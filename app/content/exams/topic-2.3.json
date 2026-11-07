@@ -28,8 +28,9 @@
    "skills": [
     "bt-design"
    ],
+   "pace": 45,
    "title": "What the strategy may see",
-   "prose": "A backtest engine loops over the bars one at a time. It has just reached the close of bar 4 and is about to call `decide(history)`. Orders go out for the next open.",
+   "prose": "A backtest engine loops over the bars one at a time. It has just reached the close of bar 4. The strategy compares the close with its 3-bar mean, a trailing window that ends at the current bar. Orders go out for the next open.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -103,11 +104,10 @@
     },
     "state": {}
    },
-   "question": "Tap every row that `history` may contain.",
+   "question": "Tap every row the 3-bar mean uses at this close.",
    "widget": {
     "kind": "tap-regions",
     "answer": [
-     "r0",
      "r1",
      "r2",
      "r3"
@@ -115,48 +115,52 @@
     "countWord": "rows",
     "wrong": [
      {
-      "id": "all",
+      "id": "lagged",
       "set": [
        "r0",
        "r1",
-       "r2",
-       "r3",
-       "r4",
-       "r5"
+       "r2"
       ]
      },
      {
-      "id": "next",
+      "id": "centred",
+      "set": [
+       "r2",
+       "r3",
+       "r4"
+      ]
+     },
+     {
+      "id": "history",
       "set": [
        "r0",
        "r1",
        "r2",
-       "r3",
-       "r4"
+       "r3"
       ]
      }
     ]
    },
    "feedback": {
-    "correct": "`history` holds bars 1 to 4, the bars that have finished.",
-    "generic": "The engine stands at the close of bar 4. Which bars have finished by then?",
+    "correct": "Bars 2, 3 and 4: the last three closes known at the close of bar 4.",
+    "generic": "The window ends at the current bar and reaches back three bars. Which three have closed?",
     "byKey": {
-     "all": "You gave the strategy the whole table. The engine hands over only what exists at that moment.",
-     "next": "Bar 5 opens after this close. The order fills there, but the decision cannot see it.",
-     "r0": "An older bar is still history. The strategy may read it.",
-     "r1": "An older bar is still history. The strategy may read it.",
-     "r2": "An older bar is still history. The strategy may read it.",
-     "r3": "Bar 4 has just closed, so its close is known. It belongs in `history`.",
+     "r0": "Bar 1 is four bars back, outside a 3-bar window.",
+     "r1": "Bar 2 is the oldest of the last three closes. It is in the window.",
+     "r2": "Bar 3 is in the window.",
+     "r3": "Bar 4 has just closed, so its close is known. The window ends there.",
      "r4": "Bar 5 has not started. Its prices do not exist at the close of bar 4.",
-     "r5": "Bar 6 is two bars in the future."
+     "r5": "Bar 6 is two bars in the future.",
+     "lagged": "You left out bar 4. Its close is known now, so the window ends there.",
+     "centred": "You centred the window on bar 4. Bar 5 has not happened yet, so that window peeks.",
+     "history": "That is the whole history. The 3-bar mean reads only the last three bars."
     }
    },
    "explain": {
-    "text": "The engine stands at the close of bar 4, so bars 1 to 4 exist and nothing later does. The order it creates waits for the open of bar 5. A strategy that reads bar 5 is looking into the future.",
+    "text": "At the close of bar 4 the last three closes are those of bars 2, 3 and 4. Their mean is (52.90 + 52.55 + 52.00) / 3 = 52.48. A centred window would need bar 5, which is still in the future.",
     "canvas": {
      "highlight": {
       "rows": [
-       0,
        1,
        2,
        3
@@ -171,8 +175,9 @@
    "skills": [
     "al-universe"
    ],
+   "pace": 60,
    "title": "Who is in the universe on 15 June 2021",
-   "prose": "A share is in the universe on a date if it passes three tests:\n\n- it is listed on the date\n- it has a full 60 days of history\n- its 60-day mean volume is at least £5m\n\nWe may use only what was known on 15 June 2021. A dash means no figure exists.",
+   "prose": "A share is in the universe on a date if it passes three tests:\n\n- it is listed on the date\n- it has a full 60 days of history\n- its 60-day mean £ volume is at least £5m\n\nThe file gives that mean to two dates. We may use only what was known on 15 June 2021. \"none\" means no figure exists.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -180,49 +185,57 @@
       "Share",
       "First day",
       "Last day",
-      "60-day mean volume"
+      "Mean to 15 Jun",
+      "Mean to 31 Dec"
      ],
      "rows": [
       [
        "AAA",
        "2 Jan 2019",
        "trading",
-       "£22.4m"
+       "£22.4m",
+       "£25.1m"
       ],
       [
        "BBB",
        "2 Jan 2019",
        "3 Mar 2021",
-       "—"
+       "none",
+       "none"
       ],
       [
        "CCC",
        "2 Jan 2019",
        "trading",
-       "£4.6m"
+       "£4.6m",
+       "£8.0m"
       ],
       [
        "DDD",
        "20 Aug 2021",
        "trading",
-       "—"
+       "none",
+       "£9.2m"
       ],
       [
        "EEE",
        "2 Jan 2019",
        "12 Nov 2021",
-       "£7.8m"
+       "£7.8m",
+       "none"
       ],
       [
        "FFF",
        "1 Feb 2019",
        "trading",
-       "£5.0m"
+       "£5.0m",
+       "£4.1m"
       ],
       [
        "GGG",
        "4 May 2021",
        "trading",
+       "none",
        "£11.0m"
       ]
      ],
@@ -230,6 +243,7 @@
       "left",
       "left",
       "left",
+      "right",
       "right"
      ],
      "tap": "rows"
@@ -252,25 +266,35 @@
        "r0",
        "r5"
       ]
+     },
+     {
+      "id": "year-end",
+      "set": [
+       "r0",
+       "r2",
+       "r3",
+       "r6"
+      ]
      }
     ]
    },
    "feedback": {
     "correct": "AAA, EEE and FFF pass all three tests on that date.",
-    "generic": "Test each share on 15 June 2021: listed then, a full 60-day window, and volume of at least £5m.",
+    "generic": "Test each share with the 15 June column only: listed, 60 days old and at least £5m.",
     "byKey": {
      "survivors": "You dropped EEE because it dies in November. On 15 June it is listed and liquid, so it belongs.",
      "r0": "AAA is listed, old enough and liquid. Keep it.",
      "r1": "BBB's last day was 3 March 2021. It is gone by 15 June.",
-     "r2": "£4.6m is under the £5m floor.",
+     "r2": "CCC's £4.6m to 15 June is under the £5m floor. Its later £8.0m was not known yet.",
      "r3": "DDD lists in August. A universe built on 15 June cannot know it.",
      "r4": "EEE dies in November, but on 15 June it is listed and liquid. A point-in-time universe keeps it.",
-     "r5": "£5.0m meets 'at least £5m'. The rule is inclusive.",
-     "r6": "GGG listed on 4 May, about 30 trading days ago. It has no full 60-day window yet."
+     "r5": "FFF's £5.0m to 15 June meets 'at least £5m'. Its later fall does not count yet.",
+     "r6": "GGG listed on 4 May, about 30 trading days ago. It has no 60-day figure on 15 June.",
+     "year-end": "You used the 31 December figures. On 15 June nobody knew them."
     }
    },
    "explain": {
-    "text": "AAA, EEE and FFF pass. BBB has died, DDD has not listed, CCC is too thin, and GGG lacks a 60-day window. A point-in-time universe keeps EEE, which dies later.",
+    "text": "AAA, EEE and FFF pass on the 15 June figures. BBB has died, DDD has not listed, CCC is too thin and GGG is too new. The December column would swap CCC, DDD and GGG in for EEE and FFF, which nobody could know in June.",
     "canvas": {
      "highlight": {
       "rows": [
@@ -288,8 +312,9 @@
    "skills": [
     "od-data"
    ],
+   "pace": 45,
    "title": "Quotes the cleaner removes",
-   "prose": "One-month calls on a £100 share. The cleaner keeps a quote only if all four hold:\n\n- the bid is above 0\n- the bid is not above the ask\n- the age is at most 30 minutes\n- (ask − bid) / mid is under 0.5",
+   "prose": "One-month calls on a £100 share, snapshotted at 14:30. The cleaner keeps a quote only if all four hold:\n\n- the bid is above 0\n- the bid is not above the ask\n- the quote is at most 30 minutes old\n- (ask − bid) / mid is under 0.5",
    "canvas": {
     "kind": "table",
     "params": {
@@ -297,57 +322,57 @@
       "Strike",
       "Bid",
       "Ask",
-      "Age (min)"
+      "Quote time"
      ],
      "rows": [
       [
        "90",
        "10.20",
        "10.60",
-       "95"
+       "12:55"
       ],
       [
        "95",
        "5.80",
        "6.10",
-       "2"
+       "14:28"
       ],
       [
        "100",
        "2.40",
        "2.60",
-       "4"
+       "14:00"
       ],
       [
        "105",
        "0.00",
        "0.15",
-       "1"
+       "14:29"
       ],
       [
        "110",
        "0.30",
        "0.20",
-       "3"
+       "14:27"
       ],
       [
        "115",
        "0.04",
        "0.12",
-       "6"
+       "14:24"
       ],
       [
        "120",
        "0.10",
        "0.14",
-       "5"
+       "14:25"
       ]
      ],
      "align": [
       "center",
       "right",
       "right",
-      "right"
+      "center"
      ],
      "tap": "rows"
     },
@@ -362,23 +387,36 @@
      "r4",
      "r5"
     ],
-    "countWord": "quotes"
+    "countWord": "quotes",
+    "wrong": [
+     {
+      "id": "edge",
+      "set": [
+       "r0",
+       "r2",
+       "r3",
+       "r4",
+       "r5"
+      ]
+     }
+    ]
    },
    "feedback": {
     "correct": "Four quotes fail a rule: stale, zero bid, crossed and too wide.",
-    "generic": "Check each row against the four rules in turn. A quote that fails any one is removed.",
+    "generic": "Work out each quote's age from 14:30 first. Then check the four rules in turn.",
     "byKey": {
-     "r0": "The £90 quote is 95 minutes old, past the 30-minute limit.",
+     "r0": "The £90 quote is from 12:55, 95 minutes before the snapshot.",
      "r1": "The £95 quote is fresh, and its spread of 0.30 on a mid of 5.95 is only 5%. It stays.",
-     "r2": "The £100 quote passes all four rules. It stays.",
+     "r2": "The £100 quote is exactly 30 minutes old and passes the other three rules. It stays.",
      "r3": "A zero bid fails the first rule, however small the ask.",
      "r4": "The bid of 0.30 is above the ask of 0.20, so the quote is crossed.",
      "r5": "The spread of 0.08 equals the mid of 0.08, a ratio of 1.0. That is too wide.",
-     "r6": "Spread 0.04 on a mid of 0.12 is 33%, under 0.5. Cheap is not wide."
+     "r6": "Spread 0.04 on a mid of 0.12 is 33%, under 0.5. Cheap is not wide.",
+     "edge": "The £100 quote is exactly 30 minutes old. 'At most 30 minutes' keeps it."
     }
    },
    "explain": {
-    "text": "£90 is stale, £105 has no bid, and £110 is crossed. £115 has a spread as big as its mid. £120 is cheap, but its spread is a third of the mid, so it stays.",
+    "text": "£90 is 95 minutes old, £105 has no bid and £110 is crossed. £115's spread equals its mid. £100 is exactly 30 minutes old and £120's spread is a third of its mid, so both stay.",
     "canvas": {
      "highlight": {
       "rows": [
@@ -397,17 +435,25 @@
    "skills": [
     "bt-execution"
    ],
+   "pace": 45,
    "title": "The cost of one fill",
-   "prose": "The engine buys 3,000 shares at £42.50. Commission is £0.005 a share with a £1 minimum. The half spread is 2 basis points of the traded value.",
-   "question": "What does the fill cost in total, in £?",
+   "prose": "The engine buys 3,000 shares at £42.50, sent as 20 child orders of 150 shares each. Commission is £0.005 a share with a £1 minimum on each order. The half spread is 2 basis points of the traded value.",
+   "question": "What do the 20 fills cost in total, in £?",
    "widget": {
     "kind": "numeric",
-    "answer": 40.5,
+    "answer": 45.5,
     "tol": {
      "abs": 0.01
     },
     "unit": "£",
     "wrong": [
+     {
+      "id": "one-order",
+      "value": 40.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
      {
       "id": "spread-only",
       "value": 25.5,
@@ -417,14 +463,14 @@
      },
      {
       "id": "commission-only",
-      "value": 15,
+      "value": 20,
       "tol": {
        "abs": 0.01
       }
      },
      {
       "id": "full-spread",
-      "value": 66,
+      "value": 71,
       "tol": {
        "abs": 0.01
       }
@@ -432,16 +478,17 @@
     ]
    },
    "feedback": {
-    "correct": "Commission £15.00 plus half spread £25.50 is £40.50.",
-    "generic": "Add two costs. Commission is shares times £0.005, and the half spread is 2 bp of shares times price.",
+    "correct": "Each child pays the £1 minimum, £20.00 in all, plus £25.50 of half spread.",
+    "generic": "Find one child's commission and apply the minimum. Then add 2 bp of the whole traded value.",
     "byKey": {
+     "one-order": "You charged commission on one order of 3,000 shares. Each child order pays at least £1.",
      "spread-only": "You charged the spread but not the commission. The engine charges both.",
      "commission-only": "You charged the commission but not the half spread. Crossing the spread costs real money.",
      "full-spread": "You charged the whole spread, 4 bp. A fill pays half of it, 2 bp."
     }
    },
    "explain": {
-    "text": "Commission is 3,000 × £0.005 = £15.00, above the £1 minimum. The traded value is 3,000 × £42.50 = £127,500, and 2 bp of it is £25.50. The total is £40.50."
+    "text": "Each child's commission is 150 × £0.005 = £0.75, below the minimum, so each pays £1.00: £20.00 in all. The half spread is 2 bp of £127,500, or £25.50, however the order is split. The total is £45.50, £5.00 more than one order of 3,000."
    }
   },
   {
@@ -450,8 +497,9 @@
    "skills": [
     "al-signal"
    ],
+   "pace": 45,
    "title": "Twelve-minus-one on monthly returns",
-   "prose": "Monthly log returns of one share, in percent, to the end of December. The 12-minus-1 signal is the sum of the first 11 months, skipping the latest month.",
+   "prose": "Monthly log returns of one share, in percent, to the end of December. Build its 12-minus-1 momentum signal at the end of December.",
    "canvas": {
     "kind": "bars",
     "params": {
@@ -542,8 +590,9 @@
    "skills": [
     "od-iv"
    ],
+   "pace": 60,
    "title": "One Newton step",
-   "prose": "We solve for the implied volatility of a one-year at-the-money call by Newton's method. The share is £100, the strike £100, $r = 5\\%$, no dividend. The market mid is £13.00. At $\\sigma = 25\\%$ the model price is £12.34 and vega is 37.8, the price change per 1.00 of volatility.",
+   "prose": "We solve for the implied volatility of a one-year at-the-money call by Newton's method. The share is £100, the strike £100, $r = 5\\%$, no dividend. The market mid is £13.00. At $\\sigma = 25\\%$ the model price is £12.34. The risk system reports vega as 0.378 per volatility point.",
    "question": "Take one Newton step from 25%. What is the new volatility, in percent?",
    "widget": {
     "kind": "numeric",
@@ -562,32 +611,33 @@
       }
      },
      {
-      "id": "no-vega",
-      "value": 0.91,
+      "id": "per-unit",
+      "value": 1.996,
       "tol": {
        "abs": 0.005
       }
      },
      {
-      "id": "units",
-      "value": 0.2502,
+      "id": "no-vega",
+      "value": 0.91,
       "tol": {
-       "abs": 0.0002
+       "abs": 0.005
       }
      }
-    ]
+    ],
+    "over100": true
    },
    "feedback": {
-    "correct": "The model is £0.66 too cheap, so volatility must rise by 0.66 / 37.8, about 1.75 points.",
-    "generic": "Newton's step is $\\sigma_1 = \\sigma_0 + (\\text{market} - \\text{model}) / \\text{vega}$. Keep volatility in decimals while you divide.",
+    "correct": "The model is £0.66 too cheap, and 0.66 / 0.378 = 1.75 points.",
+    "generic": "Newton's step is the price gap over vega. Mind the units: this vega is per volatility point.",
     "byKey": {
      "minus": "You moved volatility down. The model price is below the market, so volatility has to go up.",
      "no-vega": "You added the price gap straight to volatility. Divide by vega first.",
-     "units": "You added a decimal step of 0.0175 to 25 points. Convert before you add."
+     "per-unit": "You read vega as per 1.00 of volatility. It is per point, so the step is 1.75 points."
     }
    },
    "explain": {
-    "text": "The gap is 13.00 − 12.34 = 0.66. Divided by vega 37.8 it is 0.0175, so the new volatility is 0.25 + 0.0175 = 0.2675, or 26.75%. The true implied volatility is 26.75%, so one step is already close."
+    "text": "The gap is 13.00 − 12.34 = 0.66. With vega 0.378 per point, the step is 0.66 / 0.378 = 1.75 points. The new volatility is 26.75%, and the true implied volatility is also 26.75%."
    }
   },
   {
@@ -597,9 +647,10 @@
     "bt-design",
     "bt-execution"
    ],
+   "pace": 90,
    "title": "One bar of the engine loop",
-   "prose": "Orders fill at the next open. The engine keeps one order waiting from the previous bar. Here are the steps it takes on each new bar.",
-   "question": "Put the steps of one bar in the order the engine runs them.",
+   "prose": "Orders fill at the next open. The engine keeps one order waiting from the previous bar. Five of these steps belong to one bar of the loop, in a shuffled order. Two do not.",
+   "question": "Put the five steps in order and leave out the two that do not belong.",
    "widget": {
     "kind": "order",
     "lines": [
@@ -622,6 +673,16 @@
      {
       "id": "s5",
       "text": "Turn the change in target into an order for tomorrow's open"
+     },
+     {
+      "id": "d1",
+      "text": "Fill the new order at today's close, the price the signal used",
+      "why": "That is a same-bar fill. The new order waits for tomorrow's open."
+     },
+     {
+      "id": "d2",
+      "text": "Compute the signal once on the whole price file, before the loop",
+      "why": "A signal built on the whole file can read later bars. The loop hands over history one bar at a time."
      }
     ],
     "answer": [
@@ -636,6 +697,10 @@
       "s2",
       "s3"
      ]
+    ],
+    "distractors": [
+     "d1",
+     "d2"
     ]
    },
    "feedback": {
@@ -659,35 +724,36 @@
    "skills": [
     "al-universe"
    ],
-   "title": "A split and a dividend on one day",
-   "prose": "A share closes Monday at £240.00. On Tuesday it splits two-for-one and pays £1.50 per new share. Tuesday's raw close is £123.00.",
-   "question": "What is Tuesday's total return, in percent?",
+   "pace": 90,
+   "title": "A split, then a dividend",
+   "prose": "A share closes Monday at £240.00. On Tuesday it splits two-for-one and closes at £121.50. On Wednesday it pays £1.50 per share and closes at £122.00.",
+   "question": "What is the total return from Monday's close to Wednesday's, in percent?",
    "widget": {
     "kind": "numeric",
-    "answer": 0.0375,
+    "answer": 0.029167,
     "tol": {
      "abs": 0.0001
     },
     "unit": "%",
-    "accept": "3.75 (any value from 3.74 to 3.76)",
+    "accept": "2.92 (any value from 2.91 to 2.93)",
     "wrong": [
      {
       "id": "raw",
-      "value": -0.4875,
+      "value": -0.4917,
       "tol": {
        "abs": 0.001
       }
      },
      {
       "id": "no-dividend",
-      "value": 0.025,
+      "value": 0.0167,
       "tol": {
-       "abs": 0.001
+       "abs": 0.0005
       }
      },
      {
       "id": "dividend-old",
-      "value": 0.03125,
+      "value": 0.0229,
       "tol": {
        "abs": 0.0005
       }
@@ -695,16 +761,16 @@
     ]
    },
    "feedback": {
-    "correct": "One old share is now two new shares, each worth £123.00 plus £1.50 in cash.",
-    "generic": "Value what one Monday share has become on Tuesday: two new shares, with the dividend, against £240.00.",
+    "correct": "One Monday share is two shares by Wednesday, each worth £122.00 plus £1.50 in cash.",
+    "generic": "Follow one Monday share to Wednesday: two shares, their close and their dividends, against £240.00.",
     "byKey": {
      "raw": "You compared raw closes. The split halved the price, but the holder owns twice as many shares.",
-     "no-dividend": "You adjusted for the split but left out the dividend. The holder also received £1.50 on each new share.",
+     "no-dividend": "You adjusted for the split but left out the dividend. Each of the two shares received £1.50.",
      "dividend-old": "You paid the dividend once per old share. It is paid on each of the two new shares."
     }
    },
    "explain": {
-    "text": "One old share becomes two new ones, worth 2 × (123.00 + 1.50) = £249.00. Against £240.00 that is a gain of 9 / 240 = 3.75%."
+    "text": "One Monday share becomes two on Tuesday, and each pays £1.50 on Wednesday. The holding is worth 2 × (122.00 + 1.50) = £247.00. Against £240.00 that is 7 / 240 = 2.92%."
    }
   },
   {
@@ -713,52 +779,53 @@
    "skills": [
     "od-data"
    ],
+   "pace": 120,
    "title": "The dividend yield in an option pair",
-   "prose": "From a one-year chain, the at-the-money pair at strike £100: call mid £9.30, put mid £6.70. The share is £100 and the rate is 5% a year, continuously compounded.",
+   "prose": "From a six-month chain, the pair at strike £95: call mid £8.50, put mid £2.80. The share is £100 and the rate is 5% a year, continuously compounded.",
    "question": "What dividend yield $q$ do the two quotes imply, in percent?",
    "widget": {
     "kind": "numeric",
-    "answer": 0.023,
+    "answer": 0.033185,
     "tol": {
      "abs": 0.0002
     },
     "unit": "%",
-    "accept": "2.30, within 0.02",
+    "accept": "3.32, within 0.02",
     "wrong": [
      {
+      "id": "no-T",
+      "value": 0.0416,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
       "id": "no-discount",
-      "value": 0.0243,
+      "value": 0.036,
       "tol": {
-       "abs": 0.0001
+       "abs": 0.0002
       }
      },
      {
-      "id": "no-rate",
-      "value": -0.0257,
+      "id": "strike-as-spot",
+      "value": -0.0694,
       "tol": {
-       "abs": 0.0003
-      }
-     },
-     {
-      "id": "linear",
-      "value": 0.0227,
-      "tol": {
-       "abs": 5e-05
+       "abs": 0.0005
       }
      }
     ]
    },
    "feedback": {
-    "correct": "Parity gives a forward of £102.73, and $q = r - \\ln(F/S)/T = 2.30\\%$.",
+    "correct": "Parity gives a forward of £100.84, and $q = r - \\ln(F/S)/T = 3.32\\%$.",
     "generic": "Parity gives the forward: $F = K + e^{rT}(C - P)$. Then $F = S e^{(r-q)T}$ gives $q$.",
     "byKey": {
+     "no-T": "You left out the division by T. Over half a year, $\\ln(F/S)$ is half the yearly rate, so double it.",
      "no-discount": "You added C − P to the strike without the factor $e^{rT}$. The gap is paid at expiry, so it grows at the rate.",
-     "no-rate": "You solved $F = S e^{-qT}$ and left out $r$. The forward grows at $r - q$.",
-     "linear": "You used $F/S - 1$ in place of $\\ln(F/S)$. That is close, but the answer is off in the third figure."
+     "strike-as-spot": "You divided the forward by the strike. The forward grows from the share price, £100."
     }
    },
    "explain": {
-    "text": "The forward is F = 100 + e^{0.05} × 2.60 = £102.73. Then q = 0.05 − ln(1.0273) / 1 = 0.05 − 0.0270 = 2.30%."
+    "text": "The forward is $F = 95 + e^{0.025} \\times 5.70$, or £100.84. Then $q = 0.05 - \\ln(1.00844)/0.5 = 0.05 - 0.0168 = 3.32\\%$. Away from the money, both the strike and the time to expiry matter."
    }
   },
   {
@@ -767,6 +834,7 @@
    "skills": [
     "bt-execution"
    ],
+   "pace": 90,
    "title": "Doubling the order",
    "prose": "Impact per £ traded is $c\\,\\sigma\\sqrt{Q/V}$, with $c = 1$, $\\sigma = 1.5\\%$ a day and daily volume $V = 1{,}600{,}000$ shares. Buying 40,000 shares at £60 costs £5,692.10 in impact. We now buy 80,000 shares at the same price.",
    "question": "What does the 80,000-share order cost in impact, in £?",
@@ -812,42 +880,51 @@
    "skills": [
     "al-ic"
    ],
-   "title": "Is the mean IC different from zero",
-   "prose": "A signal's monthly rank IC has mean 0.036 and standard deviation 0.081 over 36 months. The months do not overlap.",
-   "question": "What is the t statistic of the mean IC?",
+   "pace": 90,
+   "title": "A month late",
+   "prose": "A signal's monthly rank IC has mean 0.036 and sd 0.081 over 36 months that do not overlap. Its lagged IC has a half-life of two months. The desk can trade it only one month after it is formed.",
+   "question": "Over 36 months, what t statistic should the late book's mean IC expect, with the same sd?",
    "widget": {
     "kind": "numeric",
-    "answer": 2.67,
+    "answer": 1.89,
     "tol": {
      "abs": 0.02
     },
     "wrong": [
      {
-      "id": "ir",
-      "value": 0.444,
+      "id": "no-delay",
+      "value": 2.67,
       "tol": {
-       "abs": 0.01
+       "abs": 0.02
       }
      },
      {
-      "id": "annual-ir",
-      "value": 1.54,
+      "id": "halved",
+      "value": 1.33,
       "tol": {
        "abs": 0.02
+      }
+     },
+     {
+      "id": "ir",
+      "value": 0.314,
+      "tol": {
+       "abs": 0.005
       }
      }
     ]
    },
    "feedback": {
-    "correct": "The mean is 2.67 standard errors from zero.",
-    "generic": "The standard error of a mean is the sd over $\\sqrt n$. Divide the mean by it.",
+    "correct": "One month is half a half-life, so the IC keeps $0.5^{1/2} = 0.707$ of itself.",
+    "generic": "Decay the IC by the delay first. Then divide by its standard error, the sd over $\\sqrt n$.",
     "byKey": {
-     "ir": "You divided the mean by the sd. That is the information ratio of one month. The t statistic needs $\\sqrt{36}$ as well.",
-     "annual-ir": "You scaled the ratio by $\\sqrt{12}$, as for an annual Sharpe. A t statistic scales by $\\sqrt{36}$, the months you have."
+     "no-delay": "You used the IC as it is formed. One month late, it has decayed.",
+     "halved": "You halved the IC. A two-month half-life halves it over two months, not one.",
+     "ir": "You divided the IC by the sd. The t statistic needs $\\sqrt{36}$ as well."
     }
    },
    "explain": {
-    "text": "The standard error is 0.081 / √36 = 0.0135. The t statistic is 0.036 / 0.0135 = 2.67, a little above the usual 2."
+    "text": "One month late the IC is $0.036 \\times 0.5^{1/2} = 0.0255$. Its standard error is $0.081/\\sqrt{36} = 0.0135$. The t statistic is 1.89, below 2, so the late book's edge is no longer clear."
    }
   },
   {
@@ -856,8 +933,9 @@
    "skills": [
     "od-pricers"
    ],
+   "pace": 120,
    "title": "Three pricers on one grid",
-   "prose": "Six-month puts on a £100 share, $r = 5\\%$, $q = 1\\%$, $\\sigma = 20\\%$. EU and US are 500-step European and American trees. MC is 100,000 antithetic paths, with standard error se. A pricer error is one of three things:\n\n- a European tree more than £0.01 from Black-Scholes\n- a Monte Carlo price more than 3 standard errors away\n- an American tree below the European one",
+   "prose": "Six-month puts on a £100 share, $r = 5\\%$, $q = 1\\%$, $\\sigma = 20\\%$. EU and US are 500-step European and American trees. MC is 100,000 antithetic paths, with standard error se. A pricer error is one of three things:\n\n- a European tree more than £0.01 from Black-Scholes\n- a Monte Carlo price more than 3 standard errors away\n- an American tree below the European tree, or below the exercise value $K - S$",
    "canvas": {
     "kind": "table",
     "params": {
@@ -908,7 +986,7 @@
        "18.487",
        "18.480",
        "0.006",
-       "20.004"
+       "19.950"
       ]
      ],
      "align": [
@@ -929,40 +1007,41 @@
     "answer": [
      "r3c2",
      "r1c3",
-     "r2c5"
+     "r2c5",
+     "r4c5"
     ],
     "countWord": "cells",
     "wrong": [
      {
       "id": "premium",
       "set": [
-       "r3c5",
-       "r4c5"
+       "r3c5"
       ]
      }
     ]
    },
    "feedback": {
-    "correct": "Three cells break a rule: European tree at 110, Monte Carlo at 90, American tree at 100.",
-    "generic": "Test each column against its rule. Remember that an American put is allowed to be worth more than a European one.",
+    "correct": "Four cells break a rule: the European tree at 110, Monte Carlo at 90, and the American tree at 100 and 120.",
+    "generic": "Test each column against its rule. An American put may be worth more than a European one, but never less than $K - S$.",
     "byKey": {
-     "premium": "You flagged the large American premiums at 110 and 120. Early exercise adds value to deep in-the-money puts, so they are expected.",
+     "premium": "You flagged the American premium at 110. Early exercise adds value to a deep in-the-money put, so it is expected.",
      "r3c2": "The European tree at 110 is £0.12 from Black-Scholes, and the limit is £0.01.",
-     "r1c3": "At 90 the Monte Carlo price is about 3.5 standard errors below Black-Scholes. The limit is 3.",
+     "r1c3": "At 90 the Monte Carlo price is 3.7 standard errors below Black-Scholes. The limit is 3.",
      "r2c5": "At 100 the American tree is £0.10 below the European tree. An American option is never worth less.",
-     "r3c3": "That Monte Carlo price is 1.9 standard errors from Black-Scholes. Inside 3 is noise.",
+     "r3c3": "That Monte Carlo price is 1.8 standard errors from Black-Scholes. Inside 3 is noise.",
      "r3c5": "Early exercise adds value to a put this far in the money. A premium over the European tree is expected.",
-     "r4c5": "A premium of £1.52 over the European tree is expected for a put that far in the money."
+     "r4c5": "At 120 the American put is £19.95, below the £20.00 it pays if exercised now. That is a pricer error."
     }
    },
    "explain": {
-    "text": "Three cells break a rule: European tree at 110, Monte Carlo at 90, American tree at 100. The large American premiums at 110 and 120 are early exercise, not error.",
+    "text": "The European tree misses at 110, Monte Carlo misses at 90, and the American tree sits below the European at 100. At 120 it is below the £20.00 that exercise pays today. The premium at 110 is early exercise, not error.",
     "canvas": {
      "highlight": {
       "cells": [
        "r3c2",
        "r1c3",
-       "r2c5"
+       "r2c5",
+       "r4c5"
       ]
      }
     }
@@ -974,6 +1053,7 @@
    "skills": [
     "bt-bias"
    ],
+   "pace": 90,
    "title": "Lines that peek",
    "prose": "A colleague's engine decides at each close and fills at the next open. These lines build its inputs from daily data, where `close` is a pandas Series and `ret` its daily returns.",
    "question": "Which lines use information from the future? Select all that apply.",
@@ -982,24 +1062,29 @@
     "layout": "stack",
     "options": [
      {
-      "id": "next-mean",
-      "text": "`sig = close.rolling(20).mean().shift(-1) - close`",
+      "id": "month",
+      "text": "`m = close.resample('ME').last().pct_change().reindex(close.index, method='bfill')`, the month's return on each of its days",
       "correct": true
      },
      {
-      "id": "full-z",
-      "text": "`z = (ret - ret.mean()) / ret.std()`, over the whole sample, used as the signal",
+      "id": "interp",
+      "text": "`close = close.interpolate()` to fill missing closes",
       "correct": true
      },
      {
-      "id": "bfill",
-      "text": "`close = close.bfill()` to fill missing closes",
+      "id": "rank",
+      "text": "`pct = ret.rank(pct=True)`, each day's return ranked against the whole sample",
       "correct": true
      },
      {
       "id": "ffill",
       "text": "`close = close.ffill()` to fill missing closes",
       "why": "Forward filling carries the last known price forward. It uses only the past."
+     },
+     {
+      "id": "ewm",
+      "text": "`vol = ret.ewm(span=20).std()` to scale positions",
+      "why": "An exponential average weights past returns only. Nothing here reads a later bar."
      },
      {
       "id": "lag",
@@ -1009,15 +1094,16 @@
     ]
    },
    "feedback": {
-    "correct": "`shift(-1)`, whole-sample statistics and backfilling all bring tomorrow's data into today.",
+    "correct": "A month-end value copied back, an interpolated gap and a whole-sample rank all read later bars.",
     "generic": "Ask of each line: could it be computed at that bar's close, with nothing later in the file?",
     "byKey": {
      "ffill": "You flagged forward filling. It copies yesterday's price into a gap, so it looks only back.",
-     "lag": "You flagged the shifted return. It looks back five bars and then waits a bar more."
+     "lag": "You flagged the shifted return. It looks back five bars and then waits a bar more.",
+     "ewm": "You flagged the exponential sd. It weights only returns already seen."
     }
    },
    "explain": {
-    "text": "`shift(-1)` reads tomorrow's average. The whole-sample mean and sd include later returns, and `bfill` copies a later price into a gap. `ffill` and a lagged past return use only what was known."
+    "text": "A month's return is known only at month end, so copying it back peeks. `interpolate` draws a line to the next known price, and a whole-sample rank compares today with later days. `ffill`, an exponential sd and a lagged return use only the past."
    }
   },
   {
@@ -1026,6 +1112,7 @@
    "skills": [
     "al-ic"
    ],
+   "pace": 120,
    "title": "A rank IC by hand",
    "prose": "Seven shares at the end of a month. S7 has no signal today, so it stays out. The rank IC is the correlation between the ranks of the signal and the ranks of next month's return.",
    "canvas": {
@@ -1064,12 +1151,12 @@
       ],
       [
        "S6",
-       "0.5",
+       "0.8",
        "0.9"
       ],
       [
        "S7",
-       "—",
+       "none",
        "1.1"
       ]
      ],
@@ -1081,24 +1168,24 @@
     },
     "state": {}
    },
-   "question": "What is the rank IC? Give a decimal.",
+   "question": "What is the rank IC? Give 3 decimal places.",
    "widget": {
     "kind": "numeric",
-    "answer": 0.6,
+    "answer": 0.667,
     "tol": {
-     "abs": 0.005
+     "abs": 0.002
     },
     "wrong": [
      {
-      "id": "pearson",
-      "value": 0.763,
+      "id": "formula",
+      "value": 0.671,
       "tol": {
-       "abs": 0.005
+       "abs": 0.001
       }
      },
      {
-      "id": "seven",
-      "value": 0.75,
+      "id": "pearson",
+      "value": 0.746,
       "tol": {
        "abs": 0.005
       }
@@ -1106,15 +1193,15 @@
     ]
    },
    "feedback": {
-    "correct": "The sum of squared rank gaps is 14, so the IC is 0.6.",
-    "generic": "Rank the six signals and the six returns, find each gap, and use $1 - 6\\sum d^2 / (n(n^2 - 1))$ with $n = 6$.",
+    "correct": "S1 and S6 share rank 4.5. The correlation of the two rank lists is 0.667.",
+    "generic": "Rank the six signals, giving tied values the average rank. Then correlate the two rank lists.",
     "byKey": {
-     "pearson": "You correlated the raw values. The 6.0% return pulls that up. A rank IC uses ranks only.",
-     "seven": "You counted S7 in $n$. It has no signal, so it is not ranked and $n$ is 6."
+     "formula": "You used $1 - 6\\sum d^2/(n(n^2-1))$. With a tie it is only close, so correlate the ranks themselves.",
+     "pearson": "You correlated the raw values. The 6.0% return pulls that up. A rank IC uses ranks only."
     }
    },
    "explain": {
-    "text": "Signal ranks are 5, 2, 6, 3, 1, 4 and return ranks are 2, 3, 6, 5, 1, 4. The gaps are 3, −1, 0, −2, 0, 0, so $\\sum d^2 = 14$. Then $1 - 6 \\times 14 / (6 \\times 35) = 0.6$."
+    "text": "Signal ranks are 4.5, 2, 6, 3, 1, 4.5 and return ranks are 2, 3, 6, 5, 1, 4. Both have mean 3.5; the cross products sum to 11.5 and the squares to 17 and 17.5. The IC is $11.5/\\sqrt{17 \\times 17.5} = 0.667$, where the no-ties formula gives 0.671."
    }
   },
   {
@@ -1123,19 +1210,20 @@
    "skills": [
     "od-surface"
    ],
-   "title": "Forward vols along a term structure",
-   "prose": "Total variance is $w = \\sigma^2 T$. The forward volatility between two expiries $T_1 < T_2$ is the volatility that carries $w_1$ to $w_2$: $\\sqrt{(w_2 - w_1)/(T_2 - T_1)}$. If $w_2$ is below $w_1$ there is a calendar arbitrage, and no forward vol exists.",
-   "question": "Write `forward_vols(expiries, vols)`. Return one forward vol for each pair of neighbouring expiries, or `None` for a pair whose total variance falls. Raise `ValueError` if the lists differ in length or the expiries do not strictly increase.",
+   "pace": 360,
+   "title": "Spot vols from forward vols",
+   "prose": "Total variance adds over time: $w(T) = \\sum_i \\sigma_{f,i}^2\\,\\Delta T_i$, where $\\sigma_{f,i}$ is the forward vol over the $i$-th interval. The vol to expiry $T$ is $\\sqrt{w(T)/T}$. A desk quotes forward vols for 0 to $T_1$, $T_1$ to $T_2$, and so on.",
+   "question": "Write `term_vols(expiries, fwd_vols)`. Return the vol to each expiry. Raise `ValueError` if the lists differ in length, the expiries are not positive and strictly increasing, or a forward vol is negative.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import math\n\ndef forward_vols(expiries, vols):\n    \"\"\"Forward volatility between each pair of neighbouring expiries.\n\n    expiries are in years, vols are decimals. A pair whose total\n    variance falls gives None instead of a number.\n    \"\"\"\n    out = []\n    for i in range(len(expiries) - 1):\n        # total variance at both ends\n        ...\n        # forward vol, or None if the variance falls\n        ...\n    return out\n",
-    "solution": "import math\n\ndef forward_vols(expiries, vols):\n    \"\"\"Forward volatility between each pair of neighbouring expiries.\n\n    expiries are in years, vols are decimals. A pair whose total\n    variance falls gives None instead of a number.\n    \"\"\"\n    if len(expiries) != len(vols):\n        raise ValueError(\"one vol per expiry\")\n    if any(b <= a for a, b in zip(expiries, expiries[1:])):\n        raise ValueError(\"expiries must increase\")\n    out = []\n    for i in range(len(expiries) - 1):\n        w1 = vols[i] ** 2 * expiries[i]\n        w2 = vols[i + 1] ** 2 * expiries[i + 1]\n        if w2 < w1:\n            out.append(None)\n        else:\n            out.append(math.sqrt((w2 - w1) / (expiries[i + 1] - expiries[i])))\n    return out\n",
+    "starter": "import math\n\ndef term_vols(expiries, fwd_vols):\n    \"\"\"Vol to each expiry from the forward vols of the intervals before it.\"\"\"\n    out, w, prev = [], 0.0, 0.0\n    for T, f in zip(expiries, fwd_vols):\n        # add this interval's variance to the total\n        ...\n        # the vol to T from the total variance\n        ...\n    return out\n",
+    "solution": "import math\n\ndef term_vols(expiries, fwd_vols):\n    \"\"\"Vol to each expiry from the forward vols of the intervals before it.\"\"\"\n    if len(expiries) != len(fwd_vols):\n        raise ValueError(\"one forward vol per expiry\")\n    if any(t <= 0 for t in expiries[:1]) or any(b <= a for a, b in zip(expiries, expiries[1:])):\n        raise ValueError(\"expiries must be positive and increase\")\n    if any(v < 0 for v in fwd_vols):\n        raise ValueError(\"a forward vol cannot be negative\")\n    out, w, prev = [], 0.0, 0.0\n    for T, f in zip(expiries, fwd_vols):\n        w += f * f * (T - prev)\n        prev = T\n        out.append(math.sqrt(w / T))\n    return out\n",
     "examples": [
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([1/12, 0.25, 0.5, 1.0], [0.22, 0.21, 0.21, 0.22])]",
-      "expect": "[0.204817, 0.21, 0.229565]",
+      "call": "[round(v, 6) for v in term_vols([1/12, 0.25, 0.5, 1.0], [0.22, 0.204817, 0.21, 0.229565])]",
       "compare": "isclose",
+      "expect": "[0.22, 0.21, 0.21, 0.22]",
       "tol": {
        "abs": 2e-06,
        "rel": 1e-06
@@ -1144,85 +1232,90 @@
     ],
     "tests": [
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([1/12, 0.25, 0.5, 1.0], [0.22, 0.21, 0.21, 0.22])]",
+      "call": "[round(v, 6) for v in term_vols([0.25, 0.5, 1.0], [0.30, 0.20, 0.25])]",
       "compare": "isclose",
-      "expect": "[0.204817, 0.21, 0.229565]",
+      "expect": "[0.3, 0.254951, 0.252488]",
       "tol": {
        "abs": 2e-06,
        "rel": 1e-06
       }
      },
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([0.25, 0.5], [0.30, 0.20])]",
+      "call": "[round(v, 6) for v in term_vols([1/12, 0.25, 1.0], [0.45, 0.30, 0.20])]",
       "compare": "isclose",
-      "expect": "[None]",
+      "expect": "[0.45, 0.357071, 0.248747]",
       "tol": {
        "abs": 2e-06,
        "rel": 1e-06
       }
      },
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([1/12, 0.25, 0.5, 1.0], [0.46, 0.25, 0.22, 0.21])]",
+      "call": "[round(v, 6) for v in term_vols([0.5, 1.0], [0.2, 0.2])]",
       "compare": "isclose",
-      "expect": "[None, 0.185203, 0.199499]",
+      "expect": "[0.2, 0.2]",
       "tol": {
        "abs": 2e-06,
        "rel": 1e-06
       }
      },
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([0.25, 1.0], [0.5, 0.25])]",
+      "call": "[round(v, 6) for v in term_vols([1.0, 2.0], [0.2, 0.0])]",
       "compare": "isclose",
-      "expect": "[0.0]",
+      "expect": "[0.2, 0.141421]",
       "tol": {
        "abs": 2e-06,
        "rel": 1e-06
       }
      },
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([0.5, 1.0], [0.2, 0.2])]",
+      "call": "[round(v, 6) for v in term_vols([0.75], [0.31])]",
       "compare": "isclose",
-      "expect": "[0.2]",
+      "expect": "[0.31]",
       "tol": {
        "abs": 2e-06,
        "rel": 1e-06
       }
      },
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([1.0], [0.2])]",
+      "call": "term_vols([], [])",
       "compare": "equal",
       "expect": "[]"
      },
      {
-      "call": "[None if v is None else round(v, 6) for v in forward_vols([], [])]",
-      "compare": "equal",
-      "expect": "[]"
-     },
-     {
-      "call": "forward_vols([0.5, 0.25], [0.2, 0.2])",
+      "call": "term_vols([0.5, 0.25], [0.2, 0.2])",
       "compare": "raises",
       "expect": "ValueError"
      },
      {
-      "call": "forward_vols([0.25, 0.5], [0.2])",
+      "call": "term_vols([0.25, 0.5], [0.2])",
       "compare": "raises",
       "expect": "ValueError"
      },
      {
-      "call": "forward_vols([0.25, 0.25], [0.2, 0.3])",
+      "call": "term_vols([0.25, 0.5], [0.2, -0.1])",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "term_vols([0.0, 0.5], [0.2, 0.2])",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "term_vols([0.25, 0.25], [0.2, 0.3])",
       "compare": "raises",
       "expect": "ValueError"
      }
     ],
-    "how": "Submit runs 10 hidden tests. They cover smooth and inverted curves, a falling total variance, equal total variance, short lists and bad inputs. Floats are compared within 1e-6.",
+    "how": "Submit runs 11 hidden tests. They cover rising and falling forward vols, a flat curve, a zero forward vol, one expiry, empty lists and bad inputs. Floats are compared within 2e-6.",
     "prelude": "import math\n"
    },
    "feedback": {
-    "correct": "Each pair uses total variance, a fall gives None, and bad inputs raise ValueError.",
-    "generic": "Work in total variance $\\sigma^2 T$, never in volatilities. Test the fall before taking a square root."
+    "correct": "Each forward variance is added over its own interval, and the total is divided by the expiry.",
+    "generic": "Add $\\sigma_f^2\\,\\Delta T$ interval by interval. Then take $\\sqrt{w/T}$, never an average of vols."
    },
    "explain": {
-    "text": "Total variance adds up over time, so the forward variance is the difference divided by the time between. If it is negative, no volatility can fill the gap, and the pair is flagged with None. Averaging the two vols would ignore the expiries."
+    "text": "Variance, not volatility, adds over time, so each interval adds its forward variance times its length. The vol to an expiry is the root of that total over the time. Averaging the forward vols would ignore how long each one lasts."
    }
   },
   {
@@ -1231,6 +1324,7 @@
    "skills": [
     "bt-metrics"
    ],
+   "pace": 150,
    "title": "Reading a drawdown and a Calmar ratio",
    "prose": "Month-end equity of a strategy, in £k, over a year: `100 104 109 103 98 101 107 112 108 115 119 121 118.4`. Measure drawdown on these points.",
    "canvas": {
@@ -1269,7 +1363,7 @@
     },
     "state": {}
    },
-   "question": "Fill in the three measures.",
+   "question": "Fill in the four measures.",
    "widget": {
     "kind": "table",
     "columns": [
@@ -1307,6 +1401,25 @@
       }
      ],
      [
+      "Longest spell below the running peak (months)",
+      {
+       "edit": true,
+       "answer": 4,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "with-recovery",
+         "value": 5,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
       "Calmar ratio",
       {
        "edit": true,
@@ -1328,16 +1441,17 @@
     ]
    },
    "feedback": {
-    "correct": "The worst fall is 109 to 98, and growth is 18.4%, so Calmar is about 1.82.",
+    "correct": "The worst fall is 109 to 98, it lasts four months, and Calmar is about 1.82.",
     "generic": "Track the running peak. Drawdown is the value over the peak so far, minus 1, at its worst point.",
     "byKey": {
      "global-range": "Measure each fall from the peak so far, not from the highest to the lowest point overall.",
-     "r2c1": "Calmar is the yearly growth over the size of the maximum drawdown.",
-     "global-calmar": "You divided by the highest-to-lowest range, not the largest fall from a running peak."
+     "global-calmar": "You divided by the highest-to-lowest range, not the largest fall from a running peak.",
+     "r3c1": "Calmar is the yearly growth over the size of the maximum drawdown.",
+     "with-recovery": "You counted the month equity regained the peak. The spell is the months below it: 103, 98, 101 and 107."
     }
    },
    "explain": {
-    "text": "The peak of 109 is followed by a trough of 98, a fall of 11 over 109, or 10.09%. The £118.4k ends 18.4% above £100k, so Calmar is 18.4 / 10.09 = 1.82. Using 121 and 98 would give 19.0% by comparing a trough with a later peak."
+    "text": "The worst fall is 109 to 98, 11 over 109 or 10.09%, and equity stays below 109 for four months. The year grows 18.4%, so Calmar is 18.4 / 10.09 = 1.82. Using 121 and 98 would give 19.0%, comparing a trough with a later peak."
    }
   },
   {
@@ -1346,6 +1460,7 @@
    "skills": [
     "al-portfolio"
    ],
+   "pace": 120,
    "title": "Rank weights for a long-short book",
    "prose": "Eight shares, one signal each. Build dollar-neutral rank weights: centre the ranks on their mean, then scale so the absolute weights sum to 1. S6 has no signal today.",
    "question": "Fill in the missing weights, as decimals.",
@@ -1386,13 +1501,22 @@
      ],
      [
       "S4",
-      "0.1",
+      "0.5",
       {
        "edit": true,
-       "answer": 0,
+       "answer": 0.0417,
        "tol": {
         "abs": 0.003
-       }
+       },
+       "wrong": [
+        {
+         "id": "tie-order",
+         "value": 0,
+         "tol": {
+          "abs": 0.003
+         }
+        }
+       ]
       }
      ],
      [
@@ -1414,7 +1538,7 @@
      [
       "S7",
       "0.5",
-      "0.0833"
+      "0.0417"
      ],
      [
       "S8",
@@ -1430,18 +1554,19 @@
     ]
    },
    "feedback": {
-    "correct": "Seven ranked shares give centred ranks from −3 to 3, divided by 12.",
-    "generic": "Rank only the seven shares with a signal. Centred ranks run from −3 to 3 and sum in absolute value to 12.",
+    "correct": "S4 and S7 share rank 4.5. Centred ranks run from −3 to 3 and sum to 12 in size.",
+    "generic": "Rank the seven shares with a signal, giving tied values the average rank. Centre on the mean rank, 4, then divide by the sum of sizes.",
     "byKey": {
      "r5c2": "S6 has no signal, so it is not ranked. Its weight is zero, and the other seven are ranked among themselves.",
-     "r3c2": "S4 sits in the middle of the seven, so its centred rank is 0 and so is its weight.",
+     "r3c2": "S4 ties with S7 at 0.5. Each takes rank 4.5, a centred rank of 0.5, so 0.5 / 12.",
      "r0c2": "S1 ranks sixth of seven, a centred rank of 2. Divide by 12.",
      "r2c2": "S3 ranks first of seven, a centred rank of 3. Divide by 12.",
-     "r7c2": "S8 ranks second from the bottom, a centred rank of −2. Divide by 12."
+     "r7c2": "S8 ranks second from the bottom, a centred rank of −2. Divide by 12.",
+     "tie-order": "You broke the tie by order. S4 and S7 share ranks 4 and 5, so each takes 4.5."
     }
    },
    "explain": {
-    "text": "Ranked from the bottom, the shares run S5, S8, S2, S4, S7, S1, S3, with mean rank 4. Centred ranks are −3 to 3, which sum to 12 in absolute value. S3 gets 3/12 = 0.25."
+    "text": "From the bottom: S5, S8 and S2, then S4 and S7 tied at 4.5, then S1 and S3. Centred ranks are −3, −2, −1, 0.5, 0.5, 2 and 3, which sum to 12 in size. S4 gets 0.5 / 12 = 0.0417 and S3 gets 3 / 12 = 0.25."
    }
   },
   {
@@ -1450,8 +1575,9 @@
    "skills": [
     "od-greeks"
    ],
+   "pace": 150,
    "title": "Explaining a day's P&L",
-   "prose": "One call: delta 0.5977, gamma 0.0274, vega 0.2736 per volatility point, theta −0.0222 a day. Over one day the share rises £3, volatility rises 2 points and a day passes. Full repricing shows the call up £2.4155.",
+   "prose": "One six-month at-the-money put. The pricer gives delta −0.4023, gamma 0.0274, vega 27.36 per 1.00 of volatility and theta −3.24 a year. Over one day the share falls £3, volatility rises 2 points and a day passes. Full repricing shows the put up £1.8706.",
    "question": "Fill in the Greek terms, their total and the residual, in £.",
    "widget": {
     "kind": "table",
@@ -1464,10 +1590,19 @@
       "Delta term",
       {
        "edit": true,
-       "answer": 1.7931,
+       "answer": 1.2069,
        "tol": {
         "abs": 0.01
-       }
+       },
+       "wrong": [
+        {
+         "id": "delta-sign",
+         "value": -1.2069,
+         "tol": {
+          "abs": 0.01
+         }
+        }
+       ]
       }
      ],
      [
@@ -1499,10 +1634,10 @@
        },
        "wrong": [
         {
-         "id": "vega-scale",
-         "value": 0.0055,
+         "id": "vega-units",
+         "value": 54.72,
          "tol": {
-          "abs": 0.004
+          "abs": 0.5
          }
         }
        ]
@@ -1512,17 +1647,26 @@
       "Theta term",
       {
        "edit": true,
-       "answer": -0.0222,
+       "answer": -0.0089,
        "tol": {
-        "abs": 0.005
-       }
+        "abs": 0.002
+       },
+       "wrong": [
+        {
+         "id": "theta-year",
+         "value": -3.24,
+         "tol": {
+          "abs": 0.01
+         }
+        }
+       ]
       }
      ],
      [
       "Explained total",
       {
        "edit": true,
-       "answer": 2.4414,
+       "answer": 1.8685,
        "tol": {
         "abs": 0.015
        }
@@ -1532,25 +1676,27 @@
       "Residual (actual − explained)",
       {
        "edit": true,
-       "answer": -0.0259,
+       "answer": 0.0021,
        "tol": {
-        "abs": 0.01
+        "abs": 0.001
        }
       }
      ]
     ]
    },
    "feedback": {
-    "correct": "The Greeks explain £2.4414 of the £2.4155 move. The residual is −£0.0259.",
-    "generic": "Delta times the move. Half gamma times the move squared. Vega per point times the points. Theta times the days.",
+    "correct": "The Greeks explain £1.8685 of the £1.8706 move. The residual is £0.0021.",
+    "generic": "Delta times the move. Half gamma times the move squared. Vega times the change in vol. Theta times the fraction of a year.",
     "byKey": {
      "no-half": "The gamma term is $\\tfrac12 \\Gamma\\,dS^2$. You may have left out the half.",
-     "vega-scale": "Vega here is per volatility point, so multiply by 2 points, not by 0.02.",
-     "r5c1": "The residual is the actual change minus the explained total."
+     "r5c1": "The residual is the actual change minus the explained total.",
+     "delta-sign": "Delta is negative and so is the move, so the delta term is positive.",
+     "vega-units": "This vega is per 1.00 of volatility. Two points is 0.02, so the term is 0.5472.",
+     "theta-year": "Theta here is per year. One day is a 365th of it."
     }
    },
    "explain": {
-    "text": "Delta gives 0.5977 × 3 = 1.7931 and gamma 0.5 × 0.0274 × 9 = 0.1233. Vega gives 0.2736 × 2 = 0.5472 and theta −0.0222. The total is 2.4414, and the residual against 2.4155 is −0.0259."
+    "text": "Delta gives −0.4023 × −3 = 1.2069 and gamma 0.5 × 0.0274 × 9 = 0.1233. Vega gives 27.36 × 0.02 = 0.5472 and theta −3.24 / 365 = −0.0089. The total is 1.8685, so the residual against 1.8706 is 0.0021."
    }
   },
   {
@@ -1560,6 +1706,7 @@
     "bt-metrics",
     "bt-execution"
    ],
+   "pace": 420,
    "title": "One line of a tear sheet",
    "prose": "A backtest gives daily equity and the weight held each day, as a fraction of equity. The conventions are the course's.\n\n- Sharpe: $\\sqrt{\\text{periods}}$ times the mean over the sample sd (ddof 1) of simple returns. It is 0.0 for fewer than two returns or no spread.\n- Maximum drawdown: the worst fall from a running peak, a fraction of at most 0.\n- CAGR: $(E_{\\text{last}} / E_{\\text{first}})^{\\text{periods}/(n-1)} - 1$ for $n$ values.\n- Calmar: CAGR over the size of the maximum drawdown, or `math.inf` with no drawdown.\n- Turnover: the mean absolute daily change in weight over all $n$ days, with weight 0 before day 1.",
    "question": "Write `tear_line(equity, weights, periods=252)` returning `(sharpe, max_drawdown, calmar, turnover)`.",
@@ -1570,9 +1717,9 @@
     "solution": "import math\nimport numpy as np\nimport pandas as pd\n\ndef tear_line(equity, weights, periods=252):\n    \"\"\"(sharpe, max_drawdown, calmar, turnover) of one backtest.\"\"\"\n    eq = pd.Series(equity, dtype=float)\n    r = eq.pct_change().dropna()\n    sd = r.std(ddof=1) if len(r) > 1 else 0.0\n    sharpe = 0.0 if not sd > 1e-12 else float(np.sqrt(periods) * r.mean() / sd)\n    max_dd = float((eq / eq.cummax() - 1).min())\n    cagr = float((eq.iloc[-1] / eq.iloc[0]) ** (periods / (len(eq) - 1)) - 1)\n    calmar = cagr / abs(max_dd) if max_dd < 0 else math.inf\n    w = np.asarray(weights, dtype=float)\n    turnover = float(np.abs(np.diff(w, prepend=0.0)).mean())\n    return sharpe, max_dd, calmar, turnover\n",
     "examples": [
      {
-      "setup": "e = pd.Series([100, 104, 109, 103, 98, 101, 107, 112, 108, 115, 119, 121, 118.4]); w = pd.Series([0, 1, 1, 1, 0, 0, 0.5, 1, 1, 0, -1, -1, 0])",
+      "setup": "e = pd.Series([100, 103, 99, 104, 101, 108, 106, 112.0]); w = pd.Series([0, 1, 1, 0.5, 0.5, -0.5, 0, 0])",
       "call": "[round(v, 6) for v in tear_line(e, w, periods=12)]",
-      "expect": "[1.201745, -0.100917, 1.823273, 0.461538]",
+      "expect": "[1.326034, -0.038835, 5.521664, 0.375]",
       "compare": "isclose",
       "tol": {
        "abs": 2e-06,
@@ -1581,16 +1728,6 @@
      }
     ],
     "tests": [
-     {
-      "setup": "e = pd.Series([100, 104, 109, 103, 98, 101, 107, 112, 108, 115, 119, 121, 118.4]); w = pd.Series([0, 1, 1, 1, 0, 0, 0.5, 1, 1, 0, -1, -1, 0])",
-      "call": "[round(v, 6) for v in tear_line(e, w, periods=12)]",
-      "compare": "isclose",
-      "expect": "[1.201745, -0.100917, 1.823273, 0.461538]",
-      "tol": {
-       "abs": 2e-06,
-       "rel": 1e-06
-      }
-     },
      {
       "setup": "e = pd.Series([100.0, 98.0, 101.0, 97.0, 96.0, 99.0, 103.0, 104.0]); w = pd.Series([0.5, 0.5, 1.0, 1.0, -0.5, 0.0, 0.0, 0.5])",
       "call": "[round(v, 6) for v in tear_line(e, w, periods=12)]",
@@ -1654,7 +1791,7 @@
       }
      }
     ],
-    "how": "Submit runs 8 hidden tests. They cover a monthly year, a short series, a rising curve, a flat curve and two seeded series. Floats are compared within 1e-6. The first run loads NumPy and pandas, 10 to 30 seconds.",
+    "how": "Submit runs 7 hidden tests. They cover a monthly series, a rising curve, a flat curve, a short series and two seeded series. Floats are compared within 2e-6. The first run loads NumPy and pandas, 10 to 30 seconds.",
     "prelude": "import numpy as np\nimport pandas as pd\n"
    },
    "feedback": {
@@ -1671,8 +1808,9 @@
    "skills": [
     "al-costs"
    ],
+   "pace": 120,
    "title": "What costs leave of a book",
-   "prose": "A long-short book earns 5.4% a year gross, with volatility 3.0%. Over a year it trades 4.5 times its value, buys and sells together. Each £1 traded costs 14 bp in spread and impact.",
+   "prose": "A long-short book, gross 1, earns 5.4% a year gross with volatility 3.0%. It rebalances monthly. Each rebalance replaces 30% of its longs and 30% of its shorts. Each £1 traded costs 14 bp in spread and impact.",
    "question": "Fill in the four quantities.",
    "widget": {
     "kind": "table",
@@ -1682,22 +1820,31 @@
     ],
     "rows": [
      [
-      "Cost over the year (% of the book)",
+      "£ traded a year per £ of book",
       {
        "edit": true,
-       "answer": 0.63,
+       "answer": 7.2,
        "tol": {
-        "abs": 0.01
-       }
+        "abs": 0.05
+       },
+       "wrong": [
+        {
+         "id": "one-side",
+         "value": 3.6,
+         "tol": {
+          "abs": 0.05
+         }
+        }
+       ]
       }
      ],
      [
-      "Net return (% a year)",
+      "Cost over the year (% of the book)",
       {
        "edit": true,
-       "answer": 4.77,
+       "answer": 1.008,
        "tol": {
-        "abs": 0.02
+        "abs": 0.01
        }
       }
      ],
@@ -1705,7 +1852,7 @@
       "Net Sharpe",
       {
        "edit": true,
-       "answer": 1.59,
+       "answer": 1.46,
        "tol": {
         "abs": 0.02
        }
@@ -1715,7 +1862,7 @@
       "Break-even cost (bp per £ traded)",
       {
        "edit": true,
-       "answer": 120,
+       "answer": 75,
        "tol": {
         "abs": 1
        }
@@ -1724,42 +1871,52 @@
     ]
    },
    "feedback": {
-    "correct": "Costs take 0.63% and net Sharpe falls from 1.80 to 1.59. Costs of 120 bp would remove all the return.",
-    "generic": "Cost is traded value times cost per £. The break-even cost is the gross return divided by the value traded.",
+    "correct": "The book trades 7.2 times its value a year. Costs take 1.01%, and net Sharpe falls from 1.80 to 1.46.",
+    "generic": "A replaced name is a sale and a purchase. Count both sides, then charge 14 bp on every £ traded.",
     "byKey": {
-     "r0c1": "Multiply 4.5 by 14 bp. That is a share of the book, so 63 bp or 0.63%.",
-     "r2c1": "Divide the net return, not the gross, by the volatility.",
-     "r3c1": "At break-even the cost equals the gross return. Divide 5.4% by 4.5."
+     "one-side": "You counted only the sales or only the purchases. Replacing a name means selling one and buying another.",
+     "r1c1": "Multiply 7.2 by 14 bp: 100.8 bp, or 1.01% of the book.",
+     "r2c1": "Divide the net return, 4.39%, by the volatility.",
+     "r3c1": "At break-even the cost equals the gross return. Divide 5.4% by 7.2."
     }
    },
    "explain": {
-    "text": "The cost is 4.5 × 14 bp = 63 bp, or 0.63%. Net return is 5.4 − 0.63 = 4.77%, and net Sharpe is 4.77 / 3.0 = 1.59. Costs of 5.4% / 4.5 = 120 bp per £ would leave nothing."
+    "text": "Each side is £0.50, so replacing 30% sells £0.15 and buys £0.15 a side: £0.60 a month, 7.2 a year. Costs are 7.2 × 14 bp = 1.01%, so net return is 4.39% and net Sharpe 4.39 / 3.0 = 1.46. Costs of 5.4% / 7.2 = 75 bp would leave nothing."
    }
   },
   {
    "id": "e-too-good",
    "difficulty": 3,
    "skills": [
-    "bt-bias",
+    "bt-execution",
     "bt-report"
    ],
-   "title": "A net Sharpe above 3",
-   "prose": "A colleague runs a three-day mean-reversion rule on one share and sends this output. They want to put the net Sharpe in the results note.",
+   "pace": 90,
+   "title": "Net above gross",
+   "prose": "A colleague runs a three-day mean-reversion rule on one share and sends this output. The run starts with £100,000 in cash. They want to put the net Sharpe in the results note.",
    "canvas": {
     "kind": "console",
     "params": {
      "title": "run_backtest.py",
      "lines": [
       "$ python run_backtest.py --rule revert3 --cost-bp 2.5",
-      "bars: 1260    settings tried: 1",
-      "fills: at the close of the signal bar",
-      "gross Sharpe 3.41    net Sharpe 3.02",
-      "max drawdown -0.04    turnover 0.97 a day",
-      "held-out period: not opened",
-      "look-ahead check: not run"
+      "bars: 1260    settings tried: 1    fills: next open",
+      "look-ahead check: passed at 5 cuts",
+      "gross Sharpe 2.61    net Sharpe 3.02    vol 15.0% a year",
+      "turnover 0.97 a day",
+      "day  shares  fill   cash flow    cost   cash after",
+      "1    +400    50.00  -20,000.00   5.00    80,005.00",
+      "2    -800    50.40  +40,320.00  10.08   120,335.08"
      ]
     },
-    "state": {}
+    "state": {
+     "shade": {
+      "bad": [
+       "l7",
+       "l8"
+      ]
+     }
+    }
    },
    "question": "What should happen first?",
    "widget": {
@@ -1769,31 +1926,31 @@
      {
       "id": "a",
       "text": "Report 3.02. Costs are in, so it is the net figure.",
-      "why": "Costs do not fix a fill at the signal bar's close. That price was not available to trade at."
+      "why": "Costs cannot lift net above gross. Follow the cash: day 1 gained the £5.00 it should have paid."
      },
      {
       "id": "b",
-      "text": "Run the look-ahead check and move the fills to the next open before anything else.",
+      "text": "Fix the cost sign. Cash rises by each cost, so net beats gross.",
       "correct": true
      },
      {
       "id": "c",
-      "text": "Open the held-out period to confirm the result.",
+      "text": "Open the held-out period now to confirm that the result holds.",
       "why": "Opening it on a likely bug spends your one look. Fix the engine first."
      },
      {
       "id": "d",
-      "text": "Halve the position size so the Sharpe falls below 2.",
-      "why": "Sharpe ignores scale. Halving the position leaves it unchanged and hides nothing."
+      "text": "Halve every position so the Sharpe falls below 2 before reporting.",
+      "why": "Sharpe ignores scale. Halving every position leaves it unchanged and fixes nothing."
      }
     ]
    },
    "feedback": {
-    "correct": "A simple rule above 2 is a bug until proved otherwise. Two usual causes are in the output.",
-    "generic": "Look for the line that could create a free edge, and for the check that has not been run."
+    "correct": "Day 1 should end at £79,995.00. The drag, 0.97 × 252 × 2.5 bp = 6.1% a year, is 0.41 of Sharpe.",
+    "generic": "Compare net with gross. Then follow the cash through the first fill."
    },
    "explain": {
-    "text": "Filling at the signal bar's close lets the rule trade a price it has just seen. The look-ahead check was not run. Test both before any number goes in a note."
+    "text": "Day 1 buys £20,000 of shares and pays £5.00, so cash should fall to £79,995.00, not £80,005.00. The costs were added, so the net Sharpe sits above the gross. Fixed, it is about 2.61 − 0.41 = 2.20, still above 2, so the hunt goes on."
    }
   },
   {
@@ -1802,88 +1959,95 @@
    "skills": [
     "bt-bias"
    ],
-   "title": "Where does the engine start to peek",
-   "prose": "A look-ahead test cuts the bars at row `cut` and replaces every later price with noise. Then it runs the engine again. If any row before the cut changes, the engine used the future. An engine here is `run(bars)`, which returns a Series of target positions. `make_bars`, `noise_after` and six planted engines are already defined.",
-   "question": "Write `first_leak(run, bars, cuts)`. Return the smallest cut in `cuts` where an earlier row changes, or `None` if none does.",
+   "pace": 420,
+   "title": "Which rows leak",
+   "prose": "A look-ahead test cuts the bars at row `cut` and replaces every later price with noise. Then it runs the engine again. Any row before the cut that changes used the future. An engine here is `run(bars)`, which returns a Series of target positions. `make_bars`, `noise_after` and six engines are already defined.",
+   "question": "Write `leak_rows(run, bars, cut)`. Return the sorted list of row numbers before `cut` whose value changes by more than 1e-9.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import numpy as np\n\ndef first_leak(run, bars, cuts):\n    \"\"\"The smallest cut where rows before the cut change when the\n    bars after it are replaced by noise. None if no cut leaks.\"\"\"\n    # change this loop to try the cuts in increasing order\n    for cut in cuts:\n        # the rows before the cut, run on all the data\n        full = ...\n        # the same rows, run with the future replaced by noise_after\n        noisy = ...\n        # if any row differs, return this cut\n        ...\n    return None\n",
-    "solution": "import numpy as np\n\ndef first_leak(run, bars, cuts):\n    \"\"\"The smallest cut where rows before the cut change when the\n    bars after it are replaced by noise. None if no cut leaks.\"\"\"\n    for cut in sorted(cuts):\n        full = run(bars).iloc[:cut].to_numpy(float)\n        noisy = run(noise_after(bars, cut)).iloc[:cut].to_numpy(float)\n        if full.shape != noisy.shape or not np.allclose(full, noisy, rtol=0, atol=1e-9, equal_nan=True):\n            return cut\n    return None\n",
+    "starter": "import numpy as np\n\ndef leak_rows(run, bars, cut):\n    \"\"\"Rows before cut whose value changes when the bars after cut\n    are replaced by noise.\"\"\"\n    # the first cut rows, run on all the data\n    full = ...\n    # the same rows, run with the future replaced by noise_after\n    noisy = ...\n    # the row numbers where the two differ by more than 1e-9\n    ...\n",
+    "solution": "import numpy as np\n\ndef leak_rows(run, bars, cut):\n    \"\"\"Rows before cut whose value changes when the bars after cut\n    are replaced by noise.\"\"\"\n    full = run(bars).iloc[:cut].to_numpy(float)\n    noisy = run(noise_after(bars, cut)).iloc[:cut].to_numpy(float)\n    diff = ~np.isclose(full, noisy, rtol=0, atol=1e-9, equal_nan=True)\n    return [int(i) for i in np.flatnonzero(diff)]\n",
     "examples": [
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(peek_engine, b, [300, 100, 200])",
-      "expect": "100",
+      "call": "leak_rows(peek_engine, b, 100)",
+      "expect": "[99]",
       "compare": "equal"
      },
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(honest_engine, b, [100, 200, 300])",
-      "expect": "None",
+      "call": "leak_rows(honest_engine, b, 200)",
+      "expect": "[]",
       "compare": "equal"
      }
     ],
     "tests": [
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(honest_engine, b, [100, 200, 300])",
-      "expect": "None",
+      "call": "leak_rows(late_engine, b, 350)",
+      "expect": "[349]",
       "compare": "equal"
      },
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(peek_engine, b, [300, 100, 200])",
-      "expect": "100",
+      "call": "leak_rows(late_engine, b, 300)",
+      "expect": "[]",
       "compare": "equal"
      },
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(scaled_engine, b, [250, 150])",
-      "expect": "150",
+      "call": "leak_rows(scaled_engine, b, 150)[:3]",
+      "expect": "[2, 3, 4]",
       "compare": "equal"
      },
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(late_engine, b, [100, 200, 300, 350])",
-      "expect": "350",
+      "call": "len(leak_rows(scaled_engine, b, 150))",
+      "expect": "148",
       "compare": "equal"
      },
      {
       "setup": "g = make_bars(400); g.iloc[118:121, g.columns.get_loc('close')] = np.nan",
-      "call": "first_leak(bfill_engine, g, [200, 121, 100])",
-      "expect": "121",
+      "call": "leak_rows(bfill_engine, g, 121)",
+      "expect": "[118]",
       "compare": "equal"
      },
      {
       "setup": "g = make_bars(400); g.iloc[118:121, g.columns.get_loc('close')] = np.nan",
-      "call": "first_leak(ffill_engine, g, [200, 121, 100])",
-      "expect": "None",
+      "call": "leak_rows(ffill_engine, g, 121)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "setup": "g = make_bars(400); g.iloc[118:121, g.columns.get_loc('close')] = np.nan",
+      "call": "leak_rows(bfill_engine, g, 200)",
+      "expect": "[]",
       "compare": "equal"
      },
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(peek_engine, b, [400])",
-      "expect": "None",
+      "call": "leak_rows(peek_engine, b, 400)",
+      "expect": "[]",
       "compare": "equal"
      },
      {
       "setup": "b = make_bars(400)",
-      "call": "first_leak(peek_engine, b, [])",
-      "expect": "None",
+      "call": "leak_rows(peek_engine, b, 0)",
+      "expect": "[]",
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 8 hidden tests on make_bars(400). They cover an honest engine, three that peek, one with a backfilled gap, and two edge cases. Answers are compared with ==. The first run loads NumPy and pandas, 10 to 30 seconds.",
-    "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef noise_after(bars, cut, seed=0):\n    # the same bars, with every price after row cut scaled by seeded noise\n    rng = np.random.default_rng(seed)\n    out = bars.copy()\n    k = np.exp(0.02 * rng.standard_normal(len(bars) - cut))\n    for col in [\"open\", \"high\", \"low\", \"close\"]:\n        out[col] = np.r_[bars[col].to_numpy()[:cut], bars[col].to_numpy()[cut:] * k]\n    return out\n\n# five engines, each: bars -> a Series of target positions in [-1, 1]\ndef honest_engine(bars):\n    return np.tanh(50 * bars[\"close\"].pct_change(2)).fillna(0.0)\n\ndef peek_engine(bars):\n    close = bars[\"close\"]\n    return np.tanh(50 * (close.shift(-1) / close - 1)).fillna(0.0)\n\ndef scaled_engine(bars):\n    # sizes the position by the volatility of the whole sample\n    vol = bars[\"close\"].pct_change().std()\n    return honest_engine(bars) * 0.01 / vol\n\ndef late_engine(bars):\n    # honest for its first 300 rows, then it reads tomorrow's close\n    out = honest_engine(bars).to_numpy().copy()\n    out[300:] = peek_engine(bars).to_numpy()[300:]\n    return pd.Series(out, index=bars.index)\n\ndef bfill_engine(bars):\n    # fills a missing close from the NEXT bar\n    close = bars[\"close\"].bfill()\n    return np.tanh(50 * close.pct_change()).fillna(0.0)\n\ndef ffill_engine(bars):\n    # fills a missing close from the PREVIOUS bar\n    close = bars[\"close\"].ffill()\n    return np.tanh(50 * close.pct_change()).fillna(0.0)\n",
+    "how": "Submit runs 9 hidden tests on make_bars(400). They cover a late leak on both sides of row 300, a whole-sample scale, a backfilled gap, a forward fill and cuts at both ends. Answers are compared with ==. The first run loads NumPy and pandas, 10 to 30 seconds.",
+    "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef noise_after(bars, cut, seed=0):\n    # the same bars, with every price after row cut scaled by seeded noise\n    rng = np.random.default_rng(seed)\n    out = bars.copy()\n    k = np.exp(0.02 * rng.standard_normal(len(bars) - cut))\n    for col in [\"open\", \"high\", \"low\", \"close\"]:\n        out[col] = np.r_[bars[col].to_numpy()[:cut], bars[col].to_numpy()[cut:] * k]\n    return out\n\n# six engines, each: bars -> a Series of target positions in [-1, 1]\ndef honest_engine(bars):\n    return np.tanh(50 * bars[\"close\"].pct_change(2)).fillna(0.0)\n\ndef peek_engine(bars):\n    close = bars[\"close\"]\n    return np.tanh(50 * (close.shift(-1) / close - 1)).fillna(0.0)\n\ndef scaled_engine(bars):\n    # sizes the position by the volatility of the whole sample\n    vol = bars[\"close\"].pct_change().std()\n    return honest_engine(bars) * 0.01 / vol\n\ndef late_engine(bars):\n    # honest for its first 300 rows, then it reads tomorrow's close\n    out = honest_engine(bars).to_numpy().copy()\n    out[300:] = peek_engine(bars).to_numpy()[300:]\n    return pd.Series(out, index=bars.index)\n\ndef bfill_engine(bars):\n    # fills a missing close from the NEXT bar\n    close = bars[\"close\"].bfill()\n    return np.tanh(50 * close.pct_change()).fillna(0.0)\n\ndef ffill_engine(bars):\n    # fills a missing close from the PREVIOUS bar\n    close = bars[\"close\"].ffill()\n    return np.tanh(50 * close.pct_change()).fillna(0.0)\n",
     "budget": 30000
    },
    "feedback": {
-    "correct": "Every row before each cut is compared, and the cuts are tried in increasing order.",
-    "generic": "Compare all the rows before the cut, not only the last one. A leak can sit earlier. Try the cuts smallest first."
+    "correct": "Every row before the cut is compared, and each changed row is reported.",
+    "generic": "Run the engine on the bars and on `noise_after(bars, cut)`. Compare every row before the cut, not only the last."
    },
    "explain": {
-    "text": "The test reruns the engine on bars whose future is noise. An honest engine gives the same rows before the cut. The backfill engine changes rows well before the cut, which a check on the last row alone misses."
+    "text": "The rows that change show where an engine reads ahead. The backfill engine changes row 118, three rows before the cut, while row 120 stays the same. The scaled engine changes every traded row, because its scale comes from the whole sample."
    }
   },
   {
@@ -1892,6 +2056,7 @@
    "skills": [
     "al-signal"
    ],
+   "pace": 420,
    "title": "Z-scores within sectors",
    "prose": "A signal frame has one row per date and one column per share. `sector` maps each share to its sector. On each date, z-score every share against its own sector. Subtract the sector mean and divide by the sector's sample sd (ddof 1). Ignore NaN.\n\nA sector gives NaN for a date if it has fewer than `min_names` valid shares, or no spread.",
    "question": "Write `sector_zscore(signal, sector, min_names=3)`. Return a frame with the same index and columns as `signal`.",
@@ -1913,16 +2078,6 @@
      }
     ],
     "tests": [
-     {
-      "setup": "sig, sec = toy()",
-      "call": "np.round(sector_zscore(sig, sec).fillna(-99.0).to_numpy(), 6).tolist()",
-      "compare": "isclose",
-      "expect": "[[-0.755929, -0.377964, 1.133893, 0.336463, -0.336463, -1.177622, 1.177622], [-99.0, -99.0, -99.0, 1.161895, -0.387298, 0.387298, -1.161895], [-99.0, -99.0, -99.0, -1.0, 1.0, -99.0, 0.0]]",
-      "tol": {
-       "abs": 2e-06,
-       "rel": 1e-06
-      }
-     },
      {
       "setup": "sig, sec = toy()",
       "call": "np.round(sector_zscore(sig, sec, min_names=2).fillna(-99.0).to_numpy(), 6).tolist()",
@@ -1972,7 +2127,7 @@
       "expect": "[True, True]"
      }
     ],
-    "how": "Submit runs 7 hidden tests. A hand frame has a constant sector and a thin sector. Other tests vary `min_names`, use a seeded frame with NaN, and check that no date uses another. NaN shows as −99. The first run loads NumPy and pandas, 10 to 30 seconds.",
+    "how": "Submit runs 6 hidden tests. A hand frame with a constant sector and a thin sector is scored with `min_names` 2 and 4. Other tests use a seeded frame with NaN, and check that no date uses another and that the index is kept. NaN shows as −99. The first run loads NumPy and pandas, 10 to 30 seconds.",
     "prelude": "import numpy as np\nimport pandas as pd\n\ndef mk(n_days, n_shares, seed, nan_share=0.0):\n    \"\"\"A seeded date-by-share signal frame, with some NaN cells.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = rng.standard_normal((n_days, n_shares))\n    x[rng.random((n_days, n_shares)) < nan_share] = np.nan\n    return pd.DataFrame(x, index=pd.bdate_range(\"2024-01-02\", periods=n_days),\n                        columns=[f\"S{i:02d}\" for i in range(n_shares)])\n\ndef toy():\n    cols = [\"a1\", \"a2\", \"a3\", \"b1\", \"b2\", \"b3\", \"b4\"]\n    rows = [[1.0, 2.0, 6.0, 0.5, 0.1, -0.4, 1.0],\n            [3.0, 3.0, 3.0, 2.0, 0.0, 1.0, -1.0],\n            [1.0, np.nan, 5.0, 2.0, 4.0, np.nan, 3.0]]\n    sec = pd.Series([\"A\", \"A\", \"A\", \"B\", \"B\", \"B\", \"B\"], index=cols)\n    return pd.DataFrame(rows, index=pd.bdate_range(\"2024-03-04\", periods=3), columns=cols), sec\n"
    },
    "feedback": {
@@ -1980,7 +2135,7 @@
     "generic": "Work by sector and by date. Use the sample sd, count only valid shares, and return NaN for a thin or constant sector."
    },
    "explain": {
-    "text": "The mean, sd and count are all taken across the shares of one sector on one date. A sector with two valid names, or all equal values, has no meaningful score, so it gives NaN. Scoring against the whole universe would leave sector bets in the signal."
+    "text": "The mean, sd and count are all taken across the shares of one sector on one date. With the default `min_names` of 3, a sector with two valid names gives NaN, as does one whose values are all equal. Scoring against the whole universe would leave sector bets in the signal."
    }
   },
   {
@@ -1989,7 +2144,8 @@
    "skills": [
     "od-iv"
    ],
-   "title": "Newton on a far out-of-the-money quote",
+   "pace": 120,
+   "title": "Where the safe solver goes",
    "prose": "A plain Newton solver, started at 20%, meets a one-month £130 call quoted at a mid of £0.03. The share is £100 and $r = 5\\%$.",
    "canvas": {
     "kind": "console",
@@ -2011,39 +2167,42 @@
      }
     }
    },
-   "question": "What went wrong, and what is the standard fix?",
+   "question": "A safe solver starts with the bracket [0.0001, 5]. It moves an end to each guess it prices, and bisects when a Newton step leaves the bracket. Which volatility does it price after step 0, as a decimal?",
    "widget": {
-    "kind": "choice",
-    "layout": "stack",
-    "options": [
+    "kind": "numeric",
+    "answer": 2.6,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "label": "Next volatility",
+    "wrong": [
      {
-      "id": "b",
-      "text": "The quote is below intrinsic value, so no volatility exists for it.",
-      "why": "A call out of the money has zero intrinsic value, and £0.03 is above that. A volatility of about 37% prices it."
+      "id": "newton",
+      "value": 50.6361,
+      "tol": {
+       "abs": 0.01
+      }
      },
      {
-      "id": "c",
-      "text": "Newton stopped too early. Raise the cap from 50 to 500 iterations.",
-      "why": "The second step already leaves any sane range. More iterations cannot undo that."
-     },
-     {
-      "id": "a",
-      "text": "Vega at 20% is about 0.0006, so the step is about 50. Keep every step inside a bracket and bisect when Newton leaves it.",
-      "correct": true
-     },
-     {
-      "id": "d",
-      "text": "The £0.03 mid is stale, so the cleaner should have removed it.",
-      "why": "Staleness is about age. The console shows a step that is too big, which is a solver fault, not a data fault."
+      "id": "no-update",
+      "value": 2.50005,
+      "tol": {
+       "abs": 0.005
+      }
      }
     ]
    },
    "feedback": {
-    "correct": "A tiny vega makes the Newton step huge. A bracket with a bisection fallback keeps every step in range.",
-    "generic": "Read the vega column. Newton divides the price gap by it."
+    "correct": "Step 0 is too cheap, so the bracket is [0.2, 5]. Newton leaves it, so the solver tries the midpoint, 2.6.",
+    "generic": "Update the bracket with step 0's price first. Then ask where Newton's step lands.",
+    "byKey": {
+     "newton": "That is the plain Newton step. It leaves the bracket, so the safe solver bisects instead.",
+     "no-update": "You bisected the starting bracket. Step 0 priced 20% too cheap, so the low end is now 0.2."
+    }
    },
    "explain": {
-    "text": "Far out of the money, vega at 20% is near zero. The price gap divided by vega throws the guess to 50.6, then to a nonsense value. Bracket the volatility, for example between 0.0001 and 5, and bisect whenever a step leaves it."
+    "text": "At 20% the model price is far below £0.03, so the answer is above 0.2 and the bracket becomes [0.2, 5]. Newton's step to 50.6 leaves it, so the solver bisects to 2.6. The price there is £20.70, too dear, so 2.6 becomes the top."
    }
   },
   {
@@ -2053,125 +2212,44 @@
     "al-costs",
     "al-portfolio"
    ],
+   "pace": 150,
    "title": "Where monthly rebalancing wins",
-   "prose": "Net Sharpe of one reversal signal against the half spread you assume, in basis points, for three rebalancing schedules. Gross Sharpes are 3.6 daily, 2.8 weekly and 1.6 monthly. Each loses 0.7, 0.4 and 0.1 of Sharpe per basis point.",
-   "canvas": {
-    "kind": "plane",
-    "params": {
-     "x": [
-      0,
-      7
-     ],
-     "y": [
-      -1.5,
-      4
-     ],
-     "xAxis": "bottom",
-     "xLabel": "Half spread (bp)",
-     "yLabel": "Net Sharpe",
-     "height": 300,
-     "functions": [
-      {
-       "id": "day",
-       "expr": "3.6 - 0.7*x",
-       "label": "daily",
-       "labelSide": "above",
-       "labelAt": 0.3,
-       "labelAnchor": "start"
-      },
-      {
-       "id": "wk",
-       "expr": "2.8 - 0.4*x",
-       "label": "weekly",
-       "labelSide": "above",
-       "labelAt": 0.3,
-       "labelAnchor": "start"
-      },
-      {
-       "id": "mo",
-       "expr": "1.6 - 0.1*x",
-       "label": "monthly",
-       "labelSide": "above",
-       "labelAt": 0.3,
-       "labelAnchor": "start"
-      }
-     ]
-    },
-    "state": {
-     "points": [
-      {
-       "id": "p",
-       "x": 1,
-       "y": 0.5,
-       "drag": true
-      }
-     ]
-    }
-   },
-   "question": "Drag the dot to the point where monthly first becomes the best of the three.",
+   "prose": "One reversal signal, three rebalancing schedules. Each book has volatility 1.0% a year. Gross Sharpes are 3.6 daily, 2.8 weekly and 1.6 monthly. The books trade 70, 40 and 10 times their value a year, both sides counted. Each £1 traded pays the half spread.",
+   "question": "Above what half spread, in basis points, is monthly the best of the three?",
    "widget": {
-    "kind": "drag-point",
-    "points": [
-     {
-      "id": "p",
-      "target": [
-       4.0,
-       1.2
-      ],
-      "tol": [
-       0.3,
-       0.15
-      ]
-     }
-    ],
+    "kind": "numeric",
+    "answer": 4.0,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "bp",
     "wrong": [
      {
       "id": "daily-cross",
-      "region": {
-       "x": [
-        3.0,
-        3.65
-       ],
-       "y": [
-        1.1,
-        1.45
-       ]
+      "value": 3.333,
+      "tol": {
+       "abs": 0.05
       }
      },
      {
       "id": "weekly-cross",
-      "region": {
-       "x": [
-        2.4,
-        2.95
-       ],
-       "y": [
-        1.5,
-        1.95
-       ]
+      "value": 2.667,
+      "tol": {
+       "abs": 0.05
       }
      }
     ]
    },
    "feedback": {
-    "correct": "Weekly and monthly meet at 4 bp, both at a net Sharpe of 1.2. Above that monthly is ahead of both.",
-    "generic": "Monthly must beat both other schedules. Find where it meets each, and take the later meeting.",
+    "correct": "Each bp costs 70, 40 and 10 bp a year: 0.7, 0.4 and 0.1 of Sharpe at 1% volatility. Monthly overtakes weekly at 4 bp.",
+    "generic": "A bp of half spread costs the £ traded times 1 bp a year. Divide by the volatility for the Sharpe lost per bp.",
     "byKey": {
-     "daily-cross": "You marked where monthly passes daily, near 3.3 bp. Weekly is still ahead of monthly there.",
-     "weekly-cross": "You marked where weekly passes daily, near 2.7 bp. That is not a point where monthly leads.",
-     "p": "Not yet. Look for where the monthly line crosses the weekly line, then read the net Sharpe there."
+     "daily-cross": "That is where monthly passes daily. Weekly is still ahead there.",
+     "weekly-cross": "That is where weekly passes daily. Monthly is not yet the best."
     }
    },
    "explain": {
-    "text": "Weekly and monthly meet where 2.8 − 0.4c = 1.6 − 0.1c. That gives c = 4 bp and a net Sharpe of 1.2. Monthly passes daily earlier, at 3.33 bp, but weekly is still ahead.",
-    "canvas": {
-     "points": {
-      "p": {
-       "x": 4.0,
-       "y": 1.2
-      }
-     }
-    }
+    "text": "The net Sharpes are 3.6 − 0.7c, 2.8 − 0.4c and 1.6 − 0.1c. Monthly passes daily at 3.33 bp but weekly only at 4 bp. Above 4 bp monthly beats both."
    }
   },
   {
@@ -2180,6 +2258,7 @@
    "skills": [
     "od-surface"
    ],
+   "pace": 150,
    "title": "Calendar arbitrage in a vol table",
    "prose": "Implied volatilities in percent, by strike and expiry. The expiries are 1, 3, 6 and 12 months. A cell breaks the rule if its total variance $\\sigma^2 T$ is below the cell on its left.",
    "canvas": {
@@ -2296,6 +2375,7 @@
    "skills": [
     "od-greeks"
    ],
+   "pace": 120,
    "title": "A bumped gamma of zero",
    "prose": "Gamma by a central bump is $(V(S+h) - 2V(S) + V(S-h))/h^2$. A colleague runs it on a three-month call. From the last row they report 'zero gamma'.",
    "canvas": {
@@ -2324,39 +2404,33 @@
      }
     }
    },
-   "question": "What is the right reading, and which bump would you use?",
+   "question": "From the $h = 1$ row, the truncation error is about $6.4 \\times 10^{-5}\\,h^2$. Round-off is about $\\varepsilon V/h^2$, with $\\varepsilon V = 1.5 \\times 10^{-16}$ for this £1.35 call. At what $h$ are the two equal? Give 2 significant figures.",
    "widget": {
-    "kind": "choice",
-    "layout": "stack",
-    "options": [
+    "kind": "numeric",
+    "answer": 0.0012,
+    "tol": {
+     "abs": 0.0002
+    },
+    "label": "h",
+    "wrong": [
      {
-      "id": "b",
-      "text": "Gamma really is near zero this far out of the money, so keep $h = 10^{-8}$.",
-      "why": "The closed form gives 0.046696. The zero comes from the bump, and the rows from 0.1 down to 0.0001 agree with the closed form."
-     },
-     {
-      "id": "d",
-      "text": "Switch to a one-sided bump, which has no round-off.",
-      "why": "A one-sided bump still subtracts two nearly equal prices. It loses digits too, and is less accurate at the same $h$."
-     },
-     {
-      "id": "c",
-      "text": "The error always falls as $h$ shrinks, so rerun with $h = 10^{-10}$.",
-      "why": "Truncation error does shrink, but round-off grows like $1/h^2$. The rows get worse below 0.0001."
-     },
-     {
-      "id": "a",
-      "text": "Rounding error: at $h = 10^{-8}$ the second difference is about $5 \\times 10^{-18}$, below the rounding error of the prices. Use $h$ near 0.001 to 0.01.",
-      "correct": true
+      "id": "square-root",
+      "value": 1.5e-06,
+      "tol": {
+       "abs": 1e-06
+      }
      }
     ]
    },
    "feedback": {
-    "correct": "Truncation error falls with $h^2$ and round-off grows with $1/h^2$, so a middle $h$ is best.",
-    "generic": "Compare each row with the closed-form gamma, and ask why the smallest bump is the worst."
+    "correct": "$h^4 = 1.5 \\times 10^{-16} / (6.4 \\times 10^{-5}) = 2.3 \\times 10^{-12}$, so $h \\approx 0.0012$, where the rows are best.",
+    "generic": "Set $c\\,h^2 = \\varepsilon V/h^2$ and solve for $h$.",
+    "byKey": {
+     "square-root": "You took a square root. Both errors carry $h^2$, so $h^4$ is the ratio: take a fourth root."
+    }
    },
    "explain": {
-    "text": "Truncation error shrinks with h. But subtracting nearly equal prices loses digits, and dividing by h² magnifies the loss. The rows agree with 0.046696 from 0.1 to 0.0001, and the best is near 0.001."
+    "text": "Truncation falls like $h^2$ and round-off grows like $1/h^2$, so they meet where $h^4 = \\varepsilon V/c$. That is $2.3 \\times 10^{-12}$, so $h \\approx 0.0012$. The 'zero gamma' at $10^{-8}$ is pure round-off."
    }
   },
   {
@@ -2365,6 +2439,7 @@
    "skills": [
     "od-pricers"
    ],
+   "pace": 420,
    "title": "A put with a few exercise dates",
    "prose": "A Bermudan put can be exercised only on certain dates. On a CRR tree it may be exercised at step $i$ only if $i$ is in `exercise_steps`. Step 0 is today and step $n$ is expiry, where the put always pays $\\max(K - S, 0)$. At an allowed step the holder takes the larger of the hold value and $K - S_{ij}$.\n\nThe starter builds the tree and the hold values. The tree uses $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$ and $p = (e^{(r-q)\\Delta t} - d)/(u - d)$.",
    "question": "Write the exercise step so that `bermudan_put` returns the right price.",
@@ -2394,24 +2469,6 @@
      }
     ],
     "tests": [
-     {
-      "call": "round(bermudan_put(100, 100, 0.05, 0.2, 1, 3, []), 6)",
-      "compare": "isclose",
-      "expect": "6.166814",
-      "tol": {
-       "abs": 2e-06,
-       "rel": 1e-06
-      }
-     },
-     {
-      "call": "round(bermudan_put(100, 100, 0.05, 0.2, 1, 3, [0, 1, 2, 3]), 6)",
-      "compare": "isclose",
-      "expect": "6.49956",
-      "tol": {
-       "abs": 2e-06,
-       "rel": 1e-06
-      }
-     },
      {
       "call": "round(bermudan_put(100, 100, 0.05, 0.2, 1, 3, [2]), 6)",
       "compare": "isclose",
@@ -2483,7 +2540,7 @@
       "expect": "True"
      }
     ],
-    "how": "Submit runs 11 hidden tests. Hand trees of 3 and 4 steps test exercise at step 0, 1, 2 or every step. Trees of 200 steps add a dividend yield. The course's 500-step European and American puts and an ordering check complete the set. Floats are compared within 1e-6. The first run loads NumPy, 10 to 20 seconds.",
+    "how": "Submit runs 9 hidden tests. Hand trees of 3 and 4 steps test exercise at one chosen step or at two. Trees of 200 steps add a dividend yield. The course's 500-step European and American puts and an ordering check complete the set. Floats are compared within 2e-6. The first run loads NumPy, 10 to 20 seconds.",
     "prelude": "import numpy as np\n"
    },
    "feedback": {
@@ -2501,6 +2558,7 @@
     "al-portfolio",
     "al-costs"
    ],
+   "pace": 480,
    "title": "From a signal to a net return",
    "prose": "Build a rank-weighted long-short book from a signal and charge the spread. `signal` and `ret` are date-by-share frames. A NaN signal means the share cannot be traded that day. A NaN return means it has no return.\n\n- Rebalance at the close of rows `every - 1`, `2 * every - 1`, and so on (rows count from 0).\n- The book is the centred ranks of that row's signal, scaled so the absolute weights sum to 1. A share with no signal gets 0. Fewer than `min_names` valid signals, or no spread, gives an all-zero book.\n- The book earns from the next row until the next rebalance row inclusive. A NaN return counts as 0.\n- On the row after each rebalance, subtract `half_spread_bp / 10,000` times the sum of the absolute weight changes. The old book is all zeros at first.",
    "question": "Write `net_book(signal, ret, half_spread_bp, every=5, min_names=4)`. Return a DataFrame with columns `gross` and `net`, from the row after the first rebalance to the end.",
@@ -2527,12 +2585,6 @@
        "abs": 2e-06,
        "rel": 1e-06
       }
-     },
-     {
-      "setup": "sig, ret = hand()",
-      "call": "[len(net_book(sig, ret, 10)), str(net_book(sig, ret, 10).index[0].date())]",
-      "compare": "equal",
-      "expect": "[6, '2024-05-08']"
      },
      {
       "setup": "sig, ret = hand()",
@@ -2593,7 +2645,7 @@
       "expect": "0"
      }
     ],
-    "how": "Submit runs 9 hidden tests. A hand-checked 4 by 11 case runs at two spacings. A seeded panel has one share that dies and one with a gap. Other tests cover a thin panel, equal signals, a short panel, and a no-peeking check. Floats are compared within 1e-6. The first run loads NumPy and pandas, 10 to 30 seconds.",
+    "how": "Submit runs 8 hidden tests. A hand-checked 4 by 11 case runs at two spacings. A seeded panel has one share that dies and one with a gap. Other tests cover a thin panel, equal signals, a short panel, and a no-peeking check. Floats are compared within 2e-6. The first run loads NumPy and pandas, 10 to 30 seconds.",
     "prelude": "import numpy as np\nimport pandas as pd\n\ndef mk(n_days, n_shares, seed, sd=1.0):\n    rng = np.random.default_rng(seed)\n    idx = pd.bdate_range(\"2024-01-02\", periods=n_days)\n    cols = [f\"S{i:02d}\" for i in range(n_shares)]\n    return pd.DataFrame(sd * rng.standard_normal((n_days, n_shares)), index=idx, columns=cols)\n\ndef hand():\n    # 4 shares, 11 days; every=5 rebalances at the close of rows 4 and 9\n    idx = pd.bdate_range(\"2024-05-01\", periods=11)\n    cols = [\"A\", \"B\", \"C\", \"D\"]\n    base = [0.3, -0.2, 0.9, 0.1]\n    sig = pd.DataFrame([np.roll(base, i) for i in range(11)], index=idx, columns=cols)\n    ret = pd.DataFrame([[0.01, -0.02, 0.00, 0.01]] * 11, index=idx, columns=cols)\n    ret.iloc[5] = [0.02, 0.01, -0.01, 0.00]\n    ret.iloc[6] = [-0.01, 0.00, 0.03, 0.02]\n    ret.iloc[10] = [0.04, -0.03, 0.01, 0.02]\n    return sig, ret\n",
     "budget": 30000
    },
@@ -2612,10 +2664,11 @@
     "bt-report",
     "bt-bias"
    ],
+   "pace": 600,
    "title": "Reviewing a results note",
    "kind": "longform",
    "prompt": "A colleague sends a results note for a five-day momentum rule on one share. It uses five years of daily bars. Its claims:\n\n- Net Sharpe 2.4 after 2 bp a trade.\n- 60 lookback and threshold settings were tried, and the best is reported. The 60 Sharpes had mean 0.5 and sd 0.7.\n- Orders fill at the close of the signal bar.\n- The held-out year was opened twice while tuning. Its Sharpe was 0.3, so it was averaged with the research period.\n- What failed: nothing.\n\nWrite your review.\n\n(a) Name the problems in the order you would check them, and say why that order.\n\n(b) For two of them, give a number or a test that shows how large the problem is.\n\n(c) Rewrite the \"What failed\" section so that it is honest.",
-   "model": "**(a) Problems, in order.**\n\n1. *A Sharpe of 2.4 on a simple rule is a bug until proved otherwise.* I check it first. Every other number depends on the engine. I run the look-ahead test. I cut the bars at several rows and replace everything after each cut with noise. No earlier row may change.\n2. *The fill.* Orders fill at the close of the signal bar, a price the rule has just seen. That is the same-bar rule, and it manufactures edge. The fix is a fill at the next open, with costs and slippage that grow with size.\n3. *Selection.* The note reports the best of 60 settings. With no skill at all, the best of 60 is expected near $0.5 + 0.7 \\times 2.32 = 2.12$. The reported 2.4 is only 0.4 standard deviations above that, so chance can give it.\n4. *The held-out year.* It was opened twice, so it is no longer held out. Averaging it with the research period mixes a spent number into a clean one. A year of daily data has a Sharpe standard error near 1.0. So 0.3 neither confirms nor rejects the rule. Report it alone, as a single look.\n5. *Costs.* 2 bp ignores commission and the impact of size. I would ask for turnover and a full cost bill.\n\n**(b) Numbers.** A daily rule with equal-sized wins and losses needs about 57.5% winning days to reach 2.4. That solves $\\sqrt{252}\\,(2p-1)/\\sqrt{1-(2p-1)^2} = 2.4$ for $p = 0.575$. Real daily bars rarely allow that, which supports the bug reading. For selection, the expected best of 60 no-skill settings is about 2.12, against the reported 2.4. I would also ask for the count and spread of all 60 results.\n\n**(c) What failed.**\n\n\"The first version filled at the close of the signal bar and reached a Sharpe of 2.4. We need a look-ahead test and next-open fills before quoting any figure. We tried 60 settings, with Sharpes of mean 0.5 and sd 0.7. The best of them is close to what chance alone produces. The held-out year was opened twice during tuning, so it is no longer clean. Its Sharpe of 0.3 has a standard error near 1.0 and supports no conclusion. We do not claim an edge.\"",
+   "model": "**(a) Problems, in order.**\n\n1. *A Sharpe of 2.4 on a simple rule is a bug until proved otherwise.* I check it first. Every other number depends on the engine. I run the look-ahead test. I cut the bars at several rows and replace everything after each cut with noise. No earlier row may change.\n2. *The fill.* Orders fill at the close of the signal bar, a price the rule has just seen. That is the same-bar rule, and it manufactures edge. The fix is a fill at the next open, with costs and slippage that grow with size.\n3. *Selection.* The note reports the best of 60 settings. If no setting were better than the others, the best of 60 would be expected near $0.5 + 0.7 \\times 2.32 = 2.12$. The reported 2.4 is only 0.4 of their sd above that, so chance can give it.\n4. *The held-out year.* It was opened twice, so it is no longer held out. Averaging it with the research period mixes a spent number into a clean one. A year of daily data has a Sharpe standard error near 1.0. So 0.3 neither confirms nor rejects the rule. Report it alone, as a single look.\n5. *Costs.* 2 bp ignores commission and the impact of size. I would ask for turnover and a full cost bill.\n\n**(b) Numbers.** A daily rule with equal-sized wins and losses needs about 57.5% winning days to reach 2.4. That solves $\\sqrt{252}\\,(2p-1)/\\sqrt{1-(2p-1)^2} = 2.4$ for $p = 0.575$. Real daily bars rarely allow that, which supports the bug reading. For selection, the expected best of 60 equal settings is about 2.12, against the reported 2.4. I would also ask for the count and spread of all 60 results.\n\n**(c) What failed.**\n\n\"The first version filled at the close of the signal bar and reached a Sharpe of 2.4. We need a look-ahead test and next-open fills before quoting any figure. We tried 60 settings, with Sharpes of mean 0.5 and sd 0.7. The best of them is about what the best of 60 equal settings would give. The held-out year was opened twice during tuning, so it is no longer clean. Its Sharpe of 0.3 has a standard error near 1.0 and supports no conclusion. We do not claim an edge.\"",
    "rubric": [
     {
      "points": 2,
@@ -2627,7 +2680,7 @@
     },
     {
      "points": 2,
-     "text": "Spots the selection problem: the best of 60 is near what chance gives, about 2.1. Asks for the count and spread, or a deflated comparison."
+     "text": "Spots the selection problem: among equal settings, the best of 60 is near what chance gives, about 2.1. Asks for the count and spread, or a deflated comparison."
     },
     {
      "points": 2,

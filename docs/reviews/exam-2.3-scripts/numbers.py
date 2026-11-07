@@ -134,16 +134,24 @@ for c in ('backtest', 'alpha', 'opt-dash'):
 ex.claim(doc['skills'] == union, 'skills map equals the union of the three course.json maps')
 cnt = {s: sum(1 for it in doc['items'] if s in it['skills']) for s in union}
 ex.claim(min(cnt.values()) >= 2, f'every skill tested by at least two items {cnt}')
-ex.claim(not any('pace' in it for it in doc['items']), 'no item carries pace (finding: every topic exam from 2.5 on paces each item)')
+pace = {it['id']: it.get('pace') for it in doc['items']}
+ex.claim(all(isinstance(v, (int, float)) and v > 0 for v in pace.values()) and sum(pace.values()) == 90 * 60,
+         f'every item carries a positive pace and they sum to {sum(pace.values())} s = 90 minutes (finding 34)')
 rub = sum(r['points'] for r in IT['e-results-note']['rubric'])
 ex.claim(rub == 10, f'longform rubric sums to {rub}')
 
 # ---------------------------------------------------------------- e-visible-rows
 rows = IT['e-visible-rows']['canvas']['params']['rows']
-seen = [f'r{i}' for i, r in enumerate(rows) if int(r[0]) <= 4]
-ex.claim(seen == IT['e-visible-rows']['widget']['answer'], f'e-visible-rows answer = bars 1 to 4 {seen}')
+closes = [float(r[5]) for r in rows]
+cur = 3                                   # the engine stands at the close of bar 4 (row 3)
+win = list(range(cur - 2, cur + 1))       # a trailing 3-bar window ends at the current bar
+ex.claim([f'r{i}' for i in win] == IT['e-visible-rows']['widget']['answer'] == ['r1', 'r2', 'r3'], f'e-visible-rows answer = bars 2 to 4 {win}')
 wv = {w['id']: w['set'] for w in IT['e-visible-rows']['widget']['wrong']}
-ex.claim(wv['all'] == [f'r{i}' for i in range(6)] and wv['next'] == [f'r{i}' for i in range(5)], 'e-visible-rows wrong sets: all six; bars 1 to 5')
+ex.claim(wv == {'lagged': ['r0', 'r1', 'r2'], 'centred': ['r2', 'r3', 'r4'], 'history': ['r0', 'r1', 'r2', 'r3']},
+         'e-visible-rows wrong sets: the window one bar late, centred on bar 4, and the whole history')
+ex.claim(near(sum(closes[1:4]) / 3, 52.4833, 5e-5) and near(sum(closes[1:4]), 157.45, 1e-9), f'e-visible-rows 3-bar mean {sum(closes[1:4]) / 3:.4f} reads 52.48')
+ex.expect('exam', f'{P("e-visible-rows")}.explain.text', 52.48)
+ex.claim(IT['e-visible-rows']['explain']['canvas']['highlight']['rows'] == win, 'e-visible-rows explain highlights rows 1 to 3')
 
 # ---------------------------------------------------------------- e-universe-date
 D = dt.date(2021, 6, 15)
@@ -151,41 +159,70 @@ uk_hols = {dt.date(2021, 5, 31)}  # spring bank holiday
 wk = [dt.date(2021, 5, 4) + dt.timedelta(d) for d in range((D - dt.date(2021, 5, 4)).days + 1)]
 weekdays = sum(1 for d in wk if d.weekday() < 5)
 trading = sum(1 for d in wk if d.weekday() < 5 and d not in uk_hols)
-ex.claim(weekdays == 31 and trading == 30, f'e-universe-date GGG: {weekdays} weekdays, {trading} UK trading days from 4 May to 15 June (prose: about 30)')
-uni = {'AAA': (dt.date(2019, 1, 2), None, 22.4), 'BBB': (dt.date(2019, 1, 2), dt.date(2021, 3, 3), None),
-       'CCC': (dt.date(2019, 1, 2), None, 4.6), 'DDD': (dt.date(2021, 8, 20), None, None),
-       'EEE': (dt.date(2019, 1, 2), dt.date(2021, 11, 12), 7.8), 'FFF': (dt.date(2019, 2, 1), None, 5.0),
-       'GGG': (dt.date(2021, 5, 4), None, 11.0)}
-inn = []
-for i, (s, (a, b, v)) in enumerate(uni.items()):
+ex.claim(weekdays == 31 and trading == 30, f'e-universe-date GGG: {weekdays} weekdays, {trading} UK trading days from 4 May to 15 June (about 30)')
+months = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'May': 5, 'Aug': 8, 'Nov': 11}
+
+
+def dd(s):
+    d, m, y = s.split()
+    return dt.date(int(y), months[m], int(d))
+
+
+def vol(s):
+    return None if s == 'none' else float(s.strip('£m'))
+
+
+tab = IT['e-universe-date']['canvas']['params']
+ex.claim(tab['columns'][3:] == ['Mean to 15 Jun', 'Mean to 31 Dec'], 'e-universe-date two volume columns')
+inn, inn_dec = [], []
+for i, (s, a, b, v_jun, v_dec) in enumerate(tab['rows']):
+    a = dd(a)
+    b = None if b == 'trading' else dd(b)
     listed = a <= D and (b is None or b >= D)
     days = int(np.busday_count(a, D + dt.timedelta(1)))
-    if listed and days >= 60 and v is not None and v >= 5.0:
+    if listed and days >= 60 and vol(v_jun) is not None and vol(v_jun) >= 5.0:
         inn.append(f'r{i}')
-ex.claim(inn == IT['e-universe-date']['widget']['answer'], f'e-universe-date answer AAA, EEE, FFF = {inn}')
-# A 60-day mean volume cannot exist for a share with about 30 days of history (prose: "A dash means no figure exists").
-ex.claim_text('exam', f'{P("e-universe-date")}.canvas.params.rows[6][3]', '£11.0m', False,
-              'e-universe-date GGG shows a 60-day mean volume, £11.0m, after about 30 trading days')
+    if vol(v_dec) is not None and vol(v_dec) >= 5.0:
+        inn_dec.append(f'r{i}')
+    ex.claim('—' not in ''.join(map(str, tab['rows'][i])), f'e-universe-date row {s} has no em-dash cell (finding 33)')
+ex.claim(inn == IT['e-universe-date']['widget']['answer'] == ['r0', 'r4', 'r5'], f'e-universe-date answer AAA, EEE, FFF = {inn}')
+ex.claim(inn_dec == IT['e-universe-date']['widget']['wrong'][-1]['set'] == ['r0', 'r2', 'r3', 'r6'], f'e-universe-date year-end slip set = shares that pass on the 31 December column {inn_dec}')
+ex.claim(tab['rows'][6][3] == 'none', 'e-universe-date GGG has no 15 June figure (about 30 trading days of history)')
+ex.claim(set(inn_dec) - set(inn) == {'r2', 'r3', 'r6'} and set(inn) - set(inn_dec) == {'r4', 'r5'}, 'e-universe-date explain: December swaps CCC, DDD and GGG in for EEE and FFF')
 
 # ---------------------------------------------------------------- e-clean-tap
 q2 = IT['e-clean-tap']['canvas']['params']['rows']
-drop = []
-for i, (k, b, a, age) in enumerate(q2):
-    b, a, age = float(b), float(a), float(age)
+snap = 14 * 60 + 30
+drop, ages = [], []
+for i, (k, b, a, qt) in enumerate(q2):
+    b, a = float(b), float(a)
+    hh, mm = (int(x) for x in qt.split(':'))
+    age = snap - (hh * 60 + mm)
+    ages.append(age)
     mid = (a + b) / 2
     keep = b > 0 and b <= a and age <= 30 and (a - b) / mid < 0.5
     if not keep:
         drop.append(f'r{i}')
-ex.claim(drop == IT['e-clean-tap']['widget']['answer'], f'e-clean-tap answer {drop}')
+ex.claim(ages == [95, 2, 30, 1, 3, 6, 5], f'e-clean-tap ages from the 14:30 snapshot {ages}')
+ex.claim(drop == IT['e-clean-tap']['widget']['answer'] == ['r0', 'r3', 'r4', 'r5'], f'e-clean-tap answer {drop}')
+edge = [f'r{i}' for i, age in enumerate(ages) if age >= 30 or float(q2[i][1]) <= 0 or float(q2[i][1]) > float(q2[i][2])
+        or (float(q2[i][2]) - float(q2[i][1])) / ((float(q2[i][2]) + float(q2[i][1])) / 2) >= 0.5]
+ex.claim(edge == IT['e-clean-tap']['widget']['wrong'][0]['set'], f'e-clean-tap edge slip (age 30 dropped) {edge}')
 ex.claim(round(0.30 / 5.95 * 100) == 5 and near(0.08 / 0.08, 1.0, 1e-9) and round(0.04 / 0.12 * 100) == 33, 'e-clean-tap feedback 5%, 1.0 and 33%')
+ex.claim(near(0.20 / 2.50, 0.08, 1e-12) and 0.20 / 2.50 < 0.5, 'e-clean-tap the 30-minute £100 quote passes the spread rule (0.20 / 2.50 = 0.08)')
 
 # ---------------------------------------------------------------- e-ticket-cost
-comm, half = max(3000 * 0.005, 1.0), 3000 * 42.50 * 2e-4
-key('e-ticket-cost', comm + half)
+child = max(150 * 0.005, 1.0)
+comm20, half = 20 * child, 3000 * 42.50 * 2e-4
+ex.claim(near(150 * 0.005, 0.75, 1e-12) and child == 1.0 and comm20 == 20.0, 'e-ticket-cost one child 150 x 0.005 = 0.75, minimum 1.00, twenty give 20.00')
+key('e-ticket-cost', comm20 + half)
+wrong('e-ticket-cost', 'one-order', max(3000 * 0.005, 1.0) + half, typed=40.50)
 wrong('e-ticket-cost', 'spread-only', half, typed=25.50)
-wrong('e-ticket-cost', 'commission-only', comm, typed=15.00)
-wrong('e-ticket-cost', 'full-spread', comm + 2 * half, typed=66.00)
+wrong('e-ticket-cost', 'commission-only', comm20, typed=20.00)
+wrong('e-ticket-cost', 'full-spread', comm20 + 2 * half, typed=71.00)
 ex.expect('exam', f'{P("e-ticket-cost")}.explain.text', 127500)
+ex.expect('exam', f'{P("e-ticket-cost")}.explain.text', 45.5)
+ex.claim(near(comm20 + half - (max(3000 * 0.005, 1.0) + half), 5.0, 1e-9), 'e-ticket-cost explain: £5.00 more than one order of 3,000')
 
 # ---------------------------------------------------------------- e-mom-window
 m = IT['e-mom-window']['canvas']['state']['values']
@@ -198,43 +235,55 @@ wrong('e-mom-window', 'dropped-oldest', sum(mv[1:]))
 # ---------------------------------------------------------------- e-newton-step
 p25 = bs(100, 100, 0.05, 0.25, 1)
 v25 = greeks_call(100, 100, 0.05, 0.25, 1)[2]
-ex.claim(round(p25, 2) == 12.34 and round(v25, 1) == 37.8, f'e-newton-step model price {p25:.4f} and vega {v25:.3f} read 12.34 and 37.8')
-s1 = 0.25 + (13.00 - 12.34) / 37.8
+ex.claim(round(p25, 2) == 12.34 and round(v25 / 100, 3) == 0.378, f'e-newton-step model price {p25:.4f} and vega per point {v25 / 100:.5f} read 12.34 and 0.378')
+step = (13.00 - 12.34) / 0.378                      # in volatility points, with the vega as printed
+ex.claim(round(step, 2) == 1.75, f'e-newton-step the step is {step:.4f} points (1.75)')
+s1 = 0.25 + step / 100
 key('e-newton-step', s1, t=5e-5)  # stored to the 4 places asked
 inband('e-newton-step', 0.2675, label='typed 26.75%')
 iv_true = optimize.brentq(lambda s: bs(100, 100, 0.05, s, 1) - 13.0, 0.01, 2)
 ex.claim(round(iv_true * 100, 2) == 26.75, f'e-newton-step true implied vol {iv_true:.6f} reads 26.75%')
-wrong('e-newton-step', 'minus', 0.25 - 0.66 / 37.8, typed=0.2325)
+wrong('e-newton-step', 'minus', 0.25 - step / 100, typed=0.2325)
+wrong('e-newton-step', 'per-unit', 0.25 + step, typed=1.996)
 wrong('e-newton-step', 'no-vega', 0.25 + 0.66, typed=0.91)
-wrong('e-newton-step', 'units', (25 + 0.66 / 37.8) / 100, typed=0.2502)
+ex.claim('units' not in IT['e-newton-step']['feedback']['byKey'] and IT['e-newton-step']['widget'].get('over100') is True, 'e-newton-step old units slip removed; over100 set for the 199.6% slip')
 
 # ---------------------------------------------------------------- e-bar-order
-ex.claim(IT['e-bar-order']['widget']['answer'] == ['s1', 's2', 's3', 's4', 's5'] and IT['e-bar-order']['widget']['same'] == [['s2', 's3']],
+wb = IT['e-bar-order']['widget']
+ex.claim(wb['answer'] == ['s1', 's2', 's3', 's4', 's5'] and wb['same'] == [['s2', 's3']],
          'e-bar-order: fill, then mark and hand over (either order), then signal, target, order')
+ex.claim(wb.get('distractors') == ['d1', 'd2'] and {l['id'] for l in wb['lines']} == {'s1', 's2', 's3', 's4', 's5', 'd1', 'd2'}
+         and all(l.get('why') for l in wb['lines'] if l['id'].startswith('d')),
+         'e-bar-order: two distractors, same-bar fill and a whole-file signal, each with a why; prose says five of seven')
 
 # ---------------------------------------------------------------- e-split-div
-key('e-split-div', 2 * (123 + 1.5) / 240 - 1)
-inband('e-split-div', 0.0375, label='typed 3.75%')
-wrong('e-split-div', 'raw', 123 / 240 - 1, typed=-0.4875)
-wrong('e-split-div', 'no-dividend', 2 * 123 / 240 - 1, typed=0.025)
-wrong('e-split-div', 'dividend-old', (2 * 123 + 1.5) / 240 - 1, typed=0.03125)
+key('e-split-div', 2 * (122 + 1.5) / 240 - 1, t=5e-6)
+inband('e-split-div', 0.0292, label='typed 2.92%')
+wrong('e-split-div', 'raw', 122 / 240 - 1, typed=-0.4917)
+wrong('e-split-div', 'no-dividend', 2 * 122 / 240 - 1, typed=0.0167)
+wrong('e-split-div', 'dividend-old', (2 * 122 + 1.5) / 240 - 1, typed=0.0229)
+ex.claim(near(2 * (122 + 1.5), 247.0, 1e-9) and round(7 / 240 * 100, 2) == 2.92, 'e-split-div explain: 2 x (122.00 + 1.50) = 247.00 and 7 / 240 = 2.92%')
+ex.claim(not (0.0291 <= 0.0167 <= 0.0293 or 0.0291 <= 0.0229 <= 0.0293), 'e-split-div the slips stay clear of the 2.91 to 2.93 accept range')
 
 # ---------------------------------------------------------------- e-implied-q
-F = 100 + math.exp(0.05) * (9.30 - 6.70)
-qv = 0.05 - math.log(F / 100)
-ex.claim(round(F, 2) == 102.73, f'e-implied-q forward {F:.4f}')
-key('e-implied-q', qv, t=5e-5)  # stored as 2.30%
-inband('e-implied-q', 0.0230, label='typed 2.30%')
-wrong('e-implied-q', 'no-discount', 0.05 - math.log((100 + 2.60) / 100), typed=0.0243)
-# "no-rate" is r = 0 throughout: F = 100 + 2.60 and q = -ln(F/S). With the right forward and r dropped only in the
-# second step, a learner types -2.70%, which no wrong[] catches.
-wrong('e-implied-q', 'no-rate', -math.log(1.026), typed=-0.0257)
-wrong('e-implied-q', 'linear', 0.05 - (F / 100 - 1), typed=0.0227)
-ex.claim(round(math.log(1.0273), 4) == 0.0270, f'e-implied-q explain: ln(1.0273) = {math.log(1.0273):.5f} is printed as 0.0270',
-         'ln(1.0273) is 0.0269; 0.0270 needs the unrounded 1.02733')
+Cm, Pm, Kq, Tq = 8.50, 2.80, 95.0, 0.5
+F = Kq + math.exp(0.05 * Tq) * (Cm - Pm)
+qv = 0.05 - math.log(F / 100) / Tq
+ex.claim(round(F, 2) == 100.84, f'e-implied-q forward {F:.4f}')
+key('e-implied-q', qv, t=5e-6)  # stored as 3.3185%
+inband('e-implied-q', 0.0332, label='typed 3.32%')
+Fnd = Kq + (Cm - Pm)
+wrong('e-implied-q', 'no-T', 0.05 - math.log(F / 100), typed=0.0416)
+wrong('e-implied-q', 'no-discount', 0.05 - math.log(Fnd / 100) / Tq, typed=0.0360)
+wrong('e-implied-q', 'strike-as-spot', 0.05 - math.log(F / Kq) / Tq, typed=-0.0694)
+# the linear slip (F/S - 1 for ln) falls inside the answer band, so it is no longer offered (finding 9)
+ex.claim(near(0.05 - (F / 100 - 1) / Tq, qv, 0.0002), 'e-implied-q linear slip lies inside the answer band, so it was dropped')
+ex.claim(not {'no-rate', 'linear'} & {w['id'] for w in IT['e-implied-q']['widget']['wrong']}, 'e-implied-q no-rate and linear removed')
+ex.claim(round(math.log(1.00844) / Tq, 4) == 0.0168 and round(0.05 - 0.0168, 4) == 0.0332, 'e-implied-q explain 0.0168 and 3.32%')
+ex.claim(near(Cm - Pm, 5.70, 1e-9) and near(math.exp(0.025), 1.025315, 1e-6), 'e-implied-q explain 5.70 and e^0.025')
 expl = text('e-implied-q', 'explain.text')
 outside = re.sub(r'\$[^$]*\$', '', expl)
-ex.claim('^{' not in outside, 'e-implied-q explain: no TeX (e^{0.05}) outside $...$', 'raw "e^{0.05}" is shown to the learner as text')
+ex.claim('^{' not in outside, 'e-implied-q explain: no TeX outside $...$', 'raw TeX is shown to the learner as text')
 
 # ---------------------------------------------------------------- e-impact-double
 rate1, rate2 = 0.015 * math.sqrt(40000 / 1.6e6), 0.015 * math.sqrt(80000 / 1.6e6)
@@ -245,9 +294,15 @@ wrong('e-impact-double', 'old-notional', rate2 * 2.4e6, typed=8049.84)
 ex.claim(round(rate2 * 100, 3) == 0.335 and round(rate1 * 100, 3) == 0.237 and round(rate2 / rate1 * 2, 2) == 2.83, 'e-impact-double explain 0.335%, 0.237%, 2.83 times')
 
 # ---------------------------------------------------------------- e-ic-tstat
-key('e-ic-tstat', 0.036 / (0.081 / math.sqrt(36)), t=0.005)  # stored to 2 places
-wrong('e-ic-tstat', 'ir', 0.036 / 0.081, typed=0.444)
-wrong('e-ic-tstat', 'annual-ir', 0.036 / 0.081 * math.sqrt(12), typed=1.54)
+decay = 0.5 ** (1 / 2)                       # one month of a two-month half-life
+ic_late = 0.036 * decay
+se36 = 0.081 / math.sqrt(36)
+ex.claim(round(decay, 3) == 0.707 and round(ic_late, 4) == 0.0255 and near(se36, 0.0135, 1e-12), f'e-ic-tstat decay {decay:.4f}, late IC {ic_late:.5f}, se {se36:.4f}')
+key('e-ic-tstat', ic_late / se36, t=0.005)  # stored to 2 places
+wrong('e-ic-tstat', 'no-delay', 0.036 / se36, typed=2.67)
+wrong('e-ic-tstat', 'halved', 0.036 / 2 / se36, typed=1.33)
+wrong('e-ic-tstat', 'ir', ic_late / 0.081, typed=0.314)
+ex.claim(1.89 < 2, 'e-ic-tstat explain: 1.89 is below 2')
 
 # ---------------------------------------------------------------- e-three-pricers (BS, CRR 500 with q, my own MC)
 S0, r0, q0, sg0, T0 = 100, 0.05, 0.01, 0.20, 0.5
@@ -292,16 +347,22 @@ for i, row in enumerate(grid):
         flags.append(f'r{i}c2')
     if abs(mc - bsv) > 3 * se:
         flags.append(f'r{i}c3')
-    if us < eu:
+    if us < eu or us < max(K - S0, 0):
         flags.append(f'r{i}c5')
 ex.claim(sorted(flags) == sorted(IT['e-three-pricers']['widget']['answer']), f'e-three-pricers the three rules flag {flags}')
 z90 = (1.322 - 1.359) / 0.010
 z110 = (10.503 - 10.525) / 0.012
-ex.claim_text('exam', f'{P("e-three-pricers")}.feedback.byKey.r1c3', 'about 3.5 standard errors', round(abs(z90), 1) == 3.5,
-              f'e-three-pricers byKey r1c3 "about 3.5 standard errors": the table gives {abs(z90):.1f}')
-ex.claim_text('exam', f'{P("e-three-pricers")}.feedback.byKey.r3c3', '1.9 standard errors', round(abs(z110), 1) == 1.9,
-              f'e-three-pricers byKey r3c3 "1.9 standard errors": the table gives {abs(z110):.2f}')
-ex.claim(round(20.004 - 18.487, 2) == 1.52 and round(4.621 - 4.521, 2) == 0.10 and round(10.647 - 10.525, 2) == 0.12, 'e-three-pricers feedback 1.52, 0.10, 0.12')
+ex.claim(round(abs(z90), 1) == 3.7, f'e-three-pricers byKey r1c3 "3.7 standard errors": the table gives {abs(z90):.2f}')
+ex.claim(round(abs(z110), 1) == 1.8, f'e-three-pricers byKey r3c3 "1.8 standard errors": the table gives {abs(z110):.2f}')
+ex.expect('exam', f'{P("e-three-pricers")}.feedback.byKey.r1c3', 3.7)
+ex.expect('exam', f'{P("e-three-pricers")}.feedback.byKey.r3c3', 1.8)
+am120 = crr(S0, 120, r0, sg0, T0, 500, True, q0)
+eu120 = crr(S0, 120, r0, sg0, T0, 500, False, q0)
+ex.claim(near(am120, 20.0042, 5e-4) and near(eu120, 18.487, 5e-4), f'e-three-pricers true 500-step American put at 120 is {am120:.4f} (>= 20), European {eu120:.4f}')
+ex.claim(float(grid[4][5]) == 19.95 and 19.95 > eu120 and 19.95 < 120 - S0, 'e-three-pricers planted American 19.950 sits above the European tree and below the £20.00 exercise value')
+ex.claim(float(grid[3][5]) > 110 - S0, 'e-three-pricers the 110 American price 11.142 is above its exercise value 10, a premium and not flagged')
+ex.claim(sorted(IT['e-three-pricers']['widget']['wrong'][0]['set']) == ['r3c5'], 'e-three-pricers premium slip is the 110 premium alone')
+ex.claim(round(20.00 - 19.95, 2) == 0.05, 'e-three-pricers r4c5 feedback £19.95 against £20.00')
 
 # ---------------------------------------------------------------- e-peek-lines (a cut test on each line)
 rng = np.random.default_rng(7)
@@ -310,16 +371,11 @@ close0 = pd.Series(100 * np.exp(np.cumsum(0.01 * rng.standard_normal(400))), ind
 close0.iloc[[198, 199]] = np.nan
 
 
-def L_next(c):
-    return c.rolling(20).mean().shift(-1) - c
-
-
-def L_z(c):
-    ret = c.pct_change()
-    return (ret - ret.mean()) / ret.std()
-
-
-LINES = {'next-mean': L_next, 'full-z': L_z, 'bfill': lambda c: c.bfill(), 'ffill': lambda c: c.ffill(),
+LINES = {'month': lambda c: c.resample('ME').last().pct_change().reindex(c.index, method='bfill'),
+         'interp': lambda c: c.interpolate(),
+         'rank': lambda c: c.pct_change().rank(pct=True),
+         'ffill': lambda c: c.ffill(),
+         'ewm': lambda c: c.pct_change().ewm(span=20).std(),
          'lag': lambda c: np.sign(c.pct_change(5)).shift(1)}
 peeks = []
 for name, f in LINES.items():
@@ -332,17 +388,24 @@ for name, f in LINES.items():
             leak = True
     if leak:
         peeks.append(name)
-ex.claim(sorted(peeks) == correct_ids('e-peek-lines'), f'e-peek-lines the cut test flags {peeks}')
+ex.claim(sorted(peeks) == correct_ids('e-peek-lines') == ['interp', 'month', 'rank'], f'e-peek-lines the cut test flags {peeks}')
+ex.claim({o['id'] for o in IT['e-peek-lines']['widget']['options']} == set(LINES), 'e-peek-lines options = the six tested lines')
 
 # ---------------------------------------------------------------- e-rank-ic-hand
-sig13 = [0.8, -0.3, 1.5, 0.1, -1.2, 0.5]
-ret13 = [-1.4, -0.2, 6.0, 2.3, -3.1, 0.9]
+tab13 = IT['e-rank-ic-hand']['canvas']['params']['rows']
+ex.claim(tab13[6][1] == 'none' and not any('—' in str(c) for r in tab13 for c in r), 'e-rank-ic-hand S7 reads "none", no em-dash (finding 33)')
+sig13 = [float(r[1].replace('−', '-')) for r in tab13[:6]]
+ret13 = [float(r[2].replace('−', '-')) for r in tab13[:6]]
 rs, rr = stats.rankdata(sig13), stats.rankdata(ret13)
-ex.claim(list(rs) == [5, 2, 6, 3, 1, 4] and list(rr) == [2, 3, 6, 5, 1, 4], 'e-rank-ic-hand explain ranks')
-ex.claim(sum((rs - rr) ** 2) == 14, 'e-rank-ic-hand sum d^2 = 14')
-key('e-rank-ic-hand', stats.spearmanr(sig13, ret13)[0])
-wrong('e-rank-ic-hand', 'pearson', np.corrcoef(sig13, ret13)[0, 1], typed=0.763)
-wrong('e-rank-ic-hand', 'seven', 1 - 6 * 14 / (7 * 48), typed=0.75)
+ex.claim(list(rs) == [4.5, 2, 6, 3, 1, 4.5] and list(rr) == [2, 3, 6, 5, 1, 4], f'e-rank-ic-hand explain ranks {list(rs)} {list(rr)} (S1 and S6 tie at 4.5)')
+cp = float(((rs - 3.5) * (rr - 3.5)).sum())
+ex.claim(near(cp, 11.5, 1e-12) and near(((rs - 3.5) ** 2).sum(), 17, 1e-12) and near(((rr - 3.5) ** 2).sum(), 17.5, 1e-12), 'e-rank-ic-hand explain cross products 11.5, squares 17 and 17.5')
+key('e-rank-ic-hand', stats.spearmanr(sig13, ret13)[0], t=5e-4)
+key('e-rank-ic-hand', cp / math.sqrt(17 * 17.5), t=5e-4)
+d2s = float(((rs - rr) ** 2).sum())
+wrong('e-rank-ic-hand', 'formula', 1 - 6 * d2s / (6 * 35), typed=0.671)
+wrong('e-rank-ic-hand', 'pearson', np.corrcoef(sig13, ret13)[0, 1], typed=0.746)
+ex.claim(near(d2s, 11.5, 1e-12), 'e-rank-ic-hand sum d^2 = 11.5 with the tie')
 
 # ---------------------------------------------------------------- e-drawdown-calmar
 eq15 = np.array(IT['e-drawdown-calmar']['canvas']['params']['series'][0]['values'], float)
@@ -351,20 +414,31 @@ dd = eq15 / np.maximum.accumulate(eq15) - 1
 mdd = dd.min()
 cagr15 = (eq15[-1] / eq15[0]) ** (12 / 12) - 1
 rows15 = 'widget.rows'
+below = (eq15 < np.maximum.accumulate(eq15)).astype(int)
+spell = best_run = 0
+for b_ in below:
+    spell = spell + 1 if b_ else 0
+    best_run = max(best_run, spell)
+ex.claim([r[0] for r in IT['e-drawdown-calmar']['widget']['rows']][2].startswith('Longest spell'), 'e-drawdown-calmar row 2 is the spell')
 key('e-drawdown-calmar', -mdd * 100, path=f'{rows15}[0][1]', t=0.005)
 key('e-drawdown-calmar', cagr15 * 100, path=f'{rows15}[1][1]', t=0.005)
-key('e-drawdown-calmar', cagr15 / -mdd, path=f'{rows15}[2][1]', t=0.005)
+key('e-drawdown-calmar', best_run, path=f'{rows15}[2][1]', t=1e-9)
+key('e-drawdown-calmar', cagr15 / -mdd, path=f'{rows15}[3][1]', t=0.005)
+wrong('e-drawdown-calmar', 'with-recovery', best_run + 1, typed=5, path=f'{rows15}[2][1]', t=1e-9)
 glob_rng = (eq15.max() - eq15.min()) / eq15.max()
 wrong('e-drawdown-calmar', 'global-range', glob_rng * 100, typed=19.0, path=f'{rows15}[0][1]')
-wrong('e-drawdown-calmar', 'global-calmar', cagr15 / glob_rng, typed=0.97, path=f'{rows15}[2][1]')
+wrong('e-drawdown-calmar', 'global-calmar', cagr15 / glob_rng, typed=0.97, path=f'{rows15}[3][1]')
 ex.claim(int(np.argmin(dd)) == 4 and eq15[np.argmax(eq15[:5])] == 109, 'e-drawdown-calmar worst fall 109 to 98')
-# Within the paper: e-code-tear-line's example uses the same equity and prints this item's keys.
-tl = IT['e-code-tear-line']['widget']['examples'][0]
-ex.claim('118.4' not in tl['setup'], 'e-code-tear-line example does not reuse e-drawdown-calmar\'s equity (it prints -0.100917 and 1.823273)',
-         'the example shows the drawdown and Calmar keys of e-drawdown-calmar to anyone who opens the code item first')
+ex.claim([int(i) for i in np.flatnonzero(below)][:4] == [3, 4, 5, 6] and list(eq15[3:7]) == [103, 98, 101, 107], 'e-drawdown-calmar the spell is months 3 to 6: 103, 98, 101 and 107')
+ex.expect('exam', f'{P("e-drawdown-calmar")}.feedback.byKey.with-recovery', 107)
+# Within the paper: e-code-tear-line's example no longer uses this item's equity or prints its keys (finding 16a).
+tl = IT['e-code-tear-line']['widget']
+ex.claim('118.4' not in tl['examples'][0]['setup'] and '1.823273' not in tl['examples'][0]['expect'] and '-0.100917' not in tl['examples'][0]['expect'],
+         "e-code-tear-line example does not reuse e-drawdown-calmar's equity or print its keys")
+ex.claim(not any('118.4' in t.get('setup', '') for t in tl['tests']), 'e-code-tear-line hidden tests do not reuse e-drawdown-calmar\'s equity')
 
 # ---------------------------------------------------------------- e-rank-weights
-sig16 = {'S1': 0.8, 'S2': -0.3, 'S3': 1.4, 'S4': 0.1, 'S5': -1.1, 'S6': None, 'S7': 0.5, 'S8': -0.6}
+sig16 = {r[0]: (None if r[1] == 'none' else float(r[1].replace('−', '-'))) for r in IT['e-rank-weights']['widget']['rows']}
 v16 = {k: v for k, v in sig16.items() if v is not None}
 rk = dict(zip(v16, stats.rankdata(list(v16.values()))))
 cen = {k: rk[k] - np.mean(list(rk.values())) for k in rk}
@@ -378,38 +452,73 @@ for i, row in enumerate(IT['e-rank-weights']['widget']['rows']):
     else:
         ex.claim(near(float(cell.replace('−', '-')), want, 1e-4), f'e-rank-weights {row[0]} given {cell} = {want:.4f}')
 ex.claim(gross16 == 12, 'e-rank-weights centred ranks sum to 12 in absolute value')
+ex.claim(sig16['S4'] == sig16['S7'] == 0.5 and rk['S4'] == rk['S7'] == 4.5, 'e-rank-weights S4 and S7 tie at 0.5 and share rank 4.5')
+ex.claim(sorted(cen.values()) == [-3, -2, -1, 0.5, 0.5, 2, 3], f'e-rank-weights centred ranks {sorted(cen.values())}')
+ord_rk = {'S4': 4, 'S7': 5}
+ex.claim(near((ord_rk['S4'] - 4) / 12, 0.0, 1e-12) and near((ord_rk['S7'] - 4) / 12, 0.0833, 5e-5), 'e-rank-weights tie broken by order gives S4 0 and S7 0.0833')
+ex.claim(IT['e-rank-weights']['widget']['rows'][3][2]['wrong'][0] == {'id': 'tie-order', 'value': 0, 'tol': {'abs': 0.003}}, 'e-rank-weights S4 tie-order slip is 0')
 
 # ---------------------------------------------------------------- e-explain-pnl
-d17, g17, v17, t17 = greeks_call(100, 100, 0.05, 0.20, 0.5)
-ex.claim(round(d17, 4) == 0.5977 and round(g17, 4) == 0.0274 and round(v17 / 100, 4) == 0.2736 and round(t17 / 365, 4) == -0.0222,
-         f'e-explain-pnl Greeks of the 6-month 100 call: {d17:.4f}, {g17:.4f}, {v17 / 100:.4f}, {t17 / 365:.4f}')
-act = bs(103, 100, 0.05, 0.22, 0.5 - 1 / 365) - bs(100, 100, 0.05, 0.20, 0.5)
-ex.claim(round(act, 4) == 2.4155, f'e-explain-pnl full repricing {act:.5f}')
-terms = [0.5977 * 3, 0.5 * 0.0274 * 9, 0.2736 * 2, -0.0222]
+S17, K17, r17, sg17, T17 = 100, 100, 0.05, 0.20, 0.5
+d1_17 = (math.log(S17 / K17) + (r17 + sg17 ** 2 / 2) * T17) / (sg17 * math.sqrt(T17))
+d2_17 = d1_17 - sg17 * math.sqrt(T17)
+dl17 = N(d1_17) - 1
+gm17 = npdf(d1_17) / (S17 * sg17 * math.sqrt(T17))
+vg17 = S17 * npdf(d1_17) * math.sqrt(T17)
+th17 = -S17 * npdf(d1_17) * sg17 / (2 * math.sqrt(T17)) + r17 * K17 * math.exp(-r17 * T17) * N(-d2_17)
+ex.claim(round(dl17, 4) == -0.4023 and round(gm17, 4) == 0.0274 and round(vg17, 2) == 27.36 and round(th17, 2) == -3.24,
+         f'e-explain-pnl Greeks of the 6-month 100 put: {dl17:.4f}, {gm17:.4f}, {vg17:.3f} per 1.00, {th17:.4f} a year')
+ex.claim(near(dl17 + 1, greeks_call(100, 100, 0.05, 0.20, 0.5)[0], 1e-12), 'e-explain-pnl put delta = call delta - 1 (parity)')
+act = bs(97, 100, 0.05, 0.22, 0.5 - 1 / 365, 'put') - bs(100, 100, 0.05, 0.20, 0.5, 'put')
+ex.claim(round(act, 4) == 1.8706, f'e-explain-pnl full repricing of the put {act:.5f}')
+terms = [-0.4023 * -3, 0.5 * 0.0274 * 9, 27.36 * 0.02, -3.24 / 365]
 rows17 = 'widget.rows'
 for i, v in enumerate(terms):
     key('e-explain-pnl', v, path=f'{rows17}[{i}][1]', t=5e-5)
 key('e-explain-pnl', sum(terms), path=f'{rows17}[4][1]', t=5e-5)
-key('e-explain-pnl', 2.4155 - sum(terms), path=f'{rows17}[5][1]', t=5e-5)
+key('e-explain-pnl', 1.8706 - sum(terms), path=f'{rows17}[5][1]', t=5e-5)
+wrong('e-explain-pnl', 'delta-sign', -terms[0], typed=-1.2069, path=f'{rows17}[0][1]')
 wrong('e-explain-pnl', 'no-half', 0.0274 * 9, typed=0.2466, path=f'{rows17}[1][1]')
-wrong('e-explain-pnl', 'vega-scale', 0.2736 * 0.02, typed=0.0055, path=f'{rows17}[2][1]')
+wrong('e-explain-pnl', 'vega-units', 27.36 * 2, typed=54.72, path=f'{rows17}[2][1]')
+wrong('e-explain-pnl', 'theta-year', -3.24, typed=-3.24, path=f'{rows17}[3][1]')
 
 # ---------------------------------------------------------------- e-cost-drag
-cost = 4.5 * 14e-4
 r19 = 'widget.rows'
-key('e-cost-drag', cost * 100, path=f'{r19}[0][1]', t=1e-6)
-key('e-cost-drag', 5.4 - cost * 100, path=f'{r19}[1][1]', t=1e-6)
-key('e-cost-drag', (5.4 - cost * 100) / 3.0, path=f'{r19}[2][1]', t=1e-6)
-key('e-cost-drag', 0.054 / 4.5 * 1e4, path=f'{r19}[3][1]', t=1e-6)
-ex.claim(near(5.4 / 3.0, 1.80, 1e-9), 'e-cost-drag gross Sharpe 1.80')
+per_reb = 2 * (0.5 * 0.30) * 2            # longs and shorts, each side 0.50; replacing 30% sells 0.15 and buys 0.15 on each
+traded = per_reb * 12
+ex.claim(near(per_reb, 0.6, 1e-12) and near(traded, 7.2, 1e-12), f'e-cost-drag £ traded {per_reb:.2f} a month, {traded:.1f} a year')
+cost = traded * 14e-4
+key('e-cost-drag', traded, path=f'{r19}[0][1]', t=1e-9)
+key('e-cost-drag', cost * 100, path=f'{r19}[1][1]', t=1e-6)
+key('e-cost-drag', (5.4 - cost * 100) / 3.0, path=f'{r19}[2][1]', t=0.005)   # stored to 2 places
+key('e-cost-drag', 0.054 / traded * 1e4, path=f'{r19}[3][1]', t=1e-6)
+wrong('e-cost-drag', 'one-side', traded / 2, typed=3.6, path=f'{r19}[0][1]')
+ex.claim(near(5.4 / 3.0, 1.80, 1e-9) and round(5.4 - cost * 100, 2) == 4.39 and round(cost * 100, 2) == 1.01, 'e-cost-drag gross Sharpe 1.80, cost 1.01%, net return 4.39%')
+ex.claim(round(100.8) == 101 and near(7.2 * 14, 100.8, 1e-9), 'e-cost-drag byKey r1c1 100.8 bp')
 
-# ---------------------------------------------------------------- e-too-good, e-flat-vega, e-bump-size: keys and key length
-ex.claim(correct_ids('e-too-good') == ['b'], 'e-too-good key: look-ahead check and next-open fills first')
-for iid in ('e-too-good', 'e-flat-vega', 'e-bump-size'):
+# ---------------------------------------------------------------- e-too-good
+ex.claim(correct_ids('e-too-good') == ['b'], 'e-too-good key b: fix the cost sign')
+for iid in ('e-too-good',):
     ops = IT[iid]['widget']['options']
     kl = max(len(o['text']) for o in ops if o.get('correct'))
     dl = max(len(o['text']) for o in ops if not o.get('correct'))
     ex.claim(kl <= 1.5 * dl, f'{iid} key {kl} characters against the longest distractor {dl} (advisory rule 586)', 'the key is the giveaway longest option')
+lines20 = IT['e-too-good']['canvas']['params']['lines']
+cash = 100000.0
+cost_bp = 2.5
+for ln in lines20[6:]:
+    parts = ln.replace(',', '').split()
+    shares, fill, flow, cst, after = int(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]), float(parts[5])
+    ex.claim(near(abs(shares) * fill, abs(flow), 1e-9) and near(abs(flow) * cost_bp / 1e4, cst, 5e-3), f'e-too-good day {parts[0]}: £{abs(flow):,.2f} traded, cost {cst} = 2.5 bp')
+    cash_bug = cash + flow + cst                                   # the engine adds the cost
+    ex.claim(near(cash_bug, after, 5e-3), f'e-too-good day {parts[0]}: the log adds the cost, cash {cash_bug:,.2f} = {after:,.2f}')
+    if parts[0] == '1':
+        ex.claim(near(cash + flow - cst, 79995.00, 5e-3), 'e-too-good day 1 should end at £79,995.00')
+    cash = after
+drag = 0.97 * 252 * cost_bp / 1e4
+ex.claim(round(drag * 100, 1) == 6.1 and round(drag / 0.15, 2) == 0.41, f'e-too-good drag {drag:.4f} a year, {drag / 0.15:.3f} of Sharpe')
+ex.claim(near(2.61 + round(drag / 0.15, 2), 3.02, 1e-9) and round(2.61 - drag / 0.15, 2) == 2.20 and 2.20 > 2, 'e-too-good net 3.02 = gross 2.61 + 0.41; fixed it is 2.20, above 2')
+ex.claim(IT['e-too-good']['canvas']['state']['shade']['bad'] == ['l7', 'l8'], 'e-too-good shades the two trade lines')
 
 # ---------------------------------------------------------------- e-flat-vega (console)
 K23, T23 = 130, 1 / 12
@@ -428,24 +537,33 @@ ex.claim(round(pn, 1) == -129.5, f'e-flat-vega step 2 model price {pn:.2f} (the 
 iv23 = optimize.brentq(lambda s: bs(100, K23, 0.05, s, T23) - 0.03, 0.05, 3)
 ex.claim(round(iv23, 2) == 0.37, f'e-flat-vega true implied vol {iv23:.4f}: "about 37%"')
 ex.claim(round(vg0, 4) == 0.0006 and round((0.03 - p0) / vg0) == 50, 'e-flat-vega key: vega about 0.0006, step about 50')
-ex.claim(correct_ids('e-flat-vega') == ['a'], 'e-flat-vega key a')
+lo, hi = 1e-4, 5.0
+lo = 0.20 if p0 < 0.03 else lo                         # step 0 priced too cheap, so the low end moves to 0.2
+newton_out = not (lo <= s1_23 <= hi)
+mid = (lo + hi) / 2
+key('e-flat-vega', mid, t=1e-9)
+inband('e-flat-vega', 2.6, label='typed 2.6')
+wrong('e-flat-vega', 'newton', s1_23, typed=50.6361)
+wrong('e-flat-vega', 'no-update', (1e-4 + hi) / 2, typed=2.50005)
+p26 = bs(100, K23, 0.05, mid, T23)
+ex.claim(newton_out and round(p26, 2) == 20.70 and p26 > 0.03, f'e-flat-vega Newton leaves [0.2, 5], the midpoint {mid} prices £{p26:.3f}, too dear, so it becomes the top')
+ex.claim(IT['e-flat-vega']['widget']['kind'] == 'numeric' and 'options' not in IT['e-flat-vega']['widget'], 'e-flat-vega is a numeric (key-length cue gone)')
 
 # ---------------------------------------------------------------- e-reversal-crossover
-fd = lambda x: 3.6 - 0.7 * x  # noqa: E731
-fw = lambda x: 2.8 - 0.4 * x  # noqa: E731
-fm = lambda x: 1.6 - 0.1 * x  # noqa: E731
+vol_bk, turn = 0.01, (70, 40, 10)
+gross = (3.6, 2.8, 1.6)
+slope = [t * 1e-4 / vol_bk for t in turn]           # Sharpe lost per bp of half spread
+ex.claim([round(s, 6) for s in slope] == [0.7, 0.4, 0.1], f'e-reversal-crossover Sharpe lost per bp {slope}')
 xs = np.linspace(0, 7, 70001)
-best = np.argmax(np.vstack([fd(xs), fw(xs), fm(xs)]), axis=0)
-x_first = xs[np.argmax(best == 2)]
-tg = IT['e-reversal-crossover']['widget']['points'][0]
-ex.claim(near(x_first, 4.0, 1e-3) and near(tg['target'][0], 4.0, 1e-9) and near(tg['target'][1], fm(4.0), 1e-9), f'e-reversal-crossover monthly first best at {x_first:.3f} bp, Sharpe {fm(4):.2f}')
-reg = {w['id']: w['region'] for w in IT['e-reversal-crossover']['widget']['wrong']}
-xdm, xdw = 2.0 / 0.6, 0.8 / 0.3
-ex.claim(reg['daily-cross']['x'][0] <= xdm <= reg['daily-cross']['x'][1] and reg['daily-cross']['y'][0] <= fm(xdm) <= reg['daily-cross']['y'][1],
-         f'e-reversal-crossover daily-cross region holds ({xdm:.3f}, {fm(xdm):.3f})')
-ex.claim(reg['weekly-cross']['x'][0] <= xdw <= reg['weekly-cross']['x'][1] and reg['weekly-cross']['y'][0] <= fw(xdw) <= reg['weekly-cross']['y'][1],
-         f'e-reversal-crossover weekly-cross region holds ({xdw:.3f}, {fw(xdw):.3f})')
-ex.claim(reg['daily-cross']['x'][1] < tg['target'][0] - tg['tol'][0], 'e-reversal-crossover answer box clear of the daily-cross region')
+net = np.vstack([g - s * xs for g, s in zip(gross, slope)])
+x_first = xs[np.argmax(np.argmax(net, axis=0) == 2)]
+key('e-reversal-crossover', x_first, t=1e-3)
+x_dm = (gross[0] - gross[2]) / (slope[0] - slope[2])
+x_dw = (gross[0] - gross[1]) / (slope[0] - slope[1])
+wrong('e-reversal-crossover', 'daily-cross', x_dm, typed=3.333)
+wrong('e-reversal-crossover', 'weekly-cross', x_dw, typed=2.667)
+ex.claim(near(x_first, 4.0, 1e-3) and near(1.6 - 0.1 * 4, 2.8 - 0.4 * 4, 1e-12), 'e-reversal-crossover weekly and monthly meet at 4 bp, Sharpe 1.2')
+ex.claim('canvas' not in IT['e-reversal-crossover'] and IT['e-reversal-crossover']['widget']['kind'] == 'numeric', 'e-reversal-crossover is a numeric with no plane')
 
 # ---------------------------------------------------------------- e-calendar-cells
 T25 = [1 / 12, 0.25, 0.5, 1.0]
@@ -490,18 +608,41 @@ for ln in lines26:
     else:
         ex.claim(abs(gb - g26) > 1e-3, f'e-bump-size h {h:g} round-off ruins it: mine {gb:.4g}, shown {shown} (exact value depends on the pricer\'s rounding)')
 ex.claim(min(errs, key=errs.get) in (1e-3, 1e-2), f'e-bump-size best h {min(errs, key=errs.get):g}: "near 0.001"')
-ex.claim(round(g26 * 1e-16 * 1e18) == 5, 'e-bump-size second difference at 1e-8 is about 5e-18')
-ex.claim(correct_ids('e-bump-size') == ['a'], 'e-bump-size key a')
+V1 = lambda s: bs_call_erf(s, 55, 0.03, 0.30, 0.25)  # noqa: E731
+call50 = V1(50)
+trunc1 = abs((V1(51) - 2 * V1(50) + V1(49)) - g26)
+ex.claim(round(call50, 2) == 1.35 and round(trunc1 * 1e5, 1) == 6.4, f'e-bump-size call £{call50:.4f}; h = 1 truncation error {trunc1:.3e} reads 6.4e-5')
+epsV = 1.1e-16 * call50
+ex.claim(round(epsV * 1e16, 1) == 1.5, f'e-bump-size eps V = {epsV:.3e} reads 1.5e-16')
+h_star = (1.5e-16 / 6.4e-5) ** 0.25
+key('e-bump-size', h_star, t=1e-4)
+inband('e-bump-size', 0.0012, label='typed 0.0012')
+wrong('e-bump-size', 'square-root', (1.5e-16 / 6.4e-5) ** 0.5, typed=1.5e-06)
+ex.claim(round(1.5e-16 / 6.4e-5 * 1e12, 1) == 2.3, 'e-bump-size explain h^4 = 2.3e-12')
+ex.claim(near(6.4e-5 * h_star ** 2, 1.5e-16 / h_star ** 2, 1e-18), 'e-bump-size at h* the two errors are equal')
+ex.claim(IT['e-bump-size']['widget']['kind'] == 'numeric' and 'options' not in IT['e-bump-size']['widget'], 'e-bump-size is a numeric (key-length cue gone)')
 
 # ---------------------------------------------------------------- e-results-note
 emax60 = integrate.quad(lambda x: x * 60 * npdf(x) * N(x) ** 59, -10, 10)[0]
-ex.claim(round(emax60, 2) == 2.32, f'e-results-note E[max of 60 normals] {emax60:.4f}')
-ex.claim(round(0.5 + 0.7 * 2.32, 2) == 2.12 and round((2.4 - 2.124) / 0.7, 1) == 0.4, 'e-results-note 2.12 and 0.4 sd')
+ex.claim(round(emax60, 2) == 2.32, f'e-results-note E[max of 60 standard normals] {emax60:.4f}')
+ex.claim(round(0.5 + 0.7 * 2.32, 2) == 2.12 and round((2.4 - (0.5 + 0.7 * emax60)) / 0.7, 1) == 0.4, 'e-results-note 2.12 and 0.4 of the sd')
+# Basis for finding 30: if no setting is better than the others, the 60 Sharpes are exchangeable draws around their own mean
+# (here 0.5, sd 0.7), so the best of 60 is mean + sd x E[max of 60 standard normals]. Simulated directly:
+rg30 = np.random.default_rng(30)
+sim = rg30.normal(0.5, 0.7, (200_000, 60)).max(axis=1)
+ex.claim(abs(sim.mean() - 2.1235) < 0.01, f'e-results-note simulated mean of the best of 60 equal settings {sim.mean():.4f} reads 2.12')
+p_big = 1 - N((2.4 - 0.5) / 0.7) ** 60
+ex.claim(abs((sim >= 2.4).mean() - p_big) < 0.005 and round(p_big, 2) == 0.18, f'e-results-note chance of a best of 60 at or above 2.4: formula {p_big:.3f}, simulation {(sim >= 2.4).mean():.3f}')
+# With literally no skill the settings would centre on 0, not 0.5, and the best of 60 would be near 0.7 x 2.32 = 1.62.
+ex.claim(round(0.7 * emax60, 2) == 1.62, 'e-results-note a true zero-mean set would give a best near 1.62 (why "no skill at all" was the wrong phrase)')
+mdl = IT['e-results-note']['model']
+ex.claim('no skill' not in mdl.lower() and 'no-skill' not in mdl.lower() and 'no skill' not in IT['e-results-note']['rubric'][2]['text'].lower(),
+         'e-results-note model and rubric no longer say "no skill"')
+ex.claim('equal settings' in mdl and 'If no setting were better than the others' in mdl, 'e-results-note model item 3 and (b) use the equal-settings wording')
 pp = optimize.brentq(lambda p: math.sqrt(252) * (2 * p - 1) / math.sqrt(1 - (2 * p - 1) ** 2) - 2.4, 0.5, 0.99)
 ex.claim(round(pp, 3) == 0.575, f'e-results-note hit rate {pp:.4f} reads 57.5%')
 se1 = math.sqrt((1 + (2.4 / math.sqrt(252)) ** 2 / 2) / 252) * math.sqrt(252)
 ex.claim(round(se1, 1) == 1.0, f'e-results-note one-year Sharpe se {se1:.3f}')
-
 
 # ---------------------------------------------------------------- code items
 def same(got, want, cmp, tol):
@@ -559,7 +700,10 @@ def code_item(iid, mutants=()):
     n_tests = len(w['tests'])
     ex.claim(f'{n_tests} hidden tests' in w['how'], f'{iid} how names {n_tests} hidden tests')
     dup = [i for i, t in enumerate(w['tests']) if any(t['call'] == e['call'] and t.get('setup') == e.get('setup') for e in w['examples'])]
-    print(f'   {iid}: hidden tests identical to an example: {dup}')
+    ex.claim(not dup, f'{iid} no hidden test repeats an example (finding 35)', f'tests {dup} repeat an example')
+    if any(c.get('compare') == 'isclose' for c in w['tests']) and 'compared within' in w['how']:
+        ex.claim('within 2e-6' in w['how'] and all(c['tol']['abs'] == 2e-6 for c in w['tests'] if c.get('compare') == 'isclose'),
+                 f'{iid} how states the 2e-6 tolerance the cases use (finding 36)')
     for name, old, new in mutants:
         assert old in w['solution'], (iid, name)
         bad = w['solution'].replace(old, new)
@@ -568,16 +712,43 @@ def code_item(iid, mutants=()):
     return w
 
 
-# e-code-forward-vols, against a formula written again
+# e-code-forward-vols (term_vols), against the inverse formula written again
 w14 = code_item('e-code-forward-vols', [
-    ('vol average', 'out.append(math.sqrt((w2 - w1) / (expiries[i + 1] - expiries[i])))', 'out.append((vols[i] + vols[i + 1]) / 2)'),
-    ('no division by the gap', 'math.sqrt((w2 - w1) / (expiries[i + 1] - expiries[i]))', 'math.sqrt(w2 - w1)'),
-    ('<= for equal variance', 'if w2 < w1:', 'if w2 <= w1:'),
-    ('no input checks', 'if len(expiries) != len(vols):', 'if False:'),
+    ('no interval length', 'w += f * f * (T - prev)', 'w += f * f * T'),
+    ('average of vols', 'out.append(math.sqrt(w / T))', 'out.append(sum(fwd_vols[:len(out) + 1]) / (len(out) + 1))'),
+    ('no division by T', 'math.sqrt(w / T)', 'math.sqrt(w)'),
+    ('negative forward allowed', 'if any(v < 0 for v in fwd_vols):', 'if False:'),
+    ('zero expiry allowed', 'any(t <= 0 for t in expiries[:1])', 'any(t < 0 for t in expiries[:1])'),
+    ('equal expiries allowed', 'any(b <= a for a, b in zip(expiries, expiries[1:]))', 'any(b < a for a, b in zip(expiries, expiries[1:]))'),
+    ('no length check', 'if len(expiries) != len(fwd_vols):', 'if False:'),
 ])
-T14, V14 = [1 / 12, 0.25, 0.5, 1.0], [0.22, 0.21, 0.21, 0.22]
-f14 = [math.sqrt((V14[i + 1] ** 2 * T14[i + 1] - V14[i] ** 2 * T14[i]) / (T14[i + 1] - T14[i])) for i in range(3)]
-ex.claim([round(x, 6) for x in f14] == eval(w14['examples'][0]['expect']), f'e-code-forward-vols example by hand {[round(x, 6) for x in f14]}')
+ns14 = {}
+exec(w14['prelude'] + w14['solution'], ns14)
+
+
+def fwd_from_term(T, v):
+    """The inverse: forward vols from spot vols by differencing total variance (the old course function, written again)."""
+    w_ = [s * s * t for s, t in zip(v, T)]
+    out_, pt, pw = [], 0.0, 0.0
+    for t, wi in zip(T, w_):
+        out_.append(math.sqrt((wi - pw) / (t - pt)))
+        pt, pw = t, wi
+    return out_
+
+
+rg14 = np.random.default_rng(14)
+mx14 = 0.0
+for _ in range(50):
+    n14 = int(rg14.integers(1, 9))
+    T14 = np.cumsum(rg14.uniform(0.05, 1.0, n14))
+    f14 = rg14.uniform(0.05, 0.9, n14)
+    v14 = ns14['term_vols'](list(T14), list(f14))
+    mx14 = max(mx14, max(abs(a - b) for a, b in zip(fwd_from_term(T14, v14), f14)))
+ex.claim(mx14 < 1e-9, f'e-code-forward-vols term_vols inverts forward-from-term on 50 random curves (max diff {mx14:.1e})')
+ex1 = w14['examples'][0]
+ex.claim(near(sum((a - b) ** 2 for a, b in zip(fwd_from_term([1 / 12, 0.25, 0.5, 1.0], [0.22, 0.21, 0.21, 0.22])[1:], [0.204817, 0.21, 0.229565])), 0, 1e-10),
+         'e-code-forward-vols example forward vols are the course example run backwards: 0.204817, 0.21, 0.229565')
+ex.claim(round(sum([0.22, 0.204817, 0.21]) / 3, 6) != 0.21, 'e-code-forward-vols the average of the first three forward vols is not the 0.21 vol to six months')
 
 # e-code-tear-line, against a pure-Python loop
 w18 = code_item('e-code-tear-line', [
@@ -623,42 +794,45 @@ for _ in range(30):
     b = tear_loop(e, wts, 252)
     mx = max(mx, max(abs(x - y) / max(1, abs(y)) for x, y in zip(a, b) if math.isfinite(y)))
 ex.claim(mx < 1e-9, f'e-code-tear-line solution = pure-Python loop on 30 seeded series (max rel diff {mx:.1e})')
-ex.claim(tear_loop([100, 104, 109, 103, 98, 101, 107, 112, 108, 115, 119, 121, 118.4], [0, 1, 1, 1, 0, 0, 0.5, 1, 1, 0, -1, -1, 0], 12)[3] == 6 / 13,
-         'e-code-tear-line example turnover 6/13')
+tlx = tear_loop([100, 103, 99, 104, 101, 108, 106, 112.0], [0, 1, 1, 0.5, 0.5, -0.5, 0, 0], 12)
+ex.claim(tlx[3] == 0.375 and [round(v, 6) for v in tlx] == eval(w18['examples'][0]['expect']), f'e-code-tear-line example by the loop {[round(v, 6) for v in tlx]}, turnover 3/8')
 
-# e-code-first-leak, against a brute-force scan of every cut
+# e-code-first-leak (leak_rows), against a loop over rows written again
 w21 = code_item('e-code-first-leak', [
-    ('last row only', 'full = run(bars).iloc[:cut].to_numpy(float)', 'full = run(bars).iloc[cut - 1:cut].to_numpy(float)'),
-    ('unsorted cuts', 'for cut in sorted(cuts):', 'for cut in cuts:'),
-    ('iloc[:cut+1]', 'noisy = run(noise_after(bars, cut)).iloc[:cut]', 'noisy = run(noise_after(bars, cut)).iloc[:cut + 1]'),
+    ('last row only', '.iloc[:cut]', '.iloc[cut - 1:cut]'),
+    ('one row too many', '.iloc[:cut]', '.iloc[:cut + 1]'),
+    ('tolerance too loose', 'atol=1e-9', 'atol=1e-1'),
+    ('noise ignored', 'run(noise_after(bars, cut))', 'run(bars)'),
 ])
 ns21 = {}
-exec(w21['prelude'], ns21)
+exec(w21['prelude'] + w21['solution'], ns21)
 b21 = ns21['make_bars'](400)
 g21 = b21.copy()
 g21.iloc[118:121, g21.columns.get_loc('close')] = np.nan
 
 
-def leak_start(run, bars):
-    full = run(bars).to_numpy(float)
-    for cut in range(1, len(bars) + 1):
-        noisy = run(ns21['noise_after'](bars, cut)).to_numpy(float)[:cut]
-        if not np.allclose(full[:cut], noisy, rtol=0, atol=1e-9, equal_nan=True):
-            return cut
-    return None
+def leak_loop(run, bars, cut):
+    a = run(bars)
+    b = run(ns21['noise_after'](bars, cut))
+    out_ = []
+    for i in range(min(cut, len(bars))):
+        x, y = float(a.iloc[i]), float(b.iloc[i])
+        if not (math.isnan(x) and math.isnan(y)) and abs(x - y) > 1e-9:
+            out_.append(i)
+    return out_
 
 
-starts = {n: leak_start(ns21[n], bb) for n, bb in [('honest_engine', b21), ('peek_engine', b21), ('scaled_engine', b21),
-                                                    ('late_engine', b21), ('bfill_engine', g21), ('ffill_engine', g21)]}
-ex.claim(starts == {'honest_engine': None, 'peek_engine': 1, 'scaled_engine': 3, 'late_engine': 301, 'bfill_engine': 119, 'ffill_engine': None},
-         f'e-code-first-leak leak starts by brute force {starts}')
-noisy121 = ns21['bfill_engine'](ns21['noise_after'](g21, 121)).to_numpy()[:121]
-full121 = ns21['bfill_engine'](g21).to_numpy()[:121]
-changed = [i for i in range(121) if abs(noisy121[i] - full121[i]) > 1e-9]
-ex.claim(changed == [118], f'e-code-first-leak at cut 121 the backfill engine changes rows {changed}; the last row, 120, is unchanged')
+bad21 = 0
+for name in ('honest_engine', 'peek_engine', 'scaled_engine', 'late_engine', 'bfill_engine', 'ffill_engine'):
+    for cut in (1, 2, 50, 120, 121, 122, 299, 300, 301, 350, 399, 400):
+        for bb in (b21, g21):
+            bad21 += ns21['leak_rows'](ns21[name], bb, cut) != leak_loop(ns21[name], bb, cut)
+ex.claim(bad21 == 0, f'e-code-first-leak leak_rows = row loop on 6 engines x 12 cuts x 2 bar sets ({bad21} differences)')
 eng = [k for k in ns21 if k.endswith('_engine')]
-ex.claim_text('exam', f'{P("e-code-first-leak")}.widget.prelude', '# five engines', len(eng) == 5,
-              f'e-code-first-leak prelude comment "five engines": it defines {len(eng)}')
+ex.claim(len(eng) == 6 and '# six engines' in w21['prelude'] and '# five engines' not in w21['prelude'], f'e-code-first-leak prelude defines {len(eng)} engines and says six')
+ch121 = ns21['leak_rows'](ns21['bfill_engine'], g21, 121)
+ex.claim(ch121 == [118] and 'row 118' in IT['e-code-first-leak']['explain']['text'] and 'row 120 stays the same' in IT['e-code-first-leak']['explain']['text'],
+         f'e-code-first-leak at cut 121 the backfill engine changes rows {ch121}; row 120 is unchanged (finding 21c)')
 
 # e-code-sector-z, against a nested loop
 w22 = code_item('e-code-sector-z', [
