@@ -1643,3 +1643,6 @@ Raised later (systems level 1 perf):
 Raised later (systems level 4 perf):
 - [Could] A homework or review item `question` renders as one bold line, so a markdown list in it runs together ("- N is ... - The slots ..."). systems `h4-spsc-ring` moved its specification list into `prose`. Wanted: render lists in `question`, or a validator warning on a list there.
 - [Could] C++ code widget: no threads in the WebAssembly runtime, so a single-producer, single-consumer task cannot grade its memory orders; a ring with relaxed loads and stores passes every test. Wanted: a note in AUTHORING section 3 that concurrency correctness is ungradable, or a `console` pattern for a desk ThreadSanitizer run.
+
+Raised later (pdes level 1 perf):
+- [Should] Playthrough: the 440 px `-marked` shot of a longform shows only the top of the model, so a clipped display equation lower down goes unseen. Here it was step 4 of `h-derive-lazy-walk`. A scratch render that compared each `.katex-display` scrollWidth with its clientWidth reported it as fitting (356 in 356); only a full-page screenshot showed the clipping. Wanted: a full-height `-marked` shot, and a check that compares the rendered `.katex-html` box with its card.
