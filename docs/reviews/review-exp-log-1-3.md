@@ -144,3 +144,67 @@ GCSE and A-level conventions checked: base-10 $\log$ matches the calculator key.
 1. Expression grader, equations: a correct answer typed as an equation is refused with the generic line. Two items are affected: homework-1 `items[0]` (`V_n=2500\cdot1.06^n` and `V=2500\cdot1.06^n` are refused; `2500\cdot1.06^n` passes) and homework-3 `items[5]` (`t=\frac{\ln4}{0.08}` is refused). Both questions invite an equation ("Write the balance after $n$ years", "Solve ... for $t$"). Checked with the real `grade.js` and Compute Engine 0.30.2. An engine fix is in progress, so no `accept` workaround is proposed.
 
 2. Validator `shown-arithmetic` (`tools/validate.mjs` line 109): in a chain "$a \approx b \times c = d$" the final `=` seems to get the `\approx` tolerance of one unit in the last place. homework-1 `items[7].model` "$\approx 5000 \times 2.65330 = 13266.49$" (true product 13266.50) passes, while the same chain with 1.62889 (two units off) is flagged. An `=` should keep the half-unit rule even after an `\approx` earlier in the chain.
+
+## Fix pass
+
+Status per finding (48 fixed, 0 disputed, 0 deferred; both engine notes and the orchestrator items are marked below). Every corrected number was recomputed before it was written. Conceptual findings carry their own basis. All edits are by JSON path; no file was regenerated.
+
+1. fixed: l1 `quiz[2].explain.text`. $2^{10} = 1024 > 1000 = 100 \times 10$ and $2^9 = 512 < 900$, so B passes A at step 10.
+2. fixed: l1 `quiz[3].prose` ("multiplied by 7 zero times, starting from 1"). Basis: $a \times 2^n$ is the lesson's rule, so the old story gave 7; the new one gives $7^0 = 1$.
+3. fixed: l1 `screens[2].prose`, `screens[4].explain.text`. Basis: number-sense l10 teaches powers, "index" and $a^0 = 1$ (GCSE Mathematics subject content, number: "index"); both texts now cite it.
+4. fixed: l1 `screens[8].prose` ("multiplied by 32"). $2^5 = 32$.
+5. fixed: l2 `screens[2].prose`. Basis: ratio l4 and l8 call the same number the multiplier (GCSE ratio, proportion and rates of change); the text now says so.
+6. fixed: l2 `quiz[2]`. $1.25 \times 0.8 = 1$ exactly; the key is now "Back where it started" (option ids `flat`, `up`, `down`). Graded key changed (same item, new key).
+7. fixed: l3 `screens[8].explain.text`. Basis: $(-3)^2 = 9 = 3^2$, so the law gives only $b^2 = a$; $a^x > 0$ for $a > 0$ (standard property of the exponential, A-level pure maths, exponentials) picks $\sqrt{a}$.
+8. fixed: l3 `objectives[2]`, `screens[2].prose`, `screens[8].prose`; l4 `screens[8].widget.lines[1].text`; homework-1 `items[7].model` (e). All now say "index law". Basis: number-sense l10 and GCSE name it that.
+9. fixed: l4 `screens[9]` wrong `times` now 606000 and its byKey line. $10000 \times 1.01 \times 60 = 606000$.
+10. fixed: l4 `screens[10].explain.text`. $1000 \times 1.06^{12} = 2012.196 \to$ £2,012.20; $1.06^{12} = 2.0122$; $100 \div 6 = 16.67$.
+11. fixed: l4 `screens[5].explain.text`. $0.9^6 = 0.531$, $0.9^7 = 0.478$, so day 7 is the first whole day under half; $\ln 0.5 / \ln 0.9 = 6.58$.
+12. fixed: l4 `screens[0].widget.options[0].text`; `screens[7].widget.options[1].text`, `options[2].text`. Shortened as given.
+13. fixed: review-1 `items[9]` wrong `subtract` now 3.375 and its line. $27 \times 0.5^3 = 3.375$.
+14. fixed: review-1 `items[4]` is now the interest question. $5000 \times 1.04^3 = 5624.32$, interest 624.32; slips 600, 5624.32, 408 ($5000 \times (1.04^2 - 1) = 408.00$). Graded answer changed (5624.32 to 624.32).
+15. fixed: homework-1 `items[7].model` (b). $1.05^{10} = 1.6288946$ and $5000 \times 1.6288946 = 8144.473$; $1.05^{20} = 2.6532977$ and $5000 \times 2.6532977 = 13266.4885$.
+16. fixed: l5 `quiz[3].explain.text`. $\log_4 2 = \tfrac12$, $\log_2 4 = 2$, reciprocal logs.
+17. fixed: l6 `screens[0].feedback.byKey.r8c1`; new `byKey.r2c1`. $256 = 128 \times 2$; $2^{7-5} = 4$. The validator reports no `table-slip-key` warning for l6.
+18. fixed: l6 `quiz[3].feedback.generic`, `explain.text`. With $b = 2$, $x = 8$, $y = 4$: $\log_2 32 = 5 = 3 + 2$; $\log_2 12 = 3.585$; $\log_2 2 = 1 \ne 1.5$; $\log_2 64 = 6 \ne 9$.
+19. fixed: l7 `screens[7].widget.options[3].why`. $\log 5 = 0.699 < 1$, so the unit is smaller; the text now says "new unit".
+20. fixed: l7 `quiz[1].widget.accept`; l8 `quiz[0].widget.accept`. $\log_2 3 = 1.584962\ldots$, $\log_2 12 = 3.584962\ldots$.
+21. fixed: l7 `screens[9]`. B starts at £12.00: $\log 12 = 1.0792$, $12 \times 1.25 = 15$, $\log 15 = 1.1761$; canvas range 1.0 to 1.5, point p16 replaced by p12, explain-canvas arrow `jB` moved to 1.079 to 1.176, `added` 17, `diff-log` 12.1. Graded answer changed (20 to 15).
+22. fixed: l8 `screens[1].feedback.correct`. $500 \times 1.1^{4.9} = 797.62$, about £798.
+23. fixed: l8 `screens[2].widget.wrong[1]` (0.0084, $0.2041 \times 0.0414 = 0.00845 \to 0.0084$) and tol 0.005 on `wrong[1]`, `wrong[2]`; review-2 `items[5].widget.wrong[1].tol` 0.005. Each 2 dp slip (0.01, 0.16, 0.17) lies in its band and none reaches the answer band.
+24. fixed: l9 `quiz[3].explain.text`, `screens[6].explain.text`. $1.02^4 = 1.08243$, $e^{0.079} = 1.08220 > 1.08$; $e^{0.06} = 1.0618$.
+25. fixed: l9 `screens[9].prose` names the AER. Basis: $e^{0.05} - 1 = 5.127\%$; AER is the UK term for the once-a-year equivalent rate on savings (FCA Handbook glossary, "annual equivalent rate").
+26. fixed: l10 `screens[3].prose`. Basis: $\ln x = \log_e x$ (ISO 80000-2, natural logarithm); Python docs for `math.log`: one argument gives the natural logarithm. $\ln 5 = 1.6094$.
+27. fixed: l10 (`screens[2]` and every other string) and l13: "slope" to "gradient" in all strings; the `{slope}` token and the id `q-slope-rate` kept. No "slope" remains in a lesson file. Basis: GCSE and A-level use "gradient"; functions l6. O3 is moot (course.json has no "slope").
+28. fixed: l10 `screens[5].prose` cites l6, which proves the laws for any base $b$.
+29. fixed: l10 `screens[10]` hints[1], hints[2], `byKey.yearly`, `explain.text`. $100 / 92.31 = 1.083306 \to 1.08331$; $\ln 1.08331 = 0.08002$; $\sqrt{1.08331} - 1 = 4.082\%$.
+30. fixed: l11 `screens[2].explain.text`. Basis: $\tfrac{B}{100} + \tfrac{121}{B} = 2.21$ gives $B^2 - 221B + 12100 = (B - 100)(B - 121) = 0$.
+31. fixed: l11 `screens[4].prose` ("The first three daily log returns are marked").
+32. fixed: l12 `screens[2].widget.options[2].why`. $\ln 2 / 0.12 = 5.7762$; $12 \times 5.776 = 69.31$.
+33. fixed: l12 `screens[5].feedback.byKey.r0c2`. $\ln 1.02 = 0.019803$; $0.69315 / 0.019803 = 35.002$.
+34. fixed: l12 `screens[3].widget.wrong[2].tol` and `screens[9].widget.wrong[2].tol` both 0.005 (0.1386 and 0.0462 typed as 0.14 and 0.05 fall inside).
+35. fixed: l12 `quiz[1].widget.options[3].why`. $\tfrac{1}{2 \times 3} = \tfrac16$; $(\tfrac12)^3 = \tfrac18$.
+36. fixed: l12 `quiz[0].feedback.byKey.72`. $\ln 2 / 0.1 = 6.9315$. (The `72` key is numeric; the edit was applied to the key's own string.)
+37. fixed: l12 `quiz[3].feedback.byKey.72`. $72 - 69.66 = 2.34$ at 1%; at 2% the rule is $36 - 35.00 = 1.00$ long.
+38. fixed: l12 `screens[9].feedback.byKey.linear`; review-3 `items[3].feedback.byKey.linear`. $1 - e^{-0.15} = 0.139$, $1 - e^{-0.2} = 0.181$, so "15% / 20% of what is left" was wrong for a continuous rate.
+39. fixed: l13 `screens[3].prose` links to l7's base-10 log.
+40. fixed: l13 `screens[1].widget.options[0].text`, `screens[4].widget.options[1].text`, `options[2].text`.
+41. fixed: review-3 `items[0]` is now the A minus B difference. $6000e^{0.28} = 7938.78$, $6000 \times 1.035^8 = 7900.85$, difference 37.92 (37.93 from rounded values); simple slip $7938.78 - 7680 = 258.78$. Graded answer changed (7938.78 to 37.92).
+42. fixed: review-3 `items[4]`. $20 \times 16^{1/4} = 40$; pounds slip $20 + 300/4 = 95$. Key unchanged at 40.
+43. fixed: review-2 `items[2]` is now numeric. $3^4 = 81 < 200 < 243 = 3^5$ so hour 5; $\log_3 200 = 4.82$; slips 4, 67, 3. Graded answer changed (choice "4 and 5" to numeric 5).
+44. fixed: homework-3 `items[1].widget.wrong[0]` value 46.125, tol 0.006. $45 \times 1.025 = 46.125$; typed 46.12, 46.125 or 46.13 all inside; answer band untouched.
+45. fixed: homework-3 `items[2].prose` defines the standard deviation as the square root of the variance; widget `over100: true`. The item stays self-contained (O4 kept; no edge added).
+46. fixed: homework-3 `items[5]` generic line and new wrong `pct` ($\tfrac{\ln 4}{8}$) with its byKey line.
+47. fixed: homework-3 `items[9].model` (b) and (d). $\sum \ln(1 + r_i) = 0.132941$; $e^{0.13294} - 1 = 0.14218$; $0.13294 / 6 = 0.022157$.
+48. fixed: homework-3 `items[0]` is now the price question. $1000e^{-0.21} = 810.58$; slips $1000 / 1.042^5 = 814.07$, $1000 / 1.21 = 826.45$, $1000e^{-0.042} = 958.87$. Graded answer changed (0.04214 to 810.58).
+
+Orchestrator items: O1 and O2 applied by the orchestrator (not touched here). O3 moot (no "slope" in course.json; finding 27 fixed in the lesson files). O4 kept: homework-3 `items[2]` is self-contained per finding 45.
+
+Engine notes: 1 (expression grader, equations) fixed by ENGINE-BACKLOG 619 (and 618): checked on the real `grade.js` with Compute Engine 0.30.2: `V_n=2500\cdot1.06^n` and `V=2500\cdot1.06^n` pass homework-1 `items[0]`, `t=\frac{\ln4}{0.08}` passes homework-3 `items[5]`, and the slips `V=2500\cdot0.06^n` and `t=\frac{\ln4}{8}` are refused. No workaround accept form was added. Engine 2 (validator `shown-arithmetic` after an earlier `\approx`): deferred, engine-only, already in the inbox.
+
+Numbers: `docs/reports/exp-log-L1-numbers.py` 313 of 313, `-L2-` 258 of 258, `-L3-` 314 of 314, all exit 0. Every former "content wrong" check now asserts the corrected value or wording (no check accepts old or new). New checks cover findings 1, 2, 6, 7, 9, 10, 11, 13, 14, 15, 16 to 23, 24 to 26, 28 to 38, 41 to 48. A check goes red if a fix is reverted.
+
+Gates:
+- Voice scan (`VOICE_BASE=app/content/courses/exp-log python3 docs/reviews/voice-scan.py 35`): 0 sentences over 35 words, 0 explanations over three sentences.
+- `node tools/validate.mjs`: 0 errors (the two transient errors on l12 `quiz[0]` and `quiz[3]` `byKey` came from a numeric-key edit slip and were repaired before the final run). exp-log warnings left: l8 `screens[4]` canvas (a `manipulate` screen), and advisory `O2-long-sentence` on the reader's own new wording in l9 `screens[9].prose`, l11 `screens[2].explain.text`, l13 `screens[3].prose`, l13 `quiz[0].prose`, review-3 `items[4].prose` (under 35 words, 20 is a target).
+- Playthrough with `--local-cdn`, desktop and `--mobile`: all 13 lessons (l1 to l13) and review-1 to review-3, homework-1, homework-3 played: 18 of 18 ok on desktop and 18 of 18 ok with `--mobile`, 0 browser relaunches. homework-2 is unchanged and was not replayed.

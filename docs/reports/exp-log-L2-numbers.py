@@ -1,14 +1,19 @@
 """Second-read number checks for exp-log level 2 (Logarithms): l5 to l8, review-2, homework-2.
-Written by the second reader (docs/reviews/review-exp-log-1-3.md). Checks marked "content wrong" fail until the fix pass."""
+Written by the second reader (docs/reviews/review-exp-log-1-3.md). Fix pass applied: every check now asserts the corrected value or wording."""
 import math
 import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
-from numbers_lib import Level
+from numbers_lib import Level, _walk
 
 lv = Level("exp-log", 2)
 E = lv.expect
+
+
+def N(ref, path):
+    return _walk(lv._file(ref)[1], path)[0]
+
 log, ln, l2 = math.log10, math.log, math.log2
 
 
@@ -37,12 +42,16 @@ E("l5", "screens[9].explain.text", round(l2(100), 2))
 E("l5", "quiz[0].widget.answer", round(math.log(81, 3)))
 E("l5", "quiz[2].explain.text", round(l2(50), 2))
 E("l5", "quiz[3].widget.options[3].why", round(4 ** 0.25, 2))
+lv.claim(abs(math.log(2, 4) * l2(4) - 1) < 1e-12 and math.log(2, 4) == 0.5 and l2(4) == 2 and "turns the log into its reciprocal" in lv.text("l5", "quiz[3].explain.text")
+         and "turns 2 into" not in lv.text("l5", "quiz[3].explain.text"), "l5 quiz[3]: log_4 2 = 1/2 and log_2 4 = 2 are reciprocal logs (finding 16)")
 
 # ---- l6 products into sums
 E("l6", "screens[0].feedback.correct", 32 * 128)
 lv.claim(2 ** 5 * 2 ** 7 == 2 ** 12, "l6 s0: row 5 plus row 7 is row 12")
-lv.claim_text("l6", "screens[0].feedback.byKey.r8c1", "it does not take one from the other", 2 ** (7 - 5) == 256,
-              "l6 s0 r8c1: tapping 256 comes from taking one power from the other")    # content wrong (finding 17)
+lv.claim(256 == 128 * 2 and 2 ** (7 - 5) == 4 and "256 is $128 \\times 2$" in lv.text("l6", "screens[0].feedback.byKey.r8c1") and "2^{7 - 5}" in lv.text("l6", "screens[0].feedback.byKey.r2c1"),
+         "l6 s0: 256 is one doubling of 128 (r8c1); 4 is 2^(7-5), the subtraction slip (r2c1) (finding 17)")
+E("l6", "screens[0].feedback.byKey.r8c1", 128 * 2)
+E("l6", "screens[0].feedback.byKey.r2c1", 2 ** (7 - 5))
 E("l6", "screens[1].widget.options[1].why", 128 - 16)
 E("l6", "screens[2].widget.answer", 5 + 3)
 E("l6", "screens[2].widget.wrong[0].value", 5 * 3)
@@ -70,9 +79,15 @@ E("l6", "screens[10].explain.text", 20000 * 1.5)
 E("l6", "quiz[0].widget.answer", round(l2(40), 3))
 E("l6", "quiz[0].widget.wrong[0].value", round(3 * 2.322, 3))
 E("l6", "quiz[1].explain.text", 243 / 9)
-# quiz[3]: the hint's test values x = y = 4 cannot break the power distractor at k = 2
-lv.claim_text("l6", "quiz[3].feedback.generic", "$x = 4$ and $y = 4$", (l2(4)) ** 2 != 2 * l2(4),
-              "l6 quiz[3]: x = 4 breaks (log x)^k = k log x")                           # content wrong (finding 18)
+# quiz[3]: the test values x = 8, y = 4 break every wrong statement, the power one at k = 2 included
+lv.claim("$x = 8$ and $y = 4$" in lv.text("l6", "quiz[3].feedback.generic") and "$x = 4$" not in lv.text("l6", "quiz[3].feedback.generic"),
+         "l6 quiz[3]: the hint names x = 8 and y = 4 (finding 18)")
+lv.claim(l2(8 * 4) == 5 == l2(8) + l2(4) and l2(8 + 4) != 5 and l2(8 / 4) != l2(8) / l2(4) and l2(8 ** 2) != l2(8) ** 2,
+         "l6 quiz[3]: with b = 2, x = 8, y = 4 only the product law holds (finding 18)")
+E("l6", "quiz[3].explain.text", 6)
+E("l6", "quiz[3].explain.text", 9)
+E("l6", "quiz[3].explain.text", round(l2(12), 3))
+E("l6", "quiz[3].explain.text", 1.5)
 
 # ---- l7 changing base
 E("l7", "screens[0].widget.answer", round(log(100000 / 100)))
@@ -91,15 +106,21 @@ E("l7", "screens[5].feedback.byKey.tens", round(1 / log(2), 1))
 E("l7", "screens[5].explain.text", 2 ** 20)
 E("l7", "screens[7].feedback.correct", round(math.log(200, 5), 2))
 E("l7", "screens[7].explain.text", round(log(5), 3))
-lv.claim_text("l7", "screens[7].widget.options[3].why", "Converting to a bigger unit", log(5) > 1,
-              "l7 s7: one base-5 unit is bigger than a tenfold step")                      # content wrong (finding 19)
+lv.claim(log(5) < 1 and "Converting to a new unit means dividing by its size" in lv.text("l7", "screens[7].widget.options[3].why") and "bigger unit" not in lv.text("l7", "screens[7].widget.options[3].why"),
+         "l7 s7: a base-5 unit is smaller than a tenfold step (log 5 = 0.699), so the why does not say bigger (finding 19)")
 E("l7", "screens[9].explain.text", round(log(1.25), 3))
-E("l7", "screens[9].widget.answer", 16 * 1.25)
-E("l7", "screens[9].widget.wrong[1].value", round(16 + log(1.25), 1))
+E("l7", "screens[9].widget.answer", 12 * 1.25)
+E("l7", "screens[9].feedback.correct", 12 * 1.25)
+E("l7", "screens[9].explain.text", 12 * 1.25)
+lv.claim(abs(log(12) - 1.079) < 5e-4 and abs(log(12) + log(1.25) - log(15)) < 1e-12 and abs(log(15) - 1.176) < 5e-4 and abs(log(20) - 1.301) < 5e-4 and abs(log(25) - 1.398) < 5e-4,
+         "l7 s9: B starts at £12.00 (log 1.079) and ends at £15.00 (log 1.176); A is log 20 to log 25, so £20.00 is no longer on the canvas (finding 21)")
+lv.claim([p["label"] for p in N("l7", "screens[9].canvas.state.points")] == ["£12.00", "£20.00", "£25.00"], "l7 s9: the canvas has no £15.00 label (finding 21)")
+E("l7", "screens[9].widget.wrong[1].value", round(12 + log(1.25), 1))
+E("l7", "screens[9].widget.wrong[0].value", 12 + 5)
 E("l7", "quiz[1].widget.wrong[0].value", round(log(2) / log(3), 3))
 E("l7", "quiz[1].widget.wrong[1].value", round(log(1.5), 3))
-lv.claim_text("l7", "quiz[1].widget.accept", "exactly 1.585", abs(l2(3) - 1.585) < 1e-9,
-              "l7 quiz[1]: log2 3 is exactly 1.585")                                         # content wrong (finding 20)
+lv.claim("exactly" not in lv.text("l7", "quiz[1].widget.accept") and "1.58496" in lv.text("l7", "quiz[1].widget.accept") and abs(l2(3) - 1.58496) < 5e-6 and round(l2(3), 2) == 1.58,
+         "l7 quiz[1]: log2 3 = 1.58496..., accept 1.58 (and 1.59) (finding 20)")
 E("l7", "quiz[2].explain.text", round(log(1.5), 3))
 lv.claim(abs(55 / 30 - 1 - 0.83) < 0.005, "l7 quiz[2]: £30 to £55 is +83%")
 E("l7", "quiz[3].widget.options[2].text", round(log(9) / log(27), 3))
@@ -109,12 +130,18 @@ E("l7", "quiz[3].widget.options[3].text", round(log(3), 3))
 E("l8", "screens[0].feedback.correct", r2(500 * 1.1 ** 4))
 E("l8", "screens[0].feedback.correct", r2(500 * 1.1 ** 5))
 E("l8", "screens[0].widget.answer", next(n for n in range(30) if 500 * 1.1 ** n > 800))
-lv.claim_text("l8", "screens[1].feedback.correct", "about £796", abs(500 * 1.1 ** 4.9 - 796) < 0.5,
-              "l8 s1: the balance at 4.9 years is about £796")                               # content wrong (finding 22)
+lv.claim("about £798" in lv.text("l8", "screens[1].feedback.correct") and round(500 * 1.1 ** 4.9) == 798 and "£796" not in lv.text("l8", "screens[1].feedback.correct"),
+         "l8 s1: the balance at 4.9 years is 500 x 1.1^4.9 = 797.62, about £798 (finding 22)")
 E("l8", "screens[1].explain.text", round(ln(1.6) / ln(1.1), 2))
 E("l8", "screens[2].widget.answer", round(0.2041 / 0.0414, 2))
 E("l8", "screens[2].widget.wrong[0].value", round(0.0414 / 0.2041, 3))
-E("l8", "screens[2].widget.wrong[1].value", round(0.2041 * 0.0414, 4))   # content wrong (finding 23): 0.0084, not 0.0085
+E("l8", "screens[2].widget.wrong[1].value", round(0.2041 * 0.0414, 4))
+lv.claim(N("l8", "screens[2].widget.wrong[1].value") == 0.0084 and round(0.2041 * 0.0414, 4) == 0.0084, "l8 s2: 0.2041 x 0.0414 = 0.0084, not 0.0085 (finding 23)")
+for i_, v_ in ((1, 0.2041 * 0.0414), (2, 0.2041 - 0.0414)):   # the slip typed to 2 dp falls inside its band
+    lv.claim(abs(round(v_, 2) - N("l8", f"screens[2].widget.wrong[{i_}].value")) <= N("l8", f"screens[2].widget.wrong[{i_}].tol")["abs"],
+             f"l8 s2 wrong[{i_}]: the slip rounded to 2 dp ({round(v_, 2)}) is inside its band (finding 23)")
+lv.claim(abs(round(log(1.2) / log(3), 2) - N("review", "items[5].widget.wrong[1].value")) <= N("review", "items[5].widget.wrong[1].tol")["abs"],
+         "review-2 items[5] wrong flip: the slip rounded to 2 dp (0.17) is inside its band (finding 23)")
 E("l8", "screens[2].widget.wrong[2].value", round(0.2041 - 0.0414, 4))
 E("l8", "screens[3].widget.answer", round(log(50) / log(3), 3))
 E("l8", "screens[3].widget.wrong[0].value", round(50 / 3, 2))
@@ -135,8 +162,8 @@ E("l8", "screens[9].hints[2].text", round(log(1.07), 5))
 E("l8", "screens[9].explain.text", r2(1000 * 1.07 ** 11))
 E("l8", "screens[9].explain.text", r2(1000 * 1.07 ** 10))
 E("l8", "quiz[0].widget.answer", round(l2(12), 3))
-lv.claim_text("l8", "quiz[0].widget.accept", "exactly 3.585", abs(l2(12) - 3.585) < 1e-9,
-              "l8 quiz[0]: log2 12 is exactly 3.585")                                         # content wrong (finding 20)
+lv.claim("exactly" not in lv.text("l8", "quiz[0].widget.accept") and "3.58496" in lv.text("l8", "quiz[0].widget.accept") and abs(l2(12) - 3.58496) < 5e-6 and round(l2(12), 2) == 3.58,
+         "l8 quiz[0]: log2 12 = 3.58496..., accept 3.58 (and 3.59) (finding 20)")
 E("l8", "quiz[1].feedback.correct", 202.5 / 40)
 lv.claim(abs(1.5 ** 4 - 5.0625) < 1e-12, "l8 quiz[1]: 1.5^4 = 5.0625")
 E("l8", "quiz[1].widget.wrong[0].value", round(log(202.5) / log(60), 3))
@@ -149,6 +176,15 @@ E("l8", "quiz[3].explain.text", round(log(0.8), 4))
 
 # ---- review-2
 E("review", "items[2].explain.text", round(math.log(200, 3), 2))
+first3 = next(h for h in range(1, 20) if 3 ** h > 200)
+lv.claim(first3 == 5 and 3 ** 4 == 81 and 3 ** 5 == 243 and 3 ** 4 < 200 < 3 ** 5, "review-2 items[2]: a colony tripling hourly first passes 200 cells in hour 5 (81 < 200 < 243) (finding 43)")
+E("review", "items[2].widget.answer", first3)
+E("review", "items[2].widget.wrong[0].value", 4)
+E("review", "items[2].widget.wrong[1].value", round(200 / 3))
+E("review", "items[2].widget.wrong[2].value", len(str(200)))
+E("review", "items[2].feedback.correct", 81)
+E("review", "items[2].feedback.correct", 243)
+E("review", "items[2].feedback.byKey.low", 81)
 E("review", "items[3].widget.answer", round(math.log(20, 4), 3))
 E("review", "items[3].widget.wrong[0].value", round(log(4) / log(20), 3))
 E("review", "items[3].widget.wrong[1].value", round(log(5), 3))
