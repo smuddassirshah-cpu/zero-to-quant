@@ -119,7 +119,7 @@ lv.claim(repr(q6("SELECT AVG(close) FROM prices WHERE ticker = 'AZN'")[0][0]) ==
 all9 = round(sum(r[2] for r in G) / 9, 2)
 lv.claim(all9 == round(q6("SELECT AVG(close) FROM prices")[0][0], 2) == 48.86, 'l6 all nine closes average 48.86, two ways')
 w_all = node('l6-per-group', 'screens[3]')['widget']['wrong'][2]
-lv.claim(abs(w_all['value'] - all9) <= w_all['tol']['abs'], f'l6 screens[3] wrong "all" ({w_all["value"]}) is the nine-close average {all9} (finding 1)',
+lv.claim(w_all['value'] == all9 == 48.86 and w_all['tol']['abs'] == 0.01, f'l6 screens[3] wrong "all" ({w_all["value"]}) is exactly the nine-close average {all9} (finding 1)',
          'the value does not come from averaging all nine closes')
 dt, T1 = build('l6-per-group', 'screens[5]', 'trades')
 n = len(dt.execute("SELECT date, ticker, COUNT(*) FROM trades GROUP BY date, ticker").fetchall())
@@ -133,13 +133,17 @@ lv.claim(trap['AZN'] == '2024-03-11', 'l6 trap: this SQLite prints 11 March besi
 mx = {t: max(r[2] for r in G if r[1] == t) for t in {r[1] for r in G}}
 maxrow = {r[1]: r[0] for r in G if r[2] == mx[r[1]]}           # date of each ticker's highest close, by hand
 bare = dict((t, d) for t, d, _ in q6("SELECT ticker, date, MAX(close) FROM prices GROUP BY ticker"))
-lv.claim_text('l6', 'screens[7].widget.options[1].text', 'MAX(close)', bare != maxrow,
-              'l6 screens[7]: bare date beside MAX(close) is arbitrary (finding 3)')
+bare_avg = dict((t, d) for t, d, _ in q6("SELECT ticker, date, AVG(close) FROM prices GROUP BY ticker"))
+lv.claim(bare == maxrow, 'l6: SQLite documents the lone-MAX rule, bare date comes from the max-close row (so MAX is not an arbitrary example)')
+lv.claim('AVG(close)' in lv.text('l6', 'screens[7].widget.options[1].text') and 'MAX' not in lv.text('l6', 'screens[7].widget.options[1].text') and bare_avg != maxrow,
+         'l6 screens[7]: bare date beside AVG(close) is arbitrary (finding 3)')
 mv = {t: max(r[3] for r in G if r[1] == t) for t in {r[1] for r in G}}
 maxvol = {r[1]: r[2] for r in G if r[3] == mv[r[1]]}           # close on each ticker's highest-volume day, by hand
 bare_c = dict((t, c) for t, c, _ in q6("SELECT ticker, close, MAX(volume) FROM prices GROUP BY ticker"))
-lv.claim_text('l6', 'quiz[3].widget.options[0].text', 'MAX(volume)', bare_c != maxvol,
-              'l6 quiz[3]: no rule picks the bare close beside MAX(volume) (finding 3)')
+bare_s = dict((t, c) for t, c, _ in q6("SELECT ticker, close, SUM(volume) FROM prices GROUP BY ticker"))
+lv.claim(bare_c == maxvol, 'l6: the bare close beside a lone MAX(volume) is the max-volume close (documented rule)')
+lv.claim('SUM(volume)' in lv.text('l6', 'quiz[3].widget.options[0].text') and bare_s != maxvol,
+         'l6 quiz[3]: no rule picks the bare close beside SUM(volume) (finding 3)')
 lv.claim(all(d == '2024-03-13' for (_, d) in q6("SELECT ticker, MAX(date) FROM prices GROUP BY ticker")), 'l6 screens[8]: MAX(date) = 2024-03-13 for each ticker')
 lv.expect('l6', 'quiz[0].widget.answer', 4)
 lv.expect('l6', 'quiz[2].widget.answer', 5 * 4 - 2)
@@ -171,8 +175,9 @@ tot = dict(q7("SELECT ticker, SUM(qty) FROM trades GROUP BY ticker"))
 lv.claim(tot == {'AZN': 950, 'BARC': 16000, 'SHEL': 700}, 'l7 quiz[1] totals 950, 16000, 700')
 lv.expect('l7', 'quiz[1].widget.answer', len(q7("SELECT ticker FROM trades GROUP BY ticker HAVING SUM(qty) > 1000")))
 slip = len(q7("SELECT ticker FROM trades WHERE qty > 1000 GROUP BY ticker"))
-lv.claim_text('l7', 'quiz[1].feedback.byKey.fills', 'You tested single fills against 1,000', slip == 2,
-              f'l7 quiz[1] "fills" slip (WHERE qty > 1000) gives 2 rows: it gives {slip} (finding 11)')
+q71 = node('l7-filtering-groups', 'quiz[1]')
+lv.claim(slip == 1 and 'fills' not in q71['feedback']['byKey'] and all(w['id'] != 'fills' for w in q71['widget']['wrong']),
+         f'l7 quiz[1]: the WHERE qty > 1000 slip gives {slip} row, the right answer, so the "fills" wrong value and line are gone (finding 11)')
 lv.expect('l7', 'quiz[3].widget.answer', len(q7("SELECT ticker FROM trades WHERE qty < 1000 GROUP BY ticker HAVING COUNT(*) >= 2")))
 
 # ---- l8
@@ -233,12 +238,13 @@ g = {}; exec(h2['solution'].split('def query')[0], g)
 db2 = g['db']; db2.execute("INSERT INTO trades VALUES (200, '2024-03-12', 'HSBA', 5000, 6.45)")
 counts = dict(db2.execute("SELECT ticker, COUNT(*) FROM trades GROUP BY ticker HAVING COUNT(*) > 20").fetchall())
 tie = len(set(counts.values())) < len(counts)
-lv.claim_text('homework', 'items[2].widget.solution', 'HAVING COUNT(*) > 20\nORDER BY COUNT(*) DESC\n"""', not tie,
-              f'homework-2 items[2] test 2: no tie at the sort key (counts {counts}) (finding 2)')
-fixed_sol = h2['solution'].replace('ORDER BY COUNT(*) DESC\n', 'ORDER BY COUNT(*) DESC, ticker\n')
-fixed_tests = [dict(t) for t in h2['tests']]
-fixed_tests[1]['expect'] = "[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('HSBA', 21, 523.8), ('SHEL', 21, 290.5)]"
-lv.claim(all(run_tests(fixed_sol, fixed_tests)) and not any(run_tests(h2['starter'], fixed_tests)), 'homework-2 items[2] proposed fix: tie-break solution passes, starter fails')
+lv.claim(tie and counts == {'AZN': 22, 'BARC': 35, 'HSBA': 21, 'SHEL': 21} and 'ORDER BY COUNT(*) DESC, ticker\n' in h2['solution'] and 'ties by ticker' in lv.text('homework', 'items[2].question'),
+         'homework-2 items[2] test 2 ties HSBA and SHEL on 21 and the solution and question break the tie by ticker (finding 2)')
+lv.claim(h2['tests'][1]['expect'] == "[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('HSBA', 21, 523.8), ('SHEL', 21, 290.5)]" and not any(run_tests(h2['starter'], h2['tests'])), 'homework-2 items[2]: test 2 expects HSBA before SHEL, starter fails every test')
+for alt in ['ORDER BY COUNT(*) DESC, ticker ASC\n', 'ORDER BY 2 DESC, 1\n', 'ORDER BY COUNT(*) DESC, ticker\n']:
+    base = h2['solution'].replace('ORDER BY COUNT(*) DESC, ticker\n', alt)
+    lv.claim(all(run_tests(base, h2['tests'])), f'homework-2 items[2]: tie-break variant {alt.strip()!r} passes all tests')
+lv.claim(not all(run_tests(h2['solution'].replace('ORDER BY COUNT(*) DESC, ticker\n', 'ORDER BY COUNT(*) DESC, ticker DESC\n'), h2['tests'])), 'homework-2 items[2]: the opposite tie-break (SHEL first) fails test 2, as the question says ties by ticker')
 for t, c, a in [('AZN', 22, 286.4), ('BARC', 35, 300.0), ('SHEL', 21, 290.5)]:
     qs = [100 * (k % 5 + 1) for k in range(c)]
     lv.claim(round(sum(qs) / c, 1) == a, f'homework-2 items[2]: {t} averages {a}')

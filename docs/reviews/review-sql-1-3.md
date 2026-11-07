@@ -88,3 +88,36 @@ No engine change is needed for these fixes. Three tooling items, also appended t
 - SQL code tests can expect a tie order their query does not fix (finding 2). Every build agreed on SHEL first, so the playthrough passed, but a learner who breaks the tie correctly fails. A check could rerun each SQL solution with the `ORDER BY` list extended by every selected column, in both directions, and flag a test whose expected rows change.
 - AUTHORING has no note on the SQL engine. The app runs SQLite 3.39.0 (Pyodide 0.27.7); author scripts run local SQLite (3.45 or newer). In 3.39.0, `SUM` and `AVG` of floats can differ in the last digit (`2.1500000000000004` against `2.15`), so SQL tests should `ROUND` float aggregates or compare with `isclose`, as these levels do. 3.39.0 has `FULL` and `RIGHT JOIN`, `NULLS FIRST`/`LAST`, `IS DISTINCT FROM` and the math functions, but not `string_agg`. Readers should not call a bare column beside a lone `MIN` or `MAX` arbitrary, or a text `PRIMARY KEY` non-null, in SQLite (findings 3, 5, 7).
 - Validator `key-length` fires on SQL-condition options whose key contains a distractor as its first part (l10 `screens[5]` `ON t.ticker = p.ticker AND t.date = p.date` against `ON t.ticker = p.ticker`; homework-3 `items[3]`). Such a key is long by construction. An exemption when every option is a single code span and the key starts with a distractor's text would clear these.
+
+## Fix pass
+
+Status per finding (22 fixed, 1 fixed with a deviation, 0 disputed, 0 deferred). Every corrected number was recomputed in the number scripts; every conceptual basis is the reader's run on SQLite plus the named documentation, and I re-ran the key cases on SQLite 3.53.1 here.
+
+1. fixed: l6 `screens[3].widget.wrong[2]` (`all`) is 48.86, tol 0.01. 439.70 / 9 = 48.8556.
+2. fixed: homework-2 `items[2]` question, solution (`ORDER BY COUNT(*) DESC, ticker`), `tests[1].expect`, `byKey.test-2` and explain. Test 2 ties HSBA and SHEL on 21, expected HSBA first. Tie-order check: the solution, `ORDER BY COUNT(*) DESC, ticker ASC` and `ORDER BY 2 DESC, 1` all pass every test; the starter fails every test; `ticker DESC` (SHEL first) fails test 2, as the question's "ties by ticker" requires.
+3. fixed: l6 `screens[7].widget.options[1]` is `ticker, date, AVG(close)`; `quiz[3].widget.options[0]` is `SELECT ticker, close, SUM(volume)`. Basis: sqlite.org/lang_select.html, "Bare columns in an aggregate query" (lone `min()`/`max()` rule); I ran both forms: `MAX` gives the max row, `AVG` and `SUM` give the first row of the group.
+4. fixed: homework-3 `items[1].explain.text`. Test 3's Retail has no prices, so a `WHERE` date test drops it; Telecoms survives (script check).
+5. fixed: homework-3 `items[0]` solution groups by `p.ticker, p.close`; explain updated. Passes all four tests including the tie; starter fails.
+6. fixed: homework-3 `items[7]` prose, question, `none` why, explain. Plan checked: `SCAN t`, `SEARCH p USING AUTOMATIC COVERING INDEX`. 3.53 adds a bloom-filter row that 3.39.0 lacks; the script ignores it.
+7. fixed: l9 `screens[8].explain.text` and `summary.formula.note`. Basis: sqlite.org/lang_createtable.html, "The PRIMARY KEY": a non-integer key may hold NULL unless `NOT NULL` is declared; I inserted two NULL text keys successfully.
+8. fixed: l10 `screens[7].prose` ("with no key declared").
+9. fixed: l3 `screens[7].prose` and `screens[5].widget.options[2].why`.
+10. fixed: l1 `screens[2].explain.text`.
+11. fixed: l7 `quiz[1]` `wrong[1]` and `byKey.fills` deleted; the slip returns 1 row.
+12. fixed: homework-1 `items[7].model`. `ticker = 'VOD' AND close = NULL` is false for SHEL and BATS rows, unknown for VOD.
+13. fixed: l2 `quiz[1].widget.options[2].why`.
+14. fixed: l5 `screens[4].widget.how`.
+15. fixed: six keys shortened (l3 `quiz[2]`, l9 `screens[5]`, l10 `quiz[1]` and `quiz[3]`, review-3 `items[8]`, review-2 `items[7]`). The review-2 `items[7]` explain now states £117.60 so the validator's explain-answer rule stays quiet.
+16. fixed with a deviation: homework-3 `items[2]`. The validator requires `widget.prompt` on a longform item ("required field missing"), so deleting it is not possible. Instead `prose` and `question` are removed and their text is merged into `widget.prompt` (setup, then the full ask), which the learner sees whole. Same effect: the edge-case and automatic-check asks are visible.
+17. fixed: `screens[0].type` is `explore` in l1, l2, l3, l4, l6, l7, l8, l9, l10, l11. l12 `screens[0]` is a `choice` on a static table and stays `problem`.
+18. fixed: homework-1 `items[7].prompt` last paragraph is now four short sentences.
+19. fixed: homework-3 `items[5].explain.text` is three sentences.
+20. fixed: review-3 `items[2]`: left join with `AND t.qty > 0`, answer 6, wrong 5, 8, 7. Checked: `COUNT(*)` 6, `COUNT(t.id)` 5, 8 without the test, trades 4 and 7 are the sales.
+21. fixed: review-3 `items[3]`: `date = ? AND ticker IN (?, ?)`, four options. Right call returns BP and SHEL on 4 March; the swapped order returns nothing; the joined text raises the bindings error.
+22. fixed: homework-3 `items[4]`: `p.date <= t.date`, answer 15 (1+1+2+2+3+3+3, also by SQL), wrong 7 and 21, `byKey` is `seven` and `half`.
+23. fixed: review-2 `items[8]`: smallest fill by `MIN(qty)`, three options.
+
+Number scripts: `docs/reports/sql-L1-numbers.py` exit 0 (133 of 133); `sql-L2-numbers.py` exit 0 (153 of 153); `sql-L3-numbers.py` exit 0 (126 of 126). Checks for findings 2, 3, 4, 5, 6, 11, 20 to 22 were rewritten to assert the new text and value, so reverting a fix fails them.
+Voice scan at 35: 0 sentences over 35 words, 0 explanations over three sentences.
+Validator: 0 errors.
+Playthrough with `--local-cdn`: `--lesson` l1 to l11 and `--set` review-2, review-3, homework-1, homework-2, homework-3, desktop and `--mobile`: 32 of 32 runs "All passed", exit 0, no timeouts. Code items touched (homework-2 `items[2]`, homework-3 `items[0]`): solution passes, starter fails, in CPython (number scripts).

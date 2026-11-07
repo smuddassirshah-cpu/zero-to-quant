@@ -182,12 +182,12 @@
       ],
       "title": "The most active names",
       "prose": "The starter generates a day of fills: 22 for AZN, 35 for BARC, 21 for SHEL and 20 for HSBA.",
-      "question": "Return each ticker with more than 20 fills, busiest first. Give its fill count and its average fill size to 1 place.",
+      "question": "Return each ticker with more than 20 fills, busiest first, ties by ticker. Give its fill count and its average fill size to 1 place.",
       "widget": {
         "kind": "code",
         "language": "python",
         "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\nbase = {\"AZN\": 118.90, \"BARC\": 2.17, \"SHEL\": 26.00, \"HSBA\": 6.45}\ncounts = {\"AZN\": 22, \"BARC\": 35, \"SHEL\": 21, \"HSBA\": 20}\nn = 0\nfor ticker in counts:\n    for k in range(counts[ticker]):\n        n += 1\n        db.execute(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\",\n                   (n, \"2024-03-12\", ticker, 100 * (k % 5 + 1), base[ticker]))\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*)\nFROM trades\nGROUP BY ticker\n\"\"\"\n",
-        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\nbase = {\"AZN\": 118.90, \"BARC\": 2.17, \"SHEL\": 26.00, \"HSBA\": 6.45}\ncounts = {\"AZN\": 22, \"BARC\": 35, \"SHEL\": 21, \"HSBA\": 20}\nn = 0\nfor ticker in counts:\n    for k in range(counts[ticker]):\n        n += 1\n        db.execute(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\",\n                   (n, \"2024-03-12\", ticker, 100 * (k % 5 + 1), base[ticker]))\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*), ROUND(AVG(qty), 1)\nFROM trades\nGROUP BY ticker\nHAVING COUNT(*) > 20\nORDER BY COUNT(*) DESC\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\nbase = {\"AZN\": 118.90, \"BARC\": 2.17, \"SHEL\": 26.00, \"HSBA\": 6.45}\ncounts = {\"AZN\": 22, \"BARC\": 35, \"SHEL\": 21, \"HSBA\": 20}\nn = 0\nfor ticker in counts:\n    for k in range(counts[ticker]):\n        n += 1\n        db.execute(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\",\n                   (n, \"2024-03-12\", ticker, 100 * (k % 5 + 1), base[ticker]))\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*), ROUND(AVG(qty), 1)\nFROM trades\nGROUP BY ticker\nHAVING COUNT(*) > 20\nORDER BY COUNT(*) DESC, ticker\n\"\"\"\n",
         "examples": [
           {
             "call": "db.execute(query()).fetchall()",
@@ -204,7 +204,7 @@
           {
             "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO trades VALUES (200, '2024-03-12', 'HSBA', 5000, 6.45);\")",
             "call": "t2.execute(query()).fetchall()",
-            "expect": "[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('SHEL', 21, 290.5), ('HSBA', 21, 523.8)]",
+            "expect": "[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('HSBA', 21, 523.8), ('SHEL', 21, 290.5)]",
             "compare": "equal"
           },
           {
@@ -221,11 +221,11 @@
         "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
         "byKey": {
           "test-1": "Test 1 expects `[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('SHEL', 21, 290.5)]`.",
-          "test-2": "Test 2 gives HSBA a 21st fill of 5,000 shares, so it must appear with its new average."
+          "test-2": "Test 2 gives HSBA a 21st fill of 5,000 shares, so it ties SHEL on 21. Break the tie by ticker: HSBA comes first."
         }
       },
       "explain": {
-        "text": "`HAVING COUNT(*) > 20` drops HSBA with exactly 20. `ORDER BY COUNT(*) DESC` sorts the surviving groups by their own count."
+        "text": "`HAVING COUNT(*) > 20` drops HSBA with exactly 20. `ORDER BY COUNT(*) DESC, ticker` sorts by count and breaks a tie by name, so the order never depends on luck."
       }
     },
     {
