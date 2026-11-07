@@ -414,6 +414,58 @@
       "explain": {
         "text": "Each number in the report was computed honestly; each was read too generously. The corrections are all from this level: non-overlapping dates, quintile cut points per date, and weights chosen before they are scored."
       }
+    },
+    {
+      "id": "h-overlap-aloud",
+      "performance": "aloud",
+      "difficulty": 5,
+      "skills": [
+        "al-ic"
+      ],
+      "pace": 480,
+      "question": "Start the clock and answer aloud. Then mark your answer against the model.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A colleague measures a value signal's rank IC on every trading day for three years: 756 dates, each against the shares' next 63-day return. The mean IC is 0.04 and the t statistic is 9.5. A portfolio manager asks why you will not quote 9.5.\n\nExplain aloud, in two minutes, why measuring on overlapping dates inflates the t statistic. Say roughly how much it does so here, what stays valid, and what you would report instead.",
+        "think": 30,
+        "seconds": 120,
+        "followUps": [
+          "Would it help to compute the sd from the 756 daily ICs instead of from quarterly ones?",
+          "You use Newey-West on the 756 daily ICs. How many lags, and why that number?",
+          "Dates 63 days apart leave only 12 ICs. Is that weaker evidence than the 756?"
+        ],
+        "model": "**Why neighbouring ICs repeat each other.** The IC on day $t$ scores the signal against returns over days $t + 1$ to $t + 63$. The IC on day $t + 1$ uses days $t + 2$ to $t + 64$, so 62 of its 63 days are the same. Two ICs $k$ days apart share $63 - k$ days. If each day adds its own independent noise, their correlation is about $1 - k/63$, which reaches 0 only at 63 days apart.\n\n**What the t statistic assumes.** $t = \\overline{IC}/(s/\\sqrt n)$ takes $s^2/n$ as the variance of the mean. The variance of a mean of $n$ draws is $\\sigma^2/n^2$ times the sum of all their pairwise correlations, each IC with itself included. Only when the dates are independent is that sum $n$, giving $\\sigma^2/n$.\n\n**How much overlap adds.** With correlation $1 - k/h$ at lag $k < h$, each IC counts 1 for itself and $1 - k/h$ for each neighbour $k$ days away, on both sides. Since $\\sum_{k=1}^{h-1} k = h(h - 1)/2$, the weights sum to $\\sum_{k=1}^{h-1}(1 - k/h) = (h - 1) - (h - 1)/2 = (h - 1)/2$. Dates near the ends of the sample have fewer neighbours, which matters little when $n$ is far above $h$. So:\n$$\\begin{aligned} \\operatorname{Var}(\\overline{IC}) &\\approx \\frac{\\sigma^2}{n}\\Big[1 + 2\\sum_{k=1}^{h-1}\\Big(1 - \\frac{k}{h}\\Big)\\Big] \\\\ &= \\frac{\\sigma^2}{n}\\,\\big[1 + (h - 1)\\big] = \\frac{h\\,\\sigma^2}{n}. \\end{aligned}$$\nSo the true standard error is about $\\sqrt h$ times the formula's, and $t$ is about $\\sqrt h$ times too big. Put another way, $n$ overlapping dates carry about $n/h$ independent ones: here $756/63 = 12$ quarters.\n\n**The numbers.** $\\sqrt{63} = 7.94$, so the honest $t$ is about $9.5/7.94 = 1.2$. The same figure comes from the count: $t$ grows with $\\sqrt n$, and 12 independent dates instead of 756 divide it by $\\sqrt{756/12} = \\sqrt{63}$. A $t$ of 1.2 is well below 2, so three years cannot tell this signal from luck.\n\n**What does not change.** Overlap does not bias the mean IC: each day's IC is a fair measurement, so 0.04 stands. The sd $s$ of the daily ICs is close to the spread of one IC. Only the number of independent pieces of evidence is wrong.\n\n**What to report.** Either the ICs on dates 63 days apart, 12 of them, with $t$ from their own mean and sd. Or all 756 ICs with a Newey-West standard error using 62 lags, which adds the neighbours' covariances back.\n\n**Said aloud.** \"Each day's IC shares 62 of its 63 return days with the next, so the 756 numbers are really about 12 independent quarters. The $t$ formula assumes 756 independent draws, so it is too big by about $\\sqrt{63}$, nearly eight. The honest $t$ is about 1.2: the mean IC may be real, but three years cannot tell it from luck.\"\n\n**The follow-ups.** (1) No. The sd of the daily ICs is about right either way; the error is in $\\sqrt n$, which counts 756 draws where there are about 12. (2) 62 lags: ICs 63 or more days apart share no return day, so their correlation is 0 and nothing beyond lag 62 needs adding. (3) About the same evidence. Using all 756 with an honest standard error averages over the 63 possible start days and is a little steadier. It cannot turn three years into more than about 12 quarters of evidence.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Overlap: neighbouring ICs share 62 of their 63 return days. They are near copies, and stay correlated until 63 days apart"
+          },
+          {
+            "points": 3,
+            "text": "Why $t$ inflates: the formula's $s^2/n$ needs independent dates. Overlap adds the neighbours' covariances, about 63 times that variance. So the standard error is about $\\sqrt{63}$ times too small: about 12 independent dates, not 756",
+            "required": true
+          },
+          {
+            "points": 2,
+            "text": "The numbers: $\\sqrt{63} \\approx 7.9$, so the honest $t$ is about 1.2, below 2"
+          },
+          {
+            "points": 2,
+            "text": "What stays valid: overlap does not bias the mean IC, and the sd of the daily ICs is about right. Only the count of independent dates is wrong"
+          },
+          {
+            "points": 1,
+            "text": "The fix: ICs on dates 63 days apart, or a Newey-West standard error with 62 lags"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare what you said with the model and tick the rubric.",
+        "generic": "Compare what you said with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "Each day's IC shares 62 of its 63 return days with the next, so 756 dates carry about 12 independent quarters. The t formula counts 756 independent draws, so it is about $\\sqrt{63} = 7.94$ times too big. The honest $t$ is about $9.5/7.94 = 1.2$."
+      }
     }
   ]
 }
