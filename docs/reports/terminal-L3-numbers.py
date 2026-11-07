@@ -34,7 +34,9 @@ lv.expect("l10", "screens[1].prose", len('print("hello")'))
 lv.expect("l10", "quiz[1].widget.answer", b("print(2 + 2)"))
 lv.expect("l10", "quiz[1].widget.wrong[0].value", len("print(2 + 2)"))
 lv.expect("l10", "quiz[1].widget.wrong[1].value", b("print(2+2)"))           # both spaces skipped, newline kept
-lv.stated("l10", "quiz[1].feedback.byKey.no-spaces", "or the newline", len("print(2 + 2)") == 11)
+ns = lv.text("l10", "quiz[1].feedback.byKey.no-spaces")
+lv.claim(len("print(2+2)") == 10 and 10 + 2 + 1 == b("print(2 + 2)") == 13 and "10 + 2 + 1 = 13" in ns and "or the newline" not in ns,
+         "l10 quiz[1] no-spaces (fixed): 10 + 2 + 1 = 13")
 lv.expect("l10", "screens[7].widget.answer", 300 / 20 - 300 / 40)
 lv.expect("l10", "screens[7].widget.wrong[0].value", 300 / 20)
 lv.expect("l10", "screens[7].widget.wrong[1].value", 40 - 20)
@@ -60,7 +62,8 @@ lv.claim(search(P, H, "ls")[1] == P, "l11 screens[0]: ls opens all three folders
 lv.expect("l11", "screens[2].widget.options[0].text", search(P, H, "python3")[0])
 lv.claim(search(["/usr/bin", "/bin"], H, "python3")[0] == "/usr/bin/python3", "l11 screens[8]: the job's PATH finds /usr/bin/python3")
 lv.claim(search(P, H, "code")[0] is None, "l11 screens[3]: code is not found")
-hb = "/Users/ana/bin" if "/Users/ana/bin" in lv.text("l11", "screens[6]") else "/home/ana/bin"   # review finding: /home becomes /Users
+hb = "/Users/ana/bin"   # fixed: the Mac home, as the lessons from the terminal level onward use
+lv.claim("/home/ana" not in lv.text("l11", "screens[6]"), "l11 screens[6]: no /home/ana left")
 lv.expect("l11", "screens[6].widget.options[0].text", search([hb, "/usr/bin"], {hb: {"report"}, "/usr/bin": {"report"}}, "report")[0])
 lv.expect("l11", "quiz[0].widget.options[0].text", search(P, {"/usr/bin": {"jq"}, "/bin": {"jq"}}, "jq")[0])
 five = [f"/d{i}" for i in range(1, 6)]
@@ -69,6 +72,25 @@ lv.expect("homework", "items[1].widget.wrong[0].value", len(five))
 lv.claim(search(["/opt/homebrew/bin", "/usr/bin", "/bin"], {"/opt/homebrew/bin": {"git"}, "/usr/bin": {"git"}}, "git")[0].startswith("/opt/homebrew"), "review-3 items[2]: homebrew git wins")
 new = ["/usr/local/bin", "/opt/homebrew/bin", "/usr/bin"]
 lv.claim(search(new, {d: {"python3"} for d in new}, "python3")[0] == "/usr/local/bin/python3", "homework-3 items[2]: moving /usr/local/bin first makes it win")
+
+# --- tracebacks regenerated (review-3 items[6], homework-3 items[4], l12 screens[4]) ---
+import traceback
+def last(code):
+    try:
+        exec(code, {})
+    except Exception as e:
+        return "".join(traceback.format_exception(e)).strip().splitlines()[-1]
+t6 = last('start = "250.00"\nclose = 255.0\ngain = (close - start) / start\n')
+lv.claim(t6 == "TypeError: unsupported operand type(s) for -: 'float' and 'str'" and t6 in lv.text("review", "items[6].prose"), "review-3 items[6]: the TypeError line is what CPython prints")
+t37 = last('close = 100.0\naverage = 98.0\ngap = close - avrage\n')
+lv.claim(t37 == "NameError: name 'avrage' is not defined. Did you mean: 'average'?" and t37 in lv.text("homework", "items[4].prose"), "homework-3 items[4]: the NameError line is what CPython prints")
+src9 = "    gap = close - avrage"
+lv.claim(lv.text("homework", "items[4].prose").split("\n")[6].index("^") == src9.index("avrage"), "homework-3 items[4]: carets sit under avrage")
+src4 = "    gain = (close - start) / start"
+car = lv.text("review", "items[6].prose").split("\n")[6]
+lv.claim(car.index("~") == src4.index("close") and car.index("^") == src4.index("-") and len(car.strip()) == len("close - start"), "review-3 items[6]: ~ and ^ span `close - start`, as CPython 3.13 draws")
+cell = lv.files["l12-first-script"]["screens"][4]["canvas"]["params"]["rows"][3][0]
+lv.claim(cell.startswith("^" * len("friday")) and cell.endswith("(under friday)"), "l12 screens[4]: the caret cell names its word (table cells lose indents)")
 
 # --- l12: scripts ---
 def out(code):

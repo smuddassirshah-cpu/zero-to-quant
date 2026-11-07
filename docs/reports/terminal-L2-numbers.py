@@ -36,6 +36,10 @@ ex = ["positions_mar.csv", "trades_feb.csv", "trades_jan.csv", "trades_mar.csv",
 lv.expect("review", "items[1].widget.answer", len(fnmatch.filter(ex, "trades_*.csv")))
 lv.expect("review", "items[1].widget.wrong[0].value", len(fnmatch.filter(ex, "trades_*")) )
 lv.expect("review", "items[1].widget.wrong[1].value", len(ex))
+# ls fills columns downwards: five names in two rows go positions, trades_jan, trades_summary / trades_feb, trades_mar
+ls_rows = [ex[0::2], ex[1::2]]
+blk = lv.files["review-2"]["items"][1]["prose"].split("$ ls\n")[1].split("\n```")[0].split("\n")
+lv.claim([l.split() for l in blk] == ls_rows, "review-2 items[1]: the ls block lists names down the columns, as ls does")
 files = ["prices.csv", "trades.csv", "notes.txt"]     # charts is a folder: rm refuses it
 lv.claim(len(fnmatch.filter(files, "*")) == 3, "homework-2 items[3]: a lone * matches all three files")
 
@@ -62,8 +66,13 @@ lv.expect("l7", "quiz[1].widget.answer", min(10, len(P)))
 # holding "prices.csv" (the last redirection wins and -l goes to grep). `wc -l | grep AAPL prices.csv > count.txt`
 # saves the three AAPL lines while wc waits for keyboard input.
 WC_FILE_BYTES, COUNT_TXT = 0, "prices.csv\n"
-lv.stated("l7", "screens[7].widget.options[1].why", "The first `>` sends grep's output to a file named wc", WC_FILE_BYTES > 0)
-lv.stated("l7", "screens[7].widget.options[3].why", "wc would have nothing to count", False)
+w1 = lv.text("l7", "screens[7].widget.options[1].why")
+w3 = lv.text("l7", "screens[7].widget.options[3].why")
+lv.claim("reads `> wc` as a file called wc and hands `-l` to grep" in w1 and WC_FILE_BYTES == 0 and COUNT_TXT == "prices.csv\n",
+         "l7 screens[7] two-gt (fixed): wc stays empty, -l goes to grep, count.txt holds prices.csv")
+lv.claim("wc would wait for typing" in w3 and "grep would save the AAPL lines" in w3 and len(grep("AAPL", P)) == 3,
+         "l7 screens[7] reversed (fixed): wc waits, grep saves the three AAPL lines")
+lv.claim("file named wc" not in w1 and "nothing to count" not in w3, "l7 screens[7]: both false sentences are gone")
 lv.expect("l7", "quiz[3].widget.options[0].text", grep("MSFT", grep("2024-03-05", P))[0])
 fills = ["time,ticker,side,qty", "09:30,AAPL,buy,100", "09:31,MSFT,sell,50", "09:45,AAPL,sell,100", "10:02,NVDA,buy,20", "10:15,AAPL,buy,40"]
 lv.expect("review", "items[2].widget.answer", len(grep("buy", fills)))
@@ -74,6 +83,18 @@ lv.expect("homework", "items[2].widget.answer", 0)
 short = ["date,ticker,close", "2024-03-01,AAPL,179.66"]
 lv.expect("homework", "items[5].widget.answer", sum(len(l.split()) for l in short))
 lv.expect("homework", "items[5].widget.wrong[0].value", sum(len(l.split(",")) for l in short))
+
+# homework-2 items[4] (code, reduced to one explained call): wc -l counts newlines, so "a\nb\nc" gives 2, not the 3 visible lines
+hw4 = lv.files["homework-2"]["items"][4]["widget"]
+def build(src):
+    ns = {}
+    exec(src, ns)
+    return ns["wc_l"]
+tests = [(eval(t_["call"][5:-1], {}), int(t_["expect"])) for t_ in hw4["tests"]]
+sol, start = build(hw4["solution"]), build(hw4["starter"])
+lv.claim(all(sol(x) == x.count("\n") == want for x, want in tests), "homework-2 items[4]: solution gives wc -l (newline count) on all 7 hidden tests")
+lv.claim(any(start(x) != want for x, want in tests) and all(start(x) == len(x) + 1 for x, _ in tests), "homework-2 items[4]: the starter (count of an empty string) fails the tests")
+lv.claim("a\nb\nc".count("\n") == 2 and len("a\nb\nc".splitlines()) == 3, "wc -l on a last line with no newline is one fewer than the lines seen")
 
 # --- l8: options ---
 lv.claim(4.5 < 48210 / 9120 < 5.5, "l8 screens[0] explain: prices.csv is about five times trades.csv (5.29)")
@@ -89,6 +110,7 @@ lv.claim(sorted(closes).index("9.85") > sorted(closes).index("102.30"), "l8 scre
 lv.expect("l8", "quiz[2].widget.options[0].text", sorted(["2024-03-01", "2024-03-05", "2024-03-04"], reverse=True)[0])
 lv.expect("l8", "quiz[3].widget.answer", len([".", "..", ".env", "data", "notes.txt"]))
 lv.expect("l8", "quiz[3].widget.wrong[1].value", 3)
+lv.expect("l8", "quiz[3].explain.text", len([".", "..", ".env", "data", "notes.txt"]))
 ex_t = {"export_a.csv": (3, 18, 4), "export_b.csv": (5, 17, 58), "export_c.csv": (4, 18, 10)}
 lv.expect("review", "items[6].widget.options[0].text", max(ex_t, key=ex_t.get))
 

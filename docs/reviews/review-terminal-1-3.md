@@ -118,3 +118,53 @@ Four engine limitations, also appended to `docs/BACKLOG-INBOX.md` under "Raised 
 - The `table` canvas trims leading spaces and sets cells in a proportional font, so a traceback's caret line cannot point at its word (terminal l12 `screens[4]`). Add a per-column or per-table `mono: true` that keeps spaces and uses the code font, for tap-able tracebacks and terminal output.
 - The `graph` canvas draws a directed edge between nodes that touch with no arrowhead and no warning (terminal l11, six screens at `nodeRadius` 56). Shrink the radius until directed edges have room, or have the validator warn when the computed gap between two joined nodes is under the arrowhead size.
 - `O2-long-explain` and `docs/reviews/voice-scan.py` count a bare `.` or `..` followed by a space as a sentence end (terminal l8 `quiz[3]`: two sentences counted as four). Skip a lone run of dots between spaces or after a colon.
+
+## Fix pass
+
+Status per finding (38 fixed, 4 of them with a deviation, and two of those leave out an unverified Mac or Homebrew claim as disputed: unverified; 0 deferred; orchestrator items 1 and 2 fixed by the orchestrator; the 4 engine items deferred). Shell behaviour was re-run in bash 5.2 with GNU coreutils in a throwaway folder (`fix-terminal-1-3/sh/`); no zsh or BSD tools here, so every Mac claim keeps the reader's manual-based wording or is omitted (marked below).
+
+1. fixed: l1 `screens[3].explain.text` says eight fingers (8 distinct finger labels, 10 columns, 30 keys).
+2. fixed: l2 `quiz[3]` option `one` is now `four` ("4"); the four folders in the three paths are `ana`, `Downloads`, `project`, `data` (two folders hold a CSV). Explain states 3 paths (validator O2).
+3. fixed: l4 `screens[0].hints[1]` ("largest": photo.jpg 2.1 MB, then report.pdf, then chart.png).
+4. fixed: l7 `two-gt` why. Re-run in bash: `grep AAPL prices.csv > wc -l > count.txt` leaves `wc` at 0 bytes and `count.txt` holding `prices.csv`.
+5. fixed: l7 `reversed` why. Re-run: with `wc -l` fed no input, `count.txt` holds the three AAPL lines.
+6. fixed: l10 `quiz[1]` `no-spaces`: 10 + 2 + 1 = 13 (`print(2+2)` is 10 characters).
+7. fixed with a deviation: l4 `screens[8]` and review-1 `items[7]` now say `sorted()` only, plus "Linux `ls` can skip dots and hyphens" (run: `LC_ALL=en_GB.utf8 ls` gives `run-10.csv run-1.csv`, `LC_ALL=C ls` and `sorted()` give `run-1.csv run-10.csv`). The reader's "So does `ls` on a Mac" is omitted: disputed: unverified (no BSD `ls` or macOS locale here). Order keys unchanged.
+8. fixed, text superseded by finding 32: dot-hides-a-file now stated for a Mac and Linux, with Windows Explorer showing it (basis: Explorer's hidden state is a file attribute, not a name rule); l4 `quiz[1].prose` and review-1 `items[8].prose` say "On a Mac". Explain kept at three sentences (`Cmd Shift .` in code format so the scan does not count its dot as a sentence end).
+9. fixed: l2 `screens[6].prose`, `quiz[2]` correct option, review-1 `items[3]` why and explain as specified; also l2 `quiz[2]` `copy` why now says "only points to the file" (it said "holds only the path", the same Linux-only mechanism).
+10. fixed: l5 `screens[2].prose` (zsh default prompt ends in `%`, per the zsh manual, as the reader cites).
+11. fixed: l5 `screens[8]`, l6 `screens[7]`, l7 `screens[7]`, l8 `screens[8]` have no `#` comments; the wording the reader gave is added (zsh `INTERACTIVE_COMMENTS` is off by default, per the zsh manual).
+12. fixed: l5 `screens[7].explain.text`, review-2 `items[5].explain.text`. bash checked with a pty: after `ls trades_`, the first Tab rings, the second lists both names. The zsh half rests on the zsh manual (`AUTO_LIST`), as the reader cites.
+13. fixed: l6 `screens[4]` and `screens[5]`; GNU text re-run (`mkdir: cannot create directory 'data': File exists`, `rm: cannot remove 'data': Is a directory`). The BSD forms stay as the reader quotes them, labelled "on a Mac".
+14. fixed: l8 `screens[7].explain.text` (WSL gives the course's commands; Git Bash gives most, not `man`, per the reader's note on Git for Windows).
+15. fixed: l8 `screens[5].prose`, homework-2 `items[5].prose` ("says, in short:").
+16. fixed: l9 `screens[7].widget.lines[4]` (`s5`).
+17. fixed with a deviation: l9 `screens[8].prose` appends the pip refusal. Re-run: `/usr/bin/python3.12 -m pip install --dry-run pandas` prints `error: externally-managed-environment` (PEP 668). "On many Linux systems" replaces the reader's "On Linux, and with Homebrew's Python": the Homebrew half is omitted, disputed: unverified here.
+18. fixed with a deviation: l9 `screens[9].prose` and `hints[2]`, review-3 `items[7].explain.text`. The activation line reads "`source .venv/bin/activate` (on Windows, `.venv\Scripts\activate` in Command Prompt)": the Python `venv` documentation gives `activate.bat` for cmd.exe and `Activate.ps1` for PowerShell, so the reader's unqualified Windows form would not work in PowerShell.
+19. fixed: l11 `summary.trap`. Basis: a Windows process copies its environment block when it starts, and VS Code's terminals are children of the VS Code process, so a PATH change reaches them only after VS Code restarts.
+20. fixed: homework-2 `items[7].prompt`. Re-run: `mkdir ~/projects/spx` fails with `No such file or directory` when `~/projects` is missing.
+21. fixed: l4 `screens[9]`, homework-2 `items[3]`, review-3 `items[5]` correct options shortened.
+22. fixed: l3 `screens[2].explain.text` (three sentences).
+23. fixed: l8 `quiz[3].explain.text` (code-formatted `.` and `..`; `ls -a` prints `. .. .env data notes.txt` = 5, re-run).
+24. fixed: l2 `screens[5]` `gone` why.
+25. fixed: l1 `screens[8].explain.text` states 16 (24 - 8).
+26. fixed: l12 `screens[4]` caret cell reads "^^^^^^ (under friday)".
+27. fixed: l11 `screens[0]` to `[4]` and `[8]` `canvas.params.height` 560, `nodeRadius` unchanged (desktop and 440 px screenshots of the first screen: arrowheads show between folders 1, 2 and 3).
+28. fixed: review-2 `items[1].prose`. Re-run: `ls -C` fills columns down: `positions_mar.csv  trades_jan.csv  trades_summary.txt` over `trades_feb.csv  trades_mar.csv`.
+29. fixed with a deviation: homework-2 `items[4]` stays a code item, because the validator requires a code item in a homework of a code-track course (`homework in a programming course needs at least one code item`) and the reader's numeric replacement removes the only one. The loop, `if` and `+=` are gone: the prose teaches `text.count(x)`, the starter is `return text.count("")` (fails every test), and the learner changes the quotes to `"\n"`. Same 7 hidden tests; solution passes all, starter fails them (run in CPython 3.13).
+30. fixed: homework-1 `items[6].prose`.
+31. fixed: homework-3 `items[5].prose`.
+32. fixed: l4 `screens[4].explain.text` and `summary.ideas[1]` use the finding 32 wording (superseding finding 8).
+33. fixed: l11 `screens[2].prose`.
+34. fixed: review-1 `items[2]` (answer `a-dl`; the explain canvas highlight moved to `a-dl`; `a-p-d`, `a`, `a-dl-pr` lines as specified). Every byKey key is a tap id, none a wrong-cell id.
+35. fixed: review-1 `items[4]` (`../../project/data/prices.csv` from `src` resolves to `/home/ana/project/data/prices.csv`; answer unchanged).
+36. fixed: review-3 `items[6]` (traceback regenerated in CPython 3.13.18: caret line `~~~~~~^~~~~~~` under `close - start`).
+37. fixed: homework-3 `items[4]` (`avrage`, traceback regenerated in CPython 3.13.18; carets under `avrage`).
+38. fixed: l3 `screens[0].prose`, l5 `screens[0].prose`, l11 `screens[6]` (question, `options[0].text`, `options[1].why`, `hints[1].text` now `/Users/ana/bin`).
+
+Orchestrator 1 and 2 (`requires` in terminal and first-python `course.json`): fixed (orchestrator); no `course.json` touched here.
+Engine 1 to 4: deferred, already in `docs/BACKLOG-INBOX.md`.
+
+Numbers: `terminal-L1-numbers.py` gains checks for "eight fingers" (8 finger labels, 30 keys), 24, 8 and 16 in the explain, the folder count 4 and the path count 3, the largest file, and review-1 `items[2]` and `items[4]`. `terminal-L2-numbers.py` replaces the two `stated` checks with positive checks of the new wording and the bash observations, adds the `quiz[3]` count 5, the `ls` column layout, and the homework-2 `items[4]` code item (solution passes 7 of 7, starter fails). `terminal-L3-numbers.py` replaces the `no-spaces` `stated` check with 10 + 2 + 1 = 13, tightens the l11 home path to `/Users/ana/bin` only, and adds the two regenerated tracebacks (message line and caret columns) and the l12 caret cell. Every check that accepted the old wording now requires the new.
+
+Gates: `VOICE_BASE=app/content/courses/terminal python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words, 0 explanations over three sentences. `node tools/validate.mjs`: 0 errors (the terminal warnings that remain are the reader's `key-length` and `O2` lists, none new; l6 `screens[7].prose` has one 31-word sentence from the reader's own wording, under the 35 gate). Number scripts: `terminal-L1-numbers.py` 91 of 91, `-L2-` 89 of 89, `-L3-` 85 of 85, all exit 0. Playthrough with `--local-cdn`: all 12 lessons and 6 sets, desktop and `--mobile`, 36 of 36 passed. Code items touched: homework-2 `items[4]` only (solution passes all 7 tests, starter fails them, CPython 3.13). Graded answers changed: review-1 `items[2]` (`a-dl`), homework-2 `items[4]` starter and solution (same tests), l2 `quiz[3]` wrong option (`one` to `four`).
