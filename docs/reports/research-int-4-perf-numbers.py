@@ -1,5 +1,5 @@
 """research-int L4 performance task h4-quote-at: every expected value two ways, then the
-solution, the starter and eight planted bugs against every hidden test and example.
+solution, the starter and ten planted bugs against every hidden test and example.
 Run: python3 docs/reports/research-int-4-perf-numbers.py (exit 0 when all hold)."""
 import json, math, os, sys, time
 import numpy as np
@@ -61,6 +61,8 @@ HAND = [
     [100.0 + 6.0 * 30 / 60, None, 106.0],
     [50.0, None, 60.0, None],
     [[None, None], [None], [42.0, 42.0, None]],
+    [(100.0 + 101.0 + 105.0) / 3 + (110.0 - (100.0 + 101.0 + 105.0) / 3) * 5 / 10, (100.0 + 101.0 + 105.0) / 3,
+     (100.0 + 101.0 + 105.0) / 3 + (110.0 - (100.0 + 101.0 + 105.0) / 3) * 5 / 10],
 ]
 cases = w["examples"] + w["tests"]
 ns_sol = {}; exec(SOL + "\n" + POST, ns_sol)
@@ -131,6 +133,10 @@ BUGS = {
                           .replace("out.append(ys[-1] if t - xs[-1] <= max_gap else None)", "out.append(ys[-1])"),
     "strict max_gap (>= refuses)": mutate("elif xs[i] - xs[i - 1] > max_gap:", "elif xs[i] - xs[i - 1] >= max_gap:"),
     "answers in sorted order": mutate("for t in times:", "for t in sorted(times):"),
+    "repeated asked seconds answered once": mutate("    return out\n", "    return list(dict(zip(times, out)).values())\n"),
+    "mean of first and last repeat only": mutate("        sums[t] = sums.get(t, 0.0) + p\n        counts[t] = counts.get(t, 0) + 1\n",
+        "        if t in sums:\n            sums[t] = first[t] + p\n            counts[t] = 2\n        else:\n            first[t] = p\n            sums[t], counts[t] = p, 1\n").replace(
+        "sums, counts = {}, {}", "sums, counts, first = {}, {}, {}"),
 }
 # linear scan per asked second: correct but O(n) a query
 BUGS["linear scan per second"] = SOL.replace("i = bisect.bisect_left(xs, t)",
@@ -140,11 +146,16 @@ for name, src in BUGS.items():
     caught = [k + 1 for k, v in enumerate(r) if not v]
     ok(f"planted bug caught: {name}, fails tests {caught}", len(caught) > 0)
     if name == "linear scan per second":
-        ok("linear scan fails only the timing test", caught == [9])
+        ok("linear scan fails only the timing test", caught == [10])
+
+# the two value slips once caught only by the timing test: a fast test 9 now catches them
+for name in ("repeated asked seconds answered once", "mean of first and last repeat only"):
+    caught = [k + 1 for k, v in enumerate(run(BUGS[name])) if not v]
+    ok(f"{name}: caught by value test 9, before the timing test 10 ({caught})", 9 in caught)
 
 # byKey keys point at tests that exist, and the homework still meets its limits
 keys = it["feedback"]["byKey"]
-ok("byKey keys are tests 1 to 9", all(k.startswith("test-") and 1 <= int(k[5:]) <= len(w["tests"]) for k in keys))
+ok("byKey keys are tests 1 to 10", all(k.startswith("test-") and 1 <= int(k[5:]) <= len(w["tests"]) for k in keys))
 ok("homework items 6 to 12", 6 <= len(hw["items"]) <= 12)
 ok("one performance item in the homework", sum(1 for i in hw["items"] if i.get("performance")) == 1)
 ok("at most 15 tests", len(w["tests"]) <= 15)

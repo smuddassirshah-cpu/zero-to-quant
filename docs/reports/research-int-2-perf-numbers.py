@@ -64,7 +64,7 @@ hw = json.load(open(os.path.join(here, "..", "..", "app", "content", "courses", 
 it = next(i for i in hw["items"] if i["id"] == "h2-pca-aloud")
 rub = it["widget"]["rubric"]
 check("rubric sums to 10", sum(r["points"] for r in rub), 10, 10, dp=0)
-check("exactly one required row", sum(1 for r in rub if r.get("required")), 1, 1, dp=0)
+check("rows 1 to 3 required (three-part objective), row 4 optional", sum(2 ** k for k, r in enumerate(rub) if r.get("required")), 7, 7, dp=0)
 check("homework items within 6 to 12", float(6 <= len(hw["items"]) <= 12), 1.0)
 check("one performance item", sum(1 for i in hw["items"] if i.get("performance")), 1, 1, dp=0)
 w = it["widget"]

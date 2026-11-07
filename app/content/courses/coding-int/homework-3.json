@@ -598,68 +598,68 @@
       ],
       "pace": 1500,
       "prose": "A research desk keeps its notes in a small in-memory file system. Every path is absolute, like `/desk/a.txt`, and `/` is the root. No call writes to a folder or makes a folder inside a file. `mkdir(path)` makes every missing folder on the path. `write(path, text)` makes the missing folders above the file, then sets its text, replacing any old text. `read(path)` returns the text, or `None` when no file is there. `ls(path)` returns a folder's names sorted, `[name]` for a file and `[]` for a missing path. `rm(path)` deletes a file, or a folder with everything below it. Removing `/` or a missing path does nothing. `mv(src, dst)` moves a file or a folder, with everything below it, to `dst`. It makes the missing folders above `dst` and returns `True`. It refuses, returning `False` and changing nothing, when `src` is missing or is `/`. It also refuses when `dst` exists or lies inside `src`. `size(path)` is the total length of the text in the files at or below `path`. A missing path has size 0. Every method but `ls` must take time in proportion to the names in its paths. The number of files stored must not matter.",
-      "question": "Design `FileSystem` and any classes it needs, from the stub.",
+      "question": "Design `NotesDrive` and any classes it needs, from the stub.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "class FileSystem:\n    def __init__(self):\n        pass\n\n    def mkdir(self, path):\n        pass\n\n    def write(self, path, text):\n        pass\n\n    def read(self, path):\n        pass\n\n    def ls(self, path):\n        pass\n\n    def rm(self, path):\n        pass\n\n    def mv(self, src, dst):\n        pass\n\n    def size(self, path):\n        pass\n",
-        "solution": "class _Node:\n    def __init__(self):\n        self.children = {}\n        self.text = None   # None for a folder, a string for a file\n        self.total = 0     # characters in every file at or below this node\n\n\nclass FileSystem:\n    def __init__(self):\n        self.root = _Node()\n\n    def _names(self, path):\n        return [name for name in path.split('/') if name]\n\n    def _chain(self, names):\n        # the nodes from the root to the end of the path, or None if it is missing\n        chain = [self.root]\n        for name in names:\n            child = chain[-1].children.get(name)\n            if child is None:\n                return None\n            chain.append(child)\n        return chain\n\n    def _make(self, names):\n        chain = [self.root]\n        for name in names:\n            chain.append(chain[-1].children.setdefault(name, _Node()))\n        return chain\n\n    def _add(self, chain, delta):\n        for node in chain:\n            node.total += delta\n\n    def mkdir(self, path):\n        self._make(self._names(path))\n\n    def write(self, path, text):\n        chain = self._make(self._names(path))\n        node = chain[-1]\n        self._add(chain[:-1], len(text) - node.total)\n        node.text, node.total = text, len(text)\n\n    def read(self, path):\n        chain = self._chain(self._names(path))\n        return None if chain is None else chain[-1].text\n\n    def ls(self, path):\n        names = self._names(path)\n        chain = self._chain(names)\n        if chain is None:\n            return []\n        if chain[-1].text is not None:\n            return [names[-1]]\n        return sorted(chain[-1].children)\n\n    def rm(self, path):\n        names = self._names(path)\n        chain = self._chain(names)\n        if not names or chain is None:\n            return\n        self._add(chain[:-1], -chain[-1].total)\n        del chain[-2].children[names[-1]]\n\n    def mv(self, src, dst):\n        s, d = self._names(src), self._names(dst)\n        chain = self._chain(s)\n        if not s or chain is None or self._chain(d) is not None or d[:len(s)] == s:\n            return False\n        node = chain[-1]\n        self._add(chain[:-1], -node.total)\n        del chain[-2].children[s[-1]]\n        target = self._make(d[:-1])\n        target[-1].children[d[-1]] = node\n        self._add(target, node.total)\n        return True\n\n    def size(self, path):\n        chain = self._chain(self._names(path))\n        return 0 if chain is None else chain[-1].total\n",
-        "postlude": "def run_fs(ops):\n    fs = FileSystem()\n    out = []\n    for op, *args in ops:\n        result = getattr(fs, op)(*args)\n        if op in ('read', 'ls', 'mv', 'size'):\n            out.append(result)\n    return out\n\ndef big_case(n=100000):\n    state = [3141]\n    def rnd(m):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 2**64\n        return (state[0] >> 33) % m\n    def folder(lo, hi):\n        return '/' + '/'.join('abcdefgh'[rnd(8)] for _ in range(lo + rnd(hi - lo + 1)))\n    def file():\n        return folder(1, 3) + '/' + 'abcdefgh'[rnd(8)] + '.t'\n    fs = FileSystem()\n    sizes = moved = listed = read = 0\n    for _ in range(n):\n        r = rnd(40)\n        if r < 14:\n            fs.write(file(), 'x' * rnd(50))\n        elif r < 16:\n            fs.mkdir(folder(1, 4))\n        elif r < 17:\n            fs.rm(file() if rnd(2) else folder(2, 4))\n        elif r < 21:\n            if rnd(2):\n                moved += fs.mv(file(), file())\n            else:\n                moved += fs.mv(folder(1, 3), folder(1, 3))\n        elif r < 23:\n            listed += len(fs.ls(folder(0, 3)))\n        elif r < 25:\n            read += len(fs.read(file()) or '')\n        else:\n            sizes += fs.size(folder(0, 1))\n    return [sizes, moved, listed, read]\n",
+        "starter": "class NotesDrive:\n    def __init__(self):\n        pass\n\n    def mkdir(self, path):\n        pass\n\n    def write(self, path, text):\n        pass\n\n    def read(self, path):\n        pass\n\n    def ls(self, path):\n        pass\n\n    def rm(self, path):\n        pass\n\n    def mv(self, src, dst):\n        pass\n\n    def size(self, path):\n        pass\n",
+        "solution": "class _Node:\n    def __init__(self):\n        self.children = {}\n        self.text = None   # None for a folder, a string for a file\n        self.total = 0     # characters in every file at or below this node\n\n\nclass NotesDrive:\n    def __init__(self):\n        self.root = _Node()\n\n    def _names(self, path):\n        return [name for name in path.split('/') if name]\n\n    def _chain(self, names):\n        # the nodes from the root to the end of the path, or None if it is missing\n        chain = [self.root]\n        for name in names:\n            child = chain[-1].children.get(name)\n            if child is None:\n                return None\n            chain.append(child)\n        return chain\n\n    def _make(self, names):\n        chain = [self.root]\n        for name in names:\n            chain.append(chain[-1].children.setdefault(name, _Node()))\n        return chain\n\n    def _add(self, chain, delta):\n        for node in chain:\n            node.total += delta\n\n    def mkdir(self, path):\n        self._make(self._names(path))\n\n    def write(self, path, text):\n        chain = self._make(self._names(path))\n        node = chain[-1]\n        self._add(chain[:-1], len(text) - node.total)\n        node.text, node.total = text, len(text)\n\n    def read(self, path):\n        chain = self._chain(self._names(path))\n        return None if chain is None else chain[-1].text\n\n    def ls(self, path):\n        names = self._names(path)\n        chain = self._chain(names)\n        if chain is None:\n            return []\n        if chain[-1].text is not None:\n            return [names[-1]]\n        return sorted(chain[-1].children)\n\n    def rm(self, path):\n        names = self._names(path)\n        chain = self._chain(names)\n        if not names or chain is None:\n            return\n        self._add(chain[:-1], -chain[-1].total)\n        del chain[-2].children[names[-1]]\n\n    def mv(self, src, dst):\n        s, d = self._names(src), self._names(dst)\n        chain = self._chain(s)\n        if not s or chain is None or self._chain(d) is not None or d[:len(s)] == s:\n            return False\n        node = chain[-1]\n        self._add(chain[:-1], -node.total)\n        del chain[-2].children[s[-1]]\n        target = self._make(d[:-1])\n        target[-1].children[d[-1]] = node\n        self._add(target, node.total)\n        return True\n\n    def size(self, path):\n        chain = self._chain(self._names(path))\n        return 0 if chain is None else chain[-1].total\n",
+        "postlude": "def run_drive(ops):\n    fs = NotesDrive()\n    out = []\n    for op, *args in ops:\n        result = getattr(fs, op)(*args)\n        if op in ('read', 'ls', 'mv', 'size'):\n            out.append(result)\n    return out\n\ndef big_case(n=100000):\n    state = [3141]\n    def rnd(m):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 2**64\n        return (state[0] >> 33) % m\n    def folder(lo, hi):\n        return '/' + '/'.join('abcdefgh'[rnd(8)] for _ in range(lo + rnd(hi - lo + 1)))\n    def file():\n        return folder(1, 3) + '/' + 'abcdefgh'[rnd(8)] + '.t'\n    fs = NotesDrive()\n    sizes = moved = listed = read = 0\n    for _ in range(n):\n        r = rnd(40)\n        if r < 14:\n            fs.write(file(), 'x' * rnd(50))\n        elif r < 16:\n            fs.mkdir(folder(1, 4))\n        elif r < 17:\n            fs.rm(file() if rnd(2) else folder(2, 4))\n        elif r < 21:\n            if rnd(2):\n                moved += fs.mv(file(), file())\n            else:\n                moved += fs.mv(folder(1, 3), folder(1, 3))\n        elif r < 23:\n            listed += len(fs.ls(folder(0, 3)))\n        elif r < 25:\n            read += len(fs.read(file()) or '')\n        else:\n            sizes += fs.size(folder(0, 1))\n    return [sizes, moved, listed, read]\n",
         "examples": [
           {
-            "call": "run_fs([('write', '/desk/a.txt', 'hello'), ('write', '/desk/b/c.txt', 'abc'), ('ls', '/desk'), ('size', '/desk'), ('read', '/desk/a.txt'), ('size', '/desk/b'), ('ls', '/desk/a.txt')])",
+            "call": "run_drive([('write', '/desk/a.txt', 'hello'), ('write', '/desk/b/c.txt', 'abc'), ('ls', '/desk'), ('size', '/desk'), ('read', '/desk/a.txt'), ('size', '/desk/b'), ('ls', '/desk/a.txt')])",
             "expect": "[['a.txt', 'b'], 8, 'hello', 3, ['a.txt']]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/in/q.txt', 'four'), ('mv', '/in/q.txt', '/out/q.txt'), ('ls', '/in'), ('read', '/out/q.txt'), ('size', '/out'), ('size', '/in')])",
+            "call": "run_drive([('write', '/in/q.txt', 'four'), ('mv', '/in/q.txt', '/out/q.txt'), ('ls', '/in'), ('read', '/out/q.txt'), ('size', '/out'), ('size', '/in')])",
             "expect": "[True, [], 'four', 4, 0]",
             "compare": "equal"
           }
         ],
         "tests": [
           {
-            "call": "run_fs([('write', '/desk/a.txt', 'hello'), ('write', '/desk/b/c.txt', 'abc'), ('ls', '/desk'), ('size', '/desk'), ('read', '/desk/a.txt'), ('size', '/desk/b'), ('ls', '/desk/a.txt')])",
+            "call": "run_drive([('write', '/desk/a.txt', 'hello'), ('write', '/desk/b/c.txt', 'abc'), ('ls', '/desk'), ('size', '/desk'), ('read', '/desk/a.txt'), ('size', '/desk/b'), ('ls', '/desk/a.txt')])",
             "expect": "[['a.txt', 'b'], 8, 'hello', 3, ['a.txt']]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/in/q.txt', 'four'), ('mv', '/in/q.txt', '/out/q.txt'), ('ls', '/in'), ('read', '/out/q.txt'), ('size', '/out'), ('size', '/in')])",
+            "call": "run_drive([('write', '/in/q.txt', 'four'), ('mv', '/in/q.txt', '/out/q.txt'), ('ls', '/in'), ('read', '/out/q.txt'), ('size', '/out'), ('size', '/in')])",
             "expect": "[True, [], 'four', 4, 0]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/r/a', 'abcdef'), ('write', '/r/a', 'xy'), ('size', '/r'), ('size', '/'), ('write', '/r/a', ''), ('size', '/r'), ('read', '/r/a')])",
-            "expect": "[2, 2, 0, '']",
+            "call": "run_drive([('write', '/r/a', 'abcdef'), ('write', '/r/a', 'xy'), ('size', '/r/a'), ('size', '/r'), ('size', '/'), ('write', '/r/a', ''), ('size', '/r'), ('read', '/r/a')])",
+            "expect": "[2, 2, 2, 0, '']",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/p/q/a', 'aaaa'), ('write', '/p/b', 'bb'), ('rm', '/p/q'), ('size', '/p'), ('ls', '/p'), ('read', '/p/q/a'), ('size', '/p/q'), ('rm', '/p/zzz'), ('rm', '/'), ('size', '/'), ('ls', '/')])",
+            "call": "run_drive([('write', '/p/q/a', 'aaaa'), ('write', '/p/b', 'bb'), ('rm', '/p/q'), ('size', '/p'), ('ls', '/p'), ('read', '/p/q/a'), ('size', '/p/q'), ('rm', '/p/zzz'), ('rm', '/'), ('size', '/'), ('ls', '/')])",
             "expect": "[2, ['b'], None, 0, 2, ['p']]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('ls', '/nope'), ('read', '/nope'), ('size', '/nope'), ('mkdir', '/m'), ('read', '/m'), ('size', '/m'), ('ls', '/'), ('mv', '/nope', '/x'), ('ls', '/')])",
-            "expect": "[[], None, 0, None, 0, ['m'], False, ['m']]",
+            "call": "run_drive([('ls', '/nope'), ('read', '/nope'), ('size', '/nope'), ('mkdir', '/m'), ('read', '/m'), ('size', '/m'), ('ls', '/'), ('mv', '/nope', '/x'), ('ls', '/'), ('write', '/m/k', 'abc'), ('mkdir', '/m'), ('ls', '/m'), ('size', '/m')])",
+            "expect": "[[], None, 0, None, 0, ['m'], False, ['m'], ['k'], 3]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/a/f', 'abc'), ('write', '/b/g', 'de'), ('mv', '/a', '/b'), ('mv', '/a', '/a/k/l'), ('ls', '/a'), ('mv', '/', '/z'), ('mv', '/a/f', '/b/g'), ('read', '/b/g'), ('ls', '/'), ('size', '/')])",
+            "call": "run_drive([('write', '/a/f', 'abc'), ('write', '/b/g', 'de'), ('mv', '/a', '/b'), ('mv', '/a', '/a/k/l'), ('ls', '/a'), ('mv', '/', '/z'), ('mv', '/a/f', '/b/g'), ('read', '/b/g'), ('ls', '/'), ('size', '/')])",
             "expect": "[False, False, ['f'], False, False, 'de', ['a', 'b'], 5]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/a/f', 'abc'), ('mv', '/a', '/ab'), ('ls', '/'), ('read', '/ab/f'), ('mv', '/ab', '/ab2/x'), ('ls', '/ab2'), ('size', '/ab2/x'), ('size', '/')])",
+            "call": "run_drive([('write', '/a/f', 'abc'), ('mv', '/a', '/ab'), ('ls', '/'), ('read', '/ab/f'), ('mv', '/ab', '/ab2/x'), ('ls', '/ab2'), ('size', '/ab2/x'), ('size', '/')])",
             "expect": "[True, ['ab'], 'abc', True, ['x'], 3, 3]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/w/s/a', 'aaaa'), ('write', '/w/s/t/b', 'bbbbbb'), ('write', '/w/c', 'c'), ('write', '/v/d', 'dd'), ('mv', '/w/s', '/v/s2'), ('size', '/w'), ('size', '/v'), ('size', '/v/s2/t'), ('ls', '/v'), ('read', '/v/s2/t/b'), ('write', '/v/s2/t/b', 'b'), ('size', '/v'), ('size', '/')])",
+            "call": "run_drive([('write', '/w/s/a', 'aaaa'), ('write', '/w/s/t/b', 'bbbbbb'), ('write', '/w/c', 'c'), ('write', '/v/d', 'dd'), ('mv', '/w/s', '/v/s2'), ('size', '/w'), ('size', '/v'), ('size', '/v/s2/t'), ('ls', '/v'), ('read', '/v/s2/t/b'), ('write', '/v/s2/t/b', 'b'), ('size', '/v'), ('size', '/')])",
             "expect": "[True, 1, 12, 6, ['d', 's2'], 'bbbbbb', 7, 8]",
             "compare": "equal"
           },
           {
-            "call": "run_fs([('write', '/x/y.txt', 'zz'), ('mv', '/x/y.txt', '/n/e/w.txt'), ('ls', '/n/e/w.txt'), ('ls', '/n'), ('ls', '/x'), ('rm', '/n'), ('size', '/'), ('ls', '/')])",
+            "call": "run_drive([('write', '/x/y.txt', 'zz'), ('mv', '/x/y.txt', '/n/e/w.txt'), ('ls', '/n/e/w.txt'), ('ls', '/n'), ('ls', '/x'), ('rm', '/n'), ('size', '/'), ('ls', '/')])",
             "expect": "[True, ['w.txt'], ['e'], [], 0, ['x']]",
             "compare": "equal"
           },
@@ -669,7 +669,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests through `run_fs(ops)`. It calls each method by name and keeps what `read`, `ls`, `mv` and `size` return. Test 10 plays 100,000 random steps and must finish within 5 s."
+        "how": "Check runs 10 hidden tests through `run_drive(ops)`. It calls each method by name and keeps what `read`, `ls`, `mv` and `size` return. Test 10 plays 100,000 random steps and must finish within 5 s."
       },
       "feedback": {
         "correct": "Each node carries the size of what lies below it, so every step is one walk down a path.",
@@ -680,7 +680,7 @@
           "test-4": "Test 4 removes a folder, then tries `/`. The removed size leaves every folder above it, and `/` itself stays.",
           "test-6": "Test 6 asks for three moves that must be refused. Check every refusal before you make any folder for `dst`.",
           "test-7": "Test 7 moves `/a` to `/ab`. Compare the names in the paths, not the strings: `/ab` is not inside `/a`.",
-          "test-10": "Test 10 timed out. Adding up a folder's files on every `size` call is too slow; keep a running total on each node."
+          "test-10": "Test 10 is the 100,000-step case. If it timed out, keep a running total on each node instead of adding up a folder's files on every `size` call."
         }
       },
       "explain": {

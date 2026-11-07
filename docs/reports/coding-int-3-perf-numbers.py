@@ -103,7 +103,7 @@ def namespace(code, cls=None):
     ns = {}
     exec(code, ns)
     if cls is not None:
-        ns['FileSystem'] = cls
+        ns['NotesDrive'] = cls
     exec(w['postlude'], ns)
     return ns
 
@@ -169,6 +169,12 @@ mutants = {
         "        if not names:\n            self.root = _Node()\n            return\n        if chain is None:\n            return\n", 4),
     'mv overwrites an existing dst': (
         " or self._chain(d) is not None", "", 6),
+    'size of a file gives 0': (
+        "        return 0 if chain is None else chain[-1].total",
+        "        return 0 if chain is None or chain[-1].text is not None else chain[-1].total", 3),
+    'mkdir replaces an existing folder': (
+        "    def mkdir(self, path):\n        self._make(self._names(path))",
+        "    def mkdir(self, path):\n        names = self._names(path)\n        if names:\n            chain = self._make(names[:-1])\n            chain[-1].children[names[-1]] = _Node()", 5),
     'ls of a file gives []': (
         "            return [names[-1]]", "            return []", 1),
 }
