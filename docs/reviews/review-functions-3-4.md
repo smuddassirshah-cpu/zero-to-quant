@@ -112,3 +112,46 @@ Order of first definitions in this course: call (l14 s9), put (l18 s3), selling 
 
 1. The expression grader does not strip a left-hand side. A correct `y = <expr>`, `f(x) = <expr>`, `f^{-1}(x) = <expr>`, `f(g(x)) = <expr>` or `f(-x) = <expr>` grades wrong with the generic line when the authored `answer` has no `=`, and a slip typed with `y =` misses its `wrong[]` id (finding 2, five items; checked on the real `grade.js` with Compute Engine 0.30.2). This extends the equations reviewer's lone-letter bullet to function-call left sides. Proposal: when the answer has no `=`, strip a leading `<symbol> =` or `<letter>(...) =` / `<letter>^{-1}(...) =` from the input, grade the rest against the answer and the `wrong[]` list, and keep the existing `formula` line idea for the feedback.
 2. Equation-against-equation comparison gives false positives, so the obvious content workaround (adding `y = ...` to `accept[]`) is unsafe: with `y=(x-3)^2+2` in the forms, `y=7` grades right; `z=\frac{x+2}{5}` grades right against `y=\frac{x+2}{5}`; `f(g(x))=(3x-1)^2` and `f(g(x))=3x^2+1` grade right against `f(g(x))=3x^2-1`; `f(-x)=x^2-4x` grades right against `f(-x)=x^2+4x`. Proposal: a validator error on `=` in an expression `answer`, `accept[]` or `wrong[].tex` (until the grader compares equations soundly), and a sentence in AUTHORING section 3 `expression`.
+
+## Fix pass
+
+Session V Phase 2. Every number recomputed in the two number scripts, whose checks were updated to the new values (old-value acceptance removed).
+
+1. fixed: l17 s8 `forward` slip 72887.5 ($250 \times 291.60 - 12.50$).
+2. deferred to the engine fix (grader strips a left-hand side); no `y = ...` or `f(x) = ...` accept forms added and the questions left unchanged.
+3. fixed: homework-3 items[7] check now 1.2522 and 79.86 ($100 \div 1.2522 = 79.859$).
+4. fixed: l12 s10 `max-min` feedback (420 − 90 = 330).
+5. fixed (basis: $y = -x^2$ and $y = -x^3$ reverse the shapes, so the claims need a positive leading term): l10 summary and s7 explain.
+6. fixed (basis: $h = (x+1)(x-2)^2$, expanded to $x^3 - 3x^2 + 4$): l11 s7 option b.
+7. fixed: l11 quiz[1] is now $x^2 - 6x + 8$, key 8, roots 2 and 4, turning value −1 (script check updated).
+8. fixed: l11 s10, l13 s10 and quiz[3] glosses; homework-3 items[4] replaced via finding 25.
+9. fixed: l16 s10 prose, review-4 items[8] explain and option b, plus a calculator-key sentence in homework-4 items[7] (the reader's text did not cover it); l16 quiz[3] left as is (the s10 prose now frames $\ln$).
+10. fixed: homework-3 items[6] explain no longer uses $2t$.
+11. fixed: homework-4 items[6] prose explains the sold call.
+12. fixed: $S$ defined in l14 hint and l18 s1 explain and `neg` feedback ($93 - 100 = -7$).
+13. fixed: yield renamed $r$ in l10 s10, homework-3 prompt and model (3 occurrences of the table and parts).
+14. fixed (basis: GCSE composite notation $fg(x) = f(g(x))$ in AQA and Edexcel specifications): l16 s8 prose and summary note.
+15. fixed (basis: GCSE Higher transformations are translations and reflections; stretches are A-level): l14 s8 and l15 s9.
+16. fixed: "or" joins and the four option edits in l13 s2, quiz[0], s7 and l11 s8 (checked: $4^2 = 16$, $9^2 = 81$, $f(1) = -2$).
+17. fixed: l13 and l17 summary formulas without $\iff$.
+18. fixed: "tangent" named in l12 s3.
+19. fixed (orchestrator, commit 9aa1ba1): `ratio/L2` added to functions L4 `requires`; course.json untouched here.
+20. fixed: review-3 items[0] is now $x^3 + 5$ at $x = -2$ (key −3, slips 13, −1, 9).
+21. fixed: homework-3 items[0] is now $y = 6/x$ at $x = -4$, with a new opening.
+22. fixed: review-3 items[6] curve $100 + 8x - x^2$ (gradients 6, 0, −4; points 107, 116, 112).
+23. fixed: review-3 items[3] is now $x^2 - 2x = x + 4$, smaller solution −1 (slips 3 and 4).
+24. fixed: homework-3 items[1] is now $x^2 - 10x + 16$, lowest value −9 (slips 5 and 16).
+25. fixed: homework-3 items[4], strike £60.00 and cost £5.00, key £51.00 (slips 56 and 55).
+26. fixed: homework-4 items[2] valley $(x-2)^2 - 1$, target (1, 2); regions recomputed.
+27. fixed: l12 s9 options.
+28. fixed: l16 s2 options.
+29. fixed: l17 s6 options.
+30. fixed: l18 s3 options.
+31. fixed: l10 s10 and l16 s10 explanations state the answer ($4.8911 + 0.0953 = 4.9864$).
+32. fixed: l17 s3 explain names the marked points (1, 5) and (5, 1).
+33. fixed: l17 s8 `in-y` slip added with feedback.
+34. deferred: quadratics-side change, not in functions.
+From review-functions-1-2 finding 28: fixed, l17 s1 prose now "Earlier you undid a machine by reversing its steps." (the review's "In l2" reworded because no screen cites a lesson by number; the $x^2$ repeat kept, as the review allows).
+From review-functions-1-2 finding 29: fixed, the same $gf(x)$ line as finding 14 in l16 s8.
+
+Gates: `functions-L3-numbers.py` exit 0 (222 of 222); `functions-L4-numbers.py` exit 0 (259 of 259); voice scan 0 sentences over 35 words and 0 over three sentences in L3 and L4 (3 hits remain in L1 and L2); validator 0 errors (remaining L3 and L4 warnings: l15 s7 `key-length`, which the reader judged not a giveaway, and a few O2 length notes); playthrough of 9 lessons and 4 sets, with and without `--mobile`, all passed.
