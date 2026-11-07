@@ -82,6 +82,8 @@ exec(BOOK, g)
 book = g['book']
 val = book['price'] * book['qty']
 C(val.round(2).to_dict() == {'AZN': 5920.0, 'BARC': 4300.0, 'HSBA': 5296.0, 'VOD': 3550.0}, 'l5 screens[10] example: position values')
+E('l5', 'screens[10].explain.text', '7 shares at £1.05 give 7.35 plus a stray 5')
+C(repr(1.05 * 7) == '7.3500000000000005', 'l5 screens[10] explain: 1.05 * 7 is 7.3500000000000005 in floats (hidden test 4)')
 lv.claim_text('l5', 'screens[10].explain.text', '5296.000000000001', repr(6.62 * 800) == '5296.000000000001',
               f'l5 screens[10] explain: "float noise such as 5296.000000000001", but 6.62 x 800 is {6.62 * 800!r} in floats')
 C(repr(1.05 * 7) == '7.3500000000000005', 'l5 screens[10] fix: 7 shares at 1.05 (hidden test 4) give 7.3500000000000005')
@@ -132,11 +134,16 @@ E('l6', 'quiz[1].prose', round(float(np.std(cl.to_numpy())), 4))
 two('ratio sqrt(5/4)', float(cl.std() / np.std(cl.to_numpy())), math.sqrt(5 / 4))
 E('l6', 'quiz[1].explain.text', round(math.sqrt(5 / 4), 3))
 C(abs(0.1283 * 1.118 - 0.1434) < 0.00005, 'l6 quiz[1] explain: 0.1283 x 1.118 = 0.1434')
-prints('l6', 'quiz[2].widget.options[0].text', 'print(pd.Series([12.18, 12.25, 12.40, 12.55, 12.31]).nsmallest(2).tolist())')
-prints('l6', 'quiz[2].widget.options[1].text', 'print(pd.Series([12.18, 12.25, 12.40, 12.55, 12.31]).nlargest(2).tolist())', 'l6 quiz[2] largest option is nlargest(2)')
+cl2 = pd.Series([12.40, 12.25, 12.55, 12.18, 12.31])   # finding 7: the closes in date order
+E('l6', 'quiz[2].prose', 'The closes are 12.40, 12.25, 12.55, 12.18 and 12.31, in date order.')
+prints('l6', 'quiz[2].widget.options[0].text', 'print(pd.Series([12.40, 12.25, 12.55, 12.18, 12.31]).nsmallest(2).tolist())')
+prints('l6', 'quiz[2].widget.options[1].text', 'print(pd.Series([12.40, 12.25, 12.55, 12.18, 12.31]).nlargest(2).tolist())', 'l6 quiz[2] largest option is nlargest(2)')
+prints('l6', 'quiz[2].widget.options[2].text', 'print(pd.Series([12.40, 12.25, 12.55, 12.18, 12.31]).head(2).tolist())', 'l6 quiz[2] first option is head(2)')
+prints('l6', 'quiz[2].widget.options[3].text', 'print(pd.Series([12.40, 12.25, 12.55, 12.18, 12.31]).nsmallest(2).tolist()[::-1])', 'l6 quiz[2] desc option is the reversed nsmallest')
+C(len({str(cl2.nsmallest(2).tolist()), str(cl2.nlargest(2).tolist()), str(cl2.head(2).tolist()), str(cl2.nsmallest(2).tolist()[::-1])}) == 4, 'l6 quiz[2]: the four options print four different lists')
 # quiz[2] distractor "first" names the same list as the key: on these closes the two smallest are also the first two rows
 lv.claim_text('l6', 'quiz[2].widget.options[2].text', 'only because they come first in the file',
-              cl.nsmallest(2).tolist() != cl.head(2).tolist(),
+              cl2.nsmallest(2).tolist() != cl2.head(2).tolist(),
               'l6 quiz[2]: the "first" distractor prints the same list as the key (head(2) == nsmallest(2) on these closes)')
 raises('l6', 'quiz[3]', CSV + 'df = pd.read_csv(io.StringIO(csv), index_col="date"); march = df.loc["2024-03"]', 'KeyError')
 
@@ -195,6 +202,8 @@ CH = ('df = pd.DataFrame({"close": [12.55, 12.31, 12.48, 12.62, 12.44]})\ndf["re
       'df["flag"] = 0\ndf[df["ret"] < 0]["flag"] = -1\nprint((df["flag"] == -1).sum())')
 txt, err, ws = run(CH)
 C(txt.strip() == '0' and err is None, 'l8 screens[4]: the chained write leaves df unchanged, prints 0')
+E('l8', 'screens[4].widget.options[1].text', '`0`')
+E('l8', 'screens[4].feedback.byKey.error', 'SettingWithCopyWarning')
 if PD2:
     C('SettingWithCopyWarning' in ws, 'l8 screens[4] VERSION (pandas 2.2.3): a SettingWithCopyWarning is raised', f'warnings {ws}')
 else:
@@ -303,5 +312,8 @@ E('homework', 'items[7].model', round(float(cr.mean()), 6))
 two('mean return', float(cr.mean()), (-0.019124 + 0.025183 - 0.014263) / 5, tol=1e-5)
 E('homework', 'items[7].rubric[4].text', round(float(cr.mean()), 6))
 
+# fix-pass text checks (finding 16)
+E('l6', 'quiz[1].widget.options[0].text', '`describe` uses a different divisor')
+E('l8', 'quiz[1].widget.options[0].text', 'Same values; `b` is much faster')
 lv.check_wrongs()
 lv.report()
