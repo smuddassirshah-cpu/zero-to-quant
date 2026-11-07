@@ -76,3 +76,43 @@ The exam matches the fixed courses on most GCSE points. It says "gradient" (no "
 3. `fresh-check.mjs`: 0 hits on topic-0.2 while eight items repeat course setups. In algebra the setup is a maths span, not prose: $(2x - 3)(x + 4)$, $x^2 + 2x - 15$, $f(g(x)) = 17$, $y = x^2$ with $y = x + 2$, $x^2 + 10x$. This adds to the signature check asked for in "Raised later (review exam topic-2.4)". Wanted: flag a `$...$` span of at least 8 characters, spaces and `\dfrac`/`\tfrac` normalised, that also appears in a course of the exam's topic, as advisory.
 4. Validator: nothing flags a topic exam with no `pace` on any item. Its `minutes` then cannot be checked against the items, and several exams still carry `minutes` from the old hours rule (topic-0.1, 0.3, 0.4, 0.5, 0.7, 1.1 and 2.2 have no paces). Wanted: an advisory `exam-no-pace` on a topic exam with no paces, and a warning when the paces sum to less than two thirds, or more than all, of `minutes`.
 5. Reader tooling: no tool runs typed forms through the expression widget's own `grade()` (accept, then `form`, then `wrong` routing). `test-expr-equations.mjs` calls `exprEqual` only, so a reader must copy the widget's 30 lines (done here in `expr.mjs`), and Engine 1 was invisible to it. Wanted: expose the grading core, for example `ZQ.widgets.exprGrade(ce, spec, latex)`, used by the widget and by the test.
+
+## Fix pass
+
+Edited only `app/content/exams/topic-0.2.json` and `docs/reviews/exam-0.2-scripts/numbers.py` (plus the validator's own `content/manifest.json` rewrite). No item or paper id renamed; one id added (`e-gap-table`). Every corrected number was recomputed in the script, which now exits 0 (235 of 235). Its four content checks that failed by design are now positive claims (the old wording must be absent, not merely true), and every new number has a check.
+
+### Items
+
+1. e-whole-numbers: fixed as proposed. Brute force over -100 to 100 gives -1 to 4 (six); slip set is -2 <= n < 4; n = -2 gives 11, n = 5 gives -10, n = 4 gives -7. "Integer" replaces "whole number". Graded answer changed (answer ids).
+2. e-two-roots: fixed. 3x^2 + 5x - 12 = (3x - 4)(x + 3), roots 4/3 and -3 (discriminant 169, scan agrees). Keys a, b; graded answer values changed.
+3. e-quad-inequality: fixed. Quarter scan: negative exactly on -6 < x < 3 (35 points). Key text changed with the new quadratic.
+4. e-lattice-region: fixed (in-scope replacement). Brute force: 15 points, columns 1, 4, 5, 4, 1; strict 7; on the curve 5; graphs meet at (-3, 9) and (1, 1). Canvas, 15 explain points, labels and "integer coordinates" updated. Basis for the two-variable idea: the region is spelt out in words as $x^2 \le y \le 3 - 2x$, so the learner counts integer $y$ in each column. Graded answer changed (8 to 15). The label positions (`labelAt` 2.4 and -2.6) are checked in frame by script; I did not screenshot them.
+5. e-fg-equation: fixed. f = x^2 + 2, g = 2x - 5: fg(x) = 27 only at 5 and 0 (halves scan); sqrt 14 solves gf = 27 only. Graded answer changed. No surd denominator remains.
+6. e-perpendicular: fixed. Given line gradient (8 - 2)/(1 + 1) = 3, perpendicular -1/3, c = 3; slips -3x + 19 and x/3 - 1 both pass through (6, 1); `rounded` -0.33x + 3 added. Graded answer changed.
+7. e-shifted-peak: fixed. f = 4 - (x - 3)^2 has roots 1 and 5; (1, 0) goes to (-2, -2); slips (4, -2), (-2, 2), (4, 2), on-axis (-2, 0); curve stays above -4. Graded answer changed.
+8. e-complete-table: fixed. x^2 - 16x + 9 = (x - 8)^2 - 55 (grid minimum -55); p = -8, q = -55; slips 8, 73, 55. Graded answer changed.
+9. e-inverse option c why: fixed. Same-order undo gives 5x/3 + 20; option c is divide by 3 then add 4, 5x/3 + 4 (script).
+10. e-composite: fixed as proposed (question asks for what follows the = sign). The labelled-form grading failure is an engine limit (Engine 1 and 2), deferred; no accept workaround added.
+11. e-odd-squares: fixed ("for an integer n"); the identity holds for n from -50 to 50.
+12. e-cubic-line explain: fixed (three sentences, states 3 as a numeral; roots 2cos(20, 140, 260 degrees) give -1.532, -0.347, 1.879).
+
+### Coverage, difficulty and time
+
+13. Timing. Rule: AUTHORING section 5 (topic exam) says `minutes` is the time the exam really needs, and the Learn chip shows it as written. I applied the review's paces (topic-0.6 scale) to all 27 items and set `minutes` 65: the paces sum to 3,900 s (3,810 s for the original 26, plus 90 s). The script checks both sums and that each item carries its review pace.
+14. e-gap-table added after e-factorise as written (functions L1, d3, fn-rules). 3x - 7 fits all four rows, 6x - 10 only the first, input steps 2, 1, 3. Freshness: literal grep of `app/content/courses/functions` for "3x - 7", "3x-7", "A table with gaps", "-4, 2, 5 and 14", "6x - 10", "do not climb in equal steps": 0 hits (scripted). Ramp is now 5, 14, 5, 3 of 27.
+
+### Notes
+
+15. No change (coverage holds). 16. Fixed (model part 3 without |...|; prompt names the £200 fixed cost). 17. Fixed (`root-left` region and line). 18. Fixed ("tangent", `sign-k` 5.25 slip and line). 19. Fixed (two-decimal money). 20. No change.
+
+### Engine and deferred
+
+Engine 1 and 2 (labelled composite answers `g(f(x)) = ...`, `gf(x) = ...`, and the `form` check on `y = ...`) stay in the engine list; no workaround added. Engine 3 to 5 untouched.
+
+### Gates
+
+- Number script: exit 0, 235 of 235.
+- Freshness: `node tools/fresh-check.mjs --exam topic-0.2 --min-run 10` gives 0 hits. Literal grep of `app/content/courses/equations`, `functions`, `quadratics`: 0 hits for "5 - 3n", "3x^2 + 5x - 12", "x^2 + 3x - 18", "(x + 6)(x - 3)", "3 - 2x", "fg(x)", "g(x) = 2x - 5", "(2x - 5)^2", "(6, 1)", "(-1, 2)", "4 - (x - 3)", "f(x + 3) - 2", "x^2 - 16x", "3x - 7", "integer coordinates", "-55". Incidental hits only on generic spans: "3x - 4" 11 (other equations), "(x - 8)" 4 (quadratics homework-1 and homework-3), "tangent" 9 (the word itself).
+- Validator: 0 errors; no warning names topic-0.2 (the O2 advisories on items 9 and 10 are gone); `content/manifest.json` rewritten (`examMinutes` for topic-0.2 now 65).
+- Voice: no sentence over 35 words (509 scanned), 0 explanations over three sentences, no dash or `!`.
+- Playthrough `--exam topic-0.2 --local-cdn <pkgs>`: 27 of 27, passed; `--mobile`: 27 of 27, passed.
