@@ -192,18 +192,23 @@ typed('e-mixed-subtract', '2 5/12', 'smaller-from-larger')
 typed('e-mixed-subtract', '29/12', 'smaller-from-larger')
 
 # ---------------------------------------------------------------- [1] e-percent-build
-key('e-percent-build', F(35, 100) * 360)                         # 126
-wrong('e-percent-build', 'tenth', F(35, 1000) * 360)             # 12.6 = 3.5%
-wrong('e-percent-build', 'thirty', F(30, 100) * 360)             # 108
-say('e-percent-build', 'feedback.correct', 108)
-say('e-percent-build', 'feedback.correct', 18)
+key('e-percent-build', F(39, 100) * 360)                         # 140.4
+wrong('e-percent-build', 'tenth', F(39, 1000) * 360)             # 14.04 = 3.9%
+wrong('e-percent-build', 'forty', F(40, 100) * 360)              # 144
+wrong('e-percent-build', 'added-one', F(40, 100) * 360 + F(1, 100) * 360)   # 147.6
+say('e-percent-build', 'feedback.correct', 144)
+say('e-percent-build', 'feedback.correct', 3.6)
 say('e-percent-build', 'explain.text', 36)
-say('e-percent-build', 'explain.text', 126)
-say('e-percent-build', 'feedback.byKey.tenth', 3.5)
-for t in ('126', '£126', '126.00'):
+say('e-percent-build', 'explain.text', 144)
+say('e-percent-build', 'explain.text', 3.6)
+say('e-percent-build', 'explain.text', 140.4)
+say('e-percent-build', 'feedback.byKey.tenth', 3.9)
+ex.claim(F(144) - F(36, 10) == F(1404, 10) == F(39, 100) * 360, 'e-percent-build 144 - 3.60 = 140.40')
+for t in ('140.4', '£140.40', '140.40'):
     typed('e-percent-build', t, 'right')
-typed('e-percent-build', '12.6', 'tenth')
-typed('e-percent-build', '108', 'thirty')
+typed('e-percent-build', '14.04', 'tenth')
+typed('e-percent-build', '144', 'forty')
+typed('e-percent-build', '147.6', 'added-one')
 fresh('e-percent-build', r'35%', 'ratio review-1 items[1] asks "What is 35% of £120?"')
 
 # ---------------------------------------------------------------- [2] e-pnl-close
@@ -225,29 +230,48 @@ say('e-decimal-order', 'explain.text', '0.0455 has 4 hundredths and 0.054 has 5'
 
 # ---------------------------------------------------------------- [4] e-ratio-units
 ex.claim(correct_ids('e-ratio-units') == ['a'], 'e-ratio-units key a')
-g = math.gcd(240, 90)
-ex.claim((240 // g, 90 // g) == (8, 3) and g == 30, 'e-ratio-units 240 : 90 = 8 : 3, HCF 30')
-ex.claim(F(24, 10) / 90 == F(2, 75), 'e-ratio-units option b 2.40 : 90 = 2 : 75')
-ex.claim(math.gcd(24, 9) == 3 and F(24, 9) == F(8, 3), 'e-ratio-units option d 24 : 9 shares a factor of 3')
+g = math.gcd(math.gcd(120, 45), 15)
+ex.claim((120 // g, 45 // g, 15 // g) == (8, 3, 1) and g == 15, 'e-ratio-units 120 : 45 : 15 = 8 : 3 : 1, HCF 15')
+ex.claim(F(12, 10) * 100 == 120, 'e-ratio-units £1.20 is 120p')
+ex.claim(F(12, 10) * 20 == 24 and F(45) * 20 == 900 and F(15) * 20 == 300 and (24 // 12, 900 // 12, 300 // 12) == (2, 75, 25),
+         'e-ratio-units option b 1.20 : 45 : 15 = 24 : 900 : 300 = 2 : 75 : 25')
+ex.claim(math.gcd(math.gcd(24, 9), 3) == 3 and (24 // 3, 9 // 3, 3 // 3) == (8, 3, 1), 'e-ratio-units option d 24 : 9 : 3 shares a factor of 3')
+ex.claim((1, 3, 8)[::-1] == (8, 3, 1), 'e-ratio-units option c is the reverse of 8 : 3 : 1')
 fresh('e-ratio-units', r'price : dividend', 'ratio l10 quiz[0]: mixed units to simplest form, with unconverted, unsimplified and reversed distractors')
+fresh('e-ratio-units', r'2\.40', 'the two-part price and dividend setup')
 
 # ---------------------------------------------------------------- [5] e-tranches
-key('e-tranches', F(9, 2) / F(3, 8))                             # 12
-wrong('e-tranches', 'multiplied', F(9, 2) * F(3, 8))             # 27/16
-wrong('e-tranches', 'flipped-first', F(2, 9) * F(3, 8))          # 1/12
-ex.claim(F(9, 2) * F(8, 3) == F(72, 6) == 12 and 12 * F(3, 8) == F(9, 2), 'e-tranches explain 72/6 = 12 and the check')
-for t, e in (('12', 'right'), ('27/16', 'multiplied'), ('1/12', 'flipped-first'), ('0.083', 'flipped-first')):
+cnt = F(9, 2) / F(5, 8)                                          # 36/5 = 7 1/5
+full = cnt.numerator // cnt.denominator                          # 7
+left = F(9, 2) - full * F(5, 8)
+key('e-tranches', left)                                          # 1/8
+ex.claim(cnt == F(36, 5) == 7 + F(1, 5) and full == 7, 'e-tranches 9/2 x 8/5 = 36/5 = 7 1/5, 7 full tranches')
+ex.claim(full * F(5, 8) == F(35, 8) == 4 + F(3, 8), 'e-tranches 7 x 5/8 = 35/8 = 4 3/8')
+ex.claim(F(9, 2) == 4 + F(4, 8) and 4 + F(4, 8) - (4 + F(3, 8)) == F(1, 8) == F(1, 5) * F(5, 8), 'e-tranches 4 4/8 - 4 3/8 = 1/8, and 1/5 of a tranche agrees')
+wrong('e-tranches', 'tranche-share', F(1, 5))
+wrong('e-tranches', 'count', full)
+wrong('e-tranches', 'count-exact', cnt)
+wrong('e-tranches', 'multiplied', F(9, 2) * F(5, 8))             # 45/16
+ex.claim(F(1, 8) * 1_000_000 == 125_000, 'e-tranches 1/8 million is £125,000')
+for t, e in (('1/8', 'right'), ('0.125', 'right'), ('125/1000', 'right'), ('1/5', 'tranche-share'), ('7', 'count'), ('7.2', 'count-exact'),
+             ('36/5', 'count-exact'), ('45/16', 'multiplied')):
     typed('e-tranches', t, e)
 fresh('e-tranches', r'How many tranches does it fill', 'number-sense homework-1 items[4] divides a mixed number by a fraction to a whole answer (2 1/2 / 5/8 = 4)')
+ex.claim(not exam_has('e-tranches', r'tranches of £\$\\tfrac\{3\}\{8\}'), 'e-tranches no longer divides by 3/8 to a whole 12')
 
 # ---------------------------------------------------------------- [6] e-terminating
-opts6 = {'a': F(7, 40), 'b': F(9, 75), 'c': F(21, 56), 'd': F(5, 12), 'e': F(11, 30)}
+opts6 = {'a': F(13, 80), 'b': F(9, 75), 'c': F(21, 56), 'd': F(7, 24), 'e': F(11, 30)}
 ex.claim(correct_ids('e-terminating') == sorted(k for k, v in opts6.items() if terminates(v)), 'e-terminating keys are the terminating fractions')
 ex.claim(F(9, 75) == F(3, 25) and F(21, 56) == F(3, 8), 'e-terminating explain 9/75 = 3/25, 21/56 = 3/8')
-ex.claim(f'{5 / 12:.6f}' == '0.416667' and f'{11 / 30:.6f}' == '0.366667', 'e-terminating 5/12 = 0.41666..., 11/30 = 0.3666...')
-ex.claim(F(11, 30).denominator == 30, 'e-terminating 11/30 is already in lowest terms, so its 3 stays')
+ex.claim(F(13, 80) == F(1625, 10000) and 80 == 2 ** 4 * 5 and math.gcd(13, 80) == 1, 'e-terminating 13/80 = 0.1625, 80 = 2^4 x 5, lowest terms')
+ex.claim(f'{7 / 24:.6f}' == '0.291667' and math.gcd(7, 24) == 1 and 24 == 8 * 3 and not terminates(F(7, 24)),
+         'e-terminating 7/24 = 0.291666..., 24 = 8 x 3, lowest terms, recurs')
+ex.claim(f'{11 / 30:.6f}' == '0.366667' and F(11, 30).denominator == 30 and not terminates(F(11, 30)),
+         'e-terminating 11/30 = 0.3666..., already in lowest terms, so its 3 stays')
+ex.claim(24 % 3 == 0 and 30 % 3 == 0, 'e-terminating explain: 24 and 30 keep a factor of 3')
 fresh('e-terminating', r'\{7\}\{40\}', 'number-sense fractions-to-decimals lesson screens[9]: "Which fraction gives a decimal that stops?", key 7/40, distractor 5/12')
-taught('e-terminating', r'are terminating decimals', 'number-sense', r'[Tt]erminat', 'the word "terminating" (the lesson says "a decimal that stops")')
+fresh('e-terminating', r'\{5\}\{12\}', 'the lesson screens[9] distractor 5/12')
+ex.claim(exam_has('e-terminating', r'called a terminating decimal'), 'e-terminating defines the word "terminating" where it first uses it')
 
 # ---------------------------------------------------------------- [7] e-tick-count
 n7 = F(6 * 10**5) / F(8, 1000)
@@ -258,13 +282,16 @@ ex.claim(F(6, 8) * 10**(5 + (-3)) == F(75, 10) * 10**1, 'e-tick-count option d =
 ex.claim(5 - (-3) == 8, 'e-tick-count why: 5 - (-3) = 8')
 
 # ---------------------------------------------------------------- [8] e-fraction-power
-v8 = F(27, 8)
-ex.claim(F(3, 2) ** 3 == v8 and F(3, 2) ** 2 == F(9, 4), 'e-fraction-power (27/8)^(2/3) = (3/2)^2 = 9/4')
-key('e-fraction-power', F(9, 4))
-wrong('e-fraction-power', 'no-flip', F(4, 9))
-wrong('e-fraction-power', 'negative', -F(4, 9))
-for t, e in (('9/4', 'right'), ('2 1/4', 'right'), ('2.25', 'right'), ('4/9', 'no-flip'), ('-4/9', 'negative')):
+ex.claim(F(2, 3) ** 3 == F(8, 27), 'e-fraction-power the cube root of 8/27 is 2/3 (2/3 cubed = 8/27)')
+key('e-fraction-power', F(2, 3) ** 2)                            # 4/9
+wrong('e-fraction-power', 'top-only', F(2 ** 2, 27))     # root and square taken on the 8 only
+wrong('e-fraction-power', 'doubled', F(2, 3) * 2)
+wrong('e-fraction-power', 'no-root', F(8, 27) ** 2)
+ex.claim(F(2, 3) * F(2, 3) == F(4, 9) and 3 ** 3 == 27, 'e-fraction-power 2/3 x 2/3 = 4/9, 3^3 = 27')
+for t, e in (('4/9', 'right'), ('0.444', 'right'), ('0.4444', 'right'), ('4/27', 'top-only'), ('4/3', 'doubled'), ('64/729', 'no-root')):
     typed('e-fraction-power', t, e)
+ex.claim(not exam_has('e-fraction-power', r'frac\{2\}\{3\}\}\\right\)') and not exam_has('e-fraction-power', r'\^\{-\\frac'),
+         'e-fraction-power no longer uses a fractional or negative fractional index')
 taught('e-fraction-power', r'\^\{-\\frac\{2\}\{3\}\}', 'number-sense', r'\^\{\\[dt]?frac|\^\{-\\[dt]?frac|fractional (power|index)',
        'a fractional index (taught first in exp-log, topic 0.3)')
 
@@ -277,40 +304,56 @@ say('e-operation-order', 'explain.text', 14)
 say('e-operation-order', 'feedback.byKey.negative-square', -9)
 
 # ---------------------------------------------------------------- [10] e-estimate
-est = F(600) * F(5, 100) / F(2, 10)
-ex.claim(est == 150 and correct_ids('e-estimate') == ['a'], 'e-estimate 600 x 0.05 / 0.2 = 150, key a')
-ex.claim(F(600) * F(5, 100) / 2 == 15, 'e-estimate option b: divided by 2 gives 15')
-ex.claim(F(600) * F(5, 100) * F(2, 10) == 6, 'e-estimate option c: multiplied by 0.2 gives 6')
-ex.claim(F(600) * F(5, 10) / F(2, 10) == 1500, 'e-estimate option d: 0.0487 rounded to 0.5 gives 1500')
-exact10 = 587 * 0.0487 / 0.198
-ex.claim(round(exact10) == 144, f'e-estimate explain "about 144" ({exact10:.2f})')
+est = F(10) * F(5, 100) / F(2, 1000)
+ex.claim(est == 250 and correct_ids('e-estimate') == ['a'], 'e-estimate 10 x 0.05 / 0.002 = 250, key a')
+ex.claim(F(9) * F(5, 100) / F(2, 1000) == F(225), 'e-estimate option b: 9.62 rounded down to 9 gives 225')
+ex.claim(F(10) * F(5, 10) / F(2, 1000) == 2500, 'e-estimate option c: 0.0487 rounded to 0.5 gives 2500')
+ex.claim(F(10) * F(5, 100) * F(2, 1000) == F(1, 1000), 'e-estimate option d: multiplying by 0.002 gives 0.001')
+ex.claim(F(10) * F(5, 100) == F(1, 2), 'e-estimate 10 x 0.05 = 0.5')
+exact10 = 9.62 * 0.0487 / 0.00213
+ex.claim(round(exact10, -1) == 220, f'e-estimate explain "about 220" ({exact10:.2f})')
 fresh('e-estimate', r'0\.198', 'number-sense estimating lesson screens[5] estimates (38.7 x 5.12) / 0.198, the same three-number shape and denominator')
+fresh('e-estimate', r'587', 'the old 587 numerator')
 
 # ---------------------------------------------------------------- [11] e-before-fall
-key('e-before-fall', F(306) / F(85, 100))                        # 360
-wrong('e-before-fall', 'added-back', F(306) * F(115, 100))       # 351.9
-wrong('e-before-fall', 'took-off', F(306) * F(85, 100))          # 260.1
-ex.claim(F(15, 100) * 360 == 54 and 360 - 54 == 306, 'e-before-fall check: 15% of 360 is 54, 360 - 54 = 306')
+mult = F(85, 100) * F(120, 100)                                  # 1.02
+ex.claim(mult == F(102, 100), 'e-before-fall 0.85 x 1.2 = 1.02')
+key('e-before-fall', F(306) / mult)                              # 300
+wrong('e-before-fall', 'net-five', F(306) / F(105, 100))         # 291.428571
+wrong('e-before-fall', 'one-move', F(306) / F(85, 100))          # 360
+wrong('e-before-fall', 'net-five-off', F(306) * F(95, 100))      # 290.7
+wrong('e-before-fall', 'reapplied', F(306) * mult)               # 312.12
+ex.claim(F(300) * F(85, 100) == 255 and F(255) * F(12, 10) == 306, 'e-before-fall check: 300 falls to 255, a 20% rise gives 306')
+say('e-before-fall', 'explain.text', 255)
+for t, e in (('300', 'right'), ('£300', 'right'), ('291.43', 'net-five'), ('360', 'one-move'), ('290.7', 'net-five-off'), ('312.12', 'reapplied')):
+    typed('e-before-fall', t, e)
 fresh('e-before-fall', r'After a 15% fall', 'ratio review-2 items[1] (after 15% off, £68, same two slips) and the before-the-discount lesson quiz[2] (after a 75% fall)')
 
 # ---------------------------------------------------------------- [12] e-three-moves
-m12 = F(125, 100) * F(8, 10) * F(11, 10)
-key('e-three-moves', m12 - 1)                                    # 0.1
-wrong('e-three-moves', 'added', F(25 - 20 + 10, 100))
-ex.claim(F(125, 100) * F(8, 10) == 1, 'e-three-moves explain: 1.25 x 0.8 = 1')
-for t, e in (('10', 'right'), ('10%', 'right'), ('15', 'added')):
+m12 = F(70, 100) * F(120, 100) * F(125, 100)
+key('e-three-moves', m12 - 1)                                    # 0.05
+wrong('e-three-moves', 'added', F(-30 + 20 + 25, 100))
+wrong('e-three-moves', 'multiplier', m12)                        # 105 typed into a % box
+ex.claim(m12 == F(105, 100) and F(70, 100) * F(120, 100) == F(84, 100), 'e-three-moves 0.7 x 1.2 = 0.84, x 1.25 = 1.05')
+for t, e in (('5', 'right'), ('5%', 'right'), ('15', 'added'), ('105', 'multiplier'), ('105%', 'multiplier'), ('110', 'generic')):
     typed('e-three-moves', t, e)
-fresh('e-three-moves', r'rises 25%, then falls 20%', 'ratio up-then-down lesson quiz[3]: "rises 25% and then falls 20%", ending back at the start')
+fresh('e-three-moves', r'rises 25%,? (and )?then falls 20%', 'ratio up-then-down lesson quiz[3]: "rises 25% and then falls 20%", ending back at the start')
+fresh('e-three-moves', r'cancel exactly', 'the old explain: the first two moves cancel')
 
 # ---------------------------------------------------------------- [13] e-ratio-gap
-part = F(960, 7 - 4)
-key('e-ratio-gap', part * 11)                                    # 3520
-wrong('e-ratio-gap', 'gap-as-share', F(960, 7) * 11)
+part = F(960, 6 - 2)                                             # 240
+key('e-ratio-gap', part * 11)                                    # 2640
+wrong('e-ratio-gap', 'a-minus-b', F(960, 6 - 3) * 11)            # 3520
+wrong('e-ratio-gap', 'gap-as-share', F(960, 6) * 11)             # 1760
 wrong('e-ratio-gap', 'gap-as-total', 960)
-ex.claim(part == 320 and part * 7 == 2240 and part * 4 == 1280 and 2240 - 1280 == 960, 'e-ratio-gap explain: part 320, shares 2,240 and 1,280')
-say('e-ratio-gap', 'explain.text', 2240)
-say('e-ratio-gap', 'explain.text', 1280)
-for t, e in (('3,520', 'right'), ('£3,520', 'right'), ('1508.57', 'gap-as-share'), ('960', 'gap-as-total')):
+wrong('e-ratio-gap', 'two-desks', part * (6 + 2))                # 1920
+ex.claim(part == 240 and part * 6 == 1440 and part * 3 == 720 and part * 2 == 480 and 1440 - 480 == 960 and 1440 + 720 + 480 == 2640,
+         'e-ratio-gap explain: part 240, shares 1,440, 720 and 480, A - C = 960')
+say('e-ratio-gap', 'explain.text', 1440)
+say('e-ratio-gap', 'explain.text', 720)
+say('e-ratio-gap', 'explain.text', 480)
+say('e-ratio-gap', 'explain.text', 2640)
+for t, e in (('2,640', 'right'), ('£2,640', 'right'), ('3520', 'a-minus-b'), ('1760', 'gap-as-share'), ('960', 'gap-as-total'), ('1920', 'two-desks')):
     typed('e-ratio-gap', t, e)
 fresh('e-ratio-gap', r'7 : 4', 'ratio homework-3 items[0]: a bonus pool in the ratio 7 : 4, the larger share £1,260 more, find the whole pool')
 
@@ -322,6 +365,8 @@ cell('e-two-currencies', 1, 1, F(1840) / eur, typed_ok=('1,600', '1600'))
 say('e-two-currencies', 'explain.text', 400)
 say('e-two-currencies', 'explain.text', 460)
 say('e-two-currencies', 'explain.text', 1600)
+ex.claim(IT['e-two-currencies']['widget']['rows'][1][0] == '€1,840' and '€1.15' in IT['e-two-currencies']['prose'] and '€1,840 fee' in IT['e-two-currencies']['prose'],
+         'e-two-currencies writes euros with the symbol, as the currencies lesson does')
 
 # ---------------------------------------------------------------- [15] e-loss-share
 key('e-loss-share', F(85, 1250))                                 # 0.068
@@ -331,8 +376,10 @@ ex.claim(abs(1250 / 85 - 14.70588) < 1e-4, 'e-loss-share 1250 / 85 = 14.706')
 for t, e in (('6.8', 'right'), ('6.8%', 'right'), ('14.7', 'flipped'), ('14.71', 'flipped'), ('0.068', 'decimal')):
     typed('e-loss-share', t, e)
 ex.claim(F(85, 1250) == F(68, 1000), 'e-loss-share explain 85/1250 = 6.8/100')
-ex.claim_text('exam', f'{P("e-loss-share")}.explain.text', 'a bit over half', 0.5 < F(85, 125) <= F(6, 10),
-              'e-loss-share explain: 85 is "a bit over half" of 125 (it is 68%, about two thirds)')
+ex.claim(F(10, 100) * 1250 == 125 and F(6, 10) < F(85, 125) < F(7, 10) and abs(float(F(85, 125)) - 2 / 3) < 0.02,
+         'e-loss-share check: 10% of 1,250 is 125, and 85 is 68% of that, about two thirds')
+say('e-loss-share', 'explain.text', 'about two thirds of that')
+ex.claim(not exam_has('e-loss-share', r'a bit over half'), 'e-loss-share no longer says "a bit over half"')
 
 # ---------------------------------------------------------------- [16] e-fill-rate
 rate = F(1800, 150)
@@ -349,24 +396,38 @@ wrong('e-depreciation', 'added-back', F(10240) * F(12, 10) ** 3)  # 17694.72
 ex.claim([20000 * F(8, 10) ** k for k in range(4)] == [20000, 16000, 12800, 10240], 'e-depreciation check 20,000, 16,000, 12,800, 10,240')
 ex.claim(F(8, 10) ** 3 == F(512, 1000), 'e-depreciation 0.8^3 = 0.512')
 
-# ---------------------------------------------------------------- [18] e-inverse-square
-if exam_has('e-inverse-square', r'square of \$x\$'):        # the shipped inverse-square table (findings 4 and 5)
-    k18 = 12 * 2 ** 2
-    cell('e-inverse-square', 0, 1, F(k18, 1 ** 2), typed_ok=('48',))
-    cell('e-inverse-square', 2, 1, F(k18, 4 ** 2), typed_ok=('3',))
-    cell('e-inverse-square', 3, 1, F(k18, 6 ** 2), typed_ok=('1.33', '4/3', '1 1/3'), typed_bad=('1.34',))
-    ex.claim(k18 == 48 and F(k18, 36) == F(4, 3), 'e-inverse-square k = 48, 48/36 = 4/3')
-else:
-    ex.claim(False, 'e-inverse-square was rewritten: add checks for the new table here')
+# ---------------------------------------------------------------- [18] e-inverse-square (now inverse proportion both ways)
+k18 = 2 * 12                                                     # xy = 24
+ex.claim(k18 == 24, 'e-inverse-square xy = 2 x 12 = 24')
+cell('e-inverse-square', 1, 1, F(k18, 3), typed_ok=('8', '8.00'), typed_bad=('8.01', '8.05'))
+cell('e-inverse-square', 2, 1, F(k18, 5), typed_ok=('4.8', '24/5', '4 4/5'), typed_bad=('4.81', '4.9'))
+cell('e-inverse-square', 3, 0, F(k18, 40), typed_ok=('0.6', '3/5'), typed_bad=('0.61', '0.7'))
+ex.claim(F(k18, 5) == F(24, 5) and F(k18, 40) == F(3, 5), 'e-inverse-square 24/5 = 4.8 and 24/40 = 0.6')
+ws = {(r, c): IT['e-inverse-square']['widget']['rows'][r][c]['wrong'][0] for r, c in ((1, 1), (2, 1), (3, 0))}
+ex.claim(ws[(1, 1)]['id'] == 'direct-3' and abs(ws[(1, 1)]['value'] - 12 * 3 / 2) < 1e-9, 'e-inverse-square direct slip at x = 3: 12 x 3/2 = 18')
+ex.claim(ws[(2, 1)]['id'] == 'direct-5' and abs(ws[(2, 1)]['value'] - 12 * 5 / 2) < 1e-9, 'e-inverse-square direct slip at x = 5: 12 x 5/2 = 30')
+ex.claim(ws[(3, 0)]['id'] == 'direct-x' and abs(ws[(3, 0)]['value'] - 2 * 40 / 12) < 1e-6, 'e-inverse-square direct slip at y = 40: 2 x 40/12 = 6.666667')
+say('e-inverse-square', 'explain.text', 24)
+say('e-inverse-square', 'explain.text', 8)
+say('e-inverse-square', 'explain.text', 4.8)
+say('e-inverse-square', 'explain.text', 0.6)
+ex.claim(all(IT['e-inverse-square']['widget']['rows'][r][c]['tol']['abs'] == 0.005 for r, c in ((1, 1), (2, 1), (3, 0))),
+         'e-inverse-square every typed cell has tol.abs 0.005, so a wrongly rounded 2 d.p. answer is not graded right')
 taught('e-inverse-square', r'square of \$x\$', 'ratio', r'inversely proportional to the square|\\[dt]?frac\{k\}\{x\^2\}',
        'inverse proportion to a square (ratio teaches only y = c/x)')
+ex.claim(not exam_has('e-inverse-square', r'square of'), 'e-inverse-square no longer needs the square')
 
 # ---------------------------------------------------------------- [19] e-minus-eight
-opts19 = {'a': F(-2) ** 3, 'b': -(F(2) ** 3), 'c': F(-1, 2) ** -3, 'd': F(2) ** -3, 'e': -(F(-2) ** 3)}
-ex.claim(correct_ids('e-minus-eight') == sorted(k for k, v in opts19.items() if v == -8), 'e-minus-eight keys are the options equal to -8')
-ex.claim(opts19['d'] == F(1, 8) and opts19['e'] == 8, 'e-minus-eight 2^-3 = 1/8, -(-2)^3 = 8')
-taught('e-minus-eight', r'2\^\{-3\}', 'number-sense', r'(?<![0-9])[2-9]\^\{-[0-9]|\)\^\{-[0-9]',
+opts19 = {'a': F(-2) ** 3, 'b': -(F(2) ** 3), 'c': F(-4) ** 2 / F(-2), 'd': -(F(4) ** 2) / F(-2), 'e': -(F(-2) ** 3)}
+ex.claim(correct_ids('e-minus-eight') == sorted(k for k, v in opts19.items() if v == -8) == ['a', 'b', 'c'], 'e-minus-eight keys are the options equal to -8')
+ex.claim(opts19['c'] == -8 and F(-4) ** 2 == 16, 'e-minus-eight (-4)^2 / (-2) = 16 / (-2) = -8')
+ex.claim(opts19['d'] == 8 and -(F(4) ** 2) == -16 and F(-16) / F(-2) == 8, 'e-minus-eight -4^2 / (-2) = -16 / (-2) = 8')
+ex.claim(opts19['e'] == 8, 'e-minus-eight -(-2)^3 = 8')
+say('e-minus-eight', 'explain.text', 16)
+say('e-minus-eight', 'explain.text', -16)
+taught('e-minus-eight', r'2\^\{-3\}|\)\^\{-3\}', 'number-sense', r'(?<![0-9])[2-9]\^\{-[0-9]|\)\^\{-[0-9]',
        'a negative power of a base other than 10 (number-sense shows only 10^-n; exp-log, topic 0.3, teaches 2^-3)')
+ex.claim(not exam_has('e-minus-eight', r'\^\{-3\}'), 'e-minus-eight no longer uses a negative power')
 
 # ---------------------------------------------------------------- [20] e-chain-ratio
 A, B, C = 2 * 4, 3 * 4, 5 * 3                                    # 8 : 12 : 15
@@ -391,13 +452,21 @@ say('e-fund-fees', 'explain.text', 1032)
 for t, e in (('10825.6', 'right'), ('£10,825.60', 'right'), ('10960', 'skipped-entry'), ('10795.6', 'fee-on-growth'), ('8825.6', 'fee-on-all')):
     typed('e-fund-fees', t, e)
 
-# ---------------------------------------------------------------- [22] e-recurring-proof
-x = F(236, 1000) + F(36, 99000)                                   # 0.2 363636...
-ex.claim(x == F(13, 55), 'e-recurring-proof 0.2(36 recurring) = 13/55')
-ex.claim(1000 * x - 10 * x == 234 and F(234, 990) == F(13, 55) and math.gcd(234, 990) == 18, 'e-recurring-proof 990x = 234, cancel 18')
-ex.claim(f'{13 / 55:.7f}' == '0.2363636', 'e-recurring-proof 13/55 = 0.2363636...')
+# ---------------------------------------------------------------- [22] e-recurring-proof (now a sum of two recurring decimals)
+s22 = F(5, 6) + F(7, 15)
+ex.claim(s22 == F(39, 30) == F(13, 10) == F(13, 10) and F(5, 6) == F(25, 30) and F(7, 15) == F(14, 30) and math.gcd(39, 30) == 3,
+         'e-recurring-proof 5/6 + 7/15 = 25/30 + 14/30 = 39/30 = 13/10, HCF 3')
+ex.claim(f'{5 / 6:.4f}' == '0.8333' and f'{7 / 15:.4f}' == '0.4667' and abs(7 / 15 - 0.46666666) < 1e-7, 'e-recurring-proof 5/6 = 0.8333..., 7/15 = 0.4666...')
+ex.claim(0.8333333333 + 0.4666666667 - 1.3 < 1e-9 and F(13, 10) == F(13, 10) and terminates(F(13, 10)) and 10 == 2 * 5, 'e-recurring-proof the sum is 1.3, and 10 = 2 x 5')
+ex.claim(F(5 + 7, 6 + 15) == F(12, 21) == F(4, 7) and F(12, 21) != s22, 'e-recurring-proof distractor d1: 12/21 = 4/7, not the sum')
+ex.claim(not terminates(F(5, 6)) and not terminates(F(7, 15)) and terminates(s22), 'e-recurring-proof both parts recur but the sum stops (distractor d2 is false)')
 w22 = IT['e-recurring-proof']['widget']
-ex.claim(w22['answer'] == ['let', 'big', 'small', 'sub', 'end'] and w22['same'] == [['big', 'small']], 'e-recurring-proof order and same group')
+ex.claim(w22['answer'] == ['common', 'add', 'cancel', 'rule', 'end'] and w22['distractors'] == ['d1', 'd2'] and 'same' not in w22,
+         'e-recurring-proof order, distractors, and no same group')
+ex.claim(all(next(l for l in w22['lines'] if l['id'] == d).get('why') for d in w22['distractors']), 'e-recurring-proof every distractor has a why')
+say('e-recurring-proof', 'explain.text', 39)
+say('e-recurring-proof', 'explain.text', 13)
+ex.claim(not exam_has('e-recurring-proof', r'1000x|990x|\\dot'), 'e-recurring-proof no longer needs the multiply-and-subtract method or dot notation')
 taught('e-recurring-proof', r'1000x', 'number-sense', r'1000x|100x|99x|990x',
        'turning a recurring decimal into a fraction by subtracting multiples')
 taught('e-recurring-proof', r'\\dot\{3\}\\dot\{6\}', 'number-sense', r'\\dot\{[0-9]\}[0-9]*\\dot',
@@ -414,11 +483,13 @@ maps = {}
 for c in ('number-sense', 'ratio'):
     maps.update(json.load(open(os.path.join(ROOT, 'courses', c, 'course.json'), encoding='utf8'))['skills'])
 ex.claim(doc['skills'] == maps, 'the skills map equals the union of the two course.json maps')
-PACE = {'e-mixed-subtract': 60, 'e-percent-build': 45, 'e-pnl-close': 45, 'e-decimal-order': 60, 'e-ratio-units': 60,
-        'e-tranches': 90, 'e-terminating': 150, 'e-tick-count': 90, 'e-fraction-power': 90, 'e-operation-order': 75,
-        'e-estimate': 90, 'e-before-fall': 75, 'e-three-moves': 90, 'e-ratio-gap': 90, 'e-two-currencies': 150,
+PACE = {'e-mixed-subtract': 60, 'e-percent-build': 45, 'e-pnl-close': 45, 'e-decimal-order': 60, 'e-ratio-units': 80,
+        'e-tranches': 110, 'e-terminating': 150, 'e-tick-count': 90, 'e-fraction-power': 90, 'e-operation-order': 75,
+        'e-estimate': 90, 'e-before-fall': 95, 'e-three-moves': 90, 'e-ratio-gap': 90, 'e-two-currencies': 150,
         'e-loss-share': 90, 'e-fill-rate': 90, 'e-depreciation': 150, 'e-inverse-square': 180, 'e-minus-eight': 150,
         'e-chain-ratio': 150, 'e-fund-fees': 300, 'e-recurring-proof': 300}
+ex.claim(all(IT[k].get('pace') == v for k, v in PACE.items()), 'every item stores the reader pace')
+ex.claim(doc['minutes'] == 50 and sum(PACE.values()) == 2730, 'minutes 50 against paces summing to 2,730 s (45.5 min) plus time to check')
 ex.claim(set(PACE) == set(IT), 'a reader pace for every item')
 total = sum(PACE.values())
 ex.claim(total <= doc['minutes'] * 60, f'reader paces sum to {total} s ({total / 60:.1f} min) within {doc["minutes"]} minutes')
