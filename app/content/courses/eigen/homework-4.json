@@ -557,6 +557,167 @@
      "text": "States that the repair changes other portfolios' risk (the all-long variance moves from 7 to 6.58). Recommends reporting it and re-estimating on synchronised data."
     }
    ]
+  },
+  {
+   "id": "h-replicate-svd",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "eg-svd"
+   ],
+   "pace": 1200,
+   "title": "Replicating a payoff with redundant instruments",
+   "prose": "A desk models five end states for a stock: it finishes at 80, 90, 100, 110 or 120. `PAY` is defined for you, with one row per state and one column per instrument. The columns are a bond paying 1, the stock, and a call and a put both struck at 100. Put-call parity makes the call minus the put pay exactly what the stock minus 100 bonds pays. A target `y` lists the payoff wanted in each state.",
+   "question": "Write `replicate_payoff(PAY, y, tol)` from the stub, building it from `np.linalg.svd`. Among the weights whose payoff is nearest `y` in squared error, it finds the shortest. A singular value below `tol` times the largest counts as zero. It returns the weights, the residual $\\mathbf{y} - \\text{PAY}\\,\\mathbf{w}$ and the number of singular values kept.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "PAY = [[1, 80, 0, 20], [1, 90, 0, 10], [1, 100, 0, 0], [1, 110, 10, 0], [1, 120, 20, 0]]\n",
+    "starter": "import numpy as np\n\ndef replicate_payoff(PAY, y, tol=1e-10):\n    \"\"\"Shortest least-squares weights for\n    the target y, from the SVD of PAY. A\n    singular value below tol times the\n    largest counts as zero. Returns the\n    weights, y - PAY w and the number of\n    singular values kept.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef replicate_payoff(PAY, y, tol=1e-10):\n    \"\"\"Shortest least-squares weights for\n    the target y, from the SVD of PAY. A\n    singular value below tol times the\n    largest counts as zero. Returns the\n    weights, y - PAY w and the number of\n    singular values kept.\"\"\"\n    A = np.asarray(PAY, dtype=float)\n    y = np.asarray(y, dtype=float)\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    keep = s > tol * s.max()                         # relative cut-off\n    w = Vt[keep].T @ ((U[:, keep].T @ y) / s[keep])  # V Sigma^+ U^T y\n    return w, y - A @ w, int(keep.sum())\n",
+    "examples": [
+     {
+      "call": "replicate_payoff(PAY, [20, 10, 0, 10, 20])[0]",
+      "expect": "[0, 0, 1, 1]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "replicate_payoff(PAY, [20, 10, 0, 10, 20])[0]",
+      "expect": "[0, 0, 1, 1]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "replicate_payoff(PAY, [20, 10, 0, 10, 20])[2]",
+      "expect": "3",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "replicate_payoff(PAY, [20, 10, 0, 10, 20])[1]",
+      "expect": "[0, 0, 0, 0, 0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "replicate_payoff(PAY, [80, 90, 100, 100, 100])[0]",
+      "expect": "[200/10003, 10001/10003, -10001/10003, -2/10003]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "float(np.dot(replicate_payoff(PAY, [80, 90, 100, 100, 100])[0], [100, -1, 1, -1]))",
+      "expect": "0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "replicate_payoff(PAY, [0, 0, 0, 1, 1])[0]",
+      "expect": "[-39/70021, 5021/3501050, 175033/3501050, -12494/1750525]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "replicate_payoff(PAY, [0, 0, 0, 1, 1])[1]",
+      "expect": "[1/35, -2/35, -1/7, 12/35, -6/35]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "TWO = [[1, 90, 0, 10], [1, 110, 10, 0]]",
+      "call": "replicate_payoff(TWO, [0, 1])[0]",
+      "expect": "[-17/20306, 551/101530, 8201/203060, -9901/203060]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "TWO = [[1, 90, 0, 10], [1, 110, 10, 0]]",
+      "call": "replicate_payoff(TWO, [0, 1])[2]",
+      "expect": "2",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "KEYED = [[1, 80, 0, 20], [1, 90, 0, 10.01], [1, 100, 0, 0], [1, 110, 10, 0], [1, 120, 20, 0]]",
+      "call": "replicate_payoff(KEYED, [20, 10, 0, 10, 20], 1e-5)[0]",
+      "expect": "[-0.0000014, -0.0000285, 1.0001998, 0.9999426]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "KEYED = [[1, 80, 0, 20], [1, 90, 0, 10.01], [1, 100, 0, 0], [1, 110, 10, 0], [1, 120, 20, 0]]",
+      "call": "replicate_payoff(KEYED, [20, 10, 0, 10, 20], 1e-5)[2]",
+      "expect": "3",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "KEYED = [[1, 80, 0, 20], [1, 90, 0, 10.01], [1, 100, 0, 0], [1, 110, 10, 0], [1, 120, 20, 0]]",
+      "call": "replicate_payoff(KEYED, [20, 10, 0, 10, 20])[0]",
+      "expect": "[100, -1, 2, 0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "replicate_payoff(PAY, [20, 10, 0, 10, 20])[2] == 3 and 'linalg.pinv' not in __learner_source__ and 'lstsq' not in __learner_source__",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 13 hidden tests on three payoff tables, each number within 1e-6. The tests fail if your source calls NumPy's pseudoinverse or `lstsq`. The first run loads NumPy: 1 to 3 seconds."
+   },
+   "feedback": {
+    "correct": "$\\mathbf{w} = \\mathbf{V}_k\\boldsymbol{\\Sigma}_k^{-1}\\mathbf{U}_k^T\\mathbf{y}$ on the kept directions, with the residual and the rank beside it.",
+    "generic": "Some tests failed. Read the first failing test against the description above.",
+    "byKey": {
+     "error": "Your code stopped with an error. With `full_matrices=False`, `U` has one column per singular value.",
+     "test-1": "Test 1 expects the straddle as one call and one put. $\\mathbf{X}^T\\mathbf{X}$ is singular here, so the normal equations cannot give it; drop the zero singular value instead.",
+     "test-2": "Test 2 expects 3 kept singular values: the fourth is zero up to rounding, because of put-call parity.",
+     "test-3": "Test 3 expects a zero residual: the straddle is exactly a call plus a put.",
+     "test-4": "Test 4 wants the shortest exact fit of the covered call. The stock minus a call fits too, but it is longer.",
+     "test-5": "Test 5 checks that the weights have no part along $(100, -1, 1, -1)$, the parity direction that pays nothing. Any such part makes the weights longer.",
+     "test-6": "Test 6 uses a digital that pays 1 above 105, which no weights reach exactly. Expect the least-squares fit of smallest length.",
+     "test-7": "Test 7 expects the residual $\\mathbf{y} - \\text{PAY}\\,\\mathbf{w}$, target minus fit, in that order.",
+     "test-8": "Test 8 has two states and four instruments, so `U` is $2 \\times 2$ and many weights fit exactly.",
+     "test-9": "Test 9 expects 2 singular values kept: two states give at most two.",
+     "test-10": "Test 10 keys the put's payoff in the 90 state as 10.01. One singular value is then about 0.00008, below 1e-5 times the largest, so it counts as zero. Compare with `tol` times the largest, not with `tol` alone.",
+     "test-11": "Test 11 expects 3 kept: count the singular values above the cut-off, not all of them.",
+     "test-12": "Test 12 keeps all four singular values at the default cut-off, so the typo is treated as real: the fit is two calls, less the stock, plus 100 bonds.",
+     "test-13": "Test 13 checks that you built the weights from `np.linalg.svd` yourself, without NumPy's pseudoinverse or `lstsq`."
+    }
+   },
+   "explain": {
+    "text": "Keep the singular values above `tol` times the largest and take $\\mathbf{w} = \\mathbf{V}_k\\boldsymbol{\\Sigma}_k^{-1}\\mathbf{U}_k^T\\mathbf{y}$. It has no part along the parity direction $(100, -1, 1, -1)$, which pays nothing, so it is the shortest best fit. The residual is the part of $\\mathbf{y}$ outside the column space: zero for the straddle and the covered call, but not for the digital.\n\n```python\nkeep = s > tol * s.max()\nw = Vt[keep].T @ ((U[:, keep].T @ y) / s[keep])\nreturn w, y - A @ w, int(keep.sum())\n```"
+   }
   }
  ]
 }
