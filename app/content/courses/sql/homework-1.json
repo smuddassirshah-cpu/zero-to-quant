@@ -947,6 +947,183 @@
           "text": "Notes that both bugs fail silently, with no error, and suggests testing a check on data with a known answer"
         }
       ]
+    },
+    {
+      "id": "h-cash-bonds",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "sql-select",
+        "sql-python"
+      ],
+      "pace": 900,
+      "prose": "A treasury desk parks spare cash in safe bonds that mature soon. The `bonds` table gives each bond's rating, maturity date and yield in per cent. A perpetual bond never matures, so its maturity is `NULL`. An unrated bond has a `NULL` rating.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "bond",
+            "rating",
+            "maturity",
+            "yield"
+          ],
+          "rows": [
+            [
+              "KFW 27",
+              "AAA",
+              "2027-06-15",
+              "2.31"
+            ],
+            [
+              "BARC 27",
+              "A",
+              "2027-03-10",
+              "4.40"
+            ],
+            [
+              "EIB PERP",
+              "AAA",
+              "NULL",
+              "4.95"
+            ],
+            [
+              "WB 28",
+              "AAA",
+              "2028-01-31",
+              "2.95"
+            ],
+            [
+              "TSY 27",
+              "AA",
+              "2027-09-07",
+              "3.95"
+            ],
+            [
+              "ACME 27",
+              "NULL",
+              "2027-01-20",
+              "7.50"
+            ],
+            [
+              "TSY 28",
+              "AA",
+              "2028-01-31",
+              "3.82"
+            ],
+            [
+              "HSBC PERP",
+              "AA",
+              "NULL",
+              "6.20"
+            ],
+            [
+              "ADB 27",
+              "AAA",
+              "2027-11-22",
+              "2.60"
+            ],
+            [
+              "VOD 28",
+              "BBB",
+              "2028-01-31",
+              "4.60"
+            ],
+            [
+              "NIB 28",
+              "AAA",
+              "2028-05-02",
+              "3.10"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ],
+          "label": "A desk's bonds table",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Write `query()` from the stub. It returns the bond, maturity and yield of the four AAA or AA bonds that mature soonest, soonest first. Bonds that mature on the same day rank by yield, highest first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE bonds (bond TEXT, rating TEXT, maturity TEXT, yield REAL)\")\ndb.executemany(\"INSERT INTO bonds VALUES (?, ?, ?, ?)\", [\n    (\"KFW 27\", \"AAA\", \"2027-06-15\", 2.31),\n    (\"BARC 27\", \"A\", \"2027-03-10\", 4.40),\n    (\"EIB PERP\", \"AAA\", None, 4.95),\n    (\"WB 28\", \"AAA\", \"2028-01-31\", 2.95),\n    (\"TSY 27\", \"AA\", \"2027-09-07\", 3.95),\n    (\"ACME 27\", None, \"2027-01-20\", 7.50),\n    (\"TSY 28\", \"AA\", \"2028-01-31\", 3.82),\n    (\"HSBC PERP\", \"AA\", None, 6.20),\n    (\"ADB 27\", \"AAA\", \"2027-11-22\", 2.60),\n    (\"VOD 28\", \"BBB\", \"2028-01-31\", 4.60),\n    (\"NIB 28\", \"AAA\", \"2028-05-02\", 3.10),\n])\n\n\ndef query():\n    # Return your SQL as one string.\n    return \"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE bonds (bond TEXT, rating TEXT, maturity TEXT, yield REAL)\")\ndb.executemany(\"INSERT INTO bonds VALUES (?, ?, ?, ?)\", [\n    (\"KFW 27\", \"AAA\", \"2027-06-15\", 2.31),\n    (\"BARC 27\", \"A\", \"2027-03-10\", 4.40),\n    (\"EIB PERP\", \"AAA\", None, 4.95),\n    (\"WB 28\", \"AAA\", \"2028-01-31\", 2.95),\n    (\"TSY 27\", \"AA\", \"2027-09-07\", 3.95),\n    (\"ACME 27\", None, \"2027-01-20\", 7.50),\n    (\"TSY 28\", \"AA\", \"2028-01-31\", 3.82),\n    (\"HSBC PERP\", \"AA\", None, 6.20),\n    (\"ADB 27\", \"AAA\", \"2027-11-22\", 2.60),\n    (\"VOD 28\", \"BBB\", \"2028-01-31\", 4.60),\n    (\"NIB 28\", \"AAA\", \"2028-05-02\", 3.10),\n])\n\n\ndef query():\n    return \"SELECT bond, maturity, yield FROM bonds WHERE (rating = 'AAA' OR rating = 'AA') AND maturity IS NOT NULL ORDER BY maturity, yield DESC LIMIT 4\"\n",
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('KFW 27', '2027-06-15', 2.31), ('TSY 27', '2027-09-07', 3.95), ('ADB 27', '2027-11-22', 2.6), ('TSY 28', '2028-01-31', 3.82)]",
+            "compare": "equal"
+          },
+          {
+            "call": "[c[0] for c in db.execute(query()).description]",
+            "expect": "['bond', 'maturity', 'yield']",
+            "compare": "equal"
+          },
+          {
+            "setup": "db.execute(\"INSERT INTO bonds VALUES ('EFSF 28', 'AAA', '2028-01-31', 2.40)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('KFW 27', '2027-06-15', 2.31), ('TSY 27', '2027-09-07', 3.95), ('ADB 27', '2027-11-22', 2.6), ('TSY 28', '2028-01-31', 3.82)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db.execute(\"INSERT INTO bonds VALUES ('BNG 28', 'AA', '2028-01-31', 4.05)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('KFW 27', '2027-06-15', 2.31), ('TSY 27', '2027-09-07', 3.95), ('ADB 27', '2027-11-22', 2.6), ('BNG 28', '2028-01-31', 4.05)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db.execute(\"INSERT INTO bonds VALUES ('RABO PERP', 'AA', NULL, 5.80)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('KFW 27', '2027-06-15', 2.31), ('TSY 27', '2027-09-07', 3.95), ('ADB 27', '2027-11-22', 2.6), ('BNG 28', '2028-01-31', 4.05)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db.execute(\"INSERT INTO bonds VALUES ('TSY 26', 'AA', '2026-12-07', 4.02)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('TSY 26', '2026-12-07', 4.02), ('KFW 27', '2027-06-15', 2.31), ('TSY 27', '2027-09-07', 3.95), ('ADB 27', '2027-11-22', 2.6)]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('KFW 27', '2027-06-15', 2.31), ('TSY 27', '2027-09-07', 3.95), ('ADB 27', '2027-11-22', 2.6), ('TSY 28', '2028-01-31', 3.82)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on `db`. They compare the rows your query returns and the column names. Then they add bonds to the table and run it again. Rows must match exactly, in order."
+      },
+      "feedback": {
+        "correct": "Safe, short and cut cleanly at the tie.",
+        "generic": "Not quite right. Open the first failing test below the editor.",
+        "byKey": {
+          "test-1": "Test 1 expects KFW 27, TSY 27, ADB 27, then TSY 28. A perpetual, an A, a BBB or an unrated bond here means a condition is missing.",
+          "test-2": "Test 2 checks the columns: `bond`, `maturity`, `yield`.",
+          "test-3": "Test 3 adds EFSF 28, an AAA bond maturing on 31 January 2028 at 2.40. It ties with TSY 28 on the date but yields less, so the list must not change.",
+          "test-4": "Test 4 adds BNG 28, an AA bond maturing on 31 January 2028 at 4.05. It yields more than TSY 28, so it takes fourth place.",
+          "test-5": "Test 5 adds RABO PERP, an AA perpetual bond. It never matures, so it must not appear.",
+          "test-6": "Test 6 adds TSY 26, maturing on 7 December 2026. It goes first, and BNG 28 drops out."
+        }
+      },
+      "explain": {
+        "text": "`WHERE` keeps the AAA and AA bonds that have a maturity, and brackets stop the `OR` letting a perpetual in. WB 28 and TSY 28 tie on 31 January 2028 at the cut. The yield, highest first, decides that TSY 28 is fourth.",
+        "canvas": {
+          "shade": [
+            "r0",
+            "r4",
+            "r8",
+            "r6"
+          ],
+          "highlight": [
+            "r3c3",
+            "r6c3"
+          ]
+        }
+      }
     }
   ]
 }
