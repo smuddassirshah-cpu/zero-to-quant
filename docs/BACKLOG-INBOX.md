@@ -1793,3 +1793,6 @@ Raised later (ds level 4 perf):
 - [Could] Third sighting of ENGINE-BACKLOG 655: `fresh-check --file` reports `h4-save-tree` (ds homework-4) as a code-name hit on `to_list`, a helper only its hidden prelude defines (as in l12 to l16), and exits 1. Want names the item's own prelude or starter defines skipped.
 Raised later (micro level 3 perf):
 - [Could] Seen again: AUTHORING says the `-marked` shot is the whole item card at every size, but the 440 px shot of micro `homework-3` `h-derive-tilted-quotes` shows the card only to the third paragraph of the model and blank below, so the rest of the model and the rubric are never seen. The width check passed, so nothing overflowed; the shot simply stops. Wanted: the full card in the `-marked-440` shot, or AUTHORING corrected.
+
+Raised later (terminal level 1 perf):
+- [Could] The `tree` canvas spaces its columns evenly and centres each pill on its column, so a long leaf name overlaps its parent pill: `eurusd-2024.csv` hid most of `clean`, and `uk-holidays-2024.csv` hid `calendar`, at 1280 px and at 440 px (terminal `homework-1` `h-perf-fx-paths`). The playthrough does not flag overlapping pills. Workaround: shorter names (`eurusd.csv`, `/team/holidays.csv`). Want column widths sized to the widest pill in each column, or an overlap warning.

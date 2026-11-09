@@ -553,6 +553,151 @@
           "text": "Explains YYYY-MM-DD dates, with the reason: name order then matches date order."
         }
       ]
+    },
+    {
+      "id": "h-perf-fx-paths",
+      "difficulty": 5,
+      "skills": [
+        "tm-files"
+      ],
+      "title": "Six paths on a shared machine",
+      "performance": "code",
+      "prose": "Priya studies currency prices on a shared Linux machine. The tree shows every folder and file you need, hidden ones included. Each function returns a path as text, written between its quotes.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Folder tree",
+          "nodes": [
+            {
+              "id": "r",
+              "label": "/",
+              "children": [
+                {
+                  "id": "h",
+                  "label": "home",
+                  "children": [
+                    {
+                      "id": "p",
+                      "label": "priya",
+                      "children": [
+                        {
+                          "id": "c",
+                          "label": ".config",
+                          "children": [
+                            {
+                              "id": "i",
+                              "label": "fx.ini"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "f",
+                          "label": "fx",
+                          "children": [
+                            {
+                              "id": "w",
+                              "label": "Raw",
+                              "children": [
+                                {
+                                  "id": "e",
+                                  "label": "eurusd.csv"
+                                },
+                                {
+                                  "id": "g",
+                                  "label": "gbpusd.csv"
+                                }
+                              ]
+                            },
+                            {
+                              "id": "n",
+                              "label": "clean",
+                              "children": [
+                                {
+                                  "id": "e",
+                                  "label": "eurusd.csv"
+                                }
+                              ]
+                            },
+                            {
+                              "id": "s",
+                              "label": "scripts",
+                              "children": [
+                                {
+                                  "id": "t",
+                                  "label": "tidy.py"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "s",
+                  "label": "team",
+                  "children": [
+                    {
+                      "id": "u",
+                      "label": "holidays.csv"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "question": "Write the six paths the comments ask for.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "label": "paths.py",
+        "starter": "# Write each path between the quotes.\n\ndef clean_eurusd():\n    # From the top: the cleaned EUR/USD.\n    return \"\"\n\ndef bank_holidays():\n    # From the top: the team's list\n    # of UK bank holidays.\n    return \"\"\n\ndef settings_file():\n    # From the top: Priya's fx.ini.\n    return \"\"\n\ndef note_fixed():\n    # Tom's note gives the path\n    # /home/priya/fx/raw/gbpusd.csv\n    # but opening it fails. Write the\n    # path that works, from the top.\n    return \"\"\n\ndef tidy_named():\n    # The current folder is\n    # /home/priya/fx/clean\n    # A note there names ../scripts/tidy.py\n    # Which file is that, from the top?\n    return \"\"\n\ndef settings_from_scripts():\n    # Relative: fx.ini, from the\n    # current folder /home/priya/fx/scripts\n    return \"\"\n",
+        "prelude": "import posixpath as _pp\n_FILES = {\n    \"/home/priya/.config/fx.ini\",\n    \"/home/priya/fx/Raw/eurusd.csv\",\n    \"/home/priya/fx/Raw/gbpusd.csv\",\n    \"/home/priya/fx/clean/eurusd.csv\",\n    \"/home/priya/fx/scripts/tidy.py\",\n    \"/team/holidays.csv\",\n}\n\ndef _lands(here, path, kind):\n    # Follows a path from the folder here; returns the file it names, or what is wrong.\n    if not isinstance(path, str):\n        return \"not text: put the path between quotes\"\n    if path == \"\":\n        return \"empty\"\n    if \"\\\\\" in path:\n        return \"uses \\\\, but Linux paths use /\"\n    if path != path.strip():\n        return \"has a space at one end\"\n    if kind == \"top\" and not path.startswith(\"/\"):\n        return \"does not start at the top, /\"\n    if kind == \"rel\" and path.startswith(\"/\"):\n        return \"starts with /, so it is not relative\"\n    if kind == \"top\" and \"..\" in path.split(\"/\"):\n        return \"uses .., but a path from the top only goes down\"\n    if path.endswith(\"/\"):\n        return \"ends with /, but it names a file\"\n    full = _pp.normpath(_pp.join(here, path))\n    return full if full in _FILES else \"no such file: \" + full\n",
+        "tests": [
+          {
+            "call": "_lands('/', clean_eurusd(), 'top')",
+            "expect": "'/home/priya/fx/clean/eurusd.csv'",
+            "compare": "equal"
+          },
+          {
+            "call": "_lands('/', bank_holidays(), 'top')",
+            "expect": "'/team/holidays.csv'",
+            "compare": "equal"
+          },
+          {
+            "call": "_lands('/', settings_file(), 'top')",
+            "expect": "'/home/priya/.config/fx.ini'",
+            "compare": "equal"
+          },
+          {
+            "call": "_lands('/', note_fixed(), 'top')",
+            "expect": "'/home/priya/fx/Raw/gbpusd.csv'",
+            "compare": "equal"
+          },
+          {
+            "call": "_lands('/', tidy_named(), 'top')",
+            "expect": "'/home/priya/fx/scripts/tidy.py'",
+            "compare": "equal"
+          },
+          {
+            "call": "_lands('/home/priya/fx/scripts', settings_from_scripts(), 'rel')",
+            "expect": "'/home/priya/.config/fx.ini'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, one per function. Each follows your path through the tree and reports the file it reaches, or what stops it.",
+        "solution": "# Write each path between the quotes.\n\ndef clean_eurusd():\n    return \"/home/priya/fx/clean/eurusd.csv\"\n\ndef bank_holidays():\n    return \"/team/holidays.csv\"\n\ndef settings_file():\n    return \"/home/priya/.config/fx.ini\"\n\ndef note_fixed():\n    return \"/home/priya/fx/Raw/gbpusd.csv\"\n\ndef tidy_named():\n    return \"/home/priya/fx/scripts/tidy.py\"\n\ndef settings_from_scripts():\n    return \"../../.config/fx.ini\"\n"
+      },
+      "feedback": {
+        "correct": "All six paths reach the right files.",
+        "generic": "Not quite right. Read what each failing test reports, then trace that path through the tree one name at a time."
+      },
+      "explain": {
+        "text": "From the top, a path starts with `/` and names each folder down, `.config` and capital `Raw` included. From `clean`, `..` leads to `fx`, so `../scripts/tidy.py` is `/home/priya/fx/scripts/tidy.py`. From `scripts`, two steps up reach `priya`, so fx.ini is `../../.config/fx.ini`."
+      }
     }
   ]
 }
