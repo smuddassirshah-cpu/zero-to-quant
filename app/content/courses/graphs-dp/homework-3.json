@@ -448,6 +448,107 @@
           "text": "Lists tests that include a negative-exposure answer, no answer and an empty input"
         }
       ]
+    },
+    {
+      "id": "h-fee-trades",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gd-dp"
+      ],
+      "tags": [
+        "trading-dp"
+      ],
+      "pace": 1200,
+      "prose": "A desk trades one stock and may hold at most one share at a time. Each day it may buy a share if it holds none, sell the share it holds, or do nothing. Every sale pays a fixed `fee` in pence, so each round trip, a buy and a later sale, costs `fee` once. The desk may make as many round trips as it likes, and must hold nothing at the end. `prices` gives the price in pence on each day, and may be empty.",
+      "question": "Write `trade_with_fee(prices, fee)`: the largest total profit in pence. Not trading at all makes 0.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def trade_with_fee(prices, fee):\n    ...\n",
+        "solution": "def trade_with_fee(prices, fee):\n    # State after each day: flat (no share) or long (one share).\n    # flat[i] = max(flat[i - 1], long[i - 1] + prices[i] - fee)\n    # long[i] = max(long[i - 1], flat[i - 1] - prices[i])\n    # Each entry reads only the day before, so two numbers hold the table.\n    flat, long = 0, float('-inf')   # before day 0: no share, none to sell\n    for p in prices:                # bottom up: day 0 first\n        flat, long = max(flat, long + p - fee), max(long, flat - p)\n    return flat                     # the answer must end flat\n",
+        "postlude": "def price_walk(n=300, seed=9, start=500):\n    state = [seed]\n    def rnd(k):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 18446744073709551616\n        return (state[0] >> 33) % k\n    prices, p = [], start\n    for _ in range(n):\n        p = max(1, p + rnd(41) - 20)\n        prices.append(p)\n    return prices\n",
+        "examples": [
+          {
+            "call": "trade_with_fee([10, 7, 9, 15, 12], 3)",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "trade_with_fee([10, 7, 9, 15, 12], 3)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([12, 10, 15, 9, 14, 12], 1)",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([20, 10, 12, 11, 16, 13, 18, 15], 2)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([8, 13, 11], 2)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([9, 6, 12], 2)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([15, 14, 16, 13], 3)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([], 5)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([7], 0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee([3, 5, 4, 6, 2, 7], 0)",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee(price_walk(), 25)",
+            "expect": "757",
+            "compare": "equal"
+          },
+          {
+            "call": "trade_with_fee(price_walk(seed=4), 60)",
+            "expect": "169",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests. Tests 10 and 11 use `price_walk()`, a hidden helper that gives 300 daily prices from a seeded random walk."
+      },
+      "feedback": {
+        "correct": "Two numbers a day, the best profit holding nothing and the best holding one share, carry the whole table.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 pays to trade twice: 10 to 15, then 9 to 14, for 4 + 4 = 8 after fees. One round trip makes at most 4.",
+          "test-3": "Test 3 is best as 10 to 16, then 13 to 18, for 4 + 3 = 7. Selling at 12 earns nothing after the fee, but holding from 10 through the dip to 11 pays. Trading each rise on its own makes only 6.",
+          "test-4": "Test 4 buys on the first day, at 8, and sells at 13 for 3. The first day belongs in the table too.",
+          "test-5": "Test 5 sells on the last day, at 12, for 12 − 6 − 2 = 4. Fill the table through the last day.",
+          "test-6": "Test 6 has one rise, 14 to 16, and it is smaller than the fee of 3. The best plan is not to trade, so the answer is 0.",
+          "test-7": "Test 7 has no prices at all. With no days there is nothing to trade, so return 0."
+        }
+      },
+      "explain": {
+        "text": "Let flat be the best profit holding nothing after a day, and long the best holding one share. From the day before, $\\text{flat} = \\max(\\text{flat}, \\text{long} + p - \\text{fee})$ and $\\text{long} = \\max(\\text{long}, \\text{flat} - p)$. Start from flat $= 0$ and long $= -\\infty$; the answer is flat after the last day, in $O(n)$ time."
+      }
     }
   ]
 }

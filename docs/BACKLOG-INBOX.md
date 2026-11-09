@@ -1716,3 +1716,6 @@ Raised later (graphs-dp level 1 perf):
 
 Raised later (graphs-dp level 2 perf):
 - [Could] `feedback.byKey` is keyed on the first failing test only, so test 2 of `h-cheapest-count` needs one message for two different slips (counting arrivals and pushing a venue again on a tie), and test 3 for two more. Wanted: a byKey entry that may list several messages, each with a hidden `when` call (`"when": "count_cheapest(...)[1] == 2"`) that picks the one matching the learner's result.
+
+Raised later (graphs-dp level 3 perf):
+- [Could] A `code` performance task cannot ask for a bottom-up table rather than a memoised recursion: both give the same values, and the only behavioural difference (recursion depth) would grade a correct top-down answer as wrong. `h-fee-trades` grades the values and keeps prices at 300 days so either passes. Wanted: nothing in the engine; a line in AUTHORING section 5 that a `code` task grades behaviour, so "bottom up" in an objective is taught, not tested.
