@@ -1732,3 +1732,9 @@ Raised later (graphs-dp level 3 perf):
 - [Could] A `code` performance task cannot ask for a bottom-up table rather than a memoised recursion: both give the same values, and the only behavioural difference (recursion depth) would grade a correct top-down answer as wrong. `h-fee-trades` grades the values and keeps prices at 300 days so either passes. Wanted: nothing in the engine; a line in AUTHORING section 5 that a `code` task grades behaviour, so "bottom up" in an objective is taught, not tested.
 Raised later (linear-maps level 3 perf):
 - [Could] Seen again (after limits-thm level 3): the `-marked` shot at 440 px stops at the first viewport, so a model display below it is never seen. In linear-maps `h-prove-commutator-rank` (homework-2) a display with two 2 by 2 matrices side by side ran past the 356 px column; only a scratch full-height shot of the model showed it, and a scratch width check comparing `scrollWidth` with `clientWidth` reported it as fitting. Wanted: a full-height `-marked` shot in `--mobile`, and a playthrough check that compares each `.katex-display` child's width with the column.
+
+Raised later (options level 2 perf):
+- [Could] `fresh-check.mjs` code names count a helper nested inside the solution's function (`def profit(S)` inside `strategy_card`) as reuse of homework-1's top-level `profit`. A nested helper is not a reused exercise. Renamed to `_profit` here. Wanted: skip names defined inside another function, or say in AUTHORING section 5 that nested helpers count.
+
+Raised later (options level 3 perf):
+- [Could] The playthrough's `-marked` shot is one viewport, so only the top of a long model answer is seen at 440 px; displays further down (here the parity lines and the box price) are never shot or checked. Wanted: a full-page `-marked` shot, or a check that fails when any `.katex-display` in the model has `scrollWidth > clientWidth`.
