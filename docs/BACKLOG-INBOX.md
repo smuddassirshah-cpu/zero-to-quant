@@ -1808,3 +1808,6 @@ Raised later (terminal level 1 perf):
 Raised later (terminal level 3 perf):
 - [Could] The terminal course has no simulated shell, so a command sequence can only be graded as text: Python strings (`h-code-paths`), a self-marked longform (`hw-project-setup`), or comment lines a hidden postlude follows (`h-perf-trade-script`, homework-3). Want a `shell` widget over a small virtual tree that runs `cd`, `ls`, `mkdir`, `cp`, `mv`, `python3 <file>` and grades the final state and output.
 - [Could] A stdout case graded by `match` shows an empty "Expected output" box when it fails, because the row prints `expect`. Workaround in `h-perf-trade-script`: an `expect` of `Cost: ...` lines kept for display only. Want the row to say "Expected the output to match" and show the pattern in words.
+
+Raised later (analysis level 4 perf):
+- [Should] ENGINE-BACKLOG 701 measures `.katex-display` only. An inline `$...$` triangle-inequality chain in the model of analysis `homework-4` `h-prove-uniform-diagonal` ran past the card at 440 px and was clipped, yet the playthrough passed; it was found only in the `-marked-440` shot. Wanted: the same check on every inline `.katex` whose right edge passes the card's (prompt, model, rubric), naming `<file>#<item id>` and the TeX. Workaround used: both chains moved into `aligned` displays.
