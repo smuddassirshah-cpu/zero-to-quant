@@ -1771,3 +1771,7 @@ Raised later (plotting level 3 perf):
 
 Raised later (least-squares level 2 perf):
 - [Could] `compare: "raises"` cannot tell which `ValueError` was raised. In `h-factor-neutral` (homework-2) a slip with the last transpose missing raises NumPy's own shape-mismatch `ValueError` on the three refusal tests and passes them for the wrong reason (it fails the other ten). Want an optional `match` regex on a raises case, read against the exception message, so a test can require the learner's own refusal.
+
+Raised later (algo-think level 2 perf):
+- [Could] A code task whose objective names a method ("write a recursive function") cannot check the method except by a hand-written AST test: `h-split-feed` grades answers only, so a loop with an explicit stack passes, and `how` says so. Want a widget field such as `"recursive": "split_feed"` (some function in the learner's code calls itself) with its own result row, so authors need not copy tokenizer code into postludes.
+- [Could] The playthrough proves the shipped `solution` passes and the starter fails, but it cannot run a second, slow but correct solution in Pyodide; I timed brute force over cuts in a scratch Node script that loads Pyodide 0.27.7 from the local CDN (0.25 s slowest case). Want `playthrough.mjs --variant <item>=<file.py>` that runs extra solutions against the hidden tests and reports each case's time.

@@ -479,6 +479,116 @@
           "text": "Shows the loop costs $\\frac{n(n+1)}{2}$ updates, $O(n^2)$ time, and uses one frame."
         }
       ]
+    },
+    {
+      "id": "h-split-feed",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "at-recursion"
+      ],
+      "pace": 1200,
+      "prose": "A price feed has lost the spaces between its tickers, so `BARCBP` arrives as one run of letters. `listed` holds every ticker the feed can send, each at least one letter long. It merges two venues' lists, so a ticker can appear in it twice. A split writes the whole feed as listed tickers, one after another. With `BA`, `BARC`, `RC`, `BP` and `B` listed, `BARCBP` has two splits: `BA RC BP` and `BARC BP`. An empty feed has exactly one split, which holds no tickers.",
+      "question": "Write `split_feed(feed, listed)` recursively. Return every split of `feed` once, as a list of lists of tickers in feed order. The splits may come in any order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def split_feed(feed, listed):\n    ...\n",
+        "solution": "def split_feed(feed, listed):\n    if feed == \"\":\n        return [[]]                  # one split, holding no tickers\n    splits = []\n    for ticker in set(listed):       # a ticker listed twice counts once\n        if feed.startswith(ticker):\n            for rest in split_feed(feed[len(ticker):], listed):\n                splits.append([ticker] + rest)\n    return splits\n",
+        "postlude": "def split_tally(feed, listed):\n    splits = [list(s) for s in split_feed(feed, listed)]\n    every = set(listed)\n    good = all(\"\".join(s) == feed and all(t in every for t in s) for s in splits)\n    return [len(splits), len({tuple(s) for s in splits}), good]\n",
+        "examples": [
+          {
+            "call": "sorted(split_feed('BARCBP', ['BA', 'BARC', 'RC', 'BP', 'B']))",
+            "expect": "[['BA', 'RC', 'BP'], ['BARC', 'BP']]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sorted(split_feed('BARCBP', ['BA', 'BARC', 'RC', 'BP', 'B']))",
+            "expect": "[['BA', 'RC', 'BP'], ['BARC', 'BP']]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('', ['BT', 'RR']))",
+            "expect": "[[]]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('GLENX', ['GLEN', 'GL', 'EN']))",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('IAGSSE', ['IAGS', 'IAG', 'SSE']))",
+            "expect": "[['IAG', 'SSE']]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('BTBT', ['BT', 'B', 'T', 'BT']))",
+            "expect": "[['B', 'T', 'B', 'T'], ['B', 'T', 'BT'], ['BT', 'B', 'T'], ['BT', 'BT']]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('BABA', ['BA', 'BABA']))",
+            "expect": "[['BA', 'BA'], ['BABA']]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('RIO', ['RIO']))",
+            "expect": "[['RIO']]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('AAA', ['A', 'AA']))",
+            "expect": "[['A', 'A', 'A'], ['A', 'AA'], ['AA', 'A']]",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(split_feed('SSEAZN', ['SSE', 'AZN', 'SS', 'EAZN', 'E']))",
+            "expect": "[['SS', 'E', 'AZN'], ['SS', 'EAZN'], ['SSE', 'AZN']]",
+            "compare": "equal"
+          },
+          {
+            "call": "split_tally('A' * 12, ['A', 'AA', 'AAA'])",
+            "expect": "[927, 927, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "split_tally('BA' * 8, ['BA', 'BAB', 'AB', 'A', 'B'])",
+            "expect": "[4374, 4374, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "L = ['C', 'B', 'AB', 'A']",
+            "call": "[sorted(split_feed('ABC', L)), L]",
+            "expect": "[[['A', 'B', 'C'], ['AB', 'C']], ['C', 'B', 'AB', 'A']]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests. Each sorts the list you return, so the order of the splits does not matter. Tests 10 and 11 call your function through a hidden `split_tally(feed, listed)`. It returns the number of splits, the number of different splits, and whether every split is listed tickers that join to make the feed. The tests read what your function returns, not whether it calls itself."
+      },
+      "feedback": {
+        "correct": "Every split ends at the empty feed, and its one split, `[[]]`, carries each ticker in front back up.",
+        "generic": "Not quite right. Check the first failing test. If a test returns splits from an earlier test, a default argument such as `splits=[]` is being shared between calls.",
+        "byKey": {
+          "test-1": "Test 1 has two splits, `BA RC BP` and `BARC BP`. Try every listed ticker that starts the feed, and keep every split of what is left after each.",
+          "test-2": "Test 2 is an empty feed. It has one split holding no tickers, so return `[[]]`; `[]` would say it has no split at all.",
+          "test-3": "Test 3 is `GLENX` with `GLEN`, `GL` and `EN` listed. No ticker ends with `X`, so there is no split: return `[]`.",
+          "test-4": "Test 4 is `IAGSSE`. The longest ticker at the start, `IAGS`, leaves `SE`, which has no split, so only `IAG SSE` works. Try every ticker that fits, not just the longest.",
+          "test-5": "Test 5 lists `BT` twice and has four different splits. Going through the list as given finds each split that uses `BT` more than once. Take the tickers as a set.",
+          "test-6": "Test 6 is `BABA` with `BA` and `BABA` listed, so `BABA` and `BA BA` are both splits. Stopping as soon as the rest of the feed is a ticker loses `BA BA`.",
+          "test-7": "Test 7 is one ticker, `RIO`. A cut must be able to take the whole of what is left, so let the cut reach `len(feed)`.",
+          "test-8": "Test 8 is `AAA` with `A` and `AA` listed. It has three splits, and `A AA` differs from `AA A`, so keep each split in feed order.",
+          "test-9": "Test 9 is `SSEAZN`, with three splits: `SS E AZN`, `SS EAZN` and `SSE AZN`.",
+          "test-10": "Test 10 is 12 `A`s with `A`, `AA` and `AAA` listed: 927 splits, all different. Too many means some splits repeat, and too few means some are lost.",
+          "test-11": "Test 11 is `BA` eight times over, with five tickers listed: 4,374 splits, all different.",
+          "test-12": "Test 12 checks that `listed` is unchanged after your call. Sorting it or removing from it changes the caller's list, so build a set from it instead."
+        }
+      },
+      "explain": {
+        "text": "The empty feed is the base case: it has exactly one split, the empty one, and every split ends there. For each different ticker that starts the feed, cut it off, split the rest the same way, and put the ticker in front of each of those splits. Each of the $n - 1$ gaps in a feed of $n$ letters is cut or not, so there are at most $2^{n-1}$ splits, and feeds this short stay fast."
+      }
     }
   ]
 }
