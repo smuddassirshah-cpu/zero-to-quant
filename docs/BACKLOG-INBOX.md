@@ -1788,3 +1788,6 @@ Raised later (algo-think level 3 perf):
 Raised later (random-vars level 1 perf):
 - [Could] Pyodide 0.27.7 runs Python 3.12, whose built-in `sum` of floats is compensated: ten 0.1s give 1.0, while a running `total += p` gives 0.9999999999999999. A test meant to catch an exact `== 1` check must use floats whose stored values do not add to 1 exactly (`h-build-pmf` test 7). Want one line in AUTHORING section 3 saying so.
 - [Could] The playthrough's 440 px width check covers KaTeX displays only; a starter or solution line wider than the editor at 440 px (about 46 characters) scrolls sideways unflagged. Want a warning for starter lines past the 440 px editor width.
+
+Raised later (micro level 3 perf):
+- [Could] Seen again: AUTHORING says the `-marked` shot is the whole item card at every size, but the 440 px shot of micro `homework-3` `h-derive-tilted-quotes` shows the card only to the third paragraph of the model and blank below, so the rest of the model and the rubric are never seen. The width check passed, so nothing overflowed; the shot simply stops. Wanted: the full card in the `-marked-440` shot, or AUTHORING corrected.

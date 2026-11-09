@@ -491,6 +491,45 @@
           "text": "Explains that the spread pays for adverse selection and is not pure profit."
         }
       ]
+    },
+    {
+      "id": "h-derive-tilted-quotes",
+      "performance": "derivation",
+      "difficulty": 5,
+      "skills": [
+        "ms-mm",
+        "ms-costs"
+      ],
+      "kind": "longform",
+      "title": "Zero-profit quotes when the noise leans to buying",
+      "prompt": "A share will be worth $V + D$ tomorrow, where $D = +\\delta$ or $D = -\\delta$, equally likely. You set today's ask and bid, and then one trader arrives. With chance $\\alpha$ the trader is informed: they know $D$, and buy if $D = +\\delta$ and sell if $D = -\\delta$. Otherwise they are uninformed and ignore the value. Today an index rebalance tilts the uninformed flow: an uninformed trader buys with chance $\\beta$ and sells with chance $1 - \\beta$. The trader's type does not depend on the value. The trader always deals one share, at your ask if buying and at your bid if selling. Your quotes do not change $\\alpha$, $\\beta$ or $\\delta$, and you measure profit at tomorrow's value. Rival makers compete, so a buy at your ask has zero expected profit, and so does a sell at your bid. Write the ask as $V + a$ and the bid as $V - b$.\n\n(a) Derive $a$ and $b$ in terms of $\\alpha$, $\\beta$ and $\\delta$. Justify every line.\n\n(b) Show that when $\\beta = \\tfrac12$ both reduce to the zero-profit half-spread $s = \\alpha\\delta$.\n\n(c) Take $\\alpha = 0.2$, $\\delta = 21$p and $\\beta = 0.75$. Find $a$ and $b$ in pence. Say which quote sits further from $V$, and why.\n\nOptional, one more point: (d) with the same numbers, a maker keeps the symmetric quotes $V \\pm \\alpha\\delta$. Find its expected profit on a buy, on a sell and over all trades. Say why rivals will not let it keep those quotes.",
+      "model": "**Zero profit fixes each quote.** Selling one share at $V + a$ when it is worth $V + D$ makes $a - D$. Given a buy, its expected value is $a - E[D \\mid \\text{buy}]$, so zero expected profit on a buy means $a = E[D \\mid \\text{buy}]$. Buying at $V - b$ makes $D + b$, so zero expected profit on a sell means $b = -E[D \\mid \\text{sell}]$.\n\n**The chance of a buy under each value.** If $D = +\\delta$, every informed trader buys, and an uninformed one buys with chance $\\beta$. If $D = -\\delta$, only an uninformed trader buys. The type does not depend on the value, so the chances multiply:\n$$\\begin{aligned} P(\\text{buy} \\mid D = +\\delta) &= \\alpha + (1-\\alpha)\\beta \\\\ P(\\text{buy} \\mid D = -\\delta) &= (1-\\alpha)\\beta \\end{aligned}$$\n\n**Bayes for the ask.** Each value has prior chance $\\tfrac12$, so $P(\\text{buy}) = \\tfrac12\\alpha + (1-\\alpha)\\beta$. In $E[D \\mid \\text{buy}]$ the two uninformed terms cancel, $+\\delta$ against $-\\delta$, and only the informed buy $\\tfrac12\\alpha$ is left:\n$$\\begin{aligned} a &= \\frac{\\tfrac12\\alpha \\cdot \\delta}{\\tfrac12\\alpha + (1-\\alpha)\\beta} \\\\ &= \\frac{\\alpha\\delta}{\\alpha + 2(1-\\alpha)\\beta} \\end{aligned}$$\nThe same result comes from weighting the two kinds of buyer. An informed buyer costs $a - \\delta$, and an uninformed buy says nothing about $D$, so it makes $a$ on average. Zero profit needs $p(a - \\delta) + (1 - p)a = 0$ with $p = P(\\text{informed} \\mid \\text{buy})$, so $a = \\delta p$, the same fraction.\n\n**The bid.** A sell is a buy with $\\beta$ replaced by $1 - \\beta$ and the sign of $D$ swapped. So $P(\\text{sell} \\mid D = -\\delta) = \\alpha + (1-\\alpha)(1-\\beta)$, $P(\\text{sell} \\mid D = +\\delta) = (1-\\alpha)(1-\\beta)$ and $E[D \\mid \\text{sell}] = -\\tfrac12\\alpha\\delta / P(\\text{sell})$:\n$$b = \\frac{\\alpha\\delta}{\\alpha + 2(1-\\alpha)(1-\\beta)}$$\n\n**(b) The untilted case.** At $\\beta = \\tfrac12$, $2(1-\\alpha)\\beta = 2(1-\\alpha)(1-\\beta) = 1 - \\alpha$. Both denominators become $\\alpha + 1 - \\alpha = 1$, so $a = b = \\alpha\\delta$. The quotes are $V \\pm \\alpha\\delta$: the zero-profit half-spread $s = \\alpha\\delta$.\n\n**(c) The rebalance day.** Here $\\alpha\\delta = 0.2 \\times 21 = 4.2$p. For the ask the denominator is $0.2 + 2 \\times 0.8 \\times 0.75 = 1.4$, so $a = 4.2 / 1.4 = 3$p. For the bid it is $0.2 + 2 \\times 0.8 \\times 0.25 = 0.6$, so $b = 4.2 / 0.6 = 7$p. The quotes are $V + 3$p and $V - 7$p: a 10p spread centred 2p below $V$. The bid sits further away because, with the noise leaning to buys, a sell is rarer and more likely informed. $P(\\text{informed} \\mid \\text{sell}) = 0.1 / 0.3 = \\tfrac13$, against $P(\\text{informed} \\mid \\text{buy}) = 0.1 / 0.7 = \\tfrac17$, and each quote is $\\delta$ times its chance: $21 / 7 = 3$ and $21 / 3 = 7$.\n\n**(d) Symmetric quotes.** At $V \\pm 4.2$p a buy makes $4.2 - 3 = 1.2$p on average and a sell makes $4.2 - 7 = -2.8$p. Buys come with chance $0.1 + 0.8 \\times 0.75 = 0.7$ and sells with chance 0.3. Over all trades that is $0.7 \\times 1.2 - 0.3 \\times 2.8 = 0.84 - 0.84 = 0$. A rival can still ask anywhere between $V + 3$p and $V + 4.2$p and take every buy at a profit. The symmetric maker is then left with only the sells, and loses 2.8p on each. So competition sets each quote to zero profit on its own side, not just on average.",
+      "rubric": [
+        {
+          "points": 3,
+          "required": true,
+          "text": "Derives $a = \\dfrac{\\alpha\\delta}{\\alpha + 2(1-\\alpha)\\beta}$, or an equal form such as $\\delta \\, P(\\text{informed} \\mid \\text{buy})$ worked out. Gives a reason for each step: why zero profit on a buy fixes the ask, and the chance of a buy under each value."
+        },
+        {
+          "points": 2,
+          "required": true,
+          "text": "Derives $b = \\dfrac{\\alpha\\delta}{\\alpha + 2(1-\\alpha)(1-\\beta)}$, or an equal form, by the same argument for sells or by a justified swap of $\\beta$ for $1 - \\beta$."
+        },
+        {
+          "points": 2,
+          "required": true,
+          "text": "Shows that at $\\beta = \\tfrac12$ both $a$ and $b$ equal $\\alpha\\delta$, so the quotes are $V \\pm \\alpha\\delta$ and the half-spread is $s = \\alpha\\delta$."
+        },
+        {
+          "points": 2,
+          "required": true,
+          "text": "Finds $a = 3$p and $b = 7$p, and says the bid sits further from $V$ because a sell is more likely than a buy to come from an informed trader."
+        },
+        {
+          "points": 1,
+          "text": "(d) Finds about 1.2p on a buy, a loss of 2.8p on a sell and 0 over all trades, and says a rival's better ask takes the buys and leaves only the losing sells."
+        }
+      ]
     }
   ]
 }
