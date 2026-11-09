@@ -179,6 +179,8 @@ Other version-1 keys, for the script to reproduce: pos 2 (five cards, hearts) $\
 
 **Acceptance.** The common checks for all three files; the start card says 17 questions, 60 minutes and pass 11; each version has the 4, 5, 6, 2 difficulty split and the 17 families in order; the three versions share no parameter set at any position; report at `docs/reports/exam-mock-oa-sig.md`.
 
+**Versions (session Y).** Versions 2 and 3 no longer share templates with version 1 or with each other: all 34 items were re-authored to brief `mock-versions.md`, keeping positions, difficulty, pace, skills and widget kinds, with new families (report `docs/reports/exam-mock-oa-sig-versions.md`).
+
 ## mock-oa-trader
 
 **Files.** Three fixed versions, because E3 is not built: `app/content/exams/mock-oa-trader.json`, `mock-oa-trader-2.json` and `mock-oa-trader-3.json`, with the same papers and positions. `content/prep.json` names only `mock-oa-trader`; the report proposes the other two.
