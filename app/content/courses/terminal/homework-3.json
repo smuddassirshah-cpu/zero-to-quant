@@ -446,6 +446,89 @@
       "explain": {
         "text": "6 weeks is 42 days. 42 × 10 = 420 minutes, and 420 ÷ 60 = 7 hours. Short daily sessions add up, and they build the habit better than one long one."
       }
+    },
+    {
+      "id": "h-perf-trade-script",
+      "difficulty": 5,
+      "skills": [
+        "tm-setup",
+        "tm-shell"
+      ],
+      "title": "A trade script from a blank file",
+      "performance": "code",
+      "prose": "Sam bought 40 shares at £12.25 each and later sold all 40 at £13.00. His broker charged a £10.00 fee on the buy and another on the sell. Sam will save your script as `/home/sam/desk/trade.py`. A new terminal on his machine opens in his home folder, `/home/sam`.",
+      "question": "Write `trade.py`. Store `cost`, all Sam paid with the fee, and `proceeds`, what he received after the fee. Store `profit`, proceeds minus cost, and `ret`, profit divided by `cost`. Print one line for each, labelled `Cost:`, `Proceeds:`, `Profit:` and `Return:`, in that order. Begin with comment lines giving the commands that run it from its own folder, in a new terminal.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "label": "trade.py",
+        "starter": "# trade.py: Sam's round trip, in pounds\n",
+        "postlude": "import posixpath as _pp, re as _re\n\ndef _line(label):\n    # The number printed after \"label:\", or what is wrong with that line.\n    for _l in printed:\n        _s = _l.strip()\n        if _s.startswith(label + \":\"):\n            _v = _s[len(label) + 1:].strip().lstrip(\"£\").replace(\",\", \"\")\n            try:\n                return float(_v)\n            except ValueError:\n                return \"not a number after \" + label + \": \" + _v\n    return \"no line starts \" + label + \":\"\n\n_DIRS = {\"/\", \"/home\", \"/home/sam\", \"/home/sam/desk\"}\n\ndef _home(_p):\n    return \"/home/sam\" + _p[1:] if _p == \"~\" or _p.startswith(\"~/\") else _p\n\ndef _runs():\n    # Follows the cd and python3 commands in the comments, from a new terminal in /home/sam.\n    _here, _last = \"/home/sam\", \"no comment line runs python3\"\n    for _l in __learner_source__.splitlines():\n        _s = _l.strip()\n        if not _s.startswith(\"#\"):\n            continue\n        for _seg in _re.split(r\"&&|;\", _s.lstrip(\"#\")):\n            _m = _re.search(r\"(?:^|[\\s:$])(cd|python3(?:\\.\\d+)?|python|py)(?=\\s|$)(.*)\", _seg)\n            if not _m:\n                continue\n            _cmd, _args = _m.group(1), _m.group(2).split()\n            if _cmd == \"cd\":\n                _to = _pp.normpath(_pp.join(_here, _home(_args[0] if _args else \"~\")))\n                if _to in _DIRS:\n                    _here = _to\n                else:\n                    _last = \"cd \" + _args[0] + \" from \" + _here + \": no such folder\"\n            elif _cmd in (\"python\", \"py\"):\n                _last = _cmd + \" is not python3: run the script with python3\"\n            elif not _args:\n                _last = \"python3 needs the script's name\"\n            else:\n                _file = _pp.normpath(_pp.join(_here, _home(_args[0])))\n                if _file != \"/home/sam/desk/trade.py\":\n                    _last = \"python3 \" + _args[0] + \" from \" + _here + \" looks for \" + _file\n                elif _here != \"/home/sam/desk\":\n                    _last = \"that runs it from \" + _here + \", not from its own folder\"\n                else:\n                    return \"ok\"\n    return _last\n",
+        "tests": [
+          {
+            "compare": "stdout",
+            "match": "Cost:[\\s\\S]*Proceeds:[\\s\\S]*Profit:[\\s\\S]*Return:",
+            "expect": "Cost: ...\nProceeds: ...\nProfit: ...\nReturn: ...\n"
+          },
+          {
+            "call": "cost",
+            "expect": "500.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "proceeds",
+            "expect": "510.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "profit",
+            "expect": "10.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "ret",
+            "expect": "0.02",
+            "compare": "isclose"
+          },
+          {
+            "call": "_line('Cost')",
+            "expect": "500.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "_line('Proceeds')",
+            "expect": "510.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "_line('Profit')",
+            "expect": "10.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "_line('Return')",
+            "expect": "0.02",
+            "compare": "isclose"
+          },
+          {
+            "call": "_runs()",
+            "expect": "'ok'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, each on a fresh run of your script as `python3` would run it. They read your four values and printed lines, then follow the commands in your comments from `/home/sam`.",
+        "solution": "# cd ~/desk\n# python3 trade.py\n\n# trade.py: Sam's round trip, in pounds\nshares = 40\nbuy = 12.25\nsell = 13.00\nfee = 10.00\n\ncost = shares * buy + fee\nproceeds = shares * sell - fee\nprofit = proceeds - cost\nret = profit / cost\n\nprint(\"Cost:\", cost)\nprint(\"Proceeds:\", proceeds)\nprint(\"Profit:\", profit)\nprint(\"Return:\", ret)\n"
+      },
+      "feedback": {
+        "correct": "The script works out the trade and says how to run it.",
+        "generic": "Not quite right. Read what the first failing test reports, then check that part of your script.",
+        "byKey": {
+          "error": "Your script stopped with an error. Read the message from the bottom: what went wrong, then which line."
+        }
+      },
+      "explain": {
+        "text": "Each fee adds to what Sam paid and comes off what he got: $40 \\times 12.25 + 10 = 500$ and $40 \\times 13.00 - 10 = 510$. So the profit is £10, and the return is $10 \\div 500 = 0.02$. From `/home/sam`, `cd desk` moves to the script's folder, then `python3 trade.py` runs it."
+      }
     }
   ]
 }

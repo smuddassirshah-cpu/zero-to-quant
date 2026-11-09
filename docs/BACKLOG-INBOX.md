@@ -1802,3 +1802,9 @@ Raised later (first-python level 2 perf):
 
 Raised later (first-python level 3 perf):
 - [Could] In script mode the whole program reruns for every case, so an error in the script's own lines (a function that prints, then `f"{None:.2f}"`) fails every call test at test 1, and `byKey.error` never fires. A key for an exception raised outside the `call` would let one line point at the script part (related to ENGINE-BACKLOG 681).
+Raised later (terminal level 1 perf):
+- [Could] The `tree` canvas spaces its columns evenly and centres each pill on its column, so a long leaf name overlaps its parent pill: `eurusd-2024.csv` hid most of `clean`, and `uk-holidays-2024.csv` hid `calendar`, at 1280 px and at 440 px (terminal `homework-1` `h-perf-fx-paths`). The playthrough does not flag overlapping pills. Workaround: shorter names (`eurusd.csv`, `/team/holidays.csv`). Want column widths sized to the widest pill in each column, or an overlap warning.
+
+Raised later (terminal level 3 perf):
+- [Could] The terminal course has no simulated shell, so a command sequence can only be graded as text: Python strings (`h-code-paths`), a self-marked longform (`hw-project-setup`), or comment lines a hidden postlude follows (`h-perf-trade-script`, homework-3). Want a `shell` widget over a small virtual tree that runs `cd`, `ls`, `mkdir`, `cp`, `mv`, `python3 <file>` and grades the final state and output.
+- [Could] A stdout case graded by `match` shows an empty "Expected output" box when it fails, because the row prints `expect`. Workaround in `h-perf-trade-script`: an `expect` of `Cost: ...` lines kept for display only. Want the row to say "Expected the output to match" and show the pattern in words.
