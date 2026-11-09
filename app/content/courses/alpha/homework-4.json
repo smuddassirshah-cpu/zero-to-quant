@@ -435,6 +435,159 @@
    "explain": {
     "text": "A note a committee can act on lets every number be checked: net of costs, with intervals, with the search counted and the failures named."
    }
+  },
+  {
+   "id": "h-neutral-book",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "al-portfolio"
+   ],
+   "pace": 1200,
+   "prose": "A fund runs a dollar-neutral book from a daily signal. `signal` and `ret` are frames of dates by shares with the same index and columns. A day's signal is known at that day's close and is NaN where a share has no signal. `ret` holds each share's return on each day, close to close, NaN where it did not trade.\n\nOn each date, use only the shares with a signal. Weight each by its signal minus that date's median signal. Shares above the median are long, shares below it are short, and shares at the median hold nothing. Scale the longs to add up to `gross/2` in £ and the shorts to `-gross/2`. If either side is empty, the book holds cash that day. A share with no signal holds £0.\n\nPositions set at the close of day $t$ earn the returns of day $t + 1$. A NaN return counts as 0.\n\n`five_days()` returns `(signal, ret)` for six shares from 4 to 8 March 2024. `panel(seed)` returns a seeded pair for 30 shares over 40 days.",
+   "question": "Write `split_book(signal, gross)`, a frame of £ positions shaped like `signal`, and `split_pnl(signal, ret, gross)`, the book's £ P&L on every date after the first.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nimport pandas as pd\n\ndef five_days():\n    \"\"\"Signals and returns for six shares, 4 to 8 March 2024.\"\"\"\n    ix = pd.bdate_range(\"2024-03-04\", periods=5)\n    nan = float(\"nan\")\n    signal = pd.DataFrame([[0.9, 0.3, -0.2, 0.1, -0.6, 0.5],\n                           [0.8, nan, -0.1, 0.2, -0.5, 0.4],\n                           [0.4, 0.4, -0.3, 0.4, 0.4, 0.4],\n                           [0.6, 0.6, -0.2, -0.2, 0.1, -0.5],\n                           [0.1, -0.1, 0.3, -0.3, 0.2, nan]], index=ix, columns=list(\"ABCDEF\"))\n    ret = pd.DataFrame([[0.010, -0.004, 0.006, 0.002, -0.012, 0.003],\n                        [0.012, 0.005, -0.008, 0.001, -0.015, 0.004],\n                        [-0.006, 0.010, 0.004, -0.002, 0.007, -0.009],\n                        [0.003, -0.007, 0.011, 0.005, -0.004, 0.002],\n                        [0.008, 0.002, -0.005, -0.010, 0.006, nan]], index=ix, columns=list(\"ABCDEF\"))\n    return signal, ret\n\ndef panel(seed, n_days=40, n_shares=30):\n    \"\"\"A seeded daily pair: signals with gaps and ties, returns with gaps.\"\"\"\n    x = seed\n    def u():\n        nonlocal x\n        x = (6364136223846793005 * x + 1442695040888963407) % 2 ** 64\n        return (x >> 11) / 2 ** 53\n    nan = float(\"nan\")\n    sig, ret = [], []\n    for t in range(n_days):\n        sig.append([round(u() - 0.5, 2) if u() > 0.1 else nan for j in range(n_shares)])\n        ret.append([round((u() - 0.5) * 0.04, 5) if u() > 0.05 else nan for j in range(n_shares)])\n    sig[12] = [0.25] * n_shares                      # every share ties\n    sig[25] = [0.1] * (n_shares - 1) + [0.3]         # one share above, none below\n    ix = pd.bdate_range(\"2024-01-02\", periods=n_days)\n    cols = [f\"S{j:02d}\" for j in range(n_shares)]\n    return pd.DataFrame(sig, index=ix, columns=cols), pd.DataFrame(ret, index=ix, columns=cols)\n",
+    "starter": "import pandas as pd\n\ndef split_book(signal, gross):\n    \"\"\"£ position in each share on each date, set at that date's close.\"\"\"\n    ...\n\ndef split_pnl(signal, ret, gross):\n    \"\"\"The book's £ P&L on each date after the first.\"\"\"\n    ...\n",
+    "solution": "import pandas as pd\n\ndef split_book(signal, gross):\n    d = signal.sub(signal.median(axis=1), axis=0)     # distance from the date's median; NaN stays NaN\n    up, down = d.clip(lower=0), d.clip(upper=0)\n    longs, shorts = up.sum(axis=1), -down.sum(axis=1)\n    both = (longs > 0) & (shorts > 0)                 # else the book is cash\n    w = up.div(longs.where(both), axis=0) + down.div(shorts.where(both), axis=0)\n    return (w * gross / 2).fillna(0.0)                # each side carries half the gross\n\ndef split_pnl(signal, ret, gross):\n    held = split_book(signal, gross).shift(1)          # set at the close of t, earns t + 1\n    return (held * ret.fillna(0.0)).sum(axis=1).iloc[1:]\n",
+    "examples": [
+     {
+      "setup": "S, R = five_days()",
+      "call": "split_book(S, 1_000_000).iloc[0].tolist()",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "[318181.82, 45454.55, -153846.15, -38461.54, -307692.31, 136363.64]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "S, R = five_days()",
+      "call": "float(split_book(S, 1_000_000).iloc[0].clip(lower=0).sum()), float(split_book(S, 1_000_000).iloc[0].clip(upper=0).sum())",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "(500000.0, -500000.0)"
+     },
+     {
+      "setup": "S, R = five_days()",
+      "call": "split_book(S, 1_000_000).loc['2024-03-07'].tolist()",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "[224137.93, 224137.93, -100000.0, -100000.0, 51724.14, -300000.0]"
+     },
+     {
+      "setup": "S, R = five_days()",
+      "call": "split_book(S, 1_000_000).loc['2024-03-05'].tolist()",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "[375000.0, 0.0, -150000.0, 0.0, -350000.0, 125000.0]"
+     },
+     {
+      "setup": "S, R = five_days()",
+      "call": "split_book(S, 1_000_000).loc['2024-03-06'].tolist()",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+     },
+     {
+      "setup": "S, R = five_days()",
+      "call": "split_book(S, 1_000_000).values.tolist()",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "[[318181.82, 45454.55, -153846.15, -38461.54, -307692.31, 136363.64], [375000.0, 0.0, -150000.0, 0.0, -350000.0, 125000.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [224137.93, 224137.93, -100000.0, -100000.0, 51724.14, -300000.0], [0.0, -166666.67, 333333.33, -333333.33, 166666.67, 0.0]]"
+     },
+     {
+      "setup": "S, R = panel(7); P = split_book(S, 2_500_000); live = P.abs().sum(axis=1) > 0",
+      "call": "int((~live).sum()), float((P.clip(lower=0).sum(axis=1)[live] - 1_250_000).abs().max()), float((P.clip(upper=0).sum(axis=1)[live] + 1_250_000).abs().max())",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "(2, 0.0, 0.0)"
+     },
+     {
+      "setup": "S, R = five_days(); a = split_pnl(S, R, 1_000_000); S.iloc[-1] = [5.0, -3.0, 2.0, 0.0, 1.0, -4.0]; b = split_pnl(S, R, 1_000_000)",
+      "call": "float((a - b).abs().max())",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      },
+      "expect": "0.0"
+     },
+     {
+      "setup": "S, R = five_days()",
+      "call": "[str(d.date()) for d in split_pnl(S, R, 1_000_000).index]",
+      "compare": "equal",
+      "expect": "['2024-03-05', '2024-03-06', '2024-03-07', '2024-03-08']"
+     },
+     {
+      "setup": "S, R = five_days()",
+      "call": "float(split_pnl(S, R, 1_000_000).iloc[-1])",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "4051.72"
+     },
+     {
+      "setup": "S, R = five_days()",
+      "call": "split_pnl(S, R, 1_000_000).tolist()",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "[10398.6, -6425.0, 0.0, 4051.72]"
+     },
+     {
+      "setup": "S, R = panel(7); p = split_pnl(S, R, 2_500_000)",
+      "call": "len(p), float(p.sum())",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "(39, -3885.14)"
+     },
+     {
+      "setup": "S, R = panel(7); p = split_pnl(S, R, 2_500_000)",
+      "call": "[float(p.loc[d]) for d in ('2024-01-19', '2024-02-07')]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      },
+      "expect": "[0.0, 0.0]"
+     }
+    ],
+    "how": "Check runs 12 hidden tests on `five_days()` and `panel(7)`, compared within £0.01. The first run loads pandas, which takes 10 to 20 seconds; later runs are quick."
+   },
+   "feedback": {
+    "correct": "Each side carries half the gross, and each day's positions earn the next day's returns.",
+    "generic": "Some tests failed. Read the first failing test against the rules above.",
+    "byKey": {
+     "test-1": "Test 1 adds up each side on 4 March at a gross of £1m. The longs must come to £500,000 and the shorts to −£500,000, so scale each side on its own.",
+     "test-2": "Test 2 checks 7 March share by share. Weight by the distance of the signal from that day's median, not from the mean and not by rank.",
+     "test-3": "Test 3 is 5 March, when B has no signal. Leave B out of the median and give it £0.",
+     "test-4": "Test 4 is 6 March: five shares tie at the median and only C is below it. With no long side the book holds cash, so every position is £0.",
+     "test-7": "Test 7 changes the signals of 8 March, the last day. Positions set at that close earn nothing yet, so no P&L may move.",
+     "test-8": "Test 8 checks the dates. Positions set at one close earn the next day, so the P&L runs from 5 to 8 March.",
+     "test-9": "Test 9 is 8 March, when F did not trade. A NaN return counts as 0, so the day still has a P&L."
+    }
+   },
+   "explain": {
+    "text": "On 4 March the longs' distances from the median add up to 1.1 and the shorts' to 1.3. One scale for the whole £1m book would leave it £83,333 net short. The positions move one day on before they meet the returns, so no P&L uses its own day's signal."
+   }
   }
  ]
 }
