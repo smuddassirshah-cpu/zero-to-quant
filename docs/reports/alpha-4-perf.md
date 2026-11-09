@@ -5,7 +5,7 @@
 - Product: `split_book(signal, gross)` (distance from each date's median, each side scaled to `gross/2`, cash on an empty side) and `split_pnl` (positions earn the next day).
 - 12 tests, 1 example, no timing test. 15 planted bugs each fail first at their byKey test (1 neutrality and gross, 2 weights, 3 missing signal, 4 empty side, 7 look-ahead spy, 8 dates, 9 NaN return).
 
-Freshness: l13 screens 3, 8, 9, 10 lay out rank weights at ±0.5 and next-day holding. New: median centring with per-side scaling, £ gross, empty-side cash, dated £ P&L. `fresh-check.mjs --file`: 0 hits. Grep: median, dollar-neutral, each side, gross, split_.
+Overlapping screens: l13 screens 3, 8, 9, 10 lay out rank weights at ±0.5 and next-day holding. New: median centring with per-side scaling, £ gross, empty-side cash, dated £ P&L. `fresh-check.mjs --file`: 0 hits. Grep: median, dollar-neutral, each side, gross, split_.
 
 Gates:
 1. `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors.

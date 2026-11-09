@@ -6,9 +6,9 @@ Reads the item from app/content/courses/fin-ml/homework-2.json, then
 1. runs the shipped solution against every test and checks each expect string;
 2. runs an independent plain-loop solution (no groupby, no rank) and three other correct routes;
 3. recomputes tests 1 and 2 by hand arithmetic;
-4. runs the starter (must fail every test) and 24 planted bugs (each must fail a test),
+4. runs the starter (must fail every test) and 25 planted bugs (each must fail a test),
    and checks that each bug's first failing test has a byKey line;
-5. checks the counts the item states (13 tests, 1 example, the panel sizes, k, the 15th date).
+5. checks the counts the item states (14 tests, 1 example, the panel sizes, k, the 15th date).
 Exits 1 on any failure.
 """
 import json
@@ -174,6 +174,7 @@ BUGS = {
     "shift k + 1": std('r = s["close"] / s.groupby("stock")["close"].shift(k + 1) - 1'),
     "k calendar days": std('past = s.set_index(["date", "stock"])["close"]\nkey = pd.MultiIndex.from_arrays([s["date"] - pd.Timedelta(days=k), s["stock"]])\nr = pd.Series(s["close"].values / past.reindex(key).values - 1, index=s.index)'),
     "ranked highest first": std(tail=T.replace("g.rank()", "g.rank(ascending=False)")),
+    "look-back by BDay offset (ignores a holiday)": mk(SORT + 'p = s.set_index(["date", "stock"])["close"]\nkey = pd.MultiIndex.from_arrays([s["date"] - pd.offsets.BDay(k), s["stock"]])\nr = pd.Series(s["close"].values / p.reindex(key).values - 1, index=s.index)\n' + TAIL),
     "result in date order, index reset": std(tail=T.replace("q.reindex(df.index)", "q.reset_index(drop=True)")),
 }
 bykey = item["feedback"]["byKey"]
@@ -184,13 +185,13 @@ for name, code in BUGS.items():
         check("test-%d" % f[0] in bykey, "  first failing test %d has a byKey line" % f[0])
 
 # 5. stated counts
-check(len(TESTS) == 13 and len(W["examples"]) == 1 and len(TESTS) > len(W["examples"]), "13 tests, 1 example")
+check(len(TESTS) == 14 and len(W["examples"]) == 1 and len(TESTS) > len(W["examples"]), "14 tests, 1 example")
 check(W["examples"][0] in TESTS, "the example is test 1 and is also a hidden test")
-check("13 hidden tests" in W["how"] and "12 shares" in W["how"], "`how` states 13 tests and 12 shares")
+check("14 hidden tests" in W["how"] and "12 shares" in W["how"], "`how` states 13 tests and 12 shares")
 check("k = 5" in bykey["test-11"] and "return_rank(df, 5)" in TESTS[10]["call"], "test 11 uses k = 5")
 check("15th date" in bykey["test-10"] and "[14]" in TESTS[9]["setup"], "test 10 changes closes after the 15th date")
 check("`k = 2`" in bykey["test-5"] and "return_rank(df, 2)" in TESTS[4]["call"], "test 5 uses k = 2")
-check(set(bykey) == {"test-%d" % i for i in range(1, 14)}, "a byKey line for each of the 13 tests")
+check(set(bykey) == {"test-%d" % i for i in range(1, 15)}, "a byKey line for each of the 14 tests")
 
 print("checks failed:", len(FAILS))
 raise SystemExit(1 if FAILS else 0)

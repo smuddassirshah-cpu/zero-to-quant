@@ -5,7 +5,7 @@
 - Objective matched: l10 "Prove a greedy choice with an exchange argument." It is the only verb-rule match in L3 (l9 Solve, l11 Enumerate, l12 Apply).
 - Task: problem L, one machine, every job ready at 09:00, minimise the worst lateness; the greedy runs jobs in due order. Prove it by exchange (first difference, swap, feasible, no worse, repeat), then name an assumption the proof needs and break the greedy without it. Model: ready times (A 0/5/7, B 5/1/6: 4 against 0; the never-wait rule fails on a second pair, 3 against 0) and total lateness (8 against 5).
 - Rubric 1, 3, 2, 2, 2; rows 2 to 5 required (exchange, feasibility, repeat, assumption). `rubric-passes.mjs`: minimal pass rows 2, 3, 4, 5; only row 1 can be left out.
-- Fresh: l10 screens 2 and 9 and `hw3-exchange` lay out the exchange for interval scheduling (a set, first meeting swapped), `hw3-writeup` for alert stabbing. New: an order rather than a set, the first-difference swap with the block bound, closing gaps, the ready-time and total-lateness conditions. Grep terms: `deadline`, `lateness`, `due`, `knapsack`, `exchange`, `greedy`, `swap`, `penalty`, `sorted by`. `fresh-check.mjs --file` homework-3: 0 hits.
+- Overlapping screens: l10 screens 2 and 9 and `hw3-exchange` lay out the exchange for interval scheduling (a set, first meeting swapped), `hw3-writeup` for alert stabbing. New: an order rather than a set, the first-difference swap with the block bound, closing gaps, the ready-time and total-lateness conditions. Grep terms: `deadline`, `lateness`, `due`, `knapsack`, `exchange`, `greedy`, `swap`, `penalty`, `sorted by`. `fresh-check.mjs --file` homework-3: 0 hits.
 
 ## Gates
 
