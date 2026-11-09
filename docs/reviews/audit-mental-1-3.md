@@ -39,8 +39,31 @@ No `wrong` and no `misleading` finding was made. No graded key, accepted answer 
 
 ## Overlap with the earlier second read
 
-To be filled after reading `docs/reviews/review-0.5.md` (ledger and findings were committed first).
+Read after the ledger and findings were committed: `docs/reviews/review-0.5.md` (2 errors, 8 warnings, 13 notes, with its Fix pass). Its findings on the exam, on sentence length, on layout and on the order in which methods are introduced (percentages used before l11) are outside a concept audit and are not counted. Its conceptual findings inside this scope are seven, all fixed before this audit read the files, so this audit could only confirm the fixed text. Each of the seven is a `correct` row in the ledger now.
+
+| Earlier conceptual finding (review-0.5) | State when audited | This audit |
+|---|---|---|
+| l4 screens[2]: two right answers for the number with no partner | fixed (31) | key unique, `L1:l4_odd_one` |
+| homework-1 items[9] model (d): "£10 away" was £10.50 | fixed | `L1:hw1_longform_estimate` |
+| l5 screens[1].explain: tens up, units down fails from 90 to 99 | fixed | `L2:l5_nines_digit_sum` |
+| l8 screens[7].explain: variances add only for independent risks | fixed | `L2:l8_variances_add` |
+| l9 quiz[1].prose: largest Zetamac answers reach 100 was false | fixed (division answers) | `L3:l9_zetamac_division` |
+| l10 screens[4], quiz[1]: tolerance accepted the chopped value | fixed (0.00035) | `L3:l10_sixth_tolerance` |
+| review-3 items[5]: tolerance accepted 0.8334 | fixed (0.00035) | tolerance recomputed, ledger row review-3 items[5] |
+
+| Conceptual findings | Count |
+|---|---|
+| Found by this audit only | 8 (findings 1 to 8; 0 wrong, 8 imprecise; 1 serious, 7 minor) |
+| Found by the earlier review only | 7 (2 errors, 3 warnings, 2 notes; all already fixed) |
+| Found by both | 0 |
+
+Reading: the earlier read caught every false number and wrong grading that this audit could find evidence of, and this audit found no new `wrong`. What the single read missed is one class: a rule stated in words without the condition that makes it true (findings 2, 5, 6, 7 and 8), plus two loose inferences (1 and 3) and one loose count (4). On the convergence rule the course meets the test for closing: no new `wrong` in three levels.
 
 ## Checks run
 
-To be filled.
+- Concepts scripts, from the repo root with `python3 -I`: `docs/reports/mental-L1-concepts.py`, `mental-L2-concepts.py` and `mental-L3-concepts.py` all exit 0. No `EXPECTED_FAIL`, since no content was found wrong; the eight imprecise claims are printed as `note` lines or cited from the passing checks beside them.
+- Validator, from `app/`: `node tools/validate.mjs` gives 0 errors, 4110 warnings (repository-wide count). It rewrote no tracked file.
+- Voice: `VOICE_BASE=app/content/courses/mental/ python3 docs/reviews/voice-scan.py 35 --summary` gives 0 explanations over three sentences and 0 of 5,226 sentences over 35 words. Every proposed fix above keeps to three sentences and under 35 words a sentence.
+- Author number scripts: none exists for this course (`docs/reports/mental-L*-numbers.py` is absent). The concepts scripts recompute the keyed numbers and can serve as the committed recompute script for the fix pass.
+- Playthrough with `--local-cdn`, desktop and `--mobile`: `--lesson mental/l3-making-100`, `--lesson mental/l8-squaring`, `--lesson mental/l12-against-the-clock` and `--set mental/homework-2` all end "All passed".
+- Engine limits met: none, so nothing was added to `docs/BACKLOG-INBOX.md`.
