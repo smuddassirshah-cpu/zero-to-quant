@@ -1791,3 +1791,6 @@ Raised later (random-vars level 1 perf):
 
 Raised later (ds level 4 perf):
 - [Could] Third sighting of ENGINE-BACKLOG 655: `fresh-check --file` reports `h4-save-tree` (ds homework-4) as a code-name hit on `to_list`, a helper only its hidden prelude defines (as in l12 to l16), and exits 1. Want names the item's own prelude or starter defines skipped.
+
+Raised later (first-python level 2 perf):
+- [Could] Another sighting of ENGINE-BACKLOG 681: in `h-split-bill` five planted slips (text not converted, printing the share, a loop that misses a price, a charge on every group) all fail test 1 first, so one `test-1` line has to name four cases. A key on the returned value (`test-1:None`, `test-1:TypeError`) would let each line name one action.
