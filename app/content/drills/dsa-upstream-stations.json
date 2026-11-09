@@ -1,11 +1,11 @@
 {
   "id": "dsa-upstream-stations",
-  "name": "Stations that feed a reservoir",
+  "name": "Stations on the route to a reservoir",
   "course": "graphs-dp",
   "pack": "dsa",
   "pattern": "graphs",
   "tags": [
-    "upstream-stations"
+    "route-stations"
   ],
   "skills": [
     "gd-graphs",
@@ -13,97 +13,102 @@
   ],
   "difficulty": 2,
   "pace": 900,
-  "fn": "upstream_stations",
+  "fn": "route_stations",
   "returns": "a list of whole numbers",
-  "brief": "A water network has `n` pumping stations, numbered 0 to `n - 1`. Each pipe `(a, b)` in `pipes` carries water one way, from station `a` to station `b`. Station `r` is the reservoir.\n\nWrite `upstream_stations(n, pipes, r)`, which returns, in increasing order, every station other than `r` whose water can reach `r` through one or more pipes.\n\nExample. With pipes `(0, 1)`, `(1, 2)`, `(3, 2)`, `(2, 4)` and `(5, 0)` and reservoir 2, water from 0, 1, 3 and 5 reaches 2. Station 4 is only downstream, so the answer is `[0, 1, 3, 5]`.",
+  "brief": "A water network has `n` pumping stations, numbered 0 to `n - 1`. Each pipe `(a, b)` in `pipes` carries water one way, from station `a` to station `b`. Water starts at pump `s` and is wanted at reservoir `r`, and `s` and `r` are different stations.\n\nWrite `route_stations(n, pipes, s, r)`, which returns, in increasing order, every station that water from `s` can pass through on its way to `r`, with `s` and `r` included. Return `[]` if water from `s` never reaches `r`.\n\nExample. With pipes `(0, 1)`, `(1, 2)`, `(3, 2)`, `(2, 4)` and `(5, 0)`, pump 5 and reservoir 2, the water goes 5, 0, 1, 2. Station 4 is reached from 5 but leads nowhere, and station 3 feeds 2 but is not reached, so the answer is `[0, 1, 2, 5]`.",
   "constraints": [
-    "$1 \\le n \\le 200{,}000$ and $0 \\le$ `len(pipes)` $\\le 200{,}000$. Pipes may form loops.",
-    "$O(n + m)$ time for $m$ pipes is the target. Searching forward from every station separately is too slow.",
-    "Each test has its own 5-second limit in the browser."
+    "$2 \\le n \\le 200{,}000$ and $0 \\le$ `len(pipes)` $\\le 200{,}000$. Pipes may form loops, and $s \\ne r$.",
+    "$O(n + m)$ time for $m$ pipes is the target. Searching from every station separately is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
   ],
-  "hint": "Turn every pipe round. A station feeds `r` exactly when `r` can reach it along the reversed pipes, so one search from `r` finds them all.",
-  "starter": "def upstream_stations(n, pipes, r):\n    # your code here\n    return []\n",
+  "hint": "A station is on a route exactly when `s` can reach it and it can reach `r`. Search forward from `s`, search from `r` along the reversed pipes, and keep the stations both searches found.",
+  "starter": "def route_stations(n, pipes, s, r):\n    # your code here\n    return []\n",
   "examples": [
     {
-      "call": "upstream_stations(6, [(0, 1), (1, 2), (3, 2), (2, 4), (5, 0)], 2)",
-      "expect": "[0, 1, 3, 5]",
+      "call": "route_stations(6, [(0, 1), (1, 2), (3, 2), (2, 4), (5, 0)], 5, 2)",
+      "expect": "[0, 1, 2, 5]",
       "compare": "equal",
-      "note": "Station 5 reaches 2 through 0 and 1; water from 2 flows on to 4, which does not count."
+      "note": "Water goes 5, 0, 1, 2. Station 4 is a dead end and station 3 is not reached."
     },
     {
-      "call": "upstream_stations(3, [(0, 1), (1, 2)], 0)",
+      "call": "route_stations(6, [(0, 1), (1, 2), (3, 2), (2, 4), (5, 0)], 4, 2)",
       "expect": "[]",
       "compare": "equal",
-      "note": "Nothing flows into station 0."
+      "note": "Water from station 4 goes nowhere, so there is no route."
     }
   ],
   "tests": [
     {
-      "call": "upstream_stations(1, [], 0)",
+      "call": "route_stations(2, [], 0, 1)",
       "expect": "[]",
       "compare": "equal"
     },
     {
-      "call": "upstream_stations(3, [(0, 1), (1, 2)], 0)",
-      "expect": "[]",
-      "compare": "equal"
-    },
-    {
-      "call": "upstream_stations(6, [(0, 1), (1, 2), (3, 2), (2, 4), (5, 0)], 2)",
-      "expect": "[0, 1, 3, 5]",
-      "compare": "equal"
-    },
-    {
-      "call": "upstream_stations(4, [(0, 1), (1, 0), (2, 3)], 1)",
-      "expect": "[0]",
-      "compare": "equal"
-    },
-    {
-      "call": "upstream_stations(4, [(0, 1), (1, 2), (2, 0), (3, 3)], 2)",
+      "call": "route_stations(2, [(0, 1)], 0, 1)",
       "expect": "[0, 1]",
       "compare": "equal"
     },
     {
-      "call": "upstream_stations(5, [(1, 0), (1, 0), (2, 1), (2, 0)], 0)",
-      "expect": "[1, 2]",
+      "call": "route_stations(2, [(0, 1)], 1, 0)",
+      "expect": "[]",
       "compare": "equal"
     },
     {
-      "call": "upstream_stations(5, [(0, 4), (1, 4), (2, 4), (3, 4)], 4)",
+      "call": "route_stations(6, [(0, 1), (1, 2), (3, 2), (2, 4), (5, 0)], 5, 2)",
+      "expect": "[0, 1, 2, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "route_stations(6, [(0, 1), (1, 2), (3, 2), (2, 4), (5, 0)], 4, 2)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "route_stations(4, [(0, 1), (1, 0), (1, 2), (2, 1)], 0, 2)",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "route_stations(5, [(0, 1), (0, 1), (1, 2), (2, 0), (2, 3), (3, 4)], 0, 3)",
       "expect": "[0, 1, 2, 3]",
       "compare": "equal"
     },
     {
-      "call": "upstream_stations(5, [(4, 0), (4, 1), (4, 2), (4, 3)], 4)",
+      "call": "route_stations(4, [(0, 0), (0, 1), (1, 1), (1, 2), (3, 3)], 0, 2)",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "route_stations(6, [(0, 1), (0, 2), (1, 3), (2, 3), (3, 5), (0, 4)], 0, 5)",
+      "expect": "[0, 1, 2, 3, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda v: (len(v), v[0], v[-1]))(route_stations(200000, [(i, i + 1) for i in range(199999)], 0, 199999))",
+      "expect": "(200000, 0, 199999)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda v: (len(v), sum(v)))(route_stations(200000, [(i, i + 1) for i in range(99999)] + [(i, 100000 + i) for i in range(0, 100000, 2)], 10, 90000))",
+      "expect": "(89991, 4050044955)",
+      "compare": "equal"
+    },
+    {
+      "call": "route_stations(200000, [(i, i + 1) for i in range(199999)], 199999, 0)",
       "expect": "[]",
       "compare": "equal"
     },
     {
-      "call": "upstream_stations(6, [(0, 1), (2, 3), (4, 5), (5, 2)], 3)",
-      "expect": "[2, 4, 5]",
-      "compare": "equal"
-    },
-    {
-      "call": "(lambda v: (len(v), v[0], v[-1]))(upstream_stations(200000, [(i, i + 1) for i in range(199999)], 199999))",
-      "expect": "(199999, 0, 199998)",
-      "compare": "equal"
-    },
-    {
-      "call": "(lambda v: (len(v), sum(v)))(upstream_stations(200000, [((2 * i) % 200000, i) for i in range(200000)], 7))",
-      "expect": "(2505, 250000434)",
-      "compare": "equal"
-    },
-    {
-      "call": "upstream_stations(200000, [(i + 1, i) for i in range(199999)], 199999)",
-      "expect": "[]",
+      "call": "len(route_stations(200000, [(i, (i + 1) % 200000) for i in range(200000)], 5, 7))",
+      "expect": "200000",
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
-  "solution": "def upstream_stations(n, pipes, r):\n    back = [[] for _ in range(n)]\n    for a, b in pipes:\n        back[b].append(a)\n    seen = [False] * n\n    seen[r] = True\n    stack = [r]\n    while stack:\n        x = stack.pop()\n        for y in back[x]:\n            if not seen[y]:\n                seen[y] = True\n                stack.append(y)\n    return [v for v in range(n) if seen[v] and v != r]\n",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def route_stations(n, pipes, s, r):\n    forward = [[] for _ in range(n)]\n    backward = [[] for _ in range(n)]\n    for a, b in pipes:\n        forward[a].append(b)\n        backward[b].append(a)\n\n    def reach(adj, start):\n        seen = [False] * n\n        seen[start] = True\n        stack = [start]\n        while stack:\n            x = stack.pop()\n            for y in adj[x]:\n                if not seen[y]:\n                    seen[y] = True\n                    stack.append(y)\n        return seen\n\n    from_s = reach(forward, s)\n    to_r = reach(backward, r)\n    return [v for v in range(n) if from_s[v] and to_r[v]]\n",
   "notes": [
-    "Reverse every pipe and search once from the reservoir: what it reaches backwards is exactly what feeds it forwards.",
-    "A loop through `r` must not put `r` in the answer, and a forward search from each station costs $O(n)$ each, which is $O(n^2)$ in all.",
-    "Building the reversed lists and one search is $O(n + m)$."
+    "Water from `s` can pass through `v` exactly when `s` reaches `v` and `v` reaches `r`, so one forward search and one search on the reversed pipes, intersected, give the answer.",
+    "A station that `s` reaches but that leads nowhere, or one that feeds `r` but is not reached, is in only one search and must be dropped. If `s` cannot reach `r`, the two searches share nothing.",
+    "Building both lists and two searches is $O(n + m)$; trying each station with its own two searches is $O(n(n + m))$."
   ]
 }

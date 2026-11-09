@@ -17,10 +17,10 @@
   "brief": "A faulty feed sent `k` prices with the separators lost, so only the string `digits` arrived. Each price was a whole number from 1 to `cap`, written with no leading zero.\n\nWrite `split_prices(digits, k, cap)`, which returns every way to cut `digits` back into `k` such prices, each as a list of numbers, with the lists in increasing order as Python sorts them.\n\nExample. For `\"1050\"`, `k = 2` and `cap = 999`, the cut 1 | 050 has a leading zero and 105 | 0 has a price of 0. Only 10 | 50 is left, so the answer is `[[10, 50]]`.",
   "constraints": [
     "$1 \\le$ `len(digits)` $\\le 60$, $1 \\le k \\le 30$ and $1 \\le$ `cap` $\\le 10^6$.",
-    "Stop a branch as soon as the digits left cannot fill the prices left, or can no longer fit in them. Without that check some tests take millions of steps.",
-    "Each test has its own 5-second limit in the browser."
+    "Checking only the digits left against the prices left is not enough: `'1' * 33 + '000'` with `k = 17` and `cap = 999` fails only at its end and takes tens of millions of steps. Record which pairs of position and prices left can still be finished.",
+    "All the tests in a run share one 5-second limit in the browser."
   ],
-  "hint": "Build the prices from left to right, trying each length up to the number of digits in `cap`. With `left` prices still to place, the digits remaining must number between `left` and `left` times that width.",
+  "hint": "Work out first, from the right, which pairs (prices left, position) can still be finished. Then build the prices from left to right, trying each length up to the number of digits in `cap`, and enter only the branches that can be finished.",
   "starter": "def split_prices(digits, k, cap):\n    # your code here\n    return []\n",
   "examples": [
     {
@@ -83,6 +83,11 @@
       "compare": "equal"
     },
     {
+      "call": "split_prices('1' * 33 + '000', 17, 999)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
       "call": "split_prices('1' * 45, 15, 999)",
       "expect": "[[111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111]]",
       "compare": "equal"
@@ -98,11 +103,11 @@
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
-  "solution": "def split_prices(digits, k, cap):\n    width = len(str(cap))\n    out = []\n    parts = []\n\n    def place(pos):\n        left, rest = k - len(parts), len(digits) - pos\n        if left == 0:\n            if rest == 0:\n                out.append(parts[:])\n            return\n        if rest < left or rest > left * width:\n            return\n        if digits[pos] == '0':\n            return\n        for end in range(pos + 1, min(pos + width, len(digits)) + 1):\n            price = int(digits[pos:end])\n            if price > cap:\n                break\n            parts.append(price)\n            place(end)\n            parts.pop()\n\n    place(0)\n    return out\n",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def split_prices(digits, k, cap):\n    n = len(digits)\n    width = len(str(cap))\n\n    def pieces(pos):\n        # every end position of a valid price starting at pos\n        if digits[pos] == '0':\n            return\n        for end in range(pos + 1, min(pos + width, n) + 1):\n            if int(digits[pos:end]) > cap:\n                return\n            yield end\n\n    can = [[False] * (n + 1) for _ in range(k + 1)]\n    can[0][n] = True\n    for left in range(1, k + 1):\n        for pos in range(n):\n            can[left][pos] = any(can[left - 1][end] for end in pieces(pos))\n\n    out, parts = [], []\n\n    def place(pos):\n        left = k - len(parts)\n        if left == 0:\n            out.append(parts[:])\n            return\n        for end in pieces(pos):\n            if can[left - 1][end]:\n                parts.append(int(digits[pos:end]))\n                place(end)\n                parts.pop()\n\n    if can[k][0]:\n        place(0)\n    return out\n",
   "notes": [
     "Choose the first price, then solve the same task on the digits after it; trying shorter pieces first produces the answers already in sorted order.",
-    "A piece starting with 0 is never a price, and a branch whose remaining digits are too few or too many for the prices left must stop at once.",
-    "With that check each branch either reaches an answer or dies within a few steps, so the work stays close to the size of the output."
+    "A piece starting with 0 is never a price, and a branch is worth entering only if the digits after it can still be cut into the prices left.",
+    "The table `can[left][pos]` costs $O(k \\cdot n \\cdot w)$ for $w$ digits in `cap`. After that every branch reaches an answer, so the search takes about $k w$ steps per answer, and none when the answer is empty."
   ]
 }
