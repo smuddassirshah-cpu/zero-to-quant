@@ -1056,3 +1056,19 @@ A set opens from its lesson's card on the course page ("Fluency: 20 fresh questi
 4. `node tools/test-fluency.mjs --local-cdn <pkgs> --set <course>/<set id>` is green.
 5. `node tools/playthrough.mjs --fluency <course>/<set id> --local-cdn <pkgs>` and again with `--mobile` are green.
 6. The voice rules pass as the validator applies them, including the 35-word gate on each drawn sentence (`voice-scan.py` skips `solution` and template text, so it is not used for fluency sets).
+
+### The weekly mixed review (ENGINE-BACKLOG 820 to 829)
+
+Fluency sets also feed a cumulative review that needs no authoring of its own. Once a week per learner Today lists **Weekly mixed review** in the Due card, above the practice rows: seven days after the last one was finished, and the first one seven days after the first level was met. It is not opt-in. "Not today" on its start card only postpones it: it stays on Today, marked postponed, until it is done. A review left part way is not a review: it stays due.
+
+It is 20 items drawn from **every met level**, by `ZQ.select.weeklyReview` (`js/engine/select.js`), in this order:
+
+1. **Generated items** from the Fluency families of the lessons of met levels, so a set with several distinct skills as families feeds it well. A family is drawn more often the more wrong answers its right and wrong counts hold (from Fluency attempts and from earlier weekly reviews) and the longer ago it was last practised (a family never practised counts as 60 days).
+2. **Authored items the learner has never seen**: bank items (`content/bank`) whose `skills` belong to a course with a met level and whose `requires` lessons are finished, which the interview deck has not scheduled and no weekly review has served; and the items of the topic exams of met courses, while that exam has not been sat.
+3. **Review items least recently seen**: the quiz items of the lessons and the items of the level review of met levels (the twelve levels a weekly review has covered least recently), oldest first.
+
+At most four items come from one course. The cap relaxes (to 6, 8, ...) only when too few courses are met to fill 20. Consecutive items come from different courses when that is possible. Long-form and code items are never drawn. With no Fluency set written the review is made from steps 2 and 3 alone.
+
+The result is recorded: a history row (date, score, misses per level), the uids of the authored items served (so step 2 never offers them again), the right and wrong counts of the generated families, and every authored miss joins the redo queue as a review miss does (back in 7 days). A generated miss cannot be asked again, so it moves only the family counts, which raise that family's weight next time. Answered authored items move the skill scores as a practice set does. **Nothing here gates anything**: the met rule, lessons and exams are untouched.
+
+What this means for content: nothing to write. A level with a Fluency set, a written level review and quiz items gives the review the most to draw on; bank items count when their `skills` are a met course's skills. `node tools/test-cumulative.mjs` checks the selection rules, the schedule and the recording; the playthrough's routes block moves the state clock eight days on, checks the card on Today, plays the review and checks it clears.

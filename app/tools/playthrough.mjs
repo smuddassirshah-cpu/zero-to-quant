@@ -24,7 +24,8 @@
      node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
                                                            solution passes every hidden test, the stopwatch is read and recorded (add --mobile, --narrow or --tablet to repeat it at those sizes)
      node app/tools/playthrough.mjs --session              the sample drill session: both drills, minutes per drill, result, carry, expiry (--drills includes it)
-     node app/tools/playthrough.mjs --routes-only          (also: mock-oa-code holdout and resit checks, mock versions in Prepare) only the routes, then the interview bank deck (due and new items, the 3-day box,
+     node app/tools/playthrough.mjs --routes-only          (also: the weekly mixed review on Today: the state clock moves eight days on, the card appears above the practice rows,
+                                                           "Not today" keeps it due, the review is played and recorded and the card clears, it is due again after seven days; mock-oa-code holdout and resit checks, mock versions in Prepare) only the routes, then the interview bank deck (due and new items, the 3-day box,
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
                                                            skewed Date.now so per-item seconds and the pace line are checked
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
@@ -2267,6 +2268,112 @@ const main = async () => {
 
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
+    /* ENGINE-BACKLOG 828: the weekly mixed review on Today. A fresh profile with six levels met (six courses): nothing is due on the first day; with the
+       state clock moved eight days on, the card appears in Due, above the fluency practice rows; "Not today" keeps it due; the review is played right
+       through (twenty items, at most four from one course), recorded, and the card clears; it is due again seven days after that. */
+    const cumulativeChecks = async () => {
+      where = '#weekly';
+      const fails = [];
+      const DAYMS = 86400000;
+      try {
+        await freshSetup();
+        const keys = await page.evaluate(() => {
+          const out = [], seen = new Set();
+          for (const c of ZQ.content.allCourses()) {
+            if (seen.has(c.id)) continue;
+            const lv = (c.levels || []).find(l => l.review && ZQ.content.exists(c.id, l.review) === true && (l.lessons || []).length && l.lessons.every(id => ZQ.content.exists(c.id, id) === true));
+            if (lv) { seen.add(c.id); out.push(`${c.id}/L${lv.n}`); }
+            if (out.length === 6) break;
+          }
+          ZQ.state.prereq.mark(out, 'test');
+          return out;
+        });
+        if (keys.length < 6) fails.push(`only ${keys.length} written levels to meet`);
+        const rowIn = () => page.evaluate(() => { const b = document.querySelector('.zt-due [data-go="weekly"]'); return b ? b.innerText.replace(/\s+/g, ' ').trim() : null; });
+        const todayAgain = async () => { await page.evaluate(() => { delete window.ZQ.test; }); await go('review'); await go('today'); };
+        const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflowAt = async (what) => {
+          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); if (await wideNow()) fails.push(`${what} at ${v.w} px: the page is wider than the window`); }
+          if (EXTRA.length) await setVp(DESKTOP, 150);
+        };
+        await todayAgain();
+        if (await rowIn()) fails.push('the weekly review is on Today on the day the first level was met');
+        await page.evaluate((d) => ZQ.state._setClock(() => Date.now() + d), 8 * DAYMS);
+        await todayAgain();
+        const row = await rowIn();
+        if (!row) fails.push('the weekly review is not on Today eight days after the first level was met');
+        else if (!/Weekly mixed review/.test(row)) fails.push(`the weekly row reads "${row}"`);
+        await shot('weekly-today');
+        await overflowAt('Today with the weekly review');
+        /* above the optional practice: a fluency set (the fixture, through the test hook) whose lesson is done */
+        const fx = readJSON(path.join(APP, 'tools', 'fixtures', 'fluency', 'fluency-l3-opening-brackets.json'));
+        await page.evaluate((d) => { ZQ.content._addFluency([{ course: d.course, doc: d }]); if (!(ZQ.state.lesson(d.course, d.lesson) || {}).done) ZQ.state.lessonFinished({ course: d.course, lesson: d.lesson, firstTry: [1, 1], perfect: false, seconds: 60 }); }, fx);
+        await todayAgain();
+        const order = await page.evaluate(() => { const w = document.querySelector('.zt-due [data-go="weekly"]'), p = document.querySelector('.zt-due [data-fluency-rows]'); return w && p ? !!(w.compareDocumentPosition(p) & Node.DOCUMENT_POSITION_FOLLOWING) : null; });
+        if (order === null) fails.push('the weekly row or the practice rows are missing from the Due card');
+        else if (!order) fails.push('the weekly review is not above the practice rows');
+        await overflowAt('Today with the weekly review and a practice row');
+        /* the start card, then "Not today": back on Today, still due, marked postponed */
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('weekly');
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        const intro = await page.evaluate(() => (document.querySelector('.hw-intro') || {}).innerText || '');
+        if (!/Weekly mixed review/.test(intro) || !/Twenty questions/.test(intro)) fails.push(`the start card: ${intro.replace(/\s+/g, ' ').slice(0, 140)}`);
+        if (await page.evaluate(() => !!document.querySelector('.hw-ov'))) fails.push('the start card lists every question before the review begins');
+        await shot('weekly-start');
+        await overflowAt('the weekly review start card');
+        await page.click('[data-later]');
+        await page.waitForTimeout(500);
+        if (!/#today$/.test(await page.evaluate(() => location.hash))) fails.push('"Not today" did not return to Today');
+        const post = await rowIn();
+        if (!post) fails.push('after "Not today" the weekly review is no longer due on Today');
+        else if (!/Postponed/.test(post)) fails.push(`after "Not today" the row reads "${post}"`);
+        if (!(await page.evaluate(() => ZQ.state.cumulative.status().due))) fails.push('postponing made it not due');
+        /* the review itself */
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        await go('weekly');
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        await page.evaluate(() => ZQ.test.continue());
+        await page.waitForTimeout(150);
+        let guard = 0, n = 0;
+        while (++guard < 200) {
+          const c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind === 'done') break;
+          if (c.kind !== 'item') { fails.push(`unexpected state ${c.kind} in the weekly review`); break; }
+          if (c.state === 'idle' || c.state === 'engaged') {
+            const applied = await page.evaluate(() => ZQ.test.answerCorrect());
+            const r = await page.evaluate(async () => { const x = await ZQ.test.check(); return x ? { ok: !!x.ok, key: x.key ?? null, pending: !!x.pending } : null; });
+            n++;
+            if (!applied) { fails.push(`item ${c.screenIndex + 1}: the authored answer could not be typed`); break; }
+            if (!r || r.pending || !r.ok) { fails.push(`item ${c.screenIndex + 1}: not correct, key ${r ? JSON.stringify(r.key) : 'none'}`); }
+          }
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(100);
+        }
+        if (n !== 20) fails.push(`the weekly review had ${n} items, not 20`);
+        await shot('weekly-done');
+        await overflowAt('the weekly review result page');
+        const rec = await page.evaluate(() => { const h = ZQ.state.cumulative.history(); return { rows: h.length, score: h[0] && h[0].score, n: h[0] && h[0].n, due: ZQ.state.cumulative.status().due, last: ZQ.state.cumulative.status().last, seen: Object.keys(ZQ.state.cumulative.seen()).length }; });
+        if (rec.rows !== 1 || rec.n !== 20 || rec.score !== 20) fails.push(`the save after the review: ${JSON.stringify(rec)}`);
+        if (rec.due) fails.push('the review is still due after it was finished');
+        await todayAgain();
+        if (await rowIn()) fails.push('the weekly row is still on Today after the review was finished');
+        /* seven days after it: due again, not before */
+        await page.evaluate((d) => ZQ.state._setClock(() => Date.now() + d), 14 * DAYMS);
+        if (await page.evaluate(() => ZQ.state.cumulative.status().due)) fails.push('due again only six days after the last review');
+        await page.evaluate((d) => ZQ.state._setClock(() => Date.now() + d), 15.2 * DAYMS);
+        await todayAgain();
+        if (!(await rowIn())) fails.push('not due again seven days after the last review');
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} #weekly  ${n} items, due after 8 days, postponed, finished, cleared, due again after 7 days`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log('FAIL #weekly  threw');
+      } finally {
+        try { await page.evaluate(() => ZQ.state._setClock(null)); } catch { /* the page is gone */ }
+      }
+      fails.forEach(f => failures.push(`#weekly: ${f}`));
+    };
     if (runRoutes) {
       /* the route checks (bank counts, samples hidden from You) assume a fresh profile; after played items (--all, shard 1) start one */
       if (played > 0) await freshSetup();
@@ -2310,6 +2417,7 @@ const main = async () => {
       await gatingChecks();
       await provenanceChecks();
       await capstoneChecks();
+      await cumulativeChecks();
       if (!exams.includes('mock-oa-code')) await holdoutChecks('mock-oa-code');
       await versionChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;

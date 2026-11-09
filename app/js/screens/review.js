@@ -445,7 +445,7 @@
         </ul>
         ${cfg.overview === false ? '' : `<ol class="hw-ov">${items.map((it, j) => `<li><span class="hw-ov-n tnum">${j + 1}</span><span class="t-body rvs-ov-t">${esc(it.title || it.source || '')}</span>${pips(it.difficulty || 2)}<span class="t-caption muted hw-ov-m">${esc(cfg.tag ? cfg.tag(it) : '')}</span></li>`).join('')}</ol>`}
       </section>`;
-      setActs(`<button type="button" class="btn hw-primary" data-start>Start</button>`);
+      setActs(`${cfg.later ? `<button type="button" class="btn secondary hw-sec" data-later>${esc(cfg.later.label)}</button>` : ''}<button type="button" class="btn hw-primary" data-start>Start</button>`);
       Z.mathify(col);
     };
     /* Test hook around the set (docs/PLAN.md 7): 'loading', then 'start' (continue() presses Start) or 'empty'; runSet
@@ -526,6 +526,7 @@
     host.addEventListener('click', (e) => {
       if (e.target.closest('[data-back]')) { leave(); return; }
       if (e.target.closest('[data-start]')) { start(items0); return; }
+      if (e.target.closest('[data-later]')) { try { cfg.later.run(); } catch (err) { console.error(err); } leave(); return; }   // cfg.later: { label, run } on the start card (the weekly review's "Not today")
       if (e.target.closest('[data-again]')) { Z.go(cfg.againRoute ? cfg.againRoute() : location.hash.slice(1)); }
     });
     Promise.resolve(cfg.load()).then(items => { items0 = items || []; phase = items0.length ? 'start' : 'empty'; intro(items0); }).catch(e => { console.error(e); if (alive) { col.innerHTML = `<p class="t-body">This set could not be loaded: ${esc(e.message)}</p>`; setActs('<button type="button" class="btn hw-primary" data-back>Back to Review</button>'); } });

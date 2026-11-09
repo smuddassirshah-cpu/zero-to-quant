@@ -1869,3 +1869,35 @@ Generated fluency sets (G, 800 to 819): 20 fresh typed-answer items per procedur
 
 819. Done [Must] `docs/AUTHORING.md` section 16 (every `vars` kind, every `let` function, every format with an example, `where`, choosing `form`, running `fluency-sample.mjs`, what the validator samples, the recompute script, a checklist) and `app/README.md`.
 819 status: done.
+
+Cumulative weekly review (C, 820 to 829): a weekly mixed set drawn from every met level, due on Today, not opt-in, no gate.
+
+820. Done [Must] State `ZQ.state.cumulative` (`status`, `postpone`, `record`, `seen`, `history`): due seven days after the last review was finished, the first seven days after the first level was met (`prereq.met`); postponing keeps it due; a review left part way is not a review (it keeps what was served); 100 history rows, 3000 seen uids; old saves load with an empty block.
+820 status: done. Eight cases in `tools/test-cumulative.mjs` part B.
+
+821. Done [Must] `ZQ.select.cumulative.build(model, { n, seed })`, the pure selection: tier 1 generated items from the Fluency families of met levels' lessons (weighted by wrong counts and age), tier 2 authored items never seen, tier 3 review items least recently seen; at most four from one course, relaxing only when too few courses are met; neighbours from different courses.
+821 status: done. Eleven cases in part A (with and without Fluency families).
+
+822. Done [Must] `ZQ.select.weeklyReview()` builds the model from the live save and content (met levels, fluency sets and their family counts, unseen bank items and unsat topic-exam items on met courses, the quiz and review items of the twelve least recently covered met levels) and resolves the items for `runSet`; no long-form or code item.
+822 status: done. Part C on the real content.
+
+823. Done [Must] `ZQ.select.weeklyFinish()` records the result: history row (date, score, per-level misses), authored misses to the redo queue (their own ids), family counts to the Fluency save (not an attempt), skill scores as a practice set does, seen uids; a generated miss only moves the family counts.
+823 status: done.
+
+824. Done [Must] Route `#weekly` (`js/screens/weekly.js`) on the shared set page: start card with "Not today", twenty items one try each, result with misses by level.
+824 status: done. `ZQ.setPage` gains `later`.
+
+825. Done [Must] Today's Due card lists "Weekly mixed review" when due (postponed today and overdue read differently), above the practice rows.
+825 status: done.
+
+826. Done [Should] The weekly review is never a gate: the met rule, lessons, reviews, exams and performance records are unchanged by it.
+826 status: done. Checked in `test-cumulative.mjs` (before and after) and by the playthrough.
+
+827. Done [Must] `tools/test-cumulative.mjs`: selection rules on seeded states, with and without Fluency sets, the schedule, the recording.
+827 status: done. 25 cases.
+
+828. Done [Must] Playthrough routes block (`cumulativeChecks`): nothing due on the first day, the state clock eight days on, the card appears above the practice rows, "Not today" keeps it due, the review is played (20 items) and recorded, the card clears, due again after seven days; no overflow at any width.
+828 status: done. Desktop and `--mobile`.
+
+829. Done [Must] `docs/AUTHORING.md` section 16 "The weekly mixed review" and the report `docs/reports/engine-gen-2.md`.
+829 status: done.
