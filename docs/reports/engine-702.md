@@ -1,0 +1,6 @@
+# Engine 702: perf-optional-row warning
+
+`optionalRows(it)` in `app/tools/perf-rules.mjs` returns the rubric rows (widget or flat) without `required: true` when no prompt text (`prose`, `question`, item `prompt`, `widget.prompt`) says "optional". `validate.mjs` warns once per item, `[perf-optional-row]`, and prints `perf-optional-row warnings: N` after the O2 line. Advisory only. Fixtures `ok-optional-marked`, `warn-optional-unmarked`, `ok-all-required` in `app/tools/fixtures/perf/`; `test-validate-perf.mjs` passes 36 of 36. Docs: AUTHORING section 5, backlog 702 Done.
+
+Repository: 0 errors, 40 items flagged:
+h-prove-cube-minus-n, h-derive-falling-area, h-derive-window, h-derive-parts-tail, h-prove-capped-wait, h-prove-cycles-exponential, h-prove-desk-guarantee, h-prove-integrable, h-spectral-longform, h-euler-derive, hw-floor-derive, h-aloud-two-notes, h-derive-arma-fan, h-spurious-aloud, h-reversal-note, h-overlap-aloud, hw3-due-order, h1-colleague-qp, h-ivol-plan, h-derive-ito, h-derive-black, h-aloud-unknown-drift, h-build-space, h-build-integral, h-prove-urn, h-derive-lazy-walk, hw4-kelly-draw, h-coin-dice-aloud, hw9-l-pieces-6x10, h4-pairs-aloud, h1-signal-aloud, h2-pca-aloud, h1-branch-aloud, h3-process-aloud, h-lagrange, h-prove-fit, h-prove-roots, h1-equivalent-metrics-proof, h2-ivt-proof, h3-contraction-proof.

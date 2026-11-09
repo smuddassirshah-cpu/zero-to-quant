@@ -18,7 +18,7 @@ import { createRequire } from 'node:module';
 import { scanO2, O2_CODES, orderedOptionsWhy } from './o2-rules.mjs';
 import { checkCapstones } from './capstone-rules.mjs';
 import { statedMinutes, ignoreList as durationIgnore, FLOOR as DURATION_FLOOR } from './duration-prose.mjs';
-import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb } from './perf-rules.mjs';
+import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb, optionalRows } from './perf-rules.mjs';
 const hoursLib = createRequire(import.meta.url)('../js/hours.js');   // SESSION_RANGE: the minutes each lesson session accepts (item 10)
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
 const tradeSim = createRequire(import.meta.url)('../js/engine/widgets/trade.js'); // { norm, play, ... }: the trade widget's game, so the authored strategy is played against the benchmark (item 459)
@@ -1313,10 +1313,13 @@ const checkPace = (file, where, v) => {
   else if (v > 1800) warn(file, where, `pace ${v} is over 30 minutes: it is in seconds`);
 };
 
+let perfOptionalRows = 0;
 /* Performance task (ENGINE-BACKLOG 529, docs/AUTHORING.md section 5): the shape of one item; the level rules run in the course loop (tools/perf-rules.mjs) */
 const perfItem = (file, where, it, ctx) => {
   if (!ctx.perf) { err(file, `${where}.performance`, 'performance belongs on a homework or level-review item'); return; }
   checkTask(it).forEach(m => err(file, `${where}.performance`, m));
+  const optRows = optionalRows(it);   // item 702: advisory
+  if (optRows.length) { perfOptionalRows++; warn(file, where, `[perf-optional-row] ${where} (${it.id}): rubric row${optRows.length === 1 ? '' : 's'} ${optRows.join(', ')} ${optRows.length === 1 ? 'is' : 'are'} optional but the prompt marks no part optional (DECISIONS session X, optional sub-questions)`); }
   const s = isObj(it.widget) ? it.widget : it;
   if (it.performance === 'data' && s.data != null) dataFiles(file, isObj(it.widget) ? `${where}.widget` : where, s);
   if (it.performance === 'aloud') {
@@ -2429,5 +2432,6 @@ if (!errors.length && WRITE_MANIFEST) {
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }
 console.log('\nO2 warnings: ' + O2_CODES.map(c => `${c} ${o2Counts[c]}`).join(', '));
+console.log(`perf-optional-row warnings: ${perfOptionalRows}`);
 console.log(`\n${errors.length} error${errors.length === 1 ? '' : 's'}, ${warnings.length} warning${warnings.length === 1 ? '' : 's'}`);
 process.exitCode = errors.length ? 1 : 0; // not process.exit(): it truncates large piped stdout (merge-wave capture)

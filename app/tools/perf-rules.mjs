@@ -87,3 +87,13 @@ export const checkLevel = ({ key, matched, tasks, pending }) => {
   if (tasks.length && pending) warnings.push(`${key}: has a performance task, remove from perf-pending`);
   return { errors, warnings, pendingNoTask };
 };
+
+/* ENGINE-BACKLOG 702: 1-based rubric rows without required:true on a performance item whose prompt text (prose, question, item prompt, widget prompt) never says "optional"; [] when none or no rubric */
+export const optionalRows = (it) => {
+  const w = isObj(it.widget) ? it.widget : null;
+  const rubric = w && Array.isArray(w.rubric) ? w.rubric : Array.isArray(it.rubric) ? it.rubric : null;
+  if (!rubric || it.performance === undefined) return [];
+  const text = [it.prose, it.question, it.prompt, w && w.prompt].filter(x => typeof x === 'string').join(' ');
+  if (/optional/i.test(text)) return [];
+  return rubric.map((r, i) => (isObj(r) && r.required === true ? 0 : i + 1)).filter(Boolean);
+};
