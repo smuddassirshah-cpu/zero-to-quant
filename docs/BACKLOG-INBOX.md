@@ -1730,3 +1730,6 @@ Raised later (graphs-dp level 2 perf):
 
 Raised later (graphs-dp level 3 perf):
 - [Could] A `code` performance task cannot ask for a bottom-up table rather than a memoised recursion: both give the same values, and the only behavioural difference (recursion depth) would grade a correct top-down answer as wrong. `h-fee-trades` grades the values and keeps prices at 300 days so either passes. Wanted: nothing in the engine; a line in AUTHORING section 5 that a `code` task grades behaviour, so "bottom up" in an objective is taught, not tested.
+
+Raised later (regression level 1 perf):
+- [Should] `playthrough.mjs --set` passes a longform model whose display or inline maths runs past the card at 440 px: the page does not scroll sideways (KaTeX scrolls inside its box), and the `-marked` shot shows only the first screen of the model. `h-derive-normal-eqs` had four such formulas, found only by a scratch full-height render. Wanted: with `--mobile`, measure every `.katex-display` (`scrollWidth > clientWidth`) and every inline `.katex` past the card edge in the prompt, model and rubric, and print a `note` naming the item and the formula.
