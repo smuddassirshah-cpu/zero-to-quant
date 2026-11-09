@@ -1713,3 +1713,6 @@ Raised later (cpp level 4 perf):
 Raised later (graphs-dp level 1 perf):
 - [Could] Another vote for a `--variants` playthrough (inbox, topic-1.9 exam). Checking in Pyodide that a slow but correct answer passes and that a recursive search fails the 3,000-desk test meant swapping each variant into `solution` in place and replaying. Wanted: `playthrough.mjs --set <id> --variant <item>=<file>` that plays a file as the solution and prints the first failing test.
 - [Could] AUTHORING section 3 does not give Pyodide's recursion limit or stack depth. `h-split-desks` relies on a recursive search failing a 3,000-deep chain with a clean `RecursionError` (seen in a scratch run); a test that a recursive answer should pass has no documented depth to stay under. Wanted: one line stating the limit and the deepest safe recursion.
+
+Raised later (graphs-dp level 2 perf):
+- [Could] `feedback.byKey` is keyed on the first failing test only, so test 2 of `h-cheapest-count` needs one message for two different slips (counting arrivals and pushing a venue again on a tie), and test 3 for two more. Wanted: a byKey entry that may list several messages, each with a hidden `when` call (`"when": "count_cheapest(...)[1] == 2"`) that picks the one matching the learner's result.

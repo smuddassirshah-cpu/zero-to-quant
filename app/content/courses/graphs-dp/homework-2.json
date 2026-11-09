@@ -506,6 +506,108 @@
           "text": "Shows with numbers that costs exceed a typical mispricing, and names one further practical obstacle."
         }
       ]
+    },
+    {
+      "id": "h-cheapest-count",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gd-paths"
+      ],
+      "tags": [
+        "shortest-path-count"
+      ],
+      "pace": 1200,
+      "prose": "A broker's router sends a client order from venue `src` to venue `dst` along one-way links. Each link `(a, b, fee)` charges a whole number of pence, at least 1. No two links share both ends in the same direction. The router splits the order evenly across every cheapest route, so it needs to know how many there are. Two routes differ when their lists of links differ. A map may hold thousands of links, and the number of cheapest routes can pass a billion.",
+      "question": "Write `count_cheapest(links, src, dst)`: a pair, the cheapest total fee and the number of routes that cost it. Return `(0, 1)` when `src` is `dst`, and `(None, 0)` when `dst` cannot be reached.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_cheapest(links, src, dst):\n    ...\n",
+        "solution": "import heapq\n\n\ndef count_cheapest(links, src, dst):\n    adj = {}\n    for a, b, fee in links:\n        adj.setdefault(a, []).append((b, fee))\n    cost = {src: 0}\n    ways = {src: 1}\n    heap = [(0, src)]\n    while heap:\n        d, u = heapq.heappop(heap)\n        if d > cost[u]:\n            continue                # a stale entry: u left the heap earlier\n        if u == dst:\n            return d, ways[u]       # every cheaper venue is done, so ways[u] is final\n        for v, fee in adj.get(u, []):\n            nd = d + fee\n            if v not in cost or nd < cost[v]:\n                cost[v] = nd        # a cheaper route: the old count is void\n                ways[v] = ways[u]\n                heapq.heappush(heap, (nd, v))\n            elif nd == cost[v]:\n                ways[v] += ways[u]  # a tie: every cheapest route to u extends\n    return None, 0\n",
+        "postlude": "def _venue_rng(seed):\n    state = [seed]\n    def rnd(k):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 18446744073709551616\n        return (state[0] >> 33) % k\n    return rnd\n\n\ndef venue_web(n=1000, m=6000, seed=5):\n    rnd = _venue_rng(seed)\n    names = ['V%04d' % i for i in range(n)]\n    seen, links = set(), []\n    while len(links) < m:\n        a, b = rnd(n), rnd(n)\n        if a != b and (a, b) not in seen:\n            seen.add((a, b))\n            links.append((names[a], names[b], 1 + rnd(2)))\n    return links\n\n\ndef venue_ladder(layers=60, width=5, seed=3):\n    rnd = _venue_rng(seed)\n    links = []\n    for i in range(layers):\n        for a in range(width):\n            for b in range(width):\n                links.append(('L%02d_%d' % (i, a), 'L%02d_%d' % (i + 1, b), 1 + rnd(3)))\n    return links\n",
+        "examples": [
+          {
+            "call": "count_cheapest([('LDN', 'PAR', 1), ('LDN', 'FRA', 2), ('PAR', 'AMS', 2), ('FRA', 'AMS', 1)], 'LDN', 'AMS')",
+            "expect": "(3, 2)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_cheapest([('LDN', 'PAR', 1), ('LDN', 'FRA', 2), ('PAR', 'AMS', 2), ('FRA', 'AMS', 1)], 'LDN', 'AMS')",
+            "expect": "(3, 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'PAR', 1), ('LDN', 'FRA', 1), ('PAR', 'AMS', 1), ('FRA', 'AMS', 1), ('AMS', 'MIL', 1), ('AMS', 'ZUR', 1), ('MIL', 'OSL', 1), ('ZUR', 'OSL', 1)], 'LDN', 'OSL')",
+            "expect": "(4, 4)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'PAR', 5), ('LDN', 'FRA', 1), ('FRA', 'PAR', 1), ('PAR', 'AMS', 1)], 'LDN', 'AMS')",
+            "expect": "(3, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'AMS', 9), ('LDN', 'PAR', 1), ('PAR', 'AMS', 1)], 'LDN', 'AMS')",
+            "expect": "(2, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'ROM', 3), ('LDN', 'PAR', 1), ('PAR', 'ROM', 1), ('ROM', 'AMS', 5)], 'LDN', 'AMS')",
+            "expect": "(7, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'AMS', 4), ('LDN', 'PAR', 1), ('PAR', 'FRA', 1), ('LDN', 'FRA', 2), ('FRA', 'AMS', 2)], 'LDN', 'AMS')",
+            "expect": "(4, 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'PAR', 1), ('AMS', 'PAR', 1)], 'LDN', 'AMS')",
+            "expect": "(None, 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'PAR', 1)], 'LDN', 'OSL')",
+            "expect": "(None, 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest([('LDN', 'PAR', 1), ('PAR', 'LDN', 1)], 'LDN', 'LDN')",
+            "expect": "(0, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest(venue_web(), 'V0000', 'V0782')",
+            "expect": "(8, 20)",
+            "compare": "equal"
+          },
+          {
+            "call": "count_cheapest(venue_ladder(), 'L00_0', 'L60_0')",
+            "expect": "(61, 358584264000)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests. Tests 10 and 11 build large maps with hidden helpers: `venue_web()` has 1,000 venues and 6,000 links, and `venue_ladder()` has 61 layers of 5 venues. A list in place of the pair is accepted."
+      },
+      "feedback": {
+        "correct": "Dijkstra settles venues in order of cost. Each venue passes its count along every link that keeps a route cheapest.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has two pairs of routes in a row, so 2 × 2 = 4 cheapest routes reach OSL. A tie at AMS adds the routes counted at PAR or FRA, not 1. Expand each venue once, so a tie never pushes it again.",
+          "test-3": "Test 3 reaches PAR first for 5, then for 2 through FRA. A cheaper cost replaces the count as well as the cost, so the answer is `(3, 1)`.",
+          "test-4": "Test 4 reaches AMS first for 9, then for 2 through PAR. The answer is known only when AMS comes off the heap.",
+          "test-5": "Test 5 lowers ROM from 3 to 2, so the old entry `(3, ROM)` is still in the heap. Skip it when it comes off: expanding ROM again counts its route to AMS twice.",
+          "test-7": "Test 7 has links into PAR only, so AMS cannot be reached and the answer is `(None, 0)`. Links are one-way.",
+          "test-8": "Test 8 asks for OSL, which no link touches. Return `(None, 0)` without looking it up.",
+          "test-11": "Test 11 has 358,584,264,000 cheapest routes. If it ran out of time, carry a count on each venue instead of listing routes."
+        }
+      },
+      "explain": {
+        "text": "Fees are at least 1, so a cheapest route into a venue passes only venues that leave the heap first. Its count is then final when it leaves: a tie adds a count on, and a cheaper cost replaces it. The run costs $O((V + E) \\log V)$, as plain Dijkstra does."
+      }
     }
   ]
 }
