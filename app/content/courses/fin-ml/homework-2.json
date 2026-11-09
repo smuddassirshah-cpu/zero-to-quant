@@ -413,6 +413,136 @@
       "explain": {
         "text": "Different stationarity tests weigh long memory differently, so they disagree. The note should fix one rule in advance, fit $d$ on training data, and report both. Shopping among rules afterwards is a small selection bias."
       }
+    },
+    {
+      "id": "h-return-rank",
+      "performance": "code",
+      "difficulty": 4,
+      "skills": [
+        "fm-features"
+      ],
+      "title": "Ranks from closes",
+      "pace": 900,
+      "prose": "A desk ranks shares on their recent return each day. `df` is a long table with columns `date`, `stock` and `close`. It has one row per date and share, in no particular order. `close` is NaN on a day a share did not trade.\n\nA share's feature on date $t$ is its return $c_t / c_{t-k} - 1$, with $c_{t-k}$ its close `k` dates earlier. It has a feature only if it has a close on both dates. On each date, rank the shares with a feature against each other, lowest first. Tied shares share the average of their ranks. Let $n_t$ be the number of shares with a feature on date $t$. Scale the ranks linearly so that rank 1 scores $-1$ and rank $n_t$ scores 1. A share alone on its date scores 0.\n\n`toy()` gives four shares on five dates. `day(out, df, i)` lists `out` on date `i` of `df`, counting from 0. Shares come in name order, with `None` where there is no feature.",
+      "question": "Build `return_rank(df, k)` from the stub. It returns a Series with the index of `df`: each row's score, NaN where the share has no feature.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef return_rank(df, k):\n    \"\"\"k-date return, ranked across shares on each date, -1 to 1.\"\"\"\n    ...\n",
+        "solution": "import pandas as pd\n\ndef return_rank(df, k):\n    s = df.sort_values(\"date\")\n    past = s.groupby(\"stock\")[\"close\"].shift(k)        # the close k dates before\n    r = s[\"close\"] / past - 1                           # NaN if either close is missing\n    g = r.groupby(s[\"date\"])\n    n = g.transform(\"count\")                            # shares with a return that day\n    q = 2 * (g.rank() - 1) / (n - 1) - 1                # average ranks, -1 to 1\n    q = q.where(n > 1, 0.0).where(r.notna())            # a lone share scores 0\n    return q.reindex(df.index)\n",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef toy():\n    \"\"\"Closes of four shares on five business days, one row per date and share. NaN: no close that day.\"\"\"\n    dates = pd.bdate_range(\"2024-03-04\", periods=5)\n    closes = {\"A\": [10, 11, 12, 11, 13], \"B\": [20, 20, 22, np.nan, 24],\n              \"C\": [5, 5, 6.5, 7, 7], \"D\": [40, 38, 45, 46, 41]}\n    rows = [(d, s, float(c[i])) for i, d in enumerate(dates) for s, c in closes.items()]\n    return pd.DataFrame(rows, columns=[\"date\", \"stock\", \"close\"])\n\ndef day(out, df, i):\n    \"\"\"The feature on the i-th date of df, shares in name order, NaN shown as None.\"\"\"\n    d = sorted(df[\"date\"].unique())[i]\n    rows = df.index[df[\"date\"] == d]\n    v = out.loc[rows]\n    v = v[df.loc[rows, \"stock\"].sort_values().index]\n    return [None if x != x else round(float(x), 6) for x in v]\n\ndef panel(seed, n_days=30, n_stocks=12):\n    \"\"\"Seeded closes, one row per date and share, rows shuffled, about one close in ten missing.\"\"\"\n    x = seed\n    def u():\n        nonlocal x\n        x = (6364136223846793005 * x + 1442695040888963407) % 2 ** 64\n        return (x >> 11) / 2 ** 53\n    dates = pd.bdate_range(\"2024-01-02\", periods=n_days)\n    rows = []\n    for j in range(n_stocks):\n        p = 20 + 80 * u()\n        for d in dates:\n            p *= 1 + 0.04 * (u() - 0.5)\n            rows.append((d, f\"S{j:02d}\", np.nan if u() < 0.1 else round(p, 2)))\n    df = pd.DataFrame(rows, columns=[\"date\", \"stock\", \"close\"])\n    order = sorted(range(len(df)), key=lambda i: u())\n    return df.iloc[order].reset_index(drop=True)\n",
+        "examples": [
+          {
+            "setup": "df = toy()",
+            "call": "day(return_rank(df, 1), df, 2)",
+            "expect": "[-1.0, -0.333333, 1.0, 0.333333]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "df = toy()",
+            "call": "day(return_rank(df, 1), df, 2)",
+            "expect": "[-1.0, -0.333333, 1.0, 0.333333]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy()",
+            "call": "day(return_rank(df, 1), df, 1)",
+            "expect": "[1.0, 0.0, 0.0, -1.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy()",
+            "call": "day(return_rank(df, 1), df, 3)",
+            "expect": "[-1.0, None, 1.0, 0.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy()",
+            "call": "day(return_rank(df, 1), df, 4)",
+            "expect": "[1.0, None, 0.0, -1.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy()",
+            "call": "[day(return_rank(df, 2), df, i) for i in range(5)]",
+            "expect": "[[None, None, None, None], [None, None, None, None], [0.333333, -1.0, 1.0, -0.333333], [-1.0, None, 1.0, 0.0], [0.333333, 1.0, -0.333333, -1.0]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy().sample(frac=1, random_state=4)",
+            "call": "[day(return_rank(df, 1), df, i) for i in range(5)]",
+            "expect": "[[None, None, None, None], [1.0, 0.0, 0.0, -1.0], [-1.0, -0.333333, 1.0, 0.333333], [-1.0, None, 1.0, 0.0], [1.0, None, 0.0, -1.0]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy(); df.loc[df['stock'] == 'D', 'close'] = df.loc[df['stock'] == 'A', 'close'].values",
+            "call": "[day(return_rank(df, 1), df, i) for i in (1, 2)]",
+            "expect": "[[0.666667, -0.666667, -0.666667, 0.666667], [-0.666667, 0.333333, 1.0, -0.666667]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy(); df.loc[(df['date'] == df['date'].max()) & (df['stock'] != 'A'), 'close'] = np.nan",
+            "call": "day(return_rank(df, 1), df, 4)",
+            "expect": "[0.0, None, None, None]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy(); df.loc[df['date'] == df['date'].unique()[2], 'close'] = np.nan",
+            "call": "[day(return_rank(df, 1), df, i) for i in (2, 3, 4)]",
+            "expect": "[[None, None, None, None], [None, None, None, None], [1.0, None, 0.0, -1.0]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = panel(3); late = df['date'] > sorted(df['date'].unique())[14]; df2 = df.copy(); df2.loc[late & (df2['stock'] == 'S00'), 'close'] *= 3",
+            "call": "return_rank(df2, 5)[~late].equals(return_rank(df, 5)[~late])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = panel(7)",
+            "call": "(lambda q: (int(q.notna().sum()), round(float(q.abs().sum()), 4)))(return_rank(df, 5))",
+            "expect": "(244, 135.1284)",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = panel(7); q = return_rank(df, 5)",
+            "call": "q.groupby(df['date']).agg(['min', 'max']).dropna().round(6).drop_duplicates().values.tolist()",
+            "expect": "[[-1.0, 1.0]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = panel(5)",
+            "call": "(lambda q: (type(q).__name__, q.index.equals(df.index), len(q)))(return_rank(df, 3))",
+            "expect": "('Series', True, 360)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 13 hidden tests on `toy()` and on seeded panels of 12 shares, compared with ==. The first run loads pandas, which takes 10 to 20 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Each date's scores use only the shares with a close that day and `k` dates before, ranked against each other.",
+        "generic": "Some tests failed. Read the first failing test against the rules above.",
+        "byKey": {
+          "test-1": "Test 1 is the example: the third date with `k = 1`. Compare your four scores with it one by one.",
+          "test-2": "Test 2 is the second date, where B and C both return 0. Tied shares share the average of their ranks.",
+          "test-3": "Test 3 is the fourth date, where B has no close. B gets no feature and is not counted, so the other three score $-1$, 0 and 1. `pct_change` fills a missing close from the day before unless given `fill_method=None`.",
+          "test-4": "Test 4 is the last date. B trades again but had no close the day before, so it still has no feature.",
+          "test-5": "Test 5 uses `k = 2`. The first two dates have no feature, and on the last date B has one: it has closes on both dates.",
+          "test-6": "Test 6 shuffles the rows. \"`k` dates earlier\" means in date order, so sort by date before you look back.",
+          "test-7": "Test 7 gives D the same closes as A, so their returns tie on every date. Ties take the average of the ranks they cover.",
+          "test-8": "Test 8 leaves only A with a feature on the last date. A share alone on its date scores 0.",
+          "test-9": "Test 9 removes every close on the third date. No share has a feature then or the next day, and nothing should fail.",
+          "test-10": "Test 10 triples one share's closes after the 15th date. No score up to that date may change.",
+          "test-11": "Test 11 is a seeded panel of 12 shares over 30 dates with `k = 5`. Count `k` in dates of the table, not calendar days.",
+          "test-12": "Test 12 checks every date of that panel: the lowest score is $-1$ and the highest is 1.",
+          "test-13": "Test 13 checks that the result is a Series with the index of `df`, in the same row order."
+        }
+      },
+      "explain": {
+        "text": "Sort by date, look back `k` rows within each share, then rank within each date. A missing close at either end leaves no feature and no place in $n_t$. The scale $2(\\text{rank} - 1)/(n_t - 1) - 1$ sends rank 1 to $-1$ and rank $n_t$ to 1."
+      }
     }
   ]
 }
