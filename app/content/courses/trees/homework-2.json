@@ -342,6 +342,102 @@
           "text": "Names three concrete tests with correct values (such as £11.90, £15.59, £6.29, £7.99, £9.97, parity)."
         }
       ]
+    },
+    {
+      "id": "h-perf-any-payoff",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "tp-multistep"
+      ],
+      "title": "One tree pricer for any payoff",
+      "prose": "A desk wants one tree pricer for any payoff, European or American, that also gives the first step's hedge.\n\n- Write `tree_value_delta(S, r, sigma, T, n, payoff, american)`, with `r` continuously compounded. Here `payoff(s)` is what the option pays when exercised at share price `s`.\n- Use an $n$-step CRR tree: $\\Delta t = T/n$, $u = e^{\\sigma\\sqrt{\\Delta t}}$ and $d = 1/u$, and £1 grows to $e^{r\\Delta t}$ over a step.\n- Raise `ValueError` unless $d < e^{r\\Delta t} < u$.\n- When `american` is true the holder may exercise at any node, today included.\n- Return `(value, delta)`. Here $\\Delta = (V_u - V_d)/(S_u - S_d)$ uses the option's values at the two nodes after the first step.\n\nBy hand, one step on a £50 share prices the £52 put at £5.40, with $\\Delta = -0.54$, when $r = 6\\%$, $\\sigma = 30\\%$ and $T = 0.5$. The example checks that case. Hidden tests price payoffs your code has never seen.",
+      "question": "Write `tree_value_delta` from the empty function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef tree_value_delta(S, r, sigma, T, n, payoff, american):\n    \"\"\"Value and first-step delta of any payoff on an n-step CRR tree.\n\n    r is continuously compounded, T in years, n >= 1 steps.\n    payoff(s) is what the option pays when exercised at share price s.\n    Returns (value, delta). Raises ValueError unless d < e^(r dt) < u.\n    \"\"\"\n    ...\n",
+        "solution": "import math\n\n\ndef tree_value_delta(S, r, sigma, T, n, payoff, american):\n    \"\"\"Value and first-step delta of any payoff on an n-step CRR tree.\n\n    r is continuously compounded, T in years, n >= 1 steps.\n    payoff(s) is what the option pays when exercised at share price s.\n    Returns (value, delta). Raises ValueError unless d < e^(r dt) < u.\n    \"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    grow = math.exp(r * dt)\n    if not d < grow < u:\n        raise ValueError(\"arbitrage: need d < e^(r dt) < u\")\n    q = (grow - d) / (u - d)\n    disc = 1 / grow\n    v = [payoff(S * u**j * d**(n - j)) for j in range(n + 1)]\n    first = v\n    for i in range(n - 1, -1, -1):\n        v = [disc * (q * v[j + 1] + (1 - q) * v[j]) for j in range(i + 1)]\n        if american:\n            v = [max(hold, payoff(S * u**j * d**(i - j)))\n                 for j, hold in enumerate(v)]\n        if i == 1:\n            first = v\n    delta = (first[1] - first[0]) / (S * u - S * d)\n    return v[0], delta\n",
+        "examples": [
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 1, lambda s: max(52 - s, 0), False)",
+            "expect": "(5.401276277530235, -0.5407424664717406)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 1, lambda s: max(52 - s, 0), False)",
+            "expect": "(5.401276277530235, -0.5407424664717406)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 3, lambda s: max(52 - s, 0), False)",
+            "expect": "(4.7450824293660325, -0.493717535125985)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 3, lambda s: max(52 - s, 0), True)",
+            "expect": "(4.866680007144787, -0.5141465995949458)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 6, lambda s: max(45 - s, 0) + max(s - 55, 0), True)",
+            "expect": "(4.778721713903574, 0.17339631729139338)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 4, lambda s: min(max(s - 50, 0), 8), True)",
+            "expect": "(3.521845206106764, 0.39215536412803065)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 4, lambda s: min(max(s - 50, 0), 8), False)",
+            "expect": "(2.5310257386410484, 0.28087233838892395)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(50, 0.06, 0.3, 0.5, 5, lambda s: max(s - 50, 0), True)",
+            "expect": "(5.145079179838275, 0.5911062952131182)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(100, 0.05, 0.2, 1, 200, lambda s: max(100 - s, 0), True)",
+            "expect": "(6.086382749915987, -0.4113350012188721)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(100, 0.05, 0.2, 1, 3, lambda s: max(130 - s, 0), True)",
+            "expect": "(30.0, -1.0)",
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_value_delta(100, 0.06, 0.02, 1, 4, lambda s: max(100 - s, 0), True)",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: European and American puts, a strangle, a capped call both ways, a call, a 200-step put, a put worth exercising today and a tree that must raise ValueError. Each value and delta is accepted within a relative 1e-9 of an independent tree."
+      },
+      "feedback": {
+        "correct": "One pricer for any payoff, European or American, with the first step's hedge.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "One step: the value is the discounted $q$-weighted average of the two leaves. Delta is their spread over the share's spread. Check that $q$ and the discount both use $e^{r\\Delta t}$.",
+          "test-2": "A European put over three steps. If one step passes and this fails, count your leaves and your steps back: $n$ steps have $n + 1$ leaves.",
+          "test-3": "This American put must be worth more than its European twin, £4.75. Compare holding with exercising at every node before expiry, and carry the larger value back.",
+          "test-4": "An American strangle your code has never seen, over six steps. Read the option only through `payoff(s)`, at every node.",
+          "test-5": "A call capped at £8, American. Deep in the money, £8 now beats £8 later, so this one is exercised early.",
+          "test-6": "The same capped call, European. With `american` false, nothing is compared before expiry.",
+          "test-7": "An American call on a share without dividends is never exercised early, so this must equal the European value.",
+          "test-8": "Two hundred steps. This checks $\\Delta t = T/n$ and one discount per step at scale.",
+          "test-9": "The £130 put is worth exercising today, so its value is £30. Both step-1 nodes are exercised too, which makes delta $-1$: compare at the root as well.",
+          "test-10": "Here $\\sigma\\sqrt{\\Delta t} = 0.01$, so $u = e^{0.01}$ is below one step's growth, $e^{0.015}$. The tree allows arbitrage, so raise `ValueError`."
+        }
+      },
+      "explain": {
+        "text": "Each step back takes $e^{-r\\Delta t}(qV_{\\text{up}} + (1 - q)V_{\\text{down}})$, and an American option keeps the larger of that and `payoff(s)`. The delta uses the two values one step in, after that comparison, since the first hedge must copy them. The capped call shows that a call-like payoff is exercised early once it stops growing with the share."
+      }
     }
   ]
 }
