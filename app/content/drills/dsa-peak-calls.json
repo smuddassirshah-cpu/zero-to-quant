@@ -1,0 +1,115 @@
+{
+  "id": "dsa-peak-calls",
+  "name": "Most calls at once",
+  "course": "algo-think",
+  "pack": "dsa",
+  "pattern": "intervals",
+  "tags": [
+    "stdin",
+    "sweep"
+  ],
+  "skills": [
+    "at-sort"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "solve_peak_calls",
+  "returns": "a string",
+  "brief": "A call centre logs each call by its start and end second, and a call is live from its start up to but not including its end. Find the largest number of calls live at the same moment, and the earliest second at which that many are live.\n\nThe whole input arrives as one string `text`:\n\n- line 1: `n`, the number of calls;\n- then `n` lines, each `start end`.\n\nReturn the peak and its earliest second as one string, separated by a space. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_peak_calls(text)`.\n\nExample. For `\"3\\n0 10\\n5 15\\n10 20\\n\"` two calls are live from 5, and at 10 the first ends as the third starts. The peak is 2, first reached at second 5, so the answer is `2 5`.",
+  "constraints": [
+    "$1 \\le n \\le 200{,}000$ and $0 \\le \\text{start} < \\text{end} \\le 10^9$, all integers.",
+    "$O(n \\log n)$ time is the target. Counting the live calls afresh at every start is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Turn each call into two events, `+1` at its start and `-1` at its end, and sort them. At equal times put the ends first, so a call that ends as another starts is not counted with it.",
+  "starter": "def solve_peak_calls(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_peak_calls('3\\n0 10\\n5 15\\n10 20\\n')",
+      "expect": "'2 5'",
+      "compare": "equal",
+      "note": "Two calls overlap from 5, and the hand-over at 10 adds no third."
+    },
+    {
+      "call": "solve_peak_calls('1\\n7 9\\n')",
+      "expect": "'1 7'",
+      "compare": "equal",
+      "note": "A single call gives a peak of 1 at its start."
+    },
+    {
+      "call": "solve_peak_calls(' 3 \\n 1 4\\n 1 4 \\n 2 3\\n\\n')",
+      "expect": "'3 2'",
+      "compare": "equal",
+      "note": "All three are live from 2 to 3. The extra spaces change nothing."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_peak_calls('1\\n7 9\\n')",
+      "expect": "'1 7'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('3\\n0 10\\n5 15\\n10 20\\n')",
+      "expect": "'2 5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('3\\n0 1\\n1 2\\n2 3\\n')",
+      "expect": "'1 0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('2\\n4 8\\n4 8\\n')",
+      "expect": "'2 4'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('3\\n0 100\\n10 20\\n30 40\\n')",
+      "expect": "'2 10'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('4\\n50 60\\n0 5\\n55 70\\n1 6\\n')",
+      "expect": "'2 1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('5\\n0 3\\n1 4\\n10 14\\n11 15\\n12 13\\n')",
+      "expect": "'3 12'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('3\\n20 30\\n0 25\\n25 40\\n')",
+      "expect": "'2 20'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls(' 3 \\n 1 4\\n 1 4 \\n 2 3\\n\\n')",
+      "expect": "'3 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('2\\n999999999 1000000000\\n0 1000000000   \\n\\n')",
+      "expect": "'2 999999999'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('200000\\n' + '\\n'.join('%d %d' % (j, j + 1000) for j in ((i * 7919) % 200000 for i in range(200000))) + '\\n')",
+      "expect": "'1000 999'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('200000\\n' + '\\n'.join('%d %d' % (j * 10, j * 10 + 15) for j in ((i * 7919) % 200000 for i in range(200000))) + '\\n')",
+      "expect": "'2 10'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_peak_calls(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    events = []\n    for i in range(n):\n        start, end = int(tokens[1 + 2 * i]), int(tokens[2 + 2 * i])\n        events.append((start, 1))\n        events.append((end, -1))\n    events.sort()\n    live = peak = when = 0\n    for time, step in events:\n        live += step\n        if live > peak:\n            peak, when = live, time\n    return '%d %d' % (peak, when)\n",
+  "notes": [
+    "Sorting the starts and ends as events means the live count changes only at an event, so one pass finds the peak.",
+    "Sorting a start before an end at the same second is the trap: a call that ends as another starts would count as overlapping it.",
+    "Sorting the $2n$ events costs $O(n \\log n)$, with $O(n)$ space."
+  ]
+}

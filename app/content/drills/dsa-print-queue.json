@@ -1,0 +1,116 @@
+{
+  "id": "dsa-print-queue",
+  "name": "The shortest job prints next",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "heaps-tries",
+  "tags": [
+    "stdin",
+    "heap",
+    "scheduling"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "solve_print_queue",
+  "returns": "a string",
+  "brief": "An office printer prints one page per second. Whenever it is free, it starts the waiting job with the fewest pages; ties go to the earlier arrival, then to the smaller id. A job that arrives at the moment the printer becomes free is already waiting. If nothing is waiting, the printer stays idle until the next arrival.\n\nThe whole input arrives as one string `text`:\n\n- line 1: `n`, the number of jobs;\n- then `n` lines, each `id arrival pages`, in no particular order.\n\nReturn the ids in the order they print, separated by single spaces, or an empty string when `n` is 0. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_print_queue(text)`.\n\nExample. For `\"3\\n1 0 5\\n2 1 2\\n3 2 1\\n\"` job 1 starts at 0 and ends at 5. Jobs 2 and 3 are then waiting, and job 3 has fewer pages, so the answer is `1 3 2`.",
+  "constraints": [
+    "$0 \\le n \\le 100{,}000$. Ids are distinct non-negative integers, arrivals are integers from 0 to $10^9$, and pages run from 1 to 1,000.",
+    "$O(n \\log n)$ time is the target. Scanning every waiting job each time the printer frees up is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Sort the jobs by arrival and keep a heap of waiting jobs keyed by `(pages, arrival, id)`. Push every job that has arrived by the current time, and when the heap is empty, move the clock to the next arrival.",
+  "starter": "def solve_print_queue(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_print_queue('3\\n1 0 5\\n2 1 2\\n3 2 1\\n')",
+      "expect": "'1 3 2'",
+      "compare": "equal",
+      "note": "Job 1 runs from 0 to 5; then job 3, with one page, goes before job 2."
+    },
+    {
+      "call": "solve_print_queue('0\\n')",
+      "expect": "''",
+      "compare": "equal",
+      "note": "No jobs, so nothing prints."
+    },
+    {
+      "call": "solve_print_queue('2\\n7 10 3\\n4 0 2\\n')",
+      "expect": "'4 7'",
+      "compare": "equal",
+      "note": "Job 4 ends at 2, and the printer sits idle until job 7 arrives at 10. The lines are not in arrival order."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_print_queue('0\\n')",
+      "expect": "''",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('1\\n5 3 4\\n')",
+      "expect": "'5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('3\\n1 0 5\\n2 1 2\\n3 2 1\\n')",
+      "expect": "'1 3 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('2\\n7 10 3\\n4 0 2\\n')",
+      "expect": "'4 7'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('3\\n9 0 1\\n4 1 3\\n2 0 3\\n')",
+      "expect": "'9 2 4'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('3\\n8 0 2\\n3 2 4\\n6 2 4\\n')",
+      "expect": "'8 3 6'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('3\\n1 0 4\\n2 4 1\\n3 5 1\\n')",
+      "expect": "'1 2 3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('4\\n10 0 3\\n11 3 1\\n12 4 1\\n13 100 2\\n')",
+      "expect": "'10 11 12 13'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue(' 3 \\n 5  2 2 \\n6 0   9\\n 7 1 1   \\n\\n\\n')",
+      "expect": "'6 7 5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('4\\n0 0 1000\\n1 1 1\\n2 1 1000\\n3 999 999\\n')",
+      "expect": "'0 1 3 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('100000\\n' + '\\n'.join('%d 0 %d' % (i, (i * 7919) % 1000 + 1) for i in range(100000)) + '\\n').split()[::10000]",
+      "expect": "['0', '900', '800', '700', '600', '500', '400', '300', '200', '100']",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_print_queue('100000\\n' + '\\n'.join('%d %d %d' % (i, i // 2, (i * 7919) % 50 + 1) for i in range(99999, -1, -1)) + '\\n').split()[::10000]",
+      "expect": "['0', '76087', '40', '35', '30', '25', '20', '15', '10', '5']",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "import heapq\n\n\ndef solve_print_queue(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    jobs = []\n    for i in range(n):\n        jid, arrival, pages = (int(t) for t in tokens[1 + 3 * i:4 + 3 * i])\n        jobs.append((arrival, jid, pages))\n    jobs.sort()\n    order, waiting = [], []\n    clock = i = 0\n    while len(order) < n:\n        if not waiting and clock < jobs[i][0]:\n            clock = jobs[i][0]\n        while i < n and jobs[i][0] <= clock:\n            arrival, jid, pages = jobs[i]\n            heapq.heappush(waiting, (pages, arrival, jid))\n            i += 1\n        pages, arrival, jid = heapq.heappop(waiting)\n        clock += pages\n        order.append(str(jid))\n    return ' '.join(order)\n",
+  "notes": [
+    "A min-heap on `(pages, arrival, id)` hands the printer its next job in $O(\\log n)$, and the sorted arrivals feed the heap in time order.",
+    "Pushing every job at the start is the trap: the printer would then pick a job that has not arrived yet.",
+    "Sorting and the heap give $O(n \\log n)$ time and $O(n)$ space."
+  ]
+}

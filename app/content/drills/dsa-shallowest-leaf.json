@@ -1,0 +1,110 @@
+{
+  "id": "dsa-shallowest-leaf",
+  "name": "Fewest checks to a decision",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "trees",
+  "tags": [
+    "tree-depth",
+    "recursion"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "difficulty": 1,
+  "pace": 480,
+  "fn": "fewest_checks",
+  "returns": "an int",
+  "brief": "A loan desk routes each application through a tree of checks. The tree is a nested tuple `(check, left, right)`, where `left` and `right` are trees too, and an empty tree is `None`. A check with no children is a final decision. Return the number of checks on the shortest path from the root to a decision, counting both ends. An empty tree needs 0 checks.\n\nWrite `fewest_checks(tree)`.\n\nExample. In `('income', ('debt', None, None), ('age', ('job', None, None), None))` the decision `debt` sits just under `income`, so the answer is 2.",
+  "constraints": [
+    "At most $200{,}000$ checks, and every path from the root holds at most 400 checks.",
+    "$O(n)$ time is the target. Working out a child's answer more than once at a node blows up on large trees.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "A check with one child is not a decision, so the path must go on through that child. The path stops only where both children are `None`.",
+  "starter": "def fewest_checks(tree):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "fewest_checks(('income', ('debt', None, None), ('age', ('job', None, None), None)))",
+      "expect": "2",
+      "compare": "equal",
+      "note": "The decision `debt` is two checks down, and `job` is three."
+    },
+    {
+      "call": "fewest_checks(('only', None, None))",
+      "expect": "1",
+      "compare": "equal",
+      "note": "A lone check is already a decision."
+    },
+    {
+      "call": "fewest_checks(('a', None, ('b', None, ('c', None, None))))",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Each check has one child, so the only decision is at depth 3, not 1."
+    }
+  ],
+  "tests": [
+    {
+      "call": "fewest_checks(None)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks(('only', None, None))",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks(('income', ('debt', None, None), ('age', ('job', None, None), None)))",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks(('a', None, ('b', None, ('c', None, None))))",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks(('a', ('b', ('c', ('d', None, None), None), None), None))",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks((1, (2, (4, None, None), (5, None, None)), (3, (6, None, None), (7, None, None))))",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks((1, (2, (3, (4, None, None), None), None), (5, None, (6, (7, None, None), (8, None, None)))))",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks((0, (1, None, None), (2, (3, None, None), (4, None, None))))",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks(('r', ('x', None, None), __import__('functools').reduce(lambda t, i: (i, t, None), range(300), (lambda f: f(f, 16))(lambda f, d: None if d == 0 else (d, f(f, d - 1), f(f, d - 1))))))",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks((lambda f: f(f, 17))(lambda f, d: None if d == 0 else (d, f(f, d - 1), f(f, d - 1))))",
+      "expect": "17",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks(__import__('functools').reduce(lambda t, i: (i, t, None), range(300), (lambda f: f(f, 16))(lambda f, d: None if d == 0 else (d, f(f, d - 1), f(f, d - 1)))))",
+      "expect": "316",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value.",
+  "solution": "def fewest_checks(tree):\n    if tree is None:\n        return 0\n    _, left, right = tree\n    if left is None and right is None:\n        return 1\n    if left is None:\n        return 1 + fewest_checks(right)\n    if right is None:\n        return 1 + fewest_checks(left)\n    return 1 + min(fewest_checks(left), fewest_checks(right))\n",
+  "notes": [
+    "The answer at a node is one more than its better child, where a missing child offers no path at all.",
+    "Taking `min` over both children with `None` scoring 0 is the trap: a check with one child would then look like a decision.",
+    "Each check is visited once, so $O(n)$ time and $O(h)$ stack for a tree of height $h$."
+  ]
+}

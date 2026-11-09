@@ -1,0 +1,115 @@
+{
+  "id": "dsa-common-manager",
+  "name": "The nearest manager two people share",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "trees",
+  "tags": [
+    "tree-recursion",
+    "ancestor"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "shared_manager",
+  "returns": "a name",
+  "brief": "An org chart is a binary tree, since each person has at most two direct reports. It is a nested tuple `(name, left, right)`, where `left` and `right` are charts too, and an empty chart is `None`. Names are distinct. A person's team is that person and everyone below them. Given two people `a` and `b` in the chart, return the lowest person whose team holds both, so when `a` manages `b` the answer is `a`.\n\nWrite `shared_manager(chart, a, b)`.\n\nExample. In `('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None))` both Cy and Di report to Ben, so the answer for `'Cy'` and `'Di'` is `'Ben'`.",
+  "constraints": [
+    "At most $200{,}000$ people, every path from the top holds at most 400 people, and both `a` and `b` are in the chart. Names are strings or integers.",
+    "$O(n)$ time is the target. Searching each side of the chart again at every level is too slow on a deep chart.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Write one walk that returns `a` or `b` when that part of the chart holds one of them, and `None` when it holds neither. The first person whose two sides both return a name is the answer.",
+  "starter": "def shared_manager(chart, a, b):\n    # your code here\n    return None\n",
+  "examples": [
+    {
+      "call": "shared_manager(('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None)), 'Cy', 'Di')",
+      "expect": "'Ben'",
+      "compare": "equal",
+      "note": "Cy and Di both report to Ben."
+    },
+    {
+      "call": "shared_manager(('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None)), 'Cy', 'Ed')",
+      "expect": "'Ana'",
+      "compare": "equal",
+      "note": "Cy sits under Ben and Ed is on Ana's other side, so only Ana's team holds both."
+    },
+    {
+      "call": "shared_manager(('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None)), 'Ben', 'Di')",
+      "expect": "'Ben'",
+      "compare": "equal",
+      "note": "Ben manages Di, and Ben's team includes Ben, so the answer is Ben."
+    }
+  ],
+  "tests": [
+    {
+      "call": "shared_manager(('Zo', None, None), 'Zo', 'Zo')",
+      "expect": "'Zo'",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager(('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None)), 'Cy', 'Di')",
+      "expect": "'Ben'",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager(('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None)), 'Ed', 'Cy')",
+      "expect": "'Ana'",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager(('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None)), 'Ben', 'Di')",
+      "expect": "'Ben'",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager(('Ana', ('Ben', ('Cy', None, None), ('Di', None, None)), ('Ed', None, None)), 'Di', 'Di')",
+      "expect": "'Di'",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager(('p', ('q', ('r', ('s', None, None), None), None), None), 's', 'q')",
+      "expect": "'q'",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager((5, (0, None, (2, None, None)), (8, (7, None, None), None)), 0, 2)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager((5, (0, None, (2, None, None)), (8, (7, None, None), None)), 2, 7)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager((1, (2, (4, (8, None, None), None), (5, None, (9, None, None))), (3, None, None)), 8, 9)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager((1, (2, (4, (8, None, None), None), (5, None, (9, None, None))), (3, None, None)), 9, 3)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager(__import__('functools').reduce(lambda t, i: (-i, t, None), range(1, 381), (lambda f: f(f, 1))(lambda f, k: None if k >= 131072 else (k, f(f, 2 * k), f(f, 2 * k + 1)))), 65536, 131071)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "shared_manager(__import__('functools').reduce(lambda t, i: (-i, t, None), range(1, 381), (lambda f: f(f, 1))(lambda f, k: None if k >= 131072 else (k, f(f, 2 * k), f(f, 2 * k + 1)))), 65536, 65537)",
+      "expect": "32768",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def shared_manager(chart, a, b):\n    def find(node):\n        if node is None:\n            return None\n        name, left, right = node\n        if name == a or name == b:\n            return name\n        from_left, from_right = find(left), find(right)\n        if from_left is not None and from_right is not None:\n            return name\n        return from_left if from_left is not None else from_right\n\n    return find(chart)\n",
+  "notes": [
+    "One walk reports, for each part of the chart, which of the two it found; the first person whose two sides both report a find is the answer.",
+    "The trap is asking, at every level, which side holds both people with a fresh search; on a deep chart that repeats most of the work.",
+    "Each person is visited once, so $O(n)$ time and $O(h)$ stack for a chart of height $h$."
+  ]
+}
