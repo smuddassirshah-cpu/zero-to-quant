@@ -415,6 +415,93 @@
           "text": "Compares the intervals: both include 0.5, and the prior narrows and shrinks. Recommends one with a reason and names the prior as an assumption."
         }
       ]
+    },
+    {
+      "id": "h-bump-interval",
+      "performance": "code",
+      "difficulty": 4,
+      "skills": [
+        "es-intervals"
+      ],
+      "title": "An exact interval for a speed bump",
+      "prose": "A trading venue's speed bump holds each incoming order for a random delay, uniform between 0 and $\\theta$ microseconds. The venue does not publish $\\theta$. Delays are independent of each other. Let $M$ be the largest of $n$ observed delays.",
+      "question": "Write `bump_interval(delays, level)`. Return `(lo, hi)`, the exact confidence interval for $\\theta$ built from $M$, with chance `(1 - level) / 2` of missing on each side. Then write `bump_coverage(theta, n, level, trials, seed)`. Make one `random.Random(seed)`, draw each trial's `n` delays in turn as `theta * rng.random()`, and return the share of the `trials` intervals with `lo <= theta <= hi`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\ndef bump_interval(delays, level):\n    pass  # replace this line\n\ndef bump_coverage(theta, n, level, trials, seed):\n    pass  # replace this line\n",
+        "solution": "import random\n\ndef bump_interval(delays, level):\n    n = len(delays)\n    m = max(delays)\n    a = 1 - level\n    return m / (1 - a / 2) ** (1 / n), m / (a / 2) ** (1 / n)\n\ndef bump_coverage(theta, n, level, trials, seed):\n    rng = random.Random(seed)\n    hits = 0\n    for _ in range(trials):\n        delays = [theta * rng.random() for _ in range(n)]\n        lo, hi = bump_interval(delays, level)\n        if lo <= theta <= hi:\n            hits += 1\n    return hits / trials\n",
+        "examples": [
+          {
+            "call": "list(bump_interval([12.0, 30.0, 21.0], 0.95))",
+            "expect": "[30.254249410473346, 102.59855680060177]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "list(bump_interval([12.0, 30.0, 21.0], 0.95))",
+            "expect": "[30.254249410473346, 102.59855680060177]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(bump_interval([4.0], 0.95))",
+            "expect": "[4.102564102564103, 159.99999999999986]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(bump_interval([3.1, 0.4, 2.2, 4.9, 1.7], 0.9))",
+            "expect": "[4.950526150657887, 8.920764594827794]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "d = [(7 * k) % 50 + 0.5 for k in range(50)]",
+            "call": "list(bump_interval(d, 0.99))",
+            "expect": "[49.50496266515682, 55.03333083744145]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(bump_interval([30.0, 21.0, 12.0], 0.95))",
+            "expect": "[30.254249410473346, 102.59855680060177]",
+            "compare": "isclose"
+          },
+          {
+            "call": "bump_coverage(10.0, 5, 0.95, 2000, 1)",
+            "expect": "0.947",
+            "compare": "isclose"
+          },
+          {
+            "call": "abs(bump_coverage(3.0, 2, 0.8, 5000, 7) - 0.8) < 0.02",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(bump_coverage(1.0, 1, 0.5, 4000, 3) - 0.5) < 0.03",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "bump_coverage(250.0, 20, 0.9, 1500, 11)",
+            "expect": "0.9026666666666666",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Five call `bump_interval`, with one, three, five and 50 delays and with the delays in another order. Four call `bump_coverage`: two replay the draws exactly as the question orders them, and two allow 0.02 or 0.03 either side of the level. Numbers are accepted within `math.isclose` of the expected value. The standard library is enough."
+      },
+      "feedback": {
+        "correct": "Your interval is exact at every sample size, and your simulation shows its coverage.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects about 30.25 to 102.60 from delays up to 30. The low end sits just above $M$ and the high end far above: $M/\\theta$ piles up near 1.",
+          "test-2": "Test 2 has one delay of 4.0 and expects 4.10 to 160. A normal approximation needs a spread, and one delay has none; the law of $M$ needs no spread.",
+          "test-5": "Test 5 lists the same delays in another order. Build the interval from the largest delay, not the last one.",
+          "test-6": "Test 6 replays 2,000 trials from seed 1 and expects a share of 0.947. Draw each trial's delays from the one `random.Random(seed)`, in order, and count intervals that contain $\\theta$.",
+          "test-8": "Test 8 uses one delay per trial at level 0.5 and expects a share near 0.5. Check that each end cuts `(1 - level) / 2`, and return a share, not a count."
+        }
+      },
+      "explain": {
+        "text": "All $n$ delays must fall below $u\\theta$, so $P(M/\\theta \\le u) = u^n$ for $0 \\le u \\le 1$. Cutting $a/2 = (1 - \\text{level})/2$ off each end of $M/\\theta$ and solving for $\\theta$ gives $M/(1 - a/2)^{1/n} \\le \\theta \\le M/(a/2)^{1/n}$, which holds with chance exactly `level` at every $n$. That chance is the share of fresh samples whose interval contains $\\theta$, which `bump_coverage` measures.\n\n```python\nreturn m / (1 - a / 2) ** (1 / n), m / (a / 2) ** (1 / n)\n```"
+      }
     }
   ]
 }
