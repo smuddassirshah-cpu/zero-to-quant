@@ -16,7 +16,7 @@ Rule: a row may stay optional only for a part the prompt marks "Optional, one mo
 - convex/homework-1 h1-colleague-qp: row 4 (b), the at-most-25% replacement is a detail of the fix; rows 1, 2, 3, 5, 6 (a).
 - momentum-rep/homework-1 h-ivol-plan: row 4 (b), fixing the target and a tolerance is an extra.
 - ito/homework-2 h-derive-ito: row 5 (b), the check on a special case; rows 1, 2 (a).
-- ito/homework-3 h-derive-black: row 2 (b), the only way to keep one row optional (rows 1, 3, 4, 5 are already required); a judgement call, row 2 could instead be required and row 5 freed.
+- ito/homework-3 h-derive-black: row 5 (b), the one-point check is the extra; rows 2 (the Itô step) and the already required rows 1, 3, 4 (a).
 - ito/homework-4 h-aloud-unknown-drift: row 5 (b), the follow-ups come after the clock; row 2 (a), the Itô step.
 - measure-prob/homework-1 h-build-space: row 5 (b), the final tail probability is the one-point extra.
 - measure-prob/homework-2 h-build-integral: row 5 (b), E[Y] for a signed variable is the follow-on; rows 1, 2, 3 (a).
