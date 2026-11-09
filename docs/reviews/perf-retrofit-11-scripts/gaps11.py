@@ -14,7 +14,7 @@ def check(name, ok):
 w = item("numpy-pandas", "homework-2.json", "h-fills-report")["widget"]
 slip = patched(w["solution"], ('{"ticker": ticker, "side": side,', '{"side": side,'))
 f, _ = summary(w, slip, "NP2-1 slip: no ticker column (shipped tests)")
-check("NP2-1 as found: a frame without ticker passes every test", f == [])
+check("NP2-1 fixed in the item: a frame without ticker fails test 3", f == [3])
 w2 = copy.deepcopy(w)
 w2["tests"][2]["call"] = '(r["fills"].index.tolist(), r["fills"]["ticker"].tolist())'
 w2["tests"][2]["expect"] = '([4, 1, 6, 2, 7, 3, 5], ["BARC", "VOD", "BARC", "SHEL", "VOD", "BARC", "SHEL"])'
@@ -27,7 +27,7 @@ check("NP2-1 fix: shipped passes", f == [])
 w = item("plotting", "homework-3.json", "h-price-file-report")["widget"]
 slip = patched(w["solution"], (',\n                     arrowprops=dict(arrowstyle="->"))', ')'))
 f, _ = summary(w, slip, "PL3-1 slip: label with no arrow (shipped tests)")
-check("PL3-1 as found: a label with no arrow passes every test", f == [])
+check("PL3-1 fixed in the item: a label with no arrow fails test 5", f == [5])
 w2 = copy.deepcopy(w)
 w2["tests"][4]["call"] = '_arrow(axes[2]) + [next(t for t in axes[2].texts if t.get_text().startswith("Max drawdown")).arrow_patch is not None]'
 w2["tests"][4]["expect"] = '["Max drawdown -10.5%", "2026-03-17", -0.104911, True]'

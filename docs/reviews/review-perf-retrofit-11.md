@@ -52,3 +52,25 @@ Read at HEAD `a8fc815` on `sx/read-perf-11`. No content file was edited.
 - Route-worded required rows (ES2-1) are a fourth sighting after contests L3, integrals and markov L5; the brief already carries the rule, so no new item.
 
 Totals: Must 0. Should 5 (CD2-1, ES2-1, ES2-3, RG-V1, CD-V1). Could 6 (ES2-2, NP2-1, PL3-1, PL3-2, CD4-1, RG2-1). regression `h-derive-normal-eqs`, `h-slope-check`, estimation `h-bump-interval`, numpy-pandas `h-trend-shares` and plotting `h-wealth-peak` have no finding.
+
+## Fix pass
+
+- CD2-1: fixed. Prompt of `h-two-filters` now ends with "Optional, one more point: check one of your two-flag answers by a second route." Rubric unchanged. `rubric-passes --item conditional/homework-2.json#h-two-filters`: one minimal pass, rows 1 to 4 (9 points); only row 5 can be left out. The `[perf-optional-row]` warning for `h-two-filters` is gone. Basis: DECISIONS Session X, an optional row needs the prompt's own mark.
+- ES2-1: fixed. Row 3 reworded as proposed (tail or density of $\ln X$, each step justified). `rubric-passes --item estimation/homework-2.json#hw2-pareto-tail`: one minimal pass, rows 1 to 4 (9 points); only row 5 can be left out (it is marked "Optional part" and the prompt marks it). Basis: the change of variables $Y = \ln X$ gives density $\alpha e^{-\alpha y}$, equivalent to the tail, so both routes the level teaches can tick the row.
+- ES2-2: fixed. Model (a) now says $S > 0$ holds with chance 1 because $X$ has a density, and is assumed until the optional part. Basis: $P(S = 0) = P(\text{every } X_i = 1) = 0$ for a continuous law.
+- ES2-3: skipped by instruction (the overflow sweep owns it). `hw2-longform` is untouched, so the `--mobile` playthrough of estimation/homework-2 is expected to fail there only.
+- RG-V1: fixed. The finding's quoted text sat at `l11-assumptions-fail.json` screens[2] (the voice scan's 0-based index); the four sentences became three by joining "...every day, so it comes out 35% too small." No condition or number lost.
+- CD-V1: fixed. `homework-5.json` items[7] model: the 38-word sentence is split at "stricter. Each of these raises the prior odds or the likelihood ratio." Wording otherwise unchanged.
+- Third older voice item: fixed. `micro/l6-impact.json` screens[4].prose: "Real books refill as you trade. Traders therefore use a rule fitted to many trades, the square-root model:" (the 37-word sentence ran through the display into "Here ... near 1").
+- NP2-1: fixed. `h-fills-report` test 3 now checks `(index, ticker)` with expect `([4, 1, 6, 2, 7, 3, 5], ["BARC", "VOD", "BARC", "SHEL", "VOD", "BARC", "SHEL"])`; byKey test-3 names the `ticker` column. Solution passes, the no-ticker slip fails test 3 only, starter and all other planted bugs still fail (author and reader scripts exit 0; see gates). Graded expect changed: test 3.
+- PL3-1: fixed (the author script `plotting-3-perf-numbers.py` own csv-and-loops route now draws the arrow, since the stricter test 5 rightly failed it). `h-price-file-report` test 5 call adds `arrow_patch is not None`, expect `["Max drawdown -10.5%", "2026-03-17", -0.104911, True]`; byKey test-5 gains "Draw it with `annotate` and `arrowprops`, so an arrow points there." Solution passes, the no-arrow slip fails test 5 only. Graded expect changed: test 5.
+- PL3-2: fixed. Prose names "(their sample standard deviation times $\sqrt{252}$)" for the suptitle volatility. Basis: the expected title uses the sample deviation (population title reads 43.8% and 23.9%).
+- CD4-1: fixed. "may not place" became "need not place".
+- RG2-1: fixed in `docs/reports/regression-2-perf-numbers.py` line 124: tolerance 1e-9 rel and abs, matching the item's tests' own `isclose` tolerance, with a comment on the SciPy 1.14.1 quantile difference. No test loosened.
+
+Totals: 11 fixed, 0 disputed, 1 deferred (ES2-3, to the overflow sweep). Graded values changed: numpy-pandas h-fills-report test 3 expect; plotting h-price-file-report test 5 expect.
+
+### Gates
+- Author scripts for the ten reports and reader scripts `reg_two`, `est_two`, `cond_two`, `np_two`, `plot_two`, `gaps11` (its two "as found" checks now assert the fixed tests catch the slip), `voice11`: exit 0. `findings_assert.py`: exit 1 only on ES2-3 (deferred to the overflow sweep); every other finding line passes. `plotting-3-perf-numbers.py` needed its csv-and-loops route to draw the arrow (PL3-1).
+- Validator 0 errors, no `[perf-optional-row]` on `h-two-filters`; `perf-reports.mjs --warn` lists none of the ten; voice scan 0 and 0 for regression, conditional, micro, estimation, numpy-pandas, plotting.
+- Playthrough (`--local-cdn`, with and without `--mobile`): 25 of 26 runs All passed; the one failure is `estimation/homework-2 --mobile` on `hw2-longform` (ES2-3, expected). Manifest restored.

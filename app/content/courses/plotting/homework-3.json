@@ -623,7 +623,7 @@
       ],
       "title": "From a price file to three charts",
       "pace": 1200,
-      "prose": "A vendor sends a share's daily closes as the text of a CSV file. The header is `date,close`, and each date is ISO, such as `2026-03-02`. The rows come in no order, and one day is sent twice.\n\n`report_figure(text, path)` returns `fig, axes`: three panels, one above another, sharing an x axis of dates. Draw each series with `plot`.\n\n- Top: the daily returns, each on the later date of its pair.\n- Middle: the annualised 5-day rolling volatility, the sample standard deviation of the five returns ending each day times $\\sqrt{252}$. It starts on the fifth return.\n- Bottom: the drawdown from the running peak, with an arrow to its deepest point labelled like `Max drawdown -12.3%`.\n- The figure's suptitle gives the annualised volatility of all the returns and the maximum drawdown, like `Volatility 23.4%, max drawdown -12.3%`.\n\nSave the figure to `path` at 150 dpi. `vendor_file()` returns the file in the table. `price_file(seed, n)` returns a seeded file of `n` days in the same form.",
+      "prose": "A vendor sends a share's daily closes as the text of a CSV file. The header is `date,close`, and each date is ISO, such as `2026-03-02`. The rows come in no order, and one day is sent twice.\n\n`report_figure(text, path)` returns `fig, axes`: three panels, one above another, sharing an x axis of dates. Draw each series with `plot`.\n\n- Top: the daily returns, each on the later date of its pair.\n- Middle: the annualised 5-day rolling volatility, the sample standard deviation of the five returns ending each day times $\\sqrt{252}$. It starts on the fifth return.\n- Bottom: the drawdown from the running peak, with an arrow to its deepest point labelled like `Max drawdown -12.3%`.\n- The figure's suptitle gives the annualised volatility of all the returns (their sample standard deviation times $\\sqrt{252}$) and the maximum drawdown, like `Volatility 23.4%, max drawdown -12.3%`.\n\nSave the figure to `path` at 150 dpi. `vendor_file()` returns the file in the table. `price_file(seed, n)` returns a seeded file of `n` days in the same form.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -772,8 +772,8 @@
           },
           {
             "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
-            "call": "_arrow(axes[2])",
-            "expect": "[\"Max drawdown -10.5%\", \"2026-03-17\", -0.104911]",
+            "call": "_arrow(axes[2]) + [next(t for t in axes[2].texts if t.get_text().startswith(\"Max drawdown\")).arrow_patch is not None]",
+            "expect": "[\"Max drawdown -10.5%\", \"2026-03-17\", -0.104911, True]",
             "compare": "isclose",
             "tol": {
               "rel": 0,
@@ -821,7 +821,7 @@
           "test-2": "Test 2 reads the top panel: 17 returns, the first on 3 March. Sort by date, keep one row a day, and put each return on the later date of its pair.",
           "test-3": "Test 3 reads the middle panel. Each point is the sample standard deviation of five returns times $\\sqrt{252}$, from 9 March on.",
           "test-4": "Test 4 reads the bottom panel: each close against the highest close so far, minus 1. The overall top is not the running peak.",
-          "test-5": "Test 5 reads the arrow. The deepest drawdown is 10.5%, on 17 March, not at the lowest close on 4 March.",
+          "test-5": "Test 5 reads the arrow. The deepest drawdown is 10.5%, on 17 March, not at the lowest close on 4 March. Draw it with `annotate` and `arrowprops`, so an arrow points there.",
           "test-6": "Test 6 reads the suptitle, which should be `Volatility 45.2%, max drawdown -10.5%` for the vendor file.",
           "test-7": "Test 7 checks the file saved at `path`, and that it was written at 150 dpi.",
           "test-8": "Test 8 runs `price_file(7, 40)`, which comes newest first with one day repeated. Its 39 returns run from 2 September.",

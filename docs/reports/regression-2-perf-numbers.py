@@ -121,7 +121,7 @@ exp_map = {
 }
 for i, want in exp_map.items():
     got = ev(tests[i]["expect"])
-    check(f"test {i + 1} expect matches route A", got == want if isinstance(want, list) and want and isinstance(want[0], str) else close(got, want, 1e-12, 1e-12))
+    check(f"test {i + 1} expect matches route A", got == want if isinstance(want, list) and want and isinstance(want[0], str) else close(got, want, 1e-9, 1e-9))  # the item's own tests use isclose at rel 1e-9, abs 1e-9; 1e-12 is tighter than the test and fails on Pyodide's SciPy 1.14.1 t quantile (12.706204736432 vs 12.706204736175 in 1.18.1)
 check("example is test 1", W["examples"][0] == tests[0])
 check("tests > examples, at most 15", len(tests) > len(W["examples"]) and 3 <= len(tests) <= 15)
 check("raises cases", [t["compare"] for t in tests[10:]] == ["raises", "raises"] and all(t["expect"] == "ValueError" for t in tests[10:]))
