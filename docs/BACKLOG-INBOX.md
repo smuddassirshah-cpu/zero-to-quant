@@ -1733,3 +1733,6 @@ Raised later (graphs-dp level 3 perf):
 
 Raised later (options level 2 perf):
 - [Could] `fresh-check.mjs` code names count a helper nested inside the solution's function (`def profit(S)` inside `strategy_card`) as reuse of homework-1's top-level `profit`. A nested helper is not a reused exercise. Renamed to `_profit` here. Wanted: skip names defined inside another function, or say in AUTHORING section 5 that nested helpers count.
+
+Raised later (options level 3 perf):
+- [Could] The playthrough's `-marked` shot is one viewport, so only the top of a long model answer is seen at 440 px; displays further down (here the parity lines and the box price) are never shot or checked. Wanted: a full-page `-marked` shot, or a check that fails when any `.katex-display` in the model has `scrollWidth > clientWidth`.
