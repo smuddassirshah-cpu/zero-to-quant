@@ -777,6 +777,210 @@
           "text": "(d) Gives the corrected mean daily return, −0.001641, from the five returns."
         }
       ]
+    },
+    {
+      "id": "h-fills-report",
+      "performance": "code",
+      "difficulty": 4,
+      "skills": [
+        "pd-frames"
+      ],
+      "title": "A broker's fills",
+      "pace": 900,
+      "prose": "A broker sends the day's fills as plain Python lists, in the order they happened. `ids` holds each fill's trade id. The ids are whole numbers, all different, but not in order. `ticker`, `side` (`\"buy\"` or `\"sell\"`), `qty` (shares, always positive) and `price` (£ a share) hold one entry per fill. A `price` of `None` marks a fill the broker has not confirmed yet.\n\nThe function returns a dict of four entries.\n\n- `\"fills\"`: a DataFrame indexed by trade id, rows in the order the fills happened. It has the columns `ticker`, `qty` and `value`, and may keep others. `qty` is signed, negative for a sell. `value` is that signed `qty` times `price`, in £, and NaN for a fill not confirmed.\n- `\"span\"`: a Series of `value`, indexed by trade id, for the fills from id `a` to id `b`. Both ends are included, in the order the fills happened.\n- `\"last\"`: the trade id of the day's last confirmed fill.\n- `\"net\"`: the sum of `value` over the confirmed fills, as a float.\n\nLeave the lists you are given unchanged. `day()` returns the seven fills in the table as `ids, ticker, side, qty, price`. `book(seed, n)` returns a seeded day of `n` fills in the same form.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "side",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "4",
+              "BARC",
+              "buy",
+              "1000",
+              "2.10"
+            ],
+            [
+              "1",
+              "VOD",
+              "buy",
+              "2500",
+              "0.70"
+            ],
+            [
+              "6",
+              "BARC",
+              "sell",
+              "400",
+              "2.15"
+            ],
+            [
+              "2",
+              "SHEL",
+              "buy",
+              "60",
+              "27.50"
+            ],
+            [
+              "7",
+              "VOD",
+              "sell",
+              "1500",
+              "None"
+            ],
+            [
+              "3",
+              "BARC",
+              "buy",
+              "300",
+              "2.05"
+            ],
+            [
+              "5",
+              "SHEL",
+              "sell",
+              "60",
+              "None"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "day(): the fills in the order they happened"
+        }
+      },
+      "question": "Build `fills_report(ids, ticker, side, qty, price, a, b)` from the stub.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef fills_report(ids, ticker, side, qty, price, a, b):\n    \"\"\"The day's fills as a frame, a span of values, the last confirmed fill and the net value.\"\"\"\n    ...\n",
+        "solution": "import pandas as pd\n\ndef fills_report(ids, ticker, side, qty, price, a, b):\n    fills = pd.DataFrame({\"ticker\": ticker, \"side\": side, \"qty\": qty, \"price\": price}, index=ids)\n    fills.loc[fills[\"side\"] == \"sell\", \"qty\"] *= -1          # one .loc call writes into fills itself\n    fills[\"value\"] = fills[\"qty\"] * fills[\"price\"]          # NaN where the price is missing\n    span = fills.loc[a:b, \"value\"]                          # labels, both ends kept, in row order\n    confirmed = fills[\"value\"].dropna()\n    return {\"fills\": fills, \"span\": span,\n            \"last\": confirmed.index[-1],                    # by position: the last row left\n            \"net\": float(confirmed.sum())}\n",
+        "prelude": "def day():\n    \"\"\"A short day of seven fills, as fills_report takes them.\"\"\"\n    ids = [4, 1, 6, 2, 7, 3, 5]\n    ticker = [\"BARC\", \"VOD\", \"BARC\", \"SHEL\", \"VOD\", \"BARC\", \"SHEL\"]\n    side = [\"buy\", \"buy\", \"sell\", \"buy\", \"sell\", \"buy\", \"sell\"]\n    qty = [1000, 2500, 400, 60, 1500, 300, 60]\n    price = [2.10, 0.70, 2.15, 27.50, None, 2.05, None]\n    return ids, ticker, side, qty, price\n\ndef book(seed, n):\n    \"\"\"A seeded day of n fills: trade ids 1 to n in shuffled order, about one price in six unconfirmed.\"\"\"\n    x = seed\n    def u():\n        nonlocal x\n        x = (6364136223846793005 * x + 1442695040888963407) % 2 ** 64\n        return (x >> 11) / 2 ** 53\n    names = [\"AZN\", \"BARC\", \"HSBA\", \"SHEL\", \"VOD\"]\n    base = [118.0, 2.0, 6.5, 27.0, 0.7]\n    ids = sorted(range(1, n + 1), key=lambda i: u())\n    ticker, side, qty, price = [], [], [], []\n    for _ in range(n):\n        k = int(5 * u())\n        ticker.append(names[k])\n        side.append(\"buy\" if u() < 0.55 else \"sell\")\n        qty.append(10 * (1 + int(50 * u())))\n        price.append(None if u() < 1 / 6 else round(base[k] * (0.98 + 0.04 * u()), 2))\n    return ids, ticker, side, qty, price\n",
+        "examples": [
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"span\"].tolist()",
+            "expect": "[1750.0, -860.0, 1650.0, float('nan')]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"span\"].tolist()",
+            "expect": "[1750.0, -860.0, 1650.0, float('nan')]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"span\"].index.tolist()",
+            "expect": "[1, 6, 2, 7]",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"fills\"].index.tolist()",
+            "expect": "[4, 1, 6, 2, 7, 3, 5]",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"fills\"][\"qty\"].tolist()",
+            "expect": "[1000, 2500, -400, 60, -1500, 300, -60]",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"fills\"][\"value\"].tolist()",
+            "expect": "[2100.0, 1750.0, -860.0, 1650.0, float('nan'), 615.0, float('nan')]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"last\"]",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "r[\"net\"]",
+            "expect": "5255.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "r = fills_report(*day(), 6, 3)",
+            "call": "(r[\"span\"].index.tolist(), r[\"span\"].tolist())",
+            "expect": "([6, 2, 7, 3], [-860.0, 1650.0, float('nan'), 615.0])",
+            "compare": "isclose"
+          },
+          {
+            "setup": "r = fills_report(*day(), 2, 2)",
+            "call": "(r[\"span\"].index.tolist(), r[\"span\"].tolist())",
+            "expect": "([2], [1650.0])",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = day(); r = fills_report(*L, 1, 7)",
+            "call": "(L == day(), r[\"last\"])",
+            "expect": "(True, 3)",
+            "compare": "equal"
+          },
+          {
+            "setup": "L = book(7, 40); r = fills_report(*L, L[0][6], L[0][29])",
+            "call": "(int(r[\"last\"]), round(r[\"net\"], 2), len(r[\"span\"]), int(r[\"span\"].index[0]), int(r[\"span\"].index[-1]))",
+            "expect": "(9, -58460.7, 24, 18, 35)",
+            "compare": "equal"
+          },
+          {
+            "setup": "L = book(5, 40); r = fills_report(*L, L[0][6], L[0][29])",
+            "call": "(int(r[\"last\"]), round(r[\"net\"], 2), len(r[\"span\"]), int(r[\"span\"].isna().sum()))",
+            "expect": "(25, 12943.7, 24, 6)",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = fills_report(*day(), 1, 7)",
+            "call": "(type(r[\"fills\"]).__name__, type(r[\"span\"]).__name__)",
+            "expect": "('DataFrame', 'Series')",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 13 hidden tests on `day()` and on seeded days of 40 fills. Numbers compare within a relative 1e-9, and NaN matches NaN. The first run loads pandas, which takes 10 to 20 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "The ids are whole numbers, yet `.loc` reads them as labels and `.iloc` as positions. Here the two disagree.",
+        "generic": "Some tests failed. Read the first failing test against the rules above.",
+        "byKey": {
+          "test-1": "Test 1 is the example: the fills from id 1 to id 7. A label slice keeps both ends, and fill 7 is in it as NaN.",
+          "test-2": "Test 2 checks the span's index: ids 1, 6, 2 and 7, in the order the fills happened. `iloc[1:7]` and `fills[1:7]` count positions instead.",
+          "test-3": "Test 3 checks the frame's index: the ids in the order the fills happened, 4 first. Do not sort it.",
+          "test-4": "Test 4 checks the signed `qty`. Writing through `fills[mask][\"qty\"]` changes a copy and leaves the sells positive; one `.loc` call writes into the frame.",
+          "test-5": "Test 5 checks `value`, signed `qty` times `price`, with NaN for fills 7 and 5. A price filled with 0 would claim a fill at £0.",
+          "test-6": "Test 6 asks for the last confirmed fill, id 3. Fill 5 came last, but it has no price yet.",
+          "test-7": "Test 7 is the net value, £5,255. The unconfirmed fills stay out of the sum; they must not turn it into NaN.",
+          "test-8": "Test 8 slices from id 6 to id 3. In the order the fills happened 6 comes before 3, so the span holds four fills.",
+          "test-9": "Test 9 slices from id 2 to id 2. A slice of one label still gives a Series, holding one fill.",
+          "test-10": "Test 10 checks that the lists you were given are unchanged after the call. Sign the quantities in the frame, not in `qty`.",
+          "test-11": "Test 11 is a seeded day from `book(7, 40)`, sliced between the ids in positions 6 and 29. It checks the last confirmed fill, the net value and the span's length and ends.",
+          "test-12": "Test 12 is `book(5, 40)`, where 12 fills are unconfirmed and 6 of them fall inside the span.",
+          "test-13": "Test 13 checks the types: `fills` is a DataFrame and `span` a Series."
+        }
+      },
+      "explain": {
+        "text": "Index the frame by trade id and sign `qty` with one `.loc` call, which writes into the frame. `.loc[a:b]` slices by label and keeps both ends, while `.iloc` and plain square brackets on whole-number labels count positions. `dropna` keeps the confirmed fills, and `.index[-1]` takes the last of them by position."
+      }
     }
   ]
 }

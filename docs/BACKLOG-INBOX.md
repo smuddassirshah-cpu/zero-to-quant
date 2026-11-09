@@ -1738,3 +1738,10 @@ Raised later (options level 2 perf):
 
 Raised later (options level 3 perf):
 - [Could] The playthrough's `-marked` shot is one viewport, so only the top of a long model answer is seen at 440 px; displays further down (here the parity lines and the box price) are never shot or checked. Wanted: a full-page `-marked` shot, or a check that fails when any `.katex-display` in the model has `scrollWidth > clientWidth`.
+
+Raised later (numpy-pandas level 2 perf):
+- [Could] No shared Python mirror of the code widget's `__zq_cmp`: every perf numbers script copies its own (`numpy-pandas-2-perf-numbers.py` mirrors the item 700 NaN, DataFrame and dict rules by hand), and `docs/reviews/perf-retrofit-6-scripts/harness.py` predates item 700, so it fails a correct NaN expect. Want `tools/code_harness.py`, tested against `code.js`, imported by numbers scripts.
+- [Could] `h-fills-report`'s planted slips rely on pandas 2.2.3: chained `df[mask]["col"] *= -1` leaves the frame unchanged, and `fills[1:7]` on whole-number labels slices by position. When Pyodide's pandas moves to 3.x, nothing reruns the perf numbers scripts; want a census line listing the Python perf items to recheck on a package bump.
+
+Raised later (numpy-pandas level 3 perf):
+- [Could] A test cannot see which pandas warnings the learner's code raised. `h-trend-shares` has no clean way to flag a deprecated `pct_change` fill or a chained assignment, since `quietLib` in `code.js` drops FutureWarning lines but shows SettingWithCopyWarning as plain output. Want a `warnings` list (category names caught per case) readable from a test `call`.

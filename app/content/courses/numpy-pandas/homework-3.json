@@ -408,6 +408,189 @@
           "text": "(d) A corrected script that sorts, shifts the position and compounds by month, such as `(1 + strat).resample(\"ME\").prod() - 1`."
         }
       ]
+    },
+    {
+      "id": "h-trend-shares",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "pd-time",
+        "pd-group"
+      ],
+      "title": "A trend rule on several shares",
+      "pace": 1200,
+      "prose": "A desk runs one trend rule on several shares. `df` is a long table with columns `date`, `ticker` and `close` (£), in any row order. A share has a row for each day it traded and none for a day it did not.\n\nEach share is its own series in date order. Its averages, its returns and its next close all count its own rows only. On each row, the fast average is the mean of the share's last `fast` closes, that day's included. The slow average is the mean of its last `slow` closes.\n\nAfter a close where the fast average is above the slow one, the share is held. After any other close it is out, including every close before the slow window is full. A position set at a close earns the share's return to its next close. Leave `df` unchanged.\n\n`toy()` gives the two shares in the table, one row per share per day. `share(out, df, t)` lists `out` on share `t`'s rows in date order, with `None` for NaN. `panel(seed)` gives a seeded table of five shares over 60 days, with some days missing.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "KTX",
+            "LMN"
+          ],
+          "rows": [
+            [
+              "2 Sep",
+              "40.00",
+              "80.00"
+            ],
+            [
+              "3 Sep",
+              "41.00",
+              "78.00"
+            ],
+            [
+              "4 Sep",
+              "44.00",
+              "77.00"
+            ],
+            [
+              "5 Sep",
+              "43.00",
+              "79.00"
+            ],
+            [
+              "6 Sep",
+              "42.00",
+              "76.00"
+            ],
+            [
+              "9 Sep",
+              "45.00",
+              "75.00"
+            ],
+            [
+              "10 Sep",
+              "41.00",
+              "78.00"
+            ],
+            [
+              "11 Sep",
+              "43.00",
+              "80.00"
+            ],
+            [
+              "12 Sep",
+              "46.00",
+              "79.00"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "toy(): closes in £, September 2024"
+        }
+      },
+      "question": "Build `trend_returns(df, fast, slow)` from the stub. It returns a Series with the index of `df`. Each row holds the position set at the share's previous close times the share's return since then. A share's first row has no return: NaN.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef trend_returns(df, fast, slow):\n    \"\"\"Each row's return from a fast and slow moving average rule, share by share.\"\"\"\n    ...\n",
+        "solution": "import pandas as pd\n\ndef trend_returns(df, fast, slow):\n    s = df.sort_values(\"date\")\n    g = s.groupby(\"ticker\")[\"close\"]                         # each share on its own rows\n    f = g.transform(lambda c: c.rolling(fast).mean())\n    w = g.transform(lambda c: c.rolling(slow).mean())       # NaN until the window is full\n    pos = (f > w).astype(int)                               # NaN > x is False: out\n    held = pos.groupby(s[\"ticker\"]).shift(1)                # set at the share's previous close\n    ret = g.pct_change()\n    return (held * ret).reindex(df.index)\n",
+        "prelude": "import pandas as pd\n\ndef toy():\n    \"\"\"Two shares over nine trading days, one row per share per day, share by share.\"\"\"\n    days = pd.bdate_range(\"2024-09-02\", periods=9)\n    closes = {\"KTX\": [40, 41, 44, 43, 42, 45, 41, 43, 46],\n              \"LMN\": [80, 78, 77, 79, 76, 75, 78, 80, 79]}\n    rows = [(d, t, float(c[i])) for t, c in closes.items() for i, d in enumerate(days)]\n    return pd.DataFrame(rows, columns=[\"date\", \"ticker\", \"close\"])\n\ndef share(out, df, t):\n    \"\"\"out on share t's rows of df, in date order, rounded to 6 places, None for NaN.\"\"\"\n    rows = df[df[\"ticker\"] == t].sort_values(\"date\").index\n    return [None if x != x else round(float(x), 6) for x in out.loc[rows]]\n\ndef panel(seed, n_days=60, n_shares=5):\n    \"\"\"Seeded closes for n_shares over n_days, about one day in twenty missing per share, rows shuffled.\"\"\"\n    x = seed\n    def u():\n        nonlocal x\n        x = (6364136223846793005 * x + 1442695040888963407) % 2 ** 64\n        return (x >> 11) / 2 ** 53\n    days = pd.bdate_range(\"2024-01-02\", periods=n_days)\n    rows = []\n    for j in range(n_shares):\n        p = 20 + 80 * u()\n        for d in days:\n            p *= 1 + 0.04 * (u() - 0.5)\n            if u() >= 0.05:\n                rows.append((d, f\"S{j}\", round(p, 2)))\n    df = pd.DataFrame(rows, columns=[\"date\", \"ticker\", \"close\"])\n    order = sorted(range(len(df)), key=lambda i: u())\n    return df.iloc[order].reset_index(drop=True)\n",
+        "examples": [
+          {
+            "setup": "df = toy()",
+            "call": "share(trend_returns(df, 2, 4), df, \"KTX\")",
+            "expect": "[None, 0.0, 0.0, 0.0, -0.023256, 0.0, 0.0, 0.04878, 0.0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "df = toy()",
+            "call": "share(trend_returns(df, 2, 4), df, \"KTX\")",
+            "expect": "[None, 0.0, 0.0, 0.0, -0.023256, 0.0, 0.0, 0.04878, 0.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy()",
+            "call": "share(trend_returns(df, 2, 4), df, \"LMN\")",
+            "expect": "[None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.0125]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy().sample(frac=1, random_state=3)",
+            "call": "[share(trend_returns(df, 2, 4), df, t) for t in (\"KTX\", \"LMN\")]",
+            "expect": "[[None, 0.0, 0.0, 0.0, -0.023256, 0.0, 0.0, 0.04878, 0.0], [None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.0125]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy().sort_values([\"date\", \"ticker\"]).reset_index(drop=True)",
+            "call": "[share(trend_returns(df, 2, 4), df, t) for t in (\"KTX\", \"LMN\")]",
+            "expect": "[[None, 0.0, 0.0, 0.0, -0.023256, 0.0, 0.0, 0.04878, 0.0], [None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.0125]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy(); late = df[\"date\"] > df[\"date\"].unique()[4]; df2 = df.copy(); df2.loc[late, \"close\"] *= 3",
+            "call": "trend_returns(df2, 2, 4)[~late].equals(trend_returns(df, 2, 4)[~late])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"date\": pd.bdate_range(\"2024-09-02\", periods=6), \"ticker\": \"FLT\", \"close\": [30.0, 30.0, 30.0, 30.0, 30.0, 33.0]})",
+            "call": "share(trend_returns(df, 2, 4), df, \"FLT\")",
+            "expect": "[None, 0.0, 0.0, 0.0, 0.0, 0.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy(); df = df.drop(df.index[(df[\"ticker\"] == \"KTX\") & (df[\"date\"] == df[\"date\"].unique()[3])])",
+            "call": "share(trend_returns(df, 2, 4), df, \"KTX\")",
+            "expect": "[None, 0.0, 0.0, 0.0, 0.071429, -0.088889, 0.0, 0.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy()",
+            "call": "share(trend_returns(df, 3, 5), df, \"KTX\")",
+            "expect": "[None, 0.0, 0.0, 0.0, 0.0, 0.071429, -0.088889, 0.0, 0.069767]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = panel(4); q = trend_returns(df, 5, 20)",
+            "call": "(int(q.notna().sum()), int((q.fillna(0) != 0).sum()), round(float(q.sum()), 6))",
+            "expect": "(269, 86, -0.065066)",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = panel(2); q = trend_returns(df, 3, 10)",
+            "call": "(type(q).__name__, q.index.equals(df.index), len(q))",
+            "expect": "('Series', True, 285)",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = toy(); before = df.copy(); q = trend_returns(df, 2, 4)",
+            "call": "(df.equals(before), int(q.notna().sum()))",
+            "expect": "(True, 16)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests on `toy()`, on small changes to it and on seeded panels of five shares. Values are rounded to 6 places and compared with ==. The first run loads pandas, which takes 10 to 20 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Each window, shift and return stays inside one share. Each position meets only the return after it.",
+        "generic": "Some tests failed. Read the first failing test against the rules above.",
+        "byKey": {
+          "test-1": "Test 1 is the example: KTX with `fast = 2` and `slow = 4`. KTX is out until its slow window is full. It is first held after the 5 September close, so it earns the 6 September return.",
+          "test-2": "Test 2 is LMN. Its first row has no earlier close of its own. It is NaN, not a return from KTX's last close.",
+          "test-3": "Test 3 shuffles the rows. Sort by date before any window, shift or return.",
+          "test-4": "Test 4 sorts the rows by date, so KTX and LMN alternate. Without grouping by `ticker`, a window or a shift mixes the two shares.",
+          "test-5": "Test 5 triples every close after 6 September. No value up to 6 September may change, so nothing on a row may use a later close.",
+          "test-6": "Test 6 is a share whose closes are flat, so its two averages are equal. Equal is not above, so the share stays out.",
+          "test-7": "Test 7 drops KTX's row on 5 September. KTX's windows and returns count its own rows, so its next close after 4 September is 6 September.",
+          "test-8": "Test 8 uses `fast = 3` and `slow = 5`. Check which window goes with which argument.",
+          "test-9": "Test 9 is `panel(4)` with `fast = 5` and `slow = 20`. It checks the count of returns, the count that are not 0, and their sum.",
+          "test-10": "Test 10 checks that the result is a Series with the index of `df`, in the same row order.",
+          "test-11": "Test 11 checks that `df` is unchanged after the call. Sort and add columns on a copy, not on `df` itself."
+        }
+      },
+      "explain": {
+        "text": "Sort by date and group by `ticker`, so each rolling mean, `shift` and `pct_change` stays inside one share. A position is known only at its close, so `shift(1)` moves it on to the share's next row. A NaN average compares as False, so the share stays out until the slow window is full."
+      }
     }
   ]
 }
