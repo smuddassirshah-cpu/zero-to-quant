@@ -1761,3 +1761,6 @@ Raised later (estimation level 2 perf):
 
 Raised later (conditional level 2 perf):
 - [Should] After item 701 the `-marked` shot is a full-height element shot, but everything below the first viewport is white: `conditional/homework-2` items 7 and 10 give 400 x 2175 and 400 x 4557 px images (440 run) and 780 x 3206 px (desktop) with content only in the top 1,000 to 1,500 px. The overflow check still measures every display, but the shot cannot be read for layout. A scratch render with the viewport set to the card's height (scratchpad `model-shot.mjs`) paints the whole card. Wanted: resize the viewport to the card height before the element shot, or scroll and stitch.
+
+Raised later (taylor level 1 perf):
+- [Should] Second sighting of the conditional L2 bullet: the `-marked` element shot is full height but white below the first viewport (taylor `homework-1` item 10: 400 x 4455 px at 440, 780 x 3066 px on desktop), so the model and rubric past the first screen cannot be read from the shots. The width check (701) still covers every display.
