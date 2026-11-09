@@ -265,7 +265,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 
 ### 5b. Concept audit by Fable, after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
 - [ ] Parallel Fable audit session (branch `claude/fable-audit`, started 6 Nov) on earlier-read courses; merge its branch at each content-session close
-- [ ] Paused 6 Nov (user, usage): scheduled task disabled; resume by re-enabling `trig_01FJuNVhosR68kSj3RhYkXrp` when usage allows (12 audits done, puzzles L4 to L5 and systems L4 open in round 2)
+- [x] Resumed 9 Nov (user; session Y re-enabled `trig_01FJuNVhosR68kSj3RhYkXrp`, order now by route use: mm-games, recruiting, topic 1.5, trader and developer closures, optional Stage 2 and 3 last). Was: paused 6 Nov (user, usage) (12 audits done, puzzles L4 to L5 and systems L4 open in round 2)
 - [ ] Phase 2 courses (unread list): audit after all content is finished
 - [ ] Audit interview courses and Stages 2 and 3
 - [ ] Audit Stage 1, then Stage 0

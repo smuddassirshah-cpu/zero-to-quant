@@ -209,3 +209,6 @@ Session U (6 Nov)
 
 ### Pilot stays post-completion (9 Nov, user)
 - The critical review (`docs/reviews/critical-review-fable-5-2.md`, change 1) proposed running the learner pilot now. Declined: it would add to completion time. PLAN 2c item 12 is unchanged: post-completion, human-owned, not a completion criterion. Sessions do not raise or schedule it. The review's other nine changes are unaffected.
+
+### Fable audit resumed, ordered by route use (9 Nov, user)
+- The scheduled audit task `trig_01FJuNVhosR68kSj3RhYkXrp` is re-enabled (every six hours, branch `claude/fable-audit`). Order changes from difficulty to use (critical review 6.4 and 1.2): open items, then `mm-games`, `recruiting`, the topic 1.5 courses, the rest of the trader and developer closures, other route courses; optional Stage 2 and 3 courses last. The order lives in `docs/briefs/fable-audit-session-prompt.md`. Content sessions merge `origin/claude/fable-audit` at start and close.
