@@ -1756,3 +1756,6 @@ Raised later (trees level 1 perf):
 
 Raised later (trees level 2 perf):
 - [Could] An author's numbers script that runs planted slips against a Python `code` task must copy the engine's comparison by hand (`__zq_cmp` in `js/engine/widgets/code.js`: element-wise `math.isclose` at rel 1e-9 and abs 1e-12, tuples and lists alike, `raises` by the exception's MRO). `trees-2-perf-numbers.py` reimplements it, and a drift in either would go unseen. Wanted: the harness as an importable `tools/py_grade.py` (one `grade(source, tests)` function) that `code.js` builds its harness text from, so scripts and the engine grade the same way.
+
+Raised later (least-squares level 2 perf):
+- [Could] `compare: "raises"` cannot tell which `ValueError` was raised. In `h-factor-neutral` (homework-2) a slip with the last transpose missing raises NumPy's own shape-mismatch `ValueError` on the three refusal tests and passes them for the wrong reason (it fails the other ten). Want an optional `match` regex on a raises case, read against the exception message, so a test can require the learner's own refusal.
