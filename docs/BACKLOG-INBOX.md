@@ -1730,3 +1730,6 @@ Raised later (graphs-dp level 2 perf):
 
 Raised later (graphs-dp level 3 perf):
 - [Could] A `code` performance task cannot ask for a bottom-up table rather than a memoised recursion: both give the same values, and the only behavioural difference (recursion depth) would grade a correct top-down answer as wrong. `h-fee-trades` grades the values and keeps prices at 300 days so either passes. Wanted: nothing in the engine; a line in AUTHORING section 5 that a `code` task grades behaviour, so "bottom up" in an objective is taught, not tested.
+
+Raised later (options level 2 perf):
+- [Could] `fresh-check.mjs` code names count a helper nested inside the solution's function (`def profit(S)` inside `strategy_card`) as reuse of homework-1's top-level `profit`. A nested helper is not a reused exercise. Renamed to `_profit` here. Wanted: skip names defined inside another function, or say in AUTHORING section 5 that nested helpers count.

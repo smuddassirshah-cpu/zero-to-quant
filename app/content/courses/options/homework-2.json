@@ -526,6 +526,160 @@
           "text": "Recommends the spread and says it gives up gains above £88.00, hurting only after a larger move than expected."
         }
       ]
+    },
+    {
+      "id": "h-strategy-card",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "op-strategies"
+      ],
+      "pace": 1200,
+      "title": "A strategy card for any position",
+      "prose": "A broker's site prints a card for every strategy a client builds. Write `strategy_card(legs)` for it. Each leg is `(kind, qty, strike, premium)`, where `kind` is `\"call\"`, `\"put\"` or `\"stock\"` and `qty` is negative when short. All the options are European and expire on one date. A stock leg's strike is its purchase price, and its premium is 0.\n\nReturn a dict. `cost` is the cash paid today, negative when the position takes cash in; a share costs its purchase price. `best` and `worst` are the largest and smallest profit at expiry, over every share price from £0 up. Use `float('inf')` or `float('-inf')` where there is no limit. `breakevens` lists every expiry price where the profit is exactly 0, in increasing order and each once. No test has a stretch of prices where the profit stays at 0.",
+      "question": "Write `strategy_card` from a blank start.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def strategy_card(legs):\n    \"\"\"The card: cost, best, worst, breakevens.\"\"\"\n    ...\n",
+        "solution": "def strategy_card(legs):\n    \"\"\"The card: cost, best, worst, breakevens.\"\"\"\n    def _profit(S):\n        total = 0.0\n        for kind, qty, strike, premium in legs:\n            if kind == \"call\":\n                total += qty * (max(S - strike, 0) - premium)\n            elif kind == \"put\":\n                total += qty * (max(strike - S, 0) - premium)\n            else:\n                total += qty * (S - strike)\n        return total\n\n    cost = 0.0\n    for kind, qty, strike, premium in legs:\n        cost += qty * (strike if kind == \"stock\" else premium)\n\n    # Profit is a straight line between strikes, so check £0, each strike, and the slope beyond.\n    points = sorted({0.0} | {float(k) for kind, q, k, p in legs if kind != \"stock\"})\n    values = [_profit(S) for S in points]\n    slope = sum(q for kind, q, k, p in legs if kind != \"put\")\n    best = float(\"inf\") if slope > 0 else max(values)\n    worst = float(\"-inf\") if slope < 0 else min(values)\n\n    zero = 1e-9\n    roots = []\n    for a, b, pa, pb in zip(points, points[1:], values, values[1:]):\n        if abs(pa) < zero:\n            roots.append(a)\n        elif abs(pb) >= zero and (pa < 0) != (pb < 0):\n            roots.append(a + (b - a) * pa / (pa - pb))\n    last = values[-1]\n    if abs(last) < zero:\n        roots.append(points[-1])\n    elif slope != 0 and (last < 0) != (slope < 0):\n        roots.append(points[-1] - last / slope)\n    return {\"cost\": cost, \"best\": best, \"worst\": worst, \"breakevens\": roots}\n",
+        "examples": [
+          {
+            "call": "strategy_card([(\"call\", 1, 120, 7.40), (\"call\", -1, 130, 3.15)])",
+            "expect": "{'cost': 4.25, 'best': 5.75, 'worst': -4.25, 'breakevens': [124.25]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"call\", 1, 100, 5.25), (\"put\", 1, 100, 4.75)])",
+            "expect": "{'cost': 10.0, 'best': float('inf'), 'worst': -10.0, 'breakevens': [90.0, 110.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "strategy_card([(\"call\", 1, 120, 7.40), (\"call\", -1, 130, 3.15)])",
+            "expect": "{'cost': 4.25, 'best': 5.75, 'worst': -4.25, 'breakevens': [124.25]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"call\", 1, 100, 5.25), (\"put\", 1, 100, 4.75)])",
+            "expect": "{'cost': 10.0, 'best': float('inf'), 'worst': -10.0, 'breakevens': [90.0, 110.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"put\", 1, 95, 3.5)])",
+            "expect": "{'cost': 3.5, 'best': 91.5, 'worst': -3.5, 'breakevens': [91.5]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"call\", 2, 100, 6.0)])",
+            "expect": "{'cost': 12.0, 'best': float('inf'), 'worst': -12.0, 'breakevens': [106.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"put\", -1, 90, 2.5), (\"call\", -1, 110, 3.0)])",
+            "expect": "{'cost': -5.5, 'best': 5.5, 'worst': float('-inf'), 'breakevens': [84.5, 115.5]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"call\", 1, 105, 1.5), (\"call\", -2, 100, 4.0), (\"call\", 1, 95, 7.5)])",
+            "expect": "{'cost': 1.0, 'best': 4.0, 'worst': -1.0, 'breakevens': [96.0, 104.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"stock\", 1, 100, 0), (\"call\", -1, 110, 3.0)])",
+            "expect": "{'cost': 97.0, 'best': 13.0, 'worst': -97.0, 'breakevens': [97.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"stock\", 1, 50, 0), (\"put\", 1, 45, 1.25), (\"call\", -1, 60, 1.75)])",
+            "expect": "{'cost': 49.5, 'best': 10.5, 'worst': -4.5, 'breakevens': [49.5]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"call\", 1, 100, 4.0), (\"call\", 1, 105, 1.0)])",
+            "expect": "{'cost': 5.0, 'best': float('inf'), 'worst': -5.0, 'breakevens': [105.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"call\", -1, 100, 6.0), (\"call\", 2, 105, 0.5)])",
+            "expect": "{'cost': -5.0, 'best': float('inf'), 'worst': 0.0, 'breakevens': [105.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"call\", 1, 100, 5.5), (\"call\", -4, 110, 1.25)])",
+            "expect": "{'cost': 0.5, 'best': 9.5, 'worst': float('-inf'), 'breakevens': [100.5, 110 + 9.5 / 3]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "strategy_card([(\"stock\", -1, 100, 0), (\"call\", 1, 100, 6.0)])",
+            "expect": "{'cost': -94.0, 'best': 94.0, 'worst': -6.0, 'breakevens': [94.0]}",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "how": "Check runs 12 hidden tests, each value within 0.000000001. They cover spreads, straddles, strangles, a butterfly, single options, positions with a share, and ratio positions with more options sold than bought. Pure Python: nothing to load."
+      },
+      "feedback": {
+        "correct": "Profit is straight between strikes. So £0, the strikes and the slope past the top strike settle the card.",
+        "generic": "Some tests failed. Start from the first failing row.",
+        "byKey": {
+          "test-1": "Test 1 sells the upper call. A short leg takes its premium in, so it lowers the cost.",
+          "test-2": "Test 2 is a straddle, with a break-even on each side of its strike. Look below the lowest strike, down to £0, and above the top strike too.",
+          "test-3": "Test 3 is a single put. Its best profit comes at a share price of £0. Check £0 as well as the strikes.",
+          "test-4": "Test 4 is a long call, with no limit on its profit. Read the slope above the top strike: if it is positive, `best` is `float('inf')`.",
+          "test-5": "Test 5 sells a strangle. Short legs take premium in, so `cost` is negative, and the loss above the top strike has no limit.",
+          "test-6": "Test 6 lists the butterfly's legs out of strike order. Sort the strikes before you walk between them.",
+          "test-7": "Test 7 holds a share. Its purchase price is part of the cost, and it adds 1 to the slope above the top strike.",
+          "test-9": "Test 9 breaks even exactly at the strike £105.00. List that price once: not twice, and not left out.",
+          "test-10": "Test 10 touches 0 at a strike without crossing. That price is still a break-even.",
+          "test-11": "Test 11 has a break-even at 110 + 9.5/3. Solve each straight piece exactly rather than searching a grid of prices."
+        }
+      },
+      "explain": {
+        "text": "Every leg's profit is straight between strikes, so the total bends only at a strike. Its extremes sit at £0 or at a strike, unless the slope above the top strike makes one unlimited. Each break-even is the zero of one straight piece, found once."
+      }
     }
   ]
 }
