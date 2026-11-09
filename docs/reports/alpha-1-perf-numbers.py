@@ -80,6 +80,9 @@ def review_universe(close, shares, listed, n, window):
         'picked = s.sort_values(ascending=False, kind="mergesort").index[:n]',
         'picked = s.index[s.rank(ascending=False, method="min") <= n]'),
     'smallest volume first': variant('ascending=False', 'ascending=True'),
+    # fix pass AL1-1: product of the means, not the mean of the products
+    'product of the means': variant('adv = gbp.rolling(window, min_periods=window).mean()',
+        'adv = close.rolling(window, min_periods=window).mean() * shares.rolling(window, min_periods=window).mean()'),
 }
 
 def run_tests(code):
@@ -121,7 +124,7 @@ for name, k in want_first.items():
     check(f'bug "{name}" fails test {k}', r[k - 1] is not True)
 for name, k in (('partial window allowed', 5), ('ranks shares traded, not £', 6),
                 ('same-month list', 7), ('full-sample mean volume (look-ahead)', 7),
-                ('window peeks one day ahead', 7), ('rank <= n keeps ties', 8)):
+                ('window peeks one day ahead', 7), ('rank <= n keeps ties', 8), ('product of the means', 12)):
     check(f'bug "{name}" fails byKey test {k}', run_tests(BUGS[name])[k - 1] is not True)
 
 # 5. counts stated in the item
@@ -137,7 +140,7 @@ check('January list by £ volume is D then A', list(gbp.sort_values(ascending=Fa
 bc = ns['book'](7)[0]
 check('book(): 12 shares, 130 days', bc.shape == (130, 12))
 n_t, n_e = len(w['tests']), len(w['examples'])
-check('tests 11, examples 1, tests > examples', (n_t, n_e) == (11, 1) and n_t > n_e)
+check('tests 12, examples 1, tests > examples', (n_t, n_e) == (12, 1) and n_t > n_e)
 check('how states the test count', f'runs {n_t} hidden tests' in w['how'])
 check('examples equal test 1', w['examples'][0] == w['tests'][0])
 check('homework items within 6 to 12', 6 <= len(doc['items']) <= 12, str(len(doc['items'])))

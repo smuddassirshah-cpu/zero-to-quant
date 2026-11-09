@@ -78,9 +78,9 @@ print('item index (1-based):', idx[0] + 1, 'of', len(items))
 check(item.get('performance') == 'code', 'performance kind is code')
 check(sum('performance' in it for it in items) == 1, 'one performance item in homework-1')
 check(len(items) <= 12, 'homework at or under 12 items (%d)' % len(items))
-check(len(w['tests']) == 11 and len(w['examples']) == 2, 'tests 11, examples 2')
+check(len(w['tests']) == 13 and len(w['examples']) == 2, 'tests 13, examples 2')
 check(w['examples'] == w['tests'][:2], 'examples are tests 1 and 2')
-check('11 hidden tests' in w['how'] and '1e-9' in w['how'], '"how" states 11 tests and 1e-9')
+check('13 hidden tests' in w['how'] and '1e-9' in w['how'], '"how" states 13 tests and 1e-9')
 
 # Route 1: the solution passes every test; the starter fails every test.
 res = run_all(w, w['solution'])
@@ -178,6 +178,9 @@ bugs = {
     'no positive-D guard': (mut('    if D <= 0 or icept <= 0:\n        return nan\n', ''), 10),
     'no pair minimum': (mut('    if len(w) < 3:\n        return nan\n', ''), 2),
     'yield sign flipped': (mut('q = r - log(F / S) / T', 'q = log(F / S) / T - r'), 1),
+    # fix pass OD1-2 and OD1-3
+    'counts strikes before dropping unpaired': (mut('w = w.reindex(columns=["call", "put"]).dropna()                # strikes with both mids\n    if len(w) < 3:\n        return nan', 'w = w.reindex(columns=["call", "put"])\n    if len(w) < 3:\n        return nan\n    w = w.dropna()'), 12),
+    'NaN for a discount factor above 1': (mut('if D <= 0 or icept <= 0:', 'if D <= 0 or D >= 1 or icept <= 0:'), 13),
     'rate as 1 - D': (mut('r = -log(D) / T', 'r = (1 - D) / T'), 1),
 }
 for name, (code, first) in bugs.items():
@@ -185,7 +188,8 @@ for name, (code, first) in bugs.items():
     failed = [i + 1 for i, (ok, _) in enumerate(res) if not ok]
     check(bool(failed) and failed[0] == first, 'bug "%s" fails tests %s (first %d)' % (name, failed, first))
 for k in item['feedback']['byKey']:
-    check(k in ('test-3', 'test-5', 'test-6', 'test-7', 'test-10'), 'byKey %s is a first-failure test of a planted bug' % k)
+    check(k in ('test-3', 'test-5', 'test-6', 'test-7', 'test-10', 'test-12', 'test-13'), 'byKey %s is a first-failure test of a planted bug' % k)
 
+check('\\bar K' in item['prose'] and '\\bar y' in item['prose'], 'prose defines the least-squares slope and intercept')
 print('failures:', fails)
 sys.exit(1 if fails else 0)

@@ -78,7 +78,8 @@ for phrase in ('756', '63-day', '0.04', '9.5', '62 of its 63', '756/63 = 12', '\
 # 6. shape the validator and the brief require
 rub = w['rubric']
 check('rubric 3 to 5 rows summing to 10', 3 <= len(rub) <= 5 and sum(r['points'] for r in rub) == 10, str([r['points'] for r in rub]))
-check('exactly one required row', sum(1 for r in rub if r.get('required')) == 1)
+# fix pass (review-perf-retrofit-3): required rows follow DECISIONS Session X, one per named part, never every row
+check('4 required rows, not every row', sum(1 for r in rub if r.get('required') is True) == 4 and 4 < len(rub))
 check('seconds 15 to 1800, followUps 1 to 5', 15 <= w['seconds'] <= 1800 and 1 <= len(w['followUps']) <= 5)
 check('no starter, steps, hints or parts', not any(k in w for k in ('starter', 'steps', 'order', 'derive')) and 'hints' not in item and 'parts' not in item)
 check('homework items within 6 to 12', 6 <= len(doc['items']) <= 12, str(len(doc['items'])))

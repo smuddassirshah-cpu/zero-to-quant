@@ -61,3 +61,31 @@ Read at HEAD `db8640d` on `sx/read-perf-3`. No content file was edited.
 - Protocol 6: "a pass skips a named part" is now seen eight times (adds IT3-1, IT4-1, AL3-1), so ENGINE-BACKLOG 698 (`tools/rubric-passes.mjs`) is overdue as a gate. "The report does not name the overlapping screens" is seen four more times (RPT); a validator cannot see it, so the brief's report template could carry a fixed line "Overlapping screens: ...; new parts: ...".
 
 Totals: Must 1 (OD1-1). Should 4 (AL3-2, IT3-1, IT4-1, AL3-1). Could 9 (AL1-1, OD1-2, OD1-3, IT3-2, IT3-3, IT3-4, IT4-2, IT4-3, RPT). alpha L2, opt-dash L2 and opt-dash L3 have no finding.
+
+## Fix pass
+
+Worktree `sx/fix-perf-3`. Targeted edits only, item ids kept; no `course.json`, `perf-pending.json` or engine file touched. 15 fixed, 0 disputed, 0 deferred. Graded answers changed: none (the new tests and rubric flags add checks; no existing expected value moved).
+
+1. OD1-1 (Must): fixed. Orchestrator ruling taken, first option: the prose now defines the fit once, "slope $b = \sum_i (K_i - \bar K)(y_i - \bar y) / \sum_i (K_i - \bar K)^2$ and intercept $a = \bar y - b\bar K$, the bars being means over those strikes", so no `requires` edge. Basis: the standard closed form, and the author script confirms it matches `np.polyfit` on every seeded chain.
+2. AL3-2: fixed. Model "What to report", follow-up (2) and rubric row 5 say "at least 62" lags and that the Bartlett weights shrink the far lags. Basis, recomputed: $1 + 2\sum_{k=1}^{62}(1 - k/63)^2 = 1 + 2 \cdot 81375/3969 = 42.0$, against 63, so the standard error is $\sqrt{42/63} = 0.82$ of the true one, "about a fifth too small"; a naive 9.5 becomes $9.5/\sqrt{42} = 1.47$.
+3. IT3-1: fixed. `required` set on rows 1, 3, 4, 5 of `h-derive-black`. `rubric-passes.mjs`: minimal set rows 1, 3, 4, 5 (8 points); only row 2 can be left out; no pass skips assumptions, shares, equation or check.
+4. IT4-1: fixed. `required` set on rows 1, 3, 4 of `h-aloud-unknown-drift` (6 points). `rubric-passes.mjs` minimal sets: rows 1, 2, 3, 4 and rows 1, 3, 4, 5 (8 points each); none skips the assumptions, the hedge or the equation.
+5. AL3-1: fixed. `required` set on rows 2, 3, 4, 5 of `h-overlap-aloud` (8 points). `rubric-passes.mjs` minimal set: rows 2, 3, 4, 5; only row 1 can be left out; no pass skips why, how much, what stays valid or what to report.
+6. AL1-1: fixed. Test 12 added as proposed (B's close and shares move opposite ways), `byKey` "test-12" added, `how` says 12 tests. Basis: B's mean close times mean shares is 10,267 on the three days, while the mean of the daily products is 3,867, so the two orders disagree; the solution passes, the product-of-means slip fails test 12 only (author script, new planted bug).
+7. OD1-2: fixed. Test 12 added as proposed (two pairs left after dropping unpaired quotes), `byKey` "test-12". The count-before-drop slip fails test 12 only; solution passes.
+8. OD1-3: fixed. Test 13 added as proposed (rate $-1\%$, so $D = e^{-0.01} > 1$), `byKey` "test-13", `how` says 13 tests. The "D >= 1 gives NaN" slip fails test 13 only; solution passes.
+9. IT3-2: fixed in `docs/reports/ito-3-perf.md`: the forward price is "of ito l8 screen 10, level 2; the prompt defines it", not l16.
+10. IT3-3: fixed. Step 5 of the model now says where the cash sits: $C = V - \Delta S$ earning $rC\,dt$, zero cost, same equation.
+11. IT3-4: fixed. Step 8's display ends with a full stop.
+12. IT4-2: fixed. Rubric row 1 reads "$\mu_t$ adapted and integrable, otherwise free."
+13. IT4-3: fixed. The model's "Where each assumption was used" adds the no-arbitrage condition on $\int_0^T(\mu_t - r)^2\,dt$. Basis: the Levental and Skorohod 1995 point the reviewer cites; stated in plain words, not as a theorem.
+14. RPT: fixed. An "Overlapping screens" line, with the new parts, appended to `ito-3-perf.md`, `ito-4-perf.md`, `alpha-1-perf.md` and `alpha-2-perf.md`, in the reviewer's wording.
+15. Author scripts updated to the new state: `ito-3`, `ito-4` and `alpha-3` check the new required-row counts (4, 3, 4 of 5, never every row) instead of "exactly one"; `alpha-1` and `opt-dash-1` count 12 and 13 tests and plant the new slips; `opt-dash-1` also checks that the prose defines the fit.
+
+### Gates
+
+- Author scripts `docs/reports/{ito-3,ito-4,alpha-1,alpha-2,alpha-3,opt-dash-1,opt-dash-2,opt-dash-3}-perf-numbers.py` under the venv with `-I`: all exit 0, 0 failures. Solutions pass, starters fail every test, every planted bug fails a test.
+- Reader scripts in `docs/reviews/perf-retrofit-3-scripts/` (venv, from that folder): `al1_universe`, `al2_momentum`, `od1_parity`, `od2_asian`, `od3_black_iv`, `numbers_recheck`, `voice_items` and `findings_assert` all exit 0 (`FAILS: 0`; the proposed tests pass the solution and fail the slip).
+- Validator: 0 errors, 4,087 warnings; `content/manifest.json` restored.
+- Voice scan 35: ito, alpha, opt-dash each 0 and 0.
+- Playthrough: all eight homeworks, `--local-cdn` with and without `--mobile`, All passed.

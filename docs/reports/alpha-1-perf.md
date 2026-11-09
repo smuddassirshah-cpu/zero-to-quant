@@ -14,3 +14,4 @@ Gates:
 Freshness: `fresh-check.mjs --file` 0 hits; grep of review_universe, shares traded, once a month, highest mean, 200 largest, members, sorts first finds nothing outside the item but l1's "today's 200 largest".
 
 Backlog: 0 bullets (the toast in the 440 shot is BACKLOG-INBOX line 1581).
+- Overlapping screens: l1 screens 6, 7 and 9 lay out the trailing-volume filter. New: £ volume from close and shares, monthly reviews, the top $n$ with ties, the list held from the next day.

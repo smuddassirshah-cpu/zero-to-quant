@@ -7,3 +7,4 @@
 - Gates: (1) `cd app && node tools/validate.mjs`: 0 errors. (2) `VOICE_BASE=app/content/courses/ito python3 docs/reviews/voice-scan.py 35`: 0 and 0. (3) `python3 docs/reports/ito-4-perf-numbers.py`: exit 0, 48 checks in the venv (sympy; seeded self-financing hedge under three drifts). (4) `node tools/playthrough.mjs --set ito/homework-4 --local-cdn <pkgs>`, with and without `--mobile`: All passed. Scratch model shot: no maths overflow at 440 px.
 - Freshness grep: mu_t, adapted, whole past, self-financ, S d Delta, unhedged, pays £1. `fresh-check.mjs --file`, also loose: no hit on item 7.
 - Backlog: 2 bullets.
+- Overlapping screens: ito l17 screens 1, 3 and 4 lay out the five-minute derivation, why the book earns $r$ and where $\mu$ went. New: an adapted, path-dependent $\mu_t$, the zero-cost book with cash and the self-financing follow-up.
