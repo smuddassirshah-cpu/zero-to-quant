@@ -470,6 +470,125 @@
       "explain": {
         "text": "You branched from F, so `costs` carries D, E and F under K. After a squash, main holds S instead, a different commit, so all four look new. Start each change from an up-to-date main: `git switch main`, `git pull`, `git switch -c costs`."
       }
+    },
+    {
+      "id": "h-ignore-options-repo",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gt-remote",
+        "gt-shell"
+      ],
+      "title": "A .gitignore for an options project",
+      "prose": "You are about to push an options-pricing project to GitHub. Write its `.gitignore` from scratch.\n\n**Commit** these, which you wrote by hand:\n\n- `README.md`, `requirements.txt` and `.gitignore`\n- `.env.example`, which names the keys with no values\n- `src/pricer.py`, and `src/figures.py`, which draws the charts\n- `notebooks/smile.ipynb` and `tests/test_pricer.py`\n- `tests/fixtures/chain_small.parquet`, the 12 rows the tests read\n- `data/README.md`, which says how to fetch the data\n- `docs/figures/smile.png`, the one chart the README shows\n\n**Keep out** these:\n\n- everything else under `data/`, such as `data/raw/chains_2025.parquet` (2 GB, downloaded nightly) and `data/clean/chains_2025.parquet`\n- every chart in the top-level `figures/` folder, which each run redraws\n- the virtual environment, `.venv/`\n- both keys: `.env` (live) and `.env.local` (paper trading)\n- every `__pycache__/` and `.ipynb_checkpoints/` folder, in any folder\n\nThe rules must also hold for files added later in those places, not only for today's files. Two more rules of the file. A line starting with `!` takes back an earlier line for the paths it matches. A leading `/` ties a pattern to the project's top folder.\n\n`ignored(path)` is loaded for you. It answers as `git check-ignore` would for your `GITIGNORE`, so use it to check your file.",
+      "question": "Write the file in the string `GITIGNORE`, one pattern per line.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "label": "gitignore.py",
+        "starter": "GITIGNORE = \"\"\"\n# .gitignore for the options project\n\"\"\"\n",
+        "solution": "GITIGNORE = \"\"\"\n# downloads; keep the note on fetching\ndata/*\n!data/README.md\n# charts each run redraws, top level only\n/figures/\n# rebuilt by Python and Jupyter, anywhere\n__pycache__/\n.ipynb_checkpoints/\n# the virtual environment\n.venv/\n# keys\n.env\n.env.local\n\"\"\"\n",
+        "prelude": "import re as _zq_re\n\n\ndef _zq_class(p, i):\n    # p[i] == '['; return (regex, next index) or None when unclosed\n    j = i + 1\n    neg = False\n    if j < len(p) and p[j] in '!^':\n        neg = True\n        j += 1\n    out = []\n    first = True\n    while j < len(p):\n        c = p[j]\n        if c == ']' and not first:\n            body = ''.join(out)\n            return ('[^/' + body + ']' if neg else '(?!/)[' + body + ']'), j + 1\n        first = False\n        if c == '[' and p.startswith('[:', j):\n            k = p.find(':]', j + 2)\n            if k < 0:\n                return None\n            name = p[j + 2:k]\n            table = {'alpha': 'a-zA-Z', 'digit': '0-9', 'alnum': 'a-zA-Z0-9',\n                     'upper': 'A-Z', 'lower': 'a-z', 'space': ' \\\\t\\\\n\\\\r\\\\f\\\\v',\n                     'xdigit': '0-9a-fA-F', 'punct': _zq_re.escape('!\"#$%&\\'()*+,-./:;<=>?@[\\\\]^_`{|}~')}\n            if name not in table:\n                return None\n            out.append(table[name])\n            j = k + 2\n            continue\n        if c == '\\\\' and j + 1 < len(p):\n            out.append(_zq_re.escape(p[j + 1]))\n            j += 2\n            continue\n        if j + 2 < len(p) and p[j + 1] == '-' and p[j + 2] != ']':\n            hi = p[j + 2]\n            if hi == '\\\\' and j + 3 < len(p):\n                hi = p[j + 3]\n                j += 1\n            out.append(_zq_re.escape(c) + '-' + _zq_re.escape(hi))\n            j += 3\n            continue\n        out.append(_zq_re.escape(c))\n        j += 1\n    return None\n\n\ndef _zq_glob(p):\n    # git wildmatch with WM_PATHNAME, as a regular expression\n    out = []\n    i = 0\n    n = len(p)\n    while i < n:\n        c = p[i]\n        if c == '*':\n            j = i\n            while j < n and p[j] == '*':\n                j += 1\n            double = j - i >= 2 and (i == 0 or p[i - 1] == '/')\n            if double and j == n:\n                out.append('.*')\n            elif double and p[j] == '/':\n                out.append('(?:.*/)?')\n                j += 1\n            else:\n                out.append('[^/]*')\n            i = j\n        elif c == '?':\n            out.append('[^/]')\n            i += 1\n        elif c == '[':\n            got = _zq_class(p, i)\n            if got is None:\n                out.append(_zq_re.escape('['))\n                i += 1\n            else:\n                out.append(got[0])\n                i = got[1]\n        elif c == '\\\\':\n            if i + 1 < n:\n                out.append(_zq_re.escape(p[i + 1]))\n                i += 2\n            else:\n                return None\n        else:\n            out.append(_zq_re.escape(c))\n            i += 1\n    return _zq_re.compile('(?s)' + ''.join(out) + r'\\Z')\n\n\ndef _zq_rules(text):\n    rules = []\n    for line in str(text).split('\\n'):\n        line = line.rstrip('\\r')\n        k = len(line)\n        while k > 0 and line[k - 1] == ' ' and not (k > 1 and line[k - 2] == '\\\\'):\n            k -= 1\n        line = line[:k]\n        if not line or line.startswith('#'):\n            continue\n        neg = line.startswith('!')\n        if neg:\n            line = line[1:]\n        must_dir = line.endswith('/')\n        if must_dir:\n            line = line[:-1]\n        if not line:\n            continue\n        basename = '/' not in line\n        if line.startswith('/'):\n            line = line[1:]\n        rx = _zq_glob(line)\n        if rx is not None:\n            rules.append((neg, must_dir, basename, rx))\n    return rules\n\n\ndef _zq_excluded(rules, path, is_dir):\n    for neg, must_dir, basename, rx in reversed(rules):\n        if must_dir and not is_dir:\n            continue\n        target = path.rsplit('/', 1)[-1] if basename else path\n        if rx.match(target):\n            return not neg\n    return False\n\n\ndef _zq_ignored(path, text):\n    rules = _zq_rules(text)\n    parts = path.strip('/').split('/')\n    for k in range(1, len(parts)):\n        if _zq_excluded(rules, '/'.join(parts[:k]), True):\n            return True\n    return _zq_excluded(rules, '/'.join(parts), False)\n\n\ndef ignored(path):\n    return _zq_ignored(path, globals().get('GITIGNORE', ''))\n",
+        "postlude": "import re as _zq_re\n\n\ndef _zq_class(p, i):\n    # p[i] == '['; return (regex, next index) or None when unclosed\n    j = i + 1\n    neg = False\n    if j < len(p) and p[j] in '!^':\n        neg = True\n        j += 1\n    out = []\n    first = True\n    while j < len(p):\n        c = p[j]\n        if c == ']' and not first:\n            body = ''.join(out)\n            return ('[^/' + body + ']' if neg else '(?!/)[' + body + ']'), j + 1\n        first = False\n        if c == '[' and p.startswith('[:', j):\n            k = p.find(':]', j + 2)\n            if k < 0:\n                return None\n            name = p[j + 2:k]\n            table = {'alpha': 'a-zA-Z', 'digit': '0-9', 'alnum': 'a-zA-Z0-9',\n                     'upper': 'A-Z', 'lower': 'a-z', 'space': ' \\\\t\\\\n\\\\r\\\\f\\\\v',\n                     'xdigit': '0-9a-fA-F', 'punct': _zq_re.escape('!\"#$%&\\'()*+,-./:;<=>?@[\\\\]^_`{|}~')}\n            if name not in table:\n                return None\n            out.append(table[name])\n            j = k + 2\n            continue\n        if c == '\\\\' and j + 1 < len(p):\n            out.append(_zq_re.escape(p[j + 1]))\n            j += 2\n            continue\n        if j + 2 < len(p) and p[j + 1] == '-' and p[j + 2] != ']':\n            hi = p[j + 2]\n            if hi == '\\\\' and j + 3 < len(p):\n                hi = p[j + 3]\n                j += 1\n            out.append(_zq_re.escape(c) + '-' + _zq_re.escape(hi))\n            j += 3\n            continue\n        out.append(_zq_re.escape(c))\n        j += 1\n    return None\n\n\ndef _zq_glob(p):\n    # git wildmatch with WM_PATHNAME, as a regular expression\n    out = []\n    i = 0\n    n = len(p)\n    while i < n:\n        c = p[i]\n        if c == '*':\n            j = i\n            while j < n and p[j] == '*':\n                j += 1\n            double = j - i >= 2 and (i == 0 or p[i - 1] == '/')\n            if double and j == n:\n                out.append('.*')\n            elif double and p[j] == '/':\n                out.append('(?:.*/)?')\n                j += 1\n            else:\n                out.append('[^/]*')\n            i = j\n        elif c == '?':\n            out.append('[^/]')\n            i += 1\n        elif c == '[':\n            got = _zq_class(p, i)\n            if got is None:\n                out.append(_zq_re.escape('['))\n                i += 1\n            else:\n                out.append(got[0])\n                i = got[1]\n        elif c == '\\\\':\n            if i + 1 < n:\n                out.append(_zq_re.escape(p[i + 1]))\n                i += 2\n            else:\n                return None\n        else:\n            out.append(_zq_re.escape(c))\n            i += 1\n    return _zq_re.compile('(?s)' + ''.join(out) + r'\\Z')\n\n\ndef _zq_rules(text):\n    rules = []\n    for line in str(text).split('\\n'):\n        line = line.rstrip('\\r')\n        k = len(line)\n        while k > 0 and line[k - 1] == ' ' and not (k > 1 and line[k - 2] == '\\\\'):\n            k -= 1\n        line = line[:k]\n        if not line or line.startswith('#'):\n            continue\n        neg = line.startswith('!')\n        if neg:\n            line = line[1:]\n        must_dir = line.endswith('/')\n        if must_dir:\n            line = line[:-1]\n        if not line:\n            continue\n        basename = '/' not in line\n        if line.startswith('/'):\n            line = line[1:]\n        rx = _zq_glob(line)\n        if rx is not None:\n            rules.append((neg, must_dir, basename, rx))\n    return rules\n\n\ndef _zq_excluded(rules, path, is_dir):\n    for neg, must_dir, basename, rx in reversed(rules):\n        if must_dir and not is_dir:\n            continue\n        target = path.rsplit('/', 1)[-1] if basename else path\n        if rx.match(target):\n            return not neg\n    return False\n\n\ndef _zq_ignored(path, text):\n    rules = _zq_rules(text)\n    parts = path.strip('/').split('/')\n    for k in range(1, len(parts)):\n        if _zq_excluded(rules, '/'.join(parts[:k]), True):\n            return True\n    return _zq_excluded(rules, '/'.join(parts), False)\n\n\ndef ignored(path):\n    return _zq_ignored(path, globals().get('GITIGNORE', ''))\n",
+        "examples": [
+          {
+            "call": "ignored('data/raw/chains_2025.parquet')",
+            "expect": "True"
+          },
+          {
+            "call": "ignored('src/pricer.py')",
+            "expect": "False"
+          }
+        ],
+        "tests": [
+          {
+            "call": "ignored('data/raw/chains_2025.parquet')",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "ignored('src/pricer.py')",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "ignored('data/README.md')",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "[ignored(p) for p in ['data/clean/chains_2025.parquet', 'data/raw/chains_2026.parquet', 'data/vendor/vols.csv']]",
+            "expect": "[True, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "ignored('tests/fixtures/chain_small.parquet')",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "[ignored(p) for p in ['figures/smile.png', 'figures/term_structure.png']]",
+            "expect": "[True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "ignored('docs/figures/smile.png')",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "ignored('src/figures.py')",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "[ignored(p) for p in ['src/__pycache__/pricer.cpython-312.pyc', 'src/models/__pycache__/heston.cpython-312.pyc', 'tests/__pycache__/test_pricer.cpython-312.pyc']]",
+            "expect": "[True, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "[ignored(p) for p in ['notebooks/.ipynb_checkpoints/smile-checkpoint.ipynb', 'notebooks/greeks/.ipynb_checkpoints/delta-checkpoint.ipynb']]",
+            "expect": "[True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "[ignored(p) for p in ['.venv/bin/python', '.venv/lib/python3.12/site-packages/numpy/__init__.py']]",
+            "expect": "[True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "[ignored(p) for p in ['.env', '.env.local']]",
+            "expect": "[True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "ignored('.env.example')",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "[ignored(p) for p in ['README.md', 'requirements.txt', '.gitignore', 'notebooks/smile.ipynb', 'tests/test_pricer.py', 'src/models/heston.py']]",
+            "expect": "[False, False, False, False, False, False]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 14 hidden tests through `ignored(path)`, which follows Git's own rules for one top-level `.gitignore`. Some tests use paths that are not in the lists above but fall under their rules."
+      },
+      "feedback": {
+        "correct": "Every listed file lands on the right side, and so does every file added later.",
+        "generic": "Not quite right. Run `ignored` on the path in the first failing test and find the line that decides it.",
+        "byKey": {
+          "test-3": "Test 3: `data/README.md` is ignored. Once a folder itself is ignored, Git never looks inside it, so a `!` line cannot bring a file back. Ignore the folder's contents with `data/*` instead.",
+          "test-4": "Test 4 adds new files under `data/`, one in a new subfolder. List the folder's contents with a pattern, not today's file names.",
+          "test-5": "Test 5: the test fixture is ignored. A pattern on the file type, such as `*.parquet`, also catches the 12 rows the tests need.",
+          "test-7": "Test 7: `docs/figures/smile.png` is ignored. A pattern whose only `/` is at the end matches at any depth, so it catches `docs/figures/` too. Tie it to the top folder.",
+          "test-9": "Test 9 has `__pycache__/` folders in other places. Name the folder alone, so the pattern matches it in any folder.",
+          "test-13": "Test 13: `.env.example` is ignored. A pattern with a star, such as `.env*`, catches the template too. Name the two keys, or take the template back with `!`."
+        }
+      },
+      "explain": {
+        "text": "`data/*` ignores what is inside `data/`, not the folder, so `!data/README.md` can take the note back. With `data/`, Git skips the whole folder. A pattern whose only `/` is at the end matches at any depth: right for `__pycache__/`, wrong for `figures/`."
+      }
     }
   ]
 }
