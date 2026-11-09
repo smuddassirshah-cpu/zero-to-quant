@@ -1,0 +1,109 @@
+{
+  "id": "fluency-l7-the-formula",
+  "course": "quadratics",
+  "lesson": "l7-the-formula",
+  "title": "Fluency: the quadratic formula",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 15,
+  "families": [
+    {
+      "id": "discriminant",
+      "weight": 1,
+      "skill": "work out the part under the root",
+      "vars": {
+        "a": { "int": [1, 5] },
+        "b": { "int": [-9, 9] },
+        "c": { "int": [-9, 9], "not": [0] },
+        "v": { "pick": ["x", "y", "t"] }
+      },
+      "let": { "bb": "b^2", "fac": "4*a*c", "d": "b^2 - 4*a*c" },
+      "where": ["gcd(a, abs(b), abs(c)) == 1"],
+      "prompt": "For ${poly(v; a, b, c)} = 0$, what is $b^2 - 4ac$?",
+      "widget": { "kind": "numeric", "answer": "{d}", "tol": { "abs": 0 } },
+      "wrong": [
+        { "id": "sign-of-4ac", "value": "{bb + fac}", "line": "Check the sign: $c = {c}$, so $4ac = {fac}$ and $b^2 - 4ac = {bb} - {fac:()}$." },
+        { "id": "dropped-four", "value": "{bb - a*c}", "line": "You left out the 4: the part under the root is $b^2 - 4ac$." }
+      ],
+      "solution": [
+        "Here $a = {a}$, $b = {b}$ and $c = {c}$.",
+        "$b^2 = {bb}$ and $4ac = 4 \\times {a} \\times {c:()} = {fac}$.",
+        "So $b^2 - 4ac = {bb} - {fac:()} = {d}$."
+      ]
+    },
+    {
+      "id": "rational-roots",
+      "weight": 2,
+      "skill": "use the formula for fraction roots",
+      "vars": {
+        "p": { "int": [2, 4] },
+        "q": { "int": [-7, 7], "not": [0] },
+        "s": { "int": [-5, 5], "not": [0] },
+        "w": { "pick": ["smaller", "larger"] },
+        "g": { "pick": [-1, 1] },
+        "v": { "pick": ["x", "y", "t"] }
+      },
+      "let": {
+        "a": "p", "b": "-(p*s + q)", "c": "q*s", "nb": "p*s + q", "a2": "2*p",
+        "d": "(p*s + q)^2 - 4*p*q*s", "sd": "sqrt((p*s + q)^2 - 4*p*q*s)",
+        "r": "(p*s + q + g*sd)/(2*p)", "other": "(p*s + q - g*sd)/(2*p)",
+        "lo": "(p*s + q - sd)/(2*p)", "hi": "(p*s + q + sd)/(2*p)",
+        "slip": "(-(p*s + q) + g*sd)/(2*p)", "half": "p*s + q + g*sd/(2*p)"
+      },
+      "where": [
+        "(w == 'larger' and g == 1) or (w == 'smaller' and g == -1)",
+        "gcd(p, abs(q)) == 1", "nb != 0",
+        "abs(slip - r) > 0.02", "abs(half - r) > 0.02",
+        "abs(slip - other) > 0.02", "abs(half - other) > 0.02", "abs(slip - half) > 0.02"
+      ],
+      "prompt": "Solve ${poly(v; a, b, c)} = 0$ with the formula. What is the {w} root? Give a fraction or a decimal.",
+      "widget": { "kind": "numeric", "answer": "{r}", "tol": { "abs": 0.005 }, "accept": "${r:frac}$, or a decimal within 0.005" },
+      "wrong": [
+        { "id": "other-root", "value": "{other}", "tol": { "abs": 0.005 }, "line": "That is the other root: the question asks for the {w} one." },
+        { "id": "b-for-minus-b", "value": "{slip}", "tol": { "abs": 0.005 }, "line": "The top starts with $-b$, which is ${nb}$ here, not ${b}$." },
+        { "id": "halved-root-only", "value": "{half}", "tol": { "abs": 0.005 }, "line": "The whole top, $-b \\pm \\sqrt{{b^2 - 4ac}}$, goes over $2a$, not the square root alone." }
+      ],
+      "solution": [
+        "Here $b^2 - 4ac = {d}$, and $\\sqrt{{{d}}} = {sd}$.",
+        "So ${v} = \\frac{{{nb} \\pm {sd}}}{{{a2}}}$, which gives ${lo:frac}$ or ${hi:frac}$.",
+        "The {w} root is ${r:frac}$."
+      ]
+    },
+    {
+      "id": "decimal-roots",
+      "weight": 2,
+      "skill": "use the formula to 2 decimal places",
+      "vars": {
+        "a": { "int": [1, 3] },
+        "b": { "int": [-9, 9], "not": [0] },
+        "c": { "int": [-9, 9], "not": [0] },
+        "w": { "pick": ["smaller", "larger"] },
+        "g": { "pick": [-1, 1] },
+        "v": { "pick": ["x", "y", "t"] }
+      },
+      "let": {
+        "d": "b^2 - 4*a*c", "nb": "-b", "a2": "2*a",
+        "r": "(-b + g*sqrt(abs(d)))/(2*a)", "other": "(-b - g*sqrt(abs(d)))/(2*a)",
+        "slip": "(b + g*sqrt(abs(d)))/(2*a)", "half": "-b + g*sqrt(abs(d))/(2*a)"
+      },
+      "where": [
+        "(w == 'larger' and g == 1) or (w == 'smaller' and g == -1)",
+        "gcd(a, abs(b), abs(c)) == 1", "d > 0", "floor(sqrt(abs(d)))^2 != d",
+        "abs(slip - r) > 0.02", "abs(half - r) > 0.02",
+        "abs(slip - other) > 0.02", "abs(half - other) > 0.02", "abs(slip - half) > 0.02"
+      ],
+      "prompt": "Solve ${poly(v; a, b, c)} = 0$ with the formula. What is the {w} root, to 2 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{r}", "tol": { "abs": 0.005 }, "accept": "{r:dp2}" },
+      "wrong": [
+        { "id": "other-root", "value": "{other}", "tol": { "abs": 0.005 }, "line": "That is the other root: the question asks for the {w} one." },
+        { "id": "b-for-minus-b", "value": "{slip}", "tol": { "abs": 0.005 }, "line": "The top starts with $-b$, which is ${nb}$ here, not ${b}$." },
+        { "id": "halved-root-only", "value": "{half}", "tol": { "abs": 0.005 }, "line": "The whole top, $-b \\pm \\sqrt{{b^2 - 4ac}}$, goes over $2a$, not the square root alone." }
+      ],
+      "solution": [
+        "Here $b^2 - 4ac = {d}$.",
+        "So ${v} = \\frac{{{nb} \\pm \\sqrt{{{d}}}}}{{{a2}}}$.",
+        "The {w} root is ${r:dp2}$ to 2 decimal places."
+      ]
+    }
+  ]
+}
