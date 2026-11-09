@@ -448,6 +448,158 @@
       "explain": {
         "text": "A good note states its numbers, separates results from failures, and says what breaks on real data. A reader should be able to rerun the dashboard from it."
       }
+    },
+    {
+      "id": "h4-weekend-explain",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "od-greeks"
+      ],
+      "pace": 1200,
+      "title": "A weekend's P&L explain",
+      "prose": "On Monday, risk asks for the book's P&L since Friday's close, explained by the Greeks. Write `explain_day(book, S0, S1, r, days, q=0.0)`. Each position is a dict with `qty` (negative for short), `kind`, `K`, `T` and `vol0` and `vol1`. `T` is the years to expiry at the start, in years of 365 days. `vol0` and `vol1` are the option's implied vol at the start and at the end, in vol points: 21.5 means 21.5%. Over `days` calendar days the share goes from `S0` to `S1`, while `r` and `q` stay fixed and every option outlives the period. Take each option's Greeks at the start.\n\nReturn a dict of £ amounts for the whole book. `delta`, `gamma`, `vega` and `theta` hold the four terms and `explained` their sum. `actual` is the change in the book's value by full revaluation, and `residual` is actual less explained. `bs_price(S, K, r, sigma, T, kind, q)` and `bs_greeks` with the same arguments are loaded, with vega per 1.00 of vol and theta per year.",
+      "question": "Write `explain_day` from a blank start.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from math import erf, exp, log, sqrt, pi, isnan\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Delta, gamma, vega (per 1.00), theta (per year), rho.\"\"\"\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in\n                (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega,\n            \"theta\": theta, \"rho\": rho}\n\n\nweekend_book = [\n    {\"qty\": 20, \"kind\": \"call\", \"K\": 100, \"T\": 0.25, \"vol0\": 20.0, \"vol1\": 21.5},\n    {\"qty\": -30, \"kind\": \"put\", \"K\": 90, \"T\": 0.25, \"vol0\": 24.0, \"vol1\": 27.0},\n    {\"qty\": 15, \"kind\": \"put\", \"K\": 95, \"T\": 0.5, \"vol0\": 22.5, \"vol1\": 24.5},\n    {\"qty\": -10, \"kind\": \"call\", \"K\": 110, \"T\": 0.5, \"vol0\": 18.5, \"vol1\": 19.0},\n    {\"qty\": 25, \"kind\": \"call\", \"K\": 105, \"T\": 1.0, \"vol0\": 19.5, \"vol1\": 20.5},\n    {\"qty\": -5, \"kind\": \"put\", \"K\": 100, \"T\": 1 / 12, \"vol0\": 21.0, \"vol1\": 24.0},\n]\n",
+        "starter": "def explain_day(book, S0, S1, r, days, q=0.0):\n    \"\"\"P&L explain of a book over `days` calendar days, in pounds.\"\"\"\n    ...\n",
+        "solution": "def explain_day(book, S0, S1, r, days, q=0.0):\n    \"\"\"P&L explain of a book from S0 to S1 over `days` calendar days, in pounds.\"\"\"\n    dS, dt = S1 - S0, days / 365\n    out = {\"delta\": 0.0, \"gamma\": 0.0, \"vega\": 0.0, \"theta\": 0.0,\n           \"actual\": 0.0}\n    for p in book:\n        n, K, T, kind = p[\"qty\"], p[\"K\"], p[\"T\"], p[\"kind\"]\n        vol0, vol1 = p[\"vol0\"] / 100, p[\"vol1\"] / 100   # points to units\n        g = bs_greeks(S0, K, r, vol0, T, kind, q)       # start of the day\n        out[\"delta\"] += n * g[\"delta\"] * dS\n        out[\"gamma\"] += n * 0.5 * g[\"gamma\"] * dS ** 2\n        out[\"vega\"] += n * g[\"vega\"] * (vol1 - vol0)    # vega per 1.00\n        out[\"theta\"] += n * g[\"theta\"] * dt             # theta per year\n        before = bs_price(S0, K, r, vol0, T, kind, q)\n        after = bs_price(S1, K, r, vol1, T - dt, kind, q)\n        out[\"actual\"] += n * (after - before)\n    out[\"explained\"] = (out[\"delta\"] + out[\"gamma\"]\n                        + out[\"vega\"] + out[\"theta\"])\n    out[\"residual\"] = out[\"actual\"] - out[\"explained\"]\n    return out\n",
+        "examples": [
+          {
+            "setup": "d = explain_day([{'qty': 1, 'kind': 'call', 'K': 100, 'T': 0.25, 'vol0': 20.0, 'vol1': 20.5}], 100.0, 101.0, 0.04, 1)",
+            "call": "[d[k] for k in ('delta', 'gamma', 'vega', 'theta', 'explained', 'actual', 'residual')]",
+            "expect": "[0.5596176923702425, 0.019723966545394447, 0.09861983272697178, -0.027256569674733878, 0.6507049219678748, 0.648790616320909, -0.0019143056469658193]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "explain_day([{'qty': 10, 'kind': 'call', 'K': 100, 'T': 0.5, 'vol0': 20.0, 'vol1': 20.0}, {'qty': -4, 'kind': 'put', 'K': 95, 'T': 0.5, 'vol0': 23.0, 'vol1': 23.0}], 100.0, 101.5, 0.04, 1)['delta']",
+            "expect": "10.569824960556241",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "explain_day([{'qty': 1, 'kind': 'call', 'K': 100, 'T': 0.5, 'vol0': 25.0, 'vol1': 25.0}], 100.0, 94.0, 0.03, 1)['gamma']",
+            "expect": "0.4001662233191421",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "explain_day([{'qty': 1, 'kind': 'put', 'K': 95, 'T': 0.25, 'vol0': 22.0, 'vol1': 24.5}], 100.0, 100.0, 0.03, 1)['vega']",
+            "expect": "0.4191439061983938",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "explain_day([{'qty': -10, 'kind': 'call', 'K': 100, 'T': 0.25, 'vol0': 20.0, 'vol1': 20.0}], 100.0, 100.0, 0.05, 3)['theta']",
+            "expect": "0.8608891437128064",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "d = explain_day([{'qty': 1, 'kind': 'call', 'K': 100, 'T': 1.0, 'vol0': 20.0, 'vol1': 21.0}], 100.0, 103.0, 0.05, 1)",
+            "call": "[d['actual'], d['residual']]",
+            "expect": "[2.33837527123503, -0.014213429055655702]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "explain_day([{'qty': 10, 'kind': 'call', 'K': 105, 'T': 0.5, 'vol0': 19.0, 'vol1': 18.0}, {'qty': 10, 'kind': 'put', 'K': 95, 'T': 0.5, 'vol0': 23.0, 'vol1': 26.0}], 100.0, 100.0, 0.04, 1)['vega']",
+            "expect": "4.6032785925243225",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "d = explain_day([{'qty': 5, 'kind': 'put', 'K': 100, 'T': 0.5, 'vol0': 22.0, 'vol1': 22.0}], 100.0, 100.0, 0.04, 3)",
+            "call": "[d['explained'], d['actual']]",
+            "expect": "[-0.17237094638230863, -0.17342330603209888]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "d = explain_day([{'qty': -3, 'kind': 'call', 'K': 95, 'T': 0.75, 'vol0': 21.0, 'vol1': 22.0}], 100.0, 98.0, 0.04, 1, q=0.03)",
+            "call": "[d[k] for k in ('delta', 'gamma', 'vega', 'theta', 'explained', 'actual', 'residual')]",
+            "expect": "[3.8756527104692697, -0.11810913206392198, -0.9301094150033864, 0.037687420873455106, 2.8651215842754167, 2.8457778867026065, -0.019343697572810292]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "d = explain_day(weekend_book, 100.0, 96.5, 0.04, 3, q=0.01)",
+            "call": "[d[k] for k in ('delta', 'gamma', 'vega', 'theta', 'explained', 'actual', 'residual')]",
+            "expect": "[-80.24378165659269, 2.663546571745662, 9.457145195918148, -0.8736088407702653, -68.99669872969915, -71.5168788108657, -2.520180081166558]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "d = explain_day(weekend_book, 100.0, 104.0, 0.04, 1, q=0.01)",
+            "call": "[d[k] for k in ('delta', 'gamma', 'vega', 'theta', 'explained', 'actual', 'residual')]",
+            "expect": "[91.70717903610593, 3.4789179712596403, 9.457145195918148, -0.2912029469234218, 104.35203925636029, 106.0463045081769, 1.694265251816617]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "d = explain_day([{'qty': 7, 'kind': 'put', 'K': 90, 'T': 0.25, 'vol0': 26.0, 'vol1': 30.0}, {'qty': -7, 'kind': 'put', 'K': 90, 'T': 0.25, 'vol0': 26.0, 'vol1': 30.0}], 100.0, 92.0, 0.04, 3)",
+            "call": "[d[k] for k in ('delta', 'gamma', 'vega', 'theta', 'explained', 'actual', 'residual')]",
+            "expect": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "d = explain_day([], 100.0, 103.0, 0.04, 1)",
+            "call": "[d[k] for k in ('delta', 'gamma', 'vega', 'theta', 'explained', 'actual', 'residual')]",
+            "expect": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "how": "Check runs 12 hidden tests, each value within £0.000001. They read single terms of small books, then the actual change and the residual. Others move two vols opposite ways, run a quiet weekend and add a dividend yield. The last four are the loaded `weekend_book` after a weekend fall and after a one-day rise, a long and a short that cancel, and an empty book. Pure Python: nothing to load."
+      },
+      "feedback": {
+        "correct": "Each term in its Greek's units, each option with its own vol move, and the residual from full revaluation.",
+        "generic": "Some tests failed. Start from the first failing row.",
+        "byKey": {
+          "test-1": "Test 1 reads the delta term of a long call and a short put. Weight each option by its signed `qty`, with its Greeks from the start of the period.",
+          "test-2": "Test 2 reads the gamma term of one call after a £6 fall. It is half of gamma times the move squared.",
+          "test-3": "Test 3 reads one put's vega term for a rise of 2.5 vol points. `bs_greeks` gives vega per 1.00 of vol, so convert the points first.",
+          "test-4": "Test 4 runs over a weekend, three calendar days. `bs_greeks` gives theta per year, so the period is `days / 365` of a year.",
+          "test-5": "Test 5 checks the actual change and the residual. Reprice at the new share price and vol with `T` shortened by the period, and take actual less explained.",
+          "test-6": "Test 6 moves two vols opposite ways. Give each option the vega term of its own vol move.",
+          "test-8": "Test 8 has a dividend yield. Pass `q` to the Greeks and to both prices."
+        }
+      },
+      "explain": {
+        "text": "Each term is a start-of-period Greek times its move in its own units: vol points over 100, days over 365. Vega needs each option's own vol move, so the explain runs position by position. After the weekend fall the residual is −£2.52, and vanna summed over the book is about −£2.32 of it."
+      }
     }
   ]
 }
