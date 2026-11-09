@@ -1775,3 +1775,6 @@ Raised later (least-squares level 2 perf):
 Raised later (algo-think level 2 perf):
 - [Could] A code task whose objective names a method ("write a recursive function") cannot check the method except by a hand-written AST test: `h-split-feed` grades answers only, so a loop with an explicit stack passes, and `how` says so. Want a widget field such as `"recursive": "split_feed"` (some function in the learner's code calls itself) with its own result row, so authors need not copy tokenizer code into postludes.
 - [Could] The playthrough proves the shipped `solution` passes and the starter fails, but it cannot run a second, slow but correct solution in Pyodide; I timed brute force over cuts in a scratch Node script that loads Pyodide 0.27.7 from the local CDN (0.25 s slowest case). Want `playthrough.mjs --variant <item>=<file.py>` that runs extra solutions against the hidden tests and reports each case's time.
+
+Raised later (algo-think level 3 perf):
+- [Could] l9 counts list reads through its own prelude wrapper, but no shared helper exists, so a performance task that must allow slow but correct code cannot also report reads without grading them. Want an advisory per-case note ("your code read 200,000 slots; a binary search reads about 18") that shows on the result row and does not fail the case.
