@@ -306,7 +306,21 @@ const main = async () => {
     /* item 701: `card` is a selector; the shot is then the whole element (model and rubric included), not the window */
     const shot = async (name, card) => {
       if (!opt.shots) return;
-      const snap = (f) => card ? page.locator(card).first().screenshot({ path: f }) : page.screenshot({ path: f });
+      /* item 703: an element taller than the window is not painted below the first viewport (the app scrolls in an inner container), so the viewport grows to fit the card (at most 8000 px) for the shot, then returns */
+      const fullH = () => page.evaluate((sel) => {
+        const el = document.querySelector(sel); if (!el) return 0;
+        let need = Math.ceil(el.scrollHeight), extra = 0;
+        for (let n = el.parentElement; n; n = n.parentElement) { if (n.scrollHeight > n.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(n).overflowY)) extra = Math.max(extra, n.scrollHeight - n.clientHeight); }
+        return Math.max(need, window.innerHeight + extra) + 40;
+      }, card.split(',')[0]);
+      const snap = async (f) => {
+        if (!card) return page.screenshot({ path: f });
+        const vp = page.viewportSize(); let grown = false;
+        try {
+          for (let k = 0; k < 2; k++) { const h = Math.min(8000, await fullH()); if (h > page.viewportSize().height) { await page.setViewportSize({ width: vp.width, height: h }); grown = true; await page.waitForTimeout(250); } }
+          return await page.locator(card).first().screenshot({ path: f });
+        } finally { if (grown) { await page.setViewportSize(vp); await page.waitForTimeout(150); } }
+      };
       const file = (sfx) => path.join(opt.shots, name.replace(/[^\w.-]+/g, '_') + sfx + '.png');
       /* item 278: past the enter patch (350 ms), then until canvas tweens and CSS animations have settled and an exam result page has finished its staged reveal (the `.final` class; item 509; at most 4 s) */
       await page.waitForTimeout(420);
