@@ -482,6 +482,108 @@
       "explain": {
         "text": "`counts` ends as `{\"BP\": 3, \"VOD\": 2, \"AZN\": 1}` and `seen` holds 3 tickers, so the product is 9."
       }
+    },
+    {
+      "id": "h-book-weights",
+      "performance": "code",
+      "difficulty": 4,
+      "skills": [
+        "pf-functions",
+        "pf-collections"
+      ],
+      "pace": 900,
+      "title": "Weights of a book",
+      "prose": "`book` maps tickers to shares held, negative for a short, and `prices` maps tickers to £ prices. A holding's value is shares times price, and the total value adds `cash` to the holdings. A ticker's **weight** is its value over the total.",
+      "question": "Write `book_weights(book, prices, cash=0.0)` that returns a new dictionary of the weights of the tickers in `book`. Return `None` as soon as a held ticker has no price, and `None` if the total is 0. Change neither dictionary.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def book_weights(book, prices, cash=0.0):\n    pass  # replace this line\n",
+        "solution": "def book_weights(book, prices, cash=0.0):\n    total = cash\n    for ticker, qty in book.items():\n        if ticker not in prices:\n            return None\n        total = total + qty * prices[ticker]\n    if total == 0:\n        return None\n    weights = {}\n    for ticker, qty in book.items():\n        weights[ticker] = qty * prices[ticker] / total\n    return weights\n",
+        "examples": [
+          {
+            "call": "sorted(book_weights({\"VOD\": 1000, \"BP\": 300}, {\"VOD\": 0.75, \"BP\": 5.0}).items())",
+            "expect": "[('BP', 0.6666666666666666), ('VOD', 0.3333333333333333)]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sorted(book_weights({\"VOD\": 1000, \"BP\": 300}, {\"VOD\": 0.75, \"BP\": 5.0}).items())",
+            "expect": "[('BP', 0.6666666666666666), ('VOD', 0.3333333333333333)]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "B = {\"VOD\": 1000, \"BP\": 300, \"AZN\": 10}; P = {\"VOD\": 0.75, \"BP\": 5.0, \"AZN\": 120.0, \"HSBA\": 6.5}",
+            "call": "sorted(book_weights(B, P, cash=550.0).items())",
+            "expect": "[('AZN', 0.3), ('BP', 0.375), ('VOD', 0.1875)]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "B = {\"VOD\": 1000, \"BP\": 300, \"AZN\": 10}; P = {\"VOD\": 0.75, \"BP\": 5.0, \"AZN\": 120.0, \"HSBA\": 6.5}",
+            "call": "sorted(book_weights(B, P).items())",
+            "expect": "[('AZN', 0.34782608695652173), ('BP', 0.43478260869565216), ('VOD', 0.21739130434782608)]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "B = {\"VOD\": 1000, \"BP\": 300, \"AZN\": 10}; P = {\"VOD\": 0.75, \"BP\": 5.0, \"AZN\": 120.0, \"HSBA\": 6.5}",
+            "call": "(book_weights({\"VOD\": 1000, \"TSCO\": 200}, P, cash=550.0), sorted(book_weights({\"VOD\": 1000}, P, cash=250.0).items()))",
+            "expect": "(None, [('VOD', 0.75)])",
+            "compare": "isclose"
+          },
+          {
+            "setup": "B = {\"VOD\": 1000, \"BP\": 300, \"AZN\": 10}; P = {\"VOD\": 0.75, \"BP\": 5.0, \"AZN\": 120.0, \"HSBA\": 6.5}",
+            "call": "(book_weights({}, P), book_weights({}, P, cash=100.0))",
+            "expect": "(None, {})",
+            "compare": "equal"
+          },
+          {
+            "setup": "H = {\"BP\": 300, \"SHEL\": -60}; Q = {\"BP\": 5.0, \"SHEL\": 25.0}",
+            "call": "(book_weights(H, Q), sorted(book_weights(H, Q, cash=1000.0).items()))",
+            "expect": "(None, [('BP', 1.5), ('SHEL', -1.5)])",
+            "compare": "isclose"
+          },
+          {
+            "call": "sorted(book_weights({\"BP\": 300, \"SHEL\": -20}, {\"BP\": 5.0, \"SHEL\": 25.0}, cash=500.0).items())",
+            "expect": "[('BP', 1.0), ('SHEL', -0.3333333333333333)]",
+            "compare": "isclose"
+          },
+          {
+            "call": "sorted(book_weights({\"VOD\": 3, \"BP\": 1}, {\"VOD\": 2, \"BP\": 4}, cash=4).items())",
+            "expect": "[('BP', 0.2857142857142857), ('VOD', 0.42857142857142855)]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "b = {\"VOD\": 1000, \"BP\": 300, \"AZN\": 10}; p = {\"VOD\": 0.75, \"BP\": 5.0, \"AZN\": 120.0}; w = book_weights(b, p, cash=550.0)",
+            "call": "(w is not None, b, p)",
+            "expect": "(True, {'VOD': 1000, 'BP': 300, 'AZN': 10}, {'VOD': 0.75, 'BP': 5.0, 'AZN': 120.0})",
+            "compare": "equal"
+          },
+          {
+            "setup": "b = {\"VOD\": 1000, \"TSCO\": 200}; p = {\"VOD\": 0.75}; w = book_weights(b, p); p[\"TSCO\"] = 2.5",
+            "call": "(w, b, sorted(book_weights(b, p).items()))",
+            "expect": "(None, {'VOD': 1000, 'TSCO': 200}, [('TSCO', 0.4), ('VOD', 0.6)])",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 10 hidden tests that call your function. Most read the weights as sorted `(ticker, weight)` pairs, with each weight accepted within `math.isclose`; everything else must be equal (`==`). Tests 9 and 10 also check that the dictionaries you were given did not change."
+      },
+      "feedback": {
+        "correct": "The total counts cash and every holding, and the weights land in a new dictionary. A missing price or a zero total gives `None`.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 passes `cash=550.0`, so the total is £4,000.00 and VOD's £750.00 is 0.1875. Add `cash` to the total, and give weights only for tickers in `book`.",
+          "test-4": "Test 4 holds TSCO, which has no price. Return `None` rather than skipping it or pricing it at 0.",
+          "test-5": "Test 5 expects `None` for an empty book with no cash, whose total is 0, and `{}` with £100.00 of cash.",
+          "test-6": "Test 6's short SHEL cancels BP exactly. With no cash the total is 0, so `None`; add `cash` before you check the total.",
+          "test-7": "Test 7 holds a short. Its value is negative, so it lowers the total and gets a negative weight; do not use `abs`.",
+          "test-8": "Test 8 has whole-number prices and cash, and the total is 14. Divide with `/`, which keeps the fraction; `//` gives 0.",
+          "test-9": "Test 9 checks the book after the call. Write the weights into a new dictionary, never into `book`."
+        }
+      },
+      "explain": {
+        "text": "One pass finds the total and returns `None` at the first missing price; a second pass fills a new dictionary. Checking the total before dividing turns an empty or exactly hedged book into `None`, not a `ZeroDivisionError`. The caller's book and prices are only read, so the function is pure."
+      }
     }
   ]
 }
