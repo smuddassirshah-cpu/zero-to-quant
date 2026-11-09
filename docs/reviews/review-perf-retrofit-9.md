@@ -55,3 +55,31 @@ Read at HEAD `19ab2e2` on `sx/read-perf-9`. No content file was edited.
 - The untestable-property class for test-writing tasks (PT1-1, PT2-1, PT3-3) is new to code items whose product is tests. A stronger fix for PT3-3, if wanted, is a postlude helper listing tests that fail on no broken version, with its own hidden test, as L1 and L2 already do through `weak()`.
 
 Totals: Must 0. Should 4 (LT1-1, LT2-1, LT3-1, PT3-1). Could 7 (LT3-2, LT2-2, PT3-2, PT3-3, PT1-1, PT2-1, PT1-2). graphs-dp L1 to L3 have no finding.
+
+## Fix pass
+
+Each number was recomputed before use (venv Python, exact rationals and scipy for the L3 chances; `pt_three.py` for the pytest suites). Status: fixed 11, disputed 0, deferred 0 findings; two departures from a proposal and one open gate item, all below.
+
+1. LT1-1: fixed. Prompt (d) now reads "Optional, one more point: say what $E[T]$ tends to ...". Basis: the limit $1/p$ is a separate claim from parts (a) to (c). `rubric-passes --item homework-1.json#h-prove-capped-wait`: minimal pass rows 1, 2, 3, 4 (9 points); row 5 can be left out.
+2. LT2-1: fixed. Prompt (c) now reads "Say on which side of the limit they lie. Optional, one more point: say why." Basis: the side is the answer, the integral bound is the extra. `rubric-passes ... homework-2.json#h-prove-cycles-exponential`: minimal pass rows 1, 2, 3, 5 (9 points); row 4 can be left out.
+3. LT3-1: fixed. Prompt (d) now reads "Optional, one more point: estimate the $n$ a normal model needs, ...". Basis: (d) keeps the required Chebyshev $n = 967$ (4.35 / (0.09 x 0.05) = 966.67). `rubric-passes ... homework-3.json#h-prove-desk-guarantee`: minimal pass rows 1, 2, 3, 4 (9 points); row 5 can be left out.
+4. PT3-1: fixed, but not as proposed. The validator allows at most 15 hidden tests (`tools/validate.mjs`, "at most 15 tests"), so test 16 would be an error. Test 2 is now `[broker_fee(12345.67), broker_fee(5005.00)]` against `[12.35, 5.01]` (`isclose`, element by element, as the engine compares lists), and its `byKey` line gained the £5,005.00 sentence. `how` keeps "15 hidden tests, tests 1 to 4 call your `broker_fee`". Basis: 5005 / 1000 = 5.005 exactly, half up gives 5.01, and `round(5.005, 2)` gives 5.0. Reruns (venv Python, pytest 8.1.1): solution passes all 15; starter fails 14 of 15 (all but test 9, as before); every planted wrong suite still fails as before; the reviewer's float-round version now fails test 2 (it passed all 15); float-round with its own tests now fails [2, 6, 8]. The graded value of hidden test 2 changed.
+5. LT3-2: fixed. Model now names $W_A$ and $W_B$, $S = 2W_A + 4W_B - 2n$, $S \le 0$ exactly when $W_A + 2W_B \le n$, 0.0528 at $n = 131$, first 0.05 or below at $n = 136$, and below for every larger $n$. Basis: `lt_numbers.py` (exact rationals: 0.05005 at 135, 0.04939 at 136, falling to 1,000).
+6. LT2-2: fixed. Prompt (d) now reads "each reported fill time is the true time plus $D$ seconds." Basis: the model's mean 0.03 s "late" is reported minus true, so this matches.
+7. PT3-2: fixed. Prose adds "Every notional is in pounds and whole pence." Basis: the solution equals half-up on every 7th whole-penny notional to £30,000 (`pt_three.py`).
+8. PT3-3: fixed. `how` adds the sentence that the tests cannot see whether each test pins a line of the description. Basis: the padded file passes, so the limit is stated, not removed.
+9. PT1-1: fixed. `how` adds that the tests cannot see arrange, act, assert order, different behaviours, or hand-worked answers.
+10. PT2-1: fixed. `how` adds that the tests cannot see whether a test checks a rule or a table of hand answers.
+11. PT1-2: fixed. `byKey` test-3 now also names a test that checks something the description leaves open, such as an empty `fills`.
+
+Script edits (so every gate exits 0): `perf-retrofit-9-scripts/pt_three.py` expects test 2 in the three float-round plants; `findings_assert.py` reads half-penny calls inside a list and closes LT3-2 on the new model text (the old condition also required the absence of "no continuity correction", a sentence the model keeps and that is true: normal 0.04985 against exact 0.0528); `docs/reports/pytest-3-perf-numbers.py` compares a list `expect` element by element.
+
+Graded answers changed: pytest `h3-fee-test-first` hidden test 2 (now also needs `broker_fee(5005.00) == 5.01`). No limits-thm or graphs-dp graded answer changed.
+
+### Gates
+
+- Scripts: `lt_numbers.py`, `pt_three.py`, `gd_three.py`, `voice9.py`, `findings_assert.py` (0 open) all exit 0 under `-I`; the nine author scripts exit 0 (limits-thm 41, 64, 67 checks; pytest and graphs-dp "0 failures").
+- Voice scan 35: 0 and 0 for limits-thm, pytest and graphs-dp.
+- Validator: 0 errors. `perf-reports.mjs --warn`: none of the nine reports listed.
+- Playthrough with the local CDN, 18 runs: 16 All passed. Two mobile runs fail on displays in items outside this fix pass: `limits-thm/homework-1#h-long-hyper-var` (two displays, 440px) and `limits-thm/homework-2#h-long-exponential` (three displays). Both predate this batch. Deferred, because the brief forbids editing items other than the named ones: split those displays with `aligned`. The nine named items pass at both widths.
+- `git checkout app/content/manifest.json` run; no tracked change to it.

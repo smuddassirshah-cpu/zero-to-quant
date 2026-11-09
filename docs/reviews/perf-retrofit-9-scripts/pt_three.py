@@ -222,8 +222,8 @@ def broker_fee(notional):
     return min(max(round(notional * 0.001, 2), 4.95), 25.00)
 '''
 expect(w, FLOAT + "\n\ndef test_small" + w["solution"].split("\n\n\ndef test_small", 1)[1],
-       "planted: float round(), the shipped tests", [])
-expect(w, FLOAT + TESTS, "planted: float round(), own half-penny test at 5,005", [6, 8])
+       "planted: float round(), the shipped tests", [2])
+expect(w, FLOAT + TESTS, "planted: float round(), own half-penny test at 5,005", [2, 6, 8])
 print("     float round() on half-penny notionals:", [(n, round(n * 0.001, 2)) for n in (5005.0, 10005.0, 12345.0)])
 expect(w, FLOAT + '''
 def test_a():
@@ -236,7 +236,7 @@ def test_c():
 def test_d(n):
     with pytest.raises(ValueError):
         broker_fee(n)
-''', "planted: a test that compares broker_fee with itself", [9, 10])
+''', "planted: a test that compares broker_fee with itself", [2, 9, 10])
 expect(w, MINE.replace("def test_minimum():\n    assert broker_fee(3_000.00) == pytest.approx(4.95)", "def test_minimum():\n    assert broker_fee(3_000.00) == pytest.approx(4.95)\n\ndef test_always_red():\n    assert broker_fee(1.0) == 99"),
        "planted: one always-failing test", [6, 7, 8])
 expect(w, MINE.replace("@pytest.mark.parametrize(\"n\", [0, -1.0])", "@pytest.mark.parametrize(\"n\", [-1.0])").replace("def test_rounds_up_at_half():\n    assert broker_fee(5_005.00) == pytest.approx(5.01)  # 5.005\n", ""),
