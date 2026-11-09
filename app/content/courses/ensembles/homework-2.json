@@ -389,6 +389,55 @@
           "text": "States that importance is not causation and rewrites the momentum claim as predictive use"
         }
       ]
+    },
+    {
+      "id": "hw-floor-derive",
+      "performance": "derivation",
+      "difficulty": 5,
+      "skills": [
+        "en-bagging"
+      ],
+      "pace": 1200,
+      "title": "Why more trees stop helping",
+      "question": "Derive the variance and answer both questions.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A desk's regression forest forecasts a bond's spread change over the next day, in basis points (bp). At today's inputs, across the random draws that grow the trees, each tree's forecast has variance 40 bp², and any two trees' forecasts have correlation 0.2. The forest has 100 trees. A colleague plans to grow 1,000 instead, \"to cut the forecast's variance tenfold\".\n\nDerive the variance of the average of $B$ trees' forecasts from a blank page, and justify every line. State exactly what you assume about the trees. Find the limit of the variance as $B$ grows. Then answer the colleague, with the variance at 100 trees and at 1,000.\n\nA second forest uses a smaller `max_features`. Its trees have variance 50 bp² and correlation 0.08. At these inputs they have the same bias as the first forest's trees. Which forest has the smaller mean squared error at 1,000 trees, and from how many trees on is that so?",
+        "model": "**Assumptions.** Fix today's inputs $x$. A tree's forecast at $x$ is random, because the draws that grow it are random: the training rows, the resample and the features on offer. Write $X_1, \\dots, X_B$ for the $B$ trees' forecasts at $x$, and $\\bar X = \\frac1B\\sum_b X_b$ for the forest's.\n- The $X_b$ are identically distributed, each with mean $\\mu$ and variance $\\sigma^2 > 0$.\n- Every pair $b \\ne c$ has the same correlation $\\rho$, so $\\operatorname{Cov}(X_b, X_c) = \\rho\\sigma^2$.\n- $B$ is fixed before the trees are grown.\n\nThe trees need not be independent. They are grown from one training sample, which is why $\\rho > 0$.\n\n**1. The variance of the average.** A constant comes out of a variance squared, so\n$$\\operatorname{Var}(\\bar X) = \\frac{1}{B^2}\\operatorname{Var}\\Big(\\sum_b X_b\\Big).$$\nThe variance of a sum is the sum of the covariances over all $B^2$ ordered pairs $(b, c)$:\n$$\\operatorname{Var}\\Big(\\sum_b X_b\\Big) = \\sum_{b}\\sum_{c} \\operatorname{Cov}(X_b, X_c).$$\nIn $B$ of those pairs $b = c$, and each term is $\\operatorname{Var}(X_b) = \\sigma^2$. In the other $B(B - 1)$ pairs $b \\ne c$, and each term is $\\rho\\sigma^2$. So\n$$\\operatorname{Var}(\\bar X) = \\frac{B\\sigma^2 + B(B - 1)\\rho\\sigma^2}{B^2}.$$\nDividing by $B^2$ gives $\\sigma^2/B + \\rho\\sigma^2 - \\rho\\sigma^2/B$. Collecting the two terms over $B$:\n$$\\operatorname{Var}(\\bar X) = \\rho\\sigma^2 + \\frac{(1 - \\rho)\\sigma^2}{B}.$$\n\n**2. Checks at the ends.** $B = 1$ gives $\\sigma^2$, one tree. $\\rho = 0$ gives $\\sigma^2/B$, the independent case. $\\rho = 1$ gives $\\sigma^2$ for every $B$, as for copies of one tree.\n\n**3. The limit.** The first term, $\\rho\\sigma^2$, has no $B$ in it. The second falls to 0 as $B$ grows, since its top is fixed. So the variance falls to $\\rho\\sigma^2$, the floor. While $\\rho < 1$ the second term is positive, so every finite forest sits above the floor. No number of trees gets below it; only a change to the trees, a lower $\\rho$ or $\\sigma^2$, moves it.\n\n**4. The colleague's plan.** Here $\\sigma^2 = 40$ and $\\rho = 0.2$. The floor is $0.2 \\times 40 = 8$ bp², and $(1 - \\rho)\\sigma^2 = 32$.\n- 100 trees: $8 + 32/100 = 8.32$ bp².\n- 1,000 trees: $8 + 32/1000 = 8.032$ bp².\n\nThe tenfold growth buys $8.32 - 8.032 = 0.288$ bp², about 3.5%. A tenfold cut would need 0.832 bp². That is below the floor of 8, so no number of trees gives it.\n\n**5. The bias.** Expectation is linear, so $E[\\bar X] = \\frac1B\\sum_b E[X_b] = \\mu$. The forest's bias at $x$ is $\\mu - f(x)$, where $f(x)$ is the true mean change. That is one tree's bias, whatever $B$ is. Averaging cuts variance, never bias. The mean squared error splits as\n$$E\\big[(\\bar X - f(x))^2\\big] = (\\mu - f(x))^2 + \\operatorname{Var}(\\bar X),$$\nbecause the cross term $2(\\mu - f(x))\\,E[\\bar X - \\mu]$ is 0.\n\n**6. The second forest.** Its floor is $0.08 \\times 50 = 4$ bp², and $(1 - \\rho)\\sigma^2 = 46$. At 1,000 trees its variance is $4 + 46/1000 = 4.046$ bp², against 8.032. Its trees start with the same bias as the first forest's, and step 5 says averaging keeps each bias. So the two mean squared errors differ by the variances alone, for every $B$. The second forest's variance is the smaller when\n$$\\begin{aligned} 4 + \\frac{46}{B} &< 8 + \\frac{32}{B} \\\\ \\iff \\frac{14}{B} &< 4 \\iff B > 3.5. \\end{aligned}$$\nAt 3 trees it is 19.33 bp² against 18.67, since its noisier trees still dominate. At 4 trees it is 15.5 against 16. So at 1,000 trees the second forest has the smaller mean squared error, by 3.986 bp², and it is ahead from 4 trees on.",
+        "rubric": [
+          {
+            "points": 2,
+            "required": true,
+            "text": "Assumptions. Tick only if all are stated. The forecasts at fixed inputs are random through the draws that grow the trees. They are identically distributed, with one variance $\\sigma^2$. Every pair has one correlation $\\rho$, so covariance $\\rho\\sigma^2$."
+          },
+          {
+            "points": 3,
+            "required": true,
+            "text": "Derivation. Tick only if each line has its reason. The $1/B^2$ comes out of the variance squared. The variance of a sum is the sum of all $B^2$ covariances: $B$ of them $\\sigma^2$, and $B(B - 1)$ of them $\\rho\\sigma^2$. Tidying gives $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$."
+          },
+          {
+            "points": 2,
+            "required": true,
+            "text": "Limit and the colleague. Tick only if all are given. The limit is $\\rho\\sigma^2 = 8$, as the first term has no $B$ and the second falls to 0. The variance is 8.32 at 100 trees and 8.032 at 1,000, about 3.5% less. A tenfold cut is impossible: 0.832 is below the floor."
+          },
+          {
+            "points": 2,
+            "required": true,
+            "text": "Second forest. Tick only if all are given. Averaging keeps one tree's mean, by linearity, so the biases stay equal and the errors differ by the variances. At 1,000 trees it is 4.046 against 8.032. It is ahead from 4 trees on, since $4 + 46/B < 8 + 32/B$ exactly when $B > 3.5$."
+          },
+          {
+            "points": 1,
+            "text": "Checks the formula at the ends: $B = 1$ gives $\\sigma^2$, $\\rho = 0$ gives $\\sigma^2/B$, and $\\rho = 1$ gives $\\sigma^2$ for every $B$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your derivation with the model and mark it against the rubric.",
+        "generic": "Compare your derivation with the model and mark it against the rubric."
+      },
+      "explain": {
+        "text": "The $B(B - 1)$ covariances leave $\\rho\\sigma^2$ in the average whatever $B$ is. More trees shrink only the $(1 - \\rho)\\sigma^2/B$ part, so 1,000 trees barely beat 100. Lowering the trees' correlation moves the floor, even when each tree gets noisier."
+      }
     }
   ]
 }
