@@ -19,6 +19,7 @@ import { scanO2, O2_CODES, orderedOptionsWhy } from './o2-rules.mjs';
 import { checkCapstones } from './capstone-rules.mjs';
 import { statedMinutes, ignoreList as durationIgnore, FLOOR as DURATION_FLOOR } from './duration-prose.mjs';
 import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb, optionalRows } from './perf-rules.mjs';
+import { checkSet as checkFluencySet, fixtureFiles as fluencyFixtures } from './fluency-rules.mjs';   // generated fluency sets (ENGINE-BACKLOG 812 to 816)
 const hoursLib = createRequire(import.meta.url)('../js/hours.js');   // SESSION_RANGE: the minutes each lesson session accepts (item 10)
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
 const tradeSim = createRequire(import.meta.url)('../js/engine/widgets/trade.js'); // { norm, play, ... }: the trade widget's game, so the authored strategy is played against the benchmark (item 459)
@@ -1908,6 +1909,15 @@ const KINDS_OK = (it) => ['code', 'derivation', 'aloud', 'data'].includes(it.per
 
 /* Courses */
 const manifest = [];
+const fluencyManifest = {};   // ENGINE-BACKLOG 804: "course/set-id" -> { lesson, title, n, pass, minutes, families, sample? }, read by js/content.js fluencyFor
+/* A generated fluency set (docs/AUTHORING.md section 16): schema, the lesson on the course map, every family sampled at 200 seeds; voice on the text as drawn */
+const checkFluencyFile = (file, cid, fileId, data, D, written, { fixture = false } = {}) => {
+  const lessonIds = new Set(((D && D.levels) || []).flatMap(lv => (Array.isArray(lv.lessons) ? lv.lessons : [])));
+  const voice = (where, text) => { const before = problems.length; checkText(file, where, text); return problems.splice(before).map(p => ({ level: p.level, where: p.where, msg: p.msg })); };
+  const r = checkFluencySet(data, { fileId, lessonIds, written: new Set(written), voice, course: cid });
+  r.problems.forEach(p => (p.level === 'error' ? err : warn)(file, p.where, p.msg));
+  return r;
+};
 const examMinutesManifest = {};   // ENGINE-BACKLOG 621: exam id -> minutes the exam screen runs, read by js/content.js examMinutes
 const sessionManifest = {};   // item 10: "course/lesson" -> { session, minutes } for workshop and project lessons, read by js/content.js and js/hours.js
 const lessonMinutesManifest = {};   // session Y: "course/lesson" -> the lesson's authored minutes, for the in-app hours (js/hours.js, read by js/content.js)
@@ -2002,6 +2012,15 @@ Object.keys(C.courses || {}).forEach(cid => {
   listJSON(dir).forEach(f => {
     if (referenced.has(f)) return;
     const uf = path.join(dir, f), ur = readJSON(uf), uid = f.replace(/\.json$/, '');
+    if (/^fluency-.+\.json$/.test(f)) {   // a generated fluency set, found by its file name (no course.json entry)
+      if (!isObj(ur.data)) { if (!ur.bad) err(uf, '', 'a fluency set is a JSON object'); return; }
+      manifest.push(`courses/${cid}/${f}`);
+      if (noteSample(uf, `courses/${cid}/${f}`, ur.data)) { /* listed under samples */ }
+      guard(uf, () => checkFluencyFile(uf, cid, uid, ur.data, D, written));
+      const d = ur.data;
+      fluencyManifest[`${cid}/${uid}`] = { lesson: d.lesson, title: d.title, n: Number.isInteger(d.n) ? d.n : 20, pass: typeof d.pass === 'number' ? d.pass : 0.9, minutes: Number.isInteger(d.minutes) ? d.minutes : 10, families: Array.isArray(d.families) ? d.families.length : 0, ...(d.sample === true ? { sample: true } : {}) };
+      return;
+    }
     if (!(ur.data && ur.data.sample === true)) { if (!ur.bad) err(uf, '', 'file is not referenced by course.json (an engine sample says "sample": true at the top)'); return; }
     /* a sample lesson, review or homework in a course folder: checked like the real thing, kept off the map and out of every count */
     noteSample(uf, `courses/${cid}/${f}`, ur.data); manifest.push(`courses/${cid}/${f}`);
@@ -2013,6 +2032,15 @@ Object.keys(C.courses || {}).forEach(cid => {
   }
   writtenByCourse.set(cid, new Set(written));
   summary.push({ cid, topic: meta.topic, lessons: lessonTotal, levels: levels.length, written: written.length, unwritten, reviews: levels.length - reviewsMissing, homework: levels.length - homeworkMissing });
+});
+
+/* The fluency fixtures (tools/fixtures/fluency, never content): checked like a real set, so the sampler and the rules are exercised on every run */
+fluencyFixtures().forEach(ff => {
+  const fr = readJSON(ff);
+  if (!isObj(fr.data)) return;
+  const cid = fr.data.course, D = cur.courseDocs[cid];
+  if (!D) { err(ff, 'course', `the fixture's course "${cid}" is not a course`); return; }
+  guard(ff, () => checkFluencyFile(ff, cid, fr.data.id, fr.data, D, writtenByCourse.get(cid) || [], { fixture: true }));
 });
 
 /* perf-pending.json: a key that is not a level is stale; one count line for the rest */
@@ -2431,7 +2459,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. examMinutes gives the minutes each exam runs. sessions lists the workshop and project lessons with their true minutes. lessonMinutes gives the authored minutes of every lesson and setMinutes the minutes a review or homework file states (the in-app hours). perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), examMinutes: Object.fromEntries(Object.keys(examMinutesManifest).sort().map(k => [k, examMinutesManifest[k]])), sessions: Object.fromEntries(Object.keys(sessionManifest).sort().map(k => [k, sessionManifest[k]])), lessonMinutes: Object.fromEntries(Object.keys(lessonMinutesManifest).sort().map(k => [k, lessonMinutesManifest[k]])), setMinutes: Object.fromEntries(Object.keys(setMinutesManifest).sort().map(k => [k, setMinutesManifest[k]])), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. examMinutes gives the minutes each exam runs. sessions lists the workshop and project lessons with their true minutes. lessonMinutes gives the authored minutes of every lesson and setMinutes the minutes a review or homework file states (the in-app hours). perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), examMinutes: Object.fromEntries(Object.keys(examMinutesManifest).sort().map(k => [k, examMinutesManifest[k]])), sessions: Object.fromEntries(Object.keys(sessionManifest).sort().map(k => [k, sessionManifest[k]])), lessonMinutes: Object.fromEntries(Object.keys(lessonMinutesManifest).sort().map(k => [k, lessonMinutesManifest[k]])), setMinutes: Object.fromEntries(Object.keys(setMinutesManifest).sort().map(k => [k, setMinutesManifest[k]])), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])), ...(Object.keys(fluencyManifest).length ? { fluency: Object.fromEntries(Object.keys(fluencyManifest).sort().map(k => [k, fluencyManifest[k]])) } : {}) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }

@@ -1859,3 +1859,99 @@ Status block (session Y inbox numbering, 9 Nov):
 746 status: done. Files: `app/js/hours.js` (build inputs `setMinutes`, `examMinutes`; `splitLabel`, `fmtH`), `app/js/content.js` (stage and topic `hoursApp`, `hoursOut`), `app/js/screens/{learn,course,setup}.js`, `app/css/screens/course.css`, `app/tools/{hours-source,readiness-sums,curriculum-hours,validate}.mjs` (manifest `lessonMinutes`, `setMinutes`), `content/readiness.json` (`hoursInApp`, `hoursOutside`, written by `readiness-sums.mjs --write`), `docs/AUTHORING.md` section 14. Test `tools/test-hours-split.mjs` (209 checks). Allowances are the brief's "fixed allowance per set"; the 20 and 45 are this pass's choice and live in `hours.js`.
 747. Done [Should] (user decision 9 Nov, `docs/reports/review-size-audit.md` route 1) A test-out draws 5 review items and passes at 4 of 5 (0.8), so a review of 10 items gives two papers with no repeated item (8 items repeat exactly 2).
 747 status: done. Files: `app/js/prereq.js` (`TESTOUT_N = 5`), `app/js/screens/review.js` (comment number only), `app/tools/test-met-rule.mjs` (new test 747 runs the real draw expression from `review.js`; rule 2 test now 4 of 5), `app/tools/playthrough.mjs` (fixture counts), `docs/AUTHORING.md` section 11 ("5 items, pass at 4"; "10 or more"). Stored state is untouched: a test-out passed under the old rule stays passed. The pass count is derived (`ceil(5 x 0.8) = 4`), and no learner-facing text states a count. Report `docs/reports/engine-747.md`.
+
+## Engine pass G and C (`docs/reports/engine-gen-2.md`), items 800 to 829 (brief `docs/briefs/engine-gen.md`)
+
+Generated fluency sets (G, 800 to 819): 20 fresh typed-answer items per procedural lesson, authored as JSON only; author side `docs/AUTHORING.md` section 16.
+
+800. Done [Must] Content shape: `content/courses/<course>/fluency-<lesson>.json`, one set per lesson, found by file name (no `course.json` edit); fields `id`, `lesson`, `title`, `n`, `pass`, `minutes`, `families[]` (`id`, `weight`, `skill`, `vars`, `let`, `where`, `prompt`, `widget`, `wrong`, `solution`).
+800 status: done. Schema in `tools/fluency-rules.mjs` (`checkSet`) and `js/engine/gen.js` (`checkFamily`).
+
+801. Done [Must] Safe evaluator, no `eval` and no `Function` (`js/engine/gen.js`): `+ - * / ^ %`, comparisons, `and`/`or`/`not`, `gcd lcm abs min max floor ceil round(x, dp) sqrt comb fact sign`, exact rationals (BigInt) until a root or fractional power makes a float.
+801 status: done. 261 unit cases in `tools/test-fluency.mjs` (operators, every function, 30 error cases including `constructor`, `__proto__`, `eval`).
+
+802. Done [Must] Templates and formats in `prompt`, `widget`, `wrong`, `solution`: `{x}`, `{x:+}`, `{x:c}`, `{x:+c}`, `{x:()}`, `{x:frac}`, `{x:+frac}`, `{x:dpN}`, `{x:+dpN}`, `{poly(v; c2, c1, c0)}`, any expression before the colon; `{{` and `}}` are literal braces (LaTeX is written `\\frac{{{p}}}{{{q}}}`). `+frac` and `+dpN` are additions to the brief's list, each with a test.
+802 status: done. Every format has unit cases; `poly` has 12.
+
+803. Done [Must] Seeded drawing: `vars` `int` (with `step`), `pick`, `not`; `let` in order; `where` (redraw, 60 tries per question); one stream per question from `ZQ.arith.rng`; families round robin by weight (smooth weighted round robin); no two prompts equal in an attempt.
+803 status: done. `ZQ.gen.generate(set, seed)`; the same seed gives the same attempt, in the browser and in node.
+
+804. Done [Must] Content loader: `ZQ.content.fluencyList()`, `fluencyFor(course, lesson)`, `fluencySet(course, id)`; the manifest lists sets under `fluency`; a registered fixture (`_setFluency`, `_addFluency`) counts as a real set for the page load (the test hook; no content file).
+804 status: done. `manifest.json` is unchanged while no set exists.
+
+805. Done [Must] A generated item is shaped for `ZQ.player.runSet` (`ZQ.gen.playerItem`): `question`, `widget` (numeric or expression, graded by the existing widgets unchanged), `feedback.byKey` (the matched `wrong` line then the solution steps), `explain`.
+805 status: done.
+
+806. Done [Must] State `ZQ.state.fluency` (`result`, `get`, `list`): per set attempts, best score, last score, last pass date and per family right and wrong counts; `partial: true` (leaving part way) keeps only the family counts. No skill score, streak, XP, met rule or gate moves.
+806 status: done. Checked by the playthrough (the save before and after an attempt is identical outside `fluency` and hours).
+
+807. Done [Should] `ZQ.setPage` (the review set page) takes `back`, `backLabel`, `overview: false`, `againRoute` and a `verdict` line; `runSet`'s test hook gains `answerWrong()`.
+807 status: done. Existing pages unchanged (defaults).
+
+808. Done [Must] Route `#fluency/<course>/<set id>[/<seed>]` (`js/screens/fluency.js`): start card (pass mark, no list of questions), one item a screen, one try, no hints, result with score, pass or not, "Go again" (a new seed); 440 px.
+808 status: done.
+
+809. Done [Should] The result is recorded through `ZQ.state.fluency.result` and the time logged as review hours; leaving part way is not an attempt.
+809 status: done.
+
+810. Done [Must] Today lists a set under a "Practice" heading in the Due card, after the due work, until it is first passed and only when its lesson is done (newest lesson first, at most two rows).
+810 status: done.
+
+811. Done [Must] The lesson's card on the course page carries a Fluency row (status, Start or Go again); the lesson's end card offers the set.
+811 status: done.
+
+812. Done [Must] Validator: schema (file name, `id`, `lesson` on the course map, `n`, `pass`, `minutes`, family fields, widget kinds and fields, `wrong` shapes, static name and function checks, braces), voice rules and the 35-word gate on the text as drawn, fixtures checked on every run.
+812 status: done. Rules in `tools/fluency-rules.mjs`; 30 scratch cases in `tools/test-validate-fluency.mjs`.
+
+813. Done [Must] Validator sampling: every family at 200 seeds: every placeholder filled, the typed answer graded correct (numeric through the numeric grading; an expression by text, in full by 815), each `wrong` not correct, redraw rate at most 80%, at least 60 distinct prompts (warn below 60, error below 25).
+813 status: done.
+
+814. Done [Must] `tools/fluency-sample.mjs --set <course>/<set id> [--family id] [--seed s] [--n k] [--json] [--stats]` (also `fixture/<id>` and `--file`): prompts, answers, wrongs, solutions and variable values.
+814 status: done.
+
+815. Done [Must] `tools/test-fluency.mjs --local-cdn <pkgs>`: unit tests of the evaluator and every format; every family of every set at 50 seeds in the real browser grader (answer, accept forms and upToConstant correct; each `wrong` not; for a `form` family the prompt's own expression typed back fails).
+815 status: done. 281 checks on the fixture.
+
+816. Done [Must] `playthrough.mjs --fluency <course>/<set id>` (also `fixture/<id>`, repeatable): a failing attempt, same seed repeats, Go again draws new numbers, a passing attempt, the save, Today row appears and clears, the course row, the lesson's end card, a part-way leave, nothing else in the save moves, no overflow at any width; `--all` plays every set after the sets, and the fixtures.
+816 status: done. Green at desktop and `--mobile`.
+
+817. Done [Should] `census.mjs` prints "Fluency sets N (families M)".
+817 status: done.
+
+818. Done [Must] Fixture `app/tools/fixtures/fluency/fluency-l3-opening-brackets.json` (`"sample": true`, five families: numeric, expanded, factorised, upToConstant, fractions), never under `app/content/`.
+818 status: done.
+
+819. Done [Must] `docs/AUTHORING.md` section 16 (every `vars` kind, every `let` function, every format with an example, `where`, choosing `form`, running `fluency-sample.mjs`, what the validator samples, the recompute script, a checklist) and `app/README.md`.
+819 status: done.
+
+Cumulative weekly review (C, 820 to 829): a weekly mixed set drawn from every met level, due on Today, not opt-in, no gate.
+
+820. Done [Must] State `ZQ.state.cumulative` (`status`, `postpone`, `record`, `seen`, `history`): due seven days after the last review was finished, the first seven days after the first level was met (`prereq.met`); postponing keeps it due; a review left part way is not a review (it keeps what was served); 100 history rows, 3000 seen uids; old saves load with an empty block.
+820 status: done. Eight cases in `tools/test-cumulative.mjs` part B.
+
+821. Done [Must] `ZQ.select.cumulative.build(model, { n, seed })`, the pure selection: tier 1 generated items from the Fluency families of met levels' lessons (weighted by wrong counts and age), tier 2 authored items never seen, tier 3 review items least recently seen; at most four from one course, relaxing only when too few courses are met; neighbours from different courses.
+821 status: done. Eleven cases in part A (with and without Fluency families).
+
+822. Done [Must] `ZQ.select.weeklyReview()` builds the model from the live save and content (met levels, fluency sets and their family counts, unseen bank items and unsat topic-exam items on met courses, the quiz and review items of the twelve least recently covered met levels) and resolves the items for `runSet`; no long-form or code item.
+822 status: done. Part C on the real content.
+
+823. Done [Must] `ZQ.select.weeklyFinish()` records the result: history row (date, score, per-level misses), authored misses to the redo queue (their own ids), family counts to the Fluency save (not an attempt), skill scores as a practice set does, seen uids; a generated miss only moves the family counts.
+823 status: done.
+
+824. Done [Must] Route `#weekly` (`js/screens/weekly.js`) on the shared set page: start card with "Not today", twenty items one try each, result with misses by level.
+824 status: done. `ZQ.setPage` gains `later`.
+
+825. Done [Must] Today's Due card lists "Weekly mixed review" when due (postponed today and overdue read differently), above the practice rows.
+825 status: done.
+
+826. Done [Should] The weekly review is never a gate: the met rule, lessons, reviews, exams and performance records are unchanged by it.
+826 status: done. Checked in `test-cumulative.mjs` (before and after) and by the playthrough.
+
+827. Done [Must] `tools/test-cumulative.mjs`: selection rules on seeded states, with and without Fluency sets, the schedule, the recording.
+827 status: done. 25 cases.
+
+828. Done [Must] Playthrough routes block (`cumulativeChecks`): nothing due on the first day, the state clock eight days on, the card appears above the practice rows, "Not today" keeps it due, the review is played (20 items) and recorded, the card clears, due again after seven days; no overflow at any width.
+828 status: done. Desktop and `--mobile`.
+
+829. Done [Must] `docs/AUTHORING.md` section 16 "The weekly mixed review" and the report `docs/reports/engine-gen-2.md`.
+829 status: done.

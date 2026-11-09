@@ -519,7 +519,7 @@ An item is a `problem` screen without hints: `{ "id", "difficulty", "skills": [.
   - `required: true` on an **item** of a paper (ENGINE-BACKLOG 592): the paper fails if that item is not right, whatever the share or net score. Use it for an exit that must not be failed while the stage passes (a stage's coding task). The start card says "Must be right to pass" with the question numbers (and each paper's row in a multi-paper exam gives the count), the question carries a "Must be right to pass" tag while it is open, and the result says "A required item was wrong, which fails the paper whatever the share" with the question numbers. An item with `parts` is right only when every part is; a written item is right at the 7 of 10 rule or the rubric's pass line, and Skip marking scores it wrong. The attempt's `passedAuto` reads the same rule over the auto-marked items.
   - `tracks: ["trader", "research", "strats", "developer"]` on a **mock paper** (ENGINE-BACKLOG 593; the role ids of `prep.json`, `capstones.json` and a mock's `style`; `researcher` is read as `research`): the paper counts only for a learner whose profile track is one of them (Trader, Researcher, Strats, Developer). For anyone else, including Undecided, the paper is left out of the sitting: the start card says "Left out for your track: <paper> (<roles>). They do not count towards your pass" with a link, `#exam/<id>/all`, to sit it as well; sat that way it is optional, never gates the mock, and its result row says "Optional for your track, not counted". The route flag `as-<role>` (`#exam/<id>/as-research`, after an optional seed) sits as that role, and the playthrough sits an exam with tracked papers through `all`. A mock with a left-out paper still reads as a multi-paper mock. Tracks are for a role-specific technical prompt; a paper every path needs carries none.
   - **One-item papers** (ENGINE-BACKLOG 612): a multi-paper mock whose papers (three or more) each hold one item lists them on the start card as a compact list, "5 prompts, 11.5 minutes on the clocks" with the shared rules said once, and each paper by its minutes only. A paper whose pass mark or way of sitting differs from the rest says so on its own row.
-- **Generated items** (ENGINE-BACKLOG 452): an entry in a paper's `items` of the form `{ "generator": "arith", "mix": { "add": 1, "sub": 1, "mul": 1, "div": 1 }, "n": 80, "options": 4 }` expands, when the learner begins, to `n` single-choice items, in place among any authored items. The problems come from the Today warm-up generator and `content/warmup.json` (addition and multiplication, with subtraction and division as their reverses; the same problem never follows itself). `mix` is `{ operation: weight }` (all four equally if left out); a value may be `{ "weight": 1, "a": [2, 100], "b": [2, 100] }` to narrow the ranges, which go on `add` or `mul` and apply to their reverses. `options` is 2 to 6 answers (default 4). Each wrong option is a near miss: the reverse operation, a misplaced decimal point (times or over ten) or a slipped digit. Optional `difficulty` (default 3) and `skills`. `n` is 1 to 200. The seed is chosen per attempt, so a resat differs, and is stored on the attempt (`seed`). Generated items are for mock and stage exams (not topic exams) and never join the redo queue.
+- **Generated items** (ENGINE-BACKLOG 452): an entry in a paper's `items` of the form `{ "generator": "arith", "mix": { "add": 1, "sub": 1, "mul": 1, "div": 1 }, "n": 80, "options": 4 }` expands, when the learner begins, to `n` single-choice items, in place among any authored items. The problems come from the Today warm-up generator and `content/warmup.json` (addition and multiplication, with subtraction and division as their reverses; the same problem never follows itself). `mix` is `{ operation: weight }` (all four equally if left out); a value may be `{ "weight": 1, "a": [2, 100], "b": [2, 100] }` to narrow the ranges, which go on `add` or `mul` and apply to their reverses. `options` is 2 to 6 answers (default 4). Each wrong option is a near miss: the reverse operation, a misplaced decimal point (times or over ten) or a slipped digit. Optional `difficulty` (default 3) and `skills`. `n` is 1 to 200. The seed is chosen per attempt, so a resat differs, and is stored on the attempt (`seed`). Generated items are for mock and stage exams (not topic exams) and never join the redo queue. Typed-answer families generated per lesson (JSON only) are a different feature: see section 16, "Generated fluency sets".
 - **Timed sets** (ENGINE-BACKLOG 454, covering 129): `"timed": { "seconds": 480, "lockAtZero": true }` at the top level of a level review file shows a countdown and a live "Score n of m" in the set's header; the start card states the time. With `lockAtZero: true` the set ends at zero: an answer that is ready is checked, everything else counts as missed (it joins the redo queue as any miss does) and the summary says that time ran out. Without it (the default) the clock is a guide and the learner may carry on. `seconds` is 30 to 7200. `#practice/timed/<seconds>` runs a practice set against a locking clock (the Practice card on Review links to 8 minutes). The Interview practice deck does not take `timed` yet. Timed is not for homework (the validator refuses it) or exams (a paper already has `minutes`).
 - **`tags` and `pace`** (ENGINE-BACKLOG 456 and 457). Both are optional on every kind of item (quiz, review, homework, exam, mock, bank) and on lesson screens; `pace` is also allowed on a drill file.
   - `tags`: a non-empty list of kebab-case family names, for example `["dice-ev"]`. The first tag is the item's family; any others only narrow it (at most four, no duplicates). A family is a kind of question (`dice-ev`, `fermi`, `coupon-collector`), not a skill. The validator refuses a non-list, an empty list, a name that is not kebab-case and a duplicate. The engine reads `tags` for two things: the **Interview practice** deck (a tagged quiz, review or homework item of a finished lesson joins the deck under its own schedule) and the **pace line** on results (slowest families). An item with no tag counts under its first skill, and a generated arithmetic item under `mental-arithmetic`.
@@ -898,3 +898,180 @@ The validator (`tools/capstone-rules.mjs`) errors on an unknown role or field, a
 
 **Oa drills and code tasks.** A verified drill of pack `oa` (file `pack: "oa"` or an id starting `oa-`) counts as passing the code performance task of its level. The level is the drill's optional integer `level` (drill file or `drills/index.json` row), else the lowest level of the drill's `course` that has a gating code task (coding-int level 1 today). Self-marked and non-code tasks are unaffected.
 
+
+## 16. Generated fluency sets: `fluency-<lesson>.json` (ENGINE-BACKLOG 800 to 819)
+
+A fluency set gives a procedural lesson 20 fresh typed-answer questions, every time, for ever: the learner passes at 90% and can go again for new numbers. You write JSON only. There is no engine code per family. This section is complete for an author who has also read the `expression` and `numeric` widget sections (section 3).
+
+**Where it goes.** One set per lesson: `content/courses/<course>/fluency-<lesson-id>.json`, for example `fluency-l3-opening-brackets.json`. The validator finds it by file name (nothing goes in `course.json`) and lists it in `manifest.json` under `fluency`. The lesson must be on the course map of the same course. The file `id` is `fluency-` plus the lesson id.
+
+**When a lesson deserves one.** Write a set when the lesson teaches a procedure a learner can do by rote once understood: expand, factorise, differentiate a power, solve a linear equation, add fractions, evaluate a formula. Do not write one for a concept lesson, a proof, or anything whose answer is a sentence. Four to six families is typical; each family is one skill drilled with changing numbers.
+
+### The shape
+
+```json
+{ "id": "fluency-l3-opening-brackets", "lesson": "l3-opening-brackets", "title": "Fluency: opening brackets",
+  "n": 20, "pass": 0.9, "minutes": 10,
+  "families": [
+    { "id": "expand-single", "weight": 2, "skill": "expand a single bracket",
+      "vars": { "a": { "int": [2, 9] }, "b": { "int": [-9, 9], "not": [0] }, "v": { "pick": ["x", "y", "t"] } },
+      "let": { "p": "a*b" },
+      "where": ["gcd(a, abs(b)) == 1"],
+      "prompt": "Expand ${a}({v}{b:+})$.",
+      "widget": { "kind": "expression", "answer": "{a}{v}{p:+}", "form": "expanded" },
+      "wrong": [ { "id": "first-term-only", "tex": "{a}{v}{b:+}", "line": "You multiplied only the first term by {a}." } ],
+      "solution": ["${a} \\times {v} = {a}{v}$ and ${a} \\times {b:()} = {p}$.", "So ${a}({v}{b:+}) = {a}{v}{p:+}$."] } ] }
+```
+
+Set fields: `id`, `lesson`, `title` (plain text, no maths; "Fluency: ..."), `families` (1 to 12) are required. `n` is the questions per attempt (5 to 50, default 20), `pass` the share needed (0.5 to 1, default 0.9, so 18 of 20), `minutes` the time shown on the start card (default 10). `"sample": true` is for engine fixtures only. The attempt draws `n` questions with no two the same prompt, the families in turn by `weight` (a weight 2 family comes twice as often as a weight 1 family; default 1; a family never repeats a prompt within an attempt).
+
+Family fields: `id` (kebab-case, unique in the set), `weight`, `skill` (a short phrase, shown as the question heading), `vars`, `let`, `where`, `prompt`, `widget`, `wrong`, `solution`. Nothing else is allowed.
+
+### `vars`: what is drawn
+
+Each var is one of two kinds, drawn independently from a seeded generator, in the order written:
+
+| kind | example | draws |
+|---|---|---|
+| `int` | `"a": { "int": [2, 9] }` | a whole number from 2 to 9, both ends included |
+| `int` with `step` | `"c": { "int": [0, 20], "step": 5 }` | 0, 5, 10, 15 or 20 (from the low end, in steps) |
+| `pick` of numbers | `"d": { "pick": [0.5, 1.5, 2.5] }` | one of the listed numbers; decimals stay exact (0.5 is the fraction 1/2) |
+| `pick` of text | `"v": { "pick": ["x", "y", "t"] }` | one of the listed strings, for a variable letter or a name |
+| any kind with `not` | `"b": { "int": [-9, 9], "not": [0] }` | the same, never one of the excluded values |
+
+A var name starts with a lower-case letter and holds letters, digits and `_` (`a`, `b2`, `n_terms`). It may not be `and`, `or`, `not` or the name of a function. A text var can be written into the prompt and compared (`v == 'x'`) but cannot be used in arithmetic.
+
+### `let`: derived values
+
+`let` is an object of expressions, evaluated in the order written, each able to use the vars and the earlier lets. It is where the key and the wrong answers' numbers are computed: `"let": { "p": "a*b", "q": "p + 3" }`. The evaluator is small and safe (no `eval`, no `Function`; an unknown name or function is an error). Numbers are exact fractions: `1/3 + 1/6` is exactly `1/2`, and `0.1 + 0.2` is exactly `0.3`. A square root of a non-square or a fractional power makes an ordinary decimal.
+
+Operators, tightest first: `^` (power, right to left, so `2^3^2` is 512), unary `-` (so `-2^2` is -4), `* / %` (`%` is the remainder of whole numbers, never negative for a positive divisor: `-7 % 3` is 2), `+ -`. Write every product with `*`: `2*a`, never `2a`. Brackets group. Comparisons `== != < <= > >=` and the words `and`, `or`, `not` give true or false and belong in `where`. Text in an expression is in single quotes: `v == 'x'`.
+
+| function | gives | example |
+|---|---|---|
+| `gcd(a, b, ...)` | greatest common divisor of whole numbers | `gcd(12, 18)` is 6 |
+| `lcm(a, b, ...)` | least common multiple | `lcm(4, 6)` is 12 |
+| `abs(x)` | absolute value | `abs(-3)` is 3 |
+| `sign(x)` | -1, 0 or 1 | `sign(-4)` is -1 |
+| `min(a, b, ...)`, `max(a, b, ...)` | smallest, largest | `max(1, 5, 3)` is 5 |
+| `floor(x)`, `ceil(x)` | round down, up to a whole number | `floor(-7/2)` is -4 |
+| `round(x, dp)` | round half away from zero to `dp` places (0 to 10; `dp` may be left out for a whole number) | `round(2.675, 2)` is 2.68 |
+| `sqrt(x)` | square root; exact when `x` is a perfect square (or a fraction of two), else a decimal | `sqrt(16/9)` is 4/3 |
+| `comb(n, k)` | n choose k (0 when k is more than n) | `comb(5, 2)` is 10 |
+| `fact(n)` | n factorial, n from 0 to 170 | `fact(5)` is 120 |
+
+Division by zero, the root of a negative number, an exponent above 400 and a whole-number function given a fraction are errors that reject the draw (the validator reports them).
+
+### `where`: conditions a draw must meet
+
+`where` is a list of conditions; every one must be true or the draw is thrown away and redrawn (up to 60 times per question). Use it for three things: to keep a question well posed (`b != 0`, `a != b`), to keep the key tidy (`gcd(a, abs(b)) == 1` so a fraction is in its lowest terms, `p < q`), and above all **to keep every `wrong` answer different from the key** (a wrong that equals the key in some draw is an error; add `where: ["a*b != a + b"]`). A condition is an expression that gives true or false and may use vars and lets. The validator fails a family whose `where` rejects more than 80% of draws, or that cannot complete a draw: draw the values so the condition mostly holds, rather than relying on rejection.
+
+### Templates: `prompt`, `widget`, `wrong` and `solution`
+
+Every text in the family is a template. A `{...}` is replaced by a value. **Braces are special**: write `{{` for a literal `{` and `}}` for a literal `}`. LaTeX that needs braces around a placeholder therefore reads `\\frac{{{p}}}{{{q}}}` (the outer pair is literal, the inner is the placeholder) and `x^{{{k}}}`. In JSON, a LaTeX backslash is written twice, as everywhere else in the content. Maths goes between `$...$` in the prompt and solution; the widget `answer` is plain LaTeX with no dollars.
+
+Inside the braces, any expression may stand before the colon, and a format may follow it: `{a*b:+}`, `{p/q:frac}`, `{total:dp2}`.
+
+| format | writes | with value | example and result |
+|---|---|---|---|
+| (none) | the value plainly; a fraction that terminates as a decimal, else as `\frac{n}{d}` | 3, -3, 3/4, 1/3 | `{x}` gives `3`, `-3`, `0.75`, `\frac{1}{3}` |
+| `+` | a signed term, always with its sign | 3, -3, 0 | `{b:+}` gives `+3`, `-3`, `+0` |
+| `c` | a coefficient: 1 gives nothing, -1 gives `-` | 1, -1, 5 | `{m:c}x` gives `x`, `-x`, `5x` |
+| `+c` | a signed coefficient | 1, -1, 5, -5 | `{m:+c}` gives `+`, `-`, `+5`, `-5` (so `3{m:+c}x` reads `3+x`, `3-x`, `3+5x`) |
+| `()` | brackets when negative | 3, -3 | `{b:()}` gives `3`, `(-3)` |
+| `frac` | a reduced fraction as `\frac{n}{d}`, or a whole number | 3/4, -3/4, 4/2 | `{x:frac}` gives `\frac{3}{4}`, `-\frac{3}{4}`, `2` |
+| `+frac` | the same with a sign | 3/4, -3/4 | `+\frac{3}{4}`, `-\frac{3}{4}` |
+| `dpN` | fixed decimals, N from 0 to 10, rounded half away from zero | 2/3 with `dp2`, 5 with `dp2` | `0.67`, `5.00` |
+| `+dpN` | the same with a sign | 2/3 with `+dp1`, -2/3 | `+0.7`, `-0.7` |
+
+A text var takes no format. There is no other format; ask for one with a test rather than working round it.
+
+`{poly(v; c2, c1, c0)}` writes a clean polynomial in the variable `v`, highest power first, from its coefficients: no zero terms, no coefficient 1 before a power, signs joined with no spaces, so `poly(x; 2, -1, 0)` is `2x^2-x`, `poly(x; 1, 0, -1)` is `x^2-1`, `poly(t; 1, 3)` is `t+3` and all zeros give `0`. `v` is the name of a text var (`v` above holds `x`, `y` or `t`) or a literal letter. Coefficients are expressions and must be exact (no square roots). Use it for the prompt "Factorise `{poly(v; a, p)}`" and for expanded answers with several terms.
+
+A prompt must not make the key guessable from its own wording, must contain the maths as the learner will read it, and obeys the voice rules of section 6 (the validator applies them to the text as drawn: no exclamation marks, British spelling, no em-dashes, balanced `$`). Questions are one sentence and an instruction ("Expand ...", "Work out ...", "Solve ..."); a sentence about the learner is not needed.
+
+### `widget`: how the answer is typed
+
+Only `numeric` and `expression` are allowed (no `choice`). Every field the existing widgets take is allowed, and every text field is a template.
+
+- `numeric`: `answer` (a template that gives a number: `"{r}"` or `"{p/q + r/s}"`; a fraction `7/12` is read as 0.58333...), `tol` (`{ "abs": 0 }` for a whole-number answer, `{ "abs": 0.0005 }` or `{ "rel": 0.01 }`; `tolerance` is accepted as another name), `unit` (`"%"`, `"£"`, a word), `placeholder`, `accept` (the line shown after grading, a template: `"${total:frac}$, or a decimal within 0.0005"`). With `unit: "%"` the key is the fraction (0.167 for 16.7%), as in section 3.
+- `expression`: `answer` (LaTeX, the key), `accept` (a list of other accepted forms, as learners would type them), `form`, `upToConstant`, `integers`, `functions`, `keyboard`, `label`, all as in section 3.
+
+Grading is the widget's own grading, unchanged. An expression is correct when it is equal to the key (and in the shape `form` asks for), so a key such as `{a}{v}{p:+}` accepts `{p:+}{a}{v}` too.
+
+**Choosing `form`.** Set `form` whenever the prompt itself shows an expression equal to the key, because retyping the prompt would otherwise score. Rule of thumb: an instruction that is a verb on a shape needs a `form`.
+
+| the task | `form` |
+|---|---|
+| expand, multiply out, open brackets | `expanded` (no bracketed sum left inside a product or power) |
+| factorise, take out a common factor | `factorised` (a product with a bracketed sum among its factors, or a power of one) |
+| simplify, collect like terms, cancel | `simplified` (like terms collected, fractions cancelled) |
+| a complex answer in the form a + bi | `rectangular` |
+| find a value, solve, differentiate, integrate, evaluate | leave `form` out |
+
+For a constant answer to an unevaluated expression (a surd, a fraction), `simplified` refuses `2+3` and an unfinished bracket; `rectangular` is for complex numbers. For an antiderivative set `"upToConstant": true` so `+C` and any added constant pass. When the answer is a plain number, prefer a `numeric` widget over an expression.
+
+### `wrong`: named slips with a line each
+
+`wrong` is a list of the mistakes a learner makes on this skill. Each is `{ "id", "tex" or "value", "line" }`: `tex` (expression families) or `value` (numeric families, a template that gives a number, with an optional `tol`) is what the slip would produce, and `line` is the sentence shown when the learner types it. The line names what the learner did, in the second person, as in "You multiplied only the first term by {a}." The ids are kebab-case and unique in the family. A wrong that is graded correct for some draw is an error, so protect it with `where`. A wrong must also be a plausible slip: do not pad the list. Two to three per family is plenty; none is allowed.
+
+### `solution`: the working
+
+`solution` is a non-empty list of steps (sentences with maths), at most three in practice. After a wrong answer the learner sees the matched `line`, if any, and then every step. Each step is voice-checked as drawn, so every number you state is computed, and the validator's shown-arithmetic rule checks sums you write out (`$3 \times 4 = 12$`).
+
+### Seeing what a family draws: `tools/fluency-sample.mjs`
+
+Run from `app/`:
+
+```
+node tools/fluency-sample.mjs --set equations/fluency-l3-opening-brackets --family expand-single --n 10
+node tools/fluency-sample.mjs --set equations/fluency-l3-opening-brackets --seed 3 --json
+node tools/fluency-sample.mjs --set fixture/fluency-l3-opening-brackets --stats
+node tools/fluency-sample.mjs --file path/to/a-draft.json --n 5
+```
+
+With `--family` it prints `--n` draws of that family (default 20) on seeds `s, s+1, ...`; without it, one whole attempt as a learner would meet it (`--n` questions, default the set's `n`). Each item shows the prompt, the variable values, the answer, each `wrong` and the solution. `--json` prints `{ set, seed, items: [{ family, seed, vars, lets, prompt, answer, kind, accept, form, upToConstant, tol, wrong: [{ id, tex or value, line }], solution }] }` with the vars as numbers where they are whole or terminating decimals. `--stats` adds the distinct-prompt and rejected-draw counts the validator sees.
+
+**Recompute script.** The numbers rule of `LEVEL-BRIEF.md` applies: every stated number is computed twice. Feed `--json` to a Python script that derives each answer **independently from the `vars` values** (never from the printed `answer`), compares it with the printed `answer`, and recomputes each `wrong` value from the variable values as well. Commit the script with the level, named `docs/reports/<course>-fluency-<lesson>.py` and using `numbers_lib` as for the level scripts. Run it over at least 200 draws of every family (`--n 200` with `--family`).
+
+### What the validator samples
+
+`node tools/validate.mjs` checks every `fluency-*.json` (and the fixtures under `tools/fixtures/fluency`). Besides the schema (every field above, the file name, the lesson on the course map), each family is drawn 200 times on fixed seeds and every draw must:
+
+1. fill every placeholder (an unknown name, an unknown function, a stray or unclosed brace, a bad format, a division by zero, a text var in arithmetic are all errors);
+2. grade its own typed answer correct (a `numeric` family through the numeric grading; an expression family by text here, in full by `tools/test-fluency.mjs`);
+3. grade each `wrong` as not correct (a `numeric` wrong inside the key's tolerance, an expression wrong whose text equals the key, an empty wrong are errors);
+4. stay under the redraw cap: more than 80% of draws rejected is an error, and so is a draw that cannot be completed in 60 tries;
+5. give at least 60 distinct prompts in the 200 draws (a warning below 60, an error below 25: widen the ranges, or add a var);
+6. pass the voice rules as drawn (first 40 draws): no exclamation mark, British spelling, no em-dash, balanced dollars, no float artefacts, sums that are written out must be right, and no sentence of more than 35 words (a `$...$` formula counts as one word).
+
+The expression grading and the `form` check run in `node tools/test-fluency.mjs --local-cdn <pkgs>` at 50 seeds in the real browser: the key is correct, each `wrong` and each retyped prompt expression of a `form` family is not, `accept` forms and `upToConstant` constants are. Run it before you hand a set back; it needs the local copies named in `docs/LEVEL-BRIEF.md`.
+
+### The player and the save
+
+A set opens from its lesson's card on the course page ("Fluency: 20 fresh questions"), from the lesson's end card, and from Today (below). It is one question per screen, typed, with an immediate right or wrong; a wrong answer shows the matched `line` and then the solution steps. There are no hints and no second try on the same question. The end card gives the score, pass or not at `pass`, and "Go again", which draws new numbers (a new seed). The set keeps, per set, the attempts, the best score, the last pass date and the right and wrong counts per family. **A Fluency pass changes nothing else**: no skill score, streak, XP, met rule or gate moves, and nothing is keyed on the generated text. Until it is first passed, a set whose lesson is done is listed on Today under practice, after the due reviews. It works at 440 px; the answer keyboard is the widget's `keyboard`.
+
+### Checklist before you hand a set back
+
+1. The file name, `id` and `lesson` agree; 4 to 6 families; each family a different skill of the lesson.
+2. `node tools/validate.mjs` has 0 errors and no warning for your set.
+3. `fluency-sample.mjs --json` read by eye (are the prompts natural? do the `wrong` lines name what the learner did?) and your recompute script passes.
+4. `node tools/test-fluency.mjs --local-cdn <pkgs> --set <course>/<set id>` is green.
+5. `node tools/playthrough.mjs --fluency <course>/<set id> --local-cdn <pkgs>` and again with `--mobile` are green.
+6. The voice rules pass as the validator applies them, including the 35-word gate on each drawn sentence (`voice-scan.py` skips `solution` and template text, so it is not used for fluency sets).
+
+### The weekly mixed review (ENGINE-BACKLOG 820 to 829)
+
+Fluency sets also feed a cumulative review that needs no authoring of its own. Once a week per learner Today lists **Weekly mixed review** in the Due card, above the practice rows: seven days after the last one was finished, and the first one seven days after the first level was met. It is not opt-in. "Not today" on its start card only postpones it: it stays on Today, marked postponed, until it is done. A review left part way is not a review: it stays due.
+
+It is 20 items drawn from **every met level**, by `ZQ.select.weeklyReview` (`js/engine/select.js`), in this order:
+
+1. **Generated items** from the Fluency families of the lessons of met levels, so a set with several distinct skills as families feeds it well. A family is drawn more often the more wrong answers its right and wrong counts hold (from Fluency attempts and from earlier weekly reviews) and the longer ago it was last practised (a family never practised counts as 60 days).
+2. **Authored items the learner has never seen**: bank items (`content/bank`) whose `skills` belong to a course with a met level and whose `requires` lessons are finished, which the interview deck has not scheduled and no weekly review has served; and the items of the topic exams of met courses, while that exam has not been sat.
+3. **Review items least recently seen**: the quiz items of the lessons and the items of the level review of met levels (the twelve levels a weekly review has covered least recently), oldest first.
+
+At most four items come from one course. The cap relaxes (to 6, 8, ...) only when too few courses are met to fill 20. Consecutive items come from different courses when that is possible. Long-form and code items are never drawn. With no Fluency set written the review is made from steps 2 and 3 alone.
+
+The result is recorded: a history row (date, score, misses per level), the uids of the authored items served (so step 2 never offers them again), the right and wrong counts of the generated families, and every authored miss joins the redo queue as a review miss does (back in 7 days). A generated miss cannot be asked again, so it moves only the family counts, which raise that family's weight next time. Answered authored items move the skill scores as a practice set does. **Nothing here gates anything**: the met rule, lessons and exams are untouched.
+
+What this means for content: nothing to write. A level with a Fluency set, a written level review and quiz items gives the review the most to draw on; bank items count when their `skills` are a met course's skills. `node tools/test-cumulative.mjs` checks the selection rules, the schedule and the recording; the playthrough's routes block moves the state clock eight days on, checks the card on Today, plays the review and checks it clears.

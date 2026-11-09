@@ -16,11 +16,16 @@
      node app/tools/playthrough.mjs --set number-sense/review-1   one review or homework (repeatable)
      node app/tools/playthrough.mjs --exam topic-1.5       one exam (repeatable); topic-*, stage-* and mock-* all play the same way
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
+     node app/tools/playthrough.mjs --fluency equations/fluency-l3-opening-brackets   one generated fluency set (repeatable; --fluency fixture/<id> plays a fixture from tools/fixtures/fluency,
+                                                           registered through the test hook, never as content): a failing attempt (the wrong line and the solution show, the result is not a pass,
+                                                           nothing else in the save moves), then a passing one through Go again; the lesson's end card and course row and the Today practice row are checked
+                                                           (--all plays every set in content, after the sets, and the fixtures; add --mobile for the phone width, where nothing may overflow)
      node app/tools/playthrough.mjs --bank probability-1   every item of one bank file (repeatable, or --bank all): dealt, answered right from its key, pass or fail per item
      node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
                                                            solution passes every hidden test, the stopwatch is read and recorded (add --mobile, --narrow or --tablet to repeat it at those sizes)
      node app/tools/playthrough.mjs --session              the sample drill session: both drills, minutes per drill, result, carry, expiry (--drills includes it)
-     node app/tools/playthrough.mjs --routes-only          (also: mock-oa-code holdout and resit checks, mock versions in Prepare) only the routes, then the interview bank deck (due and new items, the 3-day box,
+     node app/tools/playthrough.mjs --routes-only          (also: the weekly mixed review on Today: the state clock moves eight days on, the card appears above the practice rows,
+                                                           "Not today" keeps it due, the review is played and recorded and the card clears, it is due again after seven days; mock-oa-code holdout and resit checks, mock versions in Prepare) only the routes, then the interview bank deck (due and new items, the 3-day box,
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
                                                            skewed Date.now so per-item seconds and the pace line are checked
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
@@ -87,7 +92,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false, shard: null, list: false };
+const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false, shard: null, list: false, fluencyIds: [] };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -105,6 +110,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--exams') opt.exams = true;
   else if (a === '--set') { opt.setIds.push(next()); opt.sets = true; }
   else if (a === '--exam') { opt.examIds.push(next()); opt.exams = true; }
+  else if (a === '--fluency') opt.fluencyIds.push(next());
   else if (a === '--bank') opt.bankIds.push(next());
   else if (a === '--drill') opt.drillIds.push(next());
   else if (a === '--drills') opt.drillsAll = true;
@@ -130,9 +136,10 @@ const onlySets = !opt.all && (opt.sets || opt.exams);
 if (opt.all) { opt.sets = true; opt.exams = true; }
 if (onlySets && !opt.lessons.length) opt.lessonsOn = false;
 if (opt.bankIds.length && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
+if (opt.fluencyIds.length && !opt.lessons.length && !onlySets) opt.lessonsOn = false;   // ENGINE-BACKLOG 816
 const drillRun = opt.drillIds.length || opt.drillsAll || opt.sessionRun; // item 472
 if (drillRun && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
-if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length && !drillRun;
+if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length && !drillRun && !opt.fluencyIds.length;
 if (opt.localCdn && !fs.existsSync(opt.localCdn)) die(`--local-cdn: ${opt.localCdn} does not exist`);
 if (opt.shots) fs.mkdirSync(opt.shots, { recursive: true });
 function die(msg) { console.error('playthrough: ' + msg); process.exit(2); }
@@ -208,7 +215,15 @@ const writtenLessons = () => {
     });
   }
   const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^(topic|stage|mock)-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort() : [];
-  return { lessons: out, courses: order.filter(c => fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json'))), sets, exams };
+  /* ENGINE-BACKLOG 816: generated fluency sets, content first (course order), then the fixtures under tools/fixtures/fluency (never content) */
+  const fluency = [];
+  for (const c of order) {
+    const dir = path.join(CONTENT, 'courses', c);
+    if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => /^fluency-.+\.json$/.test(f)).sort().forEach(f => fluency.push(`${c}/${f.replace(/\.json$/, '')}`));
+  }
+  const fxDir = path.join(APP, 'tools', 'fixtures', 'fluency');
+  if (fs.existsSync(fxDir)) fs.readdirSync(fxDir).filter(f => f.endsWith('.json')).sort().forEach(f => fluency.push(`fixture/${f.replace(/\.json$/, '')}`));
+  return { lessons: out, courses: order.filter(c => fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json'))), sets, exams, fluency };
 };
 
 /* ---------- Static server on a free port ---------- */
@@ -247,19 +262,22 @@ const cdnFile = (u) => {
 /* ---------- Run ---------- */
 const main = async () => {
   const { chromium } = await loadPlaywright();
-  const { lessons: allLessons, courses, sets: allSets, exams: allExams } = writtenLessons();
+  const { lessons: allLessons, courses, sets: allSets, exams: allExams, fluency: allFluency } = writtenLessons();
   const lessons0 = opt.lessonsOn ? (opt.lessons.length ? opt.lessons : allLessons) : [];
   for (const l of opt.lessons) if (!allLessons.includes(l)) die(`--lesson ${l}: no such written lesson (the file must exist and be listed in its course.json)`);
   for (const x of opt.setIds) if (!allSets.some(s2 => s2.id === x)) die(`--set ${x}: no such written review or homework (the file must exist and be named in its course.json)`);
   for (const x of opt.examIds) if (!allExams.includes(x)) die(`--exam ${x}: no such exam in content/exams`);
   const sets0 = opt.setIds.length ? allSets.filter(s2 => opt.setIds.includes(s2.id)) : opt.sets ? allSets : [];
   const exams0 = opt.examIds.length ? opt.examIds : opt.exams ? allExams : [];
+  for (const x of opt.fluencyIds) if (!allFluency.includes(x)) die(`--fluency ${x}: no such fluency set (content/courses/<course>/fluency-<lesson>.json, or fixture/<id> under tools/fixtures/fluency)`);
+  const fluency0 = opt.fluencyIds.length ? opt.fluencyIds : opt.all ? allFluency : [];
   /* ENGINE-BACKLOG 550: the full ordered item list is lessons, then sets, then exams; --shard i/n keeps the items whose index % n === i-1 */
-  const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...exams0.map(id => ({ k: 'exam', id }))];
+  const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...fluency0.map(id => ({ k: 'fluency', id })), ...exams0.map(id => ({ k: 'exam', id }))];
   const mine = opt.shard ? full.filter((_, ix) => ix % opt.shard.n === opt.shard.i - 1) : full;
   const lessons = lessons0.filter(id => mine.some(m => m.k === 'lesson' && m.id === id));
   const sets = sets0.filter(st => mine.some(m => m.k === 'set' && m.id === st.id));
   const exams = exams0.filter(id => mine.some(m => m.k === 'exam' && m.id === id));
+  const fluencySets = fluency0.filter(id => mine.some(m => m.k === 'fluency' && m.id === id));
   if (opt.list) { mine.forEach(m => console.log(`${m.k}/${m.id}`)); return; }
   if (opt.shard) console.log(`shard ${opt.shard.i}/${opt.shard.n}: ${mine.length} of ${full.length} items${opt.routes ? (opt.shard.i === 1 ? ', plus the routes and their checks' : ', routes run in shard 1 only') : ''}`);
   const runRoutes = opt.routes && (!opt.shard || opt.shard.i === 1);
@@ -827,6 +845,184 @@ const main = async () => {
       });
       if (st.kind === 'homework') await partsHomeworkChecks(st);
     });
+    /* ENGINE-BACKLOG 816: a generated fluency set. Register a fixture through the test hook (never as content), then:
+         1. the course row and the lesson's end card offer the set, and a lesson that is done puts it on Today under practice;
+         2. a failing attempt: wrong answers show the matched line and the solution, the result is not a pass, the save records the attempt and the family
+            counts, and nothing else in it moves (XP, mastery, skills, redo queue, streak, the met rule);
+         3. Go again draws new numbers, and a passing attempt records the best score and the pass date and takes the set off Today;
+         4. nothing is wider than the window at any width (desktop, and --mobile and the others when given). */
+    const fluencyPlay = async (ref) => {
+      const label = `fluency/${ref}`;
+      where = '#' + label;
+      const fails = [];
+      const t0 = Date.now();
+      let note = '';
+      try {
+        let course, id, doc;
+        if (ref.startsWith('fixture/')) { doc = readJSON(path.join(APP, 'tools', 'fixtures', 'fluency', ref.slice(8) + '.json')); course = doc.course; id = doc.id; }
+        else { [course, id] = ref.split('/'); doc = readJSON(path.join(CONTENT, 'courses', course, id + '.json')); }
+        const n = doc.n || 20, pass = typeof doc.pass === 'number' ? doc.pass : 0.9, mark = Math.ceil(pass * n - 1e-9), lesson = doc.lesson;
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        if (ref.startsWith('fixture/')) await page.evaluate(([c, d]) => ZQ.content._addFluency([{ course: c, doc: d }]), [course, doc]);
+        await unlockRoute(`lesson/${course}/${lesson}`);
+        const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflowAt = async (what) => {
+          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); if (await wideNow()) fails.push(`${what} at ${v.w} px: the page is wider than the window`); }
+          if (EXTRA.length) await setVp(DESKTOP, 150);
+        };
+        /* the lesson done, as a learner's save would have it: the set shows on Today and the course row offers it */
+        await page.evaluate(([c, l]) => { if (!(ZQ.state.lesson(c, l) || {}).done) ZQ.state.lessonFinished({ course: c, lesson: l, firstTry: [1, 1], perfect: false, seconds: 60 }); }, [course, lesson]);
+        const progress = () => page.evaluate(() => { const d = ZQ.state.doc; return JSON.stringify({ xp: d.xp, mp: d.mp, skills: d.skills, lessons: d.lessons, reviews: d.reviews, homework: d.homework, exams: d.exams, redo: d.redo, prereq: d.prereq, perf: d.perf, count: d.streak.count, days: d.streak.days }); });
+        const before = await progress();
+        /* course page: the lesson's card carries the Fluency row */
+        await go(`course/${course}`);
+        const row = await page.evaluate(async (l) => {
+          const node = [...document.querySelectorAll('.zc-node')].find(x => x.dataset.id === l);
+          if (!node) return { none: true };
+          node.click();
+          await new Promise(r => setTimeout(r, 350));
+          const r = document.querySelector('.zc-pop [data-fluency-row]');
+          return { text: r ? r.innerText.replace(/\s+/g, ' ') : null, button: r && r.querySelector('[data-fluency]') ? r.querySelector('[data-fluency]').dataset.fluency : null };
+        }, lesson);
+        if (row.none) fails.push(`the course page has no node for ${lesson}`);
+        else if (!row.text) fails.push('the lesson card on the course page has no Fluency row');
+        else if (row.button !== id || !/Fluency: \d+ fresh questions/.test(row.text)) fails.push(`the Fluency row is wrong: ${row.text} (button ${row.button})`);
+        await shot(`${label}-course-row`);
+        await overflowAt('the course page with the Fluency row');
+        /* Today: the set under practice while it is not passed */
+        const todayRow = async () => { await go('today'); return page.evaluate((r) => !!document.querySelector(`[data-fluency-rows] [data-go="${r}"]`), `fluency/${course}/${id}`); };
+        if (!(await todayRow())) fails.push('Today does not list the set under practice although its lesson is done');
+        await shot(`${label}-today`);
+        await overflowAt('Today with the practice row');
+        await page.evaluate(() => { delete window.ZQ.test; });
+        /* the sets: a failing attempt first */
+        const play = async (route, wrong) => {
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go(route);
+          await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+          let c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind !== 'start') { fails.push(`the set opened in state ${c.kind}, not its start card`); return null; }
+          await overflowAt('the Fluency start card');
+          const intro = await page.evaluate(() => document.querySelector('.hw-intro') ? document.querySelector('.hw-intro').innerText : '');
+          if (!new RegExp(`Pass at ${mark} of`).test(intro)) fails.push(`the start card does not say the pass mark (${mark}): ${intro.replace(/\s+/g, ' ').slice(0, 160)}`);
+          if (await page.evaluate(() => !!document.querySelector('.hw-ov'))) fails.push('the start card lists every question before the set begins');
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(150);
+          const prompts = [];
+          let guard = 0, sawWrong = 0, wrongChecked = false;
+          while (++guard < n * 4) {
+            c = await page.evaluate(() => ZQ.test.current());
+            if (c.kind === 'done') break;
+            if (c.kind !== 'item') { fails.push(`unexpected state ${c.kind} in the set`); break; }
+            if (c.state === 'idle' || c.state === 'engaged') {
+              prompts.push(await page.evaluate(() => (document.querySelector('.lsn-set-body') || {}).innerText || ''));
+              const miss = wrong && c.screenIndex < wrong;
+              if (c.screenIndex === 0) await shot(`${label}-item-1`);
+              const applied = await page.evaluate((m) => (m ? ZQ.test.answerWrong() : ZQ.test.answerCorrect()), !!miss);
+              if (!applied) { fails.push(`item ${c.screenIndex + 1}: ${miss ? 'a wrong answer' : 'the authored answer'} could not be typed`); break; }
+              const r = await page.evaluate(async () => { const x = await ZQ.test.check(); return x ? { ok: !!x.ok, key: x.key ?? null, pending: !!x.pending } : null; });
+              if (!r || r.pending) { fails.push(`item ${c.screenIndex + 1}: nothing was graded`); break; }
+              if (miss) {
+                sawWrong++;
+                if (r.ok) fails.push(`item ${c.screenIndex + 1}: a wrong answer was graded correct`);
+                else if (!wrongChecked) {
+                  wrongChecked = true;
+                  const chip = await page.evaluate(() => { const x = document.querySelector('.lsn-verdict .lsn-chip.is-no'); return x ? { text: x.innerText.replace(/\s+/g, ' ').trim(), maths: x.querySelectorAll('.katex').length } : null; });
+                  if (!chip) fails.push('a wrong answer shows no verdict chip');
+                  else if (chip.text.length < 25) fails.push(`the wrong-answer chip shows no solution: "${chip.text}"`);
+                  else if (!chip.maths) fails.push('the wrong-answer chip shows no worked maths (the solution steps)');
+                  await shot(`${label}-wrong`);
+                  await overflowAt('a wrong answer with its solution');
+                }
+              } else if (!r.ok) fails.push(`item ${c.screenIndex + 1}: the authored answer was not correct, key ${JSON.stringify(r.key)}`);
+            }
+            await page.evaluate(() => ZQ.test.continue());
+            await page.waitForTimeout(100);
+          }
+          c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind !== 'done') { fails.push('the set did not reach its result page'); return null; }
+          const sum = await page.evaluate(() => ({ verdict: (document.querySelector('.hw-verdict') || {}).textContent || '', right: (document.querySelector('.hw-score-big .t-stat') || {}).textContent || '', again: !!document.querySelector('[data-again]'), rows: document.querySelectorAll('.hw-res li').length }));
+          if (sum.rows !== n) fails.push(`the result lists ${sum.rows} questions, not ${n}`);
+          if (!sum.again) fails.push('the result page has no Go again');
+          await shot(`${label}-done`);
+          await overflowAt('the result page');
+          return { prompts, sum };
+        };
+        const wrongN = n - mark + 1;
+        const a = await play(`fluency/${course}/${id}/101`, wrongN);
+        const rec1 = await page.evaluate(([c, i]) => ZQ.state.fluency.get(c, i), [course, id]);
+        if (a) {
+          if (!/Not passed/.test(a.sum.verdict)) fails.push(`the failing attempt's verdict: "${a.sum.verdict}"`);
+          if (!rec1 || rec1.attempts !== 1 || rec1.best !== n - wrongN || rec1.passedAt) fails.push(`the save after a failing attempt: ${JSON.stringify(rec1)}`);
+          else {
+            const fam = Object.values(rec1.families || {});
+            if (fam.reduce((x, f) => x + f.right + f.wrong, 0) !== n || fam.reduce((x, f) => x + f.wrong, 0) !== wrongN) fails.push(`the family counts do not add up after a failing attempt: ${JSON.stringify(rec1.families)}`);
+          }
+          if (!(await todayRow())) fails.push('Today dropped the set after a failing attempt (it stays until passed)');
+        }
+        /* same seed, same questions; Go again, new numbers */
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        const again = await play(`fluency/${course}/${id}/101`, 0);
+        if (a && again && JSON.stringify(a.prompts) !== JSON.stringify(again.prompts)) fails.push('the same seed drew different questions');
+        const p3 = await play(`fluency/${course}/${id}`, 0);   // a fresh seed, every answer right
+        if (p3 && again && JSON.stringify(p3.prompts) === JSON.stringify(again.prompts)) fails.push('Go again drew the same questions as the last attempt (a new seed was expected)');
+        if (p3) {
+          if (!/^Passed/.test(p3.sum.verdict.trim())) fails.push(`the passing attempt's verdict: "${p3.sum.verdict}"`);
+          const rec = await page.evaluate(([c, i]) => ZQ.state.fluency.get(c, i), [course, id]);
+          if (!rec || rec.attempts !== 3 || rec.best !== n || !rec.passedAt || rec.lastScore !== n) fails.push(`the save after the passing attempt: ${JSON.stringify(rec)}`);
+          else if (Object.values(rec.families || {}).reduce((x, f) => x + f.right + f.wrong, 0) !== 3 * n) fails.push(`the family counts do not add up after three attempts: ${JSON.stringify(rec.families)}`);
+          if (await todayRow()) fails.push('Today still lists the set after it was passed');
+          note = `${n} items, pass at ${mark}, 3 attempts, best ${rec ? rec.best : '?'}`;
+        }
+        const after = await progress();
+        if (after !== before) fails.push('a fluency attempt moved progress: the XP, mastery points, skills, lessons, reviews, homework, exams, redo queue, prerequisites or streak changed');
+        /* leaving part way keeps the family counts and is not an attempt */
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        await go(`fluency/${course}/${id}/7`);
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        await page.evaluate(() => ZQ.test.continue()); await page.waitForTimeout(150);
+        await page.evaluate(async () => { ZQ.test.answerCorrect(); await ZQ.test.check(); });
+        await go('review');
+        const part = await page.evaluate(([c, i]) => ZQ.state.fluency.get(c, i), [course, id]);
+        if (!part || part.attempts !== 3) fails.push(`leaving part way counted as an attempt: ${JSON.stringify(part)}`);
+        else if (Object.values(part.families || {}).reduce((x, f) => x + f.right + f.wrong, 0) !== 3 * n + 1) fails.push(`leaving part way did not keep the one answered item in the family counts: ${JSON.stringify(part.families)}`);
+        /* the course row after a pass */
+        await go(`course/${course}`);
+        const row2 = await page.evaluate(async (l) => { const node = [...document.querySelectorAll('.zc-node')].find(x => x.dataset.id === l); if (!node) return ''; node.click(); await new Promise(r => setTimeout(r, 350)); const r = document.querySelector('.zc-pop [data-fluency-row]'); return r ? r.innerText.replace(/\s+/g, ' ') : ''; }, lesson);
+        if (!/passed/.test(row2) || !/Go again/.test(row2)) fails.push(`the Fluency row after a pass: "${row2}"`);
+        /* the lesson's end card offers the set (a lesson with no code screen is played right through) */
+        const lessonDoc = readJSON(path.join(CONTENT, 'courses', course, lesson + '.json'));
+        if (!/"kind":\s*"code"/.test(JSON.stringify(lessonDoc))) {
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go('review');
+          await go(`lesson/${course}/${lesson}`);
+          await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+          let g2 = 0;
+          while (++g2 < 300) {
+            const c = await page.evaluate(() => ZQ.test.current());
+            if (c.kind === 'done') break;
+            if (c.state === 'idle' || c.state === 'engaged') { await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(async () => { await ZQ.test.check(); }); }
+            await page.evaluate(() => ZQ.test.continue());
+            await page.waitForTimeout(60);
+          }
+          await page.waitForSelector('.lsn-done.final .lsn-fluline:not([hidden])', { timeout: 15000 }).catch(() => { /* reported below */ });
+          const card = await page.evaluate(() => { const x = document.querySelector('.lsn-fluline'); return x && !x.hidden ? { text: x.innerText.replace(/\s+/g, ' '), href: (x.querySelector('a') || {}).getAttribute ? x.querySelector('a').getAttribute('href') : null } : null; });
+          if (!card) fails.push("the lesson's end card does not offer the fluency set");
+          else if (!/Fluency: \d+ fresh questions/.test(card.text) || card.href !== `#fluency/${course}/${id}`) fails.push(`the end card line is wrong: ${JSON.stringify(card)}`);
+          await shot(`${label}-end-card`);
+          await overflowAt('the lesson end card with the fluency line');
+        }
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} ${label}  ${note}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log(`FAIL ${label}  threw`);
+      }
+      fails.forEach(f => failures.push(`#${label}: ${f}`));
+    };
+    for (const ref of fluencySets) await guarded(`fluency/${ref}`, () => fluencyPlay(ref));
     /* A mock exam: forward-only papers are probed while it is played (above); here the generated items must repeat for one
        seed and differ for another, and a second sitting with the clock moved to zero must submit itself (no timer is waited for) */
     const mockChecks = async (ex) => {
@@ -2072,6 +2268,112 @@ const main = async () => {
 
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
+    /* ENGINE-BACKLOG 828: the weekly mixed review on Today. A fresh profile with six levels met (six courses): nothing is due on the first day; with the
+       state clock moved eight days on, the card appears in Due, above the fluency practice rows; "Not today" keeps it due; the review is played right
+       through (twenty items, at most four from one course), recorded, and the card clears; it is due again seven days after that. */
+    const cumulativeChecks = async () => {
+      where = '#weekly';
+      const fails = [];
+      const DAYMS = 86400000;
+      try {
+        await freshSetup();
+        const keys = await page.evaluate(() => {
+          const out = [], seen = new Set();
+          for (const c of ZQ.content.allCourses()) {
+            if (seen.has(c.id)) continue;
+            const lv = (c.levels || []).find(l => l.review && ZQ.content.exists(c.id, l.review) === true && (l.lessons || []).length && l.lessons.every(id => ZQ.content.exists(c.id, id) === true));
+            if (lv) { seen.add(c.id); out.push(`${c.id}/L${lv.n}`); }
+            if (out.length === 6) break;
+          }
+          ZQ.state.prereq.mark(out, 'test');
+          return out;
+        });
+        if (keys.length < 6) fails.push(`only ${keys.length} written levels to meet`);
+        const rowIn = () => page.evaluate(() => { const b = document.querySelector('.zt-due [data-go="weekly"]'); return b ? b.innerText.replace(/\s+/g, ' ').trim() : null; });
+        const todayAgain = async () => { await page.evaluate(() => { delete window.ZQ.test; }); await go('review'); await go('today'); };
+        const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflowAt = async (what) => {
+          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); if (await wideNow()) fails.push(`${what} at ${v.w} px: the page is wider than the window`); }
+          if (EXTRA.length) await setVp(DESKTOP, 150);
+        };
+        await todayAgain();
+        if (await rowIn()) fails.push('the weekly review is on Today on the day the first level was met');
+        await page.evaluate((d) => ZQ.state._setClock(() => Date.now() + d), 8 * DAYMS);
+        await todayAgain();
+        const row = await rowIn();
+        if (!row) fails.push('the weekly review is not on Today eight days after the first level was met');
+        else if (!/Weekly mixed review/.test(row)) fails.push(`the weekly row reads "${row}"`);
+        await shot('weekly-today');
+        await overflowAt('Today with the weekly review');
+        /* above the optional practice: a fluency set (the fixture, through the test hook) whose lesson is done */
+        const fx = readJSON(path.join(APP, 'tools', 'fixtures', 'fluency', 'fluency-l3-opening-brackets.json'));
+        await page.evaluate((d) => { ZQ.content._addFluency([{ course: d.course, doc: d }]); if (!(ZQ.state.lesson(d.course, d.lesson) || {}).done) ZQ.state.lessonFinished({ course: d.course, lesson: d.lesson, firstTry: [1, 1], perfect: false, seconds: 60 }); }, fx);
+        await todayAgain();
+        const order = await page.evaluate(() => { const w = document.querySelector('.zt-due [data-go="weekly"]'), p = document.querySelector('.zt-due [data-fluency-rows]'); return w && p ? !!(w.compareDocumentPosition(p) & Node.DOCUMENT_POSITION_FOLLOWING) : null; });
+        if (order === null) fails.push('the weekly row or the practice rows are missing from the Due card');
+        else if (!order) fails.push('the weekly review is not above the practice rows');
+        await overflowAt('Today with the weekly review and a practice row');
+        /* the start card, then "Not today": back on Today, still due, marked postponed */
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('weekly');
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        const intro = await page.evaluate(() => (document.querySelector('.hw-intro') || {}).innerText || '');
+        if (!/Weekly mixed review/.test(intro) || !/Twenty questions/.test(intro)) fails.push(`the start card: ${intro.replace(/\s+/g, ' ').slice(0, 140)}`);
+        if (await page.evaluate(() => !!document.querySelector('.hw-ov'))) fails.push('the start card lists every question before the review begins');
+        await shot('weekly-start');
+        await overflowAt('the weekly review start card');
+        await page.click('[data-later]');
+        await page.waitForTimeout(500);
+        if (!/#today$/.test(await page.evaluate(() => location.hash))) fails.push('"Not today" did not return to Today');
+        const post = await rowIn();
+        if (!post) fails.push('after "Not today" the weekly review is no longer due on Today');
+        else if (!/Postponed/.test(post)) fails.push(`after "Not today" the row reads "${post}"`);
+        if (!(await page.evaluate(() => ZQ.state.cumulative.status().due))) fails.push('postponing made it not due');
+        /* the review itself */
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        await go('weekly');
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        await page.evaluate(() => ZQ.test.continue());
+        await page.waitForTimeout(150);
+        let guard = 0, n = 0;
+        while (++guard < 200) {
+          const c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind === 'done') break;
+          if (c.kind !== 'item') { fails.push(`unexpected state ${c.kind} in the weekly review`); break; }
+          if (c.state === 'idle' || c.state === 'engaged') {
+            const applied = await page.evaluate(() => ZQ.test.answerCorrect());
+            const r = await page.evaluate(async () => { const x = await ZQ.test.check(); return x ? { ok: !!x.ok, key: x.key ?? null, pending: !!x.pending } : null; });
+            n++;
+            if (!applied) { fails.push(`item ${c.screenIndex + 1}: the authored answer could not be typed`); break; }
+            if (!r || r.pending || !r.ok) { fails.push(`item ${c.screenIndex + 1}: not correct, key ${r ? JSON.stringify(r.key) : 'none'}`); }
+          }
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(100);
+        }
+        if (n !== 20) fails.push(`the weekly review had ${n} items, not 20`);
+        await shot('weekly-done');
+        await overflowAt('the weekly review result page');
+        const rec = await page.evaluate(() => { const h = ZQ.state.cumulative.history(); return { rows: h.length, score: h[0] && h[0].score, n: h[0] && h[0].n, due: ZQ.state.cumulative.status().due, last: ZQ.state.cumulative.status().last, seen: Object.keys(ZQ.state.cumulative.seen()).length }; });
+        if (rec.rows !== 1 || rec.n !== 20 || rec.score !== 20) fails.push(`the save after the review: ${JSON.stringify(rec)}`);
+        if (rec.due) fails.push('the review is still due after it was finished');
+        await todayAgain();
+        if (await rowIn()) fails.push('the weekly row is still on Today after the review was finished');
+        /* seven days after it: due again, not before */
+        await page.evaluate((d) => ZQ.state._setClock(() => Date.now() + d), 14 * DAYMS);
+        if (await page.evaluate(() => ZQ.state.cumulative.status().due)) fails.push('due again only six days after the last review');
+        await page.evaluate((d) => ZQ.state._setClock(() => Date.now() + d), 15.2 * DAYMS);
+        await todayAgain();
+        if (!(await rowIn())) fails.push('not due again seven days after the last review');
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} #weekly  ${n} items, due after 8 days, postponed, finished, cleared, due again after 7 days`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log('FAIL #weekly  threw');
+      } finally {
+        try { await page.evaluate(() => ZQ.state._setClock(null)); } catch { /* the page is gone */ }
+      }
+      fails.forEach(f => failures.push(`#weekly: ${f}`));
+    };
     if (runRoutes) {
       /* the route checks (bank counts, samples hidden from You) assume a fresh profile; after played items (--all, shard 1) start one */
       if (played > 0) await freshSetup();
@@ -2122,6 +2424,7 @@ const main = async () => {
       await gatingChecks();
       await provenanceChecks();
       await capstoneChecks();
+      await cumulativeChecks();
       if (!exams.includes('mock-oa-code')) await holdoutChecks('mock-oa-code');
       await versionChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;

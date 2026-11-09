@@ -45,6 +45,8 @@
     lessons: {}, reviews: {}, homework: {}, exams: {}, skills: {}, selfMarked: {},   // selfMarked: per skill { seen, correct, lastAt } from self-ticked rows, never mixed into skills (provenance, N01)
     redo: [], notebook: [], drills: {}, drillSessions: [],
     bank: {}, timing: { families: {} },
+    cumulative: { last: null, postponedAt: null, history: [], seen: {} },   // the weekly mixed review (ENGINE-BACKLOG 820): when the last one was finished, the day it was last postponed, one row per review, uids of authored items already served
+    fluency: {},   // generated fluency sets (ENGINE-BACKLOG 806): "course/set-id" -> { attempts, best, n, lastScore, lastAt, passedAt, families: { id: { right, wrong, lastAt } } }
     warmup: { history: [] },
     hours: [],
     streak: { current: 0, best: 0, lastDay: null, restDays: 0, restEarnedAt: 0, days: {}, count: { day: null, problems: 0 } },
@@ -383,6 +385,58 @@
     });
   }
 
+  /* ---------- Generated fluency sets (ENGINE-BACKLOG 806, docs/AUTHORING.md section 16) ----------
+     A finished attempt keeps its counts per set: attempts, the best score, the last score, the date of the last pass and, per
+     family, right and wrong counts (the weekly review reads them). Nothing here keys on generated item text, and a fluency
+     pass changes no skill score, streak, XP, met rule or gate. families: { familyId: [right, wrong] }; partial: true records only the family counts. */
+  const fluencyKey = (course, id) => `${course}/${id}`;
+  const fluencyResult = ({ course, id, right = 0, n = 0, passed = false, families = {}, partial = false } = {}) => {
+    if (!isObj(doc.fluency)) doc.fluency = {};
+    const k = fluencyKey(course, id), r = doc.fluency[k] || (doc.fluency[k] = { attempts: 0, best: 0, n: 0, lastScore: 0, lastAt: null, passedAt: null, families: {} });
+    if (!isObj(r.families)) r.families = {};
+    if (!partial) {   // an attempt left part way keeps its family counts only: it is not an attempt, a score or a pass
+      r.attempts++; r.lastScore = right; r.n = n; r.lastAt = now();
+      if (right >= r.best) r.best = right;
+      if (passed) r.passedAt = now();
+    }
+    Object.entries(families || {}).forEach(([f, [a, b]]) => {
+      const x = r.families[f] || (r.families[f] = { right: 0, wrong: 0, lastAt: null });
+      x.right += a || 0; x.wrong += b || 0; x.lastAt = now();
+    });
+    changed('fluency');
+    return r;
+  };
+  const fluencyGet = (course, id) => (isObj(doc.fluency) && doc.fluency[fluencyKey(course, id)]) || null;
+
+  /* ---------- Cumulative weekly review (ENGINE-BACKLOG 820 to 829, docs/AUTHORING.md section 16) ----------
+     Due once a week per learner: seven days after the last one was finished, the first seven days after the first level was
+     recorded met (doc.prereq.met). Not opt-in. Postponing records the day and changes nothing else: it stays due. A finished
+     review is one history row { at, score, n, byLevel: { "course/L<n>": missed }, levels: [keys drawn from], fluency: how many
+     generated items, authored: how many authored items }; uids of authored items served are kept in `seen` (oldest dropped past 3000).
+     No gate: nothing reads this to lock or unlock anything. */
+  const WEEK_MS = 7 * DAY;
+  const cum = () => { const c = doc.cumulative; if (!isObj(c)) doc.cumulative = { last: null, postponedAt: null, history: [], seen: {} }; const x = doc.cumulative; if (!Array.isArray(x.history)) x.history = []; if (!isObj(x.seen)) x.seen = {}; return x; };
+  const cumFirstMet = () => { const ts = Object.values(prq().met).map(m => Number(m && m.at) || 0).filter(t => t > 0); return ts.length ? Math.min(...ts) : null; };
+  const cumStatus = (t) => {
+    const at = t == null ? now() : t, c = cum(), first = cumFirstMet(), base = c.last != null ? c.last : first, dueAt = base == null ? null : base + WEEK_MS, due = dueAt != null && at >= dueAt;
+    return { first, last: c.last, dueAt, due, overdueDays: due ? Math.floor((at - dueAt) / DAY) : 0, postponedToday: due && c.postponedAt != null && todayKey(c.postponedAt) === todayKey(at), count: c.history.length };
+  };
+  const cumPostpone = () => { const c = cum(); c.postponedAt = now(); changed('cumulative'); return cumStatus(); };
+  const cumRecord = ({ score = 0, n = 0, byLevel = {}, levels = [], fluency = 0, authored = 0, seen = [], partial = false } = {}) => {
+    const c = cum();
+    (seen || []).forEach(u => { c.seen[u] = now(); });
+    const keys = Object.keys(c.seen);
+    if (keys.length > 3000) keys.sort((a, b) => c.seen[a] - c.seen[b]).slice(0, keys.length - 3000).forEach(k => { delete c.seen[k]; });
+    let row = null;
+    if (!partial) {   // an attempt left part way is not a review: it stays due, but what was served is remembered
+      row = { at: now(), score, n, byLevel, levels, fluency, authored };
+      c.history.push(row); if (c.history.length > 100) c.history.splice(0, c.history.length - 100);
+      c.last = row.at; c.postponedAt = null;
+    }
+    changed('cumulative');
+    return row;
+  };
+
   /* ---------- Interview bank deck (ENGINE-BACKLOG 456): each item has its own Leitner schedule ----------
      doc.bank[uid] = { box, due, seen, miss, last, secs, at, family }, uid like "bank/<file>/<item>" or, for a tagged
      review or homework item, its own "course/lesson/item". box is the interval in days (1, 3, 7 or 30). A new item
@@ -661,6 +715,8 @@
     notebook: ns('notebook', { add: notebookAdd, list: () => doc.notebook.slice() }),
     bank: ns('bank', { entry: bankEntry, due: bankDue, result: bankResult, list: () => ({ ...doc.bank }) }),
     get timing() { return doc.timing; },
+    cumulative: ns('cumulative', { status: cumStatus, postpone: cumPostpone, record: cumRecord, seen: () => ({ ...cum().seen }), history: () => cum().history.slice() }),
+    fluency: ns('fluency', { result: fluencyResult, get: fluencyGet, list: () => (isObj(doc.fluency) ? { ...doc.fluency } : {}) }),
     drills: ns('drills', { verified: drillVerified, draft: drillDraft, time: drillTime, session: drillSessionRecord, sessions: () => (Array.isArray(doc.drillSessions) ? doc.drillSessions.slice() : []), get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
     warmup: ns('warmup', { record: warmupRecord, list: () => doc.warmup.history.slice() }),
     hours: ns('hours', { log: logHours, list: () => doc.hours.slice() }),

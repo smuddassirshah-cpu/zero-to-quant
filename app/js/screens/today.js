@@ -295,6 +295,23 @@
     /* Weekly probability problems, once ZQ.select.weeklyStatus() reports the feature active (a 1.5 lesson finished) */
     let weekly = null;
     try { const ws = ZQ.select && ZQ.select.weeklyStatus ? ZQ.select.weeklyStatus() : null; if (ws && ws.eligible) weekly = ws; } catch (e) { console.error(e); }
+    /* ENGINE-BACKLOG 825: the weekly mixed review, due once a week from the first level met (ZQ.state.cumulative); postponing keeps it here */
+    let cumRow = '';
+    try {
+      const cs = ZQ.select && ZQ.select.cumulativeStatus ? ZQ.select.cumulativeStatus() : null;
+      if (cs && cs.eligible && cs.due) {
+        cumRow = dueRow('review', 'Weekly mixed review', cs.postponedToday ? 'Postponed today. It stays due.' : `20 questions from every level you have met · about 20 minutes${cs.overdueDays > 0 ? ` · due since ${esc(shortDate(cs.dueAt))}` : ''}`, 'weekly');
+      }
+    } catch (e) { console.error(e); }
+    /* ENGINE-BACKLOG 810: practice after the due work: a generated fluency set whose lesson is done and that has not been passed yet, the newest lesson first */
+    let flu = [];
+    try {
+      flu = (C.fluencyList ? C.fluencyList() : []).filter(r => { const l = S.lesson(r.course, r.lesson), f = S.fluency.get(r.course, r.id); return !!(l && l.done) && !(f && f.passedAt); })
+        .sort((x, y) => ((S.lesson(y.course, y.lesson) || {}).completedAt || 0) - ((S.lesson(x.course, x.lesson) || {}).completedAt || 0));
+    } catch (e) { console.error(e); }
+    const fluRow = (r) => dueRow('target', esc(r.title || 'Fluency'), `${r.n} fresh questions · about ${r.minutes} minutes`, `fluency/${r.course}/${r.id}`);
+    const practice = flu.length ? `<h3 class="t-overline muted zt-prac-h" id="zt-prac-h">Practice</h3>
+        <ul aria-labelledby="zt-prac-h" data-fluency-rows>${flu.slice(0, 2).map(fluRow).join('')}</ul>${flu.length > 2 ? `<p class="t-caption muted zt-prac-more">${plural(flu.length - 2, 'more fluency set', 'more fluency sets')} on the course maps.</p>` : ''}` : '';
     P.due = `<section class="card zt-due" data-part="due" aria-labelledby="zt-due-h">
         <h2 class="t-h2" id="zt-due-h">Due</h2>
         <ul>
@@ -302,7 +319,9 @@
             : dueRow('check', 'Redo queue clear', sum.redoTotal ? `Nothing due today. ${plural(sum.redoTotal, 'problem comes', 'problems come')} back later.` : 'Nothing due today', 'review')}
           ${sum.homeworkOpen.slice(0, 2).map(hwRow).join('')}
           ${weekly ? dueRow('star', `Weekly probability problems: ${weekly.done} of ${weekly.total}`, weekly.done >= weekly.total ? 'Done for this week. Three new ones arrive on Monday.' : 'About 2 minutes each', 'practice/weekly') : ''}
+          ${cumRow}
         </ul>
+        ${practice}
       </section>`;
 
     const lastScore = sum.warmupLast;

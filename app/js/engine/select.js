@@ -317,5 +317,205 @@
     return picks.map((x, i) => Object.assign({}, x, { weekly: { week, index: i } }));
   };
 
-  Z.select = { practiceSet, redoSession, bankDeck, bankStatus, weeklyProbs, weeklyStatus, weeklyRecord, resolve, source, pool, interval, LEITNER };
+  /* ---------- Cumulative weekly review (ENGINE-BACKLOG 820 to 829; author and learner side docs/AUTHORING.md section 16) ----------
+     ZQ.select.cumulativeStatus()          { eligible, due, dueAt, overdueDays, postponedToday, last, count } for Today (no loading)
+     ZQ.select.weeklyReview({ n, seed })   the 20 items of the week's review, resolved for ZQ.player.runSet (async)
+     ZQ.select.weeklyFinish(items, res, { partial })   records the result (history row, misses to the redo queue, skill scores, family counts)
+     ZQ.select.cumulative.build(model, { n, seed, cap })   the selection itself, pure (tools/test-cumulative.mjs)
+   The rules, in order. Tier 1: generated items from the Fluency families of the lessons of every met level, the families with more
+   wrong answers and older last practice more likely. Tier 2: authored items the learner has never seen (bank items and the items of
+   topic exams not yet sat, on a course that has a met level). Tier 3: authored review items (the quiz and level review items of met
+   levels, never long-form or code) least recently seen first. At most four items from one course; the cap relaxes (4, 6, 8, ...) only
+   when too few courses are met to fill the set. Consecutive items come from different courses when that can be avoided. With no
+   Fluency sets written it is tiers 2 and 3 alone. */
+  const CUM_N = 20, CUM_CAP = 4, CUM_LEVELS = 12;
+  const lvKey = (cid, n) => `${cid}/L${n}`;
+  const cumulativeStatus = () => {
+    try {
+      const st = S().cumulative.status();
+      return Object.assign({ eligible: st.dueAt != null }, st);
+    } catch (e) { console.warn(e); return { eligible: false, due: false, dueAt: null, overdueDays: 0, postponedToday: false, last: null, count: 0 }; }
+  };
+  /* Every level the learner has met that has something written, as { course, n, key, lessons, review } */
+  const metLevels = () => {
+    const out = [];
+    let courses = [];
+    try { courses = C().allCourses(); } catch { courses = []; }
+    const P = Z.prereq;
+    courses.forEach(c => (c.levels || []).forEach(lv => {
+      let met = false;
+      try { met = P ? !!P.levelMet(c.id, lv.n) : !!(S().prereq.get().met || {})[lvKey(c.id, lv.n)]; } catch { met = false; }
+      if (met) out.push({ course: c.id, n: lv.n, key: lvKey(c.id, lv.n), lessons: (lv.lessons || []).filter(l => written(c.id, l)), review: lv.review && written(c.id, lv.review) ? lv.review : null });
+    }));
+    return out.filter(l => l.lessons.length || l.review);
+  };
+  const skillOwners = () => { const m = {}; try { C().allCourses().forEach(c => Object.keys(c.skills || {}).forEach(s => { m[s] = c.id; })); } catch { /* none */ } return m; };
+  const practiceKind = (q) => !(q.kind === 'longform' || (q.widget && (q.widget.kind === 'longform' || q.widget.kind === 'code')) || (Array.isArray(q.parts) && q.parts.some(p => p && p.widget && (p.widget.kind === 'longform' || p.widget.kind === 'code'))));
+  const gen = () => { if (!Z.gen) throw new Error('ZQ.gen is not loaded'); return Z.gen; };
+
+  /* The pure selection. model: { levels: [{ course, n, key }], families: [{ course, n, set, family, right, wrong, lastAt }],
+       unseen: [{ uid, course, n, item }], review: [{ uid, course, n, item, lastSeen }], now }. Returns entries in the order to be played:
+       { tier: 1, course, n, uid, gen, set } for a generated item, { tier: 2 or 3, course, n, uid, item } for an authored one. */
+  const cumBuild = (model, { n = CUM_N, seed = 0, cap = CUM_CAP } = {}) => {
+    const rng = rngFrom(hash(`weekly|${seed}`)), t = model.now || now();
+    const picks = [], perCourse = {}, uids = new Set(), prompts = new Set();
+    const room = (course, cp) => (perCourse[course] || 0) < cp;
+    const take = (e) => { picks.push(e); perCourse[e.course] = (perCourse[e.course] || 0) + 1; uids.add(e.uid); };
+    const fam = (model.families || []).map(f => Object.assign({}, f, { times: 0, dead: false }));
+    const weightOfFam = (f) => {
+      const wrongRate = ((f.wrong || 0) + 0.5) / ((f.right || 0) + (f.wrong || 0) + 1);          // more wrong answers, more weight
+      const days = f.lastAt ? Math.max(0, (t - f.lastAt) / DAY) : 60;                              // older last practice, more weight (never practised counts as 60 days)
+      return (0.15 + wrongRate) * (0.5 + Math.min(4, days / 14)) / (1 + f.times);
+    };
+    const unseen = (model.unseen || []).slice(), review = (model.review || []).slice();
+    const shuffled = (list) => list.map(x => ({ x, k: rng() })).sort((a, b) => a.k - b.k).map(o => o.x);
+    for (let cp = cap; picks.length < n && cp <= cap + 40; cp += 2) {
+      /* tier 1: generated items */
+      let guard = 0;
+      while (picks.length < n && guard++ < 400) {
+        const open = fam.filter(f => room(f.course, cp) && !f.dead);
+        if (!open.length) break;
+        const ws = open.map(weightOfFam), tot = ws.reduce((a, b) => a + b, 0);
+        let r = rng() * tot, f = open[open.length - 1];
+        for (let i = 0; i < open.length; i++) { r -= ws[i]; if (r <= 0) { f = open[i]; break; } }
+        const it = gen().draw(f.family, rngFrom(hash(`weekly|${seed}|${picks.length}|${f.set.id}|${f.family.id}|${f.times}`)), { avoid: prompts });
+        if (it.rejected) { f.dead = true; continue; }
+        prompts.add(it.prompt); f.times++;
+        take({ tier: 1, course: f.course, n: f.n, uid: `fluency/${f.course}/${f.set.id}/${f.family.id}#${picks.length}`, gen: it, set: f.set });
+      }
+      /* tiers 2 and 3: authored; each is taken one course at a time, the course with the fewest picks first */
+      const fromTier = (tier, list, order) => {
+        const queues = new Map();
+        order(list.filter(x => !uids.has(x.uid))).forEach(x => { const q = queues.get(x.course) || []; q.push(x); queues.set(x.course, q); });
+        while (picks.length < n) {
+          const next = [...queues.entries()].filter(([c, q]) => q.length && room(c, cp)).sort((a, b) => (perCourse[a[0]] || 0) - (perCourse[b[0]] || 0))[0];
+          if (!next) break;
+          const x = next[1].shift();
+          take({ tier, course: x.course, n: x.n, uid: x.uid, item: x.item });
+        }
+      };
+      fromTier(2, unseen, shuffled);
+      fromTier(3, review, (list) => shuffled(list).sort((a, b) => (a.lastSeen || 0) - (b.lastSeen || 0)));
+    }
+    /* play order: no two neighbours from one course when another is available */
+    const by = new Map(), out = [];
+    picks.forEach(x => { const q = by.get(x.course) || []; q.push(x); by.set(x.course, q); });
+    while (out.length < picks.length) {   // from the course with the most items left that is not the last one played (so none is stranded at the end)
+      const prev = out.length ? out[out.length - 1].course : null;
+      const open = [...by.entries()].filter(([, q]) => q.length), next = open.filter(([c]) => c !== prev).sort((a, b) => b[1].length - a[1].length)[0] || open[0];
+      out.push(next[1].shift());
+    }
+    return out;
+  };
+
+  /* The model from the live save and content (loads what the selection needs: fluency sets, bank files, topic exams, at most CUM_LEVELS levels) */
+  const cumModel = async () => {
+    const levels = metLevels(), t = now(), cumRec = (() => { try { return S().cumulative; } catch { return null; } })();
+    const seen = cumRec ? cumRec.seen() : {}, history = cumRec ? cumRec.history() : [];
+    const metCourses = new Set(levels.map(l => l.course)), owners = skillOwners();
+    const lowest = (cid) => (levels.filter(l => l.course === cid).sort((a, b) => a.n - b.n)[0] || {}).n;
+    /* tier 1 */
+    const families = [];
+    let fl = [];
+    try { fl = C().fluencyList ? C().fluencyList() : []; } catch { fl = []; }
+    for (const row of fl) {
+      const lv = levels.find(l => l.course === row.course && l.lessons.includes(row.lesson));
+      if (!lv) continue;
+      const doc = await safe(C().fluencySet(row.course, row.id));
+      if (!doc || !Array.isArray(doc.families)) continue;
+      let rec = null; try { rec = S().fluency.get(row.course, row.id); } catch { rec = null; }
+      doc.families.forEach(f => { if (Z.gen && Z.gen.checkFamily(f).length) return; const r = (rec && rec.families && rec.families[f.id]) || {}; families.push({ course: row.course, n: lv.n, set: doc, family: f, right: r.right || 0, wrong: r.wrong || 0, lastAt: r.lastAt || 0 }); });
+    }
+    /* tier 2 */
+    const unseen = [];
+    const courseOfItem = (it) => { const s = (it.skills || []).find(x => owners[x]); return s ? owners[s] : null; };
+    try {
+      for (const id of (C().bankIds ? C().bankIds() : [])) {
+        const D = await safe(C().bank(id));
+        ((D && D.items) || []).forEach(it => {
+          if (!it || !it.id || !practiceKind(it)) return;
+          const b = bankItem(it, id, D), cid = courseOfItem(b);
+          if (!cid || !metCourses.has(cid) || !lessonsDone(it.requires) || entryOf(b.uid) || seen[b.uid]) return;
+          unseen.push({ uid: b.uid, course: cid, n: lowest(cid), item: b });
+        });
+      }
+      const topics = new Set(levels.map(l => { const c = courseOf(l.course); return c && c.topic; }).filter(Boolean));
+      for (const tp of topics) {
+        const id = `topic-${tp}`, rec = ((S() && S().exams) || {})[id];
+        if (rec && Array.isArray(rec.attempts) && rec.attempts.length) continue;   // sat: its items are seen
+        const E = await safe(C().exam(id));
+        if (!E) continue;
+        const all = (E.items || []).concat(...(Array.isArray(E.parts) ? E.parts : []).filter(p => p && p.kind === 'paper').map(p => p.items || []));
+        all.forEach(it => {
+          if (!it || it.id == null || !practiceKind(it)) return;
+          const cid = courseOfItem(it), uid = `${id}/${it.id}`;
+          if (!cid || !metCourses.has(cid) || seen[uid]) return;
+          const out = Object.assign({}, it, { ref: { exam: id, item: it.id }, uid, source: source({ exam: id }), group: id, skills: it.skills || [] });
+          delete out.hints;
+          unseen.push({ uid, course: cid, n: lowest(cid), item: out });
+        });
+      }
+    } catch (e) { console.warn(e); }
+    /* tier 3: the quiz and level review items of the levels least recently covered by a weekly review */
+    const covered = {}; history.forEach(h => (h.levels || []).forEach(k => { covered[k] = Math.max(covered[k] || 0, h.at || 0); }));
+    const order = levels.slice().sort((a, b) => (covered[a.key] || 0) - (covered[b.key] || 0) || (a.key < b.key ? -1 : 1)).slice(0, CUM_LEVELS);
+    const review = [], sat = (S() && S().reviews) || {}, rc = recent.get();
+    const lastOf = (it) => Math.max(seen[it.uid] || 0, rc[it.uid] || 0) || ((sat[`${it.ref.course}/${it.ref.lesson}`] || {}).at || 0) || Math.min(...(it.skills.length ? it.skills : ['_']).map(s => (skillRec(s) && skillRec(s).lastAt) || 0));
+    for (const lv of order) {
+      const add = (items) => items.filter(practiceKind).forEach(it => review.push({ uid: it.uid, course: lv.course, n: lv.n, item: it, lastSeen: lastOf(it) }));
+      for (const l of lv.lessons) add(quizItems(await loadSet(lv.course, l), lv.course, l));
+      if (lv.review) add(setItems(await loadSet(lv.course, lv.review), lv.course, lv.review));
+    }
+    const dup = new Set(unseen.map(u => u.uid));
+    return { now: t, levels, families, unseen, review: review.filter(r => !dup.has(r.uid)) };
+  };
+  /* A selection entry as an item for ZQ.player.runSet */
+  const cumItem = (e, k) => {
+    const name = (courseOf(e.course) || {}).name || e.course;
+    if (e.tier === 1) {
+      const it = gen().playerItem(e.gen, e.set, k);
+      return Object.assign(it, { uid: e.uid, id: e.uid, group: e.course, source: `${name} · Fluency`, weekly: { tier: 1, course: e.course, n: e.n, set: e.set.id, family: e.gen.family } });
+    }
+    return Object.assign({}, e.item, { group: e.course, weekly: { tier: e.tier, course: e.course, n: e.n } });
+  };
+  const weeklyReview = async ({ n = CUM_N, seed } = {}) => {
+    const model = await cumModel();
+    const items = [];
+    items.metKeys = model.levels.map(l => l.key);
+    if (!model.levels.length) return items;
+    cumBuild(model, { n, seed: seed != null ? seed : (Math.random() * 4294967296) >>> 0 }).forEach((e, k) => items.push(cumItem(e, k)));
+    return items;
+  };
+  /* Record a finished (or, with partial, a left) weekly review. res[j] is the result of items[j] (undefined: not answered). Misses of authored
+     items join the redo queue (the same entries a review miss makes); a generated miss only moves the family counts, since a generated
+     question cannot be asked again. Answered authored items move the skill scores as a practice set does. */
+  const weeklyFinish = (items, res, { partial = false } = {}) => {
+    const byLevel = {}, fams = {}, seenUids = [], rows = [];
+    let right = 0, fluency = 0, authored = 0, answered = 0, queued = 0;
+    items.forEach((it, j) => {
+      const r = res[j]; if (!r || !it.weekly) return;
+      answered++;
+      const w = it.weekly, key = lvKey(w.course, w.n);
+      if (r.ok) right++; else byLevel[key] = (byLevel[key] || 0) + 1;
+      if (w.tier === 1) {
+        fluency++;
+        const x = fams[`${w.course}/${w.set}`] || (fams[`${w.course}/${w.set}`] = {}), f = x[w.family] || (x[w.family] = [0, 0]);
+        f[r.ok ? 0 : 1]++;
+      } else {
+        authored++; seenUids.push(it.uid);
+        rows.push({ id: it.id, ok: !!r.ok, difficulty: it.difficulty || 2, skills: it.skills || [], ref: it.ref });
+        if (!r.ok && it.ref) {
+          const kind = it.ref.exam ? 'exam' : it.ref.bank ? 'bank' : 'quiz';
+          try { S().redo.add({ id: it.uid, kind, ref: it.ref, skills: it.skills || [], difficulty: it.difficulty || 3 }); queued++; } catch (e) { console.error(e); }
+        }
+      }
+    });
+    Object.entries(fams).forEach(([k, families]) => { const [course, ...rest] = k.split('/'); try { S().fluency.result({ course, id: rest.join('/'), families, partial: true }); } catch (e) { console.error(e); } });
+    try { if (rows.length) S().practiceResult({ results: rows, source: 'weekly-review' }); } catch (e) { console.error(e); }
+    const row = S().cumulative.record({ score: right, n: items.length, byLevel, levels: items.metKeys || [], fluency, authored, seen: seenUids, partial: partial || answered < items.length });
+    return { right, byLevel, row, fluency, authored, queued, missed: answered - right };
+  };
+
+  Z.select = { practiceSet, redoSession, bankDeck, bankStatus, weeklyProbs, weeklyStatus, weeklyRecord, resolve, source, pool, interval, LEITNER,
+    cumulativeStatus, weeklyReview, weeklyFinish, metLevels, cumulative: { build: cumBuild, model: cumModel } };
 })();

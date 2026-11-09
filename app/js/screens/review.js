@@ -421,7 +421,7 @@
           <footer class="hw-foot"><div class="hw-actions" data-acts></div></footer></main>
       </div>`;
     const col = host.querySelector('[data-col]'), acts = host.querySelector('[data-acts]'), right = host.querySelector('[data-right]'), foot = host.querySelector('.hw-foot');
-    const leave = () => Z.go('review');
+    const leave = () => Z.go(cfg.back || 'review');   // cfg.back: the route a set returns to (the fluency screen goes to the course page or Today)
     host.querySelector('.hw-close').addEventListener('click', leave);
     const setActs = (html) => { acts.innerHTML = html; acts.classList.toggle('one', acts.children.length === 1); foot.hidden = !html; };
 
@@ -429,7 +429,7 @@
       if (!alive) return;
       if (!items.length) {
         col.innerHTML = `<section class="hw-intro rvs-empty"><span class="t-overline hw-deep">${esc(cfg.over || '')}</span><h1 class="t-lesson-title">${esc(cfg.emptyTitle || 'Nothing to do here')}</h1><p class="t-prose">${esc(cfg.emptyText || '')}</p></section>`;
-        setActs('<button type="button" class="btn hw-primary" data-back>Back to Review</button>');
+        setActs(`<button type="button" class="btn hw-primary" data-back>Back to ${esc(cfg.backLabel || 'Review')}</button>`);
         return;
       }
       right.innerHTML = `${I('clipboard', 'xs')}<span>${plural(items.length, 'problem', 'problems')}</span>`;
@@ -443,9 +443,9 @@
           <li>${I('lock', 'sm')}<span>No hints and one try each. Why? opens the explanation after you check.</span></li>
           ${(cfg.facts || []).map(([ic, t]) => `<li>${I(ic, 'sm')}<span>${esc(t)}</span></li>`).join('')}
         </ul>
-        <ol class="hw-ov">${items.map((it, j) => `<li><span class="hw-ov-n tnum">${j + 1}</span><span class="t-body rvs-ov-t">${esc(it.title || it.source || '')}</span>${pips(it.difficulty || 2)}<span class="t-caption muted hw-ov-m">${esc(cfg.tag ? cfg.tag(it) : '')}</span></li>`).join('')}</ol>
+        ${cfg.overview === false ? '' : `<ol class="hw-ov">${items.map((it, j) => `<li><span class="hw-ov-n tnum">${j + 1}</span><span class="t-body rvs-ov-t">${esc(it.title || it.source || '')}</span>${pips(it.difficulty || 2)}<span class="t-caption muted hw-ov-m">${esc(cfg.tag ? cfg.tag(it) : '')}</span></li>`).join('')}</ol>`}
       </section>`;
-      setActs(`<button type="button" class="btn hw-primary" data-start>Start</button>`);
+      setActs(`${cfg.later ? `<button type="button" class="btn secondary hw-sec" data-later>${esc(cfg.later.label)}</button>` : ''}<button type="button" class="btn hw-primary" data-start>Start</button>`);
       Z.mathify(col);
     };
     /* Test hook around the set (docs/PLAN.md 7): 'loading', then 'start' (continue() presses Start) or 'empty'; runSet
@@ -506,6 +506,7 @@
         <span class="t-overline hw-deep">${esc(cfg.over || '')}</span>
         <h1 class="t-complete">${esc(cfg.doneTitle || 'Set complete')}</h1>
         <div class="hw-score-big"><span class="t-stat tnum" data-count>${nRight}</span><span class="t-h2 secondary">of ${items.length} right</span></div>
+        ${out.verdict ? `<p class="t-h2 hw-verdict" role="status">${esc(out.verdict)}</p>` : ''}
         ${partsCredit != null ? `<p class="t-body hw-late hw-credit"><span>Counting each part of a multi-part problem: ${partsCredit} of ${items.length}.</span></p>` : ''}
         ${timedOut ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Time ran out with ${plural(res.filter(Boolean).length, 'problem', 'problems')} answered. The rest count as missed.</span></p>` : cfg.timed ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Finished with ${esc(clock(Math.max(0, remaining())))} left on the clock.</span></p>` : ''}
         ${pace.n ? `<p class="t-body hw-late hw-pace">${I('timer', 'sm')}<span>${esc(pace.text)}</span></p>` : ''}
@@ -517,7 +518,7 @@
           <span class="hw-rl-t"><span class="t-body">${md(stemOf(it))}</span><span class="t-caption secondary">${esc(it.source || '')}${out.lines && out.lines[j] ? ' · ' + esc(out.lines[j]) : ''}${r && typeof r.seconds === 'number' ? ` · ${esc(ZQ.mock.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${esc(ZQ.mock.fmtSeconds(it.pace))} pace` : ''}` : ''}</span></span>
           <span class="t-label tnum hw-res-m">${ok ? 'Right' : r && typeof r.credit === 'number' ? `${r.right} of ${r.of} parts` : r ? 'Not right' : 'Skipped'}</span><span></span></div></li>`; }).join('')}</ol>
       </section>`;
-      setActs(`${cfg.again ? `<button type="button" class="btn secondary hw-sec" data-again>${esc(cfg.again)}</button>` : ''}<button type="button" class="btn hw-primary" data-back>Back to Review</button>`);
+      setActs(`${cfg.again ? `<button type="button" class="btn secondary hw-sec" data-again>${esc(cfg.again)}</button>` : ''}<button type="button" class="btn hw-primary" data-back>Back to ${esc(cfg.backLabel || 'Review')}</button>`);
       right.innerHTML = `${I('check', 'xs')}<span>${nRight} of ${items.length} right</span>`;
       Z.sound('complete');
     };
@@ -525,7 +526,8 @@
     host.addEventListener('click', (e) => {
       if (e.target.closest('[data-back]')) { leave(); return; }
       if (e.target.closest('[data-start]')) { start(items0); return; }
-      if (e.target.closest('[data-again]')) { Z.go(location.hash.slice(1)); }
+      if (e.target.closest('[data-later]')) { try { cfg.later.run(); } catch (err) { console.error(err); } leave(); return; }   // cfg.later: { label, run } on the start card (the weekly review's "Not today")
+      if (e.target.closest('[data-again]')) { Z.go(cfg.againRoute ? cfg.againRoute() : location.hash.slice(1)); }
     });
     Promise.resolve(cfg.load()).then(items => { items0 = items || []; phase = items0.length ? 'start' : 'empty'; intro(items0); }).catch(e => { console.error(e); if (alive) { col.innerHTML = `<p class="t-body">This set could not be loaded: ${esc(e.message)}</p>`; setActs('<button type="button" class="btn hw-primary" data-back>Back to Review</button>'); } });
     return () => {
@@ -723,6 +725,7 @@
     };
     return setPage(root, Z, cfg);
   }
+  ZQ.setPage = setPage;   // the set page is shared with the fluency screen (js/screens/fluency.js)
   ZQ.screen({ id: 'testout', title: 'Test out', group: 'Assessment', hidden: true, shell: false, render: (root, Z, params = []) => mountTestout(root, Z, params[0], params[1]) });
 
   /* Full-screen takeover for set routes that share the shell's screen id */

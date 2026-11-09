@@ -71,6 +71,14 @@ const bank = jsonFiles(join(C, 'bank')).map((f) => ({ f, b: read(join(C, 'bank',
 const bankReal = bank.filter((x) => !x.b.sample && !x.f.startsWith('sample'));
 const bankItems = bankReal.reduce((a, x) => a + (x.b.items ?? []).length, 0);
 
+// Generated fluency sets (ENGINE-BACKLOG 817): content/courses/<course>/fluency-<lesson>.json, samples left out.
+let fluencySets = 0, fluencyFamilies = 0, fluencySamples = 0;
+for (const c of courses) for (const f of jsonFiles(join(C, 'courses', c.id)).filter((x) => /^fluency-.+\.json$/.test(x))) {
+  const d = read(join(C, 'courses', c.id, f));
+  if (d.sample) { fluencySamples++; continue; }
+  fluencySets++; fluencyFamilies += (d.families ?? []).length;
+}
+
 // Prep paths: mock ids referenced with no file.
 let prepPaths = 0; const prepMissing = new Set();
 if (existsSync(join(C, 'prep.json'))) {
@@ -117,6 +125,7 @@ out.push(`Stage exams: ${real.filter((e) => e.kind === 'stage').map((e) => e.id)
 out.push(`Topic exam pass marks: ${[...new Set(real.filter((e) => e.kind === 'topic').map((e) => e.pass))].join(', ')}; items ${Math.min(...real.filter((e) => e.kind === 'topic').map((e) => e.items))} to ${Math.max(...real.filter((e) => e.kind === 'topic').map((e) => e.items))}`);
 out.push(`Drills (non-sample) ${drillReal.length}: ${Object.entries(drillPack).map(([k, v]) => `${k} ${v}`).join(', ')}; samples ${drills.length - drillReal.length}`);
 out.push(`Bank: ${bankReal.length} files, ${bankItems} items; sample files ${bank.length - bankReal.length}`);
+out.push(`Fluency sets ${fluencySets} (families ${fluencyFamilies})${fluencySamples ? `; sample sets ${fluencySamples}` : ''}`);
 out.push(`Prep paths ${prepPaths}; mock ids named in prep.json with no file: ${prepMissing.size} (${[...prepMissing].join(', ')})`);
 out.push(legacy.length ? `Legacy stage hours field present on ${legacy.length} stage(s), total ${legacy.reduce((a, s) => a + s.hours, 0)}, ignored by the engine (run tools/apply-item11-content.mjs)` : 'Legacy stage hours field: absent (stage hours are derived from topics)');
 out.push(`Hours: stored stage total ${storedH}, summed topic total ${summedH}, gap ${summedH - storedH}`);
