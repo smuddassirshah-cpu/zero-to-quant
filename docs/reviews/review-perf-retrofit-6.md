@@ -52,3 +52,20 @@ Read at HEAD `56a757c` on `sx/read-perf-6`. No content file was edited.
 - Protocol 6: REP-1 is another sighting of a missing "Overlapping screens" line, but all three reports predate `perf-reports.mjs`; the rule already exists as a tool. CON-1 and ENS-1 are a new class: a required row worded for one route or one assumption set, so a correct answer by another fails. Two sightings in this review; one more makes it a brief line ("a required row accepts every correct route the level's ideas allow").
 
 Totals: Must 0. Should 2 (CON-1, ENS-1). Could 6 (ENS-2, FM2-1, CON-2, AL4-1, REP-1, OD4-1). opt-dash L4's item has no finding (OD4-1 is its report).
+
+## Fix pass
+
+Minimal passing sets (`node tools/rubric-passes.mjs --item <file>#<id>`): contests `hw3-due-order` rows 2 to 5 (9 points), row 1 optional; ensembles `hw-floor-derive` rows 1 to 4 (9 points), row 5 optional. Both unchanged by the rewording.
+
+- CON-1: fixed. Rows 2 and 4 accept the first-difference swap or the adjacent-inversion swap, and the model gains "Another route". Own basis: only the swapped pair moves, `j` ends earlier and `i` ends at `T`, so $\ell'_i \le \ell_j$; each swap removes one inversion; adjacent ties leave the later end on an equal due time. Row 2 split into three sentences (the first draft ran to 36 words).
+- ENS-1: fixed. Model and row 1 ask for one mean, one variance and one pairwise correlation; identical distribution is called enough. Own basis: the derivation uses only $E[X_b] = \mu$, $\operatorname{Var} = \sigma^2$ and $\operatorname{Cov} = \rho\sigma^2$.
+- ENS-2: fixed. Prompt, model and row 1 treat the training sample as random as well as the growing draws. Own basis: with one fixed sample, independent growing draws give correlation 0, so $\rho = 0.2$ needs the sample random.
+- FM2-1: fixed. Test 14 and its byKey line added, `how` says 14 tests, BDay slip added to `fin-ml-2-perf-numbers.py`. Solution passes 14 of 14, starter fails 14 of 14, the BDay slip fails test 14 only, and all 25 planted bugs fail a test.
+- CON-2: fixed, the never-wait rule is defined where it is named (the non-delay rule instance checks: A at 0, B ready at 1 is waited for).
+- AL4-1: fixed, the question says `split_pnl` returns a Series indexed by date.
+- REP-1: fixed, the "Overlapping screens" lead in the alpha-4, contests-3 and ensembles-2 reports.
+- OD4-1: fixed, the kind reason is in the opt-dash-4 report.
+
+Graded answers changed: none. Test 14 is added; no existing expect, rubric points or model number moved.
+
+Gates: author scripts (contests-3, alpha-4, opt-dash-4, ensembles-2, fin-ml-2) exit 0; reader scripts exit 0 including `findings_assert.py` (FAILS 0), `voice_items.py` 0 problems, run without `-I` since they import `harness`. Validator 0 errors. `perf-reports.mjs --warn` lists none of the five. Playthrough of the five homeworks with and without `--mobile`: All passed, manifest restored. Voice scan 35: 0 and 0 for all five courses.

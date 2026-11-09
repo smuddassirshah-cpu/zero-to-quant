@@ -17,3 +17,5 @@ Gates:
 4. `node tools/playthrough.mjs --set opt-dash/homework-4 --local-cdn <pkgs>`, with and without `--mobile`, regenerated manifest: All passed, starter fails.
 
 Freshness: `fresh-check --file` 0 hits; grep `explain_day`, `weekend`, `vol points`, `per point`, `365`, `residual`, `pnl_explain`.
+
+Kind: the verb rule gives `aloud` for "Explain", but a desk's P&L explain is a computation, the attribution l14 screen 10 codes, so `code` grades the product the objective names.

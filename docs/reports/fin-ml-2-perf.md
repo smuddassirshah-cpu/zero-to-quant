@@ -3,7 +3,7 @@
 - `homework-2.json` item 8 of 8, `h-return-rank`, appended. `code`, difficulty 4, `fm-features`.
 - Objective: l7 "Build cross-sectional rank features", over l5: a time-series rank or a stale close leaks or mis-trades silently, in range. The task builds l5's return too.
 - Product: `return_rank(df, k)`, unsorted long panel with NaN closes; $k$-date return, ranked per date, ties averaged, $-1$ to 1, lone share 0.
-- 13 tests, 1 example. 24 planted bugs fail (time-series rank, tie methods, `pct_change` padding, ffill, $n_t$ miscounts, wrong scales, inverted return, price level, unsorted, $k \pm 1$, lone share), each with a byKey line on its first failure. Loop, log and difference routes pass.
+- 14 tests, 1 example. 25 planted bugs fail (BDay look-back, time-series rank, tie methods, `pct_change` padding, ffill, $n_t$ miscounts, wrong scales, inverted return, price level, unsorted, $k \pm 1$, lone share), each with a byKey line on its first failure. Loop, log and difference routes pass.
 
 Gates:
 1. `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors.
