@@ -1,0 +1,110 @@
+{
+  "id": "dsa-ticket-desk",
+  "name": "One-desk ticket queue",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "stacks-queues",
+  "tags": [
+    "stdin",
+    "ticket-desk"
+  ],
+  "skills": [
+    "ds-stacks",
+    "ds-lists"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "solve_ticket_desk",
+  "returns": "a string",
+  "brief": "A help desk for traders has one person serving tickets in the order they arrive. A ticket starts at its arrival time or when the desk is free, whichever is later. The input comes as one string:\n\n- the first line holds `n`, the number of tickets;\n- each of the next `n` lines holds a ticket's arrival minute and its service minutes, separated by a space. Arrivals never go down.\n\nWrite `solve_ticket_desk(text)`, which returns three whole numbers separated by single spaces: the total minutes tickets wait before starting, the minute the desk finishes, and the longest queue. The queue at a minute `m` counts tickets that have arrived by `m` but start after `m`; the longest queue is its largest value at any arrival minute. For no tickets return `\"0 0 0\"`. Expect extra spaces and blank lines.\n\nExample. For `\"4\\n0 5\\n1 3\\n2 4\\n10 2\\n\"` the tickets start at 0, 5, 8 and 12, so they wait 0, 4, 6 and 2. The desk finishes at 14, and at minute 2 two tickets are queuing. The answer is `\"12 14 2\"`.",
+  "constraints": [
+    "$0 \\le n \\le 100{,}000$ tickets; arrivals between $0$ and $10^9$, never going down; service minutes between $1$ and $10^4$.",
+    "$O(n)$ time after reading is the target. Recounting the queue from scratch at every arrival is too slow.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Track when the desk is next free. Keep a deque of start minutes of tickets still queuing; at each arrival, pop from the left every start that is not after the arrival.",
+  "starter": "def solve_ticket_desk(text):\n    # your code here\n    return '0 0 0'\n",
+  "examples": [
+    {
+      "call": "solve_ticket_desk('4\\n0 5\\n1 3\\n2 4\\n10 2\\n')",
+      "expect": "'12 14 2'",
+      "compare": "equal",
+      "note": "Waits are 0, 4, 6 and 2; at minute 2 the second and third tickets are queuing."
+    },
+    {
+      "call": "solve_ticket_desk('2\\n0 3\\n3 1\\n')",
+      "expect": "'0 4 0'",
+      "compare": "equal",
+      "note": "The second ticket arrives as the desk frees up, so nobody waits."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_ticket_desk('0\\n')",
+      "expect": "'0 0 0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('1\\n5 2\\n')",
+      "expect": "'0 7 0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('2\\n0 3\\n3 1\\n')",
+      "expect": "'0 4 0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('4\\n0 5\\n1 3\\n2 4\\n10 2\\n')",
+      "expect": "'12 14 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('3\\n4 2\\n4 2\\n4 2\\n')",
+      "expect": "'6 10 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk(' 3 \\n\\n 0   1 \\n 10 1\\n  20  1 \\n\\n')",
+      "expect": "'0 21 0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('3\\n0 10\\n1 1\\n12 1\\n')",
+      "expect": "'9 13 1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('5\\n0 4\\n1 4\\n2 4\\n3 4\\n20 1\\n')",
+      "expect": "'18 21 3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('2\\n1000000000 10000\\n1000000000 10000')",
+      "expect": "'10000 1000020000 1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('4\\n0 2\\n1 2\\n5 2\\n5 2\\n')",
+      "expect": "'3 9 1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('100000\\n' + ''.join('%d 3\\n' % i for i in range(100000)))",
+      "expect": "'9999900000 300000 66666'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_ticket_desk('100000\\n' + ''.join('%d 2\\n' % (2 * i) for i in range(100000)))",
+      "expect": "'0 200000 0'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "from collections import deque\n\ndef solve_ticket_desk(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    free = 0\n    waited = 0\n    longest = 0\n    queue = deque()\n    for i in range(n):\n        arrive = int(tokens[1 + 2 * i])\n        serve = int(tokens[2 + 2 * i])\n        start = max(arrive, free)\n        waited += start - arrive\n        free = start + serve\n        while queue and queue[0] <= arrive:\n            queue.popleft()\n        if start > arrive:\n            queue.append(start)\n        longest = max(longest, len(queue))\n    return f'{waited} {free} {longest}'\n",
+  "notes": [
+    "The queue is first in, first out: start minutes only grow, so the tickets that have started leave from the front.",
+    "A ticket starting exactly at the minute in question is being served, not queuing, so pop starts that are not after it.",
+    "Each ticket joins and leaves the deque once, so the work is $O(n)$."
+  ]
+}

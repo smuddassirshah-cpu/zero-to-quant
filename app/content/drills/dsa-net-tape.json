@@ -1,0 +1,109 @@
+{
+  "id": "dsa-net-tape",
+  "name": "Netting a buy and sell tape",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "stacks-queues",
+  "tags": [
+    "net-tape"
+  ],
+  "skills": [
+    "ds-stacks",
+    "ds-arrays"
+  ],
+  "difficulty": 2,
+  "pace": 1080,
+  "fn": "net_tape",
+  "returns": "a list of whole numbers",
+  "brief": "An internal crossing engine reads a tape of orders: a positive number is a buy of that many lots, a negative one a sell. Each sell nets first against the newest buy still resting, then the next newest, until it is used up or no buy is left. A sell with nothing left to net against rests too, and later buys never reach it.\n\nWrite `net_tape(orders)`, which returns what still rests after the whole tape, oldest first.\n\nExample. For `[5, 3, -4, 2, -9]`, the -4 uses all 3 and 1 of the 5, leaving `[4]`. Then 2 rests, and -9 uses the 2 and the 4 and rests as -3. The answer is `[-3]`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ orders, each a non-zero whole number between $-10^9$ and $10^9$.",
+    "$O(n)$ time is the target. Rebuilding the list after each sell is too slow.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Keep the resting orders on a stack. For a sell, while the top is a buy and the sell is not used up, take from the top. Push whatever is left of the sell.",
+  "starter": "def net_tape(orders):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "net_tape([5, 3, -4, 2, -9])",
+      "expect": "[-3]",
+      "compare": "equal",
+      "note": "The sells eat the newest buys first; 3 lots of the last sell find nothing and rest."
+    },
+    {
+      "call": "net_tape([-2, 6])",
+      "expect": "[-2, 6]",
+      "compare": "equal",
+      "note": "The sell comes first and the later buy never reaches it."
+    }
+  ],
+  "tests": [
+    {
+      "call": "net_tape([])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([4])",
+      "expect": "[4]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([-4])",
+      "expect": "[-4]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([5, 3, -4, 2, -9])",
+      "expect": "[-3]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([-2, 6])",
+      "expect": "[-2, 6]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([3, -3])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([2, 2, -1, -1])",
+      "expect": "[2]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([1, 1, 1, -5, 2])",
+      "expect": "[-2, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([4, -1, -1, -1, -1, -1])",
+      "expect": "[-1]",
+      "compare": "equal"
+    },
+    {
+      "call": "net_tape([10**9, -1, -(10**9)])",
+      "expect": "[-1]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r)))(net_tape([1] * 100000 + [-1] * 100000))",
+      "expect": "(0, 0)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[0], r[-1]))(net_tape([3, -1] * 100000))",
+      "expect": "(100000, 2, 2)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def net_tape(orders):\n    rest = []\n    for q in orders:\n        if q > 0:\n            rest.append(q)\n            continue\n        need = -q\n        while need and rest and rest[-1] > 0:\n            take = min(need, rest[-1])\n            need -= take\n            rest[-1] -= take\n            if rest[-1] == 0:\n                rest.pop()\n        if need:\n            rest.append(-need)\n    return rest\n",
+  "notes": [
+    "Only the newest resting buy can be hit next, which is the top of a stack.",
+    "A sell may use several buys, and once it rests as a negative it shields older buys from every later sell.",
+    "Each order is pushed once and popped at most once, so the work is $O(n)$."
+  ]
+}
