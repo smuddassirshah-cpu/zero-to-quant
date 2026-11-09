@@ -1749,3 +1749,7 @@ Raised later (numpy-pandas level 3 perf):
 Raised later (plotting level 2 perf):
 - [Should] Seen again (inbox "The `code` widget shows no figure"): `h-wealth-peak` is a gating chart task, yet the learner never sees the chart they drew. A failed test shows only the artist data. Want the widget to render the returned Figure or Axes (one PNG under the results) on Run examples and Check.
 - [Could] A test that finds an artist by label fails all later tests with one lookup error when a label is wrong; byKey can only name the test, not say "no line labelled Wealth". Want a byKey match on the error text, or a per-case message shown when the call raises.
+
+Raised later (plotting level 3 perf):
+- [Should] The session venv for perf numbers scripts has matplotlib 3.8.4 and pandas 2.2.3 but NumPy 2.5.4, while Pyodide 0.27.7 ships NumPy 2.0.2. A prelude that draws data from `np.random.default_rng` could give expects that differ in the browser; `h-price-file-report` uses a pure-Python generator to avoid it. Want the venv pinned to NumPy 2.0.2, or a census line naming the mismatch.
+- [Could] A test of a saved figure has to parse the PNG's pHYs chunk in a prelude helper to read its dpi. Want a shared test helper (dpi and pixel size of a saved file) for the plotting and backtest courses.
