@@ -464,6 +464,105 @@
           "text": "Checks that the pmf of $Z$ adds to 1."
         }
       ]
+    },
+    {
+      "id": "h-build-pmf",
+      "performance": "code",
+      "difficulty": 4,
+      "skills": [
+        "rv-dist"
+      ],
+      "title": "A pmf from any sample space",
+      "prose": "In Python a sample space can be a dict: each outcome is a key, and its chance is the value. The chances may be ints, floats or `Fraction`s, and they need not be equal. A random variable is a function `X` that gives each outcome a number.",
+      "question": "Write `pmf_of(space, X)`, which returns the pmf of `X` as a dict `{value: chance}`. Outcomes that share a value add their chances. Leave out any value whose chance is 0. Check the chances first: raise `ValueError` if any chance is negative, or if they do not add up to 1 to within `1e-9`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def pmf_of(space, X):\n    \"\"\"The pmf of X as {value: chance}.\n    space maps each outcome to its chance.\n    X gives each outcome a number.\"\"\"\n    ...\n",
+        "solution": "def pmf_of(space, X):\n    \"\"\"The pmf of X as {value: chance}.\n    space maps each outcome to its chance.\n    X gives each outcome a number.\"\"\"\n    if any(p < 0 for p in space.values()):\n        raise ValueError(\"a chance is negative\")\n    if abs(sum(space.values()) - 1) > 1e-9:\n        raise ValueError(\"the chances do not add up to 1\")\n    pmf = {}\n    for outcome, p in space.items():\n        if p > 0:  # an outcome of chance 0 adds no value\n            x = X(outcome)\n            pmf[x] = pmf.get(x, 0) + p  # outcomes that share a value add\n    return pmf\n",
+        "examples": [
+          {
+            "setup": "from fractions import Fraction; die = {k: Fraction(1, 6) for k in range(1, 7)}",
+            "call": "pmf_of(die, lambda k: 3 if k == 6 else -1)",
+            "expect": "{3: 1/6, -1: 5/6}",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "from fractions import Fraction; die = {k: Fraction(1, 6) for k in range(1, 7)}",
+            "call": "pmf_of(die, lambda k: 3 if k == 6 else -1)",
+            "expect": "{3: 1/6, -1: 5/6}",
+            "compare": "isclose"
+          },
+          {
+            "setup": "from fractions import Fraction; dice = {(a, b): Fraction(1, 36) for a in range(1, 7) for b in range(1, 7)}",
+            "call": "pmf_of(dice, lambda w: w[0] * w[1])",
+            "expect": "{1: 1/36, 2: 2/36, 3: 2/36, 4: 3/36, 5: 2/36, 6: 4/36, 8: 2/36, 9: 1/36, 10: 2/36, 12: 4/36, 15: 2/36, 16: 1/36, 18: 2/36, 20: 2/36, 24: 2/36, 25: 1/36, 30: 2/36, 36: 1/36}",
+            "compare": "isclose"
+          },
+          {
+            "call": "pmf_of({'red': 0.5, 'blue': 0.3, 'green': 0.2}, lambda c: 2 if c == 'blue' else -1)",
+            "expect": "{2: 0.3, -1: 0.7}",
+            "compare": "isclose"
+          },
+          {
+            "call": "pmf_of({k: 0.1 for k in range(10)}, lambda k: k // 4)",
+            "expect": "{0: 0.4, 1: 0.4, 2: 0.2}",
+            "compare": "isclose"
+          },
+          {
+            "call": "pmf_of({'H': 0.5, 'T': 0.5, 'edge': 0}, lambda s: {'H': 1, 'T': 0, 'edge': 5}[s])",
+            "expect": "{1: 0.5, 0: 0.5}",
+            "compare": "isclose"
+          },
+          {
+            "setup": "from fractions import Fraction; cards = {(a, b): Fraction(1, 12) for a in range(1, 5) for b in range(1, 5) if a != b}",
+            "call": "pmf_of(cards, sum)",
+            "expect": "{3: 2/12, 4: 2/12, 5: 4/12, 6: 2/12, 7: 2/12}",
+            "compare": "isclose"
+          },
+          {
+            "setup": "from itertools import product; tosses = {s: 0.7 ** s.count('H') * 0.3 ** s.count('T') for s in map(''.join, product('HT', repeat=3))}; longest = lambda s: max(len(run) for run in s.split('T'))",
+            "call": "pmf_of(tosses, longest)",
+            "expect": "{0: 0.027, 1: 0.336, 2: 0.294, 3: 0.343}",
+            "compare": "isclose"
+          },
+          {
+            "call": "pmf_of({'a': 0.5, 'b': 0.4}, lambda w: 1)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "pmf_of({'a': 0.5, 'b': 0.4999}, lambda w: 1)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "pmf_of({'a': 0.6, 'b': 0.6, 'c': -0.2}, lambda w: 1)",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. A returned pmf must have exactly the right values as its keys, and each chance is compared within rounding (`math.isclose`)."
+      },
+      "feedback": {
+        "correct": "Your function checks the chances, then adds the chance of every outcome into the value it gets.",
+        "generic": "Not quite right. Take the first failing test, list its outcomes and values by hand, and compare with what your function returns.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that the `...` is replaced and that every name is defined.",
+          "test-3": "Test 3 is a spinner whose colours are not equally likely. Add each outcome's own chance, not a count of outcomes.",
+          "test-4": "If your function raised `ValueError` here, compare the total with 1 within `1e-9`. Ten float chances of 0.1, added one at a time, come to `0.9999999999999999`.",
+          "test-7": "If your function raised `ValueError` here, compare the total with 1 within `1e-9`. These float chances add up to `0.9999999999999998`, even with `sum`.",
+          "test-5": "Test 5 has an outcome of chance 0. Its value, 5, never happens, so it is left out of the pmf.",
+          "test-9": "Test 9's chances add up to 0.9999. That is more than `1e-9` from 1, so the function should raise `ValueError`.",
+          "test-10": "Test 10's chances add up to 1, but one of them is negative. A chance can never be negative, so raise `ValueError`."
+        }
+      },
+      "explain": {
+        "text": "The two checks are the two rules every pmf obeys: no negative chance, and a total of 1. Comparing the total with 1 within `1e-9` stops float rounding, such as ten 0.1s, from raising by mistake. Then each outcome adds its chance to the entry for its value, which merges outcomes that share a value.\n\n```python\npmf[x] = pmf.get(x, 0) + p\n```"
+      },
+      "pace": 900
     }
   ]
 }
