@@ -55,3 +55,29 @@ Read at HEAD `b6fec9b` on `sx/read-perf-5`. No content file was edited.
 - Protocol 6: "a pass skips a named part" is seen a ninth time (MG3-2), though the author ran `rubric-passes.mjs`. The tool lists sets; the author decides which rows are named. The brief could ask each report to list the prompt's "say" clauses beside the rows that grade them.
 
 Totals: Must 1 (MG3-1). Should 3 (MG3-2, COI-1, COI-2). Could 6 (VL3-1, COI-3, MOM-3, MOM-4, MOM-2, MG3-3). validation L2 and game-theory L1 have no finding.
+
+## Fix pass
+
+### Findings (9 fixed, 0 disputed, 0 deferred)
+
+1. MG3-1: fixed. Basis, recomputed by exact enumeration of the mixed total in `mm-games-3-perf-numbers.py`: P(10) = 0.0725 above P(14) = 0.0563, so "rarely near 10.5" was false. The new claim holds: the coin's swing 3.5 exceeds the sd of two dice (2.42) and of four dice (3.42). Model opening and rubric row 3 now say the coin alone moves fair 3.5 either way; "Why these widths" adds "$3.5^2 = 12.25$ of that 21" (8.75 within the cases + 12.25 = 21, checked).
+2. MG3-2: fixed. Row 4 (position and P&L) is `required`. `rubric-passes.mjs`: minimal set rows 1, 2, 3, 4 (9 points); only row 5 can be left out, and it is not named by the prompt.
+3. COI-1: fixed. Follow-up (1) now names a seeded run of 1,000 pairs for 0.49 and 0.97; the slope's spread is tied to the seeded run below (2,000 pairs at each length). Basis: the author script's `drift_stats` and `route_a` runs, and the reader's reproduction.
+4. COI-2: fixed within the level, no teaching added. The $1/n$ error is now justified by the top growing like $n$ and the bottom like $n^2$ (x is I(1), the residual stationary and independent of x). The long-run variance is derived from the AR(1) lag covariances that arma teaches: $\sum_k \phi^{|k|}\sigma^2/(1-\phi^2) = \sigma^2(1+\phi)/((1-\phi)(1-\phi^2)) = \sigma^2/(1-\phi)^2$; at $\phi = 0.8$ the ratio of long-run to ordinary variance is $(1+\phi)/(1-\phi) = 9$, an sd ratio of 3 as stated. `rubric-passes.mjs`: minimal set rows 1, 2, 3, 4 (9 points); every row but row 5 is required, so no pass skips a part the question names.
+5. VL3-1: fixed. Test 9 added (a record that ends after the file), byKey `test-9` and `how` (9 tests) updated, planted bug "record end clipped into the file" added to the author script. Solution passes all 9, starter fails all 9, the new bug fails test 9 only, and the 14 earlier bugs still fail where they did.
+6. COI-3: fixed. I(1) is now "each level is the running sum of stationary changes, as a random walk's is of its shocks". Basis: the definition taught in coint l3.
+7. MOM-3: fixed. The Nasdaq check says daily data start on 14 December 1972, so with 15 trading days required, December 1972 has 10 and Nasdaq shares are first scored at the end of January 1973 (reader's count of 10 days reproduced).
+8. MOM-4: fixed. The model says the 449 holding months run from August 1963 to December 2000, ranked at the ends of July 1963 to November 2000. $6.0/\sqrt{449} = 0.28$ is unchanged, and the author script's check now matches the new wording.
+9. MOM-2 and MG3-3: fixed in the two reports (sources line; "the coin's 3.5 swing in fair value").
+
+Also: the five reports without an "Overlapping screens" line (validation-2, validation-3, coint-1, game-theory-1, momentum-rep-1) had it under "Overlap:"; renamed. mm-games-3 had it under "Freshness:"; renamed. `perf-reports.mjs --warn` lists none of the six. The validation-3 and mm-games-3 reports state the new test count and the row-4 rule.
+
+Graded values changed: validation `h-dead-firms` gains hidden test 9 (expected value as in the finding). mm-games `h-coin-dice-aloud` row 4 is now required. No other graded answer changed.
+
+### Gates
+
+- Author scripts under `scratchpad/venv/bin/python -I`: all six exit 0 (validation-2 and -3 0 failures, coint-1, game-theory-1, mm-games-3 with the new enumeration checks, momentum-rep-1 0 failures). Validation L3: solution 9 of 9, starter fails 9 of 9, 15 planted bugs each fail a test.
+- Reader scripts in `perf-retrofit-5-scripts/` (venv Python, from that folder, without `-I` because `harness.py` is imported): `findings_assert.py` exit 0, FAILS 0; `gt1_street_carts.py`, `vl2_label_purge.py`, `vl3_dead_firms.py`, `numbers_recheck.py`, `voice_items.py` exit 0; `chain.py coint/L1` runs.
+- Validator: 0 errors.
+- Voice scan 35 for validation, coint, game-theory, mm-games and momentum-rep: 0 and 0 each.
+- Playthrough (`node tools/playthrough.mjs --set <course>/homework-<n> --local-cdn <pkgs>`, regenerated manifest), six homeworks, 12 runs with and without `--mobile`: All passed; manifest restored with `git checkout content/manifest.json`.

@@ -59,6 +59,25 @@ check('coin swing of the rest after the 6, 3.5 either way',
 check('coin swing of the total at the open, 3.5 either way',
       (cond(lambda o: o[1] == 'T')[0] - cond(lambda o: o[1] == 'H')[0]) / 2, f0 - 7, 3.5)
 
+# ---------- Distribution claims behind the opening reason (exact enumeration of the mixed total) ----------
+def law(k):
+    d = {}
+    for r in itertools.product(range(1, 7), repeat=k):
+        d[sum(r)] = d.get(sum(r), 0) + F(1, 6 ** k)
+    return d
+_two, _four = law(2), law(4)
+mix = lambda t: (_two.get(t, 0) + _four.get(t, 0)) / 2
+check('P(total = 10) = 0.0725, from the exact law', mix(10), sum(o[0] for o in OUT if o[3] == 10), 0.0725, tol_stated=5e-5)
+check('P(total = 14) = 0.0563', mix(14), sum(o[0] for o in OUT if o[3] == 14), 0.0563, tol_stated=5e-5)
+truth('the total is not rare near 10.5: P(10) is above P(14) and P(9 to 12) is above P(13 to 15)',
+      mix(10) > mix(14) and sum(mix(t) for t in range(9, 13)) > sum(mix(t) for t in range(13, 16)))
+_sd2, _sd4 = math.sqrt(2 * 35 / 12), math.sqrt(4 * 35 / 12)
+truth('the coin swing 3.5 exceeds the sd of two dice (2.42) and of four dice (3.42)', 3.5 > _sd2 and 3.5 > _sd4)
+_within = (2 * one_var + 4 * one_var) / 2
+check('variance 21 = mean within-case variance 8.75 + coin swing squared 12.25', _within + F(7, 2) ** 2,
+      cond(ALL)[1], 21)
+check('the coin swing squared is 12.25', F(7, 2) ** 2, (cond(lambda o: o[1] == 'T')[0] - cond(lambda o: o[1] == 'H')[0]) ** 2 / 4, 12.25)
+
 # ---------- Variances and sds (model "Why these widths") ----------
 ex2_h = 2 * one_var + 49            # 35/6 + 49
 ex2_t = 4 * one_var + 196           # 35/3 + 196

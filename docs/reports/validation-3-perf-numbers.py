@@ -109,6 +109,7 @@ BUGS = {
         '        nxt = months[list(months).index(last) + 1] if last in months and last != months[-1] else None\n        if nxt is not None:\n            last = nxt\n            base = r.loc[last, firm]'),
     'mean over every firm, gaps as 0': variant('r.where(held).mean(axis=1)', 'r.where(held).fillna(0).mean(axis=1)'),
     'record end outside the file not guarded': variant('if last in months:', 'if last:'),
+    "record end clipped into the file (delisting return in the file's last month)": variant('        if last in months:', '        last = min(last, months[-1]) if last else last\n        if last in months:'),
 }
 
 for name, code in (('A solution', SOL), ('B month-by-month loop', REF)):
@@ -135,11 +136,12 @@ want = {"universe from today's listing (still listed, every month)": 1,
         'delisting return ignored': 3, 'delisting return replaces the regular return': 3,
         'delisting return added, not compounded': 3, 'no regular return left as NaN': 3,
         'delisting return a month late': 3, 'mean over every firm, gaps as 0': 1,
-        'record end outside the file not guarded': 5}
+        'record end outside the file not guarded': 5,
+        "record end clipped into the file (delisting return in the file's last month)": 9}
 for name, k in want.items():
     check(f'bug "{name}" first fails test {k}', firsts[name] == k, f'first {firsts[name]}')
 keys = set(item['feedback']['byKey'])
-check('byKey names tests 1, 2, 3 and 5', keys == {'test-1', 'test-2', 'test-3', 'test-5'}, str(keys))
+check('byKey names tests 1, 2, 3, 5 and 9', keys == {'test-1', 'test-2', 'test-3', 'test-5', 'test-9'}, str(keys))
 
 # numbers stated in the prose, feedback and helpers, each by a second route
 ns = {}; exec(w['prelude'], ns)
@@ -171,7 +173,7 @@ for s in (2, 5, 7):
     i0 = list(R.index).index(late[0][1])
     check(f'exchange({s}): back-filled months before a late listing', R[late[0][0]].iloc[max(0, i0 - 12):i0].notna().all())
 n_t, n_e = len(w['tests']), len(w['examples'])
-check('8 tests, 1 example, tests > examples', (n_t, n_e) == (8, 1))
+check('9 tests, 1 example, tests > examples', (n_t, n_e) == (9, 1))
 check('how states the test count', f'runs {n_t} hidden tests' in w['how'])
 check('example equals test 1', w['examples'][0] == w['tests'][0])
 check('tolerances match how', '0.000002' in w['how'] and '0.0002' in w['how'] and

@@ -42,7 +42,7 @@ n_b = 5 + 12 * (2000 - 1964 + 1)
 # Route C: formation months July 1963 .. November 2000 by month index.
 n_c = (2000 * 12 + 11) - (1963 * 12 + 7) + 1
 check("449 holding months (calendar walk %d, arithmetic %d, index %d)" % (n_a, n_b, n_c), n_a == n_b == n_c == 449)
-check("model states 449", "449 holding months" in model and "\\sqrt{449}" in model)
+check("model states 449", "449 months" in model and "holding months August 1963 to December 2000" in model and "\\sqrt{449}" in model)
 check("sample is 37.5 years of formation months", Fraction(n_a + 1, 12) == Fraction(75, 2))
 
 # 2. Standard error of the mean at sd 6.0% a month over 449 months.
