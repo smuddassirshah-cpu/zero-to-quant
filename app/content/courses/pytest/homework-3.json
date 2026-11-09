@@ -413,6 +413,136 @@
       "explain": {
         "text": "The workflow's checkout copies only what is committed. `conftest.py` is untracked, so GitHub's machine has no fixture. Commit it and the run goes green."
       }
+    },
+    {
+      "id": "h3-fee-test-first",
+      "difficulty": 5,
+      "skills": [
+        "pt-design",
+        "pt-cases"
+      ],
+      "title": "A fee schedule, test first",
+      "performance": "code",
+      "prose": "A broker charges 0.1% of a trade's notional, rounded to the nearest penny. The fee is at least £4.95 and at most £25.00. A fee of exactly half a penny rounds up. A notional of zero or less is a mistake, so `broker_fee` raises `ValueError`. Work test first: write the tests, watch them fail on the empty function, then write `broker_fee` until they pass.",
+      "question": "Write at least three tests, then `broker_fee(notional)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pytest\n\n\ndef broker_fee(notional):\n    ...\n",
+        "solution": "import pytest\n\n\ndef broker_fee(notional):\n    if notional <= 0:\n        raise ValueError(\"notional must be positive\")\n    pence = (round(notional * 100) + 500) // 1000  # 0.1%, half a penny up\n    return min(max(pence, 495), 2500) / 100\n\n\ndef test_small_trade_pays_the_minimum():\n    assert broker_fee(2_000.00) == pytest.approx(4.95)\n\n\ndef test_fee_is_a_tenth_of_a_percent_to_the_penny():\n    assert broker_fee(8_765.43) == pytest.approx(8.77)  # 8.76543\n\n\ndef test_half_a_penny_rounds_up():\n    assert broker_fee(12_345.00) == pytest.approx(12.35)  # 12.345\n\n\ndef test_large_trade_pays_the_cap():\n    assert broker_fee(80_000.00) == pytest.approx(25.00)\n\n\n@pytest.mark.parametrize(\"notional\", [0.00, -500.00])\ndef test_zero_or_negative_notional_raises(notional):\n    with pytest.raises(ValueError):\n        broker_fee(notional)\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "broker_fee(2000.00)",
+            "expect": "4.95",
+            "compare": "isclose"
+          },
+          {
+            "call": "broker_fee(12345.67)",
+            "expect": "12.35",
+            "compare": "isclose"
+          },
+          {
+            "call": "broker_fee(80000.00)",
+            "expect": "25.00",
+            "compare": "isclose"
+          },
+          {
+            "call": "broker_fee(0.00)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "len(names()) >= 3",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('own')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('own', order='reverse')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "weak()",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('no_min')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('no_cap')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('rate_1pc')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('rounds_down')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('zero_allowed')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('max_for_cap')",
+            "expect": "'failed'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 15 hidden tests. Tests 1 to 4 call your `broker_fee`. The rest run your tests with real pytest. They must pass on your code and on a correct version, in file order and in reverse. Every test must fail on the empty starter function, and six broken versions must each be caught. Run examples runs your tests on your code and prints the report.",
+        "prelude": "import importlib as _zil, sys as _zs\nimport pytest as _zpt\n\n_zs.dont_write_bytecode = True\n_ZQ_MAIN = _zpt.main\n",
+        "postlude": "_ZQ_MODE = 'inline'\n_ZQ_FUNCTION = 'broker_fee'\n_ZQ_MODULE = '_zq_none'\n_ZQ_SHOWN = 'own'\n_ZQ_WEAK_AGAINST = ('stub',)\n_ZQ_VERSIONS = {\n    'right': 'from decimal import Decimal, ROUND_HALF_UP\\n\\n\\ndef broker_fee(notional):\\n    if notional <= 0:\\n        raise ValueError(\\'notional must be positive\\')\\n    fee = (Decimal(repr(notional)) / 1000).quantize(Decimal(\"0.01\"), ROUND_HALF_UP)\\n    return float(min(max(fee, Decimal(\"4.95\")), Decimal(\"25.00\")))\\n',\n    'stub': 'def broker_fee(notional):\\n    ...\\n',\n    'no_min': \"def broker_fee(notional):\\n    if notional <= 0:\\n        raise ValueError('notional must be positive')\\n    return min(round(notional * 0.001, 2), 25.00)\\n\",\n    'no_cap': \"def broker_fee(notional):\\n    if notional <= 0:\\n        raise ValueError('notional must be positive')\\n    return max(round(notional * 0.001, 2), 4.95)\\n\",\n    'rate_1pc': \"def broker_fee(notional):\\n    if notional <= 0:\\n        raise ValueError('notional must be positive')\\n    return min(max(round(notional * 0.01, 2), 4.95), 25.00)\\n\",\n    'rounds_down': 'from decimal import Decimal, ROUND_DOWN\\n\\n\\ndef broker_fee(notional):\\n    if notional <= 0:\\n        raise ValueError(\\'notional must be positive\\')\\n    fee = (Decimal(repr(notional)) / 1000).quantize(Decimal(\"0.01\"), ROUND_DOWN)\\n    return float(min(max(fee, Decimal(\"4.95\")), Decimal(\"25.00\")))\\n',\n    'zero_allowed': \"def broker_fee(notional):\\n    if notional < 0:\\n        raise ValueError('notional must be positive')\\n    return min(max(round(notional * 0.001, 2), 4.95), 25.00)\\n\",\n    'max_for_cap': \"def broker_fee(notional):\\n    if notional <= 0:\\n        raise ValueError('notional must be positive')\\n    return max(max(round(notional * 0.001, 2), 4.95), 25.00)\\n\",\n}\n\nimport ast as _za, contextlib as _zc, io as _zio\n\n_ZQ_SEEN = {}\n\n\ndef _zq_fn(nodeid):\n    # test_mine.py::test_x[row] -> test_x\n    return nodeid.split(\"::\")[-1].split(\"[\")[0]\n\n\ndef _zq_binds(node, name):\n    if isinstance(node, (_za.FunctionDef, _za.AsyncFunctionDef, _za.ClassDef)):\n        return node.name == name\n    if isinstance(node, (_za.Assign, _za.AnnAssign)):\n        targets = node.targets if isinstance(node, _za.Assign) else [node.target]\n        return any(isinstance(t, _za.Name) and t.id == name for t in targets)\n    return False\n\n\ndef _zq_source(name):\n    # the learner's file, with the version under test in place of their own function\n    if _ZQ_MODE == \"module\" or name == \"own\":\n        return __learner_source__\n    tree = _za.parse(__learner_source__)\n    tree.body = _za.parse(_ZQ_VERSIONS[name]).body + [n for n in tree.body if not _zq_binds(n, _ZQ_FUNCTION)]\n    return _za.unparse(tree)\n\n\ndef _zq_pytest(name, order=\"file\", show=False):\n    # run real pytest on the learner's file with one version of the function under test\n    if _ZQ_MODE == \"module\":\n        with open(_ZQ_MODULE + \".py\", \"w\") as f:\n            f.write(_ZQ_VERSIONS[name])\n        _zs.modules.pop(_ZQ_MODULE, None)\n    with open(\"test_mine.py\", \"w\") as f:\n        f.write(_zq_source(name))\n    _zs.modules.pop(\"test_mine\", None)\n    _zil.invalidate_caches()\n    seen, calls = {}, {}\n\n    class _Watch:\n        def pytest_collection_modifyitems(self, items):\n            if order == \"reverse\":\n                items.reverse()\n\n        @_zpt.hookimpl(tryfirst=True)\n        def pytest_runtest_setup(self, item):\n            m = _zs.modules.get(_ZQ_MODULE)\n            if m is not None:\n                m._zq_calls = 0\n\n        def pytest_runtest_logreport(self, report):\n            was = seen.get(report.nodeid, \"passed\")\n            if report.failed:\n                was = \"failed\"\n            elif report.skipped and was == \"passed\":\n                was = \"skipped\"\n            seen[report.nodeid] = was\n            if report.when == \"teardown\":\n                calls[report.nodeid] = getattr(_zs.modules.get(_ZQ_MODULE), \"_zq_calls\", 0)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\", \"test_mine.py\"]\n    if show:\n        code = _ZQ_MAIN(args, plugins=[_Watch()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _ZQ_MAIN(args, plugins=[_Watch()])\n    return int(code), seen, calls\n\n\ndef _zq_result(name, order=\"file\"):\n    key = (__learner_source__, name, order)\n    if key not in _ZQ_SEEN:\n        _ZQ_SEEN[key] = _zq_pytest(name, order)\n    return _ZQ_SEEN[key]\n\n\ndef run_tests():\n    \"\"\"Run your tests on a correct version and print pytest's report.\"\"\"\n    return _zq_pytest(_ZQ_SHOWN, show=True)[0]\n\n\ndef trial(name, order=\"file\"):\n    \"\"\"'passed', 'failed', 'no tests' or 'error' for your tests on one version.\"\"\"\n    code = _zq_result(name, order)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef names():\n    \"\"\"The test functions pytest collects from your file.\"\"\"\n    return sorted({_zq_fn(n) for n in _zq_result(_ZQ_SHOWN)[1]})\n\n\ndef weak():\n    \"\"\"Your tests that never fail on the versions in _ZQ_WEAK_AGAINST.\"\"\"\n    failed = {_zq_fn(n) for v in _ZQ_WEAK_AGAINST for n, o in _zq_result(v)[1].items() if o == \"failed\"}\n    return [t for t in names() if t not in failed]\n\n\ndef few(least=5):\n    \"\"\"Your tests that call the function under test fewer than `least` times.\"\"\"\n    calls = {}\n    for n, k in _zq_result(_ZQ_SHOWN)[2].items():\n        calls[_zq_fn(n)] = calls.get(_zq_fn(n), 0) + k\n    return [t for t in names() if calls.get(t, 0) < least]\n"
+      },
+      "feedback": {
+        "correct": "Every test was red on the empty function, and your code turns them all green.",
+        "generic": "Not quite right. Read the first hidden test that failed.",
+        "byKey": {
+          "test-1": "A £2,000.00 trade should pay the £4.95 minimum: 0.1% of it is only £2.00.",
+          "test-2": "A £12,345.67 trade should pay £12.35: 0.1% is £12.34567, which rounds up to the penny.",
+          "test-3": "An £80,000.00 trade should pay the £25.00 cap, not £80.00.",
+          "test-4": "`broker_fee(0.00)` should raise `ValueError`: zero is a mistake too, so check `notional <= 0`.",
+          "test-5": "pytest collected fewer than three tests. Name each function `test_...` after the one behaviour it checks.",
+          "test-6": "Your tests fail on your own code. Read the report from Run examples, then fix whichever side is wrong.",
+          "test-7": "Your tests fail on a correct version. Recheck the hand answers against the description.",
+          "test-8": "Your tests pass in file order but not in reverse, so one test changes data that another reads. Build each test's data inside it.",
+          "test-9": "Some tests pass on the empty function, so they were never red: an assert compared with itself, an expected value taken from `broker_fee`, or one that never runs.",
+          "test-10": "The version with no minimum got through. Test a small trade.",
+          "test-11": "The version with no cap got through. Test a large trade.",
+          "test-12": "The version that charges 1% got through. Test a trade whose fee falls between the minimum and the cap.",
+          "test-13": "The version that rounds down got through. Test a fee that rounds up, and keep the tolerance under a penny.",
+          "test-14": "The version that accepts a notional of zero got through. Test zero itself, not only a negative notional.",
+          "test-15": "The version that uses `max` for the cap got through. Test a small trade: it must not pay £25.00.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "Each test pins one line of the description, so each one was red before the code existed. The minimum binds below £4,950 of notional and the cap above £25,000, so test a trade in each. A fee such as £8.76543 tests the rounding, and zero itself tests the error.\n\n```python\ndef broker_fee(notional):\n    if notional <= 0:\n        raise ValueError(\"notional must be positive\")\n    pence = (round(notional * 100) + 500) // 1000  # 0.1%, half a penny up\n    return min(max(pence, 495), 2500) / 100\n\n\ndef test_small_trade_pays_the_minimum():\n    assert broker_fee(2_000.00) == pytest.approx(4.95)\n\n\ndef test_fee_is_a_tenth_of_a_percent_to_the_penny():\n    assert broker_fee(8_765.43) == pytest.approx(8.77)  # 8.76543\n\n\ndef test_half_a_penny_rounds_up():\n    assert broker_fee(12_345.00) == pytest.approx(12.35)  # 12.345\n\n\ndef test_large_trade_pays_the_cap():\n    assert broker_fee(80_000.00) == pytest.approx(25.00)\n\n\n@pytest.mark.parametrize(\"notional\", [0.00, -500.00])\ndef test_zero_or_negative_notional_raises(notional):\n    with pytest.raises(ValueError):\n        broker_fee(notional)\n```"
+      }
     }
   ]
 }
