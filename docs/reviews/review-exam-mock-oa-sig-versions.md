@@ -1,0 +1,68 @@
+# mock-oa-sig versions 2 and 3: second-reader findings
+
+Scope: `app/content/exams/mock-oa-sig-2.json` and `mock-oa-sig-3.json` (34 new items, one paper each: 60 min, 17 items, scoring 1/0/0, `passNet` 11), read against `docs/briefs/mock-versions.md`, the author's report `docs/reports/exam-mock-oa-sig-versions.md` and number script `docs/reports/exam-mock-oa-sig-versions-numbers.py`, and version 1 `mock-oa-sig.json`.
+
+Method: I printed each paper's questions and options with keys, feedback and explanations hidden (numeric items showed their `wrong` values, which I ignored), solved all 34 by hand in closed form and recorded the answers in `read_numbers.py` (`BLIND`) before opening the keys. I then recomputed every key by a third route of my own (full enumeration, exact DP, a midpoint grid, or a seeded simulation of the game as worded), and every distractor and `wrong` value by the slip its `why` or `byKey` names. I built my own template table for versions 1 to 3, grepped the closure courses for each method, and read the author's script line by line for independence.
+
+Format: `n. file | item [index] | JSON path | severity | problem | fix`. Severities: error, warning, note.
+
+## Tool results
+
+- Blind agreement: 34 of 34. No key disagrees with my hand answer or my third route, so no item needed a tie-break.
+- `docs/reviews/exam-mock-oa-sig-versions-scripts/read_numbers.py` (venv Python): exit 0. Every simulated third route is within 1% of the exact key; the max-and-min bound $\lceil 3n/2 \rceil - 2$ is confirmed by a brute-force adversary search for $n = 2$ to 8; binary guessing by a full minimax DP to 60 and the middle-guess DP to 1,000.
+- `docs/reviews/exam-mock-oa-sig-versions-scripts/fix_numbers.py`: exit 0 (the numbers in findings 2 to 5, each computed twice).
+- Author's script: exit 0, 34 keys. See "The author's second method" below.
+- Voice (`voice-scan.py 35` on copies of the two files): 732 sentences, 0 over 35 words, 0 explanations over three sentences. No `!`, no em-dash, no American spelling; money in £ (the `$` hits are TeX).
+- Not run: the validator (it rewrites `content/manifest.json`, and this read edits no file) and the playthroughs (the author reports both green; nothing here changes layout).
+
+## Template table (my own)
+
+| Pos | v1 setup / method | v2 setup / method | v3 setup / method |
+| --- | --- | --- | --- |
+| 1 | die pays face squared / mean of squares | same colour, two cards / fix first card | two dice, doubles doubled / total plus extra |
+| 2 | hearts in 5 cards / n times share | records in 5 days / indicators 1/k | level score in 6 tosses / indicators at even tosses |
+| 3 | £3 fee, even face paid / payout less fee | six pays and rerolls / geometric first step | £10 at 4 to 1 / payout less stake |
+| 4 | HH pairs in 10 tosses / neighbour indicators | calling ranks / **52 times 1/13** | inversions of 6 / pair indicators 1/2 |
+| 5 | a six in 4 rolls / complement | three rising rolls / one order per set | real roots of dice quadratic / count cases |
+| 6 | both aces given one / shrink space | first card ace given two / symmetric placings | first above second / relative orders |
+| 7 | 3 heads in 6 / binomial | **same head count, 3 each / Vandermonde to 3 in 6** | third head on toss 5 / negative binomial |
+| 8 | heavy coin of 10 / log base 3 | guessing 1 to 1,000 / $2^k - 1$ | heaviest and lightest / $3n/2 - 2$ |
+| 9 | 1% test Bayes / two hypotheses | randomised response / solve share, Bayes | pooled test / $P(A)/P(B)$, $A \subset B$ |
+| 10 | HH wait / prefix first step | multiple of 7 / remainders | first descent / $m_j$ recursion |
+| 11 | one reroll / backward induction | costly uniform draws / fixed point | branching ideas / extinction root |
+| 12 | max of two dice / max distribution | six before five / competing faces | nearest side / tail integral |
+| 13 | **coin bag, 3 heads / prior, $1$ against $(\frac12)^3$** | ball moved between urns / hidden-stage Bayes | **two failed searches / prior, $0.2^2$ against 1** |
+| 14 | test twice / likelihood ratio squared | two-desk relay / compound noise, Bayes | desk-mates / size bias |
+| 15 | fair ruin duration / $i(N - i)$ | split pot 2 to 1 / play out 4 games | best-of-five length / stop-time distribution |
+| 16 | biased ruin / ruin formula | +2 or −1 walk / three-state solve | craps / race of point and 7 |
+| 17 | Bayes after ruin / ruin then Bayes | knockout draw / split on draw | RPS elimination / first step on players |
+
+Bold cells are the pairs where one worked solution with numbers swapped solves the other (findings 2 to 4). Near pairs I judged distinct: v1 q03 against v3 q03 (both "weight the outcomes, take off the stake", but every difficulty-2 EV item shares that; the odds-with-stake-returned reading is v3's own step; note 9); v1 q16 against v2 q16 (both first-step on bankroll, but the +2 step breaks the ruin formula, so a swapped v1 solution fails); v2 q15 against v3 q15 (who wins against how long).
+
+## Findings
+
+1. `mock-oa-sig-2.json` | q01-colour-match [0] | `parts[0].items[0].widget.options[3].why` | warning | The £26.00 slip is "26 of the other 51 share its colour", but its `why` says "You left the first card in the deck", which is the with-replacement slip of option b (£25.50). Two options name the same slip, and the real slip of d is not named. | Replace the `why` with: "You counted 26 cards of its colour among the other 51. The first card is gone, so only 25 remain."
+2. `mock-oa-sig-2.json` | q04-calling-ranks [3] | `parts[0].items[3]` | warning | Same template as v1 q02 (hearts in 5 cards): v1's worked solution "each card is a heart with chance $\frac{13}{52}$, so $5 \times \frac14$" becomes "each card matches its call with chance $\frac{4}{52}$, so $52 \times \frac{1}{13}$". The brief (task 2) requires a re-author. | Replace with a fresh linearity item (new id `q04-two-swaps`, tag `two-swaps`, d2, `pz-expectation`, choice): "Five cards labelled 1 to 5 lie in order. Twice, two of the five places are chosen at random and their cards are swapped. What is the expected number of cards back in their own places?" Key **2**. Distractors: **1.80** "You left out a card swapped away and then straight back."; **3.00** "That is after one swap. The second swap moves more cards."; **1.00** "That is a full shuffle. Two swaps leave cards in place more often." Explanation: "A card is untouched by a swap with chance $\frac35$, so by both with chance $\frac{9}{25}$. It is also home if both swaps are the same pair through it, chance $\frac25 \times \frac{1}{10} = \frac{1}{25}$. So each card is home with chance $\frac25$, and five cards give 2." Checked by enumerating all 100 swap pairs (`fix_numbers.py`). Run `fresh-check.mjs` on it; my grep for swap setups found none.
+3. `mock-oa-sig-2.json` | q07-same-count [6] | `parts[0].items[6]` | warning | The key $\frac{5}{16}$ is v1 q07's key ($\binom63/64$, three heads in six), and the item's own check reduces it to exactly that: "your heads plus your colleague's tails make exactly 3 of 6 tosses". One worked solution solves both, and a learner who sat v1 recognises the number. | Replace the question with: "You toss a fair coin 3 times and a colleague tosses one 2 times. What is the chance you get strictly more heads?" (new id `q07-one-more-toss`, tag `one-more-toss`). Key $\frac12$. Distractors: $\frac{13}{16}$ "You counted ties as wins."; $\frac{5}{16}$ "That is the chance of a tie."; $\frac35$ "You shared the chance out by tosses, 3 to 2." Explanation: "After two tosses each, you lead or trail with equal chances, or you tie. A lead stays a lead and a deficit cannot become a lead, while your third toss turns a tie into a win half the time. So the chance is $\frac12$ whatever the tie chance; check: 16 of the 32 outcomes." Keys checked by enumeration and by the tie route (tie after two each $\frac38$).
+4. `mock-oa-sig-3.json` | q13-failed-search [12] | `parts[0].items[12]` | warning | Same template as v1 q13 (and v1 q14): two hypotheses, $k$ repeated independent observations, one hypothesis makes them certain. v1's solution "$\frac{\frac14 \times 1}{\frac14 \times 1 + \frac34 \times (\frac12)^3}$" becomes "$\frac{0.6 \times 0.2^2}{0.6 \times 0.2^2 + 0.4 \times 1}$" with numbers swapped. | Keep the drawer setup but ask a predictive question: "A missing trade ticket is in drawer A with chance 0.6, and otherwise in drawer B. Each search of drawer A finds the ticket, if it is there, with chance 0.8. You search A once and find nothing. What is the chance your next search of A finds it?" Key $\frac{12}{65}$ (about 0.185). Distractors: $\frac{12}{25}$ "That ignores the failed search: $0.6 \times 0.8$."; $\frac{3}{13}$ "That is the chance it is in A. The next search must also succeed."; $\frac45$ "That assumes the ticket is in A." Explanation: "A miss has chance $0.6 \times 0.2 + 0.4 = 0.52$, and leaves A with chance $\frac{0.12}{0.52} = \frac{3}{13}$. The next search finds it with chance $\frac{3}{13} \times 0.8 = \frac{12}{65} \approx 0.185$. Check: of 1,000 tickets, 120 in A and 400 in B are missed, and 96 of the 120 are found next, $\frac{96}{520}$." Rename the id (`q13-next-search`) and tag. Checked exactly and by a seeded simulation.
+5. `mock-oa-sig-3.json` | q11-extinction [10] | `parts[0].items[10].widget.options` | warning | Out of scope: no course in the closure (19 courses; grep for extinction, branching, offspring, smaller root) teaches that the extinction chance is the smaller root. A learner who sets up the taught first-step equation gets $\frac12$ and 1 and has no taught rule to choose, and option c offers 1. | Keep the item, but replace option c (`1`) with $\frac{7}{16}$, `why`: "You treated two new ideas as one, using $q$ where both lines must die, $q^2$. Over two generations that gives $\frac{7}{16}$." Then the taught first step plus the options decide the item, and the explanation still teaches why the smaller root holds. Options $\frac12$, $\frac14$, $\frac{11}{32}$, $\frac{7}{16}$ are pairwise more than 0.01 apart (`fix_numbers.py`).
+6. `mock-oa-sig-3.json` | q01-doubled-payout [0] | `parts[0].items[0].question` | note | "are paid £ the total" reads as a dropped number. It copies v1's house phrasing ("pays £ the square of the face shown"), so it is not new, but it is the first sentence of the paper. | "You roll two fair dice and are paid the total in pounds."
+7. `mock-oa-sig-3.json` | q16-point-game [15] | `parts[0].items[15].question` | note | "You roll two dice" is the only dice item in either paper that does not say fair; the key assumes fair dice. | "You roll two fair dice."
+8. `mock-oa-sig-3.json` | q12-nearest-side [11] | `parts[0].items[11].feedback.byKey.centre` | note | "That is the distance from the centre, the farthest any point can be." blurs which distance is meant. | "That is the centre's distance to a side, the farthest any point can be from every side."
+9. `mock-oa-sig-3.json` | q03-quoted-odds [2] | `parts[0].items[2]` | note | Close to v1 q03 (fee, payout on some faces, average less fee): with the odds read as "pay £10, get £50 on a six", v1's method applies. I judge it distinct because reading quoted odds with the stake returned is the item's point and its distractors test it, and every difficulty-2 EV item in all three versions shares "weight the outcomes". No change unless the orchestrator wants the strictest reading of the brief.
+10. `mock-oa-sig-3.json` | q08-max-and-min [7] | `parts[0].items[7]` | note | Scope and difficulty: the closure teaches knockouts ($n - 1$ matches, brainteasers l14) but not the pairing trick or its lower bound, so this d3 item is harder than v1 q08. It stays solvable by construction plus elimination (13 is reachable, 17 is not fewest, 9 and 5 are too few), so no change.
+11. both files | apostrophes | `question` strings | note | Straight and curly apostrophes mix (v2 q02 "days'", q11 "draw’s"; v3 q05 to q14). Use one form throughout, following AUTHORING.
+
+No errors: every key is right, every choice item has exactly one right option, every `wrong` value is outside the 0.005 tolerance of its key, and every other distractor matches the slip its `why` names (v2 q11 £85.86 is $100 - \sqrt{200}$; v3 q01 £7.19 is $7 + \frac{7}{36}$; v3 q15 4.13 is 4.125 for an even match; v3 q10 3.40 is $1 + \frac{12}{5}$). Tolerances (`abs` 0.005 with "three decimal places") match version 1. The conditional items state their protocol plainly (v2 q06 "you are told exactly two", v2 q12 "no five came up before it", v3 q06, v3 q14). Difficulty, pace, skill and widget kind match version 1 position by position (4 at d2, 5 at d3, 6 at d4, 2 at d5).
+
+## The author's second method
+
+Mostly independent: enumeration of the deck, dice or coin space (v2 q01, q02, q05, q07, q13, q14; v3 q02 to q07, q09, q14, q15, q17), a minimax or adversary DP (v2 q08, v3 q08), or a seeded simulation of the game as worded (v2 q03, q04, q09, q10, q12, q16; v3 q11, q12, q16, q17). Not independent:
+
+- v2 q11: the "value iteration" iterates $V \leftarrow V + \frac{(100 - V)^2}{200} - 2$, the same closed form as the exact route, so a wrong formula for $E[\max(U, V)]$ would pass both. My simulation of the threshold-80 rule (79.997) and a scan of every threshold confirm the key.
+- v2 q17: the second route is the same split on the draw written as a loop. My simulation of random draws gives 0.203.
+- v3 q10, q11 and q16: the "second" route repeats the first's recursion, but each also has an independent check (tail sum, simulation, simulation).
+
+## Counts
+
+Errors 0, warnings 5, notes 6.
