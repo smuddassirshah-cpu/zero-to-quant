@@ -1693,3 +1693,6 @@ Raised later (contests level 3 perf):
 - [Could] `playthrough.mjs --shots` takes the `-marked` shot at the viewport only, so a display equation lower in a long model (contests `hw3-due-order`, the aligned block in "No worse") is never seen at 440 px. A retrofit has to measure it with a scratch KaTeX page. Wanted: a full-height `-marked` shot, or a check that no `.katex-display` in the model is wider than its card.
 Raised later (opt-dash level 4 perf):
 - [Could] `isclose` compares lists, arrays and Series but not dicts, so a function returning a dict of floats (`h4-weekend-explain`, seven keys) is tested through a setup line and `[d[k] for k in KEYS]`. Wanted: `isclose` on dicts, key sets equal and values compared by key.
+
+Raised later (cpp level 1 perf):
+- [Could] C++ `code` widget: the learner edits one file, so an objective that names a header ("declare them in a header file", cpp l4) cannot be a performance task. `files` adds hidden files only. Wanted: an optional second editable file (`edit: ["returns.h", "main.cpp"]`), compiled and linked as `files` are. cpp L1 used the l3 loops objective instead.
