@@ -212,3 +212,8 @@ Session U (6 Nov)
 
 ### Fable audit resumed, ordered by route use (9 Nov, user)
 - The scheduled audit task `trig_01FJuNVhosR68kSj3RhYkXrp` is re-enabled (every six hours, branch `claude/fable-audit`). Order changes from difficulty to use (critical review 6.4 and 1.2): open items, then `mm-games`, `recruiting`, the topic 1.5 courses, the rest of the trader and developer closures, other route courses; optional Stage 2 and 3 courses last. The order lives in `docs/briefs/fable-audit-session-prompt.md`. Content sessions merge `origin/claude/fable-audit` at start and close.
+
+### Self-containment scope and review-size route (9 Nov, user)
+- Gap file additions (`docs/reviews/critical-review-fable-5-2/self-containment-gaps.md`): G (generated fluency sets), C (weekly cumulative review), M (chained problems), D (drill volume) and the syllabus holes are required before DONE, in the gap file's order (PLAN 2d). R (reference pages), P (in-app projects) and A (auto-graded parts) are post-completion.
+- Review size: route 1 plus an interview top-up. A test-out draws 5 items and passes at 4 of 5; about 70 review items are authored for the 26 interview-course levels only. Routes 2 and 3 are closed.
+- Fluency sets (main session): families are JSON in the course folder, written by content agents; a Fluency pass gates nothing and does not change the met rule, so no stored progress moves. The weekly review is due work on Today, postponable, not a gate.
