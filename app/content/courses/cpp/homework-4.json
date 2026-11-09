@@ -416,6 +416,72 @@
    "explain": {
     "text": "A good plan builds the library once, links it into every tool, and guards it with tests pinning known prices. That is the project `cpp-pricing` builds next."
    }
+  },
+  {
+   "id": "h4-test-median",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "cp-build"
+   ],
+   "pace": 1500,
+   "title": "Unit tests for a median",
+   "prose": "A data check uses a supplied `double median_volume(const std::vector<int>& volumes)`. It returns the median of a list of daily volumes: the middle value once sorted, or the mean of the two middle values when the count is even.\n\n- The list may come in any order.\n- Each volume is a whole number from 0 to 2,000,000,000.\n- The median of no volumes is 0.\n\nWrite its unit tests with `TEST`, `CHECK` and `CHECK_CLOSE`, as many as you need, and work each expected value out by hand.",
+   "question": "Write tests that pass on the real `median_volume` and catch any version that breaks the specification above.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <iostream>\n#include <vector>\n\n// zq_test.h: the app's stand-in for Catch2 or GoogleTest\nnamespace zqt {\nstruct Case { const char* name; void (*fn)(); };\ninline std::vector<Case>& all() { static std::vector<Case> v; return v; }\ninline int& fails() { static int n = 0; return n; }\ninline int& variant() { static int v = 0; return v; }\nstruct Add { Add(const char* n, void (*f)()) { all().push_back({n, f}); } };\ninline void fail(const char* what, int line) { ++fails(); std::fprintf(stderr, \"line %d: %s failed\\n\", line, what); }\n}\n#define TEST(name) static void name(); static zqt::Add name##_zq_add(#name, name); static void name()\n#define CHECK(expr) do { if (!(expr)) zqt::fail(\"CHECK(\" #expr \")\", __LINE__); } while (0)\n#define CHECK_CLOSE(a, b, tol) do { if (!(std::fabs((a) - (b)) <= (tol))) zqt::fail(\"CHECK_CLOSE(\" #a \", \" #b \", \" #tol \")\", __LINE__); } while (0)\n\n// supplied: the median of a day's volumes\ndouble median_volume(const std::vector<int>& volumes) {\n    int v = zqt::variant();\n    if (volumes.empty() && v != 5) return 0;\n    std::vector<int> s = volumes;\n    if (v != 1) std::sort(s.begin(), s.end());\n    std::size_t n = s.size();\n    if (v == 5) {\n        std::size_t mid = (n - 1) / 2;\n        if (n % 2 == 1) return s[mid];\n        return (static_cast<double>(s[mid]) + s[mid + 1]) / 2;\n    }\n    if (n % 2 == 1) return s[n / 2];\n    if (v == 4) return s[n / 2];\n    if (v == 2) return (s[n / 2 - 1] + s[n / 2]) / 2;\n    if (v == 3) return (s[n / 2 - 1] + s[n / 2]) / 2.0;\n    return (static_cast<double>(s[n / 2 - 1]) + s[n / 2]) / 2;\n}\n",
+    "postlude": "\nint main() {\n    int v = 0;\n    if (std::cin >> v) zqt::variant() = v;\n    int failed = 0;\n    for (const auto& t : zqt::all()) {\n        int before = zqt::fails();\n        t.fn();\n        if (zqt::fails() != before) {\n            ++failed;\n            if (v == 0) std::printf(\"FAIL %s\\n\", t.name);\n        }\n    }\n    if (v == 0) {\n        if (zqt::all().empty()) std::printf(\"real version: no tests\\n\");\n        else if (failed == 0) std::printf(\"real version: all passed\\n\");\n        else std::printf(\"real version: %d failed\\n\", failed);\n    } else {\n        std::printf(failed ? \"planted slip %d: caught\\n\" : \"planted slip %d: missed\\n\", v);\n    }\n    return 0;\n}\n",
+    "starter": "// Tests for the supplied\n// median_volume(volumes).\n// Use TEST, CHECK and CHECK_CLOSE.\n",
+    "solution": "// Tests for the supplied\n// median_volume(volumes).\n// Use TEST, CHECK and CHECK_CLOSE.\n\nTEST(odd_count_is_the_middle_of_the_sorted_list) {\n    CHECK_CLOSE(median_volume({300, 100, 200}), 200.0, 1e-9);\n}\n\nTEST(even_count_is_the_mean_of_the_two_middles) {\n    // sorted: 100, 301, 400, 700, so (301 + 400) / 2\n    CHECK_CLOSE(median_volume({700, 100, 400, 301}), 350.5, 1e-9);\n}\n\nTEST(large_volumes_do_not_overflow) {\n    CHECK_CLOSE(median_volume({2000000000, 1999999999}), 1999999999.5, 1e-6);\n}\n\nTEST(one_volume_is_its_own_median) {\n    CHECK_CLOSE(median_volume({5000}), 5000.0, 1e-9);\n}\n\nTEST(no_volumes_give_zero) {\n    CHECK_CLOSE(median_volume({}), 0.0, 1e-12);\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "real version: all passed\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "real version: all passed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n",
+      "expect": "planted slip 1: caught\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n",
+      "expect": "planted slip 2: caught\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "3\n",
+      "expect": "planted slip 3: caught\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "4\n",
+      "expect": "planted slip 4: caught\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": "5\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Test 1 runs your tests against the real median_volume and expects every one to pass. Tests 2 to 6 each swap in a version with one slip. Each expects your tests to catch it: a check fails, or the run stops."
+   },
+   "feedback": {
+    "correct": "Correct. Your tests pass on the real median and catch all five slips.",
+    "generic": "Not quite right. Read the first failing test."
+   },
+   "explain": {
+    "text": "Each slip shows only on some inputs, so each test pins one clause with a hand-worked value. Odd-sum middles catch integer division, volumes near 2,000,000,000 catch an `int` sum, and a shuffled list catches a missing sort. Call it with no volumes too: a version that works out `size() - 1` first stops there."
+   }
   }
  ]
 }
