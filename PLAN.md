@@ -64,16 +64,16 @@ Operating-model items (`docs/reviews/session-operating-model.md` 2.2 and 2.6), r
 
 ### 2d. Self-containment (user, 9 Nov; `docs/reviews/critical-review-fable-5-2/self-containment-gaps.md`, its order of work; required before DONE)
 Scope decided by the user: G, C, M, D and the syllabus holes are completion criteria. R (reference pages), P (in-app projects) and A (auto-graded parts) are post-completion, listed at the end and never ticked as a gate.
-- [ ] G engine: generator framework, typed and expression answers, Fluency sets (brief `docs/briefs/engine-gen.md`, ENGINE-BACKLOG 800 to 819, AUTHORING section 16)
-- [ ] C engine: weekly cumulative review due on Today (ENGINE-BACKLOG 820 to 829)
-- [ ] In-app hours shown apart from outside hours (critical review change 2; `docs/briefs/engine-gen.md` Agent 1)
+- [x] G engine (session Y, merged 0a6dad25; report `docs/reports/engine-gen-2.md`; follow-up forms 830 to 834 in flight): generator framework, typed and expression answers, Fluency sets (brief `docs/briefs/engine-gen.md`, ENGINE-BACKLOG 800 to 819, AUTHORING section 16)
+- [x] C engine (session Y; `#weekly`; unseen mock versions not drawn, see the report): weekly cumulative review due on Today (ENGINE-BACKLOG 820 to 829)
+- [x] In-app hours shown apart from outside hours (session Y, ENGINE-BACKLOG 746, `docs/reports/engine-gen-1.md`; trader route about 313 h in the app, 1,492 h outside; allowances of 20, 45 and 60 minutes where a review, homework or exam states none)
 - [ ] G content, first wave: Fluency families for topics 0.2 (15), 0.3 (12) and 1.3 (15); brief `docs/briefs/fluency.md`
 - [ ] G content, second wave: 0.1 (10), 1.4 (8), 1.5 (6), 1.6 (5), 1.11 (6)
 - [ ] M chained problems (three to five per level, `parts` shape, each intermediate answer graded): topics 1.5, 1.3, 0.2, 0.3 first, then the other maths, probability and statistics levels
-- [ ] D drills: topic 1.8 (60 by pattern, stdin variant), then Phase 4 packs developer first (3.5), then 1.1 (30 small programs) and 1.9 (25 C++); "Drill packs 1 to 4" and "5 to 8" in 2a are ticked as these land
+- [ ] D drills (session Y: topic 1.8 done, 60 `dsa-` drills, second-read and fixed, `docs/reviews/review-drills-dsa-a-b.md` and `-c-d.md`; open: 3.5 packs, 1.1, 1.9): topic 1.8 (60 by pattern, stdin variant), then Phase 4 packs developer first (3.5), then 1.1 (30 small programs) and 1.9 (25 C++); "Drill packs 1 to 4" and "5 to 8" in 2a are ticked as these land
 - [ ] Syllabus holes (about 30 lessons, new levels only, no lesson id renamed): 0.2 "Algebraic fractions and polynomials", 0.1 "Factors, measures and averages", 1.6 "Theory of estimation and tests" plus chi-squared, 2.1 "Other learners"; briefs first, `course.json` edits by the main session
-- [ ] Mock versions: re-author `mock-oa-sig-2` and `-3` on new templates; check and fix the trader versions; `fresh-check` rule for same-template items across versions (critical review 3.1)
-- [ ] Review size, route 1 plus interview top-up (user, 9 Nov): test-out draws 5 items, pass at 4 of 5 (`prereq.js`, test-out test, AUTHORING 11); about 70 new review items for the 26 interview-course levels, second-read
+- [x] Mock versions (session Y: sig 34 items and trader 80 items replaced, second-read, fixed, delta-read and fixed; `docs/reviews/review-exam-mock-oa-sig-versions.md`, `-trader-versions.md`, `review-mock-versions-delta.md`; the `fresh-check` rule is an inbox bullet, not built): re-author `mock-oa-sig-2` and `-3` on new templates; check and fix the trader versions; `fresh-check` rule for same-template items across versions (critical review 3.1)
+- [x] Review size, route 1 plus interview top-up (user, 9 Nov; session Y: ENGINE-BACKLOG 747 merged; top-up was 13 items, not 70, because the validator caps a review at 10 and 13 interview reviews held 9; `docs/reports/review-topup.md`; the 13 items have no second read): test-out draws 5 items, pass at 4 of 5
 Post-completion (not gates): R reference page per level (279, one engine item); P three to seven in-app projects (2.3, 3.1, 2.1 and 2.6 labs); A graded parts in 136 performance tasks and 275 long-form items; critical review changes 7 (recording), 8 (open-answer superday items), 10 (derivatives mock).
 
 ### 2a. Interview readiness (user priority, 29 Oct; ran before everything else until 2c, 5 Nov)
