@@ -1,0 +1,121 @@
+{
+  "id": "dsa-shared-tail",
+  "name": "Where two queues merge",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "trees",
+  "tags": [
+    "stdin",
+    "linked-list"
+  ],
+  "skills": [
+    "ds-lists",
+    "ds-pointers"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "solve_shared_tail",
+  "returns": "a string",
+  "brief": "A message broker keeps the nodes of every queue in one pool of `n` nodes. Node `i` points to the next node of its queue, or to `-1` at the end. Two queues start at nodes `a` and `b`, and from some node on they may share their tail. Find the first node they share.\n\nThe whole input arrives as one string `text`:\n\n- line 1: `n`, `a` and `b`, separated by spaces;\n- line 2: the `n` next pointers `next[0]` to `next[n - 1]`, separated by spaces.\n\nReturn the first shared node as a string, or `-1` when the two queues never meet. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_shared_tail(text)`.\n\nExample. For `\"6 0 3\\n1 2 4 4 5 -1\\n\"` queue A runs 0, 1, 2, 4, 5 and queue B runs 3, 4, 5. They first share node 4, so the answer is `4`.",
+  "constraints": [
+    "$1 \\le n \\le 200{,}000$ and $0 \\le a, b < n$. Following the pointers from any node reaches `-1`, so there are no loops.",
+    "$O(n)$ time is the target. Walking queue A again for every node of queue B is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Count the length of each queue and move the longer queue's start forward by the difference. Then step both together until they stand on the same node.",
+  "starter": "def solve_shared_tail(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_shared_tail('6 0 3\\n1 2 4 4 5 -1\\n')",
+      "expect": "'4'",
+      "compare": "equal",
+      "note": "The queues 0, 1, 2, 4, 5 and 3, 4, 5 meet first at node 4."
+    },
+    {
+      "call": "solve_shared_tail('3 0 1\\n-1 -1 -1\\n')",
+      "expect": "'-1'",
+      "compare": "equal",
+      "note": "Each queue is one node long, and they never meet."
+    },
+    {
+      "call": "solve_shared_tail(' 4 2 2 \\n 1 -1 3 1 \\n\\n')",
+      "expect": "'2'",
+      "compare": "equal",
+      "note": "Both queues start at node 2, so they share it at once. The extra spaces change nothing."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_shared_tail('1 0 0\\n-1\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('6 0 3\\n1 2 4 4 5 -1\\n')",
+      "expect": "'4'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('3 0 1\\n-1 -1 -1\\n')",
+      "expect": "'-1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('5 0 2\\n1 2 3 4 -1\\n')",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('5 3 0\\n1 2 3 4 -1\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('4 0 2\\n1 3 3 -1\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('7 5 6\\n-1 -1 -1 -1 -1 0 0\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('8 0 3\\n1 7 -1 4 5 6 7 -1\\n')",
+      "expect": "'7'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('3 1 2   \\n -1   0  0 \\n\\n\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail(' 4 2 2 \\n 1 -1 3 1 \\n\\n')",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('6 0 3\\n1 2 -1 4 5 -1')",
+      "expect": "'-1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('200000 0 150000\\n' + ' '.join(str(i + 1) for i in range(149999)) + ' -1 ' + ' '.join(str(j + 1) for j in range(150000, 199999)) + ' 140000\\n')",
+      "expect": "'140000'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_shared_tail('200000 0 150000\\n' + ' '.join(str(i + 1) for i in range(149999)) + ' -1 ' + ' '.join(str(j + 1) for j in range(150000, 199999)) + ' -1\\n')",
+      "expect": "'-1'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_shared_tail(text):\n    tokens = text.split()\n    n, a, b = int(tokens[0]), int(tokens[1]), int(tokens[2])\n    nxt = [int(t) for t in tokens[3:3 + n]]\n\n    def length(node):\n        steps = 0\n        while node != -1:\n            steps += 1\n            node = nxt[node]\n        return steps\n\n    la, lb = length(a), length(b)\n    while la > lb:\n        a, la = nxt[a], la - 1\n    while lb > la:\n        b, lb = nxt[b], lb - 1\n    while a != b:\n        a, b = nxt[a], nxt[b]\n    return str(a)\n",
+  "notes": [
+    "Once the longer queue's extra start is skipped, both pointers stand the same distance from the end, so they reach the shared node together.",
+    "Stepping both queues together without first evening the lengths is the trap: the pointers then pass the shared node at different times.",
+    "Each queue is walked at most twice, so $O(n)$ time and $O(1)$ space beyond the parsed pointers."
+  ]
+}

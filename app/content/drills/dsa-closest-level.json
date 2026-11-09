@@ -1,0 +1,110 @@
+{
+  "id": "dsa-closest-level",
+  "name": "Nearest price level in a search tree",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "trees",
+  "tags": [
+    "bst",
+    "search"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "nearest_levels",
+  "returns": "a list of ints",
+  "brief": "A quote book keeps its price levels in a binary search tree. It is a nested tuple `(price, left, right)`: every price in `left` is lower, every price in `right` is higher, and an empty tree is `None`. The book holds at least one level, and prices are distinct integers. For each query in `prices`, return the level nearest to it. When two levels are equally near, return the lower one.\n\nWrite `nearest_levels(book, prices)`.\n\nExample. For `book = (50, (20, None, (30, None, None)), (80, None, None))` and `prices = [33, 65, 50]` the answer is `[30, 50, 50]`. The query 65 is 15 from both 50 and 80, and the lower level wins.",
+  "constraints": [
+    "At most $100{,}000$ levels in a tree of height at most 40, and at most $20{,}000$ queries.",
+    "About $O(h)$ per query is the target, where $h$ is the height. Scanning every level for every query is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Walk down from the root as if searching for the query, going left when it is lower. Every level you pass is a candidate, and the nearest one met on the way is the answer.",
+  "starter": "def nearest_levels(book, prices):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "nearest_levels((50, (20, None, (30, None, None)), (80, None, None)), [33, 65, 50])",
+      "expect": "[30, 50, 50]",
+      "compare": "equal",
+      "note": "33 is nearest 30, 65 ties between 50 and 80, and 50 is a level itself."
+    },
+    {
+      "call": "nearest_levels((10, None, None), [3, 10, 99])",
+      "expect": "[10, 10, 10]",
+      "compare": "equal",
+      "note": "With one level, every query gets it."
+    },
+    {
+      "call": "nearest_levels((5, (1, None, None), (9, None, None)), [7, 3])",
+      "expect": "[5, 1]",
+      "compare": "equal",
+      "note": "Both queries sit halfway between two levels, so each takes the lower one."
+    }
+  ],
+  "tests": [
+    {
+      "call": "nearest_levels((10, None, None), [])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((10, None, None), [3, 10, 99])",
+      "expect": "[10, 10, 10]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((50, (20, None, (30, None, None)), (80, None, None)), [33, 65, 50])",
+      "expect": "[30, 50, 50]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((5, (1, None, None), (9, None, None)), [7, 3])",
+      "expect": "[5, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((0, (-10, (-20, None, None), (-5, None, None)), (10, None, None)), [-7, -8, -100, 100, 4, 5])",
+      "expect": "[-5, -10, -20, 10, 0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((100, (60, (40, None, (55, None, None)), (70, None, None)), (150, (120, None, None), None)), [56, 57, 58, 135, 136, 1000, 0])",
+      "expect": "[55, 55, 60, 120, 150, 150, 40]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((1, None, (2, None, (3, None, (4, None, (5, None, None))))), [0, 2, 9, 3, 3])",
+      "expect": "[1, 2, 5, 3, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((50, (20, None, (30, None, None)), (80, None, None)), [25, 35, 40, 41, 79])",
+      "expect": "[20, 30, 30, 50, 80]",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels(__import__('functools').reduce(lambda t, v: (v, t, None), range(1, 41), None), [0, 17, 41, 1000])",
+      "expect": "[1, 17, 40, 40]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda q: nearest_levels((lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else (2 * ((lo + hi) // 2), f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi))), q) == [min(max(x - x % 2, 0), 131068) for x in q])([(7 * i) % 140000 - 3 for i in range(20000)])",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "nearest_levels((lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else (2 * ((lo + hi) // 2), f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi))), [-5, 1, 77777, 131067, 131069, 500000])",
+      "expect": "[0, 0, 77776, 131066, 131068, 131068]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value.",
+  "solution": "def nearest_levels(book, prices):\n    answers = []\n    for p in prices:\n        node, best = book, None\n        while node is not None:\n            level, left, right = node\n            if best is None or (abs(level - p), level) < (abs(best - p), best):\n                best = level\n            if p == level:\n                break\n            node = left if p < level else right\n        answers.append(best)\n    return answers\n",
+  "notes": [
+    "The level just below a query and the level just above it both lie on its search path, so walking that one path finds the nearest.",
+    "Forgetting the tie rule is the trap: keep the best so far by `(distance, level)`, so ties go to the lower price.",
+    "Each query costs $O(h)$, so $O(q h)$ in all, with $O(1)$ extra space."
+  ]
+}

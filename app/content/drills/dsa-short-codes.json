@@ -1,0 +1,116 @@
+{
+  "id": "dsa-short-codes",
+  "name": "Shortest code for each product",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "heaps-tries",
+  "tags": [
+    "trie",
+    "prefix"
+  ],
+  "skills": [
+    "ds-trees",
+    "ds-hashing"
+  ],
+  "difficulty": 2,
+  "pace": 1200,
+  "fn": "short_codes",
+  "returns": "a list of strings",
+  "brief": "A warehouse scanner lets staff type the start of a product name. For each name in `names`, find its shortest prefix that starts no other name. If there is none, because the whole name also starts another name, use the whole name. Return the codes in the order of `names`.\n\nWrite `short_codes(names)`.\n\nExample. For `['bolt', 'bowl', 'cap']` the codes are `['bol', 'bow', 'c']`: `bo` still starts two names, and `c` starts only `cap`.",
+  "constraints": [
+    "$0 \\le n \\le 50{,}000$ distinct names of 1 to 12 lowercase letters.",
+    "$O(L)$ time with a trie is the target, where $L$ is the total length of the names; a sort also passes. Comparing every name with every other is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Build a trie in which each node counts the names that pass through it. A name's code ends at the first node on its path with a count of 1.",
+  "starter": "def short_codes(names):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "short_codes(['bolt', 'bowl', 'cap'])",
+      "expect": "['bol', 'bow', 'c']",
+      "compare": "equal",
+      "note": "`bo` starts two names, so the codes need a third letter; `c` is already unique."
+    },
+    {
+      "call": "short_codes(['tap', 'tape'])",
+      "expect": "['tap', 'tape']",
+      "compare": "equal",
+      "note": "Every prefix of tap also starts tape, so tap keeps its whole name, and tape needs all four letters."
+    },
+    {
+      "call": "short_codes(['x'])",
+      "expect": "['x']",
+      "compare": "equal",
+      "note": "With one name, its first letter is unique."
+    }
+  ],
+  "tests": [
+    {
+      "call": "short_codes([])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['x'])",
+      "expect": "['x']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['bolt', 'bowl', 'cap'])",
+      "expect": "['bol', 'bow', 'c']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['tap', 'tape'])",
+      "expect": "['tap', 'tape']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['a', 'ab', 'abc'])",
+      "expect": "['a', 'ab', 'abc']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['dog', 'cat', 'cow'])",
+      "expect": "['d', 'ca', 'co']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['zebra', 'zebu', 'zest'])",
+      "expect": "['zebr', 'zebu', 'zes']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['ab', 'b', 'abd', 'abe'])",
+      "expect": "['ab', 'b', 'abd', 'abe']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['nut', 'nuts', 'nutmeg', 'nail'])",
+      "expect": "['nut', 'nuts', 'nutm', 'na']",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['q', 'r', 's'])",
+      "expect": "['q', 'r', 's']",
+      "compare": "equal"
+    },
+    {
+      "call": "sum(map(len, short_codes([chr(97 + i % 26) + chr(97 + i // 26 % 26) + chr(97 + i // 676 % 26) + chr(97 + i // 17576 % 26) + 'zz' for i in range(40000)])))",
+      "expect": "160000",
+      "compare": "equal"
+    },
+    {
+      "call": "short_codes(['stock' + chr(97 + i % 26) + chr(97 + i // 26 % 26) + chr(97 + i // 676 % 26) + chr(97 + i // 17576 % 26) for i in range(40000)])[::4000]",
+      "expect": "['stockaaaa', 'stockwxfa', 'stocksvla', 'stockotra', 'stockkrxa', 'stockgpdb', 'stockcnjb', 'stockykpb', 'stockuivb', 'stockqgbc']",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def short_codes(names):\n    root = {}\n    for name in names:\n        node = root\n        for ch in name:\n            node = node.setdefault(ch, {'#': 0})\n            node['#'] += 1\n    codes = []\n    for name in names:\n        node, code = root, name\n        for i, ch in enumerate(name):\n            node = node[ch]\n            if node['#'] == 1:\n                code = name[:i + 1]\n                break\n        codes.append(code)\n    return codes\n",
+  "notes": [
+    "Counting the names that pass through each trie node finds, for every name, the first point where it stands alone.",
+    "Forgetting names that start other names is the trap: `tap` has no unique prefix, so the code falls back to the whole name.",
+    "Each letter is inserted and read once, so $O(L)$ time and $O(L)$ space for the trie."
+  ]
+}

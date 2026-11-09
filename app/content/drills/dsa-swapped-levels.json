@@ -1,0 +1,120 @@
+{
+  "id": "dsa-swapped-levels",
+  "name": "Two price levels swapped by mistake",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "trees",
+  "tags": [
+    "bst",
+    "inorder"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "swapped_levels",
+  "returns": "a list of two ints, or an empty list",
+  "brief": "A search tree of price levels is a nested tuple `(price, left, right)`, with `None` for an empty tree. Read left, node, right, it should list its prices in increasing order. A bad update swapped the prices of at most two levels. Return those two prices as `[lower, higher]`, or `[]` when the tree is already in order.\n\nWrite `swapped_levels(book)`.\n\nExample. Read in order, `(20, (30, None, None), (10, None, None))` gives 30, 20, 10. Swapping 30 and 10 restores 10, 20, 30, so the answer is `[10, 30]`.",
+  "constraints": [
+    "At most $100{,}000$ levels with distinct integer prices, in a tree of height at most 400.",
+    "$O(n)$ time is the target. Trying every pair of levels, or checking each level against every level below it, is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Read the prices in order and look for places where a price is lower than the one before. One such drop means two neighbours swapped; two drops mean the first drop's higher price and the second drop's lower price.",
+  "starter": "def swapped_levels(book):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "swapped_levels((20, (30, None, None), (10, None, None)))",
+      "expect": "[10, 30]",
+      "compare": "equal",
+      "note": "The order drops twice, 30 to 20 and 20 to 10. The first drop's 30 and the last drop's 10 were swapped."
+    },
+    {
+      "call": "swapped_levels((2, (1, None, None), (3, None, None)))",
+      "expect": "[]",
+      "compare": "equal",
+      "note": "The order reads 1, 2, 3 already."
+    },
+    {
+      "call": "swapped_levels((2, (3, None, None), None))",
+      "expect": "[2, 3]",
+      "compare": "equal",
+      "note": "There is one drop, between neighbours, so they swapped with each other."
+    }
+  ],
+  "tests": [
+    {
+      "call": "swapped_levels(None)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((7, None, None))",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((20, (30, None, None), (10, None, None)))",
+      "expect": "[10, 30]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((2, (1, None, None), (3, None, None)))",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((2, (3, None, None), None))",
+      "expect": "[2, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((10, (5, None, (12, None, None)), (15, (8, None, None), None)))",
+      "expect": "[8, 12]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((1, (2, (5, None, None), (4, None, None)), (6, None, None)))",
+      "expect": "[1, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((40, (20, (10, None, None), (30, None, None)), (60, (50, None, None), (70, None, None))))",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((40, (70, (10, None, None), (30, None, None)), (60, (50, None, None), (20, None, None))))",
+      "expect": "[20, 70]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((0, (-3, (-1, None, None), (-5, None, None)), (4, None, None)))",
+      "expect": "[-5, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels(__import__('functools').reduce(lambda t, v: (v, None, t), [299, 3] + list(range(297, 3, -1)) + [298, 2, 1], None))",
+      "expect": "[3, 298]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((lambda v: (lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else (v((lo + hi) // 2), f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi))))(lambda k: 2 * {123: 40000, 40000: 123}.get(k, k)))",
+      "expect": "[246, 80000]",
+      "compare": "equal"
+    },
+    {
+      "call": "swapped_levels((lambda v: (lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else (v((lo + hi) // 2), f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi))))(lambda k: 2 * k))",
+      "expect": "[]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def swapped_levels(book):\n    seq = []\n\n    def read(node):\n        if node is None:\n            return\n        price, left, right = node\n        read(left)\n        seq.append(price)\n        read(right)\n\n    read(book)\n    drops = [i for i in range(1, len(seq)) if seq[i] < seq[i - 1]]\n    if not drops:\n        return []\n    return [seq[drops[-1]], seq[drops[0] - 1]]\n",
+  "notes": [
+    "A single swap breaks the in-order reading in one or two places, and the culprits are the first high price and the last low price.",
+    "Checking each level only against its children is the trap: a swap between distant levels can leave every parent and child looking right.",
+    "One in-order walk is $O(n)$ time, with $O(n)$ for the list; keeping only the previous price cuts that to $O(h)$."
+  ]
+}

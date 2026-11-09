@@ -1,0 +1,116 @@
+{
+  "id": "dsa-window-every-venue",
+  "name": "Tightest window across every venue",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "heaps-tries",
+  "tags": [
+    "merge-sorted",
+    "heap"
+  ],
+  "skills": [
+    "ds-trees",
+    "ds-pointers"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "tightest_window",
+  "returns": "a list of two ints",
+  "brief": "Each of `k` venues reports a sorted list of trade times, and `feeds` holds the `k` lists. Find the shortest window `[lo, hi]` that holds at least one trade time from every venue, where the length is `hi - lo`. On a tie, return the window with the smaller `lo`.\n\nWrite `tightest_window(feeds)`.\n\nExample. For `feeds = [[1, 10, 20], [4, 12], [11, 30]]` the window `[10, 12]` holds 10, 12 and 11, and no window is shorter, so the answer is `[10, 12]`.",
+  "constraints": [
+    "$1 \\le k \\le 200$ venues, each list sorted and non-empty, with at most $200{,}000$ times in all. Times are integers and may repeat.",
+    "$O(N \\log k)$ time is the target, where $N$ is the number of times. Trying every start and searching every list from it is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Keep one pointer per venue in a heap keyed by its current time, and track the largest current time. The heap top and that largest time form a window; record it, advance the venue at the top, and stop when a venue runs out.",
+  "starter": "def tightest_window(feeds):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "tightest_window([[1, 10, 20], [4, 12], [11, 30]])",
+      "expect": "[10, 12]",
+      "compare": "equal",
+      "note": "The times 10, 12 and 11 fit in a window of length 2."
+    },
+    {
+      "call": "tightest_window([[5, 9]])",
+      "expect": "[5, 5]",
+      "compare": "equal",
+      "note": "With one venue, a single time is a window of length 0, and 5 is the smaller start."
+    },
+    {
+      "call": "tightest_window([[1, 5], [3, 7]])",
+      "expect": "[1, 3]",
+      "compare": "equal",
+      "note": "Three windows have length 2, and `[1, 3]` has the smallest `lo`."
+    }
+  ],
+  "tests": [
+    {
+      "call": "tightest_window([[8]])",
+      "expect": "[8, 8]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[5, 9]])",
+      "expect": "[5, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[1, 10, 20], [4, 12], [11, 30]])",
+      "expect": "[10, 12]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[1, 5], [3, 7]])",
+      "expect": "[1, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[4, 4, 9], [4], [2, 4, 6]])",
+      "expect": "[4, 4]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[-10, -3, 0], [-6, 8], [-4, 1]])",
+      "expect": "[-6, -3]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[1, 2, 3, 4, 5, 6, 7, 8], [100]])",
+      "expect": "[8, 100]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[0, 50, 100], [0, 50, 100], [49, 51]])",
+      "expect": "[49, 50]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[1, 1, 1], [1, 1], [1]])",
+      "expect": "[1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[10, 20, 30], [15, 25, 35], [11, 33]])",
+      "expect": "[10, 15]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([[t * 1009 + (f * 37 + t * 11) % 1000 for t in range(1000)] for f in range(200)])",
+      "expect": "[1013, 1982]",
+      "compare": "equal"
+    },
+    {
+      "call": "tightest_window([list(range(0, 300000, 3)), list(range(1, 300000, 3))])",
+      "expect": "[0, 1]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "import heapq\n\n\ndef tightest_window(feeds):\n    heap = [(feed[0], v, 0) for v, feed in enumerate(feeds)]\n    heapq.heapify(heap)\n    high = max(feed[0] for feed in feeds)\n    best = None\n    while True:\n        low, v, i = heap[0]\n        if best is None or high - low < best[1] - best[0]:\n            best = [low, high]\n        if i + 1 == len(feeds[v]):\n            return best\n        after = feeds[v][i + 1]\n        heapq.heapreplace(heap, (after, v, i + 1))\n        high = max(high, after)\n",
+  "notes": [
+    "For each start the best end is the largest of each venue's first time at or after it, and the heap visits the starts in increasing order.",
+    "Advancing a venue other than the one at the top is the trap: only moving the lowest pointer can shorten the window.",
+    "Each of the $N$ times enters the heap once at $O(\\log k)$, so $O(N \\log k)$ time and $O(k)$ space."
+  ]
+}
