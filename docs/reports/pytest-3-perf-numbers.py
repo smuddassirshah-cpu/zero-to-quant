@@ -53,7 +53,9 @@ def run(src, which="tests"):
                         except Exception as e:
                             out.append(c["expect"] in [k.__name__ for k in type(e).__mro__])
                     elif c.get("compare") == "isclose":
-                        out.append(math.isclose(float(eval(c["call"], ns)), float(eval(c["expect"], ns)), rel_tol=1e-9, abs_tol=1e-12))
+                        got, want = eval(c["call"], ns), eval(c["expect"], ns)
+                        got, want = (got, want) if isinstance(want, list) else ([got], [want])
+                        out.append(len(got) == len(want) and all(math.isclose(float(a), float(b), rel_tol=1e-9, abs_tol=1e-12) for a, b in zip(got, want)))
                     else:
                         out.append(eval(c["call"], ns) == eval(c["expect"], ns))
                 except Exception:
@@ -72,7 +74,7 @@ def failing(res):
 tests = w["tests"]
 check("15 hidden tests and 1 example, as `how` says", len(tests) == 15 and len(w["examples"]) == 1
       and "15 hidden tests" in w["how"])
-check("tests 1 to 4 call broker_fee (how)", all(t["call"].startswith("broker_fee(") for t in tests[:4])
+check("tests 1 to 4 call broker_fee (how)", all(t["call"].lstrip("[").startswith("broker_fee(") for t in tests[:4])
       and not any(t["call"].startswith("broker_fee(") for t in tests[4:]) and "Tests 1 to 4 call your `broker_fee`" in w["how"])
 broken = [t["call"] for t in tests if t["call"].startswith("trial('") and t["expect"] == "'failed'"]
 check("six broken versions (how: 'six broken versions')", len(broken) == 6 and "six broken versions" in w["how"])

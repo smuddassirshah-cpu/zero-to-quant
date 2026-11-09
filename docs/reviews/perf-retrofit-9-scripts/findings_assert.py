@@ -24,16 +24,15 @@ finding("LT2-2", bool(re.search(r"true time plus|plus \$D\$|reported time is|min
 
 it = item("limits-thm", 3, "h-prove-desk-guarantee")
 m = it["model"]
-finding("LT3-2", ("Bin" in m or "binomial" in m and "W_" in m) and "no continuity correction" not in m,
+finding("LT3-2", "W_A + 2W_B \\le n" in m and "for every larger $n$" in m,
         "exact P(S<=0) = P(W_A + 2W_B <= n), W_A ~ Bin(n,0.55), W_B ~ Bin(n,0.3) independent: 0.0528 at n=131, 0.05005 at 135, 0.0494 at 136, "
         "below 0.05 for every n from 136 to 1,000; normal 0.0499 at 131; with a continuity correction the normal asks 138 (lt_numbers.py)")
 
 it = item("pytest", 3, "h3-fee-test-first")
 def half_case(call):
-    mm = re.fullmatch(r"broker_fee\(([\d_.]+)\)", call)
-    if not mm:
-        return False
-    x = float(mm.group(1))
+    return any(half_one(x) for x in re.findall(r"broker_fee\(([\d_.]+)\)", call))
+def half_one(txt):
+    x = float(txt)
     f = Decimal(repr(x)) / 1000
     hu = float(f.quantize(Decimal("0.01"), ROUND_HALF_UP))
     return f == f.quantize(Decimal("0.001")) and str(f).endswith("5") and round(x * 0.001, 2) != hu
