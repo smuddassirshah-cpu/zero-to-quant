@@ -1701,3 +1701,6 @@ Raised later (cpp-pricing level 1 perf):
 
 Raised later (py-found level 2 perf):
 - [Could] Seen again (opt-dash level 4): `isclose` does not compare dicts, so `h-book-weights` reads its dictionary of weights through `sorted(d.items())`, which shows the learner a list of pairs instead of their dictionary. Wanted: `isclose` on dicts, key sets equal and values compared by key.
+
+Raised later (pytest level 1 perf):
+- [Could] `code` widget: a task that grades a learner's pytest file against hidden versions of the function carries its whole grader in the item (`h-average-cost-tests`: about 130 lines of prelude and postlude that write each version into a hidden `costs.py`, run real pytest with a plugin that records each test's outcome, and reverse the order). Wanted: a widget option such as `"pytestGrade": { "module": "costs", "versions": { ... } }` that provides `trial`, `names` and `weak` (tests that never fail on a broken version), so items stop copying it.
