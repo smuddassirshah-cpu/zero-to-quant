@@ -1,0 +1,110 @@
+{
+  "id": "dsa-sensor-alarm",
+  "name": "Sensor alarm windows",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "windows",
+  "tags": [
+    "stdin",
+    "sensor-alarm"
+  ],
+  "skills": [
+    "ds-arrays",
+    "ds-pointers"
+  ],
+  "difficulty": 1,
+  "pace": 780,
+  "fn": "solve_sensor_alarm",
+  "returns": "a string",
+  "brief": "A server-room sensor raises an alarm for every run of `k` consecutive readings whose average is at least `t`. The input comes as one string:\n\n- the first line holds `n`, `k` and `t`, separated by spaces;\n- the second line holds the `n` readings, whole numbers separated by spaces (it may be missing when `n` is 0).\n\nWrite `solve_sensor_alarm(text)`, which returns, as a string, how many of the windows of `k` consecutive readings have an average of at least `t`. When `k` is larger than `n` there are no windows. Expect extra spaces and a trailing newline.\n\nExample. For `\"6 3 5\\n4 6 5 2 9 7\\n\"` the window sums are 15, 13, 16 and 18, against a bar of 15. So the answer is `\"3\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$, $1 \\le k \\le 200{,}000$, readings and $t$ whole numbers between $-10^6$ and $10^6$.",
+    "$O(n)$ time after reading is the target. Summing each window afresh is too slow when `k` is large.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Compare the window sum with `k * t` instead of dividing, so no rounding creeps in. Slide the sum as each new reading arrives.",
+  "starter": "def solve_sensor_alarm(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_sensor_alarm('6 3 5\\n4 6 5 2 9 7\\n')",
+      "expect": "'3'",
+      "compare": "equal",
+      "note": "Windows summing to 15, 16 and 18 reach the bar of 15; the one summing to 13 does not."
+    },
+    {
+      "call": "solve_sensor_alarm('2 3 1\\n5 5\\n')",
+      "expect": "'0'",
+      "compare": "equal",
+      "note": "Two readings cannot fill a window of three, so there is no alarm."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_sensor_alarm('0 1 0\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('2 3 1\\n5 5\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('1 1 7\\n7\\n')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('6 3 5\\n4 6 5 2 9 7\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('  5  2  -1 \\n -1 -1  -2 0   -1 \\n\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('4 2 3\\n3 3 3 3\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('4 2 3\\n3 2 3 2\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('3 3 2\\n1 2 4')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('5 1 0\\n0 -1 2 -3 4\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('3 2 1000000\\n1000000 1000000 -1000000\\n')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('200000 100000 0\\n' + ' '.join(str((i * 37) % 201 - 100) for i in range(200000)) + '\\n')",
+      "expect": "'50265'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_sensor_alarm('200000 150000 1\\n' + ' '.join(['1'] * 200000) + '\\n')",
+      "expect": "'50001'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_sensor_alarm(text):\n    tokens = text.split()\n    n, k, t = int(tokens[0]), int(tokens[1]), int(tokens[2])\n    xs = [int(v) for v in tokens[3:3 + n]]\n    if k > n:\n        return '0'\n    total = sum(xs[:k])\n    count = 1 if total >= k * t else 0\n    for i in range(k, n):\n        total += xs[i] - xs[i - k]\n        if total >= k * t:\n            count += 1\n    return str(count)\n",
+  "notes": [
+    "A fixed window keeps a running sum: one reading in, one reading out.",
+    "The average must be at least `t`, so compare `sum >= k * t`; dividing whole numbers would round away a near miss.",
+    "Reading and sliding are both $O(n)$."
+  ]
+}

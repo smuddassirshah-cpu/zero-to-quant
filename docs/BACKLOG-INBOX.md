@@ -1815,3 +1815,7 @@ Raised later (terminal level 3 perf):
 
 Raised later (analysis level 4 perf):
 - [Should] ENGINE-BACKLOG 701 measures `.katex-display` only. An inline `$...$` triangle-inequality chain in the model of analysis `homework-4` `h-prove-uniform-diagonal` ran past the card at 440 px and was clipped, yet the playthrough passed; it was found only in the `-marked-440` shot. Wanted: the same check on every inline `.katex` whose right edge passes the card's (prompt, model, rubric), naming `<file>#<item id>` and the TeX. Workaround used: both chains moved into `aligned` displays.
+
+Raised later (drills dsa b):
+- [Should] A drill page (`js/screens/drill.js`) ignores a test's `setup`: `__ZQ_CASES` carries only call, expect and compare, so a case `{ "setup": "p = list(range(200000))", "call": "f(p)" }` fails with a NameError, yet the validator passes it and AUTHORING section 3 documents `setup` for code widgets. Found when 10 of 12 tests passed in the playthrough of the first draft. Workaround: build large inputs inside the call, as `(lambda s: sum(f(s) for _ in range(2000)))(list(range(10**6)))`. Want the drill page to run `setup`, or the validator to refuse it on a drill.
+- [Could] `__learner_source__` is not defined on a drill page, so a source check such as `{ "call": "'sort' not in __learner_source__", "expect": "True" }` (documented for code widgets) cannot ban `sorted` or `bisect` in a drill. Sub-pack B dropped two such tests and relies on large inputs instead.
