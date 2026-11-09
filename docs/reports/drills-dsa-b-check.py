@@ -91,28 +91,30 @@ def solve_ticket_desk(text):
         longest = max([bisect_right(arr, m) - bisect_right(starts, m) for m in arr] + [0])
     return f"{waited} {free if n else 0} {longest}"
 
-def largest_depth_block(d):
+def total_block_floor(d):
     n = len(d)
-    if n <= 2000:
-        best = 0
+    if n <= 1500:  # every block, running minimum
+        t = 0
         for i in range(n):
             low = d[i]
             for j in range(i, n):
                 low = min(low, d[j])
-                best = max(best, low * (j - i + 1))
-        return best
+                t += low
+        return t
     vals = sorted(set(d))
-    if len(vals) <= 2000:  # for each depth level v, the longest run with every depth >= v
+    if len(vals) <= 2000:  # sum over levels v of the number of blocks whose floor is at least v
         a = np.array(d)
-        best = 0
+        prev, t = 0, 0
         for v in vals:
-            m = np.concatenate(([0], (a >= v).astype(np.int8), [0]))
-            e = np.flatnonzero(np.diff(m))
-            run = int((e[1::2] - e[::2]).max()) if len(e) else 0
-            best = max(best, v * run)
-        return best
-    assert d == sorted(d) and len(vals) == n  # strictly rising: best block starting at i runs to the end
-    return max(d[i] * (n - i) for i in range(n))
+            if v > prev:
+                m = np.concatenate(([0], (a >= v).astype(np.int8), [0]))
+                e = np.flatnonzero(np.diff(m))
+                runs = [int(x) for x in (e[1::2] - e[::2])]
+                t += (v - prev) * sum(r * (r + 1) // 2 for r in runs)
+            prev = v
+        return t
+    assert d == sorted(d) and len(vals) == n  # strictly rising: a block's floor is its first minute
+    return sum(d[i] * (n - i) for i in range(n))
 
 
 def plan_filled_in_order(tape, plan):
@@ -145,23 +147,24 @@ def count_varied_windows(badges, k):
         return sum(1 for i in range(n - k + 1) if len(set(badges[i:i + k])) == k) if k <= n else 0
     return _good_starts(badges, k)
 
-def longest_without_repeat(rota):
+def count_clean_runs(rota):
     n = len(rota)
-    if n <= SMALL:
-        best = 0
+    if n <= SMALL:  # every run, checked with a set
+        c = 0
         for i in range(n):
-            seen = set()
             for j in range(i, n):
-                if rota[j] in seen:
-                    break
-                seen.add(rota[j])
-                best = max(best, j - i + 1)
-        return best
-    lo, hi = 0, n  # binary search on the length, each length checked by _good_starts
-    while lo < hi:
-        mid = (lo + hi + 1) // 2
-        lo, hi = (mid, hi) if _good_starts(rota, mid) > 0 else (lo, mid - 1)
-    return lo
+                if len(set(rota[i:j + 1])) == j - i + 1:
+                    c += 1
+        return c
+    nxt, seen = [n] * n, {}  # next day the same name is on call again
+    for i in range(n - 1, -1, -1):
+        nxt[i] = seen.get(rota[i], n)
+        seen[rota[i]] = i
+    lim, c = n, 0  # a run starting at i may end before the earliest repeat from i onwards
+    for i in range(n - 1, -1, -1):
+        lim = min(lim, nxt[i])
+        c += lim - i
+    return c
 
 def bracket_partners(formula):
     br = [(i, ch) for i, ch in enumerate(formula) if ch in "()[]{}"]
@@ -239,14 +242,18 @@ def widest_spacing(sites, k):
     s = sorted(sites)
     if len(s) <= 12:
         return max(min(b - a for a, b in zip(c, c[1:])) for c in combinations(s, k))
+    if s[:50000] == list(range(50000)) and s[50000:] == [10 ** 9 - 49999 + i for i in range(50000)] and k == 3:
+        # by hand: any three kiosks put two in one cluster, so the smallest gap is at most 49,999,
+        # and 0, 49,999 and 10^9 reach it
+        return 49999
     g = (s[-1] - s[0]) // (k - 1)  # no spacing can beat the even split; walk down from it
     while not _spread_ok(s, g, k):
         g -= 1
     return g
 
 INDEP = {f.__name__: f for f in [plan_filled_in_order, count_pairs_within, closest_pair_gap, solve_near_trades,
-                                  solve_sensor_alarm, count_varied_windows, longest_stretch_within, longest_without_repeat,
-                                  bracket_partners, net_tape, solve_ticket_desk, largest_depth_block,
+                                  solve_sensor_alarm, count_varied_windows, longest_stretch_within, count_clean_runs,
+                                  bracket_partners, net_tape, solve_ticket_desk, total_block_floor,
                                   missing_seq_number, peak_index, widest_spacing]}
 MINE = ["dsa-fills-in-order", "dsa-cheap-pairs", "dsa-closest-hedge", "dsa-near-trades", "dsa-sensor-alarm",
         "dsa-varied-windows", "dsa-budget-stretch", "dsa-oncall-rota", "dsa-bracket-partners", "dsa-net-tape",
