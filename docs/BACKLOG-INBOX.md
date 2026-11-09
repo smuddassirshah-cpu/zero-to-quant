@@ -1784,3 +1784,7 @@ Raised later (algo-think level 2 perf):
 
 Raised later (algo-think level 3 perf):
 - [Could] l9 counts list reads through its own prelude wrapper, but no shared helper exists, so a performance task that must allow slow but correct code cannot also report reads without grading them. Want an advisory per-case note ("your code read 200,000 slots; a binary search reads about 18") that shows on the result row and does not fail the case.
+
+Raised later (random-vars level 1 perf):
+- [Could] Pyodide 0.27.7 runs Python 3.12, whose built-in `sum` of floats is compensated: ten 0.1s give 1.0, while a running `total += p` gives 0.9999999999999999. A test meant to catch an exact `== 1` check must use floats whose stored values do not add to 1 exactly (`h-build-pmf` test 7). Want one line in AUTHORING section 3 saying so.
+- [Could] The playthrough's 440 px width check covers KaTeX displays only; a starter or solution line wider than the editor at 440 px (about 46 characters) scrolls sideways unflagged. Want a warning for starter lines past the 440 px editor width.
