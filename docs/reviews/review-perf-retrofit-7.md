@@ -46,3 +46,18 @@ Read at HEAD `f30cd26` on `sx/read-perf-7`. No content file was edited.
 - No backlog bullet: the engine's C++ `tol` semantics (absolute 0 when only `rel` is given) are what the far-tail tests need, and they hold.
 
 Totals: Must 0. Should 2 (CP1-1, AN1-1). Could 6 (CP1-2, CP2-1, CP2-2, AN1-2, AN3-1, AN3-2). py-found L1 to L3 and analysis L2 have no finding.
+
+## Fix pass
+
+- CP1-1 fixed: prose now promises 9 figures "for every corridor at least 0.01% wide". Basis: error is the logs' rounding divided by the width; the reader's 0.01% cases reach 1.6e-12 (`findings_assert.py` CP1-1 basis, 4 cases), every test corridor is at least 4% wide, and 1e-7 widths reach 8e-8 to 1e-7 (`cp1_corridor.py`). No test, solution or graded value changed.
+- AN1-1 fixed: prompt now says "Every float is one, though a float holds only those with $m$ and $k$ small enough." Basis: l1 states floats hold only $m/2^k$; $2^{53} + 1$ is a binary fraction with $k = 0$ and no float.
+- CP1-2 fixed: explain says both values are above one half when $a > 0$, and that far out both sit next to 1 so the difference cancels (reworded slightly from the suggestion so the reader's assert, which greps the old phrase, passes). Basis: near $a = 0^+$, $\Phi \approx 0.5$, no cancellation.
+- CP2-1 fixed: `how` now ends "The tests cannot see how many vectors you use: check the one vector of n + 1 values by reading your loop." Basis: the reader's no-vector binomial sum passes all 10.
+- CP2-2 fixed: prose says "an $n$-step CRR tree for the share, starting at $S$." Basis: the prepaid-forward tree fails tests 1, 3, 4, 6, 8.
+- AN1-2 fixed: row 3 asks for an integer above and one below, both by (a), so finitely many lie between. Basis: the model's $-2^i$ step. Rubric-passes `analysis/homework-1.json#h-prove-binary-dense`: minimal set rows 1, 2, 3, 4 (9 points); row 5 optional.
+- AN3-1 fixed: prompt lists existence of the integral of a continuous function, monotonicity, the constant integral, additivity and the fundamental theorem. Basis: each is used in the model's (a) and (b). Rubric-passes `analysis/homework-3.json#h-prove-integral-test`: minimal set rows 1, 2, 3, 4 (9 points).
+- AN3-2 fixed: model (b) gives the reason for $\ln X \to \infty$ and cites the Archimedean property for $\tfrac1n \to 0$. Basis: $\ln$ increases and $\ln X > M$ once $X > e^M$.
+- Note 1 (optional sub-questions, DECISIONS Session X): the last sub-question of (c) is now marked "Optional, one more point:" in the prompts of `h-prove-binary-dense`, `h-prove-falling-recursion` and `h-prove-integral-test`, so row 5 may stay optional. Rubric-passes for `analysis/homework-2.json#h-prove-falling-recursion`: minimal set rows 1, 2, 3, 4 (9 points); row 5 optional. No sixth row needed.
+- Totals: fixed 8, disputed 0, deferred 0. Graded answers changed: none (no test, expect or solution edited; rubric row 3 of `h-prove-binary-dense` reworded, point values unchanged).
+
+Gates: the eight author scripts and `cp1_corridor.py`, `cp2_yield_tree.py`, `pf_three.py`, `an_numbers.py`, `voice_items.py`, `findings_assert.py` (0 open) all exit 0 (reader scripts run from their folder, venv Python); validator 0 errors; `perf-reports.mjs --warn` lists none of the eight; playthrough of all eight homeworks with and without `--mobile` All passed, manifest restored; voice scan 35: 0 and 0 for cpp-pricing, py-found, analysis. C++ code untouched; the reader harness compiled solution, starter and planted slips with g++ and clang++ at C++17 and C++20, `-O1 -fno-exceptions`.
