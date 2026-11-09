@@ -28,7 +28,13 @@ text = item['prompt'] + item['model'] + ' '.join(r['text'] for r in item['rubric
 pts = [r['points'] for r in item['rubric']]
 req = [i for i, r in enumerate(item['rubric']) if r.get('required')]
 check('rubric sums to 10', sum(pts) == 10)
-check('exactly one required row (the weights)', req == [1])
+# fix pass AR3-1: rows 2 (weights), 3 (variance and limit) are core; row 4 (series check, half-widths) is named by the question
+import itertools
+_passes = [s for k in range(1, 5) for s in itertools.combinations(range(4), k)
+           if sum(pts[i] for i in s) >= 7 and all(r in s for r in req)]
+print('     passing tick sets (row numbers):', [[i + 1 for i in s] for s in _passes])
+check('required rows are 2 and 4, not every row', req == [1, 3])
+check('every passing set has the weights, the variance and the series check', all({1, 2, 3} <= set(s) for s in _passes) and _passes)
 check('no pass without the variance-and-limit row', sum(pts) - pts[2] < 7)
 check('no derivation item fields that the validator refuses', not any(k in item for k in ('starter', 'steps', 'order', 'derive', 'hints', 'parts')))
 for s in ['0.8', '-0.4', '\\sigma = 2', '0.4', '0.64', '3.92', '2.3117', '5.4795', '4.59', '0.52/0.36', '5.7778',

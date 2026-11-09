@@ -74,8 +74,8 @@ for lab, src in PLANTS.items():
     if not ft: uncaught.append(lab)
 print('uncaught plants:', uncaught)
 # _no_loop on the cheat: the prelude reference is not a learner function, so the check cannot see it
-expected_uncaught = {'agree: np.allclose with default tolerances',
-                     'cheat: both functions call the prelude _ref', 'cheat: agree is the prelude _close'}
+# fix pass BT1-2, BT1-3: tests 14 (drift of 5e-9) and 15 (prelude helpers in the source) now catch all three, so none is uncaught
+expected_uncaught = set()
 if set(uncaught) != expected_uncaught:
     print('  FAIL uncaught set changed:', set(uncaught) ^ expected_uncaught); fails += 1
 print('failures:', fails)

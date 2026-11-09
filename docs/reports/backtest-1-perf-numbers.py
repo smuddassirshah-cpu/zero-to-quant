@@ -54,7 +54,7 @@ def results(src):
 
 # ---- shape ----
 tests, examples = w["tests"], w["examples"]
-check("13 hidden tests, as `how` says", len(tests) == 13 and "13 hidden tests" in w["how"])
+check("15 hidden tests, as `how` says", len(tests) == 15 and "15 hidden tests" in w["how"])
 check("more tests than examples", len(tests) > len(examples) == 2)
 check("examples are tests 1 and 2", examples == tests[:2])
 check("homework has 6 to 12 items", 6 <= len(doc["items"]) <= 12)
@@ -98,6 +98,12 @@ bugs = {
         "    return all(abs(x - y) <= 1e-9 for x, y in zip(a, b))"),
     "agree: exact equality": bug("    return a.shape == b.shape and bool(np.allclose(a, b, rtol=0, atol=1e-9))",
         "    return list(a) == list(b)"),
+    # fix pass BT1-2: relative default tolerance of np.allclose in agree (test 14)
+    "agree: np.allclose default tolerances": bug("bool(np.allclose(a, b, rtol=0, atol=1e-9))", "bool(np.allclose(a, b))"),
+    # fix pass BT1-3: both engines return the prelude's hidden reference (test 15)
+    "cheat: both engines return _ref": bug("def breakout_loop(close, n):", "def breakout_loop(close, n):\n    return _ref(close, n)\n\ndef _a(close, n):").replace(
+        "def breakout_vector(close, n):", "def breakout_vector(close, n):\n    return _ref(close, n)\n\ndef _b(close, n):"),
+    "cheat: agree returns _close": bug("    return a.shape == b.shape and bool(np.allclose(a, b, rtol=0, atol=1e-9))", "    return _close(a, b)"),
     "agree: always True": bug("    return a.shape == b.shape and bool(np.allclose(a, b, rtol=0, atol=1e-9))", "    return True"),
 }
 for name, src in bugs.items():
@@ -110,6 +116,8 @@ first_fail = {name: next((k + 1 for k, ok in enumerate(results(src)) if not ok),
 check("byKey test-9: the loop call fails test 9 first", first_fail["vector: calls the loop"] == 9)
 check("byKey test-12: zip fails test 12 first", first_fail["agree: zip without a length check"] == 12)
 check("byKey test-13: exact equality fails test 13 first", first_fail["agree: exact equality"] == 13)
+check("byKey test-14: the default-tolerance agree fails test 14", not results(bugs["agree: np.allclose default tolerances"])[13])
+check("byKey test-15: the _ref cheat fails test 15", not results(bugs["cheat: both engines return _ref"])[14] and not results(bugs["cheat: agree returns _close"])[14])
 check("byKey test-7: the loop that books the next return fails test 7", not results(bugs["loop: books the next bar's return"])[6])
 check("byKey test-8: shift(-1) on returns fails test 8", not results(bugs["vector: returns read with shift(-1)"])[7])
 

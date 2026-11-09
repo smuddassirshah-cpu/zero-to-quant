@@ -12,3 +12,5 @@ Gates:
 4. `node tools/playthrough.mjs --set backtest/homework-1 --local-cdn <pkgs>`, with and without `--mobile`: All passed; shots clean.
 
 Freshness: breakout, channel, `agree(`, `walk(`, `HAND`, `ffill`, `rolling(n)` hit only this item; `fresh-check --file` 0 hits.
+- Overlapping screens: l1 screens 4, 6 and 9 lay out an event loop, a vectorised signal and the agreement idea; the objective's product needs them. New: the channel with a held target, returns with the lag, and `agree` checked on pairs that differ in timing, length and by $10^{-12}$ (and, from the fix pass, by $5 \times 10^{-9}$).
+- Fix pass: 15 tests (was 13). Test 14 rejects a default `np.allclose` in `agree`; test 15 rejects code that calls the prelude's helpers.

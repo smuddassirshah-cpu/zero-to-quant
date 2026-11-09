@@ -2,8 +2,8 @@
 
 - `homework-4.json`, item `h-reversal-note`, index 8 (9 of 9). Added; nothing converted.
 - Objective (l16): "Write a one-page results note, including what failed."
-- Kind `derivation`, not `data`. A `data` task needs a file under `app/content/data/`, which is outside this agent's course folder. So the run's output is a `table` canvas plus the prompt, and the learner writes the note in an empty box (self-marked, no scaffold).
-- Study: a reversal rule new to the course, 30 settings, a first run filled at the close, a £1m desk size. The model works out drag, standard errors, the 0.78 bar, impact (10 bp), net −0.39 at £1m and capacity near £0.37m.
+- Kind `derivation`: the verb is write, but the product is a prose note whose graded content is worked figures; `code` cannot grade what failed and would repeat l16 screen 10, and the task reads no data file. The run's output is a `table` canvas plus the prompt, and the learner writes the note in an empty box (self-marked, no scaffold).
+- Study: a reversal rule new to the course, 30 settings, a first run filled at the close, a £1m desk size. The model works out drag, standard errors, the 0.78 bar, impact (16 bp on a one-book trade), net about −0.98 at £1m and a break-even book near £0.15m.
 - Rubric 2, 2, 2, 3, 1. "What failed" (3) is `required`.
 
 Gates:
@@ -13,3 +13,4 @@ Gates:
 4. `node tools/playthrough.mjs --set backtest/homework-4 --local-cdn <pkgs>`, with and without `--mobile`: All passed. A full-height 440 px shot of the marked model fits.
 
 Freshness: reversal, `2.043`, `£1m book`, `£90m`. Only stock decimals and r-gap's 1,003 recur; `fresh-check --file` 0 hits.
+- Overlapping screens: l16 screens 2, 4, 5 and 10 lay out the template and What failed. New: a new study, costs at the desk's size, capacity, the held-out standard error and the impossible first fill.

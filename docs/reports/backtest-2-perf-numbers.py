@@ -147,5 +147,23 @@ for n, seed in ((60, 1), (120, 2), (300, 9)):
     s2 = src.replace("bars = daily_bars(200)", f"bars = daily_bars({n}, {seed})")
     check(f"model test on daily_bars({n}, {seed}) still passes every case", all(results(s2)))
 
+# fix pass BT2-2: a relative tolerance (np.allclose defaults) fails test 9 only, and the leak is about £1 on £1m
+loose = w["solution"].replace("rtol=0, atol=1e-9", "rtol=1e-5, atol=1e-8")
+rl = results(loose)
+check("loose-tolerance test fails test 9 only", [k + 1 for k, ok in enumerate(rl) if not ok] == [9])
+# the settle check's own noise (5% on every later price): largest cash move on the cut row, against the loose tolerance
+_full, _rng, _mx = ns["_cost"](ns["daily_bars"](200)), np.random.default_rng(0), []
+_b = ns["daily_bars"](200)
+for _cut in range(1, 200):
+    _alt = _b.copy()
+    _alt.iloc[_cut:] = _b.iloc[_cut:].to_numpy() * np.exp(0.05 * _rng.standard_normal((200 - _cut, 5)))
+    _alt.iloc[_cut, _b.columns.get_loc("open")] = _b["open"].iloc[_cut]
+    _mx.append(abs(ns["_cost"](_alt)["cash"].iloc[_cut] - _full["cash"].iloc[_cut]))
+_mx = np.array(_mx)
+print("     cost leak, cash move on the cut row: max %.3f, median %.3f" % (_mx.max(), np.median(_mx)))
+check("the cost leak moves cash by pence up to about £1 on £1m (max 0.5 to 2), under a 1e-5 relative band of £10",
+      0.5 < _mx.max() < 2 and _mx.max() < 1e-5 * 1_000_000)
+check("test-9 feedback says so", "about £1 on £1m" in item["feedback"]["byKey"]["test-9"])
+
 print("\n%d failure(s)" % len(FAIL))
 sys.exit(1 if FAIL else 0)
