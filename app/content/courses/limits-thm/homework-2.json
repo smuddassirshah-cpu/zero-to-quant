@@ -390,6 +390,44 @@
           "text": "(e) States the model gives no gain in safety and names the constant-hazard assumption and a way it fails."
         }
       ]
+    },
+    {
+      "id": "h-prove-cycles-exponential",
+      "performance": "derivation",
+      "difficulty": 5,
+      "skills": [
+        "dl-continuous"
+      ],
+      "title": "From matching cycles to the exponential",
+      "kind": "longform",
+      "prompt": "A venue matches orders in cycles of $\\tfrac1n$ seconds, where $n$ is a whole number. In each cycle a resting order fills with chance $\\tfrac{\\lambda}{n}$, where $\\lambda > 0$ and $n > \\lambda$. The chance is the same in every cycle, and the cycles are independent. Let $T_n$ be the fill time in seconds, read at the end of the cycle in which the order fills.\n\n(a) Show that $P(T_n > t) = \\left(1 - \\tfrac{\\lambda}{n}\\right)^{\\lfloor nt \\rfloor}$ for $t \\ge 0$. Here $\\lfloor nt \\rfloor$ is the whole part of $nt$.\n\n(b) Prove that $P(T_n > t) \\to e^{-\\lambda t}$ as $n \\to \\infty$, for each fixed $t \\ge 0$. Then check that $e^{-\\lambda t}$ is the survival function of the density $\\lambda e^{-\\lambda t}$ on $t \\ge 0$.\n\n(c) Take $\\lambda = 0.5$ a second and $t = 4$ seconds. Find $P(T_n > 4)$ for cycles of 0.1 seconds and of 0.01 seconds, and compare each with the limit. Say on which side of the limit they lie, and why.\n\n(d) An audit finds that each reported fill time is off from the true time by $D$ seconds. $D$ is equally likely to lie anywhere in $[a, b]$, with $a < b$. Derive $\\operatorname{Var}(D) = \\tfrac{(b - a)^2}{12}$ straight from the density, without first moving the interval to start at 0. Then give the mean and sd of $D$ for $a = -0.02$ and $b = 0.08$.\n\nGive a reason for every line. You may use $\\left(1 - \\tfrac{\\lambda}{n}\\right)^n \\to e^{-\\lambda}$ as $n \\to \\infty$.",
+      "model": "**(a)** Let $K$ be the number of the cycle in which the order fills. The fill is read at the end of that cycle, so $T_n = \\tfrac{K}{n}$. Then $T_n > t$ exactly when $K > nt$. As $K$ is a whole number, that is $K > \\lfloor nt \\rfloor$: none of the first $\\lfloor nt \\rfloor$ cycles fills. Each misses with chance $1 - \\tfrac{\\lambda}{n}$, and independent chances multiply, so\n$$P(T_n > t) = \\left(1 - \\tfrac{\\lambda}{n}\\right)^{\\lfloor nt \\rfloor}.$$\n\n**(b)** Write $r = 1 - \\tfrac{\\lambda}{n}$, which lies in $(0, 1)$ because $n > \\lambda > 0$. Let $j = \\lfloor nt \\rfloor$, so $nt - 1 < j \\le nt$. A number in $(0, 1)$ gets smaller as its power grows, so\n$$r^{nt} \\le r^{j} < r^{nt - 1}.$$\nOn the left, $r^{nt} = \\left(r^n\\right)^t$. Since $r^n \\to e^{-\\lambda}$, and $x \\mapsto x^t$ is continuous for $x > 0$, $r^{nt} \\to e^{-\\lambda t}$. The right side is $r^{nt} \\cdot r^{-1}$, and $r^{-1} \\to 1$, so it has the same limit. Squeezed between them, $P(T_n > t) = r^j \\to e^{-\\lambda t}$.\n\nFor the density, the chance of passing $t$ is the area to the right of $t$, an improper integral:\n$$\\begin{aligned} \\int_t^\\infty \\lambda e^{-\\lambda s}\\,ds &= \\lim_{c \\to \\infty}\\left[-e^{-\\lambda s}\\right]_t^c \\\\ &= \\lim_{c \\to \\infty}\\left(e^{-\\lambda t} - e^{-\\lambda c}\\right) \\\\ &= e^{-\\lambda t}, \\end{aligned}$$\nsince $e^{-\\lambda c} \\to 0$ for $\\lambda > 0$. So the cycle model's survival function tends to the exponential's.\n\n**(c)** Here $\\lambda t = 2$, so the limit is $e^{-2} \\approx 0.1353$. Cycles of 0.1 seconds mean $n = 10$, so $nt = 40$ and $\\tfrac{\\lambda}{n} = 0.05$. Then $P(T_{10} > 4) = 0.95^{40} \\approx 0.1285$. Cycles of 0.01 seconds mean $n = 100$, and $P(T_{100} > 4) = 0.995^{400} \\approx 0.1347$. The gap to the limit shrinks from about 0.0068 to about 0.0007.\n\nBoth lie below the limit. Here $nt$ is a whole number, so $P(T_n > t) = e^{nt \\ln(1 - x)}$ with $x = \\tfrac{\\lambda}{n}$. For $0 < x < 1$,\n$$\\begin{aligned} \\ln(1 - x) &= -\\int_{1-x}^{1} \\frac{du}{u} \\\\ &< -\\int_{1-x}^{1} 1\\,du = -x, \\end{aligned}$$\nsince $\\tfrac1u > 1$ for $u < 1$. So $e^{nt \\ln(1 - x)} < e^{-ntx} = e^{-\\lambda t}$. At these times the cycle model is a little more likely to have filled than the exponential.\n\n**(d)** $D$ has density $\\tfrac{1}{b - a}$ on $[a, b]$ and 0 elsewhere: flat, with area 1. Its mean is\n$$\\begin{aligned} E[D] &= \\int_a^b \\frac{x}{b - a}\\,dx \\\\ &= \\frac{b^2 - a^2}{2(b - a)} = \\frac{a + b}{2}, \\end{aligned}$$\nsince $b^2 - a^2 = (b - a)(b + a)$. Its second moment is\n$$\\begin{aligned} E[D^2] &= \\int_a^b \\frac{x^2}{b - a}\\,dx \\\\ &= \\frac{b^3 - a^3}{3(b - a)} \\\\ &= \\frac{a^2 + ab + b^2}{3}, \\end{aligned}$$\nsince $b^3 - a^3 = (b - a)(a^2 + ab + b^2)$. Then $\\operatorname{Var}(D) = E[D^2] - E[D]^2$, over the common denominator 12:\n$$\\begin{aligned} \\operatorname{Var}(D) &= \\frac{a^2 + ab + b^2}{3} - \\frac{(a + b)^2}{4} \\\\ &= \\frac{4a^2 + 4ab + 4b^2}{12} \\\\ &\\quad - \\frac{3a^2 + 6ab + 3b^2}{12} \\\\ &= \\frac{a^2 - 2ab + b^2}{12} = \\frac{(b - a)^2}{12}. \\end{aligned}$$\nFor $a = -0.02$ and $b = 0.08$, $E[D] = \\tfrac{0.06}{2} = 0.03$ seconds, so reports run 30 ms late on average. $\\operatorname{Var}(D) = \\tfrac{0.1^2}{12} \\approx 0.000833$ in seconds squared. The sd is $\\tfrac{0.1}{\\sqrt{12}} \\approx 0.0289$ seconds, about 28.9 ms.",
+      "rubric": [
+        {
+          "points": 2,
+          "required": true,
+          "text": "(a) Says $T_n > t$ exactly when none of the first $\\lfloor nt \\rfloor$ cycles fills, because the fill time is a whole number of cycles, and multiplies the chances by independence."
+        },
+        {
+          "points": 3,
+          "required": true,
+          "text": "(b) Tick only if all are given. A squeeze handles the whole part $\\lfloor nt \\rfloor$. $\\left(1 - \\tfrac{\\lambda}{n}\\right)^{nt} \\to e^{-\\lambda t}$ follows from the given limit, with a reason for raising it to the power $t$. And $\\int_t^\\infty \\lambda e^{-\\lambda s}\\,ds = e^{-\\lambda t}$, with the limit shown."
+        },
+        {
+          "points": 1,
+          "required": true,
+          "text": "(c) Gets $0.95^{40} \\approx 0.1285$ and $0.995^{400} \\approx 0.1347$, both below $e^{-2} \\approx 0.1353$."
+        },
+        {
+          "points": 1,
+          "text": "(c) Says why they are below: $\\ln(1 - x) < -x$ for $0 < x < 1$, with a reason, at a time where $nt$ is whole."
+        },
+        {
+          "points": 3,
+          "required": true,
+          "text": "(d) Tick only if all are given: $E[D] = \\tfrac{a + b}{2}$ and $E[D^2] = \\tfrac{a^2 + ab + b^2}{3}$ from integrals over $[a, b]$; the algebra to $\\tfrac{(b - a)^2}{12}$; a mean of 0.03 seconds and an sd of about 0.0289 seconds."
+        }
+      ]
     }
   ]
 }
