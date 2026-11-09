@@ -1,0 +1,111 @@
+{
+  "id": "dsa-stock-ledger",
+  "name": "A stockroom ledger",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "simulation",
+  "tags": [
+    "stdin",
+    "ledger"
+  ],
+  "skills": [
+    "ds-hashing",
+    "ds-arrays"
+  ],
+  "difficulty": 2,
+  "pace": 1200,
+  "fn": "solve_stock_ledger",
+  "returns": "a string",
+  "brief": "A stockroom starts empty and processes a log of movements in order. `IN item k` adds `k` units. `OUT item k` takes `k` units, but if fewer than `k` are in stock the line is refused and changes nothing.\n\nThe whole input arrives as one string `text`:\n\n- line 1: `n`, the number of movements;\n- the next `n` lines: `IN item k` or `OUT item k`.\n\nReturn the report as lines joined by `\\n`, with no newline at the end. Line 1 is the number of refused lines. Then comes one line `item count` for each item still in stock, sorted by item name. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_stock_ledger(text)`.\n\nExample. For `\"3\\nIN pen 3\\nOUT pen 5\\nOUT pen 1\\n\"` the second line is refused and 2 pens remain. So the answer is `\"1\\npen 2\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$. Item names are lower-case letters and digits, and each `k` is from 1 to $10^9$.",
+    "$O(n \\log n)$ time is the target. Searching a list of items for each line is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Keep a dict from item to count. A refused `OUT` changes nothing, and an item that falls to 0 is left out of the report.",
+  "starter": "def solve_stock_ledger(text):\n    # your code here\n    return '0'\n",
+  "examples": [
+    {
+      "call": "solve_stock_ledger('3\\nIN pen 3\\nOUT pen 5\\nOUT pen 1\\n')",
+      "expect": "'1\\npen 2'",
+      "compare": "equal",
+      "note": "Five pens cannot leave when three are in, so that line is refused."
+    },
+    {
+      "call": "solve_stock_ledger('2\\nIN cup 4\\nOUT cup 4\\n')",
+      "expect": "'0'",
+      "compare": "equal",
+      "note": "The cups go to 0, so they are left out of the report."
+    },
+    {
+      "call": "solve_stock_ledger('1\\nOUT ink 1\\n')",
+      "expect": "'1'",
+      "compare": "equal",
+      "note": "Nothing is in stock, so the one line is refused."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_stock_ledger('0\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('1\\nOUT ink 1\\n')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('2\\nIN cup 4\\nOUT cup 4\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('3\\nIN pen 3\\nOUT pen 5\\nOUT pen 1\\n')",
+      "expect": "'1\\npen 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('3\\nIN ink 2\\nOUT ink 3\\nOUT ink 2')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('3\\nIN zip 1\\nIN box 2\\nIN map 3\\n')",
+      "expect": "'0\\nbox 2\\nmap 3\\nzip 1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('2\\n  IN   cup  4  \\n OUT cup 1 \\n\\n\\n')",
+      "expect": "'0\\ncup 3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('4\\nIN a1 5\\nIN a10 1\\nIN a2 2\\nOUT a1 5\\n')",
+      "expect": "'0\\na10 1\\na2 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('4\\nIN gear 1000000000\\nIN gear 1000000000\\nOUT gear 1\\nOUT nut 2\\n')",
+      "expect": "'1\\ngear 1999999999'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_stock_ledger('5\\nOUT pen 1\\nIN pen 1\\nOUT pen 1\\nOUT pen 1\\nIN pen 2\\n')",
+      "expect": "'2\\npen 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: [len(s.split('\\n'))] + s.split('\\n')[:2] + [s.split('\\n')[-1]])(solve_stock_ledger('200000\\n' + ''.join('IN w%d 1\\n' % i for i in range(100000)) + ''.join('OUT w%d 1\\n' % i for i in range(0, 200000, 2))))",
+      "expect": "[50001, '50000', 'w1 1', 'w99999 1']",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_stock_ledger(text):\n    lines = text.split('\\n')\n    n = int(lines[0])\n    stock = {}\n    refused = 0\n    for line in lines[1:1 + n]:\n        op, item, k = line.split()\n        k = int(k)\n        have = stock.get(item, 0)\n        if op == 'IN':\n            stock[item] = have + k\n        elif have >= k:\n            stock[item] = have - k\n        else:\n            refused += 1\n    out = [str(refused)]\n    for item in sorted(stock):\n        if stock[item] > 0:\n            out.append(item + ' ' + str(stock[item]))\n    return '\\n'.join(out)\n",
+  "notes": [
+    "A dict holds the live stock, and each line is one lookup and one update.",
+    "An `OUT` that would go negative is refused whole; taking what is there instead breaks later lines.",
+    "$O(n)$ for the log and $O(m \\log m)$ to sort the $m$ items in the report."
+  ]
+}
