@@ -1,0 +1,104 @@
+{
+  "id": "dsa-traders-by-ticker",
+  "name": "Who traded each ticker",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "hashing",
+  "tags": [
+    "group-by-key"
+  ],
+  "skills": [
+    "ds-hashing",
+    "ds-arrays"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "traders_by_ticker",
+  "returns": "a dict from strings to lists of strings",
+  "brief": "A desk's blotter is a list `trades` of `(trader, ticker)` pairs, in time order. Compliance wants, for each ticker, the traders who touched it. List each trader once per ticker, in the order of their first trade in that ticker.\n\nWrite `traders_by_ticker(trades)`.\n\nExample. For `[('ann', 'VOD'), ('bo', 'BP'), ('cy', 'VOD'), ('ann', 'VOD')]` the answer is `{'VOD': ['ann', 'cy'], 'BP': ['bo']}`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ trades. Names and tickers are case-sensitive strings.",
+    "$O(n)$ time is the target. Checking `trader in list` before each append is too slow when a ticker has many traders.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Keep two things per ticker: the list to return and a set of traders already added. Python dicts keep insertion order, so a dict can stand in for both.",
+  "starter": "def traders_by_ticker(trades):\n    # your code here\n    return {}\n",
+  "examples": [
+    {
+      "call": "traders_by_ticker([('ann', 'VOD'), ('bo', 'BP'), ('cy', 'VOD'), ('ann', 'VOD')])",
+      "expect": "{'VOD': ['ann', 'cy'], 'BP': ['bo']}",
+      "compare": "equal",
+      "note": "Ann's second VOD trade adds nothing, as she is already listed."
+    },
+    {
+      "call": "traders_by_ticker([('dee', 'AZN'), ('dee', 'BP')])",
+      "expect": "{'AZN': ['dee'], 'BP': ['dee']}",
+      "compare": "equal",
+      "note": "One trader can appear under several tickers."
+    }
+  ],
+  "tests": [
+    {
+      "call": "traders_by_ticker([])",
+      "expect": "{}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('ann', 'VOD')])",
+      "expect": "{'VOD': ['ann']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('ann', 'VOD'), ('ann', 'VOD'), ('ann', 'VOD')])",
+      "expect": "{'VOD': ['ann']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('ann', 'VOD'), ('bo', 'BP'), ('cy', 'VOD'), ('ann', 'VOD')])",
+      "expect": "{'VOD': ['ann', 'cy'], 'BP': ['bo']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('dee', 'AZN'), ('dee', 'BP')])",
+      "expect": "{'AZN': ['dee'], 'BP': ['dee']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('zed', 'X'), ('amy', 'X'), ('zed', 'X'), ('max', 'X')])",
+      "expect": "{'X': ['zed', 'amy', 'max']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('Ann', 'VOD'), ('ann', 'VOD'), ('ann', 'vod')])",
+      "expect": "{'VOD': ['Ann', 'ann'], 'vod': ['ann']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('p', 'A'), ('q', 'B'), ('q', 'A'), ('p', 'B'), ('r', 'A')])",
+      "expect": "{'A': ['p', 'q', 'r'], 'B': ['q', 'p']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('', 'BP'), ('x', 'BP')])",
+      "expect": "{'BP': ['', 'x']}",
+      "compare": "equal"
+    },
+    {
+      "call": "traders_by_ticker([('k', 'T1'), ('k', 'T2'), ('k', 'T1'), ('j', 'T2')])",
+      "expect": "{'T1': ['k'], 'T2': ['k', 'j']}",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda g: [{t: len(v) for t, v in g.items()}, g['K1'][:3]])(traders_by_ticker([('T%d' % (i % 50000), 'K%d' % (i % 3)) for i in range(200000)]))",
+      "expect": "[{'K0': 50000, 'K1': 50000, 'K2': 50000}, ['T1', 'T4', 'T7']]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value.",
+  "solution": "def traders_by_ticker(trades):\n    groups = {}\n    for trader, ticker in trades:\n        groups.setdefault(ticker, {})[trader] = True\n    return {t: list(names) for t, names in groups.items()}\n",
+  "notes": [
+    "The ticker is the key, and each value collects traders in first-seen order.",
+    "A plain list needs a scan to spot a repeat; a set or dict beside it makes the check $O(1)$.",
+    "Each trade costs $O(1)$ on average, so $O(n)$ time and $O(n)$ space."
+  ]
+}

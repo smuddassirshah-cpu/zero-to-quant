@@ -1815,3 +1815,8 @@ Raised later (terminal level 3 perf):
 
 Raised later (analysis level 4 perf):
 - [Should] ENGINE-BACKLOG 701 measures `.katex-display` only. An inline `$...$` triangle-inequality chain in the model of analysis `homework-4` `h-prove-uniform-diagonal` ran past the card at 440 px and was clipped, yet the playthrough passed; it was found only in the `-marked-440` shot. Wanted: the same check on every inline `.katex` whose right edge passes the card's (prompt, model, rubric), naming `<file>#<item id>` and the TeX. Workaround used: both chains moved into `aligned` displays.
+
+Raised later (drills dsa a):
+- [Should] Playthrough `--drill` proves the model solution passes and the starter fails, but nothing proves a large test rejects slow but correct code inside Pyodide's 5 s. A drill could carry a hidden `slow` solution that the playthrough runs and expects to stop on the large case; sub-pack A timed naive versions natively instead (`<scratchpad>/dsa-a/naive.py`).
+- [Could] An in-place task ("change the list and return it") can only be graded by an identity test written as a lambda in `call` (`(lambda a: f(a) is a and a)([0, 4])`); a failure reads "Expected [4, 0], got False". A case flag such as `"inPlace": true` (pass the argument, compare it after the call) would give a plain row.
+- [Could] A test on a large output compares a summary (`len`, first and last lines) or `== expected` giving `True`, so a failing row shows `False` or a short list, not where the output went wrong. A stdin drill's large case would read better with a diff of the first differing line.

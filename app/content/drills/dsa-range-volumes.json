@@ -1,0 +1,116 @@
+{
+  "id": "dsa-range-volumes",
+  "name": "Volume between two bars",
+  "course": "ds",
+  "pack": "dsa",
+  "pattern": "prefix-sums",
+  "tags": [
+    "stdin",
+    "range-sum"
+  ],
+  "skills": [
+    "ds-arrays",
+    "ds-pointers"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "solve_range_volumes",
+  "returns": "a string",
+  "brief": "An exchange publishes the traded volume of each one-minute bar. Analysts send queries for the total volume from bar `l` to bar `r`, both included, counting bars from 1.\n\nThe whole input arrives as one string `text`:\n\n- line 1: `n` and `q`;\n- line 2: the `n` bar volumes;\n- the next `q` lines: one query `l r` each.\n\nReturn the `q` totals, one per line, joined by `\\n` with no newline at the end. With no queries, return the empty string. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_range_volumes(text)`.\n\nExample. For `\"4 2\\n5 1 4 2\\n2 3\\n1 4\\n\"` the totals are 1 + 4 = 5 and 12. So the answer is `\"5\\n12\"`.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$, $0 \\le q \\le 100{,}000$, each volume from 0 to $10^9$, and $1 \\le l \\le r \\le n$.",
+    "$O(n + q)$ time is the target. Summing each range afresh is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Build `pre` with `pre[0] = 0` and `pre[i] = pre[i - 1] + v[i]` for the 1-based bars. A query is then `pre[r] - pre[l - 1]`.",
+  "starter": "def solve_range_volumes(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_range_volumes('4 2\\n5 1 4 2\\n2 3\\n1 4\\n')",
+      "expect": "'5\\n12'",
+      "compare": "equal",
+      "note": "Bars 2 and 3 hold 1 and 4; all four bars hold 12."
+    },
+    {
+      "call": "solve_range_volumes('3 1\\n7 0 9\\n2 2\\n')",
+      "expect": "'0'",
+      "compare": "equal",
+      "note": "A query with `l` equal to `r` is one bar, here a quiet one."
+    },
+    {
+      "call": "solve_range_volumes('2 0\\n3 4\\n')",
+      "expect": "''",
+      "compare": "equal",
+      "note": "There are no queries, so the output is empty."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_range_volumes('1 0\\n8\\n')",
+      "expect": "''",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('1 1\\n8\\n1 1\\n')",
+      "expect": "'8'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('4 2\\n5 1 4 2\\n2 3\\n1 4\\n')",
+      "expect": "'5\\n12'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('3 1\\n7 0 9\\n2 2\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes(' 5  3 \\n 1  2 3 4  5 \\n1 5\\n 5 5 \\n2 4\\n\\n\\n')",
+      "expect": "'15\\n5\\n9'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('3 3\\n4 4 4\\n1 2\\n1 2\\n2 3')",
+      "expect": "'8\\n8\\n8'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('2 1\\n1000000000 1000000000\\n1 2\\n')",
+      "expect": "'2000000000'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('6 2\\n0 0 0 0 0 0\\n1 6\\n3 4\\n')",
+      "expect": "'0\\n0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('5 2\\n9 8 7 6 5\\n1 1\\n5 5\\n')",
+      "expect": "'9\\n5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('2 0\\n3 4\\n')",
+      "expect": "''",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_range_volumes('100000 100000\\n' + ' '.join(['7'] * 100000) + '\\n' + '1 100000\\n' * 100000) == '\\n'.join(['700000'] * 100000)",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: s.split('\\n')[:3] + [len(s.split('\\n'))])(solve_range_volumes('100000 100000\\n' + ' '.join(str(i % 10) for i in range(100000)) + '\\n' + ''.join('%d %d\\n' % (i + 1, 100000 - i) for i in range(100000))))",
+      "expect": "['450000', '449991', '449982', 100000]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_range_volumes(text):\n    tokens = text.split()\n    n, q = int(tokens[0]), int(tokens[1])\n    pre = [0]\n    for v in tokens[2:2 + n]:\n        pre.append(pre[-1] + int(v))\n    out = []\n    pos = 2 + n\n    for _ in range(q):\n        l, r = int(tokens[pos]), int(tokens[pos + 1])\n        pos += 2\n        out.append(str(pre[r] - pre[l - 1]))\n    return '\\n'.join(out)\n",
+  "notes": [
+    "Prefix totals turn each range into one subtraction.",
+    "With bars counted from 1, the range `l` to `r` is `pre[r] - pre[l - 1]`; using `pre[l]` drops bar `l`.",
+    "$O(n)$ to build `pre` and $O(1)$ per query, so $O(n + q)$ in all."
+  ]
+}
