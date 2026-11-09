@@ -1,0 +1,119 @@
+{
+  "id": "fluency-l10-natural-log",
+  "course": "exp-log",
+  "lesson": "l10-natural-log",
+  "title": "Fluency: the natural logarithm",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 15,
+  "families": [
+    {
+      "id": "exact-with-ln",
+      "weight": 2,
+      "skill": "solve with e and ln, exactly",
+      "vars": {
+        "k": { "int": [2, 9] },
+        "b": { "int": [2, 40] },
+        "v": { "pick": ["x", "t"] }
+      },
+      "let": {
+        "lb": "50000*(b^(1/100000) - b^(-1/100000))",
+        "lr": "50000*((b/k)^(1/100000) - (b/k)^(-1/100000))",
+        "key": "lb/k", "times": "k*lb"
+      },
+      "where": ["b != k", "abs(lr - key) > 0.01", "abs(lr - times) > 0.01"],
+      "prompt": "Solve $e^{{{k}{v}}} = {b}$, giving ${v}$ exactly.",
+      "widget": { "kind": "expression", "answer": "\\frac{{\\ln {b}}}{{{k}}}", "accept": ["\\frac{{1}}{{{k}}}\\ln {b}", "\\frac{{\\ln({b})}}{{{k}}}"], "keyboard": "calculus" },
+      "wrong": [
+        { "id": "multiplied-by-k", "tex": "{k}\\ln {b}", "line": "Taking $\\ln$ gives ${k}{v} = \\ln {b}$: divide by {k}, do not multiply." },
+        { "id": "divided-inside", "tex": "\\ln({b/k:frac})", "line": "Take $\\ln$ first, then divide: ${k}{v} = \\ln {b}$, so the {k} divides $\\ln {b}$, not {b}." }
+      ],
+      "solution": [
+        "Take $\\ln$ of both sides: $\\ln(e^{{{k}{v}}}) = {k}{v}$, so ${k}{v} = \\ln {b}$.",
+        "Divide by {k}: ${v} = \\dfrac{{\\ln {b}}}{{{k}}}$."
+      ]
+    },
+    {
+      "id": "continuous-growth",
+      "weight": 2,
+      "skill": "solve a continuous growth problem",
+      "vars": {
+        "p": { "pick": [200, 500, 800, 1000, 2000, 4000, 5000] },
+        "r": { "int": [1, 9] },
+        "q": { "pick": [1.5, 2, 2.5, 3, 4] }
+      },
+      "let": {
+        "k": "r/100", "t": "p*q",
+        "lq": "50000*(q^(1/100000) - q^(-1/100000))",
+        "lt": "50000*(t^(1/100000) - t^(-1/100000))",
+        "years": "lq/(r/100)", "early": "lt/(r/100)", "whole": "lq/r"
+      },
+      "where": ["years < 100"],
+      "prompt": "Solve ${p}e^{{{k}t}} = {t}$ for $t$, to 2 decimal places.",
+      "widget": { "kind": "numeric", "answer": "{round(years, 6)}", "tol": { "abs": 0.006 }, "placeholder": "a decimal", "accept": "{years:dp2}" },
+      "wrong": [
+        { "id": "logs-too-soon", "value": "{round(early, 6)}", "tol": { "abs": 0.006 }, "line": "Divide by {p} before taking $\\ln$: $e^{{{k}t}} = {q}$." },
+        { "id": "rate-as-whole-number", "value": "{round(whole, 6)}", "tol": { "abs": 0.006 }, "line": "The rate in the power is ${k}$, not {r}: {r}% is ${k}$." }
+      ],
+      "solution": [
+        "Divide by {p}: $e^{{{k}t}} = {q}$.",
+        "Take $\\ln$: ${k}t = \\ln {q}$, so $t = \\dfrac{{\\ln {q}}}{{{k}}} = {years:dp2}$."
+      ]
+    },
+    {
+      "id": "ln-from-two-values",
+      "weight": 2,
+      "skill": "use the log laws with ln",
+      "vars": {
+        "f": { "pick": [2, 3] },
+        "g": { "pick": [3, 5, 7] },
+        "i": { "int": [-3, 4], "not": [0] },
+        "j": { "int": [-2, 3], "not": [0] }
+      },
+      "let": {
+        "lf": "round(50000*(f^(1/100000) - f^(-1/100000)), 4)",
+        "lg": "round(50000*(g^(1/100000) - g^(-1/100000)), 4)",
+        "x": "f^i*g^j",
+        "key": "i*lf + j*lg",
+        "flat": "sign(i)*lf + sign(j)*lg",
+        "swapped": "i*lg + j*lf"
+      },
+      "where": ["f < g", "max(abs(i), abs(j)) >= 2", "i != j", "x <= 200", "x >= 1/50", "flat != swapped"],
+      "prompt": "Use $\\ln {f} = {lf:dp4}$ and $\\ln {g} = {lg:dp4}$ to find $\\ln {x:frac}$, to four decimal places.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "a decimal", "accept": "{key:dp4}, or within 0.0005" },
+      "wrong": [
+        { "id": "powers-left-behind", "value": "{flat}", "tol": { "abs": 0.0005 }, "line": "The power law brings each power down in front of its log." },
+        { "id": "swapped-the-values", "value": "{swapped}", "tol": { "abs": 0.0005 }, "line": "You swapped the two values: $\\ln {f} = {lf:dp4}$ and $\\ln {g} = {lg:dp4}$." }
+      ],
+      "solution": [
+        "Split ${x:frac}$ into powers of {f} and {g}: $\\ln {x:frac} = {i:c}\\ln {f} {j:+c}\\ln {g}$.",
+        "That is ${i} \\times {lf:dp4} + {j:()} \\times {lg:dp4} = {key:dp4}$."
+      ]
+    },
+    {
+      "id": "any-base-as-e",
+      "weight": 1,
+      "skill": "write a power of any base with e",
+      "vars": {
+        "b": { "int": [2, 60] },
+        "v": { "pick": ["x", "t"] }
+      },
+      "let": {
+        "lb": "50000*(b^(1/100000) - b^(-1/100000))",
+        "l10": "50000*(10^(1/100000) - 10^(-1/100000))",
+        "common": "lb/l10", "flip": "1/lb"
+      },
+      "where": ["abs(common - lb) > 0.001", "abs(flip - lb) > 0.001"],
+      "prompt": "Write ${b}^{v}$ as $e^{{k{v}}}$. What is $k$, to four decimal places?",
+      "widget": { "kind": "numeric", "answer": "{round(lb, 8)}", "tol": { "abs": 0.0001 }, "placeholder": "a decimal", "accept": "{lb:dp4}" },
+      "wrong": [
+        { "id": "used-log", "value": "{round(common, 8)}", "tol": { "abs": 0.0001 }, "line": "That is $\\log {b}$, base 10: the power of $e$ needs $\\ln {b}$." },
+        { "id": "one-over", "value": "{round(flip, 8)}", "tol": { "abs": 0.0001 }, "line": "That is $\\frac{{1}}{{\\ln {b}}}$: ${b} = e^{{\\ln {b}}}$, so $k = \\ln {b}$." }
+      ],
+      "solution": [
+        "${b} = e^{{\\ln {b}}}$, so ${b}^{v} = e^{{{v}\\ln {b}}}$.",
+        "So $k = \\ln {b} = {lb:dp4}$."
+      ]
+    }
+  ]
+}
