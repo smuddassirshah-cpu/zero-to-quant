@@ -251,6 +251,8 @@ Worked (version 1):
 
 **Acceptance.** The common checks for all three files; the start card lists three papers (25, 30 and 10 minutes, 65 in all) and the check; paper A refuses a step without an answer; every ranking item's gaps are at least 0.02 and every interval item has exactly one narrowest interval that holds the value; report at `docs/reports/exam-mock-oa-trader.md`, with inbox bullets for interval scoring by width and for the bank draw (E3) that would retire the fixed versions.
 
+**Versions (session Y).** `mock-oa-trader-2` and `-3` no longer share templates with version 1 or with each other: all 80 items re-authored on new families, keeping papers, ramp, skills and widgets (`docs/reports/exam-mock-oa-trader-versions.md`). The "one template per position, parameters drawn" rule above no longer applies to them.
+
 ## mock-superday-trader
 
 **File.** `app/content/exams/mock-superday-trader.json`. One file, no versions. Reason: the mocks rule above (three fixed versions only while E3 is not built) was written for the online assessments, which are resat to build speed. A superday is a rehearsal sat a few times, its weight is in the written answers and the market-making games, and `docs/briefs/interview-plan.md` section (d) asks for three versions of the OAs only ("Superdays use the stage-exam shape"). The report raises one inbox bullet that E3 would let this mock draw fresh items. `content/prep.json` already lists `mock-superday-trader` (paths `superday-trader` and the trader firm paths); do not edit it.
