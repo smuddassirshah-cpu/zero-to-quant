@@ -50,3 +50,4 @@ Items changed:
 - vectors homework-2 h-long-variance
 
 Note: annotation rows in step-by-step aligned displays moved from a right-hand column to indented rows under each step (equations 2-4, quadratics 2-3, taylor 2, trig 1).
+- random-vars homework-3 h3-two-strategies
