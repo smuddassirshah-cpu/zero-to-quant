@@ -7,6 +7,7 @@ Exit 0 means every checked claim holds. A check that fails because the content i
 wrong would be marked EXPECTED_FAIL and kept failing; this level has none.
 Claims that are true only under a hypothesis the text drops are demonstrated and
 printed as "note" lines (findings in docs/reviews/audit-mental-1-3.md), not asserted.
+After the fix pass the corrected claims are asserted, marked "(corrected claim, fix pass)".
 """
 import json
 import os
@@ -60,12 +61,15 @@ def left_to_right():
     w = d["quiz"][3]["widget"]
     check("l1_quiz_fills", F(str(w["answer"])) == F("23.85") + F("23.79") and F(str(wrongs(w)["same"])) == 2 * F("23.85"),
           "l1 quiz[3]: £47.64")
-    # screens[1].explain: "Adding tens changes only the tens digit" (finding 1): false once the sum passes 100
+    # screens[1].explain now reads "Adding tens never changes the units digit" (corrected claim, fix pass)
     cross = [(a, t) for a in range(10, 100) for t in range(10, 100, 10) if (a + t) // 100 != a // 100]
     units_kept = all((a + t) % 10 == a % 10 for a in range(10, 100) for t in range(10, 100, 10))
     check("l1_units_ride_along", units_kept, "l1 screens[1].explain: the units digit never changes when tens are added")
-    note("l1_tens_digit_only", f"{len(cross)} of 810 (two-digit a, tens jump) pairs also change the hundreds digit, "
-         "for example 66 + 50 = 116 in screens[5] (finding 1, not asserted)")
+    ex = d["screens"][1]["explain"]["text"]
+    check("l1_tens_digit_only", "never changes the units digit" in ex and "changes only the tens digit" not in ex
+          and len(cross) == 450 and 66 + 50 == 116,
+          "(corrected claim, fix pass) l1 screens[1].explain claims only that the units digit is kept; "
+          "450 of 810 pairs, such as 66 + 50 = 116, also change the hundreds digit")
 
 
 # ---- l2: round, then adjust, and the direction of the correction
@@ -100,8 +104,13 @@ def complements():
     fails = [n for n in range(1, 100) if n not in holds]
     check("l3_complement_rule", fails == list(range(10, 100, 10)) and len(holds) == 90,
           "l3 screens[2].explain: tens to 9 and units to 10 for every n from 1 to 99 except those ending in 0")
-    note("l3_rule_without_exception", "screens[3].prose, summary.ideas[2] and quiz[1].prose state the rule with no "
-         f"exception; it fails digit by digit on {len(fails)} of 99 numbers, and on every price ending in 0p (finding 2, not asserted)")
+    # (corrected claim, fix pass) every statement of the rule now carries the exception
+    d3 = load("l3-making-100")
+    stated = [d3["screens"][3]["prose"], d3["summary"]["ideas"][2], d3["screens"][8]["prose"]]
+    check("l3_rule_without_exception", all("unless" in s and "ends in 0" in s for s in stated) and len(fails) == 9
+          and "the last non-zero digit goes up to 10 and the zeros stay" in d3["quiz"][1]["prose"],
+          "(corrected claim, fix pass) l3 screens[3].prose, screens[8].prose and summary.ideas[2] give the rule "
+          "'unless the number ends in 0'; quiz[1].prose names the last non-zero digit")
     # quiz[1]: every digit to 9, the last to 10, for prices in pence with a non-zero last digit
     def rule(p):  # p in pence below 10000, as a 4-digit string
         s = f"{p:04d}"
@@ -126,6 +135,8 @@ def complements():
     d = load("l3-making-100")
     w = d["quiz"][1]["widget"]
     check("l3_change", F(str(w["answer"])) == 100 - F("37.45"), "l3 quiz[1]: change £62.55")
+    check("l3_change_ends_in_0", general(3740) == 10000 - 3740 == 6260 and rule(3740)[-1] == 10,
+          "(corrected claim, fix pass) l3 quiz[1].prose: £37.40 gives £62.60 by the last non-zero digit; the old rule asked for a digit 10")
     # counting up: hop to the next ten, then tens, then the rest, whenever the gap reaches the next ten
     ok = True
     for a in range(1, 200):
@@ -179,12 +190,14 @@ def running_totals():
     check("l4_left_out", 48 + 31 + 67 == 146, "l4 screens[5].explain: 146 is the total without the 22")
     check("hw1_check_options", abs(205 - 210) <= 9 and 58 + 23 + 41 + 87 == 209 and abs(229 - 210) > 9,
           "homework-1 items[7]: only 229 falls outside 201 to 219")
-    # quiz[3] option b: "Each number moved by at most 2 ..., so the total can be off by no more than 6" (finding 3)
-    moves = [abs(x - int(x / 10 + 0.5) * 10) for x in [29, 52, 38, 71]]
-    note("l4_quiz3_inference", f"moves are {moves}, summing to {sum(moves)}; 'each at most 2' over four numbers only gives "
-         f"at most {2 * len(moves)}, so the stated 'so ... no more than 6' does not follow (finding 3, not asserted)")
-    # running totals keyed in tables
+    # quiz[3] option b now cites the actual moves 1, 2, 2 and 1 for the bound 6 (corrected claim, fix pass)
     d = load("l4-running-total")
+    moves = [abs(x - int(x / 10 + 0.5) * 10) for x in [29, 52, 38, 71]]
+    why = d["quiz"][3]["widget"]["options"][1]["why"]
+    check("l4_quiz3_inference", moves == [1, 2, 2, 1] and sum(moves) == 6 and "by 1, 2, 2 and 1" in why
+          and "at most 6" in why and "at most 2" not in why,
+          "(corrected claim, fix pass) l4 quiz[3] option b: the moves 1, 2, 2 and 1 sum to the bound 6")
+    # running totals keyed in tables
     tot, run = 0, []
     for step in [38, -12, 45, -29, 57]:
         tot += step

@@ -7,6 +7,7 @@ Exit 0 means every checked claim holds. A check that fails because the content i
 wrong would be marked EXPECTED_FAIL and kept failing; this level has none.
 Claims that are true only under a hypothesis the text drops are demonstrated and
 printed as "note" lines (findings in docs/reviews/audit-mental-1-3.md), not asserted.
+After the fix pass the corrected claims are asserted, marked "(corrected claim, fix pass)".
 """
 import json
 import os
@@ -71,9 +72,10 @@ def division():
     # screens[4].prose: "96 is off the table" (finding 7): 96 is in the 12 by 12 table, though not in column 4
     in_table = cells(96)
     col4 = [c for c in in_table if c.endswith("c4")]
-    note("l9_96_off_table", f"96 sits in cells {in_table} of the 12 by 12 table and in no cell of column 4 ({col4}); "
-         "'96 is off the table' is true of column 4 only (finding 7, not asserted)")
-    assert in_table == ["r12c8", "r8c12"] and col4 == []
+    p4 = d["screens"][4]["prose"]
+    check("l9_96_off_table", in_table == ["r12c8", "r8c12"] and col4 == [] and 4 * 12 == 48 < 96
+          and "Column 4 stops at 48" in p4 and "off the table" not in p4,
+          "(corrected claim, fix pass) l9 screens[4].prose: 96 is past the end of column 4, though in the table as 8 x 12")
 
 
 # ---- l10: decimals of common fractions, remainders
@@ -156,6 +158,10 @@ def clock():
           "l12 screens[6]: mean 21; Thursday and Friday are above it")
     check("l12_splits", divmod(100, 7) == (14, 2) and divmod(26, 7) == (3, 5) and divmod(120, 7) == (17, 1) and 70 // 7 + 56 // 7 == 18 == 126 // 7
           and divmod(47, 7) == (6, 5) and divmod(27, 7) == (3, 6) and 147 // 7 == 21, "l12 screens[7]; review-3 items[7]: which splits leave remainders")
+    idea = d["summary"]["ideas"][2]
+    check("l12_split_contrast", 70 % 10 == 0 and 70 % 7 == 0 == 56 % 7 and 100 % 7 and 120 % 7
+          and "not at the hundred or the tens" in idea and "not at round numbers" not in idea,
+          "(corrected claim, fix pass) l12 summary.ideas[2]: the good split 70 is round; 100 and 120 fail because 7 does not divide them")
     ok = all(F(m * b + n * b, b) == m + n for m in range(0, 30) for n in range(0, 13) for b in range(1, 13))
     check("l12_split_formula", ok, "l12 screens[8].prose, summary.formula: (mb + nb) / b = m + n")
     check("l12_keys", F(232, 8) == 29 and F(204, 12) == 17 == 10 + 7 and F(196, 7) == 28 and F(117, 9) == 13 and F(22 + 25 + 24 + 27 + 27, 5) == 25,

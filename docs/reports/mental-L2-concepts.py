@@ -7,6 +7,7 @@ Exit 0 means every checked claim holds. A check that fails because the content i
 wrong would be marked EXPECTED_FAIL and kept failing; this level has none.
 Claims that are true only under a hypothesis the text drops are demonstrated and
 printed as "note" lines (findings in docs/reviews/audit-mental-1-3.md), not asserted.
+After the fix pass the corrected claims are asserted, marked "(corrected claim, fix pass)".
 """
 import json
 import math
@@ -52,8 +53,10 @@ def tables():
     pairs = {(min(a, b), max(a, b)) for a in range(1, 13) for b in range(1, 13)}
     check("l5_78_facts", len(pairs) == 78 == 12 + 132 // 2 and d["quiz"][3]["widget"]["answer"] == 78,
           "l5 screens[0].explain, summary.ideas[0], quiz[3]: 144 cells, 78 unordered facts")
-    note("l5_halves", f"symmetry leaves 78 of 144 facts ({78 / 144:.1%}), not half; the lesson keys 72 ('halved') as a slip "
-         "while screens[6].prose and the objective say it halves the table (finding 4, not asserted)")
+    stated = [d["screens"][6]["prose"], d["objectives"][2]]
+    check("l5_halves", len(pairs) == 78 and 144 // 2 == 72 == wrongs(d["quiz"][3]["widget"])["halved"]
+          and all("144 cells" in s and "78 facts" in s and "halve" not in s for s in stated),
+          "(corrected claim, fix pass) l5 screens[6].prose and objectives[2]: symmetry cuts 144 cells to 78 facts, not 72")
     # nines row: digit sums
     row = [9 * n for n in range(1, 13)]
     not9 = [p for p in row if digit_sum(p) != 9]
@@ -101,9 +104,16 @@ def splitting():
     # screens[1]: is "both pieces are table facts" enough to single out the cut at 20? (finding 5)
     table = {a * b for a in range(1, 13) for b in range(1, 13)}
     both = [(a, 23 - a) for a in range(1, 23) if a <= 12 and 23 - a <= 12]
-    note("l6_cut_criterion", f"cuts of 23 with both pieces inside the 12 by 12 table: {both}; 12 x 7 = 84 and 11 x 7 = 77 are "
-         "table facts from l5, so 'both pieces are table facts' also fits the 12 and 11 cut (finding 5, not asserted)")
     assert 84 in table and 77 in table
+    # (corrected claim, fix pass) the key is justified by a carry-free addition, which the 12 and 11 cut lacks
+    def carries(x, y):
+        return any((x // 10 ** i) % 10 + (y // 10 ** i) % 10 > 9 for i in range(4))
+    s1 = d["screens"][1]
+    texts = [s1["widget"]["options"][1]["why"], s1["feedback"]["generic"], s1["explain"]["text"]]
+    check("l6_cut_criterion", both == [(11, 12), (12, 11)] and carries(84, 77) and not carries(140, 21)
+          and 84 + 77 == 140 + 21 == 161 and all("carry" in t for t in texts)
+          and not any("both pieces are table facts" in t for t in texts),
+          "(corrected claim, fix pass) l6 screens[1]: 140 + 21 adds without a carry, 84 + 77 needs one")
 
 
 # ---- l7: compensating, halving and doubling
@@ -144,9 +154,16 @@ def squaring():
                     cancel += 1
     check("l8_equal_gaps_only", cancel == 8 * 9 and total == 8 * 81,
           "strips cancel exactly when the two gaps are equal")
-    note("l8_either_side", f"of {total} pairs (x, y) with x below and y above a multiple of ten, the strips cancel in only {cancel} "
-         "(equal gaps); 18 x 21 = 378, not 400 - 4 or 400 - 1 (finding 6, not asserted)")
-    assert 18 * 21 == 378
+    assert 18 * 21 == 378 != 400 - 4 and 18 * 21 != 400 - 1
+    # (corrected claim, fix pass) every general statement now says "the same distance either side"
+    general = [d["screens"][4]["explain"]["text"], d["screens"][6]["prose"], d["summary"]["ideas"][2], d["objectives"][2]]
+    check("l8_either_side", all("the same distance either side" in s for s in general)
+          and "always cancel" not in d["screens"][6]["explain"]["text"],
+          "(corrected claim, fix pass) l8 screens[4].explain, screens[6].prose, summary.ideas[2], objectives[2]: equal gaps named")
+    gaps = [(load("l8-squaring")["quiz"][1]["prose"], 18, 22, 20), (load("review-2")["items"][9]["prose"], 17, 23, 20),
+            (load("homework-2")["items"][5]["prose"], 37, 43, 40)]
+    check("l8_gap_named", all(f"sit {r - lo} either side of {r}" in p and r - lo == hi - r for p, lo, hi, r in gaps),
+          "(corrected claim, fix pass) l8 quiz[1], review-2 items[9], homework-2 items[5]: the equal gap is stated")
     keys = {0: 169, 2: 289, 4: 399}
     check("l8_keys", all(d["screens"][i]["widget"]["answer"] == v for i, v in keys.items()) and 13 * 13 == 169 and 17 * 17 == 289 and 19 * 21 == 399,
           "l8 screens[0], [2], [4]")
