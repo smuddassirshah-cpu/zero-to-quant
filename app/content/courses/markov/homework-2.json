@@ -380,6 +380,124 @@
       "explain": {
         "text": "From HT, a T leaves no useful tail, so $t_{HT} = 1 + \\tfrac12 t_\\varnothing$; from H, a further H keeps the record at H. Solving, $t_\\varnothing = 2 + t_H$, $t_H = 2 + t_{HT}$, so $t_\\varnothing = 5 + \\tfrac12 t_\\varnothing = 10$. With the engine's mulberry32 generator and seed 7, 200,000 simulated runs average 9.995, close to the exact 10."
       }
+    },
+    {
+      "id": "hw-absorb-code",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "mc-firststep"
+      ],
+      "pace": 1200,
+      "title": "Absorption chances and times in code",
+      "prose": "A chain on states 0 to $n - 1$ has transition matrix `P`, a list of rows. A state is absorbing when `P[i][i]` is 1, and absorbing states may sit anywhere in the order. Assume every other state can reach an absorbing state. Then from any start the chain is absorbed with chance 1.\n\n`TENNIS` is a game at deuce. The server wins each point with chance 0.6, and the states run advantage server, game, deuce, lost, advantage receiver. `WALK` is the fair walk on 0 to 3.",
+      "question": "Write three functions from the stubs. `absorb_chances(P)` returns `H`, where `H[i][j]` is the chance that the chain from `i` is absorbed at `j`. `steps_to_absorb(P)` returns `t`, the expected number of steps to absorption from each state. `simulate_absorb(P, start, runs, seed)` runs the chain `runs` times from `start` with `random.Random(seed)` and returns the share of runs absorbed at each state.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "WALK = [[1, 0, 0, 0], [0.5, 0, 0.5, 0], [0, 0.5, 0, 0.5], [0, 0, 0, 1]]\nTENNIS = [[0, 0.6, 0.4, 0, 0], [0, 1, 0, 0, 0], [0.6, 0, 0, 0, 0.4], [0, 0, 0, 1, 0], [0, 0, 0.6, 0.4, 0]]\nSIX = [[0.5, 0.3, 0.2, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0.1, 0.2, 0.4, 0.1, 0.2, 0], [0, 0, 0, 1, 0, 0], [0, 0, 0.3, 0.3, 0.3, 0.1], [0, 0, 0, 0, 0, 1]]\nCYCLE = [[0, 1, 0], [0.9, 0, 0.1], [0, 0, 1]]\nDIRECT = [[0, 0.7, 0.3], [0, 1, 0], [0, 0, 1]]\nSTUCK = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]\n",
+        "starter": "import random\n\ndef absorb_chances(P):\n    \"\"\"H[i][j]: the chance that the chain from i is absorbed at j.\"\"\"\n    ...\n\ndef steps_to_absorb(P):\n    \"\"\"t[i]: the expected number of steps to absorption from i.\"\"\"\n    ...\n\ndef simulate_absorb(P, start, runs, seed):\n    \"\"\"Share of runs from start that are absorbed at each state.\"\"\"\n    ...\n",
+        "solution": "import random\nimport numpy as np\n\ndef _blocks(P):\n    P = np.array(P, dtype=float)\n    ends = [i for i in range(len(P)) if P[i, i] == 1]      # absorbing, wherever they sit\n    moving = [i for i in range(len(P)) if P[i, i] != 1]\n    N = np.linalg.inv(np.eye(len(moving)) - P[np.ix_(moving, moving)]) if moving else None\n    return P, ends, moving, N\n\ndef absorb_chances(P):\n    \"\"\"H[i][j]: the chance that the chain from i is absorbed at j.\"\"\"\n    P, ends, moving, N = _blocks(P)\n    H = np.zeros(P.shape)\n    for a in ends:\n        H[a, a] = 1.0                                       # already absorbed\n    if moving:\n        B = N @ P[np.ix_(moving, ends)]                     # (I - Q)^-1 R\n        H[np.ix_(moving, ends)] = B\n    return H.tolist()\n\ndef steps_to_absorb(P):\n    \"\"\"t[i]: the expected number of steps to absorption from i.\"\"\"\n    P, ends, moving, N = _blocks(P)\n    t = np.zeros(len(P))\n    if moving:\n        t[moving] = N @ np.ones(len(moving))                # (I - Q)^-1 1\n    return t.tolist()\n\ndef simulate_absorb(P, start, runs, seed):\n    \"\"\"Share of runs from start that are absorbed at each state.\"\"\"\n    rng = random.Random(seed)\n    n = len(P)\n    counts = [0] * n\n    for _ in range(runs):\n        s = start\n        while P[s][s] != 1:\n            u, acc = rng.random(), 0.0\n            for j in range(n):\n                acc += P[s][j]\n                if u < acc:\n                    break\n            s = j\n        counts[s] += 1\n    return [c / runs for c in counts]\n",
+        "examples": [
+          {
+            "call": "absorb_chances(WALK)",
+            "expect": "[[1, 0, 0, 0], [2/3, 0, 0, 1/3], [1/3, 0, 0, 2/3], [0, 0, 0, 1]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "steps_to_absorb(WALK)",
+            "expect": "[0, 2, 2, 0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "absorb_chances(WALK)",
+            "expect": "[[1, 0, 0, 0], [2/3, 0, 0, 1/3], [1/3, 0, 0, 2/3], [0, 0, 0, 1]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "absorb_chances(TENNIS)",
+            "expect": "[[0, 57/65, 0, 8/65, 0], [0, 1, 0, 0, 0], [0, 9/13, 0, 4/13, 0], [0, 0, 0, 1, 0], [0, 27/65, 0, 38/65, 0]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "absorb_chances(SIX)",
+            "expect": "[[0, 68/83, 0, 13/83, 0, 2/83], [0, 1, 0, 0, 0, 0], [0, 91/166, 0, 65/166, 0, 5/83], [0, 0, 0, 1, 0, 0], [0, 39/166, 0, 99/166, 0, 14/83], [0, 0, 0, 0, 0, 1]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "absorb_chances(STUCK)",
+            "expect": "[[1, 0, 0], [0, 1, 0], [0, 0, 1]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "steps_to_absorb(WALK)",
+            "expect": "[0, 2, 2, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "steps_to_absorb(TENNIS)",
+            "expect": "[33/13, 0, 50/13, 0, 43/13]",
+            "compare": "isclose"
+          },
+          {
+            "call": "steps_to_absorb(CYCLE)",
+            "expect": "[20, 19, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "steps_to_absorb(SIX)",
+            "expect": "[270/83, 0, 260/83, 0, 230/83, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "simulate_absorb(TENNIS, 2, 30000, 1)",
+            "expect": "[0, 9/13, 0, 4/13, 0]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "call": "simulate_absorb(SIX, 4, 30000, 5)",
+            "expect": "[0, 39/166, 0, 99/166, 0, 14/83]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "call": "simulate_absorb(TENNIS, 1, 10, 3)",
+            "expect": "[0, 1, 0, 0, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "simulate_absorb(DIRECT, 0, 30000, 2)",
+            "expect": "[0, 7/10, 3/10]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ],
+        "how": "Check runs 12 hidden tests on six chains. Exact answers must match within a relative error of 1e-9. A simulation must land within 0.02 of the exact chances. You may use NumPy."
+      },
+      "feedback": {
+        "correct": "From deuce the server wins with chance 9/13, after 50/13 points on average.",
+        "generic": "Some tests failed. Read the first failing test against the rules above.",
+        "byKey": {
+          "test-2": "Test 2 puts the absorbing states game and lost in the middle. Find them from the diagonal, not from their place in the list.",
+          "test-3": "Test 3 has states that stay put with some chance. Only a diagonal entry of exactly 1 makes a state absorbing.",
+          "test-4": "Test 4 has no moving states at all. Every state is already absorbed, so H is the identity and every time is 0.",
+          "test-7": "Test 7 expects 20 and 19 steps. Each step taken counts once: t = 1 + Qt, so t is (I - Q) inverse times a column of ones.",
+          "test-9": "Test 9 runs 30,000 games from deuce. Draw each next state from its whole row, and stop only at an absorbing state.",
+          "test-11": "Test 11 starts at game, which is absorbing. The chain takes no step, so every run ends there."
+        }
+      },
+      "explain": {
+        "text": "Sort the states by the diagonal, then take $Q$ (moving to moving) and $R$ (moving to absorbing): $H = (I - Q)^{-1}R$ and $t = (I - Q)^{-1}\\mathbf{1}$. From deuce the server wins with chance $\\tfrac{9}{13} \\approx 0.692$, after $\\tfrac{50}{13} \\approx 3.85$ points on average. The simulation checks $H$ by a route that never inverts a matrix.\n\n```python\nB = N @ P[np.ix_(moving, ends)]   # (I - Q)^-1 R\n```"
+      }
     }
   ]
 }
