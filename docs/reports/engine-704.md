@@ -1,0 +1,3 @@
+# Engine 704: route test-out probe
+
+The gating routes check chose taylor/L2, which now has a gating performance task, so a passed test-out is a badge only under the met rule (AUTHORING 11, ENGINE-BACKLOG 529). The probe now takes the first direct prerequisite with a written review and no `perf` (gating) row. A new check 5b finds a direct prerequisite that does carry a gating task: a passed test-out is recorded as passed, the level stays unmet, and the lock card row says "performance task not passed". Routes-only green at desktop and mobile; check-first and today-tested-out tests pass; validator 0 errors.
