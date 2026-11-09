@@ -52,6 +52,7 @@ def same(x, y):
 
 def namespace(code):
     ns = {'__name__': '__main__', '__learner_source__': code}
+    exec(w['prelude'], ns)
     exec(code, ns)
     exec(w['postlude'], ns)
     return ns
@@ -110,11 +111,11 @@ ns1, ns2, ns3 = namespace(SOL), namespace(LINEAR), namespace(TWO_STEP)
 for k, t in enumerate(T, 1):
     want = eval(t['expect'])
     got = []
-    for ns in (ns1, ns2, ns3):
+    for ns in ((ns1, ns3) if 'Looks' in t.get('setup', '') else (ns1, ns2, ns3)):  # the linear route reads with ring.index, which Looks does not offer
         if 'setup' in t:
             exec(t['setup'], ns)
         got.append(eval(t['call'], ns))
-    check(all(same(g, want) for g in got), f'test {k}: {t["expect"]}: solution, linear scan and two-step agree')
+    check(all(same(g, want) for g in got), f'test {k}: {t["expect"]}: solution, linear scan (not on the Looks ring) and two-step agree')
 
 # 2. The big ring by the closed form, and its shape.
 n, k = 200000, 137017
@@ -143,11 +144,12 @@ for name, ns in (('solution', ns1), ('linear', ns2), ('two-step', ns3)):
 # 4. Prose, how, byKey and file counts.
 ex = [812, 815, 820, 803, 806, 809]
 check(ex.index(803) == 3 and min(ex) == 803 and sum(1 for j in range(5) if ex[j] > ex[j + 1]) == 1, 'prose: 803 is the oldest, in slot 3, one turn')
-check(len(T) == 13 and len(w['examples']) == 1 and w['examples'][0] == T[0], '13 tests, 1 example (test 1)')
-check('Check runs 13 hidden tests' in w['how'] and 'Test 12 searches a ring of 200,000 slots' in w['how'] and 'Test 13' in w['how'] and 'up to 12 numbers' in w['how'], 'how: 13 tests, test 12 of 200,000, test 13 the sweep to 12')
-check(T[12]['call'] == 'ring_sweep()' and 'top=12' in w['postlude'], 'sweep is test 13, sizes 0 to 12')
+check(len(T) == 14 and len(w['examples']) == 1 and w['examples'][0] == T[0], '14 tests, 1 example (test 1)')
+check('Check runs 14 hidden tests' in w['how'] and 'Test 12 searches a ring of 200,000 slots' in w['how'] and 'Test 13 searches such a ring twice' in w['how'] and 'at most 400' in w['how'] and 'Test 14 calls' in w['how'] and 'up to 12 numbers' in w['how'], 'how: 14 tests, test 12 of 200,000, test 13 counts reads, test 14 the sweep to 12')
+check(T[13]['call'] == 'ring_sweep()' and 'top=12' in w['postlude'], 'sweep is test 14, sizes 0 to 12')
+check('W.looks <= 400' in T[12]['call'] and T[12]['expect'] == '[162983, -1, True]' and 'class Looks' in w['prelude'], 'test 13 counts reads (at most 400) on its own 200,000-slot ring; 162983 is the closed-form slot of 1,300,000')
 bk = item['feedback']['byKey']
-check(set(bk) == {f'test-{j}' for j in range(1, 14)}, 'byKey has test-1 to test-13')
+check(set(bk) == {f'test-{j}' for j in range(1, 15)}, 'byKey has test-1 to test-14')
 check('62,983' in bk['test-12'] and '200,000' in bk['test-12'], 'byKey 12: 200,000 slots, oldest in 62,983')
 check(len(items) <= 12 and sum(1 for it in items if it.get('performance')) == 1, f'homework-3 holds {len(items)} items (cap 12), one performance item')
 check(not any(it.get('performance') for it in json.load(open(REV))['items']), 'review-3 has no performance item')
@@ -193,7 +195,7 @@ for name, (code, must) in plants.items():
     check(bad and all(m in bad for m in must), f'plant "{name}": fails {bad} (must include {must})')
 
 # 7. Slow but correct solutions pass; timing in CPython.
-slow = {
+O_N = {
     'linear scan': LINEAR,
     'oldest slot by a scan, then bisect': '''from bisect import bisect_left
 
@@ -208,6 +210,11 @@ def find_trade(ring, seq):
             return i
     return -1
 ''',
+}
+for name, code in O_N.items():
+    bad, secs = run_tests(code)
+    check(bad == [13], f'O(n) answer "{name}" fails test 13 only (reads every slot)')
+slow = {
     'recursion on slices': '''def find_trade(ring, seq):
     if not ring:
         return -1
@@ -230,10 +237,10 @@ def find_trade(ring, seq):
     'route 3 (two-step)': TWO_STEP,
 }
 bad, secs = run_tests(SOL)
-check(bad == [], f'solution passes all 13; slowest case {max(secs):.3f} s')
+check(bad == [], f'solution passes all 14; slowest case {max(secs):.3f} s')
 for name, code in slow.items():
     bad, secs = run_tests(code)
-    check(bad == [], f'slow but correct "{name}" passes all 13; slowest case {max(secs):.3f} s')
+    check(bad == [], f'slow but correct "{name}" passes all 14; slowest case {max(secs):.3f} s')
 
 print('failures:', fails)
 sys.exit(1 if fails else 0)
