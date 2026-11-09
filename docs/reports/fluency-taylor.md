@@ -18,7 +18,7 @@ Design notes. The sine and cosine family ties the text pick `fn` to the parity o
 
 ## Skipped
 
-None of the brief's families for taylor was skipped. Nothing raised in `docs/BACKLOG-INBOX.md` for taylor beyond the known limits.
+None of the brief's families for taylor was skipped. One limit raised in `docs/BACKLOG-INBOX.md` under `Raised later (fluency taylor multivar):`: `let` has no `exp` or `ln`, so the lesson's "coefficient of $(x - 2)^2$ for $e^x$, to 4 decimal places" is drilled with an exact key in terms of $e$, and no tangent-line family on $e^x$ or $\ln x$ away from 0 and 1 was attempted.
 
 ## Checks
 
