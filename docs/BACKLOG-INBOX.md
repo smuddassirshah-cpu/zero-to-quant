@@ -1688,3 +1688,6 @@ Raised later (coint level 1 perf):
 Raised later (mm-games level 3 perf):
 - [Should] An `aloud` prompt shows the whole script at once, so a market-making round that reveals trades and cards one at a time (`h-coin-dice-aloud`, six steps) can only ask the learner not to read ahead. Wanted: an optional `reveal` list on an aloud widget, each step shown on a tap once the answer clock runs.
 - [Could] Third sighting (stat-learning L2, garch L2, now mm-games L3): `playthrough.mjs --set` run after the brief's manifest restore shows a new task as "practice only". Worked round it by running the validator, then the playthrough, then restoring the manifest. Protocol 6: raise as an engine item.
+
+Raised later (contests level 3 perf):
+- [Could] `playthrough.mjs --shots` takes the `-marked` shot at the viewport only, so a display equation lower in a long model (contests `hw3-due-order`, the aligned block in "No worse") is never seen at 440 px. A retrofit has to measure it with a scratch KaTeX page. Wanted: a full-height `-marked` shot, or a check that no `.katex-display` in the model is wider than its card.
