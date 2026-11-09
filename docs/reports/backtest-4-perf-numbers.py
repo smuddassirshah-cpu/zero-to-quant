@@ -39,7 +39,8 @@ sigma_d, V, book = 0.015, 90.0, 1.0   # daily vol, £m a day, £m book
 
 # ---- shape ----
 check("rubric sums to 10 with 3 to 5 rows", sum(r["points"] for r in rubric) == 10 and 3 <= len(rubric) <= 5)
-check("required rows: Results and What failed, not every row", [r["text"][:7] for r in rubric if r.get("required")] == ["Results", "What fa"])
+# 702 sweep: rows 1 and 3 are now required; row 5 (next steps) is optional in the prompt
+check("required rows: Question, Results, Trials and What failed, not every row", [r["text"][:7] for r in rubric if r.get("required")] == ["Questio", "Results", "Trials:", "What fa"])
 check("homework has 6 to 12 items, one performance item",
       6 <= len(doc["items"]) <= 12 and sum(1 for i in doc["items"] if i.get("performance")) == 1)
 w = item["widget"]
@@ -154,7 +155,8 @@ req_rows = [i for i, r in enumerate(rubric) if r.get("required")]
 passes = [c for k in range(1, 6) for c in itertools.combinations(range(5), k)
           if sum(pts[i] for i in c) >= 7 and all(i in c for i in req_rows)]
 print("     passing tick sets:", [[i + 1 for i in c] for c in passes])
-check("required rows are 2 (results) and 4 (what failed), not every row", req_rows == [1, 3])
+# 702 sweep: rows 1 to 4 required, row 5 optional
+check("required rows are 1 to 4, not every row", req_rows == [0, 1, 2, 3])
 check("every passing set holds the results row and the what-failed row", all({1, 3} <= set(c) for c in passes) and passes)
 
 # ---- table figures quoted in the model ----

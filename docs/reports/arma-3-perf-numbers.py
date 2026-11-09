@@ -33,7 +33,8 @@ import itertools
 _passes = [s for k in range(1, 5) for s in itertools.combinations(range(4), k)
            if sum(pts[i] for i in s) >= 7 and all(r in s for r in req)]
 print('     passing tick sets (row numbers):', [[i + 1 for i in s] for s in _passes])
-check('required rows are 2 and 4, not every row', req == [1, 3])
+# 702 sweep: row 3 (the variance and its limit) is now required; row 1 is optional in the prompt
+check('required rows are 2, 3 and 4, not every row', req == [1, 2, 3])
 check('every passing set has the weights, the variance and the series check', all({1, 2, 3} <= set(s) for s in _passes) and _passes)
 check('no pass without the variance-and-limit row', sum(pts) - pts[2] < 7)
 check('no derivation item fields that the validator refuses', not any(k in item for k in ('starter', 'steps', 'order', 'derive', 'hints', 'parts')))

@@ -428,20 +428,23 @@
    "tags": [
     "recognise-convex"
    ],
-   "prompt": "A colleague sets up a long-only portfolio of the running assets ($\\mathbf{m} = (0.05, 0.08, 0.11)$, $\\boldsymbol{\\Sigma} = \\operatorname{diag}(0.04, 0.09, 0.16)$). It minimises variance with a 50% cap on every weight and a 10% return floor. Volatility must be exactly 25%, and every holding 0 or at least 5%. They call it \"a convex QP\". Prove which constraints are convex, show the problem as set is infeasible, and say what to change.",
+   "prompt": "A colleague sets up a long-only portfolio of the running assets ($\\mathbf{m} = (0.05, 0.08, 0.11)$, $\\boldsymbol{\\Sigma} = \\operatorname{diag}(0.04, 0.09, 0.16)$). It minimises variance with a 50% cap on every weight and a 10% return floor. Volatility must be exactly 25%, and every holding 0 or at least 5%. They call it \"a convex QP\". Prove which constraints are convex, show the problem as set is infeasible, and say what to change.\n\nOptional, one more point: replace exactly 25% by at most 25%, the convex sublevel set.",
    "model": "**The convex parts.** Long-only $w_i \\ge 0$ and the caps $w_i \\le 0.5$ are half-spaces. The budget $\\mathbf{1}^T\\mathbf{w} = 1$ is affine. The floor $\\mathbf{m}^T\\mathbf{w} \\ge 0.10$ is the half-space $-\\mathbf{m}^T\\mathbf{w} \\le -0.10$. The objective $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ has Hessian $2\\boldsymbol{\\Sigma} \\succeq 0$, so it is convex.\n\n**The convex core is already infeasible.** Under a 50% cap the best return puts half in asset 3 and half in asset 2: $0.5(0.11) + 0.5(0.08) = 0.095$. So 9.5% is the most any capped portfolio earns, and the 10% floor cannot be met. Convexity promises an easy problem, not a solution; a solver returns status infeasible.\n\n**Volatility exactly 25% is not convex.** $(0, 0.5, 0.5)$ and $(0, 0.78, 0.22)$ both have volatility 25%. Their midpoint $(0, 0.64, 0.36)$ has variance $0.09(0.64)^2 + 0.16(0.36)^2 = 0.0576$, volatility 24%, so it leaves the set. The level set $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = 0.0625$ is a curve, not a filled region. Replace it by **at most 25%**, the sublevel set $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} \\le 0.0625$, which is convex. Strictly that makes a convex quadratically constrained problem, not a QP. With variance as the objective the limit is often slack anyway.\n\n**The minimum holding is a union of pieces.** \"Each $w_i = 0$ or $w_i \\ge 0.05$\" allows $(0.05, 0.5, 0.45)$ and $(0, 0.5, 0.5)$, but their midpoint $(0.025, 0.5, 0.475)$ holds 2.5% of asset 1. For each asset the allowed values are $\\{0\\} \\cup [0.05, 0.5]$, two separate intervals. The feasible set is the union of $2^3 = 8$ convex pieces, one per choice of which names are held. A union of convex sets is not convex in general.\n\n**What to tell the colleague.** It is not a convex QP. Fix the target first. 10% is out of reach under a 50% cap, so lower it to 9% or loosen the cap. At 9% the free minimum-variance portfolio $(\\tfrac{5}{42}, \\tfrac37, \\tfrac{19}{42})$ has every weight below 0.4524 and volatility 22.33%. So the cap and a 25% limit are both slack. Then drop the minimum holding, or solve one convex QP per pattern of held names and take the best. That is a small mixed-integer problem.",
    "rubric": [
     {
      "points": 2,
-     "text": "Names the caps, long-only, budget and floor as affine or half-spaces, and the objective as convex (Hessian $2\\boldsymbol{\\Sigma}$)"
+     "text": "Names the caps, long-only, budget and floor as affine or half-spaces, and the objective as convex (Hessian $2\\boldsymbol{\\Sigma}$)",
+     "required": true
     },
     {
      "points": 2,
-     "text": "Shows the 10% floor is infeasible under the cap: the best capped return is 9.5%, at $(0, \\tfrac12, \\tfrac12)$"
+     "text": "Shows the 10% floor is infeasible under the cap: the best capped return is 9.5%, at $(0, \\tfrac12, \\tfrac12)$",
+     "required": true
     },
     {
      "points": 2,
-     "text": "Proves volatility exactly 25% is not convex with a counterexample, such as the 24% midpoint of $(0, 0.5, 0.5)$ and $(0, 0.78, 0.22)$"
+     "text": "Proves volatility exactly 25% is not convex with a counterexample, such as the 24% midpoint of $(0, 0.5, 0.5)$ and $(0, 0.78, 0.22)$",
+     "required": true
     },
     {
      "points": 1,
@@ -449,11 +452,13 @@
     },
     {
      "points": 2,
-     "text": "Shows the minimum holding makes a union of convex pieces, one per pattern of names, with a midpoint counterexample"
+     "text": "Shows the minimum holding makes a union of convex pieces, one per pattern of names, with a midpoint counterexample",
+     "required": true
     },
     {
      "points": 1,
-     "text": "Gives a fix: a reachable target or looser cap, and no minimum holding or one QP per pattern"
+     "text": "Gives a fix: a reachable target or looser cap, and no minimum holding or one QP per pattern",
+     "required": true
     }
    ]
   }

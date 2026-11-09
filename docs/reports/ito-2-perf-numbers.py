@@ -224,7 +224,8 @@ check('|sum dt dW| <= t max|dW| on every path', bool(np.all(cross6 <= bound6 + 1
 check('sum (dt)^2 = t h exactly', abs(n6 * h6**2 - 1.0 * h6) < 1e-15)
 # 6d. the rubric flags: rows 3 and 4 required, others not, and a row 3 that names the reason
 req = [bool(r.get('required')) for r in it['rubric']]
-check('rubric rows 3 and 4 are required, rows 1, 2 and 5 are not', req == [False, False, True, True, False], str(req))
+# 702 sweep: rows 1 and 2 are now required; row 5 (the check) is optional in the prompt
+check('rubric rows 1 to 4 are required, row 5 is not', req == [True, True, True, True, False], str(req))
 check('row 3 names mean t and variance 2t dt', 'mean $t$' in it['rubric'][2]['text'] and 'variance $2t\\Delta t' in it['rubric'][2]['text'])
 check('model step 3 states the weighted sum and the variance bound', 'variance at most $2\\sup g^2' in it['model'] and 'f_{xx}b^2' in it['model'])
 

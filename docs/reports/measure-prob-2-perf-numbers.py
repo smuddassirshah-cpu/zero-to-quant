@@ -103,7 +103,8 @@ ok(len(it) == 1, 'one h-build-integral'); it = it[0]
 ok(items.index(it) == 9, 'index 9')
 ok(it['performance'] == 'derivation' and it['kind'] == 'longform', 'kind')
 ok(sum(r['points'] for r in it['rubric']) == 10 and 3 <= len(it['rubric']) <= 5, 'rubric 10 points in 3 to 5 rows')
-ok([bool(r.get('required')) for r in it['rubric']].count(True) == 1 and it['rubric'][3].get('required') is True, 'one required row: the limit')
+# 702 sweep: rows 1 to 3 are now required; row 5 (E[Y]) is optional in the prompt
+ok([bool(r.get('required')) for r in it['rubric']].count(True) == 4 and it['rubric'][3].get('required') is True, 'four required rows, the limit among them')
 ok(not any(x in it for x in ('starter', 'steps', 'order', 'derive', 'hints', 'parts')), 'no scaffold')
 ok(sum(1 for i in items if i.get('performance')) == 1 and 6 <= len(items) <= 12 and any(i['difficulty'] == 5 for i in items), 'homework limits')
 txt = json.dumps(it, ensure_ascii=False)
