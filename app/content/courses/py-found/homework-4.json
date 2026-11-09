@@ -462,6 +462,153 @@
       "explain": {
         "text": "Importing runs every top-level line, so `main(sys.argv)` ran inside pytest with pytest's arguments. Under the guard it runs only when you start the file yourself."
       }
+    },
+    {
+      "id": "h4-sweep-offers",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "pf-idioms",
+        "pf-functions"
+      ],
+      "pace": 1200,
+      "title": "A buy order against the offers",
+      "prose": "Sellers post offers on a share's order book, each a pair `(price, size)`: a price in £ and a whole number of shares above zero. A buy order for `qty` shares takes the cheapest offer first. At the same price, the offer listed first in the book goes first. The last offer it takes from may be used only in part.",
+      "question": "Write a generator `sweep_offers(qty, offers)` that yields `(price, shares)` for each offer the order takes from. It stops when `qty` shares are bought or the offers run out. `offers` may be any iterable, a generator included, and must be left unchanged. A `qty` that is not above zero raises `ValueError`. Then write `average_price(qty, offers)`, which loops over `sweep_offers` and returns the average £ price per share bought, or `None` when nothing is bought.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def sweep_offers(qty, offers):\n    pass  # replace this line\n\n\ndef average_price(qty, offers):\n    pass  # replace this line\n",
+        "solution": "def sweep_offers(qty, offers):\n    if qty <= 0:\n        raise ValueError(f\"qty must be above zero: {qty}\")\n    left = qty\n    for price, size in sorted(offers, key=lambda offer: offer[0]):\n        take = min(size, left)\n        yield price, take\n        left = left - take\n        if left == 0:\n            break\n\n\ndef average_price(qty, offers):\n    shares = 0\n    cost = 0.0\n    for price, take in sweep_offers(qty, offers):\n        shares = shares + take\n        cost = cost + price * take\n    if shares == 0:\n        return None\n    return cost / shares\n",
+        "prelude": "def spied(qty, offers):\n    g = globals()\n    real = g['sweep_offers']\n    calls = []\n\n    def spy(q, o):\n        calls.append(q)\n        return real(q, o)\n\n    g['sweep_offers'] = spy\n    try:\n        value = average_price(qty, offers)\n    finally:\n        g['sweep_offers'] = real\n    return value, calls\n",
+        "examples": [
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "list(sweep_offers(450, book))",
+            "expect": "[(4.50, 200), (4.50, 100), (4.52, 150)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "average_price(450, book)",
+            "expect": "4.506666666666667",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "list(sweep_offers(450, book))",
+            "expect": "[(4.50, 200), (4.50, 100), (4.52, 150)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "list(sweep_offers(300, book))",
+            "expect": "[(4.50, 200), (4.50, 100)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "list(sweep_offers(2000, book))",
+            "expect": "[(4.50, 200), (4.50, 100), (4.52, 300), (4.55, 500)]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(sweep_offers(100, []))",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "list(sweep_offers(250, (offer for offer in book)))",
+            "expect": "[(4.50, 200), (4.50, 50)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]; fills = list(sweep_offers(450, book))",
+            "call": "book",
+            "expect": "[(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "next(sweep_offers(100, book))",
+            "expect": "(4.50, 100)",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "list(sweep_offers(0, book))",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "list(sweep_offers(0, []))",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "average_price(450, book)",
+            "expect": "4.506666666666667",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "(average_price(100, []), average_price(50, book))",
+            "expect": "(None, 4.5)",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "average_price(250, (offer for offer in book))",
+            "expect": "4.5",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "average_price(2000, book)",
+            "expect": "4.528181818181818",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "average_price(-50, book)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "book = [(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]",
+            "call": "spied(300, book)",
+            "expect": "(4.5, [300])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 15 hidden tests on the book `[(4.52, 300), (4.50, 200), (4.55, 500), (4.50, 100)]` and on empty ones. Fills must be exactly equal (`==`); average prices are accepted within relative 1e-9 (`math.isclose`). Tests 8, 9 and 14 pass when the call raises `ValueError`, and test 15's `spied` records each call `average_price` makes to `sweep_offers`."
+      },
+      "feedback": {
+        "correct": "Your sweep takes the cheapest offers first, keeps ties in book order and leaves the book alone. The average loops over it once.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 needs 450 shares. Both £4.50 offers go first, 200 then 100, as listed; then 150 of the 300 at £4.52. Sort by price alone with a `key`.",
+          "test-2": "Test 2 fills exactly at the end of the £4.50 offers. Stop there: yield no fill of 0 shares.",
+          "test-3": "Test 3 asks for more than the book holds. Take every offer whole, and stop when the offers run out.",
+          "test-4": "Test 4 has an empty book. Yield nothing and raise nothing.",
+          "test-5": "Test 5 passes the offers as a generator. It has no `len` or `.sort()`, and it can be read only once. Pass it to `sorted` and loop over the new list.",
+          "test-6": "Test 6 checks the caller's book after a sweep. `.sort()` or `.remove()` change it; `sorted` works on a new list.",
+          "test-7": "Test 7 asks for the first fill with `next`. A function that builds and returns a list is not a generator: yield each fill.",
+          "test-8": "Test 8 orders 0 shares. Raise `ValueError` with `raise`; an `assert` raises `AssertionError` instead.",
+          "test-9": "Test 9 orders 0 shares from an empty book. Check `qty` before anything else.",
+          "test-10": "Test 10 buys 300 at £4.50 and 150 at £4.52, so the average is £2,028 over 450 shares. Read the fills once: a spent generator gives nothing the second time.",
+          "test-11": "Test 11 buys nothing from an empty book, so return `None` before dividing by zero shares.",
+          "test-13": "Test 13 buys only the 1,100 shares the book holds. Divide by the shares bought, not by `qty`.",
+          "test-15": "Test 15 checks that `average_price` gets its fills from one call to `sweep_offers`."
+        }
+      },
+      "explain": {
+        "text": "`sorted` with a price `key` builds a new list and keeps equal prices in book order. The generator yields one fill per offer, stops once the order is full and never touches the caller's book. `average_price` adds shares and cost in one pass, because the fills can be read only once."
+      }
     }
   ]
 }
