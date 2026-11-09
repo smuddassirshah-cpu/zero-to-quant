@@ -1704,3 +1704,6 @@ Raised later (py-found level 2 perf):
 
 Raised later (pytest level 1 perf):
 - [Could] `code` widget: a task that grades a learner's pytest file against hidden versions of the function carries its whole grader in the item (`h-average-cost-tests`: about 130 lines of prelude and postlude that write each version into a hidden `costs.py`, run real pytest with a plugin that records each test's outcome, and reverse the order). Wanted: a widget option such as `"pytestGrade": { "module": "costs", "versions": { ... } }` that provides `trial`, `names` and `weak` (tests that never fail on a broken version), so items stop copying it.
+
+Raised later (pytest level 2 perf):
+- [Could] `playthrough.mjs --set` plays only the solution and the starter of a `performance: "code"` item, so the planted wrong solutions (eleven wrong test files for `h2-curve-properties`) run only in the author's CPython script, never in Pyodide's pytest. Wanted: an optional `wrongs` list on a code widget (source and the test numbers it must fail) that the playthrough pastes and checks like the starter.

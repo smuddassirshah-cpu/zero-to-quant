@@ -592,6 +592,130 @@
       "explain": {
         "text": "Run only after the fix, a pass could mean the fix worked, or that the test misses the bug. Seeing it fail on the old code rules out the second. Then green means the fix did the job."
       }
+    },
+    {
+      "id": "h2-curve-properties",
+      "difficulty": 5,
+      "skills": [
+        "pt-cases",
+        "pt-tools"
+      ],
+      "title": "Properties of an equity curve",
+      "performance": "code",
+      "prose": "`equity_curve(start, returns)`, in `curve.py`, gives an account's value after each day. It begins at `start` pounds, and each day's return `r` multiplies the value by `1 + r`. So the list is one longer than `returns`. It must leave `returns` unchanged. You cannot see the code: test it by rules that hold for every input, not by hand answers alone.",
+      "question": "Write property tests for `equity_curve`: at least three tests, each checking one rule on at least five inputs.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from curve import equity_curve\n\n\n",
+        "solution": "import pytest\n\nfrom curve import equity_curve\n\nSTART = 250.00\nPATHS = [\n    [],                                   # no days yet\n    [0.0],                                # one flat day\n    [0.012, -0.034, 0.0, 0.021],\n    [-0.5, 0.25, 0.1],                    # a big loss\n    [0.01 * ((7 * k) % 11 - 5) for k in range(40)],\n]\n\n\n@pytest.mark.parametrize(\"returns\", PATHS)\ndef test_one_value_per_day_after_the_start(returns):\n    curve = equity_curve(START, returns)\n    assert len(curve) == len(returns) + 1\n    assert curve[0] == START\n\n\n@pytest.mark.parametrize(\"returns\", PATHS)\ndef test_each_day_grows_by_one_plus_its_return(returns):\n    curve = equity_curve(START, list(returns))\n    for t, r in enumerate(returns):\n        assert curve[t + 1] == pytest.approx(curve[t] * (1 + r))\n\n\n@pytest.mark.parametrize(\"returns\", PATHS)\ndef test_returns_are_left_unchanged(returns):\n    before = list(returns)\n    equity_curve(START, returns)\n    assert returns == before\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "len(names()) >= 3",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right_accumulate')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right_product')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right', order='reverse')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('adds')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('no_start')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('mutates')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('pennies')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('skips_zero')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('percent')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('reversed')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "weak()",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "few()",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 14 hidden tests with real pytest. Your tests must pass on three correct versions of `equity_curve`, in file order and in reverse, and catch seven broken versions. Every test must fail on at least one broken version and call `equity_curve` at least five times. Run examples runs your tests on a correct version and prints the report.",
+        "prelude": "import importlib as _zil, os as _zos, sys as _zs\nimport pytest as _zpt\n\n_zs.dont_write_bytecode = True\nif _zos.getcwd() not in _zs.path:\n    _zs.path.insert(0, _zos.getcwd())\n_ZQ_MAIN = _zpt.main\n_ZQ_MODULE = 'curve'\n_ZQ_RIGHT = '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    curve = [start]\\n    for r in returns:\\n        curve.append(curve[-1] * (1 + r))\\n    return curve\\n'\nwith open(_ZQ_MODULE + '.py', 'w') as _zf:\n    _zf.write(_ZQ_RIGHT)\n_zs.modules.pop(_ZQ_MODULE, None)\n_zil.invalidate_caches()\n",
+        "postlude": "_ZQ_MODE = 'module'\n_ZQ_FUNCTION = 'equity_curve'\n_ZQ_MODULE = 'curve'\n_ZQ_SHOWN = 'right'\n_ZQ_WEAK_AGAINST = ('adds', 'no_start', 'mutates', 'pennies', 'skips_zero', 'percent', 'reversed')\n_ZQ_VERSIONS = {\n    'right': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    curve = [start]\\n    for r in returns:\\n        curve.append(curve[-1] * (1 + r))\\n    return curve\\n',\n    'right_accumulate': 'from itertools import accumulate\\n\\n_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    return list(accumulate(returns, lambda v, r: v * (1 + r), initial=start))\\n',\n    'right_product': 'import math\\n\\n_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    return [start * math.prod(1 + r for r in returns[:t]) for t in range(len(returns) + 1)]\\n',\n    'adds': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    return [start * (1 + sum(returns[:t])) for t in range(len(returns) + 1)]\\n',\n    'no_start': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    curve, value = [], start\\n    for r in returns:\\n        value = value * (1 + r)\\n        curve.append(value)\\n    return curve\\n',\n    'mutates': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    for i in range(len(returns)):\\n        returns[i] = 1 + returns[i]\\n    curve = [start]\\n    for g in returns:\\n        curve.append(curve[-1] * g)\\n    return curve\\n',\n    'pennies': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    curve = [start]\\n    for r in returns:\\n        curve.append(round(curve[-1] * (1 + r), 2))\\n    return curve\\n',\n    'skips_zero': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    curve = [start]\\n    for r in returns:\\n        if not r:\\n            continue  # nothing happened that day\\n        curve.append(curve[-1] * (1 + r))\\n    return curve\\n',\n    'percent': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    curve = [start]\\n    for r in returns:\\n        curve.append(curve[-1] * (1 + r / 100))\\n    return curve\\n',\n    'reversed': '_zq_calls = 0\\n\\n\\ndef equity_curve(start, returns):\\n    global _zq_calls\\n    _zq_calls += 1\\n    curve = [start]\\n    for r in reversed(returns):\\n        curve.append(curve[-1] * (1 + r))\\n    return curve\\n',\n}\n\nimport ast as _za, contextlib as _zc, io as _zio\n\n_ZQ_SEEN = {}\n\n\ndef _zq_fn(nodeid):\n    # test_mine.py::test_x[row] -> test_x\n    return nodeid.split(\"::\")[-1].split(\"[\")[0]\n\n\ndef _zq_binds(node, name):\n    if isinstance(node, (_za.FunctionDef, _za.AsyncFunctionDef, _za.ClassDef)):\n        return node.name == name\n    if isinstance(node, (_za.Assign, _za.AnnAssign)):\n        targets = node.targets if isinstance(node, _za.Assign) else [node.target]\n        return any(isinstance(t, _za.Name) and t.id == name for t in targets)\n    return False\n\n\ndef _zq_source(name):\n    # the learner's file, with the version under test in place of their own function\n    if _ZQ_MODE == \"module\" or name == \"own\":\n        return __learner_source__\n    tree = _za.parse(__learner_source__)\n    tree.body = _za.parse(_ZQ_VERSIONS[name]).body + [n for n in tree.body if not _zq_binds(n, _ZQ_FUNCTION)]\n    return _za.unparse(tree)\n\n\ndef _zq_pytest(name, order=\"file\", show=False):\n    # run real pytest on the learner's file with one version of the function under test\n    if _ZQ_MODE == \"module\":\n        with open(_ZQ_MODULE + \".py\", \"w\") as f:\n            f.write(_ZQ_VERSIONS[name])\n        _zs.modules.pop(_ZQ_MODULE, None)\n    with open(\"test_mine.py\", \"w\") as f:\n        f.write(_zq_source(name))\n    _zs.modules.pop(\"test_mine\", None)\n    _zil.invalidate_caches()\n    seen, calls = {}, {}\n\n    class _Watch:\n        def pytest_collection_modifyitems(self, items):\n            if order == \"reverse\":\n                items.reverse()\n\n        @_zpt.hookimpl(tryfirst=True)\n        def pytest_runtest_setup(self, item):\n            m = _zs.modules.get(_ZQ_MODULE)\n            if m is not None:\n                m._zq_calls = 0\n\n        def pytest_runtest_logreport(self, report):\n            was = seen.get(report.nodeid, \"passed\")\n            if report.failed:\n                was = \"failed\"\n            elif report.skipped and was == \"passed\":\n                was = \"skipped\"\n            seen[report.nodeid] = was\n            if report.when == \"teardown\":\n                calls[report.nodeid] = getattr(_zs.modules.get(_ZQ_MODULE), \"_zq_calls\", 0)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\", \"test_mine.py\"]\n    if show:\n        code = _ZQ_MAIN(args, plugins=[_Watch()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _ZQ_MAIN(args, plugins=[_Watch()])\n    return int(code), seen, calls\n\n\ndef _zq_result(name, order=\"file\"):\n    key = (__learner_source__, name, order)\n    if key not in _ZQ_SEEN:\n        _ZQ_SEEN[key] = _zq_pytest(name, order)\n    return _ZQ_SEEN[key]\n\n\ndef run_tests():\n    \"\"\"Run your tests on a correct version and print pytest's report.\"\"\"\n    return _zq_pytest(_ZQ_SHOWN, show=True)[0]\n\n\ndef trial(name, order=\"file\"):\n    \"\"\"'passed', 'failed', 'no tests' or 'error' for your tests on one version.\"\"\"\n    code = _zq_result(name, order)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef names():\n    \"\"\"The test functions pytest collects from your file.\"\"\"\n    return sorted({_zq_fn(n) for n in _zq_result(_ZQ_SHOWN)[1]})\n\n\ndef weak():\n    \"\"\"Your tests that never fail on the versions in _ZQ_WEAK_AGAINST.\"\"\"\n    failed = {_zq_fn(n) for v in _ZQ_WEAK_AGAINST for n, o in _zq_result(v)[1].items() if o == \"failed\"}\n    return [t for t in names() if t not in failed]\n\n\ndef few(least=5):\n    \"\"\"Your tests that call the function under test fewer than `least` times.\"\"\"\n    calls = {}\n    for n, k in _zq_result(_ZQ_SHOWN)[2].items():\n        calls[_zq_fn(n)] = calls.get(_zq_fn(n), 0) + k\n    return [t for t in names() if calls.get(t, 0) < least]\n"
+      },
+      "feedback": {
+        "correct": "Every rule holds on the correct versions, and each broken version breaks one of them.",
+        "generic": "Not quite right. Read the first hidden test that failed.",
+        "byKey": {
+          "test-1": "pytest collected fewer than three tests. Write three test functions, each named `test_...` after its rule.",
+          "test-2": "A test fails on the correct `equity_curve`. Check that the rule really holds for every input, the empty list included.",
+          "test-3": "A test fails on a correct version that rounds differently. Compare floats with `pytest.approx`, not `==`.",
+          "test-4": "A test fails on a correct version that multiplies from the start each day. Compare floats with `pytest.approx`.",
+          "test-5": "Your tests pass in file order but not in reverse, so one test changes data that another reads. Copy a list before changing it.",
+          "test-6": "The version that adds the returns instead of compounding them got through. Check each day's growth on a path with several days.",
+          "test-7": "The version that leaves out the starting value got through. Check the length and the first value.",
+          "test-8": "The version that changes `returns` got through. Copy the list before the call and compare it afterwards.",
+          "test-9": "The version that rounds every value to the penny got through. Use returns whose values are not whole pence, with `pytest.approx`.",
+          "test-10": "The version that skips a day with a return of 0.0 got through. A flat day is an input too: include one.",
+          "test-11": "The version that reads 0.01 as 0.01% got through. Check each day's growth against `1 + r`.",
+          "test-12": "The version that compounds the days in reverse order got through. Its last value is right, so check every day, not only the end.",
+          "test-13": "Some of your tests never fail, whatever the code does: a rule compared with itself, or an assert that never runs. Each rule must be able to fail.",
+          "test-14": "Some of your tests call `equity_curve` fewer than five times. Run each rule over a table of inputs with `parametrize`.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "Three rules pin the function down: the length and first value, each day's growth, and the input left alone. Run over an empty list, a flat day and a large loss, they catch every broken version. Only the step rule sees the reversed version, whose last value is right.\n\n```python\nSTART = 250.00\nPATHS = [\n    [],                                   # no days yet\n    [0.0],                                # one flat day\n    [0.012, -0.034, 0.0, 0.021],\n    [-0.5, 0.25, 0.1],                    # a big loss\n    [0.01 * ((7 * k) % 11 - 5) for k in range(40)],\n]\n\n\n@pytest.mark.parametrize(\"returns\", PATHS)\ndef test_one_value_per_day_after_the_start(returns):\n    curve = equity_curve(START, returns)\n    assert len(curve) == len(returns) + 1\n    assert curve[0] == START\n\n\n@pytest.mark.parametrize(\"returns\", PATHS)\ndef test_each_day_grows_by_one_plus_its_return(returns):\n    curve = equity_curve(START, list(returns))\n    for t, r in enumerate(returns):\n        assert curve[t + 1] == pytest.approx(curve[t] * (1 + r))\n\n\n@pytest.mark.parametrize(\"returns\", PATHS)\ndef test_returns_are_left_unchanged(returns):\n    before = list(returns)\n    equity_curve(START, returns)\n    assert returns == before\n```"
+      }
     }
   ]
 }
