@@ -1794,3 +1794,6 @@ Raised later (ds level 4 perf):
 
 Raised later (first-python level 2 perf):
 - [Could] Another sighting of ENGINE-BACKLOG 681: in `h-split-bill` five planted slips (text not converted, printing the share, a loop that misses a price, a charge on every group) all fail test 1 first, so one `test-1` line has to name four cases. A key on the returned value (`test-1:None`, `test-1:TypeError`) would let each line name one action.
+
+Raised later (first-python level 3 perf):
+- [Could] In script mode the whole program reruns for every case, so an error in the script's own lines (a function that prints, then `f"{None:.2f}"`) fails every call test at test 1, and `byKey.error` never fires. A key for an exception raised outside the `call` would let one line point at the script part (related to ENGINE-BACKLOG 681).
