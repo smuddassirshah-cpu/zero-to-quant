@@ -612,6 +612,226 @@
       "explain": {
         "text": "Slope on the page is height over width. A 4 by 8 inch figure makes every move look six times steeper than a 12 by 4 one. Pick one shape, such as 16 by 9, for every chart you compare."
       }
+    },
+    {
+      "id": "h-price-file-report",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "pl-risk",
+        "pl-figures"
+      ],
+      "title": "From a price file to three charts",
+      "pace": 1200,
+      "prose": "A vendor sends a share's daily closes as the text of a CSV file. The header is `date,close`, and each date is ISO, such as `2026-03-02`. The rows come in no order, and one day is sent twice.\n\n`report_figure(text, path)` returns `fig, axes`: three panels, one above another, sharing an x axis of dates. Draw each series with `plot`.\n\n- Top: the daily returns, each on the later date of its pair.\n- Middle: the annualised 5-day rolling volatility, the sample standard deviation of the five returns ending each day times $\\sqrt{252}$. It starts on the fifth return.\n- Bottom: the drawdown from the running peak, with an arrow to its deepest point labelled like `Max drawdown -12.3%`.\n- The figure's suptitle gives the annualised volatility of all the returns and the maximum drawdown, like `Volatility 23.4%, max drawdown -12.3%`.\n\nSave the figure to `path` at 150 dpi. `vendor_file()` returns the file in the table. `price_file(seed, n)` returns a seeded file of `n` days in the same form.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2026-03-06",
+              "41.60"
+            ],
+            [
+              "2026-03-13",
+              "42.50"
+            ],
+            [
+              "2026-03-10",
+              "43.35"
+            ],
+            [
+              "2026-03-09",
+              "42.50"
+            ],
+            [
+              "2026-03-20",
+              "42.20"
+            ],
+            [
+              "2026-03-25",
+              "43.40"
+            ],
+            [
+              "2026-03-16",
+              "41.05"
+            ],
+            [
+              "2026-03-03",
+              "40.15"
+            ],
+            [
+              "2026-03-04",
+              "38.90"
+            ],
+            [
+              "2026-03-23",
+              "43.60"
+            ],
+            [
+              "2026-03-16",
+              "41.05"
+            ],
+            [
+              "2026-03-05",
+              "39.75"
+            ],
+            [
+              "2026-03-18",
+              "41.30"
+            ],
+            [
+              "2026-03-11",
+              "44.80"
+            ],
+            [
+              "2026-03-19",
+              "42.75"
+            ],
+            [
+              "2026-03-02",
+              "41.20"
+            ],
+            [
+              "2026-03-24",
+              "44.10"
+            ],
+            [
+              "2026-03-17",
+              "40.10"
+            ],
+            [
+              "2026-03-12",
+              "43.90"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "vendor_file(): the rows as sent"
+        }
+      },
+      "question": "Build `report_figure(text, path)` from the stub.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nimport matplotlib.dates as mdates\nimport numpy as np\nimport pandas as pd\nimport os, struct\n\n\ndef vendor_file():\n    \"\"\"The vendor's file in the table, as text.\"\"\"\n    return \"date,close\\n2026-03-06,41.60\\n2026-03-13,42.50\\n2026-03-10,43.35\\n2026-03-09,42.50\\n2026-03-20,42.20\\n2026-03-25,43.40\\n2026-03-16,41.05\\n2026-03-03,40.15\\n2026-03-04,38.90\\n2026-03-23,43.60\\n2026-03-16,41.05\\n2026-03-05,39.75\\n2026-03-18,41.30\\n2026-03-11,44.80\\n2026-03-19,42.75\\n2026-03-02,41.20\\n2026-03-24,44.10\\n2026-03-17,40.10\\n2026-03-12,43.90\\n\"\n\n\ndef price_file(seed, n):\n    \"\"\"A seeded file of n trading days from 1 September 2025, newest first, with one day sent twice.\"\"\"\n    x = seed\n    def u():\n        nonlocal x\n        x = (6364136223846793005 * x + 1442695040888963407) % 2 ** 64\n        return (x >> 11) / 2 ** 53\n    close, rows = 60.0, []\n    for d in pd.bdate_range(\"2025-09-01\", periods=n):\n        close = round(close * (0.975 + 0.05 * u()), 2)\n        rows.append(f\"{d.date()},{close:.2f}\")\n    rows = rows[::-1]\n    rows.append(rows[int(n * u())])\n    return \"date,close\\n\" + \"\\n\".join(rows) + \"\\n\"\n\n\ndef _iso(x):\n    \"\"\"A point's date on a matplotlib date axis, as an ISO string.\"\"\"\n    if isinstance(x, (int, float, np.integer, np.floating)):\n        return mdates.num2date(float(x)).date().isoformat()\n    return pd.Timestamp(x).date().isoformat()\n\n\ndef _points(ax, nd=6):\n    \"\"\"The finite points of the longest line on ax, as [ISO date, y rounded to nd places].\"\"\"\n    line = max(ax.get_lines(), key=lambda ln: len(ln.get_xdata()))\n    xs, ys = line.get_xdata(orig=False), np.asarray(line.get_ydata(), dtype=float)\n    return [[_iso(a), round(float(b), nd)] for a, b in zip(xs, ys) if np.isfinite(b)]\n\n\ndef _arrow(ax):\n    \"\"\"The annotation on ax whose text starts Max drawdown, as [text, ISO date, y].\"\"\"\n    for t in ax.texts:\n        if t.get_text().startswith(\"Max drawdown\"):\n            return [t.get_text(), _iso(t.xy[0]), round(float(t.xy[1]), 6)]\n    raise LookupError(\"no annotation starting 'Max drawdown' on the bottom panel\")\n\n\ndef _png_dpi(p):\n    \"\"\"The dots per inch written in a PNG file's pHYs chunk.\"\"\"\n    b = open(p, \"rb\").read()\n    i = b.find(b\"pHYs\")\n    return round(struct.unpack(\">I\", b[i + 4:i + 8])[0] * 0.0254)\n",
+        "starter": "import io\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\n\ndef report_figure(text, path):\n    \"\"\"Three panels from a price file: returns, rolling volatility and drawdown. Saved to path.\"\"\"\n    ...\n",
+        "solution": "import io\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\n\ndef report_figure(text, path):\n    df = pd.read_csv(io.StringIO(text), parse_dates=[\"date\"])\n    closes = df.drop_duplicates(\"date\").set_index(\"date\")[\"close\"].sort_index()  # one row a day, oldest first\n    rets = closes.pct_change().dropna()                     # each return sits on the later date of its pair\n    vol = rets.rolling(5).std() * np.sqrt(252)              # sample sd of the 5 returns ending each day\n    dd = closes / closes.cummax() - 1                       # from the running peak, not the overall top\n    t, mdd = dd.idxmin(), dd.min()\n    fig, axes = plt.subplots(3, 1, sharex=True, figsize=(8, 7))\n    axes[0].plot(rets.index, rets.values)\n    axes[0].set_ylabel(\"Daily return\")\n    axes[1].plot(vol.index, vol.values)\n    axes[1].set_ylabel(\"Volatility, annualised\")\n    axes[2].plot(dd.index, dd.values)\n    axes[2].set_ylabel(\"Drawdown\")\n    axes[2].annotate(f\"Max drawdown {mdd:.1%}\", xy=(t, mdd), xytext=(t, mdd / 2),\n                     arrowprops=dict(arrowstyle=\"->\"))\n    fig.suptitle(f\"Volatility {rets.std() * np.sqrt(252):.1%}, max drawdown {mdd:.1%}\")\n    fig.savefig(path, dpi=150, bbox_inches=\"tight\")\n    return fig, axes\n",
+        "examples": [
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
+            "call": "[len(axes), all(a.get_shared_x_axes().joined(axes[0], a) for a in axes)]",
+            "expect": "[3, True]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
+            "call": "[len(axes), all(a.get_shared_x_axes().joined(axes[0], a) for a in axes)]",
+            "expect": "[3, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
+            "call": "_points(axes[0])",
+            "expect": "[[\"2026-03-03\", -0.025485], [\"2026-03-04\", -0.031133], [\"2026-03-05\", 0.021851], [\"2026-03-06\", 0.046541], [\"2026-03-09\", 0.021635], [\"2026-03-10\", 0.02], [\"2026-03-11\", 0.033449], [\"2026-03-12\", -0.020089], [\"2026-03-13\", -0.031891], [\"2026-03-16\", -0.034118], [\"2026-03-17\", -0.023143], [\"2026-03-18\", 0.029925], [\"2026-03-19\", 0.035109], [\"2026-03-20\", -0.012865], [\"2026-03-23\", 0.033175], [\"2026-03-24\", 0.011468], [\"2026-03-25\", -0.015873]]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
+            "call": "_points(axes[1])",
+            "expect": "[[\"2026-03-09\", 0.53287], [\"2026-03-10\", 0.451519], [\"2026-03-11\", 0.179839], [\"2026-03-12\", 0.396437], [\"2026-03-13\", 0.45601], [\"2026-03-16\", 0.49506], [\"2026-03-17\", 0.441223], [\"2026-03-18\", 0.416802], [\"2026-03-19\", 0.545794], [\"2026-03-20\", 0.501248], [\"2026-03-23\", 0.445905], [\"2026-03-24\", 0.322538], [\"2026-03-25\", 0.385733]]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
+            "call": "_points(axes[2])",
+            "expect": "[[\"2026-03-02\", 0.0], [\"2026-03-03\", -0.025485], [\"2026-03-04\", -0.055825], [\"2026-03-05\", -0.035194], [\"2026-03-06\", 0.0], [\"2026-03-09\", 0.0], [\"2026-03-10\", 0.0], [\"2026-03-11\", 0.0], [\"2026-03-12\", -0.020089], [\"2026-03-13\", -0.051339], [\"2026-03-16\", -0.083705], [\"2026-03-17\", -0.104911], [\"2026-03-18\", -0.078125], [\"2026-03-19\", -0.045759], [\"2026-03-20\", -0.058036], [\"2026-03-23\", -0.026786], [\"2026-03-24\", -0.015625], [\"2026-03-25\", -0.03125]]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
+            "call": "_arrow(axes[2])",
+            "expect": "[\"Max drawdown -10.5%\", \"2026-03-17\", -0.104911]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(vendor_file(), 'report-a.png')",
+            "call": "fig.get_suptitle()",
+            "expect": "\"Volatility 45.2%, max drawdown -10.5%\"",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); p = 'report-c.png'\nif os.path.exists(p): os.remove(p)\nfig, axes = report_figure(vendor_file(), p)",
+            "call": "[os.path.exists(p), _png_dpi(p)]",
+            "expect": "[True, 150]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(price_file(7, 40), 'report-b.png')",
+            "call": "[len(_points(axes[0])), _points(axes[0])[0][0], _points(axes[0])[-1][0]]",
+            "expect": "[39, \"2025-09-02\", \"2025-10-24\"]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(price_file(7, 40), 'report-b.png')",
+            "call": "_arrow(axes[2])[:2]",
+            "expect": "[\"Max drawdown -11.0%\", \"2025-10-24\"]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = report_figure(price_file(7, 40), 'report-b.png')",
+            "call": "fig.get_suptitle()",
+            "expect": "\"Volatility 24.3%, max drawdown -11.0%\"",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests on the figure your function returns and the file it saves, for `vendor_file()` and `price_file(7, 40)`. Each panel's longest line is read point by point, and its values compare within 0.000002. The first run loads matplotlib, numpy and pandas: allow 20 to 40 seconds."
+      },
+      "feedback": {
+        "correct": "One row a day, oldest first, then the three panels and the two numbers in the title.",
+        "generic": "Some tests failed. Read the first failing test against the list above.",
+        "byKey": {
+          "test-1": "Test 1 asks for three panels that all share one x axis.",
+          "test-2": "Test 2 reads the top panel: 17 returns, the first on 3 March. Sort by date, keep one row a day, and put each return on the later date of its pair.",
+          "test-3": "Test 3 reads the middle panel. Each point is the sample standard deviation of five returns times $\\sqrt{252}$, from 9 March on.",
+          "test-4": "Test 4 reads the bottom panel: each close against the highest close so far, minus 1. The overall top is not the running peak.",
+          "test-5": "Test 5 reads the arrow. The deepest drawdown is 10.5%, on 17 March, not at the lowest close on 4 March.",
+          "test-6": "Test 6 reads the suptitle, which should be `Volatility 45.2%, max drawdown -10.5%` for the vendor file.",
+          "test-7": "Test 7 checks the file saved at `path`, and that it was written at 150 dpi.",
+          "test-8": "Test 8 runs `price_file(7, 40)`, which comes newest first with one day repeated. Its 39 returns run from 2 September.",
+          "test-9": "Test 9 reads the arrow for `price_file(7, 40)`. Find the trough from that file's own closes.",
+          "test-10": "Test 10 reads the suptitle for `price_file(7, 40)`. Both numbers come from that file's returns and closes."
+        }
+      },
+      "explain": {
+        "text": "Sorting and dropping the repeated 16 March row leave 18 days, so 17 returns. The running peak is £44.80 on 11 March, so 17 March's £40.10 is 10.5% below it; the lowest close, £38.90, is only 5.6% below its peak. All 17 returns give a volatility of 45.2% a year."
+      }
     }
   ]
 }

@@ -423,6 +423,132 @@
       "explain": {
         "text": "The maximum drawdown is the most negative $D_t$, so −15% on day 300 beats −8% on day 120. `np.argmin(dd)` finds it; `np.argmin(wealth)` would pick day 120."
       }
+    },
+    {
+      "id": "h-wealth-peak",
+      "performance": "code",
+      "difficulty": 4,
+      "skills": [
+        "pl-risk",
+        "pl-figures"
+      ],
+      "title": "A client's wealth and its peak",
+      "pace": 900,
+      "prose": "A client put `capital` pounds into a fund at the end of 1992. `fund()` returns the fund's yearly returns as a pandas Series indexed by year, 1993 to 2024. The years arrive in no particular order.\n\n`wealth_chart(rets, capital)` returns one Axes holding:\n\n- the client's wealth in £ at the end of each year, as a line labelled `Wealth`. It starts at `capital` in the year before the first return;\n- the running peak of that wealth over the same years, as a dashed line labelled `Running peak`;\n- a legend naming both lines;\n- a y axis on which a 30% fall has the same height in any year. Label it with its unit, £.\n\nLeave `rets` unchanged. `short()` returns a second fund's returns, 2016 to 2021, in the same form.",
+      "question": "Build `wealth_chart(rets, capital)` from the stub.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\n\ndef fund():\n    \"\"\"The fund's yearly returns, 1993 to 2024, in the order the file lists them.\"\"\"\n    return pd.Series({2022: -0.083, 2012: 0.103, 2013: 0.186, 2006: 0.112, 1997: 0.195, 2005: 0.168, 2016: 0.142, 2000: -0.081,\n                      2015: 0.031, 1993: 0.204, 2003: 0.176, 2004: 0.094, 2001: -0.152, 1994: -0.058, 1995: 0.182, 2002: -0.243,\n                      2018: -0.094, 1996: 0.121, 2014: 0.012, 2008: -0.312, 2024: 0.096, 1998: 0.108, 1999: 0.214, 2011: -0.052,\n                      2009: 0.247, 2019: 0.163, 2007: 0.035, 2017: 0.118, 2023: 0.079, 2010: 0.118, 2020: -0.028, 2021: 0.171})\n\n\ndef short():\n    \"\"\"A second fund's yearly returns, 2016 to 2021, in no order.\"\"\"\n    return pd.Series({2019: 0.08, 2017: -0.12, 2018: 0.05, 2021: 0.6, 2016: -0.05, 2020: -0.3})\n\n\ndef _line(ax, name):\n    \"\"\"The line on ax whose label is name.\"\"\"\n    for ln in ax.get_lines():\n        if ln.get_label() == name:\n            return ln\n    raise LookupError(f\"no line labelled {name!r} on the Axes\")\n",
+        "starter": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\n\ndef wealth_chart(rets, capital):\n    \"\"\"One Axes: the client's wealth in £ and its running peak, year by year.\"\"\"\n    ...\n",
+        "solution": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\n\ndef wealth_chart(rets, capital):\n    r = rets.sort_index()                                   # a sorted copy: rets itself is untouched\n    years = [r.index[0] - 1] + list(r.index)                # the opening year comes before the first return\n    wealth = capital * np.cumprod(np.r_[1.0, 1 + r.to_numpy()])\n    peak = np.maximum.accumulate(wealth)                    # starts at capital, so a first-year fall sits under it\n    fig, ax = plt.subplots(figsize=(8, 4.5))\n    ax.plot(years, wealth, label=\"Wealth\")\n    ax.plot(years, peak, linestyle=\"--\", label=\"Running peak\")\n    ax.set_yscale(\"log\")                                    # a 30% fall is the same height in any year\n    ax.set_xlabel(\"Year\")\n    ax.set_ylabel(\"Wealth (£, log scale)\")\n    ax.legend()\n    return ax\n",
+        "examples": [
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "[int(x) for x in _line(ax, 'Wealth').get_xdata()]",
+            "expect": "list(range(1992, 2025))",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "[int(x) for x in _line(ax, 'Wealth').get_xdata()]",
+            "expect": "list(range(1992, 2025))",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "[round(float(y), 2) for y in _line(ax, 'Wealth').get_ydata()]",
+            "expect": "[10000.00, 12040.00, 11341.68, 13405.87, 15027.98, 17958.43, 19897.94, 24156.10, 22199.46, 18825.14, 14250.63, 16758.74, 18334.06, 21414.19, 23812.57, 24646.01, 16956.46, 21144.70, 23639.78, 22410.51, 24718.79, 29316.49, 29668.29, 30588.00, 34931.50, 39053.42, 35382.39, 41149.72, 39997.53, 46837.11, 42949.63, 46342.65, 50791.55]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 0.011
+            }
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "[round(float(y), 2) for y in _line(ax, 'Running peak').get_ydata()]",
+            "expect": "[10000.00, 12040.00, 12040.00, 13405.87, 15027.98, 17958.43, 19897.94, 24156.10, 24156.10, 24156.10, 24156.10, 24156.10, 24156.10, 24156.10, 24156.10, 24646.01, 24646.01, 24646.01, 24646.01, 24646.01, 24718.79, 29316.49, 29668.29, 30588.00, 34931.50, 39053.42, 39053.42, 41149.72, 41149.72, 46837.11, 46837.11, 46837.11, 50791.55]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 0.011
+            }
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "_line(ax, 'Running peak').get_linestyle()",
+            "expect": "'--'",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "sorted(t.get_text() for t in ax.get_legend().get_texts())",
+            "expect": "['Running peak', 'Wealth']",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "ax.get_yscale()",
+            "expect": "'log'",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(fund(), 10000)",
+            "call": "'£' in ax.get_ylabel()",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); r = fund(); before = r.copy(); ax = wealth_chart(r, 10000)",
+            "call": "[r.index.tolist() == before.index.tolist(), r.tolist() == before.tolist(), len(_line(ax, 'Wealth').get_xdata())]",
+            "expect": "[True, True, 33]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(short(), 20000)",
+            "call": "[[int(x) for x in _line(ax, 'Wealth').get_xdata()], [round(float(y), 2) for y in _line(ax, 'Wealth').get_ydata()]]",
+            "expect": "[[2015, 2016, 2017, 2018, 2019, 2020, 2021], [20000.00, 19000.00, 16720.00, 17556.00, 18960.48, 13272.34, 21235.74]]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 0.011
+            }
+          },
+          {
+            "setup": "plt.close('all'); ax = wealth_chart(short(), 20000)",
+            "call": "[round(float(y), 2) for y in _line(ax, 'Running peak').get_ydata()]",
+            "expect": "[20000.00, 20000.00, 20000.00, 20000.00, 20000.00, 20000.00, 21235.74]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0,
+              "abs": 0.011
+            }
+          }
+        ],
+        "how": "Check runs 10 hidden tests on the Axes your function returns, for `fund()` with £10,000 and `short()` with £20,000. Each line is found by its label, and pounds compare within a penny. The first run loads matplotlib, numpy and pandas: allow 20 to 40 seconds."
+      },
+      "feedback": {
+        "correct": "Wealth and its peak both start at the capital, so even a first-year fall shows below the peak.",
+        "generic": "Some tests failed. Read the first failing test against the list above.",
+        "byKey": {
+          "test-1": "Test 1 reads the x data of the `Wealth` line: 1992 to 2024 in year order. Sort the years, and put the opening year before the first return.",
+          "test-2": "Test 2 reads the wealth in £. Sort by year before you compound, start from `capital`, and multiply by 1 plus each year's return.",
+          "test-3": "Test 3 reads the running peak: the highest wealth so far, from the opening year on. One flat line at the overall top is not a running peak.",
+          "test-4": "Test 4 checks that the `Running peak` line is dashed.",
+          "test-5": "Test 5 reads the legend. Give both lines their labels, then call `ax.legend()` once both are drawn.",
+          "test-6": "Test 6 reads the y scale. Over 32 years a linear axis dwarfs the early falls; only a log scale gives equal % moves equal heights.",
+          "test-7": "Test 7 reads the y label, which should name the unit, £.",
+          "test-8": "Test 8 checks `rets` after the call: the same years in the same order. `sort_index()` returns a sorted copy, while `inplace=True` sorts the caller's Series.",
+          "test-9": "Test 9 runs `short()` with £20,000. Take the years and returns from `rets` and the start from `capital`, not from `fund()`.",
+          "test-10": "Test 10 runs `short()`, which falls 5% in its first year. The peak starts at the capital, so it stays at £20,000 until 2021."
+        }
+      },
+      "explain": {
+        "text": "Wealth compounds in year order, so shuffled years give the same end point but a different path. The opening year puts the capital on the chart, so the 2016 fall in `short()` sits under a £20,000 peak. On a log axis the 41% fall of 2000 to 2002 shows at full depth beside 2024's £50,792."
+      }
     }
   ]
 }
