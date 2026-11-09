@@ -120,8 +120,8 @@ await test('rule 2: the floor helper treats an absent or empty essential skill a
   eq(S.floorGaps({ a: [0, 0] }, ['a'], 0.7).length, 1, 'no rows is a gap');
 });
 
-await test('rule 2: test-out applies the same floor to the skills it drew (5 of 6 right, one skill under it, fails)', async () => {
-  const drawn = { a: [3, 3], b: [1, 2], c: [1, 1] };   // 5 of 6 right; skill b at 0.5
+await test('rule 2: test-out applies the same floor to the skills it drew (4 of 5 right, one skill under it, fails)', async () => {
+  const drawn = { a: [2, 2], b: [1, 2], c: [1, 1] };   // 4 of 5 right; skill b at 0.5
   ok(S.floorGaps(drawn, Object.keys(drawn), P.SKILL_FLOOR).includes('b'), 'b is under the floor');
   ok(/floorGaps\(drawn, Object\.keys\(drawn\), P\.SKILL_FLOOR\)/.test(fs.readFileSync(path.join(APP, 'js/screens/review.js'), 'utf8')), 'review.js test-out applies it');
 });
@@ -289,6 +289,35 @@ await test('performance: a topic exam pass is a badge for a level with a task un
   submitPerf(A, 'code', true, 'auto'); P.sync();
   ok(P.levelMet(A.cid, A.lv.n), `task passed (${key}): met`);
   C._setPerf({});
+});
+
+/* ENGINE-BACKLOG 747: a test-out draws 5 items and passes at 4 of 5; successive papers draw unseen items first. The draw is the real
+   expression in review.js (mountTestout), pulled out of the source and run here with the same seeding. */
+await test('747: test-out draws 5 and passes at 4; two papers of a 10-item review share no item, of an 8-item review exactly 2', async () => {
+  eq(P.TESTOUT_N, 5, 'TESTOUT_N');
+  eq(Math.max(1, Math.ceil(P.TESTOUT_N * P.PASS - 1e-9)), 4, 'pass count at 0.8');
+  const src = fs.readFileSync(path.join(APP, 'js/screens/review.js'), 'utf8');
+  const hashOf = new Function('return ' + src.match(/const hashOf = (\(str\) => \{.*?\});\n/s)[1])();
+  const rngOf = new Function('return ' + src.match(/const rngOf = (\(seed\) => \{.*?\});\n/s)[1])();
+  const line = src.match(/const picked = (all\.map\(.*?\.sort\(\(a, b\) => a\.i - b\.i\));/)[1];
+  const draw = new Function('all', 'seenBefore', 'idOf', 'rng', 'P', 'return ' + line);
+  const idOf = (it, i) => it.id || 'q' + i;
+  const papers = (n, key) => {
+    const all = Array.from({ length: n }, (_, i) => ({ id: 'i' + i })), seen = new Set(), out = [];
+    for (let tries = 0; tries < 2; tries++) {
+      const picked = draw(all, seen, idOf, rngOf(hashOf(`${key}/${tries}`)), P);
+      const ids = picked.map(o => idOf(o.it, o.i));
+      eq(ids.length, 5, 'paper size');
+      out.push(ids); ids.forEach(x => seen.add(x));
+    }
+    return out;
+  };
+  for (const key of ['a/L1', 'b/L2', 'c/L3', 'markov/L4']) {
+    const [p1, p2] = papers(10, key);
+    eq(p1.filter(x => p2.includes(x)).length, 0, `10 items, ${key}: shared`);
+    const [q1, q2] = papers(8, key);
+    eq(q1.filter(x => q2.includes(x)).length, 2, `8 items, ${key}: shared`);
+  }
 });
 
 const pass = results.filter(Boolean).length;

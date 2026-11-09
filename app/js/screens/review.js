@@ -667,7 +667,7 @@
     };
     return setPage(root, Z, cfg);
   }
-  /* Test-out (ENGINE-BACKLOG 485): up to 6 items from a level's review, seeded and shuffled, passed at the review's pass share.
+  /* Test-out (ENGINE-BACKLOG 485): up to 5 items from a level's review, seeded and shuffled, passed at the review's pass share.
      Route #testout/<course>/<n>. A pass records the level met; a miss lists the lessons to revisit and waits 24 hours. */
   function mountTestout(root, Z, cid, n) {
     const P = ZQ.prereq, lv = levelOf(cid, n), key = P ? P.keyOfLevel(cid, +n) : `${cid}/L${n}`;

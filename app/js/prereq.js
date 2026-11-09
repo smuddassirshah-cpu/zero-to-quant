@@ -27,7 +27,7 @@
   const DAY = 86400000;
   const PASS = 0.8;            // review pass share when a review file carries no pass (matches the quiz MASTERY bar; rule 1)
   const SKILL_FLOOR = 0.7;     // share every essential skill of a level needs in a review, test-out or exam pass to meet it (rules 2 and 4); state.js holds the same figure for the finish-time check
-  const TESTOUT_N = 6;         // items in a test-out
+  const TESTOUT_N = 5;         // items in a test-out (ENGINE-BACKLOG 747: five, pass at four, so a review of 10 gives two papers with no shared item)
   const RETAKE_H = 24;         // hours before a failed test-out can be retaken
   const REFRESH_D = 30;        // days after which a met prerequisite shows a Refresh chip
 

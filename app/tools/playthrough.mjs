@@ -1673,7 +1673,7 @@ const main = async () => {
         const pick = await evalOnly(([c, l]) => { const n = ZQ.prereq.missingFor(c, l).direct.find(x => x.kind === 'level' && x.testOut.can && !x.perf); return n ? { c: n.course, n: n.n } : null; }, [lc, ll]);
         if (!pick) console.log('     gating: no direct prerequisite with a written review to test out of; the test-out checks are skipped');
         else {
-          await evalOnly((p) => ZQ.state.prereq.testout({ key: `${p.c}/L${p.n}`, score: 0, items: 6, passed: false, missed: [] }), pick);
+          await evalOnly((p) => ZQ.state.prereq.testout({ key: `${p.c}/L${p.n}`, score: 0, items: 5, passed: false, missed: [] }), pick);
           await route(`testout/${pick.c}/${pick.n}`);
           const wait = await evalOnly(() => (document.querySelector('.rvs-empty') || {}).innerText || '');
           if (!/Try again later/i.test(wait)) fails.push(`#testout/${pick.c}/${pick.n}: a failed test-out should wait 24 hours (page says "${wait.replace(/\s+/g, ' ').slice(0, 80)}")`);
@@ -1765,7 +1765,7 @@ const main = async () => {
         });
         if (!mt) console.log('     gating: no locked level with a written review on a fresh profile; the met-level checks are skipped');
         else {
-          await evalOnly((m) => ZQ.state.prereq.testout({ key: `${m.c}/L${m.n}`, score: 6, items: 6, passed: true, missed: [] }), mt);
+          await evalOnly((m) => ZQ.state.prereq.testout({ key: `${m.c}/L${m.n}`, score: 5, items: 5, passed: true, missed: [] }), mt);
           const r = await evalOnly((m) => ({ met: ZQ.prereq.levelMet(m.c, m.n), level: ZQ.prereq.levelLocked(m.c, m.n), review: ZQ.prereq.itemLocked(m.c, m.review), hw: m.hw ? ZQ.prereq.itemLocked(m.c, m.hw) : false, lessons: m.lessons.filter(id => ZQ.content.exists(m.c, id) !== false && ZQ.prereq.lessonLocked(m.c, id)) }), mt);
           if (!r.met || r.level || r.review || r.hw || r.lessons.length) fails.push(`${mt.c}/L${mt.n} tested out but not open: ${JSON.stringify(r)}`);
           await route(`review/${mt.c}/${mt.review}`);
