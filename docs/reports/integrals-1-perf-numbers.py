@@ -134,12 +134,12 @@ rub = it['rubric']
 pts = [r['points'] for r in rub]
 req = [bool(r.get('required')) for r in rub]
 lv.claim(sum(pts) == 10 and 3 <= len(rub) <= 5, "rubric 3 to 5 rows summing to 10")
-lv.claim(req == [False, True, True, True, True], "rows 2 to 5 required, row 1 optional")
-named = {1: 'a', 2: 'b', 3: 'c', 4: 'd'}      # row index (from 0) -> the named part it carries
+lv.claim(req == [True, True, True, False, True], "rows 1, 2, 3 and 5 required, row 4 (the optional left-sum part) optional")
+named = {0: 'a', 1: 'b', 2: 'c', 4: 'd'}      # row index (from 0) -> the named part it carries
 passes = [s for r in range(1, len(rub) + 1) for s in itertools.combinations(range(len(rub)), r)
           if sum(pts[i] for i in s) >= 7 and all(i in s for i in range(len(rub)) if req[i])]
 print("passing tick sets (rows from 1):", [tuple(i + 1 for i in s) for s in passes])
-lv.claim(passes == [(1, 2, 3, 4), (0, 1, 2, 3, 4)], "the only passes are rows 2-5 and all five")
+lv.claim(passes == [(0, 1, 2, 4), (0, 1, 2, 3, 4)], "the only passes are rows 1, 2, 3, 5 and all five")
 lv.claim(all({named[i] for i in s if i in named} == {'a', 'b', 'c', 'd'} for s in passes), "every pass covers (a), (b), (c) and (d)")
 lv.claim(it.get('performance') == 'derivation' and it.get('kind') == 'longform', "kind")
 lv.claim(not any(key in it for key in ('starter', 'steps', 'order', 'derive', 'hints', 'parts')), "empty box: no scaffold")
