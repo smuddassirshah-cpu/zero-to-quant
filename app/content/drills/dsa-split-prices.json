@@ -1,0 +1,108 @@
+{
+  "id": "dsa-split-prices",
+  "name": "Splitting a run of digits into prices",
+  "course": "graphs-dp",
+  "pack": "dsa",
+  "pattern": "backtracking",
+  "tags": [
+    "split-prices"
+  ],
+  "skills": [
+    "gd-backtrack"
+  ],
+  "difficulty": 2,
+  "pace": 1080,
+  "fn": "split_prices",
+  "returns": "a list of lists of whole numbers",
+  "brief": "A faulty feed sent `k` prices with the separators lost, so only the string `digits` arrived. Each price was a whole number from 1 to `cap`, written with no leading zero.\n\nWrite `split_prices(digits, k, cap)`, which returns every way to cut `digits` back into `k` such prices, each as a list of numbers, with the lists in increasing order as Python sorts them.\n\nExample. For `\"1050\"`, `k = 2` and `cap = 999`, the cut 1 | 050 has a leading zero and 105 | 0 has a price of 0. Only 10 | 50 is left, so the answer is `[[10, 50]]`.",
+  "constraints": [
+    "$1 \\le$ `len(digits)` $\\le 60$, $1 \\le k \\le 30$ and $1 \\le$ `cap` $\\le 10^6$.",
+    "Stop a branch as soon as the digits left cannot fill the prices left, or can no longer fit in them. Without that check some tests take millions of steps.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Build the prices from left to right, trying each length up to the number of digits in `cap`. With `left` prices still to place, the digits remaining must number between `left` and `left` times that width.",
+  "starter": "def split_prices(digits, k, cap):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "split_prices('1050', 2, 999)",
+      "expect": "[[10, 50]]",
+      "compare": "equal",
+      "note": "A piece may not start with 0, which rules out two of the three cuts."
+    },
+    {
+      "call": "split_prices('11211', 3, 50)",
+      "expect": "[[1, 12, 11], [11, 2, 11], [11, 21, 1]]",
+      "compare": "equal",
+      "note": "Pieces above 50, such as 112 or 211, are refused."
+    }
+  ],
+  "tests": [
+    {
+      "call": "split_prices('7', 1, 9)",
+      "expect": "[[7]]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('7', 1, 6)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('0', 1, 9)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('1050', 2, 999)",
+      "expect": "[[10, 50]]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('11211', 3, 50)",
+      "expect": "[[1, 12, 11], [11, 2, 11], [11, 21, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('123', 4, 999)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('1111', 2, 1000)",
+      "expect": "[[1, 111], [11, 11], [111, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('2552551', 3, 255)",
+      "expect": "[[255, 25, 51], [255, 255, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('100100', 2, 1000)",
+      "expect": "[[100, 100]]",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('1' * 45, 15, 999)",
+      "expect": "[[111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111, 111]]",
+      "compare": "equal"
+    },
+    {
+      "call": "len(split_prices('1' * 20, 12, 99))",
+      "expect": "495",
+      "compare": "equal"
+    },
+    {
+      "call": "split_prices('9' * 40, 20, 99)",
+      "expect": "[[99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99]]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def split_prices(digits, k, cap):\n    width = len(str(cap))\n    out = []\n    parts = []\n\n    def place(pos):\n        left, rest = k - len(parts), len(digits) - pos\n        if left == 0:\n            if rest == 0:\n                out.append(parts[:])\n            return\n        if rest < left or rest > left * width:\n            return\n        if digits[pos] == '0':\n            return\n        for end in range(pos + 1, min(pos + width, len(digits)) + 1):\n            price = int(digits[pos:end])\n            if price > cap:\n                break\n            parts.append(price)\n            place(end)\n            parts.pop()\n\n    place(0)\n    return out\n",
+  "notes": [
+    "Choose the first price, then solve the same task on the digits after it; trying shorter pieces first produces the answers already in sorted order.",
+    "A piece starting with 0 is never a price, and a branch whose remaining digits are too few or too many for the prices left must stop at once.",
+    "With that check each branch either reaches an answer or dies within a few steps, so the work stays close to the size of the output."
+  ]
+}

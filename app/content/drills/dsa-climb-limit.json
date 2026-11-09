@@ -1,0 +1,109 @@
+{
+  "id": "dsa-climb-limit",
+  "name": "A robot that climbs one step",
+  "course": "graphs-dp",
+  "pack": "dsa",
+  "pattern": "graphs",
+  "tags": [
+    "climb-limit"
+  ],
+  "skills": [
+    "gd-traversal",
+    "gd-paths"
+  ],
+  "difficulty": 2,
+  "pace": 960,
+  "fn": "fewest_climb_steps",
+  "returns": "a whole number",
+  "brief": "A survey robot crosses a rectangular site whose cell heights are in `heights`, a list of rows. Each move goes to the cell above, below, left or right. The robot can drop any distance, but it can climb at most `climb` per move.\n\nWrite `fewest_climb_steps(heights, climb)`, which returns the fewest moves from the top-left cell to the bottom-right one, 0 when they are the same cell, or -1 if the robot cannot get there.\n\nExample. In the first example below, `climb = 1` makes each 7 a wall. The robot goes right, down the right edge, back left along the middle row, down the left edge and right again: 10 moves.",
+  "constraints": [
+    "The grid has between 1 and 300 rows and between 1 and 300 columns; heights are whole numbers from 0 to $10^6$, and $0 \\le$ `climb` $\\le 10^6$.",
+    "$O(rc)$ time for $r$ rows and $c$ columns is the target. Trying every route is far too slow.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Moves are one-way: a drop is allowed where the climb back is not. Search outward from the start, checking `heights[new] - heights[old] <= climb` for each neighbour.",
+  "starter": "def fewest_climb_steps(heights, climb):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "fewest_climb_steps([[0, 0, 0], [7, 7, 0], [0, 0, 0], [0, 7, 7], [0, 0, 0]], 1)",
+      "expect": "10",
+      "compare": "equal",
+      "note": "The 7s are too high to climb onto, so the route snakes round them."
+    },
+    {
+      "call": "fewest_climb_steps([[3, 0], [9, 1]], 1)",
+      "expect": "2",
+      "compare": "equal",
+      "note": "The robot drops from 3 to 0, then climbs 1 to reach the corner."
+    }
+  ],
+  "tests": [
+    {
+      "call": "fewest_climb_steps([[5]], 0)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[0, 2]], 1)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[2, 0]], 0)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[0, 0, 0], [7, 7, 0], [0, 0, 0], [0, 7, 7], [0, 0, 0]], 1)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[0, 0, 0], [7, 7, 0], [0, 0, 0], [0, 7, 7], [0, 0, 0]], 7)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[3, 0], [9, 1]], 1)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[0, 1, 2], [9, 9, 3], [6, 5, 4]], 1)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[0, 1, 2], [1, 9, 3], [2, 3, 9]], 1)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[4, 3, 2], [5, 9, 1], [6, 7, 0]], 0)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[(r * 7 + c * 13) % 4 for c in range(300)] for r in range(300)], 1)",
+      "expect": "598",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[9 if r % 2 == 1 and c != (299 if r % 4 == 1 else 0) else 0 for c in range(300)] for r in range(299)], 1)",
+      "expect": "44849",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_climb_steps([[1000 - r - c for c in range(300)] for r in range(300)], 0)",
+      "expect": "598",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "from collections import deque\n\ndef fewest_climb_steps(heights, climb):\n    rows, cols = len(heights), len(heights[0])\n    dist = [[-1] * cols for _ in range(rows)]\n    dist[0][0] = 0\n    queue = deque([(0, 0)])\n    while queue:\n        r, c = queue.popleft()\n        h = heights[r][c]\n        for nr, nc in ((r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)):\n            if (0 <= nr < rows and 0 <= nc < cols and dist[nr][nc] == -1\n                    and heights[nr][nc] - h <= climb):\n                dist[nr][nc] = dist[r][c] + 1\n                queue.append((nr, nc))\n    return dist[rows - 1][cols - 1]\n",
+  "notes": [
+    "Every move costs one, so breadth-first search from the start cell gives the fewest moves to every cell.",
+    "The rule is one-way, so a cell you can drop into may not let you climb back; test the height difference from the cell you are leaving.",
+    "Each cell is queued once and checks four neighbours, so the work is $O(rc)$."
+  ]
+}

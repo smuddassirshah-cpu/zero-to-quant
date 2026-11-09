@@ -1,0 +1,109 @@
+{
+  "id": "dsa-spare-cables",
+  "name": "Moving spare network cables",
+  "course": "graphs-dp",
+  "pack": "dsa",
+  "pattern": "graphs",
+  "tags": [
+    "spare-cables"
+  ],
+  "skills": [
+    "gd-graphs",
+    "gd-traversal"
+  ],
+  "difficulty": 1,
+  "pace": 720,
+  "fn": "spare_cable_moves",
+  "returns": "a whole number",
+  "brief": "An office has `n` machines, numbered 0 to `n - 1`, and a list of `cables`. Each cable is a pair `(a, b)` joining two different machines, and two machines can talk when a chain of cables links them. A technician may unplug any cable and plug it in again between any two machines.\n\nWrite `spare_cable_moves(n, cables)`, which returns the fewest cables to move so that every machine can talk to every other, or -1 if there are too few cables.\n\nExample. With `n = 4` and cables `(0, 1)`, `(0, 2)`, `(1, 2)`, machine 3 is alone. The cable `(1, 2)` is spare, since 1 and 2 still talk through 0, and moving it to reach 3 gives the answer 1.",
+  "constraints": [
+    "$1 \\le n \\le 200{,}000$ and $0 \\le$ `len(cables)` $\\le 200{,}000$. The same pair may appear more than once.",
+    "$O(n + m)$ time for $m$ cables is the target. Recursion deep enough for a long chain of machines will fail in Python.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Linking `c` separate groups takes `c - 1` cables. When there are at least `n - 1` cables, some group always holds enough spares. So count the groups.",
+  "starter": "def spare_cable_moves(n, cables):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "spare_cable_moves(4, [(0, 1), (0, 2), (1, 2)])",
+      "expect": "1",
+      "compare": "equal",
+      "note": "Two groups, {0, 1, 2} and {3}, and the cable (1, 2) is spare."
+    },
+    {
+      "call": "spare_cable_moves(6, [(0, 1), (0, 2), (0, 3), (1, 2)])",
+      "expect": "-1",
+      "compare": "equal",
+      "note": "Six machines need at least five cables, and there are four."
+    }
+  ],
+  "tests": [
+    {
+      "call": "spare_cable_moves(1, [])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(2, [])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(2, [(1, 0)])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(4, [(0, 1), (0, 2), (1, 2)])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(6, [(0, 1), (0, 2), (0, 3), (1, 2)])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(5, [(0, 1), (0, 1), (0, 1), (0, 1)])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(6, [(0, 1), (1, 2), (2, 0), (3, 4), (4, 5), (5, 3)])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(7, [(0, 1), (2, 3), (4, 5), (1, 0), (3, 2), (5, 4)])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(3, [(0, 1), (1, 2)])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(200000, [(i, i + 1) for i in range(199999)])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(200000, [(2 * i, 2 * i + 1) for i in range(100000)] + [(0, 1)] * 100000)",
+      "expect": "99999",
+      "compare": "equal"
+    },
+    {
+      "call": "spare_cable_moves(200000, [((i * 7) % 200000, (i * 7 + 3) % 200000) for i in range(199999)])",
+      "expect": "0",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def spare_cable_moves(n, cables):\n    if len(cables) < n - 1:\n        return -1\n    adj = [[] for _ in range(n)]\n    for a, b in cables:\n        adj[a].append(b)\n        adj[b].append(a)\n    seen = [False] * n\n    groups = 0\n    for start in range(n):\n        if seen[start]:\n            continue\n        groups += 1\n        seen[start] = True\n        stack = [start]\n        while stack:\n            x = stack.pop()\n            for y in adj[x]:\n                if not seen[y]:\n                    seen[y] = True\n                    stack.append(y)\n    return groups - 1\n",
+  "notes": [
+    "Count the connected groups `c`; with at least `n - 1` cables there are always `c - 1` spare ones, so the answer is `c - 1`.",
+    "The cable count decides -1 before any search, and a recursive walk breaks on a chain of 200,000 machines, so keep an explicit stack.",
+    "Building the lists and one walk over every machine and cable is $O(n + m)$."
+  ]
+}

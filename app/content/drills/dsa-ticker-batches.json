@@ -1,0 +1,108 @@
+{
+  "id": "dsa-ticker-batches",
+  "name": "Cutting a tape into ticker batches",
+  "course": "algo-think",
+  "pack": "dsa",
+  "pattern": "greedy",
+  "tags": [
+    "ticker-batches"
+  ],
+  "skills": [
+    "at-greedy"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "ticker_batches",
+  "returns": "a list of whole numbers",
+  "brief": "A settlement system reads a tape of trades as a string, one character per trade naming its ticker. It cuts the tape into consecutive batches, and all trades in one ticker must land in the same batch. More batches settle faster.\n\nWrite `ticker_batches(tape)`, which returns the lengths of the batches, in order, when the tape is cut into as many batches as possible. An empty tape gives `[]`.\n\nExample. For `\"ABACDDCE\"` the first batch must run to the last `A`, giving `\"ABA\"`. The next must run to the last `C`, giving `\"CDDC\"`, and `\"E\"` stands alone. The answer is `[3, 4, 1]`.",
+  "constraints": [
+    "$0 \\le$ `len(tape)` $\\le 200{,}000$; the characters are letters and digits.",
+    "$O(n)$ time is the target. Comparing the characters on each side of every possible cut is $O(n^2)$.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "First record where each ticker appears last. Then walk the tape, stretching the current batch's end to the last appearance of every ticker in it, and cut when you reach that end.",
+  "starter": "def ticker_batches(tape):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "ticker_batches('ABACDDCE')",
+      "expect": "[3, 4, 1]",
+      "compare": "equal",
+      "note": "The batch that holds the first C must stretch to its last C."
+    },
+    {
+      "call": "ticker_batches('ABCA')",
+      "expect": "[4]",
+      "compare": "equal",
+      "note": "The two A trades are at both ends, so the whole tape is one batch."
+    }
+  ],
+  "tests": [
+    {
+      "call": "ticker_batches('')",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('Z')",
+      "expect": "[1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('ABACDDCE')",
+      "expect": "[3, 4, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('ABCA')",
+      "expect": "[4]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('AAAA')",
+      "expect": "[4]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('ABCD')",
+      "expect": "[1, 1, 1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('AB12BA21')",
+      "expect": "[8]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('AABBAACC')",
+      "expect": "[6, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('XYXZZWVW')",
+      "expect": "[3, 2, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches('A' * 100000 + 'B' * 100000)",
+      "expect": "[100000, 100000]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r), r[0], r[-1]))(ticker_batches(''.join('AB'[i % 2] if i < 100000 else 'CD'[i % 2] for i in range(200000)) + 'E' * 7))",
+      "expect": "(3, 200007, 100000, 7)",
+      "compare": "equal"
+    },
+    {
+      "call": "ticker_batches(''.join(chr(65 + (i * 7) % 26) for i in range(200000)))",
+      "expect": "[200000]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def ticker_batches(tape):\n    last = {ch: i for i, ch in enumerate(tape)}\n    sizes = []\n    start = end = 0\n    for i, ch in enumerate(tape):\n        end = max(end, last[ch])\n        if i == end:\n            sizes.append(i - start + 1)\n            start = i + 1\n    return sizes\n",
+  "notes": [
+    "Greedy choice with its proof: any valid first batch must reach the last appearance of every ticker in it. Cutting exactly there leaves the most tape for the rest.",
+    "The end of a batch can keep moving as new tickers join it, so update it on every trade, not only on the first one.",
+    "One pass to find the last positions and one to cut is $O(n)$."
+  ]
+}
