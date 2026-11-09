@@ -1756,3 +1756,5 @@ Raised later (trees level 1 perf):
 
 Raised later (trees level 2 perf):
 - [Could] An author's numbers script that runs planted slips against a Python `code` task must copy the engine's comparison by hand (`__zq_cmp` in `js/engine/widgets/code.js`: element-wise `math.isclose` at rel 1e-9 and abs 1e-12, tuples and lists alike, `raises` by the exception's MRO). `trees-2-perf-numbers.py` reimplements it, and a drift in either would go unseen. Wanted: the harness as an importable `tools/py_grade.py` (one `grade(source, tests)` function) that `code.js` builds its harness text from, so scripts and the engine grade the same way.
+Raised later (estimation level 2 perf):
+- [Could] A longform rubric row whose text holds a wide inline maths span (here $\ell(\alpha) = n\ln\alpha - (\alpha + 1)\sum \ln x_i$) pushes the points label off the card at 440 px: it read "2 points, require". Split here into shorter spans. Wanted: the points label keeps its width (no shrink) and the text column wraps or scrolls the span, or a validator warning for a rubric maths span over about 30 characters.
