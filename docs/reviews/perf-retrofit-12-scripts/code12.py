@@ -269,7 +269,7 @@ def find_trade(ring, seq):
 '''
 check(w, "reader: find the turn, then search in sorted order", reader, passes=True, which="all")
 check(w, "reader variant: turn found with >= (same as > on distinct numbers)", patched(reader, ("if ring[mid] > ring[hi]:", "if ring[mid] >= ring[hi]:")), passes=True)
-check(w, "GAP: turn found by ring.index(min(ring)), O(n)", '''
+check(w, "plant (was AT3-1 gap): turn found by ring.index(min(ring)), O(n)", '''
 def find_trade(ring, seq):
     if not ring:
         return -1
@@ -286,12 +286,13 @@ def find_trade(ring, seq):
         else:
             hi = mid - 1
     return -1
-''', passes=True)
+''', [13])
 check(w, "plant: second search stops at lo < hi", patched(reader, ("    while lo <= hi:\n        mid = (lo + hi) // 2\n        v", "    while lo < hi:\n        mid = (lo + hi) // 2\n        v")), [7])
 check(w, "plant: slot not shifted back by the turn", patched(reader, ("            return (mid + k) % n", "            return mid")), [1])
 check(w, "plant: unturned shortcut read before the empty guard", patched(reader, ("    if n == 0:\n        return -1\n", "    if ring[0] <= ring[-1]:\n        k = 0\n    if n == 0:\n        return -1\n")), [2])
 lin = "def find_trade(ring, seq):\n    return ring.index(seq) if seq in ring else -1\n"
-check(w, "GAP: a linear scan (no binary search)", lin, passes=True)
+f, _ = check(w, "plant (was AT3-1 gap): a linear scan (no binary search)", lin, [13])
+expect(f == [13], "the linear scan fails test 13 only")
 
 print(f"failures: {fails}")
 sys.exit(1 if fails else 0)

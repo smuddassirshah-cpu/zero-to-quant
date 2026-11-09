@@ -487,6 +487,7 @@
         "language": "python",
         "starter": "def find_trade(ring, seq):\n    ...\n",
         "solution": "def find_trade(ring, seq):\n    lo, hi = 0, len(ring) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if ring[mid] == seq:\n            return mid\n        if ring[lo] <= ring[mid]:            # slots lo to mid are in order\n            if ring[lo] <= seq < ring[mid]:\n                hi = mid - 1\n            else:\n                lo = mid + 1\n        else:                                # slots mid to hi are in order\n            if ring[mid] < seq <= ring[hi]:\n                lo = mid + 1\n            else:\n                hi = mid - 1\n    return -1\n",
+        "prelude": "class Looks:\n    def __init__(self, data):\n        self.data = list(data)\n        self.looks = 0\n    def __len__(self):\n        return len(self.data)\n    def __getitem__(self, i):\n        self.looks += 1\n        return self.data[i]\n",
         "postlude": "def ring_sweep(top=12):\n    misses, first = 0, None\n    for n in range(top + 1):\n        base = [3 * i + 1 for i in range(n)]\n        for k in range(max(n, 1)):\n            ring = base[k:] + base[:k]\n            for seq in range(3 * n + 2):\n                want = ring.index(seq) if seq in ring else -1\n                try:\n                    got = find_trade(list(ring), seq)\n                except Exception as err:\n                    got = type(err).__name__\n                if got != want:\n                    misses += 1\n                    if first is None:\n                        first = [ring, seq, got]\n    return [misses, first]\n",
         "examples": [
           {
@@ -558,12 +559,18 @@
             "compare": "equal"
           },
           {
+            "setup": "W = Looks([1000000 + 3 * ((j + 137017) % 200000) for j in range(200000)])",
+            "call": "[find_trade(W, 1300000), find_trade(W, 1300001), W.looks <= 400]",
+            "expect": "[162983, -1, True]",
+            "compare": "equal"
+          },
+          {
             "call": "ring_sweep()",
             "expect": "[0, None]",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 13 hidden tests. Test 12 searches a ring of 200,000 slots. Test 13 calls a hidden `ring_sweep()`, which tries every turn of sorted lists of up to 12 numbers, for every number in them and every gap. It returns the number of wrong answers and the first one, as `[ring, seq, your answer]`. The tests read your answers, not how many slots you read."
+        "how": "Check runs 14 hidden tests. Test 12 searches a ring of 200,000 slots. Test 13 searches such a ring twice and counts the slots you read: at most 400. Test 14 calls a hidden `ring_sweep()`, which tries every turn of sorted lists of up to 12 numbers, for every number in them and every gap. It returns the number of wrong answers and the first one, as `[ring, seq, your answer]`."
       },
       "feedback": {
         "correct": "One side of `mid` is always in order, so each read still halves the slots left.",
@@ -581,7 +588,8 @@
           "test-10": "Test 10 asks for 4, 12, 22 and 31 in the same ring, where none of them is: one below every number, two in gaps and one above every number.",
           "test-11": "Test 11 turns at the last slot, `[5, 10, 15, 20, 25, 1]`, and asks for 1, 25 and 5.",
           "test-12": "Test 12 is a ring of 200,000 slots whose oldest trade sits in slot 62,983. It asks for slot 0, the last slot, the oldest and newest trades, one in the middle and three that are absent.",
-          "test-13": "Test 13 found a ring where your answer is wrong, and shows the first as `[ring, seq, your answer]`. Run your function on that ring and follow `lo` and `hi` by hand."
+          "test-13": "Test 13 searches a ring of 200,000 slots twice and counts every slot you read: at most 400 in all. Halving reads under 100 a search, so read single slots only, with no `in`, `index`, `min` or copy of the ring.",
+          "test-14": "Test 14 found a ring where your answer is wrong, and shows the first as `[ring, seq, your answer]`. Run your function on that ring and follow `lo` and `hi` by hand."
         }
       },
       "explain": {

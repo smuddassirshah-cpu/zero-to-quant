@@ -1,7 +1,7 @@
 """Gap checks and proposed fixes for batch 12 (findings AT3-1, RV1-1). Run with the venv Python, or in Pyodide via pyo12.mjs.
-AT3-1: a linear scan passes every test of algo-think h-ring-search. The proposed test counts reads with the Looks
+AT3-1: a linear scan passes every test of algo-think h-ring-search. The test (now in the item) counts reads with the Looks
 wrapper that algo-think l9 already uses; this script measures the reads of the shipped solution, two reader binary
-searches and three O(n) answers, then runs the item with the proposed prelude and test and checks who passes.
+searches and three O(n) answers, then runs the item and checks who passes.
 RV1-1: in Python 3.12 (Pyodide 0.27.7) the built-in sum of ten 0.1s is exactly 1.0, so the explain's example
 holds only for a running total."""
 import sys, json, copy, pathlib
@@ -107,18 +107,13 @@ for name, src in SRC.items():
     print(f"  {name}: most reads over {len(probe)} searches of 200,000 slots: {worst}")
     expect(worst <= 120, f"{name}: at most 120 reads")
 
-# The proposed fix: Looks in a prelude and one more test (setup builds its own ring, so it does not lean on test 12's R).
-w = copy.deepcopy(w0)
-w["prelude"] = LOOKS.lstrip()
-new = {"setup": "W = Looks([1000000 + 3 * ((j + 137017) % 200000) for j in range(200000)])",
-       "call": "[find_trade(W, 1300000), find_trade(W, 1300001), W.looks <= 400]",
-       "expect": "[162983, -1, True]", "compare": "equal"}
-w["tests"] = w["tests"][:12] + [new] + w["tests"][12:]
-print("proposed test 13:", json.dumps(new))
+# The fix is now in the item: widget.prelude holds Looks and test 13 counts the reads (the fix pass of review-perf-retrofit-12).
+w = w0
+assert w["prelude"].lstrip().startswith("class Looks") and "W.looks <= 400" in w["tests"][12]["call"]
 for name, src, ok_ in [("shipped", w0["solution"], True), ("two-phase", two_phase, True), ("recursive", recursive, True),
                        ("linear (index)", linear, False), ("linear (loop)", loop, False), ("turn by min() then halving", minidx, False)]:
-    f, _ = summary(w, src, "with fix: " + name)
-    expect((not f) if ok_ else (f == [13]), f"with fix: {name} {'passes' if ok_ else 'fails the new test 13 only'}")
+    f, _ = summary(w, src, "fixed item: " + name)
+    expect((not f) if ok_ else (f == [13]), f"fixed item: {name} {'passes' if ok_ else 'fails test 13 only'}")
 
 # RV1-1
 vals = [0.1] * 10
