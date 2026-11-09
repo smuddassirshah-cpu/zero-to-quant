@@ -61,6 +61,53 @@ const unit = async () => {
       const h = I.harness([{ call: 'f(1)', expect: '1', setup: 'import pandas as pd\ndf = pd.DataFrame()' }, { call: 'g()', expect: '2' }], 'import numpy as np\ndef f(x): return x');
       check('importHint: a test setup import is hinted (function mode)', /if False:\n\s+import pandas/.test(h), h.slice(0, 120));
       check('importHint: no setup, no hint', !/if False/.test(I.harness([{ call: 'g()', expect: '2' }], 'x = 1')));
+      /* ENGINE-BACKLOG 700: the compare harness, run in local Python (NumPy and pandas needed) */
+      try {
+        const py = I.harness([{ call: 'g()', expect: '2' }], 'x = 1');
+        const a = py.indexOf('def __zq_raises'), b = py.indexOf('def __zq_case', a) > 0 ? py.indexOf('def __zq_case', a) : py.length;
+        const defs = py.slice(a, b);
+        const probe = (aExpr, eExpr, cmp, tol = 'None') => {
+          const src = `import numpy as np, pandas as pd\nnan = float('nan')\n${defs}\nprint(__zq_cmp(${aExpr}, ${JSON.stringify(eExpr)}, '${cmp}', globals(), ${tol}))`;
+          const out = execSync('python3 -I -', { input: src, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+          return out.trim().split('\n').pop().slice(-3);
+        };
+        let have = true; try { execSync('python3 -c "import numpy, pandas"', { stdio: 'ignore' }); } catch { have = false; }
+        if (!have) console.log('note: no local NumPy and pandas; the NaN compare tests are skipped');
+        else {
+          const cases = [
+            ['isclose: NaN equals NaN in a list', '[1.0, nan]', '[1.0, float("nan")]', 'isclose', '1.0'],
+            ['isclose: NaN equals NaN in an array', 'np.array([nan, 2.0])', '[float("nan"), 2.0]', 'isclose', '1.0'],
+            ['isclose: NaN equals NaN in a Series', 'pd.Series([nan, 2.0])', '[float("nan"), 2.0]', 'isclose', '1.0'],
+            ['equal: NaN equals NaN in a list', '[1.0, nan]', '[1.0, float("nan")]', 'equal', '1.0'],
+            ['equal: NaN equals NaN in a Series', 'pd.Series([nan, 2.0])', '[float("nan"), 2.0]', 'equal', '1.0'],
+            ['isclose: NaN scalar equals NaN', 'nan', 'float("nan")', 'isclose', '1.0'],
+            ['isclose: actual NaN where 1.0 expected fails', '[nan]', '[1.0]', 'isclose', '0.0'],
+            ['isclose: 1.0 where NaN expected fails', '[1.0]', '[float("nan")]', 'isclose', '0.0'],
+            ['equal: actual NaN where 1.0 expected fails', 'np.array([nan])', '[1.0]', 'equal', '0.0'],
+            ['equal: 1.0 where NaN expected fails', 'np.array([1.0])', '[float("nan")]', 'equal', '0.0'],
+            ['isclose: DataFrame equal', 'pd.DataFrame({"a": [1.0, nan]}, index=["x", "y"])', 'pd.DataFrame({"a": [1.0, float("nan")]}, index=["x", "y"])', 'isclose', '1.0'],
+            ['isclose: DataFrame with other columns fails', 'pd.DataFrame({"b": [1.0, 2.0]})', 'pd.DataFrame({"a": [1.0, 2.0]})', 'isclose', '0.0'],
+            ['equal: DataFrame with other index fails', 'pd.DataFrame({"a": [1.0, 2.0]}, index=[5, 6])', 'pd.DataFrame({"a": [1.0, 2.0]})', 'equal', '0.0'],
+            ['isclose: DataFrame against nested list', 'pd.DataFrame({"a": [1.0], "b": [2.0]})', '[[1.0, 2.0]]', 'isclose', '1.0'],
+            ['isclose: equal dicts', '{"a": 1.0, "b": nan}', '{"b": float("nan"), "a": 1.0}', 'isclose', '1.0'],
+            ['equal: equal dicts', '{"a": 1, "b": [1, 2]}', '{"a": 1, "b": [1, 2]}', 'equal', '1.0'],
+            ['isclose: dict with a missing key fails', '{"a": 1.0}', '{"a": 1.0, "b": 2.0}', 'isclose', '0.0'],
+            ['isclose: dict with an extra key fails', '{"a": 1.0, "b": 2.0}', '{"a": 1.0}', 'equal', '0.0'],
+            ['isclose: dict value outside tolerance fails', '{"a": 1.001}', '{"a": 1.0}', 'isclose', '0.0'],
+            ['isclose: dict value within tolerance passes', '{"a": 1.0000000001}', '{"a": 1.0}', 'isclose', '1.0'],
+            ['isclose: dict with a nested list value', '{"a": [1.0, np.array([2.0, nan])]}', '{"a": [1.0, [2.0, float("nan")]]}', 'isclose', '1.0'],
+            ['isclose: dict nested list value differs', '{"a": [1.0, 2.5]}', '{"a": [1.0, 2.0]}', 'isclose', '0.0'],
+            ['isclose: unchanged tolerance pass', '[1.0000000001, 2]', '[1.0, 2]', 'isclose', '1.0'],
+            ['isclose: unchanged tolerance fail', '1.001', '1.0', 'isclose', '0.0'],
+            ['isclose: unchanged tol argument', '10.449', '10.45', 'isclose', '1.0', '(0, 0.005)'],
+            ['isclose: tol argument still fails outside it', '10.4', '10.45', 'isclose', '0.0', '(0, 0.005)'],
+          ];
+          for (const [name, aE, eE, cmp, want, tol] of cases) {
+            let got; try { got = probe(aE, eE, cmp, tol); } catch (e) { got = 'error ' + String(e.message).slice(0, 80); }
+            check(`compare (700) ${name}`, got === want, got);
+          }
+        }
+      } catch (e) { check('compare (700) harness extract', false, String(e && e.message || e).slice(0, 200)); }
     }
   } catch (e) { check('code.js loads for the importHint test', false, String(e && e.message || e)); }
 };

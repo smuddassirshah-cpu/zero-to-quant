@@ -209,14 +209,39 @@ def __zq_cmp(_a, _exp, _cmp, _ns, _tol=None):
     if _cmp == 'fraction':
         return 1.0 if isinstance(_a, _F) and _a == _e else 0.0
     # arrays, Series and nested lists compare element by element (item 143): tolist() first
+    # item 700: a DataFrame compares through to_numpy().tolist(); NaN at a position matches NaN there, in isclose and equal
     def _flat(_v):
+        if hasattr(_v, 'to_numpy') and getattr(_v, 'ndim', 0) == 2:
+            return _v.to_numpy().tolist()
         return _v.tolist() if hasattr(_v, 'tolist') and not isinstance(_v, (int, float, complex, str)) else _v
+    def _nan(_v):
+        try:
+            return bool(_v != _v)
+        except Exception:
+            return False
+    def _frame(_a, _e):
+        if hasattr(_e, 'columns') and hasattr(_e, 'index'):
+            return hasattr(_a, 'columns') and hasattr(_a, 'index') and _same(list(_a.index), list(_e.index)) and _same(list(_a.columns), list(_e.columns))
+        return True
+    def _same(_x, _y):
+        _x, _y = _flat(_x), _flat(_y)
+        if isinstance(_x, dict) or isinstance(_y, dict):  # item 700: dicts compare by key set, then value by value
+            return isinstance(_x, dict) and isinstance(_y, dict) and set(_x) == set(_y) and all(_same(_x[_k], _y[_k]) for _k in _x)
+        if isinstance(_x, (list, tuple)) or isinstance(_y, (list, tuple)):
+            return isinstance(_x, (list, tuple)) and isinstance(_y, (list, tuple)) and len(_x) == len(_y) and all(_same(_p, _q) for _p, _q in zip(_x, _y))
+        if _nan(_x) and _nan(_y):
+            return True
+        return bool(_x == _y)
     def _close(_x, _y):
         _x, _y = _flat(_x), _flat(_y)
+        if isinstance(_x, dict) or isinstance(_y, dict):
+            return isinstance(_x, dict) and isinstance(_y, dict) and set(_x) == set(_y) and all(_close(_x[_k], _y[_k]) for _k in _x)
         if isinstance(_x, (list, tuple)) or isinstance(_y, (list, tuple)):
             return isinstance(_x, (list, tuple)) and isinstance(_y, (list, tuple)) and len(_x) == len(_y) and all(_close(_p, _q) for _p, _q in zip(_x, _y))
         if isinstance(_x, (str, bytes)) and not isinstance(_y, (str, bytes)):
             return False  # item 121: "0.05" is text, not the number 0.05
+        if _nan(_x) and _nan(_y):
+            return True  # item 700: NaN where NaN is expected
         # item 430: a complex value (Python, or a NumPy complex scalar) compares as cmath.isclose, with the same tolerances
         if any(isinstance(_v, complex) or type(_v).__name__.startswith('complex') for _v in (_x, _y)):
             try:
@@ -231,10 +256,12 @@ def __zq_cmp(_a, _exp, _cmp, _ns, _tol=None):
             return _m.isclose(float(_x), float(_y), rel_tol=1e-9, abs_tol=1e-12)
         except Exception:
             return _x == _y
+    if not _frame(_a, _e):
+        return 0.0
     if _cmp == 'isclose':
         return 1.0 if _close(_a, _e) else 0.0
     try:
-        return 1.0 if bool(_flat(_a) == _flat(_e)) else 0.0
+        return 1.0 if _same(_a, _e) else 0.0
     except Exception:
         return 0.0
 `;
