@@ -115,6 +115,14 @@ def complements():
         else:
             bad += 1
     check("l3_pence_rule", ok == 9000 and bad == 999, "l3 quiz[1].prose: the digit rule gives the change from £100 exactly when the last digit is not 0")
+    # the corrected rule (finding 2 fix): digits to 9, the last non-zero digit to 10, end zeros stay 0
+    def general(p):
+        s = f"{p:04d}"
+        k = max(i for i, c in enumerate(s) if c != "0")
+        digs = [9 - int(c) for c in s[:k]] + [10 - int(s[k])] + [0] * (len(s) - k - 1)
+        return int("".join(map(str, digs)))
+    check("l3_pence_rule_general", all(general(p) == 10000 - p for p in range(1, 10000)),
+          "finding 2 fix: with 'the last digit that is not 0' the rule gives the change from £100 for every amount")
     d = load("l3-making-100")
     w = d["quiz"][1]["widget"]
     check("l3_change", F(str(w["answer"])) == 100 - F("37.45"), "l3 quiz[1]: change £62.55")
