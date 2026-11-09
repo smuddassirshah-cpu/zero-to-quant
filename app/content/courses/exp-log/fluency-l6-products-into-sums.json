@@ -1,0 +1,113 @@
+{
+  "id": "fluency-l6-products-into-sums",
+  "course": "exp-log",
+  "lesson": "l6-products-into-sums",
+  "title": "Fluency: turning products into sums",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "split-a-product",
+      "weight": 2,
+      "skill": "split the log of a product",
+      "vars": {
+        "m": { "int": [2, 6] },
+        "n": { "int": [2, 6] },
+        "b": { "pick": ["b", "2", "3", "10"] }
+      },
+      "let": { "mn": "m*n" },
+      "prompt": "Let $p = \\log_{{{b}}} x$ and $q = \\log_{{{b}}} y$. Write $\\log_{{{b}}} (x^{{{m}}} y^{{{n}}})$ in terms of $p$ and $q$.",
+      "widget": { "kind": "expression", "answer": "{m}p+{n}q", "keyboard": "algebra" },
+      "wrong": [
+        { "id": "powers-left-behind", "tex": "p+q", "line": "You left the powers behind: the power law brings each one down in front." },
+        { "id": "multiplied-the-logs", "tex": "{mn}pq", "line": "A product inside the log becomes a sum of logs, not a product." }
+      ],
+      "solution": [
+        "The product law splits the log: $\\log_{{{b}}} (x^{{{m}}}) + \\log_{{{b}}} (y^{{{n}}})$.",
+        "The power law brings the powers down: ${m}\\log_{{{b}}} x + {n}\\log_{{{b}}} y = {m}p+{n}q$."
+      ]
+    },
+    {
+      "id": "split-a-quotient",
+      "weight": 2,
+      "skill": "split the log of a quotient",
+      "vars": {
+        "m": { "int": [2, 9] },
+        "n": { "int": [2, 9] },
+        "b": { "pick": ["b", "2", "3", "10"] }
+      },
+      "where": ["gcd(m, n) == 1"],
+      "prompt": "Let $p = \\log_{{{b}}} x$ and $q = \\log_{{{b}}} y$. Write $\\log_{{{b}}} \\dfrac{{x^{{{m}}}}}{{y^{{{n}}}}}$ in terms of $p$ and $q$.",
+      "widget": { "kind": "expression", "answer": "{m}p-{n}q", "keyboard": "algebra" },
+      "wrong": [
+        { "id": "added-for-divide", "tex": "{m}p+{n}q", "line": "Dividing inside the log subtracts the logs: the $y$ term takes a minus." },
+        { "id": "divided-the-logs", "tex": "\\frac{{{m}p}}{{{n}q}}", "line": "A quotient inside the log becomes a difference of logs, not a quotient of them." }
+      ],
+      "solution": [
+        "The quotient law splits the log: $\\log_{{{b}}} (x^{{{m}}}) - \\log_{{{b}}} (y^{{{n}}})$.",
+        "The power law brings the powers down: ${m}\\log_{{{b}}} x - {n}\\log_{{{b}}} y = {m}p-{n}q$."
+      ]
+    },
+    {
+      "id": "combine-a-sum",
+      "weight": 2,
+      "skill": "combine a sum of logs",
+      "vars": {
+        "b": { "pick": [6, 10, 14, 15, 21, 22, 26] },
+        "n": { "int": [1, 3] },
+        "h": { "int": [0, 3] },
+        "d": { "int": [1, 3] }
+      },
+      "let": {
+        "u": "2 + b % 2", "w": "b/(2 + b % 2)", "bn": "b^n", "i": "h % (n + 1)", "j": "(h % (n + 1) + 1 + d % n) % (n + 1)",
+        "x": "u^i*w^j", "y": "u^(n - i)*w^(n - j)",
+        "lnb": "50000*(b^(1/100000) - b^(-1/100000))",
+        "lnx": "50000*(x^(1/100000) - x^(-1/100000))",
+        "lny": "50000*(y^(1/100000) - y^(-1/100000))",
+        "lns": "50000*((x + y)^(1/100000) - (x + y)^(-1/100000))",
+        "ofsum": "lns/lnb", "times": "lnx*lny/lnb^2"
+      },
+      "where": ["bn <= 1000", "abs(ofsum - n) > 0.05", "abs(times - n) > 0.05", "abs(ofsum - times) > 0.05"],
+      "prompt": "Work out $\\log_{{{b}}} {x} + \\log_{{{b}}} {y}$.",
+      "widget": { "kind": "numeric", "answer": "{n}", "tol": { "abs": 0 }, "placeholder": "a whole number" },
+      "wrong": [
+        { "id": "log-of-the-sum", "value": "{ofsum}", "tol": { "abs": 0.01 }, "line": "You added {x} and {y} inside one log: adding logs multiplies the numbers inside." },
+        { "id": "multiplied-the-logs", "value": "{times}", "tol": { "abs": 0.01 }, "line": "You multiplied the two logs: the product law turns a sum of logs into the log of a product." }
+      ],
+      "solution": [
+        "Adding logs multiplies the numbers inside: ${x} \\times {y} = {bn}$.",
+        "So the sum is $\\log_{{{b}}} {bn} = {n}$."
+      ]
+    },
+    {
+      "id": "combine-a-difference",
+      "weight": 2,
+      "skill": "combine a difference of logs",
+      "vars": {
+        "b": { "pick": [2, 3, 5, 10] },
+        "c": { "int": [2, 12] },
+        "n": { "int": [1, 3] }
+      },
+      "let": {
+        "bn": "b^n", "top": "c*b^n",
+        "lnc": "50000*(c^(1/100000) - c^(-1/100000))",
+        "lnb": "50000*(b^(1/100000) - b^(-1/100000))",
+        "lnt": "50000*(top^(1/100000) - top^(-1/100000))",
+        "lnd": "50000*((top - c)^(1/100000) - (top - c)^(-1/100000))",
+        "divided": "lnt/lnc", "inside": "lnd/lnb"
+      },
+      "where": ["c != b", "c != b^2", "c != b^3", "top <= 1000", "abs(divided - n) > 0.05", "abs(inside - n) > 0.05", "abs(divided - inside) > 0.05"],
+      "prompt": "Work out $\\log_{{{b}}} {top} - \\log_{{{b}}} {c}$.",
+      "widget": { "kind": "numeric", "answer": "{n}", "tol": { "abs": 0 }, "placeholder": "a whole number" },
+      "wrong": [
+        { "id": "divided-the-logs", "value": "{divided}", "tol": { "abs": 0.01 }, "line": "You divided one log by the other: the quotient law turns a difference of logs into the log of a quotient." },
+        { "id": "subtracted-inside", "value": "{inside}", "tol": { "abs": 0.01 }, "line": "You took {c} from {top} inside the log: subtracting logs divides the numbers inside." }
+      ],
+      "solution": [
+        "Subtracting logs divides the numbers inside: ${top} \\div {c} = {bn}$.",
+        "So the difference is $\\log_{{{b}}} {bn} = {n}$."
+      ]
+    }
+  ]
+}
