@@ -1696,3 +1696,5 @@ Raised later (opt-dash level 4 perf):
 
 Raised later (fin-ml level 2 perf):
 - [Could] `code` widget, `equal` and `isclose`: a test still cannot expect NaN (sixth sighting, after `exercise_boundary`, `formation_returns`, research-int DataFrames, opt-dash and `h-label-purge`). fin-ml `h-return-rank` returns NaN by contract for a share with no feature, so its tests read the result through a hidden `day` helper that writes NaN as None. Wanted: an opt-in `"nan": "equal"` on a case.
+Raised later (cpp-pricing level 1 perf):
+- [Could] C++ and Python `isclose` default to an absolute 1e-12, so a test of a tiny value (`norm_cdf(-7.5)`, 3.2e-14) passes a function that returns 0 unless the case carries `tol: { rel: 1e-9 }`. `h-perf-corridor` sets it on five cases by hand. Wanted: a validator warning on an `isclose` case whose non-zero `expect` is below 1e-10 in size and has no `tol`.
