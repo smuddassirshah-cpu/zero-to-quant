@@ -1710,6 +1710,10 @@ Raised later (cpp level 3 perf):
 Raised later (cpp level 4 perf):
 - [Could] C++ `code` widget, planted-bug grading in script mode: a case is either `stdout` ("planted slip k: caught") or `raises`, never "either". So a slip may only stop the run on the one input its `raises` case is built for; a learner input that crashes any other slip would read as a miss. `h4-test-median` keeps four slips crash-free. Wanted: a case that passes on the expected text or an abnormal end (`"compare": "stdout", "orStops": true`).
 
+Raised later (cpp level 5 perf):
+- [Could] C++ runtime: a read or write through a null pointer does not stop the run (address 0 is ordinary wasm memory), so a `CountedPtr` copy constructor that adds one to `*count_` with no null check passes, and `h5-sole-and-counted` cannot test a copy of an empty pointer; its `how` says so. Wanted: a widget flag (`"nullCheck": true`) that adds `-fsanitize=null -fsanitize-trap=null`, which traps a null member access or reference bind with no runtime library.
+- [Could] Seen again (cpp level 3 perf, `privateData`): `h5-sole-and-counted` cannot test that the raw pointer and the count are private, as the learner names them. Its `how` says no test sees it.
+
 Raised later (limits-thm level 3 perf):
 - [Could] `tools/playthrough.mjs --set ... --shots --mobile`: the `-marked` shot of a longform item covers only the first 440 x 956 viewport, so the model answer's display equations below it are never seen, and nothing checks them for sideways scroll (related to inbox lines on viewport-only shots). All three limits-thm perf models needed a scratch KaTeX column check (`eqcheck.mjs`, 356 px), which found five displays that ran up to 25 px wide. That check reads a `\sqrt` display as 8,000 px wide, so its widths need a look at the shot. Wanted: in `--mobile`, a full-height shot of the marked model and rubric, plus a check of each `.katex-display` against its box, with the overflowing ones named.
 

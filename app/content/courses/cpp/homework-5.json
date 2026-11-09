@@ -902,6 +902,148 @@
           }
         ]
       }
+    },
+    {
+      "id": "h5-sole-and-counted",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "cp-memory",
+        "cp-classes"
+      ],
+      "pace": 1800,
+      "title": "Two owning pointers for a chain of book states",
+      "prose": "An order-book recorder keeps its past states as a chain, newest first. Each state owns the one before it. Write two owning pointers for it, from a blank file.\n\n- `SolePtr<T>` owns one object or nothing. `SolePtr()` is empty, `explicit SolePtr(T* p)` owns `p`, and the destructor deletes what it owns.\n- A `SolePtr` cannot be copied. Its move constructor and move assignment are `noexcept`, hand the object over and leave the source empty.\n- `T* release()` gives the object up without deleting it and returns it.\n- `CountedPtr<T>` shares one object between owners, with one count for them all. `CountedPtr()` is empty, and `explicit CountedPtr(T* p)` starts a count of 1.\n- A copy shares the object and adds one to the count. The last owner to go deletes the object and the count. Its moves are `noexcept` and leave the source empty.\n- `CountedPtr(SolePtr<T>&& s)` takes over what `s` owned and leaves `s` empty. An empty `s` gives an empty pointer.\n- `long use_count() const` gives the count, 0 for an empty pointer. Both classes have `T* get() const`, `operator*` and `operator->`.\n- Every assignment works for `a = a`, and when the source lives inside the object being let go:\n\n```cpp\nhead = std::move(head->older);   // SolePtr<State>: drop the newest state\nlatest = latest->older;          // CountedPtr<Frame>: the same, by copy\n```",
+      "question": "Write `SolePtr<T>` and `CountedPtr<T>` to the specification above.",
+      "feedback": {
+        "correct": "Correct. Each object has one deleter, the count stays right, and an assignment takes its source before it lets go.",
+        "generic": "Not quite right. Read the first failing test: a wrong count or a crash after an assignment points to the order of its lines.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the names and signatures in the specification, and the `SolePtr&&` constructor."
+        }
+      },
+      "explain": {
+        "text": "`head->older` lives inside the state `head` owns, so an assignment that deletes first reads freed memory. Take the source first, or copy it into a temporary and swap, then let the old object go. `CountedPtr(SolePtr<T>&&)` takes the object with `release()`, so only one owner ever deletes it."
+      },
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Quote objects are alive.\nstruct Quote {\n    static inline int live = 0;\n    int px;\n    explicit Quote(int p) : px(p) { ++live; }\n    ~Quote() { --live; }\n};\n",
+        "postlude": "\n// Hidden: book states, newest first; each owns the one before it.\nstruct State {\n    static inline int live = 0;\n    int seq;\n    SolePtr<State> older;\n    explicit State(int s) : seq(s) { ++live; }\n    ~State() { --live; }\n};\nstruct Frame {\n    static inline int live = 0;\n    int seq;\n    CountedPtr<Frame> older;\n    Frame(int s, CountedPtr<Frame> o) : seq(s), older(std::move(o)) { ++live; }\n    ~Frame() { --live; }\n};\n",
+        "starter": "#include <utility>\n\n// Write the class templates SolePtr<T> and CountedPtr<T> here.\n",
+        "solution": "#include <utility>\n\n// SolePtr<T>: one owner, or none.\ntemplate <typename T>\nclass SolePtr {\npublic:\n    SolePtr() = default;\n    explicit SolePtr(T* p) : ptr_(p) {}\n    ~SolePtr() { delete ptr_; }\n\n    SolePtr(const SolePtr&) = delete;\n    SolePtr& operator=(const SolePtr&) = delete;\n    SolePtr(SolePtr&& other) noexcept : ptr_(other.release()) {}\n    SolePtr& operator=(SolePtr&& other) noexcept {\n        T* old = ptr_;\n        ptr_ = other.release();   // take the source first: the old object may own it\n        delete old;\n        return *this;\n    }\n\n    T* release() {\n        T* p = ptr_;\n        ptr_ = nullptr;\n        return p;\n    }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    T* ptr_ = nullptr;\n};\n\n// CountedPtr<T>: shared owners and one count on the heap.\ntemplate <typename T>\nclass CountedPtr {\npublic:\n    CountedPtr() = default;\n    explicit CountedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n    CountedPtr(SolePtr<T>&& s) : CountedPtr(s.release()) {}\n\n    CountedPtr(const CountedPtr& other) : ptr_(other.ptr_), count_(other.count_) {\n        if (count_) ++*count_;\n    }\n    CountedPtr(CountedPtr&& other) noexcept : ptr_(other.ptr_), count_(other.count_) {\n        other.ptr_ = nullptr;\n        other.count_ = nullptr;\n    }\n    // Build the new share first, then swap: the old share is dropped last, by the temporary.\n    CountedPtr& operator=(const CountedPtr& other) {\n        CountedPtr copy(other);\n        swap(copy);\n        return *this;\n    }\n    CountedPtr& operator=(CountedPtr&& other) noexcept {\n        CountedPtr taken(std::move(other));\n        swap(taken);\n        return *this;\n    }\n    ~CountedPtr() {\n        if (count_ && --*count_ == 0) {\n            delete ptr_;\n            delete count_;\n        }\n    }\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    void swap(CountedPtr& other) noexcept {\n        std::swap(ptr_, other.ptr_);\n        std::swap(count_, other.count_);\n    }\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
+        "examples": [
+          {
+            "setup": "{ SolePtr<Quote> p(new Quote(5)); }",
+            "call": "Quote::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "CountedPtr<Quote> a(new Quote(1)); long mid = 0; { CountedPtr<Quote> b(a); CountedPtr<Quote> c(b); mid = a.use_count(); }",
+            "call": "mid * 100 + a.use_count() * 10 + Quote::live",
+            "expect": 311,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "{ SolePtr<Quote> p(new Quote(5)); }",
+            "call": "Quote::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "SolePtr<Quote> a(new Quote(7)); SolePtr<Quote> b(std::move(a));",
+            "call": "(a.get() == nullptr ? 100 : 0) + b->px",
+            "expect": 107,
+            "compare": "equal"
+          },
+          {
+            "setup": "SolePtr<Quote> a(new Quote(1)); SolePtr<Quote> b(new Quote(2)); b = std::move(a);",
+            "call": "(a.get() == nullptr ? 100 : 0) + Quote::live * 10 + b->px",
+            "expect": 111,
+            "compare": "equal"
+          },
+          {
+            "setup": "SolePtr<Quote> a(new Quote(3)); Quote* raw = a.release(); int alive = Quote::live; int px = raw->px; delete raw;",
+            "call": "alive * 100 + px * 10 + (a.get() == nullptr ? 1 : 0)",
+            "expect": 131,
+            "compare": "equal"
+          },
+          {
+            "setup": "SolePtr<Quote> a;",
+            "compiles": "SolePtr<Quote> b = a;",
+            "expect": false
+          },
+          {
+            "setup": "SolePtr<State> head; for (int s = 1; s <= 4; ++s) { SolePtr<State> n(new State(s)); n->older = std::move(head); head = std::move(n); } head = std::move(head->older);",
+            "call": "head->seq * 10 + State::live",
+            "expect": 33,
+            "compare": "equal"
+          },
+          {
+            "setup": "CountedPtr<Quote> a(new Quote(1)); long mid = 0; { CountedPtr<Quote> b(a); CountedPtr<Quote> c(b); mid = a.use_count(); }",
+            "call": "mid * 100 + a.use_count() * 10 + Quote::live",
+            "expect": 311,
+            "compare": "equal"
+          },
+          {
+            "setup": "CountedPtr<Quote> a(new Quote(1)); CountedPtr<Quote> b(new Quote(2)); b = a; CountedPtr<Quote> c(new Quote(3)); CountedPtr<Quote>& r = c; c = r;",
+            "call": "Quote::live * 100 + a.use_count() * 10 + c.use_count()",
+            "expect": 221,
+            "compare": "equal"
+          },
+          {
+            "call": "std::vector<int>{std::is_nothrow_move_constructible_v<SolePtr<Quote>>, std::is_nothrow_move_assignable_v<SolePtr<Quote>>, std::is_nothrow_move_constructible_v<CountedPtr<Quote>>, std::is_nothrow_move_assignable_v<CountedPtr<Quote>>}",
+            "expect": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "CountedPtr<Quote> a(new Quote(4)); CountedPtr<Quote> b(std::move(a));",
+            "call": "b.use_count() * 100 + a.use_count() * 10 + (a.get() == nullptr ? 1 : 0)",
+            "expect": 101,
+            "compare": "equal"
+          },
+          {
+            "setup": "CountedPtr<Quote> a(new Quote(1)); CountedPtr<Quote> b(new Quote(2)); CountedPtr<Quote> c(b); b = std::move(a);",
+            "call": "Quote::live * 1000 + b.use_count() * 100 + c.use_count() * 10 + a.use_count()",
+            "expect": 2110,
+            "compare": "equal"
+          },
+          {
+            "setup": "CountedPtr<Frame> latest(new Frame(1, CountedPtr<Frame>())); for (int s = 2; s <= 4; ++s) latest = CountedPtr<Frame>(new Frame(s, latest)); latest = latest->older;",
+            "call": "latest->seq * 100 + latest.use_count() * 10 + Frame::live",
+            "expect": 313,
+            "compare": "equal"
+          },
+          {
+            "setup": "CountedPtr<Frame> latest(new Frame(1, CountedPtr<Frame>())); for (int s = 2; s <= 4; ++s) latest = CountedPtr<Frame>(new Frame(s, latest)); latest = std::move(latest->older);",
+            "call": "latest->seq * 100 + latest.use_count() * 10 + Frame::live",
+            "expect": 313,
+            "compare": "equal"
+          },
+          {
+            "setup": "SolePtr<Quote> u(new Quote(6)); CountedPtr<Quote> s(std::move(u)); CountedPtr<Quote> c(s);",
+            "call": "(u.get() == nullptr ? 1000 : 0) + s.use_count() * 100 + (*c).px * 10 + Quote::live",
+            "expect": 1261,
+            "compare": "equal"
+          },
+          {
+            "setup": "SolePtr<Quote> u; CountedPtr<Quote> s(std::move(u));",
+            "call": "s.use_count() * 10 + (s.get() == nullptr ? 1 : 0)",
+            "expect": 1,
+            "compare": "equal"
+          }
+        ],
+        "leakCheck": true,
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 15 hidden tests. Hidden types count the objects alive, and a test also fails on a leak or a double delete. Freed memory is overwritten, so a read of a deleted object gives a wrong value or a crash. One test only compiles a copy of a `SolePtr`, which must be refused. No test can see whether the members are private, and none copies an empty `CountedPtr`, as a write through a null pointer does not stop the run here. Check those yourself."
+      }
     }
   ]
 }
