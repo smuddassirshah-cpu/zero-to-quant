@@ -1802,3 +1802,6 @@ Raised later (first-python level 2 perf):
 
 Raised later (first-python level 3 perf):
 - [Could] In script mode the whole program reruns for every case, so an error in the script's own lines (a function that prints, then `f"{None:.2f}"`) fails every call test at test 1, and `byKey.error` never fires. A key for an exception raised outside the `call` would let one line point at the script part (related to ENGINE-BACKLOG 681).
+
+Raised later (analysis level 4 perf):
+- [Should] ENGINE-BACKLOG 701 measures `.katex-display` only. An inline `$...$` triangle-inequality chain in the model of analysis `homework-4` `h-prove-uniform-diagonal` ran past the card at 440 px and was clipped, yet the playthrough passed; it was found only in the `-marked-440` shot. Wanted: the same check on every inline `.katex` whose right edge passes the card's (prompt, model, rubric), naming `<file>#<item id>` and the TeX. Workaround used: both chains moved into `aligned` displays.
