@@ -92,7 +92,8 @@ def solve_range_volumes(text):
     out = []
     for l, r in lines[2:2 + q]:
         l, r = int(l), int(r)
-        out.append(str(int(v[l - 1:r].sum())))
+        # bars l+1..r (1-based) each against the bar before it: 0-based indices l..r-1 against l-1..r-2
+        out.append(str(int((v[l:r] > v[l - 1:r - 1]).sum())))
     return "\n".join(out)
 
 

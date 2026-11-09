@@ -40,3 +40,28 @@ Format: `N. file | JSON path | severity | what is wrong | exact fix`. Severity: 
 
 - The false line "All tests share a 5-second time limit." also appears in the pre-existing `ci-*` drills and `annualised-vol.json` (finding 10). A validator rule could flag that sentence in any drill's `constraints`.
 - The prose gate of `fresh-check.mjs` misses a renamed lesson task (findings 7 to 9: `longest_unique`, largest rectangle, `range_sum`), and the code-name check misses it because the function is renamed. A third check could compare a drill's model `solution` with lesson code widget solutions, for example by token shingles after renaming identifiers.
+
+## Fix pass
+
+Method: each claim was reproduced with the reader's planted solutions (`extra_checks.py`) before editing; new `expect` values come from the model solution and an independent slow method, and both check scripts assert they agree.
+
+1. fixed: notes[1] of `dsa-net-tape` now says a sell rests only once every buy is gone, so later buys stack above it (reader's wording).
+2. fixed: reproduced, true and floor division both pass all 14 cases (`s / k >= t` is exact because the gap 1/k is far above float error). Note and hint now give "whole numbers" as the reason.
+3. fixed: first-vs-last planted solution passed 0/14 fail; added `['a','b','b','c'], 3 -> 0` and a 100,000-badge case written as `list(range(50000)) + [49990] + list(range(50001, 100000))` with k 30000 -> 40011 (by hand: 70,001 windows minus 29,990 starts in 20,001..49,990). Planted now fails 2 tests. 14 tests.
+4. fixed: walk-down solution passed 0/14; added the two-cluster case -> 49999 (by hand: two of any three kiosks share a cluster, so at most 49,999; 0, 49,999, 10^9 reach it). Walk-down now times out on it. B check returns 49999 by that argument. 13 tests.
+5. fixed: brief now says each resting order stays a separate entry; added `[5, 1, -2] -> [4]` and `[-2, -3, 4] -> [-2, -3, 4]`. FIFO now fails 2 tests, merged sells 1. 14 tests.
+6. fixed: added `closest_pair_gap([1, 5, 5], 10) -> 0`; dedupe solution now fails it. 13 tests.
+7. fixed: confirmed `ds/l6-sliding-window.json` teaches `longest_unique` with the same dict and the `'abba'` trap. `dsa-oncall-rota` now asks `count_clean_runs(rota)`, the number of clean runs of any length. Slow method: every run checked with a set for n up to 1500, otherwise a right-to-left next-repeat sweep. Id kept, `index.json` name now "Clean runs of the rota". Planted one-run-per-end fails 10 tests, no-guard fails 1.
+8. fixed: confirmed `ds/l10-next-greater.json` teaches the largest rectangle in a histogram. `dsa-depth-block` now asks `total_block_floor(depth)`, the sum of block floors, with n up to 100,000 and depth up to 10^6 so answers stay under 2^53. Slow method: all blocks for small n, level counting for many equal depths, closed form for the rising list. Planted both-strict fails 6 tests (pop on `>` alone is the valid mirror tie-break, not a wrong solution). Name in `index.json` now "Total of block floors".
+9. fixed: confirmed `range_sum` in `ds/l7-prefix-sums.json` and `range_total` in `algo-think/l3-memory.json` are the same core. `dsa-range-volumes` keeps its stdin format and now counts bars from `l + 1` to `r` that traded more than the bar before, answer `rise[r] - rise[l]`. Slow method: per-query numpy comparison. Planted `rise[r] - rise[l-1]` fails 3 tests. Name in `index.json` now "Rising bars between two bars".
+10. fixed, with a correction: the reader cited `code.js`, which is the lesson widget. The drill page (`app/js/screens/drill.js`, `LIMIT_MS = 5000` in `exec`) arms one 5 s timer for the whole run, so "All tests share a 5-second time limit" was true and the sub-pack B line was the false one. All 30 files now say "All the tests in a run share one 5-second limit in the browser." The `ci-` drills are unaffected. Inbox item: the playthrough for large-test drills should be read against the shared limit.
+11. fixed: brief and examples[0].note now name the run 6, 0, 2 (checked: two profits, one zero day, and no run of four or more has more wins).
+12. fixed: constraints[0] now reads `$k \ge 1$`.
+13. fixed: hint now describes the dict of counts with deletion, as in the model and notes.
+14. fixed: reproduced, three reversals without the modulo raise `IndexError` on `flip(0, k - 1)`; notes[1] reworded.
+15. fixed: `looping-route` is 2 and `stock-ledger` is 3 in both files and `index.json`; mix stays 5 / 6 / 4.
+16. fixed: brief says `(open, close)` tuples of indices (a list `[1, 11]` does not equal `(1, 11)`).
+17. no change needed; the walk-down in the B check is replaced by the hand argument (finding 4).
+18. no change needed.
+
+Gates: counts 18 fixed, 0 disputed (finding 10 corrected in its cause, not its remedy). `drills-dsa-a-check.py` and `drills-dsa-b-check.py` exit 0. Validator 0 errors. `voice-scan.py 35` on the 30 files: 0 sentences over 35 words, 0 explanations over three sentences. Playthrough with `--local-cdn`: all 30 drills green, desktop and `--mobile` (14 tests for varied-windows, 13 for depth-block and kiosk-spacing, as listed above).
