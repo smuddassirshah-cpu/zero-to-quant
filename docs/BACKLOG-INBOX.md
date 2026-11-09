@@ -1815,3 +1815,6 @@ Raised later (terminal level 3 perf):
 
 Raised later (analysis level 4 perf):
 - [Should] ENGINE-BACKLOG 701 measures `.katex-display` only. An inline `$...$` triangle-inequality chain in the model of analysis `homework-4` `h-prove-uniform-diagonal` ran past the card at 440 px and was clipped, yet the playthrough passed; it was found only in the `-marked-440` shot. Wanted: the same check on every inline `.katex` whose right edge passes the card's (prompt, model, rubric), naming `<file>#<item id>` and the TeX. Workaround used: both chains moved into `aligned` displays.
+
+Raised later (mock versions mock-oa-sig):
+- [Should] `fresh-check.mjs` never compares versions of one mock (`versionOf`), so it cannot catch the fault of critical review 3.1, where versions 2 and 3 repeated version 1's 17 templates. A `--versions <base>` mode could compare the items at each position across the version files with numbers masked, at a looser gate (`--min-run 8 --min-share 0`), and flag any `tags` family shared at one position. On the old files it would have flagged all 17 positions; on the new ones, none.
