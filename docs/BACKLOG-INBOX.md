@@ -1712,3 +1712,12 @@ Raised later (cpp level 4 perf):
 
 Raised later (limits-thm level 3 perf):
 - [Could] `tools/playthrough.mjs --set ... --shots --mobile`: the `-marked` shot of a longform item covers only the first 440 x 956 viewport, so the model answer's display equations below it are never seen, and nothing checks them for sideways scroll (related to inbox lines on viewport-only shots). All three limits-thm perf models needed a scratch KaTeX column check (`eqcheck.mjs`, 356 px), which found five displays that ran up to 25 px wide. That check reads a `\sqrt` display as 8,000 px wide, so its widths need a look at the shot. Wanted: in `--mobile`, a full-height shot of the marked model and rubric, plus a check of each `.katex-display` against its box, with the overflowing ones named.
+
+Raised later (pytest level 1 perf):
+- [Could] `code` widget: a task that grades a learner's pytest file against hidden versions of the function carries its whole grader in the item (`h-average-cost-tests`: about 130 lines of prelude and postlude that write each version into a hidden `costs.py`, run real pytest with a plugin that records each test's outcome, and reverse the order). Wanted: a widget option such as `"pytestGrade": { "module": "costs", "versions": { ... } }` that provides `trial`, `names` and `weak` (tests that never fail on a broken version), so items stop copying it.
+
+Raised later (pytest level 2 perf):
+- [Could] `playthrough.mjs --set` plays only the solution and the starter of a `performance: "code"` item, so the planted wrong solutions (eleven wrong test files for `h2-curve-properties`) run only in the author's CPython script, never in Pyodide's pytest. Wanted: an optional `wrongs` list on a code widget (source and the test numbers it must fail) that the playthrough pastes and checks like the starter.
+
+Raised later (pytest level 3 perf):
+- [Could] `code` widget: a test-first task cannot see whether the learner ran their tests red before writing the code; the widget keeps no history of Run examples results. `h3-fee-test-first` stands in for it by requiring every test to fail on the starter's empty `broker_fee`. Wanted: an optional record of the first Run examples result after the tests appear (red or green), readable by a hidden case.

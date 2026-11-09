@@ -421,6 +421,118 @@
           "text": "(d) Gives two real edge cases, such as one price, a steady rise or a constant return. Writes a correct test for each."
         }
       ]
+    },
+    {
+      "id": "h-average-cost-tests",
+      "difficulty": 5,
+      "skills": [
+        "pt-basics",
+        "pt-cases"
+      ],
+      "title": "Tests from a description",
+      "performance": "code",
+      "prose": "A desk builds a position in several buys. `average_cost(fills, fee)`, in `costs.py`, gives the cost of each share held, in pounds. `fills` is a list of `(shares, price)` pairs and is never empty. Every fill pays the same flat `fee`. So the result is everything paid, prices and fees, divided by the shares bought. You cannot see the code: test it from this description alone.",
+      "question": "Write a test file for `average_cost`: at least three tests, each checking one behaviour against an answer worked out by hand.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from costs import average_cost\n\n\n",
+        "solution": "import pytest\n\nfrom costs import average_cost\n\n\ndef test_one_fill_without_a_fee_costs_its_price():\n    fills = [(200, 12.50)]\n    cost = average_cost(fills, 0.00)\n    assert cost == pytest.approx(12.50)\n\n\ndef test_bigger_fill_counts_for_more():\n    fills = [(100, 50.00), (300, 52.00)]\n    cost = average_cost(fills, 0.00)\n    assert cost == pytest.approx(51.50)  # (5,000 + 15,600) / 400\n\n\ndef test_fee_is_paid_on_every_fill():\n    fills = [(100, 50.00), (300, 52.00)]\n    cost = average_cost(fills, 6.00)\n    assert cost == pytest.approx(51.53)  # (20,600 + 2 x 6.00) / 400\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "len(names()) >= 3",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right_running')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right_exact')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('right', order='reverse')",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('no_fee')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('fee_once')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('fee_per_share')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('unweighted')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('per_fill')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "trial('last_fill')",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "weak()",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests with real pytest. Your tests must pass on three correct versions of `average_cost`, in file order and in reverse. They must catch six broken versions, and every test must fail on at least one of them. Run examples runs your tests on a correct version and prints the report.",
+        "prelude": "import importlib as _zil, os as _zos, sys as _zs\nimport pytest as _zpt\n\n_zs.dont_write_bytecode = True\nif _zos.getcwd() not in _zs.path:\n    _zs.path.insert(0, _zos.getcwd())\n_ZQ_MAIN = _zpt.main\n_ZQ_MODULE = 'costs'\n_ZQ_RIGHT = 'def average_cost(fills, fee):\\n    shares = sum(s for s, p in fills)\\n    paid = sum(s * p for s, p in fills) + fee * len(fills)\\n    return paid / shares\\n'\nwith open(_ZQ_MODULE + '.py', 'w') as _zf:\n    _zf.write(_ZQ_RIGHT)\n_zs.modules.pop(_ZQ_MODULE, None)\n_zil.invalidate_caches()\n",
+        "postlude": "_ZQ_MODE = 'module'\n_ZQ_FUNCTION = 'average_cost'\n_ZQ_MODULE = 'costs'\n_ZQ_SHOWN = 'right'\n_ZQ_WEAK_AGAINST = ('no_fee', 'fee_once', 'fee_per_share', 'unweighted', 'per_fill', 'last_fill')\n_ZQ_VERSIONS = {\n    'right': 'def average_cost(fills, fee):\\n    shares = sum(s for s, p in fills)\\n    paid = sum(s * p for s, p in fills) + fee * len(fills)\\n    return paid / shares\\n',\n    'right_running': 'def average_cost(fills, fee):\\n    held, avg = 0, 0.0\\n    for s, p in fills:\\n        held += s\\n        avg += (s * p + fee - s * avg) / held\\n    return avg\\n',\n    'right_exact': 'from fractions import Fraction\\n\\n\\ndef average_cost(fills, fee):\\n    paid = sum(Fraction(s) * Fraction(p) for s, p in fills) + Fraction(fee) * len(fills)\\n    return float(paid / sum(Fraction(s) for s, p in fills))\\n',\n    'no_fee': 'def average_cost(fills, fee):\\n    return sum(s * p for s, p in fills) / sum(s for s, p in fills)\\n',\n    'fee_once': 'def average_cost(fills, fee):\\n    return (sum(s * p for s, p in fills) + fee) / sum(s for s, p in fills)\\n',\n    'fee_per_share': 'def average_cost(fills, fee):\\n    return sum(s * (p + fee) for s, p in fills) / sum(s for s, p in fills)\\n',\n    'unweighted': 'def average_cost(fills, fee):\\n    return sum((s * p + fee) / s for s, p in fills) / len(fills)\\n',\n    'per_fill': 'def average_cost(fills, fee):\\n    return (sum(s * p for s, p in fills) + fee * len(fills)) / len(fills)\\n',\n    'last_fill': 'def average_cost(fills, fee):\\n    s, p = fills[-1]\\n    return (s * p + fee) / s\\n',\n}\n\nimport ast as _za, contextlib as _zc, io as _zio\n\n_ZQ_SEEN = {}\n\n\ndef _zq_fn(nodeid):\n    # test_mine.py::test_x[row] -> test_x\n    return nodeid.split(\"::\")[-1].split(\"[\")[0]\n\n\ndef _zq_binds(node, name):\n    if isinstance(node, (_za.FunctionDef, _za.AsyncFunctionDef, _za.ClassDef)):\n        return node.name == name\n    if isinstance(node, (_za.Assign, _za.AnnAssign)):\n        targets = node.targets if isinstance(node, _za.Assign) else [node.target]\n        return any(isinstance(t, _za.Name) and t.id == name for t in targets)\n    return False\n\n\ndef _zq_source(name):\n    # the learner's file, with the version under test in place of their own function\n    if _ZQ_MODE == \"module\" or name == \"own\":\n        return __learner_source__\n    tree = _za.parse(__learner_source__)\n    tree.body = _za.parse(_ZQ_VERSIONS[name]).body + [n for n in tree.body if not _zq_binds(n, _ZQ_FUNCTION)]\n    return _za.unparse(tree)\n\n\ndef _zq_pytest(name, order=\"file\", show=False):\n    # run real pytest on the learner's file with one version of the function under test\n    if _ZQ_MODE == \"module\":\n        with open(_ZQ_MODULE + \".py\", \"w\") as f:\n            f.write(_ZQ_VERSIONS[name])\n        _zs.modules.pop(_ZQ_MODULE, None)\n    with open(\"test_mine.py\", \"w\") as f:\n        f.write(_zq_source(name))\n    _zs.modules.pop(\"test_mine\", None)\n    _zil.invalidate_caches()\n    seen, calls = {}, {}\n\n    class _Watch:\n        def pytest_collection_modifyitems(self, items):\n            if order == \"reverse\":\n                items.reverse()\n\n        @_zpt.hookimpl(tryfirst=True)\n        def pytest_runtest_setup(self, item):\n            m = _zs.modules.get(_ZQ_MODULE)\n            if m is not None:\n                m._zq_calls = 0\n\n        def pytest_runtest_logreport(self, report):\n            was = seen.get(report.nodeid, \"passed\")\n            if report.failed:\n                was = \"failed\"\n            elif report.skipped and was == \"passed\":\n                was = \"skipped\"\n            seen[report.nodeid] = was\n            if report.when == \"teardown\":\n                calls[report.nodeid] = getattr(_zs.modules.get(_ZQ_MODULE), \"_zq_calls\", 0)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\", \"test_mine.py\"]\n    if show:\n        code = _ZQ_MAIN(args, plugins=[_Watch()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _ZQ_MAIN(args, plugins=[_Watch()])\n    return int(code), seen, calls\n\n\ndef _zq_result(name, order=\"file\"):\n    key = (__learner_source__, name, order)\n    if key not in _ZQ_SEEN:\n        _ZQ_SEEN[key] = _zq_pytest(name, order)\n    return _ZQ_SEEN[key]\n\n\ndef run_tests():\n    \"\"\"Run your tests on a correct version and print pytest's report.\"\"\"\n    return _zq_pytest(_ZQ_SHOWN, show=True)[0]\n\n\ndef trial(name, order=\"file\"):\n    \"\"\"'passed', 'failed', 'no tests' or 'error' for your tests on one version.\"\"\"\n    code = _zq_result(name, order)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef names():\n    \"\"\"The test functions pytest collects from your file.\"\"\"\n    return sorted({_zq_fn(n) for n in _zq_result(_ZQ_SHOWN)[1]})\n\n\ndef weak():\n    \"\"\"Your tests that never fail on the versions in _ZQ_WEAK_AGAINST.\"\"\"\n    failed = {_zq_fn(n) for v in _ZQ_WEAK_AGAINST for n, o in _zq_result(v)[1].items() if o == \"failed\"}\n    return [t for t in names() if t not in failed]\n\n\ndef few(least=5):\n    \"\"\"Your tests that call the function under test fewer than `least` times.\"\"\"\n    calls = {}\n    for n, k in _zq_result(_ZQ_SHOWN)[2].items():\n        calls[_zq_fn(n)] = calls.get(_zq_fn(n), 0) + k\n    return [t for t in names() if calls.get(t, 0) < least]\n"
+      },
+      "feedback": {
+        "correct": "Every test passes on the correct versions and fails on at least one broken one.",
+        "generic": "Not quite right. Read the first hidden test that failed.",
+        "byKey": {
+          "test-1": "pytest collected fewer than three tests. Name each file `test_*.py` and each function `test_...`.",
+          "test-2": "A test fails on the correct `average_cost`. Recheck that hand answer, everything paid over the shares, and compare floats with `pytest.approx`.",
+          "test-3": "A test fails on a correct version that rounds differently. Compare floats with `pytest.approx`, not `==`.",
+          "test-4": "A test fails on a correct version that works in exact fractions. Compare floats with `pytest.approx`.",
+          "test-5": "Your tests pass in file order but not in reverse, so one test changes data that another reads. Build each test's data inside it.",
+          "test-6": "The version that ignores the fee got through. Give a fill a fee, and keep the tolerance well under a penny.",
+          "test-7": "The version that charges the fee once got through. Use two or more fills with a fee.",
+          "test-8": "The version that adds the fee to every share got through. Use fills of more than one share with a fee.",
+          "test-9": "The version that averages each fill's cost without weights got through. Use fills of different sizes.",
+          "test-10": "The version that divides by the number of fills got through. Check a hand answer for fills of more than one share.",
+          "test-11": "The version that uses only the last fill got through. Use two fills at different prices.",
+          "test-12": "Some of your tests never fail, whatever the code does: an assert that compares the function with itself, or one that never runs. Each test needs a hand-worked answer.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "Fills of different sizes with a fee tell every broken version from the right one. For 100 at £50.00 and 300 at £52.00, two £6.00 fees lift the cost from £51.50 to £51.53. That 3p is why an absolute tolerance of 5p would let a missing fee through.\n\n```python\ndef test_one_fill_without_a_fee_costs_its_price():\n    fills = [(200, 12.50)]\n    cost = average_cost(fills, 0.00)\n    assert cost == pytest.approx(12.50)\n\n\ndef test_bigger_fill_counts_for_more():\n    fills = [(100, 50.00), (300, 52.00)]\n    cost = average_cost(fills, 0.00)\n    assert cost == pytest.approx(51.50)  # (5,000 + 15,600) / 400\n\n\ndef test_fee_is_paid_on_every_fill():\n    fills = [(100, 50.00), (300, 52.00)]\n    cost = average_cost(fills, 6.00)\n    assert cost == pytest.approx(51.53)  # (20,600 + 2 x 6.00) / 400\n```"
+      }
     }
   ]
 }
