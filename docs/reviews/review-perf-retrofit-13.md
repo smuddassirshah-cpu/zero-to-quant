@@ -51,3 +51,22 @@ In the table, `\|` inside maths stands for a plain `|` in the JSON (escaped only
 - Protocol 6: route-worded required rows (LS3-1) reach a fifth sighting (contests L3, integrals, markov L5, estimation L2, least-squares L3). The brief already carries the rule. A validator cannot read the wording, so the orchestrator may add one line to the author self-check in `docs/LEVEL-BRIEF.md`: "for each required row, name a second correct route and check it can tick the row".
 
 Totals: Must 0. Should 2 (LS3-1, TY2-1). Could 5 (EG2-1, EG2-2, EG4-1, TY1-1, TY1-2). limits `h-prove-negative-powers`, `h-build-cable-route` and least-squares `h-factor-neutral` have no finding.
+
+## Fix pass
+
+- LS3-1: fixed. Row 4 (d) now reads "Finds the hedge from the normal equations (...) or another valid route, such as QR." Basis: the hedge (2, 3) is the least-squares solution whichever route gives it, so the result, not the route, is what the row needs. `rubric-passes --item least-squares/homework-3.json#h-derive-hedge`: one minimal set, rows 1, 2, 3, 4 (9 points); only row 5 can be left out (the prompt's optional part).
+- TY2-1: fixed. Model (a) now says the series equals $f(h)$ for $|h| < 0.05$; rubric row 1 reads "the Maclaurin series ... valid for $|h| < 0.05$". Basis: geometric with ratio $-20h$, so it converges exactly when $|20h| < 1$, and $(1 + 20h)(1 - 20h + 400h^2) = 1 + 8000h^3$ gives the error $-800{,}000h^3/(1 + 20h)$, unchanged. `rubric-passes --item taylor/homework-2.json#h2-prove-perpetuity-series`: one minimal set, rows 1, 2, 3, 4 (9 points); only row 5 can be left out.
+- EG4-1: fixed. Question now "Treating a singular value below `tol` times the largest as zero, it finds the shortest of the weights whose payoff is nearest `y` in squared error." Basis: with the cut-off the answer is the shortest best fit of the truncated table. No test, expect, solution or starter touched; `eigen-4-perf-numbers.py` exits 0.
+- EG2-1: fixed. Question glosses $|\mathbf{w}|^2 = \sum_i w_i^2$ and says it is not the budget rule. Basis: budget reading gives 1.6, not 0.5, on table 1. Expects unchanged.
+- EG2-2: fixed. Explain adds "weighted by its squared coordinates". Basis: $\mathbf{w}^T\boldsymbol{\Sigma}\mathbf{w} = \sum_i \lambda_i c_i^2$ with $\sum c_i^2 = 1$.
+- TY1-1: fixed. Prompt (b) and model (b) name the hypothesis that $f''$ is continuous.
+- TY1-2: fixed. Model (c) now "$f' > 0$ and $f'' > 0$ ... at or to the right of the root". Basis: with $f' < 0$ the tangent falls and the zero lies left of the root, as for $e^{-x} - \tfrac13$.
+- Disputed: none. Deferred: none (the Notes for the main session are not findings).
+- Graded values changed: none (no test, expect, byKey or point value edited; only prose, the model and rubric row text).
+
+### Gates
+
+- Scripts: all eight `docs/reports/<course>-<n>-perf-numbers.py` and `derive13.py`, `eig_two.py`, `ls_two.py`, `voice13.py`, `findings_assert.py` exit 0 in the venv (`findings_assert.py` prints ok for LS3-1, TY2-1 x2, EG2-1, EG2-2, EG4-1, TY1-1, TY1-2). No code test changed, so no plant rerun was needed.
+- `node tools/validate.mjs`: 0 errors, 4,127 warnings. `node tools/perf-reports.mjs --warn`: none of the eight reports listed.
+- Voice scan 35: 0 and 0 for eigen, least-squares, taylor, limits.
+- Playthrough `--set <course>/homework-<n> --local-cdn <pkgs>` for eigen 2 and 4, least-squares 2 and 3, taylor 1 and 2, limits 2 and 4, with and without `--mobile`: All passed in 16 of 16. `git checkout app/content/manifest.json` done.
