@@ -1721,3 +1721,7 @@ Raised later (pytest level 2 perf):
 
 Raised later (pytest level 3 perf):
 - [Could] `code` widget: a test-first task cannot see whether the learner ran their tests red before writing the code; the widget keeps no history of Run examples results. `h3-fee-test-first` stands in for it by requiring every test to fail on the starter's empty `broker_fee`. Wanted: an optional record of the first Run examples result after the tests appear (red or green), readable by a hidden case.
+
+Raised later (numpy-pandas level 2 perf):
+- [Could] No shared Python mirror of the code widget's `__zq_cmp`: every perf numbers script copies its own (`numpy-pandas-2-perf-numbers.py` mirrors the item 700 NaN, DataFrame and dict rules by hand), and `docs/reviews/perf-retrofit-6-scripts/harness.py` predates item 700, so it fails a correct NaN expect. Want `tools/code_harness.py`, tested against `code.js`, imported by numbers scripts.
+- [Could] `h-fills-report`'s planted slips rely on pandas 2.2.3: chained `df[mask]["col"] *= -1` leaves the frame unchanged, and `fills[1:7]` on whole-number labels slices by position. When Pyodide's pandas moves to 3.x, nothing reruns the perf numbers scripts; want a census line listing the Python perf items to recheck on a package bump.
