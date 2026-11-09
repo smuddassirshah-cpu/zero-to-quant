@@ -2104,6 +2104,13 @@ const main = async () => {
               if (wv !== DESKTOP) await setVp(DESKTOP, 150);
             }
           }
+          /* In-app hours apart from outside study (ENGINE-BACKLOG 746): Learn's header and each course page show both figures, in-app first */
+          if (r === 'learn' || /^course\//.test(r)) {
+            const txt = await page.evaluate((sel) => { const el = document.querySelector(sel); return el ? el.textContent.replace(/\s+/g, ' ') : null; }, r === 'learn' ? '.zl-desc' : '.zc-hours');
+            const re = /about [\d,.]+ h in the app, about [\d,.]+ h of outside study/;
+            if (txt === null) { if (r === 'learn') failures.push('#learn: the header line is missing'); }
+            else if (!re.test(txt)) failures.push(`#${r}: hours should read "about N h in the app, about M h of outside study" (got ${JSON.stringify(txt.slice(0, 120))})`);
+          }
           await shot('route-' + r);
         } catch (e) { failures.push(`#${r}: threw ${String(e.message || e).split('\n')[0]}`); }
         console.log(`${consoleErrors.length > before ? 'ERR ' : 'ok  '} #${r}`);

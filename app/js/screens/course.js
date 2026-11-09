@@ -209,6 +209,8 @@
     const written = flat.filter(e => e.it.kind === 'lesson' && writtenOf(e)).length;
     const mapOnly = lessonsTotal > 0 && written === 0;
     const stats = `<span>${Z.icon('learn', 'sm')} ${lessonsTotal} lessons</span><span aria-hidden="true">·</span><span>${Z.icon('grid', 'sm')} ${levels.length} ${levels.length === 1 ? 'level' : 'levels'}</span>${written < lessonsTotal && !mapOnly ? `<span aria-hidden="true">·</span><span>${Z.icon('edit', 'sm')} ${written} written</span>` : ''}`;
+    /* Hours in the app and outside it, in-app first, never the stored total alone (js/hours.js, AUTHORING section 14); nothing for a course with no mapped lesson */
+    const HM = C.hours, hoursLine = HM && lessonsTotal > 0 ? `<p class="t-caption secondary zc-hours tnum">${esc(Z.hours.splitLabel(HM.courseApp(cid), HM.courseOut(cid)))}</p>` : '';
     const resLink = resource && resource.name ? (resource.url
       ? `<a class="zc-res" href="${esc(resource.url)}" target="_blank" rel="noopener">${Z.icon('book', 'sm')}<span>${esc(resource.name)}</span><span class="sr-only"> (opens in a new tab)</span></a>`
       : `<span class="zc-res is-plain">${Z.icon('book', 'sm')}<span>${esc(resource.name)}</span></span>`) : '';
@@ -251,6 +253,7 @@
           <h1 class="t-course-title" id="zc-title">${esc(co.name)}</h1>
           <p class="t-body secondary zc-desc">${esc(co.description || '')}</p>
           <p class="t-label zc-stats">${stats}</p>
+          ${hoursLine}
           ${mapOnly ? `<p class="t-caption secondary zc-maponly"><span class="zc-maptag">Map only</span>The lessons here are not written yet. Study this topic from its resource meanwhile.</p>` : ''}
           ${resLink}
           <div class="zc-prog">

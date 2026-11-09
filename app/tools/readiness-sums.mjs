@@ -93,10 +93,11 @@ const fmt = (n) => String(Math.round(n));
 const sums = (role, statuses) => H.roleSums((id) => cls[role][id], statuses);
 function totalsBlock(role) {
   const rq = sums(role, ['required']); const rc = sums(role, ['recommended']);
-  const hd = { w: rq.w + rc.w, u: rq.u + rc.u, hw: rq.hw + rc.hw, hu: rq.hu + rc.hu };
-  const row = (n, s) => `| ${n} | ${s.w} | ${s.u} | ${s.w + s.u} | ${s.hw} | ${s.hu} | ${s.hw + s.hu} |`;
-  return ['| Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |',
-    '| --- | --- | --- | --- | --- | --- | --- |', row('Required', rq), row('Recommended', rc), row('Learn header (required plus recommended)', hd)].join('\n');
+  const hd = { w: rq.w + rc.w, u: rq.u + rc.u, hw: rq.hw + rc.hw, hu: rq.hu + rc.hu, app: rq.app + rc.app, out: rq.out + rc.out };
+  // In-app hours first, then outside study; the stored total is never shown alone (AUTHORING 14). Fields hoursWritten, hoursUnwritten and hours stay in readiness.json.
+  const row = (n, s) => `| ${n} | ${s.w} | ${s.u} | ${s.w + s.u} | ${s.app} | ${s.out} |`;
+  return ['| Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |',
+    '| --- | --- | --- | --- | --- | --- |', row('Required', rq), row('Recommended', rc), row('Learn header (required plus recommended)', hd)].join('\n');
 }
 
 // Dependency conflicts.
@@ -136,7 +137,7 @@ function conflictsBlock(role) {
 
 function catalogueBlock() {
   const m = ids.reduce((a, i) => a + courses[i].mapped, 0); const w = ids.reduce((a, i) => a + courses[i].written, 0);
-  return `Catalogue: ${ids.length} courses, ${m} lessons mapped (${w} written, ${m - w} unwritten). Hours are stored topic hours shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1); topics 3.2 and 3.4 store 0.`;
+  return `Catalogue: ${ids.length} courses, ${m} lessons mapped (${w} written, ${m - w} unwritten). Hours are shown as hours in the app and hours of outside study: the stored topic hours, shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1), split into the minutes counted in the app (lessons, level reviews and homework, topic exams) and the rest; topics 3.2 and 3.4 store 0.`;
 }
 
 // Mocks check.
@@ -178,11 +179,11 @@ for (const [cid, l] of Object.entries(LIMITED)) {
     else if ((ml ? courses[mc].levelWritten[ml] : courses[mc].written) > 0) err(`LIMITED: ${m} now has written lessons; update LIMITED for ${cid}`);
   }
 }
-const setOf = (s) => ({ written: s.w, unwritten: s.u, total: s.w + s.u, hoursWritten: s.hw, hoursUnwritten: s.hu, hours: s.hw + s.hu });
+const setOf = (s) => ({ written: s.w, unwritten: s.u, total: s.w + s.u, hoursWritten: s.hw, hoursUnwritten: s.hu, hours: s.hw + s.hu, hoursInApp: s.app, hoursOutside: s.out });
 const json = { generated: 'node app/tools/readiness-sums.mjs --write; do not edit by hand', roles: {}, limited: {} };
 for (const r of ROLES) {
   const rq = sums(r.key, ['required']), rc = sums(r.key, ['recommended']);
-  const hd = { w: rq.w + rc.w, u: rq.u + rc.u, hw: rq.hw + rc.hw, hu: rq.hu + rc.hu };
+  const hd = { w: rq.w + rc.w, u: rq.u + rc.u, hw: rq.hw + rc.hw, hu: rq.hu + rc.hu, app: rq.app + rc.app, out: rq.out + rc.out };
   const courseMap = {}; for (const id of ids) courseMap[id] = cls[r.key][id];
   json.roles[r.key] = {
     courses: courseMap, totals: { required: setOf(rq), recommended: setOf(rc), header: setOf(hd) },
