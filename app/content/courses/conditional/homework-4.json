@@ -362,6 +362,108 @@
           "text": "Explains that the procedure that produced the words sets the likelihoods, and so the answer."
         }
       ]
+    },
+    {
+      "id": "h-host-rules-code",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "bayes",
+        "cond-traps"
+      ],
+      "pace": 1200,
+      "title": "Three hosts, any number of doors",
+      "prose": "A game show has $n \\ge 3$ doors, numbered 0 to $n - 1$, and one car. The producers may not place the car evenly: `prior[k]` is the chance it is behind door `k`. You pick door `pick`. The host opens one other door, `opened`, and it shows a goat. Each host follows his own rule:\n\n- `'knows'`: he knows where the car is. He opens one of the doors that are neither yours nor the car's, each with equal chance.\n- `'random'`: he does not know. He opens one of the doors other than yours, each with equal chance. This time it showed a goat.\n- `'lowest'`: he knows, and he always opens the lowest-numbered door that is neither yours nor the car's.",
+      "question": "Write `host_likelihood(n, pick, car, opened, host)`: the chance that this host opens door `opened` and shows a goat, when the car is behind door `car`. Then write `door_posterior(prior, pick, opened, host)`. It returns the list of chances that the car is behind each door, given what you saw, or `None` if what you saw has chance 0.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def host_likelihood(n, pick, car, opened, host):\n    \"\"\"Chance this host opens door `opened` and shows a\n    goat, when the car is behind door `car` and you\n    picked door `pick`.\"\"\"\n    ...\n\n\ndef door_posterior(prior, pick, opened, host):\n    \"\"\"Chance the car is behind each door, given that\n    the host opened door `opened` and it showed a goat.\n    None if that cannot happen.\"\"\"\n    ...\n\n\nprint(door_posterior([1/3, 1/3, 1/3], 0, 2, 'knows'))\n",
+        "solution": "def host_likelihood(n, pick, car, opened, host):\n    \"\"\"Chance this host opens door `opened` and shows a\n    goat, when the car is behind door `car` and you\n    picked door `pick`.\"\"\"\n    if opened == pick or opened == car:\n        return 0.0      # not your door; a car is no goat\n    if host == 'knows':\n        allowed = [d for d in range(n) if d != pick and d != car]\n        return 1 / len(allowed)\n    if host == 'random':\n        return 1 / (n - 1)  # any door but yours\n    if host == 'lowest':\n        first = min(d for d in range(n) if d != pick and d != car)\n        return 1.0 if opened == first else 0.0\n    raise ValueError(host)\n\n\ndef door_posterior(prior, pick, opened, host):\n    \"\"\"Chance the car is behind each door, given that\n    the host opened door `opened` and it showed a goat.\n    None if that cannot happen.\"\"\"\n    n = len(prior)\n    paths = [prior[c] * host_likelihood(n, pick, c, opened, host)\n             for c in range(n)]\n    total = sum(paths)  # chance of what you saw\n    if total == 0:\n        return None\n    return [p / total for p in paths]\n\n\nprint(door_posterior([1/3, 1/3, 1/3], 0, 2, 'knows'))\n",
+        "examples": [
+          {
+            "call": "door_posterior([1/3, 1/3, 1/3], 0, 2, 'knows')",
+            "expect": "[1/3, 2/3, 0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "door_posterior([1/3, 1/3, 1/3], 0, 2, 'knows')",
+            "expect": "[1/3, 2/3, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[host_likelihood(5, 2, c, 4, 'knows') for c in range(5)]",
+            "expect": "[1/3, 1/3, 1/4, 1/3, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[host_likelihood(5, 2, c, 4, 'random') for c in range(5)]",
+            "expect": "[1/4, 1/4, 1/4, 1/4, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[host_likelihood(4, 1, c, d, 'lowest') for d in (0, 2) for c in range(4)]",
+            "expect": "[0, 1, 1, 1, 1, 0, 0, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "door_posterior([0.5, 0.3, 0.2], 0, 2, 'knows')",
+            "expect": "[5/11, 6/11, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "door_posterior([0.5, 0.3, 0.2], 0, 2, 'random')",
+            "expect": "[5/8, 3/8, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "door_posterior([0.1, 0.2, 0.3, 0.15, 0.25], 2, 4, 'knows')",
+            "expect": "[4/27, 8/27, 9/27, 6/27, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "door_posterior([0.1, 0.2, 0.3, 0.15, 0.25], 2, 4, 'random')",
+            "expect": "[2/15, 4/15, 6/15, 3/15, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[door_posterior([0.4, 0.1, 0.2, 0.3], 3, d, 'lowest') for d in (0, 1)]",
+            "expect": "[[0, 1/6, 1/3, 1/2], [1, 0, 0, 0]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[door_posterior([0, 0, 1], 0, 2, 'knows'), door_posterior([0, 0.5, 0.5], 0, 1, 'knows')]",
+            "expect": "[None, [0, 0, 1]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "door_posterior([0.1] * 10, 0, 9, 'knows')",
+            "expect": "[1/10] + [9/80] * 8 + [0]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 11 hidden tests. Three check `host_likelihood` for each host on four or five doors. Eight check `door_posterior` on three to ten doors, with even and uneven priors. Each chance must match the exact value within a relative error of 1e-9."
+      },
+      "feedback": {
+        "correct": "Each host's rule became one likelihood per car place, and Bayes' rule did the rest.",
+        "generic": "Some tests failed. Work the first failing case by hand: one path per car place, prior times likelihood.",
+        "byKey": {
+          "test-1": "Test 1 is the classic game. With the car behind your door the host has two goat doors to choose from, so each has chance $\\tfrac12$.",
+          "test-2": "Test 2 has five doors. The knowing host has four doors to choose from when the car is behind yours, and three otherwise.",
+          "test-3": "Test 3 is the host who does not know. He opens door 4 with chance $\\tfrac14$ wherever the car is. But a goat showed there, so the car is not behind it.",
+          "test-4": "Test 4 is the lowest-door host on four doors. If the car is behind door 0 he cannot open it, so he opens door 2 instead.",
+          "test-5": "Test 5 uses an uneven prior. Weight each car place by its prior before you add the paths.",
+          "test-6": "Test 6 is the random host with an uneven prior. Door 2 showed a goat, so its path drops out; the rest keep their prior shares.",
+          "test-9": "Test 9 is the lowest-door host when you picked door 3. Opening door 1 means door 0 must hide the car.",
+          "test-10": "Test 10 asks for `None` when what you saw has chance 0. When one path survives, its door gets chance 1.",
+          "test-11": "Test 11 has ten doors and an even prior. Your door keeps $\\tfrac{1}{10}$; the other eight closed doors share the rest."
+        }
+      },
+      "explain": {
+        "text": "Each car place is one path on the tree: its prior, times the chance this host opens `opened` and shows a goat from there. Bayes' rule divides each path by their total, the chance of what you saw. The goat matters for the random host: his rule does not avoid the car, but the car cannot be behind a door that showed a goat."
+      }
     }
   ]
 }

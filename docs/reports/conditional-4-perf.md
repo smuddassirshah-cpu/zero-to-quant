@@ -1,0 +1,16 @@
+# conditional level 4: performance task
+
+- File `app/content/courses/conditional/homework-4.json`, item `h-host-rules-code`, index 8 (item 9 of 9, appended; cap 12, nothing converted). Kind `code` (Python, standard library), difficulty 5, skills `bayes`, `cond-traps`, pace 1200 s.
+- Objective matched (l18): "Write the host's rule as likelihoods on a tree and apply Bayes' rule." The only verb-rule objective in the level.
+- Product, from two stubs: `host_likelihood(n, pick, car, opened, host)`, each of three hosts' rules ('knows', 'random', 'lowest') written as the chance of opening `opened` and showing a goat; and `door_posterior(prior, pick, opened, host)`, Bayes' rule over $n$ doors with an uneven prior, `None` when what was seen has chance 0.
+- Tests: 11 hidden, 1 example (test 1): likelihood rows for each host on four or five doors, posteriors on 3, 4, 5 and 10 doors, even and uneven priors, a case with chance 0. Ten planted bugs each fail a test: host ignored (drop the door, renormalise), no goat condition for the random host, $n - 2$ or $n - 1$ doors always for the knowing host, no normalising, zeros for `None`, highest for lowest, lowest host opening the car, even prior assumed, random host over all $n$ doors. Swapping `pick` and `car` passes: every rule treats them alike.
+- Overlapping screens: l18 screens 3 to 9 (the host's rule on a tree for three doors, the random host, 100 doors, the Bayes lines in order) and quiz 12 to 14 (four doors; a host who always opens door 3); homework-4 `h-four-doors`, `h-host-q`; review-4 `r-monty-stay`, `r-random-host`. New: an uneven prior, any number of doors, each rule written as a function, the goat as a zero likelihood for the random host, the lowest-door host on four doors, the `None` case.
+
+## Gates
+
+1. Validator, `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors; expected warning "conditional/L4: has a performance task, remove from perf-pending"; one O2-long-sentence advisory on the question (under 35 words).
+2. Voice, `VOICE_BASE=app/content/courses/conditional python3 docs/reviews/voice-scan.py 35`: 0 explanations over three sentences; 1 sentence over 35 words, `homework-5.json` items[7].model (level 5, older than this task, not mine to edit). 0 in this item.
+3. Numbers script, `python3 docs/reports/conditional-4-perf-numbers.py`: exit 0, FAILURES 0. Every expect equals an exact Fraction enumeration of (car, door opened) written without the solution's code; closed forms for five cases; seeded simulation of 400,000 games per case, each within 4.5 standard errors; solution 11 of 11, starter 0 of 11, every bug fails a test, under a copy of the engine's isclose rule.
+4. Playthrough, `node tools/playthrough.mjs --set conditional/homework-4 --local-cdn <pkgs>`, with and without `--mobile`: All passed (9 items, the performance starter fails). Shots read at 1280 and 440 px.
+
+Freshness: `node tools/fresh-check.mjs --file content/courses/conditional/homework-4.json`: 0 hits, code names included. Grep terms: `host_likelihood`, `door_posterior`, `lowest`, `producer`, `prior[`, `five doors`, `n doors`, `random host`, `does not know`, `habit`, `not equally likely`. Backlog: 0 bullets. No course.json change.
