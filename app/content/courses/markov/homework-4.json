@@ -489,6 +489,111 @@
      "text": "One point each: keeps all steps, discards a burn-in of 20 or more, and uses longer or dispersed chains with a standard error."
     }
    ]
+  },
+  {
+   "id": "h-mh-network",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "mc-longrun",
+    "mc-chains"
+   ],
+   "pace": 1200,
+   "title": "A sampler on a network of venues",
+   "prose": "A router should spend time at each venue in proportion to a chosen weight `w[i] > 0`. The weights are known only up to a constant. The venues 0 to $n - 1$ form a connected network. `edges` lists each link once as a pair, with no link from a venue to itself. From venue $i$ the chain proposes one of the venues linked to $i$, each with chance $1/\\deg(i)$.\n\n`KITE` is five venues with weights `KW`, and `PATH3` and `STAR` are two small networks.",
+   "question": "Build the Metropolis-Hastings chain with this proposal from the stubs. `mh_network_matrix(n, edges, w)` returns its $n$ by $n$ transition matrix. `mh_network_shares(n, edges, w, start, steps, seed)` runs it for `steps` steps from `start` with `random.Random(seed)`. It returns the share of steps spent at each venue. A rejected step counts as a visit to where the chain stays.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "PATH3 = [(0, 1), (1, 2)]\nSTAR = [(0, 1), (0, 2), (0, 3)]\nKITE = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3), (3, 4)]\nKW = [2, 1, 4, 3, 5]\n\ndef stationary_gap(P, w):\n    \"\"\"Largest |(pi P)_j - pi_j| for the target pi = w / sum(w).\"\"\"\n    pi = [x / sum(w) for x in w]\n    return max(abs(sum(pi[i] * P[i][j] for i in range(len(w))) - pi[j]) for j in range(len(w)))\n",
+    "starter": "import random\n\ndef mh_network_matrix(n, edges, w):\n    \"\"\"Transition matrix of the Metropolis-Hastings chain on the network.\"\"\"\n    ...\n\ndef mh_network_shares(n, edges, w, start, steps, seed):\n    \"\"\"Share of the steps that the chain spends at each venue.\"\"\"\n    ...\n",
+    "solution": "import random\n\ndef _links(n, edges):\n    nb = [[] for _ in range(n)]\n    for u, v in edges:                   # each link counts at both ends\n        nb[u].append(v)\n        nb[v].append(u)\n    return nb\n\ndef _accept(nb, w, i, j):\n    # Hastings: the proposal i -> j has chance 1/deg(i), the reverse 1/deg(j)\n    return min(1, (w[j] * len(nb[i])) / (w[i] * len(nb[j])))\n\ndef mh_network_matrix(n, edges, w):\n    \"\"\"Transition matrix of the Metropolis-Hastings chain on the network.\"\"\"\n    nb = _links(n, edges)\n    P = [[0.0] * n for _ in range(n)]\n    for i in range(n):\n        for j in nb[i]:\n            P[i][j] = _accept(nb, w, i, j) / len(nb[i])\n        P[i][i] = 1 - sum(P[i][j] for j in range(n) if j != i)   # rejections stay\n    return P\n\ndef mh_network_shares(n, edges, w, start, steps, seed):\n    \"\"\"Share of the steps that the chain spends at each venue.\"\"\"\n    rng = random.Random(seed)\n    nb = _links(n, edges)\n    x = start\n    visits = [0] * n\n    for _ in range(steps):\n        y = rng.choice(nb[x])\n        if rng.random() < _accept(nb, w, x, y):\n            x = y\n        visits[x] += 1                   # a rejected step is a visit too\n    return [v / steps for v in visits]\n",
+    "examples": [
+     {
+      "call": "mh_network_matrix(3, PATH3, [1, 1, 1])",
+      "expect": "[[1/2, 1/2, 0], [1/2, 0, 1/2], [0, 1/2, 1/2]]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "mh_network_matrix(3, PATH3, [1, 1, 1])",
+      "expect": "[[1/2, 1/2, 0], [1/2, 0, 1/2], [0, 1/2, 1/2]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "mh_network_matrix(4, STAR, [1, 1, 2, 3])",
+      "expect": "[[0, 1/3, 1/3, 1/3], [1/3, 2/3, 0, 0], [1/6, 0, 5/6, 0], [1/9, 0, 0, 8/9]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "mh_network_matrix(5, KITE, KW)",
+      "expect": "[[1/3, 1/6, 1/2, 0, 0], [1/3, 0, 1/3, 1/3, 0], [1/4, 1/12, 5/12, 1/4, 0], [0, 1/9, 1/3, 2/9, 1/3], [0, 0, 0, 1/5, 4/5]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "stationary_gap(mh_network_matrix(5, KITE, KW), KW) < 1e-12",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "(lambda P: min(min(r) for r in P) >= 0 and max(abs(sum(r) - 1) for r in P) < 1e-12)(mh_network_matrix(5, KITE, KW))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "mh_network_matrix(5, [(v, u) for u, v in reversed(KITE)], [1000 * x for x in KW])",
+      "expect": "[[1/3, 1/6, 1/2, 0, 0], [1/3, 0, 1/3, 1/3, 0], [1/4, 1/12, 5/12, 1/4, 0], [0, 1/9, 1/3, 2/9, 1/3], [0, 0, 0, 1/5, 4/5]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "mh_network_matrix(2, [(0, 1)], [1, 3])",
+      "expect": "[[0, 1], [1/3, 2/3]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "stationary_gap(mh_network_matrix(5, KITE, [1, 1, 1, 1, 1]), [1, 1, 1, 1, 1]) < 1e-12",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "mh_network_shares(4, STAR, [1, 1, 2, 3], 1, 100000, 1)",
+      "expect": "[1/7, 1/7, 2/7, 3/7]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.04
+      }
+     },
+     {
+      "call": "mh_network_shares(5, KITE, KW, 4, 100000, 2)",
+      "expect": "[2/15, 1/15, 4/15, 3/15, 5/15]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.04
+      }
+     },
+     {
+      "call": "(lambda s: [len(s), sum(s)])(mh_network_shares(5, KITE, KW, 0, 1000, 3))",
+      "expect": "[5, 1]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 11 hidden tests. Matrices must match within a relative error of 1e-9. `stationary_gap(P, w)` measures how far the normalised weights are from stationary for `P`. Runs of 100,000 steps must land within 0.04 of the target shares."
+   },
+   "feedback": {
+    "correct": "The chain spends its time in proportion to the weights, whatever the degrees.",
+    "generic": "Some tests failed. Read the first failing test against the rules above.",
+    "byKey": {
+     "test-2": "Test 2 is a hub with three leaves. The proposal is not symmetric: from the hub a leaf is proposed with chance 1/3, from a leaf the hub with chance 1.",
+     "test-4": "Test 4 checks that the weights, normalised, are stationary for your matrix. Balance each pair of linked venues, proposal chances included.",
+     "test-5": "Test 5 needs every row to add to 1. A rejected proposal leaves the chain where it is, so its chance belongs on the diagonal.",
+     "test-6": "Test 6 lists each link the other way round and scales the weights by 1000. Neither may change the chain.",
+     "test-9": "Test 9 runs 100,000 steps on the star. Count every step, rejected ones included, at the venue the chain is at."
+    }
+   },
+   "explain": {
+    "text": "From $i$ the move to $j$ is proposed with chance $1/\\deg(i)$ and the move back with $1/\\deg(j)$. So the acceptance is $\\min\\left(1, \\dfrac{w_j \\deg(i)}{w_i \\deg(j)}\\right)$, and $w_i P_{ij} = \\min\\left(\\dfrac{w_i}{\\deg(i)}, \\dfrac{w_j}{\\deg(j)}\\right)$ is the same both ways, so the normalised weights are stationary. The network is connected and every weight is positive, so the chain is irreducible on finitely many venues: that stationary law is the only one, and the visit shares converge to it.\n\n```python\nmin(1, (w[j] * len(nb[i])) / (w[i] * len(nb[j])))\n```"
+   }
   }
  ]
 }
