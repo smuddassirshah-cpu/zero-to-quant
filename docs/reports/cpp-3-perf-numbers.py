@@ -31,9 +31,9 @@ check(item.get('performance') == 'code' and W['language'] == 'cpp', 'performance
 check(idx == len(items) - 1 and len(items) == 8, 'appended as item 8 of 8 (index 7)')
 check(3 <= len(T) <= 15 and len(T) > len(W['examples']), 'more tests than examples, at most 15')
 check(all(e in T for e in W['examples']), 'the example is also a test')
-check('14 hidden tests' in W['how'] and len(T) == 14, 'how says 14 hidden tests')
+check('15 hidden tests' in W['how'] and len(T) == 15, 'how says 15 hidden tests')
 check(sum(1 for t in T if t.get('compare') == 'raises') == 1, 'how: one raises test')
-check(sum(1 for t in T if 'compiles' in t) == 2, 'how: two compile tests')
+check(sum(1 for t in T if 'compiles' in t) == 3, 'how: three compile tests')
 check(not item.get('hints'), 'no hints')
 
 # ---- route B: a Python model --------------------------------------------
@@ -65,7 +65,7 @@ r = R(5000000000, 5000000000); r.add(4999999990); model[6] = r.width()
 a, b, c = R(10), R(5), R(20); a.iadd(b).iadd(c); model[7] = [a.lo, a.hi]
 a, b = R(10), R(5, 30); c = a.plus(b); model[8] = [a.lo, a.hi, b.lo, b.hi, c.lo, c.hi]
 a = R(1, 9); a.iadd(R(3, 4)); model[9] = [a.lo, a.hi]
-model[10] = [int(R(1, 4).eq(R(1, 4))), int(R(1, 4).eq(R(1, 5))), int(not R(1, 4).eq(R(1, 5))), int(not R(2, 4).eq(R(1, 4))), int(not R(1, 4).eq(R(1, 4)))]
+model[10] = [int(R(1, 4).eq(R(1, 4))), int(R(1, 4).eq(R(1, 5))), int(not R(1, 4).eq(R(1, 5))), int(not R(2, 4).eq(R(1, 4))), int(not R(1, 4).eq(R(1, 4))), int(R(1, 4).eq(R(2, 5)))]
 model[11] = R(99.5, 101.25).text() + ';' + R(-3).text() + ';'
 for k, t in enumerate(T):
     if 'compiles' in t:
@@ -150,6 +150,8 @@ BUGS = {
     'add with else moves the high down': ('        if (x < low_) low_ = x;\n        if (x > high_) high_ = x;', '        if (x < low_) low_ = x;\n        else high_ = x;'),
     '+= copies the other ends': ('        add(other.low_);\n        add(other.high_);', '        low_ = other.low_;\n        high_ = other.high_;'),
     '== compares the low only': ('return a.low() == b.low() && a.high() == b.high();', 'return a.low() == b.low();'),
+    '== compares the widths only': ('return a.low() == b.low() && a.high() == b.high();', 'return a.width() == b.width();'),
+    'ends made public (test 15 refuses the structured binding)': ('private:\n    T low_;', 'public:\n    T low_;'),
     '!= written as low below': ('return !(a == b);', 'return a.low() < b.low();'),
     '!= compares the low only': ('return !(a == b);', 'return a.low() != b.low();'),
     '<< returns void': ('std::ostream& operator<<(std::ostream& os, const SessionRange<T>& r) {\n    return os <<', 'void operator<<(std::ostream& os, const SessionRange<T>& r) {\n    os <<'),

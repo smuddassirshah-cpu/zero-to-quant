@@ -14,4 +14,4 @@ Gates:
 
 Freshness grep: `median`, `TEST(`, `CHECK_CLOSE`, `planted`, `size() - 1`; `fresh-check --file`: 0 hits.
 
-Overlapping screens: l18 screens 3, 4 and 9 and `h4-test-drawdown` lay out tests against planted bugs with this stand-in. New: no test names or inputs given, a new function, type slips the learner must foresee.
+Overlapping screens: l18 screens 4, 5 and 10 and `h4-test-drawdown` lay out tests against planted bugs with this stand-in. New: no test names or inputs given, a new function, type slips the learner must foresee.

@@ -14,4 +14,4 @@ Gates:
 
 Freshness grep: `tick rule`, `uptick`, `signed`, `prices[i - 1]`, `size() - 1`; `fresh-check --file`: 0 hits.
 
-Overlapping screens: l3 screen 3 (`count_up_days`) lays out the loop from 1 against `prices[i - 1]`; `h-total-volume` a `long long` total. New: the sign carried through flats, parallel vectors, signed sums, the first-trade rule.
+Overlapping screens: l3 screen 4 (`count_up_days`) lays out the loop from 1 against `prices[i - 1]`; `h-total-volume` a `long long` total. New: the sign carried through flats, parallel vectors, signed sums, the first-trade rule.
