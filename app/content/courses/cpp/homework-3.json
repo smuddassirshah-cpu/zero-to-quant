@@ -594,12 +594,13 @@
       "compare": "equal"
      },
      {
-      "call": "std::vector<int>{SessionRange<int>(1, 4) == SessionRange<int>(1, 4), SessionRange<int>(1, 4) == SessionRange<int>(1, 5), SessionRange<int>(1, 4) != SessionRange<int>(1, 5), SessionRange<int>(2, 4) != SessionRange<int>(1, 4), SessionRange<int>(1, 4) != SessionRange<int>(1, 4)}",
+      "call": "std::vector<int>{SessionRange<int>(1, 4) == SessionRange<int>(1, 4), SessionRange<int>(1, 4) == SessionRange<int>(1, 5), SessionRange<int>(1, 4) != SessionRange<int>(1, 5), SessionRange<int>(2, 4) != SessionRange<int>(1, 4), SessionRange<int>(1, 4) != SessionRange<int>(1, 4), SessionRange<int>(1, 4) == SessionRange<int>(2, 5)}",
       "expect": [
        1,
        0,
        1,
        1,
+       0,
        0
       ],
       "compare": "equal"
@@ -618,9 +619,14 @@
      {
       "compiles": "SessionRange<int> r = 5; (void)r;",
       "expect": false
+     },
+     {
+      "setup": "SessionRange<int> r(1);",
+      "compiles": "auto [a, b] = r; (void)a; (void)b;",
+      "expect": false
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 14 hidden tests with `int`, `long long` and `double` ranges. Doubles are accepted within a relative 1e-9. One builds a low above the high and passes only if the program stops. Two only compile a line: one on a `const` range, one that must be refused. No test can see whether the ends are private, so check that yourself."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 15 hidden tests with `int`, `long long` and `double` ranges. Doubles are accepted within a relative 1e-9. One builds a low above the high and passes only if the program stops. Three only compile a line: one on a `const` range, and two that must be refused. One of those unpacks a range as `auto [a, b] = r;`, which compiles only when its two ends are its only data and public. It cannot catch every layout, so check privacy yourself too."
    },
    "feedback": {
     "correct": "Correct. The ends stay in order, the operators agree, and `+=` hands back the range itself.",

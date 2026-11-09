@@ -57,16 +57,24 @@ standard(w, [("shipped solution", SOL), ("reader: hidden friends, throw", READER
 
 # CPP3-2: "== compares widths" passes all 14 shipped tests; the proposed test 11 adds (1, 4) == (2, 5)
 WIDTHS = dict(BUGS)["== compares widths"]
-for cc in COMPILERS:
-    f, _ = fails(w, WIDTHS, "tests", cc)
-    ck.check(f == [], "CPP3-2: == by widths passes every shipped test on %s: fails %s" % (cc, f))
 import copy
-w2 = copy.deepcopy(w)
+# w0: the item as the review found it (before the fix pass), rebuilt by undoing the two added tests if they are present
+w0 = copy.deepcopy(w)
+EXTRA11 = ", SessionRange<int>(1, 4) == SessionRange<int>(2, 5)}"
+if w0["tests"][10]["call"].endswith(EXTRA11):
+    w0["tests"][10]["call"] = w0["tests"][10]["call"][:-len(EXTRA11)] + "}"
+    w0["tests"][10]["expect"] = w0["tests"][10]["expect"][:-1]
+w0["tests"] = [t for t in w0["tests"] if not t.get("compiles", "").startswith("auto [a, b] = r;")]
+for cc in COMPILERS:
+    f, _ = fails(w0, WIDTHS, "tests", cc)
+    ck.check(f == [], "CPP3-2: == by widths passes every shipped test on %s: fails %s" % (cc, f))
+w2 = copy.deepcopy(w0)
 t11 = w2["tests"][10]
 OLD11 = "SessionRange<int>(1, 4) != SessionRange<int>(1, 4)}"
 assert t11["call"].endswith(OLD11)
 t11["call"] = t11["call"][:-1] + ", SessionRange<int>(1, 4) == SessionRange<int>(2, 5)}"
 t11["expect"] = t11["expect"] + [0]
+assert t11 == w["tests"][10], "the shipped test 11 is the proposed one"
 print("proposed test 11 call:", t11["call"])
 for cc in COMPILERS:
     for lab, src in [("shipped", SOL), ("reader", READER)]:
@@ -77,8 +85,8 @@ for cc in COMPILERS:
 
 # the privacy gap: the public-ends version passes all 14 shipped tests
 for cc in COMPILERS:
-    f, _ = fails(w, PUBLIC, "tests", cc)
-    ck.check(f == [], "public ends pass every shipped test on %s (the gap the item names): fails %s" % (cc, f))
+    f, _ = fails(w0, PUBLIC, "tests", cc)
+    ck.check(f == [], "public ends pass every pre-fix test on %s (the gap the item names): fails %s" % (cc, f))
 
 # CPP3-1 probe: proposed test 15
 PROBE = {"setup": "SessionRange<int> r(1);", "compiles": "auto [a, b] = r; (void)a; (void)b;", "expect": False}
@@ -99,6 +107,9 @@ for std in ["-std=c++17", "-std=c++20"]:
 # numbers in the text and tests
 ck.check(2000000000 - (-2000000000) == 4000000000 > 2 ** 31 - 1 == 2147483647, "explain: 2,000,000,000 - (-2,000,000,000) = 4,000,000,000 > 2,147,483,647")
 ck.check(float(5000000000 - 4999999990) == 10.0 and 101.5 - 99.25 == 2.25 and 104 - 97 == 7, "widths 10, 2.25 and 7")
-ck.check("14 hidden tests" in w["how"] and len(w["tests"]) == 14 and w["examples"][0] == w["tests"][0], "how says 14 hidden tests; the example is test 1")
+ck.check("15 hidden tests" in w["how"] and len(w["tests"]) == 15 and w["examples"][0] == w["tests"][0], "how says 15 hidden tests; the example is test 1")
+for cc in COMPILERS:
+    f, _ = fails(w, PUBLIC, "tests", cc)
+    ck.check(f == [15], "after the fix, public ends fail test 15 only on %s: %s" % (cc, f))
 print("problems:", ck.bad)
 sys.exit(1 if ck.bad else 0)

@@ -1705,7 +1705,7 @@ Raised later (cpp level 1 perf):
 - [Could] C++ `code` widget: the learner edits one file, so an objective that names a header ("declare them in a header file", cpp l4) cannot be a performance task. `files` adds hidden files only. Wanted: an optional second editable file (`edit: ["returns.h", "main.cpp"]`), compiled and linked as `files` are. cpp L1 used the l3 loops objective instead.
 
 Raised later (cpp level 3 perf):
-- [Could] C++ `code` widget: a compile check must name the member it reads, so "the data members are private" cannot be tested when the learner chooses the names. cpp `h-session-range` states the rule, and its `how` says no test sees it. Wanted: a check such as `"privateData": "SessionRange<int>"` that fails when the type has a public non-static data member.
+- [Could] C++ `code` widget: a compile check must name the member it reads, so "the data members are private" cannot be tested when the learner chooses the names. cpp `h-session-range` states the rule, and its `how` says no test sees it. Wanted: a check such as `"privateData": "SessionRange<int>"` that fails when the type has a public non-static data member. Test 15 now refuses two public ends by a structured binding; one public `std::pair` or a third public member still passes.
 
 Raised later (cpp level 4 perf):
 - [Could] C++ `code` widget, planted-bug grading in script mode: a case is either `stdout` ("planted slip k: caught") or `raises`, never "either". So a slip may only stop the run on the one input its `raises` case is built for; a learner input that crashes any other slip would read as a miss. `h4-test-median` keeps four slips crash-free. Wanted: a case that passes on the expected text or an abnormal end (`"compare": "stdout", "orStops": true`).

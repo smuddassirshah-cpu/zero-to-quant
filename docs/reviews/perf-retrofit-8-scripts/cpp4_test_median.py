@@ -87,7 +87,8 @@ OLD2 = "if (v == 2) return (s[n / 2 - 1] + s[n / 2]) / 2;"
 OLD3 = "if (v == 3) return (s[n / 2 - 1] + s[n / 2]) / 2.0;"
 NEW2 = "if (v == 2) return static_cast<int>(static_cast<unsigned>(s[n / 2 - 1]) + static_cast<unsigned>(s[n / 2])) / 2;"
 NEW3 = "if (v == 3) return static_cast<int>(static_cast<unsigned>(s[n / 2 - 1]) + static_cast<unsigned>(s[n / 2])) / 2.0;"
-ck.check(w2["prelude"].count(OLD2) == 1 and w2["prelude"].count(OLD3) == 1, "CPP4-2: slips 2 and 3 sum two ints in int (signed overflow on large volumes)")
+# after the fix pass the shipped prelude already carries the wrapped sums; before it, the plain int sums
+ck.check((w2["prelude"].count(OLD2) == 1 and w2["prelude"].count(OLD3) == 1) or (w2["prelude"].count(NEW2) == 1 and w2["prelude"].count(NEW3) == 1), "CPP4-2: slips 2 and 3 sum two ints in int (before the fix) or through unsigned (after)")
 w2["prelude"] = w2["prelude"].replace(OLD2, NEW2).replace(OLD3, NEW3)
 for label, src in [("shipped solution", w["solution"])] + list(GOOD.items()) + list(WEAK.items()):
     for cc in COMPILERS:

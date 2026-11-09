@@ -63,3 +63,22 @@ Read at HEAD `664ac56` on `sx/read-perf-8`. No content file was edited.
 - REP-2 is a first sighting. A one-line convention in AUTHORING section 5 "Performance reports" would settle it: "screens are numbered from 1, as the learner counts them".
 
 Totals: Must 1 (VOICE-1, older than the items). Should 4 (CPP3-1, MK5-1, MK5-2, L19-1). Could 4 (CPP3-2, CPP4-1, CPP4-2, REP-2). cpp L1, markov L2 and markov L4 items have no finding (cpp L1's only one is its report, REP-2).
+
+## Fix pass
+
+Every finding applied with the review's text; I recomputed each number and checked each claim before editing. No id, `course.json`, `perf-pending.json` or engine file touched.
+
+- VOICE-1 (Must): fixed. The three l19 explanations take the review's three-sentence texts; every figure kept (£1.17, 7.59, £11.75, 23 of 200, 0.1192).
+- CPP3-1 (Should): fixed. Test 15 `auto [a, b] = r;` with `expect: false`; `how` says 15 tests and three compile lines. Basis: the structured binding compiles only for exactly two public non-static members; my rerun refuses it for the solution, the reader solution and a three-member class, and accepts it for public ends, on g++ and clang++ at C++17 and C++20. Compiled the solution, starter and every planted bug with both compilers at `-std=c++20 -O1 -fno-exceptions`; all caught. Inbox bullet extended; report and `cpp-3-perf-numbers.py` now say 15 tests and three compile checks, and a public-ends bug is in its list (caught by test 15 only).
+- MK5-1 (Should): fixed. Row 3 now requires a reason $\theta^{S_n}$ has a finite mean. Basis: l17 defines a martingale with finite $E|X_n|$, and the model's bound $\theta^{\pm(|i| + n)}$ supplies it.
+- MK5-2 (Should): fixed. Row 4 accepts condition (3) or condition (2); the model adds the condition (2) sentence. Basis: $P(T > 5k) \le 0.99757^k$ sums to $E[T] \le 5/0.00243 \approx 2058$, finite, and each stopped step of $\theta^{S_n}$ moves by at most $\theta^s(1 - \theta) \le \tfrac13$. `rubric-passes.mjs --item markov/homework-5.json#h-build-lazy-martingales`: minimal set rows 2, 3, 4 (9 points); rows 2 to 4 cannot be left out, row 1 can.
+- L19-1 (Should): fixed in all six strings. Checked before editing: l19 screen 3 prose, the summary idea, l19 screen 4 line 2, l20 screen 4 and the `h-long-take-profit` model all state the same condition (3), the stopped process bounded; the theorem needs $T$ finite since $M_T$ is undefined where $T = \infty$.
+- CPP3-2 (Could): fixed. Test 11 gains `SessionRange<int>(1, 4) == SessionRange<int>(2, 5)` with expect `[1, 0, 1, 1, 0, 0]`; `==` by widths now fails test 11 only (both compilers), the solution and reader pass.
+- CPP4-1 (Could): fixed, `how` reworded.
+- CPP4-2 (Could): fixed. Slips 2 and 3 wrap through `unsigned`; my rerun gives the same verdicts for the shipped solution, three good and six weak suites. The reader script `cpp4_test_median.py` asserted the old prelude text, so its CPP4-2 precondition now accepts either form; `cpp3_session_range.py` likewise rebuilds the pre-fix item for its "before" checks and adds "public ends fail test 15 only". `cpp-4-perf-numbers.py` line 34 now matches the new `how`.
+- REP-2 (Could): fixed in the three reports.
+- Voice debt, integrals (not in this review): `l1-thin-rectangles` screens[7] sentence ended before the display; `homework-4` items[2] first two lines joined by a semicolon; `l16-infinite-height` screens[6] and [11] each cut to three sentences by merging, keeping every condition and number.
+
+Graded values changed: `cpp/homework-3` `h-session-range` test 11 expect (five to six values) and new test 15 (compile check, expect false). The `cpp/homework-4` prelude and `markov/homework-5` rubric rows change no expected value and no verdict.
+
+Gates (venv Python): author scripts for the six reports exit 0, `FAILURES: 0`; reader scripts and `findings_assert.py` exit 0 (the `cpp*`, `mk2`, `mk4` ones run from their folder without `-I`, as they import `cppharness` and `harness`; `l19_walk_sim.mjs` 0). Voice scan 35 on cpp, markov and integrals: 0 and 0. Validator 0 errors; `perf-reports.mjs --warn` clean for the six reports. Playthrough with the regenerated manifest, with and without `--mobile`: All passed for the six homeworks, `markov/l19`, `markov/l20`, `integrals/l1`, `integrals/l16` and `integrals/homework-4` (22 runs); manifest restored.

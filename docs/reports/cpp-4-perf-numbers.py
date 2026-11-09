@@ -31,7 +31,7 @@ check(item.get('performance') == 'code' and W['language'] == 'cpp', 'performance
 check(idx == len(items) - 1 and len(items) == 9, 'appended as item 9 of 9 (index 8)')
 check(3 <= len(T) <= 15 and len(T) > len(W['examples']), 'more tests than examples, at most 15')
 check(all(e in T for e in W['examples']), 'the example is also a test')
-check(len(T) == 6 and 'Tests 2 to 6' in W['how'], 'how: test 1 real, tests 2 to 6 slips')
+check(len(T) == 6 and 'Tests 2 to 5 each swap' in W['how'] and 'Test 6 swaps' in W['how'], 'how: test 1 real, tests 2 to 5 slips, test 6 a crash')
 check('five slips' in item['feedback']['correct'] and len(T) - 1 == 5, 'feedback: five slips')
 check(not item.get('hints'), 'no hints')
 
