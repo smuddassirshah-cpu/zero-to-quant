@@ -1774,3 +1774,5 @@ Raised later (least-squares level 2 perf):
 
 Raised later (taylor level 1 perf):
 - [Should] Second sighting of the conditional L2 bullet: the `-marked` element shot is full height but white below the first viewport (taylor `homework-1` item 10: 400 x 4455 px at 440, 780 x 3066 px on desktop), so the model and rubric past the first screen cannot be read from the shots. The width check (701) still covers every display.
+Raised later (limits level 4 perf):
+- [Could] The verb table in AUTHORING section 5 maps build to `code`, but in a maths course "Build the function from a constraint" (limits l14) names written maths, and the course has no code widgets. measure-prob L2 and limits L4 chose `derivation`. Want the table to read "build: `code` where it runs, else `derivation` where the product is written maths", as it already does for design and explain.
