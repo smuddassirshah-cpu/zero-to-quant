@@ -81,7 +81,7 @@ What lets errors through, and what is wasteful:
 
 | # | Change | Effort |
 | --- | --- | --- |
-| 1 | Run the pilot now on Stage 0 topics 0.1 to 0.2 with one or two real beginners (the owner counts as one for interview courses). Record stalls, a one-week delayed test, one unseen problem | 2 to 3 weeks elapsed, human; half a session to prepare the protocol |
+| 1 | (Declined by the user, 9 Nov: stays post-completion so it does not delay the build.) Run the pilot on Stage 0 topics 0.1 to 0.2 with one or two real beginners (the owner counts as one for interview courses). Record stalls, a one-week delayed test, one unseen problem | 2 to 3 weeks elapsed, human; half a session to prepare the protocol |
 | 2 | Show in-app hours apart from outside-study hours on Learn, stage cards and `readiness.md`; stop presenting 1,804 h as the route | 1 engine agent, under a day |
 | 3 | Resume the Fable audit in closure order: `mm-games`, `recruiting`, then topic 1.5, then the remaining trader and developer closures; optional Stage 2 and 3 courses last | 240 levels; several sessions |
 | 4 | Make the outside work real: per level, a named chapter and problem range with a self-ticked log, or generated fluency drills for Stage 0 algebra in the manner of the arithmetic generator | Generator: 1 engine pass plus content; assignments: 1 wave |
@@ -94,4 +94,4 @@ What lets errors through, and what is wasteful:
 
 ## Why NEXT_PROMPT changes
 
-Phase 4 stays first but starts with developer drill packs (4.2). The audit restart stays but is reordered by route use (6.4, 1.2). Two items are added ahead of bank part 2: the hours display (4.1) and fresh mock versions (3.1). The pilot is raised with the user again (6.1).
+Phase 4 stays first but starts with developer drill packs (4.2). The audit restart stays but is reordered by route use (6.4, 1.2). Two items are added ahead of bank part 2: the hours display (4.1) and fresh mock versions (3.1). The pilot was raised with the user and declined (9 Nov): it stays post-completion, PLAN 2c item 12, and adds nothing to the build. Finding 6.1 stands as a limit on what the finished app can claim, not as a task.

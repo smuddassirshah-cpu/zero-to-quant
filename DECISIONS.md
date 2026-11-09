@@ -206,3 +206,6 @@ Session U (6 Nov)
 - Optional sub-questions (review-perf-retrofit-7): a rubric may leave a row optional only when the task's prompt itself marks that part optional ("optional, one more point"); a part the prompt asks for without that mark is a named part and its row is required. This keeps a rubric from requiring every row while a prompt asks for one extra.
 - Set-up rows (review-perf-retrofit-10): a set-up step (naming the function, the notation, the variable to solve for) is graded inside the required row of the part it serves, never as a separate optional row; an optional row is kept only for a part the prompt marks "Optional, one more point:".
 - Older over-wide displays found by item 701 are split in one sweep (`docs/reports/overflow-fix-session-x.md`); readers list them, the sweep fixer applies them, and per-review fixers skip them so the same JSON lines are not edited twice.
+
+### Pilot stays post-completion (9 Nov, user)
+- The critical review (`docs/reviews/critical-review-fable-5-2.md`, change 1) proposed running the learner pilot now. Declined: it would add to completion time. PLAN 2c item 12 is unchanged: post-completion, human-owned, not a completion criterion. Sessions do not raise or schedule it. The review's other nine changes are unaffected.

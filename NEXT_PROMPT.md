@@ -7,6 +7,6 @@ Read `docs/reviews/critical-review-fable-5-2.md` (verdict and the ten changes). 
 2. Engine agent: number the session X inbox from 705; Learn, stage cards and `readiness.md` show in-app hours (from `minutes`) apart from outside-study hours (review 4.1); local record and playback on `aloud` items (5.1).
 3. Phase 4 (`docs/briefs/session-v-plan.md`), developer first: drill packs for OA and coding-interview patterns, each second-read.
 4. Re-author `mock-oa-sig-2`, `-3`, `mock-oa-trader-2`, `-3` on new templates (review 3.1), second-read; then bank part 2.
-5. Ask the user: start the Stage 0 pilot now (review change 1); the review-size route.
+5. Ask the user for the review-size route. The pilot stays post-completion (user, 9 Nov; PLAN 2c item 12): do not raise or schedule it.
 
 Acceptance: validator 0 errors, readiness-sums OK, all `tools/test-*`, four shards and routes green at the final HEAD, state files, NEXT_PROMPT for session Z.
