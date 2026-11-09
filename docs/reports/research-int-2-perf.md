@@ -14,3 +14,5 @@
 4. `node tools/playthrough.mjs --set research-int/homework-2 --local-cdn <pkgs>`, with and without `--mobile`: All passed. Shots at 440 px read: no sideways scroll.
 
 No backlog bullets. No course.json change.
+
+Overlapping screens: l9-pca-questions screens[0] and [1] (the first and second components), [3] (keep 90%?), [5] (noise has eigenvalues too), [6] (say it aloud), [8] (the yield curve) and [9] (how many components do you keep), homework-2 `h2-pca-table` and `h2-pca-parts`; new parts: one spoken answer to all three questions on a 50-stock case where an 80% rule keeps 23 components, the noise edge 1.73, three real components, 20 kept ones that are noise, and choosing by held-out error.

@@ -15,3 +15,5 @@ Gates:
 4. `node tools/playthrough.mjs --set opt-dash/homework-2 --local-cdn <pkgs>`, with and without `--mobile`: All passed, starter fails. Shots clean.
 
 Freshness grep: `asian_cv`, `Asian`, `n_fix`, `fixing`, `control variate`, `6.156`.
+
+Overlapping screens: l7-mc-pricer screens[2] (the standard error), [3] (antithetic pairs), [4] (`mc_price` in code), [5] (a control variate on the discounted share price, a European control) and [9] (an Asian call on a trade ticket, by plain paths); new parts: `asian_cv` with $X = e^{-rT}A$ as the control, the learner deriving $E[X]$ as a sum of discounted forwards, fixings drawn along one path, a one-fixing check, and an error under half the plain error.

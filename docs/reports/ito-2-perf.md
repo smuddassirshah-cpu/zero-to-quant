@@ -27,3 +27,5 @@ Four bullets under "Raised later (ito level 2 perf pilot):" in `docs/BACKLOG-INB
 ## course.json
 
 No change proposed.
+
+Overlapping screens: l6 screens[2] (the Taylor derivation of Itô's lemma, put in order) and [6] (another function of W, $f = e^x$), l13-martingale-or-not screens[4], [8] and [9] and l8 screen[9] with homework-2 `h-which-mart` (the drift test on $e^{W_t - t/2}$); new parts: a written derivation from a blank box with the conditions stated ($a$, $b$ adapted, integrability, $f \in C^{1,2}$), the integral form with why both integrals exist, the local-martingale caution, and the check $E[\int_0^t e^{2W_s - s}\,ds]$ on $f = e^{x - t/2}$.

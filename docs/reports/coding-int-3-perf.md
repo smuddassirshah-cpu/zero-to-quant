@@ -19,3 +19,5 @@ Freshness grep: `mv(`, `rm(`, `rename`, `move`, `size(`, `NotesDrive` (was `File
 Fix pass notes:
 - `mkdir`, `read` and `ls` keep l12's behaviour on purpose; `write` now replaces, and `rm`, `mv` and path-cost `size` are new. The class is `NotesDrive` and the harness `run_drive`, so the code names no longer match l12's.
 - `fresh-check --file` hits: `FileSystem` and `run_fs` (l12 screens 4 and 7, now renamed) and `big_case`, a hidden postlude helper shared with research-int and coding-int homework-1.
+
+Overlapping screens: l12-file-system screens[3] (write creates and appends), [4] (`mkdir`, `read`, `ls` and the path walk on one `Node` class), [7] (`size` as an added method) and [8] (the shared walk helper); new parts: `rm`, `mv` with refusals, a `write` that replaces, an $O(\text{path})$ `size` that stays fast, and the seven-method stub (the substrate of l12 screen 4 is the overlap; the added methods are most of the task).

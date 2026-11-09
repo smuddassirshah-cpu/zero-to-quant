@@ -15,3 +15,5 @@ Gates:
 4. `node tools/playthrough.mjs --set opt-dash/homework-3 --local-cdn <pkgs>`, with and without `--mobile`: All passed, starter fails. Shots clean.
 
 Freshness grep: `black_iv`, `black_price`, `forward terms`, `100.4`, `146,935`, `nan`.
+
+Overlapping screens: l9-iv-solver screens[2] (Newton's method), [4] (a step off the chart, penny quote), [5] (no volatility fits, no-arbitrage bounds), [6] (five steps and done), [7] (the safe solver, bracket plus Newton) and [8] (the solver in code with the pricer loaded), [9] (every quote in the chain); new parts: `black_iv` in forward terms with no pricer loaded, NaN at or outside the discounted no-arbitrage bounds or for a NaN price (the lesson's solver raises), penny quotes and vols to 300%, put-call parity sign and discounting.

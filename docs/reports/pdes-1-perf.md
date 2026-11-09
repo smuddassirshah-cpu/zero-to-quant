@@ -10,3 +10,5 @@
   3. `python3 -I docs/reports/pdes-1-perf-numbers.py`: exits 0. 77 checks with sympy in the venv; 63 without it, when the symbolic half is skipped.
   4. `node tools/playthrough.mjs --set pdes/homework-1 --local-cdn <pkgs>`: All passed, with and without `--mobile`. Two displays were split with `aligned` after a 356 px render showed them clipped.
 - Freshness grep: lazy, stays, `p - q`, `p + q`, 0.004, 0.45, 0.35, 1.975, `u_{tt}`, `u_{xxx}`, remainder. No walk item is repeated.
+
+Overlapping screens: l2-heat-equation screens[2] (the fair-walk derivation by Taylor expansion, ordered), [3] (the $D = \Delta x^2/\Delta t$ trap), [4] (variance $2Dt$), [7] (a biased walk, the drift term $c\,u_x$ stated), and homework-1 `h-drift` (the shift $u(x - ct, t)$ ordered); new parts: a lazy, biased walk (right $p$, left $q$, stay $r$) derived from a blank box, the scaling conditions, bounds on the time and space Taylor remainders, and the check $D = 1$, $c = 2.5$, variance 1.975 against $2Dt = 2$.

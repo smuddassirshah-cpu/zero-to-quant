@@ -15,3 +15,5 @@
 4. `node tools/playthrough.mjs --set brainteasers/homework-1 --local-cdn <pkgs>`, with and without `--mobile`: All passed. Shots at 1280 and 440 px: the display equation fits; no sideways scroll.
 
 Backlog: 0 new bullets (the coach tip over the marked shot is BACKLOG-INBOX "Homework page: the first-visit coach tip").
+
+Overlapping screens: l2 screens[4] (straight 1 × 4 tiles on a 6 × 6 board by stripes) and [7] (that proof in order), screens[8] (T-tetrominoes by the chessboard colouring), review-1 `r4-t-pieces-4x7`, homework-1 `hw8-say-it-10x10` (the stripe colouring said aloud); new parts: the L-tetromino, which the chessboard cannot separate (2 and 2), so the learner must choose stripes on a 6 × 10 board, both orientation cases of the 3 and 1 split, and the count $4a - 30 \ne 0$.

@@ -26,3 +26,7 @@ Stage 0 is excluded from the verb rule, so `proof/L3` is not rule-matched and no
 Four bullets under `Raised later (proof level 3 perf pilot):` in `docs/BACKLOG-INBOX.md`: raw-text titles; no performance-task label; "Item 9 and Item 10 is written"; no post-mark shot in the playthrough.
 
 No `course.json` proposal.
+
+Matched objective: proof l15 "Write a proof another reader can check line by line, with every step justified." (the rubric grades checkable lines; l10, l11 and l13 supply the methods, and the learner chooses one).
+
+Overlapping screens: l10 screens[7] (proof by cases, $n^2 + n$ even), l13 screens[2], [4] and [5] (base case and step in order, the same step shape) with quiz q-four (3 divides $4^n - 1$), l15 screens[3] (a missing case) and [8] (five methods); new parts: the claim $3 \mid n^3 - n$ appears in none of them, the learner picks the method (cases on the remainder mod 3, induction, or the factorisation $(n - 1)n(n + 1)$), and each line needs its reason.

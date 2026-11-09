@@ -19,3 +19,5 @@ No backlog bullets. No course.json change.
 Fix pass notes:
 - Fresh part: the objective is l16's own product (blank prices, repeated seconds averaged, sort then bisect, held ends appear on l16 screen 10, `price_at` and `clean_ticks`). What is new here is the `max_gap` trust window inside and at the ends, a list of asked seconds answered in order, and the log-cost demand.
 - `fresh-check --file`: one hit, `big_case`, a hidden postlude helper shared with coding-int homework-1 and homework-3.
+
+Overlapping screens: l16-interpolating screens[2] (points in any order), [3] (beyond the ends, hold the nearest value), [4] (the same x twice, merged), [5] (a missing value on uneven times), [7] (nothing left to interpolate), [8] and [9] (the formula and the sorted, merged, bracketed procedure), [11] (ten million rows), homework-4 `h4-value-at` (regridding with `np.interp`), review-4 `r4-interp-sorted`; new parts: a trust window `max_gap` between quotes and at both ends, cancelled `None` prices, answers in the order asked, and a log-cost requirement per asked second.
