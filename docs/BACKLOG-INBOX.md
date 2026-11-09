@@ -1685,3 +1685,6 @@ Raised later (validation level 2 perf):
 
 Raised later (coint level 1 perf):
 - [Could] Seen again (ENGINE-BACKLOG 536, deferred): an aloud item's follow-ups show only together with the model answer, so a rubric row that grades a follow-up answer cannot be honest. coint `h-spurious-aloud` dropped its follow-up row for a plain-words row. Wanted: the follow-ups step after the clock, before Mark my answer.
+
+Raised later (contests level 3 perf):
+- [Could] `playthrough.mjs --shots` takes the `-marked` shot at the viewport only, so a display equation lower in a long model (contests `hw3-due-order`, the aligned block in "No worse") is never seen at 440 px. A retrofit has to measure it with a scratch KaTeX page. Wanted: a full-height `-marked` shot, or a check that no `.katex-display` in the model is wider than its card.
