@@ -1,0 +1,108 @@
+{
+  "id": "dsa-server-loads",
+  "name": "Spreading batch jobs over servers",
+  "course": "graphs-dp",
+  "pack": "dsa",
+  "pattern": "backtracking",
+  "tags": [
+    "server-loads"
+  ],
+  "skills": [
+    "gd-backtrack"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "min_peak_load",
+  "returns": "a whole number",
+  "brief": "An overnight run has batch jobs whose run times, in minutes, are in `jobs`. There are `k` identical servers, every job runs whole on one server, and a server's load is the total of its jobs. The run ends when the busiest server finishes.\n\nWrite `min_peak_load(jobs, k)`, which returns the smallest possible load on the busiest server. With no jobs the answer is 0.\n\nExample. For jobs `[3, 5, 2, 7, 4]` and 2 servers, the total is 21, so one server carries at least 11. Jobs 7 and 4 on one server and 5, 3 and 2 on the other reach that, so the answer is 11.",
+  "constraints": [
+    "$0 \\le$ `len(jobs)` $\\le 12$, $1 \\le k \\le 12$, and each run time is a whole number from 1 to 1,000.",
+    "Trying all $k^n$ assignments is too slow at $n = 12$. Prune: skip a server whose load equals one already tried for this job, and stop a branch that cannot beat the best found.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Place the longest jobs first. For each job try each server, but never two servers with the same current load, and never one where the job would reach the best answer so far.",
+  "starter": "def min_peak_load(jobs, k):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "min_peak_load([3, 5, 2, 7, 4], 2)",
+      "expect": "11",
+      "compare": "equal",
+      "note": "Half of 21 rounds up to 11, and the split {7, 4} and {5, 3, 2} reaches it."
+    },
+    {
+      "call": "min_peak_load([8, 2, 2, 2], 3)",
+      "expect": "8",
+      "compare": "equal",
+      "note": "The 8-minute job alone sets the finish, whatever happens to the rest."
+    }
+  ],
+  "tests": [
+    {
+      "call": "min_peak_load([], 3)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([6], 1)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([6], 4)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([3, 5, 2, 7, 4], 2)",
+      "expect": "11",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([8, 2, 2, 2], 3)",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([4, 4, 4, 4], 2)",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([5, 5, 4, 3, 3], 2)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([1, 2, 3], 5)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([9, 8, 7, 6, 5, 4, 3], 3)",
+      "expect": "14",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([97, 89, 83, 79, 73, 71, 67, 61, 59, 53, 47, 43], 4)",
+      "expect": "207",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([500, 499, 498, 497, 496, 495, 494, 493, 492, 491, 490, 489], 5)",
+      "expect": "1475",
+      "compare": "equal"
+    },
+    {
+      "call": "min_peak_load([1000, 999, 998, 997, 996, 995, 994, 993, 992, 991, 990, 989], 12)",
+      "expect": "1000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def min_peak_load(jobs, k):\n    jobs = sorted(jobs, reverse=True)\n    loads = [0] * k\n    best = sum(jobs)        # every job on one server always works\n\n    def place(i):\n        nonlocal best\n        if i == len(jobs):\n            best = min(best, max(loads))\n            return\n        tried = set()\n        for s in range(k):\n            if loads[s] in tried or loads[s] + jobs[i] >= best:\n                continue\n            tried.add(loads[s])\n            loads[s] += jobs[i]\n            place(i + 1)\n            loads[s] -= jobs[i]\n\n    place(0)\n    return best\n",
+  "notes": [
+    "Assign jobs one at a time, longest first, and undo each choice after trying it; the best answer found so far bounds every later branch.",
+    "Servers with equal loads are interchangeable, so trying more than one of them repeats work, and the bound must start at a real answer such as the total.",
+    "The worst case is still exponential in $n$, but the two prunings cut $k^n$ down to a few thousand branches on these sizes."
+  ]
+}

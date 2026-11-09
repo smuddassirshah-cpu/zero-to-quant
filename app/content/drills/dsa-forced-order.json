@@ -1,0 +1,109 @@
+{
+  "id": "dsa-forced-order",
+  "name": "A release order with no choice",
+  "course": "graphs-dp",
+  "pack": "dsa",
+  "pattern": "graphs",
+  "tags": [
+    "forced-order"
+  ],
+  "skills": [
+    "gd-graphs",
+    "gd-traversal"
+  ],
+  "difficulty": 3,
+  "pace": 1260,
+  "fn": "forced_order",
+  "returns": "a list of whole numbers, or None",
+  "brief": "A release has `n` jobs, numbered 0 to `n - 1`. Each pair `(a, b)` in `deps` says job `a` must finish before job `b` starts, and jobs run one at a time. The release manager wants to know whether the rules leave any choice at all.\n\nWrite `forced_order(n, deps)`, which returns the order as a list when exactly one order obeys every rule, and `None` otherwise, either because the rules form a loop or because two orders both work.\n\nExample. With `n = 4` and rules `(2, 0)`, `(0, 3)`, `(3, 1)`, `(2, 3)`, job 2 must come first, then 0, then 3, then 1. That is the only order, so the answer is `[2, 0, 3, 1]`.",
+  "constraints": [
+    "$1 \\le n \\le 200{,}000$ and $0 \\le$ `len(deps)` $\\le 400{,}000$, with $a \\ne b$; a rule may repeat.",
+    "$O(n + m)$ time for $m$ rules is the target. Listing every valid order is hopeless, and rescanning all jobs at each step is $O(n^2)$.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Run Kahn's method: keep the jobs whose rules are all met. If that pool ever holds two jobs, either could go next, so the order is not forced.",
+  "starter": "def forced_order(n, deps):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "forced_order(4, [(2, 0), (0, 3), (3, 1), (2, 3)])",
+      "expect": "[2, 0, 3, 1]",
+      "compare": "equal",
+      "note": "At every step exactly one job is free to run."
+    },
+    {
+      "call": "forced_order(3, [(0, 1), (0, 2)])",
+      "expect": "None",
+      "compare": "equal",
+      "note": "After job 0, jobs 1 and 2 can go in either order."
+    }
+  ],
+  "tests": [
+    {
+      "call": "forced_order(1, [])",
+      "expect": "[0]",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(2, [])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(2, [(1, 0)])",
+      "expect": "[1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(2, [(0, 1), (1, 0)])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(4, [(2, 0), (0, 3), (3, 1), (2, 3)])",
+      "expect": "[2, 0, 3, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(3, [(0, 1), (0, 2)])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(3, [(0, 1), (1, 2), (0, 1), (0, 2)])",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(5, [(4, 3), (3, 2), (2, 1), (1, 0), (0, 4)])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(5, [(0, 1), (1, 2), (3, 4)])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: r == [(i * 7919) % 200000 for i in range(200000)])(forced_order(200000, [((i * 7919) % 200000, ((i + 1) * 7919) % 200000) for i in range(199999)] + [((i * 7919) % 200000, ((i + 2) * 7919) % 200000) for i in range(199998)]))",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(200000, [(i, i + 1) for i in range(199999) if i != 100000])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "forced_order(200000, [(i, i + 1) for i in range(199999)] + [(199999, 0)])",
+      "expect": "None",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def forced_order(n, deps):\n    after = [[] for _ in range(n)]\n    need = [0] * n\n    for a, b in deps:\n        after[a].append(b)\n        need[b] += 1\n    ready = [v for v in range(n) if need[v] == 0]\n    order = []\n    while ready:\n        if len(ready) > 1:\n            return None\n        v = ready.pop()\n        order.append(v)\n        for w in after[v]:\n            need[w] -= 1\n            if need[w] == 0:\n                ready.append(w)\n    return order if len(order) == n else None\n",
+  "notes": [
+    "Kahn's method builds every valid order by picking any job whose rules are met; the order is forced exactly when there is never more than one such job.",
+    "A loop leaves jobs that never become free, so check that every job was placed before returning the order; a repeated rule must be counted each time it appears.",
+    "Each job and rule is handled once, so the work is $O(n + m)$."
+  ]
+}

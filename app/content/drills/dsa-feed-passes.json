@@ -1,0 +1,109 @@
+{
+  "id": "dsa-feed-passes",
+  "name": "Cheapest market-data passes",
+  "course": "graphs-dp",
+  "pack": "dsa",
+  "pattern": "dp",
+  "tags": [
+    "stdin",
+    "feed-passes"
+  ],
+  "skills": [
+    "gd-dp"
+  ],
+  "difficulty": 3,
+  "pace": 1380,
+  "fn": "solve_feed_passes",
+  "returns": "a string",
+  "brief": "A small fund needs a market-data feed on certain days only. The vendor sells passes for 1, 7 or 30 consecutive days. A pass bought for day `d` covers day `d` and the days after it, up to its length. The input comes as one string:\n\n- the first line holds `n`, then the prices of the 1-day, 7-day and 30-day passes;\n- the second line holds the `n` days the feed is needed, in increasing order.\n\nWrite `solve_feed_passes(text)`, which returns, as a string, the least total cost that covers every needed day. Expect extra spaces and a trailing newline.\n\nExample. For `\"5 3 10 25\\n1 2 3 4 30\\n\"` a 7-day pass on day 1 covers days 1 to 4 for 10, and a 1-day pass covers day 30 for 3. The answer is `\"13\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$; the days are different whole numbers from 1 to $10^9$; each price is a whole number from 1 to $10^4$.",
+    "$O(n \\log n)$ or $O(n)$ time is the target. A table over every calendar day is too big when days run to $10^9$.",
+    "Each test has its own 5-second limit in the browser."
+  ],
+  "hint": "Let `best[i]` be the cheapest way to cover the needed days from the `i`-th on. Buy a pass on day `i`, then jump to the first needed day it does not cover.",
+  "starter": "def solve_feed_passes(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_feed_passes('5 3 10 25\\n1 2 3 4 30\\n')",
+      "expect": "'13'",
+      "compare": "equal",
+      "note": "Four 1-day passes would cost 12, so the 7-day pass is cheaper for the first four days."
+    },
+    {
+      "call": "solve_feed_passes('3 4 9 20\\n1 15 29\\n')",
+      "expect": "'12'",
+      "compare": "equal",
+      "note": "The days are too far apart for a 7-day pass to help, and three 1-day passes beat one 30-day pass."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_feed_passes('0 5 6 7\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('1 5 2 9\\n1000000000\\n')",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('5 3 10 25\\n1 2 3 4 30\\n')",
+      "expect": "'13'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('3 4 9 20\\n1 15 29\\n')",
+      "expect": "'12'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('  7 1 4 30\\n1 2 3  4 5 6 7 \\n')",
+      "expect": "'4'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('8 2 7 15\\n1 2 3 4 5 6 7 8\\n')",
+      "expect": "'9'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('4 10 10 10\\n1 2 30 31\\n')",
+      "expect": "'20'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('6 5 12 20\\n3 9 10 16 31 32\\n')",
+      "expect": "'20'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('12 3 11 26\\n1 3 6 7 8 12 15 20 21 27 29 40\\n')",
+      "expect": "'29'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('200000 3 13 40\\n' + ' '.join(str(1 + 2 * i + i // 5) for i in range(200000)) + '\\n')",
+      "expect": "'571430'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('200000 7 20 50\\n' + ' '.join(str(1 + 5000 * i + (i * i) % 29) for i in range(200000)) + '\\n')",
+      "expect": "'1400000'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_feed_passes('200000 2 9 21\\n' + ' '.join(str(1 + i + 3 * (i // 4)) for i in range(200000)) + '\\n')",
+      "expect": "'233335'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "from bisect import bisect_left\n\ndef solve_feed_passes(text):\n    data = list(map(int, text.split()))\n    n, prices = data[0], data[1:4]\n    days = data[4:4 + n]\n    best = [0] * (n + 1)      # best[i]: cheapest cover of days[i:]\n    for i in range(n - 1, -1, -1):\n        best[i] = min(p + best[bisect_left(days, days[i] + length)]\n                      for p, length in zip(prices, (1, 7, 30)))\n    return str(best[0])\n",
+  "notes": [
+    "Some pass must start on the first uncovered needed day, so `best[i]` is the cheapest of the three passes bought then, plus `best` at the first day each one misses.",
+    "Index the table by needed days, not calendar days, and do not assume a longer pass is dearer or cheaper: compare all three every time.",
+    "Each needed day does three binary searches, so the work is $O(n \\log n)$; three forward pointers make it $O(n)$."
+  ]
+}
