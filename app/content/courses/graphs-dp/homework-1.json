@@ -544,6 +544,116 @@
           "text": "Uses the passes of Kahn's algorithm for parallel batches, or proposes checking for cycles when dependencies change"
         }
       ]
+    },
+    {
+      "id": "h-split-desks",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gd-traversal",
+        "gd-graphs"
+      ],
+      "tags": [
+        "two-colouring"
+      ],
+      "pace": 1200,
+      "prose": "Compliance must split a bank's desks into two groups. The two desks in every conflict of interest must sit in different groups. `desks` lists every desk name, in any order. `conflicts` lists pairs `(a, b)` of two different desks, and a conflict runs both ways. Desks joined by a chain of conflicts form a linked set. A desk with no conflicts is a linked set of its own. In each linked set, the desk whose name sorts first goes in group 0. A bank may have 5,000 desks, and one chain of conflicts may run through 3,000 of them.",
+      "question": "Write `split_desks(desks, conflicts)`: a dict from every desk to its group, 0 or 1, or `None` when no split works.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def split_desks(desks, conflicts):\n    ...\n",
+        "solution": "from collections import deque\n\n\ndef split_desks(desks, conflicts):\n    adj = {d: [] for d in desks}\n    for a, b in conflicts:          # a conflict runs both ways\n        adj[a].append(b)\n        adj[b].append(a)\n    group = {}\n    for start in sorted(desks):     # the first desk of each linked set\n        if start in group:\n            continue\n        group[start] = 0\n        queue = deque([start])\n        while queue:\n            u = queue.popleft()\n            for v in adj[u]:\n                if v not in group:\n                    group[v] = 1 - group[u]\n                    queue.append(v)\n                elif group[v] == group[u]:\n                    return None     # an odd loop: no split works\n    return group\n",
+        "postlude": "def _desk_rng(seed):\n    state = [seed]\n    def rnd(m):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 18446744073709551616\n        return (state[0] >> 33) % m\n    return rnd\n\n\ndef _desk_shuffle(xs, rnd):\n    for i in range(len(xs) - 1, 0, -1):\n        j = rnd(i + 1)\n        xs[i], xs[j] = xs[j], xs[i]\n\n\ndef desk_chain(n=3000):\n    rnd = _desk_rng(7)\n    names = ['D%05d' % i for i in range(n)]\n    pairs = []\n    for i in range(n - 1):\n        a, b = names[i], names[i + 1]\n        pairs.append((a, b) if rnd(2) else (b, a))\n    _desk_shuffle(pairs, rnd)\n    _desk_shuffle(names, rnd)\n    return names, pairs\n\n\ndef desk_web(n=5000, extra=6000, odd=False):\n    rnd = _desk_rng(11)\n    side = [0] * n\n    pairs = []\n    for i in range(3, n):\n        j = 3 * rnd(i // 3) + i % 3\n        side[i] = 1 - side[j]\n        pairs.append((i, j))\n    while len(pairs) < n - 3 + extra:\n        i, j = rnd(n), rnd(n)\n        if i % 3 == j % 3 and side[i] != side[j]:\n            pairs.append((i, j))\n    if odd:\n        k = 4\n        while side[k] != side[1]:\n            k += 3\n        pairs.append((1, k))\n    names = ['D%05d' % i for i in range(n)]\n    pairs = [(names[i], names[j]) for i, j in pairs]\n    _desk_shuffle(pairs, rnd)\n    _desk_shuffle(names, rnd)\n    return names, pairs\n\n\ndef group_tally(groups):\n    if groups is None:\n        return None\n    ones = [int(d[1:]) for d, g in groups.items() if g == 1]\n    zeros = [d for d, g in groups.items() if g == 0]\n    return [len(groups), len(zeros), len(ones), sum(ones)]\n",
+        "examples": [
+          {
+            "call": "split_desks(['Credit', 'Swaps', 'Rates', 'FX'], [('FX', 'Rates'), ('Rates', 'Credit'), ('Credit', 'Swaps')])",
+            "expect": "{'Credit': 0, 'Rates': 1, 'Swaps': 1, 'FX': 0}",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "split_desks(['Credit', 'Swaps', 'Rates', 'FX'], [('FX', 'Rates'), ('Rates', 'Credit'), ('Credit', 'Swaps')])",
+            "expect": "{'Credit': 0, 'Rates': 1, 'Swaps': 1, 'FX': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Bonds', 'Cash', 'Loans'], [('Bonds', 'Cash'), ('Loans', 'Bonds')])",
+            "expect": "{'Bonds': 0, 'Cash': 1, 'Loans': 1}",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Gilts', 'Index', 'Repo'], [('Repo', 'Gilts'), ('Gilts', 'Index'), ('Index', 'Repo')])",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Audit', 'Tax', 'Legal', 'Ops', 'Risk'], [('Audit', 'Tax'), ('Legal', 'Ops'), ('Ops', 'Risk')])",
+            "expect": "{'Audit': 0, 'Tax': 1, 'Legal': 0, 'Ops': 1, 'Risk': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Bonds', 'FX', 'Cash'], [('Bonds', 'FX')])",
+            "expect": "{'Bonds': 0, 'FX': 1, 'Cash': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Rates', 'Credit', 'Swaps'], [('Credit', 'Rates'), ('Rates', 'Swaps')])",
+            "expect": "{'Credit': 0, 'Rates': 1, 'Swaps': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Credit', 'Equity', 'FX', 'Rates'], [('Credit', 'Equity'), ('Credit', 'Rates'), ('Rates', 'FX'), ('FX', 'Equity')])",
+            "expect": "{'Credit': 0, 'Equity': 1, 'Rates': 1, 'FX': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Bonds', 'Cash', 'Gilts', 'Loans'], [('Bonds', 'Cash'), ('Gilts', 'Loans'), ('Cash', 'Loans')])",
+            "expect": "{'Bonds': 0, 'Cash': 1, 'Loans': 0, 'Gilts': 1}",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(['Audit', 'Tax', 'Legal', 'Ops', 'Risk'], [('Audit', 'Tax'), ('Legal', 'Ops'), ('Ops', 'Risk'), ('Risk', 'Legal')])",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "group_tally(split_desks(*desk_chain()))",
+            "expect": "[3000, 1500, 1500, 2250000]",
+            "compare": "equal"
+          },
+          {
+            "call": "group_tally(split_desks(*desk_web()))",
+            "expect": "[5000, 2494, 2506, 6283249]",
+            "compare": "equal"
+          },
+          {
+            "call": "split_desks(*desk_web(odd=True)) is None",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests. Tests 10 to 12 build large banks with hidden helpers: `desk_chain()` is a chain of 3,000 desks, and `desk_web()` has 5,000 desks in three linked sets. `group_tally` reads a result as the number of desks, the counts in groups 0 and 1, and the sum of the desk numbers in group 1."
+      },
+      "feedback": {
+        "correct": "Each linked set is searched once from its first desk, and each new neighbour goes in the other group.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 lists each conflict once, `(Bonds, Cash)` then `(Loans, Bonds)`. A conflict runs both ways, so store it under both desks. Stored one way, Loans starts a set of its own in group 0 and clashes with Bonds.",
+          "test-3": "Test 3 is a loop of three: Repo, Gilts and Index each conflict with the other two. No split works, so return `None`. Check every neighbour already placed, not only the new ones.",
+          "test-4": "Test 4 has two linked sets: Audit and Tax, then Legal, Ops and Risk. Every desk needs a group, so start a new search from each desk not yet placed.",
+          "test-5": "Test 5 has a desk with no conflicts, Cash. It is a linked set of its own, so it goes in group 0.",
+          "test-6": "Test 6 lists Rates first, but Credit sorts first in its linked set. So Credit and Swaps are in group 0 and Rates in group 1: take the desks in sorted order.",
+          "test-7": "Test 7 is a loop of four desks, which splits: Credit and FX in group 0, Equity and Rates in group 1. A desk already placed is a clash only when it shares the group of the desk you came from.",
+          "test-8": "Test 8 joins the pairs Bonds, Cash and Gilts, Loans by a third conflict, Cash with Loans. Placed one conflict at a time, Cash and Loans both land in group 1 before that conflict is read. Place a whole linked set from its first desk instead.",
+          "test-9": "Test 9 has two linked sets, and the second, Legal, Ops and Risk, is a loop of three. A loop of odd length anywhere means no split works.",
+          "test-10": "Test 10 is a chain of 3,000 desks. A recursive search goes 3,000 calls deep, past Python's recursion limit, so use a queue."
+        }
+      },
+      "explain": {
+        "text": "From each linked set's first desk in sorted order, a queue puts each new neighbour in the other group. A neighbour already in the same group closes a loop of odd length, so no split exists. The work is $O(D + C)$ for $D$ desks and $C$ conflicts, plus the sort."
+      }
     }
   ]
 }

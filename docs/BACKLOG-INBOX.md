@@ -1709,3 +1709,7 @@ Raised later (cpp level 3 perf):
 
 Raised later (cpp level 4 perf):
 - [Could] C++ `code` widget, planted-bug grading in script mode: a case is either `stdout` ("planted slip k: caught") or `raises`, never "either". So a slip may only stop the run on the one input its `raises` case is built for; a learner input that crashes any other slip would read as a miss. `h4-test-median` keeps four slips crash-free. Wanted: a case that passes on the expected text or an abnormal end (`"compare": "stdout", "orStops": true`).
+
+Raised later (graphs-dp level 1 perf):
+- [Could] Another vote for a `--variants` playthrough (inbox, topic-1.9 exam). Checking in Pyodide that a slow but correct answer passes and that a recursive search fails the 3,000-desk test meant swapping each variant into `solution` in place and replaying. Wanted: `playthrough.mjs --set <id> --variant <item>=<file>` that plays a file as the solution and prints the first failing test.
+- [Could] AUTHORING section 3 does not give Pyodide's recursion limit or stack depth. `h-split-desks` relies on a recursive search failing a 3,000-deep chain with a clean `RecursionError` (seen in a scratch run); a test that a recursive answer should pass has no documented depth to stay under. Wanted: one line stating the limit and the deepest safe recursion.
