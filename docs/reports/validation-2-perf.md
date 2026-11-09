@@ -3,7 +3,7 @@
 - `homework-2.json` item 9 of 9, `h-label-purge`, appended. Kind `code`, difficulty 5.
 - Objective (l7): "Build a forward label with the right alignment". Product: `label_table(px, h)` on dates by shares with halts, and `train_dates(px, h, test_start, test_end)`, the purge.
 - 12 tests, 1 example. 17 planted bugs fail, each first where its byKey fits: wrong-way shift, horizon off by one (test 1); h closes not h rows, back-fill, `pct_change` padding (test 3); purge by h or h - 2, one side, none (test 7); unlabelled dates (test 10).
-- Overlap: l7 screens 4 (`forward_label`), 5 (`purged_train_idx`), 9; `h-pks`, `h-count`, `r-purge`. New: missing closes give NaN, purge by dates with an inclusive end, unlabelled dates dropped.
+- Overlapping screens: l7 screens 4 (`forward_label`), 5 (`purged_train_idx`), 9; `h-pks`, `h-count`, `r-purge`. New: missing closes give NaN, purge by dates with an inclusive end, unlabelled dates dropped.
 
 Gates:
 1. `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors.
