@@ -1771,3 +1771,6 @@ Raised later (plotting level 3 perf):
 
 Raised later (least-squares level 2 perf):
 - [Could] `compare: "raises"` cannot tell which `ValueError` was raised. In `h-factor-neutral` (homework-2) a slip with the last transpose missing raises NumPy's own shape-mismatch `ValueError` on the three refusal tests and passes them for the wrong reason (it fails the other ten). Want an optional `match` regex on a raises case, read against the exception message, so a test can require the learner's own refusal.
+
+Raised later (taylor level 1 perf):
+- [Should] Second sighting of the conditional L2 bullet: the `-marked` element shot is full height but white below the first viewport (taylor `homework-1` item 10: 400 x 4455 px at 440, 780 x 3066 px on desktop), so the model and rubric past the first screen cannot be read from the shots. The width check (701) still covers every display.
