@@ -1793,3 +1793,6 @@ Raised later (ds level 4 perf):
 - [Could] Third sighting of ENGINE-BACKLOG 655: `fresh-check --file` reports `h4-save-tree` (ds homework-4) as a code-name hit on `to_list`, a helper only its hidden prelude defines (as in l12 to l16), and exits 1. Want names the item's own prelude or starter defines skipped.
 Raised later (micro level 3 perf):
 - [Could] Seen again: AUTHORING says the `-marked` shot is the whole item card at every size, but the 440 px shot of micro `homework-3` `h-derive-tilted-quotes` shows the card only to the third paragraph of the model and blank below, so the rest of the model and the rubric are never seen. The width check passed, so nothing overflowed; the shot simply stops. Wanted: the full card in the `-marked-440` shot, or AUTHORING corrected.
+
+Raised later (git level 3 perf):
+- [Could] A task whose product is a text file that is not Python (a `.gitignore`, a shell script, a README) must wrap it in a Python string, because a code widget runs only Python or C++. Want a `language: "text"` mode: the editor holds the file as typed, Python never runs it, and the prelude, postlude and tests read it as `__learner_source__` (here `git/homework-3` `h-ignore-options-repo` would drop its `GITIGNORE = """` wrapper).
