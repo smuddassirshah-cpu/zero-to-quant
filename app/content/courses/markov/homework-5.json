@@ -528,6 +528,39 @@
      "text": "Gives an honest risk statement: 90% small wins, 10% large losses, zero mean before costs, and the backtest warning"
     }
    ]
+  },
+  {
+   "id": "h-build-lazy-martingales",
+   "performance": "derivation",
+   "difficulty": 5,
+   "skills": [
+    "mc-walks"
+   ],
+   "kind": "longform",
+   "title": "Martingales for a price that can pause",
+   "prompt": "Start from a blank page. A mid price moves on a grid of ticks. Each second it moves up one tick with chance $p$, down one tick with chance $q$, or stays put with chance $r = 1 - p - q$, independently of the past. Here $p > 0$, $q > 0$, $p + q \\le 1$ and $p \\ne q$. Let $X_k$ be the move in second $k$, and $S_n = i + X_1 + \\dots + X_n$ the price in ticks after $n$ seconds.\n\n1. Find constants $a$ and $b$ that make $(S_n - an)^2 - bn$ a martingale, and prove that it is one.\n2. Find every $\\theta > 0$ for which $\\theta^{S_n}$ is a martingale, and prove your answer.\n3. Take $p = 0.3$, $q = 0.2$ and $i = 2$. Use part 2 and optional stopping to find the chance that the price reaches 5 before 0. Name the condition of optional stopping you use, and show that it holds.",
+   "model": "**Setting.** The moves $X_1, X_2, \\dots$ are independent, each $+1$, $-1$ or $0$ with chances $p$, $q$ and $r$. So $\\mu = E[X] = p - q$ and $E[X^2] = p + q$, which give $\\sigma^2 = \\mathrm{Var}(X) = p + q - (p - q)^2$. We condition on the history $X_1, \\dots, X_n$ and write $E_n[\\,\\cdot\\,]$ for the mean given it. The history fixes $S_n$, and $X_{n+1}$ is independent of it, so $E_n$ of a function of $X_{n+1}$ alone is its plain mean. Each process below is a function of $n$ and $S_n$, so it is known from the history. Since $|S_n| \\le |i| + n$, each takes finitely many values at a given $n$, so its mean is finite.\n\n**1. The square.** Take $a = \\mu$ and write $Y_n = S_n - \\mu n$, so $Y_{n+1} = Y_n + (X_{n+1} - \\mu)$. Then\n$$\\begin{aligned} E_n[Y_{n+1}^2] &= Y_n^2 + 2Y_n\\,E[X_{n+1} - \\mu] \\\\ &\\quad + E[(X_{n+1} - \\mu)^2] \\\\ &= Y_n^2 + \\sigma^2. \\end{aligned}$$\nThe first line expands the square, takes out $Y_n$, which the history fixes, and uses independence for the two means. The last uses $E[X - \\mu] = 0$ and $E[(X - \\mu)^2] = \\sigma^2$. Subtracting $\\sigma^2(n + 1)$ from both sides gives $E_n[Y_{n+1}^2 - \\sigma^2(n+1)] = Y_n^2 - \\sigma^2 n$. So $a = p - q$ and $b = p + q - (p - q)^2$ make a martingale.\n\nNo other constants do. With any $a$ and $Z_n = S_n - an$, the same lines give a one-step change of $2(\\mu - a)Z_n + E[(X - a)^2] - b$. After one second $Z_1$ takes at least two values, since $p > 0$ and $q > 0$. So the change is 0 on every history only if $a = \\mu$, and then $b = \\sigma^2$. Check: with no pauses, $p + q = 1$ and $b = 1 - (p - q)^2 = 4pq$, the walk's own square martingale.\n\n**2. The power.** Since $S_{n+1} = S_n + X_{n+1}$,\n$$\\begin{aligned} E_n[\\theta^{S_{n+1}}] &= \\theta^{S_n}\\,E[\\theta^{X_{n+1}}] \\\\ &= \\theta^{S_n}\\left(p\\theta + r + \\frac{q}{\\theta}\\right). \\end{aligned}$$\nLine 1 takes out $\\theta^{S_n}$, which the history fixes, and uses independence. Line 2 averages over the three moves. Since $\\theta^{S_n} > 0$, the process is a martingale exactly when $p\\theta + r + q/\\theta = 1$. Multiply by $\\theta > 0$ and put $r = 1 - p - q$:\n$$\\begin{aligned} p\\theta^2 + (1 - p - q)\\theta + q &= \\theta \\\\ p\\theta^2 - (p + q)\\theta + q &= 0 \\\\ (\\theta - 1)(p\\theta - q) &= 0. \\end{aligned}$$\nSo $\\theta = 1$, the constant process, or $\\theta = q/p$, and no other. The pause chance $r$ drops out: the base is the walk's own $q/p$. The mean is finite, since $\\theta^{S_n}$ lies between $\\theta^{|i| + n}$ and $\\theta^{-(|i| + n)}$.\n\n**3. Reaching 5 before 0.** Here $r = 0.5$ and $\\theta = q/p = \\tfrac23$. Let $T$ be the first second at which $S_n$ is 0 or 5. Whether $T \\le n$ is decided by $S_0, \\dots, S_n$, so $T$ is a stopping time. We use the condition that the stopped process stays bounded, together with $T$ finite with chance 1. Bounded: before $T$ the price is in 1 to 4, and at $T$ it is 0 or 5. So $0 \\le S_{n \\wedge T} \\le 5$, and $\\theta^{S_{n \\wedge T}}$ stays between $\\theta^5$ and 1. Finite: from any price in 1 to 4, five up moves in a row reach 5, with chance $p^5 = 0.3^5 = 0.00243$. Seconds 1 to 5, 6 to 10, and so on are independent blocks, so $P(T > 5k) \\le (1 - 0.00243)^k$, which tends to 0.\n\nOptional stopping gives $E[\\theta^{S_T}] = \\theta^{S_0} = \\theta^2$. With $P = P(S_T = 5)$, and $S_T = 0$ otherwise,\n$$\\begin{aligned} P\\theta^5 + (1 - P)\\theta^0 &= \\theta^2 \\\\ P = \\frac{1 - \\theta^2}{1 - \\theta^5} &= \\frac{1 - \\tfrac49}{1 - \\tfrac{32}{243}} \\\\ &= \\frac{5/9}{211/243} = \\frac{135}{211}. \\end{aligned}$$\nSo the price reaches 5 before 0 with chance $\\tfrac{135}{211} \\approx 0.640$. Check by first-step analysis: $h_k = 0.3h_{k+1} + 0.2h_{k-1} + 0.5h_k$ rearranges to $h_k = 0.6h_{k+1} + 0.4h_{k-1}$. That is the walk with no pauses and up chance 0.6, whose answer from 2 is the same $\\tfrac{135}{211}$. Pauses change when the price arrives, not where.",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "States the move's mean $p - q$ and variance $p + q - (p - q)^2$, and that the next move is independent of the history."
+    },
+    {
+     "points": 3,
+     "text": "Tick only if all are given: $a = p - q$ and $b = p + q - (p - q)^2$; the conditional mean worked line by line, taking out $S_n - an$ as known and using independence for the next move; and a reason the means are finite.",
+     "required": true
+    },
+    {
+     "points": 3,
+     "text": "Tick only if all are given: $E[\\theta^{S_{n+1}} \\mid \\text{history}] = \\theta^{S_n}(p\\theta + r + q/\\theta)$ with its reasons; the equation solved as $(\\theta - 1)(p\\theta - q) = 0$, so $\\theta = 1$ or $\\theta = q/p$; and why no other $\\theta$ works, since $\\theta^{S_n} > 0$.",
+     "required": true
+    },
+    {
+     "points": 3,
+     "text": "Tick only if all are given: the condition named (the stopped process stays between $\\theta^5$ and 1) and $T$ shown finite with chance 1, with a reason; $P\\theta^5 + (1 - P) = \\theta^2$ with $\\theta = \\tfrac23$; and $P = \\tfrac{135}{211} \\approx 0.640$.",
+     "required": true
+    }
+   ]
   }
  ]
 }
