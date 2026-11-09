@@ -1691,3 +1691,6 @@ Raised later (mm-games level 3 perf):
 
 Raised later (contests level 3 perf):
 - [Could] `playthrough.mjs --shots` takes the `-marked` shot at the viewport only, so a display equation lower in a long model (contests `hw3-due-order`, the aligned block in "No worse") is never seen at 440 px. A retrofit has to measure it with a scratch KaTeX page. Wanted: a full-height `-marked` shot, or a check that no `.katex-display` in the model is wider than its card.
+
+Raised later (fin-ml level 2 perf):
+- [Could] `code` widget, `equal` and `isclose`: a test still cannot expect NaN (sixth sighting, after `exercise_boundary`, `formation_returns`, research-int DataFrames, opt-dash and `h-label-purge`). fin-ml `h-return-rank` returns NaN by contract for a share with no feature, so its tests read the result through a hidden `day` helper that writes NaN as None. Wanted: an opt-in `"nan": "equal"` on a case.
