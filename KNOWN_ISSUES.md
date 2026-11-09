@@ -235,4 +235,4 @@ Session X (7 to 9 Nov):
 - contests `l10-greedy-proofs` failed once in a loaded shard (32.1 s) and passes alone (28.2 s): a timing flake under load, not a content fault.
 - The scratchpad venv has NumPy 2.5.4; Pyodide 0.27.7 ships 2.0.2. Readers ran the session's NumPy-dependent tasks in real Pyodide (`docs/reviews/perf-retrofit-11-scripts/pyo11.mjs`) and found no difference; pin `numpy==2.0.2` in later venvs.
 - Shards: a full `--all` run at c5db6ee was stopped at about 66% of lessons (stale base; one flake, no failures). The final run is the one at the session-close HEAD.
-- BACKLOG-INBOX holds about 60 new "Raised later" bullets from session X authors and readers, not yet numbered (ENGINE-BACKLOG ends at 703).
+- BACKLOG-INBOX holds about 60 new "Raised later" bullets from session X authors and readers, not yet numbered (ENGINE-BACKLOG ends at 704).
