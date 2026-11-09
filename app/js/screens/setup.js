@@ -120,7 +120,7 @@
             <p class="t-body ob-react" data-hreact aria-live="polite">${S.hours ? esc(HOURS_REACT[S.hours]) : '<span class="muted">The weekly goal on Today splits into main subject, build, review and mental arithmetic.</span>'}</p></section>
           <section class="ob-group" aria-labelledby="su-gs"><h2 class="t-h2" id="su-gs">Starting stage</h2>
             <p class="t-caption secondary">${esc(EXIT_LINE)}</p>
-            <div class="opts ob-rows" role="group" aria-labelledby="su-gs">${stages.map(s => row(String(s.id), `Stage ${s.id}: ${s.name}`, `${Number(s.hours).toLocaleString('en-GB')} hours${s.exit ? '. Exit: ' + s.exit : ''}`, S.stage === s.id, 'stage')).join('')}</div></section>`;
+            <div class="opts ob-rows" role="group" aria-labelledby="su-gs">${stages.map(s => row(String(s.id), `Stage ${s.id}: ${s.name}`, `${Z.hours && s.hoursApp != null ? Z.hours.splitLabel(s.hoursApp, s.hoursOut, { short: true }) : Number(s.hours).toLocaleString('en-GB') + ' hours'}${s.exit ? '. Exit: ' + s.exit : ''}`, S.stage === s.id, 'stage')).join('')}</div></section>`;
         col.querySelector('.ob-hours').addEventListener('click', (e) => {
           const b = e.target.closest('[data-h]'); if (!b) return;
           S.hours = Number(b.dataset.h);

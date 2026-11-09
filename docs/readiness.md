@@ -14,10 +14,10 @@ Signed off by the user, 5 Nov (PLAN 2c item 2; DECISIONS "Readiness contract sig
 Status words: **required** is shown as next work in order. **Recommended** is shown after required. **Optional** is never shown as next work for the role; it stays reachable from Learn.
 
 <!-- generated:catalogue -->
-Catalogue: 79 courses, 1214 lessons mapped (1214 written, 0 unwritten). Hours are stored topic hours shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1); topics 3.2 and 3.4 store 0.
+Catalogue: 79 courses, 1214 lessons mapped (1214 written, 0 unwritten). Hours are shown as hours in the app and hours of outside study: the stored topic hours, shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1), split into the minutes counted in the app (lessons, level reviews and homework, topic exams) and the rest; topics 3.2 and 3.4 store 0.
 <!-- /generated -->
 
-Hours come from `app/js/hours.js` (AUTHORING section 14): a short lesson weighs 1 and a workshop or project `minutes / 14`. Hours in each table are rounded per cell, and the header is the sum of the cells. Run `node app/tools/readiness-sums.mjs` from the repo root to check every figure here. It exits non-zero on any mismatch.
+Hours come from `app/js/hours.js` (AUTHORING section 14): a short lesson weighs 1 and a workshop or project `minutes / 14`. Each table gives hours in the app (lesson minutes, level reviews and homework, topic exams) and hours of outside study (stored hours less the in-app figure, never below 0), in that order; no table shows the stored total alone. Hours in each table are rounded per cell, and the header is the sum of the cells. Run `node app/tools/readiness-sums.mjs` from the repo root to check every figure here. It exits non-zero on any mismatch.
 
 Derivatives and desk quant is a sub-route of Strats, not its own track. Its table sits inside the Strats section.
 
@@ -136,11 +136,11 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 **Totals**
 
 <!-- generated:totals:trader -->
-| Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
-| --- | --- | --- | --- | --- | --- | --- |
-| Required | 442 | 0 | 442 | 1214 | 0 | 1214 |
-| Recommended | 188 | 0 | 188 | 590 | 0 | 590 |
-| Learn header (required plus recommended) | 630 | 0 | 630 | 1804 | 0 | 1804 |
+| Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
+| --- | --- | --- | --- | --- | --- |
+| Required | 442 | 0 | 442 | 216 | 999 |
+| Recommended | 188 | 0 | 188 | 97 | 493 |
+| Learn header (required plus recommended) | 630 | 0 | 630 | 313 | 1492 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -267,11 +267,11 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 **Totals**
 
 <!-- generated:totals:researcher -->
-| Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
-| --- | --- | --- | --- | --- | --- | --- |
-| Required | 534 | 0 | 534 | 1653 | 0 | 1653 |
-| Recommended | 340 | 0 | 340 | 1107 | 0 | 1107 |
-| Learn header (required plus recommended) | 874 | 0 | 874 | 2760 | 0 | 2760 |
+| Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
+| --- | --- | --- | --- | --- | --- |
+| Required | 534 | 0 | 534 | 271 | 1382 |
+| Recommended | 340 | 0 | 340 | 175 | 932 |
+| Learn header (required plus recommended) | 874 | 0 | 874 | 446 | 2314 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -398,11 +398,11 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 **Totals**
 
 <!-- generated:totals:developer -->
-| Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
-| --- | --- | --- | --- | --- | --- | --- |
-| Required | 228 | 0 | 228 | 680 | 0 | 680 |
-| Recommended | 248 | 0 | 248 | 836 | 0 | 836 |
-| Learn header (required plus recommended) | 476 | 0 | 476 | 1516 | 0 | 1516 |
+| Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
+| --- | --- | --- | --- | --- | --- |
+| Required | 228 | 0 | 228 | 116 | 564 |
+| Recommended | 248 | 0 | 248 | 126 | 710 |
+| Learn header (required plus recommended) | 476 | 0 | 476 | 242 | 1274 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -531,11 +531,11 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 **Totals**
 
 <!-- generated:totals:strats -->
-| Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
-| --- | --- | --- | --- | --- | --- | --- |
-| Required | 569 | 0 | 569 | 1683 | 0 | 1683 |
-| Recommended | 223 | 0 | 223 | 595 | 0 | 595 |
-| Learn header (required plus recommended) | 792 | 0 | 792 | 2278 | 0 | 2278 |
+| Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
+| --- | --- | --- | --- | --- | --- |
+| Required | 569 | 0 | 569 | 286 | 1397 |
+| Recommended | 223 | 0 | 223 | 114 | 489 |
+| Learn header (required plus recommended) | 792 | 0 | 792 | 400 | 1886 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -658,11 +658,11 @@ Same learner as Strats, plus the pricing mathematics.
 **Totals**
 
 <!-- generated:totals:strats-deriv -->
-| Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
-| --- | --- | --- | --- | --- | --- | --- |
-| Required | 646 | 0 | 646 | 1863 | 0 | 1863 |
-| Recommended | 228 | 0 | 228 | 534 | 0 | 534 |
-| Learn header (required plus recommended) | 874 | 0 | 874 | 2397 | 0 | 2397 |
+| Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
+| --- | --- | --- | --- | --- | --- |
+| Required | 646 | 0 | 646 | 327 | 1545 |
+| Recommended | 228 | 0 | 228 | 118 | 431 |
+| Learn header (required plus recommended) | 874 | 0 | 874 | 445 | 1976 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -785,11 +785,11 @@ Undecided never reads "ready". It reads "foundation done" once the required cour
 **Totals**
 
 <!-- generated:totals:undecided -->
-| Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
-| --- | --- | --- | --- | --- | --- | --- |
-| Required | 252 | 0 | 252 | 719 | 0 | 719 |
-| Recommended | 0 | 0 | 0 | 0 | 0 | 0 |
-| Learn header (required plus recommended) | 252 | 0 | 252 | 719 | 0 | 719 |
+| Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
+| --- | --- | --- | --- | --- | --- |
+| Required | 252 | 0 | 252 | 125 | 593 |
+| Recommended | 0 | 0 | 0 | 0 | 0 |
+| Learn header (required plus recommended) | 252 | 0 | 252 | 125 | 593 |
 <!-- /generated -->
 
 **Dependency conflicts**

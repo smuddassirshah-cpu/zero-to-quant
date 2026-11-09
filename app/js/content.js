@@ -18,6 +18,7 @@
   let selfExams = null;           // manifest.selfExams: exam ids holding a longform item or a check part; null without a manifest
   let perfTasks = {};             // manifest.perf: "course/L<n>" -> { file, item, kind, how }, the levels that carry a performance task (ENGINE-BACKLOG 529)
   let drillMeta = {};             // manifest.drills: id -> { language, pattern, pace, tags, sample } read from each drill file (engine pass C, item 472)
+  let lessonMins = {}, setMins = {};   // manifest.lessonMinutes ("course/lesson" -> minutes) and manifest.setMinutes ("course/review-1" -> minutes, only where the file states it): the in-app hours (js/hours.js)
   let sessions = {};              // manifest.sessions: "course/lesson" -> { session, minutes } for workshop and project lessons (item 10)
   let hoursModel = null;          // ZQ.hours.build over the curriculum, course maps, manifest and sessions (item 11); null until content is ready
   let capstoneDoc = [];           // content/capstones.json: one record per role (ENGINE-BACKLOG 564), [] when the file is absent
@@ -331,6 +332,8 @@
     if (man && Array.isArray(man.selfExams)) selfExams = new Set(man.selfExams);
     if (man && man.perf && typeof man.perf === 'object') perfTasks = man.perf;
     if (man && man.sessions && typeof man.sessions === 'object') sessions = man.sessions;
+    if (man && man.lessonMinutes && typeof man.lessonMinutes === 'object') lessonMins = man.lessonMinutes;
+    if (man && man.setMinutes && typeof man.setMinutes === 'object') setMins = man.setMinutes;
     if (man && man.drills && typeof man.drills === 'object') drillMeta = man.drills;
     drillIndex = Array.isArray(di) ? di : [];
     /* prep.json is requested only when the manifest lists it (or there is no manifest), so no 404 reaches the console */
@@ -343,7 +346,11 @@
     const ids = Object.keys(cur.courses || {});
     await Promise.all(ids.map(id => getJSON(`courses/${id}/course.json`).then(d => { courseDocs[id] = d; })
       .catch(e => { console.error(e); courseDocs[id] = null; })));
-    if (HRS) hoursModel = HRS.build({ curriculum, courses: Object.fromEntries(Object.entries(courseDocs).filter(([, d]) => d)), written: (c, l) => exists(c, l) === true, sessions });
+    if (HRS) {
+      hoursModel = HRS.build({ curriculum, courses: Object.fromEntries(Object.entries(courseDocs).filter(([, d]) => d)), written: (c, l) => exists(c, l) === true, sessions, minutes: (c, l) => lessonMins[`${c}/${l}`], setMinutes: setMins, examMinutes: examMins || {} });
+      /* In-app and outside hours beside each stored figure (hoursApp, hoursOut): Learn and Setup show the two apart, never the stored total alone */
+      (cur.stages || []).forEach(s => { s.hoursApp = hoursModel.stageApp(s.id); s.hoursOut = hoursModel.stageOut(s.id); (s.topics || []).forEach(t => { t.hoursApp = hoursModel.topicApp(t.id); t.hoursOut = hoursModel.topicOut(t.id); }); });
+    }
     return api;
   })();
   ready.catch(e => console.error('Content failed to load:', e));

@@ -12,14 +12,23 @@
    A role's hours are the readiness.json totals (required plus recommended for the Learn header), which readiness-sums.mjs
    writes by calling roleSums below: the lessons written count their share as "written", the rest as "unwritten".
 
+   In-app hours (session Y; AUTHORING section 14). Stored hours are the whole estimate: time in the app plus study outside it. The in-app
+   part is counted from minutes: each lesson's authored `minutes` (SHORT_NORM when the lesson is not written), plus each level's review
+   and homework (their file's `minutes` where it states one, else REVIEW_MIN and HOMEWORK_MIN), plus the topic's exam (examMinutes, else
+   EXAM_MIN) shared across the topic's courses by lesson weight. Outside hours are stored minus in-app, floored at 0: per lesson and per
+   course (a course's outside is the stored share minus its own in-app, so the two are floored separately), per topic from the topic's stored hours,
+   a stage as the sum of its topics, a role as the sum of its courses. A surface shows the two apart, in-app first (splitLabel), never the stored total alone.
+
    Inputs (build): { curriculum, courses: { id: course.json doc or null }, written: (cid, lessonId) => bool,
-   sessions: { "cid/lessonId": { session, minutes } } (workshop and project lessons only), minutes: (cid, lessonId) => number | undefined }. */
+   sessions: { "cid/lessonId": { session, minutes } } (workshop and project lessons only), minutes: (cid, lessonId) => number | undefined,
+   setMinutes: { "cid/review-1": minutes } (reviews and homework whose file states minutes), examMinutes: { "topic-0.1": minutes } }. */
 (function (root) {
   'use strict';
   const SHORT_NORM = 14;                         // the median short lesson, minutes: the weight unit
   const WEEKLY_H = 15;                           // the curriculum's reference week
   const SESSION_RANGE = { short: [5, 20], workshop: [20, 90], project: [60, 240] };   // minutes the validator accepts per session
   const SESSIONS = Object.keys(SESSION_RANGE);
+  const REVIEW_MIN = 20, HOMEWORK_MIN = 45, EXAM_MIN = 60;   // minutes allowed for a level review, a level homework and a topic exam whose file states none
 
   const topicHours = (t) => (t && Number(t.hours)) || 0;
   const stageHours = (s) => ((s && s.topics) || []).reduce((a, t) => a + topicHours(t), 0);
@@ -40,7 +49,12 @@
     return `${name}, ${lo === hi ? lo : lo + ' to ' + hi} min`;
   }
 
-  function build({ curriculum, courses = {}, written = () => true, sessions = {}, minutes = () => undefined } = {}) {
+  /* "12 h", "3.5 h", "1,650 h": whole hours from 10 up, one decimal below */
+  const fmtH = (h) => { const r = h >= 10 ? Math.round(h) : Math.round(h * 10) / 10; return r.toLocaleString('en-GB'); };
+  /* The two figures together, in-app first: "about 150 h in the app, about 1,650 h of outside study"; short for a tight spot: "12 h in the app, 48 h outside" */
+  const splitLabel = (app, out, { short = false } = {}) => (short ? `${fmtH(app)} h in the app, ${fmtH(out)} h outside` : `about ${fmtH(app)} h in the app, about ${fmtH(out)} h of outside study`);
+
+  function build({ curriculum, courses = {}, written = () => true, sessions = {}, minutes = () => undefined, setMinutes = {}, examMinutes = {} } = {}) {
     const stages = (curriculum && curriculum.stages) || [];
     const topicOfCourse = {}, stageOfTopic = {};
     for (const s of stages) for (const t of s.topics || []) { stageOfTopic[t.id] = s.id; for (const c of t.courses || []) topicOfCourse[c] = t.id; }
@@ -69,21 +83,42 @@
       }
       return m / 60;
     };
-    /* A role's sums over the courses whose status is in `statuses`: lessons and hours, written and unwritten (hours rounded as the readiness contract rounds them) */
+    /* In-app hours (see the header): minutes of lessons, level reviews and homework, and the topic exam's share */
+    const lessonMin = (cid, id) => { const e = sessions[`${cid}/${id}`]; return (e && Number(e.minutes)) || (written(cid, id) && Number(minutes(cid, id))) || SHORT_NORM; };
+    const setMin = (cid, kind, n) => Number(setMinutes[`${cid}/${kind}-${n}`]) || (kind === 'review' ? REVIEW_MIN : HOMEWORK_MIN);
+    const examMin = (tid) => Number(examMinutes[`topic-${tid}`]) || EXAM_MIN;
+    const lessonApp = (cid, id) => lessonMin(cid, id) / 60;
+    const levelApp = (cid, n) => { const ls = lessonsOf(cid, n); return ls.length ? (ls.reduce((a, l) => a + lessonMin(cid, l.id), 0) + setMin(cid, 'review', n) + setMin(cid, 'homework', n)) / 60 : 0; };
+    const courseApp = (cid) => {
+      const d = courses[cid]; if (!d) return 0;
+      const t = cidTopic(cid), W = topicW[t];
+      return (d.levels || []).reduce((a, lv) => a + levelApp(cid, lv.n), 0) + (W ? examMin(t) / 60 * courseW(cid) / W : 0);
+    };
+    const topicApp = (tid) => Object.keys(courses).filter(cid => cidTopic(cid) === tid).reduce((a, cid) => a + courseApp(cid), 0);
+    const outside = (stored, app) => Math.max(0, stored - app);
+    const lessonOut = (cid, id) => outside(lesson(cid, id), lessonApp(cid, id));
+    const courseOut = (cid) => outside(course(cid), courseApp(cid));
+    const topicOut = (tid) => outside(topicHours(topicRec[tid]), topicApp(tid));
+    const stageOf = (sid) => stages.find(s => s.id === Number(sid));
+    const stageApp = (sid) => ((stageOf(sid) || {}).topics || []).reduce((a, t) => a + topicApp(t.id), 0);
+    const stageOut = (sid) => ((stageOf(sid) || {}).topics || []).reduce((a, t) => a + topicOut(t.id), 0);
+    /* A role's sums over the courses whose status is in `statuses`: lessons and hours, written and unwritten (hours rounded as the readiness contract rounds them); app and out are the in-app and outside hours */
     const roleSums = (statusOf, statuses) => {
-      let w = 0, u = 0, hw = 0, hu = 0;
+      let w = 0, u = 0, hw = 0, hu = 0, app = 0, out = 0;
       for (const cid of Object.keys(courses)) {
         if (!statuses.includes(statusOf(cid))) continue;
         const c = courseCounts(cid), h = course(cid), hwc = courseWritten(cid);
-        w += c.written; u += c.mapped - c.written; hw += hwc; hu += h - hwc;
+        w += c.written; u += c.mapped - c.written; hw += hwc; hu += h - hwc; app += courseApp(cid); out += courseOut(cid);
       }
-      return { w, u, hw: Math.round(hw), hu: Math.round(hu) };
+      return { w, u, hw: Math.round(hw), hu: Math.round(hu), app: Math.round(app), out: Math.round(out) };
     };
     return {
       lesson, level, course, courseWritten, courseCounts,
       topic: (tid) => topicHours(topicRec[tid]),
-      stage: (sid) => stageHours(stages.find(s => s.id === Number(sid))),
+      stage: (sid) => stageHours(stageOf(sid)),
       total: () => totalHours(curriculum),
+      lessonApp, levelApp, courseApp, topicApp, stageApp, totalApp: () => stages.reduce((a, s) => a + stageApp(s.id), 0),
+      lessonOut, courseOut, topicOut, stageOut, totalOut: () => stages.reduce((a, s) => a + stageOut(s.id), 0),
       topicFromMinutes, roleSums, weight: wOf,
     };
   }
@@ -91,7 +126,7 @@
   /* The readiness.json totals for a role: { required, recommended, header } each { written, unwritten, total, hoursWritten, hoursUnwritten, hours }, or null */
   const role = (readinessDoc, key) => { const r = readinessDoc && readinessDoc.roles && readinessDoc.roles[key]; return r ? r.totals : null; };
 
-  const api = { SHORT_NORM, WEEKLY_H, SESSION_RANGE, SESSIONS, topicHours, stageHours, totalHours, months, weightOf, sessionLabel, courseSessionLabel, build, role };
+  const api = { SHORT_NORM, WEEKLY_H, SESSION_RANGE, SESSIONS, REVIEW_MIN, HOMEWORK_MIN, EXAM_MIN, fmtH, splitLabel, topicHours, stageHours, totalHours, months, weightOf, sessionLabel, courseSessionLabel, build, role };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) { root.ZQ = root.ZQ || {}; root.ZQ.hours = api; }
 })(typeof window !== 'undefined' ? window : null);

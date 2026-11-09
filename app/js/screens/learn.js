@@ -112,6 +112,8 @@
       const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
       const titleCase = (s) => s.replace(/(^|\s)([a-z])([a-z]*)/g, (m, sp, a, rest) => (/^(and|of|the|for|in)$/.test(a + rest) && sp ? m : sp + a.toUpperCase() + rest));
       const hrs = (n) => `${fmt(n)} h`;
+      /* Hours always as two figures, in-app first (ZQ.hours.splitLabel); o is a stage or topic with hoursApp and hoursOut (content.js). Without hours.js the stored figure stands. */
+      const both = (o) => (o.hoursApp != null && window.ZQ.hours ? window.ZQ.hours.splitLabel(o.hoursApp, o.hoursOut, { short: true }) : hrs(o.hours));
       const STAGES = C.stages();
       const trackNames = C.tracks, trackShort = (C.curriculum && C.curriculum.trackShort) || {};
 
@@ -161,15 +163,18 @@
       const stageOf = (n) => STAGES.find(s => s.id === n);
       const inTrack = (t) => view.track === 'all' || t.track === view.track;
       const totalH = STAGES.reduce((a, s) => a + (s.hours || 0), 0);
+      const totalApp = STAGES.reduce((a, s) => a + (s.hoursApp || 0), 0), totalOut = STAGES.reduce((a, s) => a + (s.hoursOut || 0), 0);
       /* The readiness contract (content/readiness.json): one total for the chosen role, required plus recommended, written and unwritten stated separately.
          Undecided shows the shared foundation. Without the file the old line stands. */
       const roleHeader = () => {
         const role = C.readiness.roleKey(prof.track), t = C.readiness.totals(role), h = t && t.header;
-        if (!h) return `${fmt(totalH)} hours in ${STAGES.length === 4 ? 'four' : STAGES.length} stages. Sit a stage’s exit test first to skip it.`;
+        const H = window.ZQ.hours;
+        if (!h) return `${H && totalApp ? H.splitLabel(totalApp, totalOut) : `${fmt(totalH)} hours`} in ${STAGES.length === 4 ? 'four' : STAGES.length} stages. Sit a stage’s exit test first to skip it.`;
         const split = `${fmt(h.written)} written, ${fmt(h.unwritten)} unwritten`;
+        const hh = H && h.hoursInApp != null ? H.splitLabel(h.hoursInApp, h.hoursOutside) : `${fmt(h.hours)} h`;
         return role === 'undecided'
-          ? `Shared foundation: ${fmt(h.total)} lessons, ${fmt(h.hours)} h (${split}). Choose a role on You before Stage 2. Sit a stage’s exit test first to skip it.`
-          : `${esc(prof.track)} route: ${fmt(h.total)} lessons, ${fmt(h.hours)} h, required plus recommended (${split}). Sit a stage’s exit test first to skip it.`;
+          ? `Shared foundation: ${fmt(h.total)} lessons, ${hh} (${split}). Choose a role on You before Stage 2. Sit a stage’s exit test first to skip it.`
+          : `${esc(prof.track)} route: ${fmt(h.total)} lessons, ${hh}, required plus recommended (${split}). Sit a stage’s exit test first to skip it.`;
       };
 
       /* ---------- Skeleton ---------- */
@@ -200,7 +205,7 @@
       /* Segmented pill: "Stage n" only. A check marks a stage whose exit test is passed, a dot marks the learner's stage. */
       const renderStages = () => {
         stagesEl.innerHTML = STAGES.map(s => `
-          <button type="button" class="zl-stage" data-stage="${s.id}" title="${esc(s.name)} · ${fmt(s.hours)} hours">
+          <button type="button" class="zl-stage" data-stage="${s.id}" title="${esc(s.name)} · ${esc(both(s))}">
             ${stagePassed(s.id) ? `<span class="zl-stage-ok" aria-hidden="true">${Z.icon('check', 'xs')}</span>` : ''}<span class="zl-stage-n">Stage ${s.id}</span><span class="sr-only">: ${esc(s.name)}${stagePassed(s.id) ? ', passed' : ''}</span>${s.id === learnerStage ? '<i class="zl-you" aria-hidden="true"></i><span class="sr-only">, your stage</span>' : ''}
           </button>`).join('');
         paintStages();
@@ -216,7 +221,7 @@
         const nPassed = req.filter(passed).length;
         const opt = s.topics.filter(t => t.optional);
         const exit = /^[A-Z][a-z]/.test(s.exit) ? s.exit.charAt(0).toLowerCase() + s.exit.slice(1) : s.exit;
-        const facts = [esc(s.name), hrs(s.hours), `<span class="zl-months">about ${window.ZQ.hours ? window.ZQ.hours.months(s.hours) : MONTHS_FALLBACK[s.id]} months at 15 h a week</span>`,
+        const facts = [esc(s.name), both(s), `<span class="zl-months">about ${window.ZQ.hours ? window.ZQ.hours.months(s.hours) : MONTHS_FALLBACK[s.id]} months at 15 h a week</span>`,
           done ? `Exit test passed with ${Math.max(...ex.passed.map(pctOf))}%` : `${nPassed} of ${req.length} topics passed`,
           ...(!done && ex.sat ? [`Best exit test ${Math.max(...ex.attempts.map(pctOf))}%`] : []),
           ...(opt.length ? [`${opt.map(t => t.id).join(', ')} optional`] : [])];
@@ -317,7 +322,7 @@
         return `<div class="zl-topic-head">
             <div class="zl-topic-t">
               <span class="t-overline zl-ov">${esc(trackNames[t.track] || '')}</span>
-              <h2 class="zl-topic-h" id="zl-t-${t.id.replace('.', '-')}" tabindex="-1"><span class="zl-num tnum">${t.id}</span> ${esc(t.name)} <span class="zl-hrs tnum">· ${opt ? 'Optional' : hrs(t.hours)}</span></h2>
+              <h2 class="zl-topic-h" id="zl-t-${t.id.replace('.', '-')}" tabindex="-1"><span class="zl-num tnum">${t.id}</span> ${esc(t.name)} <span class="zl-hrs tnum">· ${opt ? 'Optional' : both(t)}</span></h2>
               <p class="zl-meta">${cs.length} course${cs.length === 1 ? '' : 's'} · ${lessons} lessons${notes[t.id] ? `<span class="zl-note">${esc(notes[t.id])}</span>` : ''}</p>
               ${t.exit ? `<p class="zl-target"><b>Target:</b> ${esc(t.exit)}</p>` : ''}
               ${resLink(t)}
@@ -364,7 +369,7 @@
       const stepData = (s) => {
         if (s.topic) {
           const t = C.topic(s.topic), first = topicCourses(t)[0];
-          return { title: titleCase(t.name), meta: `${t.id} · ${s.meta || `${(t.courses || []).length} courses · ${hrs(t.hours)}`}`, art: first ? first.art : 'steps', track: t.track, go: first ? `course/${first.id}` : null };
+          return { title: titleCase(t.name), meta: `${t.id} · ${s.meta || `${(t.courses || []).length} courses · ${both(t)}`}`, art: first ? first.art : 'steps', track: t.track, go: first ? `course/${first.id}` : null };
         }
         if (s.course) {
           const c = courseOf(s.course);
@@ -382,7 +387,7 @@
           : 'The three roles are interviewed differently, so each path makes different courses core. Every course stays open to you.';
         pathsEl.innerHTML = `
           <section class="zl-paths-intro" aria-labelledby="zl-paths-h">
-            <span class="t-overline muted tnum">Stage 2 · ${esc(s2.name)} · <span class="zl-unit">${hrs(s2.hours)}</span></span>
+            <span class="t-overline muted tnum">Stage 2 · ${esc(s2.name)} · <span class="zl-unit">${both(s2)}</span></span>
             <h2 class="zl-paths-h" id="zl-paths-h">${PATHS.some(p => p.id === mineId) ? 'Your path through Stage 2' : 'Choose a track before Stage 2'}</h2>
             <p class="t-body secondary">${esc(intro)}</p>
           </section>
