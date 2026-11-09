@@ -142,7 +142,7 @@ def report_figure(text, path):
     axes[0].plot(days[1:], rets)
     axes[1].plot(days[5:], vol)
     axes[2].plot(days, dd)
-    axes[2].annotate(f"Max drawdown {dd[k]:.1%}", xy=(days[k], dd[k]))
+    axes[2].annotate(f"Max drawdown {dd[k]:.1%}", xy=(days[k], dd[k]), xytext=(days[0], dd[k]), arrowprops={"arrowstyle": "->"})
     v = statistics.stdev(rets) * math.sqrt(252)
     fig.suptitle(f"Volatility {v:.1%}, max drawdown {dd[k]:.1%}")
     fig.savefig(path, dpi=150)
