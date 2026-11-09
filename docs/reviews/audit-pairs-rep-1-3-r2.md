@@ -111,3 +111,17 @@ Exact fix, `l1-ggr-design` `screens[5].explain.text` (three sentences of 19, 23 
 "On the first trading day the desk knows only the formation prices, so the paper fixes the sd there. A threshold computed on trading prices sees the future, so no desk could have run that backtest, whatever it does to the result. Across this course's simulated prices it flatters the result on average, yet on this pair it earns less."
 
 Notes for the fixer: "panel" is first used on screens[6], so the text says "this course's simulated prices". No graded key, option or number changes. The r2 `[lookahead]` check may stay print-only; the third-read script carries the asserts (top-20 regimes positive at over 3 se, the volatility-doubles case negative at over 3 se, pair (2, 3) lower under look-ahead, diverging pairs still opened).
+
+### Fix pass (third read, finding 3)
+
+Status: fixed as the third read gives it (`imprecise`, applied verbatim; no wording change needed).
+
+Basis (own script, course `pairs_panel`, `top_pairs` and `trade_pair`, look-ahead run as `trade_pair(trade, trade, ...)`; fresh seeds 5000 to 5079, top 20, look-ahead minus honest per cycle): (a) pooled over starts 0, 1,134 and 2,268 +0.0162 (se 0.0019, 240 cycles), start 0 +0.0075 (se 0.0033), one-day wait +0.0049 (se 0.0025); (b) pair (2, 3), sds 0.0210 and 0.0300: honest +0.2218, look-ahead +0.1176 (wait +0.1714 against +0.1022); (c) own true pairs (OU gap, half-life 8, 3,000 each): same volatility +0.0124 (se 0.0010), gap volatility doubled in trading −0.1045 (se 0.0018), halved +0.0367 (se 0.0004). The sign follows the data, so it is not a law about look-ahead.
+
+Strings changed: `l1-ggr-design` `screens[5].explain.text` only. Searched the course for "flatter" and look-ahead wording (hints, feedback, `why`, summary, review-1, homework-1, l2, l5): no other string states that look-ahead flatters. The other "flatter" uses (l10, l14, l15) are about choosing the best cell or the most generous settings, not look-ahead, and stay.
+
+`pairs-rep-L1-concepts-r2.py` `[lookahead]`: comments only, now describing the new text; still print only.
+
+Graded answers changed: none.
+
+Checks: validator 0 errors; voice scan 35 gives 0 and 0; `pairs-rep-L1-numbers.py`, `-concepts.py`, `-concepts-r2.py`, `-lookahead-third-read.py` exit 0; playthrough `pairs-rep/l1-ggr-design` passed desktop and `--mobile`.
