@@ -1738,3 +1738,6 @@ Raised later (options level 2 perf):
 
 Raised later (options level 3 perf):
 - [Could] The playthrough's `-marked` shot is one viewport, so only the top of a long model answer is seen at 440 px; displays further down (here the parity lines and the box price) are never shot or checked. Wanted: a full-page `-marked` shot, or a check that fails when any `.katex-display` in the model has `scrollWidth > clientWidth`.
+
+Raised later (estimation level 2 perf):
+- [Could] A longform rubric row whose text holds a wide inline maths span (here $\ell(\alpha) = n\ln\alpha - (\alpha + 1)\sum \ln x_i$) pushes the points label off the card at 440 px: it read "2 points, require". Split here into shorter spans. Wanted: the points label keeps its width (no shrink) and the text column wraps or scrolls the span, or a validator warning for a rubric maths span over about 30 characters.
