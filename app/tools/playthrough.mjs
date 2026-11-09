@@ -80,7 +80,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const APP = path.resolve(HERE, '..');
+const APP = process.env.ZQ_APP_DIR ? path.resolve(process.env.ZQ_APP_DIR) : path.resolve(HERE, '..');   // item 701: the overflow test plays a temporary copy
 const CONTENT = path.join(APP, 'content');
 const CHROMIUM = '/opt/pw-browsers/chromium';
 const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^|\.)fonts\.gstatic\.com$/;
@@ -303,14 +303,35 @@ const main = async () => {
     /* items 199, 205, 504: --mobile, --narrow and --tablet add a copy of every screenshot per extra viewport (name-440, -390, -1032, -1376; the viewport resizes, then returns) */
     /* inbox (backtest 1): a failing code screen names its first failing test (or the error) in the failure line */
     const codeWhy = async () => { try { return await page.evaluate(() => { const n = document.querySelector('.wd-res > .wd-res-err, .wd-res-row.bad'); return n ? ' (' + n.textContent.replace(/\s+/g, ' ').trim().slice(0, 240) + ')' : ''; }); } catch { return ''; } };
-    const shot = async (name) => {
+    /* item 701: `card` is a selector; the shot is then the whole element (model and rubric included), not the window */
+    const shot = async (name, card) => {
       if (!opt.shots) return;
+      const snap = (f) => card ? page.locator(card).first().screenshot({ path: f }) : page.screenshot({ path: f });
       const file = (sfx) => path.join(opt.shots, name.replace(/[^\w.-]+/g, '_') + sfx + '.png');
       /* item 278: past the enter patch (350 ms), then until canvas tweens and CSS animations have settled and an exam result page has finished its staged reveal (the `.final` class; item 509; at most 4 s) */
       await page.waitForTimeout(420);
       try { await page.waitForFunction(() => (!window.ZQ || !ZQ.canvas || !ZQ.canvas.busy || ZQ.canvas.busy() === 0) && !document.querySelector('.exm-res:not(.final)') && !document.getAnimations().some((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity), null, { timeout: 4000, polling: 50 }); } catch { /* still moving: shoot anyway */ }
-      await page.screenshot({ path: file('') });
-      if (ANY_EXTRA) { for (const v of EXTRA) { await setVp(v, 350); await page.screenshot({ path: file('-' + v.w) }); if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) console.log(`note  ${name} at ${v.w} x ${v.h}: the page is wider than the window`); } await setVp(DESKTOP, 150); }
+      await snap(file(''));
+      if (ANY_EXTRA) { for (const v of EXTRA) { await setVp(v, 350); await snap(file('-' + v.w)); if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) console.log(`note  ${name} at ${v.w} x ${v.h}: the page is wider than the window`); } await setVp(DESKTOP, 150); }
+    };
+    /* item 701: every `.katex-display` in a marked item's card must fit its column (scrollWidth <= clientWidth + 1) */
+    const wideDisplays = () => page.evaluate(() => {
+      const card = document.querySelector('.hw-item:not([hidden])'), out = [];
+      if (!card) return out;
+      card.querySelectorAll('.katex-display').forEach((d) => {
+        const k = d.querySelector('.katex'), box = d.parentElement ? d.parentElement.getBoundingClientRect().width : d.clientWidth;
+        if (d.scrollWidth > d.clientWidth + 1 || (k && k.getBoundingClientRect().width > box + 1)) {
+          const a = d.querySelector('annotation[encoding="application/x-tex"]');
+          out.push({ w: window.innerWidth, tex: (a ? a.textContent : d.textContent).replace(/\s+/g, ' ').trim().slice(0, 40) });
+        }
+      });
+      return out;
+    });
+    const checkDisplays = async (file, id, fails) => {
+      const seen = new Set(), run = async () => { for (const x of await wideDisplays()) { const k = x.w + x.tex; if (!seen.has(k)) { seen.add(k); fails.push(`${file}#${id}: display wider than its column at ${x.w}px: ${x.tex}`); } } };
+      await run();
+      for (const v of (ANY_EXTRA ? EXTRA : [])) { await setVp(v, 350); await run(); }
+      if (ANY_EXTRA) await setVp(DESKTOP, 150);
     };
     const whyShot = async (name) => { if (!opt.why || !opt.shots) return; if (await page.evaluate(() => !!(ZQ.test.why && ZQ.test.why()))) { await page.waitForTimeout(450); await shot(name); await page.evaluate(() => ZQ.test.closeWhy()); await page.waitForTimeout(250); } };
     const go = async (hash) => {
@@ -571,7 +592,12 @@ const main = async () => {
                 }
                 await btn.click(); await page.waitForTimeout(80);
                 if (!(await marked())) fails.push(`item ${c.screenIndex + 1}: Mark my answer did not open the model${hi.aloud ? ' with an empty notes box' : ''}`);
-                else { markedReal++; if (opt.shots) await shot(`${label}-item-${String(c.screenIndex).padStart(2, '0')}-marked`); }
+                else {
+                  markedReal++;
+                  const hid = await page.evaluate(() => { const it = ZQHomework.items()[ZQ.test.current().screenIndex]; return it && it.id; });
+                  await checkDisplays(route, hid || c.screenIndex + 1, fails);
+                  if (opt.shots) await shot(`${label}-item-${String(c.screenIndex).padStart(2, '0')}-marked`, '.hw-item:not([hidden])');
+                }
               }
             }
             const applied = await page.evaluate(() => ZQ.test.answerCorrect());
