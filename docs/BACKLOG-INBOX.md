@@ -1733,3 +1733,6 @@ Raised later (graphs-dp level 3 perf):
 
 Raised later (regression level 1 perf):
 - [Should] `playthrough.mjs --set` passes a longform model whose display or inline maths runs past the card at 440 px: the page does not scroll sideways (KaTeX scrolls inside its box), and the `-marked` shot shows only the first screen of the model. `h-derive-normal-eqs` had four such formulas, found only by a scratch full-height render. Wanted: with `--mobile`, measure every `.katex-display` (`scrollWidth > clientWidth`) and every inline `.katex` past the card edge in the prompt, model and rubric, and print a `note` naming the item and the formula.
+
+Raised later (regression level 2 perf):
+- [Could] A numbers script that runs a `code` item in CPython disagrees with the browser on a singular solve: CPython's `np.linalg.solve` raises `LinAlgError`, a subclass of `ValueError`, while Pyodide's returns nan (AUTHORING section 3). So a `compare: "raises"` case expecting `ValueError` on constant $x$ passes a solution without its own check in CPython and fails it in the browser, as it should. `h-slope-check`'s script patches `solve` to return nan to match. Wanted: the shared reader harness (`docs/reviews/perf-retrofit-*-scripts/harness.py`) to carry that patch, or a line in AUTHORING section 3 telling authors to emulate it.

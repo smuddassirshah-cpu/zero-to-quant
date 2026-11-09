@@ -504,6 +504,167 @@
           "text": "Concludes that beta is measured well but alpha is not distinguishable from luck, without calling it skill"
         }
       ]
+    },
+    {
+      "id": "h-slope-check",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "rg-inference",
+        "rg-fit"
+      ],
+      "title": "Does the ETF deliver twice the index",
+      "pace": 1200,
+      "prose": "A 2x leveraged ETF promises twice its index's daily return. A risk analyst wants one function to check it. It fits the ETF's daily return $y$ on the index's $x$, in %, and tests that promise or any other claimed slope.\n\nFit $y = a + bx$ by least squares through the normal equations, with a column of ones beside $x$. Assume the usual model. The $x_i$ are fixed, and the errors are independent and normal, with mean 0 and one variance. Return a dict with exactly these seven keys:\n\n- `coef`: the list `[a, b]`, intercept first;\n- `resid`: the residuals $y_i - \\hat y_i$, in the order of the data;\n- `r2`: the fit's $R^2$;\n- `se`: the standard error of $b$;\n- `ci`: the list `[lower, upper]`, the two-sided confidence interval for the slope at confidence `level`;\n- `t`: the $t$ statistic for testing $\\beta =$ `beta0`;\n- `reject`: `True` when the two-sided test of $\\beta =$ `beta0` at size $1 -$ `level` rejects, else `False`.\n\nRaise `ValueError` when there are fewer than three points or every $x$ is the same.",
+      "question": "Write `slope_check(x, y, beta0=0.0, level=0.95)` so it returns that dict.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def slope_check(x, y, beta0=0.0, level=0.95):\n    \"\"\"Fit y = a + b x and test the slope against beta0.\"\"\"\n    # Your code here\n    return None\n",
+        "solution": "import numpy as np\nfrom scipy import stats\n\ndef slope_check(x, y, beta0=0.0, level=0.95):\n    \"\"\"Fit y = a + b x and test the slope against beta0.\"\"\"\n    x = np.asarray(x, dtype=float)\n    y = np.asarray(y, dtype=float)\n    n = len(x)\n    if n < 3 or np.all(x == x[0]):\n        raise ValueError('need three points and two different x values')\n    X = np.column_stack([np.ones(n), x])\n    coef = np.linalg.solve(X.T @ X, X.T @ y)\n    resid = y - X @ coef\n    sse = resid @ resid\n    r2 = 1 - sse / np.sum((y - y.mean()) ** 2)\n    se = np.sqrt(sse / (n - 2) / np.sum((x - x.mean()) ** 2))\n    b = coef[1]\n    tcrit = stats.t.ppf((1 + level) / 2, n - 2)\n    t = (b - beta0) / se\n    return {'coef': [float(coef[0]), float(b)], 'resid': resid.tolist(),\n            'r2': float(r2), 'se': float(se),\n            'ci': [float(b - tcrit * se), float(b + tcrit * se)],\n            't': float(t), 'reject': bool(abs(t) > tcrit)}\n",
+        "examples": [
+          {
+            "setup": "x = [-1.2, 0.4, 0.9, -0.3, 1.5, -0.8, 0.2, 1.1]; y = [-2.28, 0.72, 1.68, -0.73, 2.95, -1.46, 0.35, 2.13]",
+            "call": "slope_check(x, y, 2.0)",
+            "expect": "{'coef': [-0.013219727345629512, 1.92542101042502], 'resid': [0.043724939855653566, -0.03694867682437851, -0.039659182036888535, -0.13915396952686448, 0.07508821170809944, 0.09355653568564555, -0.021864474739374497, 0.025256615878107458], 'r2': 0.9982845260577845, 'se': 0.03258479360573943, 'ci': [1.8456888927840231, 2.005153128066017], 't': -2.288766670654737, 'reject': False}",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          }
+        ],
+        "tests": [
+          {
+            "setup": "x = [-1.2, 0.4, 0.9, -0.3, 1.5, -0.8, 0.2, 1.1]; y = [-2.28, 0.72, 1.68, -0.73, 2.95, -1.46, 0.35, 2.13]",
+            "call": "slope_check(x, y, 2.0)",
+            "expect": "{'coef': [-0.013219727345629512, 1.92542101042502], 'resid': [0.043724939855653566, -0.03694867682437851, -0.039659182036888535, -0.13915396952686448, 0.07508821170809944, 0.09355653568564555, -0.021864474739374497, 0.025256615878107458], 'r2': 0.9982845260577845, 'se': 0.03258479360573943, 'ci': [1.8456888927840231, 2.005153128066017], 't': -2.288766670654737, 'reject': False}",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [-1.2, 0.4, 0.9, -0.3, 1.5, -0.8, 0.2, 1.1]; y = [-2.28, 0.72, 1.68, -0.73, 2.95, -1.46, 0.35, 2.13]",
+            "call": "[slope_check(x, y, 2.0, 0.90)[k] for k in ('ci', 't', 'reject')]",
+            "expect": "[[1.862102882045686, 1.988739138804354], -2.288766670654737, True]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [10, 12, 15, 18, 20, 25]; y = [52.1, 55.0, 60.2, 63.9, 68.3, 75.8]",
+            "call": "slope_check(x, y)['coef']",
+            "expect": "[36.09625550660793, 1.5872246696035242]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [10, 12, 15, 18, 20, 25]; y = [52.1, 55.0, 60.2, 63.9, 68.3, 75.8]",
+            "call": "slope_check(x, y)['r2']",
+            "expect": "0.997583216167375",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [10, 12, 15, 18, 20, 25]; y = [52.1, 55.0, 60.2, 63.9, 68.3, 75.8]",
+            "call": "slope_check(x, y)['se']",
+            "expect": "0.039061844417056873",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [10, 12, 15, 18, 20, 25]; y = [52.1, 55.0, 60.2, 63.9, 68.3, 75.8]",
+            "call": "[slope_check(x, y, 1.5)[k] for k in ('t', 'reject')]",
+            "expect": "[2.2329890179337344, False]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [10, 12, 15, 18, 20, 25]; y = [52.1, 55.0, 60.2, 63.9, 68.3, 75.8]",
+            "call": "[slope_check(x, y)[k] for k in ('t', 'reject')]",
+            "expect": "[40.63363349300632, True]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [0, 1, 3]; y = [0.5, 1.9, 2.6]",
+            "call": "slope_check(x, y)['ci']",
+            "expect": "[-2.651168826164031, 3.951168826164031]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [0, 1, 3]; y = [0.5, 1.9, 2.6]",
+            "call": "slope_check(x, y)['resid']",
+            "expect": "[-0.3, 0.45, -0.15]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09,
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "x = [0, 1, 3]; y = [0.5, 1.9, 2.6]",
+            "call": "sorted(slope_check(x, y))",
+            "expect": "['ci', 'coef', 'r2', 'reject', 'resid', 'se', 't']",
+            "compare": "equal"
+          },
+          {
+            "setup": "x = [2, 2, 2, 2]; y = [1.0, 1.5, 0.5, 2.0]",
+            "call": "slope_check(x, y)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "x = [1, 2]; y = [3.0, 5.0]",
+            "call": "slope_check(x, y)",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "how": "Check runs 12 hidden tests on small data sets, at several values of `beta0` and `level`. Each number is compared with math.isclose, within relative or absolute 1e-9. The tests read the values your function returns, not how it finds them. The first run loads NumPy and SciPy if your code imports them, which takes 10 to 30 seconds."
+      },
+      "feedback": {
+        "correct": "Every key matches, at both levels, on the three-point fit and on the two inputs that must be refused.",
+        "generic": "Not quite right. On the example data the slope is 1.925 with standard error 0.0326, so $t = -2.29$ against 2.",
+        "byKey": {
+          "test-2": "At 90% the interval narrows and 2 falls outside it, so the test rejects. The critical value is the $(1 + \\text{level})/2$ quantile of $t_{n-2}$.",
+          "test-3": "The coefficients are off. Without the column of ones the line is forced through the origin.",
+          "test-4": "$R^2$ is off. It compares SSE with the total sum of squares about $\\bar y$, not about 0.",
+          "test-5": "The standard error is off. Divide SSE by $n - 2$, since the fit spent two numbers, and centre $S_{xx}$ on $\\bar x$.",
+          "test-6": "The $t$ statistic measures the distance from `beta0`, not from 0: $t = (b - \\beta_0)/\\mathrm{SE}(b)$.",
+          "test-8": "With three points the test has $n - 2 = 1$ degree of freedom, so $t^*$ at 95% is 12.71, not 1.96 or 4.30.",
+          "test-9": "The residuals are $y_i - \\hat y_i$, observed minus fitted, in the data's order.",
+          "test-11": "Every $x$ is 2 here, so $S_{xx} = 0$ and no slope is defined. Check for it and raise `ValueError` before solving.",
+          "test-12": "Two points leave $n - 2 = 0$ degrees of freedom, so no standard error exists. Raise `ValueError`.",
+          "error": "Your code stopped with an error. Check the traceback against the data in the failing test."
+        }
+      },
+      "explain": {
+        "text": "$s^2 = \\mathrm{SSE}/(n - 2)$ because the fit spent two numbers, and $\\mathrm{SE}(b) = s/\\sqrt{S_{xx}}$. The interval is $b \\pm t^*\\,\\mathrm{SE}(b)$, with $t^*$ the $(1 + \\text{level})/2$ quantile of $t_{n-2}$, and the test rejects exactly when `beta0` lies outside it. The ETF's slope, 1.925, sits 2.29 standard errors below 2: inside the 95% interval but outside the 90% one."
+      }
     }
   ]
 }
