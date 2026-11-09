@@ -1,0 +1,104 @@
+{
+  "id": "fluency-l1-tangent-approx",
+  "lesson": "l1-tangent-approx",
+  "title": "Fluency: the tangent line approximation",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "write-the-line",
+      "weight": 2,
+      "skill": "write the tangent line approximation of a cubic",
+      "vars": {
+        "p": { "int": [-2, 2], "not": [0] },
+        "q": { "int": [-4, 4] },
+        "r": { "int": [-5, 5] },
+        "s": { "int": [-5, 5] },
+        "a": { "int": [-2, 2], "not": [0] }
+      },
+      "let": {
+        "fa": "p*a^3 + q*a^2 + r*a + s",
+        "p3": "3*p",
+        "q2": "2*q",
+        "fpa": "3*p*a^2 + 2*q*a + r",
+        "c0": "fa - fpa*a"
+      },
+      "where": ["fpa != 0", "fa != 0", "fa != fpa"],
+      "prompt": "Write the tangent line approximation $L(x)$ of $f(x) = {poly(x; p, q, r, s)}$ at $a = {a}$.",
+      "widget": { "kind": "expression", "answer": "{poly(x; fpa, c0)}", "accept": ["{fa}{fpa:+c}(x{-a:+})"], "keyboard": "algebra", "label": "L(x)" },
+      "wrong": [
+        { "id": "slope-at-x", "tex": "({poly(x; p3, q2, r)})(x{-a:+}){fa:+}", "line": "You left $f'(x)$ in the formula. Evaluate it at $a = {a}$: the slope is ${fpa}$." },
+        { "id": "swapped", "tex": "{poly(x; fa, fpa - fa*a)}", "line": "You swapped the height and the slope: $f({a}) = {fa}$ and $f'({a}) = {fpa}$." }
+      ],
+      "solution": [
+        "$f({a}) = {fa}$, and $f'(x) = {poly(x; p3, q2, r)}$ gives $f'({a}) = {fpa}$.",
+        "So $L(x) = {fa}{fpa:+c}(x{-a:+}) = {poly(x; fpa, c0)}$."
+      ]
+    },
+    {
+      "id": "estimate-a-power",
+      "weight": 2,
+      "skill": "estimate a value of a power from its tangent line",
+      "vars": {
+        "c": { "int": [-3, 3], "not": [0] },
+        "n": { "int": [3, 4] },
+        "a": { "int": [-2, 3], "not": [0] },
+        "h": { "pick": [-0.3, -0.2, -0.1, 0.1, 0.2, 0.3] }
+      },
+      "let": {
+        "x1": "a + h",
+        "fa": "c*a^n",
+        "cn": "c*n",
+        "fp": "c*n*a^(n-1)",
+        "rise": "c*n*a^(n-1)*h",
+        "key": "c*a^n + c*n*a^(n-1)*h",
+        "tv": "c*(a + h)^n",
+        "ux": "c*a^n + c*n*a^(n-1)*(a + h)"
+      },
+      "where": ["abs(a)^n <= 27", "abs(tv - key) > 0.001", "abs(ux - tv) > 0.001"],
+      "prompt": "Use the tangent line to $f(x) = {c:c}x^{{{n}}}$ at $a = {a}$ to estimate $f({x1})$.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "For example 2.5", "accept": "{key}, the height of the line at $x = {x1}$" },
+      "wrong": [
+        { "id": "calculator", "value": "{tv}", "tol": { "abs": 0.0005 }, "line": "That is the true value $f({x1})$. The question asks for the height of the line." },
+        { "id": "no-step", "value": "{fa}", "tol": { "abs": 0.0005 }, "line": "You stopped at $f({a}) = {fa}$. Add the slope times the step ${h}$." },
+        { "id": "used-x", "value": "{ux}", "tol": { "abs": 0.0005 }, "line": "You used $x$ in place of $x - a$. The step from the base point is ${h}$." }
+      ],
+      "solution": [
+        "$f({a}) = {fa}$, and $f'(x) = {cn}x^{{{n-1}}}$ gives $f'({a}) = {fp}$.",
+        "The step is ${h}$, so the line climbs ${fp} \\times {h:()} = {rise}$.",
+        "So $L({x1}) = {key}$."
+      ]
+    },
+    {
+      "id": "estimate-a-root",
+      "weight": 1,
+      "skill": "estimate a square root from the tangent at a perfect square",
+      "vars": {
+        "s": { "int": [2, 5] },
+        "h": { "int": [-18, 18], "not": [0] }
+      },
+      "let": {
+        "a2": "s^2",
+        "step": "h/20",
+        "x0": "s^2 + h/20",
+        "key": "s + h/(40*s)",
+        "tv": "sqrt(s^2 + h/20)",
+        "ns": "s + h/(20*s)"
+      },
+      "where": ["abs(tv - key) > 0.0003"],
+      "prompt": "Use the tangent line at $a = {a2}$ to estimate $\\sqrt{{{x0}}}$. Give 4 decimal places.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0001 }, "placeholder": "For example 2.1234", "accept": "{key:dp4}, the height of the line at $x = {x0}$" },
+      "wrong": [
+        { "id": "calculator", "value": "{tv}", "tol": { "abs": 0.0001 }, "line": "That is $\\sqrt{{{x0}}}$ from a calculator. The question asks for the height of the line." },
+        { "id": "no-step", "value": "{s}", "tol": { "abs": 0.0001 }, "line": "You kept the height at $a = {a2}$. Add the slope times the step ${step}$." },
+        { "id": "slope-not-halved", "value": "{ns}", "tol": { "abs": 0.0001 }, "line": "You used a slope of $\\tfrac{{1}}{{{s}}}$. The slope of $\\sqrt{{x}}$ at {a2} is $\\tfrac{{1}}{{2\\sqrt{{{a2}}}}} = \\tfrac{{1}}{{{2*s}}}$." }
+      ],
+      "solution": [
+        "At $a = {a2}$ the height is $\\sqrt{{{a2}}} = {s}$ and the slope is $\\tfrac{{1}}{{2\\sqrt{{{a2}}}}} = \\tfrac{{1}}{{{2*s}}}$.",
+        "The step is ${x0} - {a2} = {step}$.",
+        "So $L({x0}) = {s} + \\tfrac{{1}}{{{2*s}}} \\times {step:()} \\approx {key:dp4}$."
+      ]
+    }
+  ]
+}
