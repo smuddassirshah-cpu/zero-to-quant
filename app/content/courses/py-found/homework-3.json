@@ -411,6 +411,112 @@
           "text": "Names the silent bugs and argues which is most dangerous, such as the bare `except` turning a broken file into an empty portfolio."
         }
       ]
+    },
+    {
+      "id": "h-cash-account",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "pf-classes"
+      ],
+      "pace": 1200,
+      "title": "A broker's cash account",
+      "prose": "A broker's cash account opens with a balance in £. However many deposits and withdrawals it takes, the balance must stay exact to the penny. A withdrawal of more than the balance is refused, and so is any amount that is not above zero.",
+      "question": "Write a class `Account` with `__init__(self, opening=0.0)` and the methods `deposit(amount)`, `withdraw(amount)`, `balance()` and `history()`. `balance()` returns £ as a float; `history()` returns each move in £, oldest first, withdrawals negative. A refused move raises `ValueError` and changes nothing.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class Account:\n    pass  # replace this line\n",
+        "solution": "class Account:\n    def __init__(self, opening=0.0):\n        self.pence = round(opening * 100)\n        self.moves = []\n\n    def deposit(self, amount):\n        if amount <= 0:\n            raise ValueError(f\"a deposit must be above zero: {amount}\")\n        p = round(amount * 100)\n        self.pence = self.pence + p\n        self.moves.append(p)\n\n    def withdraw(self, amount):\n        if amount <= 0:\n            raise ValueError(f\"a withdrawal must be above zero: {amount}\")\n        p = round(amount * 100)\n        if p > self.pence:\n            raise ValueError(f\"only £{self.pence / 100:.2f} to withdraw from\")\n        self.pence = self.pence - p\n        self.moves.append(-p)\n\n    def balance(self):\n        return self.pence / 100\n\n    def history(self):\n        return [p / 100 for p in self.moves]\n",
+        "prelude": "def refused(move, amount):\n    try:\n        move(amount)\n    except ValueError:\n        return True\n    return False\n",
+        "examples": [
+          {
+            "setup": "a = Account(10.0); a.deposit(2.5); a.withdraw(4.0)",
+            "call": "(a.balance(), a.history())",
+            "expect": "(8.5, [2.5, -4.0])",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "a = Account(10.0); a.deposit(2.5); a.withdraw(4.0)",
+            "call": "(a.balance(), a.history())",
+            "expect": "(8.5, [2.5, -4.0])",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = Account(); a.deposit(0.7); a.deposit(0.7); a.deposit(0.7)",
+            "call": "a.balance()",
+            "expect": "2.1",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = Account(); a.deposit(0.29)",
+            "call": "(a.balance(), a.history())",
+            "expect": "(0.29, [0.29])",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = Account(19.99); a.withdraw(19.99)",
+            "call": "(a.balance(), a.history())",
+            "expect": "(0.0, [-19.99])",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = Account(10.0)",
+            "call": "a.withdraw(10.01)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "a = Account(10.0); r = refused(a.withdraw, 25.0)",
+            "call": "(r, a.balance(), a.history())",
+            "expect": "(True, 10.0, [])",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = Account(5.0)",
+            "call": "a.deposit(0)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "a = Account(5.0); r = refused(a.deposit, -1.0)",
+            "call": "(r, a.balance(), a.history())",
+            "expect": "(True, 5.0, [])",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = Account(5.0); r = refused(a.withdraw, -5.0)",
+            "call": "(r, a.balance(), a.history())",
+            "expect": "(True, 5.0, [])",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = Account(); b = Account(); a.deposit(5.0)",
+            "call": "(a.history(), b.history())",
+            "expect": "([5.0], [])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests on accounts they build. Balances and moves must be exactly equal (`==`), not merely close. Tests 5 and 7 pass when the call raises `ValueError`; `refused(move, amount)` in tests 6, 8 and 9 is `True` when the move raised `ValueError`."
+      },
+      "feedback": {
+        "correct": "Whole pence keep every balance exact, refused moves change nothing, and each account keeps its own history.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 deposits £0.70 three times and expects exactly 2.1. Added as floats the total falls just short, so keep whole pence with `round(amount * 100)`.",
+          "test-3": "Test 3 deposits £0.29. `0.29 * 100` is a shade under 29, so `int` gives 28 pence; `round` gives 29.",
+          "test-4": "Test 4 withdraws the whole £19.99. Taking exactly the balance is allowed: refuse only more than it.",
+          "test-6": "Test 6 tries to take £25.00 from £10.00. Check before you change the balance or the history, then raise.",
+          "test-7": "Test 7 deposits 0. An amount that is not above zero is refused, so test `amount <= 0`.",
+          "test-9": "Test 9 withdraws -£5.00, which would add money. Refuse it like a deposit of 0.",
+          "test-10": "Test 10 checks that a second account starts empty. Make the list in `__init__`, not in the class body."
+        }
+      },
+      "explain": {
+        "text": "Whole pence are exact integers, so three deposits of £0.70 make exactly £2.10. Every check runs before anything changes, so a refused move leaves the balance and history as they were. The list is made in `__init__`, so each account keeps its own."
+      }
     }
   ]
 }

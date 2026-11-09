@@ -418,6 +418,107 @@
       "explain": {
         "text": "The comprehension reads like the loop without `append`: collect `t`, for each unpacked `t, p, q`, if `p * q > 1000`. The filter always goes at the end."
       }
+    },
+    {
+      "id": "h-overnight-gaps",
+      "performance": "code",
+      "difficulty": 4,
+      "skills": [
+        "pf-idioms",
+        "pf-types"
+      ],
+      "pace": 900,
+      "title": "Overnight gaps",
+      "prose": "Each day is a `(date, open, close)` tuple, oldest first. A day's **overnight gap** compares its open with the close of the day before: $\\dfrac{o_t - c_{t-1}}{c_{t-1}}$. The first day has no day before it, so it has no gap.",
+      "question": "Write `overnight_gaps(days, limit)`. Return a tuple `(gaps, flagged)`: `gaps` lists every gap in order, and `flagged` lists the dates whose gap is more than `limit` either way. Build each list with one comprehension.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def overnight_gaps(days, limit):\n    pass  # replace this line\n",
+        "solution": "def overnight_gaps(days, limit):\n    gaps = [(today[1] - before[2]) / before[2] for before, today in zip(days, days[1:])]\n    flagged = [day[0] for day, gap in zip(days[1:], gaps) if abs(gap) > limit]\n    return gaps, flagged\n",
+        "examples": [
+          {
+            "call": "overnight_gaps([(\"Mon\", 50.0, 50.0), (\"Tue\", 51.0, 52.0), (\"Wed\", 52.0, 52.5)], 0.01)",
+            "expect": "([0.02, 0.0], ['Tue'])",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "overnight_gaps([(\"Mon\", 50.0, 50.0), (\"Tue\", 51.0, 52.0), (\"Wed\", 52.0, 52.5)], 0.01)",
+            "expect": "([0.02, 0.0], ['Tue'])",
+            "compare": "isclose"
+          },
+          {
+            "setup": "W = [(\"Mon\", 100.0, 101.0), (\"Tue\", 103.02, 102.0), (\"Wed\", 101.49, 100.5), (\"Thu\", 100.5, 99.0), (\"Fri\", 97.0, 98.0)]",
+            "call": "overnight_gaps(W, 0.01)[0]",
+            "expect": "[0.02, -0.005, 0.0, -0.020202020202020204]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "W = [(\"Mon\", 100.0, 101.0), (\"Tue\", 103.02, 102.0), (\"Wed\", 101.49, 100.5), (\"Thu\", 100.5, 99.0), (\"Fri\", 97.0, 98.0)]",
+            "call": "overnight_gaps(W, 0.01)[1]",
+            "expect": "['Tue', 'Fri']",
+            "compare": "equal"
+          },
+          {
+            "setup": "W = [(\"Mon\", 100.0, 101.0), (\"Tue\", 103.02, 102.0), (\"Wed\", 101.49, 100.5), (\"Thu\", 100.5, 99.0), (\"Fri\", 97.0, 98.0)]",
+            "call": "len(overnight_gaps(W, 0.01)[0])",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "setup": "W = [(\"Mon\", 100.0, 101.0), (\"Tue\", 103.02, 102.0), (\"Wed\", 101.49, 100.5), (\"Thu\", 100.5, 99.0), (\"Fri\", 97.0, 98.0)]",
+            "call": "overnight_gaps(W, 0.0)[1]",
+            "expect": "['Tue', 'Wed', 'Fri']",
+            "compare": "equal"
+          },
+          {
+            "setup": "W = [(\"Mon\", 100.0, 101.0), (\"Tue\", 103.02, 102.0), (\"Wed\", 101.49, 100.5), (\"Thu\", 100.5, 99.0), (\"Fri\", 97.0, 98.0)]",
+            "call": "overnight_gaps(W, 0.05)[1]",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "V = [(\"02 Mar\", 250.0, 248.0), (\"03 Mar\", 255.44, 256.0), (\"04 Mar\", 245.76, 247.0), (\"05 Mar\", 247.0, 250.0), (\"06 Mar\", 251.0, 249.5), (\"09 Mar\", 249.5, 251.0)]",
+            "call": "overnight_gaps(V, 0.025)",
+            "expect": "([0.03, -0.04, 0.0, 0.004, 0.0], ['03 Mar', '04 Mar'])",
+            "compare": "isclose"
+          },
+          {
+            "call": "overnight_gaps([(\"Mon\", 100.0, 101.0)], 0.01)",
+            "expect": "([], [])",
+            "compare": "equal"
+          },
+          {
+            "call": "overnight_gaps([], 0.01)",
+            "expect": "([], [])",
+            "compare": "equal"
+          },
+          {
+            "setup": "W = [(\"Mon\", 100.0, 101.0), (\"Tue\", 103.02, 102.0), (\"Wed\", 101.49, 100.5), (\"Thu\", 100.5, 99.0), (\"Fri\", 97.0, 98.0)]",
+            "call": "'.append(' not in __learner_source__ and overnight_gaps(W, 0.01)[1] == ['Tue', 'Fri']",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests that call your function. Numbers are accepted within `math.isclose` of the expected value; everything else must be equal (`==`). Test 10 also checks that your code builds its lists without `.append(`."
+      },
+      "feedback": {
+        "correct": "Each gap pairs a day's open with the close before it, and the flags keep moves either way.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 expects 0.02 first: Tuesday opened at 103.02 after Monday closed at 101.0. Divide by the previous close, not by the open.",
+          "test-3": "Test 3 expects Tuesday and Friday. Friday fell about 2%, so compare `abs(gap)`; and flag the day that opened, not the day before.",
+          "test-4": "Test 4 expects 4 gaps from 5 days. Index -1 is the last day, so a loop from index 0 adds a gap for Monday.",
+          "test-5": "Test 5 uses a limit of 0. Thursday opened at its previous close, a gap of 0, which is not more than 0.",
+          "test-9": "Test 9 passes no days at all and expects two empty lists. `zip` with a slice handles it without an `if`.",
+          "test-10": "Test 10 reads your code for `.append(`. Build both lists with comprehensions, as the question asks."
+        }
+      },
+      "explain": {
+        "text": "`zip(days, days[1:])` gives one `(before, today)` pair per gap, and none for a single day. `abs` makes a fall count as much as a rise. A gap of exactly `limit` is not more than it, so it stays out."
+      }
     }
   ]
 }
