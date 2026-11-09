@@ -1696,3 +1696,6 @@ Raised later (opt-dash level 4 perf):
 
 Raised later (cpp level 1 perf):
 - [Could] C++ `code` widget: the learner edits one file, so an objective that names a header ("declare them in a header file", cpp l4) cannot be a performance task. `files` adds hidden files only. Wanted: an optional second editable file (`edit: ["returns.h", "main.cpp"]`), compiled and linked as `files` are. cpp L1 used the l3 loops objective instead.
+
+Raised later (cpp level 3 perf):
+- [Could] C++ `code` widget: a compile check must name the member it reads, so "the data members are private" cannot be tested when the learner chooses the names. cpp `h-session-range` states the rule, and its `how` says no test sees it. Wanted: a check such as `"privateData": "SessionRange<int>"` that fails when the type has a public non-static data member.
