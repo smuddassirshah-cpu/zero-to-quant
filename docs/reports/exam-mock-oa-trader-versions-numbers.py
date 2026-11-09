@@ -531,8 +531,10 @@ SEQ_RULES = {
                                    lambda a: next(x for x in range(int(a[-1]) + 10, 999, 10) if is_prime(x))),
     ('3', 'a12-factor-count'): (lambda N: [len(divisors(n)) for n in range(1, N + 1)],
                                 lambda a: __import__('math').prod(pfs(len(a) + 1).count(p) + 1 for p in set(pfs(len(a) + 1)))),  # d(n) from the prime powers
-    ('3', 'a13-back-if-you-can'): (lambda N: recaman(N),
-                                   lambda a: (lambda n, b: b if b >= 0 and b not in a else a[-1] + n)(len(a), a[-1] - len(a))),
+    # delta fix pass: each term is twice the last plus the one before; second method by the gaps,
+    # which obey the same rule (g' = 2g + g_before), so next = last + 2 g_last + g_before
+    ('3', 'a13-twice-plus-before'): (lambda N: (lambda s: [s.append(2 * s[-1] + s[-2]) for _ in range(N)] and s[:N])([1, 2]),
+                                     lambda a: (lambda g: a[-1] + 2 * g[-1] + g[-2])([y - x for x, y in zip(a, a[1:])])),
     ('3', 'a14-square-digit-sum'): (lambda N: (lambda s: [s.append(sum(int(c) ** 2 for c in str(s[-1]))) for _ in range(N)] and s[:N])([4]),
                                     lambda a: sum(int(c) ** 2 for c in str(int(a[-1])))),
     ('3', 'a15-self-powers'): (lambda N: [n ** n for n in range(1, N + 1)],
@@ -778,14 +780,15 @@ def mobius(d):
     return 0 if len(f) != len(set(f)) else (-1) ** len(f)
 
 
-def coprime_exact(n):
-    """Moebius count of coprime pairs in 1..n."""
-    return F(sum(mobius(d) * (n // d) ** 2 for d in range(1, n + 1)), n * n)
+def coprime_exact(n, lo=1):
+    """Moebius count of coprime pairs in lo..n: d divides n // d - (lo - 1) // d numbers there."""
+    return F(sum(mobius(d) * (n // d - (lo - 1) // d) ** 2 for d in range(1, n + 1)), (n - lo + 1) ** 2)
 
 
-def coprime_enum(n):
+def coprime_enum(n, lo=1):
     from math import gcd
-    return F(sum(1 for a in range(1, n + 1) for b in range(1, n + 1) if gcd(a, b) == 1), n * n)
+    r = range(lo, n + 1)
+    return F(sum(1 for a in r for b in r if gcd(a, b) == 1), len(r) ** 2)
 
 
 def no_friendless_exact(k):
@@ -841,7 +844,7 @@ RANK = {
                                 'sq4': (landing_exact(4), landing_enum(4), 0),
                                 'sq3': (landing_exact(3), landing_enum(3), 0)},
     ('3', 'c04-rank-coprime'): {'cp3': (coprime_exact(3), coprime_enum(3), 0),
-                                'cp2': (coprime_exact(2), coprime_enum(2), 0),
+                                'cp23': (coprime_exact(3, 2), coprime_enum(3, 2), 0),  # delta fix pass: was 1 to 2
                                 'cp4': (coprime_exact(4), coprime_enum(4), 0)},
     ('3', 'c05-rank-friends'): {'all4': (no_friendless_exact(4), graph_frac(4, lambda deg, m: min(deg) > 0), 0),
                                 'all3': (no_friendless_exact(3), graph_frac(3, lambda deg, m: min(deg) > 0), 0),
@@ -855,7 +858,7 @@ PINNED = {('2', 'c01-rank-target'): (F(16, 25), F(49, 100), F(1, 4)), ('2', 'c02
           ('2', 'c03-rank-matrix'): (F(1, 2), F(3, 8), F(1, 8)), ('2', 'c04-rank-dominoes'): (F(3, 7), F(5, 14), F(1, 4)),
           ('2', 'c05-rank-diagonals'): (F(1, 2), F(5, 12), F(5, 13)), ('3', 'c01-rank-product'): (F(5, 12), F(2, 9), F(1, 6)),
           ('3', 'c02-rank-painted'): (F(4, 9), F(8, 27), F(2, 9)), ('3', 'c03-rank-landing'): (F(3, 4), F(11, 16), F(5, 8)),
-          ('3', 'c04-rank-coprime'): (F(7, 9), F(3, 4), F(11, 16)), ('3', 'c05-rank-friends'): (F(41, 64), F(1, 2), F(1, 8)),
+          ('3', 'c04-rank-coprime'): (F(7, 9), F(11, 16), F(1, 2)), ('3', 'c05-rank-friends'): (F(41, 64), F(1, 2), F(1, 8)),
           ('3', 'c06-rank'): (F(1, 2), F(107, 256), F(1, 3))}
 
 # ------------------------------------------------------------ intervals
@@ -998,6 +1001,36 @@ check(not (lines(V2) & lines(V1)) and not (lines(V3) & lines(V1)) and not (lines
 check(len(SEQ_RULES) == 30 and len(PROB) == 30 and len(RANK) == 12 and len(INTV) == 8, 'not every item is covered')
 check(sorted(SEQ_CHECKED) == sorted((v, it['id']) for v, d in (('2', V2), ('3', V3)) for it in d['parts'][0]['items']),
       'the rival-rule check did not run over every sequence item')
+
+# ------------------------------------------------------------ delta fix pass (review-mock-versions-delta.md)
+# a13-twice-plus-before: each distractor is the slip its why names, and no other sequence item in
+# versions 1 to 3 shares the worked solution "twice the last plus the one before".
+_a13 = items(V3)['a13-twice-plus-before']
+_t = terms_of(_a13)
+_k, _w = key_and_wrongs(_a13)
+_g = [y - x for x, y in zip(_t, _t[1:])]
+check(sorted(_w) == sorted([2 * _t[-1], _t[-1] + _t[-2], _t[-1] + _g[-1]]), 'v3/a13 distractors are not the doubling, Fibonacci and repeated-gap slips')
+check(_k == 169 and _k == _t[-1] + 2 * _g[-1] + _g[-2], 'v3/a13 key')
+check(rivals(_t) == {'recurrence order 2': F(169), 'recurrence order 2 with constant': F(169), 'recurrence order 3': F(169)}
+      and v1_predictors(_t) == {}, 'v3/a13 rivals %s, v1 families %s' % (rivals(_t), v1_predictors(_t)))
+for _ver, _d in (('1', V1), ('2', V2), ('3', V3)):
+    for _it in _d['parts'][0]['items']:
+        if _it['id'] == 'a13-twice-plus-before':
+            continue
+        _a = terms_of(_it)
+        check(not all(_a[i] == 2 * _a[i - 1] + _a[i - 2] for i in range(2, len(_a))),
+              'v%s/%s shown terms follow twice the last plus the one before' % (_ver, _it['id']))
+check(_t[-1] + _t[-2] != _k and _t[-1] + _t[-2] + _t[-3] != _k, 'v3/a13 the v1 Fibonacci or tribonacci method solves it')
+# c04-rank-coprime: the delta read asks for the v2 floor of 0.032 between neighbouring values
+_c4 = sorted((float(v[0]) for v in RANK[('3', 'c04-rank-coprime')].values()), reverse=True)
+check(min(a - b for a, b in zip(_c4, _c4[1:])) >= 0.032, 'v3/c04 gap below 0.032: %s' % _c4)
+# c06-rank: the explain shows 8 of 16 and 149 of 256 sequences without the run
+check(no_run_count(4, 2) == 8 and no_run_count(8, 3) == 149 and 256 - 149 == 107, 'v3/c06 counts')
+_trib = [1, 2, 4]
+while len(_trib) < 9:
+    _trib.append(sum(_trib[-3:]))
+check(_trib[8] == 149, 'v3/c06 tribonacci count %s' % _trib)
+check('149 of the 256' in items(V3)['c06-rank']['explain']['text'] and '8 of the 16' in items(V3)['c06-rank']['explain']['text'], 'v3/c06 explain counts')
 
 if FAILS:
     print('\n'.join(FAILS))
