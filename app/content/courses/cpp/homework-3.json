@@ -486,6 +486,149 @@
      "text": "Money in integer pence (or ticks) with no `==` on doubles, and a refused call leaves the object unchanged"
     }
    ]
+  },
+  {
+   "id": "h-session-range",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "cp-classes"
+   ],
+   "pace": 1800,
+   "title": "A session range for any number type",
+   "prose": "A risk screen tracks the lowest and highest value seen in a session. The value may be a price, a tick count or a P&L in pence. Write one class template for all three.\n\n- `SessionRange<T>` works for `T` of `int`, `long long` and `double`, and its two ends are private.\n- `explicit SessionRange(T first)` starts a range that has seen one value.\n- `SessionRange(T low, T high)` refuses a low above the high: `throw` or call `std::abort()`. Equal ends are allowed.\n- `void add(T x)` records one more value.\n- `T low() const`, `T high() const`, and `double width() const`, the high minus the low, exact for any two `int` ends.\n- `a += b` widens `a` to cover `b` as well and returns `a` itself.\n- `a + b` returns the range covering both and changes neither.\n- `a == b` when both ends match; `a != b` otherwise.\n- `os << r` writes `[low, high]`, such as `[99.5, 101.25]`, and returns `os`.",
+   "question": "Write `SessionRange<T>` and its operators to the specification above.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <sstream>\n#include <string>\n#include <vector>\n",
+    "starter": "#include <cstdlib>\n#include <ostream>\n\n// Write the class template SessionRange<T> and its operators here.\n",
+    "solution": "#include <cstdlib>\n#include <ostream>\n\ntemplate <typename T>\nclass SessionRange {\npublic:\n    explicit SessionRange(T first) : low_(first), high_(first) {}\n\n    SessionRange(T low, T high) : low_(low), high_(high) {\n        if (low_ > high_) std::abort();   // a throw ends the run too\n    }\n\n    void add(T x) {\n        if (x < low_) low_ = x;\n        if (x > high_) high_ = x;\n    }\n\n    T low() const { return low_; }\n    T high() const { return high_; }\n\n    double width() const {\n        return static_cast<double>(high_) - static_cast<double>(low_);\n    }\n\n    SessionRange& operator+=(const SessionRange& other) {\n        add(other.low_);\n        add(other.high_);\n        return *this;\n    }\n\nprivate:\n    T low_;\n    T high_;\n};\n\ntemplate <typename T>\nSessionRange<T> operator+(SessionRange<T> a, const SessionRange<T>& b) {\n    a += b;   // a is a copy, so the caller's ranges stay as they were\n    return a;\n}\n\ntemplate <typename T>\nbool operator==(const SessionRange<T>& a, const SessionRange<T>& b) {\n    return a.low() == b.low() && a.high() == b.high();\n}\n\ntemplate <typename T>\nbool operator!=(const SessionRange<T>& a, const SessionRange<T>& b) {\n    return !(a == b);\n}\n\ntemplate <typename T>\nstd::ostream& operator<<(std::ostream& os, const SessionRange<T>& r) {\n    return os << '[' << r.low() << \", \" << r.high() << ']';\n}\n",
+    "examples": [
+     {
+      "setup": "SessionRange<int> r(100); r.add(97); r.add(104); r.add(101);",
+      "call": "std::vector<int>{r.low(), r.high()}",
+      "expect": [
+       97,
+       104
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "SessionRange<int> r(100); r.add(97); r.add(104); r.add(101);",
+      "call": "std::vector<int>{r.low(), r.high()}",
+      "expect": [
+       97,
+       104
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "SessionRange<int> r(100); r.add(97); r.add(104); r.add(101);",
+      "call": "r.width()",
+      "expect": 7,
+      "compare": "isclose"
+     },
+     {
+      "setup": "SessionRange<int> r(50); r.add(60); r.add(55);",
+      "call": "std::vector<int>{r.low(), r.high()}",
+      "expect": [
+       50,
+       60
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "SessionRange<double> r(101.5); r.add(99.25); r.add(100.75);",
+      "call": "r.width()",
+      "expect": 2.25,
+      "compare": "isclose"
+     },
+     {
+      "setup": "SessionRange<int> pnl(-2000000000, 2000000000);",
+      "call": "pnl.width()",
+      "expect": 4000000000,
+      "compare": "isclose"
+     },
+     {
+      "call": "SessionRange<int>(5, 3).width()",
+      "compare": "raises"
+     },
+     {
+      "setup": "SessionRange<long long> r(5000000000LL, 5000000000LL); r.add(4999999990LL);",
+      "call": "r.width()",
+      "expect": 10,
+      "compare": "isclose"
+     },
+     {
+      "setup": "SessionRange<int> a(10), b(5), c(20); (a += b) += c;",
+      "call": "std::vector<int>{a.low(), a.high()}",
+      "expect": [
+       5,
+       20
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "SessionRange<int> a(10), b(5, 30); SessionRange<int> c = a + b;",
+      "call": "std::vector<int>{a.low(), a.high(), b.low(), b.high(), c.low(), c.high()}",
+      "expect": [
+       10,
+       10,
+       5,
+       30,
+       5,
+       30
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "SessionRange<int> a(1, 9); a += SessionRange<int>(3, 4);",
+      "call": "std::vector<int>{a.low(), a.high()}",
+      "expect": [
+       1,
+       9
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "std::vector<int>{SessionRange<int>(1, 4) == SessionRange<int>(1, 4), SessionRange<int>(1, 4) == SessionRange<int>(1, 5), SessionRange<int>(1, 4) != SessionRange<int>(1, 5), SessionRange<int>(2, 4) != SessionRange<int>(1, 4), SessionRange<int>(1, 4) != SessionRange<int>(1, 4)}",
+      "expect": [
+       1,
+       0,
+       1,
+       1,
+       0
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "std::ostringstream os; os << SessionRange<double>(99.5, 101.25) << ';' << SessionRange<int>(-3) << ';';",
+      "call": "os.str()",
+      "expect": "[99.5, 101.25];[-3, -3];",
+      "compare": "equal"
+     },
+     {
+      "setup": "const SessionRange<int> r(3);",
+      "compiles": "(void)r.low(); (void)r.high(); (void)r.width();",
+      "expect": true
+     },
+     {
+      "compiles": "SessionRange<int> r = 5; (void)r;",
+      "expect": false
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 14 hidden tests with `int`, `long long` and `double` ranges. Doubles are accepted within a relative 1e-9. One builds a low above the high and passes only if the program stops. Two only compile a line: one on a `const` range, one that must be refused. No test can see whether the ends are private, so check that yourself."
+   },
+   "feedback": {
+    "correct": "Correct. The ends stay in order, the operators agree, and `+=` hands back the range itself.",
+    "generic": "Not quite right. Read the first failing test."
+   },
+   "explain": {
+    "text": "Every way to change a range goes through `add` or the checked constructor, so the low never passes the high. `+=` returns `SessionRange&`, so `(a += b) += c` widens `a` twice, and `+` takes its left side by value, so it widens a copy. `width` converts both ends to `double` first: $2{,}000{,}000{,}000 - (-2{,}000{,}000{,}000)$ is 4,000,000,000, past the `int` limit of 2,147,483,647."
+   }
   }
  ]
 }
