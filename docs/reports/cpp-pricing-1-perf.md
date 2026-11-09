@@ -1,0 +1,9 @@
+# cpp-pricing level 1: performance task (PLAN 2a Phase 3)
+
+- File: `app/content/courses/cpp-pricing/homework-1.json`, item `h-perf-corridor`, index 8 (item 9 of 9; nothing converted).
+- Kind `code`, C++. Objective: l4 "Implement the normal cumulative distribution function with `erfc`", the only objective of the level the verb rule matches.
+- Task: from a stub, `norm_cdf` with `std::erfc` and `corridor_price(s, lo, hi, r, sigma, t)`, £1 paid at T if L < S_T <= H, to 9 significant figures in either tail. Inputs no lesson uses.
+- Tests: 12 against 2 examples. Expects from mpmath at 60 digits, agreeing with scipy within 1e-12; tail cases graded on relative 1e-9 alone. Eleven planted slips, each caught on g++ and clang++: no discount, erf form, plain CDF difference, upper tails everywhere, sigma T for sigma root T, d1 drift, `1 / 2`, missing root 2, no empty guard, tails swapped (d2 points), d1 and no discount. The starter fails 11 of 12.
+- Overlapping screens: l4 screen 4 lays out `norm_cdf` with erfc (the objective's product); l4 screen 6 says to take a small tail as `norm_cdf(-x)`; l3 screen 7 gives the terminal price. New: the corridor's two Z points, the tail chosen by side of the median, discounting, `lo = 0` and `hi = INFINITY`, the empty corridor, Phi at -7.5 and -30.
+- Gates: (1) `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors, expected perf-pending warning. (2) `VOICE_BASE=app/content/courses/cpp-pricing python3 docs/reviews/voice-scan.py 35`: 0 and 0. (3) `venv/bin/python -I docs/reports/cpp-pricing-1-perf-numbers.py`: 84 checks, 0 failures. (4) `node tools/playthrough.mjs --set cpp-pricing/homework-1 --local-cdn <pkgs>`, with and without `--mobile`: All passed; 440 px shot checked.
+- Freshness grep: corridor, band, between, range, digital put, `P(S_T`, erfc, `INFINITY`. `fresh-check --file content/courses/cpp-pricing/homework-1.json`: 0 hits.

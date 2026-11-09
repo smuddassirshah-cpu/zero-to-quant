@@ -1693,3 +1693,6 @@ Raised later (contests level 3 perf):
 - [Could] `playthrough.mjs --shots` takes the `-marked` shot at the viewport only, so a display equation lower in a long model (contests `hw3-due-order`, the aligned block in "No worse") is never seen at 440 px. A retrofit has to measure it with a scratch KaTeX page. Wanted: a full-height `-marked` shot, or a check that no `.katex-display` in the model is wider than its card.
 Raised later (opt-dash level 4 perf):
 - [Could] `isclose` compares lists, arrays and Series but not dicts, so a function returning a dict of floats (`h4-weekend-explain`, seven keys) is tested through a setup line and `[d[k] for k in KEYS]`. Wanted: `isclose` on dicts, key sets equal and values compared by key.
+
+Raised later (cpp-pricing level 1 perf):
+- [Could] C++ and Python `isclose` default to an absolute 1e-12, so a test of a tiny value (`norm_cdf(-7.5)`, 3.2e-14) passes a function that returns 0 unless the case carries `tol: { rel: 1e-9 }`. `h-perf-corridor` sets it on five cases by hand. Wanted: a validator warning on an `isclose` case whose non-zero `expect` is below 1e-10 in size and has no `tol`.

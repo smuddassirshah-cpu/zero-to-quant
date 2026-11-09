@@ -437,6 +437,127 @@
       "explain": {
         "text": "A negative base to a fractional power is NaN, and NaN plus anything is NaN. So the book's total is NaN. Write `std::pow(std::fmax(st - k, 0.0), 1.5)`, and test totals with `std::isfinite`."
       }
+    },
+    {
+      "id": "h-perf-corridor",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "title": "A corridor note priced to the tails",
+      "prose": "A desk sells a **corridor note**. It pays £1 at time $T$ if the share ends with $L < S_T \\le H$, and nothing otherwise. The pricing model is $S_T = S\\exp\\big((r - \\tfrac12\\sigma^2)T + \\sigma\\sqrt T Z\\big)$ with $Z$ standard normal, and $r$ is the continuously compounded rate.\n\n- Write `norm_cdf(x)`, the standard normal CDF, with `std::erfc`.\n- Write `corridor_price(s, lo, hi, r, sigma, t)`, the note's price today, using your `norm_cdf`.\n- `lo` is $L$ and may be 0; `hi` is $H$ and may be `INFINITY`. If `lo >= hi` the corridor is empty and is worth 0.\n- Assume $S$, $\\sigma$ and $T$ are positive.\n\nThe risk system needs 9 significant figures for every corridor. That includes corridors far out in either tail, where the price is tiny but not 0.",
+      "question": "Write `norm_cdf` and `corridor_price`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble norm_cdf(double x) {\n    return 0;\n}\n\ndouble corridor_price(double s, double lo, double hi, double r, double sigma, double t) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble norm_cdf(double x) {\n    return 0.5 * std::erfc(-x / std::sqrt(2.0));\n}\n\ndouble corridor_price(double s, double lo, double hi, double r, double sigma, double t) {\n    if (!(lo < hi)) return 0.0;\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    // S_T <= x exactly when Z <= (ln(x / s) - drift) / vol\n    double a = (std::log(lo / s) - drift) / vol;\n    double b = (std::log(hi / s) - drift) / vol;\n    // Above the median both CDFs sit next to 1: subtract the upper tails instead.\n    double p = a > 0 ? norm_cdf(-a) - norm_cdf(-b) : norm_cdf(b) - norm_cdf(a);\n    return std::exp(-r * t) * p;\n}\n",
+        "examples": [
+          {
+            "call": "corridor_price(250.0, 220.0, 280.0, 0.035, 0.28, 0.75)",
+            "expect": 0.37107977938690706,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(0.3)",
+            "expect": 0.6179114221889527,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "corridor_price(250.0, 220.0, 280.0, 0.035, 0.28, 0.75)",
+            "expect": 0.37107977938690706,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(0.3)",
+            "expect": 0.6179114221889527,
+            "compare": "isclose"
+          },
+          {
+            "call": "corridor_price(250.0, 260.0, INFINITY, 0.035, 0.28, 0.75)",
+            "expect": 0.4194870398723882,
+            "compare": "isclose"
+          },
+          {
+            "call": "corridor_price(250.0, 0.0, 240.0, 0.035, 0.28, 0.75)",
+            "expect": 0.42691516009249375,
+            "compare": "isclose"
+          },
+          {
+            "call": "corridor_price(250.0, 0.0, INFINITY, 0.035, 0.28, 0.75)",
+            "expect": 0.9740915362817815,
+            "compare": "isclose"
+          },
+          {
+            "call": "corridor_price(42.0, 40.0, 45.0, 0.05, 0.35, 2.0)",
+            "expect": 0.08551042414353006,
+            "compare": "isclose"
+          },
+          {
+            "call": "corridor_price(100.0, 140.0, 150.0, 0.02, 0.1, 0.25)",
+            "expect": 1.414719561163908e-11,
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "corridor_price(100.0, 60.0, 70.0, 0.02, 0.1, 0.25)",
+            "expect": 2.814494164221628e-13,
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "corridor_price(100.0, 40.0, 50.0, 0.02, 0.1, 0.25)",
+            "expect": 1.8533071161213993e-44,
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "corridor_price(250.0, 280.0, 220.0, 0.035, 0.28, 0.75)",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "norm_cdf(-7.5)",
+            "expect": 3.1908916729108963e-14,
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "norm_cdf(-30.0)",
+            "expect": 4.906713927148187e-198,
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 12 hidden tests that call norm_cdf and corridor_price. Each value is accepted within a relative 1e-9 of a 60-digit reference value, tiny tail values included, and an empty corridor must be exactly 0."
+      },
+      "feedback": {
+        "correct": "Every corridor keeps its digits, in both tails, and the price is discounted.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-5": "The corridor from 0 to infinity always pays £1, so today it is worth the discounted £1, $e^{-rT}$.",
+          "test-7": "This corridor lies far above spot. Both $\\Phi$ values are within $10^{-10}$ of 1, so their difference keeps few digits. There, subtract the two upper tails, each a `norm_cdf` of a negated point.",
+          "test-8": "This corridor lies far below spot, so both lower tails are tiny. If you subtracted upper tails here, both sit next to 1 and cancel.",
+          "test-12": "$\\Phi(-30)$ is about $4.9 \\times 10^{-198}$. The erf form, `0.5 * (1 + std::erf(x / std::sqrt(2.0)))`, rounds it to 0; `std::erfc` keeps it."
+        }
+      },
+      "explain": {
+        "text": "$S_T \\le x$ exactly when $Z \\le (\\ln(x/S) - (r - \\tfrac12\\sigma^2)T)/(\\sigma\\sqrt T)$, so with $a$ and $b$ those points for $L$ and $H$ the note is worth $e^{-rT}\\big(\\Phi(b) - \\Phi(a)\\big)$. When $a > 0$ both values sit next to 1 and the difference cancels, so the code takes $\\Phi(-a) - \\Phi(-b)$, two small upper tails, instead. Below that the plain difference already subtracts small numbers, and the erfc form keeps each one to full precision."
+      }
     }
   ]
 }
