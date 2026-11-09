@@ -114,7 +114,8 @@ check(len(w['followUps']) == 3, '3 follow-ups')
 check('1,000' in w['followUps'][1], 'follow-up 2 names 1,000 targets')
 rub = w['rubric']
 check(sum(r['points'] for r in rub) == 10 and 3 <= len(rub) <= 5, f'rubric {len(rub)} rows sum to 10')
-check(sum(1 for r in rub if r.get('required')) == 1, 'exactly one required row')
+# 702 sweep: row 4 (the typed code) is now required with row 3; rows 1, 2 and 5 are optional in the prompt
+check(sum(1 for r in rub if r.get('required')) == 2, 'two required rows')
 check(len(items) == 9 and sum(1 for it in items if it.get('performance')) == 1, 'homework-4 holds 9 items, one performance item')
 
 print('failures:', fails)

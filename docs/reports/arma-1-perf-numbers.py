@@ -59,7 +59,8 @@ _rows = item['rubric']
 _passes = [s for k in range(1, 5) for s in itertools.combinations(range(4), k)
            if sum(_rows[i]['points'] for i in s) >= 7 and all(r_ in s for r_, r in enumerate(_rows) if r.get('required'))]
 print('     passing tick sets (row numbers):', [[i + 1 for i in s] for s in _passes])
-check('required rows are 1 and 3 and not every row', [i for i, r in enumerate(_rows) if r.get('required')] == [0, 2])
+# 702 sweep: row 2 (note B) is now required; row 4 stays optional in the prompt
+check('required rows are 1, 2 and 3 and not every row', [i for i, r in enumerate(_rows) if r.get('required')] == [0, 1, 2])
 check('every passing set has note A, note B and the assumptions', all({0, 1, 2} <= set(s) for s in _passes) and _passes)
 check('AR1-3: no Brownian motion in the model, no "not more frequent prices" in a row',
       'Brownian' not in item['model'] and 'not more frequent prices' not in ' '.join(r['text'] for r in _rows))

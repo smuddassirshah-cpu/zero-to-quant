@@ -33,7 +33,8 @@ for k in ('starter', 'steps', 'order', 'derive', 'hints', 'parts'):
 rub = it['rubric']
 check(3 <= len(rub) <= 5, 'rubric rows not 3 to 5')
 check(sum(r['points'] for r in rub) == 10, 'rubric does not sum to 10')
-check(sum(1 for r in rub if r.get('required') is True) == 1, 'not exactly one required row')
+# 702 sweep: rows 1, 3 and 4 are now required with row 2; row 5 is optional in the prompt
+check(sum(1 for r in rub if r.get('required') is True) == 4, 'four required rows, not every row')
 check(any(i.get('difficulty') == 5 for i in hw['items']), 'no difficulty 5 item')
 check('$' not in it['title'], 'maths in title')
 

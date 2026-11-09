@@ -38,7 +38,8 @@ check('no starter, steps, order, derive, hints, parts or tags',
 pts = [r['points'] for r in it['rubric']]
 req = [i for i, r in enumerate(it['rubric']) if r.get('required')]
 check('rubric has 3 to 5 rows summing to 10', 3 <= len(pts) <= 5 and sum(pts) == 10, f'{pts}')
-check('exactly one required row, row 2 (the derived equation)', req == [1])
+# 702 sweep: rows 3 (scaling) and 4 (the numbers) are now required; row 1 is optional in the prompt
+check('required rows 2, 3 and 4, not every row', req == [1, 2, 3])
 # a pass is 7 of 10 with the required row ticked; leaving out the scaling row must fail
 check('dropping the scaling-and-bounds row fails the pass', sum(pts) - pts[2] < 7, f'{sum(pts) - pts[2]}')
 check('dropping row 1 or row 4 alone still passes', sum(pts) - pts[0] >= 7 and sum(pts) - pts[3] >= 7)
