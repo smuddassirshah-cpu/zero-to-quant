@@ -72,3 +72,42 @@ Concepts scripts: the four EXPECTED_FAIL checks (`[open-share]`, `[rebase]`, `[f
 - Concepts r2 (`python3 -I`, repo root): L1 exit 0, L2 exit 0, L3 exit 0, no EXPECTED_FAIL left. Concepts round 1: L1, L2, L3 exit 0.
 - Numbers: L1 exit 0 (146 of 146), L2 exit 0 (139 of 139), L3 exit 0 (479 of 479; the pre-existing "check by hand" byKey lines only). No hard-coded number changed.
 - Playthrough (from `app/`, `--local-cdn <pkgs>`, desktop and `--mobile`): `--lesson pairs-rep/l1-ggr-design`, `l2-normalised-paths`, `l10-matching-results`, `l12-cointegration-selection`, `l15-pairs-note`, `--set pairs-rep/homework-3`: lessons "ok", 12 to 14 checks, quiz 3/3 each; homework-3 "7 items, marked 7 of 7 right, 34 of 34 marks, 1 performance starter fail"; "browser relaunches: 0 / All passed." on desktop and on mobile.
+
+## Third read (finding 3)
+
+Third reader, 9 November 2026, worktree `worktree-agent-ab4f48da660948dd5`. Own computation: `docs/reports/pairs-rep-L1-lookahead-third-read.py` (`python3 -I`, repo root, exit 0, about 20 s). It reads the course's generator and `top_pairs` from the lesson JSON, uses its own trading loop (asserted equal to the course's `trade_pair` on the top 20 at start 0, with and without the wait), and adds panels of its own.
+
+Verdict: `upheld in part`. The sentence is `imprecise`. The fixer is right about this panel and the auditor is right that it is not a law. Neither proposed outcome should stand: the auditor's text drops a true fact about the direction, and the current text states it as a property of look-ahead.
+
+Difference in payoff per cycle on committed capital, 2 sd trigger from the trading spread minus the same from the formation spread (se). Course generator: 400 fresh panels per row. True pairs: 6,000 independent pairs per row, no selection, no bounce.
+
+| Panel | Top 20 same day | Top 20 one-day wait | Top 5 same day | Top 5 one-day wait |
+|---|---|---|---|---|
+| Course generator, before the break (start 0) | +0.0114 (0.0015) | +0.0076 (0.0011) | +0.0038 (0.0022) | +0.0019 (0.0016) |
+| Course generator, break on trading day 0 (start 1260) | +0.0218 (0.0018) | +0.0278 (0.0018) | +0.0125 (0.0036) | +0.0210 (0.0034) |
+| Course generator, after the break (start 2268) | +0.0375 (0.0017) | +0.0366 (0.0017) | +0.0206 (0.0026) | +0.0191 (0.0024) |
+| Course generator, breaks off (start 2268) | +0.0112 (0.0013) | +0.0101 (0.0010) | +0.0026 (0.0021) | +0.0011 (0.0015) |
+| The course panel itself, 22 cycles | +0.0335 (0.0052) | | | |
+
+| True pairs (per pair) | Same day | One-day wait |
+|---|---|---|
+| Stationary gaps, same volatility | +0.0098 (0.0008) | +0.0079 (0.0007) |
+| Gap volatility doubles in trading, pairs still converge | −0.1174 (0.0018) | −0.1076 (0.0017) |
+| Gap volatility halves in trading | +0.0236 (0.0005) | +0.0212 (0.0004) |
+
+The pair on the screen itself (shares 2 and 3, start 0, sds 0.0210 and 0.0300): honest trigger +0.2218, look-ahead trigger +0.1176; with the wait +0.1714 against +0.1022.
+
+Basis:
+
+1. On the lesson's panel the direction holds. Every top-20 regime is positive at 7 to 22 standard errors, with and without breaks, with and without the wait. The course panel's 22 cycles give +0.0335 (se 0.0052), the fixer's figure to four places. The auditor's +0.006 (se 0.005) was 30 cycles of the weakest regime and could not separate +0.011 from zero.
+2. It is weak where there is least to hide. Top 5 with no breaks is +0.001 to +0.004 at 0.7 to 1.7 standard errors, so not separated from zero at 400 panels.
+3. It is not a property of look-ahead. When spread volatility doubles in trading and the pairs still converge, the look-ahead trigger earns 0.117 a pair less (66 standard errors). The formation trigger sits at about 1 trading sd and takes 4.85 round trips; the look-ahead trigger takes 2.05. The sign follows how the trading sd differs from the formation sd, which depends on the data.
+4. The screen's own pair contradicts the sentence as written. Its trading sd is the wider one, and the look-ahead trigger roughly halves its payoff. A learner who checks the claim on the pair in front of them finds the opposite.
+5. The fixer's stated mechanism is wrong and should not be reused in content. Pairs whose trading sd is over 3 times the formation sd (n = 4,020) are opened by the look-ahead rule 98% of the time, not "never". They open later and lose less (mean payoff −0.083 honest, +0.013 look-ahead). Before the break the gain comes from quiet pairs, whose tighter threshold opens trades the honest rule misses.
+6. What a learner should carry away: look-ahead is invalid because no desk could have run it, whatever the sign; here it happens to flatter on average. The current sentence gives the second without the first and without its scope.
+
+Exact fix, `l1-ggr-design` `screens[5].explain.text` (three sentences of 19, 23 and 18 words):
+
+"On the first trading day the desk knows only the formation prices, so the paper fixes the sd there. A threshold computed on trading prices sees the future, so no desk could have run that backtest, whatever it does to the result. Across this course's simulated prices it flatters the result on average, yet on this pair it earns less."
+
+Notes for the fixer: "panel" is first used on screens[6], so the text says "this course's simulated prices". No graded key, option or number changes. The r2 `[lookahead]` check may stay print-only; the third-read script carries the asserts (top-20 regimes positive at over 3 se, the volatility-doubles case negative at over 3 se, pair (2, 3) lower under look-ahead, diverging pairs still opened).
