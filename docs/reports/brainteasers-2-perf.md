@@ -16,3 +16,5 @@
 4. `node tools/playthrough.mjs --set brainteasers/homework-2 --local-cdn <pkgs>`, with and without `--mobile`: All passed, "1 performance starter fail". The 440 px shot fits.
 
 Backlog: 0 new bullets.
+
+Overlapping screens: l7 screens[0] (a line of eight with the parity code), screens[3] (all at once, each person assumes the total is $i$ modulo 7), screens[11] (the Hamming-code follow-up), homework-2 `hw3-five-hats`; new parts: a circle where each person sees only two neighbours, so the whole-team sum fails, and the learner designs the pairing (one partner bets the hats match, the other that they differ) to guarantee $\lfloor n/2 \rfloor$ right for every colouring.

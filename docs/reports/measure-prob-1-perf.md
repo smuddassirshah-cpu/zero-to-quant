@@ -5,7 +5,7 @@
 - Objective matched: l3 "Build a probability space and prove continuity from above and below." It is the only rule-matched objective in the level.
 - Task: build the space on the positive integers with $p_k = 1/(k(k+1))$, prove it is a probability measure (sigma-algebra, telescoping total, countable additivity by finite partial sums), prove both continuity results for any measure with their hypotheses, then find $P(\{n, n+1, \dots\}) = 1/n$ and its limit.
 - Rubric 2, 2, 3, 2, 1. Row 3 (continuity from below) is `required`. Rows 1 and 4 open with "Tick only if".
-- Overlap (fix pass): the continuity proofs repeat l3 screen 5 and `h-order` because the objective names them; the space and its additivity proof are the fresh part. Rows 2 and 3 are `required` (additivity of $P$, continuity from below).
+- Overlapping screens: l3 screens[5] (continuity from below, ordered) and [6] (continuity from above), screens[3] and [4] (a two-toss space, length as a probability), homework-1 `h-order`, because the objective names the continuity proofs; new parts: the space on the positive integers with $p_k = 1/(k(k+1))$ and its additivity proof (telescoping total), and $P(\{n, n+1, \dots\}) = 1/n$ with its limit. Rows 2 and 3 are `required` (additivity of $P$, continuity from below).
 - Fresh: the lessons and homework prove continuity on general sets (l3 order screen, `h-order`, `h-long`) and use length, uniform picks and counting measure (`r-counting`). The space, its additivity proof and $1/n$ tails are new. Grep terms: `k(k+1)`, `telescop`, `counting measure`, `positive integers`, `whole numbers`, `{n, n+1`.
 
 ## Gates

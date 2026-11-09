@@ -15,3 +15,5 @@
 4. `node tools/playthrough.mjs --set measure-prob/homework-3 --local-cdn <pkgs>`, with and without `--mobile`: All passed (2 longform marked by the button). A scratch KaTeX render in the 356 px card column shows the one display equation fits.
 
 One backlog bullet. No course.json change.
+
+Overlapping screens: l12-martingales-defined screens[1] (adapted, integrable, the one-step condition), [2] (a martingale from squares, step by conditional expectation), [5] (subtract the drift) and [6] (dependent steps, checking one step back), markov l17 screens[8] and [9] (the Pólya share on the first draws, and a martingale keeps its mean); new parts: the Pólya urn proved for every $n$ on the draw filtration, the step $E[M_{n+1} \mid \mathcal{F}_n] = M_n$ by the conditional chance of red on each atom, $P(\text{draw } n+1 \text{ red}) = 1/2$ by the tower property, and $R_n$ not a martingale.

@@ -15,3 +15,5 @@ Gates:
 4. `node tools/playthrough.mjs --set coding-int/homework-4 --local-cdn <pkgs>`, with and without `--mobile`: All passed; marked by the button. Shots read cleanly.
 
 Freshness grep: `pair`, `target`, `two pointer`, `sums to`, `complement`, `trade-off`, `median`.
+
+Overlapping screens: l18-talking-while-coding screens[1] (say the problem back), [2] (name the brute force), [4] (plan as comments, then code), [7] (the order of a spoken answer) and [9] (say the complexity), all on products of the other entries; homework-4 `h4-aloud`; new parts: `count_pairs(sizes, target)` with equal sizes making pairs, a dictionary against sorting and two pointers with time and memory, the sorted-input follow-up, many targets on one list, and the C++ type for the answer.

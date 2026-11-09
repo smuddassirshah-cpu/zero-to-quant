@@ -42,3 +42,5 @@ Timing: CPython 3.13, solution 0.22 s and scan 13.8 s on test 9. In Pyodide (scr
 Met hook, end to end: a scratch copy of the playthrough printed after submit `state.perf["coding-int/L1"] = { item: "h1-ticker-book", kind: "code", how: "auto" }` and `ZQ.prereq.perfPassed("coding-int", L1)` true.
 
 `app/content/manifest.json` restored before the commit. No `course.json` change proposed. Backlog: 4 bullets under "Raised later (coding-int level 1 perf pilot):".
+
+Overlapping screens: l2-prefix-trees screens[4] (a `Trie` with insert, search, starts_with and `count_prefix`, node counts) and [5] (counting prefixes), [7] (the pattern), [8] (suggest symbols); new parts after the fix pass: `remove` and removing an absent ticker, re-adding, `longest_listed(query)` and `count_match(pattern)` with `?` for any one letter, neither of which l2 solves, and a 100,000-step timing test.

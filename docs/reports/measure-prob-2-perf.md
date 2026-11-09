@@ -15,3 +15,5 @@
 4. `node tools/playthrough.mjs --set measure-prob/homework-2 --local-cdn <pkgs>`, with and without `--mobile`: All passed (2 longform marked by the button). A scratch KaTeX render of the model and rubric in the 356 px card column showed all four display equations fit. All are split with `aligned` where needed. The marked 440 px shot agrees.
 
 No backlog bullets. No course.json change.
+
+Overlapping screens: l5-lebesgue-integral screens[0] and [1] (dyadic bands $\varphi_n$ for $X = U^2$), [2] (simple functions and their integral), [5] (the layer-cake formula), [8] (monotonicity passes to the supremum), [9] (`dyadic_mean(n)` in code); new parts: $X = \sqrt U$ with band chances $(2k+1)/4^n$ proved simple, below $X$, increasing and convergent, $E[\varphi_n] = (N-1)(4N+1)/(6N^2)$, monotone convergence with its hypotheses checked to reach $2/3$, and $E[Y]$ for $Y = 2\sqrt U - 1$.

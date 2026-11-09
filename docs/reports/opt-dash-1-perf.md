@@ -15,3 +15,5 @@ Gates:
 4. `node tools/playthrough.mjs --set opt-dash/homework-1 --local-cdn <pkgs>`, with and without `--mobile`: All passed, starter fails. Shots clean.
 
 Freshness grep: `parity_fit`, `least squares`, `polyfit`, `lstsq`, `intercept`, `seed=58`, `zero_bid`.
+
+Overlapping screens: l3-rates-dividends screens[0] and [1] (call minus put against strike and the parity line), [2] (the one-strike median forward, $r$ given), [4] (fitting both $r$ and $q$ from a line, shown as a table, never coded), [6] (parity to the forward), [7] `implied_forward` and [8] `implied_q` (coded); new parts: `parity_fit` as a least-squares regression of $C - P$ on $K$ returning $(F, r, q)$, NaN under three pairs or for a non-positive discount factor, zero-bid quotes dropped, pairing by strike.

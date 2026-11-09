@@ -14,3 +14,5 @@ Gates:
 Freshness: `fresh-check.mjs --file` 1 hit, existing item 1 (`h-t-36`). Grep of 756, 9.5, value signal, 63-day, 62 of, 62 lags: no lesson or review hit.
 
 Backlog: 0 bullets.
+
+Overlapping screens: l9 screens[7] (daily dates against a 21-day return, t 2.76 to 12.62, the same inflation) and screens[8] (t as mean over standard error for independent dates), l10 screens[4] and [5] (dates a horizon apart, 63-day dates), homework-3 `h-overlap-9` (the $\sqrt{10}$ inflation) and `h-newey-west` (the Newey-West variance coded); new parts: the spoken chain of reasons for 756 dates against a 63-day return, variance of the mean about 63 times $s^2/n$, standard error $\sqrt{63}$ too small, honest $t$ about 1.2, what stays valid, what to report instead.

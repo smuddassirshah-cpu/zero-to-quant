@@ -39,3 +39,5 @@ The homework page's Mark my answer button refuses an empty box ("Write your work
 ## course.json
 
 No change proposed.
+
+Overlapping screens: l4-tests-in-words screens[3] (power), [4] (what $p = 0.04$ says), [5] (a Sharpe ratio as a test), [6] (ten looks), [7] (three corrections), [9] (the best of fifty backtests), [10] (say it to a portfolio manager in two sentences), homework-1 `h1-thirty-signals` (written, p-value and correction only); new parts: all three ideas in one spoken two-minute answer to a listener with no statistics, five years at Sharpe 1 ($t = 2.24$, $p = 0.025$, power 0.61), twenty versions, a clock and three follow-ups.
