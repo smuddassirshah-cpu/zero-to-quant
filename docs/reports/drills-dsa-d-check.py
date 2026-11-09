@@ -7,7 +7,7 @@ brute force cannot finish, a different algorithm or a closed form). Both must eq
 mix, and that no case uses `setup`. Exit 0 on success.
 Run: <scratchpad>/venv/bin/python docs/reports/drills-dsa-d-check.py
 """
-import heapq, json, os, sys
+import heapq, json, os, random, sys
 from collections import Counter
 from functools import lru_cache
 from itertools import combinations, permutations, product
@@ -97,34 +97,33 @@ def fewest_climb_steps(heights, climb):
                 heapq.heappush(heap, (v + 1, *cell))
     return dist.get((rows - 1, cols - 1), -1)
 
-def upstream_stations(n, pipes, r):
-    if n <= 50:  # forward search from every station
+def route_stations(n, pipes, s, r):
+    # a station is on a route when s reaches it and it reaches r: test every station pair by its own search
+    if n <= 50:
         adj = [[] for _ in range(n)]
         for a, b in pipes:
             adj[a].append(b)
-        out = []
-        for v in range(n):
-            if v == r:
-                continue
-            seen, stack = {v}, [v]
+
+        def reaches(u, v):
+            seen, stack = {u}, [u]
             while stack:
                 x = stack.pop()
                 for y in adj[x]:
                     if y not in seen:
                         seen.add(y)
                         stack.append(y)
-            if r in seen:
-                out.append(v)
-        return out
-    # SciPy's breadth-first order on the reversed pipes
+            return v in seen
+        return [v for v in range(n) if reaches(s, v) and reaches(v, r)]
+    # SciPy's breadth-first order forward from s and on the reversed pipes from r
     from scipy.sparse import csr_matrix
     from scipy.sparse.csgraph import breadth_first_order
     if not pipes:
         return []
-    src = np.array([b for a, b in pipes]); dst = np.array([a for a, b in pipes])
-    g = csr_matrix((np.ones(len(pipes)), (src, dst)), shape=(n, n))
-    reached = breadth_first_order(g, r, directed=True, return_predecessors=False)
-    return sorted(int(v) for v in reached if v != r)
+    src = np.array([a for a, b in pipes]); dst = np.array([b for a, b in pipes])
+    fwd = csr_matrix((np.ones(len(pipes)), (src, dst)), shape=(n, n))
+    from_s = set(int(v) for v in breadth_first_order(fwd, s, directed=True, return_predecessors=False))
+    to_r = set(int(v) for v in breadth_first_order(fwd.T.tocsr(), r, directed=True, return_predecessors=False))
+    return sorted(from_s & to_r)
 
 def forced_order(n, deps):
     if n <= 7:  # list every order that obeys the rules
@@ -401,7 +400,7 @@ def min_peak_load(jobs, k):
             lo = mid + 1
     return lo
 
-INDEP = {f.__name__: f for f in [solve_lift_buttons, spare_cable_moves, fewest_climb_steps, upstream_stations,
+INDEP = {f.__name__: f for f in [solve_lift_buttons, spare_cable_moves, fewest_climb_steps, route_stations,
                                   forced_order, footpath_ways, unpayable_totals, solve_shift_pay, solve_feed_passes,
                                   largest_free_square, first_short_change, loop_start_depot, ticker_batches,
                                   split_prices, min_peak_load]}
@@ -419,6 +418,38 @@ HAND = {"footpath_ways(3)": 5, "footpath_ways(4)": 11, "unpayable_totals([3, 5],
         "solve_shift_pay('5\\n4 7 3 6 2\\n')": "19", "solve_feed_passes('5 3 10 25\\n1 2 3 4 30\\n')": "13",
         "ticker_batches('ABACDDCE')": [3, 4, 1], "first_short_change([5, 5, 10, 20, 20])": 4}
 
+# ---------------- random small-input stress for the drills replaced or extended in the fix pass ----------------
+
+def stress(models):
+    rng = random.Random(7)
+    bad = 0
+    for _ in range(1500):  # route_stations against every ordered pair reachability
+        n = rng.randrange(2, 9)
+        pipes = [(rng.randrange(n), rng.randrange(n)) for _ in range(rng.randrange(0, 14))]
+        s, r = rng.sample(range(n), 2)
+        reach = [[i == j for j in range(n)] for i in range(n)]
+        for a, b in pipes:
+            reach[a][b] = True
+        for m in range(n):
+            for i in range(n):
+                for j in range(n):
+                    reach[i][j] = reach[i][j] or (reach[i][m] and reach[m][j])
+        want = [v for v in range(n) if reach[s][v] and reach[v][r]]
+        if models["route_stations"](n, pipes, s, r) != want:
+            bad += 1
+    for _ in range(1500):  # first_short_change against every change choice
+        notes = [rng.choice([5, 5, 10, 20]) for _ in range(rng.randrange(0, 12))]
+        if models["first_short_change"](notes) != first_short_change(notes):
+            bad += 1
+    for _ in range(1500):  # split_prices against every cut set
+        digits = "".join(rng.choice("0123456789") for _ in range(rng.randrange(1, 9)))
+        k = rng.randrange(1, 6)
+        cap = rng.choice([9, 50, 99, 255, 999])
+        if models["split_prices"](digits, k, cap) != split_prices(digits, k, cap):
+            bad += 1
+    print(f"random stress: {bad} mismatches")
+    return bad
+
 # ---------------- runner ----------------
 
 def run(code, call, extra=None):
@@ -434,9 +465,13 @@ def main():
     sys.setrecursionlimit(10000)
     errors = 0
     diffs, stdin, hand_seen = Counter(), 0, set()
+    models = {}
     for did in MINE:
         d = json.load(open(os.path.join(DRILLS, did + ".json")))
         fn = d["fn"]
+        ns = {}
+        exec(d["solution"], ns)
+        models[fn] = ns[fn]
         diffs[d["difficulty"]] += 1
         stdin += "stdin" in d.get("tags", [])
         if "stdin" in d.get("tags", []):
@@ -473,6 +508,7 @@ def main():
         print(f"FAIL hand values not found: {set(HAND) - hand_seen}"); errors += 1
     if diffs != Counter({1: 5, 2: 6, 3: 4}) or stdin != 3:
         print(f"FAIL mix: difficulties {dict(diffs)}, stdin {stdin}"); errors += 1
+    errors += stress(models)
     print(f"{len(MINE)} drills, {errors} errors")
     sys.exit(1 if errors else 0)
 

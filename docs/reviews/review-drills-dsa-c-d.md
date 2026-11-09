@@ -48,3 +48,32 @@ Counts: 2 errors, 9 warnings, 11 notes.
 
 - The time-limit sentence now has three forms across the `dsa` pack (findings 3 and 12). A validator rule that requires "All the tests in a run share one 5-second limit in the browser." in any drill `constraints` line that mentions a 5-second limit would stop the drift. This is the third time the line has needed a fix (A/B finding 10, here twice), so SESSION PROTOCOL 6 applies.
 - Test gaps where a planted wrong solution passes every test were found in both reviews (A/B findings 3 to 6, here 4 and 6 to 8). A drill check that runs the author's own list of planted wrong solutions and requires each to fail at least one test would catch them at authoring time.
+
+## Fix pass
+
+Method: each claim was reproduced with the reader's planted solutions or a fresh one (`wrong_fix.py` in the scratchpad, same harness) before editing. New `expect` values come from the model solution and an independent slow method; `drills-dsa-c-check.py` and `drills-dsa-d-check.py` assert both agree.
+
+1. fixed: `dsa-shift-pay` notes[1] now says `two` feeds only the rest state (reader's wording); the claim about minus infinity was false, as the 0-start version equals the brute force.
+2. fixed: model replaced with a feasibility table `can[left][pos]` (so every branch entered reaches an answer); constraints[1], hint and notes[1] and notes[2] rewritten to match. New test `split_prices('1' * 33 + '000', 17, 999) -> []` (old model: 29.7 million calls, 10 s natively, planted old solution now TIMEOUT; new model 0.00 s). Check D adds a random cut-set stress for `split_prices`.
+3. fixed: all 15 D files now say "All the tests in a run share one 5-second limit in the browser."
+4. fixed: test `first_short_change([5, 5, 5, 5, 10, 20, 10, 10]) -> -1` added (model, independent state-set method and the three-fives-first plant: plant fails it); `how` says 13 tests.
+5. fixed: notes[0] of `dsa-kiosk-change` now gives the two-fives-for-one-ten exchange (reader's wording).
+6. fixed: test `solve_print_queue('3\n1 0 5\n9 1 2\n4 2 2\n') -> '1 9 4'` added; the `(pages, id, arrival)` heap now fails it (1 test). 13 tests.
+7. fixed: test `solve_lift_buttons('4 2 3 3 2\n') -> '-1'` added after `'10 1 10 4 4\n'`; the floor-0 plant now fails it. 13 tests.
+8. fixed: test `loop_start_depot([1] * 200000, [1] * 199998 + [2, 0]) -> 199999` added; model and the independent prefix-minimum method give 199999, the drive-from-every-depot plant now times out. 13 tests.
+9. fixed: swapped-levels constraints[1] now only names the pair method (reader's wording).
+10. fixed (replaced): `dsa-peak-calls` keeps its id, file, fn and difficulty but now asks for the longest stretch with at least `k` calls live (`n k` on line 1; trap: apply every event at one second before testing). Name "Longest busy stretch" in `index.json`. New brief, hint, notes, 3 examples, 13 tests from the model and a different method (numpy `searchsorted` over distinct event times; C check also adds a per-second random brute force). Plants: testing after each single event fails 3 tests, event counting fails 6, per-second recount times out; the starter fails 13. I checked the reader's examples (10, 9, 0) by hand.
+11. fixed (replaced): `dsa-upstream-stations` keeps its id and file, fn now `route_stations(n, pipes, s, r)` (`s` and `r` included, `[]` if no route). Name "Stations on the route to a reservoir". 13 tests, with a pairwise-reachability slow method (n up to 50, SciPy beyond) and a Floyd-Warshall stress of 1,500 random networks in the D check. Plants: forward-only fails 4, reverse-only 2, two searches per station times out. Chosen `s != r` so the answer is well defined.
+12. fixed: all 15 C files now carry the house time-limit sentence.
+13. fixed: feed-passes notes[0] now says "some cheapest plan" (reader's wording, recomputed on `'1 9 1 9\n5\n'`: one 7-day pass at 1 either way).
+14. fixed: free-desk-square notes[1] now says a first-row or first-column desk can only end a square of side 1.
+15. fixed: range-volumes notes[1] reworded; checked `5 1 4 2 6`: query `2 5` is 2 either way, `3 5` is 1 against 2 with the slip.
+16. fixed: depth-block notes[1] now names strict on the left reach and lower-or-equal on the right.
+17. fixed: ticker-batches notes[1] reworded to "the batch's first".
+18. fixed: server-loads notes[2] now gives the bound of about 140,000 branches against up to $12^{12}$ assignments.
+19. no change needed, as the reader says.
+20. no change needed (reader: none required). `lift-buttons` left as it is; the input order was not changed.
+21. fixed (optional item): the D check now has a random small-input stress for `route_stations`, `first_short_change` and `split_prices`; the C check was extended for peak-calls.
+22. no change needed. No test was added to `dsa-feed-passes`.
+
+Gates: counts 20 fixed, 0 disputed, 3 no change needed (19, 20, 22). `drills-dsa-c-check.py`, `-d-check.py` (random stress 0 mismatches) and `-b-check.py` exit 0. Validator 0 errors. `voice-scan.py 35` on the 32 changed drill files: 0 sentences over 35 words, 0 explanations over three sentences, no exclamation marks or dashes in prose. Playthrough with `--local-cdn`: all 32 changed drills green, desktop and `--mobile`. Graded answers changed: peak-calls and upstream-stations (replaced, all tests); added tests on kiosk-change, print-queue, lift-buttons, loop-depots, split-prices (one each, no existing expect changed). Engine items (a validator rule for the time-limit sentence, a planted-wrong-solution check) remain in the inbox, not touched here.

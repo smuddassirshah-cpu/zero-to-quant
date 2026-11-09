@@ -195,15 +195,22 @@ def any_clash(slots):
 
 
 def solve_peak_calls(text):
-    # live count at each start: starts so far minus ends so far
+    # longest busy stretch: live count on every stretch between distinct event times, via searchsorted
     tok = text.split()
-    n = int(tok[0])
-    s = np.array([int(tok[1 + 2 * i]) for i in range(n)], dtype=np.int64)
-    e = np.array([int(tok[2 + 2 * i]) for i in range(n)], dtype=np.int64)
+    n, k = int(tok[0]), int(tok[1])
+    s = np.array([int(tok[2 + 2 * i]) for i in range(n)], dtype=np.int64)
+    e = np.array([int(tok[3 + 2 * i]) for i in range(n)], dtype=np.int64)
     ss, es = np.sort(s), np.sort(e)
-    live = np.searchsorted(ss, ss, side="right") - np.searchsorted(es, ss, side="right")
-    peak = int(live.max())
-    return "%d %d" % (peak, int(ss[live == peak].min()))
+    times = np.unique(np.concatenate((s, e)))
+    live = np.searchsorted(ss, times, side="right") - np.searchsorted(es, times, side="right")
+    best = run = 0
+    for i in range(len(times) - 1):  # live[i] holds on [times[i], times[i + 1])
+        if live[i] >= k:
+            run += int(times[i + 1] - times[i])
+            best = max(best, run)
+        else:
+            run = 0
+    return str(best)
 
 
 def fewest_shifts(shifts, close):
@@ -315,10 +322,16 @@ def brute_cases(rng):
         yield "booked_minutes", (iv,), len(minutes)
         yield "any_clash", (iv,), any(max(p[0], q[0]) < min(p[1], q[1]) for p, q in itertools.combinations(iv, 2))
         if iv:
-            text = "%d\n" % len(iv) + "\n".join("%d %d" % (s, e) for s, e in iv) + "\n"
-            counts = [(sum(s <= t < e for s, e in iv), -t) for t in range(0, 25)]
-            pk, nt = max(counts)
-            yield "solve_peak_calls", (text,), "%d %d" % (pk, -nt)
+            kk = rng.randrange(1, 5)
+            text = "%d %d\n" % (len(iv), kk) + "\n".join("%d %d" % (s, e) for s, e in iv) + "\n"
+            best = run = 0
+            for t in range(0, 25):  # one second at a time
+                if sum(s <= t < e for s, e in iv) >= kk:
+                    run += 1
+                    best = max(best, run)
+                else:
+                    run = 0
+            yield "solve_peak_calls", (text,), str(best)
         close = rng.randrange(1, 15)
         best = -1
         for r in range(1, len(iv) + 1):

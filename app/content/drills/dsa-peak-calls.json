@@ -1,6 +1,6 @@
 {
   "id": "dsa-peak-calls",
-  "name": "Most calls at once",
+  "name": "Longest busy stretch",
   "course": "algo-think",
   "pack": "dsa",
   "pattern": "intervals",
@@ -15,101 +15,106 @@
   "pace": 900,
   "fn": "solve_peak_calls",
   "returns": "a string",
-  "brief": "A call centre logs each call by its start and end second, and a call is live from its start up to but not including its end. Find the largest number of calls live at the same moment, and the earliest second at which that many are live.\n\nThe whole input arrives as one string `text`:\n\n- line 1: `n`, the number of calls;\n- then `n` lines, each `start end`.\n\nReturn the peak and its earliest second as one string, separated by a space. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_peak_calls(text)`.\n\nExample. For `\"3\\n0 10\\n5 15\\n10 20\\n\"` two calls are live from 5, and at 10 the first ends as the third starts. The peak is 2, first reached at second 5, so the answer is `2 5`.",
+  "brief": "A call centre logs each call by its start and end second, and a call is live from its start up to but not including its end. The line is busy while at least `k` calls are live. Find the length in seconds of the longest unbroken busy stretch, or 0 if the line is never that busy.\n\nThe whole input arrives as one string `text`:\n\n- line 1: `n k`, the number of calls and the busy threshold;\n- then `n` lines, each `start end`.\n\nReturn the length as a string. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_peak_calls(text)`.\n\nExample. For `\"3 2\\n0 10\\n5 15\\n10 20\\n\"` and `k = 2`, two calls are live from 5, and at 10 the first ends as the third starts, so two stay live until 15. The longest busy stretch runs from 5 to 15, so the answer is `10`.",
   "constraints": [
-    "$1 \\le n \\le 200{,}000$ and $0 \\le \\text{start} < \\text{end} \\le 10^9$, all integers.",
-    "$O(n \\log n)$ time is the target. Counting the live calls afresh at every start is too slow.",
-    "All tests share a 5-second time limit."
+    "$1 \\le n \\le 200{,}000$, $1 \\le k \\le 200{,}000$ and $0 \\le \\text{start} < \\text{end} \\le 10^9$, all integers.",
+    "$O(n \\log n)$ time is the target. Counting the live calls afresh at every second is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
   ],
-  "hint": "Turn each call into two events, `+1` at its start and `-1` at its end, and sort them. At equal times put the ends first, so a call that ends as another starts is not counted with it.",
+  "hint": "Turn each call into two events, `+1` at its start and `-1` at its end, and sort them. Apply every event at one second together, then check whether the live count is at least `k`.",
   "starter": "def solve_peak_calls(text):\n    # your code here\n    return ''\n",
   "examples": [
     {
-      "call": "solve_peak_calls('3\\n0 10\\n5 15\\n10 20\\n')",
-      "expect": "'2 5'",
+      "call": "solve_peak_calls('3 2\\n0 10\\n5 15\\n10 20\\n')",
+      "expect": "'10'",
       "compare": "equal",
-      "note": "Two calls overlap from 5, and the hand-over at 10 adds no third."
+      "note": "Two calls are live from 5 to 15, and the hand-over at 10 does not break the stretch."
     },
     {
-      "call": "solve_peak_calls('1\\n7 9\\n')",
-      "expect": "'1 7'",
+      "call": "solve_peak_calls('2 1\\n0 5\\n5 9\\n')",
+      "expect": "'9'",
       "compare": "equal",
-      "note": "A single call gives a peak of 1 at its start."
+      "note": "One call is live at every second from 0 to 9, so the hand-over at 5 does not break the stretch."
     },
     {
-      "call": "solve_peak_calls(' 3 \\n 1 4\\n 1 4 \\n 2 3\\n\\n')",
-      "expect": "'3 2'",
+      "call": "solve_peak_calls('2 2\\n0 5\\n5 9\\n')",
+      "expect": "'0'",
       "compare": "equal",
-      "note": "All three are live from 2 to 3. The extra spaces change nothing."
+      "note": "The two calls never overlap, so two are never live and the answer is 0."
     }
   ],
   "tests": [
     {
-      "call": "solve_peak_calls('1\\n7 9\\n')",
-      "expect": "'1 7'",
+      "call": "solve_peak_calls('1 1\\n7 9\\n')",
+      "expect": "'2'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('3\\n0 10\\n5 15\\n10 20\\n')",
-      "expect": "'2 5'",
+      "call": "solve_peak_calls('3 2\\n0 10\\n5 15\\n10 20\\n')",
+      "expect": "'10'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('3\\n0 1\\n1 2\\n2 3\\n')",
-      "expect": "'1 0'",
+      "call": "solve_peak_calls('2 1\\n0 5\\n5 9\\n')",
+      "expect": "'9'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('2\\n4 8\\n4 8\\n')",
-      "expect": "'2 4'",
+      "call": "solve_peak_calls('2 2\\n0 5\\n5 9\\n')",
+      "expect": "'0'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('3\\n0 100\\n10 20\\n30 40\\n')",
-      "expect": "'2 10'",
+      "call": "solve_peak_calls('1 2\\n3 8\\n')",
+      "expect": "'0'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('4\\n50 60\\n0 5\\n55 70\\n1 6\\n')",
-      "expect": "'2 1'",
+      "call": "solve_peak_calls('3 1\\n0 1\\n2 3\\n4 6\\n')",
+      "expect": "'2'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('5\\n0 3\\n1 4\\n10 14\\n11 15\\n12 13\\n')",
-      "expect": "'3 12'",
+      "call": "solve_peak_calls('2 2\\n4 8\\n4 8\\n')",
+      "expect": "'4'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('3\\n20 30\\n0 25\\n25 40\\n')",
-      "expect": "'2 20'",
+      "call": "solve_peak_calls('3 2\\n0 10\\n2 4\\n6 8\\n')",
+      "expect": "'2'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls(' 3 \\n 1 4\\n 1 4 \\n 2 3\\n\\n')",
-      "expect": "'3 2'",
+      "call": "solve_peak_calls('4 2\\n0 4\\n2 6\\n8 12\\n10 14\\n')",
+      "expect": "'2'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('2\\n999999999 1000000000\\n0 1000000000   \\n\\n')",
-      "expect": "'2 999999999'",
+      "call": "solve_peak_calls(' 3 3 \\n 1 4\\n 1 4 \\n 2 3\\n\\n')",
+      "expect": "'1'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('200000\\n' + '\\n'.join('%d %d' % (j, j + 1000) for j in ((i * 7919) % 200000 for i in range(200000))) + '\\n')",
-      "expect": "'1000 999'",
+      "call": "solve_peak_calls('2 2\\n999999999 1000000000\\n0 1000000000   \\n\\n')",
+      "expect": "'1'",
       "compare": "equal"
     },
     {
-      "call": "solve_peak_calls('200000\\n' + '\\n'.join('%d %d' % (j * 10, j * 10 + 15) for j in ((i * 7919) % 200000 for i in range(200000))) + '\\n')",
-      "expect": "'2 10'",
+      "call": "solve_peak_calls('200000 1000\\n' + '\\n'.join('%d %d' % (j, j + 1000) for j in ((i * 7919) % 200000 for i in range(200000))) + '\\n')",
+      "expect": "'199001'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_peak_calls('200000 2\\n' + '\\n'.join('%d %d' % (j * 10, j * 10 + 15) for j in ((i * 7919) % 200000 for i in range(200000))) + '\\n')",
+      "expect": "'5'",
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
-  "solution": "def solve_peak_calls(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    events = []\n    for i in range(n):\n        start, end = int(tokens[1 + 2 * i]), int(tokens[2 + 2 * i])\n        events.append((start, 1))\n        events.append((end, -1))\n    events.sort()\n    live = peak = when = 0\n    for time, step in events:\n        live += step\n        if live > peak:\n            peak, when = live, time\n    return '%d %d' % (peak, when)\n",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_peak_calls(text):\n    tokens = text.split()\n    n, k = int(tokens[0]), int(tokens[1])\n    events = []\n    for i in range(n):\n        start, end = int(tokens[2 + 2 * i]), int(tokens[3 + 2 * i])\n        events.append((start, 1))\n        events.append((end, -1))\n    events.sort()\n    live = best = 0\n    begin = None\n    i = 0\n    while i < len(events):\n        time = events[i][0]\n        while i < len(events) and events[i][0] == time:\n            live += events[i][1]\n            i += 1\n        if live >= k and begin is None:\n            begin = time\n        elif live < k and begin is not None:\n            best = max(best, time - begin)\n            begin = None\n    return str(best)\n",
   "notes": [
-    "Sorting the starts and ends as events means the live count changes only at an event, so one pass finds the peak.",
-    "Sorting a start before an end at the same second is the trap: a call that ends as another starts would count as overlapping it.",
+    "Sorting the starts and ends as events means the live count changes only at an event, so one pass finds every stretch with at least `k` calls live.",
+    "Apply every event at one second before testing the count. Testing after each single event splits a stretch at a hand-over, where one call ends as another starts.",
     "Sorting the $2n$ events costs $O(n \\log n)$, with $O(n)$ space."
   ]
 }
