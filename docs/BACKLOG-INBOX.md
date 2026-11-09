@@ -1745,3 +1745,7 @@ Raised later (numpy-pandas level 2 perf):
 
 Raised later (numpy-pandas level 3 perf):
 - [Could] A test cannot see which pandas warnings the learner's code raised. `h-trend-shares` has no clean way to flag a deprecated `pct_change` fill or a chained assignment, since `quietLib` in `code.js` drops FutureWarning lines but shows SettingWithCopyWarning as plain output. Want a `warnings` list (category names caught per case) readable from a test `call`.
+
+Raised later (plotting level 2 perf):
+- [Should] Seen again (inbox "The `code` widget shows no figure"): `h-wealth-peak` is a gating chart task, yet the learner never sees the chart they drew. A failed test shows only the artist data. Want the widget to render the returned Figure or Axes (one PNG under the results) on Run examples and Check.
+- [Could] A test that finds an artist by label fails all later tests with one lookup error when a label is wrong; byKey can only name the test, not say "no line labelled Wealth". Want a byKey match on the error text, or a per-case message shown when the call raises.
