@@ -1701,3 +1701,6 @@ Raised later (cpp-pricing level 1 perf):
 
 Raised later (py-found level 2 perf):
 - [Could] Seen again (opt-dash level 4): `isclose` does not compare dicts, so `h-book-weights` reads its dictionary of weights through `sorted(d.items())`, which shows the learner a list of pairs instead of their dictionary. Wanted: `isclose` on dicts, key sets equal and values compared by key.
+
+Raised later (limits-thm level 3 perf):
+- [Could] `tools/playthrough.mjs --set ... --shots --mobile`: the `-marked` shot of a longform item covers only the first 440 x 956 viewport, so the model answer's display equations below it are never seen, and nothing checks them for sideways scroll (related to inbox lines on viewport-only shots). All three limits-thm perf models needed a scratch KaTeX column check (`eqcheck.mjs`, 356 px), which found five displays that ran up to 25 px wide. That check reads a `\sqrt` display as 8,000 px wide, so its widths need a look at the shot. Wanted: in `--mobile`, a full-height shot of the marked model and rubric, plus a check of each `.katex-display` against its box, with the overflowing ones named.
