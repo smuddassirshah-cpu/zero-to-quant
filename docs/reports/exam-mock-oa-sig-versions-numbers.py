@@ -79,13 +79,18 @@ for _ in range(200000):
 key(v, 'q03-free-roll', G - 1, sim / 200000 - 1, 0.02,
     {'one-roll': F(4, 6) - 1, 'one-six': 3, 'fee-only': -1})
 
-hits = 0
-for _ in range(20000):
-    d = [r for r in range(13) for _ in range(4)]
-    rng.shuffle(d)
-    hits += sum(1 for i, r in enumerate(d) if r == i % 13)
-key(v, 'q04-calling-ranks', 52 * F(4, 52), hits / 20000, 0.05,
-    {'one-match': 1, 'per-rank': 13, 'one-card': F(1, 13)})
+# two independent uniform swaps of 5 cards (fix pass): enumerate all 10 x 10 swap pairs
+sw = list(itertools.combinations(range(5), 2))
+home = 0
+for s, t in itertools.product(sw, sw):
+    p = list(range(5))
+    for a, b in (s, t):
+        p[a], p[b] = p[b], p[a]
+    home += sum(p[i] == i for i in range(5))
+one_swap = F(sum(sum(i not in s for i in range(5)) + 0 for s in sw), len(sw))
+check(one_swap == 3, 'v2 q04 one swap leaves 3')
+key(v, 'q04-two-swaps', 5 * (F(3, 5) ** 2 + F(2, 5) * F(1, 10)), F(home, 100), 0,
+    {'no-return': 5 * F(3, 5) ** 2, 'one-swap': one_swap, 'shuffle': 1})
 
 rolls = list(itertools.product(DIE, repeat=3))
 rising = F(sum(a < b < c for a, b, c in rolls), 216)
@@ -98,11 +103,14 @@ two = F(comb(4, 2) * comb(48, 3), comb(52, 5))
 key(v, 'q06-aces-in-a-hand', F(comb(4, 1), comb(5, 2)), first_and_two / two, 0,
     {'ignored': F(1, 13), 'one-ace': F(1, 5), 'even': F(1, 2)})
 
-t6 = list(itertools.product((0, 1), repeat=6))
-match = F(sum(sum(s[:3]) == sum(s[3:]) for s in t6), 64)
-key(v, 'q07-same-count', F(sum(comb(3, k) ** 2 for k in range(4)), 64), match, 0,
-    {'uniform-counts': F(1, 4), 'same-sequence': F(1, 8), 'middle-only': F(18, 64)})
-check(F(comb(6, 3), 64) == match, 'v2 q07 Vandermonde check')
+# you toss 3, colleague 2 (fix pass): exact by the tie route, second by enumerating 32 outcomes
+t5 = list(itertools.product((0, 1), repeat=5))
+more = sum(sum(s[:3]) > sum(s[3:]) for s in t5)
+tie5 = F(sum(sum(s[:3]) == sum(s[3:]) for s in t5), 32)
+tie22 = F(sum(comb(2, k) ** 2 for k in range(3)), 16)
+check(more == 16 and tie22 == F(3, 8) and tie5 == F(5, 16), 'v2 q07 counts')
+key(v, 'q07-one-more-toss', (1 - tie22) / 2 + tie22 / 2, F(more, 32), 0,
+    {'ties-win': F(more, 32) + tie5, 'halved': (1 - tie5) / 2, 'by-tosses': F(3, 5)})
 
 f = [0] * 1001                     # f[n]: worst-case guesses for n numbers, best strategy
 for n in range(1, 1001):
@@ -150,7 +158,22 @@ check((100 - Vx) ** 2 == 400 and F(Vx) == F(Vx) + F((100 - Vx) ** 2, 200) - 2, '
 Vi = 50.0
 for _ in range(2000):               # value iteration V <- E[max(U, V)] - 2, U uniform on 0..100
     Vi = Vi + (100 - Vi) ** 2 / 200 - 2 if Vi < 100 else Vi
-key(v, 'q11-cost-per-draw', Vx, Vi, 1e-6,
+check(abs(Vi - Vx) < 1e-6, 'v2 q11 value iteration')
+# independent second route (fix pass): a stop-above-t rule is worth (100 + t)/2 - 2 * 100/(100 - t)
+# (kept amount averages (100 + t)/2; draws are geometric with mean 100/(100 - t)); scan t, then simulate t = 80
+best_t = max(range(100), key=lambda t: F(100 + t, 2) - F(200, 100 - t))
+check(best_t == 80 and F(180, 2) - F(200, 20) == 80, f'v2 q11 threshold scan {best_t}')
+net = 0.0
+for _ in range(200000):
+    n = 0
+    while True:
+        n += 1
+        u = rng.random() * 100
+        if u > 80:
+            break
+    net += u - 2 * n
+check(abs(net / 200000 - 80) < 0.2, f'v2 q11 simulation {net / 200000}')
+key(v, 'q11-cost-per-draw', Vx, net / 200000, 0.2,
     {'first-draw': 48, 'no-half': 100 - math.sqrt(200), 'average': 50})
 
 tot = cnt = 0
@@ -229,7 +252,18 @@ for semi in [('F',), ('A',), ('B',)]:          # your semi-final opponent, each 
         final = {rest[0]: F(1, 2), rest[1]: F(1, 2)}
     tot += F(1, 3) * beat[opp] * sum(pf * beat[x] for x, pf in final.items())
 closed = F(1, 3) * F(3, 10) * F(3, 5) + F(2, 3) * F(3, 5) * (F(4, 5) * F(3, 10) + F(1, 5) * F(3, 5))
-key(v, 'q17-knockout-draw', closed, tot, 0, {'always-fav': F(18, 100), 'never-fav': F(36, 100)})
+check(tot == closed, 'v2 q17 loop matches closed form')
+# independent second route (fix pass): seeded simulation of random draws and matches
+beats = {('Y', 'F'): 0.3, ('Y', 'A'): 0.6, ('Y', 'B'): 0.6, ('F', 'A'): 0.8, ('F', 'B'): 0.8, ('A', 'B'): 0.5}
+def play(x, y):
+    p = beats[(x, y)] if (x, y) in beats else 1 - beats[(y, x)]
+    return x if rng.random() < p else y
+won = 0
+for _ in range(400000):
+    field = ['Y', 'F', 'A', 'B']
+    rng.shuffle(field)
+    won += play(play(field[0], field[1]), play(field[2], field[3])) == 'Y'
+key(v, 'q17-knockout-draw', closed, won / 400000, 0.003, {'always-fav': F(18, 100), 'never-fav': F(36, 100)})
 
 # ---------------- version 3 ----------------
 v = 3
@@ -334,7 +368,11 @@ for _ in range(20000):
     dead += pop == 0
 check(abs(dead / 20000 - 0.5) < 0.015, f'v3 q11 simulation {dead / 20000}')
 key(v, 'q11-extinction', roots[0], qq, F(1, 10 ** 9),
-    {'first-step': F(1, 4), 'other-root': 1, 'two-generations': q2})
+    {'first-step': F(1, 4), 'no-pair-term': F(1, 4) / (1 - F(1, 4)), 'two-generations': q2})
+check(F(1, 3) == F(1, 4) + F(1, 4) * F(1, 3), 'v3 q11 slip q = 1/4 + q/4')
+# fix pass: x < 1/2 maps below 1/2 (the map is increasing and fixes 1/2), checked on a grid
+check(all(F(1, 4) + F(1, 4) * F(k, 1000) + F(1, 2) * F(k, 1000) ** 2 < F(1, 2) for k in range(500)),
+      'v3 q11 map keeps [0, 1/2) below 1/2')
 
 sim = 0.0
 for _ in range(400000):
@@ -361,8 +399,29 @@ for where, s1, s2 in itertools.product('AB', (0, 1), (0, 1)):
         den += pr
         num += pr if where == 'A' else 0
 check(one == F(3, 13) and seq == F(3, 53), 'v3 q13 sequential update')
-key(v, 'q13-failed-search', joint / (joint + 1 - pa), num / den, 0,
-    {'one-search': one, 'joint': joint, 'prior': pa})
+check(joint / (joint + 1 - pa) == F(3, 53) and num / den == F(3, 53), 'v3 q13 old two-miss posterior')
+# fix pass: q13-next-search, P(next search of A finds it | one miss)
+nxt = one * find
+num2 = den2 = F(0)                        # enumerate drawer, first search, second search
+for where, s1, s2 in itertools.product('AB', (0, 1), (0, 1)):
+    if where == 'A':
+        pr = pa * (find if s1 else 1 - find) * (find if s2 else 1 - find)
+    else:
+        pr = (1 - pa) * (1 if not s1 and not s2 else 0)
+    if not s1:
+        den2 += pr
+        num2 += pr if s2 else 0
+check(nxt == F(12, 65) and num2 / den2 == F(96, 520), 'v3 q13 next search exact')
+fnd = miss = 0
+for _ in range(400000):
+    inA = rng.random() < 0.6
+    if inA and rng.random() < 0.8:
+        continue                          # first search found it: not in the condition
+    miss += 1
+    fnd += inA and rng.random() < 0.8
+check(abs(fnd / miss - 12 / 65) < 0.004, f'v3 q13 simulation {fnd / miss}')
+key(v, 'q13-next-search', nxt, fnd / miss, 0.004,
+    {'no-update': pa * find, 'in-A': one, 'sure-in-A': find})
 
 desks = [1] * 50 + [2] * 30 + [4] * 20
 traders = [s for s in desks for _ in range(s)]
