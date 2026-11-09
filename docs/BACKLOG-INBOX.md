@@ -1771,3 +1771,6 @@ Raised later (plotting level 3 perf):
 
 Raised later (least-squares level 2 perf):
 - [Could] `compare: "raises"` cannot tell which `ValueError` was raised. In `h-factor-neutral` (homework-2) a slip with the last transpose missing raises NumPy's own shape-mismatch `ValueError` on the three refusal tests and passes them for the wrong reason (it fails the other ten). Want an optional `match` regex on a raises case, read against the exception message, so a test can require the learner's own refusal.
+
+Raised later (vectors level 3 perf):
+- [Could] Planted wrong solutions for a code task can only be run in a CPython mirror of the harness (numbers scripts patch `np.linalg.solve` to return `nan` as Pyodide does). Whether `det == 0` misses a rank-deficient matrix depends on the LAPACK build, so `h-bond-curve` test 9 is shown to catch it in CPython only. Want an optional `plants` list on a code widget (source and the tests it must fail) that `playthrough.mjs --set` runs in the real Pyodide worker.

@@ -547,6 +547,153 @@
           "text": "Solves to $p = 437.5$ and $q = 100$, by the inverse or elimination, and checks both greeks."
         }
       ]
+    },
+    {
+      "id": "h-bond-curve",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "la-inverse",
+        "la-product"
+      ],
+      "pace": 1200,
+      "title": "Discount factors from bond prices",
+      "prose": "A discount factor $d_t$ is today's price of £1 paid in $t$ years. Each bond in `bonds` is a pair `[coupon, maturity]`, with the maturity a whole number of years. It pays the coupon in £ at each year end up to maturity, and £100 more at maturity. Its price in `prices` is the sum of its cash flows, each times its discount factor. The curve runs from year 1 to the longest maturity in `bonds`.",
+      "question": "Write `curve_from_bonds(bonds, prices, targets)` from the stub. Return two NumPy arrays. The first holds the discount factors $d_1, d_2, \\ldots$ of the curve. The second prices each bond in `targets`, given in the same form as `bonds`. Raise `ValueError` if the prices do not fix every discount factor, or if bonds and years differ in number. Raise it too when a target matures after the curve ends. Solve the system; do not form an inverse. This browser's NumPy returns `nan` for a singular matrix instead of raising.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef curve_from_bonds(bonds, prices, targets):\n    \"\"\"Discount factors for years 1 to the\n    longest maturity in bonds, then the\n    price of each bond in targets.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\n\ndef cash_flow_rows(bonds, years):\n    C = np.zeros((len(bonds), years))\n    for i, (coupon, maturity) in enumerate(bonds):\n        if maturity > years:\n            raise ValueError(\"a bond matures after the curve ends\")\n        C[i, :maturity] = coupon\n        C[i, maturity - 1] += 100\n    return C\n\ndef curve_from_bonds(bonds, prices, targets):\n    years = max(maturity for coupon, maturity in bonds)\n    C = cash_flow_rows(bonds, years)\n    if len(bonds) != years or np.linalg.matrix_rank(C) < years:\n        raise ValueError(\"these prices do not fix every discount factor\")\n    d = np.linalg.solve(C, np.array(prices, dtype=float))\n    values = cash_flow_rows(targets, years) @ d\n    return d, values\n",
+        "examples": [
+          {
+            "setup": "bonds = [[4, 1], [5, 2], [3, 3]]\nprices = [99.84, 101.4, 96.28]\ntargets = [[6, 3], [0, 2], [5, 2]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[0]",
+            "expect": "[0.96, 0.92, 0.88]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "tests": [
+          {
+            "setup": "bonds = [[4, 1], [5, 2], [3, 3]]\nprices = [99.84, 101.4, 96.28]\ntargets = [[6, 3], [0, 2], [5, 2]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[0]",
+            "expect": "[0.96, 0.92, 0.88]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "bonds = [[4, 1], [5, 2], [3, 3]]\nprices = [99.84, 101.4, 96.28]\ntargets = [[6, 3], [0, 2], [5, 2]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[1]",
+            "expect": "[104.56, 92.0, 101.4]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "bonds = [[2, 2], [6, 2], [4, 3]]\nprices = [96.8, 104.4, 100.16]\ntargets = [[0, 1], [3, 2]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[0]",
+            "expect": "[0.97, 0.93, 0.89]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "bonds = [[2, 2], [6, 2], [4, 3]]\nprices = [96.8, 104.4, 100.16]\ntargets = [[0, 1], [3, 2]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[1]",
+            "expect": "[97.0, 98.7]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "bonds = [[5, 4], [0, 1], [3.5, 2], [4.25, 3]]\nprices = [101.2, 96.5, 99.3, 100.15]\ntargets = [[6, 4], [0, 4], [2, 1]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[0]",
+            "expect": "[0.965, 0.926787439613527, 0.883548233876667, 0.831650682214753]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "bonds = [[5, 4], [0, 1], [3.5, 2], [4.25, 3]]\nprices = [101.2, 96.5, 99.3, 100.15]\ntargets = [[6, 4], [0, 4], [2, 1]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[1]",
+            "expect": "[104.806986355705, 83.1650682214753, 98.43]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "bonds = [[3, 1]]\nprices = [99.5]\ntargets = [[0, 1], [3, 1]]",
+            "call": "curve_from_bonds(bonds, prices, targets)[1]",
+            "expect": "[96.6019417475728, 99.5]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "bonds = [[2, 1], [5, 1], [4, 3]]\nprices = [98.94, 101.85, 100.16]\ntargets = [[0, 1]]",
+            "call": "curve_from_bonds(bonds, prices, targets)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "bonds = [[2.1, 3], [3.3, 3], [4.7, 3]]\nprices = [94.859, 98.207, 102.113]\ntargets = [[0, 3]]",
+            "call": "curve_from_bonds(bonds, prices, targets)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "bonds = [[4, 1], [5, 2], [3, 3]]\nprices = [99.84, 101.4, 96.28]\ntargets = [[6, 3], [5, 4]]",
+            "call": "curve_from_bonds(bonds, prices, targets)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "bonds = [[4, 1], [3, 3]]\nprices = [99.84, 96.28]\ntargets = [[0, 1]]",
+            "call": "curve_from_bonds(bonds, prices, targets)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "'inv(' not in __learner_source__",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests on seven sets of bonds: seven compare arrays within 1e-9, four expect `ValueError`, and one checks that the code forms no inverse. You may use NumPy. The first run loads it: 1 to 3 seconds."
+      },
+      "feedback": {
+        "correct": "Build the cash-flow matrix, check its rank, solve, then multiply the targets' rows by the curve.",
+        "generic": "Some tests failed. Read the first failing test against the description above.",
+        "byKey": {
+          "error": "Your code stopped with an error. Give every bond a row with one entry per year, from year 1 to the longest maturity.",
+          "test-1": "Test 1 expects 0.96, 0.92 and 0.88. A bond's row holds its coupon in every year and £100 more at maturity.",
+          "test-2": "Test 2 expects 104.56, 92 and 101.4. Give each target a row on the same years, with zeros after its maturity, and multiply by the curve.",
+          "test-3": "Test 3 has no one-year bond. Two two-year bonds with different coupons still fix years 1 and 2, so solve the whole system at once.",
+          "test-4": "Test 4 expects 97 and 98.7 on the curve 0.97, 0.93 and 0.89. Both targets end before year 3, so pad their rows with zeros.",
+          "test-5": "Test 5 lists the bonds out of maturity order. Row $i$ of your matrix must belong to bond $i$ and to price $i$.",
+          "test-6": "Test 6 expects about 104.807, 83.165 and 98.43 for the three targets on the four-year curve.",
+          "test-7": "Test 7 has one bond, so the curve has one year: $d_1 = 99.5/103$.",
+          "test-8": "Test 8 expects `ValueError`. Only the three-year bond pays in years 2 and 3, so one price must fix two discount factors.",
+          "test-9": "Test 9 expects `ValueError`. Three three-year bonds pay on the same days, so years 1 and 2 never separate. Rounding leaves the determinant tiny but not 0: check the rank.",
+          "test-10": "Test 10 expects `ValueError`: a four-year target on a three-year curve has no discount factor for year 4.",
+          "test-11": "Test 11 expects `ValueError`. Two prices cannot fix three discount factors.",
+          "test-12": "Test 12 found an inverse in your code. Solve $\\mathbf{C}\\mathbf{d} = \\mathbf{p}$ with `np.linalg.solve` instead."
+        }
+      },
+      "explain": {
+        "text": "Row $i$ of $\\mathbf{C}$ is bond $i$'s cash flows by year, so the prices say $\\mathbf{C}\\mathbf{d} = \\mathbf{p}$. The bonds fix $\\mathbf{d}$ exactly when $\\mathbf{C}$ is square with full rank, with or without a one-year bond. Each target's row times $\\mathbf{d}$ is its price, so one product prices them all.\n\n```python\nd = np.linalg.solve(C, prices)\nvalues = cash_flow_rows(targets, years) @ d\n```"
+      }
     }
   ]
 }
