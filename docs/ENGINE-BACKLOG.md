@@ -1805,3 +1805,67 @@ Status block (Session X triage, 7 Nov):
 703 status: done. The `shot` helper grows the viewport (at most 8000 px) to the card's full height, including an inner scroll container, before an element shot, then restores it, at desktop and every extra width. Test `tools/test-playthrough-tall.mjs` (fixture `tools/fixtures/overflow/homework-2-tall.json`, own PNG decoder): fails without the fix, passes with it.
 704. Done [Should] The routes block's test-out probe picks a direct prerequisite with a written review and no gating performance task, so the met-rule badge case (529) no longer fails the "level met" and "card still lists" checks; a second assertion covers a level that does carry a gating task.
 704 status: done. A passed test-out there is recorded as passed, the level stays unmet, and the lock card row reads "performance task not passed". Tool change only (`tools/playthrough.mjs`); routes-only green at desktop and `--mobile`.
+
+## Engine pass G and C (`docs/reports/engine-gen-2.md`), items 800 to 829 (brief `docs/briefs/engine-gen.md`)
+
+Generated fluency sets (G, 800 to 819): 20 fresh typed-answer items per procedural lesson, authored as JSON only; author side `docs/AUTHORING.md` section 16.
+
+800. Done [Must] Content shape: `content/courses/<course>/fluency-<lesson>.json`, one set per lesson, found by file name (no `course.json` edit); fields `id`, `lesson`, `title`, `n`, `pass`, `minutes`, `families[]` (`id`, `weight`, `skill`, `vars`, `let`, `where`, `prompt`, `widget`, `wrong`, `solution`).
+800 status: done. Schema in `tools/fluency-rules.mjs` (`checkSet`) and `js/engine/gen.js` (`checkFamily`).
+
+801. Done [Must] Safe evaluator, no `eval` and no `Function` (`js/engine/gen.js`): `+ - * / ^ %`, comparisons, `and`/`or`/`not`, `gcd lcm abs min max floor ceil round(x, dp) sqrt comb fact sign`, exact rationals (BigInt) until a root or fractional power makes a float.
+801 status: done. 261 unit cases in `tools/test-fluency.mjs` (operators, every function, 30 error cases including `constructor`, `__proto__`, `eval`).
+
+802. Done [Must] Templates and formats in `prompt`, `widget`, `wrong`, `solution`: `{x}`, `{x:+}`, `{x:c}`, `{x:+c}`, `{x:()}`, `{x:frac}`, `{x:+frac}`, `{x:dpN}`, `{x:+dpN}`, `{poly(v; c2, c1, c0)}`, any expression before the colon; `{{` and `}}` are literal braces (LaTeX is written `\\frac{{{p}}}{{{q}}}`). `+frac` and `+dpN` are additions to the brief's list, each with a test.
+802 status: done. Every format has unit cases; `poly` has 12.
+
+803. Done [Must] Seeded drawing: `vars` `int` (with `step`), `pick`, `not`; `let` in order; `where` (redraw, 60 tries per question); one stream per question from `ZQ.arith.rng`; families round robin by weight (smooth weighted round robin); no two prompts equal in an attempt.
+803 status: done. `ZQ.gen.generate(set, seed)`; the same seed gives the same attempt, in the browser and in node.
+
+804. Done [Must] Content loader: `ZQ.content.fluencyList()`, `fluencyFor(course, lesson)`, `fluencySet(course, id)`; the manifest lists sets under `fluency`; a registered fixture (`_setFluency`, `_addFluency`) counts as a real set for the page load (the test hook; no content file).
+804 status: done. `manifest.json` is unchanged while no set exists.
+
+805. Done [Must] A generated item is shaped for `ZQ.player.runSet` (`ZQ.gen.playerItem`): `question`, `widget` (numeric or expression, graded by the existing widgets unchanged), `feedback.byKey` (the matched `wrong` line then the solution steps), `explain`.
+805 status: done.
+
+806. Done [Must] State `ZQ.state.fluency` (`result`, `get`, `list`): per set attempts, best score, last score, last pass date and per family right and wrong counts; `partial: true` (leaving part way) keeps only the family counts. No skill score, streak, XP, met rule or gate moves.
+806 status: done. Checked by the playthrough (the save before and after an attempt is identical outside `fluency` and hours).
+
+807. Done [Should] `ZQ.setPage` (the review set page) takes `back`, `backLabel`, `overview: false`, `againRoute` and a `verdict` line; `runSet`'s test hook gains `answerWrong()`.
+807 status: done. Existing pages unchanged (defaults).
+
+808. Done [Must] Route `#fluency/<course>/<set id>[/<seed>]` (`js/screens/fluency.js`): start card (pass mark, no list of questions), one item a screen, one try, no hints, result with score, pass or not, "Go again" (a new seed); 440 px.
+808 status: done.
+
+809. Done [Should] The result is recorded through `ZQ.state.fluency.result` and the time logged as review hours; leaving part way is not an attempt.
+809 status: done.
+
+810. Done [Must] Today lists a set under a "Practice" heading in the Due card, after the due work, until it is first passed and only when its lesson is done (newest lesson first, at most two rows).
+810 status: done.
+
+811. Done [Must] The lesson's card on the course page carries a Fluency row (status, Start or Go again); the lesson's end card offers the set.
+811 status: done.
+
+812. Done [Must] Validator: schema (file name, `id`, `lesson` on the course map, `n`, `pass`, `minutes`, family fields, widget kinds and fields, `wrong` shapes, static name and function checks, braces), voice rules and the 35-word gate on the text as drawn, fixtures checked on every run.
+812 status: done. Rules in `tools/fluency-rules.mjs`; 30 scratch cases in `tools/test-validate-fluency.mjs`.
+
+813. Done [Must] Validator sampling: every family at 200 seeds: every placeholder filled, the typed answer graded correct (numeric through the numeric grading; an expression by text, in full by 815), each `wrong` not correct, redraw rate at most 80%, at least 60 distinct prompts (warn below 60, error below 25).
+813 status: done.
+
+814. Done [Must] `tools/fluency-sample.mjs --set <course>/<set id> [--family id] [--seed s] [--n k] [--json] [--stats]` (also `fixture/<id>` and `--file`): prompts, answers, wrongs, solutions and variable values.
+814 status: done.
+
+815. Done [Must] `tools/test-fluency.mjs --local-cdn <pkgs>`: unit tests of the evaluator and every format; every family of every set at 50 seeds in the real browser grader (answer, accept forms and upToConstant correct; each `wrong` not; for a `form` family the prompt's own expression typed back fails).
+815 status: done. 281 checks on the fixture.
+
+816. Done [Must] `playthrough.mjs --fluency <course>/<set id>` (also `fixture/<id>`, repeatable): a failing attempt, same seed repeats, Go again draws new numbers, a passing attempt, the save, Today row appears and clears, the course row, the lesson's end card, a part-way leave, nothing else in the save moves, no overflow at any width; `--all` plays every set after the sets, and the fixtures.
+816 status: done. Green at desktop and `--mobile`.
+
+817. Done [Should] `census.mjs` prints "Fluency sets N (families M)".
+817 status: done.
+
+818. Done [Must] Fixture `app/tools/fixtures/fluency/fluency-l3-opening-brackets.json` (`"sample": true`, five families: numeric, expanded, factorised, upToConstant, fractions), never under `app/content/`.
+818 status: done.
+
+819. Done [Must] `docs/AUTHORING.md` section 16 (every `vars` kind, every `let` function, every format with an example, `where`, choosing `form`, running `fluency-sample.mjs`, what the validator samples, the recompute script, a checklist) and `app/README.md`.
+819 status: done.

@@ -357,6 +357,18 @@
       const lim = lesson ? P.routeLimitsForLesson(cid, it.id) : P.routeLimitsForLevel(cid, e.lv.n);
       return `${why}${chk}${lim.length ? `<div class="rl-row">${Z.routeLimited(lim, esc)}</div>` : ''}`;
     };
+    /* ENGINE-BACKLOG 811: the lesson's generated fluency set, when it has one: its status and a button; it gates nothing */
+    const fluencyRow = (e) => {
+      const fs = e.it.kind === 'lesson' && C.fluencyFor ? C.fluencyFor(cid, e.it.id) : null, st = statusOf(e);
+      if (!fs || st === 'nw' || st === 'locked') return '';
+      const f = S.fluency.get(cid, fs.id), mark = Math.ceil(fs.pass * fs.n - 1e-9);
+      const meta = f && f.attempts ? `Best ${f.best} of ${f.n}${f.passedAt ? ' · passed' : ` · pass at ${mark}`}` : `Pass at ${mark} of ${fs.n} · about ${fs.minutes} minutes`;
+      return `<div class="zc-flu" data-fluency-row>
+        <p class="t-label">Fluency: ${fs.n} fresh questions</p>
+        <p class="t-caption secondary">${esc(meta)}. New numbers every time; it gates nothing.</p>
+        <button type="button" class="btn secondary block" data-fluency="${esc(fs.id)}">${f && f.attempts ? 'Go again' : 'Start fluency'}</button>
+      </div>`;
+    };
     const fillInfo = (body, e, close) => {
       const it = e.it, st = statusOf(e);
       const over = `Level ${e.lv.n} · ${it.kind === 'lesson' ? `Lesson ${e.no}` : it.kind === 'review' ? 'Review' : 'Homework'}`;
@@ -383,10 +395,13 @@
         ${act ? `<button type="button" class="btn track lg block" data-act>${act.label}</button>` : ''}
         ${act && act.cap ? `<p class="t-caption muted zc-cap">${esc(act.cap)}</p>` : ''}
         ${nwBody}
+        ${fluencyRow(e)}
       </div>`;
       Z.mathify(body);
       const b = body.querySelector('[data-act]');
       if (b) b.addEventListener('click', () => { if (close) close(); launch(e); });
+      const fb = body.querySelector('[data-fluency]');
+      if (fb) fb.addEventListener('click', () => { if (close) close(); Z.sound('tap'); Z.go(`fluency/${cid}/${fb.dataset.fluency}`); });
       /* Screens and minutes come from the lesson file */
       if (it.kind === 'lesson' && st !== 'nw' && !lessonMeta[keyOf(cid, it.id)]) {
         C.lesson(cid, it.id).then(Ld => {

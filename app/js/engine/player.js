@@ -904,6 +904,7 @@
           <div class="lsn-badges">${badge('acc', 'target', 'Accuracy')}${badge('time', 'clock', 'Time')}${badge('first', 'check', 'First try')}</div>
           <p class="t-body lsn-streakline" hidden></p>
           <p class="t-body lsn-nextline" hidden></p>
+          <p class="t-body lsn-fluline" hidden></p>
           <p class="t-caption lsn-skip">Tap anywhere to skip</p>
         </section>`);
         return made;
@@ -931,6 +932,14 @@
         else nl.innerHTML = `${icon('arrowR', 'sm')}<span>Next: ${Z.esc(next.name || 'the next lesson')}.</span>`;
         nl.hidden = false;
       };
+      /* ENGINE-BACKLOG 811: a lesson with a generated fluency set offers it on the end card (the set never gates anything) */
+      const fluLine = () => {
+        const fset = Z.content && Z.content.fluencyFor ? Z.content.fluencyFor(course, lessonId) : null;
+        if (!fset) return;
+        const fl = q('.lsn-fluline');
+        fl.innerHTML = `${icon('target', 'sm')}<span>Fluency: ${fset.n} fresh questions. <a href="#fluency/${Z.esc(course)}/${Z.esc(fset.id)}" data-fluency>Try it now</a> or later from the course map.</span>`;
+        fl.hidden = false;
+      };
       const finalState = () => {
         gen++; clearTimers();
         el.classList.add('final');
@@ -942,6 +951,7 @@
         setXP(total, 0);
         S.st = 'done'; skip = null;
         q('.lsn-skip').hidden = true;
+        fluLine();
         nextP.then(() => { if (!alive) return; nextLine(); refresh(); });
         refresh();
       };
@@ -1357,6 +1367,15 @@
         const ok = cur.answerCorrect();
         st0 = cur.ready() ? 'engaged' : 'idle'; sync();
         return ok;
+      },
+      /* tools/playthrough.mjs --fluency: a wrong answer typed into the open item (a number far from any key, an expression no key equals) */
+      answerWrong: () => {
+        if (!alive || !cur || !cur.widget || !(st0 === 'idle' || st0 === 'engaged')) return false;
+        const k = cur.widget.kind;
+        if (k !== 'numeric' && k !== 'expression') return false;
+        cur.widget.set(k === 'numeric' ? '-987654.321' : 'q^{7}+3');
+        st0 = cur.ready() ? 'engaged' : 'idle'; sync();
+        return true;
       },
       check: async () => {
         if (st0 !== 'engaged') return null;
