@@ -95,11 +95,12 @@ P = {
  'P6 Windows backslashes': base.replace('"/home/priya/fx/clean/eurusd.csv"', '"\\\\home\\\\priya\\\\fx\\\\clean\\\\eurusd.csv"'),
 }
 suite('tm1', w, R, P)
-# a correct absolute path with .. in it is refused: the message's claim
+# a correct absolute path with .. in it is refused; as found the message claimed "a path from the top only goes
+# down" (TM1-2); after the fix pass it only asks for the path down, a claim bash agrees with
 ns = {}
 exec(w['prelude'], ns)
 msg = ns['_lands']('/', '/home/priya/fx/../.config/fx.ini', 'top')
-check(msg == 'uses .., but a path from the top only goes down', 'tm1: _lands refuses /home/priya/fx/../.config/fx.ini with "a path from the top only goes down"')
+check(msg == 'uses ..: from the top, name each folder on the way down', 'tm1: _lands refuses /home/priya/fx/../.config/fx.ini with "name each folder on the way down" (TM1-2 fixed)')
 # bash agrees that path is absolute and reaches the file (second route on a scratch tree)
 tmp = tempfile.mkdtemp()
 for p in ['home/priya/.config/fx.ini', 'home/priya/fx/Raw/gbpusd.csv', 'home/priya/fx/clean/eurusd.csv', 'home/priya/fx/scripts/tidy.py', 'team/holidays.csv']:
@@ -153,7 +154,9 @@ suite('pf4', w, R, P)
 # the gap: a function that is not a generator but returns iter(list) passes every test
 ITER = LISTY.split('\n\n\ndef average_price')[0].replace('    return out', '    return iter(out)') + '\n\n\ndef average_price' + R['R1 stable sort by index, Fraction-free running sums'].split('\n\n\ndef average_price')[1]
 f, _ = H.grade(w, ITER)
-check(f == [], 'pf4 gap: return iter(list) (not a generator) passes all 15 shipped tests')
+check(f == [7], 'pf4 gap closed (PF4-1 fixed; as found it passed 15 of 15): return iter(list) fails shipped test 7 only: %s' % f)
+f, _ = H.grade(w, LISTY)
+check(f == [7] or 7 in f, 'pf4: a returned list fails shipped test 7: %s' % f)
 w2 = copy.deepcopy(w)
 w2['tests'][6] = {'setup': w['tests'][6]['setup'], 'call': '(next(sweep_offers(100, book)), type(sweep_offers(100, book)).__name__)', 'expect': "((4.50, 100), 'generator')", 'compare': 'equal'}
 f, _ = H.grade(w2, ITER)

@@ -198,6 +198,19 @@ slips = {
             break
     return fills
 ''' + '\n\n' + AVG,
+    'returns iter() of a list, not a generator (fix pass, PF4-1)': '''def sweep_offers(qty, offers):
+    if qty <= 0:
+        raise ValueError("qty")
+    fills = []
+    left = qty
+    for price, size in sorted(offers, key=lambda offer: offer[0]):
+        take = min(size, left)
+        fills.append((price, take))
+        left = left - take
+        if left == 0:
+            break
+    return iter(fills)
+''' + '\n\n' + AVG,
     'last offer taken whole': sub(SOL, 'take = min(size, left)', 'take = size'),
     'no stop: yields 0-share fills': sub(SOL, '        if left == 0:\n            break\n', ''),
     'stops before the offer that fills it': sub(SOL, '        take = min(size, left)\n',

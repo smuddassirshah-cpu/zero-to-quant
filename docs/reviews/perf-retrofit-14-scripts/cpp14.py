@@ -8,14 +8,28 @@ Part C: l23 screens[2] UniquePtr and screens[5] SharedPtr models (and the move o
 screens[4], review-5 r5-unique-move-assign and homework-5 h5-shared-move-assign) on their own
 tests and on a source that lives inside the object being let go; the proposed fixed models pass
 the old tests and the new ones.
+Part E (fix pass, in cpp14_fixpass.py): the fixed content in the worktree: the three code screens
+pass, starters and the as-found models fail the new tests, the reader plants still fail, and the two
+order items accept exactly the orders that run safely (every order of the lines, compiled and run).
+Parts A to D read the content as found, at the read commit ab13bb6 (git show), so they still
+describe the read after the fix lands.
 Exit 0 only if every claim holds on every build.
 """
-import json, os, sys
+import json, os, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cppharness14 import ROOT, run_builds, failing, BUILDS
+from cppharness14 import ROOT, run_builds, run_unit, failing, BUILDS
 
 C = os.path.join(ROOT, 'app', 'content', 'courses', 'cpp')
-hw = json.load(open(os.path.join(C, 'homework-5.json')))['items']
+READ_AT = 'ab13bb6'
+
+
+def found(name):
+    """The cpp file as the reader found it (the read commit), as text."""
+    return subprocess.run(['git', '-C', ROOT, 'show', '%s:app/content/courses/cpp/%s' % (READ_AT, name)],
+                          capture_output=True, text=True, check=True).stdout
+
+
+hw = json.loads(found('homework-5.json'))['items']
 item = next(i for i in hw if i['id'] == 'h5-sole-and-counted')
 W = item['widget']; T = W['tests']
 fails = []
@@ -164,7 +178,7 @@ for name, code in PLANTS.items():
     check(all(v for v in r.values()), 'B: plant %s still fails under the proposed tests' % name[:3])
 
 # ---------------- Part C: the lesson ----------------
-L = json.load(open(os.path.join(C, 'l23-own-smart-pointer.json')))['screens']
+L = json.loads(found('l23-own-smart-pointer.json'))['screens']
 S2, S5 = L[2]['widget'], L[5]['widget']
 LINK_U = '''
 struct Link {
@@ -309,6 +323,8 @@ import shutil, subprocess, tempfile
 for old in (False, True):
     tmp = tempfile.mkdtemp()
     shutil.copytree(C, os.path.join(tmp, 'content', 'courses', 'cpp'))
+    for name in ('l23-own-smart-pointer.json', 'review-5.json', 'homework-5.json'):
+        open(os.path.join(tmp, 'content', 'courses', 'cpp', name), 'w').write(found(name))
     args = ['node', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fix14.mjs'), tmp] + (['--old-solutions'] if old else [])
     check(subprocess.run(args, capture_output=True).returncode == 0, 'D: fix14.mjs applies' + (' (old solutions)' if old else ''))
     LF = json.load(open(os.path.join(tmp, 'content', 'courses', 'cpp', 'l23-own-smart-pointer.json')))['screens']
@@ -326,7 +342,11 @@ for old in (False, True):
         check(all(v == [15] for v in got['l23 screens[2]'].values()), 'D: old UniquePtr model fails the new test 15 only')
         check(all(v == [14, 15] for v in got['l23 screens[5]'].values()), 'D: old SharedPtr model fails the new tests 14 and 15 only')
         check(all(v == [3] for v in got['h5-sole-and-counted'].values()), 'D: old h5 solution fails the folded test 3 only')
+    if not old:
+        FIXED14 = {n: json.load(open(os.path.join(tmp, 'content', 'courses', 'cpp', n))) for n in ('l23-own-smart-pointer.json', 'review-5.json', 'homework-5.json')}
     shutil.rmtree(tmp)
+# ---------------- Part E: the fix pass, on the worktree's own content ----------------
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cpp14_fixpass.py')).read())
 
 print('\nFAILURES: %d' % len(fails))
 sys.exit(1 if fails else 0)
