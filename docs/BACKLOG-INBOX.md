@@ -1691,3 +1691,5 @@ Raised later (mm-games level 3 perf):
 
 Raised later (contests level 3 perf):
 - [Could] `playthrough.mjs --shots` takes the `-marked` shot at the viewport only, so a display equation lower in a long model (contests `hw3-due-order`, the aligned block in "No worse") is never seen at 440 px. A retrofit has to measure it with a scratch KaTeX page. Wanted: a full-height `-marked` shot, or a check that no `.katex-display` in the model is wider than its card.
+Raised later (opt-dash level 4 perf):
+- [Could] `isclose` compares lists, arrays and Series but not dicts, so a function returning a dict of floats (`h4-weekend-explain`, seven keys) is tested through a setup line and `[d[k] for k in KEYS]`. Wanted: `isclose` on dicts, key sets equal and values compared by key.
