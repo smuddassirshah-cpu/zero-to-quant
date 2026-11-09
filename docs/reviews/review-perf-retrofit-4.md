@@ -60,3 +60,33 @@ The objective is l16's "Write a one-page results note, including what failed." R
 - Prelude helpers visible to the learner (BT1-3) are a first sighting; no item yet.
 
 Totals: Must 1 (BT4-1). Should 7 (BT4-2, AR1-1, AR3-1, AR1-2, BT1-1, BT2-1, BT4-3). Could 6 (BT1-2, BT1-3, BT2-2, BT4-4, AR1-3, SL2-1). stat-learning L3 and garch L2 have no finding.
+
+## Fix pass
+
+I recomputed BT4-1 from the item's own model before editing, by two routes in `docs/reports/backtest-4-perf-numbers.py`: the per-trade rule $c\sigma\sqrt{Q/V}$ with $Q$ = the whole book (the rule holds -1, 0 or +1 books, so every trade is £1m, or £2m on a flip), inverted by formula for the break-even book and by bisection on net Sharpe; the drag by annual-over-volatility and by daily mean and sd. Basis: l11 screens 10 and 11 and `h2-capacity` charge impact on each trade, and turnover 0.40 means fewer trades, not smaller ones. My figures agree with the reviewer's: impact 15.8 bp (16 bp), all in 20.8 bp, drag 2.10, research net -0.98 at £1m, break-even book £0.15m (0.149). One wording note: the reviewer's "21 bp" would give -1.00, so the text uses 20.8 bp. Every author script and every reader script in `docs/reviews/perf-retrofit-4-scripts/` exits 0 under the venv, `findings_assert.py` included (0 open findings).
+
+Status: fixed 14, disputed 0 (one wording amended, BT2-2), deferred 0.
+
+1. BT4-1: fixed. Model bullet 4 and "Next steps" now charge impact on a £1m one-book trade (16 bp; 20.8 bp all in; drag 2.10; net -0.98, worse with flips; break-even book about £0.15m, less where it flips). Row 4 says "about 16 bp of impact on each one-book trade, research net Sharpe about −1.0 or worse"; row 5 says "a break-even book well under £1m (about £0.15m, less with flips)". Graded figures changed: 10 bp to 16 bp, -0.39 to -0.98, £0.37m to £0.15m. The author script now holds both routes, the flip case and a check that the old figures are gone.
+2. BT4-2: fixed. Row 2 is `required`. `rubric-passes.mjs`: minimal sets rows 1, 2, 4 and 2, 3, 4 (7 points each); rows 1, 3 and 5 can be left out, and no pass skips research beside held out or What failed.
+3. AR1-1: fixed. Row 3 (assumptions) is `required`. Minimal set: rows 1, 2, 3 (9 points); only row 4 can be left out.
+4. AR3-1: fixed. Row 4 (series check and half-widths) is `required`. Minimal set: rows 2, 3, 4 (9 points); only row 1 can be left out, as the review allows.
+5. AR1-2: fixed. The report now has the "Overlapping screens" line as proposed.
+6. BT1-1: fixed. "Overlapping screens" line added to the report.
+7. BT2-1: fixed. "Overlapping screens" line added to the report.
+8. BT4-3: fixed. Report bullet 3 now gives the reason for `derivation` (a prose note whose graded content is worked figures; `code` would repeat l16 screen 10; no data file is read), and the "Overlapping screens" line names l16 screens 2, 4, 5 and 10. The kind stays `derivation`.
+9. BT1-2: fixed. Prelude helper `_drift` (reference plus 5e-9) and test 14 `agree(_ref, _drift, ...)` is False; `byKey.test-14`. The shipped solution passes, the `np.allclose`-default `agree` fails test 14 only.
+10. BT1-3: fixed. Test 15 rejects any source that contains `_ref(`, `_targets(`, `_same_bar(`, `_close(` or `_causal(`; `byKey.test-15`; `how` says 15 tests. The solution passes; the `_ref` cheat (both engines) and the `_close` cheat (`agree`) each fail test 15 only. Reader script `bt1_breakout.py` now expects no uncaught plant.
+11. BT2-2: fixed, wording amended. `byKey.test-9` says the cash moves "by up to about £1 on £1m" and that a relative tolerance such as `assert_frame_equal`'s misses it. I measured the move on the settle check's own noise: median £0.05, largest £0.93, so "up to" is the accurate form. The loose-tolerance test fails test 9 only (script check added).
+12. BT4-4: fixed. Model "Trials" now says the bar treats the 30 settings as independent and that neighbouring settings are correlated, so the true bar is somewhat lower (script check: correlated settings give a lower expected best).
+13. AR1-3: fixed. Follow-up (1) ends "The limit is not normal and sits well left of 0, which is why its quantiles are found by simulation." Row 4 no longer says "(not more frequent prices)".
+14. SL2-1: fixed. The stat-learning L2 report now lists only the raw-unit formula and the split inside the function as new, and says the constant column repeats l9 screen 8 on purpose.
+
+Graded answers changed: backtest `h-reversal-note` only (impact 16 bp, net about -0.98, break-even book about £0.15m). Code tests added: backtest L1 tests 14 and 15 (hidden-test count 13 to 15).
+
+### Gates
+
+- Validator (`cd app && node tools/validate.mjs 2>&1 | tail -5`): 0 errors, 4,092 warnings (unchanged from HEAD; the one long sentence my first test-9 text added was split).
+- Voice (`VOICE_BASE=app/content/courses/<course> python3 docs/reviews/voice-scan.py 35`): 0 and 0 for arma, backtest, stat-learning and garch.
+- Planted bugs: backtest L1 solution passes all 15, starter fails, every planted bug (13 author plants, the loose `agree`, both cheats) fails a test.
+- Playthrough (`node tools/playthrough.mjs --set <course>/homework-<n> --local-cdn <pkgs>`, regenerated manifest, then `git checkout content/manifest.json`): All passed for arma homework-1 and -3, backtest homework-1, -2 and -4, stat-learning homework-2 and -3, garch homework-2, with and without `--mobile` (16 runs).

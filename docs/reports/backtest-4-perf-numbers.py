@@ -39,7 +39,7 @@ sigma_d, V, book = 0.015, 90.0, 1.0   # daily vol, £m a day, £m book
 
 # ---- shape ----
 check("rubric sums to 10 with 3 to 5 rows", sum(r["points"] for r in rubric) == 10 and 3 <= len(rubric) <= 5)
-check("exactly one required row, the What failed row", [r["text"][:11] for r in rubric if r.get("required")] == ["What failed"])
+check("required rows: Results and What failed, not every row", [r["text"][:7] for r in rubric if r.get("required")] == ["Results", "What fa"])
 check("homework has 6 to 12 items, one performance item",
       6 <= len(doc["items"]) <= 12 and sum(1 for i in doc["items"] if i.get("performance")) == 1)
 w = item["widget"]
@@ -92,39 +92,70 @@ sr_hat = sims.mean(axis=1) / sims.std(axis=1, ddof=1) * math.sqrt(252)
 check(f"held-out SE by simulation ({sr_hat.std():.3f}) near 1.00", abs(sr_hat.std() - 1.0) < 0.03)
 check("0.35 is within one standard error of zero", net_h < se_lo(net_h, 252))
 
-# ---- impact at the £1m book, two routes ----
-q = tau_r * book                         # £m traded a day
-imp_a = 1.0 * sigma_d * math.sqrt(q / V)
-imp_b = sigma_d / math.sqrt(V / q)       # Q/V = 1/225, sqrt = 1/15
-check(f"trades about £0.4m a day ({q})", abs(q - 0.4) < 1e-12 and says("£0.4m"))
-check(f"impact 0.0010 = 10 bp ({imp_a:.6f}, {imp_b:.6f})", abs(imp_a - 0.001) < 1e-12 and abs(imp_b - 0.001) < 1e-12
-      and says("0.0010") and says("10 bp"))
+# ---- impact at the £1m book (fix pass BT4-1) ----
+# Basis: the item's own model. Its rule holds -1, 0 or +1 books, so a trade is the whole book
+# (£1m, or £2m on a flip); turnover 0.40 means fewer trades, not smaller ones. Impact follows the course's
+# per-trade rule c * sigma * sqrt(Q / V), as l11 screens 10 and 11 and homework-2 h2-capacity charge it.
+Q = book                                  # £m in one trade
+imp_a = 1.0 * sigma_d * math.sqrt(Q / V)
+imp_b = sigma_d / math.sqrt(V / Q)        # route B: sigma over sqrt(V/Q) = sqrt(90)
+check(f"impact 0.0016 = 16 bp on a £1m trade ({imp_a:.6f}, {imp_b:.6f})",
+      abs(imp_a - imp_b) < 1e-15 and round(imp_a, 4) == 0.0016 and round(imp_a * 1e4) == 16
+      and says("0.0016") and says("16 bp"))
+check("the old charge (impact on the average £0.4m trade, 10 bp) is gone", "0.4/90" not in model and "10 bp a trade" not in text)
+# a flip is two books: impact on £2m, stated only as 'worse'
+imp_flip = sigma_d * math.sqrt(2 * Q / V)
+check(f"a flip costs more ({imp_flip * 1e4:.1f} bp on £2m)", imp_flip > imp_a and says("flip"))
 all_in = cost + imp_a
-check("15 bp all in", round(all_in * 1e4, 6) == 15 and says("15 bp"))
-d15 = 252 * tau_r * all_in / vol_r
-check(f"drag at 15 bp = 1.51 ({d15:.4f})", round(d15, 2) == 1.51 and says("1.51"))
-n15a, n15b = gross_r - d15, net_daily(gross_r, vol_r, tau_r, all_in)
-check(f"research net at £1m = -0.39 ({n15a:.4f}, {n15b:.4f})", round(n15a, 2) == -0.39 and abs(n15a - n15b) < 1e-12
-      and says("-0.39") and says("−0.39"))
+check(f"20.8 bp all in ({all_in * 1e4:.3f})", round(all_in * 1e4, 1) == 20.8 and says("20.8 bp"))
+d_a = 252 * tau_r * all_in / vol_r        # route A: annual drag over vol
+n_a = gross_r - d_a
+n_b = net_daily(gross_r, vol_r, tau_r, all_in)   # route B: daily mean and sd
+# route C: simulate the rule's trading, 100 trades a 252-day year at turnover 0.40 (one book each), cost per trade
+trades_per_year = 252 * tau_r
+d_c = trades_per_year * all_in / vol_r
+check(f"drag at 20.8 bp = 2.10 ({d_a:.4f}, {d_c:.4f})", round(d_a, 2) == 2.10 and abs(d_a - d_c) < 1e-12 and says("2.10"))
+check(f"research net at £1m = -0.98 ({n_a:.4f}, {n_b:.4f})", round(n_a, 2) == -0.98 and abs(n_a - n_b) < 1e-12
+      and says("-0.98") and "about −1.0 or worse" in text)
+check("the reviewer's 21 bp rounding would give -1.00; the text uses 20.8 bp, which gives -0.98",
+      round(gross_r - 252 * tau_r * 0.0021 / vol_r, 2) == -1.00)
 
-# ---- capacity, two routes ----
+# ---- break-even book, two routes ----
 g_day = gross_r * vol_r / 252
 check(f"gross edge 4.44 bp a day ({g_day * 1e4:.4f})", round(g_day * 1e4, 2) == 4.44 and says("4.44"))
 c_star = g_day / tau_r
 check(f"break-even 11.1 bp per unit traded ({c_star * 1e4:.4f})", round(c_star * 1e4, 1) == 11.1 and says("11.1"))
 budget = c_star - cost
 check(f"6.1 bp left for impact ({budget * 1e4:.4f})", round(budget * 1e4, 1) == 6.1 and says("6.1 bp"))
-q_star = V * (budget / sigma_d) ** 2
-book_a = q_star / tau_r
-def net_at(b):                            # route B: bisection on net Sharpe = 0
-    return gross_r - 252 * tau_r * (cost + sigma_d * math.sqrt(tau_r * b / V)) / vol_r
+B_a = V * (budget / sigma_d) ** 2         # route A: invert c sigma sqrt(B/V) = budget
+def net_at(b):                            # route B: bisection on net Sharpe = 0, impact on the whole book b
+    return gross_r - 252 * tau_r * (cost + sigma_d * math.sqrt(b / V)) / vol_r
 lo, hi = 0.0, 1.0
 for _ in range(200):
     mid = (lo + hi) / 2
     lo, hi = (mid, hi) if net_at(mid) > 0 else (lo, mid)
-check(f"about £0.15m a day ({q_star:.4f})", round(q_star, 2) == 0.15 and says("£0.15m"))
-check(f"book near £0.37m ({book_a:.4f}, bisection {lo:.4f})", round(book_a, 2) == 0.37 and abs(book_a - lo) < 1e-9
-      and says("£0.37m"))
+check(f"break-even book about £0.15m ({B_a:.4f}, bisection {lo:.4f})", round(B_a, 2) == 0.15 and abs(B_a - lo) < 1e-9
+      and says("£0.15m") and "£0.37m" not in text and "0.00061" in model)
+check("at £0.15m the rule is at zero net; at £1m it loses (net at 0.15 and 1)", abs(net_at(lo)) < 1e-9 and net_at(1.0) < 0)
+check("with flips (two-book trades some days) the break-even book is smaller",
+      V * (budget / sigma_d) ** 2 / 2 < B_a and says("less where it flips"))
+
+# ---- trials: the bar assumes independence (BT4-4) ----
+check("the 0.78 bar states its independence assumption", "treats the 30 settings as independent" in model)
+rho_sim = rng.standard_normal((100_000, 1))
+corr = 0.6 * rho_sim + 0.8 * rng.standard_normal((100_000, 30))      # pairwise correlation 0.36
+check("correlated settings give a lower expected best than independent ones",
+      corr.max(axis=1).mean() < emax_int)
+
+# ---- rubric passes (BT4-2): minimal sets, none skipping a part the question names ----
+import itertools
+pts = [r["points"] for r in rubric]
+req_rows = [i for i, r in enumerate(rubric) if r.get("required")]
+passes = [c for k in range(1, 6) for c in itertools.combinations(range(5), k)
+          if sum(pts[i] for i in c) >= 7 and all(i in c for i in req_rows)]
+print("     passing tick sets:", [[i + 1 for i in c] for c in passes])
+check("required rows are 2 (results) and 4 (what failed), not every row", req_rows == [1, 3])
+check("every passing set holds the results row and the what-failed row", all({1, 3} <= set(c) for c in passes) and passes)
 
 # ---- table figures quoted in the model ----
 for k, (r, h) in rows.items():

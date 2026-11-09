@@ -53,7 +53,16 @@ item = next(it for it in json.load(open(ITEM_FILE))['items'] if it['id'] == 'h-a
 text = item['prompt'] + item['model'] + ' '.join(r['text'] for r in item['rubric']) + ' '.join(item['followUps'])
 check('rubric sums to 10', sum(r['points'] for r in item['rubric']) == 10)
 req = [r for r in item['rubric'] if r.get('required')]
-check('exactly one required row', len(req) == 1)
+# fix pass AR1-1: rows 1 (note A) and 3 (assumptions the question names) are required; never every row
+import itertools
+_rows = item['rubric']
+_passes = [s for k in range(1, 5) for s in itertools.combinations(range(4), k)
+           if sum(_rows[i]['points'] for i in s) >= 7 and all(r_ in s for r_, r in enumerate(_rows) if r.get('required'))]
+print('     passing tick sets (row numbers):', [[i + 1 for i in s] for s in _passes])
+check('required rows are 1 and 3 and not every row', [i for i, r in enumerate(_rows) if r.get('required')] == [0, 2])
+check('every passing set has note A, note B and the assumptions', all({0, 1, 2} <= set(s) for s in _passes) and _passes)
+check('AR1-3: no Brownian motion in the model, no "not more frequent prices" in a row',
+      'Brownian' not in item['model'] and 'not more frequent prices' not in ' '.join(r['text'] for r in _rows))
 # A pass (7 of 10) must need both note rows: without the note B row (4 points) the most is 6.
 pts = [r['points'] for r in item['rubric']]
 best_without = {i: sum(pts) - pts[i] for i in range(len(pts))}

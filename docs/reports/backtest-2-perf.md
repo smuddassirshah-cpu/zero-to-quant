@@ -12,3 +12,4 @@ Gates:
 4. `node tools/playthrough.mjs --set backtest/homework-2 --local-cdn <pkgs>`, with and without `--mobile`: All passed; shots clean.
 
 Freshness: `test_never_peeks`, `daily_bars`, contract, settled, `tanh` hit only this item; `fresh-check --file` 0 hits. Item 7, `h2-same-close`, already explains the cost-from-close leak.
+- Overlapping screens: l8 screens 2, 4, 5, 8 and 9 lay out the cut and replace forms and ask about a same-close fill. New: the test from a blank start, every cut, the check on bar $t$'s shares and cash after its open, and the cost-from-close leak.
