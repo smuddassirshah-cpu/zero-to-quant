@@ -224,3 +224,15 @@ Session U (6 Nov):
 - (session W) Number scripts for numpy-pandas, plotting and exam topic-1.1 need pandas 2.2.3 and matplotlib 3.8.4 (the Pyodide 0.27.7 versions); the container's python3 has pandas 3.0.5, so run them in a venv with those versions (pytest scripts need pytest 8.1.1).
 - (session W) Expression grader: `g(f(x)) = ...` and `gf(x) = ...` answers still get the generic line (exam topic-0.2 item 11; inbox).
 - (session W) Two terminal claims about Mac behaviour (`ls` sort order, Homebrew Python refusing pip) were left out as unverified; no BSD tools here.
+
+Session X (7 to 9 Nov):
+- Review size (PLAN section 5): all 206 levels that others require hold 8 to 10 review items, not section 11's 12, because `docs/LEVEL-BRIEF.md` asks 6 to 10 (`docs/reports/review-size-audit.md`, 620 items short). User decision: fewer test-out items, a rule change, or authoring.
+- Performance tasks: three rubrics keep an optional row that a reader may want required: pdes `h-derive-lazy-walk` row 1 (set-up, against the session X set-up rule), topology homework-1 row 4 and homework-2 row 4 (named deductions, optional before the sweep; now marked optional in the prompt). `docs/reports/optional-rows-session-x.md`.
+- algo-think `h-ring-search`: a recursion that slices the list (`ring[:mid]`) passes the read-count test 13, because slices are plain lists the `Looks` wrapper does not count.
+- `compare: "raises"` cannot check the exception message, so a NumPy shape error can pass a refusal test for the wrong reason (least-squares L2; inbox). In CPython `LinAlgError` subclasses `ValueError`; Pyodide returns NaN on a singular solve instead.
+- Code tests cannot see untested properties: privacy of members (cpp L3, L5), memory order (systems L4), a removed branch (systems L1); each item's `how` says which properties the tests check.
+- Overflow check (701) measures `.katex-display` only: inline maths that runs past a card at 440 px is not caught (analysis L4 author; inbox).
+- contests `l10-greedy-proofs` failed once in a loaded shard (32.1 s) and passes alone (28.2 s): a timing flake under load, not a content fault.
+- The scratchpad venv has NumPy 2.5.4; Pyodide 0.27.7 ships 2.0.2. Readers ran the session's NumPy-dependent tasks in real Pyodide (`docs/reviews/perf-retrofit-11-scripts/pyo11.mjs`) and found no difference; pin `numpy==2.0.2` in later venvs.
+- Shards: a full `--all` run at c5db6ee was stopped at about 66% of lessons (stale base; one flake, no failures). The final run is the one at the session-close HEAD.
+- BACKLOG-INBOX holds about 60 new "Raised later" bullets from session X authors and readers, not yet numbered (ENGINE-BACKLOG ends at 703).

@@ -4,7 +4,7 @@ Goal: a single-user, Brilliant-style interactive teaching app (vanilla JS, stati
 
 Design documents live in `docs/` (`PLAN.md` there is the product design, not this checklist). Briefs for every unwritten level are in `docs/briefs/`. Conventions are in `CLAUDE.md`.
 
-## State at HEAD (census, 2026-11-07, `node app/tools/census.mjs | tail -20`)
+## State at HEAD (census, 2026-11-09, `node app/tools/census.mjs | tail -20`)
 Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not memory; dates come from `git log` (UTC).
 - Lessons 1,214 of 1,214 (Stage 0 193, Stage 1 560, Stage 2 202, Stage 3 259); 79 course maps; 279 of 279 levels fully written; reviews 279 (own pass 279), homework 279.
 - Exams: 29 topic, 4 stage, 16 mocks with versions; 7 samples. Drills 35 non-sample (oa 8); bank 20 files, 200 items; prep paths 23, no mock without a file. Hours 3,695, gap 0.
@@ -257,9 +257,11 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [x] Second reader 3.1 to 3.3 then fix pass (3.3 done 3 Nov: `docs/reviews/review-<course>.md` for its five courses; 3.2 done 4 Nov: `review-ito.md`, `review-measure-prob.md`, `review-pdes.md`, `review-exam-3.2.md`; 3.1 open); session W: momentum-rep L1 (`review-momentum-rep-1.md`), so 3.1 closed
 - [x] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov; session V: analysis L1 to L4 done; open: linear-maps L1 to L3, proof L1 to L3); session W: linear-maps L1 to L3, proof L1 to L3 closed
 - [x] Session W (7 Nov): second reads and fix passes for the 61 unread levels (`docs/reports/unread-levels-session-v.txt`, 20 courses, reviews `docs/reviews/review-<course>[-n-m].md`, number scripts `docs/reports/<course>-L<n>-numbers.py`, all exit 0, voice 0 and 0 per course) and the nine unread topic exams (`docs/reviews/review-exam-<topic>.md`, scripts `docs/reviews/exam-<topic>-scripts/numbers.py`, all exit 0)
-- [ ] Second read the five exam items written by session W fixers, never read independently: topic-1.1 `e-gen-once`, `e-assert-catch`; topic-1.2 `e-fixture-calls`; topic-0.2 `e-gap-table`; topic-0.3 `e-truss-angle` (one Opus reader, pattern `review-exam-2.2.md`)
-- [ ] Review size audit (review-first-python-1-3 item E): AUTHORING section 11 asks 12 or more items in a review whose level others require; first-python reviews hold 8. Count every gating level's review, then author the missing items with a second read (content agents per course)
-- [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
+- [x] Second read the five exam items written by session W fixers, never read independently (session X: `docs/reviews/review-exam-fixer-items.md`, 0 errors, 3 freshness warnings fixed; keys of `e-gen-once` and `e-assert-catch` changed and recomputed): topic-1.1 `e-gen-once`, `e-assert-catch`; topic-1.2 `e-fixture-calls`; topic-0.2 `e-gap-table`; topic-0.3 `e-truss-angle` (one Opus reader, pattern `review-exam-2.2.md`)
+- [ ] Review size audit (review-first-python-1-3 item E) (session X: counted, `docs/reports/review-size-audit.md`: all 206 gating levels hold 8 to 10 items because LEVEL-BRIEF asks 6 to 10; 620 items short; no authoring until the user picks a route): AUTHORING section 11 asks 12 or more items in a review whose level others require; first-python reviews hold 8. Count every gating level's review, then author the missing items with a second read (content agents per course)
+- [x] Fix the seven homework items with both prose and a hidden longform prompt (session X: the last three, py-found h4 and pytest h2 and h3, merged; validator shows none) (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
+
+- [ ] Performance-task retrofit (session-v-plan Phase 3, session X): all 108 grandfathered levels carry a task and `tools/perf-pending.json` is empty; 100 of 108 second-read and fixed (`docs/reviews/review-perf-retrofit-1.md` to `-13.md`); the last 8 (git L3, first-python L2 and L3, terminal L1 and L3, py-found L4, analysis L4, cpp L5) in `review-perf-retrofit-14.md`. Tick when its fix pass merges.
 
 ### 5b. Concept audit by Fable, after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
 - [ ] Parallel Fable audit session (branch `claude/fable-audit`, started 6 Nov) on earlier-read courses; merge its branch at each content-session close
