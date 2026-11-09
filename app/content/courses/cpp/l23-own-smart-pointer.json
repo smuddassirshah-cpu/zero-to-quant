@@ -477,8 +477,8 @@
       "widget": {
         "kind": "code",
         "language": "cpp",
-        "starter": "// A minimal unique pointer. It owns one heap object, or nothing.\n// Write: the destructor; copying deleted; a move constructor and move assignment that\n// transfer ownership and leave the source empty; release(); reset().\n// The move assignment must be safe for `a = std::move(a)`.\ntemplate <typename T>\nclass UniquePtr {\npublic:\n    UniquePtr() = default;\n    explicit UniquePtr(T* p) : ptr_(p) {}\n\n    // TODO: destructor\n    // TODO: delete copying; write the move constructor and move assignment\n\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n    explicit operator bool() const { return ptr_ != nullptr; }\n\n    T* release() { return nullptr; }                 // TODO: give up ownership, do not delete\n    void reset(T* p = nullptr) { (void)p; }          // TODO: delete the current object, then own p\n\nprivate:\n    T* ptr_ = nullptr;\n};\n",
-        "solution": "// A minimal unique pointer. It owns one heap object, or nothing.\n// Write: the destructor; copying deleted; a move constructor and move assignment that\n// transfer ownership and leave the source empty; release(); reset().\n// The move assignment must be safe for `a = std::move(a)`.\ntemplate <typename T>\nclass UniquePtr {\npublic:\n    UniquePtr() = default;\n    explicit UniquePtr(T* p) : ptr_(p) {}\n\n    ~UniquePtr() { delete ptr_; }\n    UniquePtr(const UniquePtr&) = delete;\n    UniquePtr& operator=(const UniquePtr&) = delete;\n    UniquePtr(UniquePtr&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }\n    UniquePtr& operator=(UniquePtr&& other) noexcept {\n        if (this != &other) {\n            delete ptr_;\n            ptr_ = other.ptr_;\n            other.ptr_ = nullptr;\n        }\n        return *this;\n    }\n\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n    explicit operator bool() const { return ptr_ != nullptr; }\n\n    T* release() {\n        T* p = ptr_;\n        ptr_ = nullptr;\n        return p;\n    }\n    void reset(T* p = nullptr) {\n        T* old = ptr_;\n        ptr_ = p;\n        delete old;\n    }\n\nprivate:\n    T* ptr_ = nullptr;\n};\n",
+        "starter": "// A minimal unique pointer. It owns one heap object, or nothing.\n// Write: the destructor; copying deleted; a move constructor and move assignment that\n// transfer ownership and leave the source empty; release(); reset().\n// The move assignment must be safe for `a = std::move(a)`, and when the source lives\n// inside the object it lets go, as in a list's `head = std::move(head->next)`.\ntemplate <typename T>\nclass UniquePtr {\npublic:\n    UniquePtr() = default;\n    explicit UniquePtr(T* p) : ptr_(p) {}\n\n    // TODO: destructor\n    // TODO: delete copying; write the move constructor and move assignment\n\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n    explicit operator bool() const { return ptr_ != nullptr; }\n\n    T* release() { return nullptr; }                 // TODO: give up ownership, do not delete\n    void reset(T* p = nullptr) { (void)p; }          // TODO: own p, then delete the old object\n\nprivate:\n    T* ptr_ = nullptr;\n};\n",
+        "solution": "// A minimal unique pointer. It owns one heap object, or nothing.\n// Write: the destructor; copying deleted; a move constructor and move assignment that\n// transfer ownership and leave the source empty; release(); reset().\n// The move assignment must be safe for `a = std::move(a)`, and when the source lives\n// inside the object it lets go, as in a list's `head = std::move(head->next)`.\ntemplate <typename T>\nclass UniquePtr {\npublic:\n    UniquePtr() = default;\n    explicit UniquePtr(T* p) : ptr_(p) {}\n\n    ~UniquePtr() { delete ptr_; }\n    UniquePtr(const UniquePtr&) = delete;\n    UniquePtr& operator=(const UniquePtr&) = delete;\n    UniquePtr(UniquePtr&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }\n    UniquePtr& operator=(UniquePtr&& other) noexcept {\n        if (this != &other) {\n            T* p = other.ptr_;      // take the source first: the old object may own it\n            other.ptr_ = nullptr;\n            delete ptr_;\n            ptr_ = p;\n        }\n        return *this;\n    }\n\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n    explicit operator bool() const { return ptr_ != nullptr; }\n\n    T* release() {\n        T* p = ptr_;\n        ptr_ = nullptr;\n        return p;\n    }\n    void reset(T* p = nullptr) {\n        T* old = ptr_;\n        ptr_ = p;\n        delete old;\n    }\n\nprivate:\n    T* ptr_ = nullptr;\n};\n",
         "examples": [
           {
             "setup": "{ UniquePtr<Tracked> p(new Tracked(5)); }",
@@ -508,14 +508,8 @@
           },
           {
             "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a);",
-            "call": "b->v",
-            "expect": 1,
-            "compare": "equal"
-          },
-          {
-            "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a);",
-            "call": "a.get() == nullptr",
-            "expect": true,
+            "call": "b->v * 10 + (a.get() == nullptr ? 1 : 0)",
+            "expect": 11,
             "compare": "equal"
           },
           {
@@ -580,11 +574,18 @@
             "call": "(p ? 10 : 0) + (q ? 1 : 0)",
             "expect": 1,
             "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Link> h(new Link(1)); h->next = UniquePtr<Link>(new Link(2)); h->next->next = UniquePtr<Link>(new Link(3)); h = std::move(h->next);",
+            "call": "h->v * 10 + Link::live",
+            "expect": 22,
+            "compare": "equal"
           }
         ],
         "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
         "leakCheck": true,
-        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects, so an object deleted twice or never shows in the count. Two compile checks fail if copying is allowed."
+        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects, so an object deleted twice or never shows in the count. Two compile checks fail if copying is allowed. One test runs `h = std::move(h->next)` on a hidden list, where the source lives inside the object `h` lets go.",
+        "postlude": "\n// Hidden: a list whose nodes own the next one.\nstruct Link {\n    static inline int live = 0;\n    int v;\n    UniquePtr<Link> next;\n    explicit Link(int x) : v(x) { ++live; }\n    ~Link() { --live; }\n};\n"
       },
       "hints": [
         {
@@ -600,7 +601,7 @@
         },
         {
           "rung": "step",
-          "text": "`release()` returns the pointer and nulls it. `reset(p)` deletes the old one, then owns `p`."
+          "text": "`release()` returns the pointer and nulls it. `reset(p)` owns `p` first, then deletes the old one."
         }
       ],
       "feedback": {
@@ -611,7 +612,7 @@
         }
       },
       "explain": {
-        "text": "Deleting the copy members makes ownership single. The move hands it over and nulls the source, so exactly one destructor frees the object."
+        "text": "Deleting the copy members makes ownership single. The move takes the source's pointer and nulls the source, then deletes the old object, which may own it. So exactly one destructor frees each object."
       }
     },
     {
@@ -722,7 +723,7 @@
         "lines": [
           {
             "id": "s3",
-            "text": "copy `ptr_` and `count_` from `other`"
+            "text": "set `ptr_` and `count_` from the locals"
           },
           {
             "id": "d1",
@@ -735,7 +736,7 @@
           },
           {
             "id": "s1",
-            "text": "add one to `other`'s count"
+            "text": "copy `other`'s `ptr_` and `count_` into locals, and add one to that count"
           }
         ],
         "answer": [
@@ -761,18 +762,19 @@
         },
         {
           "rung": "step",
-          "text": "Add to `other`, subtract from yourself, then copy the pointers."
+          "text": "Read `other` into locals and add to its count, subtract from yourself, then set your pointers."
         }
       ],
       "feedback": {
-        "correct": "Add first, subtract second, copy third: `a = a` stays safe.",
+        "correct": "Take the new share first, drop the old one second, set the pointers last: `a = a` stays safe.",
         "generic": "Not quite right. Think about `a = a`.",
         "byKey": {
-          "d1": "You dropped first. For `a = a` the count falls to zero and the object is deleted, then you add to a freed counter."
+          "d1": "You dropped first. For `a = a` the count falls to zero and the object is deleted, then you add to a freed counter.",
+          "s2": "You dropped before you took the new share. For `a = a`, or when your old object owns `other`, the drop frees what you are about to share."
         }
       },
       "explain": {
-        "text": "Adding first means `a = a` never lets the count reach zero. Dropping first could free the object you are about to share."
+        "text": "Adding first means `a = a` never lets the count reach zero. Reading `other` before the drop matters when the old object owns `other`, as in `head = head->next`: the drop destroys it. Dropping first could free the object you are about to share."
       }
     },
     {
@@ -801,8 +803,8 @@
       "widget": {
         "kind": "code",
         "language": "cpp",
-        "starter": "// A minimal reference-counted pointer. All owners share one heap counter next to the object.\n// The object is deleted, and the counter freed, when the last owner goes.\n// Write: the copy and move members and the destructor. use_count() is 0 for an empty pointer.\ntemplate <typename T>\nclass SharedPtr {\npublic:\n    SharedPtr() = default;\n    explicit SharedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n\n    // TODO: copy constructor: share the object and add one to the count\n    SharedPtr(const SharedPtr& other) : ptr_(other.ptr_), count_(other.count_) {}\n    // TODO: copy assignment: let go of the old object, share the new one\n    SharedPtr& operator=(const SharedPtr& other) {\n        ptr_ = other.ptr_;\n        count_ = other.count_;\n        return *this;\n    }\n    // TODO: move constructor and move assignment (noexcept): take over, leave the source empty\n    // TODO: destructor: subtract one; at zero delete the object and the counter\n    ~SharedPtr() {}\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
-        "solution": "// A minimal reference-counted pointer. All owners share one heap counter next to the object.\n// The object is deleted, and the counter freed, when the last owner goes.\n// Write: the copy and move members and the destructor. use_count() is 0 for an empty pointer.\ntemplate <typename T>\nclass SharedPtr {\npublic:\n    SharedPtr() = default;\n    explicit SharedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n\n    SharedPtr(const SharedPtr& other) : ptr_(other.ptr_), count_(other.count_) {\n        if (count_) ++*count_;\n    }\n    SharedPtr& operator=(const SharedPtr& other) {\n        if (count_ != other.count_) {\n            if (other.count_) ++*other.count_;\n            drop();\n            ptr_ = other.ptr_;\n            count_ = other.count_;\n        }\n        return *this;\n    }\n    SharedPtr(SharedPtr&& other) noexcept : ptr_(other.ptr_), count_(other.count_) {\n        other.ptr_ = nullptr;\n        other.count_ = nullptr;\n    }\n    SharedPtr& operator=(SharedPtr&& other) noexcept {\n        if (this != &other) {\n            drop();\n            ptr_ = other.ptr_;\n            count_ = other.count_;\n            other.ptr_ = nullptr;\n            other.count_ = nullptr;\n        }\n        return *this;\n    }\n    ~SharedPtr() { drop(); }\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    void drop() {\n        if (count_ && --*count_ == 0) {\n            delete ptr_;\n            delete count_;\n        }\n        ptr_ = nullptr;\n        count_ = nullptr;\n    }\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
+        "starter": "// A minimal reference-counted pointer. All owners share one heap counter next to the object.\n// The object is deleted, and the counter freed, when the last owner goes.\n// Write: the copy and move members and the destructor. use_count() is 0 for an empty pointer.\ntemplate <typename T>\nclass SharedPtr {\npublic:\n    SharedPtr() = default;\n    explicit SharedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n\n    // TODO: copy constructor: share the object and add one to the count\n    SharedPtr(const SharedPtr& other) : ptr_(other.ptr_), count_(other.count_) {}\n    // TODO: copy assignment: share the new object, then let go of the old one (it may own `other`)\n    SharedPtr& operator=(const SharedPtr& other) {\n        ptr_ = other.ptr_;\n        count_ = other.count_;\n        return *this;\n    }\n    // TODO: move constructor and move assignment (noexcept): take over, leave the source empty\n    // TODO: destructor: subtract one; at zero delete the object and the counter\n    ~SharedPtr() {}\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
+        "solution": "// A minimal reference-counted pointer. All owners share one heap counter next to the object.\n// The object is deleted, and the counter freed, when the last owner goes.\n// Write: the copy and move members and the destructor. use_count() is 0 for an empty pointer.\ntemplate <typename T>\nclass SharedPtr {\npublic:\n    SharedPtr() = default;\n    explicit SharedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n\n    SharedPtr(const SharedPtr& other) : ptr_(other.ptr_), count_(other.count_) {\n        if (count_) ++*count_;\n    }\n    SharedPtr& operator=(const SharedPtr& other) {\n        if (count_ != other.count_) {\n            T* p = other.ptr_;      // read the source first: the old object may own it\n            long* c = other.count_;\n            if (c) ++*c;\n            drop();\n            ptr_ = p;\n            count_ = c;\n        }\n        return *this;\n    }\n    SharedPtr(SharedPtr&& other) noexcept : ptr_(other.ptr_), count_(other.count_) {\n        other.ptr_ = nullptr;\n        other.count_ = nullptr;\n    }\n    SharedPtr& operator=(SharedPtr&& other) noexcept {\n        if (this != &other) {\n            T* p = other.ptr_;      // take the source first: the old object may own it\n            long* c = other.count_;\n            other.ptr_ = nullptr;\n            other.count_ = nullptr;\n            drop();\n            ptr_ = p;\n            count_ = c;\n        }\n        return *this;\n    }\n    ~SharedPtr() { drop(); }\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    void drop() {\n        if (count_ && --*count_ == 0) {\n            delete ptr_;\n            delete count_;\n        }\n        ptr_ = nullptr;\n        count_ = nullptr;\n    }\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
         "examples": [
           {
             "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); }",
@@ -831,15 +833,9 @@
             "compare": "equal"
           },
           {
-            "setup": "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; SharedPtr<Tracked> c = b; }",
-            "call": "a.use_count() * 10 + Tracked::live",
-            "expect": 11,
-            "compare": "equal"
-          },
-          {
-            "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a; }",
-            "call": "Tracked::live",
-            "expect": 0,
+            "setup": "long n = 0; { SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; SharedPtr<Tracked> c = b; } n = a.use_count() * 10 + Tracked::live; }",
+            "call": "n * 10 + Tracked::live",
+            "expect": 110,
             "compare": "equal"
           },
           {
@@ -861,15 +857,9 @@
             "compare": "equal"
           },
           {
-            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a);",
-            "call": "b.use_count() * 10 + a.use_count()",
-            "expect": 10,
-            "compare": "equal"
-          },
-          {
-            "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a); }",
-            "call": "Tracked::live",
-            "expect": 0,
+            "setup": "long n = 0; { SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a); n = b.use_count() * 10 + a.use_count(); }",
+            "call": "n * 10 + Tracked::live",
+            "expect": 100,
             "compare": "equal"
           },
           {
@@ -906,11 +896,24 @@
             "call": "std::is_nothrow_move_constructible_v<SharedPtr<Tracked>>",
             "expect": true,
             "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Link> h(new Link(1)); h->next = SharedPtr<Link>(new Link(2)); h = h->next;",
+            "call": "h->v * 100 + h.use_count() * 10 + Link::live",
+            "expect": 211,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Link> h(new Link(1)); h->next = SharedPtr<Link>(new Link(2)); h = std::move(h->next);",
+            "call": "h->v * 100 + h.use_count() * 10 + Link::live",
+            "expect": 211,
+            "compare": "equal"
           }
         ],
         "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
         "leakCheck": true,
-        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects; `leakCheck` also fails a test whose counter block is never freed."
+        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects; `leakCheck` also fails a test whose counter block is never freed. Two tests run `h = h->next` and `h = std::move(h->next)` on a hidden list, where the source lives inside the object `h` lets go.",
+        "postlude": "\n// Hidden: a list whose nodes own the next one.\nstruct Link {\n    static inline int live = 0;\n    int v;\n    SharedPtr<Link> next;\n    explicit Link(int x) : v(x) { ++live; }\n    ~Link() { --live; }\n};\n"
       },
       "hints": [
         {
@@ -926,7 +929,7 @@
         },
         {
           "rung": "step",
-          "text": "Copy assignment: add to `other` first, then release your own, then copy the two pointers."
+          "text": "Copy assignment: read `other`'s pointers into locals and add one to its count. Then release your own and set yours from the locals."
         }
       ],
       "feedback": {
@@ -1099,7 +1102,7 @@
         "tol": {
           "abs": 0
         },
-        "accept": "1: b let go of its share and took a's",
+        "accept": "1: b took a's share and let go of its own",
         "wrong": [
           {
             "id": "two",
@@ -1120,11 +1123,11 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "What does `b` do with its own share before it takes `a`'s?"
+          "text": "What does `b` do with its own share once it has taken `a`'s?"
         },
         {
           "rung": "point",
-          "text": "`b` subtracts one for its old share, then takes over `a`'s share without adding."
+          "text": "`b` takes over `a`'s share without adding, then subtracts one for its old share."
         },
         {
           "rung": "step",
@@ -1140,7 +1143,7 @@
         }
       },
       "explain": {
-        "text": "The move assignment drops `b`'s old share, so the count falls from 2 to 1. It then takes `a`'s pointers without adding to the count, and empties `a`."
+        "text": "The move assignment takes `a`'s pointers without adding to the count, and empties `a`. It then drops `b`'s old share, so the count falls from 2 to 1."
       }
     },
     {

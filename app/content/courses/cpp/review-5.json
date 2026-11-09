@@ -456,8 +456,8 @@
         "kind": "order",
         "lines": [
           {
-            "id": "s2",
-            "text": "`delete ptr_;`"
+            "id": "s3",
+            "text": "`other.ptr_ = nullptr;`"
           },
           {
             "id": "d1",
@@ -465,20 +465,24 @@
             "why": "That frees the object you are taking, and you would hold a dangling pointer."
           },
           {
-            "id": "s4",
-            "text": "`other.ptr_ = nullptr;`"
+            "id": "s5",
+            "text": "`ptr_ = p;`"
           },
           {
             "id": "s1",
             "text": "`if (this != &other) {`"
           },
           {
-            "id": "s5",
+            "id": "s6",
             "text": "`return *this;`"
           },
           {
-            "id": "s3",
-            "text": "`ptr_ = other.ptr_;`"
+            "id": "s2",
+            "text": "`T* p = other.ptr_;`"
+          },
+          {
+            "id": "s4",
+            "text": "`delete ptr_;`"
           }
         ],
         "answer": [
@@ -486,21 +490,38 @@
           "s2",
           "s3",
           "s4",
-          "s5"
+          "s5",
+          "s6"
         ],
+        "after": {
+          "s3": [
+            "s1",
+            "s2"
+          ],
+          "s4": [
+            "s3"
+          ],
+          "s5": [
+            "s4"
+          ],
+          "s6": [
+            "s5"
+          ]
+        },
         "distractors": [
           "d1"
         ]
       },
       "feedback": {
-        "correct": "Guard, free your own, take theirs, null theirs, return.",
-        "generic": "Not quite right. Free your own object before you take the other's pointer.",
+        "correct": "Guard, take theirs, null theirs, free your own, keep theirs, return.",
+        "generic": "Not quite right. Take the other pointer and null the source before you free your own object.",
         "byKey": {
-          "d1": "You freed the other object. It is the one you are taking."
+          "d1": "You freed the other object. It is the one you are taking.",
+          "s4": "You freed your own object too early. It may own the source, as in `head = std::move(head->next)`: take the pointer and null the source first."
         }
       },
       "explain": {
-        "text": "Free the object you own, take the other pointer, then null the source. The guard keeps `a = std::move(a)` safe."
+        "text": "Take the other pointer and null the source first: the object you free may own the source, as in `head = std::move(head->next)`. Then free your own object and keep the taken pointer. With the guard, `a = std::move(a)` does nothing at all."
       }
     },
     {

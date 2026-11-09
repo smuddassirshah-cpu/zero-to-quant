@@ -198,8 +198,9 @@ for key, res in run_all(sol).items():
 # a second solution, by locals instead of swap, and a member reset for SolePtr
 SOL2 = sol
 for a, b in [
-    ('''        T* old = ptr_;
-        ptr_ = other.release();   // take the source first: the old object may own it
+    ('''        T* taken = other.release();   // take the source first: the old object may own it
+        T* old = ptr_;
+        ptr_ = taken;
         delete old;
         return *this;''', '''        if (this != &other) reset(other.release());
         return *this;'''),
@@ -254,8 +255,9 @@ for key, res in run_all(SOL2).items():
 for key, res in run_all(W['starter']).items():
     check(not any(res[k] for k, t in enumerate(T) if 'compiles' not in t), 'starter fails every value test on %s %s' % key)
 
-LESSON_U = ('''        T* old = ptr_;
-        ptr_ = other.release();   // take the source first: the old object may own it
+LESSON_U = ('''        T* taken = other.release();   // take the source first: the old object may own it
+        T* old = ptr_;
+        ptr_ = taken;
         delete old;
         return *this;''', '''        if (this != &other) {
             delete ptr_;
@@ -284,6 +286,12 @@ LESSON_C_MOVE = ('''        CountedPtr taken(std::move(other));
         return *this;''')
 BUGS = {
     'SolePtr move assignment deletes first, then reads the source': [LESSON_U],
+    'SolePtr move assignment reads its own pointer before it releases the source (fix pass, CP5-3)': [('''        T* taken = other.release();   // take the source first: the old object may own it
+        T* old = ptr_;
+        ptr_ = taken;
+        delete old;''', '''        T* old = ptr_;
+        ptr_ = other.release();   // take the source first: the old object may own it
+        delete old;''')],
     'CountedPtr copy assignment adds one, drops its share, then reads the source': [LESSON_C_COPY],
     'CountedPtr move assignment drops its share, then takes the source': [LESSON_C_MOVE],
     'CountedPtr copy assignment drops first with no guard': [('''        CountedPtr copy(other);
@@ -347,6 +355,7 @@ for name, edits in BUGS.items():
 
 # the item's claims about the tests that catch the three slips the lesson's own code makes
 check(all(6 in v for v in caught['SolePtr move assignment deletes first, then reads the source'].values()), 'test 6 catches the delete-first SolePtr move')
+check(all(v == [3] for v in caught['SolePtr move assignment reads its own pointer before it releases the source (fix pass, CP5-3)'].values()), 'test 3 (self-move folded in) catches the old-before-release SolePtr move, test 3 only')
 check(all(12 in v for v in caught['CountedPtr copy assignment adds one, drops its share, then reads the source'].values()), 'test 12 catches the drop-before-read copy')
 check(all(13 in v for v in caught['CountedPtr move assignment drops its share, then takes the source'].values()), 'test 13 catches the drop-before-take move')
 

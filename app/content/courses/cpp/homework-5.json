@@ -388,16 +388,16 @@
         "kind": "order",
         "lines": [
           {
-            "id": "s4",
+            "id": "s3",
             "text": "empty the source: set its `ptr_` and `count_` to null"
           },
           {
             "id": "d2",
-            "text": "drop own count after taking the new pointer",
-            "why": "You would drop the count of the object you just took."
+            "text": "add one to the count you took",
+            "why": "A move hands the share over. Adding one leaves the count one too high, so the object is never freed."
           },
           {
-            "id": "s2",
+            "id": "s4",
             "text": "drop own count: subtract one, and at zero delete the object and the counter"
           },
           {
@@ -410,38 +410,56 @@
             "why": "Both would drop the count: it falls by two for one owner."
           },
           {
-            "id": "s3",
-            "text": "take `other`'s `ptr_` and `count_`"
+            "id": "s2",
+            "text": "copy `other`'s `ptr_` and `count_` into locals"
+          },
+          {
+            "id": "s5",
+            "text": "set own `ptr_` and `count_` from the locals"
           }
         ],
         "answer": [
           "s1",
           "s2",
           "s3",
-          "s4"
+          "s4",
+          "s5"
         ],
+        "after": {
+          "s3": [
+            "s1",
+            "s2"
+          ],
+          "s4": [
+            "s3"
+          ],
+          "s5": [
+            "s4"
+          ]
+        },
         "distractors": [
           "d1",
           "d2"
         ]
       },
       "feedback": {
-        "correct": "Guard, drop, take, empty: one owner, one count.",
-        "generic": "Not quite right. Release your own share before you take the new one.",
+        "correct": "Guard, take, empty, drop, keep: one owner, one count.",
+        "generic": "Not quite right. Take the source's share and empty the source before you drop your own: your old object may own the source.",
         "byKey": {
           "d1": "You left the count unchanged and shared the pointers. Both would drop the count.",
-          "d2": "You took first and dropped after. You would drop the count of the object you just took."
+          "s4": "You dropped your own share too early. Your old object may own the source, so take its share and empty it first.",
+          "d2": "You added one. A move hands the share over, so the count stays as it was."
         }
       },
       "explain": {
-        "text": "A move transfers the share, so the count does not change for the new object. The source is emptied so its destructor does nothing."
+        "text": "A move transfers the share, so the count does not change for the new object. The source is emptied before you drop your own share, because the object you drop may own the source."
       },
       "canvas": {
         "kind": "console",
         "params": {
           "lines": [
             "SharedPtr& operator=(SharedPtr&& other) noexcept {",
-            "    // four steps; the if closes after the last",
+            "    // five steps; the if closes after the last",
             "    return *this;",
             "}"
           ],
@@ -913,7 +931,7 @@
       ],
       "pace": 1800,
       "title": "Two owning pointers for a chain of book states",
-      "prose": "An order-book recorder keeps its past states as a chain, newest first. Each state owns the one before it. Write two owning pointers for it, from a blank file.\n\n- `SolePtr<T>` owns one object or nothing. `SolePtr()` is empty, `explicit SolePtr(T* p)` owns `p`, and the destructor deletes what it owns.\n- A `SolePtr` cannot be copied. Its move constructor and move assignment are `noexcept`, hand the object over and leave the source empty.\n- `T* release()` gives the object up without deleting it and returns it.\n- `CountedPtr<T>` shares one object between owners, with one count for them all. `CountedPtr()` is empty, and `explicit CountedPtr(T* p)` starts a count of 1.\n- A copy shares the object and adds one to the count. The last owner to go deletes the object and the count. Its moves are `noexcept` and leave the source empty.\n- `CountedPtr(SolePtr<T>&& s)` takes over what `s` owned and leaves `s` empty. An empty `s` gives an empty pointer.\n- `long use_count() const` gives the count, 0 for an empty pointer. Both classes have `T* get() const`, `operator*` and `operator->`.\n- Every assignment works for `a = a`, and when the source lives inside the object being let go:\n\n```cpp\nhead = std::move(head->older);   // SolePtr<State>: drop the newest state\nlatest = latest->older;          // CountedPtr<Frame>: the same, by copy\n```",
+      "prose": "An order-book recorder keeps its past states as a chain, newest first. Each state owns the one before it. Write two owning pointers for it, from a blank file.\n\n- `SolePtr<T>` owns one object or nothing. `SolePtr()` is empty, `explicit SolePtr(T* p)` owns `p`, and the destructor deletes what it owns.\n- A `SolePtr` cannot be copied. Its move constructor and move assignment are `noexcept`, hand the object over and leave the source empty.\n- `T* release()` gives the object up without deleting it and returns it.\n- `CountedPtr<T>` shares one object between owners, with one count for them all. `CountedPtr()` is empty, and `explicit CountedPtr(T* p)` starts a count of 1.\n- A copy shares the object and adds one to the count. The last owner to go deletes the object and the count. Its moves are `noexcept` and leave the source empty.\n- `CountedPtr(SolePtr<T>&& s)` takes over what `s` owned and leaves `s` empty. An empty `s` gives an empty pointer.\n- `long use_count() const` gives the count, 0 for an empty pointer. Both classes have `T* get() const`, `operator*` and `operator->`.\n- Every assignment works for `a = a` (for a `SolePtr`, `a = std::move(a)`), and when the source lives inside the object being let go:\n\n```cpp\nhead = std::move(head->older);   // SolePtr<State>: drop the newest state\nlatest = latest->older;          // CountedPtr<Frame>: the same, by copy\n```",
       "question": "Write `SolePtr<T>` and `CountedPtr<T>` to the specification above.",
       "feedback": {
         "correct": "Correct. Each object has one deleter, the count stays right, and an assignment takes its source before it lets go.",
@@ -931,7 +949,7 @@
         "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Quote objects are alive.\nstruct Quote {\n    static inline int live = 0;\n    int px;\n    explicit Quote(int p) : px(p) { ++live; }\n    ~Quote() { --live; }\n};\n",
         "postlude": "\n// Hidden: book states, newest first; each owns the one before it.\nstruct State {\n    static inline int live = 0;\n    int seq;\n    SolePtr<State> older;\n    explicit State(int s) : seq(s) { ++live; }\n    ~State() { --live; }\n};\nstruct Frame {\n    static inline int live = 0;\n    int seq;\n    CountedPtr<Frame> older;\n    Frame(int s, CountedPtr<Frame> o) : seq(s), older(std::move(o)) { ++live; }\n    ~Frame() { --live; }\n};\n",
         "starter": "#include <utility>\n\n// Write the class templates SolePtr<T> and CountedPtr<T> here.\n",
-        "solution": "#include <utility>\n\n// SolePtr<T>: one owner, or none.\ntemplate <typename T>\nclass SolePtr {\npublic:\n    SolePtr() = default;\n    explicit SolePtr(T* p) : ptr_(p) {}\n    ~SolePtr() { delete ptr_; }\n\n    SolePtr(const SolePtr&) = delete;\n    SolePtr& operator=(const SolePtr&) = delete;\n    SolePtr(SolePtr&& other) noexcept : ptr_(other.release()) {}\n    SolePtr& operator=(SolePtr&& other) noexcept {\n        T* old = ptr_;\n        ptr_ = other.release();   // take the source first: the old object may own it\n        delete old;\n        return *this;\n    }\n\n    T* release() {\n        T* p = ptr_;\n        ptr_ = nullptr;\n        return p;\n    }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    T* ptr_ = nullptr;\n};\n\n// CountedPtr<T>: shared owners and one count on the heap.\ntemplate <typename T>\nclass CountedPtr {\npublic:\n    CountedPtr() = default;\n    explicit CountedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n    CountedPtr(SolePtr<T>&& s) : CountedPtr(s.release()) {}\n\n    CountedPtr(const CountedPtr& other) : ptr_(other.ptr_), count_(other.count_) {\n        if (count_) ++*count_;\n    }\n    CountedPtr(CountedPtr&& other) noexcept : ptr_(other.ptr_), count_(other.count_) {\n        other.ptr_ = nullptr;\n        other.count_ = nullptr;\n    }\n    // Build the new share first, then swap: the old share is dropped last, by the temporary.\n    CountedPtr& operator=(const CountedPtr& other) {\n        CountedPtr copy(other);\n        swap(copy);\n        return *this;\n    }\n    CountedPtr& operator=(CountedPtr&& other) noexcept {\n        CountedPtr taken(std::move(other));\n        swap(taken);\n        return *this;\n    }\n    ~CountedPtr() {\n        if (count_ && --*count_ == 0) {\n            delete ptr_;\n            delete count_;\n        }\n    }\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    void swap(CountedPtr& other) noexcept {\n        std::swap(ptr_, other.ptr_);\n        std::swap(count_, other.count_);\n    }\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
+        "solution": "#include <utility>\n\n// SolePtr<T>: one owner, or none.\ntemplate <typename T>\nclass SolePtr {\npublic:\n    SolePtr() = default;\n    explicit SolePtr(T* p) : ptr_(p) {}\n    ~SolePtr() { delete ptr_; }\n\n    SolePtr(const SolePtr&) = delete;\n    SolePtr& operator=(const SolePtr&) = delete;\n    SolePtr(SolePtr&& other) noexcept : ptr_(other.release()) {}\n    SolePtr& operator=(SolePtr&& other) noexcept {\n        T* taken = other.release();   // take the source first: the old object may own it\n        T* old = ptr_;\n        ptr_ = taken;\n        delete old;\n        return *this;\n    }\n\n    T* release() {\n        T* p = ptr_;\n        ptr_ = nullptr;\n        return p;\n    }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    T* ptr_ = nullptr;\n};\n\n// CountedPtr<T>: shared owners and one count on the heap.\ntemplate <typename T>\nclass CountedPtr {\npublic:\n    CountedPtr() = default;\n    explicit CountedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n    CountedPtr(SolePtr<T>&& s) : CountedPtr(s.release()) {}\n\n    CountedPtr(const CountedPtr& other) : ptr_(other.ptr_), count_(other.count_) {\n        if (count_) ++*count_;\n    }\n    CountedPtr(CountedPtr&& other) noexcept : ptr_(other.ptr_), count_(other.count_) {\n        other.ptr_ = nullptr;\n        other.count_ = nullptr;\n    }\n    // Build the new share first, then swap: the old share is dropped last, by the temporary.\n    CountedPtr& operator=(const CountedPtr& other) {\n        CountedPtr copy(other);\n        swap(copy);\n        return *this;\n    }\n    CountedPtr& operator=(CountedPtr&& other) noexcept {\n        CountedPtr taken(std::move(other));\n        swap(taken);\n        return *this;\n    }\n    ~CountedPtr() {\n        if (count_ && --*count_ == 0) {\n            delete ptr_;\n            delete count_;\n        }\n    }\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    void swap(CountedPtr& other) noexcept {\n        std::swap(ptr_, other.ptr_);\n        std::swap(count_, other.count_);\n    }\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
         "examples": [
           {
             "setup": "{ SolePtr<Quote> p(new Quote(5)); }",
@@ -960,7 +978,7 @@
             "compare": "equal"
           },
           {
-            "setup": "SolePtr<Quote> a(new Quote(1)); SolePtr<Quote> b(new Quote(2)); b = std::move(a);",
+            "setup": "SolePtr<Quote> a(new Quote(1)); SolePtr<Quote> b(new Quote(2)); b = std::move(a); SolePtr<Quote>& r = b; b = std::move(r);",
             "call": "(a.get() == nullptr ? 100 : 0) + Quote::live * 10 + b->px",
             "expect": 111,
             "compare": "equal"
