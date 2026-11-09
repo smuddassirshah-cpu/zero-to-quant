@@ -4,7 +4,7 @@
 - Objective matched (l8): "Write the absorption probabilities as $(I - Q)^{-1}R$ and check one numerically." The only verb-rule objective in the level.
 - Product, from three stubs: `absorb_chances(P)` (full $H$), `steps_to_absorb(P)` ($t = (I - Q)^{-1}\mathbf{1}$), `simulate_absorb(P, start, runs, seed)` (the numerical check). Hypothesis in the prose: every other state can reach an absorbing state.
 - Tests: 12 hidden, 2 examples, on six chains (tennis at deuce with ends in the middle, a lazy six-state chain with three ends, a cycle, all-absorbing). Simulation bands are at least 7 standard errors. Nine planted bugs each fail a test (ends taken as the last states, any self-loop read as absorbing, $R$ alone, $I + Q$, no $+1$, absorbing rows 0, counts, a coin per entry, a step cap).
-- Overlapping screens: l8 screens 5 and 8 and l7 screen 8 lay out $H = (I - Q)^{-1}R$ and $t = 1 + Qt$ by hand; `hw-matrix-derive` and `hw-loan-book` derive and use them. New: code from a blank start, ends found from the diagonal anywhere in the order, three ends, no moving states, the simulation check, the tennis chain.
+- Overlapping screens: l8 screens 5 and 8 and l7 screen 8 lay out $H = (I - Q)^{-1}R$ and $t = 1 + Qt$ by hand; `hw-matrix-derive` and `hw-loan-book` derive and use them. New: code from a blank start, ends found from the diagonal anywhere in the order, three ends, no moving states, the simulation check, the tennis chain. The tennis chain from deuce is the up-0.6 walk on 0 to 4 from 2, so its 9/13 and 50/13 appear in later levels (l10, l19 screen 9 and l19's code tests); no level 2 screen uses it.
 
 ## Gates
 
