@@ -1751,3 +1751,6 @@ Raised later (regression level 1 perf):
 
 Raised later (regression level 2 perf):
 - [Could] A numbers script that runs a `code` item in CPython disagrees with the browser on a singular solve: CPython's `np.linalg.solve` raises `LinAlgError`, a subclass of `ValueError`, while Pyodide's returns nan (AUTHORING section 3). So a `compare: "raises"` case expecting `ValueError` on constant $x$ passes a solution without its own check in CPython and fails it in the browser, as it should. `h-slope-check`'s script patches `solve` to return nan to match. Wanted: the shared reader harness (`docs/reviews/perf-retrofit-*-scripts/harness.py`) to carry that patch, or a line in AUTHORING section 3 telling authors to emulate it.
+
+Raised later (conditional level 2 perf):
+- [Should] After item 701 the `-marked` shot is a full-height element shot, but everything below the first viewport is white: `conditional/homework-2` items 7 and 10 give 400 x 2175 and 400 x 4557 px images (440 run) and 780 x 3206 px (desktop) with content only in the top 1,000 to 1,500 px. The overflow check still measures every display, but the shot cannot be read for layout. A scratch render with the viewport set to the card's height (scratchpad `model-shot.mjs`) paints the whole card. Wanted: resize the viewport to the card height before the element shot, or scroll and stitch.
