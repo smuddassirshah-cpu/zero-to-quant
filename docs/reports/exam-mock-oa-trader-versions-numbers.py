@@ -6,10 +6,19 @@ stated tolerance), then compared with the key in the JSON. Every distractor
 must differ from the key. Ranking items: the answer order follows the values,
 neighbouring values differ by at least 0.02, and the feedback prints them to
 three places. Interval items: exactly one narrowest option holds the value.
-Sequence items: the shown terms follow the stated rule, and no version 1 rule
-family that fits the shown terms predicts a different next term. Finally no
-family tag or question text of versions 2 and 3 repeats one from version 1 or
-from the other version.
+Sequence items: the shown terms follow the stated rule, and no rival rule that
+fits every shown term predicts a different next term. Rivals tried (fix pass):
+the version 1 rule families; constant difference and ratio; polynomials of
+degree 2 and 3; linear recurrences of order 1, 2 and 3, with and without a
+constant (exact rational fit, at least one shown term beyond the fit); ratios
+rising evenly and a multiplier rising with the place; product of the two before
+and squaring the last; alternating rules (add or multiply on odd and even
+steps); two and three interleaved strands; a repeating block; and filters
+("skip a class of numbers"): the shown terms are exactly the numbers between
+the first and last term with a property, for about 140 properties, their
+negations and pairwise unions, intersections and differences of a core set,
+and "the factors of N". Finally no family tag or question text of versions 2
+and 3 repeats one from version 1 or from the other version.
 
 Run: <venv>/bin/python docs/reports/exam-mock-oa-trader-versions-numbers.py
 """
@@ -196,8 +205,266 @@ def v1_predictors(a):
     return preds
 
 
+# ------------------------------------------------------------ rival rules (fix pass)
+def pfs(n):
+    out, d = [], 2
+    while d * d <= n:
+        while n % d == 0:
+            out.append(d)
+            n //= d
+        d += 1
+    if n > 1:
+        out.append(n)
+    return out
+
+
+def ndiv(n):
+    return sum(1 for d in range(1, n + 1) if n % d == 0)
+
+
+def digs(n):
+    return [int(c) for c in str(n)]
+
+
+def _sq(n):
+    return isqrt(n) ** 2 == n
+
+
+def _cube(n):
+    r = round(n ** (1 / 3))
+    return any((r + e) ** 3 == n for e in (-1, 0, 1))
+
+
+TRI = {k * (k + 1) // 2 for k in range(200)}
+FIBS = {1, 2}
+_a, _b = 1, 2
+while _b < 10 ** 6:
+    _a, _b = _b, _a + _b
+    FIBS.add(_b)
+
+BASE = {
+    'prime': is_prime,
+    'composite': lambda x: x > 1 and not is_prime(x),
+    'square': _sq,
+    'cube': _cube,
+    'square-or-cube': lambda x: _sq(x) or _cube(x),
+    'power-of-2': lambda x: x & (x - 1) == 0,
+    'power-of-3': lambda x: x > 0 and 3 ** round(__import__('math').log(x, 3)) == x,
+    'triangular': lambda x: x in TRI,
+    'fibonacci': lambda x: x in FIBS,
+    'squarefree': lambda x: len(pfs(x)) == len(set(pfs(x))),
+    'semiprime': lambda x: len(pfs(x)) == 2,
+    'two-distinct-primes': lambda x: len(pfs(x)) == 2 and len(set(pfs(x))) == 2,
+    'prime-power': lambda x: x > 1 and len(set(pfs(x))) == 1,
+    'one-or-prime-power': lambda x: len(set(pfs(x))) <= 1,
+    'palindrome': lambda x: str(x) == str(x)[::-1],
+    'sum-two-squares': lambda x: any(_sq(x - a * a) for a in range(isqrt(x) + 1)),
+    'odd-divisor-count': lambda x: ndiv(x) % 2 == 1,
+    'abundant': lambda x: sum(d for d in range(1, x) if x % d == 0) > x,
+    'deficient': lambda x: sum(d for d in range(1, x) if x % d == 0) < x,
+    'repdigit': lambda x: len(set(str(x))) == 1,
+    'distinct-digits': lambda x: len(set(str(x))) == len(str(x)),
+    'digits-rise': lambda x: all(a < b for a, b in zip(str(x), str(x)[1:])),
+    'digits-non-falling': lambda x: all(a <= b for a, b in zip(str(x), str(x)[1:])),
+    'even-digit-sum': lambda x: sum(digs(x)) % 2 == 0,
+    'harshad': lambda x: x % sum(digs(x)) == 0,
+}
+for p in (2, 3, 5, 7):
+    BASE['%d-smooth' % p] = (lambda p: lambda x: all(f <= p for f in pfs(x)))(p)
+for t in (2, 3, 5, 7):
+    BASE['prime-above-%d' % t] = (lambda t: lambda x: is_prime(x) and x > t)(t)
+for k in range(2, 13):
+    BASE['multiple-of-%d' % k] = (lambda k: lambda x: x % k == 0)(k)
+for k in range(2, 7):
+    for r in range(1, k):
+        BASE['%d-mod-%d' % (r, k)] = (lambda k, r: lambda x: x % k == r)(k, r)
+for dd in range(10):
+    BASE['ends-%d' % dd] = (lambda dd: lambda x: x % 10 == dd)(dd)
+    BASE['has-digit-%d' % dd] = (lambda dd: lambda x: str(dd) in str(x))(dd)
+for s in range(1, 20):
+    BASE['digit-sum-%d' % s] = (lambda s: lambda x: sum(digs(x)) == s)(s)
+for nd in range(1, 9):
+    BASE['%d-divisors' % nd] = (lambda nd: lambda x: ndiv(x) == nd)(nd)
+for ds in ({'1', '2'}, {'1', '3'}, {'1', '2', '3'}, {'0', '1'}, {'1', '2', '0'}):
+    BASE['digits-in-' + ''.join(sorted(ds))] = (lambda ds: lambda x: set(str(x)) <= ds)(ds)
+
+PREDS = dict(BASE)
+for name, f in BASE.items():
+    PREDS['not-' + name] = (lambda f: lambda x: not f(x))(f)
+CORE = ['prime', 'square', 'cube', 'power-of-2', 'triangular', 'fibonacci'] + ['multiple-of-%d' % k for k in range(2, 13)] + ['ends-%d' % d for d in range(10)]
+for i, a in enumerate(CORE):
+    for b in CORE[i + 1:]:
+        fa, fb = BASE[a], BASE[b]
+        PREDS[a + '-or-' + b] = (lambda fa, fb: lambda x: fa(x) or fb(x))(fa, fb)
+        PREDS[a + '-xor-' + b] = (lambda fa, fb: lambda x: fa(x) != fb(x))(fa, fb)
+        PREDS[a + '-and-' + b] = (lambda fa, fb: lambda x: fa(x) and fb(x))(fa, fb)
+        PREDS[a + '-and-not-' + b] = (lambda fa, fb: lambda x: fa(x) and not fb(x))(fa, fb)
+        PREDS[b + '-and-not-' + a] = (lambda fa, fb: lambda x: fb(x) and not fa(x))(fa, fb)
+
+
+def solve_affine(rows, rhs, target):
+    """Exact Gaussian elimination. Returns (prediction, confirmations) when the system
+    is consistent and target is in the row space, else None."""
+    m = len(rows[0])
+    A = [list(r) + [b] for r, b in zip(rows, rhs)]
+    piv_cols, r = [], 0
+    for c in range(m):
+        p = next((i for i in range(r, len(A)) if A[i][c] != 0), None)
+        if p is None:
+            continue
+        A[r], A[p] = A[p], A[r]
+        A[r] = [x / A[r][c] for x in A[r]]
+        for i in range(len(A)):
+            if i != r and A[i][c] != 0:
+                f = A[i][c]
+                A[i] = [x - f * y for x, y in zip(A[i], A[r])]
+        piv_cols.append(c)
+        r += 1
+    if any(all(x == 0 for x in row[:m]) and row[m] != 0 for row in A):
+        return None
+    t = list(target)
+    val = F(0)
+    for i, c in enumerate(piv_cols):
+        f = t[c]
+        if f:
+            val += f * A[i][m]
+            t = [x - f * y for x, y in zip(t, A[i][:m])]
+    if any(x != 0 for x in t):
+        return None
+    return val, len(rows) - r
+
+
+def poly_next(s, k):
+    rows = [list(s)]
+    for _ in range(k + 1):
+        rows.append([b - a for a, b in zip(rows[-1], rows[-1][1:])])
+    if not rows[k + 1] or any(x != 0 for x in rows[k + 1]):
+        return None
+    nxt = rows[k][-1]
+    for j in range(k - 1, -1, -1):
+        nxt = rows[j][-1] + nxt
+    return nxt
+
+
+def strand_next(st):
+    """Next term of one strand that is constant, arithmetic or geometric (3+ terms)."""
+    if len(st) < 3:
+        return None
+    if len({b - a for a, b in zip(st, st[1:])}) == 1:
+        return st[-1] + st[1] - st[0]
+    if all(x != 0 for x in st) and len({b / a for a, b in zip(st, st[1:])}) == 1:
+        return st[-1] * st[1] / st[0]
+    return None
+
+
+def rivals(a, minconf=1):
+    """Every simple rule that fits all shown terms (with at least `minconf` terms
+    beyond those that fix its parameters), mapped to the next term it gives."""
+    a = [F(x) for x in a]
+    n = len(a)
+    out = {}
+    # differences and ratios are the degree-0/1 polynomial and order-1 recurrences below,
+    # but name them for the report
+    d = [b - x for x, b in zip(a, a[1:])]
+    if n >= 3 and len(set(d)) == 1:
+        out['constant difference'] = a[-1] + d[0]
+    if n >= 3 and all(x != 0 for x in a) and len({b / x for x, b in zip(a, a[1:])}) == 1:
+        out['constant ratio'] = a[-1] * a[1] / a[0]
+    for k in (2, 3):  # polynomial of degree k: k + 1 parameters
+        if n >= k + 1 + minconf:
+            p = poly_next(a, k)
+            if p is not None:
+                out['polynomial degree %d' % k] = p
+    # linear recurrences a_i = sum c_j a_{i-j} (+ b)
+    for k in (1, 2, 3):
+        for const in (True, False):
+            rows = [[a[i - j] for j in range(1, k + 1)] + ([F(1)] if const else []) for i in range(k, n)]
+            if not rows:
+                continue
+            rhs = [a[i] for i in range(k, n)]
+            tgt = [a[n - j] for j in range(1, k + 1)] + ([F(1)] if const else [])
+            res = solve_affine(rows, rhs, tgt)
+            if res and res[1] >= minconf:
+                out['recurrence order %d%s' % (k, ' with constant' if const else '')] = res[0]
+    # coefficient rising with the place: a_i = (m + i) a_{i-1} + c, and ratios in arithmetic progression
+    if n >= 4 and all(x != 0 for x in a):
+        r = [b / x for x, b in zip(a, a[1:])]
+        if len({y - x for x, y in zip(r, r[1:])}) == 1 and r[1] != r[0]:
+            out['ratios rise evenly'] = a[-1] * (r[-1] + r[1] - r[0])
+        rows = [[a[i - 1], i * a[i - 1], F(1)] for i in range(1, n)]
+        res = solve_affine(rows, a[1:], [a[-1], n * a[-1], F(1)])
+        if res and res[1] >= minconf:
+            out['multiplier rising with place'] = res[0]
+    # simple non-linear recurrences
+    if n >= 4:
+        if all(a[i] == a[i - 1] * a[i - 2] for i in range(2, n)):
+            out['product of two before'] = a[-1] * a[-2]
+        for c in range(-3, 4):
+            if all(a[i] == a[i - 1] ** 2 + c for i in range(1, n)):
+                out['square the last, add %d' % c] = a[-1] ** 2 + c
+    # alternating: odd steps and even steps each add a constant or multiply by one (2+ steps each)
+    if n >= 5:
+        for parity_ops in ((0, 0), (0, 1), (1, 0), (1, 1)):
+            preds = []
+            ok = True
+            for par in (0, 1):
+                steps = [(a[i], a[i + 1]) for i in range(par, n - 1, 2)]
+                if parity_ops[par] == 0:
+                    vals = {y - x for x, y in steps}
+                else:
+                    if any(x == 0 for x, _ in steps):
+                        ok = False
+                        break
+                    vals = {y / x for x, y in steps}
+                if len(steps) < 2 or len(vals) != 1:
+                    ok = False
+                    break
+                preds.append(vals.pop())
+            if ok:
+                par = (n - 1) % 2
+                v = preds[par]
+                out['alternating %s/%s' % ('+x'[parity_ops[0]], '+x'[parity_ops[1]])] = a[-1] + v if parity_ops[par] == 0 else a[-1] * v
+    # interleaved strands (2 or 3), each constant, arithmetic or geometric with 3+ terms
+    for m in (2, 3):
+        strands = [a[s::m] for s in range(m)]
+        if all(strand_next(st) is not None for st in strands):
+            out['%d interleaved strands' % m] = strand_next(strands[n % m])
+    # periodic repeat of a block of length p, at least `minconf` + 1 terms past the first block
+    for p in range(1, n):
+        if n >= p + 1 + minconf and all(a[i] == a[i - p] for i in range(p, n)):
+            out['block of %d repeats' % p] = a[n - p]
+            break
+    # mirror: the terms read back the way they came (palindromic period)
+    # filters: the shown terms are exactly the numbers in [first, last] with a property
+    if all(x.denominator == 1 and x > 0 for x in a) and all(y > x for x, y in zip(a, a[1:])):
+        ai = [int(x) for x in a]
+        lo, hi = ai[0], ai[-1]
+        shown = set(ai)
+        for name, f in PREDS.items():
+            try:
+                if all(f(x) == (x in shown) for x in range(lo, hi + 1)):
+                    nxt = next(x for x in range(hi + 1, hi * 20 + 100) if f(x))
+                    out['filter ' + name] = F(nxt)
+            except (StopIteration, ZeroDivisionError, ValueError):
+                pass
+        if lo == 1:  # the factors of some N, in order
+            for N in range(hi, 50 * hi + 1):
+                if N % hi == 0 and all((N % x == 0) == (x in shown) for x in range(1, hi + 1)):
+                    out['factors of %d' % N] = F(next(x for x in range(hi + 1, N + 1) if N % x == 0)) if N > hi else None
+    return {k: v for k, v in out.items() if v is not None}
+
+
 def tri(k):
     return k * (k + 1) // 2
+
+
+def recaman(N):
+    """Step n goes back n when that lands on a new number of 0 or more, else forward n."""
+    s = [0]
+    while len(s) < N:
+        n, b = len(s), s[-1] - len(s)
+        s.append(b if b >= 0 and b not in s else s[-1] + n)
+    return s[:N]
 
 
 def smooth23(x):
@@ -218,8 +485,8 @@ SEQ_RULES = {
                                     lambda a: next(x for x in range(int(a[-1]) + 1, 999) if x % 3 == 0 or x % 5 == 0)),
     ('2', 'a04-squares-of-primes'): (lambda N: [p * p for p in PRIMES][:N],
                                      lambda a: next(p for p in range(isqrt(int(a[-1])) + 1, 99) if is_prime(p)) ** 2),
-    ('2', 'a05-powers-plus-position'): (lambda N: [2 ** n + n for n in range(1, N + 1)],
-                                        lambda a: 2 * a[-1] - (len(a) - 1)),
+    ('2', 'a05-three-power-plus-place'): (lambda N: [3 ** n + n for n in range(1, N + 1)],
+                                          lambda a: 3 * a[-1] - (2 * len(a) - 1)),  # a' = 3a - (2n - 1)
     ('2', 'a06-collatz'): (lambda N: (lambda f: f(f, 7, N))(lambda f, x, k: [x] + f(f, x // 2 if x % 2 == 0 else 3 * x + 1, k - 1) if k else []),
                            lambda a: a[-1] / 2 if a[-1] % 2 == 0 else 3 * a[-1] + 1),
     ('2', 'a07-fixed-over-position'): (lambda N: [F(420, n) for n in range(1, N + 1)],
@@ -239,11 +506,11 @@ SEQ_RULES = {
     ('2', 'a14-add-the-reverse'): (lambda N: (lambda s: [s.append(s[-1] + rev(s[-1])) for _ in range(N)] and s[:N])([13]),
                                    lambda a: a[-1] + rev(int(a[-1]))),
     ('2', 'a15-neighbour-prime-products'): (lambda N: [PRIMES[i] * PRIMES[i + 1] for i in range(N)],
-                                            lambda a: 13 * 17),
+                                            lambda a: (lambda p: p * next(q for q in range(p + 1, 99) if is_prime(q)))(max(pfs(int(a[-1]))))),
     ('3', 'a01-growing-decimal'): (lambda N: [F(int('123456789'[:n]), 10 ** n) for n in range(1, N + 1)],
                                    lambda a: a[-1] + F(len(a) + 1, 10 ** (len(a) + 1))),
     ('3', 'a02-fraction-pairs'): (lambda N: [F(n, 2 * n + 1) for n in range(1, N + 1)],
-                                  lambda a: F(6, 13)),
+                                  lambda a: (lambda n: 1 / (2 + F(1, n + 1)))(1 / (1 / a[-1] - 2))),  # 1/a = 2 + 1/n
     ('3', 'a03-digits-one-two'): (lambda N: [x for x in range(1, 9999) if set(str(x)) <= {'1', '2'} and x > 9][:N],
                                   lambda a: next(x for x in range(int(a[-1]) + 1, 9999) if set(str(x)) <= {'1', '2'})),
     ('3', 'a04-gaps-squares'): (lambda N: [2 + sum(k * k for k in range(1, n)) for n in range(1, N + 1)],
@@ -263,13 +530,13 @@ SEQ_RULES = {
     ('3', 'a11-primes-ending-3'): (lambda N: [p for p in PRIMES if p % 10 == 3][:N],
                                    lambda a: next(x for x in range(int(a[-1]) + 10, 999, 10) if is_prime(x))),
     ('3', 'a12-factor-count'): (lambda N: [len(divisors(n)) for n in range(1, N + 1)],
-                                lambda a: 3 + 1),  # 8 = 2^3 has 3 + 1 factors
-    ('3', 'a13-ruler'): (lambda N: [n & -n for n in range(1, N + 1)],
-                         lambda a: max(2 ** j for j in range(10) if (len(a) + 1) % 2 ** j == 0)),
+                                lambda a: __import__('math').prod(pfs(len(a) + 1).count(p) + 1 for p in set(pfs(len(a) + 1)))),  # d(n) from the prime powers
+    ('3', 'a13-back-if-you-can'): (lambda N: recaman(N),
+                                   lambda a: (lambda n, b: b if b >= 0 and b not in a else a[-1] + n)(len(a), a[-1] - len(a))),
     ('3', 'a14-square-digit-sum'): (lambda N: (lambda s: [s.append(sum(int(c) ** 2 for c in str(s[-1]))) for _ in range(N)] and s[:N])([4]),
                                     lambda a: sum(int(c) ** 2 for c in str(int(a[-1])))),
     ('3', 'a15-self-powers'): (lambda N: [n ** n for n in range(1, N + 1)],
-                               lambda a: 216 ** 2),
+                               lambda a: round(__import__('math').exp((len(a) + 1) * __import__('math').log(len(a) + 1)))),  # floating exp(n ln n)
 }
 
 # ------------------------------------------------------------ probability
@@ -332,7 +599,8 @@ def cond_sim(fn, runs, seed):
 
 
 PROB = {
-    ('2', 'b01-loaded-die'): (F(2, 7), F([1, 2, 3, 4, 5, 6, 6].count(6), 7), 0),
+    ('2', 'b01-loaded-die'): (F(2, 7),  # p + 5 (p / 2) = 1; second: seeded draws with weights 1, 1, 1, 1, 1, 2
+                              random.Random(2501).choices(range(1, 7), weights=[1, 1, 1, 1, 1, 2], k=300000).count(6) / 300000, 0.005),
     ('2', 'b02-exactly-one'): (F(1, 4) * F(2, 3) + F(3, 4) * F(1, 3),
                                F(sum(1 for x in range(4) for y in range(3) if (x == 0) != (y == 0)), 12), 0),
     ('2', 'b03-same-digit-clock'): (F(3, 24 * 60),
@@ -366,7 +634,8 @@ PROB = {
     ('3', 'b05-row-or-column'): (F(7 + 7, 63),
                                  F(sum(1 for a, b in combinations([(i, j) for i in range(8) for j in range(8)], 2) if a[0] == b[0] or a[1] == b[1]), comb(64, 2)), 0),
     ('3', 'b06-parallel-edges'): (F(3, 11), cube_parallel(), 0),
-    ('3', 'b07-no-two-heads'): (F(no_run_count(5, 2), 32), F(sum(1 for s in product('HT', repeat=5) if 'HH' not in ''.join(s)), 32), 0),
+    ('3', 'b07-dice-run'): (F(4 * factorial(3), 6 ** 3),
+                            F(sum(1 for s in product(range(1, 7), repeat=3) if sorted(s)[2] - sorted(s)[0] == 2 and len(set(s)) == 3), 216), 0),
     ('3', 'b08-equilateral'): (F(2, comb(6, 3)), hexagon_equilateral(), 0),
     ('3', 'b09-three-in-a-line'): (F(3 + 3 + 2, comb(9, 3)), grid_lines(), 0),
     ('3', 'b10-no-neighbours'): (F(2, 24), F(sum(1 for p in permutations([1, 2, 3, 4]) if all(abs(p[i] - p[i + 1]) != 1 for i in range(3))), 24), 0),
@@ -412,62 +681,182 @@ def u_sim(fn, seed):
     return sim(fn, U, seed)
 
 
+def disc_sim(cond, seed):
+    """Uniform point in the unit disc by rejection from the square; cond takes its radius."""
+    rng = random.Random(seed)
+    hit = n = 0
+    while n < U:
+        x, y = rng.uniform(-1, 1), rng.uniform(-1, 1)
+        if x * x + y * y < 1:
+            n += 1
+            hit += cond(sqrt(x * x + y * y))
+    return hit / n
+
+
+def tournaments(k):
+    """Every result of a round robin of k players: a list of win counts, all equally likely."""
+    games = list(combinations(range(k), 2))
+    for res in product([0, 1], repeat=len(games)):
+        wins = [0] * k
+        for (a, b), r in zip(games, res):
+            wins[a if r else b] += 1
+        yield wins
+
+
+def tour_frac(k, cond):
+    t = list(tournaments(k))
+    return F(sum(1 for w in t if cond(w, k)), len(t))
+
+
+def matrix_frac(cond):
+    return F(sum(1 for a, b, c, d in product([0, 1], repeat=4) if cond(a, b, c, d)), 16)
+
+
+TILES = [(a, b) for a in range(7) for b in range(a, 7)]
+
+
+def tile_frac(cond):
+    assert len(TILES) == 28
+    return F(sum(1 for a, b in TILES if cond(a, b)), 28)
+
+
+def crossing_exact(n):
+    """Any four corners give one crossing pair: C(n, 4) of C(diagonals, 2)."""
+    return F(comb(n, 4), comb(n * (n - 3) // 2, 2))
+
+
+def crossing_geom(n):
+    """Coordinates of a regular n-gon; count pairs of diagonals whose interiors cross."""
+    import math
+    P = [(math.cos(2 * pi * i / n), math.sin(2 * pi * i / n)) for i in range(n)]
+    diags = [(i, j) for i, j in combinations(range(n), 2) if (j - i) % n not in (1, n - 1)]
+
+    def orient(p, q, r):
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+
+    cross = 0
+    for (a, b), (c, d) in combinations(diags, 2):
+        if len({a, b, c, d}) < 4:
+            continue  # they meet at a corner, not inside
+        o1, o2 = orient(P[a], P[b], P[c]), orient(P[a], P[b], P[d])
+        o3, o4 = orient(P[c], P[d], P[a]), orient(P[c], P[d], P[b])
+        cross += o1 * o2 < 0 and o3 * o4 < 0
+    return F(cross, comb(len(diags), 2))
+
+
+def dice2_frac(cond):
+    return F(sum(1 for a in range(1, 7) for b in range(1, 7) if cond(a * b)), 36)
+
+
+def painted_frac(k):
+    """Small cubes of a 3 x 3 x 3 cube with exactly k painted faces."""
+    return F(sum(1 for c in product(range(3), repeat=3) if sum(x in (0, 2) for x in c) == k), 27)
+
+
+def landing_exact(n):
+    """p_n = 1 - p_{n-1} / 2: square n is missed only by stepping 2 from n - 1."""
+    p = F(1)  # square 0
+    for _ in range(n):
+        p = 1 - p / 2
+    return p
+
+
+def landing_enum(n):
+    """Every run of n fair coin moves (enough to pass square n)."""
+    hit = 0
+    for s in product([1, 2], repeat=n):
+        pos, seen = 0, set()
+        for x in s:
+            pos += x
+            seen.add(pos)
+        hit += n in seen
+    return F(hit, 2 ** n)
+
+
+def mobius(d):
+    f = pfs(d)
+    return 0 if len(f) != len(set(f)) else (-1) ** len(f)
+
+
+def coprime_exact(n):
+    """Moebius count of coprime pairs in 1..n."""
+    return F(sum(mobius(d) * (n // d) ** 2 for d in range(1, n + 1)), n * n)
+
+
+def coprime_enum(n):
+    from math import gcd
+    return F(sum(1 for a in range(1, n + 1) for b in range(1, n + 1) if gcd(a, b) == 1), n * n)
+
+
+def no_friendless_exact(k):
+    """Inclusion-exclusion over the set S of friendless people: the pairs touching S are all absent."""
+    return sum((-1) ** j * comb(k, j) * F(1, 2 ** (j * (k - j) + comb(j, 2))) for j in range(k + 1))
+
+
+def graph_frac(k, cond):
+    pairs = list(combinations(range(k), 2))
+    tot = 0
+    for e in product([0, 1], repeat=len(pairs)):
+        deg = [0] * k
+        for (a, b), x in zip(pairs, e):
+            if x:
+                deg[a] += 1
+                deg[b] += 1
+        tot += cond(deg, sum(e))
+    return F(tot, 2 ** len(pairs))
+
+
+def months_with(days):
+    import calendar
+    return F(sum(1 for m in range(1, 13) if calendar.monthrange(2025, m)[1] == days), 12)
+
+
 RANK = {
-    ('2', 'c01-rank'): {'bo3': (series_exact(F(7, 10), 3), series_enum(F(7, 10), 3), 0),
-                        'one': (F(7, 10), series_enum(F(7, 10), 1), 0),
-                        'both': (F(7, 10) ** 2, u_sim(lambda r: r.random() > 0.3 and r.random() > 0.3, 21), 0.005)},
-    ('2', 'c02-rank'): {'one3': (F(3, 10), series_enum(F(3, 10), 1), 0),
-                        'bo3w': (series_exact(F(3, 10), 3), series_enum(F(3, 10), 3), 0),
-                        'sq02': (sqrt(0.2), u_sim(lambda r: r.random() ** 2 < 0.2, 22), 0.005)},
-    ('2', 'c03-rank'): {'w1': (F(2, 5), series_enum(F(2, 5), 1), 0),
-                        'w5': (series_exact(F(2, 5), 5), series_enum(F(2, 5), 5), 0),
-                        'disc': (pi / 4, u_sim(lambda r: (r.random() - .5) ** 2 + (r.random() - .5) ** 2 < .25, 23), 0.005)},
-    ('2', 'c04-rank'): {'s3': (series_exact(F(3, 5), 3), series_enum(F(3, 5), 3), 0),
-                        'near': (F(3, 5), u_sim(lambda r: abs(r.random() - .5) < .3, 24), 0.005),
-                        's5': (series_exact(F(3, 5), 5), series_enum(F(3, 5), 5), 0)},
-    ('2', 'c05-rank'): {'j5': (series_exact(F(13, 20), 5), series_enum(F(13, 20), 5), 0),
-                        'j1': (F(17, 20), series_enum(F(17, 20), 1), 0),
-                        'j3': (series_exact(F(4, 5), 3), series_enum(F(4, 5), 3), 0)},
+    ('2', 'c01-rank-target'): {'o06': (1 - F(6, 10) ** 2, disc_sim(lambda r: r > 0.6, 21), 0.005),
+                               'r07': (F(7, 10) ** 2, disc_sim(lambda r: r < 0.7, 22), 0.005),
+                               'r05': (F(1, 2) ** 2, disc_sim(lambda r: r < 0.5, 23), 0.005)},
+    ('2', 'c02-rank-unbeaten'): {'top4': (4 * F(1, 2) ** 3, tour_frac(4, lambda w, k: k - 1 in w), 0),
+                                 'tb4': (4 * 3 * F(1, 2) ** 5, tour_frac(4, lambda w, k: k - 1 in w and 0 in w), 0),
+                                 'cyc3': (F(2, 8), tour_frac(3, lambda w, k: w == [1, 1, 1]), 0)},
+    ('2', 'c03-rank-matrix'): {'sym': (F(1, 2), matrix_frac(lambda a, b, c, d: b == c), 0),
+                               'inv': (2 * F(1, 4) * F(3, 4), matrix_frac(lambda a, b, c, d: a * d - b * c != 0), 0),
+                               'same': (2 * F(1, 2) ** 4, matrix_frac(lambda a, b, c, d: a == b == c == d), 0)},
+    ('2', 'c04-rank-dominoes'): {'sum7': (F(6 + 4 + 2, 28), tile_frac(lambda a, b: a + b >= 7), 0),
+                                 'gap3': (F(4 + 3 + 2 + 1, 28), tile_frac(lambda a, b: b - a >= 3), 0),
+                                 'dbl': (F(7, 28), tile_frac(lambda a, b: a == b), 0)},
+    ('2', 'c05-rank-diagonals'): {'pent': (crossing_exact(5), crossing_geom(5), 0),
+                                  'hex': (crossing_exact(6), crossing_geom(6), 0),
+                                  'hept': (crossing_exact(7), crossing_geom(7), 0)},
     ('2', 'c06-rank'): {'g1': (F(11, 20), series_enum(F(11, 20), 1), 0),
                         'g7': (series_exact(F(11, 20), 7), series_enum(F(11, 20), 7), 0),
                         'g3': (series_exact(F(11, 20), 3), series_enum(F(11, 20), 3), 0)},
-    ('3', 'c01-rank'): {'hh3': (run_exact(3, 2), run_enum(3, 2), 0),
-                        'd12': (F(4, 6), F(sum(1 for d in divisors(12) if d % 2 == 0), len(divisors(12))), 0),
-                        'edge': (F(64 - 36, 64), F(sum(1 for i in range(8) for j in range(8) if i in (0, 7) or j in (0, 7)), 64), 0)},
-    ('3', 'c02-rank'): {'hhh5': (run_exact(5, 3), run_enum(5, 3), 0),
-                        'adj': (F(2 * 3 * 2, comb(9, 2)),
-                                F(sum(1 for a, b in combinations([(i, j) for i in range(3) for j in range(3)], 2)
-                                      if abs(a[0] - b[0]) + abs(a[1] - b[1]) == 1), comb(9, 2)), 0),
-                        'rep': (F(9, 90), F(sum(1 for x in range(10, 100) if x % 11 == 0), 90), 0)},
-    ('3', 'c03-rank'): {'oct': (F(4 * 6, comb(8, 3)), None, 0),
-                        'hhh10': (run_exact(10, 3), run_enum(10, 3), 0),
-                        'd30': (F(3, 8), F(sum(1 for d in divisors(30) if is_prime(d)), len(divisors(30))), 0)},
-    ('3', 'c04-rank'): {'dig1': (F(1 + 10, 20), F(sum(1 for x in range(1, 21) if '1' in str(x)), 20), 0),
-                        'dif1': (F(5, comb(6, 2)), F(sum(1 for a, b in combinations(range(1, 7), 2) if b - a == 1), comb(6, 2)), 0),
-                        'hh6': (run_exact(6, 2), run_enum(6, 2), 0)},
-    ('3', 'c05-rank'): {'h4in12': (run_exact(12, 4), run_enum(12, 4), 0),
-                        'd36': (F(3, 9), F(sum(1 for d in divisors(36) if d % 2), len(divisors(36))), 0),
-                        'h3in7': (run_exact(7, 3), run_enum(7, 3), 0)},
-    ('3', 'c06-rank'): {'r4': (run_exact(16, 4), run_enum(16, 4), 0),
+    # 2 | ab and 3 | ab by inclusion-exclusion on "no factor 2" (1/2 each die) and "no factor 3" (2/3 each die)
+    ('3', 'c01-rank-product'): {'m6': (1 - F(1, 2) ** 2 - F(2, 3) ** 2 + F(1, 3) ** 2, dice2_frac(lambda x: x % 6 == 0), 0),
+                                'sq': (F(6 + 2, 36), dice2_frac(lambda x: isqrt(x) ** 2 == x), 0),
+                                'end0': (2 * F(1, 6) * F(3, 6), dice2_frac(lambda x: x % 10 == 0), 0)},
+    ('3', 'c02-rank-painted'): {'two': (F(12, 27), painted_frac(2), 0),
+                                'three': (F(8, 27), painted_frac(3), 0),
+                                'one': (F(6, 27), painted_frac(1), 0)},
+    ('3', 'c03-rank-landing'): {'sq2': (landing_exact(2), landing_enum(2), 0),
+                                'sq4': (landing_exact(4), landing_enum(4), 0),
+                                'sq3': (landing_exact(3), landing_enum(3), 0)},
+    ('3', 'c04-rank-coprime'): {'cp3': (coprime_exact(3), coprime_enum(3), 0),
+                                'cp2': (coprime_exact(2), coprime_enum(2), 0),
+                                'cp4': (coprime_exact(4), coprime_enum(4), 0)},
+    ('3', 'c05-rank-friends'): {'all4': (no_friendless_exact(4), graph_frac(4, lambda deg, m: min(deg) > 0), 0),
+                                'all3': (no_friendless_exact(3), graph_frac(3, lambda deg, m: min(deg) > 0), 0),
+                                'tri3': (F(1, 8), graph_frac(3, lambda deg, m: m == 3), 0)},
+    ('3', 'c06-rank'): {'m30': (F(4, 12), months_with(30), 0),
                         'r2': (run_exact(4, 2), run_enum(4, 2), 0),
                         'r3': (run_exact(8, 3), run_enum(8, 3), 0)},
 }
-
-
-def octagon_right():
-    import math
-    pts = [(math.cos(2 * pi * i / 8), math.sin(2 * pi * i / 8)) for i in range(8)]
-    good = 0
-    for a, b, c in combinations(pts, 3):
-        for p, q_, r in ((a, b, c), (b, a, c), (c, a, b)):
-            dot = (q_[0] - p[0]) * (r[0] - p[0]) + (q_[1] - p[1]) * (r[1] - p[1])
-            if abs(dot) < 1e-9:
-                good += 1
-                break
-    return F(good, comb(8, 3))
-
-
-RANK[('3', 'c03-rank')]['oct'] = (F(4 * 6, comb(8, 3)), octagon_right(), 0)
+# values the fix pass wrote, pinned so that a reverted edit fails
+PINNED = {('2', 'c01-rank-target'): (F(16, 25), F(49, 100), F(1, 4)), ('2', 'c02-rank-unbeaten'): (F(1, 2), F(3, 8), F(1, 4)),
+          ('2', 'c03-rank-matrix'): (F(1, 2), F(3, 8), F(1, 8)), ('2', 'c04-rank-dominoes'): (F(3, 7), F(5, 14), F(1, 4)),
+          ('2', 'c05-rank-diagonals'): (F(1, 2), F(5, 12), F(5, 13)), ('3', 'c01-rank-product'): (F(5, 12), F(2, 9), F(1, 6)),
+          ('3', 'c02-rank-painted'): (F(4, 9), F(8, 27), F(2, 9)), ('3', 'c03-rank-landing'): (F(3, 4), F(11, 16), F(5, 8)),
+          ('3', 'c04-rank-coprime'): (F(7, 9), F(3, 4), F(11, 16)), ('3', 'c05-rank-friends'): (F(41, 64), F(1, 2), F(1, 8)),
+          ('3', 'c06-rank'): (F(1, 2), F(107, 256), F(1, 3))}
 
 # ------------------------------------------------------------ intervals
 def bo7_len_enum():
@@ -508,6 +897,7 @@ def interval_bounds(t):
 
 
 # ------------------------------------------------------------ run
+SEQ_CHECKED = []
 for ver, d in (('2', V2), ('3', V3)):
     its = items(d)
     for (v, iid), (rule, second) in SEQ_RULES.items():
@@ -528,9 +918,12 @@ for ver, d in (('2', V2), ('3', V3)):
         check(alt == key, '%s/%s second method gives %s, key %s' % (v, iid, alt, key))
         check(all(w != key for w in wrongs), '%s/%s a distractor equals the key' % (v, iid))
         check(len(set(wrongs)) == 3, '%s/%s distractors repeat' % (v, iid))
-        check(5 <= n <= 8, '%s/%s shows %d terms' % (v, iid, n))
+        check(5 <= n <= 9, '%s/%s shows %d terms' % (v, iid, n))
         for fam, pred in v1_predictors(shown).items():
             check(pred == key, '%s/%s v1 family %s fits the shown terms and predicts %s' % (v, iid, fam, pred))
+        for fam, pred in rivals(shown).items():
+            check(pred == key, '%s/%s rival rule "%s" fits the shown terms and predicts %s' % (v, iid, fam, pred))
+        SEQ_CHECKED.append((v, iid))
     for (v, iid), (exact, second, tol) in PROB.items():
         if v != ver:
             continue
@@ -553,6 +946,8 @@ for ver, d in (('2', V2), ('3', V3)):
         check(w['answer'] == order, '%s/%s answer %s, values give %s' % (v, iid, w['answer'], order))
         gaps = [vals[order[i]] - vals[order[i + 1]] for i in range(2)]
         check(min(gaps) >= 0.02, '%s/%s gap %.4f below 0.02' % (v, iid, min(gaps)))
+        if (v, iid) in PINNED:
+            check(tuple(lines[k][0] for k in order) == PINNED[(v, iid)], '%s/%s values differ from the fix pass' % (v, iid))
         fb = ', '.join('%.3f' % vals[k] for k in order)
         check(fb in it['feedback']['correct'], '%s/%s feedback values %s' % (v, iid, fb))
     for (v, iid), (exact, second, tol) in INTV.items():
@@ -601,6 +996,8 @@ check(not (qs(V2) & qs(V1)) and not (qs(V3) & qs(V1)) and not (qs(V2) & qs(V3)),
 lines = lambda d: {l['text'] for it in items(d).values() if it['widget']['kind'] == 'order' for l in it['widget']['lines']}
 check(not (lines(V2) & lines(V1)) and not (lines(V3) & lines(V1)) and not (lines(V2) & lines(V3)), 'a ranking event repeats across versions')
 check(len(SEQ_RULES) == 30 and len(PROB) == 30 and len(RANK) == 12 and len(INTV) == 8, 'not every item is covered')
+check(sorted(SEQ_CHECKED) == sorted((v, it['id']) for v, d in (('2', V2), ('3', V3)) for it in d['parts'][0]['items']),
+      'the rival-rule check did not run over every sequence item')
 
 if FAILS:
     print('\n'.join(FAILS))
