@@ -1669,7 +1669,8 @@ const main = async () => {
         const sw = await evalOnly(() => { const b = document.querySelector('#yu-strictprereqs'); return b ? b.checked : null; });
         if (sw !== true) fails.push(`#you: the "Strict prerequisites" switch should be on by default (found ${sw})`);
         /* 5. A failed test-out waits 24 hours; a passed one unlocks */
-        const pick = await evalOnly(([c, l]) => { const n = ZQ.prereq.missingFor(c, l).direct.find(x => x.kind === 'level' && x.testOut.can); return n ? { c: n.course, n: n.n } : null; }, [lc, ll]);
+        /* ENGINE-BACKLOG 704: the probe must have a written review and no gating performance task (a pass there is a badge only, 529) */
+        const pick = await evalOnly(([c, l]) => { const n = ZQ.prereq.missingFor(c, l).direct.find(x => x.kind === 'level' && x.testOut.can && !x.perf); return n ? { c: n.course, n: n.n } : null; }, [lc, ll]);
         if (!pick) console.log('     gating: no direct prerequisite with a written review to test out of; the test-out checks are skipped');
         else {
           await evalOnly((p) => ZQ.state.prereq.testout({ key: `${p.c}/L${p.n}`, score: 0, items: 6, passed: false, missed: [] }), pick);
@@ -1684,6 +1685,21 @@ const main = async () => {
           });
           const after = await evalOnly(([c, l, p]) => ZQ.prereq.missingFor(c, l).direct.some(n => n.ref === `${p.c}/L${p.n}`), [lc, ll, pick]);
           if (after) fails.push(`${locked3}: the card still lists ${pick.c}/L${pick.n} after it was tested out`);
+          await importDoc();
+        }
+        /* 5b. A passed test-out on a level with a gating performance task is a badge: recorded as passed, level still unmet, the card says why */
+        const gp = await evalOnly((cs) => { for (const x of cs) { const [c, l] = x.split('/'); const n = ZQ.prereq.missingFor(c, l).direct.find(y => y.kind === 'level' && y.testOut.can && y.perf); if (n) return { c: n.course, n: n.n, dc: c, dl: l }; } return null; }, lockedCands);
+        if (!gp) console.log('     gating: no gating performance task on a testable direct prerequisite; the badge check is skipped');
+        else {
+          await playSet(`testout/${gp.c}/${gp.n}`, `testout ${gp.c}/L${gp.n} (performance task)`, async () => {
+            const r = await evalOnly((p) => ({ met: ZQ.prereq.levelMet(p.c, p.n), rec: ZQ.state.prereq.get().testouts[`${p.c}/L${p.n}`] || null }), gp);
+            if (!r.rec || !r.rec.passed) return { fail: `a passed test-out should be recorded as passed (record ${JSON.stringify(r.rec)})` };
+            if (r.met) return { fail: 'a passed test-out on a level with a gating performance task should stay unmet until the task is passed' };
+            return { note: 'badge only, level unmet' };
+          });
+          await route(`lesson/${gp.dc}/${gp.dl}`);
+          const card = await evalOnly((g) => { const r = document.querySelector(`.lk-row[data-ref="${g.c}/L${g.n}"]`); return r ? r.innerText : null; }, gp);
+          if (!card || !/performance task not passed/.test(card)) fails.push(`${gp.dc}/${gp.dl}: the card should list ${gp.c}/L${gp.n} as "performance task not passed" after a badge-only test-out (row: ${JSON.stringify(card)})`);
           await importDoc();
         }
         /* 6. An old save (no prereq record, every lesson of the level before it finished) is grandfathered once */
