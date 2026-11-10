@@ -50,6 +50,17 @@ const cases = [
   ['unknown-family-field', (d) => { fam(d, 'expand-single').hint = 'x'; }, 'unknown field "hint"'],
   ['form-on-a-numeric-widget', (d) => { fam(d, 'evaluate-linear').widget.form = 'expanded'; }, 'widget.form'],
   ['let-reads-a-later-let', (d) => { fam(d, 'antiderivative-power').let = { c: 'k1 * m', k1: 'k + 1' }; }, 'not a var or an earlier let'],
+  /* ENGINE-BACKLOG 830 to 834: the new forms, set answers and a pick of tuples */
+  ['numeric-set-wrong-equals-the-answer', (d) => { fam(d, 'roots-numeric').wrong[0].value = '{s}, {r}'; }, 'grades as correct'],
+  ['expression-set-wrong-equals-the-answer', (d) => { fam(d, 'roots-expression').wrong[0].tex = '{-d/c:frac}, {-b/a:frac}'; }, 'grades as correct'],
+  ['set-answers-without-unordered', (d) => { delete fam(d, 'roots-numeric').widget.unordered; }, 'unordered'],
+  ['set-with-an-answer-as-well', (d) => { fam(d, 'roots-expression').widget.answer = '{r}'; }, 'not both'],
+  ['set-with-a-form', (d) => { fam(d, 'roots-surd').widget.form = 'simplified'; }, 'form is not used with answers'],
+  ['numeric-set-wrong-not-numbers', (d) => { fam(d, 'roots-numeric').wrong[0].value = 'two, five'; }, 'draws could not be completed'],
+  ['tuple-of-the-wrong-length', (d) => { fam(d, 'roots-numeric').vars.roots.pick[0] = [1]; }, 'tuples, each with 2'],
+  ['tuple-name-already-a-var', (d) => { fam(d, 'roots-numeric').vars.roots.as = ['r', 'v']; }, 'already a var'],
+  ['unknown-form', (d) => { fam(d, 'factorise-fully').widget.form = 'factorised-full'; }, 'widget.form'],
+  ['fully-wrong-is-the-key-typed-differently', (d) => { fam(d, 'factorise-fully').wrong[0].tex = '{k}({v}{p:+})({v}{q:+})'; }, 'common-factor-dropped'],
   ['stray-nan', (d) => { fam(d, 'evaluate-linear').let.r = 'a + b*x'; fam(d, 'evaluate-linear').solution[1] = '${a} + {sqrt(0-1)}$.'; }, 'sqrt of a negative'],
 ];
 let pass = 0, fail = 0;
@@ -69,7 +80,7 @@ for (const [name, mutate, has] of cases) {
     const m = run();
     const man = JSON.parse(fs.readFileSync(path.join(copy, 'content/manifest.json'), 'utf8'));
     const row = man.fluency && man.fluency['equations/fluency-l3-opening-brackets'];
-    if (m.code !== 0 || !row || row.lesson !== 'l3-opening-brackets' || row.families !== 5 || row.n !== 20 || row.sample || !man.files.includes('courses/equations/fluency-l3-opening-brackets.json')) problem = `manifest row wrong: ${JSON.stringify(row)}`;
+    if (m.code !== 0 || !row || row.lesson !== 'l3-opening-brackets' || row.families !== fixture.families.length || row.n !== 20 || row.sample || !man.files.includes('courses/equations/fluency-l3-opening-brackets.json')) problem = `manifest row wrong: ${JSON.stringify(row)}`;
   }
   fs.rmSync(path.join(dir, 'fluency-l99-nothing.json'), { force: true });
   void renamed;

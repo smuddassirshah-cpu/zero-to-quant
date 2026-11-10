@@ -1955,3 +1955,20 @@ Cumulative weekly review (C, 820 to 829): a weekly mixed set drawn from every me
 
 829. Done [Must] `docs/AUTHORING.md` section 16 "The weekly mixed review" and the report `docs/reports/engine-gen-2.md`.
 829 status: done.
+
+Raised later (fluency quadratics), the answer forms of a typed expression and numeric answer:
+
+830. Done [Should] `expression` `"form": "factorised-fully"`: as `factorised`, and no bracketed factor may still hold a common whole-number factor or a quadratic that factorises over the integers, so `(2x+4)(x+3)` fails for `2(x+2)(x+3)` and `(x^2-4)(x+1)` fails for `(x-2)(x+2)(x+1)`. An equal answer not fully factorised returns the key `form`, default line "Factorise fully: a bracket still has a common factor."
+830 status: done. `ZQ.grade.shapeFullyFactorised`; a quadratic factorises when its discriminant is a perfect square (rational roots, so `4x^2-9` and `x^2+3x` fail as well as integer roots). Cases in `tools/test-answer-forms.mjs` part 1.
+
+831. Done [Should] `expression` `"form": "completed-square"`: `a(x+p)^2+q` with a, p, q numbers or fractions (a may be 1 or negative), either order of the two terms, the number q may be left out; refuses the expanded form and any other equal shape. Default `form` line "Write it as a bracket squared plus a number."
+831 status: done. `ZQ.grade.shapeCompletedSquare`; the x inside the bracket has coefficient 1 and p must not be 0. Cases in `tools/test-answer-forms.mjs` part 2.
+
+832. Done [Should] A set answer for `expression` and `numeric`: `"answers": [...]` with `"unordered": true`, typed with commas (`2, -5`, `x = 2, x = -5`, `x = 2 or x = -5`, `{2, -5}`), a missing or extra value returns the key `count` with the line "This question needs 2 values, separated by commas. You gave 1."; `\pm` (and `±`, `+-` in a numeric field) in the input stands for both values; the maths keyboard of such an item has a comma and `\pm` and a numeric one opens the text phone keyboard.
+832 status: done. `ZQ.grade.exprSetGrade`, `numSetGrade`; wrong sets are comma-separated lists (`tex` or `value`); in exams the model answer shows the set.
+
+833. Done [Should] Fluency `vars`: a pick of tuples, `{ "pick": [[1, 6], [2, 3]], "as": ["r", "s"] }`, sets several names from one draw (numbers or text), so no `where` is needed to tie them.
+833 status: done. `gen.js` `checkFamily` and `draw`; section 16 documents it.
+
+834. Done [Must] Validator schema for the new fields and forms (`answers`, `unordered`, `count`, the two forms), `fluency-rules.mjs` and `fluency-sample.mjs` read set answers, `tools/test-fluency.mjs` grades set answers and both forms in the real widgets (the prompt's own expression typed back must fail), `tools/test-answer-forms.mjs`, five new fixture families, `docs/AUTHORING.md` (the `expression` and `numeric` sections, section 16) and the report `docs/reports/engine-830.md`.
+834 status: done. They work in lessons, reviews, homework and exams as well as Fluency.

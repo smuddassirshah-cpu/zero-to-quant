@@ -9,7 +9,7 @@
 
    Without --family: one attempt as a learner would meet it (--n items, default the set's n, families round robin by weight,
    no repeated prompt) from seed --seed (default 1). With --family: --n draws of that family (default 20) on seeds s, s+1, ...
-   --json prints { set, seed, items: [{ family, seed, vars, lets, prompt, answer, kind, accept, form, upToConstant, tol, unit,
+   --json prints { set, seed, items: [{ family, seed, vars, lets, prompt, answer (or answers and unordered, for a set), kind, accept, form, upToConstant, tol, unit,
    wrong: [{ id, tex | value, line }], solution }] } (vars are numbers where they are whole or terminating decimals, else
    "n/d" text or the text itself). --stats adds, per family, what the validator samples at 200 seeds: distinct prompts and
    rejected draws. Exit 0, or 1 with the reason when the set or a family cannot be drawn. */
@@ -30,7 +30,7 @@ const num = (x) => (typeof x === 'string' && /^-?\d+(\.\d+)?$/.test(x) ? Number(
 const map = (o) => Object.fromEntries(Object.entries(o || {}).map(([a, b]) => [a, num(b)]));
 const row = (it, s) => ({
   family: it.family, ...(s !== undefined ? { seed: s } : {}), vars: map(it.vars), lets: map(it.lets), prompt: it.prompt,
-  answer: it.widget.answer, kind: it.widget.kind,
+  answer: it.widget.answer, ...(it.widget.answers !== undefined ? { answers: it.widget.answers, unordered: it.widget.unordered } : {}), kind: it.widget.kind,
   ...(it.widget.accept !== undefined ? { accept: it.widget.accept } : {}), ...(it.widget.form ? { form: it.widget.form } : {}),
   ...(it.widget.upToConstant ? { upToConstant: true } : {}), ...(it.widget.tol ? { tol: it.widget.tol } : {}), ...(it.widget.unit ? { unit: it.widget.unit } : {}),
   wrong: it.wrong.map((w) => ({ id: w.id, ...(w.tex !== undefined ? { tex: w.tex } : { value: w.value }), line: w.line })), solution: it.solution,
@@ -61,7 +61,7 @@ if (has('--json')) {
   items.forEach((it, i) => {
     console.log(`${i + 1}. [${it.family}] ${it.prompt}`);
     console.log(`     vars ${JSON.stringify(it.vars)}${Object.keys(it.lets).length ? ` lets ${JSON.stringify(it.lets)}` : ''}`);
-    console.log(`     answer ${JSON.stringify(it.answer)}${it.form ? ` (form ${it.form})` : ''}${it.upToConstant ? ' (up to a constant)' : ''}`);
+    console.log(`     answer ${JSON.stringify(it.answers !== undefined ? it.answers : it.answer)}${it.answers !== undefined ? ' (a set, in any order)' : ''}${it.form ? ` (form ${it.form})` : ''}${it.upToConstant ? ' (up to a constant)' : ''}`);
     it.wrong.forEach((w) => console.log(`     wrong ${w.id}: ${JSON.stringify(w.tex !== undefined ? w.tex : w.value)}${w.line ? `  "${w.line}"` : ''}`));
     it.solution.forEach((s) => console.log(`     solution: ${s}`));
   });
