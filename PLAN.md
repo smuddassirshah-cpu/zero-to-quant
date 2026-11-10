@@ -8,7 +8,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not memory; dates come from `git log` (UTC).
 - Lessons 1,214 of 1,214 (Stage 0 193, Stage 1 560, Stage 2 202, Stage 3 259); 79 course maps; 279 of 279 levels fully written; reviews 279 (own pass 279), homework 279.
 - Exams: 29 topic, 4 stage, 16 mocks with versions; 7 samples. Drills 95 non-sample (oa 8, dsa 60); Fluency sets 46 (141 families); bank 20 files, 200 items; prep paths 23, no mock without a file. Hours 3,695, gap 0.
-- Second reads under the current standard: 279 of 279 levels read and fixed (session W closed the last 61); every topic exam has a second-read file (session W read 0.1 to 0.4, 1.1, 1.2, 2.2 to 2.4). Cross-course requires edges 261, all with why. Fable concept audit: 45 levels closed, resumed 9 Nov on a six-hourly task, ordered by route use.
+- Second reads under the current standard: 279 of 279 levels read and fixed (session W closed the last 61); every topic exam has a second-read file (session W read 0.1 to 0.4, 1.1, 1.2, 2.2 to 2.4). Cross-course requires edges 261, all with why. Fable concept audit: 51 levels closed, resumed 9 Nov on a six-hourly task, ordered by route use.
 
 ## Tasks (one per session; tick when committed)
 
