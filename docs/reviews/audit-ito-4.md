@@ -157,3 +157,15 @@ No sentence is repeated back to back in any changed item. The sentence in rows 2
 3. l13-martingale-or-not.json | screens[0].explain.text | imprecise, minor | "a tame noise term $f_x$" uses "tame" before it is defined. The only definition is in summary.ideas[0]; screens[0] and screens[1] (line a5) use the word first, so the hypothesis the fix added is not readable where it is stated. | grep of the lesson: "tame" occurs at screens[0].explain, screens[1] line a5, summary.ideas[0] and summary.formula.note only. The condition itself is right: E∫₀ᵗ (3W_s² − 3s)² ds = 6t³, finite (Shreve II Theorem 4.3.1). | Replace the last sentence of the value, so the whole value reads: `For $f = x^3 - ctx$ we have $f_t = -cx$ and $\\tfrac12f_{xx} = 3x$. The drift $(3 - c)x$ vanishes at $c = 3$. Zero drift gives a martingale when the noise term $f_x$ is tame, meaning $E\\int_0^t f_x^2\\,ds$ is finite, as here.` No other string needs to change; line a5 and the summary then follow a stated definition.
 
 Findings: 0 serious, 3 minor. No `wrong`.
+
+### Fix-pass read follow-up
+
+Opus fixer, content commit `fc2907bc`. No graded key, option, accepted answer, line order or test changed; only feedback and explain text. Gates: validator 0 errors, `ito-L4-concepts.py` exit 0 (it only comments on this wording, asserts none), voice scan 35 gives 0 and 0.
+
+1. homework-4.json | items[h-stopping].feedback.byKey.x1 | fixed | Basis: Williams, Probability with Martingales, Theorem 10.10 lists bounded stopped process with T finite a.s. as one of several sufficient conditions (uniform integrability is another); Wald's lemmas (Mörters and Peres Theorems 2.44, 2.48) give E[W_τ] = 0 and E[W_τ²] = E[τ] from finite E[τ] alone, which is how lines o2 and o4 stop the unbounded W² − t. I made "sufficient" explicit rather than the read's "holds when", so the sentence cannot be read as necessary. Final text: `You skipped the conditions. One sufficient condition for optional stopping is a bounded stopped process with $\\tau$ finite. For $W$ and $W^2 - t$, a finite $E[\\tau]$ is also enough.`
+
+2. l14-hitting-and-exit.json | screens[1].feedback.byKey.x1 | fixed | Basis as finding 1; line a5 stops W² − t, justified by Wald's second lemma, and the unchanged `why` ("an infinite mean can break the rule") agrees. Final text: identical to finding 1.
+
+3. l13-martingale-or-not.json | screens[0].explain.text | fixed | Basis: my grep of the lesson finds "tame" first at screens[0].explain, defined only in summary.ideas[0]; the definition E∫₀ᵗ f_x² ds < ∞ is the square-integrability that makes the Itô integral a martingale (Shreve II Theorem 4.3.1), and here f_x = 3W_s² − 3s gives E[f_x²] = 9(3s² − 2s² + s²) = 18s², integral 6t³, finite. Final text: `For $f = x^3 - ctx$ we have $f_t = -cx$ and $\\tfrac12f_{xx} = 3x$. The drift $(3 - c)x$ vanishes at $c = 3$. Zero drift gives a martingale when the noise term $f_x$ is tame, meaning $E\\int_0^t f_x^2\\,ds$ is finite, as here.`
+
+Fixed 3, disputed 0.

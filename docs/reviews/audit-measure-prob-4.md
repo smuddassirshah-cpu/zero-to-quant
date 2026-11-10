@@ -127,3 +127,13 @@ Other checks: no changed sentence repeats its neighbour, none drops a hypothesis
 Findings: 0 serious, 1 minor.
 
 Note outside the diff (not counted): l16-girsanov-on-a-tree.json `screens[6].feedback.correct` ends "the statement of ito lesson 10", a lesson number in learner text. Suggested ending: "Then $B_t + \\theta t$ is a $Q$-Brownian motion, which is Girsanov's theorem."
+
+### Fix-pass read follow-up
+
+Opus fixer, content commit `fc2907bc`. No graded key, option, accepted answer or test changed; only explain and feedback text. Gates: validator 0 errors, `measure-prob-L4-concepts.py` exit 0, voice scan 35 gives 0 and 0.
+
+1. l16-girsanov-on-a-tree.json | screens[6].explain.text | fixed | Basis: my own computation from ln Z_n = −U ln(1 + h) − D ln(1 − h), h = θ/√n, gives mean −0.06126 and variance 0.12245 at n = 100 and −0.06125, 0.12250 at n = 10,000, so the stated moments are limits; ln Z_n is an affine function of a sum of n independent steps, so normality in the limit is the central limit theorem (Billingsley, section 27), which two moments alone do not give. Final text: `In the limit $\\ln Z_n$ is normal with mean $-\\tfrac{\\theta^2}{2}$ and variance $\\theta^2$, and it falls as the walk rises, so it is $-\\theta B_1 - \\tfrac{\\theta^2}{2}$ with $B_1 \\sim N(0, 1)$. So $\\tfrac{dQ}{dP} = e^{-\\theta B_T - \\theta^2T/2}$, and the walk $B_t + \\theta t$ is a $Q$-Brownian motion. This is Girsanov's theorem in continuous form.`
+
+Uncounted note. l16-girsanov-on-a-tree.json | screens[6].feedback.correct | fixed | Basis: AUTHORING voice rule, no lesson number in learner text; the replacement claim holds because B is the walk less θt and the walk is fair under Q, the content of Girsanov's theorem for dQ/dP = e^{−θB_T − θ²T/2} (Shreve II Theorem 5.2.3). Final text: `$\\tfrac{dQ}{dP} = e^{-\\theta B_T - \\theta^2T/2}$. Then $B_t + \\theta t$ is a $Q$-Brownian motion, which is Girsanov's theorem.`
+
+Fixed 1 plus the note, disputed 0.
