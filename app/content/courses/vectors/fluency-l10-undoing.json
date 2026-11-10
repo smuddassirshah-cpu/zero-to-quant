@@ -1,0 +1,110 @@
+{
+  "id": "fluency-l10-undoing",
+  "course": "vectors",
+  "lesson": "l10-undoing",
+  "title": "Fluency: undoing a transformation",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 15,
+  "families": [
+    {
+      "id": "determinant",
+      "weight": 1,
+      "skill": "work out ad - bc",
+      "vars": {
+        "a": { "int": [-6, 6], "not": [0] },
+        "b": { "int": [-6, 6], "not": [0] },
+        "c": { "int": [-6, 6], "not": [0] },
+        "d": { "int": [-6, 6], "not": [0] }
+      },
+      "let": {
+        "ad": "a*d",
+        "bc": "b*c",
+        "key": "a*d - b*c",
+        "plus": "a*d + b*c"
+      },
+      "where": ["key != 0"],
+      "prompt": "Find $\\det\\mathbf{{A}}$ for $\\mathbf{{A}} = \\begin{{pmatrix}} {a} & {b} \\\\ {c} & {d} \\end{{pmatrix}}$.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "For example 5" },
+      "wrong": [
+        { "id": "added-bc", "value": "{plus}", "line": "You used $ad + bc$. The determinant subtracts: ${ad} - {bc:()}$." },
+        { "id": "ad-only", "value": "{ad}", "line": "${ad}$ is $ad$ alone. Subtract $bc = {bc}$ as well." }
+      ],
+      "solution": [
+        "$ad = {a:()} \\times {d:()} = {ad}$ and $bc = {b:()} \\times {c:()} = {bc}$.",
+        "So $\\det\\mathbf{{A}} = {ad} - {bc:()} = {key}$."
+      ]
+    },
+    {
+      "id": "inverse-column",
+      "weight": 2,
+      "skill": "find a column of a 2 by 2 inverse",
+      "vars": {
+        "j": { "pick": [1, 2] },
+        "a": { "int": [-5, 5], "not": [0] },
+        "b": { "int": [-5, 5], "not": [0] },
+        "c": { "int": [-5, 5], "not": [0] },
+        "d": { "int": [-5, 5], "not": [0] }
+      },
+      "let": {
+        "det": "a*d - b*c",
+        "ad": "a*d",
+        "bc": "b*c",
+        "m1": "if(j == 1, d, -b)",
+        "m2": "if(j == 1, -c, a)",
+        "k1": "if(j == 1, d, -b)/(a*d - b*c)",
+        "k2": "if(j == 1, -c, a)/(a*d - b*c)",
+        "n1": "if(j == 1, a, -b)/(a*d - b*c)",
+        "n2": "if(j == 1, -c, d)/(a*d - b*c)",
+        "plus": "a*d + b*c"
+      },
+      "where": ["det != 0", "plus != 0", "plus != 1", "abs(det) <= 12", "a != d", "plus != det"],
+      "prompt": "Find column {j} of $\\mathbf{{A}}^{{-1}}$ for $\\mathbf{{A}} = \\begin{{pmatrix}} {a} & {b} \\\\ {c} & {d} \\end{{pmatrix}}$.",
+      "widget": { "kind": "expression", "answer": "({k1:frac}, {k2:frac})", "keyboard": "algebra" },
+      "wrong": [
+        { "id": "not-divided", "tex": "({m1}, {m2})", "line": "You swapped and negated but did not divide by $ad - bc = {det}$.", "when": "det != 1" },
+        { "id": "not-swapped", "tex": "({n1:frac}, {n2:frac})", "line": "Swap $a$ and $d$ before you divide: the top-left of the inverse is $d$ over the determinant." },
+        { "id": "added-bc", "tex": "({m1/plus:frac}, {m2/plus:frac})", "line": "You divided by $ad + bc = {plus}$. The determinant subtracts: ${ad} - {bc:()} = {det}$." }
+      ],
+      "solution": [
+        "$ad - bc = {ad} - {bc:()} = {det}$.",
+        "Swap $a$ and $d$, negate $b$ and $c$: column {j} becomes $({m1}, {m2})$.",
+        "Divide by ${det}$: column {j} of $\\mathbf{{A}}^{{-1}}$ is $({k1:frac}, {k2:frac})$."
+      ]
+    },
+    {
+      "id": "solve-with-inverse",
+      "weight": 2,
+      "skill": "solve a 2 by 2 system with the inverse",
+      "vars": {
+        "a": { "int": [-3, 3], "not": [0] },
+        "b": { "int": [-3, 3], "not": [0] },
+        "c": { "int": [-3, 3], "not": [0] },
+        "det": { "pick": [1, -1, 2, -2, 3, -3] },
+        "x0": { "int": [-4, 4] },
+        "y0": { "int": [-4, 4] }
+      },
+      "let": {
+        "d": "(det + b*c)/a",
+        "p": "a*x0 + b*y0",
+        "q": "c*x0 + d*y0",
+        "n1": "d*(a*x0 + b*y0) - b*(c*x0 + d*y0)",
+        "n2": "a*(c*x0 + d*y0) - c*(a*x0 + b*y0)",
+        "f1": "a*(a*x0 + b*y0) + b*(c*x0 + d*y0)",
+        "f2": "c*(a*x0 + b*y0) + d*(c*x0 + d*y0)"
+      },
+      "where": ["x0 != y0", "x0 != 0 or y0 != 0", "d == floor(d)", "d != 0", "abs(d) <= 8", "abs(p) <= 30", "abs(q) <= 30", "f1 != x0 or f2 != y0", "f1 != y0 or f2 != x0"],
+      "prompt": "Solve ${a:c}x{b:+c}y = {p}$ and ${c:c}x{d:+c}y = {q}$ using $\\mathbf{{x}} = \\mathbf{{A}}^{{-1}}\\mathbf{{b}}$, giving $(x, y)$.",
+      "widget": { "kind": "expression", "answer": "({x0}, {y0})", "keyboard": "algebra" },
+      "wrong": [
+        { "id": "multiplied-by-a", "tex": "({f1}, {f2})", "line": "You multiplied $\\mathbf{{b}}$ by $\\mathbf{{A}}$. Undoing $\\mathbf{{A}}$ needs $\\mathbf{{A}}^{{-1}}$: $\\mathbf{{x}} = \\mathbf{{A}}^{{-1}}\\mathbf{{b}}$." },
+        { "id": "swapped-order", "tex": "({y0}, {x0})", "line": "Give $x$ first, then $y$: the answer is $(x, y)$." }
+      ],
+      "solution": [
+        "$\\det\\mathbf{{A}} = {det}$, so $\\mathbf{{A}}^{{-1}} = {1/det:cfrac}\\begin{{pmatrix}} {d} & {-b} \\\\ {-c} & {a} \\end{{pmatrix}}$.",
+        "$\\mathbf{{A}}^{{-1}}\\mathbf{{b}}$ with $\\mathbf{{b}} = ({p}, {q})$ is ${1/det:cfrac}({n1}, {n2})$.",
+        "So $(x, y) = ({x0}, {y0})$."
+      ]
+    }
+  ]
+}
