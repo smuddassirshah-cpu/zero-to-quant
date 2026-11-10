@@ -1,0 +1,119 @@
+{
+  "id": "ci-busiest-links",
+  "name": "The most used links on a rail map",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "heaps-tries",
+  "tags": [
+    "pack-4",
+    "busiest-links"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "busiest_links",
+  "returns": "a list of strings",
+  "brief": "A rail operator logs every trip as `[a, b]`, two different station names. A link joins two stations whichever way the trip ran, so `['Ely', 'Diss']` and `['Diss', 'Ely']` use the same link. Name a link by its two stations in alphabetical order with a hyphen between them, as `'Diss-Ely'`.\n\nReturn the `k` most used links, most used first. Links used equally often come in alphabetical order of their names. Return fewer than `k` when there are fewer links.\n\nWrite `busiest_links(trips, k)`.\n\nExample. For `[['Ely', 'Diss'], ['Bury', 'Ely'], ['Diss', 'Ely']]` and `k = 2`, the link `Diss-Ely` is used twice and `Bury-Ely` once. The answer is `['Diss-Ely', 'Bury-Ely']`.",
+  "constraints": [
+    "$0 \\le$ trips $\\le 200{,}000$ and $0 \\le k \\le 200{,}000$. Station names are letters and digits, never a hyphen.",
+    "$O(t + m \\log k)$ time is the target for $t$ trips and $m$ links; sorting every link is fine too.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Count each link under its name, built from the two stations in order. Then rank by count, highest first, breaking ties by the name.",
+  "starter": "def busiest_links(trips, k):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "busiest_links([['Ely', 'Diss'], ['Bury', 'Ely'], ['Diss', 'Ely']], 2)",
+      "expect": "['Diss-Ely', 'Bury-Ely']",
+      "compare": "equal",
+      "note": "Both directions between Diss and Ely count towards one link."
+    },
+    {
+      "call": "busiest_links([['York', 'Hull'], ['Leeds', 'Hull']], 5)",
+      "expect": "['Hull-Leeds', 'Hull-York']",
+      "compare": "equal",
+      "note": "Each link is used once, so they come alphabetically, and only two exist."
+    }
+  ],
+  "tests": [
+    {
+      "call": "busiest_links([], 3)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['A', 'B']], 0)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['B', 'A']], 1)",
+      "expect": "['A-B']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['Ely', 'Diss'], ['Bury', 'Ely'], ['Diss', 'Ely']], 2)",
+      "expect": "['Diss-Ely', 'Bury-Ely']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['York', 'Hull'], ['Leeds', 'Hull']], 5)",
+      "expect": "['Hull-Leeds', 'Hull-York']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['Z', 'Y'], ['A', 'B'], ['M', 'N'], ['B', 'A'], ['Y', 'Z'], ['N', 'M']], 2)",
+      "expect": "['A-B', 'M-N']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['Wick', 'Ayr'], ['Ayr', 'Wick'], ['Ayr', 'Ely'], ['Ely', 'Ayr'], ['Bath', 'Ayr']], 3)",
+      "expect": "['Ayr-Ely', 'Ayr-Wick', 'Ayr-Bath']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['S1', 'S2'], ['S2', 'S10'], ['S10', 'S2'], ['S1', 'S2'], ['S3', 'S2']], 2)",
+      "expect": "['S1-S2', 'S10-S2']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['Q', 'P'], ['R', 'P'], ['P', 'Q'], ['P', 'R'], ['Q', 'R']], 1)",
+      "expect": "['P-Q']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['s' + str(i % 300), 's' + str(i % 300 + 1 + i % 7)] for i in range(200000)], 6)",
+      "expect": "['s0-s1', 's0-s7', 's1-s2', 's1-s3', 's10-s13', 's10-s14']",
+      "compare": "equal"
+    },
+    {
+      "call": "busiest_links([['n' + str(i * 7919 % 1000), 'm' + str(i % 13)] if i % 2 else ['m' + str(i % 13), 'n' + str(i * 7919 % 1000)] for i in range(200000)], 4)",
+      "expect": "['m0-n0', 'm0-n1', 'm0-n100', 'm0-n103']",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value.",
+  "solution": "import heapq\n\ndef busiest_links(trips, k):\n    counts = {}\n    for a, b in trips:\n        name = a + '-' + b if a < b else b + '-' + a\n        counts[name] = counts.get(name, 0) + 1\n    best = heapq.nsmallest(k, ((-c, name) for name, c in counts.items()))\n    return [name for _, name in best]\n",
+  "notes": [
+    "Writing the two stations in alphabetical order gives both directions of a trip one key.",
+    "`Counter.most_common` breaks ties by first appearance, not by name, so the tie rule needs its own key.",
+    "Counting is one pass, and the heap keeps $k$ links, so the work is $O(t + m \\log k)$."
+  ],
+  "planted": [
+    {
+      "code": "import heapq\n\ndef busiest_links(trips, k):\n    counts = {}\n    for a, b in trips:\n        name = a + '-' + b\n        counts[name] = counts.get(name, 0) + 1\n    best = heapq.nsmallest(k, ((-c, name) for name, c in counts.items()))\n    return [name for _, name in best]\n",
+      "slip": "Naming a link in the order of the trip splits one link into two directions."
+    },
+    {
+      "code": "from collections import Counter\n\ndef busiest_links(trips, k):\n    counts = Counter(a + '-' + b if a < b else b + '-' + a for a, b in trips)\n    return [name for name, _ in counts.most_common(k)]\n",
+      "slip": "`most_common` breaks ties by first appearance, not alphabetically."
+    },
+    {
+      "code": "def busiest_links(trips, k):\n    counts = {}\n    for a, b in trips:\n        name = a + '-' + b if a < b else b + '-' + a\n        counts[name] = counts.get(name, 0) + 1\n    ranked = sorted(counts.items(), key=lambda item: (item[1], item[0]), reverse=True)\n    return [name for name, _ in ranked[:k]]\n",
+      "slip": "Sorting the pair `(count, name)` in reverse also puts tied names in reverse alphabetical order."
+    }
+  ]
+}

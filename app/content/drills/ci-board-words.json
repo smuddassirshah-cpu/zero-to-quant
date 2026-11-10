@@ -1,0 +1,124 @@
+{
+  "id": "ci-board-words",
+  "name": "Words traced on a letter board",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "heaps-tries",
+  "tags": [
+    "pack-4",
+    "board-words"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2700,
+  "fn": "board_words",
+  "returns": "a sorted list of strings",
+  "brief": "A puzzle board for a trading-floor quiz is a grid of lower-case letters, given as `board`, a list of equal-length strings, one per row. A word is on the board when you can trace its letters in order, each step moving to the cell above, below, left or right, never using a cell twice in one word. `words` is a list of distinct words. Return the words that are on the board, in alphabetical order.\n\nWrite `board_words(board, words)`.\n\nExample. On `['cat', 'oxe']` the word `'cat'` runs along the top row and `'coxe'` goes down from `c`, then right. `'tax'` would need a diagonal step, so for `['cat', 'coxe', 'tax']` the answer is `['cat', 'coxe']`.",
+  "constraints": [
+    "The board is at most $12 \\times 12$; at most $5{,}000$ words, each of 1 to 12 letters.",
+    "Searching the board once for each word is too slow when many words share a long start. The target is one search from each cell, guided by a trie of the words.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Put the words in a trie. From each cell, walk the board and the trie together, marking cells in use. Record a word when you reach its end, remove it from the trie so it is not found twice, and drop trie branches that become empty.",
+  "starter": "def board_words(board, words):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "board_words(['cat', 'oxe'], ['cat', 'coxe', 'tax'])",
+      "expect": "['cat', 'coxe', 'tax']",
+      "compare": "equal",
+      "note": "`tax` would step from `a` to `x` diagonally, which is not allowed."
+    },
+    {
+      "call": "board_words(['ab', 'ba'], ['aba', 'abab', 'abba'])",
+      "expect": "['aba', 'abab']",
+      "compare": "equal",
+      "note": "`abab` goes round the square; `abba` would reuse a cell."
+    }
+  ],
+  "tests": [
+    {
+      "call": "board_words([], ['a'])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['q'], [])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['q'], ['q', 'qq'])",
+      "expect": "['q']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['cat', 'oxe'], ['cat', 'coxe', 'tax'])",
+      "expect": "['cat', 'coxe', 'tax']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['ab', 'ba'], ['aba', 'abab', 'abba', 'ababa'])",
+      "expect": "['aba', 'abab']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['ab', 'cd'], ['ad', 'abdc', 'acdb', 'bc'])",
+      "expect": "['abdc', 'acdb']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['aaa', 'aaa'], ['aaaaaa', 'aaaaaaa', 'a', 'aa'])",
+      "expect": "['a', 'aa', 'aaaaaa']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['oaan', 'etae', 'ihkr', 'iflv'], ['oath', 'pea', 'eat', 'rain', 'hike', 'flik'])",
+      "expect": "['eat', 'oath']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['xyz'], ['zyx', 'xyzx', 'yz', 'xz'])",
+      "expect": "['yz', 'zyx']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['ab', 'cd'], ['a', 'ab', 'abd', 'abdc', 'abdca'])",
+      "expect": "['a', 'ab', 'abd', 'abdc']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words(['aaaaaaab', 'aaaaaaaa', 'aaaaaaaa', 'aaaaaaaa', 'aaaaaaaa', 'aaaaaaaa', 'aaaaaaaa', 'caaaaaad'], ['aaaaaa' + x + y for x in 'bcdefghijklmnopqrstuvwxyz' for y in 'bcdefghijklmnopqrstuvwxyz'] + ['aab', 'ab', 'ac', 'ad', 'aaaa', 'ca', 'da'])",
+      "expect": "['aaaa', 'aab', 'ab', 'ac', 'ad', 'ca', 'da']",
+      "compare": "equal"
+    },
+    {
+      "call": "board_words([''.join('abcde'[(r * 7 + c * c * 3 + r * c) % 5] for c in range(12)) for r in range(12)], [''.join('abcde'[(i * k * 7 + i // 3 + k) % 5] for k in range(3 + i % 6)) for i in range(4000)])",
+      "expect": "['abc', 'abcdea', 'adbe', 'adbecad', 'baed', 'baedcba', 'bcdea', 'bcdeabcd', 'bda', 'bdaceb', 'cad', 'cadbec', 'cccc', 'ccccccc', 'cebda', 'cebdaceb', 'dbeca', 'dbecadbe', 'dcb', 'dcbaed', 'deab', 'deabcde', 'ebda', 'ebdaceb', 'edcba', 'edcbaedc']",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The obvious method searches the board once for each word, which repeats the same long walks for words that share a start and runs out of time on the large tests. The step to the target is one walk from each cell guided by a trie, so a shared start is walked once for every word that has it.",
+  "solution": "def board_words(board, words):\n    root = {}\n    for word in words:\n        node = root\n        for ch in word:\n            node = node.setdefault(ch, {})\n        node['$'] = word\n    rows = len(board)\n    cols = len(board[0]) if rows else 0\n    grid = [list(row) for row in board]\n    found = []\n\n    def walk(r, c, parent):\n        ch = grid[r][c]\n        node = parent.get(ch)\n        if node is None:\n            return\n        word = node.pop('$', None)\n        if word is not None:\n            found.append(word)\n        grid[r][c] = '.'\n        for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '.':\n                walk(nr, nc, node)\n        grid[r][c] = ch\n        if not node:\n            del parent[ch]\n\n    for r in range(rows):\n        for c in range(cols):\n            walk(r, c, root)\n    return sorted(found)\n",
+  "notes": [
+    "Walking the board and the trie together tries every word with a given start at once.",
+    "A word must be removed from the trie when found, or a second route to it lists it twice.",
+    "The walk only follows board paths that start some word, and pruning empty branches stops repeat walks once their words are found."
+  ],
+  "planted": [
+    {
+      "code": "def board_words(board, words):\n    root = {}\n    for word in words:\n        node = root\n        for ch in word:\n            node = node.setdefault(ch, {})\n        node['$'] = word\n    rows = len(board)\n    cols = len(board[0]) if rows else 0\n    grid = [list(row) for row in board]\n    found = []\n\n    def walk(r, c, parent):\n        ch = grid[r][c]\n        node = parent.get(ch)\n        if node is None:\n            return\n        word = node.pop('$', None)\n        if word is not None:\n            found.append(word)\n        grid[r][c] = '.'\n        for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '.':\n                walk(nr, nc, node)\n        if not node:\n            del parent[ch]\n\n    for r in range(rows):\n        for c in range(cols):\n            walk(r, c, root)\n    return sorted(found)\n",
+      "slip": "Never putting a letter back after a walk returns blocks that cell for every later start."
+    },
+    {
+      "code": "def board_words(board, words):\n    root = {}\n    for word in words:\n        node = root\n        for ch in word:\n            node = node.setdefault(ch, {})\n        node['$'] = word\n    rows = len(board)\n    cols = len(board[0]) if rows else 0\n    grid = [list(row) for row in board]\n    found = []\n\n    def walk(r, c, parent):\n        ch = grid[r][c]\n        node = parent.get(ch)\n        if node is None:\n            return\n        word = node.pop('$', None)\n        if word is not None:\n            found.append(word)\n        grid[r][c] = '.'\n        for dr in (-1, 0, 1):\n            for dc in (-1, 0, 1):\n                nr, nc = r + dr, c + dc\n                if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '.':\n                    walk(nr, nc, node)\n        grid[r][c] = ch\n        if not node:\n            del parent[ch]\n\n    for r in range(rows):\n        for c in range(cols):\n            walk(r, c, root)\n    return sorted(found)\n",
+      "slip": "Stepping to all eight neighbours allows diagonal steps, which the board does not."
+    },
+    {
+      "code": "def board_words(board, words):\n    root = {}\n    for word in words:\n        node = root\n        for ch in word:\n            node = node.setdefault(ch, {})\n        node['$'] = word\n    rows = len(board)\n    cols = len(board[0]) if rows else 0\n    grid = [list(row) for row in board]\n    found = []\n\n    def walk(r, c, parent):\n        ch = grid[r][c]\n        node = parent.get(ch)\n        if node is None:\n            return\n        if '$' in node:\n            found.append(node['$'])\n        grid[r][c] = '.'\n        for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '.':\n                walk(nr, nc, node)\n        grid[r][c] = ch\n\n    for r in range(rows):\n        for c in range(cols):\n            walk(r, c, root)\n    return sorted(found)\n",
+      "slip": "Leaving a found word in the trie lists it once for every route that traces it."
+    }
+  ]
+}

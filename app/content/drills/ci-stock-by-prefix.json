@@ -1,0 +1,124 @@
+{
+  "id": "ci-stock-by-prefix",
+  "name": "Stock held under a code prefix",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "heaps-tries",
+  "tags": [
+    "pack-4",
+    "stock-by-prefix"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1440,
+  "fn": "prefix_stock",
+  "returns": "a list of whole numbers",
+  "brief": "A warehouse codes each product by a string such as `'BX12'`, and the first letters group products by family. `events` is a list of two kinds of event:\n\n`['set', code, count]` sets the stock of `code` to `count`, replacing any earlier count for that code.\n\n`['ask', prefix]` asks for the total stock of every code that starts with `prefix`. The empty prefix starts every code.\n\nReturn the answers to the asks, in order.\n\nWrite `prefix_stock(events)`.\n\nExample. After `['set', 'BX1', 5]`, `['set', 'BY2', 3]` and `['set', 'BX1', 2]`, the ask `['ask', 'B']` gets 5, since `BX1` now holds 2. The ask `['ask', 'BX']` gets 2.",
+  "constraints": [
+    "At most $200{,}000$ events; codes and prefixes hold at most 12 capital letters and digits, and counts are whole numbers from 0 to $10^6$.",
+    "$O(L)$ time per event for codes of length $L$ is the target. Scanning every code for each ask is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep a trie whose nodes store the total stock below them. A set adds the change, new count minus old count, to every node on the code's path; an ask walks the prefix and reads one node.",
+  "starter": "def prefix_stock(events):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "prefix_stock([['set', 'BX1', 5], ['set', 'BY2', 3], ['set', 'BX1', 2], ['ask', 'B'], ['ask', 'BX']])",
+      "expect": "[5, 2]",
+      "compare": "equal",
+      "note": "The second set replaces the 5 for `BX1` with 2."
+    },
+    {
+      "call": "prefix_stock([['ask', 'A'], ['set', 'A7', 4], ['ask', ''], ['ask', 'A70']])",
+      "expect": "[0, 4, 0]",
+      "compare": "equal",
+      "note": "Nothing is stocked at the first ask, and no code starts `A70`."
+    }
+  ],
+  "tests": [
+    {
+      "call": "prefix_stock([])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['ask', '']])",
+      "expect": "[0]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'A1', 3], ['ask', 'A1'], ['ask', 'A12'], ['ask', 'B']])",
+      "expect": "[3, 0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'BX1', 5], ['set', 'BY2', 3], ['set', 'BX1', 2], ['ask', 'B'], ['ask', 'BX']])",
+      "expect": "[5, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['ask', 'A'], ['set', 'A7', 4], ['ask', ''], ['ask', 'A70']])",
+      "expect": "[0, 4, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'K9', 8], ['set', 'K9', 1], ['set', 'K9', 6], ['ask', 'K']])",
+      "expect": "[6]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'AB', 2], ['set', 'A', 5], ['set', 'ABC', 7], ['ask', 'A'], ['ask', 'AB'], ['set', 'AB', 0], ['ask', 'A']])",
+      "expect": "[14, 9, 12]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'Z1', 0], ['ask', 'Z'], ['set', 'Z1', 9], ['set', 'Z2', 1], ['ask', ''], ['ask', 'Z2']])",
+      "expect": "[0, 10, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'P1', 1000000], ['set', 'P2', 1000000], ['set', 'Q', 4], ['ask', 'P'], ['ask', '']])",
+      "expect": "[2000000, 2000004]",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'M', 3], ['set', 'MM', 4], ['set', 'MMM', 5], ['ask', 'MM'], ['set', 'MM', 1], ['ask', 'M'], ['ask', 'MMMM']])",
+      "expect": "[9, 9, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "sum(prefix_stock([['set', 'C' + str(i % 5000), i % 997] if i % 2 == 0 else ['ask', 'C' + str(i % 50)] for i in range(200000)]))",
+      "expect": "4683748462",
+      "compare": "equal"
+    },
+    {
+      "call": "prefix_stock([['set', 'X' + str(i * 7919 % 100000).zfill(5), i % 10] for i in range(100000)] + [['ask', 'X' + str(d)] for d in range(10)] + [['ask', 'X00'], ['ask', '']])",
+      "expect": "[45000, 45000, 45000, 45000, 45000, 45000, 45000, 45000, 45000, 45000, 4500, 450000]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def prefix_stock(events):\n    root = [0, {}]\n    stock = {}\n    answers = []\n    for event in events:\n        if event[0] == 'set':\n            code, count = event[1], event[2]\n            change = count - stock.get(code, 0)\n            stock[code] = count\n            node = root\n            node[0] += change\n            for ch in code:\n                node = node[1].setdefault(ch, [0, {}])\n                node[0] += change\n        else:\n            node = root\n            for ch in event[1]:\n                node = node[1].get(ch)\n                if node is None:\n                    break\n            answers.append(0 if node is None else node[0])\n    return answers\n",
+  "notes": [
+    "Each trie node holds the total stock of the codes below it, so an ask reads one node.",
+    "A set replaces a count, so the change to add is the new count minus the old one.",
+    "A set or an ask walks one path of at most 12 nodes, so each event costs $O(L)$."
+  ],
+  "planted": [
+    {
+      "code": "def prefix_stock(events):\n    root = [0, {}]\n    answers = []\n    for event in events:\n        if event[0] == 'set':\n            code, count = event[1], event[2]\n            node = root\n            node[0] += count\n            for ch in code:\n                node = node[1].setdefault(ch, [0, {}])\n                node[0] += count\n        else:\n            node = root\n            for ch in event[1]:\n                node = node[1].get(ch)\n                if node is None:\n                    break\n            answers.append(0 if node is None else node[0])\n    return answers\n",
+      "slip": "Adding each count instead of replacing the old one counts a restocked code twice."
+    },
+    {
+      "code": "def prefix_stock(events):\n    root = [0, {}]\n    stock = {}\n    answers = []\n    for event in events:\n        if event[0] == 'set':\n            code, count = event[1], event[2]\n            change = count - stock.get(code, 0)\n            stock.setdefault(code, count)\n            node = root\n            node[0] += change\n            for ch in code:\n                node = node[1].setdefault(ch, [0, {}])\n                node[0] += change\n        else:\n            node = root\n            for ch in event[1]:\n                node = node[1].get(ch)\n                if node is None:\n                    break\n            answers.append(0 if node is None else node[0])\n    return answers\n",
+      "slip": "Keeping only the first count for a code makes the third set of a code subtract the wrong amount."
+    },
+    {
+      "code": "def prefix_stock(events):\n    root = [0, {}]\n    stock = {}\n    answers = []\n    for event in events:\n        if event[0] == 'set':\n            code, count = event[1], event[2]\n            change = count - stock.get(code, 0)\n            stock[code] = count\n            node = root\n            for ch in code:\n                node = node[1].setdefault(ch, [0, {}])\n                node[0] += change\n        else:\n            node = root\n            for ch in event[1]:\n                node = node[1].get(ch)\n                if node is None:\n                    break\n            answers.append(0 if node is None else node[0])\n    return answers\n",
+      "slip": "The root's total is never updated, so the empty prefix always answers 0."
+    }
+  ]
+}
