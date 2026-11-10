@@ -246,8 +246,145 @@ lv2.claim(abs(float((1 - p_ge3) ** 4) - 0.91510) < 0.000005, '0.91510 to 5 place
 
 lv2.check_wrongs('problems-2')
 
+# ---------------------------------------------------------------- Level 3
+lv3 = Level('counting-chance', 3)
+r3 = load(lv3, 3)
+
+
+def no_clash(n, d=50):
+    p_ = F(1)
+    for i in range(n):
+        p_ *= F(d - i, d)
+    return p_
+
+
+def sim_clash(n, d=50, trials=200000):
+    return sum(1 for _ in range(trials) if len({RNG.randrange(d) for _ in range(n)}) < n) / trials
+
+
+# P1: shards
+nc5 = no_clash(5)
+answer(lv3, r3, 0, 0, nc5, 1 - sim_clash(5), 'P(no clash, 5)', second_tol=0.004)
+wrongs(lv3, r3, 0, 0, {'your-shard': F(49, 50) ** 4, 'last-only': F(46, 50)})
+answer(lv3, r3, 0, 1, 1 - nc5, F(comb(50, 5) * factorial(5), 1) / 50 ** 5 * -1 + 1, 'P(clash, 5)')
+wrongs(lv3, r3, 0, 1, {'none': nc5, 'from-your-shard': 1 - F(49, 50) ** 4, 'pairs': F(comb(5, 2), 50)})
+nmin3 = next(n for n in range(1, 51) if 1 - no_clash(n) > F(1, 2))
+answer(lv3, r3, 0, 2, nmin3, 9 if (sim_clash(9) > 0.5 and sim_clash(8) < 0.5) else -1, 'smallest n (simulated at 8 and 9)')
+wrongs(lv3, r3, 0, 2, {'half': 25, 'union-bound': next(n for n in range(2, 51) if F(comb(n, 2), 50) >= F(1, 2)), 'root': 7})
+for n_, v in [(6, '0.73224'), (7, '0.64437'), (8, '0.55416'), (9, '0.46550')]:
+    lv3.claim(f'{float(no_clash(n_)):.5f}' == v, f'no clash at {n_} = {v}')
+for n_, v in [(7, 0.3556), (8, 0.4458), (9, 0.5345)]:
+    lv3.claim(abs(float(1 - no_clash(n_)) - v) < 0.00005, f'clash at {n_} = {v}')
+stated(lv3, r3, 0, 2, 'explain.text', '0.46550')
+stated(lv3, r3, 0, 2, 'feedback.byKey.union-bound', '0.4458')
+stated(lv3, r3, 0, 2, 'feedback.byKey.root', '0.3556')
+ub = F(comb(nmin3, 2), 50)
+answer(lv3, r3, 0, 3, ub, F(sum(1 for _ in itertools.combinations(range(9), 2)), 50), 'union bound at 9')
+wrongs(lv3, r3, 0, 3, {'one-symbol': F(8, 50), 'exact': 1 - no_clash(9), 'ordered-pairs': F(72, 50)})
+stated(lv3, r3, 0, 3, 'explain.text', '0.5345')
+
+# P2: three borrowers; check with an explicit Venn region model at t = 0.015 and t = 0
+PA, PB, PC = sp.Rational(10, 100), sp.Rational(8, 100), sp.Rational(6, 100)
+PAB, PAC, PBC = sp.Rational(3, 100), sp.Rational(2, 100), sp.Rational(15, 1000)
+t = sp.Symbol('t')
+uAB = PA + PB - PAB
+answer(lv3, r3, 1, 0, uAB, 0.10 + 0.08 - 0.03, 'P(A or B)')
+wrongs(lv3, r3, 1, 0, {'no-overlap': PA + PB, 'both': PAB})
+u3 = sp.expand(uAB + PC - (PAC + PBC - t))
+lv3.claim(sp.simplify(u3 - (PA + PB + PC - PAB - PAC - PBC + t)) == 0, 'part 2: split form equals the three-event rule')
+lv3.claim(sp.simplify(u3 - (sp.Rational(175, 1000) + t)) == 0, 'part 2: 0.175 + t')
+w = widget(lv3, r3, 1, 1)
+for form in w['accept']:
+    lv3.claim(sp.simplify(sp.sympify(form) - u3) == 0, f'part 2 accept form {form} equals 0.175 + t')
+for wr in w['wrong']:
+    lv3.claim(sp.simplify(sp.sympify(wr['tex']) - u3) != 0, f'part 2 wrong {wr["tex"]} differs from 0.175 + t')
+
+
+def regions(tv):
+    """The seven Venn regions for a given triple overlap; all must be >= 0 for tv to be possible."""
+    abc = tv
+    ab, ac, bc = PAB - tv, PAC - tv, PBC - tv
+    a = PA - ab - ac - abc
+    b = PB - ab - bc - abc
+    c = PC - ac - bc - abc
+    return [a, b, c, ab, ac, bc, abc]
+
+
+tmax = max(sp.Rational(k, 10000) for k in range(0, 1001) if all(r >= 0 for r in regions(sp.Rational(k, 10000))))
+answer(lv3, r3, 1, 2, min(PAB, PAC, PBC), tmax, 't max (grid search over feasible Venn regions)')
+wrongs(lv3, r3, 1, 2, {'largest-pair': PAB, 'smallest-single': PC, 'product': PA * PB * PC})
+umax = u3.subs(t, tmax)
+answer(lv3, r3, 1, 3, umax, sum(regions(tmax)), 'largest P(union) = sum of regions')
+wrongs(lv3, r3, 1, 3, {'singles': PA + PB + PC, 'smallest': u3.subs(t, 0), 'from-largest-pair': u3.subs(t, PAB)})
+lv3.claim(all(r >= 0 for r in regions(0)) and sum(regions(0)) == sp.Rational(175, 1000), 't = 0 is possible and gives 0.175')
+
+# P3: aces and kings
+N52 = comb(52, 5)
+answer(lv3, r3, 2, 0, comb(44, 5), sum(comb(4, a) * comb(4, k) * comb(44, 5 - a - k) for a in [0] for k in [0]), 'no ace no king')
+wrongs(lv3, r3, 2, 0, {'no-ace-only': comb(48, 5), 'one-each': comb(50, 5)})
+pA = F(N52 - comb(48, 5), N52)
+pU = 1 - F(comb(44, 5), N52)
+both_direct = sum(comb(4, a) * comb(4, k) * comb(44, 5 - a - k) for a in range(1, 5) for k in range(1, 5) if a + k <= 5)
+answer(lv3, r3, 2, 1, pU, F(sum(comb(4, a) * comb(4, k) * comb(44, 5 - a - k) for a in range(5) for k in range(5) if a + k <= 5 and a + k > 0), N52), 'P(A or K)')
+wrongs(lv3, r3, 2, 1, {'none': 1 - pU, 'added': 2 * pA})
+lv3.claim(abs(float(pA) - 0.341158) < 5e-7, 'P(A) = 0.341158 as stated')
+pAK = 2 * pA - pU
+answer(lv3, r3, 2, 2, pAK, F(both_direct, N52), 'P(A and K), direct sum over ace and king counts')
+wrongs(lv3, r3, 2, 2, {'product': pA ** 2, 'once': pU - pA})
+answer(lv3, r3, 2, 3, pAK * N52, both_direct, 'hands with an ace and a king')
+wrongs(lv3, r3, 2, 3, {'union': N52 - comb(44, 5), 'from-product': 302492})
+fp = [x for x in widget(lv3, r3, 2, 3)['wrong'] if x['id'] == 'from-product'][0]
+lo, hi = float(pA ** 2) * N52, 0.116389 * N52
+lv3.claim(all(abs(v - fp['value']) <= fp['tol']['abs'] for v in (round(lo), round(hi))), f'independence slip band covers {lo:.1f} (exact) and {hi:.1f} (from the rounded square 0.116389)')
+lv3.claim(abs(fp['value'] - both_direct) > fp['tol']['abs'], 'independence slip band stays clear of 260,360')
+lv3.claim(N52 - comb(48, 5) == 886656 and N52 - comb(44, 5) == 1512952, 'stated counts 886,656 and 1,512,952')
+stated(lv3, r3, 2, 3, 'explain.text', 886656)
+stated(lv3, r3, 2, 3, 'explain.text', 1512952)
+
+# P4: short deck, ranks 0..4, suits 0..3
+deck = [(r_, s_) for r_ in range(5) for s_ in range(4)]
+deals3 = list(itertools.permutations(range(20), 3))
+answer(lv3, r3, 3, 0, F(16, 19), F(sum(1 for a, b in itertools.permutations(range(20), 2) if deck[a][0] != deck[b][0]), 20 * 19), 'P(new rank)')
+wrongs(lv3, r3, 3, 0, {'replace': F(16, 20), 'same': F(3, 19)})
+p3r = F(16, 19) * F(12, 18)
+answer(lv3, r3, 3, 1, p3r, F(sum(1 for d in deals3 if len({deck[i][0] for i in d}) == 3), len(deals3)), 'P(three ranks)')
+wrongs(lv3, r3, 3, 1, {'replace': F(16, 20) * F(12, 20), 'fixed-bottom': F(16, 19) * F(12, 19)})
+hands = list(itertools.combinations(range(20), 4))
+p4r = p3r * F(8, 17)
+n4 = sum(1 for h in hands if len({deck[i][0] for i in h}) == 4)
+answer(lv3, r3, 3, 2, p4r, F(n4, len(hands)), 'P(four ranks)')
+wrongs(lv3, r3, 3, 2, {'replace': F(16 * 12 * 8, 20 ** 3), 'fixed-bottom': F(16 * 12 * 8, 19 ** 3)})
+answer(lv3, r3, 3, 3, len(hands) * p4r, comb(5, 4) * 4 ** 4, 'hands with four ranks')
+wrongs(lv3, r3, 3, 3, {'suits-only': 4 ** 4, 'ordered': 1280 * 24})
+
+
+def cls(h):
+    c = sorted((sum(1 for i in h if deck[i][0] == r_) for r_ in range(5)), reverse=True)
+    return {(1, 1, 1, 1): 'none', (2, 1, 1, 0): 'pair', (2, 2, 0, 0): 'two', (3, 1, 0, 0): 'trips', (4, 0, 0, 0): 'quads'}[tuple(c[:4])]
+
+
+from collections import Counter  # noqa: E402
+cnt = Counter(cls(h) for h in hands)
+lv3.claim(len(hands) == 4845 and cnt['two'] == 360 and cnt['trips'] == 320 and cnt['quads'] == 5 and cnt['none'] == 1280,
+          f'short-deck classes by enumeration: {dict(cnt)}')
+answer(lv3, r3, 3, 4, 4845 - 1280 - 360 - 320 - 5, cnt['pair'], 'one pair')
+wrongs(lv3, r3, 3, 4, {'at-least-pair': 4845 - 1280, 'no-quads': 4845 - 1280 - 360 - 320, 'two-pair-ordered': 4845 - 1280 - 720 - 320 - 5})
+lv3.claim(cnt['pair'] * 2 > 4845, 'one pair is more than half of all hands')
+lv3.claim(5 * 4 * comb(4, 2) * comb(4, 2) == 720 and comb(5, 2) * comb(4, 2) ** 2 == 360, 'two pair: ordered ranks 720, unordered 360')
+
+# typed share and difficulty rules, every set
+for lv_, ref in [(lv1, r1), (lv2, r2), (lv3, r3)]:
+    its = lv_.files[ref]['items']
+    kinds = [p_['widget']['kind'] for it in its for p_ in it['parts']]
+    typed = sum(1 for k in kinds if k in ('numeric', 'expression'))
+    lv_.claim(3 * typed >= 2 * len(kinds), f'{ref}: {typed} of {len(kinds)} parts typed (at least two thirds)')
+    lv_.claim(all(3 <= it['difficulty'] <= 5 for it in its) and any(it['difficulty'] == 5 for it in its), f'{ref}: difficulty 3 to 5 with a 5')
+    lv_.claim(all(3 <= len(it['parts']) <= 5 for it in its) and 3 <= len(its) <= 5, f'{ref}: 3 to 5 items of 3 to 5 parts')
+
+lv3.check_wrongs('problems-3')
+
 # ---------------------------------------------------------------- report
-results = lv1.results + lv2.results
+results = lv1.results + lv2.results + lv3.results
 bad = [r for r in results if not r[0]]
 print(f'problems-counting-chance: {len(results) - len(bad)} of {len(results)} checks passed')
 sys.exit(1 if bad else 0)
