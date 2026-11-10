@@ -94,9 +94,10 @@ rng = random.Random(11); N = 200000
 low7 = sum(sum(rng.random() < 0.9 for _ in range(10)) <= 7 for _ in range(N)) / N
 check('l1 sim: 7 or fewer hits in 10 happens about 7% of the time', abs(low7 - 0.0702) < 0.003)
 # 7 of 10 does not reject calibration at 5% (homework-1 returns 'calibrated' for it); l1 s4 calls it overconfident outright
-check('l1 s4: "the candidate was overconfident" from 7 of 10 is significant at 5%  [corrected: p = 0.070 > 0.05, a warning only]',
-      float(binom_cdf(7, 10, p9)) < 0.05, expected_fail=True)
-# corrected assert: assert float(binom_cdf(7, 10, p9)) > 0.05
+# (corrected claim, fix pass) l1 s4 now calls 7 of 10 "a warning, not proof"; P(hits <= 7) = 0.0702 > 0.05
+check('l1 s4: 7 of 10 is a warning, not proof: P(hits <= 7) = 0.070 > 0.05  (corrected claim, fix pass)',
+      float(binom_cdf(7, 10, p9)) > 0.05 and abs(float(binom_cdf(7, 10, p9)) - 0.0702) < 5e-4
+      and 'warning, not proof' in load('l1-unknown-quantity')['screens'][4]['explain']['text'])
 
 # ---------- l2: dice fair values ----------
 E = lambda fn, n: F(sum(fn(r) for r in product(range(1, 7), repeat=n)), 6 ** n)
@@ -112,9 +113,12 @@ check('l2 added sds 3.4157, 5.1235', abs(2 * sqrt(35 / 12) - 3.4157) < 1e-4 and 
 # "multiplying fair values works only for independent dice": an uncorrelated but dependent pair also multiplies.
 # X uniform on {-1, 0, 1}, Y = X^2: E[XY] = E[X^3] = 0 = E[X]E[Y], yet Y is a function of X.
 xs = [-1, 0, 1]
-check('l2 s5 "only for independent": no dependent pair has E[XY] = E[X]E[Y]  [corrected: independence is sufficient, not necessary]',
-      not (F(sum(x ** 3 for x in xs), 3) == F(sum(xs), 3) * F(sum(x * x for x in xs), 3)), expected_fail=True)
-# corrected assert: assert F(sum(x**3 for x in xs), 3) == F(sum(xs), 3) * F(sum(x*x for x in xs), 3)
+# (corrected claim, fix pass) l2 s5 now says multiplying is "safe for independent dice": sufficient, and the dependent pair shows it is not necessary
+l2c = load('l2-dice-sum')
+check('l2 s5: independence is sufficient for E[XY] = E[X]E[Y]; a dependent pair can also multiply  (corrected claim, fix pass)',
+      F(sum(x ** 3 for x in xs), 3) == F(sum(xs), 3) * F(sum(x * x for x in xs), 3)
+      and 'only' not in l2c['screens'][5]['explain']['text'] and 'only' not in l2c['summary']['ideas'][2]
+      and 'only' not in l2c['screens'][5]['feedback']['byKey']['product-of-means'])
 # 100 dice: share within 350 +- 17, exact by convolution
 pm = {0: F(1)}
 for _ in range(100):
@@ -144,9 +148,14 @@ pmx = {}
 for r in product(range(1, 7), repeat=2):
     pmx[max(r)] = pmx.get(max(r), 0) + F(1, 36)
 best = max(((lo, lo + 1) for lo in range(1, 6)), key=lambda q: pmx[q[0]] + pmx[q[1]])
-check('l3 s3: the densest width-1 range sits on the fair value for every payout  [corrected: only for a symmetric one-peaked payout; larger of two dice: fair 4.47, densest range 5 to 6]',
-      best[0] <= float(E(max, 2)) <= best[1], expected_fail=True)
-# corrected assert: assert best == (5, 6) and float(E(max, 2)) < 5
+# (corrected claim, fix pass) l3 s3 now ties "fair value = densest" to the symmetric two-dice total only
+cnt2 = {}
+for r in product(range(1, 7), repeat=2):
+    cnt2[sum(r)] = cnt2.get(sum(r), 0) + 1
+win = {c: cnt2.get(c - 1, 0) + cnt2.get(c, 0) + cnt2.get(c + 1, 0) for c in range(3, 12)}
+check('l3 s3: fair value is densest only for a symmetric total (two dice: centre 7 holds 16, 6 or 8 hold 15); larger of two dice fair 4.47, densest 5 to 6  (corrected claim, fix pass)',
+      best == (5, 6) and float(E(max, 2)) < 5 and max(win, key=win.get) == 7 and win[7] == 16 and win[6] == win[8] == 15
+      and 'symmetric' in load('l3-how-wide')['screens'][3]['explain']['text'])
 
 
 def toy_profit(h):
@@ -195,9 +204,11 @@ f90 = math.exp(logs[int(0.9 * len(logs))])
 inside8 = sum(l <= math.log(8) for l in logs) / len(logs)
 print(f'      l4: three independent factors each 90% within x2: product 90% within x{f90:.2f}; x8 holds {inside8:.4f}')
 check('l4 sim: independent errors give about a factor 2^sqrt(3) = 3.3 at 90%', abs(f90 - 2 ** sqrt(3)) < 0.08)
-check('l4 s4/s5: the factor of 8 is the 90% range of the product when each factor is a 90% factor of 2  [corrected: 8 is the worst case; the 90% factor is about 3.3 and x8 holds over 99%]',
-      inside8 < 0.93, expected_fail=True)
-# corrected assert: assert inside8 > 0.99 and abs(f90 - 3.32) < 0.1
+# (corrected claim, fix pass) l4 s4/s5 now call 8 the worst case and about 3 the usual factor
+l4c = load('l4-fermi')
+check('l4 s4/s5: 8 is the worst case; independent errors give about x3.3 at 90% and x8 holds over 99%  (corrected claim, fix pass)',
+      inside8 > 0.99 and abs(f90 - 3.32) < 0.1 and 'at worst' in l4c['screens'][5]['explain']['text']
+      and 'same way' in l4c['screens'][4]['explain']['text'] and 'about 3' in l4c['screens'][5]['explain']['text'])
 run_code_widget('l4 s9 code', load('l4-fermi')['screens'][9]['widget'])
 check('l4 trade +30; transfer 400', 3 * (90 - 80) == 30 and 40 * 5 * 2 == 400)
 
@@ -207,12 +218,14 @@ check('r1 gap of two dice = 35/18', E(lambda r: abs(r[0] - r[1]), 2) == F(35, 18
 check('r1 max of three = 119/24; six is largest in 91/216', E(max, 3) == F(119, 24) and 216 - 125 == 91)
 check('r1 scaled sd 24.15', abs(10 * sqrt(35 / 6) - 24.15) < 5e-3)
 check('r1 +-24 on 10*(S-7) holds 2/3', sum(p for s, p in p2.items() if abs(10 * (s - 7)) <= 24) == F(2, 3))
-check('r1 coins: 160000/2.3 about 70,000; 1609.344/0.0225 = 71,526', round(160000 / 2.3, -4) == 70000 and round(1609.344 / 0.0225) == 71526)
+check('r1 coins: 160000/2.3 about 70,000; 1609.344/0.02303 = 69,880, about 69,900 (fix pass)', round(160000 / 2.3, -4) == 70000 and round(1609.344 / 0.02303) == 69880)
 # The 12-sided pound coin (in use since 2017) is 23.43 mm corner to corner, 23.03 mm edge to edge (Royal Mint specification).
 # 22.5 mm was the round pound, withdrawn in October 2017.
-check('r1 coins: the "exact" 2.25 cm is the pound coin now in use  [corrected: 2.343 cm, giving 68,687]',
-      abs(2.25 - 2.343) < 0.005, expected_fail=True)
-# corrected assert: assert round(160934.4 / 2.343) == 68687
+# (corrected claim, fix pass) review-1 now uses the 12-sided coin across its flats, 23.03 mm (Royal Mint), since coins laid edge to edge touch flat to flat
+r1x = load('review-1')['items'][7]['explain']['text']
+check('r1 coins: 12-sided coin 2.303 cm across the flats gives 69,880, about 69,900 (across the corners, 2.343 cm, would give 68,687)  (corrected claim, fix pass)',
+      round(160934.4 / 2.303) == 69880 and round(160934.4 / 2.303, -2) == 69900 and round(160934.4 / 2.343) == 68687
+      and '2.303 cm' in r1x and '69,900' in r1x and '2.25' not in r1x)
 check('r1 error factor 18', 2 * 2 * 1.5 * 3 == 18)
 check('r1 chess ledger +36', 2 * (220 - 204) + (204 - 200) == 36)
 for label, fn, n, quoted in [('gap', lambda a: abs(a[0] - a[1]), 2, 1.945), ('max3', max, 3, 4.958)]:
@@ -235,9 +248,11 @@ check('hw1 ledger: +4 at 7, +8 at 9', 3 * (7 - 6) + (8 - 7) == 4 and 3 * (9 - 6)
 prod_pays = [a * b for a in range(1, 7) for b in range(1, 7)]
 mu = sum(prod_pays) / 36; sdp = sqrt(sum((x - mu) ** 2 for x in prod_pays) / 36)
 print(f'      hw1: product of two dice has sd {sdp:.2f}')
-check('hw1 explain: the product of two dice fails the width-10 quote because it is lumpy, not because it is spread out  [corrected: its sd is about 8.9, so half the rolls need a width above 10]',
-      sdp < 5, expected_fail=True)
-# corrected assert: assert 8.9 < sdp < 9.0
+# (corrected claim, fix pass) hw1 now says the product is too spread out around 12.25, sd about 8.9.
+# Widest allowed quote around centre 12.5 is 8 to 17, which holds only 14 of 36 rolls.
+in817 = sum(1 for x in prod_pays if 8 <= x <= 17)
+check('hw1 explain: the product of two dice is too spread out around 12.25 (sd 8.94); 8 to 17 holds 12 of 36  (corrected claim, fix pass)',
+      8.9 < sdp < 9.0 and mu == 12.25 and in817 == 12 and 'spread out' in load('homework-1')['items'][0]['explain']['text'])
 check('hw1 mock model: running totals and +26', [sum((9 - k) ** 2 for k in range(1, j + 1)) for j in range(1, 9)] == [64, 113, 149, 174, 190, 199, 203, 204] and 230 - 204 == 26)
 
 print(f'\n{PASSES[0]} checks passed, {len(FAILS)} failed, {len(XFAILS)} EXPECTED_FAIL')
