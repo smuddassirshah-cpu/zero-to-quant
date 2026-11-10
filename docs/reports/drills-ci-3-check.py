@@ -23,6 +23,9 @@ DRILLS = os.path.join(HERE, "..", "..", "app", "content", "drills")
 SMALL = 3000
 LIMIT = 8  # seconds per planted run of one test
 FAST = 1.5  # seconds a planted solution may take over all the tests in CPython
+# planted solutions that are right but too slow: each must time out on a hidden test (they come last in
+# `planted`, because a timed-out run restarts Python in the browser; see BACKLOG-INBOX, drills ci 2)
+SLOW_PLANTED = {("ci-log-compactor", 2)}
 OBVIOUS = json.load(open(os.path.join(HERE, "drills-ci-3-obvious.json")))
 
 # ---------------- independent methods ----------------
@@ -242,16 +245,20 @@ def count_convoys(target, position, speed):
     return count
 
 def solve_tick_ranges(text):
+    # first and last position from two dicts; an absent time is counted with numpy, not bisect
     v = [int(x) for x in re.findall(r'-?\d+', text)]
     n, q = v[0], v[1]
     first, last = {}, {}
     for i, t in enumerate(v[2:2 + n]):
         first.setdefault(t, i); last[t] = i
-    return '\n'.join(f'{first[t]} {last[t]}' if t in first else '-1 -1' for t in v[2 + n:2 + n + q])
+    arr = np.asarray(v[2:2 + n], dtype=np.int64)
+    return '\n'.join(f'{first[t]} {last[t]}' if t in first else f'-1 {int((arr < t).sum())}' for t in v[2 + n:2 + n + q])
 
 def find_in_ring(ring, targets):
-    where = {x: i for i, x in enumerate(ring)}
-    return [where.get(t, -1) for t in targets]
+    # sort the ids once, remember where each sat; the smallest id at least t is then a plain search
+    order = sorted((x, i) for i, x in enumerate(ring))
+    vals = [x for x, _ in order]
+    return [order[bisect_left(vals, t)][1] if bisect_left(vals, t) < len(vals) else -1 for t in targets]
 
 def _minutes(qs, r):
     return int(((qs + r - 1) // r).sum())
@@ -424,9 +431,9 @@ def main():
         assert d["tags"][0] == "pack-3", did
         assert (fn.startswith("solve_")) == is_stdin, did
         assert 900 <= d["pace"] <= 2700, did
-        assert 10 <= len(d["tests"]) <= 14 and 2 <= len(d["examples"]) <= 3, did
+        assert 10 <= len(d["tests"]) <= 15 and 2 <= len(d["examples"]) <= 3, did
         assert all(e.get("note") for e in d["examples"]) and len(d["notes"]) == 3, did
-        assert 2 <= len(d["planted"]) <= 3 and all(p["code"] and p["slip"] for p in d["planted"]), did
+        assert 2 <= len(d["planted"]) <= 4 and all(p["code"] and p["slip"] for p in d["planted"]), did
         assert set(d["skills"]) <= {"ci-patterns", "ci-timed", "ci-strings", "ci-design"}, did
         if d["difficulty"] >= 4:
             assert "obvious method" in d["how"], did
@@ -462,7 +469,12 @@ def main():
                 except Exception as e:
                     wrong = wrong or f"{type(e).__name__} on test {ti}"
             spent = time.time() - t0
-            if wrong is None:
+            if (did, pi) in SLOW_PLANTED:
+                if wrong is None or not wrong.startswith("over"):
+                    print(f"FAIL {did}: planted[{pi}] is meant to be too slow but gave {wrong}"); errors += 1
+                else:
+                    caught.append(f"{wrong} (slow plant)")
+            elif wrong is None:
                 print(f"FAIL {did}: planted[{pi}] passes every hidden test ({p['slip']})"); errors += 1
             elif spent > FAST:
                 print(f"FAIL {did}: planted[{pi}] takes {spent:.1f} s over all tests, so the browser run would time out"); errors += 1

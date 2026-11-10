@@ -12,8 +12,8 @@
     "ci-strings",
     "ci-patterns"
   ],
-  "difficulty": 2,
-  "pace": 900,
+  "difficulty": 3,
+  "pace": 1500,
   "fn": "compact_log",
   "returns": "a string",
   "brief": "A logger writes one lower-case letter per event. A compactor looks for `k` equal letters standing next to each other, deletes those `k`, and closes the gap. It repeats this until no `k` equal letters stand together. The final log is the same whatever order the deletions are made in.\n\nWrite `compact_log(log, k)`, which returns the final log.\n\nExample. For `log = \"xyyyxxz\"` and `k = 3` the three `y` go first, leaving `\"xxxz\"`. Then the three `x` go, so the answer is `\"z\"`.",
@@ -103,9 +103,14 @@
       "call": "(lambda r: (len(r), r[:6], r[-6:]))(compact_log(''.join('abc'[(i * i) % 3] for i in range(200000)), 2))",
       "expect": "(2, 'ab', 'ab')",
       "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r.count('b')))(compact_log('a' * 99999 + 'b' + 'a' * 99999, 100000))",
+      "expect": "(199999, 1)",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
   "solution": "def compact_log(log, k):\n    stack = []  # [letter, how many stand together]\n    for ch in log:\n        if stack and stack[-1][0] == ch:\n            stack[-1][1] += 1\n            if stack[-1][1] == k:\n                stack.pop()\n        else:\n            stack.append([ch, 1])\n    return ''.join(ch * n for ch, n in stack)\n",
   "notes": [
     "The stack holds runs, so a deletion uncovers the run below and the next letter can join it.",
@@ -120,6 +125,10 @@
     {
       "code": "def compact_log(log, k):\n    st = []\n    run, prev = 0, None\n    for ch in log:\n        run = run + 1 if ch == prev else 1\n        prev = ch\n        st.append(ch)\n        if run == k:\n            del st[-k:]\n            run, prev = 0, (st[-1] if st else None)\n    return ''.join(st)\n",
       "slip": "After a deletion it restarts the count at 0, forgetting the equal letters now on top of the stack."
+    },
+    {
+      "code": "def compact_log(log, k):\n    # compares the last k letters at every step, stopping at the first that differs\n    stack = []\n    for ch in log:\n        stack.append(ch)\n        n = len(stack)\n        if n >= k:\n            i = 2\n            while i <= k and stack[n - i] == ch:\n                i += 1\n            if i > k:\n                del stack[n - k:]\n    return \"\".join(stack)\n",
+      "slip": "Comparing the last k letters at every step restarts the comparison each time, so a long run of equal letters takes far longer than the limit."
     }
   ]
 }

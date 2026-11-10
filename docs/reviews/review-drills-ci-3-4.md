@@ -51,3 +51,28 @@ Clean (no finding of their own; statement complete, notes true, my candidates ca
 Finding class for the validator (SESSION PROTOCOL 6): "a test or example whose data lies outside the drill's own constraints" (findings 16 and 17) and "a brief's worked answer that differs from the example's `expect`" (finding 1 here, finding 1 of the packs 1 and 2 review) are both checkable by script.
 
 Every proposed `expect` above was computed by the model solution and by `mine.py` (`extra_checks.py`); findings 1, 5, 15 and 16 were also checked by hand.
+
+## Fix pass
+
+Method: every new `expect` was computed by the model solution and by the independent method in `docs/reports/drills-ci-3-check.py` or `drills-ci-4-check.py` (the independent methods for `ci-ring-lookup` and `ci-tick-ranges` were rewritten for the new tasks). The reader's wrong solutions were planted from `wrong.py`; planted solutions that are right but too slow come last in `planted` and are listed in `SLOW_PLANTED` in both check scripts (they must time out). Both check scripts exit 0 (pack 3: 34 planted, pack 4: 15 drills); the limit of hidden tests is now 10 to 15 and of planted 2 to 4 in pack 3. Validator 0 errors; playthrough green with and without `--mobile` and `planted-check --require` green on all 22 changed drills; `fresh-check` 0 hits.
+
+1. fixed: example 0 and tests[3] of `ci-board-words` now use `['cat', 'oex']` and the answer `['cat', 'coex']` (hand check: `tax` needs the diagonal `a` to `x`); brief and note agree.
+2. fixed: added the 3,602-word test (answer `['ab', 'bac']`); 13 tests. The per-word search is a slow method in the check script and times out on it.
+3. fixed: `ci-live-median` constraint is `q` up to 400,000, tests[10] replaced (expect `(400000, 0, 199838346874, ['499937', '499937', '499934'])`, model and sorted list agree), the sorted-list `insort` solution planted last (times out, planted-check green).
+4. fixed: added the 199,999-letter test (expect `(199999, 1)`) to `ci-log-compactor`, planted the last-`k`-letters comparison (times out); 14 tests.
+5. fixed: added the level-order case (expect 12) to `ci-first-misplaced` and planted the level-order read; 14 tests.
+6. fixed: added the 50,000 sets and 50,000 asks test (expect 2500000000) to `ci-stock-by-prefix` and planted the sorted-list scan (times out); 13 tests.
+7. fixed: constraint on number range added, two tests (`-1000000005`, `1000000005`) and the -10^9 / 10^9 fold planted in `ci-cell-formula`; 15 tests.
+8. fixed: `ci-busiest-links` brief and constraint now define the order; tests[9] and [10] use capitals and their expects were recomputed.
+9. fixed: `ci-ring-lookup` now returns the position of the smallest id at least the target; all expects, both examples, notes, hint, constraint, the model and both planted solutions rewritten, and two large tests now include absent targets above the ring.
+10. fixed: `ci-tick-ranges` now returns `-1 c` for an absent time; every absent-query expect, both examples and both planted solutions updated.
+11. fixed: own data in `ci-clear-rate` ([5, 8, 14, 20] with 10 gives 5), `ci-price-ramp` ([8, 3, 9, 5, 2, 6, 4] gives 5; tests[6] own), `ci-ready-blocks` ([2, 8, 5, 8, 3]; tests[5] own), `ci-visible-masts` ([9, 2, 7, 4, 3, 8, 5]; tests[6] changed too), `ci-van-convoys` (target 20, five vans, 3 convoys).
+12. fixed: own data in `ci-funded-projects`, `ci-rebuild-from-orders`, `ci-board-words` (tests[7]), `ci-cheapest-pairs` (tests[7]), `ci-downward-path-sums` (tests[7]), `ci-right-edge-view` and `ci-no-repeat-rota` (`'ccccd'`).
+13. fixed: `ci-cell-formula` constraint now says "unless the limit is raised", `how` says raising the limit also passes, and the recursive planted slip says "at the default limit".
+14. fixed: `ci-board-words` examples[1].note now explains `abba` needs two `b` cells side by side.
+15. fixed: added `count_convoys(20, [17, 1], [2, 10]) -> 2` to `ci-van-convoys`; 14 tests.
+16. fixed: `ci-relay-masts` tests[7] is `min_longest_gap([0, 10, 11, 35], 4)`, expect 6.
+17. fixed: `ci-funded-projects` tests[12] builds 100,000 projects, expect 1049949007.
+18. fixed: `ci-tray-queue` is difficulty 2, pace 1080; `ci-log-compactor` difficulty 3, pace 1500; `index.json` rows match.
+
+Graded answers changed (expect or call): `ci-board-words`, `ci-live-median`, `ci-ring-lookup`, `ci-tick-ranges`, `ci-clear-rate`, `ci-price-ramp`, `ci-ready-blocks`, `ci-visible-masts`, `ci-van-convoys`, `ci-funded-projects`, `ci-rebuild-from-orders`, `ci-cheapest-pairs`, `ci-downward-path-sums`, `ci-right-edge-view`, `ci-no-repeat-rota`, `ci-busiest-links`, `ci-relay-masts` (call only). Tests added only: `ci-log-compactor`, `ci-first-misplaced`, `ci-stock-by-prefix`, `ci-cell-formula`.
