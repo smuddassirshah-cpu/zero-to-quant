@@ -77,3 +77,23 @@ Interpolation and splines: uniqueness, the error formula, the 126 ratio, the 2^(
 Quadrature and ODEs: Simpson's even-n requirement is stated; its order was measured as 4 on smooth integrands and its exactness for cubics checked on 200 random cubics. Richardson equals Simpson to rounding. Gauss-Legendre is exact to degree 2n − 1 and not 2n for n = 1 to 8. The local (h^(p+1)) against global (h^p) convention is stated and both were measured. The step-doubling controller, its 1/5 exponent, the 38 steps and the 2.4 × 10^-8 global error were run. Euler's limit h < 2/|λ|, the four amplification factors, the stability regions on a grid of 9,720 points, RK4's −2.7853, ringing of the trapezoidal rule, L-stability, and the `solve_ivp` evaluation counts (1,172, 422, 226, the same in SciPy 1.18.1) all hold. Monte Carlo's 1/√n rate was measured where the lesson cites it.
 
 All code solutions used in the checks were executed from the JSON. None teaches a wrong method except the unstated limit of `safe_newton` (finding 12).
+
+## Overlap with the earlier review
+
+Read after the ledger and the findings above were committed (`e9f1a7db`, `85edb779`): `docs/reviews/review-numerics-1-3.md`. That review has 31 findings (9 errors, 8 warnings, 14 notes), all marked fixed in its fix pass, so this audit read the content after those fixes. Twenty of the 31 are numbers, slip values, digit counts or style. Eleven are conceptual in this audit's sense: the l6 termination argument (lines t4 and t5); the not-a-knot why in l8 quiz[2]; "the other factors are the same" in l7 screens[3]; the bound taken for the outcome in l4 quiz[0]; "accurate to u" in l4 screens[2]; when Newton wins back the lead in review-2; the bracket update in review-2's safeguard item; which operand carries the error in l2 screens[2]; the float32 penny in review-1; the one-pass variance claim at £3,000 moves in l2 quiz[2]; and `nan` against `LinAlgError` in l4 quiz[0].
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| Found by this audit only | 21 | findings 1 to 11 and 13 to 22 |
+| Found by the earlier review only | 10 | the eleven above less the l6 termination argument |
+| Found by both | 1 | finding 12: the review saw that the bisection count alone does not prove the method ends and fixed lines t4 and t5; the same false guarantee stayed in eight other strings and in the claim to be `rtsafe` |
+
+The ten review-only findings were fixed before this read, so they could not be found again; the ledger marks each fixed text `correct`. Read as a miss rate for a single second read: of this audit's 5 `wrong` findings the review met one in part (12) and none of 6, 15, 18 and 21; of the 7 serious findings it met one in part. The review's process note explains why: it recomputed every number, and these findings are in hypotheses, causes and conventions, where the numbers are right.
+
+## Gate results
+
+- Validator (from `app/`): `0 errors, 4110 warnings`; it rewrote no tracked file.
+- Author number scripts (from `app/`): `numerics-L1-numbers.py` exit 0 ("all checks passed"), `numerics-L2-numbers.py` exit 0, `numerics-L3-numbers.py` exit 0.
+- Concepts scripts: `numerics-L1-concepts.py` exit 0 (51 checks passed, 1 EXPECTED_FAIL: `variance_is_well_conditioned`); `numerics-L2-concepts.py` exit 0 (29 passed, 3 EXPECTED_FAIL: `safeguard_worst_case_is_all_bisection`, `equal_node_product_explodes_with_n`, `equal_spacing_error_grows_with_n`); `numerics-L3-concepts.py` exit 0 (34 passed, 2 EXPECTED_FAIL: `kink_on_any_node_restores_order_4`, `far_call_needs_32_nodes`). Each EXPECTED_FAIL has its corrected assert in a comment above it. The scripts also print 14 notes, one or more for each `imprecise` or `misleading` finding that has a measurable side. NumPy 2.5.3, SciPy 1.18.1, Python 3.13.
+- Playthrough smoke test (from `app/`, `--local-cdn <pkgs>`): `--set numerics/review-1`: `ok numerics/review-1 10 items, recorded 10 of 10`, `browser relaunches: 0`, `All passed.`
+- No content file, engine file or `course.json` was changed. Engine and tooling limits are in `docs/BACKLOG-INBOX.md` under "Raised later (audit numerics)" (3 bullets).
