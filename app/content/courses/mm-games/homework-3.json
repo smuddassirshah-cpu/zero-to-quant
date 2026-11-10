@@ -16,12 +16,12 @@
    ],
    "pace": 1500,
    "title": "A game engine with limits and a hedge",
-   "prose": "Extend level 2's scripted engine. Trades now fill only up to your room under the limit. A hedge contract pays the first card's value; at a `hedge` event you trade it to hold minus your position. The tests run three seeded scripts from `make_script` and some edge cases.",
+   "prose": "Extend level 2's scripted engine. Trades now fill only up to your room under the limit. A hedge contract pays the first card's value; at a `hedge` event, before that card turns, you trade it to hold minus your position. The tests run four seeded scripts from `make_script` and some edge cases.",
    "question": "Complete `full_game(script, rule, limit=3, n_cards=3)`.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "prelude": "from fractions import Fraction\nimport random\n\n\ndef card_sum_fair(revealed, n_cards, deck_total=364, deck_size=52):\n    k = len(revealed)\n    shown = sum(revealed)\n    if k == n_cards:\n        return Fraction(shown)\n    return shown + (n_cards - k) * Fraction(deck_total - shown, deck_size - k)\n\n\ndef make_script(seed, n_cards=3):\n    r = random.Random(seed)\n    deck = [v for v in range(1, 14) for _ in range(4)]\n    cards = r.sample(deck, n_cards)\n    script = []\n    for i, c in enumerate(cards):\n        for _ in range(2):\n            side = r.choice([\"buy\", \"sell\", None])\n            if side:\n                script.append((side, r.randint(1, 3)))\n        script.append((\"reveal\", c))\n        if i == 0:\n            script.append((\"hedge\", Fraction(c * 10 + r.choice([-1, 1]), 10)))\n    return script\n\n\ndef skew_rule(fair, position):\n    m = Fraction(round(2 * (fair - Fraction(position, 2))), 2)\n    return (m - 2, m + 2)\n\n\ndef centre_rule(fair, position):\n    return (fair - 2, fair + 2)\n",
+    "prelude": "from fractions import Fraction\nimport random\n\n\ndef card_sum_fair(revealed, n_cards, deck_total=364, deck_size=52):\n    k = len(revealed)\n    shown = sum(revealed)\n    if k == n_cards:\n        return Fraction(shown)\n    return shown + (n_cards - k) * Fraction(deck_total - shown, deck_size - k)\n\n\ndef make_script(seed, n_cards=3):\n    r = random.Random(seed)\n    deck = [v for v in range(1, 14) for _ in range(4)]\n    cards = r.sample(deck, n_cards)\n    script = []\n    for i, c in enumerate(cards):\n        for _ in range(2):\n            side = r.choice([\"buy\", \"sell\", None])\n            if side:\n                script.append((side, r.randint(1, 3)))\n        if i == 0:\n            script.append((\"hedge\", Fraction(70 + r.choice([-1, 1]), 10)))\n        script.append((\"reveal\", c))\n    return script\n\n\ndef skew_rule(fair, position):\n    m = Fraction(round(2 * (fair - Fraction(position, 2))), 2)\n    return (m - 2, m + 2)\n\n\ndef centre_rule(fair, position):\n    return (fair - 2, fair + 2)\n",
     "starter": "def full_game(script, rule, limit=3, n_cards=3):\n    \"\"\"Run a scripted card game with a position limit and\n    a hedge contract that pays the first card's value.\n    Events, in order:\n      (\"reveal\", v)  a card of value v turns over\n      (\"buy\", k)     the interviewer buys k at your ask\n      (\"sell\", k)    the interviewer sells k at your bid\n      (\"hedge\", p)   trade the hedge contract at price p\n                     so you hold minus your position in it\n    A trade fills only up to your room: limit + position\n    to sell, limit - position to buy.\n    rule(fair, position) gives (bid, ask); use\n    card_sum_fair(revealed, n_cards) for the fair value.\n    Return (pnl, max_position): pnl is cash plus position\n    times the true sum plus the hedge times the first\n    card, a Fraction; max_position is the largest\n    absolute position held.\"\"\"\n    ...\n",
     "solution": "def full_game(script, rule, limit=3, n_cards=3):\n    \"\"\"Run a scripted card game with a position limit and\n    a hedge contract that pays the first card's value.\n    Events, in order:\n      (\"reveal\", v)  a card of value v turns over\n      (\"buy\", k)     the interviewer buys k at your ask\n      (\"sell\", k)    the interviewer sells k at your bid\n      (\"hedge\", p)   trade the hedge contract at price p\n                     so you hold minus your position in it\n    A trade fills only up to your room: limit + position\n    to sell, limit - position to buy.\n    rule(fair, position) gives (bid, ask); use\n    card_sum_fair(revealed, n_cards) for the fair value.\n    Return (pnl, max_position): pnl is cash plus position\n    times the true sum plus the hedge times the first\n    card, a Fraction; max_position is the largest\n    absolute position held.\"\"\"\n    revealed, pos, hedge = [], 0, 0\n    cash, peak = Fraction(0), 0\n    for kind, x in script:\n        if kind == \"reveal\":\n            revealed.append(x)\n            continue\n        if kind == \"hedge\":\n            trade = -pos - hedge\n            cash -= trade * x\n            hedge += trade\n            continue\n        bid, ask = rule(card_sum_fair(revealed, n_cards), pos)\n        if kind == \"buy\":\n            k = min(x, limit + pos)\n            pos -= k\n            cash += k * ask\n        else:\n            k = min(x, limit - pos)\n            pos += k\n            cash -= k * bid\n        peak = max(peak, abs(pos))\n    first = revealed[0] if revealed else 0\n    return cash + pos * sum(revealed) + hedge * first, peak\n",
     "examples": [
@@ -34,22 +34,22 @@
     "tests": [
      {
       "call": "full_game(make_script(1), skew_rule, 3)",
-      "expect": "(Fraction(76, 5), 3)",
+      "expect": "(Fraction(16, 5), 3)",
       "compare": "equal"
      },
      {
       "call": "full_game(make_script(2), skew_rule, 3)",
-      "expect": "(Fraction(246, 5), 3)",
+      "expect": "(Fraction(156, 5), 3)",
       "compare": "equal"
      },
      {
       "call": "full_game(make_script(3), centre_rule, 2)",
-      "expect": "(Fraction(-1, 5), 2)",
+      "expect": "(Fraction(-31, 5), 2)",
       "compare": "equal"
      },
      {
       "call": "full_game(make_script(7), skew_rule, 1)",
-      "expect": "(Fraction(131, 10), 1)",
+      "expect": "(Fraction(121, 10), 1)",
       "compare": "equal"
      },
      {
@@ -58,13 +58,13 @@
       "compare": "equal"
      },
      {
-      "call": "full_game([('buy', 5), ('reveal', 4), ('hedge', Fraction(41, 10)), ('reveal', 6), ('reveal', 5)], skew_rule, 3)",
-      "expect": "(Fraction(237, 10), 3)",
+      "call": "full_game([('buy', 5), ('hedge', Fraction(71, 10)), ('reveal', 4), ('reveal', 6), ('reveal', 5)], skew_rule, 3)",
+      "expect": "(Fraction(147, 10), 3)",
       "compare": "equal"
      },
      {
-      "call": "full_game([('buy', 5), ('reveal', 4), ('hedge', Fraction(41, 10)), ('reveal', 6), ('reveal', 5)], skew_rule, 10)",
-      "expect": "(Fraction(79, 2), 5)",
+      "call": "full_game([('buy', 5), ('hedge', Fraction(71, 10)), ('reveal', 4), ('reveal', 6), ('reveal', 5)], skew_rule, 10)",
+      "expect": "(Fraction(49, 2), 5)",
       "compare": "equal"
      },
      {
@@ -83,7 +83,7 @@
     }
    },
    "explain": {
-    "text": "Each fill is cut to the room, `limit + pos` to sell and `limit - pos` to buy. A hedge trade of $-q - h$ units leaves you holding $-q$, settled at the first card. Seed 1 ends at +76/5 with a peak position of 3."
+    "text": "Each fill is cut to the room, `limit + pos` to sell and `limit - pos` to buy. A hedge trade of $-q - h$ units leaves you holding $-q$, settled at the first card. Seed 1 ends at +16/5 with a peak position of 3."
    }
   },
   {
@@ -261,7 +261,7 @@
    "title": "A full game, narrated",
    "kind": "longform",
    "prompt": "Replay lesson 13's game aloud, as if to an interviewer. Three cards come from one deck: 4, 6 and 5. Use width 4, limit 3 and a skew of 0.5 a lot. The interviewer buys 1 at your ask on turn 1 and tries to sell at 19 after the 4. Then they buy at 20.5 on turn 4 and sell at 16 after the 6.\n\nTake about ten minutes, kept with a watch. Say every fair value with its arithmetic and every quote with its reason. Say your position and P&L after every trade and card. There is no recording: write it out afterwards, then mark it.",
-   "model": "**Before the game (30 seconds).** \"Three cards from one deck. Each averages $364/52 = 7$, so fair is 21. My width is 4 while three cards are unseen, my limit is 3, and I skew 0.5 a lot. I quote 19 at 23 for 1.\"\n\n**Turn 1: they buy at 23.** \"Short 1 at 23, up £2 at fair 21. A buyer may know something, and I am short, so I move up 0.5: 19.5 at 23.5.\"\n\n**Card 1, a 4.** \"The deck holds 360 in 51 cards. Fair is $4 + 2 \\times 360/51 = 308/17$, about 18.12. Short 1 at 23, I am up £4.88. Centre $18.12 + 0.5 = 18.62$, call it 18.5: 16.5 at 20.5.\" They try to sell at 19 and miss my 16.5 bid: updating saved me from a seller who knew.\n\n**Turn 4: they buy at 20.5.** \"Short 2 now, cash £43.50, up £7.26 at 18.12. One more lot and I am at the limit. Centre 19.12, call it 19: 17 at 21.\"\n\n**Card 2, a 6.** \"The 50 cards left hold 354. Fair is $10 + 354/50 = 17.08$. Short 2, I am up £9.34. Centre 18.08: 16 at 20.\"\n\n**Turn 6: they sell at 16.** \"I buy 1 back. Short 1, cash £27.50, up £10.42 at 17.08. Centre 17.58, call it 17.5: 15.5 at 19.5.\"\n\n**Settlement.** The last card is a 5, the sum 15. \"Short 1 against cash £27.50: +£12.50. My trades made 8, 5.50 and −1 against 15. The −1 was an inventory trade that halved my risk.\"\n\n**Review.** \"With a king the same quotes make £4.50, so I grade the quotes, not the P&L. The limit was never reached, and every number had its reason.\" ",
+   "model": "**Before the game (30 seconds).** \"Three cards from one deck. Each averages $364/52 = 7$, so fair is 21. My width is 4 while three cards are unseen, my limit is 3, and I skew 0.5 a lot. I quote 19 at 23 for 1.\"\n\n**Turn 1: they buy at 23.** \"Short 1 at 23, up £2 at fair 21. A buyer may know something, and I am short, so I move up 0.5: 19.5 at 23.5.\"\n\n**Card 1, a 4.** \"The deck holds 360 in 51 cards. Fair is $4 + 2 \\times 360/51 = 308/17$, about 18.12. Short 1 at 23, I am up £4.88. Centre $18.12 + 0.5 = 18.62$, call it 18.5: 16.5 at 20.5.\" They try to sell at 19 and miss my 16.5 bid: updating saved me from a seller who had seen the 4.\n\n**Turn 4: they buy at 20.5.** \"Short 2 now, cash £43.50, up £7.26 at 18.12. One more lot and I am at the limit. Centre 19.12, call it 19: 17 at 21.\"\n\n**Card 2, a 6.** \"The 50 cards left hold 354. Fair is $10 + 354/50 = 17.08$. Short 2, I am up £9.34. Centre 18.08: 16 at 20.\"\n\n**Turn 6: they sell at 16.** \"I buy 1 back. Short 1, cash £27.50, up £10.42 at 17.08. Centre 17.58, call it 17.5: 15.5 at 19.5.\"\n\n**Settlement.** The last card is a 5, the sum 15. \"Short 1 against cash £27.50: +£12.50. My trades made 8, 5.50 and −1 against 15. The −1 was an inventory trade that halved my risk.\"\n\n**Review.** \"With a king the same quotes make £4.50, so I grade the quotes, not the P&L. The limit was never reached, and every number had its reason.\" ",
    "rubric": [
     {
      "points": 2,
@@ -503,7 +503,7 @@
    "title": "Mock round, part 2: say it",
    "kind": "longform",
    "prompt": "Narrate the mock round you just played, aloud and timed: about ten minutes. Use the model run's quotes and trades, or your own. Before the first quote the interviewer also offers a side bet. It pays evens on a coin that lands your way with chance 0.6, and you have £100. Choose and justify your stake.\n\nSay each fair value with its arithmetic and each width with its reason. Cover each trade, the limit and the bet size. End with the final P&L and a short review. Then write it out and mark it.",
-   "model": "**Before any card.** \"Each card averages 7, so fair is 21. Three unseen cards, so width 4: 19 at 23 for 1. Limit 3, skew 0.5 a lot.\"\n\n**Side bet.** \"You offer evens on a coin that lands my way with chance 0.6, from a £100 bankroll. Kelly is $0.6 - 0.4 = 0.2$, so I stake £20, not £100: the expected gain is £4, and one loss cannot end me.\"\n\n**Turn 1: they sell at 19.** \"Long 1 at 19, up £2 at 21. A seller may know something, and I am long, so I move down: 18.5 at 22.5.\"\n\n**Card 1, an 8.** \"The deck holds 356 in 51. Fair is $8 + 2 \\times 356/51 = 1120/51$, about 21.96. Long 1, up £2.96. Centre $21.96 - 0.5 = 21.46$, call it 21.5: 19.5 at 23.5.\" They try to buy at 23 and miss my 23.5 ask.\n\n**Turn 5: they sell at 19.5.** \"Long 2, cash −£38.50, up £5.42 at 21.96. One more lot reaches the limit, so my next centre drops by another 0.5.\"\n\n**Card 2, a jack.** \"19 shown; 345 in 50 cards. Fair is $19 + 345/50 = 25.9$. Long 2, up £13.30. Centre 24.9, call it 25: 23 at 27.\"\n\n**Turn 7: they buy at 27.** \"I sell 1 at 27, so I am long 1, cash −£11.50, up £14.40 at 25.9. Centre 25.4, call it 25.5: 23.5 at 27.5.\"\n\n**Settlement.** The last card is a jack: the sum is 30. \"Long 1 against cash −£11.50: +£18.50. Edges +11, +10.50 and −3 against 30. The −3 sale cut my long to 1 before the last card.\"\n\n**Review.** \"The stale 19 at 23 would have sold twice at 23 to someone who had seen high cards: −£3. Updating without the skew makes £21 with twice the position. I grade the quotes and the risk, and the bet size followed Kelly.\" ",
+   "model": "**Before any card.** \"Each card averages 7, so fair is 21. Three unseen cards, so width 4: 19 at 23 for 1. Limit 3, skew 0.5 a lot.\"\n\n**Side bet.** \"You offer evens on a coin that lands my way with chance 0.6, from a £100 bankroll. Kelly is $0.6 - 0.4 = 0.2$, so I stake £20, not £100: the expected gain is £4, and one loss cannot end me.\"\n\n**Turn 1: they sell at 19.** \"Long 1 at 19, up £2 at 21. A seller may know something, and I am long, so I move down: 18.5 at 22.5.\"\n\n**Card 1, an 8.** \"The deck holds 356 in 51. Fair is $8 + 2 \\times 356/51 = 1120/51$, about 21.96. Long 1, up £2.96. Centre $21.96 - 0.5 = 21.46$, call it 21.5: 19.5 at 23.5.\" They try to buy at 23 and miss my 23.5 ask.\n\n**Turn 5: they sell at 19.5.** \"Long 2, cash −£38.50, up £5.42 at 21.96. One more lot reaches the limit, so my next centre drops by another 0.5.\"\n\n**Card 2, a jack.** \"19 shown; 345 in 50 cards. Fair is $19 + 345/50 = 25.9$. Long 2, up £13.30. Centre 24.9, call it 25: 23 at 27.\"\n\n**Turn 7: they buy at 27.** \"I sell 1 at 27, so I am long 1, cash −£11.50, up £14.40 at 25.9. Centre 25.4, call it 25.5: 23.5 at 27.5.\"\n\n**Settlement.** The last card is a jack: the sum is 30. \"Long 1 against cash −£11.50: +£18.50. Trade by trade that is +11, +10.50 and −3 against 30. The −3 sale cut my long to 1 before the last card.\"\n\n**Review.** \"The stale 19 at 23 would have sold twice at 23 to someone who had seen high cards: −£3. Updating without the skew makes £21 with twice the position. I grade the quotes and the risk, and the bet size followed Kelly.\" ",
    "rubric": [
     {
      "points": 2,
@@ -772,7 +772,7 @@
     }
    },
    "explain": {
-    "text": "Cash is $-19 - 19.5 + 27 = -11.50$, and long 1 settles at $8 + 11 + 11 = 30$. The P&L is +£18.50. Edges: +11, +10.50 and −3."
+    "text": "Cash is $-19 - 19.5 + 27 = -11.50$, and long 1 settles at $8 + 11 + 11 = 30$. The P&L is +£18.50. By trade: +11, +10.50 and −3."
    }
   },
   {

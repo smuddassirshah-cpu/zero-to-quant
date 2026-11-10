@@ -160,7 +160,8 @@ check('implicit gamma 4% high', G(Vi) / gamma_bs - 1, 0.04, 0.005); E(L14, 'scre
 E(L14, 'screens[6].prose', 80, 0.5 * .04 * 200 ** 2 * 0.1, 1e-9); E(L14, 'screens[10].widget.answer', 66.8, G(Vc) / gamma_bs)
 E(L14, 'screens[10].explain.text', 0.17, B - pc); E(L14, 'screens[9].canvas.params.rows', 10.432399, pr)
 E(L14, 'screens[9].canvas.params.rows', 10.398664, theta(100, 100, .05, .2, 1, 200, 100, 25, 1.0)); E(L14, 'screens[9].canvas.params.rows', 10.44071, theta(100, 100, .05, .2, 1, 200, 100, 100, 0.5))
-E(L14, 'screens[8].explain.text', 1200, 3 * 400, 0); check('dense 21 million', 400 ** 3 / 3 / 1e6, 21, 0.5)
+E(L14, 'screens[8].explain.text', 2000, 2 + 5 * (400 - 2), 10);  # fix pass: 5 mult/div a row, 2 at the first, for 399 unknowns = 1,992
+check('dense 21 million', 400 ** 3 / 3 / 1e6, 21, 0.5)
 for th, want in ((0.0, 10.4428), (1.0, 10.4386), (0.5, 10.4407)):
     E(L14, 'quiz[1].prose', want, theta(100, 100, .05, .2, 1, 200, 100, 500, th))
 E(L14, 'quiz[1].prose', 0.4, 0.5 * .04 * 100 ** 2 * 0.002, 1e-12)

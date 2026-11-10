@@ -1,31 +1,26 @@
-# Concept audit: next (10 Nov 2026, audit session 3)
+# Concept audit: next (10 Nov 2026, audit session 4)
 
 State: `docs/reports/concept-audit-log.md` (rounds), `concept-audit-notes.md` (decisions, issues). Branch `claude/fable-audit`; the content session merges it.
 
-Closed: mental-pressure, puzzles, game-theory, brainteasers, coding-int, research-int, systems, pdes, pairs-rep, mental L1 to L3, number-sense L1 to L3, ito L1 to L3, measure-prob L1 to L3, and new this session odes L1 to L3 and numerics L1 to L3 (three rounds each; round 3 found 0 `wrong`).
+Closed: mental-pressure, puzzles, game-theory, brainteasers, coding-int, research-int, systems, pdes, pairs-rep, mental, number-sense, odes L1 to L3, and new this session ito L4, measure-prob L4, numerics L4 with its delta read (ito, measure-prob and numerics are now fully closed).
 
-Open, first for the next session: odes L4; numerics L4 with a delta read of the four code widgets the round-3 fix pass rewrote (numerics l5, l6, l10, homework-2; notes).
+Open, first for the next session: mm-games L1 to L3 round 2 (blind, fresh reader; round 1 found 2 `wrong`, fix pass and fix-pass read merged); odes L4 (eligible from 14:43 UTC, 11 Nov).
 
-Next, as each passes 24 quiet hours (content commits of 9 Nov ran 14:47 to 23:15 UTC): ito L4, measure-prob L4; mm-games; recruiting; counting-chance, conditional, random-vars, limits-thm, markov; the trader and developer closures, Stage 1 first; other route courses. Delta audits owed for closed courses touched on 9 Nov. Eligible but not started: garch, stat-learning, stat-models, vector-calc.
+Next: mm-games L4; recruiting; counting-chance, conditional, random-vars, limits-thm, markov (quiet from 16:46 UTC, 11 Nov); the trader and developer closures, Stage 1 first; other route courses. One delta batch is owed for closed courses touched on 9 and 10 Nov. Eligible, not started: garch, stat-learning, stat-models, vector-calc.
 
-For the content session: numerics `course.json` still names l6 "A root finder that never fails" (notes). Merge the content branch, do not rebase, when audit commits are already pushed (notes).
+For the content session: lesson numbers in learner text (lists in the three new audit files); numerics `course.json` l6 name (notes, session 3); mm-games homework-3 items[0].prose says "level 2's scripted engine".
 
-Miss rate: session 1, 39 levels, 132 audit-only findings, 12 `wrong`. Session 2, 6 levels, 20, 1 `wrong`. Session 3, 6 levels: round 1, 35 audit-only, 7 `wrong`; round 2, 21 audit-only, 4 `wrong`; round 3, 14 audit-only, 0 `wrong`.
+Miss rate: session 1, 39 levels, 132 audit-only findings, 12 `wrong`. Session 2, 6 levels, 20, 1. Session 3, 6 levels, round 1: 35, 7. Session 4, 6 levels: 64 audit-only (67 with the delta), 4 `wrong`.
 
 ## Verdict
 
-Session 3, levels audited: 6 (51 in all), three rounds each.
-Serious audit-only findings: 11 (round 1: 10; round 2: 1; round 3: 0). All fixed.
-- `odes/l1-equations-about-rates.json` screens[9].prose, `homework-1.json` items[3]: uniqueness without its smoothness hypothesis (imprecise).
-- `odes/l7-characteristic-equation.json` screens[4], [5], `l9` screens[2]: envelope e^{-t} stated and drawn without the amplitude (wrong).
-- `odes/l8-forcing.json` screens[8].prose: "multiply the guess by t" fails at y''+y'=t and double roots (imprecise).
-- `odes/l12-stability.json` screens[5], [7]: "stable" in two senses (imprecise).
-- `numerics/homework-1.json` items[8].rubric[2]: rubric credits "variance is well conditioned"; κ ≈ 5e8 (wrong).
-- `numerics/l4-stability.json` screens[4], `review-1.json` items[3]: QR "loses log10 κ digits" without the small-residual condition (imprecise).
-- `numerics/l5-bisection-and-newton.json` screens[5]: Newton order 2 without a simple root (imprecise).
-- `numerics/l5` summary.ideas[0], `l6` screens[3]: sign change without continuity (imprecise).
-- `numerics/l7-interpolation.json` screens[5]: Runge blamed on an exploding node product, for all equal spacing (wrong).
-- `numerics/l9-quadrature.json` screens[6], [9]: "put kinks on nodes"; an odd node keeps order 2 (wrong).
-- Round 2, `numerics/l5` screens[8], `l6` screens[7]: bracket test `flo * fhi > 0` loses a root at an endpoint and underflows (wrong, code).
-Also serious, found by both reads: `numerics/l6` "36: the guaranteed cap" (the solution returned a non-root after 102 calls).
-Minor: 59 (round 1: 25; round 2: 20; round 3: 14). Serious per three levels: 5.0 on round 1, 0.5 on round 2, 0 on round 3.
+Session 4, levels audited: 6 (57 in all), one round each.
+Serious audit-only findings: 6. All fixed.
+- `ito/l15-moments-quickly.json` screens[5].prose, screens[5].explain: symmetry rule backwards, "odd in total and nonzero" (wrong).
+- `ito/l14-hitting-and-exit.json` screens[1].feedback.byKey.x1: optional stopping from "a bounded stopped value or a finite mean time" (imprecise).
+- `ito/homework-4.json` items[0].feedback.byKey.x1: the same sentence (imprecise).
+- `mm-games/l11-hedging.json` screens[1], [2], summary; `review-3.json` items[4]: hedge ratio from per cent deviations read as units per unit (imprecise).
+- `mm-games/l13-full-game.json` screens[4]; `review-3.json`; `homework-3.json`: realised P&L labelled "edge" (imprecise).
+- `mm-games/homework-3.json` items[0] `make_script`: hedge traded after the first card is shown; six test values recomputed (misleading, code).
+measure-prob L4 and numerics L4: 0 serious.
+Minor: 61 audit-only (ito 13, measure-prob 9, numerics 17 with 3 delta, mm-games 22), plus 11 from fix-pass reads. Serious per three levels: 3.0.
