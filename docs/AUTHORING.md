@@ -524,6 +524,7 @@ An item is a `problem` screen without hints: `{ "id", "difficulty", "skills": [.
 - **Quiz** (in the lesson file): 3 to 5 items, difficulty 2 to 3, one attempt each, no canvas interaction beyond static diagrams where possible (scaffold-free).
 - **Level review** `review-<n>.json`: `{ "id": "review-1", "course", "level": 1, "items": [6 to 10 items] }`, difficulty 2 to 4, interleaving every lesson of the level.
 - **Homework** `homework-<n>.json`: `{ "id", "course", "level", "dueDays": 7, "items": [6 to 12] }`, difficulty 3 to 5 with at least one 5, at least one `longform` item and at least one `code` item (code courses) or one `derive`-style `order`/`expression` item (maths courses). A `code`, `order` or `expression` part of an item with `parts` counts. A `longform` item: `{ "kind": "longform", "prompt": "...", "model": "the full model answer in markdown with KaTeX", "rubric": [ { "points": 2, "text": "States the conditioning event" }, ... ] }` summing to 10. On the homework page the learner opens the model answer and the rubric with the Mark my answer button under the item; in a review, practice or redo set the Check button does it. Either way the working then locks and the learner ticks the rubric.
+- **Problem set** `problems-<n>.json` (ENGINE-BACKLOG 845 to 851): `{ "id": "problems-1", "course", "level": 1, "items": [3 to 5 chained problems] }`, every item with `parts`, difficulty 3 to 5 with at least one 5. Optional `title` and `minutes`. Not homework and not the review: see "Problem sets" below.
 - **Topic exam** `exams/topic-<topic>.json`: `{ "id": "topic-1.5", "topic": "1.5", "name", "minutes": 60, "pass": 0.7, "skills": { "<skill>": "label" }, "items": [...] }`, 20 to 30 items at the 8.4 ramp (20% at 2, 50% at 3, 20% at 4, 10% at 5), every skill of the topic covered. The Learn chip shows `minutes` as written (the validator copies it into `manifest.json` `examMinutes`; ENGINE-BACKLOG 621), so set it to the time the exam really needs.
 - **Stage exam** `exams/stage-<n>.json`: `{ "id": "stage-1", "stage": 1, "parts": [ { "kind": "paper", "name", "minutes", "pass", "items": [...] }, { "kind": "check", "name": "A ten-line Python script you wrote runs from the terminal" } ] }`.
 - **Mock assessment** `exams/mock-<id>.json` (ENGINE-BACKLOG 453): a timed paper (or several, with self-ticked checks) that models a real online assessment or interview day. It is sat many times, so it earns no XP and keeps every attempt with a net score and a trend. It mixes topics on purpose, so the topic skill-coverage rule does not apply and `skills` on items is optional. Fields: `id` (`mock-` then kebab-case words, matching the file name), `name`, `style` (`trader`, `research`, `developer` or `strats`, which sets the colour), `models` (one plain line, up to 200 characters, saying what real test it models; shown as "Models ..." on the start card and on Review), optional `description`, optional `skills` (`{ id: name }` for the by-skill chart), and either `parts` (as a stage exam: papers and checks) or the fields of a single paper at the top level (`minutes`, `items`, and the paper fields below). Mocks are listed on Review under "Mock assessments" with the latest score, the best and a trend. Say "reported" on the intro for any format taken from candidate reports. `#exam/mock-<id>/<seed>` fixes the seed of generated items, for testing.
@@ -563,6 +564,55 @@ An item is a `problem` screen without hints: `{ "id", "difficulty", "skills": [.
   **Planted wrong solutions** (`planted`, ENGINE-BACKLOG 844). Optional on any drill, Python or C++: `"planted": [{ "code": "<a plausibly wrong solution, whole source>", "slip": "<one sentence naming the mistake>" }]`. Write the slips a learner would make (an off-by-one, a tie or duplicate case, the slow method the constraints rule out). The hidden tests are too weak when one of them passes every test, and `node tools/planted-check.mjs --drill <id>` (or `--all-drills`) says so: it runs the model solution, the starter and each planted solution in the real runtime, and fails when the model misses a test or a wrong solution passes all of them. A failure means add a test, not delete the slip. `--require` also fails a drill with fewer than two planted solutions; without it a drill with none is counted and skipped. A planted solution is never shown to the learner. The validator checks the shape only (an array of objects with non-empty `code` and `slip`). Add `--local-cdn <pkgs>` without network access.
   **Checking drills.** From `app/`: `node tools/playthrough.mjs --drill <id>` (repeatable) or `--drills` opens each drill, checks that the starter (touched) fails, that the model solution passes every hidden test, that the stopwatch is read and recorded, and `--drills` and `--session` also sit the sample session (both model solutions, minutes per drill from a moved clock, the result, `carry.session`, a clock moved to zero, leaving and resuming). `--mobile` runs the same at 440 x 956 (the user's phone, iPhone 17 Pro Max), `--tablet` at 1032 x 1376 and 1376 x 1032 (iPad Pro 13-inch, both orientations), and `--narrow` at the old 390 x 844; each fails on sideways scroll. `--routes-only` checks the list filters and the session setup without running any code. Add `--local-cdn <dir>` without network access.
   **Long runs.** `node tools/playthrough.mjs --all --shard i/n` (1-based, for example `--shard 2/4`) plays every n-th item of the full ordered list (lessons, then reviews and homework, then exams), so shards 1/n to n/n cover each item once and each fits a background time limit; the routes and their checks run in shard 1 only. `--list` prints the item ids of a run without starting a browser. If Chromium closes mid-run the item is retried once on a fresh browser and the summary says `browser relaunches: R`; an ordinary failure is never retried.
+
+### Problem sets (`problems-<n>.json`, ENGINE-BACKLOG 845 to 851, PLAN 2d item M)
+
+Exams and interviews set problems of several steps in which each step feeds the next. A level may carry one problem set, `content/courses/<course>/problems-<n>.json`, beside `review-<n>.json`. It is found by its file name (it is not listed in `course.json`) and a level without one is simply not an error: sets arrive over several sessions. The content brief is `docs/briefs/chained.md`.
+
+The binding shape:
+
+- `{ "id": "problems-<n>", "course": "<course id>", "level": <n>, "items": [3 to 5], "title"?, "minutes"? }`. `id` matches the file name, `n` is a level of the course, `level` is `n`. Nothing else is allowed at the top: `timed`, `pass` and `dueDays` are refused (a problem set is untimed, has no pass mark and is not a gate), and so is any other field.
+- `minutes` is a whole number from 10 to 240, the allowance counted in the in-app hours (40 where the file states none). It is not shown to the learner as a limit.
+- **Every item uses `parts`** (the "Follow-up parts" rules below): 3 to 5 parts, each a typed or chosen answer the engine grades. A `longform` part and a `code` part are refused. Part k + 1 opens once part k is checked, right or wrong, so a later part restates the value it needs ("Using $P(A) = \tfrac{3}{10}$ from part 1, ...") and one slip does not sink the item.
+- **Difficulty 3 to 5, at least one item at 5.** `skills` are skills of the level's own lessons (checked when every lesson of the level is written) and at least one is named. Each problem should draw on at least two lessons of the level, and every lesson of the level should appear in at least one problem; the validator does not check that, the second reader does.
+- **Every item-level rule of a review item applies** (`checkItem`): no hints, prose and question as everywhere, `wrong` entries, feedback keys, shuffled-position and the voice scan (section 6).
+- Counting: an item's credit is the parts right over the parts; an item counts as right only when every part is.
+
+A full item with three parts (a plumber's bill, then the break-even against a second plumber):
+
+```json
+{ "id": "p-plumber", "difficulty": 3, "skills": ["eq-forming", "eq-linear"],
+  "prose": "A plumber charges a £45 call-out fee plus £30 for each hour of work.",
+  "parts": [
+    { "question": "Write the charge $C$, in pounds, for $h$ hours of work.",
+      "widget": { "kind": "expression", "answer": "45+30h", "accept": ["45+30h", "30h+45"],
+                  "wrong": [ { "id": "fee-per-hour", "tex": "75h" }, { "id": "swapped", "tex": "30+45h" } ] },
+      "feedback": { "correct": "The fee is paid once and the hourly rate multiplies $h$: $C = 45 + 30h$.",
+                    "generic": "Not quite. One part is paid once, the other for every hour.",
+                    "byKey": { "fee-per-hour": "You charged the £45 for every hour. It is paid once.",
+                               "swapped": "You swapped the two charges. The £30 is the hourly rate." } },
+      "explain": { "text": "The £45 is a one-off, so it stands alone. The £30 is per hour, so it multiplies $h$: $C = 45 + 30h$." } },
+    { "question": "Using $C = 45 + 30h$, a bill comes to £165. How many hours were worked?",
+      "widget": { "kind": "numeric", "answer": 4, "tol": { "abs": 0 }, "wrong": [ { "id": "no-fee", "value": 5.5, "tol": { "abs": 0 } } ] },
+      "feedback": { "correct": "$165 - 45 = 120$, and $120 \\div 30 = 4$ hours.", "generic": "Not quite. Check the step again.",
+                    "byKey": { "no-fee": "You divided the whole bill by 30. Take off the £45 first." } },
+      "explain": { "text": "Take off the call-out fee, then divide by the hourly rate: $(165 - 45) \\div 30 = 4$." } },
+    { "question": "A second plumber charges £60 plus £25 an hour. After how many hours do the two bills match?",
+      "widget": { "kind": "numeric", "answer": 3, "tol": { "abs": 0 }, "wrong": [ { "id": "fees", "value": 15, "tol": { "abs": 0 } } ] },
+      "feedback": { "correct": "$45 + 30h = 60 + 25h$ gives $5h = 15$, so $h = 3$.", "generic": "Not quite. Check the step again.",
+                    "byKey": { "fees": "That is the difference in the fees. Divide it by the difference in the hourly rates." } },
+      "explain": { "text": "Set the two charges equal: $45 + 30h = 60 + 25h$, so $5h = 15$ and $h = 3$." } } ] }
+```
+
+What the learner sees and what it earns:
+
+- **Where.** On the course map, the level review's card carries a "Problem set" row (name, the number of problems, the minutes, best score and a button), and the review's result page links to it. Route `#problems/<course>/problems-<n>`. It is locked and unlocked with its level, as the review is.
+- **How it plays.** The shared set page (the one the level review, practice and redo use): untimed, no hints, one try a part. Each part is graded with its own feedback, an item with parts is right only when every part is, and the summary says "Counting each part of a multi-part problem: 6.3 of 8". It is repeatable: "Go again" replays the same problems.
+- **Never a gate.** It does not count towards the met rule, `readiness`, the review's pass or the next level's opening, and a miss joins no redo queue. The save is `ZQ.state.problems["<course>/problems-<n>"]`: attempts, best score (in items, part credit included), last score and date.
+- **XP.** The homework scale: 50 XP and 5 for each item right, and mastery points as a homework earns them, on the first finished attempt only; a repeat earns none. Leaving part way records the time and nothing else.
+- **Weekly review.** The items of the problem set of a met level join the weekly mixed review's pool of unseen authored items (tier 2), with the long-form and code items left out as everywhere. An item with parts plays there part by part; a miss joins the redo queue under the set's own ref, and the redo session plays it again with its parts.
+- **Hours.** The in-app hours count the set (its `minutes`, else 40) in the level's minutes. The stored topic hours and the census total do not change: the set only moves time from "outside study" to "in the app". `tools/hours-source.mjs` reads the file; `manifest.json` carries `problems` for the app.
+- **Checks.** `node tools/validate.mjs` (the rules above; `node tools/test-validate-problems.mjs` holds a scratch case for each), `node tools/playthrough.mjs --problems <course>/problems-<n>` (or `--problems all`, and `--all` includes them; add `--mobile`, `--local-cdn <pkgs>`), `node tools/test-problems.mjs` (runtime) and `node tools/census.mjs`, which prints "Problem sets n (items m)". The fixture set is `tools/fixtures/problems/problems-fixture-3.json`, which is never content.
 
 ### Performance task (`performance`, ENGINE-BACKLOG 529, PLAN 2c item 5)
 
@@ -687,6 +737,7 @@ Errors:
 9. KaTeX: every `$...$` is balanced; `\\` is escaped in JSON.
 10. Strand (section 9): `strand` in `course.json` is "quant" or "pure"; `strandNote` is a non-empty string when `strand` is set, and an error without it.
 11. Course: levels 3 to 5, lessons per level 4 to 6, every lesson file referenced exists or is listed in `--summary` as unwritten (warning, not error); `review` and `homework` files exist for every level (warning until written).
+12. Problem sets (ENGINE-BACKLOG 845 to 851; section 5, "Problem sets"): `problems-<n>.json` has `n` a level of the course, `id` and `level` that match, 3 to 5 items, every item with 3 to 5 `parts` (no `longform` or `code` part), difficulty 3 to 5 with one 5, `skills` from the level's lessons, no `timed`, `pass`, `dueDays` or unknown field, and `minutes` (when given) 10 to 240. A level with no problem set is not an error. Every item-level rule of a review item applies.
 
 Warnings: prose over 60 words; a screen without a canvas in a `problem` before the ladder's end; a lesson with no `transfer`; a quiz with any interactive canvas.
 

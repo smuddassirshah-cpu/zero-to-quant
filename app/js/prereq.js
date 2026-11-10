@@ -46,7 +46,7 @@
   const levelsOf = (cid) => ((doc(cid) || {}).levels || []);
   const levelOf = (cid, n) => levelsOf(cid).find(l => l.n === n) || null;
   /* The level that holds a lesson, review or homework id */
-  const levelHolding = (cid, id) => levelsOf(cid).find(l => (l.lessons || []).includes(id) || l.review === id || l.homework === id) || null;
+  const levelHolding = (cid, id) => levelsOf(cid).find(l => (l.lessons || []).includes(id) || l.review === id || l.homework === id || id === `problems-${l.n}`) || null;   // a level's problem set (ENGINE-BACKLOG 845 to 851) is held by its level and locked with it
   const writtenLessons = (cid, lv) => (lv.lessons || []).filter(id => C().exists(cid, id) !== false);
 
   /* Curriculum order: stage, topic, course, level */

@@ -21,6 +21,10 @@
                                                            nothing else in the save moves), then a passing one through Go again; the lesson's end card and course row and the Today practice row are checked
                                                            (--all plays every set in content, after the sets, and the fixtures; add --mobile for the phone width, where nothing may overflow)
      node app/tools/playthrough.mjs --fluency-all          every fluency set and the fixtures, one profile (lessons marked done as it goes; Today shows two rows and a link to #fluency-list, which the check reads)
+     node app/tools/playthrough.mjs --problems equations/problems-3   one level problem set (repeatable; --problems fixture/<file> plays a fixture from tools/fixtures/problems, registered through the
+                                                           test hook, never as content; --problems all plays every set in content and the fixtures, and --all includes them; items 845 to 851): the course card lists it,
+                                                           one part is answered wrongly (its own feedback shows, the item earns part credit), then every part right through Go again; the first finish
+                                                           earns the homework-scale XP and a repeat none, nothing else (reviews, homework, met levels, redo queue) moves; add --mobile for the phone width
      node app/tools/playthrough.mjs --bank probability-1   every item of one bank file (repeatable, or --bank all): dealt, answered right from its key, pass or fail per item
      node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
                                                            solution passes every hidden test, the stopwatch is read and recorded (add --mobile, --narrow or --tablet to repeat it at those sizes)
@@ -94,7 +98,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, planted: false, sessionRun: false, all: false, shard: null, list: false, fluencyIds: [] };
+const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, planted: false, sessionRun: false, all: false, shard: null, list: false, fluencyIds: [], problemsIds: [], problemsAll: false };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -114,6 +118,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--exam') { opt.examIds.push(next()); opt.exams = true; }
   else if (a === '--fluency') opt.fluencyIds.push(next());
   else if (a === '--fluency-all') opt.fluencyAll = true;   // ENGINE-BACKLOG 843: every fluency set (and the fixtures) in one profile, no lessons
+  else if (a === '--problems') { const v = next(); if (v === 'all') opt.problemsAll = true; else opt.problemsIds.push(v); }   // ENGINE-BACKLOG 845 to 851: a level problem set, or every one
   else if (a === '--bank') opt.bankIds.push(next());
   else if (a === '--drill') opt.drillIds.push(next());
   else if (a === '--drills') opt.drillsAll = true;
@@ -140,10 +145,11 @@ const onlySets = !opt.all && (opt.sets || opt.exams);
 if (opt.all) { opt.sets = true; opt.exams = true; }
 if (onlySets && !opt.lessons.length) opt.lessonsOn = false;
 if (opt.bankIds.length && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
+if ((opt.problemsAll || opt.problemsIds.length) && !opt.lessons.length && !onlySets) opt.lessonsOn = false;   // ENGINE-BACKLOG 845 to 851
 if ((opt.fluencyAll || opt.fluencyIds.length) && !opt.lessons.length && !onlySets) opt.lessonsOn = false;   // ENGINE-BACKLOG 816
 const drillRun = opt.drillIds.length || opt.drillsAll || opt.sessionRun; // item 472
 if (drillRun && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
-if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length && !drillRun && !opt.fluencyIds.length && !opt.fluencyAll;
+if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length && !drillRun && !opt.fluencyIds.length && !opt.fluencyAll && !opt.problemsIds.length && !opt.problemsAll;
 if (opt.localCdn && !fs.existsSync(opt.localCdn)) die(`--local-cdn: ${opt.localCdn} does not exist`);
 if (opt.shots) fs.mkdirSync(opt.shots, { recursive: true });
 function die(msg) { console.error('playthrough: ' + msg); process.exit(2); }
@@ -227,7 +233,15 @@ const writtenLessons = () => {
   }
   const fxDir = path.join(APP, 'tools', 'fixtures', 'fluency');
   if (fs.existsSync(fxDir)) fs.readdirSync(fxDir).filter(f => f.endsWith('.json')).sort().forEach(f => fluency.push(`fixture/${f.replace(/\.json$/, '')}`));
-  return { lessons: out, courses: order.filter(c => fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json'))), sets, exams, fluency };
+  /* ENGINE-BACKLOG 845 to 851: level problem sets (problems-<n>.json beside the review; samples left out), then the fixtures under tools/fixtures/problems (never content) */
+  const problems = [];
+  for (const c of order) {
+    const dir = path.join(CONTENT, 'courses', c);
+    if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => /^problems-\d+\.json$/.test(f)).sort((a, b) => parseInt(a.slice(9), 10) - parseInt(b.slice(9), 10)).forEach(f => { let d = null; try { d = readJSON(path.join(dir, f)); } catch { /* the validator reports it */ } if (!(d && d.sample === true)) problems.push(`${c}/${f.replace(/\.json$/, '')}`); });
+  }
+  const pxDir = path.join(APP, 'tools', 'fixtures', 'problems');
+  if (fs.existsSync(pxDir)) fs.readdirSync(pxDir).filter(f => f.endsWith('.json')).sort().forEach(f => problems.push(`fixture/${f.replace(/\.json$/, '')}`));
+  return { lessons: out, courses: order.filter(c => fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json'))), sets, exams, fluency, problems };
 };
 
 /* ---------- Static server on a free port ---------- */
@@ -266,7 +280,7 @@ const cdnFile = (u) => {
 /* ---------- Run ---------- */
 const main = async () => {
   const { chromium } = await loadPlaywright();
-  const { lessons: allLessons, courses, sets: allSets, exams: allExams, fluency: allFluency } = writtenLessons();
+  const { lessons: allLessons, courses, sets: allSets, exams: allExams, fluency: allFluency, problems: allProblems } = writtenLessons();
   const lessons0 = opt.lessonsOn ? (opt.lessons.length ? opt.lessons : allLessons) : [];
   for (const l of opt.lessons) if (!allLessons.includes(l)) die(`--lesson ${l}: no such written lesson (the file must exist and be listed in its course.json)`);
   for (const x of opt.setIds) if (!allSets.some(s2 => s2.id === x)) die(`--set ${x}: no such written review or homework (the file must exist and be named in its course.json)`);
@@ -274,14 +288,17 @@ const main = async () => {
   const sets0 = opt.setIds.length ? allSets.filter(s2 => opt.setIds.includes(s2.id)) : opt.sets ? allSets : [];
   const exams0 = opt.examIds.length ? opt.examIds : opt.exams ? allExams : [];
   for (const x of opt.fluencyIds) if (!allFluency.includes(x)) die(`--fluency ${x}: no such fluency set (content/courses/<course>/fluency-<lesson>.json, or fixture/<id> under tools/fixtures/fluency)`);
+  for (const x of opt.problemsIds) if (!allProblems.includes(x)) die(`--problems ${x}: no such problem set (content/courses/<course>/problems-<n>.json, or fixture/<file> under tools/fixtures/problems)`);
+  const problems0 = opt.problemsIds.length ? opt.problemsIds : (opt.all || opt.problemsAll) ? allProblems : [];
   const fluency0 = opt.fluencyIds.length ? opt.fluencyIds : (opt.all || opt.fluencyAll) ? allFluency : [];
   /* ENGINE-BACKLOG 550: the full ordered item list is lessons, then sets, then exams; --shard i/n keeps the items whose index % n === i-1 */
-  const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...fluency0.map(id => ({ k: 'fluency', id })), ...exams0.map(id => ({ k: 'exam', id }))];
+  const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...fluency0.map(id => ({ k: 'fluency', id })), ...problems0.map(id => ({ k: 'problems', id })), ...exams0.map(id => ({ k: 'exam', id }))];
   const mine = opt.shard ? full.filter((_, ix) => ix % opt.shard.n === opt.shard.i - 1) : full;
   const lessons = lessons0.filter(id => mine.some(m => m.k === 'lesson' && m.id === id));
   const sets = sets0.filter(st => mine.some(m => m.k === 'set' && m.id === st.id));
   const exams = exams0.filter(id => mine.some(m => m.k === 'exam' && m.id === id));
   const fluencySets = fluency0.filter(id => mine.some(m => m.k === 'fluency' && m.id === id));
+  const problemSets = problems0.filter(id => mine.some(m => m.k === 'problems' && m.id === id));
   if (opt.list) { mine.forEach(m => console.log(`${m.k}/${m.id}`)); return; }
   if (opt.shard) console.log(`shard ${opt.shard.i}/${opt.shard.n}: ${mine.length} of ${full.length} items${opt.routes ? (opt.shard.i === 1 ? ', plus the routes and their checks' : ', routes run in shard 1 only') : ''}`);
   const runRoutes = opt.routes && (!opt.shard || opt.shard.i === 1);
@@ -447,7 +464,7 @@ const main = async () => {
     const trackedExam = (ex) => { try { const d = readJSON(path.join(CONTENT, "exams", ex + ".json")); return (d.parts || []).some(p => p && Array.isArray(p.tracks) && p.tracks.length); } catch { return false; } };
     const xr = (ex, seed) => `exam/${ex}${seed != null ? "/" + seed : ""}${trackedExam(ex) ? "/all" : ""}`;
     const unlockRoute = async (route) => {
-      const m = /^(?:lesson|review|homework)\/([^/]+)\/([^/]+)/.exec(route);
+      const m = /^(?:lesson|review|homework|problems)\/([^/]+)\/([^/]+)/.exec(route);
       if (m) return page.evaluate(([c, i]) => (window.ZQ && ZQ.prereq ? ZQ.prereq.unlock(c, i) : 0), [m[1], m[2]]);
       const e = /^exam\/([^/?]+)/.exec(route);
       if (e) {
@@ -1037,6 +1054,145 @@ const main = async () => {
       fails.forEach(f => failures.push(`#${label}: ${f}`));
     };
     for (const ref of fluencySets) await guarded(`fluency/${ref}`, () => fluencyPlay(ref));
+    /* ENGINE-BACKLOG 845 to 851: a level problem set (a fixture is registered through the test hook, never as content). Checks:
+         1. the level review's card on the course page lists it (name, count, a button to the route) and nothing is wider than the window;
+         2. the start card says untimed and not a gate; a first attempt gets one part wrong (where a typed part can be made wrong): the verdict shows that part's own
+            feedback, the next part still opens, the item earns the share of its parts that were right, the summary counts each part, the save records the attempt;
+         3. the first finish earns the homework-scale XP (50, and 5 for each item right), a second attempt with every part right earns none and raises the best to every item;
+         4. nothing else moves: reviews, homework, met levels, the redo queue and the performance record are as before (a problem set is never a gate). */
+    const problemsPlay = async (ref) => {
+      const label = `problems/${ref}`;
+      where = '#' + label;
+      const fails = [];
+      const t0 = Date.now();
+      let note = '';
+      try {
+        let course, id, doc;
+        if (ref.startsWith('fixture/')) { doc = readJSON(path.join(APP, 'tools', 'fixtures', 'problems', ref.slice(8) + '.json')); course = doc.course; id = doc.id; }
+        else { [course, id] = ref.split('/'); doc = readJSON(path.join(CONTENT, 'courses', course, id + '.json')); }
+        const items = doc.items || [], n = items.length, level = doc.level;
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        await page.evaluate(([c, i]) => { if (ZQ.state.doc.problems) delete ZQ.state.doc.problems[`${c}/${i}`]; }, [course, id]);
+        if (ref.startsWith('fixture/')) await page.evaluate(([c, d]) => ZQ.content._addProblems([{ course: c, doc: d }]), [course, doc]);
+        await unlockRoute(`problems/${course}/${id}`);
+        const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        const overflowAt = async (what) => {
+          for (const v of [DESKTOP, ...EXTRA]) { if (v !== DESKTOP) await setVp(v, 250); if (await wideNow()) fails.push(`${what} at ${v.w} px: the page is wider than the window`); }
+          if (EXTRA.length) await setVp(DESKTOP, 150);
+        };
+        const snap = () => page.evaluate(() => { const d = ZQ.state.doc; return JSON.stringify({ reviews: d.reviews, homework: d.homework, redo: d.redo, prereq: d.prereq.met, perf: d.perf }); });
+        const before = await snap();
+        /* 1. the course page */
+        await go(`course/${course}`);
+        const reviewId = ((readJSON(path.join(CONTENT, 'courses', course, 'course.json')).levels || [])[level - 1] || {}).review;
+        const row = await page.evaluate(async (rid) => {
+          const node = [...document.querySelectorAll('.zc-node')].find(x => x.dataset.id === rid);
+          if (!node) return { none: true };
+          node.click();
+          await new Promise(r => setTimeout(r, 350));
+          const r = document.querySelector('.zc-pop [data-problems-row]');
+          return { text: r ? r.innerText.replace(/\s+/g, ' ') : null, button: r && r.querySelector('[data-problems]') ? r.querySelector('[data-problems]').dataset.problems : null };
+        }, reviewId);
+        if (row.none) fails.push(`the course page has no node for ${reviewId}`);
+        else if (!row.text) fails.push("the level review's card on the course page has no Problem set row");
+        else if (row.button !== id || !new RegExp(`Problem set: ${n} chained problems`).test(row.text)) fails.push(`the Problem set row is wrong: ${row.text} (button ${row.button})`);
+        await shot(`${label}-course-row`);
+        await overflowAt('the course page with the Problem set row');
+        /* the set itself */
+        const parts = items.map(it => (it.parts || []).length);
+        let wrongDone = false;
+        const play = async (wrong) => {
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go('review');
+          await go(`problems/${course}/${id}`);
+          await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+          let c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind !== 'start') { fails.push(`the set opened in state ${c.kind}, not its start card`); return null; }
+          const intro = await page.evaluate(() => (document.querySelector('.hw-intro') || {}).innerText || '');
+          if (!/not a gate/i.test(intro) || /on the clock/i.test(intro)) fails.push(`the start card should say the set is untimed and not a gate: ${intro.replace(/\s+/g, ' ').slice(0, 200)}`);
+          await overflowAt('the Problem set start card');
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(150);
+          let guard = 0, wrongSeen = false;
+          while (++guard < 400) {
+            c = await page.evaluate(() => ZQ.test.current());
+            if (c.kind === 'done') break;
+            if (c.kind !== 'item') { fails.push(`unexpected state ${c.kind} in the set`); break; }
+            if (c.state === 'idle' || c.state === 'engaged') {
+              const miss = wrong && c.screenIndex === 0 && (c.part || 0) === 0 && !wrongSeen;
+              const applied = await page.evaluate((m) => (m && ZQ.test.answerWrong() ? 'wrong' : ZQ.test.answerCorrect() ? 'right' : 'none'), !!miss);
+              if (applied === 'none') { fails.push(`item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: the authored answer could not be typed`); break; }
+              const r = await page.evaluate(async () => { const x = await ZQ.test.check(); return x ? { ok: !!x.ok, key: x.key ?? null, pending: !!x.pending } : null; });
+              if (!r || r.pending) { fails.push(`item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: nothing was graded`); break; }
+              if (applied === 'wrong') {
+                wrongSeen = true; wrongDone = true;
+                if (r.ok) fails.push('a wrong answer to part 1 was graded correct');
+                else {
+                  const fb = await page.evaluate(() => { const x = document.querySelector('.lsn-verdict'); return x ? x.innerText.replace(/\s+/g, ' ').trim() : ''; });
+                  if (fb.length < 12) fails.push(`a wrong part shows no feedback of its own: "${fb}"`);
+                  await shot(`${label}-wrong-part`);
+                  await overflowAt('a wrong part with its feedback');
+                }
+              } else if (!r.ok && !(wrongSeen && c.screenIndex === 0 && c.part === c.parts - 1)) fails.push(`item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: the authored answer was not correct, key ${JSON.stringify(r.key)}${wrong ? ' (first attempt)' : ''}`);
+            }
+            await page.evaluate(() => ZQ.test.continue());
+            await page.waitForTimeout(100);
+          }
+          c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind !== 'done') { fails.push('the set did not reach its result page'); return null; }
+          const sum = await page.evaluate(() => ({ rows: document.querySelectorAll('.hw-res li').length, first: ((document.querySelector('.hw-res li .hw-res-m') || {}).textContent || '').trim(), credit: ((document.querySelector('.hw-credit') || {}).textContent || '').trim(), again: !!document.querySelector('[data-again]') }));
+          if (sum.rows !== n) fails.push(`the result lists ${sum.rows} problems, not ${n}`);
+          if (!sum.again) fails.push('the result page has no Go again');
+          await shot(`${label}-done`);
+          await overflowAt('the Problem set result page');
+          return sum;
+        };
+        const xp0 = await page.evaluate(() => ZQ.state.xp);
+        const a = await play(true);
+        const rec1 = await page.evaluate(([c, i]) => ZQ.state.problems.get(c, i), [course, id]);
+        const xp1 = await page.evaluate(() => ZQ.state.xp);
+        if (a && wrongDone) {
+          const want = Math.round((n - 1 / parts[0]) * 10) / 10, right = n - 1;
+          if (a.first !== `${parts[0] - 1} of ${parts[0]} parts`) fails.push(`the first problem's row says "${a.first}", expected "${parts[0] - 1} of ${parts[0]} parts"`);
+          if (!new RegExp(`Counting each part of a multi-part problem: ${want} of ${n}\\.`).test(a.credit)) fails.push(`the summary does not count each part (expected ${want} of ${n}): "${a.credit}"`);
+          if (!rec1 || rec1.attempts !== 1 || rec1.lastScore !== want || rec1.n !== n) fails.push(`the save after the first attempt: ${JSON.stringify(rec1)} (expected score ${want} of ${n})`);
+          if (xp1 - xp0 !== 50 + 5 * right) fails.push(`the first finish earned ${xp1 - xp0} XP, expected ${50 + 5 * right} (50 and 5 for each of ${right} problems right)`);
+        } else if (a && !wrongDone) {
+          if (!rec1 || rec1.attempts !== 1 || rec1.lastScore !== n) fails.push(`the save after the first attempt: ${JSON.stringify(rec1)}`);
+          if (xp1 - xp0 !== 50 + 5 * n) fails.push(`the first finish earned ${xp1 - xp0} XP, expected ${50 + 5 * n}`);
+        }
+        /* 3. again, every part right: no more XP, the best is every problem */
+        const b = await play(false);
+        const rec2 = await page.evaluate(([c, i]) => ZQ.state.problems.get(c, i), [course, id]);
+        const xp2 = await page.evaluate(() => ZQ.state.xp);
+        if (b) {
+          if (!rec2 || rec2.attempts !== 2 || rec2.best !== n || rec2.lastScore !== n) fails.push(`the save after the second attempt: ${JSON.stringify(rec2)}`);
+          if (xp2 !== xp1) fails.push(`a repeat attempt earned ${xp2 - xp1} XP (a repeat earns none)`);
+          if (!new RegExp(`: ${n} of ${n}\\.`).test(b.credit)) fails.push(`a clean attempt's part-credit line should read ${n} of ${n}: "${b.credit}"`);
+          note = `${n} problems, ${parts.reduce((x, y) => x + y, 0)} parts, 2 attempts, best ${rec2 ? rec2.best : '?'}`;
+        }
+        /* 4. a problem set is never a gate */
+        if ((await snap()) !== before) fails.push('a problem set moved a review, homework, met level, the redo queue or the performance record (it must not)');
+        /* leaving part way is not an attempt */
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        await go(`problems/${course}/${id}`);
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        await page.evaluate(() => ZQ.test.continue()); await page.waitForTimeout(150);
+        await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(async () => { await ZQ.test.check(); });
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('review');
+        const part = await page.evaluate(([c, i]) => ZQ.state.problems.get(c, i), [course, id]);
+        if (!part || part.attempts !== 2) fails.push(`leaving part way counted as an attempt: ${JSON.stringify(part)}`);
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} ${label}  ${note}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log(`FAIL ${label}  threw`);
+      }
+      fails.forEach(f => failures.push(`#${label}: ${f}`));
+    };
+    for (const ref of problemSets) await guarded(`problems/${ref}`, () => problemsPlay(ref));
     /* A mock exam: forward-only papers are probed while it is played (above); here the generated items must repeat for one
        seed and differ for another, and a second sitting with the clock moved to zero must submit itself (no timer is waited for) */
     const mockChecks = async (ex) => {

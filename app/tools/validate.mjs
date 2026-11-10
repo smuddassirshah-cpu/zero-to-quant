@@ -1570,9 +1570,29 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
 };
 
 /* ---------- Reviews and homework ---------- */
-const checkSet = (file, kind, courseId, id, level, doc, course) => {
+/* A level's problem set (ENGINE-BACKLOG 845 to 851, docs/AUTHORING.md section 5): problems-<n>.json, 3 to 5 chained problems, each an item with 3 to 5 parts (no longform part,
+   no code part: a part is a typed or chosen answer the engine grades), difficulty 3 to 5 with at least one 5, skills from the level's lessons. Untimed, no pass mark,
+   not a gate: timed, pass and dueDays are refused. Every item-level rule of a review item applies (checkItem). minutes (default 40) is the in-app allowance. */
+const checkProblemSet = (file, courseId, doc, items, skills, levelSkills) => {
+  Object.keys(doc).forEach(k => { if (!['id', 'course', 'level', 'items', 'title', 'minutes', 'sample'].includes(k)) err(file, k, k === 'timed' || k === 'pass' || k === 'dueDays' ? `${k} does not apply to a problem set: it is untimed, has no pass mark and is not a gate` : `unknown field "${k}" (a problem set has id, course, level, items, and optionally title and minutes)`); });
+  if (doc.title != null) { if (typeof doc.title !== 'string' || !doc.title.trim()) err(file, 'title', 'title is a non-empty string'); else checkText(file, 'title', doc.title); }
+  if (doc.minutes != null && !(Number.isInteger(doc.minutes) && doc.minutes >= 10 && doc.minutes <= 240)) err(file, 'minutes', 'minutes is a whole number from 10 to 240 (40 where the file states none)');
+  if (items.length < 3 || items.length > 5) err(file, 'items', `3 to 5 items (found ${items.length})`);
+  items.forEach((it, i) => {
+    const at = `items[${i}]`;
+    checkItem(file, at, it, { lo: 3, hi: 5, label: 'problem set', skills, skillsRequired: true, allowLongform: false, perf: false });
+    if (!isObj(it)) return;
+    if (!Array.isArray(it.parts)) { err(file, `${at}.parts`, 'every problem in a problem set uses parts: 3 to 5 chained parts, each graded on its own'); return; }
+    if (it.parts.length < 3 || it.parts.length > 5) err(file, `${at}.parts`, `a problem in a problem set has 3 to 5 parts (found ${it.parts.length})`);
+    it.parts.forEach((p, k) => { if (isObj(p) && isObj(p.widget) && ['code', 'longform'].includes(p.widget.kind)) err(file, `${at}.parts[${k}].widget`, `a ${p.widget.kind} part cannot be in a problem set: each part is a typed or chosen answer the engine grades`); });
+    if (levelSkills && Array.isArray(it.skills)) it.skills.forEach(sk => { if (skills.has(sk) && !levelSkills.has(sk)) err(file, `${at}.skills`, `skill "${sk}" is not taught in this level's lessons (use the skills of the level's own lessons)`); });
+  });
+  if (!items.some(it => isObj(it) && it.difficulty === 5)) err(file, 'items', 'a problem set needs at least one item at difficulty 5');
+  const qids = new Set(); items.forEach((it, i) => { if (it && it.id) { if (qids.has(it.id)) err(file, `items[${i}].id`, `duplicate id "${it.id}"`); qids.add(it.id); } });
+};
+const checkSet = (file, kind, courseId, id, level, doc, course, { levelSkills = null } = {}) => {
   const skills = new Set(Object.keys(course.skills || {}));
-  req(file, '', doc, kind === 'review' ? ['id', 'course', 'level', 'items'] : ['id', 'course', 'level', 'dueDays', 'items']);
+  req(file, '', doc, kind === 'review' || kind === 'problems' ? ['id', 'course', 'level', 'items'] : ['id', 'course', 'level', 'dueDays', 'items']);
   if (doc.id !== id) err(file, 'id', `id "${doc.id}" must match the file name "${id}"`);
   if (doc.course !== courseId) err(file, 'course', `course must be "${courseId}"`);
   if (doc.level !== level) err(file, 'level', `level must be ${level}`);
@@ -1592,6 +1612,7 @@ const checkSet = (file, kind, courseId, id, level, doc, course) => {
     else if (typeof doc.pass !== 'number' || !(doc.pass > 0 && doc.pass <= 1)) err(file, 'pass', 'pass is a share above 0 and at most 1 (0.7 by default)');
   }
   const items = Array.isArray(doc.items) ? doc.items : [];
+  if (kind === 'problems') return checkProblemSet(file, courseId, doc, items, skills, levelSkills);
   const [lo, hi, nlo, nhi] = kind === 'review' ? [2, 4, 6, 10] : [3, 5, 6, 12];
   if (items.length < nlo || items.length > nhi) err(file, 'items', `${nlo} to ${nhi} items (found ${items.length})`);
   const kinds = items.map((it, i) => checkItem(file, `items[${i}]`, it, { lo, hi, label: kind, skills, skillsRequired: true, allowLongform: kind === 'homework', perf: true }));
@@ -1963,6 +1984,7 @@ const checkFluencyFile = (file, cid, fileId, data, D, written, { fixture = false
   r.problems.forEach(p => (p.level === 'error' ? err : warn)(file, p.where, p.msg));
   return r;
 };
+const problemsManifest = {};   // ENGINE-BACKLOG 845 to 851: "course/problems-n" -> { level, title, items, minutes, sample? }, read by js/content.js problemsFor and the in-app hours
 const examMinutesManifest = {};   // ENGINE-BACKLOG 621: exam id -> minutes the exam screen runs, read by js/content.js examMinutes
 const sessionManifest = {};   // item 10: "course/lesson" -> { session, minutes } for workshop and project lessons, read by js/content.js and js/hours.js
 const lessonMinutesManifest = {};   // session Y: "course/lesson" -> the lesson's authored minutes, for the in-app hours (js/hours.js, read by js/content.js)
@@ -2008,6 +2030,7 @@ Object.keys(C.courses || {}).forEach(cid => {
   if (levels.length < 3 || levels.length > 5) err(file, 'levels', `3 to 5 levels (found ${levels.length})`);
   const seen = new Set(), referenced = new Set(['course.json']);
   const written = [], unwritten = [], usedSkills = new Set();
+  const levelTaught = {};   // level n -> { skills: Set of the skills its written lessons carry, complete: every lesson of the level is written }, for the problem-set skills rule
   let reviewsMissing = 0, homeworkMissing = 0, lessonTotal = 0;
   levels.forEach((lv, i) => {
     const at = `levels[${i}]`;
@@ -2016,6 +2039,7 @@ Object.keys(C.courses || {}).forEach(cid => {
     checkText(file, `${at}.name`, lv.name);
     const objs = [], sets = {}; let lessonsWritten = true;   // item 529: the level's lesson objectives and its review and homework, for the performance-task rule
     const ls = Array.isArray(lv.lessons) ? lv.lessons : [];
+    const taught = levelTaught[lv.n] = { skills: new Set(), complete: true };
     if (ls.length < 4 || ls.length > 6) err(file, `${at}.lessons`, `4 to 6 lessons per level (found ${ls.length})`);
     ls.forEach(l => {
       lessonTotal++;
@@ -2027,7 +2051,8 @@ Object.keys(C.courses || {}).forEach(cid => {
       else { checkText(file, `lessonNames.${l}`, name); if (name.includes('$')) err(file, `lessonNames.${l}`, 'keep maths out of lesson names (they show as plain text)'); }
       checkText(file, `lessonObjectives.${l}`, (D.lessonObjectives || {})[l]);
       const lf = path.join(dir, `${l}.json`), lr = readJSON(lf);
-      if (lr.missing) { unwritten.push(l); lessonsWritten = false; return; }
+      if (lr.missing) { unwritten.push(l); lessonsWritten = false; taught.complete = false; return; }
+      if (lr.data && Array.isArray(lr.data.skills)) lr.data.skills.forEach(sk => taught.skills.add(sk));
       if (lr.data && Array.isArray(lr.data.objectives)) objs.push(...lr.data.objectives.filter(o => typeof o === 'string'));
       written.push(l); manifest.push(`courses/${cid}/${l}.json`);
       if (noteSample(lf, `courses/${cid}/${l}.json`, lr.data)) err(lf, 'sample', 'a sample file cannot be on a course map: leave it out of course.json');
@@ -2066,6 +2091,18 @@ Object.keys(C.courses || {}).forEach(cid => {
       fluencyManifest[`${cid}/${uid}`] = { lesson: d.lesson, title: d.title, n: Number.isInteger(d.n) ? d.n : 20, pass: typeof d.pass === 'number' ? d.pass : 0.9, minutes: Number.isInteger(d.minutes) ? d.minutes : 10, families: Array.isArray(d.families) ? d.families.length : 0, ...(d.sample === true ? { sample: true } : {}) };
       return;
     }
+    if (/^problems-.+\.json$/.test(f)) {   // a level's problem set, found by its file name (no course.json entry; a level without one is not an error)
+      if (!isObj(ur.data)) { if (!ur.bad) err(uf, '', 'a problem set is a JSON object'); return; }
+      const pm = /^problems-(\d+)$/.exec(uid), pn = pm ? Number(pm[1]) : null;
+      if (!pm || String(pn) !== pm[1] || pn < 1 || pn > levels.length) { err(uf, '', `a problem set is problems-<n>.json with n a level of the course (1 to ${levels.length})`); return; }
+      manifest.push(`courses/${cid}/${f}`);
+      const isSample = noteSample(uf, `courses/${cid}/${f}`, ur.data);
+      const lt = levelTaught[pn];
+      guard(uf, () => checkSet(uf, 'problems', cid, uid, pn, ur.data, D, { levelSkills: lt && lt.complete ? lt.skills : null }));
+      const d = ur.data;
+      problemsManifest[`${cid}/${uid}`] = { level: pn, title: typeof d.title === 'string' ? d.title : '', items: Array.isArray(d.items) ? d.items.length : 0, minutes: Number.isInteger(d.minutes) && d.minutes > 0 ? d.minutes : 40, ...(isSample ? { sample: true } : {}) };
+      return;
+    }
     if (!(ur.data && ur.data.sample === true)) { if (!ur.bad) err(uf, '', 'file is not referenced by course.json (an engine sample says "sample": true at the top)'); return; }
     /* a sample lesson, review or homework in a course folder: checked like the real thing, kept off the map and out of every count */
     noteSample(uf, `courses/${cid}/${f}`, ur.data); manifest.push(`courses/${cid}/${f}`);
@@ -2087,6 +2124,19 @@ fluencyFixtures().forEach(ff => {
   if (!D) { err(ff, 'course', `the fixture's course "${cid}" is not a course`); return; }
   guard(ff, () => checkFluencyFile(ff, cid, fr.data.id, fr.data, D, writtenByCourse.get(cid) || [], { fixture: true }));
 });
+
+/* The problem-set fixtures (tools/fixtures/problems, never content): checked like a real set, so the rules run on every validation */
+{
+  const fxDir = path.join(APP, 'tools', 'fixtures', 'problems');
+  let fxs = []; try { fxs = fs.readdirSync(fxDir).filter(f => f.endsWith('.json')).sort(); } catch { /* none */ }
+  fxs.forEach(f => {
+    const ff = path.join(fxDir, f), fr = readJSON(ff);
+    if (!isObj(fr.data)) return;
+    const cid = fr.data.course, D = cur.courseDocs[cid];
+    if (!D) { err(ff, 'course', `the fixture's course "${cid}" is not a course`); return; }
+    guard(ff, () => checkSet(ff, 'problems', cid, fr.data.id, fr.data.level, fr.data, D));
+  });
+}
 
 /* perf-pending.json: a key that is not a level is stale; one count line for the rest */
 [...perfPending].filter(k => !perfStats.levels.has(k)).forEach(k => warn(path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-pending.json'), k, 'not a level on any course map: remove it'));
@@ -2504,7 +2554,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. examMinutes gives the minutes each exam runs. sessions lists the workshop and project lessons with their true minutes. lessonMinutes gives the authored minutes of every lesson and setMinutes the minutes a review or homework file states (the in-app hours). perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), examMinutes: Object.fromEntries(Object.keys(examMinutesManifest).sort().map(k => [k, examMinutesManifest[k]])), sessions: Object.fromEntries(Object.keys(sessionManifest).sort().map(k => [k, sessionManifest[k]])), lessonMinutes: Object.fromEntries(Object.keys(lessonMinutesManifest).sort().map(k => [k, lessonMinutesManifest[k]])), setMinutes: Object.fromEntries(Object.keys(setMinutesManifest).sort().map(k => [k, setMinutesManifest[k]])), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])), ...(Object.keys(fluencyManifest).length ? { fluency: Object.fromEntries(Object.keys(fluencyManifest).sort().map(k => [k, fluencyManifest[k]])) } : {}) }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. examMinutes gives the minutes each exam runs. sessions lists the workshop and project lessons with their true minutes. lessonMinutes gives the authored minutes of every lesson and setMinutes the minutes a review or homework file states (the in-app hours). perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), examMinutes: Object.fromEntries(Object.keys(examMinutesManifest).sort().map(k => [k, examMinutesManifest[k]])), sessions: Object.fromEntries(Object.keys(sessionManifest).sort().map(k => [k, sessionManifest[k]])), lessonMinutes: Object.fromEntries(Object.keys(lessonMinutesManifest).sort().map(k => [k, lessonMinutesManifest[k]])), setMinutes: Object.fromEntries(Object.keys(setMinutesManifest).sort().map(k => [k, setMinutesManifest[k]])), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])), ...(Object.keys(fluencyManifest).length ? { fluency: Object.fromEntries(Object.keys(fluencyManifest).sort().map(k => [k, fluencyManifest[k]])) } : {}), ...(Object.keys(problemsManifest).length ? { problems: Object.fromEntries(Object.keys(problemsManifest).sort().map(k => [k, problemsManifest[k]])) } : {}) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }

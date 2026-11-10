@@ -2002,3 +2002,28 @@ Raised later (the first Fluency content wave), engine pass 835 onward:
 
 844. Done [Should] Planted-wrong-solution check as a tool (KNOWN_ISSUES "Protocol 6 watch"; reviews `review-drills-dsa-a-b`, `review-drills-dsa-c-d`): a drill may carry `planted`, an array of `{ "code", "slip" }` wrong solutions; `node tools/planted-check.mjs --drill <id> | --all-drills [--require] [--local-cdn <pkgs>]` runs the model solution, the starter and each planted solution against the hidden tests in Pyodide or the C++ toolchain, and fails when the model fails or any wrong solution passes every test.
 844 status: done. The runner is `playthrough.mjs --drill <id> --planted` (new `plantedOne`, using the same `drillReady`, `drillSubmit` and hooks as `--drill`); `planted-check.mjs` picks the drills, reads the `PLANTED-FAIL` and `PLANTED-OK` lines and adds `--require`. Validator checks the shape only. Test `tools/test-planted-check.mjs` with fixtures in `tools/fixtures/planted/`. No existing drill holds wrong solutions under another name, and no content was edited.
+
+## Problem sets
+
+Raised by the chained-problems decision (DECISIONS "Chained problems", session Z; PLAN 2d item M; brief `docs/briefs/chained.md`). A per-level content kind, `problems-<n>.json`, for chained problems. Items 845 to 851; report `docs/reports/engine-problems.md`.
+
+845. Done [Must] The file kind `problems-<n>.json` and its validator rules: `{ id, course, level, items: [3 to 5], title?, minutes? }`, every item with 3 to 5 `parts` and no `longform` or `code` part, difficulty 3 to 5 with at least one 5, `skills` from the level's own lessons, no `timed`, `pass` or `dueDays`; every review item rule applies; a level without a file is not an error; the manifest lists each set under `problems`.
+845 status: done. `checkProblemSet` in `tools/validate.mjs` (called from `checkSet` with kind `problems`; found by file name, like Fluency sets) and the fixture check; `tools/test-validate-problems.mjs` (33 scratch cases).
+
+846. Done [Must] Loader, route and set page: `ZQ.content.problemsFor`, `problemsList`, `problems`, `_addProblems` (test hook); route `#problems/<course>/problems-<n>` on the shared set page; untimed, repeatable ("Go again"), not a gate; each part graded with its own feedback, item credit as the `parts` rules say.
+846 status: done. `mountProblemSet` in `js/screens/review.js` (no new player); `ZQ.state.problems.finished` saves attempts, best (in items, part credit counted) and last score; it locks and unlocks with its level (`levelHolding` in `js/prereq.js` knows `problems-<n>`).
+
+847. Done [Must] Listing: the level review's card on the course map carries a "Problem set" row with a button, and the review's result page links to it.
+847 status: done. `problemsRow` in `js/screens/course.js`; the row is hidden while the level is locked.
+
+848. Done [Should] XP on the homework scale: 50 and 5 an item right, and mastery points, on the first finished attempt only; no redo queue; a left set records its time and nothing else.
+848 status: done. `problemsFinished` in `js/state.js`. Nothing else moves (reviews, homework, met levels, redo queue, performance record); `tools/test-problems.mjs` and the playthrough check it.
+
+849. Done [Must] Weekly cumulative review: the items of the problem sets of met levels join the unseen authored pool (tier 2); an item with parts plays correctly there, a miss queues under the set's own ref and the redo session resolves it with its parts.
+849 status: done, and no fault found in the player: an item with parts already played in the weekly review as in a level review (`practiceKind` leaves out a code or long-form part). Changes: `cumModel`, `loadSet`, `source`, `levelOf` and `resolve` in `js/engine/select.js`. Tested in the real player (`tools/test-problems.mjs` part B).
+
+850. Done [Must] Hours: the in-app minutes count the set (stated `minutes`, else 40); the stored topic hours and the census "hours 3,695, gap 0" figure do not change.
+850 status: done. `problemsMinutes` in `js/hours.js` `build` (read from `manifest.problems` by `js/content.js`, from the files by `tools/hours-source.mjs`); with no problem file in the content every figure is unchanged. When sets arrive, in-app hours rise and outside hours fall by the same minutes, per level, course, topic and stage; stored hours stay as they are (`tools/test-hours-split.mjs` still holds, and `tools/test-problems.mjs` checks the stored figures).
+
+851. Done [Must] Tools: `node tools/playthrough.mjs --problems <course>/problems-<n>` (also `fixture/<file>` and `--problems all`, inside `--all`, with `--mobile` and `--local-cdn`); `tools/census.mjs` prints "Problem sets n (items m)"; `tools/test-problems.mjs`; the fixture set in `tools/fixtures/problems/`; AUTHORING section 5 and 7, `app/README.md`.
+851 status: done. The playthrough checks the course row, a wrong part (its own feedback, part credit, the summary line), the XP rule, a repeat, no gate, and no overflow at the phone width.

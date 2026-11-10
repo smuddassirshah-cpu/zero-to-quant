@@ -102,7 +102,7 @@
     const lv = P.levelHolding(cid, id);
     const isLesson = (lv.lessons || []).includes(id);
     const x = Z.content.courseLessons(cid).find(y => y.id === id);
-    const name = isLesson ? (x ? x.name : id) : lv.review === id ? `Level ${lv.n} review` : `Homework ${lv.n}`;
+    const name = isLesson ? (x ? x.name : id) : lv.review === id ? `Level ${lv.n} review` : id === `problems-${lv.n}` ? `Problem set ${lv.n}` : `Homework ${lv.n}`;
     return Z.lockedCard(host, { title: `${name} is locked`, route, openKey: P.keyOfLevel(cid, lv.n),
       missing: isLesson ? P.missingFor(cid, id) : P.missingForLevel(cid, lv.n), back: `#course/${cid}`,
       check: isLesson ? P.diagnosticsFor(cid, id) : P.diagnosticsForLevel(cid, lv.n), limits: isLesson ? P.routeLimitsForLesson(cid, id) : P.routeLimitsForLevel(cid, lv.n) });
