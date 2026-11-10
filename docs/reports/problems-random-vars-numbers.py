@@ -174,6 +174,79 @@ n_alt = next(n for n in range(1, 50) if 0.8 ** n <= 0.1)
 num(L1, 'p-tightest-quote', 4, n_need, n_alt, {'round-down': n_need - 1, 'added': 5})
 ok(abs(0.8 ** 10 - 0.107) < 0.0005 and abs(0.8 ** 11 - 0.086) < 0.0005, '0.8^10, 0.8^11 as stated')
 
+# ------------------------------------------------------------------ level 2
+L2 = load(2)
+
+# p-phone-cover: claim X on {0, 200, 500}; excess of 50 on claims only
+X = {0: F(85, 100), 200: F(10, 100), 500: F(5, 100)}
+EX = E(X)
+policies = 2000
+num(L2, 'p-phone-cover', 1, EX, sum(v * p for v, p in X.items()),
+    {'unweighted': F(700, 3), 'missed-500': 200 * F(1, 10), 'mode': 0})
+num(L2, 'p-phone-cover', 2, 60 - EX, E(X, lambda v: 60 - v),
+    {'reversed': EX - 60, 'carried-unweighted': 60 - F(700, 3), 'carried-500': 60 - 20})
+num(L2, 'p-phone-cover', 3, policies * (60 - EX), policies * 60 - policies * EX,
+    {'one-policy': 60 - EX, 'revenue': policies * 60, 'claims': policies * EX})
+Xe = pmf_of(X, lambda v: max(v - 50, 0))
+num(L2, 'p-phone-cover', 4, EX - 50 * (1 - X[0]) + 20, E(Xe) + 20,
+    {'excess-all': EX - 50 + 20, 'old-claims': EX + 20, 'fair': E(Xe)})
+
+# p-reversal-days: 20 independent days, up w.p. 0.6; enumerate exactly on fewer days, then scale
+u = F(6, 10)
+day = {1: u, 0: 1 - u}
+pr = u * (1 - u) + (1 - u) * u
+def ER_enum(n):   # exact expectation of reversals over n days by enumeration
+    sp = product_space(*[day] * n)
+    return sum(p * sum(1 for k in range(1, n) if w[k] != w[k - 1]) for w, p in sp.items())
+ok(ER_enum(6) == 5 * pr and ER_enum(8) == 7 * pr, 'enumerated reversals do not match (n-1) * 0.48')
+ER = 19 * pr
+num(L2, 'p-reversal-days', 1, pr, 1 - (u ** 2 + (1 - u) ** 2),
+    {'one-way': u * (1 - u), 'same': u ** 2 + (1 - u) ** 2, 'half': F(1, 2)})
+num(L2, 'p-reversal-days', 2, ER, ER_enum(10) / 9 * 19,
+    {'twenty': 20 * pr, 'one-way': 19 * u * (1 - u), 'same': 19 * (1 - pr)})
+pick(L2, 'p-reversal-days', 3, 'nothing')
+num(L2, 'p-reversal-days', 4, 57 - 8 * ER, 3 * (19 - ER) - 5 * ER,
+    {'twenty': 3 * (20 - ER) - 5 * ER, 'no-gains': -5 * ER, 'carried': 57 - 8 * 20 * pr})
+ok(isclose(float(3 * (20 - ER) - 5 * ER), -12.96), 'twenty slip is not -12.96')
+g = 5 * ER / (19 - ER)
+num(L2, 'p-reversal-days', 5, g, 5 * pr / (1 - pr), {'flipped': 5 * (19 - ER) / ER, 'equal': 5}, round_tol=0.005)
+
+# p-month-options: S on {34, 38, 42, 48}
+Sd = {34: F(1, 10), 38: F(3, 10), 42: F(4, 10), 48: F(2, 10)}
+ES = E(Sd)
+EC = E(Sd, lambda s: max(s - 40, 0))
+EQ = E(Sd, lambda s: max(40 - s, 0))
+num(L2, 'p-month-options', 1, ES, sum(Sd[s] * s for s in Sd), {'unweighted': F(34 + 38 + 42 + 48, 4), 'mode': 42})
+num(L2, 'p-month-options', 2, EC, 2 * F(4, 10) + 8 * F(2, 10),
+    {'mean-payoff': max(ES - 40, 0), 'top-only': 8 * F(2, 10), 'unweighted': F(10, 4)})
+num(L2, 'p-month-options', 3, EC - (ES - 40), EQ, {'sign': EC + (ES - 40), 'carried': EC - (F(162, 4) - 40)})
+ok(all(max(s - 40, 0) - max(40 - s, 0) == s - 40 for s in Sd), 'C - Q = S - 40 fails')
+num(L2, 'p-month-options', 4, (EC - F(210, 100)) + (F(150, 100) - EQ), (ES - 40) - (F(210, 100) - F(150, 100)),
+    {'both-bought': (EC - F(210, 100)) + (EQ - F(150, 100)), 'call-only': EC - F(210, 100), 'sign': -((EC - F(210, 100)) + (F(150, 100) - EQ))})
+
+# p-token-draw: 3 gold (20) and 7 silver (5), draw 4 without replacement
+bag = ['g'] * 3 + ['s'] * 7
+seqs = list(itertools.permutations(range(10), 4))
+Pseq = F(1, len(seqs))
+third = sum(Pseq for s in seqs if bag[s[2]] == 'g')
+num(L2, 'p-token-draw', 1, F(3, 10), third, {'shrunk': F(3, 8), 'summed': F(9, 10)})
+Gd = pmf_of({s: Pseq for s in seqs}, lambda s: sum(1 for i in s if bag[i] == 'g'))
+num(L2, 'p-token-draw', 2, 4 * F(3, 10), E(Gd),
+    {'one-draw': F(3, 10), 'all-gold': 3, 'shrinking': F(3, 10) + F(3, 9) + F(3, 8) + F(3, 7)})
+EV = 20 + 15 * E(Gd)
+Vd = pmf_of(Gd, lambda k: 20 * k + 5 * (4 - k))
+num(L2, 'p-token-draw', 3, EV, E(Vd),
+    {'no-silver': 20 * F(12, 10), 'mean-token': 4 * F(25, 2), 'drop-shift': 15 * F(12, 10),
+     'carried': 20 + 15 * (F(3, 10) + F(3, 9) + F(3, 8) + F(3, 7))})
+ok(isclose(float(4 * (F(3, 10) * 20 + F(7, 10) * 5)), 38), 'per-draw check is not 38')
+pge2 = F(comb(3, 2) * comb(7, 2) + comb(3, 3) * comb(7, 1), comb(10, 4))
+binge2 = 1 - F(7, 10) ** 4 - 4 * F(3, 10) * F(7, 10) ** 3
+num(L2, 'p-token-draw', 4, pge2, Gd[2] + Gd[3],
+    {'replaced': binge2, 'exactly-two': Gd[2], 'at-least-one': 1 - Gd[0]})
+ok(Gd[2] == F(63, 210) and Gd[3] == F(7, 210), 'hand counts are not 63 and 7')
+num(L2, 'p-token-draw', 5, EV + 15 * pge2, E(Gd, lambda k: 20 + 15 * k + (15 if k >= 2 else 0)),
+    {'no-bonus': EV, 'full-bonus': EV + 15, 'bonus-only': 15 * pge2, 'carried': EV + 15 * binge2})
+
 
 present = [n for n in (1, 2, 3) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
