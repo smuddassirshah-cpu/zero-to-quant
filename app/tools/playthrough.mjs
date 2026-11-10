@@ -35,6 +35,7 @@
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
                                                            skewed Date.now so per-item seconds and the pace line are checked
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
+     node app/tools/playthrough.mjs --problems <set> --shots out   also every part of every problem at 440 px (<set>-i<item>-p<part>-440.png)
      node app/tools/playthrough.mjs --shots out --mobile   also a 440 x 956 screenshot of each (name-440.png): the user's phone, iPhone 17 Pro Max
      node app/tools/playthrough.mjs --narrow               the old 390 x 844 pass (name-390.png), the stricter width; combine with --mobile
      node app/tools/playthrough.mjs --tablet               1032 x 1376 and 1376 x 1032 passes (name-1032.png, name-1376.png): iPad Pro 13-inch,
@@ -1135,6 +1136,14 @@ const main = async () => {
                   await overflowAt('a wrong part with its feedback');
                 }
               } else if (!r.ok && !(wrongSeen && c.screenIndex === 0 && c.part === c.parts - 1)) fails.push(`item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: the authored answer was not correct, key ${JSON.stringify(r.key)}${wrong ? ' (first attempt)' : ''}`);
+              /* --shots: every part of every problem at 440 px, answered and checked, in the first attempt only (<set>-i<item>-p<part>-440.png), so choice, expression and long parts are seen */
+              if (opt.shots && wrong) {
+                const was = curVp;
+                await setVp({ w: 440, h: 1400 }, 350);
+                await page.waitForTimeout(450);
+                await page.screenshot({ path: path.join(opt.shots, `${label.replace(/[^\w.-]+/g, '_')}-i${c.screenIndex + 1}-p${(c.part || 0) + 1}-440.png`) });
+                await setVp(was, 250);
+              }
             }
             await page.evaluate(() => ZQ.test.continue());
             await page.waitForTimeout(100);

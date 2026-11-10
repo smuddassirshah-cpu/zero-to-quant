@@ -52,6 +52,8 @@ const cases = [
   ['part-wrong-equals-the-answer', (d) => { part(d, 0, 1).widget.wrong = [{ id: 'same', value: 4, tol: { abs: 0 } }]; }, 'wrong'],
   ['exclamation-in-prose', (d) => { d.items[0].prose = 'A plumber charges a fee!'; }, 'exclamation'],
   ['em-dash-in-an-explanation', (d) => { part(d, 0, 0).explain.text = 'The fee \u2014 paid once.'; }, 'em-dash'],
+  ['warn-non-integer-numeric-without-a-form', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'How many hours are worked?'; }, 'warning:[answer-form]'],
+  ['no-warning-when-the-form-is-stated', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'How many hours are worked, to 1 decimal place?'; }, 'nowarning:[answer-form]'],
   ['performance-item-is-refused', (d) => { d.items[0].performance = 'derivation'; }, 'performance belongs'],
 ];
 let pass = 0, fail = 0;
@@ -67,10 +69,12 @@ for (const [name, mutate, has] of cases) {
     fs.writeFileSync(target, JSON.stringify(d, null, 2));
   }
   const r = run('--no-manifest');
-  const errs = r.out.split('\n').filter((l) => /^error/.test(l) && /problems/.test(l));
+  const isW = typeof has === 'string' && /^(no)?warning:/.test(has), want = isW ? has.replace(/^(no)?warning:/, '') : has;
+  const errs = r.out.split('\n').filter((l) => (isW ? /^warning/.test(l) && /equations/.test(l) : /^error/.test(l)) && /problems/.test(l));
   let problem = null;
-  if (has === null || has === 'none') { if (r.code !== 0 || errs.length) problem = `expected no error, got ${errs.length}: ${errs[0] || r.out.slice(-300)}`; }
-  else if (!errs.some((l) => l.includes(has))) problem = `no error contains "${has}" (got ${errs.length}: ${errs[0] || 'none'})`;
+  if (isW && has.startsWith('no')) { if (errs.some((l) => l.includes(want))) problem = `unexpected warning: ${errs[0]}`; }
+  else if (has === null || has === 'none') { if (r.code !== 0 || errs.length) problem = `expected no error, got ${errs.length}: ${errs[0] || r.out.slice(-300)}`; }
+  else if (!errs.some((l) => l.includes(want))) problem = `no ${isW ? 'warning' : 'error'} contains "${want}" (got ${errs.length}: ${errs[0] || 'none'})`;
   if (!problem && has === null) {   // the manifest lists the set with the level, the item count and the minutes
     const m = run();
     const man = JSON.parse(fs.readFileSync(path.join(copy, 'content/manifest.json'), 'utf8'));
@@ -80,7 +84,7 @@ for (const [name, mutate, has] of cases) {
   if (!problem && has === 'none') {   // no file: no problems key in the manifest
     const m = run();
     const man = JSON.parse(fs.readFileSync(path.join(copy, 'content/manifest.json'), 'utf8'));
-    if (m.code !== 0 || man.problems) problem = 'a course with no problem file should leave "problems" out of the manifest';
+    if (m.code !== 0 || (man.problems && man.problems['equations/problems-3'])) problem = 'a course with no problem file should have no problems entry in the manifest';
   }
   if (problem) { console.log(`FAIL ${name}: ${problem}`); fail++; } else { console.log(`PASS ${name}`); pass++; }
 }

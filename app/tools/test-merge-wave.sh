@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # test-merge-wave.sh: clone the repo, make two branches that conflict in
-# drills/index.json, BACKLOG-INBOX.md, one review file, docs/briefs/README.md and two
+# drills/index.json, BACKLOG-INBOX.md, one review file, the generated manifest.json (ours is taken, the validator regenerates it), docs/briefs/README.md and two
 # adjacent rows of docs/readiness.md (session V), one branch also leaves content/readiness.json
 # stale; merge them with merge-wave.sh and assert the result, including the readiness
 # regeneration. Prints PASS or FAIL (last line).
@@ -26,6 +26,9 @@ for(const id of [fa[tag==="a"?0:1],fa[2]])d.push({id,name:"Test "+id,course:"py-
 fs.writeFileSync(i,JSON.stringify(d,null,2)+"\n");
 const r=JSON.parse(fs.readFileSync(rev));r.items[0].prose="side-"+tag+" "+r.items[0].prose;
 fs.writeFileSync(rev,JSON.stringify(r,null,2)+"\n");' "$2" "$REV" "${FREE[@]}"
+  # a new drill file on each side: the manifest lists it, so the two regenerated manifests collide on adjacent lines
+  sed "s/\"id\": *\"${FREE[0]}\"/\"id\": \"zz-$2\"/" "app/content/drills/${FREE[0]}.json" > "app/content/drills/zz-$2.json"
+  (cd app && node tools/validate.mjs >/dev/null 2>&1)
   echo "inbox line $2" >> docs/BACKLOG-INBOX.md
   echo "brief line $2" >> docs/briefs/README.md
   node -e '
@@ -47,6 +50,7 @@ for id in "${FREE[@]}"; do [ "$(grep -c "\"id\": \"$id\"" app/content/drills/ind
 grep -q "inbox line a" docs/BACKLOG-INBOX.md && grep -q "inbox line b" docs/BACKLOG-INBOX.md || fail="$fail inbox"
 grep -q "side-b" "$REV" && ! grep -q "side-a" "$REV" || fail="$fail review-newer"
 (cd app && node tools/validate.mjs 2>&1 | grep -q '^0 errors') || fail="$fail validator"
+grep -q "drills/zz-a.json" app/content/manifest.json && grep -q "drills/zz-b.json" app/content/manifest.json || fail="$fail manifest-regenerated"
 grep -q "brief line a" docs/briefs/README.md && grep -q "brief line b" docs/briefs/README.md || fail="$fail briefs"
 NA=$(git show "$BASE:docs/readiness.md" | grep -c '^| `algebra` |')   # one row in each of the six role tables
 [ "$(grep -c '^| `algebra` |.*reason-a |$' docs/readiness.md)" = "$NA" ] || fail="$fail readiness-row-ours"

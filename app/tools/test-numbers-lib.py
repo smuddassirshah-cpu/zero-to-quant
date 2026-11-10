@@ -34,6 +34,17 @@ with contextlib.redirect_stdout(io.StringIO()):
     hand = sy.check_wrongs()
 res = {r[1].split('"')[1]: r[0] for r in sy.results}
 ok_w = res == {'clean': True, 'inside': False, 'rel': True} and len(hand) == 1 and '"clean"' in hand[0]
+buf2, buf3 = io.StringIO(), io.StringIO()
+with contextlib.redirect_stdout(buf2):
+    sy.check_wrongs()
+with contextlib.redirect_stdout(buf3):
+    sy.check_wrongs(verbose=True)
+ok_w = ok_w and 'check by hand: 1 byKey' in buf2.getvalue() and 'states' not in buf2.getvalue() and 'states' in buf3.getvalue()
+pb = Level('counting-chance', 1)
+with contextlib.redirect_stdout(io.StringIO()):
+    got = pb.expect('problems', 'items[0].parts[0].widget.answer', 24)
+    pb.check_wrongs('problems')
+ok_w = ok_w and 'problems-1' in pb.files and got and any(r[0] and 'problems-1' in r[1] for r in pb.results)
 print(f"{'PASS' if ok_w else 'FAIL'} check_wrongs: clean passes, in-tolerance fails, other-number byKey listed by hand")
 with contextlib.redirect_stdout(io.StringIO()):
     real = Level('odes', 3)

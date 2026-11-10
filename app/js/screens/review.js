@@ -517,7 +517,7 @@
         <h2 class="t-h2 hw-res-h">Problem by problem</h2>
         <ol class="hw-res">${items.map((it, j) => { const r = res[j]; const ok = !!(r && r.ok); return `<li><div class="hw-res-r ${ok ? 'ok' : 'no'} is-static">
           <span class="hw-res-ic" aria-hidden="true">${I(ok ? 'check' : 'cross')}</span>
-          <span class="hw-rl-t"><span class="t-body">${md(stemOf(it))}</span><span class="t-caption secondary">${esc(it.source || '')}${out.lines && out.lines[j] ? ' · ' + esc(out.lines[j]) : ''}${r && typeof r.seconds === 'number' ? ` · ${esc(ZQ.mock.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${esc(ZQ.mock.fmtSeconds(it.pace))} pace` : ''}` : ''}</span></span>
+          <span class="hw-rl-t"><span class="t-body">${cfg.rowLabel ? md(cfg.rowLabel(it, j)) : md(stemOf(it))}</span><span class="t-caption secondary">${esc(cfg.rowLabel ? '' : it.source || '')}${out.lines && out.lines[j] ? ' · ' + esc(out.lines[j]) : ''}${r && typeof r.seconds === 'number' ? ` · ${esc(ZQ.mock.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${esc(ZQ.mock.fmtSeconds(it.pace))} pace` : ''}` : ''}</span></span>
           <span class="t-label tnum hw-res-m">${ok ? 'Right' : r && typeof r.credit === 'number' ? `${r.right} of ${r.of} parts` : r ? 'Not right' : 'Skipped'}</span><span></span></div></li>`; }).join('')}</ol>
       </section>`;
       setActs(`${cfg.again ? `<button type="button" class="btn secondary hw-sec" data-again>${esc(cfg.again)}</button>` : ''}<button type="button" class="btn hw-primary" data-back>Back to ${esc(cfg.backLabel || 'Review')}</button>`);
@@ -685,6 +685,17 @@
       lede: 'A few longer problems in which each step feeds the next. Every part is checked on its own and shows its own working, and a wrong part never blocks the next.',
       facts: [['target', 'Right first time on every part earns 5 XP a problem, and 50 XP the first time you finish the set.'], ['replay', 'It is not a gate and has no time limit. Play it again whenever you like.']],
       tag: (it) => { const nm = skillNames(); return (it.skills || []).map(s => nm[s] || s).join(', '); },
+      /* the result list: "Problem 2" and the first sentence of the prose, cut at about 60 characters (never inside a $...$ span) */
+      rowLabel: (it, j) => {
+        const full = String(it.prose || '').replace(/\s+/g, ' ').trim(), m = /^.*?[.?!](?=\s|$)/.exec(full);
+        let t = m ? m[0] : full;
+        if (t.length > 60) {
+          t = t.slice(0, 60).replace(/\s+\S*$/, '');
+          if ((t.match(/\$/g) || []).length % 2) t = t.slice(0, t.lastIndexOf('$')).trim();
+          t = t.replace(/[,;:]$/, '') + '…';
+        }
+        return `**Problem ${j + 1}.** ${t}`;
+      },
       emptyTitle: 'Not yet written', emptyText: 'This problem set has not been written yet. Use the course map to pick another item.',
       doneTitle: 'Problem set done', setTitle: 'Problem set',
       load: () => C().problems(cid, id).then(D => {
@@ -700,7 +711,7 @@
         const rec = o.record || {};
         const wrong = results.filter(r => !r.ok).length;
         return { badges: [[`+${o.xp || 0}`, 'XP'], [rec.best != null ? rec.best : 0, 'best score'], [rec.attempts || 1, (rec.attempts || 1) === 1 ? 'attempt' : 'attempts']],
-          note: wrong ? 'Each miss showed its working. Go again for a second go at the problems you missed.' : 'Every problem right. Well done.' };
+          note: wrong ? 'Each miss showed its working. Go again for a second go at the problems you missed.' : 'Every problem was right first time.' };
       },
       partial: (items, res, seconds) => { S().problems.finished({ course: cid, id, results: [], items: items.length, seconds, partial: true }); },
     };
