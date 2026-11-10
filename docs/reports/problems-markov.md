@@ -59,3 +59,36 @@ Checks (level 2):
 | voice scan 35 (course folder) | 0 and 0 |
 
 Fresh-check: 0 hits at the gate. At triage settings three hits, all against `problems-1.json` and all form sentences or "using # from part # what is the chance" (shares 0.06 or less): stock phrasing. No lesson, review or homework uses a price band, a strategy trial, a request for quote or a takeover; the order queue, the loan ratings and the fair walks of l7 and l8 are not reused.
+
+## Level 3
+
+File: `problems-3.json` ("Problems: walks, ruin and barriers", 50 minutes). Notation as l9 to l12: $S_n$, $P_i$, $D_i$, $r = \tfrac{1-p}{p}$, $\Phi$.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-3 | p-maker-edge | 4 (4 / 0) | l9, l12 | 3 |
+| problems-3 | p-barrier-note | 5 (4 / 1) | l9, l11, l12 | 5 |
+| problems-3 | p-stake-size | 4 (4 / 0) | l9, l10 | 4 |
+| problems-3 | p-pairs-exit | 5 (4 / 1) | l9, l10 | 4 |
+
+Typed parts 16 of 18. Every lesson appears in at least one problem (l11 in one, the others in two or more), and every problem draws on two or more.
+
+Chains. p-maker-edge: a ±£2 walk with $p = 0.55$; one trade's variance (3.96), the 400-trade standard deviation (£39.80), the normal chance of being down ($\Phi(-2.01) \approx 0.022$; the exact binomial 0.0199 also passes), then the trades needed for a 1% tail with $z = 2.33$ (538; `tol` 2 also takes 536 from $z = 2.326$). p-barrier-note: a binomial price model with a knock-out barrier at $-3$; paths ending at $-4$ (495), touching paths ending at $-2$ by reflection (the same 495), the touch chance ($\tfrac{1588}{4096} \approx 0.3877$, checked by listing all 4,096 paths), the note's fair price (£61.23), then the judgement that drift breaks reflection and calls for simulation. p-stake-size: one trade's edge (−£4), the chance of £600 to £1,000 at £100 stakes (0.5026) and at £200 stakes (0.5515), then the expected profit of the bolder plan (−£48.51). p-pairs-exit: target first ($\tfrac58$), expected days (15), expected ticks at exit (0, a fair walk), the expected P&L after financing (−£600), then the choice of exits by expected days ($+2$, $-6$: −£480). Each later part restates the value it needs; the `wrong` lists hold the slip from the part before (a variance of 4 gives £40 and $n = 543$; $i \times N = 40$ days gives −£1,600).
+
+Level 3 teaches $D_i = i(N - i)$ for fair walks only, so the unfair walk in p-stake-size asks for chances and an expected profit read from the two ends, never a duration.
+
+Checks (level 3):
+
+| check | result |
+|---|---|
+| numbers script | 1,137 checks with levels 1 to 3, 0 failures |
+| validator | 0 errors, 0 warnings on the file |
+| playthrough `--local-cdn` | green (4 problems, 18 parts) |
+| playthrough `--mobile` | green; 440 px shots read, no fault |
+| voice scan 35 (course folder) | 0 and 0 |
+
+Fresh-check: 0 hits at the gate. At triage settings six hits. Five are form sentences shared with problems-1 and problems-2. One, "log price is a fair walk in steps of", is against `l12-price-paths` screens[5]: the binomial price model is the lesson's own, but the note, the barrier at $-3$, 12 days and the questions are new. An earlier wording of p-maker-edge part 3 matched `l9` quiz[2] ("is close to normal, about what is the chance"); the question was reworded and the hit is gone. That part asks the same kind of question as l9's 52% strategy (a normal tail for a walk's P&L), with a new walk (±£2 at 0.55), and the item goes on to the variance and the trades for a 1% tail.
+
+## Engine limits
+
+Two bullets in `docs/BACKLOG-INBOX.md` under "Raised later (problems markov)": the playthrough still shoots only part 1 (met again, as for conditional), and fresh-check triage is dominated by the required form sentences. Neither blocked a problem.

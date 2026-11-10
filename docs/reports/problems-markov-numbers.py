@@ -452,6 +452,159 @@ cost = F(2, 100)
 num(L2, 'p-merger-arb', 5, ev - cost * tA, float(np.mean(vals)) * 0 + float(Ha[0][0] * 10 + Ha[0][1] * 6) - 0.02 * ta_n[0],
     {'no-cost': ev, 'review-time': ev - cost * tR, 'one-month': ev - cost, 'carry-added': ev - cost * (2 + tR)})
 
+# ------------------------------------------------------------------ level 3
+L3 = load(3)
+from math import comb, sqrt, ceil
+from scipy.stats import norm, binom
+
+# p-maker-edge: steps +2 w.p. 0.55, -2 w.p. 0.45
+p_, s_ = F(55, 100), 2
+mean1 = s_ * p_ - s_ * (1 - p_)
+var1 = s_ ** 2 - mean1 ** 2
+# alt: direct sum over the two outcomes
+alt_var = p_ * (s_ - mean1) ** 2 + (1 - p_) * (-s_ - mean1) ** 2
+num(L3, 'p-maker-edge', 1, var1, alt_var,
+    {'no-mean': F(4), 'unit-steps': 1 - (2 * p_ - 1) ** 2, 'mean': mean1})
+n400 = 400
+sd400 = sqrt(n400 * float(var1))
+# alt: variance of 2(2K - n) for K ~ Binomial(n, p): 16 n p (1-p)
+num(L3, 'p-maker-edge', 2, sd400, sqrt(16 * n400 * 0.55 * 0.45),
+    {'no-mean': sqrt(n400 * 4), 'variance': n400 * float(var1), 'unit-steps': sd400 / 2, 'no-n': sqrt(float(var1))})
+zdown = float(n400 * mean1) / sd400
+pdown = norm.cdf(-zdown)
+exact_down = binom.cdf(199, n400, 0.55)       # S < 0 iff K <= 199
+num(L3, 'p-maker-edge', 3, pdown, norm.sf(zdown),
+    {'variance': norm.cdf(-80 / (n400 * float(var1))), 'complement': 1 - pdown, 'one-trade': norm.cdf(-80 / sqrt(float(var1)))},
+    routes=[norm.cdf(-80 / 39.80), exact_down, round(pdown, 2)])
+ok(abs(exact_down - 0.020) < 0.0005, f'p-maker-edge: exact binomial {exact_down}')
+z99 = 2.33
+nmin = ceil(z99 ** 2 * float(var1) / float(mean1) ** 2)
+# alt: step n until the ratio passes 2.33
+n_ = 1
+while 0.2 * n_ / sqrt(3.96 * n_) < z99:
+    n_ += 1
+num(L3, 'p-maker-edge', 4, nmin, n_,
+    {'no-mean': ceil(z99 ** 2 * 4 / 0.04), 'five-percent': ceil(1.645 ** 2 * 3.96 / 0.04),
+     'root': ceil(z99 * sqrt(3.96) / 0.2), 'two-sd': ceil(4 * 3.96 / 0.04)},
+    routes=[ceil(norm.ppf(0.99) ** 2 * 3.96 / 0.04)])
+
+# p-barrier-note: fair walk, 12 steps, barrier -3
+n12 = 12
+paths = list(itertools.product((1, -1), repeat=n12))
+ends = {}
+touch_by_end = {}
+for pth in paths:
+    pos, mn = 0, 0
+    for st in pth:
+        pos += st
+        mn = min(mn, pos)
+    ends[pos] = ends.get(pos, 0) + 1
+    if mn <= -3:
+        touch_by_end[pos] = touch_by_end.get(pos, 0) + 1
+num(L3, 'p-barrier-note', 1, comb(12, 4), ends[-4],
+    {'end-minus-two': comb(12, 5), 'mirror': comb(12, 3), 'end-zero': comb(12, 6)})
+num(L3, 'p-barrier-note', 2, comb(12, 4), touch_by_end[-2],
+    {'all-paths': comb(12, 5), 'wrong-mirror': comb(12, 3), 'none': 0})
+below = sum(comb(12, k) for k in range(0, 5))
+ok(below == 794, 'p-barrier-note: 794 paths end at -4 or below')
+touch = F(2 * below, 4096)
+num(L3, 'p-barrier-note', 3, touch, F(sum(touch_by_end.values()), 4096),
+    {'end-only': F(below, 4096), 'level-two': F(2 * (below + comb(12, 5)), 4096), 'plus-two': F(below + comb(12, 5 - 1), 4096)})
+num(L3, 'p-barrier-note', 4, 100 * (1 - touch), 100 * (1 - sum(touch_by_end.values()) / 4096),
+    {'pays-on-touch': 100 * touch, 'end-only': 100 * (1 - F(below, 4096)), 'face': 100},
+    routes=[100 * (1 - F('0.3877'))])
+pick(L3, 'p-barrier-note', 5, 'simulate')
+ok(abs(50 / 1.1 ** 3 - 37.57) < 0.005, 'p-barrier-note: barrier price £37.57')
+# drifted walk touches less often (the choice's claim)
+pd = F(52, 100)
+drift_touch = 0
+for pth in paths:
+    pos, mn, pr = 0, 0, F(1)
+    for st in pth:
+        pos += st
+        mn = min(mn, pos)
+        pr *= pd if st == 1 else 1 - pd
+    if mn <= -3:
+        drift_touch += pr
+ok(drift_touch < touch, 'p-barrier-note: upward drift touches less')
+
+# p-stake-size: p = 0.48, from 600 to 1000
+pw = F(48, 100)
+r = (1 - pw) / pw
+ok(r == F(13, 12), 'p-stake-size: r = 13/12')
+
+
+def ruin_np(i, N, p):
+    """Chance of reaching N before 0 by solving the first-step system numerically."""
+    A = np.zeros((N + 1, N + 1))
+    b = np.zeros(N + 1)
+    A[0, 0] = A[N, N] = 1
+    b[N] = 1
+    for k in range(1, N):
+        A[k, k] = 1
+        A[k, k + 1] = -p
+        A[k, k - 1] = -(1 - p)
+    return np.linalg.solve(A, b)[i]
+
+
+def PR_(i, N, rr):
+    return (1 - rr ** i) / (1 - rr ** N)
+
+
+num(L3, 'p-stake-size', 1, 100 * (2 * pw - 1), 0.48 * 100 + 0.52 * (-100),
+    {'half': 100 * (pw - F(1, 2)), 'win-only': 100 * pw, 'loss-only': -100 * (1 - pw)})
+P100 = PR_(6, 10, r)
+num(L3, 'p-stake-size', 2, P100, ruin_np(6, 10, 0.48),
+    {'fair': F(6, 10), 'r-inverted': PR_(6, 10, 1 / r)})
+ok(abs(float(r ** 6) - 1.6165) < 0.00005 and abs(float(r ** 10) - 2.2265) < 0.00005, 'p-stake-size: printed powers')
+P200 = PR_(3, 5, r)
+num(L3, 'p-stake-size', 3, P200, ruin_np(3, 5, 0.48),
+    {'fair': F(3, 5), 'r-inverted': PR_(3, 5, 1 / r), 'same': P100})
+ok(abs(float(r ** 3) - 1.2714) < 0.00005 and abs(float(r ** 5) - 1.4921) < 0.00005, 'p-stake-size: printed powers 3, 5')
+prof = 1000 * P200 - 600
+rng = np.random.default_rng(3)
+tot = 0.0
+for _ in range(100000):
+    w = 600
+    while 0 < w < 1000:
+        w += 200 if rng.random() < 0.48 else -200
+    tot += w - 600
+ok(abs(tot / 100000 - float(prof)) < 3, f'p-stake-size: simulated profit {tot / 100000}')
+num(L3, 'p-stake-size', 4, prof, 1000 * ruin_np(3, 5, 0.48) - 600,
+    {'hundreds': 1000 * P100 - 600, 'wealth': 1000 * P200, 'fair': 0, 'target-only': 400},
+    routes=[1000 * F('0.5515') - 600])
+
+# p-pairs-exit: fair walk, start 5 in [0, 8]
+i5, N8 = 5, 8
+pt = F(i5, N8)
+num(L3, 'p-pairs-exit', 1, pt, ruin_np(5, 8, 0.5),
+    {'swapped': 1 - pt, 'equal': F(1, 2), 'ratio': F(3, 5)})
+D = i5 * (N8 - i5)
+Pw = [[F(0)] * 9 for _ in range(9)]
+Pw[0][0] = Pw[8][8] = F(1)
+for k in range(1, 8):
+    Pw[k][k - 1] = Pw[k][k + 1] = F(1, 2)
+num(L3, 'p-pairs-exit', 2, D, steps(Pw, list(range(1, 8)))[i5 - 1],
+    {'width': N8, 'product': i5 * N8, 'square': i5 ** 2, 'target-sq': 9})
+ticks = pt * 3 - (1 - pt) * 5
+# alt: simulate exits
+rng = np.random.default_rng(9)
+tt, dd, m = 0, 0, 100000
+for _ in range(m):
+    x, d = 0, 0
+    while -5 < x < 3:
+        x += 1 if rng.random() < 0.5 else -1
+        d += 1
+    tt += x
+    dd += d
+ok(abs(tt / m) < 0.05 and abs(dd / m - 15) < 0.2, f'p-pairs-exit: simulated ticks {tt / m}, days {dd / m}')
+num(L3, 'p-pairs-exit', 3, ticks, 0.0,
+    {'target-only': pt * 3, 'stop-only': -(1 - pt) * 5, 'target': 3})
+num(L3, 'p-pairs-exit', 4, 100 * ticks - 40 * D, 100 * (tt / m) * 0 - 40 * 15,
+    {'no-cost': 0, 'one-day': -40, 'product-days': -40 * i5 * N8, 'ticks': 100 * pt * 3})
+pick(L3, 'p-pairs-exit', 5, 'two-six')
+ok([a * b for a, b in [(3, 5), (4, 4), (2, 6)]] == [15, 16, 12] and -40 * 12 == -480, 'p-pairs-exit: option days and £480')
+
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
