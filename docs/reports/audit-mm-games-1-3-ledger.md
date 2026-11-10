@@ -119,3 +119,108 @@ Sources: Zhou, *A Practical Guide to Quantitative Finance Interviews* (ch. 2 bra
 | homework-1 | i[6] | Distinct faces on three dice: 6 × 91/216 = 91/36; three distinct in 120 of 216; simulation 2.528 | correct | Indicator sum; enum; sim |
 | homework-1 | i[7] | Low end 1,000 × 1,000 = 1,000,000; high 36,000,000; a factor of 6 each way | correct | Worst-case bound, as taught |
 | homework-1 | i[8] | Bought 3 at 6, sold 1 at 8: +£4 at fair 7; +£8 at the roll of 9; £4 is edge and £4 is luck from being long 2 | correct | 3 × 1 + 1; 3 × 3 − 1; 2 × (9 − 7) |
+
+## Level 2
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l5-two-sided | s[0] options, hints, feedback, explain | With fair value 10.5, buying at 9.5 and selling at 11.5 each earn 1 on average; a crossed pair around 10.5 loses 1 either way; one price at 10.5 earns nothing; 3 at 18 never trades | correct | Edge against fair value; Harris ch. 13 |
+| l5-two-sided | s[0].prose | *Probability and Markets* opens with "make me a market" | correct | Jane Street guide, market-making section |
+| l5-two-sided | s[1] options, explain | Every trade earns on average exactly when the fair value sits strictly between the two prices; a wider gap earns more a trade and trades less often | correct | 10.5 − b > 0 and a − 10.5 > 0 |
+| l5-two-sided | s[2].prose | Bid is your buying price, ask your selling price; said "9.5 at 11.5", bid first; width is ask minus bid; size "3 up" | correct | Dealer convention; Harris ch. 13; *Probability and Markets* |
+| l5-two-sided | s[2] widget, hints, feedback, explain | The interviewer buys at your ask, 11.5; you are short 3; "a buyer always pays the ask and a seller always gets the bid"; nobody trades at 10.5 | correct | True for the party who trades on a maker's quote, which is the only case in the game (Harris ch. 4 and 13) |
+| l5-two-sided | s[3] | Sold 3 at 11.50 against fair 10.50: +£3 at fair, short 3; slips −3, 1, 34.5 | correct | 3 × (11.50 − 10.50) |
+| l5-two-sided | s[4] | Larger of two dice, width at most 1: 4 at 5 holds 4.47; 4.47 outside the quote trades one side at a loss | correct | 161/36 between 4 and 5 |
+| l5-two-sided | s[5] prose, check, feedback | Heads before the first tail pay £1 each: fair value £1; quote £0.50 at £1.50; centring on 2 confuses flips with heads | correct | Geometric: Σ k/2^(k+1) = 1; mean flips 2; sim |
+| l5-two-sided | s[5].explain.text | "The payout is often 0, so the bid should stay well under £1" | imprecise | The bid sits under £1 because a bid at or above fair has no edge, not because the payout is often 0; the next sentence says the centre is still the mean. Finding 11 |
+| l5-two-sided | s[6] | Product of two independent dice: 3.5 × 3.5 = 12.25; width 2 gives 11.25 at 13.25; centring on 7 prices the sum | correct | E[XY] = E[X]E[Y] under independence |
+| l5-two-sided | s[7] | 5.5 at 6.5 is centred on the mode 6; a sale to you at 5.5 loses about 1.03; centre on the mean, 4 at 5 | correct | 5.5 − 161/36 = 1.03 |
+| l5-two-sided | s[8].prose | "a crossed quote, bid above ask, loses on every trade" | imprecise | False when the fair value lies outside the crossed quote (bid 12, ask 11, fair 13: the purchase earns 1). What always loses is the round trip. sim. Finding 12 |
+| l5-two-sided | s[8] formula, widget, explain; summary.formula | bid = μ − h, ask = μ + h, width 2h; four dice, h = 1.5: 12.5 at 15.5 | correct | Definition |
+| l5-two-sided | s[9] | Buying q at μ − h and selling q at μ + h earns 2qh, the width times the size; one trade earns qh | correct | Algebra |
+| l5-two-sided | s[10] code, prose, explain | `quote` centres on fair; a valid quote holds fair and respects the width cap; a known payout may have zero width | correct | CPython: 14/14 cases pass, starter fails |
+| l5-two-sided | s[11] | Model value £4.20, width at most 10p: £4.15 at £4.25, the best quote on both sides of the shown book | correct | 4.15 > 4.10 and 4.25 < 4.30 |
+| l5-two-sided | summary.ideas, trap | Centre on the mean, not the mode; never let the bid pass the ask | correct | As rows above |
+| l5-two-sided | q[0] | "I only want to sell": answer with a bid below 7; a bid at 7 earns nothing, at 8 loses 1 | correct | One-sided market convention |
+| l5-two-sided | q[1] | Crossed "12 at 10" around 10.5: buy at 12 loses 1.5, sell at 10 loses 0.5, −£2 | correct | Arithmetic; here fair lies inside the crossed quote |
+| l5-two-sided | q[2] | "8 at 12" suggests fair value 10 and width 4 | correct | Mid of an unskewed quote; the item says "suggests" |
+| l5-two-sided | q[3] | Two dice, width at most 2: 6 at 8 | correct | Fair 7 |
+| l6-edge | s[0], s[1] | Pay £3 for a die's face: +£0.50 a play; single plays run −£2 to +£3; the average of many settles near £0.50 | correct | E = 3.5 − 3; law of large numbers |
+| l6-edge | s[2].prose, s[8].prose, summary.formula | Edge is what a trade earns on average at its price: sale p − μ, purchase μ − p; a game E[payout] − stake | correct | Standard interview usage (expected value per unit against fair) |
+| l6-edge | s[2].explain.text | "Each unit earns 1.5 on average, whatever the dice show" | imprecise | The position is open: single rolls pay from +9 to −6. "Whatever the dice show" was used correctly for a flat position in l3. sim. Finding 13 |
+| l6-edge | s[3] | Coin game worth £1 at a £1.20 charge: edge −£0.20; decline or sell the game; slips 0.2, 0.8, −1.2 | correct | E = 1 |
+| l6-edge | s[4] | £2 on heads for £1.10: edge −£0.10 | correct | ½ × 2 − 1.10 |
+| l6-edge | s[5]; summary.ideas[2]; q[2] | Against random flow each trade earns the half-width; four trades at 9.5 or 11.5 earn £4, long 2 | correct | Each trade is h from fair |
+| l6-edge | s[6] options, feedback, explain | A sale at 12 against 10.5 had edge +1.5; the 14 was bad luck; about 26% of rolls land above 12; a thousand repeats earn about £1,500 | correct | 56/216 = 0.259 |
+| l6-edge | s[6].hints[1].text | "Most rolls land at 12 or below, where the sale wins" | imprecise | At 12 the sale breaks even; it wins below 12, on 135 of 216 rolls. Finding 14 |
+| l6-edge | s[7] | One play has variance 35/12; 100 plays have sd £17.08, so £70 is about one sd above £50; one play at 100 times the size has sd £170.78 | correct | Additivity of variance; path steps checked (L2 script) |
+| l6-edge | s[8] widget, explain | A trade at fair value has zero edge; it is worth doing only to change your position | correct | Edge definition; inventory motive (Harris ch. 13) |
+| l6-edge | s[9] | E = ½ × 0 + ½(1 + E) gives E = 1; stopping after one flip gives ½ and is wrong | correct | First-step analysis (Zhou ch. 4); E is finite |
+| l6-edge | s[10] code, explain | `edge` flips sign with the side; `game_edge` is exact; larger of two dice for £4 gives 17/36 | correct | CPython: 13/13 cases pass, starter fails |
+| l6-edge | s[11] | 2,000 trades × 100 shares × 0.5p = £1,000 expected a day; one day's −£300 is noise | correct | Arithmetic |
+| l6-edge | summary.ideas[0..1], trap | Edge is fixed at the price; one outcome says little about it | correct | As rows above |
+| l6-edge | q[0], q[1], q[3] | 161/36 − 4 = 17/36; buying 2 at 9 earns 3; a purchase at 9.5 has edge +1 though a 7 lost 2.5 | correct | Arithmetic |
+| l7-skewing | s[0] options, hints, feedback, explain | Lifted for 2 you are short and lose if the total is high; move both prices up: a higher bid attracts sellers, a higher ask slows buyers; widening only trades less | correct | Inventory control; Harris ch. 13; Avellaneda and Stoikov (2008) reservation price |
+| l7-skewing | s[1], s[2] prose, s[8] formula, summary.formula | Skew: centre m = V − γq with q positive long; bid m − h, ask m + h; width unchanged | correct | Linear form of the Avellaneda and Stoikov reservation price r = s − qγσ²(T − t) |
+| l7-skewing | s[2] widget, feedback | q = −2, γ = 0.25: centre 11, quote 10 at 12 | correct | Arithmetic |
+| l7-skewing | s[3] | Lifted, lifted, hit, lifted: positions −1, −2, −1, −2; bids 9.75, 10, 9.75, 10; "lifted means you sold"; each trade happens at the quote shown before it | correct | Rule applied step by step (L2 script); lift/hit convention (Harris ch. 4) |
+| l7-skewing | s[4] | Bought at 9.50 and 9.25, sold at 11.00: +£2.75 at fair, long 1; without skew it would be 3; the skew gives up a little edge to cut the position | correct | 1 + 1.25 + 0.5 |
+| l7-skewing | s[5] | Short 3: quote 10.25 at 12.25; lowering the quote to sell more grows the short; "skew against your inventory, never with it" | correct | m = 10.5 + 0.75; sim (skewing sheds inventory faster) |
+| l7-skewing | s[6] | Two reasons to raise the quote after a lift on an unknown number: information (the buyer may know it is higher) and inventory (you are short); a lift says nothing about width | correct | Glosten and Milgrom (1985) for information; Avellaneda and Stoikov for inventory |
+| l7-skewing | s[7], q[3] | A declared random buyer moves the position, not the fair value: new quote 9.75 at 11.75 | correct | No information in the trade, so E[V given a buy] = V |
+| l7-skewing | s[8].prose, hints | "News moves V; trades move q" | correct | Rule of the lesson; s[6] has already said an informed trade is news |
+| l7-skewing | s[8] widget, explain | Long 4: quote 8.5 at 10.5; the ask at fair value is the zero-edge trade that sheds risk | correct | m = 9.5 |
+| l7-skewing | s[9] | Ask = 11.5 − 0.25q; slips 11.5 + 0.25q and 9.5 − 0.25q | correct | Algebra |
+| l7-skewing | s[10] code | `skewed_quote` and `quote_path` (+1 hit, −1 lifted) | correct | CPython: 12/12 cases pass, starter fails |
+| l7-skewing | s[11] | Short 2,000 calls is 20 lots; at £0.005 a lot the centre rises £0.10: £2.50 at £2.60; short calls lose if the share jumps | correct | Arithmetic; short calls are short delta |
+| l7-skewing | summary.ideas, trap | Up after being lifted, down after being hit; two reasons to move | correct | As rows above |
+| l7-skewing | q[0], q[2] | Long 3: ask 10.75; sold 2 at 12 and bought 1 at 10: +£3.50, short 1 | correct | Arithmetic |
+| l7-skewing | q[1] | Fair 50, long 5: "47.5 at 49.5" is the quote that fits a skew | imprecise | The keyed ask is below the stated fair value: by the previous lesson its edge is −0.5 a unit. The explain does not say the skew is paying to shed risk. Finding 15 |
+| l8-informed-flow | s[0] widget, hints, feedback | An interviewer who has seen the die buys above the ask and sells below the bid; 2.5 at 4.5 loses (1.5 + 0.5 + 0.5 + 1.5)/6 = 2/3 a game | correct | enum; sim |
+| l8-informed-flow | s[0].explain.text | "You lose 2/3 a game, however the die is centred" | imprecise | Garbled: a die is not centred. The point is that the quote is centred on fair value and still loses. Finding 16 |
+| l8-informed-flow | s[1] options | 0.5 at 6.5 loses nothing; 1.5 at 5.5 loses 1/6; 3 at 4 loses 1; 3.5 at 3.5 trades on every face the wrong way | correct | enum |
+| l8-informed-flow | s[1].feedback.correct, s[1].explain.text | "Only the whole range, 0.5 at 6.5, is safe"; "every narrower quote leaves a face that trades against you" | wrong | 1 at 6 is narrower, is reachable on the sliders and loses nothing: no face is above 6 or below 1. enum. Finding 17 |
+| l8-informed-flow | s[2].prose | Adverse selection: losing to someone who trades only when you are wrong | correct | Glosten and Milgrom (1985); Harris ch. 14 |
+| l8-informed-flow | s[2] table, feedback, explain | Loss is the distance outside the quote, summed over faces, over 6: 1/6 and 1; the tighter the quote, the more the informed take | correct | enum |
+| l8-informed-flow | s[3] | Half informed, half random at any width, quote 1.5 at 5.5: ½ × 2 − ½ × 1/6 = 11/12 | correct | enum; sim |
+| l8-informed-flow | s[4] | 2 at 5 earns 7/12, 2.5 at 4.5 earns 1/6; the widest earns most in this toy because the random half trades at any width; real flow thins as you widen | correct | enum; the toy's hypothesis is stated |
+| l8-informed-flow | s[5] | Against an interviewer who sees the die, tightening from 2 at 5 to 3 at 4 triples the loss, 1/3 to 1; widen; a loss taken is gone | correct | enum |
+| l8-informed-flow | s[6] | Dice 2, 3, 1, 6 at 2 at 5: no trade, no trade, −1, −1: −£2; expected 4/3 | correct | A die on the bid is not below it; enum |
+| l8-informed-flow | s[7] prose, widget, explain; summary.formula | Zero-profit half-spread s = αδ for a share α informed about ±δ; α = 0.2, δ = 30p gives 6p | correct | Glosten and Milgrom (1985) one-period case: ask = E[V given a buy] = V + αδ when the uninformed buy or sell with equal chance; sim |
+| l8-informed-flow | s[8] | Average a game (1 − α)h − αL(h); break-even where (1 − α)h = αL(h); L falls as h grows, so larger α needs larger h; an informed trader does not cost h | correct | Derivation; consistent with s = αδ when L(h) = δ − h |
+| l8-informed-flow | s[9] code | `informed_loss` uses strict inequalities; `mixed_pnl` weights the random half-width against it; α = 0.2 at 1.5 at 5.5 earns 47/30 | correct | CPython: 13/13 cases pass, starter fails |
+| l8-informed-flow | s[10] | 500p share, α = 0.2: 498 at 502 on a normal day, 494 at 506 before results; informed flow is called toxic | correct | s = αδ; usage as in Easley, López de Prado and O'Hara (flow toxicity) |
+| l8-informed-flow | summary.ideas, trap | Every trade an informed player chooses loses; widen until random earning and informed loss balance | correct | As rows above |
+| l8-informed-flow | q[0] | "I have not looked at it": 3 at 4, the plain two-sided game; zero width earns nothing | correct | No information asymmetry |
+| l8-informed-flow | q[1], q[3] | 2.5 at 5.5 loses 5/12; two dice at 5 at 9 lose 20/36 = 5/9; chance of a trade 12/36 | correct | enum |
+| l8-informed-flow | q[2] | α from 0.2 to 0.4 with δ = 10p: 4p | correct | s = αδ |
+| l9-cards-revealed | s[0] | Three cards from one deck, ace 1 to king 13: each averages 364/52 = 7, sum 21; slips 19.5 and 364 | correct | Linearity; holds without replacement |
+| l9-cards-revealed | s[1], s[2].prose | After a king, 351 points sit in 51 cards, 6.88 a card; each unseen card has the remaining mean | correct | Exchangeability of the undealt cards; enum |
+| l9-cards-revealed | s[2] widget, feedback, explain | Fair value 13 + 2 × 351/51 = 455/17 ≈ 26.7647, up 5.76, not 6; slips 27, 13, 19.88 | correct | enum over the remaining pairs; sim |
+| l9-cards-revealed | s[3] | Sold 1 at 23 before the king: +2 at 21, then −£3.76 at 26.76; a ledger marked at fair moves with every reveal | correct | Mark to market |
+| l9-cards-revealed | s[4] | New quote: centre within 0.5 of 26.76, width at most 4, e.g. 25 at 28.5; short 1 you might lean higher | correct | Rule of the screen; skew direction as taught |
+| l9-cards-revealed | s[5] | K and 2 shown: 15 + 349/50 = 21.98; the short at 23 is +£1.02; fair value fell 4.78 | correct | enum |
+| l9-cards-revealed | s[6], q[2] | Fresh deck for each card: the king tells nothing, 13 + 7 + 7 = 27; ace gives 15 | correct | Independence |
+| l9-cards-revealed | s[7] | Two kings: 26 + 338/50 = 32.76, not 33; a third king is less likely, 2 of 50 | correct | enum |
+| l9-cards-revealed | s[8] | Change in fair value when the first card shows c: 49(c − 7)/51; a king gives 5.76 | correct | Algebra; enum for c = 1..13 |
+| l9-cards-revealed | s[9].prose, summary.formula | F = S + (n − k)(T − S)/(N − k); F = S when k = n | correct | Conditional expectation of a sample without replacement (Cochran ch. 2); enum |
+| l9-cards-revealed | s[9] widget, explain | Ace first: 1 + 2 × 363/51 = 259/17 ≈ 15.2353; remaining mean 7.12 | correct | enum |
+| l9-cards-revealed | s[10] code | `card_sum_fair` and `quote_after_reveals`, exact | correct | CPython: 13/13 cases pass, starter fails |
+| l9-cards-revealed | s[11] | Two of five companies report £2.60 and £1.80, the rest unaffected: £10.40; linked results would move the others too | correct | Independence stated in the item |
+| l9-cards-revealed | summary.ideas, trap; q[0] | When the last card turns the market collapses to the known sum: 21 at 21, or decline | correct | Convention of the course for a known value |
+| l9-cards-revealed | q[1], q[3] | Queen first of four: 12 + 3 × 352/51 = 556/17; long 1 at 20 marks −£4.76 after an ace | correct | enum |
+| review-2 | i[0], i[1] | Four dice, width 2: 13 at 15; smaller of two dice for £2.50: edge 1/36, swamped by variance over a few plays | correct | Arithmetic |
+| review-2 | i[2], i[6] | Long 2 at γ = 0.5: quote 8.5 at 10.5, ask at fair; hit four times means long 4, move both prices down | correct | Skew rule |
+| review-2 | i[3] | Informed interviewer, quote 2 at 4: faces 1, 5, 6 cost 1, 1, 2: 2/3 a game; counting trades gives 3/6 | correct | enum |
+| review-2 | i[4], i[9] | Queen and 5 shown: 17 + 347/50 = 23.94; one king of two cards: fresh decks are higher by 2/17 | correct | enum |
+| review-2 | i[5] | Sold 2 at 8, bought 1 at the skewed bid 6.5, fair 7: +£2.50, short 1 | correct | Arithmetic |
+| review-2 | i[7] | Share 400p, α = ¼, δ = 12p: ask 403p, bid 397p | correct | s = αδ |
+| review-2 | i[8] | Sold at 9 on two dice: edge +2; only 10 to 12 lose, 1 roll in 6 | correct | 6/36 |
+| homework-2 | i[0] code, tests, explain | Scripted card game: each trade at the rule's quote for the fair value and position of the moment; P&L is cash plus position times the true sum; the mock round settles at +3 | correct | CPython: 10/10 cases pass, starter fails |
+| homework-2 | i[1] code, tests, explain | Break-even half-width is the smallest h with (1 − α)h ≥ αL(h); the gap rises with h and is piecewise linear; die α = ½ gives 4/5, α = 1 gives 5/2 | correct | CPython: 11/11 pass, starter fails; bisection (L2 script) |
+| homework-2 | i[2] | After a lift: update fair value, skew for the position, check the limit, requote; lowering the ask loses marks | correct | Order follows the lessons; the limit check before the quote is the course's convention |
+| homework-2 | i[3].model | Mock round: 21 and 19 at 23; long 2 skews to 18 at 22; 3 shown gives 17.16, −£3.69, 14 at 18; sale at 18 gives −£2.84, 14.5 at 18.5; jack gives 21, +£1, 18.5 at 22.5; 9 gives 23 and +£3 | correct | Every number recomputed (L2 script) |
+| homework-2 | i[3].rubric[0..5] | Marks for 21 from 364/52, the updates 17.16, 21, 23, width with a reason, moves named as information or inventory, ledger −£3.69, +£1, +£3, speaking in order | correct | Matches the model |
+| homework-2 | i[4], i[5], i[6] | 3 shown: 875/51; 3 and jack shown: exactly 21 because they average 7; final P&L −20 + 23 = +£3 | correct | enum |
+| homework-2 | i[7] | Two dice, half informed, 5 at 9: ½ × 2 − ½ × 5/9 = 13/18 | correct | enum |
+| homework-2 | i[8] | Six pays £6, five pays £1, stake £1: edge 1/6; play in small size | correct | 7/6 − 1 |
