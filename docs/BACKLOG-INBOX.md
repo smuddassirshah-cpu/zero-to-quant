@@ -1879,3 +1879,5 @@ Raised later (audit numerics):
 
 Raised later (fluency trig, widening pass):
 - [Could] (again; was the 840 note) `poly(r; c, d)` with a surd var still writes a terminating fraction coefficient as a decimal (`3.5\sqrt{3}`), and `mono` writes one term only, so the two-term exact keys of `trig/fluency-l4-exact-values` (`combine-values`, and `side-from-hypotenuse` with an odd hypotenuse) still keep their coefficients whole by drawing even hypotenuses. Want `poly` to write a non-whole coefficient as `\frac{7}{2}` (as `mono` and `cfrac` do), or a `{poly(r; ...):frac}` variant.
+Raised later (fluency quadratics, widening pass):
+- [Could] `form` is not allowed with `answers`, so a set of surd roots cannot ask for simplest form: `\frac{4+\sqrt{8}}{2}` and `2+\sqrt{2}` both pass. quadratics l7 `exact-roots` draws only odd $b$ and discriminants with no square factor to keep keys tidy. Want `form: "simplified"` applied to each value of a set.

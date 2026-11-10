@@ -39,34 +39,25 @@
         "p": { "int": [2, 4] },
         "q": { "int": [-7, 7], "not": [0] },
         "s": { "int": [-5, 5], "not": [0] },
-        "w": { "pick": ["smaller", "larger"] },
-        "g": { "pick": [-1, 1] },
         "v": { "pick": ["x", "y", "t"] }
       },
       "let": {
         "a": "p", "b": "-(p*s + q)", "c": "q*s", "nb": "p*s + q", "a2": "2*p",
         "d": "(p*s + q)^2 - 4*p*q*s", "sd": "sqrt((p*s + q)^2 - 4*p*q*s)",
-        "r": "(p*s + q + g*sd)/(2*p)", "other": "(p*s + q - g*sd)/(2*p)",
         "lo": "(p*s + q - sd)/(2*p)", "hi": "(p*s + q + sd)/(2*p)",
-        "slip": "(-(p*s + q) + g*sd)/(2*p)", "half": "p*s + q + g*sd/(2*p)"
+        "slo": "(-(p*s + q) - sd)/(2*p)", "shi": "(-(p*s + q) + sd)/(2*p)",
+        "hlo": "p*s + q - sd/(2*p)", "hhi": "p*s + q + sd/(2*p)"
       },
-      "where": [
-        "(w == 'larger' and g == 1) or (w == 'smaller' and g == -1)",
-        "gcd(p, abs(q)) == 1", "nb != 0",
-        "abs(slip - r) > 0.02", "abs(half - r) > 0.02",
-        "abs(slip - other) > 0.02", "abs(half - other) > 0.02", "abs(slip - half) > 0.02"
-      ],
-      "prompt": "Solve ${poly(v; a, b, c)} = 0$ with the formula. What is the {w} root? Give a fraction or a decimal.",
-      "widget": { "kind": "numeric", "answer": "{r}", "tol": { "abs": 0.005 }, "accept": "${r:frac}$, or a decimal within 0.005" },
+      "where": ["gcd(p, abs(q)) == 1", "p*s + q != 0"],
+      "prompt": "Solve ${poly(v; a, b, c)} = 0$ with the formula. Give both roots, as fractions or decimals.",
+      "widget": { "kind": "numeric", "answers": ["{lo}", "{hi}"], "unordered": true, "tol": { "abs": 0.005 }, "accept": "${lo:frac}$ and ${hi:frac}$, or decimals within 0.005" },
       "wrong": [
-        { "id": "other-root", "value": "{other}", "tol": { "abs": 0.005 }, "line": "That is the other root: the question asks for the {w} one." },
-        { "id": "b-for-minus-b", "value": "{slip}", "tol": { "abs": 0.005 }, "line": "The top starts with $-b$, which is ${nb}$ here, not ${b}$." },
-        { "id": "halved-root-only", "value": "{half}", "tol": { "abs": 0.005 }, "line": "The whole top, $-b \\pm \\sqrt{{b^2 - 4ac}}$, goes over $2a$, not the square root alone." }
+        { "id": "b-for-minus-b", "value": "{slo:dp6}, {shi:dp6}", "tol": { "abs": 0.005 }, "line": "The top starts with $-b$, which is ${nb}$ here, not ${b}$." },
+        { "id": "halved-root-only", "value": "{hlo:dp6}, {hhi:dp6}", "tol": { "abs": 0.005 }, "line": "The whole top, $-b \\pm \\sqrt{{b^2 - 4ac}}$, goes over $2a$, not the square root alone." }
       ],
       "solution": [
         "Here $b^2 - 4ac = {d}$, and $\\sqrt{{{d}}} = {sd}$.",
-        "So ${v} = \\frac{{{nb} \\pm {sd}}}{{{a2}}}$, which gives ${lo:frac}$ or ${hi:frac}$.",
-        "The {w} root is ${r:frac}$."
+        "So ${v} = \\frac{{{nb} \\pm {sd}}}{{{a2}}}$, which gives ${lo:frac}$ or ${hi:frac}$."
       ]
     },
     {
@@ -77,32 +68,48 @@
         "a": { "int": [1, 3] },
         "b": { "int": [-9, 9], "not": [0] },
         "c": { "int": [-9, 9], "not": [0] },
-        "w": { "pick": ["smaller", "larger"] },
-        "g": { "pick": [-1, 1] },
         "v": { "pick": ["x", "y", "t"] }
       },
       "let": {
         "d": "b^2 - 4*a*c", "nb": "-b", "a2": "2*a",
-        "r": "(-b + g*sqrt(abs(d)))/(2*a)", "other": "(-b - g*sqrt(abs(d)))/(2*a)",
-        "slip": "(b + g*sqrt(abs(d)))/(2*a)", "half": "-b + g*sqrt(abs(d))/(2*a)"
+        "lo": "(-b - sqrt(abs(d)))/(2*a)", "hi": "(-b + sqrt(abs(d)))/(2*a)",
+        "slo": "(b - sqrt(abs(d)))/(2*a)", "shi": "(b + sqrt(abs(d)))/(2*a)",
+        "hlo": "-b - sqrt(abs(d))/(2*a)", "hhi": "-b + sqrt(abs(d))/(2*a)"
       },
-      "where": [
-        "(w == 'larger' and g == 1) or (w == 'smaller' and g == -1)",
-        "gcd(a, abs(b), abs(c)) == 1", "d > 0", "floor(sqrt(abs(d)))^2 != d",
-        "abs(slip - r) > 0.02", "abs(half - r) > 0.02",
-        "abs(slip - other) > 0.02", "abs(half - other) > 0.02", "abs(slip - half) > 0.02"
-      ],
-      "prompt": "Solve ${poly(v; a, b, c)} = 0$ with the formula. What is the {w} root, to 2 decimal places?",
-      "widget": { "kind": "numeric", "answer": "{r}", "tol": { "abs": 0.005 }, "accept": "{r:dp2}" },
+      "where": ["gcd(a, abs(b), abs(c)) == 1", "d > 0", "floor(sqrt(abs(d)))^2 != d"],
+      "prompt": "Solve ${poly(v; a, b, c)} = 0$ with the formula. Give both roots to 2 decimal places.",
+      "widget": { "kind": "numeric", "answers": ["{lo}", "{hi}"], "unordered": true, "tol": { "abs": 0.005 }, "accept": "${lo:dp2}$ and ${hi:dp2}$" },
       "wrong": [
-        { "id": "other-root", "value": "{other}", "tol": { "abs": 0.005 }, "line": "That is the other root: the question asks for the {w} one." },
-        { "id": "b-for-minus-b", "value": "{slip}", "tol": { "abs": 0.005 }, "line": "The top starts with $-b$, which is ${nb}$ here, not ${b}$." },
-        { "id": "halved-root-only", "value": "{half}", "tol": { "abs": 0.005 }, "line": "The whole top, $-b \\pm \\sqrt{{b^2 - 4ac}}$, goes over $2a$, not the square root alone." }
+        { "id": "b-for-minus-b", "value": "{slo:dp6}, {shi:dp6}", "tol": { "abs": 0.005 }, "line": "The top starts with $-b$, which is ${nb}$ here, not ${b}$." },
+        { "id": "halved-root-only", "value": "{hlo:dp6}, {hhi:dp6}", "tol": { "abs": 0.005 }, "line": "The whole top, $-b \\pm \\sqrt{{b^2 - 4ac}}$, goes over $2a$, not the square root alone." }
       ],
       "solution": [
         "Here $b^2 - 4ac = {d}$.",
         "So ${v} = \\frac{{{nb} \\pm \\sqrt{{{d}}}}}{{{a2}}}$.",
-        "The {w} root is ${r:dp2}$ to 2 decimal places."
+        "The roots are ${lo:dp2}$ and ${hi:dp2}$ to 2 decimal places."
+      ]
+    },
+    {
+      "id": "exact-roots",
+      "weight": 2,
+      "skill": "use the formula for exact surd roots",
+      "vars": {
+        "a": { "int": [1, 3] },
+        "b": { "pick": [-9, -7, -5, -3, -1, 1, 3, 5, 7, 9] },
+        "c": { "int": [-9, 9], "not": [0] },
+        "v": { "pick": ["x", "y", "t"] }
+      },
+      "let": { "d": "b^2 - 4*a*c", "nb": "-b", "a2": "2*a" },
+      "where": ["gcd(a, abs(b), abs(c)) == 1", "d > 0", "floor(sqrt(abs(d)))^2 != d", "d % 9 != 0", "d % 25 != 0", "d % 49 != 0"],
+      "prompt": "Solve ${poly(v; a, b, c)} = 0$ with the formula. Give both roots exactly, as surds.",
+      "widget": { "kind": "expression", "answers": ["\\frac{{{nb}+\\sqrt{{{d}}}}}{{{a2}}}", "\\frac{{{nb}-\\sqrt{{{d}}}}}{{{a2}}}"], "unordered": true },
+      "wrong": [
+        { "id": "b-for-minus-b", "tex": "\\frac{{{b}+\\sqrt{{{d}}}}}{{{a2}}}, \\frac{{{b}-\\sqrt{{{d}}}}}{{{a2}}}", "line": "The top starts with $-b$, which is ${nb}$ here, not ${b}$." },
+        { "id": "over-a", "tex": "\\frac{{{nb}+\\sqrt{{{d}}}}}{{{a}}}, \\frac{{{nb}-\\sqrt{{{d}}}}}{{{a}}}", "line": "The bottom of the formula is $2a = {a2}$, not $a$.", "when": "a > 1" }
+      ],
+      "solution": [
+        "Here $a = {a}$, $b = {b}$ and $c = {c}$, so $b^2 - 4ac = {d}$, which is not a square.",
+        "So ${v} = \\frac{{{nb} \\pm \\sqrt{{{d}}}}}{{{a2}}}$, two exact roots."
       ]
     }
   ]
