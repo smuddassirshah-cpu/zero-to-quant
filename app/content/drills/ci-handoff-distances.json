@@ -1,0 +1,124 @@
+{
+  "id": "ci-handoff-distances",
+  "name": "Handoffs between two desks",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "trees",
+  "tags": [
+    "pack-4",
+    "handoff-distances"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2100,
+  "fn": "handoff_distances",
+  "returns": "a list of whole numbers",
+  "brief": "A firm's reporting lines form a tree of desks. A message between two desks climbs to their lowest shared manager and comes back down, one handoff per line. The tree comes as `parent`, where `parent[i]` is the node that node `i` hangs from and the root has `-1`; a parent may have a higher number than its child. `queries` is a list of pairs `[a, b]`. For each pair, return the number of handoffs between desks `a` and `b`.\n\nWrite `handoff_distances(parent, queries)`.\n\nExample. For `parent = [-1, 0, 0, 1, 1]` and `queries = [[3, 4], [3, 2], [1, 1]]` the answers are `[2, 3, 0]`. Desks 3 and 4 share manager 1; desks 3 and 2 meet at 0.",
+  "constraints": [
+    "$1 \\le n \\le 20{,}000$ desks and at most $20{,}000$ queries. The tree may be a chain of $20{,}000$ desks.",
+    "$O((n + q) \\log n)$ time is the target. Climbing one step at a time costs up to $n$ steps a query, too slow on a deep tree.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Find each desk's depth with a breadth-first pass. Then build jump tables: `up[0]` is the parent, and `up[k][v]` is `up[k - 1][up[k - 1][v]]`, the desk $2^k$ lines above. Lift the deeper desk to the same depth, then lift both while their jumps differ.",
+  "starter": "def handoff_distances(parent, queries):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "handoff_distances([-1, 0, 0, 1, 1], [[3, 4], [3, 2], [1, 1]])",
+      "expect": "[2, 3, 0]",
+      "compare": "equal",
+      "note": "3 to 4 goes through 1; 3 to 2 climbs two lines to 0 and comes down one."
+    },
+    {
+      "call": "handoff_distances([2, 2, -1], [[0, 2], [0, 1]])",
+      "expect": "[1, 2]",
+      "compare": "equal",
+      "note": "Desk 2 is the root here, though it has the highest number."
+    }
+  ],
+  "tests": [
+    {
+      "call": "handoff_distances([-1], [[0, 0]])",
+      "expect": "[0]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([-1], [])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([-1, 0, 0, 1, 1], [[3, 4], [3, 2], [1, 1]])",
+      "expect": "[2, 3, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([2, 2, -1], [[0, 2], [0, 1]])",
+      "expect": "[1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([-1, 0, 1, 2, 3], [[4, 0], [0, 4], [3, 1]])",
+      "expect": "[4, 4, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([-1, 0, 0, 1, 1, 2, 2, 3], [[7, 6], [7, 4], [5, 6], [7, 0]])",
+      "expect": "[5, 3, 2, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([1, 3, 3, -1, 2, 4], [[0, 5], [5, 2], [0, 1]])",
+      "expect": "[5, 2, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([-1] + list(range(1199)) + [600, 1200, 1201], [[1199, 1202], [1202, 3], [1100, 1201]])",
+      "expect": "[602, 600, 502]",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([-1] + list(range(2047)) + [0], [[2047, 2048], [2047, 1024], [2048, 1]])",
+      "expect": "[2048, 1023, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "sum(handoff_distances([-1] + [i - 1 if i < 15000 else i * 7919 % 15000 for i in range(1, 20000)], [[15000 + i * 31 % 5000, 15000 + (i * 17 + 7) % 5000] for i in range(20000)]))",
+      "expect": "100185776",
+      "compare": "equal"
+    },
+    {
+      "call": "sum(handoff_distances([i + 1 for i in range(19999)] + [-1], [[i * 7 % 2000, 18000 + i % 2000] for i in range(20000)]))",
+      "expect": "360000000",
+      "compare": "equal"
+    },
+    {
+      "call": "handoff_distances([-1] + [i - 1 if i < 15000 else i * 7919 % 15000 for i in range(1, 20000)], [[19999, 15000], [0, 14999], [16000, 16001]])",
+      "expect": "[2083, 14999, 7083]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The obvious method climbs from both desks one line at a time until they meet, which is $O(n)$ a query and runs out of time on the deep trees. The step to the target is a table of jumps by powers of two, so each climb takes $O(\\log n)$ steps.",
+  "solution": "def handoff_distances(parent, queries):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    depth = [0] * n\n    order = [root]\n    for node in order:\n        for child in children[node]:\n            depth[child] = depth[node] + 1\n            order.append(child)\n    up = [[root if p < 0 else p for p in parent]]\n    levels = max(1, max(depth).bit_length())\n    for _ in range(levels - 1):\n        prev = up[-1]\n        up.append([prev[v] for v in prev])\n    answers = []\n    for a, b in queries:\n        da, db = depth[a], depth[b]\n        if da < db:\n            a, b = b, a\n        gap, k = abs(da - db), 0\n        while gap:\n            if gap & 1:\n                a = up[k][a]\n            gap >>= 1\n            k += 1\n        if a != b:\n            for k in range(levels - 1, -1, -1):\n                if up[k][a] != up[k][b]:\n                    a, b = up[k][a], up[k][b]\n            a = up[0][a]\n        answers.append(da + db - 2 * depth[a])\n    return answers\n",
+  "notes": [
+    "The handoffs are depth of `a` plus depth of `b` minus twice the depth of their lowest shared manager.",
+    "Lifting both desks while their jumps differ stops just below that manager, so one last step up is needed.",
+    "The jump tables take $O(n \\log n)$ to build and each query $O(\\log n)$."
+  ],
+  "planted": [
+    {
+      "code": "def handoff_distances(parent, queries):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    depth = [0] * n\n    order = [root]\n    for node in order:\n        for child in children[node]:\n            depth[child] = depth[node] + 1\n            order.append(child)\n    return [abs(depth[a] - depth[b]) for a, b in queries]\n",
+      "slip": "The difference in depth is the answer only when one desk manages the other."
+    },
+    {
+      "code": "def handoff_distances(parent, queries):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    depth = [0] * n\n    order = [root]\n    for node in order:\n        for child in children[node]:\n            depth[child] = depth[node] + 1\n            order.append(child)\n    up = [[root if p < 0 else p for p in parent]]\n    levels = 10\n    for _ in range(levels - 1):\n        prev = up[-1]\n        up.append([prev[v] for v in prev])\n    answers = []\n    for a, b in queries:\n        da, db = depth[a], depth[b]\n        if da < db:\n            a, b = b, a\n        gap, k = abs(da - db), 0\n        while gap and k < levels:\n            if gap & 1:\n                a = up[k][a]\n            gap >>= 1\n            k += 1\n        if a != b:\n            for k in range(levels - 1, -1, -1):\n                if up[k][a] != up[k][b]:\n                    a, b = up[k][a], up[k][b]\n            a = up[0][a]\n        answers.append(da + db - 2 * depth[a])\n    return answers\n",
+      "slip": "A fixed ten levels of jumps reach only 1,023 lines up, too few for a deep tree."
+    },
+    {
+      "code": "def handoff_distances(parent, queries):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    depth = [0] * n\n    order = [root]\n    for node in order:\n        for child in children[node]:\n            depth[child] = depth[node] + 1\n            order.append(child)\n    up = [[root if p < 0 else p for p in parent]]\n    levels = max(1, max(depth).bit_length())\n    for _ in range(levels - 1):\n        prev = up[-1]\n        up.append([prev[v] for v in prev])\n    answers = []\n    for a, b in queries:\n        da, db = depth[a], depth[b]\n        if da < db:\n            a, b = b, a\n        gap, k = abs(da - db), 0\n        while gap:\n            if gap & 1:\n                a = up[k][a]\n            gap >>= 1\n            k += 1\n        if a != b:\n            for k in range(levels - 1, -1, -1):\n                if up[k][a] != up[k][b]:\n                    a, b = up[k][a], up[k][b]\n        answers.append(da + db - 2 * depth[a])\n    return answers\n",
+      "slip": "Stopping one line below the shared manager, without the last step up, gives an answer two too small."
+    }
+  ]
+}

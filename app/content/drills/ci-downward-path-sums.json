@@ -1,0 +1,129 @@
+{
+  "id": "ci-downward-path-sums",
+  "name": "Downward runs that hit a target",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "trees",
+  "tags": [
+    "pack-4",
+    "downward-path-sums"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1980,
+  "fn": "count_sum_paths",
+  "returns": "a whole number",
+  "brief": "A firm's reporting tree has a profit figure at each desk, and figures may be negative. The tree comes as `parent`, where `parent[i]` is the node that node `i` hangs from and the root has `-1`; a parent may have a higher number than its child. `values[i]` is node `i`'s figure. A downward run starts at any node and goes down through children, one node or more, ending anywhere below. Count the downward runs whose figures add up to `target`.\n\nWrite `count_sum_paths(parent, values, target)`.\n\nExample. For `parent = [-1, 0, 1, 0]`, `values = [2, 1, 3, 4]` and `target = 4`, the runs 1 then 3, and 4 alone, both total 4. The run 2, 1, 3 totals 6, so the answer is `2`.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ nodes; figures are whole numbers between $-10^4$ and $10^4$. The tree may be one chain of $100{,}000$ nodes, too deep for Python recursion.",
+    "$O(n)$ time is the target. Walking up from every node to the root is $O(n \\cdot h)$, too slow on a chain.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep a running total from the root and a count of the running totals on the path above you. A run ending here hits the target when an earlier total equals the current total minus `target`. Use your own stack, and take a node's total off the count as you leave it.",
+  "starter": "def count_sum_paths(parent, values, target):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "count_sum_paths([-1, 0, 1, 0], [2, 1, 3, 4], 4)",
+      "expect": "2",
+      "compare": "equal",
+      "note": "1 then 3 is one run and 4 alone is another; neither starts at the root."
+    },
+    {
+      "call": "count_sum_paths([-1, 0, 0], [5, -5, -5], 0)",
+      "expect": "2",
+      "compare": "equal",
+      "note": "5 then -5 works down either branch. The two -5s are not one run, since a run never goes back up."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_sum_paths([-1], [3], 3)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([-1], [3], 0)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([-1, 0, 1, 0], [2, 1, 3, 4], 4)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([-1, 0, 0], [5, -5, -5], 0)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([1, 2, -1], [0, 0, 0], 0)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([-1, 0, 0, 1, 2], [1, 2, 3, 4, 5], 6)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([2, 0, -1, 1, 1], [4, -1, 1, 1, -3], 1)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([-1, 0, 1, 1, 0, 4], [10, 5, 3, 2, -3, 11], 8)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([-1, 0, 1, 2], [-2, 2, -2, 2], 0)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([i + 1 for i in range(99999)] + [-1], [(i * 37) % 7 - 3 for i in range(100000)], 0)",
+      "expect": "1326505102",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([i + 1 for i in range(99999)] + [-1], [1] * 100000, 50000)",
+      "expect": "50001",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([(i - 1) // 2 for i in range(100000)], [(i * 7919) % 11 - 5 for i in range(100000)], 3)",
+      "expect": "80566",
+      "compare": "equal"
+    },
+    {
+      "call": "count_sum_paths([-1] + [i * 7919 % 100003 % i for i in range(1, 100000)], [(i % 5) - 2 for i in range(100000)], -1)",
+      "expect": "129512",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method walks up from every node, adding figures, which is $O(n \\cdot h)$ and runs out of time on the long chain. The step to the target is to keep a count of the running totals on the path from the root, so each node is answered by one lookup.",
+  "solution": "def count_sum_paths(parent, values, target):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    seen = {0: 1}\n    count = 0\n    stack = [(root, 0, False)]\n    while stack:\n        node, total, leaving = stack.pop()\n        if leaving:\n            seen[total] -= 1\n            continue\n        total += values[node]\n        count += seen.get(total - target, 0)\n        seen[total] = seen.get(total, 0) + 1\n        stack.append((node, total, True))\n        for child in children[node]:\n            stack.append((child, total, False))\n    return count\n",
+  "notes": [
+    "A run from `a` down to `b` totals the running total at `b` minus the running total just above `a`.",
+    "Leaving a node must take its total off the count, or runs would join two separate branches.",
+    "Each node is entered and left once with one dict lookup, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def count_sum_paths(parent, values, target):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    count = 0\n    stack = [(root, 0)]\n    while stack:\n        node, total = stack.pop()\n        total += values[node]\n        count += total == target\n        for child in children[node]:\n            stack.append((child, total))\n    return count\n",
+      "slip": "Counting only runs that start at the root misses runs that start lower down."
+    },
+    {
+      "code": "def count_sum_paths(parent, values, target):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    seen = {0: 1}\n    count = 0\n    stack = [(root, 0)]\n    while stack:\n        node, total = stack.pop()\n        total += values[node]\n        count += seen.get(total - target, 0)\n        seen[total] = seen.get(total, 0) + 1\n        for child in children[node]:\n            stack.append((child, total))\n    return count\n",
+      "slip": "Never taking a total off the count lets a run start in a branch that is not above it."
+    },
+    {
+      "code": "def count_sum_paths(parent, values, target):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    seen = {}\n    count = 0\n    stack = [(root, 0, False)]\n    while stack:\n        node, total, leaving = stack.pop()\n        if leaving:\n            seen[total] -= 1\n            continue\n        total += values[node]\n        count += seen.get(total - target, 0)\n        seen[total] = seen.get(total, 0) + 1\n        stack.append((node, total, True))\n        for child in children[node]:\n            stack.append((child, total, False))\n    return count\n",
+      "slip": "Starting the count of totals empty, without the 0 above the root, misses every run that starts at the root."
+    }
+  ]
+}

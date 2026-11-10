@@ -1,0 +1,129 @@
+{
+  "id": "ci-cheapest-pairs",
+  "name": "The cheapest two-leg trades",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "heaps-tries",
+  "tags": [
+    "pack-4",
+    "cheapest-pairs"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1860,
+  "fn": "cheapest_pairs",
+  "returns": "a list of whole numbers",
+  "brief": "A desk builds a trade from one leg in `a` and one leg in `b`, and the trade costs the two legs' costs added. Both lists are sorted from cheapest up and may hold repeats; every choice of a position in `a` and a position in `b` is a different trade. Return the costs of the `k` cheapest trades, cheapest first.\n\nWrite `cheapest_pairs(a, b, k)`.\n\nExample. For `a = [1, 4]`, `b = [2, 3, 9]` and `k = 4` the trades cost 3, 4, 6, 7, 10 and 13. The answer is `[3, 4, 6, 7]`.",
+  "constraints": [
+    "Each list holds at most $100{,}000$ costs between 0 and $10^9$; $0 \\le k \\le$ `len(a) * len(b)` and $k \\le 100{,}000$.",
+    "$O(k \\log k)$ time is the target. Pricing every trade is $O(|a| \\cdot |b|)$, far too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "The trades with a fixed leg `a[i]` form a sorted run `a[i] + b[0]`, `a[i] + b[1]`, and so on. Merge these runs with a heap: start with `(a[i] + b[0], i, 0)` for the first `k` values of `i`, and after popping `(cost, i, j)` push `(a[i] + b[j + 1], i, j + 1)`.",
+  "starter": "def cheapest_pairs(a, b, k):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "cheapest_pairs([1, 4], [2, 3, 9], 4)",
+      "expect": "[3, 4, 6, 7]",
+      "compare": "equal",
+      "note": "The six trades cost 3, 4, 10 with leg 1 and 6, 7, 13 with leg 4."
+    },
+    {
+      "call": "cheapest_pairs([2, 2], [5], 2)",
+      "expect": "[7, 7]",
+      "compare": "equal",
+      "note": "The two legs costing 2 are different trades, so 7 appears twice."
+    }
+  ],
+  "tests": [
+    {
+      "call": "cheapest_pairs([], [1, 2], 0)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([5], [6], 1)",
+      "expect": "[11]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([1, 2], [3, 4], 0)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([1, 4], [2, 3, 9], 4)",
+      "expect": "[3, 4, 6, 7]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([2, 2], [5], 2)",
+      "expect": "[7, 7]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([1, 1, 1], [1, 1], 6)",
+      "expect": "[2, 2, 2, 2, 2, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([0, 10, 20], [0, 1, 2, 3, 4, 5], 9)",
+      "expect": "[0, 1, 2, 3, 4, 5, 10, 11, 12]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([1, 7, 11], [2, 4, 6], 5)",
+      "expect": "[3, 5, 7, 9, 11]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([1, 2, 3], [1, 2, 3], 9)",
+      "expect": "[2, 3, 3, 4, 4, 4, 5, 5, 6]",
+      "compare": "equal"
+    },
+    {
+      "call": "cheapest_pairs([0, 5, 5, 6], [0, 0, 7], 7)",
+      "expect": "[0, 0, 5, 5, 5, 5, 6]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r), sum(r[::997]), r[-1]))(cheapest_pairs(list(range(0, 300000, 3)), sorted(i * 7919 % 100003 for i in range(100000)), 100000))",
+      "expect": "(100000, 51439886, 51736, 773)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r), sum(r[::991]), r[-1]))(cheapest_pairs([i // 50 for i in range(100000)], [i // 30 for i in range(100000)], 100000))",
+      "expect": "(100000, 671000, 672, 11)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r), r[-1]))(cheapest_pairs([10 ** 9] * 300, [0] + [10 ** 9] * 299, 600))",
+      "expect": "(600, 900000000000, 2000000000)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method prices every trade and sorts them, which is $O(|a| \\cdot |b|)$ and runs out of time on the large lists. The step to the target is to treat each leg of `a` as a sorted run and merge the runs with a heap, stopping after `k` trades.",
+  "solution": "import heapq\n\ndef cheapest_pairs(a, b, k):\n    if not a or not b:\n        return []\n    heap = [(a[i] + b[0], i, 0) for i in range(min(k, len(a)))]\n    heapq.heapify(heap)\n    costs = []\n    while heap and len(costs) < k:\n        cost, i, j = heapq.heappop(heap)\n        costs.append(cost)\n        if j + 1 < len(b):\n            heapq.heappush(heap, (a[i] + b[j + 1], i, j + 1))\n    return costs\n",
+  "notes": [
+    "With `a[i]` fixed the costs rise along `b`, so the trades are `len(a)` sorted runs to merge.",
+    "Pushing both neighbours of a popped trade without remembering them lists one trade twice.",
+    "At most `k` runs start and each pop pushes one trade, so the work is $O(k \\log k)$."
+  ],
+  "planted": [
+    {
+      "code": "import heapq\n\ndef cheapest_pairs(a, b, k):\n    if not a or not b or k == 0:\n        return []\n    heap = [(a[0] + b[0], 0, 0)]\n    costs = []\n    while heap and len(costs) < k:\n        cost, i, j = heapq.heappop(heap)\n        costs.append(cost)\n        if i + 1 < len(a):\n            heapq.heappush(heap, (a[i + 1] + b[j], i + 1, j))\n        if j + 1 < len(b):\n            heapq.heappush(heap, (a[i] + b[j + 1], i, j + 1))\n    return costs\n",
+      "slip": "Pushing both neighbours of every trade, with no record of what is queued, reaches the same trade twice."
+    },
+    {
+      "code": "def cheapest_pairs(a, b, k):\n    if not a or not b or k == 0:\n        return []\n    i = j = 0\n    costs = [a[0] + b[0]]\n    while len(costs) < k:\n        if j + 1 >= len(b) or (i + 1 < len(a) and a[i + 1] + b[j] <= a[i] + b[j + 1]):\n            i += 1\n        else:\n            j += 1\n        costs.append(a[i] + b[j])\n    return costs\n",
+      "slip": "Stepping one pointer at a time walks a single path through the trades and skips many cheap ones."
+    },
+    {
+      "code": "import heapq\n\ndef cheapest_pairs(a, b, k):\n    if not a or not b:\n        return []\n    edge = [x + b[0] for x in a] + [a[0] + y for y in b[1:]]\n    return heapq.nsmallest(k, edge)\n",
+      "slip": "Pairing every leg with the cheapest leg of the other list leaves out trades that use two dearer legs."
+    }
+  ]
+}

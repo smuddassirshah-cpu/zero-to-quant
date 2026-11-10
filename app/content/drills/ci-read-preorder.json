@@ -1,0 +1,124 @@
+{
+  "id": "ci-read-preorder",
+  "name": "Rebuild a tree from its saved text",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "trees",
+  "tags": [
+    "pack-4",
+    "read-preorder"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 1020,
+  "fn": "read_tree",
+  "returns": "a nested tuple or None",
+  "brief": "A pricing service saves its decision tree as text. It writes the tree in preorder, node first, then the left part, then the right part, and writes `#` for each empty tree. Tokens are separated by spaces or line breaks, and a value is a whole number that may be negative. Rebuild the tree as a nested tuple `(value, left, right)`, with `None` for an empty tree.\n\nWrite `read_tree(text)`.\n\nExample. `\"5 3 # # 8 # #\"` holds 5, then its left part `3 # #`, then its right part `8 # #`. So the answer is `(5, (3, None, None), (8, None, None))`.",
+  "constraints": [
+    "At most $100{,}000$ values, in a tree of height at most 400. The text is a whole, well-formed tree; `\"#\"` alone is the empty tree.",
+    "$O(n)$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Split the text into tokens and read them with one moving position. Reading a tree means: take a token; if it is `#` the tree is empty, otherwise read the left tree, then the right tree.",
+  "starter": "def read_tree(text):\n    # your code here\n    return None\n",
+  "examples": [
+    {
+      "call": "read_tree('5 3 # # 8 # #')",
+      "expect": "(5, (3, None, None), (8, None, None))",
+      "compare": "equal",
+      "note": "Each leaf is followed by two `#` marks, one for each empty side."
+    },
+    {
+      "call": "read_tree('-12 # 40 # #\\n')",
+      "expect": "(-12, None, (40, None, None))",
+      "compare": "equal",
+      "note": "The first `#` is the empty left side of -12, and 40 is its right child."
+    }
+  ],
+  "tests": [
+    {
+      "call": "read_tree('#')",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('#\\n')",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('9 # #')",
+      "expect": "(9, None, None)",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('5 3 # # 8 # #')",
+      "expect": "(5, (3, None, None), (8, None, None))",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('-12 # 40 # #\\n')",
+      "expect": "(-12, None, (40, None, None))",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('  1   2  # #  3 # #  \\n\\n')",
+      "expect": "(1, (2, None, None), (3, None, None))",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('1\\n2\\n4\\n#\\n#\\n#\\n3\\n#\\n5\\n#\\n#\\n')",
+      "expect": "(1, (2, (4, None, None), None), (3, None, (5, None, None)))",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('100 -250 # # 0 # #')",
+      "expect": "(100, (-250, None, None), (0, None, None))",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('7 7 # # 7 # #')",
+      "expect": "(7, (7, None, None), (7, None, None))",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree(' '.join(['1'] * 400 + ['#'] * 401)) == __import__('functools').reduce(lambda t, v: (1, t, None), range(400), None)",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree(' '.join((lambda f: f(f, 0, 65535))(lambda f, lo, hi: ['#'] if lo >= hi else [str((lo + hi) // 2 - 30000)] + f(f, lo, (lo + hi) // 2) + f(f, (lo + hi) // 2 + 1, hi)))) == (lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else ((lo + hi) // 2 - 30000, f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi)))",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "read_tree('\\n'.join((lambda f: f(f, 0, 100000))(lambda f, lo, hi: ['#'] if lo >= hi else [str(lo * 7 - hi)] + f(f, lo, (lo + hi) // 2) + f(f, (lo + hi) // 2 + 1, hi)))) == (lambda f: f(f, 0, 100000))(lambda f, lo, hi: None if lo >= hi else (lo * 7 - hi, f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi)))",
+      "expect": "True",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def read_tree(text):\n    tokens = text.split()\n    pos = 0\n\n    def build():\n        nonlocal pos\n        token = tokens[pos]\n        pos += 1\n        if token == '#':\n            return None\n        left = build()\n        right = build()\n        return (int(token), left, right)\n\n    return build()\n",
+  "notes": [
+    "Preorder with a mark for every empty side fixes the shape, so one left-to-right read rebuilds it.",
+    "Reading one character at a time breaks values such as `-12` and `100`.",
+    "Each token is read once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def read_tree(text):\n    tokens = [ch for ch in text if not ch.isspace()]\n    pos = 0\n\n    def build():\n        nonlocal pos\n        token = tokens[pos]\n        pos += 1\n        if token == '#':\n            return None\n        left = build()\n        right = build()\n        return (int(token), left, right)\n\n    return build()\n",
+      "slip": "Reading one character at a time splits `-12` and `100` into separate tokens."
+    },
+    {
+      "code": "def read_tree(text):\n    tokens = text.split()\n    pos = 0\n\n    def build():\n        nonlocal pos\n        token = tokens[pos]\n        pos += 1\n        if token == '#':\n            return None\n        right = build()\n        left = build()\n        return (int(token), left, right)\n\n    return build()\n",
+      "slip": "Reading the right part first hangs every left subtree on the right."
+    },
+    {
+      "code": "def read_tree(text):\n    tokens = text.strip().split(' ')\n    pos = 0\n\n    def build():\n        nonlocal pos\n        token = tokens[pos]\n        pos += 1\n        if token == '#':\n            return None\n        left = build()\n        right = build()\n        return (int(token), left, right)\n\n    return build()\n",
+      "slip": "Splitting on a single space leaves empty tokens where spaces repeat, and misses line breaks."
+    }
+  ]
+}

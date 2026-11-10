@@ -1,0 +1,129 @@
+{
+  "id": "ci-first-misplaced",
+  "name": "The first price level out of place",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "trees",
+  "tags": [
+    "pack-4",
+    "first-misplaced"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1260,
+  "fn": "first_misplaced",
+  "returns": "a whole number or None",
+  "brief": "An order book keeps its price levels in a search tree, a nested tuple `(price, left, right)` with `None` for an empty tree. Every price in a level's left part should be lower than the level's price, and every price in its right part higher. A level is misplaced when it breaks that rule for one of the levels above it.\n\nRead the tree in preorder (a level, then its left part, then its right part) and return the price of the first misplaced level. Return `None` when the tree is in order.\n\nWrite `first_misplaced(book)`.\n\nExample. In `(50, (30, None, (60, None, None)), (70, None, None))` the 60 is above 30, as a right child should be. But it sits in the left part of 50 and is not lower, so the answer is `60`.",
+  "constraints": [
+    "At most $100{,}000$ levels, in a tree of height at most 400. Prices are whole numbers and may repeat; a repeat is misplaced.",
+    "$O(n)$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Carry the range a level must lie in as you go down: going left, the parent's price becomes the upper end; going right, it becomes the lower end. Check each level against its range in preorder.",
+  "starter": "def first_misplaced(book):\n    # your code here\n    return None\n",
+  "examples": [
+    {
+      "call": "first_misplaced((50, (30, None, (60, None, None)), (70, None, None)))",
+      "expect": "60",
+      "compare": "equal",
+      "note": "60 is fine beside its parent 30, but it is in the left part of 50."
+    },
+    {
+      "call": "first_misplaced((50, (30, None, None), (70, (60, None, None), None)))",
+      "expect": "None",
+      "compare": "equal",
+      "note": "Every level lies inside the range its ancestors allow."
+    }
+  ],
+  "tests": [
+    {
+      "call": "first_misplaced(None)",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((5, None, None))",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((50, (30, None, None), (70, (60, None, None), None)))",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((50, (30, None, (60, None, None)), (70, None, None)))",
+      "expect": "60",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((10, (10, None, None), None))",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((10, None, (10, None, None)))",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((20, (10, (5, None, None), (25, None, None)), (30, (15, None, None), None)))",
+      "expect": "25",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((20, (10, (12, None, None), (8, None, None)), None))",
+      "expect": "12",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((0, (-5, (-9, None, None), (-1, None, (3, None, None))), (6, None, None)))",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((40, (20, (10, None, None), (30, (35, None, None), (45, None, None))), (60, None, None)))",
+      "expect": "35",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else (2 * ((lo + hi) // 2), f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi))))",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else (2 * ((lo + hi) // 2) + (65 if (lo + hi) // 2 == 40001 else 0), f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi))))",
+      "expect": "80067",
+      "compare": "equal"
+    },
+    {
+      "call": "first_misplaced(__import__('functools').reduce(lambda t, v: (v, None, t), range(399, 0, -1), (0, None, None)))",
+      "expect": "0",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def first_misplaced(book):\n    stack = [(book, None, None)]\n    while stack:\n        node, lo, hi = stack.pop()\n        if node is None:\n            continue\n        price, left, right = node\n        if (lo is not None and price <= lo) or (hi is not None and price >= hi):\n            return price\n        stack.append((right, price, hi))\n        stack.append((left, lo, price))\n    return None\n",
+  "notes": [
+    "Each level must lie strictly inside the range that every ancestor sets, not only beside its parent.",
+    "Checking only parent against child passes a level that is on the wrong side of a grandparent.",
+    "Each level is checked once against two bounds, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def first_misplaced(book):\n    stack = [book]\n    while stack:\n        node = stack.pop()\n        if node is None:\n            continue\n        price, left, right = node\n        if left is not None and left[0] >= price:\n            return left[0]\n        if right is not None and right[0] <= price:\n            return right[0]\n        stack.append(right)\n        stack.append(left)\n    return None\n",
+      "slip": "Comparing each level only with its children misses a level on the wrong side of a grandparent."
+    },
+    {
+      "code": "def first_misplaced(book):\n    stack = [(book, None, None)]\n    while stack:\n        node, lo, hi = stack.pop()\n        if node is None:\n            continue\n        price, left, right = node\n        if (lo is not None and price < lo) or (hi is not None and price > hi):\n            return price\n        stack.append((right, price, hi))\n        stack.append((left, lo, price))\n    return None\n",
+      "slip": "Loose bounds let a repeated price stand, though every price must be strictly lower or higher."
+    },
+    {
+      "code": "def first_misplaced(book):\n    order = []\n    stack = []\n    node = book\n    while stack or node is not None:\n        while node is not None:\n            stack.append(node)\n            node = node[1]\n        node = stack.pop()\n        order.append(node[0])\n        node = node[2]\n    for a, b in zip(order, order[1:]):\n        if b <= a:\n            return b\n    return None\n",
+      "slip": "The first drop in an in-order read is not always the first misplaced level in preorder."
+    }
+  ]
+}

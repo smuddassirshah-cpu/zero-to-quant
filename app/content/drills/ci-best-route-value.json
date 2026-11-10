@@ -1,0 +1,129 @@
+{
+  "id": "ci-best-route-value",
+  "name": "The richest route through a tree",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "trees",
+  "tags": [
+    "pack-4",
+    "best-route-value"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1920,
+  "fn": "best_route_value",
+  "returns": "a whole number",
+  "brief": "A courier network is a tree of depots, and each depot pays or costs a fee, so `values[i]` may be negative. The tree comes as `parent`, where `parent[i]` is the node that node `i` hangs from and the root has `-1`; a parent may have a higher number than its child. A route is a path of one depot or more that never visits a depot twice: it may climb from one depot to a common ancestor and come down another branch. Return the largest total of `values` along any route.\n\nWrite `best_route_value(parent, values)`.\n\nExample. For `parent = [-1, 0, 0, 1]` and `values = [-1, 4, 3, 2]` the route 2, 4, -1, 3 (depots 3, 1, 0, 2) totals 8. No route does better, so the answer is `8`.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ depots; values are whole numbers between $-10^4$ and $10^4$. The tree may be one chain, too deep for Python recursion.",
+    "$O(n)$ time is the target. Searching the tree again from every depot is $O(n^2)$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Visit depots children first, for example in reverse breadth-first order. For each depot keep the best total going down from it; a child adds to it only when its best is positive. The best route bending at a depot uses its two best children.",
+  "starter": "def best_route_value(parent, values):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "best_route_value([-1, 0, 0, 1], [-1, 4, 3, 2])",
+      "expect": "8",
+      "compare": "equal",
+      "note": "Paying the -1 at the root joins the two good branches, 6 and 3."
+    },
+    {
+      "call": "best_route_value([-1, 0, 0], [-5, -2, -3])",
+      "expect": "-2",
+      "compare": "equal",
+      "note": "Every depot costs, so the best route is the single depot with -2."
+    }
+  ],
+  "tests": [
+    {
+      "call": "best_route_value([-1], [-7])",
+      "expect": "-7",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([-1], [7])",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([-1, 0, 0, 1], [-1, 4, 3, 2])",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([-1, 0, 0], [-5, -2, -3])",
+      "expect": "-2",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([1, -1, 1], [6, -10, 6])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([-1, 0, 1, 1], [1, -2, 5, 5])",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([-1, 0, 0, 0], [2, 3, 4, 5])",
+      "expect": "11",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([3, 3, 3, -1, 0], [1, 2, 3, -1, -4])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([-1, 0, 1, 2, 3], [5, -6, 7, -1, 2])",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([i + 1 for i in range(99999)] + [-1], [(i * 37) % 21 - 10 for i in range(100000)])",
+      "expect": "23",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([i + 1 for i in range(99999)] + [-1], [-((i * 7919) % 100) - 1 for i in range(100000)])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([(i - 1) // 2 for i in range(100000)], [(i * 7919) % 201 - 100 for i in range(100000)])",
+      "expect": "1612",
+      "compare": "equal"
+    },
+    {
+      "call": "best_route_value([-1] + [i * 7919 % 100003 % i for i in range(1, 100000)], [(i * 31) % 9 - 4 for i in range(100000)])",
+      "expect": "60",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method starts a search from every depot and totals every path from it, which is $O(n^2)$ and runs out of time on the large trees. The step to the target is one pass, children first, keeping each depot's best downward total and joining its two best children there.",
+  "solution": "def best_route_value(parent, values):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    order = [root]\n    for node in order:\n        order.extend(children[node])\n    down = [0] * n\n    best = None\n    for node in reversed(order):\n        top1 = top2 = 0\n        for child in children[node]:\n            gain = down[child]\n            if gain > top1:\n                top1, top2 = gain, top1\n            elif gain > top2:\n                top2 = gain\n        down[node] = values[node] + top1\n        here = values[node] + top1 + top2\n        if best is None or here > best:\n            best = here\n    return best\n",
+  "notes": [
+    "Every route has one highest depot, where it joins at most two downward branches.",
+    "A branch with a negative best adds nothing, so it counts as 0, but the depot itself always counts.",
+    "Each depot is handled once, after its children, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def best_route_value(parent, values):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    order = [root]\n    for node in order:\n        order.extend(children[node])\n    down = [0] * n\n    best = None\n    for node in reversed(order):\n        gains = sorted((down[c] for c in children[node]), reverse=True)[:2]\n        down[node] = values[node] + (gains[0] if gains else 0)\n        here = values[node] + sum(gains)\n        if best is None or here > best:\n            best = here\n    return best\n",
+      "slip": "Adding a child's best even when it is negative drags a route through depots it should leave out."
+    },
+    {
+      "code": "def best_route_value(parent, values):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    order = [root]\n    for node in order:\n        order.extend(children[node])\n    down = [0] * n\n    best = 0\n    for node in reversed(order):\n        top1 = top2 = 0\n        for child in children[node]:\n            gain = down[child]\n            if gain > top1:\n                top1, top2 = gain, top1\n            elif gain > top2:\n                top2 = gain\n        down[node] = values[node] + top1\n        best = max(best, values[node] + top1 + top2)\n    return best\n",
+      "slip": "Starting the best at 0 reports an empty route when every depot costs."
+    },
+    {
+      "code": "def best_route_value(parent, values):\n    n = len(parent)\n    children = [[] for _ in range(n)]\n    root = 0\n    for i, p in enumerate(parent):\n        if p < 0:\n            root = i\n        else:\n            children[p].append(i)\n    order = [root]\n    for node in order:\n        order.extend(children[node])\n    down = [0] * n\n    best = None\n    for node in reversed(order):\n        top = max([0] + [down[c] for c in children[node]])\n        down[node] = values[node] + top\n        if best is None or down[node] > best:\n            best = down[node]\n    return best\n",
+      "slip": "Keeping only downward routes never lets a route bend at a depot to join two branches."
+    }
+  ]
+}

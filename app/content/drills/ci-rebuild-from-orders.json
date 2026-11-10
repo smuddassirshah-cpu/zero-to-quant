@@ -1,0 +1,124 @@
+{
+  "id": "ci-rebuild-from-orders",
+  "name": "Rebuild a tree from two readings",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "trees",
+  "tags": [
+    "pack-4",
+    "rebuild-from-orders"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1380,
+  "fn": "rebuild",
+  "returns": "a nested tuple or None",
+  "brief": "An audit log kept two readings of a routing tree with distinct node ids. `pre` lists the ids node first, then the left part, then the right part. `ino` lists them left part first, then the node, then the right part. Rebuild the tree as a nested tuple `(id, left, right)`, with `None` for an empty tree.\n\nWrite `rebuild(pre, ino)`.\n\nExample. For `pre = [3, 9, 20, 15, 7]` and `ino = [9, 3, 15, 20, 7]` the root is 3. In `ino`, 9 is left of 3 and the rest is right of it. So the answer is `(3, (9, None, None), (20, (15, None, None), (7, None, None)))`.",
+  "constraints": [
+    "At most $100{,}000$ distinct ids, in a tree of height at most 400. Both lists hold the same ids.",
+    "$O(n)$ time is the target. Searching `ino` for each root, or copying slices, costs more.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "The next unused id of `pre` is always the root of the part being built. Look up its place in `ino` with a dict made once; ids left of it form the left part and ids right of it form the right part.",
+  "starter": "def rebuild(pre, ino):\n    # your code here\n    return None\n",
+  "examples": [
+    {
+      "call": "rebuild([3, 9, 20, 15, 7], [9, 3, 15, 20, 7])",
+      "expect": "(3, (9, None, None), (20, (15, None, None), (7, None, None)))",
+      "compare": "equal",
+      "note": "The root 3 splits `ino` into the left part `[9]` and the right part `[15, 20, 7]`."
+    },
+    {
+      "call": "rebuild([1, 2], [1, 2])",
+      "expect": "(1, None, (2, None, None))",
+      "compare": "equal",
+      "note": "Nothing comes before 1 in `ino`, so 2 is its right child."
+    }
+  ],
+  "tests": [
+    {
+      "call": "rebuild([], [])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([4], [4])",
+      "expect": "(4, None, None)",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([1, 2], [2, 1])",
+      "expect": "(1, (2, None, None), None)",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([1, 2], [1, 2])",
+      "expect": "(1, None, (2, None, None))",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([3, 9, 20, 15, 7], [9, 3, 15, 20, 7])",
+      "expect": "(3, (9, None, None), (20, (15, None, None), (7, None, None)))",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([5, 2, 1, 3, 8, 9], [1, 2, 3, 5, 8, 9])",
+      "expect": "(5, (2, (1, None, None), (3, None, None)), (8, None, (9, None, None)))",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([10, 30, 20, 40], [20, 30, 10, 40])",
+      "expect": "(10, (30, (20, None, None), None), (40, None, None))",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([0, -1, -2, -3], [-3, -2, -1, 0])",
+      "expect": "(0, (-1, (-2, (-3, None, None), None), None), None)",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([7, 4, 6, 1, 9, 2], [6, 4, 1, 7, 2, 9])",
+      "expect": "(7, (4, (6, None, None), (1, None, None)), (9, (2, None, None), None))",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild(list(range(400)), list(range(399, -1, -1))) == __import__('functools').reduce(lambda t, v: (v, t, None), range(399, -1, -1), None)",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild([0] + list(range(2, 400, 2)) + list(range(1, 400, 2)), list(range(398, 0, -2)) + [0] + list(range(1, 400, 2))) == (0, __import__('functools').reduce(lambda t, v: (v, t, None), range(398, 0, -2), None), __import__('functools').reduce(lambda t, v: (v, None, t), range(399, 0, -2), None))",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "rebuild((lambda f: f(f, 0, 65535))(lambda f, lo, hi: [] if lo >= hi else [(lo + hi) // 2 * 7919 % 65536] + f(f, lo, (lo + hi) // 2) + f(f, (lo + hi) // 2 + 1, hi)), [k * 7919 % 65536 for k in range(65535)]) == (lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else ((lo + hi) // 2 * 7919 % 65536, f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi)))",
+      "expect": "True",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def rebuild(pre, ino):\n    where = {v: i for i, v in enumerate(ino)}\n    pos = 0\n\n    def build(lo, hi):\n        nonlocal pos\n        if lo >= hi:\n            return None\n        root = pre[pos]\n        pos += 1\n        mid = where[root]\n        left = build(lo, mid)\n        right = build(mid + 1, hi)\n        return (root, left, right)\n\n    return build(0, len(ino))\n",
+  "notes": [
+    "The next unused id of `pre` is the root, and its place in `ino` splits the ids into the two parts.",
+    "Building the right part before the left takes the left part's root from `pre` for the right part.",
+    "Each id is placed once with a dict lookup, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def rebuild(pre, ino):\n    where = {v: i for i, v in enumerate(ino)}\n    pos = 0\n\n    def build(lo, hi):\n        nonlocal pos\n        if lo >= hi:\n            return None\n        root = pre[pos]\n        pos += 1\n        mid = where[root]\n        right = build(mid + 1, hi)\n        left = build(lo, mid)\n        return (root, left, right)\n\n    return build(0, len(ino))\n",
+      "slip": "Building the right part first takes ids from `pre` that belong to the left part."
+    },
+    {
+      "code": "def rebuild(pre, ino):\n    if not pre:\n        return None\n    root = pre[0]\n    i = ino.index(root)\n    return (root, rebuild(pre[1:i], ino[:i]), rebuild(pre[i:], ino[i + 1:]))\n",
+      "slip": "The left part's slice of `pre` is one id short, so its last id lands in the right part."
+    },
+    {
+      "code": "def rebuild(pre, ino):\n    tree = None\n\n    def insert(node, v):\n        if node is None:\n            return (v, None, None)\n        if v < node[0]:\n            return (node[0], insert(node[1], v), node[2])\n        return (node[0], node[1], insert(node[2], v))\n    for v in pre:\n        tree = insert(tree, v)\n    return tree\n",
+      "slip": "Inserting `pre` into a search tree ignores `ino`, so it only works when the ids happen to be in search order."
+    }
+  ]
+}
