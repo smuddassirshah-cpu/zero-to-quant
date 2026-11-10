@@ -272,6 +272,17 @@ const browser = async () => {
     const nodeItems = gen.generate(probe.doc, 'probe-1').map((x) => x.prompt).join('|');
     const pageItems = await page.evaluate((d) => ZQ.gen.generate(d, 'probe-1').map((x) => x.prompt).join('|'), probe.doc);
     check('the page draws the same items as node for the same seed', nodeItems === pageItems, 'engine differs between the browser and node');
+    /* ENGINE-BACKLOG 842: the saved record is keyed by course and set id; two courses may share a set id and must not share a record */
+    const keyed = await page.evaluate(() => {
+      const F = ZQ.state.fluency, saved = ZQ.state.doc.fluency; const k1 = 'zz-one/fluency-shared', k2 = 'zz-two/fluency-shared';
+      F.result({ course: 'zz-one', id: 'fluency-shared', right: 19, n: 20, passed: true, families: { a: [19, 1] } });
+      F.result({ course: 'zz-two', id: 'fluency-shared', right: 4, n: 20, passed: false, families: { b: [4, 16] } });
+      const a = F.get('zz-one', 'fluency-shared'), b = F.get('zz-two', 'fluency-shared');
+      const out = { a: a && [a.attempts, a.best, !!a.passedAt, Object.keys(a.families).join()], b: b && [b.attempts, b.best, !!b.passedAt, Object.keys(b.families).join()], keys: [k1 in saved, k2 in saved, 'fluency-shared' in saved] };
+      delete saved[k1]; delete saved[k2];
+      return out;
+    });
+    check('two courses with one set id keep separate records', JSON.stringify(keyed) === JSON.stringify({ a: [1, 19, true, 'a'], b: [1, 4, false, 'b'], keys: [true, true, false] }), JSON.stringify(keyed));
     const maths = await page.evaluate(() => ZQ.grade.maths().then((m) => !!(m && m.ce && m.mathlive)));
     if (!maths) console.log('note: the Compute Engine or MathLive did not load (give --local-cdn <pkgs>); expression families are skipped');
     for (const s of list) {

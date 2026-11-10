@@ -20,6 +20,7 @@
                                                            registered through the test hook, never as content): a failing attempt (the wrong line and the solution show, the result is not a pass,
                                                            nothing else in the save moves), then a passing one through Go again; the lesson's end card and course row and the Today practice row are checked
                                                            (--all plays every set in content, after the sets, and the fixtures; add --mobile for the phone width, where nothing may overflow)
+     node app/tools/playthrough.mjs --fluency-all          every fluency set and the fixtures, one profile (lessons marked done as it goes; Today shows two rows and a link to #fluency-list, which the check reads)
      node app/tools/playthrough.mjs --bank probability-1   every item of one bank file (repeatable, or --bank all): dealt, answered right from its key, pass or fail per item
      node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
                                                            solution passes every hidden test, the stopwatch is read and recorded (add --mobile, --narrow or --tablet to repeat it at those sizes)
@@ -111,6 +112,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--set') { opt.setIds.push(next()); opt.sets = true; }
   else if (a === '--exam') { opt.examIds.push(next()); opt.exams = true; }
   else if (a === '--fluency') opt.fluencyIds.push(next());
+  else if (a === '--fluency-all') opt.fluencyAll = true;   // ENGINE-BACKLOG 843: every fluency set (and the fixtures) in one profile, no lessons
   else if (a === '--bank') opt.bankIds.push(next());
   else if (a === '--drill') opt.drillIds.push(next());
   else if (a === '--drills') opt.drillsAll = true;
@@ -136,10 +138,10 @@ const onlySets = !opt.all && (opt.sets || opt.exams);
 if (opt.all) { opt.sets = true; opt.exams = true; }
 if (onlySets && !opt.lessons.length) opt.lessonsOn = false;
 if (opt.bankIds.length && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
-if (opt.fluencyIds.length && !opt.lessons.length && !onlySets) opt.lessonsOn = false;   // ENGINE-BACKLOG 816
+if ((opt.fluencyAll || opt.fluencyIds.length) && !opt.lessons.length && !onlySets) opt.lessonsOn = false;   // ENGINE-BACKLOG 816
 const drillRun = opt.drillIds.length || opt.drillsAll || opt.sessionRun; // item 472
 if (drillRun && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
-if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length && !drillRun && !opt.fluencyIds.length;
+if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length && !drillRun && !opt.fluencyIds.length && !opt.fluencyAll;
 if (opt.localCdn && !fs.existsSync(opt.localCdn)) die(`--local-cdn: ${opt.localCdn} does not exist`);
 if (opt.shots) fs.mkdirSync(opt.shots, { recursive: true });
 function die(msg) { console.error('playthrough: ' + msg); process.exit(2); }
@@ -270,7 +272,7 @@ const main = async () => {
   const sets0 = opt.setIds.length ? allSets.filter(s2 => opt.setIds.includes(s2.id)) : opt.sets ? allSets : [];
   const exams0 = opt.examIds.length ? opt.examIds : opt.exams ? allExams : [];
   for (const x of opt.fluencyIds) if (!allFluency.includes(x)) die(`--fluency ${x}: no such fluency set (content/courses/<course>/fluency-<lesson>.json, or fixture/<id> under tools/fixtures/fluency)`);
-  const fluency0 = opt.fluencyIds.length ? opt.fluencyIds : opt.all ? allFluency : [];
+  const fluency0 = opt.fluencyIds.length ? opt.fluencyIds : (opt.all || opt.fluencyAll) ? allFluency : [];
   /* ENGINE-BACKLOG 550: the full ordered item list is lessons, then sets, then exams; --shard i/n keeps the items whose index % n === i-1 */
   const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...fluency0.map(id => ({ k: 'fluency', id })), ...exams0.map(id => ({ k: 'exam', id }))];
   const mine = opt.shard ? full.filter((_, ix) => ix % opt.shard.n === opt.shard.i - 1) : full;
@@ -864,6 +866,8 @@ const main = async () => {
         const n = doc.n || 20, pass = typeof doc.pass === 'number' ? doc.pass : 0.9, mark = Math.ceil(pass * n - 1e-9), lesson = doc.lesson;
         await page.evaluate(() => { delete window.ZQ.test; });
         await go('review');
+        /* ENGINE-BACKLOG 842: a fixture may share a course and set id with a real set (and so one saved record): every set is played from a clean record */
+        await page.evaluate(([c, i]) => { if (ZQ.state.doc.fluency) delete ZQ.state.doc.fluency[`${c}/${i}`]; }, [course, id]);
         if (ref.startsWith('fixture/')) await page.evaluate(([c, d]) => ZQ.content._addFluency([{ course: c, doc: d }]), [course, doc]);
         await unlockRoute(`lesson/${course}/${lesson}`);
         const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
@@ -891,7 +895,15 @@ const main = async () => {
         await shot(`${label}-course-row`);
         await overflowAt('the course page with the Fluency row');
         /* Today: the set under practice while it is not passed */
-        const todayRow = async () => { await go('today'); return page.evaluate((r) => !!document.querySelector(`[data-fluency-rows] [data-go="${r}"]`), `fluency/${course}/${id}`); };
+        /* ENGINE-BACKLOG 843: Today shows a stated number of rows (the newest lessons first) and a "More Fluency sets" row to the full list at #fluency-list; the set is listed when it is a row or an open item of the full list */
+        const todayRow = async () => {
+          await go('today');
+          const t = await page.evaluate((r) => ({ row: !!document.querySelector(`[data-fluency-rows] [data-go="${r}"]`), more: !!document.querySelector('[data-fluency-rows] [data-fluency-more]') }), `fluency/${course}/${id}`);
+          if (t.row) return true;
+          if (!t.more) return false;
+          await go('fluency-list');
+          return page.evaluate((k) => { const b = document.querySelector(`[data-fluency-list] [data-fluency-item="${k}"]`); return !!b && b.dataset.status === 'open'; }, `${course}/${id}`);
+        };
         if (!(await todayRow())) fails.push('Today does not list the set under practice although its lesson is done');
         await shot(`${label}-today`);
         await overflowAt('Today with the practice row');

@@ -310,8 +310,10 @@
         .sort((x, y) => ((S.lesson(y.course, y.lesson) || {}).completedAt || 0) - ((S.lesson(x.course, x.lesson) || {}).completedAt || 0));
     } catch (e) { console.error(e); }
     const fluRow = (r) => dueRow('target', esc(r.title || 'Fluency'), `${r.n} fresh questions · about ${r.minutes} minutes`, `fluency/${r.course}/${r.id}`);
+    /* ENGINE-BACKLOG 843: at most FLU_ROWS rows (the sets of the most recently finished lessons), then one row to the full list */
+    const FLU_ROWS = 2;
     const practice = flu.length ? `<h3 class="t-overline muted zt-prac-h" id="zt-prac-h">Practice</h3>
-        <ul aria-labelledby="zt-prac-h" data-fluency-rows>${flu.slice(0, 2).map(fluRow).join('')}</ul>${flu.length > 2 ? `<p class="t-caption muted zt-prac-more">${plural(flu.length - 2, 'more fluency set', 'more fluency sets')} on the course maps.</p>` : ''}` : '';
+        <ul aria-labelledby="zt-prac-h" data-fluency-rows>${flu.slice(0, FLU_ROWS).map(fluRow).join('')}${flu.length > FLU_ROWS ? dueRow('target', 'More Fluency sets', `${plural(flu.length - FLU_ROWS, 'more set', 'more sets')} to practise`, 'fluency-list').replace('<li>', '<li data-fluency-more>') : ''}</ul>` : '';
     P.due = `<section class="card zt-due" data-part="due" aria-labelledby="zt-due-h">
         <h2 class="t-h2" id="zt-due-h">Due</h2>
         <ul>
