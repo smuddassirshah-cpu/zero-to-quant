@@ -38,3 +38,34 @@ Level 1 teaches no normal approximation, so no part needs a table value.
 ### Fresh-check, level 1
 
 `node tools/fresh-check.mjs --file content/courses/limits-thm/problems-1.json`: 0 hits at the gate. At triage settings (`--min-run 8 --min-share 0`) one hit: "give a decimal to # places let # be the" against `counting-chance/problems-2` items[3], share 0.04. Stock phrasing. The settings are new to the course: no lesson, review or homework uses a dropped-tick feed, a client call list, a fund's monthly record against cash or settlement checks. The lessons use trades, limit orders, backtests, loans, large orders, bugs, margin calls, invoices and cards.
+
+## Level 2
+
+File: `problems-2.json` ("Problems: continuous distributions", 45 minutes).
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-2 | p-quote-life | 5 (5 / 0) | l5, l6 | 3 |
+| problems-2 | p-digital-share | 5 (5 / 0) | l7, l8 | 4 |
+| problems-2 | p-bounded-pnl | 5 (5 / 0) | l5, l7 | 5 |
+| problems-2 | p-default-drag | 5 (5 / 0) | l6, l7, l8 | 4 |
+
+Typed parts 20 of 20. Every lesson appears in two problems, and every problem draws on at least two. Every normal value a part needs is given in the part: $\Phi(0.15) = 0.5596$, $\Phi(0.69) = 0.7549$, $\Phi(0.06) = 0.5239$ with $\Phi(0.11) = 0.5438$ beside it (the value the no-drag slip reaches for), and the cut-offs 1.645 and 2.326 as tail areas. Where the table route rounds $z$ (p-digital-share part 4, p-default-drag parts 4 and 5), the key is the table answer and the tolerance also takes the unrounded answer (0.2439 against 0.2451; 0.4758 against 0.4761; 0.4526 against 0.4529).
+
+Chains. p-quote-life: $c = \tfrac29$ makes the triangle a density, the tail beyond 2 seconds is $\tfrac19$, the mean is 1, an exponential with that mean gives $e^{-2} \approx 0.1353$, and the triangle's $P(T > 2.5 \mid T > 2) = 0.25$ shows it is not memoryless (the exponential gives 0.6065). p-digital-share: median £81.21 and mean £84.95, the chance of ending below the mean ($\Phi(0.15) = 0.5596$), the digital's chance 0.2451, then the 95% VaR of £30.42 from the 5% price £49.58. p-bounded-pnl: a triangular P&L's tail 0.125 and variance 6, its 95% VaR £4.10k against the matched normal's £4.03k, then the 99% gap of £0.55k (5.70 against 5.15). p-default-drag: survival $e^{-0.05} \approx 0.9512$, the mean £41.63 given survival, the unconditional mean £39.60 (below today's £40), the chance a survivor ends up (0.4761), then the chance the holder ends up, 0.4529.
+
+### Checks, level 2
+
+| check | result |
+|---|---|
+| numbers script | 0 failures (788 checks with level 1); seeded simulations check the lognormal median, mean, 5% price, the default-adjusted mean and chance |
+| validator | 0 errors, 0 warnings on the file |
+| playthrough `--local-cdn` | green (4 problems, 20 parts) |
+| playthrough `--mobile` | green; 440 px shots read, no fault in the file |
+| voice scan 35 (course folder) | 0 and 0 |
+
+### Fresh-check, level 2
+
+0 hits at the gate. At triage settings five hits, shares 0.10 or less. Two are this course's own form sentences ("give an exact fraction or a decimal to # places") against problems-1. "What is # the chance of losing more than # k" (l7 screens[3]) and "with # drift # and volatility # a year what is" (`exams/topic-3.2` items[6]) are stock phrasing with other numbers. "The share ends the year below its expected price" (l8 screens[9]) is the same question on a new share (£80, 6%, 30% against £100, 5%, 20%), asked as one step of a longer chain; kept, because the chain then prices a digital and a VaR on the same share. The settings (a triangular quote life, a bounded triangular P&L, a share with a default hazard) are new to the course.
+
+The validator's `[wrong-band]` rule reads "to the nearest 0.01" and "2 decimal places" anywhere in a question as the rounding of the answer. The first draft of p-digital-share part 4 asked for $z$ "to 2 decimal places" and the answer to 4 places; the question now says "Give 4 decimal places." last, which the rule reads first.

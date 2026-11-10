@@ -217,6 +217,122 @@ stated('exact smallest n by scipy', 146, n_exact2, 0)
 pick(L1, 'p-settlement-checks', 5, 'enough')
 
 
+# ------------------------------------------------------------------ level 2
+from scipy.integrate import quad
+Phi = stats.norm.cdf
+L2 = load(2)
+
+# p-quote-life: f(t) = c(3 - t) on [0, 3]
+c = F(1) / (F(1, 2) * 3 * 3)
+c_quad = 1 / quad(lambda t: 3 - t, 0, 3)[0]
+num(L2, 'p-quote-life', 1, c, c_quad, {'height': F(1, 3), 'no-half': F(1, 9), 'reciprocal': F(9, 2)}, dp=4)
+f = lambda t: float(c) * (3 - t)
+tail = lambda t: F(3 - t) ** 2 / 9 if isinstance(t, int) else (3 - t) ** 2 / 9
+num(L2, 'p-quote-life', 2, c * F(1, 2), quad(f, 2, 3)[0],
+    {'left': 1 - c * F(1, 2), 'height': c * 1, 'width': F(1, 3)}, dp=4)
+stated('tail formula at 2', 0, quad(f, 2, 3)[0] - (3 - 2) ** 2 / 9, 1e-12)
+meanT = c * (F(27, 2) - 9)
+num(L2, 'p-quote-life', 3, meanT, quad(lambda t: t * f(t), 0, 3)[0],
+    {'midpoint': F(3, 2), 'no-c': quad(lambda t: t * (3 - t), 0, 3)[0]}, dp=4)
+num(L2, 'p-quote-life', 4, exp(-2), stats.expon.sf(2, scale=float(meanT)),
+    {'triangle': F(1, 9), 'cdf': 1 - exp(-2), 'from-midpoint': exp(-2 / 1.5)}, dp=4)
+cond = quad(f, 2.5, 3)[0] / quad(f, 2, 3)[0]
+num(L2, 'p-quote-life', 5, F(1, 4), cond,
+    {'memoryless': exp(-0.5), 'unconditional': (3 - 2.5) ** 2 / 9, 'fresh': (3 - 0.5) ** 2 / 9}, dp=4)
+stated('fresh half second', 0.6944, 2.5 ** 2 / 9, 0.00005)
+
+# p-digital-share: S1 = 80 exp((m - s^2/2) + s Z), m = 0.06, s = 0.3
+S0, m, s = 80, 0.06, 0.3
+drift = m - s * s / 2
+lnS = stats.lognorm(s=s, scale=S0 * exp(drift))       # scipy's lognormal: median = scale
+rng = random.Random(7)
+sim = [S0 * exp(drift + s * rng.gauss(0, 1)) for _ in range(200000)]
+sim.sort()
+num(L2, 'p-digital-share', 1, S0 * exp(drift), lnS.median(),
+    {'mean': S0 * exp(m), 'today': 80, 'plus-drag': S0 * exp(m + s * s / 2)}, dp=2)
+stated('log drift', 0.015, drift, 1e-12)
+ok(abs(sim[100000] - S0 * exp(drift)) < 0.3, 'p-digital-share: simulated median far from 81.21')
+num(L2, 'p-digital-share', 2, S0 * exp(m), lnS.mean(),
+    {'median': S0 * exp(drift), 'full-variance': S0 * exp(drift + s * s)}, dp=2)
+ok(abs(sum(sim) / len(sim) - S0 * exp(m)) < 0.2, 'p-digital-share: simulated mean far from 84.95')
+z3 = (log(S0 * exp(m) / S0) - drift) / s
+stated('z for the mean', 0.15, z3, 1e-12)
+num(L2, 'p-digital-share', 3, Phi(0.15), lnS.cdf(S0 * exp(m)),
+    {'half': 0.5, 'above': 1 - Phi(0.15)}, dp=4)
+z4 = (log(100 / S0) - drift) / s
+stated('z for 100', 0.69, z4, 0.005)
+stated('Phi(0.69) as printed', 0.7549, Phi(0.69), 0.00005)
+stated('ln 1.25', 0.2231, log(1.25), 0.00005)
+num(L2, 'p-digital-share', 4, 1 - Phi(round(z4, 2)), 1 - 0.7549,
+    {'phi': Phi(0.69), 'no-drag': 1 - Phi(round((log(1.25) - m) / s, 2)),
+     'plus-drag': 1 - Phi(round((log(1.25) - m - s * s / 2) / s, 2))}, dp=4, agree=1e-4)
+ok(abs(lnS.sf(100) - L2['p-digital-share']['parts'][3]['widget']['answer']) <= 0.0015,
+   'p-digital-share p4: exact chance not accepted')
+stated('unrounded z', 0.6938, z4, 0.00005)
+stated('unrounded chance', 0.2439, lnS.sf(100), 0.00005)
+q05 = S0 * exp(drift - 1.645 * s)
+num(L2, 'p-digital-share', 5, S0 - q05, S0 - lnS.ppf(Phi(-1.645)),
+    {'no-drag': S0 - S0 * exp(m - 1.645 * s), 'two-tailed': S0 - S0 * exp(drift - 1.96 * s),
+     'from-mean': S0 * exp(m) - q05, 'normal-price': 1.645 * s * S0}, dp=2, agree=1e-6)
+stated('5% price', 49.58, q05, 0.005)
+stated('exponent', -0.4785, drift - 1.645 * s, 1e-12)
+ok(abs(S0 - sim[10000] - (S0 - q05)) < 0.3, 'p-digital-share p5: simulated 5% price far off')
+
+# p-bounded-pnl: f(x) = (6 - |x|)/36 on [-6, 6]
+g = lambda x: (6 - abs(x)) / 36
+ok(abs(quad(g, -6, 6)[0] - 1) < 1e-12, 'p-bounded-pnl: not a density')
+num(L2, 'p-bounded-pnl', 1, F(9, 72), quad(g, -6, -3)[0],
+    {'no-half': F(9, 36), 'height': F(3, 36), 'complement': 1 - F(9, 72)}, dp=4)
+var_g = F(2, 36) * (432 - 324)
+num(L2, 'p-bounded-pnl', 2, var_g, quad(lambda x: x * x * g(x), -6, 6)[0],
+    {'one-side': var_g / 2, 'sd': sqrt(6), 'uniform': F(144, 12)}, dp=4)
+v95 = 6 - sqrt(3.6)
+v95b = -__import__('scipy.optimize', fromlist=['brentq']).brentq(lambda v: quad(g, -6, v)[0] - 0.05, -6, 0)
+num(L2, 'p-bounded-pnl', 3, v95, v95b, {'half-area': 6 - sqrt(1.8), 'ten-pc': 6 - sqrt(7.2)}, dp=2, agree=1e-8)
+n95 = 1.645 * sqrt(6)
+num(L2, 'p-bounded-pnl', 4, n95, -stats.norm.ppf(0.05, 0, sqrt(6)),
+    {'variance': 1.645 * 6, 'two-tailed': 1.96 * sqrt(6), 'triangle': v95}, dp=2, agree=1e-3)
+v99 = 6 - sqrt(0.72)
+n99 = 2.326 * sqrt(6)
+v99b = -__import__('scipy.optimize', fromlist=['brentq']).brentq(lambda v: quad(g, -6, v)[0] - 0.01, -6, 0)
+num(L2, 'p-bounded-pnl', 5, n99 - v99, -stats.norm.ppf(0.01, 0, sqrt(6)) - v99b,
+    {'sign': v99 - n99, 'at-95': n95 - v95, 'variance': 2.326 * 6 - v99}, dp=2, agree=1e-3)
+stated('rounded gap', 0.55, round(n99, 2) - round(v99, 2), 1e-9)
+stated('triangle 99', 5.15, v99, 0.005)
+stated('normal 99', 5.70, n99, 0.005)
+stated('sd', 2.4495, sqrt(6), 0.00005)
+
+# p-default-drag: hazard 0.05, S1 = 40 exp((m - s^2/2) + s Z), m = 0.04, s = 0.35
+S0, m, s, lam = 40, 0.04, 0.35, 0.05
+drift = m - s * s / 2
+surv = exp(-lam)
+num(L2, 'p-default-drag', 1, surv, stats.expon.sf(1, scale=1 / lam), {'rate': 1 - lam, 'default': 1 - surv}, dp=4)
+LN = stats.lognorm(s=s, scale=S0 * exp(drift))
+num(L2, 'p-default-drag', 2, S0 * exp(m), LN.mean(), {'median': S0 * exp(drift), 'today': 40}, dp=2)
+stated('drag', 0.0613, s * s / 2, 0.0000501)
+rng = random.Random(11)
+tot, up, M = 0.0, 0, 200000
+for _ in range(M):
+    if rng.expovariate(lam) > 1:
+        price = S0 * exp(drift + s * rng.gauss(0, 1))
+        tot += price
+        up += price > 40
+num(L2, 'p-default-drag', 3, surv * S0 * exp(m), surv * LN.mean(),
+    {'survives': S0 * exp(m), 'linear': 0.95 * 41.63, 'median': 0.9512 * 39.16}, dp=2)
+ok(abs(tot / M - surv * S0 * exp(m)) < 0.15, 'p-default-drag p3: simulation far from 39.60')
+ok(abs(0.9512 * 41.63 - 39.60) <= 0.005, 'p-default-drag p3: rounded route not accepted')
+z = -drift / s
+stated('z for 40', 0.06, z, 0.005)
+stated('Phi(0.06)', 0.5239, Phi(0.06), 0.00005)
+stated('Phi(0.11)', 0.5438, Phi(0.11), 0.00005)
+num(L2, 'p-default-drag', 4, 1 - Phi(round(z, 2)), 1 - 0.5239,
+    {'phi': Phi(0.06), 'no-drag': 1 - Phi(round(m / s, 2)), 'half': 0.5}, dp=4, agree=1e-4)
+ok(abs(LN.sf(40) - 0.4761) <= 0.0005, 'p-default-drag p4: exact chance not accepted')
+num(L2, 'p-default-drag', 5, 0.9512 * 0.4761, surv * LN.sf(40),
+    {'survivor': 0.4761, 'no-drag': 0.9512 * 0.4562}, dp=4, agree=0.0005)
+ok(abs(up / M - surv * LN.sf(40)) < 0.005, 'p-default-drag p5: simulation far from 0.4526')
+
+
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails:
