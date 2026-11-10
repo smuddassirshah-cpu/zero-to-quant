@@ -123,6 +123,59 @@ def _(t):
     raise KeyError(t['call'])
 
 
+# ------------------------------------------------------------------ cpp-tick-round
+@model('cpp-tick-round', '100.25')
+def _(t):
+    price = t['args'][0]
+    tick = t['args'][1] if len(t['args']) > 1 else 0.25
+    lo = math.floor(price / tick)            # the tick at or below, then pick the nearer of lo and lo + 1
+    d_lo, d_hi = Fraction(price) - lo * Fraction(tick), (lo + 1) * Fraction(tick) - Fraction(price)
+    if d_lo < d_hi:
+        k = lo
+    elif d_hi < d_lo:
+        k = lo + 1
+    else:
+        k = lo + 1 if price > 0 else lo       # half-way: away from zero
+    return k * tick
+
+
+# ------------------------------------------------------------------ cpp-clip-returns
+@model('cpp-clip-returns', '`{0.02, -0.1, 0.1, -0.01, 2}`')
+def _(t):
+    rets, cap = t['args']
+    out = [cap if r > cap else -cap if r < -cap else r for r in rets]
+    return out + [sum(1 for r in rets if abs(r) > cap)]
+
+
+# ------------------------------------------------------------------ cpp-tick-log
+@model('cpp-tick-log', 'the answer is 10')
+def _(t):
+    ts = t['args'][0]
+    flags, last, first, n = [], None, None, 0
+    for x in ts:
+        ok = last is None or x >= last
+        flags.append(1 if ok else 0)
+        if ok:
+            first = x if first is None else first
+            last, n = x, n + 1
+    return flags + [n, (last - first) if n >= 2 else 0]
+
+
+# ------------------------------------------------------------------ cpp-high-water
+@model('cpp-high-water', '`{-3, -1, -1, 4, 4}`')
+def _(t):
+    xs = t['args'][0]
+    return list(itertools.accumulate(xs, max)) if xs else []
+
+
+# ------------------------------------------------------------------ cpp-fee-tier
+@model('cpp-fee-tier', 'the answer is 8')
+def _(t):
+    frm, bps, asks = t['args']
+    import bisect
+    return [bps[bisect.bisect_right(frm, a) - 1] for a in asks] + [len(frm)]
+
+
 # ================================================================== driver
 def main():
     files = sorted(f for f in os.listdir(DR) if f.startswith('cpp-') and f.endswith('.json'))
