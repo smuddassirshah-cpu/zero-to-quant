@@ -85,9 +85,10 @@ check('l5 round trip earns 2qh', all((m - (m - h)) * q + ((m + h) - m) * q == 2 
 check('l5 quiz crossed 12 at 10: -2', (10.5 - 12) + (10 - 10.5) == -2)
 # "a crossed quote loses on every trade": false when fair value is outside the crossed quote
 bid, ask, fair = 12, 11, 13
-check('l5 s8: a crossed quote loses on every trade  [corrected: on every round trip; bid 12, ask 11, fair 13: the purchase earns 1]',
-      (fair - bid) < 0 and (ask - fair) < 0, expected_fail=True)
-# corrected assert: assert (fair - bid) + (ask - fair) == ask - bid < 0   (the round trip always loses the crossed width)
+# (corrected claim, fix pass) l5 s8 now says a crossed quote loses on every round trip: buy at the bid, sell at the ask
+check('l5 s8: a crossed quote loses the crossed width on every round trip, whatever the fair value  (corrected claim, fix pass)',
+      all((f - bid) + (ask - f) == ask - bid == -1 for f in (10, 11.5, 13)) and (fair - bid) == 1
+      and 'every round trip' in load('l5-two-sided')['screens'][8]['prose'])
 check('l5 option quote 4.15 at 4.25', abs(4.20 - 0.05 - 4.15) < 1e-12)
 run_code_widget('l5 s10 code', load('l5-two-sided')['screens'][10]['widget'])
 
@@ -100,17 +101,19 @@ for r in product(DIE, repeat=3):
     p3[sum(r)] = p3.get(sum(r), 0) + F(1, 216)
 above = sum(p for s, p in p3.items() if s > 12); below = sum(p for s, p in p3.items() if s < 12)
 check('l6 26% of three-dice rolls land above 12', abs(float(above) - 0.26) < 0.005)
-check('l6 s6 hint: the sale at 12 wins on rolls "at 12 or below"  [corrected: it wins below 12 (62.5%) and breaks even at 12]',
-      all((12 - s) > 0 for s in p3 if s <= 12), expected_fail=True)
-# corrected assert: assert below == F(135, 216) and (12 - 12) == 0
+# (corrected claim, fix pass) l6 s6 hint now says most rolls land below 12, where the sale wins
+check('l6 s6 hint: the sale at 12 wins on every roll below 12, 135 of 216 (most), and is flat at 12 (25 of 216)  (corrected claim, fix pass)',
+      below == F(135, 216) and below > F(1, 2) and p3[12] == F(25, 216) and all((12 - s) > 0 for s in p3 if s < 12)
+      and load('l6-edge')['screens'][6]['hints'][1]['text'] == 'Most rolls land below 12, where the sale wins.')
 series = load('l6-edge')['screens'][7]['canvas']['params']['series'][0]['values']
 steps = [b - a for a, b in zip(series, series[1:])]
 check('l6 s7 path: 100 plays, each step a profit of -2..3, ends at 70', len(steps) == 100 and set(steps) <= set(range(-2, 4)) and series[-1] == 70)
 check('l6 variance of one play 35/12; 100 plays sd 17.08; one play x100 sd 170.78',
       E(lambda r: r[0] ** 2, 1) - F(49, 4) == F(35, 12) and abs(10 * sqrt(35 / 12) - 17.08) < 5e-3 and abs(100 * sqrt(35 / 12) - 170.78) < 5e-3)
-check('l6 "whatever the dice show": the sale at 12 is not locked in  [corrected: it earns 1.5 on average over every roll; single rolls pay from +9 to -6]',
-      min(12 - s for s in p3) >= 0, expected_fail=True)
-# corrected assert: assert sum((12 - s) * p for s, p in p3.items()) == F(3, 2) and min(12 - s for s in p3) == -6
+# (corrected claim, fix pass) l6 s2 now says 1.5 on average over every roll, though one roll can win or lose more
+check('l6 s2: the sale at 12 earns 1.5 on average; single rolls pay from +9 to -6  (corrected claim, fix pass)',
+      sum((12 - s) * p for s, p in p3.items()) == F(3, 2) and min(12 - s for s in p3) == -6 and max(12 - s for s in p3) == 9
+      and 'whatever the dice show' not in load('l6-edge')['screens'][2]['explain']['text'])
 check('l6 coin game E = (1 + E)/2 gives 1', F(1, 2) * 0 + F(1, 2) * (1 + 1) == 1)
 check('l6 desk: 2000 x 100 x 0.5p = 1000 pounds', 2000 * 100 * 0.5 / 100 == 1000)
 check('l6 quiz: larger for 4 pounds = 17/36; buy 2 at 9 = +3', E(max, 2) - 4 == F(17, 36) and 2 * (10.5 - 9) == 3)
@@ -153,9 +156,9 @@ ts, tn = flatten_time(True), flatten_time(False)
 print(f'      l7 sim: mean steps for a long 4 to get flat: skewed {ts:.1f}, unskewed {tn:.1f}')
 check('l7 sim: skewing down when long sheds the position faster', ts < 0.7 * tn)
 # quiz[1]: fair 50, long 5, keyed quote 47.5 at 49.5: the ask is below fair value
-check('l7 quiz[1]: the keyed ask 49.5 has non-negative edge against fair 50  [corrected: its edge is -0.5 a unit, paid to shed risk, and the explain should say so]',
-      49.5 - 50 >= 0, expected_fail=True)
-# corrected assert: assert 49.5 - 50 == -0.5
+# (corrected claim, fix pass) l7 quiz[1] explain now says the ask at 49.5 gives up 0.5 a unit to shed risk
+check('l7 quiz[1]: the keyed ask 49.5 has edge -0.5 a unit against fair 50, and the explain says so  (corrected claim, fix pass)',
+      49.5 - 50 == -0.5 and 'give up 0.5 a unit' in load('l7-skewing')['quiz'][1]['explain']['text'])
 run_code_widget('l7 s10 code', load('l7-skewing')['screens'][10]['widget'])
 
 # ---------- l8: informed flow ----------
@@ -163,9 +166,12 @@ L = lambda b, a, xs=DIE: F(sum(max(x - a, 0) + max(b - x, 0) for x in xs), len(l
 H = F(1, 2)
 check('l8 informed loss: 2.5/4.5 = 2/3, 1.5/5.5 = 1/6, 3/4 = 1, 2/5 = 1/3, 0.5/6.5 = 0',
       (L(5 * H, 9 * H), L(3 * H, 11 * H), L(3, 4), L(2, 5), L(H, 13 * H)) == (F(2, 3), F(1, 6), 1, F(1, 3), 0))
-check('l8 s1: every quote narrower than 0.5 at 6.5 loses to the informed interviewer  [corrected: 1 at 6 is narrower and loses nothing]',
-      L(1, 6) > 0, expected_fail=True)
-# corrected assert: assert L(1, 6) == 0 and L(F(3, 2), 6) > 0
+# (corrected claim, fix pass) l8 s1 now says any bid above 1 or ask below 6 trades against you; 1 at 6 is safe too
+grid_b = [F(k, 2) for k in range(1, 8)]; grid_a = [F(k, 2) for k in range(7, 14)]
+safe = {(b, a) for b in grid_b for a in grid_a if L(b, a) == 0}
+check('l8 s1: on the slider grid a quote loses nothing exactly when bid <= 1 and ask >= 6  (corrected claim, fix pass)',
+      safe == {(b, a) for b in grid_b for a in grid_a if b <= 1 and a >= 6} and L(1, 6) == 0 and L(F(3, 2), 6) > 0 and L(1, F(11, 2)) > 0
+      and 'Any bid above 1 or ask below 6' in load('l8-informed-flow')['screens'][1]['explain']['text'])
 mixed = lambda b, a, al, fair=F(7, 2): (1 - al) * (H * (a - fair) + H * (fair - b)) - al * L(b, a)
 check('l8 mixed: 11/12, 7/12, 1/6; alpha 0.2 at 1.5/5.5 = 47/30',
       (mixed(3 * H, 11 * H, H), mixed(2, 5, H), mixed(5 * H, 9 * H, H), mixed(3 * H, 11 * H, F(1, 5))) == (F(11, 12), F(7, 12), F(1, 6), F(47, 30)))

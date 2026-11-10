@@ -78,9 +78,10 @@ p_tail = Phi((-200 - 10) / 100)
 check(f'l10 normal bet (mean 10, sd 100) loses more than 200 with chance {p_tail:.4f}, about 1.8%', abs(p_tail - 0.018) < 0.001)
 # the 1.8% needs the normal shape: a two-point bet with the same mean and sd never loses more than 200
 two_point_loss = 10 - 100
-check('l10 s4: "loses more than 200 about 1.8% of the time" holds for any bet with mean 10 and sd 100  [corrected: it assumes a roughly normal outcome; a win-or-lose bet of +110 / -90 never loses 200]',
-      two_point_loss < -200, expected_fail=True)
-# corrected assert: assert abs(Phi(-2.1) - 0.0179) < 1e-4 and (10 - 100) > -200
+# (corrected claim, fix pass) l10 s4 now states the 1.8% under a roughly normal outcome
+check('l10 s4: the 1.8% holds for a roughly normal outcome (Phi(-2.1) = 0.0179); a +110 / -90 bet with the same mean and sd never loses 200  (corrected claim, fix pass)',
+      abs(Phi(-2.1) - 0.0179) < 1e-4 and two_point_loss > -200 and abs(0.5 * 110 + 0.5 * (-90) - 10) < 1e-12 and abs(sqrt(0.5 * 100 ** 2 + 0.5 * 100 ** 2) - 100) < 1e-9
+      and 'roughly normal' in load('l10-position-limits')['screens'][4]['explain']['text'])
 
 
 def ruin(p, stake, start, target):
@@ -123,9 +124,10 @@ check(f'l10 sim: median {statistics.median(finals):.1f} near 273.68, mean {stati
 kelly = lambda p, b: p - (1 - p) / b
 check('l10 Kelly: 0.55 evens 0.1; 0.4 at 2 to 1 0.1 (50 of 500); 0.5 at 2 to 1 0.25', abs(kelly(0.55, 1) - 0.1) < 1e-12 and abs(kelly(0.4, 2) - 0.1) < 1e-12 and kelly(0.5, 2) == 0.25)
 # "Neither rule asks how sure you feel": the Kelly stake is a function of p, the stated win chance
-check('l10 s9: the Kelly stake does not depend on how sure you are of winning  [corrected: f* rises with p; it uses a win chance you can defend, not a feeling]',
-      kelly(0.55, 1) == kelly(0.65, 1), expected_fail=True)
-# corrected assert: assert kelly(0.65, 1) > kelly(0.55, 1)
+# (corrected claim, fix pass) l10 s9 now says Kelly needs a win chance you can defend, not a feeling
+check('l10 s9: the Kelly stake rises with the win chance (0.1 at 0.55, 0.3 at 0.65), so the input must be defended  (corrected claim, fix pass)',
+      kelly(0.65, 1) > kelly(0.55, 1) and abs(kelly(0.65, 1) - 0.3) < 1e-12
+      and 'Neither asks how sure you feel' not in load('l10-position-limits')['screens'][9]['explain']['text'])
 check('l10 desk: 40,000/800 = 50 and 40,000/200 = 200', 40000 / 800 == 50 and 40000 / 200 == 200)
 check('l10 quiz: long 4 at 9.5, roll 3: -26', 4 * (3 - 9.5) == -26)
 run_code_widget('l10 s10 code', load('l10-position-limits')['screens'][10]['widget'])
@@ -154,9 +156,15 @@ pa, pb = 5.0, 100.0; sa, sb, rho = 0.03, 0.02, 0.9   # the lesson's new pair
 pnl_sd = lambda units_b: sqrt((pa * sa) ** 2 + (units_b * pb * sb) ** 2 - 2 * units_b * rho * pa * sa * pb * sb)
 best_units = min((i / 10000 for i in range(0, 20001)), key=pnl_sd)
 print(f'      l11: A at 5 pounds, B at 100 pounds: best hedge is {best_units:.4f} units of B per unit of A, not 1.35')
-check('l11 s2: "1.35 units of B for each unit of A" from percentage sds holds whatever a unit is worth  [corrected: 1.35 pounds of B per pound of A; in units it is 1.35 times the price ratio, 0.0675 here]',
-      abs(best_units - 1.35) < 0.01, expected_fail=True)
-# corrected assert: assert abs(best_units - 1.35 * pa / pb) < 1e-3
+# (corrected claim, fix pass) l11 now reads h from percentage sds as pounds of B per pound of A.
+# In pounds the best hedge for £5 of A (one unit) is 1.35 * 5 = £6.75 of B, i.e. 0.0675 units at £100.
+pounds_b = best_units * pb
+l11c = load('l11-hedging')
+check('l11 s2: with percentage sds h = 1.35 is pounds of B per pound of A; in units it is 1.35 times the price ratio, 0.0675 here  (corrected claim, fix pass)',
+      abs(best_units - 1.35 * pa / pb) < 1e-3 and abs(pounds_b / pa - 1.35) < 1e-2
+      and 'pounds of B for each pound of A' in l11c['screens'][2]['prose'] and '£1.35 of B' in l11c['screens'][2]['explain']['text']
+      and 'units of B' not in l11c['summary']['formula']['note'] and 'units of B' not in l11c['screens'][1]['prose']
+      and 'units of B' not in load('review-3')['items'][4]['question'])
 run_code_widget('l11 s9 code', load('l11-hedging')['screens'][9]['widget'])
 
 # ---------- l12: thinking aloud ----------
@@ -200,14 +208,17 @@ realised = [float((p - 15) if s == 'sell' else (15 - p)) for _, s, p, _ in blot]
 at_fair = [round(float((p - f) if s == 'sell' else (f - p)), 2) for _, s, p, f in blot]
 print(f'      l13 model trades: against the true sum {realised}; edge against fair at the time {at_fair}')
 check('l13 table figures +8.00, +5.50, -1.00 are P&L against the true sum', realised == [8.0, 5.5, -1.0])
-check('l13 s4/s6/s8: the column headed "Edge" is edge as the course defined it, price against fair value at the time  [corrected: those edges are +2.00, +2.38 and +1.08; the table shows realised P&L against the settlement of 15]',
-      realised == at_fair, expected_fail=True)
-# corrected assert: assert at_fair == [2.0, 2.38, 1.08]
+# (corrected claim, fix pass) l13 now heads the column "P&L (£)" (against the true sum) and keeps "edge" for price against fair
+l13c = load('l13-full-game')
+check('l13 s4/s6: the +8.00, +5.50, -1.00 column is P&L against 15; the edges against fair were +2.00, +2.38, +1.08  (corrected claim, fix pass)',
+      at_fair == [2.0, 2.38, 1.08] and realised != at_fair
+      and l13c['screens'][4]['canvas']['right']['params']['columns'][4] == 'P&L (£)' and l13c['screens'][6]['canvas']['params']['columns'][4] == 'P&L (£)'
+      and 'edge against' not in l13c['screens'][8]['prose'])
 # "the interviewer, who knew the cards": their own trades against the true sum
 theirs = [-(x) for x in realised]
-check('l13 s4: an interviewer "who knew the cards" made money on each of their trades with the model  [corrected: they lost 8 and 5.50 buying at 23 and 20.5; the turn-3 sale rests on the 4, which was public]',
-      all(x > 0 for x in theirs), expected_fail=True)
-# corrected assert: assert theirs == [-8.0, -5.5, 1.0]
+# (corrected claim, fix pass) l13 s4 now says the interviewer had just seen the 4, not that they knew the cards
+check('l13 s4: the interviewer lost 8 and 5.50 on their purchases, so they did not know the cards; the turn-3 sale rests on the public 4  (corrected claim, fix pass)',
+      theirs == [-8.0, -5.5, 1.0] and 'knew the cards' not in l13c['screens'][4]['prose'] and 'had just seen the 4' in l13c['screens'][4]['prose'])
 check('l13 stale by trade: 8 - 4 - 4 = 0; desk review 20 + 6 - 12 = 14', 8 - 4 - 4 == 0 and abs(100 * 0.2 + 60 * 0.1 - 40 * 0.3 - 14) < 1e-9)
 run_code_widget('l13 s9 code', load('l13-full-game')['screens'][9]['widget'])
 
@@ -233,11 +244,19 @@ check('hw3 mock: stale -3 (sold twice at 23); no skew +21 long 2', game([8, 11, 
 check('hw3 mock fair values 21, 1120/51, 259/10', (fa([8]), fa([8, 11])) == (F(1120, 51), F(259, 10)))
 mm = [fa([8]) - 19, 2 * fa([8]) - F(77, 2), 2 * fa([8, 11]) - F(77, 2), fa([8, 11]) - F(23, 2)]
 check('hw3 mock ledger +2.96, +5.42, +13.30, +14.40; side bet 20 with expected gain 4', [round(float(m), 2) for m in mm] == [2.96, 5.42, 13.3, 14.4] and abs(20 * (0.6 - 0.4) - 4) < 1e-12)
-# The hedge in full_game: make_script puts the hedge event after the first card is revealed,
-# so the contract pays a known amount. Compare the spread of final P&L with and without that hedge
-# over every possible pair of later cards, holding the trades fixed.
-full_game = ns['full_game']; skew_rule = ns['skew_rule']
+# (corrected claim, fix pass) make_script now trades the hedge before the first card turns, priced at 7 +- 0.1,
+# so the contract still carries risk. The old placement, after the reveal, is kept below as the reason for the move.
+full_game = ns['full_game']; skew_rule = ns['skew_rule']; make_script = ns['make_script']
 DECK = [v for v in range(1, 14) for _ in range(4)]
+
+
+def hedge_first(sc):
+    kinds = [k for k, _ in sc]
+    return 'hedge' in kinds and kinds.index('hedge') < kinds.index('reveal') and dict(sc)['hedge'] in (F(69, 10), F(71, 10))
+
+
+check('hw3 make_script: the hedge comes before the first reveal, at 6.9 or 7.1, for seeds 1, 2, 3 and 7  (corrected claim, fix pass)',
+      all(hedge_first(make_script(k)) for k in (1, 2, 3, 7)))
 
 
 def spread_of_pnl(with_hedge, hedge_first):
@@ -257,11 +276,10 @@ def spread_of_pnl(with_hedge, hedge_first):
 
 s_none, s_after = spread_of_pnl(False, False), spread_of_pnl(True, False)
 print(f'      hw3: sd of final P&L over the two unseen cards, short 2: no hedge {s_none:.4f}, hedge after the reveal {s_after:.4f}')
-check('hw3 full_game: the hedge event, placed after the first card is shown, lowers the spread of the final P&L  [corrected: it changes nothing; the contract then pays a known amount, so it is a fixed cost or gain of 0.1 a unit]',
-      s_after < 0.99 * s_none, expected_fail=True)
-# corrected assert: assert abs(s_after - s_none) < 1e-9
-# The proposed fix moves the hedge before the first reveal, priced around the card's fair value of 7.
-# Spread of P&L over all three cards, with and without that hedge:
+check('hw3: a hedge traded after the first card is shown leaves the spread unchanged, so the engine now hedges before the reveal  (corrected claim, fix pass)',
+      abs(s_after - s_none) < 1e-9)
+
+
 def spread_three(with_hedge):
     rng = random.Random(5); outs = []
     for _ in range(40000):
@@ -269,20 +287,21 @@ def spread_three(with_hedge):
         ev = [('buy', 2)] + ([('hedge', F(71, 10))] if with_hedge else []) + [('reveal', x) for x in c]
         outs.append(float(full_game(ev, skew_rule)[0]))
     return statistics.pstdev(outs)
+
+
 s0, s1 = spread_three(False), spread_three(True)
-print(f'      hw3 proposed fix: sd of final P&L, short 2 before any card: no hedge {s0:.2f}, hedged before the reveal {s1:.2f}')
-check('hw3 proposed fix: hedging the first card before it is shown removes about a third of the variance', 0.60 < (s1 / s0) ** 2 < 0.73)
-# Expected values for the proposed fix (hedge moved before the first reveal, priced at 7 +- 0.1):
-fix_src = hw['items'][0]['widget']['prelude'].replace(
-    '        script.append(("reveal", c))\n        if i == 0:\n            script.append(("hedge", Fraction(c * 10 + r.choice([-1, 1]), 10)))',
-    '        if i == 0:\n            script.append(("hedge", Fraction(70 + r.choice([-1, 1]), 10)))\n        script.append(("reveal", c))')
-check('hw3 proposed fix: make_script patch applies', fix_src != hw['items'][0]['widget']['prelude'])
-fx = {}; exec(fix_src + '\n' + hw['items'][0]['widget']['solution'], fx)
-print('      hw3 proposed fix, new expected values:')
-for call in ['full_game(make_script(1), skew_rule, 3)', 'full_game(make_script(2), skew_rule, 3)', 'full_game(make_script(3), centre_rule, 2)', 'full_game(make_script(7), skew_rule, 1)',
-             "full_game([('buy', 5), ('hedge', Fraction(71, 10)), ('reveal', 4), ('reveal', 6), ('reveal', 5)], skew_rule, 3)",
-             "full_game([('buy', 5), ('hedge', Fraction(71, 10)), ('reveal', 4), ('reveal', 6), ('reveal', 5)], skew_rule, 10)"]:
-    print('        ', call, '->', repr(eval(call, fx)))
+print(f'      hw3: sd of final P&L, short 2 before any card: no hedge {s0:.2f}, hedged before the reveal {s1:.2f}')
+check('hw3: hedging the first card before it is shown removes about a third of the variance', 0.60 < (s1 / s0) ** 2 < 0.73)
+# exact, two cards from one deck: cov = -var/51, so the minimum-variance ratio of the sum on the first card is 49/51
+mu_c = F(sum(DECK), 52); var_c = F(sum(v * v for v in DECK), 52) - mu_c ** 2
+cov_c = F(sum(a * b for i, a in enumerate(DECK) for j, b in enumerate(DECK) if i != j), 52 * 51) - mu_c ** 2
+check('hw3: exact minimum-variance ratio of the three-card sum on the first card is 49/51', (var_c + 2 * cov_c) / var_c == F(49, 51) and cov_c == -var_c / 51)
+h3 = hw['items'][0]
+check('hw3 prose and explain match the code: hedge before that card turns; seed 1 ends at +16/5  (corrected claim, fix pass)',
+      'before that card turns' in h3['prose'] and '+16/5' in h3['explain']['text'] and full_game(make_script(1), skew_rule, 3) == (F(16, 5), 3))
+print('      hw3 expected values from the content:')
+for t in h3['widget']['tests'][:4] + h3['widget']['tests'][5:7]:
+    print('        ', t['call'], '->', t['expect'])
 # coin and dice market
 two = [a + b for a, b in product(DIE, repeat=2)]; four = [sum(r) for r in product(DIE, repeat=4)]
 mix_mean = (sum(two) / 36 + sum(four) / 1296) / 2

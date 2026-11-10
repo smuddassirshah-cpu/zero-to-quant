@@ -96,3 +96,45 @@ The earlier review touched the sentence of finding 9 (review-1 `r-coins-mile`) f
 - The guide *Probability and Markets* could not be opened (its host is outside this session's network), so two attributions stay unverified (finding 20).
 - Inbox: two bullets under "Raised later (audit mm-games):" in `docs/BACKLOG-INBOX.md`.
 - No content, engine, `course.json` or state file was changed.
+
+## Fix pass
+
+Opus fixer, 10 Nov 2026. Every finding was checked from its own basis before any edit. **25 fixed, 0 disputed.** Content commits: `7fd25ba9` (level 1), `9b3a228e` (level 2), `b258835d` (level 3), `69fd3d17` (level 1, five fixed sentences shortened under the 20-word aim). The three concepts scripts now carry each former EXPECTED_FAIL as the corrected claim, computed afresh and tied to the new content string, marked "(corrected claim, fix pass)".
+
+| N | Status | Basis (fixer's own) |
+|---|---|---|
+| 1 | fixed | P(Binomial(10, 0.9) ≤ 7) = 0.0702 by summing the pmf; the two-sided p-values 0.070, 0.011 (14 of 20), 0.008 (50 of 50) recomputed. A non-rejection is no evidence for the null (Casella and Berger, ch. 8, on hypothesis tests). Homework wording shortened to "means only thin evidence". |
+| 2 | fixed, reworded | No source for what "most" people guess, so the claim is replaced by a derivation: counting only the 1 by 1 squares gives 64, or 65 with the whole board; the total 204 = 1² + ... + 8². |
+| 3 | fixed | A sale at price p settles at V and pays p − V: it loses only when p < V, so distance from fair value alone does not invite a loss (850 − 792 = 58 checked). |
+| 4 | fixed | E[XY] − E[X]E[Y] = Cov(X, Y); X uniform on {−1, 0, 1}, Y = X² is dependent with Cov = 0. 91/6 − 49/4 = 35/12, the variance of one die. |
+| 5 | fixed | Maker buys at the bid (lower) and sells at the ask (higher); the lesson-number citation in this sentence removed. |
+| 6 | fixed | Larger of two dice: mean 161/36 ≈ 4.47, densest width-1 range 5 to 6 (20 of 36), by enumeration. Two-dice total: width 2 at 7 holds 16, at 6 or 8 holds 15. Fix tightened to drop the trailing clause. |
+| 7 | fixed, reworded | Quoted spreads in liquid shares are a few basis points against a daily sd near 1% (Harris, *Trading and Exchanges*, the chapters on dealers and bid/ask spreads). The fixer wrote "they too widen when volatility rises" rather than "in the same proportion", which no source here establishes. |
+| 8 | fixed | With log2 errors N(0, s), P(\|e\| < 1) = 0.9 gives s = 1/1.645; the sum of three has 90% bound √3, a factor 2^√3 = 3.32; the factor 8 is the all-same-sign worst case. Option and hint text also say "at worst". |
+| 9 | fixed, different figure | Royal Mint specification for the 12-sided £1 (found by web search this session): 23.43 mm point to point, 23.03 mm flat to flat; 22.5 mm was the round pound. Coins laid edge to edge touch flat to flat, so 160,934.4 / 2.303 = 69,880, said as "about 69,900" (point to point would give 68,687). Note for the orchestrator: the brief's parenthesis has flats and points swapped; a point-to-point width must exceed a flat-to-flat one. |
+| 10 | fixed | Product of two dice: mean 12.25, sd 8.94; the widest allowed quote around centre 12.5 is 8 to 17, which holds 12 of 36 rolls, under half. The sum of two dice is as lumpy and still gets a quote. |
+| 11 | fixed | The geometric payout is 0 with chance 1/2; the bid sits below the mean because buying at the mean has zero edge, not because of the payout's shape. |
+| 12 | fixed | Bid 12, ask 11, fair 13: the purchase earns +1; a buy at the bid and a sale at the ask always lose ask − bid = −1, whatever the fair value. |
+| 13 | fixed | Sale at 12 on three dice: mean P&L 1.5, single rolls from +9 (roll 3) to −6 (roll 18), by enumeration. |
+| 14 | fixed | Three dice: 135 of 216 below 12 (win), 25 at 12 (flat), by enumeration. |
+| 15 | fixed | Edge of a sale is p − μ = 49.5 − 50 = −0.5; kept "width still 2" so the wide-quote distractor keeps its reason. |
+| 16 | fixed | Quote 2.5 at 4.5 is centred on 3.5; losses 1.5 + 0.5 + 0.5 + 1.5 = 4 over six faces, −2/3. |
+| 17 | fixed, reworded | Enumerated the slider grid (bids 0.5 to 3.5, asks 3.5 to 6.5): the quote loses nothing exactly when bid ≤ 1 and ask ≥ 6, so 1 at 6 is safe and narrower. Explain now says "any bid above 1 or ask below 6 leaves a face that trades against you"; feedback "0.5 at 6.5 is safe: no face trades." Key unchanged: no other option is safe. |
+| 18 | fixed | Φ(−2.1) = 0.0179; a +110 / −90 coin bet has mean 10, sd 100 and never loses 200. |
+| 19 | fixed | f* = p − (1 − p)/b gives 0.1 at p = 0.55 and 0.3 at p = 0.65 (Kelly 1956), so the stake depends on the stated chance. |
+| 20 | fixed by removing the unverified attribution | The guide could not be opened, so nothing is said about it. l5: "Trading interviews often open with a game like this." l10: "In an interview, size the same way: by risk, not by confidence." |
+| 21 | fixed | Minimising Var(V_A r_A − V_B r_B) over V_B gives V_B / V_A = ρσ_A/σ_B with σ of returns: pounds per pound. With σ of price changes per unit it is units per unit (Hull, *Options, Futures and Other Derivatives*, ch. 3, cross hedging, h* = ρσ_S/σ_F and N* = h*Q_A/Q_F). Changed: l11 screens[1].prose, screens[2].prose, screens[2].explain.text, screens[8].prose, the screens[9] docstring (starter and solution, no test touched), summary.ideas[0], summary.formula.note, quiz[3].prose ("Long £1 of A", "sell £2 of B"), quiz[3] options[1].why and feedback.byKey.lower; review-3 items[4].question. Graded keys recomputed twice and unchanged: 1.35 (0.9 × 3/2, and 0.9 × 1.5), review-3 1.2 (0.6 × 3/1.5, and 0.6 × 2), quiz[3] variance 4 + 4 × 2.56 − 2 × 2 × 0.8 × 2 × 1.6 = 4. The dice screens are per unit in pounds and stay. |
+| 22 | fixed | No survey of interview marking is known to the fixer; "a common way" keeps the standard advice without the ranking. |
+| 23 | fixed | Edge (l6) is price against fair at the time of the trade: +2.00, +2.38 (20.5 − 18.12), +1.08 (17.08 − 16). The table's +8.00, +5.50, −1.00 are P&L against the settlement 15. Both column heads now "P&L (£)"; caption, byKey r0 and r2, explain, s8 prose, hints and generics, review-3 items[7] generic, homework-3 items[5] model and items[9] explain reworded as the audit gave. |
+| 24 | fixed | The scripted interviewer bought at 23 and 20.5 a sum worth 15, losing 8 and 5.50, so it did not know the cards; the turn-3 sale followed the public 4. Being hit on a quote left stale after public news is still adverse selection (the picking-off risk of standing quotes, Harris, *Trading and Exchanges*, same chapters). |
+| 25 | fixed | Rebuilt by running the code: after the reorder the dealt cards and trades are unchanged for seeds 1, 2, 3, 7 (the random calls keep their order), and the solution gives 16/5, 156/5, −31/5, 121/10, 147/10 (hand check: 69 − 21.3 − 45 + 12 = 14.7) and 49/2 (115 − 35.5 − 75 + 20 = 24.5), all six as the audit stated. The solution passes all 9 cases, the starter fails all 9. The old placement leaves the P&L sd unchanged (10.5120 either way, exact); placed first it cuts sd 12.71 to 10.44. The exact minimum-variance ratio is (σ² + 2 Cov)/σ² = 49/51, since Cov of two cards from one deck is −σ²/51. Prose now says "before that card turns"; explain says +16/5. |
+
+Changed graded material (keys themselves unchanged everywhere):
+- l4 `screens[5].widget.options[0].text` (the correct option): "About 100,000, within a factor of 8 at worst."
+- l8 `screens[1].feedback.correct`: "0.5 at 6.5 is safe: no face trades."
+- l11 `quiz[3].prose`, `quiz[3].widget.options[1].why`, `quiz[3].feedback.byKey.lower`; review-3 `items[4].question`.
+- homework-3 `items[0].widget.prelude` (`make_script`: hedge before the first reveal, priced `Fraction(70 ± 1, 10)`); hidden tests `tests[0]` (16/5, 3), `tests[1]` (156/5, 3), `tests[2]` (−31/5, 2), `tests[3]` (121/10, 1), `tests[5]` and `tests[6]` (call now `('hedge', Fraction(71, 10))` before `('reveal', 4)`; expect (147/10, 3) and (49/2, 5)).
+- No numeric answer, accepted answer, slip value or wrong-option value changed.
+
+Gates after the fix pass: validator 0 errors (4135 warnings, 4136 before the pass; `content/manifest.json` unchanged); L1 79 passed, L2 76, L3 68, each 0 failed, 0 EXPECTED_FAIL, exit 0; `mm-games-3-perf-numbers.py` 0 failures, exit 0 (no number it checks changed, so not edited); voice scan 35: 0 and 0. Playthroughs below.
+- Playthroughs with `--local-cdn`, desktop and `--mobile`: lessons l1 to l8, l10 to l13 and sets review-1, review-3, homework-1, homework-3, 32 of 32 runs "All passed".
