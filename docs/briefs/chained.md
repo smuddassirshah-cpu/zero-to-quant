@@ -4,7 +4,7 @@ Exams and interviews set problems of several steps where each step feeds the nex
 
 ## Home (decided session Z, DECISIONS "Chained problems")
 
-A new per-level file `problems-<n>.json` beside `review-<n>.json`: `{ "id": "problems-<n>", "course", "level": n, "items": [3 to 5] }`. Not homework (fixed 45 minutes, capped at 12, not drawn by the weekly review) and not the review (capped at 10, a gate). The engine item is in `docs/ENGINE-BACKLOG.md` ("Problem sets"); AUTHORING section 5 holds the binding shape once it lands. Content waits for it.
+A new per-level file `problems-<n>.json` beside `review-<n>.json`: `{ "id": "problems-<n>", "course", "level": n, "items": [3 to 5] }`. Not homework (fixed 45 minutes, capped at 12, not drawn by the weekly review) and not the review (capped at 10, a gate). Engine: ENGINE-BACKLOG 845 to 851, `docs/reports/engine-problems.md`; AUTHORING section 5 holds the binding shape.
 
 ## Rules for a problem
 
@@ -21,7 +21,7 @@ A new per-level file `problems-<n>.json` beside `review-<n>.json`: `{ "id": "pro
 
 1. `docs/reports/problems-<course>-numbers.py`, run with `<scratchpad>/venv/bin/python`: every stated number and every part's answer computed twice by different methods (exact with sympy or fractions, then numerically or by simulation or enumeration), and each `wrong` value shown to differ from the answer. Exit 0.
 2. From `app/`: validator 0 errors, no new warnings on your files.
-3. Playthrough of every set, with and without `--mobile`: green (flag as the engine report names it).
+3. `node tools/playthrough.mjs --problems <course>/problems-<n> --local-cdn <pkgs>` for every set, and with `--mobile`: green.
 4. Voice scan `docs/reviews/voice-scan.py 35` on the course folder: 0 and 0.
 5. Report `docs/reports/problems-<course>.md`: table of set, item, parts, lessons drawn on, difficulty; fresh-check hits and your judgement. Engine limits to `docs/BACKLOG-INBOX.md` under `Raised later (problems <course>):`.
 
