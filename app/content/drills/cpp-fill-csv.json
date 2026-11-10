@@ -1,0 +1,218 @@
+{
+  "id": "cpp-fill-csv",
+  "name": "Total value of a fills file",
+  "course": "cpp",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "parsing",
+    "strings",
+    "long-long"
+  ],
+  "skills": [
+    "cp-basics"
+  ],
+  "difficulty": 3,
+  "pace": 1080,
+  "brief": "A venue sends its fills as text, one fill per line in the form `qty,price`. `qty` is a whole number of shares, with a leading `-` for a sale. `price` is whole pence, digits only. A fill is worth `qty * price`.\n\nWrite `fills_value(text)`, which returns the total value of the good rows. Skip every bad row: an empty line, a row without exactly one comma, an empty field, or any other character (a space or a `+` makes the row bad). Lines end with `\\n`, some files use `\\r\\n` (drop a `\\r` at the end of a line), and the last line may have no ending.\n\nFor `\"100,2510\\n-40,2490\\nqty,price\\n\"` the first row is worth 251,000, the second -99,600, and the header is a bad row. The answer is 151,400.",
+  "constraints": [
+    "The text has at most 10,000 lines. A good row has $|$`qty`$| \\le 10^6$ and `price` $\\le 10^7$.",
+    "The total can pass 2,147,483,647, so it needs a `long long`.",
+    "There is no `try` in the runner: check each character yourself instead of calling `std::stoi`.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "Split the text into lines yourself, then each line at its commas. `c - '0'` turns a digit character `c` into its value.",
+  "starter": "#include <string>\n\nlong long fills_value(const std::string& text) {\n    return 0;\n}\n",
+  "examples": [
+    {
+      "call": "fills_value",
+      "args": [
+        "100,2510\n-40,2490\nqty,price\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 151400,
+      "compare": "equal",
+      "note": "251,000 less 99,600; the header row is skipped."
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "7,30\r\n3,10\r\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 240,
+      "compare": "equal",
+      "note": "Windows line ends: 210 plus 30."
+    }
+  ],
+  "tests": [
+    {
+      "call": "fills_value",
+      "args": [
+        ""
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "5,100"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 500,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "100,2510\n-40,2490\nqty,price\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 151400,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "7,30\r\n3,10\r\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 240,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "12x,100\n2,50\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 100,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "1,2,3\n4,5\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 20,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        ",5\n5,\n-,5\n6,1\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 6,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "\n\n3,3\n\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 9,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "1000000,9999999\n1000000,9999999\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 19999998000000,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "-5,20\n-5,20"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": -200,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "4, 25\n4,25\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 100,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "-0,500\n+3,10\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "fills_value",
+      "args": [
+        "2,0300\n"
+      ],
+      "types": [
+        "std::string"
+      ],
+      "expect": 600,
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "#include <string>\n\n// true when s is a whole number (with a leading - if allowed); its value goes in out\nbool read_whole(const std::string& s, bool minus_ok, long long& out) {\n    std::size_t i = 0;\n    bool neg = false;\n    if (minus_ok && !s.empty() && s[0] == '-') { neg = true; i = 1; }\n    if (i == s.size()) return false;\n    long long v = 0;\n    for (; i < s.size(); ++i) {\n        if (s[i] < '0' || s[i] > '9') return false;\n        v = v * 10 + (s[i] - '0');\n    }\n    out = neg ? -v : v;\n    return true;\n}\n\nlong long row_value(const std::string& line) {\n    std::string qty, price;\n    int commas = 0;\n    for (char c : line) {\n        if (c == ',') ++commas;\n        else if (commas == 0) qty += c;\n        else price += c;\n    }\n    long long q = 0, p = 0;\n    if (commas != 1 || !read_whole(qty, true, q) || !read_whole(price, false, p)) return 0;\n    return q * p;\n}\n\nlong long fills_value(const std::string& text) {\n    long long total = 0;\n    std::string line;\n    for (std::size_t i = 0; i <= text.size(); ++i) {\n        if (i == text.size() || text[i] == '\\n') {\n            if (!line.empty() && line.back() == '\\r') line.pop_back();\n            total += row_value(line);\n            line.clear();\n        } else {\n            line += text[i];\n        }\n    }\n    return total;\n}\n",
+  "notes": [
+    "Each line is checked on its own, so one bad row costs only that row.",
+    "A last line with no `\\n` is still a row: the loop treats the end of the text as one more line end.",
+    "The value of one row reaches $10^{13}$, so both the product and the total are `long long`."
+  ],
+  "planted": [
+    {
+      "code": "#include <string>\n\n// true when s is a whole number (with a leading - if allowed); its value goes in out\nbool read_whole(const std::string& s, bool minus_ok, long long& out) {\n    std::size_t i = 0;\n    bool neg = false;\n    if (minus_ok && !s.empty() && s[0] == '-') { neg = true; i = 1; }\n    if (i == s.size()) return false;\n    long long v = 0;\n    for (; i < s.size(); ++i) {\n        if (s[i] < '0' || s[i] > '9') return false;\n        v = v * 10 + (s[i] - '0');\n    }\n    out = neg ? -v : v;\n    return true;\n}\n\nlong long row_value(const std::string& line) {\n    std::string qty, price;\n    int commas = 0;\n    for (char c : line) {\n        if (c == ',') ++commas;\n        else if (commas == 0) qty += c;\n        else price += c;\n    }\n    long long q = 0, p = 0;\n    if (commas != 1 || !read_whole(qty, true, q) || !read_whole(price, false, p)) return 0;\n    return q * p;\n}\n\nlong long fills_value(const std::string& text) {\n    long long total = 0;\n    std::string line;\n    for (std::size_t i = 0; i < text.size(); ++i) {\n        if (text[i] == '\\n') {\n            if (!line.empty() && line.back() == '\\r') line.pop_back();\n            total += row_value(line);\n            line.clear();\n        } else {\n            line += text[i];\n        }\n    }\n    return total;\n}\n",
+      "slip": "Only a line ended by a newline is read, so a last line with no ending is lost."
+    },
+    {
+      "code": "#include <string>\n\n// true when s is a whole number (with a leading - if allowed); its value goes in out\nbool read_whole(const std::string& s, bool minus_ok, long long& out) {\n    std::size_t i = 0;\n    bool neg = false;\n    if (minus_ok && !s.empty() && s[0] == '-') { neg = true; i = 1; }\n    if (i == s.size() || s[i] < '0' || s[i] > '9') return false;\n    long long v = 0;\n    for (; i < s.size(); ++i) {\n        if (s[i] < '0' || s[i] > '9') break;\n        v = v * 10 + (s[i] - '0');\n    }\n    out = neg ? -v : v;\n    return true;\n}\n\nlong long row_value(const std::string& line) {\n    std::string qty, price;\n    int commas = 0;\n    for (char c : line) {\n        if (c == ',') ++commas;\n        else if (commas == 0) qty += c;\n        else price += c;\n    }\n    long long q = 0, p = 0;\n    if (commas != 1 || !read_whole(qty, true, q) || !read_whole(price, false, p)) return 0;\n    return q * p;\n}\n\nlong long fills_value(const std::string& text) {\n    long long total = 0;\n    std::string line;\n    for (std::size_t i = 0; i <= text.size(); ++i) {\n        if (i == text.size() || text[i] == '\\n') {\n            if (!line.empty() && line.back() == '\\r') line.pop_back();\n            total += row_value(line);\n            line.clear();\n        } else {\n            line += text[i];\n        }\n    }\n    return total;\n}\n",
+      "slip": "Reads digits up to the first bad character, as atoi does, so 12x counts as 12."
+    },
+    {
+      "code": "#include <string>\n\n// true when s is a whole number (with a leading - if allowed); its value goes in out\nbool read_whole(const std::string& s, bool minus_ok, long long& out) {\n    std::size_t i = 0;\n    bool neg = false;\n    if (minus_ok && !s.empty() && s[0] == '-') { neg = true; i = 1; }\n    if (i == s.size()) return false;\n    long long v = 0;\n    for (; i < s.size(); ++i) {\n        if (s[i] < '0' || s[i] > '9') return false;\n        v = v * 10 + (s[i] - '0');\n    }\n    out = neg ? -v : v;\n    return true;\n}\n\nlong long row_value(const std::string& line) {\n    std::string qty, price;\n    int commas = 0;\n    for (char c : line) {\n        if (c == ',') ++commas;\n        else if (commas == 0) qty += c;\n        else price += c;\n    }\n    long long q = 0, p = 0;\n    if (commas != 1 || !read_whole(qty, true, q) || !read_whole(price, false, p)) return 0;\n    return q * p;\n}\n\nlong long fills_value(const std::string& text) {\n    int total = 0;\n    std::string line;\n    for (std::size_t i = 0; i <= text.size(); ++i) {\n        if (i == text.size() || text[i] == '\\n') {\n            if (!line.empty() && line.back() == '\\r') line.pop_back();\n            total += row_value(line);\n            line.clear();\n        } else {\n            line += text[i];\n        }\n    }\n    return total;\n}\n",
+      "slip": "The running total is an int and overflows on a large file."
+    }
+  ]
+}
