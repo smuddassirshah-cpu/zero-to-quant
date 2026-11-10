@@ -167,9 +167,14 @@ while alive.any() and k < 40000:
 done = ~np.isnan(tau)
 Mtau = np.where(done, np.exp(2 * (np.where(done, tau, 0) - 1) - 2 * np.where(done, tau, 0)), 0.0)
 check(done.mean() > 0.999 and abs(np.nanmean(tau) - 1) < 0.1, f"l14.s1/hw.x1 line-hitting time has finite mean (about {np.nanmean(tau):.2f})")
-# EXPECTED_FAIL: the content says optional stopping needs "a bounded stopped value or a finite mean time".
-# Corrected assert: abs(Mtau.mean() - math.exp(-2)) < 0.02  (true: E[M_tau] = e^-2, not M_0 = 1)
-xfail(abs(Mtau.mean() - 1) < 0.02, "l14.s1.x1 / hw.h-stopping.x1: finite mean time gives E[M_tau] = M_0 for any martingale")
+# Was EXPECTED_FAIL: the content said optional stopping needs "a bounded stopped value or a finite mean time".
+# The content now says: a bounded stopped process with tau finite; for W and W^2 - t a finite E[tau] is enough.
+# Here M_tau = e^-2 is bounded and E[tau] = 1, yet E[M_tau] != M_0 = 1, while Wald's two identities hold for W.
+Wtau, ttau = xw[done], tau[done]
+check(abs(Mtau.mean() - 1) > 0.5 and abs(Mtau.mean() - math.exp(-2)) < 0.02
+      and abs(Wtau.mean()) < 0.03 and abs((Wtau**2).mean() - ttau.mean()) < 0.08,
+      f"l14.s1.x1 / hw.h-stopping.x1: finite mean time fails for exp(2W - 2t) but holds for W and W^2 - t "
+      f"(E[W_tau] = {Wtau.mean():.3f}, E[W_tau^2] - E[tau] = {(Wtau**2).mean() - ttau.mean():.3f}) (corrected claim, fix pass)")
 check(abs(Mtau.mean() - math.exp(-2)) < 0.02, f"exponential martingale stopped at a finite-mean time has mean e^-2 ({Mtau.mean():.4f})")
 
 # ------------------------------------------------------------------ lesson 14
@@ -256,9 +261,11 @@ check(E2(Ws(1) * Wt(1, 2)**3) == 6, "l15.s5 E[W_1 W_2^3] = 6")
 check(E2((Ws(2) + Wt(2, 3))**2) == 9 and E2((Ws(1) + Wt(1, 2))**2) == 5 and E2(Ws(2)*Wt(2, 5)) == 2, "l15.s4/s8 Var(W2+W3)=9, Var(W1+W2)=5, E[W2W5]=2")
 check(E2(Ws(2)**2 * Wt(2, 3)**2) == 14 and E2(Ws(2)**4 * Wt(2, 3)**2) == 132, "review.r-s2t2 = 14, hw.h-moments = 132")
 odd = {(p, q): E2(Ws(1)**p * Wt(1, 2)**q) for p in range(0, 6) for q in range(0, 6) if (p + q) % 2 == 1}
-# EXPECTED_FAIL: l15.s5 prose says a product across two times "can still be odd in total and nonzero".
-# Corrected assert: all(v == 0 for v in odd.values())   (every odd total power has mean 0 by W -> -W)
-xfail(any(v != 0 for v in odd.values()), "l15.s5 prose: a two-time product odd in total can be nonzero")
+# Was EXPECTED_FAIL: l15.s5 prose said a product across two times "can still be odd in total and nonzero".
+# The content now says: each power can be odd and the mean nonzero; symmetry gives zero only for an odd total power.
+even_odd = {(p, q): E2(Ws(1)**p * Wt(1, 2)**q) for p in (1, 3, 5) for q in (1, 3, 5)}
+check(all(v == 0 for v in odd.values()) and all(v != 0 for v in even_odd.values()),
+      "l15.s5 prose: odd total power gives 0 (15 cases); each power odd, total even, is nonzero (9 cases) (corrected claim, fix pass)")
 check(all(v == 0 for v in odd.values()), "every two-time moment of odd total power is 0 (15 cases, e.g. E[W_1 W_2^2])")
 check(E2(Ws(1) * Wt(1, 2)**2) == 0 and E2(Ws(1)**2 * Wt(1, 2)) == 0,
       "l15.s5 explain is too narrow: symmetry also kills E[W_1 W_2^2] and E[W_1^2 W_2], not only single odd powers")
@@ -309,32 +316,43 @@ check(close(6400*math.exp(0.15375), 7463.68, 0.006) and close(6400*math.exp(0.06
 check(close(100*norm.cdf(m["d1"]), 63.6831) and close(100*m["dig"], 53.2325) and close(m["call"], 10.4506), "l16.s5 asset-or-nothing 63.6831, digitals 53.2325, call 10.4506")
 check(close(q_price(lambda v: v*(v > 100), 100, 0.05, 0.2, 1), 63.6831, 2e-4), "l16.s5 asset-or-nothing call is S Phi(d1) (quadrature)")
 check(close(1 - math.exp(-0.05), 0.0488) and close(1000*(1 - math.exp(-0.05)), 48.77, 0.006), "l16.s9 miss 0.0488, 48.77 per 1,000")
-# EXPECTED_FAIL: l16.s9 feedback says "the junior forgot to discount the put" (that would be 0.4404, not 0.4677).
-# Corrected assert: close(1 - 0.5323, 0.4677)   (the junior took 1 minus the call)
-xfail(close(norm.cdf(-0.15), 0.4677, 5e-4), "l16.s9 feedback: junior's put 0.4677 is the undiscounted put")
+# Was EXPECTED_FAIL: l16.s9 feedback said "the junior forgot to discount the put" (that would be 0.4404, not 0.4677).
+# The content now says the junior took the put as 1 less the call, not e^{-rT} less the call.
+dcall = math.exp(-0.05)*norm.cdf(0.15)
+check(close(dcall, 0.5323) and close(1 - dcall, 0.4677) and close(math.exp(-0.05) - dcall, 0.4189)
+      and not close(norm.cdf(-0.15), 0.4677, 5e-4),
+      "l16.s9 feedback: junior's put 0.4677 = 1 - call, the right put e^{-rT} - call = 0.4189 (corrected claim, fix pass)")
 check(close(100*math.exp(0.1), 110.5171) and close(math.exp(-0.05)*(math.log(100) + 0.03), 4.4091) and close(math.exp(-0.05)*math.log(100), 4.3806), "l16.quiz0/quiz1 values")
 check(close(q_price(math.log, 100, 0.05, 0.2, 1), 4.4091, 1e-4), "l16.quiz1 log payoff by quadrature")
 check(close(1e6*math.exp(0.22), 1246076.73, 0.006) and close(1e6*math.exp(0.10), 1105170.92, 0.006) and close(1e6*math.exp(0.27), 1309964.45, 0.006), "l16.quiz3 cube values")
 r = env16["mc_price"](lambda v: v**2, 100, 0.05, 0.2, 1, 1000000, 16)
 zsc = (r[0] - env16["power_price"](100, 0.05, 0.2, 1, 2))/r[1]
 check(close(round(r[0], 2), 10948.77, 0.006) and close(round(r[1], 2), 4.56, 0.006), "l16.s8 seed-16 price 10,948.77, se 4.56")
-# EXPECTED_FAIL: l16.s8 feedback says "within 1.5 standard errors"; the gap is 1.54.
-# Corrected assert: abs(zsc) < 1.6   ("about 1.5 standard errors")
-xfail(abs(zsc) <= 1.5, f"l16.s8 feedback: simulation within 1.5 standard errors (z = {zsc:.3f})")
+# Was EXPECTED_FAIL: l16.s8 feedback said "within 1.5 standard errors"; the gap is 1.54.
+# The content now says "about 1.5 standard errors away".
+check(1.45 <= abs(zsc) < 1.55 and close((10948.77 - 10941.74)/4.56, 1.5417, 1e-4),
+      f"l16.s8 feedback: simulation about 1.5 standard errors away (z = {zsc:.3f}) (corrected claim, fix pass)")
 # quiz q-sigma explain: "Every nonlinear payoff does" (depend on sigma). Counter-example at one spot:
 F = 100*math.exp(0.05)
 odd_pay = lambda v: math.sqrt(v/F)*math.log(v/F)
 prices = [q_price(odd_pay, 100, 0.05, sg, 1) for sg in (0.1, 0.2, 0.4, 0.8)]
-# EXPECTED_FAIL: Corrected assert: max(abs(p) for p in prices) < 1e-8  (a nonlinear payoff whose price at this spot is 0 for every sigma)
-xfail(max(prices) - min(prices) > 1e-6, "l16.quiz2 explain: every nonlinear payoff's price depends on sigma (at a given spot)")
+# Was EXPECTED_FAIL: the explain said "Every nonlinear payoff does"; it now names the three: the digital, the square, the call.
+sgs = (0.1, 0.2, 0.4, 0.8)
+three = [[q_price(pf, 100, 0.05, sg, 1) for sg in sgs]
+         for pf in (lambda v: float(v > 100), lambda v: v**2, lambda v: max(v - 100, 0.0))]
+check(all(max(ps) - min(ps) > 1e-3 for ps in three) and max(abs(p) for p in prices) < 1e-8,
+      "l16.quiz2 explain: digital, square and call prices move with sigma; not every nonlinear payoff does (corrected claim, fix pass)")
 check(max(abs(p) for p in prices) < 1e-8, "payoff sqrt(S/F) ln(S/F) has price 0 at this spot for sigma = 0.1 to 0.8")
 # review r-dig110
 d = bs(60, 64, 0.04, 0.3, 2)
 check(close(d["d2"], -0.1757) and close(norm.cdf(d["d2"]), 0.4303) and close(d["dig"], 0.3972) and close(d["d1"], 0.2486) and close(math.exp(-0.08)*norm.cdf(d["d1"]), 0.5522), "review.r-dig110 values")
 e2 = bs(100, 102, 0.05, 0.2, 1)
-# EXPECTED_FAIL: review r-dig110 explain says a strike above today's price makes finishing above it less likely than a coin flip.
-# Corrected assert: norm.cdf(e2["d2"]) > 0.5   (K = 102 > S_0 = 100, yet Q(S_T > K) = 0.52; the test is K against the Q-median)
-xfail(norm.cdf(e2["d2"]) < 0.5, f"review.r-dig110 explain: K above S_0 gives Q(S_T > K) below one half (K=102: {norm.cdf(e2['d2']):.4f})")
+# Was EXPECTED_FAIL: the explain said a strike above today's price makes finishing above it less likely than a coin flip.
+# The content now compares the strike 64 with the Q-median S_0 e^{(r - sigma^2/2)T} = 59.40.
+qmed = 60*math.exp((0.04 - 0.3**2/2)*2)
+check(norm.cdf(e2["d2"]) > 0.5 and close(qmed, 59.40, 0.005) and close(60*math.exp(-0.01), qmed, 1e-9)
+      and 64 > qmed and norm.cdf(d["d2"]) < 0.5,
+      f"review.r-dig110 explain: K above the Q-median 59.40 gives Q(S_T > K) below one half; K=102 > S_0 still gives {norm.cdf(e2['d2']):.4f} (corrected claim, fix pass)")
 check(60*math.exp((0.04 - 0.045)*2) < 64 < 60*math.exp(0.08), "review.r-dig110: strike 64 is above the Q-median 59.40 and below the forward 65.00")
 check(close(10*math.exp(-0.0625), 9.3941) and close(10*math.exp(-0.04), 9.6079) and close(10*math.exp(0.0175), 10.1765) and close(q_price(math.sqrt, 100, 0.04, 0.3, 2), 9.3941, 1e-4), "review.r-sqrt values and quadrature")
 qp = envh2["quick_prices"]
