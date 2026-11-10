@@ -1,0 +1,108 @@
+{
+  "id": "fluency-l2-separable",
+  "lesson": "l2-separable",
+  "title": "Fluency: separating the variables",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "constant-rate",
+      "weight": 2,
+      "skill": "solve a constant-rate equation",
+      "vars": {
+        "k": { "int": [-5, 5], "not": [0] },
+        "y0": { "int": [2, 9] },
+        "v": { "pick": ["y", "P", "N"] }
+      },
+      "let": {
+        "c": "y0 - 1"
+      },
+      "prompt": "Solve $\\dfrac{{d{v}}}{{dt}} = {k:c}{v}$ with ${v}(0) = {y0}$.",
+      "widget": { "kind": "expression", "answer": "{y0}e^{{{mono(t; k, 1)}}}", "keyboard": "calculus" },
+      "wrong": [
+        { "id": "constant-added", "tex": "e^{{{mono(t; k, 1)}}}{c:+}", "line": "You added the constant after exponentiating. $e^{{{mono(t; k, 1)} + C}} = e^Ce^{{{mono(t; k, 1)}}}$, so it multiplies." },
+        { "id": "start-not-used", "tex": "e^{{{mono(t; k, 1)}}}", "line": "That solves the equation, but ${v}(0)$ must be {y0}. Fit the factor $A$ to the start." }
+      ],
+      "solution": [
+        "Separate: $\\dfrac{{d{v}}}{{{v}}} = {k:c}\\,dt$, so $\\ln|{v}| = {mono(t; k, 1)} + C$.",
+        "Exponentiate: ${v} = Ae^{{{mono(t; k, 1)}}}$, and ${v}(0) = {y0}$ gives $A = {y0}$.",
+        "So ${v} = {y0}e^{{{mono(t; k, 1)}}}$."
+      ]
+    },
+    {
+      "id": "rate-that-varies",
+      "weight": 2,
+      "skill": "solve when the rate changes with time",
+      "vars": {
+        "a": { "int": [-5, 5], "not": [0] },
+        "b": { "pick": [-6, -4, -2, 2, 4, 6] },
+        "y0": { "int": [1, 9] }
+      },
+      "let": {
+        "h": "b/2"
+      },
+      "prompt": "Solve $\\dfrac{{dy}}{{dt}} = ({poly(t; b, a)})y$ with $y(0) = {y0}$.",
+      "widget": { "kind": "expression", "answer": "{y0:c}e^{{{poly(t; h, a, 0)}}}", "keyboard": "calculus" },
+      "wrong": [
+        { "id": "rate-kept-constant", "tex": "{y0:c}e^{{{mono(t; a, 1)}}}", "line": "You kept the rate at its starting value ${a}$. It changes, so the exponent gains ${mono(t; h, 2)}$." },
+        { "id": "not-halved", "tex": "{y0:c}e^{{{poly(t; b, a, 0)}}}", "line": "The integral of ${mono(t; b, 1)}$ is ${mono(t; h, 2)}$: you did not halve it." }
+      ],
+      "solution": [
+        "Separate: $\\dfrac{{dy}}{{y}} = ({poly(t; b, a)})\\,dt$.",
+        "Integrate: $\\ln|y| = {poly(t; h, a, 0)} + C$, so $y = Ae^{{{poly(t; h, a, 0)}}}$.",
+        "At $t = 0$, $A = {y0}$, so $y = {y0:c}e^{{{poly(t; h, a, 0)}}}$."
+      ]
+    },
+    {
+      "id": "square-rate",
+      "weight": 1,
+      "skill": "solve y' = ky^2",
+      "vars": {
+        "k": { "int": [-4, 4], "not": [0] },
+        "y0": { "int": [-5, 5], "not": [0] }
+      },
+      "let": {
+        "m": "k*y0",
+        "c": "-1/y0"
+      },
+      "prompt": "Solve $\\dfrac{{dy}}{{dt}} = {k:c}y^2$ with $y(0) = {y0}$.",
+      "widget": { "kind": "expression", "answer": "\\frac{{{y0}}}{{1{-m:+c}t}}", "keyboard": "calculus" },
+      "wrong": [
+        { "id": "solved-linear", "tex": "{y0:c}e^{{{mono(t; k, 1)}}}", "line": "You solved $y' = {k:c}y$. With $y^2$ the left side is $\\dfrac{{dy}}{{y^2}}$, which integrates to $-\\dfrac{{1}}{{y}}$." },
+        { "id": "sign-lost", "tex": "\\frac{{{y0}}}{{1{m:+c}t}}", "line": "You lost the minus sign: $\\int \\dfrac{{dy}}{{y^2}} = -\\dfrac{{1}}{{y}}$." }
+      ],
+      "solution": [
+        "Separate: $\\dfrac{{dy}}{{y^2}} = {k:c}\\,dt$, so $-\\dfrac{{1}}{{y}} = {mono(t; k, 1)} + C$.",
+        "At $t = 0$: $C = {c:frac}$.",
+        "So $\\dfrac{{1}}{{y}} = {-c:frac}{-k:+c}t$, which gives $y = \\dfrac{{{y0}}}{{1{-m:+c}t}}$."
+      ]
+    },
+    {
+      "id": "discount",
+      "weight": 1,
+      "skill": "discount continuously",
+      "vars": {
+        "p": { "int": [100, 900], "step": 100 },
+        "r": { "int": [1, 9] },
+        "yr": { "int": [2, 10] }
+      },
+      "let": {
+        "x": "r*yr/100",
+        "key": "round(p*exp(-r*yr/100), 2)",
+        "simple": "p*(1 - r*yr/100)",
+        "yearly": "round(p/(1 + r/100)^yr, 2)"
+      },
+      "prompt": "A discount factor solves $\\dfrac{{dD}}{{dT}} = -rD$ with $D(0) = 1$. At $r = {r}\\%$, what is £{p} paid in {yr} years worth today, to the penny?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0051 }, "unit": "£", "placeholder": "For example 81.87" },
+      "wrong": [
+        { "id": "simple-discount", "value": "{simple}", "tol": { "abs": 0.0051 }, "line": "You took off {r}% of £{p} for each year. Continuous discounting gives $e^{{-rT}}$." },
+        { "id": "yearly-discount", "value": "{yearly}", "tol": { "abs": 0.0051 }, "line": "You discounted once a year, $1.0{r}^{{{yr}}}$. The equation discounts continuously.", "when": "abs(yearly - key) > 0.01" }
+      ],
+      "solution": [
+        "Separating gives $D(T) = e^{{-rT}}$, and $rT = {x}$.",
+        "So the value is ${p}e^{{-{x}}} = {key:dp2}$, that is £{key:dp2}."
+      ]
+    }
+  ]
+}
