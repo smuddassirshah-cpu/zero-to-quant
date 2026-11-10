@@ -1,0 +1,134 @@
+{
+  "id": "ci-basket-cover",
+  "name": "Shortest tape that fills a basket",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "windows",
+  "tags": [
+    "pack-2",
+    "basket-cover"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2100,
+  "fn": "shortest_basket_cover",
+  "returns": "a tuple of two whole numbers, or None",
+  "brief": "A trade tape lists the ticker of each trade in order. A client's basket lists tickers it must see, and a ticker listed twice must be seen at least twice. A stretch `tape[i..j]`, both ends included, covers the basket when it holds every basket ticker at least that many times.\n\nWrite `shortest_basket_cover(tape, basket)`. It returns `(i, j)` for the shortest covering stretch, the one with the smaller `i` on a tie, or `None` when no stretch covers it. The basket is never empty.\n\nExample. For `tape = ['V', 'B', 'V', 'A', 'B', 'V']` and `basket = ['V', 'B']`, the stretch `(0, 1)` covers it in two trades. So does `(1, 2)`, but it starts later. The answer is `(0, 1)`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ trades and $1 \\le$ `len(basket)` $\\le 1{,}000$; tickers are strings.",
+    "$O(n + b)$ time is the target. Growing a stretch from every start is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep a count of what the basket still needs and how many tickers are missing. Grow the right edge until nothing is missing, then shrink from the left while the stretch still covers, recording each covering stretch.",
+  "starter": "def shortest_basket_cover(tape, basket):\n    # your code here\n    return None\n",
+  "examples": [
+    {
+      "call": "shortest_basket_cover(['V', 'B', 'V', 'A', 'B', 'V'], ['V', 'B'])",
+      "expect": "(0, 1)",
+      "compare": "equal",
+      "note": "Two stretches of length 2 cover the basket, and `(0, 1)` starts first."
+    },
+    {
+      "call": "shortest_basket_cover(['A', 'B', 'A'], ['A', 'A', 'B'])",
+      "expect": "(0, 2)",
+      "compare": "equal",
+      "note": "The basket needs two `A` trades, so the whole tape is the only cover."
+    }
+  ],
+  "tests": [
+    {
+      "call": "shortest_basket_cover([], ['A'])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['A'], ['A'])",
+      "expect": "(0, 0)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['A'], ['B'])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['A', 'B'], ['A', 'A'])",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['V', 'B', 'V', 'A', 'B', 'V'], ['V', 'B'])",
+      "expect": "(0, 1)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['A', 'B', 'A'], ['A', 'A', 'B'])",
+      "expect": "(0, 2)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['C', 'A', 'X', 'B', 'A', 'C', 'B'], ['A', 'B', 'C'])",
+      "expect": "(3, 5)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['A', 'A', 'B', 'A', 'A'], ['A', 'A'])",
+      "expect": "(0, 1)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['X', 'Y', 'Z', 'X', 'Z', 'Y'], ['Y', 'X'])",
+      "expect": "(0, 1)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['B', 'A', 'B', 'B', 'A', 'B'], ['B', 'B', 'A'])",
+      "expect": "(0, 2)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['Q', 'R', 'Q', 'S', 'R'], ['S', 'Q', 'R'])",
+      "expect": "(1, 3)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['X'] * 100000 + ['A', 'B'] + ['X'] * 99998, ['A', 'B'])",
+      "expect": "(100000, 100001)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover(['A'] + ['X'] * 199998 + ['B'], ['B', 'A'])",
+      "expect": "(0, 199999)",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_basket_cover([str(i % 500) for i in range(200000)], [str(i) for i in range(500)])",
+      "expect": "(0, 499)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method grows a stretch from every start, which is quadratic and runs out of time on the large tests. The step to the target is to keep one window, grow it until it covers, then shrink it from the left, so each trade enters and leaves once.",
+  "solution": "def shortest_basket_cover(tape, basket):\n    need = {}\n    for t in basket:\n        need[t] = need.get(t, 0) + 1\n    missing = len(basket)\n    best = None\n    left = 0\n    for right, t in enumerate(tape):\n        if t in need:\n            if need[t] > 0:\n                missing -= 1\n            need[t] -= 1\n        while missing == 0:\n            if best is None or right - left < best[1] - best[0]:\n                best = (left, right)\n            u = tape[left]\n            if u in need:\n                need[u] += 1\n                if need[u] > 0:\n                    missing += 1\n            left += 1\n    return best\n",
+  "notes": [
+    "`missing` counts the basket tickers not yet in the window, so the window covers exactly when it reaches 0.",
+    "A repeated basket ticker needs its full count, and a strict `<` on length keeps the earlier stretch on a tie.",
+    "Each trade enters the window once and leaves at most once, so the work is $O(n + b)$."
+  ],
+  "planted": [
+    {
+      "code": "def shortest_basket_cover(tape, basket):\n    need = {t: 1 for t in basket}\n    missing = len(need)\n    best = None\n    left = 0\n    for right, t in enumerate(tape):\n        if t in need:\n            if need[t] > 0:\n                missing -= 1\n            need[t] -= 1\n        while missing == 0:\n            if best is None or right - left < best[1] - best[0]:\n                best = (left, right)\n            u = tape[left]\n            if u in need:\n                need[u] += 1\n                if need[u] > 0:\n                    missing += 1\n            left += 1\n    return best\n",
+      "slip": "Treating the basket as a set asks for each ticker once, even when it is listed twice."
+    },
+    {
+      "code": "def shortest_basket_cover(tape, basket):\n    need = {}\n    for t in basket:\n        need[t] = need.get(t, 0) + 1\n    missing = len(basket)\n    best = None\n    left = 0\n    for right, t in enumerate(tape):\n        if t in need:\n            if need[t] > 0:\n                missing -= 1\n            need[t] -= 1\n        while missing == 0:\n            if best is None or right - left <= best[1] - best[0]:\n                best = (left, right)\n            u = tape[left]\n            if u in need:\n                need[u] += 1\n                if need[u] > 0:\n                    missing += 1\n            left += 1\n    return best\n",
+      "slip": "Using `<=` on the length replaces an equal stretch with a later one, so a tie goes the wrong way."
+    },
+    {
+      "code": "def shortest_basket_cover(tape, basket):\n    want = {}\n    for t in basket:\n        want[t] = want.get(t, 0) + 1\n    best = None\n    for i in range(len(tape)):\n        have = {}\n        got = 0\n        for j in range(i, len(tape)):\n            t = tape[j]\n            if t in want:\n                have[t] = have.get(t, 0) + 1\n                if have[t] <= want[t]:\n                    got += 1\n            if got == len(basket):\n                if best is None or j - i < best[1] - best[0]:\n                    best = (i, j)\n                break\n    return best\n",
+      "slip": "Growing a stretch from every start is right but quadratic, so the large tests run out of time."
+    }
+  ]
+}

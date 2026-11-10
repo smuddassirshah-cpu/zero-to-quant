@@ -1,0 +1,129 @@
+{
+  "id": "ci-three-leg-nets",
+  "name": "Three legs that net to a target",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "two-pointers",
+  "tags": [
+    "pack-2",
+    "three-leg-nets"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1860,
+  "fn": "netting_triples",
+  "returns": "a list of tuples",
+  "brief": "A book holds positions with signed sizes, in lots. A three-leg trade uses three positions at different places in the list whose sizes add up to exactly `target`.\n\nWrite `netting_triples(sizes, target)`. It returns every different triple of sizes `(x, y, z)` with `x <= y <= z` that some three positions give, with no triple listed twice, in increasing order. A size may appear twice in a triple only if it appears twice in `sizes`.\n\nExample. For `sizes = [2, -1, -1, 0, 1, 3]` and `target = 1`, the triples are `(-1, -1, 3)` and `(-1, 0, 2)`. The two -1s sit at different positions, so the first triple counts. The answer is `[(-1, -1, 3), (-1, 0, 2)]`.",
+  "constraints": [
+    "$0 \\le n \\le 3{,}000$ sizes, each a whole number between $-10^6$ and $10^6$; `target` is between $-3 \\cdot 10^6$ and $3 \\cdot 10^6$.",
+    "$O(n^2)$ time is the target. Trying every triple, $O(n^3)$, is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Sort first. Fix the smallest leg, then close two pointers on the rest of the list. Skip any value equal to the one just used at the same position.",
+  "starter": "def netting_triples(sizes, target):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "netting_triples([2, -1, -1, 0, 1, 3], 1)",
+      "expect": "[(-1, -1, 3), (-1, 0, 2)]",
+      "compare": "equal",
+      "note": "The two -1s in `(-1, -1, 3)` come from different positions, so that triple counts."
+    },
+    {
+      "call": "netting_triples([0, 0, 0, 0], 0)",
+      "expect": "[(0, 0, 0)]",
+      "compare": "equal",
+      "note": "Four zeros give many sets of positions but only one triple of sizes."
+    }
+  ],
+  "tests": [
+    {
+      "call": "netting_triples([], 0)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([1, 2], 3)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([1, 2, 3], 6)",
+      "expect": "[(1, 2, 3)]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([1, 2, 3], 7)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([2, -1, -1, 0, 1, 3], 1)",
+      "expect": "[(-1, -1, 3), (-1, 0, 2)]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([0, 0, 0, 0], 0)",
+      "expect": "[(0, 0, 0)]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([-4, -1, -1, 0, 1, 2], 0)",
+      "expect": "[(-1, -1, 2), (-1, 0, 1)]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([2, 2, 2, 1, 3, 1, 3], 6)",
+      "expect": "[(1, 2, 3), (2, 2, 2)]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([5, -5, 0, 5, -5, 0, 10, -10], 0)",
+      "expect": "[(-10, 0, 10), (-10, 5, 5), (-5, -5, 10), (-5, 0, 5)]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([1000000, 1000000, 1000000, -1000000], 3000000)",
+      "expect": "[(1000000, 1000000, 1000000)]",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([3, 3, 3], 6)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[0], r[-1]))(netting_triples([(i * 7919) % 3001 - 1500 for i in range(1500)], 0))",
+      "expect": "(118153, (-1500, 1, 1499), (-5, 1, 4))",
+      "compare": "equal"
+    },
+    {
+      "call": "netting_triples([0] * 1000 + [1] * 1000 + [-1] * 1000, 0)",
+      "expect": "[(-1, 0, 1), (0, 0, 0)]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method tries every triple, which is $O(n^3)$ and runs out of time on the two largest tests. The step to the target is to sort once, fix the smallest leg, and find the other two with pointers from both ends of what is left, which is $O(n^2)$.",
+  "solution": "def netting_triples(sizes, target):\n    s = sorted(sizes)\n    n = len(s)\n    out = []\n    for i in range(n - 2):\n        if i and s[i] == s[i - 1]:\n            continue\n        lo, hi = i + 1, n - 1\n        while lo < hi:\n            total = s[i] + s[lo] + s[hi]\n            if total < target:\n                lo += 1\n            elif total > target:\n                hi -= 1\n            else:\n                out.append((s[i], s[lo], s[hi]))\n                lo += 1\n                hi -= 1\n                while lo < hi and s[lo] == s[lo - 1]:\n                    lo += 1\n                while lo < hi and s[hi] == s[hi + 1]:\n                    hi -= 1\n    return out\n",
+  "notes": [
+    "With the list sorted and the first leg fixed, the other two legs are a pair search closed from both ends.",
+    "A repeated value must be skipped at each of the three positions; skipping it only at the first still lists triples twice.",
+    "The sort is $O(n \\log n)$ and each first leg costs one $O(n)$ sweep, so the work is $O(n^2)$."
+  ],
+  "planted": [
+    {
+      "code": "def netting_triples(sizes, target):\n    s = sorted(sizes)\n    n = len(s)\n    out = []\n    for i in range(n - 2):\n        lo, hi = i + 1, n - 1\n        while lo < hi:\n            total = s[i] + s[lo] + s[hi]\n            if total < target:\n                lo += 1\n            elif total > target:\n                hi -= 1\n            else:\n                out.append((s[i], s[lo], s[hi]))\n                lo += 1\n                hi -= 1\n    return out\n",
+      "slip": "Without skipping repeated values the same triple of sizes is listed more than once."
+    },
+    {
+      "code": "def netting_triples(sizes, target):\n    s = sorted(set(sizes))\n    n = len(s)\n    out = []\n    for i in range(n - 2):\n        lo, hi = i + 1, n - 1\n        while lo < hi:\n            total = s[i] + s[lo] + s[hi]\n            if total < target:\n                lo += 1\n            elif total > target:\n                hi -= 1\n            else:\n                out.append((s[i], s[lo], s[hi]))\n                lo += 1\n                hi -= 1\n    return out\n",
+      "slip": "Removing duplicates up front loses triples such as `(-1, -1, 3)` that use one size twice."
+    },
+    {
+      "code": "from itertools import combinations\n\ndef netting_triples(sizes, target):\n    found = set()\n    for c in combinations(sorted(sizes), 3):\n        if sum(c) == target:\n            found.add(c)\n    return sorted(found)\n",
+      "slip": "Trying every triple is right but $O(n^3)$, so the large tests run out of time."
+    }
+  ]
+}

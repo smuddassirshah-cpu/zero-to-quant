@@ -1,0 +1,124 @@
+{
+  "id": "ci-capped-repeats",
+  "name": "Longest log with capped repeats",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "windows",
+  "tags": [
+    "pack-2",
+    "capped-repeats"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1200,
+  "fn": "longest_capped_run",
+  "returns": "a whole number",
+  "brief": "A market-data audit reads a log of message ids, `log`. A stretch of consecutive entries is clean when no id appears in it more than `m` times.\n\nWrite `longest_capped_run(log, m)`, which returns the length of the longest clean stretch, or 0 for an empty log.\n\nExample. For `log = ['a', 'b', 'a', 'a', 'c', 'b']` and `m = 2`, the stretch `'a', 'a', 'c', 'b'` holds `'a'` twice and is clean. The first five entries hold `'a'` three times. The answer is 4.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ entries, each a string; $1 \\le m \\le n$ when the log is not empty.",
+    "$O(n)$ time is the target. Starting a fresh count at every position is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep a count of each id inside the window. When the new entry pushes its own count past `m`, move the left edge on until that count is back to `m`.",
+  "starter": "def longest_capped_run(log, m):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "longest_capped_run(['a', 'b', 'a', 'a', 'c', 'b'], 2)",
+      "expect": "5",
+      "compare": "equal",
+      "note": "The last four entries hold each id at most twice."
+    },
+    {
+      "call": "longest_capped_run(['x', 'x', 'x'], 1)",
+      "expect": "1",
+      "compare": "equal",
+      "note": "With `m = 1` any two neighbouring `'x'` entries already break the cap."
+    }
+  ],
+  "tests": [
+    {
+      "call": "longest_capped_run([], 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['a'], 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['x', 'x', 'x'], 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['x', 'x', 'x'], 3)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['a', 'b', 'a', 'a', 'c', 'b'], 2)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['a', 'b', 'c', 'a', 'b', 'c'], 1)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['a', 'b', 'a', 'c', 'a', 'b', 'a'], 2)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['p', 'q', 'p', 'q', 'p', 'q', 'r'], 2)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['k', 'k', 'z', 'k', 'z', 'z', 'k'], 2)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run(['a', 'b', 'b', 'a', 'a', 'b', 'a'], 3)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run([str(i % 1000) for i in range(200000)], 3)",
+      "expect": "3000",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_capped_run([str(i) for i in range(200000)], 1)",
+      "expect": "200000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def longest_capped_run(log, m):\n    count = {}\n    best = left = 0\n    for right, x in enumerate(log):\n        count[x] = count.get(x, 0) + 1\n        while count[x] > m:\n            count[log[left]] -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
+  "notes": [
+    "Only the newest entry can push a count past `m`, so the window shrinks until that one id is back under the cap.",
+    "Jumping the left edge to just after the last copy of the id works only for `m = 1`; for larger `m` it drops too much.",
+    "Each entry enters the window once and leaves at most once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def longest_capped_run(log, m):\n    last = {}\n    best = left = 0\n    for right, x in enumerate(log):\n        if x in last and last[x] >= left:\n            left = last[x] + 1\n        last[x] = right\n        best = max(best, right - left + 1)\n    return best\n",
+      "slip": "Jumping past the last copy of the id treats every cap as 1."
+    },
+    {
+      "code": "def longest_capped_run(log, m):\n    count = {}\n    best = left = 0\n    for right, x in enumerate(log):\n        count[x] = count.get(x, 0) + 1\n        while count[x] >= m:\n            count[log[left]] -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
+      "slip": "Shrinking while a count is `>= m` refuses a stretch that holds an id exactly `m` times."
+    },
+    {
+      "code": "def longest_capped_run(log, m):\n    best = 0\n    for i in range(len(log)):\n        count = {}\n        for j in range(i, len(log)):\n            count[log[j]] = count.get(log[j], 0) + 1\n            if count[log[j]] > m:\n                break\n            best = max(best, j - i + 1)\n    return best\n",
+      "slip": "A fresh count from every start is right but too slow when clean stretches are long."
+    }
+  ]
+}

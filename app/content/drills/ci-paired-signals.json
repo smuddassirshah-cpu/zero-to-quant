@@ -1,0 +1,134 @@
+{
+  "id": "ci-paired-signals",
+  "name": "Best pair of signals in reach",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "windows",
+  "tags": [
+    "pack-2",
+    "paired-signals"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2040,
+  "fn": "best_signal_pair",
+  "returns": "a whole number, or None",
+  "brief": "A desk logs signals as `(t, v)` pairs: the second `t` it fired and its strength `v`, which may be negative. The times strictly increase. Two signals `i < j` form a pair only when `t_j - t_i <= k`, and the pair scores `v_i + v_j + (t_j - t_i)`, since a longer gap in reach is worth more.\n\nWrite `best_signal_pair(signals, k)`, which returns the highest score of any pair, or `None` when no pair is in reach.\n\nExample. For `signals = [(1, 3), (2, 0), (5, 10), (6, -10)]` and `k = 4`, the pair at seconds 1 and 5 scores 3 + 10 + 4 = 17, the best. The answer is 17.",
+  "constraints": [
+    "$0 \\le n \\le 100{,}000$ signals; times are whole numbers from $0$ to $10^9$, strengths from $-10^8$ to $10^8$; $0 \\le k \\le 10^9$.",
+    "$O(n)$ time is the target. Checking every earlier signal in reach is too slow when `k` is large.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Rewrite the score as `(v_j + t_j) + (v_i - t_i)`. For each `j` you need the largest `v_i - t_i` among earlier signals still in reach, which is a sliding window maximum.",
+  "starter": "def best_signal_pair(signals, k):\n    # your code here\n    return None\n",
+  "examples": [
+    {
+      "call": "best_signal_pair([(1, 3), (2, 0), (5, 10), (6, -10)], 4)",
+      "expect": "17",
+      "compare": "equal",
+      "note": "Seconds 1 and 5 are 4 apart, so they are in reach and score 17."
+    },
+    {
+      "call": "best_signal_pair([(0, 5), (10, 5)], 9)",
+      "expect": "None",
+      "compare": "equal",
+      "note": "The only two signals are 10 seconds apart, out of reach."
+    }
+  ],
+  "tests": [
+    {
+      "call": "best_signal_pair([], 5)",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(3, 7)], 5)",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(0, 5), (10, 5)], 9)",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(0, 5), (10, 5)], 10)",
+      "expect": "20",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(1, 3), (2, 0), (5, 10), (6, -10)], 4)",
+      "expect": "17",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(1, -5), (2, -5), (3, -5)], 0)",
+      "expect": "None",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(1, -5), (2, -7), (4, -1)], 2)",
+      "expect": "-6",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(0, 100), (1, 0), (2, 0), (3, 0), (50, 0)], 3)",
+      "expect": "103",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(0, 10), (2, 1), (3, 9), (4, 1), (10, 20)], 7)",
+      "expect": "36",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(0, 0), (1, 0), (2, 0), (3, 0)], 2)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(0, 100000000), (1000000000, 100000000)], 1000000000)",
+      "expect": "1200000000",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(i, (i * 7919) % 10007) for i in range(100000)], 1000000000)",
+      "expect": "119820",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(2 * i, -i) for i in range(100000)], 1000000000)",
+      "expect": "99999",
+      "compare": "equal"
+    },
+    {
+      "call": "best_signal_pair([(i, (i * 31) % 97) for i in range(100000)], 50)",
+      "expect": "240",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method checks every earlier signal in reach, which is quadratic when `k` covers the whole log and runs out of time on the large tests. The step to the target is to split the score into a part for each signal and keep the best earlier part in a deque that drops signals as they leave reach.",
+  "solution": "from collections import deque\n\ndef best_signal_pair(signals, k):\n    best = None\n    window = deque()\n    for j, (t, v) in enumerate(signals):\n        while window and t - signals[window[0]][0] > k:\n            window.popleft()\n        if window:\n            ti, vi = signals[window[0]]\n            score = vi - ti + v + t\n            if best is None or score > best:\n                best = score\n        while window and signals[window[-1]][1] - signals[window[-1]][0] <= v - t:\n            window.pop()\n        window.append(j)\n    return best\n",
+  "notes": [
+    "The score splits as `(v_j + t_j) + (v_i - t_i)`, so each `j` needs the largest `v_i - t_i` still in reach.",
+    "A signal leaves reach only when the gap is more than `k`; a gap of exactly `k` still counts.",
+    "The deque keeps `v - t` falling from front to back and each signal enters and leaves it once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def best_signal_pair(signals, k):\n    best = None\n    for j in range(1, len(signals)):\n        ti, vi = signals[j - 1]\n        t, v = signals[j]\n        if t - ti <= k:\n            score = vi + v + t - ti\n            if best is None or score > best:\n                best = score\n    return best\n",
+      "slip": "Checking only neighbouring signals misses a better partner further back but still in reach."
+    },
+    {
+      "code": "from collections import deque\n\ndef best_signal_pair(signals, k):\n    best = None\n    window = deque()\n    for j, (t, v) in enumerate(signals):\n        while window and t - signals[window[0]][0] >= k:\n            window.popleft()\n        if window:\n            ti, vi = signals[window[0]]\n            score = vi - ti + v + t\n            if best is None or score > best:\n                best = score\n        while window and signals[window[-1]][1] - signals[window[-1]][0] <= v - t:\n            window.pop()\n        window.append(j)\n    return best\n",
+      "slip": "Dropping a signal when the gap is `>= k` throws away pairs exactly `k` seconds apart."
+    },
+    {
+      "code": "def best_signal_pair(signals, k):\n    best = None\n    for j, (t, v) in enumerate(signals):\n        i = j - 1\n        while i >= 0 and t - signals[i][0] <= k:\n            ti, vi = signals[i]\n            score = vi + v + t - ti\n            if best is None or score > best:\n                best = score\n            i -= 1\n    return best\n",
+      "slip": "Checking every earlier signal in reach is right but quadratic when `k` is large, so the large tests run out of time."
+    }
+  ]
+}

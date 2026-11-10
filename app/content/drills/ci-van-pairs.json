@@ -1,0 +1,130 @@
+{
+  "id": "ci-van-pairs",
+  "name": "Parcels two to a van",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "two-pointers",
+  "tags": [
+    "pack-2",
+    "stdin",
+    "van-pairs"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1320,
+  "fn": "solve_van_pairs",
+  "returns": "a string",
+  "brief": "A courier loads parcels into vans. A van carries at most two parcels, and their total weight must be at most `cap` kilograms. No parcel is heavier than `cap`. The input comes as one string:\n\n- the first line holds `n` and `cap`, separated by a space;\n- the second line holds the `n` parcel weights in kilograms, whole numbers in no order, separated by spaces (it may be missing when `n` is 0).\n\nWrite `solve_van_pairs(text)`, which returns, as a string, the fewest vans that carry every parcel. Expect extra spaces and a trailing newline.\n\nExample. For `\"4 10\\n7 3 5 6\\n\"` the 7 rides with the 3. The 5 and the 6 weigh 11 together, so each needs its own van. The answer is `\"3\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ parcels; each weight is a whole number from $1$ to `cap`, and `cap` $\\le 10^9$.",
+    "$O(n \\log n)$ time is the target, for the sort. Searching for a partner for every parcel is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Sort the weights. The heaviest parcel left goes in a van now; it takes the lightest parcel left as well when the two fit.",
+  "starter": "def solve_van_pairs(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_van_pairs('4 10\\n7 3 5 6\\n')",
+      "expect": "'3'",
+      "compare": "equal",
+      "note": "7 rides with 3, and 6 and 5 weigh 11 together, so each needs its own van."
+    },
+    {
+      "call": "solve_van_pairs('3 8\\n4 4 4\\n')",
+      "expect": "'2'",
+      "compare": "equal",
+      "note": "Two of the 4s share a van and the third goes alone."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_van_pairs('0 10\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('0 10\\n\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('1 5\\n5\\n')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('4 10\\n7 3 5 6\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('3 8\\n4 4 4\\n')",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('2 10\\n5 5')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('2 9\\n5 5\\n')",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('  5   10 \\n 1  2  8  9  9 \\n\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('4 10\\n2 5 6 8\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('6 100\\n50 50 50 50 50 51\\n')",
+      "expect": "'4'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('3 1000000000\\n1000000000 1 999999999\\n')",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('200000 1000\\n' + ' '.join(str(i % 1000 + 1) for i in range(200000)) + '\\n')",
+      "expect": "'100100'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_van_pairs('200000 1000000000\\n' + ' '.join(['400000000'] * 200000) + '\\n')",
+      "expect": "'100000'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_van_pairs(text):\n    tokens = text.split()\n    n, cap = int(tokens[0]), int(tokens[1])\n    w = sorted(int(t) for t in tokens[2:2 + n])\n    i, j = 0, n - 1\n    vans = 0\n    while i <= j:\n        if i < j and w[i] + w[j] <= cap:\n            i += 1\n        j -= 1\n        vans += 1\n    return str(vans)\n",
+  "notes": [
+    "The heaviest parcel needs a van, and if any parcel fits beside it, the lightest does.",
+    "Pairing the two heaviest that fit is a greedy that fails: for weights 2, 5, 6, 8 and cap 10 it needs 3 vans, not 2.",
+    "The sort costs $O(n \\log n)$ and the two pointers then meet in $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def solve_van_pairs(text):\n    tokens = text.split()\n    n, cap = int(tokens[0]), int(tokens[1])\n    w = sorted((int(t) for t in tokens[2:2 + n]), reverse=True)\n    vans = 0\n    i = 0\n    while i < n:\n        if i + 1 < n and w[i] + w[i + 1] <= cap:\n            i += 2\n        else:\n            i += 1\n        vans += 1\n    return str(vans)\n",
+      "slip": "Pairing each parcel with the next heaviest one wastes the light parcels that could ride with heavy ones."
+    },
+    {
+      "code": "def solve_van_pairs(text):\n    tokens = text.split()\n    n, cap = int(tokens[0]), int(tokens[1])\n    w = sorted(int(t) for t in tokens[2:2 + n])\n    i, j = 0, n - 1\n    vans = 0\n    while i < j:\n        if w[i] + w[j] <= cap:\n            i += 1\n        j -= 1\n        vans += 1\n    return str(vans)\n",
+      "slip": "Stopping when the pointers meet forgets the last parcel when it is left on its own."
+    },
+    {
+      "code": "def solve_van_pairs(text):\n    tokens = text.split()\n    n, cap = int(tokens[0]), int(tokens[1])\n    w = sorted(int(t) for t in tokens[2:2 + n])\n    i, j = 0, n - 1\n    vans = 0\n    while i <= j:\n        if i < j and w[i] + w[j] < cap:\n            i += 1\n        j -= 1\n        vans += 1\n    return str(vans)\n",
+      "slip": "A strict `<` refuses a pair that weighs exactly `cap`, which the van can carry."
+    }
+  ]
+}
