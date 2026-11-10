@@ -14,6 +14,12 @@ import sympy as sp
 from scipy.integrate import solve_ivp
 from scipy.linalg import expm
 
+import json as _json
+import pathlib as _pl
+_ODES = _pl.Path(__file__).resolve().parents[2] / "app" / "content" / "courses" / "odes"
+def _txt(f):
+    return _json.dumps(_json.load(open(_ODES / f, encoding="utf-8")), ensure_ascii=False)
+
 FAILS = []
 NOTES = []
 
@@ -193,9 +199,10 @@ check("zero_plus_positive_is_unstable", abs(solve_ivp(lambda s, u: [-u[0] ** 3, 
 # l13 screens[7].widget.options[2].why answers "a line of equilibria" with "only the origin is still".
 # The question is about the LINEARISATION, and the linearised system does have a line of equilibria.
 J0 = sp.Matrix([x ** 2, -y]).jacobian([x, y]).subs({x: 0, y: 0})
-check("FINDING_6 linearisation_at_origin_has_only_the_origin_still (l13 screens[7] options[2].why)",
-      len(J0.nullspace()) == 0, expected_fail=True)
-# corrected assert: assert J0.nullspace() == [sp.Matrix([1, 0])]   (the linear system has the whole x axis still)
+# FINDING_6 (corrected claim, fix pass): "The linear system has that line, but the true system does not: at (1, 0), x' = 1."
+check("FINDING_6 linear_system_has_line_true_system_moves_at_(1,0) (corrected claim, fix pass)",
+      J0.nullspace() == [sp.Matrix([1, 0])] and (x ** 2).subs(x, 1) == 1
+      and "The linear system has that line, but the true system does not" in _txt("l13-linearising.json"))
 # competing strategies (homework-3 items[4])
 g1, g2 = x * (3 - x - 2 * y), y * (2 - x - y)
 Jc = sp.Matrix([g1, g2]).jacobian([x, y])

@@ -13,6 +13,12 @@ import numpy as np
 import sympy as sp
 from scipy.integrate import solve_ivp
 
+import json as _json
+import pathlib as _pl
+_ODES = _pl.Path(__file__).resolve().parents[2] / "app" / "content" / "courses" / "odes"
+def _txt(f):
+    return _json.dumps(_json.load(open(_ODES / f, encoding="utf-8")), ensure_ascii=False)
+
 FAILS = []
 NOTES = []
 
@@ -76,14 +82,24 @@ check("t+y_not_separable", not separable(tt + yy, tt, yy))
 check("t*y^2_and_exp(t+y)_separable", separable(tt * yy ** 2, tt, yy) and separable(sp.exp(tt + yy), tt, yy))
 # l2 quiz[1].feedback.correct: "t + y is a sum, not a product, so it cannot be split".
 # The stated reason would make every sum non-separable. 1 + y^2 (homework-1 items[6]) is a sum and separable.
-check("FINDING_1 a_sum_is_never_separable (l2 quiz[1].feedback.correct reasoning)",
-      not separable(1 + yy ** 2, tt, yy) and not separable(tt + tt * yy, tt, yy), expected_fail=True)
-# corrected assert: assert not separable(tt + yy, tt, yy)   (no product g(t)h(y) equals t + y)
+# FINDING_1 (corrected claim, fix pass): the feedback now reads "No product $g(t)h(y)$ equals $t + y$".
+# (log F)_ty = (F F_ty - F_t F_y) / F^2 is -1/(t+y)^2 for t + y, but 0 for the sums 1 + y^2 and t + ty.
+check("FINDING_1 no_product_equals_t+y, while sums 1+y^2 and t+ty separate (corrected claim, fix pass)",
+      not separable(tt + yy, tt, yy) and separable(1 + yy ** 2, tt, yy) and separable(tt + tt * yy, tt, yy)
+      and sp.simplify(sp.diff(sp.log(tt + yy), tt, yy) + 1 / (tt + yy) ** 2) == 0
+      and "No product $g(t)h(y)$ equals $t + y$, so it cannot be split." in _txt("l2-separable.json"))
 
 # l2 screens[9]: "first few months, where the two curves agree" / "1 - P/K is about 1"
 rate0 = 0.8 * (1 - 1000 / 10000)
-check("FINDING_2 early_logistic_rate_equals_k=0.8 (l2 screens[9])", abs(rate0 - 0.8) < 0.01, expected_fail=True)
-# corrected assert: assert abs(rate0 - 0.72) < 1e-12   (the logistic starts at 0.72 a year, 10% below k)
+# FINDING_2 (corrected claim, fix pass): "At the start 1 - P/K is 0.9, close to 1, so P grows almost as P0 e^{kt}";
+# "the two curves are still close" over the first few months: gap 2.2% at 3 months, 4.7% at 6 months.
+lg0 = lambda x: 10000 / (1 + 9 * math.exp(-0.8 * x))
+gaps = [1 - lg0(x) / (1000 * math.exp(0.8 * x)) for x in (0.25, 0.5)]
+check("FINDING_2 start_factor_0.9_rate_0.72_curves_close_early (corrected claim, fix pass)",
+      abs((1 - 1000 / 10000) - 0.9) < 1e-12 and abs(rate0 - 0.72) < 1e-12
+      and abs(gaps[0] - 0.0217) < 5e-4 and abs(gaps[1] - 0.0469) < 5e-4
+      and "where the two curves are still close" in _txt("l2-separable.json")
+      and "At the start $1 - P/K$ is 0.9, close to 1" in _txt("l2-separable.json"))
 lg = lambda x: 10000 / (1 + 9 * math.exp(-0.8 * x))
 check("exp_fit_year3_overshoots", abs(1000 * math.exp(2.4) - 11023.18) < 0.01 and abs(lg(3) - 5505.21) < 0.01)
 check("quarter_year_gap_is_2pc", abs(1000 * math.exp(0.2) / lg(0.25) - 1.022) < 0.002)
