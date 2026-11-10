@@ -1955,3 +1955,43 @@ Cumulative weekly review (C, 820 to 829): a weekly mixed set drawn from every me
 
 829. Done [Must] `docs/AUTHORING.md` section 16 "The weekly mixed review" and the report `docs/reports/engine-gen-2.md`.
 829 status: done.
+
+Raised later (fluency quadratics), the answer forms of a typed expression and numeric answer:
+
+830. Done [Should] `expression` `"form": "factorised-fully"`: as `factorised`, and no bracketed factor may still hold a common whole-number factor or a quadratic that factorises over the integers, so `(2x+4)(x+3)` fails for `2(x+2)(x+3)` and `(x^2-4)(x+1)` fails for `(x-2)(x+2)(x+1)`. An equal answer not fully factorised returns the key `form`, default line "Factorise fully: a bracket still has a common factor."
+830 status: done. `ZQ.grade.shapeFullyFactorised`; a quadratic factorises when its discriminant is a perfect square (rational roots, so `4x^2-9` and `x^2+3x` fail as well as integer roots). Cases in `tools/test-answer-forms.mjs` part 1.
+
+831. Done [Should] `expression` `"form": "completed-square"`: `a(x+p)^2+q` with a, p, q numbers or fractions (a may be 1 or negative), either order of the two terms, the number q may be left out; refuses the expanded form and any other equal shape. Default `form` line "Write it as a bracket squared plus a number."
+831 status: done. `ZQ.grade.shapeCompletedSquare`; the x inside the bracket has coefficient 1 and p must not be 0. Cases in `tools/test-answer-forms.mjs` part 2.
+
+832. Done [Should] A set answer for `expression` and `numeric`: `"answers": [...]` with `"unordered": true`, typed with commas (`2, -5`, `x = 2, x = -5`, `x = 2 or x = -5`, `{2, -5}`), a missing or extra value returns the key `count` with the line "This question needs 2 values, separated by commas. You gave 1."; `\pm` (and `±`, `+-` in a numeric field) in the input stands for both values; the maths keyboard of such an item has a comma and `\pm` and a numeric one opens the text phone keyboard.
+832 status: done. `ZQ.grade.exprSetGrade`, `numSetGrade`; wrong sets are comma-separated lists (`tex` or `value`); in exams the model answer shows the set.
+
+833. Done [Should] Fluency `vars`: a pick of tuples, `{ "pick": [[1, 6], [2, 3]], "as": ["r", "s"] }`, sets several names from one draw (numbers or text), so no `where` is needed to tie them.
+833 status: done. `gen.js` `checkFamily` and `draw`; section 16 documents it.
+
+834. Done [Must] Validator schema for the new fields and forms (`answers`, `unordered`, `count`, the two forms), `fluency-rules.mjs` and `fluency-sample.mjs` read set answers, `tools/test-fluency.mjs` grades set answers and both forms in the real widgets (the prompt's own expression typed back must fail), `tools/test-answer-forms.mjs`, five new fixture families, `docs/AUTHORING.md` (the `expression` and `numeric` sections, section 16) and the report `docs/reports/engine-830.md`.
+834 status: done. They work in lessons, reviews, homework and exams as well as Fluency.
+
+Raised later (the first Fluency content wave), engine pass 835 onward:
+
+835. Done [Must] `tools/test-cumulative.mjs` failed 5 of 25 once real Fluency sets existed: the weekly review's per-course cap with several sets in one course must hold, and the tests must not depend on which real sets exist.
+835 status: done. The cap in `select.js` was not broken (the test that draws from real content already held it at four per course); the fixtures wrongly read the real sets. Part C now reads the real sets once, starts every case with none and registers the fixture itself; one new case puts every real set in force and checks no course gives more than four. 26 of 26.
+
+836. Done [Must] Plain-text `ln`, `log`, `exp`, `sin`, `cos`, `tan`, `sqrt` before `(` in `answer`, `accept` and learner input are the functions, not a product of letters (`ln(97)/ln(4)` equalled `97/4`).
+836 status: done. `plainFns` in `grade.js`, first step of `prep`; a name behind a backslash, inside a longer word (`arcsin(`, `sinh(`) or without a bracket is untouched. `tools/audit-plain-functions.mjs` lists every such entry in `app/content` and what the fix did to it (115 entries; the list is in `docs/reports/engine-835.md`). Cases in `tools/test-expr-equations.mjs` part 1.
+
+837. Done [Should] A Fluency answer the grader returns with key `length`, `form` or `count` shows that key's line and then the `solution` steps, as any other wrong answer does.
+837 status: done. `notYetLine` in `player.js` for a generated item.
+
+838. Done [Should] Fluency `let` and `where`: functions `ln`, `log10`, `exp`, `sin`, `cos`, `tan` (radians), the constant `pi` and `if(cond, a, b)`; a `where` that uses only vars is tested before any `let` is worked out; a `let` that divides by zero rejects the draw instead of raising an error.
+838 status: done. `gen.js` (`FUNCS`, `CONSTS`, lazy `if`, `splitWhere`, the let catch). `pi`, the new function names and `if` are reserved, and no existing set used them as names. Existing sets draw the same items (the random stream and which draws are accepted are unchanged). `tools/test-fluency-reach.mjs`; fixture families `log-significant`, `height-with-sine`, `divide-reject`; AUTHORING section 16 (functions table, where). Deferred: `log(x, b)`, `asin`, `acos`, `atan`, `e`, and a degree form of the trigonometric functions.
+
+839. Done [Should] A `wrong` entry may carry `"when": "<condition>"`: the slip is offered only on draws where it holds, and the validator's "wrong equals answer" check respects it.
+839 status: done. `gen.js` `draw` and `checkFamily` (the validator, `fluency-sample.mjs` and `test-fluency.mjs` read the drawn list, so they follow). Unit cases in `tools/test-fluency-reach.mjs`; fixture families `mono-derivative`, `height-with-sine`, `divide-reject`, `exact-angle`, `fractional-coefficient`.
+
+840. Done [Should] Fluency formats: `{mono(v; c, k)}`, power 1 never written by `poly` or `mono`, `cfrac` and `+cfrac`, `(frac)`, `sfN` and `+sfN`, and `{falling(n; r)}`; the surd text var of `poly` documented.
+840 status: done. `gen.js` (`monoText`, `fallingText`, `sigFig`, the `SPEC` pattern). `poly` already wrote no power of 1, so only `mono` is new there. `dp` above 10 and `sf` outside 1 to 10 are now static errors as well as draw errors. Not done: a numeric `tol` stated in units of the last figure (authors give `abs` half a unit, as in section 16).
+
+841. Done [Should] `expression` `"form": "fraction"` (whole number or one fraction in lowest terms; a decimal or an unreduced fraction returns key `form`) and `"form": "exact-angle"` (a multiple of pi in lowest terms; refuses degree signs, decimals and an unreduced multiple); `simplified` is unchanged.
+841 status: done. `ZQ.grade.shapeFraction` and `shapeExactAngle` read the typed text (the engine's canonical form reduces `\frac{14}{18}`), called from the expression widget `formOk`, `exprFormOk`, the validator's form list and `gen.js`. Default lines for both. `tools/test-answer-forms.mjs` part 4b and the widget cases; fixture families `fraction-lowest`, `exact-angle`.

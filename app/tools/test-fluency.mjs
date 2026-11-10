@@ -15,7 +15,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { gen, loadSet, fixtureFiles, APP, numericGrade, typedAnswer, typedValue } from './fluency-rules.mjs';
+import { gen, loadSet, fixtureFiles, APP, numericGrade, typedAnswer, typedValue, grade } from './fluency-rules.mjs';
 
 const argv = process.argv.slice(2);
 const val = (k) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : null; };
@@ -134,6 +134,41 @@ const unit = () => {
   bad('a non-kebab id', { id: 'Bad_Id' }, /kebab/);
   bad('an expression accept that is not a list', { widget: { kind: 'expression', answer: 'x', accept: 'x' } }, /accept/);
 
+  /* ENGINE-BACKLOG 830 to 833: the new forms, set answers and a pick of tuples */
+  const ok1 = (name, over) => { const m = gen.checkFamily(fam(over)); check(`family rule: ${name}`, m.length === 0, m.join(' | ')); };
+  ok1('form factorised-fully', { widget: { kind: 'expression', answer: '2(x+1)(x+2)', form: 'factorised-fully' } });
+  ok1('form completed-square', { widget: { kind: 'expression', answer: '(x+1)^2', form: 'completed-square' } });
+  ok1('an expression set answer', { widget: { kind: 'expression', answers: ['{a}', '{b}'], unordered: true } });
+  ok1('a numeric set answer with a wrong set', { widget: { kind: 'numeric', answers: ['{a}', '{b}'], unordered: true, tol: { abs: 0 } }, wrong: [{ id: 'w', value: '{-a}, {-b}' }] });
+  bad('answers with an answer', { widget: { kind: 'expression', answer: 'x', answers: ['1', '2'], unordered: true } }, /not both/);
+  bad('answers without unordered', { widget: { kind: 'expression', answers: ['1', '2'] } }, /unordered must be true/);
+  bad('unordered without answers', { widget: { kind: 'expression', unordered: true } }, /answers is a list of two or more/);
+  bad('one answer only', { widget: { kind: 'expression', answers: ['1'], unordered: true } }, /two or more/);
+  bad('answers with form', { widget: { kind: 'expression', answers: ['1', '2'], unordered: true, form: 'simplified' } }, /form is not used with answers/);
+  bad('answers with accept (expression)', { widget: { kind: 'expression', answers: ['1', '2'], unordered: true, accept: ['x'] } }, /accept is not used with answers/);
+  bad('answers with a per cent unit', { widget: { kind: 'numeric', answers: ['1', '2'], unordered: true, unit: '%' } }, /unit "%"/);
+  bad('an unknown name in answers', { widget: { kind: 'expression', answers: ['{a}', '{zz}'], unordered: true } }, /"zz" is neither a var nor a let/);
+  const tup = (over) => fam({ vars: { rs: { pick: [[1, 6], [2, 3], [-2, 5]], as: ['r', 's'] } }, let: {}, prompt: 'Roots ${r}$ and ${s}$.', solution: ['${r}$ and ${s}$.'], widget: { kind: 'numeric', answers: ['{r}', '{s}'], unordered: true, tol: { abs: 0 } }, ...over });
+  check('tuple pick: a well formed family has no problems', gen.checkFamily(tup()).length === 0, gen.checkFamily(tup()).join('; '));
+  const badT = (name, vars, re) => { const m = gen.checkFamily(tup({ vars })); check(`tuple pick rule: ${name}`, m.some((x) => re.test(x)), m.join(' | ') || 'no message'); };
+  badT('a tuple of the wrong length', { rs: { pick: [[1, 6], [2]], as: ['r', 's'] } }, /tuples, each with 2/);
+  badT('as without a pick', { rs: { int: [1, 3], as: ['r', 's'] } }, /with a pick of tuples/);
+  badT('a single name', { rs: { pick: [[1], [2]], as: ['r'] } }, /two or more names/);
+  badT('a reserved name', { rs: { pick: [[1, 6]], as: ['r', 'gcd'] } }, /reserved/);
+  badT('a name used twice', { a: { int: [1, 2] }, rs: { pick: [[1, 6]], as: ['r', 'a'] } }, /already a var/);
+  badT('not with tuples', { rs: { pick: [[1, 6], [2, 3]], as: ['r', 's'], not: [1] } }, /not cannot be used/);
+  badT('a pick of tuples without as is not numbers', { rs: { pick: [[1, 6]] } }, /list of numbers or text/);
+  const tr = gen.sample(tup(), { seeds: 120, set: 't' });
+  check('tuple pick: one draw sets both names, as written, and all tuples appear', tr.failed === 0 && tr.items.every((it) => ['1,6', '2,3', '-2,5'].includes(`${it.vars.r},${it.vars.s}`)) && new Set(tr.items.map((it) => `${it.vars.r},${it.vars.s}`)).size === 3);
+  check('tuple pick: the set widget is filled from the tuple', tr.items.every((it) => it.widget.answers.join(',') === `${it.vars.r},${it.vars.s}` && it.widget.unordered === true && typeof it.widget.answers[0] === 'number'));
+  check('tuple pick: where may read the names, and no draw is lost to a half-matching tuple', gen.sample(tup({ where: ['r < s'] }), { seeds: 100, set: 't' }).items.every((it) => +it.vars.r < +it.vars.s));
+  const nw = gen.sample(tup({ wrong: [{ id: 'w', value: '{-r}, {-s}' }] }), { seeds: 5, set: 't' });
+  check('numeric set: a wrong value stays a comma-separated text', nw.failed === 0 && nw.items.every((it) => it.wrong[0].value === `${-it.vars.r}, ${-it.vars.s}`));
+  const bt = gen.sample(tup({ wrong: [{ id: 'w', value: 'two, three' }] }), { seeds: 3, set: 't' });
+  check('numeric set: a wrong value that is not numbers is an error in the draw', bt.failed === 3);
+  const mixed = gen.sample(fam({ vars: { w: { pick: [['up', 1], ['down', -1]], as: ['word', 'g'] } }, let: {}, where: ["(word == 'up' and g == 1) or (word == 'down' and g == -1)"], prompt: 'Go ${g}$ {word}.', solution: ['${g}$.'], widget: { kind: 'expression', answer: '{g}x' } }), { seeds: 60, set: 't' });
+  check('tuple pick: text and numbers in one tuple, no draw rejected', mixed.failed === 0 && mixed.rejected === 0 && mixed.items.every((it) => (it.vars.word === 'up') === (it.vars.g === '1')));
+
   /* drawing */
   const f1 = fam({ vars: { a: { int: [2, 9] }, b: { int: [-9, 9], not: [0] }, c: { int: [0, 20], step: 5 }, v: { pick: ['x', 'y'] } }, let: { p: 'a*b' }, where: ['gcd(a, abs(b)) == 1'],
     prompt: '{v}: {a} {b:+} {c}', wrong: [{ id: 'w', tex: '{a}{v}{b:+}', line: 'Line {a}.' }] });
@@ -149,8 +184,12 @@ const unit = () => {
   check('draw: the wrong line is rendered', run.items.every((it) => it.wrong[0].line === `Line ${it.vars.a}.`));
   const never = gen.sample(fam({ where: ['a > 100'] }), { seeds: 5, set: 't' });
   check('draw: a where that never holds fails every draw, and says why', never.failed === 5 && never.rejected === never.attempts);
-  const erring = gen.sample(fam({ let: { p: 'a / 0' } }), { seeds: 5, set: 't' });
-  check('draw: an evaluation error is reported, not thrown', erring.failed === 5 && /division by zero/.test(erring.errors[0][0]));
+  const erring = gen.sample(fam({ let: { p: 'sqrt(0 - a)' } }), { seeds: 5, set: 't' });
+  check('draw: an evaluation error is reported, not thrown', erring.failed === 5 && /negative/.test(erring.errors[0][0]));
+  const zero = gen.sample(fam({ let: { p: 'a / 0' } }), { seeds: 5, set: 't' });
+  check('draw: a let that divides by zero rejects the draw, with no error (838)', zero.failed === 5 && zero.rejected === zero.attempts && zero.errors.length === 0);
+  const zeroWhere = gen.sample(fam({ where: ['a / 0 > 1'] }), { seeds: 5, set: 't' });
+  check('draw: a where that divides by zero is still an error', zeroWhere.failed === 5 && /division by zero/.test(zeroWhere.errors[0][0]));
   const set = { id: 'set-x', n: 20, families: [fam({ id: 'one', weight: 2 }), fam({ id: 'two', prompt: 'T ${a}(x{b:+})$.' }), fam({ id: 'three', prompt: 'H ${a}(x{b:+})$.' })] };
   const order = gen.schedule(set.families, 20);
   check('weights: a weight-2 family takes half the turns', order.filter((i) => i === 0).length === 10 && order.filter((i) => i === 1).length === 5 && order.filter((i) => i === 2).length === 5, order.join(''));
@@ -170,6 +209,7 @@ const unit = () => {
   /* the fixtures draw cleanly */
   fixtureFiles().forEach((f) => {
     const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (path.basename(f) === 'fluency-l1-letters-for-numbers.json') { check('fixture fluency-l1-letters-for-numbers.json: a sample set with the authoring-reach families (838 to 841)', d.sample === true && d.families.length === 9 && d.families.some((x) => x.widget.form === 'fraction') && d.families.some((x) => x.widget.form === 'exact-angle')); return; }
     check(`fixture ${path.basename(f)}: has the four families the brief names (numeric, expanded, factorised, upToConstant)`,
       d.sample === true && d.families.some((x) => x.widget.kind === 'numeric') && d.families.some((x) => x.widget.form === 'expanded') && d.families.some((x) => x.widget.form === 'factorised') && d.families.some((x) => x.widget.upToConstant));
     check(`fixture ${path.basename(f)}: a full attempt draws 20 items`, gen.generate(d, 11).length === 20);
@@ -246,7 +286,22 @@ const browser = async () => {
         const jobs = r.items.map((it) => {
           const w = { ...it.widget, wrong: it.wrong.map((x) => { const o = { id: x.id }; if (x.tex !== undefined) o.tex = x.tex; if (x.value !== undefined) { o.value = x.value; if (x.tol) o.tol = x.tol; } return o; }) };
           const tries = [];
-          if (numeric) {
+          const setTries = (vals) => {   // a set answer (ENGINE-BACKLOG 832): any order, labels, "or", one value short, one too many
+            const all = vals;
+            tries.push({ text: all.join(', '), want: 'ok', what: 'set answer' });
+            tries.push({ text: all.slice().reverse().join(', '), want: 'ok', what: 'set answer reversed' });
+            tries.push({ text: all.map((x) => `x = ${x}`).join(' or '), want: 'ok', what: 'set answer as x = a or x = b' });
+            tries.push({ text: all.slice(1).join(', '), want: 'no', what: 'a value missing', key: 'count' });
+            tries.push({ text: [...all, all[0]].join(', '), want: 'no', what: 'a value too many', key: 'count' });
+            if (!numeric && all.length === 2) {   // a \pm b when the two values are a + b and a - b
+              const i = all[0].lastIndexOf('+');
+              if (i > 0 && all[0].slice(0, i) + '-' + all[0].slice(i + 1) === all[1]) tries.push({ text: `${all[0].slice(0, i)}\\pm ${all[0].slice(i + 1)}`, want: 'ok', what: 'a \\pm b' });
+            }
+          };
+          if (it.widget.answers) {
+            setTries(it.widget.answers.map((a) => (numeric ? grade().fmtNum(+a) : a)));
+            it.wrong.forEach((x) => tries.push({ text: numeric ? x.value : x.tex, want: 'no', what: `wrong ${x.id}`, id: x.id }));
+          } else if (numeric) {
             tries.push({ text: typedAnswer(it), want: 'ok', what: 'answer' });
             it.wrong.forEach((x) => tries.push({ text: typedValue(it.widget, x.value), want: 'no', what: `wrong ${x.id}`, id: x.id }));
           } else {
@@ -271,7 +326,7 @@ const browser = async () => {
           host.remove();
           return out;
         }, jobs);
-        const bad = { answer: 0, wrongOk: 0, formOk: 0, mirror: 0, route: 0 };
+        const bad = { answer: 0, wrongOk: 0, formOk: 0, mirror: 0, route: 0, key: 0 };
         const first = [];
         jobs.forEach((j, ji) => j.tries.forEach((t, ti) => {
           const g = got[ji][ti];
@@ -279,10 +334,12 @@ const browser = async () => {
           if (g.ok !== wantOk) { first.length < 3 && first.push(`seed ${j.seed} ${j.prompt}: ${t.what} "${t.text}" was ${g.ok ? 'correct' : 'not correct'}`); if (wantOk) bad.answer++; else if (t.what.startsWith('wrong')) bad.wrongOk++; else bad.formOk++; }
           if (numeric) { const m = numericGrade(j.spec, t.text); if (m.ok !== g.ok) bad.mirror++; }
           if (!wantOk && t.id && g.key !== t.id) bad.route++;
+          if (t.key && g.key !== t.key) { bad.key++; first.length < 3 && first.push(`seed ${j.seed} ${j.prompt}: ${t.what} "${t.text}" returned key ${g.key}, not ${t.key}`); }
         }));
         check(`${tag}: the answer is graded correct (every accept form, a constant for upToConstant)`, bad.answer === 0, `${bad.answer} failures; ${first.join(' || ')}`);
         check(`${tag}: no wrong is graded correct`, bad.wrongOk === 0, `${bad.wrongOk} failures; ${first.join(' || ')}`);
         if (f.widget.form) check(`${tag}: form ${f.widget.form} is enforced (the prompt's own expression typed back fails)`, bad.formOk === 0, `${bad.formOk} failures; ${first.join(' || ')}`);
+        if (f.widget.answers) check(`${tag}: a set answer is graded in any order, and a missing or extra value returns the key count`, bad.key === 0, `${bad.key} failures; ${first.join(' || ')}`);
         if (numeric) check(`${tag}: the node mirror grades as the widget does`, bad.mirror === 0, `${bad.mirror} differences`);
         if (bad.route) console.log(`note  ${tag}: ${bad.route} wrong answers were matched to another wrong id (a coinciding draw; the line shown is the other one's)`);
       }

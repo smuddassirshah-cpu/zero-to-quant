@@ -105,6 +105,9 @@
   };
   const notYetLine = (spec, r) => {
     const fb = spec.feedback || {};
+    /* ENGINE-BACKLOG 837: a generated (Fluency) item answered with a key of the widget's own (length, form, count) shows that key's stock line and
+       then the solution steps, as a wrong[] line does */
+    if (spec.generated && r.line && fb.generic && (r.key === 'length' || r.key === 'form' || r.key === 'count') && !(fb.byKey && fb.byKey[r.key])) return `${r.line} ${fb.generic}`;
     return (r.key != null && fb.byKey && fb.byKey[r.key]) || r.line || fb.generic || 'Look again at what the question asks.';
   };
 

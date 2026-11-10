@@ -36,10 +36,13 @@ const cases = [
   ['choice-widget', (d) => { fam(d, 'expand-single').widget = { kind: 'choice', answer: 'x' }; }, '"numeric" or "expression"'],
   ['unknown-format', (d) => { fam(d, 'expand-single').prompt = 'Expand ${a}({v}{b:zz})$.'; }, 'unknown format'],
   ['wrong-equals-the-answer', (d) => { fam(d, 'expand-single').vars.a = { int: [1, 9] }; }, 'first-term-only'],
+  ['wrong-with-when-is-protected', (d) => { const f = fam(d, 'expand-single'); f.vars.a = { int: [1, 9] }; f.wrong[0].when = 'a > 1'; }, null],
+  ['when-names-something-unknown', (d) => { fam(d, 'expand-single').wrong[0].when = 'zz > 1'; }, '"zz" is not a var or a let'],
   ['numeric-wrong-inside-tolerance', (d) => { fam(d, 'evaluate-linear').widget.tol = { abs: 100 }; }, 'grades as correct'],
   ['where-rejects-nearly-everything', (d) => { fam(d, 'expand-single').where = ['a == 9 and b > 0']; }, 'reject '],
   ['where-never-holds', (d) => { fam(d, 'expand-single').where = ['a > 100']; }, 'could not be completed'],
-  ['division-by-zero', (d) => { fam(d, 'expand-single').let.p = 'a / (b - b)'; }, 'division by zero'],
+  ['division-by-zero', (d) => { fam(d, 'expand-single').where = ['a / (b - b) > 0']; }, 'division by zero'],
+  ['let-division-by-zero-rejects', (d) => { fam(d, 'expand-single').let.p = 'a / (b - b)'; }, 'could not be completed'],
   ['too-few-distinct-prompts', (d) => { const f = fam(d, 'expand-single'); f.vars = { a: { int: [2, 4] }, b: { int: [1, 3] }, v: { pick: ['x'] } }; }, 'distinct prompts'],
   ['a-text-var-in-arithmetic', (d) => { fam(d, 'expand-single').let.p = 'a * v'; }, 'needs numbers'],
   ['exclamation-in-a-line', (d) => { fam(d, 'expand-single').wrong[0].line = 'You only did the first term!'; }, 'no exclamation marks'],
@@ -50,6 +53,17 @@ const cases = [
   ['unknown-family-field', (d) => { fam(d, 'expand-single').hint = 'x'; }, 'unknown field "hint"'],
   ['form-on-a-numeric-widget', (d) => { fam(d, 'evaluate-linear').widget.form = 'expanded'; }, 'widget.form'],
   ['let-reads-a-later-let', (d) => { fam(d, 'antiderivative-power').let = { c: 'k1 * m', k1: 'k + 1' }; }, 'not a var or an earlier let'],
+  /* ENGINE-BACKLOG 830 to 834: the new forms, set answers and a pick of tuples */
+  ['numeric-set-wrong-equals-the-answer', (d) => { fam(d, 'roots-numeric').wrong[0].value = '{s}, {r}'; }, 'grades as correct'],
+  ['expression-set-wrong-equals-the-answer', (d) => { fam(d, 'roots-expression').wrong[0].tex = '{-d/c:frac}, {-b/a:frac}'; }, 'grades as correct'],
+  ['set-answers-without-unordered', (d) => { delete fam(d, 'roots-numeric').widget.unordered; }, 'unordered'],
+  ['set-with-an-answer-as-well', (d) => { fam(d, 'roots-expression').widget.answer = '{r}'; }, 'not both'],
+  ['set-with-a-form', (d) => { fam(d, 'roots-surd').widget.form = 'simplified'; }, 'form is not used with answers'],
+  ['numeric-set-wrong-not-numbers', (d) => { fam(d, 'roots-numeric').wrong[0].value = 'two, five'; }, 'draws could not be completed'],
+  ['tuple-of-the-wrong-length', (d) => { fam(d, 'roots-numeric').vars.roots.pick[0] = [1]; }, 'tuples, each with 2'],
+  ['tuple-name-already-a-var', (d) => { fam(d, 'roots-numeric').vars.roots.as = ['r', 'v']; }, 'already a var'],
+  ['unknown-form', (d) => { fam(d, 'factorise-fully').widget.form = 'factorised-full'; }, 'widget.form'],
+  ['fully-wrong-is-the-key-typed-differently', (d) => { fam(d, 'factorise-fully').wrong[0].tex = '{k}({v}{p:+})({v}{q:+})'; }, 'common-factor-dropped'],
   ['stray-nan', (d) => { fam(d, 'evaluate-linear').let.r = 'a + b*x'; fam(d, 'evaluate-linear').solution[1] = '${a} + {sqrt(0-1)}$.'; }, 'sqrt of a negative'],
 ];
 let pass = 0, fail = 0;
@@ -69,7 +83,7 @@ for (const [name, mutate, has] of cases) {
     const m = run();
     const man = JSON.parse(fs.readFileSync(path.join(copy, 'content/manifest.json'), 'utf8'));
     const row = man.fluency && man.fluency['equations/fluency-l3-opening-brackets'];
-    if (m.code !== 0 || !row || row.lesson !== 'l3-opening-brackets' || row.families !== 5 || row.n !== 20 || row.sample || !man.files.includes('courses/equations/fluency-l3-opening-brackets.json')) problem = `manifest row wrong: ${JSON.stringify(row)}`;
+    if (m.code !== 0 || !row || row.lesson !== 'l3-opening-brackets' || row.families !== fixture.families.length || row.n !== 20 || row.sample || !man.files.includes('courses/equations/fluency-l3-opening-brackets.json')) problem = `manifest row wrong: ${JSON.stringify(row)}`;
   }
   fs.rmSync(path.join(dir, 'fluency-l99-nothing.json'), { force: true });
   void renamed;

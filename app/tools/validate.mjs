@@ -511,6 +511,27 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       break;
     }
     case 'numeric':
+      /* ENGINE-BACKLOG 832: a set answer, answers: [2, -5] with unordered: true; the learner types the values separated by commas */
+      if (w.answers != null || w.unordered != null) {
+        if (!(Array.isArray(w.answers) && w.answers.length >= 2 && w.answers.every(a => typeof a === 'number' && Number.isFinite(a)))) err(file, `${where}.answers`, 'numeric answers is a list of two or more numbers');
+        if (w.unordered !== true) err(file, `${where}.unordered`, 'unordered must be true with answers (the values are an unordered set)');
+        if (w.answer != null) err(file, `${where}.answer`, 'give answers (a set) or answer, not both');
+        if (w.unit === '%') err(file, `${where}.unit`, 'unit "%" is not used with answers');
+        tol(w.tol, `${where}.tol`);
+        ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
+        keys.add('count');
+        (w.wrong || []).forEach((x, i) => {
+          const parts = typeof x.value === 'string' ? x.value.split(',').map(t => t.trim()) : [];
+          if (parts.length < 2 || parts.some(t => !/^-?(\d+\.?\d*|\.\d+)(\/-?\d+\.?\d*)?$/.test(t))) { err(file, `${where}.wrong[${i}].value`, 'a wrong value of a set is text of two or more numbers separated by commas, for example "2, 5"'); return; }
+          if (Array.isArray(w.answers) && parts.length === w.answers.length && isObj(w.tol)) {
+            const nums = parts.map(t => { const m = t.split('/'); return m.length === 2 ? +m[0] / +m[1] : +t; }), tl = w.tol.rel != null ? (a) => Math.abs(a) * w.tol.rel : () => w.tol.abs || 0;
+            const pool = w.answers.slice(), hit = nums.every(v => { const k = pool.findIndex(a => Math.abs(v - a) <= tl(a) + 1e-9); if (k < 0) return false; pool.splice(k, 1); return true; });
+            if (hit) err(file, `${where}.wrong[${i}].value`, 'this wrong set is inside the answer\'s tolerance, so it grades correct and never fires');
+          }
+        });
+        text(w.accept, `${where}.accept`);
+        break;
+      }
       if ((typeof w.answer !== 'number' || !Number.isFinite(w.answer)) && !(typeof w.answer === 'string' && /^\{\{\s*carry\.[A-Za-z0-9_.]+\s*\}\}$/.test(w.answer))) err(file, `${where}.answer`, 'numeric answer must be a number (or one {{carry.name}} placeholder)');
       tol(w.tol, `${where}.tol`);
       wrongCannotFire(file, where, w.answer, w.tol, w.wrong);
@@ -537,6 +558,20 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       }
       break;
     case 'expression':
+      /* ENGINE-BACKLOG 832: a set answer, answers: ["2", "-5"] with unordered: true; the learner types the values separated by commas */
+      if (w.answers != null || w.unordered != null) {
+        if (!(Array.isArray(w.answers) && w.answers.length >= 2 && w.answers.every(a => typeof a === 'string' && a.trim()))) err(file, `${where}.answers`, 'expression answers is a list of two or more TeX strings');
+        if (w.unordered !== true) err(file, `${where}.unordered`, 'unordered must be true with answers (the values are an unordered set)');
+        if (w.answer != null) err(file, `${where}.answer`, 'give answers (a set) or answer, not both');
+        if (w.accept != null) err(file, `${where}.accept`, 'accept is not used with answers: list every value in answers');
+        if (w.form != null) err(file, `${where}.form`, 'form is not used with answers');
+        if (w.upToConstant != null) err(file, `${where}.upToConstant`, 'upToConstant is not used with answers');
+        ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
+        keys.add('count');
+        (w.wrong || []).forEach((x, i) => { if (typeof x.tex !== 'string' || !x.tex.includes(',')) err(file, `${where}.wrong[${i}].tex`, 'a wrong value of a set is TeX with the values separated by commas, for example "2, 5"'); });
+        (Array.isArray(w.answers) ? w.answers : []).forEach((a, i) => { if (typeof a === 'string') checkText(file, `${where}.answers[${i}]`, `$${a}$`, { copy: false }); });
+        break;
+      }
       if (typeof w.answer !== 'string' || !w.answer) err(file, `${where}.answer`, 'expression answer must be a TeX string');
       if (!Array.isArray(w.accept) || !w.accept.length) warn(file, `${where}.accept`, 'list the accepted plain-text forms for the fallback grader');
       /* engine pass (items 433, 437): a capital N or D, \min, \max and \epsilon now grade; a vector or matrix answer has the key "length" for a wrong size */
@@ -549,7 +584,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       else [['answer', w.answer], ...(Array.isArray(w.accept) ? w.accept.map((a, i) => [`accept[${i}]`, a]) : [])].forEach(([f, v]) => { if (typeof v !== 'string') return; for (const m of v.matchAll(/\(-1\)\^(?:\{\s*(?:-?\s*)?([A-Za-z]|\\[A-Za-z]+)(?![A-Za-z])[^{}]*\}|(?:-?\s*)?([A-Za-z]))/g)) { const sym = m[1] || m[2]; if (!(w.integers || []).includes(sym)) { warn(file, `${where}.${f}`, `(-1)^{${sym}} cannot be graded at non-integer points: add integers: ["${sym}"] to this expression`); break; } } });
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
-      if (w.form != null) { if (!['expanded', 'factorised', 'simplified', 'rectangular'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised", "simplified" or "rectangular" (a + bi)'); keys.add('form'); }
+      if (w.form != null) { if (!['expanded', 'factorised', 'factorised-fully', 'completed-square', 'simplified', 'rectangular', 'fraction', 'exact-angle'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised", "factorised-fully", "completed-square", "simplified", "rectangular" (a + bi), "fraction" or "exact-angle"'); keys.add('form'); }
       break;
     case 'slider':
       ['min', 'max', 'step'].forEach(f => { if (typeof w[f] !== 'number') err(file, `${where}.${f}`, 'must be a number'); });

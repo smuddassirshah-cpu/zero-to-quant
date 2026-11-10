@@ -13,9 +13,13 @@
      ZQ.gen.sample(family, { seeds, set })     the statistics the validator reads: distinct prompts, rejects, errors, items
      ZQ.gen.playerItem(item, set, k)           an item in the shape ZQ.player.runSet takes (feedback, explain, widget)
      ZQ.gen.rng(seed)                          the seeded generator (ZQ.arith.rng, mulberry32), one stream per string seed
+   A var may be a pick of tuples ({ pick: [[1, 6], [2, 3]], as: ["r", "s"] }): one draw sets every name in `as` (833). A widget may be
+   a set answer (answers: [...], unordered: true; 832) and its form may be factorised-fully or completed-square (830, 831).
    No eval and no Function: the evaluator is a small recursive-descent parser over + - * / ^ %, comparisons, and / or / not,
-   and the functions gcd lcm abs min max floor ceil round sqrt comb fact sign. Numbers are exact rationals (BigInt) until a
-   square root or a fractional power makes a float. */
+   and the functions gcd lcm abs min max floor ceil round sqrt comb fact sign, and (ENGINE-BACKLOG 838) ln log10 exp sin cos tan (radians),
+   the constant pi and if(cond, a, b). Numbers are exact rationals (BigInt) until a square root, a fractional power or one of those
+   functions makes a float. A wrong[] entry may carry a `when` condition (839); the formats cfrac, (frac), sfN and the placeholders
+   mono(v; c, k) and falling(n; r) are 840. */
 (function (root) {
   'use strict';
 
@@ -72,6 +76,7 @@
   const cmpNum = (a, b) => (isQ(a) && isQ(b) ? cmpQ(a, b) : toF(a) < toF(b) ? -1 : toF(a) > toF(b) ? 1 : 0);
   const bisqrt = (n) => { if (n < 2n) return n; let x = BigInt(Math.floor(Math.sqrt(Number(n)))); while (x * x > n) x--; while ((x + 1n) * (x + 1n) <= n) x++; return x; };
   const MAXDIG = 400;                                    // a power or factorial that would pass this many digits is an error, not a stall
+  const finite = (x) => { if (!Number.isFinite(x)) bad('a result that is not a finite number'); return x; };
   const needNum = (v, what) => { if (!isNum(v)) bad(`${what} needs numbers`); return v; };
   const needInt = (v, what) => { if (!isInt(v)) bad(`${what} needs a whole number`); return v.n; };
 
@@ -159,6 +164,18 @@
       if (isQ(v)) { const a = bisqrt(v.n), b = bisqrt(v.d); if (a * a === v.n && b * b === v.d) return Q(a, b); }
       return Math.sqrt(toF(v));
     } },
+    /* ENGINE-BACKLOG 838: transcendental functions give floats, except where the result is exactly a whole number */
+    ln: { n: 1, f: ([v]) => { needNum(v, 'ln'); if (cmpNum(v, Q(0n)) <= 0) bad('ln of a number that is not positive'); return isQ(v) && v.n === 1n && v.d === 1n ? Q(0n) : finite(Math.log(toF(v))); } },
+    log10: { n: 1, f: ([v]) => {
+      needNum(v, 'log10'); if (cmpNum(v, Q(0n)) <= 0) bad('log10 of a number that is not positive');
+      if (isQ(v)) { const pow = (x) => { let k = 0n, t = x; while (t > 1n && t % 10n === 0n) { t /= 10n; k++; } return t === 1n ? k : null; }; const a = pow(v.n), b = pow(v.d); if (a !== null && v.d === 1n) return Q(a); if (b !== null && v.n === 1n) return Q(-b); }
+      return finite(Math.log10(toF(v)));
+    } },
+    exp: { n: 1, f: ([v]) => { needNum(v, 'exp'); return isQ(v) && v.n === 0n ? Q(1n) : finite(Math.exp(toF(v))); } },
+    sin: { n: 1, f: ([v]) => { needNum(v, 'sin'); return isQ(v) && v.n === 0n ? Q(0n) : finite(Math.sin(toF(v))); } },
+    cos: { n: 1, f: ([v]) => { needNum(v, 'cos'); return isQ(v) && v.n === 0n ? Q(1n) : finite(Math.cos(toF(v))); } },
+    tan: { n: 1, f: ([v]) => { needNum(v, 'tan'); return isQ(v) && v.n === 0n ? Q(0n) : finite(Math.tan(toF(v))); } },
+    if: { n: 3, lazy: true },
     comb: { n: 2, f: ([a, b]) => {
       const n = needInt(a, 'comb'), k = needInt(b, 'comb');
       if (n < 0n || k < 0n) bad('comb needs non-negative whole numbers');
@@ -176,6 +193,7 @@
     } },
   };
   const FUNC_NAMES = Object.keys(FUNCS);
+  const CONSTS = { pi: Math.PI };
 
   /* ---------- Evaluation ---------- */
   const arithmetic = (o, a, b) => {
@@ -210,8 +228,9 @@
       case 'num': return n.v;
       case 'str': return n.v;
       case 'id': {
-        if (!Object.prototype.hasOwnProperty.call(env, n.name)) bad(`unknown name "${n.name}"`);
-        return env[n.name];
+        if (Object.prototype.hasOwnProperty.call(env, n.name)) return env[n.name];
+        if (Object.prototype.hasOwnProperty.call(CONSTS, n.name)) return CONSTS[n.name];
+        return bad(`unknown name "${n.name}"`);
       }
       case 'un': {
         const v = evalTree(n.a, env);
@@ -224,6 +243,11 @@
         if (!f) bad(`unknown function "${n.name}" (the functions are ${FUNC_NAMES.join(', ')})`);
         const nargs = n.args.length;
         if ((f.n !== undefined && nargs !== f.n) || (f.min !== undefined && nargs < f.min) || (f.max !== undefined && nargs > f.max)) bad(`${n.name} takes ${f.n !== undefined ? f.n : f.max !== undefined ? `${f.min} or ${f.max}` : `at least ${f.min}`} argument${f.n === 1 ? '' : 's'}`);
+        if (f.lazy) {                     // if(cond, a, b): only the chosen branch is evaluated, so if(b != 0, a/b, 0) is safe
+          const c = evalTree(n.args[0], env);
+          if (typeof c !== 'boolean') bad('the first argument of if is a condition (true or false)');
+          return evalTree(n.args[c ? 1 : 2], env);
+        }
         return f.f(n.args.map((x) => evalTree(x, env)));
       }
       case 'bin': {
@@ -265,7 +289,7 @@
   /* the names and function names an expression mentions, for the validator's static checks */
   const refs = (src) => {
     const ids = new Set(), fns = new Set();
-    const walk = (n) => { if (n.t === 'id') ids.add(n.name); else if (n.t === 'call') { fns.add(n.name); n.args.forEach(walk); } else if (n.t === 'bin') { walk(n.a); walk(n.b); } else if (n.t === 'un') walk(n.a); };
+    const walk = (n) => { if (n.t === 'id') { if (!Object.prototype.hasOwnProperty.call(CONSTS, n.name)) ids.add(n.name); } else if (n.t === 'call') { fns.add(n.name); n.args.forEach(walk); } else if (n.t === 'bin') { walk(n.a); walk(n.b); } else if (n.t === 'un') walk(n.a); };
     walk(treeOf(src));
     return { ids, fns };
   };
@@ -305,13 +329,42 @@
     const t = v.toFixed(k);
     return /^-0(\.0*)?$/.test(t) ? t.slice(1) : t;
   };
-  const SPEC = /^(\+)?(c|\(\)|frac|dp(\d+))?$/;
+  const SPEC = /^(\+)?(c|\(\)|frac|cfrac|\(frac\)|dp(\d+)|sf(\d+))?$/;
+  const FORMAT_LIST = '+, c, +c, (), frac, +frac, cfrac, +cfrac, (frac), dpN, +dpN, sfN, +sfN';
+  /* a number as N significant figures (ENGINE-BACKLOG 840), half away from zero, trailing zeros kept: 0.0034567 with sf3 is 0.00346, 1234.5 with sf2 is 1200 */
+  const floatToQ = (x) => {
+    const t = Math.abs(x).toPrecision(15), m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(t);
+    const neg = x < 0;
+    if (!m) { const q = fromDecimal(t); return neg ? Q(-q.n, q.d) : q; }
+    const digits = BigInt(m[1] + (m[2] || '')), e = Number(m[3]) - (m[2] || '').length;
+    const q = e >= 0 ? Q(digits * 10n ** BigInt(e)) : Q(digits, 10n ** BigInt(-e));
+    return neg ? Q(-q.n, q.d) : q;
+  };
+  const sigFig = (v, N) => {
+    if (N < 1 || N > 10) bad('sf takes 1 to 10 significant figures');
+    const q = isQ(v) ? Q(babs(v.n), v.d) : floatToQ(Math.abs(v));
+    if (q.n === 0n) return N > 1 ? `0.${'0'.repeat(N - 1)}` : '0';
+    const P = (k) => 10n ** BigInt(k);
+    let e = String(q.n).length - String(q.d).length;                 // floor(log10) within one
+    const ge = (k) => (k >= 0 ? q.n >= q.d * P(k) : q.n * P(-k) >= q.d);
+    while (ge(e + 1)) e++;
+    while (!ge(e)) e--;
+    for (let pass = 0; pass < 2; pass++) {
+      const dp = N - 1 - e;
+      const r = dp >= 0 ? roundHalfAway(q.n * P(dp), q.d) : roundHalfAway(q.n, q.d * P(-dp)) * P(-dp);
+      if (String(dp >= 0 ? r : r / P(-dp)).length > N) { e++; continue; }   // 9.996 to 3 sf rolls over to 10.0
+      if (dp < 0) return r.toString();
+      const d = r.toString().padStart(dp + 1, '0');
+      return dp ? `${d.slice(0, -dp)}.${d.slice(-dp)}` : d;
+    }
+    return bad('significant figures could not be written');
+  };
   /* One value through a format. spec: "" plain, "+" signed, "c" coefficient, "+c", "()", "frac", "+frac", "dpN", "+dpN". */
   const format = (v, spec = '', mode = 'tex') => {
     const m = SPEC.exec(spec);
-    if (!m) bad(`unknown format ":${spec}" (the formats are +, c, +c, (), frac, +frac, dpN, +dpN)`);
+    if (!m) bad(`unknown format ":${spec}" (the formats are ${FORMAT_LIST})`);
     const signed = !!m[1], kind = m[2] || '';
-    if (kind === '()' && signed) bad('the format "+()" does not exist');
+    if ((kind === '()' || kind === '(frac)') && signed) bad(`the format "+${kind}" does not exist`);
     if (typeof v === 'string' && (signed || kind)) bad(`a format cannot be applied to the text "${v}"`);
     if (typeof v === 'boolean') bad('a true or false value cannot be written into text');
     let body;
@@ -319,8 +372,13 @@
     if (kind === 'c') {
       if (isQ(v) && v.d === 1n && (v.n === 1n || v.n === -1n)) body = signed ? '' : (v.n === 1n ? '' : '-');
       else body = plain(mag, mode);
-    } else if (kind === 'frac') body = isQ(mag) ? fracText(mag) : plain(mag, mode);
+    } else if (kind === 'cfrac') {      // a coefficient that may be a fraction: 1 and -1 write nothing and a minus, a fraction is \frac{n}{d}
+      if (isQ(v) && v.d === 1n && (v.n === 1n || v.n === -1n)) body = signed ? '' : (v.n === 1n ? '' : '-');
+      else body = isQ(mag) ? fracText(mag) : plain(mag, mode);
+    } else if (kind === '(frac)') { const t = isQ(v) ? fracText(absOf(v)) : plain(absOf(v), mode); return negative(v) ? (isQ(v) && v.d !== 1n ? `\\left(-${t}\\right)` : `(-${t})`) : t; }
+    else if (kind === 'frac') body = isQ(mag) ? fracText(mag) : plain(mag, mode);
     else if (kind.startsWith('dp')) { const k = Number(m[3]); if (k > 10) bad('dp takes 0 to 10'); body = fixed(mag, k); }
+    else if (kind.startsWith('sf')) body = (negative(mag) ? '-' : '') + sigFig(mag, Number(m[4]));
     else if (kind === '()') { const t = plain(v, mode); return negative(v) ? `(${t})` : t; }
     else body = plain(mag, mode);
     if (signed) return (negative(v) ? '-' : '+') + body;
@@ -341,6 +399,26 @@
       out += (c.n < 0n ? '-' : out ? '+' : '') + num + v;
     });
     return out || '0';
+  };
+
+  /* mono(v; c, k): one term c v^k (ENGINE-BACKLOG 840): a coefficient of 1 or -1 writes nothing or a minus, power 1 writes no power, power 0 writes
+     the number alone, a fractional coefficient or power is \frac{n}{d}; a power of 10 or more, a negative or a fraction is written in braces */
+  const monoText = (variable, c, k) => {
+    if (!isQ(c)) bad('mono needs an exact coefficient (no square roots or fractional powers)');
+    if (!isQ(k)) bad('mono needs an exact power');
+    if (c.n === 0n) return '0';
+    const a = Q(babs(c.n), c.d), one = a.n === 1n && a.d === 1n, sign = c.n < 0n ? '-' : '';
+    if (k.n === 0n) return sign + (one ? '1' : fracText(a));
+    const pow = k.d === 1n && k.n === 1n ? '' : k.d === 1n && k.n >= 2n && k.n <= 9n ? `^${k.n}` : `^{${fracText(k)}}`;
+    return sign + (one ? '' : fracText(a)) + variable + pow;
+  };
+  /* falling(n; r): n(n-1)...(n-r+1) written out, 10 \times 9 \times 8 \times 7 (ENGINE-BACKLOG 840) */
+  const fallingText = (nv, rv) => {
+    const n = needInt(nv, 'falling'), r = needInt(rv, 'falling');
+    if (r < 1n || r > 20n) bad('falling takes 1 to 20 factors');
+    if (n < r) bad('falling needs n at least r');
+    const out = []; for (let i = 0n; i < r; i++) out.push((n - i).toString());
+    return out.join(' \\times ');
   };
 
   /* ---------- Templates ---------- */
@@ -367,10 +445,25 @@
       if (cs.some((x) => !x)) bad(`poly has an empty coefficient in "{${body}}"`);
       return { poly: { v, coefs: cs.map((x) => parse(x)) } };
     }
+    if (/^mono\s*\(/.test(t)) {
+      if (!t.endsWith(')')) bad(`mono( is not closed in "{${body}}"`);
+      const inner = t.slice(t.indexOf('(') + 1, -1), semi = inner.indexOf(';');
+      if (semi < 0) bad(`mono needs "mono(v; c, k)" in "{${body}}"`);
+      const v = inner.slice(0, semi).trim(), cs = splitTop(inner.slice(semi + 1), ',').map((x) => x.trim());
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(v)) bad(`mono needs a variable name or a letter before the ";" in "{${body}}"`);
+      if (cs.length !== 2 || cs.some((x) => !x)) bad(`mono takes a coefficient and a power: "mono(v; c, k)" in "{${body}}"`);
+      return { mono: { v, c: parse(cs[0]), k: parse(cs[1]) } };
+    }
+    if (/^falling\s*\(/.test(t)) {
+      if (!t.endsWith(')')) bad(`falling( is not closed in "{${body}}"`);
+      const ps = splitTop(t.slice(t.indexOf('(') + 1, -1), ';').map((x) => x.trim());
+      if (ps.length !== 2 || ps.some((x) => !x)) bad(`falling takes "falling(n; r)" in "{${body}}"`);
+      return { falling: { n: parse(ps[0]), r: parse(ps[1]) } };
+    }
     const colon = splitTop(t, ':');
     if (colon.length > 2) bad(`more than one ":" in "{${body}}"`);
     const spec = colon.length === 2 ? colon[1].trim() : '';
-    if (colon.length === 2) { const m = SPEC.exec(spec); if (!m || spec === '' || (m[1] && m[2] === '()')) bad(`unknown format ":${spec}" in "{${body}}" (the formats are +, c, +c, (), frac, +frac, dpN, +dpN)`); }
+    if (colon.length === 2) { const m = SPEC.exec(spec); if (!m || spec === '' || (m[1] && (m[2] === '()' || m[2] === '(frac)')) || (m[4] && (Number(m[4]) < 1 || Number(m[4]) > 10)) || (m[3] && Number(m[3]) > 10)) bad(`unknown format ":${spec}" in "{${body}}" (the formats are ${FORMAT_LIST}; dp takes 0 to 10, sf 1 to 10)`); }
     if (!colon[0].trim()) bad('an empty {} in a template (write {{ and }} for a literal brace)');
     return { expr: parse(colon[0]), spec, src: colon[0].trim() };
   };
@@ -402,13 +495,18 @@
       const v = Object.prototype.hasOwnProperty.call(env, p.poly.v) ? env[p.poly.v] : p.poly.v;
       return polyText(typeof v === 'string' ? v : plain(v, 'tex'), p.poly.coefs.map((c) => evalTree(c, env)));
     }
+    if (p.mono) {
+      const v = Object.prototype.hasOwnProperty.call(env, p.mono.v) ? env[p.mono.v] : p.mono.v;
+      return monoText(typeof v === 'string' ? v : plain(v, 'tex'), evalTree(p.mono.c, env), evalTree(p.mono.k, env));
+    }
+    if (p.falling) return fallingText(evalTree(p.falling.n, env), evalTree(p.falling.r, env));
     return format(evalTree(p.expr, env), p.spec, mode);
   }).join('');
   const templateRefs = (src) => {
     const ids = new Set(), fns = new Set();
     const add = (t) => { const r = refs(t); r.ids.forEach((x) => ids.add(x)); r.fns.forEach((x) => fns.add(x)); };
-    tplOf(src).parts.forEach((p) => { if (p.expr) add(p.expr); else if (p.poly) { p.poly.coefs.forEach(add); } });
-    tplOf(src).parts.forEach((p) => { if (p.poly) ids.add(`poly:${p.poly.v}`); });
+    tplOf(src).parts.forEach((p) => { if (p.expr) add(p.expr); else if (p.poly) { p.poly.coefs.forEach(add); } else if (p.mono) { add(p.mono.c); add(p.mono.k); } else if (p.falling) { add(p.falling.n); add(p.falling.r); } });
+    tplOf(src).parts.forEach((p) => { if (p.poly) ids.add(`poly:${p.poly.v}`); else if (p.mono) ids.add(`poly:${p.mono.v}`); });
     return { ids, fns };
   };
 
@@ -416,15 +514,15 @@
   const VAR_NAME = /^[a-z][A-Za-z0-9_]*$/;
   const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
   const WIDGET_FIELDS = {
-    numeric: ['kind', 'answer', 'tol', 'tolerance', 'unit', 'placeholder', 'accept', 'label'],
-    expression: ['kind', 'answer', 'accept', 'form', 'upToConstant', 'tolerance', 'integers', 'functions', 'keyboard', 'label'],
+    numeric: ['kind', 'answer', 'answers', 'unordered', 'tol', 'tolerance', 'unit', 'placeholder', 'accept', 'label'],
+    expression: ['kind', 'answer', 'answers', 'unordered', 'accept', 'form', 'upToConstant', 'tolerance', 'integers', 'functions', 'keyboard', 'label'],
   };
-  const FORMS = ['expanded', 'factorised', 'simplified', 'rectangular'];
-  const reserved = (n) => KEYWORDS.has(n) || FUNCS[n];
+  const FORMS = ['expanded', 'factorised', 'factorised-fully', 'completed-square', 'simplified', 'rectangular', 'fraction', 'exact-angle'];
+  const reserved = (n) => KEYWORDS.has(n) || FUNCS[n] || Object.prototype.hasOwnProperty.call(CONSTS, n);
   const intRange = (v) => Array.isArray(v) && v.length === 2 && v.every((x) => Number.isInteger(x)) && v[0] <= v[1];
   const varValues = (spec) => {         // every value a var can take, or null when the range is too wide to list (the static check then only counts)
     const not = (Array.isArray(spec.not) ? spec.not : []).map((x) => String(x));
-    if (spec.pick) return spec.pick.filter((x) => !not.includes(String(x)));
+    if (spec.pick) return spec.as ? spec.pick.slice() : spec.pick.filter((x) => !not.includes(String(x)));
     const [lo, hi] = spec.int, step = spec.step || 1, out = [];
     for (let x = lo; x <= hi; x += step) if (!not.includes(String(x))) out.push(x);
     return out;
@@ -456,8 +554,21 @@
         else if (reserved(name)) msgs.push(`${w}: "${name}" is a reserved word or function name`);
         if (!spec || typeof spec !== 'object' || Array.isArray(spec)) { msgs.push(`${w}: must be an object with int or pick`); return; }
         const kinds = ['int', 'pick'].filter((k) => spec[k] !== undefined);
-        Object.keys(spec).forEach((k) => { if (!['int', 'pick', 'not', 'step'].includes(k)) msgs.push(`${w}: unknown field "${k}" (int, pick, not, step)`); });
+        Object.keys(spec).forEach((k) => { if (!['int', 'pick', 'not', 'step', 'as'].includes(k)) msgs.push(`${w}: unknown field "${k}" (int, pick, not, step, as)`); });
         if (kinds.length !== 1) { msgs.push(`${w}: give exactly one of int and pick`); return; }
+        if (spec.as !== undefined) {           // a pick of tuples: one draw sets several names (ENGINE-BACKLOG 833)
+          const names = spec.as;
+          if (spec.pick === undefined || !Array.isArray(names) || names.length < 2 || !names.every((n) => typeof n === 'string')) { msgs.push(`${w}.as: a list of two or more names, with a pick of tuples`); return; }
+          if (spec.not !== undefined) msgs.push(`${w}: not cannot be used with a pick of tuples (leave the tuple out of the list)`);
+          if (!(Array.isArray(spec.pick) && spec.pick.length && spec.pick.every((t) => Array.isArray(t) && t.length === names.length && t.every((x) => typeof x === 'string' || (typeof x === 'number' && Number.isFinite(x)))))) { msgs.push(`${w}.pick: a non-empty list of tuples, each with ${names.length} numbers or text values to match as`); return; }
+          names.forEach((n) => {
+            if (!VAR_NAME.test(n)) msgs.push(`${w}.as: "${n}" is not a var name (a lower-case letter, then letters, digits and _)`);
+            else if (reserved(n)) msgs.push(`${w}.as: "${n}" is a reserved word or function name`);
+            else if (known.has(n) || Object.keys(f.vars).some((k) => k === n || (f.vars[k] && f.vars[k].as && k !== name && f.vars[k].as.includes(n)))) msgs.push(`${w}.as: "${n}" is already a var`);
+            known.add(n);
+          });
+          return;
+        }
         if (spec.int !== undefined && !intRange(spec.int)) msgs.push(`${w}.int: [low, high] whole numbers with low at most high`);
         if (spec.pick !== undefined && !(Array.isArray(spec.pick) && spec.pick.length && spec.pick.every((x) => typeof x === 'string' || (typeof x === 'number' && Number.isFinite(x))))) msgs.push(`${w}.pick: a non-empty list of numbers or text`);
         if (spec.not !== undefined && !Array.isArray(spec.not)) msgs.push(`${w}.not: a list of excluded values`);
@@ -492,7 +603,17 @@
       if (!WIDGET_FIELDS[w.kind]) msgs.push(`widget.kind is "numeric" or "expression" (found ${JSON.stringify(w.kind)})`);
       else {
         Object.keys(w).forEach((k) => { if (!WIDGET_FIELDS[w.kind].includes(k)) msgs.push(`widget.${k}: not a field of a ${w.kind} widget here (${WIDGET_FIELDS[w.kind].join(', ')})`); });
-        if (w.answer === undefined) msgs.push('widget.answer is required');
+        const isSet = w.answers !== undefined || w.unordered !== undefined;
+        if (!isSet && w.answer === undefined) msgs.push('widget.answer is required');
+        if (isSet) {           // a set answer (ENGINE-BACKLOG 832): answers, with unordered: true, instead of answer
+          if (w.answer !== undefined) msgs.push('widget: give answers (a set) or answer, not both');
+          if (!(Array.isArray(w.answers) && w.answers.length >= 2 && w.answers.every((x) => typeof x === 'string'))) msgs.push('widget.answers is a list of two or more values (text templates)');
+          if (w.unordered !== true) msgs.push('widget.unordered must be true with answers (the values are an unordered set)');
+          if (w.form !== undefined) msgs.push('widget.form is not used with answers');
+          if (w.accept !== undefined && w.kind === 'expression') msgs.push('widget.accept is not used with answers (list every value in answers)');
+          if (w.upToConstant !== undefined) msgs.push('widget.upToConstant is not used with answers');
+          if (w.unit === '%') msgs.push('widget.unit "%" is not used with answers');
+        }
         if (w.form !== undefined && (w.kind !== 'expression' || !FORMS.includes(w.form))) msgs.push(`widget.form is one of ${FORMS.join(', ')} (expression only)`);
         if (w.upToConstant !== undefined && (w.kind !== 'expression' || typeof w.upToConstant !== 'boolean')) msgs.push('widget.upToConstant is true or false (expression only)');
         if (w.accept !== undefined && (w.kind === 'expression' ? !(Array.isArray(w.accept) && w.accept.every((x) => typeof x === 'string')) : typeof w.accept !== 'string')) msgs.push(w.kind === 'expression' ? 'widget.accept is a list of accepted forms (text)' : 'widget.accept is one line of text');
@@ -516,7 +637,11 @@
           else if (ids.has(x.id)) msgs.push(`${at}.id: "${x.id}" is used twice`); else ids.add(x.id);
           const key = w && w.kind === 'numeric' ? 'value' : 'tex';
           if (x[key] === undefined) msgs.push(`${at}.${key} is required for a ${w && w.kind} widget`);
-          Object.keys(x).forEach((k) => { if (!['id', 'line', 'tex', 'value', 'tol'].includes(k)) msgs.push(`${at}.${k}: unknown field (id, tex or value, tol, line)`); });
+          Object.keys(x).forEach((k) => { if (!['id', 'line', 'tex', 'value', 'tol', 'when'].includes(k)) msgs.push(`${at}.${k}: unknown field (id, tex or value, tol, line, when)`); });
+          if (x.when !== undefined) {
+            if (typeof x.when !== 'string') msgs.push(`${at}.when: a condition in text`);
+            else try { const r = refs(x.when); r.ids.forEach((id) => { if (!known.has(id)) msgs.push(`${at}.when: "${id}" is not a var or a let`); }); r.fns.forEach((fn) => { if (!FUNCS[fn]) msgs.push(`${at}.when: unknown function "${fn}"`); }); } catch (e) { msgs.push(`${at}.when: ${e.message}`); }
+          }
           if (w && w.kind === 'numeric' && x.tex !== undefined) msgs.push(`${at}.tex: a numeric widget's wrong values use "value"`);
           if (w && w.kind === 'expression' && (x.value !== undefined || x.tol !== undefined)) msgs.push(`${at}: an expression widget's wrong values use "tex"`);
           ['tex', 'value', 'line'].forEach((k) => { if (typeof x[k] === 'string') tplMsgs(msgs, `${at}.${k}`, x[k], known); });
@@ -532,7 +657,7 @@
   };
 
   /* ---------- Drawing ---------- */
-  const NUMERIC_KEYS = new Set(['answer', 'abs', 'rel', 'value']);
+  const NUMERIC_KEYS = new Set(['answer', 'answers', 'abs', 'rel', 'value']);
   const asNumber = (text, at) => {
     const s = String(text).trim().replace(/\s+/g, '');
     let m;
@@ -561,6 +686,17 @@
   };
   const showVar = (v) => (typeof v === 'string' ? v : plain(v, 'num'));
   const MAX_TRIES = 60;
+  const whereSplits = new WeakMap();
+  const splitWhere = (f) => {       // [conditions on vars alone, the rest], each in written order
+    let r = whereSplits.get(f);
+    if (!r) {
+      const names = new Set(); Object.entries(f.vars || {}).forEach(([k, spec]) => { (spec && spec.as ? spec.as : [k]).forEach((n) => names.add(n)); });
+      r = [[], []];
+      (f.where || []).forEach((c) => { let early = false; try { early = [...refs(c).ids].every((id) => names.has(id)); } catch { /* reported by checkFamily */ } r[early ? 0 : 1].push(c); });
+      whereSplits.set(f, r);
+    }
+    return r;
+  };
   /* One item. opts.avoid: a Set of prompts already used. Returns the item, or { rejected, error } when no draw was accepted. */
   const draw = (f, r, opts = {}) => {
     const avoid = opts.avoid || null, stats = opts.stats || { attempts: 0, rejected: 0, dup: 0, errors: new Map() };
@@ -572,26 +708,39 @@
         Object.entries(f.vars || {}).forEach(([name, spec]) => {
           const vals = varValues(spec);
           const pick = vals[Math.floor(r() * vals.length)];
-          env[name] = fromJS(pick);
+          if (spec.as) spec.as.forEach((n, i) => { env[n] = fromJS(pick[i]); });   // a tuple: one draw, several names
+          else env[name] = fromJS(pick);
         });
-        Object.entries(f.let || {}).forEach(([name, src]) => { env[name] = evaluate(src, env); });
-        let ok = true;
-        for (const c of f.where || []) { const v = evaluate(c, env); if (typeof v !== 'boolean') bad(`where "${c}" is not a condition (true or false)`); if (!v) { ok = false; break; } }
-        if (!ok) { stats.rejected++; continue; }
+        /* ENGINE-BACKLOG 838: a where that uses only vars is tested before any let, so a let that is undefined where the where fails (a division
+           by a quantity the where rules out) never runs; a let that divides by zero rejects the draw instead of raising an error */
+        const whereOf = (c) => { const v = evaluate(c, env); if (typeof v !== 'boolean') bad(`where "${c}" is not a condition (true or false)`); return v; };
+        const [early, late] = splitWhere(f);
+        if (!early.every(whereOf)) { stats.rejected++; continue; }
+        let undefinedLet = false;
+        for (const [name, src] of Object.entries(f.let || {})) {
+          try { env[name] = evaluate(src, env); } catch (e) { if (e instanceof GenError && e.message === 'division by zero') { undefinedLet = true; break; } throw e; }
+        }
+        if (undefinedLet || !late.every(whereOf)) { stats.rejected++; continue; }
         const prompt = render(f.prompt, env);
         if (avoid && avoid.has(prompt)) { stats.rejected++; stats.dup++; continue; }
         const widget = resolveWidget(f, env);
-        const wrong = (f.wrong || []).map((x) => {
+        const offered = (f.wrong || []).filter((x) => { if (x.when === undefined) return true; const v = evaluate(x.when, env); if (typeof v !== 'boolean') bad(`wrong "${x.id}" when "${x.when}" is not a condition (true or false)`); return v; });   // ENGINE-BACKLOG 839
+        const wrong = offered.map((x) => {
           const o = { id: x.id };
           if (x.tex !== undefined) o.tex = render(x.tex, env);
-          if (x.value !== undefined) o.value = typeof x.value === 'number' ? x.value : asNumber(render(x.value, env, 'num'), `wrong ${x.id} value`);
+          if (x.value !== undefined) {
+            if (f.widget.answers !== undefined) {   // a numeric set: the wrong value is a comma-separated list of numbers
+              o.value = render(x.value, env, 'num');
+              o.value.split(',').forEach((part) => asNumber(part, `wrong ${x.id} value`));
+            } else o.value = typeof x.value === 'number' ? x.value : asNumber(render(x.value, env, 'num'), `wrong ${x.id} value`);
+          }
           if (x.tol !== undefined) o.tol = typeof x.tol === 'object' ? Object.fromEntries(Object.entries(x.tol).map(([k, v]) => [k, typeof v === 'string' ? asNumber(render(v, env, 'num'), `wrong ${x.id} tol`) : v])) : x.tol;
           o.line = x.line !== undefined ? render(x.line, env) : '';
           return o;
         });
         const solution = (f.solution || []).map((s) => render(s, env));
         const vars = {}, lets = {};
-        Object.keys(f.vars || {}).forEach((k) => { vars[k] = showVar(env[k]); });
+        Object.entries(f.vars || {}).forEach(([k, spec]) => { (spec && spec.as ? spec.as : [k]).forEach((n) => { vars[n] = showVar(env[n]); }); });
         Object.keys(f.let || {}).forEach((k) => { lets[k] = showVar(env[k]); });
         return { family: f.id, skill: f.skill || '', vars, lets, prompt, widget, wrong, solution, stats };
       } catch (e) { stats.rejected++; note(e); }

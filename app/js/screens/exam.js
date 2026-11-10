@@ -42,8 +42,8 @@
     switch (w.kind) {
       case 'choice': { const o = (w.options || []).find(x => x.correct); return o ? md(o.text) : ''; }
       case 'multi': return (w.options || []).filter(x => x.correct).map(o => md(o.text)).join('<br>');
-      case 'numeric': return w.accept ? md(w.accept) : G().fmtNum(+w.answer * (w.unit === '%' ? 100 : 1)) + (w.unit === '%' ? '%' : '');
-      case 'expression': return ZQ.tex(w.answer || '');
+      case 'numeric': return w.accept ? md(w.accept) : G().isSetSpec(w) ? G().setAnswerText(w) : G().fmtNum(+w.answer * (w.unit === '%' ? 100 : 1)) + (w.unit === '%' ? '%' : '');
+      case 'expression': return ZQ.tex(G().isSetSpec(w) ? G().setAnswerText(w) : (w.answer || ''));
       case 'order': return `<ol class="exm-ri-opts">${(w.answer || []).map(id => { const l = (w.lines || []).find(x => x.id === id); return `<li>${l ? md(l.text) : ''}</li>`; }).join('')}</ol>`;
       case 'table': { const out = []; (w.rows || []).forEach((r, i) => (r || []).forEach((c, j) => { if (c && typeof c === 'object' && c.edit) out.push(`${md(String((w.rows[i] || [])[0] ?? ''))}: ${G().fmtNum(+c.answer)}`); })); return out.join('<br>'); }
       case 'slider': return G().fmtNum(+w.answer);
