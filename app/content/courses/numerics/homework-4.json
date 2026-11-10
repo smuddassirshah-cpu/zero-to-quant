@@ -197,7 +197,7 @@
    "skills": [
     "nm-mc"
    ],
-   "prose": "Broadie and Glasserman correct a barrier checked every $\\Delta t$ by pricing a continuous barrier at $He^{-0.5826\\sigma\\sqrt{\\Delta t}}$. Take $H = 90$, $\\sigma = 20\\%$ and daily checks, $\\Delta t = 1/252$.",
+   "prose": "Broadie, Glasserman and Kou correct a barrier checked every $\\Delta t$ by pricing a continuous barrier at $He^{-0.5826\\sigma\\sqrt{\\Delta t}}$. Take $H = 90$, $\\sigma = 20\\%$ and daily checks, $\\Delta t = 1/252$.",
    "question": "What is the shifted barrier?",
    "widget": {
     "kind": "numeric",
@@ -383,8 +383,8 @@
     "nm-mc"
    ],
    "kind": "longform",
-   "prompt": "Write the model validation note for the three prices of the standard call ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$). Give the three numbers. For each, give its error's source, size, how it was measured and how it scales with cost. Say why the Monte Carlo figure is a band and the others are bounds. Name the one check you would add before the pricer goes live.",
-   "model": "**Validation note: one-year at-the-money call** ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$; Black-Scholes £10.450584).\n\n**Grid.** Crank-Nicolson with two implicit steps first, $S_{\\max} = 200$, $M = 400$, $N = 200$: £10.449920, an error of $-6.6 \\times 10^{-4}$. The error is discretisation, $O(\\Delta S^2 + \\Delta\\tau^2)$. We measured it by refinement: $-2.65 \\times 10^{-3}$, $-6.64 \\times 10^{-4}$, $-1.66 \\times 10^{-4}$ as both steps halve, a ratio of 4 each time. Its sign and size are predictable, so it is a bound. Doubling $M$ and $N$ costs four times the work and quarters the error. The strike sits on a node; off a node the pattern breaks. $S_{\\max}$ adds a tiny truncation.\n\n**Quadrature.** Gauss-Legendre with 32 nodes on $[z^*, 8]$: £10.450583572185, an error of $-2.6 \\times 10^{-13}$. The kink is an end point, so the rule error falls faster than any power of the nodes. What is left is the cut at $z = 8$. We measured it by doubling the nodes. It needs a known density, which we have here.\n\n**Monte Carlo.** 100,000 paths, seed 0, the discounted share as control: £10.4484 with standard error £0.0178. The error is statistical, $s/\\sqrt n$, with $s$ cut from 14.72 to 5.61 by the control (factor 6.88). It is a band, not a bound. The 95% interval is £10.4484 $\\pm$ £0.035; seed 1 lands 1.30 SE below. Four times the paths halves it.\n\n**Why a band.** The grid and quadrature errors are deterministic: same settings, same error, with a known sign and rate. The Monte Carlo error is random. A new seed moves the price, so we can only give a range and its probability.\n\n**Before going live.** Check gamma from the grid against the formula's 0.018762 at $S = 100$ with the production step count. Price is a weak test of ringing; gamma catches it, as $N = 10$ showed (1.2526).",
+   "prompt": "Write the model validation note for the three prices of the standard call ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$). Give the three numbers. For each, give its error's source, size, how it was measured and how it scales with cost. Say why the Monte Carlo figure is a random band and the other two errors are deterministic estimates. Name the one check you would add before the pricer goes live.",
+   "model": "**Validation note: one-year at-the-money call** ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$; Black-Scholes £10.450584).\n\n**Grid.** Crank-Nicolson with two implicit steps first, $S_{\\max} = 200$, $M = 400$, $N = 200$: £10.449920, an error of $-6.6 \\times 10^{-4}$. The error is discretisation, $O(\\Delta S^2 + \\Delta\\tau^2)$. We measured it by refinement: $-2.65 \\times 10^{-3}$, $-6.64 \\times 10^{-4}$, $-1.66 \\times 10^{-4}$ as both steps halve, a ratio of 4 each time. Its sign and size are predictable, so refinement gives a deterministic estimate of it. Doubling $M$ and $N$ costs four times the work and quarters the error. The strike sits on a node; off a node the pattern breaks. $S_{\\max}$ adds a tiny truncation.\n\n**Quadrature.** Gauss-Legendre with 32 nodes on $[z^*, 8]$: £10.450583572185, an error of $-2.6 \\times 10^{-13}$. The kink is an end point, so the rule error falls faster than any power of the nodes. What is left is the cut at $z = 8$. We measured it by doubling the nodes. It needs a known density, which we have here.\n\n**Monte Carlo.** 100,000 paths, seed 0, the discounted share as control: £10.4484 with standard error £0.0178. The error is statistical, $s/\\sqrt n$, with $s$ cut from 14.72 to 5.61 by the control (factor 6.88). It is a band, not a bound. The 95% interval is £10.4484 $\\pm$ £0.035; seed 1 lands 1.30 SE below. Four times the paths halves it.\n\n**Why a band.** The grid and quadrature errors are deterministic: same settings, same error, with a known sign and rate. The Monte Carlo error is random. A new seed moves the price, so we can only give a range and its probability.\n\n**Before going live.** Check gamma from the grid against the formula's 0.018762 at $S = 100$ with the production step count. Price is a weak test of ringing; gamma catches it, as $N = 10$ showed (1.2526).",
    "rubric": [
     {
      "points": 2,
@@ -404,7 +404,7 @@
     },
     {
      "points": 1,
-     "text": "Explains why the Monte Carlo figure is a band and the others are bounds: random against deterministic error."
+     "text": "Explains why the Monte Carlo figure is a band and the others are deterministic estimates: random against repeatable error."
     },
     {
      "points": 1,

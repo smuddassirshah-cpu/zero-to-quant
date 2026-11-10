@@ -257,13 +257,13 @@
    "skills": [
     "nm-roots"
    ],
-   "prose": "Write the nightly yield solve for a whole book. Each bond has face £100, an annual coupon rate $c$ and a whole-year maturity $n$. Solve every bond at once by a safeguarded Newton on the bracket $[0, 1]$, starting at $c$. **Rule:** a price above the sum of the cash flows needs a negative yield. Return NaN, so the desk reviews it.",
+   "prose": "Write the nightly yield solve for a whole book. Each bond has face £100, an annual coupon rate $c$ and a whole-year maturity $n$. Solve every bond at once by a safeguarded Newton on the bracket $[0, 1]$, starting at $c$. **Rule:** a price above the sum of the cash flows needs a negative yield. Return NaN, so the desk reviews it. If a bond is still unsolved after `maxit` steps, raise `RuntimeError`.",
    "question": "Write `ytm_book(prices, coupons, maturities)`.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import numpy as np\n\ndef ytm_book(prices, coupons, maturities, tol=1e-12, maxit=100):\n    \"\"\"Annual yield of each bond (face 100, annual coupon rate c,\n    whole-year maturity n), all bonds at once by a safeguarded Newton\n    on the bracket [0, 1]. NaN where no yield in [0, 1] fits.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\n\ndef ytm_book(prices, coupons, maturities, tol=1e-12, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    c = np.asarray(coupons, dtype=float)\n    n = np.asarray(maturities, dtype=int)\n    t = np.arange(1, n.max() + 1)\n    cf = np.where(t[None, :] <= n[:, None], 100 * c[:, None], 0.0)\n    cf = cf + np.where(t[None, :] == n[:, None], 100.0, 0.0)\n    def f(y):\n        return (cf / (1 + y[:, None]) ** t).sum(axis=1) - p\n    def df(y):\n        return (-t * cf / (1 + y[:, None]) ** (t + 1)).sum(axis=1)\n    lo = np.zeros_like(p)\n    hi = np.ones_like(p)\n    ok = (f(lo) >= 0) & (f(hi) <= 0)\n    y = np.where(c > 0, c, 0.05)\n    live = ok.copy()                 # bonds still being solved\n    for _ in range(maxit):\n        fy = f(y)\n        high = fy > 0          # price too high: the yield is above y\n        lo = np.where(high, y, lo)\n        hi = np.where(high, hi, y)\n        new = y - fy / df(y)\n        near = np.abs(new - y) < tol     # Newton has converged: keep its step\n        bad = ~near & (~np.isfinite(new) | (new <= lo) | (new >= hi))\n        new = np.where(bad, 0.5 * (lo + hi), new)\n        done = np.abs(new - y) < tol\n        y = np.where(live, new, y)       # a solved bond stays put\n        live &= ~done\n        if not live.any():\n            break\n    return np.where(ok, y, np.nan)\n",
+    "starter": "import numpy as np\n\ndef ytm_book(prices, coupons, maturities, tol=1e-12, maxit=100):\n    \"\"\"Annual yield of each bond (face 100, annual coupon rate c,\n    whole-year maturity n), all bonds at once by a safeguarded Newton\n    on the bracket [0, 1]. NaN where no yield in [0, 1] fits. Raise\n    RuntimeError if a bond is still unsolved after maxit steps.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef ytm_book(prices, coupons, maturities, tol=1e-12, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    c = np.asarray(coupons, dtype=float)\n    n = np.asarray(maturities, dtype=int)\n    t = np.arange(1, n.max() + 1)\n    cf = np.where(t[None, :] <= n[:, None], 100 * c[:, None], 0.0)\n    cf = cf + np.where(t[None, :] == n[:, None], 100.0, 0.0)\n    def f(y):\n        return (cf / (1 + y[:, None]) ** t).sum(axis=1) - p\n    def df(y):\n        return (-t * cf / (1 + y[:, None]) ** (t + 1)).sum(axis=1)\n    lo = np.zeros_like(p)\n    hi = np.ones_like(p)\n    ok = (f(lo) >= 0) & (f(hi) <= 0)\n    y = np.where(c > 0, c, 0.05)\n    live = ok.copy()                 # bonds still being solved\n    for _ in range(maxit):\n        fy = f(y)\n        high = fy > 0          # price too high: the yield is above y\n        lo = np.where(high, y, lo)\n        hi = np.where(high, hi, y)\n        new = y - fy / df(y)\n        near = np.abs(new - y) < tol     # Newton has converged: keep its step\n        bad = ~near & (~np.isfinite(new) | (new <= lo) | (new >= hi))\n        new = np.where(bad, 0.5 * (lo + hi), new)\n        done = np.abs(new - y) < tol\n        y = np.where(live, new, y)       # a solved bond stays put\n        live &= ~done\n        if not live.any():\n            break\n    if live.any():                   # unsolved at the cap\n        raise RuntimeError('no convergence')\n    return np.where(ok, y, np.nan)\n",
     "examples": [
      {
       "call": "float(ytm_book([95.0], [0.05], [5])[0])",
@@ -317,12 +317,17 @@
       "call": "_dt < 1.0 and np.allclose(_r, y1k, atol=1e-9)",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "ytm_book([95.0, 60.0], [0.05, 0.0], [5, 10], maxit=1)",
+      "expect": "RuntimeError",
+      "compare": "raises"
      }
     ],
-    "how": "Submit runs 6 hidden tests with NumPy. The £95 bond, a zero-coupon bond and a par bond must be within 1e-10. A price above the cash flows must give NaN, alone and inside a book. 1,000 random bonds must solve to 1e-9 in under a second."
+    "how": "Submit runs 7 hidden tests with NumPy. The £95 bond, a zero-coupon bond and a par bond must be within 1e-10. A price above the cash flows must give NaN, alone and inside a book. 1,000 random bonds must solve to 1e-9 in under a second. With maxit=1 nothing has converged, so it must raise RuntimeError."
    },
    "feedback": {
-    "correct": "All six pass: 6.193228% for the £95 bond and NaN for the £130 one.",
+    "correct": "All seven pass: 6.193228% for the £95 bond and NaN for the £130 one.",
     "generic": "Not quite right. Check the £95 bond first, then the NaN rule."
    },
    "explain": {
