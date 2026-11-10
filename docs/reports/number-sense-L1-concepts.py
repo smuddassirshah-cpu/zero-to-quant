@@ -7,11 +7,25 @@ Exit 0 means every checked claim holds on the domain the lesson uses. A line
 starting "note" records where a claim stops holding outside that domain; those
 are the `imprecise` findings of docs/reviews/audit-number-sense-1-3.md and are
 not asserted. A failing assert names the claim.
+
+Fix pass: the three notes (findings 1 to 3) are now checks marked "(corrected
+claim, fix pass)"; each recomputes the corrected claim and asserts the content
+states it and no longer states the old wording.
 """
+import json
 from fractions import Fraction as F
 from itertools import product
+from pathlib import Path
 
+COURSE = Path("app/content/courses/number-sense")
 N = 0
+
+
+def txt(file, *path):
+    d = json.loads((COURSE / file).read_text(encoding="utf-8"))
+    for p in path:
+        d = d[p]
+    return d
 
 
 def check(name, cond, msg):
@@ -50,12 +64,22 @@ def equivalence():
         zero_ok = True
     except ZeroDivisionError:
         zero_ok = False
-    note("equivalent_zero", f"'any number works in place of 4' fails for 0 (0/0 has no value): works={zero_ok} (finding 1)")
+    prose6 = txt("l2-same-amount.json", "screens", 6, "prose")
+    fnote = txt("l2-same-amount.json", "summary", "formula", "note")
+    check("equivalent_zero", not zero_ok and ok and "same number, as long as it is not 0" in prose6
+          and fnote.startswith("Any number except 0 works") and "Any number works" not in fnote,
+          "(corrected claim, fix pass) l2 screens[6].prose, summary.formula.note: the same number, other than 0 "
+          "(2x0/3x0 = 0/0 has no value) (finding 1)")
     # adding the same k to both: equal only when k = 0 or the fraction is 1
     same = [(a, b, k) for a in R for b in R for k in range(1, 13) if F(a + k, b + k) == F(a, b)]
     check("adding_changes_unless_one", all(a == b for a, b, k in same),
           "l2 screens[6] options, summary.ideas[1]: adding k > 0 to both changes the amount whenever top != bottom")
-    note("adding_same_number", f"{len(same)} cases with top = bottom are unchanged, e.g. 3/3 -> 4/4 (finding 2)")
+    ones = [(a, b, k) for a in R for b in R for k in range(1, 13) if a == b]
+    idea1 = txt("l2-same-amount.json", "summary", "ideas", 1)
+    check("adding_same_number", sorted(same) == sorted(ones) and F(3 + 1, 3 + 1) == F(3, 3)
+          and idea1.endswith("changes the amount, unless the fraction is exactly one whole."),
+          f"(corrected claim, fix pass) l2 summary.ideas[1]: adding k > 0 to both leaves the amount unchanged in exactly "
+          f"the {len(ones)} cases with top = bottom, e.g. 3/3 -> 4/4 (finding 2)")
     check("one_piece_short", all(F(n - 1, n) < F(n, n + 1) for n in range(2, 60)),
           "l2 screens[5], quiz[2]: one piece short of a whole is bigger when the missing piece is smaller")
     check("compare_common_size", F(2, 3) > F(3, 5) and F(3, 8) < F(2, 5) and F(5, 6) < F(7, 8) and F(5, 8) > F(3, 5),
@@ -103,7 +127,12 @@ def multiplication():
     whole = [(m, n) for m in range(0, 13) for n in range(0, 13) if not (m * n > m and m * n > n)]
     check("whole_number_bigger_needs_gt_one", all(m <= 1 or n <= 1 for m, n in whole),
           "l4 screens[5].prose: the product exceeds both factors exactly when both exceed 1")
-    note("whole_number_multiplying", "'with whole numbers, multiplying makes things bigger' fails for 1 x 4 = 4 and 0 x 4 = 0 (finding 3)")
+    p5 = txt("l4-fraction-of-fraction.json", "screens", 5, "prose")
+    gt1 = all(m * n > m and m * n > n for m in range(2, 13) for n in range(2, 13))
+    check("whole_number_multiplying", gt1 and 1 * 4 == 4 and 0 * 4 == 0
+          and p5.startswith("With whole numbers bigger than 1, multiplying makes things bigger"),
+          "(corrected claim, fix pass) l4 screens[5].prose: for whole numbers bigger than 1 the product beats both; "
+          "1 x 4 = 4 and 0 x 4 = 0 do not (finding 3)")
     check("l4_keys", F(2, 3) * F(3, 4) == F(1, 2) and F(1, 2) * F(3, 5) == F(3, 10) and F(3, 4) * 2 == F(3, 2)
           and F(1, 4) * F(2, 3) * 1200 == 200 and F(1, 3) * F(4, 5) * 2400 == 640 and F(3, 4) * F(2, 3) * 900 == 450,
           "l4 screens[1] to [8]; homework-1 items[3], items[7]")
