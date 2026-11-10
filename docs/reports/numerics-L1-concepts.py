@@ -362,7 +362,8 @@ def stability():
     ku = 1e6 * U
     check("qr_meets_kappa_u_when_the_fit_is_good", out["small"][0] < 100 * ku and out["small"][1] > 1e4 * out["small"][0],
           f"l4 screens[4], summary.ideas[1], [2], quiz[1], quiz[3]: with a near-exact fit QR errs by about kappa u ({out['small'][0]:.1e} against {ku:.1e}); the normal equations by about kappa^2 u ({out['small'][1]:.1e})")
-    note("qr_loses_more_when_the_residual_is_large", f"kappa = 1e6, residual as large as the fit: QR errs by {out['large'][0]:.1e}, about {out['large'][0] / ku:.0f} times kappa u, "
+    note("qr_loses_more_when_the_residual_is_large", f"kappa = 1e6: with a zero residual QR errs by {out['small'][0]:.1e} and the normal equations by {out['small'][1]:.1e}; "
+         f"with a residual as large as the fit QR errs by {out['large'][0]:.1e}, about {out['large'][0] / ku:.0f} times kappa u, "
          f"and the normal equations by {out['large'][1]:.1e} (finding 7: 'QR loses log10 kappa digits' needs a small residual; Trefethen and Bau Theorem 18.1)")
     # variance: conditioning against stability (homework-1 items[8])
     x = np.round(1e9 + rng.normal(0, 3, 250), 2)
