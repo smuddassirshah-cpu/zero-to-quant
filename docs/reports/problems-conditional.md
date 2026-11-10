@@ -46,3 +46,49 @@ Level 1 teaches no Bayes, so no part turns a likelihood into a posterior; condit
 ## Engine limits
 
 Three bullets in `docs/BACKLOG-INBOX.md` under "Raised later (problems conditional)": the playthrough shoots only part 1 of a problem set; the result page labels problems by their whole prose; the done page says "Well done.". None blocked a problem.
+
+## Level 4
+
+File: `app/content/courses/conditional/problems-4.json` ("Problems: puzzles that fool experts", 45 minutes). The numbers script now also checks level 4 (and level 5 once it exists).
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-marble-bags | 4 (4 / 0) | l18, l19 | 4 |
+| problems-4 | p-two-strategies | 4 (4 / 0) | l18, l20 | 3 |
+| problems-4 | p-two-flags | 5 (5 / 0) | l20, l21 | 4 |
+| problems-4 | p-dated-coins | 5 (5 / 0) | l19, l21 | 5 |
+
+Typed parts 18 of 18 (two are `expression`). Each lesson appears in two problems, and every problem draws on two.
+
+Chains. p-marble-bags: the chance of a black draw (0.5), the chance the partner is black (0.4, counting marbles, not bags), a dealer who shows black from a mixed bag with chance $h$ ($\tfrac{1}{1+3h}$), then the $h$ that makes his black as telling as a random draw (0.5). p-two-strategies: at least one winner (0.91), the letter naming B (0.455), both won given the letter ($\tfrac{7}{13}$, equal to the "at least one" answer), then a manager with a habit ($\tfrac{7}{22}$). p-two-flags: "at least one long" ($\tfrac13$), the 23 pairs that fit a long in energy, $\tfrac{11}{23}$, a trade shown at random ($\tfrac12$), then the fewest sectors that bring the "at least one" answer within 0.01 of it (13). p-dated-coins: a drawn gold coin (0.8), a gold box holding a 1987 coin (0.19), the assistant's report ($\tfrac{19}{24}$), the likelihood ratio $2 - \tfrac{1}{k}$, and its limit 0.8, the drawn-coin answer. Each later part restates the value it uses, and its `wrong` list holds the value from the commonest slip before it (0.8 in place of 0.5 gives 0.25; 24 pairs gives $\tfrac{12}{24}$; 0.2 in place of 0.19 gives 0.8).
+
+Settings are new to the course: no lesson, review, homework or earlier problem set uses marble bags of this make-up, two strategies with a named winner, flagged trades by sector, or dated coins. The dealer's rate $h$ echoes homework-4's host with a habit $q$ on purpose (l18's host's rule), in a new setting with new numbers and a new question.
+
+Checks: numbers script 0 failures (790 checks with levels 1 to 4); validator 0 errors, 0 warnings on the file; playthrough `--local-cdn` green (18 parts), `--mobile` green, 440 px shots read with no fault; voice scan 35 on the course folder 0 and 0.
+
+Fresh-check: 0 hits at the gate. At triage settings (`--min-run 8 --min-share 0`) three hits, all stock phrasing at shares of 0.07 or less: "what is the chance both won give a decimal" against homework-4 items[3] (a trader at 0.55, a different report), and "what is the chance the other coin is gold" against l19 screens[5] and review-4 items[1] (different boxes: two GG, one GS, one SS here).
+
+Engine limits: none new. The first bullet of "Raised later (problems conditional)" applies again: the playthrough shoots only part 1, so the two `expression` parts were graded but not shot.
+
+## Level 5
+
+File: `app/content/courses/conditional/problems-5.json` ("Problems: reasoning in the wild", 45 minutes).
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-5 | p-warning-screen | 4 (3 / 1) | l23, l26 | 4 |
+| problems-5 | p-two-houses | 4 (3 / 1) | l24, l25 | 3 |
+| problems-5 | p-signal-streak | 5 (5 / 0) | l22, l26 | 5 |
+| problems-5 | p-doubling-desk | 4 (3 / 1) | l22, l25 | 4 |
+
+Typed parts 14 of 17 (at least two thirds). Every lesson of the level appears in at least one problem (l22, l25 and l26 in two), and every problem draws on two. The three choice parts are judgements: which conditional the vendor's 2% is, why a house that loses in both groups leads overall, and what a survivors' newsletter shows.
+
+Chains. p-warning-screen: a flag gives 0.3125 (18 true flags against 39.6 false), the brochure's 2% is the prosecutor's swap, a second independent screen takes the chance to $\tfrac{40}{51}$, and Kelly stakes $\tfrac{29}{51}$ on an even-money contract (nothing on one flag). p-two-houses: House R's 4.4% over all launches, House S's survivorship gap of 5 points, the reversal read as Simpson's paradox with survival as the hidden variable, then R ahead by 1.4 points where survivors put S ahead by 1. p-signal-streak: a good call is still right with chance 0.6 after four misses (no right call is due), the ratio $0.8^4$, the chance the call is good ($\tfrac{256}{881}$), tomorrow's chance 0.529, and a Kelly stake of 0.058 against 0.1 before the streak. p-doubling-desk: a round averages £0, $(\tfrac{31}{32})^{20} \approx 0.530$ of traders finish, a quitter averages −£22.55 by total probability for averages, and the newsletter of survivors is survivorship bias. Each later part restates the value it uses, and its `wrong` list holds the slip before it (0.9 for 0.3125 gives 0.9863; 3 for the gap gives −0.6; $1.2^4$ for $0.8^4$ gives 0.6747).
+
+Settings are new to the course: profit-warning screens, two fund houses compared over survivors and closed funds, a vendor's call of unknown quality, and a desk of traders on a five-loss doubling cap. l22 used caps of six and four bets and homework-5 three; the fair-or-useless call echoes l22's unknown coin with new numbers and a Kelly ending.
+
+Checks: numbers script 0 failures (979 checks with levels 1 to 5); validator 0 errors, 0 warnings on the file; playthrough `--local-cdn` green (17 parts), `--mobile` green, 440 px shots read with no fault in the files; voice scan 35 on the course folder 0 and 0.
+
+Fresh-check: 0 hits at the gate. At triage settings seven hits, all question stock at shares of 0.08 or less: "what fraction of capital does the Kelly rule" (l26 quiz[3]), "by how many percentage points does the survivors" (homework-5 items[3], `alpha/l3-including-the-dead`), "give a decimal using # from part # what is the chance the" (problems-2 items[2]) and "what is the expected profit of one round in pounds" (l22 screens[9], review-5 items[5]). The settings and numbers differ in each.
+
+Engine limits: one new bullet in `docs/BACKLOG-INBOX.md` under "Raised later (problems conditional)", for levels 4 and 5: the 440 px course-row shot does not show the problem-set row.

@@ -285,7 +285,230 @@ tri = P(A & B & C)
 num(L3, 'p-odd-dice', 5, 1 - (1 - tri) ** 8, sum(comb(8, k) * tri ** k * (1 - tri) ** (8 - k) for k in range(1, 9)),
     {'product-slip': 1 - F(7, 8) ** 8, 'sum': 8 * tri, 'complement': (1 - tri) ** 8})
 
-present = [n for n in (1, 2, 3) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
+# ------------------------------------------------------------------ expression helper (levels 4, 5)
+from sympy import Rational, symbols, simplify
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+
+TRANS = standard_transformations + (implicit_multiplication_application,)
+
+def expr_part(items, iid, k, var, answer_tex, exact_fn, enum_fn, wrong_tex_fns, points):
+    """An expression part: the JSON answer string, each plain accept form parsed by sympy and
+    shown equal to exact_fn, exact_fn equal to an enumeration enum_fn at each point, and each
+    wrong form shown to differ from the answer at some point."""
+    if items is None: return
+    w = items[iid]['parts'][k - 1]['widget']
+    tag = f'{iid} p{k}'
+    ok(w['kind'] == 'expression', f'{tag}: not expression')
+    ok(w['answer'] == answer_tex, f'{tag}: answer {w["answer"]} vs {answer_tex}')
+    x = symbols(var)
+    target = exact_fn(x)
+    for a in w.get('accept', []):
+        if '\\' in a: continue
+        e = parse_expr(a.replace('^', '**'), transformations=TRANS, local_dict={var: x})
+        ok(simplify(e - target) == 0, f'{tag}: accept {a} is not equal to the answer')
+    for pt in points:
+        ok(F(str(target.subs(x, Rational(str(pt))))) == F(enum_fn(F(str(pt)))), f'{tag}: methods differ at {var}={pt}')
+    wrongs = {z['id']: z['tex'] for z in w.get('wrong', [])}
+    ok(set(wrongs) == set(wrong_tex_fns), f'{tag}: wrong ids {sorted(wrongs)} vs {sorted(wrong_tex_fns)}')
+    for wid, (tex, fn) in wrong_tex_fns.items():
+        ok(wrongs.get(wid) == tex, f'{tag}: wrong {wid} tex {wrongs.get(wid)} vs {tex}')
+        ok(any(simplify(fn(x).subs(x, Rational(str(pt))) - target.subs(x, Rational(str(pt)))) != 0 for pt in points),
+           f'{tag}: wrong {wid} equals the answer')
+
+# ------------------------------------------------------------------ level 4
+L4 = load(4)
+# p-marble-bags: bags BB x1, BW x3, WW x1; a bag at random, then a marble at random
+bags = ['BB', 'BW', 'BW', 'BW', 'WW']
+draws = [(i, j) for i in range(5) for j in range(2)]            # 10 equally likely (bag, marble)
+blk = [(i, j) for i, j in draws if bags[i][j] == 'B']
+pb = F(len(blk), len(draws))
+num(L4, 'p-marble-bags', 1, F(1, 5) * 1 + F(3, 5) * F(1, 2), pb,
+    {'bags': F(4, 5), 'only-black': F(1, 5)})
+both_b = [d for d in blk if bags[d[0]][1 - d[1]] == 'B']
+num(L4, 'p-marble-bags', 2, F(1, 5) / pb, F(len(both_b), len(blk)),
+    {'bags': F(1, 4), 'prior': F(1, 5), 'even': F(1, 2)})
+ok(F(1, 5) / F(4, 5) == F(1, 4), 'p-marble-bags p2: the part 1 slip 0.8 does not give 0.25')
+def dealer(h):   # enumerate the five bags with the dealer's rule
+    show_b = [1 if b == 'BB' else (h if b == 'BW' else 0) for b in bags]
+    return F(show_b[0], 5) / (sum(F(1, 5) * s for s in show_b))
+expr_part(L4, 'p-marble-bags', 3, 'h', '\\frac{1}{1+3h}', lambda h: 1 / (1 + 3 * h), dealer,
+          {'one-mixed': ('\\frac{1}{1+h}', lambda h: 1 / (1 + h)), 'draw': ('\\frac{2}{5}', lambda h: Rational(2, 5) + 0 * h)},
+          [0.2, 0.5, 0.9])
+hstar = (1 / F(2, 5) - 1) / 3
+num(L4, 'p-marble-bags', 4, hstar, next(F(h, 100) for h in range(1, 101) if dealer(F(h, 100)) == F(2, 5)),
+    {'no-third': 1 / F(2, 5) - 1, 'same': F(2, 5)})
+ok(dealer(F(1)) == F(1, 4), 'p-marble-bags p4: h = 1 does not give 1/4')
+ok(dealer(F(1, 2)) == F(1, 5) / pb, 'p-marble-bags p4: h = 1/2 is not the random draw')
+
+# p-two-strategies: A, B win with 0.7 each, independent; manager names a winner
+pw = F(7, 10)
+months = {(a, b): (pw if a else 1 - pw) * (pw if b else 1 - pw) for a in (0, 1) for b in (0, 1)}
+anyw = sum(p for (a, b), p in months.items() if a or b)
+num(L4, 'p-two-strategies', 1, 1 - (1 - pw) ** 2, anyw,
+    {'sum': 2 * pw, 'both': pw ** 2, 'exactly-one': 2 * pw * (1 - pw)})
+def names_b(sA):   # sA: chance of naming A when both win
+    return sum(p * (1 if (b and not a) else (1 - sA if (a and b) else 0)) for (a, b), p in months.items())
+nb = names_b(F(1, 2))
+num(L4, 'p-two-strategies', 2, anyw / 2, nb,
+    {'no-halve': anyw, 'own': pw, 'alone': pw * (1 - pw)})
+num(L4, 'p-two-strategies', 3, pw ** 2 / 2 / nb, pw ** 2 / anyw,
+    {'this-one': pw, 'prior': pw ** 2, 'over-all': pw ** 2 / 2 / anyw})
+ok(pw ** 2 / 2 / nb == F(7, 13), 'p-two-strategies p3: not 7/13')
+nb8 = names_b(F(8, 10))
+num(L4, 'p-two-strategies', 4, pw ** 2 * F(2, 10) / nb8, F(7, 22),
+    {'fair-coin': F(7, 13), 'this-one': pw, 'swapped': pw ** 2 * F(8, 10) / (pw ** 2 * F(8, 10) + pw * (1 - pw))})
+ok(isclose(float(nb8), 0.308), 'p-two-strategies p4: P(names B) is not 0.308')
+
+# p-two-flags: each trade a (side, sector), 12 types, 144 ordered pairs
+types = [(s, c) for s in ('L', 'S') for c in range(6)]
+pairs = list(itertools.product(types, repeat=2))
+ll = lambda p: p[0][0] == 'L' and p[1][0] == 'L'
+alo = [p for p in pairs if p[0][0] == 'L' or p[1][0] == 'L']
+num(L4, 'p-two-flags', 1, F(1, 3), F(sum(map(ll, alo)), len(alo)), {'other': F(1, 2), 'quarter': F(1, 4)})
+E = ('L', 3)
+fit = [p for p in pairs if E in p]
+num(L4, 'p-two-flags', 2, 12 + 12 - 1, len(fit), {'double': 24, 'first-only': 12})
+num(L4, 'p-two-flags', 3, F(2 * 6 - 1, 4 * 6 - 1), F(sum(map(ll, fit)), len(fit)),
+    {'no-detail': F(1, 3), 'double': F(12, 24), 'first-only': F(6, 23)})
+shown = F(0); shown_ll = F(0)   # one trade shown at random
+for p in pairs:
+    for i in (0, 1):
+        if p[i] == E:
+            shown += F(1, 144) * F(1, 2)
+            if ll(p): shown_ll += F(1, 144) * F(1, 2)
+num(L4, 'p-two-flags', 4, F(1, 2), shown_ll / shown, {'at-least': F(11, 23), 'no-detail': F(1, 3)})
+fk = lambda k: F(2 * k - 1, 4 * k - 1)
+def grid(k):
+    ts = [(s, c) for s in ('L', 'S') for c in range(k)]
+    f = [p for p in itertools.product(ts, repeat=2) if ('L', 0) in p]
+    return F(sum(1 for p in f if p[0][0] == 'L' and p[1][0] == 'L'), len(f))
+ok(all(grid(k) == fk(k) for k in (1, 2, 6, 13)), 'p-two-flags: the (2k-1)/(4k-1) formula fails the grid count')
+kmin = next(k for k in range(1, 100) if abs(fk(k) - F(1, 2)) <= F(1, 100))
+num(L4, 'p-two-flags', 5, kmin, -(-F(51, 100) // F(4, 100)),   # 0.04k >= 0.51
+    {'rounded-down': 12, 'whole': 2 * 13 - 1})
+ok(kmin == 13 and F(51, 4) == F(1275, 100), 'p-two-flags p5: k is not 13')
+ok(fk(12) < F(49, 100) <= fk(13), 'p-two-flags p5: 12 and 13 do not bracket 0.49')
+
+# p-dated-coins: boxes GG, GG, GS, SS; each coin one of k years
+boxes = ['GG', 'GG', 'GS', 'SS']
+cd = [(i, j) for i in range(4) for j in range(2)]
+gold = [(i, j) for i, j in cd if boxes[i][j] == 'G']
+num(L4, 'p-dated-coins', 1, F(4, 5), F(sum(1 for i, j in gold if boxes[i][1 - j] == 'G'), len(gold)),
+    {'boxes': F(2, 3), 'even': F(1, 2), 'draw': F(len(gold), len(cd))})
+def report(k):   # enumerate boxes and years: at least one gold coin of year 0
+    tot = F(0); gg = F(0)
+    for b in boxes:
+        for y in itertools.product(range(k), repeat=2):
+            if any(b[j] == 'G' and y[j] == 0 for j in (0, 1)):
+                tot += F(1, 4) * F(1, k * k)
+                if b == 'GG': gg += F(1, 4) * F(1, k * k)
+    return gg / tot
+pg1 = F(sum(1 for y in itertools.product(range(10), repeat=2) if 0 in y), 100)
+num(L4, 'p-dated-coins', 2, 1 - F(9, 10) ** 2, pg1, {'sum': F(2, 10), 'both': F(1, 100), 'one': F(1, 10)})
+num(L4, 'p-dated-coins', 3, F(1, 2) * pg1 / (F(1, 2) * pg1 + F(1, 4) * F(1, 10)), report(10),
+    {'no-detail': F(2, 3), 'box-weights': pg1 / (pg1 + F(1, 10)), 'drawn': F(1, 2) * F(2, 10) / (F(1, 2) * F(2, 10) + F(1, 40))})
+ok(report(10) == F(19, 24), 'p-dated-coins p3: not 19/24')
+def ratio_enum(k):
+    k = int(k)
+    a = F(sum(1 for y in itertools.product(range(k), repeat=2) if 0 in y), k * k)
+    return a / F(1, k)
+expr_part(L4, 'p-dated-coins', 4, 'k', '2-\\frac{1}{k}', lambda k: 2 - 1 / k, ratio_enum,
+          {'double': ('2', lambda k: 2 + 0 * k), 'top-only': ('\\frac{2k-1}{k^2}', lambda k: (2 * k - 1) / k ** 2)},
+          [2, 5, 10])
+post = lambda k: 2 * (2 - F(1, k)) / (2 * (2 - F(1, k)) + 1)
+ok(post(10) == report(10) and post(4) == report(4), 'p-dated-coins: odds form disagrees with the enumeration')
+num(L4, 'p-dated-coins', 5, F(4, 5), F(round(float(post(10 ** 9)) * 10 ** 6), 10 ** 6),
+    {'ratio-one': F(2, 3), 'even': F(1, 2), 'certain': 1})
+
+# ------------------------------------------------------------------ level 5
+L5 = load(5)
+# p-warning-screen: 20 of 2,000 warn; screen 1 flags 0.9 / 0.02; screen 2 flags 0.8 / 0.1
+N, Wn = 2000, 20
+s1, f1, s2, f2 = F(9, 10), F(2, 100), F(8, 10), F(1, 10)
+prior = F(Wn, N)
+true1, false1 = s1 * Wn, f1 * (N - Wn)                         # natural frequencies
+p1 = prior * s1 / (prior * s1 + (1 - prior) * f1)
+num(L5, 'p-warning-screen', 1, p1, true1 / (true1 + false1),
+    {'detection': s1, 'flipped': 1 - f1, 'prior': prior})
+pick(L5, 'p-warning-screen', 2, 'swapped')
+ok(false1 / (true1 + false1) == F(11, 16) and (true1 + false1) / N == F(288, 10000), 'p-warning-screen p2: 0.6875 or 2.88% wrong')
+both_t, both_f = Wn * s1 * s2, (N - Wn) * f1 * f2
+p3 = (p1 / (1 - p1)) * (s2 / f2); p3 = p3 / (1 + p3)
+odds_prior = prior / (1 - prior) * (s2 / f2)
+odds_slip = s1 / (1 - s1) * (s2 / f2)
+num(L5, 'p-warning-screen', 3, p3, both_t / (both_t + both_f),
+    {'from-prior': odds_prior / (1 + odds_prior), 'detection': s2, 'slip': odds_slip / (1 + odds_slip)})
+ok(p3 == F(40, 51), 'p-warning-screen p3: not 40/51')
+num(L5, 'p-warning-screen', 4, 2 * p3 - 1, p3 - (1 - p3),
+    {'p-itself': p3, 'one-screen': 2 * p1 - 1, 'from-prior': 2 * F(round(float(odds_prior / (1 + odds_prior)), 4)) - 1})
+
+# p-two-houses: survivors and closed funds at two houses (returns in % a year)
+R_ = {'n': (40, 10), 'r': (7, -6)}; S_ = {'n': (25, 25), 'r': (8, -2)}
+def allavg(h): return F(h['n'][0] * h['r'][0] + h['n'][1] * h['r'][1], sum(h['n']))
+def wavg(h):
+    w = F(h['n'][0], sum(h['n'])); return w * h['r'][0] + (1 - w) * h['r'][1]
+num(L5, 'p-two-houses', 1, allavg(R_) / 100, wavg(R_) / 100,
+    {'survivors': F(7, 100), 'unweighted': F(7 - 6, 2) / 100, 'over-survivors': F(220, 40) / 100}, round_tol=0.00005)
+gapS = F(S_['n'][1], 50) * (S_['r'][0] - S_['r'][1])
+num(L5, 'p-two-houses', 2, gapS, S_['r'][0] - allavg(S_),
+    {'no-weight': S_['r'][0] - S_['r'][1], 'all': allavg(S_), 'r-gap': R_['r'][0] - allavg(R_)})
+pick(L5, 'p-two-houses', 3, 'mix')
+ok(S_['r'][0] > R_['r'][0] and S_['r'][1] > R_['r'][1] and allavg(R_) > allavg(S_), 'p-two-houses: no reversal')
+ok(F(40, 50) == F(8, 10) and F(25, 50) == F(1, 2) and 0.2 * 13 == 2.6, 'p-two-houses p3: stated shares wrong')
+num(L5, 'p-two-houses', 4, allavg(R_) - allavg(S_), wavg(R_) - (S_['r'][0] - gapS),
+    {'survivors': R_['r'][0] - S_['r'][0], 'closed': R_['r'][1] - S_['r'][1], 'gap-slip': allavg(R_) - (S_['r'][0] - allavg(S_))})
+ok((allavg(R_) - allavg(S_)) - (R_['r'][0] - S_['r'][0]) == F(24, 10), 'p-two-houses p4: 2.4 points wrong')
+
+# p-signal-streak: good right 0.6, useless right 0.5, prior 1/2; four wrong calls
+g, u = F(6, 10), F(5, 10)
+lr = ((1 - g) / (1 - u)) ** 4
+def enum_streak():   # sum over quality and every five-day sequence
+    tot = F(0); good = F(0); right5 = F(0)
+    for q, pr in ((g, F(1, 2)), (u, F(1, 2))):
+        for seq in itertools.product((0, 1), repeat=5):
+            if any(seq[:4]): continue
+            p = pr
+            for x in seq: p *= q if x else 1 - q
+            tot += p
+            if q == g: good += p
+            if seq[4]: right5 += p
+    return good / tot, right5 / tot
+pg_enum, pr_enum = enum_streak()
+seqg = [s for s in itertools.product((0, 1), repeat=5) if not any(s[:4])]
+num(L5, 'p-signal-streak', 1, g, sum((g if s[4] else 1 - g) * (1 - g) ** 4 for s in seqg if s[4]) / ((1 - g) ** 4),
+    {'cold': 1 - g, 'five-wrong': (1 - g) ** 5})
+num(L5, 'p-signal-streak', 2, lr, ((1 - g) ** 4) / ((1 - u) ** 4),
+    {'one-day': (1 - g) / (1 - u), 'reciprocal': 1 / lr, 'right-rates': (g / u) ** 4})
+pgood = lr / (1 + lr)
+num(L5, 'p-signal-streak', 3, pgood, pg_enum,
+    {'no-update': F(1, 2), 'odds': lr, 'right-rates': (g / u) ** 4 / (1 + (g / u) ** 4)})
+ok(pgood == F(256, 881), 'p-signal-streak p3: not 256/881')
+pright = pgood * g + (1 - pgood) * u
+num(L5, 'p-signal-streak', 4, pright, pr_enum, {'good': g, 'prior-mix': (g + u) / 2, 'coin': u})
+num(L5, 'p-signal-streak', 5, 2 * pright - 1, pright - (1 - pright),
+    {'prior': 2 * (g + u) / 2 - 1, 'good': 2 * g - 1, 'p-itself': pright})
+
+# p-doubling-desk: cap of five losses, 20 rounds, quit after a losing round
+def round_enum():
+    e = F(0)
+    for k in range(1, 6):                  # first win on bet k
+        e += F(1, 2 ** k) * (2 ** (k - 1) - (2 ** (k - 1) - 1))
+    e += F(1, 32) * (-(1 + 2 + 4 + 8 + 16))
+    return e
+qwin = 1 - F(1, 32)
+num(L5, 'p-doubling-desk', 1, qwin * 1 - F(1, 32) * 31, round_enum(),
+    {'win': 1, 'no-loss': qwin, 'loss': -31})
+surv = qwin ** 20
+num(L5, 'p-doubling-desk', 2, surv, F(1) - sum(qwin ** (j - 1) * F(1, 32) for j in range(1, 21)),
+    {'sum': 1 - F(20, 32), 'one-round': qwin, 'complement': 1 - surv})
+quit_avg = sum(qwin ** (j - 1) * F(1, 32) * ((j - 1) - 31) for j in range(1, 21)) / (1 - surv)
+num(L5, 'p-doubling-desk', 3, -20 * surv / (1 - surv), quit_avg,
+    {'one-loss': -31, 'mirror': -20, 'unweighted': -20 * surv}, round_tol=0.005)
+ok(surv * 20 + (1 - surv) * quit_avg == 0, 'p-doubling-desk: the average over all traders is not 0')
+pick(L5, 'p-doubling-desk', 4, 'survivors')
+ok(round(1000 * float(surv)) == 530 and round(float(quit_avg), 2) == -22.55, 'p-doubling-desk p4: 530 or -22.55 wrong')
+
+present = [n for n in (1, 2, 3, 4, 5) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails: print('FAIL', m)
 sys.exit(1 if fails else 0)

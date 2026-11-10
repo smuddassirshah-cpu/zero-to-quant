@@ -1,0 +1,809 @@
+{
+ "id": "problems-5",
+ "course": "conditional",
+ "level": 5,
+ "title": "Problems: reasoning in the wild",
+ "minutes": 45,
+ "items": [
+  {
+   "id": "p-warning-screen",
+   "difficulty": 4,
+   "skills": [
+    "bayes",
+    "cond-traps",
+    "cond-indep"
+   ],
+   "prose": "Of 2,000 listed companies, 20 will issue a profit warning this quarter. A text screen flags 90% of the companies that will warn and 2% of those that will not.",
+   "parts": [
+    {
+     "question": "A company is flagged. What is the chance it will issue a warning? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.3125,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "detection",
+        "value": 0.9,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "flipped",
+        "value": 0.98,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "prior",
+        "value": 0.01,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac{18}{18 + 39.6} = 0.3125$.",
+      "generic": "Not quite. Count the true flags and the false flags among the 2,000 companies.",
+      "byKey": {
+       "detection": "That is $P(\\text{flag} \\mid \\text{warning})$. You need the share of flags that are warnings.",
+       "flipped": "You read $1 - 0.02$ as the chance a flag is right. The 2% is a share of quiet companies, not of flags.",
+       "prior": "That is the share of companies that warn. The flag is evidence and moves it."
+      }
+     },
+     "explain": {
+      "text": "The 20 warning companies give $0.9 \\times 20 = 18$ flags, and the 1,980 others give $0.02 \\times 1980 = 39.6$. So $P(\\text{warning} \\mid \\text{flag}) = \\tfrac{18}{57.6} = 0.3125$. False flags outnumber true ones because quiet companies are 99 times as common."
+     }
+    },
+    {
+     "question": "The vendor's brochure says: “only 2% of our flags are false alarms”. Using 0.3125 from part 1, what is wrong with the claim?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "swapped",
+        "text": "It swaps the condition: the 2% is $P(\\text{flag} \\mid \\text{no warning})$",
+        "correct": true
+       },
+       {
+        "id": "small",
+        "text": "Nothing: 2% of the 1,980 quiet companies is only a small number",
+        "why": "It is small beside 1,980 companies, but it is 39.6 false flags against 18 true ones."
+       },
+       {
+        "id": "share-flagged",
+        "text": "It should say 2.88%, the share of all 2,000 companies that are flagged",
+        "why": "2.88% is $P(\\text{flag})$, how often the screen fires. It says nothing about how often a flag is wrong."
+       },
+       {
+        "id": "detection",
+        "text": "Nothing: the screen catches 90% of the companies that will warn",
+        "why": "Catching 90% is $P(\\text{flag} \\mid \\text{warning})$. It does not count the false flags."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The brochure swaps $P(\\text{flag} \\mid \\text{no warning})$ for $P(\\text{no warning} \\mid \\text{flag})$, the prosecutor's fallacy.",
+      "generic": "Not quite. Ask which group the 2% is a share of."
+     },
+     "explain": {
+      "text": "The 2% is a share of the companies that will not warn. A false-alarm share of flags is $\\tfrac{39.6}{57.6} = 0.6875$. Swapping the two is the prosecutor's fallacy."
+     }
+    },
+    {
+     "question": "A second screen reads the options market. Given a company's fate it flags independently of the first, catching 80% of warnings and 10% of the rest. It flags the same company. Using 0.3125 from part 1, what is the chance of a warning now? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.7843,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "from-prior",
+        "value": 0.0748,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "detection",
+        "value": 0.8,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "slip",
+        "value": 0.9863,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Odds $\\tfrac{0.3125}{0.6875} \\times 8 \\approx 3.636$, so $p = \\tfrac{40}{51} \\approx 0.784$.",
+      "generic": "Not quite. Multiply the odds after the first flag by the second screen's likelihood ratio.",
+      "byKey": {
+       "from-prior": "You started from the 1% prior and dropped the first flag. Start from 0.3125.",
+       "detection": "That is the second screen's detection rate. Combine it with its false alarms and with part 1.",
+       "slip": "You started from 0.9, the part 1 slip. After one flag the chance is 0.3125."
+      }
+     },
+     "explain": {
+      "text": "The second screen's likelihood ratio is $\\tfrac{0.8}{0.1} = 8$. Odds of $\\tfrac{0.3125}{0.6875} = \\tfrac{5}{11}$ become $\\tfrac{40}{11}$, so the chance is $\\tfrac{40}{51} \\approx 0.784$. The product is valid only because the screens are independent given the company's fate."
+     }
+    },
+    {
+     "question": "A binary contract pays even money if the company warns: you win or lose your stake. Using 0.7843 from part 3, what fraction of capital does the Kelly rule $2p - 1$ stake? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5686,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "p-itself",
+        "value": 0.7843,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "one-screen",
+        "value": -0.375,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "from-prior",
+        "value": -0.8504,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 \\times \\tfrac{40}{51} - 1 = \\tfrac{29}{51} \\approx 0.569$.",
+      "generic": "Not quite. Put the chance from part 3 into $2p - 1$.",
+      "byKey": {
+       "p-itself": "That is the chance of a warning. Kelly stakes $2p - 1$, not $p$.",
+       "one-screen": "That uses 0.3125 from one flag. Both screens have flagged, so use 0.7843.",
+       "from-prior": "That uses the part 3 slip, 0.0748. Start from both flags: 0.7843."
+      }
+     },
+     "explain": {
+      "text": "$f = 2 \\times 0.7843 - 1 \\approx 0.569$. On one flag $2p - 1$ is negative, so Kelly would stake nothing on a warning. The stake rests on the screens being independent; a copy of the first would leave $p$ at 0.3125."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-two-houses",
+   "difficulty": 3,
+   "skills": [
+    "cond-traps",
+    "cond-mult"
+   ],
+   "prose": "Two fund houses each launched 50 funds ten years ago. At House R, 40 funds survived, averaging 7% a year, and the 10 that closed averaged −6% a year. At House S, 25 survived, averaging 8% a year, and 25 closed, averaging −2% a year.",
+   "parts": [
+    {
+     "question": "What was House R's average return over all 50 funds it launched, in % a year?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.044,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "for example 3.5",
+      "unit": "%",
+      "label": "House R, all funds",
+      "accept": "4.4 exactly: $\\tfrac{280 - 60}{50}$",
+      "wrong": [
+       {
+        "id": "survivors",
+        "value": 0.07,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "unweighted",
+        "value": 0.005,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "over-survivors",
+        "value": 0.055,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac{40 \\times 7 + 10 \\times (-6)}{50} = 4.4$% a year.",
+      "generic": "Not quite. Add up the returns of all 50 funds and divide by 50.",
+      "byKey": {
+       "survivors": "That is the survivors' average. The 10 closed funds belong in the average too.",
+       "unweighted": "You averaged 7 and −6 equally. There are four survivors for every closed fund.",
+       "over-survivors": "You divided the total by the 40 survivors. Divide by all 50 funds."
+      }
+     },
+     "explain": {
+      "text": "All 50 funds add up to $280 - 60 = 220$, so the average is $\\tfrac{220}{50} = 4.4$% a year. As a weighted average: $0.8 \\times 7 + 0.2 \\times (-6) = 4.4$."
+     }
+    },
+    {
+     "question": "For House S, by how many percentage points does the survivors' 8% overstate the average over all 50 funds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "for example 3.5",
+      "unit": "points",
+      "label": "Survivorship gap, House S",
+      "wrong": [
+       {
+        "id": "no-weight",
+        "value": 10,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "all",
+        "value": 3,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "r-gap",
+        "value": 2.6,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.5 \\times (8 - (-2)) = 5$ points.",
+      "generic": "Not quite. The gap is the share that closed times the difference between survivors and closed funds.",
+      "byKey": {
+       "no-weight": "That is the full difference between survivors and closed funds. Weight it by the share that closed, 0.5.",
+       "all": "That is House S's average over all funds. The question asks for the gap.",
+       "r-gap": "That is House R's gap, $7 - 4.4$. Use House S's own numbers."
+      }
+     },
+     "explain": {
+      "text": "The gap is $P(S^c)\\,(E[R \\mid S] - E[R \\mid S^c]) = 0.5 \\times 10 = 5$ points, so House S averaged $8 - 5 = 3$% over all its funds. House R's gap is only $0.2 \\times 13 = 2.6$ points, because few of its funds closed."
+     }
+    },
+    {
+     "question": "S beats R among survivors, 8% to 7%, and among closed funds, −2% to −6%. Yet over all launches R leads, 4.4% to 3%. Why?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "mix",
+        "text": "R's funds survived far more often, 80% to 50%, and survivors earn more than closed funds at both houses",
+        "correct": true
+       },
+       {
+        "id": "arithmetic",
+        "text": "There is an arithmetic slip: a house that wins in both groups must win overall",
+        "why": "That holds only when the two houses have the same mix. R puts weight 0.8 on survivors, S only 0.5."
+       },
+       {
+        "id": "drop-closed",
+        "text": "S is the better house, and the closed funds should be left out",
+        "why": "Leaving them out is survivorship bias. An investor ten years ago could have bought any of the 50."
+       },
+       {
+        "id": "risk",
+        "text": "R's closed funds lost less, so R took less risk",
+        "why": "R's closed funds lost more, 6% a year against 2%."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Each overall average is a weighted average of the two group averages, and R's weights favour its survivors.",
+      "generic": "Not quite. Look at the share of each house's funds that survived."
+     },
+     "explain": {
+      "text": "Each house's overall average weights its survivors and its closed funds by their shares. R weights its survivors 0.8 and S only 0.5, so R comes out ahead. That is Simpson's paradox, with survival as the hidden variable."
+     }
+    },
+    {
+     "question": "House R averaged 4.4% over all its funds (part 1) and House S 3% (part 2). By how many percentage points did R beat S?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.4,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "for example 3.5",
+      "unit": "points",
+      "label": "R minus S, all funds",
+      "wrong": [
+       {
+        "id": "survivors",
+        "value": -1,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "closed",
+        "value": -4,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "gap-slip",
+        "value": -0.6,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$4.4 - 3 = 1.4$ points in R's favour.",
+      "generic": "Not quite. Subtract House S's average over all funds from House R's.",
+      "byKey": {
+       "survivors": "That compares survivors only, where S leads by 1 point. Use the averages over all funds.",
+       "closed": "That compares the closed funds only. Use the averages over all funds.",
+       "gap-slip": "You took S's all-fund average as $8 - 3 = 5$, the part 2 slip. It is $8 - 5 = 3$."
+      }
+     },
+     "explain": {
+      "text": "$4.4 - 3 = 1.4$ points in R's favour. A database of survivors shows S ahead by 1 point, so it gets the comparison wrong by 2.4 points. Comparing houses needs every fund each one launched."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-signal-streak",
+   "difficulty": 5,
+   "skills": [
+    "cond-indep",
+    "bayes",
+    "cond-traps"
+   ],
+   "prose": "A desk buys a daily direction call from a vendor. The call is either good, right on 60% of days, or useless, right on 50%, each equally likely at the start. Given its quality, days are independent. The first four calls are all wrong.",
+   "parts": [
+    {
+     "question": "Suppose you knew the call was good. After the four wrong calls, what is the chance tomorrow's call is right? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "cold",
+        "value": 0.4,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "five-wrong",
+        "value": 0.0102,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Given a good call, days are independent, so the chance is still 0.6.",
+      "generic": "Not quite. Given the call's quality, the past days change nothing.",
+      "byKey": {
+       "cold": "That treats the call as on a cold run. Given its quality, each day is right with chance 0.6.",
+       "five-wrong": "That is the chance of five wrong calls in a row. Tomorrow is one day, right with chance 0.6."
+      }
+     },
+     "explain": {
+      "text": "Given that the call is good, each day is right with chance 0.6 whatever came before. So the chance is 0.6, and no right call is due. That holds only once the quality is known."
+     }
+    },
+    {
+     "question": "Using 0.6 and 0.5, what is the likelihood ratio, good to useless, of four wrong calls? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.4096,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "one-day",
+        "value": 0.8,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "reciprocal",
+        "value": 2.4414,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "right-rates",
+        "value": 2.0736,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\left(\\tfrac{0.4}{0.5}\\right)^4 = 0.8^4 = 0.4096$.",
+      "generic": "Not quite. Find the chance of four wrong calls under each quality, then divide.",
+      "byKey": {
+       "one-day": "That is one wrong call. Four independent wrong calls multiply four ratios.",
+       "reciprocal": "That is useless to good. The question asks for good to useless.",
+       "right-rates": "You used the right-call rates, $1.2^4$. The calls were wrong, at 0.4 and 0.5."
+      }
+     },
+     "explain": {
+      "text": "A good call is wrong with chance 0.4 a day and a useless one with 0.5. Four independent wrong days give $0.4^4 = 0.0256$ against $0.5^4 = 0.0625$. The ratio is $0.8^4 = 0.4096$."
+     }
+    },
+    {
+     "question": "Using 0.4096 from part 2, what is the chance the call is good, given the four wrong calls? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.2906,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "no-update",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "odds",
+        "value": 0.4096,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "right-rates",
+        "value": 0.6747,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Odds $1 \\times 0.4096$, so $p = \\tfrac{0.4096}{1.4096} \\approx 0.291$.",
+      "generic": "Not quite. Multiply the prior odds by the ratio, then turn the odds into a chance.",
+      "byKey": {
+       "no-update": "That is the prior. The losing run is evidence about the call.",
+       "odds": "That is the posterior odds. Turn odds $o$ into a chance with $\\tfrac{o}{1 + o}$.",
+       "right-rates": "That uses $1.2^4$ from the part 2 slip. The calls were wrong, so the ratio is 0.4096."
+      }
+     },
+     "explain": {
+      "text": "Prior odds are 1, so the posterior odds are 0.4096. The chance is $\\tfrac{0.4096}{1.4096} = \\tfrac{256}{881} \\approx 0.291$. The streak is evidence that the call is useless."
+     }
+    },
+    {
+     "question": "Using 0.2906 from part 3, what is the chance tomorrow's call is right? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5291,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "good",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "prior-mix",
+        "value": 0.55,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "coin",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.2906 \\times 0.6 + 0.7094 \\times 0.5 \\approx 0.529$.",
+      "generic": "Not quite. Average the two right rates, weighted by the updated chances of each quality.",
+      "byKey": {
+       "good": "That assumes the call is good. After the streak it is good with chance only 0.29.",
+       "prior-mix": "That uses the starting chances, 0.5 each. Use the updated 0.2906.",
+       "coin": "That assumes the call is useless. It may still be good."
+      }
+     },
+     "explain": {
+      "text": "Weight each right rate by the chance of its quality: $0.2906 \\times 0.6 + 0.7094 \\times 0.5 \\approx 0.529$. Before the streak it was 0.55. A losing run makes a right call less likely tomorrow, not due."
+     }
+    },
+    {
+     "question": "You bet at even money on tomorrow's call. Using 0.5291 from part 4, what fraction of capital does the Kelly rule $2p - 1$ stake? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.0581,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "prior",
+        "value": 0.1,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "good",
+        "value": 0.2,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "p-itself",
+        "value": 0.5291,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$2 \\times 0.5291 - 1 \\approx 0.058$.",
+      "generic": "Not quite. Put the chance from part 4 into $2p - 1$.",
+      "byKey": {
+       "prior": "That uses 0.55 from before the streak. Use 0.5291.",
+       "good": "That assumes the call is good. Use the chance from part 4.",
+       "p-itself": "That is the chance the call is right. Kelly stakes $2p - 1$."
+      }
+     },
+     "explain": {
+      "text": "$f = 2 \\times 0.5291 - 1 \\approx 0.058$, down from 0.1 before the streak. The streak changes no day's odds once the quality is known, but it is evidence about the quality. With an unknown edge, a losing run is a reason to stake less."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-doubling-desk",
+   "difficulty": 4,
+   "skills": [
+    "cond-traps",
+    "cond-indep",
+    "cond-mult"
+   ],
+   "prose": "Each of 1,000 traders runs a doubling system on a fair even-money bet. In a round a trader stakes £1, doubles after each loss, and stops at the first win or after five losses in a row. A trader plays 20 rounds, but quits for good after a losing round.",
+   "parts": [
+    {
+     "question": "What is the expected profit of one round, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "for example 1.5",
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "win",
+        "value": 1,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-loss",
+        "value": 0.9688,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "loss",
+        "value": -31,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\tfrac{31}{32} \\times 1 - \\tfrac{1}{32} \\times 31 = 0$.",
+      "generic": "Not quite. Weigh the £1 a winning round nets against the cost of five losses in a row.",
+      "byKey": {
+       "win": "That is what a winning round nets. Five losses in a row cost £31.",
+       "no-loss": "That counts the winning rounds only. The losing round has chance $\\tfrac{1}{32}$ and costs £31.",
+       "loss": "That is the cost of a losing round. It happens only 1 time in 32."
+      }
+     },
+     "explain": {
+      "text": "Five losses in a row have chance $\\tfrac{1}{32}$ and cost $1 + 2 + 4 + 8 + 16 = 31$ pounds. Otherwise the round nets £1. So the expected profit is $\\tfrac{31}{32} - \\tfrac{31}{32} = 0$."
+     }
+    },
+    {
+     "question": "What is the chance a trader plays all 20 rounds without a losing round? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5299,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 0.375,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "one-round",
+        "value": 0.9688,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "complement",
+        "value": 0.4701,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\left(\\tfrac{31}{32}\\right)^{20} \\approx 0.530$.",
+      "generic": "Not quite. Each round is won with chance $\\tfrac{31}{32}$, independently of the others.",
+      "byKey": {
+       "sum": "You took $\\tfrac{1}{32}$ off 20 times. Rounds can each be lost, so multiply the chances of winning.",
+       "one-round": "That is one round. All 20 must be won.",
+       "complement": "That is the chance of a losing round somewhere in the 20."
+      }
+     },
+     "explain": {
+      "text": "Rounds are independent and each is won with chance $\\tfrac{31}{32}$. All 20 are won with chance $\\left(\\tfrac{31}{32}\\right)^{20} \\approx 0.530$. So about 530 of the 1,000 traders finish."
+     }
+    },
+    {
+     "question": "Survivors each made £20. Every round played averages £0, and the stopping rule looks only at the past. So the average over all 1,000 traders is £0. Using 0.5299 from part 2, what is the average profit of a trader who quit, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": -22.546,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "for example -1.5",
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "one-loss",
+        "value": -31,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "mirror",
+        "value": -20,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "unweighted",
+        "value": -10.598,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-\\tfrac{0.5299 \\times 20}{0.4701} \\approx -22.55$ pounds.",
+      "generic": "Not quite. Split the average of £0 into survivors and quitters, weighted by their chances.",
+      "byKey": {
+       "one-loss": "That is the losing round alone. A quitter also won £1 in each round before it.",
+       "mirror": "The two groups are not the same size. Weight each by its chance.",
+       "unweighted": "That is $0.5299 \\times 20$ with a minus sign. Divide it by the quitters' chance, 0.4701."
+      }
+     },
+     "explain": {
+      "text": "Total probability for averages: $0 = 0.5299 \\times 20 + 0.4701 \\times E[\\text{profit} \\mid \\text{quit}]$. So $E[\\text{profit} \\mid \\text{quit}] = -\\tfrac{10.598}{0.4701} \\approx -22.55$ pounds. A quitter lost £31 in the last round, less the £1 wins of the rounds before it."
+     }
+    },
+    {
+     "question": "A newsletter profiles the 530 or so survivors: each has a perfect record and £20 of profit. Using −£22.55 from part 3, what should a reader conclude?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "survivors",
+        "text": "Nothing for the system: all 1,000 traders average £0",
+        "correct": true
+       },
+       {
+        "id": "discipline",
+        "text": "The system works for traders who stick firmly to its rule",
+        "why": "Every trader followed the same rule. Survival picked out the lucky ones."
+       },
+       {
+        "id": "due",
+        "text": "The quitters were due a win, so should have doubled once more",
+        "why": "Each bet is a fair coin. A run of losses makes no win due, and one more doubling risks £32."
+       },
+       {
+        "id": "half",
+        "text": "The system makes about £10 a trader, half of the £20 shown",
+        "why": "That counts the survivors and ignores the quitters' losses of about £22.55 each."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The newsletter conditions on survival. Over all 1,000 traders the system averages £0.",
+      "generic": "Not quite. Ask who is missing from the newsletter."
+     },
+     "explain": {
+      "text": "About 530 survivors at £20 make about £10,600, and about 470 quitters at −£22.55 lose the same. The newsletter shows only survivors, which is survivorship bias. Doubling changes the shape of the risk, not its average."
+     }
+    }
+   ]
+  }
+ ]
+}
