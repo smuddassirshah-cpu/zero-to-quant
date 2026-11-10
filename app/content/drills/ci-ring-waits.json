@@ -1,0 +1,129 @@
+{
+  "id": "ci-ring-waits",
+  "name": "Waiting for a higher load round the clock",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "stacks-queues",
+  "tags": [
+    "pack-3",
+    "ring-waits"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "ring_waits",
+  "returns": "a list of whole numbers",
+  "brief": "A data centre logs one load reading per hour slot of a day, and the same day repeats for ever. `load[i]` is the reading of slot `i`. For each slot, count how many slots forward you go to reach a strictly higher reading, wrapping from the last slot to the first. If no slot of the day reads higher, give `-1`.\n\nWrite `ring_waits(load)`, which returns the list of waits.\n\nExample. For `load = [5, 3, 4, 1]` slot 0 holds the top reading, so it gives `-1`. Slot 1 waits 1 slot, and slot 2 wraps round to slot 0, 2 slots on. Slot 3 waits 1. The answer is `[-1, 1, 2, 1]`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ slots, each reading a whole number between $0$ and $10^9$.",
+    "$O(n)$ time is the target. Walking forward from every slot is too slow when many readings tie.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Walk the list twice, as if it were written out two days in a row. Keep a stack of slots still waiting; a higher reading pops every lower one and fixes its wait.",
+  "starter": "def ring_waits(load):\n    # your code here\n    return [-1] * len(load)\n",
+  "examples": [
+    {
+      "call": "ring_waits([5, 3, 4, 1])",
+      "expect": "[-1, 1, 2, 1]",
+      "compare": "equal",
+      "note": "Slot 2 wraps past the end to slot 0, so it waits 2."
+    },
+    {
+      "call": "ring_waits([2, 2])",
+      "expect": "[-1, -1]",
+      "compare": "equal",
+      "note": "A tie is not higher, so both slots give -1."
+    }
+  ],
+  "tests": [
+    {
+      "call": "ring_waits([])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([7])",
+      "expect": "[-1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([2, 2])",
+      "expect": "[-1, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([5, 3, 4, 1])",
+      "expect": "[-1, 1, 2, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([1, 2, 3, 4])",
+      "expect": "[1, 1, 1, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([4, 3, 2, 1])",
+      "expect": "[-1, 3, 2, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([3, 1, 3, 1])",
+      "expect": "[-1, 1, -1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([2, 5, 2, 5, 1])",
+      "expect": "[1, -1, 1, -1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([0, 0, 1, 0, 0])",
+      "expect": "[2, 1, -1, 4, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_waits([6, 1, 6, 9, 6])",
+      "expect": "[3, 1, 1, -1, 4]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda w: (len(w), sum(w), w[:3], w[-3:]))(ring_waits([7] * 200000))",
+      "expect": "(200000, -200000, [-1, -1, -1], [-1, -1, -1])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda w: (len(w), sum(w), w[:3], w[-3:]))(ring_waits(list(range(200000, 0, -1))))",
+      "expect": "(200000, 19999899999, [-1, 199999, 199998], [3, 2, 1])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda w: (len(w), sum(w), w[:3], w[-3:]))(ring_waits([(i * 7919) % 100003 for i in range(200000)]))",
+      "expect": "(200000, 2298734, [1, 1, 1], [1, 1, 7])",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def ring_waits(load):\n    n = len(load)\n    waits = [-1] * n\n    stack = []  # slots still waiting, readings not rising\n    for i in range(2 * n):\n        x = load[i % n]\n        while stack and load[stack[-1]] < x:\n            j = stack.pop()\n            waits[j] = i - j\n        if i < n:\n            stack.append(i)\n    return waits\n",
+  "notes": [
+    "Going round twice lets each slot see every other slot once, in the right order.",
+    "Only slots of the first pass are pushed, so no slot is given a wait of a full day or more.",
+    "Each slot is pushed once and popped at most once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def ring_waits(load):\n    n = len(load)\n    waits = [-1] * n\n    stack = []\n    for i, x in enumerate(load):\n        while stack and load[stack[-1]] < x:\n            j = stack.pop()\n            waits[j] = i - j\n        stack.append(i)\n    return waits\n",
+      "slip": "It walks the day once, so a slot whose higher reading comes after the wrap stays at -1."
+    },
+    {
+      "code": "def ring_waits(load):\n    n = len(load)\n    waits = [-1] * n\n    stack = []\n    for i in range(2 * n):\n        x = load[i % n]\n        while stack and load[stack[-1]] <= x:\n            j = stack.pop()\n            if i - j < n:\n                waits[j] = i - j\n        if i < n:\n            stack.append(i)\n    return waits\n",
+      "slip": "It pops on an equal reading, so a tie counts as higher."
+    },
+    {
+      "code": "def ring_waits(load):\n    n = len(load)\n    waits = []\n    for i in range(n):\n        w = -1\n        for d in range(1, n):\n            if load[(i + d) % n] > load[i]:\n                w = d\n                break\n        waits.append(w)\n    return waits\n",
+      "slip": "It walks forward from every slot, which is $O(n^2)$ when the readings tie."
+    }
+  ]
+}

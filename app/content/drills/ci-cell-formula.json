@@ -1,0 +1,129 @@
+{
+  "id": "ci-cell-formula",
+  "name": "Evaluating a nested cell formula",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "stacks-queues",
+  "tags": [
+    "pack-3",
+    "cell-formula"
+  ],
+  "skills": [
+    "ci-strings",
+    "ci-patterns"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "formula_value",
+  "returns": "a whole number",
+  "brief": "A risk sheet stores cell formulas built from whole numbers and three functions: `SUM`, `MAX` and `MIN`. Each function takes one or more arguments, separated by commas, and an argument is a number or another call. A number may start with `-`. Spaces may appear between any two parts. The whole formula is a number or one call.\n\nWrite `formula_value(formula)`, which returns its value as an `int`.\n\nExample. `\"SUM(3, MAX(2, 7), -4)\"` is $3 + 7 - 4$, so the answer is 6.",
+  "constraints": [
+    "$1 \\le$ `len(formula)` $\\le 600{,}000$ characters, always well formed; calls may nest 100,000 deep.",
+    "$O(n)$ time is the target. A recursive parser runs out of call depth on deep nesting, and `eval` refuses it.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Push a frame (the function name and an empty argument list) at each opening bracket. At a closing bracket, pop the frame, apply its function and add the result to the frame below.",
+  "starter": "def formula_value(formula):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "formula_value('SUM(3, MAX(2, 7), -4)')",
+      "expect": "6",
+      "compare": "equal",
+      "note": "`MAX(2, 7)` is 7, then the sum is 3 + 7 - 4."
+    },
+    {
+      "call": "formula_value('MIN(-12)')",
+      "expect": "-12",
+      "compare": "equal",
+      "note": "A function may take one argument; the minus belongs to the number."
+    }
+  ],
+  "tests": [
+    {
+      "call": "formula_value('42')",
+      "expect": "42",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('-7')",
+      "expect": "-7",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('MIN(-12)')",
+      "expect": "-12",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('SUM(3, MAX(2, 7), -4)')",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('MAX(MIN(4,9),MIN(8,6))')",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('  SUM ( 10 , -10 , 25 )  ')",
+      "expect": "25",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('MIN(SUM(1,2),MAX(-5,-3),SUM(-40,41))')",
+      "expect": "-3",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('SUM(MAX(1000000000,-1000000000),1000000000,MIN(7))')",
+      "expect": "2000000007",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('MAX(-1,-2,-3)')",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('SUM(SUM(SUM(5)),MIN(SUM(2,2),MAX(3)))')",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('SUM(1,' * 60000 + '0' + ')' * 60000)",
+      "expect": "60000",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('SUM(2,MAX(' * 50000 + '-3' + '))' * 50000)",
+      "expect": "99997",
+      "compare": "equal"
+    },
+    {
+      "call": "formula_value('SUM(' + ','.join(str((i * 7919) % 2001 - 1000) for i in range(100000)) + ')')",
+      "expect": "1655",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def formula_value(formula):\n    s = formula.replace(' ', '')\n    stack = []  # frames: (name, arguments so far)\n    value = None\n    i, n = 0, len(s)\n    while i < n:\n        c = s[i]\n        if c.isalpha():\n            j = s.index('(', i)\n            stack.append((s[i:j], []))\n            i = j + 1\n            continue\n        if c == ',':\n            i += 1\n            continue\n        if c == ')':\n            name, args = stack.pop()\n            v = sum(args) if name == 'SUM' else max(args) if name == 'MAX' else min(args)\n            i += 1\n        else:\n            j = i + 1\n            while j < n and s[j].isdigit():\n                j += 1\n            v = int(s[i:j])\n            i = j\n        if stack:\n            stack[-1][1].append(v)\n        else:\n            value = v\n    return value\n",
+  "notes": [
+    "Each open call is a frame on an explicit stack, so the nesting depth costs memory, not call depth.",
+    "A minus sign starts a number; it is never an operator here, so it must stay with the digits.",
+    "Each character is read once and each value is added to one frame, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def formula_value(formula):\n    s = formula.replace(' ', '')\n    pos = 0\n\n    def parse():\n        nonlocal pos\n        if s[pos].isalpha():\n            j = s.index('(', pos)\n            name = s[pos:j]\n            pos = j + 1\n            args = [parse()]\n            while s[pos] == ',':\n                pos += 1\n                args.append(parse())\n            pos += 1\n            return sum(args) if name == 'SUM' else max(args) if name == 'MAX' else min(args)\n        j = pos + 1\n        while j < len(s) and s[j].isdigit():\n            j += 1\n        v = int(s[pos:j])\n        pos = j\n        return v\n\n    return parse()\n",
+      "slip": "It parses by recursion, which runs out of call depth when calls nest thousands deep."
+    },
+    {
+      "code": "def formula_value(formula):\n    env = {'SUM': lambda *a: sum(a), 'MAX': max, 'MIN': min}\n    return eval(formula, env)\n",
+      "slip": "It hands the text to `eval`, which cannot take `MAX` of one number and refuses deep nesting."
+    },
+    {
+      "code": "def formula_value(formula):\n    s = formula.replace(' ', '')\n    stack = []\n    value = None\n    i, n = 0, len(s)\n    while i < n:\n        c = s[i]\n        if c.isalpha():\n            j = s.index('(', i)\n            stack.append((s[i:j], []))\n            i = j + 1\n            continue\n        if c in ',-':\n            i += 1\n            continue\n        if c == ')':\n            name, args = stack.pop()\n            v = sum(args) if name == 'SUM' else max(args) if name == 'MAX' else min(args)\n            i += 1\n        else:\n            j = i + 1\n            while j < n and s[j].isdigit():\n                j += 1\n            v = int(s[i:j])\n            i = j\n        if stack:\n            stack[-1][1].append(v)\n        else:\n            value = v\n    return value\n",
+      "slip": "It skips the minus sign as if it were a separator, so every number reads as positive."
+    }
+  ]
+}

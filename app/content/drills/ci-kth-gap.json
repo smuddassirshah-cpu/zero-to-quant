@@ -1,0 +1,129 @@
+{
+  "id": "ci-kth-gap",
+  "name": "The k-th smallest gap between sensors",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "binary-search",
+  "tags": [
+    "pack-3",
+    "kth-gap"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2400,
+  "fn": "kth_smallest_gap",
+  "returns": "a whole number",
+  "brief": "Sensors sit at whole-number marks along a pipeline, given in `positions` in no order; two may share a mark. Each pair of sensors has a gap, the distance between their marks. List the gaps of all `n(n - 1)/2` pairs from smallest to largest, and return the `k`-th, counting from 1.\n\nWrite `kth_smallest_gap(positions, k)`.\n\nExample. For `positions = [9, 1, 4, 4]` the six gaps sorted are 0, 3, 3, 5, 5, 8. With `k = 4` the answer is 5.",
+  "constraints": [
+    "$2 \\le n \\le 100{,}000$ sensors at marks between $0$ and $10^9$; $1 \\le k \\le n(n - 1)/2$.",
+    "$O(n \\log n + n \\log R)$ time is the target, where $R$ is the span of the marks. Listing every pair is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Sort the marks. For a trial gap `d`, two pointers count the pairs at most `d` apart in one pass. Binary search the smallest `d` with at least `k` such pairs.",
+  "starter": "def kth_smallest_gap(positions, k):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "kth_smallest_gap([9, 1, 4, 4], 4)",
+      "expect": "5",
+      "compare": "equal",
+      "note": "The sorted gaps are 0, 3, 3, 5, 5 and 8; the fourth is 5."
+    },
+    {
+      "call": "kth_smallest_gap([9, 1, 4, 4], 1)",
+      "expect": "0",
+      "compare": "equal",
+      "note": "The two sensors at mark 4 give a gap of 0."
+    }
+  ],
+  "tests": [
+    {
+      "call": "kth_smallest_gap([3, 3], 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([0, 10], 1)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([9, 1, 4, 4], 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([9, 1, 4, 4], 4)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([9, 1, 4, 4], 6)",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([1, 2, 3, 4, 5], 5)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([5, 5, 5, 1], 4)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([7, 0, 3, 12, 20], 7)",
+      "expect": "12",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([2, 2, 2, 2], 6)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([1, 6, 1, 6, 1], 5)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([(i * 7919) % 1000000007 for i in range(60000)], 900000000)",
+      "expect": "139168506",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([i // 3 for i in range(60000)], 60000)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "kth_smallest_gap([(i * i) % 999983 for i in range(40000)], 1)",
+      "expect": "1",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method lists all $n(n-1)/2$ gaps; the step to $O(n \\log n + n \\log R)$ is to binary search the gap value and count pairs within it with two pointers.",
+  "solution": "def kth_smallest_gap(positions, k):\n    p = sorted(positions)\n    n = len(p)\n\n    def pairs_within(d):  # pairs at most d apart\n        count = left = 0\n        for right in range(n):\n            while p[right] - p[left] > d:\n                left += 1\n            count += right - left\n        return count\n\n    lo, hi = 0, p[-1] - p[0]\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if pairs_within(mid) >= k:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+  "notes": [
+    "The count of pairs at most `d` apart never falls as `d` grows, so the smallest `d` reaching `k` is the answer.",
+    "That smallest `d` is a real gap, since the count only steps up at gaps; counting with `<` is off by one.",
+    "Sorting is $O(n \\log n)$ and each of about 30 counts is one $O(n)$ two-pointer pass."
+  ],
+  "planted": [
+    {
+      "code": "def kth_smallest_gap(positions, k):\n    n = len(positions)\n    gaps = sorted(abs(positions[i] - positions[j]) for i in range(n) for j in range(i + 1, n))\n    return gaps[k - 1]\n",
+      "slip": "It lists and sorts every pair, which is $O(n^2 \\log n)$."
+    },
+    {
+      "code": "def kth_smallest_gap(positions, k):\n    p = sorted(positions)\n    n = len(p)\n\n    def pairs_below(d):\n        count = left = 0\n        for right in range(n):\n            while p[right] - p[left] >= d:\n                left += 1\n            count += right - left\n        return count\n\n    lo, hi = 0, p[-1] - p[0]\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if pairs_below(mid) >= k:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+      "slip": "It counts pairs strictly closer than the trial gap, so the search lands one past the answer."
+    },
+    {
+      "code": "def kth_smallest_gap(positions, k):\n    p = sorted(set(positions))\n    n = len(p)\n\n    def pairs_within(d):\n        count = left = 0\n        for right in range(n):\n            while p[right] - p[left] > d:\n                left += 1\n            count += right - left\n        return count\n\n    lo, hi = 0, p[-1] - p[0]\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if pairs_within(mid) >= k:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+      "slip": "It drops repeated marks, so the zero gaps between sensors at one mark vanish."
+    }
+  ]
+}
