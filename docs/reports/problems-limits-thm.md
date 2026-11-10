@@ -1,6 +1,6 @@
 # Problem sets: limits-thm (brief `docs/briefs/chained.md`)
 
-Files: `app/content/courses/limits-thm/problems-1.json` (level 1). Numbers: `docs/reports/problems-limits-thm-numbers.py`, run with the scratchpad venv; it exits 0.
+Files: `app/content/courses/limits-thm/problems-1.json`, `problems-2.json`, `problems-3.json`. Numbers: `docs/reports/problems-limits-thm-numbers.py`, run with the scratchpad venv; it exits 0.
 
 The script checks each numeric part by two methods (exact or closed form, then scipy.stats, an enumeration of hands, paths or calls, or the pmf summed term by term). It checks that the key is the value at the rounding the question asks for, and that every `wrong` value matches its slip outside the key's band. It also reads the number printed last in `feedback.correct` and checks that the part's own tolerance accepts it. Stated numbers in the explanations are checked too.
 
