@@ -126,3 +126,26 @@ Agreement of the unchanged text. `p-default-drag`: the answer bands (0.4761 and 
 | `minor` | 1 |
 
 Status: **closed**. Every changed value recomputes and nothing else in the six items contradicts a change. Nothing returns to the fixer; B1 can ride with the fix pass for section A.
+
+## Fix pass
+
+I recomputed each changed number before writing it: the supplier walk's stationary law under each of the four options (ratio uniform; flipped, always and 1/deg(i) not; 1/deg(i) gives shares proportional to deg squared, H = 16/26); the file-retry carried-both root ($m = 0.5 + 0.5m$, so 1); $16 \times 0.2099 + 2 \times 0.0527^2 = 3.3640$; $60 \times 19.2063 = 1152.38$ (and 1153 for 19.21); $38 + 15(0.3483 + \tfrac1{30}) = 43.7245$ and $38 + 15(0.3483 + 0.0837) = 44.48$. The numbers scripts for random-vars, limits-thm and markov exit 0 (1333, 1539 and 1815 checks), with the random-vars and markov scripts updated (new slips, the option check for the supplier walk, the 1153 route). Validator: 0 errors, no `[answer-form]` warning. `--problems` playthrough of the six changed sets, with and without `--mobile`: green. `voice-scan.py 35`: 0 and 0.
+
+Status: applied 11 (A1 to A5, A7, A9, A10, A11, A12, B1), engine item 1 (A8, content left as the brief directs), accepted without edit 1 (A13), applied as proposed with no change needed 1 (A6). None disputed.
+
+A1. p-supplier-survey part 3: applied. Option `inverse` text is $\tfrac{1}{\deg(i)}$, `why` as proposed. Script checks exactly one option gives the uniform law.
+A2. p-taxi-rank part 4 `explain`: applied (long-run rate, not a Poisson stream).
+A3. p-taxi-rank part 5 `explain`: applied.
+A4. p-regime-sampler part 5 `explain`: applied.
+A5. p-part-errors part 3 question: applied ("finite near 0").
+A6. p-machine-faults part 4: applied; the question stops at the Jacobian and asks for $f_{X,G}$ first. Answer, slips and feedback stand.
+A7. p-ticket-stages part 3 `rates`: applied, names the slip.
+A8. p-part-errors part 1 spellings: engine limit. One bullet added to `docs/BACKLOG-INBOX.md` under `Raised later (problems fix pass d):`; the item is left as it is (the `one-root` and `added-root` slips are not added).
+A9. p-file-retry part 2: applied. New slip `carried-both` 1 (tol 0.0005) with its `byKey` line; no collision.
+A10. p-startup-rounds part 3: applied. `count-squared` 3.3584 (tol 0.0005) to 3.3612 (tol 0.0035); takes 3.3584 and 3.3640.
+A11. p-courier-vans: applied. Part 4 opens with the rows-differ sentence; part 5 cites $P(Y = 1) = 0.38$.
+A12. p-two-loss-cut part 5: applied. `tol` 0.5 to 1 on the answer; `explain` prints 19.2063. Script accepts 1153.
+A13. p-two-loss-cut freshness: accepted, no edit.
+B1. p-token-draw part 5 (in `random-vars/problems-2.json`, not problems-3): applied. New slip `carried-half` 43.72 (tol 0.005) with its `byKey` line.
+
+Graded values changed: markov p-supplier-survey part 3 option `inverse` now $\tfrac{1}{\deg(i)}$ (still wrong; was $\tfrac{1}{\deg(j)}$, which was also right); random-vars p-startup-rounds part 3 `count-squared` 3.3584 (tol 0.0005) to 3.3612 (tol 0.0035); markov p-two-loss-cut part 5 answer `tol` 0.5 to 1 (value 1152.38 unchanged); added slips `carried-both` 1 (p-file-retry part 2) and `carried-half` 43.72 (p-token-draw part 5). No answer key changed.

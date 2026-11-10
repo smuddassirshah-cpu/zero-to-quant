@@ -250,7 +250,8 @@ ok(Gd[2] == F(63, 210) and Gd[3] == F(7, 210), 'hand counts are not 63 and 7')
 # part 5: £15 for each gold token after the first, 15 * max(G - 1, 0)
 pge3 = Gd[3]
 num(L2, 'p-token-draw', 5, EV + 15 * (pge2 + pge3), E(Gd, lambda k: 20 + 15 * k + 15 * max(k - 1, 0)),
-    {'no-bonus': EV, 'once-only': EV + 15 * pge2, 'full-bonus': EV + 15, 'bonus-only': 15 * (pge2 + pge3), 'carried': EV + 15 * (binge2 + (1 - F(7, 10) ** 4 - 4 * F(3, 10) * F(7, 10) ** 3 - 6 * F(3, 10) ** 2 * F(7, 10) ** 2))})
+    {'no-bonus': EV, 'once-only': EV + 15 * pge2, 'full-bonus': EV + 15, 'bonus-only': 15 * (pge2 + pge3), 'carried': EV + 15 * (binge2 + (1 - F(7, 10) ** 4 - 4 * F(3, 10) * F(7, 10) ** 3 - 6 * F(3, 10) ** 2 * F(7, 10) ** 2)),
+     'carried-half': EV + 15 * (binge2 + pge3)})
 ok(abs(float(EV + 15 * (binge2 + F(837, 10000))) - 44.48) < 0.005, 'p-token-draw p5: carried 44.48')
 ok(pge3 == F(1, 30) and EV + 15 * (E(Gd) - (1 - Gd[0])) == F(87, 2), 'p-token-draw p5: 1/30 or 43.50 by the other route wrong')
 
@@ -448,7 +449,8 @@ series = sum((F(1, 2) ** (k + 1)) * (k * F(32, 10) + 1) for k in range(0, 200))
 ok(abs(float(series) - float(mean_try * 2)) < 1e-12, 'retry: series over failures agrees with Wald')
 num(L4, 'p-file-retry', 2, F(str(msol)), mean_try * 2,
     {'no-restart': mean_try, 'tries': 2, 'sign': mean_try / F(3, 2),
-     'carried': F(str(sp.solve(sp.Eq(m_, F(1, 2) + F(3, 10) * m_ + F(1, 5) * (5 + m_)), m_)[0]))})
+     'carried': F(str(sp.solve(sp.Eq(m_, F(1, 2) + F(3, 10) * m_ + F(1, 5) * (5 + m_)), m_)[0])),
+     'carried-both': F(str(sp.solve(sp.Eq(m_, F(1, 2) + F(3, 10) * m_ + F(1, 5) * m_), m_)[0]))})
 fail_len = (F(3, 10) * 2 + F(1, 5) * 5) / F(1, 2)
 EF = fail_len + F(str(msol))
 num(L4, 'p-file-retry', 3, EF, (F(3, 10) * (2 + F(str(msol))) + F(1, 5) * (5 + F(str(msol)))) / F(1, 2),
@@ -594,7 +596,8 @@ VlnR = 0.25 * (log(1.5) - log(0.6)) ** 2
 ok(abs(VlnR - 0.2099) < 0.00005, 'startup: Var(ln R) = (ln 2.5)^2 / 4 = 0.2099 as stated')
 stated3 = 4 * 0.2099 + 2 * 0.0527 ** 2
 num(L5, 'p-startup-rounds', 3, stated3, 4 * 0.2099 + 2 * (-0.0527) ** 2,
-    {'fixed-count': 4 * 0.2099, 'count-squared': 16 * 0.2099, 'no-square': 4 * 0.2099 + 2 * -0.0527})
+    {'fixed-count': 4 * 0.2099, 'count-squared': 16 * 0.2099 + 2 * 0.0527 ** 2, 'no-square': 4 * 0.2099 + 2 * -0.0527})
+ok(abs(16 * 0.2099 - 3.3612) <= 0.0035, 'startup p3: count-squared band also takes 16 x 0.2099 without the count term')
 ok(abs(vW - (float(ENr) * VlnR + float(VNr) * ElnR ** 2)) < 1e-12 and abs(vW - 0.8452) <= 0.0005, 'startup p3: exact Var(ln W) 0.845135 by enumeration is in the band')
 EW = sum(p * F(21, 20) ** n for n, p in Np.items())
 EW_alt = sum(float(p) * sum(comb(n, k) / 2 ** n * 1.5 ** k * 0.6 ** (n - k) for k in range(n + 1)) for n, p in Np.items())
