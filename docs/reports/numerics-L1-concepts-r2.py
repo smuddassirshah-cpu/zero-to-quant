@@ -148,6 +148,8 @@ expected_fail('l1:quiz0_float32_cannot_hold_a_level_to_hundredths',
               not np.all(np.round(hund.astype(np.float32).astype(float), 2) == hund),
               'every hundredth from 20,000.00 to 20,000.99 survives a float32 round trip; the stored error is 0.00023, in the fourth decimal. '
               '# corrected: assert np.all(np.round(hund.astype(np.float32).astype(float), 2) == hund)')
+check('fix1:float32_one_hundredth_move_is_2.3_per_cent_off', float(np.float32(20000.02)) - float(np.float32(20000.01)) == 0.009765625
+      and abs(0.009765625 / 0.01 - 1 + 0.0234) < 1e-4 and abs(20000.01 - 20000.009765625 - 0.00023) < 1e-5)
 check('l1:stored_tenth_error', abs(float(Fraction(0.1) - Fraction(1, 10)) - 5.55e-18) < 1e-20
       and abs(float((Fraction(0.1) - Fraction(1, 10)) / Fraction(1, 10)) - 5.55e-17) < 1e-19)
 check('hw1:hex_word_is_10', struct.unpack('>d', bytes.fromhex('4024000000000000'))[0] == 10.0)
