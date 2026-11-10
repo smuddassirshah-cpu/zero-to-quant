@@ -420,6 +420,94 @@ ok(post(10) == report(10) and post(4) == report(4), 'p-dated-coins: odds form di
 num(L4, 'p-dated-coins', 5, F(4, 5), F(round(float(post(10 ** 9)) * 10 ** 6), 10 ** 6),
     {'ratio-one': F(2, 3), 'even': F(1, 2), 'certain': 1})
 
+# ------------------------------------------------------------------ level 5
+L5 = load(5)
+# p-warning-screen: 20 of 2,000 warn; screen 1 flags 0.9 / 0.02; screen 2 flags 0.8 / 0.1
+N, Wn = 2000, 20
+s1, f1, s2, f2 = F(9, 10), F(2, 100), F(8, 10), F(1, 10)
+prior = F(Wn, N)
+true1, false1 = s1 * Wn, f1 * (N - Wn)                         # natural frequencies
+p1 = prior * s1 / (prior * s1 + (1 - prior) * f1)
+num(L5, 'p-warning-screen', 1, p1, true1 / (true1 + false1),
+    {'detection': s1, 'flipped': 1 - f1, 'prior': prior})
+pick(L5, 'p-warning-screen', 2, 'swapped')
+ok(false1 / (true1 + false1) == F(11, 16) and (true1 + false1) / N == F(288, 10000), 'p-warning-screen p2: 0.6875 or 2.88% wrong')
+both_t, both_f = Wn * s1 * s2, (N - Wn) * f1 * f2
+p3 = (p1 / (1 - p1)) * (s2 / f2); p3 = p3 / (1 + p3)
+odds_prior = prior / (1 - prior) * (s2 / f2)
+odds_slip = s1 / (1 - s1) * (s2 / f2)
+num(L5, 'p-warning-screen', 3, p3, both_t / (both_t + both_f),
+    {'from-prior': odds_prior / (1 + odds_prior), 'detection': s2, 'slip': odds_slip / (1 + odds_slip)})
+ok(p3 == F(40, 51), 'p-warning-screen p3: not 40/51')
+num(L5, 'p-warning-screen', 4, 2 * p3 - 1, p3 - (1 - p3),
+    {'p-itself': p3, 'one-screen': 2 * p1 - 1, 'from-prior': 2 * F(round(float(odds_prior / (1 + odds_prior)), 4)) - 1})
+
+# p-two-houses: survivors and closed funds at two houses (returns in % a year)
+R_ = {'n': (40, 10), 'r': (7, -6)}; S_ = {'n': (25, 25), 'r': (8, -2)}
+def allavg(h): return F(h['n'][0] * h['r'][0] + h['n'][1] * h['r'][1], sum(h['n']))
+def wavg(h):
+    w = F(h['n'][0], sum(h['n'])); return w * h['r'][0] + (1 - w) * h['r'][1]
+num(L5, 'p-two-houses', 1, allavg(R_) / 100, wavg(R_) / 100,
+    {'survivors': F(7, 100), 'unweighted': F(7 - 6, 2) / 100, 'over-survivors': F(220, 40) / 100}, round_tol=0.00005)
+gapS = F(S_['n'][1], 50) * (S_['r'][0] - S_['r'][1])
+num(L5, 'p-two-houses', 2, gapS, S_['r'][0] - allavg(S_),
+    {'no-weight': S_['r'][0] - S_['r'][1], 'all': allavg(S_), 'r-gap': R_['r'][0] - allavg(R_)})
+pick(L5, 'p-two-houses', 3, 'mix')
+ok(S_['r'][0] > R_['r'][0] and S_['r'][1] > R_['r'][1] and allavg(R_) > allavg(S_), 'p-two-houses: no reversal')
+ok(F(40, 50) == F(8, 10) and F(25, 50) == F(1, 2) and 0.2 * 13 == 2.6, 'p-two-houses p3: stated shares wrong')
+num(L5, 'p-two-houses', 4, allavg(R_) - allavg(S_), wavg(R_) - (S_['r'][0] - gapS),
+    {'survivors': R_['r'][0] - S_['r'][0], 'closed': R_['r'][1] - S_['r'][1], 'gap-slip': allavg(R_) - (S_['r'][0] - allavg(S_))})
+ok((allavg(R_) - allavg(S_)) - (R_['r'][0] - S_['r'][0]) == F(24, 10), 'p-two-houses p4: 2.4 points wrong')
+
+# p-signal-streak: good right 0.6, useless right 0.5, prior 1/2; four wrong calls
+g, u = F(6, 10), F(5, 10)
+lr = ((1 - g) / (1 - u)) ** 4
+def enum_streak():   # sum over quality and every five-day sequence
+    tot = F(0); good = F(0); right5 = F(0)
+    for q, pr in ((g, F(1, 2)), (u, F(1, 2))):
+        for seq in itertools.product((0, 1), repeat=5):
+            if any(seq[:4]): continue
+            p = pr
+            for x in seq: p *= q if x else 1 - q
+            tot += p
+            if q == g: good += p
+            if seq[4]: right5 += p
+    return good / tot, right5 / tot
+pg_enum, pr_enum = enum_streak()
+seqg = [s for s in itertools.product((0, 1), repeat=5) if not any(s[:4])]
+num(L5, 'p-signal-streak', 1, g, sum((g if s[4] else 1 - g) * (1 - g) ** 4 for s in seqg if s[4]) / ((1 - g) ** 4),
+    {'cold': 1 - g, 'five-wrong': (1 - g) ** 5})
+num(L5, 'p-signal-streak', 2, lr, ((1 - g) ** 4) / ((1 - u) ** 4),
+    {'one-day': (1 - g) / (1 - u), 'reciprocal': 1 / lr, 'right-rates': (g / u) ** 4})
+pgood = lr / (1 + lr)
+num(L5, 'p-signal-streak', 3, pgood, pg_enum,
+    {'no-update': F(1, 2), 'odds': lr, 'right-rates': (g / u) ** 4 / (1 + (g / u) ** 4)})
+ok(pgood == F(256, 881), 'p-signal-streak p3: not 256/881')
+pright = pgood * g + (1 - pgood) * u
+num(L5, 'p-signal-streak', 4, pright, pr_enum, {'good': g, 'prior-mix': (g + u) / 2, 'coin': u})
+num(L5, 'p-signal-streak', 5, 2 * pright - 1, pright - (1 - pright),
+    {'prior': 2 * (g + u) / 2 - 1, 'good': 2 * g - 1, 'p-itself': pright})
+
+# p-doubling-desk: cap of five losses, 20 rounds, quit after a losing round
+def round_enum():
+    e = F(0)
+    for k in range(1, 6):                  # first win on bet k
+        e += F(1, 2 ** k) * (2 ** (k - 1) - (2 ** (k - 1) - 1))
+    e += F(1, 32) * (-(1 + 2 + 4 + 8 + 16))
+    return e
+qwin = 1 - F(1, 32)
+num(L5, 'p-doubling-desk', 1, qwin * 1 - F(1, 32) * 31, round_enum(),
+    {'win': 1, 'no-loss': qwin, 'loss': -31})
+surv = qwin ** 20
+num(L5, 'p-doubling-desk', 2, surv, F(1) - sum(qwin ** (j - 1) * F(1, 32) for j in range(1, 21)),
+    {'sum': 1 - F(20, 32), 'one-round': qwin, 'complement': 1 - surv})
+quit_avg = sum(qwin ** (j - 1) * F(1, 32) * ((j - 1) - 31) for j in range(1, 21)) / (1 - surv)
+num(L5, 'p-doubling-desk', 3, -20 * surv / (1 - surv), quit_avg,
+    {'one-loss': -31, 'mirror': -20, 'unweighted': -20 * surv}, round_tol=0.005)
+ok(surv * 20 + (1 - surv) * quit_avg == 0, 'p-doubling-desk: the average over all traders is not 0')
+pick(L5, 'p-doubling-desk', 4, 'survivors')
+ok(round(1000 * float(surv)) == 530 and round(float(quit_avg), 2) == -22.55, 'p-doubling-desk p4: 530 or -22.55 wrong')
+
 present = [n for n in (1, 2, 3, 4, 5) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails: print('FAIL', m)
