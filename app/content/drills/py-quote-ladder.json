@@ -1,0 +1,116 @@
+{
+  "id": "py-quote-ladder",
+  "name": "A ladder of quotes",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "defaults",
+    "quote-ladder"
+  ],
+  "skills": [
+    "pf-functions"
+  ],
+  "difficulty": 2,
+  "pace": 720,
+  "fn": "quote_ladder",
+  "returns": "a list of (side, price, size) tuples",
+  "brief": "A market maker posts a ladder of orders round a mid price. Level `k` (from 1 to `levels`) sits `k` steps from the mid and is `k` times the base size. Return the bids first, nearest the mid first, then the asks the same way. Each order is `(side, price, size)` with `side` `'bid'` or `'ask'` and the price rounded to 2 places.\n\nWrite `quote_ladder(mid, levels=3, step=0.05, size=100)`, with the defaults in that order, so `quote_ladder(5.0, 2)` means two levels. Every call must start a new list.\n\nExample. `quote_ladder(5.0, levels=2)` is `[('bid', 4.95, 100), ('bid', 4.9, 200), ('ask', 5.05, 100), ('ask', 5.1, 200)]`.",
+  "constraints": [
+    "$0 \\le$ `levels` $\\le 1{,}000$; `mid`, `step` and the prices are £ floats; `size` is a whole number of shares.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Two loops over `k` in `range(1, levels + 1)`, one per side. `4.85 - 4 * 0.05` is 4.6499999..., which is why each price is rounded.",
+  "starter": "def quote_ladder(mid):\n    # add the three arguments with their defaults\n    return []\n",
+  "examples": [
+    {
+      "call": "quote_ladder(5.0, levels=2)",
+      "expect": "[('bid', 4.95, 100), ('bid', 4.9, 200), ('ask', 5.05, 100), ('ask', 5.1, 200)]",
+      "compare": "equal",
+      "note": "Two levels each side. The size doubles at the second level."
+    },
+    {
+      "call": "quote_ladder(72.4, 1, step=0.1)",
+      "expect": "[('bid', 72.3, 100), ('ask', 72.5, 100)]",
+      "compare": "equal",
+      "note": "`levels` given by position and `step` by name."
+    }
+  ],
+  "tests": [
+    {
+      "call": "quote_ladder(10.0, 0)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(5.0)",
+      "expect": "[('bid', 4.95, 100), ('bid', 4.9, 200), ('bid', 4.85, 300), ('ask', 5.05, 100), ('ask', 5.1, 200), ('ask', 5.15, 300)]",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(5.0, 2)",
+      "expect": "[('bid', 4.95, 100), ('bid', 4.9, 200), ('ask', 5.05, 100), ('ask', 5.1, 200)]",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(5.0, levels=1)",
+      "expect": "[('bid', 4.95, 100), ('ask', 5.05, 100)]",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(72.4, step=0.1, size=250, levels=2)",
+      "expect": "[('bid', 72.3, 250), ('bid', 72.2, 500), ('ask', 72.5, 250), ('ask', 72.6, 500)]",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(0.72, size=1000, step=0.01)",
+      "expect": "[('bid', 0.71, 1000), ('bid', 0.7, 2000), ('bid', 0.69, 3000), ('ask', 0.73, 1000), ('ask', 0.74, 2000), ('ask', 0.75, 3000)]",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(mid=101.5, levels=1, step=0.25)",
+      "expect": "[('bid', 101.25, 100), ('ask', 101.75, 100)]",
+      "compare": "equal"
+    },
+    {
+      "call": "(quote_ladder(5.0, levels=1), quote_ladder(5.0, levels=1))[1]",
+      "expect": "[('bid', 4.95, 100), ('ask', 5.05, 100)]",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(4.85, levels=4)[3]",
+      "expect": "('bid', 4.65, 400)",
+      "compare": "equal"
+    },
+    {
+      "call": "quote_ladder(4.85, levels=4)[-1]",
+      "expect": "('ask', 5.05, 400)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda q: (len(q), q[49], q[-1]))(quote_ladder(1.0, levels=50, step=0.01))",
+      "expect": "(100, ('bid', 0.5, 5000), ('ask', 1.5, 5000))",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value.",
+  "solution": "def quote_ladder(mid, levels=3, step=0.05, size=100):\n    orders = []\n    for k in range(1, levels + 1):\n        orders.append(('bid', round(mid - k * step, 2), k * size))\n    for k in range(1, levels + 1):\n        orders.append(('ask', round(mid + k * step, 2), k * size))\n    return orders\n",
+  "notes": [
+    "Defaults let the common call be short, and keywords let a caller change one of them by name.",
+    "`4.85 - 4 * 0.05` prints as 4.6499999999999995, so an unrounded price fails an exact check; a list as a default would be shared by every call.",
+    "Two loops of `levels` steps, so $O(\\text{levels})$."
+  ],
+  "planted": [
+    {
+      "code": "def quote_ladder(mid, levels=3, step=0.05, size=100, orders=[]):\n    for k in range(1, levels + 1):\n        orders.append(('bid', round(mid - k * step, 2), k * size))\n    for k in range(1, levels + 1):\n        orders.append(('ask', round(mid + k * step, 2), k * size))\n    return orders\n",
+      "slip": "A list as a default is made once, so each call adds to the orders of the last."
+    },
+    {
+      "code": "def quote_ladder(mid, levels=3, step=0.05, size=100):\n    orders = []\n    for k in range(1, levels + 1):\n        orders.append(('bid', mid - k * step, k * size))\n    for k in range(1, levels + 1):\n        orders.append(('ask', mid + k * step, k * size))\n    return orders\n",
+      "slip": "The prices are not rounded, so 4.6499999999999995 stands where 4.65 should."
+    },
+    {
+      "code": "def quote_ladder(mid, step=0.05, levels=3, size=100):\n    orders = []\n    for k in range(1, levels + 1):\n        orders.append(('bid', round(mid - k * step, 2), k * size))\n    for k in range(1, levels + 1):\n        orders.append(('ask', round(mid + k * step, 2), k * size))\n    return orders\n",
+      "slip": "`step` comes before `levels`, so a second positional argument is read as the step."
+    }
+  ]
+}

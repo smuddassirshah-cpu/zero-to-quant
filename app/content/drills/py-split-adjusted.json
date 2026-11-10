@@ -1,0 +1,123 @@
+{
+  "id": "py-split-adjusted",
+  "name": "Closes adjusted for splits",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "mutation",
+    "split-adjusted"
+  ],
+  "skills": [
+    "pf-functions",
+    "pf-collections"
+  ],
+  "difficulty": 3,
+  "pace": 900,
+  "fn": "split_adjusted",
+  "returns": "a new list of floats",
+  "brief": "`closes` are a share's closes, oldest first. `splits` maps a day's index to a ratio: on that day each share became `ratio` shares, so that close and every later one are already on the new basis. To compare across a split, divide every earlier close by the ratio. A close before several splits is divided by each of them.\n\nWrite `split_adjusted(closes, splits)`. Return a new list and leave both arguments as they were.\n\nExample. `split_adjusted([90.0, 30.5, 31.0, 15.0], {1: 3, 3: 2})` is `[15.0, 15.25, 15.5, 15.0]`. Day 0 comes before both splits, so it is divided by 3 and by 2; days 1 and 2 come before the second split only.",
+  "constraints": [
+    "$0 \\le n \\le 100{,}000$ closes; every ratio is above zero (a ratio below 1 is a consolidation).",
+    "Floats are compared with `math.isclose` at a relative tolerance of $10^{-9}$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Walk from the newest close back to the oldest, carrying the product of the ratios already passed. Apply a day's own ratio only after that day's close is written.",
+  "starter": "def split_adjusted(closes, splits):\n    # your code here\n    return closes\n",
+  "examples": [
+    {
+      "call": "split_adjusted([100.0, 104.0, 26.5, 27.0], {2: 4})",
+      "expect": "[25.0, 26.0, 26.5, 27.0]",
+      "compare": "isclose",
+      "note": "The split is on day 2, so days 0 and 1 are divided by 4."
+    },
+    {
+      "call": "split_adjusted([90.0, 30.5, 31.0, 15.0], {1: 3, 3: 2})",
+      "expect": "[15.0, 15.25, 15.5, 15.0]",
+      "compare": "isclose",
+      "note": "Day 0 is divided by 3 and by 2, so 90 becomes 15."
+    }
+  ],
+  "tests": [
+    {
+      "call": "split_adjusted([], {})",
+      "expect": "[]",
+      "compare": "isclose"
+    },
+    {
+      "call": "split_adjusted([10.0, 11.0], {})",
+      "expect": "[10.0, 11.0]",
+      "compare": "isclose"
+    },
+    {
+      "call": "(lambda p: split_adjusted(p, {}) is not p)([1.0])",
+      "expect": "True",
+      "compare": "equal"
+    },
+    {
+      "call": "split_adjusted([50.0, 51.0], {0: 2})",
+      "expect": "[50.0, 51.0]",
+      "compare": "isclose"
+    },
+    {
+      "call": "split_adjusted([100.0, 104.0, 26.5, 27.0], {2: 4})",
+      "expect": "[25.0, 26.0, 26.5, 27.0]",
+      "compare": "isclose"
+    },
+    {
+      "call": "split_adjusted([90.0, 30.5, 31.0, 15.0], {1: 3, 3: 2})",
+      "expect": "[15.0, 15.25, 15.5, 15.0]",
+      "compare": "isclose"
+    },
+    {
+      "call": "split_adjusted([90.0, 30.5, 31.0, 15.0], {3: 2, 1: 3})",
+      "expect": "[15.0, 15.25, 15.5, 15.0]",
+      "compare": "isclose"
+    },
+    {
+      "call": "split_adjusted([2.0, 2.1, 8.6], {2: 0.25})",
+      "expect": "[8.0, 8.4, 8.6]",
+      "compare": "isclose"
+    },
+    {
+      "call": "split_adjusted([40.0, 41.0, 20.6], {2: 2})",
+      "expect": "[20.0, 20.5, 20.6]",
+      "compare": "isclose"
+    },
+    {
+      "call": "split_adjusted([120.0, 60.0, 30.0, 15.0], {1: 2, 2: 2, 3: 2})",
+      "expect": "[15.0, 15.0, 15.0, 15.0]",
+      "compare": "isclose"
+    },
+    {
+      "call": "(p := [100.0, 104.0, 26.5], s := {2: 4}, split_adjusted(p, s), (p, s))[3]",
+      "expect": "([100.0, 104.0, 26.5], {2: 4})",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[0], r[49999], r[-1]))(split_adjusted([float(1 + i % 3) for i in range(100000)], {d: 2 for d in range(10000, 100000, 10000)}))",
+      "expect": "(100000, 0.001953125, 0.0625, 1.0)",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. A number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)` holds, element by element for lists and tuples; anything else must equal the expected value.",
+  "solution": "def split_adjusted(closes, splits):\n    out = [0.0] * len(closes)\n    factor = 1.0\n    for i in range(len(closes) - 1, -1, -1):\n        out[i] = closes[i] / factor\n        if i in splits:\n            factor = factor * splits[i]\n    return out\n",
+  "notes": [
+    "Walking backwards lets one running factor carry every later split at once.",
+    "Dividing `closes[i]` in place changes the caller's list, and applying a day's ratio before its own close divides the split day too.",
+    "One pass over the closes, so $O(n)$, plus a dict lookup per day."
+  ],
+  "planted": [
+    {
+      "code": "def split_adjusted(closes, splits):\n    factor = 1.0\n    for i in range(len(closes) - 1, -1, -1):\n        closes[i] = closes[i] / factor\n        if i in splits:\n            factor = factor * splits[i]\n    return closes\n",
+      "slip": "It divides the caller's list in place and hands the same list back."
+    },
+    {
+      "code": "def split_adjusted(closes, splits):\n    out = [0.0] * len(closes)\n    factor = 1.0\n    for i in range(len(closes) - 1, -1, -1):\n        if i in splits:\n            factor = factor * splits[i]\n        out[i] = closes[i] / factor\n    return out\n",
+      "slip": "The ratio is applied before the split day's own close, which is already on the new basis."
+    },
+    {
+      "code": "def split_adjusted(closes, splits):\n    out = []\n    for i, c in enumerate(closes):\n        later = [d for d in sorted(splits) if d > i]\n        out.append(c / splits[later[0]] if later else c)\n    return out\n",
+      "slip": "Only the next split is applied, so a close before two splits is divided once."
+    }
+  ]
+}

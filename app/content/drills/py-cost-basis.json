@@ -1,0 +1,128 @@
+{
+  "id": "py-cost-basis",
+  "name": "Average cost and realised P&L",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "classes",
+    "cost-basis"
+  ],
+  "skills": [
+    "pf-classes"
+  ],
+  "difficulty": 3,
+  "pace": 1080,
+  "fn": "CostBasis",
+  "returns": "a class",
+  "brief": "A position in one share keeps its average cost. A buy of `qty` at `price` blends into the average. A sell realises `qty * (price - avg_cost)` and leaves the average alone; once the position is flat, the average goes back to `0.0`. The position is never short: a sell of more than is held raises `ValueError`, and so does a `qty` that is not above zero. A refused trade changes nothing.\n\nWrite the class `CostBasis` with attributes `qty` (an `int`), `avg_cost` and `realised` (both start at 0), and methods `buy(qty, price)`, `sell(qty, price)` and `unrealised(price)`, which is `qty * (price - avg_cost)`.\n\nExample. Buy 100 at £4.00 and 300 at £4.40: the cost is £1,720 for 400 shares, an average of £4.30. Sell 200 at £4.50: £40 is realised, and 200 shares remain at £4.30.",
+  "constraints": [
+    "Quantities are whole numbers; prices are £ floats.",
+    "Numbers are compared with `math.isclose` at a relative tolerance of $10^{-9}$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Check a trade before you change anything. On a buy the new average is (old shares times old average plus the new cost) over the new shares.",
+  "starter": "class CostBasis:\n    def __init__(self):\n        self.qty = 0\n        self.avg_cost = 0.0\n        self.realised = 0.0\n",
+  "examples": [
+    {
+      "call": "(c := CostBasis(), c.buy(100, 4.00), c.buy(300, 4.40), c.sell(200, 4.50), (c.qty, c.avg_cost, c.realised))[-1]",
+      "expect": "(200, 4.3, 40.000000000000036)",
+      "compare": "isclose",
+      "note": "The average is £1,720 over 400 shares. The sale realises 200 times 20p."
+    },
+    {
+      "call": "_raised(lambda: (c := CostBasis(), c.buy(10, 2.0), c.sell(11, 2.5)))",
+      "expect": "'ValueError'",
+      "compare": "equal",
+      "note": "Only 10 shares are held, so a sell of 11 is refused."
+    }
+  ],
+  "tests": [
+    {
+      "call": "(c := CostBasis(), (c.qty, c.avg_cost, c.realised))[1]",
+      "expect": "(0, 0.0, 0.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(100, 4.0), (c.qty, c.avg_cost))[-1]",
+      "expect": "(100, 4.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(100, 4.00), c.buy(300, 4.40), c.sell(200, 4.50), (c.qty, c.avg_cost, c.realised))[-1]",
+      "expect": "(200, 4.3, 40.000000000000036)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(100, 4.00), c.buy(300, 4.40), c.sell(200, 4.50), c.unrealised(4.10))[-1]",
+      "expect": "-40.000000000000036",
+      "compare": "isclose"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(100, 4.0), c.sell(100, 5.0), (c.qty, c.avg_cost, c.realised))[-1]",
+      "expect": "(0, 0.0, 100.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(100, 4.0), c.sell(100, 5.0), c.buy(50, 6.0), (c.qty, c.avg_cost, c.realised))[-1]",
+      "expect": "(50, 6.0, 100.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "_raised(lambda: (c := CostBasis(), c.buy(10, 2.0), c.sell(11, 2.5)))",
+      "expect": "'ValueError'",
+      "compare": "equal"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(10, 2.0), _raised(lambda: c.sell(11, 2.5)), (c.qty, c.avg_cost, c.realised))[-1]",
+      "expect": "(10, 2.0, 0.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "_raised(lambda: CostBasis().buy(0, 5.0))",
+      "expect": "'ValueError'",
+      "compare": "equal"
+    },
+    {
+      "call": "_raised(lambda: (c := CostBasis(), c.buy(10, 2.0), c.sell(-5, 3.0)))",
+      "expect": "'ValueError'",
+      "compare": "equal"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(30, 10.0), c.sell(10, 12.0), c.sell(10, 9.0), (c.qty, c.avg_cost, c.realised))[-1]",
+      "expect": "(10, 10.0, 10.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(c := CostBasis(), c.buy(5, 20.0), c.sell(5, 15.0), c.realised)[-1]",
+      "expect": "-25.0",
+      "compare": "isclose"
+    },
+    {
+      "call": "(a := CostBasis(), b := CostBasis(), a.buy(10, 1.0), (b.qty, b.avg_cost))[3]",
+      "expect": "(0, 0.0)",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. A number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)` holds, element by element for lists and tuples; anything else must equal the expected value. In a test, `_raised(f)` calls `f` and gives the name of the error it raises, or `'no error'`.",
+  "solution": "class CostBasis:\n    def __init__(self):\n        self.qty = 0\n        self.avg_cost = 0.0\n        self.realised = 0.0\n\n    def buy(self, qty, price):\n        if qty <= 0:\n            raise ValueError(f'qty must be above zero: {qty}')\n        cost = self.qty * self.avg_cost + qty * price\n        self.qty = self.qty + qty\n        self.avg_cost = cost / self.qty\n\n    def sell(self, qty, price):\n        if qty <= 0 or qty > self.qty:\n            raise ValueError(f'cannot sell {qty} of {self.qty}')\n        self.realised = self.realised + qty * (price - self.avg_cost)\n        self.qty = self.qty - qty\n        if self.qty == 0:\n            self.avg_cost = 0.0\n\n    def unrealised(self, price):\n        return self.qty * (price - self.avg_cost)\n",
+  "notes": [
+    "The object keeps three numbers that must agree, and each method checks a trade before it changes any of them.",
+    "Keeping a running total cost and dividing it after a sell moves the average, which a sell must not do.",
+    "Every method does a fixed amount of work, so each trade is $O(1)$."
+  ],
+  "planted": [
+    {
+      "code": "class CostBasis:\n    def __init__(self):\n        self.qty = 0\n        self.cost = 0.0\n        self.avg_cost = 0.0\n        self.realised = 0.0\n\n    def buy(self, qty, price):\n        if qty <= 0:\n            raise ValueError('qty')\n        self.cost = self.cost + qty * price\n        self.qty = self.qty + qty\n        self.avg_cost = self.cost / self.qty\n\n    def sell(self, qty, price):\n        if qty <= 0 or qty > self.qty:\n            raise ValueError('qty')\n        self.realised = self.realised + qty * (price - self.avg_cost)\n        self.qty = self.qty - qty\n        self.avg_cost = self.cost / self.qty if self.qty else 0.0\n\n    def unrealised(self, price):\n        return self.qty * (price - self.avg_cost)\n",
+      "slip": "The total cost is never reduced on a sell, so the average jumps after every sale."
+    },
+    {
+      "code": "class CostBasis:\n    def __init__(self):\n        self.qty = 0\n        self.avg_cost = 0.0\n        self.realised = 0.0\n\n    def buy(self, qty, price):\n        if qty <= 0:\n            raise ValueError('qty')\n        cost = self.qty * self.avg_cost + qty * price\n        self.qty = self.qty + qty\n        self.avg_cost = cost / self.qty\n\n    def sell(self, qty, price):\n        self.realised = self.realised + qty * (price - self.avg_cost)\n        self.qty = self.qty - qty\n        if qty <= 0 or self.qty < 0:\n            raise ValueError('qty')\n        if self.qty == 0:\n            self.avg_cost = 0.0\n\n    def unrealised(self, price):\n        return self.qty * (price - self.avg_cost)\n",
+      "slip": "It changes the position first and checks after, so a refused sell still moves the numbers."
+    },
+    {
+      "code": "class CostBasis:\n    def __init__(self):\n        self.qty = 0\n        self.avg_cost = 0.0\n        self.realised = 0.0\n\n    def buy(self, qty, price):\n        if qty <= 0:\n            raise ValueError('qty')\n        cost = self.qty * self.avg_cost + qty * price\n        self.qty = self.qty + qty\n        self.avg_cost = cost / self.qty\n\n    def sell(self, qty, price):\n        if qty <= 0 or qty > self.qty:\n            raise ValueError('qty')\n        self.realised = self.realised + qty * (price - self.avg_cost)\n        self.qty = self.qty - qty\n\n    def unrealised(self, price):\n        return self.qty * (price - self.avg_cost)\n",
+      "slip": "The old average stays after the position is sold out."
+    }
+  ],
+  "prelude": "def _raised(f):\n    # Test helper: call f and give the name of the error it raises.\n    try:\n        f()\n    except Exception as e:\n        return type(e).__name__\n    return 'no error'\n"
+}

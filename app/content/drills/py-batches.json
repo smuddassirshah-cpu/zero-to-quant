@@ -1,0 +1,128 @@
+{
+  "id": "py-batches",
+  "name": "Orders in batches",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "generators",
+    "batches"
+  ],
+  "skills": [
+    "pf-idioms",
+    "pf-functions"
+  ],
+  "difficulty": 2,
+  "pace": 660,
+  "fn": "batches",
+  "returns": "a generator of lists",
+  "brief": "A broker takes orders in batches of at most `size`. `items` may be any iterable, even a live feed that is never all in memory, so take the items one at a time and hand each batch on as soon as it is full. The last batch may be shorter. Each batch is a new list.\n\nWrite the generator `batches(items, size)`. When `size` is below 1, raise `ValueError` as soon as the first batch is asked for.\n\nExample. `list(batches([1, 2, 3, 4, 5, 6, 7], 3))` is `[[1, 2, 3], [4, 5, 6], [7]]`.",
+  "constraints": [
+    "$1 \\le$ `size` for a valid call; `items` can be a list, a string, a `range` or a generator.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Fill a list with a `for` loop over `items` and `yield` it when it reaches `size`, then start a new list. After the loop, yield what is left if anything is.",
+  "starter": "def batches(items, size):\n    # your code here\n    return [list(items)]\n",
+  "examples": [
+    {
+      "call": "list(batches([1, 2, 3, 4, 5, 6, 7], 3))",
+      "expect": "[[1, 2, 3], [4, 5, 6], [7]]",
+      "compare": "equal",
+      "note": "Two full batches and one short one."
+    },
+    {
+      "call": "list(batches([], 3))",
+      "expect": "[]",
+      "compare": "equal",
+      "note": "No items, no batches: not one empty batch."
+    }
+  ],
+  "tests": [
+    {
+      "call": "list(batches([], 3))",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "list(batches([1, 2, 3, 4, 5, 6, 7], 3))",
+      "expect": "[[1, 2, 3], [4, 5, 6], [7]]",
+      "compare": "equal"
+    },
+    {
+      "call": "list(batches(['BP', 'VOD', 'AZN', 'SHEL'], 2))",
+      "expect": "[['BP', 'VOD'], ['AZN', 'SHEL']]",
+      "compare": "equal"
+    },
+    {
+      "call": "list(batches([10, 20, 30], 1))",
+      "expect": "[[10], [20], [30]]",
+      "compare": "equal"
+    },
+    {
+      "call": "list(batches([10, 20, 30], 5))",
+      "expect": "[[10, 20, 30]]",
+      "compare": "equal"
+    },
+    {
+      "call": "list(batches(range(6), 3))",
+      "expect": "[[0, 1, 2], [3, 4, 5]]",
+      "compare": "equal"
+    },
+    {
+      "call": "list(batches('abcde', 2))",
+      "expect": "[['a', 'b'], ['c', 'd'], ['e']]",
+      "compare": "equal"
+    },
+    {
+      "call": "next(batches(feed(), 2))",
+      "expect": "['a', 'b']",
+      "compare": "equal"
+    },
+    {
+      "call": "type(batches([1], 1)).__name__",
+      "expect": "'generator'",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda bs: bs[0] is bs[1])(list(batches([1, 2, 3, 4], 2)))",
+      "expect": "False",
+      "compare": "equal"
+    },
+    {
+      "call": "_raised(lambda: list(batches([1, 2], 0)))",
+      "expect": "'ValueError'",
+      "compare": "equal"
+    },
+    {
+      "call": "_raised(lambda: list(batches([], -1)))",
+      "expect": "'ValueError'",
+      "compare": "equal"
+    },
+    {
+      "call": "[len(b) for b in batches(iter(range(10)), 4)]",
+      "expect": "[4, 4, 2]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. In a test, `_raised(f)` calls `f` and gives the name of the error it raises, or `'no error'`. `feed()` yields three items and then fails, as a feed that closes would.",
+  "solution": "def batches(items, size):\n    if size < 1:\n        raise ValueError(f'size must be at least 1: {size}')\n    batch = []\n    for item in items:\n        batch.append(item)\n        if len(batch) == size:\n            yield batch\n            batch = []\n    if batch:\n        yield batch\n",
+  "notes": [
+    "A generator hands on each full batch at once, so a feed is read only as far as the batches asked for.",
+    "Calling `list(items)` first reads the whole feed, and clearing one shared list empties batches already handed on.",
+    "Each item is touched once, so $O(n)$ time and $O(\\text{size})$ memory."
+  ],
+  "planted": [
+    {
+      "code": "def batches(items, size):\n    if size < 1:\n        raise ValueError('size must be at least 1')\n    items = list(items)\n    for i in range(0, len(items), size):\n        yield items[i:i + size]\n",
+      "slip": "`list(items)` reads the whole feed before the first batch, so a live feed is never handed on."
+    },
+    {
+      "code": "def batches(items, size):\n    if size < 1:\n        raise ValueError('size must be at least 1')\n    batch = []\n    for item in items:\n        batch.append(item)\n        if len(batch) == size:\n            yield batch\n            batch = []\n",
+      "slip": "The short batch at the end is never yielded."
+    },
+    {
+      "code": "def batches(items, size):\n    if size < 1:\n        raise ValueError('size must be at least 1')\n    batch = []\n    for item in items:\n        batch.append(item)\n        if len(batch) == size:\n            yield batch\n            batch.clear()\n    if batch:\n        yield batch\n",
+      "slip": "Clearing one list and refilling it changes the batches already handed on."
+    }
+  ],
+  "prelude": "def feed():\n    yield 'a'\n    yield 'b'\n    yield 'c'\n    raise RuntimeError('feed closed')\ndef _raised(f):\n    # Test helper: call f and give the name of the error it raises.\n    try:\n        f()\n    except Exception as e:\n        return type(e).__name__\n    return 'no error'\n"
+}
