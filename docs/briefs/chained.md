@@ -15,6 +15,7 @@ A new per-level file `problems-<n>.json` beside `review-<n>.json`: `{ "id": "pro
 - Difficulty 3 to 5; at least one 5 a set. `skills` from the level's lessons. Typed answers (`numeric`, `expression`) for at least two thirds of parts; `choice` only where the step is a judgement (which test, which rule).
 - Fresh: no setup, numbers or story from any lesson, quiz, review, homework or exam of the course (`node tools/fresh-check.mjs`, judge each hit).
 - Each part has `feedback` and an `explain` of at most three sentences giving the working with the item's numbers, and `wrong` entries for the slips a learner really makes, including the answer that follows from the commonest slip in the part before.
+- Every numeric part states the form it wants in one sentence ("Give an exact fraction", "Give your answer to 3 decimal places"); 35 parts in the first six sets did not and marked a sensible rounding wrong (`docs/reviews/review-problems-1.5-a.md`). The tolerance accepts the value the part's own feedback prints. A part that tells the learner to use a rounded value has the answer that rounded value gives.
 - Voice as AUTHORING section 6. £ for money.
 
 ## Checks (all required before hand-back)
