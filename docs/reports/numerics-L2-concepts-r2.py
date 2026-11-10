@@ -210,6 +210,8 @@ check('l5/l6:same_sign_values_that_underflow_are_refused (corrected claim, fix p
       and honest(lambda: (n6['safe_newton'](tiny, lambda x: 2e-200 * x, 0.0, 1.0), 1.0))
       and 'flo * fhi' not in w5_sol_text + w6_sol_text,
       'the product 1e-200 * 1e-200 is 0.0; the solvers now compare signs and raise ValueError')
+# (corrected claim, fix pass, audit round 3) the round-2 fix gains the stop at `mid == lo or mid == hi`: the
+# lesson's 15th hidden test asks bisect to end for tol = 1e-17, below the 2.2e-16 gap between doubles near 1.41.
 FIX_BISECT = '''
 def bisect(f, lo, hi, tol):
     flo, fhi = f(lo), f(hi)
@@ -222,6 +224,8 @@ def bisect(f, lo, hi, tol):
         raise ValueError('no sign change')
     while hi - lo >= tol:
         mid = (lo + hi) / 2
+        if mid == lo or mid == hi:
+            break
         fm = f(mid)
         calls += 1
         if (fm > 0) == (flo > 0):

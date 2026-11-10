@@ -103,10 +103,16 @@ _env = {}
 exec(_w["solution"], _env)
 rebuild = lambda x: (lambda sg, pw, fr: (-1) ** sg * (1 + fr) * 2.0 ** pw)(*_env["decode"](x))
 check("l1.s8 decode rebuilds normal doubles", all(rebuild(x) == x for x in (-6.5, 100.25, 0.1, 1e6, 1e-300, 1.7e308, 2.2250738585072014e-308)))
-# Docstring says "of the double x". Corrected assert, which passes: the identity holds for every NORMAL double (line above).
-check("l1.s8 decode rebuilds every double (0.0 and the subnormal 5e-324)", rebuild(0.0) == 0.0 and rebuild(5e-324) == 5e-324,
-      f"decode(0.0) = {_env['decode'](0.0)} reads as {rebuild(0.0):.3e}; decode(5e-324) = {_env['decode'](5e-324)} reads as {rebuild(5e-324):.3e}",
-      expected_fail=True)
+# (corrected claim, fix pass) the starter docstring now says "of a normal double x" and that zero, subnormals, inf and
+# nan are not handled. Own computation: exponent field 0 (zero, subnormals) has no hidden 1, so decode's triple read with
+# a hidden 1 gives 2^-1023 for both 0.0 and 5e-324; every normal double above rebuilds exactly.
+_st = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "app", "content", "courses", "numerics",
+                                    "l1-floating-point.json")))["screens"][8]["widget"]["starter"]
+check("l1.s8 decode docstring is limited to normal doubles, and that limit is needed (corrected claim, fix pass)",
+      "of a normal double x" in _st and "subnormals" in _st and "the double x" not in _st
+      and rebuild(0.0) == 2.0 ** -1023 and rebuild(5e-324) == 2.0 ** -1023 * (1 + 2.0 ** -52)
+      and fields(0.0)[1] == 0 and fields(5e-324)[1] == 0 and fields(2.2250738585072014e-308)[1] == 1,
+      f"decode(0.0) = {_env['decode'](0.0)} reads as {rebuild(0.0):.3e}; decode(5e-324) = {_env['decode'](5e-324)} reads as {rebuild(5e-324):.3e}")
 check("l1.s9 gap at 1.7e18 is 256", np.spacing(1.7e18) == 256.0 and 2.0 ** 60 < 1.7e18 < 2.0 ** 61
       and near(math.log10(1.7e18), 18.2304, ab=1e-4))
 g32 = float(np.spacing(np.float32(20000)))

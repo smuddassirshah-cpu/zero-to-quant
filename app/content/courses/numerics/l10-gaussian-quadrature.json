@@ -724,8 +724,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import math\nimport numpy as np\n\ndef gl_integrate(f, a, b, n):\n    \"\"\"Gauss-Legendre with n nodes on [a, b]; f takes arrays.\"\"\"\n    ...\n\ndef gl_call_price(S0, K, r, sigma, T, n, zmax=8):\n    \"\"\"Call by quadrature in z, split at the kink z*.\"\"\"\n    ...\n\ndef gl_put_price(S0, K, r, sigma, T, n, zmax=8):\n    \"\"\"Put by quadrature in z on [-zmax, z*].\"\"\"\n    ...\n",
-    "solution": "import math\nimport numpy as np\n\ndef gl_integrate(f, a, b, n):\n    x, w = np.polynomial.legendre.leggauss(n)\n    t = (b - a) / 2 * x + (a + b) / 2\n    return float((b - a) / 2 * np.sum(w * f(t)))\n\ndef _parts(S0, K, r, sigma, T):\n    m = (r - sigma ** 2 / 2) * T\n    s = sigma * math.sqrt(T)\n    zs = (math.log(K / S0) - m) / s\n    ST = lambda z: S0 * np.exp(m + s * z)\n    phi = lambda z: np.exp(-z ** 2 / 2) / math.sqrt(2 * math.pi)\n    return zs, ST, phi\n\ndef gl_call_price(S0, K, r, sigma, T, n, zmax=8):\n    zs, ST, phi = _parts(S0, K, r, sigma, T)\n    return math.exp(-r * T) * gl_integrate(lambda z: (ST(z) - K) * phi(z), zs, zmax, n)\n\ndef gl_put_price(S0, K, r, sigma, T, n, zmax=8):\n    zs, ST, phi = _parts(S0, K, r, sigma, T)\n    return math.exp(-r * T) * gl_integrate(lambda z: (K - ST(z)) * phi(z), -zmax, zs, n)\n",
+    "starter": "import math\nimport numpy as np\n\ndef gl_integrate(f, a, b, n):\n    \"\"\"Gauss-Legendre with n nodes on [a, b]; f takes arrays.\"\"\"\n    ...\n\ndef gl_call_price(S0, K, r, sigma, T, n, zmax=8):\n    \"\"\"Call by quadrature in z on [z*, zmax]; clip the kink z* to [-zmax, zmax].\"\"\"\n    ...\n\ndef gl_put_price(S0, K, r, sigma, T, n, zmax=8):\n    \"\"\"Put by quadrature in z on [-zmax, z*]; clip z* to [-zmax, zmax].\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef gl_integrate(f, a, b, n):\n    x, w = np.polynomial.legendre.leggauss(n)\n    t = (b - a) / 2 * x + (a + b) / 2\n    return float((b - a) / 2 * np.sum(w * f(t)))\n\ndef _parts(S0, K, r, sigma, T):\n    m = (r - sigma ** 2 / 2) * T\n    s = sigma * math.sqrt(T)\n    zs = (math.log(K / S0) - m) / s\n    ST = lambda z: S0 * np.exp(m + s * z)\n    phi = lambda z: np.exp(-z ** 2 / 2) / math.sqrt(2 * math.pi)\n    return zs, ST, phi\n\ndef gl_call_price(S0, K, r, sigma, T, n, zmax=8):\n    zs, ST, phi = _parts(S0, K, r, sigma, T)\n    zs = min(max(zs, -zmax), zmax)   # the kink may lie outside [-zmax, zmax]\n    return math.exp(-r * T) * gl_integrate(lambda z: (ST(z) - K) * phi(z), zs, zmax, n)\n\ndef gl_put_price(S0, K, r, sigma, T, n, zmax=8):\n    zs, ST, phi = _parts(S0, K, r, sigma, T)\n    zs = min(max(zs, -zmax), zmax)   # the kink may lie outside [-zmax, zmax]\n    return math.exp(-r * T) * gl_integrate(lambda z: (K - ST(z)) * phi(z), -zmax, zs, n)\n",
     "examples": [
      {
       "call": "gl_integrate(lambda x: x ** 2, -1, 1, 2)",
@@ -783,9 +783,17 @@
       "tol": {
        "abs": 1e-08
       }
+     },
+     {
+      "call": "gl_call_price(100, 50, 0.05, 0.2, 1 / 52, 32)",
+      "expect": "50.04805381657812",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
      }
     ],
-    "how": "Submit runs 7 hidden tests with NumPy, no SciPy. Exactness is checked on x² and x⁵ − x, and e^x to 1e-14. The call, the put, put-call parity and a far call at K = 200 must match Black-Scholes within 1e-8."
+    "how": "Submit runs 8 hidden tests with NumPy, no SciPy. Exactness is checked on x² and x⁵ − x, and e^x to 1e-14. The call, the put, put-call parity and a far call at K = 200 must match Black-Scholes within 1e-8, and so must a one-week call at K = 50, whose kink lies below -8."
    },
    "hints": [
     {
@@ -890,7 +898,7 @@
     "generic": "Not quite right. Look at evaluations per price."
    },
    "explain": {
-    "text": "Sixteen evaluations per price give $2 \\times 10^{-9}$, so 2,000 prices cost 32,000 evaluations. Desks price by quadrature whenever a density or characteristic function is known. Fourier pricing in `complex` level 3 is the same idea in another variable."
+    "text": "At the money 16 evaluations give $2 \\times 10^{-9}$; a strike deep in the money has a longer smooth piece and needs 32, so 2,000 prices cost at most 64,000 evaluations. Desks price by quadrature whenever a density or characteristic function is known. Fourier pricing in `complex` level 3 is the same idea in another variable."
    }
   }
  ],
@@ -992,7 +1000,7 @@
    "id": "q-interval",
    "difficulty": 3,
    "prose": "A colleague maps Gauss nodes to $[0, 4]$ but forgets the factor $\\tfrac{b - a}{2}$.",
-   "question": "By what factor is every integral wrong?",
+   "question": "The computed integral is what multiple of the true one?",
    "widget": {
     "kind": "numeric",
     "answer": 0.5,
@@ -1010,7 +1018,7 @@
     ]
    },
    "feedback": {
-    "correct": "Too small by half: the factor is $\\tfrac{4 - 0}{2} = 2$.",
+    "correct": "Half: the missing factor is $\\tfrac{4 - 0}{2} = 2$.",
     "generic": "Not quite right. The missing factor is $\\tfrac{b - a}{2}$.",
     "byKey": {
      "two": "2 is the missing factor; the computed integral is half the true one."

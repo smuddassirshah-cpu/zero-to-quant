@@ -182,17 +182,33 @@ def bsc(K, sg, T, r=0.05):
 # l10 screens[8].explain: "Sixteen evaluations per price give 2e-9, so 2,000 prices cost 32,000 evaluations."
 # That is the at-the-money figure. The smooth piece [z*, 8] is longer for a strike in the money, and 16 nodes no longer do.
 book = {K: abs(E10["gl_call_price"](100, K, 0.05, 0.2, 1.0, 16) - bsc(K, 0.2, 1.0)) for K in (50, 70, 85, 100, 120, 150)}
-# Corrected assert, which passes: book[100] < 1e-8 and all(abs(gl_call_price(100, K, .05, .2, 1, 32) - BS) < 1e-8 for K in book)
-check("l10.s8 sixteen nodes give 1e-8 for every strike of a book (one-year calls, strikes 50 to 150)", max(book.values()) < 1e-8,
-      "errors " + ", ".join(f"K={K}: {v:.1e}" for K, v in book.items()), expected_fail=True)
+# (corrected claim, fix pass) l10 screens[8].explain now reads: at the money 16 evaluations give 2e-9; a strike deep in
+# the money needs 32, so 2,000 prices cost at most 64,000. Own computation: 16 integrand evaluations per price, counted
+# by instrumenting gl_integrate and equal to n for one smooth piece; 2,000 x 16 = 32,000 and 2,000 x 32 = 64,000; errors below.
+_l10 = json.load(open(os.path.join(COURSE, "l10-gaussian-quadrature.json")))
+_x8 = _l10["screens"][8]["explain"]["text"]
+_cnt = [0]
+_Ec = {"CNT": _cnt}
+exec(_l10["screens"][7]["widget"]["solution"].replace("    return float((b - a) / 2 * np.sum(w * f(t)))",
+                                                     "    CNT[0] += len(t)\n    return float((b - a) / 2 * np.sum(w * f(t)))"), _Ec)
+_Ec["gl_call_price"](100, 100, 0.05, 0.2, 1.0, 16)
+check("l10.s8 16 evaluations give 2e-9 at the money, 32 cover the deep strikes, at most 64,000 for 2,000 prices (corrected claim, fix pass)",
+      _cnt[0] == 16 and near(book[100], 2.0e-9, rel=0.05) and max(book.values()) > 1e-8 and 2000 * 16 == 32000 and 2000 * 32 == 64000
+      and all(abs(E10["gl_call_price"](100, K, 0.05, 0.2, 1.0, 32) - bsc(K, 0.2, 1.0)) < 1e-9 for K in book)
+      and "needs 32" in _x8 and "at most 64,000 evaluations" in _x8 and "32,000" not in _x8,
+      f"{_cnt[0]} evaluations per price; 16-node errors " + ", ".join(f"K={K}: {v:.1e}" for K, v in book.items()))
 check("l10.s8 corrected: 16 nodes at the money, 32 nodes across the book", book[100] < 1e-8
       and all(abs(E10["gl_call_price"](100, K, 0.05, 0.2, 1.0, 32) - bsc(K, 0.2, 1.0)) < 1e-8 for K in book))
 # l10 screens[7] solution integrates from z* even when z* lies beyond -zmax (the homework-3 solution clips at the ends)
 deep = abs(E10["gl_call_price"](100, 50, 0.05, 0.2, 1 / 52, 32) - bsc(50, 0.2, 1 / 52))
 deep_h3 = abs(load("homework-3", "items", 6)["price_by_quadrature"](lambda v: np.maximum(v - 50, 0), [50], 100, 0.05, 0.2, 1 / 52, 32) - bsc(50, 0.2, 1 / 52))
-# Corrected assert, which passes with the lower limit max(z*, -zmax): error below 1e-8 (the homework-3 solution gives 1.3e-10).
-check("l10.s7 a one-week call struck at 50 is priced to 1e-8 with 32 nodes", deep < 1e-8, f"lesson solution {deep:.1e}, homework-3 solution {deep_h3:.1e}",
-      expected_fail=True)
+# (corrected claim, fix pass) the solution now clips z* to [-zmax, zmax]. Own computation: z* = -25.0 for this call, and
+# the clipped price matches Black-Scholes (here S - K e^{-rT}, since d1 and d2 are near 25) to 1e-8, as homework-3's does.
+_zs = (math.log(50 / 100) - (0.05 - 0.02) / 52) / (0.2 * math.sqrt(1 / 52))
+check("l10.s7 a one-week call struck at 50 is priced to 1e-8 with 32 nodes (corrected claim, fix pass)",
+      deep < 1e-8 and deep_h3 < 1e-8 and _zs < -8 and near(bsc(50, 0.2, 1 / 52), 100 - 50 * math.exp(-0.05 / 52), ab=1e-12)
+      and abs(E10["gl_call_price"](100, 1000, 0.05, 0.2, 1.0, 32)) == 0.0,
+      f"z* = {_zs:.2f}; lesson solution {deep:.1e}, homework-3 solution {deep_h3:.1e}")
 dens = lambda S: np.exp(-((np.log(S / 100) - m) / s_) ** 2 / 2) / (S * s_ * math.sqrt(2 * math.pi))
 qe = {U: [math.exp(-0.05) * gl(lambda S: (S - 100) * dens(S), 100, U, n) - C0 for n in (64, 128)] for U in (200, 300, 400)}
 check("l10.q0 truncation in S_T", near(qe[200][0], -0.0483, rel=0.01) and near(qe[200][1], qe[200][0], ab=1e-9) and near(qe[300][0], -9.2e-6, rel=0.02)
@@ -375,9 +391,16 @@ check("l12.s3 explicit regions are bounded; trapezoidal factor tends to -1, impl
 pade03 = lambda z: 1 / (1 - z + z ** 2 / 2 - z ** 3 / 6)
 zz = -10 ** rng.uniform(-3, 1, 200000) + 1j * rng.uniform(-6, 6, 200000)
 unst = int(np.sum(np.abs(pade03(zz)) > 1))
-# Corrected assert, which passes: abs(pade03(-1e9)) < 1e-8 and unst > 0  (factor -> 0 does not give stability on the left half-plane)
-check("l12.s4 a factor that tends to 0 for stiff modes is enough for L-stability (Pade (0,3) on the left half-plane)", abs(pade03(-1e9)) < 1e-8 and unst == 0,
-      f"|R(-1e9)| = {abs(pade03(-1e9)):.1e}, but |R| > 1 at {unst} of 200,000 points with Re z < 0", expected_fail=True)
+# (corrected claim, fix pass) l12 screens[4] and quiz[1] now define L-stable as A-stable plus a factor tending to 0.
+# Own computation: on the imaginary axis |1 - iy - y^2/2 + iy^3/6|^2 = (1 - y^2/2)^2 + (y^3/6 - y)^2 = 8/9 at y = sqrt 2,
+# so the (0,3) Pade factor has |R| = 3/(2 sqrt 2) > 1 there although R -> 0: the A-stable half is needed. Implicit Euler has
+# |1 - z| >= 1 on Re z <= 0 (A-stable) and R -> 0, so it is L-stable.
+_l12 = json.load(open(os.path.join(COURSE, "l12-stiff-equations.json")))
+_x4, _q1 = _l12["screens"][4]["explain"]["text"], _l12["quiz"][1]["explain"]["text"]
+check("l12.s4 L-stable = A-stable and factor -> 0; the Pade (0,3) factor tends to 0 but is not A-stable (corrected claim, fix pass)",
+      abs(pade03(-1e9)) < 1e-8 and unst > 0 and near(abs(pade03(1j * math.sqrt(2))), 3 / (2 * math.sqrt(2)), ab=1e-12)
+      and bool(np.all(np.abs(1 / (1 - zl)) <= 1)) and "**A-stable**" in _x4 and "**L-stable**" in _x4 and "A-stable" in _q1,
+      f"|R(i sqrt 2)| = {abs(pade03(1j * math.sqrt(2))):.4f}; |R| > 1 at {unst} of 200,000 points with Re z < 0")
 # implicit expression drawn for the RK4 region against |R(z)|^2 - 1
 xx, yy = rng.uniform(-4, 2, 2000), rng.uniform(-4, 4, 2000)
 drawn = (1 + xx + xx ** 2 / 2 - yy ** 2 / 2 + xx ** 3 / 6 - xx * yy ** 2 / 2 + xx ** 4 / 24 - xx ** 2 * yy ** 2 / 4 + yy ** 4 / 24) ** 2 + \
@@ -406,6 +429,19 @@ def fastest(nS, Smax=200.0, sig=0.2, r=0.05):
 f1, f2, f3 = fastest(50), fastest(100), fastest(200)
 check("l12.s8 halving dS multiplies the fastest rate by about 4", near(f2 / f1, 4, rel=0.08) and near(f3 / f2, 4, rel=0.06)
       and 0.5 < f2 / (0.2 ** 2 * 200 ** 2 / 2.0 ** 2) < 2.5, f"{f1:.0f} {f2:.0f} {f3:.0f}")
+
+# (corrected claim, fix pass) l10 quiz[2] now asks what multiple of the true integral is computed, so only the key 0.5 is
+# right and 2 stays a wrong value. Key twice: (a) the weights sum to 2 and [0, 4] has length 4, so 2 / 4 = 0.5; (b) the
+# rule mapped to [0, 4] without (b - a) / 2, run on x^2 and e^x, returns 0.5 times the true integral.
+_q2 = json.load(open(os.path.join(COURSE, "l10-gaussian-quadrature.json")))["quiz"][2]
+_xg, _wg = np.polynomial.legendre.leggauss(6)
+_tg = 2 * _xg + 2
+_ratio = [float(np.sum(_wg * fn(_tg)) / tv) for fn, tv in ((lambda v: v ** 2, 64 / 3), (np.exp, math.e ** 4 - 1))]
+check("l10.q2 the computed integral is 0.5 times the true one, and the stem asks for that multiple (corrected claim, fix pass)",
+      near(float(np.sum(_wg)) / 4, 0.5, ab=1e-15) and all(near(x, 0.5, ab=1e-6) for x in _ratio)
+      and _q2["widget"]["answer"] == 0.5 and [w_["value"] for w_ in _q2["widget"]["wrong"]] == [2]
+      and _q2["question"] == "The computed integral is what multiple of the true one?",
+      f"weights / length = {float(np.sum(_wg)) / 4}; ratios {_ratio}")
 
 print(f"\n{N} checks, {len(FAILS)} failed, {len(XFAILS)} expected fails")
 for f in FAILS:

@@ -952,8 +952,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "def bisect(f, lo, hi, tol):\n    \"\"\"Halve [lo, hi] until hi - lo < tol. Return (root, f_calls).\n    If f is zero at an end, return that end. Raise ValueError if\n    f(lo) and f(hi) have the same sign: compare signs, not a product.\"\"\"\n    ...\n\ndef secant(f, x0, x1, tol):\n    \"\"\"Secant steps until |step| < tol. Return (root, f_calls).\"\"\"\n    ...\n\ndef newton(f, df, x0, tol, maxit=50):\n    \"\"\"Newton steps until |step| < tol. Return (root, f_calls),\n    counting calls of f only. Raise RuntimeError after maxit steps.\"\"\"\n    ...\n\ndef observed_order(errs):\n    \"\"\"Order p from the last three errors.\"\"\"\n    ...\n",
-    "solution": "import math\n\ndef bisect(f, lo, hi, tol):\n    flo, fhi = f(lo), f(hi)\n    calls = 2\n    if flo == 0:\n        return lo, calls\n    if fhi == 0:\n        return hi, calls\n    if (flo > 0) == (fhi > 0):\n        raise ValueError('no sign change')\n    while hi - lo >= tol:\n        mid = (lo + hi) / 2\n        fm = f(mid)\n        calls += 1\n        if (fm > 0) == (flo > 0):\n            lo, flo = mid, fm\n        else:\n            hi = mid\n    return (lo + hi) / 2, calls\n\ndef secant(f, x0, x1, tol):\n    f0, f1 = f(x0), f(x1)\n    calls = 2\n    while abs(x1 - x0) >= tol and f1 != f0:\n        x0, x1 = x1, x1 - f1 * (x1 - x0) / (f1 - f0)\n        f0, f1 = f1, f(x1)\n        calls += 1\n    return x1, calls\n\ndef newton(f, df, x0, tol, maxit=50):\n    x, calls = x0, 0\n    for _ in range(maxit):\n        fx = f(x)\n        calls += 1\n        step = fx / df(x)\n        x -= step\n        if abs(step) < tol:\n            return x, calls\n    raise RuntimeError('no convergence')\n\ndef observed_order(errs):\n    e0, e1, e2 = errs[-3], errs[-2], errs[-1]\n    return math.log(e2 / e1) / math.log(e1 / e0)\n",
+    "starter": "def bisect(f, lo, hi, tol):\n    \"\"\"Halve [lo, hi] until hi - lo < tol, or until no double lies\n    between the ends. Return (root, f_calls).\n    If f is zero at an end, return that end. Raise ValueError if\n    f(lo) and f(hi) have the same sign: compare signs, not a product.\"\"\"\n    ...\n\ndef secant(f, x0, x1, tol):\n    \"\"\"Secant steps until |step| < tol. Return (root, f_calls).\"\"\"\n    ...\n\ndef newton(f, df, x0, tol, maxit=50):\n    \"\"\"Newton steps until |step| < tol. Return (root, f_calls),\n    counting calls of f only. Raise RuntimeError after maxit steps.\"\"\"\n    ...\n\ndef observed_order(errs):\n    \"\"\"Order p from the last three errors.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef bisect(f, lo, hi, tol):\n    flo, fhi = f(lo), f(hi)\n    calls = 2\n    if flo == 0:\n        return lo, calls\n    if fhi == 0:\n        return hi, calls\n    if (flo > 0) == (fhi > 0):\n        raise ValueError('no sign change')\n    while hi - lo >= tol:\n        mid = (lo + hi) / 2\n        if mid == lo or mid == hi:\n            break\n        fm = f(mid)\n        calls += 1\n        if (fm > 0) == (flo > 0):\n            lo, flo = mid, fm\n        else:\n            hi = mid\n    return (lo + hi) / 2, calls\n\ndef secant(f, x0, x1, tol):\n    f0, f1 = f(x0), f(x1)\n    calls = 2\n    while abs(x1 - x0) >= tol and f1 != f0:\n        x0, x1 = x1, x1 - f1 * (x1 - x0) / (f1 - f0)\n        f0, f1 = f1, f(x1)\n        calls += 1\n    return x1, calls\n\ndef newton(f, df, x0, tol, maxit=50):\n    x, calls = x0, 0\n    for _ in range(maxit):\n        fx = f(x)\n        calls += 1\n        step = fx / df(x)\n        x -= step\n        if abs(step) < tol:\n            return x, calls\n    raise RuntimeError('no convergence')\n\ndef observed_order(errs):\n    e0, e1, e2 = errs[-3], errs[-2], errs[-1]\n    return math.log(e2 / e1) / math.log(e1 / e0)\n",
     "examples": [
      {
       "call": "round(bisect(lambda x: x * x - 2, 1, 2, 1e-12)[0], 10)",
@@ -1058,9 +1058,18 @@
       "call": "newton(lambda x: x ** 3 - 2 * x + 2, lambda x: 3 * x * x - 2, 0.0, 1e-12)",
       "expect": "RuntimeError",
       "compare": "raises"
+     },
+     {
+      "setup": "def capped(g, limit):\n    calls = [0]\n    def h(x):\n        calls[0] += 1\n        if calls[0] > limit:\n            raise RuntimeError('bisect did not stop within ' + str(limit) + ' calls')\n        return g(x)\n    return h",
+      "call": "bisect(capped(lambda x: x * x - 2, 200), 1.0, 2.0, 1e-17)[0]",
+      "expect": "2 ** 0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-15
+      }
      }
     ],
-    "how": "Submit runs 14 hidden tests. Each method must find the root of x² − 2 within 1e-12. Call counts must be 40 to 44 for bisection, at most 11 for secant and at most 8 for Newton. The bond yield is checked within 1e-10, the ValueError is checked, and two orders within 0.01. A root at an end of the bracket must be returned, and same-sign values near 1e-200 must still raise ValueError. Newton must raise RuntimeError on x³ − 2x + 2 from 0, where it cycles."
+    "how": "Submit runs 15 hidden tests. Each method must find the root of x² − 2 within 1e-12. Call counts must be 40 to 44 for bisection, at most 11 for secant and at most 8 for Newton. The bond yield is checked within 1e-10, the ValueError is checked, and two orders within 0.01. A root at an end of the bracket must be returned, and same-sign values near 1e-200 must still raise ValueError. With tol = 1e-17, below the gap between doubles, bisection must still stop within 200 calls. Newton must raise RuntimeError on x³ − 2x + 2 from 0, where it cycles."
    },
    "hints": [
     {

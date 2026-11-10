@@ -833,7 +833,7 @@
   {
    "type": "problem",
    "difficulty": 3,
-   "prose": "Now solve the whole smile at once. Keep arrays `s`, `lo` and `hi`, one entry per strike. A boolean mask chooses, strike by strike, between the Newton step and the midpoint. `scipy.optimize.brentq` agrees with the result to $10^{-10}$; Brent's method mixes bisection, secant and inverse quadratic steps.",
+   "prose": "Now solve the whole smile at once. Keep arrays `s`, `lo` and `hi`, one entry per strike. A boolean mask chooses, strike by strike, between the Newton step and the midpoint. A second mask leaves each strike alone once its step falls below `tol`. `scipy.optimize.brentq` agrees with the result to $10^{-10}$; Brent's method mixes bisection, secant and inverse quadratic steps.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -921,7 +921,7 @@
     "language": "python",
     "prelude": "import math\nimport numpy as np\n_erf = np.vectorize(math.erf, otypes=[float])\ndef ncdf(x):\n    return 0.5 * (1 + _erf(np.asarray(x, dtype=float) / math.sqrt(2)))\ndef bs_price(S, K, r, T, sigma, kinds):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    sd = sigma * math.sqrt(T)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / sd\n    d2 = d1 - sd\n    call = S * ncdf(d1) - K * math.exp(-r * T) * ncdf(d2)\n    put = K * math.exp(-r * T) * ncdf(-d2) - S * ncdf(-d1)\n    return np.where(np.asarray(kinds) == 'c', call, put)\ndef bs_vega(S, K, r, T, sigma):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * math.sqrt(T))\n    return S * math.sqrt(T) * np.exp(-d1 ** 2 / 2) / math.sqrt(2 * math.pi)\n",
     "starter": "import numpy as np\n\n# bs_price(S, K, r, T, sigma, kinds) and bs_vega(S, K, r, T, sigma)\n# are provided and work on arrays; kinds holds 'c' or 'p'.\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    \"\"\"Implied vols for a whole smile at once, NaN where none exists.\n    Bracket [1e-4, 5], start at 0.2.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    K = np.asarray(strikes, dtype=float)\n    kinds = np.asarray(kinds)\n    f = lambda s: bs_price(S, K, r, T, s, kinds) - p\n    lo = np.full(p.shape, 1e-4)\n    hi = np.full(p.shape, 5.0)\n    ok = (f(lo) < 0) & (f(hi) > 0)\n    s = np.full(p.shape, 0.2)\n    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):\n        for _ in range(maxit):\n            fs = f(s)\n            low = fs < 0\n            lo = np.where(low, s, lo)\n            hi = np.where(low, hi, s)\n            new = s - fs / bs_vega(S, K, r, T, s)\n            bad = ~np.isfinite(new) | (new <= lo) | (new >= hi)\n            new = np.where(bad, 0.5 * (lo + hi), new)\n            done = np.abs(new - s) < tol\n            s = new\n            if np.all(done | ~ok):\n                break\n    return np.where(ok, s, np.nan)\n",
+    "solution": "import numpy as np\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    K = np.asarray(strikes, dtype=float)\n    kinds = np.asarray(kinds)\n    f = lambda s: bs_price(S, K, r, T, s, kinds) - p\n    lo = np.full(p.shape, 1e-4)\n    hi = np.full(p.shape, 5.0)\n    ok = (f(lo) < 0) & (f(hi) > 0)\n    live = ok.copy()                 # strikes still being solved\n    s = np.full(p.shape, 0.2)\n    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):\n        for _ in range(maxit):\n            fs = f(s)\n            low = fs < 0\n            lo = np.where(low, s, lo)\n            hi = np.where(low, hi, s)\n            new = s - fs / bs_vega(S, K, r, T, s)\n            near = np.abs(new - s) < tol     # Newton has converged: keep its step\n            bad = ~near & (~np.isfinite(new) | (new <= lo) | (new >= hi))\n            new = np.where(bad, 0.5 * (lo + hi), new)\n            done = np.abs(new - s) < tol\n            s = np.where(live, new, s)       # a solved strike stays put\n            live &= ~done\n            if not live.any():\n                break\n    return np.where(ok, s, np.nan)\n",
     "examples": [
      {
       "call": "round(float(implied_vols([2.5121], [100], 100.0, 0.05, 1 / 12, ['c'])[0]), 4)",
@@ -984,7 +984,7 @@
     "generic": "Not quite right. Check the `ok` mask and the bracket updates."
    },
    "explain": {
-    "text": "One loop updates every strike together, so 1,000 strikes cost far less than 1,000 separate solves. The mask sends the 75 and 80 puts to the midpoint on their first step. Strikes with no vol keep `ok` false and come back as NaN."
+    "text": "One loop updates every unsolved strike together, so 1,000 strikes cost far less than 1,000 separate solves. The mask sends the 75 and 80 puts to the midpoint on their first step. Strikes with no vol keep `ok` false and come back as NaN."
    }
   },
   {
