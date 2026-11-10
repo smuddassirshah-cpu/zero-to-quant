@@ -17,8 +17,8 @@
         "v": { "pick": ["x", "n", "t"] }
       },
       "let": {
-        "la": "50000*(a^(1/100000) - a^(-1/100000))",
-        "lb": "50000*(b^(1/100000) - b^(-1/100000))",
+        "la": "ln(a)",
+        "lb": "ln(b)",
         "r": "lb/la", "flip": "la/lb", "ratio": "b/a"
       },
       "where": ["abs(r - round(r)) > 0.001", "b > a", "abs(ratio - r) > 0.01"],
@@ -43,20 +43,21 @@
         "v": { "pick": ["x", "n", "t"] }
       },
       "let": {
-        "la": "50000*(a^(1/100000) - a^(-1/100000))",
-        "lb": "50000*(b^(1/100000) - b^(-1/100000))",
-        "r": "lb/la", "flip": "la/lb", "ratio": "b/a"
+        "la": "ln(a)",
+        "lb": "ln(b)",
+        "r": "lb/la", "flip": "la/lb", "ratio": "b/a",
+        "e": "floor(log10(r)) - 2", "m": "r/10^e"
       },
-      "where": ["r >= 1.01", "r < 9.99", "abs(r - round(r, 2)) > 0.0001", "abs(ratio - r) > 0.02"],
+      "where": ["abs(m - round(m)) > 0.01", "abs(ratio - r) > 0.02", "abs(flip - r) > 0.02"],
       "prompt": "Solve ${a}^{v} = {b}$, to 3 significant figures.",
-      "widget": { "kind": "numeric", "answer": "{round(r, 6)}", "tol": { "abs": 0.005 }, "placeholder": "a decimal", "accept": "{r:dp2}" },
+      "widget": { "kind": "numeric", "answer": "{round(r, 6)}", "tol": { "abs": "{0.51*10^e}" }, "placeholder": "a decimal", "accept": "{r:sf3}" },
       "wrong": [
-        { "id": "upside-down", "value": "{round(flip, 6)}", "tol": { "abs": 0.005 }, "line": "That is upside down: $\\log {b}$, the log of the answer side, goes on top." },
-        { "id": "divided-the-numbers", "value": "{ratio}", "tol": { "abs": 0.005 }, "line": "You divided {b} by {a}: take logs first, then divide the logs." }
+        { "id": "upside-down", "value": "{round(flip, 6)}", "tol": { "abs": "{0.51*10^e}" }, "line": "That is upside down: $\\log {b}$, the log of the answer side, goes on top." },
+        { "id": "divided-the-numbers", "value": "{ratio}", "tol": { "abs": "{0.51*10^e}" }, "line": "You divided {b} by {a}: take logs first, then divide the logs." }
       ],
       "solution": [
         "Take $\\log$ of both sides: ${v} \\log {a} = \\log {b}$.",
-        "So ${v} = \\dfrac{{\\log {b}}}{{\\log {a}}} = {r:dp2}$ to 3 significant figures."
+        "So ${v} = \\dfrac{{\\log {b}}}{{\\log {a}}} = {r:sf3}$ to 3 significant figures."
       ]
     },
     {
@@ -71,8 +72,8 @@
       },
       "let": {
         "an": "a^n", "d": "c*a^n", "ca": "c*a",
-        "ld": "50000*(d^(1/100000) - d^(-1/100000))",
-        "lca": "50000*(ca^(1/100000) - ca^(-1/100000))",
+        "ld": "ln(d)",
+        "lca": "ln(ca)",
         "joined": "ld/lca"
       },
       "where": ["an <= 625", "c != a", "abs(joined - n) > 0.05"],
@@ -99,22 +100,23 @@
       },
       "let": {
         "t": "p*q",
-        "lq": "50000*(q^(1/100000) - q^(-1/100000))",
-        "lg": "50000*(g^(1/100000) - g^(-1/100000))",
-        "lt": "50000*(t^(1/100000) - t^(-1/100000))",
-        "lpg": "50000*((p*g)^(1/100000) - (p*g)^(-1/100000))",
-        "r": "lq/lg", "joined": "lt/lpg", "early": "lt/lg"
+        "lq": "ln(q)",
+        "lg": "ln(g)",
+        "lt": "ln(t)",
+        "lpg": "ln(p*g)",
+        "r": "lq/lg", "joined": "lt/lpg", "early": "lt/lg",
+        "e": "floor(log10(r)) - 2", "m": "r/10^e"
       },
-      "where": ["r >= 10.1", "r < 99.9", "abs(r - round(r, 1)) > 0.001", "abs(joined - r) > 0.2"],
+      "where": ["abs(m - round(m)) > 0.01", "abs(joined - r) > 0.2"],
       "prompt": "Solve ${p} \\times {g}^{v} = {t}$, to 3 significant figures.",
-      "widget": { "kind": "numeric", "answer": "{round(r, 6)}", "tol": { "abs": 0.05 }, "placeholder": "a decimal", "accept": "{r:dp1}" },
+      "widget": { "kind": "numeric", "answer": "{round(r, 6)}", "tol": { "abs": "{0.51*10^e}" }, "placeholder": "a decimal", "accept": "{r:sf3}" },
       "wrong": [
-        { "id": "joined-the-base", "value": "{round(joined, 6)}", "tol": { "abs": 0.05 }, "line": "${p} \\times {g}^{v}$ is not $({p} \\times {g})^{v}$: divide by {p} first." },
-        { "id": "logs-too-soon", "value": "{round(early, 6)}", "tol": { "abs": 0.05 }, "line": "You took logs before getting the power alone: divide by {p} first." }
+        { "id": "joined-the-base", "value": "{round(joined, 6)}", "tol": { "abs": "{0.51*10^e}" }, "line": "${p} \\times {g}^{v}$ is not $({p} \\times {g})^{v}$: divide by {p} first." },
+        { "id": "logs-too-soon", "value": "{round(early, 6)}", "tol": { "abs": "{0.51*10^e}" }, "line": "You took logs before getting the power alone: divide by {p} first." }
       ],
       "solution": [
         "Divide both sides by {p}: ${g}^{v} = {q}$.",
-        "Take $\\log$ of both sides: ${v} = \\dfrac{{\\log {q}}}{{\\log {g}}} = {r:dp1}$ to 3 significant figures."
+        "Take $\\log$ of both sides: ${v} = \\dfrac{{\\log {q}}}{{\\log {g}}} = {r:sf3}$ to 3 significant figures."
       ]
     }
   ]

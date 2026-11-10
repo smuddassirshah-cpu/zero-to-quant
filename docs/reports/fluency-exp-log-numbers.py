@@ -1,7 +1,7 @@
 """Recompute every Fluency answer and every named slip in the exp-log sets from the drawn variable values alone, with
 sympy, and compare with what the engine resolved (tools/fluency-sample.mjs --json).
-Method 1 is the engine's own arithmetic in gen.js (exact fractions, and for logs the let formula
-50000*(y^(1/100000) - y^(-1/100000)), which is 100000*sinh(ln y / 100000) and so ln y to about 1e-11);
+Method 1 is the engine's own arithmetic in gen.js (exact fractions, and since the widening pass the evaluator's own
+`ln`; the first wave used the let formula 50000*(y^(1/100000) - y^(-1/100000)), which is 100000*sinh(ln y / 100000));
 method 2 is this script: sympy evaluates the powers exactly and the logarithms with its own log, from the vars only.
 It checks the key, that each wrong is the slip it names, that each wrong lies outside the key's tolerance, and that
 an exact (expression) key equals the sympy value. Run with the sympy venv:
@@ -193,11 +193,27 @@ def l8_exact(it, V):
     expr_item(it, root, {'upside-down': sp.log(a) / sp.log(b), 'divided-the-numbers': sp.Rational(b, a)})
 
 
+def sf3(it, r):
+    """Widening pass (sfN format): the shown answer is r to 3 significant figures, worked with Decimal at 40 digits from
+    sympy's value; the tolerance is 0.51 of a unit in the third figure; r is not a whole number of those units."""
+    import decimal
+    decimal.getcontext().prec = 40
+    v = decimal.Decimal(str(sp.N(r, 40)))
+    unit = decimal.Decimal(1).scaleb(v.adjusted() - 2)
+    shown = v.quantize(unit, rounding=decimal.ROUND_HALF_UP)
+    text = format(shown, 'f')
+    fam, seed = it['family'], it['seed']
+    check(text == it['accept'], f"{fam} seed {seed}: accept {it['accept']} is {text} (3 sf)")
+    check(len(text.replace('.', '').lstrip('0')) == 3, f"{fam} seed {seed}: {text} has 3 figures")
+    check(abs(tol_of(it.get('tol'), r) - 0.51 * float(unit)) < 1e-12, f"{fam} seed {seed}: tol is 0.51 of a unit")
+    check(f"{shown}" in ''.join(it['solution']), f"{fam} seed {seed}: solution states {text}")
+    check(abs(float(v / unit) - round(float(v / unit))) > 0.01, f"{fam} seed {seed}: not an exact 3 sf value")
+
+
 def l8_sf(it, V):
     a, b = V['a'], V['b']
     r = sp.log(b) / sp.log(a)
-    check(1 <= float(r) < 10, f"power-to-3-sf seed {it['seed']}: answer between 1 and 10, so 3 sf is 2 dp")
-    check(f"{float(r):.2f}" == it['accept'], f"power-to-3-sf seed {it['seed']}: accept shows {float(r):.2f}")
+    sf3(it, r)
     num_item(it, r, {'upside-down': 1 / r, 'divided-the-numbers': sp.Rational(b) / a}, 1e-6)
 
 
@@ -213,8 +229,7 @@ def l8_money(it, V):
     p, g, q = V['p'], V['g'], V['q']
     t = p * q
     r = sp.log(sp.Rational(t) / p) / sp.log(g)
-    check(10 <= float(r) < 100, f"money-target seed {it['seed']}: answer between 10 and 100, so 3 sf is 1 dp")
-    check(f"{float(r):.1f}" == it['accept'], f"money-target seed {it['seed']}: accept shows {float(r):.1f}")
+    sf3(it, r)
     num_item(it, r, {'joined-the-base': sp.log(t) / sp.log(p * g), 'logs-too-soon': sp.log(t) / sp.log(g)}, 1e-6)
 
 
