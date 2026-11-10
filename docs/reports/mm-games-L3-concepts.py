@@ -163,8 +163,15 @@ l11c = load('l11-hedging')
 check('l11 s2: with percentage sds h = 1.35 is pounds of B per pound of A; in units it is 1.35 times the price ratio, 0.0675 here  (corrected claim, fix pass)',
       abs(best_units - 1.35 * pa / pb) < 1e-3 and abs(pounds_b / pa - 1.35) < 1e-2
       and 'pounds of B for each pound of A' in l11c['screens'][2]['prose'] and '£1.35 of B' in l11c['screens'][2]['explain']['text']
-      and 'units of B' not in l11c['summary']['formula']['note'] and 'units of B' not in l11c['screens'][1]['prose']
+      and 'pounds of B sold for each pound of A' in l11c['summary']['formula']['note'] and 'units of B' not in l11c['screens'][1]['prose']
       and 'units of B' not in load('review-3')['items'][4]['question'])
+# (fix-pass read follow-up) the summary note also gives the units reading: with sds of price changes per unit,
+# h = rho*sa/sb is units of B per unit of A. Dice check: sum against die 1, rho = 1/sqrt(2), h = 1 unit per unit.
+sd_sum, sd_die = sqrt(var([a + b for a, b in rolls])), sqrt(var([a for a, b in rolls]))
+rho_d = (sum((a + b - 7) * (a - 3.5) for a, b in rolls) / len(rolls)) / (sd_sum * sd_die)
+check('l11 summary note: with sds in pounds a unit, h is units of B per unit of A; dice h = 1  (fix-pass read follow-up)',
+      abs(rho_d - 1 / sqrt(2)) < 1e-12 and abs(rho_d * sd_sum / sd_die - 1) < 1e-12
+      and 'With sds in pounds a unit, it is units of B for each unit of A.' in l11c['summary']['formula']['note'])
 run_code_widget('l11 s9 code', load('l11-hedging')['screens'][9]['widget'])
 
 # ---------- l12: thinking aloud ----------
