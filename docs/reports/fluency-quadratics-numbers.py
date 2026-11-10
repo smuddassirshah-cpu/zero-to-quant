@@ -5,7 +5,7 @@ vars (expanding, factorising or solving), then checks that the engine's key equa
 bracket and a factorise key is a product, and that each wrong differs from the key and equals the slip it names.
 Run with the sympy venv:  <scratchpad>/venv/bin/python docs/reports/fluency-quadratics-numbers.py   (exit 0 = pass)
 """
-import json, os, subprocess, sys
+import json, os, re, subprocess, sys
 import sympy as sp
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
 
@@ -68,6 +68,62 @@ def num_item(it, key, wrongs, tol=0, wtol=0):
             check(abs(vals[i] - vals[j]) > 2 * wtol, f"{it['family']} seed {it['seed']}: wrongs {i} and {j} apart")
 
 
+# ---- widening pass helpers: set answers and factorise fully ----------------------------------------
+def tex2(s):
+    """LaTeX with \\frac and \\sqrt as a string sympy can parse."""
+    s = s.replace('\\left', '').replace('\\right', '').replace(' ', '')
+    while True:
+        s2 = re.sub(r'\\sqrt\{([^{}]*)\}', r'sqrt(\1)', s)
+        s2 = re.sub(r'\\frac\{([^{}]*)\}\{([^{}]*)\}', r'((\1)/(\2))', s2)
+        if s2 == s:
+            return s
+        s = s2
+
+
+def tval(s, x):
+    e = parse_expr(tex2(s), local_dict={str(x): x, 'sqrt': sp.sqrt}, transformations=TR)
+    return sp.nsimplify(e, rational=True) if re.search(r'\d\.\d', s) else e
+
+
+def same_set(A, B, tol):
+    if len(A) != len(B):
+        return False
+    A = sorted(A, key=float)
+    B = sorted(B, key=float)
+    if tol == 0:
+        return all(sp.simplify(a - b) == 0 for a, b in zip(A, B))
+    return all(abs(float(a) - float(b)) <= tol for a, b in zip(A, B))
+
+
+def set_item(it, roots, slips, x, tol=0):
+    """roots: the true set from sympy; slips: {id: set}. Checks the engine's answers and every wrong set."""
+    tag = f"{it['family']} seed {it['seed']}"
+    check(it.get('unordered') is True and len(it['answers']) == len(roots), f"{tag}: an unordered set of {len(roots)}")
+    if it['kind'] == 'expression':
+        got = [tval(a, x) for a in it['answers']]
+    else:
+        got = [sp.nsimplify(float(a), rational=True) if tol == 0 else sp.Float(a) for a in it['answers']]
+    check(same_set(got, roots, 1e-9 if tol else 0), f"{tag}: answers {it['answers']} are the roots {roots}")
+    for w in it['wrong']:
+        parts = [p.strip() for p in (w.get('tex') or w.get('value')).split(', ')]
+        vals = [tval(p, x) for p in parts] if 'tex' in w else [sp.Float(p) for p in parts]
+        wt = (w.get('tol') or {}).get('abs', 0) if 'value' in w else 0
+        check(not same_set(vals, roots, tol + wt + 1e-9), f"{tag}: wrong {w['id']} is not the key set")
+        check(same_set(vals, slips[w['id']], 1e-6 if 'value' in w else 0), f"{tag}: wrong {w['id']} is the slip {slips[w['id']]}")
+
+
+def full_item(it, inner, k, wrongs, v):
+    """Factorise fully: k is the content of the quadratic, the key starts with k, every factor left is linear."""
+    x = sp.Symbol(v)
+    whole = sp.expand(k * inner)
+    content, factors = sp.factor_list(whole)
+    tag = f"{it['family']} seed {it['seed']}"
+    check(abs(content) == abs(k), f"{tag}: the common factor is {k}")
+    check(it['answer'].startswith(f"{k}("), f"{tag}: key {it['answer']} starts with {k}")
+    check(all(sp.Poly(f_, x).degree() == 1 for f_, _ in factors), f"{tag}: only linear factors are left")
+    expr_item(it, whole, None, wrongs, v)
+
+
 def run(ref, fam, fn):
     for it in draws(ref, fam):
         V = {k: (R(x) if not isinstance(x, str) else x) for k, x in it['vars'].items()}
@@ -125,6 +181,16 @@ def l3_split(it, V):
     num_item(it, a*c, {'last-term-only': c, 'the-sum': b})
 
 
+def l3_full(it, V):
+    # widening pass: common factor first, graded with form factorised-fully
+    x = sp.Symbol(V['v']); k, p, q, s = V['k'], V['p'], V['q'], V['s']
+    inner = (p*x + q) * (x + s)
+    ids = {w['id'] for w in it['wrong']}
+    check(('factor-sign' in ids) == (k < 0) and ('numbers-swapped' in ids) == (p > 1 and q != s),
+          f"common-factor-first seed {it['seed']}: the slips offered follow their when conditions")
+    full_item(it, inner, k, {'factor-dropped': inner, 'factor-sign': -k*inner, 'numbers-swapped': k*(p*x + s)*(x + q)}, V['v'])
+
+
 # ---- l4-difference-of-squares -----------------------------------------------------------------------
 def l4_sq(it, V):
     x = sp.Symbol(V['v']); p, q = V['p'], V['q']
@@ -144,6 +210,13 @@ def l4_mental(it, V):
     num_item(it, a**2 - b**2, {'difference-squared': (a - b)**2, 'sum-only': a + b})
 
 
+def l4_full(it, V):
+    # widening pass: common factor, then the difference of squares, graded with form factorised-fully
+    x = sp.Symbol(V['v']); k, p, q = V['k'], V['p'], V['q']
+    inner = (p*x + q) * (p*x - q)
+    full_item(it, inner, k, {'factor-dropped': inner, 'squared-difference': k*(p*x - q)**2}, V['v'])
+
+
 # ---- l6-completing-the-square -----------------------------------------------------------------------
 def l6_const(it, V):
     x = sp.Symbol(V['v']); h, c = V['h'], V['c']
@@ -159,15 +232,31 @@ def roots_of(quad, x):
 
 
 def l6_solve(it, V):
-    x = sp.Symbol(V['v']); h, k, w = V['h'], V['k'], V['w']
-    quad = x**2 - 2*h*x + h**2 - k**2
-    lo, hi = roots_of(quad, x)
-    key = hi if w == 'larger' else lo
-    other = lo if w == 'larger' else hi
-    # centre-sign: the same spread about -h
-    lo2, hi2 = roots_of(x**2 + 2*h*x + h**2 - k**2, x)
-    slip = hi2 if w == 'larger' else lo2
-    num_item(it, key, {'other-root': other, 'centre-sign': slip})
+    # widening pass: both roots as a set answer
+    x = sp.Symbol(V['v']); h, k = V['h'], V['k']
+    roots = roots_of(x**2 - 2*h*x + h**2 - k**2, x)
+    check(len(roots) == 2, f"solve-by-square seed {it['seed']}: two roots")
+    ids = {w['id'] for w in it['wrong']}
+    check(('no-square-root' in ids) == (k > 1), f"solve-by-square seed {it['seed']}: no-square-root offered only for k > 1")
+    slips = {'centre-sign': roots_of(x**2 + 2*h*x + h**2 - k**2, x),   # the same spread about -h
+             'no-square-root': [h - k**2, h + k**2]}                   # k^2 itself used as the spread
+    set_item(it, roots, slips, x)
+
+
+def l6_form(it, V):
+    # widening pass: the whole completed-square form, graded with form completed-square
+    x = sp.Symbol(V['v']); b, c = V['b'], V['c']
+    p_, q_ = sp.symbols('p_ q_')
+    sol = sp.solve(sp.Poly(sp.expand((x + p_)**2 + q_ - (x**2 + b*x + c)), x).all_coeffs(), [p_, q_], dict=True)
+    check(len(sol) == 1, f"square-form seed {it['seed']}: one (p, q)")
+    p0, q0 = sol[0][p_], sol[0][q_]
+    check(re.fullmatch(r'\([a-z][+-][0-9.]+\)\^2[+-][0-9.]+', it['answer']) is not None,
+          f"square-form seed {it['seed']}: key {it['answer']} is a squared bracket plus a number")
+    got_p = sp.nsimplify(re.match(r'\([a-z]([+-][0-9.]+)\)', it['answer']).group(1), rational=True)
+    check(got_p == p0, f"square-form seed {it['seed']}: the bracket holds {p0}")
+    hh = sp.Rational(b, 2)
+    expr_item(it, sp.expand((x + p0)**2 + q0), None,
+              {'added-corner': (x + hh)**2 + c + hh**2, 'b-not-halved': (x + b)**2 + c - b**2}, V['v'])
 
 
 def l6_max(it, V):
@@ -184,31 +273,44 @@ def l7_disc(it, V):
     num_item(it, sp.discriminant(a*x**2 + b*x + c, x), {'sign-of-4ac': b**2 + 4*a*c, 'dropped-four': b**2 - a*c})
 
 
-def formula_slips(a, b, c, w):
+def formula_sets(a, b, c):
+    """The slips of the formula, each as the set of two values it gives (widening pass: both roots)."""
     D = b**2 - 4*a*c
-    g = 1 if w == 'larger' else -1
-    return {'other-root': (-b - g*sp.sqrt(D)) / (2*a), 'b-for-minus-b': (b + g*sp.sqrt(D)) / (2*a),
-            'halved-root-only': -b + g*sp.sqrt(D) / (2*a)}
+    return {'b-for-minus-b': [(b - sp.sqrt(D)) / (2*a), (b + sp.sqrt(D)) / (2*a)],
+            'halved-root-only': [-b - sp.sqrt(D) / (2*a), -b + sp.sqrt(D) / (2*a)],
+            'over-a': [(-b - sp.sqrt(D)) / a, (-b + sp.sqrt(D)) / a]}
 
 
 def l7_rational(it, V):
-    x = sp.Symbol(V['v']); p, q, s, w = V['p'], V['q'], V['s'], V['w']
+    x = sp.Symbol(V['v']); p, q, s = V['p'], V['q'], V['s']
     quad = sp.expand((p*x - q) * (x - s))
     a, b, c = sp.Poly(quad, x).all_coeffs()
-    lo, hi = roots_of(quad, x)
-    check(lo.is_rational and hi.is_rational, f"rational-roots seed {it['seed']}: rational roots")
-    key = hi if w == 'larger' else lo
-    num_item(it, key, formula_slips(a, b, c, w), tol=0.005, wtol=0.005)
+    roots = roots_of(quad, x)
+    check(len(roots) == 2 and all(r.is_rational for r in roots), f"rational-roots seed {it['seed']}: two rational roots")
+    want = f"${sp.latex(roots[0])}$ and ${sp.latex(roots[1])}$, or decimals within 0.005"
+    bare = lambda t: re.sub(r'\\frac|[{} ]', '', t)
+    check(bare(it['accept']) == bare(want), f"rational-roots seed {it['seed']}: accept {it['accept']} is {want}")
+    set_item(it, roots, formula_sets(a, b, c), x, tol=0.005)
 
 
 def l7_decimal(it, V):
-    x = sp.Symbol(V['v']); a, b, c, w = V['a'], V['b'], V['c'], V['w']
-    lo, hi = roots_of(a*x**2 + b*x + c, x)
-    check(not lo.is_rational, f"decimal-roots seed {it['seed']}: irrational roots")
-    key = hi if w == 'larger' else lo
-    check(it['accept'] == f"{float(key):.2f}" or abs(float(it['accept']) - float(key)) <= 0.005,
-          f"decimal-roots seed {it['seed']}: accept {it['accept']} is the root to 2 dp")
-    num_item(it, sp.N(key, 30), {k: sp.N(v, 30) for k, v in formula_slips(a, b, c, w).items()}, tol=0.005, wtol=0.005)
+    x = sp.Symbol(V['v']); a, b, c = V['a'], V['b'], V['c']
+    roots = roots_of(a*x**2 + b*x + c, x)
+    check(len(roots) == 2 and not roots[0].is_rational, f"decimal-roots seed {it['seed']}: two irrational roots")
+    want = f"${float(roots[0]):.2f}$ and ${float(roots[1]):.2f}$"
+    check(it['accept'] == want, f"decimal-roots seed {it['seed']}: accept {it['accept']} is {want}")
+    set_item(it, roots, formula_sets(a, b, c), x, tol=0.005)
+
+
+def l7_exact(it, V):
+    # widening pass: exact surd roots as an expression set
+    x = sp.Symbol(V['v']); a, b, c = V['a'], V['b'], V['c']
+    D = b**2 - 4*a*c
+    check(D > 0 and not sp.sqrt(D).is_rational, f"exact-roots seed {it['seed']}: surd roots")
+    check(all(D % (m*m) != 0 for m in range(2, 14)), f"exact-roots seed {it['seed']}: {D} has no square factor")
+    ids = {w['id'] for w in it['wrong']}
+    check(('over-a' in ids) == (a > 1), f"exact-roots seed {it['seed']}: over-a offered only for a > 1")
+    set_item(it, roots_of(a*x**2 + b*x + c, x), formula_sets(a, b, c), x)
 
 
 # ---- functions l8-line-through-two-points -----------------------------------------------------------
@@ -238,15 +340,19 @@ JOBS = [
     ('quadratics/fluency-l2-product-and-sum', 'perfect-square', l2_square),
     ('quadratics/fluency-l3-leading-coefficient', 'factorise-non-monic', l3_nonmonic),
     ('quadratics/fluency-l3-leading-coefficient', 'split-product', l3_split),
+    ('quadratics/fluency-l3-leading-coefficient', 'common-factor-first', l3_full),
     ('quadratics/fluency-l4-difference-of-squares', 'square-minus-number', l4_sq),
     ('quadratics/fluency-l4-difference-of-squares', 'number-minus-square', l4_rev),
     ('quadratics/fluency-l4-difference-of-squares', 'mental-difference', l4_mental),
+    ('quadratics/fluency-l4-difference-of-squares', 'common-factor-first', l4_full),
     ('quadratics/fluency-l6-completing-the-square', 'find-the-constant', l6_const),
     ('quadratics/fluency-l6-completing-the-square', 'solve-by-square', l6_solve),
+    ('quadratics/fluency-l6-completing-the-square', 'square-form', l6_form),
     ('quadratics/fluency-l6-completing-the-square', 'largest-value', l6_max),
     ('quadratics/fluency-l7-the-formula', 'discriminant', l7_disc),
     ('quadratics/fluency-l7-the-formula', 'rational-roots', l7_rational),
     ('quadratics/fluency-l7-the-formula', 'decimal-roots', l7_decimal),
+    ('quadratics/fluency-l7-the-formula', 'exact-roots', l7_exact),
     ('functions/fluency-l8-line-through-two-points', 'gradient', f8_grad),
     ('functions/fluency-l8-line-through-two-points', 'line-equation', f8_line),
 ]

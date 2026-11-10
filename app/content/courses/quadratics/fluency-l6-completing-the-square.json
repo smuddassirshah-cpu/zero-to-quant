@@ -37,22 +37,43 @@
       "vars": {
         "h": { "int": [-6, 6], "not": [0] },
         "k": { "int": [1, 7] },
-        "w": { "pick": ["smaller", "larger"] },
-        "g": { "pick": [-1, 1] },
         "v": { "pick": ["x", "y", "t"] }
       },
-      "let": { "b": "-2*h", "c": "h^2 - k^2", "h2": "h^2", "k2": "k^2", "r": "h + g*k", "other": "h - g*k", "lo": "h - k", "hi": "h + k", "nh": "-h" },
-      "where": ["(w == 'larger' and g == 1) or (w == 'smaller' and g == -1)", "k != abs(h)", "-h + g*k != h - g*k"],
-      "prompt": "Solve ${poly(v; 1, b, c)} = 0$ by completing the square. What is the {w} root?",
-      "widget": { "kind": "numeric", "answer": "{r}", "tol": { "abs": 0 } },
+      "let": { "b": "-2*h", "c": "h^2 - k^2", "h2": "h^2", "k2": "k^2", "lo": "h - k", "hi": "h + k", "nh": "-h" },
+      "where": ["k != abs(h)"],
+      "prompt": "Solve ${poly(v; 1, b, c)} = 0$ by completing the square. Give both roots.",
+      "widget": { "kind": "numeric", "answers": ["{lo}", "{hi}"], "unordered": true, "tol": { "abs": 0 }, "accept": "${lo}$ and ${hi}$, in either order" },
       "wrong": [
-        { "id": "other-root", "value": "{other}", "line": "That is the other root: the question asks for the {w} one." },
-        { "id": "centre-sign", "value": "{-h + g*k}", "line": "The square is $({v}{nh:+})^2$, so the roots sit either side of ${h}$, not ${nh}$." }
+        { "id": "centre-sign", "value": "{nh - k}, {nh + k}", "line": "The square is $({v}{nh:+})^2$, so the roots sit either side of ${h}$, not ${nh}$." },
+        { "id": "no-square-root", "value": "{h - k2}, {h + k2}", "line": "You used ${k2}$ itself as the spread: square-root it first, so ${v}{nh:+} = \\pm {k}$.", "when": "k > 1" }
       ],
       "solution": [
         "Half of ${b}$ is ${nh}$, so ${poly(v; 1, b, c)} = ({v}{nh:+})^2 -{h2}{c:+} = ({v}{nh:+})^2 - {k2}$.",
         "Then $({v}{nh:+})^2 = {k2}$, so ${v}{nh:+} = \\pm {k}$.",
-        "The roots are ${lo}$ and ${hi}$; the {w} is ${r}$."
+        "So ${v} = {lo}$ or ${v} = {hi}$."
+      ]
+    },
+    {
+      "id": "square-form",
+      "weight": 2,
+      "skill": "write a quadratic as a square plus a number",
+      "vars": {
+        "b": { "int": [-12, 12], "not": [0] },
+        "c": { "int": [-12, 12] },
+        "v": { "pick": ["x", "y", "t", "r"] }
+      },
+      "let": { "h": "b/2", "h2": "b^2/4", "k": "c - b^2/4", "bb": "b^2", "kb": "c - b^2" },
+      "where": ["4*c != b^2", "4*c != -b^2", "c != b^2"],
+      "prompt": "Write ${poly(v; 1, b, c)}$ in the form $({v} + p)^2 + q$.",
+      "widget": { "kind": "expression", "answer": "({v}{h:+})^2{k:+}", "form": "completed-square" },
+      "wrong": [
+        { "id": "added-corner", "tex": "({v}{h:+})^2{c + h2:+}", "line": "You added the corner ${h2}$: the square $({v}{h:+})^2$ already holds it, so take it away." },
+        { "id": "b-not-halved", "tex": "({v}{b:+})^2{kb:+}", "line": "The number in the bracket is half of ${b}$, which is ${h}$, not ${b}$ itself." }
+      ],
+      "solution": [
+        "Half of ${b}$ is ${h}$, and ${h:()}^2 = {h2}$.",
+        "So ${poly(v; 1, b, 0)} = ({v}{h:+})^2 - {h2}$.",
+        "Adding ${c}$ gives ${poly(v; 1, b, c)} = ({v}{h:+})^2{k:+}$."
       ]
     },
     {
