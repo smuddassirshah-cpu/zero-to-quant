@@ -1,0 +1,67 @@
+{
+  "id": "fluency-l2-measuring-surprise",
+  "lesson": "l2-measuring-surprise",
+  "title": "Fluency: measuring surprise",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "z-null-zero",
+      "weight": 2,
+      "skill": "a z statistic against a null mean of 0",
+      "vars": {
+        "xh": { "int": [-40, 40], "not": [0] },
+        "sig": { "pick": [0.5, 0.8, 1, 1.2, 1.5, 2, 2.5] },
+        "nr": { "pick": [[16, 4], [25, 5], [36, 6], [49, 7], [64, 8], [100, 10], [144, 12], [225, 15], [400, 20]], "as": ["n", "rt"] }
+      },
+      "let": {
+        "xb": "xh/100",
+        "se": "sig/rt",
+        "key": "(xh/100)/(sig/rt)",
+        "bysig": "(xh/100)/sig",
+        "byn": "(xh/100)/(sig/n)"
+      },
+      "where": ["abs(key) <= 4", "abs(key) >= 0.2"],
+      "prompt": "A strategy averaged $\\bar x = {xb}\\%$ a day over $n = {n}$ days, with known $\\sigma = {sig}\\%$ and $H_0: \\mu = 0$. What is $z$, to 2 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.005 }, "placeholder": "A number such as 2.50", "accept": "${key:dp2}$, within 0.005" },
+      "wrong": [
+        { "id": "divided-by-sigma", "value": "{bysig}", "tol": { "abs": 0.005 }, "line": "You divided by $\\sigma$, the sd of one day. Divide by the standard error, $\\sigma/\\sqrt n$." },
+        { "id": "divided-by-n", "value": "{byn}", "tol": { "abs": 0.005 }, "line": "You divided $\\sigma$ by $n$. The standard error is $\\sigma/\\sqrt n$, with $\\sqrt{{{n}}} = {rt}$." }
+      ],
+      "solution": [
+        "The standard error is $\\sigma/\\sqrt n = {sig}/\\sqrt{{{n}}} = {sig}/{rt}$.",
+        "$z = \\dfrac{{{xb} - 0}}{{{sig}/{rt}}} = {xb} \\times \\dfrac{{{rt}}}{{{sig}}} \\approx {key:dp2}$."
+      ]
+    },
+    {
+      "id": "z-null-nonzero",
+      "weight": 1,
+      "skill": "a z statistic against a null mean that is not 0",
+      "vars": {
+        "m0": { "pick": [1, 1.5, 2, 2.5, 3, 3.5, 4] },
+        "dh": { "int": [-15, 15], "not": [0] },
+        "sig": { "int": [3, 10] },
+        "nr": { "pick": [[36, 6], [64, 8], [100, 10], [144, 12], [225, 15], [400, 20]], "as": ["n", "rt"] }
+      },
+      "let": {
+        "xb": "m0 + dh/10",
+        "d": "dh/10",
+        "key": "(dh/10)/(sig/rt)",
+        "centre0": "(m0 + dh/10)/(sig/rt)",
+        "bysig": "(dh/10)/sig"
+      },
+      "where": ["abs(key) <= 4", "abs(key) >= 0.2", "m0 + dh/10 > 0"],
+      "prompt": "An algorithm used to slip $\\mu_0 = {m0}$ bp per order, with $\\sigma = {sig}$ bp. After a change, $n = {n}$ orders average $\\bar x = {xb}$ bp. What is $z$, to 2 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.005 }, "placeholder": "A number such as -1.96", "accept": "${key:dp2}$, within 0.005" },
+      "wrong": [
+        { "id": "centred-on-zero", "value": "{centre0}", "tol": { "abs": 0.005 }, "line": "You measured from 0. Centre on the null mean: use $\\bar x - \\mu_0 = {d}$." },
+        { "id": "divided-by-sigma", "value": "{bysig}", "tol": { "abs": 0.005 }, "line": "You divided by $\\sigma$, the sd of one order. Divide by the standard error, $\\sigma/\\sqrt n = {sig}/{rt}$." }
+      ],
+      "solution": [
+        "$\\bar x - \\mu_0 = {xb} - {m0} = {d}$ bp, and the standard error is ${sig}/{rt}$ bp.",
+        "$z = \\dfrac{{{d}}}{{{sig}/{rt}}} = {d} \\times \\dfrac{{{rt}}}{{{sig}}} \\approx {key:dp2}$."
+      ]
+    }
+  ]
+}
