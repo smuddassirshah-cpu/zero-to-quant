@@ -1,12 +1,12 @@
 {
   "id": "ci-cancelled-to-back",
-  "name": "Cancelled orders to the back",
+  "name": "Split orders round a reference size",
   "course": "coding-int",
   "pack": "ci",
   "pattern": "two-pointers",
   "tags": [
     "pack-2",
-    "cancelled-to-back"
+    "reference-split"
   ],
   "skills": [
     "ci-patterns",
@@ -14,111 +14,121 @@
   ],
   "difficulty": 2,
   "pace": 900,
-  "fn": "push_cancelled_back",
-  "returns": "a whole number, after changing the list in place",
-  "brief": "An order blotter holds signed order sizes in lots, where a size of 0 marks a cancelled order. The desk wants the live orders at the front, in their original order, and every cancelled order behind them.\n\nWrite `push_cancelled_back(sizes)`. It changes `sizes` in place, using no second list, and returns how many live orders there are.\n\nExample. For `sizes = [0, 5, -2, 0, 3]` the list becomes `[5, -2, 3, 0, 0]` and the function returns 3.",
+  "fn": "split_by_reference",
+  "returns": "a pair of whole numbers, after changing the list in place",
+  "brief": "An order blotter holds signed order sizes in lots, and `ref` is a reference size. The desk wants every order smaller than `ref` at the front, every order equal to `ref` next, and every larger order at the back. The order inside each of the three groups does not matter.\n\nWrite `split_by_reference(sizes, ref)`. It changes `sizes` in place, using no second list, and returns `(lo, hi)`: `sizes[:lo]` holds the smaller orders, `sizes[lo:hi]` the equal ones and `sizes[hi:]` the larger ones.\n\nExample. For `sizes = [7, 2, 5, 9, 5, 1]` and `ref = 5` the list may become `[2, 1, 5, 5, 9, 7]` and the function returns `(2, 4)`.",
   "constraints": [
-    "$0 \\le n \\le 200{,}000$ sizes, each a whole number between $-10^6$ and $10^6$.",
-    "$O(n)$ time and $O(1)$ extra space are the target. Removing each 0 from the middle is too slow.",
+    "$0 \\le n \\le 200{,}000$ sizes, each a whole number between $-10^6$ and $10^6$, and `ref` lies in the same range.",
+    "$O(n)$ time and $O(1)$ extra space are the target. Moving each size with `pop` and `insert` is too slow.",
     "All the tests in a run share one 5-second limit in the browser."
   ],
-  "hint": "Keep a write position that starts at 0. Copy each live size to it and step it on. When the pass ends, fill everything from the write position onwards with 0.",
-  "starter": "def push_cancelled_back(sizes):\n    # your code here\n    return 0\n",
+  "hint": "Keep three marks: the end of the smaller group, the next unchecked size, and the start of the larger group. Swap a smaller size down and step on. Swap a larger size to the back and do not step on, since the size that arrives has not been checked.",
+  "starter": "def split_by_reference(sizes, ref):\n    # your code here\n    return (0, 0)\n",
   "examples": [
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([0, 5, -2, 0, 3])",
-      "expect": "(3, [5, -2, 3, 0, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([7, 2, 5, 9, 5, 1])",
+      "expect": "((2, 4), [1, 2], [5, 5], [7, 9])",
       "compare": "equal",
-      "note": "The three live sizes keep their order, and the call returns 3 with the changed list."
+      "note": "Two sizes are smaller, two equal and two larger, so the boundaries are 2 and 4. The tests sort each part, since the order inside a part is free."
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([0, 0])",
-      "expect": "(0, [0, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 8)))([3, 3, 3])",
+      "expect": "((3, 3), [3, 3, 3], [], [])",
       "compare": "equal",
-      "note": "Nothing is live, so the count is 0 and the list is unchanged."
+      "note": "Every size is smaller than 8, so the smaller group is the whole list and both boundaries are 3."
     }
   ],
   "tests": [
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([])",
-      "expect": "(0, [])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([])",
+      "expect": "((0, 0), [], [], [])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([4])",
-      "expect": "(1, [4])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([4])",
+      "expect": "((1, 1), [4], [], [])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([0])",
-      "expect": "(0, [0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([5])",
+      "expect": "((0, 1), [], [5], [])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([0, 5, -2, 0, 3])",
-      "expect": "(3, [5, -2, 3, 0, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([9])",
+      "expect": "((0, 0), [], [], [9])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([0, 0, 7])",
-      "expect": "(1, [7, 0, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([7, 2, 5, 9, 5, 1])",
+      "expect": "((2, 4), [1, 2], [5, 5], [7, 9])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([1, 2, 3, 0])",
-      "expect": "(3, [1, 2, 3, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([3, 1, 2])",
+      "expect": "((3, 3), [1, 2, 3], [], [])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([-1, 0, 0, -1, 0, 2])",
-      "expect": "(3, [-1, -1, 2, 0, 0, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([8, 6, 7])",
+      "expect": "((0, 0), [], [], [6, 7, 8])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([3, 3, 0, 3, 0, 0, 3])",
-      "expect": "(4, [3, 3, 3, 3, 0, 0, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([5, 5, 5])",
+      "expect": "((0, 3), [], [5, 5, 5], [])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([0, 0, 0, 1000000, -1000000])",
-      "expect": "(2, [1000000, -1000000, 0, 0, 0])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 5)))([9, 1, 9, 1, 5])",
+      "expect": "((2, 3), [1, 1], [5], [9, 9])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s))([9, -9])",
-      "expect": "(2, [9, -9])",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 0)))([-3, 4, -1, 0, 4, -3, 2])",
+      "expect": "((3, 4), [-3, -3, -1], [0], [2, 4, 4])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s == [7] * 100000 + [0] * 100000))([0, 7] * 100000)",
-      "expect": "(100000, True)",
+      "call": "(lambda s: (lambda r: (r, sorted(s[:r[0]]), sorted(s[r[0]:r[1]]), sorted(s[r[1]:])))(split_by_reference(s, 4)))([6, 6, 2, 2, 6, 2])",
+      "expect": "((3, 3), [2, 2, 2], [], [6, 6, 6])",
       "compare": "equal"
     },
     {
-      "call": "(lambda s: (push_cancelled_back(s), s[:3], s[-1], s.count(0)))([0] * 150000 + [1, -1] * 25000)",
-      "expect": "(50000, [1, -1, 1], 0, 150000)",
+      "call": "(lambda s: (lambda r: (r, all(x < 0 for x in s[:r[0]]), all(x == 0 for x in s[r[0]:r[1]]), all(x > 0 for x in s[r[1]:]), sum(s), sum(x * x for x in s), len(s)))(split_by_reference(s, 0)))([(i * 7919) % 1001 - 500 for i in range(200000)])",
+      "expect": "((99898, 100098), True, True, True, 1789, 16700250795, 200000)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (lambda r: (r, all(x < 7 for x in s[:r[0]]), all(x == 7 for x in s[r[0]:r[1]]), all(x > 7 for x in s[r[1]:]), sum(s), sum(x * x for x in s), len(s)))(split_by_reference(s, 7)))([7] * 200000)",
+      "expect": "((0, 200000), True, True, True, 1400000, 9800000, 200000)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (lambda r: (r, all(x < 100000 for x in s[:r[0]]), all(x == 100000 for x in s[r[0]:r[1]]), all(x > 100000 for x in s[r[1]:]), sum(s), sum(x * x for x in s), len(s)))(split_by_reference(s, 100000)))(list(range(100001, 200001)) + list(range(1, 100001)))",
+      "expect": "((99999, 100000), True, True, True, 20000100000, 2666686666700000, 200000)",
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each one passes your function a list, then checks both the count it returns and the list it changed.",
-  "solution": "def push_cancelled_back(sizes):\n    write = 0\n    for x in sizes:\n        if x != 0:\n            sizes[write] = x\n            write += 1\n    for i in range(write, len(sizes)):\n        sizes[i] = 0\n    return write\n",
+  "how": "Submit runs 14 hidden tests. Each one passes your function a list, then checks the boundaries it returns and the three parts of the list it changed, each part sorted. The tests check the result, not the memory you use; the practice is to do it with no second list.",
+  "solution": "def split_by_reference(sizes, ref):\n    lo, i, hi = 0, 0, len(sizes)\n    while i < hi:\n        x = sizes[i]\n        if x < ref:\n            sizes[lo], sizes[i] = sizes[i], sizes[lo]\n            lo += 1\n            i += 1\n        elif x > ref:\n            hi -= 1\n            sizes[i], sizes[hi] = sizes[hi], sizes[i]\n        else:\n            i += 1\n    return (lo, hi)\n",
   "notes": [
-    "The write position never passes the read position, so a live size is copied before anything overwrites it.",
-    "Building a new list and binding the name to it leaves the caller's list unchanged, so the test sees no change.",
-    "One pass to copy and one to fill with 0, so the work is $O(n)$ with $O(1)$ extra space."
+    "A smaller size swaps with the first size of the equal group, which was already checked, so both the smaller mark and the scan step on.",
+    "A larger size swaps with the last unchecked size, which has not been looked at yet, so only the back mark moves in.",
+    "Each size is looked at once and moved at most once, so the work is $O(n)$ with $O(1)$ extra space."
   ],
   "planted": [
     {
-      "code": "def push_cancelled_back(sizes):\n    sizes = [x for x in sizes if x != 0] + [0] * sizes.count(0)\n    return len(sizes) - sizes.count(0)\n",
-      "slip": "Binding the name to a new list leaves the caller's list as it was."
+      "code": "def split_by_reference(sizes, ref):\n    sizes = sorted(sizes)\n    lo = sum(1 for x in sizes if x < ref)\n    hi = lo + sum(1 for x in sizes if x == ref)\n    return (lo, hi)\n",
+      "slip": "Binding the name to a new sorted list leaves the caller's list as it was."
     },
     {
-      "code": "def push_cancelled_back(sizes):\n    write = 0\n    for x in sizes:\n        if x != 0:\n            sizes[write] = x\n            write += 1\n    return write\n",
-      "slip": "Copying the live sizes forward without filling the tail with 0 leaves old sizes behind them."
+      "code": "def split_by_reference(sizes, ref):\n    lo, i, hi = 0, 0, len(sizes)\n    while i < hi:\n        x = sizes[i]\n        if x < ref:\n            sizes[lo], sizes[i] = sizes[i], sizes[lo]\n            lo += 1\n            i += 1\n        elif x > ref:\n            hi -= 1\n            sizes[i], sizes[hi] = sizes[hi], sizes[i]\n            i += 1\n        else:\n            i += 1\n    return (lo, hi)\n",
+      "slip": "Stepping on after a swap with the back leaves the size that arrived there unchecked."
     },
     {
-      "code": "def push_cancelled_back(sizes):\n    i, j = 0, len(sizes) - 1\n    while i < j:\n        if sizes[i] == 0:\n            while j > i and sizes[j] == 0:\n                j -= 1\n            sizes[i], sizes[j] = sizes[j], sizes[i]\n        i += 1\n    return len(sizes) - sizes.count(0)\n",
-      "slip": "Swapping each 0 with the last live size moves every 0 back but breaks the order of the live orders."
+      "code": "def split_by_reference(sizes, ref):\n    lo = 0\n    for i in range(len(sizes)):\n        if sizes[i] <= ref:\n            sizes[lo], sizes[i] = sizes[i], sizes[lo]\n            lo += 1\n    return (lo, lo)\n",
+      "slip": "A single pass that treats a size equal to `ref` as smaller never forms the equal group."
     }
   ]
 }

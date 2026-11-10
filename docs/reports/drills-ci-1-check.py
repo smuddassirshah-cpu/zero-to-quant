@@ -151,7 +151,7 @@ def longest_even_vowels(tape):
 
 def others_product_grid(grid):
     # group equal values: a cell's answer is the product over distinct values w of w^(count - [w is this cell])
-    M = 12345
+    M = 10010
     cnt = Counter(v for row in grid for v in row)
     full = {}
     for v in cnt:
@@ -228,27 +228,27 @@ SLOW = {f.__name__: f for f in [count_code_classes, count_steady_pairs, count_ro
 
 # The worked example in each brief, recomputed by the slow method.
 BRIEF = {
-    "ci-code-classes": ('count_code_classes(["abcd", "cdab", "cbad", "dacb"])', 2),
+    "ci-code-classes": ('count_code_classes(["mnop", "onmp", "mpon", "nmop"])', 2),
     "ci-steady-climbs": ("count_steady_pairs([5, 6, 4, 8, 9])", 6),
     "ci-row-column-matches": ("count_row_column_matches([[1, 2], [2, 1]])", 2),
-    "ci-peak-stretch": ("shortest_peak_stretch([1, 2, 2, 3, 1])", 2),
-    "ci-serial-runs": ("longest_serial_run([100, 4, 200, 1, 3, 2])", [1, 4]),
+    "ci-peak-stretch": ("shortest_peak_stretch([4, 8, 8, 5, 4])", 2),
+    "ci-serial-runs": ("longest_serial_run([50, 7, 90, 5, 8, 6, 9])", [5, 5]),
     "ci-mean-stretches": ("count_mean_stretches([2, 4, 3, 1, 5], 3)", 6),
     "ci-best-block": ("best_block_sum([[1, 2, 3], [4, 5, 6], [7, 8, 9]], 2)", 28),
     "ci-unique-counts": ('solve_unique_counts("5\\nAX BY AX CZ BY\\n")', "2"),
-    "ci-zero-quads": ("count_zero_quads([1, 2], [-2, -1], [-1, 2], [0, 2])", 2),
+    "ci-zero-quads": ("count_zero_quads([2, 3], [-3, 1], [-1, 4], [1, -2])", 2),
     "ci-even-vowels": ('longest_even_vowels("xaeyea")', 6),
-    "ci-others-product": ("others_product_grid([[1, 2], [3, 4]])", [[24, 12], [8, 6]]),
+    "ci-others-product": ("others_product_grid([[2, 5], [3, 7]])", [[105, 42], [70, 30]]),
     "ci-equal-three": ('solve_equal_three("5\\nABCAB\\n")', "3"),
     "ci-camera-cover": ("cells_covered_at_least(3, 3, [[0, 0, 1, 1], [1, 1, 2, 2]], 2)", 1),
     "ci-target-blocks": ("count_target_blocks([[2, 1], [1, 2]], 3)", 4),
-    "ci-trim-to-multiple": ("shortest_cut_to_multiple([6, 3, 5, 2], 9)", 2),
+    "ci-trim-to-multiple": ("shortest_cut_to_multiple([6, 5, 1, 6], 7)", 2),
 }
 # Hand sums for the same examples (computed a second way, by reading the brief).
-assert 1 - 2 - 1 + 2 == 0 and 2 - 1 - 1 + 0 == 0
-assert [2 * 3 * 4, 1 * 3 * 4, 1 * 2 * 4, 1 * 2 * 3] == [24, 12, 8, 6]
+assert 2 + 1 - 1 - 2 == 0 and 3 - 3 - 1 + 1 == 0
+assert [5 * 3 * 7, 2 * 3 * 7, 2 * 5 * 7, 2 * 5 * 3] == [105, 42, 70, 30]
 assert max(1 + 2 + 4 + 5, 2 + 3 + 5 + 6, 4 + 5 + 7 + 8, 5 + 6 + 8 + 9) == 28
-assert (6 + 3 + 5 + 2) % 9 == 7 and (6 + 3) % 9 == 0 and all((16 - x) % 9 for x in [6, 3, 5, 2])
+assert (6 + 5 + 1 + 6) % 7 == 4 and (1 + 6) % 7 == 0 and all((18 - x) % 7 for x in [6, 5, 1, 6])
 assert sum(1 for k in [5 - 0, 6 - 1, 4 - 2, 8 - 3, 9 - 4] if k == 5) == 4 and 4 * 3 // 2 == 6
 
 
