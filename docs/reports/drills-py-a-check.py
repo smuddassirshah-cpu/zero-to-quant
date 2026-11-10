@@ -6,7 +6,7 @@ example and hidden test, and both must agree with `expect` under the drill page'
 independent method against a value worked by hand, checks that the starter fails at least one hidden test,
 that every planted wrong solution fails at least one hidden test (a wrong answer, an error, or more than
 5 s), that each drill's skills are declared by the lesson it draws on, the `how` count, the pace range and
-the difficulty mix (py-found 4 / 5 / 3, plotting 2 / 2 / 2). Exit 0 when everything holds.
+the difficulty mix (py-found 3 / 5 / 4, plotting 2 / 2 / 2). Exit 0 when everything holds.
 
 Run from the repo root: <scratchpad>/venv/bin/python docs/reports/drills-py-a-check.py
 """
@@ -194,7 +194,7 @@ class CostBasis:
 
 
 def growth_curve(rets, start=100.0):
-    return [start * math.prod(1 + r for r in rets[:i]) for i in range(len(rets) + 1)]
+    return [start * math.prod(1.0 if r is None else 1 + r for r in rets[:i]) for i in range(len(rets) + 1)]
 
 
 def bar_limits(values, pad=0.1):
@@ -346,7 +346,7 @@ def main():
     only = sys.argv[1:]
     drills = [json.load(open(os.path.join(DRILLS, i + ".json"))) for i in LESSON]
     mix = {c: Counter(d["difficulty"] for d in drills if d["course"] == c) for c in ("py-found", "plotting")}
-    if mix["py-found"] != Counter({1: 4, 2: 5, 3: 3}) or mix["plotting"] != Counter({1: 2, 2: 2, 3: 2}):
+    if mix["py-found"] != Counter({1: 3, 2: 5, 3: 4}) or mix["plotting"] != Counter({1: 2, 2: 2, 3: 2}):
         errors += 1
         print("MIX", mix)
     index = {r["id"]: r for r in json.load(open(os.path.join(DRILLS, "index.json")))}
@@ -365,7 +365,7 @@ def main():
         if not set(d["skills"]) <= lesson_skills(course, lesson):
             errors += 1
             print("SKILLS not declared by", lesson, d["id"], d["skills"])
-        if not d["how"].startswith("Submit runs %d hidden tests." % len(d["tests"])) or not 10 <= len(d["tests"]) <= 14:
+        if not d["how"].startswith("Submit runs %d hidden tests." % len(d["tests"])) or not 10 <= len(d["tests"]) <= 15:
             errors += 1
             print("HOW count", d["id"])
         if len(d["notes"]) != 3 or not 2 <= len(d["examples"]) <= 3 or not all(e.get("note") for e in d["examples"]):
@@ -399,7 +399,7 @@ def main():
                 print("PLANTED passes every test:", d["id"], k, p["slip"][:60])
             caught.append("fails %s" % ",".join(map(str, fails)) if fails else "PASSES")
         planted_total += len(caught)
-        if not 2 <= len(caught) <= 3:
+        if not 2 <= len(caught) <= 6:
             errors += 1
             print("planted count:", d["id"])
         print("%-22s %-9s d%d %4ds %2d tests, starter fails %2d; planted: %s"

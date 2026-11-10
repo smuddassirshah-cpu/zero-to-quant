@@ -6,12 +6,12 @@ Brief: `docs/briefs/drills-1.1-1.9.md` (pack `py`, agent B), on top of `docs/bri
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `py-big-move-days` | l3-masks | two conditions in one mask, `np.abs`, `&` | 1 | 420 | list of int | 10 | 3 |
 | `py-best-desk-each-day` | l2-shapes-and-axes | `argmax` along `axis=1`, first desk wins a tie | 1 | 420 | list of str | 10 | 3 |
-| `py-carry-forward-limit` | l7-gaps | `ffill(limit=k)`, limit 0, leading gap | 1 | 480 | Series | 10 | 4 |
+| `py-carry-forward-limit` | l7-gaps | `ffill(limit=k)`, limit 0, leading gap | 2 | 600 | Series | 10 | 4 |
 | `py-volume-surge` | l6-loading-prices, l9-returns-with-shift | read a CSV by column name, compare with `shift(1)` | 1 | 480 | list of str | 10 | 4 |
 | `py-fx-to-pounds` | l4-broadcasting | a per-day rate as a column, `rates[:, None]` | 2 | 600 | 2-D array | 10 | 3 |
 | `py-day-fills` | l12-split-apply-combine | named `agg`: signed net, VWAP, count | 2 | 720 | DataFrame | 11 | 4 |
 | `py-weekly-range` | l11-daily-to-monthly | `resample("W-FRI")`, empty weeks dropped | 2 | 720 | Series | 11 | 3 |
-| `py-gap-aware-returns` | l7-gaps, l9-returns-with-shift | a return across a missing close stays NaN | 2 | 660 | Series | 11 | 3 |
+| `py-gap-aware-returns` | l7-gaps, l9-returns-with-shift | a return across a missing close stays NaN | 1 | 480 | Series | 11 | 3 |
 | `py-combined-desk-pnl` | l13-joining-on-dates | outer join on the date, 0 for a silent desk | 2 | 720 | Series | 11 | 3 |
 | `py-prior-zscore` | l10-rolling, l9-returns-with-shift | rolling window ending yesterday, flat window NaN | 3 | 960 | Series | 10 | 4 |
 | `py-excess-vs-benchmark` | l12-split-apply-combine, l13-joining-on-dates | returns inside each ticker, index return before the merge | 3 | 1140 | Series | 10 | 4 |
@@ -41,3 +41,5 @@ Two faults were found in the real runtime and fixed before commit. First, the Na
 ## Engine limits
 
 Four bullets in `docs/BACKLOG-INBOX.md` under `Raised later (drills py b):`. The first commit's `index.json` already lists the six drills of the second commit.
+
+Fix pass: tests, planted solutions, starters and two difficulty labels changed (the mix stays 4 / 5 / 3); see `docs/reviews/review-drills-py.md`, `## Fix pass`.

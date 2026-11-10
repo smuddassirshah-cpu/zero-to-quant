@@ -4,14 +4,14 @@ Brief: `docs/briefs/drills-1.1-1.9.md` (pack `py`, agent A), on top of `docs/bri
 
 | id | course | lesson drawn on | idea | difficulty | pace (s) | hidden tests | planted |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `py-trimmed-fill-mean` | py-found | l2-slicing | sort, slice off `k` each end (`k = 0` trap), caller's list kept | 1 | 420 | 12 | 3 |
+| `py-trimmed-fill-mean` | py-found | l2-slicing, l8-who-changes-the-list | sort, slice off `k` each end (`k = 0` trap), caller's list kept | 1 | 420 | 12 | 3 |
 | `py-holdings-change` | py-found | l6-membership | set difference and intersection over repeated tickers; one large test | 1 | 480 | 11 | 3 |
-| `py-format-pence` | py-found | l16-returns-from-a-file | `£` formatting with commas and a leading minus, whole-number pence past $2^{53}$ | 1 | 480 | 12 | 3 |
+| `py-format-pence` | py-found | l16-returns-from-a-file | `£` formatting with commas and a leading minus, whole-number pence past $2^{53}$ | 2 | 600 | 12 | 3 |
 | `py-cross-up-days` | py-found | l4-one-line-lists | one comprehension over `i` and `i - 1`, equal-then-above counts | 1 | 540 | 12 | 3 |
 | `py-split-pence` | py-found | l1-why-not-0-3 | `round(fee * 100)` not `int`, `divmod` shares, spare pence first | 2 | 660 | 12 | 3 |
 | `py-fill-summary` | py-found | l5-lookup-by-name | two dicts of running totals, quantity-weighted average | 2 | 660 | 11 | 3 |
 | `py-quote-ladder` | py-found | l7-arguments | defaults in a stated order, keywords, no shared default list, rounded prices | 2 | 720 | 11 | 3 |
-| `py-wide-to-long` | py-found | l10-reading-a-csv | `csv.reader`, stripped headers, blank and space cells, `\r\n`, sort | 2 | 780 | 13 | 3 |
+| `py-wide-to-long` | py-found | l10-reading-a-csv | `csv.reader`, stripped headers, blank and space cells, `\r\n`, sort | 3 | 960 | 13 | 3 |
 | `py-batches` | py-found | l13-one-at-a-time | a generator that reads a feed lazily, new list per batch, `ValueError` | 2 | 660 | 13 | 3 |
 | `py-split-adjusted` | py-found | l8-who-changes-the-list | a new list, backward running factor, split day itself unchanged | 3 | 900 | 12 | 3 |
 | `py-guarded-returns` | py-found | l11-when-things-go-wrong | two narrow `except`s, `TypeError` let through | 3 | 960 | 12 | 3 |
@@ -23,7 +23,7 @@ Brief: `docs/briefs/drills-1.1-1.9.md` (pack `py`, agent A), on top of `docs/bri
 | `py-underwater-series` | plotting | l7-drawing-drawdown | drawdown and days-since-peak series, equal-to-peak resets | 3 | 900 | 10 | 3 |
 | `py-month-grid` | plotting | l10-panels ("A heat map of months") | tidy month by ticker table for grouped bars, compounded, `None` for gaps | 3 | 1140 | 14 | 3 |
 
-Mix: `py-found` 4 / 5 / 3 and `plotting` 2 / 2 / 2 at difficulty 1 / 2 / 3, so 6 / 7 / 5 for these 18. For the pack's 30 to be 9 / 12 / 9, agent B's 12 would be 3 / 5 / 4. Skills are the named lesson's own (the check script reads them from the lesson file). Large tests only where the lesson teaches cost: `py-holdings-change` (60,000 tickers each side, so `in` on a list is too slow). The other large tests are length or sum checks of correctness.
+Mix (after the fix pass): `py-found` 3 / 5 / 4 and `plotting` 2 / 2 / 2 at difficulty 1 / 2 / 3, so 5 / 7 / 6 for these 18 (first draft 4 / 5 / 3 and 6 / 7 / 5). For the pack's 30 to be 9 / 12 / 9, agent B's 12 would be 3 / 5 / 4. Skills are the named lesson's own (the check script reads them from the lesson file). Large tests only where the lesson teaches cost: `py-holdings-change` (60,000 tickers each side, so `in` on a list is too slow). The other large tests are length or sum checks of correctness.
 
 ## Checks
 
@@ -49,3 +49,5 @@ No planted solution passed every test on its first run, so no test was added for
 ## Inbox
 
 Two bullets under "Raised later (drills py a):" in `docs/BACKLOG-INBOX.md`.
+
+Fix pass: tests, planted solutions, starters and four difficulty labels changed after the second read; the counts above are the first draft's. See `docs/reviews/review-drills-py.md`, `## Fix pass`.

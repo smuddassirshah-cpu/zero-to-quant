@@ -58,3 +58,32 @@ Freshness: no sample data I recognise from a site or a book; the settings (ladde
 Finding classes for the validator (SESSION PROTOCOL 6): "a test whose data lies outside the drill's own constraints" is now seen three times (`ci` review findings 16 and 17, finding 1 here) and should become a script. A level check is new and scriptable: `first_taught.py` lists, for each construct a drill's hint and solution use, the first lesson that shows it.
 
 Every proposed `expect` above was computed by the model solution and by `mine.py` (`harness.py extra`); findings 2, 3, 5 and 7 were also checked by hand.
+
+## Fix pass
+
+Method: each new `expect` is the reader's value from `drills-py-scripts/extra_tests.json`, recomputed here by the model and by the independent method in `docs/reports/drills-py-a-check.py` or `drills-py-b-check.py` (both agree; the new tests fail only the wrong solution they were written for). The reader's wrong solutions came from `wrong.py`. The limits in the two check scripts moved to match: A allows 10 to 15 tests and 2 to 6 planted, and its py-found mix is 3 / 5 / 4; B allows 10 to 15 tests. Both exit 0 (A: 18 drills, 62 planted; B: 12 drills, 43 planted). Validator 0 errors; playthrough green with and without `--mobile` and `planted-check --require` green on all 22 changed drills; `fresh-check` 0 hits on each; voice scan 0 sentences over 35 words, no em-dashes, no exclamation marks.
+
+1. fixed: tests[10] of `py-paired-returns` now builds `yyyy-mm-dd` keys; `expect` unchanged (a date-parsing solution, the model and the check script agree).
+2. fixed: two tests added to `py-cross-up-days` (14 tests), the two mixed-day forms planted.
+3. fixed: `split_pence(1.10, 2)` added and `math.ceil` planted with the reader's slip (13 tests).
+4. fixed: `next(batches(feed(), 3))` added and the read-ahead generator planted (14 tests).
+5. fixed: both `py-cost-basis` tests added (15 tests) and the two wrong `buy` forms planted.
+6. fixed with adapted wording: test added (11 tests) and the per-share-dates solution planted; the brief sentence now says the excess "sets a two-day return against a one-day one", because "overstated" is not always true (the sign depends on the data).
+7. fixed: "Each return is at least $-1$." and the `[[-1.0]]` test added to `py-month-grid` (15 tests); the truthiness form planted.
+8. fixed: `py-guarded-returns` brief defines a number as what `float` reads as it stands, with `' 4.80 '` and `'1,200.00'` as cases, and a constraint rules out `'nan'` and `'inf'`.
+9. fixed: constraint "on weekdays only" and notes[0] corrected for a Friday in `py-weekly-range`.
+10. fixed: `py-format-pence` brief names `{n:,}` and `{n:02d}` with a two-line example, the hint uses `//` and `%`, difficulty 2, pace 600.
+11. fixed: `py-best-desk-each-day` brief names `np.argmax(p, axis=1)` with an example; difficulty stays 1.
+12. fixed: (a) hint without `divmod`; (b) `csv.reader(text.splitlines())` in starter, hint, solution and planted, no `import io`; (c) hint and notes[0] give `r.reshape(len(r), 1)` with `r[:, None]` as the short form; (d) hint says `np.flatnonzero` is new and `where` says to do it after homework-1; (e) hint says `reset_index` is new; (f) hint uses `groupby(...)[[...]].sum()` and `.size()`; the `drills-py-a.md` row of `py-trimmed-fill-mean` now names l2 and l8.
+13. fixed: eight starters cut to imports, the signature, `# your code here` and a failing return (`py-weekly-range`, `py-month-hit-rate`, `py-volume-surge`, `py-excess-vs-benchmark`, `py-big-move-days`, `py-best-desk-each-day`, `py-fx-to-pounds`, `py-prior-zscore`); every starter still fails the tests (both playthrough runs and the B script).
+14. fixed in part: (a) `py-growth-curve` gains the `None` rule (brief, constraint, solution, notes[0], two tests, one planted); (d) `py-gap-aware-returns` difficulty 1; (b) and (c) accepted as the reader proposed, no change.
+15. fixed: `py-fx-to-pounds` notes[1] reworded.
+16. fixed: `py-cost-basis` notes[1] reworded.
+17. fixed: helper renamed `make_fills` in prelude, brief, hint, 2 examples and the tests of `py-day-fills`.
+18. fixed: `py-format-pence` 2 (600), `py-gap-aware-returns` 1 (480), `py-carry-forward-limit` 2 (600), `py-wide-to-long` 3 (960); `index.json` rows equal their files; the pack is 9 / 12 / 9.
+
+Counts: 18 fixed (14 in part), 0 disputed, 0 deferred.
+
+Drills whose tests changed: `py-paired-returns` (tests[10] call only), `py-cross-up-days`, `py-split-pence`, `py-batches`, `py-cost-basis`, `py-excess-vs-benchmark`, `py-month-grid`, `py-growth-curve` (new tests only, no existing `expect` altered). Drills whose `expect` values changed: none. Drills whose starter changed: the eight of finding 13 and `py-wide-to-long`. Difficulty changed: `py-format-pence`, `py-gap-aware-returns`, `py-carry-forward-limit`, `py-wide-to-long`. Task or data touched beyond a finding: `py-growth-curve` solution (the `None` rule, as finding 14a asks); `py-wide-to-long` solution (`io` dropped, same results); `py-day-fills` helper name; no other.
+
+Left behind: `py-growth-curve` stays at difficulty 1 although it now has a rule of its own; the `py-found` mix rests on `py-wide-to-long` at 3, which the reader judged harder than `py-split-adjusted`.

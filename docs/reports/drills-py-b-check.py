@@ -285,8 +285,8 @@ def main():
             bad('pace out of range')
         if not (2 <= len(d['examples']) <= 3) or not all(e.get('note') for e in d['examples']):
             bad('needs 2 or 3 examples, each with a note')
-        if not (10 <= len(d['tests']) <= 14):
-            bad('needs 10 to 14 hidden tests')
+        if not (10 <= len(d["tests"]) <= 15):
+            bad('needs 10 to 15 hidden tests')
         if len(d.get('planted', [])) < 2:
             bad('needs two or more planted solutions')
         if f'Submit runs {len(d["tests"])} hidden tests' not in d['how']:
