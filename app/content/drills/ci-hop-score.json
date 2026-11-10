@@ -114,21 +114,21 @@
   "solution": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] < i - k:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and best[window[-1]] <= best[i]:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
   "notes": [
     "The best route to depot `i` ends with a hop from one of the `k` depots before it, so `best[i]` is `gains[i]` plus their best total.",
-    "Taking the best gain in reach at each step is a greedy that fails; a toll now can open a larger gain later.",
+    "The window holds the `k` depots before `i`, so depot `i - k` is still in reach and `i - k - 1` is not.",
     "Each depot enters and leaves the deque once, so the work is $O(n)$."
   ],
   "planted": [
     {
-      "code": "def best_hop_total(gains, k):\n    n = len(gains)\n    i = 0\n    total = gains[0]\n    while i < n - 1:\n        if i + k >= n - 1:\n            i = n - 1\n        else:\n            i = max(range(i + 1, i + k + 1), key=lambda j: gains[j])\n        total += gains[i]\n    return total\n",
-      "slip": "Hopping to the best gain in reach is a greedy that can miss a better route behind a toll."
+      "code": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] < i - k:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and gains[window[-1]] <= g:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
+      "slip": "Ordering the deque by each depot's own gain, not by the best total to reach it, keeps the wrong front."
     },
     {
       "code": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] < i - k - 1:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and best[window[-1]] <= best[i]:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
       "slip": "Keeping depot `i - k - 1` in the window allows a hop of `k + 1` depots."
     },
     {
-      "code": "def best_hop_total(gains, k):\n    best = [0] * len(gains)\n    best[0] = gains[0]\n    for i in range(1, len(gains)):\n        best[i] = gains[i] + max(best[max(0, i - k):i])\n    return best[-1]\n",
-      "slip": "Looking back over all `k` earlier totals is right but $O(nk)$, so the large tests run out of time."
+      "code": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] <= i - k:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and best[window[-1]] <= best[i]:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
+      "slip": "Dropping depot `i - k` from the window forbids the longest hop of exactly `k` depots."
     }
   ]
 }

@@ -119,16 +119,16 @@
   ],
   "planted": [
     {
-      "code": "def longest_after_swaps(rota, k):\n    best = 0\n    for i in range(len(rota)):\n        changes = 0\n        j = i\n        while j < len(rota):\n            if rota[j] != rota[i]:\n                if changes == k:\n                    break\n                changes += 1\n            j += 1\n        best = max(best, j - i)\n    return best\n",
-      "slip": "Keeping only the letter at the start of each stretch misses stretches whose best trader starts later."
+      "code": "def longest_after_swaps(rota, k):\n    if not rota:\n        return 0\n    top = max(rota.count(c) for c in set(rota))\n    return min(len(rota), top + k)\n",
+      "slip": "Using the busiest trader over the whole rota assumes their shifts sit together."
     },
     {
       "code": "def longest_after_swaps(rota, k):\n    count = {}\n    best = left = top = 0\n    for right, c in enumerate(rota):\n        count[c] = count.get(c, 0) + 1\n        top = max(top, count[c])\n        while right - left + 1 - top >= k:\n            count[rota[left]] -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
       "slip": "Shrinking while the changes needed are `>= k` never uses the last allowed change."
     },
     {
-      "code": "def longest_after_swaps(rota, k):\n    best = 0\n    for i in range(len(rota)):\n        count = {}\n        for j in range(i, len(rota)):\n            count[rota[j]] = count.get(rota[j], 0) + 1\n            if j - i + 1 - max(count.values()) <= k:\n                best = max(best, j - i + 1)\n    return best\n",
-      "slip": "Checking every stretch is right but quadratic, so the large tests run out of time."
+      "code": "def longest_after_swaps(rota, k):\n    count = {}\n    best = left = 0\n    for right, c in enumerate(rota):\n        count[c] = count.get(c, 0) + 1\n        while right - left + 1 - count[c] > k:\n            count[rota[left]] -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
+      "slip": "Measuring the changes against the newest shift's trader, not the most common one, shrinks windows that were fine."
     }
   ]
 }

@@ -127,8 +127,8 @@
       "slip": "Dropping a signal when the gap is `>= k` throws away pairs exactly `k` seconds apart."
     },
     {
-      "code": "def best_signal_pair(signals, k):\n    best = None\n    for j, (t, v) in enumerate(signals):\n        i = j - 1\n        while i >= 0 and t - signals[i][0] <= k:\n            ti, vi = signals[i]\n            score = vi + v + t - ti\n            if best is None or score > best:\n                best = score\n            i -= 1\n    return best\n",
-      "slip": "Checking every earlier signal in reach is right but quadratic when `k` is large, so the large tests run out of time."
+      "code": "from collections import deque\n\ndef best_signal_pair(signals, k):\n    best = None\n    window = deque()\n    for j, (t, v) in enumerate(signals):\n        while window and t - signals[window[0]][0] > k:\n            window.popleft()\n        if window:\n            ti, vi = signals[window[0]]\n            score = vi - ti + v + t\n            if best is None or score > best:\n                best = score\n        while window and signals[window[-1]][1] <= v:\n            window.pop()\n        window.append(j)\n    return best\n",
+      "slip": "Ranking earlier signals by strength `v` alone ignores that an older signal costs its time in the score."
     }
   ]
 }

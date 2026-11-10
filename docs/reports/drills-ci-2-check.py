@@ -6,8 +6,10 @@ For every drill it:
   different algorithm: counting, a stable sort, bisect on prefix sums, numpy, a sparse table,
   a binary search on the answer, occurrence lists) and compares with `expect`;
 - checks the starter fails at least one test;
-- runs every planted solution in its own CPython process (10 s limit) and asserts it fails a
-  test or runs out of time;
+- runs every planted solution on all hidden tests in its own CPython process and asserts it
+  fails at least one and finishes inside 2.5 s (a planted run must never time out in the browser);
+- runs each slow method in SLOW (the obvious method, kept out of `planted`) one test at a time
+  and asserts some hidden test takes it past 5 s;
 - times the model solution over all tests (must be under 1.5 s in CPython, so Pyodide keeps
   a margin inside its shared 5 s);
 - checks the pack mix: 3/5/5/2 by difficulty 2/3/4/5, two stdin drills, pace 900 to 2,700,
@@ -301,27 +303,78 @@ INDEP = {
 
 # ---------------- running ----------------
 
-RUNNER = r'''
-import json, sys
+# The slow methods a candidate writes first (the obvious method, or the right idea at the wrong
+# complexity). They are not in `planted`: a planted run that times out on the drill page restarts
+# Python, and the playthrough then reads the stale results of that run for the next submits
+# (BACKLOG-INBOX, drills ci 2). Here each must run past 5 s on one hidden test in CPython, which is
+# faster than Pyodide, so it also fails the browser's limit.
+SLOW = {
+    'ci-cancelled-to-back': [
+        'def push_cancelled_back(sizes):\n    zeros = sizes.count(0)\n    for _ in range(zeros):\n        sizes.remove(0)\n    sizes.extend([0] * zeros)\n    return len(sizes) - zeros\n',
+    ],
+    'ci-two-desk-matches': [
+        'def count_matching_pairs(a, b, target):\n    count = 0\n    for x in a:\n        for y in b:\n            if x + y == target:\n                count += 1\n    return count\n',
+    ],
+    'ci-widest-banner': [
+        'def widest_banner(posts):\n    best = 0\n    for i in range(len(posts)):\n        for j in range(i + 1, len(posts)):\n            best = max(best, min(posts[i], posts[j]) * (j - i))\n    return best\n',
+    ],
+    'ci-three-leg-nets': [
+        'from itertools import combinations\n\ndef netting_triples(sizes, target):\n    found = set()\n    for c in combinations(sorted(sizes), 3):\n        if sum(c) == target:\n            found.add(c)\n    return sorted(found)\n',
+    ],
+    'ci-frame-triples': [
+        'def count_frames(rods):\n    a = sorted(rods)\n    n = len(a)\n    count = 0\n    for i in range(n):\n        for j in range(i + 1, n):\n            for k in range(j + 1, n):\n                if a[i] + a[j] > a[k]:\n                    count += 1\n    return count\n',
+    ],
+    'ci-excused-outages': [
+        "def solve_excused_outages(text):\n    tokens = text.split()\n    n, k = int(tokens[0]), int(tokens[1])\n    days = tokens[2] if n else ''\n    best = 0\n    for i in range(n):\n        down = 0\n        for j in range(i, n):\n            down += days[j] == 'D'\n            if down > k:\n                break\n            best = max(best, j - i + 1)\n    return str(best)\n",
+    ],
+    'ci-capped-repeats': [
+        'def longest_capped_run(log, m):\n    best = 0\n    for i in range(len(log)):\n        count = {}\n        for j in range(i, len(log)):\n            count[log[j]] = count.get(log[j], 0) + 1\n            if count[log[j]] > m:\n                break\n            best = max(best, j - i + 1)\n    return best\n',
+    ],
+    'ci-rota-swaps': [
+        'def longest_after_swaps(rota, k):\n    best = 0\n    for i in range(len(rota)):\n        count = {}\n        for j in range(i, len(rota)):\n            count[rota[j]] = count.get(rota[j], 0) + 1\n            if j - i + 1 - max(count.values()) <= k:\n                best = max(best, j - i + 1)\n    return best\n',
+    ],
+    'ci-basket-cover': [
+        'def shortest_basket_cover(tape, basket):\n    want = {}\n    for t in basket:\n        want[t] = want.get(t, 0) + 1\n    best = None\n    for i in range(len(tape)):\n        have = {}\n        got = 0\n        for j in range(i, len(tape)):\n            t = tape[j]\n            if t in want:\n                have[t] = have.get(t, 0) + 1\n                if have[t] <= want[t]:\n                    got += 1\n            if got == len(basket):\n                if best is None or j - i < best[1] - best[0]:\n                    best = (i, j)\n                break\n    return best\n',
+    ],
+    'ci-ends-to-target': [
+        'def fewest_end_lots(lots, x):\n    n = len(lots)\n    best = -1\n    front = 0\n    for a in range(n + 1):\n        if a:\n            front += lots[a - 1]\n        if front > x:\n            break\n        back = 0\n        for b in range(n - a + 1):\n            if front + back == x:\n                if best < 0 or a + b < best:\n                    best = a + b\n                break\n            if b < n - a:\n                back += lots[n - 1 - b]\n    return best\n',
+    ],
+    'ci-paired-signals': [
+        'def best_signal_pair(signals, k):\n    best = None\n    for j, (t, v) in enumerate(signals):\n        i = j - 1\n        while i >= 0 and t - signals[i][0] <= k:\n            ti, vi = signals[i]\n            score = vi + v + t - ti\n            if best is None or score > best:\n                best = score\n            i -= 1\n    return best\n',
+    ],
+    'ci-exact-venue-runs': [
+        'def count_exact_venue_runs(venues, k):\n    total = 0\n    for i in range(len(venues)):\n        seen = set()\n        for j in range(i, len(venues)):\n            seen.add(venues[j])\n            if len(seen) > k:\n                break\n            if len(seen) == k:\n                total += 1\n    return total\n',
+    ],
+    'ci-hop-score': [
+        'def best_hop_total(gains, k):\n    best = [0] * len(gains)\n    best[0] = gains[0]\n    for i in range(1, len(gains)):\n        best[i] = gains[i] + max(best[max(0, i - k):i])\n    return best[-1]\n',
+    ],
+}
+
+RUNNER = r"""
+import json, sys, time
 spec = json.load(sys.stdin)
 ns = {}
 exec(spec["code"], ns)
+first = None
+t0 = time.time()
 for i, c in enumerate(spec["cases"]):
     try:
         ok = eval(c["call"], ns) == eval(c["expect"])
     except Exception as e:
-        print(json.dumps({"failed": i, "why": type(e).__name__})); sys.exit(0)
-    if not ok:
-        print(json.dumps({"failed": i, "why": "wrong"})); sys.exit(0)
-print(json.dumps({"failed": None}))
-'''
+        ok = False
+    if not ok and first is None:
+        first = i
+    if spec.get("stop") and first is not None:
+        break
+print(json.dumps({"failed": first, "s": round(time.time() - t0, 2)}))
+"""
 
-def run_isolated(code, cases, limit=10):
+def run_isolated(code, cases, limit=10, stop=False):
     try:
-        r = subprocess.run([sys.executable, "-c", RUNNER], input=json.dumps({"code": code, "cases": cases}),
+        r = subprocess.run([sys.executable, "-c", RUNNER], input=json.dumps({"code": code, "cases": cases, "stop": stop}),
                            capture_output=True, text=True, timeout=limit)
     except subprocess.TimeoutExpired:
-        return {"failed": "timeout", "why": f"over {limit} s"}
+        return {"failed": "timeout", "s": limit}
     return json.loads(r.stdout.strip().splitlines()[-1])
 
 errors = []
@@ -360,10 +413,24 @@ for did in IDS:
         err(f"{did}: fewer than two planted")
     caught = []
     for k, p in enumerate(pl):
-        r = run_isolated(p["code"], d["tests"])
-        if r["failed"] is None:
+        # every hidden test, no early stop, as the drill page runs them; must finish well inside 5 s
+        r = run_isolated(p["code"], d["tests"], limit=2.5)
+        if r["failed"] == "timeout":
+            err(f"{did}: planted[{k}] runs past 2.5 s in CPython, so it could time out in the browser")
+        elif r["failed"] is None:
             err(f"{did}: planted[{k}] passes every hidden test ({p['slip']})")
-        caught.append(f"{r['failed']}:{r.get('why', '')}")
+        caught.append(f"test {r['failed']} in {r['s']} s")
+    slow_out = []
+    for k, code in enumerate(SLOW.get(did, [])):
+        hit = None
+        for i, c in enumerate(d["tests"]):
+            r = run_isolated(code, [c], limit=5)
+            if r["failed"] == "timeout":
+                hit = i
+                break
+        if hit is None:
+            err(f"{did}: slow method {k} finishes every hidden test inside 5 s")
+        slow_out.append(hit)
     # shape
     diffs[d["difficulty"]] += 1
     stdin += "stdin" in d["tags"]
@@ -374,7 +441,7 @@ for did in IDS:
     if len(d["notes"]) != 3: err(f"{did}: notes")
     if d["pack"] != "ci" or d["course"] != "coding-int": err(f"{did}: pack or course")
     if any("setup" in c for c in cases): err(f"{did}: a case uses setup")
-    print(f"{did}: d{d['difficulty']} {len(d['tests'])} tests ok, model {dt:.2f} s, starter fails at {sres['failed']}, planted fail at {caught}")
+    print(f"{did}: d{d['difficulty']} {len(d['tests'])} tests ok, model {dt:.2f} s, starter fails at {sres['failed']}, planted fail at {caught}, slow methods time out at {slow_out}")
 
 if dict(diffs) != {2: 3, 3: 5, 4: 5, 5: 2}: err(f"difficulty mix {dict(diffs)}")
 if stdin != 2: err(f"{stdin} stdin drills")
