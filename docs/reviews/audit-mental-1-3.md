@@ -67,3 +67,28 @@ Reading: the earlier read caught every false number and wrong grading that this 
 - Author number scripts: none exists for this course (`docs/reports/mental-L*-numbers.py` is absent). The concepts scripts recompute the keyed numbers and can serve as the committed recompute script for the fix pass.
 - Playthrough with `--local-cdn`, desktop and `--mobile`: `--lesson mental/l3-making-100`, `--lesson mental/l8-squaring`, `--lesson mental/l12-against-the-clock` and `--set mental/homework-2` all end "All passed".
 - Engine limits met: none, so nothing was added to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Bases computed in my own scratch script, independent of the auditor's checks.
+
+1. fixed | basis: (n + 10k) mod 10 = n mod 10 for every two-digit n and k from 1 to 9, while 66 + 50 = 116 moves the hundreds digit (450 of the 810 pairs do). Auditor's text.
+2. fixed, with my own quiz[1] sentence and one further repeat | basis: 100 − (10t + u) = 10(9 − t) + (10 − u) needs 10 − u to be a digit, so u ≠ 0; enumeration over 1 to 99 fails exactly on 10, 20, ..., 90. For pence, the last-digit rule holds on 9,000 of 9,999 amounts, the last-non-zero-digit rule on all 9,999; £100 − £37.40 = £62.60 both ways. quiz[1].prose reads "If the price ends in 0, the last non-zero digit goes up to 10 and the zeros stay.", since the auditor's "use the last digit that is not 0" did not say what happens to the zeros. screens[8].prose, a general statement of the same rule not named in the finding, now ends "unless $a$ ends in 0". Item-specific hints and feedback ("Tens to 9, units to 10." on 58, 64 and 73) are left: none ends in 0.
+3. fixed, in shorter words | basis: |29 − 30| + |52 − 50| + |38 − 40| + |71 − 70| = 1 + 2 + 2 + 1 = 6, whereas four moves of at most 2 bound only 8. Text: "You allowed too much slack. Rounding moved the numbers by 1, 2, 2 and 1, so the total is off by at most 6." The auditor's sentence passed the 35-word gate but drew a new under-20 warning, so I shortened it.
+4. fixed | basis: unordered pairs from 1 to 12 number 12 + 66 = 78, set-counted directly; 144 / 2 = 72 is the keyed slip. Auditor's text.
+5. fixed | basis: the only cut of 23 with both parts at most 12 is 12 and 11; 84 and 77 are table cells and 84 + 77 carries in the units, while 140 + 21 carries nowhere; both give 161. Auditor's text.
+6. fixed, all four plus the three prompts and one further repeat | basis: (r − g)(r + h) = r² + r(h − g) − gh, so the strips cancel only when g = h; 18 × 21 = 378, not 396 or 399; enumeration over r = 20 to 90 and gaps 1 to 9 gives 72 cancelling pairs of 648, exactly the equal gaps. Auditor's text, except summary.ideas[2], which I wrote as "For two numbers the same distance either side of a round number, the strips cancel: ..." because the auditor's opening phrase had no subject. screens[6].explain "so they always cancel" now reads "so they cancel", since "always" there reread as the general rule. Gaps named: l8 quiz[1] (2), review-2 items[9] (3), homework-2 items[5] (3); 22 − 20 = 20 − 18, 23 − 20 = 20 − 17, 43 − 40 = 40 − 37.
+7. fixed | basis: the cells of the 12 by 12 table holding 96 are r8c12 and r12c8 only; column 4 ends at 4 × 12 = 48. Auditor's text.
+8. fixed | basis: 126 = 70 + 56 with 70 = 7 × 10 and 56 = 7 × 8, so the good split is itself round; 100 and 120 leave remainders 2 and 1 on division by 7. Auditor's text.
+
+Counts: fixed 8, disputed 0, deferred 0.
+
+Graded answers changed: none. No key, `wrong[]` value, slip, tolerance or lesson id changed; only prose, objectives, summary ideas, explain, why and feedback lines.
+
+Concepts scripts: the seven `note` lines (l1_tens_digit_only, l3_rule_without_exception, l4_quiz3_inference, l5_halves, l6_cut_criterion, l8_either_side, l9_96_off_table) are now checks marked "(corrected claim, fix pass)". Each recomputes the corrected claim and asserts the content states it and no longer states the old wording. New checks: l3_change_ends_in_0, l8_gap_named, l12_split_contrast. No check was weakened.
+
+Checks:
+- Validator (from `app/`): `0 errors, 4110 warnings`, the audit's count; it rewrote no tracked file.
+- Voice (35): `# explanations over three sentences: 0`, `# sentences scanned: 5227; over 35 words: 0`.
+- Concepts scripts with `python3 -I`: `mental-L1-concepts.py`, `-L2-`, `-L3-` exit 0.
+- Playthrough (`--local-cdn <pkgs>`) of l1-left-to-right, l3-making-100, l4-running-total, l5-tables, l6-splitting, l8-squaring, l9-missing-multiplication, l12-against-the-clock, review-2, homework-2: desktop and `--mobile` all `All passed.`
