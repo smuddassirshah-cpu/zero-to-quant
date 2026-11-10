@@ -4,11 +4,11 @@ Goal: a single-user, Brilliant-style interactive teaching app (vanilla JS, stati
 
 Design documents live in `docs/` (`PLAN.md` there is the product design, not this checklist). Briefs for every unwritten level are in `docs/briefs/`. Conventions are in `CLAUDE.md`.
 
-## State at HEAD (census, 2026-11-09, `node app/tools/census.mjs | tail -20`)
+## State at HEAD (census, 2026-11-10, `node app/tools/census.mjs | tail -20`)
 Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not memory; dates come from `git log` (UTC).
 - Lessons 1,214 of 1,214 (Stage 0 193, Stage 1 560, Stage 2 202, Stage 3 259); 79 course maps; 279 of 279 levels fully written; reviews 279 (own pass 279), homework 279.
-- Exams: 29 topic, 4 stage, 16 mocks with versions; 7 samples. Drills 35 non-sample (oa 8); bank 20 files, 200 items; prep paths 23, no mock without a file. Hours 3,695, gap 0.
-- Second reads under the current standard: 279 of 279 levels read and fixed (session W closed the last 61); every topic exam has a second-read file (session W read 0.1 to 0.4, 1.1, 1.2, 2.2 to 2.4). Cross-course requires edges 261, all with why. Fable concept audit: 39 levels closed, paused (DECISIONS 7 Nov).
+- Exams: 29 topic, 4 stage, 16 mocks with versions; 7 samples. Drills 95 non-sample (oa 8, dsa 60); Fluency sets 46 (141 families); bank 20 files, 200 items; prep paths 23, no mock without a file. Hours 3,695, gap 0.
+- Second reads under the current standard: 279 of 279 levels read and fixed (session W closed the last 61); every topic exam has a second-read file (session W read 0.1 to 0.4, 1.1, 1.2, 2.2 to 2.4). Cross-course requires edges 261, all with why. Fable concept audit: 45 levels closed, resumed 9 Nov on a six-hourly task, ordered by route use.
 
 ## Tasks (one per session; tick when committed)
 
@@ -67,7 +67,8 @@ Scope decided by the user: G, C, M, D and the syllabus holes are completion crit
 - [x] G engine (session Y, merged 0a6dad25; report `docs/reports/engine-gen-2.md`; follow-up forms 830 to 834 in flight): generator framework, typed and expression answers, Fluency sets (brief `docs/briefs/engine-gen.md`, ENGINE-BACKLOG 800 to 819, AUTHORING section 16)
 - [x] C engine (session Y; `#weekly`; unseen mock versions not drawn, see the report): weekly cumulative review due on Today (ENGINE-BACKLOG 820 to 829)
 - [x] In-app hours shown apart from outside hours (session Y, ENGINE-BACKLOG 746, `docs/reports/engine-gen-1.md`; trader route about 313 h in the app, 1,492 h outside; allowances of 20, 45 and 60 minutes where a review, homework or exam states none)
-- [ ] G content, first wave: Fluency families for topics 0.2 (15), 0.3 (12) and 1.3 (15); brief `docs/briefs/fluency.md`
+- [x] G content, first wave (session Y: 46 sets, 141 families in equations, quadratics, functions, exp-log, trig, series, counting, limits, integrals, taylor, multivar; reports `docs/reports/fluency-<course>.md`, number scripts beside them; no second read, the per-family sympy recompute is the check): Fluency families for topics 0.2, 0.3 and 1.3; brief `docs/briefs/fluency.md`
+- [ ] G content, widening pass after ENGINE-BACKLOG 830 to 835+: families skipped or narrowed for missing formats (lists in each `docs/reports/fluency-<course>.md`): factorise fully and completed square (quadratics l3, l4, l6), both roots (l6, l7), simultaneous pair (equations l15), coefficient 1 and power 1 draws (limits l9, l10; integrals l9, l10, l14), decimal definite integrals, closed-interval maximum (limits l13), recurring decimal (series l8), exact radians (trig l7), exp-log and trig families that approximate `ln` and `sin` in `let`; a new set `multivar/fluency-l2-slicing` (first partials)
 - [ ] G content, second wave: 0.1 (10), 1.4 (8), 1.5 (6), 1.6 (5), 1.11 (6)
 - [ ] M chained problems (three to five per level, `parts` shape, each intermediate answer graded): topics 1.5, 1.3, 0.2, 0.3 first, then the other maths, probability and statistics levels
 - [ ] D drills (session Y: topic 1.8 done, 60 `dsa-` drills, second-read and fixed, `docs/reviews/review-drills-dsa-a-b.md` and `-c-d.md`; open: 3.5 packs, 1.1, 1.9): topic 1.8 (60 by pattern, stdin variant), then Phase 4 packs developer first (3.5), then 1.1 (30 small programs) and 1.9 (25 C++); "Drill packs 1 to 4" and "5 to 8" in 2a are ticked as these land
