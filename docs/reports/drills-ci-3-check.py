@@ -4,10 +4,12 @@ For every drill it runs the model solution on every example and hidden test, and
 method written here (brute force on small inputs; on large inputs a different algorithm, a numpy
 version, or a closed form worked in a comment). Both must equal every `expect`. It checks that the
 starter fails at least one test, and runs every planted wrong solution in CPython: each must give a
-wrong answer, raise, or run past 8 seconds on at least one test. It also checks the pack mix.
+wrong answer or raise on at least one test, and finish all the tests in 1.5 seconds. The slow obvious
+methods are kept in drills-ci-3-obvious.json (not in `planted`; see the report): each must run past
+8 seconds, or fail, on a hidden test. It also checks the pack mix.
 Run: <scratchpad>/venv/bin/python docs/reports/drills-ci-3-check.py   (exit 0 on success)
 """
-import json, os, random, re, signal, sys
+import json, os, random, re, signal, sys, time
 from bisect import bisect_left, bisect_right, insort
 from collections import Counter, deque
 from fractions import Fraction
@@ -20,6 +22,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DRILLS = os.path.join(HERE, "..", "..", "app", "content", "drills")
 SMALL = 3000
 LIMIT = 8  # seconds per planted run of one test
+FAST = 1.5  # seconds a planted solution may take over all the tests in CPython
+OBVIOUS = json.load(open(os.path.join(HERE, "drills-ci-3-obvious.json")))
 
 # ---------------- independent methods ----------------
 
@@ -445,7 +449,27 @@ def main():
             print(f"FAIL {did}: starter passes every test"); errors += 1
         caught = []
         for pi, p in enumerate(d["planted"]):
+            # a planted solution must give a wrong answer or raise on some test, and must finish every
+            # test quickly: a browser run that times out would restart Python (see the report)
             planted_total += 1
+            wrong, t0 = None, time.time()
+            for ti, c in enumerate(d["tests"]):
+                try:
+                    if not same(run(p["code"], c["call"], limit=LIMIT), eval(c["expect"])):
+                        wrong = wrong or f"wrong on test {ti}"
+                except Slow:
+                    wrong = wrong or f"over {LIMIT} s on test {ti}"
+                except Exception as e:
+                    wrong = wrong or f"{type(e).__name__} on test {ti}"
+            spent = time.time() - t0
+            if wrong is None:
+                print(f"FAIL {did}: planted[{pi}] passes every hidden test ({p['slip']})"); errors += 1
+            elif spent > FAST:
+                print(f"FAIL {did}: planted[{pi}] takes {spent:.1f} s over all tests, so the browser run would time out"); errors += 1
+            else:
+                caught.append(f"{wrong} ({spent:.2f} s)")
+        # the obvious slow methods (kept here, not in `planted`): each must run past the limit on a hidden test
+        for oi, p in enumerate(OBVIOUS.get(did, [])):
             why = None
             for ti, c in enumerate(d["tests"]):
                 try:
@@ -458,9 +482,9 @@ def main():
                 if why:
                     break
             if why is None:
-                print(f"FAIL {did}: planted[{pi}] passes every hidden test ({p['slip']})"); errors += 1
+                print(f"FAIL {did}: obvious[{oi}] passes every hidden test ({p['slip']})"); errors += 1
             else:
-                caught.append(why)
+                caught.append("obvious " + why)
         print(f"ok {did}: {len(d['examples'])} examples, {len(d['tests'])} tests, starter fails {starter_fails}, planted: {'; '.join(caught)}")
     errors += random_crosscheck()
     if not only and (diffs != Counter({2: 3, 3: 5, 4: 5, 5: 2}) or stdin != 2):

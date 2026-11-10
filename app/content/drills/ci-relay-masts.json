@@ -114,16 +114,12 @@
   ],
   "planted": [
     {
-      "code": "import heapq\n\ndef min_longest_gap(relays, k):\n    heap = [-(b - a) for a, b in zip(relays, relays[1:])]\n    heapq.heapify(heap)\n    for _ in range(k):\n        g = -heapq.heappop(heap)\n        if g <= 1:\n            heapq.heappush(heap, -g)\n            break\n        heapq.heappush(heap, -(g // 2))\n        heapq.heappush(heap, -(g - g // 2))\n    return -heap[0]\n",
-      "slip": "It halves the longest gap again and again, but splitting a gap evenly into three can beat two halvings."
+      "code": "def min_longest_gap(relays, k):\n    gaps = sorted(b - a for a, b in zip(relays, relays[1:]))\n    longest = gaps[-1]\n    cut = -(-longest // (k + 1))\n    return max(cut, gaps[-2]) if len(gaps) > 1 else cut\n",
+      "slip": "It spends every new relay on the longest gap, though sharing them with the next longest can do better."
     },
     {
       "code": "def min_longest_gap(relays, k):\n    gaps = [b - a for a, b in zip(relays, relays[1:])]\n    lo, hi = 1, max(gaps)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if sum(g // mid for g in gaps) <= k:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
       "slip": "It counts `g // L` new relays for a gap, one too many when `L` divides `g` exactly."
-    },
-    {
-      "code": "def min_longest_gap(relays, k):\n    gaps = [b - a for a, b in zip(relays, relays[1:])]\n    best = max(gaps)\n    while best > 1 and sum((g - 1) // (best - 1) for g in gaps) <= k:\n        best -= 1\n    return best\n",
-      "slip": "It lowers the target length one kilometre at a time, which takes up to $10^9$ steps."
     }
   ]
 }

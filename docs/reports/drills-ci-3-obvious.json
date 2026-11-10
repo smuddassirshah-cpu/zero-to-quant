@@ -1,0 +1,90 @@
+{
+ "ci-log-compactor": [
+  {
+   "code": "import re\n\ndef compact_log(log, k):\n    pattern = re.compile(r'(.)\\1{%d,}' % (k - 1))\n    while True:\n        new = pattern.sub('', log)\n        if new == log:\n            return log\n        log = new\n",
+   "slip": "It deletes a whole run of `k` or more, where only `k` letters may go."
+  },
+  {
+   "code": "def compact_log(log, k):\n    st = []\n    for ch in log:\n        st.append(ch)\n        if len(st) >= k and st[-k:] == [ch] * k:\n            del st[-k:]\n    return ''.join(st)\n",
+   "slip": "It compares the last `k` letters at every step, which is right but costs $O(nk)$."
+  }
+ ],
+ "ci-ring-waits": [
+  {
+   "code": "def ring_waits(load):\n    n = len(load)\n    waits = []\n    for i in range(n):\n        w = -1\n        for d in range(1, n):\n            if load[(i + d) % n] > load[i]:\n                w = d\n                break\n        waits.append(w)\n    return waits\n",
+   "slip": "It walks forward from every slot, which is $O(n^2)$ when the readings tie."
+  }
+ ],
+ "ci-cell-formula": [],
+ "ci-tray-queue": [
+  {
+   "code": "def solve_tray_queue(text):\n    words = text.split()\n    n = int(words[0]) if words else 0\n    in_tray, out_tray = [], []\n    served, moves = [], 0\n    i = 1\n    for _ in range(n):\n        if words[i] == 'in':\n            in_tray.append(words[i + 1])\n            i += 2\n            continue\n        i += 1\n        while in_tray:\n            out_tray.append(in_tray.pop())\n            moves += 1\n        served.append(out_tray.pop() if out_tray else '0')\n        while out_tray:\n            in_tray.append(out_tray.pop())\n            moves += 1\n    return str(moves) + '\\n' + ' '.join(served)\n",
+   "slip": "It moves every ticket back after each serve, so the move count is wrong and the work is $O(n^2)$."
+  }
+ ],
+ "ci-wide-bars": [
+  {
+   "code": "def largest_block_area(widths, heights):\n    best = 0\n    n = len(heights)\n    for i in range(n):\n        low, span = heights[i], 0\n        for j in range(i, n):\n            low = min(low, heights[j])\n            span += widths[j]\n            best = max(best, low * span)\n    return best\n",
+   "slip": "It tries every run of bars, which is right but $O(n^2)$."
+  }
+ ],
+ "ci-visible-masts": [
+  {
+   "code": "def visible_masts(heights):\n    n = len(heights)\n    seen = []\n    for i in range(n):\n        count, tallest = 0, 0\n        for j in range(i + 1, n):\n            if tallest < min(heights[i], heights[j]):\n                count += 1\n            tallest = max(tallest, heights[j])\n            if tallest > heights[i]:\n                break\n        seen.append(count)\n    return seen\n",
+   "slip": "It looks east from every mast, which is right but $O(n^2)$ when the line rises slowly."
+  }
+ ],
+ "ci-price-ramp": [
+  {
+   "code": "def widest_ramp(prices):\n    n = len(prices)\n    best = 0\n    for i in range(n):\n        for j in range(n - 1, i + best, -1):\n            if prices[j] >= prices[i]:\n                best = j - i\n                break\n    return best\n",
+   "slip": "It tries pairs from the far end for every start, which is $O(n^2)$ when prices fall."
+  }
+ ],
+ "ci-free-block": [
+  {
+   "code": "def largest_free_block(rows):\n    r = len(rows)\n    best = 0\n    for top in range(r):\n        free = [True] * len(rows[0])\n        for bottom in range(top, r):\n            run = 0\n            for j, ch in enumerate(rows[bottom]):\n                free[j] = free[j] and ch == '.'\n                run = run + 1 if free[j] else 0\n                best = max(best, run * (bottom - top + 1))\n    return best\n",
+   "slip": "It tries every pair of rows and scans the columns, which is right but $O(r^2 c)$."
+  }
+ ],
+ "ci-van-convoys": [],
+ "ci-tick-ranges": [
+  {
+   "code": "def solve_tick_ranges(text):\n    v = text.split()\n    n, q = int(v[0]), int(v[1])\n    ticks = [int(x) for x in v[2:2 + n]]\n    out = []\n    for t in map(int, v[2 + n:2 + n + q]):\n        if t in ticks:\n            first = ticks.index(t)\n            out.append(f'{first} {first + ticks.count(t) - 1}')\n        else:\n            out.append('-1 -1')\n    return '\\n'.join(out)\n",
+   "slip": "It scans the log for every query, which is $O(nq)$."
+  }
+ ],
+ "ci-ring-lookup": [
+  {
+   "code": "def find_in_ring(ring, targets):\n    out = []\n    for t in targets:\n        out.append(ring.index(t) if t in ring else -1)\n    return out\n",
+   "slip": "It scans the ring for every id, which is $O(nq)$."
+  }
+ ],
+ "ci-clear-rate": [
+  {
+   "code": "def min_clear_rate(queues, minutes):\n    r = 1\n    while sum((q + r - 1) // r for q in queues) > minutes:\n        r += 1\n    return r\n",
+   "slip": "It tries rates one at a time, which takes up to $10^9$ steps."
+  }
+ ],
+ "ci-relay-masts": [
+  {
+   "code": "import heapq\n\ndef min_longest_gap(relays, k):\n    heap = [-(b - a) for a, b in zip(relays, relays[1:])]\n    heapq.heapify(heap)\n    for _ in range(k):\n        g = -heapq.heappop(heap)\n        if g <= 1:\n            heapq.heappush(heap, -g)\n            break\n        heapq.heappush(heap, -(g // 2))\n        heapq.heappush(heap, -(g - g // 2))\n    return -heap[0]\n",
+   "slip": "It halves the longest gap again and again, but splitting a gap evenly into three can beat two halvings."
+  },
+  {
+   "code": "def min_longest_gap(relays, k):\n    gaps = [b - a for a, b in zip(relays, relays[1:])]\n    best = max(gaps)\n    while best > 1 and sum((g - 1) // (best - 1) for g in gaps) <= k:\n        best -= 1\n    return best\n",
+   "slip": "It lowers the target length one kilometre at a time, which takes up to $10^9$ steps."
+  }
+ ],
+ "ci-ready-blocks": [
+  {
+   "code": "def earliest_ready_day(ready, k, m):\n    if m * k > len(ready):\n        return -1\n    for day in sorted(set(ready)):\n        count = run = 0\n        for r in ready:\n            if r <= day:\n                run += 1\n                if run == k:\n                    count += 1\n                    run = 0\n            else:\n                run = 0\n        if count >= m:\n            return day\n    return -1\n",
+   "slip": "It tries every distinct day in turn, which is $O(n^2)$ when the days differ."
+  }
+ ],
+ "ci-kth-gap": [
+  {
+   "code": "def kth_smallest_gap(positions, k):\n    n = len(positions)\n    gaps = sorted(abs(positions[i] - positions[j]) for i in range(n) for j in range(i + 1, n))\n    return gaps[k - 1]\n",
+   "slip": "It lists and sorts every pair, which is $O(n^2 \\log n)$."
+  }
+ ]
+}
