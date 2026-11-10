@@ -1,0 +1,101 @@
+{
+  "id": "fluency-l12-which-first",
+  "course": "number-sense",
+  "lesson": "l12-which-first",
+  "title": "Fluency: which operation goes first",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "times-before-plus",
+      "weight": 1,
+      "skill": "multiply before you add or subtract",
+      "vars": {
+        "a": { "int": [2, 20] },
+        "b": { "int": [2, 9] },
+        "c": { "int": [2, 9] },
+        "op": { "pick": [["+", 1], ["-", -1]], "as": ["o", "s"] }
+      },
+      "let": { "bc": "b*c", "key": "a + s*b*c", "ltr": "(a + s*b)*c", "lr": "a + s*b", "size": "abs(a + s*b*c)" },
+      "prompt": "Work out ${a} {o} {b} \\times {c}$.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "use − for below zero" },
+      "wrong": [
+        { "id": "left-to-right", "value": "{ltr}", "line": "You worked from left to right, ${a} {o} {b} = {lr}$ first. Multiply before you add or subtract." },
+        { "id": "lost-sign", "value": "{size}", "line": "Taking ${bc}$ from ${a}$ goes below zero, so the answer is negative.", "when": "a + s*b*c < 0 and abs(a + s*b*c) != (a + s*b)*c" }
+      ],
+      "solution": [
+        "Multiply first: ${b} \\times {c} = {bc}$.",
+        "Then ${a} {o} {bc} = {key}$."
+      ]
+    },
+    {
+      "id": "powers-next",
+      "weight": 1,
+      "skill": "work out a power before multiplying",
+      "vars": {
+        "a": { "int": [1, 30] },
+        "b": { "int": [2, 6] },
+        "c": { "int": [2, 5] },
+        "op": { "pick": [["+", 1], ["-", -1]], "as": ["o", "s"] }
+      },
+      "let": { "cc": "c^2", "bcc": "b*c^2", "key": "a + s*b*c^2", "sqlast": "a + s*(b*c)^2", "bc": "b*c", "bcsq": "(b*c)^2", "double": "a + s*b*2*c" },
+      "prompt": "Work out ${a} {o} {b} \\times {c}^2$.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "use − for below zero" },
+      "wrong": [
+        { "id": "multiplied-then-squared", "value": "{sqlast}", "line": "You squared ${b} \\times {c} = {bc}$. The power belongs to ${c}$ alone, so square it first." },
+        { "id": "doubled", "value": "{double}", "line": "${c}^2$ is ${c} \\times {c} = {cc}$, not ${c} \\times 2$.", "when": "c != 2" }
+      ],
+      "solution": [
+        "Power first: ${c}^2 = {cc}$.",
+        "Then multiply: ${b} \\times {cc} = {bcc}$.",
+        "Last, ${a} {o} {bcc} = {key}$."
+      ]
+    },
+    {
+      "id": "brackets-first",
+      "weight": 1,
+      "skill": "work out brackets, then the power",
+      "vars": {
+        "a": { "int": [1, 12] },
+        "b": { "int": [2, 5] },
+        "d": { "int": [1, 7] },
+        "g": { "int": [2, 4] }
+      },
+      "let": { "c": "d + g", "gg": "g^2", "bgg": "b*g^2", "key": "a + b*g^2", "added": "(a + b)*g^2", "ab": "a + b", "sqlast": "a + (b*g)^2", "bg": "b*g" },
+      "prompt": "Work out ${a} + {b} \\times ({c} - {d})^2$.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 } },
+      "wrong": [
+        { "id": "added-first", "value": "{added}", "line": "You added ${a} + {b} = {ab}$ first. Multiply before you add." },
+        { "id": "multiplied-then-squared", "value": "{sqlast}", "line": "You squared ${b} \\times {g} = {bg}$. The power belongs to the bracket alone." }
+      ],
+      "solution": [
+        "Brackets first: ${c} - {d} = {g}$.",
+        "Power next: ${g}^2 = {gg}$, then ${b} \\times {gg} = {bgg}$.",
+        "Last, ${a} + {bgg} = {key}$."
+      ]
+    },
+    {
+      "id": "left-to-right",
+      "weight": 1,
+      "skill": "work same-rank operations from left to right",
+      "vars": {
+        "b": { "int": [2, 6] },
+        "m": { "int": [2, 9] },
+        "c": { "int": [2, 6] },
+        "op": { "pick": [["-", "+", 1], ["\\div", "\\times", 2]], "as": ["o1", "o2", "k"] }
+      },
+      "let": { "a": "b*m", "first": "if(k == 1, b*m - b, m)", "key": "if(k == 1, b*m - b + c, m*c)", "right": "if(k == 1, b*m - (b + c), m/c)", "rpart": "if(k == 1, b + c, b*c)", "lost": "b*m + b + c" },
+      "prompt": "Work out ${a} {o1} {b} {o2} {c}$.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "use − for below zero" },
+      "wrong": [
+        { "id": "right-pair-first", "value": "{right}", "tol": { "abs": 0.01 }, "line": "You did ${b} {o2} {c} = {rpart}$ first. Operations of the same rank go from left to right." },
+        { "id": "minus-lost", "value": "{lost}", "line": "The ${b}$ is taken away, not added. Only the ${c}$ is added.", "when": "k == 1" }
+      ],
+      "solution": [
+        "Same rank, so left to right: ${a} {o1} {b} = {first}$.",
+        "Then ${first} {o2} {c} = {key}$."
+      ]
+    }
+  ]
+}
