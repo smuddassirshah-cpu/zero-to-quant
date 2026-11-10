@@ -1,0 +1,78 @@
+# Concept audit: measure-prob, level 4 (Changing measure)
+
+Blind concept audit (brief: `docs/briefs/concept-audit.md`) of `app/content/courses/measure-prob/` level 4: `l14-radon-nikodym`, `l15-likelihood-ratios`, `l16-girsanov-on-a-tree`, `l17-risk-neutral-rigorous`, `review-4`, `homework-4`. Stage 3 course, so the ledger is full. Every screen, quiz item, hint, explain, why, feedback, rubric, model answer, wrong option and slip was read. Every code widget's solution was run in CPython 3.13 (NumPy 2.5.3, SciPy 1.18.1): 5 widgets, 51 hidden tests, 51 pass, every starter fails, every example matches. The seeded figures (seed 21) were rerun and match to the digits printed.
+
+Claim ledger: `docs/reports/audit-measure-prob-4-ledger.md` (1,029 rows: correct 1,017, imprecise 12, misleading 0, wrong 0, unverified 0). The 12 imprecise rows belong to the 9 findings below. Experiments: `docs/reports/measure-prob-L4-concepts.py` (114 checks: 107 pass, 7 `EXPECTED_FAIL`, exit 0). It uses exact fractions on the trees, quadrature for the normal weights, linear programmes for the trinomial price ranges, and Monte Carlo with 2 million draws for the importance sampler and both Girsanov densities.
+
+Findings are `N. file | JSON path | severity | problem | evidence and basis | exact fix`. Severities: `wrong` (false as stated), `imprecise` (true under an unstated hypothesis), `misleading` (true, but teaches a wrong habit). Each is tagged `serious` or `minor`.
+
+**Result: 9 findings: 0 `wrong`, 9 `imprecise`, 0 `misleading`. All 9 are minor; none is serious.** No definition, theorem, graded key, slip value or printed number in the level is false. The direction of every density ($\tfrac{dQ}{dP}$ against $\tfrac{dP}{dQ}$), both directions of absolute continuity, the Bayes rule with its division by $Z_n$, the $P$-martingale property of $Z_n$, the Girsanov sign, and both fundamental theorems with their hypotheses are stated correctly where they are graded. Every fix below was applied to an in-memory copy of the content: each old string occurs exactly once, the JSON still parses, and each new sentence is under 35 words.
+
+## l14 The Radon-Nikodym derivative
+
+1. l14-radon-nikodym.json | screens[5].widget.options[3].why | imprecise, minor | "$Q$ ignores only null sets of length 0". A $Q$-null set need not have length 0: $[3, 4]$ has length 1 and $Q([3, 4]) = 0$. The conclusion, $P \ll Q$, is right; the stated reason is not what makes it so. | $Q$ is uniform on $[0, 2]$, so $Q(A) = 0$ exactly when $A \cap [0, 2]$ has length 0. Then $A \cap [0, 1]$ has length 0 and $P(A) = 0$ (Billingsley, *Probability and Measure*, sec. 32). Script `l14.s5 option d why` is `EXPECTED_FAIL`; the corrected check passes. | Replace the why with: "You rejected both. A set that $Q$ ignores has no length inside $[0, 2]$, so none inside $[0, 1]$, and $P$ ignores it too: $P \ll Q$ holds."
+
+2. l14-radon-nikodym.json | summary.trap | imprecise, minor | "$E_Q[X] \ne E_P[Z]\,E_P[X]$" is written as a fact about every $X$. The two sides are equal whenever $Z$ and $X$ are uncorrelated under $P$, as the explain of screen 7 says. The trap line drops that condition, and its second sentence ("large exactly where $X$ may be large") is true of the die only. | $E_P[ZX] - E_P[Z]E_P[X] = \mathrm{cov}_P(Z, X)$. On the lesson's die, $X = (1, 0, -1, 1, -1, 0)$ has covariance 0 with $Z$ and gives equality. Script `l14.summary.trap` is `EXPECTED_FAIL`; the corrected identity passes. | Replace the trap with: "$E_Q[X]$ is $E_P[ZX]$, not $E_P[Z]\,E_P[X]$. The two differ whenever $Z$ and $X$ are correlated under $P$."
+
+## l15 Likelihood ratios as changes of measure
+
+3. l15-likelihood-ratios.json | quiz[3].widget.options[3].why | imprecise, minor | The item reports "$4 \times 10^{11}$ per 100,000 days". The why says that without the division "the correct weights would give 0.3185". In the item's own unit the undivided total is 31,850 per 100,000 days. The option is still rightly rejected, since 31,850 is far from $10^{11}$. | Seed 21 rerun: the weights sum to 0.3185, and $0.3185 \times 100{,}000 = 31{,}850$. Script `l15.q3 option d` is `EXPECTED_FAIL`; the corrected check passes. | Replace the why with: "You blamed the division. Without it the correct weights total 0.3185, which is 31,850 per 100,000 days, not $10^{11}$."
+
+## l16 Girsanov on a binomial tree
+
+4. l16-girsanov-on-a-tree.json | screens[5].widget.options[2].why | imprecise, minor | Option c is $Z_n\,E_P[X \mid \mathcal{F}_n]$. The why says the future weight "is correlated with $X$, so it cannot be dropped". That is not true of every $X$ (take $X = 1$), and it does not say why the factor $Z_n$ in front is wrong. If the future weight were uncorrelated with $X$, the answer would be $E_P[X \mid \mathcal{F}_n]$, still not option c. | Bayes rule, Shreve II Lemma 5.2.2: $E_Q[X \mid \mathcal{F}_n] = E_P[\tfrac{Z_N}{Z_n}X \mid \mathcal{F}_n]$. The known $Z_n$ cancels; the ratio stays inside. Script `l16.s5 option c why` is `EXPECTED_FAIL`; the Bayes rule itself is confirmed exactly at every node of a four-step tree. | Replace the why with: "You scaled the $P$-forecast by $Z_n$. The known weight $Z_n$ cancels, and the future weight $Z_N / Z_n$ stays inside the average with $X$."
+
+5. l16-girsanov-on-a-tree.json | screens[6].explain.text (first sentence) | imprecise, minor | "$\ln Z_n$ has mean $-\tfrac{\theta^2}{2}$ and variance $\theta^2$, which is $-\theta B_1 - \tfrac{\theta^2}{2}$". A mean and a variance fix the law of $\ln Z$, not its form as a function of $B$: $+\theta B_1 - \tfrac{\theta^2}{2}$ has the same mean and variance. The question grades the sign, and the slip `plus` is exactly that other function. The reason for the minus sign is only in the feedback for that slip. | Path by path, $\ln Z_n = -U\ln(1 + \tfrac{\theta}{\sqrt n}) - D\ln(1 - \tfrac{\theta}{\sqrt n}) \approx -\theta\,(\text{walk}) + \tfrac{\theta^2}{2} = -\theta B_1 - \tfrac{\theta^2}{2}$: the weight falls as the walk rises. Script: the two signs give the same moments (`l16.s6 explain` is `EXPECTED_FAIL`), the path identity holds to $5 \times 10^{-3}$ on 20,000 paths at $n = 10{,}000$, and only the minus sign makes $B_T + \theta T$ a mean-zero, variance-$T$ variable under $Q$ (Shreve II Thm 5.2.3). | Replace the first sentence with: "$\ln Z_n$ has mean $-\tfrac{\theta^2}{2}$ and variance $\theta^2$, and it falls as the walk rises, so it is $-\theta B_1 - \tfrac{\theta^2}{2}$ with $B_1 \sim N(0, 1)$."
+
+6. l16-girsanov-on-a-tree.json | screens[7].explain.text (first sentence), screens[7].widget.options[1].why, screens[7].feedback.byKey.b, summary.ideas[1] (first sentence) | imprecise, minor | "A change of measure leaves the paths and the volatility alone", "the steps, the paths and the volatility stay". On a tree this is true of the step size, and of the squared steps along each path. It is not true of the step's standard deviation, which is $2\sqrt{q(1 - q)}$ and moves with the measure. The why for option b rejects it for having "another volatility"; by that test the keyed option also fails. In the Brownian limit the statement is exact, which is the standard form of Girsanov. | Lesson's own walk: step variance $1 - 0.2^2 = 0.96$ under $P$ and 1.00 under the fair $Q$, so $\mathrm{Var}(S_{20})$ is 19.2 against 20. With steps of $\tfrac{1}{\sqrt n}$ the gap per unit time is $\tfrac{\theta^2}{n}$, which vanishes. Quadratic variation is a property of the path, so it cannot change (Shreve II sec. 5.2.1). Script `l16.s7/summary` is `EXPECTED_FAIL`; three corrected checks pass. | screens[7].explain.text, first sentence: "A change of measure leaves the paths and the size of every step alone." options[1].why: "You changed the paths. A new step size is a different walk, not a reweighting of this one." feedback.byKey.b: "Shrinking the step changes the walk's paths. Girsanov keeps every path and moves only the chances." summary.ideas[1], first sentence: "Only the chances change; the paths and the step sizes stay, and in the Brownian limit so does the volatility."
+
+## l17 The risk-neutral measure made rigorous
+
+7. l17-risk-neutral-rigorous.json | screens[1].explain.text (second sentence) | imprecise, minor | "Harrison and Pliska prove it for finite markets; Shreve II, section 5.4, gives the Brownian version." The screen states the first theorem as "exactly when". Shreve's Brownian first theorem is one direction only: a risk-neutral measure rules out arbitrage. The converse is false as stated in continuous time and needs a stronger condition. A learner would carry "no arbitrage exactly when $Q$ exists" to Black-Scholes unqualified. The graded statement is limited to a finite tree and is right. | Shreve II Thm 5.4.7 (existence implies no arbitrage) and Thm 5.4.9 (given existence, complete exactly when unique). Delbaen and Schachermayer (1994), *Math. Annalen* 300: the converse holds with "no free lunch with vanishing risk". Finite case: Harrison and Pliska (1981); the one-period case is checked on 735 trees in the script (`l17.s1/s2`). | Replace the second sentence with: "Harrison and Pliska prove both for finite markets; in continuous time a martingale measure still rules out arbitrage (Shreve II, section 5.4), but the converse needs a stronger no-arbitrage condition."
+
+8. l17-risk-neutral-rigorous.json | quiz[2].explain.text (second sentence) | imprecise, minor | "the same price as the tree and the simulation". The only tree in this lesson is the two-step tree, whose call costs £15.59, and the summary sets "£15.59 for the two-step call" beside "£10.4506 in continuous time". The tree that gives £10.4506 is the many-step tree of the trees course, in the limit. | Black-Scholes value 10.4506 recomputed, and by Monte Carlo under $Q$ (script `l17.s5`); two-step tree 15.59 (`l17.s6`). | Replace the second sentence with: "This is $E_Q[e^{-rT}(S_T - K)^+]$, the price that the simulation gives and that trees with ever more steps approach."
+
+## review-4
+
+No finding. All eight items, their keys, slips and explanations are correct (script `r4[0]` to `r4[7]`).
+
+## homework-4
+
+9. homework-4.json | items[4].parts[0].question (second sentence) | imprecise, minor | "Every martingale measure has $q_m > 0$." The measure $(\tfrac12, 0, \tfrac12)$ satisfies the mean condition and sums to 1, so it is a martingale measure with $q_m = 0$. What needs every chance positive is equivalence to $P$. The word matters here: that boundary measure is why £15 is a bound the price never reaches. The lesson's own trinomial screen states the positivity as a requirement, which is right. | First fundamental theorem needs an equivalent martingale measure (Harrison and Pliska 1981; Shreve II Def. 5.4.3 with Def. 1.6.3). Script `h4[4] part 0` is `EXPECTED_FAIL`; the linear programme gives the closed range $[0, 15]$ over all martingale measures and the open range over equivalent ones. | Replace the sentence with: "An equivalent martingale measure gives every outcome positive chance."
+
+## Noted, not conceptual
+
+Wording met on the way. None changes a meaning, and none is counted as a finding.
+
+- Learner text cites lessons by number in several places: l14 screens[9].feedback.correct ("lesson 3 of the trees course"); l15 screens[3].prose, hints and explain ("lesson 14"), screens[4] ("lesson 14"), screens[8].explain ("ito lesson 10"); l16 screens[3] ("lesson 15"), screens[6].feedback.correct ("ito lesson 10"), screens[9].feedback.correct ("trees lesson 5"); l17 screens[3] line a2 ("lesson 12"), screens[4].feedback.correct ("trees lesson 5"), screens[5].prose ("ito lesson 10 and lesson 16"); homework-4 items[2].prose ("ito lesson 10"). Every one points at the right content (checked: trees l3 has £11.90, trees l5 has £15.59 and £6.29, ito l10 expects [10.4692, 0.0305], l12 has the martingale transform). If the voice rule against lesson numbers applies to existing text, these need lesson titles instead.
+- l17 screens[5].explain.text quotes the call as £10.4506 without its strike, volatility or expiry; they appear only in quiz[2]. Suggested: "and the course call ($K = 100$, $\sigma = 20\%$, $T = 1$) is $E_Q[e^{-rT}(S_T - K)^+] = \text{£}10.4506$".
+- l17 screens[7].prose says "A martingale measure needs ... every $q > 0$". Correct as a requirement; "An equivalent martingale measure needs" would match finding 9 and the definition on screen 1.
+- l14 screens[6].widget.options[3].why says the mean of $Z$ "is 1 for every pair of measures". It is 1 for every pair with $Q \ll P$, which the screen assumes.
+- l15 quiz[3].widget.options[1].why says noise changes an estimate "by a few percent". With very few draws it can be more, but never a factor of $10^{11}$.
+- l14 screens[4].feedback.correct says $Z$ "grows to the right of the means"; $Z$ grows to the right everywhere when $\theta > 0$.
+- l16 screens[0] and [1] overlays write the down weight as `((1 - qn) / q)`. The walk canvas binds `q` to the down chance $1 - p$ (`app/js/engine/canvas/walk.js`), so the expression is right, though it reads like the new up chance.
+
+## Checks run
+
+- `python3 docs/reports/measure-prob-L4-concepts.py`: exit 0; 114 checks, 107 ok, 7 `EXPECTED_FAIL` (findings 1 to 6 and 9), 0 FAIL; 51 hidden tests run, all pass, every starter fails. Findings 7 and 8 rest on sources and on the lesson's own figures, so they have no failing check.
+- Number scripts: the course has none for level 4 (`docs/reports/` holds `measure-prob-1`, `-2` and `-3-perf-numbers.py` only). Every stated number of level 4 is recomputed in the concepts script instead.
+- `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): 0 errors, 4133 warnings; `content/manifest.json` unchanged.
+- `node tools/playthrough.mjs --set measure-prob/review-4 --local-cdn <pkgs>`: `ok measure-prob/review-4 9 items, recorded 8 of 8`, All passed. The same with `--mobile`: `ok`, 8 of 8, All passed.
+- No content, engine file, `course.json` or state file was changed. No engine limit was met, so nothing was added to `docs/BACKLOG-INBOX.md`.
+
+## Overlap with the earlier review
+
+Read after the ledger and findings were committed (commit `7717369b`): `docs/reviews/review-measure-prob.md`, level 4 parts. Its level 4 findings are 5 (key lengths), 6 and 7 (layout), 10, 18, 20 (a cross-course pointer), 24 (data missing from two quiz items) and 26 (lesson shape). Two of them are conceptual, both about a dropped hypothesis:
+
+- Review 10: l15 screens[3] gave the importance sampling identity without $P \ll Q$. Fixed before this audit; the screen now states it, and the ledger row is `correct`.
+- Review 18: l16 screens[5] divided by $Z_n$ without $0 < q < 1$. Fixed before this audit; the ledger row is `correct`.
+
+| Conceptual findings, level 4 | Count |
+|---|---|
+| Found by this audit only | 9 |
+| Found by the earlier review only | 2 |
+| Found by both | 0 |
+
+The two review-only findings had been fixed, so a blind read of the present content could not meet them. None of the nine audit findings appears in the review, in its fix pass, or in its "Checked and correct" list as a checked claim.
+
+For completeness, the answer check `docs/reviews/answers-3.2-measure-prob-4.md` (not part of the count) raised five further points of meaning, all fixed before this audit: the drift row of the l17 interview table, the "largest price" of the trinomial call, the attribution to Shreve II section 5.4, $Z_n > 0$ in the homework proof, and the fair die in l14 quiz `q-edge`. None matches a finding here. Its note on Shreve II section 5.4 touched the sentence of finding 7 on a different point: who proves the finite case, not which direction holds in continuous time.
