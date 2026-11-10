@@ -705,7 +705,7 @@
   {
    "type": "problem",
    "difficulty": 3,
-   "prose": "Write the general method. It works whether $f$ rises or falls. Compare the sign of $f(x)$ with the sign of $f(lo)$ to decide which end to move. A zero derivative must not crash it: bisect instead. Also bisect when a Newton step is over half the step before last, and raise `RuntimeError` after `maxit` steps.",
+   "prose": "Write the general method. It works whether $f$ rises or falls. Compare the sign of $f(x)$ with the sign of $f(lo)$ to decide which end to move. A zero derivative must not crash it: bisect instead. Also bisect when a Newton step is over half the step before last, and raise `RuntimeError` after `maxit` steps. Return early once $|f(x)| \\le$ `ftol`, which bounds the residual, not the error.",
    "canvas": {
     "kind": "number-line",
     "params": {
@@ -728,8 +728,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    \"\"\"Root of f in [lo, hi], f(lo) and f(hi) of opposite signs.\n    Newton when the step stays inside the bracket and is at most half\n    the step before last, else bisect. Start at the midpoint.\n    Raise ValueError without a sign change, RuntimeError after maxit.\"\"\"\n    ...\n",
-    "solution": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    flo, fhi = f(lo), f(hi)\n    if flo * fhi > 0:\n        raise ValueError('no sign change')\n    x = 0.5 * (lo + hi)\n    step = older = abs(hi - lo)\n    for _ in range(maxit):\n        fx = f(x)\n        if abs(fx) < ftol:\n            return x\n        if (fx > 0) == (flo > 0):\n            lo, flo = x, fx\n        else:\n            hi = x\n        d = df(x)\n        new = x - fx / d if d != 0 else lo - 1.0\n        if not (min(lo, hi) < new < max(lo, hi)) or abs(new - x) > 0.5 * older:\n            new = 0.5 * (lo + hi)\n        older, step = step, abs(new - x)\n        if step < xtol:\n            return new\n        x = new\n    raise RuntimeError('no convergence')\n",
+    "starter": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    \"\"\"Root of f in [lo, hi]. If f is zero at an end, return that end.\n    Newton when the step stays inside the bracket and is at most half\n    the step before last, else bisect. Start at the midpoint. Return\n    early once |f(x)| <= ftol; ftol=0 stops on the step alone.\n    Raise ValueError without a sign change (compare signs, not a\n    product), RuntimeError after maxit.\"\"\"\n    ...\n",
+    "solution": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    flo, fhi = f(lo), f(hi)\n    if flo == 0:\n        return lo\n    if fhi == 0:\n        return hi\n    if (flo > 0) == (fhi > 0):\n        raise ValueError('no sign change')\n    x = 0.5 * (lo + hi)\n    step = older = abs(hi - lo)\n    for _ in range(maxit):\n        fx = f(x)\n        if abs(fx) <= ftol:\n            return x\n        if (fx > 0) == (flo > 0):\n            lo, flo = x, fx\n        else:\n            hi = x\n        d = df(x)\n        new = x - fx / d if d != 0 else lo - 1.0\n        if not (min(lo, hi) < new < max(lo, hi)) or abs(new - x) > 0.5 * older:\n            new = 0.5 * (lo + hi)\n        older, step = step, abs(new - x)\n        if step < xtol:\n            return new\n        x = new\n    raise RuntimeError('no convergence')\n",
     "examples": [
      {
       "call": "safe_newton(lambda x: x * x - 2, lambda x: 2 * x, 0.0, 2.0)",
@@ -788,14 +788,27 @@
       "call": "abs(safe_newton(lambda x: (x - 1) ** 9, lambda x: 9 * (x - 1) ** 8, 0.0, 3.0, ftol=0.0) - 1) < 1e-9",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "safe_newton(lambda x: -x, lambda x: -1.0, 0.0, 1.0)",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "safe_newton(lambda x: 1e-200 * (x * x + 1), lambda x: 2e-200 * x, 0.0, 1.0)",
+      "expect": "ValueError",
+      "compare": "raises"
      }
     ],
-    "how": "Submit runs 7 hidden tests, each root within 1e-9. They use a rising f, a falling f, and x³ − 2x + 2 on [−3, 0], where Newton from 0 cycles. Then x³ − 1 on [−2, 2] has zero slope at the start. A missing sign change must raise ValueError, and f may be called at most 60 times. Last, (x − 1)⁹ on [0, 3] with ftol=0 must reach 1, which needs the halving rule."
+    "how": "Submit runs 9 hidden tests, each root within 1e-9. They use a rising f, a falling f, and x³ − 2x + 2 on [−3, 0], where Newton from 0 cycles. Then x³ − 1 on [−2, 2] has zero slope at the start. A missing sign change must raise ValueError, even for same-sign values near 1e-200, and a root at an end must be returned. f may be called at most 60 times. Last, (x − 1)⁹ on [0, 3] with ftol=0 must reach 1, which needs the halving rule. With the default ftol=1e-12 the same call stops near 1.046, because every x within 0.046 of 1 has a residual below 1e-12."
    },
    "hints": [
     {
      "rung": "nudge",
-     "text": "Check the sign change first, then start at the midpoint."
+     "text": "Return an end where $f$ is zero, then compare the signs at the ends, then start at the midpoint."
     },
     {
      "rung": "point",
@@ -1056,7 +1069,7 @@
     "generic": "Not quite right. A NaN here is information about the quote."
    },
    "explain": {
-    "text": "The bracketed solver cannot fail on a valid quote, so every NaN points at the data. Desks log them and fix the feed. Filling them in would quote a vol for an arbitrage price."
+    "text": "NaN means no vol strictly between 0.0001 and 5 fits the price, so here it points at the data. Desks log them and fix the feed. Filling them in would quote a vol for an arbitrage price."
    }
   }
  ],

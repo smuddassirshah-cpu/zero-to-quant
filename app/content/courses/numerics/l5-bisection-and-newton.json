@@ -952,8 +952,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "def bisect(f, lo, hi, tol):\n    \"\"\"Halve [lo, hi] until hi - lo < tol. Return (root, f_calls).\n    Raise ValueError if f(lo) and f(hi) have the same sign.\"\"\"\n    ...\n\ndef secant(f, x0, x1, tol):\n    \"\"\"Secant steps until |step| < tol. Return (root, f_calls).\"\"\"\n    ...\n\ndef newton(f, df, x0, tol):\n    \"\"\"Newton steps until |step| < tol. Return (root, f_calls),\n    counting calls of f only.\"\"\"\n    ...\n\ndef observed_order(errs):\n    \"\"\"Order p from the last three errors.\"\"\"\n    ...\n",
-    "solution": "import math\n\ndef bisect(f, lo, hi, tol):\n    flo, fhi = f(lo), f(hi)\n    calls = 2\n    if flo * fhi > 0:\n        raise ValueError('no sign change')\n    while hi - lo >= tol:\n        mid = (lo + hi) / 2\n        fm = f(mid)\n        calls += 1\n        if (fm > 0) == (flo > 0):\n            lo, flo = mid, fm\n        else:\n            hi = mid\n    return (lo + hi) / 2, calls\n\ndef secant(f, x0, x1, tol):\n    f0, f1 = f(x0), f(x1)\n    calls = 2\n    while abs(x1 - x0) >= tol and f1 != f0:\n        x0, x1 = x1, x1 - f1 * (x1 - x0) / (f1 - f0)\n        f0, f1 = f1, f(x1)\n        calls += 1\n    return x1, calls\n\ndef newton(f, df, x0, tol):\n    x, calls = x0, 0\n    while True:\n        fx = f(x)\n        calls += 1\n        step = fx / df(x)\n        x -= step\n        if abs(step) < tol:\n            return x, calls\n\ndef observed_order(errs):\n    e0, e1, e2 = errs[-3], errs[-2], errs[-1]\n    return math.log(e2 / e1) / math.log(e1 / e0)\n",
+    "starter": "def bisect(f, lo, hi, tol):\n    \"\"\"Halve [lo, hi] until hi - lo < tol. Return (root, f_calls).\n    If f is zero at an end, return that end. Raise ValueError if\n    f(lo) and f(hi) have the same sign: compare signs, not a product.\"\"\"\n    ...\n\ndef secant(f, x0, x1, tol):\n    \"\"\"Secant steps until |step| < tol. Return (root, f_calls).\"\"\"\n    ...\n\ndef newton(f, df, x0, tol, maxit=50):\n    \"\"\"Newton steps until |step| < tol. Return (root, f_calls),\n    counting calls of f only. Raise RuntimeError after maxit steps.\"\"\"\n    ...\n\ndef observed_order(errs):\n    \"\"\"Order p from the last three errors.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef bisect(f, lo, hi, tol):\n    flo, fhi = f(lo), f(hi)\n    calls = 2\n    if flo == 0:\n        return lo, calls\n    if fhi == 0:\n        return hi, calls\n    if (flo > 0) == (fhi > 0):\n        raise ValueError('no sign change')\n    while hi - lo >= tol:\n        mid = (lo + hi) / 2\n        fm = f(mid)\n        calls += 1\n        if (fm > 0) == (flo > 0):\n            lo, flo = mid, fm\n        else:\n            hi = mid\n    return (lo + hi) / 2, calls\n\ndef secant(f, x0, x1, tol):\n    f0, f1 = f(x0), f(x1)\n    calls = 2\n    while abs(x1 - x0) >= tol and f1 != f0:\n        x0, x1 = x1, x1 - f1 * (x1 - x0) / (f1 - f0)\n        f0, f1 = f1, f(x1)\n        calls += 1\n    return x1, calls\n\ndef newton(f, df, x0, tol, maxit=50):\n    x, calls = x0, 0\n    for _ in range(maxit):\n        fx = f(x)\n        calls += 1\n        step = fx / df(x)\n        x -= step\n        if abs(step) < tol:\n            return x, calls\n    raise RuntimeError('no convergence')\n\ndef observed_order(errs):\n    e0, e1, e2 = errs[-3], errs[-2], errs[-1]\n    return math.log(e2 / e1) / math.log(e1 / e0)\n",
     "examples": [
      {
       "call": "round(bisect(lambda x: x * x - 2, 1, 2, 1e-12)[0], 10)",
@@ -1039,14 +1039,33 @@
       "tol": {
        "abs": 0.01
       }
+     },
+     {
+      "setup": "P0 = lambda y: sum(5 / (1 + y) ** t for t in range(1, 6)) + 100 / (1 + y) ** 5 - 125",
+      "call": "bisect(P0, 0.0, 0.2, 1e-10)[0]",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "bisect(lambda x: 1e-200 * (x * x + 1), 0.0, 1.0, 1e-9)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "newton(lambda x: x ** 3 - 2 * x + 2, lambda x: 3 * x * x - 2, 0.0, 1e-12)",
+      "expect": "RuntimeError",
+      "compare": "raises"
      }
     ],
-    "how": "Submit runs 11 hidden tests. Each method must find the root of x² − 2 within 1e-12. Call counts must be 40 to 44 for bisection, at most 11 for secant and at most 8 for Newton. The bond yield is checked within 1e-10, the ValueError is checked, and two orders within 0.01."
+    "how": "Submit runs 14 hidden tests. Each method must find the root of x² − 2 within 1e-12. Call counts must be 40 to 44 for bisection, at most 11 for secant and at most 8 for Newton. The bond yield is checked within 1e-10, the ValueError is checked, and two orders within 0.01. A root at an end of the bracket must be returned, and same-sign values near 1e-200 must still raise ValueError. Newton must raise RuntimeError on x³ − 2x + 2 from 0, where it cycles."
    },
    "hints": [
     {
      "rung": "nudge",
-     "text": "Bisection keeps the half whose ends still have opposite signs; check the signs once at the start."
+     "text": "Bisection keeps the half whose ends still have opposite signs. At the start return an end where $f$ is zero, then compare the two signs; a product of tiny values can underflow to 0."
     },
     {
      "rung": "point",
@@ -1071,7 +1090,7 @@
   {
    "type": "transfer",
    "difficulty": 3,
-   "prose": "Each night a desk solves the yields of 5,000 bonds. Newton from the coupon rate needs about 4 iterations, each costing one $f$ and one $f'$: 8 evaluations. Bisection on $[0, 0.2]$ needs 31 halvings, one evaluation each, after checking the ends.",
+   "prose": "Each night a desk solves the yields of 5,000 bonds. Newton from the coupon rate needs about 4 iterations, each costing one $f$ and one $f'$: 8 evaluations. Bisection on $[0, 0.2]$ to a width of $10^{-10}$ needs 2 evaluations to check the ends and 31 halvings: 33 evaluations.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -1088,7 +1107,7 @@
       ],
       [
        "Bisection",
-       "31",
+       "33",
        "yes"
       ]
      ]
@@ -1098,7 +1117,7 @@
    "question": "How many times cheaper is Newton per bond?",
    "widget": {
     "kind": "numeric",
-    "answer": 3.875,
+    "answer": 4.125,
     "tol": {
      "abs": 0.13
     },
@@ -1106,7 +1125,7 @@
     "wrong": [
      {
       "id": "iter",
-      "value": 7.75,
+      "value": 8.25,
       "tol": {
        "abs": 0.13
       }
@@ -1127,18 +1146,18 @@
     },
     {
      "rung": "step",
-     "text": "$31 / 8 \\approx 3.9$."
+     "text": "$33 / 8 \\approx 4.1$."
     }
    ],
    "feedback": {
-    "correct": "About 3.9 times cheaper: 31 against 8.",
-    "generic": "Not quite right. Compare 31 with 8 evaluations, not with 4 iterations.",
+    "correct": "About 4.1 times cheaper: 33 against 8.",
+    "generic": "Not quite right. Compare 33 with 8 evaluations, not with 4 iterations.",
     "byKey": {
      "iter": "You compared with Newton's 4 iterations. Each needs $f$ and $f'$, so 8 evaluations."
     }
    },
    "explain": {
-    "text": "$31 / 8 \\approx 3.9$, so Newton is about 4 times cheaper per bond. But only bisection is guaranteed: a bad start or a flat $f$ can send Newton anywhere. The next lesson builds a solver with both properties."
+    "text": "$33 / 8 \\approx 4.1$, so Newton is about 4 times cheaper per bond. But only bisection is guaranteed: a bad start or a flat $f$ can send Newton anywhere. The next lesson builds a solver with both properties."
    }
   }
  ],
