@@ -584,7 +584,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       else [['answer', w.answer], ...(Array.isArray(w.accept) ? w.accept.map((a, i) => [`accept[${i}]`, a]) : [])].forEach(([f, v]) => { if (typeof v !== 'string') return; for (const m of v.matchAll(/\(-1\)\^(?:\{\s*(?:-?\s*)?([A-Za-z]|\\[A-Za-z]+)(?![A-Za-z])[^{}]*\}|(?:-?\s*)?([A-Za-z]))/g)) { const sym = m[1] || m[2]; if (!(w.integers || []).includes(sym)) { warn(file, `${where}.${f}`, `(-1)^{${sym}} cannot be graded at non-integer points: add integers: ["${sym}"] to this expression`); break; } } });
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
-      if (w.form != null) { if (!['expanded', 'factorised', 'factorised-fully', 'completed-square', 'simplified', 'rectangular'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised", "factorised-fully", "completed-square", "simplified" or "rectangular" (a + bi)'); keys.add('form'); }
+      if (w.form != null) { if (!['expanded', 'factorised', 'factorised-fully', 'completed-square', 'simplified', 'rectangular', 'fraction', 'exact-angle'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised", "factorised-fully", "completed-square", "simplified", "rectangular" (a + bi), "fraction" or "exact-angle"'); keys.add('form'); }
       break;
     case 'slider':
       ['min', 'max', 'step'].forEach(f => { if (typeof w[f] !== 'number') err(file, `${where}.${f}`, 'must be a number'); });

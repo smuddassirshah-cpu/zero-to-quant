@@ -42,6 +42,9 @@ if (!audit) {
     ['x\\ne2', '2x\\ne4'], ['x\\ne2', '2\\neq x'],
     /* a learner's leading letter and = when the answer has no = */
     ['n=\\frac{a}{c-b}', '\\frac{a}{c-b}'], ['C = 3 + 2n', '3+2n'], ['\\text{cost} = 3 + 2n', '3+2n'], ['3 + 2n = C', '3+2n'], ['C_1 = 3 + 2n', '2n+3'],
+    /* ENGINE-BACKLOG 836: a plain-text function name before a bracket is the function */
+    ['\\frac{\\ln 97}{\\ln 4}', 'ln(97)/ln(4)'], ['ln(97)/ln(4)', '\\frac{\\ln(97)}{\\ln(4)}'], ['\\sqrt{6}', 'sqrt(2)*sqrt(3)'], ['e^{x}', 'exp(x)'],
+    ['\\frac{\\sin x}{\\cos x}', 'tan(x)'], ['\\log(x)', 'log(x)'], ['2\\sin(x)', '2sin(x)'], ['x\\cdot y(z)', 'xy(z)'], ['\\sin(x)', '\\sin(x)'],
   ];
   const no = [
     ['n=5', 'n=\\frac{a}{c-b}'], ['n=\\frac{a}{c-b}', 'n=5'], ['y=2x+1', 'y=2x+2'], ['y=2x+1', 'y=3x+1'], ['y=2x+1', '2x+1=y+1'],
@@ -50,6 +53,8 @@ if (!audit) {
     ['2x+1', 'y=2x+1'], ['n=5', '\\frac{a}{c-b}'], ['C=3+2n', '3+3n'], ['x=1', 'y=1'], ['x<3', '3'],
     /* the letter stripped only when the answer has no relation, and a chain stays a chain */
     ['1<x<3', '1<x<4'], ['m+1', 'n=m+1'],
+    /* 836: the letters l and n are no longer the quotient 97/4, and a name without a bracket stays letters */
+    ['\\frac{97}{4}', 'ln(97)/ln(4)'], ['ln(97)/ln(4)', '\\frac{97}{4}'], ['\\frac{\\log 97}{\\log 5}', 'ln(97)/ln(4)'], ['\\sin(x)', 'cos(x)'], ['sin(x)', 'sinx'], ['\\sqrt{2}', 'sqrt(3)'],
   ];
   yes.forEach(([a, b]) => check(`equal: ${a}  vs  ${b}`, eq(a, b)));
   no.forEach(([a, b]) => check(`unequal: ${a}  vs  ${b}`, !eq(a, b)));

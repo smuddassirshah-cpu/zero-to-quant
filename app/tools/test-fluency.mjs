@@ -184,8 +184,12 @@ const unit = () => {
   check('draw: the wrong line is rendered', run.items.every((it) => it.wrong[0].line === `Line ${it.vars.a}.`));
   const never = gen.sample(fam({ where: ['a > 100'] }), { seeds: 5, set: 't' });
   check('draw: a where that never holds fails every draw, and says why', never.failed === 5 && never.rejected === never.attempts);
-  const erring = gen.sample(fam({ let: { p: 'a / 0' } }), { seeds: 5, set: 't' });
-  check('draw: an evaluation error is reported, not thrown', erring.failed === 5 && /division by zero/.test(erring.errors[0][0]));
+  const erring = gen.sample(fam({ let: { p: 'sqrt(0 - a)' } }), { seeds: 5, set: 't' });
+  check('draw: an evaluation error is reported, not thrown', erring.failed === 5 && /negative/.test(erring.errors[0][0]));
+  const zero = gen.sample(fam({ let: { p: 'a / 0' } }), { seeds: 5, set: 't' });
+  check('draw: a let that divides by zero rejects the draw, with no error (838)', zero.failed === 5 && zero.rejected === zero.attempts && zero.errors.length === 0);
+  const zeroWhere = gen.sample(fam({ where: ['a / 0 > 1'] }), { seeds: 5, set: 't' });
+  check('draw: a where that divides by zero is still an error', zeroWhere.failed === 5 && /division by zero/.test(zeroWhere.errors[0][0]));
   const set = { id: 'set-x', n: 20, families: [fam({ id: 'one', weight: 2 }), fam({ id: 'two', prompt: 'T ${a}(x{b:+})$.' }), fam({ id: 'three', prompt: 'H ${a}(x{b:+})$.' })] };
   const order = gen.schedule(set.families, 20);
   check('weights: a weight-2 family takes half the turns', order.filter((i) => i === 0).length === 10 && order.filter((i) => i === 1).length === 5 && order.filter((i) => i === 2).length === 5, order.join(''));
@@ -205,6 +209,7 @@ const unit = () => {
   /* the fixtures draw cleanly */
   fixtureFiles().forEach((f) => {
     const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (path.basename(f) === 'fluency-l1-letters-for-numbers.json') { check('fixture fluency-l1-letters-for-numbers.json: a sample set with the authoring-reach families (838 to 841)', d.sample === true && d.families.length === 9 && d.families.some((x) => x.widget.form === 'fraction') && d.families.some((x) => x.widget.form === 'exact-angle')); return; }
     check(`fixture ${path.basename(f)}: has the four families the brief names (numeric, expanded, factorised, upToConstant)`,
       d.sample === true && d.families.some((x) => x.widget.kind === 'numeric') && d.families.some((x) => x.widget.form === 'expanded') && d.families.some((x) => x.widget.form === 'factorised') && d.families.some((x) => x.widget.upToConstant));
     check(`fixture ${path.basename(f)}: a full attempt draws 20 items`, gen.generate(d, 11).length === 20);

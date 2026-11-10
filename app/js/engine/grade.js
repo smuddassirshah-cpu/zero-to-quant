@@ -165,6 +165,21 @@
     }
     return out + t.slice(pos);
   };
+  /* ENGINE-BACKLOG 836: a plain-text function name directly before ( is the function, not a product of letters: ln(97)/ln(4) is
+     \ln(97)/\ln(4), not 97/4. Names: ln, log, exp, sin, cos, tan, sqrt. Not touched: a name already behind a backslash (\ln), a name that is
+     part of a longer word (arcsin(, sinh(, Dsin() and anything else, so a product of single letters such as s n (x) is still a product. */
+  const PLAINFN = /(?<![A-Za-z\\])(ln|log|exp|sin|cos|tan|sqrt)(?=\s*\()/;
+  const plainFns = (t) => {
+    for (let guard = 0; guard < 60; guard++) {
+      const m = PLAINFN.exec(t); if (!m) break;
+      const at = m.index + m[0].length, o = /^\s*\(/.exec(t.slice(at));
+      if (m[1] === 'sqrt') {
+        const g = matching(t, at + o[0].length); if (!g) break;
+        t = t.slice(0, m.index) + `\\sqrt{${t.slice(at + o[0].length, g.end - 1)}}` + t.slice(g.end);
+      } else t = t.slice(0, m.index) + `\\${m[1]}` + t.slice(at);
+    }
+    return t;
+  };
   /* P32-expr-exp: \exp, \operatorname{exp} and \mathrm{exp} (what MathLive's "exp" shortcut types) with a bracketed
      argument ((..), \left(..\right), {..}) or one token (a letter, number or \command) become (\exponentialE^{(arg)}).
      The engine reads \exp(x) as the tuple ["Tuple", "Exp", "x"]. */
@@ -197,7 +212,7 @@
       /* P32-expr-D: D and N are products, whatever follows (Dt, 4Dx, tD, N(0,1), D(t)). The engine reads D and N as its operators
          (D t is the tuple ["Tuple","D","t"]). A screen can keep the operator reading before a letter by listing "D" or "N" in `functions`. */
       .replace(/(?<!\\[A-Za-z]*)(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?=([A-Za-z])?)/g, (m, c, nx) => (nx && (fns || []).includes(c) ? m : `\\mathrm{${c}}`));
-    t = uncall(unexp(unbinom(minmax(t))), fns);
+    t = uncall(unexp(unbinom(minmax(plainFns(t)))), fns);
     if (cx) t = t.replace(/(?<![A-Za-z\\])(?<!_)(?<!_\{)i/g, '\\iota ').replace(/\\bar\s*\{/g, '\\overline{');
     return t;
   };
@@ -519,8 +534,35 @@
     const o = jSum(j);
     return !!o && o.length === 2 && ((squareTerm(o[0]) && jLit(o[1]) != null) || (jLit(o[0]) != null && squareTerm(o[1])));
   };
+  /* ENGINE-BACKLOG 841: the two text shapes. They read what the learner typed, not the engine's canonical form (which reduces \frac{14}{18}).
+     "fraction": a whole number, or one fraction of whole numbers in lowest terms (\frac{7}{9}, -\frac{7}{9}, 7/9), no decimal point.
+     "exact-angle": radians as a multiple of \pi in lowest terms (\pi, 3\pi, \frac{\pi}{12}, \frac{5\pi}{12}, \frac{5}{12}\pi, 5\pi/12, -\frac{\pi}{4}) or 0;
+     no degree sign, no decimal, no unreduced fraction. Both return false for anything else, so an equal but differently shaped answer gets the key `form`. */
+  const flatten = (latex) => String(latex ?? '').replace(/\\(?:left|right)(?![A-Za-z])\s*/g, '').replace(/\\[dt]frac/g, '\\frac').replace(/\\[,;:! ]|~|\s+/g, '').replace(/π/g, '\\pi').replace(/[−–]/g, '-').replace(/\\cdot|\\times/g, '');
+  const lowest = (k, m) => { let a = Math.abs(k), b = m; while (b) { [a, b] = [b, a % b]; } return a === 1 && m > 1; };
+  const shapeFraction = (latex) => {
+    const t = flatten(latex);
+    if (/^-?\d+$/.test(t)) return true;
+    const m = /^(-?)\\frac\{(-?)(\d+)\}\{(\d+)\}$/.exec(t) || /^(-?)(\d+)\/(\d+)$/.exec(t);
+    if (!m) return false;
+    const p = m.length === 5 ? Number(m[3]) : Number(m[2]), q = m.length === 5 ? Number(m[4]) : Number(m[3]);
+    return (p === 0 ? false : lowest(p, q)) && !(m.length === 5 && m[1] && m[2]);
+  };
+  const shapeExactAngle = (latex) => {
+    const t = flatten(latex);
+    if (/\\circ|\\degree|°|deg/.test(t)) return false;
+    if (t === '0') return true;
+    let m;
+    if ((m = /^-?(\d*)\\pi$/.exec(t))) return m[1] !== '1' && m[1] !== '0';
+    if ((m = /^(-?)\\frac\{(-?)(\d*)\\pi\}\{(\d+)\}$/.exec(t))) return !(m[1] && m[2]) && lowest(m[3] === '' ? 1 : Number(m[3]), Number(m[4]));
+    if ((m = /^(-?)\\frac\{(-?)(\d+)\}\{(\d+)\}\\pi$/.exec(t))) return !(m[1] && m[2]) && lowest(Number(m[3]), Number(m[4]));
+    if ((m = /^-?(\d*)\\pi\/(\d+)$/.exec(t))) return lowest(m[1] === '' ? 1 : Number(m[1]), Number(m[2]));
+    return false;
+  };
   /* the whole check for the two new forms on typed LaTeX (the widget calls the same shape functions on its own parse) */
   const exprFormOk = (ce, form, latex, fns) => {
+    if (form === 'fraction') return shapeFraction(latex);
+    if (form === 'exact-angle') return shapeExactAngle(latex);
     if (!ce || (form !== 'factorised-fully' && form !== 'completed-square')) return true;
     try { return withParsed(ce, latex, fns, (e) => (form === 'factorised-fully' ? shapeFullyFactorised(e.json) : shapeCompletedSquare(e.json))); } catch { return true; }
   };
@@ -805,5 +847,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, shapeFactorised, shapeFullyFactorised, shapeCompletedSquare, exprFormOk, setPieces, exprSetValues, setMatch, isSetSpec, setAnswerText, exprSetGrade, numSetValues, numSetGrade, countLine, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { plainFns, shapeFraction, shapeExactAngle, parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, shapeFactorised, shapeFullyFactorised, shapeCompletedSquare, exprFormOk, setPieces, exprSetValues, setMatch, isSetSpec, setAnswerText, exprSetGrade, numSetValues, numSetGrade, countLine, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();

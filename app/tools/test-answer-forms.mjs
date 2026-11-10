@@ -134,6 +134,18 @@ need.filter(fam).forEach((id) => {
   if (f.widget.answers) check(`fixture ${id}: one value alone returns count`, badCount === 0, `${badCount}`);
 });
 
+/* ---------- Part 4b (ENGINE-BACKLOG 841): form "fraction" and "exact-angle" ---------- */
+const shapedT = (form, key, typed) => G.exprEqual(ce, typed, key) && G.exprFormOk(ce, form, typed);
+['\\frac{7}{9}', '-\\frac{7}{9}', '\\frac{-7}{9}', '7/9', '-7/9', '\\dfrac{7}{9}', '\\frac{ 7 }{ 9 }', '\\left(\\frac{7}{9}\\right)'].forEach((t) => check(`fraction yes: ${t}`, G.shapeFraction(t) === (t !== '\\left(\\frac{7}{9}\\right)')));
+['0.7778', '\\frac{14}{18}', '14/18', '0.\\dot{7}', '7/9+0', '1\\frac{2}{3}', '\\frac{7}{9}x', '\\frac{4}{1}', '\\frac{0}{5}', '-\\frac{-7}{9}', '', '\\frac{7.5}{9}', '\\frac{7}{9.5}', '\\sqrt{2}', '+3'].forEach((t) => check(`fraction no: "${t}"`, !G.shapeFraction(t)));
+['3', '-3', '0', '12'].forEach((t) => check(`fraction yes (a whole number): ${t}`, G.shapeFraction(t)));
+check('fraction: equal but unreduced or decimal fails the shape, a wrong value is not equal', shapedT('fraction', '\\frac{7}{9}', '\\frac{7}{9}') && G.exprEqual(ce, '\\frac{14}{18}', '\\frac{7}{9}') && !shapedT('fraction', '\\frac{7}{9}', '\\frac{14}{18}') && !shapedT('fraction', '\\frac{1}{2}', '0.5') && !G.exprEqual(ce, '\\frac{7}{8}', '\\frac{7}{9}'));
+check('fraction: a whole-number key', shapedT('fraction', '3', '3') && !shapedT('fraction', '3', '\\frac{6}{2}') && !shapedT('fraction', '3', '3.0'));
+['\\pi', '3\\pi', '-\\pi', '-2\\pi', '\\frac{\\pi}{12}', '\\frac{5\\pi}{12}', '-\\frac{\\pi}{4}', '\\frac{-3\\pi}{4}', '\\frac{5}{12}\\pi', '5\\pi/12', '\\pi/12', '0', '\\dfrac{3\\pi}{2}', '\\frac{7\\pi}{6}', '\\frac{\\pi}{ 4 }', 'π', '3π/4'].forEach((t) => check(`exact-angle yes: ${t}`, G.shapeExactAngle(t)));
+['15^\\circ', '15\\degree', '15°', '\\frac{15\\pi}{180}', '\\frac{2\\pi}{4}', '\\frac{6\\pi}{8}', '\\frac{3}{6}\\pi', '6\\pi/8', '0.25\\pi', '0.7854', '\\frac{\\pi}{12}+0', '\\frac{\\pi}{1}', '1\\pi', '0\\pi', '\\frac{15}{180}\\pi', ''].forEach((t) => check(`exact-angle no: "${t}"`, !G.shapeExactAngle(t)));
+check('exact-angle: 15 degrees typed in any form is equal, only the radian shape passes', shapedT('exact-angle', '\\frac{\\pi}{12}', '\\frac{\\pi}{12}') && !shapedT('exact-angle', '\\frac{\\pi}{12}', '15^\\circ') && !shapedT('exact-angle', '\\frac{\\pi}{12}', '\\frac{15\\pi}{180}') && G.exprEqual(ce, '\\frac{15\\pi}{180}', '\\frac{\\pi}{12}') && !shapedT('exact-angle', '\\frac{\\pi}{12}', '\\frac{\\pi}{6}'));
+check('forms: exprFormOk is true for every other form', G.exprFormOk(ce, 'expanded', '0.5') && G.exprFormOk(ce, 'simplified', '15^\\circ'));
+
 /* ---------- Part 5: the real widgets ---------- */
 const browser = async () => {
   let pw = null;
@@ -183,6 +195,12 @@ const browser = async () => {
     check('widget completed-square: right, expanded is refused (default line), a wrong number is wrong', r.out[0].ok && !r.out[1].ok && !r.out[2].ok && r.out[2].key === 'form' && r.out[2].line === 'Write it as a bracket squared plus a number.' && !r.out[3].ok && r.out[3].key === null, JSON.stringify(r.out));
     r = await run({ kind: 'expression', answer: '-(x-2)^2+7', form: 'completed-square' }, ['7-(x-2)^2']);
     check('widget completed-square: either order of the two terms', r.out[0].ok, JSON.stringify(r.out));
+    r = await run({ kind: 'expression', answer: '\\frac{1}{2}', form: 'fraction' }, ['\\frac{1}{2}', '1/2', '\\frac{2}{4}', '0.5', '\\frac{1}{3}']);
+    check('widget fraction: lowest terms pass, unreduced and decimal return form with the default line, a wrong value is wrong', r.out[0].ok && r.out[1].ok && !r.out[2].ok && r.out[2].key === 'form' && r.out[2].line === 'That is equal, but write it as a whole number or one fraction in lowest terms, with no decimal point.' && !r.out[3].ok && r.out[3].key === 'form' && !r.out[4].ok && r.out[4].key === null, JSON.stringify(r.out));
+    r = await run({ kind: 'expression', answer: '\\frac{\\pi}{12}', form: 'exact-angle' }, ['\\frac{\\pi}{12}', '\\frac{15\\pi}{180}', '15^\\circ', '\\frac{\\pi}{6}']);
+    check('widget exact-angle: lowest terms pass, an unreduced multiple and degrees return form, a wrong angle is wrong', r.out[0].ok && !r.out[1].ok && r.out[1].key === 'form' && !r.out[2].ok && r.out[2].key === 'form' && !r.out[3].ok && r.out[3].key === null && /radians/.test(r.out[1].line || ''), JSON.stringify(r.out));
+    r = await run({ kind: 'expression', answer: '\\frac{\\ln 97}{\\ln 4}', accept: ['ln(97)/ln(4)'], wrong: [{ id: 'quotient', tex: '\\frac{97}{4}' }] }, ['ln(97)/ln(4)', '\\frac{\\ln(97)}{\\ln(4)}', '\\frac{97}{4}', 'log(97)/log(4)']);
+    check('widget: a plain-text function name is the function (836), and the letters quotient is the wrong key', r.out[0].ok && r.out[1].ok && !r.out[2].ok && r.out[2].key === 'quotient' && r.out[3].ok, JSON.stringify(r.out));
     r = await run({ kind: 'expression', answers: ['2', '-5'], unordered: true, wrong: [{ id: 'signs', tex: '-2, 5' }] }, ['2, -5', '-5, 2', 'x=2\\text{ or }x=-5', '2', '2, -5, 1', '5, -2', '2, 5']);
     check('widget expression set: any order and "or", count for a missing or extra value, a wrong set routes', r.out[0].ok && r.out[1].ok && r.out[2].ok && !r.out[3].ok && r.out[3].key === 'count' && r.out[4].key === 'count' && r.out[5].key === 'signs' && r.out[6].key === null && r.out.slice(3).every((x) => !x.ok), JSON.stringify(r.out));
     check('widget expression set: the count line says how many values are expected', r.out[3].line === 'This question needs 2 values, separated by commas. You gave 1.' && r.out[4].line === 'This question needs 2 values, separated by commas. You gave 3.', JSON.stringify(r.out[3]));
@@ -194,6 +212,28 @@ const browser = async () => {
     check('widget numeric set: the hook and the readiness', r.shown.answer === '2, -5' && r.shown.ready === true, JSON.stringify(r.shown));
     r = await run({ kind: 'numeric', answers: [5, 1], unordered: true, tol: { abs: 0 } }, ['3 ± 2', '3 \\pm 2', '3 ± 3']);
     check('widget numeric set: ± stands for both values', r.out[0].ok && r.out[1].ok && !r.out[2].ok, JSON.stringify(r.out));
+    /* ENGINE-BACKLOG 837: a generated item answered with the widget's own key (length, form, count) shows the stock line and then the solution steps */
+    const chips = await page.evaluate(async () => {
+      const host = document.createElement('div'); document.body.append(host);
+      const mk = (widget, solution) => ZQ.gen.playerItem({ family: 'f', skill: 'a skill', vars: {}, lets: {}, prompt: 'Work out $1 + 1$.', widget, wrong: [], solution }, { id: 'set-x', title: 't' }, 0);
+      const out = {};
+      for (const [name, widget, how] of [['length', { kind: 'expression', answer: '(4, 6)' }, 'wrong'], ['form', { kind: 'expression', answer: '\\frac{2}{4}', form: 'fraction' }, 'right'], ['count', { kind: 'numeric', answers: [2, -5], unordered: true, tol: { abs: 0 } }, 'wrong'], ['plain', { kind: 'numeric', answer: 4, tol: { abs: 0 } }, 'wrong']]) {
+        const run = ZQ.player.runSet(host, { title: 't', items: [mk(widget, ['First step $2 + 2 = 4$.', 'Second step $3 + 3 = 6$.'])] });
+        await new Promise((q) => setTimeout(q, 800));
+        if (how === 'wrong') ZQ.test.answerWrong(); else ZQ.test.answerCorrect();
+        await new Promise((q) => setTimeout(q, 300));
+        const r = await ZQ.test.check();
+        await new Promise((q) => setTimeout(q, 300));
+        out[name] = { key: r && r.key, ok: r && r.ok, chip: (document.querySelector('.lsn-verdict .lsn-chip.is-no') || {}).innerText || '', maths: document.querySelectorAll('.lsn-verdict .lsn-chip.is-no .katex').length };
+        run.destroy(); host.innerHTML = '';
+      }
+      host.remove();
+      return out;
+    });
+    check('player: a generated item answered with key length shows the stock line and the solution steps', chips['length'] && chips['length'].key === 'length' && /First step/.test(chips['length'].chip) && /Second step/.test(chips['length'].chip) && chips['length'].chip.length > 60 && chips['length'].maths > 0, JSON.stringify(chips['length']));
+    check('player: key form shows its line and then the steps', chips.form && chips.form.key === 'form' && /lowest terms/.test(chips.form.chip) && /First step/.test(chips.form.chip), JSON.stringify(chips.form));
+    check('player: key count shows its line and then the steps', chips.count && chips.count.key === 'count' && /needs 2 values/.test(chips.count.chip) && /First step/.test(chips.count.chip), JSON.stringify(chips.count));
+    check('player: an ordinary wrong answer still shows the steps alone', chips.plain && chips.plain.key === null && /First step/.test(chips.plain.chip), JSON.stringify(chips.plain));
     const inputmode = await page.evaluate(() => {
       const host = document.createElement('div'); document.body.append(host);
       ZQ.widgets.create(host, { kind: 'numeric', answers: [2, -5], unordered: true, tol: { abs: 0 } }, {});
