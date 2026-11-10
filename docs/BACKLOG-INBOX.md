@@ -1959,3 +1959,7 @@ Raised later (drills py b):
 Raised later (problems markov levels 4 and 5):
 - [Could] A sign before a pound sign breaks at the line end at 440 px: "reaches +£4,000" and "reaches +£1,000" in the prose of `markov/problems-5.json` wrapped as "+" on one line and "£4,000" on the next (shots `problems_markov_problems-5-i2-p5-440.png`, `-i4-p5-440.png` before the fix). The prose was reworded ("£4,000 up"); parts still print "+£1,000" mid-line. The renderer could bind a leading `+` or `−` to the following `£` and digits (a no-break join), as it would inside `$...$`.
 - [Could] Met again: fresh-check triage on `problems-4` and `problems-5` is 24 and 14 form-sentence hits of 31 and 22; the rest are "arrive as a Poisson process at # a minute" and "what is the standard deviation of the P&L". Same want as the earlier markov bullet: drop the required form sentences before the n-gram match.
+
+Raised later (problems fix pass d):
+
+- expression widget: the grader samples a symbol between 0.3 and 3, where `1 - 2s` is mostly negative, so `\frac{1}{\sqrt{1-2s}}` does not match a slip written `(1-2s)^{-1/2}` (limits-thm problems-4 `p-part-errors` part 1, slips `one` and `added`). An `expression` widget needs a way to name a sampling range per symbol (here `s < 0.5`).

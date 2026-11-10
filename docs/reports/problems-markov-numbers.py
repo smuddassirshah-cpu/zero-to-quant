@@ -639,6 +639,20 @@ num(L4, 'p-supplier-survey', 1, piC, pi_np[3],
 num(L4, 'p-supplier-survey', 2, piC + F(deg['D'], tot), pi_np[3] + pi_np[4],
     {'true': F(2, 5), 'one-firm': piC})
 pick(L4, 'p-supplier-survey', 3, 'ratio')
+# exactly one option gives a uniform stationary law: compute each option's chain
+def mh_option(acc):
+    M = [[F(0)] * 5 for _ in range(5)]
+    for a, i in enumerate(sv_nodes):
+        for b, j in enumerate(sv_nodes):
+            if j in nbs[i]:
+                M[a][b] = F(1, deg[i]) * acc(deg[i], deg[j])
+        M[a][a] = 1 - sum(M[a])
+    return stationary_np(M)
+opts = {'ratio': lambda di, dj: min(F(1), F(di, dj)), 'flipped': lambda di, dj: min(F(1), F(dj, di)),
+        'always': lambda di, dj: F(1), 'inverse': lambda di, dj: F(1, di)}
+uni = {k: bool(np.allclose(mh_option(f), [0.2] * 5)) for k, f in opts.items()}
+ok(uni == {'ratio': True, 'flipped': False, 'always': False, 'inverse': False}, f'p-supplier-survey p3: uniform options {uni}')
+ok(abs(mh_option(opts['inverse'])[0] - 16 / 26) < 1e-9, 'p-supplier-survey p3: inverse option gives H 16/26')
 # Metropolis-Hastings matrix for a uniform target with q_ij = 1/deg(i)
 MH = [[F(0)] * 5 for _ in range(5)]
 for a, i in enumerate(sv_nodes):
@@ -946,7 +960,7 @@ num(L5, 'p-two-loss-cut', 4, mu * ELL, 60 * pattern_wait_np('LL', 0.3),
     {'no-overlap': mu / pL ** 2, 'one-day': mu, 'minus-losses': mu * ELL - 1000})
 ok(abs(float(ELWL) - 19.2063) < 0.00005 and pL * (1 - pL) * pL == F(63, 1000), 'p-two-loss-cut: LWL wait 19.2063 and chance 0.063')
 num(L5, 'p-two-loss-cut', 5, mu * ELWL, 60 * pattern_wait_np('LWL', 0.3),
-    {'no-overlap': mu / (pL * (1 - pL) * pL), 'two-losses': mu * ELL})
+    {'no-overlap': mu / (pL * (1 - pL) * pL), 'two-losses': mu * ELL}, routes=(1153, 60 * 19.21))
 
 # p-capped-close: fair walk, stop at +1 or after 4 steps; enumerate the 16 paths
 rows = []
