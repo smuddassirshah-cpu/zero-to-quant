@@ -1,0 +1,98 @@
+{
+  "id": "fluency-l11-fitting-a-line",
+  "course": "least-squares",
+  "lesson": "l11-fitting-a-line",
+  "title": "Fluency: fitting a line by least squares",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 15,
+  "families": [
+    {
+      "id": "slope-from-points",
+      "weight": 2,
+      "skill": "find the least-squares slope of four points",
+      "vars": {
+        "xs": { "pick": [[1, 2, 3, 4], [0, 1, 2, 3], [2, 3, 4, 5], [1, 3, 5, 7], [0, 2, 4, 6]], "as": ["x1", "x2", "x3", "x4"] },
+        "y1": { "int": [0, 9] },
+        "y2": { "int": [0, 9] },
+        "y3": { "int": [0, 9] },
+        "y4": { "int": [0, 9] }
+      },
+      "let": {
+        "xb": "(x1 + x2 + x3 + x4)/4",
+        "yb": "(y1 + y2 + y3 + y4)/4",
+        "sxx": "(x1 - xb)^2 + (x2 - xb)^2 + (x3 - xb)^2 + (x4 - xb)^2",
+        "sxy": "(x1 - xb)*y1 + (x2 - xb)*y2 + (x3 - xb)*y3 + (x4 - xb)*y4",
+        "key": "sxy/sxx",
+        "raw": "(x1*y1 + x2*y2 + x3*y3 + x4*y4)/(x1^2 + x2^2 + x3^2 + x4^2)"
+      },
+      "where": ["sxy != 0", "abs(sxy) != sxx", "abs(raw - key) > 0.01", "abs(raw - sxx/sxy) > 0.01"],
+      "prompt": "Fit $\\hat y = \\hat\\alpha + \\hat\\beta x$ by least squares to the points $({x1}, {y1})$, $({x2}, {y2})$, $({x3}, {y3})$ and $({x4}, {y4})$. Find $\\hat\\beta$ as a fraction or a decimal.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "Fraction or decimal", "accept": "${key:frac}$, or a decimal within 0.0005" },
+      "wrong": [
+        { "id": "upside-down", "value": "{sxx/sxy}", "tol": { "abs": 0.0005 }, "line": "You divided the centred squares by the cross-products. The slope is cross-products over squares." },
+        { "id": "not-centred", "value": "{raw}", "tol": { "abs": 0.0005 }, "line": "You used $\\sum x_i y_i$ over $\\sum x_i^2$, which forces the line through the origin. Centre both sums on the means first." }
+      ],
+      "solution": [
+        "The means are $\\bar x = {xb}$ and $\\bar y = {yb}$.",
+        "$\\sum (x_i - \\bar x)(y_i - \\bar y) = {sxy}$ and $\\sum (x_i - \\bar x)^2 = {sxx}$.",
+        "So $\\hat\\beta = {sxy} \\div {sxx} = {key:frac}$."
+      ]
+    },
+    {
+      "id": "solve-normal-equations",
+      "weight": 1,
+      "skill": "solve the normal equations for a line",
+      "vars": {
+        "nt": { "pick": [[3, 6, 14], [4, 10, 30], [5, 15, 55], [4, 6, 14], [3, 3, 5], [5, 10, 30], [4, 14, 54], [4, 16, 84], [4, 12, 56]], "as": ["n", "sx", "sxx"] },
+        "al": { "int": [-5, 9] },
+        "be": { "int": [-3, 4], "not": [0] }
+      },
+      "let": {
+        "r1": "n*al + sx*be",
+        "r2": "sx*al + sxx*be",
+        "c1": "sx/n",
+        "h1": "(n*al + sx*be)/n",
+        "c2": "sxx - sx^2/n",
+        "h2": "sx*al + sxx*be - sx*(n*al + sx*be)/n"
+      },
+      "where": ["al != be"],
+      "prompt": "The normal equations are ${n}\\hat\\alpha + {sx}\\hat\\beta = {r1}$ and ${sx}\\hat\\alpha + {sxx}\\hat\\beta = {r2}$. Solve them, giving $(\\hat\\alpha, \\hat\\beta)$.",
+      "widget": { "kind": "expression", "answer": "({al}, {be})", "keyboard": "algebra" },
+      "wrong": [
+        { "id": "swapped-order", "tex": "({be}, {al})", "line": "Give $\\hat\\alpha$ first, then $\\hat\\beta$: the answer is $(\\hat\\alpha, \\hat\\beta)$." }
+      ],
+      "solution": [
+        "Divide row 1 by ${n}$: $\\hat\\alpha{c1:+c}\\hat\\beta = {h1}$.",
+        "Take ${sx}$ times that from row 2: ${c2:c}\\hat\\beta = {h2}$, so $\\hat\\beta = {be}$.",
+        "Then $\\hat\\alpha = {h1} - {c1*be:()} = {al}$, so the answer is $({al}, {be})$."
+      ]
+    },
+    {
+      "id": "intercept-from-means",
+      "weight": 1,
+      "skill": "find the intercept from the slope and the means",
+      "vars": {
+        "b": { "pick": [0.5, 1.5, 2, 3, 2.5, -0.5, -1, -2, -1.5, 4] },
+        "xb": { "int": [2, 8] },
+        "yb": { "int": [-4, 20], "not": [0] }
+      },
+      "let": {
+        "bx": "b*xb",
+        "key": "yb - b*xb",
+        "plus": "yb + b*xb",
+        "nox": "yb - b"
+      },
+      "prompt": "A least-squares line has $\\hat\\beta = {b}$, and the data have $\\bar x = {xb}$ and $\\bar y = {yb}$. Find $\\hat\\alpha$.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "For example 2.5" },
+      "wrong": [
+        { "id": "sign-slip", "value": "{plus}", "line": "The line passes through $(\\bar x, \\bar y)$, so $\\hat\\alpha = \\bar y - \\hat\\beta\\bar x$: subtract ${bx}$." },
+        { "id": "forgot-x-bar", "value": "{nox}", "line": "Multiply $\\hat\\beta$ by $\\bar x = {xb}$ before you subtract." }
+      ],
+      "solution": [
+        "The line passes through the means, so $\\hat\\alpha = \\bar y - \\hat\\beta\\bar x$.",
+        "$\\hat\\beta\\bar x = {b:()} \\times {xb} = {bx}$, so $\\hat\\alpha = {yb} - {bx:()} = {key}$."
+      ]
+    }
+  ]
+}

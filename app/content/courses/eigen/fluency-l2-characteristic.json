@@ -1,0 +1,109 @@
+{
+  "id": "fluency-l2-characteristic",
+  "course": "eigen",
+  "lesson": "l2-characteristic",
+  "title": "Fluency: the characteristic equation",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 15,
+  "families": [
+    {
+      "id": "characteristic-polynomial",
+      "weight": 1,
+      "skill": "write the characteristic polynomial",
+      "vars": {
+        "a": { "int": [-5, 6] },
+        "b": { "int": [-5, 5], "not": [0] },
+        "c": { "int": [-5, 5], "not": [0] },
+        "d": { "int": [-5, 6] },
+        "lam": { "pick": ["\\lambda"] }
+      },
+      "let": {
+        "s": "a + d",
+        "p": "a*d - b*c",
+        "ad": "a*d",
+        "bc": "b*c",
+        "q": "a*d + b*c"
+      },
+      "where": ["a != 0", "d != 0", "s != 0", "p != 0", "q != 0"],
+      "prompt": "Take $\\mathbf{{A}} = \\begin{{pmatrix}} {a} & {b} \\\\ {c} & {d} \\end{{pmatrix}}$. Expand $\\det(\\mathbf{{A}} - \\lambda\\mathbf{{I}})$ as a quadratic in $\\lambda$.",
+      "widget": { "kind": "expression", "answer": "{poly(lam; 1, -s, p)}", "form": "expanded", "keyboard": "algebra" },
+      "wrong": [
+        { "id": "sign-of-sum", "tex": "{poly(lam; 1, s, p)}", "line": "The middle coefficient is minus the diagonal sum: $-({s})$, which is ${-s}$." },
+        { "id": "added-bc", "tex": "{poly(lam; 1, -s, q)}", "line": "The constant is $\\det\\mathbf{{A}} = ad - bc$, so subtract $bc = {bc}$." }
+      ],
+      "solution": [
+        "The diagonal sum is ${a}{d:+} = {s}$ and $\\det\\mathbf{{A}} = {ad} - {bc:()} = {p}$.",
+        "So $\\det(\\mathbf{{A}} - \\lambda\\mathbf{{I}}) = {poly(lam; 1, -s, p)}$."
+      ]
+    },
+    {
+      "id": "both-eigenvalues",
+      "weight": 2,
+      "skill": "find both eigenvalues of a 2 by 2 matrix",
+      "vars": {
+        "l1": { "int": [-5, 5], "not": [0] },
+        "gp": { "int": [1, 6] },
+        "t": { "int": [-3, 4], "not": [0] },
+        "sg": { "pick": [1, -1] },
+        "sw": { "pick": [0, 1] },
+        "lam": { "pick": ["\\lambda"] }
+      },
+      "let": {
+        "l2": "l1 + gp",
+        "g": "gp - t",
+        "a": "l1 + t",
+        "d": "l1 + gp - t",
+        "b": "sg*if(sw == 0, t, gp - t)",
+        "c": "sg*if(sw == 0, gp - t, t)",
+        "s": "l1 + l2",
+        "p": "l1*l2",
+        "ad": "(l1 + t)*(l1 + gp - t)",
+        "bc": "t*(gp - t)"
+      },
+      "where": ["gp != t", "l2 != 0", "l1 + l2 != 0", "abs(a) <= 9", "abs(d) <= 9"],
+      "prompt": "Find the two eigenvalues of $\\mathbf{{A}} = \\begin{{pmatrix}} {a} & {b} \\\\ {c} & {d} \\end{{pmatrix}}$.",
+      "widget": { "kind": "numeric", "answers": ["{l1}", "{l2}"], "unordered": true, "tol": { "abs": 0 }, "accept": "${l1}$ and ${l2}$, in either order" },
+      "wrong": [
+        { "id": "diagonal-entries", "value": "{a}, {d}", "line": "Those are the diagonal entries. Only a triangular matrix shows its eigenvalues there." },
+        { "id": "signs-flipped", "value": "{-l1}, {-l2}", "line": "Each factor $\\lambda - r$ gives the root $r$, so check the signs of your roots." }
+      ],
+      "solution": [
+        "The diagonal sum is ${s}$ and $\\det\\mathbf{{A}} = {ad} - {bc:()} = {p}$.",
+        "So ${poly(lam; 1, -s, p)} = 0$, which is $(\\lambda{-l1:+})(\\lambda{-l2:+}) = 0$.",
+        "The eigenvalues are ${l1}$ and ${l2}$."
+      ]
+    },
+    {
+      "id": "eigenvector",
+      "weight": 1,
+      "skill": "find an eigenvector from one row",
+      "vars": {
+        "l": { "int": [-4, 5], "not": [0] },
+        "a": { "int": [-4, 6] },
+        "b": { "int": [-4, 4], "not": [0] },
+        "n": { "int": [-2, 2], "not": [0] }
+      },
+      "where": ["l != a", "abs(c) <= 9", "abs(d) <= 9"],
+      "let": {
+        "am": "a - l",
+        "g": "gcd(abs(l - a), abs(b))",
+        "d": "l - b*n/gcd(abs(l - a), abs(b))",
+        "c": "(l - a)*n/gcd(abs(l - a), abs(b))",
+        "key": "(l - a)/b",
+        "flip": "(a - l)/b",
+        "inv": "b/(l - a)"
+      },
+      "prompt": "$\\mathbf{{A}} = \\begin{{pmatrix}} {a} & {b} \\\\ {c} & {d} \\end{{pmatrix}}$ has the eigenvalue ${l}$. Its eigenvector is $(1, v)$. Find $v$ as a fraction or a decimal.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "Fraction or decimal", "accept": "${key:frac}$, or a decimal within 0.0005" },
+      "wrong": [
+        { "id": "sign-slip", "value": "{flip}", "tol": { "abs": 0.0005 }, "line": "Row 1 says ${am}{b:+c}v = 0$, so $v = {-am} \\div {b:()}$. Check the sign." },
+        { "id": "upside-down", "value": "{inv}", "tol": { "abs": 0.0005 }, "line": "You divided the wrong way round. Divide ${-am}$ by ${b}$, the number in front of $v$.", "when": "abs(am) != abs(b)" }
+      ],
+      "solution": [
+        "With $\\lambda = {l}$, row 1 of $\\mathbf{{A}} - \\lambda\\mathbf{{I}}$ is $({am}, {b})$.",
+        "With $v_1 = 1$ it says ${am}{b:+c}v = 0$, so $v = {key:frac}$."
+      ]
+    }
+  ]
+}
