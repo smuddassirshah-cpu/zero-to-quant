@@ -51,4 +51,31 @@
   }
 
   ZQ.screen({ id: 'fluency', title: 'Fluency', group: 'Practice', hidden: true, shell: false, render: (root, Z, params = []) => mountFluency(root, Z, params) });
+
+  /* ENGINE-BACKLOG 843: the full list Today's "More Fluency sets" row leads to. Route #fluency-list. Every real set, grouped by course in
+     course order; each row says whether its lesson is done and whether the set is passed, and opens the set (a set whose lesson is not done
+     is listed but dimmed: practice follows the lesson). Reads ZQ.content.fluencyList and ZQ.state; nothing here gates anything. */
+  ZQ.screen({
+    id: 'fluency-list', title: 'Fluency sets', group: 'Practice', hidden: true, shell: true, tab: 'today',
+    render(root, Z) {
+      const C = Z.content, S = Z.state, esc = Z.esc;
+      const rows = C.fluencyList ? C.fluencyList() : [];
+      const stat = (r) => { const l = S.lesson(r.course, r.lesson), f = S.fluency.get(r.course, r.id), done = !!(l && l.done); return { done, passed: !!(f && f.passedAt), tried: !!(f && f.attempts) }; };
+      const courses = [...new Set(rows.map(r => r.course))];
+      const item = (r) => {
+        const st = stat(r), lab = !st.done ? 'Lesson not done yet' : st.passed ? 'Passed' : st.tried ? 'Tried, not passed' : 'Not started';
+        return `<li><button class="zt-row${st.done ? '' : ' muted'}" type="button" data-go="fluency/${esc(r.course)}/${esc(r.id)}" data-fluency-item="${esc(r.course)}/${esc(r.id)}" data-status="${st.done ? (st.passed ? 'passed' : 'open') : 'locked'}">
+          <span class="zt-row-t"><span class="t-label">${esc(r.title || 'Fluency')}</span><span class="t-caption muted">${r.n} fresh questions · about ${r.minutes} minutes · ${lab}</span></span>
+          ${Z.icon('chevronR', 'sm zt-chev')}</button></li>`;
+      };
+      const group = (c) => { const co = (() => { try { return C.course(c); } catch { return null; } })(); return `<h2 class="t-overline muted">${esc(co ? co.name : c)}</h2><ul>${rows.filter(r => r.course === c).map(item).join('')}</ul>`; };
+      root.innerHTML = `<div class="card pad" data-fluency-list>
+        <h1 class="t-h2">Fluency sets</h1>
+        <p class="t-body secondary">Fresh numbers every time. Passing changes no progress.</p>
+        ${rows.length ? courses.map(group).join('') : '<p class="t-body secondary">No Fluency sets are written yet.</p>'}
+        <a class="btn secondary" href="#today">Back to Today</a></div>`;
+      root.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) { if (Z.sound) Z.sound('tap'); Z.go(g.dataset.go); } });
+      return null;
+    },
+  });
 })();
