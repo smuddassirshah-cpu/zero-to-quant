@@ -49,3 +49,48 @@ Every probe named in the brief came back clean after the two fix passes. In brie
 - Wrong options and slips: every `wrong[]` value and every option `why` was recomputed. Only finding 6 has a why that is false of what the option says.
 - Financial readings: half-lives halve the gap, the Vasicek mean follows the ODE (Monte Carlo, 200,000 paths), the perpetuity's $c/r$ is an unstable level, and the perpetual put's numbers reproduce.
 - Lesson against review and homework: every reused matrix, equation and number agrees with its lesson.
+
+## Overlap with the earlier reads
+
+Filled after the ledger, scripts and findings above were committed (da0fe403 `Concept audit: odes L1 to L3 round 3, ledger and concepts scripts` and dace047a `Concept audit: odes L1 to L3 round 3, findings (blind, before overlap)`). Only then were `docs/reviews/review-odes-1-3.md`, `docs/reviews/audit-odes-1-3.md` and `docs/reviews/audit-odes-1-3-r2.md` opened, with their `## Fix pass` sections. The earlier ledgers and the author reports were not opened. The earlier concepts scripts were run for their exit codes only.
+
+The earlier reads hold 32 conceptual findings: 9 in the second-reader review (as counted by the round-1 audit), 14 in the round-1 audit and 9 in the round-2 audit. All 32 were applied before this round read the content, so none could be found again.
+
+| | count | which |
+|---|---|---|
+| Conceptual findings found by this round only | 6 | findings 1 to 6 above (0 wrong, 5 imprecise, 1 misleading; 0 serious) |
+| Conceptual findings found by earlier reads only | 32 | review-odes-1-3: 9; audit-odes-1-3: 14 (2 wrong, 4 serious); audit-odes-1-3-r2: 9 (2 wrong, 0 serious). All fixed in the text read here |
+| Found by both | 0 | none |
+
+Where each finding of this round sits (`git log -S` on the quoted words names one commit each, the author's level commit):
+
+| finding | in fix-pass text? | note |
+|---|---|---|
+| 1 (l2 "a sum, not a product") | no | original text, commit 4ce4b470; no fix pass touched l2 |
+| 2 (l2 "where the two curves agree") | no | original text, commit 4ce4b470 |
+| 3 (l6 "Superposition is why ...") | no | original text, commit 47136824; no fix pass touched l6 |
+| 4 (l7 put equation with no region) | no | original text, commit 47136824; the fix passes changed l7 screens[4] and screens[5] only |
+| 5 (l10 "Two-factor short-rate models have ...") | no | original text, commit a1b867b9 |
+| 6 (l13 screens[7] option why) | no | original text, commit a1b867b9; the fix passes changed other screens of l13 |
+
+None of the six sits in text a fix pass wrote, against three of nine in round 2.
+
+The 32 corrected lines were each read here as they now stand, and they hold. Among them, each with its own check in this round's scripts or runs: the uniqueness hypothesis (l1 screens[9], homework-1 items[3]); the linear-drift reason for the Vasicek mean; the envelopes $\tfrac{\sqrt5}{2}e^{-t}$ and $1.0328e^{-0.5t}$; the term-by-term modification rule with $t^2$ at a double root; the smoother feedback equation with its 100; the float example $0.2^2 - 4(0.5)(0.02)$, which does print `6.938893903907228e-18` in Pyodide; undamped named apart from under-damped; "its first swing"; the semi-stable point called unstable in the strict sense; asymptotic against Lyapunov stability in l12; the $\Delta > 0$ condition in l12 screens[2]; the parabola caveat; the cubic centre that spirals in; the equal-eigenvalue caveat; and "nor does a zero eigenvalue, unless the other eigenvalue is positive". No fix of either pass introduced a new error that this round could find.
+
+Four of the notes under "Noted, not conceptual" repeat notes of round 2 that are still in the content (the l3 canvas point, the l4 console line, the bare floats and their last digits). They were notes there too, and the round-2 fix pass left them alone.
+
+Counts for the convergence rule. New `wrong` findings that no earlier read found: 0. The rule closes a course at "at most one new `wrong` per three levels", so on this count the course closes at round 3. The trend across rounds is 2 `wrong` and 4 serious, then 2 `wrong` and 0 serious, then 0 `wrong` and 0 serious. The six findings left are wording and precision; the fixes above are one sentence each.
+
+## Gate results
+
+Run in this worktree on the content as read. No content file, engine file or `course.json` was changed.
+
+- `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): `0 errors, 4116 warnings`. `content/manifest.json` unchanged (`git status` shows only this round's files).
+- `python3 docs/reports/odes-L1-concepts-r3.py`: exit 0 (43 passed, 2 EXPECTED_FAIL: findings 1 and 2). `odes-L2-concepts-r3.py`: exit 0 (40 passed, 1 EXPECTED_FAIL: finding 4). `odes-L3-concepts-r3.py`: exit 0 (39 passed, 1 EXPECTED_FAIL: finding 6). Findings 3 and 5 are a gap in an argument and a claim about practice; neither has a check that could fail, and the true statements beside them are checked. Each EXPECTED_FAIL has its corrected assert in the comment below it.
+- `python3 docs/reports/odes-L1-numbers.py`: exit 0. `odes-L2-numbers.py`: exit 0. `odes-L3-numbers.py`: exit 0.
+- Earlier concepts scripts, run only after the overlap table was filled: `odes-L{1,2,3}-concepts.py` exit 0, 0, 0; `odes-L{1,2,3}-concepts-r2.py` exit 0, 0, 0.
+- Code tasks (scratch harness, not committed): 16 tasks, every solution passes all hidden tests in CPython 3.13 with NumPy 2.5.3, every starter passes none.
+- Pyodide runs (scratch script, not committed; Pyodide 0.27.7, NumPy 2.0.2, under node with the local package folder): a singular `np.linalg.solve` returns `array([nan, nan])`; `np.linalg.eig([[-2, 2], [0, -0.5]])` gives `array([-2. , -0.5])`; `0.2**2 - 4*0.5*0.02` is `6.938893903907228e-18`; `np.roots([1, 0, 1])` is `array([-0.+1.j,  0.-1.j])`.
+- Playthrough: not run. This round changed no content, so there are no changed files to play through.
+
+Proposed fixes obey the voice rules: British English, no exclamation marks, no em-dashes, every sentence under 35 words, explanations of at most three sentences (finding 2's explain stays at three, finding 3's goes from two to three).

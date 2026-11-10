@@ -2,7 +2,7 @@
 
 Blind third audit of `app/content/courses/odes/` levels 1 to 3 (l1 to l13, review-1 to review-3, homework-1 to homework-3). One row per definition, result, method step, convention, always/never/every/only claim, interpretation, causal claim, code-behaviour claim and the reasoning of each explain, why, hint and feedback line. Rows that share one piece of reasoning on one screen are merged. Written before any earlier review, audit, ledger, concepts script or author report for this course was opened.
 
-Absolute values are written abs(x) so the table columns stay intact. Totals: 184 rows; correct 178, imprecise 5, misleading 1, wrong 0, unverified 0.
+Overlap with earlier reads is in `docs/reviews/audit-odes-1-3-r3.md`. Absolute values are written abs(x) so the table columns stay intact. Totals: 184 rows; correct 178, imprecise 5, misleading 1, wrong 0, unverified 0.
 
 Sources: Boyce and DiPrima, *Elementary Differential Equations and Boundary Value Problems* (B&D; sections by number); Strogatz, *Nonlinear Dynamics and Chaos* (ch. 2 flows on the line, ch. 5 linear systems, ch. 6 phase plane); Tenenbaum and Pollard, *Ordinary Differential Equations* (T&P; lessons by number); Perko, *Differential Equations and Dynamical Systems* (sec. 2.8, 2.10); Hull, *Options, Futures, and Other Derivatives* (perpetual American options; Vasicek); Brigo and Mercurio, *Interest Rate Models* (ch. 3 and 4). "sim: Ln:name" is a check in `docs/reports/odes-L<n>-concepts-r3.py`. "code run" means the task's solution was run in CPython against every hidden test and the starter was run against them too (16 code tasks: every solution passes all its tests, every starter passes none). "Pyodide" means the line was run in Pyodide 0.27.7 (NumPy 2.0.2) under node.
 
