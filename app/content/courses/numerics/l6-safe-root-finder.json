@@ -833,7 +833,7 @@
   {
    "type": "problem",
    "difficulty": 3,
-   "prose": "Now solve the whole smile at once. Keep arrays `s`, `lo` and `hi`, one entry per strike. A boolean mask chooses, strike by strike, between the Newton step and the midpoint. A second mask leaves each strike alone once its step falls below `tol`. `scipy.optimize.brentq` agrees with the result to $10^{-10}$; Brent's method mixes bisection, secant and inverse quadratic steps.",
+   "prose": "Now solve the whole smile at once. Keep arrays `s`, `lo` and `hi`, one entry per strike. A boolean mask chooses, strike by strike, between the Newton step and the midpoint. A second mask leaves each strike alone once its step falls below `tol`. If a strike is still unsolved after `maxit` steps, raise `RuntimeError`, as `safe_newton` does. `scipy.optimize.brentq` agrees with the result to $10^{-10}$; Brent's method mixes bisection, secant and inverse quadratic steps.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -920,8 +920,8 @@
     "kind": "code",
     "language": "python",
     "prelude": "import math\nimport numpy as np\n_erf = np.vectorize(math.erf, otypes=[float])\ndef ncdf(x):\n    return 0.5 * (1 + _erf(np.asarray(x, dtype=float) / math.sqrt(2)))\ndef bs_price(S, K, r, T, sigma, kinds):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    sd = sigma * math.sqrt(T)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / sd\n    d2 = d1 - sd\n    call = S * ncdf(d1) - K * math.exp(-r * T) * ncdf(d2)\n    put = K * math.exp(-r * T) * ncdf(-d2) - S * ncdf(-d1)\n    return np.where(np.asarray(kinds) == 'c', call, put)\ndef bs_vega(S, K, r, T, sigma):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * math.sqrt(T))\n    return S * math.sqrt(T) * np.exp(-d1 ** 2 / 2) / math.sqrt(2 * math.pi)\n",
-    "starter": "import numpy as np\n\n# bs_price(S, K, r, T, sigma, kinds) and bs_vega(S, K, r, T, sigma)\n# are provided and work on arrays; kinds holds 'c' or 'p'.\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    \"\"\"Implied vols for a whole smile at once, NaN where none exists.\n    Bracket [1e-4, 5], start at 0.2.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    K = np.asarray(strikes, dtype=float)\n    kinds = np.asarray(kinds)\n    f = lambda s: bs_price(S, K, r, T, s, kinds) - p\n    lo = np.full(p.shape, 1e-4)\n    hi = np.full(p.shape, 5.0)\n    ok = (f(lo) < 0) & (f(hi) > 0)\n    live = ok.copy()                 # strikes still being solved\n    s = np.full(p.shape, 0.2)\n    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):\n        for _ in range(maxit):\n            fs = f(s)\n            low = fs < 0\n            lo = np.where(low, s, lo)\n            hi = np.where(low, hi, s)\n            new = s - fs / bs_vega(S, K, r, T, s)\n            near = np.abs(new - s) < tol     # Newton has converged: keep its step\n            bad = ~near & (~np.isfinite(new) | (new <= lo) | (new >= hi))\n            new = np.where(bad, 0.5 * (lo + hi), new)\n            done = np.abs(new - s) < tol\n            s = np.where(live, new, s)       # a solved strike stays put\n            live &= ~done\n            if not live.any():\n                break\n    return np.where(ok, s, np.nan)\n",
+    "starter": "import numpy as np\n\n# bs_price(S, K, r, T, sigma, kinds) and bs_vega(S, K, r, T, sigma)\n# are provided and work on arrays; kinds holds 'c' or 'p'.\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    \"\"\"Implied vols for a whole smile at once, NaN where none exists.\n    Bracket [1e-4, 5], start at 0.2. Raise RuntimeError if a strike\n    is still unsolved after maxit steps.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    K = np.asarray(strikes, dtype=float)\n    kinds = np.asarray(kinds)\n    f = lambda s: bs_price(S, K, r, T, s, kinds) - p\n    lo = np.full(p.shape, 1e-4)\n    hi = np.full(p.shape, 5.0)\n    ok = (f(lo) < 0) & (f(hi) > 0)\n    live = ok.copy()                 # strikes still being solved\n    s = np.full(p.shape, 0.2)\n    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):\n        for _ in range(maxit):\n            fs = f(s)\n            low = fs < 0\n            lo = np.where(low, s, lo)\n            hi = np.where(low, hi, s)\n            new = s - fs / bs_vega(S, K, r, T, s)\n            near = np.abs(new - s) < tol     # Newton has converged: keep its step\n            bad = ~near & (~np.isfinite(new) | (new <= lo) | (new >= hi))\n            new = np.where(bad, 0.5 * (lo + hi), new)\n            done = np.abs(new - s) < tol\n            s = np.where(live, new, s)       # a solved strike stays put\n            live &= ~done\n            if not live.any():\n                break\n    if live.any():                   # unsolved at the cap\n        raise RuntimeError('no convergence')\n    return np.where(ok, s, np.nan)\n",
     "examples": [
      {
       "call": "round(float(implied_vols([2.5121], [100], 100.0, 0.05, 1 / 12, ['c'])[0]), 4)",
@@ -957,9 +957,15 @@
       "call": "_dt < 1.0 and bool(np.all(np.isfinite(_v)))",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "setup": "K11 = list(range(75, 130, 5)); kinds11 = ['p'] * 5 + ['c'] * 6\nP11 = [0.0766, 0.0794, 0.1154, 0.2448, 0.6958, 2.5121, 0.6182, 0.0872, 0.0093, 0.0012, 0.0003]",
+      "call": "implied_vols(P11, K11, 100.0, 0.05, 1 / 12, kinds11, maxit=1)",
+      "expect": "RuntimeError",
+      "compare": "raises"
      }
     ],
-    "how": "Submit runs 4 hidden tests with NumPy; none loads SciPy. The eleven quotes must match brentq within 1e-6. A quote below its bound must give NaN, alone and beside a good quote. 1,000 strikes must solve in under a second."
+    "how": "Submit runs 5 hidden tests with NumPy; none loads SciPy. The eleven quotes must match brentq within 1e-6. A quote below its bound must give NaN, alone and beside a good quote. 1,000 strikes must solve in under a second. With maxit=1 nothing has converged, so it must raise RuntimeError."
    },
    "hints": [
     {
@@ -976,7 +982,7 @@
     },
     {
      "rung": "step",
-     "text": "Mask the Newton step: where it is not finite or leaves `(lo, hi)`, use `0.5 * (lo + hi)`. Return `np.where(ok, s, np.nan)`."
+     "text": "Mask the Newton step: where it is not finite or leaves `(lo, hi)`, use `0.5 * (lo + hi)`. After the loop, raise `RuntimeError` if any strike is still live, else return `np.where(ok, s, np.nan)`."
     }
    ],
    "feedback": {
