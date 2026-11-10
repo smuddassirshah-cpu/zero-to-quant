@@ -1,0 +1,907 @@
+{
+  "id": "problems-4",
+  "course": "limits-thm",
+  "level": 4,
+  "title": "Problems: joint densities and transformations",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-machine-faults",
+      "difficulty": 4,
+      "skills": [
+        "dl-continuous"
+      ],
+      "prose": "A machine logs its first fault at time $X$ and its second at time $Y$, in years. The pair has joint density $f(x, y) = e^{-y}$ for $0 < x < y$, and 0 elsewhere.",
+      "parts": [
+        {
+          "question": "Find the marginal density $f_X(x)$ for $x > 0$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "e^{-x}",
+            "accept": [
+              "1/e^x"
+            ],
+            "wrong": [
+              {
+                "id": "no-integral",
+                "tex": "e^{-y}"
+              },
+              {
+                "id": "wrong-limits",
+                "tex": "1-e^{-x}"
+              },
+              {
+                "id": "constant",
+                "tex": "1"
+              }
+            ],
+            "keyboard": "algebra"
+          },
+          "feedback": {
+            "correct": "$f_X(x) = \\int_x^\\infty e^{-y}\\,dy = e^{-x}$.",
+            "generic": "Not quite. Integrate $f(x, y)$ over $y$, from $y = x$ upwards.",
+            "byKey": {
+              "no-integral": "That is the joint density itself. Integrate out $y$ to leave a function of $x$ alone.",
+              "wrong-limits": "You integrated over $0 < y < x$. Here $y$ runs from $x$ to infinity, so $\\int_x^\\infty e^{-y}\\,dy$.",
+              "constant": "The slice through $x$ starts at $y = x$, so its length is not fixed: $\\int_x^\\infty e^{-y}\\,dy = e^{-x}$."
+            }
+          },
+          "explain": {
+            "text": "Collapse the $y$ axis: the slice through $x$ runs over $y > x$, and $\\int_x^\\infty e^{-y}\\,dy = e^{-x}$. So the first fault is exponential with rate 1."
+          }
+        },
+        {
+          "question": "Using $f_X(x) = e^{-x}$ from part 1, the conditional density of $Y$ given $X = x$ is $f(x, y) / f_X(x)$. What is $E[Y \\mid X = 0.5]$, in years? Give your answer to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.5,
+            "tol": {
+              "abs": 0.05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "unconditional",
+                "value": 2,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "half",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "gap-only",
+                "value": 1,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$f(y \\mid 0.5) = e^{-(y - 0.5)}$ for $y > 0.5$: a rate-1 wait after 0.5, so $E[Y \\mid X = 0.5] = 0.5 + 1 = 1.5$.",
+            "generic": "Not quite. Divide the joint density by $f_X(0.5)$ and find the mean of what is left.",
+            "byKey": {
+              "unconditional": "That is $E[Y]$ with nothing known. Given $X = 0.5$, the second fault comes after 0.5.",
+              "half": "That is $x/2$, the triangle's rule from the lesson. Here $Y$ lies above $x$, not below it.",
+              "gap-only": "That is the mean wait after the first fault. Add the 0.5 years already gone."
+            }
+          },
+          "explain": {
+            "text": "$\\tfrac{e^{-y}}{e^{-0.5}} = e^{-(y - 0.5)}$ on $y > 0.5$, an exponential wait of mean 1 that starts at 0.5. So $E[Y \\mid X = 0.5] = 1.5$ years."
+          }
+        },
+        {
+          "question": "Using part 2's slice, are $X$ and $Y$ independent?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "no",
+                "text": "No: the slice for $Y$ moves with $x$",
+                "correct": true
+              },
+              {
+                "id": "factor",
+                "text": "Yes: $e^{-y}$ is a function of $y$ alone",
+                "why": "A formula with one letter is not enough. The density is 0 when $y < x$, so the support ties the two together."
+              },
+              {
+                "id": "marginals",
+                "text": "Yes: each marginal is a proper density",
+                "why": "Every joint density has proper marginals. Independence needs the joint to equal their product everywhere."
+              },
+              {
+                "id": "cov",
+                "text": "We cannot tell without the covariance",
+                "why": "The changing slice settles it: $E[Y \\mid X = x] = x + 1$ depends on $x$."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$E[Y \\mid X = x] = x + 1$ changes with $x$, so they are dependent.",
+            "generic": "Not quite. Ask whether learning $X$ changes the slice for $Y$."
+          },
+          "explain": {
+            "text": "Given $X = x$, $Y$ lives on $(x, \\infty)$, so learning $X$ moves $Y$. A joint density can factor only on a rectangle, and $0 < x < y$ is a wedge."
+          }
+        },
+        {
+          "question": "Part 3 found $X$ and $Y$ dependent. Let $G = Y - X$, the gap between faults. The map $(x, y) \\to (x, g)$ has Jacobian 1, so $f_{X,G}(x, g) = e^{-x - g}$ for $x, g > 0$. What is $P(G > 2)$? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1353,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "second-fault",
+                "value": 0.406,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "complement",
+                "value": 0.8647,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "rate-half",
+                "value": 0.3679,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$f_{X,G}$ factors, so $G$ is exponential with rate 1 and $P(G > 2) = e^{-2} \\approx 0.1353$.",
+            "generic": "Not quite. Integrate out $x$ to get the density of $G$, then find its tail beyond 2.",
+            "byKey": {
+              "second-fault": "That is $P(Y > 2) = 3e^{-2}$. The question asks about the gap $G$.",
+              "complement": "That is $P(G \\le 2)$. Take it from 1.",
+              "rate-half": "That is $e^{-1}$. The gap has rate 1, so its tail at 2 is $e^{-2}$."
+            }
+          },
+          "explain": {
+            "text": "With $y = x + g$, $|J| = 1$ and $f_{X,G}(x, g) = e^{-x}e^{-g}$. It factors on the quarter-plane, so the gap is independent of the first fault and $P(G > 2) = e^{-2} \\approx 0.1353$."
+          }
+        },
+        {
+          "question": "Using part 4's result that $G$ is exponential with rate 1 and independent of $X$, the second fault is $Y = X + G$. What is $P(Y > 3)$? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1991,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "one-wait",
+                "value": 0.0498,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "complement",
+                "value": 0.8009,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "dropped-one",
+                "value": 0.1494,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$Y$ has density $ye^{-y}$, so $P(Y > 3) = e^{-3}(1 + 3) \\approx 0.1991$.",
+            "generic": "Not quite. Convolve two rate-1 densities, or integrate $f(x, y)$ over $y > 3$.",
+            "byKey": {
+              "one-wait": "That is $e^{-3}$, the tail of one rate-1 wait. $Y$ is the sum of two.",
+              "complement": "That is $P(Y \\le 3)$. Take it from 1.",
+              "dropped-one": "You kept only $3e^{-3}$. The tail of $ye^{-y}$ is $e^{-3}(1 + 3)$."
+            }
+          },
+          "explain": {
+            "text": "Convolving $e^{-x}$ with $e^{-g}$ gives $f_Y(y) = ye^{-y}$, the Gamma with shape 2. Integrating by parts, $P(Y > 3) = 4e^{-3} \\approx 0.1991$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-ticket-stages",
+      "difficulty": 5,
+      "skills": [
+        "dl-continuous",
+        "dl-clt"
+      ],
+      "prose": "A support ticket goes through two stages, one after the other. Triage takes an exponential time with rate 1 an hour, then repair an exponential time with rate 0.5 an hour, independently. $T$ is the total time, in hours.",
+      "parts": [
+        {
+          "question": "Use the convolution $f_T(t) = \\int_0^t f_1(x)\\,f_2(t - x)\\,dx$. What is $f_T(t)$ for $t > 0$?",
+          "widget": {
+            "kind": "expression",
+            "answer": "e^{-t/2}-e^{-t}",
+            "accept": [
+              "e^{-0.5t}-e^{-t}"
+            ],
+            "wrong": [
+              {
+                "id": "product",
+                "tex": "0.5e^{-1.5t}"
+              },
+              {
+                "id": "added",
+                "tex": "e^{-t}+0.5e^{-t/2}"
+              },
+              {
+                "id": "gamma",
+                "tex": "0.25te^{-t/2}"
+              }
+            ],
+            "keyboard": "algebra"
+          },
+          "feedback": {
+            "correct": "$\\int_0^t e^{-x}\\,0.5e^{-0.5(t - x)}\\,dx = 0.5e^{-0.5t}\\int_0^t e^{-0.5x}\\,dx = e^{-t/2} - e^{-t}$.",
+            "generic": "Not quite. Put both densities in the integral, take $e^{-0.5t}$ outside, and integrate over $0 < x < t$.",
+            "byKey": {
+              "product": "That is $f_1(t)f_2(t)$, both stages at the same time $t$. The convolution lets $x$ run over every split of $t$.",
+              "added": "Densities of a sum do not add. Convolve them.",
+              "gamma": "That is the Gamma for two stages both at rate 0.5. Triage has rate 1."
+            }
+          },
+          "explain": {
+            "text": "The integrand is $0.5e^{-0.5t}e^{-0.5x}$, and $\\int_0^t e^{-0.5x}\\,dx = 2(1 - e^{-0.5t})$. So $f_T(t) = e^{-t/2} - e^{-t}$, which is 0 at $t = 0$ and has area 1."
+          }
+        },
+        {
+          "question": "Using $f_T(t) = e^{-t/2} - e^{-t}$ from part 1, what is $P(T > 10)$, the chance a ticket takes over 10 hours? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0134,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "one-stage",
+                "value": 0.0067,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "complement",
+                "value": 0.9866,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "equal-rates",
+                "value": 0.0404,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\int_{10}^\\infty (e^{-t/2} - e^{-t})\\,dt = 2e^{-5} - e^{-10} \\approx 0.0134$.",
+            "generic": "Not quite. Integrate each term of the density from 10 to infinity.",
+            "byKey": {
+              "one-stage": "That is $e^{-5}$, the repair stage's tail alone. The integral of $e^{-t/2}$ from 10 is $2e^{-5}$.",
+              "complement": "That is $P(T \\le 10)$. Take it from 1.",
+              "equal-rates": "That is $e^{-5}(1 + 5)$, the Gamma tail for two stages at rate 0.5. Triage is faster."
+            }
+          },
+          "explain": {
+            "text": "$\\int_{10}^\\infty e^{-t/2}\\,dt = 2e^{-5}$ and $\\int_{10}^\\infty e^{-t}\\,dt = e^{-10}$. Their difference is $0.01348 - 0.00005 \\approx 0.0134$, about one ticket in 74."
+          }
+        },
+        {
+          "question": "Part 2 needed the whole density. A bound needs only the moment generating function. Using $M(s) = \\tfrac{\\lambda}{\\lambda - s}$ for one exponential stage, what is $M_T(s)$ for $s < 0.5$?",
+          "widget": {
+            "kind": "expression",
+            "answer": "\\frac{1}{(1-s)(1-2s)}",
+            "accept": [
+              "1/((1-s)(1-2s))",
+              "\\frac{0.5}{(1-s)(0.5-s)}"
+            ],
+            "wrong": [
+              {
+                "id": "added",
+                "tex": "\\frac{1}{1-s}+\\frac{1}{1-2s}"
+              },
+              {
+                "id": "rates",
+                "tex": "\\frac{1}{(1-s)(1-0.5s)}"
+              },
+              {
+                "id": "single",
+                "tex": "\\frac{1}{1-s}"
+              }
+            ],
+            "keyboard": "algebra"
+          },
+          "feedback": {
+            "correct": "The stages are independent, so the MGFs multiply: $\\tfrac{1}{1 - s} \\cdot \\tfrac{0.5}{0.5 - s} = \\tfrac{1}{(1 - s)(1 - 2s)}$.",
+            "generic": "Not quite. Write each stage's MGF and multiply them.",
+            "byKey": {
+              "added": "MGFs of independent parts multiply, they do not add.",
+              "rates": "You used $\\tfrac{0.5}{0.5}$ the wrong way up: $\\tfrac{0.5}{0.5 - s} = \\tfrac{1}{1 - 2s}$.",
+              "single": "That is triage alone. Multiply by the repair stage's MGF too."
+            }
+          },
+          "explain": {
+            "text": "$M_{X+Y} = M_XM_Y$ for independent stages. Here $\\tfrac{0.5}{0.5 - s} = \\tfrac{1}{1 - 2s}$, finite only for $s < 0.5$, so $M_T(s) = \\tfrac{1}{(1 - s)(1 - 2s)}$."
+          }
+        },
+        {
+          "question": "The Chernoff bound is $P(T \\ge 10) \\le e^{-10s}M_T(s)$ for $0 < s < 0.5$. Using $M_T(s) = \\tfrac{1}{(1 - s)(1 - 2s)}$ from part 3, which $s$ makes the bound smallest? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3807,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "other-root",
+                "value": 0.9193,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "repair-only",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "triage-only",
+                "value": 0.9,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Setting the slope of $-10s - \\ln(1 - s) - \\ln(1 - 2s)$ to 0 gives $20s^2 - 26s + 7 = 0$, so $s = \\tfrac{26 - \\sqrt{116}}{40} \\approx 0.3807$.",
+            "generic": "Not quite. Minimise the log of the bound: differentiate, clear the fractions, and keep the root below 0.5.",
+            "byKey": {
+              "other-root": "That root of $20s^2 - 26s + 7 = 0$ is above 0.5, where $M_T(s)$ is infinite. Keep the smaller root.",
+              "repair-only": "That solves $10 = \\tfrac{2}{1 - 2s}$, the repair stage alone. Triage adds $\\tfrac{1}{1 - s}$.",
+              "triage-only": "That solves $10 = \\tfrac{1}{1 - s}$, triage alone, and lies past 0.5."
+            }
+          },
+          "explain": {
+            "text": "The log of the bound is $-10s - \\ln(1 - s) - \\ln(1 - 2s)$, with slope $-10 + \\tfrac{1}{1 - s} + \\tfrac{2}{1 - 2s}$. Clearing fractions gives $20s^2 - 26s + 7 = 0$, whose root below 0.5 is $s \\approx 0.3807$."
+          }
+        },
+        {
+          "question": "Using $s = 0.3807$ from part 4, what is the Chernoff bound on $P(T \\ge 10)$? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1503,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "repair-s",
+                "value": 0.1526,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-mgf",
+                "value": 0.0222,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "exact",
+                "value": 0.0134,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{e^{-3.807}}{(1 - 0.3807)(1 - 0.7614)} = \\tfrac{0.02221}{0.1478} \\approx 0.1503$.",
+            "generic": "Not quite. Put $s = 0.3807$ into $e^{-10s}M_T(s)$.",
+            "byKey": {
+              "repair-s": "That uses $s = 0.4$, part 4's repair-only slip. With $s = 0.3807$ the bound is 0.1503.",
+              "no-mgf": "That is $e^{-10s}$ alone. Multiply by $M_T(s) \\approx 6.77$.",
+              "exact": "That is the exact chance from part 2. The bound is larger, as a guarantee must be."
+            }
+          },
+          "explain": {
+            "text": "At $s = 0.3807$, $e^{-3.807} \\approx 0.02221$ and $M_T(s) \\approx 6.768$, so the bound is about 0.1503. It is about 11 times the exact 0.0134 of part 2, but it needed no integral of the density."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-dealer-quotes",
+      "difficulty": 3,
+      "skills": [
+        "dl-continuous"
+      ],
+      "prose": "A client asks 4 dealers for a price. Each dealer's improvement on the screen price, in ticks, is uniform on $[0, 1]$, independently of the others. The client trades with the best, the largest improvement.",
+      "parts": [
+        {
+          "question": "What is $P(\\text{best} \\le 0.8)$? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.4096,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "one-dealer",
+                "value": 0.8,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "worst",
+                "value": 0.9984,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "complement",
+                "value": 0.5904,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The best is at most 0.8 only if all four are: $0.8^4 = 0.4096$.",
+            "generic": "Not quite. Turn the event about the best into an event about every dealer.",
+            "byKey": {
+              "one-dealer": "That is one dealer's chance. All four must be at most 0.8.",
+              "worst": "That is $1 - 0.2^4$, the chance the worst is at most 0.8.",
+              "complement": "That is $1 - 0.8^4$, the chance the best beats 0.8."
+            }
+          },
+          "explain": {
+            "text": "$P(\\max \\le t) = F(t)^n$, so $P(\\text{best} \\le 0.8) = 0.8^4 = 0.4096$."
+          }
+        },
+        {
+          "question": "Using $P(\\text{best} \\le t) = t^4$ from part 1, what is $E[\\text{best}]$, in ticks? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.8,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "one-dealer",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "worst",
+                "value": 0.2,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "k-over-n",
+                "value": 0.75,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The density is $4t^3$, so $E[\\text{best}] = \\int_0^1 4t^4\\,dt = \\tfrac{4}{5} = 0.8$.",
+            "generic": "Not quite. Differentiate $t^4$ to get the density, then find its mean.",
+            "byKey": {
+              "one-dealer": "That is one dealer's mean. The best of four sits higher.",
+              "worst": "That is $\\tfrac{1}{5}$, the mean of the worst quote.",
+              "k-over-n": "That is $\\tfrac{n - 1}{n}$. The $k$th smallest of $n$ uniforms has mean $\\tfrac{k}{n + 1} = \\tfrac{4}{5}$."
+            }
+          },
+          "explain": {
+            "text": "$f_{\\max}(t) = 4t^3$ and $\\int_0^1 t \\cdot 4t^3\\,dt = 0.8$. It matches $\\tfrac{k}{n + 1}$ with $k = n = 4$."
+          }
+        },
+        {
+          "question": "Part 2's density $4t^3$ on $[0, 1]$ belongs to a named family. Which?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "beta41",
+                "text": "Beta(4, 1)",
+                "correct": true
+              },
+              {
+                "id": "beta14",
+                "text": "Beta(1, 4)",
+                "why": "Beta(1, 4) has density $4(1 - t)^3$: that is the worst quote."
+              },
+              {
+                "id": "gamma",
+                "text": "Gamma with shape 4",
+                "why": "A Gamma lives on $(0, \\infty)$. The best quote is trapped in $[0, 1]$."
+              },
+              {
+                "id": "uniform",
+                "text": "Uniform on $[0, 1]$",
+                "why": "The uniform is Beta(1, 1). The best of four piles up near 1."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$4t^3 = \\tfrac{t^{4 - 1}(1 - t)^{0}}{B(4, 1)}$ with $B(4, 1) = \\tfrac{1}{4}$: Beta(4, 1).",
+            "generic": "Not quite. Match $4t^3$ to $x^{a-1}(1 - x)^{b-1}$."
+          },
+          "explain": {
+            "text": "The $k$th smallest of $n$ uniforms is Beta($k$, $n - k + 1$). The best is the 4th of 4, so Beta(4, 1), with mean $\\tfrac{4}{5}$ as part 2 found."
+          }
+        },
+        {
+          "question": "Using part 3's rule, the second-best quote, the 3rd smallest of 4, is Beta(3, 2). What is its mean, in ticks? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.6,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "k-over-n",
+                "value": 0.75,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "swapped",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-dealer",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A Beta($a$, $b$) has mean $\\tfrac{a}{a + b} = \\tfrac{3}{5} = 0.6$.",
+            "generic": "Not quite. Use the Beta mean $\\tfrac{a}{a + b}$.",
+            "byKey": {
+              "k-over-n": "That is $\\tfrac{3}{4}$. The mean of the $k$th smallest is $\\tfrac{k}{n + 1} = \\tfrac{3}{5}$.",
+              "swapped": "That is $\\tfrac{2}{5}$, the mean of Beta(2, 3), the second worst.",
+              "one-dealer": "That is one dealer's mean. The second best sits above it."
+            }
+          },
+          "explain": {
+            "text": "Beta(3, 2) has mean $\\tfrac{3}{3 + 2} = 0.6$. The four quotes cut $[0, 1]$ into five gaps of mean 0.2. So the best sits 0.2 above the second best on average."
+          }
+        },
+        {
+          "question": "Using the Beta(3, 2) of part 4, what is the chance the second-best improvement is over 0.5 ticks? Give a fraction, or a decimal to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.6875,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "three-above",
+                "value": 0.3125,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-above",
+                "value": 0.9375,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "half",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The 3rd smallest of 4 is above 0.5 when at least 2 quotes are: $1 - \\tfrac{1}{16} - \\tfrac{4}{16} = \\tfrac{11}{16} = 0.6875$.",
+            "generic": "Not quite. Count how many of the four quotes must be above 0.5.",
+            "byKey": {
+              "three-above": "That needs 3 or more above 0.5. The second best is above 0.5 once 2 are.",
+              "one-above": "That is the chance at least one quote is above 0.5, the best. The second best needs two.",
+              "half": "A single uniform beats 0.5 with chance 0.5. The second best of four does so more often."
+            }
+          },
+          "explain": {
+            "text": "$X_{(3)} > 0.5$ exactly when at most 1 of the 4 quotes is below 0.5. Each is below with chance $\\tfrac12$, so $\\tfrac{1 + 4}{16}$ of the time it fails, and $P = \\tfrac{11}{16} = 0.6875$. The Beta(3, 2) integral $\\int_{0.5}^1 12x^2(1 - x)\\,dx$ gives the same."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-part-errors",
+      "difficulty": 4,
+      "skills": [
+        "dl-normal",
+        "dl-continuous"
+      ],
+      "prose": "A machined part is measured in 4 independent dimensions. Each standardised error $Z_i$ is $N(0, 1)$. The part is flagged by its squared distance from the design, $D = Z_1^2 + Z_2^2 + Z_3^2 + Z_4^2$.",
+      "parts": [
+        {
+          "question": "One squared error has $E[e^{sZ^2}] = (1 - 2s)^{-1/2}$ for $s < \\tfrac12$. What is the moment generating function $M_D(s)$?",
+          "widget": {
+            "kind": "expression",
+            "answer": "(1-2s)^{-2}",
+            "accept": [
+              "\\frac{1}{(1-2s)^2}",
+              "1/(1-2s)^2"
+            ],
+            "wrong": [
+              {
+                "id": "added",
+                "tex": "4(1-2s)^{-1/2}"
+              },
+              {
+                "id": "power",
+                "tex": "(1-2s)^{-1/8}"
+              },
+              {
+                "id": "one",
+                "tex": "(1-2s)^{-1/2}"
+              }
+            ],
+            "keyboard": "algebra"
+          },
+          "feedback": {
+            "correct": "Independent terms multiply their MGFs: $\\left((1 - 2s)^{-1/2}\\right)^4 = (1 - 2s)^{-2}$.",
+            "generic": "Not quite. Multiply the four MGFs together.",
+            "byKey": {
+              "added": "MGFs of a sum multiply, they do not add.",
+              "power": "You multiplied the exponent by $\\tfrac12$ again. Four copies of the power $-\\tfrac12$ give $-2$.",
+              "one": "That is one squared error. $D$ adds four of them."
+            }
+          },
+          "explain": {
+            "text": "$M_D(s) = E[e^{s(Z_1^2 + \\dots + Z_4^2)}] = \\prod E[e^{sZ_i^2}] = (1 - 2s)^{-2}$ by independence."
+          }
+        },
+        {
+          "question": "Using $M_D(s) = (1 - 2s)^{-2}$ from part 1, with $M'(0) = 4$, what is $\\operatorname{Var}(D)$?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 8,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "second-moment",
+                "value": 24,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one-term",
+                "value": 2,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sd",
+                "value": 2.83,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$M''(s) = 24(1 - 2s)^{-4}$, so $E[D^2] = 24$ and $\\operatorname{Var}(D) = 24 - 4^2 = 8$.",
+            "generic": "Not quite. Find $M''(0) = E[D^2]$, then take away $M'(0)^2$.",
+            "byKey": {
+              "second-moment": "That is $E[D^2] = M''(0)$. Take away $M'(0)^2 = 16$.",
+              "one-term": "That is $\\operatorname{Var}(Z^2)$ for one term. Four independent terms give 8.",
+              "sd": "That is the sd, $\\sqrt{8}$. The question asks for the variance."
+            }
+          },
+          "explain": {
+            "text": "$M'(s) = 4(1 - 2s)^{-3}$ and $M''(s) = 24(1 - 2s)^{-4}$. So $E[D] = 4$, $E[D^2] = 24$ and $\\operatorname{Var}(D) = 8$, as $n$ and $2n$ for a chi-square predict."
+          }
+        },
+        {
+          "question": "Part 2 used $M_D(s) = (1 - 2s)^{-2}$. An MGF pins down its distribution. Which is $D$?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "gamma",
+                "text": "Gamma with shape 2 and rate $\\tfrac12$",
+                "correct": true
+              },
+              {
+                "id": "exp",
+                "text": "Exponential with rate $\\tfrac12$",
+                "why": "That has MGF $(1 - 2s)^{-1}$: chi-square with 2 degrees of freedom."
+              },
+              {
+                "id": "normal",
+                "text": "Normal with mean 4 and variance 8",
+                "why": "A normal has MGF $e^{4s + 4s^2}$. $D$ is never negative."
+              },
+              {
+                "id": "gamma4",
+                "text": "Gamma with shape 4 and rate $\\tfrac12$",
+                "why": "That has MGF $(1 - 2s)^{-4}$: chi-square with 8 degrees of freedom."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\left(\\tfrac{1/2}{1/2 - s}\\right)^2 = (1 - 2s)^{-2}$, the Gamma with shape 2 and rate $\\tfrac12$.",
+            "generic": "Not quite. Compare with the Gamma MGF $\\left(\\tfrac{\\lambda}{\\lambda - s}\\right)^a$."
+          },
+          "explain": {
+            "text": "A Gamma($a$, $\\lambda$) has MGF $\\left(\\tfrac{\\lambda}{\\lambda - s}\\right)^a$, and $a = 2$, $\\lambda = \\tfrac12$ give $(1 - 2s)^{-2}$. So $D$ is chi-square with 4 degrees of freedom: the wait for the 2nd arrival at rate $\\tfrac12$."
+          }
+        },
+        {
+          "question": "Using part 3's answer, $D$ is the wait for the 2nd arrival at rate $\\tfrac12$. What is $P(D > 8)$? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0916,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "exponential",
+                "value": 0.0183,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "three-terms",
+                "value": 0.2381,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "rate-one",
+                "value": 0.003,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$D > 8$ when fewer than 2 arrivals come by 8, a Poisson count of mean 4: $e^{-4}(1 + 4) \\approx 0.0916$.",
+            "generic": "Not quite. Turn the wait into a count: how many arrivals at rate $\\tfrac12$ come by time 8?",
+            "byKey": {
+              "exponential": "That is $e^{-4}$, the chance of no arrival. The 2nd arrival is late if there are 0 or 1.",
+              "three-terms": "That is $P(N \\le 2)$, for the 3rd arrival. $D$ is the 2nd: $P(N \\le 1)$.",
+              "rate-one": "That uses rate 1. The rate is $\\tfrac12$, so the count by 8 has mean 4."
+            }
+          },
+          "explain": {
+            "text": "The count of arrivals by 8 is Poisson with mean $8 \\times \\tfrac12 = 4$. The 2nd arrival is after 8 when that count is 0 or 1, so $P(D > 8) = e^{-4}(1 + 4) \\approx 0.0916$."
+          }
+        },
+        {
+          "question": "The tail is $P(D > d) = e^{-d/2}(1 + d/2)$, as in part 4. A part is flagged when $D > d$. What is the smallest whole $d$ that flags at most 5% of good parts?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "normal",
+                "value": 9,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "ten-per-cent",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "too-far",
+                "value": 11,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$P(D > 9) = 0.0611$ and $P(D > 10) = 6e^{-5} \\approx 0.0404$, so $d = 10$.",
+            "generic": "Not quite. Step $d$ up one at a time until the tail falls to 0.05 or below.",
+            "byKey": {
+              "normal": "That is $4 + 1.645\\sqrt{8} \\approx 8.65$, rounded up: a normal approximation. At 9 the true tail is 0.0611.",
+              "ten-per-cent": "At 8 the tail is 0.0916, from part 4. That flags over 9% of good parts.",
+              "too-far": "At 10 the tail is already 0.0404, below 0.05. The smallest such $d$ is 10."
+            }
+          },
+          "explain": {
+            "text": "At $d = 9$ the tail is $5.5e^{-4.5} = 0.0611$, too high. At $d = 10$ it is $6e^{-5} = 0.0404$, so $d = 10$ flags about 4% of good parts. A normal fit would set $d = 9$ and flag 6%."
+          }
+        }
+      ]
+    }
+  ]
+}
