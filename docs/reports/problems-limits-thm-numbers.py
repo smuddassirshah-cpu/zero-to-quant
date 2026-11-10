@@ -331,6 +331,133 @@ ok(abs(LN.sf(40) - 0.4761) <= 0.0005, 'p-default-drag p4: exact chance not accep
 num(L2, 'p-default-drag', 5, 0.9512 * 0.4761, surv * LN.sf(40),
     {'survivor': 0.4761, 'no-drag': 0.9512 * 0.4562}, dp=4, agree=0.0005)
 ok(abs(up / M - surv * LN.sf(40)) < 0.005, 'p-default-drag p5: simulation far from 0.4526')
+# slips reached by a calculator (unrounded z) and by the table (z to 2 dp) both fall in their bands
+def band_has(L, iid, k, wid, vals):
+    w = {x['id']: x for x in L[iid]['parts'][k - 1]['widget']['wrong']}[wid]
+    for v in vals:
+        ok(abs(v - w['value']) <= w['tol']['abs'] + 1e-12, f'{iid} p{k}: {wid} route {v:.5f} outside its band')
+band_has(L2, 'p-digital-share', 4, 'no-drag', [1 - Phi((log(1.25) - 0.06) / 0.3), 1 - Phi(round((log(1.25) - 0.06) / 0.3, 2))])
+band_has(L2, 'p-digital-share', 4, 'plus-drag', [1 - Phi((log(1.25) - 0.105) / 0.3), 1 - Phi(round((log(1.25) - 0.105) / 0.3, 2))])
+band_has(L2, 'p-default-drag', 4, 'no-drag', [1 - Phi(0.04 / 0.35), 1 - Phi(round(0.04 / 0.35, 2))])
+band_has(L2, 'p-default-drag', 5, 'no-drag', [surv * (1 - Phi(0.04 / 0.35)), 0.9512 * (1 - Phi(round(0.04 / 0.35, 2)))])
+
+
+# ------------------------------------------------------------------ level 3
+L3 = load(3)
+
+# p-maker-days: 900 trades, mean 0.40, sd 6; 250 days
+day_var = 900 * 6 ** 2
+num(L3, 'p-maker-days', 1, sqrt(day_var), 6 * sqrt(900),
+    {'add-sds': 900 * 6, 'one-trade': 6, 'variance': day_var}, dp=0)
+rng = random.Random(3)
+sims = []
+for _ in range(4000):
+    sims.append(sum(rng.gauss(0.40, 6) for _ in range(900)))
+sd_sim = sqrt(sum((x - 360) ** 2 for x in sims) / len(sims))
+ok(abs(sd_sim - 180) < 6, 'p-maker-days p1: simulated sd far from 180')
+num(L3, 'p-maker-days', 2, 1 - 0.9772, Phi(-2),
+    {'phi': 0.9772, 'two-tailed': 2 * 0.0228, 'from-add-sds': Phi(-360 / 5400)}, dp=4, agree=0.0001)
+stated('Phi(2) as printed', 0.9772, Phi(2), 0.00005)
+pl = 0.0228
+mu_x, sd_x = 250 * pl, sqrt(250 * pl * (1 - pl))
+z = (9.5 - mu_x) / sd_x
+stated('z to 2 dp', 1.61, z, 0.005)
+stated('sd of losing days', 2.360, sd_x, 0.0005)
+stated('Phi(1.61)', 0.9463, Phi(1.61), 0.00005)
+num(L3, 'p-maker-days', 3, 1 - Phi(1.61), 1 - 0.9463,
+    {'phi': Phi(1.61), 'no-correction': 1 - Phi((10 - mu_x) / sd_x), 'wrong-side': 1 - Phi((10.5 - mu_x) / sd_x),
+     'poisson-sd': 1 - Phi((9.5 - mu_x) / sqrt(mu_x))}, dp=4, agree=0.0001)
+ok(abs(1 - Phi(z) - 0.0537) <= 0.0001, 'p-maker-days p3: unrounded z changes the answer')
+for wid, zz in (('no-correction', (10 - mu_x) / sd_x), ('wrong-side', (10.5 - mu_x) / sd_x), ('poisson-sd', (9.5 - mu_x) / sqrt(mu_x))):
+    w3 = {x['id']: x for x in L3['p-maker-days']['parts'][2]['widget']['wrong']}[wid]
+    ok(abs(round(1 - Phi(round(zz, 2)), 4) - w3['value']) <= w3['tol']['abs'], f'p-maker-days p3: table route of {wid} outside its band')
+exact_b = stats.binom.sf(9, 250, pl)
+exact_b2 = 1 - sum(binom_pmf(k, 250, F(228, 10000)) for k in range(10))
+pois_b = stats.poisson.sf(9, mu_x)
+pois_b2 = 1 - pois_cdf(9, mu_x)
+stated('exact binomial tail', 0.0626, exact_b, 0.00005)
+stated('exact binomial tail, Fraction', 0.0626, exact_b2, 0.00005)
+stated('Poisson tail', 0.0648, pois_b, 0.00005)
+stated('Poisson tail by sum', 0.0648, pois_b2, 0.00005)
+stated('np(1-p)', 5.57, 250 * pl * (1 - pl), 0.005)
+stated('Poisson error', 0.0022, pois_b - exact_b, 0.00005)
+stated('normal error', 0.0089, exact_b - (1 - Phi(1.61)), 0.00005)
+stated('normal 14% low', 14, 100 * (exact_b - 0.0537) / exact_b, 0.5)
+pick(L3, 'p-maker-days', 4, 'poisson')
+
+# p-direction-calls: Bin(400, 0.5), 216 right
+num(L3, 'p-direction-calls', 1, sqrt(400 * 0.25), stats.binom.std(400, 0.5),
+    {'variance': 100, 'share': 0.025, 'no-q': sqrt(200)}, dp=0)
+num(L3, 'p-direction-calls', 2, 1 - Phi(1.55), 1 - 0.9394,
+    {'phi': Phi(1.55), 'no-correction': 1 - Phi(1.6), 'wrong-side': 1 - Phi(1.65), 'two-tailed': 2 * (1 - 0.9394)},
+    dp=4, agree=0.0001)
+stated('Phi(1.55)', 0.9394, Phi(1.55), 0.00005)
+stated('exact binomial tail at 216', 0.0605, stats.binom.sf(215, 400, 0.5), 0.00005)
+stated('exact tail by Fraction sum', 0.0605, float(sum(F(comb(400, k), 2 ** 400) for k in range(216, 401))), 0.00005)
+best12 = 1 - 0.9394 ** 12
+rng = random.Random(5)
+hits = sum(1 for _ in range(200000) if any(rng.random() < 0.0606 for _ in range(12)))
+num(L3, 'p-direction-calls', 3, best12, 1 - (1 - 0.0606) ** 12,
+    {'added': 12 * 0.0606, 'one': 0.0606, 'no-correction': 1 - (1 - 0.0548) ** 12}, dp=4)
+ok(abs(hits / 200000 - best12) < 0.005, 'p-direction-calls p3: simulation far from 0.5277')
+stated('all 12 short', 0.4723, 0.9394 ** 12, 0.00005)
+tgt = 1 - 0.95 ** (1 / 12)
+stated('per-signal tail', 0.0043, tgt, 0.00005)
+stated('z for the tail', 2.63, stats.norm.isf(tgt), 0.005)
+stated('Phi(2.63)', 0.9957, Phi(2.63), 0.00005)
+k_norm = ceil(200.5 + 2.63 * 10)
+k_exact = next(k for k in range(200, 400) if stats.binom.sf(k - 1, 400, 0.5) <= tgt)
+k_normal_full = next(k for k in range(200, 400) if 1 - Phi((k - 0.5 - 200) / 10) <= tgt)
+num(L3, 'p-direction-calls', 4, k_norm, k_exact,
+    {'one-signal': ceil(200.5 + 1.645 * 10), 'rounded-down': k_norm - 1}, dp=0)
+stated('k by unrounded z', 227, k_normal_full, 0)
+stated('z at k=226', 2.55, (225.5 - 200) / 10, 1e-12)
+stated('share right at 227', 57, 100 * 227 / 400, 0.5)
+n5 = (2 * 0.5 / 0.04) ** 2
+n5b = next(n for n in range(1, 5000) if 0.04 * sqrt(n) / 0.5 >= 2 - 1e-12)
+num(L3, 'p-direction-calls', 5, n5, n5b,
+    {'one-se': ceil((1 * 0.5 / 0.04) ** 2), 'root': 25, 'one-point-96': ceil((1.96 * 0.5 / 0.04) ** 2)}, dp=0)
+stated('625 days over two years', 2.48, 625 / 252, 0.01)
+
+# p-rejected-orders: mean 12, sd 4
+num(L3, 'p-rejected-orders', 1, F(12, 36), 12 / 36, {'reversed': 3, 'sd': F(4, 36)}, dp=4)
+k6 = (36 - 12) / 4
+num(L3, 'p-rejected-orders', 2, F(1, 36), (4 / 24) ** 2,
+    {'not-squared': F(4, 24), 'from-zero': F(1, 81), 'markov': F(1, 3)}, dp=4)
+stated('k', 6, k6, 0)
+stated('twelvefold', 12, F(1, 3) / F(1, 36), 0)
+n3 = 16 / (0.05 * 1 ** 2)
+n3b = next(n for n in range(1, 2000) if 16 / n <= 0.05)
+num(L3, 'p-rejected-orders', 3, n3, n3b, {'ninety-five': ceil(16 / 0.95), 'sd': 4 / 0.05, 'clt': 62}, dp=0)
+n4 = ceil((1.96 * 4) ** 2)
+n4b = next(n for n in range(1, 2000) if 1.96 * 4 / sqrt(n) <= 1)
+num(L3, 'p-rejected-orders', 4, n4, n4b,
+    {'rounded-down': n4 - 1, 'one-tail': ceil((1.645 * 4) ** 2), 'no-square': ceil(1.96 * 4), 'chebyshev': 320}, dp=0)
+stated('7.84^2', 61.5, (1.96 * 4) ** 2, 0.05)
+stated('margin at 61', 1.004, 1.96 * 4 / sqrt(61), 0.0005)
+stated('a fifth of 320', 0.2, 62 / 320, 0.01)
+
+# p-fund-months: sd 4%, 36 months, average 1.2%
+se = 4 / sqrt(36)
+num(L3, 'p-fund-months', 1, F(4, 6), se, {'over-n': F(4, 36), 'sd': 4, 'variance': F(16, 36)}, dp=4)
+num(L3, 'p-fund-months', 2, 1.2 / se, 1.2 * sqrt(36) / 4,
+    {'raw-sd': 1.2 / 4, 'over-n': 1.2 / (4 / 36), 'inverted': se / 1.2}, dp=2)
+num(L3, 'p-fund-months', 3, 1 / 1.8 ** 2, F(100, 324), {'not-squared': 1 / 1.8, 'normal': 2 * (1 - Phi(1.8))}, dp=4)
+stated('Phi(1.8)', 0.9641, Phi(1.8), 0.00005)
+num(L3, 'p-fund-months', 4, 2 * (1 - 0.9641), 2 * stats.norm.sf(1.8),
+    {'one-tail': 1 - 0.9641, 'chebyshev': 1 / 1.8 ** 2, 'phi': 0.9641}, dp=4, agree=0.0001)
+rng = random.Random(9)
+tails = sum(1 for _ in range(400000) if abs(rng.gauss(0, 1)) >= 1.8)
+ok(abs(tails / 400000 - 0.0718) < 0.002, 'p-fund-months p4: simulation far from 0.0718')
+stated('one in 14', 14, 1 / 0.0718, 0.5)
+stated('about a quarter', 0.25, 0.0718 / 0.3086, 0.02)
+n_m = (2 * 4 / 1.2) ** 2
+n_mb = next(n for n in range(1, 500) if 1.2 * sqrt(n) / 4 >= 2)
+num(L3, 'p-fund-months', 5, ceil(n_m), n_mb,
+    {'one-se': ceil((4 / 1.2) ** 2), 'rounded-down': ceil(n_m) - 1, 'one-point-96': ceil((1.96 * 4 / 1.2) ** 2)}, dp=0)
+stated('sqrt n', 6.67, 2 * 4 / 1.2, 0.005)
+stated('n', 44.4, n_m, 0.05)
+stated('t at 44', 1.99, 1.2 * sqrt(44) / 4, 0.005)
 
 
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
