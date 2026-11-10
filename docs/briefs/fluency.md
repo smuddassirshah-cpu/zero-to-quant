@@ -34,3 +34,26 @@ A Fluency set is 20 fresh typed-answer items for one procedural lesson, pass at 
 6. Report `docs/reports/fluency-<course>.md` (table: set, family, distinct prompts in 200, `form`, slips). Engine limits, including any format or function you needed and did not have, go to `docs/BACKLOG-INBOX.md` under `Raised later (fluency <course>):`. Do not work round a missing format with a clumsy prompt: raise it and skip that family.
 
 Do not edit engine files, `course.json`, lessons or other courses. Commit per course in your worktree; never push.
+
+## Widening pass (session Z; PLAN 2d; formats of ENGINE-BACKLOG 830 to 835 exist, AUTHORING section 16)
+
+Same rules and the same six checks as above. Read AUTHORING section 16 again first: it has new formats since the first wave. Work only from the "skipped", "narrowed" and "engine limits" lists in your courses' `docs/reports/fluency-<course>.md`. For each entry: if the format now exists, add or widen the family; if it still does not, leave the family as it is and raise the missing format again in the inbox. Extend the course's `-numbers.py` script to cover every new or changed family and append a `## Widening pass` section to the course report (table rows for new or changed families only; a line per entry still blocked).
+
+| Agent | Courses | Entries |
+| --- | --- | --- |
+| A | `quadratics`, `equations` | quadratics: factorise fully and completed square (l3, l4, l6), both roots (l6, l7). equations l15: the simultaneous pair |
+| B | `limits`, `integrals`, `multivar` | coefficient 1 and power 1 draws (limits l9, l10; integrals l9, l10, l14), decimal definite integrals, closed-interval maximum (limits l13). New set `multivar/fluency-l2-slicing`: first partial derivatives as that lesson teaches them |
+| C | `series`, `trig`, `exp-log` | recurring decimal (series l8), exact radians (trig l7), every exp-log and trig family that approximates `ln` or `sin` in `let`: use the real function |
+
+A widened family must not change what an unchanged family draws. Existing set ids and family ids stay.
+
+## Second wave (session Z; PLAN 2d: 0.1 ten sets, 1.4 eight, 1.5 six, 1.6 five, 1.11 six)
+
+Same rules and checks. The agent chooses the lessons: the most procedural lessons of the topic, where a learner needs repetition of one technique with fresh numbers (a lesson whose point is an idea, a proof or a judgement gets no set). State the chosen lessons and one line of reason each at the top of the report, and name any lesson you considered and left out. One to four families a set. The report and numbers script are per course, as in the first wave. Where a lesson's answers are probabilities, give exact fractions unless the lesson works in decimals.
+
+| Agent | Topic | Courses | Sets |
+| --- | --- | --- | --- |
+| 1 | 0.1 | `number-sense`, `ratio` | 10 |
+| 2 | 1.4 | `vectors`, `elimination`, `eigen`, `least-squares` | 8 |
+| 3 | 1.5, 1.6 | `counting-chance`, `conditional`, `random-vars`, `limits-thm`, `markov`; `estimation`, `testing`, `regression` | 6 and 5 |
+| 4 | 1.11 | `complex`, `odes`, `vector-calc` | 6 |
