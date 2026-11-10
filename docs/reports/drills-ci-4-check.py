@@ -16,7 +16,7 @@ For every drill it:
   10 to 14 hidden tests, 2 or 3 examples with a note, `pack-4` first in tags, two or more planted,
   and at difficulty 4 and 5 a `how` that names the obvious method.
 Exit 0 on success.
-Run: <scratchpad>/venv/bin/python docs/reports/drills-ci-4-check.py
+Run: <scratchpad>/venv/bin/python docs/reports/drills-ci-4-check.py [drill ids, to check only those]
 """
 import json, os, subprocess, sys, time, heapq
 from bisect import bisect_left, bisect_right, insort
@@ -33,6 +33,9 @@ IDS = ["ci-right-edge-view", "ci-read-preorder", "ci-busiest-links", "ci-first-m
        "ci-downward-path-sums", "ci-best-route-value", "ci-handoff-distances", "ci-cheapest-pairs",
        "ci-funded-projects", "ci-live-median", "ci-board-words"]
 SMALL = 12
+FULL = len(sys.argv) == 1
+if not FULL:
+    IDS = sys.argv[1:]          # check only these drills (the mix check is then skipped)
 
 # ---------------- independent methods ----------------
 
@@ -546,7 +549,7 @@ for did in IDS:
     if d["pattern"] not in ("trees", "heaps-tries"): err(f"{did}: pattern {d['pattern']}")
     if f"Submit runs {len(d['tests'])} hidden tests" not in d["how"]: err(f"{did}: how test count")
     print(f"{did}: d{d['difficulty']} {len(d['tests'])} tests ok, model {dt:.2f} s, starter fails at {sres['failed']}, planted fail at {caught}, slow methods time out at {slow_out}")
-if dict(diffs) != {2: 3, 3: 5, 4: 5, 5: 2}: err(f"difficulty mix {dict(diffs)}")
-if stdin != 2: err(f"{stdin} stdin drills")
+if FULL and dict(diffs) != {2: 3, 3: 5, 4: 5, 5: 2}: err(f"difficulty mix {dict(diffs)}")
+if FULL and stdin != 2: err(f"{stdin} stdin drills")
 print(f"{len(IDS)} drills, {len(errors)} errors")
 sys.exit(1 if errors else 0)
