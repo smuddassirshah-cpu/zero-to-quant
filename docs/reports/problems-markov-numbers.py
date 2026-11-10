@@ -812,6 +812,165 @@ fl.append(fl[1] * Ppl[2][1] / Ppl[1][2])
 num(L4, 'p-regime-sampler', 5, piM_plain, stationary_np(Ppl)[1],
     {'target': F(1, 2), 'flipped': fl[1] / sum(fl), 'high': wts[2] / sum(wts)})
 
+# ================================================================== level 5 (problems-5.json)
+# Added by the level 4 and 5 author. Method 1: exact fractions from the martingale
+# arguments (optional stopping, Wald, the casino rule, compound Poisson moments).
+# Method 2: first-step equations solved with numpy, enumeration of paths, and seeded
+# simulations.
+from itertools import product as iproduct
+from math import comb
+L5 = load(5)
+
+# p-cash-machine: 12 an hour; sizes 20, 50, 100 with 0.5, 0.3, 0.2
+sizes, probs = [20, 50, 100], [F(1, 2), F(3, 10), F(1, 5)]
+EY = sum(p * y for p, y in zip(probs, sizes))
+EY2 = sum(p * y * y for p, y in zip(probs, sizes))
+rng = np.random.default_rng(51)
+cnt3 = rng.poisson(36, 100000)
+tot3 = np.array([rng.choice(sizes, size=c, p=[0.5, 0.3, 0.2]).sum() for c in cnt3])
+ok(abs(tot3.mean() - 1620) < 5 and abs(tot3.std() - sqrt(36 * 2950)) < 3, f'p-cash-machine: simulated 3-hour total {tot3.mean()}, {tot3.std()}')
+num(L5, 'p-cash-machine', 1, EY, np.dot([0.5, 0.3, 0.2], sizes), {'unweighted': F(sum(sizes), 3)})
+num(L5, 'p-cash-machine', 2, 1000 + 3 * 12 * EY, 1000 + 36 * np.dot([0.5, 0.3, 0.2], sizes),
+    {'whole-day': 1000 + 4 * 12 * EY, 'no-past': 3 * 12 * EY, 'from-zero': 4 * 12 * EY})
+num(L5, 'p-cash-machine', 3, EY2, np.dot([0.5, 0.3, 0.2], np.square(sizes)),
+    {'variance': EY2 - EY ** 2, 'mean-sq': EY ** 2})
+# alt for the variance: random-sum formula E[N]Var(Y) + Var(N)E[Y]^2 with Var(N) = E[N] = 36
+sd3 = sqrt(36 * EY2)
+ok(36 * (EY2 - EY ** 2) + 36 * EY ** 2 == 36 * EY2 == 106200, 'p-cash-machine: random-sum variance')
+num(L5, 'p-cash-machine', 4, sd3, sqrt(float(36 * (EY2 - EY ** 2) + 36 * EY ** 2)),
+    {'var-y': sqrt(36 * (EY2 - EY ** 2)), 'four-hours': sqrt(48 * EY2), 'variance': 36 * EY2})
+num(L5, 'p-cash-machine', 5, 1620 + 2 * sd3, 36 * np.dot([0.5, 0.3, 0.2], sizes) + 2 * sqrt(36 * np.dot([0.5, 0.3, 0.2], np.square(sizes))),
+    {'with-past': 2620 + 2 * sd3, 'var-y': 1620 + 2 * sqrt(36 * (EY2 - EY ** 2)), 'one-sd': 1620 + sd3},
+    routes=[1620 + 2 * F('325.88')])
+
+# p-signal-trial: steps of £2,000, p = 0.45, start 3, ends 0 and 5
+pp, qq = F(9, 20), F(11, 20)
+rr = qq / pp
+Pwin = (1 - rr ** 3) / (1 - rr ** 5)
+ok(Pwin == F(24381, 51001), 'p-signal-trial: P = 24381/51001')
+ok(abs(float(rr ** 3) - 1.8258) < 0.00005 and abs(float(rr ** 5) - 2.7274) < 0.00005, 'p-signal-trial: printed powers')
+
+
+def walk_np(i, N, p):
+    """Win chance and expected duration by first-step equations, solved with numpy."""
+    A = np.zeros((N + 1, N + 1))
+    b1, b2 = np.zeros(N + 1), np.zeros(N + 1)
+    A[0, 0] = A[N, N] = 1
+    b1[N] = 1
+    for k in range(1, N):
+        A[k, k], A[k, k + 1], A[k, k - 1] = 1, -p, -(1 - p)
+        b2[k] = 1
+    return np.linalg.solve(A, b1)[i], np.linalg.solve(A, b2)[i]
+
+
+pw_np, et_np = walk_np(3, 5, 0.45)
+num(L5, 'p-signal-trial', 1, 2000 * (pp - qq), 0.45 * 2000 - 0.55 * 2000,
+    {'units': pp - qq, 'sign': 2000 * (qq - pp), 'win-only': 2000 * pp})
+num(L5, 'p-signal-trial', 2, rr, 0.55 / 0.45, {'p-over-q': 1 / rr, 'q-only': qq})
+num(L5, 'p-signal-trial', 3, Pwin, pw_np,
+    {'fair': F(3, 5), 'inverted': (1 - (1 / rr) ** 3) / (1 - (1 / rr) ** 5), 'ruin': 1 - Pwin})
+ET = (5 * Pwin - 3) / (pp - qq)
+num(L5, 'p-signal-trial', 4, ET, et_np, {'fair': 6, 'sign': -ET}, routes=[(5 * F('0.4780') - 3) / (pp - qq)])
+rng = np.random.default_rng(13)
+pl = []
+for _ in range(100000):
+    s = 3
+    while 0 < s < 5:
+        s += 1 if rng.random() < 0.45 else -1
+    pl.append(4000 if s == 5 else -6000)
+ok(abs(np.mean(pl) - float(-200 * ET)) < 40, f'p-signal-trial: simulated P&L {np.mean(pl)}')
+num(L5, 'p-signal-trial', 5, -200 * ET, 4000 * pw_np - 6000 * (1 - pw_np),
+    {'fair': 0, 'per-day': -200, 'ends-swapped': 6000 * Pwin - 4000 * (1 - Pwin)},
+    routes=[-200 * F('6.10'), 4000 * F('0.478') - 6000 * F('0.522')])
+
+# p-two-loss-cut: +300 with 0.7, -500 with 0.3; cut at LL, then at LWL
+pL = F(3, 10)
+mu = F(7, 10) * 300 - pL * 500
+
+
+def pattern_wait(pat, pl_):
+    """Casino rule: add 1/P(prefix) over prefixes that are also suffixes."""
+    ch = {'L': pl_, 'W': 1 - pl_}
+    tot_ = F(0)
+    for k in range(1, len(pat) + 1):
+        if pat[:k] == pat[-k:]:
+            pr = F(1)
+            for c in pat[:k]:
+                pr *= ch[c]
+            tot_ += 1 / pr
+    return tot_
+
+
+def pattern_wait_np(pat, pl_):
+    """First-step equations on the progress states 0..len-1, solved with numpy."""
+    m = len(pat)
+    ch = {'L': pl_, 'W': 1 - pl_}
+
+    def nxt(state, c):
+        s_ = pat[:state] + c
+        for k in range(min(len(s_), m), -1, -1):
+            if s_.endswith(pat[:k]):
+                return k
+    A, b = np.eye(m), np.ones(m)
+    for st in range(m):
+        for c in 'LW':
+            t_ = nxt(st, c)
+            if t_ < m:
+                A[st, t_] -= ch[c]
+    return np.linalg.solve(A, b)[0]
+
+
+ELL = pattern_wait('LL', pL)
+ELWL = pattern_wait('LWL', pL)
+ok(ELL == F(130, 9), 'p-two-loss-cut: E[T] for LL is 130/9')
+num(L5, 'p-two-loss-cut', 1, mu, 0.7 * 300 - 0.3 * 500, {'swapped': pL * 300 - F(7, 10) * 500, 'no-chances': -200})
+num(L5, 'p-two-loss-cut', 2, ELL, pattern_wait_np('LL', 0.3),
+    {'no-overlap': 1 / pL ** 2, 'fair-coin': pattern_wait('LL', F(1, 2)), 'single': 1 / pL})
+pick(L5, 'p-two-loss-cut', 3, 'stopping')
+rng = np.random.default_rng(31)
+tots = []
+for _ in range(100000):
+    prev, t_ = None, 0
+    while True:
+        lose = rng.random() < 0.3
+        t_ += -500 if lose else 300
+        if lose and prev:
+            break
+        prev = lose
+    tots.append(t_)
+ok(abs(np.mean(tots) - float(mu * ELL)) < 10, f'p-two-loss-cut: simulated total {np.mean(tots)}')
+num(L5, 'p-two-loss-cut', 4, mu * ELL, 60 * pattern_wait_np('LL', 0.3),
+    {'no-overlap': mu / pL ** 2, 'one-day': mu, 'minus-losses': mu * ELL - 1000})
+ok(abs(float(ELWL) - 19.2063) < 0.00005 and pL * (1 - pL) * pL == F(63, 1000), 'p-two-loss-cut: LWL wait 19.2063 and chance 0.063')
+num(L5, 'p-two-loss-cut', 5, mu * ELWL, 60 * pattern_wait_np('LWL', 0.3),
+    {'no-overlap': mu / (pL * (1 - pL) * pL), 'two-losses': mu * ELL})
+
+# p-capped-close: fair walk, stop at +1 or after 4 steps; enumerate the 16 paths
+rows = []
+for path in iproduct([1, -1], repeat=4):
+    s, T_ = 0, 4
+    for d_, st in enumerate(path, 1):
+        s += st
+        if s == 1:
+            T_ = d_
+            break
+    rows.append((s, T_))
+win = F(sum(1 for s, _ in rows if s == 1), 16)
+ok(sum(1 for s, _ in rows if s != 1) == comb(4, 2), 'p-capped-close: 6 failing paths')
+num(L5, 'p-capped-close', 1, 1 - F(comb(4, 2), 16), win, {'fail': F(6, 16), 'half': F(1, 2)})
+fail_avg = F(sum(s for s, _ in rows if s != 1), 6)
+ok(F(sum(s for s, _ in rows), 16) == 0, 'p-capped-close: E[S_T] = 0 by enumeration')
+num(L5, 'p-capped-close', 2, 1000 * fail_avg, -1000 * 0.625 / 0.375,
+    {'zero': 0, 'swapped': -1000 * F(3, 8) / F(5, 8), 'worst': -4000})
+ET4 = F(sum(T_ for _, T_ in rows), 16)
+num(L5, 'p-capped-close', 3, ET4, 1 * 0.5 + 3 * 0.125 + 4 * 0.375,
+    {'cap': 4, 'no-day-3': F(1, 2) * 1 + F(1, 2) * 4, 'half': 2})
+ES2 = F(sum(s * s for s, _ in rows), 16)
+ok(ES2 == ET4 and F(sum(s * s for s, _ in rows if s != 1), 16) == F(28, 16), 'p-capped-close: E[S_T^2] = E[T] and the 28/16 term')
+num(L5, 'p-capped-close', 4, 1000 * sqrt(ES2), 1000 * float(np.std([s for s, _ in rows])),
+    {'no-root': 1000 * ES2, 'cap': 1000 * sqrt(4), 'variance': 1000 ** 2 * ES2})
+pick(L5, 'p-capped-close', 5, 'conditions')
+
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
