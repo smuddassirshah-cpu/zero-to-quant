@@ -283,9 +283,26 @@
         2.0
       ],
       "compare": "isclose"
+    },
+    {
+      "call": "[]{ std::vector<int> s(100000); for (int i = 0; i < 100000; ++i) s[i] = (i * 7919) % 1000; std::vector<double> r = mean_ranks(s); return std::vector<double>{r[0], r[1], r[99999]}; }()",
+      "expect": [
+        50.5,
+        91950.5,
+        8150.5
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "[]{ std::vector<double> r = mean_ranks(std::vector<int>(3000, 7)); return std::vector<double>{r[0], r[2999]}; }()",
+      "expect": [
+        1500.5,
+        1500.5
+      ],
+      "compare": "isclose"
     }
   ],
-  "how": "Submit runs 11 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
   "solution": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\nstd::vector<double> mean_ranks(const std::vector<int>& scores) {\n    int n = static_cast<int>(scores.size());\n    std::vector<int> idx(n);\n    std::iota(idx.begin(), idx.end(), 0);\n    std::sort(idx.begin(), idx.end(), [&](int a, int b) { return scores[a] < scores[b]; });\n    std::vector<double> out(n);\n    int i = 0;\n    while (i < n) {\n        int j = i;\n        while (j + 1 < n && scores[idx[j + 1]] == scores[idx[i]]) ++j;\n        double r = (i + 1 + j + 1) / 2.0;   // mean of ranks i+1 .. j+1\n        for (int m = i; m <= j; ++m) out[idx[m]] = r;\n        i = j + 1;\n    }\n    return out;\n}\n",
   "notes": [
     "Sorting positions, not scores, keeps the link back to the input order for writing the answer.",
@@ -304,6 +321,10 @@
     {
       "code": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\nstd::vector<double> mean_ranks(const std::vector<int>& scores) {\n    int n = static_cast<int>(scores.size());\n    std::vector<int> idx(n);\n    std::iota(idx.begin(), idx.end(), 0);\n    std::sort(idx.begin(), idx.end(), [&](int a, int b) { return scores[a] < scores[b]; });\n    std::vector<double> out(n);\n    int i = 0;\n    while (i < n) {\n        int j = i;\n        while (j + 1 < n && scores[idx[j + 1]] == scores[idx[i]]) ++j;\n        double r = (i + j) / 2.0;   // mean of ranks i+1 .. j+1\n        for (int m = i; m <= j; ++m) out[idx[m]] = r;\n        i = j + 1;\n    }\n    return out;\n}\n",
       "slip": "Counts ranks from 0, not 1."
+    },
+    {
+      "code": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\nstd::vector<double> mean_ranks(const std::vector<int>& scores) {\n    int n = static_cast<int>(scores.size());\n    std::vector<int> idx(n);\n    std::iota(idx.begin(), idx.end(), 0);\n    std::sort(idx.begin(), idx.end(), [&](int a, int b) { return scores[a] <= scores[b]; });\n    std::vector<double> out(n);\n    int i = 0;\n    while (i < n) {\n        int j = i;\n        while (j + 1 < n && scores[idx[j + 1]] == scores[idx[i]]) ++j;\n        double r = (i + 1 + j + 1) / 2.0;\n        for (int m = i; m <= j; ++m) out[idx[m]] = r;\n        i = j + 1;\n    }\n    return out;\n}\n",
+      "slip": "`<=` is not a strict ordering, and `std::sort` runs off the end on ties."
     }
   ]
 }

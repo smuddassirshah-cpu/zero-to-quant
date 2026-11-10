@@ -14,12 +14,12 @@
   ],
   "difficulty": 3,
   "pace": 1140,
-  "brief": "A Monte Carlo run reports its mean and its sample variance as the draws arrive, and batches run apart are combined at the end. Write `class RunningStats` with `void add(double x)`, `long long count() const`, `double mean() const` (0 when empty), `double variance() const`, the sample variance with $n - 1$ below (0 with fewer than two values), and `void merge(const RunningStats& other)`, which makes this object describe both sets of values.\n\nFor 2, 4, 4, 4, 5, 5, 7 and 9 the mean is 5, the squared distances from it sum to 32, and the variance is 32 / 7, about 4.571429.",
+  "brief": "A Monte Carlo run reports its mean and its sample variance as the draws arrive, and batches run apart are combined at the end. Write `class RunningStats` with `void add(double x)`, `long long count() const`, `double mean() const` (0 when empty), `double variance() const`, the sample variance with $n - 1$ below (0 with fewer than two values), and `void merge(const RunningStats& other)`, which makes this object describe both sets of values.\n\nFor 2, 4, 4, 4, 5, 5, 7 and 9 the mean is 5, the squared distances from it sum to 32, and the variance is 32 / 7, about 4.571429.\n\nWelford's method keeps the count `n`, the mean and `m2`, the sum of squared distances from the mean. For a new value `x`: `d = x - mean`, then `mean += d / n` with the new `n`, then `m2 += d * (x - mean)` with the new mean. Two sets merge with `m2 = m2a + m2b + d * d * na * nb / n`, where `d` is the gap between their means and `n = na + nb`.",
   "constraints": [
     "Up to $10^6$ values. Values may sit near $10^9$ with a spread of a few units, and the variance must still be within a relative 1e-9.",
     "Each test has a 5-second limit."
   ],
-  "hint": "Keep the count, the mean and the sum of squared distances from the mean, updated on each value (Welford's method). A sum of squares loses the spread when the values are large.",
+  "hint": "A sum of squares loses the spread when the values are large; keep distances from the running mean. Handle an empty side of a merge first.",
   "starter": "class RunningStats {\npublic:\n    void add(double x) {}\n    long long count() const { return 0; }\n    double mean() const { return 0.0; }\n    double variance() const { return 0.0; }\n    void merge(const RunningStats& other) {}\n};\n",
   "postlude": "#include <vector>\n\n// hidden test helpers: {count, mean, variance}\nstd::vector<double> report(const RunningStats& s) { return {double(s.count()), s.mean(), s.variance()}; }\nstd::vector<double> stats_of(const std::vector<double>& xs) {\n    RunningStats s;\n    for (double x : xs) s.add(x);\n    return report(s);\n}\nstd::vector<double> merged(const std::vector<double>& a, const std::vector<double>& b) {\n    RunningStats p, q;\n    for (double x : a) p.add(x);\n    for (double x : b) q.add(x);\n    p.merge(q);\n    return report(p);\n}\n",
   "examples": [

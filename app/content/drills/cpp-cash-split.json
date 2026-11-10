@@ -14,7 +14,7 @@
   ],
   "difficulty": 3,
   "pace": 1020,
-  "brief": "A settlement system holds money as whole pence in a `long long`, never as a `double`. Write `class Cash` with `static Cash from_pence(long long p)`, `long long pence() const`, `Cash operator+(Cash other) const`, and two harder members. `static Cash from_pounds(double pounds)` takes the nearest whole penny, half a penny going away from zero. `std::vector<Cash> split(int n) const` cuts the amount into `n` parts that add up to it exactly, each within a penny of the others. The parts a penny larger in size come first, and every part has the sign of the whole.\n\n`from_pounds(0.29)` must give 29 pence, although `0.29 * 100` is just below 29 as a `double`. Splitting 100p three ways gives 34, 33 and 33, and -100p gives -34, -33 and -33.",
+  "brief": "A settlement system holds money as whole pence in a `long long`, never as a `double`. Write `class Cash` with `static Cash from_pence(long long p)`, `long long pence() const`, `Cash operator+(Cash other) const`, and two harder members. `static Cash from_pounds(double pounds)` takes the nearest whole penny, half a penny going away from zero. `std::llround` in `<cmath>` rounds a `double` to the nearest `long long`, a half going away from zero. `std::vector<Cash> split(int n) const` cuts the amount into `n` parts that add up to it exactly, each within a penny of the others. The parts a penny larger in size come first, and every part has the sign of the whole.\n\n`from_pounds(0.29)` must give 29 pence, although `0.29 * 100` is just below 29 as a `double`. Splitting 100p three ways gives 34, 33 and 33, and -100p gives -34, -33 and -33.",
   "constraints": [
     "$|$pounds$| \\le 10^{9}$ and $1 \\le n \\le 1000$. Amounts in pence fit in a `long long`.",
     "Each test has a 5-second limit."
@@ -69,12 +69,12 @@
     {
       "call": "pounds_to_pence",
       "args": [
-        19.99
+        30000000.01
       ],
       "types": [
         "double"
       ],
-      "expect": 1999,
+      "expect": 3000000001,
       "compare": "equal"
     },
     {
@@ -288,6 +288,10 @@
     {
       "code": "#include <cmath>\n#include <cstdlib>\n#include <vector>\n\nclass Cash {\npublic:\n    static Cash from_pence(long long p) { Cash c; c.p_ = p; return c; }\n    static Cash from_pounds(double pounds) { return from_pence(std::llround(pounds * 100)); }\n    long long pence() const { return p_; }\n    Cash operator+(Cash o) const { return from_pence(p_ + o.p_); }\n    std::vector<Cash> split(int n) const {\n        std::vector<Cash> parts;\n        long long q = p_ / n, r = p_ % n;   // r has the sign of p_\n        for (int i = 0; i < n; ++i) {\n            long long extra = i < r ? 1 : 0;\n            parts.push_back(from_pence(q + extra));\n        }\n        return parts;\n    }\nprivate:\n    long long p_ = 0;\n};\n",
       "slip": "Hands out the remainder only when it is positive, so a negative amount loses pennies."
+    },
+    {
+      "code": "#include <cmath>\n#include <cstdlib>\n#include <vector>\n\nclass Cash {\npublic:\n    static Cash from_pence(long long p) { Cash c; c.p_ = p; return c; }\n    static Cash from_pounds(double pounds) { int p = static_cast<int>(std::round(pounds * 100)); return from_pence(p); }\n    long long pence() const { return p_; }\n    Cash operator+(Cash o) const { return from_pence(p_ + o.p_); }\n    std::vector<Cash> split(int n) const {\n        std::vector<Cash> parts;\n        long long q = p_ / n, r = p_ % n;\n        for (int i = 0; i < n; ++i) {\n            long long extra = i < std::llabs(r) ? (r > 0 ? 1 : -1) : 0;\n            parts.push_back(from_pence(q + extra));\n        }\n        return parts;\n    }\nprivate:\n    long long p_ = 0;\n};\n",
+      "slip": "The pence pass through an int, which stops at 2,147,483,647."
     }
   ]
 }

@@ -20,7 +20,7 @@
     "A log may be empty when `size` and `span` are read.",
     "Each test has a 5-second limit."
   ],
-  "hint": "Compare a new time with the last one stored, not the first. Check for an empty log before you read `back()` or `front()`.",
+  "hint": "Keep the first and last stored time and a count, or a vector of times. Compare a new time with the last one stored, not the first.",
   "starter": "#include <vector>\n\nclass TickLog {\npublic:\n    bool add(long long t) {\n        return false;\n    }\n    int size() const { return 0; }\n    long long span() const { return 0; }\nprivate:\n    // the stored times\n};\n",
   "postlude": "#include <vector>\n\n// hidden test helper: 1 or 0 for each add, then size() and span()\nstd::vector<long long> run_log(const std::vector<long long>& times) {\n    TickLog g;\n    std::vector<long long> out;\n    for (long long t : times) out.push_back(g.add(t) ? 1 : 0);\n    out.push_back(g.size());\n    out.push_back(g.span());\n    return out;\n}\n",
   "examples": [
@@ -301,9 +301,28 @@
         0
       ],
       "compare": "equal"
+    },
+    {
+      "call": "run_log",
+      "args": [
+        [
+          3000000000,
+          1
+        ]
+      ],
+      "types": [
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        0,
+        1,
+        0
+      ],
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value. A hidden helper adds each time to a fresh log, then reads `size()` and `span()`.",
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. A hidden helper adds each time to a fresh log, then reads `size()` and `span()`.",
   "solution": "#include <vector>\n\nclass TickLog {\npublic:\n    bool add(long long t) {\n        if (!times_.empty() && t < times_.back()) return false;\n        times_.push_back(t);\n        return true;\n    }\n    int size() const { return static_cast<int>(times_.size()); }\n    long long span() const { return times_.size() < 2 ? 0 : times_.back() - times_.front(); }\nprivate:\n    std::vector<long long> times_;\n};\n",
   "notes": [
     "The invariant is that stored times never decrease, and `add` is the only way in, so one check keeps it.",
@@ -322,6 +341,10 @@
     {
       "code": "#include <vector>\n\nclass TickLog {\npublic:\n    bool add(long long t) {\n        if (!times_.empty() && t < times_.back()) return false;\n        times_.push_back(t);\n        return true;\n    }\n    int size() const { return static_cast<int>(times_.size()); }\n    long long span() const { return times_.back() - times_.front(); }\nprivate:\n    std::vector<long long> times_;\n};\n",
       "slip": "Reads back() and front() of an empty log."
+    },
+    {
+      "code": "#include <vector>\n\nclass TickLog {\npublic:\n    bool add(long long t) {\n        if (!times_.empty() && t < times_.back()) return false;\n        times_.push_back(t);\n        return true;\n    }\n    int size() const { return static_cast<int>(times_.size()); }\n    long long span() const { return times_.size() < 2 ? 0 : times_.back() - times_.front(); }\nprivate:\n    std::vector<int> times_;\n};\n",
+      "slip": "The times are stored in an int and wrap."
     }
   ]
 }

@@ -15,7 +15,7 @@
   "pace": 600,
   "brief": "Round-trip latencies in microseconds have rare huge outliers, so a desk reports a trimmed mean. Write `latency_trimmed_mean(ticks, k)`, which drops the `k` smallest and the `k` largest values and returns the mean of the rest as a `double`. When `2 * k` is at least the number of values, nothing is left: return 0.\n\nFor `{120, 95, 3000, 101, 99, 110}` and `k = 1`, dropping 95 and 3000 leaves 99, 101, 110 and 120, which sum to 430. The answer is 107.5.",
   "constraints": [
-    "$0 \\le n \\le 10^5$ values, each from $-2 \\cdot 10^9$ to $2 \\cdot 10^9$, and $0 \\le k$.",
+    "$0 \\le n \\le 10^5$ values, each from $-2 \\cdot 10^9$ to $2 \\cdot 10^9$, and $0 \\le k \\le 10^5$.",
     "A sum of several values can pass 2,147,483,647.",
     "Each test has a 5-second limit."
   ],
@@ -269,9 +269,26 @@
       ],
       "expect": 5.0,
       "compare": "isclose"
+    },
+    {
+      "call": "latency_trimmed_mean",
+      "args": [
+        [
+          100000001,
+          100000002,
+          100000004
+        ],
+        0
+      ],
+      "types": [
+        "std::vector<int>",
+        "int"
+      ],
+      "expect": 100000002.33333333,
+      "compare": "isclose"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
   "solution": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\ndouble latency_trimmed_mean(std::vector<int> ticks, int k) {\n    int n = static_cast<int>(ticks.size());\n    if (2 * k >= n) return 0.0;\n    std::sort(ticks.begin(), ticks.end());\n    long long sum = std::accumulate(ticks.begin() + k, ticks.end() - k, 0LL);\n    return static_cast<double>(sum) / (n - 2 * k);\n}\n",
   "notes": [
     "`std::accumulate(first, last, 0LL)` sums in `long long`; with `0` it sums in `int` and overflows.",
@@ -290,6 +307,10 @@
     {
       "code": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\ndouble latency_trimmed_mean(std::vector<int> ticks, int k) {\n    int n = static_cast<int>(ticks.size());\n    if (2 * k > n) return 0.0;\n    std::sort(ticks.begin(), ticks.end());\n    long long sum = std::accumulate(ticks.begin() + k, ticks.end() - k, 0LL);\n    return static_cast<double>(sum) / (n - 2 * k);\n}\n",
       "slip": "Lets 2k equal n through, and then divides by zero."
+    },
+    {
+      "code": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\ndouble latency_trimmed_mean(std::vector<int> ticks, int k) {\n    int n = static_cast<int>(ticks.size());\n    if (2 * k >= n) return 0.0;\n    std::sort(ticks.begin(), ticks.end());\n    float sum = std::accumulate(ticks.begin() + k, ticks.end() - k, 0.0f);\n    return sum / (n - 2 * k);\n}\n",
+      "slip": "The sum is a float, so a sum of large values loses its low digits."
     }
   ]
 }

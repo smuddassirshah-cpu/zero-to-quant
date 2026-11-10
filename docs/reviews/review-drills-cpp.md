@@ -58,3 +58,31 @@ Tests to add or replace: `cpp-cash-split` (1), `cpp-fill-csv` (2), `cpp-compound
 Constraint to tighten: `cpp-prob-between` (10), `cpp-trimmed-mean` (17).
 
 For the fix pass: every proposed test is in `drills-cpp-scripts/extra_tests.json` with its `expect` computed by `mine.py`; `harness.py extra` shows the model passing and each candidate failing, and `app_probe.py <copy> <pkgs> after <ids>` shows the same in the app's runtime. No drill goes above 15 tests if tests[1] of `cpp-cash-split` and tests[12] of `cpp-session-time` are replaced as findings 1 and 4 say. This finding class (a planted-check that passes because the slips planted were the ones the tests were written for) has now been seen in `ci`, `py` and `cpp`; under SESSION PROTOCOL 6 it wants a script: a type-swap pass that reruns each C++ model with `double` narrowed to `float` and `long long` to `int` and fails the drill when it still passes.
+
+## Fix pass
+
+Method: each new test is the reader's from `drills-cpp-scripts/extra_tests.json`; `harness.py extra` (g++) shows each model passing and each candidate failing, and the independent Python model in `docs/reports/drills-cpp-check.py` agrees with every `expect` (it now models the two large `mean_ranks` lambdas and the `Px` test; its limits are 10 to 15 tests, 2 to 6 planted, mix `cpp` 7 / 6 / 4). That script exits 0 (25 drills, 354 cases). Validator 0 errors; `playthrough --drill` green with and without `--mobile` and `planted-check --require` green (89 planted, 0 failures) on all 21 changed drills; `fresh-check` 0 hits on each; no em-dashes, no exclamation marks, no new sentence over 35 words. All 14 unplanted wrong solutions are now planted; the quadratic `mean_ranks` is correct but slow and is not planted.
+
+1. fixed: tests[1] of `cpp-cash-split` is `pounds_to_pence(30000000.01)` = 3000000001 (recomputed: 3,000,000,001 pence, above the int limit); `int_round` planted; brief names `std::llround`.
+2. fixed: both `cpp-fill-csv` tests added (15 tests), both candidates planted; the brief now states the `-` rule for `price`, that a `\r` anywhere but the end makes the row bad, and `c - '0'`.
+3. fixed: both `cpp-compound-df` tests added (12 tests), `whole_periods` planted.
+4. fixed: `cpp-session-time` tests[12] replaced by `SessionTime(1500) < SessionTime(100)`, `SessionTime(-10) < SessionTime(5)` added before the `compiles` case (15 tests), `raw_less` planted.
+5. fixed: `[3000000000, 1]` added to `cpp-tick-log` (12 tests), `int_times` planted.
+6. fixed: both lambda tests added to `cpp-mean-ranks` (13 tests), `<=` comparator planted; the n squared count stays unplanted and fails on time.
+7. fixed: both `cpp-movers` tests added (14 tests), both candidates planted.
+8. fixed: `fee_pence(999999999999, 9999)` added (13 tests), `double_ceil` planted.
+9. fixed: one test each in `cpp-high-water` (10), `cpp-range-out` (13), `cpp-trimmed-mean` (13), `cpp-scaled-payoff` (11), each `float` candidate planted.
+10. fixed: `cpp-prob-between` constraints[0] as proposed; model and tests untouched.
+11. fixed: `cpp-crossings` has a postlude `Px` with only `<` and a twelfth test (the model passes, `right_but_other_ops` no longer compiles); `cpp-high-water` constraint reworded.
+12. fixed: `cpp-running-stats` brief gives Welford's update and the merge formula, hint reworded; difficulty stays 3.
+13. fixed: (a) `fill-csv` brief; (b) `tick-round` brief; (c) `cash-split` brief (its hint already says the remainder takes the amount's sign); (d) `tick-log` hint, and the report names l14; (e), (f) report rows name l10 for `fee-tier` and l16 for `movers`; (g) `bermudan-put` hint uses `std::vector<int>`.
+14. fixed in part: (a) `cpp-drop-small` kept and set to difficulty 1, pace 420 (index row and mix updated); (b) `bermudan-put` hint no longer says "as the binomial lesson does", and the report says it is the one tree drill; (c) report names `corridor_price`; difficulty of `prob-between` was already 1.
+15. fixed: starters of `cpp-crossings`, `cpp-session-time`, `cpp-scaled-payoff`, `cpp-clip-returns`, `cpp-drop-small` cut as proposed, with the parameter types added to the briefs of the last two; each starter still fails every test (it does not compile), as the harness and the playthrough show.
+16. fixed in part: accepted as a repeat met once in each language and recorded in the report; no task or helper name changed.
+17. fixed: `cpp-trimmed-mean` constraint $0 \le k \le 10^5$.
+18. fixed: `cpp-take-all` notes[0] as proposed.
+19. fixed: (a) `cpp-high-water` reaches 10 with finding 9; `cpp-fee-tier` has 10 (the reader's `[0, 100]` test, one tier asked at 10^13, twenty tiers); `cpp-take-all` has 10 (`run_take(5, 1)`, `run_take(1, 5)`); (b) the report says "two drills"; (c) `cpp-fee-pence` slip reworded; (d) `cpp-tick-round` notes[2] as proposed.
+
+Counts: 19 fixed (3 in part), 0 disputed, 0 deferred.
+
+Drills whose tests changed: `cpp-cash-split` (tests[1] replaced, its `expect` 1999 gone with it), `cpp-session-time` (tests[12] replaced; the `expect` false of `2000 < 100` gone with it), and new tests only (no existing `expect` altered) in `cpp-fill-csv`, `cpp-compound-df`, `cpp-tick-log`, `cpp-mean-ranks`, `cpp-movers`, `cpp-fee-pence`, `cpp-high-water`, `cpp-range-out`, `cpp-trimmed-mean`, `cpp-scaled-payoff`, `cpp-crossings`, `cpp-fee-tier`, `cpp-take-all`. Drills whose starter changed: `cpp-crossings`, `cpp-session-time`, `cpp-scaled-payoff`, `cpp-clip-returns`, `cpp-drop-small`. Difficulty and pace changed: `cpp-drop-small` (2 to 1, 600 to 420). Text only: `cpp-prob-between`, `cpp-running-stats`, `cpp-tick-round`, `cpp-bermudan-put`. Task or data touched beyond a finding: none (`cpp-crossings` gained a postlude, as finding 11 gives).
