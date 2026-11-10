@@ -1,6 +1,6 @@
 # Claim ledger: mm-games L1 to L3 (concept audit)
 
-Blind audit of `app/content/courses/mm-games/` levels 1 to 3 (l1 to l13, review-1 to review-3, homework-1 to homework-3). ROWCOUNT_LINE
+Blind audit of `app/content/courses/mm-games/` levels 1 to 3 (l1 to l13, review-1 to review-3, homework-1 to homework-3). 296 rows: correct 268, imprecise 22, misleading 2, wrong 2, unverified 2. Findings are numbered as in `docs/reviews/audit-mm-games-1-3.md`.
 
 One row per definition, result, method step, convention, always/never/every/only claim, code-behaviour claim and the reasoning of each explain, why, hint, feedback, rubric and model line. Lines on one screen that restate the same reasoning share a row, and the path column then names every key covered. Paths are JSON paths inside the file (`s[n]` is `screens[n]`, `q[n]` is `quiz[n]`, `i[n]` is `items[n]`). Verdicts: correct, wrong, imprecise, misleading, unverified. `sim:` names a check in `docs/reports/mm-games-L<n>-concepts.py`; `enum` means exact enumeration there.
 
