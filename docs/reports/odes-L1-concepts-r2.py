@@ -14,6 +14,30 @@ import numpy as np
 import sympy as sp
 from scipy.integrate import solve_ivp
 
+import json as _json, pathlib as _pl
+_ODES = _pl.Path(__file__).resolve().parents[2] / "app" / "content" / "courses" / "odes"
+
+
+def obj_of(name):
+    return _json.load(open(_ODES / name, encoding="utf-8"))
+
+
+def _leaves(o):
+    if isinstance(o, str):
+        yield o
+    elif isinstance(o, dict):
+        for v in o.values():
+            yield from _leaves(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _leaves(v)
+
+
+def text_of(name):
+    """Every string in a content file, joined (for checks on the corrected wording)."""
+    return "\n".join(_leaves(obj_of(name)))
+
+
 FAILS, XFAILS, COUNT = [], [], [0]
 
 
@@ -179,8 +203,16 @@ check("l4_semi_stable_behaviour", 1.99 < below < 2 and above > 2.5)
 # (Boyce and DiPrima sec. 9.2; the course's own l12 screens[7] uses this sense of stable).
 leaves = all(flow(lambda v: (v - 2) ** 2, 2 + d, 1 / d - 2.0) > 2.4 for d in (1e-1, 1e-2, 1e-3))
 check("l4_semi_stable_is_lyapunov_unstable", leaves)
-expected_fail("l4_quiz0_option_unstable_is_wrong", not leaves,
-              "quiz[0] marks 'It is unstable' wrong, yet y = 2 is not Lyapunov stable; corrected assert: assert leaves")
+# (corrected claim, fix pass) the wrong option now reads "It repels on both sides": below 2 paths
+# rise into 2 (a start at 1.99 increases and stays below 2), so it does not repel from below; the
+# explain now says some nearby paths leave, so y = 2 is unstable in the strict sense.
+_q = solve_ivp(lambda s, v: (v - 2) ** 2, [0, 500], [1.99], rtol=1e-10, atol=1e-12)
+_l4q = obj_of("l4-slope-fields.json")["quiz"][0]
+check("l4_quiz0_option_repels_on_both_sides_is_wrong (corrected claim, fix pass)",
+      leaves and 1.99 < _q.y[0, -1] < 2 and np.all(np.diff(_q.y[0]) > 0)
+      and _l4q["widget"]["options"][2]["text"] == "It repels on both sides" and not _l4q["widget"]["options"][2].get("correct")
+      and [o["id"] for o in _l4q["widget"]["options"] if o.get("correct")] == ["semi"]
+      and "in the strict sense it counts as unstable" in _l4q["explain"]["text"])
 hw = solve_ivp(lambda s, v: v**2 * (1 - v), [0, 2000], [-0.5], rtol=1e-10, atol=1e-13)
 check("l4_hw_semi_from_below", -0.01 < hw.y[0, -1] < 0 and np.all(np.diff(hw.y[0]) > 0))
 check("l4_hw_phase", [sp.diff(y * (y - 1) * (y - 3), y).subs(y, v) for v in (0, 1, 3)] == [3, -2, 6])

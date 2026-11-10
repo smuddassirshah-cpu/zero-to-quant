@@ -13,6 +13,30 @@ import sympy as sp
 from scipy.integrate import solve_ivp
 from scipy.optimize import brentq, minimize_scalar
 
+import json as _json, pathlib as _pl
+_ODES = _pl.Path(__file__).resolve().parents[2] / "app" / "content" / "courses" / "odes"
+
+
+def obj_of(name):
+    return _json.load(open(_ODES / name, encoding="utf-8"))
+
+
+def _leaves(o):
+    if isinstance(o, str):
+        yield o
+    elif isinstance(o, dict):
+        for v in o.values():
+            yield from _leaves(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _leaves(v)
+
+
+def text_of(name):
+    """Every string in a content file, joined (for checks on the corrected wording)."""
+    return "\n".join(_leaves(obj_of(name)))
+
+
 FAILS, XFAILS, COUNT = [], [], [0]
 
 
@@ -144,8 +168,10 @@ whole = sp.expand(L(t * (A * sp.exp(-t) + B * sp.exp(3 * t)), 3, 2) - sp.exp(-t)
 whole_ok = sp.solve([whole.coeff(sp.exp(-t)), whole.coeff(sp.exp(3 * t)).coeff(t, 0), whole.coeff(sp.exp(3 * t)).coeff(t, 1)], [A, B], dict=True) != []
 part = sp.simplify(L(t * sp.exp(-t) + sp.exp(3 * t) / 20, 3, 2) - sp.exp(-t) - sp.exp(3 * t))
 check("l8_multiply_only_the_clashing_part", part == 0)
-expected_fail("l8_whole_guess_times_t_for_mixed_forcing", whole_ok,
-              "screens[8]: 'multiply the whole guess by t' has no solution for e^{-t} + e^{3t}; corrected assert: assert part == 0 (multiply only the clashing part)")
+# (corrected claim, fix pass) screens[8] now multiplies only the guess for the clashing forcing term by t
+_l8 = text_of("l8-forcing.json")
+check("l8_multiply_guess_for_that_term (corrected claim, fix pass)",
+      part == 0 and not whole_ok and "multiply the guess for that forcing term by $t$" in _l8 and "whole guess" not in _l8)
 # smoother lag
 zeta, om = sp.symbols("zeta omega", positive=True)
 c_ = sp.symbols("c")
@@ -155,8 +181,13 @@ exact = lambda s: 96 + s + (4 + s) * math.exp(-0.5 * s)
 check("l8_smoother_chart", close(exact(1), 100.03, 0.006) and close(exact(5), 101.74, 0.006) and close(exact(20), 116.0, 0.006))
 # feedback.correct of the transfer screen prints 2 zeta w + w^2 (t + c) = w^2 (100 + t): not an identity for any c
 printed = sp.simplify(2 * zeta * om + om**2 * (t + c_) - om**2 * (100 + t))
-expected_fail("l8_lag_feedback_equation_as_printed", sp.solve(printed, c_) == [-2 * zeta / om],
-              "screens[10].feedback.correct drops the 100 on the left; corrected: 2*zeta*w + w^2*(100 + t + c) = w^2*(100 + t)")
+# (corrected claim, fix pass) the feedback now reads 2 zeta w + w^2 (100 + t + c) = w^2 (100 + t), c = -2 zeta / w, lag 4
+fixed_c = sp.solve(sp.expand(2 * zeta * om + om**2 * (100 + t + c_) - om**2 * (100 + t)), c_)
+check("l8_lag_feedback_equation (corrected claim, fix pass)",
+      sp.solve(printed, c_) != [-2 * zeta / om] and fixed_c == [-2 * zeta / om]
+      and fixed_c[0].subs({zeta: 1, om: sp.Rational(1, 2)}) == -4
+      and obj_of("l8-forcing.json")["screens"][10]["feedback"]["correct"]
+      == r"$2\zeta\omega + \omega^2(100 + t + c) = \omega^2(100 + t)$ gives $c = -2\zeta/\omega$, a lag of 4.")
 check("l8_quiz", sp.simplify(L(sp.exp(2 * t) / 6, 1, 0) - sp.exp(2 * t)) == 0 and sp.simplify(L(t * sp.exp(t) / 2, 0, -1) - sp.exp(t)) == 0)
 check("l8_t2_guess_fails_at_single_root", sp.solve(sp.Poly(sp.simplify((L(A * t**2 * sp.exp(t), 0, -1) - sp.exp(t)) / sp.exp(t)), t).coeffs(), A) == [])
 
@@ -232,9 +263,16 @@ check("l9_simulated_steady_amplitude", close(np.abs(sim.sol(np.linspace(60, 80, 
 # the float example on screens[9]: 0.2**2 - 4*0.1*0.1 is exactly 0.0 (0.4 and 0.1 are 2 x and half of the
 # same double 0.2, so both products are the same real number before rounding)
 printed_value = 0.2**2 - 4 * 0.1 * 0.1
-expected_fail("l9_float_example_not_exactly_zero", printed_value != 0.0,
-              "screens[9] says 0.2**2 - 4*0.1*0.1 is not exactly 0 and prints 6.938893903907228e-18; it is 0.0. "
-              "corrected assert: assert 0.2**2 - 4*0.5*0.02 == 6.938893903907228e-18")
+# (corrected claim, fix pass) screens[9] now shows 0.2**2 - 4*0.5*0.02, which is 6.938893903907228e-18, not 0;
+# hidden test 3 is damping_type(0.5, 0.2, 0.02), which a classifier without the tolerance (d == 0) calls 'over'
+_s9 = obj_of("l9-damping-and-resonance.json")["screens"][9]
+_new = 0.2**2 - 4 * 0.5 * 0.02
+_naive = "critical" if _new == 0 else ("under" if _new < 0 else "over")
+check("l9_float_example_not_exactly_zero (corrected claim, fix pass)",
+      printed_value == 0.0 and _new != 0.0 and repr(_new) == "6.938893903907228e-18" and _naive == "over"
+      and _s9["canvas"]["params"]["lines"][:2] == [">>> 0.2**2 - 4*0.5*0.02", repr(_new)]
+      and "$0.2^2 - 4(0.5)(0.02)$ is not exactly 0" in _s9["prose"]
+      and (_s9["widget"]["tests"][3]["call"], _s9["widget"]["tests"][3]["expect"]) == ("damping_type(0.5, 0.2, 0.02)", "'critical'"))
 check("l9_float_example_corrected", 0.2**2 - 4 * 0.5 * 0.02 == 6.938893903907228e-18 and 0.2 * 0.2 - 4 * 0.5 * 0.02 == 6.938893903907228e-18)
 check("l9_hidden_test_does_not_need_the_tolerance", 0.2 * 0.2 - 4 * 0.1 * 0.1 == 0.0)
 check("l9_negative_damping", close(math.sqrt(4 - 0.0625), math.sqrt(3.9375), 1e-12) and np.allclose(np.roots([1, -0.5, 4]).real, 0.25))
