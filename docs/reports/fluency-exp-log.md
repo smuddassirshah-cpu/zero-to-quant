@@ -41,3 +41,21 @@ The evaluator has no `ln`. Each log is computed as `50000*(y^(1/100000) - y^(-1/
 - There is no significant-figures format. The 3 sf families keep the answer between 1 and 10 (`dp2`) or between 10 and 100 (`dp1`) with `where`. Raised.
 
 Nothing was skipped.
+
+## Widening pass
+
+Entries worked: every `ln` work-round in `let` now uses the evaluator's `ln`, and the two 3 sf families use the `sf3` format instead of a `where` that held the answer in one decade.
+
+| Set | Family | Distinct prompts in 200 | `form` | Slips (`wrong` ids) |
+| --- | --- | --- | --- | --- |
+| fluency-l6-products-into-sums | combine-a-sum, combine-a-difference (changed `let`) | 62, 82 | none | as before |
+| fluency-l8-solving-for-the-power | exact-power, power-alone-first (changed `let`) | 195, 149 | none | as before |
+| | power-to-3-sf (widened: `sf3`, answers 0.56 to 13.1) | 192 | none | upside-down, divided-the-numbers |
+| | money-target (widened: `sf3`, answers 5.27 to 70.0) | 170 | none | joined-the-base, logs-too-soon |
+| fluency-l10-natural-log | all four (changed `let`) | 168, 143, 95, 101 | none | as before |
+
+Each `50000*(y^(1/100000) - y^(-1/100000))` became `ln(y)`. I drew 200 items of every exp-log set on seed 1 before the change and after it (before the `sf3` widening): the same vars, prompts, solutions and wrong values in all 800, and keys equal to within 1e-8, so every drawn answer is unchanged at its stated precision. The widened families set `"accept": "{r:sf3}"`, state `{r:sf3}` in the solution, and take a tolerance of 0.51 of a unit in the third figure as a template (`"abs": "{0.51*10^e}"` with `e = floor(log10(r)) - 2`), for the key and each slip. A `where` keeps $r$ off an exact 3 sf value, and the upside-down slip off the key near $r = 1$. Rejected draws fell from 41 to 9 (power-to-3-sf) and from 34 to 6 (money-target) per 200 kept.
+
+Checks: (1) `fluency-exp-log-numbers.py`: a new `sf3` check works the 3 sf text with Python `Decimal` at 40 digits from sympy's `log`, and checks the tolerance and the figure the solution states; 20,000 of 20,000 checks, exit 0. (2) Validator 0 errors, no warning on exp-log fluency files; `test-fluency.mjs --local-cdn`: l6 306, l8 307, l10 307, all pass. (3) Playthrough `--fluency` of l6, l8 and l10 with and without `--mobile`: green. (4) `voice-scan.py 35` on exp-log: 0 and 0. (5) I read 20 draws each of power-to-3-sf and money-target as a learner would (for example $n = \frac{\log 2}{\log 1.08} = 9.01$ and $t = \frac{\log 4}{\log 1.02} = 70.0$): no float artefacts, `+-` or double minus, and no prompt gives the answer away. (6) This section.
+
+Still blocked: nothing in this course.

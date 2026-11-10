@@ -39,3 +39,21 @@ l3 gives the sine, cosine and tangent in the prompt, to 4 dp, as the lesson does
 ## Skipped (raised in BACKLOG-INBOX under "Raised later (fluency exp-log trig)")
 
 - l7 "Write ${d}^\circ$ in radians, exactly" as an expression: `form: "simplified"` lets `15^\circ` and `\frac{15\pi}{180}` pass for `\frac{\pi}{12}`. Asked instead as "Write ${d}^\circ$ as $k\pi$ radians. What is $k$?"
+
+## Widening pass
+
+Entries worked: the `let` work-rounds now use the evaluator's own functions, and the skipped exact-radians family is added with `form: "exact-angle"`.
+
+| Set | Family | Distinct prompts in 200 | `form` | Slips (`wrong` ids) |
+| --- | --- | --- | --- | --- |
+| fluency-l3-sides-and-angles | side-from-hypotenuse (changed `let`) | 192 | none | other-ratio, divided-by-ratio |
+| | hypotenuse-from-side (changed `let`) | 193 | none | multiplied-by-ratio, other-ratio |
+| | height-with-tan (changed `let`) | 196 | none | used-sine, divided-by-tan |
+| fluency-l7-arc-length | degrees-to-radians-exact (new) | 64 | exact-angle | upside-down, used-a-full-turn |
+| | radians-to-degrees, radians-to-degrees-1-dp, arc-length (changed `let`) | 72, 92, 174 | none | as before |
+
+In l3 the Taylor series for sine and cosine (and their quotient for tangent) became `round(sin(x), 4)`, `round(cos(x), 4)` and `round(tan(x), 4)`, and `sin(x)`, `cos(x)` in the unrounded `exact`, with `x = t*pi/180`; in l7 every `3.14159265358979` became `pi`. I drew 200 items of every trig set on seed 1 before and after: the same vars, prompts, solutions and wrong values in all 800, and keys equal to within 1e-8. The new family asks "Write $55^\circ$ in radians, exactly." with key $\frac{11\pi}{36}$; $\frac{11}{36}\pi$ is accepted, and the retyped `55^\circ` is refused by the form. The numeric "What is $k$?" family stays as it was.
+
+Checks: (1) `fluency-trig-numbers.py` now covers 16 families (new `l7_d2r_exact`, and its parser reads `\pi`), 21,600 of 21,600 checks, exit 0. (2) Validator 0 errors, no warning on trig fluency files; `test-fluency.mjs --local-cdn`: l3 304 of 304, l7 312 of 312. (3) Playthrough `--fluency` of l3 and l7 with and without `--mobile`: green. (4) `voice-scan.py 35` on trig: 0 and 0. (5) I read 20 draws of the new family and of the changed l3 families: no `1\pi`, `+-`, double minus or unreduced key, and no prompt gives the answer away. (6) This section.
+
+Still blocked: none of this course's listed entries. l4 keeps whole coefficients (even hypotenuses) because `poly` still writes a terminating coefficient as a decimal (`3.5\sqrt{3}`); raised again in the inbox.
