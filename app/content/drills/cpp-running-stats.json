@@ -1,0 +1,375 @@
+{
+  "id": "cpp-running-stats",
+  "name": "Running mean and variance that merge",
+  "course": "cpp-pricing",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "welford",
+    "accumulator"
+  ],
+  "skills": [
+    "cx-numeric",
+    "cx-pricers"
+  ],
+  "difficulty": 3,
+  "pace": 1140,
+  "brief": "A Monte Carlo run reports its mean and its sample variance as the draws arrive, and batches run apart are combined at the end. Write `class RunningStats` with `void add(double x)`, `long long count() const`, `double mean() const` (0 when empty), `double variance() const`, the sample variance with $n - 1$ below (0 with fewer than two values), and `void merge(const RunningStats& other)`, which makes this object describe both sets of values.\n\nFor 2, 4, 4, 4, 5, 5, 7 and 9 the mean is 5, the squared distances from it sum to 32, and the variance is 32 / 7, about 4.571429.",
+  "constraints": [
+    "Up to $10^6$ values. Values may sit near $10^9$ with a spread of a few units, and the variance must still be within a relative 1e-9.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "Keep the count, the mean and the sum of squared distances from the mean, updated on each value (Welford's method). A sum of squares loses the spread when the values are large.",
+  "starter": "class RunningStats {\npublic:\n    void add(double x) {}\n    long long count() const { return 0; }\n    double mean() const { return 0.0; }\n    double variance() const { return 0.0; }\n    void merge(const RunningStats& other) {}\n};\n",
+  "postlude": "#include <vector>\n\n// hidden test helpers: {count, mean, variance}\nstd::vector<double> report(const RunningStats& s) { return {double(s.count()), s.mean(), s.variance()}; }\nstd::vector<double> stats_of(const std::vector<double>& xs) {\n    RunningStats s;\n    for (double x : xs) s.add(x);\n    return report(s);\n}\nstd::vector<double> merged(const std::vector<double>& a, const std::vector<double>& b) {\n    RunningStats p, q;\n    for (double x : a) p.add(x);\n    for (double x : b) q.add(x);\n    p.merge(q);\n    return report(p);\n}\n",
+  "examples": [
+    {
+      "call": "stats_of",
+      "args": [
+        [
+          2,
+          4,
+          4,
+          4,
+          5,
+          5,
+          7,
+          9
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        8,
+        5.0,
+        4.571428571428571
+      ],
+      "compare": "isclose",
+      "note": "Count, mean and sample variance."
+    },
+    {
+      "call": "merged",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        5,
+        3.0,
+        2.5
+      ],
+      "compare": "isclose",
+      "note": "Two batches merged describe 1 to 5."
+    }
+  ],
+  "tests": [
+    {
+      "call": "stats_of",
+      "args": [
+        []
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        0,
+        0.0,
+        0.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "stats_of",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        1,
+        5.0,
+        0.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "stats_of",
+      "args": [
+        [
+          2,
+          4,
+          4,
+          4,
+          5,
+          5,
+          7,
+          9
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        8,
+        5.0,
+        4.571428571428571
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "stats_of",
+      "args": [
+        [
+          1000000001.0,
+          1000000002.0,
+          1000000003.0
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        3,
+        1000000002.0,
+        1.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "stats_of",
+      "args": [
+        [
+          -1,
+          1
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        2,
+        0.0,
+        2.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "stats_of",
+      "args": [
+        [
+          1000000004.0,
+          1000000007.0,
+          1000000013.0,
+          1000000016.0
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        4,
+        1000000010.0,
+        30.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "merged",
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        5,
+        3.0,
+        2.5
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "merged",
+      "args": [
+        [],
+        [
+          3,
+          7
+        ]
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        2,
+        5.0,
+        8.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "merged",
+      "args": [
+        [
+          4,
+          6
+        ],
+        []
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        2,
+        5.0,
+        2.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "merged",
+      "args": [
+        [
+          1000000001.0
+        ],
+        [
+          1000000003.0
+        ]
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        2,
+        1000000002.0,
+        2.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "merged",
+      "args": [
+        [
+          10
+        ],
+        [
+          10
+        ]
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        2,
+        10.0,
+        0.0
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "merged",
+      "args": [
+        [
+          0.5,
+          1.5,
+          2.5
+        ],
+        [
+          100
+        ]
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        4,
+        26.125,
+        2426.2291666666665
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "merged",
+      "args": [
+        [
+          1000000002.0,
+          1000000008.0
+        ],
+        [
+          1000000005.0,
+          1000000005.0,
+          1000000011.0
+        ]
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>"
+      ],
+      "expect": [
+        5,
+        1000000006.2,
+        11.7
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "[]{ RunningStats s; for (int i = 0; i < 100000; ++i) s.add(i % 7); return report(s); }()",
+      "expect": [
+        100000,
+        2.99995,
+        3.999989997399974
+      ],
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must be within a relative 1e-9 of the expected value. Hidden helpers add the values, merge where asked, and read count, mean and variance.",
+  "solution": "class RunningStats {\npublic:\n    void add(double x) {\n        ++n_;\n        double d = x - mean_;\n        mean_ += d / n_;\n        m2_ += d * (x - mean_);\n    }\n    long long count() const { return n_; }\n    double mean() const { return n_ ? mean_ : 0.0; }\n    double variance() const { return n_ < 2 ? 0.0 : m2_ / (n_ - 1); }\n    void merge(const RunningStats& o) {\n        if (o.n_ == 0) return;\n        if (n_ == 0) { *this = o; return; }\n        long long n = n_ + o.n_;\n        double d = o.mean_ - mean_;\n        mean_ += d * o.n_ / n;\n        m2_ += o.m2_ + d * d * n_ * o.n_ / n;\n        n_ = n;\n    }\nprivate:\n    long long n_ = 0;\n    double mean_ = 0.0, m2_ = 0.0;\n};\n",
+  "notes": [
+    "Welford's update moves the mean by `d / n` and adds `d * (x - mean)` to the squared distances, with no large sum to cancel.",
+    "Merging adds the two sums of squared distances plus $d^2 n_a n_b / n$, where $d$ is the gap between the two means.",
+    "Values near $10^9$ have squares near $10^{18}$, where a `double` steps by 128, so a plain sum of squares cannot see a spread of 1."
+  ],
+  "planted": [
+    {
+      "code": "class RunningStats {\npublic:\n    void add(double x) { ++n_; s_ += x; ss_ += x * x; }\n    long long count() const { return n_; }\n    double mean() const { return n_ ? s_ / n_ : 0.0; }\n    double variance() const { return n_ < 2 ? 0.0 : (ss_ - s_ * s_ / n_) / (n_ - 1); }\n    void merge(const RunningStats& o) { n_ += o.n_; s_ += o.s_; ss_ += o.ss_; }\nprivate:\n    long long n_ = 0;\n    double s_ = 0.0, ss_ = 0.0;\n};\n",
+      "slip": "Keeps a sum and a sum of squares, which cancel to garbage for large values."
+    },
+    {
+      "code": "class RunningStats {\npublic:\n    void add(double x) {\n        ++n_;\n        double d = x - mean_;\n        mean_ += d / n_;\n        m2_ += d * (x - mean_);\n    }\n    long long count() const { return n_; }\n    double mean() const { return n_ ? mean_ : 0.0; }\n    double variance() const { return n_ < 2 ? 0.0 : m2_ / n_; }\n    void merge(const RunningStats& o) {\n        if (o.n_ == 0) return;\n        if (n_ == 0) { *this = o; return; }\n        long long n = n_ + o.n_;\n        double d = o.mean_ - mean_;\n        mean_ += d * o.n_ / n;\n        m2_ += o.m2_ + d * d * n_ * o.n_ / n;\n        n_ = n;\n    }\nprivate:\n    long long n_ = 0;\n    double mean_ = 0.0, m2_ = 0.0;\n};\n",
+      "slip": "Divides by n, giving the population variance."
+    },
+    {
+      "code": "class RunningStats {\npublic:\n    void add(double x) {\n        ++n_;\n        double d = x - mean_;\n        mean_ += d / n_;\n        m2_ += d * (x - mean_);\n    }\n    long long count() const { return n_; }\n    double mean() const { return n_ ? mean_ : 0.0; }\n    double variance() const { return n_ < 2 ? 0.0 : m2_ / (n_ - 1); }\n    void merge(const RunningStats& o) {\n        if (o.n_ == 0) return;\n        if (n_ == 0) { *this = o; return; }\n        long long n = n_ + o.n_;\n        double d = o.mean_ - mean_;\n        mean_ = (mean_ + o.mean_) / 2;\n        m2_ += o.m2_;\n        n_ = n;\n    }\nprivate:\n    long long n_ = 0;\n    double mean_ = 0.0, m2_ = 0.0;\n};\n",
+      "slip": "Merges by averaging the two means and adding the squared distances, ignoring the sizes and the gap between means."
+    }
+  ]
+}

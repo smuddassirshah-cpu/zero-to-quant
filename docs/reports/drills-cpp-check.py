@@ -318,6 +318,161 @@ def _(t):
     return float(pay * mpmath.e ** (-r * tt) * _Phi(d1 - sg * mpmath.sqrt(tt)))
 
 
+# ------------------------------------------------------------------ cpp-scaled-payoff
+def _payoff(expr):
+    """Evaluate the C++ payoff expressions of the tests with Python classes of the same names."""
+    class Forward:
+        def __init__(self, k): self.k = k
+        def __call__(self, s): return s - self.k
+
+    class Call:
+        def __init__(self, k): self.k = k
+        def __call__(self, s): return max(s - self.k, 0.0)
+
+    class Scaled:
+        def __init__(self, q, inner): self.q, self.inner = q, inner
+        def __call__(self, s): return self.q * self.inner(s)
+    py = re.sub(r'std::make_unique<(\w+)>', r'\1', expr)
+    return eval(py, {'Forward': Forward, 'Call': Call, 'Scaled': Scaled})
+
+
+@model('cpp-scaled-payoff', 'pays 20')
+def _(t):
+    c = t['call']
+    if c.startswith('[]'):
+        if 'const Payoff& p = s' in c:
+            return 2.0 * (15.0 - 10.0)
+        if 'std::make_unique<Scaled>(0.5, std::make_unique<Forward>(0.0))' in c:
+            return 0.5 * (-8.0 - 0.0)
+        if 'book.push_back' in c:
+            return -2.0 * max(120.0 - 110.0, 0) + (120.0 - 95.0)
+        raise KeyError(c)
+    return _payoff(c)
+
+
+# ------------------------------------------------------------------ cpp-curve-df
+@model('cpp-curve-df', '0.950279')
+def _(t):
+    times, zeros, x = t['args']
+    x = mpmath.mpf(x)
+    pts = [(mpmath.mpf(a), mpmath.mpf(a) * mpmath.mpf(z)) for a, z in zip(times, zeros)]
+    if x <= pts[0][0]:
+        y = mpmath.mpf(zeros[0]) * x
+    elif x >= pts[-1][0]:
+        y = mpmath.mpf(zeros[-1]) * x
+    else:
+        for (a, ya), (b, yb) in zip(pts, pts[1:]):
+            if a <= x <= b:
+                y = ya * (b - x) / (b - a) + yb * (x - a) / (b - a)
+                break
+    return float(mpmath.e ** (-y))
+
+
+# ------------------------------------------------------------------ cpp-running-stats
+def _moments(xs):
+    n = len(xs)
+    if n == 0:
+        return [0, 0.0, 0.0]
+    m = Fraction(sum(Fraction(x) for x in xs), n)
+    # sample variance from the pairwise form: sum over pairs (xi - xj)^2 / (n (n - 1))
+    if n < 2:
+        return [1, float(m), 0.0]
+    s1 = sum(Fraction(x) for x in xs)
+    s2 = sum(Fraction(x) ** 2 for x in xs)
+    v = (n * s2 - s1 * s1) / (n * (n - 1))      # exact in fractions, so no cancellation
+    return [n, float(m), float(v)]
+
+
+@model('cpp-running-stats', '32 / 7, about 4.571429')
+def _(t):
+    if t['call'] == 'stats_of':
+        return _moments(t['args'][0])
+    if t['call'] == 'merged':
+        return _moments(t['args'][0] + t['args'][1])
+    if 's.add(i % 7)' in t['call']:
+        return _moments([i % 7 for i in range(100000)])
+    raise KeyError(t['call'])
+
+
+# ------------------------------------------------------------------ cpp-cash-split
+@model('cpp-cash-split', 'gives 34, 33 and 33')
+def _(t):
+    c, a = t['call'], t['args']
+    def pence(x):                                # nearest penny of the double x * 100, half away from zero
+        v = Fraction(x * 100)
+        lo = math.floor(v)
+        frac = v - lo
+        if frac > Fraction(1, 2) or (frac == Fraction(1, 2) and v > 0):
+            return lo + 1
+        return lo
+    if c == 'pounds_to_pence':
+        return pence(a[0])
+    if c == 'add_pounds':
+        return pence(a[0]) + pence(a[1])
+    if c == 'split_pence':
+        p, n = a
+        sign = -1 if p < 0 else 1
+        base, extra = divmod(abs(p), n)
+        return [sign * (base + (1 if i < extra else 0)) for i in range(n)]
+    raise KeyError(c)
+
+
+# ------------------------------------------------------------------ cpp-bermudan-put
+def _berm(s, k, u, d, g, n, dates):
+    """Value by recursion over nodes, memoised; exercise allowed at listed steps and at expiry."""
+    s, k, u, d, g = (Fraction(x) for x in (s, k, u, d, g))
+    q = (g - d) / (u - d)
+    memo = {}
+
+    def V(i, j):
+        if (i, j) in memo:
+            return memo[(i, j)]
+        spot = s * u ** j * d ** (i - j)
+        if i == n:
+            val = max(k - spot, 0)
+        else:
+            val = (q * V(i + 1, j + 1) + (1 - q) * V(i + 1, j)) / g
+            if i in dates and i > 0:
+                val = max(val, k - spot)
+        memo[(i, j)] = val
+        return val
+    return float(V(0, 0))
+
+
+BERM_BRIEF = f'{_berm(100, 100, 1.1, 0.9, 1.02, 3, [2]):.6f}, above the European {_berm(100, 100, 1.1, 0.9, 1.02, 3, []):.6f}'
+
+
+@model('cpp-bermudan-put', BERM_BRIEF)
+def _(t):
+    return _berm(*t['args'])
+
+
+# ------------------------------------------------------------------ rounded numbers stated in briefs and notes
+def brief_numbers():
+    nd = NormalDist()
+    checks = [
+        ('cpp-compound-df', f'{1.025 ** -4:.6f}', '0.905951'),
+        ('cpp-compound-df', f'{1 / 1.05:.6f}', '0.952381'),
+        ('cpp-prob-between', f'{nd.cdf(1) - nd.cdf(-1):.6f}', '0.682689'),
+        ('cpp-cash-or-nothing', f'{(math.log(1) + (0.05 - 0.02)) / 0.2:.2f}', '0.15'),
+        ('cpp-cash-or-nothing', f'{math.exp(-0.05) * nd.cdf(0.15):.6f}', '0.532325'),
+        ('cpp-curve-df', f'{(0.032 * 1 + 0.035 * 2) / 2:.3f}', '0.051'),
+        ('cpp-curve-df', f'{math.exp(-0.051):.6f}', '0.950279'),
+        ('cpp-running-stats', f'{32 / 7:.6f}', '4.571429'),
+        ('cpp-fill-csv', f'{100 * 2510 - 40 * 2490:,}', '151,400'),
+        ('cpp-fee-pence', f'{123456 * 5 / 10000}', '61.728'),
+        ('cpp-trimmed-mean', f'{(99 + 101 + 110 + 120) / 4}', '107.5'),
+        ('cpp-movers', f'{10 / 250:.2f} {4 / 100:.2f} {50 / 5000:.2f}', '0.04 0.04 0.01'),
+        ('cpp-fee-pence', f'{2 ** 31 / 100 / 1e6:.0f}', '21'),      # an int overflows past about 21 million pounds at 1 bp
+        ('cpp-cash-split', repr(0.29 * 100), '28.999999999999996'),
+        ('cpp-running-stats', f'{math.ulp(1e18):.0f}', '128'),
+    ]
+    for i, got, want in checks:
+        if got != want:
+            errors.append(f'{i}: stated number {want}, recomputed {got}')
+    return len(checks)
+
+
 # ================================================================== driver
 def main():
     files = sorted(f for f in os.listdir(DR) if f.startswith('cpp-') and f.endswith('.json'))
@@ -360,6 +515,18 @@ def main():
                 if not ok:
                     errors.append(f'{i} {kind}[{n}]: file {got!r}, model {want!r}')
                 checked += 1
+    want_mix = {'cpp': {1: 6, 2: 7, 3: 4}, 'cpp-pricing': {1: 2, 2: 3, 3: 3}}
+    if len(files) == 25 and mix != want_mix:
+        errors.append(f'mix {mix} is not {want_mix}')
+    nb = brief_numbers()
+    for f in files:                                   # voice in learner-facing prose
+        d = json.load(open(os.path.join(DR, f)))
+        prose = [d['brief'], d['hint'], d['how']] + d['constraints'] + d['notes'] + \
+                [p['slip'] for p in d['planted']] + [e.get('note', '') for e in d['examples']]
+        for p in prose:
+            if '!' in re.sub(r'`[^`]*`', '', p) or '—' in p or '–' in p:
+                errors.append(f'{d["id"]}: exclamation mark or dash in {p[:40]!r}')
+    print(f'{nb} rounded numbers in briefs and notes recomputed')
     print('mix', json.dumps(mix, sort_keys=True))
     print(f'{len(files)} drills, {checked} cases compared')
     for e in errors:

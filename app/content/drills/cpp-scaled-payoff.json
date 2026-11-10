@@ -1,0 +1,112 @@
+{
+  "id": "cpp-scaled-payoff",
+  "name": "A forward and a scaled leg",
+  "course": "cpp-pricing",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "payoff-hierarchy",
+    "decorator"
+  ],
+  "skills": [
+    "cx-pricers"
+  ],
+  "difficulty": 2,
+  "pace": 720,
+  "brief": "The payoff library has an abstract `Payoff`, whose pure virtual `operator()(double spot) const` gives the payoff at a spot, and a `Call`; both are loaded. Write two more classes derived from `Payoff`. `Forward(k)` pays `spot - k`, which is negative below the strike. `Scaled(qty, inner)` owns another payoff through a `std::unique_ptr<Payoff>` and pays `qty` times it; a negative `qty` is a short position.\n\nShort two forwards struck at 100: at a spot of 90 each forward pays -10, so a `Scaled` with `qty` -2 around a `Forward(100.0)` pays 20.",
+  "constraints": [
+    "`qty` may be any finite number, including 0 and negative values.",
+    "A `Scaled` may hold another `Scaled`, and the tests call it through a `const Payoff&`.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "`Scaled` keeps the `unique_ptr` it is given with `std::move`, and calls `(*inner_)(spot)`, which dispatches to the real type.",
+  "starter": "#include <memory>\n#include <utility>\n\n// Payoff and Call are loaded.\n\nclass Forward : public Payoff {\npublic:\n    explicit Forward(double k) {}\n    double operator()(double spot) const override { return 0.0; }\n};\n\nclass Scaled : public Payoff {\npublic:\n    Scaled(double qty, std::unique_ptr<Payoff> inner) {}\n    double operator()(double spot) const override { return 0.0; }\n};\n",
+  "prelude": "#include <algorithm>\n#include <memory>\n#include <vector>\n\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\n\nclass Call : public Payoff {\npublic:\n    explicit Call(double k) : k_(k) {}\n    double operator()(double spot) const override { return std::max(spot - k_, 0.0); }\nprivate:\n    double k_;\n};\n",
+  "examples": [
+    {
+      "call": "Scaled(-2.0, std::make_unique<Forward>(100.0))(90.0)",
+      "expect": 20.0,
+      "compare": "isclose",
+      "note": "Short two forwards at a spot below the strike gains."
+    },
+    {
+      "call": "Scaled(3.0, std::make_unique<Scaled>(-0.5, std::make_unique<Forward>(50.0)))(70.0)",
+      "expect": -30.0,
+      "compare": "isclose",
+      "note": "A scaled leg inside a scaled leg: 3 times -0.5 times 20."
+    }
+  ],
+  "tests": [
+    {
+      "call": "Forward(100.0)(90.0)",
+      "expect": -10.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "Forward(100.0)(112.5)",
+      "expect": 12.5,
+      "compare": "isclose"
+    },
+    {
+      "call": "Scaled(-2.0, std::make_unique<Forward>(100.0))(90.0)",
+      "expect": 20.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "Scaled(3.0, std::make_unique<Call>(50.0))(70.0)",
+      "expect": 60.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "Scaled(-1.0, std::make_unique<Call>(100.0))(120.0)",
+      "expect": -20.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "Scaled(-1.0, std::make_unique<Call>(100.0))(80.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "Scaled(3.0, std::make_unique<Scaled>(-0.5, std::make_unique<Forward>(50.0)))(70.0)",
+      "expect": -30.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "[]{ Scaled s(2.0, std::make_unique<Forward>(10.0)); const Payoff& p = s; return p(15.0); }()",
+      "expect": 10.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "[]{ std::unique_ptr<Payoff> p = std::make_unique<Scaled>(0.5, std::make_unique<Forward>(0.0)); return (*p)(-8.0); }()",
+      "expect": -4.0,
+      "compare": "isclose"
+    },
+    {
+      "call": "[]{ std::vector<std::unique_ptr<Payoff>> book; book.push_back(std::make_unique<Scaled>(-2.0, std::make_unique<Call>(110.0))); book.push_back(std::make_unique<Forward>(95.0)); double v = 0; for (const auto& p : book) v += (*p)(120.0); return v; }()",
+      "expect": 5.0,
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 10 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
+  "solution": "#include <memory>\n#include <utility>\n\nclass Forward : public Payoff {\npublic:\n    explicit Forward(double k) : k_(k) {}\n    double operator()(double spot) const override { return spot - k_; }\nprivate:\n    double k_;\n};\n\nclass Scaled : public Payoff {\npublic:\n    Scaled(double qty, std::unique_ptr<Payoff> inner) : qty_(qty), inner_(std::move(inner)) {}\n    double operator()(double spot) const override { return qty_ * (*inner_)(spot); }\nprivate:\n    double qty_;\n    std::unique_ptr<Payoff> inner_;\n};\n",
+  "notes": [
+    "`Scaled` holds a `Payoff` it does not know the type of, so the call through `*inner_` must be virtual.",
+    "Owning the inner leg by `std::unique_ptr` means the `Scaled` frees it, and a book of legs frees everything.",
+    "A forward has no floor at 0; that floor is what makes a call a call."
+  ],
+  "planted": [
+    {
+      "code": "#include <memory>\n#include <utility>\n\nclass Forward : public Payoff {\npublic:\n    explicit Forward(double k) : k_(k) {}\n    double operator()(double spot) const override { return spot > k_ ? spot - k_ : 0.0; }\nprivate:\n    double k_;\n};\n\nclass Scaled : public Payoff {\npublic:\n    Scaled(double qty, std::unique_ptr<Payoff> inner) : qty_(qty), inner_(std::move(inner)) {}\n    double operator()(double spot) const override { return qty_ * (*inner_)(spot); }\nprivate:\n    double qty_;\n    std::unique_ptr<Payoff> inner_;\n};\n",
+      "slip": "The forward is floored at 0, which makes it a call."
+    },
+    {
+      "code": "#include <memory>\n#include <utility>\n\nclass Forward : public Payoff {\npublic:\n    explicit Forward(double k) : k_(k) {}\n    double operator()(double spot) const override { return spot - k_; }\nprivate:\n    double k_;\n};\n\nclass Scaled : public Payoff {\npublic:\n    Scaled(double qty, std::unique_ptr<Payoff> inner) : qty_(qty), inner_(std::move(inner)) {}\n    double operator()(double spot) const override { return (qty_ < 0 ? -qty_ : qty_) * (*inner_)(spot); }\nprivate:\n    double qty_;\n    std::unique_ptr<Payoff> inner_;\n};\n",
+      "slip": "Drops the sign of qty, so a short position counts as long."
+    },
+    {
+      "code": "#include <memory>\n#include <utility>\n\nclass Forward : public Payoff {\npublic:\n    explicit Forward(double k) : k_(k) {}\n    double operator()(double spot) const override { return k_ - spot; }\nprivate:\n    double k_;\n};\n\nclass Scaled : public Payoff {\npublic:\n    Scaled(double qty, std::unique_ptr<Payoff> inner) : qty_(qty), inner_(std::move(inner)) {}\n    double operator()(double spot) const override { return qty_ * (*inner_)(spot); }\nprivate:\n    double qty_;\n    std::unique_ptr<Payoff> inner_;\n};\n",
+      "slip": "The forward pays strike less spot, the wrong way round."
+    }
+  ]
+}

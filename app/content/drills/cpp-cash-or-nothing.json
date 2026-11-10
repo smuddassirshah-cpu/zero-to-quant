@@ -14,17 +14,17 @@
   ],
   "difficulty": 2,
   "pace": 720,
-  "brief": "A cash-or-nothing call pays a fixed `payout` at expiry if the stock ends above the strike, and nothing otherwise. Under Black-Scholes its price is $P e^{-r t} \\Phi(d_2)$ with $d_2 = \\frac{\\ln(s/k) + (r - \\sigma^2/2) t}{\\sigma \\sqrt{t}}$. Write `digital_call(s, k, r, sigma, t, payout)`. At `t = 0` the option has expired: it is worth `payout` when `s > k` and 0 otherwise.\n\nFor `s = k = 100`, `r = 0.05`, `sigma = 0.2`, `t = 1` and a payout of 1, $d_2 = 0.15$, so the answer is $e^{-0.05}\\,\\Phi(0.15)$, about 0.532325.",
+  "brief": "A cash-or-nothing call pays a fixed `payout` at expiry if the stock ends above the strike, and nothing otherwise. Under Black-Scholes its price is $P e^{-r t} \\Phi(d_2)$ with $d_2 = \\frac{\\ln(s/k) + (r - \\sigma^2/2) t}{\\sigma \\sqrt{t}}$. Write `cash_call(s, k, r, sigma, t, payout)`. At `t = 0` the option has expired: it is worth `payout` when `s > k` and 0 otherwise.\n\nFor `s = k = 100`, `r = 0.05`, `sigma = 0.2`, `t = 1` and a payout of 1, $d_2 = 0.15$, so the answer is $e^{-0.05}\\,\\Phi(0.15)$, about 0.532325.",
   "constraints": [
     "`s`, `k`, `sigma` $> 0$ and $0 \\le t \\le 10$.",
     "Some tests are far out of the money, where $\\Phi(d_2)$ is near $10^{-12}$; the answer must still be within a relative 1e-9.",
     "Each test has a 5-second limit."
   ],
   "hint": "Write $\\Phi(x)$ as `0.5 * std::erfc(-x / std::sqrt(2.0))`. `1 + std::erf(x)` loses the digits of a tiny tail.",
-  "starter": "#include <cmath>\n\ndouble digital_call(double s, double k, double r, double sigma, double t, double payout) {\n    return 0.0;\n}\n",
+  "starter": "#include <cmath>\n\ndouble cash_call(double s, double k, double r, double sigma, double t, double payout) {\n    return 0.0;\n}\n",
   "examples": [
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         100,
@@ -50,7 +50,7 @@
       "note": "At the money: a little over half the discounted payout."
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         90,
@@ -78,7 +78,7 @@
   ],
   "tests": [
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         100,
@@ -103,7 +103,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         110,
@@ -128,7 +128,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         120,
         100,
@@ -153,7 +153,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         80,
         100,
@@ -178,7 +178,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         100,
@@ -203,7 +203,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         90,
@@ -228,7 +228,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         100,
@@ -253,7 +253,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         100,
         100,
@@ -278,7 +278,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         50,
         100,
@@ -303,7 +303,7 @@
       }
     },
     {
-      "call": "digital_call",
+      "call": "cash_call",
       "args": [
         150,
         100,
@@ -329,7 +329,7 @@
     }
   ],
   "how": "Submit runs 10 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
-  "solution": "#include <cmath>\n\ndouble digital_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * std::exp(-r * t) * 0.5 * std::erfc(-d2 / std::sqrt(2.0));\n}\n",
+  "solution": "#include <cmath>\n\ndouble cash_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * std::exp(-r * t) * 0.5 * std::erfc(-d2 / std::sqrt(2.0));\n}\n",
   "notes": [
     "$\\Phi(d_2)$ is the risk-neutral chance of ending above the strike, and the payout is discounted from expiry.",
     "$d_2 = d_1 - \\sigma\\sqrt{t}$: using $d_1$ prices the wrong event.",
@@ -337,15 +337,15 @@
   ],
   "planted": [
     {
-      "code": "#include <cmath>\n\ndouble digital_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * std::exp(-r * t) * 0.5 * std::erfc(-d2 / std::sqrt(2.0));\n}\n",
+      "code": "#include <cmath>\n\ndouble cash_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * std::exp(-r * t) * 0.5 * std::erfc(-d2 / std::sqrt(2.0));\n}\n",
       "slip": "Uses d1 in place of d2."
     },
     {
-      "code": "#include <cmath>\n\ndouble digital_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * 0.5 * std::erfc(-d2 / std::sqrt(2.0));\n}\n",
+      "code": "#include <cmath>\n\ndouble cash_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * 0.5 * std::erfc(-d2 / std::sqrt(2.0));\n}\n",
       "slip": "Forgets to discount the payout from expiry."
     },
     {
-      "code": "#include <cmath>\n\ndouble digital_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * std::exp(-r * t) * 0.5 * (1.0 + std::erf(d2 / std::sqrt(2.0)));\n}\n",
+      "code": "#include <cmath>\n\ndouble cash_call(double s, double k, double r, double sigma, double t, double payout) {\n    if (t <= 0) return s > k ? payout : 0.0;\n    double d2 = (std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return payout * std::exp(-r * t) * 0.5 * (1.0 + std::erf(d2 / std::sqrt(2.0)));\n}\n",
       "slip": "Writes the normal CDF with 1 + erf, which cancels badly far out of the money."
     }
   ]
