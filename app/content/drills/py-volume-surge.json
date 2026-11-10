@@ -1,0 +1,132 @@
+{
+  "id": "py-volume-surge",
+  "name": "Volume surges from a price file",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "shift",
+    "read-csv"
+  ],
+  "skills": [
+    "pd-time",
+    "pd-frames"
+  ],
+  "difficulty": 1,
+  "pace": 480,
+  "fn": "volume_surges",
+  "returns": "a list of strings",
+  "brief": "A price file has a header row and columns `date`, `close` and `volume`, one row per trading day in date order. A day is a surge when its volume is at least twice the previous day's volume. The first day has no previous day, so it is never a surge.\n\nWrite `volume_surges(path)`. It reads the file and returns a Python list of the surge dates as text, `'YYYY-MM-DD'`, in file order. The tests compare it with the expected list exactly. The file `volumes.csv` is in the working directory to try.\n\nExample. On 8 April 98,100 shares traded and on 9 April 196,200, exactly twice as many, so `'2025-04-09'` is a surge.",
+  "constraints": [
+    "Find the columns by name: a file may list them in another order.",
+    "Volumes are whole numbers above 0. A file may have no rows after the header.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "`pd.read_csv(path, index_col=\"date\", parse_dates=True)`, then compare the volume with twice `volume.shift(1)`. Keep the index where the mask is true and format each date with `strftime`.",
+  "data": {
+    "volumes.csv": "content/data/numpy-pandas/volumes.csv"
+  },
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n",
+  "starter": "import pandas as pd\n\ndef volume_surges(path):\n    df = pd.read_csv(path, index_col=\"date\", parse_dates=True)\n    surge = ...\n    return []\n",
+  "examples": [
+    {
+      "call": "volume_surges(\"volumes.csv\")",
+      "expect": "['2025-04-09', '2025-04-10', '2025-04-15']",
+      "compare": "equal",
+      "note": "Volume doubled exactly on 9 April, more than doubled on 10 and 15 April, and fell short on 17 April."
+    },
+    {
+      "call": "[open(\"two.csv\", \"w\").write(\"date,close,volume\\n2025-01-02,10,500\\n2025-01-03,10.2,999\\n\"), volume_surges(\"two.csv\")][1]",
+      "expect": "[]",
+      "compare": "equal",
+      "note": "999 is less than twice 500, so there is no surge."
+    }
+  ],
+  "tests": [
+    {
+      "name": "The sample file",
+      "call": "volume_surges(\"volumes.csv\")",
+      "expect": "['2025-04-09', '2025-04-10', '2025-04-15']",
+      "compare": "equal"
+    },
+    {
+      "name": "Header only",
+      "call": "[open(\"t0.csv\", \"w\").write(\"date,close,volume\\n\"), volume_surges(\"t0.csv\")][1]",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "name": "One day",
+      "call": "[open(\"t1.csv\", \"w\").write(\"date,close,volume\\n2025-01-02,100,900000\\n\"), volume_surges(\"t1.csv\")][1]",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "name": "Exactly twice",
+      "call": "[open(\"t2.csv\", \"w\").write(\"date,close,volume\\n2025-01-02,100,1500\\n2025-01-03,101,3000\\n\"), volume_surges(\"t2.csv\")][1]",
+      "expect": "['2025-01-03']",
+      "compare": "equal"
+    },
+    {
+      "name": "Just short of twice",
+      "call": "[open(\"t3.csv\", \"w\").write(\"date,close,volume\\n2025-01-02,100,1500\\n2025-01-03,101,2999\\n\"), volume_surges(\"t3.csv\")][1]",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "name": "Twice, not three times",
+      "call": "[open(\"t4.csv\", \"w\").write(\"date,close,volume\\n2025-02-03,8,400\\n2025-02-04,8.1,900\\n2025-02-05,8.2,2700\\n\"), volume_surges(\"t4.csv\")][1]",
+      "expect": "['2025-02-04', '2025-02-05']",
+      "compare": "equal"
+    },
+    {
+      "name": "Columns in another order",
+      "call": "[open(\"t5.csv\", \"w\").write(\"volume,date,close\\n700,2025-02-03,49\\n1600,2025-02-04,51\\n800,2025-02-05,52.5\\n\"), volume_surges(\"t5.csv\")][1]",
+      "expect": "['2025-02-04']",
+      "compare": "equal"
+    },
+    {
+      "name": "Big first day",
+      "call": "[open(\"t6.csv\", \"w\").write(\"date,close,volume\\n2025-03-10,20,90000\\n2025-03-11,21,1000\\n2025-03-12,22,1500\\n\"), volume_surges(\"t6.csv\")][1]",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "name": "Surges in a row",
+      "call": "[open(\"t7.csv\", \"w\").write(\"date,close,volume\\n2025-03-10,20,100\\n2025-03-11,21,250\\n2025-03-12,22,600\\n2025-03-13,22,1300\\n\"), volume_surges(\"t7.csv\")][1]",
+      "expect": "['2025-03-11', '2025-03-12', '2025-03-13']",
+      "compare": "equal"
+    },
+    {
+      "name": "Quiet file",
+      "call": "[open(\"t8.csv\", \"w\").write(\"date,close,volume\\n2025-03-10,5,1000\\n2025-03-11,5.1,1100\\n2025-03-12,5,1050\\n\"), volume_surges(\"t8.csv\")][1]",
+      "expect": "[]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 10 hidden tests. Each answer must equal the expected value.",
+  "where": "Draws on numpy-pandas lessons l6-loading-prices (read a CSV on a date index) and l9-returns-with-shift.",
+  "solution": "import pandas as pd\n\ndef volume_surges(path):\n    df = pd.read_csv(path, index_col=\"date\", parse_dates=True)\n    v = df[\"volume\"]\n    surge = v >= 2 * v.shift(1)\n    return [d.strftime(\"%Y-%m-%d\") for d in df.index[surge]]\n",
+  "notes": [
+    "`shift(1)` moves each volume down one row, so each row holds yesterday's volume beside its own.",
+    "The first row compares with NaN, and any comparison with NaN is False, so it is never a surge.",
+    "One read of the file and one comparison of two columns, $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "import pandas as pd\n\ndef volume_surges(path):\n    df = pd.read_csv(path, index_col=\"date\", parse_dates=True)\n    v = df[\"volume\"]\n    surge = v >= 2 * v.shift(-1)\n    return [d.strftime(\"%Y-%m-%d\") for d in df.index[surge]]\n",
+      "slip": "Shifts the wrong way and compares with tomorrow's volume, a value not yet known."
+    },
+    {
+      "code": "import pandas as pd\n\ndef volume_surges(path):\n    df = pd.read_csv(path, index_col=\"date\", parse_dates=True)\n    v = df[\"volume\"]\n    surge = v > 2 * v.shift(1)\n    return [d.strftime(\"%Y-%m-%d\") for d in df.index[surge]]\n",
+      "slip": "Uses a strict inequality, so a day of exactly twice the volume is missed."
+    },
+    {
+      "code": "import pandas as pd\n\ndef volume_surges(path):\n    df = pd.read_csv(path, index_col=\"date\", parse_dates=True)\n    v = df[\"volume\"]\n    surge = v.pct_change() >= 2\n    return [d.strftime(\"%Y-%m-%d\") for d in df.index[surge]]\n",
+      "slip": "Asks for a rise of 200%, which is three times the volume, not twice."
+    },
+    {
+      "code": "import pandas as pd\n\ndef volume_surges(path):\n    df = pd.read_csv(path, index_col=0, parse_dates=True)\n    v = df.iloc[:, 1]\n    surge = v >= 2 * v.shift(1)\n    return [d.strftime(\"%Y-%m-%d\") for d in df.index[surge]]\n",
+      "slip": "Picks columns by position, so a file with the columns in another order goes wrong."
+    }
+  ]
+}

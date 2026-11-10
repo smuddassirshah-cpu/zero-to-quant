@@ -1,0 +1,132 @@
+{
+  "id": "py-fill-summary",
+  "name": "Summary of the day's fills",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "groupby"
+  ],
+  "skills": [
+    "pd-group"
+  ],
+  "difficulty": 2,
+  "pace": 720,
+  "fn": "fill_summary",
+  "returns": "a pandas DataFrame",
+  "brief": "`fills` is a DataFrame of the day's trades with columns `ticker`, `side` (`'B'` buy or `'S'` sell), `qty` (a positive whole number) and `price` in pence. For each ticker give `net`, shares bought less shares sold; `vwap`, the volume-weighted average price over all its fills, buys and sells alike; and `fills`, the number of fills.\n\nWrite `fill_summary(fills)`. It returns a DataFrame indexed by ticker in alphabetical order, with exactly the columns `net`, `vwap` and `fills` in that order. The tests read its columns, its index, each column with `tolist()` and the rows with `to_numpy().tolist()`; floats count within a relative `1e-9`. The frame `FILLS` and the helper `fills(rows)` are ready to try.\n\nExample. VOD bought 1,200 at 72.40 and 800 at 72.10, then sold 1,500 at 72.90. Its `net` is 500, its `vwap` is $253{,}910 / 3{,}500 \\approx 72.546$ and `fills` is 3.",
+  "constraints": [
+    "At least one fill. Tickers are text, and they may arrive in any order.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Add a signed quantity (`np.where` on the side) and a value column `qty * price` first. Then one `groupby(\"ticker\").agg(...)` sums them; `vwap` is total value over total quantity.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef fills(rows):\n    # rows of (ticker, side, qty, price)\n    return pd.DataFrame(rows, columns=['ticker', 'side', 'qty', 'price'])\n\nFILLS = fills([('VOD', 'B', 1200, 72.40), ('BARC', 'S', 500, 210.5), ('VOD', 'B', 800, 72.10),\n               ('VOD', 'S', 1500, 72.90), ('BARC', 'B', 300, 209.8), ('AZN', 'B', 40, 11950.0)])\n",
+  "starter": "import numpy as np\nimport pandas as pd\n\ndef fill_summary(fills):\n    df = fills.copy()\n    out = ...\n    return out\n",
+  "examples": [
+    {
+      "call": "fill_summary(FILLS)[\"net\"].tolist()",
+      "expect": "[40, -200, 500]",
+      "compare": "equal",
+      "note": "In ticker order, AZN bought 40. BARC sold 500 and bought 300. VOD ends 500 long."
+    },
+    {
+      "call": "fill_summary(FILLS).index.tolist()",
+      "expect": "['AZN', 'BARC', 'VOD']",
+      "compare": "equal",
+      "note": "Tickers come out in alphabetical order, though VOD traded first."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Columns",
+      "call": "fill_summary(FILLS).columns.tolist()",
+      "expect": "['net', 'vwap', 'fills']",
+      "compare": "equal"
+    },
+    {
+      "name": "Tickers in order",
+      "call": "fill_summary(FILLS).index.tolist()",
+      "expect": "['AZN', 'BARC', 'VOD']",
+      "compare": "equal"
+    },
+    {
+      "name": "Net shares",
+      "call": "fill_summary(FILLS)[\"net\"].tolist()",
+      "expect": "[40, -200, 500]",
+      "compare": "equal"
+    },
+    {
+      "name": "Weighted prices",
+      "call": "fill_summary(FILLS)[\"vwap\"].tolist()",
+      "expect": "[11950.0, 210.2375, 72.54571428571428]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Fill counts",
+      "call": "fill_summary(FILLS)[\"fills\"].tolist()",
+      "expect": "[1, 2, 3]",
+      "compare": "equal"
+    },
+    {
+      "name": "One fill",
+      "call": "fill_summary(fills([(\"HSBA\", \"S\", 200, 650.0)])).to_numpy().tolist()",
+      "expect": "[[-200.0, 650.0, 1.0]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Sold out flat",
+      "call": "fill_summary(fills([(\"RR\", \"B\", 1000, 401.0), (\"RR\", \"S\", 1000, 405.0)])).to_numpy().tolist()",
+      "expect": "[[0.0, 403.0, 2.0]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Only sells",
+      "call": "fill_summary(fills([(\"BP\", \"S\", 300, 440.0), (\"BP\", \"S\", 100, 436.0)])).to_numpy().tolist()",
+      "expect": "[[-400.0, 439.0, 2.0]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Tickers arrive unsorted",
+      "call": "fill_summary(fills([(\"ZZ\", \"B\", 10, 5.0), (\"AA\", \"B\", 20, 6.0), (\"MM\", \"S\", 5, 7.0), (\"AA\", \"S\", 5, 6.6)])).index.tolist()",
+      "expect": "['AA', 'MM', 'ZZ']",
+      "compare": "equal"
+    },
+    {
+      "name": "Sizes differ a lot",
+      "call": "fill_summary(fills([(\"SHEL\", \"B\", 5000, 2600.0), (\"SHEL\", \"B\", 10, 2700.0)]))[\"vwap\"].tolist()",
+      "expect": "[2600.199600798403]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Sells move the average",
+      "call": "fill_summary(fills([(\"LLOY\", \"B\", 400, 50.0), (\"LLOY\", \"S\", 100, 54.0), (\"LLOY\", \"B\", 100, 52.0)])).to_numpy().tolist()",
+      "expect": "[[400.0, 51.0, 3.0]]",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lesson l12-split-apply-combine: `groupby` with named aggregations.",
+  "solution": "import numpy as np\nimport pandas as pd\n\ndef fill_summary(fills):\n    df = fills.copy()\n    df[\"signed\"] = np.where(df[\"side\"] == \"B\", df[\"qty\"], -df[\"qty\"])\n    df[\"value\"] = df[\"qty\"] * df[\"price\"]\n    g = df.groupby(\"ticker\").agg(net=(\"signed\", \"sum\"), value=(\"value\", \"sum\"),\n                                  qty=(\"qty\", \"sum\"), fills=(\"qty\", \"size\"))\n    g[\"vwap\"] = g[\"value\"] / g[\"qty\"]\n    return g[[\"net\", \"vwap\", \"fills\"]]\n",
+  "notes": [
+    "A signed quantity column turns the net position into a plain sum, and a value column turns the weighted average into two sums.",
+    "`vwap` divides by all shares traded; the signed sum can be 0 or negative and would give a meaningless price.",
+    "One `groupby` pass over the fills, so the work is about $O(n)$ plus sorting the tickers."
+  ],
+  "planted": [
+    {
+      "code": "import numpy as np\nimport pandas as pd\n\ndef fill_summary(fills):\n    df = fills.copy()\n    df[\"signed\"] = np.where(df[\"side\"] == \"B\", df[\"qty\"], -df[\"qty\"])\n    g = df.groupby(\"ticker\").agg(net=(\"signed\", \"sum\"), vwap=(\"price\", \"mean\"), fills=(\"qty\", \"size\"))\n    return g[[\"net\", \"vwap\", \"fills\"]]\n",
+      "slip": "Takes the plain mean of the prices, so a fill of 40 shares weighs as much as one of 1,200."
+    },
+    {
+      "code": "import numpy as np\nimport pandas as pd\n\ndef fill_summary(fills):\n    df = fills.copy()\n    df[\"value\"] = df[\"qty\"] * df[\"price\"]\n    g = df.groupby(\"ticker\").agg(net=(\"qty\", \"sum\"), value=(\"value\", \"sum\"), fills=(\"qty\", \"size\"))\n    g[\"vwap\"] = g[\"value\"] / g[\"net\"]\n    return g[[\"net\", \"vwap\", \"fills\"]]\n",
+      "slip": "Adds up quantities without the side, so sells count as buys."
+    },
+    {
+      "code": "import numpy as np\nimport pandas as pd\n\ndef fill_summary(fills):\n    df = fills.copy()\n    df[\"signed\"] = np.where(df[\"side\"] == \"B\", df[\"qty\"], -df[\"qty\"])\n    df[\"value\"] = df[\"qty\"] * df[\"price\"]\n    g = df.groupby(\"ticker\", sort=False).agg(net=(\"signed\", \"sum\"), value=(\"value\", \"sum\"),\n                                  qty=(\"qty\", \"sum\"), fills=(\"qty\", \"size\"))\n    g[\"vwap\"] = g[\"value\"] / g[\"qty\"]\n    return g[[\"net\", \"vwap\", \"fills\"]]\n",
+      "slip": "Groups with `sort=False`, so tickers come out in the order first seen."
+    },
+    {
+      "code": "import numpy as np\nimport pandas as pd\n\ndef fill_summary(fills):\n    df = fills.copy()\n    df[\"signed\"] = np.where(df[\"side\"] == \"B\", df[\"qty\"], -df[\"qty\"])\n    df[\"value\"] = df[\"signed\"] * df[\"price\"]\n    g = df.groupby(\"ticker\").agg(net=(\"signed\", \"sum\"), value=(\"value\", \"sum\"), fills=(\"qty\", \"size\"))\n    g[\"vwap\"] = g[\"value\"] / g[\"net\"]\n    return g[[\"net\", \"vwap\", \"fills\"]]\n",
+      "slip": "Weights by the signed quantity, so the average is taken over the net position, not the shares traded."
+    }
+  ]
+}

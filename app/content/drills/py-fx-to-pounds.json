@@ -1,0 +1,123 @@
+{
+  "id": "py-fx-to-pounds",
+  "name": "Dollar prices into pounds",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "broadcasting"
+  ],
+  "skills": [
+    "np-broadcast"
+  ],
+  "difficulty": 2,
+  "pace": 600,
+  "fn": "to_pounds",
+  "returns": "a 2-D NumPy array",
+  "brief": "`prices` is a list of rows, one row per day and one column per share, in dollars. `rates` has one entry per day: the pounds one dollar bought that day. Each price converts at its own day's rate.\n\nWrite `to_pounds(prices, rates)`. It returns a 2-D NumPy array of the same shape as `prices`, in pounds. The tests compare it row by row through `tolist()`, each float within a relative `1e-9`, and also check its shape.\n\nExample. Rows `[100, 250, 40]` and `[102, 245, 41]` with rates `[0.80, 0.78]` give `[80, 200, 32]` and `[79.56, 191.1, 31.98]`.",
+  "constraints": [
+    "At least one day and one share; up to 1,000 of each.",
+    "No Python loop is needed. NumPy is available.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "A 1-D array of rates lines up with the last axis, the shares. Turn it into a column, `rates[:, None]`, so it stretches across each row instead.",
+  "prelude": "import numpy as np\n\nnan = float('nan')\n",
+  "starter": "import numpy as np\n\ndef to_pounds(prices, rates):\n    p = np.asarray(prices, dtype=float)\n    r = np.asarray(rates, dtype=float)\n    return p\n",
+  "examples": [
+    {
+      "call": "to_pounds([[100, 250, 40], [102, 245, 41]], [0.80, 0.78]).tolist()",
+      "expect": "[[80.0, 200.0, 32.0], [79.56, 191.1, 31.98]]",
+      "compare": "isclose",
+      "note": "Day 1 converts at 0.80 and day 2 at 0.78."
+    },
+    {
+      "call": "to_pounds([[10, 20], [30, 40]], [0.5, 0.25]).tolist()",
+      "expect": "[[5.0, 10.0], [7.5, 10.0]]",
+      "compare": "isclose",
+      "note": "A square table: the rate must follow the row, so 30 becomes 7.5, not 15."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Square table",
+      "call": "to_pounds([[10, 20], [30, 40]], [0.5, 0.25]).tolist()",
+      "expect": "[[5.0, 10.0], [7.5, 10.0]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "One day",
+      "call": "to_pounds([[50.0, 60.0]], [0.79]).tolist()",
+      "expect": "[[39.5, 47.400000000000006]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "One share",
+      "call": "to_pounds([[10], [20], [30]], [0.8, 0.7, 0.9]).tolist()",
+      "expect": "[[8.0], [14.0], [27.0]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "One share, shape",
+      "call": "to_pounds([[10], [20], [30]], [0.8, 0.7, 0.9]).shape",
+      "expect": "(3, 1)",
+      "compare": "equal"
+    },
+    {
+      "name": "More days than shares",
+      "call": "to_pounds([[12.5, 80.0], [13.0, 78.4], [12.0, 81.2], [12.8, 79.9]], [0.81, 0.79, 0.8, 0.77]).tolist()",
+      "expect": "[[10.125, 64.80000000000001], [10.27, 61.93600000000001], [9.600000000000001, 64.96000000000001], [9.856000000000002, 61.523]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "More shares than days",
+      "call": "to_pounds([[5.0, 15.0, 25.0, 35.0], [6.0, 14.0, 26.0, 34.0]], [0.75, 0.8]).tolist()",
+      "expect": "[[3.75, 11.25, 18.75, 26.25], [4.800000000000001, 11.200000000000001, 20.8, 27.200000000000003]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Three by three",
+      "call": "to_pounds([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]], [0.9, 0.6, 0.3]).tolist()",
+      "expect": "[[0.9, 1.8, 2.7], [2.4, 3.0, 3.5999999999999996], [2.1, 2.4, 2.6999999999999997]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Same rate every day",
+      "call": "to_pounds([[200.0, 300.0], [210.0, 290.0]], [0.785, 0.785]).tolist()",
+      "expect": "[[157.0, 235.5], [164.85, 227.65]]",
+      "compare": "isclose"
+    },
+    {
+      "name": "An array comes back",
+      "call": "type(to_pounds([[1.0]], [0.8])).__name__",
+      "expect": "'ndarray'",
+      "compare": "equal"
+    },
+    {
+      "name": "Wide table",
+      "call": "to_pounds([[float(j + 10 * i) for j in range(6)] for i in range(3)], [0.8, 0.79, 0.81]).tolist()",
+      "expect": "[[0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0], [7.9, 8.690000000000001, 9.48, 10.27, 11.06, 11.850000000000001], [16.200000000000003, 17.01, 17.82, 18.630000000000003, 19.44, 20.25]]",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 10 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lesson l4-broadcasting: a column of rates against a table of prices.",
+  "solution": "import numpy as np\n\ndef to_pounds(prices, rates):\n    p = np.asarray(prices, dtype=float)\n    r = np.asarray(rates, dtype=float)\n    return p * r[:, None]\n",
+  "notes": [
+    "A rates array of shape `(days,)` lines up with the last axis, so it must become `(days, 1)` to stretch across each row.",
+    "On a square table the flat array still broadcasts, with no error, and gives wrong numbers; on any other shape it raises or stretches wrongly.",
+    "One element-wise product, $O(\\text{days} \\times \\text{shares})$, with no loop."
+  ],
+  "planted": [
+    {
+      "code": "import numpy as np\n\ndef to_pounds(prices, rates):\n    p = np.asarray(prices, dtype=float)\n    r = np.asarray(rates, dtype=float)\n    return p * r\n",
+      "slip": "Multiplies by the flat array, which lines the rates up with the shares, not the days."
+    },
+    {
+      "code": "import numpy as np\n\ndef to_pounds(prices, rates):\n    p = np.asarray(prices, dtype=float)\n    r = np.asarray(rates, dtype=float)\n    return p / r[:, None]\n",
+      "slip": "Divides by the rate, which would convert pounds into dollars."
+    },
+    {
+      "code": "import numpy as np\n\ndef to_pounds(prices, rates):\n    p = np.asarray(prices, dtype=float)\n    r = np.asarray(rates, dtype=float)\n    return p * r[0]\n",
+      "slip": "Uses the first day's rate for every day."
+    }
+  ]
+}
