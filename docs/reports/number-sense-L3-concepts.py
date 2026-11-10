@@ -8,7 +8,13 @@ starting "note" records where a claim stops holding outside that domain; those
 are the `imprecise` findings of docs/reviews/audit-number-sense-1-3.md and are
 not asserted. A check marked EXPECTED_FAIL fails because the content is wrong
 as it stands (a `wrong` finding); it passes once the content is fixed.
+
+Fix pass: tools_minus_three_squared now runs its corrected assert (no
+EXPECTED_FAIL is left), and the notes for findings 11 and 12 are checks marked
+"(corrected claim, fix pass)" that recompute the corrected claim and assert the
+content states it. no_lesson_id_shown covers the "as in l4" text defect.
 """
+import re
 import json
 import math
 import random
@@ -113,7 +119,14 @@ def root_of_time():
           "l11 screens[9]; review-3 items[7]: independent daily swings of 1% give about 15.9% over 252 days, not 252%")
     check("root_of_time_needs_independence", ar / iid > 1.2,
           "with correlated days the yearly swing is well above sqrt(252) x daily: the rule has a hypothesis")
-    note("root_of_time", "the lesson states the rule with no condition (finding 11)")
+    p9 = json.loads((COURSE / "l11-undoing-a-square.json").read_text())["screens"][9]
+    r7 = json.loads((COURSE / "review-3.json").read_text())["items"][7]["prose"]
+    check("root_of_time", ar / iid > 1.2 and abs(iid / (0.01 * math.sqrt(252)) - 1) < 0.05
+          and "When each day's move is independent of the last, risk grows with the square root of time." in p9["prose"]
+          and p9["explain"]["text"].endswith("With independent days, risk grows like the square root of time.")
+          and "is independent of the last, so risk grows with the square root of time." in r7,
+          "(corrected claim, fix pass) l11 screens[9], review-3 items[7]: the square-root-of-time rule is stated for "
+          "independent days, where it holds; correlated days break it (finding 11)")
 
 
 # ---- l12: order of operations
@@ -141,10 +154,14 @@ def order_of_operations():
     text = json.loads((COURSE / "l12-which-first.json").read_text())["quiz"][2]["explain"]["text"]
     claims_all_tools = "Calculators and code follow the same rule" in text
     all_agree = all(v == -9 for v in tools.values())
-    # EXPECTED_FAIL while the sentence stands (finding 10). Corrected assert, true once the sentence names the exception:
-    #   check("tools_minus_three_squared", "spreadsheet" in text and "Calculators and code follow the same rule" not in text, ...)
-    check("tools_minus_three_squared", all_agree or not claims_all_tools,
-          f"l12 quiz[2].explain: 'Calculators and code follow the same rule' is false: {tools}", expected_fail=True)
+    # Corrected assert (fix pass, finding 10): the tools disagree, and the text says Python gives -9 while a
+    # spreadsheet gives 9. Python is evaluated live; the spreadsheet value is documented (and was run in
+    # LibreOffice Calc in the fix pass: =-3^2 gave 9, =0-3^2 gave -9).
+    tools["python"] = eval("-3 ** 2")
+    check("tools_minus_three_squared", not all_agree and not claims_all_tools and tools["python"] == -9
+          and tools["spreadsheet formula =-3^2"] == 9
+          and "Python agrees, but a spreadsheet reads `=-3^2` as 9, so type the brackets there." in text,
+          f"(corrected claim, fix pass) l12 quiz[2].explain: Python agrees with -9, a spreadsheet does not: {tools}")
 
 
 # ---- l13: one significant figure and estimates
@@ -185,8 +202,20 @@ def estimation():
     ds = [k / 100 for k in range(1, 100)]
     check("dividing_by_between_0_and_1", all(x / d > x for x in xs[::37] for d in ds),
           "l13 screens[4], summary.ideas[2]; l14 quiz[3]: a positive number divided by a number between 0 and 1 gets bigger")
-    note("dividing_by_a_number_below_1", f"600 / (-2) = {600 / -2:.0f} and -600 / 0.5 = {-600 / 0.5:.0f} are not bigger, and 600 / 0 "
-         "has no value: 'a number below 1' needs 'between 0 and 1' and a positive dividend (finding 12)")
+    l13 = json.loads((COURSE / "l13-estimate-first.json").read_text())
+    l14 = json.loads((COURSE / "l14-very-big-very-small.json").read_text())
+    texts = [l13["screens"][4]["widget"]["options"][3]["why"], l13["screens"][4]["explain"]["text"],
+             l13["summary"]["ideas"][2], l14["quiz"][3]["explain"]["text"]]
+    check("dividing_by_a_number_below_1", 600 / -2 < 600 and -600 / 0.5 < -600
+          and all("between 0 and 1" in t and "below 1" not in t and "small number" not in t for t in texts)
+          and all("positive number" in t for t in texts[1:]),
+          "(corrected claim, fix pass) l13 screens[4], summary.ideas[2]; l14 quiz[3]: a positive number divided by a "
+          "number between 0 and 1 gets bigger; 600 / (-2) = -300 and -600 / 0.5 = -1200 do not (finding 12)")
+    shown = [f.name for f in sorted(COURSE.glob("*.json")) if f.name != "course.json"
+             and re.search(r"\bas in l\d", f.read_text(encoding="utf-8"))]
+    check("no_lesson_id_shown", shown == [] and "as in the lesson on taking a fraction of a fraction" in l13["screens"][7]["explain"]["text"]
+          and F(6, 10) * F(4, 10) == F(24, 100),
+          f"(fix pass) no learner text cites a lesson id ('as in l4'): {shown}")
 
 
 # ---- l14: standard form

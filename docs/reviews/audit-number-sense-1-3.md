@@ -82,4 +82,33 @@ What a single read missed, measured on the content as it now stands: the review,
 
 ## Fix pass
 
-Not yet run. Per `docs/briefs/concept-audit.md` the fixer is Opus and writes, for each finding, the status and its own one-line basis here.
+Bases computed in my own scratch script and tool runs, independent of the auditor's checks.
+
+1. fixed | basis: a/b = ka/kb for every a from 0 to 14, b and k from 1 to 14; k = 0 turns 2/3 into 0/0, which Python's Fraction refuses (ZeroDivisionError). Auditor's text, both strings.
+2. fixed | basis: over a, b, k from 1 to 19, (a + k)/(b + k) = a/b holds exactly when a = b (cross-multiplying leaves k(b − a) = 0); 3/3 and 4/4 are both one whole. Auditor's text.
+3. fixed | basis: over whole m, n from 0 to 29, m × n exceeds both exactly when both exceed 1; 1 × 4 = 4 and 0 × 4 = 0. Auditor's text.
+4. fixed | basis: 10^n leaves 1 on division by 3 for every n to 199, so 1/3 has no power-of-ten bottom, while a decimal with n places is its digits over 10^n. Auditor's text, both strings; "a decimal that stops" is plain words, and l7 introduces the recurring case next.
+5. fixed | basis: 3.9 = 39/10 is already a tenth; 3.96 to one place is 4.0. Auditor's text.
+6. fixed | basis: a/12 stops for a in {3, 6, 9} only (lowest-terms bottom 4, 2, 4), and gcd(7, 12) = 1 leaves the 3, so 7/12 recurs. Auditor's text.
+7. fixed | basis: a + b < min(a, b) for every pair of negatives from −30 to −1; −2 + (−9) = −11 < −2, (−4) + (−6) = −10. Auditor's text, both strings; l9 screens[7] "a bigger loss" left, since a loss's size is its distance from zero.
+8. fixed | basis: x × 0 = 5 has no solution for any x from −50 to 50 (x × 0 = 0 for all 101), so a ÷ 0 has no answer. Auditor's text.
+9. fixed | basis: the smallest price step is £0.01 = 1/100 of a pound, which fixes two places; lining up is the effect on the reader. Auditor's text, which drops the false causal "so" without adding a new claim.
+10. fixed | basis, run myself: Python `-3**2` gives −9; node `-3 ** 2` throws "SyntaxError: Unary operator used immediately before exponentiation expression"; LibreOffice Calc, headless, evaluates `=-3^2` to 9 and `=0-3^2` to −9. Excel is documented the same way in Microsoft Support, "Calculation operators and precedence in Excel" (negation, as in −1, ranks above ^). Auditor's text; inline code in backticks renders in explain text (`docs/AUTHORING.md`).
+11. fixed, with my own review-3 sentence | basis: simulated 4,000 years of 252 days, daily sd 1%: independent days give 0.1591 against 0.01 × √252 = 0.1587; AR(1) with ρ = 0.3 gives 0.2158 and ρ = −0.3 gives 0.1163. Auditor's text in l11; review-3 items[7] reads "Each day's result is independent of the last, so risk grows with the square root of time.", since the auditor's "Its days are independent" leaves "independent" undefined for a beginner and differs from the l11 wording.
+12. fixed, with my own l14 sentence | basis: x/d > x for 59 positive x and d from 0.1 to 0.9; 600 ÷ (−2) = −300 and −600 ÷ 0.5 = −1,200 are not bigger, and 600 ÷ 0 has no value. Auditor's text in l13; l14 quiz[3].explain reads "Dividing a positive number by a number between 0 and 1 makes it bigger, as in the estimation lesson.", matching l13 rather than the auditor's "makes a positive answer bigger". The string there was "Dividing by a small number", not "below 1"; same claim, same fix.
+
+Text defects: l6 quiz[2].feedback.correct and l8 quiz[0].widget.options[2].why now say their sentence once; l13 screens[7].explain reads "as in the lesson on taking a fraction of a fraction".
+
+Repeats searched (`below 1`, `less than one`, `bigger negative`, `square root of time`, `same number`, `power of ten`, `same rule`, `Division undoes`): none left needs a change. L1's "a fraction less than one" (l4, l5) is fine where only positive amounts exist; l13 "divide by 0.2, which makes it bigger" and l11 / review-3 byKey and explain lines sit under prose that now states the condition. Not changed, for a later read: l11 screens[8] "the root of a number below 1 is bigger than the number" fails at 0 (√0 = 0); its context is 0.09 and 0.25.
+
+Counts: fixed 12, disputed 0, deferred 0.
+
+Graded answers changed: none. No key, `wrong[]` value, slip, tolerance or lesson id changed; only prose, summary, explain, why and feedback lines (23 strings in 11 files).
+
+Concepts scripts: L3 `tools_minus_three_squared` now runs its corrected assert (Python evaluated live, node run live), and no `EXPECTED_FAIL` remains. The notes for findings 1, 2, 3 (L1), 4, 6, 7, 8 (L2), 11 and 12 (L3) are checks marked "(corrected claim, fix pass)": each recomputes the corrected claim and asserts the content states it and no longer states the old wording. New checks: `three_point_nine_text`, `two_places_reason`, `second_coldest_once` (L2), `no_lesson_id_shown` (L3). The L2 `compare_negatives` note is not a finding and stays a note. No check was weakened. The number scripts match on no changed string except `You picked the second coldest.`, which still holds.
+
+Checks:
+- Validator (from `app/`): `0 errors, 4110 warnings`; it rewrote no tracked file.
+- Voice (35): `# explanations over three sentences: 0`, `# sentences scanned: 5781; over 35 words: 0`.
+- Concepts scripts with `python3 -I`: L1 exit 0 (30 checks), L2 exit 0 (35), L3 exit 0 (29). Numbers scripts: L1 337 of 337, L2 337 of 337, L3 393 of 393, all exit 0.
+- Playthrough (`--local-cdn <pkgs>`) of l2, l4, l6, l8, l9, l11, l12, l13, l14, homework-2, review-3: desktop and `--mobile` both `browser relaunches: 0`, `All passed.`

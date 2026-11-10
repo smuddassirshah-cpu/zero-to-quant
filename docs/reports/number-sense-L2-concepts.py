@@ -7,14 +7,28 @@ Exit 0 means every checked claim holds on the domain the lesson uses. A line
 starting "note" records where a claim stops holding outside that domain; those
 are the `imprecise` findings of docs/reviews/audit-number-sense-1-3.md and are
 not asserted. A failing assert names the claim.
+
+Fix pass: the notes for findings 4, 6, 7 and 8 are now checks marked "(corrected
+claim, fix pass)", and findings 5 and 9 and the two doubled sentences gained text
+checks; each recomputes the corrected claim and asserts the content states it.
 """
+import json
 import random
+from pathlib import Path
 from decimal import Decimal as D, ROUND_HALF_UP, ROUND_FLOOR
 from fractions import Fraction as F
 from math import gcd
 
+COURSE = Path("app/content/courses/number-sense")
 N = 0
 random.seed(20261109)
+
+
+def txt(file, *path):
+    d = json.loads((COURSE / file).read_text(encoding="utf-8"))
+    for p in path:
+        d = d[p]
+    return d
 
 
 def check(name, cond, msg):
@@ -41,8 +55,13 @@ def place_value():
           "l6 screens[3], [8], summary.formula.note: n digits after the point give a bottom of 10^n")
     check("third_is_not_over_power_of_ten", all((10 ** n) % 3 == 1 for n in range(1, 60)),
           "l7 screens[5]: every power of ten leaves 1 when divided by 3")
-    note("decimal_definition", "1/3 = 0.333... is a decimal with no power of ten for a bottom, so 'a decimal is a fraction "
-         "whose bottom is 10, 100, 1000' holds only for decimals that stop (finding 4)")
+    e3 = txt("l6-place-value.json", "screens", 3, "explain", "text")
+    p8 = txt("l6-place-value.json", "screens", 8, "prose")
+    check("decimal_definition", all((10 ** n) % 3 == 1 for n in range(0, 60))
+          and "A decimal that stops is a fraction whose bottom is 10, 100, 1000" in e3 and "A decimal is a fraction" not in e3
+          and "any decimal that stops can be written as one fraction over 10, 100, 1000" in p8,
+          "(corrected claim, fix pass) l6 screens[3].explain, screens[8].prose: only a decimal that stops has a power of "
+          "ten for a bottom; 1/3 = 0.333... has none (finding 4)")
 
     def digitwise(a, b):                     # compare place by place from the left, padding with zeros
         aw, af = a.split(".")
@@ -94,6 +113,18 @@ def rounding():
           "l6 screens[5], quiz[2]; l7 screens[7], [11], quiz[1], quiz[3]; review-2 items[4], [6]; homework-2 items[1], [7]")
     check("three_point_nine", r(F(39, 10), 1) == D("3.9") and r(F(396, 100), 1) == D("4.0"),
           "l6 quiz[2].feedback.byKey.ten-tenths: it is 3.96 that rounds to 4.0; 3.9 to the nearest tenth is 3.9 (finding 5)")
+    fb = txt("l6-place-value.json", "quiz", 2, "feedback")
+    check("three_point_nine_text", "so 3.96 rounds up to 4.0." in fb["byKey"]["ten-tenths"]
+          and "3.9 rounds" not in fb["byKey"]["ten-tenths"]
+          and fb["correct"].count("Write the 0: it shows one decimal place.") == 1,
+          "(corrected claim, fix pass) l6 quiz[2].feedback: the ten-tenths line names 3.96; the correct line says its "
+          "sentence once (finding 5; doubled sentence)")
+    tick = F(1, 100)
+    e9 = txt("l6-place-value.json", "screens", 9, "explain", "text")
+    check("two_places_reason", tick * 100 == 1 and "so every digit lines up" not in e9
+          and "Writing every price to two places lines the digits up." in e9,
+          "(corrected claim, fix pass) l6 screens[9].explain: a penny is 1/100 of a pound, which sets the two places; "
+          "lining up is what two places give the reader, not the reason for them (finding 9)")
 
 
 # ---- l7: stopping and recurring decimals
@@ -115,8 +146,12 @@ def terminating():
     twelfths = [a for a in range(1, 12) if stops(a, 12)]
     check("twelfths_that_stop", twelfths == [3, 6, 9] and not stops(7, 12),
           "l7 quiz[2]: 3/12 stops; homework-2 items[1]: 7/12 does not")
-    note("no_power_of_ten_for_twelfths", f"a/12 stops for a in {twelfths}, so 'no power of ten works for twelfths' "
-         "is true of 7/12 only because the 3 does not cancel (finding 6)")
+    hw = txt("homework-2.json", "items", 1, "prose")
+    check("no_power_of_ten_for_twelfths", twelfths == [a for a in range(1, 12) if (12 // gcd(a, 12)) % 3 != 0]
+          and gcd(7, 12) == 1 and not stops(7, 12) and "works for twelfths" not in hw
+          and "No power of ten works for $\\tfrac{7}{12}$" in hw and "the 3 does not cancel with the 7" in hw,
+          f"(corrected claim, fix pass) homework-2 items[1].prose: a/12 stops for a in {twelfths}, where the 3 cancels; "
+          "7/12 does not stop because the 3 does not cancel (finding 6)")
     check("lesson_examples", F(7, 40) == F(175, 1000) and not stops(1, 6) and not stops(2, 9) and not stops(5, 12)
           and F(3, 8) == F(375, 1000) and F(7, 20) == F(35, 100) and F(9, 25) == F(36, 100) and F(125, 1000) == F(1, 8),
           "l7 screens[3], [4], [9], [10], quiz[0]")
@@ -145,8 +180,18 @@ def signed_addition():
     neg = range(-12, 0)
     check("two_negatives_added", all(a + b < a and a + b < b and a + b < 0 for a in neg for b in neg),
           "l8 screens[5]; l9 screens[7]: adding two negatives gives a total below both")
-    note("bigger_negative", "-11 is the LOWER number (-11 < -2); 'a bigger negative' means further from zero, "
-         "against the lesson's own 'further left is lower' (finding 7)")
+    e5 = txt("l8-below-zero.json", "screens", 5, "explain", "text")
+    trap = txt("l9-negative-times-negative.json", "summary", "trap")
+    check("bigger_negative", -2 + -9 == -11 < -2 and (-4) + (-6) == -10 < -6
+          and "Adding two negatives gives a number lower than both." in e5
+          and "Adding two negatives gives a lower number: $(-4) + (-6) = -10$." in trap
+          and all("bigger negative" not in (COURSE / f).read_text(encoding="utf-8")
+                  for f in ("l8-below-zero.json", "l9-negative-times-negative.json")),
+          "(corrected claim, fix pass) l8 screens[5].explain, l9 summary.trap: the sum of two negatives is lower than "
+          "both (finding 7)")
+    why = txt("l8-below-zero.json", "quiz", 0, "widget", "options", 2, "why")
+    check("second_coldest_once", why.count("You picked the second coldest.") == 1 and -15 == -12 - 3,
+          "(fix pass) l8 quiz[0].widget.options[2].why says its sentence once; -15 is 3 lower than -12 (doubled sentence)")
     check("order_on_the_line", -7 < -2 and min(-12, -3, 0, -15) == -15, "l8 screens[2], quiz[0]")
     check("l8_keys", 3 - 5 == -2 and -4 + 7 == 3 and 6 + (-9) == -3 and -2 + (-5) + (-4) == -11
           and -3 - (-8) == 5 and 4 - (-5) == 9 and D("-4.25") - D("-4.25") == 0 and D("2.5") - D("-7.5") == 10,
@@ -217,7 +262,11 @@ def division_by_zero():
     every = all(x * 0 == 0 for x in Z)
     check("what_times_b_gives_a", ok and none and every,
           "l9 screens[6]: the question has one answer when b is not 0, none for a/0, and no single answer for 0/0")
-    note("division_by_zero", "the course never says b must not be 0; the hypothesis is dropped (finding 8)")
+    p6 = txt("l9-negative-times-negative.json", "screens", 6, "prose")
+    check("division_by_zero", none and not any(x * 0 == 5 for x in range(-1000, 1001))
+          and p6.endswith("Nothing times 0 gives 5, so we never divide by 0."),
+          "(corrected claim, fix pass) l9 screens[6].prose: no number times 0 gives 5, so a / 0 has no answer and "
+          "the course says we never divide by 0 (finding 8)")
 
 
 if __name__ == "__main__":
