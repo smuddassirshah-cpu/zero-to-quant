@@ -137,3 +137,4 @@ Changed graded material (keys themselves unchanged everywhere):
 - No numeric answer, accepted answer, slip value or wrong-option value changed.
 
 Gates after the fix pass: validator 0 errors (4135 warnings, 4136 before the pass; `content/manifest.json` unchanged); L1 79 passed, L2 76, L3 68, each 0 failed, 0 EXPECTED_FAIL, exit 0; `mm-games-3-perf-numbers.py` 0 failures, exit 0 (no number it checks changed, so not edited); voice scan 35: 0 and 0. Playthroughs below.
+- Playthroughs with `--local-cdn`, desktop and `--mobile`: lessons l1 to l8, l10 to l13 and sets review-1, review-3, homework-1, homework-3, 32 of 32 runs "All passed".
