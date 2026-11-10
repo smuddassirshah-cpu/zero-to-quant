@@ -164,7 +164,13 @@ check("l11 s10: s=x+y obeys s'=3s, d=x-y obeys d'=-d",
 # y' = 3|y|^(2/3), t' = 1 has one velocity at every point, yet two paths pass through (0, 0).
 tt = np.linspace(-1, 1, 401)
 two_paths = np.max(np.abs(3 * tt ** 2 - 3 * np.abs(tt ** 3) ** (2 / 3))) < 1e-12  # y = t^3 solves it; so does y = 0
-expected_fail("l11 quiz0 reasoning: 'one velocity at each point, so one path' holds for y'=3|y|^(2/3)", not two_paths, "14")
+# (corrected claim, fix pass) quiz0 now keys "A linear system has one path per point" with feedback "a smooth system
+# has one path through each point". Fixer's own check: one velocity per point is not enough (3|y|^(2/3) has two
+# paths through 0), but for x'=Ax two solutions from one point differ by e^{At}0 = 0 (the difference solves x'=Ax).
+_Aq = np.array([[1.0, 2.0], [2.0, 1.0]])
+_d = solve_ivp(lambda u, z: _Aq @ z, (0, 2), [0.0, 0.0], rtol=1e-12, atol=1e-14)
+check("l11 quiz0 reasoning (corrected claim, fix pass): non-smooth field has two paths through 0; for x'=Ax the difference of two paths from one point stays 0",
+      two_paths and np.max(np.abs(_d.y)) == 0.0 and np.allclose(expm(2.0 * _Aq) @ np.zeros(2), 0))
 # corrected assert: one path through each point when the velocity field is smooth (Lipschitz); linear fields are
 check("l11 quiz0 corrected: x'=Ax is Lipschitz with constant ||A||, so its paths never cross",
       all(np.linalg.norm(As_ @ u - As_ @ v) <= np.linalg.norm(As_, 2) * np.linalg.norm(u - v) + 1e-12
@@ -204,8 +210,14 @@ re_max = np.linalg.eigvals(Acen).real.max()
 stays_near = max(np.linalg.norm(expm(s_ * Acen) @ np.array([0.01, 0.0])) for s_ in np.linspace(0, 200, 4001)) <= 0.021
 centre_is_stable = stays_near           # s7's sense (Lyapunov): starts near, stays near
 passes_s5_test = re_max < -1e-12        # s5's test
-expected_fail("l12 s5 vs s7 one meaning of 'stable': the centre, called stable on s7, passes the s5 test 'every real part below 0'",
-              centre_is_stable == passes_s5_test, "10")
+# (corrected claim, fix pass) s5 now says "every path decays to the origin exactly when every real part is below 0:
+# that is asymptotic stability", and s7 says a centre is stable (nearby paths stay near) but not asymptotically
+# stable. Fixer's own check: the centre [[0,1],[-4,0]] conserves 4x^2 + y^2 (sympy), so paths stay near and never
+# decay, while it fails the real-part test; these are two different properties, as the text now names them.
+_xc, _yc = sp.symbols('xc yc')
+_Hc = 4 * _xc ** 2 + _yc ** 2
+check("l12 s5 vs s7 (corrected claim, fix pass): centre conserves 4x^2+y^2 (stable, not asymptotically stable) and fails the real-part test",
+      sp.simplify(sp.diff(_Hc, _xc) * _yc + sp.diff(_Hc, _yc) * (-4 * _xc)) == 0 and centre_is_stable and not passes_s5_test)
 # corrected assert: real parts below 0 is the test for ASYMPTOTIC stability; a centre is stable but not asymptotically stable
 decays = np.linalg.norm(expm(200 * Acen) @ np.array([0.01, 0.0])) < 1e-6
 check("l12 s5 corrected: centre is stable (stays within 2x its start) and not asymptotically stable (does not decay); real parts < 0 is the asymptotic test",
@@ -234,8 +246,12 @@ star, improper = -np.eye(2), np.array([[-1.0, 1.0], [0.0, -1.0]])
 same_td = np.trace(star) == np.trace(improper) and abs(np.linalg.det(star) - np.linalg.det(improper)) < 1e-12
 straight_star = all(abs(cr(expm(1.0 * star) @ v, v)) < 1e-12 for v in rng.normal(size=(50, 2)))
 straight_improper = all(abs(cr(expm(1.0 * improper) @ v, v)) < 1e-9 for v in rng.normal(size=(50, 2)))
-expected_fail("l12 summary tau_Delta_fix_picture: -I and [[-1,1],[0,-1]] (same tau=-2, Delta=1) have the same portrait",
-              not (same_td and straight_star and not straight_improper), "11")
+# (corrected claim, fix pass) summary now says tau and Delta fix the picture except on the parabola, where a node may
+# have one eigenvector or two. Fixer's own check: both matrices sit on tau^2 = 4 Delta, and their eigenvector counts
+# are 2 - rank(A + I) = 2 and 1.
+check("l12 summary tau_Delta_fix_picture (corrected claim, fix pass): -I and [[-1,1],[0,-1]] share tau=-2, Delta=1 on the parabola, with 2 and 1 eigenvectors",
+      same_td and straight_star and not straight_improper and np.trace(star) ** 2 == 4 * round(np.linalg.det(star))
+      and 2 - np.linalg.matrix_rank(star + np.eye(2)) == 2 and 2 - np.linalg.matrix_rank(improper + np.eye(2)) == 1)
 # corrected assert: they fix the picture except on the parabola, where a star node and a one-eigenvector node share tau and Delta
 check("l12 summary corrected: off the parabola (and off Delta=0) tau and Delta give distinct eigenvalues, hence one picture",
       all(classify(A) == by_eigen(A) for A in rng.integers(-4, 5, size=(3000, 2, 2)).astype(float)
@@ -308,8 +324,15 @@ s = solve_ivp(lambda u, z: [-z[1] + z[0] ** 3, z[0] + z[1] ** 3], (0, 3.5), [0.5
 check("l13 linear centre inconclusive, other way: x'=-y+x^3, y'=x+y^3 spirals out from the same Jacobian", np.hypot(*s.y[:, -1]) > 1.0)
 # l13 s6 presents the crowded model as the case of an untrusted linear centre.
 tau_c = float(Jc.trace())
-expected_fail("l13 s6 example: the crowded model's own linearisation at (3,1) is a centre that the nonlinear terms overturn",
-              classify(np.array(Jc, dtype=float)) == "centre", "12")
+# (corrected claim, fix pass) s6 now says crowding moved the trace of J to -0.5, so the linear picture is itself a spiral,
+# and uses x'=-y-x^3, y'=x-y^3 for the untrusted linear centre. Fixer's own check: differentiate the crowded field by
+# hand in sympy at (3,1), c=1/6, and check the cubic example's d/dt(x^2+y^2) = -2(x^4+y^4) < 0.
+_cx = sp.Rational(1, 6)
+_Jh = sp.Matrix([[1 - 2 * _cx * 3 - sp.Rational(1, 2) * 1, -sp.Rational(1, 2) * 3], [sp.Rational(1, 4) * 1, -sp.Rational(3, 4) + sp.Rational(1, 4) * 3]])
+check("l13 s6 example (corrected claim, fix pass): crowded J at (3,1) has trace -1/2 (a spiral), and the cubic centre example spirals in",
+      _Jh == sp.Matrix([[-sp.Rational(1, 2), -sp.Rational(3, 2)], [sp.Rational(1, 4), 0]]) and _Jh.trace() == -sp.Rational(1, 2)
+      and _Jh.trace() ** 2 < 4 * _Jh.det() and classify(np.array(Jc, dtype=float)) != "centre"
+      and sp.expand(2 * X * (-Y - X ** 3) + 2 * Y * (X - Y ** 3)) == -2 * X ** 4 - 2 * Y ** 4)
 # corrected assert: crowding moves the trace of the Jacobian to -0.5, so the linearisation itself is a (trusted) stable spiral
 check("l13 s6 corrected: at c=1/6 the linearisation is a stable spiral (tau=-0.5), which Hartman-Grobman trusts", classify(np.array(Jc, dtype=float)) == "stable spiral" and tau_c == -0.5)
 
@@ -329,8 +352,14 @@ sim_ok = abs(theta[-1] - theta_exact(30.0)) < 1e-5 and abs(np.hypot(*s.y[:, -1])
 fd = lambda f, z, h: np.array([[(f(0, [z[0] + h, z[1]])[i] - f(0, [z[0] - h, z[1]])[i]) / (2 * h) for i in range(2)],
                                [(f(0, [z[0], z[1] + h])[i] - f(0, [z[0], z[1] - h])[i]) / (2 * h) for i in range(2)]]).T
 J_near = fd(starspiral, [1e-30, 1e-30], 1e-32)
-expected_fail("l13 quiz2 node always shared: a system whose Jacobian is the star node -I approaches the origin without turning (total turning stays below pi)",
-              abs(theta_exact(1e6)) < np.pi, "13")
+# (corrected claim, fix pass) quiz2 now keys "a stable node with two distinct eigenvalues" and its explain says a node
+# with two equal eigenvalues can turn into a spiral. Fixer's own check: the star -I (equal eigenvalues) gives a
+# system whose angle is unbounded; the angle integral of dt/(ln r0 - t) diverges like ln t (sympy).
+_T, _r0 = sp.symbols('T r0', positive=True)
+_ang = sp.integrate(1 / (sp.log(sp.Rational(1, 2)) - t), (t, 0, _T))
+check("l13 quiz2 node (corrected claim, fix pass): equal-eigenvalue node -I becomes a spiral (angle integral unbounded)",
+      sp.limit(sp.Abs(_ang), _T, sp.oo) == sp.oo and abs(theta_exact(1e6)) > np.pi
+      and len(set(np.round(np.linalg.eigvals(-np.eye(2)), 12))) == 1)
 # corrected assert: stability carries over (Hartman-Grobman); a node with two equal eigenvalues may become a spiral (Strogatz 6.3)
 check("l13 quiz2 corrected: r'=-r, theta'=1/ln r is asymptotically stable with Jacobian near -I at the origin, yet turns without bound (simulation matches the exact angle)",
       sim_ok and np.allclose(J_near, -np.eye(2), atol=0.05) and abs(theta_exact(1e6)) > 4 * np.pi)

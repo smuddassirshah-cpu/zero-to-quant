@@ -71,8 +71,14 @@ tp = sp.symbols('t', positive=True)
 fam = c1 * tp ** 2
 solves = sp.simplify(sp.diff(fam, tp, 2) - (2 / tp) * sp.diff(fam, tp) + (2 / tp ** 2) * fam) == 0
 same_start = sp.limit(fam, tp, 0) == 0 and sp.limit(sp.diff(fam, tp), tp, 0) == 0
-expected_fail("homework-2 i6 two_values_fix_one_solution for any p(t), q(t): y''-(2/t)y'+(2/t^2)y=0, y(0)=y'(0)=0",
-              not (solves and same_start), "9")
+# (corrected claim, fix pass) i6 prose now states p, q and g continuous. Fixer's own check: the counter-example's
+# p = -2/t and q = 2/t^2 are not continuous at the start t = 0 (both blow up), so it is outside the stated
+# hypothesis; with continuous p, q the Wronskian of a fundamental pair is never 0 (Abel), so the 2x2 fit is unique.
+_s = sp.symbols('s', positive=True)
+_W = sp.Matrix([[sp.exp(-_s), sp.exp(-2 * _s)], [sp.diff(sp.exp(-_s), _s), sp.diff(sp.exp(-2 * _s), _s)]]).det()
+check("homework-2 i6 two_values_fix_one_solution (corrected claim, fix pass): counter-example has p, q unbounded at 0; y''+3y'+2y has Wronskian -e^{-3t}, never 0",
+      solves and same_start and sp.limit(2 / tp, tp, 0) == sp.oo and sp.limit(2 / tp ** 2, tp, 0) == sp.oo
+      and sp.simplify(_W + sp.exp(-3 * _s)) == 0)
 # corrected assert: one solution when p, q and g are continuous on an interval containing the start (Boyce and DiPrima Thm 3.2.1)
 check("homework-2 i6 corrected: with constant (continuous) coefficients the two starting values fix c1 and c2",
       len(sp.solve([c1 + c2 - 1, c1 + 2 * c2], [c1, c2])) == 2)
@@ -103,7 +109,18 @@ check("l7 s5 zero_crossing: first zero of the wave is at t=1.017, just after 1",
 # l7 s5 explain: "The envelope e^{-t} bounds it throughout"
 ts = np.linspace(0, 6, 60001)
 wave = np.exp(-ts) * (np.cos(2 * ts) + 0.5 * np.sin(2 * ts))
-expected_fail("l7 s5 envelope: |e^{-t}(cos2t+0.5 sin2t)| <= e^{-t} for all t", bool(np.all(np.abs(wave) <= np.exp(-ts) + 1e-12)), "5")
+# (corrected claim, fix pass) l7 s4/s5 chart and explain now use +-(sqrt5/2)e^{-t}. Fixer's own check: write
+# cos2t + 0.5 sin2t = R cos(2t - d) with R = sqrt(1 + 1/4) (sympy), and read the chart expression from the JSON.
+import json as _json, os as _os
+_C = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "app", "content", "courses", "odes")
+_l7 = _json.load(open(_os.path.join(_C, "l7-characteristic-equation.json"), encoding="utf-8"))
+_dd = sp.atan(sp.Rational(1, 2))
+_Rs = sp.sqrt(5) / 2
+check("l7 s5 envelope (corrected claim, fix pass): cos2t+0.5sin2t = (sqrt5/2)cos(2t-atan(1/2)), and both charts draw +-1.118034 e^{-t}",
+      sp.simplify(sp.expand_trig(_Rs * sp.cos(2 * t - _dd)) - sp.cos(2 * t) - sp.sin(2 * t) / 2) == 0
+      and all(_l7["screens"][k]["canvas"]["params"]["functions"][1]["expr"] == "1.118034*exp(-x)"
+              and _l7["screens"][k]["canvas"]["params"]["functions"][2]["expr"] == "-1.118034*exp(-x)" for k in (4, 5))
+      and abs(float(_Rs) - 1.118034) < 5e-7)
 # corrected assert: the envelope is R e^{-t} with R = sqrt(c1^2+c2^2) = sqrt(5)/2
 R = np.sqrt(1 + 0.25)
 check("l7 s5 corrected: |y| <= (sqrt5/2) e^{-t}, touched once per half-turn; y(0.2318)=0.887 > e^{-0.2318}=0.793",
@@ -112,7 +129,14 @@ check("l7 s5 corrected: |y| <= (sqrt5/2) e^{-t}, touched once per half-turn; y(0
 ts9 = np.linspace(0, 12, 120001)
 wd = np.sqrt(3.75)
 wave9 = np.exp(-0.5 * ts9) * (np.cos(wd * ts9) + 0.5 / wd * np.sin(wd * ts9))
-expected_fail("l9 s2 envelope: the b=1 curve stays inside +-e^{-0.5t} as the chart draws it", bool(np.all(np.abs(wave9) <= np.exp(-0.5 * ts9) + 1e-12)), "5")
+# (corrected claim, fix pass) l9 s2 now draws +-1.032796 e^{-0.5t}. Fixer's own check: R = sqrt(1 + (0.5/wd)^2)
+# = 4/sqrt(15) exactly (zeta = 1/4, R = 1/sqrt(1 - zeta^2)), and the JSON expression carries it to 6 places.
+_l9 = _json.load(open(_os.path.join(_C, "l9-damping-and-resonance.json"), encoding="utf-8"))
+_f9 = _l9["screens"][2]["canvas"]["params"]["functions"]
+check("l9 s2 envelope (corrected claim, fix pass): R = 4/sqrt15 = 1/sqrt(1-1/16), the chart draws +-1.032796 e^{-0.5t}",
+      sp.simplify(sp.sqrt(1 + sp.Rational(1, 4) / sp.Rational(15, 4)) - 4 / sp.sqrt(15)) == 0
+      and _f9[1]["expr"] == "1.032796*exp(-0.5*x)" and _f9[2]["expr"] == "-1.032796*exp(-0.5*x)"
+      and abs(4 / np.sqrt(15) - 1.032796) < 5e-7 and np.max(np.abs(wave9) / np.exp(-0.5 * ts9)) <= 1.032796 + 1e-6)
 # corrected assert: envelope (1/sqrt(1-zeta^2)) e^{-0.5t} = 1.0328 e^{-0.5t}
 check("l9 s2 corrected: |y| <= 1.0328 e^{-0.5t}", bool(np.all(np.abs(wave9) <= np.sqrt(1 + 0.25 / 3.75) * np.exp(-0.5 * ts9) + 1e-12)))
 check("l7 s6 discriminant: r^2+br+4 has a complex pair for 0<=b<4, double root -2 at b=4, two real roots for b>4; |r|=2 while complex",
@@ -167,7 +191,14 @@ check("l8 quiz2: t e^t/2 solves y''-y=e^t (A = 1/2 at a single root)", sp.simpli
 check("homework-2 i3: -t e^t solves y''-3y'+2y=e^t", sp.simplify(L(-t * sp.exp(t), 1, -3, 2) - sp.exp(t)) == 0)
 # homework-2 i3 byKey.half: "A half appears only for a double root"
 half_at_single_root = sp.simplify(L(t * sp.exp(t) / 2, 1, 0, -1) - sp.exp(t)) == 0 and sp.solve(r ** 2 - 1, r) == [-1, 1]
-expected_fail("homework-2 i3 half_only_double_root: no single-root case has A = 1/2", not half_at_single_root, "7")
+# (corrected claim, fix pass) byKey.half now says the slip keeps only 2A from y_p'' and drops -3A from -3y_p'.
+# Fixer's own check: the constant-term coefficient of the residual is 2A - 3A; keeping 2A alone gives 2A = 1, A = 1/2,
+# the slip value 0.5; the full -A = 1 gives the key -1.
+_res = sp.expand(sp.simplify((sp.diff(A * t * sp.exp(t), t, 2) - 3 * sp.diff(A * t * sp.exp(t), t) + 2 * A * t * sp.exp(t)) / sp.exp(t)))
+_ypp_const = sp.expand(sp.simplify(sp.diff(A * t * sp.exp(t), t, 2) / sp.exp(t))).coeff(t, 0)
+check("homework-2 i3 half (corrected claim, fix pass): residual is -A (t terms cancel); 2A alone = 1 gives the slip 1/2",
+      half_at_single_root and _res == -A and _ypp_const == 2 * A and sp.solve(_ypp_const - 1, A) == [sp.Rational(1, 2)]
+      and sp.solve(_res - 1, A) == [-1])
 # corrected assert: at a single root r of P, y_p = t e^{rt}/P'(r); at a double root, t^2 e^{rt}/P''(r)
 check("homework-2 i3 corrected: A = 1/P'(r) at a single root: y''-y gives 1/2, y''-3y'+2y gives -1; double root y''-2y'+y gives t^2 e^t/2",
       sp.Rational(1, 2) == 1 / sp.diff(r ** 2 - 1, r).subs(r, 1) and -1 == 1 / sp.diff(r ** 2 - 3 * r + 2, r).subs(r, 1)
@@ -176,13 +207,27 @@ check("homework-2 i3 corrected: A = 1/P'(r) at a single root: y''-y gives 1/2, y
 a_, b_ = sp.symbols('a b', real=True)
 plain = sp.solve(sp.Poly(sp.expand(L(a_ * t + b_, 1, 1, 0) - t), t).coeffs(), [a_, b_])
 guess_is_homogeneous = L(a_ * t + b_, 1, 1, 0) == 0  # the guess at+b as a whole does not solve y''+y'=0
-expected_fail("l8 s8 rule on y''+y'=t: the guess at+b does not solve the homogeneous equation, so the rule says use it as it stands, and it should work",
-              (not guess_is_homogeneous) and plain not in ([], {}), "6")
+# (corrected claim, fix pass) s8 now says: if any term of the guess solves the homogeneous equation, multiply the
+# whole guess by t, and repeat until no term does (t^2 at a double root). Fixer's own check: apply that rule as an
+# algorithm, term by term, to y''+y'=t (roots 0, -1) and y''-2y'+y=e^t (double root 1), then solve.
+def _rule(guess_terms, a2, a1, a0):
+    s_ = 0
+    while any(sp.simplify(L(t ** s_ * g, a2, a1, a0)) == 0 for g in guess_terms):
+        s_ += 1
+    return s_
+_s1 = _rule([t, sp.Integer(1)], 1, 1, 0)
+_s2 = _rule([sp.exp(t)], 1, -2, 1)
+check("l8 s8 rule (corrected claim, fix pass): term test gives t^1 for y''+y'=t (a=1/2, b=-1) and t^2 for y''-2y'+y=e^t (A=1/2)",
+      (not guess_is_homogeneous) and plain in ([], {}) and _s1 == 1 and _s2 == 2
+      and sp.solve(sp.Poly(sp.expand(L(t ** _s1 * (a_ * t + b_), 1, 1, 0) - t), t).coeffs(), [a_, b_]) == {a_: sp.Rational(1, 2), b_: -1}
+      and sp.solve(sp.simplify((L(A * t ** _s2 * sp.exp(t), 1, -2, 1) - sp.exp(t)) / sp.exp(t)), A) == [sp.Rational(1, 2)])
 # corrected assert: multiply by t when ANY TERM of the guess is homogeneous (here the constant b), and by t again at a double root
 fix = sp.solve(sp.Poly(sp.expand(L(t * (a_ * t + b_), 1, 1, 0) - t), t).coeffs(), [a_, b_])
 check("l8 s8 corrected: t(at+b) works for y''+y'=t with a=1/2, b=-1", fix == {a_: sp.Rational(1, 2), b_: -1})
 once = sp.solve(sp.simplify((L(A * t * sp.exp(t), 1, -2, 1) - sp.exp(t)) / sp.exp(t)), A)
-expected_fail("l8 s8 rule on y''-2y'+y=e^t: one factor of t is enough", once != [], "6")
+# (corrected claim, fix pass) one factor of t fails at the double root, as s8 now says: A t e^t leaves residual 0.
+check("l8 s8 double root (corrected claim, fix pass): A t e^t gives L = 0 for every A, so t^2 is needed", once == []
+      and sp.simplify(L(A * t * sp.exp(t), 1, -2, 1)) == 0)
 check("l8 s8 corrected: the double root needs t^2: A t^2 e^t with A=1/2", sp.solve(sp.simplify((L(A * t ** 2 * sp.exp(t), 1, -2, 1) - sp.exp(t)) / sp.exp(t)), A) == [sp.Rational(1, 2)])
 
 # ---------------- l9 damping and resonance ----------------
