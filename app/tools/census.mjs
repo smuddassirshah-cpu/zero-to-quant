@@ -79,6 +79,14 @@ for (const c of courses) for (const f of jsonFiles(join(C, 'courses', c.id)).fil
   fluencySets++; fluencyFamilies += (d.families ?? []).length;
 }
 
+// Level problem sets (ENGINE-BACKLOG 845 to 851): content/courses/<course>/problems-<n>.json, samples left out.
+let problemSets = 0, problemItems = 0;
+for (const c of courses) for (const f of jsonFiles(join(C, 'courses', c.id)).filter((x) => /^problems-\d+\.json$/.test(x))) {
+  const d = read(join(C, 'courses', c.id, f));
+  if (d.sample) continue;
+  problemSets++; problemItems += (d.items ?? []).length;
+}
+
 // Prep paths: mock ids referenced with no file.
 let prepPaths = 0; const prepMissing = new Set();
 if (existsSync(join(C, 'prep.json'))) {
@@ -126,6 +134,7 @@ out.push(`Topic exam pass marks: ${[...new Set(real.filter((e) => e.kind === 'to
 out.push(`Drills (non-sample) ${drillReal.length}: ${Object.entries(drillPack).map(([k, v]) => `${k} ${v}`).join(', ')}; samples ${drills.length - drillReal.length}`);
 out.push(`Bank: ${bankReal.length} files, ${bankItems} items; sample files ${bank.length - bankReal.length}`);
 out.push(`Fluency sets ${fluencySets} (families ${fluencyFamilies})${fluencySamples ? `; sample sets ${fluencySamples}` : ''}`);
+out.push(`Problem sets ${problemSets} (items ${problemItems})`);
 out.push(`Prep paths ${prepPaths}; mock ids named in prep.json with no file: ${prepMissing.size} (${[...prepMissing].join(', ')})`);
 out.push(legacy.length ? `Legacy stage hours field present on ${legacy.length} stage(s), total ${legacy.reduce((a, s) => a + s.hours, 0)}, ignored by the engine (run tools/apply-item11-content.mjs)` : 'Legacy stage hours field: absent (stage hours are derived from topics)');
 out.push(`Hours: stored stage total ${storedH}, summed topic total ${summedH}, gap ${summedH - storedH}`);

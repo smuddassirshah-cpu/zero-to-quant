@@ -30,11 +30,16 @@ export function loadHours(C) {
     const f = join(C, 'courses', id, `${kind}-${lv.n}.json`);
     if (existsSync(f)) { const m = read(f).minutes; if (typeof m === 'number' && m > 0) setMinutes[`${id}/${kind}-${lv.n}`] = m; }
   }
+  const problemsMinutes = {};   // ENGINE-BACKLOG 845 to 851: a level problem set counts its stated minutes, else the allowance (40); samples are left out
+  for (const id of Object.keys(courses)) for (const lv of courses[id].levels ?? []) {
+    const f = join(C, 'courses', id, `problems-${lv.n}.json`);
+    if (existsSync(f)) { const d = read(f); if (!d.sample) problemsMinutes[`${id}/problems-${lv.n}`] = typeof d.minutes === 'number' && d.minutes > 0 ? d.minutes : hours.PROBLEMS_MIN; }
+  }
   const ed = join(C, 'exams');
   if (existsSync(ed)) for (const f of readdirSync(ed).sort()) if (/^topic-.*\.json$/.test(f)) {
     const d = read(join(ed, f)), ps = Array.isArray(d.parts) ? d.parts.filter((p) => p && p.kind === 'paper') : [d];
     examMinutes[f.slice(0, -5)] = ps.reduce((a, p) => a + (+p.minutes || 60), 0);
   }
-  const H = hours.build({ curriculum: cur, courses, written, sessions, minutes: (cid, l) => mins[`${cid}/${l}`], setMinutes, examMinutes });
-  return { H, cur, courses, sessions, hours, setMinutes, examMinutes };
+  const H = hours.build({ curriculum: cur, courses, written, sessions, minutes: (cid, l) => mins[`${cid}/${l}`], setMinutes, examMinutes, problemsMinutes });
+  return { H, cur, courses, sessions, hours, setMinutes, examMinutes, problemsMinutes };
 }

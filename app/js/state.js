@@ -47,6 +47,7 @@
     bank: {}, timing: { families: {} },
     cumulative: { last: null, postponedAt: null, history: [], seen: {} },   // the weekly mixed review (ENGINE-BACKLOG 820): when the last one was finished, the day it was last postponed, one row per review, uids of authored items already served
     fluency: {},   // generated fluency sets (ENGINE-BACKLOG 806): "course/set-id" -> { attempts, best, n, lastScore, lastAt, passedAt, families: { id: { right, wrong, lastAt } } }
+    problems: {},   // problem sets (ENGINE-BACKLOG 845 to 851): "course/problems-n" -> { attempts, best, n, lastScore, lastAt, finished, xp }; never a gate
     warmup: { history: [] },
     hours: [],
     streak: { current: 0, best: 0, lastDay: null, restDays: 0, restEarnedAt: 0, days: {}, count: { day: null, problems: 0 } },
@@ -356,6 +357,33 @@
     changed('homework');
     return { xp, mp, redo, qualified };
   };
+
+  /* Problem sets (ENGINE-BACKLOG 845 to 851, docs/AUTHORING.md section 5): untimed chained problems, one file per level, repeatable, never a gate and not read by the
+     met rule. results: one row per item as a review's rows, with credit (the parts right over the parts) where the item has parts. The first finished attempt earns
+     the homework scale (XP.homework plus XP.homeworkItem for each item right, and mastery points); later attempts earn none. Misses join no redo queue: a missed
+     item is still in the set to play again. credit and best are counted in items, so 2 of 3 parts on one item is 0.7 of an item. */
+  const problemsKey = (course, id) => `${course}/${id}`;
+  const problemsFinished = ({ course, id, results = [], items = 0, seconds = 0, partial = false } = {}) => {
+    if (!isObj(doc.problems)) doc.problems = {};
+    const k = problemsKey(course, id), r = doc.problems[k] || (doc.problems[k] = { attempts: 0, best: 0, n: 0, lastScore: 0, lastAt: null, finished: false, xp: 0 });
+    const list = itemsOf({ results, difficulty: 4 });
+    const credit = Math.round((results || []).reduce((a, x) => a + (x ? (x.ok && !x.fractional ? 1 : typeof x.credit === 'number' ? x.credit : x.ok ? 1 : 0) : 0), 0) * 10) / 10;
+    const total = items || list.length;
+    let xp = 0, mp = 0;
+    if (!partial) {   // an attempt left part way records its time only: it is not an attempt, a score or a first finish
+      const repeat = !!r.finished;
+      list.forEach(x => { const gain = x.ok && !repeat && !isSelf(x) ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain, how: x.how }); });
+      xp = repeat ? 0 : XP.homework + XP.homeworkItem * list.filter(x => x.ok && !isSelf(x)).length;
+      doc.xp += xp; doc.mp += mp;
+      r.attempts++; r.n = total; r.lastScore = credit; r.lastAt = now(); r.finished = true; r.xp += xp;
+      if (credit >= r.best) r.best = credit;
+    }
+    logSeconds('main', seconds, 'problems');
+    const qualified = partial ? false : touch();
+    changed('problems');
+    return { xp, mp, qualified, record: r };
+  };
+  const problemsGet = (course, id) => (isObj(doc.problems) && doc.problems[problemsKey(course, id)]) || null;
 
   /* Practice and weekly problems (ZQ.select sets): each result moves the skill scores (Elo) and counts toward the day's
      3 graded problems for the streak. No XP and no MP: practice repeats content already scored elsewhere. */
@@ -716,6 +744,7 @@
     bank: ns('bank', { entry: bankEntry, due: bankDue, result: bankResult, list: () => ({ ...doc.bank }) }),
     get timing() { return doc.timing; },
     cumulative: ns('cumulative', { status: cumStatus, postpone: cumPostpone, record: cumRecord, seen: () => ({ ...cum().seen }), history: () => cum().history.slice() }),
+    problems: ns('problems', { finished: problemsFinished, get: problemsGet, list: () => (isObj(doc.problems) ? { ...doc.problems } : {}) }),
     fluency: ns('fluency', { result: fluencyResult, get: fluencyGet, list: () => (isObj(doc.fluency) ? { ...doc.fluency } : {}) }),
     drills: ns('drills', { verified: drillVerified, draft: drillDraft, time: drillTime, session: drillSessionRecord, sessions: () => (Array.isArray(doc.drillSessions) ? doc.drillSessions.slice() : []), get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
     warmup: ns('warmup', { record: warmupRecord, list: () => doc.warmup.history.slice() }),

@@ -372,6 +372,18 @@
         <button type="button" class="btn secondary block" data-fluency="${esc(fs.id)}">${f && f.attempts ? 'Go again' : 'Start fluency'}</button>
       </div>`;
     };
+    /* ENGINE-BACKLOG 845 to 851: the level's problem set, listed on the level review's card after the review: its status and a button; untimed, never a gate */
+    const problemsRow = (e) => {
+      const ps = e.it.kind === 'review' && C.problemsFor ? C.problemsFor(cid, e.lv.n) : null, st = statusOf(e);
+      if (!ps || st === 'locked') return '';
+      const r = S.problems.get(cid, ps.id);
+      const meta = r && r.attempts ? `Best ${r.best} of ${r.n}` : `${ps.items} problems · about ${ps.minutes} minutes`;
+      return `<div class="zc-flu" data-problems-row>
+        <p class="t-label">Problem set: ${ps.items} chained problems</p>
+        <p class="t-caption secondary">${esc(meta)}. Untimed; each part is checked on its own. It gates nothing, so play it whenever you like.</p>
+        <button type="button" class="btn secondary block" data-problems="${esc(ps.id)}">${r && r.attempts ? 'Go again' : 'Start the problem set'}</button>
+      </div>`;
+    };
     const fillInfo = (body, e, close) => {
       const it = e.it, st = statusOf(e);
       const over = `Level ${e.lv.n} · ${it.kind === 'lesson' ? `Lesson ${e.no}` : it.kind === 'review' ? 'Review' : 'Homework'}`;
@@ -399,12 +411,15 @@
         ${act && act.cap ? `<p class="t-caption muted zc-cap">${esc(act.cap)}</p>` : ''}
         ${nwBody}
         ${fluencyRow(e)}
+        ${problemsRow(e)}
       </div>`;
       Z.mathify(body);
       const b = body.querySelector('[data-act]');
       if (b) b.addEventListener('click', () => { if (close) close(); launch(e); });
       const fb = body.querySelector('[data-fluency]');
       if (fb) fb.addEventListener('click', () => { if (close) close(); Z.sound('tap'); Z.go(`fluency/${cid}/${fb.dataset.fluency}`); });
+      const pb = body.querySelector('[data-problems]');
+      if (pb) pb.addEventListener('click', () => { if (close) close(); Z.sound('tap'); Z.go(`problems/${cid}/${pb.dataset.problems}`); });
       /* Screens and minutes come from the lesson file */
       if (it.kind === 'lesson' && st !== 'nw' && !lessonMeta[keyOf(cid, it.id)]) {
         C.lesson(cid, it.id).then(Ld => {

@@ -21,6 +21,8 @@
   let lessonMins = {}, setMins = {};   // manifest.lessonMinutes ("course/lesson" -> minutes) and manifest.setMinutes ("course/review-1" -> minutes, only where the file states it): the in-app hours (js/hours.js)
   let sessions = {};              // manifest.sessions: "course/lesson" -> { session, minutes } for workshop and project lessons (item 10)
   let fluencyMeta = {};           // manifest.fluency: "course/set-id" -> { lesson, title, n, pass, minutes, families } for generated fluency sets (ENGINE-BACKLOG 804)
+  let problemsMeta = {};          // manifest.problems: "course/problems-n" -> { level, title, items, minutes, sample? } for problem sets (ENGINE-BACKLOG 845 to 851)
+  const problemsDocs = new Map(); // "course/problems-n" -> a set document registered by a test hook (tools/fixtures; never a content file)
   const fluencyDocs = new Map();  // "course/set-id" -> a set document registered by a test hook (tools/fixtures; never a content file)
   let hoursModel = null;          // ZQ.hours.build over the curriculum, course maps, manifest and sessions (item 11); null until content is ready
   let capstoneDoc = [];           // content/capstones.json: one record per role (ENGINE-BACKLOG 564), [] when the file is absent
@@ -338,6 +340,7 @@
     if (man && man.setMinutes && typeof man.setMinutes === 'object') setMins = man.setMinutes;
     if (man && man.drills && typeof man.drills === 'object') drillMeta = man.drills;
     if (man && man.fluency && typeof man.fluency === 'object') fluencyMeta = man.fluency;
+    if (man && man.problems && typeof man.problems === 'object') problemsMeta = man.problems;
     drillIndex = Array.isArray(di) ? di : [];
     /* prep.json is requested only when the manifest lists it (or there is no manifest), so no 404 reaches the console */
     const pr = !manifest || manifest.has('prep.json') ? await getJSON('prep.json', { optional: true }).catch(e => { console.error(e); return null; }) : null;
@@ -350,13 +353,34 @@
     await Promise.all(ids.map(id => getJSON(`courses/${id}/course.json`).then(d => { courseDocs[id] = d; })
       .catch(e => { console.error(e); courseDocs[id] = null; })));
     if (HRS) {
-      hoursModel = HRS.build({ curriculum, courses: Object.fromEntries(Object.entries(courseDocs).filter(([, d]) => d)), written: (c, l) => exists(c, l) === true, sessions, minutes: (c, l) => lessonMins[`${c}/${l}`], setMinutes: setMins, examMinutes: examMins || {} });
+      hoursModel = HRS.build({ curriculum, courses: Object.fromEntries(Object.entries(courseDocs).filter(([, d]) => d)), written: (c, l) => exists(c, l) === true, sessions, minutes: (c, l) => lessonMins[`${c}/${l}`], setMinutes: setMins, examMinutes: examMins || {}, problemsMinutes: problemsMinutes() });
       /* In-app and outside hours beside each stored figure (hoursApp, hoursOut): Learn and Setup show the two apart, never the stored total alone */
       (cur.stages || []).forEach(s => { s.hoursApp = hoursModel.stageApp(s.id); s.hoursOut = hoursModel.stageOut(s.id); (s.topics || []).forEach(t => { t.hoursApp = hoursModel.topicApp(t.id); t.hoursOut = hoursModel.topicOut(t.id); }); });
     }
     return api;
   })();
   ready.catch(e => console.error('Content failed to load:', e));
+
+  /* Problem sets (ENGINE-BACKLOG 845 to 851, docs/AUTHORING.md section 5): content/courses/<course>/problems-<n>.json beside review-<n>.json, found by file name and listed in
+     the manifest under `problems`. A level with no file has no set. problemsFor(course, level) is the row (or null), problemsList() every real set (samples left out),
+     problems(course, id) the document. _setProblems([{ course, doc }]) replaces the sets and _addProblems adds to them, both without a file (the test hook the fixtures use). */
+  const problemsRow = (key) => { const m = problemsMeta[key]; if (!m) return null; const i = key.indexOf('/'); return { course: key.slice(0, i), id: key.slice(i + 1), ...m }; };
+  const problemsList = ({ sample = false } = {}) => Object.keys(problemsMeta).map(problemsRow).filter(r => r && (sample || !r.sample)).sort((a, b) => (a.course + a.id).localeCompare(b.course + b.id, 'en', { numeric: true }));
+  const problemsFor = (course, level) => problemsList().find(r => r.course === course && r.level === Number(level)) || null;
+  const problemsMinutes = () => Object.fromEntries(Object.entries(problemsMeta).filter(([, m]) => m && !m.sample).map(([k, m]) => [k, Number(m.minutes) || 40]));
+  const problems = (course, id) => {
+    const k = `${course}/${id}`;
+    if (problemsDocs.has(k)) return Promise.resolve(JSON.parse(JSON.stringify(problemsDocs.get(k))));
+    return problemsMeta[k] ? load(`courses/${course}/${id}.json`) : Promise.resolve(null);
+  };
+  const setProblems = (rows, add = false) => {
+    if (!add) { problemsMeta = {}; problemsDocs.clear(); }
+    (rows || []).forEach(({ course, doc }) => {
+      const k = `${course}/${doc.id}`;
+      problemsDocs.set(k, doc);
+      problemsMeta[k] = { level: doc.level, title: doc.title || '', items: (doc.items || []).length, minutes: Number(doc.minutes) > 0 ? Number(doc.minutes) : 40 };   // a registered fixture counts as a real set for this page load
+    });
+  };
 
   const api = {
     ready,
@@ -389,6 +413,7 @@
       fluencyMeta[k] = { lesson: doc.lesson, title: doc.title, n: doc.n || 20, pass: typeof doc.pass === 'number' ? doc.pass : 0.9, minutes: doc.minutes || 10, families: (doc.families || []).length };   // a registered fixture counts as a real set for this page load
     });
   };
+  Object.assign(api, { problemsList, problemsFor, problems, _setProblems: setProblems, _addProblems: (rows) => setProblems(rows, true) });
   Object.assign(api, { fluencyList, fluencyFor, fluencySet, _setFluency: setFluency, _addFluency: (rows) => setFluency(rows, true) });
   window.ZQ = window.ZQ || {};
   window.ZQ.content = api;

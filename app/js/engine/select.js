@@ -39,9 +39,9 @@
   /* ---------- Content helpers ---------- */
   const courseOf = (cid) => { try { return C().course(cid); } catch { return null; } };
   const lessonNumber = (cid, lid) => { try { const ls = C().courseLessons(cid).filter(x => x.kind === 'lesson'); const i = ls.findIndex(x => x.id === lid); return i >= 0 ? i + 1 : null; } catch { return null; } };
-  const levelOf = (cid, lid) => { const c = courseOf(cid); const lv = (c && c.levels || []).find(l => (l.lessons || []).includes(lid) || l.review === lid || l.homework === lid); return lv ? lv.n : null; };
+  const levelOf = (cid, lid) => { const c = courseOf(cid); const lv = (c && c.levels || []).find(l => (l.lessons || []).includes(lid) || l.review === lid || l.homework === lid || lid === `problems-${l.n}`); return lv ? lv.n : null; };
   const written = (cid, id) => { try { return C().exists(cid, id) !== false; } catch { return true; } };
-  const loadSet = (cid, id) => (/^review-/.test(id) ? safe(C().review(cid, id)) : /^homework-/.test(id) ? safe(C().homework(cid, id)) : safe(C().lesson(cid, id)));
+  const loadSet = (cid, id) => (/^review-/.test(id) ? safe(C().review(cid, id)) : /^problems-/.test(id) ? safe(C().problems(cid, id)) : /^homework-/.test(id) ? safe(C().homework(cid, id)) : safe(C().lesson(cid, id)));
 
   /* A readable source for a ref: "Conditional Probability · Lesson 2 quiz" */
   const source = (ref = {}, kind) => {
@@ -51,6 +51,7 @@
     const id = String(ref.lesson || '');
     if (/^review-/.test(id)) return `${name} · Level ${id.split('-')[1]} review`;
     if (/^homework-/.test(id)) { const n = id.split('-')[1]; return `${name} · Homework ${n}`; }
+    if (/^problems-/.test(id)) return `${name} · Level ${id.split('-')[1]} problem set`;
     const n = lessonNumber(ref.course, id);
     const ln = n ? `Lesson ${n}` : C() && C().deKebab ? C().deKebab(id) : id;
     if (kind === 'screen' || ref.screen != null) return `${name} · ${ln}, screen ${(+ref.screen || 0) + 1}`;
@@ -248,7 +249,7 @@
     if (!ref.course || !ref.lesson) return null;
     const D = await loadSet(ref.course, ref.lesson);
     if (!D) return null;
-    if (/^(review|homework)-/.test(ref.lesson)) {
+    if (/^(review|homework|problems)-/.test(ref.lesson)) {
       const i = (D.items || []).findIndex((x, j) => (x.id || 'q' + j) === ref.item);
       return i < 0 ? null : norm(D.items[i], { course: ref.course, lesson: ref.lesson, skills: [], index: i });
     }
@@ -323,8 +324,8 @@
      ZQ.select.weeklyFinish(items, res, { partial })   records the result (history row, misses to the redo queue, skill scores, family counts)
      ZQ.select.cumulative.build(model, { n, seed, cap })   the selection itself, pure (tools/test-cumulative.mjs)
    The rules, in order. Tier 1: generated items from the Fluency families of the lessons of every met level, the families with more
-   wrong answers and older last practice more likely. Tier 2: authored items the learner has never seen (bank items and the items of
-   topic exams not yet sat, on a course that has a met level). Tier 3: authored review items (the quiz and level review items of met
+   wrong answers and older last practice more likely. Tier 2: authored items the learner has never seen (bank items, the items of the problem sets of met levels,
+   and the items of topic exams not yet sat, on a course that has a met level). Tier 3: authored review items (the quiz and level review items of met
    levels, never long-form or code) least recently seen first. At most four items from one course; the cap relaxes (4, 6, 8, ...) only
    when too few courses are met to fill the set. Consecutive items come from different courses when that can be avoided. With no
    Fluency sets written it is tiers 2 and 3 alone. */
@@ -438,6 +439,13 @@
           if (!cid || !metCourses.has(cid) || !lessonsDone(it.requires) || entryOf(b.uid) || seen[b.uid]) return;
           unseen.push({ uid: b.uid, course: cid, n: lowest(cid), item: b });
         });
+      }
+      /* ENGINE-BACKLOG 845 to 851: the problem sets of met levels (an item with parts plays as it does in the set page; a long-form or code part is left out as everywhere) */
+      for (const lv of levels) {
+        const row = C().problemsFor ? C().problemsFor(lv.course, lv.n) : null;
+        if (!row) continue;
+        const D = await safe(C().problems(row.course, row.id));
+        setItems(D, row.course, row.id).filter(practiceKind).forEach(it => { if (!seen[it.uid]) unseen.push({ uid: it.uid, course: lv.course, n: lv.n, item: it }); });
       }
       const topics = new Set(levels.map(l => { const c = courseOf(l.course); return c && c.topic; }).filter(Boolean));
       for (const tp of topics) {

@@ -21,14 +21,15 @@
 
    Inputs (build): { curriculum, courses: { id: course.json doc or null }, written: (cid, lessonId) => bool,
    sessions: { "cid/lessonId": { session, minutes } } (workshop and project lessons only), minutes: (cid, lessonId) => number | undefined,
-   setMinutes: { "cid/review-1": minutes } (reviews and homework whose file states minutes), examMinutes: { "topic-0.1": minutes } }. */
+   setMinutes: { "cid/review-1": minutes } (reviews and homework whose file states minutes), examMinutes: { "topic-0.1": minutes },
+   problemsMinutes: { "cid/problems-1": minutes } (the level problem sets written, ENGINE-BACKLOG 845 to 851: the file's `minutes`, else PROBLEMS_MIN, which the validator writes into the manifest; a level with no set adds nothing) }. */
 (function (root) {
   'use strict';
   const SHORT_NORM = 14;                         // the median short lesson, minutes: the weight unit
   const WEEKLY_H = 15;                           // the curriculum's reference week
   const SESSION_RANGE = { short: [5, 20], workshop: [20, 90], project: [60, 240] };   // minutes the validator accepts per session
   const SESSIONS = Object.keys(SESSION_RANGE);
-  const REVIEW_MIN = 20, HOMEWORK_MIN = 45, EXAM_MIN = 60;   // minutes allowed for a level review, a level homework and a topic exam whose file states none
+  const REVIEW_MIN = 20, HOMEWORK_MIN = 45, EXAM_MIN = 60, PROBLEMS_MIN = 40;   // minutes allowed for a level review, a level homework and a topic exam whose file states none
 
   const topicHours = (t) => (t && Number(t.hours)) || 0;
   const stageHours = (s) => ((s && s.topics) || []).reduce((a, t) => a + topicHours(t), 0);
@@ -54,7 +55,7 @@
   /* The two figures together, in-app first: "about 150 h in the app, about 1,650 h of outside study"; short for a tight spot: "12 h in the app, 48 h outside" */
   const splitLabel = (app, out, { short = false } = {}) => (short ? `${fmtH(app)} h in the app, ${fmtH(out)} h outside` : `about ${fmtH(app)} h in the app, about ${fmtH(out)} h of outside study`);
 
-  function build({ curriculum, courses = {}, written = () => true, sessions = {}, minutes = () => undefined, setMinutes = {}, examMinutes = {} } = {}) {
+  function build({ curriculum, courses = {}, written = () => true, sessions = {}, minutes = () => undefined, setMinutes = {}, examMinutes = {}, problemsMinutes = {} } = {}) {
     const stages = (curriculum && curriculum.stages) || [];
     const topicOfCourse = {}, stageOfTopic = {};
     for (const s of stages) for (const t of s.topics || []) { stageOfTopic[t.id] = s.id; for (const c of t.courses || []) topicOfCourse[c] = t.id; }
@@ -86,9 +87,10 @@
     /* In-app hours (see the header): minutes of lessons, level reviews and homework, and the topic exam's share */
     const lessonMin = (cid, id) => { const e = sessions[`${cid}/${id}`]; return (e && Number(e.minutes)) || (written(cid, id) && Number(minutes(cid, id))) || SHORT_NORM; };
     const setMin = (cid, kind, n) => Number(setMinutes[`${cid}/${kind}-${n}`]) || (kind === 'review' ? REVIEW_MIN : HOMEWORK_MIN);
+    const problemsMin = (cid, n) => Number(problemsMinutes[`${cid}/problems-${n}`]) || 0;   // a level's problem set (ENGINE-BACKLOG 845 to 851): its stated minutes, else 40 (the manifest carries the figure); 0 where the level has none
     const examMin = (tid) => Number(examMinutes[`topic-${tid}`]) || EXAM_MIN;
     const lessonApp = (cid, id) => lessonMin(cid, id) / 60;
-    const levelApp = (cid, n) => { const ls = lessonsOf(cid, n); return ls.length ? (ls.reduce((a, l) => a + lessonMin(cid, l.id), 0) + setMin(cid, 'review', n) + setMin(cid, 'homework', n)) / 60 : 0; };
+    const levelApp = (cid, n) => { const ls = lessonsOf(cid, n); return ls.length ? (ls.reduce((a, l) => a + lessonMin(cid, l.id), 0) + setMin(cid, 'review', n) + setMin(cid, 'homework', n) + problemsMin(cid, n)) / 60 : 0; };
     const courseApp = (cid) => {
       const d = courses[cid]; if (!d) return 0;
       const t = cidTopic(cid), W = topicW[t];
@@ -126,7 +128,7 @@
   /* The readiness.json totals for a role: { required, recommended, header } each { written, unwritten, total, hoursWritten, hoursUnwritten, hours }, or null */
   const role = (readinessDoc, key) => { const r = readinessDoc && readinessDoc.roles && readinessDoc.roles[key]; return r ? r.totals : null; };
 
-  const api = { SHORT_NORM, WEEKLY_H, SESSION_RANGE, SESSIONS, REVIEW_MIN, HOMEWORK_MIN, EXAM_MIN, fmtH, splitLabel, topicHours, stageHours, totalHours, months, weightOf, sessionLabel, courseSessionLabel, build, role };
+  const api = { SHORT_NORM, WEEKLY_H, SESSION_RANGE, SESSIONS, REVIEW_MIN, HOMEWORK_MIN, EXAM_MIN, PROBLEMS_MIN, fmtH, splitLabel, topicHours, stageHours, totalHours, months, weightOf, sessionLabel, courseSessionLabel, build, role };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) { root.ZQ = root.ZQ || {}; root.ZQ.hours = api; }
 })(typeof window !== 'undefined' ? window : null);

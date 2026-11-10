@@ -2,6 +2,8 @@
    Routes:
      #review                         the hub: Redo queue, Homework, Exams (left); Practice, Notebook (right)
      #review/<course>/<reviewId>     a level review, run through ZQ.player.runSet, recorded with reviewFinished
+     #problems/<course>/<problems-n>   a level's problem set (ENGINE-BACKLOG 845 to 851): chained problems, each an item with parts, run through ZQ.player.runSet,
+                                     untimed, repeatable and never a gate; recorded with ZQ.state.problems.finished (XP on the homework scale, no redo)
      #homework/<course>/<hwId>       a homework set: items rendered by ZQ.player.renderItem in exam mode (nothing marked
                                      until you submit), the long-form item self-marked against its rubric, homeworkSubmitted
      #practice  and  #practice/weekly   a practice set of 8 from ZQ.select.practiceSet, or the week's 3 probability problems;
@@ -663,12 +665,52 @@
         const results = items.map((it, j) => res[j] ? resultRow(res[j]) : { id: it.id, ok: false, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.ref });
         const o = S().reviewFinished({ course: cid, id, results, items: items.length, seconds, pass: cfg.pass }) || {};
         const wrong = results.filter(r => !r.ok).length;
+        const ps = C().problemsFor ? C().problemsFor(cid, lv ? lv.n : 0) : null;   // ENGINE-BACKLOG 845 to 851: the level's problem set, when written
         return { badges: [[`+${o.xp || 0}`, 'XP'], [`+${o.mp || 0}`, 'mastery points'], [wrong, 'to the redo queue']],
-          note: wrong ? `${plural(wrong, 'problem joins', 'problems join')} your redo queue, back in 7 days.` : 'Nothing to redo. Every problem was right first time.' };
+          note: (wrong ? `${plural(wrong, 'problem joins', 'problems join')} your redo queue, back in 7 days.` : 'Nothing to redo. Every problem was right first time.')
+            + (ps ? ` The level also has a <a href="#problems/${Z.esc(cid)}/${Z.esc(ps.id)}">problem set</a>: chained problems, untimed and not a gate.` : '') };
       },
     };
     return setPage(root, Z, cfg);
   }
+  /* A level's problem set (ENGINE-BACKLOG 845 to 851, docs/AUTHORING.md section 5). The shared set page does the work: each part is graded with its own feedback,
+     an item counts as right when every part is, and the summary shows the part credit. Untimed and no pass mark: it gates nothing and may be played again. */
+  function mountProblemSet(root, Z, cid, id) {
+    const n = Number((/^problems-(\d+)$/.exec(id) || [])[1]) || null, lv = n ? levelOf(cid, n) : null;
+    const c = course(cid);
+    let minutes = 40;
+    const cfg = {
+      title: `Level ${n || ''} problem set`, sub: `${c ? c.name : cid}${lv ? ', ' + lv.name : ''}`, over: `${c ? c.name : cid} · Level ${n || ''} · Problem set`,
+      heading: lv ? `Problem set: ${lv.name}` : 'Problem set', track: trackOf(cid), perItem: 8, back: `course/${cid}`, backLabel: 'the course', again: 'Go again', againRoute: () => `problems/${cid}/${id}`,
+      lede: 'A few longer problems in which each step feeds the next. Every part is checked on its own and shows its own working, and a wrong part never blocks the next.',
+      facts: [['target', 'Right first time on every part earns 5 XP a problem, and 50 XP the first time you finish the set.'], ['replay', 'It is not a gate and has no time limit. Play it again whenever you like.']],
+      tag: (it) => { const nm = skillNames(); return (it.skills || []).map(s => nm[s] || s).join(', '); },
+      emptyTitle: 'Not yet written', emptyText: 'This problem set has not been written yet. Use the course map to pick another item.',
+      doneTitle: 'Problem set done', setTitle: 'Problem set',
+      load: () => C().problems(cid, id).then(D => {
+        minutes = D && Number(D.minutes) > 0 ? Number(D.minutes) : 40;
+        const list = D && Array.isArray(D.items) ? D.items : [];
+        cfg.perItem = minutes / Math.max(1, list.length);
+        return list.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: id, item: it.id || 'q' + i }, source: `Problem ${i + 1}` }));
+      }),
+      record: (items, res, seconds) => {
+        const results = items.map((it, j) => (res[j] ? resultRow(res[j]) : { id: it.id, ok: false, difficulty: it.difficulty || 4, skills: it.skills || [], ref: it.ref }));
+        results.forEach((r, j) => { if (res[j] && typeof res[j].credit === 'number') { r.credit = res[j].credit; r.fractional = !!res[j].fractional; } });
+        const o = S().problems.finished({ course: cid, id, results, items: items.length, seconds }) || {};
+        const rec = o.record || {};
+        const wrong = results.filter(r => !r.ok).length;
+        return { badges: [[`+${o.xp || 0}`, 'XP'], [rec.best != null ? rec.best : 0, 'best score'], [rec.attempts || 1, (rec.attempts || 1) === 1 ? 'attempt' : 'attempts']],
+          note: wrong ? 'Each miss showed its working. Go again for a second go at the problems you missed.' : 'Every problem right. Well done.' };
+      },
+      partial: (items, res, seconds) => { S().problems.finished({ course: cid, id, results: [], items: items.length, seconds, partial: true }); },
+    };
+    return setPage(root, Z, cfg);
+  }
+  ZQ.screen({ id: 'problems', title: 'Problem set', group: 'Assessment', hidden: true, shell: false, render: (root, Z, params = []) => {
+    const host = takeover(Z);
+    const off = Z.lockedFor && Z.lockedFor(host, params[0], params[1], `problems/${params[0]}/${params[1]}`);   // locked with its level (prerequisite gating)
+    return off || mountProblemSet(host, Z, params[0], params[1]);
+  } });
   /* Test-out (ENGINE-BACKLOG 485): up to 5 items from a level's review, seeded and shuffled, passed at the review's pass share.
      Route #testout/<course>/<n>. A pass records the level met; a miss lists the lessons to revisit and waits 24 hours. */
   function mountTestout(root, Z, cid, n) {
