@@ -135,9 +135,11 @@ num(L1, 'p-dealer-calls', 2, s3, dist[3],
 rep3 = F(4, 10) + F(6, 10) * F(4, 10) + F(6, 10) ** 2 * F(4, 10)
 num(L1, 'p-dealer-calls', 3, within3, 1 - dist[None],
     {'replace': rep3, 'no-first': s2 + s3, 'product': F(4, 10) * s2 * s3})
-num(L1, 'p-dealer-calls', 4, F(4, 10) / within3, dist[1] / (dist[1] + dist[2] + dist[3]),
-    {'no-news': F(4, 10), 'times': F(4, 10) * within3, 'replace-slip': F(4, 10) / rep3})
-ok(isclose(float(F(4, 10) * within3), 1 / 3, abs_tol=1e-12), 'times slip is not 1/3')
+# part 4: given a stop within three calls but not on call 1, the chance of a stop on call 2
+num(L1, 'p-dealer-calls', 4, s2 / (within3 - F(4, 10)), dist[2] / (dist[2] + dist[3]),
+    {'keeps-call-1': s2 / within3, 'no-news': s2, 'third-call': s3 / (s2 + s3),
+     'replace-slip': (F(6, 10) * F(4, 10)) / (rep3 - F(4, 10))})
+ok(within3 - F(4, 10) == F(13, 30), 'stop within three but not on call 1 is not 13/30')
 
 # ------------------------------------------------------------------ level 2
 L2 = load(2)
@@ -202,25 +204,26 @@ pred_alt = sum(p * l ** 3 for p, l in zip(pri, lik)) / sum(p * l ** 2 for p, l i
 num(L2, 'p-broker-algo', 4, pred, pred_alt,
     {'prior-weights': pf, 'most-likely': lik[2], 'equal': sum(lik) / 3})
 
-# p-bad-ticks: two filters, independent given the truth; counts on 100,000 prints
+# p-bad-ticks: two filters, independent given the truth; counts on 1,000,000 prints
 e, a1, a0, b1, b0 = F(2, 100), F(95, 100), F(4, 100), F(70, 100), F(1, 100)
 pa = e * a1 + (1 - e) * a0
 pe_a = e * a1 / pa
 oa = e * a1 / ((1 - e) * a0)
 pe_ab = oa * (b1 / b0) / (1 + oa * (b1 / b0))
-M = 100000
+M = 1000000
 bad_both, good_both = M * e * a1 * b1, M * (1 - e) * a0 * b0
-num(L2, 'p-bad-ticks', 1, pa, F(5820, M),
+num(L2, 'p-bad-ticks', 1, pa, F(58200, M),
     {'errors-only': e * a1, 'rates-added': a1 + a0, 'false-on-all': e * a1 + a0}, round_tol=0.0001)
-num(L2, 'p-bad-ticks', 2, pe_a, F(1900, 5820),
+num(L2, 'p-bad-ticks', 2, pe_a, F(19000, 58200),
     {'inverse': a1, 'false-slip': e * a1 / (e * a1 + a0), 'specificity': 1 - a0})
 num(L2, 'p-bad-ticks', 3, pe_ab, bad_both / (bad_both + good_both),
     {'odds': oa * b1 / b0, 'product': pe_a * b1, 'skipped-a': (e / (1 - e) * b1 / b0) / (1 + e / (1 - e) * b1 / b0)}, round_tol=0.005)
-num(L2, 'p-bad-ticks', 4, good_both, 98000 * F(4, 100) * F(1, 100),
+num(L2, 'p-bad-ticks', 4, good_both, 980000 * F(4, 100) * F(1, 100),
     {'a-only': M * (1 - e) * a0, 'all-prints': M * a0 * b0}, round_tol=0.3)
 num(L2, 'p-bad-ticks', 5, good_both / (bad_both + good_both), 1 - pe_ab,
     {'over-all': good_both / M, 'over-errors': good_both / bad_both, 'error-share': pe_ab}, round_tol=0.0002)
-ok(bad_both == 1330, 'errors flagged by both is not 1,330')
+ok(bad_both == 13300 and good_both == 392, 'prints flagged by both are not 13,300 errors and 392 good')
+ok(M * (1 - e) * a0 == 39200 and M * a0 * b0 == 400, 'part 4 slips are not 39,200 and 400')
 
 # ------------------------------------------------------------------ level 3
 L3 = load(3)
@@ -272,14 +275,16 @@ num(L3, 'p-three-loans', 3, one ** 3, pseq((1, 1, 1), one),
 num(L3, 'p-three-loans', 4, all3 / one ** 3, enum_all * 1000,
     {'reciprocal': one ** 3 / all3, 'difference': all3 - one ** 3, 'weights-slip': (pb ** 3 + pg ** 3) / one ** 3}, round_tol=0.005)
 
-# p-odd-dice: A first odd, B second odd, C total even
-dice = list(itertools.product(range(1, 7), repeat=2))
-A = {d for d in dice if d[0] % 2}; B = {d for d in dice if d[1] % 2}; C = {d for d in dice if sum(d) % 2 == 0}
-P = lambda S: F(len(S), 36)
+# p-odd-dice (three desks, feeds P, Q, R): A desk 1 calm (P = Q), B desk 2 calm (P = R), C desk 3 calm (Q = R)
+feeds = list(itertools.product((0, 1), repeat=3))
+A = {x for x in feeds if x[0] == x[1]}; B = {x for x in feeds if x[0] == x[2]}; C = {x for x in feeds if x[1] == x[2]}
+P = lambda S: F(len(S), 8)
 num(L3, 'p-odd-dice', 1, F(1, 2), F(len(A & C), len(A)), {'joint': P(A & C), 'certain': 1})
 pick(L3, 'p-odd-dice', 2, 'pairwise')
+ok(P(A) == P(B) == P(C) == F(1, 2), 'each desk is not calm with chance 1/2')
 ok(all(P(X & Y) == P(X) * P(Y) for X, Y in ((A, B), (A, C), (B, C))), 'pairs are not independent')
-num(L3, 'p-odd-dice', 3, F(1, 4), P(A & B & C), {'product': F(1, 8), 'odd-total': 0})
+ok(P(A & B & C) != P(A) * P(B) * P(C), 'the three are mutually independent')
+num(L3, 'p-odd-dice', 3, F(1, 4), P(A & B & C), {'product': F(1, 8), 'single': P(C)})
 num(L3, 'p-odd-dice', 4, F(1), F(len(A & B & C), len(A & B)), {'pairwise': F(1, 2), 'joint': F(1, 4)})
 tri = P(A & B & C)
 num(L3, 'p-odd-dice', 5, 1 - (1 - tri) ** 8, sum(comb(8, k) * tri ** k * (1 - tri) ** (8 - k) for k in range(1, 9)),
@@ -507,6 +512,32 @@ num(L5, 'p-doubling-desk', 3, -20 * surv / (1 - surv), quit_avg,
 ok(surv * 20 + (1 - surv) * quit_avg == 0, 'p-doubling-desk: the average over all traders is not 0')
 pick(L5, 'p-doubling-desk', 4, 'survivors')
 ok(round(1000 * float(surv)) == 530 and round(float(quit_avg), 2) == -22.55, 'p-doubling-desk p4: 530 or -22.55 wrong')
+
+# every numeric part: form stated, a value rounded as asked is accepted, and each value the part's own feedback prints is accepted
+import re
+def form_checks(sets):
+    for ref, items in sets:
+        if items is None: continue
+        for iid, it in items.items():
+            for k, p in enumerate(it['parts'], 1):
+                w = p['widget']
+                if w['kind'] != 'numeric': continue
+                tag = f'{ref} {iid} p{k}'
+                a, tol, q = w['answer'], w['tol'].get('abs', 0), p['question']
+                whole = float(a).is_integer() and tol == 0
+                ok(whole or w.get('unit') == '£' or bool(re.search(r'\bGive\b', q)), f'{tag}: no sentence stating the form wanted')
+                m = re.search(r'(\d+) decimal places?|decimal to (\d+) places?', q)
+                if m:
+                    n = int(m.group(1) or m.group(2))
+                    ok(tol + 1e-12 >= 0.5 * 10 ** -n, f'{tag}: tolerance {tol} rejects a value rounded to {n} places')
+                texts = [p['feedback'].get('correct', ''), p['explain']['text'], w.get('accept', '')]
+                for t in texts:
+                    t = t.replace('{,}', '').replace(',', '').replace('£', '')
+                    for v in re.findall(r'(?:\\approx|about) \$?(-?\d+\.?\d*)', t):
+                        v = float(v.rstrip('.'))
+                        if a and not whole and abs(v - a) <= 0.05 * abs(a):
+                            ok(abs(v - a) <= tol + 1e-9, f'{tag}: prints {v} but the key {a} (tol {tol}) rejects it')
+form_checks([('problems-1', L1), ('problems-2', L2), ('problems-3', L3)])
 
 present = [n for n in (1, 2, 3, 4, 5) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')

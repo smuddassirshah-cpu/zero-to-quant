@@ -7,7 +7,7 @@ Files: `app/content/courses/counting-chance/problems-1.json`, `problems-2.json`,
 | Set | Item | Parts | Lessons drawn on | Difficulty | Chain |
 |---|---|---|---|---|---|
 | problems-1 | p-d4-against-d6 | 4 | l1, l2, l3, l4 | 3 | $\|S\| = 24$ → $P(s > f) = 7/12$ → $P(f > s) = 1/4$ (disjoint events, complement) → fair price £3 |
-| problems-1 | p-octahedral-prize | 5 | l1, l2, l3 | 4 | $\|B\| = 6$ → $\|A \cap B\| = 3$ → $\|A \cup B\| = 19$ → $P = 19/64$ → fair price £4.75 |
+| problems-1 | p-octahedral-prize | 5 | l1, l2, l3 | 3 | $\|B\| = 6$ → $\|A \cap B\| = 3$ → $\|A \cup B\| = 19$ → $P = 19/64$ → fair price £4.75 |
 | problems-1 | p-two-feeds | 4 | l3, l4 | 4 | $P(\text{both fail}) = 0.004$ → $P(\text{at least one works}) = 0.996$ → $0.996^{20}$ → $1 - 0.996^{20} = 0.0770$ |
 | problems-1 | p-tetra-eight | 5 | l1, l2, l4 | 5 | 16 outcomes → $1/16$ → $(15/16)^{10}$ → win 0.4755 → smallest $n = 11$ |
 | problems-2 | p-relay-team | 4 | l5, l6 | 3 | $\binom{9}{4} = 126$ teams → $126 \times 4! = 3024$ line-ups → $P(\text{both fastest in}) = 1/6$ → $P(\text{they run legs 3 and 4}) = 1/36$ |

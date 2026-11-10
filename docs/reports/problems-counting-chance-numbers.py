@@ -78,12 +78,12 @@ ties = F(sum(1 for f, s in S if s == f), 24)
 f_hi = 1 - s_hi - ties
 answer(lv1, r1, 0, 2, f_hi, F(sum(1 for f, s in S if f > s), 24), 'P(f > s)')
 wrongs(lv1, r1, 0, 2, {'no-ties': 1 - s_hi, 'tie': ties})
-answer(lv1, r1, 0, 3, 12 * f_hi, sum(12 for f, s in S if f > s) / 24, 'fair price')
-wrongs(lv1, r1, 0, 3, {'no-ties': 12 * (1 - s_hi), 'half': 6, 'other-die': 12 * s_hi})
+answer(lv1, r1, 0, 3, 12 * (1 - f_hi), sum(12 for f, s in S if s >= f) / 24, 'fair price of the game that pays unless f > s')
+wrongs(lv1, r1, 0, 3, {'forgot-ties': 12 * s_hi, 'half': 6, 'wrong-way': 12 * f_hi})
 for path, v in [('feedback.correct', 14), ('explain.text', 14), ('widget.accept', 7)]:
     stated(lv1, r1, 0, 1, path, v)
 stated(lv1, r1, 0, 2, 'explain.text', 4)
-stated(lv1, r1, 0, 3, 'explain.text', 3)
+stated(lv1, r1, 0, 3, 'explain.text', 9)
 
 # P2: eight-sided die twice
 S8 = list(itertools.product(range(1, 9), repeat=2))
@@ -94,7 +94,8 @@ wrongs(lv1, r1, 1, 0, {'one-order': len({tuple(sorted(o)) for o in B}), 'exactly
 answer(lv1, r1, 1, 1, 3, len(A & B), '|A and B|')
 wrongs(lv1, r1, 1, 1, {'one-order': sum(1 for a, b in B if a < b and a >= 7), 'all-b': len(B)})
 answer(lv1, r1, 1, 2, 16 + 6 - 3, len(A | B), '|A or B|')
-wrongs(lv1, r1, 1, 2, {'no-overlap': len(A) + len(B), 'exactly-one': len(A ^ B)})
+wrongs(lv1, r1, 1, 2, {'no-overlap': len(A) + len(B), 'only-a': len(A ^ B)})
+lv1.claim(len(A ^ B) == len(A) == 16, 'part 3 slip 16 is both |A| and the outcomes in exactly one of A, B')
 lv1.claim(len(A) == 16, '|A| = 16 as the explanation states')
 pAB = F(len(A | B), 64)
 answer(lv1, r1, 1, 3, F(19, 64), sim(lambda o: o[0] >= 7 or abs(o[0] - o[1]) >= 6, lambda: (RNG.randint(1, 8), RNG.randint(1, 8))), 'P(A or B)', second_tol=0.005)
@@ -138,15 +139,17 @@ answer(lv1, r1, 3, 2, miss10, F(15 ** 10, 16 ** 10), 'P(no 8 in 10)')
 wrongs(lv1, r1, 3, 2, {'linear': 1 - 10 * hit, 'from-unordered': F(9, 10) ** 10, 'from-totals': F(6, 7) ** 10})
 answer(lv1, r1, 3, 3, 1 - miss10, sim(lambda r: any(x == 8 for x in r), lambda: [RNG.randint(1, 4) + RNG.randint(1, 4) for _ in range(10)], 200000), 'P(win, 10)', second_tol=0.005)
 wrongs(lv1, r1, 3, 3, {'adding': 10 * hit, 'none': miss10})
-nmin = next(n for n in range(1, 100) if 1 - (1 - hit) ** n > F(1, 2))
-nmin2 = int(sp.ceiling(sp.log(sp.Rational(1, 2)) / sp.log(sp.Rational(15, 16))))
-answer(lv1, r1, 3, 4, nmin, nmin2, 'smallest n')
-wrongs(lv1, r1, 3, 4, {'adding': next(n for n in range(1, 100) if n * hit >= F(1, 2)), 'ten': 10})
-lv1.claim(abs(float(1 - F(15, 16) ** 8) - 0.4033) < 0.00005, 'part 5 byKey: at n = 8 the bet wins with 0.4033')
-lv1.claim(abs(float(F(15, 16) ** 11) - 0.4917) < 0.00005 and abs(float(1 - F(15, 16) ** 11) - 0.5083) < 0.00005, 'part 5: 0.4917 and 0.5083')
-stated(lv1, r1, 3, 4, 'explain.text', '0.4917')
-stated(lv1, r1, 3, 4, 'explain.text', '0.5083')
-stated(lv1, r1, 3, 4, 'feedback.byKey.adding', '0.4033')
+nmin = next(n for n in range(1, 200) if 1 - (1 - hit) ** n > F(9, 10))
+nmin2 = int(sp.floor(sp.log(sp.Rational(1, 10)) / sp.log(sp.Rational(15, 16)))) + 1
+answer(lv1, r1, 3, 4, nmin, nmin2, 'smallest n with a win chance above 0.9')
+wrongs(lv1, r1, 3, 4, {'adding': next(n for n in range(1, 100) if F(n, 16) > F(9, 10)),
+                       'half': next(n for n in range(1, 100) if 1 - (1 - hit) ** n > F(1, 2)),
+                       'one-short': nmin - 1})
+lv1.claim(abs(float(1 - F(15, 16) ** 36) - 0.9021) < 0.00005 and abs(float(1 - F(15, 16) ** 35) - 0.8955) < 0.00005, 'part 5: 0.9021 at 36 and 0.8955 at 35')
+lv1.claim(abs(float(1 - F(15, 16) ** 15) - 0.6202) < 0.00005 and abs(float(1 - F(15, 16) ** 11) - 0.5083) < 0.00005, 'part 5 byKey: 0.6202 at 15 and 0.5083 at 11')
+lv1.claim(abs(float(sp.log(sp.Rational(1, 10)) / sp.log(sp.Rational(15, 16))) - 35.7) < 0.05, 'part 5 explain: n > 35.7')
+stated(lv1, r1, 3, 4, 'feedback.byKey.adding', '0.6202')
+stated(lv1, r1, 3, 4, 'feedback.byKey.half', '0.5083')
 
 lv1.check_wrongs('problems-1')
 
@@ -187,14 +190,27 @@ answer(lv2, r2, 1, 2, three, F(comb(11, 3), comb(15, 3)), 'P(three clean)')
 wrongs(lv2, r2, 1, 2, {'replace': F(11, 15) ** 3, 'fixed-bottom': F(11 * 10 * 9, 15 ** 3)})
 answer(lv2, r2, 1, 3, 1 - three, F(sum(1 for p_ in picks if not all(map(clean, p_))), len(picks)), 'P(at least one breach)')
 wrongs(lv2, r2, 1, 3, {'none': three, 'replace': 1 - F(11, 15) ** 3, 'adding': 3 * F(4, 15)})
-samples = list(itertools.combinations(range(15), 3))
-answer(lv2, r2, 1, 4, comb(15, 3) * (1 - three), sum(1 for s_ in samples if not all(map(clean, s_))), 'samples with a breach')
-wrongs(lv2, r2, 1, 4, {'ordered': 290 * 6, 'none': comb(11, 3)})
-lv2.claim(len(samples) == 455, '455 samples')
+# part 5: smallest number of picks for P(at least one breach) > 0.9, by running product and by the hypergeometric count
+def none_by_product(k):
+    pr = F(1)
+    for i in range(k):
+        pr *= F(11 - i, 15 - i)
+    return pr
+kmin = next(k for k in range(1, 12) if 1 - none_by_product(k) > F(9, 10))
+kmin2 = next(k for k in range(1, 12) if 1 - F(comb(11, k), comb(15, k)) > F(9, 10))
+answer(lv2, r2, 1, 4, kmin, kmin2, 'smallest number of picks')
+lv2.claim(none_by_product(3) == three, 'the running product starts from 33/91 at 3 picks')
+wrongs(lv2, r2, 1, 4, {'five': 5, 'adding': next(n for n in range(1, 20) if n * F(4, 15) > F(9, 10)),
+                       'replace': next(n for n in range(1, 40) if 1 - F(11, 15) ** n > F(9, 10))})
+for k, v in ((4, 0.7582), (5, 0.8462), (6, 0.9077)):
+    lv2.claim(abs(float(1 - none_by_product(k)) - v) < 0.00005, f'breach chance at {k} picks is {v}')
+lv2.claim(abs(float(33 * F(8, 12) / 91) - 0.2418) < 5e-5 and abs(float(none_by_product(5)) - 0.1538) < 5e-5 and abs(float(none_by_product(6)) - 0.0923) < 5e-5, 'running products 0.2418, 0.1538, 0.0923')
+lv2.claim(comb(11, 6) == 462 and comb(15, 6) == 5005, 'C(11,6) = 462 and C(15,6) = 5005')
+stated(lv2, r2, 1, 4, 'feedback.byKey.five', '0.8462')
+stated(lv2, r2, 1, 4, 'feedback.byKey.adding', '0.7582')
 stated(lv2, r2, 1, 1, 'explain.text', 0.5238, '0.5238')
 stated(lv2, r2, 1, 2, 'explain.text', 0.3626, '0.3626')
 stated(lv2, r2, 1, 3, 'explain.text', 0.6374, '0.6374')
-stated(lv2, r2, 1, 4, 'explain.text', 165)
 
 # P3: 8 votes, 3 proposals
 lists = list(itertools.product(range(3), repeat=8))
@@ -332,7 +348,10 @@ pAK = 2 * pA - pU
 answer(lv3, r3, 2, 2, pAK, F(both_direct, N52), 'P(A and K), direct sum over ace and king counts')
 wrongs(lv3, r3, 2, 2, {'product': pA ** 2, 'once': pU - pA})
 answer(lv3, r3, 2, 3, pAK * N52, both_direct, 'hands with an ace and a king')
-wrongs(lv3, r3, 2, 3, {'union': N52 - comb(44, 5), 'from-product': 302492})
+wrongs(lv3, r3, 2, 3, {'union': N52 - comb(44, 5), 'from-product': 302490, 'from-chance': round(0.100179 * N52)})
+lv3.claim(round(0.100179 * N52) == 260361 and abs(0.100179 * N52 - 260360) > 0.5, 'multiplying the rounded chance 0.100179 by 2,598,960 gives 260,361 (not 260,360)')
+stated(lv3, r3, 2, 3, 'question', 886656)
+stated(lv3, r3, 2, 3, 'question', 1512952)
 fp = [x for x in widget(lv3, r3, 2, 3)['wrong'] if x['id'] == 'from-product'][0]
 lo, hi = float(pA ** 2) * N52, 0.116389 * N52
 lv3.claim(all(abs(v - fp['value']) <= fp['tol']['abs'] for v in (round(lo), round(hi))), f'independence slip band covers {lo:.1f} (exact) and {hi:.1f} (from the rounded square 0.116389)')
@@ -368,7 +387,7 @@ cnt = Counter(cls(h) for h in hands)
 lv3.claim(len(hands) == 4845 and cnt['two'] == 360 and cnt['trips'] == 320 and cnt['quads'] == 5 and cnt['none'] == 1280,
           f'short-deck classes by enumeration: {dict(cnt)}')
 answer(lv3, r3, 3, 4, 4845 - 1280 - 360 - 320 - 5, cnt['pair'], 'one pair')
-wrongs(lv3, r3, 3, 4, {'at-least-pair': 4845 - 1280, 'no-quads': 4845 - 1280 - 360 - 320, 'two-pair-ordered': 4845 - 1280 - 720 - 320 - 5})
+wrongs(lv3, r3, 3, 4, {'at-least-pair': 4845 - 1280, 'no-quads': 4845 - 1280 - 360 - 320, 'two-pair-ordered': 4845 - 1280 - 720 - 320 - 5, 'no-two-pair': 4845 - 1280 - 320 - 5})
 lv3.claim(cnt['pair'] * 2 > 4845, 'one pair is more than half of all hands')
 lv3.claim(5 * 4 * comb(4, 2) * comb(4, 2) == 720 and comb(5, 2) * comb(4, 2) ** 2 == 360, 'two pair: ordered ranks 720, unordered 360')
 
@@ -382,6 +401,35 @@ for lv_, ref in [(lv1, r1), (lv2, r2), (lv3, r3)]:
     lv_.claim(all(3 <= len(it['parts']) <= 5 for it in its) and 3 <= len(its) <= 5, f'{ref}: 3 to 5 items of 3 to 5 parts')
 
 lv3.check_wrongs('problems-3')
+
+# every numeric part: form stated, a value rounded as asked is accepted, and each value the part's own feedback prints is accepted
+import re  # noqa: E402
+
+
+def form_checks(lv_, ref):
+    for ii, it in enumerate(lv_.files[ref]['items']):
+        for jj, p_ in enumerate(it['parts']):
+            w = p_['widget']
+            if w['kind'] != 'numeric':
+                continue
+            tag = f'{ref} {it["id"]} p{jj + 1}'
+            a, tol, q = w['answer'], w['tol'].get('abs', 0), p_['question']
+            whole = float(a).is_integer() and tol == 0
+            lv_.claim(whole or w.get('unit') == '£' or bool(re.search(r'\bGive\b', q)), f'{tag}: a sentence states the form wanted (a whole count or a price needs none)')
+            m = re.search(r'(\d+) decimal places?|decimal to (\d+) places?', q)
+            if m:
+                n = int(m.group(1) or m.group(2))
+                lv_.claim(tol + 1e-12 >= 0.5 * 10 ** -n, f'{tag}: tolerance {tol} accepts a value rounded to {n} places')
+            for t in (p_['feedback'].get('correct', ''), p_['explain']['text'], w.get('accept', '')):
+                t = t.replace('{,}', '').replace(',', '').replace('£', '')
+                for v in re.findall(r'(?:\\approx|about) \$?(-?\d+\.?\d*)', t):
+                    v = float(v.rstrip('.'))
+                    if a and not whole and abs(v - a) <= 0.05 * abs(a):
+                        lv_.claim(abs(v - a) <= tol + 1e-9, f'{tag}: the printed {v} is accepted by key {a} (tol {tol})')
+
+
+for lv_, ref in [(lv1, r1), (lv2, r2), (lv3, r3)]:
+    form_checks(lv_, ref)
 
 # ---------------------------------------------------------------- report
 results = lv1.results + lv2.results + lv3.results
