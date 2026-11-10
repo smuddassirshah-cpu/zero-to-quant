@@ -511,6 +511,21 @@ pp = np.array([sum(100 * c_ / (1 + y_) ** k for k in range(1, n_ + 1)) + 100 / (
 out = YB(pp, cc, nn)
 check("h2 ytm_book attack: 3,000 bonds, yields from 0.05% to 95%", float(np.nanmax(np.abs(out - yy))) < 1e-9 and not np.isnan(out).any(),
       f"max err {float(np.nanmax(np.abs(out - yy))):.1e}")
+# homework-2 items[6]: the same unfrozen loop as l6 screens[8]; count its passes on the item's own 1,000-bond test
+_src = json.load(open(os.path.join(COURSE, "homework-2.json")))["items"][6]["widget"]["solution"]
+_src = _src.replace("    for _ in range(maxit):\n", "    for _ in range(maxit):\n        PASSES[0] += 1\n")
+_e = {"PASSES": [0]}
+exec(_src, _e)
+r3 = np.random.default_rng(3)
+n1 = r3.integers(1, 31, 1000); c1 = r3.uniform(0.0, 0.08, 1000); y1 = r3.uniform(0.005, 0.12, 1000)
+p1 = np.array([sum(100 * c_ / (1 + y_) ** k for k in range(1, n_ + 1)) + 100 / (1 + y_) ** n_ for n_, c_, y_ in zip(n1, c1, y1)])
+out1 = _e["ytm_book"](p1, c1, n1)
+book_passes = _e["PASSES"][0]
+_e["PASSES"][0] = 0
+_e["ytm_book"]([95.0], [0.05], [5])
+# Corrected assert, which passes once solved bonds are frozen: book_passes <= 8.
+check("h2 ytm_book: 1,000 bonds need at most 10 passes", book_passes <= 10 and float(np.max(np.abs(out1 - y1))) < 1e-9,
+      f"{book_passes} passes for the book, {_e['PASSES'][0]} for one bond; answers right to {float(np.max(np.abs(out1 - y1))):.0e}", expected_fail=True)
 check("h2 order", near(math.log(3.16e-5 / 1e-3) / math.log(1e-3 / 1e-2), 1.5, ab=0.01))
 
 print(f"\n{N} checks, {len(FAILS)} failed, {len(XFAILS)} expected fails")

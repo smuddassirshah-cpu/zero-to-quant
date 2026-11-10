@@ -95,6 +95,18 @@ p = Fraction(float("101.37")) - Fraction("101.37")
 check("l1.s7 101.37 is rounded and inside u", p != 0 and abs(p) / Fraction("101.37") <= Fraction(1, 2 ** 53))
 check("l1.s8 decode(1e6), decode(0.1)", fields(1e6)[1] - 1023 == 19 and fields(1e6)[2] / 2 ** 52 == 0.9073486328125
       and fields(0.1)[1] - 1023 == -4 and fields(0.1)[2] / 2 ** 52 == 0.6000000000000001)
+# l1 screens[8]: the lesson's own decode, run on doubles that are not normal
+import json as _json, os as _os
+_w = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "app", "content", "courses", "numerics",
+                                   "l1-floating-point.json")))["screens"][8]["widget"]
+_env = {}
+exec(_w["solution"], _env)
+rebuild = lambda x: (lambda sg, pw, fr: (-1) ** sg * (1 + fr) * 2.0 ** pw)(*_env["decode"](x))
+check("l1.s8 decode rebuilds normal doubles", all(rebuild(x) == x for x in (-6.5, 100.25, 0.1, 1e6, 1e-300, 1.7e308, 2.2250738585072014e-308)))
+# Docstring says "of the double x". Corrected assert, which passes: the identity holds for every NORMAL double (line above).
+check("l1.s8 decode rebuilds every double (0.0 and the subnormal 5e-324)", rebuild(0.0) == 0.0 and rebuild(5e-324) == 5e-324,
+      f"decode(0.0) = {_env['decode'](0.0)} reads as {rebuild(0.0):.3e}; decode(5e-324) = {_env['decode'](5e-324)} reads as {rebuild(5e-324):.3e}",
+      expected_fail=True)
 check("l1.s9 gap at 1.7e18 is 256", np.spacing(1.7e18) == 256.0 and 2.0 ** 60 < 1.7e18 < 2.0 ** 61
       and near(math.log10(1.7e18), 18.2304, ab=1e-4))
 g32 = float(np.spacing(np.float32(20000)))
