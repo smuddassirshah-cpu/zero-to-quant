@@ -285,7 +285,142 @@ tri = P(A & B & C)
 num(L3, 'p-odd-dice', 5, 1 - (1 - tri) ** 8, sum(comb(8, k) * tri ** k * (1 - tri) ** (8 - k) for k in range(1, 9)),
     {'product-slip': 1 - F(7, 8) ** 8, 'sum': 8 * tri, 'complement': (1 - tri) ** 8})
 
-present = [n for n in (1, 2, 3) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
+# ------------------------------------------------------------------ expression helper (levels 4, 5)
+from sympy import Rational, symbols, simplify
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+
+TRANS = standard_transformations + (implicit_multiplication_application,)
+
+def expr_part(items, iid, k, var, answer_tex, exact_fn, enum_fn, wrong_tex_fns, points):
+    """An expression part: the JSON answer string, each plain accept form parsed by sympy and
+    shown equal to exact_fn, exact_fn equal to an enumeration enum_fn at each point, and each
+    wrong form shown to differ from the answer at some point."""
+    if items is None: return
+    w = items[iid]['parts'][k - 1]['widget']
+    tag = f'{iid} p{k}'
+    ok(w['kind'] == 'expression', f'{tag}: not expression')
+    ok(w['answer'] == answer_tex, f'{tag}: answer {w["answer"]} vs {answer_tex}')
+    x = symbols(var)
+    target = exact_fn(x)
+    for a in w.get('accept', []):
+        if '\\' in a: continue
+        e = parse_expr(a.replace('^', '**'), transformations=TRANS, local_dict={var: x})
+        ok(simplify(e - target) == 0, f'{tag}: accept {a} is not equal to the answer')
+    for pt in points:
+        ok(F(str(target.subs(x, Rational(str(pt))))) == F(enum_fn(F(str(pt)))), f'{tag}: methods differ at {var}={pt}')
+    wrongs = {z['id']: z['tex'] for z in w.get('wrong', [])}
+    ok(set(wrongs) == set(wrong_tex_fns), f'{tag}: wrong ids {sorted(wrongs)} vs {sorted(wrong_tex_fns)}')
+    for wid, (tex, fn) in wrong_tex_fns.items():
+        ok(wrongs.get(wid) == tex, f'{tag}: wrong {wid} tex {wrongs.get(wid)} vs {tex}')
+        ok(any(simplify(fn(x).subs(x, Rational(str(pt))) - target.subs(x, Rational(str(pt)))) != 0 for pt in points),
+           f'{tag}: wrong {wid} equals the answer')
+
+# ------------------------------------------------------------------ level 4
+L4 = load(4)
+# p-marble-bags: bags BB x1, BW x3, WW x1; a bag at random, then a marble at random
+bags = ['BB', 'BW', 'BW', 'BW', 'WW']
+draws = [(i, j) for i in range(5) for j in range(2)]            # 10 equally likely (bag, marble)
+blk = [(i, j) for i, j in draws if bags[i][j] == 'B']
+pb = F(len(blk), len(draws))
+num(L4, 'p-marble-bags', 1, F(1, 5) * 1 + F(3, 5) * F(1, 2), pb,
+    {'bags': F(4, 5), 'only-black': F(1, 5)})
+both_b = [d for d in blk if bags[d[0]][1 - d[1]] == 'B']
+num(L4, 'p-marble-bags', 2, F(1, 5) / pb, F(len(both_b), len(blk)),
+    {'bags': F(1, 4), 'prior': F(1, 5), 'even': F(1, 2)})
+ok(F(1, 5) / F(4, 5) == F(1, 4), 'p-marble-bags p2: the part 1 slip 0.8 does not give 0.25')
+def dealer(h):   # enumerate the five bags with the dealer's rule
+    show_b = [1 if b == 'BB' else (h if b == 'BW' else 0) for b in bags]
+    return F(show_b[0], 5) / (sum(F(1, 5) * s for s in show_b))
+expr_part(L4, 'p-marble-bags', 3, 'h', '\\frac{1}{1+3h}', lambda h: 1 / (1 + 3 * h), dealer,
+          {'one-mixed': ('\\frac{1}{1+h}', lambda h: 1 / (1 + h)), 'draw': ('\\frac{2}{5}', lambda h: Rational(2, 5) + 0 * h)},
+          [0.2, 0.5, 0.9])
+hstar = (1 / F(2, 5) - 1) / 3
+num(L4, 'p-marble-bags', 4, hstar, next(F(h, 100) for h in range(1, 101) if dealer(F(h, 100)) == F(2, 5)),
+    {'no-third': 1 / F(2, 5) - 1, 'same': F(2, 5)})
+ok(dealer(F(1)) == F(1, 4), 'p-marble-bags p4: h = 1 does not give 1/4')
+ok(dealer(F(1, 2)) == F(1, 5) / pb, 'p-marble-bags p4: h = 1/2 is not the random draw')
+
+# p-two-strategies: A, B win with 0.7 each, independent; manager names a winner
+pw = F(7, 10)
+months = {(a, b): (pw if a else 1 - pw) * (pw if b else 1 - pw) for a in (0, 1) for b in (0, 1)}
+anyw = sum(p for (a, b), p in months.items() if a or b)
+num(L4, 'p-two-strategies', 1, 1 - (1 - pw) ** 2, anyw,
+    {'sum': 2 * pw, 'both': pw ** 2, 'exactly-one': 2 * pw * (1 - pw)})
+def names_b(sA):   # sA: chance of naming A when both win
+    return sum(p * (1 if (b and not a) else (1 - sA if (a and b) else 0)) for (a, b), p in months.items())
+nb = names_b(F(1, 2))
+num(L4, 'p-two-strategies', 2, anyw / 2, nb,
+    {'no-halve': anyw, 'own': pw, 'alone': pw * (1 - pw)})
+num(L4, 'p-two-strategies', 3, pw ** 2 / 2 / nb, pw ** 2 / anyw,
+    {'this-one': pw, 'prior': pw ** 2, 'over-all': pw ** 2 / 2 / anyw})
+ok(pw ** 2 / 2 / nb == F(7, 13), 'p-two-strategies p3: not 7/13')
+nb8 = names_b(F(8, 10))
+num(L4, 'p-two-strategies', 4, pw ** 2 * F(2, 10) / nb8, F(7, 22),
+    {'fair-coin': F(7, 13), 'this-one': pw, 'swapped': pw ** 2 * F(8, 10) / (pw ** 2 * F(8, 10) + pw * (1 - pw))})
+ok(isclose(float(nb8), 0.308), 'p-two-strategies p4: P(names B) is not 0.308')
+
+# p-two-flags: each trade a (side, sector), 12 types, 144 ordered pairs
+types = [(s, c) for s in ('L', 'S') for c in range(6)]
+pairs = list(itertools.product(types, repeat=2))
+ll = lambda p: p[0][0] == 'L' and p[1][0] == 'L'
+alo = [p for p in pairs if p[0][0] == 'L' or p[1][0] == 'L']
+num(L4, 'p-two-flags', 1, F(1, 3), F(sum(map(ll, alo)), len(alo)), {'other': F(1, 2), 'quarter': F(1, 4)})
+E = ('L', 3)
+fit = [p for p in pairs if E in p]
+num(L4, 'p-two-flags', 2, 12 + 12 - 1, len(fit), {'double': 24, 'first-only': 12})
+num(L4, 'p-two-flags', 3, F(2 * 6 - 1, 4 * 6 - 1), F(sum(map(ll, fit)), len(fit)),
+    {'no-detail': F(1, 3), 'double': F(12, 24), 'first-only': F(6, 23)})
+shown = F(0); shown_ll = F(0)   # one trade shown at random
+for p in pairs:
+    for i in (0, 1):
+        if p[i] == E:
+            shown += F(1, 144) * F(1, 2)
+            if ll(p): shown_ll += F(1, 144) * F(1, 2)
+num(L4, 'p-two-flags', 4, F(1, 2), shown_ll / shown, {'at-least': F(11, 23), 'no-detail': F(1, 3)})
+fk = lambda k: F(2 * k - 1, 4 * k - 1)
+def grid(k):
+    ts = [(s, c) for s in ('L', 'S') for c in range(k)]
+    f = [p for p in itertools.product(ts, repeat=2) if ('L', 0) in p]
+    return F(sum(1 for p in f if p[0][0] == 'L' and p[1][0] == 'L'), len(f))
+ok(all(grid(k) == fk(k) for k in (1, 2, 6, 13)), 'p-two-flags: the (2k-1)/(4k-1) formula fails the grid count')
+kmin = next(k for k in range(1, 100) if abs(fk(k) - F(1, 2)) <= F(1, 100))
+num(L4, 'p-two-flags', 5, kmin, -(-F(51, 100) // F(4, 100)),   # 0.04k >= 0.51
+    {'rounded-down': 12, 'whole': 2 * 13 - 1})
+ok(kmin == 13 and F(51, 4) == F(1275, 100), 'p-two-flags p5: k is not 13')
+ok(fk(12) < F(49, 100) <= fk(13), 'p-two-flags p5: 12 and 13 do not bracket 0.49')
+
+# p-dated-coins: boxes GG, GG, GS, SS; each coin one of k years
+boxes = ['GG', 'GG', 'GS', 'SS']
+cd = [(i, j) for i in range(4) for j in range(2)]
+gold = [(i, j) for i, j in cd if boxes[i][j] == 'G']
+num(L4, 'p-dated-coins', 1, F(4, 5), F(sum(1 for i, j in gold if boxes[i][1 - j] == 'G'), len(gold)),
+    {'boxes': F(2, 3), 'even': F(1, 2), 'draw': F(len(gold), len(cd))})
+def report(k):   # enumerate boxes and years: at least one gold coin of year 0
+    tot = F(0); gg = F(0)
+    for b in boxes:
+        for y in itertools.product(range(k), repeat=2):
+            if any(b[j] == 'G' and y[j] == 0 for j in (0, 1)):
+                tot += F(1, 4) * F(1, k * k)
+                if b == 'GG': gg += F(1, 4) * F(1, k * k)
+    return gg / tot
+pg1 = F(sum(1 for y in itertools.product(range(10), repeat=2) if 0 in y), 100)
+num(L4, 'p-dated-coins', 2, 1 - F(9, 10) ** 2, pg1, {'sum': F(2, 10), 'both': F(1, 100), 'one': F(1, 10)})
+num(L4, 'p-dated-coins', 3, F(1, 2) * pg1 / (F(1, 2) * pg1 + F(1, 4) * F(1, 10)), report(10),
+    {'no-detail': F(2, 3), 'box-weights': pg1 / (pg1 + F(1, 10)), 'drawn': F(1, 2) * F(2, 10) / (F(1, 2) * F(2, 10) + F(1, 40))})
+ok(report(10) == F(19, 24), 'p-dated-coins p3: not 19/24')
+def ratio_enum(k):
+    k = int(k)
+    a = F(sum(1 for y in itertools.product(range(k), repeat=2) if 0 in y), k * k)
+    return a / F(1, k)
+expr_part(L4, 'p-dated-coins', 4, 'k', '2-\\frac{1}{k}', lambda k: 2 - 1 / k, ratio_enum,
+          {'double': ('2', lambda k: 2 + 0 * k), 'top-only': ('\\frac{2k-1}{k^2}', lambda k: (2 * k - 1) / k ** 2)},
+          [2, 5, 10])
+post = lambda k: 2 * (2 - F(1, k)) / (2 * (2 - F(1, k)) + 1)
+ok(post(10) == report(10) and post(4) == report(4), 'p-dated-coins: odds form disagrees with the enumeration')
+num(L4, 'p-dated-coins', 5, F(4, 5), F(round(float(post(10 ** 9)) * 10 ** 6), 10 ** 6),
+    {'ratio-one': F(2, 3), 'even': F(1, 2), 'certain': 1})
+
+present = [n for n in (1, 2, 3, 4, 5) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails: print('FAIL', m)
 sys.exit(1 if fails else 0)
