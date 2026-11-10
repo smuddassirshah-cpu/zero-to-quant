@@ -1,6 +1,6 @@
 # Problem sets: markov (brief `docs/briefs/chained.md`)
 
-Files: `app/content/courses/markov/problems-1.json` (more levels below). Numbers: `docs/reports/problems-markov-numbers.py` (exits 0). The course writes distributions as row vectors, $\boldsymbol{\pi}_{k} = \boldsymbol{\pi}_0\mathbf{P}^k$, with rows of $\mathbf{P}$ adding to 1; every set follows that.
+Files: `app/content/courses/markov/problems-1.json`, `problems-2.json`, `problems-3.json`. Numbers: `docs/reports/problems-markov-numbers.py` (exits 0). The course writes distributions as row vectors, $\boldsymbol{\pi}_{k} = \boldsymbol{\pi}_0\mathbf{P}^k$, with rows of $\mathbf{P}$ adding to 1; every set follows that.
 
 Every numeric part ends with a form sentence ("Give a decimal to 2 places.", "Give a fraction, or a decimal to 4 places."), its `tol` accepts that rounding, and the numbers script checks that the value printed in `feedback.correct` is accepted by the part's own `tol`. Where a part hands the learner a rounded value (3.33 months, 6.67 minutes), the script also checks that the answer from the rounded value is accepted.
 
