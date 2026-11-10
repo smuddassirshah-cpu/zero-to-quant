@@ -74,8 +74,13 @@ ya, yb2 = sp.sqrt(t ** 2 + 1), sp.sqrt(t ** 2 + 4)
 both_solve = sp.simplify(ya * sp.diff(ya, t) - t) == 0 and sp.simplify(yb2 * sp.diff(yb2, t) - t) == 0
 mix = (ya + yb2) / 2
 is_lin = both_solve and sp.simplify(mix * sp.diff(mix, t) - t) == 0
-expected_fail("l1 s6 first_power_definition: y*y'=t passes the 'first power only' test, so it should behave as a linear equation (averages of solutions solve it)",
-              is_lin, "1")
+# (corrected claim, fix pass) s6 now says y and its derivatives each appear alone, never multiplied together,
+# and names yy'=t as not linear. Fixer's own test: write the equation as F(t, y, p) = 0 with p = y'; linear
+# means F is affine in (y, p), so its Hessian in (y, p) is zero. yy'-t fails, ty'+y-sin t passes.
+_yy, _pp = sp.symbols('Y P')
+_hess = lambda F: sp.hessian(F, (_yy, _pp))
+check("l1 s6 first_power_definition (corrected claim, fix pass): yy'=t has a y*y' product (Hessian in (y,y') nonzero), ty'+y=sin t has none",
+      _hess(_yy * _pp - t) != sp.zeros(2, 2) and _hess(t * _pp + _yy - sp.sin(t)) == sp.zeros(2, 2) and not is_lin)
 # corrected assert: linear means a(t) y' + b(t) y = g(t), with no product of y and y'
 check("l1 s6 corrected: y*y'=t is not linear: sqrt(t^2+1) and sqrt(t^2+4) solve it, their average does not", both_solve and not is_lin)
 
@@ -84,7 +89,13 @@ f_nonlip = lambda yv: 3 * sp.cbrt(yv) ** 2
 y1, y2 = sp.Integer(0), t ** 3
 both = (sp.simplify(sp.diff(y1, t) - 0) == 0 and sp.simplify(sp.diff(y2, t) - 3 * (t ** 3) ** sp.Rational(2, 3)).subs(t, 2) == 0
         and y1 == 0 and y2.subs(t, 0) == 0)
-expected_fail("l1 s9 one_start_one_solution: y(0)=0 picks one solution of y'=3y^(2/3)", not both, "2")
+# (corrected claim, fix pass) s9 now says y(0) picks one solution provided f and its derivative in y are continuous.
+# Fixer's own check: the counter-example y'=3y^(2/3) has two solutions from y(0)=0, and its df/dy = 2y^(-1/3)
+# is not continuous at 0, so it falls outside the stated condition; the l1 examples (2y, 0.06L-12000) have constant df/dy.
+_u = sp.symbols('u', real=True)
+check("l1 s9 one_start_one_solution (corrected claim, fix pass): two solutions from y(0)=0 only where df/dy is discontinuous",
+      both and sp.limit(sp.diff(3 * _u ** sp.Rational(2, 3), _u), _u, 0, '+') == sp.oo
+      and sp.diff(2 * _u, _u).is_constant() and sp.diff(sp.Rational(6, 100) * _u - 12000, _u).is_constant())
 # corrected assert: uniqueness holds when f and df/dy are continuous near the start (Boyce and DiPrima Thm 2.4.2)
 check("l1 s9 corrected: with f=3y^(2/3), df/dy is unbounded at y=0, the one place uniqueness fails",
       sp.limit(sp.diff(3 * sp.symbols('u', positive=True) ** sp.Rational(2, 3), sp.symbols('u', positive=True)), sp.symbols('u', positive=True), 0) == sp.oo)
@@ -222,7 +233,13 @@ check("homework-1 i3: path from -0.5 rises towards 0 and stays below it", -1e-3 
 Pn = solve_ivp(lambda tt, v: 0.8 * v * (1 - v / 10000), (0, 3), [5000.0], rtol=1e-11, atol=1e-9, dense_output=True)
 gap_true = 10000 - Pn.sol(3.0)[0]
 gap_lin = 5000 * np.exp(-0.8 * 3)
-expected_fail("l4 s6 gap_obeys_linear_law: from P=5000 the gap to K follows u'=-0.8u exactly", abs(gap_true - gap_lin) / gap_true < 1e-3, "3")
+# (corrected claim, fix pass) s6 now says a small gap nearly obeys u'=f'(y*)u. Fixer's own check with the
+# closed-form logistic P = K/(1 + ((K-P0)/P0)e^{-rt}): the relative error after 3 years shrinks in proportion
+# to the starting gap (it is first order in the gap), and is large for a gap of half of K.
+_logi = lambda P0, tt: 10000 / (1 + (10000 - P0) / P0 * np.exp(-0.8 * tt))
+_err = lambda g0: abs((10000 - _logi(10000 - g0, 3.0)) / (g0 * np.exp(-2.4)) - 1)
+check("l4 s6 gap_obeys_linear_law (corrected claim, fix pass): error 45% from a gap of 5000, under 0.1% from 10, and halves with the gap",
+      _err(5000) > 0.4 and _err(10) < 1e-3 and abs(_err(10) / _err(5) - 2) < 0.01 and abs(gap_true - (10000 - _logi(5000, 3.0))) < 1e-4)
 # corrected assert: the linear law holds for a small gap
 Pn2 = solve_ivp(lambda tt, v: 0.8 * v * (1 - v / 10000), (0, 3), [9990.0], rtol=1e-12, atol=1e-10)
 check("l4 s6 corrected: a small gap (10 of 10000) follows u'=-0.8u to 0.1%", abs((10000 - Pn2.y[0, -1]) / (10 * np.exp(-2.4)) - 1) < 1e-3)
@@ -231,8 +248,16 @@ check("l4 s6 corrected: a small gap (10 of 10000) follows u'=-0.8u to 0.1%", abs
 tt_ = np.linspace(-1, 1, 201)
 cross = (tt_ ** 3)
 resid = np.max(np.abs(3 * tt_ ** 2 - 3 * np.abs(cross) ** (2 / 3)))
-expected_fail("homework-1 i3 never_cross: no solution of y'=3|y|^(2/3) crosses the constant solution y=0",
-              not (resid < 1e-12 and cross[0] < 0 < cross[-1]), "2")
+# (corrected claim, fix pass) homework-1 i3 now says the right side is a polynomial (smooth), so one solution
+# passes through each point and the path cannot cross y=0. Fixer's own check (Gronwall): on [-0.5, 0],
+# |f(y) - f(0)| <= L|y| with L = max|2y - 3y^2| = 1.75, so |y(t)| >= 0.5 e^{-1.75 t} > 0 for all t;
+# the simulated path obeys that bound. The non-smooth 3|y|^(2/3) does cross, so the condition is needed.
+_hwp = solve_ivp(lambda tt, v: v ** 2 * (1 - v), (0, 20), [-0.5], rtol=1e-11, atol=1e-15, dense_output=True)
+_tg = np.linspace(0, 20, 2001)
+_Lc = max(abs(2 * v - 3 * v ** 2) for v in np.linspace(-0.5, 0, 501))
+check("homework-1 i3 never_cross (corrected claim, fix pass): smooth f keeps the path off 0 (Gronwall bound), non-smooth 3|y|^(2/3) crosses",
+      abs(_Lc - 1.75) < 1e-12 and bool(np.all(-_hwp.sol(_tg)[0] >= 0.5 * np.exp(-_Lc * _tg) * (1 - 1e-6)))
+      and resid < 1e-12 and cross[0] < 0 < cross[-1])
 # corrected assert: true when f has a continuous derivative in y, as the polynomial y^2(1-y) has
 check("homework-1 i3 corrected: y^2(1-y) is a polynomial, so its paths cannot cross y=0 (simulated above)", True)
 
@@ -280,8 +305,15 @@ z = np.ones(M)
 for _ in range(m):
     z = z - z ** 3 * h + 0.8 * np.sqrt(h) * rng.standard_normal(M)
 se2 = z.std() / np.sqrt(M)
-expected_fail("l5 s5 reasoning 'mean-zero shocks, so the mean path solves the ODE' applied to drift -x^3 (ODE value 0.57735)",
-              abs(z.mean() - 3 ** -0.5) < 4 * se2, "4")
+# (corrected claim, fix pass) s5 now says the shocks have mean zero AND the drift is linear in r. Fixer's own
+# check: for the exact AR(1) r_{k+1} = theta + phi (r_k - theta) + e_k, taking expectations is linear, so
+# m_{k+1} = theta + phi (m_k - theta) exactly; iterating 252 days gives 0.052131. With the nonlinear drift
+# -x^3 the mean path misses the ODE value 0.57735 (MC above), so linearity is the condition that matters.
+_m = 0.06
+for _ in range(252):
+    _m = 0.04 + np.exp(-0.5 / 252) * (_m - 0.04)
+check("l5 s5 reasoning (corrected claim, fix pass): linear drift: mean recursion gives 0.052131; nonlinear drift -x^3: mean is off the ODE path",
+      abs(_m - 0.052131) < 5e-7 and abs(z.mean() - 3 ** -0.5) > 20 * se2)
 # corrected assert: the mean path solves the ODE because the drift is linear in r (E[kappa(theta-r)] = kappa(theta-E[r]))
 check("l5 s5 corrected: with drift -x^3 the mean falls below the ODE path by more than 20 standard errors", 3 ** -0.5 - z.mean() > 20 * se2)
 
