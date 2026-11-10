@@ -98,9 +98,14 @@
       "call": "prefix_stock([['set', 'X' + str(i * 7919 % 100000).zfill(5), i % 10] for i in range(100000)] + [['ask', 'X' + str(d)] for d in range(10)] + [['ask', 'X00'], ['ask', '']])",
       "expect": "[45000, 45000, 45000, 45000, 45000, 45000, 45000, 45000, 45000, 45000, 4500, 450000]",
       "compare": "equal"
+    },
+    {
+      "call": "sum(prefix_stock([['set', 'X' + str(i), 1] for i in range(50000)] + [['ask', 'X']] * 50000))",
+      "expect": "2500000000",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
   "solution": "def prefix_stock(events):\n    root = [0, {}]\n    stock = {}\n    answers = []\n    for event in events:\n        if event[0] == 'set':\n            code, count = event[1], event[2]\n            change = count - stock.get(code, 0)\n            stock[code] = count\n            node = root\n            node[0] += change\n            for ch in code:\n                node = node[1].setdefault(ch, [0, {}])\n                node[0] += change\n        else:\n            node = root\n            for ch in event[1]:\n                node = node[1].get(ch)\n                if node is None:\n                    break\n            answers.append(0 if node is None else node[0])\n    return answers\n",
   "notes": [
     "Each trie node holds the total stock of the codes below it, so an ask reads one node.",
@@ -119,6 +124,10 @@
     {
       "code": "def prefix_stock(events):\n    root = [0, {}]\n    stock = {}\n    answers = []\n    for event in events:\n        if event[0] == 'set':\n            code, count = event[1], event[2]\n            change = count - stock.get(code, 0)\n            stock[code] = count\n            node = root\n            for ch in code:\n                node = node[1].setdefault(ch, [0, {}])\n                node[0] += change\n        else:\n            node = root\n            for ch in event[1]:\n                node = node[1].get(ch)\n                if node is None:\n                    break\n            answers.append(0 if node is None else node[0])\n    return answers\n",
       "slip": "The root's total is never updated, so the empty prefix always answers 0."
+    },
+    {
+      "code": "import bisect\n\ndef prefix_stock(events):\n    # codes in a sorted list; an ask bisects to the prefix and adds up every match\n    codes = []\n    stock = {}\n    out = []\n    for e in events:\n        if e[0] == \"set\":\n            if e[1] not in stock:\n                bisect.insort(codes, e[1])\n            stock[e[1]] = e[2]\n        else:\n            p = e[1]\n            i = bisect.bisect_left(codes, p)\n            total = 0\n            while i < len(codes) and codes[i].startswith(p):\n                total += stock[codes[i]]\n                i += 1\n            out.append(total)\n    return out\n",
+      "slip": "A sorted list still adds up every matching code for each ask, so many asks on a common prefix run far past the limit."
     }
   ]
 }

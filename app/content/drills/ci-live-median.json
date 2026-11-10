@@ -19,7 +19,7 @@
   "returns": "a string",
   "brief": "A venue shows the median size of its live orders, and orders arrive and are cancelled. The input comes as one string.\n\nThe first line holds `q`, the number of events.\n\nEach of the next `q` lines is `+ x`, a new order of size `x`, or `- x`, the cancelling of one live order of size `x`. A cancelled size is always live.\n\nAfter each event, record the lower median of the live sizes: with `m` live orders sorted, the one in place `(m + 1) // 2`, counting from 1. Record `-` when nothing is live.\n\nWrite `solve_live_median(text)`, which returns the records separated by single spaces. Expect extra spaces and a trailing newline.\n\nExample. For `\"4\\n+ 5\\n+ 1\\n- 5\\n- 1\\n\"` the live sizes are {5}, {1, 5}, {1} and none. The answer is `\"5 1 1 -\"`.",
   "constraints": [
-    "$0 \\le q \\le 200{,}000$ events; sizes are whole numbers from 1 to $10^9$, and equal sizes may be live at once.",
+    "$0 \\le q \\le 400{,}000$ events; sizes are whole numbers from 1 to $10^9$, and equal sizes may be live at once.",
     "$O(q \\log q)$ time is the target. Sorting the live sizes after every event is far too slow, and a sorted list with insertions in the middle is $O(q^2)$ moves.",
     "All the tests in a run share one 5-second limit in the browser."
   ],
@@ -91,8 +91,8 @@
       "compare": "equal"
     },
     {
-      "call": "(lambda out: (len(out), out.count('-'), sum(int(t) for t in out if t != '-'), out[-3:]))(solve_live_median('200000\\n' + '\\n'.join('+ %d' % (i * 7919 % 1000003) if i < 150000 else '- %d' % ((i - 150000) * 3 * 7919 % 1000003) for i in range(200000)) + '\\n').split())",
-      "expect": "(200000, 0, 99853115543, ['499966', '499966', '499937'])",
+      "call": "(lambda out: (len(out), out.count('-'), sum(int(t) for t in out if t != '-'), out[-3:]))(solve_live_median('400000\\n' + '\\n'.join('+ %d' % (i * 7919 % 1000003) if i < 300000 else '- %d' % ((i - 300000) * 3 * 7919 % 1000003) for i in range(400000)) + '\\n').split())",
+      "expect": "(400000, 0, 199838346874, ['499937', '499937', '499934'])",
       "compare": "equal"
     },
     {
@@ -120,6 +120,10 @@
     {
       "code": "import heapq\n\ndef solve_live_median(text):\n    lines = text.strip().split('\\n')\n    q = int(lines[0]) if lines[0] else 0\n    low, high = [], []\n    gone_low, gone_high = {}, {}\n    n_low = n_high = 0\n\n    def tidy(heap, gone, sign):\n        while heap and gone.get(sign * heap[0]):\n            gone[sign * heapq.heappop(heap)] -= 1\n\n    records = []\n    for i in range(q):\n        op, x = lines[1 + i].split(' ')\n        x = int(x)\n        tidy(low, gone_low, -1)\n        if op == '+':\n            if n_low and x <= -low[0]:\n                heapq.heappush(low, -x)\n                n_low += 1\n            else:\n                heapq.heappush(high, x)\n                n_high += 1\n        elif n_low and x <= -low[0]:\n            gone_low[x] = gone_low.get(x, 0) + 1\n            n_low -= 1\n        else:\n            gone_high[x] = gone_high.get(x, 0) + 1\n            n_high -= 1\n        if n_low > n_high + 1:\n            tidy(low, gone_low, -1)\n            heapq.heappush(high, -heapq.heappop(low))\n            n_low -= 1\n            n_high += 1\n        elif n_low < n_high:\n            tidy(high, gone_high, 1)\n            heapq.heappush(low, -heapq.heappop(high))\n            n_low += 1\n            n_high -= 1\n        tidy(low, gone_low, -1)\n        records.append(str(-low[0]) if n_low else '-')\n    return ' '.join(records)\n",
       "slip": "Splitting each line on a single space breaks on the extra spaces the input may carry."
+    },
+    {
+      "code": "from bisect import bisect_left, insort\n\ndef solve_live_median(text):\n    tokens = text.split()\n    q = int(tokens[0]) if tokens else 0\n    live, out = [], []\n    for i in range(q):\n        op, x = tokens[1 + 2 * i], int(tokens[2 + 2 * i])\n        if op == '+':\n            insort(live, x)\n        else:\n            del live[bisect_left(live, x)]\n        out.append(str(live[(len(live) + 1) // 2 - 1]) if live else '-')\n    return ' '.join(out)\n",
+      "slip": "A sorted list shifts every later size on each insert and cancel, so the large test runs far past the limit."
     }
   ]
 }

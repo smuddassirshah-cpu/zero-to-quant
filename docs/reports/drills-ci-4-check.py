@@ -13,7 +13,7 @@ For every drill it:
   and asserts some hidden test takes it past 5 s;
 - times the model solution over all tests (must be under 1.5 s in CPython);
 - checks the pack mix: 3/5/5/2 by difficulty 2/3/4/5, two stdin drills, pace 900 to 2,700,
-  10 to 14 hidden tests, 2 or 3 examples with a note, `pack-4` first in tags, two or more planted,
+  10 to 15 hidden tests, 2 or 3 examples with a note, `pack-4` first in tags, two or more planted,
   and at difficulty 4 and 5 a `how` that names the obvious method.
 Exit 0 on success.
 Run: <scratchpad>/venv/bin/python docs/reports/drills-ci-4-check.py [drill ids, to check only those]
@@ -33,6 +33,9 @@ IDS = ["ci-right-edge-view", "ci-read-preorder", "ci-busiest-links", "ci-first-m
        "ci-downward-path-sums", "ci-best-route-value", "ci-handoff-distances", "ci-cheapest-pairs",
        "ci-funded-projects", "ci-live-median", "ci-board-words"]
 SMALL = 12
+# planted solutions that are right but too slow: each must time out on a hidden test (they come last in
+# `planted`, because a timed-out run restarts Python in the browser; see BACKLOG-INBOX, drills ci 2)
+SLOW_PLANTED = {("ci-live-median", 3), ("ci-stock-by-prefix", 3)}
 FULL = len(sys.argv) == 1
 if not FULL:
     IDS = sys.argv[1:]          # check only these drills (the mix check is then skipped)
@@ -516,6 +519,12 @@ for did in IDS:
         err(f"{did}: fewer than two planted")
     caught = []
     for k, p in enumerate(pl):
+        if (did, k) in SLOW_PLANTED:
+            r = run_isolated(p["code"], d["tests"], limit=5)
+            if r["failed"] != "timeout":
+                err(f"{did}: planted[{k}] is meant to be too slow but did not time out")
+            caught.append("timeout (slow plant)")
+            continue
         r = run_isolated(p["code"], d["tests"], limit=2.5)
         if r["failed"] == "timeout":
             err(f"{did}: planted[{k}] runs past 2.5 s in CPython, so it could time out in the browser")
@@ -542,7 +551,7 @@ for did in IDS:
     stdin += "stdin" in d["tags"]
     if d["tags"][0] != "pack-4": err(f"{did}: tags must start pack-4")
     if not 900 <= d["pace"] <= 2700: err(f"{did}: pace {d['pace']}")
-    if not 10 <= len(d["tests"]) <= 14: err(f"{did}: {len(d['tests'])} tests")
+    if not 10 <= len(d["tests"]) <= 15: err(f"{did}: {len(d['tests'])} tests")
     if not 2 <= len(d["examples"]) <= 3 or not all(e.get("note") for e in d["examples"]): err(f"{did}: examples")
     if len(d["notes"]) != 3: err(f"{did}: notes")
     if d["pack"] != "ci" or d["course"] != "coding-int": err(f"{did}: pack or course")

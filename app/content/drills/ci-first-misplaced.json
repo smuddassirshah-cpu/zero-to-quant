@@ -103,9 +103,14 @@
       "call": "first_misplaced(__import__('functools').reduce(lambda t, v: (v, None, t), range(399, 0, -1), (0, None, None)))",
       "expect": "0",
       "compare": "equal"
+    },
+    {
+      "call": "first_misplaced((20, (10, (5, None, (12, None, None)), None), (15, None, None)))",
+      "expect": "12",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
   "solution": "def first_misplaced(book):\n    stack = [(book, None, None)]\n    while stack:\n        node, lo, hi = stack.pop()\n        if node is None:\n            continue\n        price, left, right = node\n        if (lo is not None and price <= lo) or (hi is not None and price >= hi):\n            return price\n        stack.append((right, price, hi))\n        stack.append((left, lo, price))\n    return None\n",
   "notes": [
     "Each level must lie strictly inside the range that every ancestor sets, not only beside its parent.",
@@ -124,6 +129,10 @@
     {
       "code": "def first_misplaced(book):\n    order = []\n    stack = []\n    node = book\n    while stack or node is not None:\n        while node is not None:\n            stack.append(node)\n            node = node[1]\n        node = stack.pop()\n        order.append(node[0])\n        node = node[2]\n    for a, b in zip(order, order[1:]):\n        if b <= a:\n            return b\n    return None\n",
       "slip": "The first drop in an in-order read is not always the first misplaced level in preorder."
+    },
+    {
+      "code": "from collections import deque\n\ndef first_misplaced(book):\n    # right bounds, but read level by level instead of in preorder\n    todo = deque([(book, None, None)])\n    while todo:\n        node, lo, hi = todo.popleft()\n        if node is None:\n            continue\n        price, left, right = node\n        if (lo is not None and price <= lo) or (hi is not None and price >= hi):\n            return price\n        todo.append((left, lo, price))\n        todo.append((right, price, hi))\n    return None\n",
+      "slip": "Reading the levels row by row returns the first misplaced level in that order, which may come after another in preorder."
     }
   ]
 }
