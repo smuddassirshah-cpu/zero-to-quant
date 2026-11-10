@@ -8,7 +8,7 @@ The developer route's volume: interview-level problems after `coding-int`, harde
 - `difficulty` 2 to 5 per pack of 15: three at 2, five at 3, five at 4, two at 5. `pace` 900 to 2,700 seconds. At 4 and 5 the obvious method must fail the large hidden test on time, and `how` names the step from the obvious method to the target one.
 - Two stdin drills a pack, not three.
 - `tags`: `"pack-<n>"` first, so the pack can be drawn by number.
-- **Planted wrong solutions (ENGINE-BACKLOG 844, AUTHORING section 5, required here).** Every drill carries `planted`: two or three wrong solutions a real candidate writes (off by one at the boundary, the tie broken the wrong way, the empty input not handled, the greedy that fails one case, the right idea at the wrong complexity), each with its `slip` sentence. Every one must fail at least one hidden test. If one passes, the tests are too weak: add the test that catches it; never weaken the planted solution.
+- **Planted wrong solutions (ENGINE-BACKLOG 844, AUTHORING section 5, required here).** Every drill carries `planted`: two or three wrong solutions a real candidate writes (a fix pass may add a fourth, and a too-slow one goes last) (off by one at the boundary, the tie broken the wrong way, the empty input not handled, the greedy that fails one case, the right idea at the wrong complexity), each with its `slip` sentence. Every one must fail at least one hidden test. If one passes, the tests are too weak: add the test that catches it; never weaken the planted solution.
 - `notes`: each of the three lines must be true of this drill's own solution; a reason you cannot show from the code does not go in (two reviews found false reasons there).
 
 ## Packs (one agent each, 15 drills)

@@ -17,10 +17,10 @@
   "pace": 1080,
   "fn": "solve_tick_ranges",
   "returns": "a string",
-  "brief": "A tick log stores trade times in milliseconds, in order that never goes down; several trades can share a time. Analysts ask for the first and last position of a time in the log. The input comes as one string:\n\n- the first line holds `n` and `q`, the number of ticks and of queries;\n- the second line holds the `n` tick times;\n- the third line holds the `q` query times.\n\nWrite `solve_tick_ranges(text)`, which returns one line per query, joined by `\"\\n\"`: the first and last position (counting from 0), separated by a space, or `-1 c` when the time is not in the log, where `c` is the number of ticks before that time. With no queries return `\"\"`. Expect extra spaces and blank lines.\n\nExample. For `\"6 2\\n3 5 5 5 8 9\\n5 4\\n\"` time 5 sits at positions 1 to 3 and 4 is absent. The answer is `\"1 3\\n-1 1\"`.",
+  "brief": "A tick log stores trade times in milliseconds, in order that never goes down; several trades can share a time. Analysts ask for the first and last position of a time in the log. The input comes as one string:\n\n- the first line holds `n` and `q`, the number of ticks and of queries;\n- the second line holds the `n` tick times;\n- the third line holds the `q` query times.\n\nWrite `solve_tick_ranges(text)`, which returns one line per query, joined by `\"\\n\"`. A line holds the first and last position (counting from 0), separated by a space. When the time is not in the log the line is `-1 c`, where `c` is the number of ticks before that time. With no queries return `\"\"`. Expect extra spaces and blank lines.\n\nExample. For `\"6 2\\n3 5 5 5 8 9\\n5 4\\n\"` time 5 sits at positions 1 to 3 and 4 is absent. The answer is `\"1 3\\n-1 1\"`.",
   "constraints": [
     "$0 \\le n, q \\le 100{,}000$; times are whole numbers between $0$ and $10^{12}$.",
-    "$O((n + q) \\log n)$ time is the target. Scanning the log for each query is too slow.",
+    "$O((n + q) \\log n)$ time is the target. Scanning the log for each query is too slow, and so is stepping up from an absent time one millisecond at a time.",
     "All the tests in a run share one 5-second limit in the browser."
   ],
   "hint": "Two searches per query: the first position holding a time at least `t`, and the first holding a time above `t`. The `bisect` module gives both.",
@@ -71,8 +71,8 @@
       "compare": "equal"
     },
     {
-      "call": "solve_tick_ranges('4 3\\n0 0 1000000000000 1000000000000\\n0 1000000000000 999999999999\\n')",
-      "expect": "'0 1\\n2 3\\n-1 2'",
+      "call": "solve_tick_ranges('4 4\\n0 0 1000000000000 1000000000000\\n0 1000000000000 999999999999 1\\n')",
+      "expect": "'0 1\\n2 3\\n-1 2\\n-1 2'",
       "compare": "equal"
     },
     {
@@ -99,9 +99,14 @@
       "call": "(lambda r: (r.count('\\n'), sum(map(int, r.split()))))(solve_tick_ranges('100000 100000\\n' + '5 ' * 100000 + '\\n' + ' '.join(str(4 + i % 3) for i in range(100000)) + '\\n'))",
       "expect": "(99999, 6666500000)",
       "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (r.count('\\n'), sum(map(int, r.split()))))(solve_tick_ranges('100000 100000\\n' + ' '.join(str(10000000 * (i // 2)) for i in range(100000)) + '\\n' + ' '.join(str(i * 7919) for i in range(100000)) + '\\n'))",
+      "expect": "(99999, 7919120)",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
   "solution": "from bisect import bisect_left, bisect_right\n\ndef solve_tick_ranges(text):\n    v = text.split()\n    n, q = int(v[0]), int(v[1])\n    ticks = [int(x) for x in v[2:2 + n]]\n    out = []\n    for t in map(int, v[2 + n:2 + n + q]):\n        lo = bisect_left(ticks, t)\n        if lo < n and ticks[lo] == t:\n            out.append(f'{lo} {bisect_right(ticks, t) - 1}')\n        else:\n            out.append(f'-1 {lo}')\n    return '\\n'.join(out)\n",
   "notes": [
     "The first position at or above `t` and the first above it bracket every copy of `t`.",
@@ -116,6 +121,10 @@
     {
       "code": "from bisect import bisect_left, bisect_right\n\ndef solve_tick_ranges(text):\n    v = text.split()\n    n, q = int(v[0]), int(v[1])\n    ticks = [int(x) for x in v[2:2 + n]]\n    out = []\n    for t in map(int, v[2 + n:2 + n + q]):\n        lo = bisect_left(ticks, t)\n        if lo < n:\n            out.append(f'{lo} {bisect_right(ticks, t) - 1}')\n        else:\n            out.append(f'-1 {lo}')\n    return '\\n'.join(out)\n",
       "slip": "It checks only that the search landed inside the log, not that the time found is the one asked for."
+    },
+    {
+      "code": "def solve_tick_ranges(text):\n    v = text.split()\n    n, q = int(v[0]), int(v[1])\n    ticks = [int(x) for x in v[2:2 + n]]\n    first, last = {}, {}\n    for i, t in enumerate(ticks):\n        first.setdefault(t, i)\n        last[t] = i\n    top = ticks[-1] if n else None\n    out = []\n    for t in map(int, v[2 + n:2 + n + q]):\n        if t in first:\n            out.append(f'{first[t]} {last[t]}')\n        elif top is None or t > top:\n            out.append(f'-1 {n}')\n        else:\n            s = t\n            while s not in first:\n                s += 1\n            out.append(f'-1 {first[s]}')\n    return '\\n'.join(out)\n",
+      "slip": "Dicts answer times that are present, but an absent time is walked up one millisecond at a time to the next tick."
     }
   ]
 }
