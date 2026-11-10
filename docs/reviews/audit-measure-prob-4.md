@@ -54,8 +54,25 @@ Wording met on the way. None changes a meaning, and none is counted as a finding
 
 ## Checks run
 
-- `python3 docs/reports/measure-prob-L4-concepts.py`: exit 0; 114 checks, 107 ok, 7 `EXPECTED_FAIL` (findings 1 to 6 and 9), 0 FAIL; 51 hidden tests run.
+- `python3 docs/reports/measure-prob-L4-concepts.py`: exit 0; 114 checks, 107 ok, 7 `EXPECTED_FAIL` (findings 1 to 6 and 9), 0 FAIL; 51 hidden tests run, all pass, every starter fails. Findings 7 and 8 rest on sources and on the lesson's own figures, so they have no failing check.
+- Number scripts: the course has none for level 4 (`docs/reports/` holds `measure-prob-1`, `-2` and `-3-perf-numbers.py` only). Every stated number of level 4 is recomputed in the concepts script instead.
+- `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): 0 errors, 4133 warnings; `content/manifest.json` unchanged.
+- `node tools/playthrough.mjs --set measure-prob/review-4 --local-cdn <pkgs>`: `ok measure-prob/review-4 9 items, recorded 8 of 8`, All passed. The same with `--mobile`: `ok`, 8 of 8, All passed.
+- No content, engine file, `course.json` or state file was changed. No engine limit was met, so nothing was added to `docs/BACKLOG-INBOX.md`.
 
 ## Overlap with the earlier review
 
-Filled after the ledger and findings were committed; see below.
+Read after the ledger and findings were committed (commit `7717369b`): `docs/reviews/review-measure-prob.md`, level 4 parts. Its level 4 findings are 5 (key lengths), 6 and 7 (layout), 10, 18, 20 (a cross-course pointer), 24 (data missing from two quiz items) and 26 (lesson shape). Two of them are conceptual, both about a dropped hypothesis:
+
+- Review 10: l15 screens[3] gave the importance sampling identity without $P \ll Q$. Fixed before this audit; the screen now states it, and the ledger row is `correct`.
+- Review 18: l16 screens[5] divided by $Z_n$ without $0 < q < 1$. Fixed before this audit; the ledger row is `correct`.
+
+| Conceptual findings, level 4 | Count |
+|---|---|
+| Found by this audit only | 9 |
+| Found by the earlier review only | 2 |
+| Found by both | 0 |
+
+The two review-only findings had been fixed, so a blind read of the present content could not meet them. None of the nine audit findings appears in the review, in its fix pass, or in its "Checked and correct" list as a checked claim.
+
+For completeness, the answer check `docs/reviews/answers-3.2-measure-prob-4.md` (not part of the count) raised five further points of meaning, all fixed before this audit: the drift row of the l17 interview table, the "largest price" of the trinomial call, the attribution to Shreve II section 5.4, $Z_n > 0$ in the homework proof, and the fair die in l14 quiz `q-edge`. None matches a finding here. Its note on Shreve II section 5.4 touched the sentence of finding 7 on a different point: who proves the finite case, not which direction holds in continuous time.
