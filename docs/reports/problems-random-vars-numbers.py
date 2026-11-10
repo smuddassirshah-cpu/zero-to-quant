@@ -250,7 +250,8 @@ ok(Gd[2] == F(63, 210) and Gd[3] == F(7, 210), 'hand counts are not 63 and 7')
 # part 5: £15 for each gold token after the first, 15 * max(G - 1, 0)
 pge3 = Gd[3]
 num(L2, 'p-token-draw', 5, EV + 15 * (pge2 + pge3), E(Gd, lambda k: 20 + 15 * k + 15 * max(k - 1, 0)),
-    {'no-bonus': EV, 'once-only': EV + 15 * pge2, 'full-bonus': EV + 15, 'bonus-only': 15 * (pge2 + pge3), 'carried': EV + 15 * (binge2 + pge3)})
+    {'no-bonus': EV, 'once-only': EV + 15 * pge2, 'full-bonus': EV + 15, 'bonus-only': 15 * (pge2 + pge3), 'carried': EV + 15 * (binge2 + (1 - F(7, 10) ** 4 - 4 * F(3, 10) * F(7, 10) ** 3 - 6 * F(3, 10) ** 2 * F(7, 10) ** 2))})
+ok(abs(float(EV + 15 * (binge2 + F(837, 10000))) - 44.48) < 0.005, 'p-token-draw p5: carried 44.48')
 ok(pge3 == F(1, 30) and EV + 15 * (E(Gd) - (1 - Gd[0])) == F(87, 2), 'p-token-draw p5: 1/30 or 43.50 by the other route wrong')
 
 # ------------------------------------------------------------------ level 3
