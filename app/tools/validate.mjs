@@ -1585,6 +1585,13 @@ const checkProblemSet = (file, courseId, doc, items, skills, levelSkills) => {
     if (!Array.isArray(it.parts)) { err(file, `${at}.parts`, 'every problem in a problem set uses parts: 3 to 5 chained parts, each graded on its own'); return; }
     if (it.parts.length < 3 || it.parts.length > 5) err(file, `${at}.parts`, `a problem in a problem set has 3 to 5 parts (found ${it.parts.length})`);
     it.parts.forEach((p, k) => { if (isObj(p) && isObj(p.widget) && ['code', 'longform'].includes(p.widget.kind)) err(file, `${at}.parts[${k}].widget`, `a ${p.widget.kind} part cannot be in a problem set: each part is a typed or chosen answer the engine grades`); });
+    /* [answer-form] (advisory): a numeric part whose answer is not a whole number must say the form asked for (found on 35 parts, docs/reviews/review-problems-1.5-a.md) */
+    it.parts.forEach((p, k) => {
+      const w = isObj(p) && isObj(p.widget) ? p.widget : null;
+      if (!w || w.kind !== 'numeric' || typeof w.answer !== 'number' || !Number.isFinite(w.answer) || Number.isInteger(w.answer)) return;
+      if (typeof p.question !== 'string' || /decimal place|significant figure|fraction|nearest|per cent|%/i.test(p.question)) return;
+      warn(file, `${at}.parts[${k}].question`, `[answer-form] the answer ${w.answer} is not a whole number but the question does not state the form (say "to 2 decimal places", "to 3 significant figures", "as a fraction", "to the nearest ..." or "per cent")`);
+    });
     if (levelSkills && Array.isArray(it.skills)) it.skills.forEach(sk => { if (skills.has(sk) && !levelSkills.has(sk)) err(file, `${at}.skills`, `skill "${sk}" is not taught in this level's lessons (use the skills of the level's own lessons)`); });
   });
   if (!items.some(it => isObj(it) && it.difficulty === 5)) err(file, 'items', 'a problem set needs at least one item at difficulty 5');

@@ -577,6 +577,8 @@ The binding shape:
 - **Difficulty 3 to 5, at least one item at 5.** `skills` are skills of the level's own lessons (checked when every lesson of the level is written) and at least one is named. Each problem should draw on at least two lessons of the level, and every lesson of the level should appear in at least one problem; the validator does not check that, the second reader does.
 - **Every item-level rule of a review item applies** (`checkItem`): no hints, prose and question as everywhere, `wrong` entries, feedback keys, shuffled-position and the voice scan (section 6).
 - Counting: an item's credit is the parts right over the parts; an item counts as right only when every part is.
+- **State the form of a non-integer answer** (advisory `[answer-form]` warning, ENGINE-BACKLOG 857): a `numeric` part whose answer is not a whole number needs a question that names the form: "decimal place", "significant figure", "fraction", "nearest", "per cent" or "%".
+- **The result page** labels each problem "Problem n" and the first sentence of its `prose`, cut at about 60 characters, so open each `prose` with a sentence that names the situation. The done page's note on a clean run is "Every problem was right first time." (ENGINE-BACKLOG 856).
 
 A full item with three parts (a plumber's bill, then the break-even against a second plumber):
 
@@ -612,7 +614,7 @@ What the learner sees and what it earns:
 - **XP.** The homework scale: 50 XP and 5 for each item right, and mastery points as a homework earns them, on the first finished attempt only; a repeat earns none. Leaving part way records the time and nothing else.
 - **Weekly review.** The items of the problem set of a met level join the weekly mixed review's pool of unseen authored items (tier 2), with the long-form and code items left out as everywhere. An item with parts plays there part by part; a miss joins the redo queue under the set's own ref, and the redo session plays it again with its parts.
 - **Hours.** The in-app hours count the set (its `minutes`, else 40) in the level's minutes. The stored topic hours and the census total do not change: the set only moves time from "outside study" to "in the app". `tools/hours-source.mjs` reads the file; `manifest.json` carries `problems` for the app.
-- **Checks.** `node tools/validate.mjs` (the rules above; `node tools/test-validate-problems.mjs` holds a scratch case for each), `node tools/playthrough.mjs --problems <course>/problems-<n>` (or `--problems all`, and `--all` includes them; add `--mobile`, `--local-cdn <pkgs>`), `node tools/test-problems.mjs` (runtime) and `node tools/census.mjs`, which prints "Problem sets n (items m)". The fixture set is `tools/fixtures/problems/problems-fixture-3.json`, which is never content.
+- **Checks.** `node tools/validate.mjs` (the rules above; `node tools/test-validate-problems.mjs` holds a scratch case for each), `node tools/playthrough.mjs --problems <course>/problems-<n>` (or `--problems all`, and `--all` includes them; add `--mobile`, `--local-cdn <pkgs>`; with `--shots <dir>` every part of every problem is also shot at 440 px as `<set>-i<item>-p<part>-440.png`, ENGINE-BACKLOG 858), `node tools/test-problems.mjs` (runtime) and `node tools/census.mjs`, which prints "Problem sets n (items m)". The fixture set is `tools/fixtures/problems/problems-fixture-3.json`, which is never content.
 
 ### Performance task (`performance`, ENGINE-BACKLOG 529, PLAN 2c item 5)
 

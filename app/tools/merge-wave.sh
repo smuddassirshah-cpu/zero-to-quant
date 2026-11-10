@@ -10,6 +10,7 @@
 #   app/content/courses/*/review-*.json   side whose last commit on the file is newer
 #   PROGRESS.md, docs/reports/*.md, docs/reviews/*.md, docs/briefs/*.md   keep both sides
 #   docs/readiness.md               keep both sides, then drop a repeated table row key (ours first)
+#   app/content/manifest.json       ours (generated; the validator step regenerates it)
 #   anything else                   abort that merge, print UNRESOLVED, go on
 # Then: conflict-marker scan of the lines the merge adds, `node tools/validate.mjs`
 # from app/ (manifest.json is staged), `node tools/readiness-sums.mjs --write` from app/
@@ -61,6 +62,8 @@ resolve_file() { # path branch ; returns 0 if resolved
       cp "$d/o" "$f"
       git merge-file --union "$f" "$d/b" "$d/t" >>"$LOG" 2>&1
       [ $? -lt 128 ] || return 1 ;;
+    app/content/manifest.json)   # generated: take ours, the validator step below rewrites it
+      git checkout --ours -- "$f" || return 1 ;;
     app/content/courses/*/review-*.json)
       local ho bo
       ho=$(git log -1 --format=%ct HEAD -- "$f"); bo=$(git log -1 --format=%ct "$br" -- "$f")

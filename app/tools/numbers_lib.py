@@ -3,7 +3,7 @@
 Use from docs/reports/<course>-L<n>-numbers.py:
     import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
     from numbers_lib import Level
-    lv = Level("odes", 3)                       # every lesson, the review and the homework of that level
+    lv = Level("odes", 3)                       # every lesson, the review, the homework and the problem set of that level
     lv.expect("l10", "screens[3].widget.answer", 3)               # numeric token equal to 3 in a string or number
     lv.expect("l10", "screens[3].prose", -0.5)                    # a minus may be written "-" or U+2212
     lv.expect("review", "items[2].widget.options[1].why", 1214)   # "1,214", "£1,214" and "$1{,}214$" all match
@@ -15,7 +15,8 @@ Use from docs/reports/<course>-L<n>-numbers.py:
     lv.stated("l7", "screens[2].prose", "is always positive", x > 0)    # tied to its wording: fails while the sentence is in the text and false, passes once reworded
     lv.claim_text("l7", "screens[2].prose", "phrase", ok, "label")      # the same with your own label
     lv.report()                                                   # prints the count, exits 1 on any failure
-`file` is a lesson id or a unique prefix ("l10"), "review" or "homework". `lv.text(file, path)` returns the string
+`file` is a lesson id or a unique prefix ("l10"), "review", "homework" or "problems" (the level's problems-<n>.json, when it exists:
+paths read items[i].parts[j].widget...). `lv.text(file, path)` returns the string
 (strings below an object or list are joined with newlines) for ad-hoc checks. Without `fmt` a number matches any token
 of equal value after normalisation (thousands commas, currency signs, LaTeX spacing and braces, U+2212, trailing zeros; a LaTeX fraction \\tfrac{3}{4}, \\frac{1}{2} or \\frac12 matches its value and its integers);
 a string value must appear verbatim in the raw or the normalised text.
@@ -23,7 +24,7 @@ a string value must appear verbatim in the raw or the normalised text.
 wrong[] list. Each numeric wrong value must lie outside the answer's tolerance, by the validator's rule 581 and grade.js within()
 (abs: |v-a| <= abs; rel: |v-a| <= |a|*rel; a wrong entry's own tol widens it, default abs 1e-9); a hit is a failed check. It also
 reads the feedback.byKey text for that wrong id on the same screen or item and prints "check by hand" (not a failure) when the
-text states numbers and none equals the wrong value. Call it in every number script, before report().
+text states numbers and none equals the wrong value: a count by default, the lines with verbose=True or --verbose. Call it in every number script, before report().
 """
 import json
 import os
@@ -115,7 +116,7 @@ class Level:
         d = os.path.join(COURSES, course)
         with open(os.path.join(d, 'course.json'), encoding='utf8') as f:
             lv = json.load(f)['levels'][n - 1]
-        for fid in list(lv.get('lessons', [])) + [lv.get('review'), lv.get('homework')]:
+        for fid in list(lv.get('lessons', [])) + [lv.get('review'), lv.get('homework'), f'problems-{n}']:   # problems-<n>.json when the level has a set
             p = os.path.join(d, f'{fid}.json') if fid else None
             if p and os.path.exists(p):
                 with open(p, encoding='utf8') as f:
@@ -124,7 +125,7 @@ class Level:
             raise SystemExit(f'numbers_lib: no files for {course} level {n}')
 
     def _file(self, ref):
-        if ref in ('review', 'homework'):
+        if ref in ('review', 'homework', 'problems'):
             ref = f'{ref}-{self.n}'
         hits = [k for k in self.files if k == ref] or [k for k in self.files if k.startswith(ref)]
         if len(hits) != 1:
@@ -169,8 +170,11 @@ class Level:
     def stated(self, ref, path, phrase, ok):
         return self.claim_text(ref, path, phrase, ok)
 
-    def check_wrongs(self, file=None):
-        """Assert no numeric wrong[] value lies inside its answer's tolerance; list byKey texts that state other numbers."""
+    def check_wrongs(self, file=None, verbose=False):
+        """Assert no numeric wrong[] value lies inside its answer's tolerance; count the byKey texts that state other numbers
+        ("check by hand": usually a line that states the working, not the wrong value) and print them only with verbose=True,
+        `--verbose` or `-v` on the script's command line."""
+        verbose = verbose or '--verbose' in sys.argv or '-v' in sys.argv
         def half(a, t):
             t = {'abs': t} if isinstance(t, (int, float)) else (t or {})
             return abs(a) * t['rel'] + 1e-12 if t.get('rel') is not None else (t.get('abs') or 0) + 1e-9
@@ -210,8 +214,11 @@ class Level:
         for fid, doc in self.files.items():
             if file is None or fid == self._file(file)[0]:
                 visit(doc, '', None, fid)
-        for h in hand:
-            print(h)
+        if verbose:
+            for h in hand:
+                print(h)
+        elif hand:
+            print(f'check by hand: {len(hand)} byKey line(s) state numbers other than the wrong value (not failures; rerun with --verbose to list them)')
         return hand
 
     def _rec(self, ok, label, note):

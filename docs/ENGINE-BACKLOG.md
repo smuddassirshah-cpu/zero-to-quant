@@ -2027,3 +2027,26 @@ Raised by the chained-problems decision (DECISIONS "Chained problems", session Z
 
 851. Done [Must] Tools: `node tools/playthrough.mjs --problems <course>/problems-<n>` (also `fixture/<file>` and `--problems all`, inside `--all`, with `--mobile` and `--local-cdn`); `tools/census.mjs` prints "Problem sets n (items m)"; `tools/test-problems.mjs`; the fixture set in `tools/fixtures/problems/`; AUTHORING section 5 and 7, `app/README.md`.
 851 status: done. The playthrough checks the course row, a wrong part (its own feedback, part credit, the summary line), the XP rule, a repeat, no gate, and no overflow at the phone width.
+
+Raised later (engine session Z, from the inbox):
+
+852. Done [Must] Mobile overflow: the topic pill on a course page ("1.11 Complex numbers, vector calculus and differential equations") did not wrap, so `complex`, `odes` and `vector-calc` pages were wider than 440 px and `--fluency ... --mobile` failed its course-row check.
+852 status: done. `css/screens/course.css`: `.zc-course-body .chip.track` wraps (`white-space: normal`, `height: auto`, `max-width: 100%`, `overflow-wrap: anywhere`). The three 1.11 courses and `vectors` pass `--fluency --mobile`.
+
+853. Not reproduced [Should] Flake: `--fluency` "the same seed drew different questions".
+853 status: not reproduced in 2 x 30 repeated same-seed plays (`vectors/fluency-l3-lengths-angles`, `vector-calc/fluency-l5-divergence-and-curl`, alternating a failing and a clean attempt). Ruled out: generation (`ZQ.gen` has no clock or `Math.random`, deterministic by seed, `fluency.js` takes the seed from the route), widget kinds (only numeric and expression, so no option shuffle), KaTeX (a synchronous script, `tex()` cannot fall back to `<code>` after load), the item render (`show` is synchronous). Left: a load-dependent read of `innerText` in the check; no code change.
+
+854. Done [Should] `merge-wave.sh`: a conflict in the generated `app/content/manifest.json` now takes ours and the validator step regenerates it (it no longer ends as UNRESOLVED).
+854 status: done. `tools/test-merge-wave.sh` adds a new drill file on each branch, so the two regenerated manifests collide; the old script failed the case, the new one passes.
+
+855. Done [Should] `numbers_lib.py`: `Level` loads `problems-<n>.json` (ref `"problems"`); `check_wrongs` prints a count of "check by hand" lines, the lines with `verbose=True` or `--verbose`.
+855 status: done. `tools/test-numbers-lib.py` extended (count versus verbose, a problem set read and checked).
+
+856. Done [Should] Problem sets: the done page note on a clean run reads "Every problem was right first time." (not "Well done."); the result page labels each problem "Problem n." and the first sentence of its prose, cut at about 60 characters (`rowLabel` in `mountProblemSet`, `js/screens/review.js`).
+856 status: done. `Well done.` remains in `js/screens/fluency.js` (a passed Fluency set); not in this item.
+
+857. Done [Could] Validator `[answer-form]` warning: a `numeric` problem-set part with a non-integer answer whose question lacks "decimal place", "significant figure", "fraction", "nearest", "per cent" or "%".
+857 status: done. `checkProblemSet` in `tools/validate.mjs`; two cases in `tools/test-validate-problems.mjs`.
+
+858. Done [Should] `playthrough.mjs --problems ... --shots`: every part of every problem is shot at 440 px (`<set>-i<item>-p<part>-440.png`), in the first attempt.
+858 status: done.
