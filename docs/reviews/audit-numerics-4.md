@@ -93,8 +93,27 @@ Starter docstring of `bisect`, first sentence: `"""Halve [lo, hi] until hi - lo 
 
 ## Overlap with the earlier review (Part A only)
 
-To be filled after the commit of this ledger and these findings.
+Read after the ledger, script and findings above were committed (`32f3047a`): `docs/reviews/review-numerics-4.md` (second reader, 18 level 4 findings and 4 cross-course items, with its fix pass). Of its level 4 findings, six are conceptual: the pairs-with-control variance (30.67 held b at the single-path value; 3.78 with b fitted to the pairs), the antithetic variance per draw (a quarter, not a half), the off-node error having two sources (kink and interpolation), "antithetics help only a monotone payoff" (monotone is sufficient, not necessary), "Gauss-Legendre is exact for polynomials once the kink is an end point" and the two-part trust habit cited from `odes`. The other twelve are arithmetic, grading or style (a wrong value that could not fire, a tolerance overlap, rounded figures, a starter that passed one test, titles, a highlight, a hyphen). Its l12 sign-convention item is conceptual but sits in a level 3 file, outside Part A.
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| Found by this audit only | 14 | findings 1 to 14 (1 wrong, 13 imprecise) |
+| Found by the earlier review only | 6 | the six above; all were fixed before this read, and this audit's ledger marks each fixed text `correct` |
+| Found by both | 0 | none |
+
+Near overlaps, counted as this audit only because the earlier read judged the text sound or looked at a different sentence:
+
+- Finding 3. The review corrected "help only a payoff that is monotone" in l16 screens[8] and review-4. The summary trap's "for a payoff that rises on both sides they increase the variance" is the same idea stated too strongly in the other direction, and it was not raised.
+- Finding 8. The review's "Checked and correct" list carries "1,200 against 21 million" as a recomputed figure (3 × 400). It checked the arithmetic, not the count.
+- Finding 6. The review notes that N = 392 still prices to £10.44337 "since the negative weight is tiny", which is the evidence that the bound is not necessary, but it did not raise "safe only while".
+- Finding 7. The review recomputed the ratio 4.2 and did not question the inference from it.
+
+Delta, for the record (not in the table): the head of `docs/reviews/audit-numerics-1-3-r3.md`, opened for format after the commit, shows that an earlier audit round noted that `implied_vols` "returns silently at `maxit`" and judged it not an error. Finding 16 is therefore a near overlap with that note; finding 17 is the same pattern in `ytm_book`. Both are tagged minor here and neither changes a current test or figure.
 
 ## Checks run
 
-To be filled.
+- `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): 0 errors, 4133 warnings; `content/manifest.json` was left unchanged.
+- `python3 docs/reports/numerics-L4-numbers.py; echo $?` (repo root): 215 of 215 checks, 8 code widgets, 0 second-method failures, exit 0.
+- `python3 docs/reports/numerics-L4-concepts.py; echo $?`: 244 checks pass, 8 `EXPECTED_FAIL`, 0 failed, exit 0, about 15 s.
+- `node tools/playthrough.mjs --set numerics/review-4 --local-cdn <pkgs>`: "ok numerics/review-4 10 items, recorded 10 of 10", "All passed." The same with `--mobile`: "All passed."
+- No content, engine file, `course.json` or state file was changed. One bullet was added to `docs/BACKLOG-INBOX.md` under `Raised later (audit numerics):`.
