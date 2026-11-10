@@ -1,19 +1,31 @@
-# Concept audit: next (10 Nov 2026, audit session 2)
+# Concept audit: next (10 Nov 2026, audit session 3)
 
 State: `docs/reports/concept-audit-log.md` (rounds), `concept-audit-notes.md` (decisions, issues). Branch `claude/fable-audit`; the content session merges it.
 
-Closed: mental-pressure, puzzles, game-theory, brainteasers, coding-int, research-int, systems, pdes, pairs-rep (all levels; the round-2 finding 3 dispute is settled, `upheld in part`, fixed), ito L1 to L3, measure-prob L1 to L3, and new this session mental L1 to L3 and number-sense L1 to L3.
+Closed (unchanged): mental-pressure, puzzles, game-theory, brainteasers, coding-int, research-int, systems, pdes, pairs-rep, mental L1 to L3, number-sense L1 to L3, ito L1 to L3, measure-prob L1 to L3.
 
-Open: ito L4, measure-prob L4, mm-games, recruiting and the topic 1.5 courses were not eligible (content commits on 9 Nov, 18:21 to 23:15 UTC, touched 69 of 79 course folders). Minor: number-sense l11 screens[8] root claim fails at 0 (notes).
+Open, first for the next session: round 3 blind read of odes L1 to L3 and of numerics L1 to L3. Both had two rounds this session, each round fixed in full with gates green, and each round 2 still found 2 new `wrong`. Then odes L4 and numerics L4.
 
-Next, in order, as each passes 24 quiet hours: ito L4, measure-prob L4; mm-games; recruiting; counting-chance, conditional, random-vars, limits-thm, markov; the rest of the trader and developer closures, Stage 1 first; other route courses. Closed courses touched on 9 Nov (brainteasers, game-theory, puzzles, research-int, systems, coding-int, pdes) need a delta audit of the changed files. Run `git fetch --unshallow` before rebasing.
+Next, as each passes 24 quiet hours (content commits of 9 Nov ran 14:47 to 23:15 UTC): ito L4, measure-prob L4; mm-games; recruiting; counting-chance, conditional, random-vars, limits-thm, markov; the trader and developer closures, Stage 1 first; other route courses. Delta audits owed for closed courses touched on 9 Nov. Eligible but not started: garch, stat-learning, stat-models, vector-calc.
 
-Miss rate: session 1, 39 levels, 132 audit-only findings, 12 `wrong`. Session 2, 6 levels, 20 audit-only findings, 1 `wrong`, overlap with the earlier read 0.
+For the content session: numerics `course.json` still names l6 "A root finder that never fails" (notes). Check `git merge-base` before rebasing (notes).
+
+Miss rate: session 1, 39 levels, 132 audit-only findings, 12 `wrong`. Session 2, 6 levels, 20, 1 `wrong`. Session 3, 6 levels: round 1, 35 audit-only, 7 `wrong`; round 2, 21 audit-only, 4 `wrong`.
 
 ## Verdict
 
-Session 2, levels audited: 6 (45 in all).
-Serious audit-only findings: 2.
-- `mental/l8-squaring.json` screens[4].explain, screens[6].prose, summary.ideas[2], objectives[2]: either-side shortcut stated without "the same distance" (imprecise).
-- `number-sense/l12-which-first.json` quiz[2].explain.text: tools said to read −3² as −9; a spreadsheet gives 9 (wrong).
-Minor: 18. Serious per three levels: 1.0.
+Session 3, levels audited: 6 (51 in all), two rounds each.
+Serious audit-only findings: 11 (round 1: 10; round 2: 1). All fixed.
+- `odes/l1-equations-about-rates.json` screens[9].prose, `homework-1.json` items[3]: uniqueness without its smoothness hypothesis (imprecise).
+- `odes/l7-characteristic-equation.json` screens[4], [5], `l9` screens[2]: envelope e^{-t} stated and drawn without the amplitude (wrong).
+- `odes/l8-forcing.json` screens[8].prose: "multiply the guess by t" fails at y''+y'=t and double roots (imprecise).
+- `odes/l12-stability.json` screens[5], [7]: "stable" in two senses (imprecise).
+- `numerics/homework-1.json` items[8].rubric[2]: rubric credits "variance is well conditioned"; κ ≈ 5e8 (wrong).
+- `numerics/l4-stability.json` screens[4], `review-1.json` items[3]: QR "loses log10 κ digits" without the small-residual condition (imprecise).
+- `numerics/l5-bisection-and-newton.json` screens[5]: Newton order 2 without a simple root (imprecise).
+- `numerics/l5` summary.ideas[0], `l6` screens[3]: sign change without continuity (imprecise).
+- `numerics/l7-interpolation.json` screens[5]: Runge blamed on an exploding node product, for all equal spacing (wrong).
+- `numerics/l9-quadrature.json` screens[6], [9]: "put kinks on nodes"; an odd node keeps order 2 (wrong).
+- Round 2, `numerics/l5` screens[8], `l6` screens[7]: bracket test `flo * fhi > 0` loses a root at an endpoint and underflows (wrong, code).
+Also serious, found by both reads: `numerics/l6` "36: the guaranteed cap" (the solution returned a non-root after 102 calls).
+Minor: 45 (round 1: 25; round 2: 20). Serious per three levels: 5.0 on round 1, 0.5 on round 2.
