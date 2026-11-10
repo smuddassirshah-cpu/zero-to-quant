@@ -43,8 +43,43 @@ Graded items stated under a convention were checked under that convention: 18 ÷
 
 ## Overlap with the earlier review
 
-To be filled after the blind pass is committed.
+Filled after the blind pass and its two commits (`5b331344` ledger and scripts, `8dc76314` findings), from `docs/reviews/review-number-sense-1-3.md` and its Fix pass. Only the review's conceptual findings are counted: a dropped hypothesis, a why line that reaches its option by reasoning that does not produce it, a rounding argument that does not settle the rounding, a slip value that is correct under a valid reading, a convention. Its text, placeholder, band, voice, layout and continuity findings (1, 9, 11, 12, 15 to 30) are not counted. The review's fix pass had been applied to the content this audit read, so none of its findings was re-findable; the "both" count is therefore a floor.
+
+| | count |
+|---|---|
+| conceptual findings by this audit only | 12 (findings 1 to 12 above; none appears in the review) |
+| conceptual findings by the earlier review only | 10 (all fixed before this audit, listed below) |
+| conceptual findings by both | 0 |
+
+The earlier review's conceptual findings, with what this audit saw of each:
+
+- 2, l10 `screens[7].prose` dropped a ≠ 0 from the index laws. Fixed ("other than 0"); the ledger marks the fixed sentence correct and `zero_base_excluded` checks it. The same hypothesis is still missing where division is defined (this audit's finding 8).
+- 3, 4, 5, 6: four why lines named a slip that does not produce the option (l14 `screens[9]` and review-3 `items[4]` added indices; l14 `quiz[3]` product; l9 `screens[7]` kept minus). All fixed; the audit recomputed each fixed why (5 × 10^20, 9 × 10^6, 18 × 10^2, −2) and found it consistent.
+- 7, l11 `screens[8]` promised one decimal place but stopped at 4.4 < √20 < 4.5. Fixed with the 4.45² check; `root_keys` confirms it.
+- 8, l7 `screens[4]` the slip 0.38 is also 3/8 rounded to two places. Fixed; the byKey line now names both readings.
+- 10, homework-3 `items[2]` argued the rounding from "nearer the first square", which can fail. Fixed with the midpoint 38.75²; `root_keys` confirms it.
+- 13, l6 `quiz[2]` told the learner that 4 and 4.0 are both fine for one decimal place. Fixed in the text; the widget still accepts 4 (the review's Engine item 1).
+- 14, l10 `screens[6]` said the index laws are about multiplying only. Fixed; ledgered correct.
+
+Three things in this audit trace back to that fix pass, not to the author:
+
+- Finding 10 (the only `wrong`). The sentence "Calculators and code follow the same rule" is the review's own replacement text (its finding 15, a voice fix for "This edge case catches calculators and code too"). The original said the convention trips tools up, which is true of spreadsheets; the replacement says the opposite.
+- The two doubled sentences under "Noted, not conceptual" (l6 `quiz[2].feedback.correct`, l8 `quiz[0].widget.options[2].why`) are the review's fix texts 13 and 16 applied twice.
+- "as in l4" in l13 `screens[7].explain.text` is the review's fix text 26, pasted as given.
+
+What a single read missed, measured on the content as it now stands: the review, reading for numbers, slips, voice and GCSE conventions, found ten concept-level faults, and this audit confirms all ten are fixed. It did not raise the eleven statements whose conditions are missing (zero as a multiplier or divisor, the fraction equal to one, whole numbers 0 and 1, decimals that recur, twelfths that cancel, negative divisors, independent days, "bigger negative", the cause of two-place quotes, the 3.9 slip line), and its own fix introduced the one false statement. One new `wrong` in three levels sits at the convergence threshold of `docs/briefs/concept-audit.md` (at most one new `wrong` per three levels).
 
 ## Checks
 
-To be filled.
+- Validator (`node tools/validate.mjs`, from `app/`): `0 errors, 4111 warnings`; `content/manifest.json` came out unchanged (`git status` clean), so nothing was restored or committed.
+- Voice (`VOICE_BASE=app/content/courses/number-sense/ python3 docs/reviews/voice-scan.py 35 --summary`): `# explanations over three sentences: 0`, `# sentences scanned: 5781; over 35 words: 0`.
+- Author number scripts (`python3 -I` from the repo root): `number-sense-L1-numbers.py` exit 0 (337 of 337), `-L2-` exit 0 (337 of 337), `-L3-` exit 0 (393 of 393).
+- Concepts scripts (`python3 -I` from the repo root): `number-sense-L1-concepts.py` exit 0 (27 checks), `number-sense-L2-concepts.py` exit 0 (28 checks), `number-sense-L3-concepts.py` exit 1 (25 checks pass; `tools_minus_three_squared` is `EXPECTED_FAIL`, finding 10, and passes once the sentence is fixed). The `imprecise` findings are printed as `note` lines and are not asserted.
+- Playthrough (`node tools/playthrough.mjs --local-cdn <pkgs>`, from `app/`), `--lesson number-sense/l2-same-amount --lesson number-sense/l9-negative-times-negative --lesson number-sense/l12-which-first --set number-sense/homework-2`:
+  - desktop: `ok l9-negative-times-negative 15 checks, 9.1 s, quiz 5/5` / `ok l12-which-first 14 checks, 8.3 s, quiz 5/5` / `ok homework-2 9 items, marked 9 of 9 right, 43 of 43 marks, 1 longform marked by the button, 2.1 s` / `browser relaunches: 0` / `All passed.` (the l2 line is above the tail read; "All passed" covers it).
+  - `--mobile`: the same three lines (9.0 s, 8.1 s, 2.6 s) / `browser relaunches: 0` / `All passed.`
+- Engine limits met: none new in the widgets. Two validator rules are raised in `docs/BACKLOG-INBOX.md` under "Raised later (audit number-sense):" (a sentence repeated back to back; a lesson id shown to the learner).
+
+## Fix pass
+
+Not yet run. Per `docs/briefs/concept-audit.md` the fixer is Opus and writes, for each finding, the status and its own one-line basis here.
