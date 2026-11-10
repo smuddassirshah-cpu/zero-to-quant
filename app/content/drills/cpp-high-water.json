@@ -16,7 +16,7 @@
   "brief": "A fund's performance fee is charged only above its high-water mark, the best cumulative P&L so far. `pnl` holds the cumulative P&L at each day's close, in pounds, and it may be negative. Write `high_water(pnl)`, which returns a vector of the same length whose entry `i` is the largest of `pnl[0]` to `pnl[i]`.\n\nFor `{-3, -1, -2, 4, 2}` the marks are -3, then -1, -1 again, then 4 and 4, so the answer is `{-3, -1, -1, 4, 4}`.",
   "constraints": [
     "$0 \\le n \\le 10^5$ days. An empty input gives an empty vector.",
-    "The size of the result is known before the loop, so reserve it.",
+    "The size of the result is known before the loop, so `reserve` it; the tests cannot see this, but a reviewer would.",
     "Each test has a 5-second limit."
   ],
   "hint": "The first mark is the first day's P&L itself, not 0. Each later mark is the larger of the day's P&L and the mark before.",
@@ -236,9 +236,28 @@
         -0.5
       ],
       "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          0.1,
+          0.3,
+          0.2
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        0.1,
+        0.3,
+        0.3
+      ],
+      "compare": "isclose"
     }
   ],
-  "how": "Submit runs 9 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
+  "how": "Submit runs 10 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
   "solution": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    out.reserve(pnl.size());\n    for (std::size_t i = 0; i < pnl.size(); ++i)\n        out.push_back(i == 0 || pnl[i] > out.back() ? pnl[i] : out.back());\n    return out;\n}\n",
   "notes": [
     "`reserve(pnl.size())` makes the room once, so the `push_back` calls never move the block.",
@@ -257,6 +276,10 @@
     {
       "code": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    if (pnl.empty()) return out;\n    double peak = pnl[0];\n    for (std::size_t i = 1; i < pnl.size(); ++i) {\n        if (pnl[i] > peak) peak = pnl[i];\n        out.push_back(peak);\n    }\n    return out;\n}\n",
       "slip": "The loop starts at day 1 and never pushes day 0, so the result is one short."
+    },
+    {
+      "code": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    out.reserve(pnl.size());\n    float peak = 0;\n    for (std::size_t i = 0; i < pnl.size(); ++i) {\n        if (i == 0 || pnl[i] > peak) peak = pnl[i];\n        out.push_back(peak);\n    }\n    return out;\n}\n",
+      "slip": "The running mark is a float, so a value such as 0.1 comes back a little off."
     }
   ]
 }

@@ -220,6 +220,11 @@ def _(t):
 # ------------------------------------------------------------------ cpp-crossings
 @model('cpp-crossings', 'The answer is 3')
 def _(t):
+    m = re.fullmatch(r'count_crossings\(std::vector<Px>\{(.*)\}, Px\{(\d+)\}\)', t['call'])
+    if m:                                  # the postlude's struct Px { int p; } with only operator<
+        xs = [int(x) for x in re.findall(r'\{(\d+)\}', m.group(1))]
+        signs = [1 if x > int(m.group(2)) else -1 for x in xs if x != int(m.group(2))]
+        return sum(1 for a, b in zip(signs, signs[1:]) if a != b)
     m = re.fullmatch(r'count_crossings\(std::vector<(int|long long|double)>\{(.*)\}, (.+)\)', t['call'])
     num = (lambda s: float(s)) if m.group(1) == 'double' else (lambda s: int(s.rstrip('L')))
     xs = [num(s) for s in m.group(2).split(', ')] if m.group(2) else []
@@ -276,6 +281,21 @@ def _(t):
 # ------------------------------------------------------------------ cpp-mean-ranks
 @model('cpp-mean-ranks', '`{3.5, 1, 3.5, 2}`')
 def _(t):
+    if t['call'].startswith('[]'):               # the two large lambda tests, ranked by counting values
+        import collections
+        if '(i * 7919) % 1000' in t['call']:
+            v, pick = [(i * 7919) % 1000 for i in range(100000)], (0, 1, 99999)
+        elif 'std::vector<int>(3000, 7)' in t['call']:
+            v, pick = [7] * 3000, (0, 2999)
+        else:
+            raise KeyError(t['call'])
+        cnt = collections.Counter(v)
+        keys = sorted(cnt)
+        below, acc = {}, 0
+        for k in keys:
+            below[k] = acc
+            acc += cnt[k]
+        return [below[v[i]] + (cnt[v[i]] + 1) / 2 for i in pick]
     v = t['args'][0]
     # rank = (number strictly below) + (number equal + 1) / 2
     return [sum(1 for y in v if y < x) + (sum(1 for y in v if y == x) + 1) / 2 for x in v]
@@ -500,6 +520,10 @@ def main():
             errors.append(f'{i}: how count')
         if BRIEF[i] not in d['brief']:
             errors.append(f'{i}: worked answer {BRIEF[i]!r} not in the brief')
+        if not 10 <= len(d['tests']) <= 15:
+            errors.append(f'{i}: {len(d["tests"])} hidden tests, not 10 to 15')
+        if not 2 <= len(d.get('planted', [])) <= 6:
+            errors.append(f'{i}: planted count {len(d.get("planted", []))}')
         if len(d.get('planted', [])) < 2:
             errors.append(f'{i}: fewer than two planted')
         calls = [json.dumps({k: v for k, v in t.items() if k != 'note'}, sort_keys=True) for t in d['tests']]
@@ -515,7 +539,7 @@ def main():
                 if not ok:
                     errors.append(f'{i} {kind}[{n}]: file {got!r}, model {want!r}')
                 checked += 1
-    want_mix = {'cpp': {1: 6, 2: 7, 3: 4}, 'cpp-pricing': {1: 2, 2: 3, 3: 3}}
+    want_mix = {'cpp': {1: 7, 2: 6, 3: 4}, 'cpp-pricing': {1: 2, 2: 3, 3: 3}}
     if len(files) == 25 and mix != want_mix:
         errors.append(f'mix {mix} is not {want_mix}')
     nb = brief_numbers()

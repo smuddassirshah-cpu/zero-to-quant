@@ -21,7 +21,7 @@
     "Each test has a 5-second limit."
   ],
   "hint": "In C++ `%` keeps the sign of the left side, so -30 % 1440 is -30. Add 1440 and take `%` again.",
-  "starter": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(minutes) {}   // wrap into 0..1439\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return t; }\nint operator-(SessionTime b, SessionTime a) { return 0; }\nbool operator<(SessionTime a, SessionTime b) { return false; }\n",
+  "starter": "class SessionTime {\npublic:\n    // an explicit constructor from int, and minutes()\n};\n\n// then operator+, operator- and operator< as free functions\n",
   "examples": [
     {
       "call": "(SessionTime(23 * 60 + 50) + 20).minutes()",
@@ -98,7 +98,12 @@
       "compare": "equal"
     },
     {
-      "call": "SessionTime(2000) < SessionTime(100)",
+      "call": "SessionTime(1500) < SessionTime(100)",
+      "expect": true,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(-10) < SessionTime(5)",
       "expect": false,
       "compare": "equal"
     },
@@ -108,7 +113,7 @@
       "name": "No silent conversion from int"
     }
   ],
-  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The last only compiles `SessionTime t = 5;` and expects it to be refused.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The last only compiles `SessionTime t = 5;` and expects it to be refused.",
   "solution": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(((minutes % 1440) + 1440) % 1440) {}\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return SessionTime(t.minutes() + m); }\nint operator-(SessionTime b, SessionTime a) { return SessionTime(b.minutes() - a.minutes()).minutes(); }\nbool operator<(SessionTime a, SessionTime b) { return a.minutes() < b.minutes(); }\n",
   "notes": [
     "Wrapping once, in the constructor, keeps every `SessionTime` inside 0 to 1439, so the operators can trust it.",
@@ -127,6 +132,10 @@
     {
       "code": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(minutes) {\n        if (m_ >= 1440) m_ -= 1440;\n        if (m_ < 0) m_ += 1440;\n    }\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return SessionTime(t.minutes() + m); }\nint operator-(SessionTime b, SessionTime a) { return SessionTime(b.minutes() - a.minutes()).minutes(); }\nbool operator<(SessionTime a, SessionTime b) { return a.minutes() < b.minutes(); }\n",
       "slip": "Wraps by one day only, so a count more than a day out of range stays out of range."
+    },
+    {
+      "code": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(minutes) {}\n    int minutes() const { return ((m_ % 1440) + 1440) % 1440; }\n    friend bool operator<(SessionTime a, SessionTime b) { return a.m_ < b.m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return SessionTime(t.minutes() + m); }\nint operator-(SessionTime b, SessionTime a) { return SessionTime(b.minutes() - a.minutes()).minutes(); }\n",
+      "slip": "Compares the raw minute counts, so a time past one day is not wrapped before the comparison."
     }
   ]
 }

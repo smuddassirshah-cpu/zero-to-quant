@@ -7,34 +7,34 @@ Brief: `docs/briefs/drills-1.1-1.9.md`, pack `cpp`, on top of `docs/briefs/drill
 | id | course / lesson drawn on | tags (idea) | difficulty | pace (s) | hidden tests | planted |
 | --- | --- | --- | --- | --- | --- | --- |
 | `cpp-clip-returns` | `cpp/l5-value-or-reference` | pass-by-reference, out-parameter | 1 | 420 | 10 | 3 |
-| `cpp-fee-pence` | `cpp/l2-fixed-types` | integer-rounding, long-long | 1 | 420 | 12 | 3 |
-| `cpp-high-water` | `cpp/l14-vector` | running-maximum, reserve | 1 | 420 | 9 | 3 |
+| `cpp-fee-pence` | `cpp/l2-fixed-types` | integer-rounding, long-long | 1 | 420 | 13 | 4 |
+| `cpp-high-water` | `cpp/l14-vector` | running-maximum, reserve | 1 | 420 | 10 | 4 |
 | `cpp-longest-rise` | `cpp/l3-branches-and-loops` | streaks, loops | 1 | 420 | 12 | 3 |
-| `cpp-tick-log` | `cpp/l10-invariants` | class-invariant, refuse-bad-input | 1 | 480 | 11 | 3 |
+| `cpp-tick-log` | `cpp/l10-invariants`, `cpp/l14-vector` | class-invariant, refuse-bad-input | 1 | 480 | 12 | 4 |
 | `cpp-tick-round` | `cpp/l4-functions-and-headers` | default-argument, rounding | 1 | 360 | 12 | 3 |
-| `cpp-crossings` | `cpp/l13-templates` | function-template, signal | 2 | 660 | 11 | 3 |
-| `cpp-drop-small` | `cpp/l14-vector` | erase-in-loop, iterators | 2 | 600 | 11 | 3 |
-| `cpp-fee-tier` | `cpp/l6-const` | const-method, tier-lookup | 2 | 600 | 7 | 3 |
-| `cpp-range-out` | `cpp/l7-addresses` | pointer-out-parameter, nullptr | 2 | 540 | 12 | 3 |
-| `cpp-session-time` | `cpp/l12-operators` | operator-overloading, modulo | 2 | 660 | 14 | 3 |
+| `cpp-crossings` | `cpp/l13-templates` | function-template, signal | 2 | 660 | 12 | 3 |
+| `cpp-drop-small` | `cpp/l14-vector` | erase-in-loop, iterators | 1 | 420 | 11 | 3 |
+| `cpp-fee-tier` | `cpp/l6-const`, `cpp/l10-invariants` | const-method, tier-lookup | 2 | 600 | 10 | 3 |
+| `cpp-range-out` | `cpp/l7-addresses` | pointer-out-parameter, nullptr | 2 | 540 | 13 | 4 |
+| `cpp-session-time` | `cpp/l12-operators` | operator-overloading, modulo | 2 | 660 | 15 | 4 |
 | `cpp-temp-limit` | `cpp/l11-creation-destruction` | raii, destructor, reference-member | 2 | 660 | 12 | 3 |
-| `cpp-trimmed-mean` | `cpp/l16-algorithms` | sort-and-accumulate, integer-division | 2 | 600 | 12 | 3 |
-| `cpp-fill-csv` | `cpp/l3-branches-and-loops` | parsing, strings, long-long | 3 | 1080 | 13 | 3 |
-| `cpp-mean-ranks` | `cpp/l16-algorithms` | sort-indices, ties | 3 | 1020 | 11 | 3 |
-| `cpp-movers` | `cpp/l15-maps` | map-first-and-last, sort-with-ties | 3 | 1080 | 12 | 3 |
-| `cpp-take-all` | `cpp/l19-moving-not-copying` | move-semantics, rvalue-reference | 3 | 900 | 8 | 3 |
-| `cpp-compound-df` | `cpp-pricing/l2-cmath` | discounting, compounding | 1 | 420 | 10 | 3 |
+| `cpp-trimmed-mean` | `cpp/l16-algorithms` | sort-and-accumulate, integer-division | 2 | 600 | 13 | 4 |
+| `cpp-fill-csv` | `cpp/l3-branches-and-loops` | parsing, strings, long-long | 3 | 1080 | 15 | 5 |
+| `cpp-mean-ranks` | `cpp/l16-algorithms` | sort-indices, ties | 3 | 1020 | 13 | 4 |
+| `cpp-movers` | `cpp/l15-maps`, `cpp/l16-algorithms` | map-first-and-last, sort-with-ties | 3 | 1080 | 14 | 5 |
+| `cpp-take-all` | `cpp/l19-moving-not-copying` | move-semantics, rvalue-reference | 3 | 900 | 10 | 3 |
+| `cpp-compound-df` | `cpp-pricing/l2-cmath` | discounting, compounding | 1 | 420 | 12 | 4 |
 | `cpp-prob-between` | `cpp-pricing/l4-normal-cdf` | normal-cdf, erfc | 1 | 480 | 10 | 3 |
 | `cpp-cash-or-nothing` | `cpp-pricing/l7-black-scholes-cpp` | black-scholes, digital-option | 2 | 720 | 10 | 3 |
 | `cpp-curve-df` | `cpp-pricing/l2-cmath` | discount-curve, interpolation | 2 | 900 | 13 | 3 |
-| `cpp-scaled-payoff` | `cpp-pricing/l5-payoff-classes` | payoff-hierarchy, decorator | 2 | 720 | 10 | 3 |
+| `cpp-scaled-payoff` | `cpp-pricing/l5-payoff-classes` | payoff-hierarchy, decorator | 2 | 720 | 11 | 4 |
 | `cpp-bermudan-put` | `cpp-pricing/l6-binomial-cpp` | binomial-tree, early-exercise | 3 | 1200 | 12 | 3 |
-| `cpp-cash-split` | `cpp-pricing/l1-doubles` | fixed-point, rounding, allocation | 3 | 1020 | 15 | 3 |
+| `cpp-cash-split` | `cpp-pricing/l1-doubles` | fixed-point, rounding, allocation | 3 | 1020 | 15 | 4 |
 | `cpp-running-stats` | `cpp-pricing/l8-monte-carlo` | welford, accumulator | 3 | 1140 | 14 | 3 |
 
-Mix: `cpp` 6 / 7 / 4 and `cpp-pricing` 2 / 3 / 3 at difficulties 1 / 2 / 3, so 8 / 10 / 7 in all, as the brief asks. 283 hidden tests, 75 planted solutions. The brief's list is covered: references and const (`clip-returns`, `fee-tier`), vector and string (`high-water`, `drop-small`, `fill-csv`), classes with invariants (`tick-log`), RAII (`temp-limit`), templates (`crossings`), map and algorithms (`movers`, `trimmed-mean`, `mean-ranks`), iterators (`drop-small`), move (`take-all`); for pricing a payoff hierarchy (`scaled-payoff`), a discount curve lookup (`curve-df`), a binomial step (`bermudan-put`), a running statistics accumulator (`running-stats`) and a fixed-point money type (`cash-split`). Class drills are graded through hidden `postlude` helpers that drive the class and return a vector, so examples read as one call with JSON arguments; three drills also carry a `compiles` case (a deleted copy, an `explicit` constructor).
+Mix: `cpp` 7 / 6 / 4 and `cpp-pricing` 2 / 3 / 3 at difficulties 1 / 2 / 3, so 9 / 9 / 7 in all (`cpp-drop-small` moved from 2 to 1 in the fix pass). 304 hidden tests, 89 planted solutions. The brief's list is covered: references and const (`clip-returns`, `fee-tier`), vector and string (`high-water`, `drop-small`, `fill-csv`), classes with invariants (`tick-log`), RAII (`temp-limit`), templates (`crossings`), map and algorithms (`movers`, `trimmed-mean`, `mean-ranks`), iterators (`drop-small`), move (`take-all`); for pricing a payoff hierarchy (`scaled-payoff`), a discount curve lookup (`curve-df`), a binomial step (`bermudan-put`), a running statistics accumulator (`running-stats`) and a fixed-point money type (`cash-split`). Class drills are graded through hidden `postlude` helpers that drive the class and return a vector, so examples read as one call with JSON arguments; two drills also carry a `compiles` case (a deleted copy, an `explicit` constructor).
 
-Not repeated: the lesson tasks of both courses were listed first (every code screen, review and homework item) and avoided, in particular `count_up_days`, `max_drawdown`, `vwap`, `average`, `accrue`, `RiskLimit`, `SessionRange`, `Fixed`, `Money`, `Connection`, `Straddle`, `CappedCall`, `Strangle`, `step_back`, `american_put` and `discount`. Two earlier drafts were dropped for being too close: a move-only "slot holder" (lesson l11's `Connection`) and a band class with `width` and `contains` (homework 3's `SessionRange`). The two `sample-cpp-` drills and the `ci-cpp-` drills share no task.
+Not repeated: the lesson tasks of both courses were listed first (every code screen, review and homework item) and avoided, in particular `count_up_days`, `max_drawdown`, `vwap`, `average`, `accrue`, `RiskLimit`, `SessionRange`, `Fixed`, `Money`, `Connection`, `Straddle`, `CappedCall`, `Strangle`, `step_back`, `american_put` and `discount`. Two earlier drafts were dropped for being too close: a move-only "slot holder" (lesson l11's `Connection`) and a band class with `width` and `contains` (homework 3's `SessionRange`). The two `sample-cpp-` drills and the `ci-cpp-` drills share no task. Fix pass, as the second reader found: `cpp-drop-small` is lesson l14's erase loop with a counter (kept, difficulty 1); `cpp-bermudan-put` is the pack's one tree drill and reuses l6's `tree_price` shape with one vector of marks; `cpp-prob-between` and `cpp-cash-or-nothing` are the two halves of homework-1's `corridor_price`, and `cpp-cash-or-nothing` brings a new payoff. `cpp-cash-split` and `cpp-trimmed-mean` repeat `py-split-pence` and `py-trimmed-fill-mean` in C++ and are accepted as a task met once in each language.
 
 ## Planted solutions
 
@@ -44,7 +44,7 @@ On the first `planted-check --require` run all 75 failed at least one hidden tes
 
 ## Checks
 
-1. `docs/reports/drills-cpp-check.py` (scratchpad venv Python): exit 0, "25 drills, 333 cases compared, errors: 0". The builder computed each `expect` with one Python model; the script holds a second, written apart and by another method where one exists (Fractions for exact rounding and ties, mpmath at 40 digits for the pricing drills, a memoised recursion over tree nodes for the Bermudan put, the pairwise variance formula, Python classes for the payoffs, a hand value with its working for each C++ lambda call). It also checks the brief's worked answer is in the brief, recomputes 15 rounded numbers stated in briefs and notes, the `how` counts, that every example is also a hidden test, the index rows, the pace range, the 8 / 10 / 7 mix and no exclamation marks or dashes in prose.
+1. `docs/reports/drills-cpp-check.py` (scratchpad venv Python): exit 0, "25 drills, 354 cases compared, errors: 0" after the fix pass. The builder computed each `expect` with one Python model; the script holds a second, written apart and by another method where one exists (Fractions for exact rounding and ties, mpmath at 40 digits for the pricing drills, a memoised recursion over tree nodes for the Bermudan put, the pairwise variance formula, Python classes for the payoffs, a hand value with its working for each C++ lambda call). It also checks the brief's worked answer is in the brief, recomputes 15 rounded numbers stated in briefs and notes, the `how` counts, that every example is also a hidden test, the index rows, the pace range, the 9 / 9 / 7 mix and no exclamation marks or dashes in prose.
 2. `node tools/validate.mjs`: 0 errors; the warning count (4269) is the same as before the pack, so these files add none.
 3. `node tools/playthrough.mjs --drill <id> ... --local-cdn <pkgs>` for all 25: green, model passes every test, starter fails; again with `--mobile`: green. Shots at 440 px of `fill-csv`, `temp-limit`, `bermudan-put`, `movers` and `scaled-payoff` were read; two layout faults were fixed (a markdown list in a brief renders as one paragraph; inline code spans longer than about 42 characters run off a 440 px screen) and every span is now at most 42 characters.
 4. `node tools/planted-check.mjs --drill <each of 25> --require --local-cdn <pkgs>`: "25 drills checked, 75 planted solutions, 0 failures".

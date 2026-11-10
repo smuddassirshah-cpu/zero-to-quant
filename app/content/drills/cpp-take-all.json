@@ -201,12 +201,58 @@
       "call": "[]{ std::vector<Fill> d, s = make_fills(\"b\", 2); take_all(d, std::move(s)); s.emplace_back(\"c0\", 9); take_all(d, std::move(s)); std::string ids; for (const Fill& f : d) ids += f.id + \" \"; return ids + std::to_string(s.size()); }()",
       "expect": "b0 b1 c0 0",
       "compare": "equal"
+    },
+    {
+      "call": "run_take",
+      "args": [
+        5,
+        1
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "6",
+        "0",
+        "a0:1",
+        "a1:2",
+        "a2:3",
+        "a3:4",
+        "a4:5",
+        "b0:1"
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "run_take",
+      "args": [
+        1,
+        5
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "6",
+        "0",
+        "a0:1",
+        "b0:1",
+        "b1:2",
+        "b2:3",
+        "b3:4",
+        "b4:5"
+      ],
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 8 hidden tests. Each answer must equal the expected value. The first number each helper returns is `Fill::copies`, which must be 0.",
+  "how": "Submit runs 10 hidden tests. Each answer must equal the expected value. The first number each helper returns is `Fill::copies`, which must be 0.",
   "solution": "void take_all(std::vector<Fill>& dst, std::vector<Fill>&& src) {\n    dst.reserve(dst.size() + src.size());\n    for (Fill& f : src) dst.push_back(std::move(f));\n    src.clear();\n}\n",
   "notes": [
-    "`std::move(f)` on each element picks `Fill`'s move constructor, which takes the string's buffer instead of copying it.",
+    "`std::move(f)` on each element picks `Fill`'s move constructor, so `Fill::copies` stays at 0; for a long `id` the move also takes the string's buffer instead of copying it.",
     "Moved-from fills are still elements of `src`, so `src.clear()` is needed to leave it empty.",
     "Inside the function `src` has a name, so it is an lvalue; `&&` only says the caller gave it up."
   ],
