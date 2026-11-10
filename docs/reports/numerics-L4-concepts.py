@@ -242,6 +242,8 @@ time100 = e100 - space100
 print(f'   M=100: space error {space100:.5f}, explicit time error at N=500 {time100:+.5f};'
       f' M=200: space {space200:.5f}, time at N=1700 {e200 - space200:+.5f}')
 chk('the dS^2 term is the larger part of the error at both grids', abs(space100) > 3 * abs(time100) and abs(space200) > 3 * abs(e200 - space200))
+near('l13 screens[4].explain: coarse-grid space part -0.0099 (fix pass)', space100, -0.0099, 5e-5)
+near('l13 screens[4].explain: coarse-grid time part +0.0021 (fix pass)', time100, 0.0021, 5e-5)
 near('space error quarters (ratio 4.0)', space100 / space200, 4.0, 0.05)
 # the measured ratio 4.2 mixes a 4.0 space ratio with a 3.4 time ratio
 near('measured ratio of total errors', e100 / e200, 4.2, 0.1)
@@ -269,9 +271,8 @@ print(f'   M=100: the step matrix has spectral radius <= 1 from N = {min(stable_
       f' frozen-coefficient von Neumann at j = M-1 gives N >= {0.04 * 99 ** 2 + 0.025:.2f}')
 chk('the bound is sufficient: spectral radius <= 1 for N >= 401', all(radius(100, N) <= 1 + 1e-12 for N in (401, 450, 500)) and radius(200, 1601) <= 1 + 1e-12)
 chk('well below the bound the step matrix amplifies', radius(100, 330) > 1.05 and radius(100, 300) > 1.2)
-xfail('l13 "safe only while dt <= 1/(sigma^2 M^2 + r)": some N below 401 are stable too',
-      min(stable_N) >= 401, f'spectral radius <= 1 from N = {min(stable_N)}')
-# corrected assert: assert min(stable_N) < 401   (the bound is sufficient and close to sharp, not necessary)
+chk('l13 summary.ideas[2] "a sufficient bound that is close to sharp": stable from some N below 401, but within 15% of it (corrected claim, fix pass)',
+    0.85 * 401 <= min(stable_N) < 401, f'spectral radius <= 1 from N = {min(stable_N)}')
 # growth reaches S = 100 if the unstable march carries on (quiz[1])
 chk('N=330 step size, twice as long a march: blow-up reaches S=100', abs(march(100, 100, R, SIG, 2, 200, 100, 660, 0.0)) > 1e3)
 # where the explicit grid's error is largest (l13 screens[4].explain)
@@ -339,26 +340,27 @@ chk('theta=0.4 leaves [-1, 1] for large z', ((1 - 0.6 * z) / (1 + 0.4 * z)).min(
 # Thomas: operation count of the lesson solution (l14 "about 3M operations")
 class F(float):
     ops = 0
-    def _w(self, o, f):
+    md = 0      # multiplications and divisions only (fix pass)
+    def _w(self, o, f, md=False):
         F.ops += 1
+        F.md += md
         return F(f(float(self), float(o)))
     def __add__(s, o): return s._w(o, lambda a, b: a + b)
     def __sub__(s, o): return s._w(o, lambda a, b: a - b)
     def __rsub__(s, o): return s._w(o, lambda a, b: b - a)
-    def __mul__(s, o): return s._w(o, lambda a, b: a * b)
-    def __rmul__(s, o): return s._w(o, lambda a, b: a * b)
-    def __truediv__(s, o): return s._w(o, lambda a, b: a / b)
-    def __rtruediv__(s, o): return s._w(o, lambda a, b: b / a)
+    def __mul__(s, o): return s._w(o, lambda a, b: a * b, True)
+    def __rmul__(s, o): return s._w(o, lambda a, b: a * b, True)
+    def __truediv__(s, o): return s._w(o, lambda a, b: a / b, True)
+    def __rtruediv__(s, o): return s._w(o, lambda a, b: b / a, True)
 src = widgets(load('l14-implicit-and-crank-nicolson'))['screens[8]']['solution'].replace('list(map(float, v))', 'list(map(F, v))')
 nsF = {'F': F}
 exec(src, nsF)
 n = 399
-F.ops = 0
+F.ops = F.md = 0
 nsF['thomas']([-1.0] * n, [2.5] * n, [-1.0] * n, [1.0] * n)
-print(f'   Thomas, n = {n}: {F.ops} arithmetic operations = {F.ops / n:.2f} n (3 multiplies, 2 divides, 3 subtracts a row)')
-xfail('l14 "about 3M operations" for Thomas (1,200 for M = 400)', abs(F.ops / n - 3) < 0.5, f'counted {F.ops / n:.1f} n')
-# corrected assert: assert abs(F.ops / n - 8) < 0.1     (8 operations a row: 3 multiplies, 2 divides, 3 subtracts;
-#   so "about 5M multiplications and divisions", 2,000 for M = 400, against M^3/3 multiplications for a dense solve)
+print(f'   Thomas, n = {n}: {F.ops} arithmetic operations = {F.ops / n:.2f} n (3 multiplies, 2 divides, 3 subtracts a row); {F.md} multiplications and divisions')
+chk('l14 "about 5M multiplications and divisions" for Thomas, "about 2,000" for M = 400 (corrected claim, fix pass)',
+    abs(F.md / n - 5) < 0.05 and abs(F.md - 2000) < 50 and abs(F.ops / n - 8) < 0.1, f'counted {F.md} = {F.md / n:.2f} n')
 near('dense solve M^3/3 at M=400 is 21 million', 400 ** 3 / 3, 21e6, 0.5e6)
 A = np.diag([2.0] * 4) + np.diag([-1.0] * 3, 1) + np.diag([-1.0] * 3, -1)
 chk('4 by 4 system has x = (1,1,1,1)', np.allclose(np.linalg.solve(A, [1, 0, 0, 1]), 1))
@@ -457,9 +459,8 @@ zz = np.random.default_rng(0).standard_normal(50_000)
 pooled = np.concatenate([f_pay(zz), f_pay(-zz)])
 naive = pooled.std(ddof=1) / math.sqrt(100_000)
 print(f'   antithetic call, seed 0: SE over 50,000 pairs {sea:.4f}; SE over 100,000 payoffs as if independent {naive:.4f}')
-xfail('l16 screens[9].explain: counting the antithetic call\'s error over payoffs gives too small an SE', naive < sea,
-      f'over payoffs {naive:.4f} is larger than over pairs {sea:.4f}: the pairs are negatively correlated')
-# corrected assert: assert naive > sea     (too large for the call; too small only when the pair correlation is positive)
+chk('l16 screens[9].explain: counting payoffs "would give £0.0466 here, not £0.0329" (corrected claim, fix pass)',
+    naive > sea and abs(naive - 0.0466) < 5e-5 and abs(sea - 0.0329) < 5e-5, f'over payoffs {naive:.4f}, over pairs {sea:.4f}')
 strad = lambda q: math.exp(-R) * np.abs(100 * np.exp(0.03 + 0.2 * q) - 100)
 ES = E(strad); vS = E(lambda q: strad(q) ** 2) - ES ** 2
 cS = (E(lambda q: strad(q) * strad(-q)) - ES ** 2) / vS
@@ -481,9 +482,8 @@ I70 = lambda g: integrate.quad(lambda q: g(q) * norm.pdf(q), -12, 12, points=[(m
 v70 = I70(lambda q: s70(q) ** 2) - E70 ** 2
 c70 = (I70(lambda q: s70(q) * s70(-q)) - E70 ** 2) / v70
 print(f'   |S_T - 70| (rises on both sides of 70): pair correlation {c70:+.3f}')
-xfail('l16 summary.trap: antithetics increase the variance of any payoff that rises on both sides', c70 > 0,
-      f'|S_T - 70| has pair correlation {c70:+.3f}, so the pairs help')
-# corrected assert: assert c70 < 0     ("can increase": the sign of Cov(f(Z), f(-Z)) decides)
+chk('l16 summary.trap: monotone payoffs (call, put, digital) are helped, the at-the-money straddle is hurt, and a two-sided payoff need not be hurt (corrected claim, fix pass)',
+    c_pair < 0 and cS > 0 and c70 < 0, f'call {c_pair / varY:+.3f}, straddle {cS:+.3f}, |S_T - 70| {c70:+.3f}')
 # Asian
 ag = ns16b['asian_geometric_cv']; geo = ns16b['geometric_asian_call']
 near('geometric Asian 5.9402', geo(100, 100, R, SIG, 1, 12), 5.9402, 5e-5)
@@ -522,10 +522,8 @@ for m in (12, 252):
     yb, ye = sim_barrier(m, 400_000, 5, also_euro=True)
     rb = np.corrcoef(yb, ye)[0, 1]
     print(f'   down-and-out call (H = 90, {m} dates) against the European call payoff: rho = {rb:.4f}, factor {1 / (1 - rb * rb):.1f}')
-    if m == 252:
-        xfail('l16 screens[11]: a European control has rho = 0.9995 with a barrier option (the course\'s own H = 90 barrier)', rb > 0.999,
-              f'rho = {rb:.3f}, a factor of {1 / (1 - rb * rb):.0f}, not 1,000')
-        # corrected assert: assert 0.90 < rb < 0.99
+    chk(f'l16 screens[11].explain: a European tracks the H = 90 down-and-out call at rho "about 0.93 to 0.96", {m} dates (corrected claim, fix pass)',
+        0.925 <= rb <= 0.965, f'rho = {rb:.4f}')
 zz = np.random.default_rng(0).standard_normal(100_000)
 STp = 100 * np.exp((0.04 - 0.045) * 0.5 + 0.3 * math.sqrt(0.5) * zz)
 yp, xp = math.exp(-0.02) * np.maximum(95 - STp, 0), math.exp(-0.02) * STp
@@ -608,9 +606,8 @@ chk('bisect: an exact zero at a midpoint is still found (rising and falling f)',
 chk('bisect: error is at most tol / 2', all(abs(bis(lambda x: x ** 3 - q, 0.0, 3.0, 1e-6)[0] - q ** (1 / 3)) <= 0.5e-6 for q in (0.5, 2.0, 7.0, 20.0)))
 r_, c_ = bis(lambda x: x * x - 2, 2.0, 1.0, 1e-12)
 print(f'   bisect with the ends swapped, bisect(f, 2.0, 1.0, 1e-12): returns {r_} after {c_} calls')
-xfail('bisect (delta): a bracket given as (hi, lo) is either solved or refused', abs(r_ - math.sqrt(2)) < 1e-9,
-      f'returns the first midpoint {r_} with no error')
-# corrected assert: assert abs(bisect(lambda x: x * x - 2, 2.0, 1.0, 1e-12)[0] - 2 ** 0.5) < 1e-12
+chk('bisect (delta): a bracket given as (hi, lo) is solved, "the ends may come in either order" (corrected claim, fix pass)',
+    abs(r_ - math.sqrt(2)) < 1e-12 and c_ == 42, f'returns {r_} after {c_} calls')
 
 sn = ns6['safe_newton']
 chk('safe_newton: root at either end is returned', sn(lambda x: x, lambda x: 1.0, 0.0, 1.0) == 0.0 and sn(lambda x: x - 1, lambda x: 1.0, 0.0, 1.0) == 1.0)
@@ -710,13 +707,17 @@ for _ in range(300):
 print(f'   implied_vols fuzz: {n_checked} recoverable quotes, worst error {worst_err:.2e}, {not_conv} above 1e-6')
 chk('implied_vols fuzz: every recoverable quote solved to 1e-6, with bad quotes mixed in', not_conv == 0)
 # at the iteration cap the unsolved strikes come back as numbers, not NaN and not an error
-capped = iv(P11, K11, 100.0, 0.05, 1 / 12, kinds11, maxit=3)
-n_wrong = int(np.sum(np.abs(capped - v11) > 1e-6))
-print(f'   implied_vols with maxit = 3: {n_wrong} of 11 strikes are returned unconverged, as plain numbers; worst miss {np.nanmax(np.abs(capped - v11)):.3f}')
-xfail('implied_vols (delta): strikes still unsolved at the iteration cap are flagged (NaN), not returned as numbers',
-      n_wrong == 0 or bool(np.all(np.isnan(capped[np.abs(capped - v11) > 1e-6]))), f'{n_wrong} unconverged vols returned silently')
-# corrected assert (after the fix `return np.where(ok & ~live, s, np.nan)`):
-#   assert np.all(np.isnan(capped) | (np.abs(capped - v11) < 1e-6))
+def raises_runtime(fn):
+    try:
+        return False, fn()
+    except RuntimeError:
+        return True, None
+# the smallest cap at which all eleven converge; every smaller cap must raise, none may return a wrong vol
+caps = [raises_runtime(lambda k=k: iv(P11, K11, 100.0, 0.05, 1 / 12, kinds11, maxit=k)) for k in range(1, 31)]
+first_ok = next(k + 1 for k, (rz, _) in enumerate(caps) if not rz)
+print(f'   implied_vols: maxit = 1 to {first_ok - 1} raise RuntimeError; from maxit = {first_ok} the eleven vols come back')
+chk('implied_vols (delta): strikes still unsolved at the iteration cap raise RuntimeError, never come back as numbers (corrected claim, fix pass)',
+    caps[0][0] and caps[2][0] and all(rz or np.max(np.abs(v - v11)) < 1e-6 for rz, v in caps), f'first cap that returns: {first_ok}')
 
 glc, glp = ns10['gl_call_price'], ns10['gl_put_price']
 worst_gl = 0.0
@@ -748,13 +749,14 @@ bad_ = rng.random(n_) < 0.1
 pp2 = np.where(bad_, 100 * cc * nn + 100 + 1.0, pp)
 out = yb(pp2, cc, nn)
 chk('ytm_book fuzz: 5,000 bonds, yields 0 to 95%, bad prices mixed in', np.all(np.isnan(out[bad_])) and np.max(np.abs(out[~bad_] - yy_[~bad_])) < 1e-9, f'{np.nanmax(np.abs(out[~bad_] - yy_[~bad_])):.2e}')
-capped = yb(pp[:200], cc[:200], nn[:200], maxit=2)
-n_wrong = int(np.sum(np.abs(capped - yy_[:200]) > 1e-6))
-print(f'   ytm_book with maxit = 2: {n_wrong} of 200 bonds are returned unconverged, as plain numbers')
-xfail('ytm_book (delta): bonds still unsolved at the iteration cap are flagged (NaN), not returned as numbers',
-      n_wrong == 0 or bool(np.all(np.isnan(capped[np.abs(capped - yy_[:200]) > 1e-6]))), f'{n_wrong} unconverged yields returned silently')
-# corrected assert (after the fix `return np.where(ok & ~live, y, np.nan)`):
-#   assert np.all(np.isnan(capped) | (np.abs(capped - yy_[:200]) < 1e-6))
+caps = [raises_runtime(lambda k=k: yb(pp[:200], cc[:200], nn[:200], maxit=k)) for k in range(1, 41)]
+first_ok = next((k + 1 for k, (rz, _) in enumerate(caps) if not rz), None)
+print(f'   ytm_book, 200 bonds: maxit = 1 to {first_ok - 1} raise RuntimeError; from maxit = {first_ok} the yields come back')
+chk('ytm_book (delta): bonds still unsolved at the iteration cap raise RuntimeError, never come back as numbers (corrected claim, fix pass)',
+    caps[1][0] and all(rz or np.max(np.abs(v - yy_[:200])) < 1e-9 for rz, v in caps), f'first cap that returns: {first_ok}')
+# edge bonds whose yield sits on an end of the bracket must still converge, not raise
+chk('ytm_book: yields of exactly 0 and 1 converge under the default cap (no RuntimeError)',
+    not raises_runtime(lambda: yb([125.0, price_of(1.0, 0.05, 5)], [0.05, 0.05], [5, 5]))[0])
 
 print(f'--- {NPASS[0]} checks passed, {len(XFAILS)} EXPECTED_FAIL, {len(FAILS)} failed, {time.time() - t0:.0f} s')
 for x in XFAILS:

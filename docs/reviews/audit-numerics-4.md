@@ -117,3 +117,38 @@ Delta, for the record (not in the table): the head of `docs/reviews/audit-numeri
 - `python3 docs/reports/numerics-L4-concepts.py; echo $?`: 244 checks pass, 8 `EXPECTED_FAIL`, 0 failed, exit 0, about 15 s.
 - `node tools/playthrough.mjs --set numerics/review-4 --local-cdn <pkgs>`: "ok numerics/review-4 10 items, recorded 10 of 10", "All passed." The same with `--mobile`: "All passed."
 - No content, engine file, `course.json` or state file was changed. One bullet was added to `docs/BACKLOG-INBOX.md` under `Raised later (audit numerics):`.
+
+## Fix pass
+
+Opus fixer. Content commits `5e3d2f21` (all 17 findings) and `04522501` (l5 test folded, see finding 15). Every basis below is my own: a source, a derivation, or a run of my own code (`verify.py` and `runw.py` in the session scratchpad, written afresh, not the auditor's script), and the figures were then rechecked by the concepts script. Result: 17 fixed, 0 disputed, 0 not applied.
+
+| # | Status | Basis (one line) |
+|---|---|---|
+| 1 | fixed | Own run of the lesson's example, seed 0, 50,000 pairs: SE over pairs £0.0329, SE over the 100,000 payoffs as if independent £0.0466 (pair correlation −0.501), so payoff counting overstates here; for the straddle (positive pair correlation) it gives £0.0419 against £0.0537, too small. Glasserman section 4.2. Applied with the auditor's figures, reworded: "the two payoffs in a pair are not independent, so counting payoffs would give £0.0466 here, not £0.0329." |
+| 2 | fixed | Own simulation, 200,000 paths, seed 123, H = 90: ρ(barrier, European payoff) = 0.964 monthly, 0.932 daily (factors 14 and 8, not 1,000). Explain states "ρ of about 0.93 to 0.96". |
+| 3 | fixed | Own run, 2 million normals: \|S_T − 70\| has pair correlation −0.917, so two-sided payoffs can be helped; monotone f gives Cov(f(Z), f(−Z)) ≤ 0 (Glasserman section 4.2). Trap reworded to "they are sure to help a payoff that moves one way with z, but for our at-the-money straddle they increase the variance." |
+| 4 | fixed | Own run, n = 10, 300,000 reps: bias −0.835 (SE 0.004) with b fitted on the same paths, −0.001 with b fixed; Glasserman section 4.1.3 (bias O(1/n)). |
+| 5 | fixed | Var(aY) = a²Var(Y): variance is a quadratic form; covariance is the bilinear form the expansion uses. |
+| 6 | fixed | Own spectral-radius scan of the M = 100 step matrix: radius ≤ 1 from N = 359, bound asks 401; Morton and Mayers chapter 2 (maximum principle gives a sufficient condition). |
+| 7 | fixed | Own θ-scheme on SciPy's banded solver: M = 100, space part −0.0099 (CN at N = 4,000), explicit time part +0.0021 at N = 500; M = 200: −0.0025 and +0.0006. Both new figures added to the concepts script. |
+| 8 | fixed | Count by hand from the lesson's `thomas`: 3 multiplies, 2 divides, 3 subtracts a row, so 5n multiplications and divisions (1,992 for 399 unknowns) and 8n operations; dense elimination n³/3 counts multiplications (Higham chapter 9; Golub and Van Loan section 4.3). The stated 1,200 became 2,000, so `numerics-L4-numbers.py` line for l14 screens[8].explain now checks 2,000 against 2 + 5 × 398. |
+| 9 | fixed | Own factors at ν = 0.4, ω = π: explicit −0.600, implicit 0.385, Crank-Nicolson 0.111; they are not close, and the agreement comes from small time errors. |
+| 10 | fixed | Richardson: for an order-p method the error of the finer grid is about −(V_h − V_2h)/(2^p − 1), an asymptotic estimate, not a bound (LeVeque, Finite Difference Methods, appendix A). Own recompute from the stated errors: estimates −6.62e-4, −1.66e-4, −4.15e-5 against −6.64e-4, −1.66e-4, −4.15e-5. Wording made exact: "a third of the last change in price, with the opposite sign". |
+| 11 | fixed | The central limit theorem behind s/√n needs a finite variance (Glasserman section 1.1). |
+| 12 | fixed | Grid error n^(−p/d) against n^(−1/2) ties at d = 2p: 4 for the trapezium (p = 2) of screens[7], 8 for a fourth-order rule. |
+| 13 | fixed | Broadie, Glasserman and Kou, "A continuity correction for discrete barrier options", Mathematical Finance 7(4), 1997; own closed form with the shifted barrier gives £9.580, £9.174, £8.914. |
+| 14 | fixed | The solution's `gl_price` integrates (−8, z*) for a put; docstring now says so, reflowed to keep the lines short. |
+| 15 | fixed | Own run of the old solution: `bisect(x² − 2, 2.0, 1.0, 1e-12)` returns (1.5, 2). Swapping the ends first is the minimal repair. The validator allows at most 15 tests, so the new check is folded into test 0, which now asks for the root with the ends in both orders (`[bisect(..., 1, 2, ...)[0], bisect(..., 2, 1, ...)[0]]` against `[2 ** 0.5, 2 ** 0.5]`); test count stays 15. CPython: solution 15 of 15 tests and the example pass, starter fails 15 of 15, old solution fails test 0. |
+| 16 | fixed, convention changed | Unconverged values must not come back as numbers; the auditor's NaN fix is sound, but I used `RuntimeError`, as the repaired `safe_newton` on the screen before does and as Numerical Recipes `rtsafe` (section 9.4) does at its cap. NaN keeps its one meaning, "no vol exists". Two lines after the loop: `if live.any(): raise RuntimeError('no convergence')`. Docstring, prose, hint 3 and `how` describe it. New hidden test: the eleven quotes with `maxit=1`, `compare: raises`, `expect: RuntimeError`. CPython: solution 5 of 5 tests and the example, starter fails 5 of 5, old solution fails the new test. With the default cap all eleven solve, the 9,849-quote fuzz never raises; caps 1 to 8 raise, 9 and above return the brentq vols. |
+| 17 | fixed, convention changed | As 16, for `ytm_book`. Docstring, prose, `how` and `feedback.correct` ("All seven pass") updated. New hidden test: `ytm_book([95.0, 60.0], [0.05, 0.0], [5, 10], maxit=1)` raises `RuntimeError`. CPython: solution 7 of 7 tests and the example, starter fails 7 of 7, old solution fails the new test. The 5,000-bond fuzz and the yield-0 and yield-1 edge bonds converge without raising. |
+
+Graded keys, options, accepted answers and tests that changed:
+
+- l14 `quiz[1]` correct option text (id `small`; still the correct option).
+- homework-4 `items[7].rubric[4].text` and `items[7].prompt` (rubric wording: "deterministic estimates", not "bounds").
+- l5 `screens[8].widget.tests[0]` (now checks both bracket orders); l6 `screens[8].widget.tests[4]` added; homework-2 `items[6].widget.tests[6]` added. Solutions of `bisect`, `implied_vols` and `ytm_book` changed; signatures unchanged.
+- No other graded key changed. Feedback strings changed: l14 screens[8].feedback.correct, review-4 items[3].feedback.correct, homework-2 items[6].feedback.correct.
+
+Scripts: in `numerics-L4-concepts.py` the eight `EXPECTED_FAIL` checks are now ordinary checks of the corrected claims, each marked "(corrected claim, fix pass)" and computed afresh (multiplication-and-division counter for Thomas; RuntimeError at every cap below convergence and the right values above it; ρ in [0.925, 0.965] at both monitoring rates). Two checks added for −0.0099 and +0.0021. `numerics-L4-numbers.py`: one line, 1,200 to 2,000.
+
+Gates: validator 0 errors (4,135 warnings, manifest unchanged); concepts 256 passed, 0 `EXPECTED_FAIL`, exit 0; L4 numbers 215 of 215, exit 0; L2 numbers exit 0; L2 concepts r3 73 checks, exit 0; voice scan 35: 0 explanations over three sentences, 0 sentences over 35 words; playthrough desktop and `--mobile` all passed for l5, l6, l13, l14, l15, l16, l17, homework-2, review-4 and homework-4.
