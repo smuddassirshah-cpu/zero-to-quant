@@ -268,6 +268,190 @@ ok(abs(tot / n - float(rule)) < 0.05, f'p-carry-pause: simulated rule {tot / n}'
 ok(avg + (1 - share) * (-nextS) == rule, 'p-carry-pause: rule = always on + skipped loss')
 ok(nextC == F(245, 100), 'p-carry-pause: 2.45 after calm')
 
+# ------------------------------------------------------------------ level 2
+L2 = load(2)
+
+
+def solve_exact(A, b):
+    """Gaussian elimination over Fractions."""
+    n = len(A)
+    M = [list(map(F, A[i])) + [F(b[i])] for i in range(n)]
+    for c in range(n):
+        r = next(i for i in range(c, n) if M[i][c] != 0)
+        M[c], M[r] = M[r], M[c]
+        for i in range(n):
+            if i != c and M[i][c] != 0:
+                f = M[i][c] / M[c][c]
+                M[i] = [a - f * bb for a, bb in zip(M[i], M[c])]
+    return [M[i][n] / M[i][i] for i in range(n)]
+
+
+def stationary_exact(P):
+    """pi P = pi with sum 1: replace the last balance equation by the normaliser."""
+    n = len(P)
+    A = [[P[j][i] - (1 if i == j else 0) for j in range(n)] for i in range(n)]
+    A[-1] = [F(1)] * n
+    return solve_exact(A, [0] * (n - 1) + [1])
+
+
+def absorb(P, trans, target):
+    """Exact chance of absorption at `target` from each transient state, (I - Q)h = r."""
+    A = [[(1 if i == j else 0) - P[i][j] for j in trans] for i in trans]
+    return solve_exact(A, [P[i][target] for i in trans])
+
+
+def steps(P, trans):
+    A = [[(1 if i == j else 0) - P[i][j] for j in trans] for i in trans]
+    return solve_exact(A, [1] * len(trans))
+
+
+def np_absorb(P, trans, absn):
+    A = np.array([[float(x) for x in r] for r in P])
+    Q = A[np.ix_(trans, trans)]
+    R = A[np.ix_(trans, absn)]
+    N = np.linalg.inv(np.eye(len(trans)) - Q)
+    return N @ R, N @ np.ones(len(trans))
+
+
+def expr(items, iid, k, value_at, wrong_at, q0=F(3, 5)):
+    """An expression part in q: answer and accept forms equal value_at(q) at several q;
+    each wrong differs. Uses sympy."""
+    if items is None:
+        return
+    import sympy as sp
+    q = sp.Symbol('q')
+    w = items[iid]['parts'][k - 1]['widget']
+    tag = f'{iid} p{k}'
+
+    from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+
+    def parse(t):
+        t = re.sub(r'\\frac\{([^{}]+)\}\{([^{}]+)\}', r'((\1)/(\2))', t)
+        return parse_expr(t, local_dict={'q': q},
+                          transformations=standard_transformations + (implicit_multiplication_application,))
+    forms = [w['answer']] + w.get('accept', [])
+    for f_ in forms:
+        e = parse(f_)
+        for qv in [F(1, 10), F(3, 5), F(9, 10)]:
+            ok(sp.Rational(value_at(qv)) == sp.nsimplify(e.subs(q, sp.Rational(qv))), f'{tag}: form {f_} differs at q={qv}')
+    for x in w['wrong']:
+        e = parse(x['tex'])
+        ok(sp.simplify(e - parse(w['answer'])) != 0, f'{tag}: wrong {x["id"]} equals the answer')
+        ok(x['id'] in wrong_at and sp.nsimplify(e.subs(q, sp.Rational(1, 2))) == sp.Rational(wrong_at[x['id']](F(1, 2))),
+           f'{tag}: wrong {x["id"]} does not match its slip')
+    ok(set(x['id'] for x in w['wrong']) == set(wrong_at), f'{tag}: wrong ids differ')
+    ok(set(items[iid]['parts'][k - 1]['feedback']['byKey']) == set(wrong_at), f'{tag}: byKey keys differ')
+
+
+# p-band-days: order Below, Inside, Above
+PB = [[F(1, 2), F(1, 2), F(0)], [F(1, 10), F(8, 10), F(1, 10)], [F(0), F(4, 10), F(6, 10)]]
+canvas_matrix(L2, 'p-band-days', PB)
+B_, I_, A_ = 0, 1, 2
+num(L2, 'p-band-days', 1, mpow(PB, 2)[I_][A_], npow(PB, 2)[I_][A_],
+    {'squared': PB[I_][A_] ** 2, 'one-path': PB[I_][I_] * PB[I_][A_], 'one-step': PB[I_][A_]})
+c = PB[I_][B_] / (1 - PB[B_][B_])
+piB = stationary_exact(PB)
+pin = stationary_np(PB)
+num(L2, 'p-band-days', 2, c, pin[B_] / pin[I_],
+    {'inverted': 1 / c, 'no-move': PB[I_][B_], 'row': PB[B_][B_] + PB[B_][I_]})
+cA = PB[I_][A_] / (1 - PB[A_][A_])
+ok(cA == F(1, 4), 'p-band-days: pi_A = 0.25 pi_I')
+num(L2, 'p-band-days', 3, 1 / (1 + c + cA), pin[I_],
+    {'equal': F(1, 3), 'stay': PB[I_][I_], 'no-move-carry': 1 / (1 + PB[I_][B_] + cA), 'no-self': 1 / (c + cA)})
+ok(piB == [F(4, 29), F(20, 29), F(5, 29)], f'p-band-days: pi {piB}')
+ok(np.allclose(npow(PB, 60), np.tile(pin, (3, 1)), atol=1e-6), 'p-band-days: P^60 rows equal pi')
+pick(L2, 'p-band-days', 4, 'yes')
+piI = piB[I_]
+pl = (1 - piI) * 3 - piI * 1
+rng = np.random.default_rng(11)
+st, tot, n = 1, 0.0, 300000
+cum = np.cumsum(np.array([[float(x) for x in r] for r in PB]), axis=1)
+for _ in range(n):
+    tot += 3 if st != 1 else -1
+    st = int(np.searchsorted(cum[st], rng.random(), side='right'))
+ok(abs(tot / n - float(pl)) < 0.03, f'p-band-days: simulated P&L {tot / n}')
+num(L2, 'p-band-days', 5, pl, float(pin @ np.array([3, -1, 3])),
+    {'equal': F(3 - 1 + 3, 3), 'sign': (1 - piI) * 3 + piI, 'stay': F(2, 10) * 3 - F(8, 10), 'outside-only': (1 - piI) * 3})
+
+# p-strategy-trial: order Test, On, Off, Shut
+PT = [[F(1, 2), F(3, 10), F(0), F(2, 10)], [F(0), F(9, 10), F(1, 10), F(0)],
+      [F(0), F(4, 10), F(6, 10), F(0)], [F(0), F(0), F(0), F(1)]]
+canvas_matrix(L2, 'p-strategy-trial', PT)
+num(L2, 'p-strategy-trial', 1, mpow(PT, 2)[0][1], npow(PT, 2)[0][1],
+    {'test-test': PT[0][0] * PT[0][1], 'on-on': PT[0][1] * PT[1][1], 'squared': PT[0][1] ** 2})
+live = stationary_exact([[PT[1][1], PT[1][2]], [PT[2][1], PT[2][2]]])
+num(L2, 'p-strategy-trial', 2, live[0], stationary_np([[0.9, 0.1], [0.4, 0.6]])[0],
+    {'stay': PT[1][1], 'swapped': live[1], 'equal': F(1, 2), 'stay-ratio': PT[1][1] / (PT[1][1] + PT[2][1])})
+hl = PT[0][1] / (1 - PT[0][0])
+num(L2, 'p-strategy-trial', 3, hl, 1 - npow(PT, 500)[0][3],
+    {'one-week': PT[0][1], 'two-weeks': PT[0][1] + PT[0][0] * PT[0][1], 'carry': mpow(PT, 2)[0][1],
+     'total': PT[0][1] + PT[0][0]})
+num(L2, 'p-strategy-trial', 4, hl * live[0], npow(PT, 500)[0][1],
+    {'ignores-shut': live[0], 'live-only': hl, 'two-step': mpow(PT, 2)[0][1], 'whole-chain': 0})
+
+# p-rfq-rounds: order Quote, Counter, Trade, Walk
+PR = [[F(0), F(4, 10), F(4, 10), F(2, 10)], [F(1, 2), F(0), F(2, 10), F(3, 10)],
+      [F(0), F(0), F(1), F(0)], [F(0), F(0), F(0), F(1)]]
+canvas_matrix(L2, 'p-rfq-rounds', PR)
+expr(L2, 'p-rfq-rounds', 1, lambda qv: F(1, 5) + qv / 2,
+     {'no-direct': lambda qv: qv / 2, 'walk': lambda qv: F(3, 10) + qv / 2, 'plus-one': lambda qv: F(6, 5) + qv / 2})
+hq = absorb(PR, [0, 1], 2)
+Hn, tn = np_absorb(PR, [0, 1], [2, 3])
+num(L2, 'p-rfq-rounds', 2, hq[0], Hn[0][0],
+    {'direct': PR[0][2], 'one-pass': PR[0][2] + PR[0][1] * PR[1][2], 'no-direct': PR[0][2] / (1 - PR[0][1] * F(1, 2)),
+     'walk': (PR[0][2] + PR[0][1] * F(3, 10)) / (1 - PR[0][1] * F(1, 2))})
+ok(hq[1] == F(1, 2) and abs(Hn[0][1] - 0.4) < 1e-12, 'p-rfq-rounds: h_C = 0.5 and walk row 0.4')
+tq = steps(PR, [0, 1])
+num(L2, 'p-rfq-rounds', 3, tq[0], tn[0],
+    {'one-pass': 1 + PR[0][1], 'no-one': 0, 'geometric': 1 / (PR[0][2] + PR[0][3]), 'counter': tq[1]})
+ok(tq[1] == F(15, 8), 'p-rfq-rounds: t_C = 1.875')
+PR2 = [r[:] for r in PR]
+PR2[0] = [F(0), F(3, 10), F(5, 10), F(2, 10)]
+hq2 = absorb(PR2, [0, 1], 2)
+Hn2, _ = np_absorb(PR2, [0, 1], [2, 3])
+num(L2, 'p-rfq-rounds', 4, hq2[0], Hn2[0][0],
+    {'one-pass': PR2[0][2] + PR2[0][1] * PR2[1][2], 'old-hc': PR2[0][2] + PR2[0][1] * hq[1], 'direct': PR2[0][2],
+     'old-q': hq[0]})
+ok(hq2[0] == F(56, 85), 'p-rfq-rounds: new q = 56/85')
+pick(L2, 'p-rfq-rounds', 5, 'old')
+ok(hq[0] * 50 == 30 and abs(float(hq2[0] * 40) - 26.35) < 0.005, 'p-rfq-rounds: £30 and £26.35')
+
+# p-merger-arb: order Announced, Review, Completed, Withdrawn
+PA = [[F(1, 2), F(3, 10), F(1, 10), F(1, 10)], [F(0), F(6, 10), F(1, 4), F(15, 100)],
+      [F(0), F(0), F(1), F(0)], [F(0), F(0), F(0), F(1)]]
+canvas_matrix(L2, 'p-merger-arb', PA)
+hA, hR = absorb(PA, [0, 1], 2)
+Ha, ta_n = np_absorb(PA, [0, 1], [2, 3])
+num(L2, 'p-merger-arb', 1, hR, Ha[1][0],
+    {'one-month': PA[1][2], 'over-stay': PA[1][2] / PA[1][1], 'leave': PA[1][2] + PA[1][3]})
+noloop = PA[0][2] + PA[0][1] * hR
+num(L2, 'p-merger-arb', 2, hA, Ha[0][0],
+    {'no-loop': noloop, 'direct': PA[0][2] + PA[0][1], 'loop-once': noloop * F(3, 2)})
+tA, tR = steps(PA, [0, 1])
+ok(tR == F(5, 2), 'p-merger-arb: t_R = 2.5')
+num(L2, 'p-merger-arb', 3, tA, ta_n[0],
+    {'no-loop': 1 + PA[0][1] * tR, 'no-review': 1 / (1 - PA[0][0]), 'no-one': PA[0][1] * tR / (1 - PA[0][0]),
+     'added': 1 / (1 - PA[0][0]) + tR})
+ev = hA * 10 + (1 - hA) * 6
+# alt: simulate deals
+rng = np.random.default_rng(5)
+cumA = np.cumsum(np.array([[float(x) for x in r] for r in PA]), axis=1)
+vals, months = [], []
+for _ in range(100000):
+    s_, m_ = 0, 0
+    while s_ in (0, 1):
+        s_ = int(np.searchsorted(cumA[s_], rng.random(), side='right'))
+        m_ += 1
+    vals.append(10 if s_ == 2 else 6)
+    months.append(m_)
+ok(abs(np.mean(vals) - float(ev)) < 0.03, f'p-merger-arb: simulated value {np.mean(vals)}')
+ok(abs(np.mean(months) - float(tA)) < 0.05, f'p-merger-arb: simulated months {np.mean(months)}')
+num(L2, 'p-merger-arb', 4, ev, Ha[0][0] * 10 + Ha[0][1] * 6,
+    {'review-h': hR * 10 + (1 - hR) * 6, 'even': F(8), 'no-withdraw': hA * 10, 'swapped': hA * 6 + (1 - hA) * 10})
+cost = F(2, 100)
+num(L2, 'p-merger-arb', 5, ev - cost * tA, float(np.mean(vals)) * 0 + float(Ha[0][0] * 10 + Ha[0][1] * 6) - 0.02 * ta_n[0],
+    {'no-cost': ev, 'review-time': ev - cost * tR, 'one-month': ev - cost, 'carry-added': ev - cost * (2 + tR)})
+
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:

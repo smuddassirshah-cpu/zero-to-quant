@@ -32,3 +32,30 @@ Checks (level 1):
 | voice scan 35 (course folder) | 0 and 0 |
 
 Fresh-check: 0 hits at the gate. At triage settings (`--min-run 8 --min-share 0`) one hit, "give a decimal to # places using # how many", against `counting-chance/problems-3.json` items[2], share 0.06: the form sentence, stock phrasing. The settings are new to the course: no lesson, review or homework uses a Deep and Thin order book, a two-loss stop, margin calls or a paused carry trade. The bull and bear numbers, the A, B, Default ratings and the weather chain of the lessons are not reused.
+
+## Level 2
+
+File: `problems-2.json` ("Problems: long runs and absorption", 50 minutes). Level 2 writes $P$ and $\pi$ without bold, as its lessons do.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-2 | p-band-days | 5 (4 / 1) | l5, l6 | 3 |
+| problems-2 | p-strategy-trial | 4 (4 / 0) | l5, l6, l8 | 4 |
+| problems-2 | p-rfq-rounds | 5 (4 / 1) | l7, l8 | 4 |
+| problems-2 | p-merger-arb | 5 (5 / 0) | l7, l8 | 5 |
+
+Typed parts 17 of 19 (one `expression`). Every lesson appears in at least two problems, and every problem draws on two or more.
+
+Chains. p-band-days: a two-step chance on a three-state band chain (0.14), the ratio $\pi_B = 0.2\pi_I$ from one column of $\pi P = \pi$, the normalised $\pi_I = \tfrac{20}{29}$, the judgement that the chain is irreducible and aperiodic so $\pi$ attracts every start, then a mean-reversion rule's long-run P&L ($\tfrac{7}{29} \approx$ £0.24k a day). p-strategy-trial: a reducible chain (Test, a live class On and Off, Shut); On in two weeks (0.42), the On share of the live class (0.8), the chance of ever going live (0.6), then the start-dependent limit $0.6 \times 0.8 = 0.48$. Part 3 does not use part 2; both feed part 4. p-rfq-rounds: a request for quote with re-quotes; $h_C = 0.2 + 0.5q$ as an expression, $q = 0.6$, expected rounds $t_Q = 1.75$, the trade chance under a tighter quote ($\tfrac{56}{85} \approx 0.6588$), then the judgement that the old quote earns more per request (£30 against £26.35). p-merger-arb: completion from Review (0.625) and from Announced (0.575), expected months to resolution (3.5), the share's expected value at resolution (£8.30), then the break-even price after holding costs (£8.23). Each later part restates the value it needs, and its `wrong` list holds the value from the commonest slip before it (the dropped $0.5\pi_B$ gives $\pi_I = 0.7407$; 4.5 months gives £8.21).
+
+Checks (level 2):
+
+| check | result |
+|---|---|
+| numbers script | 788 checks with levels 1 and 2, 0 failures |
+| validator | 0 errors, 0 warnings on the file |
+| playthrough `--local-cdn` | green (4 problems, 19 parts) |
+| playthrough `--mobile` | green; 440 px shots read, the matrix canvas fits |
+| voice scan 35 (course folder) | 0 and 0 |
+
+Fresh-check: 0 hits at the gate. At triage settings three hits, all against `problems-1.json` and all form sentences or "using # from part # what is the chance" (shares 0.06 or less): stock phrasing. No lesson, review or homework uses a price band, a strategy trial, a request for quote or a takeover; the order queue, the loan ratings and the fair walks of l7 and l8 are not reused.
