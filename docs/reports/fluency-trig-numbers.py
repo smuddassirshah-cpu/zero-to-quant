@@ -1,7 +1,7 @@
 """Recompute every Fluency answer and every named slip in the trig sets from the drawn variable values alone, with
 sympy, and compare with what the engine resolved (tools/fluency-sample.mjs --json).
-Method 1 is the engine's own arithmetic in gen.js (exact fractions; the sines and cosines of l3 by a Taylor series in
-`let`, rounded to 4 dp; pi written as 3.14159265358979); method 2 is this script: sympy's exact sin, cos, tan and pi,
+Method 1 is the engine's own arithmetic in gen.js (exact fractions; since the widening pass the sines, cosines and
+tangents of l3 come from the evaluator's own `sin`, `cos`, `tan` and `pi`, rounded to 4 dp); method 2 is this script: sympy's exact sin, cos, tan and pi,
 and Pythagoras from the vars only. It checks the key, that each wrong is the slip it names, that each wrong lies
 outside the key's tolerance, that the values a prompt gives are the true ratios to 4 dp, and that an exact key equals
 sympy's exact value. Run with the sympy venv:
@@ -76,8 +76,8 @@ def tex(s):
         while depth:
             depth += {'{': 1, '}': -1}.get(s[k], 0); k += 1
         s = s[:i] + '((' + s[i + 6:j - 1] + ')/(' + s[j + 1:k - 1] + '))' + s[k:]
-    s = s.replace('\\sqrt', ' sqrt').replace('{', '(').replace('}', ')')
-    return parse_expr(s, local_dict={'sqrt': sp.sqrt}, transformations=TR)
+    s = s.replace('\\sqrt', ' sqrt').replace('\\pi', ' pi ').replace('{', '(').replace('}', ')')
+    return parse_expr(s, local_dict={'sqrt': sp.sqrt, 'pi': sp.pi}, transformations=TR)
 
 
 def expr_item(it, key, wrongs):
@@ -230,6 +230,18 @@ def l7_d2r(it, V):
     num_item(it, k, {'upside-down': 1 / k, 'used-a-full-turn': sp.Rational(d, 360)})
 
 
+def l7_d2r_exact(it, V):
+    """Widening pass: the exact radian measure, a multiple of pi in lowest terms."""
+    d = V['d']
+    theta = sp.nsimplify(d * DEG)
+    k = theta / sp.pi
+    p, q = sp.fraction(k)
+    check(f"${d}^\\circ$ in radians, exactly" in it['prompt'], f"degrees-to-radians-exact seed {it['seed']}: prompt")
+    check(it['answer'] == (f"\\frac{{\\pi}}{{{q}}}" if p == 1 else f"\\frac{{{p}\\pi}}{{{q}}}") and q > 1 and sp.gcd(p, q) == 1,
+          f"degrees-to-radians-exact seed {it['seed']}: key {it['answer']} is {theta} in lowest terms")
+    expr_item(it, theta, {'upside-down': sp.pi / k, 'used-a-full-turn': sp.Rational(d, 360) * sp.pi})
+
+
 def l7_r2d(it, V):
     q, h = V['q'], V['h']
     p = 1 + h % (2 * q - 1)
@@ -260,7 +272,7 @@ JOBS = [
     (L3, 'side-from-hypotenuse', l3_side), (L3, 'hypotenuse-from-side', l3_hyp), (L3, 'height-with-tan', l3_tan),
     (L4, 'side-from-hypotenuse', l4_side), (L4, 'height-with-tan', l4_tan),
     (L4, 'forty-five-triangle', l4_45), (L4, 'combine-values', l4_combine),
-    (L7, 'degrees-to-radians', l7_d2r), (L7, 'radians-to-degrees', l7_r2d),
+    (L7, 'degrees-to-radians', l7_d2r), (L7, 'degrees-to-radians-exact', l7_d2r_exact), (L7, 'radians-to-degrees', l7_r2d),
     (L7, 'radians-to-degrees-1-dp', l7_r2d_dp), (L7, 'arc-length', l7_arc),
 ]
 
