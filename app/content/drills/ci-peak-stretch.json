@@ -1,0 +1,124 @@
+{
+  "id": "ci-peak-stretch",
+  "name": "Shortest stretch with the busiest badge",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "hashing",
+  "tags": [
+    "pack-1",
+    "peak-stretch"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1200,
+  "fn": "shortest_peak_stretch",
+  "returns": "a whole number",
+  "brief": "A door logs the badge number of each entry in `badges`. The peak count of a log is the most entries made by any one badge. Return the length of the shortest stretch of consecutive entries whose peak count equals the peak count of the whole log. Return 0 for an empty log.\n\nWrite `shortest_peak_stretch(badges)`.\n\nExample. In `[1, 2, 2, 3, 1]` the peak count is 2, held by badges 1 and 2. Badge 1 needs all five entries, but badge 2 needs only entries 1 and 2. The answer is 2.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ entries, each a whole number between $-10^9$ and $10^9$.",
+    "$O(n)$ time is the target. Checking every stretch is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "A stretch with the peak count must hold every entry of some badge with the peak count. So record each badge's count, first position and last position, then take the shortest span among the badges at the peak.",
+  "starter": "def shortest_peak_stretch(badges):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "shortest_peak_stretch([1, 2, 2, 3, 1])",
+      "expect": "2",
+      "compare": "equal",
+      "note": "Badges 1 and 2 both appear twice. Badge 2 spans 2 entries and badge 1 spans 5."
+    },
+    {
+      "call": "shortest_peak_stretch([5, 6, 7])",
+      "expect": "1",
+      "compare": "equal",
+      "note": "Each badge appears once, so a single entry already has the peak count."
+    }
+  ],
+  "tests": [
+    {
+      "call": "shortest_peak_stretch([])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([4])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([1, 2, 2, 3, 1])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([1, 2, 2, 3, 1, 4, 2])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([5, 6, 7])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([3, 1, 1, 3])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([7, 7, 7, 7])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([-1, -1, 0, 0, -1])",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([2, 1, 1, 2, 1, 3, 3, 3])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([i % 1000 for i in range(200000)])",
+      "expect": "199001",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch(list(range(100000)) + [99999])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_peak_stretch([i % 3 for i in range(150000)] + [7] * 50001)",
+      "expect": "50001",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def shortest_peak_stretch(badges):\n    count = {}\n    first = {}\n    best_count, best_len = 0, 0\n    for i, b in enumerate(badges):\n        if b not in first:\n            first[b] = i\n        count[b] = count.get(b, 0) + 1\n        span = i - first[b] + 1\n        if count[b] > best_count or (count[b] == best_count and span < best_len):\n            best_count, best_len = count[b], span\n    return best_len\n",
+  "notes": [
+    "The shortest stretch is the span from the first to the last entry of one badge at the peak count.",
+    "Several badges can share the peak count, so the span must be the smallest over all of them.",
+    "One pass keeps a count and a first position per badge, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def shortest_peak_stretch(badges):\n    if not badges:\n        return 0\n    count, first, last = {}, {}, {}\n    for i, b in enumerate(badges):\n        count[b] = count.get(b, 0) + 1\n        first.setdefault(b, i)\n        last[b] = i\n    top = max(count, key=count.get)\n    return last[top] - first[top] + 1\n",
+      "slip": "It takes the first badge at the peak count and ignores a later badge with a shorter span."
+    },
+    {
+      "code": "def shortest_peak_stretch(badges):\n    count, first, last = {}, {}, {}\n    for i, b in enumerate(badges):\n        count[b] = count.get(b, 0) + 1\n        first.setdefault(b, i)\n        last[b] = i\n    peak = max(count.values(), default=0)\n    return min((last[b] - first[b] for b in count if count[b] == peak), default=0)\n",
+      "slip": "It measures a span as last minus first, one short, so a single entry gives 0."
+    },
+    {
+      "code": "def shortest_peak_stretch(badges):\n    n = len(badges)\n    total = {}\n    for b in badges:\n        total[b] = total.get(b, 0) + 1\n    peak = max(total.values(), default=0)\n    best = n\n    for i in range(n):\n        seen = {}\n        top = 0\n        for j in range(i, n):\n            seen[badges[j]] = seen.get(badges[j], 0) + 1\n            top = max(top, seen[badges[j]])\n            if top == peak:\n                best = min(best, j - i + 1)\n                break\n    return best\n",
+      "slip": "It tries every start and grows each stretch, which is $O(n^2)$ and too slow for the large logs."
+    }
+  ]
+}

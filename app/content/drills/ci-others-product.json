@@ -1,0 +1,124 @@
+{
+  "id": "ci-others-product",
+  "name": "Products of every other cell",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "prefix-sums",
+  "tags": [
+    "pack-1",
+    "others-product"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "others_product_grid",
+  "returns": "a list of lists of whole numbers",
+  "brief": "`grid` is a table of growth factors, each a positive whole number, with `R` rows and `C` columns. For each cell, find the product of every other cell in the table, taken modulo 12345. Return a table of the same shape.\n\nWrite `others_product_grid(grid)`.\n\nExample. For `[[1, 2], [3, 4]]` the cell holding 1 gets 2 times 3 times 4, which is 24. The answer is `[[24, 12], [8, 6]]`.",
+  "constraints": [
+    "$1 \\le R \\cdot C \\le 100{,}000$ cells, each a whole number from 1 to $10^9$. A single cell has no others, so its product is 1.",
+    "$O(RC)$ time is the target. Since 12345 is $3 \\cdot 5 \\cdot 823$, not every factor has an inverse modulo 12345, so dividing out a cell does not work.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Read the table row by row as one long list. The product of the others is the product of everything before a cell times everything after it, so make one pass forwards and one backwards, reducing modulo 12345 at every step.",
+  "starter": "def others_product_grid(grid):\n    # your code here\n    return grid\n",
+  "examples": [
+    {
+      "call": "others_product_grid([[1, 2], [3, 4]])",
+      "expect": "[[24, 12], [8, 6]]",
+      "compare": "equal",
+      "note": "The cell holding 3 gets 1 times 2 times 4, which is 8."
+    },
+    {
+      "call": "others_product_grid([[12345], [2], [1]])",
+      "expect": "[[2], [0], [0]]",
+      "compare": "equal",
+      "note": "Any cell whose others include 12345 gets 0. The top cell gets 2 times 1."
+    }
+  ],
+  "tests": [
+    {
+      "call": "others_product_grid([[7]])",
+      "expect": "[[1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[3, 5]])",
+      "expect": "[[5, 3]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[1, 2], [3, 4]])",
+      "expect": "[[24, 12], [8, 6]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[12345], [2], [1]])",
+      "expect": "[[2], [0], [0]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[2, 3, 4, 5]])",
+      "expect": "[[60, 40, 30, 24]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[2], [3], [4]])",
+      "expect": "[[12], [8], [6]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[10 ** 9, 10 ** 9], [10 ** 9, 2]])",
+      "expect": "[[11780, 11780], [11780, 4855]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[823, 15], [1, 1]])",
+      "expect": "[[15, 823], [0, 0]]",
+      "compare": "equal"
+    },
+    {
+      "call": "others_product_grid([[100, 200, 300], [400, 500, 600]])",
+      "expect": "[[9435, 10890, 7260], [5445, 6825, 3630]]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda g: [len(g), g[0][:4], g[-1][-4:], sum(map(sum, g))])(others_product_grid([[2 ** ((r * 400 + c) % 29 + 1) for c in range(400)] for r in range(250)]))",
+      "expect": "[250, [8948, 4474, 2237, 7291], [9818, 4909, 8627, 10486], 870531974]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda g: [len(g), g[0][:4], g[-1][-4:], sum(map(sum, g))])(others_product_grid([[2 if (r * 1000 + c) % 3 else 7 for c in range(1000)] for r in range(100)]))",
+      "expect": "[100, [4483, 9518, 9518, 4483], [4483, 9518, 9518, 4483], 783963310]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda g: [len(g), g[0][:4], g[-1][-4:], sum(map(sum, g))])(others_product_grid([[12346] * 50000, [12344] * 50000]))",
+      "expect": "[2, [1, 1, 1, 1], [12344, 12344, 12344, 12344], 617250000]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The large tests need the step from multiplying out every other cell to products before and after each cell.",
+  "solution": "def others_product_grid(grid):\n    MOD = 12345\n    R, C = len(grid), len(grid[0])\n    flat = [v % MOD for row in grid for v in row]\n    out = [1] * len(flat)\n    acc = 1\n    for i in range(len(flat)):\n        out[i] = acc\n        acc = acc * flat[i] % MOD\n    acc = 1\n    for i in range(len(flat) - 1, -1, -1):\n        out[i] = out[i] * acc % MOD\n        acc = acc * flat[i] % MOD\n    return [out[r * C:(r + 1) * C] for r in range(R)]\n",
+  "notes": [
+    "The product of the others is the product before a cell times the product after it.",
+    "12345 is not prime, so the trick of dividing the total by the cell has no modular form here.",
+    "Two passes over the cells, each one multiply and one reduce, so the work is $O(RC)$."
+  ],
+  "planted": [
+    {
+      "code": "def others_product_grid(grid):\n    MOD = 12345\n    total = 1\n    for row in grid:\n        for v in row:\n            total = total * v % MOD\n    return [[total * pow(v, -1, MOD) % MOD for v in row] for row in grid]\n",
+      "slip": "It divides the total by each cell through a modular inverse, which does not exist for a factor sharing 3, 5 or 823 with 12345."
+    },
+    {
+      "code": "def others_product_grid(grid):\n    MOD = 12345\n    R, C = len(grid), len(grid[0])\n    flat = [v for row in grid for v in row]\n    out = [1] * len(flat)\n    acc = 1\n    for i in range(len(flat)):\n        out[i] = acc\n        acc = acc * flat[i] % MOD\n    acc = 1\n    for i in range(len(flat) - 1, -1, -1):\n        out[i] = out[i] * acc\n        acc = acc * flat[i] % MOD\n    return [out[r * C:(r + 1) * C] for r in range(R)]\n",
+      "slip": "It forgets the last reduction, so a cell can hold the product of two remainders, up to $12344^2$."
+    },
+    {
+      "code": "def others_product_grid(grid):\n    MOD = 12345\n    total = 1\n    for row in grid:\n        for v in row:\n            total *= v\n    return [[total // v % MOD for v in row] for row in grid]\n",
+      "slip": "It forms the exact product and divides each cell out, but that number has hundreds of thousands of digits and is far too slow."
+    }
+  ]
+}

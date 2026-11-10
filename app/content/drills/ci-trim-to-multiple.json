@@ -1,0 +1,129 @@
+{
+  "id": "ci-trim-to-multiple",
+  "name": "Shortest cut to an even split",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "prefix-sums",
+  "tags": [
+    "pack-1",
+    "trim-to-multiple"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2700,
+  "fn": "shortest_cut_to_multiple",
+  "returns": "a whole number",
+  "brief": "`lots` lists the sizes of a fund's orders in a day, and the remaining lots must split evenly among `p` brokers. You may cancel one stretch of consecutive orders, possibly none, but never all of them. Return the length of the shortest stretch whose removal leaves a total divisible by `p`. Return -1 if no stretch works.\n\nWrite `shortest_cut_to_multiple(lots, p)`.\n\nExample. For `lots = [6, 3, 5, 2]` and `p = 9` the total is 16. Cancelling 5 and 2 leaves 9, and no single order works, so the answer is 2.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ orders, each a whole number between $-10^9$ and $10^9$, and $1 \\le p \\le 10^9$.",
+    "$O(n)$ time is the target. Trying every stretch is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Let `need` be the total modulo `p`. A stretch works when its sum is `need` modulo `p`, so keep running sums modulo `p` and the last position of each. At each position look up the running sum less `need`.",
+  "starter": "def shortest_cut_to_multiple(lots, p):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "shortest_cut_to_multiple([6, 3, 5, 2], 9)",
+      "expect": "2",
+      "compare": "equal",
+      "note": "Cancelling 5 and 2 leaves 6 + 3 = 9, which 9 brokers split evenly."
+    },
+    {
+      "call": "shortest_cut_to_multiple([4], 5)",
+      "expect": "-1",
+      "compare": "equal",
+      "note": "Only cancelling the one order would work, and that is not allowed."
+    }
+  ],
+  "tests": [
+    {
+      "call": "shortest_cut_to_multiple([], 3)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([5], 5)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([4], 5)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([1, 1], 3)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([6, 3, 5, 2], 9)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([3, 1, 4, 2], 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([-3, 4, 2], 4)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([2, 5, 1, 5, 2], 5)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([7, 1, 1, 7, 3], 6)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([4, 1, 1, 1, 4], 4)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([1] * 199999 + [2], 200003)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([(i * 7919) % 1000003 for i in range(200000)], 999983)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "shortest_cut_to_multiple([2] * 200000, 3)",
+      "expect": "2",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The large tests need the step from trying every stretch to a dict of the last position of each running sum modulo `p`.",
+  "solution": "def shortest_cut_to_multiple(lots, p):\n    need = sum(lots) % p\n    if need == 0:\n        return 0\n    last = {0: -1}\n    run = 0\n    best = len(lots)\n    for i, x in enumerate(lots):\n        run = (run + x) % p\n        want = (run - need) % p\n        if want in last:\n            best = min(best, i - last[want])\n        last[run] = i\n    return -1 if best == len(lots) else best\n",
+  "notes": [
+    "A stretch works when its sum matches the total modulo `p`, which is a lookup of an earlier running sum.",
+    "Keep the last position of each running sum, so the stretch is the shortest, and refuse the whole list.",
+    "One pass with a dict, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def shortest_cut_to_multiple(lots, p):\n    need = sum(lots) % p\n    if need == 0:\n        return 0\n    last = {0: -1}\n    run = 0\n    best = None\n    for i, x in enumerate(lots):\n        run = (run + x) % p\n        want = (run - need) % p\n        if want in last and (best is None or i - last[want] < best):\n            best = i - last[want]\n        last[run] = i\n    return -1 if best is None else best\n",
+      "slip": "It allows the whole list to be cancelled, so it returns `n` where the answer is -1."
+    },
+    {
+      "code": "def shortest_cut_to_multiple(lots, p):\n    need = sum(lots) % p\n    if need == 0:\n        return 0\n    first = {0: -1}\n    run = 0\n    best = len(lots)\n    for i, x in enumerate(lots):\n        run = (run + x) % p\n        want = (run - need) % p\n        if want in first:\n            best = min(best, i - first[want])\n        first.setdefault(run, i)\n    return -1 if best == len(lots) else best\n",
+      "slip": "It keeps the first position of each running sum, so it measures from the earliest match and finds a longer stretch."
+    },
+    {
+      "code": "def shortest_cut_to_multiple(lots, p):\n    n = len(lots)\n    total = sum(lots)\n    if total % p == 0:\n        return 0\n    for length in range(1, n):\n        s = sum(lots[:length])\n        for start in range(n - length + 1):\n            if start:\n                s += lots[start + length - 1] - lots[start - 1]\n            if (total - s) % p == 0:\n                return length\n    return -1\n",
+      "slip": "It tries every length with a sliding sum, which is $O(n^2)$ when no short stretch works."
+    }
+  ]
+}

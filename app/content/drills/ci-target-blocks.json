@@ -1,0 +1,124 @@
+{
+  "id": "ci-target-blocks",
+  "name": "Rectangles of the map that hit the target",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "prefix-sums",
+  "tags": [
+    "pack-1",
+    "target-blocks"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2400,
+  "fn": "count_target_blocks",
+  "returns": "a whole number",
+  "brief": "`grid` is a map of whole-number readings with `R` rows and `C` columns, and readings may be negative. A block is any rectangle of one or more neighbouring cells. Count the blocks whose readings sum to exactly `target`.\n\nWrite `count_target_blocks(grid, target)`.\n\nExample. In `[[2, 1], [1, 2]]` with `target = 3` each row and each column sums to 3. No single cell or the whole map does, so the answer is 4.",
+  "constraints": [
+    "$1 \\le R \\le 60$ rows and $1 \\le C \\le 400$ columns. Each reading lies between $-1{,}000$ and $1{,}000$, and so does `target`.",
+    "$O(R^2 C)$ time is the target. Checking every rectangle with a prefix table is $O(R^2 C^2)$, too slow at 60 by 400.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Fix a top row and a bottom row, and add up each column between them. That leaves a one-dimensional list, where a dict of running sums counts the stretches with sum `target`.",
+  "starter": "def count_target_blocks(grid, target):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "count_target_blocks([[2, 1], [1, 2]], 3)",
+      "expect": "4",
+      "compare": "equal",
+      "note": "Both rows and both columns sum to 3. The cells give 2 or 1 and the whole map gives 6."
+    },
+    {
+      "call": "count_target_blocks([[1, -1], [-1, 1]], 0)",
+      "expect": "5",
+      "compare": "equal",
+      "note": "The two rows, the two columns and the whole map each sum to 0, which makes 5."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_target_blocks([[5]], 5)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[5]], 0)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[-2]], -2)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[2, 1], [1, 2]], 3)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[1, -1], [-1, 1]], 0)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[0, 0], [0, 0]], 0)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[1, 2, 3]], 3)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[1], [2], [3]], 3)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[0, 1, 0], [1, 1, 1], [0, 1, 0]], 0)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[3, -3, 3], [-3, 3, -3]], 3)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[(r * 7 + c * 3) % 5 - 2 for c in range(400)] for r in range(60)], 0)",
+      "expect": "70199280",
+      "compare": "equal"
+    },
+    {
+      "call": "count_target_blocks([[(r * c + r + 2 * c) % 5 - 2 for c in range(400)] for r in range(60)], 3)",
+      "expect": "574098",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The large tests need the step from checking every rectangle to fixing two rows and counting column-sum stretches with a dict.",
+  "solution": "def count_target_blocks(grid, target):\n    R, C = len(grid), len(grid[0])\n    total = 0\n    for top in range(R):\n        col = [0] * C\n        for bottom in range(top, R):\n            row = grid[bottom]\n            for c in range(C):\n                col[c] += row[c]\n            seen = {0: 1}\n            run = 0\n            for v in col:\n                run += v\n                total += seen.get(run - target, 0)\n                seen[run] = seen.get(run, 0) + 1\n    return total\n",
+  "notes": [
+    "Fixing the top and bottom rows turns each band into a list of column sums.",
+    "Each band needs its own dict starting at running sum 0, or blocks from the left edge are missed.",
+    "There are $O(R^2)$ bands, each a pass of $C$ steps, so the work is $O(R^2 C)$."
+  ],
+  "planted": [
+    {
+      "code": "def count_target_blocks(grid, target):\n    R, C = len(grid), len(grid[0])\n    pre = [[0] * (C + 1) for _ in range(R + 1)]\n    for r in range(R):\n        for c in range(C):\n            pre[r + 1][c + 1] = grid[r][c] + pre[r][c + 1] + pre[r + 1][c] - pre[r][c]\n    total = 0\n    for r1 in range(R):\n        for r2 in range(r1 + 1, R + 1):\n            for c1 in range(C):\n                for c2 in range(c1 + 1, C + 1):\n                    if pre[r2][c2] - pre[r1][c2] - pre[r2][c1] + pre[r1][c1] == target:\n                        total += 1\n    return total\n",
+      "slip": "It checks every rectangle with a prefix table, which is $O(R^2 C^2)$ and too slow at 60 by 400."
+    },
+    {
+      "code": "def count_target_blocks(grid, target):\n    R, C = len(grid), len(grid[0])\n    total = 0\n    for top in range(R):\n        col = [0] * C\n        for bottom in range(top, R):\n            for c in range(C):\n                col[c] += grid[bottom][c]\n            seen = {}\n            run = 0\n            for v in col:\n                run += v\n                total += seen.get(run - target, 0)\n                seen[run] = seen.get(run, 0) + 1\n    return total\n",
+      "slip": "Each band's dict starts empty, so blocks that start at the left edge are never counted."
+    },
+    {
+      "code": "def count_target_blocks(grid, target):\n    R, C = len(grid), len(grid[0])\n    total = 0\n    col = [0] * C\n    for bottom in range(R):\n        for c in range(C):\n            col[c] += grid[bottom][c]\n        seen = {0: 1}\n        run = 0\n        for v in col:\n            run += v\n            total += seen.get(run - target, 0)\n            seen[run] = seen.get(run, 0) + 1\n    return total\n",
+      "slip": "It only grows bands down from the top row, so blocks that start lower are missed."
+    }
+  ]
+}

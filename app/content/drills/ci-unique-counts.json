@@ -1,0 +1,136 @@
+{
+  "id": "ci-unique-counts",
+  "name": "Stock counts with no two alike",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "hashing",
+  "tags": [
+    "pack-1",
+    "stdin",
+    "unique-counts"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed",
+    "ci-strings"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "solve_unique_counts",
+  "returns": "a string",
+  "brief": "A shop's stock list holds one product code per item. The auditor wants no two different codes left with the same number of items. Remove as few items as you can to get there. A code with no items left is gone and has no count.\n\nThe whole input arrives as one string `text`.\n\nLine 1 holds `n`, the number of items.\n\nLine 2 holds the `n` product codes, separated by spaces.\n\nReturn the number of items removed, as a string. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_unique_counts(text)`.\n\nExample. For `\"5\\nAX BY AX CZ BY\\n\"` the counts are 2, 2 and 1. Keep 2, cut the other 2 to 1 and the 1 to 0, so the answer is `\"2\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ items. Each code is 1 to 8 letters and digits.",
+    "$O(n + k \\log k)$ time is the target, where $k$ is the number of distinct codes.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Count each code, then go through the counts from largest to smallest. Each count may keep at most one less than the count kept before it, and never less than 0.",
+  "starter": "def solve_unique_counts(text):\n    # your code here\n    return \"\"\n",
+  "examples": [
+    {
+      "call": "solve_unique_counts(\"5\\nAX BY AX CZ BY\\n\")",
+      "expect": "'2'",
+      "compare": "equal",
+      "note": "Counts 2, 2, 1 become 2, 1, 0, which removes 2 items."
+    },
+    {
+      "call": "solve_unique_counts(\"3\\nA B C\\n\")",
+      "expect": "'2'",
+      "compare": "equal",
+      "note": "Three counts of 1 become 1, 0 and 0, which removes 2 items."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_unique_counts(\"0\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"0\\n\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"1\\nQ7\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"3\\nA A A\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"3\\nA B C\\n\")",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"4\\nA A B B\\n\")",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"5\\nAX BY AX CZ BY\\n\")",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"  4 \\nA  A B  B  \\n\\n\")",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"6\\nK1 K1 K1 K2 K2 K2\\n\")",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"9\\na a a b b b c c c\\n\")",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"8\\nP P P P Q Q R S\\n\")",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"2\\nA  B\\n\")",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"200000\\n\" + \" \".join(\"C%d\" % (i % 700) for i in range(200000)) + \"\\n\")",
+      "expect": "'158959'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_unique_counts(\"200000\\n\" + \" \".join(\"D%d\" % (i * i % 997) for i in range(200000)) + \"\\n\\n\")",
+      "expect": "'118997'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_unique_counts(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    counts = {}\n    for code in tokens[1:1 + n]:\n        counts[code] = counts.get(code, 0) + 1\n    removed = 0\n    cap = None\n    for c in sorted(counts.values(), reverse=True):\n        keep = c if cap is None else min(c, cap)\n        removed += c - keep\n        cap = max(keep - 1, 0)\n    return str(removed)\n",
+  "notes": [
+    "Going from the largest count down, each count drops to one below the last count kept, or to 0.",
+    "Once a count reaches 0 the code is gone, so later codes may also go to 0 without a clash.",
+    "Counting is $O(n)$ and sorting the counts is $O(k \\log k)$."
+  ],
+  "planted": [
+    {
+      "code": "def solve_unique_counts(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    counts = {}\n    for code in tokens[1:1 + n]:\n        counts[code] = counts.get(code, 0) + 1\n    used = set()\n    removed = 0\n    for c in counts.values():\n        k = c\n        while k in used:\n            k -= 1\n        removed += c - k\n        used.add(k)\n    return str(removed)\n",
+      "slip": "It lets 0 clash like any other count, so codes already gone push later counts below zero."
+    },
+    {
+      "code": "def solve_unique_counts(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    counts = {}\n    for code in tokens[1:1 + n]:\n        counts[code] = counts.get(code, 0) + 1\n    used = set()\n    removed = 0\n    for c in counts.values():\n        if c in used:\n            removed += c\n        else:\n            used.add(c)\n    return str(removed)\n",
+      "slip": "On a clash it removes the whole code instead of trimming it to the next free count."
+    },
+    {
+      "code": "def solve_unique_counts(text):\n    lines = text.split(\"\\n\")\n    n = int(lines[0])\n    codes = lines[1].split(\" \") if n else []\n    counts = {}\n    for code in codes:\n        counts[code] = counts.get(code, 0) + 1\n    removed = 0\n    cap = None\n    for c in sorted(counts.values(), reverse=True):\n        keep = c if cap is None else min(c, cap)\n        removed += c - keep\n        cap = max(keep - 1, 0)\n    return str(removed)\n",
+      "slip": "It splits the codes on single spaces, so a double space reads as an extra empty code."
+    }
+  ]
+}

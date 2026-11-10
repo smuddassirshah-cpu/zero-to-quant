@@ -1,0 +1,124 @@
+{
+  "id": "ci-mean-stretches",
+  "name": "Stretches that average the target",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "prefix-sums",
+  "tags": [
+    "pack-1",
+    "mean-stretches"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1350,
+  "fn": "count_mean_stretches",
+  "returns": "a whole number",
+  "brief": "`pnl` is a desk's daily P&L in pounds and `target` is a whole number of pounds. A stretch is one or more consecutive days. Count the stretches whose mean daily P&L is exactly `target`.\n\nWrite `count_mean_stretches(pnl, target)`.\n\nExample. For `pnl = [2, 4, 3, 1, 5]` and `target = 3` the stretches 2, 4 and 3 and 1, 5 each average £3. So do 2, 4, 3 and 3, 1, 5, the single day 3 and all five days. The answer is 6.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ days. Each P&L and `target` lie between $-10^9$ and $10^9$.",
+    "$O(n)$ time is the target. Checking every stretch is too slow.",
+    "All tests share a 5-second time limit. Answers can pass $10^{10}$."
+  ],
+  "hint": "A stretch averages `target` exactly when its days, each less `target`, sum to 0. Keep a running total of `x - target` and count how often each total has been seen, starting from 0 seen once.",
+  "starter": "def count_mean_stretches(pnl, target):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "count_mean_stretches([2, 4, 3, 1, 5], 3)",
+      "expect": "6",
+      "compare": "equal",
+      "note": "Less £3 a day the P&L is -1, 1, 0, -2, 2, and six stretches of that sum to 0."
+    },
+    {
+      "call": "count_mean_stretches([-2, -4, 0], -2)",
+      "expect": "3",
+      "compare": "equal",
+      "note": "The day -2 alone, all three days, and -4 with 0 each average -2."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_mean_stretches([], 5)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([3], 3)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([4], 3)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([3, 3, 3], 3)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([2, 4, 3, 1, 5], 3)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([-2, -4, 0], -2)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([6, 0, -6, 6], 0)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([1, 2], 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([10, -2, 4, 4, 0, 8], 4)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([3] * 200000, 3)",
+      "expect": "20000100000",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([1, 5] * 100000, 3)",
+      "expect": "10000000000",
+      "compare": "equal"
+    },
+    {
+      "call": "count_mean_stretches([(i * 7919) % 21 - 10 for i in range(200000)], 0)",
+      "expect": "2222153969",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def count_mean_stretches(pnl, target):\n    seen = {0: 1}\n    run = 0\n    total = 0\n    for x in pnl:\n        run += x - target\n        total += seen.get(run, 0)\n        seen[run] = seen.get(run, 0) + 1\n    return total\n",
+  "notes": [
+    "Subtracting `target` from every day turns the mean test into a zero-sum test.",
+    "The dict starts with total 0 seen once, or stretches that begin on day 0 are missed.",
+    "One pass with a dict of running totals, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def count_mean_stretches(pnl, target):\n    seen = {}\n    run = 0\n    total = 0\n    for x in pnl:\n        run += x - target\n        total += seen.get(run, 0)\n        seen[run] = seen.get(run, 0) + 1\n    return total\n",
+      "slip": "It never records the empty start, so a stretch that begins on day 0 is not counted."
+    },
+    {
+      "code": "def count_mean_stretches(pnl, target):\n    pre = [0]\n    for x in pnl:\n        pre.append(pre[-1] + x)\n    total = 0\n    for i in range(len(pnl)):\n        for j in range(i + 1, len(pnl) + 1):\n            if (pre[j] - pre[i]) / (j - i) == target:\n                total += 1\n    return total\n",
+      "slip": "It checks every stretch with prefix sums, which is $O(n^2)$ and too slow for 200,000 days."
+    },
+    {
+      "code": "def count_mean_stretches(pnl, target):\n    seen = {0: 1}\n    run = 0\n    total = 0\n    for x in pnl:\n        run += x\n        total += seen.get(run - target, 0)\n        seen[run] = seen.get(run, 0) + 1\n    return total\n",
+      "slip": "It counts stretches whose sum is `target`, not stretches whose mean is `target`."
+    }
+  ]
+}

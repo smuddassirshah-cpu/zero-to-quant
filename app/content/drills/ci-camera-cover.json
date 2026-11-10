@@ -1,0 +1,124 @@
+{
+  "id": "ci-camera-cover",
+  "name": "Bays seen by enough cameras",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "prefix-sums",
+  "tags": [
+    "pack-1",
+    "camera-cover"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "cells_covered_at_least",
+  "returns": "a whole number",
+  "brief": "A warehouse floor is a grid of bays with `rows` rows and `cols` columns, counted from 0. Each camera in `rects` sees the rectangle `[r1, c1, r2, c2]`: rows `r1` to `r2` and columns `c1` to `c2`, all four included. Count the bays seen by at least `m` cameras.\n\nWrite `cells_covered_at_least(rows, cols, rects, m)`.\n\nExample. On a 3 by 3 floor the cameras `[0, 0, 1, 1]` and `[1, 1, 2, 2]` overlap only at bay `(1, 1)`. With `m = 2` the answer is 1.",
+  "constraints": [
+    "$1 \\le$ `rows`, `cols` $\\le 400$, up to 3,000 cameras, and $1 \\le m \\le 3{,}000$. Each rectangle lies inside the floor.",
+    "$O(\\text{rows} \\cdot \\text{cols} + k)$ time is the target for $k$ cameras. Marking every bay of every camera is too slow when the rectangles are large.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "For each camera add 1 at `(r1, c1)`, subtract 1 at `(r1, c2 + 1)` and at `(r2 + 1, c1)`, and add 1 at `(r2 + 1, c2 + 1)`. A two-dimensional running sum of that table then gives each bay's camera count.",
+  "starter": "def cells_covered_at_least(rows, cols, rects, m):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "cells_covered_at_least(3, 3, [[0, 0, 1, 1], [1, 1, 2, 2]], 2)",
+      "expect": "1",
+      "compare": "equal",
+      "note": "The two squares share only bay (1, 1)."
+    },
+    {
+      "call": "cells_covered_at_least(3, 3, [[0, 0, 1, 1], [1, 1, 2, 2]], 1)",
+      "expect": "7",
+      "compare": "equal",
+      "note": "Each camera sees 4 bays and they share 1, so 7 bays are seen."
+    }
+  ],
+  "tests": [
+    {
+      "call": "cells_covered_at_least(1, 1, [], 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(2, 2, [[0, 0, 1, 1]], 1)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(2, 2, [[0, 0, 1, 1]], 2)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(1, 5, [[0, 2, 0, 2]], 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(3, 3, [[0, 0, 1, 1], [1, 1, 2, 2]], 2)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(3, 3, [[0, 0, 1, 1], [1, 1, 2, 2]], 1)",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(3, 3, [[0, 0, 2, 2], [0, 0, 0, 0]], 1)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(4, 4, [[1, 1, 2, 2]] * 3, 3)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(3, 4, [[0, 3, 2, 3], [2, 0, 2, 3], [0, 0, 0, 0]], 2)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(5, 5, [[0, 0, 4, 4], [1, 1, 3, 3], [2, 2, 2, 2]], 2)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(400, 400, [[(i * 7) % 200, (i * 11) % 200, 200 + (i * 13) % 200, 200 + (i * 3) % 200] for i in range(3000)], 1500)",
+      "expect": "25264",
+      "compare": "equal"
+    },
+    {
+      "call": "cells_covered_at_least(400, 400, [[0, 0, 399, 399]] * 3000, 3000)",
+      "expect": "160000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The large tests need the step from marking every bay of every camera to four corner marks and a two-dimensional running sum.",
+  "solution": "def cells_covered_at_least(rows, cols, rects, m):\n    diff = [[0] * (cols + 1) for _ in range(rows + 1)]\n    for r1, c1, r2, c2 in rects:\n        diff[r1][c1] += 1\n        diff[r1][c2 + 1] -= 1\n        diff[r2 + 1][c1] -= 1\n        diff[r2 + 1][c2 + 1] += 1\n    count = 0\n    above = [0] * cols\n    for r in range(rows):\n        acc = 0\n        row = diff[r]\n        cur = [0] * cols\n        for c in range(cols):\n            acc += row[c]\n            cur[c] = above[c] + acc\n            if cur[c] >= m:\n                count += 1\n        above = cur\n    return count\n",
+  "notes": [
+    "Four corner marks per camera and one running sum give every bay's count.",
+    "Rectangles include their last row and column, so the closing marks go at `r2 + 1` and `c2 + 1`.",
+    "Each camera costs four updates and the sum visits each bay once, so the work is $O(\\text{rows} \\cdot \\text{cols} + k)$."
+  ],
+  "planted": [
+    {
+      "code": "def cells_covered_at_least(rows, cols, rects, m):\n    seen = [[0] * cols for _ in range(rows)]\n    for r1, c1, r2, c2 in rects:\n        for r in range(r1, r2 + 1):\n            line = seen[r]\n            for c in range(c1, c2 + 1):\n                line[c] += 1\n    return sum(1 for line in seen for v in line if v >= m)\n",
+      "slip": "It marks every bay of every camera, which is far too slow for 3,000 large rectangles."
+    },
+    {
+      "code": "def cells_covered_at_least(rows, cols, rects, m):\n    diff = [[0] * (cols + 1) for _ in range(rows + 1)]\n    for r1, c1, r2, c2 in rects:\n        diff[r1][c1] += 1\n        diff[r1][c2] -= 1\n        diff[r2][c1] -= 1\n        diff[r2][c2] += 1\n    count = 0\n    above = [0] * cols\n    for r in range(rows):\n        acc = 0\n        cur = [0] * cols\n        for c in range(cols):\n            acc += diff[r][c]\n            cur[c] = above[c] + acc\n            if cur[c] >= m:\n                count += 1\n        above = cur\n    return count\n",
+      "slip": "It closes each rectangle at `r2` and `c2`, so the last row and column of every camera are lost."
+    },
+    {
+      "code": "def cells_covered_at_least(rows, cols, rects, m):\n    diff = [[0] * (cols + 1) for _ in range(rows + 1)]\n    for r1, c1, r2, c2 in rects:\n        diff[r1][c1] += 1\n        diff[r1][c2 + 1] -= 1\n        diff[r2 + 1][c1] -= 1\n        diff[r2 + 1][c2 + 1] += 1\n    count = 0\n    above = [0] * cols\n    for r in range(rows):\n        acc = 0\n        cur = [0] * cols\n        for c in range(cols):\n            acc += diff[r][c]\n            cur[c] = above[c] + acc\n            if cur[c] == m:\n                count += 1\n        above = cur\n    return count\n",
+      "slip": "It counts bays seen by exactly `m` cameras, not at least `m`."
+    }
+  ]
+}

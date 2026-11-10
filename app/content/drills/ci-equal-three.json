@@ -1,0 +1,131 @@
+{
+  "id": "ci-equal-three",
+  "name": "Shift logs with all three desks equal",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "prefix-sums",
+  "tags": [
+    "pack-1",
+    "stdin",
+    "equal-three"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed",
+    "ci-strings"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "solve_equal_three",
+  "returns": "a string",
+  "brief": "A help line logs which desk takes each call: `A`, `B` or `C`. Count the stretches of consecutive calls in which the three desks took the same number of calls.\n\nThe whole input arrives as one string `text`.\n\nLine 1 holds `n`, the number of calls.\n\nLine 2 holds the `n` letters with no spaces between them.\n\nReturn the count as a string. Lines may carry extra spaces, and the text may end with blank lines.\n\nWrite `solve_equal_three(text)`.\n\nExample. For `\"5\\nABCAB\\n\"` the stretches `ABC`, `BCA` and `CAB` each hold one call per desk. No other stretch is balanced, so the answer is `\"3\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ calls.",
+    "$O(n)$ time is the target. Counting the calls in every stretch is too slow.",
+    "All tests share a 5-second time limit. Answers can pass $10^{9}$."
+  ],
+  "hint": "Keep running counts `a`, `b` and `c`. A stretch is balanced exactly when the pair `(a - b, b - c)` is the same before it and at its end, so count how often each pair has been seen.",
+  "starter": "def solve_equal_three(text):\n    # your code here\n    return \"\"\n",
+  "examples": [
+    {
+      "call": "solve_equal_three(\"5\\nABCAB\\n\")",
+      "expect": "'3'",
+      "compare": "equal",
+      "note": "Each of the three stretches of length 3 holds one A, one B and one C."
+    },
+    {
+      "call": "solve_equal_three(\"6\\nABCABC\\n\")",
+      "expect": "'5'",
+      "compare": "equal",
+      "note": "Four stretches of length 3 are balanced, and so is the whole log, which makes 5."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_equal_three(\"0\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"1\\nA\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"3\\nAAA\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"3\\nCCC\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"3\\nCBA\\n\")",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"5\\nABCAB\\n\")",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"6\\nABCABC\\n\")",
+      "expect": "'5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"  4 \\n  ABCA  \\n\\n\")",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"6\\nAABBCC\\n\")",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"9\\nABACBCCAB\\n\\n\")",
+      "expect": "'5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"200000\\n\" + \"ABC\" * 66666 + \"AB\" + \"\\n\")",
+      "expect": "'6666633333'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"200000\\n\" + \"A\" * 200000 + \"\\n\")",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_equal_three(\"200000\\n\" + \"\".join(\"ABC\"[(i * i + i // 7) % 3] for i in range(200000)) + \"\\n\")",
+      "expect": "'142846'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The large tests need the step from counting every stretch to a dict keyed on the two differences of the running counts.",
+  "solution": "def solve_equal_three(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    calls = tokens[1] if n else \"\"\n    seen = {(0, 0): 1}\n    a = b = c = 0\n    total = 0\n    for ch in calls:\n        if ch == \"A\":\n            a += 1\n        elif ch == \"B\":\n            b += 1\n        else:\n            c += 1\n        key = (a - b, b - c)\n        total += seen.get(key, 0)\n        seen[key] = seen.get(key, 0) + 1\n    return str(total)\n",
+  "notes": [
+    "Two differences of the running counts fix the balance, so equal pairs bound a balanced stretch.",
+    "One difference is not enough: `CCC` keeps `a - b` at 0 but is not balanced.",
+    "One pass with a dict of pairs, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def solve_equal_three(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    calls = tokens[1] if n else \"\"\n    seen = {0: 1}\n    a = b = 0\n    total = 0\n    for ch in calls:\n        if ch == \"A\":\n            a += 1\n        elif ch == \"B\":\n            b += 1\n        total += seen.get(a - b, 0)\n        seen[a - b] = seen.get(a - b, 0) + 1\n    return str(total)\n",
+      "slip": "It keys only on `a - b`, so a stretch of calls to desk C alone looks balanced."
+    },
+    {
+      "code": "def solve_equal_three(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    calls = tokens[1] if n else \"\"\n    seen = {}\n    a = b = c = 0\n    total = 0\n    for ch in calls:\n        if ch == \"A\":\n            a += 1\n        elif ch == \"B\":\n            b += 1\n        else:\n            c += 1\n        key = (a - b, b - c)\n        total += seen.get(key, 0)\n        seen[key] = seen.get(key, 0) + 1\n    return str(total)\n",
+      "slip": "It never records the empty start, so balanced stretches that begin with the first call are lost."
+    },
+    {
+      "code": "def solve_equal_three(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    calls = tokens[1] if n else \"\"\n    total = 0\n    for i in range(n):\n        a = b = c = 0\n        for j in range(i, n):\n            if calls[j] == \"A\":\n                a += 1\n            elif calls[j] == \"B\":\n                b += 1\n            else:\n                c += 1\n            if a == b == c:\n                total += 1\n    return str(total)\n",
+      "slip": "It counts the calls of every stretch, which is $O(n^2)$ and too slow for 200,000 calls."
+    }
+  ]
+}

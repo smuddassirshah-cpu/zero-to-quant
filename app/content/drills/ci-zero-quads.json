@@ -1,0 +1,124 @@
+{
+  "id": "ci-zero-quads",
+  "name": "Four desks that net to zero",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "hashing",
+  "tags": [
+    "pack-1",
+    "zero-quads"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "count_zero_quads",
+  "returns": "a whole number",
+  "brief": "Four desks each propose position changes, in lots, in the lists `a`, `b`, `c` and `d`. A combination takes one change from each desk. Count the combinations of positions `(i, j, k, l)` with `a[i] + b[j] + c[k] + d[l] == 0`. Equal values at different positions count separately.\n\nWrite `count_zero_quads(a, b, c, d)`.\n\nExample. For `a = [1, 2]`, `b = [-2, -1]`, `c = [-1, 2]` and `d = [0, 2]` two combinations net to zero: 1, -2, -1, 2 and 2, -1, -1, 0. The answer is 2.",
+  "constraints": [
+    "Each list holds 0 to 500 whole numbers between $-10^6$ and $10^6$, and the lists may differ in length.",
+    "$O(n^2)$ time is the target for lists of length $n$. Fixing three changes and looking up the fourth is $O(n^3)$, too slow at 500.",
+    "All tests share a 5-second time limit. Answers can pass $10^{10}$."
+  ],
+  "hint": "Split the four desks into two pairs. Count every sum `a[i] + b[j]` in a dict, then for every `c[k] + d[l]` add the count of its negative.",
+  "starter": "def count_zero_quads(a, b, c, d):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "count_zero_quads([1, 2], [-2, -1], [-1, 2], [0, 2])",
+      "expect": "2",
+      "compare": "equal",
+      "note": "The pair sums of a and b are -1, 0, 0, 1. Two sums of c and d, 1 and -1, cancel one of them each."
+    },
+    {
+      "call": "count_zero_quads([0, 0], [0, 0], [0, 0], [0, 0])",
+      "expect": "16",
+      "compare": "equal",
+      "note": "Every one of the 16 combinations nets to zero."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_zero_quads([], [1], [1], [1])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([0], [0], [0], [0])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([1], [1], [1], [1])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([1, 2], [-2, -1], [-1, 2], [0, 2])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([0, 0], [0, 0], [0, 0], [0, 0])",
+      "expect": "16",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([-5, 5], [5, -5], [0], [0])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([1, 2, 3], [-1], [0, 5], [-3, 0, -5])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([3, 1], [4, 1], [-5, -9], [2, 6])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([2, 2, 2], [-1], [-1], [0, 0])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([(i * 37) % 101 - 50 for i in range(500)], [(i * 53) % 103 - 51 for i in range(500)], [(i * 29) % 97 - 48 for i in range(500)], [(i * 61) % 89 - 44 for i in range(500)])",
+      "expect": "425697886",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([0] * 500, [0] * 500, [0] * 500, [0] * 500)",
+      "expect": "62500000000",
+      "compare": "equal"
+    },
+    {
+      "call": "count_zero_quads([i * 1000 for i in range(500)], [-i for i in range(500)], [i for i in range(500)], [-i * 1000 for i in range(500)])",
+      "expect": "250000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The large tests need the step from fixing three changes and looking up the fourth to a dict of the sums of two desks.",
+  "solution": "def count_zero_quads(a, b, c, d):\n    sums = {}\n    for x in a:\n        for y in b:\n            s = x + y\n            sums[s] = sums.get(s, 0) + 1\n    total = 0\n    for x in c:\n        for y in d:\n            total += sums.get(-x - y, 0)\n    return total\n",
+  "notes": [
+    "Pair sums of `a` and `b` go in a count dict, and each pair sum of `c` and `d` looks up its negative.",
+    "The dict must hold counts, not just which sums occur, because equal sums are separate combinations.",
+    "Each half has at most $500^2$ sums, so the work is $O(n^2)$."
+  ],
+  "planted": [
+    {
+      "code": "def count_zero_quads(a, b, c, d):\n    need = {}\n    for y in d:\n        need[y] = need.get(y, 0) + 1\n    total = 0\n    for w in a:\n        for x in b:\n            for y in c:\n                total += need.get(-w - x - y, 0)\n    return total\n",
+      "slip": "It fixes three changes and looks up the fourth, which is $O(n^3)$ and too slow at 500 each."
+    },
+    {
+      "code": "def count_zero_quads(a, b, c, d):\n    sums = {x + y for x in a for y in b}\n    return sum(1 for x in c for y in d if -x - y in sums)\n",
+      "slip": "It keeps the pair sums in a set, so a sum made in several ways is counted once."
+    },
+    {
+      "code": "def count_zero_quads(a, b, c, d):\n    sums = {}\n    for x in a:\n        for y in b:\n            sums[x + y] = sums.get(x + y, 0) + 1\n    return sum(sums.get(x + y, 0) for x in c for y in d)\n",
+      "slip": "It looks up `c[k] + d[l]` itself instead of its negative, so it counts totals that double rather than cancel."
+    }
+  ]
+}

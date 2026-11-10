@@ -1,0 +1,134 @@
+{
+  "id": "ci-even-vowels",
+  "name": "Longest tape with even vowel counts",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "prefix-sums",
+  "tags": [
+    "pack-1",
+    "even-vowels"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "longest_even_vowels",
+  "returns": "a whole number",
+  "brief": "A machine writes one lowercase letter per event to the string `tape`. Return the length of the longest stretch of consecutive letters in which each of `a`, `e`, `i`, `o` and `u` appears an even number of times. Zero times is even.\n\nWrite `longest_even_vowels(tape)`.\n\nExample. In `\"xaeyea\"` the whole tape holds `a` twice and `e` twice, so the answer is 6.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ letters, each from `a` to `z`.",
+    "$O(n)$ time is the target. Counting the vowels of every stretch is too slow.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Keep five bits, one per vowel, flipped each time that vowel appears. A stretch is even exactly when the bits before it and at its end are equal, so store the first position of each bit pattern.",
+  "starter": "def longest_even_vowels(tape):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "longest_even_vowels(\"xaeyea\")",
+      "expect": "6",
+      "compare": "equal",
+      "note": "The whole tape holds two of a and two of e, so all 6 letters count."
+    },
+    {
+      "call": "longest_even_vowels(\"aeiou\")",
+      "expect": "0",
+      "compare": "equal",
+      "note": "Every stretch holds some vowel once, so no stretch is even."
+    }
+  ],
+  "tests": [
+    {
+      "call": "longest_even_vowels(\"\")",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"b\")",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"a\")",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"aa\")",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"bb\")",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"aeiou\")",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"xaeyea\")",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"zaez\")",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"uxuoabo\")",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"eleetminicoworoep\")",
+      "expect": "13",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"ab\" * 100000)",
+      "expect": "200000",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"a\" + \"b\" * 199999)",
+      "expect": "199999",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"\".join(\"aeioubcd\"[(i * i + 3 * i) % 8] for i in range(200000)))",
+      "expect": "200000",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_even_vowels(\"a\" + \"b\" * 999 + \"e\" + \"b\" * 197999 + \"i\" + \"b\" * 999)",
+      "expect": "197999",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The large tests need the step from counting vowels in every stretch to a dict of the first position of each parity pattern.",
+  "solution": "def longest_even_vowels(tape):\n    bit = {\"a\": 1, \"e\": 2, \"i\": 4, \"o\": 8, \"u\": 16}\n    first = {0: -1}\n    mask = 0\n    best = 0\n    for i, ch in enumerate(tape):\n        mask ^= bit.get(ch, 0)\n        if mask in first:\n            best = max(best, i - first[mask])\n        else:\n            first[mask] = i\n    return best\n",
+  "notes": [
+    "Five parity bits summarise the vowels so far, and equal patterns bound an even stretch.",
+    "The empty prefix has pattern 0 at position -1, and only the first position of a pattern is kept.",
+    "One pass with at most 32 patterns in the dict, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def longest_even_vowels(tape):\n    bit = {\"a\": 1, \"e\": 2, \"i\": 4, \"o\": 8, \"u\": 16}\n    first = {}\n    mask = 0\n    best = 0\n    for i, ch in enumerate(tape):\n        mask ^= bit.get(ch, 0)\n        if mask in first:\n            best = max(best, i - first[mask])\n        else:\n            first[mask] = i\n    return best\n",
+      "slip": "It never records pattern 0 before the tape starts, so a stretch from the first letter is missed."
+    },
+    {
+      "code": "def longest_even_vowels(tape):\n    bit = {\"a\": 1, \"e\": 2, \"i\": 4, \"o\": 8, \"u\": 16}\n    first = {0: -1}\n    mask = 0\n    best = 0\n    for i, ch in enumerate(tape):\n        mask ^= bit.get(ch, 0)\n        if mask in first:\n            best = max(best, i - first[mask])\n        first[mask] = i\n    return best\n",
+      "slip": "It overwrites each pattern with its latest position, so it measures from the nearest match, not the earliest."
+    },
+    {
+      "code": "def longest_even_vowels(tape):\n    n = len(tape)\n    for length in range(n, 0, -1):\n        for start in range(n - length + 1):\n            part = tape[start:start + length]\n            if all(part.count(v) % 2 == 0 for v in \"aeiou\"):\n                return length\n    return 0\n",
+      "slip": "It tries the longest stretches first and counts each afresh, which is far too slow on a long tape."
+    }
+  ]
+}
