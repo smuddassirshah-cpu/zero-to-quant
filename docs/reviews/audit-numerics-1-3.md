@@ -126,3 +126,5 @@ Opus fixer, independent of the auditor's arguments. Own checks (session scratch,
 22. fixed (keyed option text, feedback) | Own RK4 on y' = -y, 1e7 steps: relative error 6.1e-14 against the worst case n eps = 2.2e-9 (Higham sec. 2.8). Key choice unchanged.
 
 Also applied from "Noted, not conceptual": the l6 title only ("A root finder you can trust"), since after finding 12 the method raises at the cap. Scripts: each former EXPECTED_FAIL now asserts the corrected claim with a second method, marked "(corrected claim, fix pass)"; `numerics-L2-numbers.py` `safe()` uses the rtsafe test. All three concepts scripts end with 0 EXPECTED_FAIL.
+
+Fix-pass gates (from `app/`): validator `0 errors, 4116 warnings` (manifest unchanged); numbers scripts L1, L2, L3 exit 0; concepts scripts exit 0 (52, 32 and 36 checks passed, 0 EXPECTED_FAIL); voice scan at 35 on the 15 changed files: 0 explanations over three sentences, 0 sentences over 35 words; playthrough with `--local-cdn` of l1 to l10, review-1 to review-3, homework-1 and homework-2, desktop and `--mobile`: 30 of 30 `All passed`, no reruns.
