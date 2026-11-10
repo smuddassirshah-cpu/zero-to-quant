@@ -605,6 +605,213 @@ num(L3, 'p-pairs-exit', 4, 100 * ticks - 40 * D, 100 * (tt / m) * 0 - 40 * 15,
 pick(L3, 'p-pairs-exit', 5, 'two-six')
 ok([a * b for a, b in [(3, 5), (4, 4), (2, 6)]] == [15, 16, 12] and -40 * 12 == -480, 'p-pairs-exit: option days and £480')
 
+# ================================================================== level 4 (problems-4.json)
+# Added by the level 4 and 5 author. Method 1: exact fractions (degrees, balance weights,
+# Metropolis-Hastings entries). Method 2: numpy eigenvectors of the full transition
+# matrices, brute-force searches and seeded simulations.
+from math import exp, log, sqrt, factorial
+L4 = load(4)
+
+
+def walk_matrix(nodes, edges):
+    """Exact transition matrix of the simple random walk on an undirected graph."""
+    nb = {v: [] for v in nodes}
+    for a, b in edges:
+        nb[a].append(b)
+        nb[b].append(a)
+    return [[F(1, len(nb[i])) if j in nb[i] else F(0) for j in nodes] for i in nodes], nb
+
+
+# p-supplier-survey: H-A, H-B, H-C, H-D, A-B
+sv_nodes = ['H', 'A', 'B', 'C', 'D']
+sv_edges = [('H', 'A'), ('H', 'B'), ('H', 'C'), ('H', 'D'), ('A', 'B')]
+Psv, nbs = walk_matrix(sv_nodes, sv_edges)
+deg = {v: len(nbs[v]) for v in sv_nodes}
+tot = sum(deg.values())
+ok(tot == 2 * len(sv_edges) == 10, 'p-supplier-survey: total degree')
+pi_np = stationary_np(Psv)
+piC = F(deg['C'], tot)
+num(L4, 'p-supplier-survey', 1, piC, pi_np[3],
+    {'uniform': F(1, 5), 'hub': F(deg['H'], tot)})
+num(L4, 'p-supplier-survey', 2, piC + F(deg['D'], tot), pi_np[3] + pi_np[4],
+    {'true': F(2, 5), 'one-firm': piC})
+pick(L4, 'p-supplier-survey', 3, 'ratio')
+# Metropolis-Hastings matrix for a uniform target with q_ij = 1/deg(i)
+MH = [[F(0)] * 5 for _ in range(5)]
+for a, i in enumerate(sv_nodes):
+    for b, j in enumerate(sv_nodes):
+        if j in nbs[i]:
+            MH[a][b] = F(1, deg[i]) * min(F(1), F(deg[i], deg[j]))
+    MH[a][a] = 1 - sum(MH[a])
+ok(all(MH[a][b] == MH[b][a] for a in range(5) for b in range(5)), 'p-supplier-survey: MH matrix not symmetric')
+ok(np.allclose(stationary_np(MH), [0.2] * 5), 'p-supplier-survey: MH not uniform')
+stayC = MH[3][3]
+# alt: count rejections by simulation of the corrected walk from C
+rng = np.random.default_rng(41)
+x, stays, n_sim = 'C', 0, 200000
+for _ in range(n_sim):
+    j = nbs[x][rng.integers(len(nbs[x]))]
+    if rng.random() < min(1.0, deg[x] / deg[j]):
+        x = j
+    else:
+        stays += 1
+num(L4, 'p-supplier-survey', 4, stayC, 1 - 1 / 4,
+    {'move': F(1, 4), 'flipped': 0})
+ok([MH[k][k] for k in range(5)] == [0, F(1, 4), F(1, 4), F(3, 4), F(3, 4)], 'p-supplier-survey: staying chances in part 5 text')
+rep = sum(F(1, 5) * MH[k][k] for k in range(5))
+ok(abs(stays / n_sim - float(rep)) < 0.005, f'p-supplier-survey: simulated repeats {stays / n_sim}')
+num(L4, 'p-supplier-survey', 5, rep, float(np.trace(np.diag([0.2] * 5) @ np.array(MH, float))),
+    {'plain': 0, 'leaves-only': F(1, 5) * (MH[3][3] + MH[4][4]),
+     'degree-weights': sum(F(deg[v], tot) * MH[k][k] for k, v in enumerate(sv_nodes))})
+
+# p-taxi-rank: taxis 2.4, passengers 1.6 a minute; capacity 3, then 4
+lt, lp = F('2.4'), F('1.6')
+up = lt / (lt + lp)
+num(L4, 'p-taxi-rank', 1, up, 2.4 / 4.0, {'ratio': lt / lp, 'passenger': 1 - up})
+ratio = up / (1 - up)
+num(L4, 'p-taxi-rank', 2, ratio, 0.6 / 0.4, {'inverted': 1 / ratio, 'one-way': up})
+
+
+def rank_chain(cap):
+    P = [[F(0)] * (cap + 1) for _ in range(cap + 1)]
+    for i in range(cap + 1):
+        P[i][min(i + 1, cap)] += up
+        P[i][max(i - 1, 0)] += 1 - up
+    return P
+
+
+def pi0_exact(cap, rr):
+    return 1 / sum(rr ** k for k in range(cap + 1))
+
+
+p0 = pi0_exact(3, ratio)
+ok(p0 == F(8, 65), 'p-taxi-rank: pi0 is 8/65')
+num(L4, 'p-taxi-rank', 3, p0, stationary_np(rank_chain(3))[0],
+    {'inverted': pi0_exact(3, 1 / ratio), 'uniform': F(1, 4), 'three-states': pi0_exact(2, ratio)})
+ok(pi0_exact(3, 1 / ratio) == ratio ** 3 * p0, 'p-taxi-rank: full share equals the inverted empty share')
+# alt for the passenger loss rate: continuous-time simulation over 20,000 minutes
+rng = np.random.default_rng(17)
+t, k, lost, T_end = 0.0, 0, 0, 20000.0
+while True:
+    t += rng.exponential(1 / 4.0)
+    if t > T_end:
+        break
+    if rng.random() < 0.6:
+        k = min(k + 1, 3)
+    elif k == 0:
+        lost += 1
+    else:
+        k -= 1
+ok(abs(lost / T_end * 60 - float(96 * p0)) < 0.4, f'p-taxi-rank: simulated loss {lost / T_end * 60}')
+loss3 = 96 * p0
+num(L4, 'p-taxi-rank', 4, loss3, 1.6 * 60 * stationary_np(rank_chain(3))[0],
+    {'all-arrivals': 240 * p0, 'per-minute': lp * p0, 'taxis': 144 * ratio ** 3 * p0},
+    routes=[96 * F('0.1231')])
+p04 = pi0_exact(4, ratio)
+ok(p04 == F(16, 211), 'p-taxi-rank: pi0 with 4 spaces is 16/211')
+num(L4, 'p-taxi-rank', 5, 96 * p04, 96 * stationary_np(rank_chain(4))[0],
+    {'no-change': loss3, 'inverted': 96 * pi0_exact(4, 1 / ratio), 'saved': loss3 - 96 * p04})
+
+# p-payment-audits: A-B, A-C, A-D, B-C, C-D, D-E, E-F; audits at 2 an hour
+pa_nodes = list('ABCDEF')
+pa_edges = [('A', 'B'), ('A', 'C'), ('A', 'D'), ('B', 'C'), ('C', 'D'), ('D', 'E'), ('E', 'F')]
+Ppa, nbp = walk_matrix(pa_nodes, pa_edges)
+dg = [len(nbp[v]) for v in pa_nodes]
+ok(dg == [3, 2, 3, 3, 2, 1] and sum(dg) == 14, 'p-payment-audits: degrees')
+pin = stationary_np(Ppa)
+num(L4, 'p-payment-audits', 1, F(3, 14), pin[3], {'uniform': F(1, 6), 'links': F(3, 7)})
+# alt for the return time: mean gap between visits to F in a long simulated walk
+rng = np.random.default_rng(5)
+x, last, gaps = 'F', 0, []
+for s in range(1, 400001):
+    x = nbp[x][rng.integers(len(nbp[x]))]
+    if x == 'F':
+        gaps.append(s - last)
+        last = s
+ok(abs(np.mean(gaps) - 14) < 0.3, f'p-payment-audits: simulated return {np.mean(gaps)}')
+num(L4, 'p-payment-audits', 2, 14, 1 / pin[5], {'links': 7, 'banks': 6})
+rateF = 2 * F(1, 14)
+mean_day = 8 * rateF
+# alt: thinned count simulated as Binomial thinning of Poisson(16) audits
+rng = np.random.default_rng(23)
+cnt = rng.binomial(rng.poisson(16, 200000), 1 / 14)
+ok(abs(cnt.mean() - 8 / 7) < 0.01 and abs((cnt == 0).mean() - exp(-8 / 7)) < 0.004, 'p-payment-audits: simulated thinning')
+num(L4, 'p-payment-audits', 3, mean_day, 16 * pin[5],
+    {'no-thinning': 16, 'per-hour': rateF, 'uniform': F(8, 6)})
+num(L4, 'p-payment-audits', 4, exp(-8 / 7), sum((-8 / 7) ** n / factorial(n) for n in range(40)),
+    {'complement': 1 - exp(-8 / 7), 'per-hour': exp(-1 / 7), 'uniform': exp(-8 / 6)})
+
+
+def first_hours(rate, target=0.9):
+    t = 1
+    while 1 - exp(-rate * t) <= target:
+        t += 1
+    return t
+
+
+ans_t = int(np.ceil(7 * log(10)))
+ok(abs(1 - exp(-16 / 7) - 0.8983) < 0.00005, 'p-payment-audits: chance at 16 hours')
+num(L4, 'p-payment-audits', 5, ans_t, first_hours(1 / 7),
+    {'round-down': ans_t - 1, 'uniform': first_hours(1 / 3), 'no-thinning': first_hours(2),
+     'complement': int(np.ceil(7 * log(10 / 9)))})
+
+# p-regime-sampler: weights L 2, M 5, H 3; q_LM = q_HM = 1, q_ML = 0.3, q_MH = 0.7
+w = {'L': F(2), 'M': F(5), 'H': F(3)}
+q = {('L', 'M'): F(1), ('H', 'M'): F(1), ('M', 'L'): F(3, 10), ('M', 'H'): F(7, 10)}
+
+
+def mh_matrix(rule):
+    S = ['L', 'M', 'H']
+    P = [[F(0)] * 3 for _ in range(3)]
+    for a, i in enumerate(S):
+        for b, j in enumerate(S):
+            if (i, j) in q:
+                acc = min(F(1), w[j] * q[(j, i)] / (w[i] * q[(i, j)])) if rule == 'mh' else min(F(1), w[j] / w[i])
+                P[a][b] = q[(i, j)] * acc
+        P[a][a] = 1 - sum(P[a])
+    return P
+
+
+Pmh = mh_matrix('mh')
+pis = stationary_np(Pmh)
+ok(np.allclose(pis, [0.2, 0.5, 0.3]), f'p-regime-sampler: MH chain stationary {pis}')
+num(L4, 'p-regime-sampler', 1, Pmh[0][1], min(1.0, 5 * 0.3 / 2) * 1.0, {'uphill': 1, 'stay': 1 - Pmh[0][1]})
+num(L4, 'p-regime-sampler', 2, Pmh[1][2], 0.7 * min(1.0, 3 / (5 * 0.7)),
+    {'accept-only': F(6, 7), 'plain': F(7, 10) * F(3, 5), 'proposal-only': F(7, 10)})
+num(L4, 'p-regime-sampler', 3, Pmh[1][0], 0.2 * 0.75 / 0.5,
+    {'swapped': F(1, 2) * F(3, 4) / F(1, 5), 'plain': F(3, 10) * F(2, 5), 'stay': Pmh[1][1]})
+pi_ex = [F(1, 5), F(1, 2), F(3, 10)]
+rej = sum(pi_ex[k] * Pmh[k][k] for k in range(3))
+# alt: simulate the chain and count rejections
+rng = np.random.default_rng(29)
+S = ['L', 'M', 'H']
+x, rj, n_sim = 'M', 0, 200000
+for _ in range(n_sim):
+    if x == 'M':
+        j = 'L' if rng.random() < 0.3 else 'H'
+    else:
+        j = 'M'
+    acc = min(1.0, float(w[j] * q[(j, x)] / (w[x] * q[(x, j)])))
+    if rng.random() < acc:
+        x = j
+    else:
+        rj += 1
+ok(abs(rj / n_sim - 0.1) < 0.004, f'p-regime-sampler: simulated rejections {rj / n_sim}')
+stays = [Pmh[k][k] for k in range(3)]
+num(L4, 'p-regime-sampler', 4, rej, float(np.dot(pis, np.diag(np.array(Pmh, float)))),
+    {'unweighted': sum(stays), 'average': sum(stays) / 3, 'one-state': pi_ex[0] * stays[0]})
+ok(pi_ex[0] * stays[0] == pi_ex[1] * stays[1], 'p-regime-sampler: Low and Mid rejections are equal (one-state slip)')
+Ppl = mh_matrix('plain')
+ok(Ppl[0][1] == 1 and Ppl[1][0] == F(12, 100) and Ppl[1][2] == F(42, 100) and Ppl[2][1] == 1, 'p-regime-sampler: plain rule entries in part 5')
+wts = [F(1), Ppl[0][1] / Ppl[1][0]]
+wts.append(wts[1] * Ppl[1][2] / Ppl[2][1])
+piM_plain = wts[1] / sum(wts)
+ok(piM_plain == F(50, 77), 'p-regime-sampler: 50/77')
+fl = [F(1), Ppl[1][0] / Ppl[0][1]]
+fl.append(fl[1] * Ppl[2][1] / Ppl[1][2])
+num(L4, 'p-regime-sampler', 5, piM_plain, stationary_np(Ppl)[1],
+    {'target': F(1, 2), 'flipped': fl[1] / sum(fl), 'high': wts[2] / sum(wts)})
+
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:

@@ -92,3 +92,34 @@ Fresh-check: 0 hits at the gate. At triage settings six hits. Five are form sent
 ## Engine limits
 
 Two bullets in `docs/BACKLOG-INBOX.md` under "Raised later (problems markov)": the playthrough still shoots only part 1 (met again, as for conditional), and fresh-check triage is dominated by the required form sentences. Neither blocked a problem.
+
+## Level 4
+
+File: `problems-4.json` ("Problems: balance, networks, sampling and arrivals", 50 minutes). Numbers: the section "level 4 (problems-4.json)" at the end of `docs/reports/problems-markov-numbers.py`, added after the level 3 section; the earlier sections are unchanged. Notation as l13 to l16: $\pi_iP_{ij} = \pi_jP_{ji}$, $\pi_i = \tfrac{\deg(i)}{2|E|}$, $q_{ij}$ and $\min\left(1, \tfrac{w_jq_{ji}}{w_iq_{ij}}\right)$, rates $\lambda$.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-supplier-survey | 5 (4 / 1) | l14, l15 | 3 |
+| problems-4 | p-taxi-rank | 5 (5 / 0) | l13, l16 | 4 |
+| problems-4 | p-payment-audits | 5 (5 / 0) | l14, l16 | 4 |
+| problems-4 | p-regime-sampler | 5 (5 / 0) | l13, l15 | 5 |
+
+Typed parts 19 of 20. Every lesson appears in two problems, and every problem draws on two.
+
+Chains. p-supplier-survey: a walk on a five-firm network (degrees 4, 2, 2, 1, 1); the share at a leaf (0.1), the walk's estimate of the late-payer rate (0.2 against a true 0.4), the judgement that $\min(1, \tfrac{\deg(i)}{\deg(j)})$ makes the target uniform, the chance a leaf stays (0.75), then the share of repeated records in the corrected walk (0.4). p-taxi-rank: merged Poisson streams give the chance an arrival is a taxi (0.6), balance gives the ratio 1.5, the empty share is $\tfrac{8}{65}$, passengers lost an hour (11.82), then the loss with a fourth space (7.28). p-payment-audits: a six-bank network with 7 links; $\pi_D = \tfrac{3}{14}$, the return time to F (14 hops), thinned audits at F ($\tfrac87$ a day), no audit in a day ($e^{-8/7} \approx 0.3189$), then the fewest hours for a 0.9 chance of one (17). p-regime-sampler: Metropolis-Hastings with an unequal proposal; $P_{LM} = 0.75$, $P_{MH} = 0.6$, $P_{ML} = 0.3$ from detailed balance, the rejection share (0.1), then the share a plain Metropolis rule gives Mid ($\tfrac{50}{77} \approx 0.6494$ against 0.5). Each later part restates the value it needs, and its `wrong` list holds the value from the slip before it (the uniform share $\tfrac16$ carries into $\tfrac86$ and $e^{-8/6}$; the inverted ratio into $\tfrac{27}{65}$ and 36.85).
+
+The taxi rank is watched at arrivals, so it is a discrete chain with up chance $\tfrac{2.4}{4}$, as l16's merge rule gives; passengers arrive whatever the rank holds, so the share who find it empty is $\pi_0$. The script checks this by simulating the rank in continuous time. The audits pick a message at random from many in flight, so each lands on F with chance $\pi_F$ independently, the condition for thinning.
+
+Checks (level 4):
+
+| check | result |
+|---|---|
+| numbers script | 1,485 checks with levels 1 to 4, 0 failures |
+| validator | 0 errors, 0 warnings on the file (no `[answer-form]`) |
+| playthrough `--local-cdn` | green (4 problems, 20 parts) |
+| playthrough `--mobile` | green; every part shot at 440 px and read, no fault |
+| voice scan 35 (course folder) | 0 and 0 |
+
+The script found one stated number wrong in a draft: the chance of an audit at F within 16 hours is 0.8983, not 0.8984; the feedback and explanation were corrected before commit.
+
+Fresh-check (`--file`): 0 hits at the gate. At triage settings 31 hits: 24 are the form sentences ("give an exact fraction, or a decimal to # places"), 7 are "arrive as a Poisson process at # a minute" or "an hour" against l16, l22, review-4, review-5, homework-4, limits-thm review-2 and the topic exam. Stock phrasing. No lesson, review or homework uses a taxi rank, a supply-network survey, payment audits or a volatility-regime sampler; the knight, the venues, the dealer network, the hit-rate grid, the order queue and the 3 and 2 buy and sell rates are not reused.
