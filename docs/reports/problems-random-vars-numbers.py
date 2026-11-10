@@ -170,9 +170,12 @@ ok(cdf(Tq, 1) == 1 - F(4, 5) ** 3 == F(61, 125), 'F_T(1) is not 0.488')
 num(L1, 'p-tightest-quote', 3, cdf(Tq, 2) - cdf(Tq, 1), Tq[2],
     {'cdf': cdf(Tq, 2), 'one-dealer': F(1, 5), 'all-two': F(1, 125)})
 n_need = next(n for n in range(1, 50) if 1 - F(4, 5) ** n >= F(9, 10))
-n_alt = next(n for n in range(1, 50) if 0.8 ** n <= 0.1)
-num(L1, 'p-tightest-quote', 4, n_need, n_alt, {'round-down': n_need - 1, 'added': 5})
-ok(abs(0.8 ** 10 - 0.107) < 0.0005 and abs(0.8 ** 11 - 0.086) < 0.0005, '0.8^10, 0.8^11 as stated')
+# part 4: smallest n with P(T <= 2) >= 0.99 on n dealers (exact, then by brute force on 1 - 0.6^n)
+n_need = next(n for n in range(1, 60) if 1 - F(3, 5) ** n >= F(99, 100))
+n_alt = next(n for n in range(1, 60) if 0.6 ** n <= 0.01)
+num(L1, 'p-tightest-quote', 4, n_need, n_alt,
+    {'round-down': n_need - 1, 'old-base': next(n for n in range(1, 80) if 0.8 ** n <= 0.01), 'two-fifths': next(n for n in range(1, 60) if 0.4 ** n <= 0.01)})
+ok(F(98, 125) == 1 - F(3, 5) ** 3 and abs(0.6 ** 9 - 0.0101) < 0.00005 and abs(0.6 ** 10 - 0.0060) < 0.00005, '0.6^3, 0.6^9, 0.6^10 as stated')
 
 # ------------------------------------------------------------------ level 2
 L2 = load(2)
@@ -244,8 +247,11 @@ binge2 = 1 - F(7, 10) ** 4 - 4 * F(3, 10) * F(7, 10) ** 3
 num(L2, 'p-token-draw', 4, pge2, Gd[2] + Gd[3],
     {'replaced': binge2, 'exactly-two': Gd[2], 'at-least-one': 1 - Gd[0]})
 ok(Gd[2] == F(63, 210) and Gd[3] == F(7, 210), 'hand counts are not 63 and 7')
-num(L2, 'p-token-draw', 5, EV + 15 * pge2, E(Gd, lambda k: 20 + 15 * k + (15 if k >= 2 else 0)),
-    {'no-bonus': EV, 'full-bonus': EV + 15, 'bonus-only': 15 * pge2, 'carried': EV + 15 * binge2})
+# part 5: £15 for each gold token after the first, 15 * max(G - 1, 0)
+pge3 = Gd[3]
+num(L2, 'p-token-draw', 5, EV + 15 * (pge2 + pge3), E(Gd, lambda k: 20 + 15 * k + 15 * max(k - 1, 0)),
+    {'no-bonus': EV, 'once-only': EV + 15 * pge2, 'full-bonus': EV + 15, 'bonus-only': 15 * (pge2 + pge3), 'carried': EV + 15 * (binge2 + pge3)})
+ok(pge3 == F(1, 30) and EV + 15 * (E(Gd) - (1 - Gd[0])) == F(87, 2), 'p-token-draw p5: 1/30 or 43.50 by the other route wrong')
 
 # ------------------------------------------------------------------ level 3
 L3 = load(3)
@@ -274,8 +280,9 @@ pA = pmf_of(J, lambda w: w[0]); pB = pmf_of(J, lambda w: w[1])
 EA, EB, VA, VB = E(pA), E(pB), var(pA), var(pB)
 cov = E(J, lambda w: (w[0] - EA) * (w[1] - EB))
 EAB = E(J, lambda w: w[0] * w[1])
-num(L3, 'p-fund-hedge', 1, EA, -1 * (J[(-1, -2)] + J[(-1, 2)]) + 2 * (J[(2, -2)] + J[(2, 2)]),
-    {'unweighted': F(1, 2), 'b-mean': EB})
+# part 1 is typed in per cent (unit %), so the key is the fraction E[A] / 100
+num(L3, 'p-fund-hedge', 1, EA / 100, (-1 * (J[(-1, -2)] + J[(-1, 2)]) + 2 * (J[(2, -2)] + J[(2, 2)])) / 100,
+    {'unweighted': F(1, 2) / 100, 'b-mean': EB / 100}, round_tol=0.000005)
 ok(EB == F(4, 10) and VB == F(384, 100), 'E[B], Var(B) as stated')
 num(L3, 'p-fund-hedge', 2, E(pA, lambda v: v * v) - EA ** 2, VA,
     {'no-mean': E(pA, lambda v: v * v), 'unsquared-mean': E(pA, lambda v: v * v) - EA, 'carried': E(pA, lambda v: v * v) - F(1, 4)})
@@ -345,6 +352,43 @@ num(L3, 'p-clustered-fills', 4, n_max, n_alt2,
      'pairs-once': max(n for n in range(1, 40) if 144 * (n * F(1, 4) + n * (n - 1) * cv / 2) <= 400)})
 ok(VN(5) == F(225, 100) and VN(6) == 3 and isclose(12 * sqrt(3), 20.78, abs_tol=0.005), 'n = 5, 6 figures as stated')
 
+
+# every numeric part: form stated, a value rounded as asked is accepted, each value the part's own feedback prints is accepted,
+# and an "exact decimal" part has an answer that terminates
+import re
+WORDS = {'one': 1, 'two': 2, 'three': 3, 'four': 4}
+def form_checks(sets):
+    for ref, items in sets:
+        if items is None: continue
+        for iid, it in items.items():
+            for k, p in enumerate(it['parts'], 1):
+                w = p['widget']
+                if w['kind'] != 'numeric': continue
+                tag = f'{ref} {iid} p{k}'
+                a, tol, q = w['answer'], w['tol'].get('abs', 0), p['question']
+                scale = 100 if w.get('unit') == '%' else 1
+                whole = float(a).is_integer() and tol == 0
+                ok(whole or bool(re.search(r'\bGive\b', q)), f'{tag}: no sentence stating the form wanted')
+                n = None
+                m = re.search(r'(\d+) decimal places?|decimal to (\d+) places?', q)
+                if m: n = int(m.group(1) or m.group(2))
+                m = re.search(r'\b(one|two|three|four) decimal places?', q)
+                if m: n = WORDS[m.group(1)]
+                if 'nearest penny' in q: n = 2
+                if 'nearest pound' in q: n = 0
+                if n is not None:
+                    r = round(a * scale, n) / scale
+                    ok(abs(r - a) <= tol + 1e-9, f'{tag}: tolerance {tol} rejects the key rounded to {n} places ({r})')
+                if 'exact decimal' in q:
+                    ok(any(abs(a * scale * 10 ** j - round(a * scale * 10 ** j)) < 1e-9 for j in range(0, 5)), f'{tag}: the exact decimal does not end within 4 places')
+                texts = [p['feedback'].get('correct', ''), p['explain']['text'], w.get('accept', '')]
+                for t in texts:
+                    t = t.replace('{,}', '').replace(',', '').replace('\u00a3', '')
+                    for v in re.findall(r'(?:\\approx|about) \$?(-?\d+\.?\d*)', t):
+                        v = float(v.rstrip('.'))
+                        if a and not whole and abs(v - a * scale) <= 0.05 * abs(a * scale):
+                            ok(abs(v / scale - a) <= tol + 1e-9, f'{tag}: prints {v} but the key {a} (tol {tol}) rejects it')
+form_checks([('problems-1', L1), ('problems-2', L2), ('problems-3', L3)])
 
 present = [n for n in (1, 2, 3) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
