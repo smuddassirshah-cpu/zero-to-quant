@@ -1,5 +1,5 @@
 import json, time, random
-d = json.load(open('app/content/drills/ci-cancelled-to-back.json'))
+d = json.load(open('app/content/drills/ci-reference-split.json'))
 def split_by_reference(sizes, ref):
     lo = 0
     for i in range(len(sizes)):

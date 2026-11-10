@@ -15,115 +15,130 @@
   "difficulty": 3,
   "pace": 1200,
   "fn": "widest_banner",
-  "returns": "a whole number",
-  "brief": "Posts stand one metre apart along a trading-floor wall, and `posts[i]` is the height of post `i` in metres. A banner hangs between two posts `i < j`. Its width is `j - i` and its height is the shorter of the two posts, so its area is `min(posts[i], posts[j]) * (j - i)`.\n\nWrite `widest_banner(posts)`, which returns the largest area any banner can have, or 0 when there are fewer than two posts.\n\nExample. For `posts = [2, 5, 1, 4]` the banner between the 5 and the 4 is 4 high and 2 wide, area 8. No pair does better, so the answer is 8.",
+  "returns": "a list of two whole numbers",
+  "brief": "Posts stand one metre apart along a trading-floor wall, and `posts[i]` is the height of post `i` in metres. A banner hangs between two posts `i < j`. Its width is `j - i` and its height is the shorter of the two posts, so its area is `min(posts[i], posts[j]) * (j - i)`.\n\nWrite `widest_banner(posts)`, which returns `[area, width]` for the banner with the largest area. If several banners share that area, return the widest of them. When no banner has an area above 0, including when there are fewer than two posts, return `[0, 0]`.\n\nExample. For `posts = [2, 5, 1, 4]` the banner between the 5 and the 4 is 4 high and 2 wide, area 8. No pair does better, so the answer is `[8, 2]`.",
   "constraints": [
     "$0 \\le n \\le 100{,}000$ posts, each a whole number between $0$ and $10^6$.",
     "$O(n)$ time is the target. Trying every pair is too slow.",
     "All the tests in a run share one 5-second limit in the browser."
   ],
-  "hint": "Start with the two end posts. The shorter of the pair caps every narrower banner that uses it, so move that pointer inwards.",
+  "hint": "Start with the two end posts. The shorter of the pair caps every narrower banner that uses it, so move that pointer inwards. The walk meets the widest banners first, so only a strictly larger area should replace the best.",
   "starter": "def widest_banner(posts):\n    # your code here\n    return 0\n",
   "examples": [
     {
       "call": "widest_banner([2, 5, 1, 4])",
-      "expect": "8",
+      "expect": "[8, 2]",
       "compare": "equal",
       "note": "The 5 and the 4 give 4 times 2. The two ends give only 2 times 3."
     },
     {
       "call": "widest_banner([3, 3])",
-      "expect": "3",
+      "expect": "[3, 1]",
       "compare": "equal",
-      "note": "Two posts 1 metre apart, both 3 high, give area 3."
+      "note": "Two posts 1 metre apart, both 3 high, give area 3 and width 1."
+    },
+    {
+      "call": "widest_banner([6, 6, 3])",
+      "expect": "[6, 2]",
+      "compare": "equal",
+      "note": "The two 6s give area 6 at width 1, and the 6 and the 3 give 3 times 2, also 6. The wider banner is returned."
     }
   ],
   "tests": [
     {
       "call": "widest_banner([])",
-      "expect": "0",
+      "expect": "[0, 0]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([7])",
-      "expect": "0",
+      "expect": "[0, 0]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([3, 3])",
-      "expect": "3",
+      "expect": "[3, 1]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([2, 5, 1, 4])",
-      "expect": "8",
+      "expect": "[8, 2]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([3, 9, 4, 4, 2, 7, 5, 9, 1])",
-      "expect": "54",
+      "expect": "[54, 6]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([0, 0, 0, 0])",
-      "expect": "0",
+      "expect": "[0, 0]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([1, 100, 100, 1])",
-      "expect": "100",
+      "expect": "[100, 1]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([10, 1, 1, 1, 1, 1, 10])",
-      "expect": "60",
+      "expect": "[60, 6]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([4, 3, 2, 1, 4])",
-      "expect": "16",
+      "expect": "[16, 4]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([1, 2, 4, 3])",
-      "expect": "4",
+      "expect": "[4, 2]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([6, 9, 1, 1, 1, 9, 2])",
-      "expect": "36",
+      "expect": "[36, 4]",
+      "compare": "equal"
+    },
+    {
+      "call": "widest_banner([6, 6, 3])",
+      "expect": "[6, 2]",
       "compare": "equal"
     },
     {
       "call": "widest_banner(list(range(1, 100001)))",
-      "expect": "2500000000",
+      "expect": "[2500000000, 50000]",
       "compare": "equal"
     },
     {
       "call": "widest_banner([1000000 - abs(50000 - i) for i in range(100001)])",
-      "expect": "95000000000",
+      "expect": "[95000000000, 100000]",
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
-  "solution": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best = 0\n    while i < j:\n        h = min(posts[i], posts[j])\n        best = max(best, h * (j - i))\n        if posts[i] < posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return best\n",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
+  "solution": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best, width = 0, 0\n    while i < j:\n        area = min(posts[i], posts[j]) * (j - i)\n        if area > best:\n            best, width = area, j - i\n        if posts[i] < posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return [best, width]\n",
   "notes": [
     "Every narrower banner that keeps the shorter post is no taller and no wider, so that post can be dropped.",
     "Moving the taller post instead can drop the best pair, as in `[3, 9, 4, 4, 2, 7, 5, 9, 1]`.",
-    "Each step drops one post, so the work is $O(n)$."
+    "Each step drops one post, so the work is $O(n)$. The widest banners are met first, so a strict `>` keeps the widest of a tie."
   ],
   "planted": [
     {
-      "code": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best = 0\n    while i < j:\n        h = min(posts[i], posts[j])\n        best = max(best, h * (j - i))\n        if posts[i] > posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return best\n",
+      "code": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best, width = 0, 0\n    while i < j:\n        area = min(posts[i], posts[j]) * (j - i)\n        if area > best:\n            best, width = area, j - i\n        if posts[i] > posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return [best, width]\n",
       "slip": "Moving the taller post inwards can throw away the post that belongs to the best banner."
     },
     {
-      "code": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best = 0\n    while i < j:\n        h = min(posts[i], posts[j])\n        best = max(best, h * (j - i + 1))\n        if posts[i] < posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return best\n",
+      "code": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best, width = 0, 0\n    while i < j:\n        area = min(posts[i], posts[j]) * (j - i + 1)\n        if area > best:\n            best, width = area, j - i\n        if posts[i] < posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return [best, width]\n",
       "slip": "Counting posts, `j - i + 1`, instead of the gaps between them makes every banner one metre too wide."
     },
     {
-      "code": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best = 0\n    while i < j:\n        h = max(posts[i], posts[j])\n        best = max(best, h * (j - i))\n        if posts[i] < posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return best\n",
+      "code": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best, width = 0, 0\n    while i < j:\n        area = max(posts[i], posts[j]) * (j - i)\n        if area > best:\n            best, width = area, j - i\n        if posts[i] < posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return [best, width]\n",
       "slip": "Taking the taller post as the height lets the banner hang above the shorter post."
+    },
+    {
+      "code": "def widest_banner(posts):\n    i, j = 0, len(posts) - 1\n    best, width = 0, 0\n    while i < j:\n        area = min(posts[i], posts[j]) * (j - i)\n        if area >= best:\n            best, width = area, j - i\n        if posts[i] < posts[j]:\n            i += 1\n        else:\n            j -= 1\n    return [best, width]\n",
+      "slip": "Replacing the best on `>=` lets a later, narrower banner of the same area win, so the returned width is too small."
     }
   ]
 }

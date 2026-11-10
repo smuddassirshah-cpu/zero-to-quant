@@ -4,7 +4,7 @@ Brief: `docs/briefs/drills-ci-packs.md`, row "Pack 2", on top of `docs/briefs/dr
 
 | id | pattern | difficulty | pace (s) | stdin | hidden tests | planted |
 | --- | --- | --- | --- | --- | --- | --- |
-| `ci-cancelled-to-back` | two-pointers | 2 | 900 | no | 12 | 3 |
+| `ci-reference-split` | two-pointers | 2 | 900 | no | 12 | 3 |
 | `ci-late-fills-merge` | two-pointers | 2 | 1020 | no | 12 | 3 |
 | `ci-two-desk-matches` | two-pointers | 3 | 1260 | no | 13 | 3 |
 | `ci-widest-banner` | two-pointers | 3 | 1200 | no | 13 | 3 |
@@ -42,3 +42,7 @@ The first draft had one "right idea, wrong complexity" planted solution per dril
 `node tools/fresh-check.mjs --drill <id>`: 0 hits for all 15. At `--min-run 8 --min-share 0` the hits are the shared constraint line ("is too slow. All the tests in a run share one 5-second limit in the browser") against `dsa-` and sibling `ci-` drills: stock phrasing, kept. Taught setups avoided by design: `max_sliding_window` and `longest_within_limit` (coding-int l3), `shortest_at_least` and `window_median` (coding-int homework-1), `longest_k_distinct`, `has_pair_with_difference` (ds homework-2), `two_sum_sorted` (ds l5), `merge` and `merge_logs` (algo-think l12), `partition` (algo-think l13), `find_anagrams` (coding-int l6), and the pack's `dsa-` and `oa-` drills of these two patterns (pairs within a budget, closest pair, pairs within d, subsequence, rain water, budget stretch, clean runs, alarm windows, varied windows, product windows).
 
 `app/content/manifest.json` was rewritten by the validator and is left out of the commit.
+
+Counts as authored; see `docs/reviews/review-drills-ci-1-2.md`, Fix pass, for later changes. `ci-zero-quads` is now difficulty 3 and `ci-mean-stretches` 4 (see the delta fix pass).
+
+Counts as authored; `ci-reference-split` was `ci-cancelled-to-back`, and `ci-widest-banner` now returns `[area, width]` with 14 tests and 4 planted. See `docs/reviews/review-delta-session-z.md`, Fix pass.
