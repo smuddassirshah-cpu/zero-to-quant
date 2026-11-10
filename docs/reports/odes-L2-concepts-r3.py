@@ -14,6 +14,12 @@ import sympy as sp
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
+import json as _json
+import pathlib as _pl
+_ODES = _pl.Path(__file__).resolve().parents[2] / "app" / "content" / "courses" / "odes"
+def _txt(f):
+    return _json.dumps(_json.load(open(_ODES / f, encoding="utf-8")), ensure_ascii=False)
+
 FAILS = []
 NOTES = []
 
@@ -79,8 +85,11 @@ num = {rr: 0.05, sig: 0.2, Kk: 100}
 check("put_numbers", abs(float(gam.subs(num)) - 2.5) < 1e-12 and abs(float(Sst.subs(num)) - 71.43) < 0.005
       and abs(float(V.subs(num).subs(S, 100)) - 12.32) < 0.005)
 # l7 screens[9].prose says the value V(S) obeys the equation, with no region. Below S* the value is K - S.
-check("FINDING_4 put_value_obeys_the_ODE_at_every_S (l7 screens[9].prose)", ode(Kk - S) == 0, expected_fail=True)
-# corrected assert: assert ode(Kk - S) == -rr * Kk   (the equation holds only for S above S*)
+# FINDING_4 (corrected claim, fix pass): the prose now says the equation holds "while it is held" (S above S*).
+# In the exercise region V = K - S leaves -rK, not 0; the held branch (K - S*)(S/S*)^-gamma gives 0.
+check("FINDING_4 ode_holds_while_held_not_in_exercise_region (corrected claim, fix pass)",
+      sp.simplify(ode(Kk - S) + rr * Kk) == 0 and ode(V) == 0
+      and "so while it is held its value $V(S)$ obeys" in _txt("l7-characteristic-equation.json"))
 
 # ---- l8: forcing ------------------------------------------------------------
 check("yp_sin_forcing", L(-3 * sp.cos(t) + sp.sin(t), 1, 3, 2) == 10 * sp.sin(t))

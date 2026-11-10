@@ -94,3 +94,23 @@ Run in this worktree on the content as read. No content file, engine file or `co
 - Playthrough: not run. This round changed no content, so there are no changed files to play through.
 
 Proposed fixes obey the voice rules: British English, no exclamation marks, no em-dashes, every sentence under 35 words, explanations of at most three sentences (finding 2's explain stays at three, finding 3's goes from two to three).
+
+## Fix pass
+
+Opus fixer, round 3. Each status has the fixer's own basis; the numbers come from a scratch check script (not committed) and are re-asserted in the r3 scripts, marked "(corrected claim, fix pass)". No graded key, accepted answer or option flag changed.
+
+1. Fixed. l2 quiz[1].feedback.correct now "No product $g(t)h(y)$ equals $t + y$, so it cannot be split." Basis: sympy gives $\partial_t\partial_y \ln F = -1/(t + y)^2 \ne 0$ for $t + y$, but 0 for the sums $1 + y^2$ and $t + ty$, so "a sum" is no test and "no product" is.
+2. Fixed. l2 screens[9].prose now "where the two curves are still close"; explain starts "At the start $1 - P/K$ is 0.9, close to 1, so $P$ grows almost as $P_0e^{kt}$." Basis: own run, logistic $P(0.25) = 1{,}194.95$ against $1{,}221.40$ (2.2% gap), 4.7% at six months, initial rate $0.8 \times 0.9 = 0.72$; explain stays at three sentences.
+3. Fixed (wording mine, no screen number). l6 screens[4].explain now "Superposition makes every such sum a solution. The Wronskian, later in this lesson, says when such sums give every solution." Basis: $y_1 = e^t$, $y_2 = 2e^t$ both solve $y'' - 3y' + 2y = 0$, every sum of them solves it, $W = 0$, and the solution $e^{2t}$ is not among them (Boyce and DiPrima 3.2, Theorem 3.2.4).
+4. Fixed. l7 screens[9].prose now "so while it is held its value $V(S)$ obeys ...". Basis: sympy, $V = K - S$ gives $-rK$ on the left side, while the held branch $(K - S^*)(S/S^*)^{-2r/\sigma^2}$ gives 0.
+5. Fixed. l10 screens[10].prose now "Two-factor short-rate models are often fitted with one fast factor and one slow one." Basis: in G2++ (Brigo and Mercurio, *Interest Rate Models*, 4.2) the speeds $a$ and $b$ are independent free parameters, so separation is a property of a fit, not of the class.
+6. Fixed. l13 screens[7].widget.options[2].why now "The linear system has that line, but the true system does not: at $(1, 0)$, $x' = 1$." Basis: $\mathbf{J}(0, 0)$ has null space spanned by $(1, 0)$, so $x' = 0$, $y' = -y$ is still along the whole $x$ axis, while the true $x' = x^2$ is 1 at $(1, 0)$; option stays not correct.
+
+Noted lines (CPython 3, NumPy 2.5.3, each expression run directly):
+
+- l4 screens[8].canvas.params.lines[3]: changed to `array([-0.+1.j,  0.-1.j])`, the printed `repr(np.roots([1, 0, 1]))`. No graded answer uses it.
+- l2 screens[8].canvas.params.lines[3]: changed to `2.746530721670274`, the digits of `np.log(9) / 0.8` (also `math.log(9) / 0.8`). Bare-number house style kept. No graded answer uses the 16-digit value.
+- l3 screens[8].canvas.params.lines[1]: changed to `15569.310496803075`, what the solution's `linear_const(0.05, 1200, 0, 10)` returns; `24000 * (e^{0.5} - 1)` written directly gives ...077, which is where the old digits came from. No graded answer uses the 16-digit value.
+- The `np.float64(...)` wrapper, the l3 canvas point and the l10 eig note: left as they are (not in scope of this pass).
+
+Gates (from `app/`): validator 0 errors (4116 warnings, manifest unchanged); voice scan 35: 0 over three sentences, 0 over 35 words; `odes-L{1,2,3}-numbers.py`, `-concepts.py`, `-concepts-r2.py`, `-concepts-r3.py` all exit 0, r3 scripts 0 EXPECTED_FAIL; playthrough desktop and `--mobile` all passed for l2, l3, l4, l6, l7, l10 and l13.
