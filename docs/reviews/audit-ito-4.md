@@ -87,3 +87,28 @@ The earlier review's "checked and correct" list for level 4 covers numbers only 
 - `python3 docs/reports/ito-4-perf-numbers.py`: 48 checks, 0 failures, exit 0.
 - `node tools/playthrough.mjs --set ito/review-4 --local-cdn <pkgs>`: ok, 9 items, recorded 9 of 9, all passed. The same with `--mobile`: ok, 9 of 9, all passed.
 - No content, engine file, `course.json` or state file was changed. No engine limit was met, so there is no inbox bullet.
+
+## Fix pass
+
+Opus fixer, commits ad20e1a2 and 33556fd6 (content), then this file and `docs/reports/ito-L4-concepts.py`. Each fix was applied as a targeted string replacement in the named field; each changed string was reread whole. **16 fixed, 0 disputed, 0 not applied.** No graded key, accepted answer, `wrong[]` value, `answer` order or hidden test changed; h-stopping keeps the strict order o1, o2, o3, o4 with no `same` group. One option text changed: review-4 r-mu `options[0].text` (the correct option, id `notmu` unchanged) now names today's share price.
+
+| # | status | basis (fixer's own) |
+|---|---|---|
+| 1 | fixed (wording: "a tame noise term $f_x$", the lesson's own term) | Øksendal 3.2 (Cor. 3.2.6): $\int f_x\,dW$ is a martingale when $E\int f_x^2\,ds<\infty$; zero drift alone gives a local martingale (KS 3.2.D). Here $f_x = 3x^2 - 3t$ is square-integrable. |
+| 2 | fixed, serious (reworded) | Williams 10.10: (b) $X$ bounded and $T$ a.s. finite; (c) $E[T]<\infty$ needs bounded increments as well. Mörters and Peres Thms 2.44 and 2.48 (Wald's lemmas) give $E[\tau]<\infty$ as enough for $W$ and $W^2 - t$. My derivation: $\tau$ = first time $W_t = t - 1$ has $E[\tau]=1$ and $e^{2W_\tau - 2\tau} = e^{-2}$ on every path, so a bounded stopped *value* with finite mean time is not enough either. New text: "a bounded stopped process and a finite $\tau$. For $W$ and $W^2 - t$, a finite $E[\tau]$ is enough on its own." |
+| 3 | fixed | Single barrier: $W_\tau = 1$ on every path, so $E[W_\tau]=1$; an infinite mean removes the guarantee only (counter-case: first zero after time 1). |
+| 4 | fixed | $P(\sup X \ge a) = e^{-2|\mu| a/\sigma^2}$ with $a$ measured from the start (Shreve II Ex. 8.3 / KS 3.5.C); key $e^{-0.25}$ needs start 0. |
+| 5 | fixed, serious (prose reworded into two short sentences) | $(W_s, W_t) \overset{d}{=} (-W_s, -W_t)$, so $E[W_s^pW_t^q] = (-1)^{p+q}E[W_s^pW_t^q]$: zero exactly when $p+q$ is odd. Checked exactly: 15 odd-total cases zero, 9 cases with both powers odd nonzero. |
+| 6 | fixed | Shreve II Thm 4.3.1 (isometry $E[(\int H\,dW)^2] = E\int H^2\,dt$); $\text{Var}\int_0^2 W\,dW = \int_0^2 t\,dt = 2$. |
+| 7 | fixed | Hull ch. 5 (5.4 to 5.6): with yield $q$ the value is $S_0e^{-qT} - Ke^{-rT}$, so the stated value needs no dividends. |
+| 8 | fixed | $(10{,}948.77 - 10{,}941.74)/4.56 = 1.5417$; script $z = 1.541$. |
+| 9 | fixed (old string was "the junior forgot to discount the put.") | $e^{-0.05}\Phi(0.15) = 0.5323$; $1 - 0.5323 = 0.4677$; undiscounted put $\Phi(-0.15) = 0.4404$; right put $0.9512 - 0.5323 = 0.4189$. |
+| 10 | fixed | Own derivation: $X = \ln(S_T/F) \sim N(-v/2, v)$ under $Q$, so $E[Xe^{X/2}] = e^{m/2 + v/8}(m + v/2) = 0$ for every $\sigma$; quadrature confirms, and the digital, square and call prices all move with $\sigma$. |
+| 11 | fixed | $V = S - Ke^{-r(T-t)}$: $V_t + rSV_S - rV = -rKe^{-r(T-t)} + rS - rS + rKe^{-r(T-t)} = 0$, and $V_{SS} = 0$, so the check cannot see the dropped term. |
+| 12 | fixed (split into two sentences) | $Q(S_T > K) = \Phi(d_2) < \tfrac12 \iff K > S_0e^{(r - \sigma^2/2)T}$; $60e^{-0.01} = 59.403$, forward $60e^{0.08} = 64.997$; course market $K = 102$ gives 0.5203. |
+| 13 | fixed (option text changed, key unchanged) | Hull ch. 15 (Black-Scholes-Merton formula): $c = c(S_0, K, T, r, \sigma)$. |
+| 14 | fixed, serious (same text as 2) | As 2; the item's lines o1 (bounded) and o2 ($\tau$ finite) are exactly Williams 10.10(b). |
+| 15 | fixed (reworded: "A bounded stopped process, with $\tau$ finite, is the condition used here.") | "Fails" is too strong: first zero after time 1 has $E[\tau] = \infty$ and $E[W_\tau] = 0$. |
+| 16 | fixed | Shreve II 3.7 (first passage density): $E[\tau_m] = \infty$; the stopped path at one barrier is unbounded below. |
+
+Gates after the fix: validator 0 errors, 4,133 warnings (as before; two new sentences of 20 words or more were split); `ito-L4-concepts.py` exit 0 with 0 `EXPECTED_FAIL` (the six former ones now assert the corrected claims, marked "(corrected claim, fix pass)"; the optional-stopping check also confirms Wald's two identities on the same stopping time); `ito-4-perf-numbers.py` 48 checks, exit 0; voice scan 35: 0 and 0; playthrough desktop and `--mobile` all passed for l13 to l17, review-4 and homework-4.
