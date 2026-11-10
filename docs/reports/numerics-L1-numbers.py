@@ -61,6 +61,12 @@ check('eps/tiny ~ 1e292', round(math.log10(EPS / sys.float_info.min)), 292)
 check('float32 eps', np.finfo(np.float32).eps, 2.0**-23); check('float32 eps value', 2.0**-23, 1.19e-7, rel=0.01)
 check('float32 gap 20000', float(np.spacing(np.float32(20000))), 0.001953125); check('20000 in [2^14,2^15)', 2**14 <= 20000 < 2**15, True)
 check('float32 20000.01', float(np.float32(20000.01)), 20000.009765625)
+# (corrected claim, fix pass) l1 quiz[0].explain: stored error 0.00023 (exact fractions), every hundredth still rounds back,
+# and a one-hundredth move comes out as 0.009765625, 2.3% wrong.
+check('float32 20000.01 error', float(Fraction(20000.01) - Fraction(float(np.float32(20000.01)))), 0.00023, abs_=5e-6)
+check('float32 hundredths round back', all(round(float(np.float32(Fraction(2000000 + k, 100))), 2) == round(20000 + k / 100, 2) for k in range(100)), True)
+check('float32 hundredth move', float(np.float32(20000.01)) - float(np.float32(20000.0)), 0.009765625)
+check('float32 hundredth move error', abs(0.009765625 - 0.01) / 0.01 * 100, 2.3, abs_=0.05)
 check('float32 eps*20000', 2.0**-23 * 20000, 0.00238, rel=0.01)
 check('float32 f64 distractor', 2.0**-52 * 2**14, 3.6e-12, rel=0.02)
 ts = 1.7e18
@@ -156,7 +162,24 @@ Vp, d1p = (lambda S, K: (K * mexp(-mpf('0.05')) * ncdf(-((mlog(mpf(S) / K) + mpf
 vegap = float(100 * npdf(d1p))
 check('60 put price', float(Vp), 0.0113, abs_=0.00005); check('60 put vega', vegap, 0.588, abs_=0.0005)
 check('60 put vol move', 0.01 / vegap * 100, 1.70, abs_=0.005); check('64 times', (0.01 / vegap) / (0.01 / vega), 64, abs_=0.5)
-check('put 0.05 move', 0.05 / vegap * 100, 8.5, abs_=0.05); check('call 0.05 move', 0.05 / vega * 100, 0.133, abs_=0.0005)
+# (corrected claim, fix pass) l3 quiz[3] and screens[9]: true implied-vol moves of the one-year 60 put, found by
+# 200 bisection steps on a float Black-Scholes put (an independent route from the mpmath price above).
+def _put60(s):
+    d1 = (math.log(100 / 60) + 0.05 + s * s / 2) / s
+    return 60 * math.exp(-0.05) * 0.5 * math.erfc((d1 - s) / math.sqrt(2)) - 100 * 0.5 * math.erfc(d1 / math.sqrt(2))
+def _iv60(q):
+    a, b = 1e-4, 5.0
+    for _ in range(200):
+        m = (a + b) / 2
+        if (_put60(m) - q > 0) == (_put60(a) - q > 0): a = m
+        else: b = m
+    return (a + b) / 2
+check('put +0.05 true move', (_iv60(float(Vp) + 0.05) - 0.2) * 100, 4.1, abs_=0.05)
+check('put -0.05 leaves no vol (price below 0)', float(Vp) - 0.05 < 0, True)
+check('put +0.01 true move', (_iv60(float(Vp) + 0.01) - 0.2) * 100, 1.3, abs_=0.05)
+check('put -0.01 true move', (0.2 - _iv60(float(Vp) - 0.01)) * 100, 3.3, abs_=0.05)
+check('0.01 is 89% of the put', 0.01 / float(Vp) * 100, 89, abs_=0.5)
+check('call 0.05 move', 0.05 / vega * 100, 0.133, abs_=0.0005)
 check('corr kappa', (1 + 0.95) / (1 - 0.95), 39, rel=1e-9); check('vif', 1 / (1 - 0.95**2), 10.26, abs_=0.005)
 check('log10 39', math.log10(39), 1.6, abs_=0.01); check('r 0.99', (1.99) / 0.01, 199, rel=1e-9)
 check('predicted error', np.linalg.cond(A) * 1e-8, 4.0002e-4, rel=1e-6)

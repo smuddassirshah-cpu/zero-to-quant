@@ -271,9 +271,15 @@ def conditioning():
     p60, v60 = put(60, 0.2)
     vatm = 100 * norm.pdf(0.35)
     check("implied_vol_sensitivity", close(p60, 0.0113, abs_=5e-5) and close(v60, 0.588, abs_=5e-4) and close(vatm, 37.52, abs_=0.005)
-          and close(0.01 / v60 * 100, 1.70, abs_=0.01) and close(0.05 / vatm * 100, 0.133, abs_=0.001) and close(0.05 / v60 * 100, 8.5, abs_=0.01)
+          and close(0.01 / v60 * 100, 1.70, abs_=0.01) and close(0.05 / vatm * 100, 0.133, abs_=0.001)
           and p60 / (v60 * 0.2) < 1,
           "l3 screens[9], quiz[3]: vol moves by dV/vega; the wing is ill-conditioned in absolute terms only (relative kappa V/(vega sigma) is below 1)")
+    # (corrected claim, fix pass) l3 quiz[3].explain and screens[9].explain: the true moves of the 60 put's vol
+    from scipy.optimize import brentq
+    iv60 = lambda q: brentq(lambda s: put(60, s)[0] - q, 1e-4, 5, xtol=1e-14)
+    check("put60_true_vol_moves", close((iv60(p60 + 0.05) - 0.2) * 100, 4.1, abs_=0.05) and p60 - 0.05 < 0
+          and close((iv60(p60 + 0.01) - 0.2) * 100, 1.3, abs_=0.05) and close((0.2 - iv60(p60 - 0.01)) * 100, 3.3, abs_=0.05),
+          "l3 quiz[3], screens[9] (corrected claim, fix pass): +0.05 moves the 60 put's vol 4.1 points, -0.05 leaves no vol; +-0.01 give +1.3 and -3.3")
 
 
 # ---------------------------------------------------------------- l4
