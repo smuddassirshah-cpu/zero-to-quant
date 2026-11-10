@@ -1879,3 +1879,8 @@ Raised later (audit numerics):
 
 Raised later (fluency trig, widening pass):
 - [Could] (again; was the 840 note) `poly(r; c, d)` with a surd var still writes a terminating fraction coefficient as a decimal (`3.5\sqrt{3}`), and `mono` writes one term only, so the two-term exact keys of `trig/fluency-l4-exact-values` (`combine-values`, and `side-from-hypotenuse` with an odd hypotenuse) still keep their coefficients whole by drawing even hypotenuses. Want `poly` to write a non-whole coefficient as `\frac{7}{2}` (as `mono` and `cfrac` do), or a `{poly(r; ...):frac}` variant.
+
+Raised later (drills ci 1):
+- [Should] `playthrough.mjs --planted` (`plantedOne`, used by `planted-check.mjs`): after a submit that times out, the Python worker restarts and the next `ZQDrill.submit()` is a no-op while the status is `restarting`, so `drillSubmit` returns the previous run's results. Every drill whose planted list holds a too-slow solution then reports "the model solution passes 9 of 12" (11 of 15 in ci pack 1). Fix: `await drillReady(cpp)` before each planted submit and before the model submit; with that change on a scratch copy all 15 ci pack 1 drills are green.
+- [Could] Drill `brief` rendering (`block()` in `js/screens/drill.js`) has no lists and no single line breaks, so a `- line 1 ... - line 2` input format runs together in one paragraph (the `dsa` stdin briefs show it). ci pack 1 writes each input line as its own paragraph instead. Wanted: `-` list items or line breaks in drill briefs.
+- [Could] The validator's `pace ... over 30 minutes` warning fires on every difficulty-5 `ci` drill, which `docs/briefs/drills-ci-packs.md` allows up to 2,700 s. Raise the threshold to 2,700 for drills, or to 45 minutes.
