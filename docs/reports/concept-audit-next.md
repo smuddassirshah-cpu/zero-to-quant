@@ -1,11 +1,19 @@
-# Concept audit: next (6 Nov 2026, audit session 1)
+# Concept audit: next (10 Nov 2026, audit session 2)
 
 State: `docs/reports/concept-audit-log.md` (rounds), `concept-audit-notes.md` (decisions, issues). Branch `claude/fable-audit`; the content session merges it.
 
-Closed (convergence rule met, fix passes merged, gates green): mental-pressure L1 to L4, puzzles L1 to L5 (L4 to L5 took two rounds), game-theory L1 to L3, brainteasers L1 to L3, coding-int L1 to L4, research-int L1 to L4, systems L1 to L4 (L4 took two rounds), ito L1 to L3, measure-prob L1 to L3, pdes L1 to L3, pairs-rep L1 to L3 (two rounds).
+Closed: mental-pressure, puzzles, game-theory, brainteasers, coding-int, research-int, systems, pdes, pairs-rep (all levels; the round-2 finding 3 dispute is settled, `upheld in part`, fixed), ito L1 to L3, measure-prob L1 to L3, and new this session mental L1 to L3 and number-sense L1 to L3.
 
-Open: ito L4, measure-prob L4 (not yet audited); pairs-rep round-2 finding 3 (disputed, needs a third reader). Deferred to the content session (notes): research-int l20 and l14 pound-typed rows; research-int review-1 timed-set playthrough failure (engine).
+Open: ito L4, measure-prob L4, mm-games, recruiting and the topic 1.5 courses were not eligible (content commits on 9 Nov, 18:21 to 23:15 UTC, touched 69 of 79 course folders). Minor: number-sense l11 screens[8] root claim fails at 0 (notes).
 
-Next, in order (reordered 9 Nov by the content session, user decision; `docs/briefs/fable-audit-session-prompt.md` "Order" is binding): the pairs-rep third read, ito L4 and measure-prob L4; then mm-games, recruiting; the topic 1.5 courses; the rest of the trader and developer closures; other route courses; optional Stage 2 and 3 courses last; exams after their courses close. Use the same agent briefs (auditor on `fable`, fixer on `opus`, own scratch subfolder each; by-design checks marked `EXPECTED_FAIL` with the corrected assert in a comment, which the fixer enables).
+Next, in order, as each passes 24 quiet hours: ito L4, measure-prob L4; mm-games; recruiting; counting-chance, conditional, random-vars, limits-thm, markov; the rest of the trader and developer closures, Stage 1 first; other route courses. Closed courses touched on 9 Nov (brainteasers, game-theory, puzzles, research-int, systems, coding-int, pdes) need a delta audit of the changed files. Run `git fetch --unshallow` before rebasing.
 
-Miss rate (round 1, 39 levels, 13 course-level reads): 132 audit-only conceptual findings, 12 `wrong`, 113 `imprecise`, 15 `misleading`; about 0.9 `wrong` and 10 findings per three levels left behind by one second read. Round 2 (puzzles L4 to L5, systems L4, pairs-rep): 0 new `wrong`.
+Miss rate: session 1, 39 levels, 132 audit-only findings, 12 `wrong`. Session 2, 6 levels, 20 audit-only findings, 1 `wrong`, overlap with the earlier read 0.
+
+## Verdict
+
+Session 2, levels audited: 6 (45 in all).
+Serious audit-only findings: 2.
+- `mental/l8-squaring.json` screens[4].explain, screens[6].prose, summary.ideas[2], objectives[2]: either-side shortcut stated without "the same distance" (imprecise).
+- `number-sense/l12-which-first.json` quiz[2].explain.text: tools said to read −3² as −9; a spreadsheet gives 9 (wrong).
+Minor: 18. Serious per three levels: 1.0.

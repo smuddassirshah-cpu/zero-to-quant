@@ -78,8 +78,9 @@ for seed in range(30):
     flat_trade.append(cycle_mean(c_, 0, 20, 'trade'))
 d = np.array(flat_trade) - np.array(flat_form)
 print(f'[lookahead] trading-sd threshold minus formation-sd threshold, 30 fresh first cycles: mean {d.mean():+.4f}, se {d.std(ddof=1)/np.sqrt(len(d)):.4f}')
-# the content says the look-ahead threshold "flatters the backtest"; the honest claim is only that it uses future prices
-# (whether it flatters depends on the data). The ledger marks the "flatters" clause imprecise; no assert on its sign.
+# after the third-read fix pass the content says look-ahead is invalid whatever its effect, that it flatters on average
+# on this course's simulated prices, and that on the screen's pair (2, 3) it earns less. This 30-cycle check is
+# underpowered for the sign; the asserts live in pairs-rep-L1-lookahead-third-read.py. Print only, no assert on its sign.
 
 # ---- 4. open share of pair-days (l1 screens[8].explain "most will be waiting" against l13 screens[2] "open most of the time") [open-share]
 open_days, all_days = 0, 0
