@@ -138,9 +138,9 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 <!-- generated:totals:trader -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 442 | 0 | 442 | 231 | 983 |
+| Required | 442 | 0 | 442 | 232 | 982 |
 | Recommended | 188 | 0 | 188 | 97 | 493 |
-| Learn header (required plus recommended) | 630 | 0 | 630 | 328 | 1476 |
+| Learn header (required plus recommended) | 630 | 0 | 630 | 329 | 1475 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 534 | 0 | 534 | 286 | 1367 |
+| Required | 534 | 0 | 534 | 288 | 1365 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 874 | 0 | 874 | 461 | 2299 |
+| Learn header (required plus recommended) | 874 | 0 | 874 | 463 | 2297 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -533,9 +533,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 569 | 0 | 569 | 301 | 1382 |
+| Required | 569 | 0 | 569 | 303 | 1380 |
 | Recommended | 223 | 0 | 223 | 114 | 489 |
-| Learn header (required plus recommended) | 792 | 0 | 792 | 415 | 1871 |
+| Learn header (required plus recommended) | 792 | 0 | 792 | 417 | 1869 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -660,9 +660,9 @@ Same learner as Strats, plus the pricing mathematics.
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 646 | 0 | 646 | 342 | 1529 |
+| Required | 646 | 0 | 646 | 344 | 1528 |
 | Recommended | 228 | 0 | 228 | 118 | 431 |
-| Learn header (required plus recommended) | 874 | 0 | 874 | 460 | 1960 |
+| Learn header (required plus recommended) | 874 | 0 | 874 | 462 | 1959 |
 <!-- /generated -->
 
 **Dependency conflicts**

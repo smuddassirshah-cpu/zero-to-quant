@@ -1,0 +1,909 @@
+{
+  "id": "problems-4",
+  "course": "markov",
+  "level": 4,
+  "title": "Problems: balance, networks, sampling and arrivals",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-supplier-survey",
+      "difficulty": 3,
+      "skills": [
+        "mc-longrun",
+        "mc-walks",
+        "mc-chains"
+      ],
+      "prose": "An auditor surveys five firms in a supply network. Firm H trades with A, B, C and D, and A also trades with B; there are no other links. She walks from firm to firm, each step along a trading link chosen at random, and records the firm at every step. Firms C and D are behind on their payments.",
+      "parts": [
+        {
+          "question": "In the long run, what share of her records are firm C? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "uniform",
+                "value": 0.2,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "hub",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The degrees of H, A, B, C and D add to $4 + 2 + 2 + 1 + 1 = 10$. So $\\pi_C = \\tfrac{1}{10} = 0.1$.",
+            "generic": "Not quite. Count each firm's links, then divide C's count by the total.",
+            "byKey": {
+              "uniform": "That gives each firm $\\tfrac15$, or divides by the 5 links. A walk visits a firm in proportion to its degree, out of $2 \\times 5 = 10$.",
+              "hub": "That is the share of the hub H, degree 4. C has degree 1."
+            }
+          },
+          "explain": {
+            "text": "The degrees are 4, 2, 2, 1 and 1, adding to $10 = 2 \\times 5$ links. A walk on a network has $\\pi_i = \\tfrac{\\deg(i)}{2|E|}$, so $\\pi_C = 0.1$. Firms with few links are recorded least."
+          }
+        },
+        {
+          "question": "Using $\\pi_C = \\pi_D = 0.1$, what share of her records are firms behind on payments? She reports that share as the network's rate. Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "true",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-firm",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\pi_C + \\pi_D = 0.1 + 0.1 = 0.2$.",
+            "generic": "Not quite. Add the long-run shares of the two firms behind on payments.",
+            "byKey": {
+              "true": "That is the true share of firms, 2 of 5. Her walk records C and D less often than H.",
+              "one-firm": "That is C alone. D is behind on payments too."
+            }
+          },
+          "explain": {
+            "text": "Her records put $0.1 + 0.1 = 0.2$ at C or D. Two firms in five are behind, a rate of 0.4. The plain walk halves the rate, because the late payers have the fewest links."
+          }
+        },
+        {
+          "question": "She wants every firm recorded equally often. She keeps proposing a random link from the current firm $i$, so $q_{ij} = \\tfrac{1}{\\deg(i)}$, and adds a Metropolis-Hastings test. Which acceptance chance for a move from $i$ to $j$ makes the target uniform?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "ratio",
+                "text": "$\\min\\left(1, \\tfrac{\\deg(i)}{\\deg(j)}\\right)$",
+                "correct": true
+              },
+              {
+                "id": "flipped",
+                "text": "$\\min\\left(1, \\tfrac{\\deg(j)}{\\deg(i)}\\right)$",
+                "why": "That favours moves to well linked firms, so it pushes the walk further towards H."
+              },
+              {
+                "id": "always",
+                "text": "Accept every proposal",
+                "why": "That is the plain walk, whose shares follow the degrees."
+              },
+              {
+                "id": "inverse",
+                "text": "$\\tfrac{1}{\\deg(j)}$",
+                "why": "From A to B it accepts only half the time, though A and B have the same degree. The test compares the two proposal chances."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. With equal weights the ratio is $\\tfrac{q_{ji}}{q_{ij}} = \\tfrac{1/\\deg(j)}{1/\\deg(i)} = \\tfrac{\\deg(i)}{\\deg(j)}$.",
+            "generic": "Not quite. Put $w_jq_{ji}$ over $w_iq_{ij}$ with equal weights and $q_{ij} = \\tfrac{1}{\\deg(i)}$."
+          },
+          "explain": {
+            "text": "With a uniform target the weights cancel, leaving $\\tfrac{q_{ji}}{q_{ij}} = \\tfrac{\\deg(i)}{\\deg(j)}$. A move towards a better linked firm is accepted less often. That cancels the plain walk's pull towards H."
+          }
+        },
+        {
+          "question": "With the test $\\min\\left(1, \\tfrac{\\deg(i)}{\\deg(j)}\\right)$, what is the chance that one step from C stays at C? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.75,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "move",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "flipped",
+                "value": 0,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "C can only propose H, and accepts with $\\min(1, \\tfrac14) = \\tfrac14$, so it stays with chance $1 - \\tfrac14 = 0.75$.",
+            "generic": "Not quite. C has one link, to H. Find the acceptance chance, then the chance of a rejection.",
+            "byKey": {
+              "move": "That is the chance the move to H is accepted, $\\tfrac14$. The chain stays with the rest.",
+              "flipped": "That uses $\\tfrac{\\deg(j)}{\\deg(i)}$, which accepts every move from C. The test is $\\tfrac{\\deg(i)}{\\deg(j)} = \\tfrac14$."
+            }
+          },
+          "explain": {
+            "text": "C proposes H for certain, and the test gives $\\min\\left(1, \\tfrac{1}{4}\\right) = \\tfrac14$. So the walk stays at C with chance 0.75. Long stays at the leaves are how they catch up with the hub."
+          }
+        },
+        {
+          "question": "In the corrected walk each firm has share $\\tfrac15$. A step never stays put at H. It stays with chance 0.25 at A or B, and 0.75 at C or D. What share of all her records repeat the firm before? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.4,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "plain",
+                "value": 0,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "leaves-only",
+                "value": 0.3,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "degree-weights",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac15(0 + 0.25 + 0.25 + 0.75 + 0.75) = \\tfrac{2}{5} = 0.4$.",
+            "generic": "Not quite. Weight each firm's staying chance by its share, $\\tfrac15$, and add.",
+            "byKey": {
+              "plain": "That is the plain walk, which always moves. The corrected walk rejects some moves.",
+              "leaves-only": "That counts C and D only. A and B stay with chance 0.25 each as well.",
+              "degree-weights": "That weights the firms by the plain walk's shares. The corrected walk spends $\\tfrac15$ of its time at each firm."
+            }
+          },
+          "explain": {
+            "text": "The repeats are $\\tfrac15(0 + 0.25 + 0.25 + 0.75 + 0.75) = 0.4$ of her records. Her survey now records C or D two times in five, the true rate. The price is that two records in five repeat the one before, so a long walk is needed."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-taxi-rank",
+      "difficulty": 4,
+      "skills": [
+        "mc-longrun",
+        "mc-chains"
+      ],
+      "prose": "A station taxi rank has room for 3 taxis. Taxis arrive as a Poisson process at 2.4 a minute and passengers, independently, at 1.6 a minute. A passenger takes a waiting taxi, or leaves if the rank is empty. A taxi that finds the rank full drives off. Watch the number of taxis just after each arrival of either kind.",
+      "parts": [
+        {
+          "question": "What is the chance that the next arrival is a taxi? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.6,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "ratio",
+                "value": 1.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "passenger",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Merged, arrivals come at $2.4 + 1.6 = 4$ a minute, and each is a taxi with chance $\\tfrac{2.4}{4} = 0.6$.",
+            "generic": "Not quite. Merge the two streams, then take the taxi share of the total rate.",
+            "byKey": {
+              "ratio": "That is the ratio of the rates, $\\tfrac{2.4}{1.6}$. A chance divides by the total rate.",
+              "passenger": "That is the chance the next arrival is a passenger."
+            }
+          },
+          "explain": {
+            "text": "Two independent Poisson streams merge into one at rate 4 a minute. Each arrival is a taxi with chance $\\tfrac{2.4}{4} = 0.6$, independently of the others. So from arrival to arrival the rank moves up with chance 0.6 and down with chance 0.4."
+          }
+        },
+        {
+          "question": "At each arrival the rank gains a taxi with chance 0.6 or loses one with chance 0.4. A blocked move leaves it unchanged. In the long run, what is the ratio $\\tfrac{\\pi_{i+1}}{\\pi_i}$? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.5,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 0.6667,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-way",
+                "value": 0.6,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Detailed balance gives $0.6\\pi_i = 0.4\\pi_{i+1}$, so $\\tfrac{\\pi_{i+1}}{\\pi_i} = 1.5$.",
+            "generic": "Not quite. Balance the flow up from $i$ with the flow down from $i + 1$.",
+            "byKey": {
+              "inverted": "That is $\\tfrac{0.4}{0.6}$, upside down. The flow up from $i$, $0.6\\pi_i$, equals the flow down from $i + 1$, $0.4\\pi_{i+1}$.",
+              "one-way": "That is the chance of a step up alone. Balance compares it with the chance of a step down."
+            }
+          },
+          "explain": {
+            "text": "The rank is a birth-death chain on 0 to 3, so it is reversible. Balance between neighbours gives $0.6\\pi_i = 0.4\\pi_{i+1}$, so each level is 1.5 times as likely as the one below. Taxis arrive faster than passengers, so the rank is often full."
+          }
+        },
+        {
+          "question": "Using the ratio 1.5, what share of passengers find the rank empty? Give an exact fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1231,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 0.4154,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "uniform",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "three-states",
+                "value": 0.2105,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The weights are $1, 1.5, 2.25, 3.375$, adding to 8.125, so $\\pi_0 = \\tfrac{1}{8.125} = \\tfrac{8}{65} \\approx 0.1231$.",
+            "generic": "Not quite. Give level 0 weight 1, multiply by 1.5 for each level up, then divide by the total.",
+            "byKey": {
+              "inverted": "That is $\\tfrac{27}{65}$: the share with a full rank, or the empty share with the ratio upside down. Empty is the lightest level here.",
+              "uniform": "That gives each of the four levels the same share. Balance makes them grow by 1.5 a level.",
+              "three-states": "That leaves out the full rank, level 3. The weights are $1, 1.5, 2.25$ and $3.375$."
+            }
+          },
+          "explain": {
+            "text": "The weights $1, 1.5, 2.25, 3.375$ add to 8.125, so $\\pi_0 = \\tfrac{8}{65} \\approx 0.1231$. Passengers arrive whatever the rank holds, so each finds it empty with this chance. The full rank, $\\tfrac{27}{65}$, is the most likely level."
+          }
+        },
+        {
+          "question": "A share $\\tfrac{8}{65}$ of passengers find the rank empty. How many passengers an hour leave without a taxi, on average? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 11.8154,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "all-arrivals",
+                "value": 29.5385,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "per-minute",
+                "value": 0.1969,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "taxis",
+                "value": 59.8154,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Passengers arrive at $1.6 \\times 60 = 96$ an hour, so $96 \\times \\tfrac{8}{65} \\approx 11.82$.",
+            "generic": "Not quite. Multiply the passengers an hour by the share who find no taxi.",
+            "byKey": {
+              "all-arrivals": "That applies the share to all 240 arrivals an hour, taxis too. Only the 96 passengers can leave without a taxi.",
+              "per-minute": "That is the rate a minute, $1.6 \\times \\tfrac{8}{65}$. Multiply by 60 for the hour.",
+              "taxis": "That is the taxis turned away from a full rank, $144 \\times \\tfrac{27}{65}$. The question asks for passengers."
+            }
+          },
+          "explain": {
+            "text": "An hour brings $1.6 \\times 60 = 96$ passengers on average. A share $\\tfrac{8}{65}$ find no taxi, so about $\\tfrac{768}{65} \\approx 11.82$ an hour are lost. Each passenger is a thinned arrival, so this is a Poisson stream too."
+          }
+        },
+        {
+          "question": "The council adds a fourth space, so the rank holds 0 to 4 taxis with the same ratio 1.5. How many passengers an hour leave without a taxi now? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7.2796,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-change",
+                "value": 11.8154,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 36.8531,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "saved",
+                "value": 4.5358,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The weights now add to $8.125 + 5.0625 = 13.1875$, so $\\pi_0 = \\tfrac{16}{211}$ and $96 \\times \\tfrac{16}{211} \\approx 7.28$.",
+            "generic": "Not quite. Add the weight of level 4 to the total, recompute $\\pi_0$, then multiply by 96.",
+            "byKey": {
+              "no-change": "That is the loss with 3 spaces. A fourth space adds the weight $1.5^4 = 5.0625$ to the total.",
+              "inverted": "That uses the ratio $\\tfrac23$, upside down. The rank grows by 1.5 a level.",
+              "saved": "That is the number saved, $11.82 - 7.28$. The question asks how many are still lost."
+            }
+          },
+          "explain": {
+            "text": "The new weight $1.5^4 = 5.0625$ lifts the total to 13.1875, so $\\pi_0 = \\tfrac{16}{211} \\approx 0.0758$. Lost passengers fall to $96 \\times \\tfrac{16}{211} \\approx 7.28$ an hour. One space saves about 4.5 passengers an hour, because extra room only helps when taxis outrun passengers."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-payment-audits",
+      "difficulty": 4,
+      "skills": [
+        "mc-longrun",
+        "mc-walks",
+        "mc-chains"
+      ],
+      "prose": "Payment messages hop between six banks along fixed links: A to B, A to C, A to D, B to C, C to D, D to E and E to F. Each hop goes to a linked bank chosen at random, and links work both ways. Thousands of messages are in flight, each long since settled into the walk's long-run shares.",
+      "parts": [
+        {
+          "question": "What long-run share of its time does a message spend at bank D? Give an exact fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2143,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "uniform",
+                "value": 0.1667,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "links",
+                "value": 0.4286,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "D has links to A, C and E, so $\\deg(D) = 3$, and the degrees add to 14. So $\\pi_D = \\tfrac{3}{14} \\approx 0.2143$.",
+            "generic": "Not quite. Count the links at each bank, then divide D's count by the total.",
+            "byKey": {
+              "uniform": "That gives every bank $\\tfrac16$. A walk on a network visits each bank in proportion to its links.",
+              "links": "That divides D's 3 links by the 7 links. Each link has two ends, so divide by $2 \\times 7 = 14$."
+            }
+          },
+          "explain": {
+            "text": "The degrees of A to F are 3, 2, 3, 3, 2 and 1, adding to $14 = 2 \\times 7$. On a network $\\pi_i = \\tfrac{\\deg(i)}{2|E|}$, so $\\pi_D = \\tfrac{3}{14}$. The uniform guess $\\tfrac16$ ignores that D is better linked than most."
+          }
+        },
+        {
+          "question": "The degrees add to 14, and bank F has a single link. On average, how many hops pass between one visit of a message to F and its next? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 14,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "links",
+                "value": 7,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "banks",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\pi_F = \\tfrac{1}{14}$, so the mean return time is $\\tfrac{1}{\\pi_F} = 14$.",
+            "generic": "Not quite. Find F's long-run share, then take its reciprocal.",
+            "byKey": {
+              "links": "That is the number of links. F's share is $\\tfrac{1}{14}$, so the mean return time is 14.",
+              "banks": "That treats the six banks as equally visited. F holds only $\\tfrac{1}{14}$ of the time."
+            }
+          },
+          "explain": {
+            "text": "F has degree 1 of a total 14, so $\\pi_F = \\tfrac{1}{14}$. The mean return time to a state is $\\tfrac{1}{\\pi_i}$, here 14 hops. A message that leaves F wanders the rest of the network for 13 hops on average first."
+          }
+        },
+        {
+          "question": "Audits come as a Poisson process at 2 an hour. Each audit picks one message at random, independently, and inspects the bank that holds it. Using $\\pi_F = \\tfrac{1}{14}$, what is the expected number of audits that land on F in an 8-hour day? Give an exact fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.1429,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-thinning",
+                "value": 16,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "per-hour",
+                "value": 0.1429,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "uniform",
+                "value": 1.3333,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Audits at F form a Poisson stream at $2 \\times \\tfrac{1}{14} = \\tfrac17$ an hour, so over 8 hours the mean is $\\tfrac87 \\approx 1.1429$.",
+            "generic": "Not quite. Thin the audit stream by F's share, then multiply by the hours.",
+            "byKey": {
+              "no-thinning": "That is every audit in the day. Only a share $\\tfrac{1}{14}$ of them land on F.",
+              "per-hour": "That is the rate per hour, $\\tfrac{2}{14}$. Multiply by the 8 hours.",
+              "uniform": "That uses $\\tfrac16$ for F, the uniform guess. F's share is $\\tfrac{1}{14}$."
+            }
+          },
+          "explain": {
+            "text": "Each audit lands on F with chance $\\tfrac{1}{14}$, independently. So the audits at F are a Poisson stream at $\\tfrac{2}{14} = \\tfrac17$ an hour. Over 8 hours the expected count is $\\tfrac87 \\approx 1.1429$."
+          }
+        },
+        {
+          "question": "Audits at F in an 8-hour day have mean $\\tfrac87$. What is the chance that F has no audit all day? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3189,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "complement",
+                "value": 0.6811,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "per-hour",
+                "value": 0.8669,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "uniform",
+                "value": 0.2636,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The count at F is Poisson with mean $\\tfrac87$, so $P(0) = e^{-8/7} \\approx 0.3189$.",
+            "generic": "Not quite. Use the Poisson chance of a zero count with the day's mean.",
+            "byKey": {
+              "complement": "That is the chance of at least one audit. The question asks for none.",
+              "per-hour": "That is $e^{-1/7}$, one hour with no audit. Use the day's mean, $\\tfrac87$.",
+              "uniform": "That is $e^{-8/6}$, from the uniform share $\\tfrac16$. With $\\tfrac{1}{14}$ the mean is $\\tfrac87$."
+            }
+          },
+          "explain": {
+            "text": "The audits at F in a day are Poisson with mean $\\tfrac87$. The chance of none is $e^{-8/7} \\approx 0.3189$. So F goes a whole day unaudited about one day in three."
+          }
+        },
+        {
+          "question": "Audits reach F at $\\tfrac17$ an hour. Find the fewest whole hours that give at least one audit at F with chance above 0.9. Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 17,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "round-down",
+                "value": 16,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "uniform",
+                "value": 7,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-thinning",
+                "value": 2,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "complement",
+                "value": 1,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$e^{-t/7} < 0.1$ needs $t > 7\\ln 10 \\approx 16.12$ hours, so $t = 17$.",
+            "generic": "Not quite. Write the chance of no audit in $t$ hours, set it below 0.1 and solve for $t$.",
+            "byKey": {
+              "round-down": "At 16 hours the chance is $1 - e^{-16/7} \\approx 0.8983$, just under 0.9. Round up.",
+              "uniform": "That uses the uniform share $\\tfrac16$, a rate of $\\tfrac13$ an hour. F's rate is $\\tfrac17$.",
+              "no-thinning": "That uses the full audit rate of 2 an hour. Only $\\tfrac17$ an hour reach F.",
+              "complement": "That solves $e^{-t/7} < 0.9$. The chance of no audit must fall below 0.1."
+            }
+          },
+          "explain": {
+            "text": "The chance of no audit in $t$ hours is $e^{-t/7}$, which must fall below 0.1. That needs $t > 7\\ln 10 \\approx 16.12$, so 17 hours: at 16 the chance is only 0.8983. The least linked bank needs more than two working days of audits to be fairly sure of one."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-regime-sampler",
+      "difficulty": 5,
+      "skills": [
+        "mc-longrun",
+        "mc-chains"
+      ],
+      "prose": "A risk model samples a market's volatility regime, Low, Mid or High. The posterior weights are 2, 5 and 3, known only up to a constant. From Low or High the chain always proposes Mid. From Mid it proposes Low with chance 0.3 and High with chance 0.7. It accepts a move from $i$ to $j$ with the Metropolis-Hastings chance $\\min\\left(1, \\tfrac{w_jq_{ji}}{w_iq_{ij}}\\right)$, else it stays.",
+      "parts": [
+        {
+          "question": "What is the chance that one step from Low moves to Mid? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.75,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "uphill",
+                "value": 1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "stay",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The proposal is certain and the acceptance is $\\min\\left(1, \\tfrac{5 \\times 0.3}{2 \\times 1}\\right) = 0.75$.",
+            "generic": "Not quite. Put $w_{\\text{Mid}}\\,q_{ML}$ on top and $w_{\\text{Low}}\\,q_{LM}$ below.",
+            "byKey": {
+              "uphill": "That treats a move to a heavier weight as certain. With an unequal proposal the ratio also has $\\tfrac{q_{ML}}{q_{LM}} = 0.3$ in it.",
+              "stay": "That is the chance it stays at Low. The move is accepted with the other 0.75."
+            }
+          },
+          "explain": {
+            "text": "From Low the chain proposes Mid with $q_{LM} = 1$, and back the proposal is $q_{ML} = 0.3$. So the ratio is $\\tfrac{5 \\times 0.3}{2 \\times 1} = 0.75$, below 1. Mid is heavier, yet the move is not certain, because Mid rarely proposes Low in return."
+          }
+        },
+        {
+          "question": "What is the chance that one step from Mid moves to High? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.6,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "accept-only",
+                "value": 0.8571,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "plain",
+                "value": 0.42,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "proposal-only",
+                "value": 0.7,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Propose High with chance 0.7, accept with $\\tfrac{3 \\times 1}{5 \\times 0.7} = \\tfrac67$: the move chance is $0.7 \\times \\tfrac67 = 0.6$.",
+            "generic": "Not quite. Multiply the proposal chance by the acceptance chance.",
+            "byKey": {
+              "accept-only": "That is the acceptance chance, $\\tfrac{3 \\times 1}{5 \\times 0.7} = \\tfrac67$. Multiply by the proposal chance 0.7.",
+              "plain": "That uses the plain ratio $\\tfrac35$, which leaves out the proposal chances. With them the acceptance is $\\tfrac67$.",
+              "proposal-only": "That is the proposal chance alone. A move to a lighter weight still has to be accepted."
+            }
+          },
+          "explain": {
+            "text": "The acceptance is $\\min\\left(1, \\tfrac{3 \\times 1}{5 \\times 0.7}\\right) = \\tfrac67$. So $P_{MH} = 0.7 \\times \\tfrac67 = 0.6$. Check balance: $\\pi_M P_{MH} = 0.5 \\times 0.6 = 0.3 = \\pi_H \\times 1$, since the move back from High is accepted for sure."
+          }
+        },
+        {
+          "question": "Part 1 gave $P_{LM} = 0.75$, and the target shares are $\\pi = (0.2, 0.5, 0.3)$. Use detailed balance between Low and Mid: what is $P_{ML}$, the chance one step from Mid moves to Low? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "swapped",
+                "value": 1.875,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "plain",
+                "value": 0.12,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "stay",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Balance gives $0.2 \\times 0.75 = 0.5\\,P_{ML}$, so $P_{ML} = \\tfrac{0.15}{0.5} = 0.3$.",
+            "generic": "Not quite. Set the flow from Low to Mid equal to the flow from Mid to Low.",
+            "byKey": {
+              "swapped": "That is $\\tfrac{0.5 \\times 0.75}{0.2}$, with the shares the wrong way round. Balance says $\\pi_L P_{LM} = \\pi_M P_{ML}$.",
+              "plain": "That is $0.3 \\times \\tfrac25$, the plain Metropolis rule. This chain accepts the move with $\\min(1, \\tfrac43) = 1$.",
+              "stay": "That is the chance Mid stays, $1 - 0.3 - 0.6$. The question asks for a move to Low."
+            }
+          },
+          "explain": {
+            "text": "The flow from Low to Mid is $0.2 \\times 0.75 = 0.15$, and balance makes the flow back equal: $0.5\\,P_{ML} = 0.15$, so $P_{ML} = 0.3$. The rule agrees: propose Low with 0.3 and accept with $\\min(1, \\tfrac{2 \\times 1}{5 \\times 0.3}) = 1$. The constant behind the weights is never needed."
+          }
+        },
+        {
+          "question": "Using $P_{LM} = 0.75$, $P_{MH} = 0.6$ and $P_{ML} = 0.3$, with $\\pi = (0.2, 0.5, 0.3)$, what share of all steps in a long run are rejections, where the chain stays put? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "unweighted",
+                "value": 0.35,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "average",
+                "value": 0.1167,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-state",
+                "value": 0.05,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Low stays with chance 0.25, Mid with $1 - 0.3 - 0.6 = 0.1$ and High never, so the share is $0.2 \\times 0.25 + 0.5 \\times 0.1 = 0.1$.",
+            "generic": "Not quite. Find each regime's chance of staying, then weight it by $\\pi$.",
+            "byKey": {
+              "unweighted": "That adds the three staying chances, 0.25, 0.1 and 0. Weight each by the share of time spent there.",
+              "average": "That averages the staying chances equally. The chain spends 0.2, 0.5 and 0.3 of its time in the three regimes.",
+              "one-state": "That counts the rejections of one regime only. Low gives $0.2 \\times 0.25$ and Mid gives $0.5 \\times 0.1$; add both."
+            }
+          },
+          "explain": {
+            "text": "Low stays with 0.25, Mid with 0.1 and High with 0, because a move from High is always accepted. Weighted by time, $0.2 \\times 0.25 + 0.5 \\times 0.1 + 0.3 \\times 0 = 0.1$. Nine steps in ten move, and the repeats must still be counted."
+          }
+        },
+        {
+          "question": "A colleague keeps the same proposal but accepts with the plain rule $\\min\\left(1, \\tfrac{w_j}{w_i}\\right)$. Then $P_{LM} = 1$, $P_{ML} = 0.12$, $P_{MH} = 0.42$ and $P_{HM} = 1$. What long-run share does her chain give Mid? Give an exact fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.6494,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "target",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "flipped",
+                "value": 0.0854,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "high",
+                "value": 0.2727,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Balance gives weights $1, \\tfrac{1}{0.12}, \\tfrac{0.42}{0.12}$ for Low, Mid and High, so $\\pi_M = \\tfrac{25/3}{77/6} = \\tfrac{50}{77} \\approx 0.6494$.",
+            "generic": "Not quite. It is a birth-death chain: use $\\tfrac{\\pi_{j}}{\\pi_i} = \\tfrac{P_{ij}}{P_{ji}}$ between neighbours, then normalise.",
+            "byKey": {
+              "target": "That is the target share. Her chain balances to a different $\\pi$: solve it from her move chances.",
+              "flipped": "That uses the ratios upside down. Balance gives $\\tfrac{\\pi_M}{\\pi_L} = \\tfrac{P_{LM}}{P_{ML}} = \\tfrac{1}{0.12}$.",
+              "high": "That is the share of High. The question asks for Mid."
+            }
+          },
+          "explain": {
+            "text": "Between neighbours $\\tfrac{\\pi_M}{\\pi_L} = \\tfrac{1}{0.12} = \\tfrac{25}{3}$ and $\\tfrac{\\pi_H}{\\pi_M} = 0.42$, so the weights are $1, \\tfrac{25}{3}, 3.5$ with total $\\tfrac{77}{6}$. Her chain gives Mid $\\tfrac{50}{77} \\approx 0.6494$ against the target 0.5. Dropping the $q$ terms biases the sampler towards the regime that proposes least."
+          }
+        }
+      ]
+    }
+  ]
+}
