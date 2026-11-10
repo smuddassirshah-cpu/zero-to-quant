@@ -1890,6 +1890,7 @@ Raised later (drills ci 1):
 - [Could] Drill `brief` rendering (`block()` in `js/screens/drill.js`) has no lists and no single line breaks, so a `- line 1 ... - line 2` input format runs together in one paragraph (the `dsa` stdin briefs show it). ci pack 1 writes each input line as its own paragraph instead. Wanted: `-` list items or line breaks in drill briefs.
 - [Could] The validator's `pace ... over 30 minutes` warning fires on every difficulty-5 `ci` drill, which `docs/briefs/drills-ci-packs.md` allows up to 2,700 s. Raise the threshold to 2,700 for drills, or to 45 minutes.
 
+<<<<<<< HEAD
 Raised later (drills ci 2):
 - [Must] `playthrough.mjs --planted` (and so `planted-check.mjs`) reads stale results after any planted run that times out. The drill page restarts Python on a timeout, `drillSubmit` does not wait for `ZQDrill.status() === 'ready'`, so the next `ZQDrill.submit()` is refused ("Python is still loading") and the old run's results are read again. Seen on 13 drills of pack 2: the model "passed 10 of 12 hidden tests" with exactly the timed-out planted's pattern; a scratch copy that calls `drillReady` at the top of `drillSubmit` gave 0 failures. It also hides a planted solution that follows a timed-out one (its stale fails count as caught). Fix: wait for ready before each submit in `plantedOne` (and `drillOne`). Workaround used: no planted solution may time out; the slow "right idea, wrong complexity" methods are timed in `docs/reports/drills-ci-2-check.py` (`SLOW`) instead.
 - [Could] The validator warns "pace over 30 minutes" on every drill paced 1,800 s or more, but `docs/briefs/drills-ci-packs.md` sets `pace` 900 to 2,700 s for difficulty 4 and 5, so six warnings in this pack are expected. Raise the threshold for `ci` drills at difficulty 4 and 5, or to 2,700 s.
@@ -1917,3 +1918,14 @@ Raised later (problems counting-chance):
 - [Should] `app/tools/numbers_lib.py` `Level(course, n)` loads the lessons, review and homework of a level but not `problems-<n>.json`, so `lv.expect` and `lv.check_wrongs` cannot see a problem set. `docs/reports/problems-counting-chance-numbers.py` loads the file into `lv.files['problems-<n>']` itself. Want `Level` to load the level's problem set when it exists (ref `"problems"`).
 - [Should] `playthrough.mjs --problems ... --shots` shoots the course row, part 1 answered wrong and the done page only. A later part (here a `choice` in problems-2 and an `expression` in problems-3) is never shot, so its layout at 440 px is not seen. Want one shot per part, or at least each part whose widget kind differs from part 1.
 - [Could] `lv.check_wrongs` prints "check by hand" for every `byKey` line that quotes the inputs of a slip ("That is $\left(\tfrac{11}{15}\right)^2$ ..."), 74 lines over three problem sets, which buries any real mismatch. Want it to evaluate a simple LaTeX product, power or fraction in the line, or to skip lines whose numbers combine to the wrong value.
+=======
+
+Raised later (fluency conditional):
+- [Could] No way to write a reduced fraction only when it differs from the working fraction. `conditional/fluency-l7-turning-around` `from-counts` ends "$\tfrac{18}{58}$, which is $\frac{9}{29}$ in lowest terms", and on draws already in lowest terms it reads "$\tfrac{9}{29}$, which is $\frac{9}{29}$ in lowest terms". `if` returns numbers only, so a text branch cannot be chosen. Want a format such as `{a/b:=frac}` writing `= \frac{n}{d}` when the reduced form differs and nothing otherwise, or an `if` that returns text.
+
+Raised later (fluency limits-thm):
+- [Could] No standard normal CDF in `let`. `limits-thm/fluency-l7-bell-curve` draws $z$ from a hand-written tuple of ten table values (`[[0.4, 0.6554], ...]`) and the prompt states $\Phi(z)$, which suits the lesson, but any later family (testing l3 p-values, l6 power, limits-thm l13 normal approximation) must copy the table again. Want `phi(x)` (and its inverse) in the evaluator, so a key can be `round(phi(z), 4)` and the prompt's table value computed, not typed.
+
+Raised later (fluency testing):
+- [Could] A var's range cannot depend on an earlier var. `testing/fluency-l4-t-test` `sharpe-t` wants $T$ from 2 to 10 for years and 6 to 60 for months, so it draws `y` from 2 to 60 and filters with `where: ["y >= lo", "y <= hi"]` from the period tuple, rejecting 213 of 413 draws (the validator allows 80%). Want `int` bounds that are expressions of earlier vars (`"y": { "int": ["lo", "hi"] }`).
+>>>>>>> worktree-agent-a071befb92273fd54

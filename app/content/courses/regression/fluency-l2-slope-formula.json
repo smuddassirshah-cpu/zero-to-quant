@@ -1,0 +1,91 @@
+{
+  "id": "fluency-l2-slope-formula",
+  "lesson": "l2-slope-formula",
+  "title": "Fluency: the slope is covariance over variance",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "slope-from-sums",
+      "weight": 2,
+      "skill": "the least squares slope from the sums",
+      "vars": {
+        "sxx": { "pick": [4, 5, 8, 10, 16, 20, 25, 40, 50] },
+        "sxy": { "int": [-30, 30], "not": [0] },
+        "syy": { "int": [5, 90] }
+      },
+      "let": {
+        "key": "sxy/sxx",
+        "inv": "sxx/sxy",
+        "other": "sxy/syy"
+      },
+      "where": ["abs(sxy) != sxx", "syy != sxx", "sxy^2 < sxx*syy"],
+      "prompt": "Paired data have $S_{{xy}} = {sxy}$, $S_{{xx}} = {sxx}$ and $S_{{yy}} = {syy}$. What is the least squares slope $b$ of $y$ on $x$?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "An exact decimal such as 1.3", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "upside-down", "value": "{inv}", "tol": { "abs": 0.0005 }, "when": "abs(inv - key) > 0.002", "line": "You divided $S_{{xx}}$ by $S_{{xy}}$. The slope is $S_{{xy}}/S_{{xx}}$: covariance over the variance of $x$." },
+        { "id": "x-on-y", "value": "{other}", "tol": { "abs": 0.0005 }, "when": "abs(other - key) > 0.002 and abs(other - inv) > 0.002", "line": "You divided by $S_{{yy}}$, which gives the slope of $x$ on $y$. For $y$ on $x$, divide by $S_{{xx}}$." }
+      ],
+      "solution": [
+        "$b = \\dfrac{{S_{{xy}}}}{{S_{{xx}}}} = \\dfrac{{{sxy}}}{{{sxx}}} = {key}$."
+      ]
+    },
+    {
+      "id": "intercept",
+      "weight": 1,
+      "skill": "the intercept from the slope and the means",
+      "vars": {
+        "bh": { "int": [-20, 30], "not": [0, 10] },
+        "xh": { "int": [-10, 30], "not": [0] },
+        "yh": { "int": [-10, 30] }
+      },
+      "let": {
+        "b": "bh/10",
+        "xb": "xh/10",
+        "yb": "yh/10",
+        "bx": "(bh/10)*(xh/10)",
+        "key": "yh/10 - (bh/10)*(xh/10)",
+        "plus": "yh/10 + (bh/10)*(xh/10)",
+        "swap": "xh/10 - (bh/10)*(yh/10)"
+      },
+      "where": ["xh != yh"],
+      "prompt": "A least squares line has slope $b = {b}$, and the data have $\\bar x = {xb}$ and $\\bar y = {yb}$. What is the intercept $a$?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "An exact decimal such as -0.3", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "added", "value": "{plus}", "line": "You added $b\\bar x$. The line passes through $(\\bar x, \\bar y)$, so $a = \\bar y - b\\bar x$." },
+        { "id": "means-swapped", "value": "{swap}", "line": "You swapped the means. The intercept is $\\bar y - b\\bar x$, with $\\bar y = {yb}$.", "when": "swap != key and swap != plus" }
+      ],
+      "solution": [
+        "The line passes through $(\\bar x, \\bar y)$, so $a = \\bar y - b\\bar x$.",
+        "$b\\bar x = {b} \\times {xb:()} = {bx}$, so $a = {yb} - {bx:()} = {key}$."
+      ]
+    },
+    {
+      "id": "slope-from-r",
+      "weight": 1,
+      "skill": "the slope from a correlation and two sds",
+      "vars": {
+        "r": { "pick": [-0.6, -0.4, -0.2, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "sx": { "pick": [0.8, 1, 1.2, 1.5, 2, 2.5] },
+        "sy": { "pick": [0.6, 1, 1.2, 1.5, 1.8, 2, 2.4, 3, 4] },
+        "w": { "pick": [["stock", "market"], ["bond", "gilt future"], ["fund", "index"]], "as": ["ys", "xs"] }
+      },
+      "let": {
+        "key": "r*sy/sx",
+        "inv": "r*sx/sy",
+        "ratio": "sy/sx"
+      },
+      "where": ["sx != sy"],
+      "prompt": "A {ys}'s daily returns have correlation {r} with the {xs}'s. The {xs}'s daily sd is {sx}% and the {ys}'s is {sy}%. What is the slope of the {ys}'s return on the {xs}'s, to 3 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "A number such as 0.800", "accept": "${key:dp3}$, within 0.0005" },
+      "wrong": [
+        { "id": "sds-upside-down", "value": "{inv}", "tol": { "abs": 0.0005 }, "line": "You used $r\\,s_x/s_y$. The slope of $y$ on $x$ is $r\\,s_y/s_x$: the {ys}'s sd on top." },
+        { "id": "forgot-r", "value": "{ratio}", "tol": { "abs": 0.0005 }, "line": "That is $s_y/s_x$ alone. Multiply by the correlation, {r}." }
+      ],
+      "solution": [
+        "$b = r\\,\\dfrac{{s_y}}{{s_x}} = {r} \\times \\dfrac{{{sy}}}{{{sx}}} \\approx {key:dp3}$."
+      ]
+    }
+  ]
+}

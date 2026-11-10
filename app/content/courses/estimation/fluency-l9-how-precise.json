@@ -1,0 +1,88 @@
+{
+  "id": "fluency-l9-how-precise",
+  "lesson": "l9-how-precise",
+  "title": "Fluency: how precise is the estimate",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "se-of-mean",
+      "weight": 2,
+      "skill": "the standard error of a mean",
+      "vars": {
+        "s": { "pick": [0.5, 0.8, 1, 1.2, 1.5, 2, 2.4, 3, 4, 5] },
+        "nr": { "pick": [[16, 4], [25, 5], [64, 8], [100, 10], [256, 16], [400, 20], [625, 25]], "as": ["n", "rt"] },
+        "w": { "pick": [["backtest", "days", "daily return"], ["record", "trades", "return per trade"]], "as": ["rec", "units", "ret"] }
+      },
+      "let": {
+        "key": "s/rt",
+        "byn": "s/n"
+      },
+      "prompt": "A {rec} of {n} {units} has sample sd $s = {s}\\%$. What is the estimated standard error of its mean {ret}, in %?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "An exact decimal", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "divided-by-n", "value": "{byn}", "line": "You divided by $n = {n}$. The standard error divides by $\\sqrt n = {rt}$." },
+        { "id": "gave-sd", "value": "{s}", "line": "That is the sd of a single {ret}. The mean of {n} is steadier: divide by $\\sqrt{{{n}}} = {rt}$." }
+      ],
+      "solution": [
+        "$\\mathrm{{SE}}(\\bar x) \\approx \\dfrac{{s}}{{\\sqrt n}} = \\dfrac{{{s}}}{{\\sqrt{{{n}}}}} = \\dfrac{{{s}}}{{{rt}}} = {key}\\%$."
+      ]
+    },
+    {
+      "id": "se-of-proportion",
+      "weight": 1,
+      "skill": "the standard error of a hit rate",
+      "vars": {
+        "pr": { "pick": [[10, 0.3], [20, 0.4], [36, 0.48], [50, 0.5], [64, 0.48], [80, 0.4], [90, 0.3]], "as": ["pc", "rootpq"] },
+        "nr": { "pick": [[25, 5], [100, 10], [400, 20], [625, 25], [1600, 40], [2500, 50]], "as": ["n", "rt"] },
+        "w": { "pick": [["A signal was right on", "days"], ["A trader won", "trades"], ["An order router filled", "orders"]], "as": ["lead", "units"] }
+      },
+      "let": {
+        "p": "pc/100",
+        "q": "1 - pc/100",
+        "pq": "pc/100*(1 - pc/100)",
+        "key": "rootpq/rt",
+        "noroot": "pc/100*(1 - pc/100)/n",
+        "rootoverN": "rootpq/n"
+      },
+      "where": ["(pc*n) % 100 == 0"],
+      "prompt": "{lead} {pc}% of {n} {units}. What is the standard error of that share, $\\hat p$?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "An exact decimal such as 0.04", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "no-root", "value": "{noroot}", "line": "That is the variance of $\\hat p$. Take its square root to get the standard error." },
+        { "id": "root-over-n", "value": "{rootoverN}", "line": "You divided $\\sqrt{{\\hat p(1 - \\hat p)}}$ by $n$. Divide by $\\sqrt n = {rt}$." }
+      ],
+      "solution": [
+        "$\\hat p(1 - \\hat p) = {p} \\times {q} = {pq}$, and $\\sqrt{{{pq}}} = {rootpq}$.",
+        "$\\mathrm{{SE}}(\\hat p) = \\dfrac{{{rootpq}}}{{\\sqrt{{{n}}}}} = \\dfrac{{{rootpq}}}{{{rt}}} = {key}$."
+      ]
+    },
+    {
+      "id": "data-needed",
+      "weight": 1,
+      "skill": "the data needed for a target standard error",
+      "vars": {
+        "sk": { "pick": [[0.2, 2], [0.4, 2], [0.6, 2], [0.8, 2], [1, 2], [0.3, 3], [0.6, 3], [0.9, 3], [1.2, 3], [0.4, 4], [0.8, 4], [1.2, 4], [0.5, 5], [1, 5]], "as": ["se1", "k"] },
+        "n": { "pick": [25, 50, 100, 200, 250, 400, 500] }
+      },
+      "let": {
+        "se2": "se1/k",
+        "k2": "k^2",
+        "key": "n*k^2",
+        "linear": "n*k",
+        "extra": "n*k^2 - n"
+      },
+      "prompt": "Your standard error is {se1}% from {n} days of data. How many days in all would give a standard error of {se2}%?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A whole number of days", "accept": "${key}$ days" },
+      "wrong": [
+        { "id": "linear", "value": "{linear}", "line": "You scaled $n$ by {k}. The standard error falls like $1/\\sqrt n$, so $n$ must grow by ${k}^2 = {k2}$." },
+        { "id": "extra-only", "value": "{extra}", "line": "That is the extra days. The question asks for the days in all, {extra} more than {n}." }
+      ],
+      "solution": [
+        "Dividing the standard error by {k} needs $\\sqrt n$ to grow {k} times, so $n$ grows ${k}^2 = {k2}$ times.",
+        "${n} \\times {k2} = {key}$ days."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "id": "fluency-l4-t-test",
+  "lesson": "l4-t-test",
+  "title": "Fluency: when the variance is estimated",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "t-statistic",
+      "weight": 2,
+      "skill": "a t statistic for a mean",
+      "vars": {
+        "n": { "int": [5, 30] },
+        "xh": { "int": [-20, 30], "not": [0] },
+        "sh": { "int": [5, 40] },
+        "w": { "pick": [["fund", "months"], ["strategy", "weeks"], ["manager", "quarters"]], "as": ["who", "units"] }
+      },
+      "let": {
+        "xb": "xh/10",
+        "s": "sh/10",
+        "rt": "sqrt(n)",
+        "key": "(xh/10)/((sh/10)/sqrt(n))",
+        "nort": "(xh/10)/(sh/10)",
+        "dfroot": "(xh/10)/((sh/10)/sqrt(n - 1))",
+        "df": "n - 1"
+      },
+      "where": ["abs(key) >= 0.3", "abs(key) <= 6", "abs(key - dfroot) > 0.002"],
+      "prompt": "A {who}'s {n} {units} average $\\bar x = {xb}\\%$, with sample sd $s = {s}\\%$. What is $t$ for $H_0: \\mu = 0$, to 3 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "A number such as 2.530", "accept": "${key:dp3}$, within 0.0005" },
+      "wrong": [
+        { "id": "no-root-n", "value": "{nort}", "tol": { "abs": 0.0005 }, "line": "You divided by $s$, the sd of one period. Divide by $s/\\sqrt n$, with $n = {n}$." },
+        { "id": "root-of-df", "value": "{dfroot}", "tol": { "abs": 0.0005 }, "line": "You divided $s$ by $\\sqrt{{{df}}}$. The degrees of freedom are $n - 1$, but the standard error uses $\\sqrt n = \\sqrt{{{n}}}$." }
+      ],
+      "solution": [
+        "$s/\\sqrt n = {s}/\\sqrt{{{n}}} \\approx {s/rt:sf4}\\%$.",
+        "$t = \\dfrac{{{xb} - 0}}{{{s}/\\sqrt{{{n}}}}} \\approx {key:dp3}$, with ${df}$ degrees of freedom."
+      ]
+    },
+    {
+      "id": "sharpe-t",
+      "weight": 1,
+      "skill": "a t statistic from a Sharpe ratio",
+      "vars": {
+        "sr": { "pick": [0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.5] },
+        "per": { "pick": [["an annualised", "years", 2, 10], ["a monthly", "months", 6, 60]], "as": ["kind", "units", "lo", "hi"] },
+        "y": { "int": [2, 60] }
+      },
+      "let": {
+        "key": "sr*sqrt(y)",
+        "times": "sr*y",
+        "over": "sr/sqrt(y)"
+      },
+      "where": ["y >= lo", "y <= hi", "sr*sqrt(y) <= 8"],
+      "prompt": "A fund reports {kind} Sharpe ratio of {sr} over {y} {units}. What is its $t$ statistic for a mean of 0, to 3 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "A number such as 1.789", "accept": "${key:dp3}$, within 0.0005" },
+      "wrong": [
+        { "id": "times-t", "value": "{times}", "tol": { "abs": 0.0005 }, "line": "You multiplied by {y}. The $t$ statistic is the Sharpe ratio times $\\sqrt T$, with $T = {y}$." },
+        { "id": "over-root", "value": "{over}", "tol": { "abs": 0.0005 }, "line": "You divided by $\\sqrt T$. The standard error divides $s$ by $\\sqrt T$, so $t$ multiplies the Sharpe ratio by it." }
+      ],
+      "solution": [
+        "$t = \\dfrac{{\\bar x}}{{s/\\sqrt T}}$ is the Sharpe ratio times $\\sqrt T$, with $T = {y}$ {units}.",
+        "${sr}\\sqrt{{{y}}} \\approx {key:dp3}$."
+      ]
+    }
+  ]
+}

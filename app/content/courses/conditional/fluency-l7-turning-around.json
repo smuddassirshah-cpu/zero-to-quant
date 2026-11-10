@@ -1,0 +1,106 @@
+{
+  "id": "fluency-l7-turning-around",
+  "lesson": "l7-turning-around",
+  "title": "Fluency: turning the condition around",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "from-counts",
+      "weight": 1,
+      "skill": "turn a condition around from counts",
+      "vars": {
+        "tot": { "pick": [100, 200, 400] },
+        "a": { "int": [5, 30] },
+        "c": { "int": [1, 9] },
+        "b": { "int": [3, 40] },
+        "ctx": { "pick": [["people", "ill"], ["parts", "faulty"], ["payments", "fraudulent"]], "as": ["who", "bad"] }
+      },
+      "let": {
+        "ip": "a + c",
+        "pos": "a + b",
+        "key": "a/(a + b)",
+        "fwd": "a/(a + c)",
+        "joint": "a/tot"
+      },
+      "where": ["b != c"],
+      "prompt": "Of {tot} {who} checked, {ip} are {bad}. The test is positive for {a} of the {bad} {who} and for {b} of the rest. What is $P(\\text{{{bad}}} \\mid +)$? Give a fraction.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A fraction such as 4/13", "accept": "${key:frac}$, or an equal fraction" },
+      "wrong": [
+        { "id": "inverse", "value": "{fwd}", "line": "That is $P(+ \\mid \\text{{{bad}}})$: you divided by the {ip} {bad} {who}. Given a positive, divide by all {pos} positives." },
+        { "id": "joint", "value": "{joint}", "line": "You divided by all {tot} {who}. Given a positive, only the {pos} positives are left." }
+      ],
+      "solution": [
+        "Every positive is one of the {a} {bad} {who} or one of the {b} others: ${a} + {b} = {pos}$ positives.",
+        "So $P(\\text{{{bad}}} \\mid +) = \\tfrac{{{a}}}{{{pos}}}$, which is ${key:frac}$ in lowest terms."
+      ]
+    },
+    {
+      "id": "from-rates",
+      "weight": 2,
+      "skill": "turn a condition around from rates",
+      "vars": {
+        "pp": { "pick": [1, 2, 5, 10, 20, 25, 30, 40] },
+        "s": { "int": [60, 95], "step": 5 },
+        "f": { "int": [5, 30], "step": 5 },
+        "ctx": { "pick": [["people", "ill"], ["parts", "faulty"], ["payments", "fraudulent"]], "as": ["who", "bad"] }
+      },
+      "let": {
+        "p": "pp/100",
+        "q": "1 - pp/100",
+        "sd": "s/100",
+        "fd": "f/100",
+        "j": "pp*s/10000",
+        "fp": "(1 - pp/100)*f/100",
+        "pplus": "pp*s/10000 + (1 - pp/100)*f/100",
+        "key": "(pp*s/10000)/(pp*s/10000 + (1 - pp/100)*f/100)",
+        "nof": "(pp*s/10000)/(pp*s/10000 + f/100)"
+      },
+      "where": ["abs(key - sd) > 0.002", "abs(key - j) > 0.002", "abs(key - nof) > 0.002", "abs(nof - sd) > 0.002", "abs(nof - j) > 0.002"],
+      "prompt": "{pp}% of {who} are {bad}. The test is positive for {s}% of {bad} {who} and {f}% of the others. What is $P(\\text{{{bad}}} \\mid +)$, to 3 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "A decimal such as 0.308", "accept": "${key:dp3}$, or the exact ${key:frac}$" },
+      "wrong": [
+        { "id": "inverse", "value": "{sd}", "line": "That is $P(+ \\mid \\text{{{bad}}})$, the other way round. Put the {bad}-and-positive path over every positive path." },
+        { "id": "no-division", "value": "{j}", "line": "That is $P(\\text{{{bad}}} \\cap +)$. Divide it by $P(+)$, every path into a positive." },
+        { "id": "unweighted-others", "value": "{nof}", "tol": { "abs": 0.0005 }, "line": "You added {fd} for the others without weighting it by their share, {q}." }
+      ],
+      "solution": [
+        "$P(\\text{{{bad}}} \\cap +) = {p} \\times {sd} = {j}$, and the other positives are ${q} \\times {fd} = {fp}$.",
+        "$P(+) = {j} + {fp} = {pplus}$.",
+        "$P(\\text{{{bad}}} \\mid +) = \\tfrac{{{j}}}{{{pplus}}} \\approx {key:dp3}$."
+      ]
+    },
+    {
+      "id": "every-positive-path",
+      "weight": 1,
+      "skill": "add every path into the evidence",
+      "vars": {
+        "pp": { "pick": [5, 10, 15, 20, 25, 30, 40] },
+        "s": { "int": [60, 95], "step": 5 },
+        "f": { "int": [5, 40], "step": 5 },
+        "ctx": { "pick": [["people", "ill"], ["parts", "faulty"], ["payments", "fraudulent"]], "as": ["who", "bad"] }
+      },
+      "let": {
+        "p": "pp/100",
+        "q": "1 - pp/100",
+        "sd": "s/100",
+        "fd": "f/100",
+        "j": "pp*s/10000",
+        "fp": "(1 - pp/100)*f/100",
+        "key": "pp*s/10000 + (1 - pp/100)*f/100",
+        "unw": "pp*s/10000 + f/100"
+      },
+      "prompt": "{pp}% of {who} are {bad}. The test is positive for {s}% of {bad} {who} and {f}% of the others. What is $P(+)$, the chance a random one tests positive?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A decimal such as 0.26", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "one-path", "value": "{j}", "line": "That is only the {bad}-and-positive path. A positive can also come from the others: add ${q} \\times {fd}$." },
+        { "id": "unweighted-others", "value": "{unw}", "line": "You added {fd} for the others without weighting it by their share, {q}." }
+      ],
+      "solution": [
+        "The {bad}-and-positive path is ${p} \\times {sd} = {j}$. The other positive path is ${q} \\times {fd} = {fp}$.",
+        "$P(+) = {j} + {fp} = {key}$."
+      ]
+    }
+  ]
+}

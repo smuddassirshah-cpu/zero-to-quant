@@ -1,0 +1,108 @@
+{
+  "id": "fluency-l2-transition-matrix",
+  "lesson": "l2-transition-matrix",
+  "title": "Fluency: the transition matrix",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "two-state-two-step",
+      "weight": 1,
+      "skill": "a two-step chance in a two-state chain",
+      "vars": {
+        "a": { "pick": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "b": { "pick": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "ij": { "pick": [[0, 0, "bull", "bull"], [0, 1, "bull", "bear"], [1, 0, "bear", "bull"], [1, 1, "bear", "bear"]], "as": ["i", "j", "fi", "tj"] }
+      },
+      "let": {
+        "a2": "1 - a",
+        "b2": "1 - b",
+        "pi0": "if(i == 0, a, b)",
+        "pi1": "if(i == 0, 1 - a, 1 - b)",
+        "p0j": "if(j == 0, a, 1 - a)",
+        "p1j": "if(j == 0, b, 1 - b)",
+        "x0": "if(i == 0, a, b)*if(j == 0, a, 1 - a)",
+        "x1": "if(i == 0, 1 - a, 1 - b)*if(j == 0, b, 1 - b)",
+        "key": "if(i == 0, a, b)*if(j == 0, a, 1 - a) + if(i == 0, 1 - a, 1 - b)*if(j == 0, b, 1 - b)",
+        "pij": "if(j == 0, if(i == 0, a, b), if(i == 0, 1 - a, 1 - b))",
+        "sq": "if(j == 0, if(i == 0, a, b), if(i == 0, 1 - a, 1 - b))^2"
+      },
+      "where": ["a != b"],
+      "prompt": "A market is bull or bear each period, with $\\mathbf{{P}} = \\begin{{pmatrix}} {a} & {a2} \\\\ {b} & {b2} \\end{{pmatrix}}$, rows now and columns next, in the order bull, bear. Today is {fi}. What is the chance of {tj} in two periods?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A decimal such as 0.34", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "squared-entry", "value": "{sq}", "line": "You squared one entry. The chain can pass through bull or bear on the way, so add both paths.", "when": "sq != key" },
+        { "id": "one-step", "value": "{pij}", "line": "That is the one-step chance. Two periods means a middle state: sum over it.", "when": "pij != key" }
+      ],
+      "solution": [
+        "Through bull: ${pi0} \\times {p0j} = {x0}$. Through bear: ${pi1} \\times {p1j} = {x1}$.",
+        "Add the two paths: ${x0} + {x1} = {key}$."
+      ]
+    },
+    {
+      "id": "three-state-two-step",
+      "weight": 2,
+      "skill": "a two-step chance in a three-state chain",
+      "vars": {
+        "r1": { "pick": [[0.6, 0.3, 0.1], [0.5, 0.4, 0.1], [0.7, 0.2, 0.1], [0.4, 0.4, 0.2], [0.5, 0.3, 0.2], [0.6, 0.2, 0.2]], "as": ["a1", "a2", "a3"] },
+        "r2": { "pick": [[0.2, 0.5, 0.3], [0.3, 0.4, 0.3], [0.1, 0.6, 0.3], [0.3, 0.5, 0.2], [0.2, 0.6, 0.2], [0.4, 0.4, 0.2]], "as": ["b1", "b2", "b3"] },
+        "r3": { "pick": [[0.1, 0.3, 0.6], [0.2, 0.4, 0.4], [0.2, 0.3, 0.5], [0.1, 0.4, 0.5], [0.3, 0.3, 0.4], [0.1, 0.2, 0.7]], "as": ["c1", "c2", "c3"] },
+        "to": { "pick": [[1, "Sunny"], [2, "Cloudy"], [3, "Rain"]], "as": ["j", "tj"] }
+      },
+      "let": {
+        "p1j": "if(j == 1, a1, if(j == 2, a2, a3))",
+        "p2j": "if(j == 1, b1, if(j == 2, b2, b3))",
+        "p3j": "if(j == 1, c1, if(j == 2, c2, c3))",
+        "x1": "a1*if(j == 1, a1, if(j == 2, a2, a3))",
+        "x2": "a2*if(j == 1, b1, if(j == 2, b2, b3))",
+        "x3": "a3*if(j == 1, c1, if(j == 2, c2, c3))",
+        "key": "a1*if(j == 1, a1, if(j == 2, a2, a3)) + a2*if(j == 1, b1, if(j == 2, b2, b3)) + a3*if(j == 1, c1, if(j == 2, c2, c3))",
+        "sq": "if(j == 1, a1, if(j == 2, a2, a3))^2"
+      },
+      "prompt": "Weather runs Sunny, Cloudy, Rain, with rows today and columns tomorrow: $\\mathbf{{P}} = \\begin{{pmatrix}} {a1} & {a2} & {a3} \\\\ {b1} & {b2} & {b3} \\\\ {c1} & {c2} & {c3} \\end{{pmatrix}}$. Today is Sunny. What is the chance of {tj} in two days?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A decimal such as 0.47", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "squared-entry", "value": "{sq}", "line": "You squared one entry. Tomorrow can be any of the three states, so add a path through each.", "when": "sq != key" },
+        { "id": "one-step", "value": "{p1j}", "line": "That is the chance for tomorrow. Two days means a middle state: sum over all three.", "when": "p1j != key" }
+      ],
+      "solution": [
+        "Row Sunny times column {tj}: ${a1} \\times {p1j} + {a2} \\times {p2j} + {a3} \\times {p3j}$.",
+        "That is ${x1} + {x2} + {x3} = {key}$."
+      ]
+    },
+    {
+      "id": "distribution-forward",
+      "weight": 1,
+      "skill": "move a distribution one step forward",
+      "vars": {
+        "u": { "pick": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "a": { "pick": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "b": { "pick": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "to": { "pick": [[0, "bull"], [1, "bear"]], "as": ["j", "tj"] }
+      },
+      "let": {
+        "v": "1 - u",
+        "a2": "1 - a",
+        "b2": "1 - b",
+        "p0j": "if(j == 0, a, 1 - a)",
+        "p1j": "if(j == 0, b, 1 - b)",
+        "y0": "u*if(j == 0, a, 1 - a)",
+        "y1": "(1 - u)*if(j == 0, b, 1 - b)",
+        "key": "u*if(j == 0, a, 1 - a) + (1 - u)*if(j == 0, b, 1 - b)",
+        "colsum": "if(j == 0, a, 1 - a) + if(j == 0, b, 1 - b)"
+      },
+      "where": ["a != b"],
+      "prompt": "Today's chances are bull {u} and bear {v}. With $\\mathbf{{P}} = \\begin{{pmatrix}} {a} & {a2} \\\\ {b} & {b2} \\end{{pmatrix}}$, rows now, in the order bull, bear, what is the chance of {tj} next period?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A decimal such as 0.55", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "bull-row-only", "value": "{p0j}", "line": "You used only the bull row, as if today were surely bull. Weight each row by today's chance and add.", "when": "p0j != key" },
+        { "id": "unweighted-column", "value": "{colsum}", "line": "You added the {tj} column without weighting it by today's chances, {u} and {v}.", "when": "colsum != key" }
+      ],
+      "solution": [
+        "$\\boldsymbol{{\\pi}}_1 = \\boldsymbol{{\\pi}}_0\\mathbf{{P}}$, so the {tj} entry is today's row vector times the {tj} column.",
+        "${u} \\times {p0j} + {v} \\times {p1j} = {y0} + {y1} = {key}$."
+      ]
+    }
+  ]
+}

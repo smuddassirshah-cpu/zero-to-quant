@@ -1,0 +1,94 @@
+{
+  "id": "fluency-l1-counting-successes",
+  "lesson": "l1-counting-successes",
+  "title": "Fluency: counting successes",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "exactly-k",
+      "weight": 2,
+      "skill": "the chance of exactly k successes",
+      "vars": {
+        "n": { "int": [4, 7] },
+        "k": { "int": [2, 5] },
+        "p": { "pick": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "w": { "pick": [["trades", "win"], ["loans", "repay"], ["orders", "fill"]], "as": ["things", "verb"] }
+      },
+      "where": ["k <= n - 2", "key >= 0.001"],
+      "let": {
+        "q": "1 - p",
+        "nk": "n - k",
+        "ways": "comb(n, k)",
+        "path": "p^k*(1 - p)^(n - k)",
+        "key": "comb(n, k)*p^k*(1 - p)^(n - k)",
+        "swap": "comb(n, k)*(1 - p)^k*p^(n - k)"
+      },
+      "prompt": "Each of {n} independent {things} has chance {p} to {verb}. What is the chance exactly {k} of them {verb}? Give 4 decimal places.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.00005 }, "placeholder": "A decimal such as 0.3456", "accept": "${key:dp4}$; exactly ${key}$" },
+      "wrong": [
+        { "id": "one-path", "value": "{path}", "tol": { "abs": 0.00005 }, "line": "That is one path's chance. There are $\\binom{{{n}}}{{{k}}} = {ways}$ paths with {k} successes, so multiply by {ways}.", "when": "abs(key - path) > 0.0002" },
+        { "id": "swapped", "value": "{swap}", "tol": { "abs": 0.00005 }, "line": "You raised {q} to the power {k}. The {k} successes each have chance {p}.", "when": "abs(key - swap) > 0.0002" }
+      ],
+      "solution": [
+        "One path with {k} successes has chance ${p}^{{{k}}} \\times {q}^{{{nk}}} = {path}$.",
+        "$\\binom{{{n}}}{{{k}}} = {ways}$ paths have {k} successes, so $P(X = {k}) = {ways} \\times {path} = {key}$.",
+        "To 4 decimal places that is ${key:dp4}$."
+      ]
+    },
+    {
+      "id": "binomial-variance",
+      "weight": 1,
+      "skill": "the variance of a binomial count",
+      "vars": {
+        "n": { "int": [10, 100], "step": 5 },
+        "p": { "pick": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] },
+        "w": { "pick": [["trades", "win", "winning trades"], ["loans", "repay", "repaid loans"], ["orders", "fill", "filled orders"]], "as": ["things", "verb", "count"] }
+      },
+      "let": {
+        "q": "1 - p",
+        "mean": "n*p",
+        "key": "n*p*(1 - p)",
+        "one": "p*(1 - p)"
+      },
+      "prompt": "A desk has {n} independent {things}, each with chance {p} to {verb}. What is the variance of the number of {count}?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "An exact decimal", "accept": "${key}$ exactly" },
+      "wrong": [
+        { "id": "gave-mean", "value": "{mean}", "line": "That is the mean, $np$. The variance multiplies by $1 - p = {q}$ as well." },
+        { "id": "one-trial", "value": "{one}", "line": "That is the variance of one trial. The {n} trials are independent, so their variances add: multiply by {n}." }
+      ],
+      "solution": [
+        "The count is $\\text{{Bin}}({n}, {p})$, so $\\operatorname{{Var}}(X) = np(1 - p)$.",
+        "${n} \\times {p} \\times {q} = {key}$."
+      ]
+    },
+    {
+      "id": "none-succeed",
+      "weight": 1,
+      "skill": "the chance of no successes",
+      "vars": {
+        "n": { "int": [2, 5] },
+        "p": { "pick": [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9] },
+        "w": { "pick": [["trades", "win"], ["loans", "repay"], ["orders", "fill"]], "as": ["things", "verb"] }
+      },
+      "let": {
+        "q": "1 - p",
+        "key": "(1 - p)^n",
+        "allp": "p^n",
+        "comp": "1 - p^n"
+      },
+      "where": ["abs(key - comp) > 0.0002", "key >= 0.001"],
+      "prompt": "Each of {n} independent {things} has chance {p} to {verb}. What is the chance that none of them {verb}? Give 4 decimal places.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.00005 }, "placeholder": "A decimal such as 0.6561", "accept": "${key:dp4}$; exactly ${key}$" },
+      "wrong": [
+        { "id": "used-p", "value": "{allp}", "tol": { "abs": 0.00005 }, "line": "That is the chance all {n} {verb}. None succeeding means each fails, with chance {q}." },
+        { "id": "complement-of-all", "value": "{comp}", "tol": { "abs": 0.00005 }, "line": "That is the chance not all {n} {verb}. None means every one fails: ${q}^{{{n}}}$." }
+      ],
+      "solution": [
+        "None succeeding is the single path with $k = 0$: each of the {n} fails, with chance {q}.",
+        "$P(X = 0) = {q}^{{{n}}} = {key}$, which is ${key:dp4}$ to 4 decimal places."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "id": "fluency-l10-catching-the-truth",
+  "lesson": "l10-catching-the-truth",
+  "title": "Fluency: a range that catches the truth",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "interval-from-se",
+      "weight": 2,
+      "skill": "a confidence interval from a standard error",
+      "vars": {
+        "xh": { "int": [2, 60] },
+        "sh": { "int": [2, 20] },
+        "lv": { "pick": [[90, 1.645], [95, 1.96], [99, 2.576]], "as": ["lev", "z"] }
+      },
+      "let": {
+        "xb": "xh/100",
+        "se": "sh/100",
+        "hw": "z*sh/100",
+        "lo": "xh/100 - z*sh/100",
+        "hi": "xh/100 + z*sh/100",
+        "lo1": "xh/100 - sh/100",
+        "hi1": "xh/100 + sh/100",
+        "lo96": "xh/100 - 1.96*sh/100",
+        "hi96": "xh/100 + 1.96*sh/100"
+      },
+      "prompt": "A backtest gives $\\bar x = {xb}\\%$ a day, with $\\mathrm{{SE}} = {se}\\%$. What is the {lev}% confidence interval for $\\mu$? Give both ends in %, to 3 decimal places.",
+      "widget": { "kind": "numeric", "answers": ["{lo}", "{hi}"], "unordered": true, "tol": { "abs": 0.0005 }, "placeholder": "Two numbers, such as 0.022, 0.218", "accept": "${lo:dp3}$ and ${hi:dp3}$, each within 0.0005" },
+      "wrong": [
+        { "id": "no-multiplier", "value": "{lo1}, {hi1}", "line": "You went one standard error each way. A {lev}% interval goes ${z}$ standard errors each way." },
+        { "id": "used-1-96", "value": "{lo96}, {hi96}", "line": "You used 1.96, the 95% multiplier. For {lev}% the multiplier is ${z}$.", "when": "lev != 95" }
+      ],
+      "solution": [
+        "The {lev}% multiplier is ${z}$, so the half-width is ${z} \\times {se} = {hw}\\%$.",
+        "The interval runs from ${xb} - {hw} = {lo}$ to ${xb} + {hw} = {hi}$, in %."
+      ]
+    },
+    {
+      "id": "half-width-from-s",
+      "weight": 1,
+      "skill": "the half-width from a sample sd",
+      "vars": {
+        "s": { "pick": [0.5, 0.8, 1, 1.2, 1.5, 2, 2.5] },
+        "nr": { "pick": [[16, 4], [25, 5], [64, 8], [100, 10], [256, 16], [400, 20], [625, 25]], "as": ["n", "rt"] },
+        "lv": { "pick": [[90, 1.645], [95, 1.96], [99, 2.576]], "as": ["lev", "z"] }
+      },
+      "let": {
+        "se": "s/rt",
+        "key": "z*s/rt",
+        "nort": "z*s",
+        "byn": "z*s/n"
+      },
+      "prompt": "A {n}-day backtest has sample sd $s = {s}\\%$. What is the half-width of the {lev}% interval for its mean daily return, in %, to 3 decimal places?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "placeholder": "A decimal such as 0.196", "accept": "${key:dp3}$; exactly ${key}$" },
+      "wrong": [
+        { "id": "no-root-n", "value": "{nort}", "tol": { "abs": 0.0005 }, "line": "You used $s$ in place of the standard error. Divide $s$ by $\\sqrt{{{n}}} = {rt}$ first." },
+        { "id": "divided-by-n", "value": "{byn}", "tol": { "abs": 0.0005 }, "line": "You divided $s$ by $n = {n}$. The standard error is $s/\\sqrt n$, with $\\sqrt{{{n}}} = {rt}$." }
+      ],
+      "solution": [
+        "$\\mathrm{{SE}} \\approx \\dfrac{{{s}}}{{\\sqrt{{{n}}}}} = \\dfrac{{{s}}}{{{rt}}} = {se}\\%$.",
+        "The {lev}% half-width is ${z} \\times {se} = {key}$, or ${key:dp3}\\%$ to 3 decimal places."
+      ]
+    }
+  ]
+}
