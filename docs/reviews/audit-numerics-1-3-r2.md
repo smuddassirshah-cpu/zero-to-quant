@@ -102,3 +102,38 @@ Conventions are stated once and kept: machine epsilon is $2^{-52}$, the gap abov
 Theorems carry their hypotheses: the digits-lost rule is called a rule of thumb, and "loses about $\log_{10}\kappa(\mathbf A)$" is tied to a close fit wherever QR is compared with the normal equations; Newton's order 2 needs $f'(r) \ne 0$, with the double-root case named; bisection is certain "for a continuous $f$ with a sign change"; Runge's growth is claimed "for this $f$" and "for some smooth functions"; Simpson's $h^4$ needs four continuous derivatives; Gauss speed needs smoothness; local order $p + 1$ against global order $p$; stiffness is defined by stability, not accuracy, setting the step; unconditional stability is separated from accuracy and from L-stability.
 
 Every empirical claim was rerun independently, with these results among others. The secant order tends to 1.618 in 3,000-digit arithmetic. Random matrices confirm $\kappa(\mathbf A^T\mathbf A) = \kappa(\mathbf A)^2$ and $\kappa(\mathbf R) = \kappa(\mathbf A)$. Twenty thousand random right-hand sides never exceed the $\kappa$ bound. Trefethen and Bau's degree-14 fit gives 0.99999998 by QR and $-0.16$ by the normal equations on this machine, as the screen says of a desktop NumPy. Gauss-Legendre is exact to degree $2n - 1$ and not $2n$ for $n = 1$ to 8. Monte Carlo error falls with slope $-0.5$ over 300 replications per sample size, and a CRR tree with slope $-1$. The implicit Euler and trapezoidal factors are at most 1 at 40,000 random points of the left half-plane. `solve_ivp` reproduces 1,172, 422 and 226 evaluations in SciPy 1.18.1. The fastest rate of a Black-Scholes grid quadruples when $\Delta S$ halves.
+
+## Overlap with the earlier reads
+
+Read after the ledger, scripts and findings above were committed (`9329a8f0`, `634a2e69`): `docs/reviews/review-numerics-1-3.md` (second reader, 31 findings, fix pass `1bc2a38b`) and `docs/reviews/audit-numerics-1-3.md` (round-1 concept audit, 22 findings, fix pass `6dce011e`). Both fix passes were applied before this read, so this audit read the content after them. The round-1 audit counted 11 of the review's 31 findings as conceptual; this table adds a twelfth, the review's note on l5 screens[9] (31 against 33 evaluations), because it is the same convention as finding 8 here.
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| Found by this audit only | 12 | findings 1 to 7 and 9 to 13 |
+| Found by the earlier reads only | 32 | round-1 audit findings 1 to 22 (its finding 12 shared with the review) and 10 review-only findings; all were fixed before this read |
+| Found by both | 1 | finding 8: the review saw that 31 counts halvings while screens[8] counts 33 calls, and its fix pass reworded one sentence; the table, the key and the feedback still say 31 |
+
+Two near overlaps are counted as this audit only, because the earlier read judged the text sound. Round-1 finding 4 rewrote the l3 screens[4] sentence about $\tfrac{1 + r}{1 - r}$ for another reason (it is the normal-equations figure) and left the sign condition out (finding 2 here). Round 1's "Noted" list called l6 screens[9] true as it stands and retitled the lesson; finding 10 here shows the sentence fails outside the bracket and that `course.json` still carries the old name. The second reader's "checked and correct" list passes the 8.5 vol points of finding 3 as arithmetic.
+
+Whether each finding sits in text or code a fix pass wrote (`git show` of each path before and after `1bc2a38b` and `6dce011e`):
+
+| Finding | In fix-pass text or code | Detail |
+|---|---|---|
+| 1, 3, 4, 5, 7, 11, 12, 13 | no | original author text or code, untouched by both fix passes |
+| 2 | partly, round-1 fix pass | the screens[4] sentence is round-1 fix text ("correlation matrix, whose $\kappa$ is ..."); the quiz[0] prose is original |
+| 6 | partly, round-1 fix pass | the round-1 fix pass rewrote `safe_newton` and kept the original line `if flo * fhi > 0`; it added `RuntimeError` and the title "you can trust", which make the silent wrong return stand out more. `bisect` in l5 is original |
+| 8 | yes, second reader's fix pass | the sentence "31 halvings, one evaluation each, after checking the ends" is that pass's text; the table and key are original |
+| 9 | yes, round-1 fix pass | the default `ftol=1e-12` is original; the hidden test with `ftol=0.0` and the `how` sentence that mentions it without explanation are round-1 fix text |
+| 10 | partly, round-1 fix pass | screens[9] is original; the stale `course.json` name is an omission of the round-1 retitling |
+
+So 4 of the 13 findings touch what the round-1 fix pass wrote or left behind (2, 6, 9, 10), 1 sits in the second reader's fix text (8), and 8 are in original text that two earlier reads passed. The one serious finding (6) is in code that all three earlier passes ran: the author, the second reader and the round-1 auditor and fixer each executed `bisect` and `safe_newton`, always on brackets with a strict sign change.
+
+All other fix-pass text was read blind with the rest and then reread against the list of 78 strings changed by `6dce011e`. No further defect was found in it: the `rtsafe` halving rule is implemented as Numerical Recipes states it, the nine-fold root does need it, and the reworded Runge, Simpson-panel, close-fit and variance-conditioning passages hold.
+
+## Gate results
+
+- Validator (from `app/`): `0 errors, 4115 warnings`; `git status` clean afterwards.
+- Round-2 concept scripts: `numerics-L1-concepts-r2.py` exit 0 (68 checks passed, 4 `EXPECTED_FAIL`); `numerics-L2-concepts-r2.py` exit 0 (58 passed, 7 `EXPECTED_FAIL`); `numerics-L3-concepts-r2.py` exit 0 (49 passed, 1 `EXPECTED_FAIL`). Each `EXPECTED_FAIL` prints the corrected assert. NumPy 2.5.3, SciPy 1.18.1, Python 3.13.
+- Author number scripts (from `app/`): `numerics-L1-numbers.py` exit 0, `numerics-L2-numbers.py` exit 0, `numerics-L3-numbers.py` exit 0 (each "all checks passed").
+- Code tasks: 17 solutions pass all their hidden tests and all 17 starters fail (inside the concept scripts). The replacement code of fixes 6 and 7 passes the current hidden tests and the proposed new ones.
+- No content file, engine file or `course.json` was changed. Playthrough was not run: nothing playable changed.
