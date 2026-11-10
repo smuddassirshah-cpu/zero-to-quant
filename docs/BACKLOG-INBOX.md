@@ -1865,3 +1865,7 @@ Raised later (fluency exp-log trig):
 Raised later (audit number-sense):
 - [Could] Validator rule: warn when a learner-facing string repeats a sentence back to back. The audit met two, both left by a fix pass that applied its text twice: number-sense l6 `quiz[2].feedback.correct` ("Write the 0: it shows one decimal place." twice) and l8 `quiz[0].widget.options[2].why` ("You picked the second coldest." twice).
 - [Could] Validator rule: warn when learner-facing text cites a lesson by its id (`\bl\d+\b` outside maths, for example "as in l4" in number-sense l13 `screens[7].explain.text`). A learner sees lesson names, never ids.
+
+Raised later (audit odes):
+- [Could] `function-plot` (and the other curve canvases): an `envelope` option on a function, drawing $\pm R e^{\alpha x}$ computed from the plotted curve's own constants. In odes l7 screens[4] and [5] and l9 screens[2] the envelope is a second hand-typed expression (`exp(-x)`, `exp(-0.5*x)`) that left out the amplitude $R = \sqrt{c_1^2 + c_2^2}$, so the curve passes outside its drawn envelope (audit-odes-1-3 finding 5). A derived envelope cannot drift from its curve.
+- [Could] `merge-wave.sh` and the reader brief run `<course>-L<n>-concepts.py` only for its exit code. The scripts print `EXPECTED_FAIL  <name>  [finding N]` lines for content that is wrong and still exit 0. Want the merge tail to print the count of `EXPECTED_FAIL` lines per script, so open concept findings stay visible until a fix pass turns them into plain checks.
