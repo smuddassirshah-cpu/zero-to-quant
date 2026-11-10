@@ -1810,6 +1810,16 @@ const checkDrill = (file, id, d, cur) => {
     if (d.fn != null) warn(file, 'fn', 'fn is for Python drills; a C++ test names the function in its own call');
     if (Array.isArray(d.examples) && d.examples.length < 1) err(file, 'examples', 'at least 1 example');
   }
+  /* item 844: planted wrong solutions, run by tools/planted-check.mjs (no runtime here: shape only) */
+  if (d.planted !== undefined) {
+    if (!Array.isArray(d.planted)) err(file, 'planted', 'planted is an array of { "code", "slip" } wrong solutions');
+    else d.planted.forEach((p, i) => {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) { err(file, `planted[${i}]`, 'a planted entry is { "code": "<a wrong solution>", "slip": "<one sentence naming the mistake>" }'); return; }
+      if (typeof p.code !== 'string' || !/\S/.test(p.code)) err(file, `planted[${i}].code`, 'code is a non-empty string: the wrong solution');
+      if (typeof p.slip !== 'string' || !/\S/.test(p.slip)) err(file, `planted[${i}].slip`, 'slip is a non-empty string: one sentence naming the mistake');
+      Object.keys(p).forEach(k => { if (!['code', 'slip'].includes(k)) warn(file, `planted[${i}].${k}`, `unknown field "${k}" in a planted entry`); });
+    });
+  }
   if (d.pack !== undefined && (typeof d.pack !== 'string' || !KEBAB.test(d.pack))) err(file, 'pack', 'pack is a kebab-case name: the group a mock paper draws from ("drills/<pack>")');   // ENGINE-BACKLOG 468
 };
 
