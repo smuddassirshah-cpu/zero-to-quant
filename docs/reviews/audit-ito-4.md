@@ -67,8 +67,23 @@ What the level gets right, checked and worth keeping: the local-versus-true mart
 
 ## Overlap with the earlier review
 
-Filled after the ledger and findings were committed.
+Read after commit 1a00bfd8 (ledger, findings and script): `docs/reviews/review-ito.md`, level 4 parts. That review has seven findings that touch level 4. Two are conceptual: its finding 6 (homework h-stopping, valid proof orders marked wrong) and its finding 21 (l14, Wald used with no link to the martingale $X_t - \mu t$). The other five are not conceptual (9 tolerance on q-cube, 10 `accept` for y and n, 11 key length in l17 s9, 20 notice wording in l13, 22 shuffle in l14 s0).
+
+| | count | which |
+|---|---|---|
+| Conceptual findings, audit only | 16 | findings 1 to 16 above |
+| Conceptual findings, earlier review only | 2 | review 6 (h-stopping order), review 21 (Wald link) |
+| Found by both | 0 | |
+
+Notes on the two review-only findings. Review 21 is fixed in the content I read (l14 screens[5] now stops $X_t - \mu t$), and the fixed text is correct. On review 6, the fix pass recorded `same: [[o2, o3]]` for h-stopping on the ground that "o3 needs only o1". The current file has no `same` group, and that is the right state: o3 passes to the limit $W_{t \wedge \tau} \to W_\tau$, which needs $\tau$ finite, and o2 is the line that proves it. The strict order o1, o2, o3, o4 should stay.
+
+The earlier review's "checked and correct" list for level 4 covers numbers only (exit chances, moments, prices, thetas), and I agree with every one. None of my 16 findings is a number in a key.
 
 ## Runs
 
-Filled after the checks were run.
+- `python3 -I docs/reports/ito-L4-concepts.py`: 134 checks, 128 ok, 6 `EXPECTED_FAIL` (findings 2 and 14, 5, 8, 9, 10, 12), 0 unexpected failures, exit 0. About 10 seconds.
+- Code widgets in CPython 3.13: l13 s8 9/9, l14 s8 9/9, l15 s7 10/10, l16 s8 8/8, l17 s8 6/6, homework h-exit-report 5/5, h-quick-prices 5/5. Every starter passes 0 of its tests. Every example and every output quoted in feedback was reproduced.
+- `node tools/validate.mjs` (from `app/`): 0 errors, 4,133 warnings. It left `content/manifest.json` unchanged.
+- `python3 docs/reports/ito-4-perf-numbers.py`: 48 checks, 0 failures, exit 0.
+- `node tools/playthrough.mjs --set ito/review-4 --local-cdn <pkgs>`: ok, 9 items, recorded 9 of 9, all passed. The same with `--mobile`: ok, 9 of 9, all passed.
+- No content, engine file, `course.json` or state file was changed. No engine limit was met, so there is no inbox bullet.
