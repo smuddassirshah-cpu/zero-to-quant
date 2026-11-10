@@ -35,6 +35,7 @@ const DAY = 86400000;
 const results = [];
 const test = async (name, fn) => {
   store.clear(); S._reload(); S._setClock(null);
+  if (name.startsWith('C:') && !name.includes('real sets')) C._setFluency([]);
   try { await fn(); results.push(true); console.log(`PASS ${name}`); }
   catch (e) { results.push(false); console.log(`FAIL ${name}: ${e && e.message ? e.message : e}`); }
 };
@@ -190,6 +191,10 @@ await test('B: an old save with no cumulative block loads with an empty one', ()
 });
 
 /* ---------- Part C: the live model on the real content ---------- */
+/* The fixtures of this part must not depend on which real Fluency sets exist (ENGINE-BACKLOG 835): the real sets are read once, then every C test
+   starts with none, and registers the fixture (or, in the one test that wants them, the real sets) through the test hook. */
+const realSets = [];
+for (const r of C.fluencyList()) realSets.push({ course: r.course, doc: await C.fluencySet(r.course, r.id) });
 const courses = C.allCourses();
 const written = (cid, id) => C.exists(cid, id) !== false;
 const fullLevels = [];
@@ -212,6 +217,17 @@ await test('C: the review draws twenty items from met levels only, at most four 
   eq(new Set(items.map((it) => it.uid)).size, 20, 'no item twice');
   const again = await SEL.weeklyReview({ seed: 21 });
   eq(again.map((it) => it.uid).join(), items.map((it) => it.uid).join(), 'the same seed gives the same review');
+});
+await test('C: with the real Fluency sets of several courses in force, no course gives more than its cap', async () => {
+  ok(realSets.length > 0, 'real sets are read');
+  C._setFluency(realSets);
+  const six = onePerCourse(6); S.prereq.mark(metKeys(six), 'test');
+  const items = await SEL.weeklyReview({ seed: 28 });
+  eq(items.length, 20);
+  ok(Object.values(perCourse(items.map((it) => ({ course: it.weekly.course })))).every((v) => v <= 4), 'at most four from a course');
+  const withSets = new Set(realSets.map((r) => r.course));
+  ok(count(items, (it) => it.weekly.tier === 1) <= 4 * withSets.size, 'generated items within the cap of each course');
+  C._setFluency([]);
 });
 await test('C: with no level met there is nothing to review', async () => {
   const items = await SEL.weeklyReview({ seed: 1 });

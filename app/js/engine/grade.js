@@ -165,6 +165,21 @@
     }
     return out + t.slice(pos);
   };
+  /* ENGINE-BACKLOG 836: a plain-text function name directly before ( is the function, not a product of letters: ln(97)/ln(4) is
+     \ln(97)/\ln(4), not 97/4. Names: ln, log, exp, sin, cos, tan, sqrt. Not touched: a name already behind a backslash (\ln), a name that is
+     part of a longer word (arcsin(, sinh(, Dsin() and anything else, so a product of single letters such as s n (x) is still a product. */
+  const PLAINFN = /(?<![A-Za-z\\])(ln|log|exp|sin|cos|tan|sqrt)(?=\s*\()/;
+  const plainFns = (t) => {
+    for (let guard = 0; guard < 60; guard++) {
+      const m = PLAINFN.exec(t); if (!m) break;
+      const at = m.index + m[0].length, o = /^\s*\(/.exec(t.slice(at));
+      if (m[1] === 'sqrt') {
+        const g = matching(t, at + o[0].length); if (!g) break;
+        t = t.slice(0, m.index) + `\\sqrt{${t.slice(at + o[0].length, g.end - 1)}}` + t.slice(g.end);
+      } else t = t.slice(0, m.index) + `\\${m[1]}` + t.slice(at);
+    }
+    return t;
+  };
   /* P32-expr-exp: \exp, \operatorname{exp} and \mathrm{exp} (what MathLive's "exp" shortcut types) with a bracketed
      argument ((..), \left(..\right), {..}) or one token (a letter, number or \command) become (\exponentialE^{(arg)}).
      The engine reads \exp(x) as the tuple ["Tuple", "Exp", "x"]. */
@@ -197,7 +212,7 @@
       /* P32-expr-D: D and N are products, whatever follows (Dt, 4Dx, tD, N(0,1), D(t)). The engine reads D and N as its operators
          (D t is the tuple ["Tuple","D","t"]). A screen can keep the operator reading before a letter by listing "D" or "N" in `functions`. */
       .replace(/(?<!\\[A-Za-z]*)(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?=([A-Za-z])?)/g, (m, c, nx) => (nx && (fns || []).includes(c) ? m : `\\mathrm{${c}}`));
-    t = uncall(unexp(unbinom(minmax(t))), fns);
+    t = uncall(unexp(unbinom(minmax(plainFns(t)))), fns);
     if (cx) t = t.replace(/(?<![A-Za-z\\])(?<!_)(?<!_\{)i/g, '\\iota ').replace(/\\bar\s*\{/g, '\\overline{');
     return t;
   };
@@ -805,5 +820,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, shapeFactorised, shapeFullyFactorised, shapeCompletedSquare, exprFormOk, setPieces, exprSetValues, setMatch, isSetSpec, setAnswerText, exprSetGrade, numSetValues, numSetGrade, countLine, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { plainFns, parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, shapeFactorised, shapeFullyFactorised, shapeCompletedSquare, exprFormOk, setPieces, exprSetValues, setMatch, isSetSpec, setAnswerText, exprSetGrade, numSetValues, numSetGrade, countLine, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();

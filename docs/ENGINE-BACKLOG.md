@@ -1972,3 +1972,14 @@ Raised later (fluency quadratics), the answer forms of a typed expression and nu
 
 834. Done [Must] Validator schema for the new fields and forms (`answers`, `unordered`, `count`, the two forms), `fluency-rules.mjs` and `fluency-sample.mjs` read set answers, `tools/test-fluency.mjs` grades set answers and both forms in the real widgets (the prompt's own expression typed back must fail), `tools/test-answer-forms.mjs`, five new fixture families, `docs/AUTHORING.md` (the `expression` and `numeric` sections, section 16) and the report `docs/reports/engine-830.md`.
 834 status: done. They work in lessons, reviews, homework and exams as well as Fluency.
+
+Raised later (the first Fluency content wave), engine pass 835 onward:
+
+835. Done [Must] `tools/test-cumulative.mjs` failed 5 of 25 once real Fluency sets existed: the weekly review's per-course cap with several sets in one course must hold, and the tests must not depend on which real sets exist.
+835 status: done. The cap in `select.js` was not broken (the test that draws from real content already held it at four per course); the fixtures wrongly read the real sets. Part C now reads the real sets once, starts every case with none and registers the fixture itself; one new case puts every real set in force and checks no course gives more than four. 26 of 26.
+
+836. Done [Must] Plain-text `ln`, `log`, `exp`, `sin`, `cos`, `tan`, `sqrt` before `(` in `answer`, `accept` and learner input are the functions, not a product of letters (`ln(97)/ln(4)` equalled `97/4`).
+836 status: done. `plainFns` in `grade.js`, first step of `prep`; a name behind a backslash, inside a longer word (`arcsin(`, `sinh(`) or without a bracket is untouched. `tools/audit-plain-functions.mjs` lists every such entry in `app/content` and what the fix did to it (115 entries; the list is in `docs/reports/engine-835.md`). Cases in `tools/test-expr-equations.mjs` part 1.
+
+837. Done [Should] A Fluency answer the grader returns with key `length`, `form` or `count` shows that key's line and then the `solution` steps, as any other wrong answer does.
+837 status: done. `notYetLine` in `player.js` for a generated item.
