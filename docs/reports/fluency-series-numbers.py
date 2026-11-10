@@ -239,6 +239,15 @@ def l8_bond(V):
     return pv, {'payment-today': pv + c, 'per-cent-not-decimal': c / i}
 
 
+def l8_recurring(V):
+    """Widening pass: 0.tututu... summed as a geometric series of the digit pair, cross-checked against 40 places."""
+    pair = 10 * V['t'] + V['u']
+    s = s_inf(sp.Rational(pair, 100), sp.Rational(1, 100))
+    places = sum(sp.Rational(int(c), 10 ** (i + 1)) for i, c in enumerate(('%d%d' % (V['t'], V['u'])) * 20))
+    assert 0 <= s - places < sp.Rational(1, 10 ** 39) and 0 < s < 1
+    return s, {'first-term-only': sp.Rational(pair, 100), 'sign-of-r': sp.Rational(pair, 100) / (1 + sp.Rational(1, 100))}
+
+
 # ---- fluency-l11-powers-of-a-bracket ----
 def coeff(expr, e):
     return sp.Poly(sp.expand(expr), x).coeff_monomial(x ** e)
@@ -268,6 +277,7 @@ FAMILIES = [
     ('fluency-l8-adding-forever', 'from-the-terms', l8_terms),
     ('fluency-l8-adding-forever', 'from-a-and-r', l8_a_r),
     ('fluency-l8-adding-forever', 'perpetual-bond', l8_bond),
+    ('fluency-l8-adding-forever', 'recurring-decimal', l8_recurring),
     ('fluency-l11-powers-of-a-bracket', 'x-plus-b', l11_plain),
     ('fluency-l11-powers-of-a-bracket', 'ax-plus-b', l11_scaled),
     ('fluency-l11-powers-of-a-bracket', 'term-with-no-x', l11_no_x),

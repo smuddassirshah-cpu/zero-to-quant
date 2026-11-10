@@ -39,3 +39,17 @@ Notation and wording follow each lesson: $u_n$, $a$, $d$, $r$, "Write $u_n$ for 
 4. `voice-scan.py 35` on `app/content/courses/series`: 0 and 0.
 5. I read 20 drawn items of every family as a learner would. The scan found `+0` terms ("$1+0-1+\dots$") and `+ \dots -28` endings, both removed with `where`; a line opening with a numeral and the sigma solution's unexplained $-128$ were reworded. No prompt gives the answer away.
 6. Slips that could equal the key or each other are kept apart by `where` (l2 `a != d`, l8 three gaps of 0.02 with wrong `tol` 0.005).
+
+## Widening pass
+
+Entry worked: l8 "write a recurring decimal as a fraction", skipped in the first wave, is now added with `form: "fraction"` (AUTHORING section 16). No other series family changed, so every other family draws exactly as before.
+
+| set | family | distinct prompts in 200 | `form` | slips (`wrong` ids) |
+|---|---|---|---|---|
+| fluency-l8-adding-forever | recurring-decimal (new) | 86 | fraction | first-term-only, sign-of-r |
+
+The prompt is "Write $0.171717\ldots$ as a fraction in its lowest terms", drawn from the 98 digit pairs 01 to 98 (a pair such as 33 gives the lesson's $0.333\ldots$). The solution takes the lesson's route: $a = 0.17$, $r = 0.01$, $S_\infty = 0.17 \div 0.99 = \frac{17}{99}$, then lowest terms.
+
+Checks: (1) `fluency-series-numbers.py` now covers 20 families (new `l8_recurring`: the geometric sum by `summation`, checked against 40 decimal places of the digits), 12,200 checks, 0 failures, exit 0. (2) Validator 0 errors, no warning on series fluency files; `test-fluency.mjs --local-cdn` on the set: 308 of 308 (the prompt's decimal typed back is refused). (3) Playthrough `--fluency` with and without `--mobile`: green. (4) `voice-scan.py 35` on the course: 0 and 0. (5) I read 20 draws of the new family as a learner would: no `1x`, `+-`, double minus or unreduced key, and no prompt gives the answer away. (6) This section.
+
+Unchanged: the "up to the last term" families still leave out series that end on a negative term. That is a reading choice, not a missing format, so it is not raised.
