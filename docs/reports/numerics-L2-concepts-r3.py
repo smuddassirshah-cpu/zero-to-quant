@@ -140,13 +140,19 @@ check("l5.s8 attack: bisect returns an exact midpoint root", E5["bisect"](lambda
       or abs(E5["bisect"](lambda v: v, -1.0, 1.0, 1e-9)[0]) < 1e-9)
 g = capped(f2, 5000)
 try:
-    E5["bisect"](g, 1.0, 2.0, 1e-17)
+    rt17 = E5["bisect"](g, 1.0, 2.0, 1e-17)
     ends = True
 except Budget:
     ends = False
-# l5 screens[8] solution: `while hi - lo >= tol` cannot end once tol is below the gap between doubles (2.2e-16 near 1.41).
-# Corrected assert, which passes when the loop also stops at `mid == lo or mid == hi`: ends is True, in 54 calls.
-check("l5.s8 bisect ends for every positive tol (tol = 1e-17 on [1, 2], 5,000 calls allowed)", ends, "", expected_fail=True)
+# (corrected claim, fix pass) the solution now also stops at `mid == lo or mid == hi`. Own computation: the bracket stalls
+# at the two adjacent doubles around sqrt 2, 2^-52 apart (52 halvings of [1, 2]), so 2 + 52 = 54 calls, root within one gap.
+_lo, _hi, _n = 1.0, 2.0, 0
+while (_lo + _hi) / 2 not in (_lo, _hi):
+    _m = (_lo + _hi) / 2; _n += 1
+    _lo, _hi = (_m, _hi) if _m * _m < 2 else (_lo, _m)
+check("l5.s8 bisect ends for every positive tol (tol = 1e-17 on [1, 2], 5,000 calls allowed) (corrected claim, fix pass)",
+      ends and rt17[1] == 2 + _n == 54 and _hi - _lo == 2.0 ** -52 and abs(rt17[0] - R2) <= 2.0 ** -52,
+      f"{rt17[1] if ends else 'no end'} calls, {_n} halvings to a bracket of width {_hi - _lo:.1e}")
 try:
     E5["newton"](f2, lambda v: 2 * v, 0.0, 1e-12)
     zde = False
@@ -342,10 +348,66 @@ P1k = E6["bs_price"](100.0, K1k, 0.05, 1 / 12, tv1k, kinds1k)
 o1k, n1k_ = passes(E6, "implied_vols", P1k, K1k, 100.0, 0.05, 1 / 12, kinds1k)
 oex, nex = passes(E6, "implied_vols", E6["bs_price"](100.0, [100.0], 0.05, 1 / 12, 0.2, ["c"]), [100.0], 100.0, 0.05, 1 / 12, ["c"])
 check("l6.s8 the book's answers are right all the same", float(np.max(np.abs(o1k - tv1k))) < 1e-9 and abs(float(oex[0]) - 0.2) < 1e-9)
-# Corrected assert, which passes once solved strikes are frozen (see the finding): n1k_ <= 12 and nex == 1.
-check("l6.s8 a book of 1,000 strikes needs about as many passes as its hardest strike (at most 12), and an exact start needs 1",
-      n1k_ <= 12 and nex <= 2, f"lesson's own 1,000-strike test: {n1k_} passes; a quote priced exactly at the start vol 0.2: {nex} passes",
-      expected_fail=True)
+# (corrected claim, fix pass) the solution now keeps a Newton step below tol (instead of reading a zero step as
+# leaving the bracket) and freezes each strike once its step is below tol. Own computation: a scalar safeguarded
+# Newton, one strike at a time, counts each strike's passes; the vectorised book must need exactly the hardest
+# strike's count. The pre-fix loop (35 passes, 24 for an exact start) is rebuilt below for contrast.
+
+
+def _scalar_passes(p_, K_, kk, tol=1e-10):
+    g = lambda v: float(E6["bs_price"](100.0, np.array([K_]), 0.05, 1 / 12, v, np.array([kk]))[0]) - p_
+    lo_, hi_, v, n_ = 1e-4, 5.0, 0.2, 0
+    while True:
+        n_ += 1
+        gv = g(v)
+        if gv < 0:
+            lo_ = v
+        else:
+            hi_ = v
+        nv = v - gv / float(E6["bs_vega"](100.0, np.array([K_]), 0.05, 1 / 12, v)[0])
+        if not abs(nv - v) < tol and not (lo_ < nv < hi_):
+            nv = 0.5 * (lo_ + hi_)
+        if abs(nv - v) < tol:
+            return n_
+        v = nv
+
+
+its1k = np.array([_scalar_passes(float(P1k[i]), float(K1k[i]), str(kinds1k[i])) for i in range(0, 1000, 1)])
+_src6 = json.load(open(os.path.join(COURSE, "l6-safe-root-finder.json")))["screens"][8]["widget"]["solution"]
+_old6 = '''
+import numpy as np
+
+def implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):
+    p = np.asarray(prices, dtype=float)
+    K = np.asarray(strikes, dtype=float)
+    kinds = np.asarray(kinds)
+    f = lambda s: bs_price(S, K, r, T, s, kinds) - p
+    lo = np.full(p.shape, 1e-4)
+    hi = np.full(p.shape, 5.0)
+    ok = (f(lo) < 0) & (f(hi) > 0)
+    s = np.full(p.shape, 0.2)
+    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):
+        for _ in range(maxit):
+            fs = f(s)
+            low = fs < 0
+            lo = np.where(low, s, lo)
+            hi = np.where(low, hi, s)
+            new = s - fs / bs_vega(S, K, r, T, s)
+            bad = ~np.isfinite(new) | (new <= lo) | (new >= hi)
+            new = np.where(bad, 0.5 * (lo + hi), new)
+            done = np.abs(new - s) < tol
+            s = new
+            if np.all(done | ~ok):
+                break
+    return np.where(ok, s, np.nan)
+'''
+_E6o = dict(E6); exec(_old6, _E6o)
+o1k_old, n1k_old = passes(_E6o, "implied_vols", P1k, K1k, 100.0, 0.05, 1 / 12, kinds1k)
+_, nex_old = passes(_E6o, "implied_vols", E6["bs_price"](100.0, [100.0], 0.05, 1 / 12, 0.2, ["c"]), [100.0], 100.0, 0.05, 1 / 12, ["c"])
+check("l6.s8 a book of 1,000 strikes needs about as many passes as its hardest strike (at most 12), and an exact start needs 1 (corrected claim, fix pass)",
+      "live" in _src6 and n1k_ <= 12 and n1k_ == int(its1k.max()) and nex == 1 and n1k_old == 35 and nex_old == 24
+      and float(np.max(np.abs(o1k - o1k_old))) < 1e-10,
+      f"fixed loop: {n1k_} passes for the book (hardest strike {int(its1k.max())}), {nex} for an exact start; old loop: {n1k_old} and {nex_old}")
 it_, bi_ = counts(Q, Ks, kinds)
 check("l6.s4 iteration table", (it_[0], it_[1], it_[2], it_[5], it_[10]) == (9, 9, 8, 2, 6) and list(bi_[[0, 1, 2, 5, 10]]) == [1, 1, 0, 0, 0]
       and 2 <= it_.min() and it_.max() <= 9, f"its={list(it_)} bis={list(bi_)}")
@@ -439,10 +501,15 @@ ex_eq40 = max(bary_excess(np.linspace(-1, 1, 41), q) for q in QS)
 ex_eq60 = max(bary_excess(np.linspace(-1, 1, 61), q) for q in QS)
 check("l7.s7 barycentric formula is stable on Chebyshev nodes (error within 20 cond u, n to 60)", ex_ch < 20, f"{ex_ch:.1f} cond*u")
 check("l7.s7 barycentric formula keeps 11 figures on the lesson's own grids (equal nodes, n = 20)", ex_eq20[1] < 1e-11, f"rel err {ex_eq20[1]:.1e}")
-# Content says "is stable" with no condition on the nodes (l7 screens[7].explain, summary.ideas[0], quiz[0].explain).
-# Corrected assert, which passes: ex_ch < 20  (stable for well-placed nodes such as Chebyshev).
-check("l7.s7 barycentric formula is stable for any nodes (equal spacing, n = 40 and 60)", ex_eq40[0] < 1e3 and ex_eq60[1] < 1e-6,
-      f"n=40: {ex_eq40[0]:.1e} cond*u, rel err {ex_eq40[1]:.1e}; n=60: rel err {ex_eq60[1]:.1e}", expected_fail=True)
+# (corrected claim, fix pass) the content now says the formula is stable on Chebyshev (well-placed) nodes, and no longer
+# "stable" for any nodes. Own computation: within 20 cond u on Chebyshev nodes to n = 60, but far beyond it on equal
+# spacing (n = 40 and 60), so the condition on the nodes is needed; the three texts carry it.
+_l7 = json.load(open(os.path.join(COURSE, "l7-interpolation.json")))
+_t7 = [_l7["screens"][7]["explain"]["text"], _l7["summary"]["ideas"][0], _l7["quiz"][0]["explain"]["text"]]
+check("l7.s7 barycentric formula is stable on Chebyshev nodes, not on equal spacing, and the text says so (corrected claim, fix pass)",
+      ex_ch < 20 and ex_eq40[0] > 1e3 and ex_eq60[1] > 1e-6 and all("Chebyshev" in x for x in _t7)
+      and "and is stable, so" not in _t7[0] and not _t7[1].endswith("evaluates it stably.") and "most stable" not in _t7[2],
+      f"Chebyshev {ex_ch:.1f} cond*u; equal n=40: {ex_eq40[0]:.1e} cond*u, rel err {ex_eq40[1]:.1e}; n=60: rel err {ex_eq60[1]:.1e}")
 check("r2/q2 Lebesgue arithmetic", near(29.9 * 0.002, 0.0598, ab=1e-9) and near(2.42 * 0.002, 0.00484, ab=1e-9))
 
 # ---------------------------------------------------------------- l8 splines
@@ -482,10 +549,17 @@ check("l8.s5 every inner M changes", bool(np.all(np.abs(cb(t, 2) - M)[1:-1] > 1e
 others = [u for u in t if u != 5]
 fine = np.linspace(1, 30, 2901)
 moved = np.abs(cb(fine) - cs(fine)) > 1e-12
-# review-2 items[7] key: "Every rate along the curve" moves. The spline still passes through the seven unbumped quotes.
-# Corrected assert, which passes: every rate strictly between quotes moves, and none at the seven other quotes.
-check("r2 spline-global: every rate along the curve moves, the other quoted maturities included",
-      all(abs(mv(u)) > 1e-9 for u in others), f"move at the seven other quotes: {max(abs(mv(u)) for u in others):.1e} bp", expected_fail=True)
+# (corrected claim, fix pass) review-2 items[7] now keys "Rates between every pair of quotes" and says the seven other
+# quoted rates stay put. Own computation: the move is 0 at the seven other quotes (interpolation), and on 2,901
+# maturities it is nonzero everywhere strictly between quotes, with no sign change inside any interval.
+_r2 = json.load(open(os.path.join(COURSE, "review-2.json")))["items"][7]
+_between = fine[~np.isin(fine, t)]
+_mvb = (cb(_between) - cs(_between)) * 100
+_nozero = all(int(np.sum(np.diff(np.sign(_mvb[(_between > a_) & (_between < b_)])) != 0)) == 0 for a_, b_ in zip(t[:-1], t[1:]))
+check("r2 spline-global: every rate between quotes moves, the seven other quotes stay put (corrected claim, fix pass)",
+      all(abs(mv(u)) < 1e-9 for u in others) and bool(np.all(np.abs(_mvb) > 1e-9)) and _nozero
+      and _r2["widget"]["options"][0]["text"].startswith("Rates between every pair of quotes") and "seven other quoted rates stay put" in _r2["explain"]["text"],
+      f"move at the seven other quotes: {max(abs(mv(u)) for u in others):.1e} bp; smallest move between quotes {np.min(np.abs(_mvb)):.1e} bp")
 check("r2 spline-global corrected: every rate between quotes moves", bool(np.all(moved[np.array([not any(abs(x - u) < 1e-9 for u in others) for x in fine])])))
 check("l8.s7 prices", near(100 * math.exp(-4 * float(cs(4)) / 100), 85.5169, ab=1e-4) and near(100 * math.exp(-4 * 0.03925), 85.4704, ab=1e-4)
       and near(100 / 1.03925 ** 4, 85.7274, ab=1e-3) and near(85.5169 - 85.4704, 0.0465, ab=1e-4))
@@ -523,9 +597,34 @@ out1 = _e["ytm_book"](p1, c1, n1)
 book_passes = _e["PASSES"][0]
 _e["PASSES"][0] = 0
 _e["ytm_book"]([95.0], [0.05], [5])
-# Corrected assert, which passes once solved bonds are frozen: book_passes <= 8.
-check("h2 ytm_book: 1,000 bonds need at most 10 passes", book_passes <= 10 and float(np.max(np.abs(out1 - y1))) < 1e-9,
-      f"{book_passes} passes for the book, {_e['PASSES'][0]} for one bond; answers right to {float(np.max(np.abs(out1 - y1))):.0e}", expected_fail=True)
+# (corrected claim, fix pass) the solution now keeps a Newton step below tol and freezes each bond once solved (the
+# pre-fix loop took 19 passes). Own computation: a scalar safeguarded Newton per bond; the book needs the hardest bond's count.
+
+
+def _bond_passes(p_, c_, n_, tol=1e-12):
+    cfs = [100 * c_] * (n_ - 1) + [100 * c_ + 100]
+    g = lambda v: sum(x / (1 + v) ** (k + 1) for k, x in enumerate(cfs)) - p_
+    dg = lambda v: sum(-(k + 1) * x / (1 + v) ** (k + 2) for k, x in enumerate(cfs))
+    lo_, hi_, v, m_ = 0.0, 1.0, (c_ if c_ > 0 else 0.05), 0
+    while True:
+        m_ += 1
+        gv = g(v)
+        if gv > 0:
+            lo_ = v
+        else:
+            hi_ = v
+        nv = v - gv / dg(v)
+        if not abs(nv - v) < tol and not (lo_ < nv < hi_):
+            nv = 0.5 * (lo_ + hi_)
+        if abs(nv - v) < tol:
+            return m_
+        v = nv
+
+
+_hard = max(_bond_passes(float(p1[i]), float(c1[i]), int(n1[i])) for i in range(1000))
+check("h2 ytm_book: 1,000 bonds need at most 10 passes, the hardest bond's count (corrected claim, fix pass)",
+      book_passes <= 10 and book_passes == _hard and float(np.max(np.abs(out1 - y1))) < 1e-9,
+      f"{book_passes} passes for the book (hardest bond {_hard}), {_e['PASSES'][0]} for one bond; answers right to {float(np.max(np.abs(out1 - y1))):.0e}")
 check("h2 order", near(math.log(3.16e-5 / 1e-3) / math.log(1e-3 / 1e-2), 1.5, ab=0.01))
 
 print(f"\n{N} checks, {len(FAILS)} failed, {len(XFAILS)} expected fails")
