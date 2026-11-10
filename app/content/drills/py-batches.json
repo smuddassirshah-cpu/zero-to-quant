@@ -101,9 +101,14 @@
       "call": "[len(b) for b in batches(iter(range(10)), 4)]",
       "expect": "[4, 4, 2]",
       "compare": "equal"
+    },
+    {
+      "call": "next(batches(feed(), 3))",
+      "expect": "['a', 'b', 'c']",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. In a test, `_raised(f)` calls `f` and gives the name of the error it raises, or `'no error'`. `feed()` yields three items and then fails, as a feed that closes would.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. In a test, `_raised(f)` calls `f` and gives the name of the error it raises, or `'no error'`. `feed()` yields three items and then fails, as a feed that closes would.",
   "solution": "def batches(items, size):\n    if size < 1:\n        raise ValueError(f'size must be at least 1: {size}')\n    batch = []\n    for item in items:\n        batch.append(item)\n        if len(batch) == size:\n            yield batch\n            batch = []\n    if batch:\n        yield batch\n",
   "notes": [
     "A generator hands on each full batch at once, so a feed is read only as far as the batches asked for.",
@@ -122,6 +127,10 @@
     {
       "code": "def batches(items, size):\n    if size < 1:\n        raise ValueError('size must be at least 1')\n    batch = []\n    for item in items:\n        batch.append(item)\n        if len(batch) == size:\n            yield batch\n            batch.clear()\n    if batch:\n        yield batch\n",
       "slip": "Clearing one list and refilling it changes the batches already handed on."
+    },
+    {
+      "code": "def batches(items, size):\n    if size < 1:\n        raise ValueError('size must be at least 1')\n    batch = []\n    for item in items:\n        if len(batch) == size:\n            yield batch\n            batch = []\n        batch.append(item)\n    if batch:\n        yield batch\n",
+      "slip": "It waits for one more item before it hands a full batch on."
     }
   ],
   "prelude": "def feed():\n    yield 'a'\n    yield 'b'\n    yield 'c'\n    raise RuntimeError('feed closed')\ndef _raised(f):\n    # Test helper: call f and give the name of the error it raises.\n    try:\n        f()\n    except Exception as e:\n        return type(e).__name__\n    return 'no error'\n"

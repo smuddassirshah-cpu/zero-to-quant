@@ -13,13 +13,13 @@
   "pace": 720,
   "fn": "day_fill_summary",
   "returns": "a pandas DataFrame",
-  "brief": "`fills` is a DataFrame of the day's trades with columns `ticker`, `side` (`'B'` buy or `'S'` sell), `qty` (a positive whole number) and `price` in pence. For each ticker give `net`, shares bought less shares sold; `vwap`, the volume-weighted average price over all its fills, buys and sells alike; and `fills`, the number of fills.\n\nWrite `day_fill_summary(fills)`. It returns a DataFrame indexed by ticker in alphabetical order, with exactly the columns `net`, `vwap` and `fills` in that order. The tests read its columns, its index, each column with `tolist()` and the rows with `to_numpy().tolist()`; floats count within a relative `1e-9`. The frame `FILLS` and the helper `fills(rows)` are ready to try.\n\nExample. VOD bought 1,200 at 72.40 and 800 at 72.10, then sold 1,500 at 72.90. Its `net` is 500, its `vwap` is $253{,}910 / 3{,}500 \\approx 72.546$ and `fills` is 3.",
+  "brief": "`fills` is a DataFrame of the day's trades with columns `ticker`, `side` (`'B'` buy or `'S'` sell), `qty` (a positive whole number) and `price` in pence. For each ticker give `net`, shares bought less shares sold; `vwap`, the volume-weighted average price over all its fills, buys and sells alike; and `fills`, the number of fills.\n\nWrite `day_fill_summary(fills)`. It returns a DataFrame indexed by ticker in alphabetical order, with exactly the columns `net`, `vwap` and `fills` in that order. The tests read its columns, its index, each column with `tolist()` and the rows with `to_numpy().tolist()`; floats count within a relative `1e-9`. The frame `FILLS` and the helper `make_fills(rows)` are ready to try.\n\nExample. VOD bought 1,200 at 72.40 and 800 at 72.10, then sold 1,500 at 72.90. Its `net` is 500, its `vwap` is $253{,}910 / 3{,}500 \\approx 72.546$ and `fills` is 3.",
   "constraints": [
     "At least one fill. Tickers are text, and they may arrive in any order.",
     "pandas is available. All the tests in a run share one 5-second limit in the browser."
   ],
-  "hint": "Add a signed quantity (`np.where` on the side) and a value column `qty * price` first. Then one `groupby(\"ticker\").agg(...)` sums them; `vwap` is total value over total quantity.",
-  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef fills(rows):\n    # rows of (ticker, side, qty, price)\n    return pd.DataFrame(rows, columns=['ticker', 'side', 'qty', 'price'])\n\nFILLS = fills([('VOD', 'B', 1200, 72.40), ('BARC', 'S', 500, 210.5), ('VOD', 'B', 800, 72.10),\n               ('VOD', 'S', 1500, 72.90), ('BARC', 'B', 300, 209.8), ('AZN', 'B', 40, 11950.0)])\n",
+  "hint": "Add a signed quantity (`np.where` on the side) and a value column `qty * price` first. Then `groupby(\"ticker\")[[\"signed\", \"value\", \"qty\"]].sum()` adds them up and `groupby(\"ticker\").size()` counts the fills; `vwap` is total value over total quantity.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef make_fills(rows):\n    # rows of (ticker, side, qty, price)\n    return pd.DataFrame(rows, columns=['ticker', 'side', 'qty', 'price'])\n\nFILLS = make_fills([('VOD', 'B', 1200, 72.40), ('BARC', 'S', 500, 210.5), ('VOD', 'B', 800, 72.10),\n               ('VOD', 'S', 1500, 72.90), ('BARC', 'B', 300, 209.8), ('AZN', 'B', 40, 11950.0)])\n",
   "starter": "import numpy as np\nimport pandas as pd\n\ndef day_fill_summary(fills):\n    df = fills.copy()\n    out = ...\n    return out\n",
   "examples": [
     {
@@ -68,37 +68,37 @@
     },
     {
       "name": "One fill",
-      "call": "day_fill_summary(fills([(\"HSBA\", \"S\", 200, 650.0)])).to_numpy().tolist()",
+      "call": "day_fill_summary(make_fills([(\"HSBA\", \"S\", 200, 650.0)])).to_numpy().tolist()",
       "expect": "[[-200.0, 650.0, 1.0]]",
       "compare": "isclose"
     },
     {
       "name": "Sold out flat",
-      "call": "day_fill_summary(fills([(\"RR\", \"B\", 1000, 401.0), (\"RR\", \"S\", 1000, 405.0)])).to_numpy().tolist()",
+      "call": "day_fill_summary(make_fills([(\"RR\", \"B\", 1000, 401.0), (\"RR\", \"S\", 1000, 405.0)])).to_numpy().tolist()",
       "expect": "[[0.0, 403.0, 2.0]]",
       "compare": "isclose"
     },
     {
       "name": "Only sells",
-      "call": "day_fill_summary(fills([(\"BP\", \"S\", 300, 440.0), (\"BP\", \"S\", 100, 436.0)])).to_numpy().tolist()",
+      "call": "day_fill_summary(make_fills([(\"BP\", \"S\", 300, 440.0), (\"BP\", \"S\", 100, 436.0)])).to_numpy().tolist()",
       "expect": "[[-400.0, 439.0, 2.0]]",
       "compare": "isclose"
     },
     {
       "name": "Tickers arrive unsorted",
-      "call": "day_fill_summary(fills([(\"ZZ\", \"B\", 10, 5.0), (\"AA\", \"B\", 20, 6.0), (\"MM\", \"S\", 5, 7.0), (\"AA\", \"S\", 5, 6.6)])).index.tolist()",
+      "call": "day_fill_summary(make_fills([(\"ZZ\", \"B\", 10, 5.0), (\"AA\", \"B\", 20, 6.0), (\"MM\", \"S\", 5, 7.0), (\"AA\", \"S\", 5, 6.6)])).index.tolist()",
       "expect": "['AA', 'MM', 'ZZ']",
       "compare": "equal"
     },
     {
       "name": "Sizes differ a lot",
-      "call": "day_fill_summary(fills([(\"SHEL\", \"B\", 5000, 2600.0), (\"SHEL\", \"B\", 10, 2700.0)]))[\"vwap\"].tolist()",
+      "call": "day_fill_summary(make_fills([(\"SHEL\", \"B\", 5000, 2600.0), (\"SHEL\", \"B\", 10, 2700.0)]))[\"vwap\"].tolist()",
       "expect": "[2600.199600798403]",
       "compare": "isclose"
     },
     {
       "name": "Sells move the average",
-      "call": "day_fill_summary(fills([(\"LLOY\", \"B\", 400, 50.0), (\"LLOY\", \"S\", 100, 54.0), (\"LLOY\", \"B\", 100, 52.0)])).to_numpy().tolist()",
+      "call": "day_fill_summary(make_fills([(\"LLOY\", \"B\", 400, 50.0), (\"LLOY\", \"S\", 100, 54.0), (\"LLOY\", \"B\", 100, 52.0)])).to_numpy().tolist()",
       "expect": "[[400.0, 51.0, 3.0]]",
       "compare": "isclose"
     }
