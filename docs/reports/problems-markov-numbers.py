@@ -415,6 +415,8 @@ num(L2, 'p-rfq-rounds', 4, hq2[0], Hn2[0][0],
 ok(hq2[0] == F(56, 85), 'p-rfq-rounds: new q = 56/85')
 pick(L2, 'p-rfq-rounds', 5, 'old')
 ok(hq[0] * 50 == 30 and abs(float(hq2[0] * 40) - 26.35) < 0.005, 'p-rfq-rounds: £30 and £26.35')
+tq_new = (1 + F(3, 10)) / (1 - F(3, 10) * F(1, 2))      # t_Q = 1 + 0.3 t_C, t_C = 1 + 0.5 t_Q
+ok(tq_new == F(26, 17) and abs(float(tq_new) - 1.53) < 0.005 and tq[0] == F(7, 4), 'p-rfq-rounds p5: 1.53 against 1.75')
 
 # p-merger-arb: order Announced, Review, Completed, Withdrawn
 PA = [[F(1, 2), F(3, 10), F(1, 10), F(1, 10)], [F(0), F(6, 10), F(1, 4), F(15, 100)],
@@ -475,7 +477,8 @@ pdown = norm.cdf(-zdown)
 exact_down = binom.cdf(199, n400, 0.55)       # S < 0 iff K <= 199
 num(L3, 'p-maker-edge', 3, pdown, norm.sf(zdown),
     {'variance': norm.cdf(-80 / (n400 * float(var1))), 'complement': 1 - pdown, 'one-trade': norm.cdf(-80 / sqrt(float(var1)))},
-    routes=[norm.cdf(-80 / 39.80), exact_down, round(pdown, 2)])
+    routes=[norm.cdf(-80 / 39.80), exact_down, round(pdown, 3), norm.cdf(-2.01), norm.cdf(-2)])
+ok(abs(1 - 0.9778 - 0.0222) < 1e-12 and abs(norm.cdf(2.01) - 0.9778) < 0.00005, 'p-maker-edge p3: Phi(2.01) = 0.9778')
 ok(abs(exact_down - 0.020) < 0.0005, f'p-maker-edge: exact binomial {exact_down}')
 z99 = 2.33
 nmin = ceil(z99 ** 2 * float(var1) / float(mean1) ** 2)

@@ -121,3 +121,25 @@ Tooling note: the fix pass reports "no warning on these five files". At b97e71b 
 | `minor` | 3 |
 
 Status: **closed**. All six changed answers recompute, the surrounding text agrees with them, and the hardened parts sit within their levels. Nothing returns to the fixer; the three minor items can ride with the fix pass for section A.
+
+## Fix pass
+
+I recomputed every changed number before writing it (exact fractions and scipy: $\Phi(2.01) = 0.9778$, 0.0222; $t_Q = 26/17 = 1.5294$; $\Phi(0.11) = 0.5438$, $0.9512 \times 0.5438 = 0.5173$; $38 + 15(0.3483 + 0.0837) = 44.48$). The numbers scripts for markov, limits-thm, conditional, random-vars and counting-chance exit 0 (1141, 1539, 1177, 1319 and 611 checks), with the markov, limits-thm and random-vars scripts updated for the changed values. `node tools/validate.mjs`: 0 errors, and no warning of any kind on a `problems-*.json` file (no `[answer-form]`). `--problems` playthrough of the nine changed sets, with and without `--mobile`: green. `voice-scan.py 35`: 0 and 0.
+
+Status: applied 9 (A1, A2, A4, A5, A7, A8, B1 to B3), applied with a change 1 (A3), accepted without edit 1 (A6), engine item 1 (A9, not touched), extra 1 applied. None disputed.
+
+A1. p-maker-edge part 3: applied. Question supplies $\Phi(2.01) = 0.9778$ and asks for 3 places; `tol` 0.0025 on the answer and the three slips. Answer 0.0222 unchanged; band 0.0197 to 0.0247 (takes 0.020, 0.021, 0.022, 0.023).
+A2. p-rfq-rounds prose: applied. The three Counter chances are listed as three separate chances.
+A3. p-default-drag parts 4 and 5: applied with a change. `no-drag` 0.4553 to 0.5438 (part 4) and 0.4331 to 0.5173 (part 5); byKey text as proposed. `tol` is 0.002, not 0.0005: the calculator route $\Phi(0.1143) = 0.5455$ (part 5: 0.5189) lies 0.0017 and 0.0016 from the table values, so 0.0005 would reject a learner who made the slip without the table. No collision with any answer or other slip. Numbers script derivations and band checks updated.
+A4. p-merger-arb part 5: applied. Asks for the break-even price. Answer 8.23 unchanged.
+A5. p-rfq-rounds part 5: applied. The `rounds` `why` line cites 1.53 against 1.75; the script checks $t_Q = 26/17$ for the tighter quote.
+A6. p-maker-edge freshness: accepted, no edit (the review's ruling).
+A7. p-block-calls part 2: applied; the sentence is split in two to stay under 20 words.
+A8. p-maker-days part 2: applied (the `phi` line).
+A9. validator pattern: engine item, no content change. The validator prints no `[answer-form]` warning on these files now.
+B1. p-token-draw part 5: applied. `carried` 43.7245 to 44.48 and its text; the question opening names the 7 hands with three gold tokens.
+B2. p-fund-hedge: applied. Placeholder "for example 1.5"; "the answer is 0.5833".
+B3. p-two-houses part 4: applied. Straight apostrophes in the question, `generic` and `r-count` lines.
+Extra. counting-chance p-octahedral-prize part 5 (fair price 4.75): applied. "Give your answer to the nearest penny." added; the tolerance 0.005 already accepts it.
+
+Graded values changed: limits-thm p-default-drag part 4 `no-drag` slip 0.4553 to 0.5438 (tol 0.001 to 0.002); part 5 `no-drag` slip 0.4331 to 0.5173 (tol 0.001 to 0.002); random-vars p-token-draw part 5 `carried` slip 43.7245 to 44.48; markov p-maker-edge part 3 `tol` 0.005 to 0.0025 on the answer and its three slips (answer 0.0222 unchanged). No answer key changed.

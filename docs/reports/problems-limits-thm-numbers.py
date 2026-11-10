@@ -326,10 +326,10 @@ stated('z for 40', 0.06, z, 0.005)
 stated('Phi(0.06)', 0.5239, Phi(0.06), 0.00005)
 stated('Phi(0.11)', 0.5438, Phi(0.11), 0.00005)
 num(L2, 'p-default-drag', 4, 1 - Phi(round(z, 2)), 1 - 0.5239,
-    {'phi': Phi(0.06), 'no-drag': 1 - Phi(round(m / s, 2)), 'half': 0.5}, dp=4, agree=1e-4)
+    {'phi': Phi(0.06), 'no-drag': Phi(round(m / s, 2)), 'half': 0.5}, dp=4, agree=1e-4)
 ok(abs(LN.sf(40) - 0.4761) <= 0.0005, 'p-default-drag p4: exact chance not accepted')
 num(L2, 'p-default-drag', 5, 0.9512 * 0.4761, surv * LN.sf(40),
-    {'survivor': 0.4761, 'no-drag': 0.9512 * 0.4562}, dp=4, agree=0.0005)
+    {'survivor': 0.4761, 'no-drag': 0.9512 * 0.5438}, dp=4, agree=0.0005)
 ok(abs(up / M - surv * LN.sf(40)) < 0.005, 'p-default-drag p5: simulation far from 0.4526')
 # slips reached by a calculator (unrounded z) and by the table (z to 2 dp) both fall in their bands
 def band_has(L, iid, k, wid, vals):
@@ -338,8 +338,8 @@ def band_has(L, iid, k, wid, vals):
         ok(abs(v - w['value']) <= w['tol']['abs'] + 1e-12, f'{iid} p{k}: {wid} route {v:.5f} outside its band')
 band_has(L2, 'p-digital-share', 4, 'no-drag', [1 - Phi((log(1.25) - 0.06) / 0.3), 1 - Phi(round((log(1.25) - 0.06) / 0.3, 2))])
 band_has(L2, 'p-digital-share', 4, 'plus-drag', [1 - Phi((log(1.25) - 0.105) / 0.3), 1 - Phi(round((log(1.25) - 0.105) / 0.3, 2))])
-band_has(L2, 'p-default-drag', 4, 'no-drag', [1 - Phi(0.04 / 0.35), 1 - Phi(round(0.04 / 0.35, 2))])
-band_has(L2, 'p-default-drag', 5, 'no-drag', [surv * (1 - Phi(0.04 / 0.35)), 0.9512 * (1 - Phi(round(0.04 / 0.35, 2)))])
+band_has(L2, 'p-default-drag', 4, 'no-drag', [Phi(0.04 / 0.35), Phi(round(0.04 / 0.35, 2))])
+band_has(L2, 'p-default-drag', 5, 'no-drag', [surv * Phi(0.04 / 0.35), 0.9512 * Phi(round(0.04 / 0.35, 2))])
 
 
 # ------------------------------------------------------------------ level 3
