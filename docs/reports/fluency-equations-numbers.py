@@ -142,6 +142,16 @@ def common_factor(V):
     return [(0, h * p * v + h * q)], h * (p * v + q), {'constant-not-divided': h * (p * v + h * q), 'letter-taken-out': h * v * (p + q)}, None
 
 
+def highest_common_factor(V):
+    # widening pass: a composite highest common factor, answer graded with form factorised-fully
+    h, p, q, v = V['h'], V['p'], V['q'], S(V['v'])
+    if sp.gcd(h * p, h * q) != h:
+        fail(f'highest-common-factor: highest common factor of {h*p} and {h*q} is not {h}')
+    if sp.gcd(p, q) != 1:
+        fail(f'highest-common-factor: bracket {p}{v}{q:+} still has a common factor')
+    return [(0, h * p * v + h * q)], h * (p * v + q), {'constant-not-divided': h * (p * v + h * q), 'letter-taken-out': h * v * (p + q)}, None
+
+
 def multiply_then_add(V):
     a, x0, b, v = V['a'], V['x0'], V['b'], S(V['v'])
     c = a * x0 + b
@@ -225,18 +235,19 @@ def substitute_linear_pair(V):
 FAMILIES = {
     'fluency-l2-like-terms': {'collect-one-letter': collect_one_letter},
     'fluency-l3-opening-brackets': {'expand-one-bracket': expand_one_bracket, 'expand-two-and-collect': expand_two_and_collect},
-    'fluency-l4-putting-brackets-back': {'common-factor': common_factor},
+    'fluency-l4-putting-brackets-back': {'common-factor': common_factor, 'highest-common-factor': highest_common_factor},
     'fluency-l6-undoing-in-reverse': {'multiply-then-add': multiply_then_add, 'divide-then-add': divide_then_add},
     'fluency-l7-unknowns-both-sides': {'bracket-one-side': bracket_one_side, 'brackets-both-sides': brackets_both_sides},
     'fluency-l8-clearing-fractions': {'two-fractions-sum': two_fractions_sum, 'whole-tops': whole_tops},
     'fluency-l13-changing-the-subject': {'subject-from-linear': subject_from_linear, 'subject-from-product': subject_from_product,
                                          'subject-from-bottom': subject_from_bottom},
-    # 'fluency-l15-swapping-in': {'substitute-linear-pair': substitute_linear_pair},   # skipped: see fluency-equations.md
+    'fluency-l15-swapping-in': {'substitute-linear-pair': substitute_linear_pair},   # added in the widening pass
 }
 
 # The shape the key must be written in, checked on the engine's key text.
 SHAPES = {
     'common-factor': re.compile(r'^\d+\((\d*)?[a-z][+-]\d+\)$'),
+    'highest-common-factor': re.compile(r'^\d+\((\d*)?[a-z][+-]\d+\)$'),
 }
 
 

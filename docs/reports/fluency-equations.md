@@ -77,3 +77,23 @@ Seven sets, thirteen families. Each set uses its lesson's notation (`\dfrac`, le
 ```
 
 Its recompute function, `substitute_linear_pair`, is in the number script, commented out of `FAMILIES`.
+
+## Widening pass
+
+ENGINE-BACKLOG 837 shows the solution steps after a `length` reply, so the skipped l15 set goes in, and 830 lifts the l4 narrowing. The unchanged families draw as before.
+
+| set | family | distinct prompts in 200 | `form` | slips |
+| --- | --- | --- | --- | --- |
+| fluency-l15-swapping-in (new) | substitute-linear-pair | 199 | none (vector answer) | bracket-dropped, swapped-order |
+| fluency-l4-putting-brackets-back | highest-common-factor (new) | 182 | factorised-fully | constant-not-divided, letter-taken-out |
+
+The l15 family is the appendix draft with two changes: the slip's let divides by $a + bm$ directly (a zero divisor now rejects the draw), and the solution no longer reads "$x = -2$ and $x = -2$" when $a + bm = 1$. The l4 family draws composite factors 4, 6, 8, 9, 10 and 12 and asks "Factorise ... fully", as the lesson does; `common-factor` keeps its prime factors.
+
+Checks for the widening pass:
+1. `docs/reports/fluency-equations-numbers.py` now runs both families (l15 was commented out): 3,000 draws, 0 failures, exit 0.
+2. Validator 0 errors, no warning on these files. `test-fluency.mjs --local-cdn`: 915 of 915.
+3. Playthrough `--fluency` of l4 and l15, with and without `--mobile`: green; the l15 wrong-answer screen at 440 px shows the length line and then the working.
+4. Voice scan 35 on the course folder: 0 and 0.
+5. I read 20 draws of each family and scanned 200 for `1x`, `+-`, `--`, `^1`, `0x`, `+0`, `/1`: no hits.
+
+Still blocked: none.
