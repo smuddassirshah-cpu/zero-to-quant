@@ -54,7 +54,7 @@ File: `app/content/courses/conditional/problems-4.json` ("Problems: puzzles that
 | set | item | parts (typed / choice) | lessons drawn on | difficulty |
 |---|---|---|---|---|
 | problems-4 | p-marble-bags | 4 (4 / 0) | l18, l19 | 4 |
-| problems-4 | p-two-strategies | 4 (4 / 0) | l18, l20 | 3 |
+| problems-4 | p-two-strategies | 4 (4 / 0) | l18, l20 | 4 |
 | problems-4 | p-two-flags | 5 (5 / 0) | l20, l21 | 4 |
 | problems-4 | p-dated-coins | 5 (5 / 0) | l19, l21 | 5 |
 

@@ -98,3 +98,25 @@ Tags: `wrong` = a learner is marked wrongly or told something false; `unclear` =
 Form sentences to add or change: 61 numeric parts in findings 3, 4 and 7, plus the two in findings 1 and 2.
 
 Clean problems (no finding other than the form sentences of findings 3, 4 and 7): conditional `p-marble-bags`; random-vars `p-spinner-product`, `p-bond-defaults`, `p-straddle-days`, `p-phone-cover`, `p-reversal-days`, `p-month-options`, `p-quote-trades`, `p-clustered-fills`. No problem is free of edits.
+
+## Fix pass
+
+I recomputed every changed number before writing it (exact fractions, enumeration of the token hands, running powers for the dealer counts, the 100 flagged-company counts, a try-every-count search for the House S survivors, the doubling route from the rounded 0.5299). Both author scripts were extended and exit 0 (`problems-conditional-numbers.py` 1177 checks over sets 1 to 5; `problems-random-vars-numbers.py` 744 checks), each now with `form_checks` for sets 4 and 5 (conditional) and sets 1 to 3 (random-vars): a form sentence on every non-whole numeric part, the key rounded as asked is inside its tolerance (penny, pound, places, per cent scaled), exact-decimal parts terminate, and every printed `\approx` value is accepted. `node tools/validate.mjs`: 0 errors, no warning on these five files. `--problems` playthrough of all five sets, with and without `--mobile`: green. `voice-scan.py 35`: 0 and 0.
+
+Status: applied 14, applied with a change 1, accepted without edit 1. No finding disputed.
+
+1. p-doubling-desk part 3: applied. Recomputed: exact -22.5486, route -10.598 / 0.4701 = -22.5441. Key -22.55, tol 0.01 (takes -22.54 to -22.56; nearest slip -20), "nearest penny", feedback and explanation as proposed. Graded answer changed: -22.546 to -22.55.
+2. p-fund-hedge part 1: applied. `unit: "%"`, key 0.008, tol 0.000005, slips 0.005 and 0.004, "Give one decimal place." Graded answer changed in storage only (0.8 typed in % is still the same figure).
+3. Form sentences (17 parts): applied as listed.
+4. Form sentences (14 parts): applied as listed. Where feedback or explain printed a 3-place value under a 4-place question it now prints 4 places (0.5385, 0.3182, 0.4783, 0.7917, 0.7843, 0.5686, 0.2906, 0.5291, 0.5299, 0.5833).
+5. p-dated-coins part 3, p-two-flags parts 1 and 2: applied with the proposed wording.
+6. p-two-houses part 2 explanation: applied.
+7. Form sentences (30 parts): applied as listed, with one change. p-doubling-desk part 1 asks for the nearest penny, not the nearest pound: at whole pounds the slip `no-loss` 0.9688 rounds to 1 and collides with `win`, and the validator's wrong-band rule fires. `no-loss` has tol 0.005 so 0.97 reaches it. The answer 0 is unchanged.
+8. p-signal-streak part 5: applied. Key 0.0582, feedback and explanation as proposed. Graded answer changed: 0.0581 to 0.0582 (exact 0.058116, both inside the band).
+9. p-warning-screen: applied. 10,000 companies, 100 warners, 90 true and 198 false flags; 0.3125, 0.6875 and 2.88% unchanged. Numbers script updated, with a check that both counts are whole.
+10. p-two-houses part 4: applied. Now asks how many of S's 50 funds must survive to match 4.4% (32, tol 0, unit "funds"). Graded answer changed: 1.4 to 32. Slips: `r-count` 40, `actual` 25, `share` 0.64 (old slips -1, -4 and -0.6 retired with the question).
+11. p-two-strategies part 4: applied.
+12. p-fund-hedge part 5: applied.
+13. p-two-funds part 5: applied; ratios stay in feedback, explanation and `why` lines.
+14. Difficulty labels: applied by hardening where a set needs its 5. p-two-strategies relabelled 4 (report table updated). p-tightest-quote part 4 now asks the smallest n with P(T <= 2) >= 0.99: 10 (0.6^9 = 0.0101, 0.6^10 = 0.0060); slips 9, 21 (base 0.8 from the old rule) and 6 (base 0.4). Graded answer changed: 11 to 10. p-token-draw: part 4 says the bonus is £15 for the second gold token and a further £15 for the third (still P(G >= 2) = 1/3, answer unchanged), and part 5 asks the fair price: 38 + 15(1/3 + 1/30) = 43.50, checked against 38 + 15(E[G] - P(G >= 1)) = 38 + 15(1.2 - 5/6). Graded answer changed: 43 to 43.50; slips no-bonus 38, once-only 43, full-bonus 53, bonus-only 5.5, carried 43.7245.
+15. p-doubling-desk freshness: accepted, no edit (the review allows it; parts 2 to 4 are new).

@@ -427,8 +427,8 @@ num(L4, 'p-dated-coins', 5, F(4, 5), F(round(float(post(10 ** 9)) * 10 ** 6), 10
 
 # ------------------------------------------------------------------ level 5
 L5 = load(5)
-# p-warning-screen: 20 of 2,000 warn; screen 1 flags 0.9 / 0.02; screen 2 flags 0.8 / 0.1
-N, Wn = 2000, 20
+# p-warning-screen: 100 of 10,000 warn; screen 1 flags 0.9 / 0.02; screen 2 flags 0.8 / 0.1
+N, Wn = 10000, 100
 s1, f1, s2, f2 = F(9, 10), F(2, 100), F(8, 10), F(1, 10)
 prior = F(Wn, N)
 true1, false1 = s1 * Wn, f1 * (N - Wn)                         # natural frequencies
@@ -436,6 +436,7 @@ p1 = prior * s1 / (prior * s1 + (1 - prior) * f1)
 num(L5, 'p-warning-screen', 1, p1, true1 / (true1 + false1),
     {'detection': s1, 'flipped': 1 - f1, 'prior': prior})
 pick(L5, 'p-warning-screen', 2, 'swapped')
+ok(true1 == 90 and false1 == 198 and (Wn * s1).denominator == 1 and ((N - Wn) * f1).denominator == 1, 'p-warning-screen: the flag counts are not whole (90 and 198)')
 ok(false1 / (true1 + false1) == F(11, 16) and (true1 + false1) / N == F(288, 10000), 'p-warning-screen p2: 0.6875 or 2.88% wrong')
 both_t, both_f = Wn * s1 * s2, (N - Wn) * f1 * f2
 p3 = (p1 / (1 - p1)) * (s2 / f2); p3 = p3 / (1 + p3)
@@ -460,8 +461,12 @@ num(L5, 'p-two-houses', 2, gapS, S_['r'][0] - allavg(S_),
 pick(L5, 'p-two-houses', 3, 'mix')
 ok(S_['r'][0] > R_['r'][0] and S_['r'][1] > R_['r'][1] and allavg(R_) > allavg(S_), 'p-two-houses: no reversal')
 ok(F(40, 50) == F(8, 10) and F(25, 50) == F(1, 2) and 0.2 * 13 == 2.6, 'p-two-houses p3: stated shares wrong')
-num(L5, 'p-two-houses', 4, allavg(R_) - allavg(S_), wavg(R_) - (S_['r'][0] - gapS),
-    {'survivors': R_['r'][0] - S_['r'][0], 'closed': R_['r'][1] - S_['r'][1], 'gap-slip': allavg(R_) - (S_['r'][0] - allavg(S_))})
+# part 4: survivors S needs to match R's 4.4 with its own group averages (8 and -2), by solving and by trying every count
+need = F(220 + 2 * 50, 8 + 2)
+tryc = [m for m in range(0, 51) if F(m * 8 - (50 - m) * 2, 50) == allavg(R_)]
+num(L5, 'p-two-houses', 4, need, tryc[0],
+    {'r-count': R_['n'][0], 'actual': S_['n'][0], 'share': need / 50})
+ok(tryc == [32] and F(40 * 8 - 10 * 2, 50) == 6 and F(25 * 8 - 25 * 2, 50) == 3, 'p-two-houses p4: 32, 40 giving 6% or 25 giving 3% wrong')
 ok((allavg(R_) - allavg(S_)) - (R_['r'][0] - S_['r'][0]) == F(24, 10), 'p-two-houses p4: 2.4 points wrong')
 
 # p-signal-streak: good right 0.6, useless right 0.5, prior 1/2; four wrong calls
@@ -492,6 +497,7 @@ pright = pgood * g + (1 - pgood) * u
 num(L5, 'p-signal-streak', 4, pright, pr_enum, {'good': g, 'prior-mix': (g + u) / 2, 'coin': u})
 num(L5, 'p-signal-streak', 5, 2 * pright - 1, pright - (1 - pright),
     {'prior': 2 * (g + u) / 2 - 1, 'good': 2 * g - 1, 'p-itself': pright})
+ok(2 * F(5291, 10000) - 1 == F(582, 10000), 'p-signal-streak p5: 2 x 0.5291 - 1 is not 0.0582')
 
 # p-doubling-desk: cap of five losses, 20 rounds, quit after a losing round
 def round_enum():
@@ -512,9 +518,16 @@ num(L5, 'p-doubling-desk', 3, -20 * surv / (1 - surv), quit_avg,
 ok(surv * 20 + (1 - surv) * quit_avg == 0, 'p-doubling-desk: the average over all traders is not 0')
 pick(L5, 'p-doubling-desk', 4, 'survivors')
 ok(round(1000 * float(surv)) == 530 and round(float(quit_avg), 2) == -22.55, 'p-doubling-desk p4: 530 or -22.55 wrong')
+route = -F(5299, 10000) * 20 / (1 - F(5299, 10000))     # the part's own route, from the rounded 0.5299
+kw = items_part = L5['p-doubling-desk']['parts'][2]['widget'] if L5 else None
+if kw:
+    ok(round(float(route), 2) == -22.54 and abs(-22.54 - kw['answer']) <= kw['tol']['abs'] + 1e-9 and abs(round(float(quit_avg), 2) - kw['answer']) <= kw['tol']['abs'] + 1e-9,
+       'p-doubling-desk p3: the rounded route (-22.54) or the exact value (-22.55) is rejected')
 
-# every numeric part: form stated, a value rounded as asked is accepted, and each value the part's own feedback prints is accepted
+# every numeric part: form stated, a value rounded as asked is accepted, each value the part's own feedback prints is accepted,
+# and an "exact decimal" part has an answer that terminates
 import re
+WORDS = {'one': 1, 'two': 2, 'three': 3, 'four': 4}
 def form_checks(sets):
     for ref, items in sets:
         if items is None: continue
@@ -524,20 +537,29 @@ def form_checks(sets):
                 if w['kind'] != 'numeric': continue
                 tag = f'{ref} {iid} p{k}'
                 a, tol, q = w['answer'], w['tol'].get('abs', 0), p['question']
+                scale = 100 if w.get('unit') == '%' else 1
                 whole = float(a).is_integer() and tol == 0
-                ok(whole or w.get('unit') == '£' or bool(re.search(r'\bGive\b', q)), f'{tag}: no sentence stating the form wanted')
+                ok(whole or bool(re.search(r'\bGive\b', q)), f'{tag}: no sentence stating the form wanted')
+                n = None
                 m = re.search(r'(\d+) decimal places?|decimal to (\d+) places?', q)
-                if m:
-                    n = int(m.group(1) or m.group(2))
-                    ok(tol + 1e-12 >= 0.5 * 10 ** -n, f'{tag}: tolerance {tol} rejects a value rounded to {n} places')
+                if m: n = int(m.group(1) or m.group(2))
+                m = re.search(r'\b(one|two|three|four) decimal places?', q)
+                if m: n = WORDS[m.group(1)]
+                if 'nearest penny' in q: n = 2
+                if 'nearest pound' in q: n = 0
+                if n is not None:
+                    r = round(a * scale, n) / scale
+                    ok(abs(r - a) <= tol + 1e-9, f'{tag}: tolerance {tol} rejects the key rounded to {n} places ({r})')
+                if 'exact decimal' in q:
+                    ok(any(abs(a * scale * 10 ** j - round(a * scale * 10 ** j)) < 1e-9 for j in range(0, 5)), f'{tag}: the exact decimal does not end within 4 places')
                 texts = [p['feedback'].get('correct', ''), p['explain']['text'], w.get('accept', '')]
                 for t in texts:
-                    t = t.replace('{,}', '').replace(',', '').replace('£', '')
+                    t = t.replace('{,}', '').replace(',', '').replace('\u00a3', '')
                     for v in re.findall(r'(?:\\approx|about) \$?(-?\d+\.?\d*)', t):
                         v = float(v.rstrip('.'))
-                        if a and not whole and abs(v - a) <= 0.05 * abs(a):
-                            ok(abs(v - a) <= tol + 1e-9, f'{tag}: prints {v} but the key {a} (tol {tol}) rejects it')
-form_checks([('problems-1', L1), ('problems-2', L2), ('problems-3', L3)])
+                        if a and not whole and abs(v - a * scale) <= 0.05 * abs(a * scale):
+                            ok(abs(v / scale - a) <= tol + 1e-9, f'{tag}: prints {v} but the key {a} (tol {tol}) rejects it')
+form_checks([('problems-1', L1), ('problems-2', L2), ('problems-3', L3), ('problems-4', L4), ('problems-5', L5)])
 
 present = [n for n in (1, 2, 3, 4, 5) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
