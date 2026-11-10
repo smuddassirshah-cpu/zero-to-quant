@@ -69,3 +69,30 @@ Numbers. The script now loads `problems-4` and checks each part twice: exact fra
 | voice scan 35 (course folder) | 0 and 0 |
 
 Fresh-check: 0 hits at the gate. At `--min-run 8 --min-share 0` five hits, all the form sentence "give a fraction or a decimal to # places" (share 0.05), shared with other problem sets. Stock phrasing.
+
+## Level 5: `problems-5.json` (conditioning and inequalities)
+
+Lessons read first: l17 variance given information, l18 random sums, l19 convex bets, l20 many categories. Settings new to the course: a fishing boat's catch over calm and rough days, a drone whose wind-set speed varies, a chip tester waiting for the second fault from an unknown line, a start-up whose value is multiplied at each funding round.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-5 | p-fishing-catch | 5 (5 / 0) | l17, l18 | 3 |
+| problems-5 | p-drone-route | 5 (4 / 1) | l19, l20 | 4 |
+| problems-5 | p-faulty-chips | 5 (5 / 0) | l17, l20 | 4 |
+| problems-5 | p-startup-rounds | 5 (4 / 1) | l17, l18, l19 | 5 |
+
+Typed parts 18 of 20; the choice parts are judgements (why $E[12/V]$ beats $12/E[V]$; how $E[\ln W] < 0$ sits with $E[W] > 1$). Chains: $E[N]$, $\operatorname{Var}(N)$ by Eve's law, $E[S]$, $\operatorname{Var}(S)$ by the random-sum formula, and the count's share of it (0.9846); $E[V]$, the planner's 16.94 minutes, the true 18, Jensen, then the multinomial chance that four flights overrun 80 minutes ($\tfrac{37}{256}$); a negative binomial chance, $E[T]$ and $E[\operatorname{Var}(T \mid \text{line})]$ over the two lines, $\operatorname{Var}(T) = 148$ and the line's share; $E[\ln R]$, $E[\ln W]$ and $\operatorname{Var}(\ln W)$ as a random sum of logs, Jensen against $E[W] = 1.2184$, and $P(W < 1) = \tfrac{89}{128}$. Each later part restates its value; `carried` slips follow from the part before where one feeds the next.
+
+Stated rounded values: the start-up's parts 2 and 3 use $-0.0527$ and 0.2099, so the keys are $-0.2108$ and 0.8452 (exact $-0.210721$ and 0.845135, both inside the band, checked by enumeration of every $N$ and up count).
+
+Numbers. Second routes: Poisson counts for the fishing mixture (mean equal to variance) and Eve's law by kind of day; all 81 ordered speed sequences for the drone; a 5-chip pattern count and a 3,000-term mixture pmf of $T$ for the chips; every $(N, k)$ for the start-up, in floats against exact fractions. 1,318 checks over sets 1 to 5, 0 failures.
+
+| check | problems-5 |
+|---|---|
+| numbers script | exit 0 (1,318 checks over sets 1 to 5) |
+| validator | 0 errors, 0 warnings on the file |
+| playthrough `--local-cdn` | green (20 parts) |
+| playthrough `--mobile` | green; 440 px shots read (all 20 parts), no layout fault |
+| voice scan 35 (course folder) | 0 and 0 |
+
+Fresh-check: 0 hits at the gate. At `--min-run 8 --min-share 0` 14 hits, every one a form sentence ("give a fraction or a decimal to # places", "give your answer to # decimal places using # from part # what is"), share 0.08 or less. Stock phrasing.

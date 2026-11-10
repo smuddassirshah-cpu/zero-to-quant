@@ -471,7 +471,142 @@ ok(abs(float(mB - need) - 0.99) < 0.01, 'retry: backup is about a second too slo
 
 # ------------------------------------------------------------------ level 5
 L5 = load(5)
-#LEVEL5
+from math import log, log10, factorial as _fact
+import random as _random
+
+# p-fishing-catch: calm 0.7 (N mean 40, var 40), rough 0.3 (N mean 10, var 10); X mean 1.5, sd 0.5
+wd = {'calm': (F(7, 10), 40, 40), 'rough': (F(3, 10), 10, 10)}
+EN = sum(p * m for p, m, v in wd.values())
+inside = sum(p * v for p, m, v in wd.values())
+between = sum(p * (m - EN) ** 2 for p, m, v in wd.values())
+VNf = inside + between
+# method 2: model each day's count as Poisson (mean = variance), so the mixture's moments come from E[N^2] summed over a pmf
+from math import exp as _exp
+def pois(lam, k):
+    return _exp(-lam + k * log(lam) - sum(log(j) for j in range(1, k + 1)))
+EN2 = sum(float(p) * sum(k * pois(m, k) for k in range(200)) for p, m, v in wd.values())
+EN2sq = sum(float(p) * sum(k * k * pois(m, k) for k in range(200)) for p, m, v in wd.values())
+num(L5, 'p-fishing-catch', 1, EN, EN2, {'unweighted': 25, 'swapped': F(3, 10) * 40 + F(7, 10) * 10})
+num(L5, 'p-fishing-catch', 2, VNf, EN2sq - EN2 ** 2,
+    {'inside-only': inside, 'between-only': between,
+     'unsquared': inside + sum(p * abs(m - EN) for p, m, v in wd.values()),
+     'carried': inside + sum(p * (m - 25) ** 2 for p, m, v in wd.values())})
+EX_, VX_ = F(3, 2), F(1, 4)
+num(L5, 'p-fishing-catch', 3, EN * EX_, EN2 * 1.5, {'sd': EN * F(1, 2), 'calm': 40 * EX_, 'carried': 25 * EX_}, round_tol=0.05)
+VS = EN * VX_ + VNf * EX_ ** 2
+# method 2: Eve's law by kind of day, each day itself a random sum with fixed weather
+VS_alt = sum(p * (m * VX_ + v * EX_ ** 2) for p, m, v in wd.values()) + sum(p * (m * EX_ - EN * EX_) ** 2 for p, m, v in wd.values())
+num(L5, 'p-fishing-catch', 4, VS, VS_alt,
+    {'fixed-count': EN * VX_, 'no-square': EN * VX_ + VNf * EX_, 'sd': EN * F(1, 2) + VNf * EX_ ** 2,
+     'carried': EN * VX_ + inside * EX_ ** 2}, round_tol=0.005)
+share = VNf * EX_ ** 2 / VS
+num(L5, 'p-fishing-catch', 5, share, 1 - EN * VX_ / VS_alt,
+    {'weights': EN * VX_ / VS, 'carried': VNf * EX_ / (EN * VX_ + VNf * EX_), 'between': between * EX_ ** 2 / VS})
+
+# p-drone-route: V in {30, 40, 60} w.p. 1/4, 1/2, 1/4; T = 12/V hours
+sp_ = {30: F(1, 4), 40: F(1, 2), 60: F(1, 4)}
+EV = sum(v * p for v, p in sp_.items())
+tickets_v = [v for v, p in sp_.items() for _ in range(int(p * 4))]
+num(L5, 'p-drone-route', 1, EV, F(sum(tickets_v), len(tickets_v)), {'unweighted': F(130, 3), 'middle': 40}, round_tol=0.05)
+plan = F(12) / EV * 60
+num(L5, 'p-drone-route', 2, plan, 720 / float(sum(tickets_v) / len(tickets_v)), {'hours': F(12) / EV, 'carried': F(12) / F(130, 3) * 60}, round_tol=0.005)
+ET = sum(F(12, v) * 60 * p for v, p in sp_.items())
+num(L5, 'p-drone-route', 3, ET, sum(720 / v for v in tickets_v) / len(tickets_v), {'planned': plan, 'hours': ET / 60}, round_tol=0.005)
+ok(ET > plan, 'drone: Jensen, E[12/V] > 12/E[V]')
+pick(L5, 'p-drone-route', 4, 'jensen')
+ok(sorted(F(720, v) for v in sp_) == [12, 18, 24], 'drone: times 24, 18, 12 minutes as stated')
+def multi4(cond):
+    t = F(0)
+    for a in range(5):
+        for c in range(5 - a):
+            b = 4 - a - c
+            if cond(a, b, c):
+                t += F(_fact(4), _fact(a) * _fact(b) * _fact(c)) * sp_[30] ** a * sp_[40] ** b * sp_[60] ** c
+    return t
+over80 = multi4(lambda a, b, c: 24 * a + 18 * b + 12 * c > 80)
+# method 2: all 3^4 ordered speed sequences
+seqs = [(x, y, z, u) for x in sp_ for y in sp_ for z in sp_ for u in sp_]
+over80_alt = sum(sp_[x] * sp_[y] * sp_[z] * sp_[u] for x, y, z, u in seqs if sum(720 / s for s in (x, y, z, u)) > 80)
+num(L5, 'p-drone-route', 5, over80, over80_alt,
+    {'slow-count': multi4(lambda a, b, c: a >= 2), 'one-more-slow': multi4(lambda a, b, c: a - c >= 1),
+     'only-two': multi4(lambda a, b, c: (a, b, c) == (2, 2, 0))})
+ok(over80 == F(37, 256) and 72 + 6 * 1 < 80 < 72 + 6 * 2, 'drone: 37/256, and slow minus fast must be 2 or more')
+ok(abs(float(multi4(lambda a, b, c: (a, b, c) == (2, 2, 0))) - 0.09375) < 1e-12, 'drone: (2, 2, 0) has chance 0.09375')
+
+# p-faulty-chips: T = trial of the 2nd fault; line A p = 0.1 (0.6), line B p = 0.2 (0.4)
+lines = {'A': (F(3, 5), F(1, 10)), 'B': (F(2, 5), F(1, 5))}
+nb = lambda t, r, p: comb(t - 1, r - 1) * p ** r * (1 - p) ** (t - r)
+pA = F(1, 10)
+alt5 = sum(F(1) for seq in itertools.product([0, 1], repeat=5) if sum(seq) == 2 and seq[-1] == 1) * pA ** 2 * (1 - pA) ** 3
+num(L5, 'p-faulty-chips', 1, nb(5, 2, pA), alt5,
+    {'all-orders': comb(5, 2) * pA ** 2 * (1 - pA) ** 3, 'one-order': pA ** 2 * (1 - pA) ** 3}, round_tol=0.0001)
+ETc = sum(w * 2 / p for w, p in lines.values())
+# method 2: sum t * pmf over a long range on each line
+ETc_alt = sum(float(w) * sum(t * float(nb(t, 2, p)) for t in range(2, 2000)) for w, p in lines.values())
+num(L5, 'p-faulty-chips', 2, ETc, ETc_alt,
+    {'pooled': 2 / (F(3, 5) * F(1, 10) + F(2, 5) * F(1, 5)), 'unweighted': (20 + 10) / 2,
+     'first-fault': sum(w / p for w, p in lines.values())}, round_tol=0.005)
+EVc = sum(w * 2 * (1 - p) / p ** 2 for w, p in lines.values())
+EVc_alt = 0.0
+for w, p in lines.values():
+    m1 = sum(t * float(nb(t, 2, p)) for t in range(2, 2000))
+    m2 = sum(t * t * float(nb(t, 2, p)) for t in range(2, 2000))
+    EVc_alt += float(w) * (m2 - m1 ** 2)
+num(L5, 'p-faulty-chips', 3, EVc, EVc_alt,
+    {'no-q': sum(w * 2 / p ** 2 for w, p in lines.values()), 'unweighted': (180 + 40) / 2,
+     'one-wait': sum(w * (1 - p) / p ** 2 for w, p in lines.values())})
+btw = sum(w * (2 / p - ETc) ** 2 for w, p in lines.values())
+VT = EVc + btw
+# method 2: the mixture pmf of T, variance straight from it
+pmfT = {t: sum(float(w * nb(t, 2, p)) for w, p in lines.values()) for t in range(2, 3000)}
+mT = sum(t * q for t, q in pmfT.items())
+VT_alt = sum(t * t * q for t, q in pmfT.items()) - mT ** 2
+num(L5, 'p-faulty-chips', 4, VT, VT_alt,
+    {'inside-only': EVc, 'between-only': btw, 'unsquared': EVc + sum(w * abs(2 / p - ETc) for w, p in lines.values())}, round_tol=0.05)
+num(L5, 'p-faulty-chips', 5, btw / VT, 1 - EVc_alt / VT_alt,
+    {'inside': EVc / VT, 'over-inside': btw / EVc,
+     'carried': sum(w * abs(2 / p - ETc) for w, p in lines.values()) / (EVc + sum(w * abs(2 / p - ETc) for w, p in lines.values()))})
+
+# p-startup-rounds: R in {1.5, 0.6} equally; N in {2, 4, 6} w.p. 1/4, 1/2, 1/4
+Np = {2: F(1, 4), 4: F(1, 2), 6: F(1, 4)}
+ElnR = 0.5 * (log(1.5) + log(0.6))
+num(L5, 'p-startup-rounds', 1, ElnR, 0.5 * log(0.9),
+    {'log-of-mean': log(1.05), 'mean-minus-one': 0.05, 'log10': 0.5 * (log10(1.5) + log10(0.6))})
+ENr = sum(n * p for n, p in Np.items())
+VNr = sum(n * n * p for n, p in Np.items()) - ENr ** 2
+ok(ENr == 4 and VNr == 2, 'startup: E[N] = 4 and Var(N) = 2 (E[N^2] = 18)')
+# method 2 for parts 2 and 3: enumerate every N and every up count k exactly in floats
+def lnW_moments():
+    m1 = m2 = 0.0
+    for n, p in Np.items():
+        for k in range(n + 1):
+            q = float(p) * comb(n, k) / 2 ** n
+            v = k * log(1.5) + (n - k) * log(0.6)
+            m1 += q * v
+            m2 += q * v * v
+    return m1, m2 - m1 * m1
+mW, vW = lnW_moments()
+num(L5, 'p-startup-rounds', 2, 4 * -0.0527, 4 * -0.0527,
+    {'carried': 4 * log(1.05), 'one-round': ElnR, 'most-rounds': 6 * ElnR})
+ok(abs(mW - 4 * ElnR) < 1e-12 and abs(-0.2108 - mW) <= 0.0005, 'startup p2: exact E[ln W] = -0.210721, the stated route gives -0.2108, both in the band')
+VlnR = 0.25 * (log(1.5) - log(0.6)) ** 2
+ok(abs(VlnR - 0.2099) < 0.00005, 'startup: Var(ln R) = (ln 2.5)^2 / 4 = 0.2099 as stated')
+stated3 = 4 * 0.2099 + 2 * 0.0527 ** 2
+num(L5, 'p-startup-rounds', 3, stated3, 4 * 0.2099 + 2 * (-0.0527) ** 2,
+    {'fixed-count': 4 * 0.2099, 'count-squared': 16 * 0.2099, 'no-square': 4 * 0.2099 + 2 * -0.0527})
+ok(abs(vW - (float(ENr) * VlnR + float(VNr) * ElnR ** 2)) < 1e-12 and abs(vW - 0.8452) <= 0.0005, 'startup p3: exact Var(ln W) 0.845135 by enumeration is in the band')
+EW = sum(p * F(21, 20) ** n for n, p in Np.items())
+EW_alt = sum(float(p) * sum(comb(n, k) / 2 ** n * 1.5 ** k * 0.6 ** (n - k) for k in range(n + 1)) for n, p in Np.items())
+ok(abs(float(EW) - EW_alt) < 1e-12 and abs(float(EW) - 1.2184) < 0.00005 and abs(log(float(EW)) - 0.1975) < 0.00005, 'startup: E[W] = 1.2184, ln E[W] = 0.1975')
+pick(L5, 'p-startup-rounds', 4, 'both')
+PW = sum(p * sum(F(comb(n, k), 2 ** n) for k in range(n + 1) if 1.5 ** k * 0.6 ** (n - k) < 1) for n, p in Np.items())
+PW_alt = sum(p * sum(F(comb(n, k), 2 ** n) for k in range(n + 1) if 2 * k <= n) for n, p in Np.items())
+cond_n = {n: sum(F(comb(n, k), 2 ** n) for k in range(n + 1) if 2 * k <= n) for n in Np}
+ok(cond_n == {2: F(3, 4), 4: F(11, 16), 6: F(21, 32)} and F(21, 32) == F(42, 64), 'startup: conditional chances 3/4, 11/16, 21/32')
+num(L5, 'p-startup-rounds', 5, PW, PW_alt,
+    {'fewer-than-half': sum(p * sum(F(comb(n, k), 2 ** n) for k in range(n + 1) if 2 * k < n) for n, p in Np.items()),
+     'four-rounds': cond_n[4], 'unweighted': sum(cond_n.values()) / 3})
+ok(PW == F(89, 128), 'startup: P(W < 1) = 89/128')
 
 
 # every numeric part: form stated, a value rounded as asked is accepted, each value the part's own feedback prints is accepted,
