@@ -11,3 +11,9 @@ Items 852 to 858 of `docs/ENGINE-BACKLOG.md`; all seven addressed.
 7. **Validator (857).** `[answer-form]` warning plus two test cases.
 
 Docs: `docs/AUTHORING.md` section 5, `docs/LEVEL-BRIEF.md`, playthrough header.
+
+## Validator pass (859, 860)
+- 860: `[answer-form]` accepts "decimal", "places", "dp", "sf", "fraction", "nearest", "per cent", "%", "exact value", "in pounds" and similar. Warnings 137 to 1. Remaining: `counting-chance/problems-1.json` items[1].parts[4] (answer 4.75, "what is the fair price of one play, the average payout per play?"), a genuine lack. I read it plus ten sampled formerly-warned parts: each carries "Give a decimal [to N places]" or "the exact decimal".
+- 859: index rows must match drill files on name, course, difficulty; unlisted non-sample file is an error. Real content fires nothing (no offenders).
+- Tests: problems 42/42, drill-index 8/8, session, planted-check green; validator 0 errors.
+

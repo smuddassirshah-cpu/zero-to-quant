@@ -54,6 +54,13 @@ const cases = [
   ['em-dash-in-an-explanation', (d) => { part(d, 0, 0).explain.text = 'The fee \u2014 paid once.'; }, 'em-dash'],
   ['warn-non-integer-numeric-without-a-form', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'How many hours are worked?'; }, 'warning:[answer-form]'],
   ['no-warning-when-the-form-is-stated', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'How many hours are worked, to 1 decimal place?'; }, 'nowarning:[answer-form]'],
+  ['no-warning-form-a-decimal', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'How many hours are worked? Give a decimal.'; }, 'nowarning:[answer-form]'],
+  ['no-warning-form-to-n-places', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'What is the rate? Answer to 4 places.'; }, 'nowarning:[answer-form]'],
+  ['no-warning-form-exact-value', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'What is the mean? Give the exact value.'; }, 'nowarning:[answer-form]'],
+  ['no-warning-form-as-a-fraction', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'What is the chance? Write it as a fraction.'; }, 'nowarning:[answer-form]'],
+  ['no-warning-form-in-pounds', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'What is the fee? Give it in pounds.'; }, 'nowarning:[answer-form]'],
+  ['no-warning-form-to-the-nearest', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'What is the price? Round to the nearest penny.'; }, 'nowarning:[answer-form]'],
+  ['warn-when-only-exactly-appears', (d) => { part(d, 0, 1).widget.answer = 4.5; part(d, 0, 1).question = 'What is the chance of exactly 3 hits?'; }, 'warning:[answer-form]'],
   ['performance-item-is-refused', (d) => { d.items[0].performance = 'derivation'; }, 'performance belongs'],
 ];
 let pass = 0, fail = 0;
