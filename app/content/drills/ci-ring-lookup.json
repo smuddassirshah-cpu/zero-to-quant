@@ -19,7 +19,7 @@
   "brief": "A ring buffer holds distinct order ids that were stored in rising order, but the read pointer has moved, so `ring` is that sorted list turned round at some point (perhaps not at all). For each id in `targets`, find the position in `ring` of the smallest id that is at least the target, or `-1` if every id is smaller.\n\nWrite `find_in_ring(ring, targets)`, which returns the positions in the order of `targets`.\n\nExample. For `ring = [40, 50, 10, 20, 30]` and `targets = [20, 45, 55]` the id 20 sits at position 3 and 45 is met by 50 at position 1. Every id is below 55. The answer is `[3, 1, -1]`.",
   "constraints": [
     "$0 \\le n, q \\le 100{,}000$; ids are distinct whole numbers between $-10^9$ and $10^9$.",
-    "$O(\\log n)$ time per lookup is the target. Scanning the ring for each id is too slow, and a lookup by exact value cannot answer for an id that is absent.",
+    "$O(\\log n)$ time per lookup is the target. Scanning the ring for each id is too slow, and a lookup by exact value cannot answer for an id that is absent. Stepping up from an absent id to the next present one can take up to $10^9$ steps.",
     "All the tests in a run share one 5-second limit in the browser."
   ],
   "hint": "First find where the smallest id sits with one binary search against the last entry. Then search the sorted order as if it started there, taking positions modulo `n`, for the first id that is not below the target.",
@@ -85,8 +85,8 @@
       "compare": "equal"
     },
     {
-      "call": "find_in_ring([1000000000, -1000000000], [-1000000000, 1000000000])",
-      "expect": "[1, 0]",
+      "call": "find_in_ring([1000000000, -1000000000], [-1000000000, 1000000000, -999999999, 0])",
+      "expect": "[1, 0, 0, 0]",
       "compare": "equal"
     },
     {
@@ -98,9 +98,14 @@
       "call": "(lambda r: (len(r), sum(r), r.count(-1)))(find_in_ring([2 * ((i + 61729) % 100000) for i in range(100000)], [(i * 7919) % 200003 for i in range(100000)]))",
       "expect": "(100000, 5000131641, 1)",
       "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r), r.count(-1)))(find_in_ring([10000 * ((i + 61729) % 100000) for i in range(100000)], [(i * 104729) % 1000000000 for i in range(100000)]))",
+      "expect": "(100000, 5053688078, 1)",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
   "solution": "def find_in_ring(ring, targets):\n    n = len(ring)\n    lo, hi = 0, n - 1\n    while lo < hi:  # find the smallest id\n        mid = (lo + hi) // 2\n        if ring[mid] > ring[hi]:\n            lo = mid + 1\n        else:\n            hi = mid\n    start = lo\n    out = []\n    for t in targets:\n        a, b = 0, n  # search the sorted order, read from start\n        while a < b:\n            m = (a + b) // 2\n            if ring[(start + m) % n] < t:\n                a = m + 1\n            else:\n                b = m\n        k = (start + a) % n if n else 0\n        out.append(k if a < n else -1)\n    return out\n",
   "notes": [
     "Comparing with the last entry tells which side of the turn `mid` is on, even when there is no turn.",
@@ -115,6 +120,10 @@
     {
       "code": "def find_in_ring(ring, targets):\n    n = len(ring)\n    lo, hi = 0, n - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if ring[mid] >= ring[0]:\n            lo = mid + 1\n        else:\n            hi = mid\n    start = lo\n    out = []\n    for t in targets:\n        a, b = 0, n\n        while a < b:\n            m = (a + b) // 2\n            if ring[(start + m) % n] < t:\n                a = m + 1\n            else:\n                b = m\n        k = (start + a) % n if n else 0\n        out.append(k if a < n else -1)\n    return out\n",
       "slip": "It finds the turn by comparing with the first entry, which puts the start at the end when the ring is not turned."
+    },
+    {
+      "code": "def find_in_ring(ring, targets):\n    where = {v: i for i, v in enumerate(ring)}\n    top = max(ring) if ring else None\n    out = []\n    for t in targets:\n        if top is None or t > top:\n            out.append(-1)\n            continue\n        while t not in where:\n            t += 1\n        out.append(where[t])\n    return out\n",
+      "slip": "A dict answers ids that are present, but an absent id is walked up one at a time, which takes as many steps as the gap to the next id."
     }
   ]
 }

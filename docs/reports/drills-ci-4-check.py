@@ -454,8 +454,13 @@ SLOW = {
     ],
     "ci-board-words": [
         "def board_words(board, words):\n    rows = len(board)\n    cols = len(board[0]) if rows else 0\n\n    def on_board(word):\n        used = set()\n\n        def go(r, c, i):\n            if board[r][c] != word[i]:\n                return False\n            if i == len(word) - 1:\n                return True\n            used.add((r, c))\n            for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n                if 0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in used and go(nr, nc, i + 1):\n                    used.discard((r, c))\n                    return True\n            used.discard((r, c))\n            return False\n\n        return any(go(r, c, 0) for r in range(rows) for c in range(cols))\n\n    return sorted(w for w in words if on_board(w))\n",
+        "from collections import Counter\n\ndef board_words(board, words):\n    rows = len(board)\n    cols = len(board[0]) if rows else 0\n    have = Counter(\"\".join(board))\n    grid = [list(r) for r in board]\n\n    def trace(word):\n        if any(have[ch] < c for ch, c in Counter(word).items()):\n            return False\n        last = len(word) - 1\n\n        def go(r, c, i):\n            if grid[r][c] != word[i]:\n                return False\n            if i == last:\n                return True\n            grid[r][c] = \".\"\n            ok = False\n            for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n                if 0 <= nr < rows and 0 <= nc < cols and go(nr, nc, i + 1):\n                    ok = True\n                    break\n            grid[r][c] = word[i]\n            return ok\n\n        return any(go(r, c, 0) for r in range(rows) for c in range(cols))\n\n    return sorted(w for w in words if trace(w))\n",
     ],
 }
+
+# A slow method that must reach one named test: the per-word search with the letter-count check first
+# passes tests[0..11] and is stopped only by the 3,602-word test (the 12th, index 12).
+SLOW_AT = {("ci-board-words", 1): 12}
 
 # ---------------- running ----------------
 
@@ -541,6 +546,8 @@ for did in IDS:
                 break
         if hit is None:
             err(f"{did}: slow method {k} finishes every hidden test inside 5 s")
+        elif (did, k) in SLOW_AT and hit != SLOW_AT[(did, k)]:
+            err(f"{did}: slow method {k} should time out at test {SLOW_AT[(did, k)]} but did at {hit}")
         slow_out.append(hit)
     if d["difficulty"] >= 4:
         if did not in SLOW:

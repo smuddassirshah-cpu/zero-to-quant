@@ -25,7 +25,7 @@ LIMIT = 8  # seconds per planted run of one test
 FAST = 1.5  # seconds a planted solution may take over all the tests in CPython
 # planted solutions that are right but too slow: each must time out on a hidden test (they come last in
 # `planted`, because a timed-out run restarts Python in the browser; see BACKLOG-INBOX, drills ci 2)
-SLOW_PLANTED = {("ci-log-compactor", 2)}
+SLOW_PLANTED = {("ci-log-compactor", 2), ("ci-ring-lookup", 2), ("ci-tick-ranges", 2)}
 OBVIOUS = json.load(open(os.path.join(HERE, "drills-ci-3-obvious.json")))
 
 # ---------------- independent methods ----------------
