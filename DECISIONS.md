@@ -234,3 +234,6 @@ Session U (6 Nov)
 - (6) Every finding is tagged `serious` or `minor`; the log row records both counts. (7) Stage 0 ledgers cover definitions, rules, absolute claims, conventions, keys, wrong options and slips; hints and feedback only where they state a rule. Stages 1 to 3 keep the full ledger.
 - (8) Fix-pass read: a fresh Fable reader checks the fixer's diff of content strings before a course closes; a `wrong` returns to the Opus fixer and counts towards convergence (the number-sense l12 `wrong` came from a fixer). (9) The auditor brief mirrors 3, 6 and 7.
 - Also reconciled: disputed findings go to a fresh Fable reader in both briefs (the auditor brief said Opus).
+
+### Chained problems live in `problems-<n>.json` (session Z, 10 Nov 2026)
+- M items get a new per-level file kind, not homework and not the review. Reasons: homework is a fixed 45 minutes, capped at 12 items and not in the weekly review's pools; a review is capped at 10 and is a gate. Cost: one engine pass of about 20 files, modelled on how Fluency sets were wired in. Brief `docs/briefs/chained.md`.
