@@ -44,7 +44,7 @@
     }
    },
    "explain": {
-    "text": "$\\log_2(5 / 10^{-8}) = 28.9$, so 29 halvings. A safeguarded solver needs far fewer in practice, but this is its worst case."
+    "text": "$\\log_2(5 / 10^{-8}) = 28.9$, so 29 halvings. A safeguarded solver usually needs far fewer steps, and 29 bisections always suffice."
    }
   },
   {
@@ -326,7 +326,7 @@
     "generic": "Not quite right. Check the £95 bond first, then the NaN rule."
    },
    "explain": {
-    "text": "Build a cash-flow matrix, one row per bond, so price and slope are two sums over its columns. The bracket test `f(0) >= 0 >= f(1)` sends impossible prices to NaN before the loop. Each pass of the loop moves every bond together, so 1,000 bonds cost little more than one."
+    "text": "Build a cash-flow matrix, one row per bond, so price and slope are two sums over its columns. The bracket test `f(0) >= 0 >= f(1)` sends impossible prices to NaN before the loop. Each pass of the loop moves every bond together, so 1,000 bonds cost far less than 1,000 separate solves."
    }
   },
   {
@@ -337,11 +337,11 @@
    ],
    "kind": "longform",
    "prompt": "A colleague fits the one-month vol smile with a degree-10 polynomial through eleven quotes at strikes 75 to 125. After one quote moves by a tick, the fit shows a negative vol between two strikes. Explain Runge's phenomenon and noise amplification by the Lebesgue constant. Say why a spline or a parametric smile is safer, and what you would check before pricing between quotes.",
-   "model": "**Runge's phenomenon.** A polynomial through equally spaced points has error $\\tfrac{f^{(n+1)}(\\xi)}{(n+1)!}\\prod_k(x - x_k)$. The node product is about 126 times larger near the ends than in the middle for 11 points. So the curve swings between the outer quotes, and the swings grow with the degree. For Runge's function the error is 1.92 at $n = 10$ and 59.8 at $n = 20$.\n\n**Noise amplification.** The Lebesgue constant of 11 equal nodes is 29.9. A quote error $\\delta$ can move the fit by up to $29.9\\delta$ between quotes. Alternating errors of 0.001 in vol gave a swing of 0.0292, about 2.9 vol points, near strike 123.4. One tick in the wing moves the vol by $\\text{tick}/\\text{vega}$, which is large where vega is small. So a single moved quote can push the curve below zero.\n\n**Why a spline or a parametric smile is safer.** A cubic spline joins low-degree pieces. Its error does not grow with the number of quotes, and no high-degree swings appear. A parametric smile, such as a quadratic in log-moneyness, has few parameters fitted by least squares. It smooths noise instead of passing through it. Both keep vols positive in practice, and both can be checked for arbitrage.\n\n**Checks before pricing between quotes.** Evaluate the fit on a fine grid of strikes and check that every vol is positive. Check that call prices fall with strike and are convex in it: no static arbitrage. Bump each quote by a tick and check the fit moves by about that much, not thirty times more. Compare the fit with the quotes' bid and ask, and refuse to price outside the quoted range.",
+   "model": "**Runge's phenomenon.** A polynomial through equally spaced points has error $\\tfrac{f^{(n+1)}(\\xi)}{(n+1)!}\\prod_k(x - x_k)$. The node product is about 126 times larger near the ends than in the middle for 11 points. So the error sits between the outer quotes, and it grows with the degree when the derivative factor grows fast. Runge's function is the standard case: 1.92 at $n = 10$ and 59.8 at $n = 20$.\n\n**Noise amplification.** The Lebesgue constant of 11 equal nodes is 29.9. A quote error $\\delta$ can move the fit by up to $29.9\\delta$ between quotes. Alternating errors of 0.001 in vol gave a swing of 0.0292, about 2.9 vol points, near strike 123.4. One tick in the wing moves the vol by $\\text{tick}/\\text{vega}$, which is large where vega is small. So a single moved quote can push the curve below zero.\n\n**Why a spline or a parametric smile is safer.** A cubic spline joins low-degree pieces. Its error does not grow with the number of quotes, and no high-degree swings appear. A parametric smile, such as a quadratic in log-moneyness, has few parameters fitted by least squares. It smooths noise instead of passing through it. Both keep vols positive in practice, and both can be checked for arbitrage.\n\n**Checks before pricing between quotes.** Evaluate the fit on a fine grid of strikes and check that every vol is positive. Check that call prices fall with strike and are convex in it: no static arbitrage. Bump each quote by a tick and check the fit moves by about that much, not thirty times more. Compare the fit with the quotes' bid and ask, and refuse to price outside the quoted range.",
    "rubric": [
     {
      "points": 2,
-     "text": "Explains Runge's phenomenon: equal spacing, swings at the ends that grow with the degree (node product)"
+     "text": "Explains Runge's phenomenon: equal spacing puts the error at the ends (node product), and for such functions it grows with the degree"
     },
     {
      "points": 2,
