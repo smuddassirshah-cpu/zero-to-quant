@@ -99,3 +99,5 @@ Fixer: Opus, own derivations in `docs/reports/odes-L{1,2,3}-concepts.py` (each f
 14. fixed. Basis: y' = 3|y|^{2/3} has one velocity at each point and two paths through 0; for x' = Ax the difference of two solutions from one point solves x' = Ax from 0, so it is 0. Key option text shortened to "A linear system has one path per point" (the validator's key-length rule flagged the longer form) and feedback says "a smooth system".
 
 Disputed: none.
+
+Fix-pass gates, run from `app/`: validator `0 errors, 4109 warnings` (was 4110; manifest unchanged). `odes-L1/L2/L3-numbers.py` exit 0. `odes-L1/L2/L3-concepts.py` exit 0 with 89, 74 and 75 passed and 0 EXPECTED_FAIL. `voice-scan.py 35` on the 11 changed files: 0 explanations over three sentences, 0 sentences over 35 words. Playthrough desktop and `--mobile`, `--local-cdn`: l1, l4, l5, l7, l8, l9, l11, l12, l13, homework-1, homework-2 all passed.
