@@ -1,0 +1,92 @@
+{
+  "id": "fluency-l7-bell-curve",
+  "lesson": "l7-bell-curve",
+  "title": "Fluency: the bell curve",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "standardise",
+      "weight": 1,
+      "skill": "standardise a normal value",
+      "vars": {
+        "z": { "pick": [-3, -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 3] },
+        "sig": { "int": [2, 9] },
+        "mu": { "int": [-10, 20] }
+      },
+      "let": {
+        "x": "mu + z*sig",
+        "d": "z*sig",
+        "byvar": "z/sig",
+        "flip": "-z"
+      },
+      "prompt": "$X \\sim N({mu}, {sig}^2)$. What is the $z$ value of $x = {x}$?",
+      "widget": { "kind": "numeric", "answer": "{z}", "tol": { "abs": 0 }, "placeholder": "A number such as -1.5", "accept": "${z}$ exactly" },
+      "wrong": [
+        { "id": "divided-by-variance", "value": "{byvar}", "tol": { "abs": 0.005 }, "line": "You divided by the variance, {sig*sig}. Divide by the sd, $\\sigma = {sig}$." },
+        { "id": "sign-flipped", "value": "{flip}", "line": "You worked out $\\mu - x$. The $z$ value is $x - \\mu$ over $\\sigma$, so a value below the mean has a negative $z$." }
+      ],
+      "solution": [
+        "$z = \\dfrac{{x - \\mu}}{{\\sigma}} = \\dfrac{{{x} - {mu:()}}}{{{sig}}} = \\dfrac{{{d}}}{{{sig}}} = {z}$."
+      ]
+    },
+    {
+      "id": "normal-probability",
+      "weight": 2,
+      "skill": "a normal probability from the table",
+      "vars": {
+        "tab": { "pick": [[0.4, 0.6554], [0.5, 0.6915], [0.8, 0.7881], [1, 0.8413], [1.2, 0.8849], [1.5, 0.9332], [1.6, 0.9452], [2, 0.9772], [2.5, 0.9938], [3, 0.9987]], "as": ["za", "ph"] },
+        "sgn": { "pick": [-1, 1] },
+        "dir": { "pick": [["<", 0], [">", 1]], "as": ["op", "up"] },
+        "sig": { "int": [2, 8] },
+        "mu": { "int": [-5, 30] }
+      },
+      "let": {
+        "z": "sgn*za",
+        "x": "mu + sgn*za*sig",
+        "lo": "1 - ph",
+        "key": "if(up == 0, if(sgn == 1, ph, 1 - ph), if(sgn == 1, 1 - ph, ph))",
+        "other": "1 - if(up == 0, if(sgn == 1, ph, 1 - ph), if(sgn == 1, 1 - ph, ph))"
+      },
+      "prompt": "$X \\sim N({mu}, {sig*sig})$, and $\\Phi({za}) = {ph}$. What is $P(X {op} {x})$?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A decimal such as 0.0228", "accept": "${key}$ from the table" },
+      "wrong": [
+        { "id": "other-tail", "value": "{other}", "line": "That is the other side of {x}. Check the direction: the question asks for $X {op} {x}$." },
+        { "id": "gave-z", "value": "{z}", "line": "That is the $z$ value. Read $\\Phi$ at it to turn it into a chance." }
+      ],
+      "solution": [
+        "$\\sigma = \\sqrt{{{sig*sig}}} = {sig}$, so $z = \\dfrac{{{x} - {mu:()}}}{{{sig}}} = {z}$.",
+        "$\\Phi({za}) = {ph}$ and, by symmetry, $\\Phi({-za}) = 1 - {ph} = {lo}$.",
+        "So $P(X {op} {x}) = P(Z {op} {z}) = {key}$."
+      ]
+    },
+    {
+      "id": "within-band",
+      "weight": 1,
+      "skill": "the chance of landing in a band about the mean",
+      "vars": {
+        "tab": { "pick": [[0.4, 0.6554], [0.5, 0.6915], [0.8, 0.7881], [1, 0.8413], [1.2, 0.8849], [1.5, 0.9332], [1.6, 0.9452], [2, 0.9772], [2.5, 0.9938], [3, 0.9987]], "as": ["za", "ph"] },
+        "sig": { "int": [2, 9] },
+        "mu": { "int": [-5, 30] }
+      },
+      "let": {
+        "lo": "mu - za*sig",
+        "hi": "mu + za*sig",
+        "tail": "1 - ph",
+        "key": "2*ph - 1",
+        "half": "ph - 0.5"
+      },
+      "prompt": "$X \\sim N({mu}, {sig}^2)$, and $\\Phi({za}) = {ph}$. What is $P({lo} < X < {hi})$?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A decimal such as 0.6826", "accept": "${key}$ from the table" },
+      "wrong": [
+        { "id": "one-cut", "value": "{ph}", "line": "That is $P(X < {hi})$, which still holds the whole left tail. Take away $P(X < {lo}) = {tail}$." },
+        { "id": "half-band", "value": "{half}", "line": "That is only the half from {mu} to {hi}. The band runs as far below the mean as above it." }
+      ],
+      "solution": [
+        "Each end is {za} sd from $\\mu = {mu}$, so the band is $P({-za} < Z < {za})$.",
+        "$\\Phi({za}) - \\Phi({-za}) = {ph} - {tail} = {key}$."
+      ]
+    }
+  ]
+}
