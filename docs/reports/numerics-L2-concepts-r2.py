@@ -92,6 +92,14 @@ def solution_ns(fname, idx=0):
     return ns
 
 
+def txt(fname, *path):
+    """The content's text or value at a JSON path, for the fix-pass checks."""
+    o = json.load(open(os.path.join(BASE, fname)))
+    for p in path:
+        o = o[p]
+    return o
+
+
 import mpmath as mp
 from scipy.interpolate import CubicSpline
 
@@ -157,9 +165,17 @@ check('l5:call_counts_42_9_6', n5['bisect'](f2, 1, 2, 1e-12)[1] == 42 and n5['se
       and n5['newton'](P, dP, 0.05, 1e-12)[1] == 4)
 # s[9]: table says bisection costs 31 evaluations per bond; the lesson's own bisect counts the two end checks.
 nb = n5['bisect'](P, 0.0, 0.2, 1e-10)[1]
-expected_fail('l5:s9_bisection_costs_31_evaluations_per_bond', nb == 31,
-              'the lesson\'s own bisect makes %d calls (2 end checks + 31 halvings); 33/8 = 4.125 falls outside the accepted 3.875 +/- 0.13. '
-              '# corrected: assert nb == 33' % nb)
+cnt9 = [0]
+def P9(y):
+    cnt9[0] += 1
+    return P(y)
+n5['bisect'](P9, 0.0, 0.2, 1e-10)
+s9w = txt('l5-bisection-and-newton.json', 'screens', 9)
+check('l5:s9_bisection_costs_33_evaluations_per_bond (corrected claim, fix pass)',
+      nb == 33 and cnt9[0] == 33 and 2 + halvings(0.2, 1e-10) == 33
+      and s9w['canvas']['params']['rows'][1][1] == '33' and '33 evaluations' in s9w['prose']
+      and abs(s9w['widget']['answer'] - 33 / 8) < 1e-12 and abs(s9w['widget']['wrong'][0]['value'] - 33 / 4) < 1e-12,
+      'returned count %d, instrumented count %d, formula 2 + %d; key 33/8 = 4.125, distractor 33/4 = 8.25' % (nb, cnt9[0], halvings(0.2, 1e-10)))
 # sign change needs continuity
 bl = n5['bisect'](lambda x: 1 / x, -1.0, 2.0, 1e-9)[0]
 check('l5:sign_change_without_continuity_gives_no_root', abs(bl) < 1e-8, 'bisect on 1/x over [-1, 2] ends at the pole, %.1e' % bl)
@@ -178,16 +194,22 @@ def honest(fn):
 
 P125 = lambda y: sum(5 / (1 + y) ** t for t in range(1, 6)) + 100 / (1 + y) ** 5 - 125     # yield is exactly 0
 rb = n5['bisect'](P125, 0.0, 0.2, 1e-10)[0]
-expected_fail('l5:bisect_root_at_lower_end_is_found_or_refused', honest(lambda: (rb, P125(rb))),
-              'a bond priced at the sum of its cash flows has yield 0 = lo; bisect returns %.4f where f = %.1f. flo * fhi > 0 lets f(lo) = 0 through, then the loop moves lo off the root. '
-              '# corrected: return lo when f(lo) == 0, hi when f(hi) == 0, and compare signs, not a product' % (rb, P125(rb)))
+check('l5:bisect_root_at_lower_end_is_found_or_refused (corrected claim, fix pass)', honest(lambda: (rb, P125(rb))) and rb == 0.0
+      and n5['bisect'](lambda x: x - 1, 0.0, 1.0, 1e-9)[0] == 1.0,
+      'zero-yield bond: bisect returns %.4f where f = %.1f; a root at hi is returned too' % (rb, P125(rb)))
 rs = n6['safe_newton'](lambda x: -x, lambda x: -1.0, 0.0, 1.0, ftol=0.0)
-expected_fail('l6:safe_newton_root_at_lower_end_is_found_or_refused', honest(lambda: (rs, -rs)),
-              'f(x) = -x on [0, 1]: safe_newton returns %.6f where f = %.1f, with no error. # corrected: as for bisect' % (rs, -rs))
+check('l6:safe_newton_root_at_lower_end_is_found_or_refused (corrected claim, fix pass)', honest(lambda: (rs, -rs)) and rs == 0.0
+      and n6['safe_newton'](lambda x: x - 1, lambda x: 1.0, 0.0, 1.0, ftol=0.0) == 1.0,
+      'f(x) = -x on [0, 1]: safe_newton returns %.6f' % rs)
 tiny = lambda x: 1e-200 * (x * x + 1)
-expected_fail('l5/l6:same_sign_values_that_underflow_are_refused',
-              honest(lambda: (n5['bisect'](tiny, 0.0, 1.0, 1e-9)[0], 1.0)) and honest(lambda: (n6['safe_newton'](tiny, lambda x: 2e-200 * x, 0.0, 1.0, ftol=0.0), 1.0)),
-              'flo * fhi underflows to 0.0 for two positive values near 1e-200, so no ValueError is raised and a non-root comes back. # corrected: test (flo > 0) == (fhi > 0)')
+w5_sol_text = txt('l5-bisection-and-newton.json', 'screens', 8, 'widget', 'solution')
+w6_sol_text = txt('l6-safe-root-finder.json', 'screens', 7, 'widget', 'solution')
+check('l5/l6:same_sign_values_that_underflow_are_refused (corrected claim, fix pass)',
+      1e-200 * 1e-200 == 0.0
+      and honest(lambda: (n5['bisect'](tiny, 0.0, 1.0, 1e-9)[0], 1.0)) and honest(lambda: (n6['safe_newton'](tiny, lambda x: 2e-200 * x, 0.0, 1.0, ftol=0.0), 1.0))
+      and honest(lambda: (n6['safe_newton'](tiny, lambda x: 2e-200 * x, 0.0, 1.0), 1.0))
+      and 'flo * fhi' not in w5_sol_text + w6_sol_text,
+      'the product 1e-200 * 1e-200 is 0.0; the solvers now compare signs and raise ValueError')
 FIX_BISECT = '''
 def bisect(f, lo, hi, tol):
     flo, fhi = f(lo), f(hi)
@@ -270,9 +292,13 @@ cyc = lambda x: x ** 3 - 2 * x + 2
 x, seen = 0.0, []
 for k in range(10000):
     step = cyc(x) / (3 * x * x - 2); x -= step; seen.append(x)
-expected_fail('l5:taught_newton_loop_ends_on_x^3-2x+2_from_0', abs(step) < 1e-12,
-              'the iterates are 1, 0, 1, 0, ... for 10,000 steps (last two %s); the lesson\'s `while True` loop never returns and hangs the page. '
-              '# corrected: cap the loop (maxit) and raise RuntimeError' % seen[-2:])
+try:
+    n5['newton'](cyc, lambda x: 3 * x * x - 2, 0.0, 1e-12); n5_capped = False
+except RuntimeError:
+    n5_capped = True
+check('l5:taught_newton_is_capped_and_raises_on_x^3-2x+2_from_0 (corrected claim, fix pass)',
+      abs(step) > 0.5 and seen[-2:] == [1.0, 0.0] and n5_capped and 'while True' not in w5_sol_text,
+      'plain Newton steps cycle 1, 0, 1, 0 for 10,000 steps; the lesson\'s newton now stops at maxit = 50 with RuntimeError')
 try:
     nf['newton'](cyc, lambda x: 3 * x * x - 2, 0.0, 1e-12); capped = False
 except RuntimeError:
@@ -324,9 +350,12 @@ for k in range(6):
 check('l6:newton_cycles_0_1_and_bracket_fixes_it', cyc_path == [1.0, 0.0] * 3 and abs(n6['safe_newton'](cyc, lambda x: 3 * x * x - 2, -3.0, 0.0) + 1.769292354238631) < 1e-9)
 # default ftol stops on the residual
 rd = n6['safe_newton'](lambda x: (x - 1) ** 9, lambda x: 9 * (x - 1) ** 8, 0.0, 3.0)
-expected_fail('l6:safe_newton_default_call_reaches_the_ninefold_root_to_1e-9', abs(rd - 1) < 1e-9,
-              'with the default ftol = 1e-12 the call returns %.4f: |f| < 1e-12 already holds 0.046 from the root. The hidden test has to pass ftol=0.0, which the lesson never explains. '
-              '# corrected: assert abs(rd - 1) > 0.04' % rd)
+how7 = txt('l6-safe-root-finder.json', 'screens', 7, 'widget', 'how')
+pro7 = txt('l6-safe-root-finder.json', 'screens', 7, 'prose')
+check('l6:default_ftol_stops_near_1.046_on_the_ninefold_root_and_the_lesson_says_so (corrected claim, fix pass)',
+      abs(rd - 1.046) < 5e-4 and (rd - 1) ** 9 <= 1e-12 and abs(1e-12 ** (1 / 9) - 0.0464) < 1e-4 and 0.046 ** 9 < 1e-12
+      and 'stops near 1.046' in how7 and 'within 0.046 of 1 has a residual below 1e-12' in how7 and 'bounds the residual, not the error' in pro7,
+      'default call returns %.4f; (x - 1)^9 is below 1e-12 for |x - 1| < 1e-12^(1/9) = %.4f' % (rd, 1e-12 ** (1 / 9)))
 # clipping to the edge can bounce for ever (arctan on [-5, 5], Newton clipped)
 x, clip_path = 5.0, []
 for k in range(50):
@@ -339,9 +368,20 @@ lo125 = brentq(lambda s: price(10, s) - 0.00025, 1e-4, 5); hi125 = brentq(lambda
 check('l6:rounded_quote_explains_the_gap', abs(v125 - 0.0218) < 1e-4 and abs(0.00005 / v125 - 0.0023) < 1e-4 and lo125 < 0.2103 < hi125
       and abs(0.0001 / 0.0218 * 100 - 0.46) < 0.01)
 q6 = nv['bs_price'](100.0, np.array([100.0]), 0.05, 1 / 12, 6.0, np.array(['c']))
-expected_fail('l6:s9_bracketed_solver_cannot_fail_on_a_valid_quote', not np.isnan(nv['implied_vols'](q6, [100.0], 100.0, 0.05, 1 / 12, ['c'])[0]),
-              'a call priced at a vol of 6 is a valid, arbitrage-free quote, and implied_vols returns NaN because the bracket stops at 5. '
-              '# corrected: the claim holds only for vols inside [0.0001, 5]')
+# (corrected claim, fix pass) the solver returns NaN exactly when the price is not strictly inside the range that
+# vols 0.0001 to 5 give (prices from vols in the bracket, some of them flattened onto a bound in floating point).
+vin = rng.uniform(0.001, 4.99, 400); Kin = rng.uniform(70, 130, 400); kin = np.where(rng.uniform(size=400) < 0.5, 'p', 'c')
+Pin = nv['bs_price'](100.0, Kin, 0.05, 1 / 12, vin, kin)
+Pin[:40] = Pin[:40] * rng.uniform(0.0, 1.0, 40)          # some stale quotes below their bounds
+ivin = nv['implied_vols'](Pin, Kin, 100.0, 0.05, 1 / 12, kin)
+inside = (nv['bs_price'](100.0, Kin, 0.05, 1 / 12, np.full(400, 1e-4), kin) < Pin) & (Pin < nv['bs_price'](100.0, Kin, 0.05, 1 / 12, np.full(400, 5.0), kin))
+with np.errstate(invalid='ignore'):
+    fit = np.abs(nv['bs_price'](100.0, Kin, 0.05, 1 / 12, ivin, kin) - Pin) < 1e-8
+ex9 = txt('l6-safe-root-finder.json', 'screens', 9, 'explain', 'text')
+check('l6:s9_NaN_exactly_when_the_price_is_not_inside_the_bracket_range (corrected claim, fix pass)',
+      bool(np.isnan(nv['implied_vols'](q6, [100.0], 100.0, 0.05, 1 / 12, ['c'])[0])) and bool(np.all(np.isnan(ivin) == ~inside)) and bool(np.all(fit[inside]))
+      and 'cannot fail on a valid quote' not in ex9 and 'not strictly inside the range that vols 0.0001 to 5 give' in ex9,
+      'vol 6 gives NaN; of 400 random quotes, %d NaNs, each exactly where the price is not strictly inside the bracket range; the rest reprice to 1e-8' % int(np.isnan(ivin).sum()))
 K1k = np.linspace(80, 120, 1000); kinds1k = np.where(K1k < 100, 'p', 'c'); true1k = 0.2 + 0.001 * (K1k - 100) ** 2 / 10
 P1k = nv['bs_price'](100.0, K1k, 0.05, 1 / 12, true1k, kinds1k)
 check('l6:thousand_strikes_recovered', np.max(np.abs(nv['implied_vols'](P1k, K1k, 100.0, 0.05, 1 / 12, kinds1k) - true1k)) < 1e-8)
@@ -397,6 +437,10 @@ kk = np.linspace(75, 125, 5001)
 swing = bary(np.linspace(75, 125, 11), 0.001 * (-1.0) ** np.arange(11), kk)
 im = int(np.argmax(np.abs(swing)))
 lam_there = lebesgue(np.linspace(75, 125, 11), kk[im:im + 1])[0] * 0.001
+check('l7:s8_hint0_alternating_is_close_to_not_the_worst_case (corrected claim, fix pass)',
+      abs(swing[im]) < lam_there and lam_there - abs(swing[im]) < 0.001
+      and 'close to the worst case' in txt('l7-interpolation.json', 'screens', 8, 'hints', 0, 'text'),
+      'alternating %.4f against the Lebesgue worst case %.4f at the same strike' % (abs(swing[im]), lam_there))
 check('l7:alternating_quote_errors', abs(abs(swing[im]) - 0.0292) < 1e-4 and min(abs(kk[im] - 76.6), abs(kk[im] - 123.4)) < 0.1 and abs(swing[im]) < lam_there <= 0.0299,
       'alternating signs give %.4f; the worst sign pattern at that strike gives %.4f' % (abs(swing[im]), lam_there))
 
@@ -410,6 +454,14 @@ h = np.diff(t)
 rhs = [6 * ((z[i + 1] - z[i]) / h[i] - (z[i] - z[i - 1]) / h[i - 1]) for i in range(1, 7)]
 T6 = np.array([[4, 1, 0, 0, 0, 0], [1, 6, 2, 0, 0, 0], [0, 2, 8, 2, 0, 0], [0, 0, 2, 10, 3, 0], [0, 0, 0, 3, 26, 10], [0, 0, 0, 0, 10, 40.0]])
 check('l8:tridiagonal_system', np.allclose(rhs, [0.60, 0.45, 0.15, 0.10, -0.13, -0.21], atol=1e-9) and np.allclose(np.linalg.solve(T6, rhs), cs(t, 2)[1:-1], atol=1e-12))
+from scipy.linalg import solve_banded
+ab = np.zeros((3, 6)); ab[0, 1:] = np.diag(T6, 1); ab[1] = np.diag(T6); ab[2, :-1] = np.diag(T6, -1)
+check('l8:banded_solve_gives_the_same_M_and_the_text_names_it (corrected claim, fix pass)',
+      np.allclose(solve_banded((1, 1), ab, rhs), cs(t, 2)[1:-1], atol=1e-12)
+      and 'banded solver handles in $O(n)$' in txt('l8-splines.json', 'screens', 2, 'explain', 'text')
+      and 'with a banded solver' in txt('l8-splines.json', 'summary', 'ideas', 1)
+      and 'solve_banded' in txt('l8-splines.json', 'screens', 7, 'prose') and 'np.linalg.solve' in txt('l8-splines.json', 'screens', 7, 'widget', 'solution'),
+      'the lesson solves densely with np.linalg.solve; solve_banded gives the same M in O(n)')
 pol = bary(t, z, [4, 15, 25])
 check('l8:degree_7_polynomial_wiggles', np.allclose(pol, [3.9103, 5.1921, -2.58], atol=5e-3))
 check('l8:spline_values_and_forwards', abs(cs(4) - 3.9114) < 1e-4 and abs(cs(15) - 4.5297) < 1e-4 and abs(cs(4) + 4 * cs(4, 1) - 4.0273) < 1e-4

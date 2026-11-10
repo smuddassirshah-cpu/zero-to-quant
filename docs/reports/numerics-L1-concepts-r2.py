@@ -92,6 +92,14 @@ def solution_ns(fname, idx=0):
     return ns
 
 
+def txt(fname, *path):
+    """The content's text at a JSON path, for the fix-pass checks."""
+    o = json.load(open(os.path.join(BASE, fname)))
+    for p in path:
+        o = o[p]
+    return o
+
+
 warnings.simplefilter('ignore')
 for f in ('l1-floating-point.json', 'l2-cancellation.json', 'l3-conditioning.json', 'l4-stability.json', 'homework-1.json'):
     for p, w in code_tasks(f):
@@ -144,10 +152,13 @@ check('l1:time_gap_256ns', np.spacing(1.7e18) == 256.0 and float(1.7e18) + 100 =
 check('l1:float32_gap_near_20000', np.spacing(np.float32(20000.0)) == 2.0 ** -9 and float(np.float32(20000.01)) == 20000.009765625
       and float(np.finfo(np.float32).eps) == 2.0 ** -23)
 hund = np.round(np.arange(20000, 20001, 0.01), 2)
-expected_fail('l1:quiz0_float32_cannot_hold_a_level_to_hundredths',
-              not np.all(np.round(hund.astype(np.float32).astype(float), 2) == hund),
-              'every hundredth from 20,000.00 to 20,000.99 survives a float32 round trip; the stored error is 0.00023, in the fourth decimal. '
-              '# corrected: assert np.all(np.round(hund.astype(np.float32).astype(float), 2) == hund)')
+q0 = txt('l1-floating-point.json', 'quiz', 0, 'explain', 'text')
+check('l1:quiz0_level_rounds_to_its_hundredth_but_a_hundredth_move_is_2.3_per_cent_off (corrected claim, fix pass)',
+      np.all(np.round(hund.astype(np.float32).astype(float), 2) == hund)
+      and abs(float(Fraction(20000.01) - Fraction(float(np.float32(20000.01)))) - 0.00023) < 5e-6
+      and abs((float(np.float32(20000.01)) - float(np.float32(20000.0))) / 0.01 - 1) * 100 - 2.3 < 0.05
+      and 'off by 0.00023' in q0 and 'still rounds to its hundredth' in q0 and 'wrong by 2.3%' in q0 and 'third decimal' not in q0,
+      'every hundredth from 20,000.00 to 20,000.99 survives a float32 round trip; the one-hundredth move is 0.009765625')
 check('fix1:float32_one_hundredth_move_is_2.3_per_cent_off', float(np.float32(20000.02)) - float(np.float32(20000.01)) == 0.009765625
       and abs(0.009765625 / 0.01 - 1 + 0.0234) < 1e-4 and abs(20000.01 - 20000.009765625 - 0.00023) < 1e-5)
 check('l1:stored_tenth_error', abs(float(Fraction(0.1) - Fraction(1, 10)) - 5.55e-18) < 1e-20
@@ -211,6 +222,16 @@ check('l2:delta_bumps', abs(delta - 0.636831) < 1e-6 and min(de, key=de.get) == 
       and 1e-3 < de[1e-12] < 2e-2, 'errors %s' % {k: float('%.3g' % v) for k, v in de.items()})
 ge = {hh: abs((V(100 + hh) - 2 * V(100) + V(100 - hh)) / hh ** 2 - gamma) for hh in (1.0, 0.01, 1e-4, 1e-6)}
 check('l2:gamma_bumps', abs(gamma - 0.0187620) < 1e-7 and min(ge, key=ge.get) == 0.01 and ge[1e-6] > 1e-3 and abs(ge[1.0] - 2.3e-6) < 2e-7)
+# (corrected claim, fix pass) l2 screens[9].hints[1]: the numerator's rounding error does not grow with 1/h; the estimate's does.
+import mpmath as _mp
+_mp.mp.dps = 40
+def _Vm(S):
+    S = _mp.mpf(S); d1 = (_mp.log(S / 100) + _mp.mpf('0.07')) / _mp.mpf('0.2')
+    return S * _mp.ncdf(d1) - 100 * _mp.e ** _mp.mpf('-0.05') * _mp.ncdf(d1 - _mp.mpf('0.2'))
+_num = {hh: abs(float((V(100 + hh) - 2 * V(100) + V(100 - hh)) - (_Vm(100 + hh) - 2 * _Vm(100) + _Vm(100 - hh)))) for hh in (1.0, 0.1, 0.01, 1e-3, 1e-4)}
+check('l2:s9_hint1_numerator_error_is_flat_estimate_error_grows_like_1/h^2 (corrected claim, fix pass)',
+      max(_num.values()) < 100 * EPS * V(100) and 'in the estimate grows like' in txt('l2-cancellation.json', 'screens', 9, 'hints', 1, 'text'),
+      'numerator rounding errors %s, all below 100 eps V for h from 1 to 1e-4' % ['%.1e' % v for v in _num.values()])
 check('l2:model_best_delta_bump', abs(2 * math.sqrt(EPS * V(100) / gamma) - 7e-7) < 1e-7)
 check('l2:log1p', abs(math.log(1 + 1e-12) - 1.000089e-12) < 1e-18 and abs(math.log1p(1e-12) - 9.999999999995e-13) < 1e-25)
 ok = True
@@ -263,18 +284,23 @@ res = np.array([2, 2.0001]) - A @ np.array([0.0, 2.0])
 check('l3:small_residual_large_error', np.allclose(res, [0, -0.0001], atol=1e-12))
 for r in (0.95, 0.99, 0.3):
     check('l3:corr_kappa_r=%s' % r, abs(np.linalg.cond([[1, r], [r, 1]]) - (1 + r) / (1 - r)) < 1e-9 * (1 + r) / (1 - r))
-expected_fail('l3:corr_kappa_formula_for_negative_r', abs(np.linalg.cond([[1, -0.95], [-0.95, 1]]) - (1 - 0.95) / (1 + 0.95)) < 1e-6,
-              'for r = -0.95 the matrix has kappa 39, not (1 + r)/(1 - r) = 0.0256; the formula needs |r|. '
-              '# corrected: assert abs(np.linalg.cond([[1, r], [r, 1]]) - (1 + abs(r)) / (1 - abs(r))) < 1e-6')
+check('l3:corr_kappa_formula_with_|r|_and_r>=0 (corrected claim, fix pass)',
+      all(abs(np.linalg.cond([[1, r], [r, 1]]) - (1 + abs(r)) / (1 - abs(r))) < 1e-6 * (1 + abs(r)) / (1 - abs(r)) for r in (-0.95, -0.3, 0.0, 0.3, 0.95, 0.99))
+      and '1 + |r|}{1 - |r|' in txt('l3-conditioning.json', 'screens', 4, 'explain', 'text')
+      and 'for $r \\ge 0$' in txt('l3-conditioning.json', 'quiz', 0, 'prose'),
+      'kappa of [[1, r], [r, 1]] is (1 + |r|)/(1 - |r|): eigenvalues 1 + r and 1 - r')
 p60, v60 = bs(100, 60, 0.05, 0.2, 1.0, 'p'), vega(100, 60, 0.05, 0.2, 1.0)
 iv = lambda q: brentq(lambda s: bs(100, 60, 0.05, s, 1.0, 'p') - q, 1e-4, 5, xtol=1e-14)
 up1, dn1, up5 = 100 * (iv(p60 + 0.01) - 0.2), 100 * (0.2 - iv(p60 - 0.01)), 100 * (iv(p60 + 0.05) - 0.2)
 check('l3:put60_price_vega_first_order', abs(p60 - 0.0113) < 5e-5 and abs(v60 - 0.588) < 5e-4 and abs(0.01 / v60 * 100 - 1.70) < 0.005
       and abs(0.01 / vega(100, 100, 0.05, 0.2, 1.0) * 100 - 0.027) < 5e-4 and 1 < up1 < 4 and 1 < dn1 < 4,
       'true moves for a 0.01 error: +%.2f and -%.2f vol points (first-order 1.70)' % (up1, dn1))
-expected_fail('l3:quiz3_0.05_on_the_60_put_moves_vol_8.5_points', abs(up5 - 8.5) < 1.0 and p60 - 0.05 > 0,
-              'the put is worth 0.0113, so a 0.05 error is over four times the price: +0.05 moves the vol %.1f points and -0.05 leaves no vol at all. '
-              '# corrected: assert abs(up5 - 4.1) < 0.1 and p60 - 0.05 < 0' % up5)
+q3, s9 = txt('l3-conditioning.json', 'quiz', 3, 'explain', 'text'), txt('l3-conditioning.json', 'screens', 9, 'explain', 'text')
+check('l3:quiz3_and_s9_true_moves_of_the_60_put (corrected claim, fix pass)',
+      abs(up5 - 4.1) < 0.05 and p60 - 0.05 < 0 and abs(up1 - 1.3) < 0.05 and abs(dn1 - 3.3) < 0.05 and abs(0.01 / p60 * 100 - 89) < 0.5
+      and '4.1 points' in q3 and 'no vol at all' in q3 and '8.5' not in q3
+      and '1.3 points up and 3.3 down' in s9 and '89%' in s9,
+      '+0.05 moves the vol %.2f points, -0.05 makes the price negative; +-0.01 give +%.2f and -%.2f' % (up5, up1, dn1))
 check('l3:quiz3_atm', abs(0.05 / vega(100, 100, 0.05, 0.2, 1.0) * 100 - 0.133) < 1e-3)
 
 # ------------------------------------------------------------------ l4
@@ -317,11 +343,11 @@ check('l4:yield_design_conditioning', abs(np.linalg.cond(D) / 2.98e4 - 1) < 0.01
 # quiz[1].o[1].why: "An ill-conditioned problem rules [forward accuracy] out for any algorithm."
 xa, ya = 1.0 + 2.0 ** -40, 1.0
 kappa_sub = (abs(xa) + abs(ya)) / abs(xa - ya)
-expected_fail('l4:quiz1_ill_conditioning_rules_out_forward_accuracy_for_any_algorithm',
-              not (kappa_sub > 1e12 and Fraction(xa - ya) == Fraction(xa) - Fraction(ya)),
-              'x - y for two close doubles has kappa %.1e yet floating-point subtraction returns it exactly (Sterbenz, taught in l2 quiz[1]). '
-              'Ill-conditioning limits what a backward stable method can promise, not every algorithm. '
-              '# corrected: assert kappa_sub > 1e12 and Fraction(xa - ya) == Fraction(xa) - Fraction(ya)' % kappa_sub)
+why1 = txt('l4-stability.json', 'quiz', 1, 'widget', 'options', 1, 'why')
+check('l4:quiz1_backward_stable_promises_only_about_kappa_u (corrected claim, fix pass)',
+      kappa_sub > 1e12 and Fraction(xa - ya) == Fraction(xa) - Fraction(ya)
+      and 'for any algorithm' not in why1 and 'backward stable algorithm does not promise it' in why1 and '\\kappa u' in why1,
+      'x - y with kappa %.1e is exact (Sterbenz), so the limit is on what a backward stable method promises, not on every algorithm' % kappa_sub)
 # homework-1 items[8]: kappa of the sample variance is about 2 xbar / s
 xb = 1e9 + rng.normal(0, 3, 250)
 s0 = np.var(xb, ddof=1)

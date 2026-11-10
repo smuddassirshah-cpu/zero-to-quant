@@ -147,9 +147,10 @@ NL = [2 ** k for k in range(4, 13)]
 sl_s = slope(NL, [simp(gk, -8, 8, n) - BSV for n in NL])
 sl_t = slope(NL, [trap(gk, -8, 8, n) - BSV for n in NL])
 check('l9:kink_inside_drops_simpson_to_about_h^2', -2.6 < sl_s < -1.6, 'fitted slope %.2f over n = 16 to 4096' % sl_s)
-expected_fail('l9:s9_trapezium_has_a_lower_order_than_simpson_with_the_kink_inside', sl_t > sl_s + 0.5,
-              'with the kink inside, both rules are erratic and second order: fitted slopes %.2f (trapezium) and %.2f (Simpson). A kink does not lower the trapezium rule\'s order. '
-              '# corrected: assert abs(sl_t - sl_s) < 0.5' % (sl_t, sl_s))
+_why9 = json.load(open(os.path.join(BASE, 'l9-quadrature.json')))['screens'][9]['widget']['options'][2]['why']
+check('l9:s9_with_the_kink_inside_both_rules_are_second_order (corrected claim, fix pass)',
+      abs(sl_t - sl_s) < 0.5 and -2.6 < sl_t < -1.6 and 'both rules are erratic and second order' in _why9 and 'lower order' not in _why9,
+      'fitted slopes %.2f (trapezium) and %.2f (Simpson) over n = 16 to 4096' % (sl_t, sl_s))
 fk = lambda x: np.abs(x - 1 / math.pi)
 Ik = quad(fk, 0, 1, points=[1 / math.pi], epsabs=1e-15)[0]
 NK = [10 * 2 ** k for k in range(9)]
