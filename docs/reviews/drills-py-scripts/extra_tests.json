@@ -1,0 +1,25 @@
+{
+  "py-cross-up-days": [
+    {"call": "cross_up_days([5.0, 7.0], [4.0, 6.0])", "expect": "[]", "compare": "equal", "catches": ["yesterday's fast against today's slow"]},
+    {"call": "cross_up_days([1.0, 3.0], [2.0, 4.0])", "expect": "[]", "compare": "equal", "catches": ["today's fast against yesterday's slow"]}
+  ],
+  "py-split-pence": [
+    {"call": "split_pence(1.10, 2)", "expect": "[55, 55]", "compare": "equal", "catches": ["math.ceil(fee * 100)"]}
+  ],
+  "py-batches": [
+    {"call": "next(batches(feed(), 3))", "expect": "['a', 'b', 'c']", "compare": "equal", "catches": ["reads one item ahead before handing a batch on"]}
+  ],
+  "py-cost-basis": [
+    {"call": "(c := CostBasis(), c.buy(10, 2.0), _raised(lambda: c.buy(-4, 9.0)), (c.qty, c.avg_cost, c.realised))[-1]", "expect": "(10, 2.0, 0.0)", "compare": "isclose", "catches": ["buy refuses 0 only: a negative buy goes through", "buy changes the position, then checks"]},
+    {"call": "_raised(lambda: CostBasis().buy(-1, 5.0))", "expect": "'ValueError'", "compare": "equal", "catches": ["buy refuses 0 only: a negative buy goes through"]}
+  ],
+  "py-month-grid": [
+    {"call": "month_grid([('2026-08-03', 'Q', -1.0), ('2026-08-04', 'Q', 0.5)])[2]", "expect": "[[-1.0]]", "compare": "isclose", "catches": ["a month that loses everything shows None"]}
+  ],
+  "py-paired-returns": [
+    {"call": "(lambda p: (len(p), p[0], p[-1]))(paired_returns({'%04d-%02d-%02d' % (2000 + i // 336, 1 + i // 28 % 12, 1 + i % 28): 100.0 + i % 7 for i in range(10000)}, {'%04d-%02d-%02d' % (2000 + i // 336, 1 + i // 28 % 12, 1 + i % 28): 50.0 + i % 5 for i in range(0, 10000, 2)}))", "expect": "(4999, (0.020000000000000018, 0.040000000000000036), (0.020000000000000018, 0.03921568627450989))", "compare": "isclose", "catches": [], "also_passes": ["RIGHT by the brief: sorts the dates as dates"]}
+  ],
+  "py-excess-vs-benchmark": [
+    {"call": "mean_excess_bps(long_prices([(\"2025-01-06\", \"GAP\", 100.0), (\"2025-01-08\", \"GAP\", 103.0)]), BENCH).tolist()", "expect": "[300.0000000000003]", "compare": "isclose", "catches": ["index return taken over the share's own dates"]}
+  ]
+}
