@@ -150,13 +150,15 @@
       return !!n && (n === G().normExpr(target));
     };
     /* The shape check on canonical MathJSON */
-    const FORM_LINE = { 'factorised-fully': 'Factorise fully: a bracket still has a common factor.', 'completed-square': 'Write it as a bracket squared plus a number.', rectangular: 'That is equal, but not in the form a + bi: work out the real and imaginary parts.', expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
+    const FORM_LINE = { fraction: 'That is equal, but write it as a whole number or one fraction in lowest terms, with no decimal point.', 'exact-angle': 'That is equal, but write the angle in radians as a multiple of pi in lowest terms, with no degrees.', 'factorised-fully': 'Factorise fully: a bracket still has a common factor.', 'completed-square': 'Write it as a bracket squared plus a number.', rectangular: 'That is equal, but not in the form a + bi: work out the real and imaginary parts.', expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
     const head = (j) => (Array.isArray(j) ? j[0] : null);
     const args = (j) => (Array.isArray(j) ? j.slice(1) : []);
     const hasSum = (j) => head(j) === 'Add' || head(j) === 'Subtract' || args(j).some(hasSum);
     const size = (j) => (Array.isArray(j) ? 1 + args(j).reduce((a, x) => a + size(x), 0) : 1);
     const isSumLike = (j) => head(j) === 'Add' || head(j) === 'Subtract';
     const formOk = (L) => {
+      if (spec.form === 'fraction') return G().shapeFraction(L);              // ENGINE-BACKLOG 841: text shapes, read from what was typed
+      if (spec.form === 'exact-angle') return G().shapeExactAngle(L);
       if (!spec.form || !ce) return true;
       try {
         return G().withParsed(ce, L, fo.functions, (e) => {

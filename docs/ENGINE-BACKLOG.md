@@ -1983,3 +1983,15 @@ Raised later (the first Fluency content wave), engine pass 835 onward:
 
 837. Done [Should] A Fluency answer the grader returns with key `length`, `form` or `count` shows that key's line and then the `solution` steps, as any other wrong answer does.
 837 status: done. `notYetLine` in `player.js` for a generated item.
+
+838. Done [Should] Fluency `let` and `where`: functions `ln`, `log10`, `exp`, `sin`, `cos`, `tan` (radians), the constant `pi` and `if(cond, a, b)`; a `where` that uses only vars is tested before any `let` is worked out; a `let` that divides by zero rejects the draw instead of raising an error.
+838 status: done. `gen.js` (`FUNCS`, `CONSTS`, lazy `if`, `splitWhere`, the let catch). `pi`, the new function names and `if` are reserved, and no existing set used them as names. Existing sets draw the same items (the random stream and which draws are accepted are unchanged). `tools/test-fluency-reach.mjs`; fixture families `log-significant`, `height-with-sine`, `divide-reject`; AUTHORING section 16 (functions table, where). Deferred: `log(x, b)`, `asin`, `acos`, `atan`, `e`, and a degree form of the trigonometric functions.
+
+839. Done [Should] A `wrong` entry may carry `"when": "<condition>"`: the slip is offered only on draws where it holds, and the validator's "wrong equals answer" check respects it.
+839 status: done. `gen.js` `draw` and `checkFamily` (the validator, `fluency-sample.mjs` and `test-fluency.mjs` read the drawn list, so they follow). Unit cases in `tools/test-fluency-reach.mjs`; fixture families `mono-derivative`, `height-with-sine`, `divide-reject`, `exact-angle`, `fractional-coefficient`.
+
+840. Done [Should] Fluency formats: `{mono(v; c, k)}`, power 1 never written by `poly` or `mono`, `cfrac` and `+cfrac`, `(frac)`, `sfN` and `+sfN`, and `{falling(n; r)}`; the surd text var of `poly` documented.
+840 status: done. `gen.js` (`monoText`, `fallingText`, `sigFig`, the `SPEC` pattern). `poly` already wrote no power of 1, so only `mono` is new there. `dp` above 10 and `sf` outside 1 to 10 are now static errors as well as draw errors. Not done: a numeric `tol` stated in units of the last figure (authors give `abs` half a unit, as in section 16).
+
+841. Done [Should] `expression` `"form": "fraction"` (whole number or one fraction in lowest terms; a decimal or an unreduced fraction returns key `form`) and `"form": "exact-angle"` (a multiple of pi in lowest terms; refuses degree signs, decimals and an unreduced multiple); `simplified` is unchanged.
+841 status: done. `ZQ.grade.shapeFraction` and `shapeExactAngle` read the typed text (the engine's canonical form reduces `\frac{14}{18}`), called from the expression widget `formOk`, `exprFormOk`, the validator's form list and `gen.js`. Default lines for both. `tools/test-answer-forms.mjs` part 4b and the widget cases; fixture families `fraction-lowest`, `exact-angle`.
