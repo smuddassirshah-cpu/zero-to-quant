@@ -1,0 +1,113 @@
+{
+  "id": "py-underwater-series",
+  "name": "Depth and length under water",
+  "course": "plotting",
+  "pack": "py",
+  "tags": [
+    "drawdown",
+    "underwater-series"
+  ],
+  "skills": [
+    "pl-risk",
+    "pl-honest"
+  ],
+  "difficulty": 3,
+  "pace": 900,
+  "fn": "underwater_series",
+  "returns": "a tuple (list of floats, list of whole numbers)",
+  "brief": "A two-panel drawdown chart shows, for each day, how far the value is below its running peak and for how long it has been below. The drawdown is `value / peak - 1`, so it is 0 at a peak and negative under water. The day count is the number of days since the peak was last reached: 0 on a day at the peak, where a value equal to the peak counts as reaching it.\n\nWrite `underwater_series(values)`, returning `(drawdowns, days)`, two lists as long as `values`.\n\nExample. For `[100.0, 90.0, 95.0, 100.0, 80.0]` the answer is `([0.0, -0.1, -0.05, 0.0, -0.2], [0, 1, 2, 0, 1])`. Day 3 is back at 100, so its count goes back to 0.",
+  "constraints": [
+    "$0 \\le n \\le 100{,}000$ values, each above zero.",
+    "Numbers are compared with `math.isclose` at a relative tolerance of $10^{-9}$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Carry the peak and the count. A value at or above the peak becomes the new peak and resets the count; any other adds one.",
+  "starter": "def underwater_series(values):\n    # your code here\n    return ([], [])\n",
+  "examples": [
+    {
+      "call": "underwater_series([100.0, 90.0, 95.0, 100.0, 80.0])",
+      "expect": "([0.0, -0.09999999999999998, -0.050000000000000044, 0.0, -0.19999999999999996], [0, 1, 2, 0, 1])",
+      "compare": "isclose",
+      "note": "Back at 100 on day 3 counts as a peak, so the count starts again."
+    },
+    {
+      "call": "underwater_series([50.0, 60.0])",
+      "expect": "([0.0, 0.0], [0, 0])",
+      "compare": "isclose",
+      "note": "Two new peaks: never under water."
+    }
+  ],
+  "tests": [
+    {
+      "call": "underwater_series([])",
+      "expect": "([], [])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([100.0])",
+      "expect": "([0.0], [0])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([50.0, 60.0])",
+      "expect": "([0.0, 0.0], [0, 0])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([100.0, 90.0, 80.0])",
+      "expect": "([0.0, -0.09999999999999998, -0.19999999999999996], [0, 1, 2])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([100.0, 90.0, 95.0, 100.0, 80.0])",
+      "expect": "([0.0, -0.09999999999999998, -0.050000000000000044, 0.0, -0.19999999999999996], [0, 1, 2, 0, 1])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([10.0, 10.0, 10.0])",
+      "expect": "([0.0, 0.0, 0.0], [0, 0, 0])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([20.0, 16.0, 25.0, 20.0, 24.0, 30.0])",
+      "expect": "([0.0, -0.19999999999999996, 0.0, -0.19999999999999996, -0.040000000000000036, 0.0], [0, 1, 0, 1, 2, 0])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([5.0, 4.0, 5.0, 4.5, 4.0, 5.0, 6.0])",
+      "expect": "([0.0, -0.19999999999999996, 0.0, -0.09999999999999998, -0.19999999999999996, 0.0, 0.0], [0, 1, 0, 1, 2, 0, 0])",
+      "compare": "isclose"
+    },
+    {
+      "call": "underwater_series([80.0, 100.0, 50.0, 75.0, 99.0])",
+      "expect": "([0.0, 0.0, -0.5, -0.25, -0.010000000000000009], [0, 0, 1, 2, 3])",
+      "compare": "isclose"
+    },
+    {
+      "call": "(lambda r: (len(r[0]), min(r[0]), max(r[1]), r[1][-1]))(underwater_series([100.0 + (i % 50) - (i // 1000) for i in range(100000)]))",
+      "expect": "(100000, -0.9932885906040269, 99000, 99000)",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 10 hidden tests. A number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)` holds, element by element for lists and tuples; anything else must equal the expected value.",
+  "solution": "def underwater_series(values):\n    drawdowns = []\n    days = []\n    peak = None\n    count = 0\n    for v in values:\n        if peak is None or v >= peak:\n            peak = v\n            count = 0\n        else:\n            count = count + 1\n        drawdowns.append(v / peak - 1)\n        days.append(count)\n    return (drawdowns, days)\n",
+  "notes": [
+    "One running peak gives both panels: the depth from the ratio, the length from a count since the peak.",
+    "Resetting only on a strictly higher value keeps counting on a day that is back at the peak.",
+    "One pass, so $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def underwater_series(values):\n    drawdowns = []\n    days = []\n    peak = None\n    count = 0\n    for v in values:\n        if peak is None or v > peak:\n            peak = v\n            count = 0\n        elif v < peak:\n            count = count + 1\n        else:\n            count = count + 1\n        drawdowns.append(v / peak - 1)\n        days.append(count)\n    return (drawdowns, days)\n",
+      "slip": "Only a strictly higher value resets the count, so a return to the peak keeps counting."
+    },
+    {
+      "code": "def underwater_series(values):\n    drawdowns = []\n    days = []\n    peak = None\n    count = 0\n    for v in values:\n        if peak is None or v >= peak:\n            peak = v\n            count = 0\n        else:\n            count = count + 1\n        drawdowns.append(1 - v / peak)\n        days.append(count)\n    return (drawdowns, days)\n",
+      "slip": "The drawdown comes out positive, so the panel would sit above the axis."
+    },
+    {
+      "code": "def underwater_series(values):\n    drawdowns = []\n    days = []\n    peak = None\n    at = 0\n    for t, v in enumerate(values):\n        if peak is None or v >= peak:\n            peak = v\n            at = t\n        drawdowns.append(v / peak - 1)\n        days.append(t - at + 1 if t > at else 0)\n    return (drawdowns, days)\n",
+      "slip": "It counts the peak day as well, so the first day under water shows 2."
+    }
+  ]
+}
