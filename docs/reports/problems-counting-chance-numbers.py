@@ -150,8 +150,104 @@ stated(lv1, r1, 3, 4, 'feedback.byKey.adding', '0.4033')
 
 lv1.check_wrongs('problems-1')
 
+# ---------------------------------------------------------------- Level 2
+from math import comb, factorial, perm  # noqa: E402
+
+lv2 = Level('counting-chance', 2)
+r2 = load(lv2, 2)
+
+# P1: relay team of 4 from 9, then running order; Ada = 0, Bea = 1
+teams = list(itertools.combinations(range(9), 4))
+answer(lv2, r2, 0, 0, comb(9, 4), len(teams), 'teams')
+wrongs(lv2, r2, 0, 0, {'ordered': perm(9, 4), 'times': 9 * 4})
+lineups = list(itertools.permutations(range(9), 4))
+answer(lv2, r2, 0, 1, comb(9, 4) * factorial(4), len(lineups), 'line-ups')
+wrongs(lv2, r2, 0, 1, {'times-four': 126 * 4, 'added': 126 + 24})
+both = F(sum(1 for t in teams if 0 in t and 1 in t), len(teams))
+answer(lv2, r2, 0, 2, F(comb(7, 2), comb(9, 4)), both, 'P(both in)')
+wrongs(lv2, r2, 0, 2, {'one-named': F(4, 9), 'squared': F(4, 9) ** 2})
+last2 = F(sum(1 for l in lineups if set(l[2:]) == {0, 1}), len(lineups))
+answer(lv2, r2, 0, 3, both * F(2 * 2, 24), last2, 'P(last two legs)')
+wrongs(lv2, r2, 0, 3, {'one-order': F(sum(1 for l in lineups if l[2:] == (0, 1)), len(lineups)), 'in-team': both, 'from-squared': F(4, 9) ** 2 * F(1, 6)})
+lv2.claim(sum(1 for l in lineups if set(l[2:]) == {0, 1}) == 84, 'part 4: 84 line-ups of 3024')
+stated(lv2, r2, 0, 0, 'explain.text', 3024)
+stated(lv2, r2, 0, 2, 'explain.text', 21)
+stated(lv2, r2, 0, 3, 'explain.text', 84)
+
+# P2: 15 orders, 4 breaches, 3 picks without replacement; orders 0..3 breach
+picks = list(itertools.permutations(range(15), 3))
+clean = lambda o: o >= 4  # noqa: E731
+answer(lv2, r2, 1, 0, F(11, 15), F(sum(1 for p_ in picks if clean(p_[0])), len(picks)), 'P(first clean)')
+wrongs(lv2, r2, 1, 0, {'breach': F(4, 15)})
+two = F(11, 15) * F(10, 14)
+answer(lv2, r2, 1, 1, two, F(sum(1 for p_ in picks if clean(p_[0]) and clean(p_[1])), len(picks)), 'P(two clean)')
+wrongs(lv2, r2, 1, 1, {'replace': F(11, 15) ** 2, 'fixed-bottom': F(11 * 10, 15 * 15), 'fixed-top': F(11, 15) * F(11, 14)})
+three = two * F(9, 13)
+answer(lv2, r2, 1, 2, three, F(comb(11, 3), comb(15, 3)), 'P(three clean)')
+wrongs(lv2, r2, 1, 2, {'replace': F(11, 15) ** 3, 'fixed-bottom': F(11 * 10 * 9, 15 ** 3)})
+answer(lv2, r2, 1, 3, 1 - three, F(sum(1 for p_ in picks if not all(map(clean, p_))), len(picks)), 'P(at least one breach)')
+wrongs(lv2, r2, 1, 3, {'none': three, 'replace': 1 - F(11, 15) ** 3, 'adding': 3 * F(4, 15)})
+samples = list(itertools.combinations(range(15), 3))
+answer(lv2, r2, 1, 4, comb(15, 3) * (1 - three), sum(1 for s_ in samples if not all(map(clean, s_))), 'samples with a breach')
+wrongs(lv2, r2, 1, 4, {'ordered': 290 * 6, 'none': comb(11, 3)})
+lv2.claim(len(samples) == 455, '455 samples')
+stated(lv2, r2, 1, 1, 'explain.text', 0.5238, '0.5238')
+stated(lv2, r2, 1, 2, 'explain.text', 0.3626, '0.3626')
+stated(lv2, r2, 1, 3, 'explain.text', 0.6374, '0.6374')
+stated(lv2, r2, 1, 4, 'explain.text', 165)
+
+# P3: 8 votes, 3 proposals
+lists = list(itertools.product(range(3), repeat=8))
+tallies = {tuple(v.count(k) for k in range(3)) for v in lists}
+answer(lv2, r2, 2, 0, comb(10, 2), len(tallies), 'tallies')
+wrongs(lv2, r2, 2, 0, {'distinct': 3 ** 8, 'at-least-one': comb(7, 2), 'stars-only': comb(8, 2)})
+answer(lv2, r2, 2, 1, comb(10, 2) - comb(7, 2), sum(1 for t in tallies if 0 in t), 'tallies with a zero')
+wrongs(lv2, r2, 2, 1, {'all-voted': comb(7, 2), 'unanimous': sum(1 for t in tallies if sorted(t) == [0, 0, 8])})
+w = widget(lv2, r2, 2, 2)
+lv2.claim([o['id'] for o in w['options'] if o.get('correct')] == ['right'], 'part 3: one correct option, "right"')
+n332 = sum(1 for v in lists if tuple(v.count(k) for k in range(3)) == (3, 3, 2))
+n800 = sum(1 for v in lists if tuple(v.count(k) for k in range(3)) == (8, 0, 0))
+lv2.claim(n332 == factorial(8) // (6 * 6 * 2) == 560 and n800 == 1, 'part 3: 3,3,2 from 560 lists ("hundreds"), 8,0,0 from one')
+una = F(3, 3 ** 8)
+answer(lv2, r2, 2, 3, una, F(sum(1 for v in lists if len(set(v)) == 1), len(lists)), 'P(unanimous)')
+wrongs(lv2, r2, 2, 3, {'tallies': F(3, 45), 'one-proposal': F(1, 3 ** 8)})
+lv2.claim(abs(widget(lv2, r2, 2, 3)['answer'] - float(una)) <= 5e-10, 'P(unanimous) key to 9 places')
+stated(lv2, r2, 2, 2, 'explain.text', 6561)
+stated(lv2, r2, 2, 3, 'explain.text', 2187)
+
+# P4: 30 feeds, audit of 5; yours are 0..4
+N = comb(30, 5)
+answer(lv2, r2, 3, 0, N, perm(30, 5) // factorial(5), 'sets')
+wrongs(lv2, r2, 3, 0, {'ordered': perm(30, 5), 'power': 30 ** 5})
+
+
+def hyper(k):  # second method: count sets by brute force over the 25 others is too large; use Vandermonde check
+    return comb(5, k) * comb(25, 5 - k)
+
+
+lv2.claim(sum(hyper(k) for k in range(6)) == N, 'Vandermonde: the hypergeometric counts sum to C(30,5)')
+p_ex3 = F(hyper(3), N)
+answer(lv2, r2, 3, 1, p_ex3, sim(lambda s_: len(s_ & {0, 1, 2, 3, 4}) == 3, lambda: set(RNG.sample(range(30), 5)), 400000), 'P(exactly 3)', second_tol=0.0012)
+wrongs(lv2, r2, 3, 1, {'no-others': F(comb(5, 3), N), 'others-ordered': F(comb(5, 3) * 25 * 24, N)})
+p_ge3 = F(hyper(3) + hyper(4) + hyper(5), N)
+answer(lv2, r2, 3, 2, p_ge3, 1 - F(hyper(0) + hyper(1) + hyper(2), N), 'P(at least 3)')
+wrongs(lv2, r2, 3, 2, {'exactly': p_ex3, 'double-four': F(3000 + 250 + 1, N)})
+lv2.claim(hyper(4) == 125 and hyper(5) == 1 and hyper(3) == 3000, 'stated counts 3000, 125, 1')
+q4 = 1 - (1 - p_ge3) ** 4
+alt = sum(comb(4, k) * p_ge3 ** k * (1 - p_ge3) ** (4 - k) for k in range(1, 5))
+answer(lv2, r2, 3, 3, q4, alt, 'P(in 4 quarters)')
+wrongs(lv2, r2, 3, 3, {'adding': 4 * p_ge3, 'from-exactly': 1 - (1 - p_ex3) ** 4, 'none': (1 - p_ge3) ** 4})
+stated(lv2, r2, 3, 0, 'explain.text', 17100720)
+stated(lv2, r2, 3, 1, 'explain.text', 0.02105, '0.02105')
+stated(lv2, r2, 3, 2, 'explain.text', 0.02194, '0.02194')
+stated(lv2, r2, 3, 3, 'explain.text', 0.91510, '0.91510')
+stated(lv2, r2, 3, 3, 'explain.text', 0.0849, '0.0849')
+lv2.claim(abs(float((1 - p_ge3) ** 4) - 0.91510) < 0.000005, '0.91510 to 5 places')
+
+lv2.check_wrongs('problems-2')
+
 # ---------------------------------------------------------------- report
-results = lv1.results
+results = lv1.results + lv2.results
 bad = [r for r in results if not r[0]]
 print(f'problems-counting-chance: {len(results) - len(bad)} of {len(results)} checks passed')
 sys.exit(1 if bad else 0)
