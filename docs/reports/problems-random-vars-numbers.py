@@ -247,6 +247,104 @@ ok(Gd[2] == F(63, 210) and Gd[3] == F(7, 210), 'hand counts are not 63 and 7')
 num(L2, 'p-token-draw', 5, EV + 15 * pge2, E(Gd, lambda k: 20 + 15 * k + (15 if k >= 2 else 0)),
     {'no-bonus': EV, 'full-bonus': EV + 15, 'bonus-only': 15 * pge2, 'carried': EV + 15 * binge2})
 
+# ------------------------------------------------------------------ level 3
+L3 = load(3)
+from math import sqrt
+
+# p-quote-trades: X on {-3, 1, 4}; totals of independent trades
+Xq = {-3: F(2, 10), 1: F(5, 10), 4: F(3, 10)}
+mq, vq = E(Xq), var(Xq)
+num(L3, 'p-quote-trades', 1, mq, sum(v * p for v, p in Xq.items()),
+    {'unweighted': F(2, 3), 'sign': 3 * F(2, 10) + F(5, 10) + 4 * F(3, 10), 'mode': 1})
+num(L3, 'p-quote-trades', 2, E(Xq, lambda v: v * v) - mq ** 2, vq,
+    {'no-mean': E(Xq, lambda v: v * v), 'mean-not-squared': E(Xq, lambda v: v * v) - mq,
+     'carried': E(Xq, lambda v: v * v) - F(2, 3) ** 2, 'sd': sqrt(vq)}, round_tol=0.001)
+two = pmf_of(product_space(Xq, Xq), sum)        # exact: Var of a sum of two = 2 Var
+ok(var(two) == 2 * vq, 'variance of two trades is not 2 Var(X)')
+num(L3, 'p-quote-trades', 3, sqrt(100 * vq), 10 * sqrt(float(var(two)) / 2),
+    {'sd-times-n': 100 * sqrt(vq), 'variance': 100 * vq, 'one-trade': sqrt(vq)})
+n_q = next(n for n in range(1, 5000) if vq * n <= (mq * n / 10) ** 2)
+n_alt = next(n for n in range(1, 5000) if sqrt(5.89 * n) <= 0.11 * n)
+num(L3, 'p-quote-trades', 4, n_q, n_alt, {'round-down': n_q - 1, 'no-square': 23})
+ok(22 < sqrt(5.89) / 0.11 < 23 and isclose(5.89 / 0.0121, 486.7769, abs_tol=1e-3), 'stated 22.06 and 486.8 wrong')
+
+# p-fund-hedge: joint pmf of (A, B)
+J = {(-1, -2): F(3, 10), (-1, 2): F(1, 10), (2, -2): F(1, 10), (2, 2): F(5, 10)}
+pA = pmf_of(J, lambda w: w[0]); pB = pmf_of(J, lambda w: w[1])
+EA, EB, VA, VB = E(pA), E(pB), var(pA), var(pB)
+cov = E(J, lambda w: (w[0] - EA) * (w[1] - EB))
+EAB = E(J, lambda w: w[0] * w[1])
+num(L3, 'p-fund-hedge', 1, EA, -1 * (J[(-1, -2)] + J[(-1, 2)]) + 2 * (J[(2, -2)] + J[(2, 2)]),
+    {'unweighted': F(1, 2), 'b-mean': EB})
+ok(EB == F(4, 10) and VB == F(384, 100), 'E[B], Var(B) as stated')
+num(L3, 'p-fund-hedge', 2, E(pA, lambda v: v * v) - EA ** 2, VA,
+    {'no-mean': E(pA, lambda v: v * v), 'unsquared-mean': E(pA, lambda v: v * v) - EA, 'carried': E(pA, lambda v: v * v) - F(1, 4)})
+num(L3, 'p-fund-hedge', 3, EAB - EA * EB, cov, {'no-means': EAB, 'added': EAB + EA * EB, 'means-only': EA * EB})
+rho = float(cov) / sqrt(VA * VB)
+ok(VA * VB == F(288, 100) ** 2, 'sd product is not 2.88')
+num(L3, 'p-fund-hedge', 4, cov / F(288, 100), rho,
+    {'variances': cov / (VA * VB), 'cov-over-var': cov / VA, 'carried': EAB / F(288, 100)})
+h = cov / VB
+ok(h == F(4375, 10000), 'h is not 0.4375')
+hedged = pmf_of(J, lambda w: w[0] - h * w[1])
+num(L3, 'p-fund-hedge', 5, VA + h * h * VB - 2 * h * cov, var(hedged),
+    {'cov-sign': VA + h * h * VB + 2 * h * cov, 'no-cross': VA + h * h * VB, 'h-unsquared': VA + h * VB - 2 * h * cov})
+ok(VA * (1 - (cov / F(288, 100)) ** 2) == var(hedged) == VA * F(95, 144), 'Var(A)(1 - rho^2) check fails')
+
+# p-two-funds: X on {-0.1, 0.1, 0.3}, Y independent with mean 0.05, var 0.0049
+Xf = {F(-1, 10): F(2, 10), F(1, 10): F(5, 10), F(3, 10): F(3, 10)}
+mX, vX = E(Xf), var(Xf)
+mY, vY = F(5, 100), F(49, 10000)
+Yf = {mY - F(7, 100): F(1, 2), mY + F(7, 100): F(1, 2)}     # a two-point Y with that mean and variance
+ok(E(Yf) == mY and var(Yf) == vY, 'two-point Y does not match')
+num(L3, 'p-two-funds', 1, mX, sum(v * p for v, p in Xf.items()), {'unweighted': F(1, 10), 'sign': F(16, 100)})
+num(L3, 'p-two-funds', 2, E(Xf, lambda v: v * v) - mX ** 2, vX,
+    {'no-mean': E(Xf, lambda v: v * v), 'carried': E(Xf, lambda v: v * v) - F(1, 100), 'sd': sqrt(vX)})
+wstar = vY / (vX + vY)
+grid = min((F(k, 1000) for k in range(0, 1001)), key=lambda w: w * w * vX + (1 - w) ** 2 * vY)
+num(L3, 'p-two-funds', 3, wstar, grid,
+    {'flipped': 1 - wstar, 'sd-ratio': F(7, 100) / (F(14, 100) + F(7, 100)), 'carried': vY / (E(Xf, lambda v: v * v) + vY)}, round_tol=0.0005)
+port = pmf_of(product_space(Xf, Yf), lambda w: wstar * w[0] + (1 - wstar) * w[1])
+sdp = sqrt(wstar ** 2 * vX + (1 - wstar) ** 2 * vY)
+num(L3, 'p-two-funds', 4, sdp, sqrt(var(port)),
+    {'averaged-sd': wstar * sqrt(vX) + (1 - wstar) * sqrt(vY), 'unsquared': sqrt(wstar * vX + (1 - wstar) * vY),
+     'variance': wstar ** 2 * vX + (1 - wstar) ** 2 * vY}, round_tol=0.0001)
+mP = wstar * mX + (1 - wstar) * mY
+ok(mP == E(port) == F(64, 1000), 'portfolio mean is not 0.064')
+ratios = {'x': float(mX) / sqrt(vX), 'y': float(mY) / sqrt(vY), 'mix': float(mP) / sdp}
+ok(max(ratios, key=ratios.get) == 'mix', 'the mix does not have the best ratio')
+ok(round(ratios['mix'], 2) == 1.02 and round(ratios['x'], 2) == 0.86 and round(ratios['y'], 2) == 0.71, f'ratios as stated {ratios}')
+pick(L3, 'p-two-funds', 5, 'mix')
+
+# p-clustered-fills: exchangeable fills, P(fill) 0.5, P(both) 0.3
+pf, pboth = F(1, 2), F(3, 10)
+cv = pboth - pf * pf
+VN = lambda n: n * pf * (1 - pf) + n * (n - 1) * cv
+# Method 2: a mixture model with these moments: half the days p = 0.5 + d, half p = 0.5 - d, d^2 = 0.05
+d = sqrt(0.05)
+def mix_var(n):
+    tot = {}
+    for p in (0.5 + d, 0.5 - d):
+        for s in itertools.product([0, 1], repeat=n):
+            pr_ = 0.5
+            for x in s:
+                pr_ *= p if x else 1 - p
+            tot[sum(s)] = tot.get(sum(s), 0) + pr_
+    m = sum(k * v for k, v in tot.items())
+    return sum((k - m) ** 2 * v for k, v in tot.items())
+num(L3, 'p-clustered-fills', 1, cv, (0.5 * (0.5 + d) ** 2 + 0.5 * (0.5 - d) ** 2) - 0.25,
+    {'joint': pboth, 'independent': 0, 'minus-half': pboth - pf})
+num(L3, 'p-clustered-fills', 2, VN(4), mix_var(4),
+    {'independent': 4 * pf * (1 - pf), 'pairs-once': 1 + 6 * cv, 'carried': 1 + 12 * pboth})
+num(L3, 'p-clustered-fills', 3, 12 * sqrt(VN(4)), sqrt(144 * mix_var(4)),
+    {'no-square': sqrt(12 * VN(4)), 'independent': 12, 'variance': 144 * VN(4)}, round_tol=0.0005)
+n_max = max(n for n in range(1, 40) if 144 * VN(n) <= 400)
+n_alt2 = max(n for n in range(1, 12) if 144 * mix_var(n) <= 400 + 1e-9)
+num(L3, 'p-clustered-fills', 4, n_max, n_alt2,
+    {'independent': max(n for n in range(1, 40) if 144 * n * F(1, 4) <= 400),
+     'pairs-once': max(n for n in range(1, 40) if 144 * (n * F(1, 4) + n * (n - 1) * cv / 2) <= 400)})
+ok(VN(5) == F(225, 100) and VN(6) == 3 and isclose(12 * sqrt(3), 20.78, abs_tol=0.005), 'n = 5, 6 figures as stated')
+
 
 present = [n for n in (1, 2, 3) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
