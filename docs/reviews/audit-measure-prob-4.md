@@ -76,3 +76,23 @@ Read after the ledger and findings were committed (commit `7717369b`): `docs/rev
 The two review-only findings had been fixed, so a blind read of the present content could not meet them. None of the nine audit findings appears in the review, in its fix pass, or in its "Checked and correct" list as a checked claim.
 
 For completeness, the answer check `docs/reviews/answers-3.2-measure-prob-4.md` (not part of the count) raised five further points of meaning, all fixed before this audit: the drift row of the l17 interview table, the "largest price" of the trinomial call, the attribution to Shreve II section 5.4, $Z_n > 0$ in the homework proof, and the fair die in l14 quiz `q-edge`. None matches a finding here. Its note on Shreve II section 5.4 touched the sentence of finding 7 on a different point: who proves the finite case, not which direction holds in continuous time.
+
+## Fix pass
+
+Opus fixer, content commit `504d882b`. Each basis is the fixer's own derivation or source; the auditor's figures were recomputed, not copied (scratch recomputation, then the corrected checks in `docs/reports/measure-prob-L4-concepts.py`). No graded key, accepted answer, option text, slip value or hidden test changed: the edits touch two `why` strings in l14 and l15, one `why`, one explain, one `byKey` feedback, one more `why` and one summary idea in l16, two explains in l17, and one question sentence in homework-4.
+
+1. fixed (wording adjusted: "has length 0 inside $[0, 2]$"). Basis: $Q(A) = \tfrac12|A \cap [0, 2]|$, so $Q(A) = 0$ forces $|A \cap [0, 1]| = 0$, i.e. $P(A) = 0$; $[3, 4]$ is $Q$-null with length 1, so the old reason was false.
+2. fixed as proposed. Basis: $E_P[Z] = 1$, so $E_Q[X] - E_P[Z]E_P[X] = E_P[ZX] - E_P[X] = \mathrm{cov}_P(Z, X)$; recomputed on the die, 0.7 for the face and 0 for $X = (1, 0, -1, 1, -1, 0)$.
+3. fixed (writes $4 \times 10^{11}$, the item's own figure, where the auditor wrote $10^{11}$). Basis: seed 21 rerun two ways (exponential weight and normal density ratio): weights sum to 0.31850, times 100,000 is 31,850.
+4. fixed (wording adjusted: "The rule divides by the known $Z_n$, which leaves ..."). Basis: Shreve I, Lemma 3.2.6, $\tilde E_n[Y] = E_n[Z_N Y]/Z_n$; for $X = 1$ the future weight averages 1 under $P$, yet option c gives $\tfrac56$ at node H against the true 1, so correlation is not the reason.
+5. fixed as proposed. Basis: with $P$-up chance $\tfrac12(1 + \tfrac{\theta}{\sqrt n})$ and $Q$ fair, $\ln Z_n = -U\ln(1 + e) - D\ln(1 - e)$ is strictly decreasing in $U$ (slope $-0.35$ per unit of walk at $n = 10{,}000$), and $\pm\theta B_1 - \tfrac{\theta^2}{2}$ share one law, so the moments alone cannot fix the sign.
+6. fixed as proposed, four strings. Basis: a $\pm1$ step with up chance $q$ has variance $4q(1 - q)$: 0.96 at $q = 0.6$, 1 at $q = \tfrac12$, so $\mathrm{Var}(S_{20})$ is 19.2 against 20; the step size and the pathwise sum of squared steps are unchanged, and with steps $\tfrac{1}{\sqrt n}$ the gap $\tfrac{\theta^2}{n}$ vanishes (quadratic variation is pathwise, Shreve II sec. 3.4 and 5.2).
+7. fixed (wording adjusted: "both parts", and "a stronger condition than no arbitrage"). Basis: Shreve II Thm 5.4.7 states only that a risk-neutral measure implies no arbitrage; Delbaen and Schachermayer (1994) show the converse needs NFLVR; Harrison and Pliska (1981) give both parts on finite markets. The new sentence is 33 words (under the 35 gate; the validator now raises one O2 long-sentence warning on it).
+8. fixed (wording adjusted: "the price a simulation under $Q$ estimates and trees with ever more steps approach"). Basis: Black-Scholes recomputed, $d_1 = 0.35$, £10.4506; CRR with 1,000 and 1,001 steps gives £10.4486 and £10.4523, while the lesson's two-step tree ($u = 1.2$, $d = 0.8$, 5%) gives $0.625^2 \times 44/1.05^2 = \text{£}15.59$.
+9. fixed as proposed. Basis: $(\tfrac12, 0, \tfrac12)$ sums to 1 and gives $65 + 0 + 35 = 100$, so it is a martingale measure with $q_m = 0$; equivalence to $P$ (Shreve II Def. 5.4.3) is what forces every chance positive, keeping the put below £15.
+
+Disputed: none. Not applied: none (the non-conceptual notes were left alone, as no changed sentence cites a lesson number).
+
+Script: the seven `EXPECTED_FAIL` checks were replaced by checks of the corrected claim, each marked "(corrected claim, fix pass)", each asserting the new content string and the fixer's own computation; two checks were added for findings 7 and 8. Result: 116 checks, 116 ok, 0 `EXPECTED_FAIL`, 0 FAIL, exit 0.
+
+Gates: validator 0 errors (4,134 warnings, one more than before: the O2 warning of finding 7); `content/manifest.json` unchanged. Voice scan 35: 0 and 0. Playthrough of l14, l15, l16, l17 and homework-4, desktop and `--mobile`: all passed.

@@ -134,8 +134,14 @@ check('l14.q0 E_P[X Z(X)] = theta = 0.5',
 # uniform pair: dP/dQ = 2 on [0,1]; Q-mean of dP/dQ is 1; Q << P fails
 check('l14.s5 P([1,2]) = 0, Q([1,2]) = 1/2, E_Q[dP/dQ] = 1', close(2 * 0.5, 1, 0))
 # l14.s5 option d why: "Q ignores only null sets of length 0". [3,4] has length 1 and Q([3,4]) = 0.
-check('l14.s5 option d why: every Q-null set has length 0', not (stats.uniform(0, 2).cdf(4) - stats.uniform(0, 2).cdf(3) == 0),
-      expected_fail=True)
+# (corrected claim, fix pass): a Q-null set has length 0 inside [0, 2], so inside [0, 1]; [3, 4] is Q-null with length 1
+why14d = DOC['l14-radon-nikodym']['screens'][5]['widget']['options'][3]['why']
+lin = lambda a, b, lo, hi: max(F(0), min(b, hi) - max(a, lo))
+grid = [F(k, 4) for k in range(-8, 21)]
+check('l14.s5 option d why (corrected claim, fix pass): a Q-null set has length 0 inside [0, 2], hence inside [0, 1], so P << Q',
+      'length 0 inside $[0, 2]$' in why14d and 'only null sets' not in why14d
+      and all(lin(a, b, 0, 2) > 0 or lin(a, b, 0, 1) == 0 for a in grid for b in grid if b > a)
+      and lin(F(3), F(4), 0, 2) == 0 and F(4) - F(3) == 1)
 # corrected: a Q-null interval meets [0,2] in length 0, hence meets [0,1] in length 0 (P-null)
 check('l14.s5 corrected: Q-null sets meet [0,2] in length 0, so P << Q',
       stats.uniform(0, 1).cdf(4) - stats.uniform(0, 1).cdf(3) == 0)
@@ -150,7 +156,15 @@ check('l14.q3 q = 0.6, Z_down = 0.8', close((1.02 - 0.9) / 0.2, 0.6, 1e-12) and 
 Xsym = {1: 1, 2: 0, 3: -1, 4: 1, 5: -1, 6: 0}   # cov_P(Z, X) = 0 on the die
 lhs = sum(P6[k] * Z6[k] * Xsym[k] for k in P6)
 rhs = sum(P6[k] * Z6[k] for k in P6) * sum(P6[k] * Xsym[k] for k in P6)
-check('l14.summary.trap: E_Q[X] != E_P[Z]E_P[X] for every X', lhs != rhs, expected_fail=True)
+trap14 = DOC['l14-radon-nikodym']['summary']['trap']
+Xface = {k: k for k in P6}
+covZ = lambda X: sum(P6[k] * (Z6[k] - 1) * (X[k] - sum(P6[j] * X[j] for j in P6)) for k in P6)
+EQ6 = lambda X: sum(Q6[k] * X[k] for k in P6)
+check('l14.summary.trap (corrected claim, fix pass): E_Q[X] = E_P[ZX] differs from E_P[Z]E_P[X] exactly when cov_P(Z, X) != 0',
+      'differ whenever $Z$ and $X$ are correlated under $P$' in trap14 and '\\ne' not in trap14
+      and lhs == rhs and covZ(Xsym) == 0
+      and EQ6(Xface) != sum(P6[k] * Xface[k] for k in P6) and covZ(Xface) == F(7, 10)
+      and all(EQ6(X) - sum(P6[k] * X[k] for k in P6) == covZ(X) for X in (Xsym, Xface)))
 # corrected: the two differ exactly by cov_P(Z, X)
 check('l14.summary.trap corrected: E_Q[X] - E_P[Z]E_P[X] = cov_P(Z, X)',
       all(sum(P6[k] * Z6[k] * X[k] for k in P6) - sum(P6[k] * X[k] for k in P6)
@@ -189,8 +203,11 @@ check('l15.s5/s6 seed 21: estimate 3.185e-5, s.e. 6.73e-7, 4,994 above 4, weight
 inv = (np.exp(4 * x21 - 8) * (x21 > 4)).mean()
 check('l15.s6/q3 inverted weight on seed 21 gives about 4e11 per 100,000 days', 3.5e11 < inv * 1e5 < 4.5e11)
 # l15.q3 option d why: the undivided total "would give 0.3185", but the item reports per 100,000 days
-check('l15.q3 option d: undivided total, in the item\'s unit per 100,000 days, is 0.3185',
-      close(w21.sum() * 1e5, 0.3185, 5e-3), expected_fail=True)
+why15d = DOC['l15-likelihood-ratios']['quiz'][3]['widget']['options'][3]['why']
+w21b = np.where(x21 > 4, stats.norm.pdf(x21) / stats.norm.pdf(x21, 4, 1), 0.0)   # second way: density ratio
+check('l15.q3 option d (corrected claim, fix pass): undivided total 0.3185, which is 31,850 per 100,000 days',
+      '0.3185' in why15d and '31,850 per 100,000 days' in why15d
+      and close(w21.sum(), 0.3185, 5e-5) and close(w21b.sum() * 1e5, 31850, 5))
 check('l15.q3 option d corrected: undivided total is 31,850 per 100,000 days', close(w21.sum() * 1e5, 31850, 5))
 # Monte Carlo: the estimator is unbiased and its per-draw relative error is as stated
 rng = np.random.default_rng(2026)
@@ -264,9 +281,16 @@ check('l16.s5 options b and c disagree with the Q-forecast at interior nodes', o
 check('l16.s5 tree labels 0.8333, 1.25, 0.6944, 1.0417, 1.5625',
       [round(float(Zw(w, pp, qq)), 4) for w in ('H', 'T', 'HH', 'HT', 'TT')] == [0.8333, 1.25, 0.6944, 1.0417, 1.5625])
 # option c why says the future weight "is correlated with X": false for X = 1 (and any X independent of the future)
-check('l16.s5 option c why: the future weight Z_N/Z_n is correlated with every X',
-      all(sum(chance(t, pp) * Zw(t, pp, qq) * X(t) for t in paths(2))
-          != sum(chance(t, pp) * X(t) for t in paths(2)) for X in (lambda w: 1, S)), expected_fail=True)
+why16c = DOC['l16-girsanov-on-a-tree']['screens'][5]['widget']['options'][2]['why']
+ok4 = True
+for X in (lambda w: 1, S, runmax):
+    for pre in paths(1):
+        eq = sum(chance(t, qq) * X(pre + t) for t in paths(1))
+        ratio = sum(chance(t, pp) * (Zw(pre + t, pp, qq) / Zw(pre, pp, qq)) * X(pre + t) for t in paths(1))
+        ok4 &= eq == ratio                                       # Z_n cancels; Z_N/Z_n stays inside
+X1c = Zw('H', pp, qq) * sum(chance(t, pp) * 1 for t in paths(1))  # option c for X = 1 gives 5/6, not 1
+check('l16.s5 option c why (corrected claim, fix pass): dividing by the known Z_n leaves Z_N/Z_n inside the average',
+      'divides by the known $Z_n$' in why16c and 'correlated' not in why16c and ok4 and X1c == F(5, 6))
 check('l16.s5 option c corrected: covariance is nonzero for X = S, zero for X = 1',
       sum(chance(t, pp) * Zw(t, pp, qq) * S(t) for t in paths(2)) != sum(chance(t, pp) * S(t) for t in paths(2))
       and sum(chance(t, pp) * Zw(t, pp, qq) for t in paths(2)) == 1)
@@ -302,9 +326,13 @@ check('l16.s6 MC: the plus-sign weight gives mean 2 theta T instead (slip "plus"
 check('l16.s6 MC: without the correction the mean weight is exp(theta^2 T/2)',
       close(np.exp(-theta * B).mean(), math.exp(theta ** 2 * T / 2), 0.003))
 # the table alone (mean and variance of ln Z) cannot fix the sign of theta B: both signs have the same law
-check('l16.s6 explain: mean and variance of ln Z identify -theta B_1 - theta^2/2 as a function of B',
-      not (close(np.log(Zplus).mean(), np.log(Zc).mean(), 0.002) and close(np.log(Zplus).var(), np.log(Zc).var(), 0.002)),
-      expected_fail=True)
+ex16s6 = DOC['l16-girsanov-on-a-tree']['screens'][6]['explain']['text']
+e5 = 0.35 / math.sqrt(10000)
+lnZU = [-u * math.log(1 + e5) - (10000 - u) * math.log(1 - e5) for u in range(4800, 5201, 25)]
+check('l16.s6 explain (corrected claim, fix pass): ln Z falls as the walk rises, so the sign is minus; moments alone match both signs',
+      'falls as the walk rises' in ex16s6
+      and all(b < a for a, b in zip(lnZU, lnZU[1:]))
+      and close(np.log(Zplus).mean(), np.log(Zc).mean(), 0.002) and close(np.log(Zplus).var(), np.log(Zc).var(), 0.002))
 # corrected: the sign follows from the path: ln Z_n = -theta * (walk end) + theta^2/2 to first order
 n = 10000
 e = theta / math.sqrt(n)
@@ -316,8 +344,13 @@ check('l16.s6 corrected: ln Z_n = -theta (walk) + theta^2/2 = -theta B_1 - theta
 # volatility claim: "the steps, the paths and the volatility stay"
 varP = 1 - float(2 * pp - 1) ** 2
 varQ = 1 - float(2 * qq - 1) ** 2
-check('l16.s7/summary: the step has the same standard deviation under P and Q', close(varP, varQ, 1e-12),
-      expected_fail=True)
+s7 = DOC['l16-girsanov-on-a-tree']['screens'][7]
+txt7 = [s7['explain']['text'], s7['widget']['options'][1]['why'], s7['feedback']['byKey']['b'],
+        DOC['l16-girsanov-on-a-tree']['summary']['ideas'][1]]
+check('l16.s7/summary (corrected claim, fix pass): step size kept, step s.d. moves on the tree, volatility kept only in the Brownian limit',
+      'size of every step' in txt7[0] and 'volatility' not in ' '.join(txt7[:3])
+      and 'in the Brownian limit so does the volatility' in txt7[3]
+      and not close(varP, varQ, 1e-12) and close(4 * float(pp * (1 - pp)), 0.96, 1e-12) and close(4 * float(qq * (1 - qq)), 1.0, 1e-12))
 check('l16.s7 corrected: squared steps add to n on every path (the pathwise volatility is unchanged)',
       all(sum((1 if c == 'H' else -1) ** 2 for c in w) == len(w) for w in paths(5)))
 check('l16.s7 corrected: step variance 0.96 under P and 1.00 under Q; Var S_20 is 19.2 and 20',
@@ -485,7 +518,11 @@ lo, hi = emm_range([130, 100, 70], [0, 0, 30], extra=([30, 0, 0], 6))
 # h4[4] part 0 says "Every martingale measure has q_m > 0": (1/2, 0, 1/2) is a martingale measure, not equivalent to P
 qb = (F(1, 2), F(0), F(1, 2))
 is_mm = sum(qb) == 1 and 130 * qb[0] + 100 * qb[1] + 70 * qb[2] == 100 and min(qb) >= 0
-check('h4[4] part 0: every martingale measure has q_m > 0', not is_mm, expected_fail=True)
+q4 = DOC['homework-4']['items'][4]['parts'][0]['question']
+eq_ok = all(30 * F(k, 200) < 15 for k in range(1, 100))           # q_d = k/200 in (0, 1/2): all chances positive
+check('h4[4] part 0 (corrected claim, fix pass): an EQUIVALENT martingale measure gives every outcome positive chance; (1/2, 0, 1/2) is a non-equivalent martingale measure',
+      'An equivalent martingale measure gives every outcome positive chance.' in q4 and 'Every martingale measure has' not in q4
+      and is_mm and qb[1] == 0 and eq_ok)
 check('h4[4] corrected: every EQUIVALENT martingale measure has all chances positive, so the put stays below 15',
       is_mm and 30 * qb[2] == 15)
 check('h4[4] with the call at 6 the put is 6 under every martingale measure; the market is complete (rank 3)',
@@ -509,6 +546,23 @@ check('h4[8] call 17.49; with p^2 alone 21.97', close(0.3364 * 56.25 / 1.0816, 1
 
 # ---------------------------------------------------------------------------
 fails = [n for n, s in results if s == 'FAIL']
+# findings 7 and 8 (fix pass): continuous-time first theorem is one direction; 10.4506 is the many-step limit
+ex17s1 = DOC['l17-risk-neutral-rigorous']['screens'][1]['explain']['text']
+ex17q2 = DOC['l17-risk-neutral-rigorous']['quiz'][2]['explain']['text']
+d1 = (math.log(1) + 0.05 + 0.02) / 0.2
+bs = 100 * stats.norm.cdf(d1) - 100 * math.exp(-0.05) * stats.norm.cdf(d1 - 0.2)
+def crr(nst):
+    dt = 1 / nst; u = math.exp(0.2 * math.sqrt(dt)); d = 1 / u; qn = (math.exp(0.05 * dt) - d) / (u - d)
+    return math.exp(-0.05) * sum(math.comb(nst, k) * qn ** k * (1 - qn) ** (nst - k) * max(100 * u ** k * d ** (nst - k) - 100, 0)
+                                 for k in range(nst + 1))
+check('l17.s1 explain (corrected claim, fix pass): finite markets both directions; continuous time existence rules out arbitrage, converse needs more',
+      'prove both parts for finite markets' in ex17s1 and 'converse needs a stronger condition' in ex17s1
+      and 'gives the Brownian version' not in ex17s1)
+check('l17.q2 explain (corrected claim, fix pass): 10.4506 is the limit of ever finer trees, not the two-step tree (15.59)',
+      'trees with ever more steps approach' in ex17q2 and close(bs, 10.4506, 5e-5)
+      and abs(crr(1000) - bs) < 0.005 and abs(crr(1001) - bs) < 0.005
+      and close(0.625 ** 2 * (144 - 100) / 1.05 ** 2, 15.59, 5e-3) and abs(15.59 - bs) > 5)
+
 xf = [n for n, s in results if s == 'EXPECTED_FAIL']
 fixed = [n for n, s in results if s == 'FIXED']
 for n, s in results:
