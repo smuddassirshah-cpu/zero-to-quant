@@ -20,3 +20,6 @@ node tools/planted-check.mjs --all-drills [--require] [--local-cdn <pkgs>]
 node tools/test-planted-check.mjs [--no-cpp] [--local-cdn <pkgs>]
 ```
 Output: `FAIL <id>: planted[0] passes all 14 hidden tests (slip: ...)`, then `planted-check: N drills checked, M planted solutions, K skipped without any, F failures`. Exit 1 on any failure.
+
+- Item 844 fix (stale read after a timed-out planted solution): `plantedOne` in `app/tools/playthrough.mjs` now submits through a local helper that awaits `drillReady` first, then awaits that submit's own promise before reading the results panel, so a Python restart can no longer leave the previous run's results to be read as the model's.
+- Test: fixture `planted-py-timeout` (first planted solution loops forever, second fails normally) added to `tools/test-planted-check.mjs`; green, as is `--require` over the 15 pack-1 `ci-` drills (44 planted solutions, 0 failures).
