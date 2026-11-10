@@ -1889,3 +1889,13 @@ Raised later (drills ci 1):
 - [Should] `playthrough.mjs --planted` (`plantedOne`, used by `planted-check.mjs`): after a submit that times out, the Python worker restarts and the next `ZQDrill.submit()` is a no-op while the status is `restarting`, so `drillSubmit` returns the previous run's results. Every drill whose planted list holds a too-slow solution then reports "the model solution passes 9 of 12" (11 of 15 in ci pack 1). Fix: `await drillReady(cpp)` before each planted submit and before the model submit; with that change on a scratch copy all 15 ci pack 1 drills are green.
 - [Could] Drill `brief` rendering (`block()` in `js/screens/drill.js`) has no lists and no single line breaks, so a `- line 1 ... - line 2` input format runs together in one paragraph (the `dsa` stdin briefs show it). ci pack 1 writes each input line as its own paragraph instead. Wanted: `-` list items or line breaks in drill briefs.
 - [Could] The validator's `pace ... over 30 minutes` warning fires on every difficulty-5 `ci` drill, which `docs/briefs/drills-ci-packs.md` allows up to 2,700 s. Raise the threshold to 2,700 for drills, or to 45 minutes.
+
+
+Raised later (fluency conditional):
+- [Could] No way to write a reduced fraction only when it differs from the working fraction. `conditional/fluency-l7-turning-around` `from-counts` ends "$\tfrac{18}{58}$, which is $\frac{9}{29}$ in lowest terms", and on draws already in lowest terms it reads "$\tfrac{9}{29}$, which is $\frac{9}{29}$ in lowest terms". `if` returns numbers only, so a text branch cannot be chosen. Want a format such as `{a/b:=frac}` writing `= \frac{n}{d}` when the reduced form differs and nothing otherwise, or an `if` that returns text.
+
+Raised later (fluency limits-thm):
+- [Could] No standard normal CDF in `let`. `limits-thm/fluency-l7-bell-curve` draws $z$ from a hand-written tuple of ten table values (`[[0.4, 0.6554], ...]`) and the prompt states $\Phi(z)$, which suits the lesson, but any later family (testing l3 p-values, l6 power, limits-thm l13 normal approximation) must copy the table again. Want `phi(x)` (and its inverse) in the evaluator, so a key can be `round(phi(z), 4)` and the prompt's table value computed, not typed.
+
+Raised later (fluency testing):
+- [Could] A var's range cannot depend on an earlier var. `testing/fluency-l4-t-test` `sharpe-t` wants $T$ from 2 to 10 for years and 6 to 60 for months, so it draws `y` from 2 to 60 and filters with `where: ["y >= lo", "y <= hi"]` from the period tuple, rejecting 213 of 413 draws (the validator allows 80%). Want `int` bounds that are expressions of earlier vars (`"y": { "int": ["lo", "hi"] }`).
