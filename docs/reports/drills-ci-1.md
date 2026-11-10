@@ -46,3 +46,5 @@ Not repeated from the ten existing `ci-` drills or the `dsa` hashing and prefix 
 ## Open
 
 - Check 6 needs the `plantedOne` fix (inbox bullet) before it can go green in the repo.
+
+Counts as authored; see `docs/reviews/review-drills-ci-1-2.md`, Fix pass, for later changes. `ci-zero-quads` is now difficulty 3 and `ci-mean-stretches` 4 (see the delta fix pass).

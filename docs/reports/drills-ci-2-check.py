@@ -27,7 +27,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DRILLS = os.path.join(HERE, "..", "..", "app", "content", "drills")
-IDS = ["ci-cancelled-to-back", "ci-late-fills-merge", "ci-two-desk-matches", "ci-widest-banner",
+IDS = ["ci-reference-split", "ci-late-fills-merge", "ci-two-desk-matches", "ci-widest-banner",
        "ci-van-pairs", "ci-three-leg-nets", "ci-frame-triples", "ci-excused-outages",
        "ci-capped-repeats", "ci-rota-swaps", "ci-basket-cover", "ci-ends-to-target",
        "ci-paired-signals", "ci-exact-venue-runs", "ci-hop-score"]
@@ -52,15 +52,24 @@ def count_matching_pairs(a, b, target):
 def widest_banner(posts):
     n = len(posts)
     if n <= 400:
-        return max([min(posts[i], posts[j]) * (j - i) for i in range(n) for j in range(i + 1, n)] + [0])
+        best = (0, 0)
+        for i in range(n):
+            for j in range(i + 1, n):
+                a = min(posts[i], posts[j]) * (j - i)
+                if a > 0 and (a, j - i) > best:
+                    best = (a, j - i)
+        return list(best)
     # tallest first: for each post as the shorter end, the partner is the farthest post at least as tall
     order = sorted(range(n), key=lambda i: -posts[i])
     lo = hi = order[0]
-    best = 0
+    best = (0, 0)
     for i in order[1:]:
         lo, hi = min(lo, i), max(hi, i)
-        best = max(best, posts[i] * max(i - lo, hi - i))
-    return best
+        w = max(i - lo, hi - i)
+        a = posts[i] * w
+        if a > 0 and (a, w) > best:
+            best = (a, w)
+    return list(best)
 
 def ints(text):
     return [int(v) for v in re.findall(r"-?\d+", text)]
@@ -293,7 +302,7 @@ def best_hop_total(gains, k):
     return best[-1]
 
 INDEP = {
-    "ci-cancelled-to-back": split_by_reference, "ci-late-fills-merge": merge_late_fills,
+    "ci-reference-split": split_by_reference, "ci-late-fills-merge": merge_late_fills,
     "ci-two-desk-matches": count_matching_pairs, "ci-widest-banner": widest_banner,
     "ci-van-pairs": solve_van_pairs, "ci-three-leg-nets": netting_triples,
     "ci-frame-triples": count_frames, "ci-excused-outages": solve_excused_outages,
@@ -311,14 +320,14 @@ INDEP = {
 # (BACKLOG-INBOX, drills ci 2). Here each must run past 5 s on one hidden test in CPython, which is
 # faster than Pyodide, so it also fails the browser's limit.
 SLOW = {
-    'ci-cancelled-to-back': [
+    'ci-reference-split': [
         'def split_by_reference(sizes, ref):\n    lo = 0\n    for i in range(len(sizes)):\n        if sizes[i] < ref:\n            sizes.insert(lo, sizes.pop(i))\n            lo += 1\n    hi = lo\n    for i in range(lo, len(sizes)):\n        if sizes[i] == ref:\n            sizes.insert(hi, sizes.pop(i))\n            hi += 1\n    return (lo, hi)\n',
     ],
     'ci-two-desk-matches': [
         'def count_matching_pairs(a, b, target):\n    count = 0\n    for x in a:\n        for y in b:\n            if x + y == target:\n                count += 1\n    return count\n',
     ],
     'ci-widest-banner': [
-        'def widest_banner(posts):\n    best = 0\n    for i in range(len(posts)):\n        for j in range(i + 1, len(posts)):\n            best = max(best, min(posts[i], posts[j]) * (j - i))\n    return best\n',
+        'def widest_banner(posts):\n    best, width = 0, 0\n    for i in range(len(posts)):\n        for j in range(i + 1, len(posts)):\n            area = min(posts[i], posts[j]) * (j - i)\n            if area > best or (area == best and area > 0 and j - i > width):\n                best, width = area, j - i\n    return [best, width]\n',
     ],
     'ci-three-leg-nets': [
         'from itertools import combinations\n\ndef netting_triples(sizes, target):\n    found = set()\n    for c in combinations(sorted(sizes), 3):\n        if sum(c) == target:\n            found.add(c)\n    return sorted(found)\n',
