@@ -22,7 +22,10 @@ edit() { # branch tag date
   node -e '
 const fs=require("fs"),[tag,rev,...fa]=process.argv.slice(1);
 const i="app/content/drills/index.json",d=JSON.parse(fs.readFileSync(i));
-for(const id of [fa[tag==="a"?0:1],fa[2]])d.push({id,name:"Test "+id,course:"py-found",difficulty:1});
+// a row must equal its drill file on name, course and difficulty (validator, ENGINE-BACKLOG 859), so copy them from the file
+const row=(id,src)=>{const f=JSON.parse(fs.readFileSync("app/content/drills/"+src+".json"));return {id,name:f.name,course:f.course,difficulty:f.difficulty};};
+for(const id of [fa[tag==="a"?0:1],fa[2]])d.push(row(id,id));
+d.push(row("zz-"+tag,fa[0]));   // the new zz drill file below is a non-sample file, so it needs a row too
 fs.writeFileSync(i,JSON.stringify(d,null,2)+"\n");
 const r=JSON.parse(fs.readFileSync(rev));r.items[0].prose="side-"+tag+" "+r.items[0].prose;
 fs.writeFileSync(rev,JSON.stringify(r,null,2)+"\n");' "$2" "$REV" "${FREE[@]}"

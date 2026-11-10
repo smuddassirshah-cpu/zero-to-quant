@@ -898,6 +898,8 @@ const main = async () => {
         /* the lesson done, as a learner's save would have it: the set shows on Today and the course row offers it */
         await page.evaluate(([c, l]) => { if (!(ZQ.state.lesson(c, l) || {}).done) ZQ.state.lessonFinished({ course: c, lesson: l, firstTry: [1, 1], perfect: false, seconds: 60 }); }, [course, lesson]);
         const progress = () => page.evaluate(() => { const d = ZQ.state.doc; return JSON.stringify({ xp: d.xp, mp: d.mp, skills: d.skills, lessons: d.lessons, reviews: d.reviews, homework: d.homework, exams: d.exams, redo: d.redo, prereq: d.prereq, perf: d.perf, count: d.streak.count, days: d.streak.days }); });
+        /* The Review screen assigns a level's homework the first time it opens once the level's lessons are all done (assignDue in review.js; the play's go('review') opens it, so leave the route first). That follows from the lessons marked done above, not from the attempt, so let it settle before the baseline */
+        await go('today'); await go('review');
         const before = await progress();
         /* course page: the lesson's card carries the Fluency row */
         await go(`course/${course}`);
@@ -1009,7 +1011,7 @@ const main = async () => {
           note = `${n} items, pass at ${mark}, 3 attempts, best ${rec ? rec.best : '?'}`;
         }
         const after = await progress();
-        if (after !== before) fails.push('a fluency attempt moved progress: the XP, mastery points, skills, lessons, reviews, homework, exams, redo queue, prerequisites or streak changed');
+        if (after !== before) { const B = JSON.parse(before), A = JSON.parse(after), moved = Object.keys(A).filter(k => JSON.stringify(A[k]) !== JSON.stringify(B[k])); fails.push(`a fluency attempt moved progress (${moved.join(', ')}): the XP, mastery points, skills, lessons, reviews, homework, exams, redo queue, prerequisites or streak changed`); if (process.env.PT_DEBUG) for (const k of moved) console.log(k, JSON.stringify(B[k]).slice(0, 400), '=>', JSON.stringify(A[k]).slice(0, 400)); }
         /* leaving part way keeps the family counts and is not an attempt */
         await page.evaluate(() => { delete window.ZQ.test; });
         await go('review');
