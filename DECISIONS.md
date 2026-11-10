@@ -226,3 +226,11 @@ Session U (6 Nov)
 - Fluency sets have no second reader. The gate is the validator's 200-seed sampling, `test-fluency.mjs` in the real grader, a sympy recompute of every family from its variable values, and the author reading 20 draws. A family the framework cannot express cleanly is skipped and raised, never approximated (the exp-log and trig `ln` and `sin` approximations are to be rewritten in the widening pass).
 - A reader's replacement item or value is never applied on trust: the fixer solves it again by two methods and checks templates and freshness.
 - An agent that keeps re-sending a finished hand-back because of its own stray background process is stopped once its commit is merged; agent briefs now say "start nothing in the background; hand back once".
+
+### Audit rules revised (10 Nov 2026, user)
+- Briefs `docs/briefs/fable-audit-session-prompt.md` and `docs/briefs/concept-audit.md`; reasons in `docs/reports/concept-audit-notes.md` "Audit session 2". A session already running finishes under the rules it started with.
+- (1) Waves of at most three agents. (2) A course is ineligible only if its folder was touched in the last 2 hours or changed by more than 40 lines in 24 hours; smaller changes fall to the delta rule. (3) Delta audits are batched: one Fable agent, up to eight reopened courses, one ledger per batch.
+- (4) Fixed budget of four course reads a session (auditor, fixer and fix-pass read; a delta batch is one) replaces the half-window rule; open fix passes come first and do not count. (5) `git fetch --unshallow` before the rebase.
+- (6) Every finding is tagged `serious` or `minor`; the log row records both counts. (7) Stage 0 ledgers cover definitions, rules, absolute claims, conventions, keys, wrong options and slips; hints and feedback only where they state a rule. Stages 1 to 3 keep the full ledger.
+- (8) Fix-pass read: a fresh Fable reader checks the fixer's diff of content strings before a course closes; a `wrong` returns to the Opus fixer and counts towards convergence (the number-sense l12 `wrong` came from a fixer). (9) The auditor brief mirrors 3, 6 and 7.
+- Also reconciled: disputed findings go to a fresh Fable reader in both briefs (the auditor brief said Opus).
