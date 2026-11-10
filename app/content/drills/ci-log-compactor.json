@@ -1,0 +1,125 @@
+{
+  "id": "ci-log-compactor",
+  "name": "Compacting an event log",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "stacks-queues",
+  "tags": [
+    "pack-3",
+    "log-compactor"
+  ],
+  "skills": [
+    "ci-strings",
+    "ci-patterns"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "compact_log",
+  "returns": "a string",
+  "brief": "A logger writes one lower-case letter per event. A compactor looks for `k` equal letters standing next to each other, deletes those `k`, and closes the gap. It repeats this until no `k` equal letters stand together. The final log is the same whatever order the deletions are made in.\n\nWrite `compact_log(log, k)`, which returns the final log.\n\nExample. For `log = \"xyyyxxz\"` and `k = 3` the three `y` go first, leaving `\"xxxz\"`. Then the three `x` go, so the answer is `\"z\"`.",
+  "constraints": [
+    "$0 \\le$ `len(log)` $\\le 200{,}000$ lower-case letters; $2 \\le k \\le 200{,}000$.",
+    "$O(n)$ time is the target. Rescanning the log after each deletion is too slow, and so is comparing the last `k` letters at every step.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep a stack of pairs: a letter and how many of it stand together at the top. When a count reaches `k`, pop the pair.",
+  "starter": "def compact_log(log, k):\n    # your code here\n    return log\n",
+  "examples": [
+    {
+      "call": "compact_log('xyyyxxz', 3)",
+      "expect": "'z'",
+      "compare": "equal",
+      "note": "The `y` run goes, the two `x` join the first one, and that run goes too."
+    },
+    {
+      "call": "compact_log('aaaa', 3)",
+      "expect": "'a'",
+      "compare": "equal",
+      "note": "Only `k` letters go at a time, so one `a` is left."
+    }
+  ],
+  "tests": [
+    {
+      "call": "compact_log('', 2)",
+      "expect": "''",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('q', 2)",
+      "expect": "'q'",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('aaaa', 3)",
+      "expect": "'a'",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('xyyyxxz', 3)",
+      "expect": "'z'",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('abba', 2)",
+      "expect": "''",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('abcba', 2)",
+      "expect": "'abcba'",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('aabbaa', 3)",
+      "expect": "'aabbaa'",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('aaabbbccc', 3)",
+      "expect": "''",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('baaab' * 2, 3)",
+      "expect": "'b'",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('abccbaab', 2)",
+      "expect": "'ab'",
+      "compare": "equal"
+    },
+    {
+      "call": "compact_log('ab' * 50000 + 'ba' * 50000, 2)",
+      "expect": "''",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[:6], r[-6:]))(compact_log('ab' * 100000, 50000))",
+      "expect": "(200000, 'ababab', 'ababab')",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[:6], r[-6:]))(compact_log(''.join('abc'[(i * i) % 3] for i in range(200000)), 2))",
+      "expect": "(2, 'ab', 'ab')",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def compact_log(log, k):\n    stack = []  # [letter, how many stand together]\n    for ch in log:\n        if stack and stack[-1][0] == ch:\n            stack[-1][1] += 1\n            if stack[-1][1] == k:\n                stack.pop()\n        else:\n            stack.append([ch, 1])\n    return ''.join(ch * n for ch, n in stack)\n",
+  "notes": [
+    "The stack holds runs, so a deletion uncovers the run below and the next letter can join it.",
+    "A run longer than `k` loses only `k` letters; the count wraps, it does not vanish.",
+    "Each letter is pushed and popped at most once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def compact_log(log, k):\n    out = []\n    i = 0\n    while i < len(log):\n        j = i\n        while j < len(log) and log[j] == log[i]:\n            j += 1\n        out.append(log[i] * ((j - i) % k))\n        i = j\n    return ''.join(out)\n",
+      "slip": "It removes each run once but never looks again, so letters that meet after a deletion stay."
+    },
+    {
+      "code": "def compact_log(log, k):\n    st = []\n    run, prev = 0, None\n    for ch in log:\n        run = run + 1 if ch == prev else 1\n        prev = ch\n        st.append(ch)\n        if run == k:\n            del st[-k:]\n            run, prev = 0, (st[-1] if st else None)\n    return ''.join(st)\n",
+      "slip": "After a deletion it restarts the count at 0, forgetting the equal letters now on top of the stack."
+    }
+  ]
+}

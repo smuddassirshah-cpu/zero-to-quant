@@ -1,0 +1,125 @@
+{
+  "id": "ci-free-block",
+  "name": "Largest block of free desks",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "stacks-queues",
+  "tags": [
+    "pack-3",
+    "free-block"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2700,
+  "fn": "largest_free_block",
+  "returns": "a whole number",
+  "brief": "A trading floor plan is a grid of desks. `rows` is a list of strings of equal length, one per row, where `.` is a free desk and `#` a taken one. A team needs a rectangle of free desks with sides along the grid. Find the most desks such a rectangle can hold.\n\nWrite `largest_free_block(rows)`. With no rows, or no free desk, the answer is 0.\n\nExample. For `rows = [\"..#.\", \"....\", \"#...\"]` the rectangle of rows 1 and 2, columns 1 to 3, holds 6 free desks, and no larger one fits. The answer is 6.",
+  "constraints": [
+    "$0 \\le r \\le 600$ rows of $1 \\le c \\le 600$ characters, each `.` or `#`.",
+    "$O(rc)$ time is the target. Trying every pair of rows and scanning the columns between is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "For each row, count the free desks running up from it in each column. That row is the base of a bar chart, and the largest rectangle under the bars is one stack pass.",
+  "starter": "def largest_free_block(rows):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "largest_free_block(['..#.', '....', '#...'])",
+      "expect": "6",
+      "compare": "equal",
+      "note": "Rows 1 and 2, columns 1 to 3, give 2 by 3 free desks."
+    },
+    {
+      "call": "largest_free_block(['.#', '#.'])",
+      "expect": "1",
+      "compare": "equal",
+      "note": "No two free desks touch, so the best is one desk."
+    }
+  ],
+  "tests": [
+    {
+      "call": "largest_free_block([])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['#'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['.'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['.#', '#.'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['..#.', '....', '#...'])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['....', '....'])",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['.', '.', '#', '.', '.', '.'])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['.##.', '....', '.##.'])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['...#', '..##', '.###', '####'])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['#....', '#...#', '.....', '...#.'])",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block(['.' * 600] * 600)",
+      "expect": "360000",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block([''.join('#' if (i * 31 + j * 17) % 23 == 0 else '.' for j in range(600)) for i in range(600)])",
+      "expect": "36",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_free_block([''.join('#' if (i * i + 7 * j) % 41 == 0 else '.' for j in range(600)) for i in range(600)])",
+      "expect": "1800",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method tries every pair of rows, $O(r^2 c)$; the step to $O(rc)$ is to treat each row as the base of a bar chart and run the largest-rectangle stack on it.",
+  "solution": "def largest_free_block(rows):\n    if not rows:\n        return 0\n    c = len(rows[0])\n    up = [0] * c  # free desks running up from this row\n    best = 0\n    for row in rows:\n        for j in range(c):\n            up[j] = up[j] + 1 if row[j] == '.' else 0\n        stack = []  # (left column, height), heights rising\n        for j, h in enumerate(up + [0]):\n            left = j\n            while stack and stack[-1][1] >= h:\n                left, top = stack.pop()\n                best = max(best, top * (j - left))\n            stack.append((left, h))\n    return best\n",
+  "notes": [
+    "Each row turns the grid above it into a bar chart, and the best rectangle has its base on some row.",
+    "A taken desk resets its column count to 0; otherwise blocks join across it.",
+    "Each row costs $O(c)$ for the counts and $O(c)$ for the stack pass, so the work is $O(rc)$."
+  ],
+  "planted": [
+    {
+      "code": "def largest_free_block(rows):\n    if not rows:\n        return 0\n    c = len(rows[0])\n    up = [0] * c\n    best = 0\n    for row in rows:\n        for j in range(c):\n            up[j] += row[j] == '.'\n        stack = []\n        for j, h in enumerate(up + [0]):\n            left = j\n            while stack and stack[-1][1] >= h:\n                left, top = stack.pop()\n                best = max(best, top * (j - left))\n            stack.append((left, h))\n    return best\n",
+      "slip": "It never resets a column count at a taken desk, so free desks above and below a `#` join up."
+    },
+    {
+      "code": "def largest_free_block(rows):\n    if not rows:\n        return 0\n    c = len(rows[0])\n    prev = [0] * c\n    best = 0\n    for row in rows:\n        cur = [0] * c\n        for j in range(c):\n            if row[j] == '.':\n                cur[j] = 1 + (min(prev[j], cur[j - 1], prev[j - 1]) if j else 0)\n                best = max(best, cur[j] * cur[j])\n        prev = cur\n    return best\n",
+      "slip": "It finds the largest square of free desks, but a rectangle can hold more."
+    }
+  ]
+}

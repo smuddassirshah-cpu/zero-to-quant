@@ -1,0 +1,125 @@
+{
+  "id": "ci-wide-bars",
+  "name": "Largest block under bars of mixed width",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "stacks-queues",
+  "tags": [
+    "pack-3",
+    "wide-bars"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "largest_block_area",
+  "returns": "a whole number",
+  "brief": "A depth chart draws each price level as a bar standing on one baseline. Bar `i` has width `widths[i]` and height `heights[i]`, and the bars stand side by side with no gaps. Find the largest area of a rectangle that sits on the baseline and stays under the bars.\n\nWrite `largest_block_area(widths, heights)`, which returns that area. With no bars it is 0.\n\nExample. For `widths = [1, 3, 2, 1]` and `heights = [2, 4, 3, 6]` the best rectangle spans the last three bars at height 3, so its width is 6 and the answer is 18.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ bars; each width between $1$ and $10^4$, each height between $0$ and $10^9$.",
+    "$O(n)$ time is the target. Growing a rectangle out from every bar is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep a stack of bars with rising heights, each with the left edge where its height starts. A lower bar pops every taller one; the popped height spans from its left edge to the current bar.",
+  "starter": "def largest_block_area(widths, heights):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "largest_block_area([1, 3, 2, 1], [2, 4, 3, 6])",
+      "expect": "18",
+      "compare": "equal",
+      "note": "Height 3 runs over widths 3, 2 and 1, so the area is 18."
+    },
+    {
+      "call": "largest_block_area([5, 1], [1, 4])",
+      "expect": "6",
+      "compare": "equal",
+      "note": "The narrow tall bar gives 4; the wide low span gives 6, which is larger."
+    }
+  ],
+  "tests": [
+    {
+      "call": "largest_block_area([], [])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([7], [3])",
+      "expect": "21",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([2, 2], [0, 0])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([1, 3, 2, 1], [2, 4, 3, 6])",
+      "expect": "18",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([5, 1], [1, 4])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([1, 1, 1, 1], [3, 3, 3, 3])",
+      "expect": "12",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([1, 1, 1, 1, 1], [1, 2, 3, 4, 5])",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([4, 1, 4], [2, 9, 2])",
+      "expect": "18",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([1, 10, 1], [5, 1, 5])",
+      "expect": "12",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([3, 1, 2, 2], [4, 0, 6, 5])",
+      "expect": "20",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([1] * 200000, [10 ** 9] * 200000)",
+      "expect": "200000000000000",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([1 + i % 7 for i in range(200000)], list(range(1, 200001)))",
+      "expect": "40000400000",
+      "compare": "equal"
+    },
+    {
+      "call": "largest_block_area([1 + (i * 31) % 10000 for i in range(200000)], [(i * 7919) % 1000003 for i in range(200000)])",
+      "expect": "288431559630",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method grows a rectangle from every bar, $O(n^2)$; the step to $O(n)$ is to let each bar wait on a stack until a lower bar fixes its right edge.",
+  "solution": "def largest_block_area(widths, heights):\n    best = 0\n    stack = []  # (left edge, height), heights rising\n    x = 0\n    for w, h in zip(widths + [0], heights + [0]):\n        left = x\n        while stack and stack[-1][1] >= h:\n            left, top = stack.pop()\n            best = max(best, top * (x - left))\n        stack.append((left, h))\n        x += w\n    return best\n",
+  "notes": [
+    "A popped bar's rectangle runs from the left edge it inherited to the bar that stopped it.",
+    "Without a zero-height bar at the end, the bars still on the stack are never measured.",
+    "Each bar is pushed and popped once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def largest_block_area(widths, heights):\n    best = 0\n    stack = []\n    for i, h in enumerate(heights + [0]):\n        left = i\n        while stack and stack[-1][1] >= h:\n            left, top = stack.pop()\n            best = max(best, top * (i - left))\n        stack.append((left, h))\n    return best\n",
+      "slip": "It counts bars instead of adding their widths, the classic version that ignores `widths`."
+    },
+    {
+      "code": "def largest_block_area(widths, heights):\n    best = 0\n    stack = []\n    x = 0\n    for w, h in zip(widths, heights):\n        left = x\n        while stack and stack[-1][1] >= h:\n            left, top = stack.pop()\n            best = max(best, top * (x - left))\n        stack.append((left, h))\n        x += w\n    return best\n",
+      "slip": "It never empties the stack at the end, so bars still rising at the right edge are never measured."
+    }
+  ]
+}

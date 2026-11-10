@@ -1,0 +1,125 @@
+{
+  "id": "ci-visible-masts",
+  "name": "Masts seen along a coast",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "stacks-queues",
+  "tags": [
+    "pack-3",
+    "visible-masts"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "visible_masts",
+  "returns": "a list of whole numbers",
+  "brief": "Radio masts stand in a line from west to east, and no two have the same height. Mast `i` can see mast `j` to its east when every mast strictly between them is shorter than both. For each mast, count the masts to its east that it can see.\n\nWrite `visible_masts(heights)`, which returns the counts in order.\n\nExample. For `heights = [10, 6, 8, 5, 11, 9]` mast 0 sees 6, 8 and 11; 5 hides behind 8, and 11 hides 9. The answer is `[3, 1, 2, 1, 1, 0]`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ masts, distinct heights between $1$ and $10^9$.",
+    "$O(n)$ time is the target. Looking east from every mast is too slow when the line rises slowly.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Walk from east to west with a stack of heights. A mast sees every shorter mast it pops, plus the first taller one left on the stack.",
+  "starter": "def visible_masts(heights):\n    # your code here\n    return [0] * len(heights)\n",
+  "examples": [
+    {
+      "call": "visible_masts([10, 6, 8, 5, 11, 9])",
+      "expect": "[3, 1, 2, 1, 1, 0]",
+      "compare": "equal",
+      "note": "Mast 0 sees 6, 8 and 11; mast 2 sees 5 and 11."
+    },
+    {
+      "call": "visible_masts([3, 1, 2])",
+      "expect": "[2, 1, 0]",
+      "compare": "equal",
+      "note": "Mast 0 sees 1, and 2 over it because 1 is shorter than both."
+    }
+  ],
+  "tests": [
+    {
+      "call": "visible_masts([])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([4])",
+      "expect": "[0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([3, 1, 2])",
+      "expect": "[2, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([10, 6, 8, 5, 11, 9])",
+      "expect": "[3, 1, 2, 1, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([1, 2, 3, 4])",
+      "expect": "[1, 1, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([4, 3, 2, 1])",
+      "expect": "[1, 1, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([5, 1, 2, 3, 4])",
+      "expect": "[4, 1, 1, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([2, 9, 1, 8, 3, 7])",
+      "expect": "[1, 2, 1, 2, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([6, 2, 5, 1, 4, 3, 7])",
+      "expect": "[3, 1, 3, 1, 2, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "visible_masts([1, 10, 2, 9, 3, 8])",
+      "expect": "[1, 2, 1, 2, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (len(s), sum(s), s[:3], s[-3:]))(visible_masts([200000] + list(range(1, 200000))))",
+      "expect": "(200000, 399997, [199999, 1, 1], [1, 1, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (len(s), sum(s), s[:3], s[-3:]))(visible_masts(list(range(200000, 0, -2)) + list(range(1, 200000, 2))))",
+      "expect": "(200000, 399997, [2, 3, 3], [1, 1, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (len(s), sum(s), s[:3], s[-3:]))(visible_masts([(i * 7919) % 200003 + 1 for i in range(200000)]))",
+      "expect": "(200000, 399925, [1, 1, 1], [1, 1, 0])",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method looks east from every mast, $O(n^2)$; the step to $O(n)$ is to keep only the masts still in view on a stack, walking west.",
+  "solution": "def visible_masts(heights):\n    n = len(heights)\n    seen = [0] * n\n    stack = []  # heights to the east, falling from bottom to top\n    for i in range(n - 1, -1, -1):\n        h = heights[i]\n        count = 0\n        while stack and stack[-1] < h:\n            stack.pop()\n            count += 1\n        if stack:\n            count += 1\n        seen[i] = count\n        stack.append(h)\n    return seen\n",
+  "notes": [
+    "A mast popped by a taller one to its west can never be seen past that taller mast.",
+    "The first taller mast left on the stack is seen too, so it adds one when the stack is not empty.",
+    "Each height is pushed once and popped at most once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def visible_masts(heights):\n    n = len(heights)\n    seen = [0] * n\n    stack = []\n    for i in range(n - 1, -1, -1):\n        h = heights[i]\n        count = 0\n        while stack and stack[-1] < h:\n            stack.pop()\n            count += 1\n        seen[i] = count\n        stack.append(h)\n    return seen\n",
+      "slip": "It counts the shorter masts it pops but forgets the taller one that stops the view."
+    },
+    {
+      "code": "def visible_masts(heights):\n    n = len(heights)\n    seen = [0] * n\n    stack = []  # positions waiting for a taller mast\n    nxt = [n] * n\n    for i, h in enumerate(heights):\n        while stack and heights[stack[-1]] < h:\n            nxt[stack.pop()] = i\n        stack.append(i)\n    for i in range(n):\n        seen[i] = nxt[i] - i if nxt[i] < n else n - 1 - i\n    return seen\n",
+      "slip": "It counts every mast up to the first taller one, though a mast hidden behind a nearer, taller one is not seen."
+    }
+  ]
+}

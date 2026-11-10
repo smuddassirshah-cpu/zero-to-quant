@@ -1,0 +1,120 @@
+{
+  "id": "ci-ring-lookup",
+  "name": "Lookups in a turned ring buffer",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "binary-search",
+  "tags": [
+    "pack-3",
+    "ring-lookup"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 1200,
+  "fn": "find_in_ring",
+  "returns": "a list of whole numbers",
+  "brief": "A ring buffer holds distinct order ids that were stored in rising order, but the read pointer has moved, so `ring` is that sorted list turned round at some point (perhaps not at all). For each id in `targets`, find its position in `ring`, or `-1` if it is absent.\n\nWrite `find_in_ring(ring, targets)`, which returns the positions in the order of `targets`.\n\nExample. For `ring = [40, 50, 10, 20, 30]` and `targets = [20, 45]` the id 20 sits at position 3 and 45 is absent. The answer is `[3, -1]`.",
+  "constraints": [
+    "$0 \\le n, q \\le 100{,}000$; ids are distinct whole numbers between $-10^9$ and $10^9$.",
+    "$O(\\log n)$ time per lookup is the target. Scanning the ring for each id is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "First find where the smallest id sits with one binary search against the last entry. Then search the sorted order as if it started there, taking positions modulo `n`.",
+  "starter": "def find_in_ring(ring, targets):\n    # your code here\n    return [-1] * len(targets)\n",
+  "examples": [
+    {
+      "call": "find_in_ring([40, 50, 10, 20, 30], [20, 45])",
+      "expect": "[3, -1]",
+      "compare": "equal",
+      "note": "The sorted order starts at position 2; 20 is its second id."
+    },
+    {
+      "call": "find_in_ring([1, 2, 3], [3, 0])",
+      "expect": "[2, -1]",
+      "compare": "equal",
+      "note": "A ring not turned at all is plain sorted; 0 is absent."
+    }
+  ],
+  "tests": [
+    {
+      "call": "find_in_ring([], [5])",
+      "expect": "[-1]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([7], [7, 8])",
+      "expect": "[0, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([2, 1], [1, 2, 3])",
+      "expect": "[1, 0, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([40, 50, 10, 20, 30], [20, 45])",
+      "expect": "[3, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([1, 2, 3], [3, 0])",
+      "expect": "[2, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([5, 6, 7, 1, 2, 3, 4], [5, 4, 1, 7, 8, 0])",
+      "expect": "[0, 6, 3, 2, -1, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([3, 1, 2], [3, 1, 2])",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([-5, -2, 0, -9, -7], [-9, -5, 0, -1])",
+      "expect": "[3, 0, 2, -1]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([9, 10, 2, 4, 6], [])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "find_in_ring([1000000000, -1000000000], [-1000000000, 1000000000])",
+      "expect": "[1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r), r.count(-1)))(find_in_ring(list(range(30000, 100000)) + list(range(30000)), list(range(-1000, 99000))))",
+      "expect": "(100000, 4930449500, 1000)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r), r.count(-1)))(find_in_ring([2 * ((i + 61729) % 100000) for i in range(100000)], [(i * 7919) % 200000 for i in range(100000)]))",
+      "expect": "(100000, 2499825000, 50000)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def find_in_ring(ring, targets):\n    n = len(ring)\n    lo, hi = 0, n - 1\n    while lo < hi:  # find the smallest id\n        mid = (lo + hi) // 2\n        if ring[mid] > ring[hi]:\n            lo = mid + 1\n        else:\n            hi = mid\n    start = lo\n    out = []\n    for t in targets:\n        a, b = 0, n  # search the sorted order, read from start\n        while a < b:\n            m = (a + b) // 2\n            if ring[(start + m) % n] < t:\n                a = m + 1\n            else:\n                b = m\n        k = (start + a) % n if n else 0\n        out.append(k if a < n and ring[k] == t else -1)\n    return out\n",
+  "notes": [
+    "Comparing with the last entry tells which side of the turn `mid` is on, even when there is no turn.",
+    "Comparing with the first entry fails on a ring that was never turned: every entry is at least the first.",
+    "One $O(\\log n)$ search finds the turn and one more answers each lookup."
+  ],
+  "planted": [
+    {
+      "code": "def find_in_ring(ring, targets):\n    out = []\n    for t in targets:\n        lo, hi, found = 0, len(ring) - 1, -1\n        while lo <= hi:\n            mid = (lo + hi) // 2\n            if ring[mid] == t:\n                found = mid\n                break\n            if ring[lo] < ring[mid]:\n                if ring[lo] <= t < ring[mid]:\n                    hi = mid - 1\n                else:\n                    lo = mid + 1\n            else:\n                if ring[mid] < t <= ring[hi]:\n                    lo = mid + 1\n                else:\n                    hi = mid - 1\n        out.append(found)\n    return out\n",
+      "slip": "It tests the left half with `<` where `<=` is needed, so when `lo` meets `mid` it searches the wrong half."
+    },
+    {
+      "code": "def find_in_ring(ring, targets):\n    n = len(ring)\n    lo, hi = 0, n - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if ring[mid] >= ring[0]:\n            lo = mid + 1\n        else:\n            hi = mid\n    start = lo\n    out = []\n    for t in targets:\n        a, b = 0, n\n        while a < b:\n            m = (a + b) // 2\n            if ring[(start + m) % n] < t:\n                a = m + 1\n            else:\n                b = m\n        k = (start + a) % n if n else 0\n        out.append(k if a < n and ring[k] == t else -1)\n    return out\n",
+      "slip": "It finds the turn by comparing with the first entry, which puts the start at the end when the ring is not turned."
+    }
+  ]
+}

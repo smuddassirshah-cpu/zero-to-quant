@@ -1,0 +1,125 @@
+{
+  "id": "ci-clear-rate",
+  "name": "Slowest rate that clears the queues",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "binary-search",
+  "tags": [
+    "pack-3",
+    "clear-rate"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "min_clear_rate",
+  "returns": "a whole number",
+  "brief": "A settlement worker clears job queues. `queues[i]` is the number of jobs in queue `i`. Each minute the worker picks one queue and clears up to `r` jobs from it; it never splits a minute between queues. So a queue of `q` jobs takes `ceil(q / r)` minutes. Find the smallest whole rate `r` that clears every queue within `minutes`.\n\nWrite `min_clear_rate(queues, minutes)`.\n\nExample. For `queues = [3, 6, 7, 11]` and `minutes = 8`, rate 4 takes 1 + 2 + 2 + 3 = 8 minutes, and rate 3 takes 1 + 2 + 3 + 4 = 10. The answer is 4.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ queues, each of $1$ to $10^9$ jobs; $n \\le$ `minutes` $\\le 10^9$, so an answer exists.",
+    "$O(n \\log m)$ time is the target, where $m$ is the largest queue. Trying rates 1, 2, 3 and so on is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "The minutes needed only fall as the rate rises, so binary search the rate between 1 and the largest queue. For a rate `r`, `(q + r - 1) // r` is the ceiling.",
+  "starter": "def min_clear_rate(queues, minutes):\n    # your code here\n    return 1\n",
+  "examples": [
+    {
+      "call": "min_clear_rate([3, 6, 7, 11], 8)",
+      "expect": "4",
+      "compare": "equal",
+      "note": "Rate 4 needs exactly 8 minutes; rate 3 needs 10."
+    },
+    {
+      "call": "min_clear_rate([5, 9], 2)",
+      "expect": "9",
+      "compare": "equal",
+      "note": "One minute per queue means the rate must match the largest queue."
+    }
+  ],
+  "tests": [
+    {
+      "call": "min_clear_rate([1], 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([10], 10)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([10], 3)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([5, 9], 2)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([3, 6, 7, 11], 8)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([3, 6, 7, 11], 4)",
+      "expect": "11",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([4, 4, 4], 6)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([1, 1, 1, 1000000000], 5)",
+      "expect": "500000000",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([12, 12, 12], 9)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([7, 1, 3], 1000)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([1000000000] * 100000, 100000)",
+      "expect": "1000000000",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([10 ** 9 - i * 997 for i in range(50000)], 1000000)",
+      "expect": "50000000",
+      "compare": "equal"
+    },
+    {
+      "call": "min_clear_rate([1 + (i * 7919) % 1000000000 for i in range(50000)], 3 * 10 ** 7)",
+      "expect": "330227",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def min_clear_rate(queues, minutes):\n    lo, hi = 1, max(queues)  # the largest queue always fits\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if sum((q + mid - 1) // mid for q in queues) <= minutes:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+  "notes": [
+    "The minutes needed never rise as the rate rises, which is what lets the search halve the range.",
+    "The answer can be the largest queue itself, so the range must include it; a queue rounds up, not down.",
+    "About 30 halvings, each a pass over the queues, so the work is $O(n \\log m)$."
+  ],
+  "planted": [
+    {
+      "code": "def min_clear_rate(queues, minutes):\n    lo, hi = 1, max(queues)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if sum(max(1, q // mid) for q in queues) <= minutes:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+      "slip": "It rounds the minutes per queue down, so a part-full last minute is not counted."
+    },
+    {
+      "code": "def min_clear_rate(queues, minutes):\n    lo, hi = 1, max(queues) - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if sum((q + mid - 1) // mid for q in queues) <= minutes:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+      "slip": "It starts the top of the search one below the largest queue, so it can never return that rate."
+    }
+  ]
+}

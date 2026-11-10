@@ -1,0 +1,126 @@
+{
+  "id": "ci-tray-queue",
+  "name": "A ticket queue from two trays",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "stacks-queues",
+  "tags": [
+    "pack-3",
+    "stdin",
+    "tray-queue"
+  ],
+  "skills": [
+    "ci-design",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1500,
+  "fn": "solve_tray_queue",
+  "returns": "a string",
+  "brief": "An order printer keeps tickets in two stacked trays. A new ticket goes on top of the in-tray. To serve a ticket it takes the top of the out-tray. When the out-tray is empty it first moves every ticket from the in-tray, one at a time from the top, onto the out-tray, which puts the oldest on top. If both trays are empty the serve gives `0`. The input comes as one string:\n\n- the first line holds `n`, the number of commands;\n- each of the next `n` lines is `in x`, a ticket with id `x`, or `out`, a serve.\n\nWrite `solve_tray_queue(text)`, which returns two lines joined by `\"\\n\"`: the number of tickets moved from tray to tray, then the ids served, separated by single spaces. With no serves the second line is empty. Expect extra spaces and blank lines.\n\nExample. For `\"5\\nin 4\\nin 9\\nout\\nin 2\\nout\\n\"` the first serve moves 9 and then 4, and serves 4. The second serves 9 from the out-tray with no move. The answer is `\"2\\n4 9\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ commands; ids are whole numbers between $1$ and $10^9$, written without leading zeros.",
+    "$O(n)$ time is the target: each ticket moves at most once. Moving the tickets back after every serve is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Split the text into words and keep two Python lists as the trays. Move tickets only when the out-tray is empty, and count each move.",
+  "starter": "def solve_tray_queue(text):\n    # your code here\n    return '0\\n'\n",
+  "examples": [
+    {
+      "call": "solve_tray_queue('5\\nin 4\\nin 9\\nout\\nin 2\\nout\\n')",
+      "expect": "'2\\n4 9'",
+      "compare": "equal",
+      "note": "Two tickets move at the first serve; the second serve needs no move."
+    },
+    {
+      "call": "solve_tray_queue('3\\nout\\nin 6\\nin 8\\n')",
+      "expect": "'0\\n0'",
+      "compare": "equal",
+      "note": "The serve finds both trays empty and gives 0; no ticket ever moves."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_tray_queue('0\\n')",
+      "expect": "'0\\n'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('1\\nout\\n')",
+      "expect": "'0\\n0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('2\\nin 5\\nin 6\\n')",
+      "expect": "'0\\n'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('5\\nin 4\\nin 9\\nout\\nin 2\\nout\\n')",
+      "expect": "'2\\n4 9'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('  4 \\n in 1 \\n\\n out\\nout \\n out\\n\\n')",
+      "expect": "'1\\n1 0 0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('7\\nin 1\\nin 2\\nout\\nin 3\\nin 4\\nout\\nout\\n')",
+      "expect": "'4\\n1 2 3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('8\\nin 10\\nout\\nin 20\\nin 30\\nout\\nin 40\\nout\\nout\\n')",
+      "expect": "'4\\n10 20 30 40'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('6\\nin 3\\nin 1\\nin 2\\nout\\nout\\nout\\n')",
+      "expect": "'3\\n3 1 2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('5\\nin 1000000000\\nout\\nout\\nin 7\\nout\\n')",
+      "expect": "'2\\n1000000000 0 7'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_tray_queue('9\\nin 1\\nin 2\\nin 3\\nout\\nin 4\\nout\\nout\\nout\\nout\\n')",
+      "expect": "'4\\n1 2 3 4 0'",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (r.split('\\n')[0], len(r.split('\\n')[1].split()), r[-20:]))(solve_tray_queue('200000\\n' + 'in 5\\n' * 100000 + 'out\\n' * 100000))",
+      "expect": "('100000', 100000, ' 5 5 5 5 5 5 5 5 5 5')",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (r.split('\\n')[0], sum(map(int, r.split('\\n')[1].split()))))(solve_tray_queue(str(200000) + '\\n' + ''.join('in %d\\nin %d\\nout\\nout\\n' % (i + 1, i + 2) for i in range(0, 100000, 2))))",
+      "expect": "('100000', 5000050000)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (r.split('\\n')[0], sum(map(int, r.split('\\n')[1].split()))))(solve_tray_queue('150000\\n' + ''.join('in %d\\n' % i for i in range(1, 100001)) + 'out\\nin 7\\n' * 25000))",
+      "expect": "('100000', 312512500)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_tray_queue(text):\n    words = text.split()\n    n = int(words[0]) if words else 0\n    in_tray, out_tray = [], []\n    served, moves = [], 0\n    i = 1\n    for _ in range(n):\n        if words[i] == 'in':\n            in_tray.append(words[i + 1])\n            i += 2\n            continue\n        i += 1\n        if not out_tray:\n            while in_tray:\n                out_tray.append(in_tray.pop())\n                moves += 1\n        served.append(out_tray.pop() if out_tray else '0')\n    return str(moves) + '\\n' + ' '.join(served)\n",
+  "notes": [
+    "Tickets move only when the out-tray is empty, so the oldest ticket is always on top of it.",
+    "Refilling a tray that still holds tickets buries them under newer ones and breaks the order.",
+    "Each ticket is moved at most once and popped once, so the work is $O(n)$ after reading."
+  ],
+  "planted": [
+    {
+      "code": "def solve_tray_queue(text):\n    words = text.split()\n    n = int(words[0]) if words else 0\n    in_tray, out_tray = [], []\n    served, moves = [], 0\n    i = 1\n    for _ in range(n):\n        if words[i] == 'in':\n            in_tray.append(words[i + 1])\n            i += 2\n            continue\n        i += 1\n        while in_tray:\n            out_tray.append(in_tray.pop())\n            moves += 1\n        served.append(out_tray.pop() if out_tray else '0')\n    return str(moves) + '\\n' + ' '.join(served)\n",
+      "slip": "It refills the out-tray at every serve, even when it still holds tickets, which buries older ones."
+    },
+    {
+      "code": "def solve_tray_queue(text):\n    words = text.split()\n    n = int(words[0]) if words else 0\n    in_tray, out_tray = [], []\n    served, moves = [], 0\n    i = 1\n    for _ in range(n):\n        if words[i] == 'in':\n            in_tray.append(words[i + 1])\n            i += 2\n            continue\n        i += 1\n        if not out_tray:\n            while in_tray:\n                out_tray.append(in_tray.pop())\n                moves += 1\n        if out_tray:\n            served.append(out_tray.pop())\n    return str(moves) + '\\n' + ' '.join(served)\n",
+      "slip": "It drops a serve that finds both trays empty instead of writing 0."
+    }
+  ]
+}
