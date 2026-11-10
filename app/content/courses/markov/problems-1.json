@@ -1,0 +1,943 @@
+{
+  "id": "problems-1",
+  "course": "markov",
+  "level": 1,
+  "title": "Problems: chains, paths and regimes",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-thin-book",
+      "difficulty": 3,
+      "skills": [
+        "mc-chains",
+        "mc-longrun"
+      ],
+      "prose": "A desk labels each minute of a futures order book Deep (D) or Thin (T). A record of 61 minutes holds 60 moves: 34 from D to D, 6 from D to T, 6 from T to D and 14 from T to T.",
+      "parts": [
+        {
+          "question": "Estimate $\\hat p_{TT}$, the chance a Thin minute is followed by another Thin minute. Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.7,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "of-all",
+                "value": 0.2333,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "over-stays",
+                "value": 0.2917,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "into-d",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Moves out of T: $6 + 14 = 20$, and 14 of them stay, so $\\hat p_{TT} = \\tfrac{14}{20} = 0.7$.",
+            "generic": "Not quite. Count the moves that leave T, then divide the ones that stay by that count.",
+            "byKey": {
+              "of-all": "You divided by all 60 moves. A row of $\\mathbf{P}$ uses only the moves out of its own state.",
+              "over-stays": "You divided by the moves that stay put in either state. Divide by the 20 moves out of T.",
+              "into-d": "That compares the 6 moves T to D with the 6 moves D to T. Use the moves out of T: 14 of 20 stay."
+            }
+          },
+          "explain": {
+            "text": "Each row of $\\mathbf{P}$ is estimated from the moves out of that state. T was left 20 times and stayed 14 times, so $\\hat p_{TT} = 0.7$. In the same way $\\hat p_{DD} = \\tfrac{34}{40} = 0.85$."
+          }
+        },
+        {
+          "question": "Using $\\hat p_{TT} = 0.7$ and $\\hat p_{DD} = 0.85$ as the true chances, the book is Thin now. What is the chance it is Thin two minutes from now? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.535,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "stay-path",
+                "value": 0.49,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "d-stays",
+                "value": 0.745,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "row-twice",
+                "value": 0.58,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(\\mathbf{P}^2)_{TT} = 0.7 \\times 0.7 + 0.3 \\times 0.15 = 0.49 + 0.045 = 0.535$.",
+            "generic": "Not quite. Split the two minutes by the middle minute, D or T, and add the two paths.",
+            "byKey": {
+              "stay-path": "That is the path T, T, T alone. The book can also go Deep and come back: add $0.3 \\times 0.15$.",
+              "d-stays": "You used $\\hat p_{DD} = 0.85$ for the second step of the D path. The book must leave D to be Thin: $0.15$.",
+              "row-twice": "You used row T for both steps. The second step of the D path starts in D, so use $\\hat p_{DT} = 0.15$."
+            }
+          },
+          "explain": {
+            "text": "Row T of $\\mathbf{P}$ is $(0.3, 0.7)$ in the order D, T, and column T is $(0.15, 0.7)$. Their product adds the two middle states: $0.3 \\times 0.15 + 0.7 \\times 0.7 = 0.535$."
+          }
+        },
+        {
+          "question": "Using $\\hat p_{TT} = 0.7$, how many minutes does a Thin spell last on average? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.3333,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "used-stay",
+                "value": 1.4286,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "further",
+                "value": 2.3333,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "two-step",
+                "value": 2.1505,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A Thin spell ends each minute with chance $0.3$, so it lasts $\\tfrac{1}{0.3} \\approx 3.33$ minutes on average.",
+            "generic": "Not quite. A spell's length is geometric. Its mean is one over the chance of leaving.",
+            "byKey": {
+              "used-stay": "You divided by the chance of staying, 0.7. The mean run is $\\tfrac{1}{1 - p_{TT}}$.",
+              "further": "That is $\\tfrac{0.7}{0.3}$, the minutes still to come after the first one. Count the first minute too.",
+              "two-step": "You used 0.535 from part 2. A run ends on the first exit, so use the one-step chance 0.7."
+            }
+          },
+          "explain": {
+            "text": "The spell survives each minute with chance 0.7, whatever its age. Its length is geometric with exit chance 0.3, so the mean is $\\tfrac{1}{0.3} \\approx 3.33$ minutes. A Deep spell lasts $\\tfrac{1}{0.15} \\approx 6.67$ minutes."
+          }
+        },
+        {
+          "question": "A Deep spell lasts $\\tfrac{1}{0.15} \\approx 6.67$ minutes on average, and a Thin spell $3.33$ from part 3. Over a long stretch, what share of minutes is the book Thin? Give a fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3333,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "equal",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "swapped",
+                "value": 0.6667,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "stay-ratio",
+                "value": 0.4516,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each Deep and Thin cycle lasts $6.67 + 3.33 = 10$ minutes on average, and $3.33$ are Thin: $\\tfrac{1}{3} \\approx 0.3333$.",
+            "generic": "Not quite. Divide the mean Thin spell by the mean length of one Deep spell plus one Thin spell.",
+            "byKey": {
+              "equal": "The two kinds of spell alternate, but they are not equally long. Weight each by its mean length.",
+              "swapped": "That is the Deep share, $\\tfrac{6.67}{10}$. The Thin spells are the shorter ones.",
+              "stay-ratio": "That is $\\tfrac{0.7}{0.7 + 0.85}$, a ratio of the staying chances. Use the mean spell lengths."
+            }
+          },
+          "explain": {
+            "text": "Spells alternate, so a cycle averages $6.67 + 3.33 = 10$ minutes, of which $3.33$ are Thin. The share is $\\tfrac{1}{3}$. The record agrees: 20 of its 60 moves start in T."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-two-losses",
+      "difficulty": 4,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "A trader's next trade wins with chance 0.7 after a win and 0.4 after a loss. Her first trade of the day is treated as coming after a win. She stops for the day after two losses in a row. After each trade her state is W (last trade won), L (last trade lost) or S (stopped).",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.7,
+                  0.3,
+                  0
+                ],
+                [
+                  0.4,
+                  0,
+                  0.6
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "label": "$\\mathbf{P}$, order W, L, S"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "parts": [
+        {
+          "question": "She starts in W. What is the chance her first four trades go loss, win, loss, loss? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0216,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "iid",
+                "value": 0.0189,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "last-loss",
+                "value": 0.0108,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "win-after-loss",
+                "value": 0.0378,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.3 \\times 0.4 \\times 0.3 \\times 0.6 = 0.0216$.",
+            "generic": "Not quite. Multiply one arrow per trade, each read from the state the trade starts in.",
+            "byKey": {
+              "iid": "You used 0.7 for every win and 0.3 for every loss. The win after a loss has chance 0.4, and the loss after it 0.6.",
+              "last-loss": "You used 0.3 for the last loss. It follows a loss, so its chance is $1 - 0.4 = 0.6$.",
+              "win-after-loss": "You used 0.7 for the win. It follows a loss, so its chance is 0.4."
+            }
+          },
+          "explain": {
+            "text": "The path steps W to L, L to W, W to L, then L to S. Each factor needs only the state before it: $0.3 \\times 0.4 \\times 0.3 \\times 0.6 = 0.0216$."
+          }
+        },
+        {
+          "question": "What is the chance she has stopped after two trades? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.18,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "loss-squared",
+                "value": 0.09,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-step",
+                "value": 0.6,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "path-l",
+                "value": 0.21,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Two losses from W: $0.3 \\times 0.6 = 0.18$, the S entry of row W of $\\mathbf{P}^2$.",
+            "generic": "Not quite. Find entry $(W, S)$ of $\\mathbf{P}^2$: row W times column S.",
+            "byKey": {
+              "loss-squared": "You used 0.3 for the second loss too. After a loss the next trade loses with chance 0.6.",
+              "one-step": "That is the chance of stopping from L in one trade. From W she must lose first, with chance 0.3.",
+              "path-l": "That is the chance of being in L after two trades, $0.7 \\times 0.3$. Stopping needs both trades lost."
+            }
+          },
+          "explain": {
+            "text": "Row W of $\\mathbf{P}$ is $(0.7, 0.3, 0)$ and column S is $(0, 0.6, 1)$. Their product is $0.3 \\times 0.6 = 0.18$. Row W of $\\mathbf{P}^2$ is $(0.61, 0.21, 0.18)$."
+          }
+        },
+        {
+          "question": "Row W of $\\mathbf{P}^2$ is $(0.61, 0.21, 0.18)$, and part 2 found the 0.18. What is the chance she has stopped after three trades? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.306,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "new-only",
+                "value": 0.126,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-step",
+                "value": 0.39,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "loss-low",
+                "value": 0.243,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.61 \\times 0 + 0.21 \\times 0.6 + 0.18 \\times 1 = 0.306$.",
+            "generic": "Not quite. Take row W of $\\mathbf{P}^2$ times column S of $\\mathbf{P}$.",
+            "byKey": {
+              "new-only": "That is only the stops on trade 3. Those stopped by trade 2 stay in S: add 0.18.",
+              "no-step": "You added the L entry, 0.21, as if every L stops. From L the next trade stops her with chance 0.6.",
+              "loss-low": "You used 0.3 for the loss from L. After a loss the next trade loses with chance 0.6."
+            }
+          },
+          "explain": {
+            "text": "S is absorbing, so $(\\mathbf{P}^3)_{WS}$ is the chance of having stopped by trade 3. It is $0.18$ already stopped plus $0.21 \\times 0.6 = 0.126$ new: $0.306$."
+          }
+        },
+        {
+          "question": "Using row W of $\\mathbf{P}^2$, $(0.61, 0.21, 0.18)$, what is the chance she stops on her fourth trade exactly? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1098,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "cumulative",
+                "value": 0.4158,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "trade-three",
+                "value": 0.126,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "from-w",
+                "value": 0.366,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "She is in L after three trades with chance $0.61 \\times 0.3 = 0.183$, then loses with chance 0.6: $0.183 \\times 0.6 = 0.1098$.",
+            "generic": "Not quite. She stops on trade 4 only from L after trade 3. Find that chance first.",
+            "byKey": {
+              "cumulative": "That is $(\\mathbf{P}^4)_{WS}$, stopped by trade 4. Take off the 0.306 already stopped by trade 3.",
+              "trade-three": "That is the stop on trade 3, $0.21 \\times 0.6$. Move one more trade: she reaches L on trade 3 only from W.",
+              "from-w": "You multiplied 0.61 by 0.6, as if a stop could follow a win. From W she must first lose, with chance 0.3."
+            }
+          },
+          "explain": {
+            "text": "A stop on trade 4 needs L after trade 3 and a loss on trade 4. L after trade 3 comes only from W after trade 2: $0.61 \\times 0.3 = 0.183$. So the chance is $0.183 \\times 0.6 = 0.1098$, the step from $0.306$ to $0.4158$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-margin-calls",
+      "difficulty": 4,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "A broker checks each client account once a day. An account is Healthy (H), on a Margin call (M) or Liquidated (X), and a liquidated account stays liquidated.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.9,
+                  0.1,
+                  0
+                ],
+                [
+                  0.5,
+                  0.3,
+                  0.2
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "label": "$\\mathbf{P}$, order H, M, X"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "parts": [
+        {
+          "question": "An account is on a margin call today. What is the chance it is Healthy at least once in the next two days? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.65,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "on-day-two",
+                "value": 0.6,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-day",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "added",
+                "value": 0.8,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Healthy tomorrow with chance 0.5, or still on the call and then Healthy with chance $0.3 \\times 0.5$. In all $0.5 + 0.15 = 0.65$.",
+            "generic": "Not quite. Add the two first-visit paths: H tomorrow, or M tomorrow and H the day after.",
+            "byKey": {
+              "on-day-two": "That is $(\\mathbf{P}^2)_{MH}$, Healthy on day 2 itself. It leaves out accounts Healthy tomorrow that fall back to M on day 2.",
+              "one-day": "That is tomorrow alone. An account still on the call tomorrow gets a second chance.",
+              "added": "You added 0.3 as a whole. Staying on the call is not a return: it must be followed by a move to H."
+            }
+          },
+          "explain": {
+            "text": "The first visit to H comes on day 1 (0.5) or on day 2 ($0.3 \\times 0.5 = 0.15$). The paths do not overlap, so the chance is $0.65$. Being Healthy on day 2, $(\\mathbf{P}^2)_{MH} = 0.6$, is a different event."
+          }
+        },
+        {
+          "question": "Part 1 found $0.5 + 0.3 \\times 0.5 = 0.65$ for two days. Now allow any number of days. What is the chance an account on a margin call today is ever Healthy again? Give a fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.7143,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "two-days",
+                "value": 0.65,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-day",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-x",
+                "value": 0.625,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "If $h$ is the chance, then $h = 0.5 + 0.3h$, so $h = \\tfrac{0.5}{0.7} = \\tfrac{5}{7} \\approx 0.7143$.",
+            "generic": "Not quite. Each day on the call is a fresh start: $h = 0.5 + 0.3h$.",
+            "byKey": {
+              "two-days": "That stops at two days. Every extra day on the call adds another chance: $0.5 + 0.3 \\times 0.5 + 0.3^2 \\times 0.5 + \\dots$",
+              "one-day": "That is tomorrow alone. A day on the call comes back to the same position.",
+              "no-x": "You divided 0.5 by $0.5 + 0.3$. Divide by the chance of leaving M, $0.5 + 0.2 = 0.7$."
+            }
+          },
+          "explain": {
+            "text": "A day on the call leaves the account where it began, so $h = 0.5 + 0.3h$ and $h = \\tfrac{5}{7}$. As a sum, $0.5(1 + 0.3 + 0.3^2 + \\dots) = \\tfrac{0.5}{0.7}$, which extends part 1."
+          }
+        },
+        {
+          "question": "Using $h = \\tfrac{5}{7}$ from part 2, what is $f_H$, the chance a Healthy account is ever Healthy again on a later day? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.9714,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "loop-only",
+                "value": 0.9,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "one-day",
+                "value": 0.95,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "two-days",
+                "value": 0.965,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "via-m",
+                "value": 0.0714,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$f_H = 0.9 + 0.1 \\times \\tfrac{5}{7} = \\tfrac{34}{35} \\approx 0.9714$.",
+            "generic": "Not quite. Split on tomorrow: H again at once, or M and then back with chance $h$.",
+            "byKey": {
+              "loop-only": "That is the loop alone. An account that goes to M can still come back, with chance $\\tfrac{5}{7}$.",
+              "one-day": "You used 0.5 for the way back from M. Part 2 gave $\\tfrac{5}{7}$ with no limit on days.",
+              "two-days": "You used 0.65, the two-day chance from part 1. The return may take any number of days: use $\\tfrac{5}{7}$.",
+              "via-m": "That is the return through M alone. Add the loop, 0.9."
+            }
+          },
+          "explain": {
+            "text": "Tomorrow the account is Healthy again (0.9) or on a call (0.1), from which it returns with chance $\\tfrac{5}{7}$. So $f_H = 0.9 + 0.1 \\times \\tfrac{5}{7} \\approx 0.9714$, just below 1, and H is transient."
+          }
+        },
+        {
+          "question": "With $f_H \\approx 0.9714$ from part 3, the broker calls Healthy accounts safe. What happens in this model to an account that is Healthy today, with no limit on time?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "liquidated",
+                "text": "It is liquidated in the end with chance 1: H and M are transient, and X is the only closed class.",
+                "correct": true
+              },
+              {
+                "id": "stays",
+                "text": "It stays Healthy for ever with chance 0.9714.",
+                "why": "That reads $f_H$ as staying for ever. $f_H$ is the chance of one more return, and each return risks the next."
+              },
+              {
+                "id": "split",
+                "text": "It is liquidated with chance 0.0286 and stays out of X otherwise.",
+                "why": "That uses only the first trip. After each return the account faces the same 0.0286 again, and those risks add up."
+              },
+              {
+                "id": "share",
+                "text": "It is liquidated with chance $\\tfrac{2}{7}$, the share of calls that end in X.",
+                "why": "That is the chance a single margin call ends in X before H. An account has many calls over time."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Each visit to H is the last with chance 0.0286. So in the end the account leaves H for good, for X.",
+            "generic": "Not quite. Ask which states the chain can leave and never come back to."
+          },
+          "explain": {
+            "text": "H and M can both reach X, and X never leads back, so both are transient. Each visit to H is followed by no return with chance $1 - 0.9714 = 0.0286$, so the returns stop in the end. The chance then sits in X, the only closed class."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-carry-pause",
+      "difficulty": 5,
+      "skills": [
+        "mc-chains",
+        "mc-longrun"
+      ],
+      "prose": "A carry trade makes £3m in a calm month and loses £8m in a stressed month. The regime is a chain: calm stays calm with chance 0.95, and stressed stays stressed with chance 0.7. Each month's P&L is set by that month's regime.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.95,
+                  0.05
+                ],
+                [
+                  0.3,
+                  0.7
+                ]
+              ],
+              "label": "$\\mathbf{P}$, order calm, stressed"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "parts": [
+        {
+          "question": "How many months does a stressed spell last on average? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.3333,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "used-stay",
+                "value": 1.4286,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "further",
+                "value": 2.3333,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "calm",
+                "value": 20,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A stressed spell ends each month with chance 0.3, so it lasts $\\tfrac{1}{0.3} \\approx 3.33$ months on average.",
+            "generic": "Not quite. The mean run is one over the chance of leaving the regime.",
+            "byKey": {
+              "used-stay": "You divided by the chance of staying, 0.7. Divide by the chance of leaving, 0.3.",
+              "further": "That is $\\tfrac{0.7}{0.3}$, the months after the first. Count the first month too.",
+              "calm": "That is the calm spell, $\\tfrac{1}{0.05}$. The question asks about stress."
+            }
+          },
+          "explain": {
+            "text": "Stress persists with chance 0.7, so its spells are geometric with exit chance 0.3. The mean is $\\tfrac{1}{0.3} \\approx 3.33$ months, against $\\tfrac{1}{0.05} = 20$ for a calm spell."
+          }
+        },
+        {
+          "question": "A calm spell lasts 20 months on average, and a stressed spell $3.33$ from part 1. Over a long stretch, what share of months are calm? Give a fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.8571,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "stay-ratio",
+                "value": 0.5758,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "used-stay",
+                "value": 0.9333,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "swapped",
+                "value": 0.1429,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "equal",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{20}{20 + 3.33} = \\tfrac{6}{7} \\approx 0.8571$.",
+            "generic": "Not quite. Divide the mean calm spell by the mean length of one calm plus one stressed spell.",
+            "byKey": {
+              "stay-ratio": "That is $\\tfrac{0.95}{0.95 + 0.7}$. Weight each regime by its mean spell length instead.",
+              "used-stay": "You used $\\tfrac{1}{0.7} \\approx 1.43$ for the stressed spell. Part 1 gives 3.33 months.",
+              "swapped": "That is the stressed share. Calm spells are the long ones.",
+              "equal": "Calm and stressed spells alternate, but calm ones last six times as long."
+            }
+          },
+          "explain": {
+            "text": "A calm spell and a stressed spell together average $20 + 3.33 = 23.33$ months. The calm share is $\\tfrac{20}{23.33} = \\tfrac{6}{7}$, which is also $\\tfrac{0.3}{0.05 + 0.3}$."
+          }
+        },
+        {
+          "question": "Using the calm share $\\tfrac{6}{7}$ from part 2, what is the trade's long-run average P&L per month, in £m? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.4286,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "equal",
+                "value": -2.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "used-stay",
+                "value": 2.2667,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sign",
+                "value": 3.7143,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "swapped",
+                "value": -6.4286,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{6}{7} \\times 3 - \\tfrac{1}{7} \\times 8 = \\tfrac{10}{7} \\approx 1.43$.",
+            "generic": "Not quite. Weight each month's P&L by the share of months in that regime.",
+            "byKey": {
+              "equal": "You gave the two regimes equal weight. Calm months are $\\tfrac{6}{7}$ of all months.",
+              "used-stay": "That uses a calm share of 0.9333 from a stressed spell of 1.43 months. Use $\\tfrac{6}{7}$.",
+              "sign": "You added the £8m. A stressed month loses it.",
+              "swapped": "You gave the calm share to the stressed months. Calm is $\\tfrac{6}{7}$."
+            }
+          },
+          "explain": {
+            "text": "In the long run $\\tfrac{6}{7}$ of months make £3m and $\\tfrac{1}{7}$ lose £8m. The average is $\\tfrac{18 - 8}{7} = \\tfrac{10}{7} \\approx £1.43$m a month."
+          }
+        },
+        {
+          "question": "This month is stressed. If the trade stays on, what is the expected P&L next month, in £m? Give a decimal to 1 place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -4.7,
+            "tol": {
+              "abs": 0.05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "stays",
+                "value": -8,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "calm-row",
+                "value": 2.45,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "long-run",
+                "value": 1.4286,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "swapped",
+                "value": -0.3,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.3 \\times 3 + 0.7 \\times (-8) = 0.9 - 5.6 = -4.7$.",
+            "generic": "Not quite. Weight next month's two P&Ls by row stressed of $\\mathbf{P}$.",
+            "byKey": {
+              "stays": "That assumes stress certainly lasts. It ends next month with chance 0.3.",
+              "calm-row": "You used row calm, $(0.95, 0.05)$. This month is stressed, so use $(0.3, 0.7)$.",
+              "long-run": "That is the long-run average from part 3. Next month depends on this month's regime.",
+              "swapped": "You swapped the two chances in row stressed. Stress stays with chance 0.7."
+            }
+          },
+          "explain": {
+            "text": "Next month is calm with chance 0.3 and stressed with chance 0.7, so the expected P&L is $0.3 \\times 3 + 0.7 \\times (-8) = -4.7$. From a calm month it is $0.95 \\times 3 + 0.05 \\times (-8) = 2.45$."
+          }
+        },
+        {
+          "question": "A new rule runs the trade next month only when this month is calm, and earns 0 otherwise. A calm month is followed by an expected £2.45m, and part 4 found −£4.7m after a stressed one. Using the calm share $\\tfrac{6}{7}$, what is the long-run average P&L per month under the rule, in £m? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.1,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "ignores-switch",
+                "value": 2.5714,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "unweighted",
+                "value": 2.45,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "always-on",
+                "value": 1.4286,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "gain",
+                "value": 0.6714,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{6}{7} \\times 2.45 + \\tfrac{1}{7} \\times 0 = 2.1$.",
+            "generic": "Not quite. Weight each regime this month by its share, then use the expected P&L the rule takes next month.",
+            "byKey": {
+              "ignores-switch": "That is $\\tfrac{6}{7} \\times 3$, as if a calm month were always followed by a calm one. Use the expected £2.45m.",
+              "unweighted": "That is the month after a calm month. The rule earns it only in the $\\tfrac{6}{7}$ of months that are calm.",
+              "always-on": "That counts the −£4.7m after stressed months, which the rule avoids. Under the rule those months earn 0.",
+              "gain": "That is the gain over always on, $\\tfrac{1}{7} \\times 4.7$. Add it to the £1.43m of part 3."
+            }
+          },
+          "explain": {
+            "text": "The rule earns £2.45m on average after each calm month and nothing after a stressed one. Calm months are $\\tfrac{6}{7}$ of all, so the average is $\\tfrac{6}{7} \\times 2.45 = £2.1$m. That beats £1.43m by $\\tfrac{4.7}{7} \\approx 0.67$, the loss it skips."
+          }
+        }
+      ]
+    }
+  ]
+}
