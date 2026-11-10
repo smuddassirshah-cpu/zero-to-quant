@@ -1,0 +1,306 @@
+{
+  "id": "cpp-temp-limit",
+  "name": "A limit lowered for one block",
+  "course": "cpp",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "raii",
+    "destructor",
+    "reference-member"
+  ],
+  "skills": [
+    "cp-classes",
+    "cp-memory"
+  ],
+  "difficulty": 2,
+  "pace": 660,
+  "brief": "A risk check lowers a trader's order limit for the length of one block of code, then puts it back. Write the class `TempLimit`. Its constructor `TempLimit(int& limit, int cap)` lowers `limit` to `cap` when `cap` is smaller, and never raises it. Its destructor puts `limit` back to the value it had just before this object was made. Copying is deleted, as the starter says.\n\nBlocks nest. With a limit of 500, a block with cap 200 sets it to 200, a block inside with cap 300 leaves it at 200, and one inside that with cap 50 sets 50. Leaving the blocks gives back 200, 200 and then 500. The test helper `nest(500, {200, 300, 50})` records the limit at those six moments: `{200, 200, 50, 200, 200, 500}`.",
+  "constraints": [
+    "Limits and caps are whole numbers and may be 0 or negative.",
+    "The object must change the caller's `int`, not a copy of it.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "Store a reference to the caller's limit and the old value, taken before you change anything.",
+  "starter": "#include <memory>\n#include <vector>\n\nclass TempLimit {\npublic:\n    TempLimit(int& limit, int cap) {\n        // lower limit to cap if cap is smaller; remember the old value\n    }\n    ~TempLimit() {\n        // put the old value back\n    }\n    TempLimit(const TempLimit&) = delete;\n    TempLimit& operator=(const TempLimit&) = delete;\n};\n",
+  "postlude": "#include <vector>\n\n// hidden test helpers: nest opens one block inside another for each cap and records the limit\n// on the way in and after each inner block closes; siblings opens one block at a time\nvoid nest_from(int& lim, const std::vector<int>& caps, std::size_t i, std::vector<int>& r) {\n    TempLimit t(lim, caps[i]);\n    r.push_back(lim);\n    if (i + 1 < caps.size()) { nest_from(lim, caps, i + 1, r); r.push_back(lim); }\n}\nstd::vector<int> nest(int start, const std::vector<int>& caps) {\n    int lim = start;\n    std::vector<int> r;\n    if (!caps.empty()) nest_from(lim, caps, 0, r);\n    r.push_back(lim);\n    return r;\n}\nstd::vector<int> siblings(int start, const std::vector<int>& caps) {\n    int lim = start;\n    std::vector<int> r;\n    for (int c : caps) { { TempLimit t(lim, c); r.push_back(lim); } r.push_back(lim); }\n    return r;\n}\n",
+  "examples": [
+    {
+      "call": "nest",
+      "args": [
+        500,
+        [
+          200,
+          300,
+          50
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        200,
+        200,
+        50,
+        200,
+        200,
+        500
+      ],
+      "compare": "equal",
+      "note": "The limit on the way in, after each inner block closes, then at the end."
+    },
+    {
+      "call": "siblings",
+      "args": [
+        100,
+        [
+          150
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        100,
+        100
+      ],
+      "compare": "equal",
+      "note": "A cap above the limit leaves it alone."
+    }
+  ],
+  "tests": [
+    {
+      "call": "nest",
+      "args": [
+        500,
+        [
+          200,
+          300,
+          50
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        200,
+        200,
+        50,
+        200,
+        200,
+        500
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "siblings",
+      "args": [
+        100,
+        [
+          150
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        100,
+        100
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "nest",
+      "args": [
+        10,
+        [
+          -5
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        -5,
+        10
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "siblings",
+      "args": [
+        100,
+        [
+          40,
+          60
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        40,
+        100,
+        60,
+        100
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "nest",
+      "args": [
+        80,
+        [
+          80
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        80,
+        80
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "nest",
+      "args": [
+        0,
+        [
+          0,
+          -1
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        0,
+        -1,
+        0,
+        0
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "nest",
+      "args": [
+        300,
+        [
+          250,
+          200,
+          150
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        250,
+        200,
+        150,
+        200,
+        250,
+        300
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "nest",
+      "args": [
+        40,
+        [
+          90,
+          60,
+          10,
+          70
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        40,
+        40,
+        10,
+        10,
+        10,
+        40,
+        40,
+        40
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "nest",
+      "args": [
+        5,
+        []
+      ],
+      "types": [
+        "int",
+        "std::vector<int>"
+      ],
+      "expect": [
+        5
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "[]{ int lim = 7; std::vector<int> r; auto p = std::make_unique<TempLimit>(lim, 1); r.push_back(lim); p.reset(); r.push_back(lim); return r; }()",
+      "expect": [
+        1,
+        7
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "[]{ int a = 50, b = 60; std::vector<int> r; { TempLimit x(a, 10); TempLimit y(b, 20); r.push_back(a); r.push_back(b); } r.push_back(a); r.push_back(b); return r; }()",
+      "expect": [
+        10,
+        20,
+        50,
+        60
+      ],
+      "compare": "equal"
+    },
+    {
+      "compiles": "TempLimit b = a;",
+      "setup": "int n = 5; TempLimit a(n, 3);",
+      "expect": false,
+      "name": "Copying is refused"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. Hidden helpers `nest` and `siblings` open the blocks; one test only compiles a copy and expects it to be refused.",
+  "solution": "#include <memory>\n#include <vector>\n\nclass TempLimit {\npublic:\n    TempLimit(int& limit, int cap) : limit_(limit), old_(limit) {\n        if (cap < limit_) limit_ = cap;\n    }\n    ~TempLimit() { limit_ = old_; }\n    TempLimit(const TempLimit&) = delete;\n    TempLimit& operator=(const TempLimit&) = delete;\nprivate:\n    int& limit_;\n    int old_;\n};\n",
+  "notes": [
+    "The old value is read in the member initialiser list, before the body changes the limit.",
+    "The member `int& limit_` binds to the caller's variable, so the destructor writes back to it.",
+    "Each object restores the value it saw, so nested blocks unwind in reverse order, as a stack does."
+  ],
+  "planted": [
+    {
+      "code": "#include <memory>\n#include <vector>\n\nclass TempLimit {\npublic:\n    TempLimit(int& limit, int cap) : limit_(limit), old_(limit) {\n        limit_ = cap;\n    }\n    ~TempLimit() { limit_ = old_; }\n    TempLimit(const TempLimit&) = delete;\n    TempLimit& operator=(const TempLimit&) = delete;\nprivate:\n    int& limit_;\n    int old_;\n};\n",
+      "slip": "Sets the limit to the cap even when the cap is higher, so an inner block raises it."
+    },
+    {
+      "code": "#include <memory>\n#include <vector>\n\nclass TempLimit {\npublic:\n    TempLimit(int& limit, int cap) : limit_(limit), old_(limit) {\n        if (cap < limit_) limit_ = cap;\n    }\n    ~TempLimit() { limit_ = old_; }\n    TempLimit(const TempLimit&) = delete;\n    TempLimit& operator=(const TempLimit&) = delete;\nprivate:\n    int limit_;\n    int old_;\n};\n",
+      "slip": "Stores a copy of the limit, so the caller never sees the change."
+    },
+    {
+      "code": "#include <memory>\n#include <vector>\n\nclass TempLimit {\npublic:\n    TempLimit(int& limit, int cap) : limit_(limit) {\n        if (cap < limit_) limit_ = cap;\n        old_ = limit_;\n    }\n    ~TempLimit() { limit_ = old_; }\n    TempLimit(const TempLimit&) = delete;\n    TempLimit& operator=(const TempLimit&) = delete;\nprivate:\n    int& limit_;\n    int old_;\n};\n",
+      "slip": "Remembers the value after lowering it, so the destructor puts back the lowered limit."
+    }
+  ]
+}

@@ -1,0 +1,262 @@
+{
+  "id": "cpp-high-water",
+  "name": "High-water mark of a P&L",
+  "course": "cpp",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "running-maximum",
+    "reserve"
+  ],
+  "skills": [
+    "cp-stl"
+  ],
+  "difficulty": 1,
+  "pace": 420,
+  "brief": "A fund's performance fee is charged only above its high-water mark, the best cumulative P&L so far. `pnl` holds the cumulative P&L at each day's close, in pounds, and it may be negative. Write `high_water(pnl)`, which returns a vector of the same length whose entry `i` is the largest of `pnl[0]` to `pnl[i]`.\n\nFor `{-3, -1, -2, 4, 2}` the marks are -3, then -1, -1 again, then 4 and 4, so the answer is `{-3, -1, -1, 4, 4}`.",
+  "constraints": [
+    "$0 \\le n \\le 10^5$ days. An empty input gives an empty vector.",
+    "The size of the result is known before the loop, so reserve it.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "The first mark is the first day's P&L itself, not 0. Each later mark is the larger of the day's P&L and the mark before.",
+  "starter": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    return out;\n}\n",
+  "examples": [
+    {
+      "call": "high_water",
+      "args": [
+        [
+          -3,
+          -1,
+          -2,
+          4,
+          2
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        -3,
+        -1,
+        -1,
+        4,
+        4
+      ],
+      "compare": "isclose",
+      "note": "The mark only rises: -3, -1, -1, 4, 4."
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          -5,
+          -6,
+          -7
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        -5,
+        -5,
+        -5
+      ],
+      "compare": "isclose",
+      "note": "A fund that only loses keeps its first day as the mark."
+    }
+  ],
+  "tests": [
+    {
+      "call": "high_water",
+      "args": [
+        []
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          5
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        5
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          -3,
+          -1,
+          -2,
+          4,
+          2
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        -3,
+        -1,
+        -1,
+        4,
+        4
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          -5,
+          -6,
+          -7
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        -5,
+        -5,
+        -5
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        1,
+        2,
+        3
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          3,
+          2,
+          1
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        3,
+        3,
+        3
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          0,
+          -0.5,
+          0.25
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        0,
+        0,
+        0.25
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          2,
+          2,
+          1,
+          2
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "compare": "isclose"
+    },
+    {
+      "call": "high_water",
+      "args": [
+        [
+          -1.5,
+          -1.5,
+          -2.5,
+          -0.5,
+          -3
+        ]
+      ],
+      "types": [
+        "std::vector<double>"
+      ],
+      "expect": [
+        -1.5,
+        -1.5,
+        -1.5,
+        -0.5,
+        -0.5
+      ],
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 9 hidden tests. Each answer must be within a relative 1e-9 of the expected value.",
+  "solution": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    out.reserve(pnl.size());\n    for (std::size_t i = 0; i < pnl.size(); ++i)\n        out.push_back(i == 0 || pnl[i] > out.back() ? pnl[i] : out.back());\n    return out;\n}\n",
+  "notes": [
+    "`reserve(pnl.size())` makes the room once, so the `push_back` calls never move the block.",
+    "Starting the mark at 0 would be wrong for a fund that never makes money.",
+    "`out.back()` is read only when `i > 0`, so the empty and one-day cases are safe."
+  ],
+  "planted": [
+    {
+      "code": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    double peak = 0;\n    for (double x : pnl) {\n        if (x > peak) peak = x;\n        out.push_back(peak);\n    }\n    return out;\n}\n",
+      "slip": "Starts the mark at 0, which is wrong while the P&L is negative."
+    },
+    {
+      "code": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    double peak = pnl[0];\n    for (double x : pnl) {\n        if (x > peak) peak = x;\n        out.push_back(peak);\n    }\n    return out;\n}\n",
+      "slip": "Reads pnl[0] before checking for an empty input."
+    },
+    {
+      "code": "#include <vector>\n\nstd::vector<double> high_water(const std::vector<double>& pnl) {\n    std::vector<double> out;\n    if (pnl.empty()) return out;\n    double peak = pnl[0];\n    for (std::size_t i = 1; i < pnl.size(); ++i) {\n        if (pnl[i] > peak) peak = pnl[i];\n        out.push_back(peak);\n    }\n    return out;\n}\n",
+      "slip": "The loop starts at day 1 and never pushes day 0, so the result is one short."
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+{
+  "id": "cpp-take-all",
+  "name": "Hand over fills without copying",
+  "course": "cpp",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "move-semantics",
+    "rvalue-reference"
+  ],
+  "skills": [
+    "cp-memory",
+    "cp-classes"
+  ],
+  "difficulty": 3,
+  "pace": 900,
+  "brief": "At the end of a session the day's fills move from a staging vector into the main record. The type `Fill` (a string `id` and an `int qty`) is loaded and counts every copy made of it in `Fill::copies`.\n\nWrite `take_all(dst, src)`, which appends every fill of `src` to the end of `dst`, in order, keeps what `dst` already holds, makes no copy of any `Fill`, and leaves `src` empty. The caller writes `take_all(dst, std::move(src))`.\n\nWith `dst` holding `a0` and `src` holding `b0` and `b1`, `dst` ends as `a0`, `b0`, `b1`, `src` is empty, and `Fill::copies` is still 0.",
+  "constraints": [
+    "`src` and `dst` hold up to 10,000 fills each, and either may be empty.",
+    "A copy anywhere, including inside a loop variable or a vector insert, adds 1 to `Fill::copies`.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "A named variable is an lvalue even when its type is `Fill&&`. Moving each element needs `std::move` on that element.",
+  "starter": "void take_all(std::vector<Fill>& dst, std::vector<Fill>&& src) {\n    // move each fill of src onto the end of dst; leave src empty\n}\n",
+  "prelude": "#include <string>\n#include <vector>\n\n// A fill counts every copy made of it.\nstruct Fill {\n    std::string id;\n    int qty;\n    static int copies;\n    Fill(std::string i, int q) : id(std::move(i)), qty(q) {}\n    Fill(const Fill& o) : id(o.id), qty(o.qty) { ++copies; }\n    Fill(Fill&& o) noexcept : id(std::move(o.id)), qty(o.qty) {}\n    Fill& operator=(const Fill& o) { id = o.id; qty = o.qty; ++copies; return *this; }\n    Fill& operator=(Fill&& o) noexcept { id = std::move(o.id); qty = o.qty; return *this; }\n};\nint Fill::copies = 0;\n",
+  "postlude": "#include <string>\n#include <vector>\n\n// hidden test helpers\nstd::vector<Fill> make_fills(const std::string& tag, int n) {\n    std::vector<Fill> v;\n    for (int i = 0; i < n; ++i) v.emplace_back(tag + std::to_string(i), i + 1);\n    return v;\n}\n// moves n fills tagged b onto m fills tagged a; returns copies made, sizes after, then every id\nstd::vector<std::string> run_take(int m, int n) {\n    std::vector<Fill> dst = make_fills(\"a\", m), src = make_fills(\"b\", n);\n    Fill::copies = 0;\n    take_all(dst, std::move(src));\n    std::vector<std::string> out{std::to_string(Fill::copies), std::to_string(dst.size()), std::to_string(src.size())};\n    for (const Fill& f : dst) out.push_back(f.id + \":\" + std::to_string(f.qty));\n    return out;\n}\n",
+  "examples": [
+    {
+      "call": "run_take",
+      "args": [
+        1,
+        2
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "3",
+        "0",
+        "a0:1",
+        "b0:1",
+        "b1:2"
+      ],
+      "compare": "equal",
+      "note": "A helper fills dst with a0 and src with b0, b1, then reads copies, both sizes and every id."
+    },
+    {
+      "call": "run_take",
+      "args": [
+        0,
+        3
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "3",
+        "0",
+        "b0:1",
+        "b1:2",
+        "b2:3"
+      ],
+      "compare": "equal",
+      "note": "An empty dst simply receives the three."
+    }
+  ],
+  "tests": [
+    {
+      "call": "run_take",
+      "args": [
+        0,
+        0
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "0",
+        "0"
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "run_take",
+      "args": [
+        1,
+        2
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "3",
+        "0",
+        "a0:1",
+        "b0:1",
+        "b1:2"
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "run_take",
+      "args": [
+        0,
+        3
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "3",
+        "0",
+        "b0:1",
+        "b1:2",
+        "b2:3"
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "run_take",
+      "args": [
+        2,
+        0
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "2",
+        "0",
+        "a0:1",
+        "a1:2"
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "run_take",
+      "args": [
+        3,
+        3
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "6",
+        "0",
+        "a0:1",
+        "a1:2",
+        "a2:3",
+        "b0:1",
+        "b1:2",
+        "b2:3"
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "run_take",
+      "args": [
+        1,
+        1
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        "0",
+        "2",
+        "0",
+        "a0:1",
+        "b0:1"
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "[]{ std::vector<Fill> d = make_fills(\"a\", 5), s = make_fills(\"b\", 400); Fill::copies = 0; take_all(d, std::move(s)); return std::vector<int>{Fill::copies, (int)d.size(), (int)s.size(), d[404].qty}; }()",
+      "expect": [
+        0,
+        405,
+        0,
+        400
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "[]{ std::vector<Fill> d, s = make_fills(\"b\", 2); take_all(d, std::move(s)); s.emplace_back(\"c0\", 9); take_all(d, std::move(s)); std::string ids; for (const Fill& f : d) ids += f.id + \" \"; return ids + std::to_string(s.size()); }()",
+      "expect": "b0 b1 c0 0",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 8 hidden tests. Each answer must equal the expected value. The first number each helper returns is `Fill::copies`, which must be 0.",
+  "solution": "void take_all(std::vector<Fill>& dst, std::vector<Fill>&& src) {\n    dst.reserve(dst.size() + src.size());\n    for (Fill& f : src) dst.push_back(std::move(f));\n    src.clear();\n}\n",
+  "notes": [
+    "`std::move(f)` on each element picks `Fill`'s move constructor, which takes the string's buffer instead of copying it.",
+    "Moved-from fills are still elements of `src`, so `src.clear()` is needed to leave it empty.",
+    "Inside the function `src` has a name, so it is an lvalue; `&&` only says the caller gave it up."
+  ],
+  "planted": [
+    {
+      "code": "void take_all(std::vector<Fill>& dst, std::vector<Fill>&& src) {\n    dst.insert(dst.end(), src.begin(), src.end());\n    src.clear();\n}\n",
+      "slip": "Inserting the range copies every fill instead of moving it."
+    },
+    {
+      "code": "void take_all(std::vector<Fill>& dst, std::vector<Fill>&& src) {\n    for (Fill f : src) dst.push_back(std::move(f));\n    src.clear();\n}\n",
+      "slip": "The loop variable is taken by value, so each fill is copied before it is moved."
+    },
+    {
+      "code": "void take_all(std::vector<Fill>& dst, std::vector<Fill>&& src) {\n    for (Fill& f : src) dst.push_back(std::move(f));\n}\n",
+      "slip": "Moves each fill but leaves the emptied shells in src."
+    }
+  ]
+}

@@ -1,0 +1,293 @@
+{
+  "id": "cpp-cash-split",
+  "name": "A money type that splits exactly",
+  "course": "cpp-pricing",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "fixed-point",
+    "rounding",
+    "allocation"
+  ],
+  "skills": [
+    "cx-numeric"
+  ],
+  "difficulty": 3,
+  "pace": 1020,
+  "brief": "A settlement system holds money as whole pence in a `long long`, never as a `double`. Write `class Cash` with `static Cash from_pence(long long p)`, `long long pence() const`, `Cash operator+(Cash other) const`, and two harder members. `static Cash from_pounds(double pounds)` takes the nearest whole penny, half a penny going away from zero. `std::vector<Cash> split(int n) const` cuts the amount into `n` parts that add up to it exactly, each within a penny of the others. The parts a penny larger in size come first, and every part has the sign of the whole.\n\n`from_pounds(0.29)` must give 29 pence, although `0.29 * 100` is just below 29 as a `double`. Splitting 100p three ways gives 34, 33 and 33, and -100p gives -34, -33 and -33.",
+  "constraints": [
+    "$|$pounds$| \\le 10^{9}$ and $1 \\le n \\le 1000$. Amounts in pence fit in a `long long`.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "`std::llround` rounds half-way away from zero. In C++ `p % n` has the sign of `p`, so for a negative amount the extra pennies are negative.",
+  "starter": "#include <cmath>\n#include <cstdlib>\n#include <vector>\n\nclass Cash {\npublic:\n    static Cash from_pence(long long p) { Cash c; c.p_ = p; return c; }\n    static Cash from_pounds(double pounds) { return Cash(); }\n    long long pence() const { return p_; }\n    Cash operator+(Cash o) const { return Cash(); }\n    std::vector<Cash> split(int n) const { return {}; }\nprivate:\n    long long p_ = 0;\n};\n",
+  "postlude": "#include <vector>\n\n// hidden test helpers\nstd::vector<long long> split_pence(long long p, int n) {\n    std::vector<long long> out;\n    for (const Cash& c : Cash::from_pence(p).split(n)) out.push_back(c.pence());\n    return out;\n}\nlong long pounds_to_pence(double x) { return Cash::from_pounds(x).pence(); }\nlong long add_pounds(double a, double b) { return (Cash::from_pounds(a) + Cash::from_pounds(b)).pence(); }\n",
+  "examples": [
+    {
+      "call": "pounds_to_pence",
+      "args": [
+        0.29
+      ],
+      "types": [
+        "double"
+      ],
+      "expect": 29,
+      "compare": "equal",
+      "note": "0.29 * 100 is 28.999999999999996, which rounds to 29."
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        -100,
+        3
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        -34,
+        -33,
+        -33
+      ],
+      "compare": "equal",
+      "note": "The extra penny goes first, with the sign of the whole."
+    }
+  ],
+  "tests": [
+    {
+      "call": "pounds_to_pence",
+      "args": [
+        0.29
+      ],
+      "types": [
+        "double"
+      ],
+      "expect": 29,
+      "compare": "equal"
+    },
+    {
+      "call": "pounds_to_pence",
+      "args": [
+        19.99
+      ],
+      "types": [
+        "double"
+      ],
+      "expect": 1999,
+      "compare": "equal"
+    },
+    {
+      "call": "pounds_to_pence",
+      "args": [
+        -4.35
+      ],
+      "types": [
+        "double"
+      ],
+      "expect": -435,
+      "compare": "equal"
+    },
+    {
+      "call": "pounds_to_pence",
+      "args": [
+        0.125
+      ],
+      "types": [
+        "double"
+      ],
+      "expect": 13,
+      "compare": "equal"
+    },
+    {
+      "call": "pounds_to_pence",
+      "args": [
+        -0.125
+      ],
+      "types": [
+        "double"
+      ],
+      "expect": -13,
+      "compare": "equal"
+    },
+    {
+      "call": "pounds_to_pence",
+      "args": [
+        10000000.07
+      ],
+      "types": [
+        "double"
+      ],
+      "expect": 1000000007,
+      "compare": "equal"
+    },
+    {
+      "call": "add_pounds",
+      "args": [
+        0.1,
+        0.2
+      ],
+      "types": [
+        "double",
+        "double"
+      ],
+      "expect": 30,
+      "compare": "equal"
+    },
+    {
+      "call": "add_pounds",
+      "args": [
+        1.15,
+        -0.05
+      ],
+      "types": [
+        "double",
+        "double"
+      ],
+      "expect": 110,
+      "compare": "equal"
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        100,
+        3
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        34,
+        33,
+        33
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        -100,
+        3
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        -34,
+        -33,
+        -33
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        5,
+        7
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        0,
+        2
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        0,
+        0
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        9,
+        3
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        3,
+        3,
+        3
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        1,
+        1
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "split_pence",
+      "args": [
+        -7,
+        4
+      ],
+      "types": [
+        "long long",
+        "int"
+      ],
+      "expect": [
+        -2,
+        -2,
+        -2,
+        -1
+      ],
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. Hidden helpers convert pounds, add two amounts, and split an amount into a list of pence.",
+  "solution": "#include <cmath>\n#include <cstdlib>\n#include <vector>\n\nclass Cash {\npublic:\n    static Cash from_pence(long long p) { Cash c; c.p_ = p; return c; }\n    static Cash from_pounds(double pounds) { return from_pence(std::llround(pounds * 100)); }\n    long long pence() const { return p_; }\n    Cash operator+(Cash o) const { return from_pence(p_ + o.p_); }\n    std::vector<Cash> split(int n) const {\n        std::vector<Cash> parts;\n        long long q = p_ / n, r = p_ % n;   // r has the sign of p_\n        for (int i = 0; i < n; ++i) {\n            long long extra = i < std::llabs(r) ? (r > 0 ? 1 : -1) : 0;\n            parts.push_back(from_pence(q + extra));\n        }\n        return parts;\n    }\nprivate:\n    long long p_ = 0;\n};\n",
+  "notes": [
+    "A cast to `long long` truncates, so 28.999999999999996 becomes 28; rounding to the nearest penny is the fix.",
+    "`p_ / n` and `p_ % n` both round towards zero in C++, so for a negative amount the remainder is negative too.",
+    "Handing out the remainder one penny at a time keeps every part within a penny and the total exact."
+  ],
+  "planted": [
+    {
+      "code": "#include <cmath>\n#include <cstdlib>\n#include <vector>\n\nclass Cash {\npublic:\n    static Cash from_pence(long long p) { Cash c; c.p_ = p; return c; }\n    static Cash from_pounds(double pounds) { return from_pence(static_cast<long long>(pounds * 100)); }\n    long long pence() const { return p_; }\n    Cash operator+(Cash o) const { return from_pence(p_ + o.p_); }\n    std::vector<Cash> split(int n) const {\n        std::vector<Cash> parts;\n        long long q = p_ / n, r = p_ % n;   // r has the sign of p_\n        for (int i = 0; i < n; ++i) {\n            long long extra = i < std::llabs(r) ? (r > 0 ? 1 : -1) : 0;\n            parts.push_back(from_pence(q + extra));\n        }\n        return parts;\n    }\nprivate:\n    long long p_ = 0;\n};\n",
+      "slip": "The cast truncates, so 0.29 pounds becomes 28 pence."
+    },
+    {
+      "code": "#include <cmath>\n#include <cstdlib>\n#include <vector>\n\nclass Cash {\npublic:\n    static Cash from_pence(long long p) { Cash c; c.p_ = p; return c; }\n    static Cash from_pounds(double pounds) { return from_pence(std::llround(pounds * 100)); }\n    long long pence() const { return p_; }\n    Cash operator+(Cash o) const { return from_pence(p_ + o.p_); }\n    std::vector<Cash> split(int n) const {\n        std::vector<Cash> parts;\n        long long q = p_ / n, r = p_ % n;   // r has the sign of p_\n        for (int i = 0; i < n; ++i) {\n            long long extra = i == 0 ? r : 0;\n            parts.push_back(from_pence(q + extra));\n        }\n        return parts;\n    }\nprivate:\n    long long p_ = 0;\n};\n",
+      "slip": "Gives the whole remainder to the first part, so parts can differ by more than a penny."
+    },
+    {
+      "code": "#include <cmath>\n#include <cstdlib>\n#include <vector>\n\nclass Cash {\npublic:\n    static Cash from_pence(long long p) { Cash c; c.p_ = p; return c; }\n    static Cash from_pounds(double pounds) { return from_pence(std::llround(pounds * 100)); }\n    long long pence() const { return p_; }\n    Cash operator+(Cash o) const { return from_pence(p_ + o.p_); }\n    std::vector<Cash> split(int n) const {\n        std::vector<Cash> parts;\n        long long q = p_ / n, r = p_ % n;   // r has the sign of p_\n        for (int i = 0; i < n; ++i) {\n            long long extra = i < r ? 1 : 0;\n            parts.push_back(from_pence(q + extra));\n        }\n        return parts;\n    }\nprivate:\n    long long p_ = 0;\n};\n",
+      "slip": "Hands out the remainder only when it is positive, so a negative amount loses pennies."
+    }
+  ]
+}

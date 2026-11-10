@@ -1,0 +1,347 @@
+{
+  "id": "cpp-fee-tier",
+  "name": "A fee schedule read through const",
+  "course": "cpp",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "const-method",
+    "tier-lookup"
+  ],
+  "skills": [
+    "cp-references"
+  ],
+  "difficulty": 2,
+  "pace": 600,
+  "brief": "A broker's fee falls as an order grows. The schedule is two lists of the same length: tier `i` charges `bps[i]` basis points on any notional from `from[i]` pence upwards, until the next tier starts. `from` rises strictly and `from[0]` is 0. Write the class `FeeSchedule`. Its constructor takes `std::vector<long long> from` and `std::vector<int> bps`. Add `int bps_for(long long notional)`, the rate for a notional, and `int tiers()`, the number of tiers. The tests only ever hold a `const FeeSchedule`, so both lookups must work on one.\n\nWith `from` holding 0, 1,000,000, 10,000,000 and 100,000,000, and `bps` holding 12, 8, 5 and 3, a notional of 1,000,000p is exactly where the second tier starts, so the answer is 8.",
+  "constraints": [
+    "1 to 20 tiers. Notionals lie from 0 to $10^{13}$ pence, which needs `long long`.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "A method that changes nothing should say so with `const` after its parameter list. Then find the last tier whose start is at or below the notional.",
+  "starter": "#include <utility>\n#include <vector>\n\nclass FeeSchedule {\npublic:\n    FeeSchedule(std::vector<long long> from, std::vector<int> bps) {\n        // keep both lists\n    }\n    int bps_for(long long notional) {\n        return 0;\n    }\n    int tiers() {\n        return 0;\n    }\n};\n",
+  "postlude": "#include <vector>\n\n// hidden test helper: a const schedule, bps_for each ask, then tiers()\nstd::vector<int> rates(const std::vector<long long>& from, const std::vector<int>& bps,\n                       const std::vector<long long>& asks) {\n    const FeeSchedule s(from, bps);\n    std::vector<int> out;\n    for (long long a : asks) out.push_back(s.bps_for(a));\n    out.push_back(s.tiers());\n    return out;\n}\n",
+  "examples": [
+    {
+      "call": "rates",
+      "args": [
+        [
+          0,
+          1000000,
+          10000000,
+          100000000
+        ],
+        [
+          12,
+          8,
+          5,
+          3
+        ],
+        [
+          0,
+          999999,
+          1000000,
+          5000000,
+          10000000,
+          250000000
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        12,
+        12,
+        8,
+        8,
+        5,
+        3,
+        4
+      ],
+      "compare": "equal",
+      "note": "bps_for each notional, then tiers(). A tier starts at its own boundary."
+    },
+    {
+      "call": "rates",
+      "args": [
+        [
+          0
+        ],
+        [
+          7
+        ],
+        [
+          0,
+          1000000000000
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        7,
+        7,
+        1
+      ],
+      "compare": "equal",
+      "note": "One tier covers every notional."
+    }
+  ],
+  "tests": [
+    {
+      "call": "rates",
+      "args": [
+        [
+          0,
+          1000000,
+          10000000,
+          100000000
+        ],
+        [
+          12,
+          8,
+          5,
+          3
+        ],
+        [
+          0,
+          999999,
+          1000000,
+          5000000,
+          10000000,
+          250000000
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        12,
+        12,
+        8,
+        8,
+        5,
+        3,
+        4
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "rates",
+      "args": [
+        [
+          0
+        ],
+        [
+          7
+        ],
+        [
+          0,
+          1000000000000
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        7,
+        7,
+        1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "rates",
+      "args": [
+        [
+          0,
+          1000000,
+          10000000,
+          100000000
+        ],
+        [
+          12,
+          8,
+          5,
+          3
+        ],
+        [
+          99999999,
+          100000000,
+          5000000000000
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        5,
+        3,
+        3,
+        4
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "rates",
+      "args": [
+        [
+          0,
+          500
+        ],
+        [
+          20,
+          10
+        ],
+        [
+          499,
+          500,
+          501
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        20,
+        10,
+        10,
+        2
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "rates",
+      "args": [
+        [
+          0,
+          100,
+          200
+        ],
+        [
+          9,
+          9,
+          4
+        ],
+        [
+          150,
+          199,
+          200
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        9,
+        9,
+        4,
+        3
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "rates",
+      "args": [
+        [
+          0,
+          1000000,
+          10000000,
+          100000000
+        ],
+        [
+          12,
+          8,
+          5,
+          3
+        ],
+        [
+          10000001,
+          9999999,
+          1
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        5,
+        8,
+        12,
+        4
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "rates",
+      "args": [
+        [
+          0,
+          2500000000,
+          7500000000
+        ],
+        [
+          6,
+          4,
+          2
+        ],
+        [
+          2499999999,
+          2500000000,
+          7499999999,
+          7500000000
+        ]
+      ],
+      "types": [
+        "std::vector<long long>",
+        "std::vector<int>",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        6,
+        4,
+        4,
+        2,
+        3
+      ],
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 7 hidden tests. Each answer must equal the expected value. A hidden helper builds a `const FeeSchedule` and calls `bps_for` on each notional, then `tiers()`. The starter does not compile until both methods are `const`.",
+  "solution": "#include <utility>\n#include <vector>\n\nclass FeeSchedule {\npublic:\n    FeeSchedule(std::vector<long long> from, std::vector<int> bps)\n        : from_(std::move(from)), bps_(std::move(bps)) {}\n    int bps_for(long long notional) const {\n        std::size_t i = from_.size() - 1;\n        while (i > 0 && from_[i] > notional) --i;\n        return bps_[i];\n    }\n    int tiers() const { return static_cast<int>(from_.size()); }\nprivate:\n    std::vector<long long> from_;\n    std::vector<int> bps_;\n};\n",
+  "notes": [
+    "Calling a method on a `const` object needs the method to be `const`; without it the compiler refuses the call.",
+    "A tier starts at its own boundary, so the test is `from[i] <= notional`, read from the top tier down.",
+    "Taking the lists by value and moving them into the members makes one copy at most, at the call."
+  ],
+  "planted": [
+    {
+      "code": "#include <utility>\n#include <vector>\n\nclass FeeSchedule {\npublic:\n    FeeSchedule(std::vector<long long> from, std::vector<int> bps)\n        : from_(std::move(from)), bps_(std::move(bps)) {}\n    int bps_for(long long notional) {\n        std::size_t i = from_.size() - 1;\n        while (i > 0 && from_[i] > notional) --i;\n        return bps_[i];\n    }\n    int tiers() const { return static_cast<int>(from_.size()); }\nprivate:\n    std::vector<long long> from_;\n    std::vector<int> bps_;\n};\n",
+      "slip": "bps_for is not const, so it cannot be called on a const schedule."
+    },
+    {
+      "code": "#include <utility>\n#include <vector>\n\nclass FeeSchedule {\npublic:\n    FeeSchedule(std::vector<long long> from, std::vector<int> bps)\n        : from_(std::move(from)), bps_(std::move(bps)) {}\n    int bps_for(long long notional) const {\n        std::size_t i = from_.size() - 1;\n        while (i > 0 && from_[i] >= notional) --i;\n        return bps_[i];\n    }\n    int tiers() const { return static_cast<int>(from_.size()); }\nprivate:\n    std::vector<long long> from_;\n    std::vector<int> bps_;\n};\n",
+      "slip": "A notional exactly at a boundary is charged the lower tier's rate."
+    },
+    {
+      "code": "#include <utility>\n#include <vector>\n\nclass FeeSchedule {\npublic:\n    FeeSchedule(std::vector<long long> from, std::vector<int> bps)\n        : from_(std::move(from)), bps_(std::move(bps)) {}\n    int bps_for(long long notional) const {\n        for (std::size_t i = 1; i < from_.size(); ++i)\n            if (notional < from_[i]) return bps_[i - 1];\n        return bps_[0];\n    }\n    int tiers() const { return static_cast<int>(from_.size()); }\nprivate:\n    std::vector<long long> from_;\n    std::vector<int> bps_;\n};\n",
+      "slip": "A notional above every boundary falls through to the first tier's rate."
+    }
+  ]
+}
