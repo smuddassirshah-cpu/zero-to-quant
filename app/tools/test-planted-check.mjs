@@ -1,6 +1,7 @@
 // Test for tools/planted-check.mjs (ENGINE-BACKLOG 844). Run from app/: node tools/test-planted-check.mjs [--local-cdn <pkgs>] [--no-cpp]
 // Plays a temporary copy of app/ with the fixture drills of tools/fixtures/planted/ added to content/drills:
 //   planted-py-caught   one planted solution that a hidden test catches: the tool must pass
+//   planted-py-timeout  first planted solution loops forever (Python restarts), second fails normally: model passes, both caught
 //   planted-py-missed   one planted solution that passes every hidden test: the tool must fail and name it
 //   planted-cpp-caught, planted-cpp-missed   the same in C++ (--no-cpp skips them: the first C++ compile is slow)
 // and checks --require (a drill with one planted solution fails) and the skip count (a drill with none is skipped, not failed).
@@ -40,6 +41,7 @@ const run = (label, cliArgs, wantExit, wantLines) => {
   else console.log(`ok ${label}: exit ${r.status}, ${out.trim().split('\n').slice(-1)[0]}`);
 };
 run('python, planted solution caught', ['--drill', 'planted-py-caught'], 0, [/1 drill checked, 1 planted solution, 0 skipped without any, 0 failures/]);
+run('python, a timed-out planted solution then a normal one', ['--drill', 'planted-py-timeout'], 0, [/1 drill checked, 2 planted solutions, 0 skipped without any, 0 failures/]);
 run('python, planted solution passes every test', ['--drill', 'planted-py-missed'], 1, [/FAIL planted-py-missed: planted\[0\] passes all 4 hidden tests \(slip: Applies the bounds/, /1 failure/]);
 run('--require, one planted solution is too few', ['--drill', 'planted-py-caught', '--require'], 1, [/FAIL planted-py-caught: 1 planted solution, --require wants at least two/]);
 if (!noCpp) {

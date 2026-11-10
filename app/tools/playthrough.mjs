@@ -1740,6 +1740,15 @@ const main = async () => {
         await page.waitForFunction(() => window.ZQDrill, null, { timeout: opt.timeout });
         const rdy = await drillReady(cpp);
         if (rdy) throw new Error(rdy);
+        /* a timed-out run restarts Python: wait for ready, and read the results only after this submit's own promise settles, never a stale panel */
+        const drillSubmit = async () => {
+          const again = await drillReady(cpp);
+          if (again) throw new Error(again);
+          await page.evaluate(() => { window.__zqSub = ZQDrill.submit(); });
+          await page.evaluate(() => window.__zqSub);
+          await page.waitForFunction(() => { const r = ZQDrill.results(); return r && r.mode === 'submit' && (r.res ? r.res.every(x => !['pending', 'running'].includes(x.status)) : true); }, null, { timeout: 180000 });
+          return page.evaluate(() => { const r = ZQDrill.results(); return r.res ? { ok: r.res.every(x => x.status === 'pass'), passed: r.res.filter(x => x.status === 'pass').length, total: r.res.length } : { ok: r.ok, passed: r.passed, total: r.total }; });
+        };
         const tag = cpp ? '\n// planted check\n' : '\n# planted check\n';
         await page.evaluate((s2) => ZQDrill.setCode(s2), file.starter + tag);
         const st = await drillSubmit();
