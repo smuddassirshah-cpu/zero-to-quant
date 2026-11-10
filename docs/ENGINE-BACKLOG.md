@@ -2050,3 +2050,10 @@ Raised later (engine session Z, from the inbox):
 
 858. Done [Should] `playthrough.mjs --problems ... --shots`: every part of every problem is shot at 440 px (`<set>-i<item>-p<part>-440.png`), in the first attempt.
 858 status: done.
+
+859. Done [Should] Validator: a row of `drills/index.json` that disagrees with its drill file on `name`, `course` or `difficulty` is an error; a non-sample drill file with no row is now an error (was a warning); a row with no file was already an error.
+859 status: done. Real content already clean (155 rows, 162 files, 7 sample files unlisted). `tools/test-validate-drill-index.mjs` (8 cases).
+
+860. Done [Could] Validator `[answer-form]` widened (`ANSWER_FORM` in `tools/validate.mjs`): "decimal", "place(s)", "dp", "sf", "fraction", "nearest", "per cent", "percentage", "%", "exact value/answer/result/figure", "in pounds/pence/£/basis points", "ratio". Phrases listed in `docs/AUTHORING.md` section 5.
+860 status: done. 137 warnings over the 1.5 sets fall to 1. Six pass cases and one "exactly alone still warns" case in `tools/test-validate-problems.mjs`.
+

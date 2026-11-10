@@ -1573,6 +1573,8 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
 /* A level's problem set (ENGINE-BACKLOG 845 to 851, docs/AUTHORING.md section 5): problems-<n>.json, 3 to 5 chained problems, each an item with 3 to 5 parts (no longform part,
    no code part: a part is a typed or chosen answer the engine grades), difficulty 3 to 5 with at least one 5, skills from the level's lessons. Untimed, no pass mark,
    not a gate: timed, pass and dueDays are refused. Every item-level rule of a review item applies (checkItem). minutes (default 40) is the in-app allowance. */
+/* ENGINE-BACKLOG 860: any phrase that states the form of a non-integer answer (listed in docs/AUTHORING.md section 5) */
+const ANSWER_FORM = /decimal|\bplaces?\b|\bd\.?p\b|significant figure|\bs\.?f\b|fraction|nearest|per ?cent|percentage|%|exact (value|answer|result|figure)|in (pounds|pence|£|basis points|bps?)\b|\bratio\b/i;
 const checkProblemSet = (file, courseId, doc, items, skills, levelSkills) => {
   Object.keys(doc).forEach(k => { if (!['id', 'course', 'level', 'items', 'title', 'minutes', 'sample'].includes(k)) err(file, k, k === 'timed' || k === 'pass' || k === 'dueDays' ? `${k} does not apply to a problem set: it is untimed, has no pass mark and is not a gate` : `unknown field "${k}" (a problem set has id, course, level, items, and optionally title and minutes)`); });
   if (doc.title != null) { if (typeof doc.title !== 'string' || !doc.title.trim()) err(file, 'title', 'title is a non-empty string'); else checkText(file, 'title', doc.title); }
@@ -1589,8 +1591,8 @@ const checkProblemSet = (file, courseId, doc, items, skills, levelSkills) => {
     it.parts.forEach((p, k) => {
       const w = isObj(p) && isObj(p.widget) ? p.widget : null;
       if (!w || w.kind !== 'numeric' || typeof w.answer !== 'number' || !Number.isFinite(w.answer) || Number.isInteger(w.answer)) return;
-      if (typeof p.question !== 'string' || /decimal place|significant figure|fraction|nearest|per cent|%/i.test(p.question)) return;
-      warn(file, `${at}.parts[${k}].question`, `[answer-form] the answer ${w.answer} is not a whole number but the question does not state the form (say "to 2 decimal places", "to 3 significant figures", "as a fraction", "to the nearest ..." or "per cent")`);
+      if (typeof p.question !== 'string' || ANSWER_FORM.test(p.question)) return;
+      warn(file, `${at}.parts[${k}].question`, `[answer-form] the answer ${w.answer} is not a whole number but the question does not state the form (say "Give a decimal to 4 places.", "to 3 significant figures", "as a fraction", "the exact value", "in pounds", "to the nearest ..." or "per cent"; the list is in docs/AUTHORING.md section 5)`);
     });
     if (levelSkills && Array.isArray(it.skills)) it.skills.forEach(sk => { if (skills.has(sk) && !levelSkills.has(sk)) err(file, `${at}.skills`, `skill "${sk}" is not taught in this level's lessons (use the skills of the level's own lessons)`); });
   });
@@ -2331,10 +2333,10 @@ else if (prepDoc.missing && PREP_FILE) err(prepFile, '', 'the file given to --pr
 const drillDir = path.join(CONTENT, 'drills');
 const idxFile = path.join(drillDir, 'index.json');
 const idx = readJSON(idxFile);
-const listed = new Set();
+const listed = new Set(), idxRow = new Map();   // ENGINE-BACKLOG 859: idxRow holds each index row to compare with its drill file
 if (idx.missing) warn(idxFile, '', 'drills/index.json is missing; the drill list will be empty');
 else if (idx.data && !Array.isArray(idx.data)) err(idxFile, '', 'index.json is an array of drill ids or { id, ... } entries');
-else (idx.data || []).forEach((e, i) => { const id = typeof e === 'string' ? e : e && e.id; if (!id) err(idxFile, `[${i}]`, 'entry needs an id'); else listed.add(id); });
+else (idx.data || []).forEach((e, i) => { const id = typeof e === 'string' ? e : e && e.id; if (!id) err(idxFile, `[${i}]`, 'entry needs an id'); else { listed.add(id); if (e && typeof e === 'object') idxRow.set(id, e); } });
 const drillMeta = {}; // item 472: language, pattern, pace, tags and sample of each drill file, for manifest.drills
 const drillIds = new Set(listJSON(drillDir).filter(f => f !== 'index.json').map(f => f.replace(/\.json$/, '')));
 listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
@@ -2353,7 +2355,9 @@ listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
     if (D.level !== undefined) { if (!Number.isInteger(D.level) || D.level < 1) err(file, 'level', 'level is a whole number from 1: the level of its course whose code performance task a verified oa drill counts toward'); else meta.level = D.level; }
     if (Object.keys(meta).length) drillMeta[id] = meta;
   }
-  if (!listed.has(id) && !isSample) warn(file, '', 'drill is not listed in drills/index.json');
+  if (!listed.has(id) && !isSample) err(file, '', 'drill is not listed in drills/index.json (a non-sample drill file needs a row there; ENGINE-BACKLOG 859)');
+  const row = idxRow.get(id);
+  if (row && D && typeof D === 'object') ['name', 'course', 'difficulty'].forEach(k => { if (row[k] !== D[k]) err(idxFile, `${id}.${k}`, `drills/index.json says ${k} ${JSON.stringify(row[k])} but drills/${f} says ${JSON.stringify(D[k])}; make them agree (ENGINE-BACKLOG 859)`); });
   listed.delete(id);
 });
 listed.forEach(id => err(idxFile, '', `drill "${id}" is listed but drills/${id}.json does not exist`));
