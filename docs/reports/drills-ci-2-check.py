@@ -13,7 +13,7 @@ For every drill it:
 - times the model solution over all tests (must be under 1.5 s in CPython, so Pyodide keeps
   a margin inside its shared 5 s);
 - checks the pack mix: 3/5/5/2 by difficulty 2/3/4/5, two stdin drills, pace 900 to 2,700,
-  10 to 14 hidden tests, 2 or 3 examples with a note, `pack-2` first in tags, two or more planted.
+  10 to 15 hidden tests, 2 or 3 examples with a note, `pack-2` first in tags, two or more planted.
 Exit 0 on success.
 Run: <scratchpad>/venv/bin/python docs/reports/drills-ci-2-check.py
 """
@@ -35,10 +35,12 @@ SMALL = 60
 
 # ---------------- independent methods ----------------
 
-def push_cancelled_back(sizes):
-    live = [x for x in sizes if x != 0]
-    sizes[:] = live + [0] * (len(sizes) - len(live))
-    return len(live)
+def split_by_reference(sizes, ref):
+    small = [x for x in sizes if x < ref]
+    equal = [x for x in sizes if x == ref]
+    big = [x for x in sizes if x > ref]
+    sizes[:] = small + equal + big
+    return (len(small), len(small) + len(equal))
 
 def merge_late_fills(log, m, late):
     log[:] = sorted(log[:m] + list(late), key=lambda f: f[0])   # stable: log entries first on a tie
@@ -291,7 +293,7 @@ def best_hop_total(gains, k):
     return best[-1]
 
 INDEP = {
-    "ci-cancelled-to-back": push_cancelled_back, "ci-late-fills-merge": merge_late_fills,
+    "ci-cancelled-to-back": split_by_reference, "ci-late-fills-merge": merge_late_fills,
     "ci-two-desk-matches": count_matching_pairs, "ci-widest-banner": widest_banner,
     "ci-van-pairs": solve_van_pairs, "ci-three-leg-nets": netting_triples,
     "ci-frame-triples": count_frames, "ci-excused-outages": solve_excused_outages,
@@ -310,7 +312,7 @@ INDEP = {
 # faster than Pyodide, so it also fails the browser's limit.
 SLOW = {
     'ci-cancelled-to-back': [
-        'def push_cancelled_back(sizes):\n    zeros = sizes.count(0)\n    for _ in range(zeros):\n        sizes.remove(0)\n    sizes.extend([0] * zeros)\n    return len(sizes) - zeros\n',
+        'def split_by_reference(sizes, ref):\n    lo = 0\n    for i in range(len(sizes)):\n        if sizes[i] < ref:\n            sizes.insert(lo, sizes.pop(i))\n            lo += 1\n    hi = lo\n    for i in range(lo, len(sizes)):\n        if sizes[i] == ref:\n            sizes.insert(hi, sizes.pop(i))\n            hi += 1\n    return (lo, hi)\n',
     ],
     'ci-two-desk-matches': [
         'def count_matching_pairs(a, b, target):\n    count = 0\n    for x in a:\n        for y in b:\n            if x + y == target:\n                count += 1\n    return count\n',
@@ -436,7 +438,7 @@ for did in IDS:
     stdin += "stdin" in d["tags"]
     if d["tags"][0] != "pack-2": err(f"{did}: tags must start pack-2")
     if not 900 <= d["pace"] <= 2700: err(f"{did}: pace {d['pace']}")
-    if not 10 <= len(d["tests"]) <= 14: err(f"{did}: {len(d['tests'])} tests")
+    if not 10 <= len(d["tests"]) <= 15: err(f"{did}: {len(d['tests'])} tests")
     if not 2 <= len(d["examples"]) <= 3 or not all(e.get("note") for e in d["examples"]): err(f"{did}: examples")
     if len(d["notes"]) != 3: err(f"{did}: notes")
     if d["pack"] != "ci" or d["course"] != "coding-int": err(f"{did}: pack or course")

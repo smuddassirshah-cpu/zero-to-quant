@@ -16,20 +16,20 @@
   "pace": 1200,
   "fn": "longest_serial_run",
   "returns": "a list of two whole numbers",
-  "brief": "A depot scans the serial numbers of returned parcels into `serials`, in any order and with repeats. A run is a block of consecutive whole numbers that are all present. Return `[first, length]` for the longest run. On a tie, return the run with the smallest first serial. Return `[0, 0]` when `serials` is empty.\n\nWrite `longest_serial_run(serials)`.\n\nExample. For `[100, 4, 200, 1, 3, 2]` the serials 1, 2, 3 and 4 are all present. No longer run exists, so the answer is `[1, 4]`.",
+  "brief": "A depot scans the serial numbers of returned parcels into `serials`, in any order and with repeats. A run is a block of consecutive whole numbers that are all present. Return `[first, length]` for the longest run. On a tie, return the run with the smallest first serial. Return `[0, 0]` when `serials` is empty.\n\nWrite `longest_serial_run(serials)`.\n\nExample. For `[50, 7, 90, 5, 8, 6, 9]` the serials 5, 6, 7, 8 and 9 are all present. No longer run exists, so the answer is `[5, 5]`.",
   "constraints": [
     "$0 \\le n \\le 200{,}000$ serials, each a whole number between $-10^9$ and $10^9$.",
     "$O(n)$ expected time is the target with a set. Sorting first also passes; walking up from every serial does not.",
-    "All tests share a 5-second time limit."
+    "All the tests in a run share one 5-second limit in the browser."
   ],
   "hint": "Put the serials in a set. Start counting only from a serial whose predecessor is missing, so each run is walked once.",
   "starter": "def longest_serial_run(serials):\n    # your code here\n    return [0, 0]\n",
   "examples": [
     {
-      "call": "longest_serial_run([100, 4, 200, 1, 3, 2])",
-      "expect": "[1, 4]",
+      "call": "longest_serial_run([50, 7, 90, 5, 8, 6, 9])",
+      "expect": "[5, 5]",
       "compare": "equal",
-      "note": "Serials 1 to 4 make a run of 4. 100 and 200 are runs of 1."
+      "note": "Serials 5 to 9 make a run of 5. 50 and 90 are runs of 1."
     },
     {
       "call": "longest_serial_run([10, 11, 1, 2])",
@@ -50,8 +50,8 @@
       "compare": "equal"
     },
     {
-      "call": "longest_serial_run([100, 4, 200, 1, 3, 2])",
-      "expect": "[1, 4]",
+      "call": "longest_serial_run([50, 7, 90, 5, 8, 6, 9])",
+      "expect": "[5, 5]",
       "compare": "equal"
     },
     {
@@ -98,9 +98,14 @@
       "call": "longest_serial_run([10 ** 9 - i for i in range(100000)] + [-10 ** 9 + i for i in range(100000)])",
       "expect": "[-1000000000, 100000]",
       "compare": "equal"
+    },
+    {
+      "call": "longest_serial_run([0] * 100000 + list(range(100000)))",
+      "expect": "[0, 100000]",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
   "solution": "def longest_serial_run(serials):\n    present = set(serials)\n    best = [0, 0]\n    for x in present:\n        if x - 1 in present:\n            continue\n        y = x\n        while y + 1 in present:\n            y += 1\n        length = y - x + 1\n        if length > best[1] or (length == best[1] and x < best[0]):\n            best = [x, length]\n    return best\n",
   "notes": [
     "A run is counted only from its lowest serial, the one whose predecessor is missing.",
@@ -119,6 +124,10 @@
     {
       "code": "def longest_serial_run(serials):\n    present = set(serials)\n    best = [0, 0]\n    for x in sorted(present):\n        y = x\n        while y + 1 in present:\n            y += 1\n        if y - x + 1 > best[1]:\n            best = [x, y - x + 1]\n    return best\n",
       "slip": "It walks up from every serial, not just from run starts, which is $O(n^2)$ on one long run."
+    },
+    {
+      "code": "def longest_serial_run(serials):\n    present = set(serials)\n    best = [0, 0]\n    for x in serials:\n        if x - 1 in present:\n            continue\n        y = x\n        while y + 1 in present:\n            y += 1\n        length = y - x + 1\n        if length > best[1] or (length == best[1] and x < best[0]):\n            best = [x, length]\n    return best\n",
+      "slip": "Looping over the list, not the set, walks a run again for every repeat of its first serial."
     }
   ]
 }
