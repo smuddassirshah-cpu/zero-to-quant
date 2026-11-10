@@ -1,0 +1,136 @@
+{
+  "id": "py-carry-forward-limit",
+  "name": "Carry a price forward, but not for ever",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "missing-data"
+  ],
+  "skills": [
+    "pd-frames"
+  ],
+  "difficulty": 1,
+  "pace": 480,
+  "fn": "carry_forward",
+  "returns": "a pandas Series",
+  "brief": "`close` is a pandas Series of daily closes on a date index, with NaN where a close is missing. A short gap may take the last known close. A long one should stay visible.\n\nWrite `carry_forward(close, limit)`. Fill each missing close with the last known close, but only for the first `limit` missing days in a row; later days of the gap stay NaN. Missing closes before the first known close stay NaN. `limit` may be 0, which fills nothing. Do not change `close` itself.\n\nIt returns a Series on the same dates. The tests read its values in order with `tolist()`, showing a missing value as `None`. The helper `daily(start, values)` builds a Series on weekdays from `start`, and `nan` is defined.\n\nExample. For closes `101.5, nan, nan, nan, 103.2` and `limit = 2`, the answer is `101.5, 101.5, 101.5, nan, 103.2`.",
+  "constraints": [
+    "Up to 10,000 closes. `limit` is a whole number of 0 or more.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "`ffill` takes a `limit`, but pandas refuses a limit of 0. Handle that case with a copy of `close`.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n",
+  "starter": "import pandas as pd\n\ndef carry_forward(close, limit):\n    out = close.copy()\n    # fill at most limit days of each gap\n    return out\n",
+  "examples": [
+    {
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [101.5, nan, nan, nan, 103.2]), 2))",
+      "expect": "[101.5, 101.5, 101.5, None, 103.2]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [101.5, nan, nan, nan, 103.2]), 2).tolist()",
+      "note": "Two days of the three-day gap take 101.5. The third stays missing."
+    },
+    {
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [nan, 99.0, nan]), 1))",
+      "expect": "[None, 99.0, 99.0]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [nan, 99.0, nan]), 1).tolist()",
+      "note": "Nothing is known before 99.0, so the first day stays missing."
+    }
+  ],
+  "tests": [
+    {
+      "name": "No gaps",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [10.0, 10.5, 11.0]), 2))",
+      "expect": "[10.0, 10.5, 11.0]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [10.0, 10.5, 11.0]), 2).tolist()"
+    },
+    {
+      "name": "Leading gap stays",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [nan, nan, 99.0, nan]), 3))",
+      "expect": "[None, None, 99.0, 99.0]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [nan, nan, 99.0, nan]), 3).tolist()"
+    },
+    {
+      "name": "A limit of 0",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [10.0, nan, 12.0]), 0))",
+      "expect": "[10.0, None, 12.0]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [10.0, nan, 12.0]), 0).tolist()"
+    },
+    {
+      "name": "Long gap, limit 1",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [50.0, nan, nan, nan, nan, 52.0]), 1))",
+      "expect": "[50.0, 50.0, None, None, None, 52.0]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [50.0, nan, nan, nan, nan, 52.0]), 1).tolist()"
+    },
+    {
+      "name": "Limit longer than the gap",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [7.25, nan, 7.5]), 5))",
+      "expect": "[7.25, 7.25, 7.5]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [7.25, nan, 7.5]), 5).tolist()"
+    },
+    {
+      "name": "Each gap counts afresh",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [20.0, nan, nan, 21.0, nan, nan, nan]), 2))",
+      "expect": "[20.0, 20.0, 20.0, 21.0, 21.0, 21.0, None]",
+      "compare": "isclose",
+      "show": "carry_forward(daily(\"2025-03-03\", [20.0, nan, nan, 21.0, nan, nan, nan]), 2).tolist()"
+    },
+    {
+      "name": "Every close missing",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", [nan, nan]), 2))",
+      "expect": "[None, None]",
+      "compare": "equal",
+      "show": "carry_forward(daily(\"2025-03-03\", [nan, nan]), 2).tolist()"
+    },
+    {
+      "name": "Empty series",
+      "call": "_plain(carry_forward(daily(\"2025-03-03\", []), 1))",
+      "expect": "[]",
+      "compare": "equal",
+      "show": "carry_forward(daily(\"2025-03-03\", []), 1).tolist()"
+    },
+    {
+      "name": "Same dates",
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in carry_forward(daily(\"2025-03-06\", [1.0, nan, 3.0]), 1).index]",
+      "expect": "['2025-03-06', '2025-03-07', '2025-03-10']",
+      "compare": "equal"
+    },
+    {
+      "name": "Input left alone",
+      "call": "(lambda s: (carry_forward(s, 2), int(s.isna().sum()))[1])(daily(\"2025-03-03\", [5.0, nan, nan, 6.0]))",
+      "expect": "2",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 10 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lesson l7-gaps: `ffill` and its `limit`.",
+  "solution": "import pandas as pd\n\ndef carry_forward(close, limit):\n    if limit == 0:\n        return close.copy()\n    return close.ffill(limit=limit)\n",
+  "notes": [
+    "`ffill(limit=k)` copies the last known value into at most `k` missing days of each gap.",
+    "pandas raises an error for `limit=0`, so that case returns a copy; days before the first close have nothing to copy and stay NaN.",
+    "One pass over the Series, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "import pandas as pd\n\ndef carry_forward(close, limit):\n    return close.ffill()\n",
+      "slip": "Fills every gap to the end, whatever its length."
+    },
+    {
+      "code": "import pandas as pd\n\ndef carry_forward(close, limit):\n    return close.ffill(limit=limit)\n",
+      "slip": "Passes a limit of 0 straight to `ffill`, which raises an error."
+    },
+    {
+      "code": "import pandas as pd\n\ndef carry_forward(close, limit):\n    if limit > 0:\n        close.ffill(limit=limit, inplace=True)\n    return close\n",
+      "slip": "Fills in place, so the caller's own Series is changed."
+    },
+    {
+      "code": "import pandas as pd\n\ndef carry_forward(close, limit):\n    if limit == 0:\n        return close.copy()\n    return close.ffill(limit=limit).bfill(limit=limit)\n",
+      "slip": "Also fills the start from the first known close, a value from the future."
+    }
+  ]
+}

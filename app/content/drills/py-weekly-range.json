@@ -1,0 +1,128 @@
+{
+  "id": "py-weekly-range",
+  "name": "Weekly trading range",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "resample"
+  ],
+  "skills": [
+    "pd-time"
+  ],
+  "difficulty": 2,
+  "pace": 720,
+  "fn": "weekly_range",
+  "returns": "a pandas Series",
+  "brief": "`close` is a pandas Series of daily closes on a sorted date index, with no missing values. For each week ending on a Friday, the range is the week's highest close less its lowest, divided by the week's first close.\n\nWrite `weekly_range(close)`. It returns a Series indexed by each week's Friday. A week with no closes at all, such as a holiday week, is left out. The tests compare values with `tolist()`, floats within a relative `1e-9`, and the dates as text. The helpers `daily(start, values)` and `on(dates, values)` build Series to try.\n\nExample. Monday 2 June 2025 to Friday 6 June closes at 50.0, 51.2, 49.6, 50.8 and 52.0. The range is $(52.0 - 49.6) / 50.0 = 0.048$, labelled 2025-06-06.",
+  "constraints": [
+    "Up to five years of closes.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "`close.resample(\"W-FRI\")` groups by week ending Friday. Its `max`, `min` and `first` each give one value per week; drop the weeks that come back NaN.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n",
+  "starter": "import pandas as pd\n\ndef weekly_range(close):\n    weeks = close.resample(\"W-FRI\")\n    out = ...\n    return out\n",
+  "examples": [
+    {
+      "call": "weekly_range(daily(\"2025-06-02\", [50.0, 51.2, 49.6, 50.8, 52.0, 52.4, 51.0, 53.5, 52.9, 53.1])).tolist()",
+      "expect": "[0.04799999999999997, 0.04770992366412214]",
+      "compare": "isclose",
+      "note": "Week 2 runs from 51.0 to 53.5 and opened at 52.4: 2.5 / 52.4."
+    },
+    {
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in weekly_range(daily(\"2025-06-02\", [50.0, 51.2, 49.6, 50.8, 52.0, 52.4, 51.0])).index]",
+      "expect": "['2025-06-06', '2025-06-13']",
+      "compare": "equal",
+      "note": "A part week still counts, labelled by its Friday."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Two full weeks",
+      "call": "weekly_range(daily(\"2025-06-02\", [50.0, 51.2, 49.6, 50.8, 52.0, 52.4, 51.0, 53.5, 52.9, 53.1])).tolist()",
+      "expect": "[0.04799999999999997, 0.04770992366412214]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Friday labels",
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in weekly_range(daily(\"2025-06-02\", [50.0, 51.2, 49.6, 50.8, 52.0, 52.4, 51.0, 53.5, 52.9, 53.1])).index]",
+      "expect": "['2025-06-06', '2025-06-13']",
+      "compare": "equal"
+    },
+    {
+      "name": "One day",
+      "call": "weekly_range(daily(\"2025-06-04\", [80.0])).tolist()",
+      "expect": "[0.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "A week with no closes",
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in weekly_range(on([\"2025-06-02\", \"2025-06-04\", \"2025-06-17\", \"2025-06-18\"], [10.0, 10.4, 10.2, 9.9])).index]",
+      "expect": "['2025-06-06', '2025-06-20']",
+      "compare": "equal"
+    },
+    {
+      "name": "Values round the gap",
+      "call": "weekly_range(on([\"2025-06-02\", \"2025-06-04\", \"2025-06-17\", \"2025-06-18\"], [10.0, 10.4, 10.2, 9.9])).tolist()",
+      "expect": "[0.040000000000000036, 0.029411764705882252]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Starts on a Wednesday",
+      "call": "weekly_range(daily(\"2025-07-02\", [30.0, 29.0, 31.5, 32.0, 31.0, 30.5])).tolist()",
+      "expect": "[0.08333333333333333, 0.046875]",
+      "compare": "isclose"
+    },
+    {
+      "name": "First close is the low",
+      "call": "weekly_range(daily(\"2025-09-01\", [100.0, 104.0, 108.0, 112.0, 116.0])).tolist()",
+      "expect": "[0.16]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Last close is the low",
+      "call": "weekly_range(daily(\"2025-09-01\", [116.0, 112.0, 108.0, 104.0, 100.0])).tolist()",
+      "expect": "[0.13793103448275862]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Flat week",
+      "call": "weekly_range(daily(\"2025-09-08\", [7.5, 7.5, 7.5, 7.5, 7.5])).tolist()",
+      "expect": "[0.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Four weeks, length",
+      "call": "len(weekly_range(daily(\"2025-10-06\", [float(40 + (i * 7) % 5) for i in range(20)])))",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "name": "Four weeks, values",
+      "call": "weekly_range(daily(\"2025-10-06\", [float(40 + (i * 7) % 5) for i in range(20)])).tolist()",
+      "expect": "[0.1, 0.1, 0.1, 0.1]",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lesson l11-daily-to-monthly: `resample` with the right rule and aggregations.",
+  "solution": "import pandas as pd\n\ndef weekly_range(close):\n    weeks = close.resample(\"W-FRI\")\n    out = (weeks.max() - weeks.min()) / weeks.first()\n    return out.dropna()\n",
+  "notes": [
+    "`resample(\"W-FRI\")` puts each day in the week that ends on the next Friday and labels the week by that Friday.",
+    "A week with no closes still gets a row, with NaN in every aggregate, so `dropna` removes it.",
+    "Three aggregations over one pass of the closes, $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "import pandas as pd\n\ndef weekly_range(close):\n    weeks = close.resample(\"W\")\n    out = (weeks.max() - weeks.min()) / weeks.first()\n    return out.dropna()\n",
+      "slip": "Uses the rule `\"W\"`, which labels each week by its Sunday."
+    },
+    {
+      "code": "import pandas as pd\n\ndef weekly_range(close):\n    weeks = close.resample(\"W-FRI\")\n    out = (weeks.max() - weeks.min()) / weeks.last()\n    return out.dropna()\n",
+      "slip": "Divides by the week's last close, not its first."
+    },
+    {
+      "code": "import pandas as pd\n\ndef weekly_range(close):\n    weeks = close.resample(\"W-FRI\")\n    return (weeks.max() - weeks.min()) / weeks.first()\n",
+      "slip": "Keeps the empty weeks as NaN rows."
+    }
+  ]
+}

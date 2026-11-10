@@ -1,0 +1,134 @@
+{
+  "id": "py-month-hit-rate",
+  "name": "How often each month rises",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "resample",
+    "groupby"
+  ],
+  "skills": [
+    "pd-time",
+    "pd-group"
+  ],
+  "difficulty": 3,
+  "pace": 1080,
+  "fn": "month_hit_rate",
+  "returns": "a pandas Series",
+  "brief": "`close` is a pandas Series of daily closes on a sorted date index, with at least one close in every month it spans. A month's return runs from the last close of the month before to the last close of this month. The very first month has no return.\n\nFor each calendar month (1 for January to 12 for December), find the share of its returns that were above 0, counting only the months that have a return. Write `month_hit_rate(close)`. It returns a Series of those shares indexed by month number in order, with an entry only for a calendar month that has at least one return. The tests read its index and its values with `tolist()`, floats within a relative `1e-9`. The helpers `daily(start, values)`, `on(dates, values)` and `mid_month(start, values)` are ready to try.\n\nExample. If February 2024 rose and February 2025 fell, entry 2 holds 0.5. If the data start in January 2024, that January has no return and only January 2025 counts.",
+  "constraints": [
+    "Up to 20 years of closes.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "`close.resample(\"ME\").last()` gives month-end closes, and `pct_change().dropna()` their returns. Group `ret > 0` by `ret.index.month` and take the mean.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef mid_month(start, values):\n    # one close on the 15th of each month from the month of start\n    idx = pd.date_range(start, periods=len(values), freq='MS') + pd.Timedelta(days=14)\n    return pd.Series(values, index=pd.DatetimeIndex(idx, name='date'), dtype=float, name='close')\n",
+  "starter": "import pandas as pd\n\ndef month_hit_rate(close):\n    me = close.resample(\"ME\").last()\n    out = pd.Series(dtype=float)\n    return out\n",
+  "examples": [
+    {
+      "call": "month_hit_rate(mid_month(\"2024-01-01\", [100.0, 103.0, 101.0, 99.0, 104.0, 104.5, 102.0, 106.0, 107.0, 105.0, 108.0, 110.0, 109.0, 112.0, 113.0])).tolist()",
+      "expect": "[0.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]",
+      "compare": "isclose",
+      "note": "January 2024 has no return, so entry 1 counts January 2025 alone. March fell once and rose once, so entry 3 holds 0.5."
+    },
+    {
+      "call": "month_hit_rate(daily(\"2025-01-29\", [50.0, 51.0, 52.0, 49.0, 49.5, 48.0])).tolist()",
+      "expect": "[0.0]",
+      "compare": "isclose",
+      "note": "January ends at 52.0 and February so far ends at 48.0: a fall, so entry 2 holds 0.0."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Months present",
+      "call": "month_hit_rate(mid_month(\"2024-03-01\", [100.0, 103.0, 101.0, 99.0, 104.0, 104.5, 102.0, 106.0, 107.0, 105.0, 108.0, 110.0, 109.0, 112.0, 113.0])).index.tolist()",
+      "expect": "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]",
+      "compare": "equal"
+    },
+    {
+      "name": "Fifteen months",
+      "call": "month_hit_rate(mid_month(\"2024-01-01\", [100.0, 103.0, 101.0, 99.0, 104.0, 104.5, 102.0, 106.0, 107.0, 105.0, 108.0, 110.0, 109.0, 112.0, 113.0])).tolist()",
+      "expect": "[0.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Two months",
+      "call": "month_hit_rate(daily(\"2025-01-29\", [50.0, 51.0, 52.0, 49.0, 49.5, 48.0])).tolist()",
+      "expect": "[0.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "One month only",
+      "call": "month_hit_rate(daily(\"2025-03-03\", [10.0, 11.0, 12.0])).tolist()",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "name": "Month-end, not month-start",
+      "call": "month_hit_rate(on([\"2025-01-02\", \"2025-01-31\", \"2025-02-03\", \"2025-02-28\", \"2025-03-03\", \"2025-03-31\"], [100.0, 90.0, 120.0, 95.0, 80.0, 99.0])).tolist()",
+      "expect": "[1.0, 1.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "A flat month",
+      "call": "month_hit_rate(on([\"2025-04-30\", \"2025-05-30\", \"2025-06-30\"], [20.0, 20.0, 21.0])).tolist()",
+      "expect": "[0.0, 1.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Three years of mid-months",
+      "call": "month_hit_rate(mid_month(\"2022-01-01\", [float(100 + (i * 5) % 11 - (i % 3)) for i in range(36)])).tolist()",
+      "expect": "[1.0, 0.6666666666666666, 0.6666666666666666, 0.3333333333333333, 0.6666666666666666, 0.3333333333333333, 0.6666666666666666, 0.3333333333333333, 0.6666666666666666, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Starts in July",
+      "call": "month_hit_rate(mid_month(\"2023-07-01\", [40.0, 41.0, 39.0, 42.0, 43.0, 41.5, 44.0, 45.0, 44.0, 46.0, 47.0, 45.0, 48.0, 47.5])).tolist()",
+      "expect": "[1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.5, 0.0, 1.0, 1.0, 0.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Months present from July",
+      "call": "month_hit_rate(mid_month(\"2023-07-01\", [40.0, 41.0, 39.0, 42.0, 43.0, 41.5, 44.0, 45.0, 44.0, 46.0, 47.0, 45.0, 48.0, 47.5])).index.tolist()",
+      "expect": "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]",
+      "compare": "equal"
+    },
+    {
+      "name": "Daily closes, three months",
+      "call": "month_hit_rate(daily(\"2025-01-01\", [float(200 + (i * 7) % 13 - i // 20) for i in range(64)])).tolist()",
+      "expect": "[0.0, 1.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Up days, down month",
+      "call": "month_hit_rate(on([\"2025-01-31\", \"2025-02-03\", \"2025-02-04\", \"2025-02-05\", \"2025-02-28\"], [100.0, 101.0, 102.0, 103.0, 90.0])).tolist()",
+      "expect": "[0.0]",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lessons l11-daily-to-monthly (month-end closes) and l12-split-apply-combine (grouping by a calendar field).",
+  "solution": "import pandas as pd\n\ndef month_hit_rate(close):\n    me = close.resample(\"ME\").last()\n    ret = me.pct_change().dropna()\n    hits = (ret > 0).groupby(ret.index.month).mean()\n    return hits\n",
+  "notes": [
+    "`resample(\"ME\").last()` gives one close per month, so `pct_change` runs month end to month end.",
+    "The first month's return is NaN, and `NaN > 0` is False, so it must be dropped before counting or it scores as a fall.",
+    "One resample, one `pct_change` and one group of at most 12 keys, $O(n)$ in the number of closes."
+  ],
+  "planted": [
+    {
+      "code": "import pandas as pd\n\ndef month_hit_rate(close):\n    me = close.resample(\"ME\").last()\n    ret = me.pct_change()\n    hits = (ret > 0).groupby(ret.index.month).mean()\n    return hits\n",
+      "slip": "Keeps the first month, whose return is NaN, and `NaN > 0` is False, so it counts as a fall."
+    },
+    {
+      "code": "import pandas as pd\n\ndef month_hit_rate(close):\n    me = close.resample(\"ME\").first()\n    ret = me.pct_change().dropna()\n    hits = (ret > 0).groupby(ret.index.month).mean()\n    return hits\n",
+      "slip": "Takes each month's first close, so the return runs between month starts."
+    },
+    {
+      "code": "import pandas as pd\n\ndef month_hit_rate(close):\n    me = close.resample(\"ME\").last()\n    ret = me.pct_change().dropna()\n    hits = (ret >= 0).groupby(ret.index.month).mean()\n    return hits\n",
+      "slip": "Counts a flat month as a rise."
+    },
+    {
+      "code": "import pandas as pd\n\ndef month_hit_rate(close):\n    ret = close.pct_change().dropna()\n    hits = (ret > 0).groupby(ret.index.month).mean()\n    return hits\n",
+      "slip": "Scores daily returns, not monthly ones, so a month is the share of its up days."
+    }
+  ]
+}

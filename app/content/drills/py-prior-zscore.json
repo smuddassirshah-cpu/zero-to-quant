@@ -1,0 +1,137 @@
+{
+  "id": "py-prior-zscore",
+  "name": "Z-score against the days before",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "rolling",
+    "shift",
+    "look-ahead"
+  ],
+  "skills": [
+    "pd-time"
+  ],
+  "difficulty": 3,
+  "pace": 960,
+  "fn": "prior_zscore",
+  "returns": "a pandas Series",
+  "brief": "A mean-reversion signal asks how unusual today's close is next to the `n` closes before it. Today's close must not be part of its own yardstick. With $m_t$ the mean and $s_t$ the sample standard deviation (`ddof=1`) of the `n` closes before day $t$, the score is $z_t = (c_t - m_t) / s_t$.\n\nWrite `prior_zscore(close, n)`. It returns a Series on the same dates. The first `n` days have too few closes before them and score NaN. When the `n` closes before a day are all equal, $s_t = 0$ and that day scores NaN. The tests read its values in order with `tolist()`, showing a missing value as `None`; floats count within a relative `1e-9`. The helper `daily(start, values)` is ready to try.\n\nExample. For closes 20, 21, 22, 24, 20 and `n = 3`, day 3 sits against 20, 21 and 22: mean 21, deviation 1, so $z = 3$. Day 4 sits against 21, 22 and 24: mean $22\\tfrac13$, deviation $\\sqrt{7/3}$, so $z \\approx -1.528$.",
+  "constraints": [
+    "`n` is at least 2. Up to 10,000 closes, none missing.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "`close.shift(1).rolling(n)` is a window of the `n` closes before each day. Take its `mean()` and `std()`, and keep the score only where the deviation is above 0.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n",
+  "starter": "import pandas as pd\n\ndef prior_zscore(close, n):\n    window = close.rolling(n)\n    z = ...\n    return z\n",
+  "examples": [
+    {
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [20.0, 21.0, 22.0, 24.0, 20.0]), 3))",
+      "expect": "[None, None, None, 3.0, -1.5275252316519454]",
+      "compare": "isclose",
+      "show": "prior_zscore(daily(\"2025-01-06\", [20.0, 21.0, 22.0, 24.0, 20.0]), 3).tolist()",
+      "note": "Day 3 scores 3 against 20, 21 and 22. Day 4 scores about -1.528."
+    },
+    {
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [5.0, 5.0, 5.0, 6.0]), 3))",
+      "expect": "[None, None, None, None]",
+      "compare": "equal",
+      "show": "prior_zscore(daily(\"2025-01-06\", [5.0, 5.0, 5.0, 6.0]), 3).tolist()",
+      "note": "The three closes before day 3 are equal, so there is no spread to measure by."
+    }
+  ],
+  "tests": [
+    {
+      "name": "The worked example",
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [20.0, 21.0, 22.0, 24.0, 20.0]), 3))",
+      "expect": "[None, None, None, 3.0, -1.5275252316519454]",
+      "compare": "isclose",
+      "show": "prior_zscore(daily(\"2025-01-06\", [20.0, 21.0, 22.0, 24.0, 20.0]), 3).tolist()"
+    },
+    {
+      "name": "Flat history",
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [5.0, 5.0, 5.0, 6.0]), 3))",
+      "expect": "[None, None, None, None]",
+      "compare": "equal",
+      "show": "prior_zscore(daily(\"2025-01-06\", [5.0, 5.0, 5.0, 6.0]), 3).tolist()"
+    },
+    {
+      "name": "Too short",
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [1.0, 2.0, 3.0]), 3))",
+      "expect": "[None, None, None]",
+      "compare": "equal",
+      "show": "prior_zscore(daily(\"2025-01-06\", [1.0, 2.0, 3.0]), 3).tolist()"
+    },
+    {
+      "name": "Window of two",
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [10.0, 12.0, 11.0, 15.0, 9.0]), 2))",
+      "expect": "[None, None, 0.0, 4.949747468305833, -1.414213562373095]",
+      "compare": "isclose",
+      "show": "prior_zscore(daily(\"2025-01-06\", [10.0, 12.0, 11.0, 15.0, 9.0]), 2).tolist()"
+    },
+    {
+      "name": "Flat, then moving",
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [8.0, 8.0, 8.0, 9.0, 7.0, 8.5]), 3))",
+      "expect": "[None, None, None, None, -2.309401076758505, 0.5000000000000001]",
+      "compare": "isclose",
+      "show": "prior_zscore(daily(\"2025-01-06\", [8.0, 8.0, 8.0, 9.0, 7.0, 8.5]), 3).tolist()"
+    },
+    {
+      "name": "A steady climb",
+      "call": "_plain(prior_zscore(daily(\"2025-01-06\", [100.0, 101.0, 102.0, 103.0, 104.0, 105.0]), 4))",
+      "expect": "[None, None, None, None, 1.9364916731037085, 1.9364916731037085]",
+      "compare": "isclose",
+      "show": "prior_zscore(daily(\"2025-01-06\", [100.0, 101.0, 102.0, 103.0, 104.0, 105.0]), 4).tolist()"
+    },
+    {
+      "name": "Same dates",
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in prior_zscore(daily(\"2025-01-09\", [1.0, 3.0, 2.0, 4.0]), 2).index]",
+      "expect": "['2025-01-09', '2025-01-10', '2025-01-13', '2025-01-14']",
+      "compare": "equal"
+    },
+    {
+      "name": "Scores counted",
+      "call": "int(prior_zscore(daily(\"2025-02-03\", [float(50 + (i * 13) % 7) for i in range(30)]), 5).notna().sum())",
+      "expect": "25",
+      "compare": "equal"
+    },
+    {
+      "name": "Thirty days, last five",
+      "call": "prior_zscore(daily(\"2025-02-03\", [float(50 + (i * 13) % 7) for i in range(30)]), 5).tolist()[-5:]",
+      "expect": "[-0.07726674092862665, -0.6949955884209114, -1.8973665961010273, -1.8973665961010273, 2.529822128134703]",
+      "compare": "isclose"
+    },
+    {
+      "name": "A sharp drop",
+      "call": "_plain(prior_zscore(daily(\"2025-03-03\", [62.0, 61.5, 62.4, 61.8, 62.1, 55.0]), 5))",
+      "expect": "[None, None, None, None, None, -20.704751282343828]",
+      "compare": "isclose",
+      "show": "prior_zscore(daily(\"2025-03-03\", [62.0, 61.5, 62.4, 61.8, 62.1, 55.0]), 5).tolist()"
+    }
+  ],
+  "how": "Submit runs 10 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lessons l10-rolling and l9-returns-with-shift: a rolling window that ends yesterday.",
+  "solution": "import pandas as pd\n\ndef prior_zscore(close, n):\n    window = close.shift(1).rolling(n)\n    m = window.mean()\n    s = window.std()\n    z = (close - m) / s\n    return z.where(s > 0)\n",
+  "notes": [
+    "`shift(1)` before `rolling(n)` makes every window end the day before, so the score never sees its own close.",
+    "pandas `std` is the sample deviation by default, and `where(s > 0)` turns the flat-window days into NaN instead of infinity.",
+    "Rolling mean and deviation update as the window moves, so the work is $O(n)$ in the number of closes."
+  ],
+  "planted": [
+    {
+      "code": "import pandas as pd\n\ndef prior_zscore(close, n):\n    window = close.rolling(n)\n    m = window.mean()\n    s = window.std()\n    z = (close - m) / s\n    return z.where(s > 0)\n",
+      "slip": "Rolls without the shift, so today's close is inside its own window."
+    },
+    {
+      "code": "import pandas as pd\n\ndef prior_zscore(close, n):\n    window = close.shift(1).rolling(n)\n    m = window.mean()\n    s = window.std(ddof=0)\n    z = (close - m) / s\n    return z.where(s > 0)\n",
+      "slip": "Uses the population deviation, `ddof=0`, not the sample one."
+    },
+    {
+      "code": "import pandas as pd\n\ndef prior_zscore(close, n):\n    window = close.shift(1).rolling(n)\n    m = window.mean()\n    s = window.std()\n    return (close - m) / s\n",
+      "slip": "Divides by a deviation of 0 after a flat stretch, which gives infinity."
+    },
+    {
+      "code": "import pandas as pd\n\ndef prior_zscore(close, n):\n    window = close.shift(1).rolling(n, min_periods=2)\n    m = window.mean()\n    s = window.std()\n    z = (close - m) / s\n    return z.where(s > 0)\n",
+      "slip": "Lets the window start with two closes, so early days score on too short a history."
+    }
+  ]
+}

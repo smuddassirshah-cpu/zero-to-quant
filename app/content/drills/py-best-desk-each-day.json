@@ -1,0 +1,122 @@
+{
+  "id": "py-best-desk-each-day",
+  "name": "Best desk on each day",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "axis-reduction"
+  ],
+  "skills": [
+    "np-arrays"
+  ],
+  "difficulty": 1,
+  "pace": 420,
+  "fn": "best_desk",
+  "returns": "a list of strings",
+  "brief": "`pnl` is a list of rows, one row per day and one column per desk, in pounds. `desks` names the columns in order. For each day, find the desk that made the most. When desks tie, the one that comes first in `desks` wins.\n\nWrite `best_desk(pnl, desks)`. It returns a Python list of desk names, one per day, in day order. With no days it returns `[]`. The tests compare it with the expected list exactly.\n\nExample. With desks `['rates', 'fx', 'credit']` and rows `[120, -40, 75]`, `[-10, 30, 30]` and `[-60, -15, -90]`, the answer is `['rates', 'fx', 'fx']`. On day 1 `fx` ties with `credit` and comes first. On day 2 every desk lost, and `fx` lost least.",
+  "constraints": [
+    "Up to 1,000 days and 50 desks. Every row has one entry per desk.",
+    "NumPy is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Make a 2-D array. Days are rows, so the reduction runs across each row: `axis=1`. `np.argmax` returns the first position of the largest value.",
+  "prelude": "import numpy as np\n\nnan = float('nan')\n",
+  "starter": "import numpy as np\n\ndef best_desk(pnl, desks):\n    p = np.asarray(pnl, dtype=float)\n    best = ...\n    return []\n",
+  "examples": [
+    {
+      "call": "best_desk([[120, -40, 75], [-10, 30, 30], [-60, -15, -90]], ['rates', 'fx', 'credit'])",
+      "expect": "['rates', 'fx', 'fx']",
+      "compare": "equal",
+      "note": "`fx` wins the tie on day 1 by coming first, and loses least on day 2."
+    },
+    {
+      "call": "best_desk([], ['rates', 'fx'])",
+      "expect": "[]",
+      "compare": "equal",
+      "note": "No days, so the list is empty."
+    }
+  ],
+  "tests": [
+    {
+      "name": "No days",
+      "call": "best_desk([], ['a', 'b'])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "name": "One day, one desk",
+      "call": "best_desk([[-5]], ['solo'])",
+      "expect": "['solo']",
+      "compare": "equal"
+    },
+    {
+      "name": "Square table",
+      "call": "best_desk([[3, 1], [4, 2]], ['a', 'b'])",
+      "expect": "['a', 'a']",
+      "compare": "equal"
+    },
+    {
+      "name": "A three-way tie",
+      "call": "best_desk([[7, 7, 7]], ['x', 'y', 'z'])",
+      "expect": "['x']",
+      "compare": "equal"
+    },
+    {
+      "name": "Tie after the first desk",
+      "call": "best_desk([[1, 9, 9], [9, 1, 9]], ['x', 'y', 'z'])",
+      "expect": "['y', 'x']",
+      "compare": "equal"
+    },
+    {
+      "name": "Every desk lost",
+      "call": "best_desk([[-300, -20, -45], [-5, -80, -1]], ['eq', 'fx', 'rates'])",
+      "expect": "['fx', 'rates']",
+      "compare": "equal"
+    },
+    {
+      "name": "More days than desks",
+      "call": "best_desk([[10, 20], [25, 5], [0, 0], [-3, -4]], ['east', 'west'])",
+      "expect": "['west', 'east', 'east', 'east']",
+      "compare": "equal"
+    },
+    {
+      "name": "More desks than days",
+      "call": "best_desk([[4, 8, 6], [9, 2, 9]], ['p', 'q', 'r'])",
+      "expect": "['q', 'p']",
+      "compare": "equal"
+    },
+    {
+      "name": "Six days, four desks",
+      "call": "best_desk([[150, -20, 310, 40], [-75, 60, -10, 60], [0, -5, -2, -1], [220, 225, 219, -400], [-30, -30, -60, -10], [12, 11, 13, 13]], ['rates', 'fx', 'credit', 'eq'])",
+      "expect": "['credit', 'fx', 'rates', 'fx', 'eq', 'credit']",
+      "compare": "equal"
+    },
+    {
+      "name": "Pence and fractions",
+      "call": "best_desk([[0.5, 0.25], [-0.75, -0.5], [1.5, 1.5]], ['spot', 'swaps'])",
+      "expect": "['spot', 'swaps', 'spot']",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 10 hidden tests. Each answer must equal the expected value.",
+  "where": "Draws on numpy-pandas lesson l2-shapes-and-axes: a reduction along the right axis.",
+  "solution": "import numpy as np\n\ndef best_desk(pnl, desks):\n    if len(pnl) == 0:\n        return []\n    p = np.asarray(pnl, dtype=float)\n    best = np.argmax(p, axis=1)\n    return [desks[i] for i in best]\n",
+  "notes": [
+    "Each row is a day, so the best desk of a day is a maximum across its row, `axis=1`.",
+    "`np.argmax` returns the first position of the largest value, which settles ties in the order of `desks`.",
+    "One reduction over the whole table, $O(\\text{days} \\times \\text{desks})$, then one lookup per day."
+  ],
+  "planted": [
+    {
+      "code": "import numpy as np\n\ndef best_desk(pnl, desks):\n    if len(pnl) == 0:\n        return []\n    p = np.asarray(pnl, dtype=float)\n    best = np.argmax(p, axis=0)\n    return [desks[i] for i in best]\n",
+      "slip": "Reduces along `axis=0`, down each desk, so it answers which day was best for each desk."
+    },
+    {
+      "code": "import numpy as np\n\ndef best_desk(pnl, desks):\n    if len(pnl) == 0:\n        return []\n    p = np.asarray(pnl, dtype=float)\n    best = p.shape[1] - 1 - np.argmax(p[:, ::-1], axis=1)\n    return [desks[i] for i in best]\n",
+      "slip": "Breaks a tie in favour of the last desk, not the first."
+    },
+    {
+      "code": "import numpy as np\n\ndef best_desk(pnl, desks):\n    if len(pnl) == 0:\n        return []\n    p = np.asarray(pnl, dtype=float)\n    best = np.argmax(np.abs(p), axis=1)\n    return [desks[i] for i in best]\n",
+      "slip": "Takes the largest move in either direction, so a big loss can win the day."
+    }
+  ]
+}
