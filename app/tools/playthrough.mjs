@@ -24,7 +24,8 @@
      node app/tools/playthrough.mjs --bank probability-1   every item of one bank file (repeatable, or --bank all): dealt, answered right from its key, pass or fail per item
      node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
                                                            solution passes every hidden test, the stopwatch is read and recorded (add --mobile, --narrow or --tablet to repeat it at those sizes)
-     node app/tools/playthrough.mjs --session              the sample drill session: both drills, minutes per drill, result, carry, expiry (--drills includes it)
+     node app/tools/playthrough.mjs --drill <id> --planted   the planted wrong solutions of a drill (item 844; use tools/planted-check.mjs, which wraps this)
+     node app/tools/playthrough.mjs --session            the sample drill session: both drills, minutes per drill, result, carry, expiry (--drills includes it)
      node app/tools/playthrough.mjs --routes-only          (also: the weekly mixed review on Today: the state clock moves eight days on, the card appears above the practice rows,
                                                            "Not today" keeps it due, the review is played and recorded and the card clears, it is due again after seven days; mock-oa-code holdout and resit checks, mock versions in Prepare) only the routes, then the interview bank deck (due and new items, the 3-day box,
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
@@ -93,7 +94,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false, shard: null, list: false, fluencyIds: [] };
+const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, planted: false, sessionRun: false, all: false, shard: null, list: false, fluencyIds: [] };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -116,6 +117,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--bank') opt.bankIds.push(next());
   else if (a === '--drill') opt.drillIds.push(next());
   else if (a === '--drills') opt.drillsAll = true;
+  else if (a === '--planted') opt.planted = true;   // item 844: with --drill / --drills, check the planted wrong solutions instead (tools/planted-check.mjs wraps it)
   else if (a === '--session') opt.sessionRun = true;
   else if (a === '--all') opt.all = true;
   else if (a === '--list') opt.list = true;
@@ -1727,8 +1729,41 @@ const main = async () => {
       fails.forEach(x => failures.push('drill library: ' + x));
       console.log(`${fails.length ? 'FAIL' : 'ok  '} drill filters and session setup`);
     };
+    /* item 844: --planted. The starter and every `planted` wrong solution of a drill must fail at least one hidden test, and the model solution must pass them all.
+       One line per problem ("PLANTED-FAIL <id> | <what>") and one "PLANTED-OK <id> | <n> planted" per clean drill; tools/planted-check.mjs reads them. */
+    const plantedOne = async (id) => {
+      const file = readJSON(path.join(CONTENT, 'drills', id + '.json')), cpp = file.language === 'cpp', pl = Array.isArray(file.planted) ? file.planted : [], bad = [];
+      where = '#drill/' + id;
+      try {
+        await page.evaluate((id2) => { delete ZQ.state.drills.get()[id2]; ZQ.store.set(`drill.${id2}.state`, null); }, id);
+        await go('drill/' + id);
+        await page.waitForFunction(() => window.ZQDrill, null, { timeout: opt.timeout });
+        const rdy = await drillReady(cpp);
+        if (rdy) throw new Error(rdy);
+        const tag = cpp ? '\n// planted check\n' : '\n# planted check\n';
+        await page.evaluate((s2) => ZQDrill.setCode(s2), file.starter + tag);
+        const st = await drillSubmit();
+        if (st.ok) bad.push('the starter passes every hidden test');
+        for (let i = 0; i < pl.length; i++) {
+          await page.evaluate((s2) => ZQDrill.setCode(s2), pl[i].code + tag);
+          const r = await drillSubmit();
+          if (r.ok) bad.push(`planted[${i}] passes all ${r.total} hidden tests (slip: ${pl[i].slip})`);
+        }
+        await page.evaluate((s2) => ZQDrill.setCode(s2), file.solution);
+        const ref = await drillSubmit();
+        if (!ref.ok) bad.push(`the model solution passes ${ref.passed} of ${ref.total} hidden tests${await codeWhy()}`);
+      } catch (e) { bad.push('threw ' + String(e.message || e).split('\n')[0]); }
+      if (bad.length) bad.forEach(x => { console.log(`PLANTED-FAIL ${id} | ${x}`); failures.push(`planted ${id}: ${x}`); });
+      else console.log(`PLANTED-OK ${id} | ${pl.length} planted`);
+      await page.evaluate(() => { location.hash = '#today'; });
+      await page.waitForTimeout(300);
+    };
     const drillPhase = opt.drillIds.length || opt.drillsAll || opt.sessionRun;
-    if (drillPhase) {
+    if (drillPhase && opt.planted) {
+      const ids = opt.drillsAll ? drillIdsAll() : opt.drillIds;
+      for (const id of ids) if (!drillIdsAll().includes(id)) die(`--drill ${id}: no such file in content/drills`);
+      for (const id of ids) await plantedOne(id);
+    } else if (drillPhase) {
       const ids = opt.drillsAll ? drillIdsAll() : opt.drillIds;
       for (const id of ids) if (!drillIdsAll().includes(id)) die(`--drill ${id}: no such file in content/drills`);
       for (const v of ANY_EXTRA ? EXTRA : [DESKTOP]) {

@@ -24,6 +24,7 @@ Topic 1.8 has no drill of its own. These 60 are the independent practice between
 1. `docs/reports/drills-dsa-<a|b|c|d>-check.py`, run with `<scratchpad>/venv/bin/python`: for every drill it runs the model `solution` on every example and hidden test, and also an independent slow method you write separately (brute force), and both must equal every `expect`. It also checks the `starter` fails at least one test. Exit 0.
 2. From `app/`: `node tools/validate.mjs 2>&1 | tail -5` shows 0 errors.
 3. `node tools/playthrough.mjs --drill <id> ... --local-cdn <pkgs>` for all 15, and again with `--mobile`: green.
+4a. Planted wrong solutions (ENGINE-BACKLOG 844): give each drill two or more `planted` entries (AUTHORING section 5) and run `node tools/planted-check.mjs --all-drills --require --local-cdn <pkgs>` (or `--drill <id> ... --require`): exit 0.
 4. Voice: British English, no exclamation marks, no em-dashes, sentences under 35 words, in `brief`, `hint`, `notes`, `note`.
 5. Report `docs/reports/drills-dsa-<x>.md` (table: id, pattern, difficulty, pace, stdin, test count; fresh-check hits and your judgement). Engine limits go to `docs/BACKLOG-INBOX.md` under `Raised later (drills dsa <x>):`.
 
