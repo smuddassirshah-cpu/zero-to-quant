@@ -49,8 +49,51 @@ The probes the brief asked for, and what was found.
 - Resonance: undamped resonance at the natural frequency with $y_p = \tfrac{t}{4}\sin 2t$; the damped peak is put correctly below the natural frequency at $\omega_0\sqrt{1 - 2\zeta^2}$, confirmed by maximising the formula and by simulating the forced equation.
 - Damping: three regimes from the discriminant, $\zeta = b/(2\omega_0)$, envelope height $\sqrt{c_1^2 + c_2^2}$ (1.0328 and $\sqrt5/2$), overshoot $e^{-\zeta\pi/\sqrt{1 - \zeta^2}}$ against a numerical peak, the settling table recomputed from closed forms, and "critical is the fastest with no overshoot" against every $\zeta$ from 1 to 3.
 - Mean reversion: sign of the drift, half-life $\ln 2/\kappa$ acting on the gap, $1/\kappa$ named as the $1/e$ time, the exact AR(1) with $\phi = e^{-\kappa/252}$, and the expected Vasicek path by Monte Carlo (200,000 paths).
-- Phase plane: classification by eigenvalues and by trace and determinant agree on 19,000 random matrices; the zero-eigenvalue and equal-eigenvalue cases are named; the direction of turning from the bottom-left entry holds for 5,000 random matrices with complex eigenvalues, and the transpose reverses it.
+- Phase plane: classification by eigenvalues and by trace and determinant agree on 20,000 random matrices (those within 0.001 of an edge of the map are skipped); the zero-eigenvalue and equal-eigenvalue cases are named; the direction of turning from the bottom-left entry holds for 5,000 random matrices with complex eigenvalues, and the transpose reverses it.
 - Senses of stable: l12 screens[5] defines asymptotic stability, and screens[7] says a centre is stable but not asymptotically stable. Only l4 quiz[0] is at odds with that (finding 2).
 - Linearisation: trusted at hyperbolic points only, with Hartman-Grobman stated as "no eigenvalue on the imaginary axis"; the equal-eigenvalue caveat; a linear centre shown to spiral in under cubic terms (and out under the mirror terms); the zero-eigenvalue example. Stability carried over in 150 random hyperbolic systems with quadratic terms.
 - Code-behaviour claims: Pyodide's NumPy does return `nan` for a singular solve (run in Pyodide 0.27.7). The float example in l9 does not behave as printed (finding 5).
 - Chart curves: every plotted expression read against its prose (loan, logistic, wrong-working curves, envelopes, the three damping branches, step responses, the smoother series, two-factor paths, the trace-determinant points). None contradicts the text.
+
+## Overlap with the earlier reads
+
+Filled after the ledger, scripts and findings above were committed (commits `Concept audit: odes L1 to L3 round 2, blind ledger and check scripts` and `Concept audit: odes L1 to L3 round 2, blind findings`). Only then were `docs/reviews/review-odes-1-3.md` and `docs/reviews/audit-odes-1-3.md` opened, with their `## Fix pass` sections. The round-1 ledger, the round-1 concept scripts and the author reports were not opened.
+
+The earlier reads hold 23 conceptual findings: 9 in the second-reader review (as counted by the round-1 audit) and 14 in the round-1 audit. All 23 were applied before this round read the content, so none could be found again. Each of the 23 corrected lines was read here as it now stands.
+
+| | count | which |
+|---|---|---|
+| Conceptual findings found by this round only | 9 | findings 1 to 9 above (2 wrong, 7 imprecise; 0 serious) |
+| Conceptual findings found by earlier reads only | 23 | review-odes-1-3: 9; audit-odes-1-3: 14 (2 wrong, 11 imprecise, 1 misleading; 4 serious). All fixed in the text read here |
+| Found by both | 0 | none |
+
+Where each finding of this round sits:
+
+| finding | in fix-pass text? | note |
+|---|---|---|
+| 1 (l1 residual feedback) | no | original text; neither earlier read raised it |
+| 2 (l4 "It is unstable" graded wrong) | no | original text; round 1 stated that no `wrong[]` option is correct under a valid alternative |
+| 3 (l8 "multiply the whole guess") | yes | the words "the whole guess" were written by the round-1 fix pass for its finding 6; the round-1 auditor's own wording was "multiply the guess by $t$" |
+| 4 (l8 feedback equation) | no, but left behind by a fix | the review's fix changed the prose guess from $t + c$ to $100 + t + c$ and left this feedback line on the old guess; before that fix the line matched the prose |
+| 5 (l9 float example) | no | original text; a NEW `wrong` no earlier read found. The review ran every code widget, and the hidden test passes, because the example is exactly 0 |
+| 6 (l9 undamped called under-damped) | no | original text |
+| 7 (l9 "its one swing") | yes | the phrase was written by the review's fix pass for its l9 screens[4] warning |
+| 8 (l12 rules without $\Delta > 0$) | no | original text |
+| 9 (l13 "a zero eigenvalue decides nothing") | yes | summary.ideas[1] was replaced whole by the round-1 fix pass for its finding 13, with the round-1 auditor's wording; round 1 listed the zero-eigenvalue claim as checked and clean |
+
+Counts for the convergence rule. New `wrong` findings that no earlier read found: 2 (findings 4 and 5), both minor. Finding 4 is a dropped term in one feedback line, a residue of the first fix pass. Finding 5 is a false code-behaviour claim with a console line Python does not print. The rule closes a course at "at most one new `wrong` per three levels", so on a strict count this round does not close the course. No finding of this round is serious, against 4 serious in round 1. Three of the nine findings (3, 7, 9) sit in text a fix pass wrote, and a fourth (4) was left behind by one, so fix-pass text accounts for 4 of 9.
+
+The 23 corrected lines hold. Among them: the uniqueness hypothesis (l1 screens[9], homework-1 items[3]), the envelopes $\tfrac{\sqrt5}{2}e^{-t}$ and $1.0328e^{-0.5t}$ with their chart curves, the term-by-term modification rule and $t^2$ at a double root, the two senses of stable in l12, the parabola caveat, the cubic example of a linear centre that spirals in, the equal-eigenvalue caveat, "any nudge to its trace", and "capital dips but never reaches zero". Each is in the ledger as `correct` with its own check.
+
+## Gate results
+
+Run from `app/` in this worktree, on the content as read. No content file, engine file or `course.json` was changed.
+
+- `node tools/validate.mjs 2>&1 | tail -5`: `0 errors, 4109 warnings`. `content/manifest.json` unchanged (`git status` clean).
+- `python3 ../docs/reports/odes-L1-concepts-r2.py`: exit 0 (83 checks, 1 `EXPECTED_FAIL`: finding 2). `odes-L2-concepts-r2.py`: exit 0 (107 checks, 3 `EXPECTED_FAIL`: findings 3, 4, 5). `odes-L3-concepts-r2.py`: exit 0 (68 checks, 2 `EXPECTED_FAIL`: findings 8, 9). Findings 1 and 7 have ordinary checks that show the counter-case (`l1_grid_residual_can_be_zero_for_non_solution`, `l9_b3_first_undershoot`). Finding 6 is a naming convention and has no check that could fail. Each `EXPECTED_FAIL` prints the corrected assert. When a fix lands, the marker prints `XPASS` and should be turned into a plain check.
+- `python3 ../docs/reports/odes-L1-numbers.py`: exit 0. `odes-L2-numbers.py`: exit 0. `odes-L3-numbers.py`: exit 0.
+- Round-1 scripts `odes-L1-concepts.py`, `-L2-concepts.py`, `-L3-concepts.py` (run only after the overlap table was filled): exit 0, 0, 0.
+- Pyodide runs (scratch scripts, not committed; Pyodide 0.27.7 under node with the local package folder): `np.linalg.solve` on a singular matrix returns `array([nan, nan])`; `0.2**2 - 4*0.1*0.1` is `0.0`; `0.2**2 - 4*0.5*0.02` is `6.938893903907228e-18`; the l9 solution returns `'critical'` for `(0.5, 0.2, 0.02)`.
+- Playthrough: not run. This round changed no content, so there are no changed files to play through.
+
+Proposed fixes obey the voice rules: British English, no exclamation marks, no em-dashes, every sentence under 35 words, explanations of at most three sentences. Finding 5 also proposes one hidden-test change (`damping_type(0.5, 0.2, 0.02)`); the solution passes it and a solution without the tolerance fails it.
