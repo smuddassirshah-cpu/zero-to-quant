@@ -1,0 +1,132 @@
+{
+  "id": "cpp-session-time",
+  "name": "Clock times that wrap at midnight",
+  "course": "cpp",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "operator-overloading",
+    "modulo"
+  ],
+  "skills": [
+    "cp-classes",
+    "cp-references"
+  ],
+  "difficulty": 2,
+  "pace": 660,
+  "brief": "A futures desk trades nearly round the clock, so its scheduler works in minutes after midnight, 0 to 1439. Write `class SessionTime` with an `explicit SessionTime(int minutes)` that wraps any whole number into 0 to 1439, and `int minutes() const`. Then write three free operators. `t + m` is the time `m` minutes later (`m` may be negative). `b - a` is the number of minutes forward from `a` to `b`, 0 to 1439. `a < b` compares the times within one day.\n\n23:50 plus 20 minutes is 00:10, so `(SessionTime(23 * 60 + 50) + 20).minutes()` is 10. Going forward from 23:50 to 00:30 takes 40 minutes, so the answer to `SessionTime(30) - SessionTime(1430)` is 40.",
+  "constraints": [
+    "Minute counts lie between $-10^6$ and $10^6$.",
+    "`SessionTime t = 5;` must not compile: the constructor is `explicit`.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "In C++ `%` keeps the sign of the left side, so -30 % 1440 is -30. Add 1440 and take `%` again.",
+  "starter": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(minutes) {}   // wrap into 0..1439\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return t; }\nint operator-(SessionTime b, SessionTime a) { return 0; }\nbool operator<(SessionTime a, SessionTime b) { return false; }\n",
+  "examples": [
+    {
+      "call": "(SessionTime(23 * 60 + 50) + 20).minutes()",
+      "expect": 10,
+      "compare": "equal",
+      "note": "Past midnight the clock starts again at 0."
+    },
+    {
+      "call": "SessionTime(30) - SessionTime(1430)",
+      "expect": 40,
+      "compare": "equal",
+      "note": "Forward from 23:50 to 00:30."
+    }
+  ],
+  "tests": [
+    {
+      "call": "(SessionTime(23 * 60 + 50) + 20).minutes()",
+      "expect": 10,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(30) - SessionTime(1430)",
+      "expect": 40,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(-30).minutes()",
+      "expect": 1410,
+      "compare": "equal"
+    },
+    {
+      "call": "(SessionTime(600) + (-700)).minutes()",
+      "expect": 1340,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(480) < SessionTime(1000)",
+      "expect": true,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(1440 * 3 + 5).minutes()",
+      "expect": 5,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(100) - SessionTime(100)",
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "(SessionTime(0) + -2880).minutes()",
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "(SessionTime(900) + 3000).minutes()",
+      "expect": 1020,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(5) < SessionTime(5)",
+      "expect": false,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(1439) - SessionTime(0)",
+      "expect": 1439,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(-4000).minutes()",
+      "expect": 320,
+      "compare": "equal"
+    },
+    {
+      "call": "SessionTime(2000) < SessionTime(100)",
+      "expect": false,
+      "compare": "equal"
+    },
+    {
+      "compiles": "SessionTime t = 5;",
+      "expect": false,
+      "name": "No silent conversion from int"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The last only compiles `SessionTime t = 5;` and expects it to be refused.",
+  "solution": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(((minutes % 1440) + 1440) % 1440) {}\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return SessionTime(t.minutes() + m); }\nint operator-(SessionTime b, SessionTime a) { return SessionTime(b.minutes() - a.minutes()).minutes(); }\nbool operator<(SessionTime a, SessionTime b) { return a.minutes() < b.minutes(); }\n",
+  "notes": [
+    "Wrapping once, in the constructor, keeps every `SessionTime` inside 0 to 1439, so the operators can trust it.",
+    "`((m % 1440) + 1440) % 1440` is right for negative `m`; `m % 1440` alone can be negative.",
+    "`b - a` reuses the constructor's wrap, so a time just before midnight to one just after gives a small number."
+  ],
+  "planted": [
+    {
+      "code": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(minutes % 1440) {}\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return SessionTime(t.minutes() + m); }\nint operator-(SessionTime b, SessionTime a) { return SessionTime(b.minutes() - a.minutes()).minutes(); }\nbool operator<(SessionTime a, SessionTime b) { return a.minutes() < b.minutes(); }\n",
+      "slip": "Uses % alone, so a negative minute count stays negative."
+    },
+    {
+      "code": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(((minutes % 1440) + 1440) % 1440) {}\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return SessionTime(t.minutes() + m); }\nint operator-(SessionTime b, SessionTime a) { return b.minutes() - a.minutes(); }\nbool operator<(SessionTime a, SessionTime b) { return a.minutes() < b.minutes(); }\n",
+      "slip": "The difference is not wrapped, so a span across midnight comes out negative."
+    },
+    {
+      "code": "class SessionTime {\npublic:\n    explicit SessionTime(int minutes) : m_(minutes) {\n        if (m_ >= 1440) m_ -= 1440;\n        if (m_ < 0) m_ += 1440;\n    }\n    int minutes() const { return m_; }\nprivate:\n    int m_;\n};\n\nSessionTime operator+(SessionTime t, int m) { return SessionTime(t.minutes() + m); }\nint operator-(SessionTime b, SessionTime a) { return SessionTime(b.minutes() - a.minutes()).minutes(); }\nbool operator<(SessionTime a, SessionTime b) { return a.minutes() < b.minutes(); }\n",
+      "slip": "Wraps by one day only, so a count more than a day out of range stays out of range."
+    }
+  ]
+}

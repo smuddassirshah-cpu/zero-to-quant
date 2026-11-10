@@ -176,6 +176,85 @@ def _(t):
     return [bps[bisect.bisect_right(frm, a) - 1] for a in asks] + [len(frm)]
 
 
+# ------------------------------------------------------------------ cpp-range-out
+@model('cpp-range-out', '`{1, -1, 3.5}`')
+def _(t):
+    xs, want_lo, want_hi = t['args']
+    lo = hi = 999
+    if not xs:
+        return [0, lo, hi]
+    s = sorted(xs)
+    return [1, s[0] if want_lo else lo, s[-1] if want_hi else hi]
+
+
+# ------------------------------------------------------------------ cpp-session-time
+def _wrap(m):
+    while m < 0:
+        m += 1440
+    while m >= 1440:
+        m -= 1440
+    return m
+
+
+@model('cpp-session-time', 'is 10')
+def _(t):
+    if 'compiles' in t:
+        return False                      # explicit constructor: no copy-initialisation from int
+    c = t['call']
+    m = re.fullmatch(r'\(SessionTime\((.+?)\) \+ \(?(-?\d+)\)?\)\.minutes\(\)', c)
+    if m:
+        return _wrap(eval(m.group(1)) + int(m.group(2)))
+    m = re.fullmatch(r'SessionTime\((-?[\d *+]+)\)\.minutes\(\)', c)
+    if m:
+        return _wrap(eval(m.group(1)))
+    m = re.fullmatch(r'SessionTime\((-?\d+)\) - SessionTime\((-?\d+)\)', c)
+    if m:                                 # minutes forward from a to b
+        a, b = _wrap(int(m.group(2))), _wrap(int(m.group(1)))
+        return b - a if b >= a else b - a + 1440
+    m = re.fullmatch(r'SessionTime\((-?\d+)\) < SessionTime\((-?\d+)\)', c)
+    if m:
+        return _wrap(int(m.group(1))) < _wrap(int(m.group(2)))
+    raise KeyError(c)
+
+
+# ------------------------------------------------------------------ cpp-crossings
+@model('cpp-crossings', 'The answer is 3')
+def _(t):
+    m = re.fullmatch(r'count_crossings\(std::vector<(int|long long|double)>\{(.*)\}, (.+)\)', t['call'])
+    num = (lambda s: float(s)) if m.group(1) == 'double' else (lambda s: int(s.rstrip('L')))
+    xs = [num(s) for s in m.group(2).split(', ')] if m.group(2) else []
+    level = num(m.group(3))
+    signs = [1 if x > level else -1 for x in xs if x != level]     # drop the values at the level
+    return sum(1 for a, b in zip(signs, signs[1:]) if a != b)
+
+
+# ------------------------------------------------------------------ cpp-drop-small
+@model('cpp-drop-small', '`{300, 400, 3}`')
+def _(t):
+    v, m = t['args']
+    v = list(v)
+    removed = 0
+    i = 0
+    while i < len(v):
+        if v[i] < m:
+            del v[i]
+            removed += 1
+        else:
+            i += 1
+    return v + [removed]
+
+
+# ------------------------------------------------------------------ cpp-trimmed-mean
+@model('cpp-trimmed-mean', 'The answer is 107.5')
+def _(t):
+    v, k = t['args']
+    if 2 * k >= len(v):
+        return 0.0
+    s = sorted(v)
+    mid = s[k:len(s) - k]
+    return float(Fraction(sum(mid), len(mid)))
+
+
 # ================================================================== driver
 def main():
     files = sorted(f for f in os.listdir(DR) if f.startswith('cpp-') and f.endswith('.json'))

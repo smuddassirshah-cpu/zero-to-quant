@@ -1,0 +1,116 @@
+{
+  "id": "cpp-crossings",
+  "name": "Crossings of a level, for any type",
+  "course": "cpp",
+  "pack": "cpp",
+  "language": "cpp",
+  "tags": [
+    "function-template",
+    "signal"
+  ],
+  "skills": [
+    "cp-classes"
+  ],
+  "difficulty": 2,
+  "pace": 660,
+  "brief": "A signal counts how often a series crosses a level. The series may be prices in pence (`int`), sizes (`long long`) or prices as `double`, so write one function template, `template <typename T> int count_crossings(const std::vector<T>& xs, T level)`.\n\nA crossing is a move from strictly below the level to strictly above it, or back. A value equal to the level keeps the side the series was last on, and values at the level before any side is known are ignored.\n\nFor `{98, 101, 100, 99, 102}` and level 100 the series goes below, above, stays above at 100, then below and above again. The answer is 3.",
+  "constraints": [
+    "$0 \\le n \\le 10^5$ values. The tests call the template with `int`, `long long` and `double`.",
+    "`T` needs only `<`: use no other operator on it.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "Keep the last known side, -1 or +1, starting at 0 for not known. A value at the level changes nothing.",
+  "starter": "#include <vector>\n\ntemplate <typename T>\nint count_crossings(const std::vector<T>& xs, T level) {\n    return 0;\n}\n",
+  "examples": [
+    {
+      "call": "count_crossings(std::vector<int>{98, 101, 100, 99, 102}, 100)",
+      "expect": 3,
+      "compare": "equal",
+      "note": "Below, above, still above at 100, below, above: three crossings."
+    },
+    {
+      "call": "count_crossings(std::vector<int>{100, 100, 101, 100, 99}, 100)",
+      "expect": 1,
+      "compare": "equal",
+      "note": "The values at 100 before 101 belong to no side, so only 101 to 99 counts."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_crossings(std::vector<int>{}, 5)",
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<int>{5}, 5)",
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<int>{98, 101, 100, 99, 102}, 100)",
+      "expect": 3,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<int>{100, 100, 101, 100, 99}, 100)",
+      "expect": 1,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<int>{99, 100, 99}, 100)",
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<double>{1.5, 2.5, 1.5, 2.5}, 2.0)",
+      "expect": 3,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<double>{-0.1, 0.0, 0.2, -0.3}, 0.0)",
+      "expect": 2,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<long long>{3000000000LL, 2000000000LL, 4000000000LL}, 2500000000LL)",
+      "expect": 2,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<int>{1, 2, 3, 4}, 10)",
+      "expect": 0,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<int>{10, 1, 10, 1, 10}, 5)",
+      "expect": 4,
+      "compare": "equal"
+    },
+    {
+      "call": "count_crossings(std::vector<double>{100.5, 100.5, 99.5}, 100.5)",
+      "expect": 0,
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value. The tests call it with `int`, `long long` and `double` vectors.",
+  "solution": "#include <vector>\n\ntemplate <typename T>\nint count_crossings(const std::vector<T>& xs, T level) {\n    int side = 0, n = 0;   // -1 below, +1 above, 0 not known yet\n    for (const T& x : xs) {\n        int s = x < level ? -1 : (level < x ? 1 : 0);\n        if (s == 0) continue;\n        if (side != 0 && s != side) ++n;\n        side = s;\n    }\n    return n;\n}\n",
+  "notes": [
+    "One template serves all three types; the compiler writes a version for each `T` the tests use.",
+    "`level` has type `T` too, so a call passes a level of the same type as the vector's values.",
+    "Comparing only neighbours misses a crossing that pauses at the level, as 101, 100, 99 does."
+  ],
+  "planted": [
+    {
+      "code": "#include <vector>\n\nint count_crossings(const std::vector<double>& xs, double level) {\n    int side = 0, n = 0;   // -1 below, +1 above, 0 not known yet\n    for (double x : xs) {\n        int s = x < level ? -1 : (level < x ? 1 : 0);\n        if (s == 0) continue;\n        if (side != 0 && s != side) ++n;\n        side = s;\n    }\n    return n;\n}\n",
+      "slip": "Written for double only, so a vector of int or long long does not match."
+    },
+    {
+      "code": "#include <vector>\n\ntemplate <typename T>\nint count_crossings(const std::vector<T>& xs, T level) {\n    int n = 0;\n    for (std::size_t i = 1; i < xs.size(); ++i) {\n        if ((xs[i - 1] < level && level < xs[i]) || (level < xs[i - 1] && xs[i] < level)) ++n;\n    }\n    return n;\n}\n",
+      "slip": "Compares neighbours only, so a crossing that stops at the level on the way is missed."
+    },
+    {
+      "code": "#include <vector>\n\ntemplate <typename T>\nint count_crossings(const std::vector<T>& xs, T level) {\n    int side = 0, n = 0;   // -1 below, +1 above, 0 not known yet\n    for (const T& x : xs) {\n        int s = level < x ? 1 : -1;\n        if (s == 0) continue;\n        if (side != 0 && s != side) ++n;\n        side = s;\n    }\n    return n;\n}\n",
+      "slip": "Treats a value at the level as below it."
+    }
+  ]
+}
