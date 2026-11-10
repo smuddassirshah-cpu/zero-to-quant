@@ -32,3 +32,20 @@ No family skipped. One limit raised in `docs/BACKLOG-INBOX.md` under `Raised lat
 3. Playthrough `--fluency`, with and without `--mobile`: green for both sets. I looked at the 440 px item, wrong-answer and end-card screenshots: no overflow.
 4. `voice-scan.py 35` on `app/content/courses/multivar`: 0 and 0.
 5. I read 20 drawn items of every family as a learner would and ran a pattern scan (`1x`, `+-`, `x^1`, `0x`, double minus, `+0`, `-0`, `1 \times`, float artefacts, unreduced `\frac`). It found `-1 \times 3` in a solution (reworded), `y^{1}` in a slip's tex (powers now from 3) and one draw where the two point-on-a-contour slips coincided (now excluded by `where`). Final scan clean; no prompt gives the answer away.
+
+## Widening pass
+
+New set `fluency-l2-slicing`, written from that lesson only: its notation ($f_x$, $\dfrac{\partial f}{\partial y}$ at a point), its examples ($x^2y + 3y$, $xy$, $e^{xy}$, $\ln(x^2 + y^2)$) and its slips (kept constant term, dropped held factor, wrong variable, height for slope, no chain). The first partials of l3 drop their powers from 3 to 2 now that `mono` prints a power of 1 cleanly.
+
+| set | family | distinct prompts in 200 | `form` | slips (`wrong` ids) |
+|---|---|---|---|---|
+| fluency-l2-slicing | partial-x (new) | 200 | none | y-term-kept, y-dropped |
+| | partial-y-at-a-point (new, numeric) | 200 | none | f-x (`when` it differs), height (`when` it differs) |
+| | exponential-x (new, $f = ce^{kx^my^n}$) | 116 | none | no-chain, wrong-variable |
+| | log-at-a-point (new, numeric, fraction or decimal) | 166 | none | f-x (`when` it differs), no-chain (`when` it differs) |
+| fluency-l3-second-partials | first-partial (powers now from 2) | 200 | none | x-term-differentiated, x-factor-dropped |
+| | mixed-partial (powers now from 2) | 200 | none | product-of-partials, pure-term-kept, power-not-lowered |
+
+Entries still blocked: none.
+
+Checks: (1) `fluency-multivar-numbers.py`, extended with the four l2 families (sympy `diff` from the vars) and an offered-set check for every `when`: 6,182 checks over 10 families, 0 failures, exit 0. (2) Validator 0 errors, no warning on a fluency file; `test-fluency.mjs --local-cdn` 306/306 (l2) and 302/302 (l3), no coinciding-wrong notes. (3) Playthrough `--fluency` of both sets, with and without `--mobile`: green; the 440 px item and wrong-answer screenshots read, no overflow. (4) Voice scan 35: 0 and 0. (5) I read 20 draws of every new or changed family and scanned 200 for `1x`, `0x`, `x^1`, `+-`, double minus and unreduced fractions: none. Reading led to two rewordings (a solution that named $y^2$ twice, and a fraction step that repeated a reduced fraction).

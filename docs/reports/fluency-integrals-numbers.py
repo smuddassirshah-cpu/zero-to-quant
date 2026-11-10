@@ -143,13 +143,15 @@ def expr_family(set_id, fam, integrand, antideriv=None):
 
 
 def num_family(set_id, fam, exact, slips):
-    """exact(vars) -> Rational; slips(vars) -> {wrong id: Rational}"""
+    """exact(vars) -> Rational or exact sympy value; slips(vars) -> {wrong id: value}, holding exactly the slips that
+    are offered on this draw (a `when` switches a slip off), so the offered set is checked too."""
     items = sample(set_id, fam)
     for it in items:
         v = it['vars']
         e = sp.nsimplify(exact(v))
         got = sp.Rational(str(it['answer'])) if re.fullmatch(r'-?\d+(/\d+)?', str(it['answer'])) else sp.nsimplify(float(it['answer']), rational=True, tolerance=1e-12)
-        check(abs(float(got) - float(e)) < 1e-9, f'{set_id}/{fam} seed {it["seed"]}: answer {it["answer"]} but sympy gives {e}')
+        scale = max(1.0, abs(float(e)))
+        check(abs(float(got) - float(e)) < 1e-9 * scale, f'{set_id}/{fam} seed {it["seed"]}: answer {it["answer"]} but sympy gives {e}')
         tol = (it.get('tol') or {}).get('abs', 0)
         mine = slips(v)
         seen = []
@@ -157,11 +159,12 @@ def num_family(set_id, fam, exact, slips):
             wv = float(w['value'])
             check(w['id'] in mine, f'{set_id}/{fam}: wrong {w["id"]} not recomputed here')
             if w['id'] in mine:
-                check(abs(wv - float(mine[w['id']])) < 1e-9, f'{set_id}/{fam} seed {it["seed"]}: wrong {w["id"]} {wv} but here {mine[w["id"]]}')
+                check(abs(wv - float(mine[w['id']])) < 1e-9 * max(1.0, abs(wv)), f'{set_id}/{fam} seed {it["seed"]}: wrong {w["id"]} {wv} but here {mine[w["id"]]}')
             check(abs(wv - float(e)) > tol + 1e-9, f'{set_id}/{fam} seed {it["seed"]}: wrong {w["id"]} inside the key tolerance')
             for s in seen:
                 check(abs(wv - s) > tol + 1e-9, f'{set_id}/{fam} seed {it["seed"]}: two wrongs coincide')
             seen.append(wv)
+        check(set(mine) == {w['id'] for w in it['wrong']}, f'{set_id}/{fam} seed {it["seed"]}: offered {[w["id"] for w in it["wrong"]]} but here {sorted(mine)}')
     return len(items)
 
 
@@ -220,6 +223,25 @@ counts[S + '/reciprocal-square'] = num_family(S, 'reciprocal-square', lambda v: 
     'sign-lost': I(v['c'] / X**2, v['q'], v['p']),
     'power-lowered': (-v['c'] / (3 * X**3)).subs(X, v['q']) - (-v['c'] / (3 * X**3)).subs(X, v['p'])})
 
+
+
+def expo(v):
+    return I(v['c'] * sp.exp(sp.nsimplify(v['k']) * X), 0, v['q'])
+
+
+def expo_slips(v):
+    k = sp.nsimplify(v['k'])
+    F = v['c'] * sp.exp(k * X) / k
+    out = {'lower-limit-zero': F.subs(X, v['q'])}
+    if k not in (1, -1):
+        out['no-divide'] = (k * F).subs(X, v['q']) - (k * F).subs(X, 0)
+    if k < 0:
+        out['sign-lost'] = -(F.subs(X, v['q']) - F.subs(X, 0))
+    return out
+
+
+counts[S + '/exponential'] = num_family(S, 'exponential', expo, expo_slips)
+
 # ---------- fluency-l9-undo-chain ----------
 S = 'fluency-l9-undo-chain'
 counts[S + '/power-inside'] = expr_family(S, 'power-inside', lambda v: v['k'] * X * (X**2 + v['b'])**v['n'])
@@ -268,7 +290,12 @@ def cover_items():
         B = sp.limit((X - b) * parts, X, b)
         check(sp.simplify(parts - (A / (X - a) + B / (X - b))) == 0, f'{S}/cover-up seed {it["seed"]}: not two simple pieces')
         check(int(it['answer']) == A, f'{S}/cover-up seed {it["seed"]}: answer {it["answer"]} but apart gives A = {A}')
-        mine = {'other-factor': B, 'no-divide': num.subs(X, a)}
+        mine = {}
+        if B != A:
+            mine['other-factor'] = B
+        if num.subs(X, a) != A and num.subs(X, a) != B:
+            mine['no-divide'] = num.subs(X, a)
+        check(set(mine) == {w['id'] for w in it['wrong']}, f'{S}/cover-up seed {it["seed"]}: offered set differs')
         vals = []
         for w in it['wrong']:
             check(int(w['value']) == mine[w['id']], f'{S}/cover-up seed {it["seed"]}: wrong {w["id"]} {w["value"]} but here {mine[w["id"]]}')
@@ -297,6 +324,41 @@ def split_f(v):
 
 
 counts[S + '/split-integrate'] = expr_family(S, 'split-integrate', split_f, split_ref)
+
+
+
+def between_items():
+    fam = 'split-between-limits'
+    items = sample(S, fam)
+    for it in items:
+        v = it['vars']
+        a, b, lo, hi = v['a'], v['b'], v['lo'], v['hi']
+        num = prompt_numerator(it['prompt'], 'x')
+        check(sp.expand(num - (v['ca'] * (X - b) + v['cb'] * (X - a))) == 0, f'{S}/{fam} seed {it["seed"]}: numerator')
+        f = num / ((X - a) * (X - b))
+        parts = sp.apart(sp.together(f), X)
+        A = sp.limit((X - a) * parts, X, a)
+        B = sp.limit((X - b) * parts, X, b)
+        exact = sp.integrate(parts, (X, lo, hi))
+        check(abs(float(it['answer']) - float(exact)) < 1e-9, f'{S}/{fam} seed {it["seed"]}: answer {it["answer"]} but sympy {sp.N(exact)}')
+        La, Lb = sp.log(sp.Rational(hi - a, lo - a)), sp.log(sp.Rational(hi - b, lo - b))
+        sw = float(B * La + A * Lb)
+        mine = {'sign-flip': -float(exact)}
+        if abs(sw - float(exact)) > 0.0002 and abs(sw + float(exact)) > 0.0002:
+            mine['swapped'] = sw
+        tol = it['tol']['abs']
+        check(set(mine) == {w['id'] for w in it['wrong']}, f'{S}/{fam} seed {it["seed"]}: offered set differs')
+        vals = []
+        for w in it['wrong']:
+            wv = float(w['value'])
+            check(abs(wv - mine.get(w['id'], 1e9)) < 1e-9, f'{S}/{fam} seed {it["seed"]}: wrong {w["id"]} {wv}')
+            check(abs(wv - float(exact)) > tol, f'{S}/{fam} seed {it["seed"]}: wrong {w["id"]} inside tolerance')
+            vals.append(wv)
+        check(all(abs(p - q) > tol for i, p in enumerate(vals) for q in vals[i + 1:]), f'{S}/{fam} seed {it["seed"]}: two wrongs coincide')
+    return len(items)
+
+
+counts[S + '/split-between-limits'] = between_items()
 
 for k, n in counts.items():
     print(f'{k}: {n} draws')

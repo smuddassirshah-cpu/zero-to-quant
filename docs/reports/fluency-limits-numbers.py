@@ -130,6 +130,9 @@ def check(set_id, fam, derive):
         checked += 1
         if not ok:
             fails.append('%s: key %s, engine %s' % (label, key, it['answer']))
+        if set(wrongs) != {w['id'] for w in it['wrong']}:
+            fails.append('%s: offered %s, expected %s' % (label, [w['id'] for w in it['wrong']], sorted(wrongs)))
+            continue
         for w in it['wrong']:
             want = wrongs[w['id']]
             if it['kind'] == 'numeric':
@@ -225,7 +228,10 @@ def l9_point(V):
 def l10_linear(V):
     a, b, n = V['a'], V['b'], V['n']
     g = a * x + b
-    return sp.diff(g ** n, x), {'inside-forgotten': n * g ** (n - 1), 'power-not-lowered': n * a * g ** n}
+    slips = {'power-not-lowered': n * a * g ** n}
+    if a != 1:   # widening pass: a = 1 is drawn, and the slip is switched off there by `when`
+        slips['inside-forgotten'] = n * g ** (n - 1)
+    return sp.diff(g ** n, x), slips
 
 
 def l10_square(V):
@@ -329,7 +335,28 @@ def l13_value(V):
     return f.subs(x, mn), {'x-not-value': mn, 'peak-value': f.subs(x, mx)}
 
 
+def l13_closed(V):
+    """Widening pass: the largest value of the cubic on [lo, hi], from f' = 0 and the two ends, compared by sympy."""
+    A, r, g, d, e1, e2 = V['ka'], V['r'], V['g'], V['d'], V['e1'], V['e2']
+    f, mx, mn = l13_cubic(dict(V, A=A))
+    lo, hi = min(mx, mn) - e1, max(mx, mn) + e2
+    crit = [z for z in sp.solve(sp.diff(f, x), x) if lo <= z <= hi]
+    assert len(crit) == 2
+    cands = [lo] + sorted(crit) + [hi]
+    vals = {z: f.subs(x, z) for z in cands}
+    top = max(vals.values())
+    arg = [z for z in cands if vals[z] == top]
+    xa = hi if hi in arg else lo if lo in arg else mx
+    slips = {'smallest': min(vals.values())}
+    if f.subs(x, mx) != top:
+        slips['local-max'] = f.subs(x, mx)
+    if xa != top:
+        slips['x-not-value'] = xa
+    return top, slips
+
+
 FAMILIES = [
+    ('fluency-l13-peaks-and-troughs', 'closed-interval-maximum', l13_closed),
     ('fluency-l2-computing-limits', 'cancel-linear-bottom', l2_linear),
     ('fluency-l2-computing-limits', 'cancel-two-quadratics', l2_quadratics),
     ('fluency-l2-computing-limits', 'difference-quotient', l2_quotient),

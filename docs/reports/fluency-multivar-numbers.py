@@ -103,7 +103,9 @@ def check(set_id, fam, derive):
         checked += 1
         if not ok:
             fails.append('%s: key %s, engine %s' % (label, key, it['answer']))
-        assert set(w['id'] for w in it['wrong']) == set(wrongs), (label, [w['id'] for w in it['wrong']])
+        if set(w['id'] for w in it['wrong']) != set(wrongs):
+            fails.append('%s: offered %s, expected %s' % (label, [w['id'] for w in it['wrong']], sorted(wrongs)))
+            continue
         for w in it['wrong']:
             want = wrongs[w['id']]
             if it['kind'] == 'numeric':
@@ -166,7 +168,49 @@ def l3_mixed(V):
                  'power-not-lowered': sp.diff(term, x, y) * y}
 
 
+# ---- fluency-l2-slicing (widening pass): hold one input fixed and differentiate in the other ----
+def l2_fx(V):
+    f = V['c'] * x ** V['m'] * y ** V['n'] + V['b'] * x ** V['p'] + V['e'] * y ** V['q']
+    fx = sp.diff(f, x)
+    return fx, {'y-term-kept': fx + V['e'] * y ** V['q'], 'y-dropped': fx.subs(y, 1)}
+
+
+def l2_point(V):
+    f = V['c'] * x ** V['m'] * y ** V['n'] + V['b'] * x ** V['p'] + V['e'] * y ** V['q']
+    pt = {x: V['x0'], y: V['y0']}
+    key = sp.diff(f, y).subs(pt)
+    slips = {}
+    if sp.diff(f, x).subs(pt) != key:
+        slips['f-x'] = sp.diff(f, x).subs(pt)
+    if f.subs(pt) != key:
+        slips['height'] = f.subs(pt)
+    return key, slips
+
+
+def l2_exp(V):
+    f = V['c'] * sp.exp(V['k'] * x ** V['m'] * y ** V['n'])
+    return sp.diff(f, x), {'no-chain': f, 'wrong-variable': sp.diff(f, y)}
+
+
+def l2_log(V):
+    f = sp.log(V['a'] * x ** 2 + V['b'] * y ** 2)
+    pt = {x: V['x0'], y: V['y0']}
+    key = sp.diff(f, y).subs(pt)
+    slips = {}
+    fxv = sp.diff(f, x).subs(pt)
+    nochain = (1 / (V['a'] * x ** 2 + V['b'] * y ** 2)).subs(pt)
+    if abs(fxv - key) > R(1, 1000):
+        slips['f-x'] = fxv
+    if abs(nochain - key) > R(1, 1000):
+        slips['no-chain'] = nochain
+    return key, slips
+
+
 FAMILIES = [
+    ('fluency-l2-slicing', 'partial-x', l2_fx),
+    ('fluency-l2-slicing', 'partial-y-at-a-point', l2_point),
+    ('fluency-l2-slicing', 'exponential-x', l2_exp),
+    ('fluency-l2-slicing', 'log-at-a-point', l2_log),
     ('fluency-l1-two-inputs', 'contour-through-a-point', l1_level),
     ('fluency-l1-two-inputs', 'walk-along-a-contour', l1_walk),
     ('fluency-l1-two-inputs', 'point-on-a-contour', l1_point),

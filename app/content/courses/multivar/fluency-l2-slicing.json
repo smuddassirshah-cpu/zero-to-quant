@@ -1,0 +1,120 @@
+{
+  "id": "fluency-l2-slicing",
+  "lesson": "l2-slicing",
+  "title": "Fluency: partial derivatives",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "partial-x",
+      "weight": 2,
+      "skill": "find a partial derivative in x",
+      "vars": {
+        "c": { "int": [-4, 4], "not": [0] },
+        "mx": { "pick": [[1, "x", ""], [2, "x^2", "x"], [3, "x^3", "x^2"]], "as": ["m", "xm", "xm1"] },
+        "n": { "int": [1, 3] },
+        "b": { "int": [-5, 5], "not": [0] },
+        "p": { "int": [2, 4] },
+        "e": { "int": [-5, 5], "not": [0] },
+        "q": { "int": [1, 3] }
+      },
+      "let": { "cm": "c*m", "bp": "b*p" },
+      "prompt": "Take $f(x, y) = {c:c}{xm}{mono(y; 1, n)}{b:+c}x^{{{p}}}{e:+c}{mono(y; 1, q)}$. Find $f_x$.",
+      "widget": { "kind": "expression", "answer": "{cm:c}{xm1}{mono(y; 1, n)}{bp:+}{mono(x; 1, p - 1)}", "keyboard": "calculus", "label": "The partial derivative f sub x" },
+      "wrong": [
+        { "id": "y-term-kept", "tex": "{cm:c}{xm1}{mono(y; 1, n)}{bp:+}{mono(x; 1, p - 1)}{e:+c}{mono(y; 1, q)}", "line": "You kept ${mono(y; e, q)}$. With $y$ held fixed it is a constant, so its $x$-derivative is 0." },
+        { "id": "y-dropped", "tex": "{mono(x; cm, m - 1)}{bp:+}{mono(x; 1, p - 1)}", "line": "You dropped ${mono(y; 1, n)}$. A held $y$ is a constant factor, so it stays in front." }
+      ],
+      "solution": [
+        "Hold $y$ fixed: in ${c:c}{xm}{mono(y; 1, n)}$ the factor ${mono(y; 1, n)}$ is a constant, and ${mono(y; e, q)}$ is a constant with $x$-derivative 0.",
+        "Differentiate the powers of $x$: $f_x = {cm:c}{xm1}{mono(y; 1, n)}{bp:+}{mono(x; 1, p - 1)}$."
+      ]
+    },
+    {
+      "id": "partial-y-at-a-point",
+      "weight": 2,
+      "skill": "find a partial derivative in y at a point",
+      "vars": {
+        "c": { "int": [-3, 3], "not": [0] },
+        "m": { "int": [1, 2] },
+        "ny": { "pick": [[1, ""], [2, "y"], [3, "y^2"]], "as": ["n", "yn1"] },
+        "b": { "int": [-5, 5], "not": [0] },
+        "p": { "int": [1, 3] },
+        "qy": { "pick": [[1, ""], [2, "y"]], "as": ["q", "yq1"] },
+        "e": { "int": [-5, 5], "not": [0] },
+        "x0": { "int": [-2, 2], "not": [0] },
+        "y0": { "int": [-2, 2], "not": [0] }
+      },
+      "let": {
+        "cn": "c*n", "eq": "e*q",
+        "key": "c*n*x0^m*y0^(n - 1) + e*q*y0^(q - 1)",
+        "fx": "c*m*x0^(m - 1)*y0^n + b*p*x0^(p - 1)",
+        "fv": "c*x0^m*y0^n + b*x0^p + e*y0^q"
+      },
+      "where": ["fx != fv"],
+      "prompt": "Take $f(x, y) = {c:c}{mono(x; 1, m)}{mono(y; 1, n)}{b:+c}{mono(x; 1, p)}{e:+c}{mono(y; 1, q)}$. What is $\\dfrac{{\\partial f}}{{\\partial y}}$ at $({x0}, {y0})$?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "For example 7" },
+      "wrong": [
+        { "id": "f-x", "value": "{fx}", "line": "That is $f_x$ at the point. For $\\dfrac{{\\partial f}}{{\\partial y}}$ hold $x$ fixed and differentiate in $y$.", "when": "fx != key" },
+        { "id": "height", "value": "{fv}", "line": "That is the height $f({x0}, {y0})$. Differentiate in $y$ first, then put the point in.", "when": "fv != key" }
+      ],
+      "solution": [
+        "Hold $x$ fixed: ${mono(x; b, p)}$ is a constant, so $f_y = {cn:c}{mono(x; 1, m)}{yn1}{eq:+}{yq1}$.",
+        "At $({x0}, {y0})$ this is $f_y = {key}$."
+      ]
+    },
+    {
+      "id": "exponential-x",
+      "weight": 1,
+      "skill": "find a partial derivative of an exponential",
+      "vars": {
+        "c": { "int": [-3, 3], "not": [0] },
+        "k": { "int": [-4, 4], "not": [0] },
+        "mx": { "pick": [[1, "x", ""], [2, "x^2", "x"]], "as": ["m", "xm", "xm1"] },
+        "ny": { "pick": [[1, "y", ""], [2, "y^2", "y"]], "as": ["n", "yn", "yn1"] }
+      },
+      "let": { "km": "k*m", "ckm": "c*k*m", "ckn": "c*k*n" },
+      "prompt": "Take $f(x, y) = {c:c}e^{{{k:c}{xm}{yn}}}$. Find $f_x$.",
+      "widget": { "kind": "expression", "answer": "{ckm:c}{xm1}{yn}e^{{{k:c}{xm}{yn}}}", "keyboard": "calculus", "label": "The partial derivative f sub x" },
+      "wrong": [
+        { "id": "no-chain", "tex": "{c:c}e^{{{k:c}{xm}{yn}}}", "line": "You left the exponential as it was. By the chain rule, multiply by the $x$-derivative of the power." },
+        { "id": "wrong-variable", "tex": "{ckn:c}{xm}{yn1}e^{{{k:c}{xm}{yn}}}", "line": "That is $f_y$: you differentiated the power in $y$. For $f_x$ hold $y$ fixed." }
+      ],
+      "solution": [
+        "Hold $y$ fixed: the power ${k:c}{xm}{yn}$ has $x$-derivative ${km:c}{xm1}{yn}$.",
+        "By the chain rule, $f_x = {ckm:c}{xm1}{yn}e^{{{k:c}{xm}{yn}}}$."
+      ]
+    },
+    {
+      "id": "log-at-a-point",
+      "weight": 1,
+      "skill": "find a partial derivative of a logarithm at a point",
+      "vars": {
+        "a": { "int": [1, 4] },
+        "b": { "int": [1, 4] },
+        "x0": { "int": [-3, 3] },
+        "y0": { "int": [-3, 3], "not": [0] }
+      },
+      "let": {
+        "den": "a*x0^2 + b*y0^2",
+        "b2": "2*b",
+        "top": "2*b*y0",
+        "key": "2*b*y0/(a*x0^2 + b*y0^2)",
+        "fxv": "2*a*x0/(a*x0^2 + b*y0^2)",
+        "nochain": "1/(a*x0^2 + b*y0^2)"
+      },
+      "where": ["abs(fxv - nochain) > 0.001"],
+      "prompt": "Take $f(x, y) = \\ln({a:c}x^2+{b:c}y^2)$. What is $\\dfrac{{\\partial f}}{{\\partial y}}$ at $({x0}, {y0})$? Give a fraction or a decimal.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0005 }, "accept": "${key:frac}$, or a decimal within 0.0005" },
+      "wrong": [
+        { "id": "f-x", "value": "{fxv}", "tol": { "abs": 0.0005 }, "line": "That is $f_x$ at the point. For $f_y$ the top is the $y$-derivative of the inside, ${b2}y$.", "when": "abs(fxv - key) > 0.001" },
+        { "id": "no-chain", "value": "{nochain}", "tol": { "abs": 0.0005 }, "line": "You stopped at one over the inside. By the chain rule, multiply by its $y$-derivative, ${b2}y$.", "when": "abs(nochain - key) > 0.001" }
+      ],
+      "solution": [
+        "Hold $x$ fixed and use the chain rule: $f_y = \\dfrac{{{b2}y}}{{{a:c}x^2+{b:c}y^2}}$.",
+        "At $({x0}, {y0})$ the top is {top} and the bottom is {den}, so $f_y = {key:frac}$."
+      ]
+    }
+  ]
+}
