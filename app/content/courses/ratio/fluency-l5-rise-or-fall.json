@@ -1,0 +1,54 @@
+{
+  "id": "fluency-l5-rise-or-fall",
+  "course": "ratio",
+  "lesson": "l5-rise-or-fall",
+  "title": "Fluency: measuring a rise or a fall",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "percentage-change",
+      "weight": 2,
+      "skill": "find a percentage rise or fall",
+      "vars": {
+        "old": { "pick": [8, 12, 16, 20, 24, 25, 30, 32, 40, 45, 48, 50, 60, 64, 75, 80, 90, 120, 150, 200] },
+        "p": { "int": [5, 150], "step": 5 },
+        "dir": { "pick": [["rises", 1, "rise"], ["falls", -1, "fall"]], "as": ["verb", "s", "noun"] }
+      },
+      "where": ["s == 1 or p < 100"],
+      "let": { "new": "old*(1 + s*p/100)", "diff": "old*p/100", "key": "p/100", "newbase": "old*p/100/(old*(1 + s*p/100))", "pounds": "old*p/10000", "ratio": "1 + s*p/100" },
+      "prompt": "A share {verb} from £{old:dp2} to £{new:dp2}. By what percentage did it {noun}?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0001 }, "unit": "%", "accept": "{p}%" },
+      "wrong": [
+        { "id": "new-base", "value": "{newbase}", "tol": { "abs": 0.0005 }, "line": "You divided by the new price. A change is measured against the original price, £{old:dp2}." },
+        { "id": "ratio", "value": "{ratio}", "tol": { "abs": 0.0005 }, "line": "That is the new price as a percentage of the old. Take the change, £{diff:dp2}, over the old price.", "when": "s == 1 or p != 50" },
+        { "id": "pounds", "value": "{pounds}", "tol": { "abs": 0.0005 }, "line": "The {noun} is £{diff:dp2}, but pounds are not per cent. Divide it by the original £{old:dp2}.", "when": "abs(old*p/10000 - p/100) > 0.002 and abs(old*p/10000 - 1 - s*p/100) > 0.002 and abs(old*p/10000 - old*p/100/(old*(1 + s*p/100))) > 0.002" }
+      ],
+      "solution": [
+        "The {noun} is the gap between the prices, £{diff:dp2}.",
+        "Divide by the original price: ${diff} \\div {old} = {key}$, which is {p}%."
+      ]
+    },
+    {
+      "id": "daily-return",
+      "weight": 1,
+      "skill": "find a daily return from two closes",
+      "vars": {
+        "y": { "pick": [20, 25, 40, 50, 80, 100, 120, 125, 150, 200, 250, 300, 400, 500] },
+        "r": { "int": [-12, 12], "not": [0] }
+      },
+      "let": { "t": "y*(1 + r/100)", "diff": "y*r/100", "key": "r/100", "flip": "-r/100", "newbase": "y*r/100/(y*(1 + r/100))" },
+      "prompt": "A stock closes at £{y:dp2} on Monday and at £{t:dp2} on Tuesday. What is its daily return?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.0001 }, "unit": "%", "accept": "{r}%", "placeholder": "use − for a fall" },
+      "wrong": [
+        { "id": "sign-flipped", "value": "{flip}", "tol": { "abs": 0.0001 }, "line": "Check the sign: a rise is a positive return and a fall is a negative one." },
+        { "id": "new-base", "value": "{newbase}", "tol": { "abs": 0.0005 }, "line": "You divided by Tuesday's close. A return is measured against the earlier close, £{y:dp2}.", "when": "abs(r/100 - r/(100 + r)) > 0.001" }
+      ],
+      "solution": [
+        "The change is ${t:dp2} - {y:dp2} = {diff:dp2}$ pounds.",
+        "Divide by Monday's close: ${diff} \\div {y} = {key}$, a return of {r}%."
+      ]
+    }
+  ]
+}
