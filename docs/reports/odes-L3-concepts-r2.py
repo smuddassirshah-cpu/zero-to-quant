@@ -13,6 +13,30 @@ import sympy as sp
 from scipy.integrate import solve_ivp
 from scipy.linalg import expm
 
+import json as _json, pathlib as _pl
+_ODES = _pl.Path(__file__).resolve().parents[2] / "app" / "content" / "courses" / "odes"
+
+
+def obj_of(name):
+    return _json.load(open(_ODES / name, encoding="utf-8"))
+
+
+def _leaves(o):
+    if isinstance(o, str):
+        yield o
+    elif isinstance(o, dict):
+        for v in o.values():
+            yield from _leaves(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _leaves(v)
+
+
+def text_of(name):
+    """Every string in a content file, joined (for checks on the corrected wording)."""
+    return "\n".join(_leaves(obj_of(name)))
+
+
 FAILS, XFAILS, COUNT = [], [], [0]
 
 
@@ -174,9 +198,18 @@ check("l12_two_factor_from_tau_det", np.allclose(sorted([(-2.5 + 1.5) / 2, (-2.5
 # screens[2].prose, read sentence by sentence: "tau^2 > 4 Delta gives a node" and "tau = 0 a centre"
 # hold only with Delta > 0. Counterexamples: lesson 11's saddle and review-3's trace-zero saddle.
 unconditional = (by_eigenvalues(As) == "stable node" or by_eigenvalues(As) == "unstable node") and np.trace(As) ** 2 > 4 * np.linalg.det(As)
-expected_fail("l12_node_and_centre_rules_without_delta_positive", unconditional,
-              "screens[2].prose: tau^2 > 4*Delta with Delta < 0 is a saddle, and tau = 0 with Delta < 0 is a saddle; "
-              "corrected assert: for Delta > 0 only, tau^2 > 4*Delta is a node and tau = 0 a centre")
+# (corrected claim, fix pass) screens[2] now opens the rule with "With Delta > 0": under that condition
+# tau^2 > 4 Delta is a node and tau^2 < 4 Delta a spiral (2,000 random matrices), and tau = 0 a centre
+_ok, _rs = 0, np.random.default_rng(7)
+for _A in _rs.normal(size=(2000, 2, 2)):
+    _t, _d = np.trace(_A), np.linalg.det(_A)
+    if _d <= 0.01 or abs(_t * _t - 4 * _d) < 1e-3:
+        _ok += 1
+        continue
+    _ok += ("node" in by_eigenvalues(_A)) == (_t * _t > 4 * _d)
+check("l12_node_and_centre_rules_with_delta_positive (corrected claim, fix pass)",
+      not unconditional and _ok == 2000 and np.allclose(np.linalg.eigvals(Ac).real, 0) and np.linalg.det(Ac) > 0
+      and r"With $\Delta > 0$, $\tau^2 > 4\Delta$ gives a node" in obj_of("l12-stability.json")["screens"][2]["prose"])
 check("l12_trace_zero_saddle", classify(M([[2, 1], [-3, -2]])) == "saddle" and np.allclose(sorted(np.linalg.eigvals(M([[2, 1], [-3, -2]])).real), [-1, 1]))
 # damping regimes are regions of the map
 check("l12_damping_on_map", [classify(M([[0, 1], [-4, -b]])) for b in (1, 4, 5)] == ["stable spiral", "stable node", "stable node"]
@@ -263,9 +296,11 @@ check("l13_zero_eigenvalue_example", abs(left[0]) < 1e-3 and left[0] < 0 and rig
 # linearisation does decide: unstable, whatever the nonlinear terms (here they even pull x in).
 runs = [np.linalg.norm(solve_ivp(lambda s, z: [-z[0] ** 3, z[1]], [0, 12], [d, d], rtol=1e-10, atol=1e-13).y[:, -1]) for d in (1e-2, 1e-3, 1e-4)]
 zero_decides_nothing = not all(rn > 1 for rn in runs)
-expected_fail("l13_zero_eigenvalue_decides_nothing", zero_decides_nothing,
-              "summary.ideas[1]: eigenvalues 0 and +1 (x' = -x^3, y' = y) are unstable from the linearisation alone; "
-              "corrected assert: a zero eigenvalue leaves stability open only when no eigenvalue has positive real part")
+# (corrected claim, fix pass) summary.ideas[1] now says a zero eigenvalue decides nothing unless the other is
+# positive, when the point is unstable: 0 and +1 runs away from every start; 0 and -1 stays open (l13_zero_eigenvalue_example)
+check("l13_zero_eigenvalue_unless_other_positive (corrected claim, fix pass)",
+      not zero_decides_nothing and "Nor does a zero eigenvalue, unless the other eigenvalue is positive: then the point is unstable."
+      in obj_of("l13-linearising.json")["summary"]["ideas"][1])
 # hyperbolic equilibria: stability carries over under small smooth nonlinear terms (Monte Carlo)
 carried, tried = 0, 0
 while tried < 150:

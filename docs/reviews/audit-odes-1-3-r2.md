@@ -97,3 +97,21 @@ Run from `app/` in this worktree, on the content as read. No content file, engin
 - Playthrough: not run. This round changed no content, so there are no changed files to play through.
 
 Proposed fixes obey the voice rules: British English, no exclamation marks, no em-dashes, every sentence under 35 words, explanations of at most three sentences. Finding 5 also proposes one hidden-test change (`damping_type(0.5, 0.2, 0.02)`); the solution passes it and a solution without the tolerance fails it.
+
+## Fix pass
+
+Opus fixer, round 2. Each finding re-derived before editing (scratch: `odes-fix-r2/own.py`, `l9tests.py` in the session scratchpad). All nine hold; all nine applied with the audit's wording. No graded key, accepted answer or `correct` flag changed (l4 quiz[0] keeps key `semi`; only the text and `why` of option `unstable` changed, and its id is kept).
+
+1. fixed. Own basis: hidden test 3 gives residual $|2 - 2(1 + 0)| = 0$ at $t = 0$ for the non-solution $1 + 2t$, so zero on a grid only speaks for the grid points.
+2. fixed. Own basis: closed form $y = 2 + 1/(1/d - t)$ from $2 + d$ blows up at $t = 1/d$ (solve_ivp reaches 3 at $t = 9.0$ and $999.0$ for $d = 0.1, 0.001$, matching $1/d - 1$), so $y = 2$ is not Lyapunov stable; a start at 1.99 rises towards 2, so "repels on both sides" is false and exactly one option (`semi`) is correct. Key unchanged.
+3. fixed. Own basis: sympy residual of $t(Ae^{-t} + Be^{3t})$ is $(A - 1)e^{-t} + (20Bt + 9B - 1)e^{3t}$, unsolvable; $te^{-t} + e^{3t}/20$ gives residual 0.
+4. fixed. Own basis: sympy on $y_p = 100 + t + c$ in $y'' + 2\zeta\omega y' + \omega^2 y = \omega^2(100 + t)$ gives $c = -2\zeta/\omega = -4$ at $\zeta = 1$, $\omega = 0.5$; the printed equation without the 100 gives $c = 100 - 2\zeta/\omega$.
+5. fixed. Own basis: CPython 3.13 prints `0.0` for `0.2**2 - 4*0.1*0.1` (both products are `0.04000000000000001`) and `6.938893903907228e-18` for `0.2**2 - 4*0.5*0.02` (`4*0.5*0.02` is `0.04`). Prose, console line and hidden test 3 now use $(0.5, 0.2, 0.02)$; the lesson solution passes all 10 tests and the same solution with `d == 0` in place of the tolerance fails test 3 only (returns `'over'`); the starter fails (playthrough green).
+6. fixed. Own basis: $b = 0$ gives roots $\pm 2i$, $\zeta = 0$, a pure $\cos 2t$ with no decay, so it is undamped, not under-damped ($0 < \zeta < 1$); hidden test 4 (`damping_type(1, 0, 4)` is `'under'`) is now stated in the docstring.
+7. fixed. Own basis: $y'' + 3y' + 4y = 0$ from $(1, 0)$ crosses zero 8 times on $[0, 20]$; swings $-0.0284$, $+0.0008$, $-0.00002$, so $-0.028$ is the first of many.
+8. fixed. Own basis: $\begin{pmatrix}1&2\\2&1\end{pmatrix}$ has $\tau^2 = 4 > -12 = 4\Delta$ and eigenvalues $3, -1$ (saddle); $\begin{pmatrix}0&1\\1&0\end{pmatrix}$ has $\tau = 0$, $\Delta = -1$, eigenvalues $\pm 1$ (saddle). With $\Delta > 0$ the rule agrees with the eigenvalues on 2,000 random matrices.
+9. fixed. Own basis: $x' = -x^3$, $y' = y$ (eigenvalues 0 and 1) from $(0, 10^{-2})$ and $(0, 10^{-4})$ reaches $y \approx 3 \times 10^4$ and 327 by $t = 15$; an eigenvalue with positive real part makes the point unstable (Perron's instability theorem; Strogatz 6.3). With eigenvalues 0 and $-1$ the course's own $x' = x^2$, $y' = -y$ stays open.
+
+Scripts: the six `EXPECTED_FAIL` markers in `odes-L{1,2,3}-concepts-r2.py` are now plain checks marked "(corrected claim, fix pass)", each recomputing the claim and reading the corrected wording from the JSON. Results: L1 84 checks, L2 110, L3 70, 0 failed, 0 `EXPECTED_FAIL`. Round-1 scripts `odes-L{1,2,3}-concepts.py` and `odes-L{1,2,3}-numbers.py` exit 0 unchanged.
+
+Gates (from `app/`): validator `0 errors, 4115 warnings` (manifest unchanged); voice scan 35 on the whole odes folder 0 and 0; playthrough desktop and `--mobile` green for l1, l4, l8, l9, l12, l13. No set changed.
