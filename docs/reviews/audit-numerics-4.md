@@ -220,3 +220,17 @@ Notes that need no fix:
 3. homework-4 | items[7].prompt | imprecise, minor | "Say why the Monte Carlo figure is a random band and the other two errors are deterministic estimates" calls an error an estimate and breaks the parallel between figure and error. The model answer and rubric say the errors are deterministic and repeatable. | Wording against the item's own model: "The grid and quadrature errors are deterministic: same settings, same error". | Replace that sentence with: "Say why the Monte Carlo error is a random band and the other two errors are deterministic."
 
 Findings: 0 `wrong`; 3 `imprecise`, all minor; 0 serious.
+
+### Fix-pass read follow-up
+
+Opus fixer, content commit `ce240f34`. Each finding was checked independently before the edit. No graded key, option id, accepted answer or test changed: l16 screens[11] still keys 36 s with `nosq` and `hours`, and homework-4 items[7] keeps its model and rubric. The scripts `numerics-L4-concepts.py` and `numerics-L4-numbers.py` assert figures, not these wordings, so they are unchanged and still exit 0.
+
+1. l14-implicit-and-crank-nicolson | screens[8].explain.text | fixed. Basis: my own count of the lesson's `thomas` solution: 2 divisions for row 0, then 4 a row forward (one multiply for the pivot, a division for $c'$, a multiply and a division for $d'$) and 1 multiply a row back, so $5n - 3$; for $n = 400$ that is 1,997 in all, of which only 399 are the back sweep; $400^3/3 = 21.3$ million. Final text: "Dividing each row by its pivot as you go stores $c'_k$ and $d'_k$ directly. The back sweep then needs one multiply and one subtract a row. For $M = 400$ the whole solve takes about 2,000 multiplications and divisions, against 21 million for a dense solve."
+
+2. l16-control-variates | screens[11].prose | fixed. Basis: I ran the lesson's `asian_geometric_cv` with its parameters (100,000 paths, 12 fixings): $\rho$ = 0.99961, 0.99962 and 0.99961 for seeds 0, 1 and 2, factors 1,281, 1,318 and 1,272, against $1/(1 - 0.9995^2) = 1{,}000.25$; the hypothetical control keeps its 0.9995 and the key of 36 s. Final text: "An exotic desk needs a price to a fixed error. Plain paths take 10 hours on the grid of machines. The desk finds a control with a closed form and $\rho = 0.9995$, close to what the geometric Asian gives for the arithmetic one."
+
+3. homework-4 | items[7].prompt | fixed. Basis: the item's own model says "The grid and quadrature errors are deterministic: same settings, same error", and refinement gives an estimate of an error, so an error is not itself an estimate; rubric[4] ("the others are deterministic estimates", meaning the other prices) is left as it reads correctly. Final text: "Write the model validation note for the three prices of the standard call ($S = K = 100$, $r = 5\%$, $\sigma = 20\%$, $T = 1$). Give the three numbers. For each, give its error's source, size, how it was measured and how it scales with cost. Say why the Monte Carlo error is a random band and the other two errors are deterministic. Name the one check you would add before the pricer goes live."
+
+Note on `tol=0`: no code changed. The `implied_vols` and `ytm_book` docstrings, prose and `how` text promise NaN outside the bracket and RuntimeError after `maxit` steps; none promises convergence for every tolerance, so the raise at `tol=0` is the documented behaviour and nothing needs rewording.
+
+Gates: validator 0 errors; concepts and numbers scripts exit 0; voice scan 35: 0 over 35 words, 0 explanations over three sentences.
