@@ -255,6 +255,69 @@ def _(t):
     return float(Fraction(sum(mid), len(mid)))
 
 
+# ------------------------------------------------------------------ cpp-movers
+@model('cpp-movers', '`{"BARC", "VOD"}`')
+def _(t):
+    syms, px, pct = t['args']
+    rows = {}
+    for i, s in enumerate(syms):            # positions of each symbol's first and last trade
+        rows.setdefault(s, [i, i])[1] = i
+    out = []
+    for s, (i, j) in rows.items():
+        first, last = Fraction(px[i]), Fraction(px[j])
+        mv = abs(last - first) / first
+        if mv * 100 >= Fraction(pct):
+            out.append((mv, s))
+    out.sort(key=lambda r: r[1])            # alphabetical, then a stable sort by move, largest first
+    out.sort(key=lambda r: r[0], reverse=True)
+    return [s for _, s in out]
+
+
+# ------------------------------------------------------------------ cpp-mean-ranks
+@model('cpp-mean-ranks', '`{3.5, 1, 3.5, 2}`')
+def _(t):
+    v = t['args'][0]
+    # rank = (number strictly below) + (number equal + 1) / 2
+    return [sum(1 for y in v if y < x) + (sum(1 for y in v if y == x) + 1) / 2 for x in v]
+
+
+# ------------------------------------------------------------------ pricing helpers (mpmath, 40 digits)
+import mpmath
+mpmath.mp.dps = 40
+
+
+def _Phi(x):
+    return mpmath.ncdf(mpmath.mpf(x))
+
+
+# ------------------------------------------------------------------ cpp-compound-df
+@model('cpp-compound-df', '0.952381')
+def _(t):
+    r, tt, m = (mpmath.mpf(x) for x in t['args'])
+    v = mpmath.e ** (-r * tt) if m == 0 else (1 + r / m) ** (-m * tt)
+    return float(v)
+
+
+# ------------------------------------------------------------------ cpp-prob-between
+@model('cpp-prob-between', '0.682689')
+def _(t):
+    mu, s, a, b = (mpmath.mpf(x) for x in t['args'])
+    if a > b:
+        return 0.0
+    return float(mpmath.quad(lambda x: mpmath.npdf(x, mu, s), [a, mu, b]) if a < mu < b
+                 else mpmath.quad(lambda x: mpmath.npdf(x, mu, s), [a, b]))
+
+
+# ------------------------------------------------------------------ cpp-cash-or-nothing
+@model('cpp-cash-or-nothing', '0.532325')
+def _(t):
+    s, k, r, sg, tt, pay = (mpmath.mpf(x) for x in t['args'])
+    if tt == 0:
+        return float(pay) if s > k else 0.0
+    d1 = (mpmath.log(s / k) + (r + sg ** 2 / 2) * tt) / (sg * mpmath.sqrt(tt))
+    return float(pay * mpmath.e ** (-r * tt) * _Phi(d1 - sg * mpmath.sqrt(tt)))
+
+
 # ================================================================== driver
 def main():
     files = sorted(f for f in os.listdir(DR) if f.startswith('cpp-') and f.endswith('.json'))
