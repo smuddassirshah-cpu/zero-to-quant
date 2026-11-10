@@ -1,0 +1,134 @@
+{
+  "id": "ci-rota-swaps",
+  "name": "One trader for the longest stretch",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "windows",
+  "tags": [
+    "pack-2",
+    "rota-swaps"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1440,
+  "fn": "longest_after_swaps",
+  "returns": "a whole number",
+  "brief": "A desk rota is a string `rota` with one capital letter per shift, the initial of the trader on duty. A manager may reassign at most `k` shifts to anyone. The aim is the longest stretch of consecutive shifts all covered by one trader.\n\nWrite `longest_after_swaps(rota, k)`, which returns the length of that stretch, or 0 for an empty rota.\n\nExample. For `rota = 'AABAB'` and `k = 1`, giving shift 2 to `A` makes `'AAAAB'`, a stretch of 4. Two shifts would need changing for all 5. The answer is 4.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ shifts, each a letter from `A` to `Z`; $0 \\le k \\le n$.",
+    "$O(n)$ time is the target, counting the 26 letters as fixed. Checking every stretch is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "A stretch works when its length minus the count of its most common letter is at most `k`. Slide a window and keep the highest letter count seen so far.",
+  "starter": "def longest_after_swaps(rota, k):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "longest_after_swaps('AABAB', 1)",
+      "expect": "4",
+      "compare": "equal",
+      "note": "One change covers shifts 0 to 3 with `A`."
+    },
+    {
+      "call": "longest_after_swaps('ABC', 0)",
+      "expect": "1",
+      "compare": "equal",
+      "note": "With no changes allowed the best stretch is one shift."
+    }
+  ],
+  "tests": [
+    {
+      "call": "longest_after_swaps('', 0)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('', 3)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('Q', 0)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('ABC', 0)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('ABC', 3)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('AABAB', 1)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('ABAB', 2)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('BAAA', 1)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('AABABBA', 1)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('ABBBCCCCAD', 2)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('ZZYZXZWZ', 0)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('XYZXYZXYZ', 3)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('AB' * 100000, 1000)",
+      "expect": "2001",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_after_swaps('ABCDEFGHIJ' * 20000, 0)",
+      "expect": "1",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
+  "solution": "def longest_after_swaps(rota, k):\n    count = {}\n    best = left = top = 0\n    for right, c in enumerate(rota):\n        count[c] = count.get(c, 0) + 1\n        top = max(top, count[c])\n        while right - left + 1 - top > k:\n            count[rota[left]] -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
+  "notes": [
+    "A stretch needs `length - most common count` changes, so it works when that is at most `k`.",
+    "`top` is never lowered; a window can only beat the best when some letter's count passes the old `top`.",
+    "Each shift enters the window once and leaves at most once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def longest_after_swaps(rota, k):\n    if not rota:\n        return 0\n    top = max(rota.count(c) for c in set(rota))\n    return min(len(rota), top + k)\n",
+      "slip": "Using the busiest trader over the whole rota assumes their shifts sit together."
+    },
+    {
+      "code": "def longest_after_swaps(rota, k):\n    count = {}\n    best = left = top = 0\n    for right, c in enumerate(rota):\n        count[c] = count.get(c, 0) + 1\n        top = max(top, count[c])\n        while right - left + 1 - top >= k:\n            count[rota[left]] -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
+      "slip": "Shrinking while the changes needed are `>= k` never uses the last allowed change."
+    },
+    {
+      "code": "def longest_after_swaps(rota, k):\n    count = {}\n    best = left = 0\n    for right, c in enumerate(rota):\n        count[c] = count.get(c, 0) + 1\n        while right - left + 1 - count[c] > k:\n            count[rota[left]] -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
+      "slip": "Measuring the changes against the newest shift's trader, not the most common one, shrinks windows that were fine."
+    }
+  ]
+}

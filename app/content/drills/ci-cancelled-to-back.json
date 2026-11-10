@@ -1,0 +1,124 @@
+{
+  "id": "ci-cancelled-to-back",
+  "name": "Cancelled orders to the back",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "two-pointers",
+  "tags": [
+    "pack-2",
+    "cancelled-to-back"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "push_cancelled_back",
+  "returns": "a whole number, after changing the list in place",
+  "brief": "An order blotter holds signed order sizes in lots, where a size of 0 marks a cancelled order. The desk wants the live orders at the front, in their original order, and every cancelled order behind them.\n\nWrite `push_cancelled_back(sizes)`. It changes `sizes` in place, using no second list, and returns how many live orders there are.\n\nExample. For `sizes = [0, 5, -2, 0, 3]` the list becomes `[5, -2, 3, 0, 0]` and the function returns 3.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ sizes, each a whole number between $-10^6$ and $10^6$.",
+    "$O(n)$ time and $O(1)$ extra space are the target. Removing each 0 from the middle is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep a write position that starts at 0. Copy each live size to it and step it on. When the pass ends, fill everything from the write position onwards with 0.",
+  "starter": "def push_cancelled_back(sizes):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([0, 5, -2, 0, 3])",
+      "expect": "(3, [5, -2, 3, 0, 0])",
+      "compare": "equal",
+      "note": "The three live sizes keep their order, and the call returns 3 with the changed list."
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([0, 0])",
+      "expect": "(0, [0, 0])",
+      "compare": "equal",
+      "note": "Nothing is live, so the count is 0 and the list is unchanged."
+    }
+  ],
+  "tests": [
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([])",
+      "expect": "(0, [])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([4])",
+      "expect": "(1, [4])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([0])",
+      "expect": "(0, [0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([0, 5, -2, 0, 3])",
+      "expect": "(3, [5, -2, 3, 0, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([0, 0, 7])",
+      "expect": "(1, [7, 0, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([1, 2, 3, 0])",
+      "expect": "(3, [1, 2, 3, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([-1, 0, 0, -1, 0, 2])",
+      "expect": "(3, [-1, -1, 2, 0, 0, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([3, 3, 0, 3, 0, 0, 3])",
+      "expect": "(4, [3, 3, 3, 3, 0, 0, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([0, 0, 0, 1000000, -1000000])",
+      "expect": "(2, [1000000, -1000000, 0, 0, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s))([9, -9])",
+      "expect": "(2, [9, -9])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s == [7] * 100000 + [0] * 100000))([0, 7] * 100000)",
+      "expect": "(100000, True)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: (push_cancelled_back(s), s[:3], s[-1], s.count(0)))([0] * 150000 + [1, -1] * 25000)",
+      "expect": "(50000, [1, -1, 1], 0, 150000)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each one passes your function a list, then checks both the count it returns and the list it changed.",
+  "solution": "def push_cancelled_back(sizes):\n    write = 0\n    for x in sizes:\n        if x != 0:\n            sizes[write] = x\n            write += 1\n    for i in range(write, len(sizes)):\n        sizes[i] = 0\n    return write\n",
+  "notes": [
+    "The write position never passes the read position, so a live size is copied before anything overwrites it.",
+    "Building a new list and binding the name to it leaves the caller's list unchanged, so the test sees no change.",
+    "One pass to copy and one to fill with 0, so the work is $O(n)$ with $O(1)$ extra space."
+  ],
+  "planted": [
+    {
+      "code": "def push_cancelled_back(sizes):\n    sizes = [x for x in sizes if x != 0] + [0] * sizes.count(0)\n    return len(sizes) - sizes.count(0)\n",
+      "slip": "Binding the name to a new list leaves the caller's list as it was."
+    },
+    {
+      "code": "def push_cancelled_back(sizes):\n    write = 0\n    for x in sizes:\n        if x != 0:\n            sizes[write] = x\n            write += 1\n    return write\n",
+      "slip": "Copying the live sizes forward without filling the tail with 0 leaves old sizes behind them."
+    },
+    {
+      "code": "def push_cancelled_back(sizes):\n    i, j = 0, len(sizes) - 1\n    while i < j:\n        if sizes[i] == 0:\n            while j > i and sizes[j] == 0:\n                j -= 1\n            sizes[i], sizes[j] = sizes[j], sizes[i]\n        i += 1\n    return len(sizes) - sizes.count(0)\n",
+      "slip": "Swapping each 0 with the last live size moves every 0 back but breaks the order of the live orders."
+    }
+  ]
+}

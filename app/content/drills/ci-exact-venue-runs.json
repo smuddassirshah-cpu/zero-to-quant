@@ -1,0 +1,134 @@
+{
+  "id": "ci-exact-venue-runs",
+  "name": "Stretches on exactly k venues",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "windows",
+  "tags": [
+    "pack-2",
+    "exact-venue-runs"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2520,
+  "fn": "count_exact_venue_runs",
+  "returns": "a whole number",
+  "brief": "An order router logs the venue of each child order in turn. Compliance asks how many stretches of consecutive orders, of any length, touched exactly `k` different venues. Stretches at different places count separately, even when they hold the same venues.\n\nWrite `count_exact_venue_runs(venues, k)`, which returns that count.\n\nExample. For `venues = ['L', 'C', 'L', 'T']` and `k = 2`, the stretches are `L C`, `C L`, `L T`, and `L C L`. So the answer is 4.",
+  "constraints": [
+    "$0 \\le n \\le 100{,}000$ orders, each venue a string; $1 \\le k \\le n + 1$.",
+    "$O(n)$ time is the target. Growing a set from every start is too slow. Answers can pass $10^{9}$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Exactly `k` is at most `k` minus at most `k - 1`. Counting stretches with at most `m` venues is one sliding window: each right edge adds the number of good stretches that end there.",
+  "starter": "def count_exact_venue_runs(venues, k):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "count_exact_venue_runs(['L', 'C', 'L', 'T'], 2)",
+      "expect": "4",
+      "compare": "equal",
+      "note": "Three pairs and one triple touch two venues; `C L T` touches three."
+    },
+    {
+      "call": "count_exact_venue_runs(['L', 'L', 'L'], 1)",
+      "expect": "6",
+      "compare": "equal",
+      "note": "Every one of the 6 stretches touches only `L`."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_exact_venue_runs([], 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['L'], 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['L'], 2)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['L', 'L', 'L'], 1)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['L', 'C', 'L', 'T'], 2)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['L', 'C', 'L', 'T'], 3)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['A', 'B', 'A', 'B', 'C'], 2)",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['A', 'B', 'C', 'A', 'B'], 3)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['X', 'X', 'Y', 'Y', 'X'], 1)",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['P', 'Q', 'R', 'S'], 4)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['P', 'Q', 'R', 'S'], 5)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs(['v'] * 100000, 1)",
+      "expect": "5000050000",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs([str(i % 50) for i in range(100000)], 50)",
+      "expect": "4995151176",
+      "compare": "equal"
+    },
+    {
+      "call": "count_exact_venue_runs([str((i // 3) % 7) for i in range(100000)], 3)",
+      "expect": "299982",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method grows a set of venues from every start, which is quadratic and runs out of time on the large tests. The step to the target is to count stretches with at most `k` venues and with at most `k - 1` with one sliding window each, and subtract.",
+  "solution": "def count_exact_venue_runs(venues, k):\n    def at_most(m):\n        count = {}\n        left = total = 0\n        for right, v in enumerate(venues):\n            count[v] = count.get(v, 0) + 1\n            while len(count) > m:\n                u = venues[left]\n                count[u] -= 1\n                if count[u] == 0:\n                    del count[u]\n                left += 1\n            total += right - left + 1\n        return total\n    return at_most(k) - at_most(k - 1)\n",
+  "notes": [
+    "A window of at most `m` venues ending at `right` means every shorter stretch ending there qualifies too, so `right - left + 1` are added.",
+    "One window cannot count exactly `k` directly, since shrinking past the first good start loses stretches; the subtraction handles it.",
+    "Two passes, each with every order entering and leaving once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def count_exact_venue_runs(venues, k):\n    count = {}\n    left = total = 0\n    for right, v in enumerate(venues):\n        count[v] = count.get(v, 0) + 1\n        while len(count) > k:\n            u = venues[left]\n            count[u] -= 1\n            if count[u] == 0:\n                del count[u]\n            left += 1\n        if len(count) == k:\n            total += 1\n    return total\n",
+      "slip": "One window counts one stretch per right edge, missing the other good starts that end there."
+    },
+    {
+      "code": "def count_exact_venue_runs(venues, k):\n    count = {}\n    left = total = 0\n    for right, v in enumerate(venues):\n        count[v] = count.get(v, 0) + 1\n        while len(count) > k:\n            u = venues[left]\n            count[u] -= 1\n            if count[u] == 0:\n                del count[u]\n            left += 1\n        if len(count) == k:\n            total += right - left + 1\n    return total\n",
+      "slip": "Adding the whole window when it touches `k` venues counts short stretches inside it that touch fewer."
+    },
+    {
+      "code": "def count_exact_venue_runs(venues, k):\n    def at_most(m):\n        count = {}\n        left = total = 0\n        for right, v in enumerate(venues):\n            count[v] = count.get(v, 0) + 1\n            if len(count) > m:\n                u = venues[left]\n                count[u] -= 1\n                if count[u] == 0:\n                    del count[u]\n                left += 1\n            total += right - left + 1\n        return total\n    return at_most(k) - at_most(k - 1)\n",
+      "slip": "Shrinking by one order with `if`, not `while`, leaves windows that still touch too many venues."
+    }
+  ]
+}

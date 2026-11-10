@@ -1,0 +1,135 @@
+{
+  "id": "ci-excused-outages",
+  "name": "Uptime with excused outages",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "windows",
+  "tags": [
+    "pack-2",
+    "stdin",
+    "excused-outages"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 960,
+  "fn": "solve_excused_outages",
+  "returns": "a string",
+  "brief": "A status page logs one letter per day for a pricing service: `U` when it was up and `D` when it was down. The supplier may excuse at most `k` down days in a reported run. The input comes as one string:\n\n- the first line holds `n` and `k`, separated by a space;\n- the second line holds the `n` letters with no spaces between them (it may be missing when `n` is 0).\n\nWrite `solve_excused_outages(text)`, which returns, as a string, the length of the longest run of consecutive days holding at most `k` down days. Expect extra spaces and a trailing newline.\n\nExample. For `\"7 1\\nUUDUUDU\\n\"` the first five days hold one `D`, and so do the last four. The answer is `\"5\"`.",
+  "constraints": [
+    "$0 \\le n \\le 200{,}000$ days and $0 \\le k \\le n$.",
+    "$O(n)$ time is the target. Trying every start and end is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Read the tokens with `text.split()`. Grow a window one day at a time, and while it holds more than `k` down days, move its left edge on.",
+  "starter": "def solve_excused_outages(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_excused_outages('7 1\\nUUDUUDU\\n')",
+      "expect": "'5'",
+      "compare": "equal",
+      "note": "Either run of five days holds one outage; any run of six holds two."
+    },
+    {
+      "call": "solve_excused_outages('3 0\\nDDD\\n')",
+      "expect": "'0'",
+      "compare": "equal",
+      "note": "No outage may be excused and every day was down, so no run counts."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_excused_outages('0 0\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('0 0\\n\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('1 0\\nU\\n')",
+      "expect": "'1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('1 0\\nD\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('7 1\\nUUDUUDU\\n')",
+      "expect": "'5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('3 0\\nDDD\\n')",
+      "expect": "'0'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('5 5\\nDDDDD')",
+      "expect": "'5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('  8   2 \\n  DUDDUUDU  \\n\\n')",
+      "expect": "'5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('6 0\\nUUDUUU\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('4 1\\n UUUU \\n')",
+      "expect": "'4'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('4 2\\nDDDU\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('6 1\\nDUUUUD\\n')",
+      "expect": "'5'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('200000 1\\nD' + 'U' * 199999 + '\\n')",
+      "expect": "'200000'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_excused_outages('200000 50000\\n' + 'UD' * 100000 + '\\n')",
+      "expect": "'100001'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
+  "solution": "def solve_excused_outages(text):\n    tokens = text.split()\n    n, k = int(tokens[0]), int(tokens[1])\n    days = tokens[2] if n else ''\n    best = left = down = 0\n    for right, c in enumerate(days):\n        if c == 'D':\n            down += 1\n        while down > k:\n            if days[left] == 'D':\n                down -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return str(best)\n",
+  "notes": [
+    "The window always holds the longest run ending today with at most `k` down days.",
+    "The longest run of up days plus `k` is not the answer: the excused days must sit inside one run.",
+    "Each day enters the window once and leaves at most once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def solve_excused_outages(text):\n    tokens = text.split()\n    n, k = int(tokens[0]), int(tokens[1])\n    days = tokens[2] if n else ''\n    best = run = 0\n    for c in days:\n        run = run + 1 if c == 'U' else 0\n        best = max(best, run)\n    return str(min(n, best + k))\n",
+      "slip": "Adding `k` to the longest up run assumes the excused days sit next to it, which they need not."
+    },
+    {
+      "code": "def solve_excused_outages(text):\n    lines = text.split('\\n')\n    n, k = int(lines[0].split()[0]), int(lines[0].split()[1])\n    days = lines[1] if n else ''\n    best = left = down = 0\n    for right, c in enumerate(days):\n        if c != 'U':\n            down += 1\n        while down > k:\n            if days[left] != 'U':\n                down -= 1\n            left += 1\n        best = max(best, right - left + 1)\n    return str(best)\n",
+      "slip": "Reading the second line raw keeps its spaces, which then count as down days."
+    },
+    {
+      "code": "def solve_excused_outages(text):\n    tokens = text.split()\n    n, k = int(tokens[0]), int(tokens[1])\n    days = tokens[2] if n else ''\n    best = left = down = 0\n    for right, c in enumerate(days):\n        if c == 'D':\n            down += 1\n        if down > k:\n            left = right\n            down = 1 if c == 'D' else 0\n        if down <= k:\n            best = max(best, right - left + 1)\n    return str(best)\n",
+      "slip": "Starting a new run at today when the excuses run out throws away the days that could still be kept."
+    }
+  ]
+}

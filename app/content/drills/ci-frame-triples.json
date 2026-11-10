@@ -1,0 +1,129 @@
+{
+  "id": "ci-frame-triples",
+  "name": "Rods that make a frame",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "two-pointers",
+  "tags": [
+    "pack-2",
+    "frame-triples"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1800,
+  "fn": "count_frames",
+  "returns": "a whole number",
+  "brief": "A workshop keeps a box of rods, and `rods[i]` is the length of rod `i` in centimetres. Three rods make a triangular frame when the two shorter ones together are strictly longer than the longest. Rods at different positions are different rods, even with equal lengths.\n\nWrite `count_frames(rods)`, which returns how many sets of three rods make a frame.\n\nExample. For `rods = [2, 3, 4, 5]` the sets are 2, 3, 4 and 2, 4, 5 and 3, 4, 5. The set 2, 3, 5 fails because 2 plus 3 is not more than 5. So the answer is 3.",
+  "constraints": [
+    "$0 \\le n \\le 2{,}000$ rods, each a whole number from $1$ to $10^6$.",
+    "$O(n^2)$ time is the target. Trying every set of three is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Sort the rods and fix the longest rod of the set. With two pointers below it, whenever the pair `i, j` is long enough, so is every rod from `i` to `j - 1` paired with `j`.",
+  "starter": "def count_frames(rods):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "count_frames([2, 3, 4, 5])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Three of the four sets work. 2, 3 and 5 would lie flat."
+    },
+    {
+      "call": "count_frames([4, 4, 4, 4])",
+      "expect": "4",
+      "compare": "equal",
+      "note": "Every set of three equal rods works, and four rods give 4 sets."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_frames([])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([3, 4])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([3, 4, 5])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([1, 2, 3])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([2, 3, 4, 5])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([4, 4, 4, 4])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([5, 4, 3, 2])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([1, 1, 2, 2, 3])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([10, 1, 1, 1, 21, 10])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([1000000, 1, 999999, 2, 1000000])",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([1, 1, 1, 100])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([(i * 37) % 1000 + 1 for i in range(1500)])",
+      "expect": "280669759",
+      "compare": "equal"
+    },
+    {
+      "call": "count_frames([1] * 1500)",
+      "expect": "561375500",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method tries every set of three, which is $O(n^3)$ and runs out of time on the two largest tests. The step to the target is to sort, fix the longest rod, and count whole blocks of good pairs with two pointers, which is $O(n^2)$.",
+  "solution": "def count_frames(rods):\n    a = sorted(rods)\n    count = 0\n    for k in range(len(a) - 1, 1, -1):\n        i, j = 0, k - 1\n        while i < j:\n            if a[i] + a[j] > a[k]:\n                count += j - i\n                j -= 1\n            else:\n                i += 1\n    return count\n",
+  "notes": [
+    "Once `a[i] + a[j]` beats `a[k]`, every larger `i` below `j` does too, so `j - i` sets are counted at once.",
+    "The test is strictly greater: three rods with `a + b == c` lie flat and are not a frame.",
+    "The sort is $O(n \\log n)$ and each longest rod costs one $O(n)$ sweep, so the work is $O(n^2)$."
+  ],
+  "planted": [
+    {
+      "code": "def count_frames(rods):\n    a = sorted(rods)\n    count = 0\n    for k in range(len(a) - 1, 1, -1):\n        i, j = 0, k - 1\n        while i < j:\n            if a[i] + a[j] >= a[k]:\n                count += j - i\n                j -= 1\n            else:\n                i += 1\n    return count\n",
+      "slip": "Using `>=` counts the flat sets where the two short rods exactly equal the long one."
+    },
+    {
+      "code": "def count_frames(rods):\n    a = sorted(rods)\n    count = 0\n    for k in range(len(a) - 1, 1, -1):\n        i, j = 0, k - 1\n        while i < j:\n            if a[i] + a[j] > a[k]:\n                count += 1\n                j -= 1\n            else:\n                i += 1\n    return count\n",
+      "slip": "Adding 1 for a good pair forgets that every rod between `i` and `j` also works with `j`."
+    },
+    {
+      "code": "def count_frames(rods):\n    a = rods\n    count = 0\n    for k in range(len(a) - 1, 1, -1):\n        i, j = 0, k - 1\n        while i < j:\n            if a[i] + a[j] > a[k]:\n                count += j - i\n                j -= 1\n            else:\n                i += 1\n    return count\n",
+      "slip": "Without the sort the last rod need not be the longest and the pointer moves prove nothing."
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "id": "ci-hop-score",
+  "name": "Best total over hops of at most k",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "windows",
+  "tags": [
+    "pack-2",
+    "hop-score"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2580,
+  "fn": "best_hop_total",
+  "returns": "a whole number",
+  "brief": "A van drives down a road of depots and `gains[i]` is what it earns on stopping at depot `i`, negative for a toll. It must stop at the first depot and the last. From one stop it may drive on 1 to `k` depots before the next stop.\n\nWrite `best_hop_total(gains, k)`, which returns the largest total of the gains at the stops.\n\nExample. For `gains = [2, -5, -1, 4, -3, 1]` and `k = 2`, the best stops are 0, 2, 3 and 5, for 2 - 1 + 4 + 1 = 6. The answer is 6.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ depots, each gain a whole number between $-10^4$ and $10^4$; $1 \\le k \\le n$.",
+    "$O(n)$ time is the target. Looking back over all `k` earlier stops for each depot, $O(nk)$, is too slow.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Let `best[i]` be the top total for a route ending at depot `i`. It is `gains[i]` plus the largest `best` among the `k` depots before it, so keep that window's maximum in a deque.",
+  "starter": "def best_hop_total(gains, k):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "best_hop_total([2, -5, -1, 4, -3, 1], 2)",
+      "expect": "6",
+      "compare": "equal",
+      "note": "The route skips the two tolls of 5 and 3 and stops everywhere else."
+    },
+    {
+      "call": "best_hop_total([-3, -9, -9, -2], 3)",
+      "expect": "-5",
+      "compare": "equal",
+      "note": "One hop of 3 goes straight from the first depot to the last."
+    }
+  ],
+  "tests": [
+    {
+      "call": "best_hop_total([7], 1)",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([-7], 1)",
+      "expect": "-7",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([1, -10, 1], 1)",
+      "expect": "-8",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([1, -10, 1], 2)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([2, -5, -1, 4, -3, 1], 2)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([-3, -9, -9, -2], 3)",
+      "expect": "-5",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([-3, -9, -9, -2], 2)",
+      "expect": "-14",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([5, -1, -1, -1, 5], 3)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([0, 3, -4, -4, 3, -4, -4, 0], 3)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([1, 2, 3, 4], 4)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([10, -20, -20, 5, -20, -20, 10], 2)",
+      "expect": "-15",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([-1] * 100000, 100000)",
+      "expect": "-2",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([(i * 37) % 101 - 60 for i in range(100000)], 50000)",
+      "expect": "811782",
+      "compare": "equal"
+    },
+    {
+      "call": "best_hop_total([-((i * 7919) % 1009) for i in range(100000)], 30000)",
+      "expect": "-629",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method looks back over all `k` earlier depots for every depot, which is $O(nk)$ and runs out of time on the large tests. The step to the target is to keep the window of the last `k` totals in a deque whose front is always its maximum.",
+  "solution": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] < i - k:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and best[window[-1]] <= best[i]:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
+  "notes": [
+    "The best route to depot `i` ends with a hop from one of the `k` depots before it, so `best[i]` is `gains[i]` plus their best total.",
+    "The window holds the `k` depots before `i`, so depot `i - k` is still in reach and `i - k - 1` is not.",
+    "Each depot enters and leaves the deque once, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] < i - k:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and gains[window[-1]] <= g:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
+      "slip": "Ordering the deque by each depot's own gain, not by the best total to reach it, keeps the wrong front."
+    },
+    {
+      "code": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] < i - k - 1:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and best[window[-1]] <= best[i]:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
+      "slip": "Keeping depot `i - k - 1` in the window allows a hop of `k + 1` depots."
+    },
+    {
+      "code": "from collections import deque\n\ndef best_hop_total(gains, k):\n    best = [0] * len(gains)\n    window = deque()\n    for i, g in enumerate(gains):\n        if window and window[0] <= i - k:\n            window.popleft()\n        best[i] = g + (best[window[0]] if window else 0)\n        while window and best[window[-1]] <= best[i]:\n            window.pop()\n        window.append(i)\n    return best[-1]\n",
+      "slip": "Dropping depot `i - k` from the window forbids the longest hop of exactly `k` depots."
+    }
+  ]
+}
