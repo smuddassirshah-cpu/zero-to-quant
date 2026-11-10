@@ -126,12 +126,18 @@ def newton_cotes():
     odd = [kink_error(1, n) for n in (16, 32, 64, 128, 256)]
     even = [kink_error(0, n) for n in (16, 32, 64, 128, 256)]
     po, pe = orders(odd)[-2:], orders(even)[-2:]
-    # Corrected assert: a kink on an odd-numbered node is still inside a parabola's panel, and the order stays 2;
-    # only a kink on an even-numbered node (a panel boundary) or at an end restores order 4:
-    #     all(abs(p - 2) < 0.2 for p in po) and all(abs(p - 4) < 0.2 for p in pe)
-    check("kink_on_any_node_restores_order_4", all(abs(p - 4) < 0.3 for p in po) and all(abs(p - 4) < 0.3 for p in pe),
-          f"l9 screens[6].explain, widget option ok, screens[9] option ok and hints[2], summary.ideas[2] (finding 18): 'put kinks on nodes'; "
-          f"measured order with the call's kink on an odd node {po[-1]:.2f} (errors {odd[2]:.1e}, {odd[3]:.1e}), on an even node {pe[-1]:.2f}", expected_fail=True)
+    # (corrected claim, fix pass) The content now says: put the kink where two panels meet, on an even-numbered
+    # node, or split there. A kink on an odd-numbered node stays inside a panel and the order stays 2. Second
+    # method: one panel of |x| on [-h, h] gives Simpson 2h^2/3 against the integral h^2, an O(h^2) panel error.
+    h = 0.1
+    panel = h / 3 * (abs(-h) + 4 * 0 + abs(h))
+    l9 = load("l9-quadrature")
+    l9_texts = [l9["screens"][6]["explain"]["text"], l9["screens"][9]["widget"]["options"][0]["text"], l9["screens"][9]["hints"][2]["text"], l9["summary"]["ideas"][2]]
+    check("kink_on_any_node_restores_order_4", all(abs(p - 2) < 0.2 for p in po) and all(abs(p - 4) < 0.2 for p in pe)
+          and close(panel, 2 * h * h / 3, rel=1e-12) and abs(panel - h * h) > 0.3 * h * h
+          and all("two panels meet" in t or "even-numbered" in t for t in l9_texts) and not any("on a node" in t or "on nodes" in t for t in l9_texts),
+          f"l9 screens[6], [9], summary.ideas[2] (finding 18, corrected claim, fix pass): order with the kink on an odd node {po[-1]:.2f} "
+          f"(errors {odd[2]:.1e}, {odd[3]:.1e}), on an even node {pe[-1]:.2f}")
     check("doubling_counts", close(0.004 / 4, 0.001) and 3.7e-5 / 16 ** 3 > 1e-9 > 3.7e-5 / 16 ** 4 and 0.02 / 4 ** 3 > 1e-4 > 0.02 / 4 ** 4 and 0.02 / 16 ** 2 < 1e-4,
           "l9 quiz[0], quiz[1]; homework-3 items[0]; review-3 items[0]: halving h divides the error by 4 or 16")
 
@@ -174,10 +180,14 @@ def gauss():
     d1 = (math.log(0.5) + 0.07) / 0.2
     bs200 = 100 * norm.cdf(d1) - 200 * math.exp(-0.05) * norm.cdf(d1 - 0.2)
     e16, e32 = abs(glc(100, 200, 0.05, 0.2, 1.0, 16) - bs200), abs(glc(100, 200, 0.05, 0.2, 1.0, 32) - bs200)
-    # Corrected assert: 16 nodes already price the K = 200 call to the tail's 2e-13; 32 nodes add nothing:
-    #     e16 < 1e-11 and abs(e16 - e32) < 1e-14
-    check("far_call_needs_32_nodes", e16 > 1e-8,
-          f"l10 screens[7].explain (finding 21): 'the far call needs 32 nodes'; with 16 nodes the error is {e16:.1e}, with 32 it is {e32:.1e}", expected_fail=True)
+    # (corrected claim, fix pass) The content now says the far call is just as easy as the standard one. Second
+    # method: the far call's piece [z*, 8] = [3.32, 8] is shorter than the standard call's [-0.15, 8], so the same
+    # 16 nodes are denser there; 16 nodes reach the cut-off tail and 32 add nothing.
+    zfar = (math.log(2) - 0.03) / 0.2
+    l10x = load("l10-gaussian-quadrature")["screens"][7]["explain"]["text"]
+    check("far_call_needs_32_nodes", e16 < 1e-11 and abs(e16 - e32) < 1e-14 and 8 - zfar < 8 + 0.15
+          and "needs 32 nodes" not in l10x and "just as easy" in l10x,
+          f"l10 screens[7].explain (finding 21, corrected claim, fix pass): with 16 nodes the K = 200 error is {e16:.1e}, with 32 it is {e32:.1e}; piece width {8 - zfar:.2f}")
 
     def dens(s):
         return np.exp(-(np.log(s / 100) - 0.03) ** 2 / 0.08) / (s * 0.2 * math.sqrt(2 * math.pi))

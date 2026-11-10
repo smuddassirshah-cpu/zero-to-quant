@@ -212,23 +212,34 @@ def safe_solver():
     ratio = tm(lambda: iv(P1k, K1k, 100.0, 0.05, T, k1k)) / tm(lambda: iv(P1k[:1], K1k[:1], 100.0, 0.05, T, k1k[:1]))
     note("thousand_strikes_cost", f"1,000 strikes take {ratio:.0f} times as long as one strike here: far below 1,000 times, but not 'about as much as one' "
          "(finding 14: l6 screens[8].explain; homework-2 items[6].explain)")
-    # The taught solver has no test of slow progress, so Newton steps that stay inside the bracket can creep.
-    bound = math.ceil(math.log2(3 / 1e-10))
-    worst_calls, worst_err = 0, 0.0
+    # Before the fix pass the taught solver had no test of slow progress: on 1e40 (x - 1)^p over [0, 3] it reached
+    # maxit after 102 calls for p = 9 and 21 and returned x silently, 3.8e-3 from the root for p = 21.
+    # (corrected claim, fix pass) The solution now has rtsafe's second test (bisect when the Newton step is over
+    # half the step before last) and raises RuntimeError at maxit instead of returning a guess. The content no
+    # longer claims an all-bisection worst case; it says Newton steps cannot creep and maxit is the last stop.
+    # Every return must be by ftol (|f| below 1e-12, the residual test) or by a step below xtol, never at the cap.
+    # Second method: with ftol = 0 only the step test can stop it, and each multiple root must be reached.
+    ends_ok = True
     for p in (3, 9, 21):
         f = lambda t, p=p: 1e40 * (t - 1) ** p
-        df = lambda t, p=p: 1e40 * p * (t - 1) ** (p - 1)
         g, c = counted(f)
-        root = sn(g, df, 0.0, 3.0)
-        worst_calls, worst_err = max(worst_calls, c[0]), max(worst_err, abs(root - 1))
-    # Corrected assert: iterations are bounded by maxit only, and at maxit the returned x need not be a root:
-    #     worst_calls > bound + 2 and worst_err > 1e-6
-    # With the progress test of Numerical Recipes' rtsafe (bisect when the Newton step is more than half the
-    # previous step) the same cases take at most 64 calls and end within 1e-8 (see the audit, finding 12).
-    check("safeguard_worst_case_is_all_bisection", worst_calls <= bound + 2 and worst_err < 1e-9,
-          f"l6 screens[4].prose, feedback ('36: the guaranteed cap'), screens[3].explain; homework-2 items[0].explain (finding 12): "
-          f"on 1e40 (x - 1)^p over [0, 3] the lesson's safe_newton makes up to {worst_calls} calls against a bisection count of {bound}, "
-          f"and returns silently with error {worst_err:.1e}", expected_fail=True)
+        root = sn(g, lambda t, p=p: 1e40 * p * (t - 1) ** (p - 1), 0.0, 3.0)
+        ends_ok &= c[0] < 102 and (abs(f(root)) < 1e-12 or abs(root - 1) < 1e-9)
+    creep = []
+    for p in (3, 9, 21, 51):
+        g, c = counted(lambda t, p=p: (t - 1) ** p)
+        creep.append((abs(sn(g, lambda t, p=p: p * (t - 1) ** (p - 1), 0.0, 3.0, ftol=0.0) - 1), c[0]))
+    raised = False
+    try:
+        sn(lambda t: (t - 1) ** 9, lambda t: 9 * (t - 1) ** 8, 0.0, 3.0, ftol=0.0, maxit=10)
+    except RuntimeError:
+        raised = True
+    s4 = l6["screens"][4]
+    check("safeguard_worst_case_is_all_bisection", ends_ok and raised and all(e < 1e-6 and n < 102 for e, n in creep)
+          and all(e < 1e-9 for e, _ in creep[:3]) and "worst case is all bisection" not in s4["prose"]
+          and "guaranteed cap" not in s4["feedback"]["correct"] and "maxit" in l6["screens"][3]["explain"]["text"],
+          f"l6 screens[3], [4], [7] (finding 12, corrected claim, fix pass): on (x - 1)^p, p = 3, 9, 21, 51 with ftol = 0 the solver ends "
+          f"with errors {', '.join(f'{e:.1e}' for e, _ in creep)} in {', '.join(str(n) for _, n in creep)} calls; with maxit = 10 it raises")
 
 
 # ---------------------------------------------------------------- l7
@@ -259,19 +270,28 @@ def interpolation():
           and all(prod(ch(n)).max() <= 2.0 ** (1 - n) * (1 + 1e-9) for n in (4, 8, 10, 12, 20)),
           "l7 screens[3], quiz[1]: equal-node product is 126 times larger near the end than the middle; Chebyshev product never exceeds 2^(1-n)")
     pe = {n: prod(eq(n)).max() for n in (4, 8, 10, 20)}
-    # Corrected assert: the largest node product on equal spacing shrinks as n grows (0.113, 0.0188, 0.00853, 0.000234);
-    # Runge's error grows because f^(n+1)/(n+1)! grows like 5^(n+1), faster than the product shrinks:
-    #     pe[20] < pe[10] < pe[8] < pe[4]
-    check("equal_node_product_explodes_with_n", pe[20] > pe[10],
-          f"l7 screens[5].explain (finding 15): 'more equally spaced points feed the node product, which explodes at the ends'; "
-          f"its maximum is {pe[10]:.5f} at n = 10 and {pe[20]:.6f} at n = 20", expected_fail=True)
+    # (corrected claim, fix pass) The content now says the derivative factor grows faster than the node product
+    # shrinks, and equal spacing leaves that product largest at the ends. Product maxima shrink with n; the Runge
+    # derivative factor |f^(n+1)| / (n+1)! grows like 5^(n+1) (Cauchy estimate: the poles at +-0.2i set a radius
+    # of 1/5), so factor times product grows; and the end-to-middle ratio stays large.
+    deriv = {n: 5.0 ** (n + 1) for n in (10, 20)}
+    l7 = load("l7-interpolation")
+    check("equal_node_product_explodes_with_n", pe[20] < pe[10] < pe[8] < pe[4] and deriv[20] * pe[20] > deriv[10] * pe[10]
+          and pe[10] / prod(eq(10))[len(g) // 2 - 500:len(g) // 2 + 500].max() > 50
+          and "explodes" not in l7["screens"][5]["explain"]["text"] and "grows faster than the node product shrinks" in l7["screens"][5]["explain"]["text"],
+          f"l7 screens[5].explain (finding 15, corrected claim, fix pass): the node product's maximum falls, {pe[10]:.5f} at n = 10 and {pe[20]:.6f} at n = 20, "
+          f"while 5^(n+1) times it rises from {deriv[10] * pe[10]:.2e} to {deriv[20] * pe[20]:.2e}")
     ee = {n: mie(np.exp, eq(n), g) for n in (4, 8, 10, 20)}
     er = {n: mie(lambda x: 1 / (1 + x * x), eq(n), g) for n in (4, 8, 10, 20)}
-    # Corrected assert: for e^x and for 1/(1 + x^2) more equally spaced points fit closer:
-    #     ee[20] < ee[10] < ee[4] and er[20] < er[10] < er[4]
-    check("equal_spacing_error_grows_with_n", ee[20] > ee[10] and er[20] > er[10],
-          f"l7 summary.ideas[1], summary.trap, screens[5] option why; review-2 items[5].feedback.generic (finding 15): stated for equal spacing in general; "
-          f"e^x: {ee[10]:.1e} at n = 10, {ee[20]:.1e} at n = 20; 1/(1 + x^2): {er[10]:.1e}, {er[20]:.1e}", expected_fail=True)
+    # (corrected claim, fix pass) The content now limits the growth to some functions (Runge's): for e^x and for
+    # 1/(1 + x^2) more equally spaced points fit closer, while Runge's function gets worse.
+    r2 = load("review-2")["items"][5]
+    texts = [l7["summary"]["ideas"][1], l7["summary"]["trap"], l7["screens"][5]["widget"]["options"][1]["why"], r2["feedback"]["generic"]]
+    check("equal_spacing_error_grows_with_n", ee[20] < ee[10] < ee[4] and er[20] < er[10] < er[4] and mie(rf, eq(20), g) > mie(rf, eq(10), g)
+          and not any(t.startswith("On equal spacing the error swings") or t.startswith("More equally spaced points do not") for t in texts)
+          and all(("Runge" in t or "this $f$" in t or "some smooth" in t) for t in texts),
+          f"l7 summary, screens[5] option why; review-2 items[5] (finding 15, corrected claim, fix pass): "
+          f"e^x: {ee[10]:.1e} at n = 10, {ee[20]:.1e} at n = 20; 1/(1 + x^2): {er[10]:.1e}, {er[20]:.1e}; only Runge's function grows")
 
     def lebesgue(nodes, grid):
         return sum(np.abs(le(nodes, np.eye(len(nodes))[j], grid)) for j in range(len(nodes)))

@@ -371,12 +371,17 @@ def stability():
     d = 1e-10
     amp = abs(np.var(x * (1 + d * np.sign(x - x.mean())), ddof=1) - s2) / s2 / d
     kap = 2 * x.mean() / math.sqrt(s2)
-    # Corrected assert (Chan, Golub and LeVeque 1983; Higham sec. 1.9): the relative condition number of the
-    # sample variance is about 2 * mean / s, here about 6e8:
-    #     0.5 * kap < amp < 1.5 * kap and amp > 1e8
-    check("variance_is_well_conditioned", amp < 100,
-          f"homework-1 items[8].model, rubric[2] (finding 6): 'variance as a function of the marks is well conditioned'; "
-          f"measured relative amplification {amp:.2e}, 2 mean / s = {kap:.2e}", expected_fail=True)
+    # (corrected claim, fix pass) The content now says kappa is about 2 mean / s, near 6e8 (of order 1e9), and a
+    # stable method errs by about kappa u, near 1e-7, so it keeps about 7 digits. Second method: the exact
+    # componentwise condition number from the gradient, 2 sum |x_i (x_i - mean)| / ((n - 1) s^2).
+    kap_grad = 2 * float(np.sum(np.abs(x * (x - x.mean())))) / ((len(x) - 1) * s2)
+    hw1 = load("homework-1")["items"][8]
+    hw_text = hw1["model"] + hw1["rubric"][2]["text"] + hw1["prompt"]
+    check("variance_is_well_conditioned", 0.5 * kap < amp < 1.5 * kap and abs(amp - kap_grad) < 0.05 * kap_grad and 1e8 < kap < 1e9
+          and 1e-8 < kap * U < 2e-7 and round(16 - math.log10(kap)) == 7
+          and r"\kappa \approx 2\bar x/s \approx 6 \times 10^8" in hw_text and "well conditioned" not in hw_text,
+          f"homework-1 items[8] (finding 6, corrected claim, fix pass): kappa about 2 mean / s = {kap:.2e}; "
+          f"measured amplification {amp:.2e}, gradient formula {kap_grad:.2e}; kappa u = {kap * U:.1e}, so a stable method keeps about 7 digits")
     one, two = [], []
     for _ in range(200):
         y = 1e9 + rng.normal(0, 3, 250)

@@ -88,6 +88,7 @@ fl = lambda x: float(x)
 def safe(K, k, q):
     f = lambda s: fl(mprice(K, s, k)) - q; df = lambda s: fl(mvega(K, s))
     lo, hi, x, its, bis = 1e-4, 5.0, 0.2, 0, 0
+    step = older = hi - lo  # fix pass: rtsafe's second test, as in the l6 solution
     flo = f(lo)
     for its in range(1, 101):
         fx = f(x)
@@ -95,8 +96,9 @@ def safe(K, k, q):
         if (fx > 0) == (flo > 0): lo, flo = x, fx
         else: hi = x
         d = df(x); xn = x - fx / d if d else lo - 1
-        if not (lo < xn < hi): xn = 0.5 * (lo + hi); bis += 1
-        if abs(xn - x) < 1e-10: x = xn; break
+        if not (lo < xn < hi) or abs(xn - x) > 0.5 * older: xn = 0.5 * (lo + hi); bis += 1
+        older, step = step, abs(xn - x)
+        if step < 1e-10: x = xn; break
         x = xn
     return x, its, bis
 res = [safe(K, k, q) for K, k, q in zip(Ks, kinds, stated_q)]
