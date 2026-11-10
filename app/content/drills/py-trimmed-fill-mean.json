@@ -1,0 +1,122 @@
+{
+  "id": "py-trimmed-fill-mean",
+  "name": "A trimmed mean of fills",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "slicing",
+    "trimmed-fill-mean"
+  ],
+  "skills": [
+    "pf-types"
+  ],
+  "difficulty": 1,
+  "pace": 420,
+  "fn": "trimmed_fill_mean",
+  "returns": "a float, or None",
+  "brief": "A desk quotes a trimmed mean of its fill prices, so one bad print cannot move it. Sort the prices, drop the `k` lowest and the `k` highest, and return the mean of the rest. Return `None` when no price is left. Leave the caller's list as it was.\n\nWrite `trimmed_fill_mean(prices, k)`.\n\nExample. For `prices = [4.2, 9.9, 4.4, 4.3, 0.1]` and `k = 1` the sorted list is `[0.1, 4.2, 4.3, 4.4, 9.9]`. Dropping one price from each end leaves 4.2, 4.3 and 4.4, whose mean is 4.3.",
+  "constraints": [
+    "$0 \\le n \\le 10{,}000$ prices, each a float; $k \\ge 0$ is a whole number.",
+    "Floats are compared with `math.isclose` at a relative tolerance of $10^{-9}$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "`sorted` gives a new list, so the caller's list is safe. Then slice from `k` up to `len(s) - k`: a slice ending at `-k` is empty when `k` is 0.",
+  "starter": "def trimmed_fill_mean(prices, k):\n    # your code here\n    return 0.0\n",
+  "examples": [
+    {
+      "call": "trimmed_fill_mean([4.2, 9.9, 4.4, 4.3, 0.1], 1)",
+      "expect": "4.3",
+      "compare": "isclose",
+      "note": "The lowest print, 0.1, and the highest, 9.9, are dropped. The mean of 4.2, 4.3 and 4.4 is 4.3."
+    },
+    {
+      "call": "trimmed_fill_mean([5.0, 7.0], 0)",
+      "expect": "6.0",
+      "compare": "isclose",
+      "note": "With `k = 0` nothing is dropped, so this is the plain mean."
+    }
+  ],
+  "tests": [
+    {
+      "call": "trimmed_fill_mean([], 0)",
+      "expect": "None",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([72.5], 0)",
+      "expect": "72.5",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([72.5], 1)",
+      "expect": "None",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([5.0, 7.0], 0)",
+      "expect": "6.0",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([3.0, 8.0, 1.0, 6.0], 2)",
+      "expect": "None",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([3.0, 8.0, 1.0, 6.0], 3)",
+      "expect": "None",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([4.2, 9.9, 4.4, 4.3, 0.1], 1)",
+      "expect": "4.3",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([2.0, 2.0, 2.0, 9.0, 2.0], 1)",
+      "expect": "2.0",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([-0.4, 1.6, -2.3, 0.9, 0.2, 5.1], 2)",
+      "expect": "0.55",
+      "compare": "isclose"
+    },
+    {
+      "call": "(p := [6.1, 2.4, 9.8, 3.3], trimmed_fill_mean(p, 1), p)[2]",
+      "expect": "[6.1, 2.4, 9.8, 3.3]",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([101.25, 99.5, 100.75, 250.0, 100.0, 1.0, 100.5], 1)",
+      "expect": "100.4",
+      "compare": "isclose"
+    },
+    {
+      "call": "trimmed_fill_mean([float(i % 97) for i in range(10000)], 0)",
+      "expect": "47.9604",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. A number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)` holds, element by element for lists and tuples; anything else must equal the expected value.",
+  "solution": "def trimmed_fill_mean(prices, k):\n    s = sorted(prices)\n    kept = s[k:len(s) - k]\n    if not kept:\n        return None\n    return sum(kept) / len(kept)\n",
+  "notes": [
+    "Sorting a copy puts the extremes at the two ends, where one slice removes them.",
+    "`s[k:-k]` is empty when `k` is 0, so the end of the slice is written `len(s) - k`.",
+    "The sort costs $O(n \\log n)$; the slice and the sum are $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def trimmed_fill_mean(prices, k):\n    s = sorted(prices)[k:-k]\n    if not s:\n        return None\n    return sum(s) / len(s)\n",
+      "slip": "Slicing to `-k` empties the list when `k` is 0."
+    },
+    {
+      "code": "def trimmed_fill_mean(prices, k):\n    prices.sort()\n    kept = prices[k:len(prices) - k]\n    if not kept:\n        return None\n    return sum(kept) / len(kept)\n",
+      "slip": "Sorting in place reorders the caller's list."
+    },
+    {
+      "code": "def trimmed_fill_mean(prices, k):\n    s = sorted(prices)\n    kept = s[k:len(s) - k]\n    return sum(kept) / len(kept)\n",
+      "slip": "No check for an empty slice, so dropping every price divides by zero."
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "id": "py-fill-summary",
+  "name": "Fills rolled up by order",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "dicts",
+    "fill-summary"
+  ],
+  "skills": [
+    "pf-collections"
+  ],
+  "difficulty": 2,
+  "pace": 660,
+  "fn": "fill_summary",
+  "returns": "a dict",
+  "brief": "A broker reports each fill as `(order_id, qty, price)`: a whole number of shares above zero at a £ price. An order can be filled in several pieces, in any order among other orders' fills. Return a dict from each order id to `(total_qty, avg_price)`, where `avg_price` weights each fill's price by its quantity.\n\nWrite `fill_summary(fills)`.\n\nExample. For `[('A1', 100, 4.80), ('B7', 50, 72.10), ('A1', 300, 4.84)]` the order A1 bought 400 shares for £480 plus £1,452, so its average price is 1932 / 400 = 4.83. The answer is `{'A1': (400, 4.83), 'B7': (50, 72.1)}`.",
+  "constraints": [
+    "$0 \\le n \\le 50{,}000$ fills.",
+    "Return the average unrounded. Numbers are compared with `math.isclose` at a relative tolerance of $10^{-9}$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Keep two running totals per order, the shares and the £ spent, each in a dict filled with `get(key, 0)`. Divide once at the end.",
+  "starter": "def fill_summary(fills):\n    # your code here\n    return {}\n",
+  "examples": [
+    {
+      "call": "(lambda s: [s['A1'], s['B7']])(fill_summary([('A1', 100, 4.80), ('B7', 50, 72.10), ('A1', 300, 4.84)]))",
+      "expect": "[(400, 4.83), (50, 72.1)]",
+      "compare": "isclose",
+      "note": "A1 spent £1,932 on 400 shares. The plain mean of 4.80 and 4.84 would be 4.82, which ignores the sizes."
+    },
+    {
+      "call": "sorted(fill_summary([('A1', 100, 4.80), ('B7', 50, 72.10), ('A1', 300, 4.84)]))",
+      "expect": "['A1', 'B7']",
+      "compare": "equal",
+      "note": "One key per order, whatever order the fills came in."
+    }
+  ],
+  "tests": [
+    {
+      "call": "fill_summary([])",
+      "expect": "{}",
+      "compare": "equal"
+    },
+    {
+      "call": "fill_summary([('Q9', 250, 18.4)])['Q9']",
+      "expect": "(250, 18.4)",
+      "compare": "isclose"
+    },
+    {
+      "call": "sorted(fill_summary([('A1', 100, 4.80), ('B7', 50, 72.10), ('A1', 300, 4.84)]))",
+      "expect": "['A1', 'B7']",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda s: [s['A1'], s['B7']])(fill_summary([('A1', 100, 4.80), ('B7', 50, 72.10), ('A1', 300, 4.84)]))",
+      "expect": "[(400, 4.83), (50, 72.1)]",
+      "compare": "isclose"
+    },
+    {
+      "call": "fill_summary([('K2', 10, 3.0), ('K2', 10, 3.0), ('K2', 10, 3.0)])['K2']",
+      "expect": "(30, 3.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "fill_summary([('X', 1, 10.0), ('X', 9, 20.0)])['X']",
+      "expect": "(10, 19.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(lambda s: [s['M4'], s['N5']])(fill_summary([('M4', 200, 101.5), ('N5', 75, 0.72), ('M4', 50, 102.0), ('N5', 25, 0.74), ('M4', 250, 100.9)]))",
+      "expect": "[(500, 101.25), (100, 0.725)]",
+      "compare": "isclose"
+    },
+    {
+      "call": "fill_summary([('Z1', 5, 12), ('Z1', 15, 16)])['Z1']",
+      "expect": "(20, 15.0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(lambda s: [len(s), s['P1'], s['P2']])(fill_summary([('P1', 400, 2.5), ('P2', 400, 2.5)]))",
+      "expect": "[2, (400, 2.5), (400, 2.5)]",
+      "compare": "isclose"
+    },
+    {
+      "call": "fill_summary([('R3', 3, 7.25), ('R3', 1, 7.75), ('R3', 6, 7.0)])['R3']",
+      "expect": "(10, 7.15)",
+      "compare": "isclose"
+    },
+    {
+      "call": "(lambda s: (len(s), s['O0'][0], s['O0'][1], s['O49']))(fill_summary([('O%d' % (i % 50), 1 + i % 7, 10.0 + (i % 11) / 10) for i in range(50000)]))",
+      "expect": "(50, 3997, 10.499999999999996, (3997, 10.499124343257442))",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. A number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)` holds, element by element for lists and tuples; anything else must equal the expected value.",
+  "solution": "def fill_summary(fills):\n    qty = {}\n    spent = {}\n    for oid, q, p in fills:\n        qty[oid] = qty.get(oid, 0) + q\n        spent[oid] = spent.get(oid, 0.0) + q * p\n    return {oid: (qty[oid], spent[oid] / qty[oid]) for oid in qty}\n",
+  "notes": [
+    "Two dicts keyed by order id carry the shares and the money, so each fill is one addition to each.",
+    "The plain mean of the prices treats a 1-share fill like a 9-share fill; the money total does not.",
+    "One pass over the fills, so $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def fill_summary(fills):\n    qty = {}\n    prices = {}\n    for oid, q, p in fills:\n        qty[oid] = qty.get(oid, 0) + q\n        prices.setdefault(oid, []).append(p)\n    return {oid: (qty[oid], sum(prices[oid]) / len(prices[oid])) for oid in qty}\n",
+      "slip": "It averages the prices without weighting them by quantity."
+    },
+    {
+      "code": "def fill_summary(fills):\n    out = {}\n    for oid, q, p in fills:\n        out[oid] = (q, p)\n    return out\n",
+      "slip": "Each fill overwrites the last, so only the final piece of an order is kept."
+    },
+    {
+      "code": "def fill_summary(fills):\n    qty = {}\n    spent = {}\n    count = {}\n    for oid, q, p in fills:\n        qty[oid] = qty.get(oid, 0) + q\n        spent[oid] = spent.get(oid, 0.0) + q * p\n        count[oid] = count.get(oid, 0) + 1\n    return {oid: (qty[oid], spent[oid] / count[oid]) for oid in qty}\n",
+      "slip": "It divides the money by the number of fills instead of the number of shares."
+    }
+  ]
+}

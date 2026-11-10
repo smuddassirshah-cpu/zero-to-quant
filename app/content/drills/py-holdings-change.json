@@ -1,0 +1,118 @@
+{
+  "id": "py-holdings-change",
+  "name": "What changed in the book",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "sets",
+    "holdings-change"
+  ],
+  "skills": [
+    "pf-collections",
+    "pf-idioms"
+  ],
+  "difficulty": 1,
+  "pace": 480,
+  "fn": "holdings_change",
+  "returns": "a tuple (list, list, int)",
+  "brief": "Two lists name the tickers held yesterday and today, taken from trade logs, so a ticker can appear more than once. Return `(added, dropped, kept)`: `added` lists the tickers held today and not yesterday, `dropped` those held yesterday and not today, each sorted and with no repeats, and `kept` counts the different tickers held on both days.\n\nWrite `holdings_change(before, after)`.\n\nExample. For `before = ['BP', 'VOD', 'BP', 'AZN']` and `after = ['VOD', 'SHEL', 'AZN', 'SHEL']` the answer is `(['SHEL'], ['BP'], 2)`: SHEL is new, BP has gone, and VOD and AZN are held on both days.",
+  "constraints": [
+    "$0 \\le n \\le 100{,}000$ tickers in each list, each a string.",
+    "$O(n \\log n)$ time is the target. Testing `x in before` on a list, once per ticker, is too slow for the largest test.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Turn each list into a set first. Set difference gives `added` and `dropped`, and the intersection gives `kept`.",
+  "starter": "def holdings_change(before, after):\n    # your code here\n    return ([], [], 0)\n",
+  "examples": [
+    {
+      "call": "holdings_change(['BP', 'VOD', 'BP', 'AZN'], ['VOD', 'SHEL', 'AZN', 'SHEL'])",
+      "expect": "(['SHEL'], ['BP'], 2)",
+      "compare": "equal",
+      "note": "SHEL appears twice today but is listed once. VOD and AZN make `kept` 2."
+    },
+    {
+      "call": "holdings_change([], ['LLOY'])",
+      "expect": "(['LLOY'], [], 0)",
+      "compare": "equal",
+      "note": "An empty book yesterday: everything today is added."
+    }
+  ],
+  "tests": [
+    {
+      "call": "holdings_change([], [])",
+      "expect": "([], [], 0)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['BP'], ['BP'])",
+      "expect": "([], [], 1)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change([], ['LLOY'])",
+      "expect": "(['LLOY'], [], 0)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['LLOY', 'LLOY'], [])",
+      "expect": "([], ['LLOY'], 0)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['BP', 'VOD', 'BP', 'AZN'], ['VOD', 'SHEL', 'AZN', 'SHEL'])",
+      "expect": "(['SHEL'], ['BP'], 2)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['TSCO', 'BARC'], ['ULVR', 'HSBA', 'ULVR', 'AAL'])",
+      "expect": "(['AAL', 'HSBA', 'ULVR'], ['BARC', 'TSCO'], 0)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['RR', 'RR', 'RR'], ['RR', 'RR'])",
+      "expect": "([], [], 1)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['NG', 'SSE', 'BT', 'NG'], ['BT', 'NG', 'SSE', 'BT'])",
+      "expect": "([], [], 3)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['GSK', 'AZN', 'HLN'], ['HLN', 'AZN', 'GSK', 'BA', 'IAG', 'BA'])",
+      "expect": "(['BA', 'IAG'], [], 3)",
+      "compare": "equal"
+    },
+    {
+      "call": "holdings_change(['bp', 'BP'], ['BP'])",
+      "expect": "([], ['bp'], 1)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r[0]), r[0][:2], len(r[1]), r[1][:3], r[2]))(holdings_change(['T%d' % i for i in range(60000)], ['T%d' % i for i in range(30000, 90000)]))",
+      "expect": "(30000, ['T60000', 'T60001'], 30000, ['T0', 'T1', 'T10'], 30000)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Each answer must equal the expected value.",
+  "solution": "def holdings_change(before, after):\n    old = set(before)\n    new = set(after)\n    return (sorted(new - old), sorted(old - new), len(old & new))\n",
+  "notes": [
+    "A set holds each ticker once, so the repeats in the logs vanish before anything is compared.",
+    "Filtering one list against the other keeps repeats, and a list comprehension keeps first-seen order, not sorted order.",
+    "Building the sets is $O(n)$ and sorting the two differences is $O(n \\log n)$."
+  ],
+  "planted": [
+    {
+      "code": "def holdings_change(before, after):\n    old = set(before)\n    new = set(after)\n    added = sorted([t for t in after if t not in old])\n    dropped = sorted([t for t in before if t not in new])\n    return (added, dropped, len(old & new))\n",
+      "slip": "Filtering the lists keeps a ticker once for every time it was traded."
+    },
+    {
+      "code": "def holdings_change(before, after):\n    old = set(before)\n    new = set(after)\n    added = [t for t in dict.fromkeys(after) if t not in old]\n    dropped = [t for t in dict.fromkeys(before) if t not in new]\n    return (added, dropped, len(old & new))\n",
+      "slip": "The lists come back in first-seen order, not sorted."
+    },
+    {
+      "code": "def holdings_change(before, after):\n    old = set(before)\n    new = set(after)\n    kept = sum(1 for t in after if t in old)\n    return (sorted(new - old), sorted(old - new), kept)\n",
+      "slip": "`kept` counts every trade of a kept ticker, not each ticker once."
+    }
+  ]
+}

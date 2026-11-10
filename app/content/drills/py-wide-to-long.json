@@ -1,0 +1,127 @@
+{
+  "id": "py-wide-to-long",
+  "name": "A wide price file, one row per close",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "csv",
+    "wide-to-long"
+  ],
+  "skills": [
+    "pf-modules"
+  ],
+  "difficulty": 2,
+  "pace": 780,
+  "fn": "wide_to_long",
+  "returns": "a list of (ticker, date, close) tuples",
+  "brief": "A vendor sends closes as CSV text with one column per ticker: the header is `date` and then the tickers, and each row is a date and its closes. A cell that is empty or only spaces means no close that day. Header names may carry spaces round them.\n\nWrite `wide_to_long(text)`, returning one `(ticker, date, close)` tuple per close, with `close` a float, sorted by ticker and then by date. Dates are `yyyy-mm-dd`, so they sort as text.\n\nExample. For `'date,BP,VOD\\n2026-03-02,4.85,\\n2026-03-03,4.91,0.72\\n'` the answer is `[('BP', '2026-03-02', 4.85), ('BP', '2026-03-03', 4.91), ('VOD', '2026-03-03', 0.72)]`.",
+  "constraints": [
+    "$0 \\le$ rows $\\le 5{,}000$ and up to 50 tickers. Lines may end in `\\n` or `\\r\\n`, and blank lines may appear.",
+    "Every cell that is not blank holds a number `float` can read.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "`csv.reader(io.StringIO(text))` gives each row as a list. Strip the header names, skip a cell whose `strip()` is empty, and sort the tuples at the end.",
+  "starter": "import csv\nimport io\n\n\ndef wide_to_long(text):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "wide_to_long('date,BP,VOD\\n2026-03-02,4.85,\\n2026-03-03,4.91,0.72\\n')",
+      "expect": "[('BP', '2026-03-02', 4.85), ('BP', '2026-03-03', 4.91), ('VOD', '2026-03-03', 0.72)]",
+      "compare": "equal",
+      "note": "VOD has no close on 2 March, so it gives one tuple, not two."
+    },
+    {
+      "call": "wide_to_long('date,AZN\\n')",
+      "expect": "[]",
+      "compare": "equal",
+      "note": "A header with no rows has no closes."
+    }
+  ],
+  "tests": [
+    {
+      "call": "wide_to_long('')",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,AZN\\n')",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,BP,VOD\\n2026-03-02,4.85,\\n2026-03-03,4.91,0.72\\n')",
+      "expect": "[('BP', '2026-03-02', 4.85), ('BP', '2026-03-03', 4.91), ('VOD', '2026-03-03', 0.72)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,AZN\\n2026-03-04,104.2\\n2026-03-02,103.0\\n2026-03-03,103.9\\n')",
+      "expect": "[('AZN', '2026-03-02', 103.0), ('AZN', '2026-03-03', 103.9), ('AZN', '2026-03-04', 104.2)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date, BP , VOD\\n2026-03-02, 4.85 ,0.72\\n')",
+      "expect": "[('BP', '2026-03-02', 4.85), ('VOD', '2026-03-02', 0.72)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,BP,VOD\\n2026-03-02,4.85, \\n2026-03-03,,0.73\\n')",
+      "expect": "[('BP', '2026-03-02', 4.85), ('VOD', '2026-03-03', 0.73)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,SHEL,BP\\r\\n2026-03-02,26.4,4.85\\r\\n2026-03-03,26.1,\\r\\n')",
+      "expect": "[('BP', '2026-03-02', 4.85), ('SHEL', '2026-03-02', 26.4), ('SHEL', '2026-03-03', 26.1)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,VOD,AZN,BP\\n2026-03-05,0.7,101.0,4.9')",
+      "expect": "[('AZN', '2026-03-05', 101.0), ('BP', '2026-03-05', 4.9), ('VOD', '2026-03-05', 0.7)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date\\n2026-03-02\\n2026-03-03\\n')",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,BP\\n2026-03-02,4.85\\n\\n2026-03-03,4.88\\n\\n')",
+      "expect": "[('BP', '2026-03-02', 4.85), ('BP', '2026-03-03', 4.88)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,AZN ,BP\\n2026-03-02,  ,4.9\\n2026-03-03,104.0,4.95\\n')",
+      "expect": "[('AZN', '2026-03-03', 104.0), ('BP', '2026-03-02', 4.9), ('BP', '2026-03-03', 4.95)]",
+      "compare": "equal"
+    },
+    {
+      "call": "wide_to_long('date,TSCO,ULVR\\n2026-02-27,3.1,\\n2026-03-02,,41.5\\n2026-02-26,3.05,41.2\\n')",
+      "expect": "[('TSCO', '2026-02-26', 3.05), ('TSCO', '2026-02-27', 3.1), ('ULVR', '2026-02-26', 41.2), ('ULVR', '2026-03-02', 41.5)]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[0], r[-1]))(wide_to_long('date,A,B,C\\n' + ''.join('2025-%02d-%02d,%d,,%d.5\\n' % (1 + i // 28, 1 + i % 28, i, i) for i in range(336))))",
+      "expect": "(672, ('A', '2025-01-01', 0.0), ('C', '2025-12-28', 335.5))",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "import csv\nimport io\n\n\ndef wide_to_long(text):\n    rows = list(csv.reader(io.StringIO(text)))\n    if not rows:\n        return []\n    tickers = [h.strip() for h in rows[0][1:]]\n    out = []\n    for row in rows[1:]:\n        if not row:\n            continue\n        date = row[0].strip()\n        for ticker, cell in zip(tickers, row[1:]):\n            if cell.strip():\n                out.append((ticker, date, float(cell)))\n    return sorted(out)\n",
+  "notes": [
+    "Each cell is a ticker and a date: the header gives the ticker, the first cell of the row gives the date.",
+    "A cell of one space is not `''`, so test `cell.strip()`; `float(' ')` raises `ValueError`.",
+    "Reading is $O(rc)$ for $r$ rows and $c$ tickers, and the sort adds $O(m \\log m)$ for $m$ closes."
+  ],
+  "planted": [
+    {
+      "code": "import csv\nimport io\n\n\ndef wide_to_long(text):\n    rows = list(csv.reader(io.StringIO(text)))\n    if not rows:\n        return []\n    tickers = [h.strip() for h in rows[0][1:]]\n    out = []\n    for row in rows[1:]:\n        if not row:\n            continue\n        for ticker, cell in zip(tickers, row[1:]):\n            if cell != '':\n                out.append((ticker, row[0], float(cell)))\n    return sorted(out)\n",
+      "slip": "A cell of spaces is not `''`, so `float` is asked to read it and raises."
+    },
+    {
+      "code": "import csv\nimport io\n\n\ndef wide_to_long(text):\n    rows = list(csv.reader(io.StringIO(text)))\n    if not rows:\n        return []\n    tickers = [h.strip() for h in rows[0][1:]]\n    out = []\n    for row in rows[1:]:\n        if not row:\n            continue\n        for ticker, cell in zip(tickers, row[1:]):\n            if cell.strip():\n                out.append((ticker, row[0], float(cell)))\n    return sorted(out, key=lambda t: (t[1], t[0]))\n",
+      "slip": "It sorts by date first, so the tickers interleave."
+    },
+    {
+      "code": "import csv\nimport io\n\n\ndef wide_to_long(text):\n    rows = list(csv.reader(io.StringIO(text)))\n    if not rows:\n        return []\n    tickers = rows[0][1:]\n    out = []\n    for row in rows[1:]:\n        if not row:\n            continue\n        for ticker, cell in zip(tickers, row[1:]):\n            if cell.strip():\n                out.append((ticker, row[0], float(cell)))\n    return sorted(out)\n",
+      "slip": "The header names keep their spaces, so `' BP '` is a different ticker from `'BP'`."
+    }
+  ]
+}

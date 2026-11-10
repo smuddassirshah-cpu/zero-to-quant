@@ -1,0 +1,123 @@
+{
+  "id": "py-guarded-returns",
+  "name": "Returns from a noisy feed",
+  "course": "py-found",
+  "pack": "py",
+  "tags": [
+    "exceptions",
+    "guarded-returns"
+  ],
+  "skills": [
+    "pf-classes"
+  ],
+  "difficulty": 3,
+  "pace": 960,
+  "fn": "guarded_returns",
+  "returns": "a tuple (list of floats, int, int)",
+  "brief": "A feed sends each day as a pair of strings, `(open_text, close_text)`. The day's return is `close / open - 1`. A pair where either text is not a number counts as **bad**. A readable pair whose open is zero counts as **zero**. Skip both kinds and keep the other returns in order. Anything else, such as `None` where a pair or a text should be, is a bug further up: let its `TypeError` through.\n\nWrite `guarded_returns(pairs)`, returning `(returns, bad, zero)`.\n\nExample. For `[('4.80', '4.92'), ('n/a', '4.95'), ('0', '5.10'), ('5.00', '4.90')]` the answer is `([0.025, -0.02], 1, 1)`.",
+  "constraints": [
+    "$0 \\le n \\le 10{,}000$ pairs.",
+    "Returns are compared with `math.isclose` at a relative tolerance of $10^{-9}$.",
+    "All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Read both texts in one `try` that catches only `ValueError`. Divide in a second `try` that catches only `ZeroDivisionError`.",
+  "starter": "def guarded_returns(pairs):\n    # your code here\n    return ([], 0, 0)\n",
+  "examples": [
+    {
+      "call": "guarded_returns([('4.80', '4.92'), ('n/a', '4.95'), ('0', '5.10'), ('5.00', '4.90')])",
+      "expect": "([0.025000000000000133, -0.019999999999999907], 1, 1)",
+      "compare": "isclose",
+      "note": "`'n/a'` is bad and the open of `'0'` is zero. The other two days give 2.5% and -2%."
+    },
+    {
+      "call": "guarded_returns([('0', 'x')])",
+      "expect": "([], 1, 0)",
+      "compare": "isclose",
+      "note": "The close cannot be read, so the pair is bad, although its open is also zero."
+    }
+  ],
+  "tests": [
+    {
+      "call": "guarded_returns([])",
+      "expect": "([], 0, 0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([('100', '102')])",
+      "expect": "([0.020000000000000018], 0, 0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([('4.80', '4.92'), ('n/a', '4.95'), ('0', '5.10'), ('5.00', '4.90')])",
+      "expect": "([0.025000000000000133, -0.019999999999999907], 1, 1)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([('', '1.0'), ('2.0', ' ')])",
+      "expect": "([], 2, 0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([('0.00', '1.0'), ('-0', '3.0'), ('0e0', '1')])",
+      "expect": "([], 0, 3)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([('0', 'x')])",
+      "expect": "([], 1, 0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([(' 4.80 ', '4.90\\n')])",
+      "expect": "([0.02083333333333348], 0, 0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([('1,200.00', '1,212.00'), ('1200', '1212')])",
+      "expect": "([0.010000000000000009], 1, 0)",
+      "compare": "isclose"
+    },
+    {
+      "call": "guarded_returns([('250', '240'), ('-', '241'), ('240', '0'), ('0', '0')])",
+      "expect": "([-0.040000000000000036, -1.0], 1, 1)",
+      "compare": "isclose"
+    },
+    {
+      "call": "_raised(lambda: guarded_returns([('1.0', '1.1'), None]))",
+      "expect": "'TypeError'",
+      "compare": "equal"
+    },
+    {
+      "call": "_raised(lambda: guarded_returns([('1.0', None)]))",
+      "expect": "'TypeError'",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r[0]), r[1], r[2], r[0][0]))(guarded_returns([(str(100 + i % 9), str(101 + i % 9)) if i % 10 else ('0', '5') for i in range(10000)]))",
+      "expect": "(9000, 0, 1000, 0.00990099009900991)",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. A number is accepted when `math.isclose(actual, expected, rel_tol=1e-9)` holds, element by element for lists and tuples; anything else must equal the expected value. In a test, `_raised(f)` calls `f` and gives the name of the error it raises, or `'no error'`.",
+  "solution": "def guarded_returns(pairs):\n    returns = []\n    bad = 0\n    zero = 0\n    for open_text, close_text in pairs:\n        try:\n            o = float(open_text)\n            c = float(close_text)\n        except ValueError:\n            bad = bad + 1\n            continue\n        try:\n            returns.append(c / o - 1)\n        except ZeroDivisionError:\n            zero = zero + 1\n    return (returns, bad, zero)\n",
+  "notes": [
+    "Each `except` names the one error it expects, so a real bug still stops the program.",
+    "`except Exception` would count a `None` as a bad text and hide the bug; one `except` for both errors loses the zero count.",
+    "One pass over the pairs, so $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def guarded_returns(pairs):\n    returns = []\n    bad = 0\n    zero = 0\n    for pair in pairs:\n        try:\n            o = float(pair[0])\n            c = float(pair[1])\n            returns.append(c / o - 1)\n        except ZeroDivisionError:\n            zero = zero + 1\n        except Exception:\n            bad = bad + 1\n    return (returns, bad, zero)\n",
+      "slip": "`except Exception` swallows the `TypeError` of a missing pair and counts it as bad."
+    },
+    {
+      "code": "def guarded_returns(pairs):\n    returns = []\n    bad = 0\n    for open_text, close_text in pairs:\n        try:\n            returns.append(float(close_text) / float(open_text) - 1)\n        except (ValueError, ZeroDivisionError):\n            bad = bad + 1\n    return (returns, bad, 0)\n",
+      "slip": "One `except` for both errors counts a zero open as a bad text."
+    },
+    {
+      "code": "def guarded_returns(pairs):\n    returns = []\n    bad = 0\n    zero = 0\n    for open_text, close_text in pairs:\n        try:\n            o = float(open_text)\n            c = float(close_text)\n        except (ValueError, TypeError):\n            bad = bad + 1\n            continue\n        try:\n            returns.append(c / o - 1)\n        except ZeroDivisionError:\n            zero = zero + 1\n    return (returns, bad, zero)\n",
+      "slip": "Catching `TypeError` as well counts a `None` text as bad instead of letting the bug through."
+    }
+  ],
+  "prelude": "def _raised(f):\n    # Test helper: call f and give the name of the error it raises.\n    try:\n        f()\n    except Exception as e:\n        return type(e).__name__\n    return 'no error'\n"
+}
