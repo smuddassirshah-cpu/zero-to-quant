@@ -71,3 +71,38 @@ Chains. p-quote-life: $c = \tfrac29$ makes the triangle a density, the tail beyo
 The validator's `[wrong-band]` rule reads the first "n decimal places" in a question, else "to the nearest 0.01", as the rounding of the answer. The first draft of p-digital-share part 4 asked for $z$ "to 2 decimal places" and the answer "to 4 places", which the rule does not read. $z$ is now asked "to the nearest 0.01" and the answer in "4 decimal places", which the rule reads first.
 
 Slips that need a $\Phi$ value the part does not give (the no-drag routes in p-digital-share part 4 and p-default-drag parts 4 and 5) have bands wide enough for both a calculator's unrounded $z$ and a table's $z$ to 2 places; the script checks both routes.
+
+## Level 3
+
+File: `problems-3.json` ("Problems: limit theorems", 50 minutes).
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-3 | p-maker-days | 4 (3 / 1) | l9, l11, l13 | 4 |
+| problems-3 | p-direction-calls | 5 (5 / 0) | l12, l13 | 5 |
+| problems-3 | p-rejected-orders | 4 (4 / 0) | l9, l10, l11 | 3 |
+| problems-3 | p-fund-months | 5 (5 / 0) | l10, l11, l12 | 4 |
+
+Typed parts 17 of 18. Every lesson of the level appears in at least one problem (l9, l10, l12 and l13 in two, l11 in three), and every problem draws on at least two. The one choice part is a judgement: Poisson or normal for a rare count. Every normal value is given in its part ($\Phi(2)$, $\Phi(1.61)$, $\Phi(1.55)$, $\Phi(2.63)$, $\Phi(1.8)$, and 1.96 as a two-tailed cut-off).
+
+Chains. p-maker-days: the day's sd £180 from 900 trades (variances add), a losing day with chance 0.0228 by the central limit theorem, losing days in a year as $\text{Bin}(250, 0.0228)$ with the corrected normal estimate 0.0537 of 10 or more, then the judgement that the Poisson (0.0648) beats the normal against the exact 0.0626 at $np(1-p) \approx 5.6$. p-direction-calls: the no-skill sd 10, the corrected tail 0.0606 at 216 right calls, the best of 12 signals (0.5277), the cut-off 227 that holds 12 signals to a 0.05 chance (the exact binomial agrees), then the 625 calls a true 54% signal needs for $t = 2$. p-rejected-orders: Markov's $\tfrac13$, Chebyshev's $\tfrac{1}{36}$ for the same tail, 320 days for an average within 1 by Chebyshev, then 62 by the normal. p-fund-months: the standard error 0.6667, $t = 1.80$, Chebyshev's 0.3086 on a fluke that large, the normal's 0.0718, then the 45 months a true edge of that size needs.
+
+Each later part restates the value it uses, and its `wrong` list holds the value that follows from the commonest slip before it (the sd added as £5,400 gives 0.4734 for a losing day; 0.0548 without the correction gives 0.4915 for the best of 12; $\tfrac{4}{36}$ for the standard error gives $t = 10.8$).
+
+### Checks, level 3
+
+| check | result |
+|---|---|
+| numbers script | 0 failures (1,181 checks with levels 1 and 2); exact binomial sums in fractions, seeded simulations of the day's sd, the best of 12 and the two-tailed chance |
+| validator | 0 errors, 0 warnings on the file |
+| playthrough `--local-cdn` | green (4 problems, 18 parts) |
+| playthrough `--mobile` | green; 440 px shots read, no fault in the file |
+| voice scan 35 (course folder) | 0 and 0 |
+
+### Fresh-check, level 3
+
+0 hits at the gate. At triage settings four hits, shares 0.07 or less: three are this course's own form sentences against problems-1 and problems-2, and "part # what is the chance at least one" (`conditional/problems-3` items[3]) is stock phrasing. The settings are new: no lesson, review or homework of the course uses a market maker's 900 trades, a vendor's direction calls tested 12 at a time, a broker's rejected orders, or a 36-month fund record. l12 counts 20 backtests at $|t| > 2$; p-direction-calls asks for the cut-off that controls 12, a new question.
+
+## Engine limits
+
+Two bullets in `docs/BACKLOG-INBOX.md` under "Raised later (problems limits-thm)". The playthrough still shoots only part 1 of a set, and the done page still says "Well done." (both already raised under problems conditional); not repeated.
