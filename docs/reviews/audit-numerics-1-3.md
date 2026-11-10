@@ -97,3 +97,34 @@ The ten review-only findings were fixed before this read, so they could not be f
 - Concepts scripts: `numerics-L1-concepts.py` exit 0 (51 checks passed, 1 EXPECTED_FAIL: `variance_is_well_conditioned`); `numerics-L2-concepts.py` exit 0 (29 passed, 3 EXPECTED_FAIL: `safeguard_worst_case_is_all_bisection`, `equal_node_product_explodes_with_n`, `equal_spacing_error_grows_with_n`); `numerics-L3-concepts.py` exit 0 (34 passed, 2 EXPECTED_FAIL: `kink_on_any_node_restores_order_4`, `far_call_needs_32_nodes`). Each EXPECTED_FAIL has its corrected assert in a comment above it. The scripts also print 14 notes, one or more for each `imprecise` or `misleading` finding that has a measurable side. NumPy 2.5.3, SciPy 1.18.1, Python 3.13.
 - Playthrough smoke test (from `app/`, `--local-cdn <pkgs>`): `--set numerics/review-1`: `ok numerics/review-1 10 items, recorded 10 of 10`, `browser relaunches: 0`, `All passed.`
 - No content file, engine file or `course.json` was changed. Engine and tooling limits are in `docs/BACKLOG-INBOX.md` under "Raised later (audit numerics)" (3 bullets).
+
+## Fix pass
+
+Opus fixer, independent of the auditor's arguments. Own checks (session scratch, not committed): `verify.py` (mpmath, SVD, own Simpson, Gauss-Legendre and RK4 code), `sn_exp.py` and `smile.py` for the solver. Content commit `6dce011e`.
+
+1. fixed | Higham ASNA Thm 2.2 assumes no underflow; own run: 1.3e-320 is stored with relative error 8.7e-5, far above u.
+2. fixed | mpmath at 50 digits: stored `math.exp(1e-10)` is off by 8.27e-18, and 8.27e-18 / 1e-10 = 8.27e-8, so "near 1e-16" contradicted the next sentence.
+3. fixed | Derivation: relative error of x - y is at most max|delta| (|x| + |y|)/|x - y|, a size-to-difference ratio; the operands' own ratio is about 1.
+4. fixed | Eigenvalues of [[1, r], [r, 1]] are 1 +- r, so 39 is the matrix's kappa; own SVD of a standardised r = 0.95 design gives kappa(X) = 6.26, about sqrt 39 (Trefethen and Bau lect. 19). Key 39 unchanged.
+5. fixed | Equality in the bound also needs ||Ax|| = ||A|| ||x||; own run on the lesson's A: worst ratio 40,002 for b along u1, 1.000 for b along u2.
+6. fixed (prompt, model, rubric[2]) | Own computation on 250 marks near 1e9, s = 3.1: componentwise kappa 5.19e8 from the gradient formula and 5.19e8 from an mpmath perturbation; normwise 2 mean/s = 6.4e8; kappa u = 5.8e-8, about 7 digits kept. Rubric[2] now credits "kappa about 2 mean/s, of order 1e9, and about 7 digits from a stable method", recomputed both ways.
+7. fixed | Trefethen and Bau Thm 18.1: LS sensitivity carries kappa^2 tan(theta)/eta; own run at kappa = 1e6: QR error 3.2e-12 with zero residual, 4.0e-7 (3,600 kappa u) with a residual as large as the fit. Keys unchanged.
+8. fixed | Notation: l4 uses epsilon = 1e-8 for the Läuchli parameter; 1/u = 2^53 = 9.0e15, below 2e16 and 5e20.
+9. fixed | Trefethen and Bau lect. 15: a backward stable method's digits beyond kappa u also vary by platform, so disagreement alone does not mark instability.
+10. fixed | Burden and Faires sec. 2.4: Newton is linear at a multiple root; own run on (x - 1)^2 (x + 3): error ratio 0.500.
+11. fixed | IVT needs f in C[a, b] (Burden and Faires Thm 1.11); 1/x on [-1, 2] changes sign with no root.
+12. fixed (solution code and one hidden test) | Reproduced with the old solution: 1e40 (x - 1)^9 and ^21 on [0, 3] hit maxit after 102 calls and return x silently, errors 3.8e-6 and 3.8e-3. l6 screens[7] solution now has the second test of Numerical Recipes sec. 9.4 `rtsafe` (bisect when the Newton step is over half the step before last) and raises RuntimeError at maxit. With ftol = 0, (x - 1)^p for p = 3, 9, 21, 51 now ends with errors 1.5e-10, 3.5e-11, 4.0e-10, 4.5e-7 in at most 67 calls; 3,000 random atan-type cases all converged. New test: (x - 1)^9, ftol = 0, within 1e-9; the new solution passes all 7 tests, the old solution fails the new one, the starter fails all. The smile table (75 and 80: 9 iterations, 1 bisection; others 2 to 8) recomputed with the new rule twice, mpmath (numbers script) and float SciPy (`smile.py`): unchanged. Prose, derive lines t1, t4, t5, starter docstring, hints, summary formula and title rewritten so no all-bisection worst case or never-fails claim remains. Vectorised `implied_vols` and homework-2 `ytm_book` unchanged: they serve smooth monotone prices and their text claims no general bound.
+13. fixed | 2^-39 = 1.8e-12 > 1.59e-12 > 2^-40 = 9.1e-13, so exactly 40 halvings reach Newton's step-4 size; key unchanged.
+14. fixed | The concepts script's own timing: 1,000 strikes take 16 to 30 times one strike, far below 1,000.
+15. fixed (homework-2 rubric[0]) | Own runs (SciPy barycentric): equal-node product maxima 0.113, 0.0188, 0.00853, 0.000234 at n = 4, 8, 10, 20; from n = 10 to 20 e^x falls 2.4e-10 to 3.8e-12 and 1/(1 + x^2) 7.9e-4 to 5.8e-6, while Runge's grows 1.92 to 59.8 (Trefethen ATAP ch. 13). Rubric[0] checked against both the product and the error data.
+16. fixed | Burden and Faires sec. 3.5: natural means S'' = 0 at the ends; own spline's end slope is -0.17% a year.
+17. fixed (keyed option text) | Own per-interval maxima 0.15, 0.46, 10.0, 10.0, 2.78, 3.47, 1.11 bp, not monotone; new text "most of all near the 5-year quote" holds on the same data and on the lesson's 5.51, 6.42, -2.67, 3.25 bp. Option id unchanged.
+18. fixed (keyed option texts) | Own composite Simpson on |x| e^x with the kink held on an odd-index node, n = 16 to 128: orders 1.99, 2.00, 2.00; on an even-index node 4.00. One panel of |x| on [-h, h] gives 2h^2/3 against h^2. Option ids unchanged.
+19. fixed | Own run, e^x on [0, 1], n = 4: rule minus integral +0.00894, while -(b - a)h^2 f''/12 = -0.00895; Burden and Faires Thms 4.4 and 4.5 state integral minus rule.
+20. fixed | l9 calls a pair of strips a panel; 129 evaluations is 128 strips.
+21. fixed | Own Gauss-Legendre pricer: K = 200 call errors 4.5e-8, 1.9e-13, 1.9e-13 at 8, 16, 32 nodes.
+22. fixed (keyed option text, feedback) | Own RK4 on y' = -y, 1e7 steps: relative error 6.1e-14 against the worst case n eps = 2.2e-9 (Higham sec. 2.8). Key choice unchanged.
+
+Also applied from "Noted, not conceptual": the l6 title only ("A root finder you can trust"), since after finding 12 the method raises at the cap. Scripts: each former EXPECTED_FAIL now asserts the corrected claim with a second method, marked "(corrected claim, fix pass)"; `numerics-L2-numbers.py` `safe()` uses the rtsafe test. All three concepts scripts end with 0 EXPECTED_FAIL.
+
+Fix-pass gates (from `app/`): validator `0 errors, 4116 warnings` (manifest unchanged); numbers scripts L1, L2, L3 exit 0; concepts scripts exit 0 (52, 32 and 36 checks passed, 0 EXPECTED_FAIL); voice scan at 35 on the 15 changed files: 0 explanations over three sentences, 0 sentences over 35 words; playthrough with `--local-cdn` of l1 to l10, review-1 to review-3, homework-1 and homework-2, desktop and `--mobile`: 30 of 30 `All passed`, no reruns.
