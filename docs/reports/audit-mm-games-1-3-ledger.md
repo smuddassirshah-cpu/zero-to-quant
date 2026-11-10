@@ -125,7 +125,7 @@ Sources: Zhou, *A Practical Guide to Quantitative Finance Interviews* (ch. 2 bra
 | file | JSON path | claim | verdict | basis |
 |---|---|---|---|---|
 | l5-two-sided | s[0] options, hints, feedback, explain | With fair value 10.5, buying at 9.5 and selling at 11.5 each earn 1 on average; a crossed pair around 10.5 loses 1 either way; one price at 10.5 earns nothing; 3 at 18 never trades | correct | Edge against fair value; Harris ch. 13 |
-| l5-two-sided | s[0].prose | *Probability and Markets* opens with "make me a market" | correct | Jane Street guide, market-making section |
+| l5-two-sided | s[0].prose | *Probability and Markets* "opens the same way", with "make me a market" | unverified | The guide covers market-making games, but how it opens could not be checked: it could not be opened from this session. Finding 20 |
 | l5-two-sided | s[1] options, explain | Every trade earns on average exactly when the fair value sits strictly between the two prices; a wider gap earns more a trade and trades less often | correct | 10.5 − b > 0 and a − 10.5 > 0 |
 | l5-two-sided | s[2].prose | Bid is your buying price, ask your selling price; said "9.5 at 11.5", bid first; width is ask minus bid; size "3 up" | correct | Dealer convention; Harris ch. 13; *Probability and Markets* |
 | l5-two-sided | s[2] widget, hints, feedback, explain | The interviewer buys at your ask, 11.5; you are short 3; "a buyer always pays the ask and a seller always gets the bid"; nobody trades at 10.5 | correct | True for the party who trades on a maker's quote, which is the only case in the game (Harris ch. 4 and 13) |
@@ -224,3 +224,95 @@ Sources: Zhou, *A Practical Guide to Quantitative Finance Interviews* (ch. 2 bra
 | homework-2 | i[4], i[5], i[6] | 3 shown: 875/51; 3 and jack shown: exactly 21 because they average 7; final P&L −20 + 23 = +£3 | correct | enum |
 | homework-2 | i[7] | Two dice, half informed, 5 at 9: ½ × 2 − ½ × 5/9 = 13/18 | correct | enum |
 | homework-2 | i[8] | Six pays £6, five pays £1, stake £1: edge 1/6; play in small size | correct | 7/6 − 1 |
+
+## Level 3
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l10-position-limits | s[0]; s[9] formula; summary.ideas[0]; q[0] | A limit L leaves room L − q to buy and L + q to sell; long 3 under 4: buy 1, sell 7; short 2 under 5: sell 3 | correct | Definition of a symmetric position limit |
+| l10-position-limits | s[1] | At the limit, long 4, show an offer only, priced near fair; a bid can only add; stepping out leaves risk on | correct | Risk-reducing quotes only at a limit; Harris ch. 13 |
+| l10-position-limits | s[2] prose, strategy, explain | Limit game: stop one fill short; the model run sold 1 at 11.5, bought 4 at 9.5, dropped its bid at +3 and ended long 3 with +£3.50 at the value 10 | correct | Arithmetic of the stated fills (11.5 − 38 + 30); the fills are engine output, checked by playthrough of the lesson |
+| l10-position-limits | s[3] | Long 3 with cash −26.50: +3.50 at a roll of 10, −5.50 at 7; a swing of £9, £12 at four lots; the limit caps what one roll can take | correct | Cash plus position times value |
+| l10-position-limits | s[4] options, why, feedback | A bet with mean £10 and sd £100 suits the £10,000 trader, not the £200 one; expected value says a bet is good, the bankroll says how much to take | correct | Risk of ruin; Zhou ch. 4 (gambler's ruin) |
+| l10-position-limits | s[4].explain.text | "One bet loses more than £200 about 1.8% of the time" | imprecise | True for a normal outcome, Φ(−2.1) = 0.018, as drawn on the canvas; the prose gives only a mean and an sd, and a +110/−90 bet with the same two never loses £200. Finding 18 |
+| l10-position-limits | s[5] | From £20 to £0 or £40 at 0.55 and evens: ruin 1.8% with £1 stakes, 40.1% with £10, 45% with £20; the edge is the same, the bet against the bankroll differs | correct | Gambler's ruin formula (Feller vol. 1 ch. XIV); sim |
+| l10-position-limits | s[6] | Log growth a bet g(f) = 0.6 ln(1 + f) + 0.4 ln(1 − f) peaks at f = 0.2 with g = 0.0201 | correct | Kelly (1956); grid search |
+| l10-position-limits | s[7] | With 50 bets ahead stake £20 of £100; a full stake is ruined by the first loss; half Kelly grows 0.0150, double Kelly −0.0024; £5 grows at under half the Kelly rate | correct | g(0.1), g(0.4), g(0.05) computed; log-growth criterion, stated on the screen |
+| l10-position-limits | s[8] | Median bankroll after 50 Kelly bets is 100 × 1.2³⁰ × 0.8²⁰ = £273.68 = 100e^(50g); the mean, £711, is pulled up by rare paths | correct | Median of Binomial(50, 0.6) is 30; mean 100 × 1.04⁵⁰; sim |
+| l10-position-limits | s[9].prose, summary.formula | Kelly fraction f* = p − (1 − p)/b for a win of b per £1 with chance p | correct | Kelly (1956); Thorp |
+| l10-position-limits | s[9] widget, feedback | 0.55 at evens: f* = 0.1, the whole edge p − q | correct | Arithmetic |
+| l10-position-limits | s[9].explain.text | "Neither [rule] asks how sure you feel" | imprecise | The Kelly stake is a function of p, the win chance you state; it rises with it (L3 script). Finding 19 |
+| l10-position-limits | s[10] code | `kelly_stake` clamps at zero; `growth`; `ruin_sim` settles near 0.45, 0.401 and 0.0178 | correct | CPython: 14/14 cases pass, starter fails |
+| l10-position-limits | s[11] widget, feedback | Risk limit £40,000 of daily sd: 50 lots at £800 a lot, 200 at £200; size by risk, not conviction | correct | Arithmetic |
+| l10-position-limits | s[11].explain.text | *Probability and Markets* "stresses sizing for the same reason" | unverified | The guide could not be opened from this session (host not reachable). Finding 20 |
+| l10-position-limits | summary.ideas[1..2], trap | A good bet can ruin a small bankroll; double Kelly shrinks; growth peaks at f* | correct | As rows above |
+| l10-position-limits | q[1] | Limit set to zero while long 2: only an offer until flat, then nothing | correct | Only risk-reducing trades are inside the limit |
+| l10-position-limits | q[2] | 2 to 1 at chance 0.4: f* = 0.4 − 0.6/2 = 0.1, £50 of £500; edge 0.2 a pound over odds 2 | correct | Kelly formula |
+| l10-position-limits | q[3] | Long 4 bought at 9.5, roll 3: −£26, the worst case | correct | 3 is the lowest total of three dice |
+| l11-hedging | s[0] | Long A with B correlated 0.8: sell some B; a short B gains on most of A's bad days; that offset is a hedge | correct | Definition; Hull ch. 3 |
+| l11-hedging | s[1] | The squared gaps are least near h = 1.0 = 0.8 × 2/1.6; correlation alone (0.8) or the sd ratio alone (1.25) is wrong; at h = 2 the gaps are as large as with no hedge | correct | Regression slope of A on B; variance formula; sim |
+| l11-hedging | s[2].prose, s[8].prose, summary.formula | Minimum-variance hedge ratio h = ρσ_A/σ_B; variance left σ_A² + h²σ_B² − 2hρσ_Aσ_B; σ_left = σ_A√(1 − ρ²) | correct | Hull ch. 3 sec. 3.4; calculus; grid search (L3 script) |
+| l11-hedging | s[1].prose, s[2].explain.text, summary.formula.note, summary.ideas[0] | With moves given in per cent, "h units of B for each unit of A" | imprecise | With percentage sds h is pounds of B per pound of A; it is units per unit only when the units are worth the same. Hull defines σ on price changes per unit. A at £5 and B at £100 need 0.0675 units, not 1.35 (L3 script). Finding 21 |
+| l11-hedging | s[2] widget, feedback | ρ = 0.9, 3% and 2%: h = 1.35; slips 0.9, 1.5, 0.6 | correct | Arithmetic |
+| l11-hedging | s[3] | The best hedge removes the share ρ² of the variance; at 0.8 the sd falls from 2% to 1.2%, a cut of 40%, not 80% | correct | 1 − ρ² = 0.36 |
+| l11-hedging | s[4] | Two-dice game: the model run bought 2 at 6 and sold 4 at 8, short 2 with cash +£20, +£6 at 7 | correct | Arithmetic of the stated fills; fills are engine output |
+| l11-hedging | s[5] | The sum moves one for one with the first die, so h = 1; hedged sd 1.7078 a unit against 2.4152; a flat position needs no hedge | correct | Cov(S, D₁)/Var(D₁) = 1; enum |
+| l11-hedging | s[6] | Hedge bought 2 at 3.6, die landed 3: −£1.20, total +£4.80; the sd fell from 4.83 to 3.42; buying at 3.6 against 3.5 cost £0.20 of edge; judge a hedge by the risk removed | correct | Arithmetic |
+| l11-hedging | s[7] | Share at 2% with a future at 4%, ρ = 0.8: sell £4,000 against £10,000, sd 1.2%; pound for pound raises the sd to 2.68% | correct | h = 0.4 in pounds; √(4 + 16 − 12.8) |
+| l11-hedging | s[8] widget, explain | ρ = 0: h = 0, any B only adds h²σ_B²; every hedge across a spread costs edge | correct | Variance formula |
+| l11-hedging | s[9] code | `hedge_ratio`, `residual_sd`, seeded `hedged_pnl_sim` with population sd | correct | CPython: 13/13 cases pass, starter fails |
+| l11-hedging | s[10] | Bank at 2.5%, sector future at 1.4%, ρ = 0.7: h = 1.25, sell £62,500; 1.79% a day is left; a desk short calls buys their delta | correct | Arithmetic; delta hedging (Hull ch. 19) |
+| l11-hedging | summary.ideas[1..2], trap | At ρ = 0.8, 60% of the sd remains; pound for pound over-hedges when B moves more | correct | As rows above |
+| l11-hedging | q[0] | Sold 10 calls of 100 shares at delta 0.6: buy 600 shares; delta is an option's hedge ratio | correct | Hull ch. 19 |
+| l11-hedging | q[1], q[3] | ρ = 0.6 leaves 4% of 5%; selling 2 units of B at ρ = 0.8, σ 2% and 1.6% leaves 2%, the same as no hedge | correct | Variance formula |
+| l11-hedging | q[2] | Short 3, hedge at 19.8 to 20.2 around 20: buying 3 at the ask gives away £0.60, half the width a lot | correct | 3 × 0.2 |
+| l12-thinking-aloud | s[0] | In the transcript lines 2, 6, 8 and 10 lose marks: silence then a bare quote, a move with no reason, the slip 6 + 7 = 13.5, an unexplained change to 14; line 4 is the model | correct | Transcript arithmetic; interview practice (*Probability and Markets*; Joshi et al. ch. 1) |
+| l12-thinking-aloud | s[1], s[2] | Fair value after a 6 is 13; cash −12 and long 1 mark +£1 at 13 | correct | Arithmetic |
+| l12-thinking-aloud | s[3] | Best answer states the fair value, its arithmetic and a reason for the width; 6.99 at 7.01 is false precision against an sd of 2.4 | correct | sd of two dice 2.415 |
+| l12-thinking-aloud | s[4] | Order of a first quote: question back, fair value, uncertainty (sd about 3), quote, what comes next | correct | sd of three dice 2.96; convention of the course |
+| l12-thinking-aloud | s[5] options, why | A silent right quote loses marks; a slip said aloud can be fixed | correct | Interview practice |
+| l12-thinking-aloud | s[5].explain.text | Silent reasoning "is the most common way to lose marks" | imprecise | Empirical "most common" with no source. Finding 22 |
+| l12-thinking-aloud | s[6] | Interrupted: finish 6 + 7 = 13, then short 2 with skew 0.25 gives centre 13.5 and 12.5 at 14.5 | correct | Skew rule |
+| l12-thinking-aloud | s[7], summary.formula | m = F − γq said term by term; fair 10.5, long 2, γ = 0.5: centre 9.5 | correct | Skew rule |
+| l12-thinking-aloud | s[8] code, explain | A keyword rule flags lines 0 and 2 and misses the slip and the unexplained change; whole-word match | correct | CPython: 9/9 cases pass, starter fails |
+| l12-thinking-aloud | s[9]; review-3 i[6] | Best reply states position, P&L at fair, the two reasons and the new quote: short 3 at 8 is +£3, move up to 7 at 9; long 2 at 9.5 is +£2, move down | correct | Arithmetic; skew direction |
+| l12-thinking-aloud | s[10], summary.ideas, trap | A narrated game needs fair values with arithmetic, widths with reasons, position and P&L after each trade | correct | Matches the homework rubric |
+| l12-thinking-aloud | q[0], q[1], q[2] | Say position and P&L first; a 10 shown gives 10 + 2 × 354/51 = 23.88; work aloud | correct | enum |
+| l13-full-game | s[0] | Width 4 around fair less 0.5 a lot, centre rounded to 0.5: short 1 quotes 19.5 at 23.5 | correct | Rule stated on the screen |
+| l13-full-game | s[1] strategy, hints, explain | Model run: 19 at 23, 19.5 at 23.5, 16.5 at 20.5 twice, 17 at 21, 16 at 20, 15.5 at 19.5 twice; sold at 23 and 20.5, bought at 16; short 1, cash +27.50, +£12.50 at 15 | correct | Replay of the scripted game (L3 script) |
+| l13-full-game | s[2], s[3] | Fair after the 4 is 308/17 ≈ 18.1176; after the 6 it is 427/25 = 17.08 | correct | enum |
+| l13-full-game | s[4] answer, hints, left table | Turn 3 is where updating avoided the stale purchase at 19; stale run ends +1 with £0.00 | correct | Replay (L3 script) |
+| l13-full-game | s[4] canvas column and caption, feedback r0 and r2, explain; s[6] canvas column; s[8].prose; s[8] and s[10] hints and generic feedback | Per-trade P&L against the true sum is called "edge": "Each trade's P&L is its edge against the true value V" | imprecise | The course defined edge as price against fair value at the time and made judging by outcome the trap. Those edges are +2.00, +2.38, +1.08; the table's +8.00, +5.50, −1.00 are realised P&L (L3 script). Finding 23 |
+| l13-full-game | s[4].prose, s[5].options[3].why, s[8].explain.text | The interviewer "knew the cards"; stale bought "from someone who knew" | imprecise | The same scripted interviewer bought at 23 and 20.5 a sum worth 15, losing 8 and 5.50; the turn-3 sale rests on the 4, which was public. The stale loss comes from a quote not updated for public news. Finding 24 |
+| l13-full-game | s[5] | The unskewed run made +£13.00 short 2; the model +£12.50 short 1; a king would cost £16 against £8; grade the quotes, not one draw | correct | Replay (L3 script) |
+| l13-full-game | s[6], q[1] | With a king the model run makes 27.50 − 23 = +£4.50; with a queen +£5.50 | correct | Arithmetic |
+| l13-full-game | s[7] | A game with no trades is reviewed by its quotes: centre, width, moves; no trades does not prove the quote was too wide | correct | Review convention of the course |
+| l13-full-game | s[8] formula, widget; summary.formula | P&L = Σ n(p − V) over sales + Σ n(V − p) over buys; stale run 8 − 4 − 4 = 0 | correct | Identity with cash plus position times V |
+| l13-full-game | s[9] code | `review_game` returns per-trade P&L and the total | correct | CPython: 7/7 cases pass, starter fails |
+| l13-full-game | s[10] | Sold 100 at 50.20, bought 60 at 49.90 and 40 at 50.30, close 50.00: +20 + 6 − 12 = +£14 | correct | Arithmetic |
+| l13-full-game | s[11] | A partner should deal in secret, keep time and hear each update | correct | Practice advice |
+| l13-full-game | summary.ideas, trap | Update on every card, skew on every trade; the same quotes made £12.50 with a 5 and £4.50 with a king | correct | As rows above |
+| l13-full-game | q[0] | Short 2 at fair 17.08 quotes 16 at 20; the purchase at 16 was an inventory trade; edge against fair 1.08, −£1 against the true 15 | correct | Skew rule; here edge is used as defined |
+| l13-full-game | q[2] | B, flat with every quote updated, played better than A, richer and at the limit | correct | Review by quotes and risk |
+| review-3 | i[0] | Limit game on two dice: model sold 2 at 8, raised its ask to 8.5, bought 1 at 6; short 1 with cash +£10 settles at 8: +£2 | correct | Arithmetic of the stated fills; playthrough |
+| review-3 | i[1], i[2], i[3] | Long 2 under 3: sell 5; Kelly 0.1 of £400 is £40 and a fraction never reaches zero; double Kelly at 0.6 shrinks, g = −0.0024 | correct | As l10 |
+| review-3 | i[4] | 3% and 1.5% with ρ = 0.6: "1.2 units of B per unit of A" | imprecise | Same units convention as l11 s[2]. Finding 21 |
+| review-3 | i[5] | ρ = 0.9 leaves 2 × √0.19 = 0.87%, over 40% of the sd | correct | Arithmetic |
+| review-3 | i[7] | Sold 2 at 23, bought 1 at 19, value 17: +£10 (generic feedback calls the parts "edge") | correct | Arithmetic; wording covered by finding 23 |
+| review-3 | i[8] | 2 shown: 2 + 2 × 362/51 = 16.20 | correct | enum |
+| review-3 | i[9] | "£13 beats £12.50" grades one outcome; with a king the unskewed run loses £3 against +£4.50 | correct | Replay (L3 script) |
+| homework-3 | i[0] code, tests | Engine with fills capped at the room and P&L settled at the true sum | correct | CPython: 9/9 cases pass, starter fails |
+| homework-3 | i[0] prose, prelude `make_script`, explain | A "hedge" contract on the first card, traded after that card is shown | misleading | Once the card is shown the contract pays a known amount, so the trade removes no risk: the sd of the final P&L is identical with and without it (L3 script, exact). By l11, a hedge with no correlation to the risk left is none. Finding 25 |
+| homework-3 | i[1] code, explain | One seeded Kelly path and the median over 1,001 paths: £273.68 at Kelly, £88.48 at double Kelly, £212.14 at half Kelly | correct | CPython: 9/9 pass, starter fails; closed forms 1.2³⁰0.8²⁰, 1.4³⁰0.6²⁰, 1.1³⁰0.9²⁰ |
+| homework-3 | i[2] | Before each quote: position against limit, bankroll against the worst case, hedge and its cost, then quote; conviction sets none of these | correct | Convention of the course |
+| homework-3 | i[3].model | Narrated game: 21; short 1 at 23, +£2; fair 18.12, +£4.88, 16.5 at 20.5; short 2, +£7.26, 17 at 21; fair 17.08, +£9.34, 16 at 20; short 1, +£10.42, 15.5 at 19.5; +£12.50; king case £4.50 | correct | Every figure recomputed (L3 script); "a seller who knew" is covered by finding 24 |
+| homework-3 | i[3].rubric[0..6] | Marks for the three fair values, the six quotes, the ledger +2, +4.88, +7.26, +9.34, +10.42, +12.50, turn 3, the limit, review by quotes, no silent working | correct | Matches the model |
+| homework-3 | i[4] strategy, explain | Mock round on 8, jack, jack: model bought at 19 and 19.5, sold at 27; long 1, cash −11.50, +£18.50; stale −£3 | correct | Replay of the scripted game (L3 script) |
+| homework-3 | i[5].model | Mock narration: 21; side bet £20 by Kelly with expected gain £4; +£2.96, +£5.42, +£13.30, +£14.40, +£18.50; stale −£3; no skew £21 with twice the position | correct | Recomputed (L3 script); Kelly for one bet is the log-utility convention taught in l10; "Edges" wording is covered by finding 23 |
+| homework-3 | i[5].rubric[0..6] | Marks for 21, 1120/51, 259/10, widths, responses to trades, the limit, Kelly £20, +£18.50 and a review, clear speech | correct | Matches the model |
+| homework-3 | i[6], i[7], i[8] | Fair 21; 8 shown: 1120/51 ≈ 21.9608; 8 and jack: 19 + 345/50 = 25.9 | correct | enum |
+| homework-3 | i[9] | Cash −19 − 19.5 + 27 = −11.50, long 1 at 30: +£18.50 | correct | Arithmetic |
+| homework-3 | i[10] | £10 stakes: ruin (r² − r⁴)/(1 − r⁴) = 81/202 = 0.401 with r = 9/11 | correct | Gambler's ruin formula |
+| homework-3 | i[11].widget.model | Coin and dice: fair ½ × 7 + ½ × 14 = 10.5; after a 6, 13; after heads, 9.5; ledger +2.50, 0, +3, −0.50, 0; £6 of edge against fair given back by inventory | correct | Enumeration and sim (L3 script); the first die carries no news about the coin |
+| homework-3 | i[11].widget.model (widths) | Variance 131.25 − 10.5² = 21, sd 4.58, of which the coin gives 12.25; after the 6, 18.08 and 4.25; after heads 1.71 | correct | Law of total variance; enum |
+| homework-3 | i[11].widget.model (follow-ups), rubric[0..4] | Someone who sees the coin takes £1 a lot from 8 at 13; only 7 at 14 or wider stops it; the round was good judged by quotes | correct | 8 − 7 and 14 − 13; consistent with l8 |
