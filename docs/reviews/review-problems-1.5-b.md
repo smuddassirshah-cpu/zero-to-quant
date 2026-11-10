@@ -103,7 +103,7 @@ Clean problems (no finding other than the form sentences of findings 3, 4 and 7)
 
 I recomputed every changed number before writing it (exact fractions, enumeration of the token hands, running powers for the dealer counts, the 100 flagged-company counts, a try-every-count search for the House S survivors, the doubling route from the rounded 0.5299). Both author scripts were extended and exit 0 (`problems-conditional-numbers.py` 1177 checks over sets 1 to 5; `problems-random-vars-numbers.py` 744 checks), each now with `form_checks` for sets 4 and 5 (conditional) and sets 1 to 3 (random-vars): a form sentence on every non-whole numeric part, the key rounded as asked is inside its tolerance (penny, pound, places, per cent scaled), exact-decimal parts terminate, and every printed `\approx` value is accepted. `node tools/validate.mjs`: 0 errors, no warning on these five files. `--problems` playthrough of all five sets, with and without `--mobile`: green. `voice-scan.py 35`: 0 and 0.
 
-Status: applied 14, applied with a change 1, accepted without edit 1. No finding disputed.
+Status: applied 13, applied with a change 1 (finding 7), accepted without edit 1 (finding 15). No finding disputed.
 
 1. p-doubling-desk part 3: applied. Recomputed: exact -22.5486, route -10.598 / 0.4701 = -22.5441. Key -22.55, tol 0.01 (takes -22.54 to -22.56; nearest slip -20), "nearest penny", feedback and explanation as proposed. Graded answer changed: -22.546 to -22.55.
 2. p-fund-hedge part 1: applied. `unit: "%"`, key 0.008, tol 0.000005, slips 0.005 and 0.004, "Give one decimal place." Graded answer changed in storage only (0.8 typed in % is still the same figure).
