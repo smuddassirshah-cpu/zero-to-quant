@@ -1518,7 +1518,7 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import struct\n\ndef decode(x):\n    \"\"\"Return (sign, power, mantissa_fraction) of the double x.\"\"\"\n    bits = int.from_bytes(struct.pack('>d', x), 'big')\n    ...\n\ndef machine_epsilon():\n    \"\"\"Halve eps from 1.0 while 1.0 + eps / 2 > 1.0.\"\"\"\n    ...\n",
+    "starter": "import struct\n\ndef decode(x):\n    \"\"\"Return (sign, power, mantissa_fraction) of a normal double x.\n    Zero, subnormals, inf and nan have no hidden 1; they are not handled.\"\"\"\n    bits = int.from_bytes(struct.pack('>d', x), 'big')\n    ...\n\ndef machine_epsilon():\n    \"\"\"Halve eps from 1.0 while 1.0 + eps / 2 > 1.0.\"\"\"\n    ...\n",
     "solution": "import struct\n\ndef decode(x):\n    bits = int.from_bytes(struct.pack('>d', x), 'big')\n    sign = bits >> 63\n    stored = (bits >> 52) & 0x7FF\n    fraction = (bits & (2**52 - 1)) / 2**52\n    return (sign, stored - 1023, fraction)\n\ndef machine_epsilon():\n    eps = 1.0\n    while 1.0 + eps / 2 > 1.0:\n        eps /= 2\n    return eps\n",
     "examples": [
      {
@@ -1707,7 +1707,7 @@
   "ideas": [
    "A double stores $(-1)^s \\times (1.m)_2 \\times 2^{e-1023}$ in 1 sign bit, 11 exponent bits and 52 mantissa bits.",
    "The gap between doubles doubles at each power of two: it is $2^{-52}$ above 1 and 2 above $2^{53}$.",
-   "Every stored result is $x(1 + \\delta)$ with $|\\delta| \\le u = 2^{-53}$: the relative error is bounded, the absolute error grows with $x$."
+   "Every stored result between `tiny` and `max` is $x(1 + \\delta)$ with $|\\delta| \\le u = 2^{-53}$: the relative error is bounded, the absolute error grows with $x$."
   ],
   "formula": {
    "name": "Rounding model",
@@ -1754,7 +1754,7 @@
     "generic": "Not quite right. Use $2^{k-23}$ with $k = 14$."
    },
    "explain": {
-    "text": "Between $2^{14}$ and $2^{15}$ float32's gap is $2^{14-23} = 0.001953125$. So 20,000.01 is stored as 20,000.009765625, wrong in the third decimal. A level quoted to hundredths needs float64."
+    "text": "Between $2^{14}$ and $2^{15}$ float32's gap is $2^{14-23} = 0.001953125$. So 20,000.01 is stored as 20,000.009765625, off by 0.00023, and the level still rounds to its hundredth. But a one-hundredth move comes out as 0.009765625, wrong by 2.3%, so small moves in the level need float64."
    }
   },
   {

@@ -1,7 +1,7 @@
 {
  "id": "l6-safe-root-finder",
  "course": "numerics",
- "title": "A root finder that never fails",
+ "title": "A root finder you can trust",
  "minutes": 15,
  "objectives": [
   "Build a safeguarded Newton method and use it for implied volatility on every strike."
@@ -368,20 +368,20 @@
     "generic": "Not quite right. Look for the step that always keeps the root inside."
    },
    "explain": {
-    "text": "The method is Numerical Recipes' `rtsafe`: Newton inside the bracket, bisection otherwise. After each step the sign of $f$ at the new point tells us which end to move. Near the root Newton takes over, so it keeps the fast finish."
+    "text": "The method is Numerical Recipes' `rtsafe`: Newton inside the bracket, bisection otherwise, and bisection too when Newton's step is over half the one before last. After each step the sign of $f$ at the new point tells us which end to move. Near the root Newton takes over, so it keeps the fast finish."
    }
   },
   {
    "type": "derive",
    "difficulty": 3,
-   "prose": "Why can the safeguarded method never fail? Order the argument and leave out the false line.",
+   "prose": "Why does the safeguarded method always end? Order the argument and leave out the false line.",
    "question": "Order the argument.",
    "widget": {
     "kind": "order",
     "lines": [
      {
       "id": "t1",
-      "text": "At the start $f(lo)$ and $f(hi)$ have opposite signs, so a root lies in $[lo, hi]$."
+      "text": "At the start $f(lo)$ and $f(hi)$ have opposite signs and $f$ is continuous, so a root lies in $[lo, hi]$."
      },
      {
       "id": "t2",
@@ -393,11 +393,11 @@
      },
      {
       "id": "t4",
-      "text": "Every bisection halves it, and the cap `maxit` ends any long run of Newton steps."
+      "text": "Every bisection halves it, and a Newton step is kept only if it is at most half the step before last."
      },
      {
       "id": "t5",
-      "text": "So the method ends: by xtol after at most $\\lceil \\log_2(\\text{width}/\\text{xtol}) \\rceil$ bisections, or at the cap."
+      "text": "So the steps die away and the method ends by `xtol`, or it raises an error at the cap `maxit`."
      },
      {
       "id": "tx",
@@ -427,11 +427,11 @@
     },
     {
      "rung": "step",
-     "text": "Finish with the bisections, which are what guarantee the end."
+     "text": "Finish with the two halving rules, which are what guarantee the end."
     }
    ],
    "feedback": {
-    "correct": "The root stays bracketed, and the bisections force the end.",
+    "correct": "The root stays bracketed, and the halving rules force the end.",
     "generic": "Not quite right. Start from the sign change, then the invariant, then the count.",
     "byKey": {
      "tx": "A Newton step can creep. Only bisection guarantees the bracket halves.",
@@ -439,13 +439,13 @@
     }
    },
    "explain": {
-    "text": "The sign change keeps a root inside, the ends only move inward, and each bisection halves the width. So the method ends after at most $\\log_2$ of width over tolerance bisections. That is the guarantee plain Newton lacks."
+    "text": "For a continuous $f$ the sign change keeps a root inside, the ends only move inward, and each bisection halves the width. Newton steps must also halve every two steps, so they cannot creep, and `maxit` raises an error rather than return a guess. Plain Newton has no such bracket."
    }
   },
   {
    "type": "problem",
    "difficulty": 2,
-   "prose": "On the smile, the safe solver needs 9 iterations for the 75 and 80 puts. One of them is a bisection. The other quotes need 2 to 8. The worst case is all bisection.",
+   "prose": "On the smile, the safe solver needs 9 iterations for the 75 and 80 puts. One of them is a bisection. The other quotes need 2 to 8. A run made only of bisections is counted below.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -526,7 +526,7 @@
     }
    ],
    "feedback": {
-    "correct": "36: the guaranteed cap.",
+    "correct": "36: enough bisections to pin the root to $10^{-10}$.",
     "generic": "Not quite right. Find the smallest $k$ with $5/2^k < 10^{-10}$.",
     "byKey": {
      "w35": "$5 / 2^{35} = 1.5 \\times 10^{-10}$, still too wide.",
@@ -534,7 +534,7 @@
     }
    },
    "explain": {
-    "text": "$5 / 2^{36} = 7.3 \\times 10^{-11}$, so 36 bisections at most. In practice the solver needed 9 iterations or fewer here. The cap is the promise; Newton makes the usual case fast."
+    "text": "$5 / 2^{36} = 7.3 \\times 10^{-11}$, so 36 bisections are enough. In practice the solver needed 9 iterations or fewer here. Newton steps can add to the count, and `maxit` is the final stop."
    }
   },
   {
@@ -705,7 +705,7 @@
   {
    "type": "problem",
    "difficulty": 3,
-   "prose": "Write the general method. It works whether $f$ rises or falls. Compare the sign of $f(x)$ with the sign of $f(lo)$ to decide which end to move. A zero derivative must not crash it: bisect instead.",
+   "prose": "Write the general method. It works whether $f$ rises or falls. Compare the sign of $f(x)$ with the sign of $f(lo)$ to decide which end to move. A zero derivative must not crash it: bisect instead. Also bisect when a Newton step is over half the step before last, and raise `RuntimeError` after `maxit` steps. Return early once $|f(x)| \\le$ `ftol`, which bounds the residual, not the error.",
    "canvas": {
     "kind": "number-line",
     "params": {
@@ -728,8 +728,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    \"\"\"Root of f in [lo, hi], f(lo) and f(hi) of opposite signs.\n    Newton when the step stays inside the bracket, else bisect.\n    Start at the midpoint. Raise ValueError without a sign change.\"\"\"\n    ...\n",
-    "solution": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    flo, fhi = f(lo), f(hi)\n    if flo * fhi > 0:\n        raise ValueError('no sign change')\n    x = 0.5 * (lo + hi)\n    for _ in range(maxit):\n        fx = f(x)\n        if abs(fx) < ftol:\n            return x\n        if (fx > 0) == (flo > 0):\n            lo, flo = x, fx\n        else:\n            hi = x\n        d = df(x)\n        new = x - fx / d if d != 0 else lo - 1.0\n        if not (min(lo, hi) < new < max(lo, hi)):\n            new = 0.5 * (lo + hi)\n        if abs(new - x) < xtol:\n            return new\n        x = new\n    return x\n",
+    "starter": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    \"\"\"Root of f in [lo, hi]. If f is zero at an end, return that end.\n    Newton when the step stays inside the bracket and is at most half\n    the step before last, else bisect. Start at the midpoint. Return\n    early once |f(x)| <= ftol; ftol=0 stops on the step alone.\n    Raise ValueError without a sign change (compare signs, not a\n    product), RuntimeError after maxit.\"\"\"\n    ...\n",
+    "solution": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    flo, fhi = f(lo), f(hi)\n    if flo == 0:\n        return lo\n    if fhi == 0:\n        return hi\n    if (flo > 0) == (fhi > 0):\n        raise ValueError('no sign change')\n    x = 0.5 * (lo + hi)\n    step = older = abs(hi - lo)\n    for _ in range(maxit):\n        fx = f(x)\n        if abs(fx) <= ftol:\n            return x\n        if (fx > 0) == (flo > 0):\n            lo, flo = x, fx\n        else:\n            hi = x\n        d = df(x)\n        new = x - fx / d if d != 0 else lo - 1.0\n        if not (min(lo, hi) < new < max(lo, hi)) or abs(new - x) > 0.5 * older:\n            new = 0.5 * (lo + hi)\n        older, step = step, abs(new - x)\n        if step < xtol:\n            return new\n        x = new\n    raise RuntimeError('no convergence')\n",
     "examples": [
      {
       "call": "safe_newton(lambda x: x * x - 2, lambda x: 2 * x, 0.0, 2.0)",
@@ -783,14 +783,32 @@
       "call": "abs(safe_newton(g, lambda x: 2 * x, 0.0, 2.0) - 2 ** 0.5) < 1e-10 and calls[0] <= 60",
       "expect": "True",
       "compare": "equal"
+     },
+     {
+      "call": "abs(safe_newton(lambda x: (x - 1) ** 9, lambda x: 9 * (x - 1) ** 8, 0.0, 3.0, ftol=0.0) - 1) < 1e-9",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "safe_newton(lambda x: -x, lambda x: -1.0, 0.0, 1.0)",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "safe_newton(lambda x: 1e-200 * (x * x + 1), lambda x: 2e-200 * x, 0.0, 1.0)",
+      "expect": "ValueError",
+      "compare": "raises"
      }
     ],
-    "how": "Submit runs 6 hidden tests, each root within 1e-9. They use a rising f, a falling f, and x³ − 2x + 2 on [−3, 0], where Newton from 0 cycles. Then x³ − 1 on [−2, 2] has zero slope at the start. A missing sign change must raise ValueError, and f may be called at most 60 times."
+    "how": "Submit runs 9 hidden tests, each root within 1e-9. They use a rising f, a falling f, and x³ − 2x + 2 on [−3, 0], where Newton from 0 cycles. Then x³ − 1 on [−2, 2] has zero slope at the start. A missing sign change must raise ValueError, even for same-sign values near 1e-200, and a root at an end must be returned. f may be called at most 60 times. Last, (x − 1)⁹ on [0, 3] with ftol=0 must reach 1, which needs the halving rule. With the default ftol=1e-12 the same call stops near 1.046, because every x within 0.046 of 1 has a residual below 1e-12."
    },
    "hints": [
     {
      "rung": "nudge",
-     "text": "Check the sign change first, then start at the midpoint."
+     "text": "Return an end where $f$ is zero, then compare the signs at the ends, then start at the midpoint."
     },
     {
      "rung": "point",
@@ -801,11 +819,11 @@
     },
     {
      "rung": "step",
-     "text": "Try `x - fx / df(x)`; if the slope is 0 or the step leaves the bracket, use `(lo + hi) / 2`."
+     "text": "Try `x - fx / df(x)`; if the slope is 0, the step leaves the bracket or it is over half the step before last, use `(lo + hi) / 2`."
     }
    ],
    "feedback": {
-    "correct": "It passes, cycle and flat start included.",
+    "correct": "It passes, cycle, flat start and ninefold root included.",
     "generic": "Not quite right. Check the sign test that moves the ends."
    },
    "explain": {
@@ -815,7 +833,7 @@
   {
    "type": "problem",
    "difficulty": 3,
-   "prose": "Now solve the whole smile at once. Keep arrays `s`, `lo` and `hi`, one entry per strike. A boolean mask chooses, strike by strike, between the Newton step and the midpoint. `scipy.optimize.brentq` agrees with the result to $10^{-10}$; Brent's method mixes bisection, secant and inverse quadratic steps.",
+   "prose": "Now solve the whole smile at once. Keep arrays `s`, `lo` and `hi`, one entry per strike. A boolean mask chooses, strike by strike, between the Newton step and the midpoint. A second mask leaves each strike alone once its step falls below `tol`. `scipy.optimize.brentq` agrees with the result to $10^{-10}$; Brent's method mixes bisection, secant and inverse quadratic steps.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -903,7 +921,7 @@
     "language": "python",
     "prelude": "import math\nimport numpy as np\n_erf = np.vectorize(math.erf, otypes=[float])\ndef ncdf(x):\n    return 0.5 * (1 + _erf(np.asarray(x, dtype=float) / math.sqrt(2)))\ndef bs_price(S, K, r, T, sigma, kinds):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    sd = sigma * math.sqrt(T)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / sd\n    d2 = d1 - sd\n    call = S * ncdf(d1) - K * math.exp(-r * T) * ncdf(d2)\n    put = K * math.exp(-r * T) * ncdf(-d2) - S * ncdf(-d1)\n    return np.where(np.asarray(kinds) == 'c', call, put)\ndef bs_vega(S, K, r, T, sigma):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * math.sqrt(T))\n    return S * math.sqrt(T) * np.exp(-d1 ** 2 / 2) / math.sqrt(2 * math.pi)\n",
     "starter": "import numpy as np\n\n# bs_price(S, K, r, T, sigma, kinds) and bs_vega(S, K, r, T, sigma)\n# are provided and work on arrays; kinds holds 'c' or 'p'.\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    \"\"\"Implied vols for a whole smile at once, NaN where none exists.\n    Bracket [1e-4, 5], start at 0.2.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    K = np.asarray(strikes, dtype=float)\n    kinds = np.asarray(kinds)\n    f = lambda s: bs_price(S, K, r, T, s, kinds) - p\n    lo = np.full(p.shape, 1e-4)\n    hi = np.full(p.shape, 5.0)\n    ok = (f(lo) < 0) & (f(hi) > 0)\n    s = np.full(p.shape, 0.2)\n    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):\n        for _ in range(maxit):\n            fs = f(s)\n            low = fs < 0\n            lo = np.where(low, s, lo)\n            hi = np.where(low, hi, s)\n            new = s - fs / bs_vega(S, K, r, T, s)\n            bad = ~np.isfinite(new) | (new <= lo) | (new >= hi)\n            new = np.where(bad, 0.5 * (lo + hi), new)\n            done = np.abs(new - s) < tol\n            s = new\n            if np.all(done | ~ok):\n                break\n    return np.where(ok, s, np.nan)\n",
+    "solution": "import numpy as np\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    K = np.asarray(strikes, dtype=float)\n    kinds = np.asarray(kinds)\n    f = lambda s: bs_price(S, K, r, T, s, kinds) - p\n    lo = np.full(p.shape, 1e-4)\n    hi = np.full(p.shape, 5.0)\n    ok = (f(lo) < 0) & (f(hi) > 0)\n    live = ok.copy()                 # strikes still being solved\n    s = np.full(p.shape, 0.2)\n    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):\n        for _ in range(maxit):\n            fs = f(s)\n            low = fs < 0\n            lo = np.where(low, s, lo)\n            hi = np.where(low, hi, s)\n            new = s - fs / bs_vega(S, K, r, T, s)\n            near = np.abs(new - s) < tol     # Newton has converged: keep its step\n            bad = ~near & (~np.isfinite(new) | (new <= lo) | (new >= hi))\n            new = np.where(bad, 0.5 * (lo + hi), new)\n            done = np.abs(new - s) < tol\n            s = np.where(live, new, s)       # a solved strike stays put\n            live &= ~done\n            if not live.any():\n                break\n    return np.where(ok, s, np.nan)\n",
     "examples": [
      {
       "call": "round(float(implied_vols([2.5121], [100], 100.0, 0.05, 1 / 12, ['c'])[0]), 4)",
@@ -966,7 +984,7 @@
     "generic": "Not quite right. Check the `ok` mask and the bracket updates."
    },
    "explain": {
-    "text": "One loop updates every strike together, so 1,000 strikes cost about as much as one. The mask sends the 75 and 80 puts to the midpoint on their first step. Strikes with no vol keep `ok` false and come back as NaN."
+    "text": "One loop updates every unsolved strike together, so 1,000 strikes cost far less than 1,000 separate solves. The mask sends the 75 and 80 puts to the midpoint on their first step. Strikes with no vol keep `ok` false and come back as NaN."
    }
   },
   {
@@ -1051,20 +1069,20 @@
     "generic": "Not quite right. A NaN here is information about the quote."
    },
    "explain": {
-    "text": "The bracketed solver cannot fail on a valid quote, so every NaN points at the data. Desks log them and fix the feed. Filling them in would quote a vol for an arbitrage price."
+    "text": "NaN means the price is not strictly inside the range that vols 0.0001 to 5 give, so here it points at the data. Desks log them and fix the feed. Filling them in would quote a vol for an arbitrage price."
    }
   }
  ],
  "summary": {
   "ideas": [
    "Plain Newton fails where the slope is tiny. On the deep puts vega at 0.2 is near 0, so the step is huge.",
-   "A safeguarded Newton keeps a bracket with a sign change. It takes Newton steps inside the bracket and bisects otherwise, so it always ends.",
+   "A safeguarded Newton keeps a bracket with a sign change. It takes Newton steps inside the bracket and bisects otherwise, so the root never escapes the bracket.",
    "Stop in the data's units: a price good to £0.0001 fixes $\\sigma$ only to $0.0001/\\text{vega}$. A price below its bound has no vol."
   ],
   "formula": {
    "name": "Safeguarded step",
-   "tex": "x_{\\text{new}} = \\begin{cases} x - f(x)/f'(x) & \\text{if inside } (lo, hi) \\\\ \\tfrac12(lo + hi) & \\text{otherwise} \\end{cases}",
-   "note": "At most $\\lceil\\log_2(\\text{width}/\\text{xtol})\\rceil$ bisections."
+   "tex": "x_{\\text{new}} = \\begin{cases} x - f(x)/f'(x) & \\text{if inside } (lo, hi) \\text{ and not over half the step before last} \\\\ \\tfrac12(lo + hi) & \\text{otherwise} \\end{cases}",
+   "note": "About $\\lceil\\log_2(\\text{width}/\\text{xtol})\\rceil$ bisections are enough; `maxit` is the last stop."
   },
   "trap": "A rounded quote gives a vol that differs from the smile. That is not a solver bug, and a tighter tolerance only chases digits the data lack."
  },
@@ -1170,7 +1188,7 @@
     }
    },
    "explain": {
-    "text": "Each bisection halves the width: $5 / 1024 \\approx 0.00488$. This guaranteed shrinking is what makes the safeguarded method end."
+    "text": "Each bisection halves the width: $5 / 1024 \\approx 0.00488$. This guaranteed shrinking is why a bisection step is the safe fallback."
    }
   },
   {

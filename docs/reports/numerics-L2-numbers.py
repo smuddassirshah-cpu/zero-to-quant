@@ -57,7 +57,9 @@ check('bond it1', its[0], 6.15487, abs_=5e-6); check('bond it2', its[1], 6.19318
 check('scipy newton agrees', sp_newton(P, 0.05, fprime=dP), yb, abs_=1e-12)
 check('31 halvings', next(k for k in range(1, 60) if 0.2 / 2**k < 1e-10), 31)
 check('0.2/2^31', 0.2 / 2**31, 9.3e-11, rel=0.01); check('0.2/2^30', 0.2 / 2**30, 1.9e-10, rel=0.03)
-check('31/8', 31 / 8, 3.875)
+# (corrected claim, fix pass) l5 screens[9]: 2 end checks + 31 halvings = 33 evaluations; key 33/8, distractor 33/4.
+check('33 evaluations', 2 + next(k for k in range(1, 60) if 0.2 / 2**k < 1e-10), 33)
+check('33/8', 33 / 8, 4.125); check('33/4', 33 / 4, 8.25)
 check('20 halvings', next(k for k in range(1, 60) if 1 / 2**k < 1e-6), 20)
 
 # ---------- l6 ----------
@@ -88,6 +90,7 @@ fl = lambda x: float(x)
 def safe(K, k, q):
     f = lambda s: fl(mprice(K, s, k)) - q; df = lambda s: fl(mvega(K, s))
     lo, hi, x, its, bis = 1e-4, 5.0, 0.2, 0, 0
+    step = older = hi - lo  # fix pass: rtsafe's second test, as in the l6 solution
     flo = f(lo)
     for its in range(1, 101):
         fx = f(x)
@@ -95,8 +98,9 @@ def safe(K, k, q):
         if (fx > 0) == (flo > 0): lo, flo = x, fx
         else: hi = x
         d = df(x); xn = x - fx / d if d else lo - 1
-        if not (lo < xn < hi): xn = 0.5 * (lo + hi); bis += 1
-        if abs(xn - x) < 1e-10: x = xn; break
+        if not (lo < xn < hi) or abs(xn - x) > 0.5 * older: xn = 0.5 * (lo + hi); bis += 1
+        older, step = step, abs(xn - x)
+        if step < 1e-10: x = xn; break
         x = xn
     return x, its, bis
 res = [safe(K, k, q) for K, k, q in zip(Ks, kinds, stated_q)]
