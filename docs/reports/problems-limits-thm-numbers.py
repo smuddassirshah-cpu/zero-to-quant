@@ -460,6 +460,148 @@ stated('n', 44.4, n_m, 0.05)
 stated('t at 44', 1.99, 1.2 * sqrt(44) / 4, 0.005)
 
 
+
+# ------------------------------------------------------------------ level 4
+L4 = load(4)
+import sympy as sp
+from scipy.integrate import quad, dblquad
+from scipy.optimize import minimize_scalar
+x_, y_, t_, s_ = sp.symbols('x y t s', positive=True)
+# every expression string in the set, hand-translated; each JSON string must appear here
+TEX = {
+    'e^{-x}': sp.exp(-x_), '1/e^x': 1 / sp.exp(x_), 'e^{-y}': sp.exp(-y_), '1-e^{-x}': 1 - sp.exp(-x_), '1': sp.Integer(1),
+    'e^{-t/2}-e^{-t}': sp.exp(-t_ / 2) - sp.exp(-t_), 'e^{-0.5t}-e^{-t}': sp.exp(-sp.Rational(1, 2) * t_) - sp.exp(-t_),
+    '0.5e^{-1.5t}': sp.Rational(1, 2) * sp.exp(-sp.Rational(3, 2) * t_), 'e^{-t}+0.5e^{-t/2}': sp.exp(-t_) + sp.exp(-t_ / 2) / 2,
+    '0.25te^{-t/2}': t_ * sp.exp(-t_ / 2) / 4,
+    '\\frac{1}{(1-s)(1-2s)}': 1 / ((1 - s_) * (1 - 2 * s_)), '1/((1-s)(1-2s))': 1 / ((1 - s_) * (1 - 2 * s_)),
+    '\\frac{0.5}{(1-s)(0.5-s)}': sp.Rational(1, 2) / ((1 - s_) * (sp.Rational(1, 2) - s_)),
+    '\\frac{1}{1-s}+\\frac{1}{1-2s}': 1 / (1 - s_) + 1 / (1 - 2 * s_), '\\frac{1}{(1-s)(1-0.5s)}': 1 / ((1 - s_) * (1 - s_ / 2)),
+    '\\frac{1}{1-s}': 1 / (1 - s_),
+    '(1-2s)^{-2}': (1 - 2 * s_) ** -2, '\\frac{1}{(1-2s)^2}': 1 / (1 - 2 * s_) ** 2, '1/(1-2s)^2': 1 / (1 - 2 * s_) ** 2,
+    '4(1-2s)^{-1/2}': 4 * (1 - 2 * s_) ** sp.Rational(-1, 2), '(1-2s)^{-1/8}': (1 - 2 * s_) ** sp.Rational(-1, 8),
+    '(1-2s)^{-1/2}': (1 - 2 * s_) ** sp.Rational(-1, 2),
+}
+
+
+def expr_part(iid, k, truth):
+    if L4 is None:
+        return
+    w = L4[iid]['parts'][k - 1]['widget']
+    tag = f'{iid} p{k}'
+    ok(w['kind'] == 'expression', f'{tag}: not expression')
+    for txt in [w['answer']] + w.get('accept', []):
+        ok(txt in TEX, f'{tag}: {txt} not translated')
+        if txt in TEX:
+            ok(sp.simplify(TEX[txt] - truth) == 0, f'{tag}: {txt} differs from the key')
+    bykey = L4[iid]['parts'][k - 1]['feedback'].get('byKey', {})
+    for x in w.get('wrong', []):
+        ok(x['tex'] in TEX, f'{tag}: wrong {x["tex"]} not translated')
+        if x['tex'] in TEX:
+            ok(sp.simplify(TEX[x['tex']] - truth) != 0, f'{tag}: wrong {x["id"]} equals the key')
+        ok(x['id'] in bykey, f'{tag}: wrong {x["id"]} has no byKey line')
+
+
+def form_stated(items):
+    """the validator's [answer-form] words on every non-whole numeric part"""
+    if items is None:
+        return
+    for iid, it in items.items():
+        for k, p in enumerate(it['parts'], 1):
+            w = p['widget']
+            if w['kind'] == 'numeric' and not float(w['answer']).is_integer():
+                ok(re.search(r'decimal place|significant figure|fraction|nearest|per cent|%', p['question'], re.I) is not None,
+                   f'{iid} p{k}: form not stated')
+
+
+# p-machine-faults: f(x, y) = e^{-y} on 0 < x < y
+f_xy = sp.exp(-y_)
+fX = sp.integrate(f_xy, (y_, x_, sp.oo))
+expr_part('p-machine-faults', 1, sp.exp(-x_))
+ok(sp.simplify(fX - sp.exp(-x_)) == 0 and abs(quad(lambda y: exp(-y), 0.7, 60)[0] - exp(-0.7)) < 1e-9, 'faults: marginal e^{-x} two ways')
+ok(abs(dblquad(lambda y, x: exp(-y), 0, 50, lambda x: x, lambda x: 60)[0] - 1) < 1e-6, 'faults: volume is 1')
+EYx = sp.integrate(y_ * f_xy.subs(x_, sp.Rational(1, 2)) / fX.subs(x_, sp.Rational(1, 2)), (y_, sp.Rational(1, 2), sp.oo))
+num(L4, 'p-machine-faults', 2, EYx, quad(lambda y: y * exp(-(y - 0.5)), 0.5, 80)[0],
+    {'unconditional': sp.integrate(y_ * y_ * sp.exp(-y_), (y_, 0, sp.oo)), 'half': 0.25, 'gap-only': 1}, dp=1, agree=1e-8)
+pick(L4, 'p-machine-faults', 3, 'no')
+ok(sp.simplify(sp.integrate(y_ * f_xy / fX, (y_, x_, sp.oo)) - (x_ + 1)) == 0, 'faults: E[Y | X = x] = x + 1 as the choice feedback says')
+# part 4: Jacobian of (x, g) -> (x, x + g) is 1; P(G > 2) exactly, then as a volume of the joint density over y - x > 2
+g_ = sp.symbols('g', positive=True)
+ok(sp.Matrix([[1, 0], [1, 1]]).det() == 1, 'faults: Jacobian 1')
+pG = sp.integrate(sp.integrate(sp.exp(-x_ - g_), (x_, 0, sp.oo)), (g_, 2, sp.oo))
+pG_alt = dblquad(lambda y, x: exp(-y), 0, 50, lambda x: x + 2, lambda x: x + 70)[0]
+num(L4, 'p-machine-faults', 4, pG, pG_alt, {'second-fault': 3 * exp(-2), 'complement': 1 - exp(-2), 'rate-half': exp(-1)}, dp=4, agree=1e-6)
+pY = sp.integrate(sp.integrate(f_xy, (x_, 0, y_)), (y_, 3, sp.oo))
+rng = random.Random(14)
+simY = sum(1 for _ in range(400000) if rng.expovariate(1) + rng.expovariate(1) > 3) / 400000
+ok(abs(simY - float(pY)) < 0.003, 'faults: simulation of X + G agrees with 4e^{-3}')
+num(L4, 'p-machine-faults', 5, pY, stats.gamma.sf(3, 2), {'one-wait': exp(-3), 'complement': 1 - 4 * exp(-3), 'dropped-one': 3 * exp(-3)}, dp=4)
+
+# p-ticket-stages: triage rate 1, repair rate 0.5
+dens = sp.integrate(sp.exp(-x_) * sp.Rational(1, 2) * sp.exp(-sp.Rational(1, 2) * (t_ - x_)), (x_, 0, t_))
+expr_part('p-ticket-stages', 1, sp.exp(-t_ / 2) - sp.exp(-t_))
+ok(sp.simplify(dens - (sp.exp(-t_ / 2) - sp.exp(-t_))) == 0, 'ticket: convolution gives e^{-t/2} - e^{-t}')
+ok(abs(quad(lambda x: exp(-x) * 0.5 * exp(-0.5 * (2.3 - x)), 0, 2.3)[0] - (exp(-1.15) - exp(-2.3))) < 1e-12, 'ticket: numeric convolution at t = 2.3')
+tail10 = sp.integrate(sp.exp(-t_ / 2) - sp.exp(-t_), (t_, 10, sp.oo))
+rng = random.Random(15)
+sim10 = sum(1 for _ in range(600000) if rng.expovariate(1) + rng.expovariate(0.5) > 10) / 600000
+ok(abs(sim10 - float(tail10)) < 0.0008, 'ticket: simulation of the tail at 10')
+num(L4, 'p-ticket-stages', 2, tail10, quad(lambda t: exp(-t / 2) - exp(-t), 10, 200)[0],
+    {'one-stage': exp(-5), 'complement': 1 - float(tail10), 'equal-rates': exp(-5) * 6}, dp=4, agree=1e-8)
+stated('repair tail term', 0.01348, 2 * exp(-5), 0.000005)
+stated('one ticket in 74', 74, 1 / float(tail10), 0.5)
+MT = sp.integrate(sp.exp(s_ * t_) * (sp.exp(-t_ / 2) - sp.exp(-t_)), (t_, 0, sp.oo), conds='none')
+expr_part('p-ticket-stages', 3, 1 / ((1 - s_) * (1 - 2 * s_)))
+ok(sp.simplify(MT.subs(s_, sp.Rational(1, 5)) - 1 / ((1 - sp.Rational(1, 5)) * (1 - sp.Rational(2, 5)))) == 0, 'ticket: MGF from the density at s = 0.2')
+roots = sp.solve(sp.diff(-10 * s_ - sp.log(1 - s_) - sp.log(1 - 2 * s_), s_), s_)
+sstar = min(float(r) for r in roots)
+opt = minimize_scalar(lambda s: exp(-10 * s) / ((1 - s) * (1 - 2 * s)), bounds=(1e-6, 0.5 - 1e-6), method='bounded', options={'xatol': 1e-10})
+num(L4, 'p-ticket-stages', 4, sstar, opt.x,
+    {'other-root': max(float(r) for r in sp.solve(20 * s_ ** 2 - 26 * s_ + 7, s_)), 'repair-only': 0.4, 'triage-only': 0.9}, dp=4, agree=1e-6)
+ok(abs(sstar - (26 - sqrt(116)) / 40) < 1e-12, 'ticket: s* = (26 - sqrt 116) / 40')
+bound = lambda s: exp(-10 * s) / ((1 - s) * (1 - 2 * s))
+num(L4, 'p-ticket-stages', 5, bound(0.3807), opt.fun,
+    {'repair-s': bound(0.4), 'no-mgf': exp(-3.807), 'exact': float(tail10)}, dp=4, agree=1e-6)
+stated('e^{-3.807}', 0.02221, exp(-3.807), 0.000005)
+stated('(1 - s)(1 - 2s)', 0.1478, (1 - 0.3807) * (1 - 0.7614), 0.00005)
+stated('M_T(s*)', 6.768, 1 / ((1 - 0.3807) * (1 - 2 * 0.3807)), 0.0005)
+stated('about 11 times', 11, bound(sstar) / float(tail10), 0.25)
+
+# p-dealer-quotes: best of 4 uniforms
+qa = [F(i, 10) for i in range(11)]
+num(L4, 'p-dealer-quotes', 1, F(8, 10) ** 4, stats.beta.cdf(0.8, 4, 1),
+    {'one-dealer': 0.8, 'worst': 1 - 0.2 ** 4, 'complement': 1 - 0.8 ** 4}, dp=4, agree=1e-9)
+num(L4, 'p-dealer-quotes', 2, sp.integrate(t_ * 4 * t_ ** 3, (t_, 0, 1)), quad(lambda t: 1 - t ** 4, 0, 1)[0],
+    {'one-dealer': 0.5, 'worst': F(1, 5), 'k-over-n': F(3, 4)}, dp=2)
+pick(L4, 'p-dealer-quotes', 3, 'beta41')
+ok(abs(stats.beta.pdf(0.7, 4, 1) - 4 * 0.7 ** 3) < 1e-12, 'quotes: Beta(4, 1) density is 4t^3')
+num(L4, 'p-dealer-quotes', 4, F(3, 5), stats.beta.mean(3, 2), {'k-over-n': F(3, 4), 'swapped': F(2, 5), 'one-dealer': F(1, 2)}, dp=2)
+# part 5 by counting, by the Beta integral and by enumeration of the 16 above/below patterns
+pat = sum(1 for bits in itertools.product([0, 1], repeat=4) if sum(bits) >= 2)
+num(L4, 'p-dealer-quotes', 5, F(pat, 16), stats.beta.sf(0.5, 3, 2),
+    {'three-above': F(5, 16), 'one-above': F(15, 16), 'half': F(1, 2)}, dp=4)
+ok(abs(quad(lambda x: 12 * x ** 2 * (1 - x), 0.5, 1)[0] - 0.6875) < 1e-12, 'quotes: Beta(3, 2) integral 11/16')
+
+# p-part-errors: D chi-square on 4 degrees of freedom
+expr_part('p-part-errors', 1, (1 - 2 * s_) ** -2)
+MD = (1 - 2 * s_) ** -2
+m1, m2 = sp.diff(MD, s_).subs(s_, 0), sp.diff(MD, s_, 2).subs(s_, 0)
+ok(m1 == 4 and m2 == 24, "parts: M'(0) = 4 and M''(0) = 24")
+num(L4, 'p-part-errors', 2, m2 - m1 ** 2, stats.chi2.var(4), {'second-moment': 24, 'one-term': 2, 'sd': sqrt(8)}, dp=0)
+pick(L4, 'p-part-errors', 3, 'gamma')
+ok(sp.simplify((sp.Rational(1, 2) / (sp.Rational(1, 2) - s_)) ** 2 - MD) == 0, 'parts: Gamma(2, 1/2) MGF matches')
+tail = lambda d: exp(-d / 2) * (1 + d / 2)
+num(L4, 'p-part-errors', 4, tail(8), stats.chi2.sf(8, 4),
+    {'exponential': exp(-4), 'three-terms': exp(-4) * 13, 'rate-one': exp(-8) * 9}, dp=4)
+ok(abs(pois_cdf(1, 4) - tail(8)) < 1e-12, 'parts: Poisson(4) count <= 1 equals the Gamma tail')
+dstar = next(d for d in range(1, 40) if tail(d) <= 0.05)
+dstar_alt = ceil(stats.chi2.isf(0.05, 4))
+num(L4, 'p-part-errors', 5, dstar, dstar_alt, {'normal': ceil(4 + 1.645 * sqrt(8)), 'ten-per-cent': 8, 'too-far': 11}, dp=0)
+stated('tail at 9', 0.0611, tail(9), 0.00005)
+stated('tail at 10', 0.0404, tail(10), 0.00005)
+stated('normal fit', 8.65, 4 + 1.645 * sqrt(8), 0.005)
+form_stated(L4)
+
+
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails:

@@ -106,3 +106,30 @@ Each later part restates the value it uses, and its `wrong` list holds the value
 ## Engine limits
 
 Two bullets in `docs/BACKLOG-INBOX.md` under "Raised later (problems limits-thm)". The playthrough still shoots only part 1 of a set, and the done page still says "Well done." (both already raised under problems conditional); not repeated.
+
+## Level 4
+
+File: `problems-4.json` ("Problems: joint densities and transformations", 45 minutes). Lessons read first: l14 joint densities, l15 new variables, l16 adding densities, l17 smallest and largest, l18 Gamma and Beta, l19 generating functions. Settings new to the course: a machine's first and second faults on a wedge-shaped support, a support ticket's two stages at different rates, a client's four dealer quotes, a machined part's squared error over four dimensions.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-machine-faults | 5 (4 / 1, one `expression`) | l14, l15, l16, l18 | 4 |
+| problems-4 | p-ticket-stages | 5 (5 / 0, two `expression`) | l16, l19 | 5 |
+| problems-4 | p-dealer-quotes | 5 (4 / 1) | l17, l18 | 3 |
+| problems-4 | p-part-errors | 5 (4 / 1, one `expression`) | l18, l19 | 4 |
+
+Typed parts 17 of 20. Every lesson appears in at least one problem and every problem draws on at least two. The choice parts are judgements: whether a density on a wedge can be independent, which family $4t^3$ belongs to, and which distribution an MGF names. Chains: marginal $e^{-x}$, $E[Y \mid X = 0.5] = 1.5$, dependence, the gap $G = Y - X$ by a Jacobian (independent, $e^{-2}$), then $P(Y > 3) = 4e^{-3}$; a convolution $e^{-t/2} - e^{-t}$, its tail at 10 hours (0.0134), the product MGF, the Chernoff optimum $s = \tfrac{26 - \sqrt{116}}{40}$ and the bound 0.1503 (about 11 times the exact tail); $0.8^4$, $E[\text{best}] = 0.8$, Beta(4, 1), the Beta(3, 2) mean and $P(X_{(3)} > 0.5) = \tfrac{11}{16}$; $M_D = (1 - 2s)^{-2}$, $\operatorname{Var}(D) = 8$, Gamma(2, $\tfrac12$), $P(D > 8) = 5e^{-4}$ and the flag line $d = 10$.
+
+Form. Every non-whole numeric part says "Give your answer to n decimal places." or "Give a fraction, or a decimal to 4 decimal places.", so `[answer-form]` is silent. Part 5 of the ticket problem tells the learner to use $s = 0.3807$; the key 0.1503 is what that value gives (the exact optimum gives the same to 7 places).
+
+Numbers. The script now loads `problems-4`: sympy integrals for every density, marginal, tail, MGF and derivative, then a second route (scipy `quad` and `dblquad`, `stats.gamma`, `stats.beta`, `stats.chi2`, a bounded minimiser for the Chernoff optimum, seeded simulations of $X + G$ and of the two stages, the 16 above/below patterns of four quotes). Each `expression` key, accept form and slip is translated by hand and compared with sympy (equal, or for a slip not equal), and `form_stated` checks the form sentence of every non-whole part. The printed value of each `feedback.correct` is checked against its tolerance by `num`. 1,539 checks over sets 1 to 4, 0 failures.
+
+| check | problems-4 |
+|---|---|
+| numbers script | exit 0 (1,539 checks over sets 1 to 4) |
+| validator | 0 errors, 0 warnings on the file |
+| playthrough `--local-cdn` | green (20 parts) |
+| playthrough `--mobile` | green; 440 px shots read (all 20 parts), no layout fault |
+| voice scan 35 (course folder) | 0 and 0 |
+
+Fresh-check: 0 hits at the gate. At `--min-run 8 --min-share 0` ten hits, all form or chain sentences ("give your answer to # decimal places using # from part # what is"), share 0.11 or less, shared with other problem sets. Stock phrasing.
