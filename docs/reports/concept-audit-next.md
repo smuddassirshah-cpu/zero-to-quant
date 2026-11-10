@@ -8,7 +8,7 @@ Open, first for the next session: mm-games L1 to L3 round 2 (blind, fresh reader
 
 Next: mm-games L4; recruiting; counting-chance, conditional, random-vars, limits-thm, markov (quiet from 16:46 UTC, 11 Nov); the trader and developer closures, Stage 1 first; other route courses. One delta batch is owed for closed courses touched on 9 and 10 Nov. Eligible, not started: garch, stat-learning, stat-models, vector-calc.
 
-For the content session: lesson numbers in learner text (lists in the three new audit files); numerics `course.json` l6 name (notes, session 3).
+For the content session: lesson numbers in learner text (lists in the three new audit files); numerics `course.json` l6 name (notes, session 3); mm-games homework-3 items[0].prose says "level 2's scripted engine".
 
 Miss rate: session 1, 39 levels, 132 audit-only findings, 12 `wrong`. Session 2, 6 levels, 20, 1. Session 3, 6 levels, round 1: 35, 7. Session 4, 6 levels: 64 audit-only (67 with the delta), 4 `wrong`.
 
