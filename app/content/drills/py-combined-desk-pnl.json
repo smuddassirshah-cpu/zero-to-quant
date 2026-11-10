@@ -1,0 +1,129 @@
+{
+  "id": "py-combined-desk-pnl",
+  "name": "Two desks, one daily P&L",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "merge",
+    "outer-join"
+  ],
+  "skills": [
+    "pd-group"
+  ],
+  "difficulty": 2,
+  "pace": 720,
+  "fn": "combined_pnl",
+  "returns": "a pandas Series",
+  "brief": "Two desks report daily P&L in pounds as pandas Series `a` and `b`, each on a sorted date index named `date`. They do not report on the same days. The firm's P&L on a day is the sum of what was reported; a desk that did not report that day counts as 0.\n\nWrite `combined_pnl(a, b)`. It returns a Series over every day on which at least one desk reported, in date order. The tests compare values with `tolist()`, floats within a relative `1e-9`, and the dates as text. The helper `on(dates, values)` builds a Series to try.\n\nExample. Desk `a` reports 1,200, -300 and 450 on 2, 3 and 5 June. Desk `b` reports 200, -150 and -50 on 3, 4 and 5 June. The answer is 1,200, -100, -150 and 400 on 2 to 5 June.",
+  "constraints": [
+    "Either Series may be empty. No reported value is missing.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Turn each Series into a frame with `reset_index()`, then `pd.merge(..., on=\"date\", how=\"outer\")`. Fill the gaps with 0 before adding, and sort by date.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\nDESK_A = on(['2025-06-02', '2025-06-03', '2025-06-05'], [1200.0, -300.0, 450.0])\nDESK_B = on(['2025-06-03', '2025-06-04', '2025-06-05'], [200.0, -150.0, -50.0])\n",
+  "starter": "import pandas as pd\n\ndef combined_pnl(a, b):\n    m = ...\n    return a + b\n",
+  "examples": [
+    {
+      "call": "combined_pnl(DESK_A, DESK_B).tolist()",
+      "expect": "[1200.0, -100.0, -150.0, 400.0]",
+      "compare": "isclose",
+      "note": "On 4 June only desk `b` reported, so the total is its -150."
+    },
+    {
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in combined_pnl(DESK_A, DESK_B).index]",
+      "expect": "['2025-06-02', '2025-06-03', '2025-06-04', '2025-06-05']",
+      "compare": "equal",
+      "note": "Every day either desk reported, in date order."
+    }
+  ],
+  "tests": [
+    {
+      "name": "The two desks",
+      "call": "combined_pnl(DESK_A, DESK_B).tolist()",
+      "expect": "[1200.0, -100.0, -150.0, 400.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Their dates",
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in combined_pnl(DESK_A, DESK_B).index]",
+      "expect": "['2025-06-02', '2025-06-03', '2025-06-04', '2025-06-05']",
+      "compare": "equal"
+    },
+    {
+      "name": "No shared days",
+      "call": "combined_pnl(on([\"2025-01-06\", \"2025-01-08\"], [10.0, 20.0]), on([\"2025-01-07\"], [-5.0])).tolist()",
+      "expect": "[10.0, -5.0, 20.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Same days",
+      "call": "combined_pnl(on([\"2025-01-06\", \"2025-01-07\"], [100.0, -40.0]), on([\"2025-01-06\", \"2025-01-07\"], [-100.0, 15.5])).tolist()",
+      "expect": "[0.0, -24.5]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Second desk silent",
+      "call": "combined_pnl(on([\"2025-02-03\", \"2025-02-04\"], [7.0, 8.0]), on([], [])).tolist()",
+      "expect": "[7.0, 8.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "First desk silent",
+      "call": "combined_pnl(on([], []), on([\"2025-02-03\"], [-12.25])).tolist()",
+      "expect": "[-12.25]",
+      "compare": "isclose"
+    },
+    {
+      "name": "Both silent",
+      "call": "combined_pnl(on([], []), on([], [])).tolist()",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "name": "Second desk starts earlier",
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in combined_pnl(on([\"2025-03-05\", \"2025-03-06\"], [1.0, 2.0]), on([\"2025-03-03\", \"2025-03-04\", \"2025-03-06\"], [3.0, 4.0, 5.0])).index]",
+      "expect": "['2025-03-03', '2025-03-04', '2025-03-05', '2025-03-06']",
+      "compare": "equal"
+    },
+    {
+      "name": "Values in date order",
+      "call": "combined_pnl(on([\"2025-03-05\", \"2025-03-06\"], [1.0, 2.0]), on([\"2025-03-03\", \"2025-03-04\", \"2025-03-06\"], [3.0, 4.0, 5.0])).tolist()",
+      "expect": "[3.0, 4.0, 1.0, 7.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "A real zero",
+      "call": "combined_pnl(on([\"2025-04-01\", \"2025-04-02\"], [0.0, 50.0]), on([\"2025-04-02\", \"2025-04-03\"], [-50.0, 0.0])).tolist()",
+      "expect": "[0.0, 0.0, 0.0]",
+      "compare": "isclose"
+    },
+    {
+      "name": "A week of trading",
+      "call": "combined_pnl(on([\"2025-05-12\", \"2025-05-13\", \"2025-05-15\", \"2025-05-16\"], [2500.0, -1800.0, 640.0, 75.0]), on([\"2025-05-13\", \"2025-05-14\", \"2025-05-16\"], [900.0, -2200.0, 310.0])).tolist()",
+      "expect": "[2500.0, -900.0, -2200.0, 640.0, 385.0]",
+      "compare": "isclose"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lesson l13-joining-on-dates: an outer join on the date.",
+  "solution": "import pandas as pd\n\ndef combined_pnl(a, b):\n    left = a.rename(\"a\").reset_index()\n    right = b.rename(\"b\").reset_index()\n    m = pd.merge(left, right, on=\"date\", how=\"outer\").sort_values(\"date\")\n    total = m[\"a\"].fillna(0) + m[\"b\"].fillna(0)\n    return pd.Series(total.to_numpy(), index=pd.DatetimeIndex(m[\"date\"], name=\"date\"), name=\"pnl\")\n",
+  "notes": [
+    "An outer join keeps every date found in either Series and leaves NaN where a desk did not report.",
+    "The NaN must become 0 before the sum, because NaN plus a number is NaN.",
+    "One merge on the date, about $O(n \\log n)$ with the sort."
+  ],
+  "planted": [
+    {
+      "code": "import pandas as pd\n\ndef combined_pnl(a, b):\n    return a + b\n",
+      "slip": "Adds the two Series directly, which gives NaN on every day only one desk reported."
+    },
+    {
+      "code": "import pandas as pd\n\ndef combined_pnl(a, b):\n    left = a.rename(\"a\").reset_index()\n    right = b.rename(\"b\").reset_index()\n    m = pd.merge(left, right, on=\"date\").sort_values(\"date\")\n    total = m[\"a\"] + m[\"b\"]\n    return pd.Series(total.to_numpy(), index=pd.DatetimeIndex(m[\"date\"], name=\"date\"))\n",
+      "slip": "Uses the default inner join, which keeps only the days both desks reported."
+    },
+    {
+      "code": "import pandas as pd\n\ndef combined_pnl(a, b):\n    left = a.rename(\"a\").reset_index()\n    right = b.rename(\"b\").reset_index()\n    m = pd.merge(left, right, on=\"date\", how=\"left\").sort_values(\"date\")\n    total = m[\"a\"].fillna(0) + m[\"b\"].fillna(0)\n    return pd.Series(total.to_numpy(), index=pd.DatetimeIndex(m[\"date\"], name=\"date\"))\n",
+      "slip": "Uses a left join, which loses the days only desk `b` reported."
+    }
+  ]
+}

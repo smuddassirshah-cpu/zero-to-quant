@@ -1,0 +1,140 @@
+{
+  "id": "py-gap-aware-returns",
+  "name": "Returns that respect the gaps",
+  "course": "numpy-pandas",
+  "pack": "py",
+  "tags": [
+    "shift",
+    "missing-data"
+  ],
+  "skills": [
+    "pd-time"
+  ],
+  "difficulty": 2,
+  "pace": 660,
+  "fn": "gap_returns",
+  "returns": "a pandas Series",
+  "brief": "`close` is a pandas Series of daily closes, with NaN where a close is missing. The daily return is today's close over yesterday's, less 1. When either close is missing, the return is missing too: never compare with an older close. The first day has no return.\n\nWrite `gap_returns(close)`. It returns a Series on the same dates. The tests read its values in order with `tolist()`, showing a missing value as `None`; floats count within a relative `1e-9`. The helper `daily(start, values)` and `nan` are ready to try.\n\nExample. Closes `80.0, 82.0, nan, 84.0, 83.16` give returns `nan, 0.025, nan, nan, -0.01`. The 84.0 has no close the day before, so its return is missing.",
+  "constraints": [
+    "Up to 10,000 closes.",
+    "pandas is available. All the tests in a run share one 5-second limit in the browser."
+  ],
+  "hint": "Divide by `close.shift(1)` yourself. NaN on either side of the division gives NaN, which is what you want. `pct_change()` with no arguments fills the gap first.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n",
+  "starter": "import pandas as pd\n\ndef gap_returns(close):\n    ret = ...\n    return ret\n",
+  "examples": [
+    {
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [80.0, 82.0, nan, 84.0, 83.16])))",
+      "expect": "[None, 0.02499999999999991, None, None, -0.010000000000000009]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [80.0, 82.0, nan, 84.0, 83.16])).tolist()",
+      "note": "Both returns that touch the missing close are missing."
+    },
+    {
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [50.0, 51.0, 49.98])))",
+      "expect": "[None, 0.020000000000000018, -0.020000000000000018]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [50.0, 51.0, 49.98])).tolist()",
+      "note": "No gaps: 51 / 50 - 1 and 49.98 / 51 - 1."
+    }
+  ],
+  "tests": [
+    {
+      "name": "No gaps",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [50.0, 51.0, 49.98, 52.479])))",
+      "expect": "[None, 0.020000000000000018, -0.020000000000000018, 0.050000000000000044]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [50.0, 51.0, 49.98, 52.479])).tolist()"
+    },
+    {
+      "name": "One gap",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [80.0, 82.0, nan, 84.0, 83.16])))",
+      "expect": "[None, 0.02499999999999991, None, None, -0.010000000000000009]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [80.0, 82.0, nan, 84.0, 83.16])).tolist()"
+    },
+    {
+      "name": "Leading gap",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [nan, 10.0, 11.0])))",
+      "expect": "[None, None, 0.10000000000000009]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [nan, 10.0, 11.0])).tolist()"
+    },
+    {
+      "name": "Trailing gap",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [10.0, 12.0, nan])))",
+      "expect": "[None, 0.19999999999999996, None]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [10.0, 12.0, nan])).tolist()"
+    },
+    {
+      "name": "Two missing days",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [20.0, nan, nan, 21.0, 21.21])))",
+      "expect": "[None, None, None, None, 0.010000000000000009]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [20.0, nan, nan, 21.0, 21.21])).tolist()"
+    },
+    {
+      "name": "One close",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [99.0])))",
+      "expect": "[None]",
+      "compare": "equal",
+      "show": "gap_returns(daily(\"2025-05-05\", [99.0])).tolist()"
+    },
+    {
+      "name": "Every close missing",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [nan, nan, nan])))",
+      "expect": "[None, None, None]",
+      "compare": "equal",
+      "show": "gap_returns(daily(\"2025-05-05\", [nan, nan, nan])).tolist()"
+    },
+    {
+      "name": "Empty series",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [])))",
+      "expect": "[]",
+      "compare": "equal",
+      "show": "gap_returns(daily(\"2025-05-05\", [])).tolist()"
+    },
+    {
+      "name": "Same dates",
+      "call": "[d.strftime(\"%Y-%m-%d\") for d in gap_returns(daily(\"2025-05-08\", [1.0, nan, 1.5])).index]",
+      "expect": "['2025-05-08', '2025-05-09', '2025-05-12']",
+      "compare": "equal"
+    },
+    {
+      "name": "Gaps in turn",
+      "call": "_plain(gap_returns(daily(\"2025-05-05\", [4.0, nan, 4.4, nan, 4.84, 5.324])))",
+      "expect": "[None, None, None, None, None, 0.10000000000000009]",
+      "compare": "isclose",
+      "show": "gap_returns(daily(\"2025-05-05\", [4.0, nan, 4.4, nan, 4.84, 5.324])).tolist()"
+    },
+    {
+      "name": "Missing returns counted",
+      "call": "int(gap_returns(daily(\"2025-05-05\", [30.0, 30.3, nan, 30.9, nan, nan, 31.2, 31.5])).isna().sum())",
+      "expect": "6",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 11 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
+  "where": "Draws on numpy-pandas lessons l7-gaps and l9-returns-with-shift: a return over a missing close stays missing.",
+  "solution": "import pandas as pd\n\ndef gap_returns(close):\n    return close / close.shift(1) - 1\n",
+  "notes": [
+    "`close.shift(1)` sets yesterday's close beside today's, and NaN on either side makes the quotient NaN.",
+    "`pct_change()` with its default fills a missing close from the one before, so it reports a return across the gap.",
+    "One shift and one division, $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "import pandas as pd\n\ndef gap_returns(close):\n    return close.pct_change()\n",
+      "slip": "Uses `pct_change()` as it stands, which fills a gap from the last close before it divides."
+    },
+    {
+      "code": "import pandas as pd\n\ndef gap_returns(close):\n    return close.dropna().pct_change().reindex(close.index)\n",
+      "slip": "Drops the gaps first, so the day after a gap gets a return over two days."
+    },
+    {
+      "code": "import pandas as pd\n\ndef gap_returns(close):\n    return (close.ffill() / close.ffill().shift(1) - 1).where(close.notna())\n",
+      "slip": "Fills forward before dividing, so the day after a gap is compared with a stale close."
+    }
+  ]
+}
