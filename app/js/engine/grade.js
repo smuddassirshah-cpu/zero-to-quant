@@ -10,6 +10,10 @@
      maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget, 6 s budget
      exprEqual(ce, a, b, { functions })  symbolic equivalence after simplify, with a 6-point numeric second opinion; real and
                                    imaginary parts both compared when an i appears; vectors and matrices entry by entry
+     exprFormOk(ce, form, latex)   the shape check of form "factorised-fully" or "completed-square" (shapeFactorised, shapeFullyFactorised,
+                                   shapeCompletedSquare are the same checks on MathJSON; ENGINE-BACKLOG 830, 831)
+     exprSetGrade(ce, spec, text), numSetGrade(spec, text)   a set answer (spec.answers with unordered: true): { ok, key, line };
+                                   the key "count" for a missing or extra value; \pm in the text stands for both values (832)
      exprShape(ce, s)              undefined (no parse), null (one value) or { n, r, c, vec } for a vector or matrix
      exprShapeLine(ce, ans, input) the "wrong size" feedback line for a vector or matrix answer, else null
      fmtNum(v), fmtFrac(v), fmtAs(v, format)   a number for display; fmtFrac writes 0.375 as 3/8; fmtAs applies a slider
@@ -432,6 +436,188 @@
     return checked >= 3;
   };
 
+  /* ---------- Answer shapes for expression `form` (ENGINE-BACKLOG 830, 831) ----------
+     Pure functions on canonical MathJSON (the widget's e.json), shared by the expression widget and tools/test-answer-forms.mjs.
+       shapeFactorised(j)       a product with a bracketed sum among its factors, or a power of one (a leading minus allowed)
+       shapeFullyFactorised(j)  factorised, and no bracketed sum still holds a common whole-number factor or a quadratic that
+                                factorises over the integers (rational roots, so (x^2-4), (4x^2-9) and (x^2+3x) all fail)
+       shapeCompletedSquare(j)  a(x+p)^2 + q: one squared bracket x + p (x with coefficient 1), times a number a, plus a number q
+                                in either order (q may be left out); a, p, q whole numbers, decimals or fractions */
+  const jh = (j) => (Array.isArray(j) ? j[0] : null);
+  const ja = (j) => (Array.isArray(j) ? j.slice(1) : []);
+  const jLit = (j) => {                                         // a plain number's value, else null
+    if (typeof j === 'number') return Number.isFinite(j) ? j : null;
+    if (j && typeof j === 'object' && !Array.isArray(j) && 'num' in j) { const v = parseFloat(j.num); return Number.isFinite(v) ? v : null; }
+    const h = jh(j), a = ja(j);
+    if (h === 'Rational' || h === 'Divide') { const n = jLit(a[0]), d = jLit(a[1]); return n != null && d ? n / d : null; }
+    if (h === 'Negate') { const v = jLit(a[0]); return v == null ? null : -v; }
+    return null;
+  };
+  const jSum = (j) => (jh(j) === 'Add' ? ja(j) : jh(j) === 'Subtract' ? [ja(j)[0], ['Negate', ja(j)[1]]] : null);   // the terms of a sum, else null
+  const jNeg = (j) => (jh(j) === 'Negate' ? ja(j)[0] : j);
+  const shapeFactorised = (j) => {
+    const r = jNeg(j);
+    return (jh(r) === 'Multiply' && ja(r).some(f => jSum(f) || (jh(f) === 'Power' && jSum(ja(f)[0])))) || (jh(r) === 'Power' && !!jSum(ja(r)[0]));
+  };
+  const gcdI = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; };
+  /* the whole-number coefficient of one term (2x gives 2, -x gives 1, 4 gives 4), or null when it is not a whole number */
+  const termCoef = (t) => {
+    const v = jLit(t); if (v != null) return Number.isInteger(v) ? Math.abs(v) : null;
+    if (jh(t) === 'Negate') return termCoef(ja(t)[0]);
+    if (jh(t) === 'Multiply') { let c = 1; for (const o of ja(t)) { const x = jLit(o); if (x != null) { if (!Number.isInteger(x)) return null; c *= Math.abs(x); } } return c; }
+    return 1;
+  };
+  const commonNumber = (S) => { const co = jSum(S).map(termCoef); return co.length > 1 && co.every(c => c != null && c > 0) && co.reduce(gcdI) > 1; };
+  const jSymbols = (j, out = new Set()) => { if (typeof j === 'string') { if (!/^(Pi|ExponentialE|ImaginaryUnit|iota)$/.test(j)) out.add(j); } else ja(j).forEach(x => jSymbols(x, out)); return out; };
+  /* the coefficients [c0, c1, c2, ...] of a polynomial in the one symbol v, else null */
+  const polyOf = (j, v) => {
+    const add = (p, q) => Array.from({ length: Math.max(p.length, q.length) }, (_, i) => (p[i] || 0) + (q[i] || 0));
+    const mul = (p, q) => { const r = Array(p.length + q.length - 1).fill(0); p.forEach((x, i) => q.forEach((y, k) => { r[i + k] += x * y; })); return r; };
+    const go = (x) => {
+      const n = jLit(x); if (n != null) return [n];
+      if (x === v) return [0, 1];
+      const h = jh(x), a = ja(x);
+      if (h === 'Add') return a.reduce((s, t) => { const p = go(t); return s && p && add(s, p); }, [0]);
+      if (h === 'Subtract') { const p = go(a[0]), q = go(a[1]); return p && q && add(p, q.map(c => -c)); }
+      if (h === 'Negate') { const p = go(a[0]); return p && p.map(c => -c); }
+      if (h === 'Multiply') return a.reduce((s, t) => { const p = go(t); return s && p && mul(s, p); }, [1]);
+      if (h === 'Square') { const p = go(a[0]); return p && mul(p, p); }
+      if (h === 'Power') { const e = jLit(a[1]), p = go(a[0]); if (!p || e == null || !Number.isInteger(e) || e < 0 || e > 6) return null; let r = [1]; for (let i = 0; i < e; i++) r = mul(r, p); return r; }
+      return null;
+    };
+    const p = go(j);
+    return p && p.every(Number.isFinite) ? p : null;
+  };
+  const quadFactorises = (S) => {
+    const syms = [...jSymbols(S)]; if (syms.length !== 1) return false;
+    const p = polyOf(S, syms[0]); if (!p) return false;
+    while (p.length && Math.abs(p[p.length - 1]) < 1e-12) p.pop();
+    if (p.length !== 3) return false;
+    let m = 0; for (let k = 1; k <= 60 && !m; k++) if (p.every(c => Math.abs(c * k - Math.round(c * k)) < 1e-9)) m = k;
+    if (!m) return false;
+    const [c, b, a] = p.map(x => Math.round(x * m)), d = b * b - 4 * a * c;
+    return d >= 0 && Number.isInteger(Math.sqrt(d));
+  };
+  const shapeFullyFactorised = (j) => {
+    if (!shapeFactorised(j)) return false;
+    const r = jNeg(j);
+    return (jh(r) === 'Multiply' ? ja(r) : [r]).every(f => { const b = jh(f) === 'Power' ? ja(f)[0] : f; return !jSum(b) || !(commonNumber(b) || quadFactorises(b)); });
+  };
+  /* a (x + p)^2 as one term: an optional minus or number in front, then a square of a sum of the symbol and a number */
+  const squareTerm = (t) => {
+    let c = jNeg(t);
+    if (jh(c) === 'Multiply') { const o = ja(c), rest = o.filter(x => jLit(x) == null); if (rest.length !== 1) return false; c = rest[0]; }
+    else if (jh(c) === 'Divide' && jLit(ja(c)[1])) c = ja(c)[0];
+    if (jh(c) === 'Negate') c = ja(c)[0];
+    if (jh(c) !== 'Power' || jLit(ja(c)[1]) !== 2) return false;
+    const o = jSum(ja(c)[0]); if (!o || o.length !== 2) return false;
+    const [s, n] = typeof o[0] === 'string' ? [o[0], o[1]] : [o[1], o[0]];
+    return typeof s === 'string' && !/^(Pi|ExponentialE|ImaginaryUnit|iota)$/.test(s) && jLit(n) != null;
+  };
+  const shapeCompletedSquare = (j) => {
+    if (squareTerm(j)) return true;
+    const o = jSum(j);
+    return !!o && o.length === 2 && ((squareTerm(o[0]) && jLit(o[1]) != null) || (jLit(o[0]) != null && squareTerm(o[1])));
+  };
+  /* the whole check for the two new forms on typed LaTeX (the widget calls the same shape functions on its own parse) */
+  const exprFormOk = (ce, form, latex, fns) => {
+    if (!ce || (form !== 'factorised-fully' && form !== 'completed-square')) return true;
+    try { return withParsed(ce, latex, fns, (e) => (form === 'factorised-fully' ? shapeFullyFactorised(e.json) : shapeCompletedSquare(e.json))); } catch { return true; }
+  };
+
+  /* ---------- Set answers (ENGINE-BACKLOG 832): answers: [...] with unordered: true ----------
+     The learner types the values separated by commas (2, -5), or "x = 2 or x = -5", "x = 2 and x = -5", {2, -5}; a plus-or-minus
+     (3 \pm \sqrt{2}, or ± or +- in a numeric field) stands for both values. Each value is graded as a single answer would be,
+     in any order; a wrong number of values returns the key "count". */
+  const SET_WORD = /(?<![A-Za-z\\])(?:or|and)(?![A-Za-z])/g;
+  const unwrapOnce = (t, open, close) => {
+    const s = t.trim();
+    if (s[0] !== open || s[s.length - 1] !== close) return t;
+    let d = 0;
+    for (let i = 0; i < s.length; i++) { if (s[i] === open) d++; else if (s[i] === close) { d--; if (d === 0 && i < s.length - 1) return t; } }
+    return d === 0 ? s.slice(1, -1) : t;
+  };
+  const setPieces = (text) => {
+    let t = String(text ?? '')
+      .replace(/\\(?:left|right)(?![A-Za-z])\s*/g, '').replace(/\\(?:lbrace|\{)/g, '\u0001').replace(/\\(?:rbrace|\})/g, '\u0002')
+      .replace(/\{,\}/g, ',').replace(/\\[,;:! ]|~/g, ' ').replace(/[−–]/g, '-').replace(/±/g, '\\pm ')
+      .replace(/\\(?:text|textrm|textbf|mathrm|operatorname|mbox)\s*\{\s*(or|and)\s*\}/g, ' $1 ').replace(/\\(?:lor|vee)(?![A-Za-z])/g, ' or ').replace(/\\(?:land|wedge)(?![A-Za-z])/g, ' and ');
+    t = t.trim();
+    if (t[0] === '\u0001' && t[t.length - 1] === '\u0002') t = t.slice(1, -1);
+    t = t.replace(/[\u0001\u0002]/g, '');
+    t = unwrapOnce(unwrapOnce(unwrapOnce(t, '{', '}'), '(', ')'), '[', ']');
+    t = t.replace(SET_WORD, ',');
+    const out = []; let depth = 0, cur = '';
+    for (const ch of t) {
+      if ('({['.includes(ch)) depth++; else if (')}]'.includes(ch)) depth--;
+      if ((ch === ',' || ch === ';') && depth <= 0) { out.push(cur); cur = ''; } else cur += ch;
+    }
+    out.push(cur);
+    return out.map(s => s.trim()).filter(Boolean);
+  };
+  const LABEL = /^\s*[A-Za-z](?:_(?:[A-Za-z0-9]|\{[^{}]*\}))?\s*=(?!=)\s*/;
+  /* the values typed in an expression set: labels dropped, a \pm piece turned into its plus and minus values */
+  const exprSetValues = (text) => {
+    const out = [];
+    setPieces(text).forEach((p) => {
+      p = p.replace(LABEL, '');
+      const parts = p.split(/\\pm(?![A-Za-z])/);
+      if (parts.length === 1 || parts.length > 3) { out.push(p.trim()); return; }
+      const signs = parts.length === 2 ? [['+'], ['-']] : [['+', '+'], ['+', '-'], ['-', '+'], ['-', '-']];
+      signs.forEach(sg => out.push(parts.reduce((acc, part, i) => acc + (i ? sg[i - 1] : '') + part, '').trim()));
+    });
+    return out.filter(Boolean);
+  };
+  /* every pairing of the typed values with the keys, in any order: the equality is the caller's */
+  const setMatch = (vals, keys, eq) => {
+    if (vals.length !== keys.length) return false;
+    const used = keys.map(() => false);
+    const go = (i) => { if (i === vals.length) return true; for (let k = 0; k < keys.length; k++) if (!used[k] && eq(vals[i], keys[k])) { used[k] = true; if (go(i + 1)) return true; used[k] = false; } return false; };
+    return go(0);
+  };
+  const countLine = (want, got) => `This question needs ${want} values, separated by commas. You gave ${got}.`;
+  const isSetSpec = (spec) => !!spec && Array.isArray(spec.answers) && spec.answers.length > 0;
+  const setAnswerText = (spec) => (spec.kind === 'numeric' ? spec.answers.map(a => fmtNum(+a)) : spec.answers.map(String)).join(', ');
+  /* expression set: { ok, key, line } on the typed LaTeX (the answers and each wrong[].tex are comma-separated values) */
+  const exprSetGrade = (ce, spec, text) => {
+    const vals = exprSetValues(text), keys = spec.answers.map(String);
+    if (!vals.length) return { ok: false, key: null };
+    if (vals.length !== keys.length) return { ok: false, key: 'count', line: countLine(keys.length, vals.length) };
+    const fo = { functions: Array.isArray(spec.functions) ? spec.functions : [], integers: Array.isArray(spec.integers) ? spec.integers : [] };
+    const eq = (v, k) => (ce && exprEqual(ce, v, k, fo)) || (!!normExpr(v) && normExpr(v) === normExpr(k));
+    if (setMatch(vals, keys, eq)) return { ok: true, key: null };
+    const w = (spec.wrong || []).find(x => x && typeof x.tex === 'string' && setMatch(vals, exprSetValues(x.tex), eq));
+    return { ok: false, key: w ? w.id : null };
+  };
+  /* numeric set: the typed text is split the same way; each value is a number (a leading "x =" dropped, a ± piece expanded) */
+  const numSetValues = (text, { percent = false } = {}) => {
+    const out = [];
+    setPieces(String(text ?? '').replace(/\+\s*\/\s*[-−]|\+\s*-/g, '\\pm ')).forEach((p) => {
+      p = p.replace(LABEL, '').replace(/^\+\s*/, '');
+      const parts = p.split(/\\pm(?![A-Za-z])/);
+      if (parts.length === 1) { out.push(parseNum(p, { percent })); return; }
+      if (parts.length !== 2) { out.push(NaN); return; }
+      const a = parts[0].trim() ? parseNum(parts[0], { percent }) : 0, b = parseNum(parts[1], { percent });
+      out.push(a + b, a - b);
+    });
+    return out;
+  };
+  const numSetGrade = (spec, text) => {
+    const vals = numSetValues(text, { percent: spec.unit === '%' });
+    if (!vals.length) return { ok: false, key: null, detail: { value: null } };
+    if (vals.some(v => !Number.isFinite(v))) return { ok: false, key: null, detail: { value: null } };
+    const keys = spec.answers.map(Number);
+    if (vals.length !== keys.length) return { ok: false, key: 'count', line: countLine(keys.length, vals.length), detail: { value: vals } };
+    const eq = (tol) => (v, k) => within(v, k, tol);
+    if (setMatch(vals, keys, eq(spec.tol))) return { ok: true, key: null, detail: { value: vals } };
+    const w = (spec.wrong || []).find((x) => {
+      if (!x || x.value == null) return false;
+      const wv = typeof x.value === 'string' ? numSetValues(x.value).filter(Number.isFinite) : [+x.value];
+      return setMatch(vals, wv, eq(x.tol ?? { abs: 1e-9 }));
+    });
+    return { ok: false, key: w ? w.id : null, detail: { value: vals } };
+  };
+
   /* ---------- Authored answers, in the shape each widget's set() accepts ---------- */
   const manipulatePath = (spec) => {
     const S = spec.states || {}, start = spec.start, target = spec.target;
@@ -510,8 +696,8 @@
     switch (spec.kind) {
       case 'choice': return (spec.options || []).find(o => o.correct)?.id ?? null;
       case 'multi': return (spec.options || []).filter(o => o.correct).map(o => o.id);
-      case 'numeric': return spec.unit === '%' ? fmtNum(spec.answer * 100) : fmtNum(+spec.answer);
-      case 'expression': return spec.answer;
+      case 'numeric': return isSetSpec(spec) ? setAnswerText(spec) : spec.unit === '%' ? fmtNum(spec.answer * 100) : fmtNum(+spec.answer);
+      case 'expression': return isSetSpec(spec) ? setAnswerText(spec) : spec.answer;
       case 'order': return (spec.answer || []).slice();
       case 'place': return spec.mode === 'boxes' ? JSON.parse(JSON.stringify(spec.answer || {})) : spec.mode === 'order' ? (spec.order || []).slice() : Object.fromEntries((spec.slots || []).map(s => [s.id, (s.accepts || []).slice()]));
       case 'table': {
@@ -619,5 +805,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, shapeFactorised, shapeFullyFactorised, shapeCompletedSquare, exprFormOk, setPieces, exprSetValues, setMatch, isSetSpec, setAnswerText, exprSetGrade, numSetValues, numSetGrade, countLine, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();

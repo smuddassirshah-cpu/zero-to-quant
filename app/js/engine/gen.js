@@ -13,6 +13,8 @@
      ZQ.gen.sample(family, { seeds, set })     the statistics the validator reads: distinct prompts, rejects, errors, items
      ZQ.gen.playerItem(item, set, k)           an item in the shape ZQ.player.runSet takes (feedback, explain, widget)
      ZQ.gen.rng(seed)                          the seeded generator (ZQ.arith.rng, mulberry32), one stream per string seed
+   A var may be a pick of tuples ({ pick: [[1, 6], [2, 3]], as: ["r", "s"] }): one draw sets every name in `as` (833). A widget may be
+   a set answer (answers: [...], unordered: true; 832) and its form may be factorised-fully or completed-square (830, 831).
    No eval and no Function: the evaluator is a small recursive-descent parser over + - * / ^ %, comparisons, and / or / not,
    and the functions gcd lcm abs min max floor ceil round sqrt comb fact sign. Numbers are exact rationals (BigInt) until a
    square root or a fractional power makes a float. */
@@ -416,15 +418,15 @@
   const VAR_NAME = /^[a-z][A-Za-z0-9_]*$/;
   const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
   const WIDGET_FIELDS = {
-    numeric: ['kind', 'answer', 'tol', 'tolerance', 'unit', 'placeholder', 'accept', 'label'],
-    expression: ['kind', 'answer', 'accept', 'form', 'upToConstant', 'tolerance', 'integers', 'functions', 'keyboard', 'label'],
+    numeric: ['kind', 'answer', 'answers', 'unordered', 'tol', 'tolerance', 'unit', 'placeholder', 'accept', 'label'],
+    expression: ['kind', 'answer', 'answers', 'unordered', 'accept', 'form', 'upToConstant', 'tolerance', 'integers', 'functions', 'keyboard', 'label'],
   };
-  const FORMS = ['expanded', 'factorised', 'simplified', 'rectangular'];
+  const FORMS = ['expanded', 'factorised', 'factorised-fully', 'completed-square', 'simplified', 'rectangular'];
   const reserved = (n) => KEYWORDS.has(n) || FUNCS[n];
   const intRange = (v) => Array.isArray(v) && v.length === 2 && v.every((x) => Number.isInteger(x)) && v[0] <= v[1];
   const varValues = (spec) => {         // every value a var can take, or null when the range is too wide to list (the static check then only counts)
     const not = (Array.isArray(spec.not) ? spec.not : []).map((x) => String(x));
-    if (spec.pick) return spec.pick.filter((x) => !not.includes(String(x)));
+    if (spec.pick) return spec.as ? spec.pick.slice() : spec.pick.filter((x) => !not.includes(String(x)));
     const [lo, hi] = spec.int, step = spec.step || 1, out = [];
     for (let x = lo; x <= hi; x += step) if (!not.includes(String(x))) out.push(x);
     return out;
@@ -456,8 +458,21 @@
         else if (reserved(name)) msgs.push(`${w}: "${name}" is a reserved word or function name`);
         if (!spec || typeof spec !== 'object' || Array.isArray(spec)) { msgs.push(`${w}: must be an object with int or pick`); return; }
         const kinds = ['int', 'pick'].filter((k) => spec[k] !== undefined);
-        Object.keys(spec).forEach((k) => { if (!['int', 'pick', 'not', 'step'].includes(k)) msgs.push(`${w}: unknown field "${k}" (int, pick, not, step)`); });
+        Object.keys(spec).forEach((k) => { if (!['int', 'pick', 'not', 'step', 'as'].includes(k)) msgs.push(`${w}: unknown field "${k}" (int, pick, not, step, as)`); });
         if (kinds.length !== 1) { msgs.push(`${w}: give exactly one of int and pick`); return; }
+        if (spec.as !== undefined) {           // a pick of tuples: one draw sets several names (ENGINE-BACKLOG 833)
+          const names = spec.as;
+          if (spec.pick === undefined || !Array.isArray(names) || names.length < 2 || !names.every((n) => typeof n === 'string')) { msgs.push(`${w}.as: a list of two or more names, with a pick of tuples`); return; }
+          if (spec.not !== undefined) msgs.push(`${w}: not cannot be used with a pick of tuples (leave the tuple out of the list)`);
+          if (!(Array.isArray(spec.pick) && spec.pick.length && spec.pick.every((t) => Array.isArray(t) && t.length === names.length && t.every((x) => typeof x === 'string' || (typeof x === 'number' && Number.isFinite(x)))))) { msgs.push(`${w}.pick: a non-empty list of tuples, each with ${names.length} numbers or text values to match as`); return; }
+          names.forEach((n) => {
+            if (!VAR_NAME.test(n)) msgs.push(`${w}.as: "${n}" is not a var name (a lower-case letter, then letters, digits and _)`);
+            else if (reserved(n)) msgs.push(`${w}.as: "${n}" is a reserved word or function name`);
+            else if (known.has(n) || Object.keys(f.vars).some((k) => k === n || (f.vars[k] && f.vars[k].as && k !== name && f.vars[k].as.includes(n)))) msgs.push(`${w}.as: "${n}" is already a var`);
+            known.add(n);
+          });
+          return;
+        }
         if (spec.int !== undefined && !intRange(spec.int)) msgs.push(`${w}.int: [low, high] whole numbers with low at most high`);
         if (spec.pick !== undefined && !(Array.isArray(spec.pick) && spec.pick.length && spec.pick.every((x) => typeof x === 'string' || (typeof x === 'number' && Number.isFinite(x))))) msgs.push(`${w}.pick: a non-empty list of numbers or text`);
         if (spec.not !== undefined && !Array.isArray(spec.not)) msgs.push(`${w}.not: a list of excluded values`);
@@ -492,7 +507,17 @@
       if (!WIDGET_FIELDS[w.kind]) msgs.push(`widget.kind is "numeric" or "expression" (found ${JSON.stringify(w.kind)})`);
       else {
         Object.keys(w).forEach((k) => { if (!WIDGET_FIELDS[w.kind].includes(k)) msgs.push(`widget.${k}: not a field of a ${w.kind} widget here (${WIDGET_FIELDS[w.kind].join(', ')})`); });
-        if (w.answer === undefined) msgs.push('widget.answer is required');
+        const isSet = w.answers !== undefined || w.unordered !== undefined;
+        if (!isSet && w.answer === undefined) msgs.push('widget.answer is required');
+        if (isSet) {           // a set answer (ENGINE-BACKLOG 832): answers, with unordered: true, instead of answer
+          if (w.answer !== undefined) msgs.push('widget: give answers (a set) or answer, not both');
+          if (!(Array.isArray(w.answers) && w.answers.length >= 2 && w.answers.every((x) => typeof x === 'string'))) msgs.push('widget.answers is a list of two or more values (text templates)');
+          if (w.unordered !== true) msgs.push('widget.unordered must be true with answers (the values are an unordered set)');
+          if (w.form !== undefined) msgs.push('widget.form is not used with answers');
+          if (w.accept !== undefined && w.kind === 'expression') msgs.push('widget.accept is not used with answers (list every value in answers)');
+          if (w.upToConstant !== undefined) msgs.push('widget.upToConstant is not used with answers');
+          if (w.unit === '%') msgs.push('widget.unit "%" is not used with answers');
+        }
         if (w.form !== undefined && (w.kind !== 'expression' || !FORMS.includes(w.form))) msgs.push(`widget.form is one of ${FORMS.join(', ')} (expression only)`);
         if (w.upToConstant !== undefined && (w.kind !== 'expression' || typeof w.upToConstant !== 'boolean')) msgs.push('widget.upToConstant is true or false (expression only)');
         if (w.accept !== undefined && (w.kind === 'expression' ? !(Array.isArray(w.accept) && w.accept.every((x) => typeof x === 'string')) : typeof w.accept !== 'string')) msgs.push(w.kind === 'expression' ? 'widget.accept is a list of accepted forms (text)' : 'widget.accept is one line of text');
@@ -532,7 +557,7 @@
   };
 
   /* ---------- Drawing ---------- */
-  const NUMERIC_KEYS = new Set(['answer', 'abs', 'rel', 'value']);
+  const NUMERIC_KEYS = new Set(['answer', 'answers', 'abs', 'rel', 'value']);
   const asNumber = (text, at) => {
     const s = String(text).trim().replace(/\s+/g, '');
     let m;
@@ -572,7 +597,8 @@
         Object.entries(f.vars || {}).forEach(([name, spec]) => {
           const vals = varValues(spec);
           const pick = vals[Math.floor(r() * vals.length)];
-          env[name] = fromJS(pick);
+          if (spec.as) spec.as.forEach((n, i) => { env[n] = fromJS(pick[i]); });   // a tuple: one draw, several names
+          else env[name] = fromJS(pick);
         });
         Object.entries(f.let || {}).forEach(([name, src]) => { env[name] = evaluate(src, env); });
         let ok = true;
@@ -584,14 +610,19 @@
         const wrong = (f.wrong || []).map((x) => {
           const o = { id: x.id };
           if (x.tex !== undefined) o.tex = render(x.tex, env);
-          if (x.value !== undefined) o.value = typeof x.value === 'number' ? x.value : asNumber(render(x.value, env, 'num'), `wrong ${x.id} value`);
+          if (x.value !== undefined) {
+            if (f.widget.answers !== undefined) {   // a numeric set: the wrong value is a comma-separated list of numbers
+              o.value = render(x.value, env, 'num');
+              o.value.split(',').forEach((part) => asNumber(part, `wrong ${x.id} value`));
+            } else o.value = typeof x.value === 'number' ? x.value : asNumber(render(x.value, env, 'num'), `wrong ${x.id} value`);
+          }
           if (x.tol !== undefined) o.tol = typeof x.tol === 'object' ? Object.fromEntries(Object.entries(x.tol).map(([k, v]) => [k, typeof v === 'string' ? asNumber(render(v, env, 'num'), `wrong ${x.id} tol`) : v])) : x.tol;
           o.line = x.line !== undefined ? render(x.line, env) : '';
           return o;
         });
         const solution = (f.solution || []).map((s) => render(s, env));
         const vars = {}, lets = {};
-        Object.keys(f.vars || {}).forEach((k) => { vars[k] = showVar(env[k]); });
+        Object.entries(f.vars || {}).forEach(([k, spec]) => { (spec && spec.as ? spec.as : [k]).forEach((n) => { vars[n] = showVar(env[n]); }); });
         Object.keys(f.let || {}).forEach((k) => { lets[k] = showVar(env[k]); });
         return { family: f.id, skill: f.skill || '', vars, lets, prompt, widget, wrong, solution, stats };
       } catch (e) { stats.rejected++; note(e); }

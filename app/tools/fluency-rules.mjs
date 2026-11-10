@@ -28,6 +28,7 @@ export const grade = () => G || (G = sandbox());
 
 /* the numeric widget's grade(), line for line (js/engine/widgets/numeric.js), on the typed text */
 export const numericGrade = (w, text) => {
+  if (grade().isSetSpec(w)) { const r = grade().numSetGrade(w, text); return { ok: r.ok, key: r.key }; }   // a set answer (ENGINE-BACKLOG 832)
   const pct = w.unit === '%', t = String(text).trim();
   const v0 = grade().parseNum(t), v = pct && !t.includes('%') ? v0 / 100 : v0;
   if (!Number.isFinite(v)) return { ok: false, key: null };
@@ -37,9 +38,10 @@ export const numericGrade = (w, text) => {
 };
 export const typedAnswer = (item) => {
   const w = item.widget;
+  if (grade().isSetSpec(w)) return w.answers.map((a) => grade().fmtNum(+a)).join(', ');
   return grade().fmtNum(w.unit === '%' ? +(w.answer * 100).toPrecision(12) : w.answer);
 };
-export const typedValue = (w, value) => grade().fmtNum(w.unit === '%' ? +(value * 100).toPrecision(12) : value);
+export const typedValue = (w, value) => grade().isSetSpec(w) ? String(value) : grade().fmtNum(w.unit === '%' ? +(value * 100).toPrecision(12) : value);
 export const norm = (s) => grade().normExpr(s);
 
 export const loadSet = (ref) => {
@@ -118,20 +120,22 @@ export const checkSet = (doc, ctx = {}) => {
     const bad = { answer: 0, empty: 0, stray: 0, wrongSame: new Map(), wrongEmpty: new Map(), wrongBlank: 0 };
     r.items.forEach((it) => {
       const wid = it.widget;
-      const text = [it.prompt, ...it.solution, wid.answer, ...[].concat(wid.accept || []).filter((x) => typeof x === 'string')].join(' ');
+      const set = grade().isSetSpec(wid);
+      const text = [it.prompt, ...it.solution, wid.answer, ...(set ? wid.answers : []), ...[].concat(wid.accept || []).filter((x) => typeof x === 'string')].join(' ');
       if (/NaN|undefined|Infinity|\[object/.test(text)) bad.stray++;
-      if (!it.prompt.trim() || it.solution.some((s) => !String(s).trim()) || wid.answer === '' || wid.answer === undefined) bad.empty++;
+      if (!it.prompt.trim() || it.solution.some((s) => !String(s).trim()) || (set ? wid.answers.some((a) => a === '' || a === undefined) : wid.answer === '' || wid.answer === undefined)) bad.empty++;
       if (numeric) {
         if (!numericGrade(wid, typedAnswer(it)).ok) bad.answer++;
         it.wrong.forEach((x) => {
-          if (!Number.isFinite(x.value)) { bad.wrongBlank++; return; }
+          if (set ? !String(x.value).split(',').every((p) => Number.isFinite(grade().parseNum(p))) : !Number.isFinite(x.value)) { bad.wrongBlank++; return; }
           if (numericGrade({ ...wid, wrong: [] }, typedValue(wid, x.value)).ok) bad.wrongSame.set(x.id, (bad.wrongSame.get(x.id) || 0) + 1);
         });
       } else {
-        const keys = [wid.answer, ...[].concat(wid.accept || [])].map(norm);
+        const keys = set ? [] : [wid.answer, ...[].concat(wid.accept || [])].map(norm);
+        const setKey = set ? grade().exprSetValues(wid.answers.join(',')).map(norm).sort().join('|') : null;   // a set compares by its values, in any order
         it.wrong.forEach((x) => {
           if (!String(x.tex).trim()) bad.wrongEmpty.set(x.id, (bad.wrongEmpty.get(x.id) || 0) + 1);
-          else if (keys.includes(norm(x.tex))) bad.wrongSame.set(x.id, (bad.wrongSame.get(x.id) || 0) + 1);
+          else if (set ? grade().exprSetValues(x.tex).map(norm).sort().join('|') === setKey : keys.includes(norm(x.tex))) bad.wrongSame.set(x.id, (bad.wrongSame.get(x.id) || 0) + 1);
         });
       }
     });

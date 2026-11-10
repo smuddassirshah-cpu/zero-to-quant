@@ -3,12 +3,16 @@
    Engine decides equivalence (isEqual after simplify, with a 5-point numeric second opinion for one variable).
    Both load lazily on the first expression widget with a 6 s budget. If either fails, the widget falls back to a
    plain text field compared, after normExpr, against the answer and the authored accept[] forms.
-   form: "expanded" | "factorised" | "simplified" | "rectangular" also asks for a shape, judged on the Compute Engine's canonical
+   form: "expanded" | "factorised" | "factorised-fully" | "completed-square" | "simplified" | "rectangular" also asks for a shape, judged on the Compute Engine's canonical
    MathJSON of the input: expanded has no sum inside a product or power (an Add of monomials, or one monomial);
    factorised is a Multiply with a sum among its factors, or a power of a sum (a leading minus is allowed);
    simplified has no more nodes than its own simplify(), and a constant answer is also evaluated (no sum of two plain numbers, no
    division by a complex number, no bracket holding i inside a product); rectangular (a constant answer) is a + bi in that
    sense, so retyping the prompt's \frac{4+7i}{2-3i} does not score (ENGINE-BACKLOG 596). An equal answer in the wrong shape returns key "form".
+   factorised-fully is factorised with no bracket left holding a common whole-number factor or a quadratic that factorises;
+   completed-square is a(x+p)^2 + q (grade.js shapeFullyFactorised, shapeCompletedSquare; ENGINE-BACKLOG 830, 831).
+   A set answer (answers: [...], unordered: true) takes the values separated by commas, in any order, \pm for both values; a wrong
+   number of values returns key "count" (grade.js exprSetGrade; ENGINE-BACKLOG 832).
    Complex answers (an i in either side) compare real and imaginary parts at every seeded point; a vector or matrix
    answer ((2, -1, 3) or a pmatrix) compares entry by entry and a wrong size returns key "length" (grade.js).
    Without the engine the text fallback already demands a normalised match with answer or accept[], which authors
@@ -56,6 +60,7 @@
   Z.widgets.exprForms = { reducible, rectangular, hasI };
 
   Z.widgets.register('expression', (host, spec, ctx) => {
+    const isSet = G().isSetSpec(spec) && spec.unordered === true;
     const el = Z.h(`<div class="wd-expr is-loading">
       <div class="field wd-field wd-expr-field"><span class="wd-expr-load t-caption">Loading the maths editor</span></div>
       <p class="t-caption wd-expr-note" hidden></p>
@@ -98,6 +103,7 @@
           const vk = window.mathVirtualKeyboard; if (!vk) return;
           const show = !vk.visible;
           mf.focus();
+          setKeyboard(vk);
           if (show) vk.show(); else vk.hide();
           kb.setAttribute('aria-pressed', String(show));
         });
@@ -117,10 +123,26 @@
       if (locked) lockNow(true);
       changed();
     };
+    /* a set answer needs a comma and a plus-or-minus (ENGINE-BACKLOG 832): its own layout, and the default back for any other item */
+    const SET_KEYBOARD = [{
+      label: '123', tooltip: 'Numbers, comma and plus or minus', rows: [
+        ['[7]', '[8]', '[9]', '[+]', '\\pm', '[,]', '[backspace]'],
+        ['[4]', '[5]', '[6]', '[-]', '\\sqrt{#0}', '\\frac{#@}{#?}', '[left]'],
+        ['[1]', '[2]', '[3]', '[*]', 'x', 'y', '[right]'],
+        ['[0]', '[.]', '[(]', '[)]', '[=]', '#@^{#?}', '[hide-keyboard]'],
+      ],
+    }];
+    const setKeyboard = (vk) => {
+      try {
+        if (isSet) { vk.layouts = SET_KEYBOARD; Z.setKeyboardActive = true; }
+        else if (Z.setKeyboardActive) { vk.layouts = 'default'; Z.setKeyboardActive = false; }
+      } catch { /* the default keyboard stays */ }
+    };
     const loadP = G().maths().then(build, () => build({ mathlive: false, ce: null }));
 
     const lockNow = (v) => { if (mf) mf.readOnly = v; if (txt) txt.readOnly = v; };
     const forms = () => [spec.answer, ...(spec.accept || [])].filter(Boolean);
+    const answerLatex = () => (isSet ? G().setAnswerText(spec) : spec.answer);
     const fo = { functions: Array.isArray(spec.functions) ? spec.functions : [], integers: Array.isArray(spec.integers) ? spec.integers : [] }; // letters that are functions here (f(x) stays a call); integers: symbols sampled at whole numbers
     const equal = (inputLatex, inputAscii, target) => {
       if (ce && (spec.upToConstant ? G().exprEqualUpToConstant(ce, inputLatex, target, fo) : G().exprEqual(ce, inputLatex, target, fo))) return true; // item 200: + C need not be listed
@@ -128,12 +150,11 @@
       return !!n && (n === G().normExpr(target));
     };
     /* The shape check on canonical MathJSON */
-    const FORM_LINE = { rectangular: 'That is equal, but not in the form a + bi: work out the real and imaginary parts.', expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
+    const FORM_LINE = { 'factorised-fully': 'Factorise fully: a bracket still has a common factor.', 'completed-square': 'Write it as a bracket squared plus a number.', rectangular: 'That is equal, but not in the form a + bi: work out the real and imaginary parts.', expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
     const head = (j) => (Array.isArray(j) ? j[0] : null);
     const args = (j) => (Array.isArray(j) ? j.slice(1) : []);
     const hasSum = (j) => head(j) === 'Add' || head(j) === 'Subtract' || args(j).some(hasSum);
     const size = (j) => (Array.isArray(j) ? 1 + args(j).reduce((a, x) => a + size(x), 0) : 1);
-    const unNeg = (j) => (head(j) === 'Negate' ? args(j)[0] : j);
     const isSumLike = (j) => head(j) === 'Add' || head(j) === 'Subtract';
     const formOk = (L) => {
       if (!spec.form || !ce) return true;
@@ -141,7 +162,9 @@
         return G().withParsed(ce, L, fo.functions, (e) => {
           const j = e.json;
           if (spec.form === 'expanded') return isSumLike(j) ? args(j).every(t => !hasSum(t)) : !hasSum(j);
-          if (spec.form === 'factorised') { const r = unNeg(j); return (head(r) === 'Multiply' && args(r).some(f => isSumLike(f) || (head(f) === 'Power' && isSumLike(args(f)[0])))) || (head(r) === 'Power' && isSumLike(args(r)[0])); }
+          if (spec.form === 'factorised') return G().shapeFactorised(j);
+          if (spec.form === 'factorised-fully') return G().shapeFullyFactorised(j);
+          if (spec.form === 'completed-square') return G().shapeCompletedSquare(j);
           const constant = !(e.unknowns || []).filter(v => v !== 'iota').length;   // a constant answer must be evaluated, not retyped from the prompt
           if (spec.form === 'rectangular') return constant ? Z.widgets.exprForms.rectangular(j) : true;
           if (spec.form === 'simplified') { if (constant && Z.widgets.exprForms.reducible(j)) return false; try { return size(j) <= size(e.simplify().json); } catch { return true; } }
@@ -149,20 +172,21 @@
         });
       } catch { return true; }
     };
-    const acceptText = () => 'Accepted: any expression equal to ' + G().inline('$' + spec.answer + '$') + (spec.accept && spec.accept.length ? ', for example ' + spec.accept.slice(0, 2).map(a => `<code class="lsn-ic">${Z.esc(a)}</code>`).join(' or ') : '') + '.';
+    const acceptText = () => isSet ? 'Accepted: ' + G().inline('$' + G().setAnswerText(spec) + '$') + ', in either order.' : 'Accepted: any expression equal to ' + G().inline('$' + spec.answer + '$') + (spec.accept && spec.accept.length ? ', for example ' + spec.accept.slice(0, 2).map(a => `<code class="lsn-ic">${Z.esc(a)}</code>`).join(' or ') : '') + '.';
     const showAccept = () => { acc.innerHTML = acceptText(); acc.hidden = false; };
 
     const api = {
       el,
       value: () => latex(),
       set(v) { setValue(v); changed(); },
-      answer: () => (mf || !txt ? spec.answer : (spec.accept && spec.accept[0]) || spec.answer),
+      answer: () => (mf || !txt ? answerLatex() : (spec.accept && spec.accept[0]) || answerLatex()),
       /* item 105: a value set while the editor loads (the test hook's answerCorrect) counts; grading then waits for the load */
       ready: () => latex().trim() !== '',
       grade() {
         if (!loaded) return loadP.then(() => api.grade());
         const L = latex(), A = ascii();
         if (!L.trim()) return { ok: false, key: null };
+        if (isSet) { const r = G().exprSetGrade(ce, spec, L); return { ok: r.ok, key: r.key, line: r.line, detail: { latex: L, ascii: A, engine: ce ? 'compute-engine' : 'text', form: null } }; }
         const same = forms().some(f => equal(L, A, f));
         const shaped = same && formOk(L);
         let key = null, line;
@@ -177,7 +201,7 @@
       lock() { locked = true; lockNow(true); },
       unlock() { locked = false; lockNow(false); mark(null); acc.hidden = true; },
       markGraded(res) { mark(res.ok ? 'correct' : 'wrong'); if (res.ok || res.final) showAccept(); },
-      reveal() { setValue(mf || !txt ? spec.answer : (spec.accept && spec.accept[0]) || spec.answer); locked = true; lockNow(true); mark('wd-rev'); showAccept(); },
+      reveal() { setValue(mf || !txt ? answerLatex() : (spec.accept && spec.accept[0]) || answerLatex()); locked = true; lockNow(true); mark('wd-rev'); showAccept(); },
       reset() { setValue(''); locked = false; lockNow(false); mark(null); acc.hidden = true; changed(); },
       focus() { (mf || txt)?.focus?.(); },
       destroy() { alive = false; try { if (window.mathVirtualKeyboard && window.mathVirtualKeyboard.visible) window.mathVirtualKeyboard.hide(); } catch { /* none */ } },
