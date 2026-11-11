@@ -75,3 +75,31 @@ Opus fixer, 11 Nov 2026. No graded key, option, tolerance, canvas value, hidden 
 Not touched (no finding, noted only): `l16` `screens[7].prose` still names "lesson 12" twice, against the voice rule on lesson numbers.
 
 Gates: validator 0 errors (manifest unchanged); `odes-L4-concepts-r2.py` 116 checks, 0 failed, exit 0 (no check string changed); `odes-L4-numbers.py` and `odes-L4-concepts.py` exit 0; voice scan 35 on the odes folder 0 and 0; playthrough of l16, l17, l18 with `--local-cdn`, desktop and `--mobile`: all passed.
+
+## Fix-pass read
+
+Fresh reader, 11 Nov 2026. Diff read: `git diff 8f8ddf4a~1 8f8ddf4a -- app/content/courses/odes/` (three files, five changed strings). Rows were judged before the findings above, the ledger and `audit-odes-4.md` were opened. All numbers below were recomputed in Python for this read.
+
+| File | JSON path | New text in short | Verdict | Basis |
+|---|---|---|---|---|
+| `l16-euler-method.json` | `screens[7].prose` | "With $\lambda = 10$, the factor is 0.5 at $h = 0.05$ and 0 at $h = 0.1$." | correct | Factor is $1 - h\lambda$: $1 - 0.05 \times 10 = 0.5$ and $1 - 0.1 \times 10 = 0$. The screen's canvas plots `abs(1 - 10*x)` and its question, key 0.2, `byKey.one` and explain all use $y' = -10y$, so $\lambda = 10$ matches every other string. Both steps sit below $2/\lambda = 0.2$. |
+| `l17-runge-kutta.json` | `screens[5].canvas.state.caption` | "Green: Euler's 63 steps. Blue: RK4's 63 steps." | correct | Series `E` has `colour: 3`, `K` has `colour: 1`. `plane.js` line 635 sets `slot: f.colour`, line 1107 draws with `K.obj(id, 'cvb-fn', fd.slot)`, `COLOUR` maps 3 to `cvb-c3` and 1 to `cvb-c1`; `canvases.css` line 471 sets `--c: var(--s3)` and `var(--s1)`; `tokens.css` gives `--s3` #1BAF7A (dark #199E70), a green, and `--s1` #2A78D6 (dark #3987E5), a blue. Orange is `--s2`, used by nothing here; the field arrows are `muted`. |
+| `l18-four-decimal-places.json` | `screens[6].feedback.correct` | "The error in $D$ is $1.35 \times 10^{-4}$, outside the band of $5 \times 10^{-5}$." | correct | Euler on $(r, I)$ with $n = 60$ gives $D = 0.78907975$; closed form $0.78921492$; difference $1.3517 \times 10^{-4}$. The same from the table's rounded values: $0.789215 - 0.789080 = 1.35 \times 10^{-4}$. Band is as defined on `screens[3]`. Agrees with option a, option b's `why` and the hints. |
+| `l18-four-decimal-places.json` | `screens[6].explain.text` | "The error is $1.35 \times 10^{-4}$, 2.7 times the band, so monthly Euler fails. Euler is first order, so it takes 163 steps, not 60..." | correct | $1.3517 \times 10^{-4} / 5 \times 10^{-5} = 2.703$. Step loop: error $50.016 \times 10^{-6}$ at $n = 162$, $49.709 \times 10^{-6}$ at 163, so 163 is the first inside. First-order scaling agrees: $60 \times 2.703 = 162.2$. Matches `screens[3]` key 163. The table still prints 0.7891 against 0.7892, which is true and no longer offered as the reason. |
+| `l18-four-decimal-places.json` | `screens[7].prose` | "Then $I$ is normal, so the price gains a factor $e^{\frac12\mathrm{Var}(I)}$; here it is $e^{4.643\sigma^2}$. The factor is above 1 because $e^{-I}$ is convex." | correct | Vasicek $r$ is Gaussian (linear SDE, constant $\sigma$), so $I = \int_0^5 r\,dt$ is normal and the normal moment generating function gives $E[e^{-I}] = e^{-E[I] + \frac12\mathrm{Var}(I)}$ exactly; $E[I]$ is the no-noise $I$ because $E[r]$ obeys the drift ODE. So normality gives the exact factor, and convexity (Jensen) gives only its direction; the new text assigns each claim to its right cause. $\mathrm{Var}(I)/\sigma^2 = 9.286408$ by the closed form and $9.28641$ by a double sum of the OU covariance on a $2000^2$ grid, so half is 4.643204. $0.78921492 \times e^{4.643204 \times 10^{-4}} = 0.789581$; gap £0.03665, inside the key's tolerance. |
+
+Verdicts: 5 rows, 5 `correct`, 0 `wrong`, 0 `imprecise`, 0 `misleading`, 0 `unverified`. No findings.
+
+No contradiction was left in the three files: the l16 screen's other strings already used $\lambda = 10$; the l17 legend labels ("Euler", "RK4") carry the same colours as the caption; l18 `screens[7]` `byKey.lower` and explain still credit convexity only with the direction of the gap.
+
+After the rows were written the findings above were read. Each of the four is met by its fix.
+
+### Note outside the diff: lesson numbers in `l16` `screens[7].prose`
+
+Confirmed. The prose reads "This is lesson 12's discrete test." and ends "(`numerics` lesson 12)". `l12-stability.json` teaches the test on its screen "Continuous against discrete": a discrete chain decays only when $|\lambda| < 1$. Tag: voice, minor. Paste-ready replacement for the whole `prose` string (JSON-escaped), with no other change:
+
+```
+"prose": "On $y' = -\\lambda y$ each step multiplies by $1 - h\\lambda$. The steps shrink only if $$|1 - h\\lambda| < 1, \\quad\\text{so}\\quad h < \\frac{2}{\\lambda}.$$ This is the discrete stability test: a multiplier must have size below 1. For an eigenvalue $\\mu = -\\lambda < 0$ the same factor reads $1 + h\\mu$. With $\\lambda = 10$, the factor is 0.5 at $h = 0.05$ and 0 at $h = 0.1$. Beside slower rates in a system, a fast one like this makes it **stiff**, a topic the `numerics` course takes up.",
+```
+
+The same lesson cites other lessons by number elsewhere ("Lesson 5's drift", "lesson 11's" centre), as do l17 and l18 ("Lesson 16's centre", "Lesson 17's RK4"); those are outside this diff and are left for a course-wide decision.
