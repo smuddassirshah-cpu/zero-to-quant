@@ -24,6 +24,7 @@ const ROWS = {
   'counting 3 p-sail-ring part 2 (want: first five pass, last fails)': ['\\frac{1}{2}r+\\frac{1}{2}s', '\\frac{1}{2}(r+s)', '(r+s)/2', '0.5r+0.5s', '\\frac{r+s}{2}', 'r+\\frac{1}{2}(s-r)'],
   'counting 3 p-sail-ring part 3 (want: first three pass, last fails)': ['\\frac{1}{3}r+\\frac{1}{3}s', '\\frac{1}{3}(r+s)', '(r+s)/3', '\\frac{2}{3}(\\frac{1}{2}r+\\frac{1}{2}s)'],
   'counting 3 p-sail-ring part 4 (want: first four pass, last two fail)': ['-\\frac{2}{3}r+\\frac{1}{3}s', '\\frac{1}{3}s-\\frac{2}{3}r', '(s-2r)/3', '\\frac{1}{3}(s-2r)', '-r+\\frac{1}{3}r+\\frac{1}{3}s', '\\frac{1}{3}r+\\frac{1}{3}s-r'],
+  'other forms a learner may type for the simplified answer (want: all pass)': ['\\frac{5t-4}{2}', '2.50t-2', '2.5t-2.00', '-2+\\frac{5}{2}t', '2.5\\times t-2', '5\\times n-100', '\\frac{s-2r}{3}', '-\\frac{2r}{3}+\\frac{s}{3}', '\\frac{r+s}{3}', '\\frac{r}{3}+\\frac{s}{3}', '\\frac{1}{3}s+\\frac{1}{3}r', '\\frac{-2r+s}{3}'],
 };
 for (const [k, rows] of Object.entries(ROWS)) {
   console.log(k);

@@ -1,8 +1,8 @@
-"""Shape checks on the six sets: parts and kinds, difficulty, skills against the level's lesson skills, explanation length,
+"""Shape checks on the four sets: parts and kinds, difficulty, skills against the level's lesson skills, explanation length,
 a stated answer form on every numeric part, wrong[] bands wide against their own value, whether each later part restates a
 value, choice parts (share, key length, options named by place), and reading load (words in prose and questions).
 
-Usage (repo root): python3 docs/reviews/problems-0.2-a-scripts/forms.py
+Usage (repo root): python3 docs/reviews/problems-0.3-a-scripts/forms.py
 """
 import json
 import re
@@ -10,9 +10,9 @@ import re
 FORM = re.compile(r'Give |whole number|as a decimal|exact|nearest|decimal place|in terms of|How many', re.I)
 PLACE = re.compile(r'\b(first|second|third|fourth|last|top|bottom) (option|choice|answer)|option [A-D1-4]\b|\babove\b|\bbelow\b', re.I)
 tot = {}
-for c in ('equations', 'functions'):
+for c, ns in (('counting', (1, 2, 3)), ('functions', (4,))):
     cj = json.load(open(f'app/content/courses/{c}/course.json'))
-    for n in (1, 2, 3):
+    for n in ns:
         d = json.load(open(f'app/content/courses/{c}/problems-{n}.json'))
         lessons = next(lv for lv in cj['levels'] if lv['n'] == n)['lessons']
         lskills = set()
