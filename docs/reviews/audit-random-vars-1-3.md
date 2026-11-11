@@ -53,3 +53,41 @@ Pattern: `N. file | JSON path | severity | serious or minor | problem | evidence
 - homework-3 `items[6]` part (d) asks what the sd "would be if ρ were 1". With these two-point marginals (0.6 and 0.7) ρ = 1 cannot be reached, but the part is a formula exercise on the two sds and is sound as one.
 - l9 `screens[3].explain`: "a roll typically lands about 1.7 from 3.5" reads the sd as a typical distance. The mean absolute distance is 1.5; the loose reading is standard and is not graded.
 - l12 `screens[7].prose` cites the Lagrange derivation in the multivariable course; `app/content/courses/multivar/l12-min-variance.json` exists and contains it.
+
+## Overlap with the earlier reads
+
+Read after the blind commit `946c5eda`: `docs/reviews/review-1.5.md` (random-vars section and its fix pass) and `docs/reviews/review-problems-1.5-a.md` to `-d.md` (the parts on random-vars `problems-1` to `problems-3`). Only conceptual findings on levels 1 to 3 are counted: meaning, graded keys and slip values. Voice, sentence counts, rounding instructions, restated values and difficulty labels are left out.
+
+| Finding | This audit | Earlier read |
+|---|---|---|
+| l7 `screens[2]`: "nothing in the argument used independence" (wrong) | 1 | not found |
+| l7 `quiz[2]`, homework-2 `items[6]`: the product rule "fails for dependent variables" (wrong) | 2 | not found |
+| l7, l10: product rule and adding variances "need" independence | 3 | not found |
+| l11 `summary.trap`, `quiz[2]`: scaling leaves ρ unchanged, no "positive" | 4 | not found |
+| l10 `summary.ideas[2]`: "n copies" for independent variables | 5 | not found |
+| l3 `screens[10]`: "on 95% of days" | 6 | not found |
+| l6 `quiz[3]` key: "roughly break even" | 7 | not found |
+| l10 `screens[9]`: √252 rule, returns that add | 8 | not found |
+| l4 `screens[7]`: "39% of paths" | 9 | not found |
+| l5 `screens[9]`: "about £50" | 10 | not found |
+| l6 `screens[9]` slip `one-up`: value £40 did not match its described slip | not found (fixed before this read; the value is now £64 and checks) | review-1.5 |
+| l11 `screens[2]` slip `count`: value 2 did not match its described slip | not found (fixed; now 0) | review-1.5 |
+| homework-2 `items[7]`: overround called the bookmaker's edge | not found (fixed; the explain now separates 5.56% from 1/19) | review-1.5 |
+| problems-3 `p-fund-hedge` part 1: key rejected "0.8%" | not found (fixed; the widget now has the % unit) | review-problems-1.5-b, 2 |
+| problems-2 `p-token-draw` part 5: `carried` slip value mixed two methods | not found (fixed; 44.48 and 43.72 both check) | review-problems-1.5-c B1, -d B1 |
+
+Counts: found by this audit only 10; by the earlier reads only 5; by both 0. Both of this audit's `wrong` findings are new: no earlier read found them. The five earlier-only findings had been fixed before this read, so a blind reader of the current files could not meet them; each fixed value was recomputed here and is correct in the ledger.
+
+## Gates
+
+- Validator (`node app/tools/validate.mjs`): 0 errors, 4666 warnings. `content/manifest.json` unchanged.
+- `docs/reports/random-vars-L1-3-concepts.py`: 158 checks, 13 failed, exit 1 (the 13 are the findings).
+- `docs/reports/fluency-random-vars-numbers.py`: 1767 checks, 0 failures, exit 0.
+- `docs/reports/problems-random-vars-numbers.py`: 1333 checks over sets 1 to 5, 0 failures, exit 0.
+- `docs/reports/random-vars-1-perf-numbers.py`: 109 checks, 0 failures, exit 0.
+- No other number script for these levels exists in `docs/reports/`.
+- Playthrough with `--local-cdn`, the 12 lessons (`--lesson`), 6 review and homework sets (`--set`), 3 problem sets (`--problems`) and the fluency set (`--fluency`): desktop 22 ok, "All passed", exit 0; `--mobile` 22 ok, "All passed", exit 0.
+
+## Inbox
+
+Two bullets under "Raised later (audit random-vars 1-3):" in `docs/BACKLOG-INBOX.md`: a content lint for independence stated as a necessary condition (findings 2 and 3, seven strings), and one for "scaling leaves ρ unchanged" without "positive" (finding 4).
