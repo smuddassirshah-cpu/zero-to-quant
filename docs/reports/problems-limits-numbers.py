@@ -17,7 +17,7 @@ Run: <scratchpad>/venv/bin/python docs/reports/problems-limits-numbers.py
 """
 import json, os, re, sys, itertools
 from fractions import Fraction as F
-from math import sin, cos, exp, log, pi, sqrt, isclose, ceil
+from math import sin, cos, exp, log, pi, sqrt, isclose, ceil, atan, tan
 import sympy as sp
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -413,7 +413,226 @@ def level3(L):
 
 run_level(3, level3)
 
-present = [n for n in (1, 2, 3) if load(n) is not None]
+
+def grid_argmax(f, lo, hi, n=200000):
+    """A brute search on a fine grid: the second method for a best value."""
+    best = max(range(n + 1), key=lambda i: f(lo + (hi - lo) * i / n))
+    return lo + (hi - lo) * best / n
+
+
+def bisect(f, lo, hi, it=200):
+    """A root of f between lo and hi by halving: the second method for a solved equation."""
+    flo = f(lo)
+    for _ in range(it):
+        mid = (lo + hi) / 2
+        if (f(mid) > 0) == (flo > 0):
+            lo, flo = mid, f(mid)
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+# ------------------------------------------------------------------ level 4
+def level4(L):
+    s, u = sp.symbols('s u')
+    # p-spread-quote
+    R_ = 900 * s / (2 + s) ** 2
+    Rf = lambda v: 900 * v / (2 + v) ** 2
+    dR = sp.diff(R_, s)
+    expr_part(L, 'p-spread-quote', 1, dR, {
+        '\\frac{900(2-s)}{(2+s)^3}': 900 * (2 - s) / (2 + s) ** 3,
+        '900(2-s)/(2+s)^3': 900 * (2 - s) / (2 + s) ** 3,
+        '\\frac{1800-900s}{(2+s)^3}': (1800 - 900 * s) / (2 + s) ** 3,
+        '\\frac{900}{(2+s)^2}-\\frac{1800s}{(2+s)^3}': 900 / (2 + s) ** 2 - 1800 * s / (2 + s) ** 3,
+        '\\frac{900(s-2)}{(2+s)^3}': 900 * (s - 2) / (2 + s) ** 3,
+        '\\frac{900(2+3s)}{(2+s)^3}': 900 * (2 + 3 * s) / (2 + s) ** 3,
+        '\\frac{900(2-s)}{2+s}': 900 * (2 - s) / (2 + s),
+        '-\\frac{1800}{(2+s)^3}': -1800 / (2 + s) ** 3})
+    # the slips: added = u'v + uv' over v^2; product of derivatives = 900 * d/ds (2+s)^-2
+    ok(sp.simplify((900 * (2 + s) ** 2 + 900 * s * 2 * (2 + s)) / (2 + s) ** 4 - 900 * (2 + 3 * s) / (2 + s) ** 3) == 0, 'spread: added slip')
+    ok(sp.simplify(900 * sp.diff((2 + s) ** -2, s) + 1800 / (2 + s) ** 3) == 0, 'spread: product-of-derivatives slip')
+    smax = [v for v in sp.solve(dR, s) if v >= 0]
+    ok(smax == [2], 'spread: one stationary half-spread, s = 2')
+    ok(dR.subs(s, 1) > 0 and dR.subs(s, 3) < 0, 'spread: R\' changes + to - at 2 (a maximum)')
+    num(L, 'p-spread-quote', 2, smax[0], grid_argmax(Rf, 0, 10), {'pole': -2, 'start': 0}, agree=1e-4)
+    num(L, 'p-spread-quote', 3, R_.subs(s, 2), F(1800, 16), {'no-s': F(900, 16), 'bottom-unsquared': F(1800, 4), 'slope': 0}, dp=1)
+    num(L, 'p-spread-quote', 4, R_.subs(s, 1), Rf(grid_argmax(Rf, 0, 1)),
+        {'ignored-cap': F(225, 2), 'slope': dR.subs(s, 1), 'start': 0}, agree=1e-9)
+    est = dR.subs(s, 1) * sp.Rational(1, 4)
+    num(L, 'p-spread-quote', 5, est, dq(Rf, 1) * 0.25,
+        {'true-gain': R_.subs(s, sp.Rational(5, 4)) - 100, 'full-cap': dR.subs(s, 1) * sp.Rational(5, 4), 'sign': -est, 'flat-top': dR.subs(s, 2)},
+        dp=2, agree=1e-6)
+    stated('spread: R\'(1) = 33.33', 33.33, dR.subs(s, 1), 0.005)
+    stated('spread: true gain 6.51', 6.51, Rf(1.25) - Rf(1), 0.005)
+    ok(abs(33.33 * 0.25 - 8.3333) <= 0.006, 'spread: the rounded slope 33.33 times 0.25 is accepted')
+    stated('spread: 56.25 trades an hour', 56.25, 900 / 16, 0)
+
+    # p-signal-decay
+    N_ = 60 * sp.log(1 + t) - 3 * t
+    Nf = lambda v: 60 * log(1 + v) - 3 * v
+    num(L, 'p-signal-decay', 1, sp.limit(N_ / t, t, 0), table_limit(lambda v: Nf(v) / v, 0, 1),
+        {'no-cost': 60, 'cost-sign': 63, 'zero-over-zero': 0}, agree=1e-5)
+    num(L, 'p-signal-decay', 2, sp.limit(N_ / t, t, sp.oo), far_out(lambda v: Nf(v) / v),
+        {'start': 57, 'lost-cost': 0, 'cost-sign': 3}, agree=1e-6)
+    ok(sp.limit(sp.log(1 + t) / t, t, sp.oo) == 0, 'signal: ln(1+t)/t -> 0')
+    tbest = sp.solve(sp.diff(N_, t), t)
+    ok(tbest == [19], 'signal: N\'(t) = 0 at 19 only')
+    ok(sp.diff(N_, t, 2).subs(t, 19) < 0, 'signal: N\'\'(19) < 0, a maximum')
+    num(L, 'p-signal-decay', 3, tbest[0], grid_argmax(Nf, 0, 100), {'dropped-one': 20, 'start-rate': 57}, agree=1e-4)
+    num(L, 'p-signal-decay', 4, N_.subs(t, 19), Nf(19),
+        {'dropped-one': Nf(20), 'no-cost': 60 * log(20), 'log-ten': 60 * log(20, 10) - 57}, dp=2, agree=1e-9)
+    stated('signal: ln 20', 2.9957, log(20), 0.00005)
+    stated('signal: 60 ln 20', 179.74, 60 * log(20), 0.005)
+
+    # p-barbell-hedge
+    V_ = 50 * sp.exp(-2 * u) + 50 * sp.exp(-8 * u) - 100 * sp.exp(-5 * u)
+    Vf = lambda v: 50 * exp(-2 * v) + 50 * exp(-8 * v) - 100 * exp(-5 * v)
+    dV = sp.diff(V_, u)
+    E = sp.exp
+    expr_part(L, 'p-barbell-hedge', 1, dV, {
+        '-100e^{-2u}-400e^{-8u}+500e^{-5u}': -100 * E(-2 * u) - 400 * E(-8 * u) + 500 * E(-5 * u),
+        '500e^{-5u}-100e^{-2u}-400e^{-8u}': 500 * E(-5 * u) - 100 * E(-2 * u) - 400 * E(-8 * u),
+        '-100e^{-2u}-400e^{-8u}-500e^{-5u}': -100 * E(-2 * u) - 400 * E(-8 * u) - 500 * E(-5 * u),
+        '-50e^{-2u}-50e^{-8u}+100e^{-5u}': -50 * E(-2 * u) - 50 * E(-8 * u) + 100 * E(-5 * u),
+        '100e^{-2u}+400e^{-8u}-500e^{-5u}': 100 * E(-2 * u) + 400 * E(-8 * u) - 500 * E(-5 * u)})
+    num(L, 'p-barbell-hedge', 2, dV.subs(u, 0), dq(Vf, 0, 1e-5), {'short-sign': -1000}, agree=1e-6)
+    d2 = sp.diff(V_, u, 2).subs(u, 0)
+    hh = 1e-4
+    num(L, 'p-barbell-hedge', 3, d2, (Vf(hh) - 2 * Vf(0) + Vf(-hh)) / hh ** 2,
+        {'first-power': dV.subs(u, 0), 'short-sign': 200 + 3200 + 2500, 'sign': -d2}, agree=1e-5)
+    # V(0.01) exact (sympy, 30 digits) and by the power series of each exponential with fractions
+    ser = lambda T: sum(F(-T, 100) ** k / sp.factorial(k) for k in range(25))
+    Vser = float(50 * ser(2) + 50 * ser(8) - 100 * ser(5))
+    gain = sp.N(1000 * V_.subs(u, sp.Rational(1, 100)), 30)
+    num(L, 'p-barbell-hedge', 4, gain, 1000 * Vser, {'tangent': 0, 'wrong-way': 1000 * Vf(-0.01)}, dp=0, agree=1e-9)
+    ok(round(float(gain)) == 43, 'barbell: nearest pound is 43')
+    for shown, T, c in ((49.00993, 2, 50), (46.15582, 8, 50), (95.12294, 5, 100)):
+        stated(f'barbell: {c}e^-{T/100}', shown, c * exp(-T / 100), 0.000005)
+    stated('barbell: the printed terms combine', 0.04281, 49.00993 + 46.15582 - 95.12294, 0.000005)
+    ok(Vf(-0.01) > 0 and Vf(0.01) > 0, 'barbell: gains whichever way yields move')
+    ok(abs(1000 * 0.5 * float(d2) * 1e-4 - 42.81) > 0.5, 'barbell: the untaught curvature estimate 45 lies outside the band')
+
+    # p-level-annuity
+    A_ = (1 - sp.exp(-10 * r)) / r
+    Af = lambda v: (1 - exp(-10 * v)) / v
+    num(L, 'p-level-annuity', 1, sp.limit(A_, r, 0), table_limit(Af, 0),
+        {'upside-down': F(1, 10), 'top-only': 0, 'lost-inner': 1}, agree=1e-5)
+    dA = sp.diff(A_, r)
+    expr_part(L, 'p-level-annuity', 2, dA, {
+        '\\frac{10re^{-10r}-(1-e^{-10r})}{r^2}': (10 * r * E(-10 * r) - (1 - E(-10 * r))) / r ** 2,
+        '\\frac{(10r+1)e^{-10r}-1}{r^2}': ((10 * r + 1) * E(-10 * r) - 1) / r ** 2,
+        '\\frac{10e^{-10r}}{r}-\\frac{1-e^{-10r}}{r^2}': 10 * E(-10 * r) / r - (1 - E(-10 * r)) / r ** 2,
+        '\\frac{(1-e^{-10r})-10re^{-10r}}{r^2}': ((1 - E(-10 * r)) - 10 * r * E(-10 * r)) / r ** 2,
+        '\\frac{re^{-10r}-(1-e^{-10r})}{r^2}': (r * E(-10 * r) - (1 - E(-10 * r))) / r ** 2,
+        '\\frac{10re^{-10r}-(1-e^{-10r})}{r}': (10 * r * E(-10 * r) - (1 - E(-10 * r))) / r})
+    top = 10 * r * E(-10 * r) - (1 - E(-10 * r))
+    ok(sp.simplify(sp.diff(top, r) + 100 * r * E(-10 * r)) == 0, 'annuity: the top of A\' differentiates to -100 r e^-10r')
+    slope0 = sp.limit(dA, r, 0)
+    num(L, 'p-level-annuity', 3, slope0, dq(Af, 0, 1e-4),
+        {'no-two': -100, 'sign': 50, 'value': 10}, agree=1e-6)
+    est = 10 + slope0 * sp.Rational(2, 100)
+    num(L, 'p-level-annuity', 4, est, 10 - 50 * 0.02, {'carried-no-two': 10 - 100 * 0.02, 'sign': 10 + 50 * 0.02, 'change-only': -1}, dp=2)
+    a02 = sp.N(A_.subs(r, sp.Rational(2, 100)), 30)
+    aser = float(sum(F(-1) ** k * F(10) ** (k + 1) * F(2, 100) ** k / sp.factorial(k + 1) for k in range(30)))
+    num(L, 'p-level-annuity', 5, a02, aser, {'tangent': 9, 'lost-ten': (1 - exp(-0.02)) / 0.02, 'no-divide': 1 - exp(-0.2)}, dp=4, agree=1e-12)
+    stated('annuity: e^-0.2', 0.818731, exp(-0.2), 0.0000005)
+    stated('annuity: 1 - e^-0.2', 0.181269, 1 - exp(-0.2), 0.0000005)
+    ok(float(a02) > float(est), 'annuity: the tangent sits below the curve')
+    ok(sp.diff(A_, r, 2).subs(r, sp.Rational(2, 100)) > 0, 'annuity: A bends up at 0.02')
+
+
+run_level(4, level4)
+
+
+# ------------------------------------------------------------------ level 5
+def level5(L):
+    # p-camera-pan
+    th = sp.atan(x / 30)
+    dth = sp.diff(th, x)
+    expr_part(L, 'p-camera-pan', 1, dth, {
+        '\\frac{30}{900+x^2}': 30 / (900 + x ** 2),
+        '30/(900+x^2)': 30 / (900 + x ** 2),
+        '\\frac{1}{30\\left(1+\\frac{x^2}{900}\\right)}': 1 / (30 * (1 + x ** 2 / 900)),
+        '\\frac{900}{900+x^2}': 900 / (900 + x ** 2),
+        '\\frac{1}{1+x^2}': 1 / (1 + x ** 2),
+        '\\frac{1}{\\sqrt{1-\\frac{x^2}{900}}}': 1 / sp.sqrt(1 - x ** 2 / 900)})
+    thf = lambda tt: atan(20 * tt / 30)          # the angle against time, x = 20 t
+    rate40 = dth.subs(x, 40) * 20
+    num(L, 'p-camera-pan', 2, rate40, dq(thf, 2), {'no-speed': dth.subs(x, 40), 'lost-inner': F(900, 2500) * 20, 'divided': dth.subs(x, 40) / 20}, agree=1e-6)
+    avg = (th.subs(x, 30) - th.subs(x, -30)) / 3
+    ok(sp.simplify(avg - sp.pi / 6) == 0, 'camera: average rate is pi/6')
+    num(L, 'p-camera-pan', 3, avg, (atan(1) - atan(-1)) / 3,
+        {'half-sweep': sp.pi / 12, 'per-metre': sp.pi / 2 / 60, 'degrees': 30}, dp=3)
+    xs = [v for v in sp.solve(sp.Eq(600 / (900 + x ** 2), sp.pi / 6), x) if v > 0]
+    ok(len(xs) == 1, 'camera: one positive MVT point')
+    root = bisect(lambda v: 600 / (900 + v * v) - pi / 6, 0, 30)
+    num(L, 'p-camera-pan', 4, xs[0], root,
+        {'midpoint': 0, 'carried-half': sqrt(7200 / pi - 900), 'time': sqrt(3600 / pi - 900) / 20}, dp=1, agree=1e-9)
+    ok(sp.simplify(sp.diff(sp.atan(20 * t / 30), t) - (dth * 20).subs(x, 20 * t)) == 0, 'camera: theta\' = 600/(900+x^2)')
+    stated('camera: 3600/pi', 1145.92, 3600 / pi, 0.005)
+    stated('camera: x^2', 245.92, 3600 / pi - 900, 0.005)
+    stated('camera: rate at the midpoint', 0.667, 600 / 900, 0.0005)
+    ok(abs(float(dth.subs(x, 0)) * 20 - pi / 6) > 0.1, 'camera: the midpoint is not an MVT point')
+
+    # p-app-adoption
+    Nt = 1000 / (1 + 9 * sp.exp(-t))
+    Nf = lambda v: 1000 / (1 + 9 * exp(-v))
+    ok(sp.simplify(sp.diff(Nt, t) - Nt * (1000 - Nt) / 1000) == 0, 'app: N\' = N(1000-N)/1000')
+    ok(Nt.subs(t, 0) == 100, 'app: starts at 100')
+    t200 = sp.solve(sp.Eq(Nt, 200), t)[0]
+    num(L, 'p-app-adoption', 1, sp.Rational(200 * 800, 1000), dq(Nf, float(t200)),
+        {'no-thousand': 200 * 800, 'one-factor': 200}, agree=1e-6)
+    n2 = sp.diff(Nt, t, 2).subs(t, t200)
+    hh = 1e-4
+    num(L, 'p-app-adoption', 2, sp.simplify(n2), (Nf(float(t200) + hh) - 2 * Nf(float(t200)) + Nf(float(t200) - hh)) / hh ** 2,
+        {'no-rate': F(600, 1000), 'one-term': F(160 * 800, 1000), 'substituted-first': 0}, agree=1e-5)
+    ok(sp.simplify(n2 - sp.Rational(160 * 600, 1000)) == 0, 'app: the formula N\'(1000-2N)/1000 agrees with d2N/dt2')
+    tinf = sp.solve(sp.diff(Nt, t, 2), t)
+    ok(len(tinf) == 1 and sp.simplify(tinf[0] - sp.log(9)) == 0, 'app: inflection at t = ln 9')
+    num(L, 'p-app-adoption', 3, sp.simplify(Nt.subs(t, tinf[0])), Nf(grid_argmax(lambda v: dq(Nf, v), 0, 10, 100000)),
+        {'cap': 1000, 'start': 100}, agree=1e-3)
+    peak = sp.simplify(sp.diff(Nt, t).subs(t, tinf[0]))
+    num(L, 'p-app-adoption', 4, peak, max(dq(Nf, i / 10000) for i in range(0, 100000)),
+        {'users': 500, 'no-thousand': 250000, 'carried-cap': 0}, agree=1e-6)
+    t900 = sp.solve(sp.Eq(Nt, 900), t)[0]
+    ok(sp.simplify(t900 - sp.log(81)) == 0, 'app: N = 900 at t = ln 81')
+    num(L, 'p-app-adoption', 5, sp.Rational(800, 250), F(900 - 100) / F(250),
+        {'actual': t900, 'from-zero': F(900, 250), 'carried-users': F(800, 500)})
+    ok(float(t900) >= 3.2, 'app: the true time respects the bound')
+    stated('app: ln 9', 2.2, log(9), 0.05)
+    stated('app: ln 81', 4.39, log(81), 0.005)
+
+    # p-impact-curve
+    pq = 2 * sp.atan(q / 500)
+    dp_ = sp.diff(pq, q)
+    expr_part(L, 'p-impact-curve', 1, dp_, {
+        '\\frac{1000}{250000+q^2}': 1000 / (250000 + q ** 2),
+        '1000/(250000+q^2)': 1000 / (250000 + q ** 2),
+        '\\frac{2}{500\\left(1+\\frac{q^2}{250000}\\right)}': 2 / (500 * (1 + q ** 2 / 250000)),
+        '\\frac{500000}{250000+q^2}': 500000 / (250000 + q ** 2),
+        '\\frac{500}{250000+q^2}': 500 / (250000 + q ** 2),
+        '\\frac{2}{1+q^2}': 2 / (1 + q ** 2)})
+    pf = lambda v: 2 * atan(v / 500)
+    num(L, 'p-impact-curve', 2, dp_.subs(q, 500) * 200, dq(lambda tt: pf(500 + 200 * tt), 0),
+        {'no-rate': dp_.subs(q, 500), 'lost-inner': F(500000, 500000) * 200, 'no-two': F(500, 500000) * 200}, agree=1e-6)
+    d2p = sp.diff(pq, q, 2)
+    ok(sp.simplify(d2p + 2000 * q / (250000 + q ** 2) ** 2) == 0, 'impact: p\'\' as printed')
+    ok(all(d2p.subs(q, v) < 0 for v in (1, 100, 500, 5000)) and d2p.subs(q, -100) > 0, 'impact: concave down for buys, up for sells')
+    ok(d2p.subs(q, 500) != 0, 'impact: no inflection at 500')
+    pick(L, 'p-impact-curve', 3, 'down')
+    q1 = 500 * sp.tan(sp.Rational(1, 2))
+    stated('impact: q(1)', 273.15, q1, 0.005)
+    inv = 1 / dp_.subs(q, q1)
+    qf = lambda v: 500 * tan(v / 2)
+    num(L, 'p-impact-curve', 4, sp.N(inv, 30), dq(qf, 1),
+        {'at-y': 1 / dp_.subs(q, 1), 'at-500': 1 / dp_.subs(q, 500), 'not-inverted': dp_.subs(q, q1)}, dp=0, agree=1e-6)
+    stated('impact: 273.15^2', 74612, float(q1) ** 2, 0.5)
+    stated('impact: q\'(1) by 250 sec^2', 324.61, 250 * (1 + tan(0.5) ** 2), 0.005)
+
+
+run_level(5, level5)
+
+present = [n for n in (1, 2, 3, 4, 5) if load(n) is not None]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails:
     print('FAIL', m)
