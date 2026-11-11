@@ -394,7 +394,7 @@ print(f'parts: {total}')
 
 if '--sim' in sys.argv:
     # overlap: next-5-day return on (a) the past-5-day return, (b) an independent daily signal; no true effect; 503 days
-    def run(kind, reps=1500, h=5, n=503):
+    def run(kind, reps=4000, h=5, n=503):
         out = {'naive': [], 'hac4': [], 'hac8': [], 'hac20': []}
         for _ in range(reps):
             d_ = rng.normal(size=n + 2 * h)
