@@ -1989,3 +1989,7 @@ Raised later (delta session AA):
 
 Raised later (review problems 1.3 a):
 - [Should] validator: an advisory `[tight-band]` when a numeric question says "decimal to $k$ places" (or "to $k$ decimal places"), the stored answer has more than $k + 2$ decimal digits and `tol.abs` is at most $0.5 \times 10^{-k}$; suggest $10^{-k}$. Seen three times (review-problems-1.5-c finding 1; limits and integrals problems 1.3 findings 2 to 4): a working kept to 4 figures lands one unit out. Also add one line to `docs/briefs/chained.md`: the tolerance accepts the value the explanation's own printed figures give.
+
+Raised later (problems functions):
+- [Could] numeric `answers` sets: the `count` key cannot tell which value is missing or extra, so its `byKey` line must stay generic; a learner who gives one of two roots cannot be told "you have 3, the other comes from the factor $x$" without naming the answer. A key per missing value (or the matched values passed to the line) would let the feedback name what is still wanted (functions problems-3 `p-track-cubic` part 2).
+- [Could] Met again: fresh-check triage on the three functions sets is 10 hits, all the required sentences ("Type only what comes after the $=$ sign", "Give a whole number. Using ..."). Same want as the markov and taylor bullets: drop the required form sentences before the n-gram match.
