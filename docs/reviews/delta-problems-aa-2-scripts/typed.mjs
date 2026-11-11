@@ -144,7 +144,7 @@ export const TYPED = [
     ['\\frac{5x}{2}-\\frac{x^2}{2}', 'form', 'the question asks for decimals; this collected form is refused while other fraction forms pass'], ['\\frac{5x}{2}-0.5x^2', true], ['2.5x-\\frac{x^2}{2}', 'form', 'the question asks for decimals; this collected form is refused while other fraction forms pass'], ['\\frac{5x-x^2}{2}', true], ['0.5x(5-x)', true], ['x(2.5-0.5x)', true], ['\\frac{1}{2}x(5-x)', true],
     ['-\\frac{1}{2}x^2+\\frac{5}{2}x', true], ['2.5x-0.5x^{2}', true], ['3.5x-0.5x^2', 'added'], ['2.5x+0.5x^2', 'sign'], ['2.5x', false]]),
   ...rows(E, 4, 'p-salt-solutions', 1, [['0.15x+0.4y=125', true], ['0.4y+0.15x=125', true], ['125=0.15x+0.4y', true], ['0.15x+0.40y=125', true], ['3x+8y=2500', true], ['15x+40y=12500', true],
-    ['\\frac{15x}{100}+\\frac{40y}{100}=125', true], ['\\frac{15}{100}x+\\frac{40}{100}y=125', true], ['0.15x+0.4y=0.25\\times500', true], ['0.15x+0.4y=0.25(500)', true],
+    ['\\frac{15x}{100}+\\frac{40y}{100}=125', true], ['\\frac{15}{100}x+\\frac{40}{100}y=125', true], ['0.15x+0.4y=0.25\\times500', true], ['0.15x+0.4y=0.25(500)', true], ['0.15x+0.4y=0.25\\left(500\\right)', true], ['0.4y+0.15x=0.25(500)', true], ['0.15x+0.4y=(0.25)(500)', true], ['0.15x+0.4y=500(0.25)', true],
     ['0.15x+0.4y=0.25\\cdot500', true], ['0.15x+0.4y=\\frac{25}{100}\\times500', true], ['0.15x+0.4y=\\frac{500}{4}', true],
     ['0.15x+0.4y=0.25(x+y)', 'both-letters'], ['15x+40y=25(x+y)', 'both-letters'], ['0.15x+0.4y=\\frac{x+y}{4}', 'both-letters'], ['0.15x+0.4y=0.25x+0.25y', 'both-letters'], ['2x=3y', 'both-letters'],
     ['15x+40y=125', 'per-cent'], ['0.15x+0.4y=0.25', 'strength'], ['0.4x+0.15y=125', 'swapped'], ['x+y=500', false], ['0.15x+0.4y', false], ['0.15x+0.4(500-x)=125', false]]),
