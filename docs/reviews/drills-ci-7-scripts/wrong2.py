@@ -982,6 +982,47 @@ from itertools import permutations
 def smooth_orderings(sizes, d):
     return sum(1 for p in set(permutations(sizes)) if all(abs(x - y) <= d for x, y in zip(p, p[1:])))
 ''')
+add('desks_random_restarts', 'ci-even-desks', 'no table: 300 random splits, each improved by swaps of one trader for one, the best kept', '''
+import random
+def even_desks(skills):
+    m = len(skills) // 2
+    total = sum(skills)
+    rnd = random.Random(1)
+    best = total
+    xs = list(skills)
+    for _ in range(300):
+        rnd.shuffle(xs)
+        a, b = xs[:m], xs[m:]
+        diff = sum(a) - sum(b)
+        improved = True
+        while improved and diff:
+            improved = False
+            for i in range(m):
+                for j in range(m):
+                    nd = diff - 2 * (a[i] - b[j])
+                    if abs(nd) < abs(diff):
+                        a[i], b[j] = b[j], a[i]
+                        diff = nd
+                        improved = True
+        best = min(best, abs(diff))
+        if best <= total % 2:
+            break
+    return best
+''')
+add('trace_rows_cols_swapped', 'ci-trace-count', 'rows and columns swapped in the bounds check', '''
+MOD = 10 ** 9 + 7
+def trace_count(board, word):
+    R, C = len(board[0]), len(board)
+    ways = {(i, j): 1 for i in range(len(board)) for j in range(len(board[0])) if board[i][j] == word[0]}
+    for ch in word[1:]:
+        nxt = {}
+        for (i, j), w in ways.items():
+            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+                if 0 <= a < R and 0 <= b < C and a < len(board) and b < len(board[0]) and board[a][b] == ch:
+                    nxt[(a, b)] = (nxt.get((a, b), 0) + w) % MOD
+        ways = nxt
+    return sum(ways.values()) % MOD
+''')
 add('smooth_memo_counts_OK', 'ci-smooth-orderings', 'the walk remembered on (copies left of each size, last size): right', '''
 from collections import Counter
 from functools import lru_cache
