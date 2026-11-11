@@ -102,3 +102,96 @@ Graded items changed. No numeric key or slip value changed. Keyed option text: l
 Concepts script: section 8 added with four checks for the new text (ten units, new skewE traded through, find_arb on L, straddle counts). The old checks keyed on the replaced text now skip.
 
 Gates: validator 0 errors (4,137 warnings, as before; manifest unchanged); concepts script exit 0 (297 checks, 0 failed, 5 notes, all unconditional notes on the old wording's counterexamples); `mm-games-3-perf-numbers.py` exit 0; voice scan 35: 0 and 0; playthrough with `--local-cdn` of l14 to l18, review-4 and homework-4, desktop and `--mobile`: all passed (review-4 10 of 10; homework-4 9 of 9, 40 of 40 marks).
+
+## Fix-pass read
+
+Blind read of the content-string diff of fix commit `6bc15e4e` (`git diff 6bc15e4e~1 6bc15e4e -- app/content/courses/mm-games`; 7 files). The reader did not open the audit above, its ledger, the earlier review or the concepts script. Paths use screen and item indices as they stand after the commit.
+
+### Ledger
+
+| # | File | JSON path | Claim (short) | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | l14 | screens[7].explain.text | People asked for 90% ranges often make them too narrow; fix is wider ranges | correct | Alpert and Raiffa (1982), Lichtenstein, Fischhoff and Phillips (1982): stated 90% or 98% ranges hold well under their nominal rate. No figure is now quoted. |
+| 2 | l14 | screens[11].prose | Interviews may ask for 90% ranges; a desk can set one each morning; mean £102.40, sd £1.20 | correct | Hedged with "may" and "can"; no source claimed. |
+| 3 | l14 | screens[11].explain.text | Range £100.43 to £104.37; about two misses a month; many more suggest sd too low or mean off | correct | 1.645 × 1.20 = 1.974; 102.40 ∓ 1.974 = 100.426, 104.374. About 21 trading days × 0.1 = 2.1. A shifted mean also raises the miss rate. |
+| 4 | l14 | summary.ideas[2] | Calibrated set scores six or fewer in ten only 1.3% of the time | correct | Bin(10, 0.9): P(X ≤ 6) = 0.012795 (computed). Agrees with screens[6] (0.0128) and screens[7] option `luck`. |
+| 5 | l15 | screens[6].hints[0].text | An arbitrage can lose on no roll; find each plan's worst roll | correct | Necessary condition of the standard definition (Shreve, *Stochastic Calculus for Finance I*, Def. 1.1.2; Hull ch. 1). |
+| 6 | l15 | screens[6].hints[1].text | Add the cash to what each plan pays on its worst roll | correct | Worst-outcome total is the test for "cannot lose". |
+| 7 | l15 | screens[6].hints[2].text | First plan loses £0.10 on every roll; second loses when the second die shows 4 or more | correct | Plan 1: 7.0 − 7.1 = −0.10, legs cancel. Plan 2: +3.50 − second die, negative for 4, 5, 6. |
+| 8 | l15 | screens[6].feedback.generic | Add the cash and check each plan's worst roll | correct | As row 6. |
+| 9 | l15 | screens[6].explain.text | Arbitrage can lose on no roll; each plan loses on some | correct | As row 7. Key `neither` still unique; options `first`, `second`, `both` still false. |
+| 10 | l15 | screens[7].prose | Evens, 2 to 1, 5 to 1 on three outcomes, exactly one happens | correct | 1/2 + 1/3 + 1/6 = 1. Key `none` unique: `equal` returns £20 on £30, `half` returns £20 on £20, `long` is a bet. |
+| 11 | l15 | screens[8].feedback.byKey.rev | −12 has the sign reversed; loop ends at £1,012 | correct | 1,000 × 1.25 × 0.92 × 0.88 = 1,012. |
+| 12 | l15 | screens[9].prose (sentences 1 and 2) | Arbitrage: trades that cannot lose on any outcome and gain on at least one; cancelling payoffs with money left over is the plainest kind | correct | Standard definition on a finite outcome set: Shreve I, Def. 1.1.2 (zero probability of loss, positive probability of gain); Björk, *Arbitrage Theory in Continuous Time*, Def. 2.3. The cancelling case is a special case. |
+| 13 | l15 | screens[9].prose (sentence 3) | Board with odds o_i to 1 on outcomes of which exactly one happens has an arbitrage when Σ 1/(o_i + 1) < 1 | correct | Stake 1/(o_i + 1) per £1 payout on each: cost Σ < 1, return 1 on the one outcome that happens. Exclusive and exhaustive is the needed hypothesis; exclusive alone is not enough (no outcome may happen). |
+| 14 | l15 | screens[10].widget.starter and solution, `book_arb` docstring | "exactly one outcome happens" | correct | As row 13. The code is unchanged by the diff. |
+| 15 | l15 | summary.ideas[0] | Same definition as row 12 | correct | As row 12; matches screens[9]. |
+| 16 | l15 | summary.ideas[2] | Exactly one outcome happens: sum below 1 locks a profit; exactly 1 fair; above 1 is the overround | correct | As row 13. Overround = excess of the summed implied chances over 1 (standard bookmaking usage). |
+| 17 | l15 | summary.trap | Calling a trade arbitrage when some outcome loses money | correct | As row 5. |
+| 18 | l15 | quiz[1].prose | 1 to 1, 2 to 1, 3 to 1 on three outcomes, exactly one happens | correct | Hypothesis stated; key 13/12 = 1.0833 unchanged. |
+| 19 | l15 | quiz[1].explain.text | Excess 1/12 is called the overround | correct | 13/12 − 1 = 1/12; standard term. |
+| 20 | l15 | screens[0].explain.text (unchanged) | "That is an **arbitrage**: a profit on every outcome, with nothing left to settle." | imprecise | First bold definition is the strong form; screens[9] and summary.ideas[0] now define the weak form (no loss anywhere, gain somewhere). Two definitions in one lesson. Finding 1. |
+| 21 | l16 | screens[2].widget.options[2].text | A 3.3 to 3.7, E 2.5 to 2.9, F 1.3 to 1.7 is not consistent | correct | Run: buy A 3.7, sell E 2.5 and F 1.3 locks 0.10 (payoffs cancel since E + F = A). The old text (E 2.3 to 2.7) had no arbitrage, so the old distractor was a second right answer. |
+| 22 | l16 | screens[2].widget.options[2].why; feedback.byKey.skewE | E sits 0.7 above fair; interviewer sells E at 2.5 and F at 1.3, buys A at 3.7, locks 0.10 a set | correct | Centre 2.7 − 2 = 0.7. 2.5 + 1.3 − 3.7 = 0.10. Key `good` unique: exhaustive search of ±1 on up to three of A, E, F finds no strict or weak arbitrage in `good`, and one in each of `evens` (1.4), `skewE` (0.10), `same` (2.9). |
+| 23 | l16 | screens[10].prose | "find the profit a combination locks on every face" | correct | Matches the code: min over faces of payoff plus cash. |
+| 24 | l16 | screens[10].widget.starter and solution, `find_arb` docstring | Return smallest of six totals if positive, else 0 | correct | Run: solution passes 9 of 9 hidden tests and the example; starter fails all. 20,000-case fuzz against an independent reference, 0 mismatches. |
+| 25 | l16 | screens[10].widget.solution (code) | `max(Fraction(0), min(net) + cash)` | correct | As row 24. Returns an exact Fraction in every fuzz case. |
+| 26 | l16 | screens[10].widget.tests[7] | Sell L at 3.2 gives 1/5 | correct | L pays at most 3; 3.2 − 3 = 0.2. |
+| 27 | l16 | screens[10].widget.tests[8] | Buy A at 0.9 gives 1/10 | correct | A pays at least 1; 1 − 0.9 = 0.1. |
+| 28 | l16 | screens[10].widget.how | 9 hidden tests; a combination that can lose on some face returns 0 | imprecise | True, but a combination that breaks even on its worst face and gains elsewhere also returns 0 (35 such cases in the fuzz). Under the definition taught one lesson earlier that trade is an arbitrage. Finding 2. |
+| 29 | l16 | screens[10].hints[1].text | Take the worst face: the smallest of the six totals | correct | As row 24. |
+| 30 | l16 | screens[10].hints[2].text | Buying pays the ask; selling receives the bid; add the cash to each face | correct | As row 24. |
+| 31 | l16 | screens[10].feedback.generic | Check the worst face and the sign of the cash | correct | As row 24. |
+| 32 | l16 | screens[10].explain.text | Sell U at 1.1 locks 0.10; H and L for 3.5 against A at 3.6 locks 0.10; sell L at 3.2 locks 0.20 since L never pays more than 3 | correct | All three are hidden tests and pass. |
+| 33 | l16 | screens[11].explain.text | "Options on a dice game, later in this level, use the same parity." | correct | No lesson number; the options lesson states C_K − P_K = E[S] − K. |
+| 34 | l17 | screens[8].explain.text | Short straddle at 2.0 gains only on sums 6 to 8, 16 rolls in 36, "and loses on 12" | imprecise | Gains when the sum is within 1 of 7: 5 + 6 + 5 = 16 rolls. Loses on sums 2, 3, 4, 10, 11, 12: 12 rolls. "Loses on 12" follows "the worst rolls, 2 and 12" and reads as the sum 12. Finding 3. |
+| 35 | l17 | quiz[0].explain.text | Calls struck well above 7, and puts well below it, are cheap | correct | 9-call = 10/36 = 5-put by symmetry of the sum about 7. Low-strike calls are not cheap, which the old text implied. |
+| 36 | l17 | summary.ideas[2] (unchanged) | "A short straddle earns small sums often and owes most at the extremes" | imprecise | The explain now says it gains on only 16 rolls in 36, with 8 level and 12 losing. "Often" is the half of the old claim the fix removed from the explain. Finding 4. |
+| 37 | l18 | screens[4].explain.text | Equal scaling is close to the best capped mix, which cuts a to about £6 | correct | Grid maximisation of expected log wealth, three independent bets, stakes summing to £30: a £6.05, b £7.80, d £16.15, growth 0.03259 against 0.03240 for £7.50, £7.50, £15. |
+| 38 | l18 | screens[11].explain.text | Resizing works best as a fixed rule, not a choice made by feel | correct | Practice statement, now hedged; £80,000 = 10% of £800,000. |
+| 39 | l18 | summary.ideas[1] | A simple rule scales all stakes alike: £40 capped at £30 is 0.75 of each | correct | 30/40 = 0.75; agrees with row 37 and summary.formula. |
+| 40 | review-4 | items[2].explain.text | Range 90 to 140 would score 50; ten more units of width would have saved 90 | correct | Width 50, truth 95 inside. 140 − 50 = 90; 50 − 40 = 10. |
+| 41 | review-4 | items[4].prose | Evens, 4 to 1, 4 to 1 on three outcomes, exactly one happens | correct | 1/2 + 1/5 + 1/5 = 9/10; stakes £5, £2, £2 return £10; key £1. |
+| 42 | review-4 | items[9].explain.text | Kelly £10 and £12.50; scaled by 2/3 to £6.67 and £8.33; equal scaling keeps the mix | correct | f = 0.6 − 0.4 = 0.2; f = 0.5 − 0.5/2 = 0.25; 15/22.5 = 2/3. |
+| 43 | review-4 | items[9].prose (unchanged) | "At most £15 at risk in the round." Key £8.33 | imprecise | The key holds only under equal scaling, which the item does not ask for. The lesson now says equal scaling is not the best capped mix; here the growth-optimal split is £5.10 and £9.90 (grid search). Finding 5. |
+| 44 | homework-4 | items[0].widget.starter and solution, docstring | Score each set by its profit on the worst face; keep those above 0; tie-break; none gives (Fr(0), ()) | correct | Run: solution passes 9 of 9 hidden tests and the example; starter fails all. 20,000-case fuzz against a brute-force reference written from the docstring, 0 mismatches. Layout only: finding 6. |
+| 45 | homework-4 | items[0].widget.solution (code) | `profit = min(net) + cash`, strict `> 0`, key (−profit, count, trades) | correct | As row 44. "Above 0" is stated, so a trade level on its worst face is openly left out. |
+| 46 | homework-4 | items[0].widget.tests[7] | L at 3.1 to 3.2 with fair U: (1/10, sell L) | correct | 3.1 − 3 = 0.1; no better set. |
+| 47 | homework-4 | items[0].widget.tests[8] | A at 2.2 to 2.3 with fair H: (1/10, buy A, sell H) | correct | Cash 2.4 − 2.3 = 0.1; A − H is 1, 2, 3, 0, 0, 0, never negative. |
+| 48 | homework-4 | items[0].widget.how | 9 hidden tests: seven planted arbitrages, two consistent sets with none | correct | Counted: tests 0 and 5 expect (0, ()); the other seven expect a trade. |
+| 49 | homework-4 | items[0].feedback.generic | Check the profit on the worst face, and the tie-break | correct | As row 44. |
+| 50 | homework-4 | items[0].explain.text | Cheap A against E and F locks 0.10; buy A at 2.3, sell H at 2.4 locks at least 0.10; a fair set returns nothing | correct | Tests 2 and 8. Fair set: enumeration of every set of up to three finds no non-losing combination; in general each quote straddles its fair value, so every trade has negative mean. |
+| 51 | homework-4 | items[2].widget.lines[1].text | Find a combination to test, such as one whose payoffs cancel | correct | Cancelling is one kind, as row 12. |
+| 52 | homework-4 | items[2].widget.lines[2].text | Price at the quotes; is it in profit on every face? | correct | The prose asks for money "for sure", the strong form. Order pay, combo, cash, size is still the only valid order; `trade` is still the one left out. |
+| 53 | homework-4 | items[2].widget.lines[4].why; feedback.byKey.trade | A gap is only an arbitrage once no face can lose | correct | Necessary condition, as row 5. |
+| 54 | homework-4 | items[2].explain.text | Table shows each combination's pay per face; with the cash, a profit on every face is money for sure; size says how much | correct | As rows 12 and 52. |
+
+### Verdict counts
+
+54 rows: 49 correct, 0 wrong, 5 imprecise, 0 misleading, 0 unverified. Three of the five imprecise rows (20, 36, 43) are sentences the diff did not touch that a changed sentence now sits beside.
+
+### Checks run
+
+- `find_arb` (l16 screens[10]) and `find_all_arb` (homework-4 items[0]): prelude, starter, solution and hidden tests extracted from the JSON and run in Python 3. Each solution passes 9 of 9 hidden tests plus its example; each starter fails all 10.
+- Fuzz: 20,000 random families (1 to 5 contracts, payoffs 0 to 4, quotes on a 0.1 grid so ties occur). `find_arb` against a face-by-face reference, and `find_all_arb` against a brute-force reference that enumerates every buy, sell or skip assignment and sorts by the docstring's tie-break. No mismatch. 291 positive `find_arb` cases, 5,977 positive `find_all_arb` cases, 35 weak-only cases (level on the worst face, gain elsewhere) that return 0.
+- l16 screens[2]: exhaustive ±1 search on A, E, F for each option, strict and weak.
+- l18 screens[4] and review-4 items[9]: grid maximisation of expected log wealth under the cap.
+- Binomial tail for l14; straddle roll counts for l17.
+- Voice on every changed string: no exclamation mark, no em-dash, no sentence over 35 words, no explanation over three sentences, no lesson cited by number.
+- Not run: validator and playthrough (no content was edited by this read).
+
+### Findings
+
+1. l15-arbitrage-in-a-book.json | screens[0].explain.text | imprecise | minor | The lesson's first, bold definition of arbitrage is "a profit on every outcome", the strong form. screens[9].prose and summary.ideas[0] now define it as no loss on any outcome and a gain on at least one. A learner meets two definitions in one lesson. | Shreve, *Stochastic Calculus for Finance I*, Def. 1.1.2 is the form the fix adopted; the screens[0] trade does profit on every outcome, so only the definition clause is off. | Replace the whole explain with three sentences: `X's best offer, 103.0, is below Y's best bid, 104.0, so buying from one and selling to the other locks £1 a unit. That is an **arbitrage**: a trade that cannot lose on any outcome and gains on at least one. Here it gains £1 a unit whatever happens.`
+
+2. l16-several-contracts.json | screens[10].widget.how | imprecise | minor | "A combination that can lose on some face returns 0" leaves out the other case that returns 0: a combination level on its worst face that gains on others. By the definition taught one lesson earlier that trade is an arbitrage, yet `find_arb` scores it like a losing one. The docstring is right ("profit locked on every face"); only the meaning of 0 is unstated. | Fuzz: 35 of 20,000 random cases have worst-face total 0 and a positive total elsewhere; all return `Fraction(0)`. | `Check runs 9 hidden tests. Values are exact Fractions. A combination that can lose, or only break even, on some face returns 0.`
+
+3. l17-options-on-a-game.json | screens[8].explain.text | imprecise | minor | "and loses on 12" means 12 rolls in 36, but it follows "The worst rolls, 2 and 12" and reads as the sum 12. | Loses when the sum is more than 2 from 7: sums 2, 3, 4, 10, 11, 12, which is 1 + 2 + 3 + 3 + 2 + 1 = 12 rolls. | Replace the third sentence with: `The short straddle gains only on sums 6 to 8, 16 rolls in 36, and loses on 12 rolls in 36.`
+
+4. l17-options-on-a-game.json | summary.ideas[2] | imprecise | minor | The summary still says a short straddle "earns small sums often". The explain on screens[8] now says it gains on only 16 rolls in 36; it is level on 8 and loses on 12. The two no longer agree. | Same count as finding 3; at 2.0 the gains are 1 or 2 and the losses 1, 2 or 3. | `A short straddle gains near the middle and owes most at the extremes; a revealed die moves every option.`
+
+5. review-4.json | items[9].prose | imprecise | minor | The key £8.33 is right only if both Kelly stakes are scaled by one factor, and the item does not say to do so. The betting-board lesson now states that equal scaling is a simple rule and not the best capped mix, so a careful learner may reasonably look for the best mix. | Grid search of expected log wealth with £15 at risk: about £5.10 on bet 1 and £9.90 on bet 2, against £6.67 and £8.33 under equal scaling. The feedback and explain already assume equal scaling. | `£50 bankroll. Bet 1: evens with chance 0.6. Bet 2: 2 to 1 with chance 0.5. At most £15 at risk in the round, so scale both Kelly stakes by the same factor.`
+
+6. homework-4.json | items[0].widget.starter and items[0].widget.solution (docstring) | imprecise | minor | Layout only: the edited docstring line `face (payoff plus cash) and keep those above 0. Return (profit, trades) for the` is 82 characters where every other line is under 60, so it wraps or scrolls on a phone. No change of meaning. | Line lengths read from the JSON. | In both strings replace the docstring text from `(at the bid).` to its end with: `(at the bid). Score each by its profit on the worst\n    face (payoff plus cash) and keep those above 0.\n    Return (profit, trades) for the best: highest profit,\n    then fewest trades, then the first in sorted order;\n    trades is a sorted tuple of (name, \"buy\" or \"sell\").\n    With none: (Fr(0), ()).\"\"\"`
+
+No `wrong` and no `serious` finding. The arbitrage definition, the board rule, both code items and every changed key and distractor hold.
