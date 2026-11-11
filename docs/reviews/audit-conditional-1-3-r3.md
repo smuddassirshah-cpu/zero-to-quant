@@ -51,3 +51,54 @@ wrong 0; imprecise 5 (findings 1, 2, 3, 4, 6); misleading 1 (finding 5). Serious
 ## After the blind commit
 
 The sections below were added after the ledger, findings and script were committed.
+
+Blind commit: `856507f0` (ledger, findings above and concepts script). Opened only after it: `docs/reviews/audit-conditional-1-3.md` (round 1 with its fix pass, fix-pass read and follow-up), `docs/reviews/audit-conditional-1-3-r2.md` (round 2 with its fix pass and fix-pass read), and searches of `docs/reviews/review-1.5.md` and `docs/reviews/review-problems-1.5-a.md` for the places of this round's findings. The earlier ledgers, concepts libraries and author reports were not used to change any verdict. No git history or diff of the course folder was read.
+
+## Overlap with all earlier reads
+
+Earlier conceptual findings on levels 1 to 3, as counted by rounds 1 and 2: 37 distinct (round 1 audit 23; round 1 fix-pass read 2; the two second-reader reviews 3 more, their fourth being round 1's finding 13; round 2 audit 9 more, its finding 5 being the class of round 1's finding 11). The round 2 fix-pass read raised none.
+
+| | Count | Which |
+|---|---|---|
+| Found by this audit only | 3 | Finding 4 (l8 `screens[2]`, a rounded right answer graded as a slip), finding 5 (l17 `screens[5]` leaves) and finding 6 (the unstated convention that "independent" means mutually independent). See the notes below: two of the three were seen earlier and not raised as findings |
+| Found by both | 3 | Findings 1, 2 and 3 are further places of one earlier class: round 1 finding 11 and round 2 finding 5 (evidence called plainly "independent" where independence given the hypothesis is needed). Those rounds fixed seven prose and summary places. The round 2 fixer listed these three places and left them "as shorthand"; the round 2 fix-pass read noted findings 1 and 2 as observations with no verdict |
+| Found by earlier reads only | 36 | Every other earlier finding. All were fixed before this read, so the present text could not show them again |
+
+`wrong` verdicts of this audit: 0. New `wrong` found by no earlier read: 0.
+
+None of the 36 earlier findings has come back. Each of those places is a `correct` row in this ledger, read without knowing its history: the l3 and l16 `trap` lines (rows 29 and 238, with the l16 order of steps recomputed at row 156), the stated yes-or-no questions (rows 23, 27, 177, 194, 197, 218), l12 `screens[3]` "both dice gained" (row 117), the l11 `screens[8]` tree with leaves 0.245, 0.255, 0.045, 0.455 (row 111, and the script's generic tree check), l12 `screens[7]` (row 121), l1 `screens[6]` (row 6), l16 `quiz[2]` with its stated baseline (row 162), l15 "only a range" (row 145), l13 `quiz[1]` (row 133), l5 `screens[10]` (row 50), homework-2 `items[4]` and `items[6]` (rows 205 and 207), l17 `screens[6]` and `screens[10]` (rows 169 and 173). So both fix passes read as sound.
+
+Where the reads touch:
+
+- Finding 5. Round 2 saw the l17 `screens[5]` leaves and listed them under "Noted, not conceptual", because the prose says what they are. I weigh it differently: the canvas is what a learner looks at while answering, and round 2's own finding 2 was this use of `leaves` in l11. One caption sentence removes the clash. It stays `minor`.
+- Finding 4. `review-problems-1.5-a` found the same class in problems-2 `items[3].parts[0]` (key 0.0582, slip 0.059, "Give a decimal") and it was fixed there by asking for 4 places. The l8 screen has the same numbers pattern and was not raised by any read.
+- Finding 6. The round 2 fixer wrote that plain independence in l3, l14 and review-3 "is correct as written". I agree for each of those lines. The finding is that lesson 15 teaches two kinds for several events and never says which one the bare word means.
+- Seen earlier and still present, read as `correct` here too: l8 `objectives[0]` ("See how a rare condition makes most positive tests false"), an aim line the lesson's own case bears out; homework-1 `items[4].explain.text` cites "Item 8" by position, which is right today.
+
+Miss rate of a single read, on this evidence: after two reviews, two audits and two fix-pass reads, a third blind read finds no `wrong`, no `serious` finding and no graded key in doubt. It finds six `minor` points, of which four had been seen by an earlier reader and left.
+
+Convergence: 0 new `wrong` in three levels is within the limit of one, so on this round levels 1 to 3 meet the closing rule in `docs/briefs/concept-audit.md`, once the fix pass for the six minor findings has had its fix-pass read.
+
+## The two open minor notes from round 2
+
+Both were weighed after the blind commit. Both were already findings of the blind read (1 and 2), reached before I knew they had been noted.
+
+- `l11` `screens[8].feedback.byKey.one`, "The second independent call adds more." **Needs a fix.** The round 2 fix-pass read called it "true here". It is not: the two calls are dependent overall, P(both say up) = 0.29 against 0.5 × 0.5 = 0.25, and lesson 16 `screens[10]` teaches exactly that about two analysts. The line contradicts a later lesson of the same course. Text: "That is one analyst's call. The second call errs independently of the first, whichever way the stock goes, so it adds more."
+- `review-2` `items[5].feedback.byKey.added`, "Independent ratios multiply, giving 9." **Worth a fix, lower priority.** It teaches nothing false about the key, but it attaches "independent" to the ratios, which is not a property a number can have, and it is the one line a learner sees after the adding slip. Text: "You added the ratios to get 6. The signals arise independently, battle or no battle, so their ratios multiply to give 9."
+
+If only one of the two is taken, take the first.
+
+## Gates
+
+Run on the worktree after the blind commit, content unchanged. CPython 3 for every script.
+
+- `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors, 4,666 warnings repo-wide. `content/manifest.json` unchanged.
+- Number scripts, from the repo root: `fluency-conditional-numbers.py` exit 0 (2,000 checks over 3 families, 0 failures); `problems-conditional-numbers.py` exit 0 (1,177 checks, 0 failures); `conditional-2-perf-numbers.py` exit 0 (0 failures); `conditional-4-perf-numbers.py` exit 0 (0 failures; level 4, run because it matches the name pattern). The first two import `sympy`, which this sandbox lacked; they exit 1 on import until `pip install sympy` (an inbox bullet for that already exists under counting-chance).
+- Earlier concepts scripts, run as gates only after the blind commit: round 1 `conditional-L1-concepts.py`, `-L2-`, `-L3-` exit 0 (145, 165, 155 checks); round 2 `conditional-L1-concepts-r2.py`, `-L2-`, `-L3-` exit 0 (706, 831, 714 checks); `conditional-L1-3-fixread-r2.py app/content/courses/conditional` exit 0.
+- This round's `conditional-L1-3-concepts-r3.py`: 934 checks pass, 6 fail, exit 1. The six are findings 1 to 6 and stay failing until the content is fixed. Run time under 2 seconds.
+- Playthrough with `--local-cdn` (Pyodide 0.27.7 from the scratchpad `pkgs` folder): all 17 lessons, `review-1` to `review-3`, `homework-1` to `homework-3`, `problems-1` to `problems-3` (`--problems`) and `fluency-l7-turning-around` (`--fluency`). Desktop: 27 of 27 ok, "All passed", exit 0, 0 browser relaunches. `--mobile`: 27 of 27 ok, "All passed", exit 0, 0 relaunches.
+- No content JSON, engine file, `course.json` or state file was changed.
+
+## Engine
+
+No engine fault found. Numeric grading adds 1e-12 slack to a zero tolerance (`app/js/engine/widgets/_base.js`, `within`), so the exact keys of the fluency set are safe against floating-point noise. One tool item is added to `docs/BACKLOG-INBOX.md` under "Raised later (audit conditional):": a validator advisory for a slip value that equals the key rounded to one place fewer where the question names no places (finding 4; second sighting of the class).
