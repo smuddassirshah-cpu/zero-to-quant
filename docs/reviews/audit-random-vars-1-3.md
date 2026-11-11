@@ -91,3 +91,29 @@ Counts: found by this audit only 10; by the earlier reads only 5; by both 0. Bot
 ## Inbox
 
 Two bullets under "Raised later (audit random-vars 1-3):" in `docs/BACKLOG-INBOX.md`: a content lint for independence stated as a necessary condition (findings 2 and 3, seven strings), and one for "scaling leaves ρ unchanged" without "positive" (finding 4).
+
+## Fix pass
+
+Fixer: Opus, 11 Nov 2026. Each finding was checked against the current files before it was applied. No graded key, option set, tolerance, canvas value, hidden test or code changed; one key option's text changed (finding 7) and no number changed.
+
+| # | Status | Fixer's basis |
+|---|---|---|
+| 1 | fixed | Row k averages k + 3.5 only if E[Y given X = k] = 3.5 for every k; with Y = X row k is the single cell 2k with average 2k. That needs independence (mean independence) of the second die. Linearity itself is proved without it in `screens[8]` from the joint table. |
+| 2 | fixed differently | l7 `quiz[2].explain`: "Independence is enough for the product rule; without it the rule can fail, as it does here." homework-2 `items[6]` `product`: "You used $E[X]E[Y]$. Independence would make that safe, but here a high $X$ always comes with a low $Y$, so the rule fails." The auditor's "safe only for independent variables" was not used: "only" restates necessity. Basis: X uniform on −1, 0, 1, Y = X², dependent, E[XY] = E[X³] = 0 = E[X]E[Y]; for the homework, Cov(X, 7 − X) = −Var(X) = −35/12 ≠ 0, so 7(3.5) − 91/6 = 28/3 ≠ 12.25. |
+| 3 | fixed differently | Applied the auditor's text for l7 `screens[6]`, l10 `screens[6]` and l10 `summary.formula.note`. For l7 `screens[7]` option `product` the why reads "This holds for independent variables but can fail otherwise", and l7 `quiz[2]` `product` reads "That is safe for independent variables, and $X$ is not independent of itself" (no "only"). Basis: Var(X + Y) = Var X + Var Y + 2Cov and E[XY] − E[X]E[Y] = Cov, so both rules hold exactly when Cov = 0; independence gives Cov = 0 but not conversely. |
+| 4 | fixed | Cov(X, aY + b) = a Cov(X, Y) and sd(aY + b) = |a| sd(Y), so ρ(X, aY + b) = sign(a) ρ(X, Y). The l11 item uses a = 2 > 0, so its key 0.3 stands. |
+| 5 | fixed | sd(X + X) = 2σ, so n copies of one variable give nσ; √n σ is for n independent variables with sd σ (Var adds to nσ²). |
+| 6 | fixed | Table: F(2) = 0.90, F(5) = 0.96, so VaR = 5 and P(L ≤ 5) = 0.96 ≥ 0.95: "at least" is exact, "95%" is not. |
+| 7 | fixed | For a fair ±£1 coin game the total after n bets has sd √n (so about £100 at n = 10,000, mean absolute value √(2n/π) ≈ £80), while the average per bet has sd 1/√n → 0. Option text only; it stays the key. |
+| 8 | fixed | The √252 rule takes Var(sum of 252 daily returns) = 252σ² for independent days; the yearly return is the sum of daily returns exactly for log returns, since log(1 + R_year) = Σ log(1 + r_t), and only approximately for simple returns. |
+| 9 | fixed | Two-day paths with up 0.3, flat 0.5 (from the 0.09 and 0.15 path chances): 3 of 9 paths pay (up-up, up-flat, flat-up), total chance 0.09 + 0.15 + 0.15 = 0.39. "39% of paths" counts paths as equally likely. |
+| 10 | fixed | E per day = 2(0.3) − 2(0.2) = 0.2, so 250 days give E = £50 exactly; Var per day = 4(0.5) − 0.04 = 1.96, sd over 250 independent days 1.4√250 ≈ £22.1, so "about £50" reads as a forecast. |
+
+Extra search for the same class (independence stated as necessary): the level 1 to 3 files were grepped for "needs independence", "requires independence", "only for independent", "fails for dependent", "need ... independent" and every sentence containing "independen" or "dependent" was read. Every necessity phrasing found was already one of the listed strings (l7 lines on `screens[6]`, `screens[7]`, `quiz[2]`; l10 `screens[6]`, `summary.formula.note`; homework-2 `items[6]`). The remaining sentences state independence as sufficient ("for independent variables ... add", "because the dice are independent") or state that linearity needs none, which is correct. No extra fixes.
+
+Gates after the fix pass:
+- Validator: 0 errors; `content/manifest.json` unchanged.
+- `docs/reports/random-vars-L1-3-concepts.py`: 158 checks, 0 failed, exit 0 (no check changed).
+- `fluency-random-vars-numbers.py`, `problems-random-vars-numbers.py`, `random-vars-1-perf-numbers.py`: exit 0.
+- Voice scan at 35 over the course folder: 0 explanations over three sentences, 0 sentences over 35 words.
+- Playthrough with `--local-cdn` of the eight changed files (l3, l4, l5, l6, l7, l10, l11 with `--lesson`, homework-2 with `--set`): desktop all passed; `--mobile` all passed.
