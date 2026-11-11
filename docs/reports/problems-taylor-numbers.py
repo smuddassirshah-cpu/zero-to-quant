@@ -335,6 +335,86 @@ if I is not None:
          'x-one': ser.subs(X, 1) + t / 2 - t ** 2 / 8 + t ** 3 / 24}, dp=5)
     ok(abs(log(2) - float(-s5) - 0.0046) < 0.00005 and round(log(2.1), 5) == 0.74194, 'ln 2 gap 0.0046; ln 2.1 = 0.74194')
 
+# ---------------------------------------------------------------- level 3
+I = load(3)
+if I is not None:
+    ok(3 <= len(I) <= 5, 'set 3: item count')
+    n = sp.Symbol('n', positive=True)
+    # p-doubling-coefficients: c_n = 2^n / n^2
+    c = lambda m: R(2) ** m / R(m) ** 2
+    num(I, 'p-doubling-coefficients', 1, c(5) / c(4), 2 ** 5 / 25 / (2 ** 4 / 16),
+        {'upside-down': c(4) / c(5), 'no-square': 2 * R(4, 5), 'powers-only': 2})
+    lim = sp.limit((2 ** (n + 1) / (n + 1) ** 2) / (2 ** n / n ** 2), n, sp.oo)
+    num(I, 'p-doubling-coefficients', 2, lim, 2 * (1e8 / (1e8 + 1)) ** 2,
+        {'lost-two': 1, 'radius': R(1, 2), 'part-one': c(5) / c(4)}, agree=1e-6)
+    num(I, 'p-doubling-coefficients', 3, 1 / lim, 1 / 2.0, {'no-flip': lim, 'one': 1})
+    geo = R(8, 10) / (1 - R(8, 10))
+    num(I, 'p-doubling-coefficients', 4, geo, sum(0.8 ** k for k in range(1, 400)),
+        {'from-zero': 1 / (1 - R(8, 10)), 'first-term': R(8, 10), 'flipped': R(10, 8)})
+    ok(sum(0.8 ** k / k ** 2 for k in range(1, 400)) < 4, 'series at 0.4 sums below 4')
+    pick(I, 'p-doubling-coefficients', 5, 'closed')
+    ok(all(abs(c(m) * R(1, 2) ** m - R(1, m * m)) == 0 for m in range(1, 20)), 'terms at x = 1/2 are 1/n^2')
+
+    # p-two-months
+    lg = lambda r: log(1 + r)
+    r1, r2 = R(8, 100), R(-5, 100)
+    e1, e2 = r1 - r1 ** 2 / 2, r2 - r2 ** 2 / 2
+    num(I, 'p-two-months', 1, e1, 0.08 - 0.0064 / 2, {'no-half': r1 - r1 ** 2, 'plus': r1 + r1 ** 2 / 2, 'just-r': r1}, dp=4)
+    b1 = r1 ** 3 / 3 * 10 ** 5
+    num(I, 'p-two-months', 2, b1, 0.08 ** 3 / 3 * 1e5, {'factorial': r1 ** 3 / 6 * 10 ** 5, 'no-divide': r1 ** 3 * 10 ** 5, 'kept-term': r1 ** 2 / 2 * 10 ** 5}, dp=1)
+    ok(abs((lg(0.08) - float(e1)) * 1e5 - 16.10) < 0.005 and (lg(0.08) - float(e1)) * 1e5 < float(b1), 'true error 16.10e-5 under the bound')
+    num(I, 'p-two-months', 3, e2, -0.05 - 0.0025 / 2, {'sign': r2 + r2 ** 2 / 2, 'just-r': r2, 'no-half': r2 - r2 ** 2}, dp=5)
+    M = 2 / (1 + r2) ** 3
+    Mnum = max(2 / (1 + x) ** 3 for x in [-0.05 + 0.05 * j / 1000 for j in range(1001)])
+    b2 = M * abs(r2) ** 3 / 6 * 10 ** 5
+    num(I, 'p-two-months', 4, b2, Mnum * 0.05 ** 3 / 6 * 1e5,
+        {'wrong-end': 2 * abs(r2) ** 3 / 6 * 10 ** 5, 'two-factorial': M * abs(r2) ** 3 / 2 * 10 ** 5, 'no-m': abs(r2) ** 3 / 6 * 10 ** 5}, dp=2)
+    true2 = abs(lg(-0.05) - float(e2)) * 1e5
+    ok(abs(true2 - 4.33) < 0.005 and true2 > float(abs(r2) ** 3 / 3 * 10 ** 5) and true2 < float(b2), 'true error 4.33e-5: above 4.17, under 4.86')
+    ok(abs(float(M) - 2.3327) < 0.00005, 'M = 2.3327')
+    tot = R(1707, 100) + R(486, 100)
+    num(I, 'p-two-months', 5, tot, 17.07 + 4.86,
+        {'subtracted': R(1707, 100) - R(486, 100), 'wrong-end': R(1707, 100) + R(417, 100), 'first-only': R(1707, 100)}, dp=1)
+    ok(abs(float(b1 + b2) - 21.93) < 0.005, 'unrounded bounds also sum to 21.93')
+    truetot = log(1.08 * 0.95)
+    ok(round(truetot, 6) == 0.025668 and abs((truetot - 0.02555) * 1e5 - 11.8) < 0.05 and float(e1 + e2) == 0.02555, 'true total 0.025668, 11.8e-5 above')
+
+    # p-tail-bound: e^0.4
+    xv = R(4, 10)
+    T3 = sum(xv ** k / sp.factorial(k) for k in range(4))
+    num(I, 'p-tail-bound', 1, T3, sum(0.4 ** k / [1, 1, 2, 6][k] for k in range(4)),
+        {'quadratic': T3 - xv ** 3 / 6, 'cube-over-three': T3 - xv ** 3 / 6 + xv ** 3 / 3, 'no-half': T3 + xv ** 2 / 2}, dp=5)
+    lag = R(3, 2) * xv ** 4 / 24
+    num(I, 'p-tail-bound', 2, lag, 1.5 * 0.0256 / 24, {'m-one': xv ** 4 / 24, 'power-three': R(3, 2) * xv ** 3 / 6, 'no-factorial': R(3, 2) * xv ** 4}, dp=5)
+    ok(exp(0.4) < 1.5, 'e^0.4 < 1.5')
+    a = lambda k: xv ** k / sp.factorial(k)
+    num(I, 'p-tail-bound', 3, a(5) / a(4), 0.4 / 5, {'over-four': xv / 4, 'x-only': xv, 'upside-down': a(4) / a(5)})
+    ok(all(a(k + 1) / a(k) <= R(8, 100) for k in range(4, 30)), 'later ratios at most 0.08')
+    tail = a(4) / (1 - R(8, 100))
+    num(I, 'p-tail-bound', 4, tail * 10 ** 4, 0.4 ** 4 / 24 * sum(0.08 ** j for j in range(60)) * 1e4, {'first-term': a(4) * 10 ** 4, 'over-four': a(4) / (1 - xv / 4) * 10 ** 4, 'lagrange': lag * 10 ** 4}, dp=2)
+    ok(abs((exp(0.4) - float(T3)) * 1e4 - 11.58) < 0.005 and exp(0.4) - float(T3) < float(tail), 'true error 11.58e-4 under the tail bound')
+    ub = R(1490667, 10 ** 6) + R(11594, 10 ** 7)
+    num(I, 'p-tail-bound', 5, ub, 1.490667 + 0.0011594,
+        {'lagrange': T3 + lag, 'lower': T3 + a(4), 'over-four': T3 + a(4) / (1 - xv / 4)}, dp=5, agree=2e-7)
+    ok(round(float(T3 + a(4)), 5) == 1.49173 and float(T3 + a(4)) < exp(0.4) < float(ub) and round(exp(0.4), 5) == 1.49182, 'bounds hold; e^0.4 = 1.49182')
+
+    # p-big-gain
+    an = 1.8 ** n / n
+    num(I, 'p-big-gain', 1, sp.limit(an.subs(n, n + 1) / an, n, sp.oo), 1.8 * 1e8 / (1e8 + 1),
+        {'upside-down': 1 / 1.8, 'radius': 1}, agree=1e-6)
+    s4 = sum((-1) ** (k + 1) * xv ** k / k for k in range(1, 5))
+    num(I, 'p-big-gain', 2, s4, 0.4 - 0.08 + 0.064 / 3 - 0.0256 / 4,
+        {'three-terms': s4 + xv ** 4 / 4, 'all-plus': sum(xv ** k / k for k in range(1, 5)),
+         'factorials': sum((-1) ** (k + 1) * xv ** k / sp.factorial(k) for k in range(1, 5))}, dp=5)
+    num(I, 'p-big-gain', 3, xv ** 5 / 5, 0.4 ** 5 / 5, {'last-kept': xv ** 4 / 4, 'factorial': xv ** 5 / 120, 'no-divide': xv ** 5}, dp=5)
+    ok(abs(log(1.4) - float(s4) - 0.00154) < 0.000005 and round(log(1.4), 6) == 0.336472, 'ln 1.4 = 0.336472, 0.00154 above')
+    l2 = R(693147, 10 ** 6)
+    s4r = R(334933, 10 ** 6)
+    num(I, 'p-big-gain', 4, l2 + s4r, log(2) + float(s4),
+        {'three-terms': l2 + R(341333, 10 ** 6), 'multiplied': l2 * s4r, 'simple': R(18, 10)}, dp=4, agree=1e-6)
+    ok(round(log(2.8), 6) == 1.029619 and log(2.8) - 1.02808 < 0.00205, 'ln 2.8 = 1.029619, inside the bound')
+    ok(round(log(2), 6) == 0.693147, 'ln 2 as printed')
+
 print(f'{checks} checks, {len(fails)} failures')
 for m in fails:
     print('FAIL', m)
