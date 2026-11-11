@@ -101,9 +101,14 @@ check('review-1 pay key', it['r3-pay']['widget']['answer'] == 30000)
 check('review-1 days key', it['r5-days']['widget']['answer'] == days(date(2026, 11, 15)))
 check('review-1 0.9^20 key', near(it['r7-spread']['widget']['answer'], 0.9 ** 20, 0.005), '%.4f' % 0.9 ** 20)
 p = it['r4-spring']['widget']['points'][0]
-lo, hi = p['target'] - p['tol'], p['target'] + p['tol']
-check('review-1 r4-spring key accepts all of March and April 2027 (months 8 to 10)',
-      lo <= mi(2027, 3) and hi >= mi(2027, 5), 'accepts %.2f to %.2f' % (lo, hi))
+# Grade is abs(x - target) <= tol + 1e-9 (drag-point.js); x snaps to multiples of 0.5 on [0, 26].
+# x = k is the first day of month k, so March and April 2027 are [8, 10): grid values 8, 8.5, 9, 9.5.
+nl = it['r4-spring']['canvas']['params']
+grid = [i * nl['snap'] for i in range(int(nl['max'] / nl['snap']) + 1)]
+acc = [x for x in grid if abs(x - p['target']) <= p['tol'] + 1e-9]
+want = [x for x in grid if mi(2027, 3) <= x < mi(2027, 5)]
+check('review-1 r4-spring key accepts exactly the March and April 2027 grid points',
+      acc == want == [8, 8.5, 9, 9.5], 'accepts %s' % acc)
 
 # ---- homework-1 ----
 h1 = J('homework-1')
