@@ -27,8 +27,9 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} 
 /* ---------- Part 1: unit tests in plain node ---------- */
 const loadInto = (win, rel) => vm.runInContext(fs.readFileSync(path.join(APP, rel), 'utf8'), win, { filename: rel });
 const unit = async () => {
-  const win = { ZQ: { widgets: { register() {}, shuffle: (a) => a } }, console };
+  const win = { ZQ: { widgets: { register() {}, shuffle: (a) => a } }, console, document: { addEventListener() {} } };
   win.window = win; vm.createContext(win);
+  loadInto(win, 'js/engine/grade.js');   // the shape checks live in grade.js since engine pass AA 2 (the app loads it before the widgets)
   loadInto(win, 'js/engine/widgets/expression.js');
   const F = win.ZQ.widgets.exprForms;
   check('expression: exprForms exported', !!F && typeof F.rectangular === 'function' && typeof F.reducible === 'function');

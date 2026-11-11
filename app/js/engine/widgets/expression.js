@@ -23,41 +23,9 @@
   const G = () => Z.grade;
   const KB = '<svg class="icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h17v10h-17zM7 10h.01M10 10h.01M13 10h.01M16 10h.01M8 14h8"/></svg>';
 
-  /* The shape checks on canonical MathJSON, shared by the widget and tools/test-engine-runtime.mjs (ENGINE-BACKLOG 596).
-     A constant answer (no free symbol but the imaginary unit, which the grader reads as the symbol iota) must be evaluated:
-     reducible() finds what a learner left undone: two plain numbers added or multiplied, a quotient or power with a complex
-     base, a division by a complex number, a product with a bracket that holds i. rectangular() is a + bi: one real part and
-     one imaginary term (a number, a surd or a fraction times i), nothing reducible. */
-  const hd = (j) => (Array.isArray(j) ? j[0] : null);
-  const ar = (j) => (Array.isArray(j) ? j.slice(1) : []);
-  const hasI = (j) => j === 'iota' || (Array.isArray(j) && j.some(hasI));
-  const isLit = (j) => typeof j === 'number' || (j && typeof j === 'object' && !Array.isArray(j) && 'num' in j) || hd(j) === 'Rational' || (hd(j) === 'Negate' && isLit(ar(j)[0]));
-  const isSum = (j) => hd(j) === 'Add' || hd(j) === 'Subtract';
-  const reducible = (j) => {
-    if (!Array.isArray(j)) return false;
-    const h = hd(j), a = ar(j);
-    if ((h === 'Add' || h === 'Subtract') && a.filter(isLit).length > 1) return true;
-    if (h === 'Multiply' && (a.filter(isLit).length > 1 || a.some(x => isSum(x) && hasI(x)))) return true;
-    if (h === 'Divide' && (hasI(a[1]) || (isSum(a[0]) && hasI(a[0])))) return true;
-    if (h === 'Power' && hasI(a[0]) && a[0] !== 'iota') return true;
-    return a.some(reducible);
-  };
-  const imagTerm = (j) => {
-    if (j === 'iota') return true;
-    const h = hd(j), a = ar(j);
-    if (h === 'Negate') return imagTerm(a[0]);
-    if (h === 'Multiply') { const w = a.filter(hasI); return w.length === 1 && w[0] === 'iota' && a.length === 2; }
-    if (h === 'Divide') return imagTerm(a[0]) && !hasI(a[1]);
-    return false;
-  };
-  const rectangular = (j) => {
-    if (reducible(j)) return false;
-    if (!hasI(j)) return true;                                   // a real number is a + 0i
-    const r = hd(j) === 'Negate' && isSum(ar(j)[0]) ? ar(j)[0] : j;
-    if (isSum(r)) { const w = ar(r).filter(hasI); return w.length === 1 && imagTerm(w[0]); }
-    return imagTerm(r);
-  };
-  Z.widgets.exprForms = { reducible, rectangular, hasI };
+  /* The shape checks and the whole grade of one typed expression live in grade.js (exprGrade, exprForms), shared with the tests and
+     tools/grade-regression.mjs (ENGINE-BACKLOG 898 to 908). */
+  Z.widgets.exprForms = G().exprForms;
 
   Z.widgets.register('expression', (host, spec, ctx) => {
     const isSet = G().isSetSpec(spec) && spec.unordered === true;
@@ -141,40 +109,8 @@
     const loadP = G().maths().then(build, () => build({ mathlive: false, ce: null }));
 
     const lockNow = (v) => { if (mf) mf.readOnly = v; if (txt) txt.readOnly = v; };
-    const forms = () => [spec.answer, ...(spec.accept || [])].filter(Boolean);
     const answerLatex = () => (isSet ? G().setAnswerText(spec) : spec.answer);
-    const fo = { functions: Array.isArray(spec.functions) ? spec.functions : [], integers: Array.isArray(spec.integers) ? spec.integers : [] }; // letters that are functions here (f(x) stays a call); integers: symbols sampled at whole numbers
-    const equal = (inputLatex, inputAscii, target) => {
-      if (ce && (spec.upToConstant ? G().exprEqualUpToConstant(ce, inputLatex, target, fo) : G().exprEqual(ce, inputLatex, target, fo))) return true; // item 200: + C need not be listed
-      const n = G().normExpr(inputAscii || inputLatex);
-      return !!n && (n === G().normExpr(target));
-    };
-    /* The shape check on canonical MathJSON */
-    const FORM_LINE = { fraction: 'That is equal, but write it as a whole number or one fraction in lowest terms, with no decimal point.', 'exact-angle': 'That is equal, but write the angle in radians as a multiple of pi in lowest terms, with no degrees.', 'factorised-fully': 'Factorise fully: a bracket still has a common factor.', 'completed-square': 'Write it as a bracket squared plus a number.', rectangular: 'That is equal, but not in the form a + bi: work out the real and imaginary parts.', expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
-    const head = (j) => (Array.isArray(j) ? j[0] : null);
-    const args = (j) => (Array.isArray(j) ? j.slice(1) : []);
-    const hasSum = (j) => head(j) === 'Add' || head(j) === 'Subtract' || args(j).some(hasSum);
-    const size = (j) => (Array.isArray(j) ? 1 + args(j).reduce((a, x) => a + size(x), 0) : 1);
-    const isSumLike = (j) => head(j) === 'Add' || head(j) === 'Subtract';
-    const formOk = (L) => {
-      if (spec.form === 'fraction') return G().shapeFraction(L);              // ENGINE-BACKLOG 841: text shapes, read from what was typed
-      if (spec.form === 'exact-angle') return G().shapeExactAngle(L);
-      if (!spec.form || !ce) return true;
-      try {
-        return G().withParsed(ce, L, fo.functions, (e) => {
-          const j = e.json;
-          if (spec.form === 'expanded') return isSumLike(j) ? args(j).every(t => !hasSum(t)) : !hasSum(j);
-          if (spec.form === 'factorised') return G().shapeFactorised(j);
-          if (spec.form === 'factorised-fully') return G().shapeFullyFactorised(j);
-          if (spec.form === 'completed-square') return G().shapeCompletedSquare(j);
-          const constant = !(e.unknowns || []).filter(v => v !== 'iota').length;   // a constant answer must be evaluated, not retyped from the prompt
-          if (spec.form === 'rectangular') return constant ? Z.widgets.exprForms.rectangular(j) : true;
-          if (spec.form === 'simplified') { if (constant && Z.widgets.exprForms.reducible(j)) return false; try { return size(j) <= size(e.simplify().json); } catch { return true; } }
-          return true;
-        });
-      } catch { return true; }
-    };
-    const acceptText = () => isSet ? 'Accepted: ' + G().inline('$' + G().setAnswerText(spec) + '$') + ', in either order.' : 'Accepted: any expression equal to ' + G().inline('$' + spec.answer + '$') + (spec.accept && spec.accept.length ? ', for example ' + spec.accept.slice(0, 2).map(a => `<code class="lsn-ic">${Z.esc(a)}</code>`).join(' or ') : '') + '.';
+    const acceptText = () => isSet ? 'Accepted: ' + G().inline('$' + G().setAnswerText(spec) + '$') + ', in either order.' : 'Accepted: any expression equal to ' + G().inline('$' + spec.answer + '$') + (spec.accept && spec.accept.length ? ', for example ' + spec.accept.slice(0, 2).map(a => G().inline("$" + a + "$")).join(' or ') : '') + '.';
     const showAccept = () => { acc.innerHTML = acceptText(); acc.hidden = false; };
 
     const api = {
@@ -189,15 +125,7 @@
         const L = latex(), A = ascii();
         if (!L.trim()) return { ok: false, key: null };
         if (isSet) { const r = G().exprSetGrade(ce, spec, L); return { ok: r.ok, key: r.key, line: r.line, detail: { latex: L, ascii: A, engine: ce ? 'compute-engine' : 'text', form: null } }; }
-        const same = forms().some(f => equal(L, A, f));
-        const shaped = same && formOk(L);
-        let key = null, line;
-        if (same && !shaped) { key = 'form'; line = FORM_LINE[spec.form]; }
-        else if (!same) {
-          const w = (spec.wrong || []).find(x => x.tex && equal(L, A, x.tex)); key = w ? w.id : null;
-          /* item 433: a vector or matrix answer of the wrong size gets its own key and a line saying how many entries */
-          if (!w && ce) { const sl = G().exprShapeLine(ce, spec.answer, L, fo.functions); if (sl) { key = 'length'; line = sl; } }
-        }
+        const { ok: shaped, key, line } = G().exprGrade(ce, spec, L, A);
         return { ok: shaped, key, line, detail: { latex: L, ascii: A, engine: ce ? 'compute-engine' : 'text', form: spec.form || null } };
       },
       lock() { locked = true; lockNow(true); },

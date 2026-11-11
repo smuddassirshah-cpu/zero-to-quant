@@ -102,6 +102,38 @@ check('numeric set: a wrong set routes to its key, in any order', ng(nw, '5, -2'
 check('numeric set: a three-value set and decimals', ng(NS([0.25, 1, -3]), '-3, 1/4, 1').ok && ng(NS([0.25, 1, -3]), '-3, 0.25').key === 'count');
 check('numeric: a single-answer spec is untouched by the set code', G.within(2, 2, { abs: 0 }) && G.parseNum('1,000') === 1000);
 
+/* ---------- Part 3b: engine pass AA 2 (ENGINE-BACKLOG 902: form "simplified"; 907: the numeric field) ---------- */
+const gx = (spec, typed) => G.exprGrade(ce, { kind: 'expression', form: 'simplified', ...spec }, typed, typed);
+const simp = (spec, t) => gx(spec, t).ok === true, shapeKey = (spec, t) => { const r = gx(spec, t); return r.ok ? 'ok' : r.key; };
+const sail = { answer: '-\\frac{2}{3}r+\\frac{1}{3}s', accept: ['\\frac{1}{3}s-\\frac{2}{3}r', '(s-2r)/3'] };
+['-\\frac{2r}{3}+\\frac{s}{3}', '\\frac{1}{3}s-\\frac{2}{3}r', '(s-2r)/3', '\\frac{s-2r}{3}', '-\\frac{2}{3}r+\\frac{1}{3}s', 's/3-2r/3', '\\frac{s}{3}-\\frac{2r}{3}', 'r=-\\frac{2r}{3}+\\frac{s}{3}'.replace('r=', 'B=')].forEach((t) => check(`902 simplified yes (sail ring): ${t}`, simp(sail, t), JSON.stringify(gx(sail, t))));
+['-r+\\frac{1}{3}r+\\frac{1}{3}s', '-r+\\frac{r}{3}+\\frac{s}{3}', 'r\\left(-1+\\frac{1}{3}\\right)+\\frac{1}{3}s'].forEach((t) => check(`902 simplified no (sail ring, the route before the r terms are collected): ${t}`, shapeKey(sail, t) === 'form', JSON.stringify(gx(sail, t))));
+const car = { answer: '2.5t-2', accept: ['-2+2.5t', '\\frac{5}{2}t-2', '\\frac{5t}{2}-2'] };
+['2.5t-2', '-2+2.5t', '\\frac{5}{2}t-2', '\\frac{5t}{2}-2', '(5t-4)/2', '\\frac{5t-4}{2}', 'y=2.5t-2'].forEach((t) => check(`902 simplified yes (car park): ${t}`, simp(car, t), JSON.stringify(gx(car, t))));
+['3+2.5(t-2)', '3+2.5t-5', '0.5+2.5(t-1)', '2.5t-1-1', '2.5(t-0.8)', '\\frac{5}{2}(t-\\frac{4}{5})', '2.5t+3-5', '\\frac{10t-8}{4}'].forEach((t) => check(`902 simplified no (car park): ${t}`, shapeKey(car, t) === 'form', JSON.stringify(gx(car, t))));
+const spr = { answer: '2.5x-0.5x^2', accept: ['-0.5x^2+2.5x', '\\frac{5}{2}x-\\frac{1}{2}x^2'] };
+['\\frac{5x}{2}-\\frac{x^2}{2}', '2.5x-\\frac{x^2}{2}', '-\\frac{x^2}{2}+\\frac{5x}{2}', '\\frac{5x-x^2}{2}', '2.5x-0.5x^2', '\\frac{5}{2}x-\\frac{1}{2}x^2'].forEach((t) => check(`902 simplified yes (sprinkler bank): ${t}`, simp(spr, t), JSON.stringify(gx(spr, t))));
+['2.5x-0.5x^2+0x', '2.5x-0.25x^2-0.25x^2', '\\frac{10x-2x^2}{4}'].forEach((t) => check(`902 simplified no (sprinkler bank): ${t}`, !simp(spr, t) && G.exprEqual(ce, t, spr.answer), JSON.stringify(gx(spr, t))));
+const bonus = { answer: '5n-100', accept: ['5n-100', '-100+5n', '5(n-20)'] };
+check('902 simplified (ticket bonus): the authored forms pass, the composite before it is simplified does not', simp(bonus, '5n-100') && simp(bonus, '5(n-20)') && simp(bonus, '-100+5n') && shapeKey(bonus, '0.2(25n-500)') === 'form' && shapeKey(bonus, '\\frac{1}{5}(25n-500)') === 'form' && shapeKey(bonus, '\\frac{25n-500}{5}') === 'form');
+const plate = { answer: '36x^2+24x-5' };
+check('902 simplified: uncollected like terms and two plain numbers are refused', simp(plate, '36x^2+24x-5') && shapeKey(plate, '36x^2+24x+4-9') === 'form' && shapeKey(plate, '36x^2+12x+12x-5') === 'form' && simp(plate, '-5+24x+36x^2'));
+const mid = { answer: '\\frac{1}{2}r+\\frac{1}{2}s' };
+check('902 simplified: an unopened bracket in a sum is refused (r+\\frac{1}{2}(s-r))', simp(mid, '\\frac{1}{2}r+\\frac{1}{2}s') && simp(mid, '\\frac{r+s}{2}') && shapeKey(mid, 'r+\\frac{1}{2}(s-r)') === 'form' && shapeKey(mid, 'r+0.5(s-r)') === 'form');
+check('902 simplified: the old comparison with simplify() still decides what the new rule leaves alone', simp({ answer: '\\sqrt{2}' }, '\\sqrt{2}') && !simp({ answer: '\\sqrt{2}' }, '\\sqrt{8}\\cdot\\frac{1}{2}') && simp({ answer: '\\frac{3}{11}' }, '\\frac{3}{11}') && !simp({ answer: '5' }, '2+3') && simp({ answer: '\\frac{1}{x}+x' }, 'x+\\frac{1}{x}'));
+
+/* 907: the numeric field reads a trailing unit or degree sign and a letter and = before the value; a scale for "units of 10^-k" */
+const nv = (spec, t) => G.numGrade({ kind: 'numeric', ...spec }, t);
+const cm = { answer: 22, tol: { abs: 0 }, unit: 'cm' };
+['22', '22 cm', '22cm', '22 CM', '22 cm.', 'x = 22', 'x=22 cm', 'b = 22', 'L_1 = 22', '22.0 cm'].forEach((t) => check(`907 numeric: ${t}`, nv(cm, t).ok === true, JSON.stringify(nv(cm, t))));
+check('907 numeric: degrees, a one-letter unit only when it is the field\'s own', nv({ answer: 115, tol: { abs: 0 }, unit: '°' }, '115°').ok && nv({ answer: 115, tol: { abs: 0 } }, '115°').ok && nv({ answer: 115, tol: { abs: 0 } }, '115^\\circ').ok && nv({ answer: 600, tol: { abs: 0 }, unit: 'g' }, '600 g').ok && !nv({ answer: 3, tol: { abs: 0 } }, '3x').ok && nv({ answer: 3, tol: { abs: 0 }, unit: 'x' }, '3x').ok && nv({ answer: 3500, tol: { abs: 0 } }, '3500 m').ok === false && nv({ answer: 3500, tol: { abs: 0 }, unit: 'm' }, '3500 m').ok);
+check('907 numeric: two-letter units and rates, wrong values still route', nv({ answer: 40, tol: { abs: 0 } }, '40 km/h').ok && nv({ answer: 40, tol: { abs: 0 } }, '40mph').ok && nv({ answer: 3, tol: { abs: 0 }, wrong: [{ id: 'w', value: 5 }] }, 'x = 5 cm').key === 'w' && nv({ answer: 3, tol: { abs: 0 } }, 'x = 7 cm').key === null);
+check('907 numeric: nothing else changes (scientific notation, fractions, percentages, currency, an empty or non-numeric field)', nv({ answer: 4.86e-5, tol: { rel: 1e-9 } }, '4.86e-5').ok && nv({ answer: 0.75, tol: { abs: 0 } }, '3/4').ok && nv({ answer: 0.167, unit: '%', tol: { abs: 0.0005 } }, '16.7').ok && nv({ answer: 0.167, unit: '%', tol: { abs: 0.0005 } }, '16.7%').ok && nv({ answer: 75, tol: { abs: 0 }, unit: '£' }, '£75').ok && nv({ answer: 1000, tol: { abs: 0 } }, '1,000').ok && nv({ answer: 1, tol: { abs: 0 } }, '').key === null && nv({ answer: 1, tol: { abs: 0 } }, 'abc').ok === false);
+const sc = { answer: 4.86, tol: { abs: 0.005 }, scale: 1e-5, wrong: [{ id: 'one-off', value: 4.9, tol: { abs: 0.005 } }] };
+check('907 scale: the stored units and the true value both pass', nv(sc, '4.86').ok && nv(sc, '4.86e-5').ok && nv(sc, '0.0000486').ok && nv(sc, '0.00004861').ok && nv(sc, '48.6e-6').ok);
+check('907 scale: the band is scaled, a wrong value routes in either units, no scale means no unscaled reading', !nv(sc, '4.9').ok && nv(sc, '4.9').key === 'one-off' && nv(sc, '4.9e-5').key === 'one-off' && !nv(sc, '0.0000487').ok && !nv({ ...sc, scale: undefined }, '4.86e-5').ok && nv(sc, '').ok === false && !nv(sc, '5').ok);
+check('907 scale: widget values are numbers (G.numValue)', Math.abs(G.numValue('x = 22 cm', { unit: 'cm' }) - 22) < 1e-12 && Number.isNaN(G.numValue('cm', {})) && G.numText('b = 12', {}) === '12');
+
 /* ---------- Part 4: the fixture set ---------- */
 const fix = JSON.parse(fs.readFileSync(path.join(APP, 'tools/fixtures/fluency/fluency-l3-opening-brackets.json'), 'utf8'));
 const gen = (await import('node:module')).createRequire(import.meta.url)('../js/engine/gen.js');

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Freshness check (ENGINE-BACKLOG 588). Flags items whose prose, question or widget prompt text
 // copies a lesson screen, quiz, review, homework or other exam item, even with changed numbers.
+// Problem sets (893): --file courses/<c>/problems-<n>.json also lists, as advisory, a shared displayed formula or two shared parameters with its course (--shared-params n, --no-set-reuse).
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
 //                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
 //   --file content/courses/<c>/review-1.json (or homework-2.json) checks a course set against everything else, code items included, and
@@ -82,10 +83,29 @@ function numbersOf(strings) {
   return out;
 }
 const SHARED_NUMS = Number(opt('--shared-numbers', 3));
+// ENGINE-BACKLOG 893: the displayed formulas of a unit (its $..$ and $$..$$ spans, and each side of an = or \approx in them), with spaces, \left \right,
+// \, and \tfrac dropped, kept when they hold three or more tokens. A problem-set item that shares one with a lesson, quiz, review, homework, exam or
+// other set of its course, or two or more of its stated parameters (--shared-params, default 2), is reported as advisory.
+function formulasOf(strings) {
+  const out = new Set();
+  const norm = (x) => x.replace(/\\(?:left|right)(?![a-z])/g, '').replace(/\\[,;:! ]|~|\s+/g, '').replace(/\\[dt]frac/g, '\\frac').replace(/\\operatorname\{([a-z]+)\}|\\mathrm\{([a-z]+)\}/g, '$1$2');
+  for (const m of strings.join(' \n ').matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)) {
+    const whole = norm(m[1] ?? m[2]);
+    for (const f of new Set([whole, ...whole.split(/=|\\approx|\\le(?![a-z])|\\ge(?![a-z])|<|>/)])) {
+      const tk = f.match(/\\[a-zA-Z]+|[A-Za-z]|\d+(?:\.\d+)?|[^\s]/g) ?? [];
+      const sig = tk.filter((t) => !/^[(){}[\],.]$/.test(t));
+      // a formula that states something specific: six or more tokens, a letter, an operator and a number (a bare identity such as \frac{c_{n+1}}{c_n} is a taught idea, not a setting)
+      if (sig.length >= 6 && /[A-Za-z]/.test(f) && /\d/.test(f) && /[-+^*/=]|\\(?:frac|sqrt|ln|sin|cos|tan|exp|int|sum|binom|cdot|times)/.test(f) && (f.split(/[(){}]/).length - 1) % 1 === 0 && (f.match(/\(/g) ?? []).length === (f.match(/\)/g) ?? []).length) out.add(f);
+    }
+  }
+  return out;
+}
+const sigLen = (f) => (f.match(/\\[a-zA-Z]+|[A-Za-z]|\d+(?:\.\d+)?|[^\s]/g) ?? []).filter((t) => !/^[(){}[\],.]$/.test(t)).length;
+const SHARED_PARAMS = Number(opt('--shared-params', 2)), BOILER_F = Number(opt('--boiler-formula', 3));
 // Units: one lesson screen / quiz item / review item / homework item / exam item / drill / bank item.
 function unitsOf(file, rel) {
   const d = rd(file), u = [];
-  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, nums: numbersOf(out) }); };
+  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, nums: numbersOf(out), forms: formulasOf(out) }); };
   if (rel.startsWith('courses/')) {
     (d.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s));
     const qz = Array.isArray(d.quiz) ? d.quiz : d.quiz?.items ?? [];
@@ -187,6 +207,28 @@ function scanNumbers(rel, targetUnits) {
   }
   return hits;
 }
+// Set reuse (893): a problem-set item against the lessons, quizzes, reviews, homework and other sets of its course, and every exam.
+const dfForm = new Map();
+for (const x of corpus) for (const f of x.forms ?? []) dfForm.set(f, (dfForm.get(f) ?? 0) + 1);
+function scanSetReuse(rel, targetUnits) {
+  const m = rel.match(/^courses\/([^/]+)\/problems-\d+\.json$/);
+  if (!m || has('--no-set-reuse')) return [];
+  const hits = [];
+  for (const t of targetUnits) {
+    const mine = [...t.forms].filter((f) => (dfForm.get(f) ?? 0) <= BOILER_F);
+    for (const c of corpus) {
+      const exam = c.file.startsWith('exams/');
+      if (c.file === rel || !(c.file.startsWith(`courses/${m[1]}/`) || exam)) continue;
+      // the same formula, or one that sits inside a longer one of the source (P(t)=40e^{0.06t} inside P(t)=40e^{0.06t}(1+0.02t)); an exam is not tied to a course, so it needs a longer formula and three parameters
+      const fs = mine.filter((f) => (!exam || sigLen(f) >= 8) && (c.forms.has(f) || [...c.forms].some((g) => g.length > f.length && g.includes(f))));
+      if (fs.length) { hits.push({ target: `${rel}:${t.path}`, source: `${c.file}:${c.path}`, kind: 'formula', ngram: fs.slice(0, 3).join('  '), count: fs.length, score: 0 }); continue; }
+      // a stated parameter is a specific number: a whole number over 20, a decimal with two places or more, or three or more significant digits (0.3 and 1.5 are everywhere)
+      const shared = [...t.nums].filter((n) => c.nums.has(n) && (n.replace('.', '').replace(/^0+/, '').length >= 3 || /\.\d\d/.test(n) || (!n.includes('.') && +n > 20)));
+      if (SHARED_PARAMS >= 1 && shared.length >= SHARED_PARAMS + (exam ? 1 : 0)) hits.push({ target: `${rel}:${t.path}`, source: `${c.file}:${c.path}`, kind: 'params', ngram: shared.slice(0, 6).join(' '), count: shared.length, score: 0 });
+    }
+  }
+  return hits;
+}
 // Code names (ENGINE-BACKLOG 600): function and class names of code widgets in a target (exam, drill or bank
 // item) against every code widget of every lesson, review and homework. A task renamed in prose but with the
 // same function (`walk_forward_mse`, `irls_logistic`, `metropolis`) is a reuse the prose scan cannot see.
@@ -259,16 +301,17 @@ if (direct) {
 }
 // One line per target item and source file: the best hit (an n-gram hit beats a score, then the higher score).
 const best = new Map();
-for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...scanNumbers(t.rel, t.units), ...(has('--no-code') ? [] : scanCode(t.rel, t.abs))]) {
+for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...scanNumbers(t.rel, t.units), ...scanSetReuse(t.rel, t.units), ...(has('--no-code') ? [] : scanCode(t.rel, t.abs))]) {
   const k = `${h.target}|${h.kind === 'code-name' ? 'name:' + h.ngram : h.source.split(':')[0]}`, o = best.get(k);
-  const RANK = { 'code-name': 4, ngram: 3, jaccard: 2, numbers: 1 };
+  const RANK = { 'code-name': 4, ngram: 3, jaccard: 2, formula: 1.6, params: 1.5, numbers: 1 };
   if (!o || RANK[h.kind] > RANK[o.kind] || (h.kind === o.kind && ((h.count ?? 0) > (o.count ?? 0) || (h.run ?? 0) > (o.run ?? 0) || ((h.run ?? 0) === (o.run ?? 0) && h.score > o.score)))) best.set(k, h);
 }
 const all = [...best.values()];
-const hard = all.filter((h) => h.kind !== 'numbers');   // shared numbers are advisory: a table of critical values is shared on purpose
+const ADVISORY = new Set(['numbers', 'formula', 'params']);   // shared numbers, a shared formula and shared parameters are advisory: a table of critical values is shared on purpose
+const hard = all.filter((h) => !ADVISORY.has(h.kind));
 if (has('--json')) console.log(JSON.stringify(all, null, 1));
 else {
-  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
-  console.log(`${hard.length} hit(s) in ${targets.length} target file(s)${all.length > hard.length ? `, ${all.length - hard.length} advisory (shared numbers: read them, they may be a shared table of constants)` : ''}`);
+  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'formula' ? `shared formula ${h.ngram}` : h.kind === 'params' ? `${h.count} shared parameters (${h.ngram})` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
+  console.log(`${hard.length} hit(s) in ${targets.length} target file(s)${all.length > hard.length ? `, ${all.length - hard.length} advisory (shared numbers, formulas and parameters: read them, they may be a shared table of constants)` : ''}`);
 }
 process.exitCode = hard.length ? 1 : 0;   // not process.exit: piped output must flush
