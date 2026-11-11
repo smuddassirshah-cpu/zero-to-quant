@@ -509,13 +509,17 @@ def level4(L):
     ser = lambda T: sum(F(-T, 100) ** k / sp.factorial(k) for k in range(25))
     Vser = float(50 * ser(2) + 50 * ser(8) - 100 * ser(5))
     gain = sp.N(1000 * V_.subs(u, sp.Rational(1, 100)), 30)
-    num(L, 'p-barbell-hedge', 4, gain, 1000 * Vser, {'tangent': 0, 'wrong-way': 1000 * Vf(-0.01)}, dp=0, agree=1e-9)
+    so_est = 0.5 * float(d2) * 0.01 ** 2 * 1000   # fix pass 1.3 c: the second-order estimate (1/2) V''(0) u^2, in pounds
+    num(L, 'p-barbell-hedge', 4, gain, 1000 * Vser, {'tangent': 0, 'second-order': so_est, 'wrong-way': 1000 * Vf(-0.01)}, dp=0, agree=1e-9)
+    ok(abs(so_est - 45) < 1e-9, 'barbell: second-order estimate is 45 pounds')
+    ok(not any(abs(x - y) <= 1.0 for x, y in ((45, float(gain)), (45, 1000 * Vf(-0.01)), (float(gain), 1000 * Vf(-0.01)))), 'barbell: bands of 0.5 around 42.81, 45 and 47.31 are disjoint')
+    ok('keeping each term to 5 decimal places' in L['p-barbell-hedge']['parts'][3]['question'], 'barbell: part 4 asks for 5 decimal places')
     ok(round(float(gain)) == 43, 'barbell: nearest pound is 43')
     for shown, T, c in ((49.00993, 2, 50), (46.15582, 8, 50), (95.12294, 5, 100)):
         stated(f'barbell: {c}e^-{T/100}', shown, c * exp(-T / 100), 0.000005)
     stated('barbell: the printed terms combine', 0.04281, 49.00993 + 46.15582 - 95.12294, 0.000005)
     ok(Vf(-0.01) > 0 and Vf(0.01) > 0, 'barbell: gains whichever way yields move')
-    ok(abs(1000 * 0.5 * float(d2) * 1e-4 - 42.81) > 0.5, 'barbell: the untaught curvature estimate 45 lies outside the band')
+    ok(abs(so_est - 42.81) > 0.5, 'barbell: the second-order estimate 45 lies outside the key band')
 
     # p-level-annuity
     A_ = (1 - sp.exp(-10 * r)) / r
@@ -540,6 +544,13 @@ def level4(L):
     a02 = sp.N(A_.subs(r, sp.Rational(2, 100)), 30)
     aser = float(sum(F(-1) ** k * F(10) ** (k + 1) * F(2, 100) ** k / sp.factorial(k + 1) for k in range(30)))
     num(L, 'p-level-annuity', 5, a02, aser, {'tangent': 9, 'lost-ten': (1 - exp(-0.02)) / 0.02, 'no-divide': 1 - exp(-0.2)}, dp=4, agree=1e-12)
+    # fix pass 1.3 c: tol 0.0001; the working with e^-0.2 kept to 6 places gives 0.181269 / 0.02 = 9.06345, and both ends 9.0634, 9.0636 are accepted
+    atol = L['p-level-annuity']['parts'][4]['widget']['tol']['abs']
+    ok(atol == 0.0001, 'annuity: part 5 tol is 0.0001')
+    hand = (1 - round(exp(-0.2), 6)) / 0.02
+    ok(abs(hand - 9.06345) < 1e-9 and all(abs(v - 9.0635) <= atol + 1e-12 for v in (hand, 9.0634, 9.0635, 9.0636)), 'annuity: 9.06345, 9.0634 and 9.0636 are accepted')
+    ok(all(abs(v - 9.0635) > atol + 1e-9 for v in (9, 0.9901, 0.1813)), 'annuity: the three wrong values stay outside')
+    ok('Keep $e^{-0.2}$ to 6 decimal places' in L['p-level-annuity']['parts'][4]['question'], 'annuity: part 5 asks for 6 places of e^-0.2')
     stated('annuity: e^-0.2', 0.818731, exp(-0.2), 0.0000005)
     stated('annuity: 1 - e^-0.2', 0.181269, 1 - exp(-0.2), 0.0000005)
     ok(float(a02) > float(est), 'annuity: the tangent sits below the curve')
@@ -601,6 +612,8 @@ def level5(L):
         {'users': 500, 'no-thousand': 250000, 'carried-cap': 0}, agree=1e-6)
     t900 = sp.solve(sp.Eq(Nt, 900), t)[0]
     ok(sp.simplify(t900 - sp.log(81)) == 0, 'app: N = 900 at t = ln 81')
+    ok('At least how many months' in L['p-app-adoption']['parts'][4]['question'], 'app: part 5 asks for the bound (at least), not the true time')
+    ok(abs(float(sp.log(81)) - 4.3944) < 5e-5 and 4.3944 - 3.2 > 0.005, 'app: true time ln 81 = 4.3944 is the actual slip, apart from the bound 3.2')
     num(L, 'p-app-adoption', 5, sp.Rational(800, 250), F(900 - 100) / F(250),
         {'actual': t900, 'from-zero': F(900, 250), 'carried-users': F(800, 500)})
     ok(float(t900) >= 3.2, 'app: the true time respects the bound')
@@ -631,6 +644,10 @@ def level5(L):
     qf = lambda v: 500 * tan(v / 2)
     num(L, 'p-impact-curve', 4, sp.N(inv, 30), dq(qf, 1),
         {'at-y': 1 / dp_.subs(q, 1), 'at-500': 1 / dp_.subs(q, 500), 'not-inverted': dp_.subs(q, q1)}, dp=0, agree=1e-6)
+    ni = L['p-impact-curve']['parts'][3]['widget']['wrong']
+    ni = [z for z in ni if z['id'] == 'not-inverted'][0]
+    ok(ni['tol']['abs'] == 0.0005 and abs(float(dp_.subs(q, q1)) - ni['value']) <= ni['tol']['abs'], 'impact: not-inverted band 0.0031 +- 0.0005 holds p\'(273.15) = 0.00308')
+    ok(all(abs(v - ni['value']) > ni['tol']['abs'] for v in (0, 0.002, 0.4)), 'impact: 0, 0.002 and 0.4 lie outside the not-inverted band')
     stated('impact: 273.15^2', 74612, float(q1) ** 2, 0.5)
     stated('impact: q\'(1) by 250 sec^2', 324.61, 250 * (1 + tan(0.5) ** 2), 0.005)
 

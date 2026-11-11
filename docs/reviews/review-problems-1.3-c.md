@@ -142,3 +142,38 @@ One fix pass on Sonnet covers all of it. Findings 10 and 11 change graded answer
 | `dump.py` | compact dump of a set for reading | `python3` |
 
 All run from the repo root.
+
+## Fix pass
+
+Targeted JSON field edits (files round-trip with the same layout). Every changed number was computed twice (sympy exact, then quadrature, a bisection, a series, or simulation) in `docs/reports/problems-limits-numbers.py`, `-integrals-numbers.py` and `-multivar-numbers.py`, all updated and exit 0 (limits 1269 checks, integrals 1087 of 1087, multivar 731 of 731, 0 failures). The new checks pin the new bands and texts, so a reverted fix fails.
+
+1. Fixed. `p-app-adoption` part 5: question now "At least how many months must it take ...", key 3.2 and `actual` 4.3944 unchanged (ln 81 = 4.3944, 800 / 250 = 3.2).
+2. Fixed. `p-signal-decay` part 3: restates $N'(t) = \tfrac{60}{1+t} - 3$ (57 at 0) and part 2's fall; chain is 1, 3, 4 with part 2 the reason a largest day exists. Answer 19 and `wrong` unchanged.
+3. Fixed. `p-barbell-hedge` part 4: new question; `wrong` `second-order` 45 (tol 0.5) with its `byKey` line. $\tfrac12 \times 900 \times 0.0001 \times 1000 = 45$ pounds, by hand and in the script. Bands 42.31 to 43.31, 44.5 to 45.5, 46.81 to 47.81 (V(-0.01) = 47.31) are disjoint.
+4. Fixed. `p-level-annuity` part 5: question says keep $e^{-0.2}$ to 6 places; `tol` 0.0001, `accept` "$9.0635 \pm 0.0001$". 0.181269 / 0.02 = 9.06345, so 9.0634, 9.0635 and 9.0636 are accepted (9.0634 is within 0.0001 in floating point: 9.99999999998e-5); 9, 0.9901, 0.1813 stay outside.
+5. Fixed. `p-impact-curve` part 4 `not-inverted`: tol 0.5 to 0.0005. $p'(273.15) = \tfrac{1000}{250000 + 74612} = 0.003081$ is inside; 0, 0.002, 0.4 are outside.
+6. Fixed. `p-dish-and-spindle` part 3: `tol` 0.001, `accept` "$0.141 \pm 0.001$". $\pi \times 0.0447 = 0.1404$ and a typed 0.140 are accepted; 0.260, 0.904, 5.236 outside. Part 4: 2.048 / 0.141 and 2.0485 / 0.1403 both round to 15.
+7. Fixed. Ten `accept` lines now read "$\ldots \approx v$, accepted as $v \pm t$" (kernel 3, 4; flared-mouth 1 to 4; dish-and-spindle 2; seal 1, 3, 5). Values 0.811, 1.386, 6.283, 1.645, 4.935, 0.707, 2.048, 1.571, 59.22, 5.07 each match the stored `tol` (0.0005 or 0.005). The script now fails on any "Any form" line in the set.
+8. Fixed. `p-impact-kernel` part 1 `unit-rule` line: 1 is the bound on $[0, 1]$, $\tfrac12 \times \tfrac{1}{1-p}$ with $p = \tfrac12$ ($\int_0^1 \tfrac{dt}{2\sqrt t} = 1$ by quadrature).
+9. Fixed. `p-dish-and-spindle` part 4 `inverse`: tol 0.5 to 0.005. $\tfrac{0.14076}{2.04847} = 0.06872$ inside; 0.141, 0.326, 0, 0.5 outside.
+10. Fixed. `p-corner-sprinkler` part 1 is now the depth in polar: answer `9-r^2`, `accept` `9-r^{2}`, `(3-r)(3+r)`, `wrong` `r-not-squared` `9-r`, `with-r` `9r-r^3`, with feedback and explain as proposed; part 2 restates "the depth $9 - r^2$ from part 1". Basis: $x = r\cos\theta$, $y = r\sin\theta$ give $x^2 + y^2 = r^2$ (sympy), so $d = 9 - r^2$, 9 at the origin and 0 at $r = 3$. The chain is now 1 to 2 to 3 to 4 to 5.
+11. Fixed. `p-drone-landing` on $c\,e^{-(x^2+y^2)/32}$, $\sigma = 4$, all five parts recomputed here (sympy; quadrature, double quadrature, simulation of 2,000,000 points, bisection): part 1 $\sqrt{32\pi} = 4\sqrt{2\pi} = 10.0265$; part 2 $32\pi$; part 3 $\tfrac{1}{32\pi} \approx 0.0099$; part 4 within 4 m is $1 - e^{-1/2} = 0.3935$ (radial integral $16(1 - e^{-1/2})$); part 5 $a = \sqrt{32\ln 10} = 8.5839$. Exponent 32 appears in no other multivar file; `sigma-root8` renamed `sigma-root32`. "A little more than doubles": 8.58 / 4 = 2.15.
+12. Deferred, engine. Added to `docs/BACKLOG-INBOX.md` under `Raised later (review problems 1.3 c):` with a second bullet for the two validator rules. No content edit.
+
+Reader's "other" items: the two wide `wrong` bands (findings 5 and 9) are fixed above. No other finding disputed.
+
+Graded answers, bands and `wrong` values changed (a delta reader recomputes this list):
+
+- limits 4 `p-level-annuity` part 5: answer 9.0635 unchanged; `tol` 0.00005 to 0.0001 (accepted 9.06345 to 9.06355 becomes 9.0634 to 9.0636).
+- limits 4 `p-barbell-hedge` part 4: new `wrong` `second-order` value 45, tol 0.5. Answer 42.81 and the other `wrong` entries unchanged.
+- limits 5 `p-impact-curve` part 4: `not-inverted` tol 0.5 to 0.0005 (value 0.0031 unchanged).
+- integrals 4 `p-dish-and-spindle` part 3: answer 0.14076 unchanged; `tol` 0.0005 to 0.001. Part 4 `inverse`: tol 0.5 to 0.005 (value 0.0687 unchanged).
+- multivar 4 `p-corner-sprinkler` part 1: answer `\sqrt{9-x^2}` to `9-r^2`; `accept` `\sqrt{9-x^{2}}`, `(9-x^2)^{1/2}` to `9-r^{2}`, `(3-r)(3+r)`; `wrong` `straight` `3-x` and `no-root` `9-x^2` to `r-not-squared` `9-r` and `with-r` `9r-r^3`. Part 2 unchanged in answer.
+- multivar 4 `p-drone-landing`:
+  - part 1: answer 5.0133 to 10.0265; `no-scale` 1.7725 (same); `inverted` 0.6267 to 0.3133; `sigma-root8` 7.0898 to `sigma-root32` 14.1796.
+  - part 2: answer `8\pi` to `32\pi` (accept `8 \cdot \pi` to `32 \cdot \pi`); `not-squared` `\sqrt{8\pi}` to `\sqrt{32\pi}`; `doubled` `2\sqrt{8\pi}` to `2\sqrt{32\pi}`; `carried` `\pi` (same).
+  - part 3: answer `\frac{1}{8\pi}` to `\frac{1}{32\pi}` (accept `1/(8\pi)`, `\frac{1}{8}\cdot\frac{1}{\pi}` to `1/(32\pi)`, `\frac{1}{32}\cdot\frac{1}{\pi}`); `not-inverted` `8\pi` to `32\pi`; `from-root` `\frac{1}{\sqrt{8\pi}}` to `\frac{1}{\sqrt{32\pi}}`; `carried` `\frac{1}{\pi}` (same).
+  - part 4: question 2 m to 4 m; answer 0.3935 (same); `r-not-squared` 0.2212 to 0.1175; `no-2pi` 0.0626 (same); `outside` 0.6065 (same).
+  - part 5: answer 4.29 to 8.58; `no-root` 18.42 to 73.68; `tail-swap` 0.92 to 1.84; `log10` 2.83 to 5.66.
+
+Gates: validator 0 errors (4144 warnings, none new on these files); `fresh-check.mjs --file` 0 hits on each of the four changed sets; `playthrough --problems` green for limits 4 and 5, integrals 4, multivar 4, with and without `--mobile`; voice scan 35: 0 and 0 on limits, integrals and multivar. The reader's `grade-check.mjs` reports its old hard-coded typed strings for the sprinkler and drone as refused, as expected after the rewrite; the five other rows are as before.

@@ -400,6 +400,7 @@ lv.claim(all(wl(q) < 1 / (2 * math.sqrt(q)) for q in (1e-6, 0.01, 0.5, 1, 4, 100
 bound = sp.limit(sp.integrate(1 / (2 * sp.sqrt(t)), (t, b, 4)), b, 0, '+')
 num(lv, 0, 0, bound, quad(lambda q: 0.5 / math.sqrt(q), 0, 4)[0], {
     'no-half': sp.integrate(1 / sp.sqrt(t), (t, 0, 4)), 'unit-rule': sp.Rational(1, 2) * 1 / (1 - sp.Rational(1, 2))}, agree=1e-6)
+lv.claim(abs(float(quad(lambda q: 0.5 / math.sqrt(q), 0, 1)[0]) - 1) < 1e-9 and 'bound on $[0, 1]$' in lv.files['problems-4']['items'][0]['parts'][0]['feedback']['byKey']['unit-rule'] and W(lv, 0, 0)['wrong'][1]['value'] == 1, 'L4 p-impact-kernel part 1: the unit-rule line names 1 as the bound on [0, 1]')
 gu = 2 / ((1 + u) * (2 + u))
 lv.claim(sp.simplify(sp.integrate(wl_ := 1 / (sp.sqrt(t) * (1 + sp.sqrt(t)) * (2 + sp.sqrt(t))), t).subs(t, u ** 2)
                      - sp.integrate(gu, u)).free_symbols == set(), 'L4 p-impact-kernel part 2: u = sqrt t turns w dt into 2 du/((1+u)(2+u))')
@@ -468,6 +469,18 @@ lv.claim(sp.simplify(I_f - sp.log(sp.Rational(4, 3))) == 0, 'L4 p-dish-and-spind
 num(lv, 2, 2, VXx, PI * quad(lambda q: fdl(q) ** 2, 0, 2)[0], {
     'square-integral': sp.pi * I_f ** 2, 'no-square': sp.pi * I_f, 'cross-term': sp.pi * sp.Rational(5, 3)}, printed=0.141)
 lv.claim(abs(float(sp.pi * I_f ** 2) - 0.260) < 0.0005, 'L4 p-dish-and-spindle part 4: squared-integral V_x 0.260')
+# fix pass 1.3 c: part 3 tol 0.001 takes the 4-place working (pi x 0.0447 = 0.1403 and the typed 0.140); part 4 inverse band 0.0687 +- 0.005
+w3 = W(lv, 2, 2)
+lv.claim(w3['tol']['abs'] == 0.001 and all(abs(v - w3['answer']) <= 0.001 for v in (0.140, 0.141, float(sp.pi) * 0.0447)), 'L4 p-dish-and-spindle part 3: tol 0.001 accepts 0.140, 0.141 and pi x 0.0447')
+lv.claim(all(abs(v - w3['answer']) > 0.001 for v in (0.260, 0.904, 5.236)), 'L4 p-dish-and-spindle part 3: the wrong values stay outside')
+lv.claim(abs(0.141 - 0.1408) < 0.001 and round(2.048 / 0.141) == 15 and round(2.0485 / 0.1403) == 15, 'L4 p-dish-and-spindle part 4: handing 0.141 or 0.1403 on still gives 15')
+wi = {z['id']: z for z in W(lv, 2, 3)['wrong']}['inverse']
+lv.claim(wi['tol']['abs'] == 0.005 and abs(float(VXx / VYx) - wi['value']) <= 0.005 and all(abs(v - wi['value']) > 0.005 for v in (0.141, 0.326, 0, 0.5)), 'L4 p-dish-and-spindle part 4: inverse band 0.0687 +- 0.005 excludes 0.141, 0.326, 0 and 0.5')
+# fix pass 1.3 c: no accept line promises a form the numeric field cannot parse
+for it in lv.files['problems-4']['items']:
+    for pt in it['parts']:
+        ac = pt['widget'].get('accept') if isinstance(pt['widget'].get('accept'), str) else ''
+        lv.claim('Any form' not in ac, f'L4 {it["id"]}: no "Any form equal to" accept line')
 ratio = VYx / VXx
 num(lv, 2, 3, ratio, (2 * PI * quad(lambda q: q * fdl(q), 0, 2)[0]) / (PI * quad(lambda q: fdl(q) ** 2, 0, 2)[0]), {
     'inverse': 1 / ratio, 'square-integral': VYx / (sp.pi * I_f ** 2)}, printed=15, agree=1e-6)
