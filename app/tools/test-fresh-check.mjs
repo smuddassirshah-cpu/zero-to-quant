@@ -110,6 +110,35 @@ check('set reuse: --no-set-reuse switches it off', !/shared formula|shared param
 check('set reuse: a review or homework set is not scanned for it (only problem sets)', !/shared formula/.test(run(['--file', join(root, 'courses/s1/review-3.json'), '--no-code']).stdout));
 check('set reuse: --shared-params 4 needs four specific parameters', !/shared parameters/.test(run(['--file', join(root, 'courses/s1/problems-1.json'), '--no-code', '--shared-params', '4']).stdout));
 
+// Bank part 2 (ENGINE-BACKLOG 920, 927 and 929): drill code names count against a bank item (not an exam), a shuffled choice is read option by option,
+// and a stem run of 8 words is an advisory at any share.
+put('drills/pack-a.json', { id: 'pack-a', name: 'Pack A', starter: 'def rolling_lot_book(xs):\n    pass\n', solution: 'def rolling_lot_book(xs):\n    return xs\n', tests: [{ call: 'rolling_lot_book([1])', expect: '[1]' }] });
+const bankCode = (fn) => ({ id: 'b-code', tags: ['t'], prose: 'Write it.', widget: codeW(fn) });
+put('bank/code-a.json', { id: 'code-a', items: [bankCode('rolling_lot_book')] });
+put('bank/code-b.json', { id: 'code-b', items: [bankCode('fresh_lot_name')] });
+put('exams/j.json', { id: 'j', items: [{ id: 'j1', prose: 'Drill name in an exam.', widget: codeW('rolling_lot_book') }] });
+r = run(['--bank', 'code-a']);
+check('a bank code item reusing a drill function name hits', r.status === 1 && /code names rolling_lot_book/.test(r.stdout) && /drills\/pack-a\.json/.test(r.stdout), r.stdout);
+check('a bank code item with a fresh name is clean', run(['--bank', 'code-b']).status === 0);
+check('a drill name does not count against an exam (as before)', run(['--exam', 'j']).status === 0, run(['--exam', 'j']).stdout);
+const opts = (...t) => t.map((x, i) => ({ id: 'o' + i, text: x, ...(i === 0 ? { correct: true } : { why: 'Because of the working.' }) }));
+const ch = (shuffle, o) => ({ kind: 'choice', ...(shuffle === false ? { shuffle: false } : {}), options: o });
+const same = ['gamma negative vega positive', 'theta positive rho zero'];
+put('courses/c1/l10.json', { id: 'l10', screens: [{ type: 'ladder', title: 'G', prose: 'Greeks of a position.', question: 'Which sign pattern is the short straddle?', widget: ch(true, opts(...same)) }] });
+put('bank/shuf.json', { id: 'shuf', items: [{ id: 's1', tags: ['t'], prose: 'A desk holds a book of options.', question: 'Which list describes the risk?', widget: ch(true, opts(...same)) }] });
+const fixedOpts = ['delta hedged rho flat', 'vanna long volga short'];
+put('courses/c1/l12.json', { id: 'l12', screens: [{ type: 'ladder', title: 'H', prose: 'Hedges of a position.', question: 'Which hedge is the delta neutral one?', widget: ch(false, opts(...fixedOpts)) }] });
+put('bank/fixed.json', { id: 'fixed', items: [{ id: 's1', tags: ['t'], prose: 'A trader runs a small book of calls.', question: 'Which pair matches the exposure?', widget: ch(false, opts(...fixedOpts)) }] });
+const optRun = (f) => run(['--bank', f, '--no-code', '--min-run', '8', '--min-share', '0', '--no-question-run']);
+check('a shuffled choice: options in the file order do not join into a run', optRun('shuf').status === 0, optRun('shuf').stdout);
+check('shuffle: false keeps the options joined in order (hit)', optRun('fixed').status === 1, optRun('fixed').stdout);
+const stem = 'the forward is quoted rich against the spot plus carry so the arbitrage is riskless';
+put('courses/c1/l11.json', { id: 'l11', screens: [{ type: 'ladder', title: 'F', prose: `A short lesson note. ${stem}.`, question: 'Why does it work?', widget: num(1) }] });
+put('bank/long.json', { id: 'long', items: [{ id: 'q1', tags: ['t'], prose: 'A share costs a sum and pays a dividend at year end, with money lent and borrowed at a simple rate for the year and a one year contract struck today. Then ' + stem + ' and nothing else needs saying here at all today.', question: 'How much does the arbitrage make per share at delivery in pounds?', widget: num(1) }] });
+r = run(['--bank', 'long', '--no-code']);
+check('a stem run of 8 words at a low share is an advisory line (exit 0)', r.status === 0 && /stem shares \d+ words/.test(r.stdout) && /advisory/.test(r.stdout), r.stdout);
+check('--no-question-run switches the stem advisory off', !/stem shares/.test(run(['--bank', 'long', '--no-code', '--no-question-run']).stdout));
+
 rmSync(root, { recursive: true, force: true });
 console.log(fails ? `${fails} failed` : 'all passed');
 process.exit(fails ? 1 : 0);

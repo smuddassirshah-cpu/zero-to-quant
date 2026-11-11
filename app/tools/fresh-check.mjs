@@ -35,6 +35,9 @@ function collect(node, out, on) {
   if (node && typeof node === 'object') {
     for (const [k, v] of Object.entries(node)) {
       if (SKIP_KEYS.has(k)) continue;
+      // ENGINE-BACKLOG 927: a shuffled choice or multi shows its options in an order the learner never sees, so each option is read on its own: a break between them keeps
+      // a run from joining the end of one option to the start of the next (the order they happen to have in the file)
+      if (k === 'options' && Array.isArray(v) && node.shuffle !== false && (node.kind === 'choice' || node.kind === 'multi')) { for (const o of v) { collect(o, out, on); out.push(' | '); } continue; }
       collect(v, out, on || TEXT_KEYS.has(k));
     }
   }
@@ -105,7 +108,8 @@ const SHARED_PARAMS = Number(opt('--shared-params', 2)), BOILER_F = Number(opt('
 // Units: one lesson screen / quiz item / review item / homework item / exam item / drill / bank item.
 function unitsOf(file, rel) {
   const d = rd(file), u = [];
-  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, nums: numbersOf(out), forms: formulasOf(out) }); };
+  const qOf = (node) => (node && typeof node === 'object' ? [node.prose, node.question, ...(Array.isArray(node.parts) ? node.parts.flatMap((p) => [p && p.prose, p && p.question]) : [])].filter((x) => typeof x === 'string') : []);
+  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, qtk: tokens(qOf(node)), nums: numbersOf(out), forms: formulasOf(out) }); };
   if (rel.startsWith('courses/')) {
     (d.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s));
     const qz = Array.isArray(d.quiz) ? d.quiz : d.quiz?.items ?? [];
@@ -192,6 +196,26 @@ function scan(rel, targetUnits, selfId) {
   return hits;
 }
 
+// ENGINE-BACKLOG 929: for a bank, exam or drill target, a run of QRUN or more words in the stem (`prose` and `question`; options, feedback and code are left out) shared with another unit, whatever its share of the item, as an advisory
+// (a reused setup with new numbers and a fresh paragraph around it passes the share gate). Stock phrases are dropped by the same document-frequency filter as the n-grams.
+const QRUN = Number(opt('--question-run', 8));
+function scanQuestionRuns(rel, targetUnits, selfId) {
+  if (!/^(bank|exams|drills)\//.test(rel) || has('--no-question-run') || QRUN < 1) return [];
+  const hits = [];
+  for (const t of targetUnits) {
+    if (!t.qtk || words(t.qtk) < QRUN) continue;
+    const cand = new Set();
+    for (const g of grams(t.qtk, Math.min(NGRAM, QRUN)).filter(informative).map((x) => x.join(' '))) for (const i of idxN.get(g) ?? []) cand.add(i);
+    for (const g of grams(t.qtk, NGRAM)) for (const i of idxN.get(g.join(' ')) ?? []) cand.add(i);
+    for (const i of cand) {
+      const s = corpus[i];
+      if (!s.qtk || s.file === rel || (selfId && s.id === selfId && s.file.startsWith('exams/') && rel.startsWith('exams/'))) continue;
+      const r = longestRun(t.qtk, s.qtk);
+      if (r.len >= QRUN && (dfN.get(r.text.split(' ').slice(0, NGRAM).join(' ')) ?? 0) <= BOILER) hits.push({ target: `${rel}:${t.path}`, source: `${s.file}:${s.path}`, kind: 'question-run', ngram: r.text, run: r.len, share: +(r.len / (words(t.tk) || 1)).toFixed(2), score: 0 });
+    }
+  }
+  return hits;
+}
 // Shared numbers (614): a course set item with three or more non-trivial numbers in common with one lesson screen of the same course.
 function scanNumbers(rel, targetUnits) {
   const m = rel.match(/^courses\/([^/]+)\/(?:review|homework)/);
@@ -258,7 +282,7 @@ function codeWidgets(node, path, out) {
 const nameIdx = new Map();
 if (!has('--no-code')) {
   for (const rel of listAll()) {
-    if (!rel.startsWith('courses/')) continue;
+    if (!rel.startsWith('courses/') && !rel.startsWith('drills/')) continue;   // ENGINE-BACKLOG 920: drill code names too (a bank code item is held against drills as well as lessons)
     const ws = []; codeWidgets(rd(join(C, rel)), '', ws);
     for (const w of ws) for (const n of w.names) { let a = nameIdx.get(n); if (!a) nameIdx.set(n, (a = [])); a.push(`${rel}:${w.path}`); }
   }
@@ -269,8 +293,8 @@ function scanCode(rel, abs = join(C, rel)) {
   const ws = []; codeWidgets(rd(abs), '', ws);
   const hits = [];
   for (const w of ws) for (const n of new Set(w.names)) {
-    const srcs = (nameIdx.get(n) ?? []).filter((x) => !x.startsWith(rel + ':'));
-    if (!srcs.length || new Set(srcs.map((x) => x.split('/')[1])).size >= IDIOM) continue;
+    const srcs = (nameIdx.get(n) ?? []).filter((x) => !x.startsWith(rel + ':') && (x.startsWith('courses/') || rel.startsWith('bank/')));   // drill names count against bank items only
+    if (!srcs.length || new Set(srcs.map((x) => (x.startsWith('drills/') ? 'drills' : x.split('/')[1]))).size >= IDIOM) continue;
     hits.push({ target: `${rel}:${w.path}`, source: srcs[0] + (srcs.length > 1 ? ` (+${srcs.length - 1} more)` : ''), kind: 'code-name', names: [n], ngram: n, score: 0 });
   }
   return hits;
@@ -301,17 +325,17 @@ if (direct) {
 }
 // One line per target item and source file: the best hit (an n-gram hit beats a score, then the higher score).
 const best = new Map();
-for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...scanNumbers(t.rel, t.units), ...scanSetReuse(t.rel, t.units), ...(has('--no-code') ? [] : scanCode(t.rel, t.abs))]) {
+for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...scanNumbers(t.rel, t.units), ...scanQuestionRuns(t.rel, t.units, t.id), ...scanSetReuse(t.rel, t.units), ...(has('--no-code') ? [] : scanCode(t.rel, t.abs))]) {
   const k = `${h.target}|${h.kind === 'code-name' ? 'name:' + h.ngram : h.source.split(':')[0]}`, o = best.get(k);
-  const RANK = { 'code-name': 4, ngram: 3, jaccard: 2, formula: 1.6, params: 1.5, numbers: 1 };
+  const RANK = { 'code-name': 4, ngram: 3, jaccard: 2, formula: 1.6, params: 1.5, 'question-run': 1.2, numbers: 1 };
   if (!o || RANK[h.kind] > RANK[o.kind] || (h.kind === o.kind && ((h.count ?? 0) > (o.count ?? 0) || (h.run ?? 0) > (o.run ?? 0) || ((h.run ?? 0) === (o.run ?? 0) && h.score > o.score)))) best.set(k, h);
 }
 const all = [...best.values()];
-const ADVISORY = new Set(['numbers', 'formula', 'params']);   // shared numbers, a shared formula and shared parameters are advisory: a table of critical values is shared on purpose
+const ADVISORY = new Set(['numbers', 'formula', 'params', 'question-run']);   // shared numbers, a shared formula and shared parameters are advisory: a table of critical values is shared on purpose
 const hard = all.filter((h) => !ADVISORY.has(h.kind));
 if (has('--json')) console.log(JSON.stringify(all, null, 1));
 else {
-  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'formula' ? `shared formula ${h.ngram}` : h.kind === 'params' ? `${h.count} shared parameters (${h.ngram})` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
-  console.log(`${hard.length} hit(s) in ${targets.length} target file(s)${all.length > hard.length ? `, ${all.length - hard.length} advisory (shared numbers, formulas and parameters: read them, they may be a shared table of constants)` : ''}`);
+  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'formula' ? `shared formula ${h.ngram}` : h.kind === 'params' ? `${h.count} shared parameters (${h.ngram})` : h.kind === 'question-run' ? `stem shares ${h.run} words ("${h.ngram}"), share ${h.share}` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
+  console.log(`${hard.length} hit(s) in ${targets.length} target file(s)${all.length > hard.length ? `, ${all.length - hard.length} advisory (shared numbers, formulas, parameters and stem runs: read them, they may be a shared table of constants or a stock phrase)` : ''}`);
 }
 process.exitCode = hard.length ? 1 : 0;   // not process.exit: piped output must flush

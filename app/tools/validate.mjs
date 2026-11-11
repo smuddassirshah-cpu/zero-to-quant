@@ -569,6 +569,15 @@ const plausibleId = (canvas, id) => {
 };
 
 /* ---------- Widgets (rule 4) and the keys they can produce (rule 5) ---------- */
+/* Bank part 2 (B2-E1): a Python code item in the bank deck is played with its hidden tests, so it needs a solution that passes them and a starter that does not (tools/playthrough.mjs --bank checks both in the browser). */
+const bankCodeRules = (file, where, w) => {
+  if (w.language === 'cpp') return;   // reported once by checkBank / checkParts
+  if (typeof w.solution !== 'string' || !w.solution.trim()) err(file, `${where}.solution`, '[bank-code] a bank code item needs a solution: the playthrough pastes it and expects every hidden test to pass');
+  else if (typeof w.starter === 'string' && w.starter.trim() === w.solution.trim()) err(file, `${where}.starter`, '[bank-code] the starter equals the solution, so it cannot fail the hidden tests');
+  const hn = typeof w.how === 'string' && /runs (\d+) hidden tests/.exec(w.how);
+  if (hn && Array.isArray(w.tests) && +hn[1] !== w.tests.length) warn(file, `${where}.how`, `[bank-code] how says ${hn[1]} hidden tests and the item has ${w.tests.length}`);
+  if (Array.isArray(w.tests) && (w.tests.length < 6 || w.tests.length > 10)) warn(file, `${where}.tests`, `[bank-code] ${w.tests.length} hidden tests: a bank code item has six to ten`);
+};
 const checkWidget = (file, where, w, canvas, ctx = {}) => {
   if (!isObj(w)) { err(file, where, 'widget must be an object'); return null; }
   if (!WIDGETS.has(w.kind)) { err(file, `${where}.kind`, `unknown widget kind "${w.kind}"`); return null; }
@@ -926,7 +935,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       keys.add('*');
       break;
     case 'code':
-      req(file, where, w, ['language', 'starter']);
+      req(file, where, w, ctx.bank ? ['starter'] : ['language', 'starter']);   // a bank code item may leave language out (Python)
       /* item 304: language is "python" (Pyodide) or "cpp" (clang in the browser); a starter with #include is C++ */
       if (w.language != null && !['python', 'cpp'].includes(w.language)) err(file, `${where}.language`, 'language is "python" or "cpp"');
       if (typeof w.starter === 'string' && /^\s*#\s*include\b/m.test(w.starter) && w.language !== 'cpp') err(file, `${where}.language`, 'the starter has #include, so it is C++: set language: "cpp"');
@@ -971,6 +980,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if (w.budget != null && !(typeof w.budget === 'number' && w.budget >= 0 && w.budget <= 120000)) err(file, `${where}.budget`, 'budget is extra milliseconds for a run, 0 to 120000');
       if (w.caseBudget != null && !(typeof w.caseBudget === 'number' && w.caseBudget >= 0 && w.caseBudget <= 120000)) err(file, `${where}.caseBudget`, 'caseBudget is extra milliseconds for each case, 0 to 120000');
       if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
+      if (ctx.bank) bankCodeRules(file, where, w);
       keys.add('*');
       break;
     case 'longform': checkLongform(file, where, w); keys.add('*'); break;
@@ -1493,7 +1503,7 @@ const checkItem = (file, where, it, ctx) => {
   checkText(file, `${where}.prose`, it.prose); checkText(file, `${where}.question`, it.question);
   if (!it.question) err(file, `${where}.question`, 'required field missing');
   if (!it.widget) { err(file, `${where}.widget`, 'required field missing'); return null; }
-  const keys = checkWidget(file, `${where}.widget`, it.widget, it.canvas, { question: it.question, prose: it.prose, allowLongform: ctx.allowLongform, feedback: it.feedback, explain: it.explain });
+  const keys = checkWidget(file, `${where}.widget`, it.widget, it.canvas, { question: it.question, prose: it.prose, allowLongform: ctx.allowLongform, feedback: it.feedback, explain: it.explain, bank: ctx.label === 'bank' });
   checkFeedback(file, `${where}.feedback`, it.feedback, keys);
   checkExplain(file, `${where}.explain`, it.explain, { required: true });
   checkShuffledPosition(file, where, it);
@@ -1528,8 +1538,8 @@ const checkParts = (file, where, it, ctx) => {
     if (!p.question) err(file, `${at}.question`, 'required field missing: each part asks its own question');
     if (!isObj(p.widget)) { err(file, `${at}.widget`, 'required field missing'); return; }
     if (p.widget.kind === 'longform') err(file, `${at}.widget`, 'a part cannot be longform: the learner marks a written answer, which a follow-up cannot wait for');
-    if (ctx.label === 'bank' && p.widget.kind === 'code') err(file, `${at}.widget`, 'a code part cannot run in the bank deck');
-    const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, prose: p.prose ?? it.prose, allowLongform: false, feedback: p.feedback, explain: p.explain ?? it.explain });
+    if (ctx.label === 'bank' && p.widget.kind === 'code' && p.widget.language === 'cpp') err(file, `${at}.widget`, 'a C++ code part cannot run in the bank deck (compile time in a deck of 8); use Python or a reading item');
+    const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, prose: p.prose ?? it.prose, allowLongform: false, feedback: p.feedback, explain: p.explain ?? it.explain, bank: ctx.label === 'bank' });
     checkFeedback(file, `${at}.feedback`, p.feedback, keys);
     checkExplain(file, `${at}.explain`, p.explain);
     checkShuffledPosition(file, at, p, it);
@@ -1993,6 +2003,23 @@ const checkDrillSession = (file, id, d, drillIds) => {
 
 /* ---------- Interview bank: content/bank/<family>.json (ENGINE-BACKLOG 456, docs/AUTHORING.md section 5) ---------- */
 const BANK_STYLES = ['mental-maths', 'probability', 'brainteaser', 'market-making', 'statistics', 'finance', 'coding', 'behavioural'];
+/* B2-E5: every skill id of a course.json, plus the first tag of every item (an object with tags and a widget, a question or parts) in content/courses/ */
+let familyCache = null;
+const bankFamilies = (allSkills) => {
+  if (familyCache) return familyCache;
+  const out = new Set(allSkills);
+  out.add('mental-arithmetic');   // the engine's own family for generated arithmetic (js/engine/mock.js family())
+  const walk = (n) => {
+    if (Array.isArray(n)) n.forEach(walk);
+    else if (isObj(n)) {
+      if (Array.isArray(n.tags) && typeof n.tags[0] === 'string' && (n.widget || n.parts || n.question || n.kind)) out.add(n.tags[0]);
+      Object.values(n).forEach(v => { if (v && typeof v === 'object') walk(v); });
+    }
+  };
+  const root = path.join(CONTENT, 'courses');
+  try { fs.readdirSync(root).forEach(c => listJSON(path.join(root, c)).forEach(f => { if (f !== 'course.json') { const r = readJSON(path.join(root, c, f)); if (r.data) walk(r.data); } })); } catch { /* no courses folder */ }
+  return (familyCache = out);
+};
 const checkBank = (file, id, doc, cur) => {
   req(file, '', doc, ['id', 'name', 'items']);
   if (doc.id !== id) err(file, 'id', `id "${doc.id}" must match the file name "${id}"`);
@@ -2002,13 +2029,19 @@ const checkBank = (file, id, doc, cur) => {
   if (doc.items.length > 200) warn(file, 'items', 'over 200 items: split the file by family');
   const allSkills = new Set(Object.values(cur.courseDocs).flatMap(c => Object.keys((c || {}).skills || {})));
   const ictx = { lo: 1, hi: 5, label: 'bank', skills: allSkills, skillsRequired: false, allowLongform: true };
+  const families = bankFamilies(allSkills);
   const seen = new Set();
   doc.items.forEach((it, i) => {
     const at = `items[${i}]`;
     const kind = checkItem(file, at, it, ictx);
     if (!isObj(it)) return;
     if (it.id) { if (seen.has(it.id)) err(file, `${at}.id`, `duplicate id "${it.id}"`); seen.add(it.id); }
-    if (kind === 'code') err(file, `${at}.widget`, 'a code item cannot run in the bank deck');
+    if (kind === 'code') {
+      if (it.widget.language === 'cpp') err(file, `${at}.widget`, 'a C++ code item cannot run in the bank deck (compile time in a deck of 8); use Python or a reading item');
+      else if (typeof it.pace !== 'number' || it.pace < 240 || it.pace > 480) warn(file, `${at}.pace`, '[bank-code] a bank code item has a pace of 240 to 480 seconds');
+    }
+    /* B2-E5: the family (first tag) is a skill id of some course, or the first tag of an item in content/courses/ */
+    if (doc.sample !== true && Array.isArray(it.tags) && typeof it.tags[0] === 'string' && !families.has(it.tags[0])) warn(file, `${at}.tags`, `[bank-family] "${it.tags[0]}" is neither a skill id of a course nor the first tag of a course item: a misspelt family is dealt on its own (check the spelling against the families in docs/AUTHORING.md section 5)`);
     if (it.tags === undefined) err(file, `${at}.tags`, 'a bank item needs tags: a list of kebab-case family names, the first being its family');
     if (!Array.isArray(it.role) || !it.role.length) err(file, `${at}.role`, `role is a non-empty list drawn from ${MOCK_STYLES.join(', ')}`);
     else it.role.forEach(r => { if (!MOCK_STYLES.includes(r)) err(file, `${at}.role`, `unknown role "${r}" (${MOCK_STYLES.join(', ')})`); });

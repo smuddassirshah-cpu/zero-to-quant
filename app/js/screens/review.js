@@ -58,7 +58,8 @@
     return out;
   };
   const md = (s) => G().inline(s || '');
-  const stemOf = (it) => (it ? (it.question || it.prose || it.prompt || it.title || (Array.isArray(it.parts) && it.parts[0] && it.parts[0].question) || '') : '');
+  /* B2-E6: a longform item's row shows its widget.prompt (the interview question); its `question` is only the instruction to answer aloud */
+  const stemOf = (it) => (it ? (((it.widget && it.widget.kind === 'longform' && it.widget.prompt) || (it.kind === 'longform' && it.prompt)) || it.question || it.prose || it.prompt || it.title || (Array.isArray(it.parts) && it.parts[0] && it.parts[0].question) || '') : '');
   const store = {
     get: (k, d) => { try { return ZQ.store.get(k, d); } catch { return d; } },
     set: (k, v) => { try { ZQ.store.set(k, v); } catch { /* storage blocked */ } },
