@@ -157,3 +157,13 @@ Verdict counts: 17 rows; 16 correct, 0 wrong, 1 imprecise, 0 misleading, 0 unver
 ### Against the audit (read after the rows were written)
 
 All six findings are met by the diff. Findings 1, 2, 3, 4 and 6 carry the auditor's text unchanged. Finding 5 was fixed differently, by giving the tree a second level, and that fix is sound: the tree now obeys the course's own rule that a leaf is a path product and that leaves add to 1 (rows 5 to 8, 12 and 13). My finding 1 is about the auditor's own wording for 3(c), so it was not introduced by the fixer's judgement; it stays minor.
+
+## Fix pass (follow-up)
+
+Fixer, 11 Nov 2026. Edits in `app/content/courses/conditional/problems-2.json`, `items[1].parts[4]` only.
+
+1. `feedback.correct` | fixed | Now "Given the truth, the exit did not arise independently of the delay after all, so its ratio of 6 double counts." Basis: conditional independence given the truth is a property of the joint law of the reports in each state, $P(D \cap E \mid T) = P(D \mid T)\,P(E \mid T)$. Learning that the exit was caused by the delay changes what the desk knows about that law, not the law itself, so the stem's assumption was false from the start and "after all" says so. Option keys and the graded choice are unchanged.
+
+Note (explain.text) | fixed | "needed the two reports to arise independently" now reads "needed the two reports to arise independently given the truth". Basis: the chained update multiplies likelihood ratios, which needs independence within each state, not unconditional independence; the two reports are unconditionally dependent here, since each raises the chance of a downgrade. The explanation stays at two sentences; the changed sentence is 14 words.
+
+Gates: validator 0 errors; `conditional-L1-3-concepts-r3.py`, `conditional-L1-3-fixread-r3.py`, `conditional-L2-concepts.py`, `conditional-L2-concepts-r2.py`, `problems-conditional-numbers.py` exit 0 (none tested the old strings, so no check was changed); voice scan 35 reports 0 and 0; playthrough `--problems conditional/problems-2` green desktop and `--mobile` with `--local-cdn`.
