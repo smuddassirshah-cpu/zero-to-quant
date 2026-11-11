@@ -2009,3 +2009,7 @@ Raised later (review problems 1.3 c):
 
 Raised later (problems quadratics):
 - [Could] expression widget, `form: "expanded"`: an expansion with like terms left uncollected passes (`x^2+3x+8x+24` for the key `x^2+11x+24`; `36x^2+12x+12x+4-9` for `36x^2+24x-5`), so a part cannot ask for "expanded and simplified" and refuse the half-done form. quadratics problems-1 `p-cinema-block` part 1 and `p-steel-plates` part 3 accept it today. Same remedy as the equations bullet above: an `"expanded-simplified"` form (no bracketed sum, like terms collected); this is the second course to want it.
+
+Raised later (problems functions):
+- [Could] Met again (set 4): the expression Accepted line prints LaTeX `accept` forms as raw source, `\frac{x-4}{1.5}` and `\frac{b+100}{5}` in code type under the rendered key (functions problems-4 `p-photo-mount` part 3, `p-ticket-bonus` part 3, at 440 px). Same want as the multivar bullet: render a form with a backslash as maths.
+- [Could] Met again (set 4): a part that asks for a rule "as simply as possible" grades the question's own unexpanded form correct (`3+2.5(t-2)` for the key `2.5t-2`, functions problems-4 `p-car-park` part 2). `form: "expanded"` would refuse the equal and fully simple `5(n-20)` on `p-ticket-bonus` part 2, and it passes uncollected terms (quadratics bullet). Want a `form: "collected"`: no bracket left that a number multiplies and no two like terms, with the factorised key forms listed in `accept` still allowed.
