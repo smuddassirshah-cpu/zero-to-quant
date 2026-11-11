@@ -1,0 +1,800 @@
+{
+  "id": "problems-2",
+  "course": "estimation",
+  "level": 2,
+  "title": "Problems: likelihood",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-robot-deliveries",
+      "difficulty": 3,
+      "skills": [
+        "es-mle"
+      ],
+      "prose": "A delivery robot makes 12 trips in a row. It completes 9 and fails 3, each trip completing with the same chance $p$, independently.",
+      "parts": [
+        {
+          "question": "Write $L(p)$, the chance of this exact sequence of 9 completions and 3 failures, as a function of $p$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "p^9(1-p)^3",
+            "accept": [
+              "p^9(1-p)^3",
+              "p^{9}(1-p)^{3}",
+              "(1-p)^3p^9"
+            ],
+            "wrong": [
+              {
+                "id": "swapped",
+                "tex": "p^3(1-p)^9"
+              },
+              {
+                "id": "added",
+                "tex": "9p+3(1-p)"
+              },
+              {
+                "id": "one-failure",
+                "tex": "p^9(1-p)"
+              },
+              {
+                "id": "any-order",
+                "tex": "220p^9(1-p)^3"
+              }
+            ],
+            "keyboard": "algebra"
+          },
+          "feedback": {
+            "correct": "Each completion gives a factor $p$ and each failure $1 - p$, so $L(p) = p^9(1 - p)^3$.",
+            "generic": "Not quite. Multiply one factor per trip: $p$ for a completion, $1 - p$ for a failure.",
+            "byKey": {
+              "swapped": "You gave the failures the factor $p$. A completion has chance $p$, so the 9 go with $p$.",
+              "added": "Independent trips multiply, they do not add. Each trip gives a factor, raised to how often it happens.",
+              "one-failure": "Each of the 3 failures gives its own factor $1 - p$, so $(1 - p)^3$.",
+              "any-order": "That is the chance of 9 completions in any order. This exact sequence has no $\\binom{12}{9} = 220$ in front; the peak is in the same place."
+            }
+          },
+          "explain": {
+            "text": "The trips are independent, so the chance of the sequence is the product of 12 factors. Nine are $p$ and three are $1 - p$, so $L(p) = p^9(1 - p)^3$."
+          }
+        },
+        {
+          "question": "Using $L(p) = p^9(1 - p)^3$, take logs and solve $\\ell'(p) = 0$. What is $\\hat p$? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.75,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "failure-share",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "odds",
+                "value": 3,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\ell'(p) = \\tfrac{9}{p} - \\tfrac{3}{1 - p} = 0$ gives $9(1 - p) = 3p$, so $\\hat p = 0.75$.",
+            "generic": "Not quite. Differentiate $\\ell(p) = 9\\ln p + 3\\ln(1 - p)$ and set it to zero.",
+            "byKey": {
+              "failure-share": "That is the share of failures, or $\\hat p$ from part 1's swapped slip. Completions have chance $p$: $9 / 12 = 0.75$.",
+              "odds": "That is $9 / 3$, the odds of completing. The MLE is the share, $9 / 12$."
+            }
+          },
+          "explain": {
+            "text": "$\\ell(p) = 9\\ln p + 3\\ln(1 - p)$, and $\\ell'(p) = 0$ gives $\\hat p = 9 / 12 = 0.75$. $\\ell'$ is positive below 0.75 and negative above, so it is a maximum."
+          }
+        },
+        {
+          "question": "The maker claims $p \\ge 0.9$. Using $\\hat p = 0.75$ from part 2, what is the maximum likelihood estimate if $p$ must lie between 0.9 and 1? Give your answer to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.9,
+            "tol": {
+              "abs": 0.05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "unrestricted",
+                "value": 0.75,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "top",
+                "value": 1,
+                "tol": {
+                  "abs": 0.04
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$L$ falls for every $p$ above 0.75, so on $[0.9, 1]$ it is largest at the edge, $p = 0.9$.",
+            "generic": "Not quite. Check which way $L$ moves on the allowed range, then look at its ends.",
+            "byKey": {
+              "unrestricted": "0.75 is outside the allowed range. On $[0.9, 1]$ the best value is at an end.",
+              "top": "$L(1) = 0$: a robot that never fails could not have failed 3 times."
+            }
+          },
+          "explain": {
+            "text": "$\\ell'(p) < 0$ for all $p > 0.75$, so $L$ falls across $[0.9, 1]$. The restricted maximum is the left edge, $p = 0.9$, where $\\ell'$ is not zero."
+          }
+        },
+        {
+          "question": "Using $\\hat p = 0.75$ and the claim's best value $0.9$, what is the likelihood ratio $L(0.75) / L(0.9)$? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.0282,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 0.3302,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-failures",
+                "value": 0.1938,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "same",
+                "value": 1,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\left(\\tfrac{0.75}{0.9}\\right)^9\\left(\\tfrac{0.25}{0.1}\\right)^3 = 0.1938 \\times 15.625 \\approx 3.03$.",
+            "generic": "Not quite. Divide $p^9(1 - p)^3$ at 0.75 by the same at 0.9.",
+            "byKey": {
+              "inverted": "That is $L(0.9) / L(0.75)$. The question puts 0.75 on top.",
+              "no-failures": "You compared only the completions, $(0.75 / 0.9)^9$. The 3 failures add $(0.25 / 0.1)^3 = 15.625$.",
+              "same": "You compared 0.75 with itself, part 3's unrestricted slip. The claim's best value is 0.9."
+            }
+          },
+          "explain": {
+            "text": "The completions favour 0.9 by $(0.9 / 0.75)^9 \\approx 5.2$, but the failures favour 0.75 by $(0.25 / 0.1)^3 = 15.6$. On balance the record is about 3.03 times as likely under 0.75 as under the claim's best value."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-tank-sensor",
+      "difficulty": 4,
+      "skills": [
+        "es-mle"
+      ],
+      "prose": "A sensor reads the level of a storage tank four times: 52, 47, 55 and 50 cm. Each reading is $N(\\mu, 4^2)$, independently, with the true level $\\mu$ unknown. Up to a constant, $\\ell(\\mu) = -\\tfrac{1}{32}\\sum (x_i - \\mu)^2$.",
+      "parts": [
+        {
+          "question": "What is the maximum likelihood estimate $\\hat\\mu$, in cm?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 51,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "by-three",
+                "value": 68,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "middle-two",
+                "value": 52.5,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\hat\\mu = \\bar x = 204 / 4 = 51$ cm.",
+            "generic": "Not quite. For a normal mean with known sd, the MLE is the sample mean.",
+            "byKey": {
+              "by-three": "You divided 204 by 3. There are 4 readings.",
+              "middle-two": "That averages 50 and 55. Use all four readings."
+            }
+          },
+          "explain": {
+            "text": "Maximising $\\ell$ means minimising $\\sum (x_i - \\mu)^2$, which happens at $\\bar x$. The readings add to 204, so $\\hat\\mu = 51$ cm."
+          }
+        },
+        {
+          "question": "Using $\\hat\\mu = 51$, what is $\\ell(51) - \\ell(48)$? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.125,
+            "tol": {
+              "abs": 0.001
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-two",
+                "value": 2.25,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "sd-not-squared",
+                "value": 4.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "reversed",
+                "value": -1.125,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sum (x_i - 51)^2 = 34$ and $\\sum (x_i - 48)^2 = 70$, so the difference is $\\tfrac{70 - 34}{32} = 1.125$.",
+            "generic": "Not quite. Work out both sums of squares, then divide their difference by $2\\sigma^2 = 32$.",
+            "byKey": {
+              "no-two": "You divided by $\\sigma^2 = 16$. The normal log-likelihood divides by $2\\sigma^2 = 32$.",
+              "sd-not-squared": "You divided by $2\\sigma = 8$. The divisor is $2\\sigma^2 = 32$.",
+              "reversed": "That is $\\ell(48) - \\ell(51)$. The MLE has the higher log-likelihood, so the difference is positive."
+            }
+          },
+          "explain": {
+            "text": "The squares about 51 are $1, 16, 16, 1$, adding to 34; about 48 they add to $34 + 4 \\times 3^2 = 70$. So $\\ell(51) - \\ell(48) = 36 / 32 = 1.125$."
+          }
+        },
+        {
+          "question": "Using $\\ell(51) - \\ell(48) = 1.125$, how many times as likely are the readings if $\\mu = 51$ as if $\\mu = 48$? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.0802,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "carried",
+                "value": 9.4877,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-exp",
+                "value": 1.125,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 0.3247,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$e^{1.125} \\approx 3.08$.",
+            "generic": "Not quite. A difference of log-likelihoods is the log of the likelihood ratio.",
+            "byKey": {
+              "carried": "You used 2.25, part 2's slip of dividing by 16. With 1.125 the ratio is 3.08.",
+              "no-exp": "That is the log of the ratio. Undo the log with $e^x$.",
+              "inverted": "That is $L(48) / L(51)$. The question puts 51 on top."
+            }
+          },
+          "explain": {
+            "text": "Since $\\ell = \\ln L$, the ratio is $L(51) / L(48) = e^{1.125} \\approx 3.08$."
+          }
+        },
+        {
+          "question": "Using $\\hat\\mu = 51$ and $\\sum (x_i - \\mu)^2 = 34 + 4(\\mu - 51)^2$, what is the largest $\\mu$ with $L(\\mu)$ at least a tenth of $L(51)$? Give cm to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 55.2919,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "log-ten",
+                "value": 53.8284,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 69.4207,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sd-not-squared",
+                "value": 53.146,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-n",
+                "value": 59.5839,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{(\\mu - 51)^2}{8} \\le \\ln 10$ gives $\\mu \\le 51 + \\sqrt{8\\ln 10} \\approx 55.29$ cm.",
+            "generic": "Not quite. Write $\\ell(51) - \\ell(\\mu) \\le \\ln 10$ and solve for $\\mu$.",
+            "byKey": {
+              "log-ten": "You used $\\log_{10} 10 = 1$. Likelihoods and $\\ell$ use the natural log, $\\ln 10 \\approx 2.303$.",
+              "no-root": "You added $8\\ln 10$ itself. Take its square root: $\\mu - 51 \\le 4.29$.",
+              "sd-not-squared": "You divided by $2\\sigma = 8$, part 2's slip, giving $(\\mu - 51)^2 / 2$. The divisor is 32.",
+              "no-n": "You dropped the 4 in $4(\\mu - 51)^2$. All four readings move together."
+            }
+          },
+          "explain": {
+            "text": "$\\ell(51) - \\ell(\\mu) = \\tfrac{4(\\mu - 51)^2}{32} = \\tfrac{(\\mu - 51)^2}{8}$. Setting it at most $\\ln 10 \\approx 2.303$ gives $|\\mu - 51| \\le 4.29$, so the top of the range is 55.29 cm."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-currency-vol",
+      "difficulty": 4,
+      "skills": [
+        "es-mle",
+        "es-biasvar"
+      ],
+      "prose": "An FX desk has eight weekly returns of a currency pair, in %: 1.4, $-0.6$, 0.7, $-1.3$, 1.1, $-0.1$, 1.8 and $-1.0$. It models them as independent $N(\\mu, \\sigma^2)$ and estimates both by maximum likelihood. The squares of the returns add to 9.96.",
+      "parts": [
+        {
+          "question": "What is $\\hat\\mu$, the mean weekly return, in %? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.25,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "by-seven",
+                "value": 0.2857,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sizes",
+                "value": 1.0,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The returns add to 2.0, so $\\hat\\mu = 2.0 / 8 = 0.25\\%$.",
+            "generic": "Not quite. The MLE of a normal mean is the sample mean.",
+            "byKey": {
+              "by-seven": "You divided by $n - 1 = 7$. The mean divides by $n = 8$.",
+              "sizes": "You dropped the minus signs. The falling weeks count as negative."
+            }
+          },
+          "explain": {
+            "text": "Setting $\\partial\\ell / \\partial\\mu = 0$ gives $\\hat\\mu = \\bar r$. The eight returns add to 2.0, so $\\hat\\mu = 0.25\\%$ a week."
+          }
+        },
+        {
+          "question": "Using $\\hat\\mu = 0.25$, what is $\\hat\\sigma$, the MLE of the weekly sd, in %? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.0874,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "n-minus-one",
+                "value": 1.1625,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "zero-mean",
+                "value": 1.1158,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "variance",
+                "value": 1.1825,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$SS = 9.96 - 8 \\times 0.25^2 = 9.46$, so $\\hat\\sigma = \\sqrt{9.46 / 8} \\approx 1.09\\%$.",
+            "generic": "Not quite. The MLE divides the sum of squared deviations from $\\hat\\mu$ by $n$, then takes the square root.",
+            "byKey": {
+              "n-minus-one": "You divided by $n - 1 = 7$. That is $s$. The MLE divides by $n = 8$.",
+              "zero-mean": "You used the squares about 0, 9.96. The mean is estimated here, so measure from 0.25.",
+              "variance": "That is $\\hat\\sigma^2 = 1.1825$. Take its square root."
+            }
+          },
+          "explain": {
+            "text": "Deviations from 0.25 give $SS = 9.96 - 8(0.25)^2 = 9.46$. The MLE is $\\hat\\sigma^2 = 9.46 / 8 = 1.1825$, so $\\hat\\sigma \\approx 1.0874\\%$."
+          }
+        },
+        {
+          "question": "Using $\\hat\\sigma = 1.0874\\%$ a week and 52 weeks in a year, what is the annualised volatility, in %? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7.8414,
+            "tol": {
+              "abs": 0.02
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "times-52",
+                "value": 56.545,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "trading-days",
+                "value": 17.262,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 8.383,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "variance",
+                "value": 61.49,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.0874 \\times \\sqrt{52} \\approx 7.84\\%$ a year.",
+            "generic": "Not quite. Independent weeks add variances, so the sd grows with the square root of the number of weeks.",
+            "byKey": {
+              "times-52": "You multiplied the sd by 52. Variances add, so multiply the variance by 52 and the sd by $\\sqrt{52}$.",
+              "trading-days": "You used $\\sqrt{252}$, for daily returns. These are weekly, so use $\\sqrt{52}$.",
+              "carried": "You used 1.1625, part 2's $n - 1$ slip. With 1.0874 the answer is 7.84%.",
+              "variance": "That is the annual variance, $52 \\times 1.1825$, in %². Take its square root."
+            }
+          },
+          "explain": {
+            "text": "Annual variance is $52\\hat\\sigma^2$, so annual volatility is $\\sqrt{52}\\,\\hat\\sigma = 7.2111 \\times 1.0874 \\approx 7.84\\%$."
+          }
+        },
+        {
+          "question": "The standard error of $\\hat\\sigma$ is about $\\hat\\sigma / \\sqrt{2n}$; take this as given. Using 7.84% from part 3 and $n = 8$, what is the standard error of the annual volatility, in percentage points? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.96,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-two",
+                "value": 2.7719,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "weeks-in-year",
+                "value": 0.7688,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 0.49,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$7.84 / \\sqrt{16} = 7.84 / 4 = 1.96$ points.",
+            "generic": "Not quite. Divide 7.84 by $\\sqrt{2n} = \\sqrt{16}$.",
+            "byKey": {
+              "no-two": "You divided by $\\sqrt 8$. The formula has $\\sqrt{2n} = 4$.",
+              "weeks-in-year": "You used $n = 52$. The estimate rests on the 8 weeks of data.",
+              "no-root": "You divided by $2n = 16$. Divide by its square root, 4."
+            }
+          },
+          "explain": {
+            "text": "Scaling by $\\sqrt{52}$ scales the error the same way, so the annual SE is $7.84 / \\sqrt{2 \\times 8} = 1.96$ points. Eight weeks pin the volatility down only to within a few points."
+          }
+        },
+        {
+          "question": "Using the annual volatility 7.84% and the rule $\\mathrm{SE} \\approx 7.84 / \\sqrt{2n}$, how many weeks of returns would cut the standard error to 0.5 points? Give a whole number of weeks.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 123,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-two",
+                "value": 246,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "unsquared",
+                "value": 7.84,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "no-two-unsquared",
+                "value": 15.68,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$7.84 / \\sqrt{2n} = 0.5$ gives $2n = 15.68^2$, so $n$ must be at least 122.9: round up to 123 weeks.",
+            "generic": "Not quite. Solve $7.84 / \\sqrt{2n} \\le 0.5$ for $n$ and round up.",
+            "byKey": {
+              "no-two": "You solved $7.84 / \\sqrt n = 0.5$, part 4's slip. With $\\sqrt{2n}$ you need half as many: 123 weeks.",
+              "unsquared": "You solved $7.84 / (2n) = 0.5$. Square both sides first: $2n = 15.68^2$.",
+              "no-two-unsquared": "That is $7.84 / 0.5 = 15.68$, which is $\\sqrt{2n}$. Square it and halve it."
+            }
+          },
+          "explain": {
+            "text": "Squaring $\\sqrt{2n} \\ge 7.84 / 0.5 = 15.68$ gives $n$ at least 122.9, so 123 weeks, more than two years. Part 4's figures agree: 8 weeks times $(1.96 / 0.5)^2$ is also just under 123."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-ride-waits",
+      "difficulty": 5,
+      "skills": [
+        "es-mle"
+      ],
+      "prose": "A ride app logs how long five riders waited for a car, in minutes: 2, 7, 4, 1 and 6. Model each wait as exponential with rate $\\lambda$ per minute, independently: density $f(x) = \\lambda e^{-\\lambda x}$ for $x \\ge 0$, and $P(X > t) = e^{-\\lambda t}$.",
+      "parts": [
+        {
+          "question": "Write the log-likelihood $\\ell(\\lambda)$ for the five waits.",
+          "widget": {
+            "kind": "expression",
+            "answer": "5\\ln(\\lambda)-20\\lambda",
+            "accept": [
+              "5\\ln(\\lambda)-20\\lambda",
+              "5\\ln\\lambda-20\\lambda",
+              "-20\\lambda+5\\ln(\\lambda)",
+              "\\ln(\\lambda^5)-20\\lambda"
+            ],
+            "wrong": [
+              {
+                "id": "likelihood",
+                "tex": "\\lambda^5e^{-20\\lambda}"
+              },
+              {
+                "id": "sign",
+                "tex": "5\\ln(\\lambda)+20\\lambda"
+              },
+              {
+                "id": "one-log",
+                "tex": "\\ln(\\lambda)-20\\lambda"
+              }
+            ],
+            "keyboard": "algebra"
+          },
+          "feedback": {
+            "correct": "Each wait adds $\\ln\\lambda - \\lambda x_i$, and the waits total 20, so $\\ell(\\lambda) = 5\\ln\\lambda - 20\\lambda$.",
+            "generic": "Not quite. Take the log of each density and add the five terms.",
+            "byKey": {
+              "likelihood": "That is $L(\\lambda)$ itself. Take its log: $5\\ln\\lambda - 20\\lambda$.",
+              "sign": "$\\ln e^{-\\lambda x} = -\\lambda x$, so the waits enter with a minus sign.",
+              "one-log": "Each of the 5 waits brings its own $\\ln\\lambda$, so the log term is $5\\ln\\lambda$."
+            }
+          },
+          "explain": {
+            "text": "$\\ln f(x_i) = \\ln\\lambda - \\lambda x_i$. Adding five such terms, with $\\sum x_i = 20$, gives $\\ell(\\lambda) = 5\\ln\\lambda - 20\\lambda$."
+          }
+        },
+        {
+          "question": "Using $\\ell(\\lambda) = 5\\ln\\lambda - 20\\lambda$, what is $\\hat\\lambda$, per minute? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.25,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "mean-wait",
+                "value": 4,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-log",
+                "value": 0.05,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\ell'(\\lambda) = \\tfrac{5}{\\lambda} - 20 = 0$ gives $\\hat\\lambda = 0.25$ per minute.",
+            "generic": "Not quite. Differentiate, set $\\ell'(\\lambda) = 0$ and solve for $\\lambda$.",
+            "byKey": {
+              "mean-wait": "That is the mean wait, $20 / 5 = 4$ minutes. The rate is its reciprocal.",
+              "one-log": "You solved $\\tfrac{1}{\\lambda} = 20$, from part 1's one-log slip. With $5\\ln\\lambda$ the rate is $5 / 20$."
+            }
+          },
+          "explain": {
+            "text": "$\\ell'(\\lambda) = 5 / \\lambda - 20$, which is 0 at $\\lambda = 0.25$. $\\ell''(\\lambda) = -5 / \\lambda^2 < 0$, so it is a maximum: one car every 4 minutes on average."
+          }
+        },
+        {
+          "question": "A sixth rider gave up after 8 minutes with no car. All we know is that this wait was over 8 minutes, so it adds the factor $P(X > 8) = e^{-8\\lambda}$ to $L$. Starting from part 1's $\\ell$, what is the new $\\hat\\lambda$? Give a fraction, or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.178571,
+            "tol": {
+              "abs": 0.0001
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "as-complete",
+                "value": 0.2143,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "dropped",
+                "value": 0.25,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-time",
+                "value": 0.3,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\ell(\\lambda) = 5\\ln\\lambda - 28\\lambda$, so $\\hat\\lambda = \\tfrac{5}{28} \\approx 0.1786$.",
+            "generic": "Not quite. Add $\\ln e^{-8\\lambda} = -8\\lambda$ to part 1's $\\ell$, then maximise again.",
+            "byKey": {
+              "as-complete": "You treated the sixth wait as ending at 8 minutes, giving $6 / 28$. We only know it ran past 8, so it adds no $\\ln\\lambda$.",
+              "dropped": "That leaves the sixth rider out. Their 8 minutes without a car is evidence of a slower rate.",
+              "no-time": "You counted the sixth rider as a sixth wait but left out their 8 minutes. The censored wait adds $-8\\lambda$ and no $\\ln\\lambda$."
+            }
+          },
+          "explain": {
+            "text": "The sixth rider adds $\\ln P(X > 8) = -8\\lambda$, so $\\ell = 5\\ln\\lambda - 28\\lambda$. Setting $5 / \\lambda = 28$ gives $\\hat\\lambda = 5 / 28 \\approx 0.1786$ per minute."
+          }
+        },
+        {
+          "question": "Using $\\hat\\lambda = \\tfrac{5}{28}$, what is the chance that a rider waits more than 10 minutes? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.16768,
+            "tol": {
+              "abs": 0.0001
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "old-rate",
+                "value": 0.0821,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "as-complete",
+                "value": 0.1173,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "complement",
+                "value": 0.8323,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$e^{-10 \\times 5/28} = e^{-1.7857} \\approx 0.1677$.",
+            "generic": "Not quite. Use $P(X > t) = e^{-\\lambda t}$ with $t = 10$.",
+            "byKey": {
+              "old-rate": "That uses $\\hat\\lambda = 0.25$ from part 2, which ignores the rider who gave up.",
+              "as-complete": "That uses $6 / 28$, part 3's slip of treating the 8 minutes as a finished wait.",
+              "complement": "That is the chance of waiting at most 10 minutes. The question asks for more than 10."
+            }
+          },
+          "explain": {
+            "text": "$P(X > 10) = e^{-50/28} \\approx 0.1677$. Dropping the rider who gave up would give $e^{-2.5} \\approx 0.0821$, half as large: leaving out the worst wait hides the long tail."
+          }
+        }
+      ]
+    }
+  ]
+}

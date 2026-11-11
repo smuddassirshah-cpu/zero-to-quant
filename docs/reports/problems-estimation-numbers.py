@@ -208,7 +208,7 @@ I = load(2)
 if I:
     P = sp.Symbol('p')
     expr(I, 'p-robot-deliveries', 1, P ** 9 * (1 - P) ** 3,
-         {'swapped': P ** 3 * (1 - P) ** 9, 'added': 9 * P + 3 * (1 - P), 'one-failure': P ** 9 * (1 - P)})
+         {'swapped': P ** 3 * (1 - P) ** 9, 'added': 9 * P + 3 * (1 - P), 'one-failure': P ** 9 * (1 - P), 'any-order': sp.binomial(12, 9) * P ** 9 * (1 - P) ** 3})
     ph = sp.solve(sp.diff(9 * sp.log(P) + 3 * sp.log(1 - P), P), P)[0]
     phn = optimize.minimize_scalar(lambda q: -stats.binom.logpmf(9, 12, q), bounds=(0.01, 0.99), method='bounded', options={'xatol': 1e-10}).x
     num(I, 'p-robot-deliveries', 2, ph, phn, {'failure-share': F(1, 4), 'odds': 3}, rel=1e-6)
