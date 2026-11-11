@@ -243,6 +243,98 @@ if I is not None:
     rate = bisect(lambda z: vf(z) - 10000, 0.01, 0.2)
     ok(abs(rate - float(y2)) < 5e-7 and 0.05403 < rate, 'y2 is the rate to 6 places; y1 fell short')
 
+# ---------------------------------------------------------------- level 2
+I = load(2)
+if I is not None:
+    ok(3 <= len(I) <= 5, 'set 2: item count')
+    # p-three-halves: f = x^(3/2) about 4
+    f = X ** R(3, 2)
+    d = [sp.diff(f, X, j).subs(X, 4) for j in range(4)]
+    ff = lambda x: x ** 1.5
+    ok(d == [8, 3, R(3, 8), R(-3, 64)], 'x^(3/2) derivatives at 4')
+    num(I, 'p-three-halves', 1, d[1], dnum(ff, 4), {'no-root': R(3, 2), 'up-power': R(3, 2) * 4 ** R(5, 2)}, agree=1e-8)
+    c2 = d[2] / 2
+    num(I, 'p-three-halves', 2, c2, d2num(ff, 4) / 2, {'no-half': d[2], 'root-up': R(3, 4) * 2 / 2}, dp=4, agree=1e-6)
+    h = R(4, 10)
+    Q = 8 + 3 * h + c2 * h ** 2
+    num(I, 'p-three-halves', 3, Q, 8 + 3 * 0.4 + 0.1875 * 0.16,
+        {'no-half': 8 + 3 * h + d[2] * h ** 2, 'root-up': 8 + 3 * h + R(3, 4) * h ** 2, 'tangent': 8 + 3 * h}, dp=4)
+    c3 = d[3] / 6
+    c3alt = (d2num(ff, 4.001) - d2num(ff, 3.999)) / 0.002 / 6
+    num(I, 'p-three-halves', 4, c3, c3alt, {'no-factorial': d[3], 'divide-three': d[3] / 3, 'sign': -c3}, dp=5, agree=1e-4)
+    P3 = Q + c3 * h ** 3
+    num(I, 'p-three-halves', 5, P3, sp.series(f, X, 4, 4).removeO().subs(X, R(44, 10)),
+        {'divide-three': Q + d[3] / 3 * h ** 3, 'no-factorial': Q + d[3] * h ** 3, 'sign': Q - c3 * h ** 3}, dp=4)
+    ok(round(4.4 ** 1.5, 4) == 9.2295 and abs(round(4.4 ** 1.5, 5) - 9.22952) < 1e-9, '4.4^(3/2) = 9.22952')
+
+    # p-square-geometric: (1 - x)^-2
+    g = (1 - X) ** -2
+    ser = sp.series(g, X, 0, 6).removeO()
+    ok(all(ser.coeff(X, j) == j + 1 for j in range(6)), 'coefficients k + 1 from sympy series')
+    g3 = sp.diff(g, X, 3).subs(X, 0)
+    gf = lambda x: (1 - x) ** -2.0
+    # sympy against the hand product of the powers 2 x 3 x 4
+    num(I, 'p-square-geometric', 1, g3, 2 * 3 * 4, {'geometric': sp.diff(1 / (1 - X), X, 3).subs(X, 0), 'sign': -g3})
+    num(I, 'p-square-geometric', 2, g3 / 6, ser.coeff(X, 3), {'no-factorial': g3, 'divide-three': g3 / 3, 'geometric': R(6, 6)})
+    expr(I, 'p-square-geometric', 3, K + 1)
+    ok(all(sp.factorial(k + 1) / sp.factorial(k) == k + 1 for k in range(10)), '(k+1)!/k! = k + 1')
+    pick(I, 'p-square-geometric', 4, 'outside')
+    ok(gf(1.5) == 4 and sum((k + 1) * (-0.5) ** k for k in range(200)) - 1 / 2.25 < 1e-12, 'f(1.5) = 4; series at -0.5 sums to 1/2.25')
+    xv = R(1, 10)
+    est = sum((k + 1) * xv ** k for k in range(4))
+    num(I, 'p-square-geometric', 5, est, 1 + 0.2 + 0.03 + 0.004,
+        {'c3-24': est - 4 * xv ** 3 + 24 * xv ** 3, 'geometric': sum(xv ** k for k in range(4)), 'k-only': sum(k * xv ** k for k in range(4))}, dp=4)
+    ok(abs(1 / 0.81 - 1.234568) < 5e-7 and abs(1 / 0.81 - float(est) - 0.000568) < 1e-6, '1/0.81 and the gap')
+
+    # p-eight-coupon
+    cf = {1: 8, 2: 8, 3: 8, 4: 108}
+    P, dP, d2P = bond(cf, R(7, 100))
+    pf = bondf(cf)
+    ok(abs(float(-dP / P) - 3.3502) < 0.00005, 'D = 3.3502 as printed')
+    num(I, 'p-eight-coupon', 1, P, pf(0.07), {'par': 100, 'face-only': R(108) / R(107, 100) ** 4, 'no-discount': 132}, dp=2)
+    ok(abs(float(P - R(108) / R(107, 100) ** 4) - 20.99) < 0.005, 'coupons add 20.99')
+    num(I, 'p-eight-coupon', 2, d2P, d2num(pf, 0.07),
+        {'power-t': d2P * R(107, 100) ** 2, 't-squared': sum(R(t * t * c) / R(107, 100) ** (t + 2) for t, c in cf.items()),
+         'one-term': R(20 * 108) / R(107, 100) ** 6}, dp=2, agree=1e-6)
+    ok(abs(float(d2P - R(20 * 108) / R(107, 100) ** 6) - 118.13) < 0.005, 'coupons add 118.13 to the bend')
+    Pr, d2r = R(10339, 100), R(155743, 100)
+    num(I, 'p-eight-coupon', 3, d2r / Pr, 1557.43 / 103.39,
+        {'power-t': R(178310, 100) / Pr, 't-squared': R(123372, 100) / Pr, 'upside-down': Pr / d2r}, dp=2)
+    ok(abs(float(d2P / P) - 15.06) < 0.005, 'C from unrounded values also 15.06')
+    D, Cv, dy = R(33502, 10000), R(1506, 100), R(15, 1000)
+    dur = Pr * (1 - D * dy)
+    num(I, 'p-eight-coupon', 4, dur, 103.39 - 3.3502 * 103.39 * 0.015,
+        {'sign': Pr * (1 + D * dy), 'percent': Pr * (1 - D * R(15, 10)), 'no-price': Pr - D * dy}, dp=2)
+    dc = dur + Cv * Pr * dy ** 2 / 2
+    num(I, 'p-eight-coupon', 5, dc, 103.39 * (1 - 3.3502 * 0.015 + 0.5 * 15.06 * 0.015 ** 2),
+        {'subtract': dur - Cv * Pr * dy ** 2 / 2, 'no-half': dur + Cv * Pr * dy ** 2, 'not-squared': dur + Cv * Pr * dy / 2}, dp=2)
+    true85 = pf(0.085)
+    ok(round(true85, 2) == 98.36 and round(true85 - float(dur), 2) == 0.17 and abs(float(dc) - true85) < 0.01, 'true price 98.36: 17p from duration, a penny from both')
+
+    # p-log-two
+    lg = sp.log(1 + X)
+    ser = sp.series(lg, X, 0, 6).removeO()
+    s5 = ser.subs(X, R(-1, 2))
+    pick(I, 'p-log-two', 1, 'half')
+    ok(abs(sum((-1) ** (k + 1) / k for k in range(1, 6)) - 0.78333) < 5e-6, 'five terms at x = 1 give 0.783')
+    alt5 = sum(0.5 ** k / k for k in range(1, 6))
+    num(I, 'p-log-two', 2, -s5, alt5,
+        {'four-terms': sum(R(1, 2 ** k * k) for k in range(1, 5)), 'alternating': sum((-1) ** (k + 1) * R(1, 2 ** k * k) for k in range(1, 6)),
+         'x-one': ser.subs(X, 1)}, dp=4)
+    L2 = sp.log(X)
+    e2 = [sp.diff(L2, X, j).subs(X, 2) for j in range(4)]
+    num(I, 'p-log-two', 3, e2[2] / 2, d2num(log, 2) / 2, {'no-half': e2[2], 'centre-one': sp.diff(L2, X, 2).subs(X, 1) / 2, 'sign': -e2[2] / 2}, dp=4, agree=1e-6)
+    num(I, 'p-log-two', 4, e2[3] / 6, (d2num(log, 2.001) - d2num(log, 1.999)) / 0.002 / 6,
+        {'no-factorial': e2[3], 'divide-three': e2[3] / 3, 'centre-one': sp.diff(L2, X, 3).subs(X, 1) / 6}, dp=4, agree=1e-3)
+    l2 = R(68854, 100000)
+    t = R(1, 10)
+    est = l2 + t / 2 - t ** 2 / 8 + t ** 3 / 24
+    num(I, 'p-log-two', 5, est, 0.68854 + 0.05 - 0.00125 + 0.001 / 24,
+        {'no-cubic': l2 + t / 2 - t ** 2 / 8, 'no-half': l2 + t / 2 - t ** 2 / 4 + t ** 3 / 24,
+         'four-terms': sum(R(1, 2 ** k * k) for k in range(1, 5)) + t / 2 - t ** 2 / 8 + t ** 3 / 24,
+         'x-one': ser.subs(X, 1) + t / 2 - t ** 2 / 8 + t ** 3 / 24}, dp=5)
+    ok(abs(log(2) - float(-s5) - 0.0046) < 0.00005 and round(log(2.1), 5) == 0.74194, 'ln 2 gap 0.0046; ln 2.1 = 0.74194')
+
 print(f'{checks} checks, {len(fails)} failures')
 for m in fails:
     print('FAIL', m)
