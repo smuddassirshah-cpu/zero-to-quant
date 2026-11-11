@@ -119,6 +119,9 @@ if L4 is not None:
     ok(abs(0.4 ** 2 / 200 / sims200.var() - 0.99) < 0.02, 'p-disk-failures p5: simulated efficiency at n = 200 is near 0.99')
     ok(sp.Rational(198, 200) == sp.Rational(99, 100) and sp.Rational(38, 40) == sp.Rational(19, 20) and (n_brute - 1 - 2) / (n_brute - 1) < 0.99, 'p-disk-failures p5: 198/200 = 0.99, 38/40 = 0.95, and 199 gaps fall short')
     prints(L4, 'p-disk-failures', 5, ['n \\ge 200', 'n = 200', '0.95'])
+    q5 = L4['p-disk-failures']['parts'][4]['question']
+    ok('smallest number of gaps' in q5 and 'How many gaps make' not in q5, 'p-disk-failures p5: the question asks for the smallest number of gaps, so exactly one number answers it (review-delta-holes finding 6)')
+    ok(min(k for k in range(3, 10000) if sp.Rational(k - 2, k) >= sp.Rational(99, 100)) == n_brute == 200, 'p-disk-failures p5: 200 is the smallest n with (n - 2) / n >= 0.99')
 
     # ---------- p-website-signups: 12 Poisson hours totalling 54 ----------
     pick(L4, 'p-website-signups', 1, 'total')

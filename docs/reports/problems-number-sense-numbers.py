@@ -127,6 +127,11 @@ def level4(L):
     stated('tiles: floor cm2', 216000, 15 * 120 * 120)
     stated('tiles: 3.6 x 6', 21.6, 3.6 * 6, 1e-9)
     text_has(L, 'p-hall-tiles', 4, '14{,}400', '216{,}000', '21.6')
+    hall = json.dumps(L['p-hall-tiles'], ensure_ascii=False)
+    ok(not re.search(r'(?<![\d.])108(?![\d])', hall), "tiles: the old hall's 108 is left nowhere in p-hall-tiles (review-delta-holes finding 1)")
+    g2 = L['p-hall-tiles']['parts'][1]['feedback']['generic']
+    ok('factors of 120' in g2 and 'factors of 108' not in g2, 'tiles: part 2 generic names the factors of 120, the number its question asks about')
+    ok('120' in L['p-hall-tiles']['parts'][1]['question'], 'tiles: part 2 question says 120')
     ok(L['p-hall-tiles']['parts'][0]['widget']['unit'] == 'cm' and L['p-hall-tiles']['parts'][3]['widget']['unit'] == 'm\u00b2', 'tiles: units cm and m2')
 
     # ---- courtyard and basin (14 m by 11 m, 5 m across)
@@ -143,14 +148,16 @@ def level4(L):
     num(L, 'p-lawn-pond', 2, F(court) - F('19.63'), sum(1 for i in range(14) for j in range(11)) - 19.63,
         {'circumference-carried': F(court) - F('15.71'), 'perimeter': 2 * (14 + 11) - F('19.63')}, dp=2,
         pis=lambda P: court - round(P * 6.25, 2))
-    need = F('134.37') / 15
-    tins = next(b for b in range(1, 20) if 15 * b >= F('134.37'))
-    num(L, 'p-lawn-pond', 3, -(-F('134.37') // 15), tins, {'rounded-down': F('134.37') // 15, 'circumference-carried': -(-F('138.29') // 15),
-                                                           'whole-courtyard': -(-F(court) // 15)})
-    stated('basin: 134.37 / 15', 8.96, round(float(need), 2))
-    stated('basin: 138.29 / 15 rounds up to 10', 10, -(-F('138.29') // 15))
-    stated('basin: 9 tins cover 135 and 8 cover 120', 135 - 120, 15)
-    ok(9 * 15 >= 134.37 > 8 * 15 and 135 > 134.37, 'basin: 9 tins just enough')
+    need = F('134.37') / 12
+    tins = next(b for b in range(1, 20) if 12 * b >= F('134.37'))
+    num(L, 'p-lawn-pond', 3, -(-F('134.37') // 12), tins, {'rounded-down': F('134.37') // 12, 'whole-courtyard': -(-F(court) // 12)})
+    stated('basin: 134.37 / 12', 11.20, round(float(need), 2))
+    ok(round(need) == 11 and -(-need // 1) == 12 and -(-F(court) // 12) == 13, 'basin: rounding to nearest gives 11 but up gives 12 (review-delta-holes finding 7); the whole courtyard gives 13')
+    ok(-(-F('138.29') // 12) == 12, 'basin: the dropped circumference slip, 138.29 / 12, also gives 12, so it is no slip here')
+    stated('basin: 11 tins cover 132 and 12 cover 144', 144 - 132, 12)
+    ok(12 * 12 >= 134.37 > 11 * 12 and 144 > 134.37, 'basin: 12 tins just enough')
+    pj = json.dumps(L['p-lawn-pond']['parts'][2], ensure_ascii=False)
+    ok(not re.search(r'(?<![\d.])(15 m|8\.96|135 m|120 m)', pj) and 'circumference-carried' not in pj, 'basin: no figure or slip of the 15 m2 tin version is left in the part')
     ok(L['p-lawn-pond']['parts'][0]['widget']['unit'] == 'm\u00b2' and L['p-lawn-pond']['parts'][1]['widget']['unit'] == 'm\u00b2', 'basin: units m2')
 
     # ---- cycle commute
