@@ -76,10 +76,10 @@ check('l3 s9 Pois(2) P(X>=6)=0.0166, about 4 days in 250',
       near(1 - pois_cdf(2, 5), 0.0166, 5e-5) and near(250 * (1 - pois_cdf(2, 5)), 4, 0.5))
 check('l3 quiz2 exact Bin(1000,.002) P(X=1)=0.2707', near(binom_pmf(1000, .002, 1), 0.2707, 5e-5))
 check('l4 s7 C(16,5)/C(20,5)=0.2817', near(hyper(0, 20, 4, 5), 0.2817, 5e-5))
-# Content claim (l4 s7 explain): "Each factor is below 0.8". The first is 16/20.
+# Content claim (l4 s7 explain, fixed): "The first factor is 0.8 and each later one is smaller".
 factors = [16 / 20, 15 / 19, 14 / 18, 13 / 17, 12 / 16]
-check('l4 s7 CLAIM every factor of the clean-run product is below 0.8',
-      all(f < 0.8 - 1e-12 for f in factors), 'first factor is exactly 0.8 (finding 1)')
+check('l4 s7 first factor is 0.8, each later one smaller (finding 1 fixed)',
+      factors[0] == 0.8 and all(factors[i + 1] < factors[i] for i in range(4)) and factors[1] < 0.8)
 t = [(20, 0.2817, 0.0459), (100, 0.3193, 0.0084), (1000, 0.3269, 0.0008)]
 check('l4 s9 table exact, gap', all(near(hyper(0, n, n // 5, 5), e, 6e-5) and
                                     near(0.8**5 - hyper(0, n, n // 5, 5), g, 1.1e-4) for n, e, g in t))
@@ -106,8 +106,8 @@ check('p1 item3 exact smallest n is 146; binomial 152; 0.98994 at 151', nmin == 
       and near(1 - 0.97**151, 0.98994, 5e-6) and 1 - 0.97**152 >= 0.99, 'exact n=%d' % nmin)
 
 # ---------------------------------------------------------------- Level 2
-check('l7 s3 CLAIM 2.28% of days is "roughly once a month" (21 trading days)',
-      near(1 / (1 - Phi(2)), 21, 5), '1 in %.0f days, about two months (finding 2)' % (1 / (1 - Phi(2))))
+check('l7 s3 2.28% of days is "roughly once every two months of trading" (42 days, finding 2 fixed)',
+      near(1 / (1 - Phi(2)), 42, 5), '1 in %.0f days' % (1 / (1 - Phi(2))))
 check('l7 s4 0.3085/0.0228 about 13', near(Phi(-0.5) / Phi(-2), 13.5, 0.6))
 check('l7 s8 Phi(-3.05/1.2)=0.0055, once in 180 days', near(Phi(-3.05 / 1.2), 0.0055, 5e-5)
       and near(1 / Phi(-3.05 / 1.2), 181, 2))
@@ -295,6 +295,8 @@ check('l13 normal 0.0579/0.0578, 0.0361, 0.1306, 0.161', near(1 - Phi(3.5 / sqrt
 check('l13 s7 Bin(100,.02) P(X>=5): 0.0508, Poisson 0.0527, normal 0.0371', near(binom_tail(100, .02, 5), 0.0508, 5e-5)
       and near(1 - pois_cdf(2, 4), 0.0527, 5e-5) and near(1 - Phi(2.5 / 1.4), 0.0371, 5e-5))
 check('l13 s8 0.0287 against exact 0.0284', near(1 - Phi(1.9), 0.0287, 5e-5) and near(binom_tail(100, .5, 60), 0.0284, 5e-5))
+check('l13 s9 slip nocc: uncorrected normal 0.0119 (finding 15)', near(1 - Phi(10 / sqrt(19.6)), 0.0119, 5e-5)
+      and abs(0.0119 - 0.0159) > 2 * 0.0003)
 check('l13 s9 0.0159, exact 0.0207, Poisson 0.0218', near(1 - Phi(9.5 / sqrt(19.6)), 0.0159, 5e-5)
       and near(binom_tail(1000, .02, 30), 0.0207, 5e-5) and near(1 - pois_cdf(20, 29), 0.0218, 5e-5))
 check('l13 quiz2 exact P(Bin(100,.5)=50)=0.0796', near(binom_pmf(100, .5, 50), 0.0796, 5e-5))
