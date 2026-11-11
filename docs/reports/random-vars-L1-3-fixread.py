@@ -132,7 +132,7 @@ def sd_sum(rho):
 
 check('l10 sds add at rho = 1 and at no smaller rho',
       math.isclose(sd_sum(1), sx + sy) and all(sd_sum(r / 100) < sx + sy - 1e-9 for r in range(-100, 100)))
-check('l10 s9 changed explain present', 'which is exact for log returns' in l10['screens'][9]['explain']['text'])
+check('l10 s9 changed explain present', 'independent days of equal variance whose returns add; adding is exact for log returns' in l10['screens'][9]['explain']['text'])
 check('l10 annual vol 0.1905 and variance 0.0363',
       round(0.012 * math.sqrt(252), 4) == 0.1905 and round(252 * 0.012 ** 2, 4) == 0.0363)
 # Log returns add exactly; simple returns compound.
