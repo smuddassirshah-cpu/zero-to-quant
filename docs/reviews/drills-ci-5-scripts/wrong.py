@@ -91,7 +91,7 @@ def cheapest_route(n, roads, src, dst):
     return out[::-1]
 ''', '(cost, roads, town) in the heap and the first parent kept: no town-by-town tie')
 
-C['route: search from dst, smaller next'] = ('ci-cheapest-route', '''
+C['route: search from dst, smaller next (right)'] = ('ci-cheapest-route', '''
 import heapq
 def cheapest_route(n, roads, src, dst):
     adj = [[] for _ in range(n)]
@@ -344,7 +344,7 @@ def first_cycle_rule(n, rules):
     return lo - 1
 ''', '[a, a] dropped')
 
-C['loop rule: search bound off by one'] = ('ci-first-circular-rule', '''
+C['loop rule: bounds on positions (right)'] = ('ci-first-circular-rule', '''
 def first_cycle_rule(n, rules):
     def loops(k):
         after = [[] for _ in range(n)]; waits = [0] * n
@@ -865,7 +865,7 @@ def largest_after_each(rows, cols, fills):
     return out
 ''', 'every neighbouring island relabelled to the new cell')
 
-C['land: sizes added per neighbour'] = ('ci-reclaimed-land', '''
+C['land: no union by size (right)'] = ('ci-reclaimed-land', '''
 def largest_after_each(rows, cols, fills):
     parent = {}; size = {}
     def find(x):
@@ -886,7 +886,7 @@ def largest_after_each(rows, cols, fills):
     return out
 ''', 'union-find without union by size (right, slower)')
 
-C['land: no shortening, no sizes order'] = ('ci-reclaimed-land', '''
+C['land: no shortening, new under old (right)'] = ('ci-reclaimed-land', '''
 def largest_after_each(rows, cols, fills):
     parent = {}; size = {}
     def find(x):
@@ -930,7 +930,7 @@ def largest_after_each(rows, cols, fills):
 ''', 'cell numbers plus and minus one join across the end of a row')
 
 # ---------------------------------------------------------------- safest walk
-C['walk: levels from the top, fresh search'] = ('ci-safest-walk', '''
+C['walk: levels from the top (accepted)'] = ('ci-safest-walk', '''
 from collections import deque
 def safest_walk(grid):
     R, C = len(grid), len(grid[0]); cover = [[-1] * C for _ in range(R)]; q = deque()
