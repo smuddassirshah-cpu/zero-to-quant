@@ -369,10 +369,108 @@ def level3(L):
     stated('sprinkler: 6.25 - 3.125', 3.125, 6.25 - 3.125)
 
 
+# ================================================================== level 4
+y = sp.Symbol('y', real=True)
+SYM['y'] = y
+
+
+def eq_part(items, iid, kk, truth, slips):
+    """An equation answer: each form is lhs - rhs; equal when the ratio to the truth is a non-zero constant."""
+    part = items[iid]['parts'][kk - 1]
+    w = part['widget']
+    tag = f'{iid} p{kk}'
+
+    def side(s):
+        l, r = s.split('=')
+        return sp.expand(tex(l) - tex(r))
+
+    def same(a, b):
+        q = sp.simplify(a / b)
+        return q.is_number and q != 0
+    T = side(truth)
+    for s in [w['answer']] + w.get('accept', []):
+        ok(same(side(s), T), f'{tag}: {s} is not the equation {truth}')
+    bykey = part['feedback'].get('byKey', {})
+    wrongs = {z['id']: z['tex'] for z in w.get('wrong', [])}
+    ok(set(wrongs) == set(slips), f'{tag}: wrong ids {sorted(wrongs)} vs slips {sorted(slips)}')
+    for wid, tt in wrongs.items():
+        ok(not same(side(tt), T), f'{tag}: wrong {wid} is the key equation')
+        ok(same(side(tt), side(slips[wid])), f'{tag}: wrong {wid} is not the slip')
+        ok(wid in bykey, f'{tag}: wrong {wid} has no byKey line')
+
+
+def level4(L):
+    # ---- park pond: circle, line, surd, tangent
+    C, Lp = (-2, 3), (4, 11)
+    r2 = (Lp[0] - C[0]) ** 2 + (Lp[1] - C[1]) ** 2
+    walk = max(k for k in range(0, 50) if k * k <= r2)          # integer root by search
+    num(L, 'p-park-pond', 1, sp.sqrt(r2), walk, {'added': 6 + 8, 'no-root': r2})
+    circle = (x - C[0]) ** 2 + (y - C[1]) ** 2 - r2
+    eq_part(L, 'p-park-pond', 2, '(x+2)^2+(y-3)^2=100', {'signs': '(x-2)^2+(y+3)^2=100', 'radius-not-squared': '(x+2)^2+(y-3)^2=10'})
+    ok(sp.expand(circle) == sp.expand(x ** 2 + y ** 2 + 4 * x - 6 * y - 87), 'pond: expanded circle')
+    meet = sp.solve(circle.subs(y, x + 7), x)
+    grid_meet = [i for i in range(-30, 31) if circle.subs({x: i, y: i + 7}) == 0]
+    slip = sp.solve(((x - 2) ** 2 + (y + 3) ** 2 - 100).subs(y, x + 7), x)
+    numset(L, 'p-park-pond', 3, meet, grid_meet, {'signs': [-z for z in meet], 'centre-signs-carried': [round(float(z), 2) for z in slip]})
+    ok(sp.expand(circle.subs(y, x + 7)) == 2 * x ** 2 + 12 * x - 80, 'pond: substituted quadratic 2x^2 + 12x - 80')
+    P, Q = (-10, -3), (4, 11)
+    ok(all(circle.subs({x: a, y: b}) == 0 and b == a + 7 for a, b in (P, Q)), 'pond: both crossing points on the circle and the path')
+    chord = sp.sqrt((Q[0] - P[0]) ** 2 + (Q[1] - P[1]) ** 2)
+    a_coef = sp.simplify(chord / sp.sqrt(2))
+    num(L, 'p-park-pond', 4, a_coef, float(chord) / 2 ** 0.5, {'squared': a_coef ** 2, 'added': 28})
+    stated('pond: 14 sqrt 2', 19.80, round(float(chord), 2))
+    c = sp.Symbol('c')
+    quad = sp.expand(((x - C[0]) ** 2 + (x + c - C[1]) ** 2 - r2))
+    ok(sp.expand(quad - (2 * x ** 2 + (2 * c - 2) * x + c ** 2 - 6 * c - 87)) == 0, 'pond: the stated quadratic in c')
+    disc = sp.expand((2 * c - 2) ** 2 - 8 * (c ** 2 - 6 * c - 87))
+    ok(disc == -4 * c ** 2 + 40 * c + 700, 'pond: discriminant -4c^2 + 40c + 700')
+    cs = sorted(sp.solve(disc, c))
+    # second route: the distance from the centre to y = x + c is |c - 5| / sqrt(2), equal to the radius
+    c_dist = 5 + 10 * 2 ** 0.5
+    num(L, 'p-park-pond', 5, cs[1], c_dist, {'lower': cs[0], 'shift-by-radius': 15}, dp=2)
+    ok(sp.simplify(cs[1] - (5 + 10 * sp.sqrt(2))) == 0, 'pond: c = 5 + 10 sqrt 2')
+
+    # ---- windy ride
+    T = sp.together(16 / v + 9 / (v - 2))
+    top = sp.expand(sp.cancel(T * v * (v - 2)))
+    expr_part(L, 'p-windy-ride', 1, str(top).replace('*', ''), {'own-bottoms': '25v-18', 'tops-added': '25'})
+    ok(top == 25 * v - 32, 'ride: top 25v - 32')
+    roots = sorted(sp.solve(sp.Eq(16 / v + 9 / (v - 2), sp.Rational(7, 2)), v))
+    by_time = [z for z in (sp.Rational(k, 7) for k in range(1, 200)) if z != 2 and abs(float(16 / z + 9 / (z - 2)) - 3.5) < 1e-12]
+    slip_roots = sorted(sp.solve(7 * v ** 2 - 64 * v + 36, v))
+    numset(L, 'p-windy-ride', 2, roots, by_time, {'signs': [-1 * float(z) for z in roots], 'own-bottoms-carried': [round(float(z), 2) for z in slip_roots]}, dp=2)
+    ok(sp.expand((v - 8) * (7 * v - 8)) == 7 * v ** 2 - 64 * v + 64, 'ride: (v - 8)(7v - 8)')
+    speed = [z for z in roots if z - 2 > 0]
+    num(L, 'p-windy-ride', 3, speed[0], 16 / 2, {'small-root': roots[0]})
+    ratio = sp.simplify((9 / (v - 2)) / (16 / v))
+    expr_part(L, 'p-windy-ride', 4, '9v/(16(v-2))', {'not-flipped': '144/(v(v-2))', 'upside-down': '16(v-2)/(9v)'})
+    ok(sp.simplify(ratio - 9 * v / (16 * (v - 2))) == 0, 'ride: ratio 9v / 16(v - 2)')
+    num(L, 'p-windy-ride', 5, ratio.subs(v, 8), (9 / 6) / (16 / 8), {'upside-down': 1 / ratio.subs(v, 8), 'small-root': ratio.subs(v, roots[0])})
+    stated('ride: 2 hours out', 2, 16 / 8); stated('ride: 1.5 hours home', 1.5, 9 / 6)
+
+    # ---- storage crate
+    V = x ** 3 + 4 * x ** 2 + x - 6
+    num(L, 'p-storage-crate', 1, V.subs(x, -2), sp.rem(V, x + 2, x), {'sign': V.subs(x, 2), 'cube-sign': 8 + 16 - 2 - 6})
+    qt, rr = sp.div(V, x + 2, x)
+    ok(rr == 0, 'crate: (x + 2) divides V')
+    co = sp.Poly(V, x).all_coeffs()
+    s1 = co[1] + 2 * co[0]
+    s0 = co[2] + 2 * s1
+    expr_part(L, 'p-storage-crate', 2, str(qt).replace('**', '^').replace('*', ''), {'sign': f'x^2+{s1}x+{s0}', 'constant-sign': 'x^2+2x+3'})
+    expr_part(L, 'p-storage-crate', 3, '(x+2)(x+3)(x-1)', {'signs': '(x+2)(x-3)(x+1)', 'one-root-sign': '(x+2)(x+3)(x+1)'})
+    ok(sp.factor(V) == (x - 1) * (x + 2) * (x + 3), 'crate: sympy factor')
+    h = sp.cancel(V / (x ** 2 + 5 * x + 6))
+    expr_part(L, 'p-storage-crate', 4, str(h), {'wrong-pair': 'x+2', 'sign': 'x+1'})
+    xs = sp.Rational(7, 2)
+    num(L, 'p-storage-crate', 5, V.subs(x, xs), 5.5 * 6.5 * 2.5, {'x-is-height': V.subs(x, sp.Rational(5, 2)), 'base-only': sp.Rational(11, 2) * sp.Rational(13, 2)})
+    stated('crate: (-2)^3', -8, (-2) ** 3)
+
+
 run_level(1, level1)
 run_level(2, level2)
 run_level(3, level3)
-print(f'quadratics problem sets 1 to 3; checks: {checks}; failures: {len(fails)}')
+run_level(4, level4)
+print(f'quadratics problem sets 1 to 4; checks: {checks}; failures: {len(fails)}')
 for m in fails:
     print('FAIL', m)
 sys.exit(1 if fails else 0)
