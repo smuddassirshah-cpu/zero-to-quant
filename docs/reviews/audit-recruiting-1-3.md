@@ -171,3 +171,78 @@ Also changed, from the unverified list: `l4` `quiz[3]` (key rests on JP Morgan's
 - `recruiting-L1-concepts.py`, `-L2-` and `-L3-`: each exits 0. `review-topup-numbers.py`: exits 0.
 - Playthrough with `--local-cdn`, desktop and `--mobile`: "All passed" on all 30 runs (lessons l1, l2, l3, l4, l5, l6, l7, l8, l9, l11, l12 and l15; sets review-1, review-2 and homework-2). l3 desktop was rerun after its last edit and passed.
 - Content commit: `eed1fb5e`.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit, its ledger, the earlier review and the fix-pass notes. Scope: content strings changed by `eed1fb5e` in `app/content/courses/recruiting` (15 files, 47 changed JSON leaves, 48 rows). Each row was read in its screen or item. Disclosure: one stray `grep` printed three lines of `docs/reports/recruiting-L2-concepts.py` (the homework-2 word-count checks, lines 182 to 184); finding 1 was computed before that and does not rest on it.
+
+Runs: a survivorship simulation (1,500 shares, 180 months, 12-month decile long-short, 20 seeds). With failures placed among past losers, the survivors-only test understates the long-short return (0.38 full against 0.02 a year, difference 0.36, s.e. 0.003). With failures among past winners it overstates (full -0.27 against 0.02, difference 0.29, s.e. 0.003). So the sign depends on which leg the delisted shares sat in. Web checks, 11 November 2026: Ladders eye-tracking study 2018 (7.4 s first screen; hrdive.com summary); Yale OCS, Cornell Career Services and Vault pages on summer 2027 banking (US bank postings opened about January to April 2026, boutiques earlier); QuantVault timeline (US quant postings July and August) against other guides (Citadel, Jane Street, HRT in March and April).
+
+### Ledger
+
+| # | file | JSON path | claim (short) | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-2 | items[0].widget.model | Treasurer dated "Oct 2026 to Jun 2027" | correct | Matches the CV's other dates (month and year), so "one date format" now holds; inside the degree dates and before the July 2027 send date |
+| 2 | homework-2 | items[4].widget.model | Missing bust firms bias the result; on a long-short test the direction must be checked | correct | Simulation above; derivation: dropped failures sit in either leg, and the short leg gains from them |
+| 3 | homework-2 | items[4].widget.model | "about 210 words: 1 minute 36 seconds"; last section "about 25 s" | imprecise | Count of the four spoken sections is now 218 words (was 208): 218 / 130 × 60 = 100.6 s. Last section is 64 words, 29.5 s, not 25. Finding 1 |
+| 4 | l1-three-roles | screens[2].widget.options[2].why | Research interviews at funds and trading firms test statistics and data; some bank desks add pricing | correct | Bank quant research and strats postings list derivatives pricing and stochastic calculus; distractor stays false for the highlighted row |
+| 5 | l1-three-roles | screens[6].widget.options[1].why | The trading firms quoted here state no finance knowledge is needed | correct | Agrees with the two table rows on the same screen |
+| 6 | l1-three-roles | screens[6].feedback.byKey.deriv | Same, then spend the time on arithmetic and probability | correct | Same table; agrees with the key |
+| 7 | l1-three-roles | summary.trap | Most trading-firm intern interviews do not test finance knowledge; several firms say so; check each posting | correct | Hedged; consistent with screens[6] (two firms quoted) and with l6 and l8 wording |
+| 8 | l11-stories-that-answer | screens[4].canvas.params.rows[2][1] | Contest story: "argued the team into half size" | correct | Now supports the keyed "Persuade: Yes" and "Leading: Yes"; agrees with l13 ("argued for it") |
+| 9 | l11-stories-that-answer | screens[5].canvas.params.rows[2][1] | Same row, second table | correct | Deadline Yes (one afternoon), Proud No, Learn No still follow |
+| 10 | l12-reasoning-aloud | screens[11].canvas.params.lines[5] | Bought from, move the market up; sold to, move it down | correct | Standard market-making update: a buyer signals the value is above your offer. Agrees with byKey.l6 and the explain |
+| 11 | l15-after-a-rejection | screens[7].explain.text | Separate employers, separate applications; check the fund's page for a wait of its own | correct | Hedged advice; cannot harm; agrees with the key |
+| 12 | l2-kinds-of-firm | screens[1].feedback.correct | A trading firm's money is its own, not clients' or investors' | correct | Definition of proprietary trading; agrees with the explain |
+| 13 | l2-kinds-of-firm | screens[4].widget.options[3].why | A high return-offer rate follows hard screening before the summer | unverified | The second half (the rate says nothing about ease) is logic. The causal half is plausible but the screen's only source names no sources. Finding 2 |
+| 14 | l2-kinds-of-firm | screens[6].widget.options[3].why | Separate employers, so apply and let Firm H decide | correct | Follows from the screen's caption; applying costs nothing |
+| 15 | l2-kinds-of-firm | screens[6].feedback.byKey.both | Shared name, separate employers and applications | correct | Agrees with options[1].why and the explain |
+| 16 | l3-the-calendar | screens[5].widget.options[3].why | A reminder may never come, and places fill meanwhile | correct | Follows from rolling review as defined in the lesson; no "never" claim left |
+| 17 | l3-the-calendar | screens[8].prose | US cycle also opens long before the summer; dates differ by firm and move each year | correct | Yale OCS and Cornell pages (banks over a year ahead); QuantVault (trading firms about a year ahead) |
+| 18 | l3-the-calendar | screens[8].canvas.params.rows[0][2] | US: trading firms often July and August; many banks months earlier | unverified | Bank half correct (sources above). Trading-firm half: guides disagree, July and August (QuantVault) against March and April for the largest firms. Settled only by each firm's careers page. Finding 3 |
+| 19 | l3-the-calendar | screens[8].canvas.state.caption | Sources named; "check each firm's careers page" | correct | Source list matches the cell; instruction is safe |
+| 20 | l3-the-calendar | screens[8].widget.options[0].text | Keyed: the rule "apply as soon as postings open" carries over | correct | Uniquely right: the label, the pay unit and "final year" are each false by the table; agrees with screens[5] and the explain |
+| 21 | l3-the-calendar | screens[8].hints[1].text | In both, postings open long before the summer | correct | Both cells of row 0 |
+| 22 | l3-the-calendar | screens[8].hints[2].text | The rule transfers; labels and pay units do not | correct | Rows 2 and 3 of the table |
+| 23 | l3-the-calendar | screens[8].feedback.correct | The rule transfers; the labels do not | correct | Agrees with the key |
+| 24 | l3-the-calendar | screens[8].feedback.generic | Look for a habit that holds in both columns | correct | Points at the key without giving it |
+| 25 | l3-the-calendar | screens[8].explain.text | Some US postings, banks above all, open well before July; check US dates on each firm's page | correct | Yale OCS, Cornell, Vault; three sentences; agrees with the key |
+| 26 | l4-firm-by-firm | summary.trap | Of the lines quoted, only the 8-month retake rule comes from Optiver's own page | correct | Lesson table (retake rule marked official, source Optiver EU campus Q&A); agrees with the screen that says only the retake rule is official |
+| 27 | l4-firm-by-firm | quiz[1].widget.options[3].why | A practice run, where one exists, is separate; the rule counts the real sitting | correct | Consistent with "practise before the real link" in the lesson; the option still does not answer "when can you next sit it" |
+| 28 | l4-firm-by-firm | quiz[3].question | Asks by the table's labels | correct | Makes the key checkable against the lesson, not the world |
+| 29 | l4-firm-by-firm | quiz[3].feedback.correct | The table marks the line official, from the 2027 posting read October 2026 | correct | Table row "JP Morgan, researcher": "Coding challenge and recorded video (official)". Key unique: the other three are labelled reports or disputed |
+| 30 | l4-firm-by-firm | quiz[3].explain.text | Same, then check the posting before applying | correct | As row 29. The posting's own wording is not something this read could open; the sentence no longer asserts it |
+| 31 | l5-a-target-list | screens[7].prose | (1-p)^n is optimistic under a shared weakness; E = np holds either way | correct | Linearity of expectation needs no independence. For a shared cause, E[(1-P)^n] >= (1-E[P])^n by Jensen. Agrees with summary.formula.note |
+| 32 | l6-one-page-cv | screens[0].feedback.byKey.r3 | A transcript confirms the year average, which backs the predicted grade | correct | Row r3 reads "Predicted First; year 2 average 74%"; 74 is in the First band |
+| 33 | l6-one-page-cv | screens[4].prose | For finance and trading roles UK student CV conventions are strict | correct | UK university careers services allow two pages in general and advise one for banking and finance |
+| 34 | l6-one-page-cv | screens[4].explain.text | For finance roles: one page, no photo, no date of birth, grade expected | correct | Same; agrees with the keyed options |
+| 35 | l6-one-page-cv | screens[7].explain.text | Several trading firms state no finance experience is needed | correct | Consistent with l1 summary.trap |
+| 36 | l6-one-page-cv | summary.ideas[2] | UK student CV for finance: the same list | correct | Agrees with screens[4] |
+| 37 | l6-one-page-cv | quiz[0].widget.options[2].why | A year average is checkable and backs the prediction | correct | Option reads "Predicted First; year 2 average 71%" |
+| 38 | l6-one-page-cv | quiz[1].explain.text | For finance roles: grade and dates, one page, no photo or date of birth | correct | Agrees with the keyed options |
+| 39 | l7-projects-that-count | screens[0].prose | One widely cited study timed a first read of a whole CV at about seven seconds | correct | Ladders eye-tracking study, 2018: 7.4 seconds; attributed, not stated as a law |
+| 40 | l7-projects-that-count | screens[10].widget.options[0].text | Keyed: missing delisted shares bias the result; rerun and see which way | correct | Simulation above. Uniquely best: the others claim certainty, are vague, or name a seed a price backtest does not have |
+| 41 | l7-projects-that-count | screens[10].hints[2].text | On a long-short test the bias can go either way | correct | Simulation above |
+| 42 | l7-projects-that-count | screens[10].explain.text | The test trades a list nobody had at the time; direction either way, so rerun | correct | Universe look-ahead is the definition of survivorship bias; three sentences |
+| 43 | l8-why-this-firm | screens[2].widget.options[3].why | Following the news shows an interest, not a reason | correct | Agrees with the lesson's rule (a true fact, your evidence, why this role) |
+| 44 | l8-why-this-firm | screens[6].feedback.byKey.pay | Pay says nothing about why this firm | correct | Agrees with the explain; drops the claim that rival firms pay the same |
+| 45 | l9-sitting-an-assessment | screens[7].widget.lines[3].text | Eat and drink once the set-up is done | correct | Keyed order email, room, check, eat, start is now the only order the lines allow |
+| 46 | l9-sitting-an-assessment | screens[7].explain.text | Food comes after set-up, so nothing is left to fix | correct | Agrees with the key and the hints |
+| 47 | review-1 | items[3].widget.points[0].target, .tol | Spring week at 9 with tolerance 1, so 8 to 10 accepted | imprecise | Snap is 0.5 and "today, 2 Nov" sits at 4.03, so x = 4 is 1 November and x = 10 is 1 May. Points 8, 8.5, 9 and 9.5 are March or April; 10 is not. Finding 4 |
+| 48 | review-2 | items[0].feedback.byKey.r3 | A year average is checkable and backs the prediction | correct | Row r3 reads "Predicted 2:1; year 2 average 67%"; 67 is in the 2:1 band |
+
+Verdict counts: 48 rows. correct 44, imprecise 2, unverified 2, wrong 0, misleading 0.
+
+Voice, changed strings only: British English, no exclamation marks, no em-dashes, longest sentence 22 words, every explain at most three sentences, no lesson cited by number. Unchanged strings on the same screens still cite lessons by id (for example l15 screens[7] prose and hints[1], l1 screens[6] explain); out of this diff's scope.
+
+### Findings
+
+1. homework-2.json | items[4].widget.model | imprecise | minor | The fix added ten words to the last section, and the stated totals were not recomputed. | The four spoken sections now hold 26, 55, 73 and 64 words: 218 in all. At 130 words a minute that is 100.6 s, and the last section is 29.5 s. The text still says "about 210 words: 1 minute 36 seconds" and "(about 25 s)". The account stays inside two minutes, so the rubric line holds. | Replace "It is about 210 words: 1 minute 36 seconds at 130 words a minute." with "It is about 220 words: 1 minute 41 seconds at 130 words a minute." and replace "*What failed, and next (about 25 s).*" with "*What failed, and next (about 30 s).*" Check: 12 + 25 + 34 + 30 = 101 s = 1 minute 41 seconds. The number script's hw2 checks need the same three figures.
+
+2. l2-kinds-of-firm.json | screens[4].widget.options[3].why | unverified | minor | "A high rate follows hard screening" states a cause as fact; the screen's only source names no sources. | The distractor is still false and the slip is still right. Only the causal clause is unsupported. A firm's own careers page stating how it sizes its intern class would settle it. | "You read the rate as difficulty. A high rate usually comes with hard screening before the summer; it does not make the summer easy."
+
+3. l3-the-calendar.json | screens[8].canvas.params.rows[0][2] | unverified | minor | "Trading firms often July and August" rests on one guide; other 2026 guides put the largest US trading firms' openings in March and April. | QuantVault timeline (July and August) against other recruiting guides found on 11 November 2026 (Citadel, Jane Street, HRT in March and April). The bank half is supported (Yale OCS, Cornell, Vault). The key does not depend on the cell, and the caption sends the learner to each firm's page, so no graded answer is at risk. Each firm's careers page, read when its posting goes live, settles it. | "Trading firms from spring to August, by firm; many banks months earlier, as reported"
+
+4. review-1.json | items[3].widget.points[0] | imprecise | minor | Target 9 with tolerance 1 accepts x = 10, which is 1 May on this axis. | Snap 0.5; the grade is abs(x - 9) <= 1 (drag-point.js), so 8, 8.5, 9, 9.5 and 10 pass. "Today, 2 Nov" at 4.03 fixes x = k as the first day of month k, and the item's own feedback says "March 2027 is month 8". The prose says March or April. A learner who drops the point on May is marked right. | `"target": 8.75, "tol": 0.75` accepts exactly 8, 8.5, 9 and 9.5. These are the values before the fix, so the fixer should weigh this against the audit's reason for the change. If the audit wanted the end of April accepted, keep 9 and 1 and change feedback.correct to "March to April 2027, from month 8 up to month 10."
+
+Remaining unverified: finding 2 (source: a firm's own statement on intern class size and conversion) and finding 3 (source: each US trading firm's careers page, posting dates for summer 2027 and 2028). The JP Morgan line in l4 quiz[3] is now a claim about the table's label, which is correct; the posting itself could not be opened from here.
