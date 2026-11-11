@@ -103,3 +103,19 @@ No changed number, key, `wrong` value or test is wrong. The fixer's two departur
 | `l19-which-learner.json` | The three false sentences are gone and both new tests bite. Minor (8, 9) and the shared phrase of finding 1. |
 | `review-4.json` | Fixed; the key holds on a run. |
 | `homework-4.json` | `h-kmeans` has one reading. `h-pick-learner` is right; its prose can be read as the leak (4), and two minor (5, 6). |
+
+## Fix pass
+
+1. Fixed: l17 s8 and l19 s7 `how` now say "because a network's score differs a little between runtimes".
+2. Fixed: l17 s9 says this build measured up to four rows in 300 between runtimes and another runtime may differ by a few rows.
+3. Fixed: l18 q2 now says a natural spline builds the straight tail into the fit with no curvature at its boundary knots (ISLP 7.4.3).
+4. Fixed: `h-pick-learner` prose now says each learner is fitted to 400 of 600 training rows, validated on the other 200, then refitted on all 600; key 1.21 follows (0.59 on 400 test rows, t = 1.2087).
+5. Fixed: `h-pick-learner` tolerance now abs 0.015; nearest `wrong` value 1.61 is clear.
+6. Fixed: fifth learner's test accuracy now 0.57 (t = 0.40, meets no band); best test score 0.62 unchanged.
+7. Fixed: l16 s5 prose now `KMeans(3, n_init=10, random_state=0)`.
+8. Fixed: `test-6` lines added for l19 s7 (also prose and starter comment now say the factory is called once per cell and `clone` is not the route; no test changed, per ruling) and l19 s8, `test-6` and `test-7` for l17 s8, `test-10` for l16 s4.
+9. Fixed: l19 s5 now "Simple learners hold up where the truth is simple or the rows are few; flexibility wins where the truth is curved and the rows are many."
+10. Fixed: l16 s5 `why` and `byKey.c` say "73% of shares land with their own group" and "the match with the planted groups falls to 73%"; `stat-learning-L4-numbers.py` now expects 73 (457 of 457).
+11. Fixed: l18 s3 question asks for the basis-function count, "Count the interior knots first."
+12. Fixed: l16 s7 now reads closeness from the height at which two leaves join.
+13. Fixed: l15 s0 "usual penalty".

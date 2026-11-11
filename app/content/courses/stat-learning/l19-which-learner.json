@@ -3992,7 +3992,7 @@
     "generic": "Find what made each row's winner win."
    },
    "explain": {
-    "text": "Bias wins where the truth is simple or the rows are few; flexibility wins where the truth is curved and the rows are many. Noise caps everyone. Where scores tie, the learner you can explain wins."
+    "text": "Simple learners hold up where the truth is simple or the rows are few; flexibility wins where the truth is curved and the rows are many. Noise caps everyone. Where scores tie, the learner you can explain wins."
    }
   },
   {
@@ -4128,7 +4128,7 @@
   {
    "type": "ladder",
    "difficulty": 3,
-   "prose": "Fill the table in code. `PROBLEMS` maps a name to `(X_train, y_train, X_test, y_test)` and `LEARNERS` maps a name to a function that builds a fresh pipeline, simplest first.",
+   "prose": "Fill the table in code. `PROBLEMS` maps a name to `(X_train, y_train, X_test, y_test)` and `LEARNERS` maps a name to a function that builds a fresh pipeline, simplest first. Call the factory once for each cell, never reuse a model, and do not use `clone` here.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -4144,7 +4144,7 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "def fit_table(problems, learners):\n    # {problem: {learner: test accuracy rounded to 4 places}}\n    # build each learner fresh with learners[name]()\n    ...\n",
+    "starter": "def fit_table(problems, learners):\n    # {problem: {learner: test accuracy rounded to 4 places}}\n    # call learners[name]() once per cell, never reuse a model; clone is not the route here\n    ...\n",
     "solution": "def fit_table(problems, learners):\n    # {problem: {learner: test accuracy rounded to 4 places}}\n    # build each learner fresh with learners[name]()\n    table = {}\n    for p, (Xa, ya, Xb, yb) in problems.items():\n        table[p] = {}\n        for name, make in learners.items():\n            m = make().fit(Xa, ya)\n            table[p][name] = round(m.score(Xb, yb), 4)\n    return table\n",
     "prelude": "import numpy as np\n\ndef make_street(n, seed):            # two overlapping groups, a straight boundary is right\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    X = rng.normal(0, 0.8, (n, 2)) + np.where(y[:, None] == 1, 1.0, -1.0)\n    return np.round(X, 3), y\n\ndef make_rings(n, seed):             # class 1 near the centre, class 0 in a ring round it\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    r = np.where(y == 1, rng.normal(0.8, 0.3, n), rng.normal(2.2, 0.4, n))\n    a = rng.uniform(0, 2 * np.pi, n)\n    return np.round(np.c_[r * np.cos(a), r * np.sin(a)], 3), y\n\ndef make_quadrants(n, seed):         # class 1 when the two features share a sign; 10% of labels flipped\n    rng = np.random.default_rng(seed)\n    X = rng.uniform(-2, 2, (n, 2))\n    y = ((X[:, 0] * X[:, 1]) > 0).astype(int)\n    flip = rng.random(n) < 0.1\n    return np.round(X, 3), np.where(flip, 1 - y, y)\n\ndef make_wide(n, seed, p=20):        # make_street's signal in 2 columns, 18 columns of noise\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    X = rng.normal(0, 1, (n, p))\n    X[:, :2] = X[:, :2] * 0.8 + np.where(y[:, None] == 1, 1.0, -1.0)\n    return np.round(X, 3), y\n\ndef make_noise(n, seed):             # labels are up with chance 0.54 whatever the features say\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, 2))\n    return np.round(X, 3), (rng.random(n) < 0.54).astype(int)\n\ndef make_stocks(seed):               # 60 shares: beta, and volatility in % a year; three groups of 20\n    rng = np.random.default_rng(seed)\n    rows, lab = [], []\n    for g, (b, v) in enumerate([(0.6, 20.0), (1.4, 20.0), (1.0, 45.0)]):\n        rows.append(np.c_[rng.normal(b, 0.12, 20), rng.normal(v, 5.0, 20)])\n        lab += [g] * 20\n    return np.round(np.vstack(rows), 2), np.array(lab)\n\ndef make_impact(n, seed):            # order size (% of daily volume) and price impact (bp): a square-root law\n    rng = np.random.default_rng(seed)\n    x = rng.uniform(0, 50, n)\n    return np.round(x, 3), np.round(10 * np.sqrt(x) + rng.normal(0, 4, n), 3)\n\ndef make_additive(n, seed, interaction=0.0):\n    rng = np.random.default_rng(seed)\n    X = rng.uniform(-2, 2, (n, 2))\n    y = np.sin(1.5 * X[:, 0]) + 0.5 * X[:, 1] ** 2 + interaction * X[:, 0] * X[:, 1] + rng.normal(0, 0.3, n)\n    return np.round(X, 3), np.round(y, 3)\n\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler, SplineTransformer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.svm import SVC\nfrom sklearn.neural_network import MLPClassifier\n\ndef _p(train, test):\n    return train[0], train[1], test[0], test[1]\n\nPROBLEMS = {\n    \"street\": _p(make_street(300, 4), make_street(300, 5)),\n    \"rings\": _p(make_rings(300, 7), make_rings(300, 8)),\n    \"quadrants\": _p(make_quadrants(300, 3), make_quadrants(300, 4)),\n    \"wide\": _p(make_wide(60, 4), make_wide(300, 5)),\n    \"noise\": _p(make_noise(300, 4), make_noise(300, 5)),\n}\nLEARNERS = {   # simplest first\n    \"logistic\": lambda: make_pipeline(StandardScaler(), LogisticRegression()),\n    \"additive\": lambda: make_pipeline(StandardScaler(), SplineTransformer(n_knots=5), LogisticRegression(max_iter=2000)),\n    \"knn\": lambda: make_pipeline(StandardScaler(), KNeighborsClassifier(15)),\n    \"svm\": lambda: make_pipeline(StandardScaler(), SVC(C=1, gamma=\"scale\")),\n    \"net\": lambda: make_pipeline(StandardScaler(), MLPClassifier(hidden_layer_sizes=(8,), solver=\"lbfgs\", alpha=0.01, random_state=0, max_iter=500)),\n}\n\nBUILDS = []\n\ndef counted(name):                   # the same learner, recording each model it builds\n    def make():\n        BUILDS.append(name)\n        return LEARNERS[name]()\n    return make\n",
     "examples": [
@@ -4186,7 +4186,7 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 6 hidden tests: single cells, two four-learner rows, a two-by-two block, the network's rings cell, and a count of the models built, one per cell. The network cell is checked against a band from 0.95 to 0.99, because a network's score moves in the third place between runtimes. The first run loads scikit-learn."
+    "how": "Check runs 6 hidden tests: single cells, two four-learner rows, a two-by-two block, the network's rings cell, and a count of the models built, one per cell. The network cell is checked against a band from 0.95 to 0.99, because a network's score differs a little between runtimes. The first run loads scikit-learn."
    },
    "hints": [
     {
@@ -4209,7 +4209,8 @@
     "correct": "The table reproduces: 0.5067 for logistic on the rings, 0.4567 for the additive model on the quadrants.",
     "generic": "Some tests failed. The rings row for logistic should be 0.5067.",
     "byKey": {
-     "error": "Your code stopped with an error. Each problem unpacks into four arrays."
+     "error": "Your code stopped with an error. Each problem unpacks into four arrays.",
+     "test-6": "Your table is right, but one model served more than one cell. Call `learners[name]()` once for each cell."
     }
    },
    "explain": {
@@ -4303,7 +4304,8 @@
     "correct": "Ties go to the simpler learner: logistic on the street, additive on the rings.",
     "generic": "Some tests failed. On the quadrants the SVM should win, with test accuracy 0.8567.",
     "byKey": {
-     "error": "Your code stopped with an error. Check the slices `X[:-n_val]` and `X[-n_val:]`."
+     "error": "Your code stopped with an error. Check the slices `X[:-n_val]` and `X[-n_val:]`.",
+     "test-6": "A learner that memorises its rows won your validation. Fit on `X[:-n_val]` only, then score on the last `n_val` rows."
     }
    },
    "explain": {
