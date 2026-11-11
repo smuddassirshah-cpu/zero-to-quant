@@ -541,13 +541,14 @@ SLOW_PLANTED = {(d, 2) for d in ("ci-word-split", "ci-longest-rising", "ci-tape-
                                   "ci-long-stairwell", "ci-nested-crates", "ci-capped-trips")}
 SLOW_PLANTED |= {("ci-best-session", 3), ("ci-word-split", 3), ("ci-longest-rising", 3), ("ci-longest-rising", 4),
                  ("ci-nested-crates", 3), ("ci-paving-ways", 4)}
-SOFT_SLOW = {("ci-word-split", 3)}   # about 4.7 s natively on the 5,000-code test; the Pyodide run is the gate
+SOFT_SLOW = {("ci-word-split", 3)}   # 4.7 s natively on the fix pass machine, 1.9 to 2.3 s on CPython 3.13; the Pyodide run (14.8 s, limit 5 s) is the gate
+SOFT_FLOOR = 1.5   # natively: finished, but at least ten times the model; the page verdict is the --pyodide check above 5 s
 OBVIOUS = {d: 2 for d, _ in SLOW_PLANTED if d not in ("ci-best-session", "ci-paving-ways")}
 OBVIOUS["ci-paving-ways"] = 4
 EXPECT_PLANTED = {"ci-best-session": 4, "ci-shift-picks": 4, "ci-product-stretch": 4, "ci-paving-ways": 5,
                   "ci-word-split": 4, "ci-longest-rising": 5, "ci-fewest-tokens": 5, "ci-nested-crates": 4,
                   "ci-capped-trips": 6}   # planted count after the fix pass (finding: 12 wrong candidates added)
-WANT_DIFF = {"ci-longest-rising": 3, "ci-paving-ways": 4, "ci-capped-trips": 4, "ci-long-stairwell": 5}
+WANT_DIFF = {"ci-longest-rising": 4, "ci-paving-ways": 4, "ci-capped-trips": 4, "ci-long-stairwell": 5, "ci-word-split": 3}
 
 # ======================= running =======================
 
@@ -677,7 +678,7 @@ for did in IDS:
     for k, p in enumerate(pl):
         if (did, k) in SLOW_PLANTED:
             r = run_isolated(p["code"], d["tests"], limit=5)
-            if (did, k) in SOFT_SLOW and r["failed"] is None and r["s"] >= 3.5:
+            if (did, k) in SOFT_SLOW and r["failed"] is None and r["s"] >= SOFT_FLOOR:
                 caught.append(f"slow plant, {r['s']} s natively")
                 continue
             if r["failed"] != "timeout":

@@ -131,9 +131,14 @@
       "call": "drop_point_routes(['.' * 80] * 20 + ['.' * 20 + 'P' + '.' * 59] + ['.' * 80] * 39 + ['.' * 60 + 'P' + '.' * 19] + ['.' * 80] * 19)",
       "expect": "712361278",
       "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.' * 18] * 2 + ['.' * 2 + 'P' + '.' * 15] + ['.' * 18] * 15)",
+      "expect": "930705120",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. Unlike a plain count of routes past shelves, the drop points need a second count, because one route can meet several of them.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. Unlike a plain count of routes past shelves, the drop points need a second count, because one route can meet several of them.",
   "solution": "MOD = 10 ** 9 + 7\n\ndef drop_point_routes(grid):\n    rows, cols = len(grid), len(grid[0])\n    every = [0] * cols   # routes into each cell of the current row\n    clear = [0] * cols   # the routes among them that have met no drop point\n    for i in range(rows):\n        for j in range(cols):\n            ch = grid[i][j]\n            if ch == '#':\n                every[j] = clear[j] = 0\n                continue\n            if i == 0 and j == 0:\n                a = c = 1\n            else:\n                a = every[j] + (every[j - 1] if j else 0)\n                c = clear[j] + (clear[j - 1] if j else 0)\n            every[j] = a % MOD\n            clear[j] = 0 if ch == 'P' else c % MOD\n    return (every[-1] - clear[-1]) % MOD\n",
   "notes": [
     "The routes through a drop point are all the routes less the routes that meet none.",
@@ -152,6 +157,10 @@
     {
       "code": "def drop_point_routes(grid):\n    rows, cols = len(grid), len(grid[0])\n    every = [0] * cols\n    clear = [0] * cols\n    for i in range(rows):\n        for j in range(cols):\n            ch = grid[i][j]\n            if ch == '#':\n                every[j] = clear[j] = 0\n                continue\n            if i == 0 and j == 0:\n                a = c = 1\n            else:\n                a = every[j] + (every[j - 1] if j else 0)\n                c = clear[j] + (clear[j - 1] if j else 0)\n            every[j] = a\n            clear[j] = 0 if ch == 'P' else c\n    return every[-1] - clear[-1]\n",
       "slip": "Leaving out the modulus returns the full count, which on a large floor runs to dozens of digits."
+    },
+    {
+      "code": "MOD = 10 ** 9 + 7\n\ndef drop_point_routes(grid):\n    rows, cols = len(grid), len(grid[0])\n    every = [0] * cols   # routes into each cell of the current row\n    clear = [0] * cols   # the routes among them that have met no drop point\n    for i in range(rows):\n        for j in range(cols):\n            ch = grid[i][j]\n            if ch == '#':\n                every[j] = clear[j] = 0\n                continue\n            if i == 0 and j == 0:\n                a = c = 1\n            else:\n                a = every[j] + (every[j - 1] if j else 0)\n                c = clear[j] + (clear[j - 1] if j else 0)\n            every[j] = a % MOD\n            clear[j] = 0 if ch == 'P' else c % MOD\n    return every[-1] - clear[-1]\n",
+      "slip": "Reducing both counts but not their difference returns a negative number when the first residue is the smaller."
     }
   ]
 }
