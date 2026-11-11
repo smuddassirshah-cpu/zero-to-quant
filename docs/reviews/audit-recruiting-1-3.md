@@ -78,3 +78,37 @@ The brief asks for a view on advice that could hurt a learner. I found none that
 ## Dated content
 
 Every "today" in level 1 is fixed at 2 November 2026 and says so. By the audit date, 10 November 2026, the 8 November deadline in l1 `screens[0]`, l3 `screens[4]` and l5 `screens[1]` has passed. The items stay correct as dated exercises. They will read as stale to a learner, which is an authoring and engine question, raised in `docs/BACKLOG-INBOX.md`.
+
+## Overlap with the earlier review
+
+Read after the ledger and findings were committed (`0b4ba0f4`): `docs/reviews/review-0.7.md`, levels 1 to 3 and its Fix pass. That review listed 41 findings for these levels. I count 16 as conceptual (a false or overstated claim, a pointer to a source that is not there, or a key that marks a defensible answer wrong). The other 25 are the firm-naming policy, consistency of the invented candidate, sentence length, layout and accept lists.
+
+| Conceptual findings, levels 1 to 3 | Count |
+|---|---|
+| Found by this audit only | 19 |
+| Found by the earlier review only | 16 |
+| Found by both | 0 |
+
+How to read the zero. All 16 earlier findings were fixed before this audit, and I confirmed each fix in the content as read: l5 bank summers (penultimate year), l3 Amir's key, l4 order `same`, l3 `screens[6]` tolerance, review-1 spring-week tolerance, l1 developer `why`, l2 table caption, l6 `screens[0]` question, l10 source pointer, l6 section order premise, l9 paper card, l8 hedge-fund row, l9 `screens[4]` wording, l10 `screens[4]` and `[6]`, the 52% exam story, and l14's "pattern holds". So a blind reader of the fixed text could not find them again. The 19 audit findings are all things one read and one fix pass left in place.
+
+Three audit findings touch text the earlier fix pass wrote or left next to a fix:
+
+- Finding 10 (review-1 `items[3]`): the earlier review found the key too wide (it accepted mid-February). Its fix, `target 8.75, tol 0.75`, made it too narrow. The fix-pass note says "March to mid-April" and does not notice that the prose promises all of April.
+- Finding 13 (survivorship direction): earlier fix 29 made the momentum project long-short everywhere. That is what makes "flatters the result" unsafe, and neither the review nor the fix pass looked at the direction.
+- Finding 18 (l11 Contest row): earlier finding 36 was the same row and the same defect class (the cue words did not support the prefilled "Deadline: Yes"). Its fix added "one afternoon" and left the graded "Persuade: Yes" cell unsupported.
+
+Nothing in the earlier review or its fix pass conflicts with a verdict in the ledger.
+
+## Gate results
+
+Run on 10 and 11 November 2026 in the audit worktree; no content file was edited.
+
+- Validator (`node tools/validate.mjs`, from `app/`): 0 errors, 4,137 warnings (repo-wide). `content/manifest.json` was not changed.
+- Voice scan (`VOICE_BASE=app/content/courses/recruiting/ python3 docs/reviews/voice-scan.py 35`): 8,544 sentences scanned, 0 over 35 words, 0 explanations over three sentences.
+- Number scripts: no committed script has both "recruiting" and "numbers" in its name. `docs/reports/review-topup-numbers.py`, which covers recruiting review items, exits 0 ("all 13 keys recomputed twice").
+- Concepts scripts: `recruiting-L1-concepts.py` exits 1 (34 checks pass, 1 fails: finding 10). `recruiting-L2-concepts.py` exits 1 (35 pass, 1 fails: finding 17). `recruiting-L3-concepts.py` exits 0 (49 pass). Both failures are findings and stay failing until the fix lands; each script then exits 0.
+- Playthrough with `--local-cdn`, desktop and `--mobile`, "All passed" on all eighteen runs: lessons l3-the-calendar, l9-sitting-an-assessment and l14-offers-and-deadlines; sets review-1, review-2, review-3, homework-1, homework-2 and homework-3.
+
+Observation outside the concept scope: learner text cites lessons by number about 106 times in these files ("l4", "l2", "l16"), which a learner cannot resolve. The mm-games audit already raised a validator rule for this in `docs/BACKLOG-INBOX.md`; no new bullet is added.
+
+Inbox: two bullets under "Raised later (audit recruiting):" in `docs/BACKLOG-INBOX.md` (an `order` line that may sit in more than one slot; lessons anchored to a literal "today").
