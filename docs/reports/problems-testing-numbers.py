@@ -1,6 +1,6 @@
 """Recompute every number in app/content/courses/testing/problems-<n>.json twice (docs/briefs/chained.md check 1).
 
-Level 4 only so far. Method 1 is exact: sympy, with the likelihood, information or table written out and solved or
+Levels 1 and 4 so far. Method 1 is exact: sympy, with the likelihood, information or table written out and solved or
 summed symbolically. Method 2 takes another route: a score root found numerically, information as the variance of
 the score by summing over the Poisson or exponential law, a Monte Carlo estimate (seeded) where a mean or variance is
 claimed, a brute search over n for a sample size. For each numeric part the script checks: the two methods agree;
@@ -217,6 +217,91 @@ if L4 is not None:
     ok(abs(19 * 0.1966 - 3.735) < 0.0005, 'p-night-admissions: 19 nights give 3.735')
     prints(L4, 'p-night-admissions', 2, ['8.9828', '1.966'])
     ok(abs(S * math.log(3.8 / 3) - 8.9828) < 0.00005, 'p-night-admissions: 38 ln(3.8/3)')
+
+L1 = load(1)
+if L1 is not None:
+    Phi = stats.norm.cdf
+    # ---------- p-cereal-boxes: 36 boxes, mean 743.1 g, sigma 18, label 750 ----------
+    pick(L1, 'p-cereal-boxes', 1, 'label-lower')
+    n, sig, xbar, mu0 = 36, 18, sp.Rational(7431, 10), 750
+    se = sp.Integer(sig) / sp.sqrt(n)
+    sims = rng.normal(mu0, sig, size=(200000, n)).mean(axis=1)                  # route 2: simulated sd of the mean
+    ok(abs(sims.std() - 3) < 0.02, 'p-cereal-boxes: simulated se near 3')
+    num(L1, 'p-cereal-boxes', 2, se, math.sqrt(sig ** 2 / n), {'over-n': sp.Rational(sig, n), 'variance': sp.Rational(sig ** 2, n)})
+    z = (xbar - mu0) / se
+    num(L1, 'p-cereal-boxes', 3, z, stats.norm.ppf(stats.norm(750, sig / math.sqrt(n)).cdf(743.1)),   # route 2: through the mean's own normal law
+        {'sign': -z, 'over-sd': (xbar - mu0) / sig, 'carried': (xbar - mu0) / sp.Rational(1, 2)})
+    p_rounded = 1 - sp.Rational(9893, 10000)                                     # the part gives Phi(2.3) = 0.9893
+    ok(round(Phi(2.3), 4) == 0.9893, 'p-cereal-boxes: Phi(2.3) = 0.9893')
+    num(L1, 'p-cereal-boxes', 4, p_rounded, stats.norm.sf(2.3), {'upper-tail': 1 - p_rounded, 'two-sided': 2 * p_rounded},
+        agree=5e-5, round_tol=0.00006)
+    ok(abs(stats.norm.cdf(-2.3) - 0.0107) < 0.00005 and round(1 / 0.0107) == 93, 'p-cereal-boxes: p = 0.0107, one in 93')
+    pick(L1, 'p-cereal-boxes', 5, 'fail')
+    ok(0.0107 > 0.01 and 0.0107 < 0.05, 'p-cereal-boxes: between the two levels')
+    prints(L1, 'p-cereal-boxes', 4, ['0.0107', '0.9893'])
+
+    # ---------- p-phone-battery: 8 lives, advert 19.5, one-sided t ----------
+    xs = [15, 19, 20, 17, 18, 16, 21, 18]
+    n = len(xs)
+    xbar = sp.Rational(sum(xs), n)
+    num(L1, 'p-phone-battery', 1, xbar, np.mean(xs), {'n-minus-one': sp.Rational(sum(xs), n - 1)}, round_tol=0.001)
+    ss = sum((sp.Integer(x) - xbar) ** 2 for x in xs)
+    ok(ss == 28 and sum(xs) == 144, 'p-phone-battery: total 144 and squares 28')
+    s = sp.sqrt(ss / (n - 1))
+    xbar_slip = sp.Rational(sum(xs), n - 1)
+    num(L1, 'p-phone-battery', 2, s, np.std(xs, ddof=1),
+        {'divide-by-n': sp.sqrt(ss / n), 'variance': s ** 2, 'carried': sp.sqrt(sum((x - xbar_slip) ** 2 for x in xs) / (n - 1))},
+        round_tol=0.001)
+    t = (xbar - sp.Rational(39, 2)) / (s / sp.sqrt(n))
+    t_scipy = stats.ttest_1samp(xs, 19.5).statistic
+    num(L1, 'p-phone-battery', 3, t, t_scipy,
+        {'root-seven': (xbar - sp.Rational(39, 2)) / (s / sp.sqrt(n - 1)), 'over-s': (xbar - sp.Rational(39, 2)) / s, 'sign': -t,
+         'carried': (xbar - sp.Rational(39, 2)) / (sp.sqrt(ss / n) / sp.sqrt(n))}, round_tol=0.0006)
+    ok(abs(-1.5 / 0.707 - (-2.1213)) < 0.001, 'p-phone-battery p3: a 3-place standard error stays in the band')
+    c7, c2, cn = stats.t(7).ppf(0.95), stats.t(7).ppf(0.975), stats.norm.ppf(0.95)
+    ok(round(c7, 3) == 1.895 and round(c2, 3) == 2.365 and round(cn, 3) == 1.645, 'p-phone-battery: cut-offs')
+    ok(float(t) < -c7 and abs(float(t)) < c2, 'p-phone-battery: one-sided rejects, two-sided would not')
+    pick(L1, 'p-phone-battery', 4, 'one-sided-t7')
+    se = s / sp.sqrt(n)
+    mu_star = xbar + sp.Rational(1895, 1000) * se
+    # route 2: bisection for the null value that puts the scipy t statistic at -1.895
+    mu_root = optimize.brentq(lambda m: stats.ttest_1samp(xs, m).statistic + 1.895, 18, 25)
+    num(L1, 'p-phone-battery', 5, mu_star, mu_root,
+        {'normal': xbar + sp.Rational(1645, 1000) * se, 'two-sided': xbar + sp.Rational(2365, 1000) * se,
+         'wrong-side': xbar - sp.Rational(1895, 1000) * se, 'sd-not-se': xbar + sp.Rational(1895, 1000) * s}, round_tol=0.005)
+    ok(round(18 + 1.895 * 0.7071, 2) == 19.34 and abs(19.5 - 19.34 - 0.16) < 1e-9, 'p-phone-battery p5: printed 0.7071 gives 19.34; 0.16 inside')
+
+    # ---------- p-wine-taster: 12 trials, guessing p = 1/2 ----------
+    seqs = list(itertools.product([0, 1], repeat=12))                            # route 2: enumerate all 4096
+    def tail(k):
+        return sp.Rational(sum(math.comb(12, j) for j in range(k, 13)), 4096)
+    def enum_tail(k):
+        return sum(1 for q in seqs if sum(q) >= k) / len(seqs)
+    num(L1, 'p-wine-taster', 1, tail(11), enum_tail(11), {'eleven-only': sp.Rational(12, 4096), 'twelve-only': sp.Rational(1, 4096)},
+        round_tol=0.00005)
+    num(L1, 'p-wine-taster', 2, tail(10), stats.binom(12, 0.5).sf(9), {'exactly-ten': sp.Rational(66, 4096), 'carried': sp.Rational(78, 4096)},
+        round_tol=0.00005)
+    ok(math.comb(12, 10) == 66 and math.comb(12, 9) == 220 and tail(10) == sp.Rational(79, 4096), 'p-wine-taster: binomial counts')
+    num(L1, 'p-wine-taster', 3, tail(9), enum_tail(9), {'exactly-nine': sp.Rational(220, 4096), 'carried': sp.Rational(66 + 220, 4096)},
+        round_tol=0.00005)
+    ok(abs(0.0193 + 0.0537 - 0.0730) < 1e-9, 'p-wine-taster p3: the rounded sum is 0.0730')
+    k_star = min(k for k in range(13) if tail(k) <= sp.Rational(1, 20))
+    k_star2 = int(stats.binom(12, 0.5).isf(0.05)) + 1                             # smallest k with P(W >= k) <= 0.05
+    num(L1, 'p-wine-taster', 4, k_star, k_star2, {'nine': k_star - 1, 'eleven': min(k for k in range(13) if tail(k) <= sp.Rational(1, 100))})
+
+    # ---------- p-pizza-delivery: 16 deliveries, mean 33.5, sigma 8 then s = 9.6 ----------
+    n, xbar, mu0 = 16, sp.Rational(67, 2), 30
+    z = (xbar - mu0) / (sp.Integer(8) / sp.sqrt(n))
+    num(L1, 'p-pizza-delivery', 1, z, (33.5 - 30) / (8 / math.sqrt(16)),
+        {'over-sd': (xbar - mu0) / 8, 'over-n': (xbar - mu0) / sp.Rational(8, 16), 'no-null': xbar / 2}, round_tol=0.005)
+    ok(round(Phi(1.75), 4) == 0.9599, 'p-pizza-delivery: Phi(1.75) = 0.9599')
+    p_r = 1 - sp.Rational(9599, 10000)
+    num(L1, 'p-pizza-delivery', 2, p_r, stats.norm.sf(1.75), {'two-sided': 2 * p_r, 'lower-tail': 1 - p_r}, agree=5e-5, round_tol=0.00006)
+    t = z * sp.Rational(8, 1) / sp.Rational(96, 10)
+    num(L1, 'p-pizza-delivery', 3, t, 3.5 / (9.6 / 4), {'flipped': z * sp.Rational(96, 80), 'over-s': (xbar - mu0) / sp.Rational(96, 10)})
+    c15 = stats.t(15).ppf(0.95)
+    ok(round(c15, 3) == 1.753 and float(t) < c15 and float(z) > 1.645, 'p-pizza-delivery: z rejects, t does not')
+    pick(L1, 'p-pizza-delivery', 4, 't-fails')
 
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
