@@ -2099,3 +2099,7 @@ Raised later (stat-learning L4):
 - [Could] No dendrogram canvas: l16 and homework-4 draw trees to scale as `plane` `segments` (15 segments for six leaves) with leaf labels as untappable points and a `frames` control to switch linkage. It reads well at 440 px, but a `dendrogram` kind taking a scipy linkage matrix would remove the hand layout and allow tapping a branch for a cut.
 - [Could] A table cell's text `answer` cannot be a choice from a fixed list: l19's "does scale matter" column takes typed yes or no. A per-cell `options` (a small select) would make yes/no and short-label cells harder to mistype.
 - [Could] `bars` category labels: five learner names fit at 440 px only as one short word each ("logistic", "k-NN", "SVM", "network", "additive"); two-word names would collide. Wrapping category labels onto two lines would allow "RBF SVM" and "15-NN".
+
+Raised later (drills ci 6):
+- [Could] Pattern vocabulary (`PATTERNS` in `js/screens/drill-lib.js`) has one `dp` slug, so packs 6 (`dp-1d`) and 7 (`dp-2d`) cannot be told apart in the `#drill` pattern filter or a session draw. Pack 6 uses `"pattern": "dp"` with the tag `dp-1d`; adding `dp-1d` and `dp-2d` slugs (or filtering on tags) would let the list split them.
+- [Could] Validator: the "pace over 30 minutes" warning fires on every difficulty 4 and 5 `ci-` drill, whose brief sets pace up to 2,700 s. A drill-specific ceiling (2,700 s) would leave the warning for real slips only.
