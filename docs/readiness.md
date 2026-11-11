@@ -139,8 +139,8 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
 | Required | 453 | 0 | 453 | 263 | 951 |
-| Recommended | 194 | 0 | 194 | 102 | 487 |
-| Learn header (required plus recommended) | 647 | 0 | 647 | 365 | 1438 |
+| Recommended | 194 | 0 | 194 | 104 | 485 |
+| Learn header (required plus recommended) | 647 | 0 | 647 | 367 | 1436 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 556 | 0 | 556 | 328 | 1325 |
+| Required | 556 | 0 | 556 | 330 | 1323 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 503 | 2257 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 505 | 2255 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -533,9 +533,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 580 | 0 | 580 | 336 | 1336 |
+| Required | 580 | 0 | 580 | 338 | 1334 |
 | Recommended | 234 | 0 | 234 | 121 | 503 |
-| Learn header (required plus recommended) | 814 | 0 | 814 | 457 | 1839 |
+| Learn header (required plus recommended) | 814 | 0 | 814 | 459 | 1837 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -660,9 +660,9 @@ Same learner as Strats, plus the pricing mathematics.
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 657 | 0 | 657 | 377 | 1483 |
+| Required | 657 | 0 | 657 | 379 | 1481 |
 | Recommended | 239 | 0 | 239 | 125 | 445 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 502 | 1928 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 504 | 1926 |
 <!-- /generated -->
 
 **Dependency conflicts**
