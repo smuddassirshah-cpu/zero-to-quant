@@ -72,4 +72,16 @@ expect('e-odds-update key', odds / (1 + odds), 0.2146, 5e-5)
 
 # Bands proposed for two Fluency families: see shares.py for the shares
 expect('chi-squared 5% cut-off, 1 df', stats.chi2.ppf(0.95, 1), 3.841, 5e-4)
+
+# Finding on p-spam-filter part 4: a refit with a smaller C, the same centre line and a wider street
+w2 = np.array([0.9, -1.2])
+expect('refit norm', float(np.linalg.norm(w2)), 1.5)
+expect('refit margin', 1 / float(np.linalg.norm(w2)), 0.667, 5e-4)
+expect('refit street width', 2 / float(np.linalg.norm(w2)), 1.333, 5e-4)
+expect('refit is the old weights times 0.6', float(np.abs(w2 - 0.6 * np.array([1.5, -2])).max()) + abs(0.3 - 0.6 * 0.5), 0)
+expect('margin grows by the factor', (1 / 1.5) / 0.4, 5 / 3)
+
+# Finding on p-disk-failures part 5, turned round: the smallest n with efficiency (n - 2)/n at least 0.99
+expect('smallest n with efficiency 0.99', next(k for k in range(3, 1000) if (k - 2) / k >= 0.99 - 1e-12), 200)
+expect('by algebra, 2 / 0.01', 2 / 0.01, 200)
 print(n_ok, 'checks passed')

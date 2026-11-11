@@ -159,7 +159,7 @@ grad = (L(0.5 + 1e-6) - L(0.5 - 1e-6)) / 2e-6
 check(P[2]['widget'], 'unit 3', round(grad, 5), {'slope-for-v': -9, 'dropped-x': -6, 'sign': 48, 'carried': -16})
 check(P[3]['widget'], 'unit 4', 0.5 - 0.01 * grad, {'uphill': 0.5 + 0.01 * grad, 'no-rate': 0.5 - grad, 'carried': 0.5 + 0.09}, )
 check(P[4]['widget'], 'unit 5', optimize.brentq(lambda t: 0.98 * t - 1, 0, 5), {'old-knot': 2, 'sign': -1 / 0.98, 'carried': 1 / 0.59})
-ok(L(0.98) > L(0.5), f'unit 4 (claim, expected to FAIL the explanation, see the finding): the step raises the loss from {L(0.5)} to {L(0.98):.4f}')
+ok(L(0.98) > L(0.5), f'unit 4: the step to 0.98 raises the loss (4.5 to 10.95), which is what finding 10 reports; if this fails the content was fixed')
 
 P = S['p-renewals']['parts']
 check(P[0]['widget'], 'renewals 1', np.zeros((16, 6)).size + 16 + 16 + 1, {'no-biases': 112, 'units': 23})
