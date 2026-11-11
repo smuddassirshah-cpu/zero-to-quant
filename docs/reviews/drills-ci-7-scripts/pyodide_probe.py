@@ -1,4 +1,4 @@
-"""Put candidates from wrong.py into a COPY of app/ as `planted`, to run them in
+"""Put candidates from wrong.py, wrong2.py and wrong3.py into a COPY of app/ as `planted`, to run them in
 Chromium and Pyodide through planted-check.
 
 usage: pyodide_probe.py <copy of app> [--tests] <label> [<label> ...]
@@ -17,9 +17,13 @@ app = os.path.abspath(sys.argv[1])
 assert app != os.path.abspath(os.path.join(here, '..', '..', '..', 'app')), 'use a copy'
 with_tests = '--tests' in sys.argv
 labels = [a for a in sys.argv[2:] if a != '--tests']
-w = {}
-exec(open(os.path.join(here, 'wrong.py')).read(), w)
-extra = json.load(open(os.path.join(here, 'extra_tests.json')))
+w = {'CANDIDATES': {}}
+for name in ('wrong.py', 'wrong2.py', 'wrong3.py'):
+    if os.path.exists(os.path.join(here, name)):
+        e = {}
+        exec(open(os.path.join(here, name)).read(), e)
+        w['CANDIDATES'].update(e['CANDIDATES'])
+extra = json.load(open(os.path.join(here, 'extra_tests.json'))) if os.path.exists(os.path.join(here, 'extra_tests.json')) else {}
 todo = {}
 for label in labels:
     did, code, _ = w['CANDIDATES'][label]
