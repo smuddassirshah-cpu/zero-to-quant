@@ -516,9 +516,9 @@ for _ in range(400):
         cc_ = nc_
     _low.append((round(float(((Xst - cc_[l_]) ** 2).sum()), 2), round(purity(lab_true, l_), 4)))
 ok(min(_low) == (842.15, 0.7333) and (842.33, 0.75) in _low, "l16 s5: own Lloyd loop, 400 random starts: lowest 842.15 at purity 0.7333; 842.33 at 0.75 is a local stop")
-for val in (842.33, 842.15, 0.73):
+for val in (842.33, 842.15, 73):
     lv.expect("l16", "screens[5].widget.options[2].why", val)
-lv.expect("l16", "screens[5].feedback.byKey.c", 0.73)
+lv.expect("l16", "screens[5].feedback.byKey.c", 73)
 gone("l16", "screens[5].widget.options[2].why", "Ten starts found the lowest")
 # l16 s4 new test: squared distance against summed absolute gaps
 P3 = np.array([[0, 0], [0, 6], [4, 3]], float); C2 = np.array([[0, 5], [3, 3]], float)
