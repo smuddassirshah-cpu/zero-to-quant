@@ -76,7 +76,8 @@ check(not any(run(W['starter'], tests)), "starter fails every test")
 v = [F(10), F(12), F(14), F(30), F(32), F(40)]
 ok2 = (sum(v[:3]) / 3, sum(v[3:]) / 3) == (12, 34) and sum((x - 12) ** 2 for x in v[:3]) + sum((x - 34) ** 2 for x in v[3:]) == 64
 check(ok2, "six shares from 10, 12: centres 12, 34, inertia 64 (fractions)")
-check(sum(v[1:]) / 5 == F(128, 5) and sum((x - F(128, 5)) ** 2 for x in v[1:]) == F(5872, 10), "one assignment: centre 25.6, inertia 587.2 (fractions)")
+check(sum(v[1:]) / 5 == F(128, 5) and sum((x - F(128, 5)) ** 2 for x in v[1:]) == F(5872, 10), "one round (an assignment and its update): centre 25.6, inertia 587.2 (fractions)")
+check("each round is one assignment and the update that follows it" in ITEM['prose'] and "`max_iter` assignments" not in ITEM['prose'], "the prose defines a round, so max_iter=1 includes the update")
 check((v[1] + v[2]) / 2 == 13 and 0 + 1 + 1 + sum((x - 34) ** 2 for x in v[3:]) == 58, "bad start: 10, 13, 34, inertia 58 (fractions)")
 # empty cluster by hand: E = 0, 1, 2, 10 from 0, 1, 100
 E = [0.0, 1.0, 2.0, 10.0]; C = [0.0, 1.0, 100.0]; prev = None
@@ -109,6 +110,7 @@ PLANTED = {
     "assigns by absolute (Manhattan) distance": BASE.replace("d = ((X[:, None, :] - C[None, :, :]) ** 2).sum(axis=2)", "d = np.abs(X[:, None, :] - C[None, :, :]).sum(axis=2)"),
     "returns the centres from before the last update": BASE.replace("        for j in range(k):", "        keep = C.copy()\n        for j in range(k):").replace("    inertia = float", "    C = keep if max_iter == 1 else C\n    inertia = float"),
 }
+PLANTED["stops straight after the max_iter-th assignment (the reading the fix pass ruled out)"] = BASE.replace("        for j in range(k):", "        if _ == max_iter - 1:\n            break\n        for j in range(k):")
 for slip, src in PLANTED.items():
     check(src != BASE, f"planted '{slip}' differs from the solution")
     res = run(src, tests)

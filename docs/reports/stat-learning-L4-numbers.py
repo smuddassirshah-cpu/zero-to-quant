@@ -484,5 +484,161 @@ hand = [float(st.dual_coef_[0] @ np.exp(-1.0 * ((st.support_vectors_ - p) ** 2).
 ok(np.allclose(hand, st.decision_function([[0, 0], [1.5, 0], [0.3, -2.1]])) and np.round(hand, 6).tolist() == [2.127469, -0.082931, -1.539442], "homework RBF by hand equals decision_function")
 ok(close(2 * math.exp(-1) - 1, -0.264241, 1e-6), "homework hand kernel case")
 
+# ================================================================ fix pass (docs/reviews/review-stat-learning-4.md)
+# Every value the fix pass wrote, by two routes, tied to its text; each check fails if its fix is reverted.
+gone = lambda ref, path, phrase: ok(phrase not in lv.text(ref, path), f"fix pass: {ref} {path} no longer says {phrase!r}")
+
+# l15: the vertical street rests on (2, 0), (3, 3), (3, 5)
+X6 = np.array([[1, 1], [0, 1], [2, 0], [3, 3], [4, 3], [3, 5]], float); s6 = np.array([-1, -1, -1, 1, 1, 1])
+on = np.flatnonzero(np.abs(s6 * (X6 @ [2, 0] - 5) - 1) < 1e-9)
+ok(X6[on].tolist() == [[2, 0], [3, 3], [3, 5]] and [p for p, s in zip(X6.tolist(), s6) if (p[0] == 2 and s < 0) or (p[0] == 3 and s > 0)] == X6[on].tolist(), "l15 s3: x1 = 2.5 scaled rests on (2, 0), (3, 3), (3, 5)")
+lv.expect("l15", "screens[3].explain.text", "$(2, 0)$, $(3, 3)$ and $(3, 5)$")
+lv.expect("l15", "screens[4].explain.text", "ISLP's $C$ is a budget")
+gone("l15", "screens[1].explain.text", "anywhere outside the street")
+
+# l16 s1 'half', s2 'unsq'
+ok([(10 + 12) / 2, (25.6 + 34) / 2] == [11.0, 29.8] and F(128, 5) / 2 + 17 == F(298, 10), "l16 s1 halfway from (10, 25.6) to (12, 34) is 11 and 29.8")
+lv.expect("l16", "screens[1].widget.wrong", "11, 29.8")
+plain = float(np.abs(v - np.array([12, 12, 12, 34, 34, 34])).sum())
+ok(plain == 16 == 2 + 0 + 2 + 4 + 2 + 6, "l16 s2 plain distances add to 16")
+lv.expect("l16", "screens[2].widget.wrong[0].value", 16)
+# l16 s5: more starts lower the raw inertia from 842.33 to 842.15, purity 0.7333 (scikit-learn; then my own Lloyd loop)
+km10 = KMeans(3, n_init=10, random_state=0).fit(Xst); km200 = KMeans(3, n_init=200, random_state=0).fit(Xst)
+ok(round(km10.inertia_, 2) == 842.33 and round(km200.inertia_, 2) == 842.15 and close(purity(lab_true, km200.labels_), 44 / 60), "l16 s5: 10 starts 842.33, 200 starts 842.15 with purity 0.7333")
+_rng = np.random.default_rng(123); _low = []
+for _ in range(400):
+    cc_ = Xst[_rng.choice(60, 3, replace=False)].astype(float)
+    for _i in range(200):
+        l_ = ((Xst[:, None] - cc_[None]) ** 2).sum(2).argmin(1)
+        nc_ = np.array([Xst[l_ == j].mean(0) if (l_ == j).any() else cc_[j] for j in range(3)])
+        if np.allclose(nc_, cc_):
+            break
+        cc_ = nc_
+    _low.append((round(float(((Xst - cc_[l_]) ** 2).sum()), 2), round(purity(lab_true, l_), 4)))
+ok(min(_low) == (842.15, 0.7333) and (842.33, 0.75) in _low, "l16 s5: own Lloyd loop, 400 random starts: lowest 842.15 at purity 0.7333; 842.33 at 0.75 is a local stop")
+for val in (842.33, 842.15, 0.73):
+    lv.expect("l16", "screens[5].widget.options[2].why", val)
+lv.expect("l16", "screens[5].feedback.byKey.c", 0.73)
+gone("l16", "screens[5].widget.options[2].why", "Ten starts found the lowest")
+# l16 s4 new test: squared distance against summed absolute gaps
+P3 = np.array([[0, 0], [0, 6], [4, 3]], float); C2 = np.array([[0, 5], [3, 3]], float)
+eu = ((P3[:, None] - C2[None]) ** 2).sum(2).argmin(1).tolist(); mn = np.abs(P3[:, None] - C2[None]).sum(2).argmin(1).tolist()
+ok(eu == [1, 0, 1] and mn == [0, 0, 1] and [25 > 18, 1 < 18, 20 > 1] == [True] * 3 and [5 < 6], "l16 s4 new test: Euclid [1, 0, 1], Manhattan [0, 0, 1]")
+lv.expect("l16", "screens[4].widget.tests[9].expect", "[1, 0, 1]")
+import json  # noqa: E402
+_CONTENT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'stat-learning')
+ntests = lambda name, i: len(json.load(open(os.path.join(_CONTENT, name + '.json')))['screens'][i]['widget']['tests'])
+ok(ntests('l16-groups-nobody-labelled', 4) == 10 and ntests('l17-a-small-network', 8) == 7 and ntests('l19-which-learner', 7) == 6 and ntests('l19-which-learner', 8) == 6,
+   "test counts match each `how`: l16 s4 10, l17 s8 7, l19 s7 6, l19 s8 6")
+lv.expect("l16", "screens[4].widget.how", 10)
+
+# l17 q2 wrong[]: the wrong order gives -1; the dropped term gives 6
+W1_ = np.array([[1, 2], [0, 1]]); w2_ = np.array([3, -1])
+ok((W1_ @ w2_).tolist() == [1, -1] and 0 * 3 + 1 * (-1) == -1 and 3 * 2 == 6 and (w2_ @ W1_).tolist() == [3, 5], "l17 q2: W1 w2 = (1, -1); 3 x 2 = 6; w2 W1 = (3, 5)")
+lv.expect("l17", "quiz[1].widget.wrong[1].value", -1)
+lv.expect("l17", "quiz[1].widget.wrong[2].value", 6)
+# l17 s9: CPython against the Pyodide table, in rows of 300; the best Pyodide score is two rows above the base rate
+moves = []
+for s, (ptr, pte) in PYO_N.items():
+    m = MLPClassifier(hidden_layer_sizes=(8,), solver="lbfgs", alpha=0.01, random_state=s, max_iter=500).fit(Xn, yn)
+    moves.append(abs(round(m.score(Xn2, yn2) * 300) - round(pte * 300)))
+ok(moves == [3, 4, 0] and max(moves) == 4, f"l17 s9: test scores move by up to four rows in 300 between runtimes ({moves})")
+ok(round(0.5567 * 300) - round(0.55 * 300) == 2 and int(yn2.sum()) == 165 and max(pte for _, pte in PYO_N.values()) == 0.5567, "l17 s9: best test score is 167 rows, two above the base rate's 165")
+lv.expect("l17", "screens[9].explain.text", "four rows in 300")
+lv.expect("l17", "screens[9].widget.options[0].text", "two rows in 300")
+gone("l17", "screens[9].explain.text", "third place")
+# l17 s0: logistic regression fitted to the four corners scores 0.5 (weights 0 by symmetry), so 0.75 is a ceiling, not its score
+X4 = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]); y4 = np.array([0, 1, 1, 0]); lr4 = LogisticRegression().fit(X4, y4)
+best4 = max(np.mean(((X4 @ [a, b] + c) > 0) == y4) for a in (-1, 0, 1) for b in (-1, 0, 1) for c in (-1.5, -0.5, 0.5, 1.5))
+ok(np.allclose(lr4.coef_, 0) and lr4.score(X4, y4) == 0.5 and best4 == 0.75, "l17 s0: logistic on the corners scores 0.5; the best line scores 0.75")
+gone("l17", "screens[0].explain.text", "stuck at the same")
+ok(close(Xr.std(0)[0], Xr.std(0)[1], 0.05), "l17 s8: the two ring features are on one scale (sds 1.20 and 1.17)")
+# l17 s8 new tests: seed 1 at 3 units reaches the band, seed 0 does not; seed 5 stays under 0.85, the default alpha does not
+mlp3 = lambda s, a=0.01: MLPClassifier(hidden_layer_sizes=(3,), solver="lbfgs", alpha=a, random_state=s, max_iter=500).fit(Xr, yr).score(Xr2, yr2)
+ok(0.93 <= mlp3(1) < 0.99 and not 0.93 <= mlp3(0) < 0.99, "l17 s8 test 6: 3 units, seed 1 in [0.93, 0.99); seed 0 (seed ignored) is not")
+ok(mlp3(5) < 0.85 and not mlp3(5, 1e-4) < 0.85, "l17 s8 test 7: 3 units, seed 5 under 0.85; with the default alpha it is not")
+lv.expect("l17", "screens[8].widget.how", 7)
+ok(3 + 1 == 4 == npar([3, 1]), "l17 s4: a layer from 3 units to 1 has 4 parameters")
+
+# l18 s3 'interior' 3; q3 ridge on 40 knots
+ok(5 - 2 == 3 and 3 + 4 == 7, "l18 s3: 3 interior knots, 7 basis functions")
+lv.expect("l18", "screens[3].widget.wrong[3].value", 3)
+gridg = np.linspace(0.5, 49.5, 491)[:, None]
+u40 = make_pipeline(SplineTransformer(n_knots=40, degree=3), LinearRegression()).fit(X1, y)
+rough = lambda m: float((np.diff(m.predict(gridg), 2) ** 2).sum())
+big = make_pipeline(SplineTransformer(n_knots=40, degree=3), Ridge(alpha=1e6)).fit(X1, y)
+small = make_pipeline(SplineTransformer(n_knots=40, degree=3), Ridge(alpha=1e-3)).fit(X1, y)
+ok(rough(mr) < rough(u40) and mr.predict(gridg).std() < 0.85 * u40.predict(gridg).std(), "l18 q3: a ridge penalty of 1 wiggles less (second differences) and is flatter (sd of the fit 12.9 against 15.8)")
+ok(np.allclose(big.predict(gridg), y.mean(), atol=0.01) and np.ptp(big.predict(gridg)) < 0.01, "l18 q3: a huge ridge penalty gives a flat line at the mean, not a line in x")
+ok(np.abs(small.predict(gridg) - u40.predict(gridg)).max() < 0.1, "l18 q3: a small penalty (0.001) moves the curve by under 0.1 bp")
+ok(close(round(mr.predict([[1]])[0], 1), 12.3) and close(round(m5.predict([[1]])[0], 1), 9.8) and close(round(mr.predict([[40]])[0], 1), 61.0) and close(round(m5.predict([[40]])[0], 1), 62.5), "l18 q3: flattened ends, 12.3 against 9.8 at 1% and 61.0 against 62.5 at 40%")
+gone("l18", "quiz[2].explain.text", "too smooth")
+lv.expect("l18", "quiz[1].explain.text", "natural spline")
+
+# l19 s3: 40 further seed pairs of the wide problem (training seed 100 + 2i, test seed 101 + 2i)
+WIDE = np.array([[LEARN[n]().fit(*make_wide(60, 100 + 2 * i)).score(*make_wide(300, 101 + 2 * i)) for n in LEARN] for i in range(40)])
+wm = dict(zip(LEARN, WIDE.mean(0)))
+last = int((WIDE[:, 1] < np.delete(WIDE, 1, 1).min(1)).sum())
+ok(close(round(wm["knn"], 2), 0.86) and last == 35 and int((WIDE[:, 1] < WIDE[:, 0]).sum()) == 40, f"l19 s3: nearest neighbours averages 0.86 and is strictly last in 35 of 40 ({wm['knn']:.4f}, {last})")
+ok(all(0.90 < wm[n] < 0.93 for n in LEARN if n != "knn") and wm["additive"] > wm["logistic"], "l19 s3: the other four average between 0.90 and 0.93, and logistic is not the best of them on average")
+# second route for the same averages: predictions counted by hand on a fresh loop for the two deterministic ends
+_k = np.mean([acc_by_hand(LEARN["knn"]().fit(*make_wide(60, 100 + 2 * i)), *make_wide(300, 101 + 2 * i)) for i in range(40)])
+_l = np.mean([acc_by_hand(LEARN["logistic"]().fit(*make_wide(60, 100 + 2 * i)), *make_wide(300, 101 + 2 * i)) for i in range(40)])
+ok(close(_k, wm["knn"], 1e-12) and close(_l, wm["logistic"], 1e-12) and close(round(_l, 2), 0.92), "l19 s3: the averages again from predictions counted by hand")
+for val in (0.86, 35, 0.90, 0.93):
+    lv.expect("l19", "screens[3].explain.text", val)
+gone("l19", "screens[3].explain.text", "favour the simplest")
+gone("l19", "summary.ideas[1]", "favour the simplest")
+ok(TABLE["wide"][3] < TABLE["wide"][0] and TABLE["wide"][3] < TABLE["wide"][2], "l19 s3: the network's 0.9067 is behind logistic regression and the SVM")
+gone("l19", "screens[3].widget.options[2].why", "both linear-boundary")
+gone("l19", "screens[5].prose", "Each score is 1 minus a test error")
+# l19 s7: fit() starts again, so a reused object scores the same; a kept reference is overwritten; the new test counts builds
+same = True
+for n in ("logistic", "knn", "svm", "additive"):
+    one = LEARN[n]()
+    for (Xa_, ya_), (Xb_, yb_) in PROB.values():
+        same = same and one.fit(Xa_, ya_).score(Xb_, yb_) == LEARN[n]().fit(Xa_, ya_).score(Xb_, yb_)
+one = LEARN["logistic"](); kept = {p: one.fit(*PROB[p][0]) for p in ("street", "rings")}
+ok(same and kept["street"] is kept["rings"] and kept["street"].score(*PROB["street"][1]) < 0.5 < LEARN["logistic"]().fit(*PROB["street"][0]).score(*PROB["street"][1]),
+   "l19 s7: a reused object scores the same in every cell, and a kept fitted model is overwritten by the next fit")
+gone("l19", "screens[7].explain.text", "carry state")
+built = []
+
+
+def counted():
+    built.append(1)
+    return LEARN["logistic"]()
+
+
+for p in ("street", "rings"):
+    counted().fit(*PROB[p][0])
+ok(len(built) == 2 == 2 * 1, "l19 s7 new test: one build per cell, 2 cells")
+lv.expect("l19", "screens[7].widget.tests[5].expect", "2")
+lv.expect("l19", "screens[7].widget.how", 6)
+# l19 s8 new test: a learner that memorises; honest validation keeps logistic, validating on seen rows picks knn1
+(Xa_, ya_), (Xb_, yb_) = PROB["street"]
+knn1 = lambda: make_pipeline(StandardScaler(), KNeighborsClassifier(1))
+hon = (LEARN["logistic"]().fit(Xa_[:-100], ya_[:-100]).score(Xa_[-100:], ya_[-100:]), knn1().fit(Xa_[:-100], ya_[:-100]).score(Xa_[-100:], ya_[-100:]))
+leak = (LEARN["logistic"]().fit(Xa_, ya_).score(Xa_[-100:], ya_[-100:]), knn1().fit(Xa_, ya_).score(Xa_[-100:], ya_[-100:]))
+ok(close(hon[0], 0.97) and close(hon[1], 0.96) and close(leak[1], 1.0) and leak[1] > leak[0] and close(round(knn1().fit(Xa_, ya_).score(Xb_, yb_), 4), 0.93)
+   and close(round(acc_by_hand(LEARN["logistic"]().fit(Xa_, ya_), Xb_, yb_), 4), 0.9633), "l19 s8 new test: honest ('logistic', 0.9633); on seen rows 1-NN scores 1.0 and the answer becomes ('knn1', 0.93)")
+lv.expect("l19", "screens[8].widget.tests[5].expect", "['logistic', 0.9633]")
+lv.expect("l19", "screens[8].widget.how", 6)
+
+# review r-few-rows: 25 features, 10 knots each
+ok(SplineTransformer(n_knots=10).fit_transform(np.random.default_rng(0).normal(size=(80, 25))).shape == (80, 300) and 25 * (10 + 3 - 1) == 300, "review r-few-rows: 300 spline columns")
+lv.expect("review", "items[8].widget.options[3].why", 300)
+# homework h-pick-learner (new item, index 9)
+se_h = math.sqrt(0.56 * 0.44 / 400)
+val_h = [0.61, 0.61, 0.60, 0.59, 0.58]; test_h = [0.59, 0.60, 0.62, 0.58, 0.61]
+pick = val_h.index(max(val_h))
+ok(pick == 0 and close(round((test_h[pick] - 0.56) / se_h, 2), 1.21) and close(float(F(3, 100) ** 2 / (F(56, 100) * F(44, 100) / 400)) ** 0.5, 0.03 / se_h, 1e-12) and close(round(se_h, 4), 0.0248), "homework h-pick-learner: t 1.21 (se 0.0248)")
+ok([round((max(test_h) - 0.56) / se_h, 2), round((test_h[1] - 0.56) / se_h, 2), round((0.59 - 0.5) / math.sqrt(0.25 / 400), 2), round((0.61 - 0.56) / se_h, 2)] == [2.42, 1.61, 3.6, 2.01], "homework h-pick-learner slips 2.42, 1.61, 3.6, 2.01")
+lv.expect("homework", "items[9].widget.answer", 1.21)
+for j, val in enumerate([2.42, 1.61, 3.6, 2.01]):
+    lv.expect("homework", f"items[9].widget.wrong[{j}].value", val)
+lv.expect("homework", "items[9].explain.text", 0.0248)
+lv.expect("homework", "items[6].prose", "each round is one assignment and the update that follows it")
+
 lv.check_wrongs()
 lv.report()
