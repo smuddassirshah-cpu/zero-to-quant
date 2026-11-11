@@ -47,6 +47,12 @@ const ROWS = [
   ['cinema 1 with form simplified', { answer: 'x^2+11x+24', form: 'simplified' }, 'x^2+8x+3x+24', false, 'form'],
   ['cinema 1 with form simplified', { answer: 'x^2+11x+24', form: 'simplified' }, '(x+3)(x+8)', true, null],
   ['cinema 1 with form simplified', { answer: 'x^2+11x+24', form: 'simplified' }, 'x^2+11x+24', true, null],
+  // finding 8: which shape checks fail on a letter and "=" in front
+  ['y = in front, completed-square', { answer: '-0.2(x-10)^2+20', form: 'completed-square' }, 'y=-0.2(x-10)^2+20', false, 'form'],
+  ['A = in front, factorised', { answer: '(x+4)(x+5)', form: 'factorised' }, 'A=(x+4)(x+5)', false, 'form'],
+  ['A = in front, factorised-fully', { answer: '3(x+4)^2', form: 'factorised-fully' }, 'A=3(x+4)^2', false, 'form'],
+  ['S = in front, expanded', { answer: 'x^2+11x+24', form: 'expanded' }, 'S=x^2+11x+24', false, 'form'],
+  ['y = in front, simplified', { answer: '2.5x-0.5x^2', form: 'simplified' }, 'y=2.5x-0.5x^2', true, null],
   // finding on salt part 1: a wrong[] entry catches the two-letter right-hand side and gives it its own line
   ['salt 1 with wrong both-letters', SALT, '0.15x+0.4y=0.25(x+y)', false, 'both-letters'],
   ['salt 1 with wrong both-letters', SALT, '15x+40y=25(x+y)', false, 'both-letters'],
