@@ -124,9 +124,14 @@
       "call": "smooth_orderings([3, 1, 4, 1, 5, 9, 2, 6, 5, 3], 3)",
       "expect": "1572",
       "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([40, 10, 90, 20, 110, 60, 30, 100, 70, 50, 80], 90)",
+      "expect": "32659200",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method builds every distinct sequence one at a time, and with 11 different sizes and a loose `d` there are $39{,}916{,}800$ of them, 11 factorial, so it runs out of time. The step to the target is to count by the set of orders sent and the last one sent, so sequences that agree on those are added up once. Unlike counting the orders of a multiset, the rule on neighbours ties each step to the one before, which is why the last order is part of the state.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method builds every distinct sequence one at a time, and with 11 different sizes and a loose `d` there are $39{,}916{,}800$ of them, 11 factorial, so it runs out of time. The step to the target is to count by the set of orders sent and the last one sent, so sequences that agree on those are added up once. Unlike counting the orders of a multiset, the rule on neighbours ties each step to the one before, which is why the last order is part of the state.",
   "solution": "def smooth_orderings(sizes, d):\n    vals = sorted(sizes)\n    n = len(vals)\n    near = [[j for j in range(n) if abs(vals[i] - vals[j]) <= d] for i in range(n)]\n    ways = [[0] * n for _ in range(1 << n)]       # ways[sent][last]\n    for i in range(n):\n        if i == 0 or vals[i] != vals[i - 1]:      # start only from the first copy of a size\n            ways[1 << i][i] = 1\n    for sent in range(1 << n):\n        row = ways[sent]\n        for last in range(n):\n            w = row[last]\n            if not w:\n                continue\n            for j in near[last]:\n                if sent >> j & 1:\n                    continue\n                if j and vals[j] == vals[j - 1] and not sent >> (j - 1) & 1:\n                    continue                      # an equal size must wait for its earlier copy\n                ways[sent | 1 << j][j] += w\n    return sum(ways[-1])\n",
   "notes": [
     "The state is the set of orders sent so far and the last one sent, and the count for a state adds up every way to reach it.",
@@ -149,6 +154,10 @@
     {
       "code": "from collections import Counter\n\ndef smooth_orderings(sizes, d):\n    left = Counter(sizes)\n    kinds = sorted(left)\n\n    def walk(last, placed):\n        if placed == len(sizes):\n            return 1\n        total = 0\n        for v in kinds:\n            if left[v] and (last is None or abs(v - last) <= d):\n                left[v] -= 1\n                total += walk(v, placed + 1)\n                left[v] += 1\n        return total\n\n    return walk(None, 0)\n",
       "slip": "Building each distinct sequence one at a time is right but takes time in proportion to the number of sequences."
+    },
+    {
+      "code": "from collections import Counter\nfrom math import factorial\n\n\ndef smooth_orderings(sizes, d):\n    left = Counter(sizes)\n    kinds = sorted(left)\n    if kinds[-1] - kinds[0] <= d:\n        total = factorial(len(sizes))\n        for c in left.values():\n            total //= factorial(c)\n        return total\n\n    def walk(last, placed):\n        if placed == len(sizes):\n            return 1\n        total = 0\n        for v in kinds:\n            if left[v] and (last is None or abs(v - last) <= d):\n                left[v] -= 1\n                total += walk(v, placed + 1)\n                left[v] += 1\n        return total\n\n    return walk(None, 0)\n",
+      "slip": "Answering with a formula when every pair may sit together and walking every sequence otherwise runs out of time as soon as the gap rules out a few pairs of a long list."
     }
   ]
 }

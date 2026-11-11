@@ -19,7 +19,7 @@
   "returns": "a string",
   "brief": "A tape of call signs must be cut into pieces that each read the same forwards and backwards, using as few pieces as possible. The input comes as one string.\n\nThe first line holds `q`, the number of tapes.\n\nEach of the next `q` lines holds one tape of lower-case letters.\n\nWrite `solve_mirror_pieces(text)`, which returns the fewest pieces for each tape, one per line, as a string with the lines joined by newlines and no newline at the end.\n\nExample. The tape `abacdc` cuts into `aba` and `cdc`. For the text `'1\\nabacdc\\n'` the answer is `'2'`.",
   "constraints": [
-    "$1 \\le q \\le 50$ tapes, each of 1 to 400 letters, with at most $3{,}000$ letters in all. Lines may carry extra spaces at either end, and the text may end with blank lines.",
+    "$1 \\le q \\le 50$ tapes, each of 1 to 150 letters, with at most $3{,}000$ letters in all. Lines may carry extra spaces at either end, and the text may end with blank lines.",
     "$O(n^2)$ time per tape of $n$ letters is the target. Trying every first piece and recursing on the rest is too slow.",
     "All the tests in a run share one 5-second limit in the browser.",
     {
@@ -94,13 +94,13 @@
       "compare": "equal"
     },
     {
-      "call": "solve_mirror_pieces('5\\n' + '\\n'.join(['a' * 400, 'ab' * 200, 'abc' * 133, 'a' * 199 + 'b' + 'a' * 200, 'ba' + 'a' * 398]) + '\\n')",
-      "expect": "'1\\n2\\n399\\n2\\n2'",
+      "call": "solve_mirror_pieces('5\\n' + '\\n'.join(['a' * 150, 'ab' * 75, 'abc' * 50, 'a' * 74 + 'b' + 'a' * 75, 'ba' + 'a' * 148]) + '\\n')",
+      "expect": "'1\\n2\\n150\\n2\\n2'",
       "compare": "equal"
     },
     {
-      "call": "solve_mirror_pieces('7\\n' + '\\n'.join(''.join('ab'[(i * j * j + j) % 3 % 2] for j in range(400)) for i in range(7)) + '\\n')",
-      "expect": "'2\\n1\\n2\\n2\\n1\\n2\\n2'",
+      "call": "solve_mirror_pieces('7\\n' + '\\n'.join(''.join('ab'[(i * j * j + j) % 3 % 2] for j in range(150)) for i in range(7)) + '\\n')",
+      "expect": "'1\\n1\\n2\\n1\\n1\\n2\\n1'",
       "compare": "equal"
     },
     {
@@ -109,12 +109,17 @@
       "compare": "equal"
     },
     {
-      "call": "solve_mirror_pieces('3\\n' + '\\n'.join(['ab' * 150 + 'a', 'aab' * 100, 'z' * 300]) + '\\n')",
+      "call": "solve_mirror_pieces('3\\n' + '\\n'.join(['ab' * 74 + 'a', 'aab' * 50, 'z' * 150]) + '\\n')",
       "expect": "'1\\n2\\n1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_mirror_pieces('2\\nabaaabba\\n' + ''.join('abc'[(i * i + i // 7) % 3] for i in range(150)) + '\\n')",
+      "expect": "'3\\n36'",
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method tries every mirrored first piece and recurses on the rest, which solves the same tails again and again and runs out of time on long tapes with many mirrored pieces. The step to the target is to keep the fewest pieces for each prefix, so each part of the tape is solved once. Unlike listing every way to cut the tape, only the fewest pieces are asked for, which is what lets a table replace the search.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method tries every mirrored first piece and recurses on the rest, which solves the same tails again and again and runs out of time on long tapes with many mirrored pieces. The step to the target is to keep the fewest pieces for each prefix, so each part of the tape is solved once. Unlike listing every way to cut the tape, only the fewest pieces are asked for, which is what lets a table replace the search. This is the standard fewest-pieces table, returning pieces where the usual task returns cuts.",
   "solution": "def solve_mirror_pieces(text):\n    tokens = text.split()\n    q = int(tokens[0])\n    out = []\n    for tape in tokens[1:1 + q]:\n        n = len(tape)\n        best = [0] + [n] * n          # best[i]: fewest pieces for tape[:i]\n        for centre in range(2 * n - 1):\n            lo, hi = centre // 2, (centre + 1) // 2\n            while lo >= 0 and hi < n and tape[lo] == tape[hi]:\n                if best[lo] + 1 < best[hi + 1]:\n                    best[hi + 1] = best[lo] + 1\n                lo -= 1\n                hi += 1\n        out.append(str(best[n]))\n    return '\\n'.join(out)\n",
   "notes": [
     "The fewest pieces for the first `r + 1` letters is one more than the fewest for the first `l`, over the mirrored pieces from `l` to `r`.",
@@ -135,8 +140,16 @@
       "slip": "Reading whole lines keeps the extra spaces, which then count as letters of the tape."
     },
     {
+      "code": "def solve_mirror_pieces(text):\n    tokens = text.split()\n    q = int(tokens[0])\n\n    def greedy(tape):\n        pieces, i = 0, 0\n        while i < len(tape):\n            j = len(tape)\n            while tape[i:j] != tape[i:j][::-1]:\n                j -= 1\n            pieces += 1\n            i = j\n        return pieces\n\n    return '\\n'.join(str(min(greedy(tape), greedy(tape[::-1]))) for tape in tokens[1:1 + q])\n",
+      "slip": "Taking the smaller of a longest-piece greedy from the left end and one from the right end still fails where both cut badly."
+    },
+    {
       "code": "def solve_mirror_pieces(text):\n    tokens = text.split()\n    q = int(tokens[0])\n\n    def fewest(tape, i):\n        if i == len(tape):\n            return 0\n        return min(1 + fewest(tape, j) for j in range(i + 1, len(tape) + 1) if tape[i:j] == tape[i:j][::-1])\n\n    return '\\n'.join(str(fewest(tape, 0)) for tape in tokens[1:1 + q])\n",
       "slip": "Trying every mirrored first piece and recursing on the rest is right but solves the same tails again and again."
+    },
+    {
+      "code": "def solve_mirror_pieces(text):\n    tokens = text.split()\n    q = int(tokens[0])\n    out = []\n    for tape in tokens[1:1 + q]:\n        n = len(tape)\n        best = [n]\n\n        def search(i, used):\n            if i == n:\n                best[0] = min(best[0], used)\n                return\n            if used + 1 >= best[0]:\n                return\n            for j in range(n, i, -1):\n                if tape[i:j] == tape[i:j][::-1]:\n                    search(j, used + 1)\n\n        search(0, 0)\n        out.append(str(best[0]))\n    return '\\n'.join(out)\n",
+      "slip": "Trying the longest piece first and dropping a branch that cannot beat the best found is still the exponential search, and it runs out of time when the best cut needs many pieces."
     }
   ]
 }

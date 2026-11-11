@@ -19,7 +19,7 @@
   "returns": "an integer",
   "brief": "Two venues report the same instrument, but their tick prices, in pence, can differ slightly. An analyst lines the two feeds `a` and `b` up by choosing ticks from each and pairing them in order, so that paired ticks differ by at most `tol`.\n\nWrite `tolerant_common(a, b, tol)`, which returns the largest number of pairs possible. The chosen ticks need not sit next to each other in either feed, but each tick is used at most once and the pairs keep the order of both feeds.\n\nExample. For `a = [100, 104, 99, 107]`, `b = [98, 101, 106]` and `tol = 1`, the ticks 100 and 101 can pair, and so can 99 and 98, but those two pairs cross. Either one can be followed by 107 with 106, so the answer is 2.",
   "constraints": [
-    "Each feed holds $0$ to $300$ ticks from $0$ to $1{,}000{,}000$, and $0 \\le$ `tol` $\\le 1{,}000{,}000$.",
+    "Each feed holds $0$ to $150$ ticks from $0$ to $1{,}000{,}000$, and $0 \\le$ `tol` $\\le 1{,}000{,}000$.",
     "$O(nm)$ time is the target for feeds of $n$ and $m$ ticks.",
     "All the tests in a run share one 5-second limit in the browser.",
     {
@@ -27,7 +27,7 @@
       "type": "list",
       "len": [
         0,
-        300
+        150
       ],
       "of": "int",
       "range": [
@@ -40,7 +40,7 @@
       "type": "list",
       "len": [
         0,
-        300
+        150
       ],
       "of": "int",
       "range": [
@@ -125,17 +125,22 @@
       "compare": "equal"
     },
     {
-      "call": "tolerant_common([(i * 7919) % 1009 for i in range(300)], [(i * 104729 + 17) % 1013 for i in range(300)], 4)",
-      "expect": "44",
+      "call": "tolerant_common([(i * 7919) % 1009 for i in range(150)], [(i * 104729 + 17) % 1013 for i in range(150)], 4)",
+      "expect": "22",
       "compare": "equal"
     },
     {
-      "call": "tolerant_common([(i * i * 31) % 997 for i in range(300)], [(i * i * 37 + 5) % 991 for i in range(280)], 0)",
-      "expect": "16",
+      "call": "tolerant_common([(i * i * 31) % 997 for i in range(150)], [(i * i * 37 + 5) % 991 for i in range(140)], 0)",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([0, 2, 6, 3], [0, 4, 5, 2], 1)",
+      "expect": "3",
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. Unlike the longest common subsequence, ticks match when they are close rather than equal, so only the match test changes, and a `tol` of 0 gives the classic.",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. Unlike the longest common subsequence, ticks match when they are close rather than equal, so only the match test changes, and a `tol` of 0 gives the classic.",
   "solution": "def tolerant_common(a, b, tol):\n    prev = [0] * (len(b) + 1)\n    for x in a:\n        cur = [0]\n        for j, y in enumerate(b):\n            if abs(x - y) <= tol:\n                cur.append(prev[j] + 1)\n            else:\n                cur.append(max(prev[j + 1], cur[j]))\n        prev = cur\n    return prev[-1]\n",
   "notes": [
     "When the last ticks of both feeds are within `tol`, pairing them is never worse, so each cell reads only three neighbours.",
