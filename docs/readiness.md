@@ -14,7 +14,7 @@ Signed off by the user, 5 Nov (PLAN 2c item 2; DECISIONS "Readiness contract sig
 Status words: **required** is shown as next work in order. **Recommended** is shown after required. **Optional** is never shown as next work for the role; it stays reachable from Learn.
 
 <!-- generated:catalogue -->
-Catalogue: 79 courses, 1236 lessons mapped (1214 written, 22 unwritten). Hours are shown as hours in the app and hours of outside study: the stored topic hours, shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1), split into the minutes counted in the app (lessons, level reviews and homework, topic exams) and the rest; topics 3.2 and 3.4 store 0.
+Catalogue: 79 courses, 1236 lessons mapped (1219 written, 17 unwritten). Hours are shown as hours in the app and hours of outside study: the stored topic hours, shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1), split into the minutes counted in the app (lessons, level reviews and homework, topic exams) and the rest; topics 3.2 and 3.4 store 0.
 <!-- /generated -->
 
 Hours come from `app/js/hours.js` (AUTHORING section 14): a short lesson weighs 1 and a workshop or project `minutes / 14`. Each table gives hours in the app (lesson minutes, level reviews and homework, topic exams) and hours of outside study (stored hours less the in-app figure, never below 0), in that order; no table shows the stored total alone. Hours in each table are rounded per cell, and the header is the sum of the cells. Run `node app/tools/readiness-sums.mjs` from the repo root to check every figure here. It exits non-zero on any mismatch.
@@ -138,9 +138,9 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 <!-- generated:totals:trader -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 442 | 11 | 453 | 261 | 953 |
+| Required | 447 | 6 | 453 | 261 | 953 |
 | Recommended | 188 | 6 | 194 | 101 | 489 |
-| Learn header (required plus recommended) | 630 | 17 | 647 | 362 | 1442 |
+| Learn header (required plus recommended) | 635 | 12 | 647 | 362 | 1442 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 534 | 22 | 556 | 324 | 1329 |
+| Required | 539 | 17 | 556 | 324 | 1329 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 874 | 22 | 896 | 499 | 2261 |
+| Learn header (required plus recommended) | 879 | 17 | 896 | 499 | 2261 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -400,9 +400,9 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 <!-- generated:totals:developer -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 228 | 5 | 233 | 120 | 560 |
+| Required | 233 | 0 | 233 | 120 | 560 |
 | Recommended | 248 | 6 | 254 | 151 | 685 |
-| Learn header (required plus recommended) | 476 | 11 | 487 | 271 | 1245 |
+| Learn header (required plus recommended) | 481 | 6 | 487 | 271 | 1245 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -533,9 +533,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 569 | 11 | 580 | 334 | 1338 |
+| Required | 574 | 6 | 580 | 334 | 1338 |
 | Recommended | 223 | 11 | 234 | 119 | 504 |
-| Learn header (required plus recommended) | 792 | 22 | 814 | 453 | 1842 |
+| Learn header (required plus recommended) | 797 | 17 | 814 | 453 | 1842 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -660,9 +660,9 @@ Same learner as Strats, plus the pricing mathematics.
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 646 | 11 | 657 | 375 | 1485 |
+| Required | 651 | 6 | 657 | 375 | 1485 |
 | Recommended | 228 | 11 | 239 | 123 | 447 |
-| Learn header (required plus recommended) | 874 | 22 | 896 | 498 | 1932 |
+| Learn header (required plus recommended) | 879 | 17 | 896 | 498 | 1932 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -787,9 +787,9 @@ Undecided never reads "ready". It reads "foundation done" once the required cour
 <!-- generated:totals:undecided -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 252 | 11 | 263 | 154 | 564 |
+| Required | 257 | 6 | 263 | 154 | 564 |
 | Recommended | 0 | 0 | 0 | 0 | 0 |
-| Learn header (required plus recommended) | 252 | 11 | 263 | 154 | 564 |
+| Learn header (required plus recommended) | 257 | 6 | 263 | 154 | 564 |
 <!-- /generated -->
 
 **Dependency conflicts**
