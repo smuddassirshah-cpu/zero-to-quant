@@ -2,7 +2,7 @@
 
 Auditor: blind Fable reader, round 2. Scope: `app/content/courses/conditional/` files `l1` to `l17`, `review-1` to `review-3`, `homework-1` to `homework-3` (with the performance task `h-two-filters`), `problems-1` to `problems-3` and `fluency-l7-turning-around`. Levels 4 and 5 are out of scope. Topic 1.5 is Stage 1, so the ledger has full depth.
 
-Blind rule: the ledger, the findings below and the three concepts scripts were written and committed before any earlier audit, review, ledger, concepts script, author report, git history or diff of the course folder was opened. The overlap table and the gate results were added afterwards.
+Blind rule: the ledger, the findings below and the three concepts scripts were written and committed (commit `74967a24`) before any earlier audit, review, ledger, concepts script, author report, git history or diff of the course folder was opened. The overlap table, the gate results and the inbox bullet were added afterwards.
 
 Ledger: `docs/reports/audit-conditional-1-3-r2-ledger.md` (459 rows: correct 443, wrong 3, imprecise 13, misleading 0, unverified 0).
 
@@ -55,3 +55,52 @@ Counts: 10 findings. wrong 2 (1 serious, 1 minor), imprecise 8 (all minor), misl
 - Summaries and `trap` lines against the lesson bodies: all 17 agree with their lessons, except the "never the other way round" line of finding 7.
 - Empirical and finance claims: adverse selection on limit orders (l5), false discoveries in backtests (l8, l14), natural frequencies (l9), Cromwell's rule (l12), explaining away (l16), correlated defaults and senior tranches in 2008 (l17). Each is stated at a level the named sources support, and the sample claims in l13 and homework-3 are hedged to the sample.
 - "Always" claims that needed proof: a recession mix with the same mean never lowers P(3 or more) or P(no defaults) (l17 `screens[1]`, `quiz[0]`); pairwise independence leaves P(all three) anywhere in [0, 1/4] (l15 `screens[6]`); the shared-factor excess q(1 − q)(p_b − p_g)² (homework-3). All hold.
+
+## Overlap with earlier reads
+
+Opened only after commit `74967a24`: `docs/reviews/audit-conditional-1-3.md` (audit round 1 with its fix pass, fix-pass read and follow-up), `docs/reports/audit-conditional-1-3-ledger.md` (searched for the rows of this round's findings), `docs/reviews/review-1.5.md` (conditional section and fix pass) and `docs/reviews/review-problems-1.5-a.md` (conditional `problems-1` to `problems-3`). The round 1 concepts scripts and the author reports were not used. `git log -S` was run on the two `wrong` sentences only.
+
+Conceptual findings, levels 1 to 3:
+
+| | Count | Which |
+|---|---|---|
+| Found by this audit only | 9 | Findings 1 to 4 and 6 to 10. Both `wrong` findings are here |
+| Found by both | 1 | Finding 5 is the class of round 1 finding 11 (evidence called plainly "independent" where independence given the hypothesis is needed). Round 1 named and fixed two places (l10 `screens[8]`, l11 `screens[0]`). The five places of finding 5 were not named and still read that way |
+| Found by audit round 1 only | 22 | Round 1 findings 1 to 10 and 12 to 23. All were fixed before this read, so a blind read of the present text could not find them again |
+| Found by the round 1 fix-pass read only | 2 | homework-2 `items[4].explain.text` and l5 `screens[10].prose`; both fixed |
+| Found by the earlier reviews only | 4 | As counted by round 1: l7 "agree only when P(A) = P(B)" (also round 1 finding 13 at a third place), l7 "hit rate", l12 `screens[6]` prose, problems-1 `p-order-router`. All fixed |
+
+None of the 28 earlier findings has come back. Each of those places reads `correct` in the round 2 ledger: the l3 and l16 `trap` lines (round 1's two `wrong`), the stated yes or no questions, l12 `screens[7]` ("cannot overlap and whose priors add to 1"), the l8 "much rarer than the false-positive rate" lines, l15 `screens[6]` ("only a range"), homework-2 `items[4]` and `items[6]`, l5 `screens[10]`, l17 `screens[6]` and `screens[10]`.
+
+`wrong` verdicts of this audit: 2.
+
+- Finding 1 (l12 `screens[3].explain.text`, the 8-sided die "lost a little"): found by no earlier read. Not fix-pass text: `git log -S` puts the sentence in commit `4181221a` (20 October 2026); the round 1 fix pass (`c4ec159e`) changed only `screens[7].prose` in that file. The round 1 ledger has this row as `correct` (its line 1970).
+- Finding 2 (l11 `screens[8]` leaves and the `joint` feedback): found by no earlier read. Not fix-pass text: both strings date from commit `43e79a98` (20 October 2026); the fix pass changed `screens[0].prose`, `screens[9].explain.text` and `summary.ideas[2]` in that file. The round 1 ledger has `screens[8].feedback.byKey.joint` as `correct` (its line 1886, basis "slip reproduces its value"). The value 0.49 does reproduce; the quantity it is named as does not.
+
+Convergence: two new `wrong` in three levels is over the limit of one, so by the rule in `docs/briefs/concept-audit.md` the course does not close on this round. It needs a fix pass and another blind read.
+
+Where the reads touch:
+
+- Finding 3 is in l16 `quiz[2]`. Round 1 finding 19 reworded the last sentence of that item's explanation and its ledger marks the key and the `same` option's `why` as `correct`; the unstated baseline was not raised.
+- Finding 4 (l1 `screens[6].explain.text`) and finding 6 are on rows the round 1 ledger marks `correct`.
+- Finding 7: round 1 finding 18 reworded l15 `summary.trap`; the "never the other way round" line beside it in `summary.ideas[2]` was not raised.
+- Finding 2's canvas would be caught by a validator rule (inbox bullet below). l17 `screens[5]` uses leaves the same way with a declaration in the prose.
+- Seen by the round 1 fix-pass read and not raised here: l8 `objectives[0]`, "See how a rare condition makes most positive tests false", is looser than the corrected screens. It is still in the text. It is an aim line and the lesson's own case bears it out, so this audit read it as `correct`.
+- review-1.5 corrected homework-1 "Item 7" to "Item 8"; the reference is still by position (noted above).
+
+Miss rate of a single read, on this evidence: after two reviews, one audit and its fix-pass read, a fresh blind read still found 10 findings in 17 lessons and 10 sets. Two are `wrong` (one serious), neither a graded key. Round 1's ledger had 3,284 rows and passed both sentences with a basis written for the key, not for the sentence.
+
+## Gates
+
+Run on the worktree at commit `74967a24`, content unchanged.
+
+- `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): 0 errors, 4,667 warnings repo-wide. `content/manifest.json` was not changed by the run.
+- Number scripts, from the repo root: `conditional-2-perf-numbers.py` 0 failures, exit 0; `fluency-conditional-numbers.py` 2,000 checks, 0 failures, exit 0; `problems-conditional-numbers.py` 1,177 checks, 0 failures, exit 0.
+- Round 2 concepts scripts: L1 706 checks, exit 0. L2 829 checks, 6 failed, exit 1 (findings 1 and 2; they stay failing until the content is fixed). L3 714 checks, exit 0.
+- Playthrough with `--local-cdn` (Pyodide 0.27.7 from the scratchpad `pkgs` folder), desktop and `--mobile`: all 17 lessons, `review-1` to `review-3`, `homework-1` to `homework-3`, `problems-1` to `problems-3` (`--problems`) and `fluency-l7-turning-around` (`--fluency`). 54 file runs in 8 invocations, every one "All passed", exit 0, 0 browser relaunches.
+- `VOICE_BASE=app/content/courses/conditional python3 docs/reviews/voice-scan.py 35`: 15,592 sentences, 0 over 35 words, 0 explanations over three sentences. The fix texts above were written to the same limits.
+- No content JSON, engine file, `course.json` or state file was changed.
+
+## Engine
+
+No engine fault found. One tool item is added to `docs/BACKLOG-INBOX.md` under the existing line "Raised later (audit conditional):": a validator warning for a `tree` canvas whose stated leaves are not its path products, with an opt-out for declared leaves (finding 2; a working check is `trees()` in `docs/reports/conditional_concepts_r2_lib.py`).
