@@ -78,8 +78,38 @@ Not concept findings. All minor.
 
 ## Overlap with earlier reads
 
-To be filled after the first commit.
+Opened only after commit `51f1d6a5` (ledger, findings and scripts): `docs/reviews/review-mm-games.md` (second reader, with its fix pass), `docs/reviews/audit-mm-games-1-3.md` (audit round 1, its fix pass, the fix-pass read and its follow-up) and `docs/reports/audit-mm-games-1-3-ledger.md`. The round 1 concepts scripts and the author reports were not used.
+
+Conceptual findings, levels 1 to 3:
+
+| | Count | Which |
+|---|---|---|
+| Found by this audit only | 14 | Findings 1 to 14 |
+| Found by earlier reads only | 35 | Review: 6 (as counted by audit round 1). Audit round 1: 25. Fix-pass read: 4. All 35 were fixed in the text before this read, so a blind read of the present text could not find them again. None of the 35 has come back: each of those places reads `correct` in the round 2 ledger, except l10 `screens[9].explain.text` (finding 9, below). |
+| Found by both | 0 | |
+
+`wrong` verdicts: this audit 1 (finding 4, minor), found by no earlier read. Earlier reads: 2 (audit round 1, findings 9 and 17, both fixed).
+
+Where the reads touch:
+
+- Finding 4 (homework-2 says three seeded games, four are dealt) is the sibling of fix-pass read finding 2, which fixed the same slip in homework-3 `items[0].prose` and did not look at homework-2.
+- Finding 9 (q for 1 − p beside q for the position) sits in l10 `screens[9].explain.text`, a sentence the round 1 fix pass rewrote for its finding 19. The rewrite kept "p − q". So one finding of this round is in fix-pass text.
+- Findings 1 and 7 are on rows the round 1 ledger marked `correct` (its rows for l1 `screens[7]` and l10 `screens[5]`).
+- Findings 12 and 13 are in l13 `quiz[0]`. Round 1 finding 23 separated edge at the time from P&L at settlement across l13 and did not reach this quiz item.
+- Lesson-number notes: N1, N2, N3 and N5 are also in round 1's "Noted, not conceptual" list and are still in the text (round 1 raised a validator rule instead of fixing them). N4 is new. The review's own fix for l9 `screens[4]` wrote "as lesson 7 showed", which is N3.
+- Seen by round 1 and not by this audit: its note that l11 `screens[7]` gives an index future a daily sd of 4% against 2% for a single share, which is unrealistic (an index moves less than its members). The method and key are right. It is still in the text.
+- New in this round and not conceptual findings: the six unverified claims U1 to U6. Round 1 softened one claim of the same kind (its finding 22) and removed two attributions (its finding 20). The seeded figures round 1 could not rebuild (l6 `screens[7]` seed 6, l8 `screens[6]` seed 4) reproduce with Python's `random.Random(seed).randint(1, 6)` (L2 script notes).
+
+Miss rate of a single read, on this evidence: three earlier reads left 14 findings (3 serious, 11 minor), none of them a wrong graded number.
 
 ## Gates
 
-To be filled after the first commit.
+Run on the worktree at commit `51f1d6a5`, content unchanged.
+
+- `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): 0 errors, 4137 warnings. `content/manifest.json` was not changed by the run.
+- `python3 docs/reports/mm-games-3-perf-numbers.py`: 0 failures, exit 0. It is the only committed number script for the course whose name ends in `numbers.py`.
+- `VOICE_BASE=app/content/courses/mm-games/ python3 docs/reviews/voice-scan.py 35`: 9,888 sentences scanned, 0 over 35 words, 0 explanations over three sentences.
+- Playthroughs with `--local-cdn` (Pyodide 0.27.7 from the scratchpad `pkgs` folder), desktop and `--mobile`: lessons `l3-how-wide`, `l9-cards-revealed`, `l13-full-game`; sets `review-1`, `review-2`, `review-3`, `homework-1`, `homework-2`, `homework-3`. 18 of 18 runs "All passed", 0 browser relaunches.
+- Round 2 concepts scripts: `mm-games-L1-concepts-r2.py` 86 checks, 0 failed, exit 0. `mm-games-L2-concepts-r2.py` 72 checks, 2 failed, exit 1 (findings 4 and 6; both stay failing until the content is fixed). `mm-games-L3-concepts-r2.py` 70 checks, 0 failed, exit 0 (needs `node` for the trade-game replays).
+- Inbox: two bullets under "Raised later (audit mm-games round 2):" in `docs/BACKLOG-INBOX.md` (a validator rule for stated test counts; a validator warning for `order` keys with no `same` or `after`).
+- No content, engine file, `course.json` or state file was changed.
