@@ -292,7 +292,7 @@ def level2(L):
     stated('climb: 31 cost 293', 293, 45 + 8 * 31)
     pence = floor(F(25500, 35))
     num(L, 'p-climbing-wall', 4, F(pence, 100), F(max(brute(lambda p: 4500 + 35 * p <= 30000, 0, 3000)), 100),
-        {'rounded-up': F(pence + 1, 100), 'no-fee': F(300, 35)}, printed=False)
+        {'rounded-up': F(pence + 1, 100), 'no-fee': F(300, 35), 'pence': pence}, printed=False)
     stated('climb: 255/35', 7.2857, F(255, 35), 0.00005)
     stated('climb: at 7.29', 300.15, 45 + 35 * F(729, 100))
     stated('climb: at 7.28', 299.80, 45 + 35 * F(728, 100))

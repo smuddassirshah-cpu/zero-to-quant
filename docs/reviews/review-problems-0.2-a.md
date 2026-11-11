@@ -192,3 +192,52 @@ One fix pass on Sonnet covers all of it. Findings 10, 13 and 14 change graded an
 | `dump.py` | compact dump of a set for reading | `python3` |
 
 All run from the repo root.
+
+## Fix pass
+
+Fix agent, Sonnet. Every changed number was computed twice (sympy or fractions, then a float route, grid, projection or a whole-number count) in `docs/reports/problems-equations-numbers.py` and `problems-functions-numbers.py`, both updated and exit 0 (806 and 787 checks, 0 failures). Expression and set parts were put through the engine's graders with a scratch copy of the reader's `grade-check.mjs` (stale rows for the renumbered parts replaced by 45 new typed rows): 910 checks, 0 failures; the only 5 FINDING rows left are finding 3.
+
+1. fixed. Part 1 and part 2 questions of `p-interest-split` now say "Type 12000 with no comma"; the engine cannot take the comma in an expression (the comma rows of `grade-check.mjs` still refuse), so the prose route was used. Inbox bullet added.
+2. fixed. Part 3 restates $0.04s + 0.065(12000 - s) = 660$ and asks for a whole number. Answer 4800 unchanged.
+3. deferred (engine). Bullet added to `docs/BACKLOG-INBOX.md` under `Raised later (review problems 0.2 a):`. A content guard is not possible: the unsolved line has the same solution set as the key and is matched as the answer before any `wrong`. The three parts stand.
+4. fixed. Part 4 of `p-climbing-wall` asks for pounds "such as 6.45"; `wrong` `pence` = 728 (`tol` 0) and its `byKey` line added. 728 pence = £7.28, and 728 differs from the key 7.28.
+5. fixed. Parts 3 and 4 open with the earlier result (21 climbers on £213; 31 climbers on £300) and the form. Answers unchanged. Part 4 check: $45 + 35p \le 300$ gives $p \le 7.2857$, so 7.28 (and 45 + 35 x 7.28 = 299.80).
+6. fixed. Part 4 of `p-fridge-temperature` now carries $C = \tfrac{F - 32}{1.8}$ from part 1 and the double inequality. Answer 19 unchanged ($-13 \le F \le 5$, counted 19 by brute force).
+7. fixed. Sentences appended to `p-climbing-wall` 1, `p-cottage-share` 1 and `p-bakery-stock` 1 as proposed; `>=` and `≥` grade correct (grade-check rows).
+8. fixed. Basis: $y = x^3$ has $y' = 3x^2 \ge 0$, so it only rises; a cubic has two turning points only when $y' = 0$ has two roots. The explanation now says "with a positive $x^3$ and two turning points rises, falls, then rises again". Now on the new curve, $h' = 3(x - 2)(x - 6)$.
+9. fixed. `p-stone-throw` part 2 and part 4 questions give $(t - 2)^2 = 9$ and $(t - 2)^2 = 1$ and ask for the times. Answers, `wrong` and feedback unchanged.
+10. fixed, graded answers changed (list below). Path through $A(-2, 1)$, $B(5, 29)$: gradient $28/7 = 4$, $c = 1 + 8 = 9$ (B check $20 + 9 = 29$). Pipe gradient $-1/4$, through $D(12, 23)$: $c = 23 + 3 = 26$. Meet: $4x + 9 = -0.25x + 26$, $4.25x = 17$, $x = 4$, $y = 25$. Second route: projecting $D - A = (14, 22)$ on $B - A = (7, 28)$ gives $t = (14 \cdot 7 + 22 \cdot 28)/(49 + 784) = 714/833 = 6/7$, so the foot is $(-2 + 6, 1 + 24) = (4, 25)$, between A and B. Slips rebuilt: flipped $7/28 = 0.25$; lost-minus $28/3 = 9.333$; $c$-first 1; sign $1 - 8 = -7$; flipped line $c = 1 + 0.5 = 1.5$; pipe slips $-0.25x + 23$, $-0.25x + 20$ ($23 - 3$), $0.25x + 20$ ($23 - 0.25 \times 12$); sign-x $17/3.75 = 4.533$; constants $35/4.25 = 8.235$. Parts 1 and 5 say "Give a decimal if it is not whole" instead of "Give a whole number", because the validator's `[wrong-band]` rule (advisory, new on these files) warned that decimal slips sit under a whole-number form. Neither new line is in the course (grep) and the gate gives 0 hits.
+11. fixed. One sentence on a product being 0 added to `p-bakery-trays` part 2 and `p-track-cubic` part 2.
+12. fixed, graded positions changed. Parts 4 and 5 of `p-bakery-trays` swapped; the new part 5 question restates "Part 4 showed that $P$ rises until $x = 6$ and falls after it". The greatest profit $P(6) = -180 + 360 - 100 = 80$ (grid maximum 80) is now last. Values unchanged.
+13. fixed, graded answers changed. Sledge at 5 s: $0.5 \times 25 = 12.5$; average $12.5 / 5 = 2.5$ m/s (below the cyclist's 3). Slips: no-square $2.5$, whole-square $2.5^2 = 6.25$, no-half 25; times $62.5$, distance 12.5. Bands 0.001. Parts 3 to 5 unchanged.
+14. fixed, graded answers changed. $h(x) = x^3 - 12x^2 + 36x = x(x - 6)^2$ on $0 \le x \le 8$. $h(4) = 64 - 192 + 144 = 16$ (also $4 \times 4 = 16$). Roots 0 and 6. $h' = 3(x - 2)(x - 6)$, so turning points $(2, 32)$ and $(6, 0)$; it falls only on $2 < x < 6$ (grid check). $h(x) - 32 = (x - 2)^2(x - 8)$ by expansion, so $h = 32$ at 2 and 8 (brute force over 0 to 8 agrees). Slips: all-plus $64 + 192 + 144 = 400$, cube-as-times $12 - 192 + 144 = -36$, signs "0, -6", roots "0, 6", turns "2, 6". The curve is a stretched, slid copy of the lesson's, with new heights; the gate gives 0 hits.
+15. fixed. Part 3 carries $h(4) = 16$ and $h(6) = 0$; part 4 carries "falls from $x = 2$ to $x = 6$" and $h(2) = 32$.
+16. fixed. Part 4 of `p-two-cultures` gives $2^{3.3} \approx 9.849$ and $2^{3.4} \approx 10.556$ (checked: 9.8492, 10.5561; so $N = 1970$ and 2111). Answer 3.3 unchanged.
+17. fixed. Part 3 states that part 2 found M ahead by 300 at 3 hours.
+18. fixed. Part 5 of `p-stone-throw` restates 40 m at 1 s and 3 s; `no-five` line now reads "Those solve $h(t) = 0$, from part 2. For 40 metres, $(t - 2)^2 = 1$, not 9."
+19. fixed. `lost-t` of `p-sledge-cyclist` part 3: `tol` 0.5 to 0.05 ($\sqrt 6 = 2.4495$; 2.5 and 2 are outside it). The validator's `[wrong-band]` advisory now names this entry (a whole-number question with a decimal slip); kept, since the reader asked for the narrow band.
+20. fixed. Part 4 of `p-two-savers` restates £130 and £110 and both lines; the correct option reads "Never: the two lines are parallel".
+
+Per-problem notes (five loose chains, minors): accepted as the reader judged, no edit.
+
+Graded answers, bands and `wrong` values changed (old to new), for a delta reader:
+
+- equations `problems-2` `p-climbing-wall` part 4: `wrong` `pence` added, 728, `tol` 0. Key 7.28 unchanged.
+- functions `problems-2` `p-path-and-pipe`:
+  - part 1: key 0.5 (`tol` 0.001) to 4 (`tol` 0); `flipped` 2 (0) to 0.25 (0.001); `lost-minus` 1.5 (0.001) to 9.333 (0.005).
+  - part 2: key `0.5x+2` to `4x+9`; `accept` (`0.5x+2`, `\frac{x}{2}+2`, `\frac{1}{2}x+2`, `2+0.5x`, `\frac{x+4}{2}`) to (`4x+9`, `9+4x`); `c-first` `0.5x+1` to `4x+1`; `sign` `0.5x` to `4x-7`; `flipped` `2x+5` to `0.25x+1.5`.
+  - part 3: key -2 (0) to -0.25 (0.001); `reciprocal` 2 (0) to 0.25 (0.001); `negative` -0.5 to -4 (0.001); `same` 0.5 to 4 (0.001).
+  - part 4: key `-2x+7` to `-0.25x+26`; `accept` (`-2x+7`, `7-2x`) to (`-0.25x+26`, `26-0.25x`, `-\frac{x}{4}+26`, `26-\frac{x}{4}`, `-\frac{1}{4}x+26`); `c-first` `-2x-3` to `-0.25x+23`; `sign` `-2x-13` to `-0.25x+20`; `reciprocal` `2x-13` to `0.25x+20`.
+  - part 5: key 2 to 4; `y-value` 3 to 25; `sign-x` -3.333 to 4.533 (0.005); `constants` 3.6 to 8.235 (0.005).
+- functions `problems-3` `p-bakery-trays`: parts 4 and 5 swapped (new part 4 the choice, key `left`; new part 5 numeric, key 80, `wrong` 75, 60, 440 unchanged).
+- functions `problems-3` `p-sledge-cyclist`:
+  - part 1: key 8 (0) to 12.5 (0.001); `no-square` 2 to 2.5; `whole-square` 4 to 6.25; `no-half` 16 to 25 (all 0.001).
+  - part 2: key 2 (0) to 2.5 (0.001); `times` 32 to 62.5; `distance` 8 to 12.5 (0.001).
+  - part 3: `lost-t` 2.449 `tol` 0.5 to 0.05.
+- functions `problems-3` `p-track-cubic`:
+  - part 1: key 2 to 16; `all-plus` 50 to 400; `cube-as-times` 0 to -36.
+  - part 2: key (0, 3) to (0, 6); `signs` "0, -3" to "0, -6".
+  - part 3: keyed option `middle` text $1 < x < 3$ to $2 < x < 6$; the three other options renumbered the same way.
+  - part 4: key (1, 4) to (2, 8); `roots` "0, 3" to "0, 6"; `turns` "1, 3" to "2, 6".
+
+Gates. Validator 0 errors; the only warning on the six files is `[wrong-band]` for `lost-t` (finding 19). `fresh-check.mjs --file` on the five changed sets: 0 hits each. `playthrough --problems` with `--local-cdn`, equations 2 and 3 and functions 1 to 3, with and without `--mobile`: all passed. Voice scan 35: 0 and 0 on both course folders. Number scripts: both exit 0.
