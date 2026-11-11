@@ -1,0 +1,290 @@
+"""Recompute every number in app/content/courses/vectors/problems-<n>.json twice.
+
+Method 1 is exact: sympy Rationals and Matrices (exact inverses, determinants, square roots,
+acos in closed form where one exists). Method 2 is a different route in floating point: NumPy
+arrays and np.linalg (solve, inv, det, norm, matrix_rank), or a worked alternative such as the
+cosine rule or a step-by-step composition. For each numeric part: both methods agree; the key
+lies within its tol of them; each `wrong` value matches its named slip, lies outside the key's
+band, and no two wrong bands overlap; every wrong id has a byKey line; a non-whole key's
+question names its form. Expression parts (vectors and matrices): the key and every accept form
+equal the exact answer entry by entry, and every wrong form differs. Choice parts: the keyed
+option. `stated` ties an intermediate figure printed in feedback or explain to its text and its
+value. Exit 0 when all pass.
+
+Run: <scratchpad>/venv/bin/python docs/reports/problems-vectors-numbers.py
+"""
+import json, os, re, sys, itertools, math
+import numpy as np
+import sympy as sp
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+COURSE = os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'vectors')
+fails, checks = [], 0
+FORM = re.compile(r'decimal|places?\b|fraction|whole number|nearest|per cent|percentage|%', re.I)
+R = sp.Rational
+k_ = sp.Symbol('k')
+
+
+def ok(cond, msg):
+    global checks
+    checks += 1
+    if not cond:
+        fails.append(msg)
+
+
+def load(n):
+    p = os.path.join(COURSE, f'problems-{n}.json')
+    if not os.path.exists(p):
+        return None
+    d = json.load(open(p))
+    ok(d['id'] == f'problems-{n}' and d['level'] == n and d['course'] == 'vectors', f'set {n}: header')
+    ok(3 <= len(d['items']) <= 5, f'set {n}: item count')
+    ok(any(it['difficulty'] == 5 for it in d['items']), f'set {n}: no difficulty 5')
+    for it in d['items']:
+        ok(3 <= it['difficulty'] <= 5, f'{it["id"]}: difficulty')
+        ok(3 <= len(it['parts']) <= 5, f'{it["id"]}: part count')
+    parts = [p for it in d['items'] for p in it['parts']]
+    typed = sum(p['widget']['kind'] in ('numeric', 'expression') for p in parts)
+    ok(3 * typed >= 2 * len(parts), f'set {n}: typed parts {typed} of {len(parts)}')
+    return {it['id']: it for it in d['items']}
+
+
+def part(items, iid, k):
+    return items[iid]['parts'][k - 1]
+
+
+def text_of(p):
+    return json.dumps(p, ensure_ascii=False)
+
+
+def num(items, iid, k, exact, alt, slips=None, rel=1e-9):
+    """exact: sympy or Fraction value; alt: float from the second route; slips: {id: value}."""
+    p = part(items, iid, k)
+    w, tag = p['widget'], f'{iid} p{k}'
+    ok(w['kind'] == 'numeric', f'{tag}: not numeric')
+    e = float(exact)
+    ok(math.isclose(e, float(alt), rel_tol=rel, abs_tol=1e-9), f'{tag}: methods differ {e} vs {float(alt)}')
+    tol = w['tol']['abs']
+    ok(abs(w['answer'] - e) <= tol + 1e-12, f'{tag}: key {w["answer"]} vs computed {e} (tol {tol})')
+    if float(w['answer']) != int(w['answer']) or tol > 0 and tol < 0.5:
+        ok(bool(FORM.search(p['question'])), f'{tag}: question states no form')
+    if float(w['answer']) == int(w['answer']) and tol == 0:
+        ok(bool(re.search(r'whole number', p['question'])), f'{tag}: whole-number part does not say so')
+    slips = slips or {}
+    wrongs = {x['id']: x for x in w.get('wrong', [])}
+    ok(set(wrongs) == set(slips), f'{tag}: wrong ids {sorted(wrongs)} vs slips {sorted(slips)}')
+    ok(set(wrongs) <= set(p['feedback'].get('byKey', {})), f'{tag}: byKey lines missing')
+    for wid, val in slips.items():
+        if wid not in wrongs:
+            continue
+        x = wrongs[wid]
+        wt = x['tol']['abs']
+        ok(abs(x['value'] - float(val)) <= max(wt, 1e-9), f'{tag}: wrong {wid} {x["value"]} vs slip {float(val)}')
+        ok(abs(x['value'] - w['answer']) > tol + wt, f'{tag}: wrong {wid} {x["value"]} inside the key band')
+        ok(abs(float(val) - e) > tol, f'{tag}: slip {wid} equals the answer')
+    for a, b in itertools.combinations(list(wrongs), 2):
+        A, B = wrongs[a], wrongs[b]
+        ok(abs(A['value'] - B['value']) > A['tol']['abs'] + B['tol']['abs'], f'{tag}: wrongs {a} and {b} overlap')
+    return e
+
+
+def parse_entry(s):
+    s = s.strip()
+    s = re.sub(r'\\frac\{([^{}]*)\}\{([^{}]*)\}', r'((\1)/(\2))', s)
+    return sp.nsimplify(sp.sympify(s, locals={'k': k_}), rational=True)
+
+
+def parse_obj(s):
+    """'(a, b)', '[a, b]', '[[a, b], [c, d]]' or a pmatrix -> sympy Matrix."""
+    s = s.strip()
+    m = re.fullmatch(r'\\begin\{pmatrix\}(.*)\\end\{pmatrix\}', s, re.S)
+    if m:
+        rows = [r.split('&') for r in m.group(1).split('\\\\')]
+        return sp.Matrix([[parse_entry(x) for x in r] for r in rows])
+    if s.startswith('[['):
+        rows = re.findall(r'\[([^\[\]]*)\]', s[1:-1])
+        return sp.Matrix([[parse_entry(x) for x in r.split(',')] for r in rows])
+    inner = s[1:-1]
+    parts, depth, cur = [], 0, ''
+    for ch in inner:
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+        if ch == ',' and depth == 0:
+            parts.append(cur)
+            cur = ''
+        else:
+            cur += ch
+    parts.append(cur)
+    return sp.Matrix([[parse_entry(x) for x in parts]])
+
+
+def same(A, B):
+    if A.shape != B.shape:
+        return False
+    return all(sp.simplify(a - b) == 0 for a, b in zip(A, B))
+
+
+def obj(items, iid, k, exact, alt, slips):
+    """exact: sympy Matrix (a vector as one row); alt: NumPy array from the second route."""
+    p = part(items, iid, k)
+    w, tag = p['widget'], f'{iid} p{k}'
+    ok(w['kind'] == 'expression', f'{tag}: not expression')
+    exact = sp.Matrix(exact)
+    if exact.shape[0] != 1 and np.ndim(alt) == 1:
+        exact = exact.T
+    if not exact.free_symbols:
+        ok(np.allclose(np.array(exact.tolist(), dtype=float).reshape(np.shape(alt)), alt), f'{tag}: methods differ')
+    else:
+        for kv in (0.5, 1.7, 3):
+            ev = np.array(exact.subs(k_, kv).tolist(), dtype=float)
+            ok(np.allclose(ev.reshape(np.shape(alt(kv))), alt(kv)), f'{tag}: methods differ at k={kv}')
+    for form in [w['answer']] + w.get('accept', []):
+        ok(same(parse_obj(form), exact), f'{tag}: form {form} differs from the key')
+    got = {x['id']: x['tex'] for x in w.get('wrong', [])}
+    ok(set(got) == set(slips), f'{tag}: wrong ids {sorted(got)} vs {sorted(slips)}')
+    ok(set(got) <= set(p['feedback'].get('byKey', {})), f'{tag}: byKey lines missing')
+    for wid, val in slips.items():
+        if wid not in got:
+            continue
+        g = parse_obj(got[wid])
+        v = sp.Matrix(val)
+        if v.shape != g.shape and v.T.shape == g.shape:
+            v = v.T
+        ok(same(g, v), f'{tag}: wrong {wid} {got[wid]} vs slip {v.tolist()}')
+        ok(not same(g, exact), f'{tag}: wrong {wid} equals the key')
+    for a, b in itertools.combinations(list(got), 2):
+        ok(not same(parse_obj(got[a]), parse_obj(got[b])), f'{tag}: wrongs {a} and {b} coincide')
+
+
+def poly(items, iid, k, exact, slips):
+    p = part(items, iid, k)
+    w, tag = p['widget'], f'{iid} p{k}'
+    for form in [w['answer']] + w.get('accept', []):
+        ok(sp.simplify(parse_entry(form) - exact) == 0, f'{tag}: form {form} differs')
+    got = {x['id']: x['tex'] for x in w.get('wrong', [])}
+    ok(set(got) == set(slips), f'{tag}: wrong ids')
+    ok(set(got) <= set(p['feedback'].get('byKey', {})), f'{tag}: byKey lines missing')
+    for wid, val in slips.items():
+        ok(sp.simplify(parse_entry(got[wid]) - val) == 0, f'{tag}: wrong {wid}')
+        ok(sp.simplify(parse_entry(got[wid]) - exact) != 0, f'{tag}: wrong {wid} equals key')
+
+
+def pick(items, iid, k, cid):
+    opts = part(items, iid, k)['widget']['options']
+    keyed = [o['id'] for o in opts if o.get('correct')]
+    ok(keyed == [cid], f'{iid} p{k}: keyed {keyed}, expected {cid}')
+    ok(all(o.get('why') for o in opts if not o.get('correct')), f'{iid} p{k}: a distractor has no why')
+
+
+def stated(items, iid, k, phrase, value, printed, places):
+    """The phrase is in the part's text, and `printed` is `value` rounded to `places`."""
+    ok(phrase in text_of(part(items, iid, k)), f'{iid} p{k}: phrase not found: {phrase}')
+    ok(abs(float(value) - printed) <= 0.5 * 10 ** (-places) + 1e-12, f'{iid} p{k}: stated {printed} vs {float(value)}')
+
+
+def deg(x):
+    return math.degrees(x)
+
+
+def acos_deg_np(u, v):
+    u, v = np.asarray(u, float), np.asarray(v, float)
+    return np.degrees(np.arccos(u @ v / (np.linalg.norm(u) * np.linalg.norm(v))))
+
+
+M = sp.Matrix
+# ======================================================== level 1: vectors
+I = load(1)
+if I:
+    # p-charging-robot
+    u, v, T = M([3, 1]), M([1, 2]), M([9, 8])
+    ab = M.hstack(u, v).LUsolve(T)
+    obj(I, 'p-charging-robot', 1, ab.T, np.linalg.solve(np.array([[3, 1], [1, 2.]]), [9, 8.]), {'swapped': [[3, 2]]})
+    a, b = ab
+    L1, L2 = a * u, b * v
+    d12 = L1.dot(L2)
+    num(I, 'p-charging-robot', 2, d12, 2 * 3 * float(np.dot([3, 1], [1, 2])),
+        {'unweighted': u.dot(v), 'only-u': (a * u).dot(v), 'only-v': u.dot(b * v)})
+    th = sp.acos(d12 / (L1.norm() * L2.norm()))
+    ok(th == sp.pi / 4, 'robot: angle is exactly pi/4')
+    num(I, 'p-charging-robot', 3, deg(float(th)), acos_deg_np([6, 2], [3, 6]),
+        {'radians': float(th), 'no-root': deg(math.acos(30 / (40 * 45)))})
+    stated(I, 'p-charging-robot', 3, r'\approx 0.7071', d12 / (L1.norm() * L2.norm()), 0.7071, 4)
+    stated(I, 'p-charging-robot', 3, r'\approx 42.43', sp.sqrt(1800), 42.43, 2)
+    straight = sp.sqrt(L1.dot(L1) + 2 * d12 + L2.dot(L2))
+    num(I, 'p-charging-robot', 4, straight, np.linalg.norm([9, 8.]),
+        {'no-cross': sp.sqrt(85), 'path': L1.norm() + L2.norm(), 'minus': sp.sqrt(85 - 60), 'no-root': 145}, rel=1e-3)
+    ok(abs(float(straight) - 12.04) <= 0.005, 'robot: 12.04 is the 2 dp value')
+
+    # p-active-bets
+    bw, ww, rr = M([R(5, 10), R(3, 10), R(2, 10)]), M([R(4, 10), R(45, 100), R(15, 100)]), M([R(2, 100), R(-1, 100), R(4, 100)])
+    aa = ww - bw
+    obj(I, 'p-active-bets', 1, aa.T, np.array([0.4, 0.45, 0.15]) - np.array([0.5, 0.3, 0.2]),
+        {'flipped': (-aa).T, 'added': (ww + bw).T})
+    ok(sum(aa) == 0, 'active weights add to 0')
+    ar = aa.dot(rr)
+    num(I, 'p-active-bets', 2, ar, np.dot([0.4, 0.45, 0.15], [0.02, -0.01, 0.04]) - np.dot([0.5, 0.3, 0.2], [0.02, -0.01, 0.04]),
+        {'flipped': -ar, 'fund': ww.dot(rr), 'benchmark': bw.dot(rr)})
+    na = aa.norm()
+    num(I, 'p-active-bets', 3, na, np.linalg.norm([-0.1, 0.15, -0.05]),
+        {'no-root': aa.dot(aa), 'abs-sum': sum(abs(x) for x in aa), 'sum': sum(aa)}, rel=1e-3)
+    nr = rr.norm()
+    ang = deg(float(sp.acos(ar / (na * nr))))
+    num(I, 'p-active-bets', 4, ang, acos_deg_np([-0.1, 0.15, -0.05], [0.02, -0.01, 0.04]),
+        {'acute': 180 - ang, 'radians': math.radians(ang)}, rel=1e-3)
+    ok(abs(deg(math.acos(-0.0055 / (0.1871 * 0.04583))) - 130) < 0.5, 'bets: rounded inputs still give 130')
+    stated(I, 'p-active-bets', 4, r'\approx 0.04583', nr, 0.04583, 5)
+    stated(I, 'p-active-bets', 4, r'\approx -0.6415', ar / (na * nr), -0.6415, 4)
+    ok(aa[1] > 0 and rr[1] < 0 and aa[2] < 0 and rr[2] == max(rr), 'bets: explain names US overweight falling, Japan underweight rising most')
+
+    # p-drone-crosswind
+    dep, wind = M([12, 16]), M([-8, 1])
+    dh = dep / dep.norm()
+    obj(I, 'p-drone-crosswind', 1, dh.T, np.array([12, 16.]) / np.hypot(12, 16),
+        {'not-unit': [[3, 4]], 'swapped': [[R(4, 5), R(3, 5)]], 'whole': [[12, 16]]})
+    along = wind.dot(dh)
+    num(I, 'p-drone-crosswind', 2, along, np.dot([-8, 1.], [0.6, 0.8]),
+        {'sign': -along, 'not-unit': wind.dot(dep), 'three-four': wind.dot(M([3, 4])), 'swapped': wind.dot(M([R(4, 5), R(3, 5)]))})
+    perp_vec = wind - along * dh
+    cross = sp.sqrt(wind.dot(wind) - along ** 2)
+    ok(perp_vec.norm() == cross and perp_vec.dot(dh) == 0, 'drone: crosswind is the perpendicular remainder')
+    num(I, 'p-drone-crosswind', 3, cross, abs(12 * 1. - 16 * -8.) / 20,
+        {'wind-speed': wind.norm(), 'added': sp.sqrt(wind.dot(wind) + along ** 2), 'no-root': cross ** 2}, rel=1e-9)
+    air_along = sp.sqrt(25 ** 2 - cross ** 2)
+    num(I, 'p-drone-crosswind', 4, air_along, np.sqrt(25. ** 2 - 7. ** 2), {'no-cancel': 25, 'subtracted': 25 - cross, 'no-root': air_along ** 2})
+    ground = air_along + along
+    # second route: build the air velocity explicitly and add the wind
+    nhat = np.array([-0.8, 0.6])
+    air = 24 * np.array([0.6, 0.8]) - float(perp_vec.dot(M([-R(4, 5), R(3, 5)]))) * nhat
+    gv = air + np.array([-8, 1.])
+    ok(abs(np.linalg.norm(air) - 25) < 1e-12 and abs(gv @ nhat) < 1e-12, 'drone: air velocity is 25 long and ground track is on the route')
+    num(I, 'p-drone-crosswind', 5, dep.norm() / ground * 60, 20 / np.linalg.norm(gv) * 60,
+        {'no-wind': R(20, 24) * 60, 'tailwind': R(20, 28) * 60, 'air-only': R(20, 25) * 60, 'hours': dep.norm() / ground})
+
+    # p-stress-hedge
+    w0, c, s = M([R(6, 10), R(3, 10), R(1, 10)]), M([R(1, 100), R(-12, 100), R(8, 100)]), M([R(-3, 100), R(4, 100), R(-2, 100)])
+    R1 = w0.dot(c)
+    num(I, 'p-stress-hedge', 1, R1, np.dot([0.6, 0.3, 0.1], [0.01, -0.12, 0.08]), {'unweighted': sum(c), 'equal': sum(c) / 3})
+    h = sp.Symbol('h')
+    move = M([0, -1, 1])
+    hh = sp.solve((w0 + h * move).dot(c), h)[0]
+    hnum = np.linalg.solve(np.array([[np.dot([0, -1, 1.], [0.01, -0.12, 0.08])]]), [-np.dot([0.6, 0.3, 0.1], [0.01, -0.12, 0.08])])[0]
+    num(I, 'p-stress-hedge', 2, hh, hnum,
+        {'sign': -R1 / (c[2] + c[1]), 'gold-only': -R1 / c[2], 'equity-only': -R1 / -c[1]}, rel=1e-9)
+    ok(abs(float(-R1 / (c[2] + c[1])) - (-0.55)) < 1e-12, 'hedge: sign slip is -0.55')
+    w1 = w0 + hh * move
+    ok(w1 == M([R(6, 10), R(19, 100), R(21, 100)]) and sum(w1) == 1 and w1.dot(c) == 0, 'hedge: new weights stated, sum to 1, perpendicular to crash')
+    R2 = w1.dot(s)
+    num(I, 'p-stress-hedge', 3, R2, np.dot([0.6, 0.19, 0.21], [-0.03, 0.04, -0.02]),
+        {'old': w0.dot(s), 'shift-added': w0.dot(s) - hh * move.dot(s)})
+    ok(hh * move.dot(s) == R(-66, 10000), 'hedge: the move costs 0.0066 in the rate rise')
+    R3 = w1.dot((c + s) / 2)
+    num(I, 'p-stress-hedge', 4, R3, np.dot([0.6, 0.19, 0.21], (np.array([0.01, -0.12, 0.08]) + np.array([-0.03, 0.04, -0.02])) / 2),
+        {'unhedged': w0.dot((c + s) / 2), 'no-half': w1.dot(c + s)})
+    ok(abs(float(w0.dot((c + s) / 2))) / abs(float(R3)) > 1.9, 'hedge: roughly halves the central loss')
+
+print(f'{checks} checks, {len(fails)} failures')
+for f in fails:
+    print('FAIL', f)
+sys.exit(1 if fails else 0)
