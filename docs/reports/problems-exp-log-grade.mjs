@@ -50,7 +50,7 @@ const T = [
   [3, 'p-savings-doubling', 4, '6788', true], [3, 'p-savings-doubling', 4, '6787', true], [3, 'p-savings-doubling', 4, '6788.23', true], [3, 'p-savings-doubling', 4, '6786.73', true], [3, 'p-savings-doubling', 4, '6786', false], [3, 'p-savings-doubling', 4, '6790', false],
   [3, 'p-weekly-target', 1, '0.043', true], [3, 'p-weekly-target', 2, '41.76', true], [3, 'p-weekly-target', 2, '41.7575', true], [3, 'p-weekly-target', 2, '41.75', false],
   [3, 'p-weekly-target', 3, '0.0747', true], [3, 'p-weekly-target', 3, '0.0748', true], [3, 'p-weekly-target', 3, '0.07472', true], [3, 'p-weekly-target', 3, '0.0746', false], [3, 'p-weekly-target', 3, '0.0749', false],
-  [3, 'p-weekly-target', 4, '0.0249', true], [3, 'p-weekly-target', 4, '0.02493', true],
+  [3, 'p-weekly-target', 4, '0.0249', true], [3, 'p-weekly-target', 4, '0.02493', true], [3, 'p-weekly-target', 4, '0.02490', true], [3, 'p-weekly-target', 4, '0.024908', true], [3, 'p-weekly-target', 4, '0.0248', false], [3, 'p-weekly-target', 4, '0.0250', false], [3, 'p-weekly-target', 4, '0.0259', false],
   [3, 'p-weekly-target', 5, '2.52', true], [3, 'p-weekly-target', 5, '2.521', true], [3, 'p-weekly-target', 5, '2.51', false], [3, 'p-weekly-target', 5, '0.0249', false], [3, 'p-weekly-target', 5, '2.52%', true], [3, 'p-weekly-target', 5, '2.53', false], [3, 'p-weekly-target', 5, '2.49', false],
   [3, 'p-log-chart-line', 1, '27.47', true], [3, 'p-log-chart-line', 1, '27.47%', true], [3, 'p-log-chart-line', 1, '27.5', false], [3, 'p-log-chart-line', 1, '27.46', false],
   [3, 'p-log-chart-line', 2, '2.52', true], [3, 'p-log-chart-line', 2, '2.5233', true],

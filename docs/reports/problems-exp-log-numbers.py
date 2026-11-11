@@ -391,6 +391,11 @@ def level3():
         asked=0.0249, extra_ok=(0.0748 / 3, ln_b((45 / 41.76) ** (1 / 3)), need / 3))
     w4 = L['p-weekly-target']['parts'][3]['widget']
     ok(w4['answer'] == 0.0249, 'weekly 4: key is 0.0249')
+    # fix pass, delta aa-3 (b1): band 0.0249 +- 0.00005 takes the printed value and the carried roundings, refuses the neighbours
+    ok(w4['tol']['abs'] == 5e-05, 'weekly 4: tol is 0.00005')
+    ok(all(within(v, 0.0249, 5e-05) for v in (0.0249, 0.02490, 0.0747 / 3, 0.074724 / 3, 0.0748 / 3, 0.07472 / 3)), 'weekly 4: takes 0.0249, 0.024900, 0.0249, 0.024908, 0.024933 and 0.024907')
+    ok(not within(0.0248, 0.0249, 5e-05) and not within(0.0250, 0.0249, 5e-05), 'weekly 4: refuses 0.0248 and 0.0250')
+    ok(abs(0.0747 - 3 * 0.0249) < 1e-4 and all(abs(x['value'] - 0.0249) > x['tol']['abs'] + 5e-05 for x in w4['wrong']), 'weekly 4: wrong bands do not meet the answer band')
     simple = ev(sp.exp(sp.Rational(249, 10000)) - 1)  # the question names 0.0249
     num(L, 'p-weekly-target', 5, simple, exp_series(0.0249) - 1,
         {'log-as-simple': 0.0249, 'simple-split': ((45 - 41.76) / 41.76) / 3, 'decimal': 0.0252 / 100, 'e-power': exp_series(0.0249)},

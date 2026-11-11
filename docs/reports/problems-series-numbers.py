@@ -337,20 +337,27 @@ check_numeric('2 plans p5', it[4], 3000 - B21, 3000 - 2000 * (1 - 0.9 ** 21), [1
 P = load(3)
 
 it = P['p-pizza-toppings']['parts']
-tops = range(11)
+# fix pass, delta aa-3 (c1): 18 toppings and a 19th (15 and 16 collided: 43680 is in topic-0.3, 1820 in series/review-2, 560 in counting)
+N = 18
+tops = range(N)
 c4 = sum(1 for _ in itertools.combinations(tops, 4))
-check_numeric('3 pizza p1', it[0], comb(11, 4), c4, [330], {'ordered': 11 * 10 * 9 * 8, 'times': 11 * 4, 'three-orders': 11 * 10 * 9 * 8 // 6})
-c47 = sum(1 for k in (4, 7) for _ in itertools.combinations(tops, k))
-check_numeric('3 pizza p2', it[1], comb(11, 4) + comb(11, 7), c47, [660], {'one-size': comb(11, 4)})
-ok(comb(11, 7) == comb(11, 4) == 330, 'pizza symmetry 330 each')
-c12 = sum(1 for _ in itertools.combinations(range(12), 4))
-with_ham = sum(1 for s_ in itertools.combinations(range(12), 4) if 11 in s_)
-ok(with_ham == comb(11, 3) == 165, 'pizza with ham 165')
-check_numeric('3 pizza p3', it[2], comb(11, 4) + comb(11, 3), c12, [495], {'one-more': 330 + 11, 'doubled': 2 * 330, 'ordered': 12 * 11 * 10 * 9})
-allp = sum(1 for k in range(13) for _ in itertools.combinations(range(12), k))
-row12 = [comb(12, k) for k in range(13)]
-ok(row12[:5] == [1, 12, 66, 220, 495], 'pizza row 12 begins 1, 12, 66, 220, 495')
-check_numeric('3 pizza p4', it[3], sum(row12), allp, [4096], {'no-plain': allp - 1, 'row-eleven': 2 ** 11})
+o4 = N * (N - 1) * (N - 2) * (N - 3)
+ok(comb(N, 4) == o4 // 24 == 3060 and o4 == 73440, 'pizza p1: C(18,4) = 73440 / 24 = 3060')
+check_numeric('3 pizza p1', it[0], comb(N, 4), c4, [3060], {'ordered': o4, 'times': N * 4, 'three-orders': o4 // 6})
+c414 = sum(1 for k in (4, 14) for _ in itertools.combinations(tops, k))
+check_numeric('3 pizza p2', it[1], comb(N, 4) + comb(N, 14), c414, [6120], {'one-size': comb(N, 4)})
+ok(comb(N, 14) == comb(N, 4) == 3060, 'pizza symmetry 3060 each')
+c19 = sum(1 for _ in itertools.combinations(range(N + 1), 4))
+with_ham = sum(1 for s_ in itertools.combinations(range(N + 1), 4) if N in s_)
+ok(with_ham == comb(N, 3) == 816, 'pizza with ham 816 (enumerated, and 18 x 17 x 16 / 6)')
+check_numeric('3 pizza p3', it[2], comb(N, 4) + comb(N, 3), c19, [3876], {'one-more': 3060 + 18, 'doubled': 2 * 3060, 'ordered': 19 * 18 * 17 * 16})
+ok(comb(N + 1, 4) == 19 * 18 * 17 * 16 // 24 == 3876, 'pizza p3: C(19,4) = 93024 / 24 = 3876')
+allp = sum(1 for k in range(N + 2) for _ in itertools.combinations(range(N + 1), k))
+row19 = [comb(N + 1, k) for k in range(N + 2)]
+ok(row19[:5] == [1, 19, 171, 969, 3876], 'pizza row 19 begins 1, 19, 171, 969, 3876')
+ok(comb(19, 2) == 19 * 18 // 2 == 171 and comb(19, 3) == 19 * 18 * 17 // 6 == 969, 'pizza row 19: 171 and 969 by the formula')
+check_numeric('3 pizza p4', it[3], sum(row19), allp, [524288], {'no-plain': allp - 1, 'row-eighteen': 2 ** 18})
+ok(allp == 2 ** 19 == 524288, 'pizza p4: 2^19 = 524288')
 
 def expand(a, b, n):
     """Coefficients of (a + b x)^n by repeated multiplication."""
