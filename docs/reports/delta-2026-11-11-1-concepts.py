@@ -277,7 +277,7 @@ resn = run_py(dict(wd, tests=wd['tests'][:-1]), NAIVE)
 check('notes drive: an independent flat-dict version passes the nine rule tests', all(resn), resn)
 check('notes drive: it also agrees with the solution on a 4,000-step random case', ns1['big_case'](4000) == ns2['big_case'](4000))
 refused = sum(1 for op in eval(wd['tests'][5]['call'][len('run_drive('):-1]) if op[0] == 'mv')
-check('notes drive: feedback test-6 says three refused moves; the test has that many', 'three moves' in it['feedback']['byKey']['test-6'] and refused == 3, 'refused moves in test 6: %d' % refused)
+check('notes drive: feedback test-6 says four refused moves; the test has that many', 'four moves' in it['feedback']['byKey']['test-6'] and refused == 4, 'refused moves in test 6: %d' % refused)
 # size() must not depend on the number of files: time size('/') with 2,000 and 64,000 files
 def size_time(nf):
     d = ns1['NotesDrive']()
