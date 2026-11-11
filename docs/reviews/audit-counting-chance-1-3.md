@@ -78,3 +78,33 @@ Three of this audit's findings sit on sentences the earlier fix pass wrote: find
 ## Engine
 
 - homework-3 `items[2]` (`smallest_n`): the untouched starter is `while ...:` with a body of `...`. `...` is truthy in Python, so the starter loops for ever and fails only when the runner's time limit stops it. A learner who presses Check before typing waits out the limit. The starter-fails gate passes on a timeout as it does on a wrong value. Raised in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fixer, round 1, 11 Nov 2026. Each basis below is the fixer's own, worked independently of the auditor's. Edits are targeted string replacements in `app/content/courses/counting-chance/`; no file was regenerated and no lesson id changed.
+
+1. fixed. Basis: Grimmett and Stirzaker, *Probability and Random Processes*, 1.5: independence is $P(A \cap B) = P(A)P(B)$, equivalently $P(A \mid B) = P(A)$; exact count of the 3 red, 2 blue bag without replacement gives $P(R_2) = \tfrac{3}{5}$ but $P(R_1 R_2) = \tfrac{6}{20} \ne \tfrac{9}{25}$, so "chances never change" is not the criterion.
+2. fixed (graded slip value). Basis: $2{,}598{,}960 - 4(575{,}757) + 6(65{,}780) = 690{,}612$ and $690{,}612 / 2{,}598{,}960 = 0.265726$, so 0.2657 to 4 places. The slip band 0.2656 to 0.2658 stays clear of the key band 0.2636 to 0.2638; the byKey line, key, accept and explain are unchanged and still consistent.
+3. fixed. Basis: as finding 1; ordered pairs of distinct cards give $P(\text{second ace}) = \tfrac{4 \cdot 51}{52 \cdot 51} = \tfrac{1}{13}$ yet $P(\text{both aces}) = \tfrac{12}{2652} = \tfrac{1}{221} \ne \tfrac{1}{169}$. Explain sentence shortened to 18 words for the voice target.
+4. fixed. Basis: as finding 1; restoring the bag makes each draw's chances the same whatever earlier draws gave, which is the conditional form of independence.
+5. fixed. Basis: Grimmett and Stirzaker 1.5, as finding 1; the gloss now says what "independent" means where the product rule is first used.
+6. fixed differently: the auditor's order, with the last sentence kept as "The log suggests about 0.6." to keep the key from growing (validator key-length). Basis: $\sum_{k=6}^{10} \binom{10}{k} = 210 + 120 + 45 + 10 + 1 = 386$, so a fair coin gives 6 or more ups in 10 with chance $\tfrac{386}{1024} \approx 0.377$; the log cannot be the reason counting fails.
+7. fixed. Basis: two dice have 11 unequal totals whose chances are still found by counting the 36 equally likely rolls (Blitzstein and Hwang, *Introduction to Probability*, 1.3, naive definition applied to an equally likely list behind the events).
+8. fixed. Basis: enumeration of 36 rolls: total 7 has 6, total 2 has 1, total 12 has 1, so 7 is six times each but three times the event "2 or 12".
+9. fixed. Basis: the 21 unordered results partition the 36 rolls (6 doubles of chance $\tfrac{1}{36}$, 15 pairs of chance $\tfrac{2}{36}$; $6 + 30 = 36$), so they form a valid sample space that is not equally likely.
+10. fixed. Basis: $10^5 = 100{,}000 < 26^4 = 456{,}976$, so length does not always beat alphabet size.
+11. fixed. Basis: $\binom{13}{4} = 715$ and $\binom{9}{4} = 126$ are 4 places chosen from the 13 and 9 places built for 3 bars; 4 bars would give $\binom{14}{4} = 1{,}001$ and $\binom{10}{4} = 210$.
+12. fixed. Basis: the product $\prod (365 - i)/365$ is the count of injective assignments over $365^n$, valid only for $365^n$ equally likely ordered birthday lists, that is uniform and independent birthdays (Feller, *An Introduction to Probability Theory*, vol. 1, II.3).
+13. fixed differently: the auditor's listing point kept, but the dart is named as the case where every point has chance 0, since the dart screen itself argues by monotonicity and never uses the fractions. Basis: axiom 3 is countable additivity (Billingsley, *Probability and Measure*, section 2); the rationals in $[0, 1]$ are countable and the interval is not (Cantor's diagonal argument), so the axiom sums the former to 0 and says nothing about all points.
+14. fixed. Basis: $P = \text{count} / \binom{52}{5}$ needs the $2{,}598{,}960$ hands equally likely, which a well-shuffled deck gives by symmetry; the four prose lines now say so.
+15. fixed. Basis: Pascal's letter to Fermat of 29 July 1654 records de Méré's objection as the proportion 4 : 6 = 24 : 36, not a sum of chances, which is not a story of losses; the prompt and part (c) now attribute the sum to the method, not to him. Model and rubric unchanged.
+
+Counts: fixed 13, fixed differently 2 (findings 6 and 13), disputed 0. Graded key changed: one slip value (homework-3 `items[5]` two-terms, 0.2658 to 0.2657); no key, option correctness or test changed.
+
+Gates after the fix pass:
+
+- Validator: 0 errors, 4,667 warnings repo-wide (3 more than the audit's figure; one is the prose-length warning on l11 screen 2, which the fuller axiom 3 note now trips); `content/manifest.json` unchanged.
+- Concepts scripts: L1 exit 0 (161 of 161), L2 exit 0 (181 of 181), L3 exit 0 (143 of 143; the finding 2 check now passes, unchanged).
+- Number scripts: `fluency-counting-chance-numbers.py` exit 0 (1,771 checks), `problems-counting-chance-numbers.py` exit 0 (611 of 611). No stated number in them changed.
+- Voice scan at 35 on the course folder: 0 sentences over 35 words, 0 explanations over three sentences.
+- Playthrough with `--local-cdn`, 9 changed lessons and 5 changed sets (homework-1 to 3, review-2, review-3): desktop exit 0, 14 of 14 passed; `--mobile` exit 0, 14 of 14 passed.
