@@ -140,3 +140,13 @@ Round 1, fix commit `df6bdeb7` (13 files, strings only, no key changed). Read bl
 | 25 | review-2 | `items[3].explain.text` | The limit depends on the start because the chain has two closed classes | correct | Classes $\{1, 2\}$ and $\{3\}$; $h = 0.5h + 0.2$ gives 0.4. |
 
 Count: 25 rows; 24 correct, 0 wrong, 1 imprecise (minor, row 13), 0 misleading, 0 unverified.
+
+## Follow-up (fix-pass read)
+
+Row 13, `l4-regimes` `screens[10].feedback.byKey.total`: **fixed** (the reader's wording, applied unchanged). New text: "You added the 4 weeks to the mean. The chain has no memory, so the weeks already spent add nothing to the time still to come."
+
+Basis: the chart's P&L peaks at week 24 (240.5) and falls through weeks 25 to 28, where the series ends. So the shaded 4 weeks include the current week. The question counts this week in the 6.67, giving a total of 3 + 1/0.15 = 9.67, not 4 + 6.67 = 10.67. Recomputed twice: 1/0.15 = 6.6667 by hand and in `python3`. The old line named 10.67 as the total. The new one only names the slip, adding the 4 weeks, which is still what produces 10.67. Slip value, key 6.67 and tolerances unchanged; no number script asserts this line.
+
+Other lines on the screen checked for the same counting slip: `correct` ("as on day one"), `subtract` (2.67 = 6.67 - 4, "the full mean is still to come"), `generic`, the hints and `explain.text` all speak of the time still to come, never a total, so they hold under either reading. No other edit.
+
+Gates: validator 0 errors; voice scan 35 on the markov course 0 and 0; markov number scripts and `markov-L1-3-concepts.py` exit 0; playthrough `--lesson markov/l4-regimes` green desktop and `--mobile` (15 checks, quiz 4/4).
