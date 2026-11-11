@@ -528,7 +528,7 @@ lv.claim(sp.simplify(half ** 2 - (9 - 9 / sp.sqrt(2))) == 0 and round(float(half
 lv.claim(abs(float(water / 2) - float(sp.Rational(81, 16) * sp.pi)) < 1e-12, 'L4 item 1 part 5: half the water is 81 pi / 16')
 
 # ---- item 2 p-drone-landing: f = c exp(-(x^2 + y^2)/32), sigma = 4 (fix pass 1.3 c: was /8, which repeated lesson l16's e^{-x^2/8})
-K32, S4 = 32, 4
+K32, S4, RAD = 32, 4, 6
 one = sp.integrate(sp.exp(-x ** 2 / K32), (x, -sp.oo, sp.oo))
 num(lv, 2, 0, one, si.quad(lambda q: math.exp(-q * q / K32), -np.inf, np.inf)[0], {'no-scale': sp.sqrt(sp.pi), 'inverted': sp.sqrt(sp.pi) / (4 * sp.sqrt(2)),
                                                                                     'sigma-root32': sp.sqrt(K32) * sp.sqrt(2 * sp.pi)}, printed=(10.0265,))
@@ -540,15 +540,16 @@ c_d = 1 / plane
 lv.claim(abs(float(c_d) * si.dblquad(lambda yy, xx: math.exp(-(xx * xx + yy * yy) / K32), -80, 80, -80, 80)[0] - 1) < 1e-8, 'L4 item 2 part 3: c times a dblquad of the plane is 1')
 expr(lv, 2, 2, c_d, {'not-inverted': plane, 'from-root': 1 / one, 'carried': 1 / sp.pi})
 say(lv, 2, 2, 'explain.text', round(float(c_d), 4))
-p2 = c_d * 2 * sp.pi * sp.integrate(sp.exp(-R ** 2 / K32) * R, (R, 0, S4))
+p2 = c_d * 2 * sp.pi * sp.integrate(sp.exp(-R ** 2 / K32) * R, (R, 0, RAD))
 pts = rng.normal(0, S4, size=(2_000_000, 2))
-mc2 = float(np.mean((pts ** 2).sum(axis=1) <= S4 ** 2))
-num(lv, 2, 3, p2, mc2, {'r-not-squared': 1 - sp.exp(-sp.Rational(S4, K32)), 'no-2pi': p2 / (2 * sp.pi), 'outside': 1 - p2}, printed=(0.3935,), agree=2e-3)
-lv.claim(sp.simplify(p2 - (1 - sp.exp(-sp.Rational(1, 2)))) == 0 and sp.simplify(sp.integrate(sp.exp(-R ** 2 / K32) * R, (R, 0, S4)) - 16 * (1 - sp.exp(-sp.Rational(1, 2)))) == 0, 'L4 item 2 part 4: the chance is 1 - e^(-1/2); the radial integral is 16 (1 - e^(-1/2))')
+mc2 = float(np.mean((pts ** 2).sum(axis=1) <= RAD ** 2))
+num(lv, 2, 3, p2, mc2, {'r-not-squared': 1 - sp.exp(-sp.Rational(RAD, K32)), 'no-2pi': p2 / (2 * sp.pi), 'outside': 1 - p2}, printed=(0.6753,), agree=2e-3)
+lv.claim(abs(float(c_d) * si.dblquad(lambda yy, xx: math.exp(-(xx * xx + yy * yy) / K32), -RAD, RAD, lambda xx: -math.sqrt(RAD ** 2 - xx * xx), lambda xx: math.sqrt(RAD ** 2 - xx * xx))[0] - float(p2)) < 1e-8, 'L4 item 2 part 4: a Cartesian double integral of the density over the disc agrees with the closed form')
+lv.claim(sp.simplify(p2 - (1 - sp.exp(-sp.Rational(9, 8)))) == 0 and sp.simplify(sp.integrate(sp.exp(-R ** 2 / K32) * R, (R, 0, RAD)) - 16 * (1 - sp.exp(-sp.Rational(9, 8)))) == 0, 'L4 item 2 part 4: the chance is 1 - e^(-9/8); the radial integral is 16 (1 - e^(-9/8))')
 a90 = sp.sqrt(K32 * sp.log(10))
 num(lv, 2, 4, a90, bisect(lambda q: 1 - math.exp(-q * q / K32) - 0.9, 0, 20), {'no-root': K32 * sp.log(10), 'tail-swap': sp.sqrt(K32 * sp.log(sp.Rational(10, 9))), 'log10': sp.sqrt(K32)}, printed=(8.58,))
 lv.claim(round(float(K32 * sp.log(10)), 2) == 73.68 and round(math.log(10), 4) == 2.3026, 'L4 item 2 part 5: 32 ln 10 = 73.68, ln 10 = 2.3026')
-lv.claim(round(float(p2) * 100) == 39 and 2 < float(a90) / S4 < 2.5, 'L4 item 2 part 5: the explanation says 39% and a little more than doubles (8.58 / 4 = 2.15)')
+lv.claim(round(float(p2) * 100) == 68 and 1 < float(a90) / RAD < 1.5, 'L4 item 2 part 5: the explanation says 68% and growth by under a half (8.58 / 6 = 1.43)')
 lv.claim(round(float(a90), 2) == 8.58 and round(float(sp.sqrt(K32 * sp.log(sp.Rational(10, 9)))), 2) == 1.84 and round(float(sp.sqrt(K32)), 2) == 5.66, 'L4 item 2 part 5: key 8.58 and wrong values 1.84 and 5.66')
 import glob  # noqa: E402
 lv.claim(not [g for g in glob.glob(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'multivar', '*.json')) if f'/{K32}}}' in open(g).read() and 'problems-4' not in g],
