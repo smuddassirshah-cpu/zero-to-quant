@@ -503,8 +503,12 @@ lv.claim(abs(si.dblquad(lambda yy, xx: 0.75 * xx * yy ** 2, 0, 1, 0, lambda xx: 
 say(lv, 0, 1, 'feedback.correct', 8 / 6)
 
 # ---- item 1 p-corner-sprinkler: d = 9 - (x^2 + y^2) on the quarter disc of radius 3
-expr(lv, 1, 0, sp.sqrt(9 - x ** 2), {'straight': 3 - x, 'no-root': 9 - x ** 2})
-lv.claim(sp.solve(sp.Eq(x ** 2 + y ** 2, 9), y) == [-sp.sqrt(9 - x ** 2), sp.sqrt(9 - x ** 2)], 'L4 item 1 part 1: the edge solved for y')
+# fix pass 1.3 c: part 1 is now the depth in polar, d = 9 - r^2 (the strip limit it replaced fed no later part)
+depth_r = sp.simplify((9 - (x ** 2 + y ** 2)).subs({x: R * sp.cos(TH), y: R * sp.sin(TH)}))
+lv.claim(sp.simplify(depth_r - (9 - R ** 2)) == 0, 'L4 item 1 part 1: x^2 + y^2 = r^2 in polar, so d = 9 - r^2')
+expr(lv, 1, 0, 9 - R ** 2, {'r-not-squared': 9 - R, 'with-r': (9 - R ** 2) * R})
+lv.claim(9 - 0 == 9 and 9 - 3 ** 2 == 0, 'L4 item 1 part 1: the depth is 9 mm at the sprinkler and 0 at r = 3')
+lv.claim('Using the depth $9 - r^2$ from part 1' in lv.files['problems-4']['items'][1]['parts'][1]['question'], 'L4 item 1 part 2: restates the depth from part 1')
 integrand = sp.expand((9 - R ** 2) * R)
 expr(lv, 1, 1, integrand, {'no-r': 9 - R ** 2, 'r-not-squared': (9 - R) * R})
 inner_r = sp.integrate(integrand, (R, 0, 3))
@@ -523,27 +527,32 @@ lv.claim(sp.simplify(sp.integrate(integrand, (R, 0, aa)) - (81 - (9 - aa ** 2) *
 lv.claim(sp.simplify(half ** 2 - (9 - 9 / sp.sqrt(2))) == 0 and round(float(half ** 2), 3) == 2.636, 'L4 item 1 part 5: a^2 = 9 - 9/sqrt2 = 2.636')
 lv.claim(abs(float(water / 2) - float(sp.Rational(81, 16) * sp.pi)) < 1e-12, 'L4 item 1 part 5: half the water is 81 pi / 16')
 
-# ---- item 2 p-drone-landing: f = c exp(-(x^2 + y^2)/8)
-one = sp.integrate(sp.exp(-x ** 2 / 8), (x, -sp.oo, sp.oo))
-num(lv, 2, 0, one, si.quad(lambda q: math.exp(-q * q / 8), -np.inf, np.inf)[0], {'no-scale': sp.sqrt(sp.pi), 'inverted': sp.sqrt(sp.pi) / (2 * sp.sqrt(2)),
-                                                                                 'sigma-root8': sp.sqrt(8) * sp.sqrt(2 * sp.pi)}, printed=(5.0133,))
-lv.claim(sp.simplify(one - sp.sqrt(8 * sp.pi)) == 0, 'L4 item 2 part 1: the integral is sqrt(8 pi)')
-plane = sp.integrate(sp.exp(-R ** 2 / 8) * R, (R, 0, sp.oo)) * 2 * sp.pi
-lv.claim(sp.simplify(plane - one ** 2) == 0, 'L4 item 2 part 2: polar 2 pi x 4 equals the square of part 1')
+# ---- item 2 p-drone-landing: f = c exp(-(x^2 + y^2)/32), sigma = 4 (fix pass 1.3 c: was /8, which repeated lesson l16's e^{-x^2/8})
+K32, S4 = 32, 4
+one = sp.integrate(sp.exp(-x ** 2 / K32), (x, -sp.oo, sp.oo))
+num(lv, 2, 0, one, si.quad(lambda q: math.exp(-q * q / K32), -np.inf, np.inf)[0], {'no-scale': sp.sqrt(sp.pi), 'inverted': sp.sqrt(sp.pi) / (4 * sp.sqrt(2)),
+                                                                                    'sigma-root32': sp.sqrt(K32) * sp.sqrt(2 * sp.pi)}, printed=(10.0265,))
+lv.claim(sp.simplify(one - sp.sqrt(K32 * sp.pi)) == 0 and sp.simplify(one - 4 * sp.sqrt(2 * sp.pi)) == 0, 'L4 item 2 part 1: the integral is sqrt(32 pi) = 4 sqrt(2 pi)')
+plane = sp.integrate(sp.exp(-R ** 2 / K32) * R, (R, 0, sp.oo)) * 2 * sp.pi
+lv.claim(sp.simplify(plane - one ** 2) == 0 and sp.simplify(plane - 32 * sp.pi) == 0, 'L4 item 2 part 2: polar 2 pi x 16 equals the square of part 1, 32 pi')
 expr(lv, 2, 1, one ** 2, {'not-squared': one, 'doubled': 2 * one, 'carried': sp.pi})
 c_d = 1 / plane
-lv.claim(abs(float(c_d) * si.dblquad(lambda yy, xx: math.exp(-(xx * xx + yy * yy) / 8), -40, 40, -40, 40)[0] - 1) < 1e-8, 'L4 item 2 part 3: c times a dblquad of the plane is 1')
+lv.claim(abs(float(c_d) * si.dblquad(lambda yy, xx: math.exp(-(xx * xx + yy * yy) / K32), -80, 80, -80, 80)[0] - 1) < 1e-8, 'L4 item 2 part 3: c times a dblquad of the plane is 1')
 expr(lv, 2, 2, c_d, {'not-inverted': plane, 'from-root': 1 / one, 'carried': 1 / sp.pi})
 say(lv, 2, 2, 'explain.text', round(float(c_d), 4))
-p2 = c_d * 2 * sp.pi * sp.integrate(sp.exp(-R ** 2 / 8) * R, (R, 0, 2))
-pts = rng.normal(0, 2, size=(2_000_000, 2))
-mc2 = float(np.mean((pts ** 2).sum(axis=1) <= 4))
-num(lv, 2, 3, p2, mc2, {'r-not-squared': 1 - sp.exp(-sp.Rational(2, 8)), 'no-2pi': p2 / (2 * sp.pi), 'outside': 1 - p2}, printed=(0.3935,), agree=2e-3)
-lv.claim(sp.simplify(p2 - (1 - sp.exp(-sp.Rational(1, 2)))) == 0, 'L4 item 2 part 4: the chance is 1 - e^(-1/2)')
-a90 = sp.sqrt(8 * sp.log(10))
-num(lv, 2, 4, a90, bisect(lambda q: 1 - math.exp(-q * q / 8) - 0.9, 0, 10), {'no-root': 8 * sp.log(10), 'tail-swap': sp.sqrt(8 * sp.log(sp.Rational(10, 9))), 'log10': sp.sqrt(8)}, printed=(4.29,))
-lv.claim(round(float(8 * sp.log(10)), 2) == 18.42 and round(math.log(10), 4) == 2.3026, 'L4 item 2 part 5: 8 ln 10 = 18.42, ln 10 = 2.3026')
-lv.claim(round(float(p2) * 100) == 39, 'L4 item 2 part 5: the explanation says 39%')
+p2 = c_d * 2 * sp.pi * sp.integrate(sp.exp(-R ** 2 / K32) * R, (R, 0, S4))
+pts = rng.normal(0, S4, size=(2_000_000, 2))
+mc2 = float(np.mean((pts ** 2).sum(axis=1) <= S4 ** 2))
+num(lv, 2, 3, p2, mc2, {'r-not-squared': 1 - sp.exp(-sp.Rational(S4, K32)), 'no-2pi': p2 / (2 * sp.pi), 'outside': 1 - p2}, printed=(0.3935,), agree=2e-3)
+lv.claim(sp.simplify(p2 - (1 - sp.exp(-sp.Rational(1, 2)))) == 0 and sp.simplify(sp.integrate(sp.exp(-R ** 2 / K32) * R, (R, 0, S4)) - 16 * (1 - sp.exp(-sp.Rational(1, 2)))) == 0, 'L4 item 2 part 4: the chance is 1 - e^(-1/2); the radial integral is 16 (1 - e^(-1/2))')
+a90 = sp.sqrt(K32 * sp.log(10))
+num(lv, 2, 4, a90, bisect(lambda q: 1 - math.exp(-q * q / K32) - 0.9, 0, 20), {'no-root': K32 * sp.log(10), 'tail-swap': sp.sqrt(K32 * sp.log(sp.Rational(10, 9))), 'log10': sp.sqrt(K32)}, printed=(8.58,))
+lv.claim(round(float(K32 * sp.log(10)), 2) == 73.68 and round(math.log(10), 4) == 2.3026, 'L4 item 2 part 5: 32 ln 10 = 73.68, ln 10 = 2.3026')
+lv.claim(round(float(p2) * 100) == 39 and 2 < float(a90) / S4 < 2.5, 'L4 item 2 part 5: the explanation says 39% and a little more than doubles (8.58 / 4 = 2.15)')
+lv.claim(round(float(a90), 2) == 8.58 and round(float(sp.sqrt(K32 * sp.log(sp.Rational(10, 9)))), 2) == 1.84 and round(float(sp.sqrt(K32)), 2) == 5.66, 'L4 item 2 part 5: key 8.58 and wrong values 1.84 and 5.66')
+import glob  # noqa: E402
+lv.claim(not [g for g in glob.glob(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'multivar', '*.json')) if f'/{K32}}}' in open(g).read() and 'problems-4' not in g],
+         'L4 item 2: no other multivar file has an exponent over 32')
 
 lv.check_wrongs('problems')
 results.append(lv)

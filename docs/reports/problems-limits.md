@@ -66,7 +66,7 @@ problems-4 and problems-5: 0 hits at the gate. At triage settings 2 hits, both t
 
 Where a part follows a value that a learner may round, the tolerance takes the rounded routes: p-gas-season part 3 states $s'(3) = -0.05\pi$ exactly, and its band of 0.02 accepts $5 + 215 \times (-0.157) = -28.755$ as well as $-28.77$ (checked in the script). p-perpetuity-slope part 2 asks for the nearest whole number and its band of 0.5 takes both $-2041$ and the exact $-2040.82$.
 
-Sets 4 and 5: p-barbell-hedge part 4 asks the nearest pound; its band of 0.5 takes 42.81 and 43, and leaves out 45, the curvature estimate that level 4 does not teach (checked). The printed terms carry 5 places so that they add to the printed 0.04281. p-spread-quote part 5 takes 8.33 from the rounded slope 33.33 (band 0.006). p-camera-pan part 4 asks 1 place; its band of 0.05 takes 15.68 and 15.7. p-impact-curve part 4 asks the nearest share; its band of 0.5 takes 324.61 and 325.
+Sets 4 and 5: p-barbell-hedge part 4 asks the nearest pound; its band of 0.5 takes 42.81 and 43, and leaves out 45, the second-order estimate $\tfrac12 V''(0)u^2$, which has its own `wrong` line (fix pass 1.3 c); the question now asks for each term to 5 places. The printed terms carry 5 places so that they add to the printed 0.04281. p-spread-quote part 5 takes 8.33 from the rounded slope 33.33 (band 0.006). p-camera-pan part 4 asks 1 place; its band of 0.05 takes 15.68 and 15.7. p-impact-curve part 4 asks the nearest share; its band of 0.5 takes 324.61 and 325.
 
 ## Engine limits
 
