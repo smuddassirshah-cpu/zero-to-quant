@@ -97,3 +97,41 @@ Neither earlier review raised the summary `trap` lines, the "at least one" proto
 ## Engine
 
 - No engine fault found. Three tool items are raised in `docs/BACKLOG-INBOX.md` under "Raised later (audit conditional)".
+
+## Fix pass
+
+Opus fixer, round 1, 11 Nov 2026. Every finding was re-derived before editing; edits are targeted string replacements in the content JSON. No graded key changed value: finding 18 rewords the text of the correct option in l15 screens[6] (id `right`, still the key), and its feedback, hints and the other options' `why` lines stay consistent with it.
+
+1. fixed. Basis: BH 2.2 (the "at least one boy" against "a randomly met child" examples); by enumeration, a yes to the question "at least one 5?" leaves 11 of 36 cells, while a random die reported as 5 gives 1/6. screens[3] and screens[4] prose now state the question and the yes; the `why` and `byKey` lines are unchanged.
+2. fixed. Basis: as 1; a yes to "did at least one rise?" leaves 3 of 4 outcomes, a randomly named riser gives 1/2.
+3. fixed. Basis: as 1; the yes to the question leaves 15 of 64 cells, a randomly reported die gives 1/8.
+4. fixed. Basis: as 1; each of the three items now states a yes-or-no question, which makes the event itself the news and keeps the keys.
+21. fixed differently: kept the order of the two statements and swapped the counts ("The first leaves 11 outcomes; the second leaves 6."). Basis: enumeration, 11 cells hold at least one 5 and 6 cells have a first die of 5. The L1 check now also requires the corrected text.
+5. fixed. Basis: GS 1.4 Definition (1) takes $P(A \cap B)/P(B)$ as the definition; dividing counts by 36 only shows it agrees with counting when outcomes are equally likely.
+6. fixed differently: the 0.52 is now "the stock closes above your limit price" on a typical day, with the `byKey.unconditional` line to match; explain left as it is. Basis: a fill is at the limit price, so profit at the close is the event "close above the limit"; 0.45 and 0.52 are then that one event given a fill and unconditionally, which is the adverse-selection comparison.
+7. fixed. Basis: GS 1.4 Lemma (4) needs a partition; die counterexample, $H_1$ even and $H_2$ at most 3 with evidence "a 2": the formula gives $\tfrac{1/6}{1/3} = \tfrac12$, the truth is 1.
+8. fixed. Basis: false positives outnumber true ones exactly when $f(1-b) > hb$; with $b = 0.01$, $h = 0.9$, $f = 0.001$ the true positives are 0.009 against 0.00099, so rarity alone is not enough.
+9. fixed. Basis: BH 2.3 odds form; the likelihood ratio 18 is the same in both clinics, only the posterior needs the base rate.
+10. fixed differently: "The gain in probability changes as the start moves, but the arrow does not." Basis: gain $g(p) = \tfrac{18p}{1+17p} - p$ has $g' = 0$ at $(1+17p)^2 = 18$, $p \approx 0.191$; $g(0.01) \approx 0.144$, $g(0.5) \approx 0.447$, so it rises then falls and "shrinks near 50%" is not the pattern.
+11. fixed. Basis: BH 2.5; likelihood ratios multiply when signals are independent given the hypothesis and given its negation. l11 screens[0] now says "errs independently of the first, both with and without the condition", matching l11 screens[7] (slightly reworded from the audit's text).
+12. fixed. Basis: two 70% analysts whose errors never coincide cannot both be wrong, so when they agree both are right: agreement is conclusive, worth more than two independent votes.
+13. fixed. Basis: $P(A \mid B) = P(B \mid A)$ iff $P(A \cap B)\,(P(A) - P(B)) = 0$, given both conditions positive.
+14. fixed. Basis: posterior odds $= \tfrac{h}{f} \cdot \tfrac{b}{1-b}$; $f/h = 0.001$, $b = 0.01$ gives odds $1000/99$, posterior about 0.91.
+15. fixed differently: the prompt keeps $P(E) > 0$ and adds $P(E \mid \neg H) > 0$ (rather than replacing the first condition); model part (a) and rubric[0] state the same condition. Points unchanged. Basis: the division needs $P(\neg H \mid E) = P(E \mid \neg H)P(\neg H)/P(E) > 0$; $P(E \mid \neg H) = 0$ with $P(H) = 0.5$ meets the old prompt and makes the divisor 0.
+16. fixed. Basis: BH Def. 2.5.1 and GS 1.5; $P(A \mid B) = P(A)$ is defined only when $P(B) > 0$, and $P(B \mid A \cap C)$ only when $P(A \cap C) > 0$.
+17. fixed. Basis: Binomial(10, 0.55), my own computation: $P(X \ge 7) = 0.2660$, $P(X = 7) = 0.1665$.
+18. fixed. Basis: with $t = P(ABC)$, pairwise independence at $\tfrac12$ forces each of the eight atoms to be $t$ or $\tfrac14 - t$, so $0 \le t \le \tfrac14$; the lesson's coins ($\tfrac14$) and "coins differ" (0) are the two ends. Option text of the key changed; id, key and feedback unchanged.
+19. fixed. Basis: if $P(E \mid a, b) = f(a)g(b)$ with $A$, $B$ independent, the posterior over $(a, b)$ factorises; checked numerically ($P(A \cap B \mid E) = P(A \mid E)P(B \mid E) = 0.4461$ for one choice of $f$, $g$).
+22. fixed. Basis: the sector model's own numbers: weighting first gives marginals 0.5 and a product 0.25, multiplying inside each branch then weighting gives 0.34 (the L3 script recomputes both). The L3 check now also requires the corrected text.
+23. fixed. Basis: l17 screens[5]: $0.2 \times 0.3222 + 0.8 \times 0.0002 = 0.0646$; the unweighted sum 0.3224 is not the tail.
+20. fixed. Basis: Hull OFOD ch. 25 (one-factor Gaussian copula for CDO tranches, with a correlation parameter) and Li (2000); the explain line now names 0.0115 as the independent model's figure, ratio $0.0646/0.0115 \approx 5.62$.
+
+Also: problems-3 items[3].prose had one sentence of 38 words; split at the colon so the voice gate passes on the changed file.
+
+Totals: fixed 19, fixed differently 4 (6, 10, 15, 21), disputed 0.
+
+Gates:
+- Validator from `app/`: 0 errors, 4,664 warnings; `content/manifest.json` unchanged.
+- Concept scripts: L1 exit 0 (145 checks), L2 exit 0 (165), L3 exit 0 (155). Number scripts: `conditional-2-perf-numbers.py`, `fluency-conditional-numbers.py`, `problems-conditional-numbers.py` all exit 0. The checks for findings 21 and 22 were tightened to require the new wording.
+- Voice scan 35 on the course folder: 0 sentences over 35 words, 0 explanations over three sentences.
+- Playthrough with `--local-cdn` of the 17 changed files (11 lessons, review-1, review-2, homework-1, homework-2, problems-1 and problems-3 with `--problems`), desktop and `--mobile`: All passed, exit 0 both.
