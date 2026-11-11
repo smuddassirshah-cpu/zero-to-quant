@@ -1,6 +1,6 @@
 # Problem sets: quadratics (brief `docs/briefs/chained.md`)
 
-Files: `app/content/courses/quadratics/problems-1.json` to `problems-3.json`. Numbers: `docs/reports/problems-quadratics-numbers.py` (exits 0, 634 checks).
+Files: `app/content/courses/quadratics/problems-1.json` to `problems-4.json`. Numbers: `docs/reports/problems-quadratics-numbers.py` (exits 0, 857 checks with level 4; 634 for levels 1 to 3).
 
 ## Sets
 
@@ -53,3 +53,41 @@ Read by hand against the course's lessons, quizzes, reviews, homework and `topic
 ## Engine limits
 
 One bullet to `docs/BACKLOG-INBOX.md` under "Raised later (problems quadratics)": `form: "expanded"` takes an uncollected expansion, the second course to want an expanded-and-simplified form.
+
+## Level 4
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-park-pond | 5 (5 / 0) | l14, l18, l19 | 5 |
+| problems-4 | p-windy-ride | 5 (5 / 0) | l15, l16 | 4 |
+| problems-4 | p-storage-crate | 5 (5 / 0) | l15, l17 | 4 |
+
+Typed parts: 15 of 15. Every lesson of the level appears in at least one problem and every problem draws on at least two. Skills: `quad-rational` (l14 to l17), `quad-solve` and `quad-graph` (l16, l18, l19).
+
+Park pond: the radius from the centre $(-2, 3)$ to a lamp post at $(4, 11)$ (10 m), the circle's equation, where the path $y = x + 7$ crosses (a numeric set, 4 and $-10$), the path's length in the pond as $a\sqrt{2}$ (14), then the $c > 0$ for which $y = x + c$ is a tangent, from the discriminant ($5 + 10\sqrt{2} \approx 19.14$). Windy ride: 16 km out at $v$ and 9 km home at $v - 2$; the top over $v(v - 2)$ ($25v - 32$), both roots of the 3.5-hour equation (8 and $\tfrac{8}{7}$, to 2 dp), the speed out once $\tfrac{8}{7}$ is rejected, the time home over the time out as one fraction ($\tfrac{9v}{16(v - 2)}$), then its value at $v = 8$ (0.75). Storage crate: $V(-2) = 0$ for $V(x) = x^3 + 4x^2 + x - 6$, the quotient by $(x + 2)$, the full factorisation, the height $\tfrac{V(x)}{x^2 + 5x + 6} = x - 1$, then the volume at a height of 2.5 m (89.375).
+
+Each later part restates what it uses ("Using $(x + 2)^2 + (y - 3)^2 = 100$", "Using $v = 8$ or $v = \tfrac{8}{7}$", "Using $V(x) = (x + 2)(x + 3)(x - 1)$"), and carries a `wrong` for the answer that follows from the commonest slip before it: the crossing points from the centre's signs flipped ($-0.26$ and $-7.74$), the roots from the top $25v - 18$ (8.54 and 0.60), and the ratio at the rejected root ($-0.75$).
+
+### Checks
+
+| check | problems-4 |
+|---|---|
+| numbers script | 0 failures (223 new checks; 857 for the four sets). Two methods each part: sympy against a whole-number search, the grid of the circle, the rational search $\tfrac{k}{7}$ for the roots, the distance $\tfrac{c - 5}{\sqrt{2}} = 10$ for the tangent, the remainder by long division, floats for the volume; the circle part is checked as an equation (ratio of the two sides a non-zero constant) |
+| validator | 0 errors, no warning on the file (4,664 in all, as before) |
+| playthrough `--local-cdn` | green (15 parts) |
+| playthrough `--mobile` | green; 440 px shots of every part read, no fault |
+| voice scan 35 (course folder) | 0 and 0 |
+| grader probe | 27 typed strings through `grade.js` `exprGrade` with the local Compute Engine (scratch script, not committed): the circle in either order and expanded passes, each named slip routes to its key, and the unexpanded top, the factorised quotient, the unfinished factorisation and both uncancelled heights return `form`. The one gap: the division typed back in windy ride part 4 passes (inbox) |
+
+### Review 4 faults avoided
+
+- No rule stated without its reason: the tangent comes from the discriminant (l19), the root rejected because the speed home would be negative, the cancelling from factorising the base.
+- Each 2 dp part has `tol` 0.005 on the unrounded key, which takes the printed 19.14 and 1.14; the expression parts accept the expanded circle and reordered forms, and `form` refuses an unfinished factorisation or an uncancelled height.
+
+### Fresh-check
+
+0 hits at the gate and at `--min-run 8 --min-share 0`. One advisory: the formula $x^2 + 5x + 6$ also opens l15 (`screens[1]`), as the top of the hook fraction; here it is the crate's base, the product $(x + 2)(x + 3)$ of two factors of $V$. A stock quadratic, judged acceptable. Read by hand: l18 measures from $(1, 2)$ to $(4, 6)$, so the pond uses $(-2, 3)$ to $(4, 11)$; l19 meets $x^2 + y^2 = 25$ with $y = x + 1$ ($x^2 + x - 12$), here $x^2 + 6x - 40$; l16 has a share bought with equal sums of money, here a ride; l17's cubics have roots $\{1, -2, 3\}$ and $\{1, 2, -3\}$, the crate $\{1, -2, -3\}$.
+
+### Engine limits
+
+One bullet to `docs/BACKLOG-INBOX.md` under "Raised later (fluency and problems quadratics 4)": a part that asks for a ratio of two algebraic fractions in simplest form (windy ride part 4) also accepts the division typed back unsimplified.
