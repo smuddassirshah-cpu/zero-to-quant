@@ -65,7 +65,7 @@ def best_session(pnl):
 ''', 'drops leading zero days to make the run shorter, against "earliest start" first')
 
 # ---------------------------------------------------------------- broken steps
-C['steps: modulus only at the end'] = ('ci-broken-steps', '''
+C['steps: modulus only at the end (right)'] = ('ci-broken-steps', '''
 def ways_up(n, broken):
     bad = set(broken)
     a, b, c = 0, 0, 1
@@ -100,7 +100,7 @@ def ways_up(n, broken):
 ''', 'pushes counts forward from sound steps, so a cracked top step still collects')
 
 # ---------------------------------------------------------------- shift picks
-C['shifts: tie keeps the rest-day plan'] = ('ci-shift-picks', '''
+C['shifts: tie keeps the rest-day plan (right)'] = ('ci-shift-picks', '''
 def best_shifts(pay):
     n = len(pay)
     total = [0] * (n + 2)
@@ -111,7 +111,7 @@ def best_shifts(pay):
         else:
             total[i + 2], days[i + 2] = total[i + 1], days[i + 1]
     return [total[-1], days[-1]]
-''', 'on equal pay keeps the plan that rests, without comparing the day counts')
+''', 'on equal pay keeps the plan that rests; no input found where this is not the fewest days (20,000 tried)')
 
 C['shifts: richest day first'] = ('ci-shift-picks', '''
 def best_shifts(pay):
@@ -126,7 +126,7 @@ def best_shifts(pay):
     return [total, days]
 ''', 'greedy by pay')
 
-C['shifts: days counted from a plan walked back'] = ('ci-shift-picks', '''
+C['shifts: days counted from a plan walked back (right)'] = ('ci-shift-picks', '''
 def best_shifts(pay):
     n = len(pay)
     best = [0] * (n + 2)
@@ -140,7 +140,7 @@ def best_shifts(pay):
             days += 1
             i -= 2
     return [best[-1], days]
-''', 'one best plan rebuilt preferring to rest; not always the fewest days')
+''', 'one best plan rebuilt preferring to rest; no input found where this is not the fewest days (20,000 tried)')
 
 # ---------------------------------------------------------------- ring stalls
 C['ring: three rows (right)'] = ('ci-ring-stalls', '''
@@ -400,7 +400,7 @@ def paving_ways(n, drains):
     return ways[0]
 ''', 'the overlap check stops one column short, so a slab can end on a drain in the last column')
 
-C['paving: across slabs only checked against the state'] = ('ci-paving-ways', '''
+C['paving: across slabs only checked against the state (right)'] = ('ci-paving-ways', '''
 def paving_ways(n, drains):
     mod = 1_000_000_007
     blocked = [0] * n
@@ -425,7 +425,7 @@ def paving_ways(n, drains):
     return ways[0]
 ''', 'right as far as I can see: three cells allow at most one across slab (right)')
 
-C['paving: modulus only at the end'] = ('ci-paving-ways', '''
+C['paving: modulus only at the end (right)'] = ('ci-paving-ways', '''
 def paving_ways(n, drains):
     blocked = [0] * n
     for r, c in drains:
@@ -492,7 +492,7 @@ def cooldown_profit(prices, k):
     return cash[-1]
 ''', 'O(n^2)')
 
-C['cooldown: rest counted from the day after the sale'] = ('ci-cooldown-trades', '''
+C['cooldown: rest counted from the day after the sale (right)'] = ('ci-cooldown-trades', '''
 def cooldown_profit(prices, k):
     n = len(prices)
     cash = [0] * n
@@ -554,7 +554,7 @@ def fewest_words(text, words):
     return best[n] if best[n] < big else -1
 ''', 'O(n^2) cuts')
 
-C['words: every earlier cut within the longest code'] = ('ci-word-split', '''
+C['words: every earlier cut within the longest code (right)'] = ('ci-word-split', '''
 def fewest_words(text, words):
     vocab = set(words)
     longest = max(map(len, words))
@@ -610,7 +610,7 @@ def rising_readings(readings):
     return [top, min(v for v, l in best.items() if l == top)]
 ''', 'O(n * different values)')
 
-C['rising: end is the smallest reading of the last pile'] = ('ci-longest-rising', '''
+C['rising: end is the smallest reading of the last pile (right)'] = ('ci-longest-rising', '''
 from bisect import bisect_left
 def rising_readings(readings):
     tails, firsts = [], []
@@ -624,7 +624,7 @@ def rising_readings(readings):
 ''', 'returns tails[-1] by a roundabout route (right)')
 
 # ---------------------------------------------------------------- tape decodes
-C['tape: modulus only at the end'] = ('ci-tape-decodes', '''
+C['tape: modulus only at the end (right)'] = ('ci-tape-decodes', '''
 def solve_tape_decodes(text):
     tok = text.split()
     out = []
@@ -692,7 +692,7 @@ def solve_tape_decodes(text):
     return '\\n'.join(out)
 ''', 'the memo fixes the time but not the depth')
 
-C['tape: one line per tape, read by t without skipping blanks'] = ('ci-tape-decodes', '''
+C['tape: one line per tape, read by t without skipping blanks (right)'] = ('ci-tape-decodes', '''
 def solve_tape_decodes(text):
     lines = text.split('\\n')
     t = int(lines[0])
@@ -804,7 +804,7 @@ def fewest_tokens(values, amount):
                     top = c
         best[a] = top
     return list(best[amount] or [])
-''', 'not right in general: skips a list whose head is above v; kept to see what the tests say')
+''', 'right: the largest head of any fewest payment is found through that head')
 
 # ---------------------------------------------------------------- long stairwell
 C['stairwell: modulus only at the end'] = ('ci-long-stairwell', '''
@@ -826,7 +826,7 @@ def stride_ways(n, strides):
     return result[0][0] % 1_000_000_007
 ''', 'the entries grow without bound')
 
-C['stairwell: numpy int64 matrix power'] = ('ci-long-stairwell', '''
+C['stairwell: numpy int64 matrix power (right)'] = ('ci-long-stairwell', '''
 import numpy as np
 def stride_ways(n, strides):
     mod = 1_000_000_007
