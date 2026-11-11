@@ -156,3 +156,74 @@ Gates after the fix (worktree at `323619ba`):
 - Playthroughs with `--local-cdn`, desktop and `--mobile`: lessons l1, l3, l4, l8, l9, l10, l11, l12, l13 and sets homework-1, homework-2, homework-3. 24 of 24 "All passed", 0 browser relaunches.
 
 For the fix-pass read: the two `after` keys are wider than the audit proposed for homework-2 (limit-first is also accepted), and U1 replaces the book attribution with the origin of the term rather than keeping Crack.
+
+## Fix-pass read
+
+Blind read of `git diff 323619ba~1 323619ba -- app/content/courses/mm-games` by a fresh reader who has not seen the audit, its ledgers or the reviews. The commit touches 12 files (l1, l3, l4, l8 to l13, homework-1 to 3; no review file changed), 53 changed JSON leaves. Each changed string was read with its whole screen or item. Numbers were recomputed in Python; the two `order` keys were enumerated over all 326 arrangements (every ordered subset of the five lines) with a port of `orderOk` and `late` from `app/js/engine/widgets/order.js` (`after` set, no `same`, so the rule is: exactly the four answer lines, each after all its named predecessors).
+
+| # | file | JSON path | claim (short) | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-1 | items[5].feedback.generic | Add units and tens digits of 1 to 99, then the digit sum of 100 | correct | Derivation: digits 0 to 99 sum to 2 × 10 × 45 = 900; 100 adds 1; 901. |
+| 2 | homework-1 | items[5].explain.text | 100 adds its digit sum of 1; fair value 901/100 = 9.01 | correct | Same derivation: 900 + 1 = 901, over 100 equally likely draws. |
+| 3 | homework-2 | items[0].prose | Hidden tests deal four seeded games, plus the mock round and edge cases | correct | Counted `tests`: `make_script` seeds 1, 2, 3, 7 (four), the mock script (sell 2, 3, buy 1, 11, 9), four edge cases; 9 in all, matching `how`. |
+| 4 | homework-2 | items[2].widget.after | skew after info; requote after info, skew, limit | correct | Enumeration: 3 of 326 accepted (info-skew-limit-requote, info-limit-skew-requote, limit-info-skew-requote). Under the course rule m = F − γq (l12 screens[7]) these are exactly the valid orders: 0 valid rejected, 0 invalid accepted. `answer` satisfies the rules. |
+| 5 | homework-2 | items[2].feedback.correct | Fair value before skew, quote last, limit check anywhere before the quote | correct | Matches the key as the engine applies it (row 4). |
+| 6 | homework-2 | items[2].feedback.generic | Fair value before the skew; the quote last | correct | Matches the key; l12 screens[7] says F, then q, then m. |
+| 7 | homework-2 | items[2].explain.text | "The skew is set from that fair value and the new position" | imprecise | m = F − γq: the size of the skew, γq, depends on the position alone; only the skewed centre needs F. See finding 1. The other two sentences are correct. |
+| 8 | homework-2 | items[5].widget.wrong[0].value | Slip 21.0784 | correct | Key: 14 + (364 − 14)/50 = 21. Slip: 14 + 361/51 = 21.0784, the last card priced at the deck mean after the first card only (the jack not removed). A real slip (361/51 is the per-card mean of the step before), outside the key's tolerance, and not an answer under any valid method. |
+| 9 | homework-2 | items[5].feedback.byKey.first | Used 361/51; two cards have left, so the last card averages 350/50 | correct | (364 − 3)/51 = 361/51; (364 − 14)/50 = 7. |
+| 10 | homework-3 | items[0].prose | Extends the card game coded in the quoting homework; four seeded scripts and edge cases | correct | Level 2 is named "Quoting" in `course.json` and its homework item 0 is `play`. Counted `tests`: seeds 1, 2, 3, 7 (four) and four edge cases; 8, matching `how`. |
+| 11 | homework-3 | items[2].widget.after | quote after pos, bank, hedge | correct | Enumeration: 6 of 326 accepted, the six orders of the three checks followed by the quote. The checks are independent (limit room, bankroll against stake, hedge availability), so those six are exactly the valid orders: 0 valid rejected, 0 invalid accepted. |
+| 12 | homework-3 | items[2].feedback.correct | Three risk checks in any order, then the quote | correct | Matches row 11. |
+| 13 | homework-3 | items[2].explain.text | No check needs another's answer, so any order works; quote last | correct | Each check reads a different input (position, bankroll, hedge market); agrees with `feedback.generic`. |
+| 14 | homework-3 | items[3].prompt | The full game is in this level's last lesson | correct | `course.json`: level 3 ends with l13 "A full game with a partner"; cards 4, 6, 5, width 4, limit 3, skew 0.5 match l13. |
+| 15 | homework-3 | items[10].explain.text | Win chance the same as with £1 bets, fewer bets; ruin 1.8% to 40.1% | correct | Gambler's ruin (Feller vol. 1, ch. XIV): r = 9/11, (r² − r⁴)/(1 − r⁴) = 81/202 = 0.40099; £1 stakes 0.01775. |
+| 16 | l1 | screens[7].feedback.byKey.none | Never missing, round after round, is the sign of ranges too wide | correct | A hit rate above p over many rounds is over-wide by the screen's own definition of calibration. |
+| 17 | l1 | screens[7].explain.text | Missing none hints at too wide but is not proof; chance about 12% | correct | 0.9^20 = 0.1216. |
+| 18 | l3 | screens[3].prose | An interviewer may set a width rule | correct | Hedged statement of possibility; 6 to 8 spans three totals. |
+| 19 | l3 | screens[6].explain.text | "Avoid both mistakes." | correct | Instruction, no claim; agrees with the two distractor lines. |
+| 20 | l4 | screens[2].prose | The name Fermi estimate comes from the physicist Enrico Fermi, known for such guesses | correct | Standard attribution: Fermi's Trinity blast-yield estimate and his "piano tuners in Chicago" classroom problems (Weinstein and Adam, *Guesstimation*, introduction). |
+| 21 | l4 | screens[3].prose (sentence 3) | The estimating-products trick is in Mental Maths Under Pressure | correct | `mental-pressure/course.json`: the course name matches and l7 is "Estimating products". No lesson number cited. |
+| 22 | l4 | screens[3].prose (sentence 1, unchanged, inside the changed string) | "Interviewers want the order of magnitude first." | unverified | A generalisation about all interviewers with no source; the same commit hedged the like lines in l3 and l12. See finding 2. |
+| 23 | l4 | screens[10].explain.text | The next level gives a two-sided price and moves it after a trade | correct | `course.json` level 2: l5 "A two-sided price", l7 "Moving after a trade". |
+| 24 | l8 | screens[4].explain.text | Narrowing earns less from each random trader and loses more to informed ones | correct | Half-width 2, 1.5, 1; informed loss 1/6, 1/3, 2/3 on a die; averages 0.9167, 0.5833, 0.1667 recomputed. |
+| 25 | l8 | quiz[0].feedback.generic | Without information, quote a plain two-sided market around fair | correct | Agrees with the key (3 at 4 around 3.5) and the explain. |
+| 26 | l9 | screens[4].explain.text | Short 1, lean a little higher, as the skewing lesson showed | correct | m = F − γq with q = −1 raises the centre; l7 teaches the skew (38 uses of the word). |
+| 27 | l9 | screens[7].explain.text | Remove both kings, not one; 338/50 = 6.76, fair 32.76 | correct | 364 − 26 = 338; 26 + 6.76 = 32.76. |
+| 28 | l10 | screens[5].title | "Bigger stakes, same coin" | correct | p = 0.55 at every stake on the screen. |
+| 29 | l10 | screens[5].widget.options[3].why | Edge per pound staked is the same; the number of bets is not | correct | Edge per £1 at evens is 2p − 1 = 0.1 at any stake; edge per bet scales with the stake. |
+| 30 | l10 | screens[5].feedback.byKey.same | Same text as row 29 | correct | As row 29. |
+| 31 | l10 | screens[5].explain.text | Ruin 1.8%, 40.1%, 45%; the win chance never changed, only bet size against bankroll | correct | Ruin formula: 0.01775, 0.40099, 0.45. |
+| 32 | l10 | screens[6].explain.text | Peak g = 0.0201 at f = 0.2; growth falls past it, negative near f = 0.39 | correct | g(f) = 0.6 ln(1 + f) + 0.4 ln(1 − f): g(0.2) = 0.020136; root by bisection at f = 0.3894 (Kelly 1956). |
+| 33 | l10 | screens[9].feedback.byKey.edge | At evens f* is the whole edge p − (1 − p) = 0.1 | correct | f* = p − (1 − p)/b with b = 1. The screen now uses q only for position. |
+| 34 | l10 | screens[9].explain.text | Kelly at evens is 0.55 − 0.45 = 0.1 | correct | As row 33. |
+| 35 | l10 | screens[10].explain.text | `kelly_stake` is max(0, p − (1 − p)/b) times bankroll; win chance the same in each run | correct | Matches the solution code and the three `ruin_sim` tests (p = 0.55). |
+| 36 | l11 | screens[3].prose | h = 1.0 is the minimum-variance hedge; it removes ρ² of A's variance and any other h removes less | correct | Hull, *Options, Futures and Other Derivatives*, ch. 3 (minimum variance hedge ratio): h* = ρσA/σB = 0.8 × 2/1.6 = 1; variance left (1 − ρ²)σA². |
+| 37 | l11 | quiz[3].explain.text | At h = 2 you are in effect net short £1 of B plus the part of A that B cannot hedge | correct | A = 1.0·B + e with e uncorrelated with B, var(e) = 1.44; A − 2B = −B + e; variance 2.56 + 1.44 = 4. |
+| 38 | l12 | screens[5].widget.options[3].why | An interviewer may simply move on | correct | Hedged possibility; no generalisation. |
+| 39 | l12 | screens[9].prose | A market-making round can open like this | correct | Hedged possibility; short 3 at 8 against fair 7 is +£3. |
+| 40 | l13 | screens[0].explain.text | Same inventory skew as before; 19.5 at 23.5 | correct | Centre 21 − 0.5 × (−1) = 21.5, ± 2. |
+| 41 | l13 | quiz[0].question | Why did the bid sit as high as 16 | correct | Lesson rule: centre = fair − 0.5q rounded to 0.5, width 4. Skewed: 17.08 + 1 = 18.08, rounds to 18, bid 16, ask 20. Unskewed: 17.08 rounds to 17, bid 15. |
+| 42 | l13 | quiz[0].widget.options[0].text | Key: the short, through the skew, lifted the bid | correct | Row 41: 16 against 15. Uniquely right. |
+| 43 | l13 | quiz[0].widget.options[1].text and .why | Distractor: an unskewed bid would be 16 too. Why: it would be 15, 2 below the rounded fair of 17 | correct | The option is false and the why is exact (row 41). |
+| 44 | l13 | quiz[0].widget.options[2].why | The model cannot see what the interviewer knows; the bid moved for the short | correct | The quoting rule takes fair and position only; the option is false as a reason for the bid. |
+| 45 | l13 | quiz[0].widget.options[3].why | Short 2 was inside the limit of 3; the skew moved the bid | correct | Limit 3 in l13; the limit does not enter the centre. |
+| 46 | l13 | quiz[0].feedback.correct | The short lifted the bid | correct | Row 41. |
+| 47 | l13 | quiz[0].explain.text | Centre up 1 for short 2, bid 16 not 15; 1.08 of edge at fair 17.08; £1 lost against the true 15 was the last card | correct | 17.08 − 16 = 1.08; cards 4, 6, 5 sum to 15, so the buy at 16 lost £1; the last card was 5 against a mean of 7.08. Agrees with l13's "Turn 6 was an inventory trade" and homework-3's rubric step +9.34 to +10.42. |
+
+Verdict counts: 47 rows. correct 45, wrong 0, imprecise 1, misleading 0, unverified 1.
+
+Other checks, all clean on the changed strings: British English; no exclamation marks; no em-dashes; longest changed sentence 22 words; every changed explanation has at most three sentences; no lesson or level cited by number ("the next level", "this level's last lesson", "the quoting homework", "the skewing lesson"). Notation: after the change l10 uses q only for position (L − q, L + q) and writes the losing chance as 1 − p throughout; no symbol is used for two things in any changed screen.
+
+Recomputations asked for:
+- homework-2 `items[2]`: 3 orders accepted of 326 arrangements; no valid order rejected and no invalid order accepted under m = F − γq. If "skew" is read as only the shift γq, the three orders with skew before info give the same quote and are rejected; finding 1 fixes the wording so the key's reading is the stated one.
+- homework-3 `items[2]`: 6 orders accepted of 326; exactly the valid set.
+- homework-2 `items[5]`: key 21 = 14 + 350/50. `wrong[0]` 21.0784 = 14 + 361/51 is a real slip (jack not removed from the deck) and not correct under any valid method.
+- l13 `quiz[0]`: unskewed bid 15, skewed bid 16, edge 1.08; the keyed option is right and uniquely right, each distractor is false, and the explain agrees.
+- Seeded games: homework-2 has four (seeds 1, 2, 3, 7) of 9 tests; homework-3 has four of 8.
+
+Findings:
+
+1. homework-2.json | items[2].explain.text | imprecise | minor | The second sentence says the skew is "set from that fair value". The size of the skew depends on the position alone; it is the skewed centre that needs the fair value. As written the reason for marking skew-before-information wrong is loose. | m = F − γq (l12 screens[7]); enumeration shows the three skew-before-info orders are rejected, which is right only on the skewed-centre reading. | Replace the explain text with: "A trade first changes what the number is likely to be, so the fair value moves. The skewed centre is that fair value moved for the new position, short 3, so it comes second. The limit check needs only the position, so it can come anywhere before the quote, which goes last."
+
+2. l4-fermi.json | screens[3].prose | imprecise | minor | "Interviewers want the order of magnitude first" is an unsourced generalisation about all interviewers, left in a string this commit edited; the like lines in l3 and l12 were hedged. Ledger verdict `unverified`. | No source in the lesson; the lesson summary already gives it as advice ("say the power of ten first"). | Replace the prose with: "Say the order of magnitude first. Round each factor to one significant figure and count powers of ten: $5 \\times 10^2$, $2 \\times 10^1$ and $8$. This is the estimating-products trick from Mental Maths Under Pressure." (in the JSON the backslashes stay doubled as shown).
