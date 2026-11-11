@@ -442,6 +442,134 @@ def solve_mirror_pieces(text):
 VALID["ci-mirror-pieces"] = v_mirror
 INDEP["ci-mirror-pieces"] = solve_mirror_pieces
 
+# ---- ci-three-feed-common
+def _is_sub(s, t):
+    it = iter(t)
+    return all(ch in it for ch in s)
+
+def three_feed_common(a, b, c):
+    short = min((a, b, c), key=len)
+    if len(short) <= 12:                     # every subsequence of the shortest string
+        best = 0
+        for mask in range(1 << len(short)):
+            s = "".join(short[i] for i in range(len(short)) if mask >> i & 1)
+            if len(s) > best and _is_sub(s, a) and _is_sub(s, b) and _is_sub(s, c):
+                best = len(s)
+        return best
+    @lru_cache(maxsize=None)
+    def f(i, j, k):                          # from the front, remembered
+        if i == len(a) or j == len(b) or k == len(c):
+            return 0
+        if a[i] == b[j] == c[k]:
+            return 1 + f(i + 1, j + 1, k + 1)
+        return max(f(i + 1, j, k), f(i, j + 1, k), f(i, j, k + 1))
+    r = f(0, 0, 0)
+    f.cache_clear()
+    return r
+
+VALID["ci-three-feed-common"] = lambda a: None
+INDEP["ci-three-feed-common"] = three_feed_common
+
+# ---- ci-even-desks
+def v_desks(a):
+    assert len(a["skills"]) % 2 == 0, "even number of traders"
+
+def even_desks(skills):
+    n, m, total = len(skills), len(skills) // 2, sum(skills)
+    if n <= 16:                              # every first desk
+        return min(abs(total - 2 * sum(p)) for p in combinations(skills, m))
+    reach = [set() for _ in range(m + 1)]    # sets of totals per count
+    reach[0].add(0)
+    for x in skills:
+        for c in range(m, 0, -1):
+            reach[c] |= {s + x for s in reach[c - 1]}
+    return min(abs(total - 2 * s) for s in reach[m])
+
+VALID["ci-even-desks"] = v_desks
+INDEP["ci-even-desks"] = even_desks
+
+# ---- ci-merged-tape
+def merge_ways(a, b, tape):
+    n, m = len(a), len(b)
+    if n + m != len(tape):
+        return 0
+    if n + m <= 14:                          # every choice of the positions that go to a
+        return sum(1 for pos in combinations(range(n + m), n)
+                   if "".join(tape[p] for p in pos) == a
+                   and "".join(tape[p] for p in range(n + m) if p not in set(pos)) == b) % MOD
+    # from the end: suf[i][j] = ways to make tape[i+j:] from a[i:] and b[j:]
+    suf = [[0] * (m + 1) for _ in range(n + 1)]
+    suf[n][m] = 1
+    for i in range(n, -1, -1):
+        for j in range(m, -1, -1):
+            if i == n and j == m:
+                continue
+            ch = tape[i + j]
+            v = 0
+            if i < n and a[i] == ch:
+                v += suf[i + 1][j]
+            if j < m and b[j] == ch:
+                v += suf[i][j + 1]
+            suf[i][j] = v % MOD
+    return suf[0][0]
+
+VALID["ci-merged-tape"] = lambda a: None
+INDEP["ci-merged-tape"] = merge_ways
+
+# ---- ci-light-cargo
+def v_cargo(a):
+    assert len(a["weights"]) == len(a["values"]), "equal lengths"
+
+def light_cargo(weights, values, cap):
+    n = len(weights)
+    if n <= 14:                              # every subset
+        best = 0
+        for mask in range(1 << n):
+            idx = [i for i in range(n) if mask >> i & 1]
+            if sum(weights[i] for i in idx) <= cap:
+                best = max(best, sum(values[i] for i in idx))
+        return best
+    front = [(0, 0)]                         # Pareto list of (weight, value), weight rising, value rising
+    for w, v in zip(weights, values):
+        merged = sorted(front + [(fw + w, fv + v) for fw, fv in front if fw + w <= cap])
+        front = []
+        for fw, fv in merged:
+            if not front or fv > front[-1][1]:
+                if front and front[-1][0] == fw:
+                    front.pop()
+                front.append((fw, fv))
+    return front[-1][1]
+
+VALID["ci-light-cargo"] = v_cargo
+INDEP["ci-light-cargo"] = light_cargo
+
+# ---- ci-smooth-orderings
+def smooth_orderings(sizes, d):
+    n = len(sizes)
+    if n <= 8:                               # every distinct arrangement
+        return sum(1 for p in set(permutations(sizes)) if all(abs(x - y) <= d for x, y in zip(p, p[1:])))
+    # orders of the individual orders, then divide by the shuffles of equal sizes
+    ways = [[0] * n for _ in range(1 << n)]
+    for i in range(n):
+        ways[1 << i][i] = 1
+    for sent in range(1 << n):
+        for last in range(n):
+            w = ways[sent][last]
+            if w:
+                for j in range(n):
+                    if not sent >> j & 1 and abs(sizes[last] - sizes[j]) <= d:
+                        ways[sent | 1 << j][j] += w
+    shuffles = 1
+    for c in Counter(sizes).values():
+        for t in range(2, c + 1):
+            shuffles *= t
+    total = sum(ways[-1])
+    assert total % shuffles == 0
+    return total // shuffles
+
+VALID["ci-smooth-orderings"] = lambda a: None
+INDEP["ci-smooth-orderings"] = smooth_orderings
+
 # ======================= slow plants =======================
 # planted solutions that are right but too slow (always the last entry): (drill id, index)
 SLOW_PLANTED = {("ci-trace-count", 3), ("ci-mirror-pieces", 3), ("ci-three-feed-common", 2), ("ci-even-desks", 2),

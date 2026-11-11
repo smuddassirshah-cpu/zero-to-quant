@@ -1,0 +1,157 @@
+{
+  "id": "ci-three-feed-common",
+  "name": "What three feeds share",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "dp-2d",
+    "three-feed-common"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2040,
+  "fn": "three_feed_common",
+  "returns": "an integer",
+  "brief": "Three surveillance feeds record a trader's actions as strings of lower-case letters, one letter per action. An analyst wants the longest run of actions that appears, in order, in all three feeds, where the actions need not sit next to each other.\n\nWrite `three_feed_common(a, b, c)`, which returns the length of the longest string that is a subsequence of `a`, of `b` and of `c`. A subsequence keeps the order of the letters but may skip any of them.\n\nExample. For `'buyhold'`, `'bidsold'` and `'bolds'`, the string `'bold'` keeps its order in all three, and no five letters do. The answer is 4.",
+  "constraints": [
+    "Each string holds $0$ to $50$ lower-case letters.",
+    "$O(n_a n_b n_c)$ time is the target. Recursing on the three ends without remembering answers is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "a",
+      "type": "str",
+      "len": [
+        0,
+        50
+      ],
+      "pattern": "[a-z]*"
+    },
+    {
+      "arg": "b",
+      "type": "str",
+      "len": [
+        0,
+        50
+      ],
+      "pattern": "[a-z]*"
+    },
+    {
+      "arg": "c",
+      "type": "str",
+      "len": [
+        0,
+        50
+      ],
+      "pattern": "[a-z]*"
+    }
+  ],
+  "hint": "Extend the two-string table by one dimension: cell `(i, j, k)` holds the answer for the first `i`, `j` and `k` letters. Only the layer for `i - 1` is needed to fill the layer for `i`.",
+  "starter": "def three_feed_common(a, b, c):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "three_feed_common('buyhold', 'bidsold', 'bolds')",
+      "expect": "4",
+      "compare": "equal",
+      "note": "`'bold'` skips `uyh` in the first feed, `ids` in the second and the `s` in the third."
+    },
+    {
+      "call": "three_feed_common('ab', 'ba', 'b')",
+      "expect": "1",
+      "compare": "equal",
+      "note": "The first two share `'a'` or `'b'`, and only `'b'` is in the third, so the answer is 1."
+    }
+  ],
+  "tests": [
+    {
+      "call": "three_feed_common('', 'abc', 'abc')",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('q', 'q', 'q')",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('q', 'q', 'r')",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('xyz', 'xyz', 'xyz')",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('abc', 'bca', 'cab')",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('acbd', 'abdc', 'adcb')",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('aab', 'abb', 'bab')",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('sell', 'less', 'else')",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('xbcxx', 'bcyyy', 'zbzcz')",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('xyx', 'xxyzy', 'xxxxz')",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common(''.join('ab'[(i * i + i) % 5 % 2] for i in range(50)), ''.join('ab'[(i * 3 + 1) % 7 % 2] for i in range(50)), ''.join('ab'[(i * i * i) % 3 % 2] for i in range(50)))",
+      "expect": "38",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common(''.join('abc'[(i * 7) % 11 % 3] for i in range(50)), ''.join('abc'[(i * i) % 13 % 3] for i in range(50)), ''.join('abc'[(i * 5 + 2) % 9 % 3] for i in range(50)))",
+      "expect": "27",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('ab' * 25, 'ba' * 25, 'a' * 25 + 'b' * 25)",
+      "expect": "25",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method recurses on the three ends without remembering answers, branching three ways at every mismatch, so it runs out of time on strings of 50 letters. The step to the target is a three-dimensional table filled once per cell. Unlike the longest common subsequence of two strings, a third string is added, and solving two of them first and then the third does not work.",
+  "solution": "def three_feed_common(a, b, c):\n    nb, nc = len(b), len(c)\n    prev = [[0] * (nc + 1) for _ in range(nb + 1)]\n    for x in a:\n        cur = [[0] * (nc + 1)]\n        for j in range(1, nb + 1):\n            y = b[j - 1]\n            up, diag, left = prev[j], prev[j - 1], cur[j - 1]\n            row = [0]\n            for k in range(1, nc + 1):\n                if x == y == c[k - 1]:\n                    row.append(diag[k - 1] + 1)\n                else:\n                    row.append(max(up[k], left[k], row[k - 1]))\n            cur.append(row)\n        prev = cur\n    return prev[nb][nc]\n",
+  "notes": [
+    "When the last letters of all three strings agree, keeping that letter is never worse, as with two strings.",
+    "A longest common subsequence of two of the strings need not contain a best one for all three, so the strings cannot be merged two at a time.",
+    "The table has $(n_a + 1)(n_b + 1)(n_c + 1)$ cells, each filled in $O(1)$, so the work is $O(n_a n_b n_c)$."
+  ],
+  "planted": [
+    {
+      "code": "def three_feed_common(a, b, c):\n    def common(s, t):\n        best = [[''] * (len(t) + 1) for _ in range(len(s) + 1)]\n        for i in range(1, len(s) + 1):\n            for j in range(1, len(t) + 1):\n                if s[i - 1] == t[j - 1]:\n                    best[i][j] = best[i - 1][j - 1] + s[i - 1]\n                else:\n                    best[i][j] = max(best[i - 1][j], best[i][j - 1], key=len)\n        return best[len(s)][len(t)]\n\n    return len(common(common(a, b), c))\n",
+      "slip": "Taking one longest common subsequence of the first two and matching it with the third can keep the wrong letters."
+    },
+    {
+      "code": "def three_feed_common(a, b, c):\n    def common(s, t):\n        prev = [0] * (len(t) + 1)\n        for x in s:\n            cur = [0]\n            for j, y in enumerate(t):\n                cur.append(prev[j] + 1 if x == y else max(prev[j + 1], cur[j]))\n            prev = cur\n        return prev[-1]\n\n    return min(common(a, b), common(b, c), common(a, c))\n",
+      "slip": "The smallest of the three pairwise answers can be more than any string all three share."
+    },
+    {
+      "code": "def three_feed_common(a, b, c):\n    def best(i, j, k):\n        if i == len(a) or j == len(b) or k == len(c):\n            return 0\n        if a[i] == b[j] == c[k]:\n            return 1 + best(i + 1, j + 1, k + 1)\n        return max(best(i + 1, j, k), best(i, j + 1, k), best(i, j, k + 1))\n\n    return best(0, 0, 0)\n",
+      "slip": "Recursing on the three ends without remembering answers is right but branches three ways at every mismatch."
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "id": "ci-even-desks",
+  "name": "Two desks of equal size",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "dp-2d",
+    "even-desks"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2040,
+  "fn": "even_desks",
+  "returns": "an integer",
+  "brief": "A firm splits `2m` new traders between two desks of exactly `m` traders each. Each trader has a score in `skills`, and a desk's strength is the total of its scores. The firm wants the two desks as even as possible.\n\nWrite `even_desks(skills)`, which returns the smallest possible difference between the strengths of the two desks.\n\nExample. For `[1, 2, 3, 10]`, putting 10 alone on a desk would give strengths of 10 and 6, but each desk needs two traders. The closest split is `[1, 10]` against `[2, 3]`, so the answer is 6.",
+  "constraints": [
+    "An even number of traders from $2$ to $40$, with scores from $1$ to $1{,}000$.",
+    "$O(n \\cdot m \\cdot \\sum s)$ bit operations is the target. Trying every choice of `m` traders is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "skills",
+      "type": "list",
+      "len": [
+        2,
+        40
+      ],
+      "of": "int",
+      "range": [
+        1,
+        1000
+      ]
+    }
+  ],
+  "hint": "Keep, for each count `c` from 0 to `m`, the set of totals that `c` traders can reach. A Python integer with bit `s` set for each reachable total `s` makes adding a trader one shift and one OR per count.",
+  "starter": "def even_desks(skills):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "even_desks([1, 2, 3, 10])",
+      "expect": "6",
+      "compare": "equal",
+      "note": "Without the rule on numbers, `[10]` against `[1, 2, 3]` would differ by 4."
+    },
+    {
+      "call": "even_desks([7, 3, 5, 4, 2, 9])",
+      "expect": "0",
+      "compare": "equal",
+      "note": "`[3, 5, 7]` and `[2, 4, 9]` both total 15."
+    }
+  ],
+  "tests": [
+    {
+      "call": "even_desks([40, 15])",
+      "expect": "25",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([8, 8])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([5, 5, 5, 5])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([1, 1, 1, 9])",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([10, 9, 8, 1, 1, 1])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([6, 5, 4, 3, 3, 3])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([1000, 1, 1, 1, 1, 1, 1, 1])",
+      "expect": "999",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([12, 7, 7, 5, 4, 4, 3, 2])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([(i * 37) % 101 + 1 for i in range(20)])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([(i * i * 13) % 997 + 1 for i in range(40)])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([(i * 389) % 1000 + 1 for i in range(39)] + [1000])",
+      "expect": "12",
+      "compare": "equal"
+    },
+    {
+      "call": "even_desks([2 * ((i * 71) % 500) + 1 for i in range(38)] + [1000, 2])",
+      "expect": "0",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The obvious method tries every choice of `m` traders for the first desk, and $\\binom{40}{20}$ is about 138 billion, so it runs out of time. The step to the target is to keep the totals each count of traders can reach, which is a knapsack table with a count in it. Unlike splitting into two equal totals, the desks must also have equal numbers of traders, so the table carries the count as a second dimension.",
+  "solution": "def even_desks(skills):\n    m = len(skills) // 2\n    total = sum(skills)\n    reach = [0] * (m + 1)       # bit s of reach[c] is set when c traders can total s\n    reach[0] = 1\n    for x in skills:\n        for c in range(m, 0, -1):\n            reach[c] |= reach[c - 1] << x\n    sums = reach[m]\n    return min(abs(total - 2 * s) for s in range(total + 1) if sums >> s & 1)\n",
+  "notes": [
+    "Keep, for each count of traders, every total that count can reach, then read the totals for `m` traders.",
+    "A plain subset-sum split ignores the count and can put more traders on one desk.",
+    "Each trader updates `m` sets of at most $\\sum s$ totals, so the work is $O(n \\cdot m \\cdot \\sum s)$ bit operations, done a machine word at a time."
+  ],
+  "planted": [
+    {
+      "code": "def even_desks(skills):\n    total = sum(skills)\n    reach = 1\n    for x in skills:\n        reach |= reach << x\n    return min(abs(total - 2 * s) for s in range(total + 1) if reach >> s & 1)\n",
+      "slip": "A plain subset-sum split forgets that both desks need `m` traders."
+    },
+    {
+      "code": "def even_desks(skills):\n    m = len(skills) // 2\n    desks = [[], []]\n    for x in sorted(skills, reverse=True):\n        lighter = 0 if sum(desks[0]) <= sum(desks[1]) else 1\n        if len(desks[lighter]) == m:\n            lighter = 1 - lighter\n        desks[lighter].append(x)\n    return abs(sum(desks[0]) - sum(desks[1]))\n",
+      "slip": "Giving each next-strongest trader to the weaker desk is a greedy that an exact split beats."
+    },
+    {
+      "code": "from itertools import combinations\n\ndef even_desks(skills):\n    m = len(skills) // 2\n    total = sum(skills)\n    return min(abs(total - 2 * sum(pick)) for pick in combinations(skills, m))\n",
+      "slip": "Trying every choice of `m` traders is right but makes $\\binom{2m}{m}$ choices."
+    }
+  ]
+}

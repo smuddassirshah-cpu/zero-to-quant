@@ -1,0 +1,162 @@
+{
+  "id": "ci-light-cargo",
+  "name": "Heavy parcels, small values",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "light-cargo"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2520,
+  "fn": "light_cargo",
+  "returns": "an integer",
+  "brief": "An aircraft takes cargo up to `cap` kilograms. Parcel `i` weighs `weights[i]` kilograms and is worth `values[i]` points to the airline, and each parcel goes whole or not at all. The weights run into the millions, but the values are small.\n\nWrite `light_cargo(weights, values, cap)`, which returns the largest total value the aircraft can carry.\n\nExample. For weights `[600000, 450000, 500000]`, values `[7, 4, 5]` and `cap = 1000000`, the first parcel is too heavy to pair with either of the others. The second and third weigh 950,000 kilograms together and are worth 9, which beats 7, so the answer is 9.",
+  "constraints": [
+    "$1 \\le n \\le 80$ parcels, weights from $1$ to $10^9$ kilograms, values from $1$ to $30$, and $1 \\le$ `cap` $\\le 10^9$.",
+    "$O(n \\cdot \\sum v)$ time is the target. A knapsack table over weight, with `cap + 1` cells, is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "weights",
+      "type": "list",
+      "len": [
+        1,
+        80
+      ],
+      "of": "int",
+      "range": [
+        1,
+        1000000000
+      ]
+    },
+    {
+      "arg": "values",
+      "type": "list",
+      "len": [
+        1,
+        80
+      ],
+      "of": "int",
+      "range": [
+        1,
+        30
+      ]
+    },
+    {
+      "arg": "cap",
+      "type": "int",
+      "range": [
+        1,
+        1000000000
+      ]
+    }
+  ],
+  "hint": "Swap the roles of weight and value. Let `lightest[t]` be the least weight that makes a value of exactly `t`, update it for each parcel from the largest `t` down, and return the largest `t` whose weight fits.",
+  "starter": "def light_cargo(weights, values, cap):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "light_cargo([600000, 450000, 500000], [7, 4, 5], 1000000)",
+      "expect": "9",
+      "compare": "equal",
+      "note": "The two lighter parcels together are worth more than the most valuable one alone."
+    },
+    {
+      "call": "light_cargo([30, 50, 51], [3, 5, 5], 101)",
+      "expect": "10",
+      "compare": "equal",
+      "note": "By value per kilogram the first two come first, worth 8, but the last two weigh 101 kilograms and are worth 10."
+    }
+  ],
+  "tests": [
+    {
+      "call": "light_cargo([5], [3], 4)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([5], [3], 5)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([1], [30], 1)",
+      "expect": "30",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([40, 41, 60], [4, 4, 6], 100)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([10], [7], 35)",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([(i * 7919) % 40000 + 1000 for i in range(80)], [(i * 13) % 30 + 1 for i in range(80)], 1500000)",
+      "expect": "1213",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([2, 3, 4], [1, 1, 1], 1000000000)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([999999999, 999999999], [30, 29], 1000000000)",
+      "expect": "30",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([500000000, 500000000, 1], [10, 10, 1], 1000000000)",
+      "expect": "20",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([(i * 104729) % 900000000 + 10000000 for i in range(80)], [(i * 17) % 30 + 1 for i in range(80)], 1000000000)",
+      "expect": "1219",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([(i * i * 31337) % 1000000000 + 1 for i in range(80)], [30 - i % 7 for i in range(80)], 999999937)",
+      "expect": "1251",
+      "compare": "equal"
+    },
+    {
+      "call": "light_cargo([1000000000] * 80, [30] * 80, 999999999)",
+      "expect": "0",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The obvious method is the usual knapsack table over weight, with `cap + 1` cells updated for every parcel, which runs out of time and memory when `cap` is in the millions. The step to the target is a table over value, which has at most $80 \\times 30 + 1$ cells. Unlike the usual 0/1 knapsack, the weights are huge and the values small, which is what makes the value the right index.",
+  "solution": "def light_cargo(weights, values, cap):\n    top = sum(values)\n    lightest = [0] + [cap + 1] * top      # cap + 1 stands for \"cannot be made within cap\"\n    for w, v in zip(weights, values):\n        if w > cap:\n            continue\n        for t in range(top, v - 1, -1):\n            load = lightest[t - v] + w\n            if load < lightest[t]:\n                lightest[t] = load\n    return max(t for t in range(top + 1) if lightest[t] <= cap)\n",
+  "notes": [
+    "With small values, the table runs over total value and holds the lightest load that makes it.",
+    "A table over weight needs `cap + 1` cells, which is out of reach when `cap` is near $10^9$.",
+    "The table has $\\sum v + 1$ cells and each parcel updates each cell once, so the work is $O(n \\cdot \\sum v)$."
+  ],
+  "planted": [
+    {
+      "code": "def light_cargo(weights, values, cap):\n    order = sorted(range(len(weights)), key=lambda i: values[i] / weights[i], reverse=True)\n    load = total = 0\n    for i in order:\n        if load + weights[i] <= cap:\n            load += weights[i]\n            total += values[i]\n    return total\n",
+      "slip": "Loading by value per kilogram is a greedy that leaves room a better pair would have used."
+    },
+    {
+      "code": "def light_cargo(weights, values, cap):\n    top = sum(values)\n    lightest = [0] + [float('inf')] * top\n    for w, v in zip(weights, values):\n        for t in range(top, v - 1, -1):\n            lightest[t] = min(lightest[t], lightest[t - v] + w)\n    return max(t for t in range(top + 1) if lightest[t] < cap)\n",
+      "slip": "Using `<` refuses a load that weighs exactly `cap`."
+    },
+    {
+      "code": "def light_cargo(weights, values, cap):\n    top = sum(values)\n    lightest = [0] + [float('inf')] * top\n    for w, v in zip(weights, values):\n        for t in range(v, top + 1):\n            lightest[t] = min(lightest[t], lightest[t - v] + w)\n    return max(t for t in range(top + 1) if lightest[t] <= cap)\n",
+      "slip": "Updating values upwards lets one parcel be loaded more than once."
+    },
+    {
+      "code": "def light_cargo(weights, values, cap):\n    best = [0] * (cap + 1)\n    for w, v in zip(weights, values):\n        for t in range(cap, w - 1, -1):\n            if best[t - w] + v > best[t]:\n                best[t] = best[t - w] + v\n    return best[cap]\n",
+      "slip": "The knapsack table over weight is right but has `cap + 1` cells to update for every parcel."
+    }
+  ]
+}
