@@ -1,0 +1,143 @@
+{
+  "id": "ci-longest-rising",
+  "name": "The longest rise and where it ends",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-6",
+    "dp-1d",
+    "longest-rising"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1980,
+  "fn": "rising_readings",
+  "returns": "a list `[length, end]`",
+  "brief": "`readings` holds a sensor's values in time order. A rising chain picks some readings, keeping their order, with each strictly above the one before. Return `[length, end]`: the length of the longest rising chain, and the smallest value a chain of that length can end on.\n\nWrite `rising_readings(readings)`.\n\nExample. For `[2, 9, 4, 8, 5]` the longest chains have three readings, such as 2, 4, 8 and 2, 4, 5. The smaller end is 5, so the answer is `[3, 5]`.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ readings, each between $-10^9$ and $10^9$.",
+    "$O(n \\log n)$ time is the target. Comparing each reading with every earlier one is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "readings",
+      "type": "list",
+      "len": [
+        1,
+        100000
+      ],
+      "of": "int",
+      "range": [
+        -1000000000,
+        1000000000
+      ]
+    }
+  ],
+  "hint": "Keep `tails`, where `tails[j]` is the smallest value a rising chain of length `j + 1` can end on. Each reading replaces the first entry that is at least as large, found with `bisect_left`, or extends the list.",
+  "starter": "def rising_readings(readings):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "rising_readings([2, 9, 4, 8, 5])",
+      "expect": "[3, 5]",
+      "compare": "equal",
+      "note": "The chain 2, 4, 8 is found first, but 2, 4, 5 has the same length and a smaller end."
+    },
+    {
+      "call": "rising_readings([5, 1, 6, 2, 7, 3, 4])",
+      "expect": "[4, 4]",
+      "compare": "equal",
+      "note": "The chain 1, 2, 3, 4 beats 5, 6, 7 by one reading."
+    }
+  ],
+  "tests": [
+    {
+      "call": "rising_readings([7])",
+      "expect": "[1, 7]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([3, 3, 3])",
+      "expect": "[1, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([4, 3, 2, 1])",
+      "expect": "[1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([1, 2, 2, 3])",
+      "expect": "[3, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([10, 20, 11, 12, 1])",
+      "expect": "[3, 12]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([6, 7, 1, 2, 3, -5])",
+      "expect": "[3, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([-1000000000, 1000000000, 0])",
+      "expect": "[2, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([8, 1, 9, 2, 10, 3, 4, 0])",
+      "expect": "[4, 4]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([5, 6, 7, 1, 2, 3])",
+      "expect": "[3, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([2, 5, 3, 5, 4, 5])",
+      "expect": "[4, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([(i * 7919) % 100003 - 50000 for i in range(100000)])",
+      "expect": "[306, 49090]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings(list(range(100000)))",
+      "expect": "[100000, 99999]",
+      "compare": "equal"
+    },
+    {
+      "call": "rising_readings([(i % 500) * 3 - (i // 500) for i in range(100000)])",
+      "expect": "[500, 1298]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method finds, for each reading, the longest chain ending there by checking every earlier reading, which is $O(n^2)$ and runs out of time on 100,000 readings. The step to the target is the list of smallest tails, kept sorted, so each reading costs one binary search. Unlike the usual task, which asks only for the length, the answer also needs the smallest end, which is the last entry of `tails` and not the reading that last made the list longer.",
+  "solution": "from bisect import bisect_left\n\ndef rising_readings(readings):\n    tails = []\n    for x in readings:\n        k = bisect_left(tails, x)\n        if k == len(tails):\n            tails.append(x)\n        else:\n            tails[k] = x\n    return [len(tails), tails[-1]]\n",
+  "notes": [
+    "`tails` stays sorted, and a reading lowers the first tail at least as large, so each entry is the smallest end for its length.",
+    "`bisect_left` keeps the chain strictly rising, and the smallest end is read from `tails[-1]` at the finish, after every later reading has had its chance to lower it.",
+    "One binary search per reading makes the work $O(n \\log n)$."
+  ],
+  "planted": [
+    {
+      "code": "from bisect import bisect_right\n\ndef rising_readings(readings):\n    tails = []\n    for x in readings:\n        k = bisect_right(tails, x)\n        if k == len(tails):\n            tails.append(x)\n        else:\n            tails[k] = x\n    return [len(tails), tails[-1]]\n",
+      "slip": "Using `bisect_right` lets equal readings extend a chain, which must rise strictly."
+    },
+    {
+      "code": "from bisect import bisect_left\n\ndef rising_readings(readings):\n    tails = []\n    end = None\n    for x in readings:\n        k = bisect_left(tails, x)\n        if k == len(tails):\n            tails.append(x)\n            end = x\n        else:\n            tails[k] = x\n    return [len(tails), end]\n",
+      "slip": "Reporting the reading that last made the list longer misses a later, smaller end for a chain of the same length."
+    },
+    {
+      "code": "def rising_readings(readings):\n    n = len(readings)\n    length = [1] * n\n    for i in range(n):\n        for j in range(i):\n            if readings[j] < readings[i] and length[j] + 1 > length[i]:\n                length[i] = length[j] + 1\n    top = max(length)\n    return [top, min(readings[i] for i in range(n) if length[i] == top)]\n",
+      "slip": "Comparing each reading with every earlier one is right but takes $O(n^2)$ time, too slow."
+    }
+  ]
+}
