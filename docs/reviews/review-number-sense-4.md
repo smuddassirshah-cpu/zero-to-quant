@@ -82,3 +82,40 @@ Freshness against `topic-0.1`: no exam item shares a setup or a number with the 
 
 - `numbers_lib` or the validator could probe π items: where a key is a multiple of π rounded to n places, warn when the value from π ≈ 3.14 or 22/7 falls outside the tolerance and matches no `wrong` entry (finding 3 was the one item of ten).
 - `area` with `shape: "circle"` and `sectors` can shade a fraction of the disc but cannot colour alternate wedges, so the cut circle in l18 s2 cannot match the up and down wedges of the strip beside it (finding 14).
+
+## Fix pass
+
+Findings 1 to 20 applied by targeted edits; none disputed, none deferred (finding 15's line chart stays for the problem set, as the reader said). Engine items 1 and 2 are already in the inbox.
+
+1. fixed: `two-r` keeps 62.83 and the text now says it is $2 \times \pi \times 10$. Basis: $2\pi \times 10 = 62.83$; doubling the radius for $\pi r^2$ gives $\pi \times 10^2 = 314.16$ (the `diameter` entry) and for a rim gives $\pi \times 10 = 31.42$ (the `circumference` entry), so no new slip entry is needed.
+2. fixed: `first-last` value 55 to 40. $25 - (-15) = 40$; also $65 - 25 = 40$ by splitting at 0 ($25 + 15$).
+3. fixed: `r-circle-14` tol 0.1; wrongs `diameter` 0.35, `circ` 0.05; `accept` names 153.86 and 154. Basis: $49 \times 3.14 = 153.86$, $49 \times 22/7 = 154$; $196 \times 3.14 = 615.44$, $196 \times 22/7 = 616$; $14 \times 3.14 = 43.96$, $14 \times 22/7 = 44$. Other circle items probed with 3.14, 3.142 and 22/7 (reader probe plus the author script): only l18 `q-area-3` also failed on 22/7 (finding 20) and its `diameter` slip rejected 3.14 (113.04), so that tolerance is widened to 0.1. The rest accept all three.
+4. fixed: `same` replaced by `after` (`prod` after `c84` and `c120`; `same` after `def`; `end` after `prod` and `same`). Basis: `same` uses the definition line, `prod` uses both circles, `end` uses both; `answer` satisfies the rules.
+5. fixed: distractor now "The first remainder is 147, so the HCF is 147", `why` and `byKey` rewritten. Basis: $462 = 3 \times 147 + 21$, so 147 does not divide 462.
+6. fixed: per cent replaced by "1.15 times ... 1.6 times". $23 \div 20 = 1.15$; $(23 - 15) \div (20 - 15) = 8 \div 5 = 1.6$.
+7. fixed: digit-sum rule stated in the hint; option `why` and `explain` use $3 \times 29 = 87$ only.
+8. fixed: l16 s3 prose rewritten (primes written out with repeats, shared ones paired off into the overlap).
+9. fixed: `feedback.correct` names the 10th and 11th days. Mode and median both 2 by the shared data: counting days gives day 10 and 11 both at 2 ($2 + 5 = 7$ days below, then 8 days of 2 run from the 8th to the 15th).
+10. fixed: "an **outlier**" introduced in l19 s4 `explain`.
+11. fixed: trap says "a rectangular corner".
+12. fixed: `added` now "You added 1.1 and 1.1 ... $1.1 \times 1.1$".
+13. fixed: four texts rewritten. $72 \times 3.6 = 259.2$ is $72 \times 3{,}600 \div 1{,}000$; the homework slip $25$ (now $35$) $\div 3.6$ is $\div 3{,}600 \times 1{,}000$.
+14. fixed: `shade` removed from the left canvas of l18 s2 (validator and playthrough green).
+15. fixed: `q-unsorted` added as quiz[4]: sorted $-20, 10, 30, 70, 90$, median 30; list order middle is 10; mean $180 \div 5 = 36$.
+16. fixed: option `sub` is now $\tfrac{1}{7}$: $30 \div 30 = 1$, $42 \div 6 = 7$.
+17. fixed: `h-speed` now 35 m/s; `h-leaver` now £87,000 (changed values below). `r-l-shape` left as the reader allowed.
+18. fixed: "Multiply the smaller number by itself".
+19. fixed: `just-two` now "You used one 2 only ... $2 \times 2 \times 3$".
+20. fixed: `q-area-3` tol 0.02: $9 \times 22/7 = 28.29$, within $28.27 \pm 0.02$.
+
+Changed graded values (old to new, working):
+- l19 quiz[3] `first-last` wrong: 55 to 40. $25 - (-15) = 40$.
+- l19 quiz[4] `q-unsorted` new: answer 30; wrongs 10 and 36. Median of sorted five is the 3rd value; $180 \div 5 = 36$.
+- review-4 `r-circle-14` tol 0.01 to 0.1 (answer 153.94 unchanged); `diameter` tol 0.01 to 0.35; `circ` tol 0.01 to 0.05. $49 \times 3.14 = 153.86$, $49 \times 22/7 = 154$.
+- review-4 `r-cancel` option `sub` text $\tfrac{3}{4}$ to $\tfrac{1}{7}$ (a distractor, not a key).
+- l18 `q-area-3` tol 0.01 to 0.02; `diameter` tol 0.01 to 0.1. $9 \times 22/7 = 28.29$; $36 \times 3.14 = 113.04$.
+- homework-4 `h-speed`: answer 90 to 126 ($35 \times 3.6 = 126$; $35 \times 3600 \div 1000$); `wrong-way` 6.94 to 9.72 ($35 \div 3.6$); `minutes` 1.5 to 2.1 ($35 \times 60 \div 1000$); `no-km` 90000 to 126000 ($35 \times 3600$).
+- homework-4 `h-leaver`: answer 38000 to 39000 ($(360000 - 87000) \div 7 = 273000 \div 7$); `eight` 33250 to 34125 ($273000 \div 8$); `unchanged` 45000 and `old-total` 51429 unchanged ($360000 \div 7$).
+- l18 s7 `two-r` value 62.83 unchanged (text only).
+
+Gates: author script `docs/reports/number-sense-L4-numbers.py` exit 0, 491 of 491 (new checks cover every value above and fail if the old tolerances or values return). Reader script `read-numbers.py`: 104 of 106; the two remaining failures are its hard-coded old values for finding 17 ("25 m/s = 90 km/h" and "leaver 38,000"), now superseded; all findings it flagged (W1, W2, U-pi, U-euclid, U-percent) pass. Validator 0 errors. Voice scan 0 and 0. Playthrough with `--local-cdn`, with and without `--mobile`: l15 to l19, `review-4`, `homework-4` all passed.
