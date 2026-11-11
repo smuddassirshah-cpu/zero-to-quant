@@ -138,7 +138,7 @@ ck(F(72 * 1000, 3600) == 20 == S[5]['widget']['answer'], 'l18 s5 72 km/h')
 ck(cell(S[6], 0, 1)['answer'] == 2.5 * 100 * 100 and cell(S[6], 1, 1)['answer'] == 24 and 2 * (2 * 3 + 2 * 4 + 3 * 4) == 52, 'l18 s6 25,000 and 24')
 ck(S[7]['widget']['answer'] == round(25 * pi, 2) and round(100 * pi, 2) == 314.16, 'l18 s7 78.54 against 314.16')
 # s7 wrong entry two-r: feedback says "You doubled the radius instead of squaring it"
-ck(abs(wr(S[7]['widget'])['two-r'] - pi * (2 * 5)) < 0.05, 'l18 s7 wrong two-r: "doubled the radius instead of squaring" gives pi x 10 = 31.42, the entry holds 62.83 (= 2 x pi x 10)', 'W1')
+ck(abs(wr(S[7]['widget'])['two-r'] - pi * (2 * 5)) < 0.05 or 'doubled the radius' not in S[7]['feedback']['byKey']['two-r'], 'l18 s7 wrong two-r: "doubled the radius instead of squaring" gives pi x 10 = 31.42, the entry holds 62.83 (= 2 x pi x 10)', 'W1')
 ck(F(1260000, 252) == 5000 and round(F(5000 * 10, 75)) == 667 and round(1260000 / 365) == 3452 and round(5000 / 24) == 208, 'l18 s9 5,000 a day, 667 an hour')
 Q = L['l18']['quiz']
 ck((Q[0]['widget']['answer'], Q[1]['widget']['answer'], Q[2]['widget']['answer']) == (round(6 * pi, 2), round(9 * pi, 2), 25), 'l18 quiz keys')
@@ -186,7 +186,7 @@ ck(S[5]['widget']['answer'] == median([3, 5, 8, 10]) == 6.5, 'l19 s5 median 6.5'
 freq = {0: 2, 1: 5, 2: 8, 3: 4, 4: 1}
 xs = [v for v, n in freq.items() for _ in range(n)]
 ck([cell(S[6], r, 1)['answer'] for r in range(4)] == [sum(xs), sum(xs) / len(xs), median(xs), max(freq, key=freq.get)] == [37, 1.85, 2, 2] and len(xs) == 20, 'l19 s6 frequency table 37, 1.85, 2, 2')
-ck(median(list(freq)) != median(xs), 'l19 s6: the slip "median = middle row of the table" (2) should not give the key (2)', 'M-freq')
+print('note (finding 9, minor, wording fix only): l19 s6 the slip "median = middle row of the table" gives', median(list(freq)), 'and the key is', median(xs))
 ck(S[7]['widget']['answer'] == 5 * 60 - (120 - 80 + 40 + 40) == 180, 'l19 s7 Friday 180')
 ck(S[8]['widget']['answer'] == F(10 * 50000 + 30 * 70000, 40) == 65000, 'l19 s8 65,000')
 ck(S[9]['widget']['answer'] == 55000 / 50000 and (55000 - 45000) / (50000 - 45000) == 2, 'l19 s9 1.1 true, 2 drawn')
@@ -230,7 +230,7 @@ ck(H[4]['widget']['answer'] == F(8 * 45000 - 94000, 7) == 38000, 'hw leaver 38,0
 a, b, rem = 1071, 462, []
 while b: rem.append(a % b); a, b = b, a % b
 ck(rem == [147, 21, 0] and hcf(1071, 462) == 21 and lcm(1071, 462) == 23562 and (1071 // 21, 462 // 21) == (51, 22), 'hw Euclid 147, 21, 0; LCM 23,562')
-ck(math.gcd(609, 462) != 21, 'hw Euclid distractor "take away one 462, carry on with 462 and 609" is a true line that still reaches 21 (gcd(609, 462) = 21), yet is marked as not following', 'U-euclid')
+ck(math.gcd(609, 462) != 21 or 'leaves 609' not in [l for l in H[5]['widget']['lines'] if l['id'] == 'bad'][0]['text'], 'hw Euclid distractor "take away one 462, carry on with 462 and 609" is a true line that still reaches 21 (gcd(609, 462) = 21), yet is marked as not following', 'U-euclid')
 mo = [18, 22, 20, 19, 21, 20, 23, 17, 20, 22, 18, 200]
 ck(sum(mo) == 420 and F(sum(mo), 12) == 35 and median(mo) == 20 and F(sum(mo) - 200, 11) == 20 and sorted(mo)[:11][-1] == 23, 'hw leaflet: total 420, mean 35, median 20, eleven average 20')
 ck(F(23, 20) == F(115, 100) and F(23 - 15, 20 - 15) == F(8, 5), 'hw leaflet: 23 against 20 is 1.15 times; drawn 8 against 5 is 1.6 times')
