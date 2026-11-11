@@ -1,6 +1,6 @@
 # Concept audit, delta batch 1 of 11 November 2026
 
-Blind delta audit of content added or changed after each course closed: puzzles, game-theory, brainteasers, coding-int, research-int, systems, ito (levels 2 and 3) and measure-prob (levels 1 to 3). Scope is the changed items only, read from `git diff <close> HEAD` with each whole item and its lesson context. Twenty-seven files, 28 items (24 new, 4 edited).
+Blind delta audit of content added or changed after each course closed: puzzles, game-theory, brainteasers, coding-int, research-int, systems, ito (levels 2 and 3) and measure-prob (levels 1 to 3). Scope is the changed items only, read from `git diff <close> HEAD` with each whole item and its lesson context. Twenty-seven files, 29 items (25 new, 4 edited).
 
 - Ledger: `docs/reports/audit-delta-2026-11-11-1-ledger.md` (349 rows).
 - Script: `docs/reports/delta-2026-11-11-1-concepts.py` (85 checks; exits 1 because three checks fail on findings C1, R1 and R2 below; it exits 0 once they are fixed).
@@ -66,20 +66,56 @@ No new or changed learner text cites a lesson by number. The two lesson referenc
 
 | course | ledger rows | wrong | imprecise | misleading | unverified | serious | minor | overlap: mine only / earlier only / both |
 |---|---|---|---|---|---|---|---|---|
-| puzzles | 42 | 0 | 0 | 0 | 0 | 0 | 0 | pending |
-| game-theory | 28 | 0 | 1 | 0 | 0 | 0 | 1 | pending |
-| brainteasers | 31 | 0 | 0 | 0 | 0 | 0 | 0 | pending |
-| coding-int | 46 | 1 | 2 | 0 | 0 | 0 | 3 | pending |
-| research-int | 55 | 0 | 2 | 1 | 0 | 0 | 3 | pending |
-| systems | 69 | 0 | 1 | 0 | 0 | 0 | 1 | pending |
-| ito | 31 | 0 | 0 | 0 | 0 | 0 | 0 | pending |
-| measure-prob | 47 | 0 | 1 | 0 | 0 | 0 | 1 | pending |
-| total | 349 | 1 | 7 | 1 | 0 | 0 | 9 | pending |
+| puzzles | 42 | 0 | 0 | 0 | 0 | 0 | 0 | 0 / 0 / 0 |
+| game-theory | 28 | 0 | 1 | 0 | 0 | 0 | 1 | 1 / 0 / 0 |
+| brainteasers | 31 | 0 | 0 | 0 | 0 | 0 | 0 | 0 / 3 / 0 |
+| coding-int | 46 | 1 | 2 | 0 | 0 | 0 | 3 | 3 / 1 / 0 |
+| research-int | 55 | 0 | 2 | 1 | 0 | 0 | 3 | 3 / 3 / 0 |
+| systems | 69 | 0 | 1 | 0 | 0 | 0 | 1 | 1 / 5 / 0 |
+| ito | 31 | 0 | 0 | 0 | 0 | 0 | 0 | 0 / 1 / 0 |
+| measure-prob | 47 | 0 | 1 | 0 | 0 | 0 | 1 | 1 / 1 / 0 |
+| total | 349 | 1 | 7 | 1 | 0 | 0 | 9 | 9 / 14 / 0 |
 
 ## Overlap with earlier reads
 
-Pending: filled after the blind commit.
+Filled after the blind commit (`b1009863`). Earlier reads of this delta content, found by `grep -l` of the item ids in `docs/reviews/`:
+
+- `review-perf-retrofit-1.md`: brainteasers `hw9-l-pieces-6x10` and `hw9-circle-hats`; research-int `h2-pca-aloud` and `h4-quote-at`; coding-int `h3-notes-drive` and `h4-pairs-aloud`.
+- `review-perf-retrofit-2.md`: systems `h1-branch-aloud`, `h3-process-aloud`, `h4-spsc-ring`; measure-prob `h-build-space`, `h-build-integral`, `h-prove-urn`; puzzles `hw4-kelly-draw`.
+- `review-perf-retrofit-3.md`: ito `h-derive-black`.
+- `review-perf-retrofit-5.md`: game-theory `hw1-street-carts`.
+- `review-perf-pilots.md`: ito `h-derive-ito` and research-int `h1-signal-aloud`. Its findings were fixed before those courses closed, so they are outside this delta and are not counted. The delta edits to both items (required flags, an optional point) and the two layout edits have no earlier read.
+- Review top-up items (the ten new review items in this batch): no earlier read exists. No file in `docs/reviews/` names any of them; only the author report `docs/reports/review-topup.md` and its number script do.
+
+Counted as conceptual: a finding about a definition, a claim, a method, a hypothesis or a stated reason. Not counted: rubric weights and required flags, missing hidden tests, feedback that gives the answer away, freshness against lesson screens, report wording and typography. Every earlier finding had its fix applied before this read, so "both" can only be a fault that survived a fix; there is none.
+
+| course | this audit only | earlier read only | both | earlier conceptual findings (all fixed before this read) |
+|---|---|---|---|---|
+| puzzles | 0 | 0 | 0 | none; retrofit 2 read the Kelly task clean. Review items: no earlier read |
+| game-theory | 1 | 0 | 0 | none; retrofit 5 read the street-carts task clean. My finding is on a review item with no earlier read |
+| brainteasers | 0 | 3 | 0 | BZ1-1 (the piece as defined admitted the I piece), BZ2-2 (bound asserted without its reason), BZ2-3 ($n = 2$ sight line) |
+| coding-int | 3 | 1 | 0 | CI4-1 ($O(1)$ memory for sort and two pointers) |
+| research-int | 3 | 3 | 0 | RI2-2 (standardised returns), RI2-3 (same-day share against forecast), RI2-5 (loadings in the equicorrelation case) |
+| systems | 1 | 5 | 0 | SY4-2 (wrong reason for the wrap), SY3-1 (wait overstated), SY3-4 (kernel copy stated without exception), SY3-5 (tagged TLB entries), SY4-4 (own line against different lines) |
+| ito | 0 | 1 | 0 | IT3-3 (the zero-cost book with cash) |
+| measure-prob | 1 | 1 | 0 | MP1-2 (some finite $\mu(A_m)$ is enough) |
+| total | 9 | 14 | 0 | |
+
+Three of the nine findings sit in text that an earlier read's fix wrote, which is the pattern the fix-pass read exists for:
+
+- research-int 1 ("a stricter bar") is the wording of RI2-4's fix.
+- coding-int 2 (the required row tied to the look-up order) is the wording of CI4-2's fix.
+- systems 1 follows from SY4-1's fix, which sent the learner to the explain for the memory orders without extending the explain to the `head_` pair.
+
+The other six (game-theory 1, coding-int 1 and 3, research-int 2 and 3, measure-prob 1) were in the authored text and were missed by the earlier read, or had no earlier read. I agree with every earlier conceptual fix as it now stands in the content.
 
 ## Gate results
 
-Pending: filled after the blind commit.
+Run from `app/` on the worktree at the blind commit, 11 November 2026.
+
+- Validator: `node tools/validate.mjs` gives 0 errors (4,138 warnings, none new for these items; `perf-optional-row` warnings 0). `content/manifest.json` unchanged.
+- Concepts script: `python3 docs/reports/delta-2026-11-11-1-concepts.py` runs 85 checks and exits 1. The three failing checks are findings coding-int 1, research-int 1 and research-int 2, and stay failing until those are fixed. No check was skipped: g++ 13 and ThreadSanitizer were both available.
+- Committed number scripts, all exit 0: `puzzles-4`, `game-theory-1`, `brainteasers-1`, `brainteasers-2`, `coding-int-3`, `coding-int-4`, `research-int-1`, `research-int-2`, `research-int-4`, `systems-1`, `systems-3`, `systems-4`, `ito-2`, `ito-3`, `measure-prob-1`, `measure-prob-2`, `measure-prob-3` (each `-perf-numbers.py`), and `review-topup-numbers.py` ("all 13 keys recomputed twice"). `ito-2` and `puzzles-4` report that sympy is missing and run their numeric checks only.
+- Voice: `python3 docs/reviews/voice-scan.py 35 --summary` on each of the eight course folders gives 0 sentences over 35 words and 0 explanations over three sentences. Every proposed fix above was counted by hand against the same limits.
+- Playthrough, each of the 27 changed sets, desktop and `--mobile`, with `--local-cdn`: 52 of 54 runs end "All passed", code items included (the `NotesDrive`, `quote_at`, street-carts and hats solutions under Pyodide, and the ring under clang). The two that do not are `research-int/review-1`, desktop and mobile: the set itself plays (10 of 10 recorded) but its `(timed)` and `(timed parts)` checks throw `page.waitForFunction: Timeout 20000ms exceeded`. That failure is recorded in KNOWN_ISSUES (session Y) as present before and after the top-up item, and is already in the inbox; it is a harness or engine fault, not a content fault of this delta. It is restated as one inbox bullet under `Raised later (audit delta 2026-11-11):`.
+- Unverified claims: none. Two claims rest on the item's own stated figures and not on measurement: the 5 ns cost of a wrong guess and the 0.2 µs, 2 µs and 1 µs costs in the systems tasks are given as round figures in the prompts, and were checked only for the arithmetic built on them.
