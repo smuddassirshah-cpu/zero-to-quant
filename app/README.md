@@ -47,6 +47,7 @@ The validator implements `docs/AUTHORING.md` section 7. Missing lesson, review a
 | `tools/fluency-sample.mjs`, `tools/test-fluency.mjs`, `tools/fluency-rules.mjs` | Draw items from a fluency set; grade every family in the real browser; the rules the validator applies. Fixtures in `tools/fixtures/fluency/` |
 | `tools/test-fluency-reach.mjs`, `tools/audit-plain-functions.mjs` | Unit tests of the authoring reach of Fluency families (functions and `pi` and `if` in `let`, `wrong[].when`, the `cfrac`, `(frac)`, `sfN`, `mono` and `falling` formats; ENGINE-BACKLOG 838 to 840); the audit of plain-text function names in graded answers (836) |
 | `tools/test-validate-problems.mjs`, `tools/test-problems.mjs`, `tools/fixtures/problems/` | Scratch cases for the problem-set validator rules; the runtime test (save, XP, hours, weekly review pool, the real player); the fixture set (never content). `node tools/playthrough.mjs --problems <course>/problems-<n>` plays one |
+| `tools/drill-constraints.mjs`, `tools/test-drill-constraints.mjs`, `tools/test-drill-page.mjs`, `tools/fixtures/drill-page/` | Machine-readable drill `constraints` (reader shared with the validator; `[no-constraints]`; ENGINE-BACKLOG 866) and the drill page limits (shared comparison, `setup`, `raises`, lists, long spans, `allocCheck`; 861 to 865): unit cases plus a played fixture drill, desktop and `--mobile` |
 | `vendor/katex/` | KaTeX, vendored |
 
 ## The C++ compiler (not vendored)

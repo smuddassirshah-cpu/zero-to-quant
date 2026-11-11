@@ -2057,3 +2057,71 @@ Raised later (engine session Z, from the inbox):
 860. Done [Could] Validator `[answer-form]` widened (`ANSWER_FORM` in `tools/validate.mjs`): "decimal", "place(s)", "dp", "sf", "fraction", "nearest", "per cent", "percentage", "%", "exact value/answer/result/figure", "in pounds/pence/£/basis points", "ratio". Phrases listed in `docs/AUTHORING.md` section 5.
 860 status: done. 137 warnings over the 1.5 sets fall to 1. Six pass cases and one "exactly alone still warns" case in `tools/test-validate-problems.mjs`.
 
+
+Raised later (engine pass AA 1, numbered from the inbox "Raised later (fluency trig, widening pass)" onward; bullets already covered by 844, 852, 853, 855 to 860 are not repeated):
+
+861. Done [Should] Drill page compares results as the code widget does (NaN equal to NaN, dicts by key, text, bool, pandas Series, float tolerance): one shared comparison. [inbox: drills py a, drills py b]
+861 status: done. `JUDGE` in `js/engine/widgets/code.js` gains `__zq_judge(actual, expected, compare, tol)` (the code widget's `__zq_cmp` calls it) and is exported as `ZQ.widgets.codeJudge`; `js/screens/drill.js` dropped `__zq_eq` and uses it, with per-test `tol`. Fixed in passing: the harness case table is now loaded with `json.loads` (a `null` tol is not Python). `tools/test-drill-page.mjs` (15 judge cases in real Python, plus a played fixture).
+862. Done [Should] Drill page runs a test's `setup` and `"compare": "raises"`, which the validator accepts. [inbox: drills py a]
+862 status: done. The drill harness runs `setup` (and reads its imports with `importHint`) and the `raises` mode (named exception or a subclass; result row reads `raised <Name>` or `no error, the value was ...`); `RULES.raises` gives the Accepted line. Played by `tools/fixtures/drill-page/drill-aa-page.json`, desktop and `--mobile`.
+863. Done [Could] Lists (`- item`) and single line breaks in a drill `brief` render. [inbox: drills ci 1, drills cpp]
+863 status: done. `block()` in `js/screens/drill-lib.js` renders `- `, `* ` and `1. ` lists (continuation lines join the item); `drill.js` uses it, so both Python and C++ pages share it. `.drl-list` in `css/screens/drill.css`. Unit cases in `tools/test-drill-page.mjs`.
+864. Done [Should] A long inline code span in a drill brief wraps at 440 px, and `playthrough.mjs --mobile` fails on horizontal overflow of the drill page. [inbox: drills cpp]
+864 status: done. A code span over 24 characters wraps on the C++ page too (the Python page already did); `playthrough.mjs --drill` at 440 px and the other widths fails with "the brief runs past the right edge" when a brief element ends past the clipping column (`briefClipped`). Case: a fixture with an unbreakable formula fails `--mobile` and passes desktop.
+865. Done [Should] `allocCheck` passed from a C++ drill to the code widget (`drill-lib.js`). [inbox: drills cpp]
+865 status: done. `allocCheck` added to the pass-through list in `js/screens/drill-lib.js`; checked by a source test (no C++ drill uses it yet).
+866. Done [Should] `constraints` for a drill's inputs, machine-readable, and a validator check that every example and hidden test satisfies them (error), with a `[no-constraints]` warning for a drill without. [KNOWN_ISSUES session Z protocol 6; reviews drills-py, ci]
+866 status: done. `tools/drill-constraints.mjs` (Python-literal call reader, constraint objects, one shared reader); `validate.mjs` errors on a test or example that breaks a stated constraint or a malformed object, warns `[no-constraints]` on a non-sample drill with none. Existing `constraints` strings are untouched and objects are not shown on the page. 210 of 210 existing drills carry the warning; shipped content stays at 0 errors. `docs/AUTHORING.md` section 5; `tools/test-drill-constraints.mjs` (36 checks).
+867. Done [Could] AUTHORING states that a drill's `prelude` runs after the learner's code (a code widget's runs before). [inbox: drills py b]
+867 status: done. Stated in `docs/AUTHORING.md` section 5 (with the rest of what the drill page runs).
+868. [Could] Drill page "Accepted:" line names one rule for the whole drill; a per-test rule on each result row. [inbox: drills py a]
+869. [Could] `playthrough.mjs --drill` and `planted-check.mjs` say "drill missing from content/manifest.json, run validate.mjs" instead of a 20 s timeout. [inbox: drills py b]
+870. [Could] `planted-check.mjs` and `--drill --why` name the failing hidden test and its actual value. [inbox: drills py b]
+871. [Could] `planted` cannot state "too slow" as the slip. [inbox: drills ci 4]
+872. [Could] A drill-level hidden helper usable from `tests` but not from the learner's code. [inbox: drills ci 4]
+873. [Could] Validator `pace` over 30 minutes warning: raise the threshold for drills (900 to 2,700 s allowed by the ci brief). [inbox: drills ci 1, ci 2, ci 3]
+874. [Could] `voice-scan.py` skips `planted[].code` (and `slip` if not learner-facing). [inbox: drills ci 3]
+875. [Could] Fluency `poly` with a surd var writes a non-whole coefficient as `\frac{7}{2}`; `mono` writes one term only. [inbox: fluency trig]
+876. [Could] `form: "simplified"` applied to each value of an `answers` set. [inbox: fluency quadratics]
+877. [Could] A power placeholder for any base (`{pow(k)}` writes nothing for 1); `mono` with a bracketed base. [inbox: fluency limits integrals multivar]
+878. [Could] Decision wanted: the four-family cap for Fluency sets (`integrals/fluency-l9`, `l10`). [inbox: fluency limits integrals multivar]
+879. [Should] `form: "standard"` for standard form (refuses `0.00042` and `42 \times 10^{-5}`). [inbox: fluency number-sense]
+880. [Should] `form: "ratio"` for a ratio in simplest form (`5 : 2`, refuses `10 : 4`). [inbox: fluency ratio]
+881. [Could] Thousands separator format in Fluency templates (`{x:dp2}` to `1,271.00`). [inbox: fluency ratio]
+882. [Could] Fluency `numeric` widget refuses `over100`; list the two field sets in AUTHORING. [inbox: fluency ratio]
+883. [Should] A whole matrix as a typed Fluency answer (keyboard, and how `[[a, b], [c, d]]` is read). [inbox: fluency vectors elimination eigen least-squares]
+884. [Could] Maths keyboard of an `expression` item offers $\lambda$. [inbox: fluency vectors elimination eigen least-squares]
+885. [Could] A reduced fraction written only when it differs from the working fraction (`{a/b:=frac}` or a text `if`). [inbox: fluency conditional]
+886. [Could] `phi(x)` and its inverse in Fluency `let`. [inbox: fluency limits-thm]
+887. [Could] A Fluency `int` bound that is an expression of an earlier var. [inbox: fluency testing]
+888. [Should] `form: "rectangular"` accepts a whole number times a surd times $i$ (`9\sqrt{3}i`). [inbox: fluency complex odes vector-calc]
+889. [Could] `atan` and `atan2` in Fluency `let`. [inbox: fluency complex odes vector-calc]
+890. [Should] `--problems ... --shots` at 440 px shoots the "Problem set" row with the review card open and scrolled into view. [inbox: drills ci 4 levels 4 and 5, problems random-vars]
+891. [Could] A `numeric` part with `tol`, no `accept` and `unit: "£"` prints "£45.00, to the penny". [inbox: problems random-vars]
+892. [Could] `fresh-check.mjs` triage: required form sentences in `STOPLIST` or problem sets compared only with non-problem files. [inbox: problems markov (twice), markov levels 4 and 5, taylor, functions; also the `fresh-check` triage of series]
+893. [Could] `fresh-check.mjs --file` on a problems set: advisory when an item shares a displayed formula or two stated parameters with a lesson, quiz, review or homework item of its course. [inbox: review problems 1.3 b]
+894. [Should] Validator: the number printed after the last `=` or `\approx` in `feedback.correct` lies inside `answer ± tol` (allow parts in units of $10^{-k}$). [inbox: problems limits-thm, problems taylor]
+895. [Could] `[wrong-band]` reads "to n places", prefers the last rounding phrase, skips `unscaled` slips, and respects units. [inbox: problems limits-thm, review problems 1.3 b; KNOWN_ISSUES session AA]
+896. [Could] `numbers_lib.py` part checker (form sentence, rounding inside tolerance, printed value) and `check_wrongs` evaluating simple LaTeX in `byKey` lines. [inbox: problems limits-thm level 4, problems counting-chance]
+897. [Could] Prose renderer binds a leading `+` or `-` to the following `£` and digits (no break at 440 px). [inbox: problems markov levels 4 and 5]
+898. [Should] Expression grader: a per-symbol sampling range or domain (`s < 0.5`, `\arcsin x`), both parts of a complex value, and no refusal of a correct form with a tiny term (`\frac{400}{e^{8u}}` for `400e^{-8u}`). [inbox: problems fix pass d, problems integrals, delta session AA, review problems 1.3 c]
+899. [Should] The `trade` widget takes a one-sided quote. [inbox: audit mm-games]
+900. [Could] Validator warns on learner text citing a lesson or homework by number. [inbox: audit mm-games]
+901. [Could] Set page: the feedback heading "Not quite right." and a `generic` line beginning "Not quite." read twice. [inbox: problems integrals]
+902. [Should] `form: "simplified"` refuses some simplest forms (`-\frac{2r}{3}+\frac{s}{3}`, terms over 2) and passes unopened vector or bracketed forms (`3+2.5(t-2)`, `r+\frac{1}{2}(s-r)`). [inbox: review problems 0.2 b, review problems 0.3 a, problems equations, problems functions, problems counting]
+903. [Could] `expanded` and `factorised-fully` refuse uncollected like terms (`x^2+3x+8x+24`). [inbox: problems quadratics, review problems 0.2 b]
+904. [Should] A typed left side (`y=`, `A=`, `m(e(x))=`, `f^{-1}(x)=`) is dropped before the shape checks and for nested or inverse names. [inbox: review problems 0.2 b, review problems 0.3 a]
+905. [Should] A "Solve" inequality part does not grade the retyped question as correct. [inbox: review problems 0.2 a; KNOWN_ISSUES session AA]
+906. [Could] A thousands comma inside an expression (`12,000-s`). [inbox: review problems 0.2 a]
+907. [Could] `numeric` field: a trailing unit or degree sign, a letter and `=` before the value, and a scale for "units of $10^{-k}$". [inbox: review problems 0.3 a, problems equations, problems taylor]
+908. [Could] Expression parser: a plain-text power with a bracketed exponent (`80*0.9^(n-1)`), and a decimal times a bracket (`0.25(500)`). [inbox: problems series, review problems 0.2 b]
+909. [Could] Validator advisories `[tight-band]` and `[wide-wrong-band]` (a band over half its own value). [inbox: review problems 1.3 a, 1.3 b, 1.3 c, review problems 0.2 a]
+910. [Should] Validator: an expression `wrong[].tex` that grades equal to a single `answer`. [inbox: problems equations]
+911. [Could] Validator: an `accept` string "Any form equal to" a value that is not a ratio of whole numbers. [inbox: review problems 1.3 c]
+912. [Could] Validator: a later part saying "Using part n" with no value after it, or using a symbol only an earlier part supplies. [inbox: review problems 0.2 a, review problems 0.3 a]
+913. [Could] `answers` sets: `count` key cannot name the missing value; a value cannot be a pair. [inbox: problems functions, problems multivar]
+914. [Could] The fixed feedback bar covers the last part's input at 440 px once checked. [inbox: problems exp-log, problems series]
+915. [Could] Expression "Accepted:" line prints `accept` forms as raw LaTeX source; render as KaTeX. [inbox: delta session AA, problems exp-log, problems functions, problems series, problems integrals, problems counting]
+916. [Could] Expression "Accepted:" line says "any expression equal to" when a `form` refuses equal forms (fraction, simplified). [inbox: fluency number-sense, problems equations]
+
+Last inbox heading numbered: "Raised later (problems series)" (end of file at the time of numbering).

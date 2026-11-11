@@ -19,6 +19,7 @@ import { scanO2, O2_CODES, orderedOptionsWhy } from './o2-rules.mjs';
 import { checkCapstones } from './capstone-rules.mjs';
 import { statedMinutes, ignoreList as durationIgnore, FLOOR as DURATION_FLOOR } from './duration-prose.mjs';
 import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb, optionalRows } from './perf-rules.mjs';
+import { drillConstraintReport } from './drill-constraints.mjs';   // machine-readable drill constraints (ENGINE-BACKLOG 866)
 import { checkSet as checkFluencySet, fixtureFiles as fluencyFixtures } from './fluency-rules.mjs';   // generated fluency sets (ENGINE-BACKLOG 812 to 816)
 const hoursLib = createRequire(import.meta.url)('../js/hours.js');   // SESSION_RANGE: the minutes each lesson session accepts (item 10)
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
@@ -1839,6 +1840,13 @@ const checkDrill = (file, id, d, cur) => {
     if (typeof d.solution !== 'string') err(file, 'solution', 'a C++ drill needs its model solution, a string of C++');
     if (d.fn != null) warn(file, 'fn', 'fn is for Python drills; a C++ test names the function in its own call');
     if (Array.isArray(d.examples) && d.examples.length < 1) err(file, 'examples', 'at least 1 example');
+  }
+  /* ENGINE-BACKLOG 866: `constraints` may hold objects stating the inputs; every example and hidden test must satisfy them */
+  if (d.constraints !== undefined && !Array.isArray(d.constraints)) err(file, 'constraints', 'constraints is an array of markdown strings and, optionally, objects stating the inputs (docs/AUTHORING.md section 5)');
+  else {
+    const cr = drillConstraintReport(d);
+    cr.errors.forEach(e => err(file, e.where, e.msg));
+    if (!cr.has && d.sample !== true) warn(file, 'constraints', '[no-constraints] no machine-readable constraints: add an object per argument to "constraints" ({ "arg", "type", "len", "range", "sorted", "distinct", "nonEmpty" }) so every example and test is checked against them');
   }
   /* item 844: planted wrong solutions, run by tools/planted-check.mjs (no runtime here: shape only) */
   if (d.planted !== undefined) {

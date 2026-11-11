@@ -202,10 +202,13 @@ def __zq_raises(_call, _exp, _ns):
     return 0.0
 
 def __zq_cmp(_a, _exp, _cmp, _ns, _tol=None):
+    print(${JSON.stringify(MARK)} + repr(_a), end='')
+    return __zq_judge(_a, eval(_exp, _ns), _cmp, _tol)
+
+def __zq_judge(_a, _e, _cmp, _tol=None):
+    # ENGINE-BACKLOG 861: the one value comparison, shared with the drill page (js/screens/drill.js)
     import math as _m
     from fractions import Fraction as _F
-    print(${JSON.stringify(MARK)} + repr(_a), end='')
-    _e = eval(_exp, _ns)
     if _cmp == 'fraction':
         return 1.0 if isinstance(_a, _F) and _a == _e else 0.0
     # arrays, Series and nested lists compare element by element (item 143): tolist() first
@@ -292,6 +295,7 @@ __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(
   const importsOf = (src) => String(src).split('\n').map(l => l.match(/^\s*(?:import\s+([\w.]+(?:\s+as\s+\w+)?(?:\s*,\s*[\w.]+(?:\s+as\s+\w+)?)*)|from\s+([\w.]+)\s+import\b)/)).filter(Boolean)
     .flatMap(m => (m[1] ? m[1].split(',').map(x => x.replace(/\s+as\s+\w+\s*$/, '')) : [m[2]]).map(x => x.trim())).filter(x => x && !x.startsWith('.'));
   const importHint = (...srcs) => { const im = [...new Set(srcs.flatMap(importsOf))]; return im.length ? 'if False:\n' + im.map(x => '    import ' + x).join('\n') + '\n' : ''; };
+  Z.widgets.codeJudge = { JUDGE, tolOf };   // ENGINE-BACKLOG 861: the drill page compares with the same Python (js/screens/drill.js)
   Z.widgets.codeImports = { importsOf, importHint, harness };   // read by tools/test-engine-runtime.mjs
   /* item 163: prelude (hidden Python run in the learner's namespace before their code) and postlude (run after it).
      With either, the learner's code is carried as a string and compiled as solution.py, so its line numbers stay true. */
