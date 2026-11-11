@@ -2145,3 +2145,8 @@ Raised later (audit mm-games round 2):
 
 Raised later (audit delta 2026-11-11):
 - [Should] Playthrough: the timed checks of `research-int/review-1` (`(timed)` and `(timed parts)`) still throw `page.waitForFunction: Timeout 20000ms exceeded`, desktop and `--mobile`, at the delta audit of 11 November (three runs with `--local-cdn`). The plain set passes, 10 of 10 recorded. This is the item raised earlier in this inbox (the bullet that names `review-2`'s passing timed checks) and KNOWN_ISSUES session Y; it predates the top-up item `r1-det-rank-one`. Until it is fixed this set cannot show a green gate, so every audit of it reports the same two problems.
+
+Raised later (fluency and problems number-sense 4):
+- [Could] Fluency formats: no format writes a thousands separator (`{x:,}` giving `3{,}300{,}000`), so a generated working cannot show a 5-digit or larger result in British style. `number-sense/fluency-l18-circles-and-units` dropped its m³ to cm³ family for this; the m² family writes `{n}{,}000` by hand, which works only for whole thousands.
+- [Could] Expression `form` for a product of primes (`2^3 \times 3^2 \times 5`, powers of primes only, each prime once): without it the typed answer to "write 360 as a product of primes" is graded by value, so 360 itself passes. `number-sense/fluency-l15-building-blocks` asks for the largest prime and the factor counts instead; the l15 quiz uses a choice.
+- [Could] `fluency-sample.mjs --json` leaves out a `wrong` entry's own `tol`, so a recompute script must read the set file to check that slip bands do not overlap (both number scripts of this pass do).

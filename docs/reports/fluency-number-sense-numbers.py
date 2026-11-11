@@ -232,6 +232,271 @@ JOBS = [
     ('number-sense/fluency-l12-which-first', 'left-to-right', l12_ltr),
 ]
 
+
+# ==== Level 4 (fluency and problems number-sense 4) =================================================
+# Method 2 here is sympy (factorint, divisor_count, igcd, ilcm) and exact fractions, worked from the drawn
+# vars alone; the circle families are also probed with pi = 3.14 and 22/7 at the asked rounding.
+import sympy as sp
+from math import pi as PI
+
+SETS4 = {}
+
+
+def wtol(ref, fam, wid):
+    """A wrong entry's own tol, read from the set file (the sampler does not print it)."""
+    if ref not in SETS4:
+        SETS4[ref] = json.load(open(os.path.join(APP, 'content', 'courses', *ref.split('/')) + '.json'))
+    f = next(x for x in SETS4[ref]['families'] if x['id'] == fam)
+    w = next(x for x in f['wrong'] if x['id'] == wid)
+    return float((w.get('tol') or {}).get('abs', 0))
+
+
+def item4(it, ref, key, slips, tol=0.0, text_has=()):
+    """key and slips worked here; slips: {id: value or None when the slip must not be offered}."""
+    tag = f"{it['family']} seed {it['seed']}"
+    check(abs(float(num(it['answer'])) - float(key)) <= 1e-9 * max(1, abs(float(key))), f"{tag}: key {it['answer']} is {float(key)}")
+    want = {k for k, v in slips.items() if v is not None}
+    got = {w['id']: float(num(w['value'])) for w in it['wrong']}
+    check(set(got) == want, f"{tag}: slips offered {sorted(got)} are {sorted(want)}")
+    for wid, v in got.items():
+        wt = wtol(ref, it['family'], wid)
+        if wid in want:
+            check(abs(v - float(slips[wid])) <= 1e-9 * max(1, abs(v)), f"{tag}: slip {wid} = {v} is {float(slips[wid])}")
+        check(abs(v - float(key)) > tol + wt, f"{tag}: slip {wid} lies outside the key band")
+    ids = list(got)
+    for i in range(len(ids)):
+        for j in range(i + 1, len(ids)):
+            a, b = ids[i], ids[j]
+            check(abs(got[a] - got[b]) > wtol(ref, it['family'], a) + wtol(ref, it['family'], b),
+                  f"{tag}: slips {a} and {b} do not overlap")
+    for s in text_has:
+        check(s in it['prompt'] or any(s in x for x in it['solution']), f"{tag}: {s!r} appears in the prompt or working")
+
+
+R15 = 'number-sense/fluency-l15-building-blocks'
+
+
+def n15(V):
+    n = int(V['nn'])
+    fa = sp.factorint(n)
+    exps = {p: int(V['e' + str(p)]) for p in (2, 3, 5, 7, 11, 13)}
+    check({p: e for p, e in exps.items() if e} == fa, f"l15 {n}: tuple indices are the prime factors {fa}")
+    tex = ' \\times '.join(f'{p}^{e}' if e > 1 else f'{p}' for p, e in sorted(fa.items()))
+    check(V['ptex'] == tex, f"l15 {n}: index form {V['ptex']} is {tex}")
+    return n, fa
+
+
+def l15_largest(it, V):
+    n, fa = n15(V)
+    lp, spf = max(fa), min(fa)
+    big = n // spf
+    pp = lp ** fa[lp]
+    item4(it, R15, lp, {'largest-factor': big, 'prime-power': pp if fa[lp] > 1 and pp != big else None},
+          text_has=[f"{n} = {V['ptex']}"])
+
+
+def l15_from_primes(it, V):
+    n, fa = n15(V)
+    key = sp.divisor_count(n)
+    mul = int(sp.prod(fa.values()))
+    add = sum(e + 1 for e in fa.values())
+    check(key == len(sp.divisors(n)), f"l15 {n}: divisor count by listing")
+    item4(it, R15, key, {'indices-multiplied': mul if mul != add else None, 'indices-added': add if add != key else None})
+
+
+def l15_count(it, V):
+    n, fa = n15(V)
+    key = len([d for d in range(1, n + 1) if n % d == 0])
+    check(key == sp.divisor_count(n), f"l15 {n}: trial division agrees with sympy")
+    pairs = (key + 1) // 2
+    check(pairs == len([d for d in range(1, n + 1) if n % d == 0 and d * d <= n]), f"l15 {n}: factor pairs counted")
+    mul = int(sp.prod(fa.values()))
+    item4(it, R15, key, {'pairs': pairs if pairs != mul else None, 'no-plus-one': mul})
+
+
+R16 = 'number-sense/fluency-l16-shared-factors'
+
+
+def n16(V):
+    g, p, a, b = int(V['g']), int(V['p']), int(V['a']), int(V['b'])
+    check(p == min(sp.factorint(g)) and sp.igcd(a, b) == 1 and a < b, f"l16 g={g}: smallest prime {p}, a and b coprime")
+    m, n = g * a, g * b
+    check(sp.igcd(m, n) == g and sp.ilcm(m, n) == g * a * b, f"l16 {m},{n}: HCF {g}, LCM {g * a * b}")
+    return g, p, m, n
+
+
+def l16_hcf(it, V):
+    g, p, m, n = n16(V)
+    key = max(d for d in range(1, m + 1) if m % d == 0 and n % d == 0)
+    item4(it, R16, key, {'lcm': sp.ilcm(m, n), 'one-prime': p if g != p else None}, text_has=[f"${m}$ and ${n}$"])
+
+
+def l16_lcm(it, V):
+    g, p, m, n = n16(V)
+    key = next(k for k in range(n, m * n + 1, n) if k % m == 0)
+    item4(it, R16, key, {'product': m * n, 'hcf': g}, text_has=[f"${m}$ and ${n}$"])
+
+
+def l16_other(it, V):
+    g, p, m, n = n16(V)
+    l = sp.ilcm(m, n)
+    cands = [x for x in range(1, g * l + 1) if sp.igcd(m, x) == g and sp.ilcm(m, x) == l]
+    check(cands == [n], f"l16 other {m}: the only number with HCF {g} and LCM {l} is {n} ({cands})")
+    a, b = m // g, n // g
+    item4(it, R16, n, {'lcm-over-hcf': l // g if a != g else None, 'product': g * l}, text_has=[f"${m}$", f"${g}$", f"${l}$"])
+
+
+R17 = 'number-sense/fluency-l17-around-and-inside'
+
+
+def shoelace(pts):
+    return abs(sum(F(x1) * y2 - F(x2) * y1 for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]))) / 2
+
+
+def l17_tri(it, V):
+    b, h, k = (int(V[x]) for x in 'bhk')
+    s = h + k
+    key = F(b * h, 2)
+    shoe = shoelace([(0, 0), (b, 0), (F(b, 3), h)])
+    check(shoe == key, f"tri {b},{h}: shoelace area {shoe}")
+    item4(it, R17, key, {'no-half': b * h, 'sloping-side': F(b * s, 2) if s != 2 * h else None},
+          text_has=[f"base ${b}$ cm", f"side of ${s}$ cm", f"height ${h}$ cm"])
+
+
+def l17_para(it, V):
+    b, h, k = (int(V[x]) for x in 'bhk')
+    s = h + k
+    shoe = shoelace([(0, 0), (b, 0), (b + 2, h), (2, h)])
+    check(shoe == b * h, f"para {b},{h}: shoelace area {shoe}")
+    item4(it, R17, b * h, {'slant-side': b * s, 'halved': F(b * h, 2)}, text_has=[f"base ${b}$ cm", f"slant side ${s}$ cm"])
+
+
+def l17_trap(it, V):
+    a, d, h = (int(V[x]) for x in 'adh')
+    c = a + d
+    key = F((a + c) * h, 2)
+    shoe = shoelace([(0, 0), (c, 0), (a + 1, h), (1, h)])
+    check(shoe == key, f"trap {a},{c},{h}: shoelace {shoe}")
+    item4(it, R17, key, {'no-half': (a + c) * h, 'longer-side': c * h}, text_has=[f"${a}$ m and ${c}$ m"])
+
+
+def l17_l(it, V):
+    w, t, p, q = (int(V[x]) for x in 'wtpq')
+    cells = sum(1 for i in range(w) for j in range(t) if not (i >= w - p and j >= t - q))
+    check(cells == w * t - p * q, f"L {w}x{t} cut {p}x{q}: {cells} unit squares")
+    item4(it, R17, cells, {'corner-kept': w * t, 'corner-added': w * t + p * q})
+
+
+R18 = 'number-sense/fluency-l18-circles-and-units'
+
+
+def pi_probe(tag, true, tol, dp, f):
+    for approx in (3.14, 22 / 7):
+        v = round(f(approx), dp)
+        check(abs(v - true) <= tol, f"{tag}: the value with pi = {approx:.4f}, {v}, is accepted")
+    check(abs(round(true, dp) - true) <= tol, f"{tag}: the value at {dp} dp is accepted")
+
+
+def l18_circ(it, V):
+    k, m = int(V['k']), int(V['m'])
+    d = F(2 * m) if k == 1 else F(m)
+    r = d / 2
+    key = sp.N(sp.pi * sp.Rational(d), 15)
+    tag = f"circ {V['word']} {m}"
+    check(abs(float(key) - 2 * PI * float(r)) < 1e-9, f"{tag}: pi d is 2 pi r")
+    pi_probe(tag, float(key), 0.15, 1, lambda P: P * float(d))
+    area = PI * float(r) ** 2
+    swap = PI * (m if k == 1 else 2 * m)
+    item4(it, R18, float(key), {'area-rule': area if abs(area - float(key)) > 1 and abs(area - swap) > 1 else None,
+                                 'radius-diameter': swap}, tol=0.15)
+
+
+def l18_area(it, V):
+    k, m = int(V['k']), int(V['m'])
+    r = F(m) if k == 1 else F(m, 2)
+    key = float(sp.N(sp.pi * sp.Rational(r) ** 2, 15))
+    tag = f"area {V['word']} {m}"
+    pi_probe(tag, key, 0.2, 1, lambda P: P * float(r) ** 2)
+    circ = 2 * PI * float(r)
+    item4(it, R18, key, {'diameter-squared': PI * m * m if k == 2 else None,
+                         'circumference': circ if abs(key - circ) > 1 else None}, tol=0.2)
+
+
+def l18_speed(it, V):
+    x, dr = int(V['x']), int(V['dir'])
+    if dr == 1:
+        key = sp.Rational(x * 1000, 3600)
+        check(abs(float(key) - x / 3.6) < 1e-9, f"speed {x}: x / 3.6")
+        slips = {'wrong-way': sp.Rational(x * 36, 10), 'minutes': sp.Rational(x * 1000, 60)}
+    else:
+        key = sp.Rational(x * 3600, 1000)
+        check(abs(float(key) - x * 3.6) < 1e-9, f"speed {x}: x * 3.6")
+        slips = {'wrong-way': sp.Rational(x * 1000, 3600), 'minutes': sp.Rational(x * 60, 1000)}
+    check(abs(round(float(key), 1) - float(key)) <= 0.05, f"speed {x}: 1 dp value accepted")
+    item4(it, R18, key, slips, tol=0.05)
+
+
+def l18_units(it, V):
+    n = int(V['n'])
+    a = F(n, 10)
+    key = a * 100 * 100
+    check(key == n * 1000, f"units {n}: {a} m2 is {n * 1000} cm2")
+    check(f"${n}{{,}}000$" in it['solution'][1], f"units {n}: working writes {n},000")
+    item4(it, R18, key, {'length-only': a * 100, 'divided': a / 10000})
+
+
+R19 = 'number-sense/fluency-l19-one-number-for-many'
+
+
+def shown_list(it):
+    return [F(int(z)) for z in re.findall(r'\$(-?\d+)\$', it['prompt'])]
+
+
+def l19_mean(it, V):
+    vals = shown_list(it)
+    check(len(vals) == 5 and sum(1 for v in vals if v < 0) >= 1, f"mean seed {it['seed']}: five values, a loss among them")
+    key = sum(vals) / 5
+    check(key == int(V['m']), f"mean seed {it['seed']}: mean {key}")
+    a = F(int(V['a']))
+    pos = (sum(vals) - 2 * a) / 5
+    item4(it, R19, key, {'divided-by-four': sum(vals) / 4, 'loss-added': pos if pos != sum(vals) / 4 else None})
+
+
+def l19_median(it, V):
+    vals = shown_list(it)
+    check(len(vals) == 5 and len(set(vals)) == 5, f"median seed {it['seed']}: five different values")
+    key = sorted(vals)[2]
+    mean = sum(vals) / 5
+    item4(it, R19, key, {'unsorted': vals[2] if vals[2] != key else None,
+                         'mean': mean if mean != key and mean != vals[2] else None})
+
+
+def l19_range(it, V):
+    vals = shown_list(it)
+    check(len(vals) == 5 and min(vals) < 0 < max(vals), f"range seed {it['seed']}: a loss and a profit")
+    key = max(vals) - min(vals)
+    fl = abs(vals[4] - vals[0])
+    lost = max(vals) + min(vals)
+    item4(it, R19, key, {'first-last': fl if fl != key and fl != lost else None, 'sign-lost': lost if lost != key else None})
+
+
+def l19_table(it, V):
+    f = [int(V['f' + str(i)]) for i in range(5)]
+    data = [v for v in range(5) for _ in range(f[v])]
+    key = F(sum(data), len(data))
+    check(f"${len(data)}$" in it['prompt'], f"table seed {it['seed']}: the count {len(data)} is stated")
+    check(abs(round(float(key), 2) - float(key)) <= 0.01, f"table seed {it['seed']}: 2 dp accepted")
+    item4(it, R19, key, {'values-only': F(2), 'rows': F(sum(data), 5)}, tol=0.01)
+
+
+JOBS += [
+    (R15, 'largest-prime', l15_largest), (R15, 'count-from-primes', l15_from_primes), (R15, 'count-factors', l15_count),
+    (R16, 'hcf', l16_hcf), (R16, 'lcm', l16_lcm), (R16, 'other-number', l16_other),
+    (R17, 'triangle-area', l17_tri), (R17, 'parallelogram-area', l17_para), (R17, 'trapezium-area', l17_trap), (R17, 'l-shape-area', l17_l),
+    (R18, 'circumference', l18_circ), (R18, 'circle-area', l18_area), (R18, 'speed-units', l18_speed), (R18, 'area-units', l18_units),
+    (R19, 'mean', l19_mean), (R19, 'median', l19_median), (R19, 'range', l19_range), (R19, 'table-mean', l19_table),
+]
+
 for ref, fam, fn in JOBS:
     run(ref, fam, fn)
 print(f"{len(JOBS)} families, {N} draws each, {count} checks")
