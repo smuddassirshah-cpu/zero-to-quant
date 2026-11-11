@@ -253,6 +253,85 @@ def level1(L):
 
 run_level(1, level1)
 
+
+def dq(f, a, hh=1e-6):
+    """A symmetric difference quotient: the shrinking window of l5 as the second method."""
+    return (f(a + hh) - f(a - hh)) / (2 * hh)
+
+
+# ------------------------------------------------------------------ level 2
+def level2(L):
+    # p-session-volume
+    N = 3 * t ** 2 + 4 * t
+    Nf = lambda v: 3 * v * v + 4 * v
+    avg = (N.subs(t, 4) - N.subs(t, 1)) / 3
+    num(L, 'p-session-volume', 1, avg, sum(dq(Nf, 1 + (i + 0.5) * 3 / 3000) for i in range(3000)) / 3000,
+        {'no-divide': 57, 'since-start': F(64, 4), 'wrong-gap': F(57, 4)}, agree=1e-6)  # mean of the slopes over the window
+    quot = sp.expand(sp.cancel((N.subs(t, 2 + h) - N.subs(t, 2)) / h))
+    expr_part(L, 'p-session-volume', 2, quot, {'16+3h': 16 + 3 * h, '3h+16': 3 * h + 16, '4+3h': 4 + 3 * h, '16': sp.Integer(16)})
+    ok(quot == 16 + 3 * h, 'volume: quotient is 16 + 3h')
+    ok(sp.expand((3 * (4 + h ** 2) + 4 * (2 + h) - 20) / h) == 4 + 3 * h, 'volume: square-slip gives 4 + 3h')
+    num(L, 'p-session-volume', 3, sp.limit(quot, h, 0), dq(Nf, 2),
+        {'h-one': quot.subs(h, 1), 'since-start': F(20, 2), 'square-slip': 4}, agree=1e-6)
+    tsol = sp.solve(sp.Eq(sp.diff(N, t), 34), t)[0]
+    num(L, 'p-session-volume', 4, tsol, first_whole(lambda v: abs(dq(Nf, v) - 34) < 1e-4, 0),
+        {'no-bring-down': sp.solve(sp.Eq(3 * t + 4, 34), t)[0], 'dropped-four': F(34, 6)})
+    ok(sp.diff(N, t).subs(t, 2) == 16, 'volume: N\'(2) = 16 matches part 3')
+
+    # p-fund-session
+    V = 2 * t ** 3 - 9 * t ** 2 + 12 * t + 500
+    Vf = lambda v: 2 * v ** 3 - 9 * v ** 2 + 12 * v + 500
+    dV = sp.diff(V, t)
+    expr_part(L, 'p-fund-session', 1, dV, {'6t^2-18t+12': 6 * t ** 2 - 18 * t + 12, '6(t-1)(t-2)': 6 * (t - 1) * (t - 2),
+                                           '12-18t+6t^2': 12 - 18 * t + 6 * t ** 2, '6t^2-18t+512': 6 * t ** 2 - 18 * t + 512,
+                                           '6t^3-18t^2+12t': 6 * t ** 3 - 18 * t ** 2 + 12 * t})
+    roots = sp.solve(dV, t)
+    alt_roots = sorted(v / 100 for v in range(0, 301) if abs(dq(Vf, v / 100)) < 1e-6)
+    numset(L, 'p-fund-session', 2, roots, alt_roots, {'signs': [-1, -2]})
+    pick(L, 'p-fund-session', 3, 'between')
+    ok(all(dq(Vf, v) < 0 for v in [1.01 + i * 0.01 for i in range(98)]) and dq(Vf, 0.5) > 0 and dq(Vf, 2.5) > 0, 'fund: falling only on (1, 2)')
+    ok(V.subs(t, 3) == 509 and V.subs(t, 0) == 500, 'fund: V(3) = 509, V(0) = 500')
+    low = min(dV.subs(t, v) for v in [sp.Rational(i, 1000) for i in range(0, 3001)])
+    num(L, 'p-fund-session', 4, dV.subs(t, sp.Rational(3, 2)), low,
+        {'height': V.subs(t, sp.Rational(3, 2)), 'sign': F(3, 2), 'dropped-six': F(-1, 4)})
+
+    # p-inventory-penalty
+    Cq = sp.Rational(1, 2) * q ** 2
+    qt = sp.expand(sp.cancel((Cq.subs(q, 4 + h) - Cq.subs(q, 4)) / h))
+    expr_part(L, 'p-inventory-penalty', 1, qt, {'4+0.5h': 4 + h / 2, '4+\\frac{h}{2}': 4 + h / 2, '\\frac{8+h}{2}': (8 + h) / 2,
+                                                 '0.5h+4': h / 2 + 4, '0.5h': h / 2, '8+h': 8 + h})
+    ok(sp.expand((sp.Rational(1, 2) * (16 + h ** 2) - 8) / h) == h / 2, 'penalty: square-slip gives 0.5h')
+    pick(L, 'p-inventory-penalty', 2, 'corner')
+    ok(3 * 4 - 4 == 8 == Cq.subs(q, 4), 'penalty: draft is continuous at 4')
+    left_slope = sp.limit(qt, h, 0, '-')
+    num(L, 'p-inventory-penalty', 3, left_slope, dq(lambda v: 0.5 * v * v, 4),
+        {'draft': 3, 'height': 8, 'no-power': sp.Rational(1, 2) * 4}, agree=1e-6)
+    m_, b_ = sp.symbols('m_ b_')
+    bsol = sp.solve(sp.Eq(4 * 4 + b_, Cq.subs(q, 4)), b_)[0]
+    num(L, 'p-inventory-penalty', 4, bsol, 0.5 * 16 - 4 * 4, {'value': 8, 'draft': -4, 'height-slope': 8 - 8 * 4})
+    tangent = sp.diff(Cq, q).subs(q, 4) * (q - 4) + Cq.subs(q, 4)
+    ok(sp.expand(tangent - (4 * q - 8)) == 0, 'penalty: 4q - 8 is the tangent at 4')
+
+    # p-perpetuity-slope
+    P = 5 / r
+    Pf = lambda v: 5 / v
+    num(L, 'p-perpetuity-slope', 1, (P.subs(r, sp.Rational(4, 100)) - 100) / sp.Rational(-1, 100), (Pf(0.04) - Pf(0.05)) / (0.04 - 0.05),
+        {'sign': 2500, 'no-divide': 25})
+    ok(P.subs(r, sp.Rational(4, 100)) == 125 and P.subs(r, sp.Rational(5, 100)) == 100, 'perp: prices 125 and 100')
+    s2 = (P.subs(r, sp.Rational(49, 1000)) - 100) / sp.Rational(-1, 1000)
+    num(L, 'p-perpetuity-slope', 2, s2, (Pf(0.049) - Pf(0.05)) / (0.049 - 0.05),
+        {'sign': -s2, 'no-divide': P.subs(r, sp.Rational(49, 1000)) - 100}, dp=0, agree=1e-9)
+    stated('P(0.049)', 102.0408, P.subs(r, sp.Rational(49, 1000)), 0.00005)
+    stated('rise 2.0408', 2.0408, P.subs(r, sp.Rational(49, 1000)) - 100, 0.00005)
+    stated('exact -2040.82', -2040.82, s2, 0.005)
+    num(L, 'p-perpetuity-slope', 3, sp.diff(P, r).subs(r, sp.Rational(5, 100)), dq(Pf, 0.05, 1e-7),
+        {'sign': 2000, 'no-square': -5 / 0.05, 'secant': -2500}, agree=1e-6)
+    pick(L, 'p-perpetuity-slope', 4, 'steepens')
+    stated('slope at 0.04', -3125, sp.diff(P, r).subs(r, sp.Rational(4, 100)), 1e-9)
+
+
+run_level(2, level2)
+
 present = [n for n in (1, 2, 3) if load(n) is not None]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails:
