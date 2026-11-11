@@ -16,6 +16,8 @@ Run: <scratchpad>/venv/bin/python docs/reports/problems-vectors-numbers.py
 import json, os, re, sys, itertools, math
 import numpy as np
 import sympy as sp
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+TR = standard_transformations + (implicit_multiplication_application,)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 COURSE = os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'vectors')
@@ -91,7 +93,7 @@ def num(items, iid, k, exact, alt, slips=None, rel=1e-9):
 def parse_entry(s):
     s = s.strip()
     s = re.sub(r'\\frac\{([^{}]*)\}\{([^{}]*)\}', r'((\1)/(\2))', s)
-    return sp.nsimplify(sp.sympify(s, locals={'k': k_}), rational=True)
+    return sp.nsimplify(parse_expr(s, local_dict={'k': k_}, transformations=TR), rational=True)
 
 
 def parse_obj(s):
@@ -358,6 +360,96 @@ if I:
     ok(cvec.dot(xo) == cost, 'bakery: c . x reproduces part 2')
     num(I, 'p-bakery-costs', 5, cvec.dot(M([50, 20])), pn @ (Qn @ np.array([50, 20.])),
         {'this-week': cost, 'swapped': cvec.dot(M([20, 50])), 'one-each': sum(cvec)})
+
+# ======================================================== level 3: inverses and systems
+I = load(3)
+if I:
+    def adj_noswap(Mx):
+        return M([[Mx[0, 0], -Mx[0, 1]], [-Mx[1, 0], Mx[1, 1]]])
+
+    def adj(Mx):
+        return M([[Mx[1, 1], -Mx[0, 1]], [-Mx[1, 0], Mx[0, 0]]])
+
+    # p-goat-feed
+    A = M([[R(4, 10), R(1, 10)], [R(2, 10), R(3, 10)]])
+    An = np.array([[0.4, 0.1], [0.2, 0.3]])
+    bb = M([13, 14])
+    obj(I, 'p-goat-feed', 1, A, np.column_stack([[0.4, 0.2], [0.1, 0.3]]), {'transposed': A.T})
+    dA = A.det()
+    num(I, 'p-goat-feed', 2, dA, np.linalg.det(An), {'added': A[0, 0] * A[1, 1] + A[0, 1] * A[1, 0], 'flipped': -dA})
+    Ai = A.inv()
+    ok(Ai == adj(A) / dA, 'feed: inverse is the 2 x 2 recipe')
+    obj(I, 'p-goat-feed', 3, Ai, np.linalg.inv(An),
+        {'no-divide': adj(A), 'no-negate': M([[3, 1], [2, 4]]), 'transposed': A.T.inv(), 'times-det': adj(A) * dA})
+    xx = Ai * bb
+    obj(I, 'p-goat-feed', 4, xx.T, np.linalg.solve(An, [13, 14.]),
+        {'transposed': (A.T.inv() * bb).T, 'no-divide': (adj(A) * bb).T, 'swapped': M([[xx[1], xx[0]]])})
+    ok(A * xx == bb and A[0, :] * xx == M([13]) and A[0, 0] * xx[0] == 10 and A[1, 0] * xx[0] == 5, 'feed: check 10 + 3 = 13, 5 + 9 = 14')
+
+    # p-paint-tints
+    Ak = M([[12, 8], [3, k_]])
+    kk = sp.solve(Ak.det(), k_)
+    num(I, 'p-paint-tints', 1, kk[0], [kv for kv in np.arange(-10, 10.5, 0.5) if abs(np.linalg.det(np.array([[12, 8], [3, kv]]))) < 1e-9][0],
+        {'plus': sp.solve(12 * k_ + 24, k_)[0], 'mixed': sp.solve(sp.Eq(R(12) / k_, R(8, 3)), k_)[0]})
+    A2 = Ak.subs(k_, 2)
+    num(I, 'p-paint-tints', 2, A2.rank(), np.linalg.matrix_rank(np.array([[12, 8], [3, 2.]])), {'full': 2, 'zero': 0})
+    pick(I, 'p-paint-tints', 3, 'none')
+    aug = M.hstack(A2, M([60, 18]))
+    ok(aug.rank() == 2 and A2.rank() == 1, 'paint: (60, 18) is off the column line (no solution)')
+    ok(M.hstack(A2, M([60, 15])).rank() == 1 and 3 * 5 == 15, 'paint: (60, 15) on the line; p = 5 gives blue 15')
+    q = sp.Symbol('q')
+    qq = sp.solve(12 * 3 + 8 * q - 60, q)[0]
+    ok((A2 * M([3, qq]))[1] == 15, 'paint: blue checks at (3, 3)')
+    num(I, 'p-paint-tints', 4, qq, (60 - 12 * 3) / 8, {'q-only': R(60, 8), 'p-only': 0})
+    A5 = Ak.subs(k_, 5)
+    ok(A5.det() == 36 and (12 * k_ - 24).subs(k_, 5) == 36, 'paint: det 36 at k = 5')
+    x5 = A5.inv() * M([64, 22])
+    obj(I, 'p-paint-tints', 5, x5.T, np.linalg.solve(np.array([[12, 8], [3, 5.]]), [64, 22.]),
+        {'swapped': M([[x5[1], x5[0]]]), 'no-divide': (adj(A5) * M([64, 22])).T})
+    ok(adj(A5) * M([64, 22]) == M([144, 72]), 'paint: 320 - 176 = 144 and -192 + 264 = 72')
+
+    # p-colour-sensor
+    Ms = M([[R(8, 10), R(3, 10)], [R(2, 10), R(7, 10)]])
+    Mn = np.array([[0.8, 0.3], [0.2, 0.7]])
+    rd = M([130, 70])
+    corners = Mn @ np.array([[0, 1, 1, 0], [0, 0, 1, 1.]])
+    shoelace = 0.5 * abs(sum(corners[0, i] * corners[1, (i + 1) % 4] - corners[0, (i + 1) % 4] * corners[1, i] for i in range(4)))
+    num(I, 'p-colour-sensor', 1, abs(Ms.det()), shoelace, {'added': Ms[0, 0] * Ms[1, 1] + Ms[0, 1] * Ms[1, 0], 'diagonal': Ms[0, 0] * Ms[1, 1]})
+    Mi = Ms.inv()
+    obj(I, 'p-colour-sensor', 2, Mi, np.linalg.inv(Mn), {'no-divide': adj(Ms), 'times-det': adj(Ms) * Ms.det(), 'no-negate': M([[R(14, 10), R(6, 10)], [R(4, 10), R(16, 10)]])})
+    star = np.linalg.inv(Mn) * np.array([130, 70.])
+    num(I, 'p-colour-sensor', 3, Mi[0, 1] * rd[1], star[0, 1], {'matrix-product': (Mi * rd)[0], 'entry-10': Mi[1, 0] * rd[0], 'entry-00': Mi[0, 0] * rd[0]}, rel=1e-9)
+    ok(np.allclose(star, [[182, -42], [-52, 112]]) and np.allclose(star.sum(axis=1), [140, 60]) and np.allclose(star.sum(axis=0), [130, 70]),
+       'sensor: the * array, its row sums and its column sums')
+    tt = Mi * rd
+    obj(I, 'p-colour-sensor', 4, tt.T, np.linalg.solve(Mn, [130, 70.]),
+        {'no-divide': (adj(Ms) * rd).T, 'forward': (Ms * rd).T, 'column-sums': rd.T})
+    ok(Ms * tt == rd, 'sensor: M(140, 60) = (130, 70)')
+
+    # p-engraver-dial
+    Ae = M([[3, 1], [2, 1]])
+    Bk = M([[2, k_], [1, 1]])
+    Ck = Bk * Ae
+    obj(I, 'p-engraver-dial', 1, Ck, lambda kv: np.array([[2, kv], [1, 1.]]) @ np.array([[3, 1], [2, 1.]]),
+        {'order': Ae * Bk, 'entrywise': Bk.multiply_elementwise(Ae)})
+    dC = sp.expand(Ck.det())
+    ok(sp.simplify(dC - Bk.det() * Ae.det()) == 0, 'engraver: det C = det B det A')
+    ok(all(abs(np.linalg.det(np.array([[2, kv], [1, 1.]]) @ np.array([[3, 1], [2, 1.]])) - (2 - kv)) < 1e-9 for kv in (-1, 0.5, 3)), 'engraver: det numerically')
+    added = sp.expand(Ck[0, 0] * Ck[1, 1] + Ck[0, 1] * Ck[1, 0])
+    poly(I, 'p-engraver-dial', 2, dC, {'added': added, 'flipped': -dC})
+    ok(sp.simplify(sp.expand((Ae * Bk).det()) - dC) == 0, 'engraver: the order slip has the same determinant')
+    k0 = sp.solve(dC, k_)[0]
+    num(I, 'p-engraver-dial', 3, k0, [kv for kv in range(-5, 6) if abs(np.linalg.det(np.array([[2, kv], [1, 1.]]) @ np.array([[3, 1], [2, 1.]]))) < 1e-9][0],
+        {'added': sp.solve(added, k_)[0]})
+    C1 = Ck.subs(k_, 1)
+    ok(C1 == M([[8, 3], [5, 2]]) and C1.det() == 1, 'engraver: C_1 and its determinant')
+    obj(I, 'p-engraver-dial', 4, C1.inv(), np.linalg.inv(np.array([[8, 3], [5, 2.]])),
+        {'no-negate': M([[2, 3], [5, 8]]), 'unswapped': adj_noswap(C1), 'order': (Ae * Bk.subs(k_, 1)).inv()})
+    mark = M([19, 12])
+    pt = C1.inv() * mark
+    obj(I, 'p-engraver-dial', 5, pt.T, np.linalg.solve(np.array([[8, 3], [5, 2.]]), [19, 12.]),
+        {'order': ((Ae * Bk.subs(k_, 1)).inv() * mark).T, 'forward': (C1 * mark).T, 'unswapped': (adj_noswap(C1) * mark).T})
+    ok(Ae * pt == M([7, 5]) and Bk.subs(k_, 1) * M([7, 5]) == mark, 'engraver: forward check (2, 1) -> (7, 5) -> (19, 12)')
 
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
