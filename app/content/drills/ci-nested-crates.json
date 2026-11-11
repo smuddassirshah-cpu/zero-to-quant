@@ -1,0 +1,161 @@
+{
+  "id": "ci-nested-crates",
+  "name": "A row of ever wider crates",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-6",
+    "dp-1d",
+    "nested-crates"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2520,
+  "fn": "longest_nest",
+  "returns": "a whole number",
+  "brief": "A shop window shows crates in a row. Each crate is `[w, h]`, a width and a height in centimetres. From left to right, each crate in the row must be strictly wider than the one before it and at least as tall. The shop may choose any of its crates, in any order. Return the most crates the row can hold.\n\nWrite `longest_nest(crates)`.\n\nExample. For `[[3, 4], [1, 2], [3, 6], [2, 2], [4, 1]]` the row `[1, 2]`, `[2, 2]`, `[3, 4]` holds three crates; the two crates of width 3 cannot both go in, and `[4, 1]` is too short to follow. The answer is 3.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ crates, with widths and heights from 1 to $10^9$.",
+    "$O(n \\log n)$ time is the target. Comparing each crate with every other is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "crates",
+      "type": "list",
+      "len": [
+        1,
+        100000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          2,
+          2
+        ],
+        "of": "int",
+        "range": [
+          1,
+          1000000000
+        ]
+      }
+    }
+  ],
+  "hint": "Sort the widths and take each width as one group. Every crate of the group finds its place with `bisect_right` in the list of smallest tails as it stood before the group; only then write the group's heights in.",
+  "starter": "def longest_nest(crates):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "longest_nest([[3, 4], [1, 2], [3, 6], [2, 2], [4, 1]])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Equal heights may follow each other, as `[1, 2]` and `[2, 2]` do, but equal widths may not."
+    },
+    {
+      "call": "longest_nest([[2, 3], [2, 5]])",
+      "expect": "1",
+      "compare": "equal",
+      "note": "The crates share a width, so only one goes in."
+    },
+    {
+      "call": "longest_nest([[1, 4], [2, 4], [2, 4], [3, 4]])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Each width gives one crate of height 4, so three fit; the two `[2, 4]` crates cannot both go in."
+    }
+  ],
+  "tests": [
+    {
+      "call": "longest_nest([[5, 5]])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[1, 9], [1, 1], [1, 5]])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[4, 4], [3, 3], [2, 2], [1, 1]])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[1, 2], [2, 1]])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[2, 7], [1, 7], [3, 7], [3, 8]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[1, 3], [2, 5], [2, 4], [3, 4], [4, 6]])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[6, 1], [5, 2], [4, 3], [7, 3]])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[1, 1000000000], [1000000000, 1000000000], [1000000000, 1]])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[3, 2], [3, 3], [4, 2], [5, 3], [5, 2]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[2, 2], [2, 2], [3, 2]])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[7, 7], [7, 7], [7, 7]])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[(i * 7919) % 100003 + 1, (i * 104729) % 99991 + 1] for i in range(100000)])",
+      "expect": "544",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[i // 2 + 1, 100000 - i] for i in range(100000)])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "longest_nest([[i // 3 + 1, (i % 1000) // 7 + 1] for i in range(100000)])",
+      "expect": "664",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method sorts the crates and, for each one, checks every earlier crate it can follow, which is $O(n^2)$ and runs out of time on 100,000 crates. The step to the target is the list of smallest tails with a binary search per crate, with each width placed as one group so that equal widths never chain. Unlike the usual nesting problem, a crate need only be at least as tall, not taller. The usual trick of sorting equal widths tallest first then fails on two crates of the same size, which is why each width is placed as one group.",
+  "solution": "from bisect import bisect_right\n\ndef longest_nest(crates):\n    groups = {}\n    for w, h in crates:\n        groups.setdefault(w, []).append(h)\n    tails = []\n    for w in sorted(groups):\n        moves = {}\n        for h in groups[w]:\n            k = bisect_right(tails, h)\n            if k not in moves or h < moves[k]:\n                moves[k] = h\n        for k in sorted(moves):\n            if k == len(tails):\n                tails.append(moves[k])\n            elif moves[k] < tails[k]:\n                tails[k] = moves[k]\n    return len(tails)\n",
+  "notes": [
+    "Every crate of one width is placed against the tails from narrower crates only, so no two crates of one width can share a row.",
+    "`bisect_right` lets a crate of equal height follow, and within a group only the lowest height for each place is written in.",
+    "A sort and one binary search per crate make the work $O(n \\log n)$."
+  ],
+  "planted": [
+    {
+      "code": "from bisect import bisect_right\n\ndef longest_nest(crates):\n    order = sorted(crates, key=lambda c: (c[0], -c[1]))\n    tails = []\n    for _, h in order:\n        k = bisect_right(tails, h)\n        if k == len(tails):\n            tails.append(h)\n        else:\n            tails[k] = h\n    return len(tails)\n",
+      "slip": "Sorting equal widths tallest first keeps different heights apart, but two crates of the same size still follow each other."
+    },
+    {
+      "code": "from bisect import bisect_left\n\ndef longest_nest(crates):\n    order = sorted(crates, key=lambda c: (c[0], -c[1]))\n    tails = []\n    for _, h in order:\n        k = bisect_left(tails, h)\n        if k == len(tails):\n            tails.append(h)\n        else:\n            tails[k] = h\n    return len(tails)\n",
+      "slip": "Using `bisect_left` makes the heights rise strictly, so a crate just as tall is refused."
+    },
+    {
+      "code": "def longest_nest(crates):\n    order = sorted(crates)\n    n = len(order)\n    best = [1] * n\n    for i in range(n):\n        for j in range(i):\n            if order[j][0] < order[i][0] and order[j][1] <= order[i][1] and best[j] + 1 > best[i]:\n                best[i] = best[j] + 1\n    return max(best)\n",
+      "slip": "Comparing each crate with every earlier one after sorting is right but takes $O(n^2)$ time, too slow."
+    }
+  ]
+}
