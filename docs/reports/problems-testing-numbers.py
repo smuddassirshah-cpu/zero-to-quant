@@ -1,6 +1,6 @@
 """Recompute every number in app/content/courses/testing/problems-<n>.json twice (docs/briefs/chained.md check 1).
 
-Levels 1 and 4 so far. Method 1 is exact: sympy, with the likelihood, information or table written out and solved or
+Levels 1, 2 and 4 so far. Method 1 is exact: sympy, with the likelihood, information or table written out and solved or
 summed symbolically. Method 2 takes another route: a score root found numerically, information as the variance of
 the score by summing over the Poisson or exponential law, a Monte Carlo estimate (seeded) where a mean or variance is
 claimed, a brute search over n for a sample size. For each numeric part the script checks: the two methods agree;
@@ -302,6 +302,93 @@ if L1 is not None:
     c15 = stats.t(15).ppf(0.95)
     ok(round(c15, 3) == 1.753 and float(t) < c15 and float(z) > 1.645, 'p-pizza-delivery: z rejects, t does not')
     pick(L1, 'p-pizza-delivery', 4, 't-fails')
+
+L2 = load(2)
+if L2 is not None:
+    Phi = stats.norm.cdf
+    # ---------- p-fertiliser-trials: sd 1.2, 36 plots, effect 0.45, cut-off 1.645 ----------
+    m = sp.Rational(45, 100) / (sp.Rational(12, 10) / 6)
+    sims = rng.normal(0.45, 1.2, size=(100000, 36)).mean(axis=1) / 0.2       # route 2: simulated z under H1
+    ok(abs(sims.mean() - 2.25) < 0.01 and abs(sims.std() - 1) < 0.01, 'p-fertiliser-trials: simulated centre 2.25, sd 1')
+    num(L2, 'p-fertiliser-trials', 1, m, sims.mean(), {'over-sd': sp.Rational(45, 100) / sp.Rational(12, 10), 'over-n': sp.Rational(45, 100) / (sp.Rational(12, 10) / 36)},
+        agree=0.01)
+    ok(round(Phi(0.605), 4) == 0.7274 and abs(2.25 - 1.645 - 0.605) < 1e-12, 'p-fertiliser-trials: Phi(0.605) = 0.7274')
+    pw = sp.Rational(7274, 10000)
+    num(L2, 'p-fertiliser-trials', 2, pw, (sims > 1.645).mean(), {'beta': 1 - pw, 'alpha': sp.Rational(5, 100)}, agree=0.005, round_tol=0.00006)
+    either = 1 - (1 - pw) ** 2
+    sims2 = rng.normal(0.45, 1.2, size=(100000, 36)).mean(axis=1) / 0.2       # a second, independent trial
+    num(L2, 'p-fertiliser-trials', 3, either, 1 - stats.norm.cdf(1.645 - 2.25) ** 2, {'both': pw ** 2, 'added': 2 * pw, 'carried': 1 - pw ** 2},
+        agree=5e-5, round_tol=0.00006)
+    ok(abs(((sims > 1.645) | (sims2 > 1.645)).mean() - float(either)) < 0.005, 'p-fertiliser-trials: simulated either rule')
+    c72 = 2.25 * math.sqrt(2) - 1.645
+    ok(abs(c72 - 1.537) < 0.0005 and round(Phi(1.537), 4) == 0.9379, 'p-fertiliser-trials: 72-plot centre and Phi(1.537)')
+    pw72 = sp.Rational(9379, 10000)
+    num(L2, 'p-fertiliser-trials', 4, pw72, stats.norm.sf(1.645, loc=0.45 / (1.2 / math.sqrt(72))), {'beta': 1 - pw72, 'unchanged': pw},
+        agree=5e-5, round_tol=0.00006)
+    ok(round(1 - 0.95 ** 2, 4) == 0.0975 and pw72 > either, 'p-fertiliser-trials: either-rule alpha 0.0975, one trial wins on power')
+    pick(L2, 'p-fertiliser-trials', 5, 'one-big')
+    prints(L2, 'p-fertiliser-trials', 3, ['0.0743', '0.9257'])
+
+    # ---------- p-tyre-brands: Welch, 50 v 40 cars ----------
+    va, vb = sp.Rational(81, 100) / 50, sp.Rational(36, 100) / 40
+    se = sp.sqrt(va + vb)
+    # route 2: scipy's Welch test from the summary statistics gives the same t, so se = gap / t
+    wt = stats.ttest_ind_from_stats(3.2, 0.9, 50, 2.8, 0.6, 40, equal_var=False).statistic
+    num(L2, 'p-tyre-brands', 1, se, 0.4 / wt,
+        {'sum-se': sp.sqrt(sp.Rational(81, 100) / 50) + sp.sqrt(sp.Rational(36, 100) / 40), 'variance': va + vb,
+         'same-n': sp.sqrt(sp.Rational(117, 100) / 50)}, round_tol=0.0001)
+    t = sp.Rational(4, 10) / se
+    num(L2, 'p-tyre-brands', 2, t, wt, {'carried': sp.Rational(4, 10) / sp.Rational(2221, 10000), 'over-variance': sp.Rational(4, 10) / (va + vb)})
+    ok(abs(0.4 / 0.1587 - 2.5198) < 0.001, 'p-tyre-brands p2: printed 0.1587 stays in the band')
+    ok(round(Phi(2.52), 4) == 0.9941, 'p-tyre-brands: Phi(2.52)')
+    p2 = 2 * (1 - sp.Rational(9941, 10000))
+    num(L2, 'p-tyre-brands', 3, p2, 2 * stats.norm.sf(float(t)), {'one-sided': p2 / 2, 'inside': 1 - p2}, agree=0.0001, round_tol=0.0001)
+    pick(L2, 'p-tyre-brands', 4, 'right')
+
+    # ---------- p-running-shoes: nine paired differences ----------
+    d = [-7, -3, -9, -1, -4, -5, 1, -3, -5]
+    n = len(d)
+    db = sp.Rational(sum(d), n)
+    num(L2, 'p-running-shoes', 1, db, np.mean(d), {'n-minus-one': sp.Rational(sum(d), n - 1), 'sign': -db})
+    ss = sum((x - db) ** 2 for x in d)
+    ok(ss == 72 and [x - db for x in d] == [-3, 1, -5, 3, 0, -1, 5, 1, -1], 'p-running-shoes: deviations and 72')
+    sd = sp.sqrt(ss / (n - 1))
+    db_slip = sp.Rational(sum(d), n - 1)
+    num(L2, 'p-running-shoes', 2, sd, np.std(d, ddof=1),
+        {'divide-by-n': sp.sqrt(ss / n), 'variance': sd ** 2, 'carried': sp.sqrt(sum((x - db_slip) ** 2 for x in d) / (n - 1))}, round_tol=0.001)
+    t = db / (sd / sp.sqrt(n))
+    old = np.array([1200, 1260, 1185, 1320, 1230, 1275, 1210, 1290, 1245])      # any old times: the paired t uses only the gaps
+    num(L2, 'p-running-shoes', 3, t, stats.ttest_rel(old + np.array(d), old).statistic,
+        {'over-sd': db / sd, 'root-eight': db / (sd / sp.sqrt(n - 1)), 'carried': db / (sp.sqrt(ss / n) / 3), 'sign': -t}, round_tol=0.001)
+    c8 = stats.t(8).ppf(0.95)
+    ok(round(c8, 3) == 1.860 and float(t) < -c8, 'p-running-shoes: t8 cut-off 1.860, reject')
+    pick(L2, 'p-running-shoes', 4, 'paired')
+    n_need = sp.ceiling(sp.Rational(618, 100) * (sd / sp.Rational(3, 2)) ** 2)
+    # route 2: the smallest n with power at least 0.8 by the normal power formula, searched
+    n_brute = next(k for k in range(2, 500) if Phi(1.5 * math.sqrt(k) / 3 - 1.645) >= 0.8)
+    num(L2, 'p-running-shoes', 5, n_need, n_brute,
+        {'not-rounded': sp.Rational(618, 100) * 4, 'rounded-down': n_need - 1, 'no-square': sp.ceiling(sp.Rational(618, 100) * 2),
+         'carried': sp.ceiling(sp.Rational(618, 100) * 8 / sp.Rational(9, 4))}, round_tol=0.05)
+    ok(abs(6.18 * 8 / 2.25 - 21.97) < 0.01 and Phi(1.5 * math.sqrt(24) / 3 - 1.645) < 0.8, 'p-running-shoes p5: carried 21.97; 24 runners fall short')
+
+    # ---------- p-blood-screen: healthy N(50, 10), disease N(72, 10), cut-off 68, prevalence 2% ----------
+    ok(round(Phi(1.8), 4) == 0.9641 and round(Phi(0.4), 4) == 0.6554, 'p-blood-screen: Phi values')
+    a_ = 1 - sp.Rational(9641, 10000)
+    num(L2, 'p-blood-screen', 1, a_, stats.norm(50, 10).sf(68), {'lower': 1 - a_, 'two-tail': 2 * a_, 'disease-curve': sp.Rational(6554, 10000)},
+        agree=5e-5, round_tol=0.00006)
+    b_ = 1 - sp.Rational(6554, 10000)
+    num(L2, 'p-blood-screen', 2, b_, stats.norm(72, 10).cdf(68), {'power': 1 - b_, 'healthy-curve': 1 - a_}, agree=5e-5, round_tol=0.00006)
+    flags = 9800 * a_ + 200 * (1 - b_)
+    pop = np.r_[rng.normal(50, 10, 980000), rng.normal(72, 10, 20000)]            # route 2: a simulated million patients
+    num(L2, 'p-blood-screen', 3, flags, (pop > 68).sum() / 100,
+        {'true-only': 200 * (1 - b_), 'false-only': 9800 * a_, 'beta-not-power': 9800 * a_ + 200 * b_}, agree=1.5, round_tol=0.5)
+    ok(round(float(flags)) == 483 and round(9800 * stats.norm(50, 10).sf(68) + 200 * stats.norm(72, 10).sf(68)) == 483, 'p-blood-screen: 483 from rounded and unrounded rates')
+    share = 200 * (1 - b_) / flags
+    sick = np.r_[np.zeros(980000, bool), np.ones(20000, bool)]
+    num(L2, 'p-blood-screen', 4, share, sick[pop > 68].mean(),
+        {'flipped': 1 - share, 'power': 1 - b_, 'carried': 200 * b_ / (9800 * a_ + 200 * b_)}, agree=0.01, round_tol=0.005)
+    ok(abs(131.1 / 483 - 0.27) < 0.005 and round(float(9800 * a_), 1) == 351.8 and round(float(200 * (1 - b_)), 1) == 131.1, 'p-blood-screen: printed 351.8, 131.1, 0.27')
+    pick(L2, 'p-blood-screen', 5, 'right')
 
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
