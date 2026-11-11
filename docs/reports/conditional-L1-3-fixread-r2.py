@@ -1,7 +1,7 @@
 from fractions import Fraction as F
 from itertools import product
 import json, sys, random
-base = sys.argv[1]
+base = sys.argv[1] if len(sys.argv) > 1 else "app/content/courses/conditional"
 
 def post(prior, *lrs):
     o = prior / (1 - prior)

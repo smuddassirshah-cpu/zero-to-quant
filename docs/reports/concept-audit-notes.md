@@ -69,3 +69,15 @@ Issues
 - mm-games: with the guide "Probability and Markets" unreachable, attributions to it stay removed in L1 to L4, and the "Fermi" attribution now names Enrico Fermi only.
 - (open, engine) Two inbox bullets from mm-games round 2 (a validator rule for stated test counts; a warning for `order` keys with no `same` or `after`), two from recruiting (an `order` line valid in more than one slot; lessons anchored to a literal "today", stale after 8 Nov), one from the delta (research-int review-1 timed-check timeout, already in KNOWN_ISSUES). Order keys that reject valid orders have now been found three times (mm-games homework-2 and homework-3, recruiting), which meets SESSION PROTOCOL 6 for a validator rule.
 - (open, content session) Lesson numbers in learner text: fixed in mm-games where listed; the measure-prob and ito lists of session 4 still stand.
+
+## Audit session 6 (11 Nov 2026, from 19:54 UTC)
+
+- Four course reads, the session's budget: odes L4, counting-chance L1 to L3, conditional L1 to L3, conditional L1 to L3 round 2. Only counting-chance closed. random-vars was not started.
+- Choice (decision): with odes L4 and conditional both owing a round 2 and one read left, conditional took it, because topic 1.5 ranks first in the order. odes L4 round 2 is first for the next session.
+- Templated ledgers (issue, now a brief rule in the orchestrator's prompts): the conditional round 1 auditor generated 3,238 `correct` rows with templated bases. Round 2, told to hand-check every claim, found 2 `wrong` in rows round 1 had marked correct. Auditor prompts should say "hand-check every claim, do not template verdicts"; a ledger of thousands of rows is a warning sign, not thoroughness. counting-chance round 1 (3,931 rows) closed on a ledger of the same kind, so it carries that residual risk.
+- odes L4: console lines in lessons did not match what the taught code prints (four in round 1, one more and a stale test value in the fix-pass read). Shown floats are now formatted (`:.2e`) or pasted from a real run in CPython and Pyodide 0.27.7. Inbox bullet raised: no check that console canvas lines match the solution's output.
+- Fix-pass read follow-ups (minor `imprecise` only, no `wrong`) were applied by Opus and read by the orchestrator from the fixer's hand-back, not by a further Fable reader.
+- `docs/reports/conditional-L1-3-fixread-r2.py` took the course folder as a required argument; the orchestrator gave it a default so it exits 0 bare.
+- (open, minor) conditional `l11` `screens[8].feedback.byKey.one` and `review-2` `items[5].feedback.byKey.added` still use the bare word "independent" (round 2 fix-pass read, unchanged lines). For round 3.
+- (open, engine) Inbox bullets this session: conditional 4 (one a validator warning for tree canvas leaves that are not path products), odes 2, counting-chance 2 (homework-3 `smallest_n` starter loops for ever and fails only by the time limit; number scripts need `sympy`).
+- Content branch during the session: stat-learning, number-sense, quadratics and testing gained lines; none of this session's courses did.
