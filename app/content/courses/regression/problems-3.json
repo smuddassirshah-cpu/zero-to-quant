@@ -160,57 +160,57 @@
           }
         },
         {
-          "question": "Each slope's variance shrinks in proportion to $1/n$. Uncorrelated predictors and 200 days would give the gas slope some precision. Using $\\mathrm{VIF} = 1.5625$, how many days does the two-predictor fit need to match it? Give a whole number.",
+          "question": "The two-predictor fit reports a standard error of 0.05 for the gas slope. Using $\\mathrm{VIF} = 1.5625$, what would it be with uncorrelated predictors, the same spreads and the same noise? Give your answer to 3 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 313,
+            "answer": 0.04,
             "tol": {
-              "abs": 0
+              "abs": 0.0005
             },
-            "unit": "days",
+            "placeholder": "decimal",
             "wrong": [
               {
-                "id": "root",
-                "value": 250,
+                "id": "by-vif",
+                "value": 0.032,
                 "tol": {
-                  "abs": 0
+                  "abs": 0.0005
                 }
               },
               {
-                "id": "no-square",
-                "value": 500,
+                "id": "times",
+                "value": 0.0625,
                 "tol": {
-                  "abs": 0
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "times-vif",
+                "value": 0.0781,
+                "tol": {
+                  "abs": 0.0005
                 }
               },
               {
                 "id": "carried",
-                "value": 260,
+                "value": 0.0439,
                 "tol": {
-                  "abs": 0
-                }
-              },
-              {
-                "id": "round-down",
-                "value": 312,
-                "tol": {
-                  "abs": 0
+                  "abs": 0.0005
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "The variance must fall by a factor of 1.5625, so we need $200 \\times 1.5625$ days, which is 312.5: 313 days.",
-            "generic": "Not quite. More days divide the variance by $n$; collinearity multiplies it by the VIF.",
+            "correct": "$\\mathrm{SE} \\propto \\sqrt{\\mathrm{VIF}}$, so $0.05 / \\sqrt{1.5625} = 0.05 / 1.25 = 0.04$.",
+            "generic": "Not quite. The VIF multiplies the variance, so the standard error carries its square root.",
             "byKey": {
-              "root": "$200 \\times 1.25$ matches standard errors as if they fell with $1/n$. They fall with $1/\\sqrt n$, so multiply by the VIF itself.",
-              "no-square": "That uses a VIF of 2.5 from a slip in part 3. With 1.5625 you need 313 days.",
-              "carried": "That uses a VIF of 1.2994 from a slip in part 3. With 1.5625 you need 313 days.",
-              "round-down": "312 days leave the variance a little too large. 312.5 rounds up to 313."
+              "by-vif": "You divided by the VIF itself, 1.5625. The VIF is on the variance, so the standard error carries its root, 1.25.",
+              "times": "You multiplied by 1.25. Collinearity makes the error larger, so uncorrelated predictors give a smaller one: divide.",
+              "times-vif": "You multiplied by the VIF. Uncorrelated predictors give a smaller error: divide by the root of the VIF, 1.25.",
+              "carried": "That uses a VIF of 1.2994 from a slip in part 3. With 1.5625 the answer is 0.04."
             }
           },
           "explain": {
-            "text": "Collinearity multiplies the variance by 1.5625, and more days divide it by $n$. Matching 200 uncorrelated days takes $200 \\times 1.5625$ days, which is 312.5, so 313."
+            "text": "The variance carries the factor 1.5625, so the standard error carries $\\sqrt{1.5625} = 1.25$. With uncorrelated predictors it would be $0.05 / 1.25 = 0.04$."
           }
         }
       ]
@@ -300,6 +300,13 @@
                 "tol": {
                   "abs": 0.003
                 }
+              },
+              {
+                "id": "no-sign",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.005
+                }
               }
             ]
           },
@@ -309,7 +316,8 @@
             "byKey": {
               "simple": "$45/30 = 1.5$ is the slope on temperature alone. Holding sunshine fixed, take $24 \\times 2.5$ off first.",
               "sign": "You added $24 \\times 2.5$. It moves to the other side: $30b_2 = 45 - 60$.",
-              "carried": "That uses $b_1 = 2.2$ from a slip in part 1. With 2.5, $b_2 = -0.5$."
+              "carried": "That uses $b_1 = 2.2$ from a slip in part 1. With 2.5, $b_2 = -0.5$.",
+              "no-sign": "$45 - 60 = -15$, so $b_2$ is negative: $-0.5$."
             }
           },
           "explain": {
@@ -479,7 +487,7 @@
         "rg-diagnostics",
         "rg-inference"
       ],
-      "prose": "A strategist regresses each day's next-5-day return, in %, on two signals over 503 days, with a constant. The fit has $\\mathrm{SSE} = 4{,}500$, in %². The diagonal entry of $(\\mathbf{X}^T\\mathbf{X})^{-1}$ for signal A is 0.0004, and signal A's coefficient is 0.21.",
+      "prose": "A strategist regresses each day's next-5-day return, in %, on two signals over 503 days, with a constant. Each signal is a 5-day rolling average, so it shares 4 days with its neighbour. The fit has $\\mathrm{SSE} = 4{,}500$, in %². The diagonal entry of $(\\mathbf{X}^T\\mathbf{X})^{-1}$ for signal A is 0.0004, and signal A's coefficient is 0.21.",
       "parts": [
         {
           "question": "What is the residual standard deviation $s$, in %? Give your answer to 2 decimal places.",
@@ -612,7 +620,7 @@
           }
         },
         {
-          "question": "Neighbouring 5-day windows share 4 days, so the naive $t$ is too big by a factor of about $\\sqrt{1 + 2\\sum_{j=1}^{h-1}(1 - j/h)^2}$, with $h = 5$. Using the naive $t = 3.5$, what is the honest $t$? Give your answer to 2 decimal places.",
+          "question": "The returns and the signals both overlap by 4 days in 5. The naive $t$ is then too big by a factor of about $\\sqrt{1 + 2\\sum_{j=1}^{h-1}(1 - j/h)^2}$, with $h = 5$. Using the naive $t = 3.5$, what is the honest $t$? Give your answer to 2 decimal places.",
           "widget": {
             "kind": "numeric",
             "answer": 1.8981,
@@ -648,6 +656,13 @@
                 "tol": {
                   "abs": 0.005
                 }
+              },
+              {
+                "id": "root-h",
+                "value": 1.5652,
+                "tol": {
+                  "abs": 0.005
+                }
               }
             ]
           },
@@ -658,11 +673,12 @@
               "no-root": "You divided by 3.4. The factor is its root, about 1.844.",
               "no-two": "You left out the 2. The factor is $\\sqrt{1 + 2 \\times 1.2}$.",
               "times": "The naive $t$ is too big, so divide by the factor.",
-              "carried": "That starts from $t = 1.17$, a slip in part 3. From 3.5 the honest $t$ is about 1.90."
+              "carried": "That starts from $t = 1.17$, a slip in part 3. From 3.5 the honest $t$ is about 1.90.",
+              "root-h": "You divided by $\\sqrt 5$. The factor is $\\sqrt{1 + 2 \\times 1.2} = \\sqrt{3.4}$."
             }
           },
           "explain": {
-            "text": "Overlap makes neighbouring residuals share news, so the naive error is too small by a factor of about 1.844. Dividing gives an honest $t$ of about 1.90. HAC errors with at least 4 lags would give much the same."
+            "text": "Overlap makes neighbouring residuals share news, so the naive error is too small by a factor of about 1.844. Dividing gives an honest $t$ of about 1.90. HAC errors go only part of the way: in simulation they still reject a true zero about one time in ten."
           }
         },
         {
@@ -742,6 +758,13 @@
                 "tol": {
                   "abs": 5e-05
                 }
+              },
+              {
+                "id": "no-sign",
+                "value": 0.006,
+                "tol": {
+                  "abs": 5e-05
+                }
               }
             ]
           },
@@ -751,7 +774,8 @@
             "byKey": {
               "spread-sign": "Spreads fell, so $x_2 = -5$ and $-0.03 \\times (-5) = +0.15$.",
               "no-intercept": "You left out the intercept, 0.05.",
-              "all-signs": "The slopes carry minus signs: a rise in yields costs the fund, $-0.08 \\times 10 = -0.80$."
+              "all-signs": "The slopes carry minus signs: a rise in yields costs the fund, $-0.08 \\times 10 = -0.80$.",
+              "no-sign": "The yield rise costs more than the spreads give back, so the prediction is negative: $-0.60\\%$."
             }
           },
           "explain": {
@@ -909,7 +933,7 @@
             }
           },
           "explain": {
-            "text": "Halve $d$ and take it from 1, which gives $\\hat\\rho \\approx 0.89$. Each week's miss carries most of the week before's."
+            "text": "Halve $d$ and take it from 1, which gives $\\hat\\rho \\approx 0.89$. With only 8 weeks the rule is rough: the lag-1 correlation worked directly is 0.73. Either way, each week's miss carries most of the week before's."
           }
         },
         {
@@ -936,7 +960,7 @@
               {
                 "id": "cautious",
                 "text": "The usual errors, since positive autocorrelation makes them too large and so cautious",
-                "why": "Positive autocorrelation makes the usual errors too small: 8 echoing weeks hold less news than 8 independent ones."
+                "why": "With residuals and predictors that both echo, the usual errors are too small: 8 echoing weeks hold less news than 8 independent ones."
               }
             ]
           },
