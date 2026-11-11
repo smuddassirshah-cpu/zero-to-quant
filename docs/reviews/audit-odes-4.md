@@ -148,3 +148,8 @@ Code runs. Every console line of the changed screens and of l18 `screens[10]` wa
    ```
    "expect": "2.718279744135166"
    ```
+
+## Fix pass (fix-pass read follow-up)
+
+1. l18-four-decimal-places.json screens[10] console | fixed | Ran the screen's `discount_ivp` with `discount_exact` on CPython: the bare difference prints `1.7795764861716634e-12`, so the console now assigns `d` and prints `f"{d:.2e}"`, which gives `1.78e-12` here and for the Pyodide value `1.779687508474126e-12`. Prose, tests and explain unchanged.
+2. l17 screens[9].widget.tests[1]; homework-4 items[5].widget.examples[0] and tests[0] | fixed | Ran both solutions: `float(rk4(lambda t, y: y, 0, 1.0, 0.1, 10)[1][-1])` returns `2.718279744135166`, matching the l17 console, so the three `expect` strings now hold it. Tolerance 1e-9 unchanged; the l17 starter still returns `None` and fails. `docs/reports/odes-L4-numbers.py` now checks `lines[2]` for finding 1.

@@ -409,7 +409,7 @@ for i, args in enumerate([(0.06, 0.5, 0.04, 5), (0.04, 0.5, 0.04, 5), (0.02, 1.0
     ex1 = math.exp(-(tt * TT + (a - tt) * (1 - math.exp(-kk_ * TT)) / kk_))
     ex2 = math.exp(-ivp(lambda t, y: [kk_ * (tt - y[0]), y[0]], [a, 0.0], TT)[1])
     stated("l18", f"screens[10].widget.tests[{i}].expect", ex1, ex2, tol=1e-9)
-same("l18", "screens[10].canvas.params.lines[1]", 1.78e-12)    # measured in Pyodide 0.27.7 (SciPy 1.14.1) and CPython (SciPy 1.18.1)
+same("l18", "screens[10].canvas.params.lines[2]", 1.78e-12)    # f"{d:.2e}" of the difference, measured in Pyodide 0.27.7 (SciPy 1.14.1) and CPython (SciPy 1.18.1)
 for row, n, e in [(1, 2, 3.9e-4), (2, 4, 1.4e-5), (3, 8, 6.7e-7)]:
     stated("l18", f"screens[11].canvas.params.lines[{row}]", rk_D(n), rk_D2(n), 6)
     stated("l18", f"screens[11].canvas.params.lines[{row}]", abs(rk_D(n) - D), abs(rk_D2(n) - D2), show=e, tol=e * 0.05)
