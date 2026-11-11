@@ -20,7 +20,7 @@
   "brief": "A small exchange keeps a book of sell orders and a list of waiting stop orders for one share. The input comes as one string.\n\nThe first line holds `n`, the number of events. Each of the next `n` lines is one event:\n\n- `S p q`: a sell order of `q` shares at price `p` joins the book.\n- `B q`: a market buy of `q` shares takes shares from the cheapest sell orders first, until it is filled or the book is empty. Whatever cannot be filled is dropped.\n- `T p q`: a stop order waits until the last trade price is `p` or more, then becomes a market buy of `q` shares.\n\nAfter each event, while some waiting stop has its price at or below the last trade price, one such stop fires and leaves the list, even if it fills nothing. Its trades can set off more stops. The last trade price is the price of the most recent share traded.\n\nWrite `solve_stop_cascade(text)`. After each event it records the last trade price and the total shares traded so far, separated by a space, or `- 0` before the first trade. It returns these `n` lines joined by line breaks.\n\nExample. For the events `S 10 2`, `T 10 3`, `S 12 5`, `B 1`, the stop waits until the buy trades at 10. It then buys the last share at 10 and two at 12. The answer is `'- 0\\n- 0\\n- 0\\n12 4'`.",
   "constraints": [
     "$1 \\le n \\le 60{,}000$ events, with $1 \\le p \\le 10^6$ and $1 \\le q \\le 10^6$. Lines may carry extra spaces, and the text may end with blank lines.",
-    "$O(n \\log n)$ time is the target. Scanning the book or the waiting stops after every event is too slow when either holds thousands of orders; sorted lists kept with `bisect` are fast enough at this size.",
+    "$O(n \\log n)$ time is the target. Scanning the book or the waiting stops after every event is too slow when either holds thousands of orders. Sorted lists kept with `bisect` also pass, by a smaller margin than two heaps, but heaps are the target. One event can set off 20,000 stops, so fire them in a loop, not by recursion.",
     "All the tests in a run share one 5-second limit in the browser.",
     {
       "arg": "text",
@@ -79,8 +79,8 @@
       "compare": "equal"
     },
     {
-      "call": "solve_stop_cascade('6\\nS 10 1\\nS 11 1\\nS 13 5\\nT 12 2\\nT 10 1\\nB 1\\n')",
-      "expect": "'- 0\\n- 0\\n- 0\\n- 0\\n- 0\\n11 2'",
+      "call": "solve_stop_cascade('4\\nS 5 1\\nB 3\\nS 6 2\\nB 1\\n')",
+      "expect": "'- 0\\n5 1\\n5 1\\n6 2'",
       "compare": "equal"
     },
     {
@@ -104,8 +104,8 @@
       "compare": "equal"
     },
     {
-      "call": "solve_stop_cascade('4\\nS 5 1\\nB 1\\nT 5 3\\nS 6 2\\n')",
-      "expect": "'- 0\\n5 1\\n5 1\\n5 1'",
+      "call": "solve_stop_cascade('5\\nS 9 3\\nB 1\\nS 1 2\\nT 7 1\\nT 2 2\\n')",
+      "expect": "'- 0\\n9 1\\n9 1\\n1 2\\n1 2'",
       "compare": "equal"
     },
     {
@@ -143,6 +143,14 @@
     {
       "code": "import heapq\n\ndef solve_stop_cascade(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    asks, stops = [], []\n    last, volume = None, 0\n    out = []\n\n    def buy(qty):\n        nonlocal last, volume\n        while qty > 0 and asks:\n            best = asks[0]\n            take = min(qty, best[2])\n            qty -= take\n            best[2] -= take\n            volume += take\n            last = best[0]\n            if best[2] == 0:\n                heapq.heappop(asks)\n\n    pos = 1\n    for seq in range(n):\n        kind = tokens[pos]\n        if kind == 'B':\n            buy(int(tokens[pos + 1]))\n            pos += 2\n        else:\n            price, qty = int(tokens[pos + 1]), int(tokens[pos + 2])\n            if kind == 'S':\n                heapq.heappush(asks, [price, seq, qty])\n            else:\n                heapq.heappush(stops, (price, seq, qty))\n            pos += 3\n        while stops and last is not None and stops[0][0] <= last and asks:\n            buy(heapq.heappop(stops)[2])\n        out.append(f'{last} {volume}' if last is not None else '- 0')\n    return '\\n'.join(out)\n",
       "slip": "Keeping a stop waiting while the book is empty lets it fire later, though the brief says a fired stop is gone."
+    },
+    {
+      "code": "import heapq\n\ndef solve_stop_cascade(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    asks, stops = [], []\n    last, volume = None, 0\n    high = 0\n    out = []\n\n    def buy(qty):\n        nonlocal last, volume, high\n        while qty > 0 and asks:\n            best = asks[0]\n            take = min(qty, best[2])\n            qty -= take\n            best[2] -= take\n            volume += take\n            last = best[0]\n            high = max(high, last)\n            if best[2] == 0:\n                heapq.heappop(asks)\n\n    pos = 1\n    for seq in range(n):\n        kind = tokens[pos]\n        if kind == 'B':\n            buy(int(tokens[pos + 1]))\n            pos += 2\n        else:\n            price, qty = int(tokens[pos + 1]), int(tokens[pos + 2])\n            if kind == 'S':\n                heapq.heappush(asks, [price, seq, qty])\n            else:\n                heapq.heappush(stops, (price, seq, qty))\n            pos += 3\n        while stops and last is not None and stops[0][0] <= high:\n            buy(heapq.heappop(stops)[2])\n        out.append(f'{last} {volume}' if last is not None else '- 0')\n    return '\\n'.join(out)\n",
+      "slip": "Testing the stops against the highest trade price so far, not the last, fires a stop after the price has fallen below it."
+    },
+    {
+      "code": "import heapq\n\ndef solve_stop_cascade(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    asks, stops = [], []\n    last, volume = None, 0\n    owed = 0\n    out = []\n\n    def buy(qty):\n        nonlocal last, volume\n        while qty > 0 and asks:\n            best = asks[0]\n            take = min(qty, best[2])\n            qty -= take\n            best[2] -= take\n            volume += take\n            last = best[0]\n            if best[2] == 0:\n                heapq.heappop(asks)\n\n    pos = 1\n    for seq in range(n):\n        kind = tokens[pos]\n        if kind == 'B':\n            before = volume\n            want = int(tokens[pos + 1])\n            buy(want)\n            owed += want - (volume - before)\n            pos += 2\n        else:\n            price, qty = int(tokens[pos + 1]), int(tokens[pos + 2])\n            if kind == 'S':\n                heapq.heappush(asks, [price, seq, qty])\n                if owed:\n                    before = volume\n                    buy(owed)\n                    owed -= volume - before\n            else:\n                heapq.heappush(stops, (price, seq, qty))\n            pos += 3\n        while stops and last is not None and stops[0][0] <= last:\n            buy(heapq.heappop(stops)[2])\n        out.append(f'{last} {volume}' if last is not None else '- 0')\n    return '\\n'.join(out)\n",
+      "slip": "Leaving the unfilled part of a market buy waiting for later sells, when the brief says it is dropped."
     },
     {
       "code": "import heapq\n\ndef solve_stop_cascade(text):\n    tokens = text.split()\n    n = int(tokens[0])\n    asks, stops = [], []\n    last, volume = None, 0\n    out = []\n\n    def buy(qty):\n        nonlocal last, volume\n        while qty > 0 and asks:\n            best = asks[0]\n            take = min(qty, best[2])\n            qty -= take\n            best[2] -= take\n            volume += take\n            last = best[0]\n            if best[2] == 0:\n                heapq.heappop(asks)\n\n    pos = 1\n    for seq in range(n):\n        kind = tokens[pos]\n        if kind == 'B':\n            buy(int(tokens[pos + 1]))\n            pos += 2\n        else:\n            price, qty = int(tokens[pos + 1]), int(tokens[pos + 2])\n            if kind == 'S':\n                heapq.heappush(asks, [price, seq, qty])\n            else:\n                stops.append((price, seq, qty))\n            pos += 3\n        fired = True\n        while fired and last is not None:\n            fired = False\n            for k, stop in enumerate(stops):\n                if stop[0] <= last:\n                    del stops[k]\n                    buy(stop[2])\n                    fired = True\n                    break\n        out.append(f'{last} {volume}' if last is not None else '- 0')\n    return '\\n'.join(out)\n",

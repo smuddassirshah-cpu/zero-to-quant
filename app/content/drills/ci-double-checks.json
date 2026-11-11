@@ -12,8 +12,8 @@
     "ci-patterns",
     "ci-timed"
   ],
-  "difficulty": 3,
-  "pace": 1620,
+  "difficulty": 4,
+  "pace": 1980,
   "fn": "fewest_checks",
   "returns": "an integer",
   "brief": "A safety inspector walks a factory at whole minutes she chooses, at most once in each minute. Each job `[start, end, need]` runs from minute `start` to minute `end`, both included, and must be seen at `need` different minutes while it runs. One visit counts for every job running at that minute.\n\nWrite `fewest_checks(jobs)`, which returns the fewest visits that give every job its `need`.\n\nExample. For `jobs = [[1, 4, 2], [3, 6, 2], [6, 8, 1]]`, visits at minutes 3, 4 and 6 work: the first job sees 3 and 4, the second sees 3, 4 and 6, and the third sees 6. Two visits cannot serve all three jobs, so the answer is 3.",
@@ -70,8 +70,8 @@
       "compare": "equal"
     },
     {
-      "call": "fewest_checks([[0, 4, 1], [5, 9, 1]])",
-      "expect": "2",
+      "call": "fewest_checks([[1, 5, 5], [5, 14, 4], [9, 13, 2]])",
+      "expect": "8",
       "compare": "equal"
     },
     {
@@ -135,7 +135,7 @@
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The change from covering each job once is the count `need`, so each job is checked for how many visits it already holds, and new visits must skip minutes already used.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The obvious method tries sets of minutes, which doubles with every minute; the step to the target is to take jobs by end and place each missing visit as late as it will go. The change from covering each job once is the count `need`, so each job is checked for how many visits it already holds, and new visits must skip minutes already used.",
   "solution": "import bisect\n\ndef fewest_checks(jobs):\n    marks = []\n    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):\n        have = bisect.bisect_right(marks, end) - bisect.bisect_left(marks, start)\n        minute = end\n        while have < need:\n            i = bisect.bisect_left(marks, minute)\n            if i == len(marks) or marks[i] != minute:\n                marks.insert(i, minute)\n                have += 1\n            minute -= 1\n    return len(marks)\n",
   "notes": [
     "Taken by end, the latest free minutes of a job serve every later job at least as well as any other minutes inside it.",
@@ -154,6 +154,14 @@
     {
       "code": "def fewest_checks(jobs):\n    marks = []\n    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):\n        if not any(start <= m <= end for m in marks):\n            marks.extend(range(end, end - need, -1))\n    return len(marks)\n",
       "slip": "Adding visits only to a job that has none treats one visit as enough for a job that needs more."
+    },
+    {
+      "code": "def fewest_checks(jobs):\n    marks = []\n    used = set()\n    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):\n        have = sum(1 for m in marks[-5:] if start <= m <= end)\n        minute = end\n        while have < need:\n            if minute not in used:\n                used.add(minute)\n                marks.append(minute)\n                have += 1\n            minute -= 1\n    return len(marks)\n",
+      "slip": "Keeping the visits in the order placed and counting only the last five for each job counts visits inside the job that sit earlier in the list, and misses others."
+    },
+    {
+      "code": "def fewest_checks(jobs):\n    if not jobs:\n        return 0\n    lo = min(s for s, e, need in jobs)\n    hi = max(e for s, e, need in jobs)\n\n    def covers(pick):\n        return all(sum(s <= m <= e for m in pick) >= need for s, e, need in jobs)\n\n    def search(first, left, pick):\n        if left == 0:\n            return covers(pick)\n        for m in range(first, hi + 1):\n            if search(m + 1, left - 1, pick + [m]):\n                return True\n        return False\n\n    size = 0\n    while not search(lo, size, []):\n        size += 1\n    return size\n",
+      "slip": "Trying every set of minutes by size is right but doubles with every minute, far too slow when the jobs span many minutes."
     }
   ]
 }

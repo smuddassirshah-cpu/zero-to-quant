@@ -136,12 +136,17 @@
       "compare": "equal"
     },
     {
-      "call": "fewest_switches(['1100', '0110', '0011', '1001'], '1010')",
-      "expect": "[0, 1]",
+      "call": "fewest_switches(['110', '110', '011'], '011')",
+      "expect": "[2]",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_switches(['101', '011'], '000')",
+      "expect": "[]",
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. Trying every set by its bit mask in increasing order finds a smallest set, but not always the one that comes first; trying sets by size in combination order settles the tie.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. Trying every set by its bit mask in increasing order finds a smallest set, but not always the one that comes first; trying sets by size in combination order settles the tie.",
   "solution": "from itertools import combinations\n\ndef fewest_switches(switches, target):\n    want = int(target, 2)\n    masks = [int(s, 2) for s in switches]\n    for size in range(len(masks) + 1):\n        for pick in combinations(range(len(masks)), size):\n            lit = 0\n            for i in pick:\n                lit ^= masks[i]\n            if lit == want:\n                return list(pick)\n    return None\n",
   "notes": [
     "Pressing switches in any order gives the XOR of their patterns, so a set is all that matters.",
@@ -160,6 +165,14 @@
     {
       "code": "def fewest_switches(switches, target):\n    want = int(target, 2)\n    lit = 0\n    pick = []\n    for i, s in enumerate(switches):\n        m = int(s, 2)\n        if bin((lit ^ m) ^ want).count('1') < bin(lit ^ want).count('1'):\n            lit ^= m\n            pick.append(i)\n    return pick if lit == want else None\n",
       "slip": "Pressing each switch that brings the board closer to the target is a greedy that misses sets needing a step away first."
+    },
+    {
+      "code": "from itertools import combinations\n\ndef fewest_switches(switches, target):\n    want = int(target, 2)\n    uniq = list(dict.fromkeys(switches))\n    masks = [int(s, 2) for s in uniq]\n    for size in range(len(masks) + 1):\n        for pick in combinations(range(len(masks)), size):\n            lit = 0\n            for i in pick:\n                lit ^= masks[i]\n            if lit == want:\n                return list(pick)\n    return None\n",
+      "slip": "Dropping equal switches before the search returns positions in the shortened list, not in `switches`."
+    },
+    {
+      "code": "from itertools import combinations\n\ndef fewest_switches(switches, target):\n    want = int(target, 2)\n    masks = [int(s, 2) for s in switches]\n    if want == 0 and not masks:\n        return []\n    for size in range(1, len(masks) + 1):\n        for pick in combinations(range(len(masks)), size):\n            lit = 0\n            for i in pick:\n                lit ^= masks[i]\n            if lit == want:\n                return list(pick)\n    return None\n",
+      "slip": "Trying sizes from 1 up misses a target that pressing nothing already reaches, unless `switches` is empty."
     }
   ]
 }
