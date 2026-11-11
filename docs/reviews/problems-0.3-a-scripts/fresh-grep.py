@@ -14,7 +14,7 @@ PAT = {
         1: {
             'p-tulip-bed': [r'tulip', r'gardener', r'varieties', r'binom\{8\}\{4\}', r'P\(8, ?4\)', r'\b1680\b', r'\b6720\b'],
             'p-team-photo': [r'netball', r'photo', r'twins', r'captain', r'middle (place|seat)', r'\b192\b'],
-            'p-five-a-side': [r'league', r'home and away', r'at home', r'n\(n ?- ?1\)', r'binom\{9\}\{6\}', r'\b84\b', r'every (team|player) plays'],
+            'p-five-a-side': [r'\bleague', r'home and away', r'at home', r'n\(n ?- ?1\)', r'binom\{9\}\{6\}', r'\b84\b', r'every (team|player) plays'],
             'p-ice-cream-van': [r'ice.cream', r'flavour', r'scoop', r'topping', r'binom\{11\}\{3\}', r'\b990\b', r'\b5775\b'],
         },
         2: {
