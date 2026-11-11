@@ -14,7 +14,7 @@ Signed off by the user, 5 Nov (PLAN 2c item 2; DECISIONS "Readiness contract sig
 Status words: **required** is shown as next work in order. **Recommended** is shown after required. **Optional** is never shown as next work for the role; it stays reachable from Learn.
 
 <!-- generated:catalogue -->
-Catalogue: 79 courses, 1236 lessons mapped (1231 written, 5 unwritten). Hours are shown as hours in the app and hours of outside study: the stored topic hours, shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1), split into the minutes counted in the app (lessons, level reviews and homework, topic exams) and the rest; topics 3.2 and 3.4 store 0.
+Catalogue: 79 courses, 1236 lessons mapped (1236 written, 0 unwritten). Hours are shown as hours in the app and hours of outside study: the stored topic hours, shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1), split into the minutes counted in the app (lessons, level reviews and homework, topic exams) and the rest; topics 3.2 and 3.4 store 0.
 <!-- /generated -->
 
 Hours come from `app/js/hours.js` (AUTHORING section 14): a short lesson weighs 1 and a workshop or project `minutes / 14`. Each table gives hours in the app (lesson minutes, level reviews and homework, topic exams) and hours of outside study (stored hours less the in-app figure, never below 0), in that order; no table shows the stored total alone. Hours in each table are rounded per cell, and the header is the sum of the cells. Run `node app/tools/readiness-sums.mjs` from the repo root to check every figure here. It exits non-zero on any mismatch.
@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 551 | 5 | 556 | 324 | 1329 |
+| Required | 556 | 0 | 556 | 324 | 1329 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 891 | 5 | 896 | 499 | 2261 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 499 | 2261 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -534,8 +534,8 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
 | Required | 580 | 0 | 580 | 334 | 1338 |
-| Recommended | 229 | 5 | 234 | 119 | 504 |
-| Learn header (required plus recommended) | 809 | 5 | 814 | 453 | 1842 |
+| Recommended | 234 | 0 | 234 | 119 | 504 |
+| Learn header (required plus recommended) | 814 | 0 | 814 | 453 | 1842 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -661,8 +661,8 @@ Same learner as Strats, plus the pricing mathematics.
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
 | Required | 657 | 0 | 657 | 375 | 1485 |
-| Recommended | 234 | 5 | 239 | 123 | 447 |
-| Learn header (required plus recommended) | 891 | 5 | 896 | 498 | 1932 |
+| Recommended | 239 | 0 | 239 | 123 | 447 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 498 | 1932 |
 <!-- /generated -->
 
 **Dependency conflicts**

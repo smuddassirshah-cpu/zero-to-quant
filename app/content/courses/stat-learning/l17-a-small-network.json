@@ -1,0 +1,1571 @@
+{
+ "id": "l17-a-small-network",
+ "course": "stat-learning",
+ "title": "A small neural network",
+ "minutes": 15,
+ "objectives": [
+  "Build a network with one hidden layer, follow one gradient step, and fit one with scikit-learn.",
+  "Explain when a small network overfits, and why one seed is not enough."
+ ],
+ "skills": [
+  "sl-classify",
+  "sl-tradeoff"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A signal works when exactly one of two conditions holds: momentum up, or volume high, but not both. The corners $(1, 0)$ and $(0, 1)$ are class 1; $(0, 0)$ and $(1, 1)$ are class 0. Move the line and count the corners it gets right.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       0,
+       0,
+       "class 0"
+      ],
+      [
+       1,
+       1,
+       "class 0"
+      ],
+      [
+       1,
+       0,
+       "class 1"
+      ],
+      [
+       0,
+       1,
+       "class 1"
+      ]
+     ],
+     "groups": [
+      "class 0",
+      "class 1"
+     ],
+     "xLabel": "momentum up",
+     "yLabel": "volume high",
+     "xRange": [
+      -0.5,
+      1.5
+     ],
+     "yRange": [
+      -0.5,
+      1.5
+     ],
+     "height": 300
+    },
+    "state": {
+     "line": {
+      "m": -1,
+      "b": 0.5,
+      "label": "your line"
+     }
+    },
+    "derive": {
+     "let": {
+      "c": "(0 < line.b ? 1 : 0) + (1 < line.m + line.b ? 1 : 0) + (0 > line.m + line.b ? 1 : 0) + (1 > line.b ? 1 : 0)"
+     },
+     "caption": "Corners right, taking the better side as class 1: {{max(c, 4 - c)}} of 4"
+    },
+    "controls": [
+     {
+      "bind": "line.m",
+      "min": -3,
+      "max": 3,
+      "step": 0.1,
+      "label": "slope"
+     },
+     {
+      "bind": "line.b",
+      "min": -2,
+      "max": 3,
+      "step": 0.1,
+      "label": "intercept"
+     }
+    ]
+   },
+   "question": "What is the largest number of corners one straight line can get right?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Try to cut off one corner on its own."
+    },
+    {
+     "rung": "point",
+     "text": "A line that isolates $(0, 0)$ gets that corner and both class 1 corners right."
+    },
+    {
+     "rung": "step",
+     "text": "The fourth corner, $(1, 1)$, then sits on the class 1 side: 3 of 4."
+    }
+   ],
+   "feedback": {
+    "correct": "Three of four, an accuracy of 0.75, is the best any line does.",
+    "generic": "Try lines that cut off one corner, then two.",
+    "byKey": {
+     "four": "No line does it: the two class 1 corners sit on a diagonal, with a class 0 corner on each side.",
+     "two": "Two is what a poor line gets. Cutting off one corner gets three."
+    }
+   },
+   "explain": {
+    "text": "Each class sits on a diagonal, so a line keeping both class 1 corners together keeps a class 0 corner too. The best is 3 of 4, accuracy 0.75. Logistic regression draws a line too, so it is stuck at the same 0.75.",
+    "canvas": {
+     "line": {
+      "m": -1,
+      "b": 0.5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A network with two hidden units. Each hidden unit adds its weighted inputs and its bias, then applies $\\max(0, \\cdot)$: $h_1 = \\max(0, x_1 + x_2)$ and $h_2 = \\max(0, x_1 + x_2 - 1)$. The output is $z = 4h_1 - 8h_2 - 2$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.1,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.1,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.25
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.75
+      },
+      {
+       "id": "z",
+       "label": "z",
+       "x": 0.9,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 1
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": 1
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": 1
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 1
+      },
+      {
+       "from": "h1",
+       "to": "z",
+       "w": 4
+      },
+      {
+       "from": "h2",
+       "to": "z",
+       "w": -8
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "h1": "b = 0",
+      "h2": "b = −1",
+      "z": "b = −2"
+     }
+    }
+   },
+   "question": "Fill $h_1$, $h_2$ and $z$ for each corner.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "corner",
+     "$h_1$",
+     "$h_2$",
+     "$z$"
+    ],
+    "rows": [
+     [
+      "(0, 0)",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "norelu",
+         "value": -1,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "norelu6",
+         "value": 6,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "(1, 0)",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "(0, 1)",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "(1, 1)",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$h_2$ is $x_1 + x_2 - 1$, floored at 0."
+    },
+    {
+     "rung": "point",
+     "text": "At $(0, 0)$, $x_1 + x_2 - 1 = -1$, so $h_2 = 0$.",
+     "highlight": [
+      "h2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At $(1, 1)$: $h_1 = 2$, $h_2 = 1$, $z = 8 - 8 - 2 = -2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$z = -2, 2, 2, -2$: positive exactly on the class 1 corners.",
+    "generic": "Apply $\\max(0, \\cdot)$ to each hidden unit before the output.",
+    "byKey": {
+     "norelu": "You kept $h_2 = -1$ at $(0, 0)$. The unit floors negative values at 0.",
+     "norelu6": "You used $h_2 = -1$ at $(0, 0)$, giving $z = 6$. Floor $h_2$ at 0 first."
+    }
+   },
+   "explain": {
+    "text": "$h_2$ switches on only when both inputs are 1, and its weight $-8$ then cancels $h_1$'s $4 \\times 2$. So $z$ is positive on $(1, 0)$ and $(0, 1)$ and negative on the others. The logistic function of $z$ gives 0.1192, 0.8808, 0.8808 and 0.1192: all four right.",
+    "canvas": {
+     "values": {
+      "h1": "1",
+      "h2": "0",
+      "z": "2"
+     },
+     "caption": "The forward pass at (1, 0)."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The **hidden layer** builds new features $h_1, h_2$ from the old ones, and the **ReLU** $\\max(0, \\cdot)$ bends them. The output is the logistic regression we already know, fitted on $h_1, h_2$: $p = 1/(1 + e^{-z})$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.1,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.1,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.25
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.75
+      },
+      {
+       "id": "z",
+       "label": "z",
+       "x": 0.9,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 1
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": 1
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": 1
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 1
+      },
+      {
+       "from": "h1",
+       "to": "z",
+       "w": 4
+      },
+      {
+       "from": "h2",
+       "to": "z",
+       "w": -8
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "h1": "b = 0",
+      "h2": "b = −1",
+      "z": "b = −2"
+     }
+    }
+   },
+   "question": "What probability of class 1 does the network give the point $(0.5, 0.8)$? Give two decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.69,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "z",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "flip",
+      "value": 0.31,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "noh2",
+      "value": 0.96,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with $h_1 = 1.3$."
+    },
+    {
+     "rung": "point",
+     "text": "$h_2 = \\max(0, 1.3 - 1) = 0.3$, so $z = 5.2 - 2.4 - 2$.",
+     "highlight": [
+      "h1",
+      "h2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$z = 0.8$ and $p = 1/(1 + e^{-0.8})$."
+    }
+   ],
+   "feedback": {
+    "correct": "$z = 0.8$ and $p \\approx 0.69$.",
+    "generic": "Work out $h_1$, $h_2$, then $z$, then the logistic function.",
+    "byKey": {
+     "z": "You stopped at $z = 0.8$. Put it through the logistic function.",
+     "flip": "You gave $1 - p$, the chance of class 0.",
+     "noh2": "You left out $h_2 = 0.3$. Its weight $-8$ takes 2.4 off $z$."
+    }
+   },
+   "explain": {
+    "text": "$h_1 = 1.3$, $h_2 = 0.3$, so $z = 4(1.3) - 8(0.3) - 2 = 0.8$. The logistic function gives $p \\approx 0.69$. The point leans to class 1, but less surely than a corner.",
+    "canvas": {
+     "values": {
+      "h1": "1.3",
+      "h2": "0.3",
+      "z": "0.8"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Every arrow carries a weight and every unit after the inputs carries a bias. Our network is 2–2–1: two inputs, two hidden units, one output, with $2 \\times 2 + 2 + 2 + 1 = 9$ parameters.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 260,
+     "nodes": [
+      {
+       "id": "x1",
+       "label": "x₁",
+       "x": 0.1,
+       "y": 0.25
+      },
+      {
+       "id": "x2",
+       "label": "x₂",
+       "x": 0.1,
+       "y": 0.75
+      },
+      {
+       "id": "h1",
+       "label": "h₁",
+       "x": 0.5,
+       "y": 0.25
+      },
+      {
+       "id": "h2",
+       "label": "h₂",
+       "x": 0.5,
+       "y": 0.75
+      },
+      {
+       "id": "z",
+       "label": "z",
+       "x": 0.9,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x1",
+       "to": "h1",
+       "w": 1
+      },
+      {
+       "from": "x2",
+       "to": "h1",
+       "w": 1
+      },
+      {
+       "from": "x1",
+       "to": "h2",
+       "w": 1
+      },
+      {
+       "from": "x2",
+       "to": "h2",
+       "w": 1
+      },
+      {
+       "from": "h1",
+       "to": "z",
+       "w": 4
+      },
+      {
+       "from": "h2",
+       "to": "z",
+       "w": -8
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "h1": "b = 0",
+      "h2": "b = −1",
+      "z": "b = −2"
+     }
+    }
+   },
+   "question": "How many parameters has a 2–8–1 network?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 33,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "weights",
+      "value": 24,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nohb",
+      "value": 25,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "units",
+      "value": 11,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count weights layer by layer, then biases."
+    },
+    {
+     "rung": "point",
+     "text": "Inputs to hidden: $2 \\times 8 = 16$ weights and 8 biases."
+    },
+    {
+     "rung": "step",
+     "text": "Hidden to output: 8 weights and 1 bias. $16 + 8 + 8 + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$16 + 8 + 8 + 1 = 33$.",
+    "generic": "Each layer has inputs times outputs weights, plus one bias per output.",
+    "byKey": {
+     "weights": "You counted only the weights. The 8 hidden units and the output each have a bias too.",
+     "nohb": "You missed the 8 hidden biases.",
+     "units": "You counted units, not parameters."
+    }
+   },
+   "explain": {
+    "text": "A layer from $a$ units to $b$ units has $ab + b$ parameters. So 2–8–1 has $24 + 9 = 33$, and 10–16–16–1 has $176 + 272 + 17 = 465$. Parameters grow fast with width and depth."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "The forward pass and the count in NumPy. `W1` has one row per hidden unit, so the hidden layer is `X @ W1.T + b1`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> forward([[0.5, 0.8]], [[1, 1], [1, 1]], [0, -1], [4, -8], -2)",
+      "array([0.68997448])",
+      ">>> n_params([2, 8, 1])",
+      "33"
+     ],
+     "title": "Forward pass and count"
+    },
+    "state": {}
+   },
+   "question": "Complete `forward(X, W1, b1, W2, b2)` and `n_params(sizes)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef forward(X, W1, b1, W2, b2):\n    # rows of X in; ReLU hidden layer; logistic output p = 1 / (1 + e^(-z))\n    ...\n\ndef n_params(sizes):\n    # sizes like [2, 8, 1]: weights plus biases of every layer\n    ...\n",
+    "solution": "import numpy as np\n\ndef forward(X, W1, b1, W2, b2):\n    # rows of X in; ReLU hidden layer; logistic output p = 1 / (1 + e^(-z))\n    X = np.asarray(X, float)\n    H = np.maximum(0, X @ np.asarray(W1, float).T + np.asarray(b1, float))\n    z = H @ np.asarray(W2, float) + b2\n    return 1 / (1 + np.exp(-z))\n\ndef n_params(sizes):\n    # sizes like [2, 8, 1]: weights plus biases of every layer\n    return sum(a * b + b for a, b in zip(sizes[:-1], sizes[1:]))\n",
+    "prelude": "import numpy as np\nC4 = [[0, 0], [1, 0], [0, 1], [1, 1]]\nW1, b1, W2, b2 = [[1, 1], [1, 1]], [0, -1], [4, -8], -2\n",
+    "examples": [
+     {
+      "call": "n_params([2, 2, 1])",
+      "expect": "9",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(forward(C4, W1, b1, W2, b2), 4).tolist()",
+      "expect": "[0.1192, 0.8808, 0.8808, 0.1192]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(forward([[0.5, 0.8]], W1, b1, W2, b2), 4).tolist()",
+      "expect": "[0.69]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(forward([[1, 2]], [[-1, -1]], [0], [3], 0.5), 4).tolist()",
+      "expect": "[0.6225]",
+      "compare": "isclose"
+     },
+     {
+      "call": "n_params([2, 2, 1])",
+      "expect": "9",
+      "compare": "equal"
+     },
+     {
+      "call": "n_params([2, 8, 1])",
+      "expect": "33",
+      "compare": "equal"
+     },
+     {
+      "call": "n_params([10, 16, 16, 1])",
+      "expect": "465",
+      "compare": "equal"
+     },
+     {
+      "call": "n_params([3, 1])",
+      "expect": "4",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: the four corners, the point $(0.5, 0.8)$, a network whose one hidden unit is switched off, and four counts. Probabilities are rounded to 4 places."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.maximum(0, ...)` is the ReLU, applied element by element."
+    },
+    {
+     "rung": "point",
+     "text": "The output is `H @ W2 + b2`, then the logistic function.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the count, pair each layer size with the next: `zip(sizes[:-1], sizes[1:])`."
+    }
+   ],
+   "feedback": {
+    "correct": "The corners come out at 0.1192 and 0.8808, and the counts are 9, 33 and 465.",
+    "generic": "Some tests failed. The four corners should give `[0.1192, 0.8808, 0.8808, 0.1192]`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check the shapes: `X @ W1.T` needs `W1` with one row per hidden unit."
+    }
+   },
+   "explain": {
+    "text": "The switched-off case has $-1 - 2 < 0$ into its only hidden unit, so $h = 0$ and $p = \\sigma(0.5) = 0.6225$. A one-input layer of 3 to 1 has $3 + 1 = 4$ parameters. Deep nets are this, repeated."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Where do weights come from? From a loss and **gradient descent**. The smallest case: input $x = 2$, target 3, $h = \\max(0, w_1 x)$, prediction $\\hat y = w_2 h$, no biases, loss $L = \\tfrac12(\\hat y - 3)^2$. With $w_1 = 0.5$ and $w_2 = 2$, $\\hat y = 2$ and $L = 0.5$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 160,
+     "nodes": [
+      {
+       "id": "x",
+       "label": "x = 2",
+       "x": 0.1,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "h",
+       "label": "h",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "p",
+       "label": "ŷ",
+       "x": 0.9,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "x",
+       "to": "h",
+       "w": "w₁ = 0.5"
+      },
+      {
+       "from": "h",
+       "to": "p",
+       "w": "w₂ = 2"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "h": "1",
+      "p": "2"
+     }
+    }
+   },
+   "question": "Holding $w_2$ fixed, what is the slope $\\partial L / \\partial w_1$ at these weights?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -4,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "w2slope",
+      "value": -1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "now2",
+      "value": -2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Chain rule: $\\dfrac{dL}{dw_1} = \\dfrac{dL}{d\\hat y} \\cdot \\dfrac{d\\hat y}{dh} \\cdot \\dfrac{dh}{dw_1}$."
+    },
+    {
+     "rung": "point",
+     "text": "$dL/d\\hat y = \\hat y - 3 = -1$ and $d\\hat y/dh = w_2 = 2$."
+    },
+    {
+     "rung": "step",
+     "text": "$dh/dw_1 = x = 2$ while $w_1 x > 0$: so $-1 \\times 2 \\times 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-1 \\times 2 \\times 2 = -4$: raising $w_1$ lowers the loss fast.",
+    "generic": "Multiply the three slopes along the chain from $L$ back to $w_1$.",
+    "byKey": {
+     "w2slope": "You gave the slope for $w_2$: $(\\hat y - 3) h = -1$. For $w_1$ the chain runs through $w_2$ and $x$ as well.",
+     "now2": "You left out $d\\hat y/dh = w_2 = 2$.",
+     "sign": "You lost the sign. The prediction is too low, so the loss falls as $w_1$ rises: the slope is negative."
+    }
+   },
+   "explain": {
+    "text": "The slope for $w_2$ is $(\\hat y - 3) h = -1$ and for $w_1$ it is $(\\hat y - 3) w_2 x = -4$. Each is a single-variable derivative with the other weight held fixed. Working these products backwards, layer by layer, is **backpropagation**."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "A step of size $\\eta$ moves each weight against its slope: $w_1 \\to 0.5 + 4\\eta$ and $w_2 \\to 2 + \\eta$. The curve is the loss after one step, against $\\eta$. Drag the point along it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      0.2
+     ],
+     "y": [
+      0,
+      4
+     ],
+     "xLabel": "step size η",
+     "yLabel": "loss after one step",
+     "height": 280,
+     "functions": [
+      {
+       "id": "L",
+       "expr": "0.5*((2 + x)*(1 + 8*x) - 3)^2",
+       "label": "loss",
+       "domain": [
+        0,
+        0.2
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 0.02,
+       "on": "L",
+       "drag": true,
+       "label": "η = {x:.2f}"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "start",
+       "y": 0.5,
+       "label": "loss before 0.5"
+      }
+     ]
+    }
+   },
+   "question": "What is the loss after one step of size 0.1? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3042,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "before",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "pred",
+      "value": 3.78,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "New weights: $w_1 = 0.9$, $w_2 = 2.1$."
+    },
+    {
+     "rung": "point",
+     "text": "New prediction: $2.1 \\times 0.9 \\times 2 = 3.78$."
+    },
+    {
+     "rung": "step",
+     "text": "$L = \\tfrac12 (3.78 - 3)^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac12(0.78)^2 = 0.3042$: better than 0.5, but the step already overshot 3.",
+    "generic": "Move the weights, recompute the prediction, then the loss.",
+    "byKey": {
+     "before": "You gave the loss before the step.",
+     "pred": "You gave the new prediction, 3.78. Square its error and halve it."
+    }
+   },
+   "explain": {
+    "text": "At $\\eta = 0.1$ the prediction jumps from 2 to 3.78, past the target, and the loss is 0.3042. At $\\eta = 0.5$ the weights become 2.5 and 2.5, the prediction 12.5 and the loss 45.125. A learning rate is chosen by watching the loss, not by hope.",
+    "canvas": {
+     "points": {
+      "p": {
+       "x": 0.1
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "One step as a function. It returns the new weights and the loss after the step, so you can run it twice and watch.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> gd_step(0.5, 2, 2, 3, 0.1)",
+      "(0.9, 2.1, 0.3042)",
+      ">>> gd_step(0.5, 2, 2, 3, 0.5)",
+      "(2.5, 2.5, 45.125)"
+     ],
+     "title": "One step, two sizes"
+    },
+    "state": {}
+   },
+   "question": "Complete `gd_step(w1, w2, x, y, lr)` for $\\hat y = w_2 \\max(0, w_1 x)$ and $L = \\tfrac12(\\hat y - y)^2$.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def gd_step(w1, w2, x, y, lr):\n    # slopes at the current weights (ReLU slope is 0 when w1 * x <= 0),\n    # step both weights, then return (new w1, new w2, loss after),\n    # each rounded to 4 places\n    ...\n",
+    "solution": "def gd_step(w1, w2, x, y, lr):\n    # slopes at the current weights (ReLU slope is 0 when w1 * x <= 0),\n    # step both weights, then return (new w1, new w2, loss after),\n    # each rounded to 4 places\n    h = max(0.0, w1 * x)\n    err = w2 * h - y\n    g2 = err * h\n    g1 = err * w2 * (x if w1 * x > 0 else 0.0)\n    w1, w2 = w1 - lr * g1, w2 - lr * g2\n    loss = 0.5 * (w2 * max(0.0, w1 * x) - y) ** 2\n    return (round(w1, 4), round(w2, 4), round(loss, 4))\n",
+    "examples": [
+     {
+      "call": "list(gd_step(0.5, 2, 2, 3, 0.1))",
+      "expect": "[0.9, 2.1, 0.3042]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(gd_step(0.5, 2, 2, 3, 0.1))",
+      "expect": "[0.9, 2.1, 0.3042]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(gd_step(0.5, 2, 2, 3, 0.5))",
+      "expect": "[2.5, 2.5, 45.125]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(gd_step(0.5, 2, 2, 3, 0))",
+      "expect": "[0.5, 2.0, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(gd_step(-0.5, 2, 2, 3, 0.1))",
+      "expect": "[-0.5, 2.0, 4.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(gd_step(1, 1, 1, 0.5, 0.1))",
+      "expect": "[0.95, 0.95, 0.081]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 5 hidden tests: the two steps above, a step of size 0, a dead unit with $w_1 x < 0$, and a fresh case. Values are rounded to 4 places. Pure Python: nothing to load."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out both slopes before changing either weight."
+    },
+    {
+     "rung": "point",
+     "text": "`g1 = err * w2 * x` when `w1 * x > 0`, else 0; `g2 = err * h`."
+    },
+    {
+     "rung": "step",
+     "text": "Step, recompute the prediction with the new weights, and return the loss."
+    }
+   ],
+   "feedback": {
+    "correct": "Both steps match, and the dead unit does not move at all.",
+    "generic": "Some tests failed. `gd_step(0.5, 2, 2, 3, 0.1)` should give `(0.9, 2.1, 0.3042)`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Use `max(0.0, w1 * x)` for the ReLU."
+    }
+   },
+   "explain": {
+    "text": "With $w_1 = -0.5$ the unit's input is $-1$, so $h = 0$ and both slopes are 0: the weights never change. That is a **dead unit**, and no step size revives it. Compute both slopes before moving either weight."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now scikit-learn on the rings, `make_rings(300, 7)`, tested on seed 8, with one hidden layer of $h$ units: `MLPClassifier(hidden_layer_sizes=(h,), solver=\"lbfgs\", alpha=0.01, random_state=seed, max_iter=500)`. The bars show test accuracy from the playthrough's runtime.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3",
+      "8",
+      "64"
+     ],
+     "xLabel": "hidden units",
+     "yLabel": "test accuracy",
+     "yMin": 0,
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "1": 0.6567,
+      "2": 0.6467,
+      "3": 0.82,
+      "8": 0.97,
+      "64": 0.97
+     }
+    }
+   },
+   "question": "Complete `mlp_width_report(widths, seed)`, returning test accuracies rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from sklearn.neural_network import MLPClassifier\n\ndef mlp_width_report(widths, seed):\n    # one MLPClassifier per width h, fitted on Xr_tr, yr_tr\n    # (solver='lbfgs', alpha=0.01, random_state=seed, max_iter=500)\n    # return the test accuracies on Xr_te, yr_te, rounded to 4 places\n    ...\n",
+    "solution": "from sklearn.neural_network import MLPClassifier\n\ndef mlp_width_report(widths, seed):\n    # one MLPClassifier per width h, fitted on Xr_tr, yr_tr\n    # (solver='lbfgs', alpha=0.01, random_state=seed, max_iter=500)\n    # return the test accuracies on Xr_te, yr_te, rounded to 4 places\n    out = []\n    for h in widths:\n        m = MLPClassifier(hidden_layer_sizes=(h,), solver=\"lbfgs\", alpha=0.01,\n                          random_state=seed, max_iter=500)\n        m.fit(Xr_tr, yr_tr)\n        out.append(round(m.score(Xr_te, yr_te), 4))\n    return out\n",
+    "prelude": "import numpy as np\n\ndef make_rings(n, seed):             # class 1 near the centre, class 0 in a ring round it\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    r = np.where(y == 1, rng.normal(0.8, 0.3, n), rng.normal(2.2, 0.4, n))\n    a = rng.uniform(0, 2 * np.pi, n)\n    return np.round(np.c_[r * np.cos(a), r * np.sin(a)], 3), y\n\nXr_tr, yr_tr = make_rings(300, 7)\nXr_te, yr_te = make_rings(300, 8)\n",
+    "examples": [
+     {
+      "call": "len(mlp_width_report([1, 2, 3], 0))",
+      "expect": "3",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(mlp_width_report([1, 2, 3], 0))",
+      "expect": "3",
+      "compare": "equal"
+     },
+     {
+      "call": "mlp_width_report([1, 2], 0)[0] < 0.75 and mlp_width_report([1, 2], 0)[1] < 0.75",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "mlp_width_report([3], 0)[0]",
+      "expect": "0.82",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.03
+      }
+     },
+     {
+      "call": "all(0.93 <= a < 0.99 for a in mlp_width_report([8, 64], 0))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "[0.93 <= mlp_width_report([8], s)[0] < 0.99 for s in (0, 1, 2)]",
+      "expect": "[True, True, True]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests, against bands rather than exact values, because a network's score moves in the third place between runtimes. One or two units must score under 0.75, three units within 0.03 of 0.82, and 8 or 64 units from 0.93 to 0.99 on three seeds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over `widths`, fit a fresh model each time."
+    },
+    {
+     "rung": "point",
+     "text": "Score on the test rows: `m.score(Xr_te, yr_te)`.",
+     "highlight": [
+      "x3",
+      "x8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Pass `random_state=seed` so each run is repeatable."
+    }
+   ],
+   "feedback": {
+    "correct": "One or two units stay near 0.65; three jump to 0.82; eight reach 0.97.",
+    "generic": "Some tests failed. Width 8 should score between 0.93 and 0.99 on the test rows.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that `hidden_layer_sizes` is a tuple: `(h,)`."
+    }
+   },
+   "explain": {
+    "text": "A ReLU unit draws one bend line. Three lines can fence the centre in a triangle; one or two cannot close a region. Seeds 0, 1 and 2 at 8 units gave 0.97, 0.9667 and 0.96: a spread, so report it.",
+    "canvas": {
+     "highlight": [
+      "x3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "The same 8-unit network on `make_noise(300, 4)`, tested on seed 5: labels are up with chance 0.54 whatever the features say. The base rate on the test rows is 0.55.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "seed",
+      "training accuracy",
+      "test accuracy"
+     ],
+     "rows": [
+      [
+       "0",
+       "0.5833",
+       "0.5567"
+      ],
+      [
+       "1",
+       "0.6033",
+       "0.5000"
+      ],
+      [
+       "2",
+       "0.6500",
+       "0.4967"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What has the network learned?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "Nothing: test accuracy sits at or below the 0.55 base rate; the training edge is fitted noise",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "A small edge, since every seed beats a coin's 0.5 on the training rows",
+      "why": "You judged it on training rows and against 0.5. The base rate is 0.55, and on test rows two seeds fall below it."
+     },
+     {
+      "id": "c",
+      "text": "Seed 0 found the signal, so keep the seed 0 network and drop the other two",
+      "why": "You picked the seed by its test score. That is choosing on the test rows, and 0.5567 is still the base rate."
+     },
+     {
+      "id": "d",
+      "text": "It needs more hidden units, say 64, before it can find the pattern",
+      "why": "You reached for width. There is no pattern: with 64 units training accuracy rises and test accuracy stays near 0.5."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare test accuracy with the base rate, not with 0.5."
+    },
+    {
+     "rung": "point",
+     "text": "Training accuracy rises with the seed's luck; test accuracy does not follow."
+    },
+    {
+     "rung": "step",
+     "text": "0.5567, 0.5000, 0.4967 against 0.55."
+    }
+   ],
+   "feedback": {
+    "correct": "No edge: the network memorised noise, and the test rows show it.",
+    "generic": "Look at the test column against the base rate.",
+    "byKey": {
+     "b": "That is the trap: training accuracy above 0.5 looks like skill. Against the 0.55 base rate on test rows there is none.",
+     "d": "That is the trap of width: more units fit more noise. With 64 units the training score rises further, not the test score."
+    }
+   },
+   "explain": {
+    "text": "Training accuracy runs 0.58 to 0.65 while test accuracy is 0.50 to 0.56, around a base rate of 0.55. A wide network on few noisy rows fits the noise. The exact values move in the third place on another runtime; the conclusion does not."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Put the slope for $w_1$ in order, for $\\hat y = w_2 \\max(0, w_1 x)$ and $L = \\tfrac12(\\hat y - y)^2$, holding $w_2$ fixed. One line does not belong.",
+   "question": "Put the steps in order and leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$\\dfrac{dL}{d\\hat y} = \\hat y - y = 2 - 3 = -1$: differentiate the square and halve."
+     },
+     {
+      "id": "d2",
+      "text": "$\\dfrac{d\\hat y}{dh} = w_2 = 2$: $\\hat y$ is $w_2$ times $h$, with $w_2$ held fixed."
+     },
+     {
+      "id": "d3",
+      "text": "$\\dfrac{dh}{dw_1} = x = 2$: the ReLU passes its input on, since $w_1 x = 1 > 0$."
+     },
+     {
+      "id": "d4",
+      "text": "$\\dfrac{dL}{dw_1} = (-1)(2)(2) = -4$: the chain rule multiplies the three slopes."
+     },
+     {
+      "id": "d5",
+      "text": "A step of 0.1 gives $w_1 = 0.5 - 0.1 \\times (-4) = 0.9$: move against the slope."
+     },
+     {
+      "id": "x1",
+      "text": "$\\dfrac{dh}{dw_1} = 1$, because the ReLU always has slope 1."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5"
+    ],
+    "distractors": [
+     "x1"
+    ],
+    "same": [
+     [
+      "d1",
+      "d2",
+      "d3"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Three slopes along the chain, then their product, then the step."
+    },
+    {
+     "rung": "point",
+     "text": "The ReLU's slope is 1 only when its input is positive, and the inner slope is $x$."
+    },
+    {
+     "rung": "step",
+     "text": "The three factors may come in any order before the product."
+    }
+   ],
+   "feedback": {
+    "correct": "$-4$, and a step of 0.1 lifts $w_1$ to 0.9.",
+    "generic": "Find each link of the chain, multiply, then step against the slope.",
+    "byKey": {
+     "x1": "You gave the ReLU slope 1 everywhere. It is 0 for a negative input, and the inner derivative of $w_1 x$ is $x = 2$."
+    }
+   },
+   "explain": {
+    "text": "Three local slopes, $-1$, 2 and 2, multiply to $-4$. A step of 0.1 against it moves $w_1$ to 0.9. With many weights, backpropagation reuses each local slope instead of recomputing it."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A desk fits a 10–16–16–1 network to 250 days of returns with 10 features and reports 71% training accuracy. It predicts next-day direction. The base rate of up days is 0.54.",
+   "question": "What do you ask for first?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "The hit rate on later days against the 0.54 base rate: 465 parameters can memorise 250 rows",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "A deeper network, since 71% in training shows the ten features carry signal",
+      "why": "You took training accuracy as skill. With 465 parameters and 250 rows, 71% is easy to reach on noise."
+     },
+     {
+      "id": "c",
+      "text": "The training accuracy on a second seed, to check that the 71% is stable",
+      "why": "You checked the training score again. A stable training score says nothing about new days."
+     },
+     {
+      "id": "d",
+      "text": "Nothing more: 71% against a coin's 50% is already a large edge",
+      "why": "You compared with 50%. The base rate is 54%, and 71% is a training score."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count parameters against rows."
+    },
+    {
+     "rung": "point",
+     "text": "$176 + 272 + 17 = 465$ parameters for 250 days."
+    },
+    {
+     "rung": "step",
+     "text": "Ask for the hit rate on days after the training window, against the base rate."
+    }
+   ],
+   "feedback": {
+    "correct": "Parameters outnumber rows, so only a later test window can show an edge.",
+    "generic": "Compare 465 parameters with 250 rows, then ask what has been measured."
+   },
+   "explain": {
+    "text": "465 parameters on 250 rows can fit almost anything, so 71% in training proves nothing. Ask for the hit rate on later days and its $t$ statistic against 0.54. A network earns its place with many rows, structure a linear model cannot express, and validation that respects time."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A hidden layer builds new features from the inputs, and the ReLU bends them; the output is a logistic regression on those features.",
+   "Weights come from gradient descent: the chain rule gives each slope with the other weights held fixed, and the step size must be watched.",
+   "A network needs scaled features, several seeds and many rows; on few noisy rows it fits the noise, and only held-out rows show it."
+  ],
+  "formula": {
+   "name": "One hidden layer",
+   "tex": "p = \\sigma\\big(w_2 \\cdot \\max(0, W_1 x + b_1) + b_2\\big)",
+   "note": "A layer from $a$ to $b$ units has $ab + b$ parameters."
+  },
+  "trap": "Reading training accuracy, or the best seed, as skill: a wide network on noise beats the base rate only on the rows it has seen."
+ },
+ "quiz": [
+  {
+   "id": "q1",
+   "difficulty": 2,
+   "prose": "A hidden unit has weights $(-2, -1)$ and bias $-0.5$. Every row of the data has both features positive.",
+   "question": "What happens to this unit during training?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "Its input is negative on every row, so its output and slopes are 0: it never learns",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "It learns quickly, because its weights are large in size",
+      "why": "You looked at the size, not the sign. Negative weights on positive inputs give a negative input, and the ReLU floors it."
+     },
+     {
+      "id": "c",
+      "text": "It outputs negative values that pull every prediction down",
+      "why": "You forgot the floor. The ReLU outputs 0 for any negative input."
+     },
+     {
+      "id": "d",
+      "text": "Its slope is 1, so it moves just like every other unit",
+      "why": "You gave the ReLU slope 1 everywhere. It is 0 when the input is negative."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A dead unit: zero output, zero slope, no learning.",
+    "generic": "Work out the unit's input for a row with positive features."
+   },
+   "explain": {
+    "text": "$-2x_1 - x_2 - 0.5 < 0$ whenever both features are positive. The ReLU then outputs 0 and passes back slope 0, so gradient descent never moves its weights. That is the edge case of a dead unit."
+   }
+  },
+  {
+   "id": "q2",
+   "difficulty": 3,
+   "prose": "A network with no activation: $h = W_1 x$ with $W_1 = \\begin{pmatrix} 1 & 2 \\\\ 0 & 1 \\end{pmatrix}$, then $z = w_2 \\cdot h$ with $w_2 = (3, -1)$. So $z = v \\cdot x$ for one vector $v$.",
+   "question": "What is the second entry of $v$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "first",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "order",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$v = w_2 W_1 = (3, 5)$: two layers collapse to one linear model.",
+    "generic": "Multiply the row vector $w_2$ by $W_1$.",
+    "byKey": {
+     "first": "You gave the first entry, $3 \\times 1 + (-1) \\times 0 = 3$.",
+     "order": "You multiplied in the wrong order. $v = w_2 W_1$: the second entry is $3 \\times 2 + (-1) \\times 1$."
+    }
+   },
+   "explain": {
+    "text": "$z = w_2 (W_1 x) = (w_2 W_1) x$, and $w_2 W_1 = (3, 6 - 1) = (3, 5)$. Without a bend between them, stacked layers are one linear model. The ReLU is what makes the hidden layer worth having."
+   }
+  },
+  {
+   "id": "q3",
+   "difficulty": 2,
+   "prose": "Three runs of the same 8-unit network on the rings use `random_state` 0, 1 and 2. They give test accuracies 0.97, 0.9667 and 0.96.",
+   "question": "What should you report?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "The range, 0.96 to 0.97: each seed starts the weights elsewhere",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "0.97, the best run, since that network exists",
+      "why": "You reported the best seed. That choice was made on the test rows and flatters the method."
+     },
+     {
+      "id": "c",
+      "text": "0.9667, the middle run, as the true accuracy",
+      "why": "You picked one run as the truth. Report the spread; the middle run is one draw."
+     },
+     {
+      "id": "d",
+      "text": "Nothing yet: fix the seed at 0 and the result is exact",
+      "why": "You fixed the seed and called it exact. It is repeatable, not representative."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Report the spread across seeds.",
+    "generic": "Each seed starts the weights elsewhere and ends at a different network."
+   },
+   "explain": {
+    "text": "Each seed gives different starting weights and so a different fitted network. Reporting only the best of three picks on the test rows. Report the range, here 0.96 to 0.97."
+   }
+  },
+  {
+   "id": "q4",
+   "difficulty": 3,
+   "prose": "You train a network by gradient descent on two raw features: daily volume in shares, around 2,000,000, and a return in decimals, around 0.01.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "Volume's weight gets far larger slopes, so no one step size suits both; scale first",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Nothing goes wrong, because the weights adjust to any units",
+      "why": "You trusted the weights to absorb the units. They can, but one learning rate cannot move both at sensible speeds."
+     },
+     {
+      "id": "c",
+      "text": "The return column dominates, since its values are small",
+      "why": "You have it backwards. The slope for a weight is proportional to its input, so the large column dominates."
+     },
+     {
+      "id": "d",
+      "text": "The ReLU units stop working on inputs larger than 1",
+      "why": "You blamed the activation. ReLU works at any size; the trouble is the step size."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Standardise before gradient descent, as before a penalty.",
+    "generic": "The slope for a weight carries its input as a factor."
+   },
+   "explain": {
+    "text": "A weight's slope is proportional to its input, so volume's slopes are about $2 \\times 10^8$ times return's. A step small enough for volume barely moves the return weight. scikit-learn's networks expect standardised features for this reason."
+   }
+  }
+ ]
+}

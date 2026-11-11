@@ -1,0 +1,2442 @@
+{
+ "id": "l15-widest-street",
+ "course": "stat-learning",
+ "title": "The widest street",
+ "minutes": 15,
+ "objectives": [
+  "Fit a support vector machine, read its margin and support vectors, and bend the boundary with a kernel.",
+  "Explain what the cost $C$ and the reach $\\gamma$ trade, and choose them on a validation split."
+ ],
+ "skills": [
+  "sl-classify",
+  "sl-regularise"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Six past loans on two credit scores, both standardised. Three defaulted and three repaid. Many lines separate them: the dashed line $x_1 = 2.5$ leaves an empty street 1 wide. Logistic regression would pick yet another line.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       1,
+       1,
+       "defaulted"
+      ],
+      [
+       0,
+       1,
+       "defaulted"
+      ],
+      [
+       2,
+       0,
+       "defaulted"
+      ],
+      [
+       3,
+       3,
+       "repaid"
+      ],
+      [
+       4,
+       3,
+       "repaid"
+      ],
+      [
+       3,
+       5,
+       "repaid"
+      ]
+     ],
+     "groups": [
+      {
+       "id": "defaulted",
+       "label": "defaulted"
+      },
+      {
+       "id": "repaid",
+       "label": "repaid"
+      }
+     ],
+     "xLabel": "cover score",
+     "yLabel": "cash score",
+     "xRange": [
+      -1,
+      6
+     ],
+     "yRange": [
+      -1,
+      6
+     ],
+     "height": 300,
+     "curves": [
+      {
+       "id": "v",
+       "implicit": "x - 2.5",
+       "dashed": true,
+       "label": "x = 2.5",
+       "labelAt": [
+        2.5,
+        5.6
+       ]
+      }
+     ]
+    },
+    "state": {
+     "line": {
+      "m": -0.5,
+      "b": 3.5,
+      "label": "your line"
+     }
+    },
+    "derive": {
+     "let": {
+      "s": "min(line.m+line.b-1, line.b-1, 2*line.m+line.b, 3-3*line.m-line.b, 3-4*line.m-line.b, 5-3*line.m-line.b)"
+     },
+     "caption": "Street width: {{ s > 0 ? fixed(2 * s / sqrt(line.m * line.m + 1), 2) : 'none, the line has loans of both kinds on one side' }}"
+    }
+   },
+   "question": "Set the slope and intercept of your line to make the empty street as wide as you can.",
+   "widget": {
+    "kind": "sliders",
+    "sliders": [
+     {
+      "id": "m",
+      "bind": "line.m",
+      "min": -3,
+      "max": 0,
+      "step": 0.05,
+      "start": -0.5,
+      "label": "slope"
+     },
+     {
+      "id": "b",
+      "bind": "line.b",
+      "min": 0,
+      "max": 8,
+      "step": 0.1,
+      "start": 3.5,
+      "label": "intercept"
+     }
+    ],
+    "check": "2*min(m+b-1, b-1, 2*m+b, 3-3*m-b, 3-4*m-b, 5-3*m-b)/sqrt(m*m+1)",
+    "value": 2.828,
+    "tol": 0.05,
+    "show": {
+     "m": -1,
+     "b": 4
+    },
+    "wrong": [
+     {
+      "id": "crosses",
+      "check": "min(m+b-1, b-1, 2*m+b, 3-3*m-b, 3-4*m-b, 5-3*m-b) <= 0"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The street ends at the first loan it touches on either side."
+    },
+    {
+     "rung": "point",
+     "text": "Three loans sit closest to the gap: $(1, 1)$, $(2, 0)$ and $(3, 3)$.",
+     "highlight": [
+      "p0",
+      "p2",
+      "p3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Run the line through the middle of that gap, parallel to the line from $(1, 1)$ to $(2, 0)$: slope $-1$, intercept 4."
+    }
+   ],
+   "feedback": {
+    "correct": "A street $2\\sqrt{2} \\approx 2.83$ wide, almost three times the vertical line's.",
+    "generic": "Wider is possible. Watch which loan touches the street first and tilt away from it.",
+    "byKey": {
+     "crosses": "Your line has loans of both kinds on one side, so there is no street at all. Move it into the gap first.",
+     "off": "Your street is narrower than it could be. The closest loan on each side sets the width, so balance the gap."
+    }
+   },
+   "explain": {
+    "text": "The line $x_1 + x_2 = 4$ is $\\sqrt{2}$ from $(1, 1)$, $(2, 0)$ and $(3, 3)$, so the street is $2\\sqrt{2} \\approx 2.83$ wide. Any tilt brings one of those three closer. That line is the **maximal margin classifier**.",
+    "canvas": {
+     "line": {
+      "m": -1,
+      "b": 4,
+      "label": "widest"
+     },
+     "lines": [
+      {
+       "id": "e1",
+       "m": -1,
+       "b": 2,
+       "dashed": true,
+       "colour": 4
+      },
+      {
+       "id": "e2",
+       "m": -1,
+       "b": 6,
+       "dashed": true,
+       "colour": 4
+      }
+     ],
+     "highlight": [
+      "p0",
+      "p2",
+      "p3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Here is the widest street with its two edges. Use the control to move one loan at a time and watch the street.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       1,
+       1,
+       "defaulted"
+      ],
+      [
+       0,
+       1,
+       "defaulted"
+      ],
+      [
+       2,
+       0,
+       "defaulted"
+      ],
+      [
+       3,
+       3,
+       "repaid"
+      ],
+      [
+       4,
+       3,
+       "repaid"
+      ],
+      [
+       3,
+       5,
+       "repaid"
+      ]
+     ],
+     "groups": [
+      {
+       "id": "defaulted",
+       "label": "defaulted"
+      },
+      {
+       "id": "repaid",
+       "label": "repaid"
+      }
+     ],
+     "xLabel": "cover score",
+     "yLabel": "cash score",
+     "xRange": [
+      -1,
+      6
+     ],
+     "yRange": [
+      -1,
+      6
+     ],
+     "height": 300
+    },
+    "state": {
+     "line": {
+      "m": -1,
+      "b": 4,
+      "label": "centre"
+     },
+     "lines": [
+      {
+       "id": "e1",
+       "m": -1,
+       "b": 2,
+       "dashed": true,
+       "colour": 4
+      },
+      {
+       "id": "e2",
+       "m": -1,
+       "b": 6,
+       "dashed": true,
+       "colour": 4
+      }
+     ],
+     "caption": "As fitted."
+    },
+    "controls": [
+     {
+      "label": "Move a loan",
+      "frames": [
+       {
+        "caption": "As fitted."
+       },
+       {
+        "points": {
+         "p5": {
+          "x": 5,
+          "y": 6
+         }
+        },
+        "caption": "The loan at (3, 5) moved to (5, 6): the street does not move."
+       },
+       {
+        "points": {
+         "p3": {
+          "x": 2.5,
+          "y": 3
+         }
+        },
+        "line": {
+         "m": -0.75,
+         "b": 3.3125,
+         "label": "centre"
+        },
+        "lines": [
+         {
+          "id": "e1",
+          "m": -0.75,
+          "b": 1.75,
+          "dashed": true,
+          "colour": 4
+         },
+         {
+          "id": "e2",
+          "m": -0.75,
+          "b": 4.875,
+          "dashed": true,
+          "colour": 4
+         }
+        ],
+        "caption": "The loan at (3, 3) moved to (2.5, 3): the street turns and narrows to 2.5."
+       }
+      ],
+      "frameLabels": [
+       "as fitted",
+       "move (3, 5)",
+       "move (3, 3)"
+      ]
+     }
+    ]
+   },
+   "question": "Tap the loans that hold the street in place as fitted.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "p0",
+     "p2",
+     "p3"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which loans touch an edge?"
+    },
+    {
+     "rung": "point",
+     "text": "Moving $(3, 5)$ changed nothing. Moving $(3, 3)$ changed everything.",
+     "highlight": [
+      "p0",
+      "p2",
+      "p3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Tap the three loans on the dashed edges: $(1, 1)$, $(2, 0)$ and $(3, 3)$."
+    }
+   ],
+   "feedback": {
+    "correct": "These three are the **support vectors**: the street depends on them and on nothing else.",
+    "generic": "Tap only the loans that sit on a dashed edge.",
+    "byKey": {
+     "p5": "You tapped $(3, 5)$, but moving it left the street where it was.",
+     "p1": "You tapped $(0, 1)$, which sits well clear of the edge.",
+     "p4": "You tapped $(4, 3)$, which sits well clear of the edge."
+    }
+   },
+   "explain": {
+    "text": "The street touches $(1, 1)$, $(2, 0)$ and $(3, 3)$: these are the support vectors, and the other three loans could move anywhere outside the street without effect. Two of them are defaults at the same distance, which is why the street is tilted at exactly $-1$. Moving $(3, 3)$ inwards turned the street, because a support vector moved.",
+    "canvas": {
+     "highlight": [
+      "p0",
+      "p2",
+      "p3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Write the centre line as $w \\cdot x + b = 0$ with $w = (0.5, 0.5)$ and $b = -2$. On the three support vectors $w \\cdot x + b$ is exactly $-1$ or $+1$, and on the other loans it is further from 0.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       1,
+       1,
+       "defaulted"
+      ],
+      [
+       0,
+       1,
+       "defaulted"
+      ],
+      [
+       2,
+       0,
+       "defaulted"
+      ],
+      [
+       3,
+       3,
+       "repaid"
+      ],
+      [
+       4,
+       3,
+       "repaid"
+      ],
+      [
+       3,
+       5,
+       "repaid"
+      ]
+     ],
+     "groups": [
+      {
+       "id": "defaulted",
+       "label": "defaulted"
+      },
+      {
+       "id": "repaid",
+       "label": "repaid"
+      }
+     ],
+     "xLabel": "cover score",
+     "yLabel": "cash score",
+     "xRange": [
+      -1,
+      6
+     ],
+     "yRange": [
+      -1,
+      6
+     ],
+     "height": 300
+    },
+    "state": {
+     "line": {
+      "m": -1,
+      "b": 4,
+      "label": "centre"
+     },
+     "lines": [
+      {
+       "id": "e1",
+       "m": -1,
+       "b": 2,
+       "dashed": true,
+       "colour": 4
+      },
+      {
+       "id": "e2",
+       "m": -1,
+       "b": 6,
+       "dashed": true,
+       "colour": 4
+      }
+     ],
+     "highlight": [
+      "p0",
+      "p2",
+      "p3"
+     ]
+    }
+   },
+   "question": "The **margin** is the distance from the centre line to either edge. What is it? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.4142,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "norm",
+      "value": 0.7071,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "street",
+      "value": 2.8284,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "value",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ],
+    "accept": "$1/\\lVert w \\rVert = 1/\\sqrt{0.5} \\approx 1.4142$"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Distance from a line is $|w \\cdot x + b|$ divided by the length of $w$."
+    },
+    {
+     "rung": "point",
+     "text": "On an edge, $|w \\cdot x + b| = 1$.",
+     "highlight": [
+      "p0",
+      "p2",
+      "p3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\lVert w \\rVert = \\sqrt{0.25 + 0.25} = 0.7071$, so the margin is $1 / 0.7071$."
+    }
+   ],
+   "feedback": {
+    "correct": "The margin is $1/\\lVert w \\rVert \\approx 1.4142$, half the street of 2.83.",
+    "generic": "Divide the decision value on an edge, 1, by the length of $w$.",
+    "byKey": {
+     "norm": "You gave $\\lVert w \\rVert$ itself. The margin is its reciprocal.",
+     "street": "You gave the whole street. The margin is half of it.",
+     "value": "You gave the decision value on the edge. Divide it by $\\lVert w \\rVert$ to get a distance."
+    }
+   },
+   "explain": {
+    "text": "The distance from $x$ to the line is $|w \\cdot x + b| / \\lVert w \\rVert$. On an edge the top is 1 and $\\lVert w \\rVert = 0.7071$, so the margin is $1.4142$. A wider street needs a shorter $w$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Two checks you can run on any fitted line. `X6` and `y6` hold the six loans, with 0 for a default and 1 for a repayment.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> margin_width([0.5, 0.5], -2)",
+      "1.4142135623730951",
+      ">>> support_points(X6, y6, [0.5, 0.5], -2)",
+      "[0, 2, 3]"
+     ],
+     "title": "Six loans"
+    },
+    "state": {}
+   },
+   "question": "Complete `margin_width(w, b)` and `support_points(X, y, w, b, tol)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef margin_width(w, b):\n    # distance from the line w.x + b = 0 to the edge where w.x + b = 1\n    ...\n\ndef support_points(X, y, w, b, tol=1e-6):\n    # indices i, in order, with s_i (w.x_i + b) = 1 within tol,\n    # where s_i = -1 for class 0 and +1 for class 1\n    ...\n",
+    "solution": "import numpy as np\n\ndef margin_width(w, b):\n    # distance from the line w.x + b = 0 to the edge where w.x + b = 1\n    return 1 / np.linalg.norm(w)\n\ndef support_points(X, y, w, b, tol=1e-6):\n    # indices i, in order, with s_i (w.x_i + b) = 1 within tol,\n    # where s_i = -1 for class 0 and +1 for class 1\n    s = np.where(np.asarray(y) == 1, 1, -1)\n    v = s * (np.asarray(X, float) @ np.asarray(w, float) + b)\n    return [int(i) for i in np.flatnonzero(np.abs(v - 1) <= tol)]\n",
+    "prelude": "X6 = [[1, 1], [0, 1], [2, 0], [3, 3], [4, 3], [3, 5]]\ny6 = [0, 0, 0, 1, 1, 1]\n",
+    "examples": [
+     {
+      "call": "round(margin_width([0.5, 0.5], -2), 4)",
+      "expect": "1.4142",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(margin_width([0.5, 0.5], -2), 4)",
+      "expect": "1.4142",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(margin_width([2, 0], -5), 4)",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(margin_width([3, 4], 0), 4)",
+      "expect": "0.2",
+      "compare": "isclose"
+     },
+     {
+      "call": "support_points(X6, y6, [0.5, 0.5], -2)",
+      "expect": "[0, 2, 3]",
+      "compare": "equal"
+     },
+     {
+      "call": "support_points(X6, y6, [2, 0], -5)",
+      "expect": "[2, 3, 5]",
+      "compare": "equal"
+     },
+     {
+      "call": "support_points(X6, y6, [0.4999, 0.5002], -1.9993, tol=0.01)",
+      "expect": "[0, 2, 3]",
+      "compare": "equal"
+     },
+     {
+      "call": "support_points(X6, y6, [-0.5, -0.5], 2)",
+      "expect": "[]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: three margins, then support points for four lines. They are the widest line, the vertical line $w = (2, 0)$, $b = -5$, a fitted line known to 4 places, and the widest line with its signs swapped. Margins are rounded to 4 places."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.linalg.norm(w)` is the length of $w$."
+    },
+    {
+     "rung": "point",
+     "text": "Turn the labels into signs with `np.where(y == 1, 1, -1)`.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Multiply the signs by `X @ w + b` and keep the indices where the result is within `tol` of 1."
+    }
+   ],
+   "feedback": {
+    "correct": "Both checks pass, including the vertical line, whose support vectors are $(2, 0)$, $(3, 3)$ and $(3, 5)$.",
+    "generic": "Some tests failed. `support_points(X6, y6, [0.5, 0.5], -2)` should be `[0, 2, 3]`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Both functions need a `return`."
+    }
+   },
+   "explain": {
+    "text": "The vertical street $x_1 = 2.5$ scaled to $w = (2, 0)$, $b = -5$ has margin 0.5 and rests on three different loans. With the signs swapped every loan is on the wrong side, so the list is empty. Fitted lines come with rounding, which is why `tol` exists."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Real classes overlap, so no empty street exists. A **support vector classifier** lets points into the street, or across it, at a cost $C$ per unit of intrusion. We fit `SVC(kernel=\"linear\", C=C)` to `make_street(200, 4)` and test on seed 5.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$C$",
+      "support vectors",
+      "street width",
+      "test accuracy"
+     ],
+     "rows": [
+      [
+       "0.01",
+       "94",
+       "2.78",
+       "0.975"
+      ],
+      [
+       "1",
+       "24",
+       "1.07",
+       "0.965"
+      ],
+      [
+       "100",
+       "21",
+       "0.80",
+       "0.950"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the small cost $C = 0.01$ buy?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "A wide street that many points hold up, so one point moves it little",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Fewer support vectors, so a simpler model",
+      "why": "You read the column the wrong way: $C = 0.01$ has 94 support vectors, the most."
+     },
+     {
+      "id": "c",
+      "text": "A narrow street that fits the training rows tightly",
+      "why": "You have $C$ backwards. A large $C$ charges more for each intrusion, so it narrows the street."
+     },
+     {
+      "id": "d",
+      "text": "The best test accuracy on any data set",
+      "why": "You turned one split into a rule. On another sample or a curved boundary a larger $C$ can win."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$C$ is the price of a point inside the street."
+    },
+    {
+     "rung": "point",
+     "text": "A cheap intrusion lets the street widen until many points sit inside it.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each point inside the street is a support vector, so the street rests on 94 points at once."
+    }
+   ],
+   "feedback": {
+    "correct": "A cheap $C$ gives a wide, stable street: more bias, less variance.",
+    "generic": "Read the support vector and width columns together.",
+    "byKey": {
+     "c": "You have $C$ backwards: $C = 100$ makes intrusions dear and gives the narrowest street, 0.80."
+    }
+   },
+   "explain": {
+    "text": "$C$ is a penalty, like the ridge penalty, but large $C$ means a weak penalty on $\\lVert w \\rVert$. At $C = 0.01$ the street is 2.78 wide and rests on 94 points, so no single point can move it much. Here that steadiness also tested best, 0.975 against 0.950."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "`make_rings(300, 7)` puts class 1 near the centre and class 0 in a ring. On test rows a linear SVM scores 0.65 and logistic regression 0.5067. Add one column, $x_1^2 + x_2^2$, and the linear SVM scores 0.9733.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       1.7,
+       -2.23,
+       "ring"
+      ],
+      [
+       -0.73,
+       0.51,
+       "centre"
+      ],
+      [
+       2.18,
+       0.04,
+       "ring"
+      ],
+      [
+       0.12,
+       -0.52,
+       "centre"
+      ],
+      [
+       0.06,
+       1.95,
+       "ring"
+      ],
+      [
+       0.31,
+       0.39,
+       "centre"
+      ],
+      [
+       0.73,
+       -2.29,
+       "ring"
+      ],
+      [
+       -0.47,
+       -1.11,
+       "centre"
+      ],
+      [
+       0.48,
+       2.0,
+       "ring"
+      ],
+      [
+       -0.07,
+       0.61,
+       "centre"
+      ],
+      [
+       2.02,
+       -0.81,
+       "ring"
+      ],
+      [
+       -0.1,
+       0.9,
+       "centre"
+      ],
+      [
+       -0.6,
+       -1.95,
+       "ring"
+      ],
+      [
+       0.36,
+       0.38,
+       "centre"
+      ],
+      [
+       0.84,
+       -1.94,
+       "ring"
+      ],
+      [
+       0.75,
+       0.68,
+       "centre"
+      ],
+      [
+       -1.55,
+       -0.16,
+       "ring"
+      ],
+      [
+       0.65,
+       0.14,
+       "centre"
+      ],
+      [
+       -1.77,
+       -0.57,
+       "ring"
+      ],
+      [
+       0.24,
+       -0.34,
+       "centre"
+      ],
+      [
+       1.63,
+       0.96,
+       "ring"
+      ],
+      [
+       -0.11,
+       0.72,
+       "centre"
+      ],
+      [
+       0.26,
+       -2.8,
+       "ring"
+      ],
+      [
+       -0.69,
+       -0.55,
+       "centre"
+      ],
+      [
+       -0.75,
+       1.81,
+       "ring"
+      ],
+      [
+       -0.51,
+       -0.54,
+       "centre"
+      ],
+      [
+       -2.11,
+       0.62,
+       "ring"
+      ],
+      [
+       0.41,
+       -0.49,
+       "centre"
+      ],
+      [
+       -0.64,
+       2.3,
+       "ring"
+      ],
+      [
+       0.04,
+       -0.83,
+       "centre"
+      ],
+      [
+       -1.38,
+       -1.58,
+       "ring"
+      ],
+      [
+       -0.04,
+       -0.66,
+       "centre"
+      ],
+      [
+       -1.29,
+       1.23,
+       "ring"
+      ],
+      [
+       -0.09,
+       -0.55,
+       "centre"
+      ],
+      [
+       -0.54,
+       -1.61,
+       "ring"
+      ],
+      [
+       -0.42,
+       0.36,
+       "centre"
+      ],
+      [
+       2.67,
+       0.45,
+       "ring"
+      ],
+      [
+       1.04,
+       -0.25,
+       "centre"
+      ],
+      [
+       -0.6,
+       -2.56,
+       "ring"
+      ],
+      [
+       0.21,
+       0.74,
+       "centre"
+      ],
+      [
+       -0.28,
+       -2.29,
+       "ring"
+      ],
+      [
+       -0.15,
+       0.81,
+       "centre"
+      ],
+      [
+       -2.93,
+       0.57,
+       "ring"
+      ],
+      [
+       0.52,
+       -0.63,
+       "centre"
+      ],
+      [
+       -1.86,
+       0.63,
+       "ring"
+      ],
+      [
+       -0.08,
+       0.33,
+       "centre"
+      ],
+      [
+       -0.76,
+       2.08,
+       "ring"
+      ],
+      [
+       0.74,
+       0.39,
+       "centre"
+      ],
+      [
+       0.49,
+       2.54,
+       "ring"
+      ],
+      [
+       -0.18,
+       1.39,
+       "centre"
+      ],
+      [
+       0.86,
+       1.64,
+       "ring"
+      ],
+      [
+       0.41,
+       0.17,
+       "centre"
+      ],
+      [
+       -2.26,
+       0.49,
+       "ring"
+      ],
+      [
+       0.22,
+       0.95,
+       "centre"
+      ],
+      [
+       -0.16,
+       -2.28,
+       "ring"
+      ],
+      [
+       0.89,
+       -0.47,
+       "centre"
+      ],
+      [
+       -0.3,
+       2.06,
+       "ring"
+      ],
+      [
+       -0.9,
+       -0.44,
+       "centre"
+      ],
+      [
+       -2.28,
+       -0.1,
+       "ring"
+      ],
+      [
+       0.53,
+       0.27,
+       "centre"
+      ],
+      [
+       1.7,
+       1.7,
+       "ring"
+      ],
+      [
+       0.49,
+       -0.44,
+       "centre"
+      ],
+      [
+       -2.4,
+       0.39,
+       "ring"
+      ],
+      [
+       0.15,
+       -0.42,
+       "centre"
+      ],
+      [
+       1.39,
+       0.62,
+       "ring"
+      ],
+      [
+       -0.61,
+       -0.42,
+       "centre"
+      ],
+      [
+       0.94,
+       -1.06,
+       "ring"
+      ],
+      [
+       0.77,
+       -0.85,
+       "centre"
+      ],
+      [
+       2.54,
+       0.09,
+       "ring"
+      ],
+      [
+       -0.56,
+       -0.08,
+       "centre"
+      ],
+      [
+       -1.46,
+       1.57,
+       "ring"
+      ],
+      [
+       0.01,
+       -0.2,
+       "centre"
+      ],
+      [
+       1.84,
+       0.91,
+       "ring"
+      ],
+      [
+       -0.07,
+       0.77,
+       "centre"
+      ],
+      [
+       0.94,
+       -2.27,
+       "ring"
+      ],
+      [
+       -0.99,
+       0.19,
+       "centre"
+      ],
+      [
+       -2.19,
+       0.66,
+       "ring"
+      ],
+      [
+       0.68,
+       -0.14,
+       "centre"
+      ],
+      [
+       -0.74,
+       1.57,
+       "ring"
+      ],
+      [
+       1.21,
+       0.33,
+       "centre"
+      ],
+      [
+       -1.66,
+       1.33,
+       "ring"
+      ],
+      [
+       0.4,
+       0.58,
+       "centre"
+      ],
+      [
+       1.96,
+       1.11,
+       "ring"
+      ],
+      [
+       -0.69,
+       -0.32,
+       "centre"
+      ],
+      [
+       2.53,
+       -0.76,
+       "ring"
+      ],
+      [
+       -0.41,
+       -0.22,
+       "centre"
+      ],
+      [
+       -1.59,
+       -2.1,
+       "ring"
+      ],
+      [
+       -0.3,
+       0.6,
+       "centre"
+      ],
+      [
+       -2.17,
+       -1.04,
+       "ring"
+      ],
+      [
+       0.01,
+       -1.0,
+       "centre"
+      ],
+      [
+       -1.73,
+       -1.09,
+       "ring"
+      ],
+      [
+       0.33,
+       -0.95,
+       "centre"
+      ],
+      [
+       -1.6,
+       -0.52,
+       "ring"
+      ],
+      [
+       0.36,
+       1.06,
+       "centre"
+      ],
+      [
+       -2.19,
+       -1.25,
+       "ring"
+      ],
+      [
+       -0.97,
+       0.06,
+       "centre"
+      ],
+      [
+       1.15,
+       1.98,
+       "ring"
+      ],
+      [
+       -0.66,
+       -0.61,
+       "centre"
+      ],
+      [
+       0.61,
+       -1.38,
+       "ring"
+      ],
+      [
+       0.12,
+       0.14,
+       "centre"
+      ]
+     ],
+     "groups": [
+      {
+       "id": "centre",
+       "label": "class 1"
+      },
+      {
+       "id": "ring",
+       "label": "class 0"
+      }
+     ],
+     "xLabel": "$x_1$",
+     "yLabel": "$x_2$",
+     "xRange": [
+      -3.5,
+      3.5
+     ],
+     "yRange": [
+      -3.5,
+      3.5
+     ],
+     "height": 380
+    },
+    "state": {}
+   },
+   "question": "Drawn back in the plane of $x_1$ and $x_2$, what shape is the boundary of that linear SVM?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "A circle round the centre",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "A straight line",
+      "why": "You read linear as straight in the plane. It is straight in the three columns, and the new column is curved in $x_1$ and $x_2$."
+     },
+     {
+      "id": "c",
+      "text": "Two parallel lines",
+      "why": "You pictured the two edges of a street. The boundary is one curve where the decision value is 0."
+     },
+     {
+      "id": "d",
+      "text": "A parabola open upwards",
+      "why": "You kept $x_1^2$ and dropped $x_2^2$. The new column treats both directions alike."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $w_1 x_1 + w_2 x_2 + w_3 (x_1^2 + x_2^2) + b = 0$."
+    },
+    {
+     "rung": "point",
+     "text": "Both squares carry the same weight $w_3$."
+    },
+    {
+     "rung": "step",
+     "text": "Equal weights on $x_1^2$ and $x_2^2$ make a circle."
+    }
+   ],
+   "feedback": {
+    "correct": "A circle of radius about 1.41: straight in three columns, round in two.",
+    "generic": "Write the boundary out with the new column and look at the squared terms."
+   },
+   "explain": {
+    "text": "The fit gives $w_3 = -2.26$ and $b = 4.50$ with small $w_1, w_2$, so the boundary is $x_1^2 + x_2^2 \\approx 1.99$, a circle of radius 1.41. A **kernel** does this without writing the column: `SVC(kernel=\"rbf\", C=1, gamma=1)` scores 0.98 with 44 support vectors. The kernel is a choice of similarity between points, not magic.",
+    "canvas": {
+     "curves": [
+      {
+       "id": "circ",
+       "implicit": "x^2 + y^2 - 1.993",
+       "label": "boundary",
+       "labelAt": [
+        1.0,
+        1.0
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "One function to report a fit. `Xs_tr, ys_tr` and `Xs_te, ys_te` are the street data, `Xr_tr` and the rest the rings. Both features of each set are already on one scale, so we skip the scaler here; on real columns you would not.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> svm_report(Xs_tr, ys_tr, Xs_te, ys_te, 1)",
+      "(24, 0.965, 0.965)",
+      ">>> svm_report(Xr_tr, yr_tr, Xr_te, yr_te, 1, gamma=1)",
+      "(44, 0.9967, 0.98)"
+     ],
+     "title": "Street, then rings"
+    },
+    "state": {}
+   },
+   "question": "Complete `svm_report`, which returns the number of support vectors and the two accuracies.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from sklearn.svm import SVC\n\ndef svm_report(X_train, y_train, X_test, y_test, C, gamma=None):\n    # gamma None: kernel=\"linear\"; otherwise kernel=\"rbf\" with that gamma\n    # return (support vectors, training accuracy, test accuracy),\n    # the accuracies rounded to 4 places\n    ...\n",
+    "solution": "from sklearn.svm import SVC\n\ndef svm_report(X_train, y_train, X_test, y_test, C, gamma=None):\n    # gamma None: kernel=\"linear\"; otherwise kernel=\"rbf\" with that gamma\n    # return (support vectors, training accuracy, test accuracy),\n    # the accuracies rounded to 4 places\n    if gamma is None:\n        m = SVC(kernel=\"linear\", C=C)\n    else:\n        m = SVC(kernel=\"rbf\", C=C, gamma=gamma)\n    m.fit(X_train, y_train)\n    return (len(m.support_), round(m.score(X_train, y_train), 4),\n            round(m.score(X_test, y_test), 4))\n",
+    "prelude": "import numpy as np\n\ndef make_street(n, seed):            # two overlapping groups, a straight boundary is right\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    X = rng.normal(0, 0.8, (n, 2)) + np.where(y[:, None] == 1, 1.0, -1.0)\n    return np.round(X, 3), y\n\ndef make_rings(n, seed):             # class 1 near the centre, class 0 in a ring round it\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    r = np.where(y == 1, rng.normal(0.8, 0.3, n), rng.normal(2.2, 0.4, n))\n    a = rng.uniform(0, 2 * np.pi, n)\n    return np.round(np.c_[r * np.cos(a), r * np.sin(a)], 3), y\n\nXs_tr, ys_tr = make_street(200, 4)\nXs_te, ys_te = make_street(200, 5)\nXr_tr, yr_tr = make_rings(300, 7)\nXr_te, yr_te = make_rings(300, 8)\n",
+    "examples": [
+     {
+      "call": "list(svm_report(Xs_tr, ys_tr, Xs_te, ys_te, 1))",
+      "expect": "[24, 0.965, 0.965]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(svm_report(Xs_tr, ys_tr, Xs_te, ys_te, 1))",
+      "expect": "[24, 0.965, 0.965]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(svm_report(Xs_tr, ys_tr, Xs_te, ys_te, 0.01))",
+      "expect": "[94, 0.965, 0.975]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(svm_report(Xs_tr, ys_tr, Xs_te, ys_te, 100))",
+      "expect": "[21, 0.97, 0.95]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(svm_report(Xr_tr, yr_tr, Xr_te, yr_te, 1))",
+      "expect": "[298, 0.66, 0.65]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(svm_report(Xr_tr, yr_tr, Xr_te, yr_te, 1, gamma=1))",
+      "expect": "[44, 0.9967, 0.98]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(svm_report(Xr_tr, yr_tr, Xr_te, yr_te, 1, gamma=1000))",
+      "expect": "[300, 1.0, 0.64]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: three costs on the street data, then the rings with a linear kernel and with RBF kernels at $\\gamma = 1$ and $\\gamma = 1000$. Accuracies are rounded to 4 places. The first run loads scikit-learn, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Choose the kernel with one `if`."
+    },
+    {
+     "rung": "point",
+     "text": "`m.support_` lists the support vectors' row indices.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Fit, then return `len(m.support_)`, `round(m.score(X_train, y_train), 4)` and the same on the test rows."
+    }
+   ],
+   "feedback": {
+    "correct": "The three $C$ rows and the rings match: the RBF kernel lifts the rings from 0.65 to 0.98.",
+    "generic": "Some tests failed. `svm_report(Xs_tr, ys_tr, Xs_te, ys_te, 1)` should give `(24, 0.965, 0.965)`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check the kernel names and the `return`."
+    }
+   },
+   "explain": {
+    "text": "A linear kernel on the rings keeps 298 of 300 points as support vectors: the street is useless there. The RBF kernel needs 44 and scores 0.98. At $\\gamma = 1000$ all 300 are support vectors and the test score falls to 0.64."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "$\\gamma$ sets how far one point's influence reaches in the RBF kernel: large $\\gamma$, short reach. Here are the rings at $C = 1$ for six values of $\\gamma$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "0.01",
+      "0.1",
+      "1",
+      "10",
+      "100",
+      "1000"
+     ],
+     "xLabel": "gamma",
+     "yLabel": "accuracy",
+     "yMin": 0,
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 2,
+     "groups": [
+      {
+       "id": "train",
+       "label": "training"
+      },
+      {
+       "id": "test",
+       "label": "test"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "train": {
+       "0.01": 0.6333,
+       "0.1": 0.99,
+       "1": 0.9967,
+       "10": 0.9967,
+       "100": 1.0,
+       "1000": 1.0
+      },
+      "test": {
+       "0.01": 0.61,
+       "0.1": 0.97,
+       "1": 0.98,
+       "10": 0.97,
+       "100": 0.87,
+       "1000": 0.64
+      }
+     }
+    }
+   },
+   "question": "A colleague picks $\\gamma = 1000$ because its training accuracy is 1.0. What do you tell them?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "Every one of the 300 points is a support vector: it memorised the rows, and test accuracy is 0.64",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Right choice: a perfect training score shows the kernel found the shape",
+      "why": "You trusted training accuracy. At $\\gamma = 1000$ each point is its own island, and test accuracy falls to 0.64."
+     },
+     {
+      "id": "c",
+      "text": "Right choice, but only after scaling the two features",
+      "why": "You blamed scaling. Both features are already on one scale; the trouble is the short reach."
+     },
+     {
+      "id": "d",
+      "text": "Any $\\gamma$ will do, since $\\gamma$ only changes the fitting time",
+      "why": "You treated $\\gamma$ as a speed setting. It changes the shape of the boundary, from 0.61 to 0.98 on test rows."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two bars at $\\gamma = 1000$."
+    },
+    {
+     "rung": "point",
+     "text": "Training accuracy rises to 1.0 from $\\gamma = 100$ on.",
+     "highlight": [
+      "x100-train",
+      "x1000-train"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Test accuracy peaks at $\\gamma = 1$ and falls on both sides."
+    }
+   ],
+   "feedback": {
+    "correct": "A small reach memorises: 1.0 on training rows, 0.64 on test rows.",
+    "generic": "Look at the test bar, not the training bar.",
+    "byKey": {
+     "b": "That is the trap: training accuracy rewards memorising. With $\\gamma = 1000$ all 300 points are support vectors and test accuracy is 0.64."
+    }
+   },
+   "explain": {
+    "text": "Large $\\gamma$ makes each point's influence tiny, so the boundary wraps every training point. Training accuracy reaches 1.0 at $\\gamma = 100$, where test accuracy is already down to 0.87. Too small, $\\gamma = 0.01$, underfits at 0.61.",
+    "canvas": {
+     "highlight": [
+      "x1000-train",
+      "x1000-test"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Choose $\\gamma$ on a validation split carved from the training rows, as we chose $k$ for nearest neighbours. Fit on all but the last 100 training rows and score on those 100. Several values tie at the top, so the rule for ties matters.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> pick_gamma(Xr_tr, yr_tr, 1)",
+      "(1, 1.0)",
+      ">>> pick_gamma(Xr_tr, yr_tr, 100)",
+      "(0.01, 1.0)"
+     ],
+     "title": "Validation, never the test rows"
+    },
+    "state": {}
+   },
+   "question": "Complete `pick_gamma`, sending a tie to the smaller $\\gamma$.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from sklearn.svm import SVC\n\ndef pick_gamma(X, y, C, gammas=(0.01, 0.1, 1, 10), n_val=100):\n    # fit SVC(kernel=\"rbf\", C=C, gamma=g) on all but the last n_val rows\n    # and score it on the last n_val rows\n    # return (best gamma, its validation accuracy rounded to 4 places);\n    # a tie goes to the smaller gamma\n    ...\n",
+    "solution": "from sklearn.svm import SVC\n\ndef pick_gamma(X, y, C, gammas=(0.01, 0.1, 1, 10), n_val=100):\n    # fit SVC(kernel=\"rbf\", C=C, gamma=g) on all but the last n_val rows\n    # and score it on the last n_val rows\n    # return (best gamma, its validation accuracy rounded to 4 places);\n    # a tie goes to the smaller gamma\n    Xf, yf, Xv, yv = X[:-n_val], y[:-n_val], X[-n_val:], y[-n_val:]\n    best, best_acc = None, -1.0\n    for g in sorted(gammas):\n        m = SVC(kernel=\"rbf\", C=C, gamma=g).fit(Xf, yf)\n        acc = round(m.score(Xv, yv), 4)\n        if acc > best_acc:\n            best, best_acc = g, acc\n    return (best, best_acc)\n",
+    "prelude": "import numpy as np\n\ndef make_street(n, seed):            # two overlapping groups, a straight boundary is right\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    X = rng.normal(0, 0.8, (n, 2)) + np.where(y[:, None] == 1, 1.0, -1.0)\n    return np.round(X, 3), y\n\ndef make_rings(n, seed):             # class 1 near the centre, class 0 in a ring round it\n    rng = np.random.default_rng(seed)\n    y = np.arange(n) % 2\n    r = np.where(y == 1, rng.normal(0.8, 0.3, n), rng.normal(2.2, 0.4, n))\n    a = rng.uniform(0, 2 * np.pi, n)\n    return np.round(np.c_[r * np.cos(a), r * np.sin(a)], 3), y\n\nXs_tr, ys_tr = make_street(200, 4)\nXs_te, ys_te = make_street(200, 5)\nXr_tr, yr_tr = make_rings(300, 7)\nXr_te, yr_te = make_rings(300, 8)\n",
+    "examples": [
+     {
+      "call": "list(pick_gamma(Xr_tr, yr_tr, 1))",
+      "expect": "[1, 1.0]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(pick_gamma(Xr_tr, yr_tr, 1))",
+      "expect": "[1, 1.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(pick_gamma(Xr_tr, yr_tr, 100))",
+      "expect": "[0.01, 1.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(pick_gamma(Xr_tr, yr_tr, 10))",
+      "expect": "[0.1, 1.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(pick_gamma(Xr_tr, yr_tr, 0.1))",
+      "expect": "[1, 0.99]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(pick_gamma(Xr_tr, yr_tr, 100, gammas=(10, 1, 0.1, 0.01)))",
+      "expect": "[0.01, 1.0]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on the rings' 300 training rows: four costs, and one list of $\\gamma$ values given largest first. Accuracies are rounded to 4 places. The test rows are never used."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slice with `X[:-n_val]` and `X[-n_val:]`."
+    },
+    {
+     "rung": "point",
+     "text": "Loop over `sorted(gammas)` so the smaller value comes first.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Replace the best only when the new accuracy is strictly larger: `if acc > best_acc`."
+    }
+   ],
+   "feedback": {
+    "correct": "At $C = 100$ the values 0.01 and 0.1 both validate at 1.0, and the smaller one wins.",
+    "generic": "Some tests failed. `pick_gamma(Xr_tr, yr_tr, 100)` should be `(0.01, 1.0)`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check the slices and the `return`."
+    }
+   },
+   "explain": {
+    "text": "A strict `>` over the sorted list keeps the first, smaller $\\gamma$ on a tie. The smaller $\\gamma$ gives a smoother boundary, which costs nothing on these rows and varies less on new ones. Only after choosing do we score the test rows, once."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Why is the widest street the line with the shortest $w$? Put the argument in order. One line does not belong.",
+   "question": "Put the steps in order and leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "The distance from $x$ to the line $w \\cdot x + b = 0$ is $\\dfrac{|w \\cdot x + b|}{\\lVert w \\rVert}$: project $x$ onto the unit normal $w / \\lVert w \\rVert$."
+     },
+     {
+      "id": "d2",
+      "text": "Multiplying $w$ and $b$ by the same positive number leaves the line where it is, so we may choose the scale."
+     },
+     {
+      "id": "d3",
+      "text": "Choose the scale so that the nearest points give $w \\cdot x + b = \\pm 1$."
+     },
+     {
+      "id": "d4",
+      "text": "Their distance, the margin, is then $\\dfrac{1}{\\lVert w \\rVert}$: put $|w \\cdot x + b| = 1$ into the distance."
+     },
+     {
+      "id": "d5",
+      "text": "So the widest street minimises $\\lVert w \\rVert$ subject to $s_i (w \\cdot x_i + b) \\ge 1$ for every point: each on its own side, at least one margin away."
+     },
+     {
+      "id": "x1",
+      "text": "The scale of $w$ is fixed by the data, so the margin is $\\lVert w \\rVert$ itself."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the distance of a point to a line."
+    },
+    {
+     "rung": "point",
+     "text": "The free scale is what lets us set the nearest value to 1."
+    },
+    {
+     "rung": "step",
+     "text": "Distance, free scale, choose the scale, the margin, then the optimisation."
+    }
+   ],
+   "feedback": {
+    "correct": "Widening the street is shortening $w$, under one constraint per point.",
+    "generic": "Distance first, then the free scale, then the margin.",
+    "byKey": {
+     "x1": "You fixed the scale of $w$. Doubling $w$ and $b$ draws the same line, so we choose the scale, and the margin is $1/\\lVert w \\rVert$."
+    }
+   },
+   "explain": {
+    "text": "The scale of $w$ is free, so we fix it by the nearest points. With them at $\\pm 1$ the margin is $1/\\lVert w \\rVert$. On the loans $\\lVert w \\rVert = 0.7071$ and the margin is 1.4142."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A desk's entry rule for a mean-reversion trade: it works when today's standardised spread move and volume surprise are both small, and fails when either is extreme. Its 300 past trades look like the rings.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       1.7,
+       -2.23,
+       "ring"
+      ],
+      [
+       -0.73,
+       0.51,
+       "centre"
+      ],
+      [
+       2.18,
+       0.04,
+       "ring"
+      ],
+      [
+       0.12,
+       -0.52,
+       "centre"
+      ],
+      [
+       0.06,
+       1.95,
+       "ring"
+      ],
+      [
+       0.31,
+       0.39,
+       "centre"
+      ],
+      [
+       0.73,
+       -2.29,
+       "ring"
+      ],
+      [
+       -0.47,
+       -1.11,
+       "centre"
+      ],
+      [
+       0.48,
+       2.0,
+       "ring"
+      ],
+      [
+       -0.07,
+       0.61,
+       "centre"
+      ],
+      [
+       2.02,
+       -0.81,
+       "ring"
+      ],
+      [
+       -0.1,
+       0.9,
+       "centre"
+      ],
+      [
+       -0.6,
+       -1.95,
+       "ring"
+      ],
+      [
+       0.36,
+       0.38,
+       "centre"
+      ],
+      [
+       0.84,
+       -1.94,
+       "ring"
+      ],
+      [
+       0.75,
+       0.68,
+       "centre"
+      ],
+      [
+       -1.55,
+       -0.16,
+       "ring"
+      ],
+      [
+       0.65,
+       0.14,
+       "centre"
+      ],
+      [
+       -1.77,
+       -0.57,
+       "ring"
+      ],
+      [
+       0.24,
+       -0.34,
+       "centre"
+      ],
+      [
+       1.63,
+       0.96,
+       "ring"
+      ],
+      [
+       -0.11,
+       0.72,
+       "centre"
+      ],
+      [
+       0.26,
+       -2.8,
+       "ring"
+      ],
+      [
+       -0.69,
+       -0.55,
+       "centre"
+      ],
+      [
+       -0.75,
+       1.81,
+       "ring"
+      ],
+      [
+       -0.51,
+       -0.54,
+       "centre"
+      ],
+      [
+       -2.11,
+       0.62,
+       "ring"
+      ],
+      [
+       0.41,
+       -0.49,
+       "centre"
+      ],
+      [
+       -0.64,
+       2.3,
+       "ring"
+      ],
+      [
+       0.04,
+       -0.83,
+       "centre"
+      ],
+      [
+       -1.38,
+       -1.58,
+       "ring"
+      ],
+      [
+       -0.04,
+       -0.66,
+       "centre"
+      ],
+      [
+       -1.29,
+       1.23,
+       "ring"
+      ],
+      [
+       -0.09,
+       -0.55,
+       "centre"
+      ],
+      [
+       -0.54,
+       -1.61,
+       "ring"
+      ],
+      [
+       -0.42,
+       0.36,
+       "centre"
+      ],
+      [
+       2.67,
+       0.45,
+       "ring"
+      ],
+      [
+       1.04,
+       -0.25,
+       "centre"
+      ],
+      [
+       -0.6,
+       -2.56,
+       "ring"
+      ],
+      [
+       0.21,
+       0.74,
+       "centre"
+      ],
+      [
+       -0.28,
+       -2.29,
+       "ring"
+      ],
+      [
+       -0.15,
+       0.81,
+       "centre"
+      ],
+      [
+       -2.93,
+       0.57,
+       "ring"
+      ],
+      [
+       0.52,
+       -0.63,
+       "centre"
+      ],
+      [
+       -1.86,
+       0.63,
+       "ring"
+      ],
+      [
+       -0.08,
+       0.33,
+       "centre"
+      ],
+      [
+       -0.76,
+       2.08,
+       "ring"
+      ],
+      [
+       0.74,
+       0.39,
+       "centre"
+      ],
+      [
+       0.49,
+       2.54,
+       "ring"
+      ],
+      [
+       -0.18,
+       1.39,
+       "centre"
+      ],
+      [
+       0.86,
+       1.64,
+       "ring"
+      ],
+      [
+       0.41,
+       0.17,
+       "centre"
+      ],
+      [
+       -2.26,
+       0.49,
+       "ring"
+      ],
+      [
+       0.22,
+       0.95,
+       "centre"
+      ],
+      [
+       -0.16,
+       -2.28,
+       "ring"
+      ],
+      [
+       0.89,
+       -0.47,
+       "centre"
+      ],
+      [
+       -0.3,
+       2.06,
+       "ring"
+      ],
+      [
+       -0.9,
+       -0.44,
+       "centre"
+      ],
+      [
+       -2.28,
+       -0.1,
+       "ring"
+      ],
+      [
+       0.53,
+       0.27,
+       "centre"
+      ],
+      [
+       1.7,
+       1.7,
+       "ring"
+      ],
+      [
+       0.49,
+       -0.44,
+       "centre"
+      ],
+      [
+       -2.4,
+       0.39,
+       "ring"
+      ],
+      [
+       0.15,
+       -0.42,
+       "centre"
+      ],
+      [
+       1.39,
+       0.62,
+       "ring"
+      ],
+      [
+       -0.61,
+       -0.42,
+       "centre"
+      ],
+      [
+       0.94,
+       -1.06,
+       "ring"
+      ],
+      [
+       0.77,
+       -0.85,
+       "centre"
+      ],
+      [
+       2.54,
+       0.09,
+       "ring"
+      ],
+      [
+       -0.56,
+       -0.08,
+       "centre"
+      ],
+      [
+       -1.46,
+       1.57,
+       "ring"
+      ],
+      [
+       0.01,
+       -0.2,
+       "centre"
+      ],
+      [
+       1.84,
+       0.91,
+       "ring"
+      ],
+      [
+       -0.07,
+       0.77,
+       "centre"
+      ],
+      [
+       0.94,
+       -2.27,
+       "ring"
+      ],
+      [
+       -0.99,
+       0.19,
+       "centre"
+      ],
+      [
+       -2.19,
+       0.66,
+       "ring"
+      ],
+      [
+       0.68,
+       -0.14,
+       "centre"
+      ],
+      [
+       -0.74,
+       1.57,
+       "ring"
+      ],
+      [
+       1.21,
+       0.33,
+       "centre"
+      ],
+      [
+       -1.66,
+       1.33,
+       "ring"
+      ],
+      [
+       0.4,
+       0.58,
+       "centre"
+      ],
+      [
+       1.96,
+       1.11,
+       "ring"
+      ],
+      [
+       -0.69,
+       -0.32,
+       "centre"
+      ],
+      [
+       2.53,
+       -0.76,
+       "ring"
+      ],
+      [
+       -0.41,
+       -0.22,
+       "centre"
+      ],
+      [
+       -1.59,
+       -2.1,
+       "ring"
+      ],
+      [
+       -0.3,
+       0.6,
+       "centre"
+      ],
+      [
+       -2.17,
+       -1.04,
+       "ring"
+      ],
+      [
+       0.01,
+       -1.0,
+       "centre"
+      ],
+      [
+       -1.73,
+       -1.09,
+       "ring"
+      ],
+      [
+       0.33,
+       -0.95,
+       "centre"
+      ],
+      [
+       -1.6,
+       -0.52,
+       "ring"
+      ],
+      [
+       0.36,
+       1.06,
+       "centre"
+      ],
+      [
+       -2.19,
+       -1.25,
+       "ring"
+      ],
+      [
+       -0.97,
+       0.06,
+       "centre"
+      ],
+      [
+       1.15,
+       1.98,
+       "ring"
+      ],
+      [
+       -0.66,
+       -0.61,
+       "centre"
+      ],
+      [
+       0.61,
+       -1.38,
+       "ring"
+      ],
+      [
+       0.12,
+       0.14,
+       "centre"
+      ]
+     ],
+     "groups": [
+      {
+       "id": "centre",
+       "label": "class 1"
+      },
+      {
+       "id": "ring",
+       "label": "class 0"
+      }
+     ],
+     "xLabel": "$x_1$",
+     "yLabel": "$x_2$",
+     "xRange": [
+      -3.5,
+      3.5
+     ],
+     "yRange": [
+      -3.5,
+      3.5
+     ],
+     "height": 380
+    },
+    "state": {}
+   },
+   "question": "Why can no straight-line rule capture it, and what would the desk rather use?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "A line keeps a half-plane, but small in every direction is a disc; use $x_1^2 + x_2^2$, which the desk can explain",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "A line could do it with a large enough cost $C$, so tune $C$ on a validation split",
+      "why": "You treated $C$ as a cure for shape. $C$ only prices points inside the street; the boundary stays straight."
+     },
+     {
+      "id": "c",
+      "text": "Logistic regression can, because it outputs a probability of success",
+      "why": "You confused the output with the boundary. Its boundary is still a line, and it scored 0.5067 on the rings."
+     },
+     {
+      "id": "d",
+      "text": "Use the RBF kernel, because its 0.98 beats the feature's 0.9733 on the test rows",
+      "why": "You compared one test split. The gap is 2 trades in 300, and the desk cannot read the kernel's boundary."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which region of the plane is a winning trade?"
+    },
+    {
+     "rung": "point",
+     "text": "A line keeps one side and drops the other. A disc is bounded on every side."
+    },
+    {
+     "rung": "step",
+     "text": "The squared distance from the centre turns the disc into one threshold."
+    }
+   ],
+   "feedback": {
+    "correct": "Small in every direction is a disc, and one column, the squared distance, makes it a line.",
+    "generic": "Picture the winning region, then ask what a line can draw.",
+    "byKey": {
+     "d": "You picked the winner on the test rows and ignored that the desk must explain the rule. Two trades in 300 is no evidence either way."
+    }
+   },
+   "explain": {
+    "text": "A linear rule keeps a half-plane, never a disc. The column $x_1^2 + x_2^2$ turns the disc into a threshold on one number, scored 0.9733 and easy to explain. The kernel's 0.98 is 2 trades better in 300 and offers no rule to read."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The maximal margin classifier is the line with the widest empty street; only the support vectors on its edges fix it.",
+   "When classes overlap, the cost $C$ prices each point inside the street: small $C$ gives a wide, stable street, large $C$ a narrow one.",
+   "A kernel bends the boundary without writing features; choose $C$ and $\\gamma$ on a validation split, with the features on one scale."
+  ],
+  "formula": {
+   "name": "Margin",
+   "tex": "\\text{margin} = \\dfrac{1}{\\lVert w \\rVert} \\text{ when the nearest points give } w \\cdot x + b = \\pm 1",
+   "note": "Widest street means shortest $w$."
+  },
+  "trap": "A large $\\gamma$ scores 1.0 on the training rows by memorising them; judge it on rows it has not seen."
+ },
+ "quiz": [
+  {
+   "id": "q1",
+   "difficulty": 2,
+   "prose": "The widest line for the loans has $w = (0.5, 0.5)$ and $b = -2$. The repaid loan at $(3, 5)$ has decision value $w \\cdot x + b = 2$.",
+   "question": "How far is $(3, 5)$ from the centre line? Give two decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.83,
+    "tol": {
+     "abs": 0.005
+    },
+    "wrong": [
+     {
+      "id": "value",
+      "value": 2,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "margin",
+      "value": 1.41,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2 / 0.7071 \\approx 2.83$: two margins from the centre.",
+    "generic": "Divide the decision value by $\\lVert w \\rVert$.",
+    "byKey": {
+     "value": "You read the decision value as a distance. It is in units of the margin: divide by $\\lVert w \\rVert = 0.7071$.",
+     "margin": "You gave one margin. A decision value of 2 is two margins."
+    }
+   },
+   "explain": {
+    "text": "Distance is $|w \\cdot x + b| / \\lVert w \\rVert = 2 / 0.7071 \\approx 2.83$. The decision value counts margins, and this loan is two margins out."
+   }
+  },
+  {
+   "id": "q2",
+   "difficulty": 2,
+   "prose": "A fitted `SVC` returns `decision_function` 0.8 for a new loan.",
+   "question": "What does 0.8 tell you?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "The loan falls inside the street on the repaid side, 0.8 margins from the centre line",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The loan will repay with probability 0.8, so expect one default in five",
+      "why": "You read a signed distance as a probability. `SVC` gives no probability unless you calibrate it."
+     },
+     {
+      "id": "c",
+      "text": "The loan is classed as a default, because 0.8 is below the edge at 1",
+      "why": "You missed the sign. A positive value is the repaid side."
+     },
+     {
+      "id": "d",
+      "text": "The loan lies 0.8 units of the features away from the centre line",
+      "why": "You skipped the scale. The value is in margins; divide by $\\lVert w \\rVert$ for feature units."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A signed distance in margins: positive side, inside the street.",
+    "generic": "Think of the value as distance in units of the margin, with a sign."
+   },
+   "explain": {
+    "text": "The decision value is $w \\cdot x + b$, which is $\\pm 1$ on the edges. A value of 0.8 is between the centre line and the repaid edge. Turning it into a probability needs a calibration step on held-out rows."
+   }
+  },
+  {
+   "id": "q3",
+   "difficulty": 3,
+   "prose": "Add a seventh loan at $(1.5, 0.5)$, among the defaults, that in fact repaid.",
+   "question": "What happens to the widest street?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "No line separates them, so the hard margin fails; a soft margin keeps the street and pays slack for that loan",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The street shrinks to width zero, because every loan must stay outside it",
+      "why": "You kept the hard rule. A soft margin lets the loan inside at a cost instead of collapsing the street."
+     },
+     {
+      "id": "c",
+      "text": "The fit quietly relabels the loan as a default, so the street stays clean",
+      "why": "You expected the model to change the data. It never relabels; it pays for the error."
+     },
+     {
+      "id": "d",
+      "text": "The line swings round until the loan sits on the repaid side of the street",
+      "why": "You assumed every point must be classed right. One point pays a slack rather than move a street held up by many."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One mislabelled loan breaks the hard margin and costs the soft margin one slack.",
+    "generic": "Ask first whether any line now separates the two kinds."
+   },
+   "explain": {
+    "text": "$(1.5, 0.5)$ sits among the defaults, so every line has a mistake. With $C = 1$ the fitted line stays at about $x_1 + x_2 = 4$ and the loan's decision value is $-1$, a slack of 2. That is the edge case where the soft margin is needed."
+   }
+  },
+  {
+   "id": "q4",
+   "difficulty": 3,
+   "prose": "You fit an RBF SVM on two raw columns: spread move in basis points, with sd 40, and volume surprise as a ratio, with sd 0.3.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "a",
+      "text": "Distances are almost all spread move, so volume is ignored; scale both columns first",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Nothing goes wrong, because the RBF kernel adapts to any units",
+      "why": "You trusted the kernel to rescale. It measures plain distance, so the column with the big unit decides."
+     },
+     {
+      "id": "c",
+      "text": "The fit stops with an error saying the columns have different units",
+      "why": "You expected a warning. scikit-learn fits happily and quietly ignores the small column."
+     },
+     {
+      "id": "d",
+      "text": "Volume surprise dominates the distances, because its numbers are smaller",
+      "why": "You have the units backwards. Small numbers barely move a distance; the large ones swamp it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Scale first: a distance-based learner listens to the largest unit.",
+    "generic": "Ask which column a distance between two trades is made of."
+   },
+   "explain": {
+    "text": "The spread column varies about 133 times as much as the volume column, so distances ignore volume. Multiplying one street column by 100 dropped the RBF test accuracy from 0.965 to 0.795. Standardise inside a pipeline, as for ridge."
+   }
+  }
+ ]
+}
