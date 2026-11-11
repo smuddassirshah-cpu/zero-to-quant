@@ -24,35 +24,35 @@ Generated from the source by `node app/tools/curriculum-hours.mjs --write` (chec
 <!-- generated:hours -->
 | Stage | In the app | Outside study | Quant path in the app | Quant path outside study | At 15 h/week |
 | --- | --- | --- | --- | --- | --- |
-| 0. From nothing | 97 | 458 | 89 | 426 | 9 months |
-| 1. Foundations | 286 | 1,364 | 257 | 1,230 | 25 months |
-| 2. Intermediate | 111 | 829 | 111 | 829 | 14 months |
+| 0. From nothing | 116 | 439 | 108 | 407 | 9 months |
+| 1. Foundations | 317 | 1,333 | 288 | 1,199 | 25 months |
+| 2. Intermediate | 114 | 826 | 114 | 826 | 14 months |
 | 3. Advanced | 131 | 460 | 114 | 460 | 8 months |
-| All stages | 625 | 3,111 | 571 | 2,945 | 57 months |
+| All stages | 678 | 3,058 | 624 | 2,892 | 57 months |
 
 Stage hours are the sum of topic hours; nothing stores them. In the app counts each lesson's minutes, a level review (20 min) and homework (45 min) unless the file states minutes, and the topic exam's minutes. Outside study is the stored hours less that, never below 0; months use the stored hours. Quant path leaves out the courses tagged Pure maths, at their lesson share of a topic's hours. Topic hours:
 
 | Topic | Name | In the app | Outside study | Lessons mapped | Lessons written |
 | --- | --- | --- | --- | --- | --- |
-| 0.1 | Number | 13 | 47 | 27 | 27 |
-| 0.2 | Algebra | 23 | 157 | 48 | 48 |
-| 0.3 | Precalculus | 25 | 175 | 52 | 52 |
+| 0.1 | Number | 15 | 45 | 32 | 27 |
+| 0.2 | Algebra | 33 | 147 | 54 | 48 |
+| 0.3 | Precalculus | 33 | 167 | 52 | 52 |
 | 0.4 | Computer basics | 13 | 27 | 24 | 24 |
 | 0.5 | Mental arithmetic | 7 | 13 | 12 | 12 |
 | 0.6 | Reasoning and proof | 8 | 32 | 15 | 15 |
 | 0.7 | Getting hired | 8 | 7 | 15 | 15 |
 | 1.1 | Python | 22 | 128 | 42 | 42 |
 | 1.2 | Tools | 19 | 21 | 36 | 36 |
-| 1.3 | Calculus | 35 | 165 | 69 | 69 |
+| 1.3 | Calculus | 47 | 153 | 69 | 69 |
 | 1.4 | Linear algebra | 27 | 123 | 53 | 53 |
-| 1.5 | Probability | 48 | 203 | 99 | 99 |
-| 1.6 | Statistics | 19 | 101 | 36 | 36 |
+| 1.5 | Probability | 64 | 186 | 99 | 99 |
+| 1.6 | Statistics | 21 | 99 | 42 | 36 |
 | 1.7 | Finance basics | 28 | 72 | 55 | 55 |
 | 1.8 | Data structures and algorithms | 25 | 225 | 49 | 49 |
 | 1.9 | C++ | 18 | 122 | 35 | 35 |
 | 1.10 | Analysis and proof-based linear algebra | 22 | 108 | 43 | 43 |
 | 1.11 | Complex numbers, vector calculus and differential equations | 23 | 97 | 43 | 43 |
-| 2.1 | Machine learning | 27 | 173 | 50 | 50 |
+| 2.1 | Machine learning | 29 | 171 | 55 | 50 |
 | 2.2 | Time series | 20 | 40 | 36 | 36 |
 | 2.3 | Projects | 26 | 374 | 48 | 48 |
 | 2.4 | Contests | 10 | 130 | 16 | 16 |
