@@ -61,9 +61,25 @@ Points the brief asked to press, and what was found:
 
 ## Gates
 
-- `node tools/validate.mjs`: see the lines under "Gate results" below.
-- Number scripts and the concepts script: exit codes under "Gate results".
+- `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): "0 errors, 4865 warnings". The rewritten `content/manifest.json` was restored; no content file was touched.
+- Number scripts for the course: `problems-markov-numbers.py` exit 0; `fluency-markov-numbers.py` exit 0; `markov-2-perf-numbers.py` exit 0. No missing package. (`markov-4-perf-numbers.py` and `markov-5-perf-numbers.py` are outside levels 1 to 3 and were not run.)
+- `python3 docs/reports/markov-L1-3-concepts.py`: 82 checks, 74 pass, 8 fail on purpose (findings 1 twice, 2, 3, 4, 9, 10, 15); exit 1 until those are fixed. Each failing check tests for the audited sentence, so the fix pass turns it green. The passing checks include a replay of the engine's seeded walk canvas for every batch figure quoted in l9, l10 and l12, the engine generator's 9.995 for the HTH wait, Monte Carlo of the reflection rule (fair and at $p = 0.55$), of both ruin formulas and of the memoryless run.
+- Playthrough: not run; no grading defect is suspected. Finding 4 is a wording matter, not a grader fault.
 
 ## Overlap with earlier reviews
 
-Filled after the WIP commit (see below).
+Read after the ledger and findings were committed (commit `ee4e8ff9`, "WIP"): `docs/reviews/review-1.5.md` (section "markov" and its fix pass), `docs/reviews/review-problems-1.5-c.md` (markov sets 1 to 3), `docs/reviews/review-perf-retrofit-8.md` (markov `hw-absorb-code`). `review-problems-1.5-d.md` covers sets 4 and 5 only.
+
+Earlier findings in this scope that bear on meaning rather than voice, form or freshness: four. `review-1.5.md`: l2 `screens[8]` "half again the A route" (ratio is 1.93) and l12 `screens[0]` "a 6.5% fall on day 71" (three such falls, none 6.5% in simple terms). `review-problems-1.5-c.md`: `p-rfq-rounds` prose ("otherwise" read as a conditional chance) and `p-merger-arb` part 5 ("highest price with a positive expected profit" does not exist). All four are fixed in the content read here, and the fixed text is correct (ledger rows l2 `s[8]`, l12 `s[0]`, problems-2 `it[2]`, `it[3] p[4]`).
+
+| | count |
+|---|---|
+| Conceptual findings, this audit only | 16 |
+| Conceptual findings, earlier reviews only | 4 |
+| Found by both | 0 |
+
+None of the 16 sits in text written by an earlier fix pass: `git log -S` puts the three sentences of findings 1 to 3 in the original authoring commits (20 Oct for the lessons, 10 Nov for `problems-3.json`).
+
+## Inbox
+
+Two bullets appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit markov 1-3)": a "needs independence" content lint (third sighting of the class across audits), and a reader checklist line for "fair price" items on a modelled share.
