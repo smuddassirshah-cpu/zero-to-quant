@@ -1,0 +1,964 @@
+{
+ "id": "l14-what-data-can-forget",
+ "course": "testing",
+ "title": "What the data can forget",
+ "minutes": 14,
+ "objectives": [
+  "Recognise a sufficient statistic with the factorisation theorem, and improve an estimator by conditioning on it."
+ ],
+ "skills": [
+  "ht-setup"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Two traders log the same 10 trades. Sheet A reads W W L W W W L W L W. Sheet B reads only 7 wins. Each trade wins with chance $p$, independently. Sheet A's likelihood is $p^7(1 - p)^3$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      1.15
+     ],
+     "grid": true,
+     "height": 260,
+     "xLabel": "$p$",
+     "yLabel": "likelihood, peak scaled to 1",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^7*(1-x)^3/(0.7^7*0.3^3)",
+       "label": "$p^7(1 - p)^3$",
+       "labelAt": 0.25
+      }
+     ]
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "pk",
+       "x": 0.7,
+       "label": "0.7"
+      }
+     ]
+    }
+   },
+   "question": "Another order, L L L W W W W W W W, has which likelihood?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "$p^7(1 - p)^3$, the same function of $p$",
+      "correct": true
+     },
+     {
+      "id": "later",
+      "text": "A different one: the later trades count for more",
+      "why": "You weighted trades by when they came. Each factor is $p$ or $1 - p$ whatever its place, and multiplication ignores order."
+     },
+     {
+      "id": "wins",
+      "text": "$p^7$, since only the wins matter",
+      "why": "You dropped the losses. Each loss contributes a factor $1 - p$, so three losses give $(1 - p)^3$."
+     },
+     {
+      "id": "number",
+      "text": "$0.7^7 \\times 0.3^3$, a fixed number",
+      "why": "You put the estimate 0.7 in for $p$. The likelihood is a function of $p$; that number is only its value at the peak."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write one factor per trade."
+    },
+    {
+     "rung": "step",
+     "text": "Seven factors of $p$ and three of $1 - p$, in any order: $p^7(1 - p)^3$."
+    }
+   ],
+   "feedback": {
+    "correct": "Any order of 7 wins and 3 losses gives the same likelihood.",
+    "generic": "Not quite. Multiply one factor per trade.",
+    "byKey": {
+     "later": "Order does not change a product."
+    }
+   },
+   "explain": {
+    "text": "Every order with 7 wins has likelihood $p^7(1 - p)^3$, the curve on the chart. So sheet B, with only the count, gives the same likelihood as sheet A. Inference about $p$ cannot tell them apart."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Each of the 120 cells is one order of 7 wins in 10 trades; sheet A's order is shaded. Slide $p$. The caption gives the chance of sheet A's order, the chance of 7 wins, and their ratio.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 10,
+     "cols": 12,
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {
+     "shade": {
+      "seen": [
+       "r3c5"
+      ]
+     },
+     "caption": "one order 0.00222, 7 wins 0.2668, ratio 0.0083"
+    },
+    "derive": {
+     "caption": "one order {{fixed(pow(p, 7)*pow(1 - p, 3), 5)}}, 7 wins {{fixed(120*pow(p, 7)*pow(1 - p, 3), 4)}}, ratio {{fixed(pow(p, 7)*pow(1 - p, 3)/(120*pow(p, 7)*pow(1 - p, 3)), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "p",
+      "min": 0.3,
+      "max": 0.9,
+      "step": 0.05,
+      "start": 0.7,
+      "label": "$p$"
+     }
+    ]
+   },
+   "question": "As you move $p$, what happens to the chance of sheet A's order given that there were 7 wins?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fixed",
+      "text": "It stays at $\\tfrac{1}{120} = 0.0083$",
+      "correct": true
+     },
+     {
+      "id": "rises",
+      "text": "It rises as $p$ rises, like the order's chance",
+      "why": "You read the chance of the order itself, which does rise. Divide by the chance of 7 wins, which rises in step."
+     },
+     {
+      "id": "peak",
+      "text": "It peaks at $p = 0.7$, the share of wins",
+      "why": "The chance of 7 wins peaks near 0.7, but the ratio is flat. Watch the last number in the caption."
+     },
+     {
+      "id": "falls",
+      "text": "It falls as $p$ rises towards 0.9",
+      "why": "Watch the ratio, not the chance of one order: it never moves."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the last number in the caption."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{p^7(1 - p)^3}{120\\,p^7(1 - p)^3} = \\tfrac{1}{120}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Given 7 wins, each of the 120 orders has chance $\\tfrac{1}{120}$, whatever $p$ is.",
+    "generic": "Not quite. Read the ratio as you slide."
+   },
+   "explain": {
+    "text": "The chance of one order is $p^7(1 - p)^3$ and the chance of 7 wins is $120\\,p^7(1 - p)^3$. Their ratio, $\\tfrac{1}{120}$, has no $p$ in it. Once the count is known, the order carries no information about $p$.",
+    "canvas": {
+     "params": {
+      "p": 0.5
+     },
+     "caption": "one order 0.00098, 7 wins 0.1172, ratio 0.0083"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A statistic $T$ is **sufficient** for $\\theta$ when the conditional distribution of the data given $T$ does not depend on $\\theta$. The count of wins is sufficient for $p$: given it, every order is equally likely. A different sample has 6 wins in 10.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 10,
+     "cols": 21,
+     "rowHeads": false,
+     "colHeads": false,
+     "compact": true
+    },
+    "state": {
+     "shade": {
+      "seen": [
+       "r1c1"
+      ]
+     }
+    }
+   },
+   "question": "Given 6 wins in 10, each order has the same chance. How many orders are there?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 210,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "",
+    "placeholder": "whole number",
+    "accept": "210: $\\binom{10}{6}$",
+    "wrong": [
+     {
+      "id": "seven",
+      "value": 120,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 1024,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Choose which 6 of the 10 trades won."
+    },
+    {
+     "rung": "step",
+     "text": "$\\binom{10}{6} = \\tfrac{10 \\times 9 \\times 8 \\times 7}{4 \\times 3 \\times 2 \\times 1} = 210$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\binom{10}{6} = 210$, so each order has chance $\\tfrac{1}{210}$ given the count.",
+    "generic": "Not quite. Count the ways to place 6 wins among 10 trades.",
+    "byKey": {
+     "seven": "120 is $\\binom{10}{7}$, for 7 wins. This sample has 6.",
+     "all": "1,024 is $2^{10}$, every sequence of 10 results. Keep only those with 6 wins."
+    }
+   },
+   "explain": {
+    "text": "There are $\\binom{10}{6} = 210$ orders, each with chance $\\tfrac{1}{210}$ given 6 wins, for every $p$. The whole sample is always sufficient, so the aim is the smallest summary that still is: here, one number."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "Checking sufficiency by conditioning is slow. The **factorisation theorem** is the working tool: $T$ is sufficient for $\\theta$ exactly when the joint density factors as $$f(x_1, \\dots, x_n \\mid \\theta) = g\\big(T(x), \\theta\\big)\\,h(x),$$ where $h$ does not involve $\\theta$. The coin: $p^k(1 - p)^{n - k}$ is $g(k, p)$ with $h = 1$.",
+   "question": "For $n$ independent exponential gaps, $f = \\lambda^n e^{-\\lambda\\sum x_i}$. Which statistic is sufficient for $\\lambda$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "total",
+      "text": "The total $\\sum x_i$",
+      "correct": true
+     },
+     {
+      "id": "max",
+      "text": "The longest gap $\\max x_i$",
+      "why": "You picked a summary that does not appear in the density. $\\lambda$ meets the data only through $\\sum x_i$."
+     },
+     {
+      "id": "first",
+      "text": "The first gap $x_1$",
+      "why": "One gap leaves out the others, yet each appears in $\\sum x_i$ inside the exponent."
+     },
+     {
+      "id": "prod",
+      "text": "The product $\\prod x_i$",
+      "why": "The product would come from a $\\ln x_i$ term, and there is none here. The exponent holds the sum."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where do the data appear in $\\lambda^n e^{-\\lambda\\sum x_i}$?"
+    },
+    {
+     "rung": "step",
+     "text": "Take $g(t, \\lambda) = \\lambda^n e^{-\\lambda t}$ with $t = \\sum x_i$ and $h = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "The data enter only through $\\sum x_i$, so the total is sufficient.",
+    "generic": "Not quite. Read where the data appear in the density."
+   },
+   "explain": {
+    "text": "$\\lambda^n e^{-\\lambda\\sum x_i}$ is $g(\\sum x_i, \\lambda)$ with $h(x) = 1$. Two samples with the same total have the same likelihood. The MLE, $\\tfrac{n}{\\sum x_i}$, is a function of it, as an MLE is whenever a sufficient statistic exists."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Normal data with both $\\mu$ and $\\sigma$ unknown: $$f = (2\\pi\\sigma^2)^{-n/2}\\exp\\Big(-\\tfrac{\\sum x_i^2 - 2\\mu\\sum x_i + n\\mu^2}{2\\sigma^2}\\Big).$$ With $\\sigma$ known, $\\sum x_i$ alone would do.",
+   "question": "Which summaries are sufficient for the pair $(\\mu, \\sigma)$? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pair",
+      "text": "The pair $\\sum x_i$ and $\\sum x_i^2$",
+      "correct": true
+     },
+     {
+      "id": "meanvar",
+      "text": "The pair $\\bar x$ and $\\hat\\sigma^2$",
+      "correct": true
+     },
+     {
+      "id": "mean",
+      "text": "$\\bar x$ alone",
+      "why": "You kept the summary that was enough with $\\sigma$ known. With $\\sigma$ unknown, $\\sum x_i^2$ also appears in the density."
+     },
+     {
+      "id": "var",
+      "text": "$\\hat\\sigma^2$ alone",
+      "why": "The spread alone loses the centre: $\\mu$ multiplies $\\sum x_i$ in the exponent."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which sums of the data appear in the exponent?"
+    },
+    {
+     "rung": "step",
+     "text": "Both $\\sum x_i$ and $\\sum x_i^2$. And $\\bar x$, $\\hat\\sigma^2$ can be computed from them and back."
+    }
+   ],
+   "feedback": {
+    "correct": "Both pairs work: $(\\bar x, \\hat\\sigma^2)$ and $(\\sum x_i, \\sum x_i^2)$ determine each other.",
+    "generic": "Not quite. The density needs two sums of the data.",
+    "byKey": {
+     "mean": "With $\\sigma$ unknown the term $\\sum x_i^2$ also needs to be known."
+    }
+   },
+   "explain": {
+    "text": "The data enter through $\\sum x_i$ and $\\sum x_i^2$ only, so that pair is sufficient. Since $\\bar x = \\tfrac{1}{n}\\sum x_i$ and $\\hat\\sigma^2 = \\tfrac{1}{n}\\sum x_i^2 - \\bar x^2$, the pair $(\\bar x, \\hat\\sigma^2)$ carries the same information. Either alone does not."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Uniform on $(0, \\theta)$, data 1, 5, 9. Each density is $\\tfrac{1}{\\theta}$ on $(0, \\theta)$, so $$f = \\theta^{-n}\\,\\mathbf{1}\\{\\max x_i \\le \\theta\\}.$$ The chart shows this likelihood as a function of $\\theta$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      20
+     ],
+     "y": [
+      0,
+      1.6
+     ],
+     "grid": true,
+     "height": 240,
+     "xLabel": "$\\theta$",
+     "yLabel": "likelihood",
+     "functions": [
+      {
+       "id": "L",
+       "expr": "1000/x^3",
+       "domain": [
+        9,
+        20
+       ],
+       "label": "$\\theta^{-3}$, scaled",
+       "labelAt": 13,
+       "endpoints": [
+        "closed",
+        null
+       ]
+      }
+     ]
+    },
+    "state": {
+     "segments": [
+      {
+       "id": "zero",
+       "from": [
+        0,
+        0
+       ],
+       "to": [
+        9,
+        0
+       ]
+      }
+     ],
+     "vlines": [
+      {
+       "id": "mx",
+       "x": 9,
+       "label": "max 9"
+      }
+     ]
+    }
+   },
+   "question": "Which statistic is sufficient for $\\theta$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "max",
+      "text": "The largest observation",
+      "correct": true
+     },
+     {
+      "id": "mean",
+      "text": "The sample mean",
+      "why": "You reached for the mean, which worked for the exponential. Here $\\theta$ meets the data only through the indicator, which reads the largest value."
+     },
+     {
+      "id": "min",
+      "text": "The smallest observation",
+      "why": "The smallest value never decides whether $\\theta$ is allowed. Only the largest one can exceed $\\theta$."
+     },
+     {
+      "id": "sum",
+      "text": "The total $\\sum x_i$",
+      "why": "The total does not appear in $\\theta^{-n}\\,\\mathbf{1}\\{\\max x_i \\le \\theta\\}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which number decides where the likelihood is 0?"
+    },
+    {
+     "rung": "point",
+     "text": "The chart jumps at one data value.",
+     "highlight": [
+      "mx"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$g(t, \\theta) = \\theta^{-n}\\mathbf{1}\\{t \\le \\theta\\}$ with $t = \\max x_i$."
+    }
+   ],
+   "feedback": {
+    "correct": "The largest observation: it decides where the likelihood switches on.",
+    "generic": "Not quite. Look at the indicator."
+   },
+   "explain": {
+    "text": "$f = g(\\max x_i, \\theta)$ with $h = 1$, so the largest observation is sufficient. The MLE, 9, is that statistic. The moment estimate $2\\bar x$ is not a function of it, which is why it can contradict the data.",
+    "canvas": {
+     "highlight": [
+      "mx"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Why it matters. **Rao-Blackwell**: let $\\hat\\theta$ be unbiased with finite variance and $T$ sufficient. Then $E[\\hat\\theta \\mid T]$ is an estimator (sufficiency keeps $\\theta$ out of it), it is unbiased, and its variance is never larger. Take $\\hat p = X_1$, the first trade's result: unbiased, with variance $p(1 - p)$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "binomial",
+     "params": {
+      "n": 10,
+      "p": 0.6
+     },
+     "height": 220,
+     "variable": "K"
+    },
+    "state": {
+     "caption": "The count $K$ of wins in 10 trades, $p = 0.6$."
+    }
+   },
+   "question": "Given $K = k$ wins, $E[X_1 \\mid K = k] = \\tfrac{k}{10}$. At $p = 0.6$, what is $\\mathrm{Var}\\big(\\tfrac{K}{10}\\big)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.024,
+    "tol": {
+     "abs": 0.0002
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.024: $\\tfrac{0.6 \\times 0.4}{10}$",
+    "wrong": [
+     {
+      "id": "one-trade",
+      "value": 0.24,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "n-squared",
+      "value": 0.0024,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathrm{Var}(K) = np(1 - p)$ for a binomial."
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathrm{Var}\\big(\\tfrac{K}{n}\\big) = \\tfrac{np(1 - p)}{n^2} = \\tfrac{p(1 - p)}{n}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{0.6 \\times 0.4}{10} = 0.024$, a tenth of the 0.24 for $X_1$.",
+    "generic": "Not quite. Divide $\\mathrm{Var}(K)$ by $n^2$.",
+    "byKey": {
+     "one-trade": "0.24 is $\\mathrm{Var}(X_1)$, before conditioning. The count averages 10 trades.",
+     "n-squared": "You divided $p(1 - p)$ by $n^2$. $\\mathrm{Var}(K) = np(1 - p)$, so one factor of $n$ cancels."
+    }
+   },
+   "explain": {
+    "text": "Given $k$ wins, each trade is a win with chance $\\tfrac{k}{10}$, so conditioning turns $X_1$ into $\\tfrac{K}{10}$. Its variance is $\\tfrac{0.24}{10} = 0.024$, against 0.24. Conditioning on a sufficient statistic kept the mean and removed nine tenths of the variance."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "Two uniform samples on $(0, \\theta)$: A is 1, 5, 9 and B is 4, 5, 6. A risk log stores only the mean, 5, for each.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 10,
+     "step": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a1",
+       "x": 1,
+       "label": "A"
+      },
+      {
+       "id": "a2",
+       "x": 5,
+       "label": "A, B"
+      },
+      {
+       "id": "a3",
+       "x": 9,
+       "label": "A"
+      },
+      {
+       "id": "b1",
+       "x": 4,
+       "label": "B",
+       "labelPos": "below",
+       "colour": 2
+      },
+      {
+       "id": "b3",
+       "x": 6,
+       "label": "B",
+       "labelPos": "below",
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "Is the mean sufficient for $\\theta$ here?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: A rules out $\\theta < 9$, B only $\\theta < 6$",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: the mean is sufficient for every model",
+      "why": "You carried over the exponential result. Sufficiency depends on the model: for the uniform the likelihood reads the maximum, which the mean loses."
+     },
+     {
+      "id": "data",
+      "text": "It depends on whether the sample looks uniform",
+      "why": "You tied sufficiency to the data. It is a property of the model: for the uniform family the maximum is sufficient, for every sample."
+     },
+     {
+      "id": "n",
+      "text": "Yes, once the sample is large enough to settle",
+      "why": "No sample size makes the mean decide where $\\theta^{-n}\\mathbf{1}\\{\\max x_i \\le \\theta\\}$ switches on."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the two likelihoods."
+    },
+    {
+     "rung": "point",
+     "text": "Look at each sample's largest point.",
+     "highlight": [
+      "a3",
+      "b3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A gives $\\theta^{-3}$ for $\\theta \\ge 9$; B gives $\\theta^{-3}$ for $\\theta \\ge 6$. Same mean, different likelihoods."
+    }
+   ],
+   "feedback": {
+    "correct": "Same mean, different likelihoods: the mean is not sufficient for the uniform.",
+    "generic": "Not quite. Compare the two likelihoods.",
+    "byKey": {
+     "yes": "Sufficiency belongs to a model, and the uniform's statistic is the maximum.",
+     "data": "The model decides, not the sample."
+    }
+   },
+   "explain": {
+    "text": "A's likelihood is $\\theta^{-3}$ for $\\theta \\ge 9$ and B's is $\\theta^{-3}$ for $\\theta \\ge 6$. They differ, so storing the mean loses information. Likewise the count is sufficient for independent trades with one $p$, but not if $p$ drifts during the day.",
+    "canvas": {
+     "highlight": [
+      "a3",
+      "b3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "We show that the total is sufficient for the mean $\\lambda$ of $n$ independent Poisson counts $x_1, \\dots, x_n$.",
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$f = \\prod_i \\dfrac{e^{-\\lambda}\\lambda^{x_i}}{x_i!}$: independent counts, so the probabilities multiply"
+     },
+     {
+      "id": "d2",
+      "text": "$f = e^{-n\\lambda}\\,\\lambda^{\\sum x_i} \\cdot \\dfrac{1}{\\prod_i x_i!}$: collect the exponentials and the powers of $\\lambda$"
+     },
+     {
+      "id": "d3",
+      "text": "$g(t, \\lambda) = e^{-n\\lambda}\\lambda^{t}$ with $t = \\sum x_i$, and $h(x) = \\dfrac{1}{\\prod_i x_i!}$: $h$ has no $\\lambda$ in it"
+     },
+     {
+      "id": "d4",
+      "text": "So $T = \\sum x_i$ is sufficient for $\\lambda$: the factorisation theorem"
+     },
+     {
+      "id": "dx",
+      "text": "$h(x) = \\dfrac{\\lambda^{\\sum x_i}}{\\prod_i x_i!}$: keep the powers of $\\lambda$ with the factorials",
+      "why": "$h$ must not involve $\\lambda$. The power $\\lambda^{\\sum x_i}$ belongs in $g$."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4"
+    ],
+    "distractors": [
+     "dx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the joint probability first."
+    },
+    {
+     "rung": "step",
+     "text": "Multiply, collect, name $g$ and $h$, conclude."
+    }
+   ],
+   "feedback": {
+    "correct": "Multiply, collect, factor, conclude.",
+    "generic": "Not quite. Each line rewrites the one before.",
+    "byKey": {
+     "dx": "That $h$ contains $\\lambda$, so it is not a valid factor.",
+     "left-out": "One of the four true lines is missing."
+    }
+   },
+   "explain": {
+    "text": "The joint probability is $e^{-n\\lambda}\\lambda^{\\sum x_i}$ times a factor free of $\\lambda$. So the total count is sufficient. Its MLE, $\\bar x = \\tfrac{1}{n}\\sum x_i$, is a function of it."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "To save space, a risk system keeps three numbers per day: the count of returns $n$, their sum $\\sum x_i$ and their sum of squares $\\sum x_i^2$. The raw returns are deleted.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "$n$",
+      "$\\sum x_i$ (%)",
+      "$\\sum x_i^2$ (%²)"
+     ],
+     "rows": [
+      [
+       "Mon",
+       "390",
+       "1.95",
+       "40.6"
+      ],
+      [
+       "Tue",
+       "390",
+       "-3.12",
+       "52.3"
+      ],
+      [
+       "Wed",
+       "390",
+       "0.47",
+       "38.9"
+      ]
+     ]
+    }
+   },
+   "question": "Which questions can the stored numbers still answer exactly? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mu",
+      "text": "The maximum-likelihood mean of a normal model",
+      "correct": true
+     },
+     {
+      "id": "sigma",
+      "text": "The maximum-likelihood variance of a normal model",
+      "correct": true
+     },
+     {
+      "id": "worst",
+      "text": "The worst single return of the day",
+      "why": "You assumed the sums keep every return. The largest loss is not a function of $n$, $\\sum x_i$ and $\\sum x_i^2$."
+     },
+     {
+      "id": "tails",
+      "text": "The maximum-likelihood degrees of freedom of a fat-tailed $t$ model",
+      "why": "You assumed what is sufficient for the normal is sufficient for every model. The $t$ likelihood needs every return, not three sums."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For which model are these three numbers sufficient?"
+    },
+    {
+     "rung": "step",
+     "text": "Normal: $\\hat\\mu = \\tfrac{\\sum x_i}{n}$ and $\\hat\\sigma^2 = \\tfrac{\\sum x_i^2}{n} - \\hat\\mu^2$. Other questions need the raw data."
+    }
+   ],
+   "feedback": {
+    "correct": "Both normal estimates survive; the worst loss and a $t$ fit do not.",
+    "generic": "Not quite. The sums are sufficient for the normal model only.",
+    "byKey": {
+     "tails": "Sufficiency belongs to a model; the $t$ has no small sufficient statistic."
+    }
+   },
+   "explain": {
+    "text": "For a normal model, $n$, $\\sum x_i$ and $\\sum x_i^2$ are sufficient, so both parameters can be re-estimated exactly: Monday gives $\\hat\\mu = 0.005\\%$. A $t$ model's likelihood depends on each return, so its tail parameter is lost. So is the day's worst return."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "$T$ is sufficient for $\\theta$ when the data's distribution given $T$ does not depend on $\\theta$: given the count, every order of wins is equally likely.",
+   "Factorisation theorem: $T$ is sufficient exactly when $f(x \\mid \\theta) = g(T(x), \\theta)\\,h(x)$ with $h$ free of $\\theta$.",
+   "Rao-Blackwell: for an unbiased $\\hat\\theta$ with finite variance and a sufficient $T$, $E[\\hat\\theta \\mid T]$ is unbiased with no larger variance."
+  ],
+  "formula": {
+   "name": "Factorisation theorem",
+   "tex": "f(x_1, \\dots, x_n \\mid \\theta) = g\\big(T(x), \\theta\\big)\\,h(x)",
+   "note": "The total for exponential or Poisson data, the largest value for the uniform."
+  },
+  "trap": "Sufficiency belongs to the model: the mean is sufficient for a normal mean but loses information for the uniform."
+ },
+ "quiz": [
+  {
+   "id": "q-coin-count",
+   "difficulty": 2,
+   "prose": "A strategy makes $n$ independent trades, each a win with chance $p$.",
+   "question": "Which statistic is sufficient for $p$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "count",
+      "text": "The number of wins",
+      "correct": true
+     },
+     {
+      "id": "last",
+      "text": "The result of the last trade",
+      "why": "One trade ignores the other $n - 1$, each of which carries a factor of $p$ or $1 - p$."
+     },
+     {
+      "id": "longest",
+      "text": "The longest winning streak",
+      "why": "The streak depends on the order, and given the count the order says nothing about $p$."
+     },
+     {
+      "id": "first-win",
+      "text": "The position of the first win",
+      "why": "That reads one place in the order. The likelihood $p^k(1 - p)^{n - k}$ depends on the count $k$ only."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The count: the likelihood is $p^k(1 - p)^{n - k}$.",
+    "generic": "Not quite. Write the likelihood and see what it depends on."
+   },
+   "explain": {
+    "text": "The likelihood $p^k(1 - p)^{n - k}$ depends on the data only through $k$. Given $k$, every order has chance $1/\\binom{n}{k}$, free of $p$."
+   }
+  },
+  {
+   "id": "q-same-total",
+   "difficulty": 2,
+   "prose": "Two samples of 5 exponential gaps each have total 2.5 minutes. One is 0.5, 0.5, 0.5, 0.5, 0.5; the other is 0.1, 0.2, 0.2, 0.5, 1.5.",
+   "question": "What is the maximum-likelihood rate $\\hat\\lambda$, per minute, for the second sample?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "2: $\\tfrac{5}{2.5}$",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\hat\\lambda = \\tfrac{5}{2.5} = 2$, the same as the first sample.",
+    "generic": "Not quite. The MLE depends on the total only.",
+    "byKey": {
+     "mean": "0.5 is the mean gap. The rate is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "$\\hat\\lambda = \\tfrac{n}{\\sum x_i} = \\tfrac{5}{2.5} = 2$ for both samples. They have the same total, so the same likelihood and the same estimate."
+   }
+  },
+  {
+   "id": "q-rb",
+   "difficulty": 3,
+   "prose": "A hit rate is estimated from $n = 20$ independent trades with $p = 0.5$. The first trade's result, $X_1$, is unbiased with variance 0.25.",
+   "question": "After Rao-Blackwell, conditioning on the count, what is the variance of the improved estimator?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0125,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.0125: $\\tfrac{0.25}{20}$",
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "n2",
+      "value": 0.000625,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The improved estimator is $\\tfrac{K}{20}$, with variance $\\tfrac{0.25}{20} = 0.0125$.",
+    "generic": "Not quite. Condition $X_1$ on the count $K$.",
+    "byKey": {
+     "none": "0.25 is the variance before conditioning.",
+     "n2": "You divided by $n^2$. $\\mathrm{Var}(K) = np(1 - p)$, so one factor of $n$ cancels."
+    }
+   },
+   "explain": {
+    "text": "$E[X_1 \\mid K] = \\tfrac{K}{20}$, whose variance is $\\tfrac{p(1 - p)}{20} = \\tfrac{0.25}{20} = 0.0125$. That is twenty times smaller than for $X_1$."
+   }
+  },
+  {
+   "id": "q-minimal",
+   "difficulty": 3,
+   "question": "The whole sample is always sufficient. So what are we looking for when we look for a sufficient statistic?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "smallest",
+      "text": "The smallest summary that is still sufficient",
+      "correct": true
+     },
+     {
+      "id": "unbiased",
+      "text": "An unbiased estimator",
+      "why": "You mixed up two ideas. Sufficiency is about keeping information, not about being right on average."
+     },
+     {
+      "id": "mle",
+      "text": "The maximum-likelihood estimate itself",
+      "why": "The MLE is a function of a sufficient statistic, but it need not be sufficient on its own."
+     },
+     {
+      "id": "any",
+      "text": "Any summary of the sample",
+      "why": "Many summaries lose information, as the mean does for the uniform."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The aim is the most compact summary that loses nothing about $\\theta$.",
+    "generic": "Not quite. The whole sample is always sufficient, so the aim is something smaller."
+   },
+   "explain": {
+    "text": "The full sample trivially keeps everything. We want the smallest summary that is still sufficient, called minimal sufficient. For the coin it is one number, the count."
+   }
+  }
+ ]
+}
