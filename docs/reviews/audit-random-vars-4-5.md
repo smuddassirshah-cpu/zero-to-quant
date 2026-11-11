@@ -92,3 +92,33 @@ Two points on fix-pass text:
 ## Inbox
 
 Four bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit random-vars):` a slip-value against named-quantity check, a lint for lessons cited by number, a named-law introduction check, and the `sympy` dependency of two number scripts.
+
+## Fix pass
+
+Fixer: Opus, round 1. Content edits only, levels 4 and 5 files. No key, answer, option id, slip value, test or code changed; one `accept` display string changed (finding 17).
+
+1. fixed. Basis: `l13` table gives $P(\text{up} \mid \text{fires}) = 0.12/0.20 = 0.60$ and $P(\text{fires} \mid \text{up}) = 0.12/0.52 = 0.23$; the Conditional Probability signal has $P(\text{flash} \mid \text{up}) = 0.60$, a different table. Now "the same turn-around, with other numbers".
+2. fixed. Basis: $P(Y = 2 \mid X = 1) = 0.01/0.30 = 0.033 < 0.10$; only $X = 2$ lifts it, $0.04/0.20 = 0.20$. Now "Two defaults in pool 1 make two in pool 2 likelier".
+3. fixed. Basis: in a 2 by 2 table with margins $r, c$, the cell $a = rc$ forces $r - a = r(1 - c)$, $c - a = (1 - r)c$ and the last cell $(1 - r)(1 - c)$. Note and trap now limit the one-cell claim to tables beyond 2 by 2.
+4. fixed. Basis: with all trials equal to one shared coin flip, each succeeds with chance $p$ but the wait is 1 with chance $p$ and infinite otherwise; the first-step proof uses a fresh independent copy. "Independent" added to `l16` `summary.ideas[2]` and `l20` `quiz[2].prose`.
+5. fixed. Basis: a mixture's tail chance is the weighted average $0.2\,P_{\text{vol}} + 0.8\,P_{\text{calm}}$, so it lies between the regimes' tails and cannot exceed both. `l17` now says a calm-only model understates the −£480 day; `homework-5` Step 5 compares with one normal of the same 7% sd and says the extra tail lowers $E[\ln(1 + R)]$ (the fourth-order Taylor term $-E[(R - \mu)^4]/4$ is negative).
+6. fixed. Basis: $\mathrm{Var}(Y) - E[\mathrm{Var}(Y \mid X)] = \mathrm{Var}(E[Y \mid X])$, zero exactly when $E[Y \mid X]$ is constant; independence is sufficient only. Option `vary` why rewritten; `quiz[2].prose` now says $Y$ is not constant, so $E[Y \mid X] = X^2$ really varies.
+7. fixed differently. Basis: neither name is defined in the course (grep). Replaced, not named: every "Eve's law" became "the law of total variance" (`l18` `screens[3]`, `l20` `screens[6]`, `problems-5` items 0 and 2) and "Adam's law" became "the law of total expectation" (`l18` `screens[7]`). Lesson-number citations in level 4 and 5 learner text replaced with plain references: `l17` (three), `l18` (three), `l19` (two, including "limits lesson 14" now "the Limits course"), `l20` (two), `homework-5` (one).
+8. fixed. Basis: Wald's identity (Ross, *First Course*, 7.5): for $N$ a stopping time, dependent on the terms, $E[S] = E[N]E[X]$ still holds, so independence is a hypothesis of the proof, not a necessary condition; correlated fills with $N$ independent also break the variance step, so "only if" fails too. `summary.ideas[2]` now says the proof assumes independence and to check without it; `screens[8].explain` says the proof assumed it and the formulas "can fail"; `screens[10].explain` sibling "would fail" became "could fail"; `quiz[2]` option `rand` why states both assumptions. Sibling `quiz[2].explain` said a changed fill distribution breaks $E[S \mid N] = N\,E[X]$; a changed shape with the same mean does not, so it now says "changes their mean". The keyed option stands: worse fills on busy days change $E[S \mid N]$.
+9. fixed. Basis: the key $12 \times 9{,}000{,}000 + 16 \times 4{,}000{,}000 = 172{,}000{,}000$, sd £13,115, uses the random-sum formula, which needs the independence now stated in `quiz[3].prose`.
+10. fixed. Basis: $\sqrt{x} \approx \sqrt{\mu} + (x - \mu)/(2\sqrt{\mu}) - (x - \mu)^2/(8\mu^{3/2})$, so the gap is about $\sigma^2/(8\mu^{3/2})$; for 1 or 9, $16/(8 \times 11.18) = 0.18$ against exact $\sqrt5 - 2 = 0.236$.
+11. fixed. Basis: a convex function has a supporting line at every interior point (Casella and Berger, proof of 4.7.7); the tangent version needs differentiability. Prose now says "smooth convex $g$"; explain adds the kink case. Explain stays at three sentences.
+12. fixed. Basis: chord from $(-3, -27)$ to $(1, 1)$ is at $-13$ over $x = -1$, below the curve's $-1$; gap $-12$.
+13. fixed. Basis: $0.5\ln 1.07 + 0.5\ln 0.95 = 0.008183$; $e^{120 \times 0.008183} = e^{0.982} = 2.67$ is the typical path, while independent months give $E[W] = 1.01^{120} = 3.30$. Explain reworded; `screens[11].prose` now says the months are independent, which the mean $1.01^{120}$ needs.
+14. fixed. Basis: equality in Jensen forces $X$ constant only for strictly convex or concave $g$; a call payoff gives equality for any $X$ on one side of the strike.
+15. fixed. Basis: half the range of $\{1, 3\}$ is $1$, the key, so the feedback misnamed 0.5. New text names no quantity for 0.5 and shows $5 - 4$. Slip value unchanged.
+16. fixed. Basis: $0.5^5 = 0.03125$; one full ten-day record has chance $0.5^{10} = 0.00098$, and $252 \times 0.5^{10} = 0.2461$, the key.
+17. fixed. Basis: $0.5^4 \times 0.2^2 \times 0.3^4 = 0.0625 \times 0.04 \times 0.0081 = 0.00002025$, and $3150 \times 0.00002025 = 0.0638$ (recomputed as $3150 \times 2.025 \times 10^{-5}$). `accept` display string only.
+18. fixed. Basis: with $X$ constant each cell equals $Y$'s margin; now "Margins alone do not, in general, fix the cells."
+19. fixed. Basis: $\mathrm{Var}(A + B) = \mathrm{Var}(A) + \mathrm{Var}(B) + 2\,\mathrm{Cov}(A, B)$, so zero covariance suffices. Now says adding variances needs the waits uncorrelated, which independence gives.
+
+Gates:
+- `node tools/validate.mjs 2>&1 | tail -5`: 0 errors, 4864 warnings.
+- `random-vars-L4-5-concepts.py`: exit 0, 81 checks, 0 failed (no check edited). `problems-random-vars-numbers.py`, `fluency-random-vars-numbers.py`, `random-vars-1-perf-numbers.py`, `random-vars-L1-3-concepts.py`, `random-vars-L1-3-fixread.py`: all exit 0.
+- `voice-scan.py 35` over the course: 0 sentences over 35 words, 0 explanations over three sentences.
+- Playthrough, desktop and `--mobile`, all passed: lessons `l13`, `l14`, `l16`, `l17`, `l18`, `l19`, `l20`; sets `homework-4`, `homework-5`; `--problems random-vars/problems-5`.
