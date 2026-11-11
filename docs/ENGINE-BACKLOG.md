@@ -2060,13 +2060,20 @@ Raised later (engine session Z, from the inbox):
 
 Raised later (engine pass AA 1, numbered from the inbox "Raised later (fluency trig, widening pass)" onward; bullets already covered by 844, 852, 853, 855 to 860 are not repeated):
 
-861. [Should] Drill page compares results as the code widget does (NaN equal to NaN, dicts by key, text, bool, pandas Series, float tolerance): one shared comparison. [inbox: drills py a, drills py b]
-862. [Should] Drill page runs a test's `setup` and `"compare": "raises"`, which the validator accepts. [inbox: drills py a]
-863. [Could] Lists (`- item`) and single line breaks in a drill `brief` render. [inbox: drills ci 1, drills cpp]
-864. [Should] A long inline code span in a drill brief wraps at 440 px, and `playthrough.mjs --mobile` fails on horizontal overflow of the drill page. [inbox: drills cpp]
-865. [Should] `allocCheck` passed from a C++ drill to the code widget (`drill-lib.js`). [inbox: drills cpp]
-866. [Should] `constraints` for a drill's inputs, machine-readable, and a validator check that every example and hidden test satisfies them (error), with a `[no-constraints]` warning for a drill without. [KNOWN_ISSUES session Z protocol 6; reviews drills-py, ci]
-867. [Could] AUTHORING states that a drill's `prelude` runs after the learner's code (a code widget's runs before). [inbox: drills py b]
+861. Done [Should] Drill page compares results as the code widget does (NaN equal to NaN, dicts by key, text, bool, pandas Series, float tolerance): one shared comparison. [inbox: drills py a, drills py b]
+861 status: done. `JUDGE` in `js/engine/widgets/code.js` gains `__zq_judge(actual, expected, compare, tol)` (the code widget's `__zq_cmp` calls it) and is exported as `ZQ.widgets.codeJudge`; `js/screens/drill.js` dropped `__zq_eq` and uses it, with per-test `tol`. Fixed in passing: the harness case table is now loaded with `json.loads` (a `null` tol is not Python). `tools/test-drill-page.mjs` (15 judge cases in real Python, plus a played fixture).
+862. Done [Should] Drill page runs a test's `setup` and `"compare": "raises"`, which the validator accepts. [inbox: drills py a]
+862 status: done. The drill harness runs `setup` (and reads its imports with `importHint`) and the `raises` mode (named exception or a subclass; result row reads `raised <Name>` or `no error, the value was ...`); `RULES.raises` gives the Accepted line. Played by `tools/fixtures/drill-page/drill-aa-page.json`, desktop and `--mobile`.
+863. Done [Could] Lists (`- item`) and single line breaks in a drill `brief` render. [inbox: drills ci 1, drills cpp]
+863 status: done. `block()` in `js/screens/drill-lib.js` renders `- `, `* ` and `1. ` lists (continuation lines join the item); `drill.js` uses it, so both Python and C++ pages share it. `.drl-list` in `css/screens/drill.css`. Unit cases in `tools/test-drill-page.mjs`.
+864. Done [Should] A long inline code span in a drill brief wraps at 440 px, and `playthrough.mjs --mobile` fails on horizontal overflow of the drill page. [inbox: drills cpp]
+864 status: done. A code span over 24 characters wraps on the C++ page too (the Python page already did); `playthrough.mjs --drill` at 440 px and the other widths fails with "the brief runs past the right edge" when a brief element ends past the clipping column (`briefClipped`). Case: a fixture with an unbreakable formula fails `--mobile` and passes desktop.
+865. Done [Should] `allocCheck` passed from a C++ drill to the code widget (`drill-lib.js`). [inbox: drills cpp]
+865 status: done. `allocCheck` added to the pass-through list in `js/screens/drill-lib.js`; checked by a source test (no C++ drill uses it yet).
+866. Done [Should] `constraints` for a drill's inputs, machine-readable, and a validator check that every example and hidden test satisfies them (error), with a `[no-constraints]` warning for a drill without. [KNOWN_ISSUES session Z protocol 6; reviews drills-py, ci]
+866 status: done. `tools/drill-constraints.mjs` (Python-literal call reader, constraint objects, one shared reader); `validate.mjs` errors on a test or example that breaks a stated constraint or a malformed object, warns `[no-constraints]` on a non-sample drill with none. Existing `constraints` strings are untouched and objects are not shown on the page. 210 of 210 existing drills carry the warning; shipped content stays at 0 errors. `docs/AUTHORING.md` section 5; `tools/test-drill-constraints.mjs` (36 checks).
+867. Done [Could] AUTHORING states that a drill's `prelude` runs after the learner's code (a code widget's runs before). [inbox: drills py b]
+867 status: done. Stated in `docs/AUTHORING.md` section 5 (with the rest of what the drill page runs).
 868. [Could] Drill page "Accepted:" line names one rule for the whole drill; a per-test rule on each result row. [inbox: drills py a]
 869. [Could] `playthrough.mjs --drill` and `planted-check.mjs` say "drill missing from content/manifest.json, run validate.mjs" instead of a 20 s timeout. [inbox: drills py b]
 870. [Could] `planted-check.mjs` and `--drill --why` name the failing hidden test and its actual value. [inbox: drills py b]

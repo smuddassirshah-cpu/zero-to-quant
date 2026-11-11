@@ -8,12 +8,12 @@
      fn          the function the tests call (default: the first `def` in the starter)
      returns     what the function returns, for the wrong-type message ("a list of floats")
      definition  markdown shown in the shaded box under the brief
-     constraints [markdown]   hint   markdown, opens after the first run   notes  [markdown] beside the model solution
+     constraints [markdown, and objects stating the inputs: tools/drill-constraints.mjs]   hint   markdown, opens after the first run   notes  [markdown] beside the model solution
      where       one line under the brief    prelude  Python run after the learner's code (helpers the tests call)
      examples[]  { call, expect, compare, note }     tests[] { name, call, expect, compare, why, show, note }
    Each run appends a small harness to the learner's code (see harness()): the worker calls __zq_case(i) for each case,
-   which evaluates `call`, compares with `expect` (isclose: element by element for lists, within rel 1e-9 or abs 1e-12;
-   fraction: a Fraction equal to it; equal: ==) and prints the actual value after a marker.
+   which runs the test's `setup`, evaluates `call`, compares with `expect` by the code widget's judge (ZQ.widgets.codeJudge: isclose,
+   fraction, equal, raises; NaN, dicts, arrays, Series; `tol`) and prints the actual value after a marker.
 
    Learner state: the draft is kept per drill with ZQ.state.drills.draft(id, code) (400ms debounce; it is in the state
    document, so Export carries it), attempts in ZQ.store 'drill.<id>.state'. A pass records ZQ.state.drills.verified(id, code) and logs the time on the
@@ -35,17 +35,20 @@
     isclose: { rule: 'math.isclose(actual, expected,\n             rel_tol=1e-9)', accept: 'Accepted: `math.isclose(actual, expected, rel_tol=1e-9)`, element by element for lists.' },
     fraction: { rule: 'isinstance(actual, Fraction)\nand actual == expected', accept: 'Accepted: a `Fraction` exactly equal to the expected value.' },
     equal: { rule: 'actual == expected', accept: 'Accepted: a value equal to the expected one.' },
+    raises: { rule: 'the call raises\nthe named exception', accept: 'Accepted: the call raises the named exception (or a subclass of it).' },
   };
 
   /* ---------- The test harness appended to the learner's code ---------- */
   const py = (v) => JSON.stringify(v); // a JSON string is a valid Python string literal
+  const J = () => ZQ.widgets.codeJudge;   // the code widget's judge and tolerance reader (ENGINE-BACKLOG 861)
   const harness = (P, defs) => `
 
 
 # ---- Test harness, added by the drill when it runs. Not part of your code. ----
-${P.prelude || ''}
-import contextlib as __zq_cl, io as __zq_io, json as __zq_json, math as __zq_m
+${ZQ.widgets.codeImports.importHint(...defs.map(d => (d.setup == null ? '' : String(d.setup))))}${P.prelude || ''}
+import contextlib as __zq_cl, io as __zq_io, json as __zq_json
 from fractions import Fraction as __zq_F
+${J().JUDGE}
 
 
 def __zq_typed(a, e, mode):
@@ -60,42 +63,40 @@ def __zq_typed(a, e, mode):
     return type(a) is type(e)
 
 
-def __zq_eq(a, e, mode):
-    if mode == 'fraction':
-        return isinstance(a, __zq_F) and a == e
-    if mode == 'isclose':
-        if e is None:
-            return a is None
-        if isinstance(e, (list, tuple)):
-            return isinstance(a, (list, tuple)) and len(a) == len(e) and all(__zq_eq(x, y, mode) for x, y in zip(a, e))
-        if isinstance(a, bool) or not isinstance(a, (int, float)):
-            return False
-        return __zq_m.isclose(a, e, rel_tol=1e-9, abs_tol=1e-12)
-    return a == e
-
-
 def __zq_case(i):
-    call, expect, mode = __ZQ_CASES[i]
+    call, expect, mode, setup, tol = __ZQ_CASES[i]
     out = __zq_io.StringIO()
     try:
         with __zq_cl.redirect_stdout(out), __zq_cl.redirect_stderr(out):
+            if setup:
+                exec(setup, globals())
             actual = eval(call, globals())
+    except Exception as x:
+        if mode == 'raises':   # ENGINE-BACKLOG 862: the call must raise the named exception or a subclass
+            got = [k.__name__ for k in type(x).__mro__]
+            print(${py(MARK)} + __zq_json.dumps({'r': 'raised ' + type(x).__name__, 't': type(x).__name__, 'typed': True, 'o': out.getvalue()[-2500:]}), end='')
+            return 1.0 if expect.strip().strip(chr(34) + chr(39)) in got else 0.0
+        print(${py(MARK)} + __zq_json.dumps({'o': out.getvalue()[-2500:]}), end='')
+        raise
     except BaseException:
         print(${py(MARK)} + __zq_json.dumps({'o': out.getvalue()[-2500:]}), end='')
         raise
-    expected = eval(expect, globals())
     try:
         text = repr(actual)
     except Exception:
         text = '<repr failed>'
     if len(text) > 400:
         text = text[:400] + ' ...'
+    if mode == 'raises':
+        print(${py(MARK)} + __zq_json.dumps({'r': 'no error, the value was ' + text, 't': type(actual).__name__, 'typed': True, 'o': out.getvalue()[-2500:]}), end='')
+        return 0.0
+    expected = eval(expect, globals())
     print(${py(MARK)} + __zq_json.dumps({'r': text, 't': type(actual).__name__, 'typed': bool(__zq_typed(actual, expected, mode)),
                                           'o': out.getvalue()[-2500:]}), end='')
-    return 1.0 if __zq_eq(actual, expected, mode) else 0.0
+    return 1.0 if __zq_judge(actual, expected, mode, tol) else 0.0   # the code widget's comparison (ENGINE-BACKLOG 861)
 
 
-__ZQ_CASES = ${py(defs.map(d => [String(d.call), String(d.expect), d.compare || 'isclose']))}
+__ZQ_CASES = __zq_json.loads(${py(JSON.stringify(defs.map(d => [String(d.call), String(d.expect), d.compare || 'isclose', d.setup == null ? '' : String(d.setup), J().tolOf(d)])))})
 if not callable(globals().get(${py(P.fn)})):
     raise NameError(${py(P.fn + '() is not defined in solution.py')})
 `;
@@ -119,12 +120,12 @@ if not callable(globals().get(${py(P.fn)})):
     const topic = C.topic ? Z.content.topic(C.topic) : null;
     const fn = d.fn || ((String(d.starter || '').match(/^def\s+([A-Za-z_]\w*)\s*\(/m) || [])[1]) || 'solution';
     const modes = Array.from(new Set((d.tests || []).map(t => t.compare || 'isclose')));
-    const main = modes.includes('fraction') ? 'fraction' : modes.includes('isclose') ? 'isclose' : modes[0] || 'isclose';
+    const main = modes.includes('fraction') ? 'fraction' : modes.includes('isclose') ? 'isclose' : modes.find(m => m !== 'raises' && RULES[m]) || (modes.includes('raises') ? 'raises' : 'isclose');
     return {
       id: d.id, fn, title: d.name, difficulty: d.difficulty || 2, skills: d.skills || [],
       course: C.name || d.course, courseId: d.course, track: C.track || 'code',
       topic: topic ? `${topic.id} ${topic.name}` : (C.topic || ''),
-      brief: d.brief || '', definition: d.definition || '', cons: d.constraints || [], hint: d.hint || '',
+      brief: d.brief || '', definition: d.definition || '', cons: (d.constraints || []).filter(c => typeof c === 'string'), hint: d.hint || '',
       how: d.how || '', rule: RULES[main].rule, accept: RULES[main].accept, where: d.where || '',
       language: 'python', pattern: d.pattern || '', pace: d.pace || 0,
       starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', data: d.data && typeof d.data === 'object' ? d.data : null, returns: d.returns || 'a value of the right type',
@@ -477,11 +478,8 @@ if not callable(globals().get(${py(P.fn)})):
       const m = p.match(/^\$([^$]+)\$(.?)$/);
       return `<span class="drl-nw">${Z.tex(m[1])}${esc(m[2])}</span>`;
     }).join('');
-    /* Block copy: paragraphs, $$display$$ maths and inline code */
-    const block = (s, cls = 't-prose') => String(s).split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => {
-      const m = p.match(/^\$\$([\s\S]+)\$\$$/);
-      return m ? `<div class="drl-disp">${Z.tex(m[1], true)}</div>` : `<p class="${cls}">${fmt(p)}</p>`;
-    }).join('');
+    /* Block copy: paragraphs, $$display$$ maths, lists and inline code (shared with the C++ drill page: drill-lib.js) */
+    const block = (s, cls = 't-prose') => lib().block(Z, s, cls);
     const lines = (s) => esc(s).replace(/\n/g, '<br>');
     const callOf = (d) => d.show || d.call;
 

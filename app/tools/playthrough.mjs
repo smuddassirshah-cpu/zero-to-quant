@@ -1721,6 +1721,24 @@ const main = async () => {
     const skewBy = (ms) => page.evaluate((n) => { if (!window.__zqNow) { window.__zqNow = Date.now.bind(Date); window.__zqSkew = 0; Date.now = () => window.__zqNow() + window.__zqSkew; } window.__zqSkew += n; }, ms);
     const unskewClock = () => page.evaluate(() => { if (window.__zqNow) { Date.now = window.__zqNow; delete window.__zqNow; delete window.__zqSkew; } });
     const wide = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    /* ENGINE-BACKLOG 864: the Python drill page clips its brief column sideways (overflow-x: hidden), so a long span runs off unseen and the document is not wider.
+       An element of the brief that ends past the right edge of the nearest ancestor that clips it (and does not scroll) is overflow too. Returns its text, or '' */
+    const briefClipped = () => page.evaluate(() => {
+      const root = document.querySelector('.drl, .drlc');
+      if (!root) return '';
+      for (const e of root.querySelectorAll('.drl-brief-in *, .drlc-in *')) {
+        const r = e.getBoundingClientRect();
+        if (!r.width || e.closest('.drl-hl, .drl-sh-code, .drl-ed-main, .drl-gut, .drlc-code, .drl-sh, .katex-mathml')) continue;
+        for (let n = e.parentElement; n && n !== document.body; n = n.parentElement) {
+          const ox = getComputedStyle(n).overflowX;
+          if (ox === 'visible') continue;
+          if ((ox === 'hidden' || ox === 'clip') && r.right > n.getBoundingClientRect().right + 1) return (e.textContent || e.tagName).trim().slice(0, 60);
+          break;
+        }
+        if (r.right > window.innerWidth + 1) return (e.textContent || e.tagName).trim().slice(0, 60);
+      }
+      return '';
+    });
     const drillReady = async (cpp) => {
       const wait = cpp ? 300000 : 90000;
       try { await page.waitForFunction(() => window.ZQDrill && ZQDrill.status() === 'ready', null, { timeout: Math.max(opt.timeout, wait) }); return null; }
@@ -1745,6 +1763,7 @@ const main = async () => {
         const bad = await drillReady(cpp);
         if (bad) { mine.push(bad); throw new Error(bad); }
         if (ANY_EXTRA && await wide()) mine.push(`the page is wider than the ${curVp.w} px window`);
+        if (ANY_EXTRA) { const c = await briefClipped(); if (c) mine.push(`the brief runs past the right edge at ${curVp.w} px: "${c}"`); }
         const pill0 = await page.evaluate(() => { const t = document.querySelector('.drl-sw-t'); return t ? t.textContent : null; });
         if (!pill0 || !/^\d+:\d\d$/.test(pill0)) mine.push(`the stopwatch pill is missing or unreadable (${pill0})`);
         await shot('drill-' + id);

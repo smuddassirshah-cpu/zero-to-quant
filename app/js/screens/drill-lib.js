@@ -39,13 +39,34 @@
   /* Inline copy (`code`, $maths$) and block copy, as drill.js does */
   const inline = (Z, s) => String(s).split(/(\$[^$]+\$[.,;:]?|`[^`]+`[.,;:]?)/g).map((p, i) => {
     if (!(i % 2)) return Z.esc(p);
-    if (p[0] === '`') { const c = p.match(/^`([^`]+)`(.?)$/); return `<span class="drl-nw"><code class="drl-ic">${Z.esc(c[1])}</code>${Z.esc(c[2])}</span>`; }
+    if (p[0] === '`') {
+      const c = p.match(/^`([^`]+)`(.?)$/), html = `<code class="drl-ic">${Z.esc(c[1])}</code>${Z.esc(c[2])}`;
+      return c[1].length > 24 ? html : `<span class="drl-nw">${html}</span>`;   // ENGINE-BACKLOG 864: a long code span may wrap
+    }
     const m = p.match(/^\$([^$]+)\$(.?)$/);
     return `<span class="drl-nw">${Z.tex(m[1])}${Z.esc(m[2])}</span>`;
   }).join('');
+  /* Block copy for a brief (ENGINE-BACKLOG 863): paragraphs, $$display$$ maths, and lists. A run of lines starting `- `, `* ` or `1. `
+     is a list (a line that does not start one continues the item before it); other lines in a paragraph join with a space. */
+  const LI = /^\s*(?:[-*]|\d+[.)])\s+/;
   const block = (Z, s, cls = 't-prose') => String(s).split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => {
     const m = p.match(/^\$\$([\s\S]+)\$\$$/);
-    return m ? `<div class="drl-disp">${Z.tex(m[1], true)}</div>` : `<p class="${cls}">${inline(Z, p)}</p>`;
+    if (m) return `<div class="drl-disp">${Z.tex(m[1], true)}</div>`;
+    const out = [];
+    let para = [], list = null;
+    const flushP = () => { if (para.length) out.push(`<p class="${cls}">${inline(Z, para.join(' ').trim())}</p>`); para = []; };
+    const flushL = () => { if (list) out.push(`<${list.tag} class="drl-list ${cls}">${list.items.map(t => `<li>${inline(Z, t.trim())}</li>`).join('')}</${list.tag}>`); list = null; };
+    p.split('\n').forEach(l => {
+      if (LI.test(l)) {
+        flushP();
+        const tag = /^\s*\d/.test(l) ? 'ol' : 'ul';
+        if (list && list.tag !== tag) flushL();
+        (list = list || { tag, items: [] }).items.push(l.replace(LI, ''));
+      } else if (list && l.trim()) list.items[list.items.length - 1] += ' ' + l.trim();
+      else { flushL(); if (l.trim()) para.push(l.trim()); }
+    });
+    flushP(); flushL();
+    return out.join('');
   }).join('');
   const dots = (Z, n) => `<span class="drl-diff-dots" role="img" aria-label="Difficulty ${n} of 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
 
@@ -185,7 +206,7 @@
         ${d.definition ? `<div class="drl-def">${block(Z, d.definition, 't-body')}</div>` : ''}
         <h2 class="t-h2 drl-sec">Examples</h2>
         <div class="drl-exs">${examples.map(exCard).join('')}</div>
-        ${(d.constraints || []).length ? `<h2 class="t-h2 drl-sec">Constraints</h2><ul class="drl-cons t-body">${d.constraints.map(c => `<li>${inline(Z, c)}</li>`).join('')}</ul>` : ''}
+        ${(d.constraints || []).filter(c => typeof c === 'string').length ? `<h2 class="t-h2 drl-sec">Constraints</h2><ul class="drl-cons t-body">${d.constraints.filter(c => typeof c === 'string').map(c => `<li>${inline(Z, c)}</li>`).join('')}</ul>` : ''}
         ${d.hint ? `<details class="drl-hint drlc-hint"${S.ran ? '' : ' hidden'}><summary><span class="drl-hint-i">${I('bulb', 'sm')}</span><span class="drl-hint-l"><span>Hint</span></span></summary><div class="drl-hint-b t-body">${inline(Z, d.hint)}</div></details>` : ''}
         <div class="drl-how"><span class="drl-how-i" aria-hidden="true">${I('clipboard', 'sm')}</span><div class="drl-how-t"><p class="t-label">How it is checked</p><p class="t-body">${inline(Z, d.how || '')}</p></div></div>
         ${d.where ? `<p class="t-caption drl-where">${inline(Z, d.where)}</p>` : ''}
@@ -206,7 +227,7 @@
     if (sw) { pill = stopwatchPill(Z, sw, d.pace); $('.drlc-sw-host').append(pill.el); }
 
     /* The widget: every drill field the C++ code widget reads is passed on */
-    const KEYS = ['starter', 'solution', 'how', 'flags', 'prelude', 'postlude', 'files', 'leakCheck', 'testkit', 'signature', 'budget'];
+    const KEYS = ['starter', 'solution', 'how', 'flags', 'prelude', 'postlude', 'files', 'leakCheck', 'testkit', 'signature', 'budget', 'allocCheck'];   // allocCheck: ENGINE-BACKLOG 865
     const spec = { kind: 'code', language: 'cpp', examples, tests };
     KEYS.forEach(k => { if (d[k] != null) spec[k] = d[k]; });
     const widgetHost = $('.drlc-code');
