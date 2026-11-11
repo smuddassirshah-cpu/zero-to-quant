@@ -309,6 +309,76 @@ if L1:
     ok(abs(ev(20 * s3 - 15) - Bo[1]) < 1e-12, 'lamp p5: exact height equals the coordinate route')
 
 
+# ================================================================ LEVEL 2
+L2 = load(2)
+if L2:
+    import cmath
+    explain_len(L2)
+    # ---- p-water-wheel: r = 2.4, hub 3 m up, tip from angle 0 anticlockwise
+    r, hub, s_arc = 2.4, 3.0, 5.4
+    th_e = sp.Rational(54, 24)
+    th_a = bisect(lambda x: r * x - s_arc, 0, 10)
+    num(L2, 'p-water-wheel', 1, th_e, th_a,
+        {'times': s_arc * r, 'flipped': r / s_arc, 'turns': s_arc / (2 * math.pi * r)}, printed='2.25')
+    tip = r * cmath.exp(1j * float(th_e))  # second route: the tip as a complex number
+    deg_a = deg(math.atan2(tip.imag, tip.real))
+    num(L2, 'p-water-wheel', 2, th_e * 180 / sp.pi, deg_a,
+        {'wrong-way': 2.25 * math.pi / 180, 'no-pi': 2.25 * 180}, asked=128.9, printed='128.9')
+    h_e = hub + r * sp.sin(th_e)
+    num(L2, 'p-water-wheel', 3, h_e, hub + tip.imag,
+        {'radian-mode': hub + r * math.sin(128.9), 'degree-mode': hub + r * math.sin(rad(2.25)),
+         'cos': hub + r * math.cos(rad(128.9)), 'no-hub': r * math.sin(rad(128.9))},
+        asked=4.87, extra_ok=(hub + r * math.sin(rad(128.9)), hub + r * 0.778), printed='4.87')
+    h_val = ev(h_e)
+    mir_e = 180 - th_e * 180 / sp.pi
+    mir_a = deg(bisect(lambda x: hub + r * math.sin(x) - h_val, 0, math.pi / 2))
+    num(L2, 'p-water-wheel', 4, mir_e, mir_a,
+        {'cos-mirror': 360 - 128.9, 'half-turn': 128.9 + 180, 'minus-90': 128.9 - 90}, asked=51.1, printed='51.1')
+    arc_e = r * (sp.pi - th_e)
+    arc_a = 2 * (r * math.pi / 2) - s_arc  # the top is r*pi/2 round; the two points sit equally either side of it
+    num(L2, 'p-water-wheel', 5, arc_e, arc_a,
+        {'degrees': r * 51.1, 'divided': 51.1 / r, 'between': s_arc - 2.14},
+        asked=2.14, extra_ok=(r * rad(51.1), r * 0.892), printed='2.14')
+    ok(abs(rad(51.1) - 0.892) < 0.0005 and abs(r * math.pi / 2 - 3.77) < 0.005 and abs(3.77 - 2.14 - 1.63) < 1e-9 and abs(5.4 - 3.77 - 1.63) < 1e-9, 'wheel p5: printed 0.892, 3.77, 1.63')
+
+    # ---- p-two-buoys: grid scans as the second route
+    h1 = lambda t: 6 + 0.8 * math.sin(math.pi * t / 5)
+    h2 = lambda t: 6 + 0.8 * math.sin(math.pi * (t - 3) / 5)
+    grid = [i / 10000 for i in range(0, 300001)]
+    peaks = [t for t in grid[1:-1] if h1(t) >= h1(t - 1e-4) and h1(t) >= h1(t + 1e-4)]
+    num(L2, 'p-two-buoys', 1, 2 * sp.pi / (sp.pi / 5), peaks[1] - peaks[0],
+        {'read-five': 5, 'b-itself': math.pi / 5, 'times': 2 * math.pi * math.pi / 5}, agree=1e-3)
+    num(L2, 'p-two-buoys', 2, sp.Rational(5, 2), peaks[0],
+        {'angle': math.pi / 2, 'half': 5, 'trough': 7.5}, agree=1e-3, printed='2.5')
+    peak2 = max((t for t in grid if t <= 10), key=h2)
+    num(L2, 'p-two-buoys', 3, sp.Rational(5, 2) + 3, peak2, {'early': 2.5 - 3, 'lag': 3}, agree=1e-3, printed='5.5')
+    gap_e = sp.Rational(4, 5) - sp.Rational(4, 5) * sp.sin(sp.Rational(11, 10) * sp.pi)
+    num(L2, 'p-two-buoys', 4, gap_e, h2(5.5) - h1(5.5),
+        {'height': h1(5.5), 'degree-mode': 6.8 - (6 + 0.8 * math.sin(rad(1.1 * math.pi))), 'full-swing': 1.6},
+        asked=1.05, extra_ok=(6.8 - 5.753,), printed='1.05')
+    ok(abs(0.8 * math.sin(1.1 * math.pi) + 0.247) < 0.0005 and abs(h1(5.5) - 5.753) < 0.0005, 'buoys p4: printed 0.247 and 5.753')
+
+    # ---- p-observation-wheel: second route is the wheel itself, height 28 - 25 cos(2 pi t / 20)
+    geo = lambda t: 28 - 25 * math.cos(2 * math.pi * t / 20)
+    num(L2, 'p-observation-wheel', 1, sp.Rational(50, 2), (max(map(geo, grid[:200001])) - min(map(geo, grid[:200001]))) / 2,
+        {'diameter': 50, 'top': 53, 'hub': 28}, agree=1e-6)
+    tt = sp.Symbol('t', positive=True)
+    expr_part(L2, 'p-observation-wheel', 2, sp.pi / 10,
+              {'period': sp.Integer(20), 'half': sp.pi / 20, 'flipped': 10 / sp.pi})
+    bsol = sp.solve(sp.Eq(2 * sp.pi / sp.Symbol('b', positive=True), 20))
+    ok(bsol == [sp.pi / 10], 'wheel p2: 2 pi / b = 20 gives pi/10')
+    c_alt = bisect(lambda t: geo(t) - 28, 0.1, 9.9)
+    num(L2, 'p-observation-wheel', 3, sp.Rational(20, 4), c_alt, {'boarding': 0, 'top': 10, 'falling': 15}, agree=1e-9)
+    model = lambda t: 25 * math.sin(math.pi / 10 * (t - 5)) + 28
+    ok(all(abs(model(t) - geo(t)) < 1e-9 for t in (0, 3.3, 7, 12.5, 19)), 'wheel: model equals the wheel at sample times')
+    h8 = 25 * sp.sin(sp.pi / 10 * 3) + 28
+    num(L2, 'p-observation-wheel', 4, h8, geo(8),
+        {'degree-mode': 25 * math.sin(rad(0.3 * math.pi)) + 28, 'no-shift': 25 * math.sin(0.8 * math.pi) + 28},
+        asked=48.23, extra_ok=(25 * 0.809 + 28,), printed='48.23')
+    t2 = bisect(lambda t: geo(t) - geo(8), 10.01, 19.99)
+    num(L2, 'p-observation-wheel', 5, 5 + (sp.pi - sp.Rational(3, 10) * sp.pi) / (sp.pi / 10), t2,
+        {'no-shift': 7, 'half-period': 18, 'mirror-start': 2}, agree=1e-9)
+
 # ================================================================ report
 print(f'numbers: {checks} checks, {len(fails)} failures')
 for f in fails:
