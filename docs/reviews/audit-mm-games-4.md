@@ -24,7 +24,7 @@ Pattern: `N. file | JSON path | severity | serious or minor | problem | evidence
 
 4. `l16-several-contracts.json` | `screens[2].widget.options[2]` (`skewE`) with its `why` and `feedback.byKey.skewE` | imprecise | minor | The question asks which set is "consistent", and the explain tests consistency by whether any combination can be traded through. Option `skewE` (E 2.3 to 2.7) also passes that test: its bids for E and F total 3.6, below the A ask of 3.7, and its asks total 4.4, above the A bid. It is off fair and loses on average, as its `why` says, but it is not inconsistent in the lesson's sense. | Concepts script section 3: `no_arb_three` is true for the key and for `skewE`, false for `evens` and `same`. | Make the option break the family, so one test covers all three wrong sets. Option text: `A 3.3 to 3.7, E 2.5 to 2.9, F 1.3 to 1.7`. `why` and `feedback.byKey.skewE`: `Your E sits 0.7 above fair. The interviewer sells you E at 2.5 and F at 1.3, buys A at 3.7 and locks 0.10 a set.` Basis: 2.5 + 1.3 − 3.7 = 0.10, flat on every face.
 
-5. `l18-betting-board.json`, `review-4.json` | l18 `screens[4].explain.text`, `summary.ideas[1]`; review-4 `items[9].explain.text` | imprecise | minor | Scaling every Kelly stake by the same factor under a cap is presented as the method, with "the mix Kelly chose" kept. Under a binding cap the growth-optimal mix changes: it trims the low-edge bet most. Equal scaling is a simple and common rule, not the optimum. The keys are right for the rule as instructed. | Concepts script section 5: maximising expected log growth for a, b, d with £30 at risk on £100 gives about £6.03, £7.82, £16.15 (growth 0.03259) against 0.03240 for £7.50, £7.50, £15. Basis: Kelly (1956) objective with a budget constraint; Thorp (2006), section 7. | l18 `screens[4].explain.text`, replace the last sentence with: `It is a simple rule, close to the best capped mix, which trims a a little more.` l18 `summary.ideas[1]`: `When the stakes break the limit, a simple rule scales them all alike: £40 capped at £30 means 0.75 of each.` review-4 `items[9].explain.text`, last sentence: `Equal scaling keeps the mix the same under the cap.` (no change needed if the l18 line is fixed).
+5. `l18-betting-board.json`, `review-4.json` | l18 `screens[4].explain.text`, `summary.ideas[1]`; review-4 `items[9].explain.text` | imprecise | minor | Scaling every Kelly stake by the same factor under a cap is presented as the method, with "the mix Kelly chose" kept. Under a binding cap the growth-optimal mix changes: it trims the low-edge bet most. Equal scaling is a simple and common rule, not the optimum. The keys are right for the rule as instructed. | Concepts script section 5: maximising expected log growth for a, b, d with £30 at risk on £100 gives about £6.03, £7.82, £16.15 (growth 0.03259) against 0.03240 for £7.50, £7.50, £15. Basis: Kelly (1956) objective with a budget constraint; Thorp (2006), section 7. | l18 `screens[4].explain.text`, replace the last sentence with: `It is a simple rule, close to the best capped mix, which trims bet a a little more.` l18 `summary.ideas[1]`: `When the stakes break the limit, a simple rule scales them all alike: £40 capped at £30 means 0.75 of each.` review-4 `items[9].explain.text`, last sentence: `Equal scaling keeps the mix the same under the cap.` (no change needed if the l18 line is fixed).
 
 6. `l17-options-on-a-game.json` | `screens[8].explain.text` | imprecise | minor | "A short straddle earns small sums often and loses large ones rarely" is the market intuition, and it does not hold on this game. Sold at 2.0, the straddle gains on 16 of 36 rolls (2 or 1), breaks even on 8, and loses on 12 (1, 2 or 3). | Enumeration, concepts script section 4. | Replace the last sentence with: `A short straddle keeps most of its premium near 7 and owes most at the extremes.`
 
@@ -48,8 +48,29 @@ B. `l17-options-on-a-game.json` `screens[3].prose` and `homework-4.json` `items[
 
 ## Overlap with the earlier review
 
-Filled after the first commit. See below.
+Read after commit `a9cadaa8`: `docs/reviews/review-mm-games.md` (Level 4 section and Fix pass items 24 to 30) and `docs/reports/mm-games-4.md`.
+
+The earlier review raised seven Level 4 findings. Two are conceptual: the l16 `screens[2]` option `same` line ("E and F pay less than A on every face", false) and the l18 `screens[11]` slip `cut` line (reasoning that did not give the stored value). Both were fixed before this audit, and the fixed text is `correct` in the ledger. The other five are mechanical (tolerances that touch, a missing unit, a caption letter, a stale word, table widths).
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| Found by this audit only | 12 | findings 1 to 12 (1 wrong, 11 imprecise; 2 serious) |
+| Found by the earlier review only | 2 | l16 `same` why; l18 `cut` feedback (both already fixed, so not visible to a later read) |
+| Found by both | 0 | |
+
+The earlier read checked numbers and wording and found no definitional gap. The two serious findings here (the definition of arbitrage, and the missing "one outcome must happen") are of the kind a number check cannot see. The author report's joint-Kelly figures (about 0.094, 0.095, 0.195) agree with this audit's gradient-ascent result.
 
 ## Gates
 
-Filled after the first commit. See below.
+Run on branch `worktree-agent-a3943be3d29330bd0`, content unchanged.
+
+- Validator (`node tools/validate.mjs`, from `app/`): 0 errors, 4,137 warnings. The manifest was not changed.
+- Concepts script `docs/reports/mm-games-L4-concepts.py`: exit 1. 293 checks pass, 1 fails (finding 1, review-4 `items[2].explain`), 10 notes. It exits 0 once finding 1 is fixed.
+- Number scripts: no committed script named for level 4. The course's one number script, `docs/reports/mm-games-3-perf-numbers.py`, exits 0 (0 failures).
+- Voice scan (`VOICE_BASE=.../mm-games/ python3 docs/reviews/voice-scan.py 35 --summary`): 0 sentences over 35 words, 0 explanations over three sentences, 9,888 sentences scanned.
+- Playthrough with `--local-cdn`, desktop: all passed. l14 16 checks, quiz 4/4; l15, l16, l17, l18 15 checks each, quiz 3/3; review-4 10 of 10 recorded; homework-4 9 of 9 right, 40 of 40 marks.
+- Playthrough with `--local-cdn --mobile`: all passed, same counts.
+- Trade games replayed through `app/js/engine/widgets/trade.js` `play()`: strategy and opening-quote runs match every explain (l14 0 and −200; l15 +0.80; l16 +0.70 and −5.40; l17 +1.70; review-4 0 and −160; homework-4 +1.80).
+- Engine limits: none found. No bullet added to `docs/BACKLOG-INBOX.md`.
+
+Proposed fixes were checked against the voice gate by hand: all under 35 words, no exclamation marks or em-dashes. In fix 5, "bet a a little more" is intended: the first "a" is the bet's name.
