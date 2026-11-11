@@ -463,5 +463,7 @@ def one_bit_pairs(codes):
         seen[c] = seen.get(c, 0) + 1
     return total
 ''')
+add('R_stop_recursive_fire_limit', 'ci-stop-cascade', 'the same recursion with the recursion limit raised first',
+    '\nimport sys\nsys.setrecursionlimit(100000)\n' + C['R_stop_recursive_fire'][1])
 
 CANDIDATES = C
