@@ -214,10 +214,10 @@ ok(f'l16 MC news given alert and drop {m:.4f} vs 0.2', abs(m - 0.2) < 0.004)
 
 # ---------------- l17 correlated defaults ----------------
 L = 'l17-correlated-defaults'
-# screens[5]: the prose says "The leaves show P(3 or more defaults) in each regime",
-# so those two leaves are conditional tails by declaration; they are checked below.
-trees(L, stated_leaves=('screens[5]',))
-S(L, 'screens[5].prose', 'The leaves show $P(3 \\text{ or more defaults})$ in each regime')
+# screens[5]: since the round 3 fix pass the regime tails are second-level branches
+# and the leaves are path products, so the generic tree check covers this tree too.
+trees(L)
+S(L, 'screens[5].prose', 'The second branches show $P(3 \\text{ or more defaults})$ in each regime')
 ind = [binom_pmf(10, k, 0.05) for k in range(3)]
 ind.append(1 - sum(ind))
 st = get(L, 'screens[1].canvas.state.values')
@@ -245,8 +245,8 @@ pair = 0.2 * 0.2 ** 2 + 0.8 * 0.0125 ** 2
 A(L, 'screens[4]', pair, indep=0.05 ** 2, recpath=0.008, given=0.04)
 S(L, 'screens[4].explain.text', 'more than three times as likely', pair / 0.0025 > 3)
 tr, tn = binom_tail(3, 10, 0.2), binom_tail(3, 10, 0.0125)
-lv = get(L, 'screens[5].canvas.params.leaves')
-ok('l17 s5 regime tails', close(lv['r'], tr, 6e-5) and close(lv['n'], tn, 6e-5))
+tp = get(L, 'screens[5].canvas.params.levels[1].branches[0].p')
+ok('l17 s5 regime tails', close(tp['r'], tr, 6e-5) and close(tp['n'], tn, 6e-5))
 A(L, 'screens[5]', 0.2 * tr + 0.8 * tn, indep=ind[3], rec=tr, avg=(0.3222 + 0.0002) / 2, recw=0.2 * 0.3222)
 S(L, 'screens[5].explain.text', '5.6 times', round((0.2 * tr + 0.8 * tn) / ind[3], 1) == 5.6)
 C(L, 'screens[6]', 'right')
