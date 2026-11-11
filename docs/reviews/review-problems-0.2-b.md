@@ -158,3 +158,46 @@ One fix pass on Sonnet covers all of it. Findings 1, 2 and 6 change graded answe
 | `dump.py` | compact dump of a set for reading | `python3` |
 
 All run from the repo root.
+
+## Fix pass
+
+Applied with targeted edits to the four content files and the two authors' scripts (`docs/reports/problems-quadratics-numbers.py` 646 checks, `docs/reports/problems-equations-numbers.py` 1154 checks, both exit 0). Every new number was recomputed by two routes (sympy exact, then counting seats or plots, a search over whole numbers, the formula, or the value put back) inside those scripts, and each new check is tightened to the new value so a revert fails.
+
+1. `p-cinema-block`: fixed. New numbers $(x+4)(x+11) = x^2+15x+44$, 8 seats out, $x^2+15x+36 = (x+3)(x+12)$ (only 3 and 12 sum to 15; found by search), 286 at $x=10$ ($13 \times 22$; $294 - 8$; counted by rows), part 4 keeps "no" with $2k = 15$, $k = 7.5$. All feedback, `wrong` and explanations rewritten as in the review; the choice options `four`/`three` are now `six`/`five`.
+2. `p-allotment-plots`: fixed. Plots $x^2+11x+30 = (x+5)(x+6)$ and $2x^2+19x+45 = (x+5)(2x+9)$ ($ac = 90$, 9 and 10; grouping expanded back), joined $3(x+5)^2$ ($3x + 15$), 300 at $x=5$ ($110 + 190$). `wrong` values 900 and 600 unchanged.
+3. `p-cinema-block` 1 and `p-steel-plates` 3, "expanded and simplified": deferred, engine only (inbox).
+4. `p-allotment-plots` 3, `(x+5)(x+6+2x+9)` passing: deferred, engine only (inbox).
+5. `p-bus-chase` 4: fixed. `tol` 0.006 and the question says the exact answer is a square root. Script proves $6.32^2 = 39.94 < 40 < 40.07 = 6.33^2$, band takes 6.32, 6.325, 6.33 and refuses 6.3, 6.31, 6.34 and both `wrong` values (3.16228, 40).
+6. `p-bus-chase` 3: fixed. Sam starts 6 m behind: $t^2 - 6t + 6 = (t-3)^2 - 3$, roots $3 \pm \sqrt{3}$ = 1.26795 and 4.73205 (formula route $\frac{6 \pm \sqrt{12}}{2}$ and a fine grid agree), answer band 0.005 with accept "1.27". `wrong`: `larger` 4.73205, `half-root` $3 - \sqrt{12} = -0.4641$, `no-root` 0 (band 0.001).
+7. `p-cliff-stone`: fixed, story only. Now a flare fired from a ship's deck (id kept, numbers unchanged). "flare", "deck", "ship" appear in no other 0.2 file; `fresh-check` gate and `--min-run 8 --min-share 0` both 0 hits on set 2.
+8. `p-canal-arch` 3: fixed in the question ("Type only the expression, with no $y =$ in front"). Engine row stays in the inbox. Proved with the engine graders (`probe2.mjs`, scratchpad): `-0.2(x-10)^2+20`, `20-0.2(x-10)^2` and `-\frac{1}{5}(x-10)^2+20` are accepted; the unworked `-0.2x(x-20)` and `-0.2x^2+4x` are refused with the form line; `sign-h` still lands on its own key.
+9. `p-sprinkler-bank` 1: fixed in the question and the `form` line ("keep the decimals, as in $1.5x$"). Engine row stays in the inbox. Proved: `2.5x-0.5x^2`, `-0.5x^2+2.5x` and `\frac{5}{2}x-\frac{1}{2}x^2` accepted; `(3x-0.5x^2)-0.5x` and `3x-0.5x-0.5x^2` refused with the form line; `added` lands on its key. The `\frac{5x}{2}` typings are still refused (the engine's size test), now with a line that tells the learner to keep the decimals.
+10. `p-salt-solutions` 1: fixed. The engine cannot accept $0.15x + 0.4y = 0.25(x+y)$ as the key (the polynomials differ; only the system with $x+y=500$ agrees), so the question now asks for the right-hand side as one number, the true both-letters line has a `wrong` entry `both-letters` with its own line, and `0.15x+0.4y=0.25(500)` is added to `accept` (the engine's text match takes it). Proved with the engine graders: `0.15x+0.4y=125`, `3x+8y=2500`, `0.25\times500` and `0.25(500)` accepted; `0.15x+0.4y=0.25(x+y)` and `15x+40y=25(x+y)` refused on `both-letters`; the unworked `x+y=500` refused; `per-cent`, `strength`, `swapped` still land on their keys. Script checks that the both-letters balance with $x+y=500$ gives 300 and 200.
+11. `p-remote-cars`: fixed. Part 3 now starts from part 2's 49 m ("A marker post stands 32 m further on, 81 m from the start line", $49 + 32 = 81$) and part 4 restates 81 m. Answers, `wrong` and feedback unchanged.
+
+Gates: validator 0 errors (no new warning on the four files after splitting two long sentences); `fresh-check` 0 hits on each of the four sets; playthrough `--problems` green for the four sets, with and without `--mobile`; voice scan 35 on both course folders 0 and 0. Not edited: engine files, `course.json`, lesson ids, equations sets 1 to 3. `proposed.py` now reports "failures" only because its freshness greps find the new words and expressions in the files it was written to protect; those are the applied fixes.
+
+### Changed graded values for the delta reader
+
+`quadratics/problems-1.json`, `p-cinema-block` (all four parts; whole item recomputed):
+- part 1 answer `x^2+11x+24` to `x^2+15x+44`; accept the same; `wrong` `x^2+24` to `x^2+44`, `x^2+11x+11` to `x^2+15x+15`, `x^2+24x+11` to `x^2+44x+15`.
+- part 2 answer `(x+2)(x+9)` to `(x+3)(x+12)` (both orders); `wrong` `sum-nine (x+3)(x+6)` to `sum-thirteen (x+4)(x+9)`, `one-eighteen (x+1)(x+18)` to `square (x+6)^2`, `signs (x-2)(x-9)` to `(x-3)(x-12)`.
+- part 3 answer 228 to 286 (accept "286", tol 0); `wrong` `kept` 234 to 294, `sum-nine` 208 to `sum-thirteen` 266, `one-eighteen` 308 to `square` 256.
+- part 4 key unchanged (`no-middle`, text now "$2k = 15$"); distractors `four` ("8 seats out, $(x+4)^2$") to `six` ("8 seats out, $(x+6)^2$", $x^2+15x+36$), `three` ("15 seats out, $(x+3)^2$") to `five` ("19 seats out, $(x+5)^2$", $x^2+15x+25$).
+
+`quadratics/problems-1.json`, `p-allotment-plots`:
+- part 1 answer `(x+4)(x+5)` to `(x+5)(x+6)`; `wrong` `sum-twelve (x+2)(x+10)` to `sum-thirteen (x+3)(x+10)`, `sum-21 (x+1)(x+20)` to `sum-seventeen (x+2)(x+15)`.
+- part 2 answer `(x+4)(2x+7)` to `(x+5)(2x+9)`; `wrong` `no-group (x+7)(x+8)` to `(x+9)(x+10)`, `wrong-pair (2x+4)(x+7)` to `(2x+5)(x+9)`.
+- part 3 answer `3(x+4)^2` to `3(x+5)^2` (accept also `3(x+5)(x+5)`); `wrong` `6(x+4)^2` to `6(x+5)^2`, `3(x+4)` to `3(x+5)`.
+- part 4 answer 300 unchanged (now at $x = 5$, was $x = 6$); `wrong` 900 and 600 unchanged.
+
+`quadratics/problems-2.json`:
+- `p-bus-chase` part 3 answer 1.58579 to 1.26795; accept "1.59" to "1.27"; `wrong` `larger` 4.41421 to 4.73205, `half-root` 0.17157 to $-0.4641$, `no-root` 1 to 0 (tol 0.001).
+- `p-bus-chase` part 4 band `abs` 0.005 to 0.006 (answer 6.32456 and `wrong` unchanged).
+- `p-cliff-stone`: no value changed (story only).
+
+`equations/problems-4.json`:
+- `p-salt-solutions` part 1: new `wrong` entry `both-letters` `0.15x+0.4y=0.25(x+y)` with its `byKey` line; new `accept` `0.15x+0.4y=0.25(500)`; answer unchanged.
+- `p-remote-cars` parts 3 and 4: question text only.
+
+`quadratics/problems-3.json`: `p-canal-arch` part 3 and `p-sprinkler-bank` part 1: question text (and the sprinkler `form` line) only; keys, `accept` and `wrong` unchanged.
