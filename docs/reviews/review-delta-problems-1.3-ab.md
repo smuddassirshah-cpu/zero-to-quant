@@ -73,3 +73,11 @@ Tags: `wrong` = a learner is marked wrongly or told something false; `unclear` =
 | `minor` | 2 | 2 | 4 |
 
 Findings 1, 3 and 4 are text edits with no graded value changed; a fix pass on Sonnet covers them without a further delta read. Findings 2 and 5 need a ruling, and both are proposed to stand.
+
+## Fix pass
+
+1. Fixed. The three `accept` lines now read "$13.83$ (13.84 is accepted too)", "$-0.0719$ ($-0.0720$ is accepted too)" and "$2.967$ (2.968 is accepted too)". Bands unchanged; each printed end lies inside its band.
+2. Stands (main session ruling). No edit.
+3. Fixed. `p-cube-root-27` part 3 `feedback.generic` now reads $f''(16)$. No other string of the item carries a 27 or a cube root; only the kept id does.
+4. Fixed. Recomputed: 0.056 + 0.112 x 0.02 = 0.05824, and 0.056 x 1.0404 = 0.0582624, which prints as 0.05826. `explain` now ends "to 0.05824"; `correct` says the scaled weights give "the exact value, 0.05826". Key 0.05824 and band 0.0001 unchanged; the `accept` line (0.0582 and 0.0583 accepted) is true of the band and left.
+5. Stands (main session ruling). No edit.
