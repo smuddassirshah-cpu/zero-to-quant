@@ -420,11 +420,135 @@ def level3(L):
     ok(blocks[0] == 8 and blocks[-1] == 16, 'fund: n from 8 to 16')
 
 
+# ================================================================== level 4 (problems-4; added after sets 1 to 3, which are unchanged)
+# Method 1: sympy solve / linsolve, or Fractions. Method 2: a brute search over whole numbers, a step-by-step simulation
+# (minute by minute, second by second, tray by tray), or the story worked forward. Every slip is rebuilt from its description.
+def level4(L):
+    b, c, x, y, n, t = (SYM[v] for v in ('b', 'c', 'x', 'y', 'n', 't'))
+
+    # p-rowing-current: b + c = 14, b - c = 10
+    expr_part(L, 'p-rowing-current', 1, 'b-c=10', {'reversed': 'c-b=10', 'helps': 'b+c=10', 'speed': 'b-c=14'})
+    sol = sp.solve([sp.Eq(b + c, 14), sp.Eq(b - c, 10)], [b, c])
+    pairs = [(u, v) for u in range(0, 40) for v in range(0, 40) if u + v == 14 and u - v == 10]
+    ok(pairs == [(12, 2)], f'rowing: brute pairs {pairs}')
+    bb, cc = sol[b], sol[c]
+    num(L, 'p-rowing-current', 2, bb, pairs[0][0], {'stopped': 2 * bb, 'current': cc, 'two-c': 14 - 10})
+    num(L, 'p-rowing-current', 3, 14 - bb, pairs[0][1], {'carried': 14 - 2 * bb, 'added': 14 + bb, 'sign': 10 - bb})
+    km, minutes = F(0), 0
+    while km < 42:                                   # minute by minute against the current
+        km += F(16 - pairs[0][1], 60)
+        minutes += 1
+    hours = F(42, 16 - cc)
+    num(L, 'p-rowing-current', 4, hours, F(minutes, 60),
+        {'with': F(42, 16 + cc), 'still': F(42, 16), 'multiplied': 42 * (16 - cc)})
+    ok(14 - bb == cc and bb - cc == 10, 'rowing: c = 2 fits both equations')
+    stated('rowing: 14 + 10', 24, 14 + 10)
+    stated('rowing: 12 - 2', 10, bb - cc)
+    stated('rowing: 16 - 2', 14, 16 - cc)
+    stated('rowing: 3 x 14', 42, 3 * 14)
+
+    # p-seedling-trays: y = x + 8, 5x + 3y = 168
+    expr_part(L, 'p-seedling-trays', 1, 'x+8', {'times': '8x', 'reversed': 'x-8'})
+    xs = sp.solve(sp.Eq(5 * x + 3 * (x + 8), 168), x)[0]
+    brute_x = brute(lambda v: 5 * v + 3 * (v + 8) == 168, 0, 200)
+    num(L, 'p-seedling-trays', 2, xs, brute_x[0],
+        {'bracket': F(168 - 8, 8), 'reversed': F(168 + 24, 8), 'no-eight': F(168, 8), 'times': F(168, 5 + 24)})
+    ok(brute_x == [18], 'trays: one whole-number x')
+    ys = xs + 8
+    stated('trays: 8x = 144', 144, 168 - 24)
+    stated('trays: 90 + 78', 168, 5 * 18 + 3 * 26)
+    stated('trays: y = 26', 26, ys)
+    expr_part(L, 'p-seedling-trays', 3, '62n', {'equal': '18n+26n', 'reversed': '18\\frac{n}{2}+26n', 'carried': '20(2n)+28n'})
+    ok(all(sum([xs] * (2 * k) + [ys] * k) == 62 * k for k in range(1, 12)), 'trays: 62n by adding trays one by one')
+    stated('trays: 36n + 26n', 62, 2 * xs + ys)
+    nn = sp.solve(sp.Eq(62 * n, 310), n)[0]
+    order = [k for k in range(0, 50) if 2 * k * 18 + k * 26 == 310]
+    num(L, 'p-seedling-trays', 4, 2 * nn, 2 * order[0], {'large': nn, 'both': 3 * nn, 'plants': 2 * nn * xs})
+    stated('trays: 180 + 130', 310, 10 * 18 + 5 * 26)
+
+    # p-remote-cars: d = t^2, d = 7t
+    roots = sorted(sp.solve(sp.Eq(t ** 2, 7 * t), t))
+    brute_t = brute(lambda v: v * v == 7 * v, -50, 50)
+    ok(roots == [0, 7] and brute_t == [0, 7], f'cars: level times {roots} {brute_t}')
+    w1 = L['p-remote-cars']['parts'][0]['widget']
+    ok(sorted(w1['answers']) == [0, 7] and w1.get('unordered') is True, 'cars p1: key set')
+    bk1 = L['p-remote-cars']['parts'][0]['feedback']['byKey']
+    ok({'count', 'point'} <= set(bk1), 'cars p1: byKey for count and point')
+    ok([z['value'] for z in w1['wrong']] == ['7, 49'] and sorted([7, 7 * 7]) != [0, 7], 'cars p1: wrong set is (t, d) of the crossing')
+    d7 = 7 * roots[1]
+    num(L, 'p-remote-cars', 2, d7, roots[1] ** 2, {'double': 2 * roots[1], 'time': roots[1]})
+    post = [r for r in sp.solve(sp.Eq(t ** 2, 81), t) if r >= 0][0]
+    brute_post = brute(lambda v: v * v == 81, -100, 100)
+    ok(brute_post == [-9, 9], f'cars: t^2 = 81 has {brute_post}')
+    num(L, 'p-remote-cars', 3, post, max(brute_post), {'negative': -post, 'halved': F(81, 2), 'squared': 81 ** 2})
+    a_pos = sum(2 * s - 1 for s in range(1, 10))      # car A second by second: 1 + 3 + ... + 17
+    b_pos = sum(7 for _ in range(9))                   # car B second by second
+    num(L, 'p-remote-cars', 4, 81 - 7 * post, a_pos - b_pos,
+        {'position': 7 * post, 'meeting': 81 - d7, 'time-gap': post - roots[1], 'carried': 81 - 7 * (-post)})
+    stated('cars: 7 x 9', 63, 7 * 9)
+
+    # p-salt-solutions: x + y = 500, 0.15x + 0.4y = 125
+    expr_part(L, 'p-salt-solutions', 1, '0.15x+0.4y=125',
+              {'per-cent': '15x+40y=125', 'strength': '0.15x+0.4y=0.25', 'swapped': '0.4x+0.15y=125'})
+    stated('salt: 25% of 500', 125, F(25, 100) * 500)
+    lin = sp.solve([sp.Eq(x + y, 500), sp.Eq(sp.Rational(15, 100) * x + sp.Rational(40, 100) * y, 125)], [x, y])
+    salt = lambda u, v: F(15, 100) * u + F(40, 100) * v
+    brute_y = brute(lambda v: salt(500 - v, v) == 125, 0, 500)
+    swapped_y = sp.solve([sp.Eq(x + y, 500), sp.Eq(sp.Rational(40, 100) * x + sp.Rational(15, 100) * y, 125)], [x, y])[y]
+    num(L, 'p-salt-solutions', 2, lin[y], brute_y[0],
+        {'other': lin[x], 'all-strong': F(125) / F(40, 100), 'even': 250, 'multiplied': 50 * F(25, 100)})
+    ok(swapped_y == lin[x], 'salt: the swapped-strengths slip gives 300, the value of "other"')
+    stated('salt: 0.15 x 500', 75, F(15, 100) * 500)
+    stated('salt: 0.25y = 50', 50, 125 - 75)
+    stated('salt: half each is 27.5%', F(275, 1000), salt(250, 250) / 500)
+    num(L, 'p-salt-solutions', 3, 500 - lin[y], brute(lambda u: salt(u, 200) == 125, 0, 500)[0],
+        {'salt': 125 - F(40, 100) * 200, 'carried': 500 - F(125) / F(40, 100), 'added': 500 + 200})
+    stated('salt: 45 + 80', 125, salt(300, 200))
+    ratio = sp.solve(sp.Eq(sp.Rational(15, 100) * x + sp.Rational(40, 100) * y, sp.Rational(25, 100) * (x + y)), x)[0]
+    ok(sp.simplify(ratio - sp.Rational(3, 2) * y) == 0, f'salt: every 25% batch has x = 3y/2, got {ratio}')
+    ok(F(300, 200) == F(3, 2), 'salt: 300 to 200 is 3 to 2')
+    y360 = sp.solve(sp.Eq(salt(360, 0) + sp.Rational(40, 100) * y, sp.Rational(25, 100) * (360 + y)), y)[0]
+    brute_360 = brute(lambda v: salt(360, v) == F(25, 100) * (360 + v), 0, 2000)
+    num(L, 'p-salt-solutions', 4, 360 + y360, 360 + brute_360[0],
+        {'stopped': y360, 'reversed': 360 + F(3, 2) * 360, 'added': 500 + 360 - 300})
+    stated('salt: 2/3 x 360', 240, F(2, 3) * 360)
+    stated('salt: 54 + 96', 150, salt(360, 240))
+    stated('salt: 25% of 600', 150, F(25, 100) * 600)
+
+
+def run_level4():
+    """run_level for set 4: the same checks, with form_stated reading a numeric `answers` set (cars part 1) value by value."""
+    items = load(4)
+    if items is None:
+        return
+    level4(items)
+    for iid, it in items.items():
+        for k, part in enumerate(it['parts'], 1):
+            w = part['widget']
+            vals = w.get('answers', [w.get('answer')]) if w['kind'] == 'numeric' else []
+            if any(not float(v).is_integer() for v in vals):
+                ok(re.search(r'decimal|places?|fraction|nearest|per cent|percentage|in pounds|in pence|%', part['question'], re.I) is not None,
+                   f'{iid} p{k}: form not stated')
+            if w['kind'] == 'numeric':
+                ok(re.search(r'in (km/h|hours|metres|seconds|grams)|how many|values of', part['question'], re.I) is not None,
+                   f'{iid} p{k}: unit or count not named')
+    typed = sum(1 for it in items.values() for p in it['parts'] if p['widget']['kind'] in ('numeric', 'expression'))
+    total = sum(len(it['parts']) for it in items.values())
+    ok(3 * typed >= 2 * total, f'level 4: typed parts {typed} of {total}, under two thirds')
+    ok(any(it['difficulty'] == 5 for it in items.values()), 'level 4: no difficulty 5')
+    ok(all(3 <= it['difficulty'] <= 5 and 3 <= len(it['parts']) <= 5 for it in items.values()), 'level 4: difficulty or part count')
+    lv = Level('equations', 4)
+    lv.check_wrongs('problems')
+    bad = [rr for rr in lv.results if not rr[0]]
+    ok(not bad, f'level 4: numbers_lib check_wrongs failures {bad}')
+
+
 run_level(1, level1)
 run_level(2, level2)
 run_level(3, level3)
+run_level4()
 
-present = [n for n in (1, 2, 3) if load(n) is not None]
+present = [n for n in (1, 2, 3, 4) if load(n) is not None]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails:
     print('FAIL', m)
