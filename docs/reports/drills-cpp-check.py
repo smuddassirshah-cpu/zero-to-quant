@@ -539,7 +539,7 @@ def main():
                 if not ok:
                     errors.append(f'{i} {kind}[{n}]: file {got!r}, model {want!r}')
                 checked += 1
-    want_mix = {'cpp': {1: 7, 2: 6, 3: 4}, 'cpp-pricing': {1: 2, 2: 3, 3: 3}}
+    want_mix = {'cpp': {1: 6, 2: 7, 3: 4}, 'cpp-pricing': {1: 2, 2: 3, 3: 3}}
     if len(files) == 25 and mix != want_mix:
         errors.append(f'mix {mix} is not {want_mix}')
     nb = brief_numbers()

@@ -20,7 +20,7 @@
   ],
   "hint": "Add a signed quantity (`np.where` on the side) and a value column `qty * price` first. Then `groupby(\"ticker\")[[\"signed\", \"value\", \"qty\"]].sum()` adds them up and `groupby(\"ticker\").size()` counts the fills; `vwap` is total value over total quantity.",
   "prelude": "import numpy as np\nimport pandas as pd\n\nnan = float('nan')\n\ndef _plain(v):\n    # values in order as a list, None where a value is missing (the drill compares plain lists)\n    return [None if isinstance(x, float) and x != x else x for x in v.tolist()]\n\ndef daily(start, values):\n    # one value per weekday from start; the index is named date\n    idx = pd.bdate_range(start, periods=len(values), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef on(dates, values):\n    # values on the dates given, in that order\n    idx = pd.DatetimeIndex(pd.to_datetime(dates), name='date')\n    return pd.Series(values, index=idx, dtype=float, name='close')\n\ndef make_fills(rows):\n    # rows of (ticker, side, qty, price)\n    return pd.DataFrame(rows, columns=['ticker', 'side', 'qty', 'price'])\n\nFILLS = make_fills([('VOD', 'B', 1200, 72.40), ('BARC', 'S', 500, 210.5), ('VOD', 'B', 800, 72.10),\n               ('VOD', 'S', 1500, 72.90), ('BARC', 'B', 300, 209.8), ('AZN', 'B', 40, 11950.0)])\n",
-  "starter": "import numpy as np\nimport pandas as pd\n\ndef day_fill_summary(fills):\n    df = fills.copy()\n    out = ...\n    return out\n",
+  "starter": "import numpy as np\nimport pandas as pd\n\ndef day_fill_summary(fills):\n    # your code here\n    return fills\n",
   "examples": [
     {
       "call": "day_fill_summary(FILLS)[\"net\"].tolist()",
@@ -104,7 +104,7 @@
     }
   ],
   "how": "Submit runs 11 hidden tests. Lists are compared item by item. Each float counts when it is within a relative `1e-9` of the expected value; text and whole numbers must be equal.",
-  "where": "Draws on numpy-pandas lesson l12-split-apply-combine: `groupby` with named aggregations.",
+  "where": "Draws on numpy-pandas lesson l12-split-apply-combine: sums and a count inside each group.",
   "solution": "import numpy as np\nimport pandas as pd\n\ndef day_fill_summary(fills):\n    df = fills.copy()\n    df[\"signed\"] = np.where(df[\"side\"] == \"B\", df[\"qty\"], -df[\"qty\"])\n    df[\"value\"] = df[\"qty\"] * df[\"price\"]\n    g = df.groupby(\"ticker\").agg(net=(\"signed\", \"sum\"), value=(\"value\", \"sum\"),\n                                  qty=(\"qty\", \"sum\"), fills=(\"qty\", \"size\"))\n    g[\"vwap\"] = g[\"value\"] / g[\"qty\"]\n    return g[[\"net\", \"vwap\", \"fills\"]]\n",
   "notes": [
     "A signed quantity column turns the net position into a plain sum, and a value column turns the weighted average into two sums.",

@@ -154,3 +154,22 @@ Drills `py` clean in full: `py-batches`, `py-best-desk-each-day`, `py-big-move-d
 | 3, problem sets 1.5 d | 0 | 0 | 3 | closed |
 
 Finding classes (SESSION PROTOCOL 6). "A pack report left behind by a fix pass" is now seen twice (session Z finding 10, finding 8 here). "A check script's target moved to fit the content" (finding 3) is new. "A rule the fix pass wrote into a brief without a test" (finding 2) is the class of the three drill reviews, now seen in a fix pass: a fixer who adds a sentence to a brief should add or adapt a test for it in the same pass.
+
+## Fix pass
+
+1. Fixed: `cpp-crossings` `constraints[0]` now names the small struct that has only `<`; `notes[0]` says "every type the tests use".
+2. Fixed: `cpp-fill-csv` `tests[14]` replaced by `"1\r2,5\n3,4\r\r\n6,1\n"`, expect 6 (the row `3,4\r` is bad after one `\r` is dropped; strip-all would add 12 and give 18). Planted-check: 5 planted, 0 failures.
+3. Fixed: `cpp-clip-returns` to difficulty 2, pace 540 (file and index row); `want_mix` back to 6 / 7 / 4; `drills-cpp.md` row and mix line updated (8 / 10 / 7 in all, the brief's mix). The check script passes.
+4. Fixed: `cpp-prob-between` `constraints[0]` adds that `b - a` is at least half a standard deviation, or the band is empty.
+5. Fixed: `cpp-running-stats` `constraints[0]` reworded as the reader gave it (no promise beyond the running method on whole-number tests).
+6. Fixed: `py-excess-vs-benchmark` brief: definition first, then "After a date the share misses, its next return spans two days while the index's still spans one; real code would flag it."
+7. Fixed: (a) `py-fx-to-pounds` hint makes `r = np.asarray(rates, dtype=float)` first (`notes[0]` left, it only describes the reshape); (b) `py-growth-curve` hint handles `None`; (c) `py-day-fills` `where` reworded.
+8. Fixed: the seven stale rows of `drills-py-a.md` and `drills-py-b.md` now carry the file's test and planted counts (cross-up-days 14/5, split-pence 13/4, batches 14/4, cost-basis 15/5, growth-curve 12/4, month-grid 15/4, excess-vs-benchmark 11/5).
+9. Fixed: the four starters (`py-carry-forward-limit`, `py-combined-desk-pnl`, `py-day-fills`, `py-gap-aware-returns`) now use the house form: signature, `# your code here`, failing return. Starter check passes in planted-check and `drills-py-b-check.py`.
+10. Fixed: `random-vars/problems-4` `p-courier-vans` part 4 question now says part 3 showed the number of vans changes the chances of late parcels.
+11. Fixed: `limits-thm/problems-4` closing brace of `byKey` back on its own line.
+12. Fixed: bullet added to `docs/BACKLOG-INBOX.md` under `Raised later (delta session AA):` (the reader's wording; the pass-d bullet is about sampling, so a new section was used).
+
+Graded answers and test `expect` changed: one test `expect`, `cpp-fill-csv` `tests[14]` (12 to 6, with its input), no graded problem answer.
+
+Gates: validator 0 errors; voice scan 0 and 0 on drills, limits-thm, random-vars; `planted-check --require` on the 12 changed drills 0 failures; `drills-cpp-check.py` 354 cases, 0 errors; `drills-py-b-check.py` 0 errors; `playthrough --drill` on the 12, desktop and `--mobile`, all passed; `--problems` on random-vars/problems-4 and limits-thm/problems-4, both widths, all passed; numbers scripts random-vars 1333 and limits-thm 1539 checks, 0 failures.
