@@ -37,6 +37,7 @@ say(6 * (23 + 53) // 2 == 228 and 305 - sum(tins[:4]) == 243 and sum(tins[:4]) =
 # --- finding S7: pizza, 11 toppings, exactly 4, then a 12th
 c = lambda n, k: sum(1 for _ in combinations(range(n), k))
 say(c(11, 4) == 330 == 11 * 10 * 9 * 8 // 24 and 11 * 10 * 9 * 8 == 7920 and 11 * 4 == 44 and 11 ** 4 == 14641, 'part 1: 330, ordered 7920, 44')
+say(7920 // 6 == 1320, 'part 1 slip 1320 (divided by 3!)')
 say(c(11, 7) == 330 and 11 * 10 * 9 * 8 * 7 * 6 * 5 == 1663200, 'part 2 (old form): 330')
 say(c(11, 4) + c(11, 7) == 660, 'part 2 (new form): 660')
 say(c(11, 3) == 165 and c(12, 4) == 495 == 330 + 165 and 330 + 11 == 341 and 12 * 11 * 10 * 9 == 11880, 'part 3: 495; slips 341, 660, 11880')

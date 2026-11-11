@@ -52,3 +52,17 @@ for (const t of ['5\\sqrt{3}', '\\sqrt{75}', '\\frac{10\\sqrt{3}}{2}', '\\sqrt{1
   let r; try { r = simplified(t) ? 'passes ' : 'REFUSED'; } catch (e) { r = 'error  '; }
   console.log(`   ${r}  ${t}`);
 }
+console.log('   and the forms of finding 11 (sides of 8 cm):');
+for (const t of ['5\\cdot\\sqrt{3}', '4\\sqrt{3}', '4\\cdot\\sqrt{3}', '\\sqrt{48}', '8\\sqrt{3}', '\\sqrt{192}', '\\sqrt{8^2-4^2}']) {
+  let r; try { r = simplified(t) ? 'passes ' : 'REFUSED'; } catch (e) { r = 'error  '; }
+  console.log(`   ${r}  ${t}`);
+}
+
+/* would the accept forms proposed in finding 2 rescue the plain-text spellings through the text fallback? */
+console.log('\ntext fallback (normExpr) of a plain-text spelling against a proposed accept form:');
+for (const [typed, acc] of [['80*(0.9)^(n-1)', '80\\cdot(0.9)^{n-1}'], ['80(0.9)^(n-1)', '80(0.9)^{n-1}'], ['160(0.4)^(n-1)', '160(0.4)^{n-1}'], ['160*(0.4)^(n-1)', '160\\cdot(0.4)^{n-1}'],
+  ['64(1.5)^(n-1)', '64(1.5)^{n-1}'], ['64*(1.5)^(n-1)', '64\\cdot(1.5)^{n-1}'], ['160*(2/5)^(n-1)', '160\\cdot(0.4)^{n-1}']])
+  console.log(`   ${G.normExpr(typed) === G.normExpr(acc) ? 'match   ' : 'NO MATCH'}  ${typed.padEnd(18)} against ${acc}   (${G.normExpr(typed)} | ${G.normExpr(acc)})`);
+
+console.log('\nshapeFraction with a label in front:');
+for (const t of ['\\frac{7}{9}', 'x=\\frac{7}{9}', '7/9', 'x=7/9']) console.log(`   ${G.shapeFraction(t) ? 'shape ok ' : 'REFUSED  '} ${t}`);
