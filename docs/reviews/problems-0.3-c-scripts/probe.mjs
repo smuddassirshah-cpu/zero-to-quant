@@ -41,3 +41,14 @@ for (const [course, n, id, i, typed] of ROWS) {
 console.log('\nshapeExactAngle (form: "exact-angle", trig 3 p-quadratic-in-sine part 4):');
 for (const t of ['\\frac{5\\pi}{6}', '5\\pi/6', '\\frac{5}{6}\\pi', 'x=\\frac{5\\pi}{6}', 'x = \\frac{5\\pi}{6}', '5pi/6', '5π/6', '\\frac{5\\pi}{6}\\text{ rad}', '\\frac{5 \\pi}{6}', '\\frac{5\\cdot\\pi}{6}', '\\frac{5\\times\\pi}{6}', '5\\cdot\\frac{\\pi}{6}', '5\\frac{\\pi}{6}', '\\frac{5\\pi}{6}^{}', '\\left(\\frac{5\\pi}{6}\\right)', '\\dfrac{5\\pi}{6}', '\\tfrac{5\\pi}{6}', '150^\\circ', '\\frac{150\\pi}{180}'])
   console.log(`   ${G.shapeExactAngle(t) ? 'shape ok ' : 'REFUSED  '} ${t}`);
+
+/* form: "simplified" (the widget's own check, expression.js) on the exact-value parts of trig 1: would it refuse an unworked line? */
+g.ZQ.widgets = { register() {}, dataPanel() { return null; } }; g.ZQ.h = () => ({}); g.ZQ.esc = (x) => x;
+vm.runInContext(fs.readFileSync('app/js/engine/widgets/expression.js', 'utf8'), g);
+const size = (j) => (Array.isArray(j) ? 1 + j.slice(1).reduce((a, x) => a + size(x), 0) : 1);
+const simplified = (L) => G.withParsed(ce, L, [], (e) => { const j = e.json; const constant = !(e.unknowns || []).filter(v => v !== 'iota').length; if (constant && g.ZQ.widgets.exprForms.reducible(j)) return false; try { return size(j) <= size(e.simplify().json); } catch { return true; } });
+console.log('\nform "simplified" on exact values (trig 1 p-hexagon-tile 1 and 2, p-desk-lamp 1 and 5):');
+for (const t of ['5\\sqrt{3}', '\\sqrt{75}', '\\frac{10\\sqrt{3}}{2}', '\\sqrt{10^2-5^2}', '10\\sin(60^\\circ)', '10\\sqrt{3}', '\\sqrt{300}', '2\\cdot5\\sqrt{3}', '20\\sqrt{3}', '\\sqrt{1200}', '40\\cdot\\frac{\\sqrt{3}}{2}', '40\\sin(60^\\circ)', '20\\sqrt{3}-15', '-15+20\\sqrt{3}', '5(4\\sqrt{3}-3)', '20\\sqrt{3}-30\\cdot\\frac{1}{2}', '40\\sin(60^\\circ)-30\\sin(30^\\circ)']) {
+  let r; try { r = simplified(t) ? 'passes ' : 'REFUSED'; } catch (e) { r = 'error  '; }
+  console.log(`   ${r}  ${t}`);
+}
