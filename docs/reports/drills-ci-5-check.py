@@ -193,6 +193,32 @@ VALID = {"ci-flood-reach": v_flood, "ci-loop-cables": v_loop, "ci-line-from-pair
          "ci-two-shift-rota": v_rota, "ci-cheapest-route": v_route, "ci-island-shapes": v_shapes,
          "ci-wall-break-route": v_wall, "ci-nearest-depot": v_depot}
 
+def v_land(a):
+    assert all(0 <= r < a["rows"] and 0 <= c < a["cols"] for r, c in a["fills"])
+
+def v_ferry(a):
+    lines = [l for l in a["text"].split("\n") if l.strip()]
+    n, m = map(int, lines[0].split())
+    assert 1 <= n <= 50000 and 0 <= m <= 100000 and len(lines) == m + 1, "line count"
+    for l in lines[1:]:
+        x, y, t, p = map(int, l.split())
+        assert 1 <= x <= n and 1 <= y <= n and 1 <= t <= 1000 and 1 <= p <= 1000, l
+
+def v_cycle(a):
+    assert all(0 <= x < a["n"] and 0 <= y < a["n"] for x, y in a["rules"])
+
+def v_fare(a):
+    n = a["n"]
+    assert all(x != y and 0 <= x < n and 0 <= y < n and 1 <= w <= 1000000 for x, y, w in a["roads"])
+    assert 0 <= a["src"] < n and 0 <= a["dst"] < n
+
+def v_safe(a):
+    g = a["grid"]
+    assert grid_ok(g, "#.G") and "G" in "".join(g) and g[0][0] != "#" and g[-1][-1] != "#"
+
+VALID.update({"ci-reclaimed-land": v_land, "ci-ferry-timetable": v_ferry, "ci-first-circular-rule": v_cycle,
+              "ci-half-fare-route": v_fare, "ci-safest-walk": v_safe})
+
 # ======================= independent methods =======================
 
 def wet_cells(heights, r, c):
@@ -502,7 +528,177 @@ def depot_shares(grid):
                 elif y is not None and (x is None or y < x): out[1] += 1
     return out
 
-INDEP = {"ci-flood-reach": wet_cells, "ci-loop-cables": loop_cables, "ci-line-from-pairs": rebuild_line,
+def largest_after_each(rows, cols, fills):
+    if len(fills) <= SMALL:
+        land, out = set(), []
+        for r, c in fills:
+            land.add((r, c))
+            best, seen = 0, set()
+            for s in land:
+                if s in seen: continue
+                seen.add(s); st = [s]; k = 0
+                while st:
+                    i, j = st.pop(); k += 1
+                    for x in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+                        if x in land and x not in seen:
+                            seen.add(x); st.append(x)
+                best = max(best, k)
+            out.append(best)
+        return out
+    # union by rank on (row, col) keys, sizes kept in a separate table
+    par, rank, size, out, best = {}, {}, {}, [], 0
+    def f(x):
+        while par[x] != x:
+            par[x] = par[par[x]]; x = par[x]
+        return x
+    for r, c in fills:
+        if (r, c) not in par:
+            par[(r, c)] = (r, c); rank[(r, c)] = 0; size[(r, c)] = 1
+            for x in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):
+                if x in par:
+                    a, b = f((r, c)), f(x)
+                    if a == b: continue
+                    if rank[a] < rank[b]: a, b = b, a
+                    par[b] = a; size[a] += size[b]
+                    if rank[a] == rank[b]: rank[a] += 1
+            best = max(best, size[f((r, c))])
+        out.append(best)
+    return out
+
+def solve_ferry_timetable(text):
+    v = list(map(int, text.split()))
+    n, m = v[0], v[1]
+    legs = [v[2 + 4 * k: 6 + 4 * k] for k in range(m)]
+    if n <= 6 and m <= 8:
+        # minute by minute: at each minute, every port already reached can board the sailings leaving then
+        reached = {1: 0}; pending = {}
+        for t in range(0, 6000):
+            for port, when in list(pending.items()):
+                if when == t and port not in reached:
+                    reached[port] = t
+            if n in reached:
+                return str(reached[n])
+            for a, b, dur, p in legs:
+                if a in reached and t % p == 0:
+                    if b not in pending or t + dur < pending[b]:
+                        pending[b] = t + dur
+        return "-1"
+    # queue-based relaxation (SPFA)
+    out = defaultdict(list)
+    for a, b, dur, p in legs:
+        out[a].append((b, dur, p))
+    best = {1: 0}; q = deque([1]); inq = {1}
+    while q:
+        u = q.popleft(); inq.discard(u)
+        for b, dur, p in out[u]:
+            t = -(-best[u] // p) * p + dur
+            if b not in best or t < best[b]:
+                best[b] = t
+                if b not in inq:
+                    inq.add(b); q.append(b)
+    return str(best[n]) if n in best else "-1"
+
+def _cyclic(n, rules):
+    adj = defaultdict(list)
+    for a, b in rules:
+        adj[a].append(b)
+    colour = [0] * n
+    for s in range(n):
+        if colour[s]: continue
+        colour[s] = 1; st = [(s, 0)]
+        while st:
+            v, i = st.pop()
+            if i < len(adj[v]):
+                st.append((v, i + 1)); w = adj[v][i]
+                if colour[w] == 1:
+                    return True
+                if colour[w] == 0:
+                    colour[w] = 1; st.append((w, 0))
+            else:
+                colour[v] = 2
+    return False
+
+def first_cycle_rule(n, rules):
+    if len(rules) <= SMALL:
+        for k in range(1, len(rules) + 1):
+            if _cyclic(n, rules[:k]):
+                return k - 1
+        return -1
+    if not _cyclic(n, rules):
+        return -1
+    lo, hi = 0, len(rules) - 1          # answer index: smallest i with a loop in rules[:i + 1]
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if _cyclic(n, rules[:mid + 1]): hi = mid
+        else: lo = mid + 1
+    return lo
+
+def _dijkstra(n, near, s):
+    best = [None] * n; best[s] = 0; h = [(0, s)]
+    while h:
+        c, u = heapq.heappop(h)
+        if c > best[u]: continue
+        for v, w in near[u]:
+            if best[v] is None or c + w < best[v]:
+                best[v] = c + w; heapq.heappush(h, (c + w, v))
+    return best
+
+def cheapest_with_coupon(n, roads, src, dst):
+    if len(roads) <= SMALL:
+        # the voucher on each road in turn, or on none
+        found = []
+        for half in range(-1, len(roads)):
+            near = defaultdict(list)
+            for i, (a, b, w) in enumerate(roads):
+                w2 = w // 2 if i == half else w
+                near[a].append((b, w2)); near[b].append((a, w2))
+            d = _dijkstra(n, near, src)[dst]
+            if d is not None: found.append(d)
+        return min(found) if found else -1
+    near = defaultdict(list)
+    for a, b, w in roads:
+        near[a].append((b, w)); near[b].append((a, w))
+    to, back = _dijkstra(n, near, src), _dijkstra(n, near, dst)
+    if to[dst] is None:
+        return -1
+    best = to[dst]
+    for a, b, w in roads:
+        for x, y in ((a, b), (b, a)):
+            if to[x] is not None and back[y] is not None:
+                best = min(best, to[x] + w // 2 + back[y])
+    return best
+
+def safest_walk(grid):
+    import numpy as np
+    R, C = len(grid), len(grid[0])
+    cams = np.array([(i, j) for i in range(R) for j in range(C) if grid[i][j] == "G"])
+    cover = np.empty((R, C), dtype=np.int64)
+    cols = np.arange(C)
+    for i in range(R):    # each row against every camera
+        cover[i] = (np.abs(cams[:, 0:1] - i) + np.abs(cams[:, 1:2] - cols[None, :])).min(axis=0)
+    def ok(level):
+        if cover[0][0] < level: return False
+        seen = {(0, 0)}; q = deque([(0, 0)])
+        while q:
+            i, j = q.popleft()
+            if (i, j) == (R - 1, C - 1): return True
+            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+                if 0 <= a < R and 0 <= b < C and (a, b) not in seen and grid[a][b] != "#" and cover[a][b] >= level:
+                    seen.add((a, b)); q.append((a, b))
+        return False
+    if not ok(0):
+        return -1
+    lo, hi = 0, int(cover[0][0])
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if ok(mid): lo = mid
+        else: hi = mid - 1
+    return lo
+
+INDEP = {"ci-reclaimed-land": largest_after_each, "ci-ferry-timetable": solve_ferry_timetable,
+         "ci-first-circular-rule": first_cycle_rule, "ci-half-fare-route": cheapest_with_coupon,
+         "ci-safest-walk": safest_walk,
+         "ci-flood-reach": wet_cells, "ci-loop-cables": loop_cables, "ci-line-from-pairs": rebuild_line,
          "ci-checkpoint-route": solve_checkpoint_route, "ci-stuck-jobs": stuck_jobs,
          "ci-two-shift-rota": max_day_shift, "ci-cheapest-route": cheapest_route, "ci-island-shapes": lone_shapes,
          "ci-wall-break-route": fewest_moves_one_break, "ci-nearest-depot": depot_shares}
@@ -510,9 +706,10 @@ INDEP = {"ci-flood-reach": wet_cells, "ci-loop-cables": loop_cables, "ci-line-fr
 # ======================= slow methods kept out of `planted` =======================
 SLOW = {}
 # planted solutions that are right but too slow (always the last entry): (drill id, index)
-SLOW_PLANTED = {("ci-wall-break-route", 3), ("ci-nearest-depot", 3)}
+SLOW_PLANTED = {(d, 2) for d in ("ci-wall-break-route", "ci-nearest-depot", "ci-reclaimed-land", "ci-ferry-timetable",
+                                  "ci-first-circular-rule", "ci-half-fare-route", "ci-safest-walk")}
 # the obvious method timed in Pyodide for each difficulty 4 and 5 drill: a planted index, or "s<k>" for SLOW[did][k]
-OBVIOUS = {"ci-wall-break-route": 3, "ci-nearest-depot": 3}
+OBVIOUS = {d: 2 for d, _ in SLOW_PLANTED}
 
 # ======================= running =======================
 
