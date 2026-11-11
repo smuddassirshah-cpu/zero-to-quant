@@ -1,0 +1,176 @@
+{
+  "id": "ci-stone-hops",
+  "name": "Hops across stepping stones",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "greedy",
+  "tags": [
+    "pack-8",
+    "stone-hops"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2040,
+  "fn": "fewest_hops",
+  "returns": "an integer",
+  "brief": "A path across a river is a string `stones`: `.` is a stone and `~` is water. A walker starts on the first character and must reach the last, and both are stones. Each hop goes forward from position `i` to a stone at `j` with `lo <= j - i <= hi`, so a hop can be neither too short nor too long.\n\nWrite `fewest_hops(stones, lo, hi)`, which returns the fewest hops to the last stone, or `-1` when it cannot be reached.\n\nExample. For `stones = '..~.~..'`, `lo = 2` and `hi = 3`, the hops 0 to 3 and 3 to 6 reach the end in 2. No single hop covers 6 places, so the answer is 2.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ characters, the first and last `.`, and $1 \\le$ `lo` $\\le$ `hi` $\\le n$.",
+    "$O(n)$ time is the target. Looking at every place in reach from every stone is $O(n \\times (hi - lo))$, too slow for wide hops.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "stones",
+      "type": "str",
+      "len": [
+        1,
+        100000
+      ],
+      "pattern": "\\.([.~]*\\.)?"
+    },
+    {
+      "arg": "lo",
+      "type": "int",
+      "range": [
+        1,
+        100000
+      ]
+    },
+    {
+      "arg": "hi",
+      "type": "int",
+      "range": [
+        1,
+        100000
+      ]
+    }
+  ],
+  "hint": "Search breadth first from position 0, so stones come off the queue in order of hops and also in increasing position. Keep the furthest position any stone has already looked at, and let the next stone look only beyond it, never below its own `i + lo`.",
+  "starter": "def fewest_hops(stones, lo, hi):\n    # your code here\n    return -1\n",
+  "examples": [
+    {
+      "call": "fewest_hops('..~.~..', 2, 3)",
+      "expect": "2",
+      "compare": "equal",
+      "note": "The stones at 3 and 6 make a two-hop route, and no one hop reaches 6."
+    },
+    {
+      "call": "fewest_hops('.~~~.', 1, 3)",
+      "expect": "-1",
+      "compare": "equal",
+      "note": "The last stone is 4 places away and hops are at most 3, with water in between."
+    }
+  ],
+  "tests": [
+    {
+      "call": "fewest_hops('.', 1, 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('..', 2, 2)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('..', 1, 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('.....', 2, 2)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('......', 2, 2)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('......', 4, 5)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('.~.~.~.', 1, 2)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('..~~~..', 1, 4)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('.....~.....', 3, 4)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('.~.~~...~.', 3, 4)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('...~~~~~.', 5, 6)",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('.' * 100000, 1, 50000)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops(''.join('~' if i % 7 == 3 or i % 11 == 5 else '.' for i in range(99999)) + '.', 2, 40000)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('.' * 30000 + '~' * 39999 + '.' * 30001, 20000, 50000)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_hops('.' * 100000, 30000, 30001)",
+      "expect": "-1",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The obvious method is a breadth-first search that looks at every place from `i + lo` to `i + hi` for each stone, which is $O(n \\times (hi - lo))$. Searching back from the end, or filling a table over the same window, costs as much. The step to the target is to keep the furthest place already looked at, so each place is looked at once. The change from the classic fewest-jumps task is the water and the shortest hop `lo`, which break the greedy of always jumping as far as possible.",
+  "solution": "from collections import deque\n\ndef fewest_hops(stones, lo, hi):\n    n = len(stones)\n    dist = [-1] * n\n    dist[0] = 0\n    queue = deque([0])\n    seen_to = 0\n    while queue:\n        i = queue.popleft()\n        if i == n - 1:\n            return dist[i]\n        for j in range(max(i + lo, seen_to + 1), min(i + hi, n - 1) + 1):\n            if stones[j] == '.':\n                dist[j] = dist[i] + 1\n                queue.append(j)\n        seen_to = max(seen_to, i + hi)\n    return -1\n",
+  "notes": [
+    "Breadth-first search gives the fewest hops, and its queue holds stones in increasing position, so the windows only move forward.",
+    "A place below `i + lo` cannot be reached from `i`, so the scan starts at the larger of `i + lo` and the furthest place looked at plus 1.",
+    "Each place is looked at once over the whole search, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def fewest_hops(stones, lo, hi):\n    n = len(stones)\n    i, hops = 0, 0\n    while i < n - 1:\n        nxt = -1\n        for j in range(min(i + hi, n - 1), i + lo - 1, -1):\n            if stones[j] == '.':\n                nxt = j\n                break\n        if nxt < 0:\n            return -1\n        i, hops = nxt, hops + 1\n    return hops\n",
+      "slip": "Always hopping to the furthest stone in reach can land where the walker is stuck, while a shorter hop would have got through."
+    },
+    {
+      "code": "from collections import deque\n\ndef fewest_hops(stones, lo, hi):\n    n = len(stones)\n    dist = [-1] * n\n    dist[0] = 0\n    queue = deque([0])\n    seen_to = 0\n    while queue:\n        i = queue.popleft()\n        if i == n - 1:\n            return dist[i]\n        for j in range(seen_to + 1, min(i + hi, n - 1) + 1):\n            if stones[j] == '.':\n                dist[j] = dist[i] + 1\n                queue.append(j)\n        seen_to = max(seen_to, i + hi)\n    return -1\n",
+      "slip": "Starting each scan just past the furthest place looked at forgets that a hop must cover at least `lo` places."
+    },
+    {
+      "code": "def fewest_hops(stones, lo, hi):\n    n = len(stones)\n    if n == 1:\n        return 0\n    hops, reach, edge = 0, 0, 0\n    for i in range(n - 1):\n        if stones[i] == '.':\n            reach = max(reach, i + hi)\n        if i == edge:\n            if reach <= edge:\n                return -1\n            hops, edge = hops + 1, reach\n            if edge >= n - 1:\n                return hops\n    return -1\n",
+      "slip": "The level-by-level reach count of the classic task ignores both `lo` and stones that cannot be reached."
+    },
+    {
+      "code": "from collections import deque\n\ndef fewest_hops(stones, lo, hi):\n    n = len(stones)\n    dist = [-1] * n\n    dist[0] = 0\n    queue = deque([0])\n    while queue:\n        i = queue.popleft()\n        if i == n - 1:\n            return dist[i]\n        for j in range(i + lo, min(i + hi, n - 1) + 1):\n            if stones[j] == '.' and dist[j] < 0:\n                dist[j] = dist[i] + 1\n                queue.append(j)\n    return -1\n",
+      "slip": "Looking at every place from `i + lo` to `i + hi` for each stone is $O(n \\times (hi - lo))$, too slow for wide hops."
+    },
+    {
+      "code": "from collections import deque\n\ndef fewest_hops(stones, lo, hi):\n    n = len(stones)\n    dist = [-1] * n\n    dist[n - 1] = 0\n    queue = deque([n - 1])\n    while queue:\n        j = queue.popleft()\n        if j == 0:\n            return dist[j]\n        for i in range(j - lo, max(j - hi, 0) - 1, -1):\n            if stones[i] == '.' and dist[i] < 0:\n                dist[i] = dist[j] + 1\n                queue.append(i)\n    return -1\n",
+      "slip": "Searching back from the last stone over the same windows costs just as much."
+    },
+    {
+      "code": "def fewest_hops(stones, lo, hi):\n    n = len(stones)\n    best = [-1] * n\n    best[0] = 0\n    for j in range(1, n):\n        if stones[j] != '.':\n            continue\n        options = [best[i] for i in range(max(0, j - hi), j - lo + 1) if best[i] >= 0]\n        if options:\n            best[j] = min(options) + 1\n    return best[n - 1]\n",
+      "slip": "Filling a table of best hop counts with a minimum over each window is $O(n \\times (hi - lo))$ as well."
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "id": "ci-k-bit-count",
+  "name": "Serials with exactly k set bits",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "bits",
+  "tags": [
+    "pack-8",
+    "k-bit-count"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2100,
+  "fn": "count_k_bits",
+  "returns": "a list of integers",
+  "brief": "A registry checks serial numbers by their number of set bits, the `1`s in binary. Each query `[lo, hi, k]` asks how many whole numbers `x` with `lo <= x <= hi` have exactly `k` set bits.\n\nWrite `count_k_bits(queries)`, which returns the answers in the order of `queries`.\n\nExample. For the query `[5, 12, 2]`, the numbers from 5 to 12 with two set bits are 5, 6, 9, 10 and 12, in binary `101`, `110`, `1001`, `1010` and `1100`. So `count_k_bits([[5, 12, 2]])` returns `[5]`.",
+  "constraints": [
+    "At most $2{,}000$ queries, with $0 \\le$ `lo` $\\le$ `hi` $< 2^{60}$ and $0 \\le k \\le 60$.",
+    "$O(60)$ work a query is the target. A range can hold $2^{60}$ numbers, so counting them one by one is hopeless.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "queries",
+      "type": "list",
+      "len": [
+        1,
+        2000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          3,
+          3
+        ],
+        "of": "int",
+        "range": [
+          0,
+          1152921504606846975
+        ]
+      }
+    }
+  ],
+  "hint": "Count the numbers from 0 to `n` with `k` set bits, and answer a query as the count up to `hi` minus the count up to `lo - 1`. Walk the bits of `n` from the top. Where `n` has a 1, every number with a 0 there that agrees with `n` above it is smaller, and `math.comb` counts how to place the remaining set bits below.",
+  "starter": "def count_k_bits(queries):\n    # your code here\n    return [0] * len(queries)\n",
+  "examples": [
+    {
+      "call": "count_k_bits([[5, 12, 2]])",
+      "expect": "[5]",
+      "compare": "equal",
+      "note": "Five numbers in the range have two set bits: 5, 6, 9, 10 and 12."
+    },
+    {
+      "call": "count_k_bits([[0, 0, 0], [0, 7, 3], [8, 8, 2]])",
+      "expect": "[1, 1, 0]",
+      "compare": "equal",
+      "note": "Zero has no set bits, 7 is the only number up to 7 with three, and 8 has one."
+    }
+  ],
+  "tests": [
+    {
+      "call": "count_k_bits([[0, 1, 0]])",
+      "expect": "[1]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[1, 1, 1], [1, 1, 0], [2, 3, 1]])",
+      "expect": "[1, 0, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[0, 63, 3], [64, 127, 3], [0, 127, 7]])",
+      "expect": "[20, 15, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[13, 13, 3], [14, 15, 4], [9, 20, 2]])",
+      "expect": "[1, 1, 6]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[0, 1000, 0], [1, 1000, 1], [100, 200, 5]])",
+      "expect": "[1, 10, 26]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[1023, 1024, 10], [1023, 1024, 1], [1000, 1023, 9]])",
+      "expect": "[1, 1, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[0, (1 << 60) - 1, 30]])",
+      "expect": "[118264581564861424]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[0, (1 << 60) - 1, 60], [0, (1 << 60) - 1, 0], [1 << 59, (1 << 60) - 1, 1]])",
+      "expect": "[1, 1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[123456789012345, 987654321098765432, 31], [5, 10 ** 18, 2], [10 ** 17, 10 ** 17, 15]])",
+      "expect": "[97214163672653092, 1769, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[(1 << 40) + 7, (1 << 41) - 1, 1], [3, (1 << 50) - 1, 49]])",
+      "expect": "[0, 50]",
+      "compare": "equal"
+    },
+    {
+      "call": "count_k_bits([[2 ** 59 - 1, 2 ** 59 + 1, 59], [2 ** 59 - 1, 2 ** 59 + 1, 2]])",
+      "expect": "[1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), sum(r) % 1000000007, r[:3], r[-3:]))(count_k_bits([[(i * 982451653) % (1 << 59), (i * 982451653) % (1 << 59) + (i * 15485863) % (1 << 58), i % 61] for i in range(2000)]))",
+      "expect": "(2000, 757208573, [1, 0, 0], [0, 0, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(set(r[:-1])), r[0], r[-1]))(count_k_bits([[1 << 20, 1 << 22, 3]] * 1000 + [[1, 1 << 59, 25]]))",
+      "expect": "(1, 400, 30284005485024837)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method checks every number in the range, which is hopeless for a range of $2^{60}$, and stepping only through numbers with `k` set bits is as bad when there are $\\binom{60}{30}$ of them. The step to the target is to count up to a bound with binomial coefficients, one per set bit of the bound, and subtract two such counts.",
+  "solution": "from math import comb\n\ndef count_k_bits(queries):\n    def upto(n, k):\n        if n < 0:\n            return 0\n        count, used = 0, 0\n        for b in range(n.bit_length() - 1, -1, -1):\n            if n >> b & 1:\n                if used <= k:\n                    count += comb(b, k - used)\n                used += 1\n        if used == k:\n            count += 1\n        return count\n    return [upto(hi, k) - upto(lo - 1, k) for lo, hi, k in queries]\n",
+  "notes": [
+    "A number below `n` first differs from `n` at a bit where `n` has a 1 and it has a 0, and the bits below are then free, which `comb` counts.",
+    "The count up to `lo - 1` is subtracted, so `lo` itself is kept, and `n` is counted on its own when it has exactly `k` set bits.",
+    "Each count walks at most 60 bits, so a query is $O(60)$ work."
+  ],
+  "planted": [
+    {
+      "code": "from math import comb\n\ndef count_k_bits(queries):\n    def upto(n, k):\n        if n < 0:\n            return 0\n        count, used = 0, 0\n        for b in range(n.bit_length() - 1, -1, -1):\n            if n >> b & 1:\n                if used <= k:\n                    count += comb(b, k - used)\n                used += 1\n        return count\n    return [upto(hi, k) - upto(lo - 1, k) for lo, hi, k in queries]\n",
+      "slip": "Counting only the numbers below the bound leaves out the bound itself."
+    },
+    {
+      "code": "from math import comb\n\ndef count_k_bits(queries):\n    def upto(n, k):\n        if n < 0:\n            return 0\n        count, used = 0, 0\n        for b in range(n.bit_length() - 1, -1, -1):\n            if n >> b & 1:\n                if used <= k:\n                    count += comb(b, k - used)\n                used += 1\n        if used == k:\n            count += 1\n        return count\n    return [upto(hi, k) - upto(lo, k) for lo, hi, k in queries]\n",
+      "slip": "Subtracting the count up to `lo` instead of `lo - 1` drops `lo` from its own range."
+    },
+    {
+      "code": "from math import comb\n\ndef count_k_bits(queries):\n    def upto(n, k):\n        if n < 0:\n            return 0\n        count, used = 0, 0\n        for b in range(n.bit_length() - 1, -1, -1):\n            if n >> b & 1:\n                count += comb(b, k - used)\n                used += 1\n        if used == k:\n            count += 1\n        return count\n    return [upto(hi, k) - upto(lo - 1, k) for lo, hi, k in queries]\n",
+      "slip": "Calling `comb` with a negative second argument raises an error once the bound has more set bits than `k`."
+    },
+    {
+      "code": "def count_k_bits(queries):\n    return [sum(1 for x in range(lo, hi + 1) if bin(x).count('1') == k) for lo, hi, k in queries]\n",
+      "slip": "Checking every number in the range is hopeless when the range holds $2^{60}$ numbers."
+    },
+    {
+      "code": "def count_k_bits(queries):\n    out = []\n    for lo, hi, k in queries:\n        if k == 0:\n            out.append(1 if lo == 0 else 0)\n            continue\n        x, count = (1 << k) - 1, 0\n        while x <= hi:\n            if x >= lo:\n                count += 1\n            low = x & -x\n            ripple = x + low\n            x = ripple | (((x ^ ripple) >> 2) // low)\n        out.append(count)\n    return out\n",
+      "slip": "Stepping through the numbers with `k` set bits is as slow when there are billions of them."
+    }
+  ]
+}

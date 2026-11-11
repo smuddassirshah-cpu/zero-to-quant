@@ -430,3 +430,256 @@ WRONG["ci-loop-starts"] = [
     return sorted(starts)
 """, "a sliding start that drops the first depot's gain without re-checking"),
 ]
+
+# ======================= drills eleven to fifteen =======================
+
+HOPS = """from collections import deque
+
+def fewest_hops(stones, lo, hi):
+    n = len(stones)
+    dist = [-1] * n
+    dist[0] = 0
+    queue = deque([0])
+    seen_to = 0
+    while queue:
+        i = queue.popleft()
+        if i == n - 1:
+            return dist[i]
+        for j in range(max(i + lo, seen_to + 1), min(i + hi, n - 1) + 1):
+            if stones[j] == '.':
+                dist[j] = dist[i] + 1
+                queue.append(j)
+        seen_to = max(seen_to, i + hi)
+    return -1
+"""
+WRONG["ci-stone-hops"] = [
+    (_sub(HOPS, ("min(i + hi, n - 1) + 1)", "min(i + hi, n - 1))")), "the longest hop left out"),
+    (_sub(HOPS, ("        for j in range(max(i + lo, seen_to + 1), min(i + hi, n - 1) + 1):\n", "        seen_to = max(seen_to, i + hi)\n        for j in range(max(i + lo, seen_to + 1), min(i + hi, n - 1) + 1):\n")), "the furthest mark moved before the scan"),
+    ("""def fewest_hops(stones, lo, hi):
+    n = len(stones)
+    i, hops = 0, 0
+    while i < n - 1:
+        nxt = -1
+        for j in range(i + lo, min(i + hi, n - 1) + 1):
+            if stones[j] == '.':
+                nxt = j
+                break
+        if nxt < 0:
+            return -1
+        i, hops = nxt, hops + 1
+    return hops
+""", "always the nearest stone in reach"),
+    (_sub(HOPS, ("        if i == n - 1:\n            return dist[i]\n", ""), ("    return -1\n", "    return dist[n - 1] if n > 1 else -1\n")), "a path of one stone reported as unreachable"),
+    ("""from collections import deque
+
+def fewest_hops(stones, lo, hi):
+    n = len(stones)
+    best = [-1] * n
+    best[0] = 0
+    window = deque()
+    for j in range(1, n):
+        i = j - lo
+        if i >= 0 and best[i] >= 0:
+            while window and best[window[-1]] >= best[i]:
+                window.pop()
+            window.append(i)
+        while window and window[0] <= j - hi:
+            window.popleft()
+        if stones[j] == '.' and window:
+            best[j] = best[window[0]] + 1
+    return best[n - 1]
+""", "a sliding-window table that drops the position exactly `hi` back"),
+]
+
+KBITS = """from math import comb
+
+def count_k_bits(queries):
+    def upto(n, k):
+        if n < 0:
+            return 0
+        count, used = 0, 0
+        for b in range(n.bit_length() - 1, -1, -1):
+            if n >> b & 1:
+                if used <= k:
+                    count += comb(b, k - used)
+                used += 1
+        if used == k:
+            count += 1
+        return count
+    return [upto(hi, k) - upto(lo - 1, k) for lo, hi, k in queries]
+"""
+WRONG["ci-k-bit-count"] = [
+    (_sub(KBITS, ("        if n < 0:\n            return 0\n", "        if n <= 0:\n            return 0\n")), "zero never counted"),
+    (_sub(KBITS, ("range(n.bit_length() - 1, -1, -1)", "range(n.bit_length())")), "bits walked from the bottom"),
+    (_sub(KBITS, ("                if used <= k:\n                    count += comb(b, k - used)\n                used += 1\n", "                used += 1\n                if used <= k:\n                    count += comb(b, k - used)\n")), "the set bit counted before the free bits below it"),
+    (_sub(KBITS, ("count += comb(b, k - used)", "count += comb(b + 1, k - used)")), "the free bits counted one too many"),
+    ("""def count_k_bits(queries):
+    out = []
+    for lo, hi, k in queries:
+        if hi - lo < 10 ** 6:
+            out.append(sum(1 for x in range(lo, hi + 1) if bin(x).count('1') == k))
+        else:
+            out.append(round((hi - lo + 1) * __import__('math').comb(60, k) / 2 ** 60))
+    return out
+""", "a large range estimated from the share of all 60-bit numbers"),
+]
+
+BONUS = """def ring_bonuses(scores):
+    n = len(scores)
+    low = scores.index(min(scores))
+    line = scores[low:] + scores[:low] + [scores[low]]
+    left = [1] * (n + 1)
+    for i in range(1, n + 1):
+        if line[i] > line[i - 1]:
+            left[i] = left[i - 1] + 1
+    right = [1] * (n + 1)
+    for i in range(n - 1, -1, -1):
+        if line[i] > line[i + 1]:
+            right[i] = right[i + 1] + 1
+    return sum(max(a, b) for a, b in zip(left[:n], right[:n]))
+"""
+WRONG["ci-ring-bonuses"] = [
+    (_sub(BONUS, ("low = scores.index(min(scores))", "low = scores.index(max(scores))")), "the circle cut at a highest score"),
+    (_sub(BONUS, ("return sum(max(a, b) for a, b in zip(left[:n], right[:n]))", "return sum(a + b - 1 for a, b in zip(left[:n], right[:n]))")), "the two passes added, not maxed"),
+    ("""def ring_bonuses(scores):
+    n = len(scores)
+    low = scores.index(min(scores))
+    line = scores[low:] + scores[:low]
+    left = [1] * n
+    for i in range(1, n):
+        if line[i] > line[i - 1]:
+            left[i] = left[i - 1] + 1
+    right = [1] * n
+    for i in range(n - 2, -1, -1):
+        if line[i] > line[i + 1]:
+            right[i] = right[i + 1] + 1
+    return sum(max(a, b) for a, b in zip(left, right))
+""", "the circle cut at a lowest score without repeating it at the far end"),
+    ("""def ring_bonuses(scores):
+    n = len(scores)
+    line = scores + scores
+    left = [1] * (2 * n)
+    for i in range(1, 2 * n):
+        if line[i] > line[i - 1]:
+            left[i] = left[i - 1] + 1
+    right = [1] * (2 * n)
+    for i in range(2 * n - 2, -1, -1):
+        if line[i] > line[i + 1]:
+            right[i] = right[i + 1] + 1
+    return sum(max(left[i], right[i]) for i in range(n))
+""", "two copies in a line, reading the first copy"),
+    ("""def ring_bonuses(scores):
+    n = len(scores)
+    tokens = [1] * n
+    for _ in range(1):
+        for i in range(n):
+            if scores[i] > scores[i - 1]:
+                tokens[i] = max(tokens[i], tokens[i - 1] + 1)
+        for i in range(n - 1, -1, -1):
+            if scores[i] > scores[(i + 1) % n]:
+                tokens[i] = max(tokens[i], tokens[(i + 1) % n] + 1)
+    return sum(tokens) if n > 1 else 1
+""", "one sweep each way round the circle, which misses a run carried across the join"),
+]
+
+SPIRAL = """def spiral_cells(rows, cols, ks):
+    def before(t):
+        return rows * cols - (rows - 2 * t) * (cols - 2 * t)
+    last = (min(rows, cols) - 1) // 2
+    out = []
+    for k in ks:
+        lo, hi = 0, last
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            if before(mid) < k:
+                lo = mid
+            else:
+                hi = mid - 1
+        t = lo
+        p = k - before(t) - 1
+        h, w = rows - 2 * t, cols - 2 * t
+        if p < w:
+            out.append([t, t + p])
+        elif p < w + h - 1:
+            out.append([t + p - w + 1, t + w - 1])
+        elif p < 2 * w + h - 2:
+            out.append([t + h - 1, t + w - 1 - (p - w - h + 2)])
+        else:
+            out.append([t + h - 1 - (p - 2 * w - h + 3), t])
+    return out
+"""
+WRONG["ci-spiral-cells"] = [
+    (_sub(SPIRAL, ("    last = (min(rows, cols) - 1) // 2\n", "    last = max(rows, cols)\n")), "the binary search runs past the innermost ring"),
+    ("""import math
+
+def spiral_cells(rows, cols, ks):
+    out = []
+    S = rows + cols
+    last = (min(rows, cols) - 1) // 2
+    for k in ks:
+        t = int((S - math.sqrt(S * S - 4 * (k - 1))) / 4)
+        t = max(0, min(t, last))
+        p = k - 1 - (2 * t * S - 4 * t * t)
+        h, w = rows - 2 * t, cols - 2 * t
+        if p < w:
+            out.append([t, t + p])
+        elif p < w + h - 1:
+            out.append([t + p - w + 1, t + w - 1])
+        elif p < 2 * w + h - 2:
+            out.append([t + h - 1, t + w - 1 - (p - w - h + 2)])
+        else:
+            out.append([t + h - 1 - (p - 2 * w - h + 3), t])
+    return out
+""", "the ring from a floating-point square root"),
+    (_sub(SPIRAL, ("out.append([t + h - 1, t + w - 1 - (p - w - h + 2)])", "out.append([t + h - 1, t + w - 1 - (p - w - h + 1)])")), "the bottom row starts one plot too far right"),
+    (_sub(SPIRAL, ("out.append([t + h - 1 - (p - 2 * w - h + 3), t])", "out.append([t + h - 1 - (p - 2 * w - h + 2), t])")), "the left edge starts one plot too low"),
+    (_sub(SPIRAL, ("            out.append([t, t + p])\n        elif", "            out.append([t + 1, t + p + 1])\n        elif")), "the top row counted from 1"),
+]
+
+STOPS = """import heapq
+
+def solve_stop_cascade(text):
+    tokens = text.split()
+    n = int(tokens[0])
+    asks, stops = [], []
+    last, volume = None, 0
+    out = []
+
+    def buy(qty):
+        nonlocal last, volume
+        while qty > 0 and asks:
+            best = asks[0]
+            take = min(qty, best[2])
+            qty -= take
+            best[2] -= take
+            volume += take
+            last = best[0]
+            if best[2] == 0:
+                heapq.heappop(asks)
+
+    pos = 1
+    for seq in range(n):
+        kind = tokens[pos]
+        if kind == 'B':
+            buy(int(tokens[pos + 1]))
+            pos += 2
+        else:
+            price, qty = int(tokens[pos + 1]), int(tokens[pos + 2])
+            if kind == 'S':
+                heapq.heappush(asks, [price, seq, qty])
+            else:
+                heapq.heappush(stops, (price, seq, qty))
+            pos += 3
+        while stops and last is not None and stops[0][0] <= last:
+            buy(heapq.heappop(stops)[2])
+        out.append(f'{last} {volume}' if last is not None else '- 0')
+    return '\\n'.join(out)
+"""
+WRONG["ci-stop-cascade"] = [
+    (_sub(STOPS, ("stops[0][0] <= last", "stops[0][0] < last")), "a stop fires only above its price"),
+    (_sub(STOPS, ("        while qty > 0 and asks:\n            best = asks[0]\n", "        first = None\n        while qty > 0 and asks:\n            best = asks[0]\n            first = best[0] if first is None else first\n"), ("            last = best[0]\n", "            last = first\n")), "the last price taken from the first share of a buy"),
+    (_sub(STOPS, ("            volume += take\n", ""), ("    def buy(qty):\n        nonlocal last, volume\n", "    def buy(qty):\n        nonlocal last, volume\n        volume += qty if asks else 0\n")), "the shares asked for counted, not those traded"),
+    (_sub(STOPS, ("heapq.heappush(asks, [price, seq, qty])", "heapq.heappush(asks, [-price, seq, qty])"), ("            last = best[0]\n", "            last = -best[0]\n")), "the dearest sell taken first"),
+    (_sub(STOPS, ("        while stops and last is not None and stops[0][0] <= last:\n", "        while kind == 'B' and stops and last is not None and stops[0][0] <= last:\n")), "stops checked only after a market buy"),
+    (_sub(STOPS, ("        while stops and last is not None and stops[0][0] <= last:\n            buy(heapq.heappop(stops)[2])\n", "        if stops and last is not None and stops[0][0] <= last:\n            buy(heapq.heappop(stops)[2])\n")), "one stop fired per event"),
+]

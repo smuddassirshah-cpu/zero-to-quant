@@ -357,3 +357,261 @@ STATED.update({
                        (lambda: [f - b for f, b in zip([3, 1, 4, 0], [1, 2, 2, 3])], [2, -1, 2, -3]),
                        (lambda: list(accumulate([2, -1, 2, -3])), [2, 1, 3, 0]), (lambda: list(accumulate([2, -3])), [2, -1])],
 })
+
+# ======================= drills eleven to fifteen =======================
+from functools import lru_cache
+from math import isqrt
+
+def v_hops(a):
+    s, lo, hi = a["stones"], a["lo"], a["hi"]
+    assert 1 <= len(s) <= 100000 and s[0] == "." and s[-1] == "." and set(s) <= set(".~"), "stones"
+    assert 1 <= lo <= hi <= len(s), "1 <= lo <= hi <= n"
+
+def v_kbits(a):
+    q = a["queries"]
+    assert 1 <= len(q) <= 2000
+    assert all(0 <= lo <= hi < 2**60 and 0 <= k <= 60 for lo, hi, k in q), "query shape"
+
+def v_bonus(a):
+    assert 1 <= len(a["scores"]) <= 100000 and all(0 <= x <= 10**9 for x in a["scores"])
+
+def v_spiral(a):
+    r, c, ks = a["rows"], a["cols"], a["ks"]
+    assert 1 <= r <= 10**9 and 1 <= c <= 10**9 and 1 <= len(ks) <= 10000
+    assert all(1 <= k <= r * c for k in ks), "1 <= k <= rows * cols"
+
+def v_stops(a):
+    tok = a["text"].split()
+    n = int(tok[0])
+    assert 1 <= n <= 60000, "n"
+    pos, events = 1, 0
+    while pos < len(tok):
+        kind = tok[pos]
+        assert kind in ("S", "B", "T"), kind
+        width = 2 if kind == "B" else 3
+        vals = [int(x) for x in tok[pos + 1:pos + width]]
+        assert len(vals) == width - 1 and all(1 <= v <= 10**6 for v in vals), "p, q in 1..1e6"
+        pos += width
+        events += 1
+    assert events == n, "n events"
+    lines = [l for l in a["text"].split("\n") if l.strip()]
+    assert len(lines) == n + 1, "one event a line"
+
+VALID.update({"ci-stone-hops": v_hops, "ci-k-bit-count": v_kbits, "ci-ring-bonuses": v_bonus,
+              "ci-spiral-cells": v_spiral, "ci-stop-cascade": v_stops})
+
+def fewest_hops(stones, lo, hi):
+    n = len(stones)
+    if n <= 3000:
+        # brute force: breadth-first search over every hop
+        dist = {0: 0}
+        q = deque([0])
+        while q:
+            i = q.popleft()
+            for j in range(i + lo, min(i + hi, n - 1) + 1):
+                if stones[j] == "." and j not in dist:
+                    dist[j] = dist[i] + 1
+                    q.append(j)
+        return dist.get(n - 1, -1)
+    # a table of best hop counts with a sliding-window minimum (deque of positions with increasing values)
+    INF = float("inf")
+    best = [INF] * n
+    best[0] = 0
+    dq = deque()
+    for j in range(1, n):
+        i = j - lo                      # position entering the window [j - hi, j - lo]
+        if i >= 0 and best[i] < INF:
+            while dq and best[dq[-1]] >= best[i]:
+                dq.pop()
+            dq.append(i)
+        while dq and dq[0] < j - hi:
+            dq.popleft()
+        if stones[j] == "." and dq:
+            best[j] = best[dq[0]] + 1
+    return -1 if best[n - 1] == INF else best[n - 1]
+
+def count_k_bits(queries):
+    out = []
+    for lo, hi, k in queries:
+        if hi - lo <= 100000:
+            # brute force
+            out.append(sum(bin(x).count("1") == k for x in range(lo, hi + 1)))
+            continue
+        # digit dynamic programming over the bits of the bound, top down
+        def upto(n):
+            if n < 0:
+                return 0
+            bits = bin(n)[2:]
+            @lru_cache(maxsize=None)
+            def go(pos, left, tight):
+                if left < 0:
+                    return 0
+                if pos == len(bits):
+                    return 1 if left == 0 else 0
+                top = int(bits[pos]) if tight else 1
+                return sum(go(pos + 1, left - d, tight and d == top) for d in range(top + 1))
+            return go(0, k, True)
+        out.append(upto(hi) - upto(lo - 1))
+    return out
+
+def ring_bonuses(scores):
+    n = len(scores)
+    if n <= 300:
+        # brute force: raise anyone short until nothing changes
+        t = [1] * n
+        changed = True
+        while changed:
+            changed = False
+            for i in range(n):
+                for j in ((i - 1) % n, (i + 1) % n):
+                    if scores[i] > scores[j] and t[i] <= t[j]:
+                        t[i] = t[j] + 1
+                        changed = True
+        return sum(t)
+    # three copies in a line: the middle copy sees every rising run in full (a run is shorter than n)
+    line = scores * 3
+    m = len(line)
+    L, R = [1] * m, [1] * m
+    for i in range(1, m):
+        if line[i] > line[i - 1]:
+            L[i] = L[i - 1] + 1
+    for i in range(m - 2, -1, -1):
+        if line[i] > line[i + 1]:
+            R[i] = R[i + 1] + 1
+    return sum(max(L[i], R[i]) for i in range(n, 2 * n))
+
+def spiral_cells(rows, cols, ks):
+    if rows * cols <= 100000:
+        # brute force: list the spiral
+        order, seen = [], set()
+        r = c = 0
+        d = 0
+        moves = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        for _ in range(rows * cols):
+            order.append([r, c])
+            seen.add((r, c))
+            for turn in range(4):
+                dr, dc = moves[(d + turn) % 4]
+                a, b = r + dr, c + dc
+                if 0 <= a < rows and 0 <= b < cols and (a, b) not in seen:
+                    d = (d + turn) % 4
+                    r, c = a, b
+                    break
+        return [order[k - 1] for k in ks]
+    # the ring from the quadratic 4t^2 - 2(R + C)t + (k - 1) = 0, settled by integer square roots
+    out = []
+    S = rows + cols
+    last = (min(rows, cols) - 1) // 2
+    def before(t):
+        return 2 * t * S - 4 * t * t
+    for k in ks:
+        disc = S * S - 4 * (k - 1)
+        t = max(0, min(last, (S - isqrt(max(disc, 0))) // 4))
+        while t > 0 and before(t) >= k:
+            t -= 1
+        while t < last and before(t + 1) < k:
+            t += 1
+        p = k - 1 - before(t)
+        h, w = rows - 2 * t, cols - 2 * t
+        sides = [(w, lambda x: [t, t + x]), (h - 1, lambda x: [t + 1 + x, t + w - 1]),
+                 (w - 1, lambda x: [t + h - 1, t + w - 2 - x]), (h - 2, lambda x: [t + h - 2 - x, t])]
+        for length, at in sides:
+            if p < length:
+                out.append(at(p))
+                break
+            p -= max(length, 0)
+    return out
+
+def solve_stop_cascade(text):
+    tok = text.split()
+    n = int(tok[0])
+    pos, events = 1, []
+    for _ in range(n):
+        if tok[pos] == "B":
+            events.append(("B", 0, int(tok[pos + 1])))
+            pos += 2
+        else:
+            events.append((tok[pos], int(tok[pos + 1]), int(tok[pos + 2])))
+            pos += 3
+    if n <= 400:
+        # brute force: lists, the cheapest sell found by a scan, stops fired one at a time in list order
+        book, stops, last, vol, out = [], [], None, 0, []
+        def buy(q):
+            nonlocal last, vol
+            while q and book:
+                best = min(range(len(book)), key=lambda i: (book[i][0], i))
+                take = min(q, book[best][1])
+                q -= take
+                vol += take
+                last = book[best][0]
+                book[best][1] -= take
+                if book[best][1] == 0:
+                    book.pop(best)
+        for kind, p, q in events:
+            if kind == "S":
+                book.append([p, q])
+            elif kind == "T":
+                stops.append([p, q])
+            else:
+                buy(q)
+            fired = True
+            while fired:
+                fired = False
+                for i in range(len(stops)):
+                    if last is not None and stops[i][0] <= last:
+                        q = stops.pop(i)[1]
+                        buy(q)
+                        fired = True
+                        break
+            out.append(f"{last} {vol}" if last is not None else "- 0")
+        return "\n".join(out)
+    # large: price levels in a dict with a sorted price list; every stop in reach fires together as one buy
+    # (a cascade only buys, so the cheapest shares go first and the order of firing cannot change the result)
+    levels, prices, triggers, waiting = defaultdict(int), [], [], defaultdict(int)
+    last, vol, out = None, 0, []
+    def buy(q):
+        nonlocal last, vol
+        while q and prices:
+            p = prices[0]
+            take = min(q, levels[p])
+            q -= take
+            vol += take
+            levels[p] -= take
+            last = p
+            if levels[p] == 0:
+                prices.pop(0)
+                del levels[p]
+    for kind, p, q in events:
+        if kind == "S":
+            if p not in levels:
+                bisect.insort(prices, p)
+            levels[p] += q
+        elif kind == "T":
+            if p not in waiting:
+                bisect.insort(triggers, p)
+            waiting[p] += q
+        else:
+            buy(q)
+        while last is not None and triggers and triggers[0] <= last:
+            cut = bisect.bisect_right(triggers, last)
+            total = sum(waiting.pop(t) for t in triggers[:cut])
+            del triggers[:cut]
+            buy(total)
+        out.append(f"{last} {vol}" if last is not None else "- 0")
+    return "\n".join(out)
+
+INDEP.update({"ci-stone-hops": fewest_hops, "ci-k-bit-count": count_k_bits, "ci-ring-bonuses": ring_bonuses,
+              "ci-spiral-cells": spiral_cells, "ci-stop-cascade": solve_stop_cascade})
+SLOW_IDX.update({"ci-stone-hops": [3, 4, 5], "ci-k-bit-count": [3, 4], "ci-ring-bonuses": [3, 4],
+                 "ci-spiral-cells": [3, 4, 5], "ci-stop-cascade": [3, 4, 5]})
+STATED.update({
+    "ci-stone-hops": [(lambda: fewest_hops("..~.~..", 2, 3), 2), (lambda: 6 - 0 > 3, True)],
+    "ci-k-bit-count": [(lambda: count_k_bits([[5, 12, 2]]), [5]),
+                       (lambda: [x for x in range(5, 13) if bin(x).count("1") == 2], [5, 6, 9, 10, 12]),
+                       (lambda: [bin(x)[2:] for x in (5, 6, 9, 10, 12)], ["101", "110", "1001", "1010", "1100"])],
+    "ci-ring-bonuses": [(lambda: ring_bonuses([3, 1, 2, 5]), 8), (lambda: 2 + 1 + 2 + 3, 8)],
+    "ci-spiral-cells": [(lambda: spiral_cells(3, 4, list(range(1, 13))), [[0, 0], [0, 1], [0, 2], [0, 3], [1, 3], [2, 3], [2, 2], [2, 1], [2, 0], [1, 0], [1, 1], [1, 2]]),
+                        (lambda: spiral_cells(3, 4, [5, 11, 12]), [[1, 3], [1, 1], [1, 2]]),
+                        (lambda: (10 ** 9 - 1) // 2 + 1, 5 * 10 ** 8)],
+    "ci-stop-cascade": [(lambda: solve_stop_cascade("4\nS 10 2\nT 10 3\nS 12 5\nB 1\n"), "- 0\n- 0\n- 0\n12 4")],
+})
