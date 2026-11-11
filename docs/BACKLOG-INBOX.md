@@ -2145,3 +2145,7 @@ Raised later (audit mm-games round 2):
 
 Raised later (audit delta 2026-11-11):
 - [Should] Playthrough: the timed checks of `research-int/review-1` (`(timed)` and `(timed parts)`) still throw `page.waitForFunction: Timeout 20000ms exceeded`, desktop and `--mobile`, at the delta audit of 11 November (three runs with `--local-cdn`). The plain set passes, 10 of 10 recorded. This is the item raised earlier in this inbox (the bullet that names `review-2`'s passing timed checks) and KNOWN_ISSUES session Y; it predates the top-up item `r1-det-rank-one`. Until it is fixed this set cannot show a green gate, so every audit of it reports the same two problems.
+
+Raised later (audit counting-chance):
+- [Could] Validator or playthrough: say when a Python starter fails only by the time limit. counting-chance homework-3 `items[2]` (`smallest_n`) has the starter `while ...:` with body `...`; `...` is truthy, so the untouched starter loops for ever and a learner who presses Check before typing waits out the limit. A warning "starter does not return" would let the author write `while False:  # replace` or leave the loop line for the learner.
+- [Could] The topic number scripts `docs/reports/fluency-counting-chance-numbers.py` and `problems-counting-chance-numbers.py` import `sympy`, which a fresh sandbox lacks (both exit 1 on import until `pip install sympy`). State the dependency in `docs/LEVEL-BRIEF.md` where the number scripts are described, or have `numbers_lib.py` print one clear line when it is missing.
