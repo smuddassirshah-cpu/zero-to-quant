@@ -13,11 +13,11 @@
     "ci-patterns",
     "ci-timed"
   ],
-  "difficulty": 3,
-  "pace": 1620,
+  "difficulty": 4,
+  "pace": 2100,
   "fn": "paving_ways",
   "returns": "a whole number",
-  "brief": "A pavement is 3 cells wide and `n` cells long, with rows 0 to 2 and columns 0 to `n - 1`. It is paved with 1 by 2 slabs, laid along the pavement or across it. The cells listed in `drains`, each as `[row, col]`, hold drain covers and stay unpaved; every other cell gets exactly one slab, and no slab hangs off the end. Return the number of different pavings, modulo `1_000_000_007`.\n\nWrite `paving_ways(n, drains)`.\n\nExample. For `n = 3` and a drain at `[1, 1]`, the eight cells round the drain form a ring, which pairs up in two ways. The answer is 2.",
+  "brief": "A pavement is 3 cells wide and `n` cells long, with rows 0 to 2 and columns 0 to `n - 1`. It is paved with 1 by 2 slabs, laid along the pavement or across it. The cells listed in `drains`, each as `[row, col]`, hold drain covers and stay unpaved; every other cell gets exactly one slab, and no slab hangs off the end. If every cell is a drain, there is one paving, the empty one. Return the number of different pavings, modulo `1_000_000_007`.\n\nWrite `paving_ways(n, drains)`.\n\nExample. For `n = 3` and a drain at `[1, 1]`, the eight cells round the drain form a ring, which pairs up in two ways. The answer is 2.",
   "constraints": [
     "$1 \\le n \\le 20{,}000$. The drains are different cells with `row` from 0 to 2 and `col` from 0 to `n - 1`.",
     "$O(n)$ time is the target, with a small factor for the eight states of a column.",
@@ -95,8 +95,8 @@
       "compare": "equal"
     },
     {
-      "call": "paving_ways(3, [])",
-      "expect": "0",
+      "call": "paving_ways(30, [])",
+      "expect": "299303201",
       "compare": "equal"
     },
     {
@@ -143,9 +143,14 @@
       "call": "paving_ways(19999, [[1, 9999]])",
       "expect": "930650168",
       "compare": "equal"
+    },
+    {
+      "call": "paving_ways(2, [[0, 1], [1, 1]])",
+      "expect": "1",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. Unlike the plain 3 by `n` strip, which has a closed recurrence, the drains change the count column by column, so the state must record which cells are already covered.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The obvious method lays slabs cell by cell and backtracks, which counts the pavings one at a time and runs out of time on the long pavements. The step to the target is one pass over the columns with eight states. Unlike the plain 3 by `n` strip, which has a closed recurrence, the drains change the count column by column, so the state must record which cells are already covered.",
   "solution": "def paving_ways(n, drains):\n    mod = 1_000_000_007\n    blocked = [0] * n\n    for r, c in drains:\n        blocked[c] |= 1 << r\n\n    def fill(row, full, nxt, out):\n        if row == 3:\n            out.append(nxt)\n            return\n        bit = 1 << row\n        if full & bit:\n            fill(row + 1, full, nxt, out)\n            return\n        fill(row + 1, full | bit, nxt | bit, out)\n        if row < 2 and not full & (bit << 1):\n            fill(row + 2, full | bit | (bit << 1), nxt, out)\n\n    moves = []\n    for full in range(8):\n        out = []\n        fill(0, full, 0, out)\n        moves.append(out)\n\n    ways = [1, 0, 0, 0, 0, 0, 0, 0]\n    for c in range(n):\n        new = [0] * 8\n        b = blocked[c]\n        for state in range(8):\n            w = ways[state]\n            if w and not state & b:\n                for nxt in moves[state | b]:\n                    new[nxt] += w\n        ways = [x % mod for x in new]\n    return ways[0]\n",
   "notes": [
     "A column's state is the mask of its cells already covered from the left, and the drains are added to it before the column is filled.",
@@ -164,6 +169,14 @@
     {
       "code": "def paving_ways(n, drains):\n    mod = 1_000_000_007\n    if n % 2:\n        return 0\n    f = [1, 3]\n    for _ in range(n // 2 - 1):\n        f.append((4 * f[-1] - f[-2]) % mod)\n    return f[n // 2]\n",
       "slip": "The known count for a plain 3 by `n` strip ignores the drains."
+    },
+    {
+      "code": "def paving_ways(n, drains):\n    mod = 1_000_000_007\n    blocked = [0] * (n + 1)\n    for r, c in drains:\n        blocked[c] |= 1 << r\n    def fill(row, full, nxt, out):\n        if row == 3:\n            out.append(nxt); return\n        bit = 1 << row\n        if full & bit:\n            fill(row + 1, full, nxt, out); return\n        fill(row + 1, full | bit, nxt | bit, out)\n        if row < 2 and not full & (bit << 1):\n            fill(row + 2, full | bit | (bit << 1), nxt, out)\n    moves = []\n    for full in range(8):\n        out = []; fill(0, full, 0, out); moves.append(out)\n    ways = [1] + [0] * 7\n    for c in range(n):\n        new = [0] * 8\n        for s in range(8):\n            if ways[s]:\n                for nxt in moves[s | blocked[c]]:\n                    if c + 1 < n - 1 and nxt & blocked[c + 1]:\n                        continue\n                    new[nxt] += ways[s]\n        ways = [x % mod for x in new]\n    return ways[0]\n",
+      "slip": "Checking each slab against the drains of the next column, but stopping one column short, lets a slab end on a drain in the last column."
+    },
+    {
+      "code": "def paving_ways(n, drains):\n    cells = [[False] * n for _ in range(3)]\n    for r, c in drains:\n        cells[r][c] = True\n\n    def go(pos):\n        while pos < 3 * n and cells[pos % 3][pos // 3]:\n            pos += 1\n        if pos == 3 * n:\n            return 1\n        r, c = pos % 3, pos // 3\n        total = 0\n        cells[r][c] = True\n        if r < 2 and not cells[r + 1][c]:\n            cells[r + 1][c] = True\n            total += go(pos + 1)\n            cells[r + 1][c] = False\n        if c + 1 < n and not cells[r][c + 1]:\n            cells[r][c + 1] = True\n            total += go(pos + 1)\n            cells[r][c + 1] = False\n        cells[r][c] = False\n        return total\n\n    return go(0) % 1_000_000_007\n",
+      "slip": "Laying slabs cell by cell and backtracking is right but counts the pavings one at a time, which is far too slow on long pavements."
     }
   ]
 }

@@ -13,8 +13,8 @@
     "ci-patterns",
     "ci-timed"
   ],
-  "difficulty": 5,
-  "pace": 2700,
+  "difficulty": 4,
+  "pace": 2100,
   "fn": "best_trips",
   "returns": "a whole number",
   "brief": "`prices` holds a share's price on each of `n` days. A trip is one buy and a later sale of one share; the trader holds at most one share and makes at most one trade a day. Each sale costs a broker's fee of `fee` pounds, and the trader may make at most `k` trips. Return the largest total profit after fees.\n\nWrite `best_trips(prices, k, fee)`.\n\nExample. For `[1, 6, 4, 9, 2, 8]`, `k = 2` and `fee = 1`, the trips 1 to 9 and 2 to 8 make 7 and 5 after fees. Three short trips would make more, but only two are allowed. The answer is 12.",
@@ -133,9 +133,19 @@
       "call": "best_trips([1, 10000] * 1500, 30, 9998)",
       "expect": "30",
       "compare": "equal"
+    },
+    {
+      "call": "best_trips([4, 6, 5, 9], 3, 2)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([1, 5, 4, 9], 2, 3)",
+      "expect": "5",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method is plain recursion over (day, trips left, holding), which branches on each day and runs out of time on 40 days already. The step to the target is two lists over the trip count, updated once a day, so each state is worked out once. Unlike the usual trip limit with no costs, every sale pays a fee, so joining two rises into one trip can beat taking both.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The obvious method is plain recursion over (day, trips left, holding), which branches on each day and runs out of time on 40 days already. The step to the target is two lists over the trip count, updated once a day, so each state is worked out once. Unlike the usual trip limit with no costs, every sale pays a fee, so joining two rises into one trip can beat taking both. This is the trip-limit table of the contests course with a fee on each sale; the fee changes one term and rules out the shortcut for a large `k`.",
   "solution": "def best_trips(prices, k, fee):\n    k = min(k, len(prices) // 2)\n    if k == 0:\n        return 0\n    hold = [-prices[0]] * (k + 1)\n    free = [0] * (k + 1)\n    for p in prices[1:]:\n        for j in range(k, 0, -1):\n            free[j] = max(free[j], hold[j] + p - fee)\n            hold[j] = max(hold[j], free[j - 1] - p)\n    return max(free)\n",
   "notes": [
     "Each day a sale moves `hold[j]` into `free[j]` and a buy moves `free[j - 1]` into `hold[j]`, so the lists hold the best of every plan so far.",
@@ -154,6 +164,18 @@
     {
       "code": "def best_trips(prices, k, fee):\n    n = len(prices)\n\n    def go(i, left, holding):\n        if i == n:\n            return 0 if not holding else -10 ** 9\n        best = go(i + 1, left, holding)\n        if holding:\n            best = max(best, prices[i] - fee + go(i + 1, left, False))\n        elif left:\n            best = max(best, go(i + 1, left - 1, True) - prices[i])\n        return best\n\n    return go(0, k, False)\n",
       "slip": "Plain recursion over each day's choice is right but repeats the same states, too slow."
+    },
+    {
+      "code": "def best_trips(prices, k, fee):\n    n = len(prices)\n    if k >= n // 2:\n        return sum(max(0, b - a - fee) for a, b in zip(prices, prices[1:]))\n    hold = [float('-inf')] * (k + 1)\n    free = [0] * (k + 1)\n    for p in prices:\n        for j in range(k, 0, -1):\n            free[j] = max(free[j], hold[j] + p - fee)\n            hold[j] = max(hold[j], free[j - 1] - p)\n    return max(free)\n",
+      "slip": "The shortcut for a large `k` charges the fee on every daily rise, but one trip can span several rises and pays the fee once."
+    },
+    {
+      "code": "def best_trips(prices, k, fee):\n    n = len(prices)\n    if k >= n // 2:\n        total, low = 0, prices[0]\n        for a, b in zip(prices, prices[1:] + [0]):\n            if b < a:\n                total += max(0, a - low - fee)\n                low = b\n        return total\n    hold = [float('-inf')] * (k + 1)\n    free = [0] * (k + 1)\n    for p in prices:\n        for j in range(k, 0, -1):\n            free[j] = max(free[j], hold[j] + p - fee)\n            hold[j] = max(hold[j], free[j - 1] - p)\n    return max(free)\n",
+      "slip": "The shortcut for a large `k` takes each upward run as its own trip, but with a fee, joining two runs across a small dip can pay more."
+    },
+    {
+      "code": "def best_trips(prices, k, fee):\n    hold = [float('-inf')] * (k + 1)\n    free = [0] + [float('-inf')] * k\n    for p in prices:\n        for j in range(k, 0, -1):\n            free[j] = max(free[j], hold[j] + p - fee)\n            hold[j] = max(hold[j], free[j - 1] - p)\n    return max(0, free[k])\n",
+      "slip": "Reading the answer at exactly `k` trips forces all `k` trips, where fewer would pay more."
     }
   ]
 }

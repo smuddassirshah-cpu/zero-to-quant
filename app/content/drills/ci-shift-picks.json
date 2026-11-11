@@ -112,12 +112,17 @@
       "call": "best_shifts([(i * 7 + i * i) % 23 for i in range(100000)])",
       "expect": "[634780, 43478]",
       "compare": "equal"
+    },
+    {
+      "call": "best_shifts([3, 5, 3])",
+      "expect": "[6, 2]",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. Unlike the usual rest-day sum, ties are broken on the fewest days, so the table carries a pair.",
   "solution": "def best_shifts(pay):\n    before, last = (0, 0), (0, 0)\n    for x in pay:\n        before, last = last, max(last, (before[0] + x, before[1] - 1))\n    return [last[0], -last[1]]\n",
   "notes": [
-    "The best plan for the first `i` days either rests on day `i` or works it after the best plan for the first `i - 1` days.",
+    "The best plan up to day `i` either rests on day `i`, or works it after the best plan up to day `i - 2`.",
     "Comparing (pay, minus days) as one tuple settles the tie in the same step, so a £0 day is never counted.",
     "One pass holding two tuples makes the work $O(n)$."
   ],
@@ -133,6 +138,10 @@
     {
       "code": "def best_shifts(pay):\n    n = len(pay)\n    total = [0] * n\n    days = [0] * n\n    total[0], days[0] = pay[0], 1 if pay[0] else 0\n    if n == 1:\n        return [total[0], days[0]]\n    total[1], days[1] = pay[1], 1 if pay[1] else 0\n    for i in range(2, n):\n        a, b = (total[i - 1], -days[i - 1]), (total[i - 2] + pay[i], -days[i - 2] - 1)\n        best = max(a, b)\n        total[i], days[i] = best[0], -best[1]\n    return [total[-1], days[-1]]\n",
       "slip": "Setting day 1's best to its own pay forgets that working day 0 alone may pay more."
+    },
+    {
+      "code": "def best_shifts(pay):\n    n = len(pay)\n    used = [False] * (n + 2)\n    total = days = 0\n    for i in sorted(range(n), key=lambda i: -pay[i]):\n        if pay[i] and not used[i] and not used[i + 2]:\n            used[i + 1] = True\n            total += pay[i]\n            days += 1\n    return [total, days]\n",
+      "slip": "Taking the richest free day first is greedy, and it fails when one middle day blocks two neighbours that together pay more."
     }
   ]
 }

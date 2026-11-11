@@ -130,9 +130,14 @@
       "call": "fewest_words('ef' * 9999 + 'e', ['ef', 'fe', 'e', 'f' * 20])",
       "expect": "10000",
       "compare": "equal"
+    },
+    {
+      "call": "fewest_words('ab' * 10000, ['a', 'b', 'abab'] + ['z' + chr(97 + i // 676) + chr(97 + i // 26 % 26) + chr(97 + i % 26) for i in range(4997)])",
+      "expect": "5000",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method is plain recursion that tries every code at the front and splits the rest, which repeats the same suffixes and runs out of time on the long runs of one letter. The step to the target is one table over the positions, each filled from the code lengths that end there. Unlike the yes-or-no word break, the answer is the fewest codes, so each position keeps a minimum instead of a flag.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method is plain recursion that tries every code at the front and splits the rest, which repeats the same suffixes and runs out of time on the long runs of one letter. The step to the target is one table over the positions, each filled from the code lengths that end there. Unlike the yes-or-no word break, the answer is the fewest codes, so each position keeps a minimum instead of a flag.",
   "solution": "def fewest_words(text, words):\n    vocab = set(words)\n    lengths = sorted({len(w) for w in words})\n    n = len(text)\n    big = n + 1\n    best = [0] + [big] * n\n    for i in range(1, n + 1):\n        b = big\n        for L in lengths:\n            if L > i:\n                break\n            if best[i - L] + 1 < b and text[i - L:i] in vocab:\n                b = best[i - L] + 1\n        best[i] = b\n    return best[n] if best[n] < big else -1\n",
   "notes": [
     "The fewest codes for the first `i` letters is one more than the best over the codes that end at `i`.",
@@ -151,6 +156,10 @@
     {
       "code": "def fewest_words(text, words):\n    vocab = set(words)\n    longest = max(len(w) for w in words)\n\n    def go(i):\n        if i == len(text):\n            return 0\n        best = -1\n        for j in range(i + 1, min(len(text), i + longest) + 1):\n            if text[i:j] in vocab:\n                r = go(j)\n                if r >= 0 and (best < 0 or r + 1 < best):\n                    best = r + 1\n        return best\n\n    return go(0)\n",
       "slip": "Plain recursion over every split is right but tries the same suffix again and again, too slow."
+    },
+    {
+      "code": "def fewest_words(text, words):\n    n = len(text)\n    big = n + 1\n    best = [0] + [big] * n\n    for i in range(n):\n        if best[i] == big:\n            continue\n        for w in words:\n            if text.startswith(w, i) and best[i] + 1 < best[i + len(w)]:\n                best[i + len(w)] = best[i] + 1\n    return best[n] if best[n] < big else -1\n",
+      "slip": "Trying every code at every position costs the number of codes per position, not the number of code lengths, and is too slow with thousands of codes."
     }
   ]
 }

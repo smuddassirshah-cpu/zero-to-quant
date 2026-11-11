@@ -64,3 +64,53 @@ Clean (no finding of their own; statement complete, notes true, every candidate 
 No `expect` is wrong, no test leaves the constraints, tie rules are stated and tested everywhere, and the author's brute forces caught the one wrong model before hand-back. The weakness is the one of pack 5, a third time now (packs 3 and 4, 5, 6): at difficulty 4 and 5 only the plain quadratic or exponential method was planted, and the method one step short of the target (the right table, searched or looped the slow way) passes, because the large tests keep the searched list short or the looped set small. Finding class for a script (SESSION PROTOCOL 6), raised in the inbox.
 
 Every proposed `expect` above was computed by the model solution and by `mine.py` (`extra_checks.py`); findings 1 to 5 were also checked by hand or by brute force.
+
+## Fix pass
+
+Applied with targeted edits to 14 files (13 drills and `index.json`), `docs/reports/drills-ci-6-check.py` and `docs/reports/drills-ci-6.md`. Fixed 19, disputed 2 in part (15 and 16 for the two classics, basis below), deferred 0 (19 is a no-change note). "Two agree" means the model solution and my own second solution in the scratchpad (`own.py`: brute force on small inputs, a different algorithm on large ones); the model and my brute forces also agreed on 1,500 random small inputs a drill first.
+
+1. `ci-capped-trips` tests: fixed. Both reader tests added (15 tests), three plants added (fee per rise, fee per upward run, answer at exactly `k`); all fail on the new tests in Chromium.
+2. `ci-fewest-tokens` tests: fixed. tests[4] and tests[6] replaced by the reader's two (15 tests); two plants added (no `v <= a` guard, tie rule on the first token only).
+3. `ci-shift-picks` tests: fixed (13 tests); richest-day-first plant added.
+4. `ci-product-stretch` tests: fixed (14 tests); zero-forgotten plant added.
+5. `ci-paving-ways` tests: fixed (reader's test added); one-column-short plant added.
+6. `ci-word-split` tests: fixed (14 tests); every-code-per-position plant added (over the limit in Chromium: 12.5 s in Pyodide).
+7. `ci-longest-rising` tests: fixed (14 tests); two scan plants added (from the back, from the front).
+8. `ci-nested-crates` tests: fixed (15 tests); scan plant added.
+9. `ci-best-session` tests: fixed (13 tests); scan-from-each-start plant added.
+10. `ci-paving-ways` brief: fixed as proposed.
+11. `ci-long-stairwell` brief: fixed as proposed.
+12. `ci-shift-picks` notes[0]: fixed. Recounted: the model's `before` is the best plan up to day `i - 2`.
+13. `ci-product-stretch` notes[2]: fixed. Recounted: `hi * x` and `lo * x` are two multiplications.
+14. `ci-product-stretch` constraints[1]: fixed by rewording as the reader says; `n` stays 2,000, nothing now claims the tests rule out trying every stretch.
+15. `ci-capped-trips`: relabelled, task kept (disputed in part). Difficulty 4, pace 2,100, `how` gains the reader's sentence. Basis for keeping the task: the fee is a new term in the update and removes the large-`k` shortcut, which three real candidates got wrong (finding 1), so the code does differ from the fee-free homework; the sentence in `how` says so. `ci-long-stairwell` to difficulty 5, pace 2,520.
+16. `ci-longest-rising` to difficulty 3, pace 1,500; `ci-paving-ways` to difficulty 4, pace 2,100 (disputed in part for the rising task: its return value already differs from the classic, as `how` says, and the reader's own remedy is the relabel, so the code was not changed further). Paving at difficulty 4 needs an obvious method that fails on time (brief rule), so `how` is rewritten with the obvious method and the step to the target, a cell-by-cell backtracking plant is added (cut off at 12 s in Pyodide) and tests[4] `paving_ways(3, [])` (0, covered by the odd-`n` tests at [7] and [10]) is replaced by `paving_ways(30, [])`, which that plant cannot finish. `index.json` rows in step (the check script now tests this).
+17. `how` sentences added to best-session, broken-steps, shift-picks, ring-stalls (broken-steps and ring-stalls reworded slightly to match the code: "cracked steps get 0 ways", "three cases are tried for the first let stall").
+18. Tape tests[6] `226` to `216` (`expect` stays `'3\n2\n99'`: 216 has 3 readings, brute force over the smudges agrees); tokens tests[1] `fewest_tokens([4], 6)` = `[]`. The crates test is kept, as the reader allows.
+19. Constraints objects: no content change, as the reader says.
+20. `ci-best-session` solution: now `if run > best[0]:`; every test still passes.
+21. `ci-nested-crates` how: the clause "which is why each width is placed as one group" removed; reader's closing sentence added.
+
+### Added or changed test `expect`s, and the two solutions that agree
+
+- best-session `[-1] * 50000 + [1] * 50000` = `[50000, 50000, 99999]` (model, prefix-sum minima in numpy).
+- shift-picks `[3, 5, 3]` = `[6, 2]` (model, brute force over every subset).
+- product-stretch `[-9, 2, 0]` = `0` (model, every stretch).
+- paving-ways `(2, [[0, 1], [1, 1]])` = `1` (model, backtracking over cells); tests[4] now `paving_ways(30, [])` = `299303201` (model; the recurrence f(k) = 4 f(k-1) - f(k-2) with f(0) = 1, f(1) = 3 at k = 15, below the modulus).
+- word-split `'ab' * 10000` with `['a', 'b', 'abab']` and 4,997 three-letter `z` codes = `5000` (model, a length-by-length lookup DP of mine).
+- longest-rising 50,000 even values up, then 50,000 odd values down = `[50001, 99999]` (model, Fenwick tree over ranks).
+- fewest-tokens `([1, 8], 4)` = `[1, 1, 1, 1]`, `([5, 7, 8, 4], 26)` = `[8, 8, 5, 5]`, `([4], 6)` = `[]` (model, enumeration of every multiset with the tie rule).
+- nested-crates 50,000 odd widths at height 1 then 50,000 even widths at height 2 = `50001` (model, sort by (height, width) and a strict rising run).
+- capped-trips `([4, 6, 5, 9], 3, 2)` = `3` and `([1, 5, 4, 9], 2, 3)` = `5` (model, every choice of up to `k` buy and sell day pairs).
+- tape-decodes tests[6] unchanged `expect` for the new tape `216`: `'3\n2\n99'` (model, every fill of the smudges).
+All new inputs sit inside each drill's `constraints`; the check script re-reads them against the objects and prose.
+
+Difficulty, pace and return-value changes: capped-trips 5 to 4 (2,100); long-stairwell 4 to 5 (2,520); longest-rising 4 to 3 (1,500); paving-ways 3 to 4 (2,100). No return value changed. Graded answers changed: none of the existing `expect`s (tests[4] of paving, tests[4] and [6] of tokens and tests[1] of tokens were replaced by new inputs).
+
+### Gates
+
+- `docs/reports/drills-ci-6-check.py`: exit 0, 15 drills, 0 errors; it now also checks plant counts, the four difficulties and the `index.json` rows. With `--pyodide <pkgs>`: exit 0; models 0.02 s to 0.91 s, every obvious method cut off at 12 s, word-split new plant 12.5 s.
+- `node tools/validate.mjs`: 0 errors. Index rows in step.
+- `node tools/planted-check.mjs --drill <13 changed ids> --require --local-cdn <pkgs>`: 13 drills checked, 53 planted solutions, 0 failures.
+- `node tools/playthrough.mjs --drill <13 ids> --local-cdn <pkgs>`: All passed; with `--mobile`: All passed.
+- `voice-scan.py 35` on the 15 pack files: 584 sentences, 0 over 35 words, 0 explanations over three sentences.

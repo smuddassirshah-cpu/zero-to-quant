@@ -112,10 +112,15 @@
       "call": "best_session([(i * i * 31 + i * 17) % 2001 - 1000 for i in range(100000)])",
       "expect": "[502886, 554, 99560]",
       "compare": "equal"
+    },
+    {
+      "call": "best_session([-1] * 50000 + [1] * 50000)",
+      "expect": "[50000, 50000, 99999]",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
-  "solution": "def best_session(pnl):\n    best = [pnl[0], 0, 0]\n    run, start = pnl[0], 0\n    for i in range(1, len(pnl)):\n        if run >= 0:\n            run += pnl[i]\n        else:\n            run, start = pnl[i], i\n        if run > best[0] or (run == best[0] and start < best[1]):\n            best = [run, start, i]\n    return best\n",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. Unlike the usual best-run task, the answer carries the run's ends with a tie rule.",
+  "solution": "def best_session(pnl):\n    best = [pnl[0], 0, 0]\n    run, start = pnl[0], 0\n    for i in range(1, len(pnl)):\n        if run >= 0:\n            run += pnl[i]\n        else:\n            run, start = pnl[i], i\n        if run > best[0]:\n            best = [run, start, i]\n    return best\n",
   "notes": [
     "The best run ending on a day is that day alone or that day added to the best run ending the day before.",
     "Carrying on a run whose total is exactly 0 keeps its earlier start, which the tie rule asks for.",
@@ -133,6 +138,10 @@
     {
       "code": "def best_session(pnl):\n    best = [pnl[0], 0, 0]\n    run, start = pnl[0], 0\n    for i in range(1, len(pnl)):\n        if run >= 0:\n            run += pnl[i]\n        else:\n            run, start = pnl[i], i\n        if run >= best[0]:\n            best = [run, start, i]\n    return best\n",
       "slip": "Replacing the best on an equal total keeps the latest and longest run, not the earliest and shortest."
+    },
+    {
+      "code": "def best_session(pnl):\n    run = top = pnl[0]\n    for x in pnl[1:]:\n        run = max(x, run + x)\n        top = max(top, run)\n    for s in range(len(pnl)):\n        tot = 0\n        for e in range(s, len(pnl)):\n            tot += pnl[e]\n            if tot == top:\n                return [top, s, e]\n",
+      "slip": "Finding the best total first and then scanning from every start for a run that reaches it is right but takes $O(n^2)$ when the best run starts late."
     }
   ]
 }
