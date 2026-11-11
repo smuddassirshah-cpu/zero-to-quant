@@ -184,3 +184,7 @@ No `wrong` rows, so nothing here counts towards the convergence rule.
 - Numbers in research-int homework-2 `items[8]` and game-theory review-2 `items[9]` recomputed in Python.
 - `voice-scan.py 35 --summary` on the five courses: 0 and 0 each. `node tools/validate.mjs`: 0 errors.
 - Not run: the systems C++ solution was read line by line, not compiled, and no playthrough was run (no content changed in this read).
+
+## Fix pass (fix-pass read follow-up)
+
+- Finding 1, `app/content/courses/systems/homework-4.json` `items[6].explain.text`, sentence 1: fixed. Basis: the solution indexes slots with `t & (N - 1)`, `h & (N - 1)` and `(h + i) & (N - 1)`, so what stays in order through the wrap is that masked counter, not the constant mask. The sentence now reads "the slot, the counter masked with $N - 1$, stays in order because $N$ divides $2^{32}$". Gates: validator 0 errors, concepts script exit 0 (no check encoded the old sentence), voice scan 35 0 and 0, playthrough `--set systems/homework-4` green with and without `--mobile`.
