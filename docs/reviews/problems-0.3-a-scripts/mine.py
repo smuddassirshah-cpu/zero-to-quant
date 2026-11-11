@@ -156,7 +156,172 @@ part(c2, 'p-quiz-team', 4, len(mixed), {'no-girls-again': 325 - 5, 'both-off': 3
 part(c2, 'p-quiz-team', 5, F(len(mixed), len(tm)), {'girl-only': F(325, 330), 'bottom': F(310, 325), 'carried': F(305, 330)},
      accept=[0.939, F(31, 33), F(310, 330), 0.9394], reject=[0.94, 0.93, 0.9])
 
-# SETS-3-AND-4 (appended below as each set is read)
+# ---------------------------------------------------------------- counting 3 (vectors) and functions 4
+import re
+import sympy as sp
+
+r_, s_, x_, t_, n_, b_ = sp.symbols('r s x t n b')
+SYMS = {'r': r_, 's': s_, 'x': x_, 't': t_, 'n': n_, 'b': b_}
+
+
+def tex(e):
+    """The keys' small LaTeX: \\frac{a}{b}, implied products, tuples."""
+    e = e.replace('\\left', '').replace('\\right', '')
+    while '\\frac' in e:
+        e2 = re.sub(r'\\frac\{([^{}]*)\}\{([^{}]*)\}', r'((\1)/(\2))', e)
+        if e2 == e:
+            raise ValueError(e)
+        e = e2
+    e = re.sub(r'(\d|\))\s*(?=[a-z(])', r'\1*', e)
+    return sp.sympify(e, locals=SYMS, rational=True)
+
+
+def same(a, b):
+    a, b = tex(a) if isinstance(a, str) else a, tex(b) if isinstance(b, str) else b
+    if isinstance(a, (tuple, sp.Tuple)) or isinstance(b, (tuple, sp.Tuple)):
+        return len(a) == len(b) and all(sp.simplify(sp.sympify(u) - sp.sympify(v)) == 0 for u, v in zip(a, b))
+    return sp.simplify(a - b) == 0
+
+
+def epart(items, pid, k, mine, wrongs=None):
+    w = items[pid]['parts'][k - 1]['widget']
+    lab = f'{pid}[{k}]'
+    ok(w['kind'] == 'expression', f'{lab} is an expression part')
+    for form in [w['answer']] + list(w.get('accept') or []):
+        ok(same(form, mine), f'{lab} key form {form} is not my {mine}')
+    have = {q['id']: q for q in w.get('wrong', [])}
+    for q in have.values():
+        ok(not same(q['tex'], mine), f'{lab} wrong {q["id"]} equals the answer')
+    for wid, v in (wrongs or {}).items():
+        ok(wid in have and same(have[wid]['tex'], v), f'{lab} wrong {wid}: slip gives {v}, file {have.get(wid, {}).get("tex")}')
+    ok(not (set(have) - set(wrongs or {})), f'{lab} wrong ids not rebuilt: {sorted(set(have) - set(wrongs or {}))}')
+
+
+V = sp.Matrix
+tup = lambda m: tuple(m)
+norm = lambda m: sp.sqrt(sum(c ** 2 for c in m))
+c3 = load('counting', 3)
+
+S, P, Q = V([1, 2]), V([10, 14]), V([-2, 30])
+SP, PQ = P - S, Q - P
+epart(c3, 'p-orienteering', 1, tup(SP), {'start-minus-end': tup(S - P), 'end-point': tup(P)})
+epart(c3, 'p-orienteering', 2, tup(PQ), {'start-minus-end': tup(P - Q), 'added': tup(P + Q)})
+epart(c3, 'p-orienteering', 3, tup(SP + PQ), {'subtracted': tup(SP - PQ), 'position': tup(Q)})
+ok(SP + PQ == Q - S, 'orienteering: head to tail equals end minus start')
+route = 100 * (norm(SP) + norm(PQ))
+direct = 100 * norm(Q - S)
+ok(route == 3500 and sp.simplify(direct - 100 * sp.sqrt(793)) == 0, 'orienteering lengths exact')
+ok(abs(math.hypot(9, 12) + math.hypot(-12, 16) - 35) < 1e-12 and abs(math.hypot(-3, 28) - 28.1603) < 5e-5, 'orienteering lengths numeric')
+part(c3, 'p-orienteering', 4, route, {'components': 100 * (9 + 12 + 12 + 16), 'direct': float(direct), 'squares': 35}, accept=[3500], reject=[3499, 3501])
+part(c3, 'p-orienteering', 5, float(route - direct), {'direct': float(direct), 'added-components': 3500 - 100 * (3 + 28), 'carried': 4900 - float(direct), 'squares': float(route - direct) / 100},
+     accept=[684, 683.97, 3500 - 2816], reject=[680, 690, 3500 - 2820])
+
+A, B, Cc = V([2, 3]), V([8, 7]), V([17, 13])
+AB, AC = B - A, Cc - A
+epart(c3, 'p-power-line', 1, tup(AB), {'start-minus-end': tup(A - B), 'added': tup(A + B)})
+epart(c3, 'p-power-line', 2, tup(AC), {'start-minus-end': tup(A - Cc), 'from-b': tup(Cc - B)})
+k = sp.Rational(AC[0], AB[0])
+ok(k == sp.Rational(AC[1], AB[1]) == sp.Rational(5, 2), 'power line: one k for both rows')
+part(c3, 'p-power-line', 3, k, {'reciprocal': 1 / k, 'difference': AC[0] - AB[0]})
+cable = 100 * norm(AC)
+ok(sp.simplify(cable - 100 * k * norm(AB)) == 0 and sp.simplify(norm(AC) ** 2 - 325) == 0, 'power line: |AC| = 2.5|AB| = sqrt(325)')
+part(c3, 'p-power-line', 5, float(cable), {'ab-only': float(100 * norm(AB)), 'added': 100 * (15 + 10), 'units': float(norm(AC))},
+     accept=[1803, 1802.78, 250 * 7.211, 250 * 7.21, 1802], reject=[1800, 1805, 250 * 7.2])
+ok(k > 1, 'power line: k > 1 puts C beyond B')
+
+h, d, tr = V([60, 40]), V([sp.Rational(5, 2), -sp.Rational(7, 2)]), V([-20, 30])
+h2 = h + tr
+part(c3, 'p-grain-merchant', 1, h.dot(d), {'no-sign': 60 * 2.5 + 40 * 3.5, 'sum-first': (60 + 40) * (2.5 - 3.5)})
+epart(c3, 'p-grain-merchant', 2, tup(h2), {'signs': tup(h - tr), 'trade': tup(tr)})
+ok(h2.dot(d) == h.dot(d) + tr.dot(d) == -145, 'grain: the dot product splits over the trade')
+part(c3, 'p-grain-merchant', 3, h2.dot(d), {'trade-only': tr.dot(d), 'old-book': h.dot(d), 'signs': h.dot(d) - tr.dot(d), 'no-sign': 40 * 2.5 + 70 * 3.5})
+ok((h - tr).dot(d) == 165, 'grain: holdings (80, 10) also give 165, as the signs line says')
+cosv = h2.dot(d) / (norm(h2) * norm(d))
+ang = math.degrees(math.acos(float(cosv)))
+ang2 = math.degrees(math.atan2(-3.5, 2.5) - math.atan2(70, 40)) % 360
+ok(abs(ang - min(ang2, 360 - ang2)) < 1e-9, 'grain: angle by acos and by atan2 agree')
+part(c3, 'p-grain-merchant', 4, ang, {'acute': 180 - ang, 'cosine': float(cosv), 'radians': math.radians(ang)},
+     accept=[115, 114.7, math.degrees(math.acos(-0.418)), math.degrees(math.acos(-0.42)), math.degrees(math.acos(-145 / 346.8))], reject=[114, 116, math.degrees(math.acos(-0.4))])
+ok(abs(float(norm(h2)) - 80.62) < 5e-3 and abs(float(norm(d)) - 4.301) < 5e-4 and abs(float(norm(h2) * norm(d)) - 346.8) < 0.05, 'grain: magnitudes in the explanation')
+
+RS = s_ - r_
+OM = r_ + RS / 2
+OX = sp.Rational(2, 3) * OM
+RX = OX - r_
+RN = -r_ + s_ / 2
+epart(c3, 'p-sail-ring', 1, RS, {'reversed': r_ - s_, 'added': r_ + s_})
+epart(c3, 'p-sail-ring', 2, OM, {'half-rs': RS / 2, 'whole-rs': r_ + RS})
+epart(c3, 'p-sail-ring', 3, OX, {'two-thirds': sp.Rational(2, 3) * (r_ + s_), 'added': (sp.Rational(2, 3) + sp.Rational(1, 2)) * (r_ + s_)})
+epart(c3, 'p-sail-ring', 4, RX, {'ox': OX, 'reversed': -RX, 'added': OX + r_})
+kk = sp.symbols('k')
+RXe, RNe = sp.expand(RX), sp.expand(RN)
+solk = sp.solve([sp.Eq(RXe.coeff(r_), kk * RNe.coeff(r_)), sp.Eq(RXe.coeff(s_), kk * RNe.coeff(s_))], kk)
+ok(solk == {kk: sp.Rational(2, 3)}, f'sail: one k fits both the r and the s terms ({solk})')
+part(c3, 'p-sail-ring', 5, sp.Rational(2, 3), {'reciprocal': 1.5, 'third': RXe.coeff(s_) / 1, 'half': 0.5}, accept=[0.667, 0.6667, F(2, 3)], reject=[0.67, 0.66, 0.7])
+# numbers: a real triangle, X is the centroid and lies on RN two thirds of the way along
+O_, R_, S_ = V([0, 0]), V([7, 1]), V([2, 9])
+M_, N_ = (R_ + S_) / 2, S_ / 2
+X_ = sp.Rational(2, 3) * M_
+ok(X_ == (O_ + R_ + S_) / 3 and X_ - R_ == sp.Rational(2, 3) * (N_ - R_), 'sail: numeric triangle, X is the centroid on RN')
+
+f4 = load('functions', 4)
+e = lambda v: sp.Rational(3, 2) * v
+m = lambda v: v + 4
+part(f4, 'p-photo-mount', 1, m(e(12)), {'order': e(m(12)), 'one-side': e(12) + 2, 'no-enlarge': m(12)})
+epart(f4, 'p-photo-mount', 2, m(e(x_)), {'order': e(m(x_)), 'one-side': e(x_) + 2})
+y_ = sp.symbols('y')
+inv = sp.solve(sp.Eq(y_, m(e(x_))), x_)[0].subs(y_, x_)
+epart(f4, 'p-photo-mount', 3, inv, {'wrong-order': x_ / sp.Rational(3, 2) - 4, 'sign': (x_ + 4) / sp.Rational(3, 2), 'reciprocal': 1 / m(e(x_))})
+ok(inv.subs(x_, 22) == 12, 'photo: inverse sends 22 back to 12')
+part(f4, 'p-photo-mount', 4, inv.subs(x_, 31), {'wrong-order': 31 / 1.5 - 4, 'sign': 35 / 1.5, 'forward': m(e(31)), 'times': 27 * 1.5})
+part(f4, 'p-photo-mount', 5, e(m(18)), {'same': m(e(18)), 'mount-only': m(18), 'one-side': e(18 + 2)})
+ok(e(m(18)) - 31 == 2, 'photo: 2 cm wider than ordered')
+
+hh = lambda v: sp.Rational(15, 100) * v * (12 - v)
+part(f4, 'p-fountain-jet', 1, hh(6), {'no-bracket': 0.15 * 6 * 12, 'one-factor': 0.15 * 6, 'position': 6}, accept=[5.4], reject=[5, 5.5])
+ok(sp.solve(sp.diff(hh(x_), x_), x_) == [6], 'fountain: the top is at x = 6')
+gs = {'squeeze': hh(sp.Rational(4, 5) * x_), 'widen-wrong': hh(sp.Rational(5, 4) * x_), 'slide': hh(x_ - 3), 'taller': sp.Rational(5, 4) * hh(x_)}
+facts = {kq: (sorted(sp.solve(gq, x_)), gq.subs(x_, sp.solve(sp.diff(gq, x_), x_)[0])) for kq, gq in gs.items()}
+ok(facts['squeeze'] == ([0, 15], sp.Rational(27, 5)), 'fountain: h(0.8x) leaves at 0, lands at 15, top 5.4')
+ok(facts['widen-wrong'][0] == [0, sp.Rational(48, 5)] and facts['slide'][0] == [3, 15] and facts['taller'] == ([0, 12], sp.Rational(27, 4)), 'fountain: the three why lines')
+opts = {o['id']: o for o in f4['p-fountain-jet']['parts'][1]['widget']['options']}
+ok([kq for kq, o in opts.items() if o.get('correct')] == ['squeeze'] and set(opts) == set(gs), 'fountain: one option fits')
+top = sp.solve(sp.diff(gs['squeeze'], x_), x_)[0]
+part(f4, 'p-fountain-jet', 3, top, {'times': 6 * 0.8, 'same': 6, 'slide': 9})
+w4 = f4['p-fountain-jet']['parts'][3]['widget']
+roots = sorted(sp.solve(sp.Eq(gs['squeeze'], sp.Rational(405, 100)), x_))
+ok(hh(3) == hh(9) == sp.Rational(405, 100), 'fountain: old jet 4.05 at 3 and 9')
+ok([float(v) for v in roots] == sorted(w4['answers']) == [3.75, 11.25], 'fountain part 4 set')
+slips4 = {'times': '2.4, 7.2', 'old': '3, 9', 'slide': '6, 12', 'top-plus-three': '4.5, 10.5'}
+ok({q['id']: q['value'] for q in w4['wrong']} == slips4, 'fountain part 4 wrong sets are the named slips')
+
+Cpk = lambda v: 3 if v <= 2 else 3 + sp.Rational(5, 2) * (v - 2)
+rising = sp.expand(3 + sp.Rational(5, 2) * (t_ - 2))
+part(f4, 'p-car-park', 1, Cpk(sp.Rational(9, 2)), {'no-free': 3 + 2.5 * 4.5, 'no-fee': 2.5 * 2.5, 'rate-only': 2.5 * 4.5})
+epart(f4, 'p-car-park', 2, rising, {'bracket': 3 + sp.Rational(5, 2) * t_ - 2, 'no-fee': sp.Rational(5, 2) * t_ - 5, 'dropped': sp.Rational(5, 2) * t_ + 3})
+stay = sp.solve(sp.Eq(rising, sp.Rational(1275, 100)), t_)[0]
+part(f4, 'p-car-park', 3, stay, {'sign': (12.75 - 2) / 2.5, 'order': 12.75 / 2.5 + 2, 'carried': (12.75 - 1) / 2.5, 'forward': 2.5 * 12.75 - 2})
+new = lambda v: 3 if v <= 3 else 3 + sp.Rational(5, 2) * (v - 3)
+grid = [sp.Rational(i, 20) for i in range(21, 200)]
+cands = {'later': lambda v: Cpk(v - 1), 'earlier': lambda v: Cpk(v + 1), 'less-rate': lambda v: Cpk(v) - sp.Rational(5, 2), 'plus-one': lambda v: Cpk(v) + 1}
+fits = [kq for kq, fn in cands.items() if all(fn(v) == new(v) for v in grid)]
+optc = {o['id']: o for o in f4['p-car-park']['parts'][3]['widget']['options']}
+ok(fits == ['later'] and [kq for kq, o in optc.items() if o.get('correct')] == ['later'] and set(optc) == set(cands), 'car park: only C(t - 1) is the new charge for every stay over 1 hour')
+ok(all(cands['less-rate'](v) == new(v) for v in grid if v > 3) and cands['less-rate'](sp.Rational(3, 2)) == sp.Rational(1, 2), 'car park: the less-rate why line')
+part(f4, 'p-car-park', 5, new(stay), {'earlier': Cpk(stay + 1), 'same': Cpk(stay), 'outside': Cpk(stay) - 1})
+ok(Cpk(stay) - new(stay) == sp.Rational(5, 2) and Cpk(stay - 1) == new(stay), 'car park: £2.50 less than before')
+
+Bn = lambda v: sp.Max(sp.Rational(1, 5) * (v - 500), 0)
+Tn = lambda q: 25 * q
+part(f4, 'p-ticket-bonus', 1, sp.solve(sp.Eq(Tn(n_), 500), n_)[0], {'times': 500 * 25, 'next': 21})
+comp = sp.expand(sp.Rational(1, 5) * (Tn(n_) - 500))
+ok(all(Bn(Tn(q)) == comp.subs(n_, q) for q in range(21, 200)) and all(Bn(Tn(q)) == 0 for q in range(0, 21)), 'bonus: 5n - 100 for n > 20, 0 up to 20')
+epart(f4, 'p-ticket-bonus', 2, comp, {'order': 25 * sp.Rational(1, 5) * (n_ - 500), 'bracket': 5 * n_ - 500, 'no-500': 5 * n_})
+invb = sp.solve(sp.Eq(b_, comp), n_)[0]
+epart(f4, 'p-ticket-bonus', 3, invb, {'wrong-order': b_ / 5 + 100, 'sign': (b_ - 100) / 5, 'reciprocal': 1 / (5 * b_ - 100)})
+need = [q for q in range(0, 500) if sp.Max(sp.Rational(3, 10) * (Tn(q) - 500), 0) == 60]
+ok(need == [28] and all(sp.Max(sp.Rational(3, 10) * (Tn(q) - 500), 0) == sp.Rational(3, 2) * Bn(Tn(q)) for q in range(0, 200)), 'bonus: 30% is 1.5 times every old bonus; 28 tickets give £60')
+part(f4, 'p-ticket-bonus', 4, invb.subs(b_, sp.Rational(60) / sp.Rational(3, 2)), {'old-rate': invb.subs(b_, 60), 'times': invb.subs(b_, 90), 'scaled': 32 / 1.5})
 
 if __name__ == '__main__':
     print(f'{checks} checks, {fails} failures')
