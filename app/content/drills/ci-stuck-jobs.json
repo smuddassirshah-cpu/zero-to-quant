@@ -1,0 +1,157 @@
+{
+  "id": "ci-stuck-jobs",
+  "name": "Batch jobs that can never run",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "graphs",
+  "tags": [
+    "pack-5",
+    "stuck-jobs"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1260,
+  "fn": "stuck_jobs",
+  "returns": "a list of whole numbers",
+  "brief": "An overnight batch has `n` jobs, numbered 0 to `n - 1`. Each rule `[a, b]` in `rules` says job `a` must finish before job `b` starts. A rule may repeat, and a rule `[a, a]` makes a job wait for itself. A job runs once every job it waits for has run. Return, in increasing order, the jobs that can never run.\n\nWrite `stuck_jobs(n, rules)`.\n\nExample. For `n = 6` and `rules = [[0, 1], [1, 2], [2, 1], [2, 3], [4, 5]]`, jobs 1 and 2 wait for each other, and job 3 waits for job 2. Jobs 0, 4 and 5 run, so the answer is `[1, 2, 3]`.",
+  "constraints": [
+    "$1 \\le n \\le 200{,}000$ jobs and at most $250{,}000$ rules.",
+    "$O(n + m)$ time is the target for $m$ rules. A chain of rules can be too deep for Python recursion.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "n",
+      "type": "int",
+      "range": [
+        1,
+        200000
+      ]
+    },
+    {
+      "arg": "rules",
+      "type": "list",
+      "len": [
+        0,
+        250000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          2,
+          2
+        ],
+        "of": "int",
+        "range": [
+          0,
+          199999
+        ]
+      }
+    }
+  ],
+  "hint": "Count, for each job, the rules that make it wait. Start with the jobs whose count is 0, and as each one runs take one off the count of every job it releases. Jobs whose count never reaches 0 are stuck.",
+  "starter": "def stuck_jobs(n, rules):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "stuck_jobs(6, [[0, 1], [1, 2], [2, 1], [2, 3], [4, 5]])",
+      "expect": "[1, 2, 3]",
+      "compare": "equal",
+      "note": "Jobs 1 and 2 wait for each other, and job 3 waits behind them."
+    },
+    {
+      "call": "stuck_jobs(3, [[1, 1], [0, 2]])",
+      "expect": "[1]",
+      "compare": "equal",
+      "note": "Job 1 waits for itself; jobs 0 and 2 run in that order."
+    }
+  ],
+  "tests": [
+    {
+      "call": "stuck_jobs(1, [])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(1, [[0, 0]])",
+      "expect": "[0]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(2, [[0, 1], [0, 1]])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(2, [[0, 1], [1, 0]])",
+      "expect": "[0, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(4, [[3, 2], [2, 1], [1, 2], [0, 3]])",
+      "expect": "[1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(5, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 4]])",
+      "expect": "[4]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(5, [[4, 3], [3, 2], [2, 1], [1, 0]])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(6, [[0, 1], [0, 1], [1, 2], [3, 4], [4, 5], [5, 3], [2, 3]])",
+      "expect": "[3, 4, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(7, [[0, 6], [1, 6], [2, 6], [6, 3], [3, 1], [4, 5]])",
+      "expect": "[1, 3, 6]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(4, [[2, 3], [2, 2], [0, 1], [1, 0], [3, 0]])",
+      "expect": "[0, 1, 2, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "stuck_jobs(5, [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [1, 4]])",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[0], r[-1]))(stuck_jobs(200000, [[i, i + 1] for i in range(199999)] + [[100000, 50000]]))",
+      "expect": "(150000, 50000, 199999)",
+      "compare": "equal"
+    },
+    {
+      "call": "len(stuck_jobs(200000, [[i, i + 1] for i in range(199999)] + [[i, i + 2] for i in range(49999)]))",
+      "expect": "0",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "from collections import deque\n\ndef stuck_jobs(n, rules):\n    after = [[] for _ in range(n)]\n    waits = [0] * n\n    for a, b in rules:\n        after[a].append(b)\n        waits[b] += 1\n    ready = deque(j for j in range(n) if waits[j] == 0)\n    ran = [False] * n\n    while ready:\n        j = ready.popleft()\n        ran[j] = True\n        for k in after[j]:\n            waits[k] -= 1\n            if waits[k] == 0:\n                ready.append(k)\n    return [j for j in range(n) if not ran[j]]\n",
+  "notes": [
+    "Running jobs in topological order by waiting counts leaves exactly the jobs on a cycle or behind one.",
+    "Each repeated rule adds to the count and is taken off again, and a self rule is never taken off.",
+    "Each job and each rule is handled once, so the work is $O(n + m)$."
+  ],
+  "planted": [
+    {
+      "code": "from collections import deque\n\ndef stuck_jobs(n, rules):\n    after = [[] for _ in range(n)]\n    waits = [0] * n\n    for a, b in rules:\n        if a != b:\n            after[a].append(b)\n            waits[b] += 1\n    ready = deque(j for j in range(n) if waits[j] == 0)\n    ran = set()\n    while ready:\n        j = ready.popleft()\n        ran.add(j)\n        for k in after[j]:\n            waits[k] -= 1\n            if waits[k] == 0:\n                ready.append(k)\n    return [j for j in range(n) if j not in ran]\n",
+      "slip": "Skipping a rule `[a, a]` lets a job that waits for itself run."
+    },
+    {
+      "code": "from collections import deque\n\ndef stuck_jobs(n, rules):\n    after = [set() for _ in range(n)]\n    waits = [0] * n\n    for a, b in rules:\n        after[a].add(b)\n        waits[b] += 1\n    ready = deque(j for j in range(n) if waits[j] == 0)\n    ran = set()\n    while ready:\n        j = ready.popleft()\n        ran.add(j)\n        for k in after[j]:\n            waits[k] -= 1\n            if waits[k] == 0:\n                ready.append(k)\n    return [j for j in range(n) if j not in ran]\n",
+      "slip": "Storing each job's followers as a set but counting every repeated rule leaves a job waiting for ever."
+    },
+    {
+      "code": "from collections import deque\n\ndef stuck_jobs(n, rules):\n    after = [[] for _ in range(n)]\n    waits = [0] * n\n    for a, b in rules:\n        after[b].append(a)\n        waits[a] += 1\n    ready = deque(j for j in range(n) if waits[j] == 0)\n    ran = set()\n    while ready:\n        j = ready.popleft()\n        ran.add(j)\n        for k in after[j]:\n            waits[k] -= 1\n            if waits[k] == 0:\n                ready.append(k)\n    return [j for j in range(n) if j not in ran]\n",
+      "slip": "Reading `[a, b]` the wrong way round marks the jobs before a cycle as stuck, not the jobs after it."
+    }
+  ]
+}
