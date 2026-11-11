@@ -203,3 +203,12 @@ Fix for row 4 (`homework-3.json`, `items[7].prompt`, first paragraph). Replace "
 > mean 0.06% a day, sd 0.9% a day. Take the risk-free rate as 0. She tested
 
 Optional, not a finding: `l7` `screens[9]` could catch a learner who types the VaR itself with a slip `var` at value 0.02741, tolerance 0.0001, feedback "That is the VaR, the size of the loss. The question asks for the return $r$, which is negative."
+
+## Follow-up (fix-pass read)
+
+| # | Status | Basis |
+|---|---|---|
+| 4 | fixed | `homework-3` `items[7].prompt` now reads "mean 0.06% a day, sd 0.9% a day. Take the risk-free rate as 0. She tested". Sharpe (1994) defines the ratio on excess returns; with the rate at 0 the model's figures all use the raw mean and agree: SR = (0.06/0.9)√252 = 1.0583, standard error 1/√1.5 = 0.816, t = 0.06√378/0.9 = 1.2961 = SR√1.5, n = (1.8/0.06)² = 900, 1 − Φ(1.30) = 0.0968, 1 − 0.9032^10 = 0.639. Rubric unchanged. |
+| 4a | fixed (same class, sibling) | `homework-3` `items[4].prose` (`h-years-t3`) had the same gap: its key uses SR = (0.04/0.8)√252 = 0.7937 from the raw mean and then SR√T = t, which holds only at a rate of 0. Added "Take the risk-free rate as 0." after "sd 0.8%". Key 14.3 rechecked two ways: (3/0.7937)² = 14.286 and 9σ²/(252μ²) = 9 × 0.64/(0.0016 × 252) = 14.286. Slips `t2` 6.35 and `no-square` 3.78 unchanged. |
+
+No key, option, slip, test or code changed. `review-3` and `problems-3` contain no Sharpe ratio, annualisation by √252 or risk-free rate, so nothing to fix there. Gates: validator 0 errors; voice scan 0 and 0 on homework-3; `limits-thm-1/2/3-perf-numbers.py` and `limits-thm-L1-3-concepts.py` exit 0; playthrough `--set limits-thm/homework-3` green desktop and mobile (10 of 10, 51 of 51).
