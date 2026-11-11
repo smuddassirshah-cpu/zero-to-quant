@@ -113,3 +113,46 @@ Run on the worktree at commit `51f1d6a5`, content unchanged.
 - Round 2 concepts scripts: `mm-games-L1-concepts-r2.py` 86 checks, 0 failed, exit 0. `mm-games-L2-concepts-r2.py` 72 checks, 2 failed, exit 1 (findings 4 and 6; both stay failing until the content is fixed). `mm-games-L3-concepts-r2.py` 70 checks, 0 failed, exit 0 (needs `node` for the trade-game replays).
 - Inbox: two bullets under "Raised later (audit mm-games round 2):" in `docs/BACKLOG-INBOX.md` (a validator rule for stated test counts; a validator warning for `order` keys with no `same` or `after`).
 - No content, engine file, `course.json` or state file was changed.
+
+## Fix pass
+
+Fixer: Opus, own worktree, content commit `323619ba`. Each basis below was worked out independently (enumeration, exact arithmetic or reading the hidden tests); nothing was pasted from the findings unchecked. All 14 findings fixed, 0 disputed, 0 not applied; U1 to U6 and N1 to N5 all applied.
+
+Graded keys, keyed option texts and slip values changed (listed explicitly):
+
+- homework-2 `items[2].widget.after` added: `{"skew": ["info"], "requote": ["info", "skew", "limit"]}`. Recomputed by enumerating all 24 orders of the four lines against an independent dependency table (skew needs the fair value; the quote needs all three; the limit check needs only the position): exactly 3 valid orders, and the engine's `after` rule accepts exactly those 3 (info-skew-limit-requote, info-limit-skew-requote, limit-info-skew-requote). This is wider than the audit's `same [skew, limit]`, which would still reject limit-first.
+- homework-3 `items[2].widget.after` added: `{"quote": ["pos", "bank", "hedge"]}`. Enumeration: 6 of 24 orders valid (the three checks in any order, quote last), the engine accepts exactly those 6.
+- homework-2 `items[5].widget.wrong[0].value` 20.8824 to 21.0784 (id `first`): after the 3 the deck holds 364 − 3 = 361 points in 51 cards, and 14 + 361/51 = 21.0784; the key 21 = 14 + 350/50 is unchanged and outside the slip's tolerance.
+- l13 `quiz[0]` options: `inv.text` "Its short: the skew lifted the bid to buy back risk" (correct, unchanged id); `edge.text` "For edge alone: an unskewed bid would sit at 16 too" (now false). Recomputed with the lesson's rule (width 4, skew 0.5 a lot, centre rounded to 0.5): unskewed centre round(17.08) = 17, bid 15; skewed centre round(18.08) = 18, bid 16. Buy at 16 against fair 17.08 has edge +1.08; the last card was 5, so the true value is 15.
+
+Per finding:
+
+1. fixed. Basis: P(0 misses in 20 | calibrated) = 0.9^20 = 0.1216, not small. l1 `screens[7].feedback.byKey.none`, `screens[7].explain.text`.
+2. fixed. Basis: sum of digit sums over 1 to 100 = 901 by direct count; 100 contributes 1, not 100. homework-1 `items[5].feedback.generic`, `items[5].explain.text`.
+3. fixed. Basis: random earnings 1, 0.75, 0.5 fall as the quote narrows; informed loss 1/12, 1/6, 1/3 rises. l8 `screens[4].explain.text` (middle sentence only).
+4. fixed. Basis: the hidden tests call `make_script` with seeds 1, 2, 3 and 7: four games. homework-2 `items[0].prose`.
+5. fixed (key, see above). homework-2 `items[2].widget.after`, `items[2].feedback.correct`, `.feedback.generic`, `.explain.text`.
+6. fixed (slip value, see above). homework-2 `items[5].widget.wrong[0].value`, `items[5].feedback.byKey.first`.
+7. fixed. Basis: edge of a stake s at 0.55 and evens is 0.55s − 0.45s = 0.1s, so 10p, £1, £2; the win chance is what is equal. Ruin rechecked: (r^20 − r^40)/(1 − r^40) = 0.0178, (r^2 − r^4)/(1 − r^4) = 0.401, 0.45, r = 9/11. l10 `screens[5].title`, `screens[5].widget.options[3].why`, `screens[5].feedback.byKey.same`, `screens[5].explain.text`, `screens[10].explain.text`; homework-3 `items[10].explain.text`.
+8. fixed, with my own wording. Basis: g(f) = 0.6 ln(1 + f) + 0.4 ln(1 − f); g(0.3) = +0.0147, g(0.4) = −0.0024, root by bisection 0.3894. New sentence: growth falls past 0.2 and turns negative near f = 0.39. l10 `screens[6].explain.text`.
+9. fixed: one notation, q for the position only, 1 − p for the losing chance. l10 `screens[9].feedback.byKey.edge`, `screens[9].explain.text`, `screens[10].explain.text`. The `kelly_stake` solution already uses `1 - p`.
+10. fixed. Basis: Var(A − hB) is minimised at h = ρσ_A/σ_B = 1.0 with residual σ_A²(1 − ρ²); any other h leaves more. The text now names the minimum-variance hedge (the term the previous screen defines). l11 `screens[3].prose`.
+11. fixed. Basis: A − 2B = (A − B) − B; residual sd 1.2%, uncorrelated with B; 1.44 + 2.56 = 4. l11 `quiz[3].explain.text`.
+12. fixed (option texts, see above). l13 `quiz[0].question`, `options[inv].text`, `options[edge].text` and `.why`, `options[info].why`, `options[limit].why`, `feedback.correct`.
+13. fixed. Basis: the level judges a trade at the fair value of its moment; +1.08 of edge at the time, −£1 at settlement from a 5 against a mean of 7.08. l13 `quiz[0].explain.text`.
+14. fixed (key, see above). homework-3 `items[2].widget.after`, `items[2].feedback.correct`, `items[2].explain.text`. The question was left as it was, so the item does not announce that the order of the checks is free.
+
+Unverified claims: U1 fixed by removing both book attributions (I cannot confirm Fermi questions in either book) and naming the source of the term instead, Enrico Fermi, l4 `screens[2].prose`. U2 "An interviewer may set a rule", l3 `screens[3].prose`. U3 "Avoid both mistakes.", l3 `screens[6].explain.text`. U4 "Remove both kings, not one: that is the step to check.", l9 `screens[7].explain.text`. U5 "An interviewer may simply move on", l12 `screens[5].widget.options[3].why`. U6 "A market-making round can open like this.", l12 `screens[9].prose`.
+
+Lesson-number notes: N1 l4 `screens[3].prose` (course named, lesson number dropped; that course's l7 is "Estimating products"); N2 l4 `screens[10].explain.text` ("The next level", which holds the two-sided and skewing lessons); N3 l9 `screens[4].explain.text` ("the skewing lesson"); N4 l8 `quiz[0].feedback.generic`; N5 homework-3 `items[3].prompt`. Also fixed: homework-3 `items[0].prose` "level 2's scripted engine" now "the scripted card game you coded in the quoting homework", and l13 `screens[0].explain.text` "level 2's skew" now "the same inventory skew as before". A grep of levels 1 to 3 finds no remaining "lesson N" or "level N" in learner text.
+
+No hidden test, rubric row or code solution changed. No check script needed updating.
+
+Gates after the fix (worktree at `323619ba`):
+
+- `node tools/validate.mjs`: 0 errors, 4137 warnings (the same count as before the fix; two new under-20-word warnings from first drafts were removed by shortening the sentences). `content/manifest.json` unchanged.
+- Concepts scripts: L1 r2 86 checks 0 failed, L2 r2 72 checks 0 failed (findings 4 and 6 now pass), L3 r2 70 checks 0 failed; round 1 L1 79, L2 76, L3 69 checks, 0 failed; `mm-games-3-perf-numbers.py` 0 failures. All exit 0, no script edited.
+- `VOICE_BASE=app/content/courses/mm-games/ python3 docs/reviews/voice-scan.py 35`: 9,897 sentences, 0 over 35 words, 0 explanations over three sentences. No em-dash, exclamation mark or lesson number in the added text.
+- Playthroughs with `--local-cdn`, desktop and `--mobile`: lessons l1, l3, l4, l8, l9, l10, l11, l12, l13 and sets homework-1, homework-2, homework-3. 24 of 24 "All passed", 0 browser relaunches.
+
+For the fix-pass read: the two `after` keys are wider than the audit proposed for homework-2 (limit-first is also accepted), and U1 replaces the book attribution with the origin of the term rather than keeping Crack.
