@@ -1974,3 +1974,6 @@ Raised later (audit mm-games):
 Raised later (problems integrals):
 - [Could] expression widget, Accepted line: after grading it shows the first `accept` entry as a raw code chip ("for example `(1+x^2)^{-1}`", integrals problems-3 `p-order-size-tail` part 1 at 440 px) beside the rendered answer. Render the example as KaTeX, or leave it out when `accept` holds LaTeX.
 - [Could] set page: the feedback heading "Not quite right." sits above a `generic` line that, following the shape in AUTHORING section 5, also starts "Not quite.", so the learner reads it twice (every problem set so far). Either drop the heading when `generic` opens with "Not quite", or change the AUTHORING example and have the validator warn on a set `generic` that starts with it.
+
+Raised later (problems multivar):
+- [Could] numeric and expression `answers` sets: a value cannot be a pair, because commas separate the values, so "give every stationary point" cannot be asked as points. multivar problems-3 `p-two-level-points` part 1 asks for the $x$-values instead and states $y = x$ in the feedback. Accept a bracketed pair as one value inside a set (`(0, 0), (1, 1)`).
