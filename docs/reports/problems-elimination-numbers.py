@@ -189,6 +189,7 @@ def to_py(seg):
     if not s or re.search(r'[A-Za-z\\_^{}]', s):
         return None
     s = re.sub(r'\(([^()]*,[^()]*)\)', r'np.array([\1])', s)
+    s = re.sub(r'(\d)\s*(np\.array|\()', r'\1*\2', s)
     try:
         v = eval(s, {'np': np})
     except Exception:
@@ -406,6 +407,141 @@ if I:
     obj(I, iid, 5, sol, nps, {'carried': M([xslip, R(31, 2), 5]), 'no-divide': M([2 * sol[0], 8, 5])})
     vocab(I, iid, [r3, A[2, :] + 2 * A[0, :], A[2, :] - 3 * A[0, :], 2 * A[0, :], R2, R3, Ab[2, :] - 2 * Ab[0, :], 110 - 105, 105, 70, 31, 15, 20,
                    R3[3] - 15, 2 * yv, sol, 2 * sol[0], 35 - 8 - 15, xslip, R(31, 2), b4, b2, 3 * 5, 3 * 35, 2 * 35, 101 - 70])
+    arith(I, iid)
+
+
+# ======================================================== level 2: spaces
+def rref_np(A, tol=1e-12):
+    """Second route for rank and nullspace: NumPy SVD."""
+    A = np.array(A, dtype=float)
+    r = np.linalg.matrix_rank(A, tol=tol)
+    _, s, vt = np.linalg.svd(A)
+    return r, vt[r:]
+
+
+def in_null_np(A, v):
+    return np.allclose(np.array(A, dtype=float) @ np.array(v, dtype=float), 0)
+
+
+I = load(2)
+if I:
+    # ---- p-burning-ethanol
+    iid = 'p-burning-ethanol'
+    A = M([[2, 0, -1, 0], [6, 0, 0, -2], [1, 2, -2, -1]])
+    r2_ = A[1, :] - 3 * A[0, :]
+    r3_ = A[2, :] - R(1, 2) * A[0, :]
+    ok(list(r2_) == [0, 0, 3, -2] and list(r3_) == [0, 2, R(-3, 2), -1], 'ethanol: rows after column 1')
+    ok(r2_[1] == 0 and r3_[1] != 0, 'ethanol: column 2 needs the swap')
+    rk, nb = rref_np(npf(A))
+    num(I, iid, 1, A.rank(), rk, {'columns': A.shape[1]})
+    ns = A.nullspace()
+    num(I, iid, 2, len(ns), A.shape[1] - rk, {'rank': A.rank(), 'full': 0})
+    s = ns[0] / ns[0][3]
+    v = nb[0] / nb[0][3]
+    Apos = A.applyfunc(abs)
+    sp_pos = Apos.nullspace()[0]
+    sp_pos = sp_pos / sp_pos[3]
+    obj(I, iid, 3, s, v, {'no-minus': sp_pos, 'scaled': 3 * s})
+    ok(sp_pos == M([R(-1, 3), -1, R(2, 3), 1]), 'ethanol: the all-plus slip is (-1/3, -1, 2/3, 1)')
+    den = sp.ilcm(*[sp.fraction(x)[1] for x in s])
+    whole = s * den
+    # second route: search the smallest positive whole balance by enumeration
+    found = next(w for w in itertools.product(range(1, 7), repeat=4) if in_null_np(npf(A), w))
+    obj(I, iid, 4, whole, np.array(found), {'not-whole': s, 'double': 2 * whole})
+    ok(sp.gcd_list(list(whole)) == 1 and A * whole == sp.zeros(3, 1), 'ethanol: (1, 3, 2, 3) is a balance in lowest terms')
+    vocab(I, iid, [r2_, r3_, s, whole, 2 * whole, sp_pos, R(3, 2) * s[2] + 1, 4 - 3])
+    arith(I, iid)
+
+    # ---- p-tilted-gantry
+    iid = 'p-tilted-gantry'
+    m1, m2, m3 = M([1, 0, 2]), M([1, 1, 0]), M([0, 2, k_])
+    Mk = M.hstack(m1, m2, m3)
+    r3 = Mk[2, :] - 2 * Mk[0, :]
+    r3b = r3 + 2 * Mk[1, :]
+    ok(list(r3) == [0, -2, k_] and list(r3b) == [0, 0, k_ + 4], 'gantry: elimination rows')
+    kk = sp.solve(r3b[2], k_)
+    scan = [kv for kv in range(-10, 11) if np.linalg.matrix_rank(np.array(Mk.subs(k_, kv).tolist(), dtype=float)) < 3]
+    num(I, iid, 1, kk[0], scan[0], {'sign': -kk[0], 'zero': 0})
+    ok(r3b[2].subs(k_, 0) == 4 and r3b[2].subs(k_, 4) == 8, 'gantry: byKey pivots 4 and 8')
+    M4 = Mk.subs(k_, kk[0])
+    ab = M.hstack(m1, m2)[[0, 1, 2], :].solve_least_squares(M4[:, 2])
+    ab_np = np.linalg.lstsq(npf(M.hstack(m1, m2)), npf(M4[:, 2]).ravel(), rcond=None)[0]
+    obj(I, iid, 2, ab, ab_np, {'sign': -ab})
+    ok(M.hstack(m1, m2) * ab == M4[:, 2], 'gantry: m3 = -2 m1 + 2 m2 exactly')
+    ok(list(M.hstack(m1, m2) * (-ab)) == [0, -2, 4], 'gantry: sign slip gives (0, -2, 4)')
+    cs = sp.Symbol('c')
+    Ab = M4.row_join(M([3, 1, cs]))
+    e3 = Ab[2, :] - 2 * Ab[0, :] + 2 * (Ab[1, :])
+    cval = sp.solve(e3[3], cs)[0]
+    # second route: reach (3, 1, c) with m1, m2 and read c
+    x12 = np.linalg.solve(np.array([[1, 1], [0, 1.]]), [3, 1.])
+    num(I, iid, 3, cval, 2 * x12[0], {'half-step': sp.solve((Ab[2, :] - 2 * Ab[0, :])[3], cs)[0], 'sign': kk[0]})
+    base = M([2, 1, 0])
+    nvec = M([2, -2, 1])
+    ok(M4 * nvec == sp.zeros(3, 1) and M4 * base == M([3, 1, 4]), 'gantry: (2, -2, 1) in N and (2, 1, 0) reaches the point')
+    tgt = base + nvec
+    alt = np.linalg.lstsq(npf(M4)[:, :2], np.array([3, 1, 4.]) - npf(M4)[:, 2], rcond=None)[0]
+    obj(I, iid, 4, tgt, np.array([alt[0], alt[1], 1.]), {'no-motor-3': base, 'sign': base + M([-2, 2, 1])})
+    ok(M4 * M([-2, 2, 1]) != sp.zeros(3, 1), 'gantry: (-2, 2, 1) is not in the nullspace')
+    vocab(I, iid, [r3, ab, -ab, M4[:, 2], 2 * 2, cval, tgt, nvec, base, 6, 8, k_ + 4, -2 * 2])
+    arith(I, iid)
+
+    # ---- p-futures-packages
+    iid = 'p-futures-packages'
+    S = M([[1, 0, 1], [-1, 1, -2], [0, -1, 1]])
+    s1, s2, f = S[:, 0], S[:, 1], S[:, 2]
+    ok(list(s1) == [1, -1, 0] and list(s2) == [0, 1, -1] and list(f) == [1, -2, 1], 'packages: columns match the prose')
+    num(I, iid, 1, S.rank(), rref_np(npf(S))[0], {'columns': 3})
+    ok(list(S[1, :] + S[0, :]) == [0, 1, -1] and list(S[2, :] + S[1, :] + S[0, :]) == [0, 0, 0], 'packages: elimination rows')
+    nsv = S.nullspace()[0]
+    nsv = nsv / nsv[2]
+    nb = rref_np(npf(S))[1][0]
+    obj(I, iid, 2, nsv, nb / nb[2], {'sign': M([1, -1, 1])})
+    ok(f == s1 - s2 and list(s1 - s2 + f) == [2, -4, 2], 'packages: f = s1 - s2, and the sign slip sums to (2, -4, 2)')
+    cs = sp.Symbol('c')
+    Ab = S.row_join(M([4, -1, cs]))
+    R2 = Ab[1, :] + Ab[0, :]
+    R3 = Ab[2, :] + R2
+    cval = sp.solve(R3[3], cs)[0]
+    num(I, iid, 3, cval, -(4 - 1), {'sign': -cval, 'stale-rhs': sp.solve(cs + Ab[1, 3], cs)[0]})
+    ok(R2[3] == 3 and sum([4, -1, cval]) == 0, 'packages: row 2 right side 3, entries sum to 0')
+    tgt = M([4, -1, cval])
+    x0 = M([4, 3, 0])
+    ok(S * x0 == tgt, 'packages: (4, 3, 0) builds the target')
+    sol0 = np.linalg.lstsq(npf(S)[:, :2], npf(tgt).ravel(), rcond=None)[0]
+    obj(I, iid, 4, x0, np.array([sol0[0], sol0[1], 0.]), {'sign': M([4, -3, 0])})
+    ok(list(S * M([4, -3, 0])) == [4, -7, 3], 'packages: sign slip June -7')
+    x2 = x0 + 2 * nsv
+    ok(S * x2 == tgt and x2[2] == 2, 'packages: (2, 5, 2) builds the target with 2 butterflies')
+    alt = np.linalg.lstsq(npf(S)[:, :2], npf(tgt).ravel() - 2 * npf(f).ravel(), rcond=None)[0]
+    obj(I, iid, 5, x2, np.array([alt[0], alt[1], 2.]), {'sign': x0 + 2 * M([1, -1, 1]), 'nullspace-only': 2 * nsv})
+    ok(list(S * (x0 + 2 * M([1, -1, 1]))) == [8, -9, 1], 'packages: sign slip gives (8, -9, 1)')
+    vocab(I, iid, [S, nsv, R2, R3.subs(cs, 0), tgt, x0, x2, 2 * nsv, M([2, -4, 2]), M([8, -9, 1]), -7, 4 - 1 + 3, 6, 3])
+    arith(I, iid)
+
+    # ---- p-coin-hopper
+    iid = 'p-coin-hopper'
+    A = M([[20, 50, 100], [1, 1, 1]])
+    num(I, iid, 1, A.rank(), rref_np(npf(A))[0], {'columns': 3, 'one': 1})
+    r2_ = A[1, :] - R(1, 20) * A[0, :]
+    ok(list(r2_) == [0, R(-3, 2), -4], 'coins: row 2 after elimination')
+    ns = A.nullspace()[0]
+    ns = ns / ns[2]
+    swap = 3 * ns
+    nb = rref_np(npf(A))[1][0]
+    obj(I, iid, 2, swap, 3 * nb / nb[2], {'sign': M([-swap[0], -swap[1], 3]), 'special': ns})
+    ok(A * M([-5, 8, 3]) == M([600, 6]), 'coins: sign slip changes the value by 600 pence')
+    a_, b_ = sp.symbols('a b')
+    sol = sp.solve([a_ + b_ + 1 - 10, 20 * a_ + 50 * b_ + 100 - 370], [a_, b_])
+    x0 = M([sol[a_], sol[b_], 1])
+    found = [w for w in itertools.product(range(11), repeat=3) if sum(w) == 10 and 20 * w[0] + 50 * w[1] + 100 * w[2] == 370]
+    obj(I, iid, 3, x0, np.array([w for w in found if w[2] == 1][0]), {'swapped': M([x0[1], x0[0], 1])})
+    ok(A * M([3, 6, 1]) == M([460, 10]), 'coins: swapped slip is worth 460p')
+    ok(found == [(6, 3, 1)], 'coins: enumeration finds one way only')
+    ok(A * (x0 + swap) == A * x0 and list(x0 + swap) == [11, -5, 4] and list(x0 - swap) == [1, 11, -2], 'coins: one swap either way goes negative')
+    pick(I, iid, 4, 'one')
+    vocab(I, iid, [r2_, swap, ns, M([-5, 8, 3]), 600, x0, 370, 120, 150, 270, 180, 90, 30, 9, 460, 60, 300, x0 + swap, x0 - swap,
+                   -3, -300, -240, 10, 400, -100, R(370, 100)])
     arith(I, iid)
 
 
