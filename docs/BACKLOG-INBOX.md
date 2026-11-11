@@ -2083,3 +2083,8 @@ Raised later (quadratics L4):
 - [Could] numeric-set `wrong` entries default to `tol` 1e-9 (AUTHORING does not say so), so a slip typed to a different rounding misses its key: homework-4 `used-r-squared` ("4.47, -4.47" for $\pm\sqrt{20}$) needed its own `tol`. Document it, or default to the widget's `tol`.
 - [Could] `area` in a side-by-side `pair` scales its cell labels to about 7 px on a 780 px column (l17 screen 3, two division grids). Workaround: `stack: true` with `size: [6, 2]`. An automatic stack for area pairs, as bars and matrices have, would fix it.
 - [Could] a `table` widget cell with `bind: "points.<id>.y"` needs the point to exist first, so l17's hook parks the four points at `y: 99` (off the plot) until the learner types; a point option "hidden until bound" would be cleaner.
+
+Raised later (review quadratics 4):
+- [Could] `expression` with `form: "factorised"` accepts a numeric factor left uncancelled: `\frac{4(x+2)}{2}` grades correct for the key `2(x+2)` and `\frac{2x(x+2)}{2}` for `x(x+2)` (quadratics l15 screens 4 and 5; probe in `docs/reviews/quadratics-4-scripts/probe-grade.mjs`). A quotient by a number should fail the shape.
+- [Could] `plane` polygons: `label` sits at the centroid with no way to move it, so on a polygon that straddles an axis it lands on the tick labels (quadratics l18 screen 0, the "?" on the tilted square reads "4 ? 3" at 440 px). A `labelAt: [x, y]` on polygons, as functions have, would fix it.
+- [Could] `plane` function labels: with `labelAt` near the left edge the label is drawn to the left of the point and clipped at 440 px (quadratics l19 screens 0, 2 and 5, `labelAt: -7` on `y = x + k` reads ") = x + k"). Flip the label inside the plot when it would cross the edge.
