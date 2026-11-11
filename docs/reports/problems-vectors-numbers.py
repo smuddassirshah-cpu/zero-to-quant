@@ -284,6 +284,81 @@ if I:
         {'unhedged': w0.dot((c + s) / 2), 'no-half': w1.dot(c + s)})
     ok(abs(float(w0.dot((c + s) / 2))) / abs(float(R3)) > 1.9, 'hedge: roughly halves the central loss')
 
+# ======================================================== level 2: matrices
+I = load(2)
+if I:
+    # p-italic-letters
+    S = M([[1, R(1, 4)], [0, 1]])
+    ok(S * M([1, 0]) == M([1, 0]) and S * M([0, 1]) == M([R(1, 4), 1]), 'italic: S fixes e1 and sends e2 to (0.25, 1)')
+    obj(I, 'p-italic-letters', 1, S, np.column_stack([[1, 0], [0.25, 1]]), {'rows': S.T})
+    top = M([2, 8])
+    obj(I, 'p-italic-letters', 2, (S * top).T, 2 * np.array([1, 0.]) + 8 * np.array([0.25, 1]),
+        {'rows': (S.T * top).T, 'once': [[R(9, 4), 8]]})
+    Dm = M([[R(3, 2), 0], [0, 1]])
+    obj(I, 'p-italic-letters', 3, Dm * S, np.array([[1.5, 0], [0, 1]]) @ np.array([[1, 0.25], [0, 1]]),
+        {'order': S * Dm, 'entrywise': Dm.multiply_elementwise(S)})
+    num(I, 'p-italic-letters', 4, (Dm * S * top)[0], (np.array([[1.5, 0], [0, 1]]) @ np.array([4., 8]))[0],
+        {'order': (S * Dm * top)[0], 'slant-only': (S * top)[0], 'widen-only': (Dm * top)[0]})
+
+    # p-site-plan
+    Rm = M([[R(4, 5), -R(3, 5)], [R(3, 5), R(4, 5)]])
+    th = math.atan2(0.6, 0.8)
+    Rn = np.array([[math.cos(th), -math.sin(th)], [math.sin(th), math.cos(th)]])
+    obj(I, 'p-site-plan', 1, Rm, Rn, {'clockwise': Rm.T, 'swapped': M([[R(3, 5), -R(4, 5)], [R(4, 5), R(3, 5)]])})
+    obj(I, 'p-site-plan', 2, Rm.T * Rm, Rn.T @ Rn, {'square': Rm * Rm, 'entrywise': Rm.T.multiply_elementwise(Rm)})
+    bh = Rm.T * M([11, 2])
+    obj(I, 'p-site-plan', 3, bh.T, np.linalg.solve(Rn, [11, 2.]),
+        {'forward': (Rm * M([11, 2])).T, 'swapped': (M([[R(3, 5), -R(4, 5)], [R(4, 5), R(3, 5)]]).T * M([11, 2])).T})
+    ok(Rm * bh == M([11, 2]), 'site: check R(10, -5) = (11, 2)')
+    step = Rm * (M([10, 5]) - bh)
+    ok(step == M([-6, 8]), 'site: ground step (-6, 8)')
+    phi = deg(float(sp.acos(step[0] / step.norm())))
+    ground_step = Rn @ np.array([10, 5.]) - np.array([11, 2.])
+    num(I, 'p-site-plan', 4, phi, np.degrees(np.arctan2(ground_step[1], ground_step[0])),
+        {'plan-angle': 90, 'clockwise': deg(float(sp.acos((Rm.T * M([0, 10]))[0] / 10))), 'theta': deg(th)}, rel=1e-9)
+    ok(abs(phi - (90 + deg(th))) < 1e-9, 'site: angle is 90 + theta')
+
+    # p-factor-risk
+    Bm = M([[R(12, 10), R(4, 10)], [R(8, 10), R(-5, 10)], [1, 1]])
+    wv = M([R(1, 2), R(3, 10), R(1, 5)])
+    Fm = M([[R(225, 10000), R(3, 1000)], [R(3, 1000), R(64, 10000)]])
+    pick(I, 'p-factor-risk', 1, 'bt-w')
+    ok(Bm.T.shape == (2, 3) and (Bm.T * wv).shape == (2, 1) and (Bm * Bm.T * wv).shape == (3, 1), 'factor: sizes of the options')
+    e = Bm.T * wv
+    Bn, wn, Fn = np.array([[1.2, 0.4], [0.8, -0.5], [1.0, 1.0]]), np.array([0.5, 0.3, 0.2]), np.array([[0.0225, 0.003], [0.003, 0.0064]])
+    obj(I, 'p-factor-risk', 2, e.T, wn @ Bn, {'unweighted': M([[3, R(9, 10)]]), 'equal': M([[1, R(3, 10)]])})
+    ok(M([[sum(Bm[:, 0]), sum(Bm[:, 1])]]) == M([[3, R(9, 10)]]), 'factor: unweighted column sums')
+    Fe = Fm * e
+    obj(I, 'p-factor-risk', 3, Fe.T, Fn @ (Bn.T @ wn),
+        {'diagonal': (M.diag(Fm[0, 0], Fm[1, 1]) * e).T, 'wrong-order': M([[Fe[1], Fe[0]]])})
+    var = (e.T * Fe)[0]
+    var_alt = wn @ (Bn @ Fn @ Bn.T) @ wn
+    num(I, 'p-factor-risk', 4, var, var_alt,
+        {'diagonal': (e.T * M.diag(Fm[0, 0], Fm[1, 1]) * e)[0], 'no-f': (e.T * e)[0], 'sum': sum(Fe)})
+    stated(I, 'p-factor-risk', 4, '0.025116 + 0.00118', e[0] * Fe[0], 0.025116, 6)
+    ok(e[1] * Fe[1] == R(118, 100000), 'factor: second term 0.00118')
+    ok(2 * e[0] * e[1] * Fm[0, 1] == R(156, 100000), 'factor: cross term 0.00156')
+    vol = sp.sqrt(var)
+    num(I, 'p-factor-risk', 5, vol, np.sqrt(var_alt), {'diagonal': sp.sqrt((e.T * M.diag(Fm[0, 0], Fm[1, 1]) * e)[0]), 'no-root': var}, rel=1e-9)
+    stated(I, 'p-factor-risk', 5, r'\approx 0.1622', vol, 0.1622, 4)
+    stated(I, 'p-factor-risk', 5, '15.7%', sp.sqrt((e.T * M.diag(Fm[0, 0], Fm[1, 1]) * e)[0]) * 100, 15.7, 1)
+
+    # p-bakery-costs
+    Qm = M([[R(1, 2), R(3, 10)], [R(1, 10), R(1, 5)], [R(1, 20), R(1, 5)]])
+    pv, xo = M([R(4, 5), R(3, 2), 6]), M([40, 12])
+    Qn, pn = np.array([[0.5, 0.3], [0.1, 0.2], [0.05, 0.2]]), np.array([0.8, 1.5, 6.0])
+    use = Qm * xo
+    obj(I, 'p-bakery-costs', 1, use.T, 40 * Qn[:, 0] + 12 * Qn[:, 1], {'swapped': (Qm * M([12, 40])).T, 'one-each': (Qm * M([1, 1])).T})
+    cost = pv.dot(use)
+    num(I, 'p-bakery-costs', 2, cost, (Qn.T @ pn) @ np.array([40, 12.]), {'swapped': pv.dot(Qm * M([12, 40])), 'unpriced': sum(use)})
+    pick(I, 'p-bakery-costs', 3, 'qt-p')
+    cvec = Qm.T * pv
+    ok(cvec == M([R(85, 100), R(174, 100)]), 'bakery: c = (0.85, 1.74)')
+    num(I, 'p-bakery-costs', 4, cvec[1], Qn[:, 1] @ pn, {'loaf': cvec[0], 'unpriced': sum(Qm[:, 1])})
+    ok(cvec.dot(xo) == cost, 'bakery: c . x reproduces part 2')
+    num(I, 'p-bakery-costs', 5, cvec.dot(M([50, 20])), pn @ (Qn @ np.array([50, 20.])),
+        {'this-week': cost, 'swapped': cvec.dot(M([20, 50])), 'one-each': sum(cvec)})
+
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
     print('FAIL', f)
