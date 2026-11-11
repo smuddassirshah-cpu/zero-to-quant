@@ -1053,7 +1053,7 @@ if not callable(globals().get(${py(P.fn)})):
       setCode: (s) => ed.set(String(s)), code: () => ed.value, run: () => go('examples'), submit: () => go('submit'),
       status: () => pyr.status, tab: (t) => setTab(t), reference: () => P.reference, problem: () => id,
       language: 'python', seconds: () => secs(), pace: () => P.pace || null,
-      verified: () => S.verified, results: () => (S.run ? { mode: S.run.mode, res: S.run.res.map(r => ({ status: r.status, actual: r.actual })) } : null),
+      verified: () => S.verified, results: () => (S.run ? { mode: S.run.mode, crash: S.run.crash, res: S.run.res.map(r => ({ status: r.status, actual: r.actual, error: r.error })) } : null),
       compare: (on = true) => { S.compare = !!on; paintModel(); },
     };
 
