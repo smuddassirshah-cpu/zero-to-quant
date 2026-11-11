@@ -64,8 +64,8 @@
       "compare": "equal"
     },
     {
-      "call": "solve_ferry_timetable('  3 2 \\n 1 2 3 1 \\n 2 3 3 4  \\n')",
-      "expect": "'7'",
+      "call": "solve_ferry_timetable('  3 2 \\n 1 2 5 1 \\n 2 3 2 6  \\n')",
+      "expect": "'8'",
       "compare": "equal"
     },
     {
@@ -112,9 +112,14 @@
       "call": "solve_ferry_timetable('50000 49999\\n' + '\\n'.join('%d %d 1 1' % (i, i + 1) for i in range(49999, 0, -1)) + '\\n')",
       "expect": "'49999'",
       "compare": "equal"
+    },
+    {
+      "call": "solve_ferry_timetable((lambda o: '50000 49999\\n' + '\\n'.join('%d %d %d %d' % (o[k], o[k + 1], 1 + k % 3, 1 + k % 4) for k in ((j * 31337) % 49999 for j in range(49999))) + '\\n')([1] + [2 + (k * 7919) % 49998 for k in range(49998)] + [50000]))",
+      "expect": "'149998'",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method relaxes every crossing again and again until no arrival time improves, which takes one sweep per port on a long chain listed backwards and runs out of time. The step to the target is Dijkstra on arrival times, with the wait for the next sailing added to each crossing. Unlike two-way trains, each ferry runs one way and the answer may be `'-1'`, so the crossings are stored by their port of departure only.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method relaxes every crossing again and again until no arrival time improves. On a long chain, however the crossings are ordered or swept, that takes one sweep per port and runs out of time. The step to the target is Dijkstra on arrival times, with the wait for the next sailing added to each crossing. Unlike two-way trains, each ferry runs one way and the answer may be `'-1'`, so the crossings are stored by their port of departure only.",
   "solution": "import heapq\n\ndef solve_ferry_timetable(text):\n    vals = list(map(int, text.split()))\n    n, m = vals[0], vals[1]\n    out = [[] for _ in range(n + 1)]\n    for k in range(2, 2 + 4 * m, 4):\n        a, b, t, p = vals[k:k + 4]\n        out[a].append((b, t, p))\n    best = [None] * (n + 1)\n    best[1] = 0\n    heap = [(0, 1)]\n    while heap:\n        now, u = heapq.heappop(heap)\n        if now > best[u]:\n            continue\n        if u == n:\n            return str(now)\n        for v, t, p in out[u]:\n            arrive = (now + p - 1) // p * p + t\n            if best[v] is None or arrive < best[v]:\n                best[v] = arrive\n                heapq.heappush(heap, (arrive, v))\n    return '-1'\n",
   "notes": [
     "Arriving earlier never makes the next arrival later, so Dijkstra on arrival times stays correct with waiting.",
@@ -133,6 +138,14 @@
     {
       "code": "def solve_ferry_timetable(text):\n    vals = list(map(int, text.split()))\n    n, m = vals[0], vals[1]\n    legs = [vals[2 + 4 * k: 6 + 4 * k] for k in range(m)]\n    best = [None] * (n + 1)\n    best[1] = 0\n    changed = True\n    while changed:\n        changed = False\n        for a, b, t, p in legs:\n            if best[a] is not None:\n                arrive = (best[a] + p - 1) // p * p + t\n                if best[b] is None or arrive < best[b]:\n                    best[b] = arrive\n                    changed = True\n    return str(best[n]) if best[n] is not None else '-1'\n",
       "slip": "Relaxing every crossing until nothing changes is right but needs one sweep per port on a long chain, too slow."
+    },
+    {
+      "code": "def solve_ferry_timetable(text):\n    v = list(map(int, text.split())); n, m = v[0], v[1]\n    legs = [v[2 + 4 * k: 6 + 4 * k] for k in range(m)]\n    best = [None] * (n + 1); best[1] = 0\n    changed = True; rev = legs[::-1]; turn = 0\n    while changed:\n        changed = False\n        for a, b, t, p in (legs if turn % 2 == 0 else rev):\n            if best[a] is not None:\n                arr = (best[a] + p - 1) // p * p + t\n                if best[b] is None or arr < best[b]:\n                    best[b] = arr; changed = True\n        turn += 1\n    return str(best[n]) if best[n] is not None else '-1'\n",
+      "slip": "Sweeping the crossings forwards and then backwards until nothing changes is right but still needs a sweep per port on a chain listed in a scattered order, too slow."
+    },
+    {
+      "code": "def solve_ferry_timetable(text):\n    v = list(map(int, text.split())); n, m = v[0], v[1]\n    legs = sorted(v[2 + 4 * k: 6 + 4 * k] for k in range(m))\n    best = [None] * (n + 1); best[1] = 0\n    changed = True\n    while changed:\n        changed = False\n        for a, b, t, p in legs:\n            if best[a] is not None:\n                arr = (best[a] + p - 1) // p * p + t\n                if best[b] is None or arr < best[b]:\n                    best[b] = arr; changed = True\n    return str(best[n]) if best[n] is not None else '-1'\n",
+      "slip": "Sorting the crossings by port before each sweep until nothing changes is right but still needs a sweep per port on a chain through the ports in a scattered order, too slow."
     }
   ]
 }

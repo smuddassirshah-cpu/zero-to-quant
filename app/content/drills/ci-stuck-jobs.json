@@ -131,9 +131,14 @@
       "call": "len(stuck_jobs(200000, [[i, i + 1] for i in range(199999)] + [[i, i + 2] for i in range(49999)]))",
       "expect": "0",
       "compare": "equal"
+    },
+    {
+      "call": "len(stuck_jobs(200000, [[(k * 7919) % 200000, ((k + 1) * 7919) % 200000] for k in range(199999)]))",
+      "expect": "0",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
   "solution": "from collections import deque\n\ndef stuck_jobs(n, rules):\n    after = [[] for _ in range(n)]\n    waits = [0] * n\n    for a, b in rules:\n        after[a].append(b)\n        waits[b] += 1\n    ready = deque(j for j in range(n) if waits[j] == 0)\n    ran = [False] * n\n    while ready:\n        j = ready.popleft()\n        ran[j] = True\n        for k in after[j]:\n            waits[k] -= 1\n            if waits[k] == 0:\n                ready.append(k)\n    return [j for j in range(n) if not ran[j]]\n",
   "notes": [
     "Running jobs in topological order by waiting counts leaves exactly the jobs on a cycle or behind one.",
@@ -152,6 +157,10 @@
     {
       "code": "from collections import deque\n\ndef stuck_jobs(n, rules):\n    after = [[] for _ in range(n)]\n    waits = [0] * n\n    for a, b in rules:\n        after[b].append(a)\n        waits[a] += 1\n    ready = deque(j for j in range(n) if waits[j] == 0)\n    ran = set()\n    while ready:\n        j = ready.popleft()\n        ran.add(j)\n        for k in after[j]:\n            waits[k] -= 1\n            if waits[k] == 0:\n                ready.append(k)\n    return [j for j in range(n) if j not in ran]\n",
       "slip": "Reading `[a, b]` the wrong way round marks the jobs before a cycle as stuck, not the jobs after it."
+    },
+    {
+      "code": "def stuck_jobs(n, rules):\n    ran = [False] * n; changed = True\n    before = [[] for _ in range(n)]\n    for a, b in rules: before[b].append(a)\n    while changed:\n        changed = False\n        for j in range(n):\n            if not ran[j] and all(ran[a] for a in before[j]):\n                ran[j] = True; changed = True\n    return [j for j in range(n) if not ran[j]]\n",
+      "slip": "Sweeping the jobs from 0 upwards until nothing changes is right but needs one sweep per link when a chain runs through the jobs in a scattered order, too slow."
     }
   ]
 }

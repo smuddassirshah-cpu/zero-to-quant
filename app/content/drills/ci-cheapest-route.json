@@ -13,7 +13,7 @@
     "ci-timed"
   ],
   "difficulty": 3,
-  "pace": 1500,
+  "pace": 1800,
   "fn": "cheapest_route",
   "returns": "a list of whole numbers",
   "brief": "A haulier plans a delivery between towns numbered 0 to `n - 1`. Each road `[a, b, cost]` in `roads` runs both ways between two different towns at a toll in pounds; two towns may have more than one road. Return the cheapest route from `src` to `dst` as its list of towns. Among the cheapest, take the one with fewest roads. If routes still tie, take the one whose list of towns comes first, compared town by town. Return `[]` when `dst` cannot be reached.\n\nWrite `cheapest_route(n, roads, src, dst)`.\n\nExample. For `n = 5`, `roads = [[0, 1, 4], [1, 4, 4], [0, 2, 3], [2, 3, 3], [3, 4, 2], [0, 4, 9]]`, `src = 0` and `dst = 4`, the routes 0, 1, 4 and 0, 2, 3, 4 both cost £8. The first uses two roads, so the answer is `[0, 1, 4]`.",
@@ -99,6 +99,11 @@
       "compare": "equal"
     },
     {
+      "call": "cheapest_route(3, [[0, 1, 2], [0, 1, 9], [1, 2, 2], [0, 2, 6]], 0, 2)",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+    },
+    {
       "call": "cheapest_route(4, [[0, 1, 1], [1, 2, 1], [2, 3, 1], [0, 3, 5]], 0, 3)",
       "expect": "[0, 1, 2, 3]",
       "compare": "equal"
@@ -149,7 +154,7 @@
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value.",
   "solution": "import heapq\n\ndef cheapest_route(n, roads, src, dst):\n    near = [[] for _ in range(n)]\n    for a, b, cost in roads:\n        near[a].append((b, cost))\n        near[b].append((a, cost))\n\n    def best_from(s):\n        best = [None] * n\n        best[s] = (0, 0)\n        heap = [(0, 0, s)]\n        while heap:\n            c, k, u = heapq.heappop(heap)\n            if (c, k) > best[u]:\n                continue\n            for v, w in near[u]:\n                cand = (c + w, k + 1)\n                if best[v] is None or cand < best[v]:\n                    best[v] = cand\n                    heapq.heappush(heap, (c + w, k + 1, v))\n        return best\n\n    fwd, back = best_from(src), best_from(dst)\n    if fwd[dst] is None:\n        return []\n    cost, legs = fwd[dst]\n    route, u = [src], src\n    while u != dst:\n        u = min(v for v, w in near[u] if back[v] is not None\n                and fwd[u][0] + w + back[v][0] == cost and fwd[u][1] + 1 + back[v][1] == legs)\n        route.append(u)\n    return route\n",
   "notes": [
     "Dijkstra works on the pair (cost, roads), compared cost first, because every road adds a positive pair.",
@@ -168,6 +173,10 @@
     {
       "code": "import heapq\n\ndef cheapest_route(n, roads, src, dst):\n    near = [[] for _ in range(n)]\n    for a, b, cost in roads:\n        near[a].append((b, cost))\n        near[b].append((a, cost))\n    best = [None] * n\n    came = [None] * n\n    best[src] = (0, 0)\n    heap = [(0, 0, src)]\n    while heap:\n        c, k, u = heapq.heappop(heap)\n        if (c, k) > best[u]:\n            continue\n        for v, w in near[u]:\n            cand = (c + w, k + 1)\n            if best[v] is None or cand < best[v] or (cand == best[v] and u < came[v]):\n                if best[v] is None or cand < best[v]:\n                    heapq.heappush(heap, (c + w, k + 1, v))\n                best[v] = cand\n                came[v] = u\n    if best[dst] is None:\n        return []\n    route = [dst]\n    while route[-1] != src:\n        route.append(came[route[-1]])\n    return route[::-1]\n",
       "slip": "Breaking a tie by the smaller previous town settles the end of the route, not its first towns."
+    },
+    {
+      "code": "import heapq\ndef cheapest_route(n, roads, src, dst):\n    w = {}\n    for a, b, c in roads:\n        w[(a, b)] = c; w[(b, a)] = c\n    adj = [[] for _ in range(n)]\n    for (a, b), c in w.items(): adj[a].append((b, c))\n    done = set()\n    heap = [(0, 0, (src,))]\n    while heap:\n        cost, k, path = heapq.heappop(heap)\n        u = path[-1]\n        if u in done: continue\n        done.add(u)\n        if u == dst: return list(path)\n        for v, c in adj[u]:\n            if v not in done: heapq.heappush(heap, (cost + c, k + 1, path + (v,)))\n    return []\n",
+      "slip": "Keeping the roads in a dictionary keyed by the pair of towns lets a later road replace an earlier, cheaper road between the same towns."
     }
   ]
 }

@@ -144,9 +144,14 @@
       "call": "(lambda r: (len(r), r[-1], r[25000], sum(r)))(largest_after_each(1000, 1000, [[(k * 7919) % 1000, (k * 104729 + k // 1000) % 1000] for k in range(50000)]))",
       "expect": "(50000, 5556, 2778, 133513456)",
       "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[29999], r[65000], r[-1], sum(r)))(largest_after_each(1000, 1000, [[r, c] for r in range(485, 515) for c in range(1000)] + [[516 + 2 * k - d, c] for k in range(35) for c in range(0, 1000, 2) for d in (0, 1)] + [[483 - 2 * k + d, c] for k in range(35) for c in range(0, 1000, 2) for d in (0, 1)]))",
+      "expect": "(100000, 30000, 65000, 100000, 5000015000)",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method measures the new cell's island again with a flood fill after every fill. Once one island holds most of the cells that is a long walk per fill, and it runs out of time on the large tests. The step to the target is union-find with the group sizes kept at the roots, so each fill costs a few root lookups. Unlike counting islands as land is added, the record is the largest island's area, so each group carries its size.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The obvious method measures the new cell's island again with a flood fill after every fill. Once one island holds most of the cells that is a long walk per fill, and it runs out of time on the large tests. The step to the target is union-find with the group sizes kept at the roots, so each fill costs a few root lookups. Unlike counting islands as land is added, the record is the largest island's area, so each group carries its size.",
   "solution": "def largest_after_each(rows, cols, fills):\n    parent = {}\n    size = {}\n\n    def find(x):\n        root = x\n        while parent[root] != root:\n            root = parent[root]\n        while parent[x] != root:\n            parent[x], x = root, parent[x]\n        return root\n\n    best = 0\n    out = []\n    for r, c in fills:\n        cell = r * cols + c\n        if cell not in parent:\n            parent[cell] = cell\n            size[cell] = 1\n            for a, b in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n                if 0 <= a < rows and 0 <= b < cols and a * cols + b in parent:\n                    x, y = find(cell), find(a * cols + b)\n                    if x != y:\n                        if size[x] < size[y]:\n                            x, y = y, x\n                        parent[y] = x\n                        size[x] += size[y]\n            best = max(best, size[find(cell)])\n        out.append(best)\n    return out\n",
   "notes": [
     "Islands only ever merge, so union-find with sizes at the roots tracks every island as the fills arrive.",
@@ -165,6 +170,10 @@
     {
       "code": "def largest_after_each(rows, cols, fills):\n    land = set()\n    best = 0\n    out = []\n    for r, c in fills:\n        land.add((r, c))\n        seen = {(r, c)}\n        stack = [(r, c)]\n        while stack:\n            i, j = stack.pop()\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if (a, b) in land and (a, b) not in seen:\n                    seen.add((a, b))\n                    stack.append((a, b))\n        best = max(best, len(seen))\n        out.append(best)\n    return out\n",
       "slip": "Measuring the new cell's island again after each fill is right but walks the whole island each time, too slow once it grows large."
+    },
+    {
+      "code": "def largest_after_each(rows, cols, fills):\n    isle = {}; cells = {}; best = 0; out = []; nid = 0\n    for r, c in fills:\n        if (r, c) not in isle:\n            ids = []\n            for p in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n                if p in isle and isle[p] not in ids: ids.append(isle[p])\n            if not ids:\n                nid += 1; isle[(r, c)] = nid; cells[nid] = [(r, c)]; k = nid\n            else:\n                k = ids[0]; isle[(r, c)] = k; cells[k].append((r, c))\n                for o in ids[1:]:\n                    for p in cells[o]: isle[p] = k\n                    cells[k] += cells.pop(o)\n            best = max(best, len(cells[k]))\n        out.append(best)\n    return out\n",
+      "slip": "Keeping a list of cells per island and rewriting the others into the first island found, not the smaller one, is right but rewrites a large island again and again, too slow."
     }
   ]
 }

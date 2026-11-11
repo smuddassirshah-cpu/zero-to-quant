@@ -62,3 +62,59 @@ Clean (no finding of their own; statement complete, notes true, every candidate 
 The statements are the best of the five packs read so far: ties and output order are defined everywhere, no test leaves the constraints, and no `expect` is wrong. The weakness is one class, seen four times here (findings 1 to 4): the large tests are chains in index order or grow one way, so a slow method that happens to sweep in that order, or the same search turned round, finishes at once. Finding class for a script (SESSION PROTOCOL 6): for each difficulty 4 and 5 drill, plant the ruled-out method in both directions and in sorted order, not once.
 
 Every proposed `expect` above was computed by the model solution and by `mine.py` (`extra_checks.py`); findings 5 to 10 and 15 were also checked by hand.
+
+## Fix pass
+
+Applied with targeted edits to the 12 drill files, `index.json`, `docs/reports/drills-ci-5-check.py` and `docs/reports/drills-ci-5.md`. Fixed 19, disputed 0, deferred 0 (16 is a no-change note, recorded below). "Three agree" means the model solution, the author's independent method in the check script and the reviewer's `mine.py` (for the half-fare drill, which the pass changed, the model, the check script's method updated for the new rule, and my own SPFA over (town, voucher used) in the scratchpad); small cases were also worked by hand.
+
+1. `ci-ferry-timetable` tests: fixed. Added the scattered 50,000-port chain (14 tests, `how` says 14). Planted two new slow candidates (sweeps forwards and backwards in turn; crossings sorted by port). Both time out in Pyodide (over 12 s); model 0.84 s for the whole run. `how` now says the sweeps fail however the crossings are ordered or swept.
+2. `ci-first-circular-rule` tests: fixed. Added the two-chain test with 10,000 cross rules (14 tests). The backward search is planted: 4.5 s in CPython, 11.1 s in Pyodide (bound by the 20,000-rule limit, so the native check for that plant uses 3 s; `--pyodide` is the gate). The forward plant is over 12 s in Pyodide; the model 0.46 s.
+3. `ci-reclaimed-land` tests: fixed. Added the block-then-single-cells test (15 tests). Planted the island-list candidate (rewrites the others into the first found): over 12 s in Pyodide; model 0.80 s.
+4. `ci-stuck-jobs` tests: fixed. Added the scattered 200,000-job chain (14 tests). Planted the upward sweep: over 12 s in Pyodide; model 0.86 s.
+5. `ci-island-shapes` tests: fixed. Added the corner test, the equal-profile test and the 300 by 300 slick; dropped tests[2] (`['#.#']`, two equal cells, covered by the `'#.#.#'` test and by planted[2]) to stay at 15. Constraints gain "One slick can hold every cell, too deep for Python recursion." Planted the eight-neighbour, profile and recursive candidates. planted[1] is recursive and now fails on an earlier test by value as before (accepted either way).
+6. `ci-two-shift-rota` tests: fixed. Added `max_day_shift(5, [[0, 1], [0, 2], [0, 3]])`; planted the whole-desk larger colour.
+7. `ci-wall-break-route` tests: fixed. Added `['S#', '#E']` (15 tests); planted the straight-through candidate before the slow plant.
+8. `ci-cheapest-route` tests: fixed. Added the repeated-road test (14 tests); planted the dict-of-roads candidate.
+9. `ci-half-fare-route` tests: fixed, with the changed task (finding 14). Added `cheapest_with_coupon(3, [[0, 1, 5], [1, 2, 4], [0, 2, 6]], 1, 1)` = 0 (src equal to dst with a loop that could use the voucher; the used-layer candidate returns 12) and `cheapest_with_coupon(4, [[0, 1, 10], [1, 3, 10], [0, 2, 1], [2, 3, 22]], 0, 3)` = 12 (the dearest-road greedy returns 15, which the guard had let pass). 15 tests.
+10. `ci-nearest-depot` brief: fixed. Sentence added, and a third example `depot_shares(['A.#.'])` = `[1, 0]`.
+11. `ci-first-circular-rule` brief: fixed ("which is a loop on its own").
+12. `ci-flood-reach` constraints[1], planted[2].slip: fixed as proposed. Basis: `sys.setrecursionlimit` lets a recursive fill pass every test, so the text no longer says the tests rule recursion out; the slip names the default limit.
+13. `ci-half-fare-route` notes[2]: fixed, recounted. From the unused copy each road gives two moves in each direction (full and half), from the used copy one in each direction: 4 + 2 = 6 per road, so "at most $6m$ moves" (at most, because roads at `src` offer no half-price move).
+14. `ci-half-fare-route` whole drill: fixed by changing the task: the voucher is refused on any road with `src` at one end. The guard changes the code (the half-price move is offered only when neither end of the road is `src`). Brief, hint, both examples, notes[0] and notes[2], `how`, tests, planted and solution updated. No `index.json` text change besides difficulty.
+15. `ci-ferry-timetable` tests[3] and `ci-loop-cables` tests[2]: fixed. Ferry: `'  3 2 \n 1 2 5 1 \n 2 3 2 6  \n'` = `'8'` (leave 0, arrive 5, next sailing at 6, land at 8). Cables: not the reviewer's triangle but `loop_cables(4, [[3, 1], [0, 3], [1, 0], [2, 0]])` = `[2]` (cable 2 closes 3, 1, 0; cable 3 reaches rack 2).
+16. constraints objects of `ci-cheapest-route` and `ci-half-fare-route`: no content change (the shape cannot give a range per position; the check script covers the gap), as the reader says.
+17. `ci-loop-cables` notes[2]: fixed. Basis: path compression alone gives $O(\log n)$ amortised per operation, and with union by size $O(\alpha(n))$ (Tarjan and van Leeuwen, "Worst-case analysis of set union algorithms", 1984).
+18. `ci-wall-break-route` how: fixed ("at most one is allowed").
+19. Difficulties and paces: fixed. `ci-half-fare-route` 5 to 4, pace 2,580 to 2,100; `ci-first-circular-rule` 4 to 5, pace 2,580; `ci-cheapest-route` pace 1,500 to 1,800; `index.json` rows in step (checked by the check script). Mix still 3 / 5 / 5 / 2.
+
+### Added or changed test `expect`s, and the solutions that agree
+
+New (finding 1 to 9, the last two are the half-fare tests above):
+- ferry, scattered chain of 50,000 ports: `'149998'` (three agree).
+- first-circular-rule, 20,000 modules: `19998` (three agree; by hand: 9,998 chain rules plus 10,000 cross rules precede the closing rule `[9999, 0]`, and no earlier rule closes a loop since all flow runs from module 0 towards 9999).
+- reclaimed-land, 1000 by 1000: `(100000, 30000, 65000, 100000, 5000015000)` (three agree; 30,000 plus 2 x 35 x 500 x 2 = 100,000 cells).
+- stuck-jobs, scattered chain of 200,000: `0` (three agree; a chain has no loop).
+- island-shapes: `['#.#', '.#.', '...', '.##']` = 1 (three agree; three equal single cells and one pair); `['##...', '.##..', '.....', '..##.', '.##..']` = 2 (three agree; a Z and an S, different shapes); `['#' * 300] * 300` = 1 (three agree).
+- two-shift-rota: `max_day_shift(5, [[0, 1], [0, 2], [0, 3]])` = 4 (three agree; 3 from the star group and 1 alone).
+- wall-break-route: `['S#', '#E']` = 2 (three agree).
+- cheapest-route: `cheapest_route(3, [[0, 1, 2], [0, 1, 9], [1, 2, 2], [0, 2, 6]], 0, 2)` = `[0, 1, 2]` (three agree; 4 against 6).
+- half-fare: `(3, [[0, 1, 5], [1, 2, 4], [0, 2, 6]], 1, 1)` = 0 and `(4, [[0, 1, 10], [1, 3, 10], [0, 2, 1], [2, 3, 22]], 0, 3)` = 12 (three agree each; 1 + 22 // 2 = 12 against 10 + 10 // 2 = 15).
+- nearest-depot example: `['A.#.']` = `[1, 0]` (three agree).
+
+Replaced: ferry tests[3] `'8'` and cable tests[2] `[2]` (three agree each).
+
+Changed by the half-fare rule (model, check-script method and SPFA agree on every one; the rest of the 15 tests keep their value):
+- `(2, [[0, 1, 1]], 1, 0)`: 0 to 1 (the only road starts at `src`).
+- `(2, [[0, 1, 7], [1, 0, 5]], 0, 1)`: 2 to 5 (both roads start at `src`).
+- `(4, [[0, 1, 2], [1, 2, 2], [2, 3, 2], [0, 3, 9]], 0, 3)`: 4 to 5 (2 + 1 + 2).
+- example 2 replaced: `(3, [[0, 1, 9], [1, 2, 7], [0, 2, 13]], 0, 2)` = 12 (9 + 7 // 2; the direct road stays at 13). Example 1 keeps 6.
+
+Return-value or difficulty changes: `ci-half-fare-route` now refuses the voucher at `src` (above); difficulties `ci-half-fare-route` 4 and `ci-first-circular-rule` 5.
+
+### Gates
+
+- `docs/reports/drills-ci-5-check.py`: exit 0, 15 drills, 0 errors (it now also checks the index rows and several slow plants); with `--pyodide`, all 12 slow plants are past 5 s (11.1 s to over 12 s) and every model is under 1 s (0.13 to 0.86 s).
+- `node tools/validate.mjs`: 0 errors. Index rows in step.
+- `node tools/planted-check.mjs --drill <the 12 changed ids> --require --local-cdn <pkgs>`: 12 drills checked, 49 planted solutions, 0 failures.
+- `node tools/playthrough.mjs --drill <the 12 ids> --local-cdn <pkgs>`: All passed; with `--mobile`: All passed.
+- `voice-scan.py 35` on the 15 pack files: 0 sentences over 35 words, 0 explanations over three sentences.
