@@ -23,21 +23,21 @@ const T = [
   [1, 'p-theatre-rows', 3, '90', true], [1, 'p-theatre-rows', 3, '93', false],
   [1, 'p-theatre-rows', 4, '10', true], [1, 'p-theatre-rows', 4, '9', false], [1, 'p-theatre-rows', 4, '13', false],
   [1, 'p-pendulum-swings', 2, '80\\cdot0.9^{n-1}', true], [1, 'p-pendulum-swings', 2, '80*0.9^{(n-1)}', true], [1, 'p-pendulum-swings', 2, '\\frac{800}{9}\\cdot0.9^n', true],
-  [1, 'p-pendulum-swings', 2, '80\\cdot0.9^n', false], [1, 'p-pendulum-swings', 2, '88-8n', false], [1, 'p-pendulum-swings', 2, '72^{n-1}', false],
+  [1, 'p-pendulum-swings', 2, '80*(0.9)^(n-1)', true], [1, 'p-pendulum-swings', 2, '80\\cdot(0.9)^{n-1}', true], [1, 'p-pendulum-swings', 2, '80*0.9^(n-1)', true], [1, 'p-pendulum-swings', 2, '80*(0.9)^n', false], [1, 'p-pendulum-swings', 2, '80\\cdot0.9^n', false], [1, 'p-pendulum-swings', 2, '88-8n', false], [1, 'p-pendulum-swings', 2, '72^{n-1}', false],
   [1, 'p-pendulum-swings', 3, '47.2', true], [1, 'p-pendulum-swings', 3, '47.24', true], [1, 'p-pendulum-swings', 3, '47.2392', true], [1, 'p-pendulum-swings', 3, '47.3', false], [1, 'p-pendulum-swings', 3, '42.5', false],
   [1, 'p-pendulum-swings', 4, '8', true], [1, 'p-pendulum-swings', 4, '7', false],
   [1, 'p-daily-tablet', 1, '374.4', true], [1, 'p-daily-tablet', 1, '374.40', true], [1, 'p-daily-tablet', 1, '374', false], [1, 'p-daily-tablet', 1, '336', false],
   [1, 'p-daily-tablet', 2, '400', true], [1, 'p-daily-tablet', 2, '600', false],
   [1, 'p-daily-tablet', 3, '160\\cdot0.4^{n-1}', true], [1, 'p-daily-tablet', 3, '160*0.4^{(n-1)}', true], [1, 'p-daily-tablet', 3, '400\\cdot0.4^n', true], [1, 'p-daily-tablet', 3, '160\\left(\\frac{2}{5}\\right)^{n-1}', true],
-  [1, 'p-daily-tablet', 3, '160\\cdot0.4^n', false], [1, 'p-daily-tablet', 3, '160\\cdot0.6^{n-1}', false],
+  [1, 'p-daily-tablet', 3, '160(0.4)^(n-1)', true], [1, 'p-daily-tablet', 3, '160*(0.4)^(n-1)', true], [1, 'p-daily-tablet', 3, '160\\cdot(0.4)^{n-1}', true], [1, 'p-daily-tablet', 3, '160(0.4)^n', false], [1, 'p-daily-tablet', 3, '160*(0.6)^(n-1)', false], [1, 'p-daily-tablet', 3, '160\\cdot0.4^n', false], [1, 'p-daily-tablet', 3, '160\\cdot0.6^{n-1}', false],
   [1, 'p-daily-tablet', 4, '5', true], [1, 'p-daily-tablet', 4, '4', false],
   [1, 'p-shop-orders', 1, '60', true], [1, 'p-shop-orders', 1, '120', false],
   [1, 'p-shop-orders', 2, '1.5', true], [1, 'p-shop-orders', 2, '3/2', true], [1, 'p-shop-orders', 2, '2.25', false],
   [1, 'p-shop-orders', 4, '64\\cdot1.5^{n-1}', true], [1, 'p-shop-orders', 4, '96\\cdot1.5^{n-2}', true], [1, 'p-shop-orders', 4, '64*1.5^{(n-1)}', true], [1, 'p-shop-orders', 4, '64\\left(\\frac{3}{2}\\right)^{n-1}', true],
-  [1, 'p-shop-orders', 4, '96\\cdot1.5^{n-1}', false], [1, 'p-shop-orders', 4, '60n-24', false],
+  [1, 'p-shop-orders', 4, '64(1.5)^(n-1)', true], [1, 'p-shop-orders', 4, '64*(1.5)^(n-1)', true], [1, 'p-shop-orders', 4, '64\\cdot(1.5)^{n-1}', true], [1, 'p-shop-orders', 4, '64(1.5)^n', false], [1, 'p-shop-orders', 4, '96*(1.5)^(n-1)', false], [1, 'p-shop-orders', 4, '96\\cdot1.5^{n-1}', false], [1, 'p-shop-orders', 4, '60n-24', false],
   [1, 'p-shop-orders', 5, '8', true], [1, 'p-shop-orders', 5, '7', false],
-  [2, 'p-tin-display', 1, '27', true], [2, 'p-tin-display', 2, '192', true], [2, 'p-tin-display', 2, '384', false],
-  [2, 'p-tin-display', 3, '8', true], [2, 'p-tin-display', 3, '7', false], [2, 'p-tin-display', 4, '160', true], [2, 'p-tin-display', 4, '140', false],
+  [2, 'p-tin-display', 1, '53', true], [2, 'p-tin-display', 1, '58', false], [2, 'p-tin-display', 1, '50', false], [2, 'p-tin-display', 2, '305', true], [2, 'p-tin-display', 2, '610', false], [2, 'p-tin-display', 2, '265', false], [2, 'p-tin-display', 2, '330', false],
+  [2, 'p-tin-display', 3, '7', true], [2, 'p-tin-display', 3, '6', false], [2, 'p-tin-display', 3, '10', false], [2, 'p-tin-display', 4, '266', true], [2, 'p-tin-display', 4, '228', false], [2, 'p-tin-display', 4, '243', false], [2, 'p-tin-display', 4, '305', false],
   [2, 'p-app-users', 1, '972', true], [2, 'p-app-users', 2, '1456', true], [2, 'p-app-users', 2, '1,456', true], [2, 'p-app-users', 2, '1458', false],
   [2, 'p-app-users', 3, '2\\cdot3^n-2', true], [2, 'p-app-users', 3, '2(3^n-1)', true], [2, 'p-app-users', 3, '\\frac{4(3^n-1)}{2}', true], [2, 'p-app-users', 3, '2*3^n-2', true], [2, 'p-app-users', 3, 'S_n=2\\cdot3^n-2', true],
   [2, 'p-app-users', 3, '4\\cdot3^n-4', false], [2, 'p-app-users', 3, '2\\cdot3^{n-1}-2', false], [2, 'p-app-users', 3, '2\\cdot3^n', false],
@@ -53,14 +53,16 @@ const T = [
   [2, 'p-two-repayment-plans', 3, '2000', true], [2, 'p-two-repayment-plans', 3, '2,000', true], [2, 'p-two-repayment-plans', 3, '£2,000', true], [2, 'p-two-repayment-plans', 3, '1800', false],
   [2, 'p-two-repayment-plans', 4, '1781', true], [2, 'p-two-repayment-plans', 4, '1782', true], [2, 'p-two-repayment-plans', 4, '1781.16', true], [2, 'p-two-repayment-plans', 4, '£1,781', true], [2, 'p-two-repayment-plans', 4, '1780', false], [2, 'p-two-repayment-plans', 4, '1757', false],
   [2, 'p-two-repayment-plans', 5, '1219', true], [2, 'p-two-repayment-plans', 5, '1218', true], [2, 'p-two-repayment-plans', 5, '1,219', true], [2, 'p-two-repayment-plans', 5, '1000', false], [2, 'p-two-repayment-plans', 5, '1220', false],
-  [3, 'p-pizza-toppings', 1, '56', true], [3, 'p-pizza-toppings', 1, '336', false], [3, 'p-pizza-toppings', 2, '56', true],
-  [3, 'p-pizza-toppings', 3, '84', true], [3, 'p-pizza-toppings', 3, '64', false], [3, 'p-pizza-toppings', 4, '512', true], [3, 'p-pizza-toppings', 4, '511', false],
+  [3, 'p-pizza-toppings', 1, '330', true], [3, 'p-pizza-toppings', 1, '7920', false], [3, 'p-pizza-toppings', 1, '44', false], [3, 'p-pizza-toppings', 1, '1320', false],
+  [3, 'p-pizza-toppings', 2, '660', true], [3, 'p-pizza-toppings', 2, '330', false],
+  [3, 'p-pizza-toppings', 3, '495', true], [3, 'p-pizza-toppings', 3, '341', false], [3, 'p-pizza-toppings', 3, '660', false], [3, 'p-pizza-toppings', 3, '11880', false],
+  [3, 'p-pizza-toppings', 4, '4096', true], [3, 'p-pizza-toppings', 4, '4095', false], [3, 'p-pizza-toppings', 4, '2048', false],
   [3, 'p-bracket-estimate', 1, '189', true], [3, 'p-bracket-estimate', 1, '-189', false],
   [3, 'p-bracket-estimate', 2, '1-21x+189x^2', true], [3, 'p-bracket-estimate', 2, '189x^2-21x+1', true], [3, 'p-bracket-estimate', 2, '1-21x+189x^{2}', true],
   [3, 'p-bracket-estimate', 2, '1+21x+189x^2', false], [3, 'p-bracket-estimate', 2, '1-21x', false], [3, 'p-bracket-estimate', 2, '(1-3x)^7', false],
   [3, 'p-bracket-estimate', 3, '0.8089', true], [3, 'p-bracket-estimate', 3, '0.80890', true], [3, 'p-bracket-estimate', 3, '0.809', false], [3, 'p-bracket-estimate', 3, '0.8080', false],
   [3, 'p-bracket-estimate', 4, '-945', true], [3, 'p-bracket-estimate', 4, '945', false],
-  [3, 'p-bracket-estimate', 5, '0.80796', true], [3, 'p-bracket-estimate', 5, '0.80795', true], [3, 'p-bracket-estimate', 5, '0.80798', true], [3, 'p-bracket-estimate', 5, '0.8080', false], [3, 'p-bracket-estimate', 5, '0.80985', false],
+  [3, 'p-bracket-estimate', 5, '0.80796', true], [3, 'p-bracket-estimate', 5, '0.80795', true], [3, 'p-bracket-estimate', 5, '0.80798', false], [3, 'p-bracket-estimate', 5, '0.807983', false], [3, 'p-bracket-estimate', 5, '0.807955', true], [3, 'p-bracket-estimate', 5, '0.80799', false], [3, 'p-bracket-estimate', 5, '0.8080', false], [3, 'p-bracket-estimate', 5, '0.80985', false],
   [3, 'p-gym-membership', 1, '1.06165', true], [3, 'p-gym-membership', 1, '1.06168', false], [3, 'p-gym-membership', 1, '1.0617', false],
   [3, 'p-gym-membership', 2, '0.9419', true], [3, 'p-gym-membership', 2, '0.94189', true], [3, 'p-gym-membership', 2, '0.94190', true], [3, 'p-gym-membership', 2, '0.9418', false], [3, 'p-gym-membership', 2, '0.942', false],
   [3, 'p-gym-membership', 3, '1162', true], [3, 'p-gym-membership', 3, '1161', true], [3, 'p-gym-membership', 3, '£1,162', true], [3, 'p-gym-membership', 3, '1161.89', true], [3, 'p-gym-membership', 3, '1200', false], [3, 'p-gym-membership', 3, '1160', false],
@@ -84,7 +86,7 @@ const wrongKey = (w, text) => {
 };
 const gradeExpr = (w, L) => {
   const fo = { functions: w.functions || [], integers: w.integers || [] };
-  const eq = (t) => { try { return !!G.exprEqual(ce, L, t, fo); } catch { return false; } };
+  const eq = (t) => { try { return !!G.exprEqual(ce, L, t, fo) || (!!G.normExpr(L) && G.normExpr(L) === G.normExpr(t)); } catch { return false; } };
   return [w.answer, ...(w.accept || [])].some(eq);
 };
 for (const n of [1, 2, 3]) {
@@ -96,6 +98,7 @@ for (const n of [1, 2, 3]) {
       say(G.within(w.answer, w.answer, w.tol), `${where}: answer outside band`);
       for (const x of w.wrong || []) say(!G.within(x.value, w.answer, w.tol), `${where}: wrong ${x.id} inside answer band`);
       for (const x of w.wrong || []) for (const y of w.wrong || []) if (x !== y) say(!G.within(x.value, y.value, y.tol || w.tol), `${where}: wrong ${x.id} inside ${y.id}`);
+      for (const x of w.wrong || []) { const k = wrongKey(w, String(x.value)); say(k === x.id, `${where}: wrong ${x.id} value ${x.value} lands on ${k}`); }
       for (const r of typed) say(gradeNumeric(w, r[3]) === r[4], `${where}: typed "${r[3]}" ${r[4] ? 'refused' : 'accepted'} (wrong key ${wrongKey(w, r[3])})`);
     } else if (w.kind === 'expression') {
       say(gradeExpr(w, w.answer), `${where}: answer not correct`);

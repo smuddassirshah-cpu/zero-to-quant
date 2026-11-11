@@ -212,6 +212,7 @@ for _ in range(200):
 check_numeric('1 tablet p2', it[1], L, lim, [400], {'kept-sixty': F(240) / (1 - F(3, 5)), 'sign': F(240) / F(7, 5)})
 ok(within(171, 171.43, 0.5), 'tablet sign slip rounded is caught')
 gaps = [L - t for t in u]
+ok(gaps[0] == 160 and gaps[2] == F(128, 5) and 400 - F(1872, 5) == F(128, 5) == F(256, 10), 'tablet p3 question: g1 = 160 and g3 = 25.6 from u3 = 374.4')
 ok(gaps[0] == 160 and all(gaps[k + 1] == F(2, 5) * gaps[k] for k in range(11)), 'tablet gaps geometric 0.4')
 check_expr('1 tablet p3', it[2], 160 * sp.Rational(2, 5) ** (n_sym - 1),
            {'power-n': 160 * sp.Rational(2, 5) ** n_sym, 'cleared': 160 * sp.Rational(3, 5) ** (n_sym - 1),
@@ -233,7 +234,8 @@ check_numeric('1 shop p2', it[1], r, 2.25 ** 0.5, [1.5, 1.50], {'no-halve' if Fa
 check_choice('1 shop p3', it[2], 'geom')
 ok(96 + 60 == 156 and 96 * F(3, 2) == 144 and 144 * F(3, 2) == 216, 'shop month 3 test')
 check_expr('1 shop p4', it[3], 64 * sp.Rational(3, 2) ** (n_sym - 1),
-           {'month-two-start': 96 * sp.Rational(3, 2) ** (n_sym - 1), 'power-n': 64 * sp.Rational(3, 2) ** n_sym, 'arith': 60 * n_sym - 24})
+           {'month-two-start': 96 * sp.Rational(3, 2) ** (n_sym - 1), 'arith': 60 * n_sym - 24})
+ok(same(64 * sp.Rational(3, 2) ** n_sym, 96 * sp.Rational(3, 2) ** (n_sym - 1)), 'shop p4: the removed power-n entry was equal to month-two-start')
 o = terms_geom(64, F(3, 2), 20)
 ok(o[1] == 96 and o[3] == 216 and o[6] == 729 and o[7] == F(2187, 2), 'shop months 2, 4, 7, 8')
 first = next(k for k in range(1, 21) if o[k - 1] > 1000)
@@ -249,16 +251,17 @@ check_numeric('1 shop p5', it[4], first, k2, [8],
 P = load(2)
 
 it = P['p-tin-display']['parts']
-rows = terms_arith(5, 2, 12)
-check_numeric('2 tins p1', it[0], rows[11], 5 + 11 * 2, [27], {'n-steps': 5 + 12 * 2, 'step-only': 12 * 2})
-check_numeric('2 tins p2', it[1], sum(rows), F(12, 2) * (5 + 27), [192],
-              {'no-halve': 12 * 32, 'last-only': F(12, 2) * 27, 'n-steps': F(12, 2) * (10 + 12 * 2)})
-ok(all(2 * k + 3 == rows[k - 1] for k in range(1, 13)), 'tins row k is 2k + 3')
-check_numeric('2 tins p3', it[2], 12 - 5 + 1, len(range(5, 13)), [8], {'subtract': 12 - 5, 'top': 12})
-stand = sum(2 * k + 3 for k in range(5, 13))
-check_numeric('2 tins p4', it[3], stand, F(8, 2) * (13 + 27), [160],
-              {'seven-rows': F(7, 2) * 40, 'five-left': sum(rows) - sum(rows[:5]), 'full': sum(rows)})
-ok(sum(rows[:4]) == 32 and 192 - 32 == stand and rows[4] == 13, 'tins check 192 - 32')
+rows = terms_arith(8, 5, 10)
+ok(rows[:3] == [8, 13, 18], 'tins prose rows')
+check_numeric('2 tins p1', it[0], rows[9], 8 + 9 * 5, [53], {'n-steps': 8 + 10 * 5, 'step-only': 10 * 5})
+check_numeric('2 tins p2', it[1], sum(rows), F(10, 2) * (8 + 53), [305],
+              {'no-halve': 10 * 61, 'last-only': F(10, 2) * 53, 'n-steps': F(10, 2) * (16 + 10 * 5)})
+ok(all(5 * k + 3 == rows[k - 1] for k in range(1, 11)), 'tins row k is 5k + 3')
+check_numeric('2 tins p3', it[2], 10 - 4 + 1, len(range(4, 11)), [7], {'subtract': 10 - 4, 'top': 10})
+stand = sum(5 * k + 3 for k in range(4, 11))
+check_numeric('2 tins p4', it[3], stand, F(7, 2) * (23 + 53), [266],
+              {'six-rows': F(6, 2) * (23 + 53), 'four-left': sum(rows) - sum(rows[:4]), 'full': sum(rows)})
+ok(sum(rows[:3]) == 39 and sum(rows[:4]) == 62 and 305 - 39 == stand and rows[3] == 23, 'tins check 305 - 39')
 
 it = P['p-app-users']['parts']
 day = terms_geom(4, 3, 15)
@@ -334,19 +337,20 @@ check_numeric('2 plans p5', it[4], 3000 - B21, 3000 - 2000 * (1 - 0.9 ** 21), [1
 P = load(3)
 
 it = P['p-pizza-toppings']['parts']
-tops = range(8)
-c3 = sum(1 for _ in itertools.combinations(tops, 3))
-check_numeric('3 pizza p1', it[0], comb(8, 3), c3, [56], {'ordered': 8 * 7 * 6, 'times': 8 * 3, 'repeats': 8 ** 3})
-c5 = sum(1 for _ in itertools.combinations(tops, 5))
-check_numeric('3 pizza p2', it[1], comb(8, 5), c5, [56], {'ordered': 8 * 7 * 6 * 5 * 4, 'ordered-three': 8 * 7 * 6})
-c9 = sum(1 for _ in itertools.combinations(range(9), 3))
-with_ham = sum(1 for s in itertools.combinations(range(9), 3) if 8 in s)
-ok(with_ham == comb(8, 2) == 28, 'pizza with ham 28')
-check_numeric('3 pizza p3', it[2], comb(8, 3) + comb(8, 2), c9, [84], {'one-more': 56 + 8, 'doubled': 112, 'ordered': 9 * 8 * 7})
-allp = sum(1 for k in range(10) for _ in itertools.combinations(range(9), k))
-row9 = [comb(9, k) for k in range(10)]
-ok(row9 == [1, 9, 36, 84, 126, 126, 84, 36, 9, 1], 'pizza row 9')
-check_numeric('3 pizza p4', it[3], sum(row9), allp, [512], {'no-plain': allp - 1, 'row-eight': 2 ** 8})
+tops = range(11)
+c4 = sum(1 for _ in itertools.combinations(tops, 4))
+check_numeric('3 pizza p1', it[0], comb(11, 4), c4, [330], {'ordered': 11 * 10 * 9 * 8, 'times': 11 * 4, 'three-orders': 11 * 10 * 9 * 8 // 6})
+c47 = sum(1 for k in (4, 7) for _ in itertools.combinations(tops, k))
+check_numeric('3 pizza p2', it[1], comb(11, 4) + comb(11, 7), c47, [660], {'one-size': comb(11, 4)})
+ok(comb(11, 7) == comb(11, 4) == 330, 'pizza symmetry 330 each')
+c12 = sum(1 for _ in itertools.combinations(range(12), 4))
+with_ham = sum(1 for s_ in itertools.combinations(range(12), 4) if 11 in s_)
+ok(with_ham == comb(11, 3) == 165, 'pizza with ham 165')
+check_numeric('3 pizza p3', it[2], comb(11, 4) + comb(11, 3), c12, [495], {'one-more': 330 + 11, 'doubled': 2 * 330, 'ordered': 12 * 11 * 10 * 9})
+allp = sum(1 for k in range(13) for _ in itertools.combinations(range(12), k))
+row12 = [comb(12, k) for k in range(13)]
+ok(row12[:5] == [1, 12, 66, 220, 495], 'pizza row 12 begins 1, 12, 66, 220, 495')
+check_numeric('3 pizza p4', it[3], sum(row12), allp, [4096], {'no-plain': allp - 1, 'row-eleven': 2 ** 11})
 
 def expand(a, b, n):
     """Coefficients of (a + b x)^n by repeated multiplication."""
@@ -373,8 +377,10 @@ check_numeric('3 bracket p3', it[2], est, 1 - 0.21 + 0.0189, [0.8089],
 ok(within(0.97 ** 7, 0.808, 0.00005), 'bracket calculator slip catches 0.80798')
 check_numeric('3 bracket p4', it[3], comb(7, 3) * (-3) ** 3, c[3], [-945], {'sign': 945, 'not-cubed': -105, 'no-count': -27})
 imp = est + c[3] * x ** 3
-check_numeric('3 bracket p5', it[4], imp, 0.8089 - 0.000945, [0.80796, 0.80795, round(0.97 ** 7, 5)],
-              {'added': est - c[3] * x ** 3, 'square': est + c[3] * x ** 2})
+check_numeric('3 bracket p5', it[4], imp, 0.8089 - 0.000945, [0.80796, 0.80795],
+              {'added': est - c[3] * x ** 3, 'square': est + c[3] * x ** 2, 'calculator': 0.97 ** 7},
+              typed_bad=[0.80798, 0.8080])
+ok(round(0.97 ** 7, 6) == 0.807983 and within(0.807983, 0.807983, 6e-6) and not within(0.97 ** 7, 0.807955, 6e-6), 'bracket p5 calculator value 0.807983 sits outside the key band')
 ok(abs(float(imp) - 0.97 ** 7) < 3e-5, 'bracket improved estimate within 3e-5 of the true value')
 ok(F(97, 100) ** 7 == sum(c[k] * x ** k for k in range(8)), 'bracket full expansion equals 0.97^7')
 

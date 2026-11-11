@@ -215,3 +215,77 @@ One fix pass on Sonnet covers all of it. Findings 4, 5, 6, 11, 14, 17 and 19 cha
 | `census.py` | parts by kind and `wrong` entries per set | `python3` |
 
 All run from the repo root. `dump.py` and `skim.py` of batch 0.2 b were used as they are.
+
+## Fix pass
+
+Applied by targeted edits (a patch script per file, reading and writing the JSON in the file's own layout), never by regeneration. Of the 20 findings: 18 fixed in content (2 and 18 keep an engine row already in the inbox), 1 deferred (16, engine), 1 noted with no fix asked (20), 0 disputed. Every new number was recomputed by me twice: `docs/reports/problems-series-numbers.py` and `problems-trig-numbers.py` (exact fractions, sympy and closed forms, then term-by-term stepping, `itertools` enumeration, coordinates and grid scans) now hold the new values only and exit 0; the two grade scripts run the engine's graders on every new key, `accept` line, `wrong` entry and typed string.
+
+1. fixed. `power-n` entry and its `byKey` line deleted from `p-shop-orders` part 4 (64 x 1.5^n = 96 x 1.5^(n-1), checked in the numbers script); `month-two-start` line as proposed. Part 5's `power-n` stays.
+2. fixed in content as asked: `accept` gains `80\cdot(0.9)^{n-1}` (pendulum 2), `160(0.4)^{n-1}`, `160\cdot(0.4)^{n-1}` (tablet 3), `64(1.5)^{n-1}`, `64\cdot(1.5)^{n-1}` (shop 4). The grade script now grades expressions as the widget does (`exprEqual`, then the `normExpr` text fallback): `80*(0.9)^(n-1)`, `160(0.4)^(n-1)`, `160*(0.4)^(n-1)`, `64(1.5)^(n-1)`, `64*(1.5)^(n-1)` and the LaTeX spellings pass; `80*(0.9)^n`, `160(0.4)^n`, `160*(0.6)^(n-1)`, `64(1.5)^n`, `96*(1.5)^(n-1)` stay wrong. A fraction base and `^(` in general stay an engine row (already in the inbox).
+3. fixed. `p-daily-tablet` part 3 question restates part 1's u_3 = 374.4 and g_3 = 25.6 (400 - 374.4, checked); `generic` as proposed.
+4. fixed, new numbers accepted: tins 8 + 5 per row, 10 rows. Bottom row 53 = 8 + 9 x 5; display 305 (summing 8, 13, ..., 53 directly, and 5 x 61); 7 rows (10 - 4 + 1); stand 266 (summing rows 4 to 10, and 305 - 39). Slips recomputed: 58, 50; 610, 265, 330; 6, 10; 228 (3 x 76), 243 (305 - 62), 305. Part 3 `generic` also moved to rows 4 to 10. `seven-rows` and `five-left` renamed `six-rows` and `four-left`.
+5. fixed with finding 6: part 2 now asks for 4 or 7 toppings from 11 (answer 660 = 330 + 330, counted by enumeration); its only `wrong` is `one-size` 330.
+6. fixed, new numbers accepted: 11 toppings and a 12th. 330 = C(11,4) (also 7920/24, and enumeration); 660; 495 = 330 + 165 = C(12,4); 4096 = 2^12 = the sum of row 12 (1, 12, 66, 220, 495, ...; enumerated). Slips: 7920, 44, 1320 (`three-orders`, replaces `repeats`); 330; 341, 660, 11880; 4095, 2048 (`row-eleven`, replaces `row-eight`).
+7. fixed. `p-bracket-estimate` part 5 `tol` 6e-06; new `calculator` entry 0.807983 (0.97^7 = 0.80798284, recomputed) with the proposed line. 0.80795 and 0.80796 pass; 0.80798 and 0.807983 are refused and route to `calculator`.
+8. fixed. Hexagon part 4: `half` 0.5 (tol 0.0005) before `radians`. Lamp part 3: `ratio-tan` 0.75 and `ratio-sin` 0.6 (tol 0.0005) before `radians`, whose `tol` is now 0.005 (takes 0.64, 0.644 and 0.6435). Both trig scripts check that each entry routes to its own key; the numbers script now lets a band sit inside a LATER wider band (the widget takes the first match) and refuses a partial overlap or a band inside an earlier one. The validator prints four advisory warnings on these entries (0.5, 0.75 and 0.6435 are narrower than the asked rounding; one overlap note). Kept as the reader specified: a wider `half` or `ratio-sin` would steal the true radians values 0.5236 and 0.6435.
+9. fixed. The three `radians` lines (hexagon 4, lake 3, lamp 3) now say the calculator is in radians, "another unit for angles that level 2 teaches".
+10. fixed. `"form": "simplified"` on hexagon parts 1 and 2 and lamp parts 1 and 5, each question ending "Give it in its simplest form, such as $7\sqrt{2}$."; the four unworked `accept` forms are cut (with the 8 cm numbers the hexagon accepts are `\sqrt{48}`, `4\cdot\sqrt{3}` and `\sqrt{192}`). The trig grade script loads `expression.js` and applies the widget's own check: `4\sqrt{3}`, `\sqrt{48}`, `8\sqrt{3}`, `\sqrt{192}`, `20\sqrt{3}`, `\sqrt{1200}`, `20\sqrt{3}-15` and `-15+20\sqrt{3}` pass; `\sqrt{8^2-4^2}`, `8\sin(60^\circ)`, `2\cdot4\sqrt{3}`, `40\sin(60^\circ)`, `40\times\frac{\sqrt3}{2}`, `5(4\sqrt{3}-3)` and `40\sin(60^\circ)-30\sin(30^\circ)` are refused.
+11. fixed, new numbers accepted: hexagon of side 8 cm. Height 4 sqrt3 = sqrt48 (Pythagoras, and the distance from A to line OB by coordinates); AC = 8 sqrt3 = sqrt192 (coordinates); AD = 16; CD = 8; AC^2 + CD^2 = 192 + 64 = 256 = AD^2; angle CAD 30 (vectors). Slips: sqrt80, 8 sqrt3, 4 sqrt2; 4 sqrt3, 8, 16; 88, 174.85 (64 sqrt3 + 64), 200; part 4 unchanged (60, 26.57 = atan(8/16), radians 0.5236).
+12. fixed. `p-water-wheel` part 4 question restates 128.9 degrees and about 4.87 m.
+13. fixed with finding 14: `p-two-angles` part 4 restates sin A = 28/53, cos A = -45/53, sin B = 7/25, cos B = 24/25.
+14. fixed, new numbers accepted: sin A = 28/53 (28, 45, 53). cos A = -45/53 = -0.849057 (also from the angle itself, 148.11 degrees); sin(A + B) = (672 - 315)/1325 = 357/1325 = 0.269434; cos(A + B) = (-1080 - 196)/1325 = -1276/1325 = -0.963019; 357^2 + 1276^2 = 1325^2 (checked); A + B = 164.37 (180 - asin(357/1325), and the sum of the two angles). Slips: 0.849057, 0.471698, 0.720897; 0.744906 (987/1325), 0.808302, -0.963019; -0.66717, 0.66717; 15.63, 195.63, 344.37. Printed A about 148.1, B about 16.3 and sin^-1 0.2694 about 15.6 recomputed.
+15. fixed. Part 1 `tol` 0.0005 on the answer and the three `wrong` entries; `accept` "-45/53, or -0.849 to 3 places". -0.849 passes; -0.85 and -0.88 are refused.
+16. deferred: engine row already in the inbox (a form flag for "one side is 0"). No content edit, as the reader ruled.
+17. fixed, new numbers accepted: the short days. 9.8 hours gives sin = (9.8 - 12)/4.4 = -0.5, angles -pi/6 and 7pi/6, t = 2 and 10 (a bisect on the model, and solveset); months above 9.8 = 10 - 2 = 8 (a 12,000-step scan). Slips: 7, 11 (no shift; sin(pi t/6) = -0.5 at 7 and 11); 4, 8 (+0.5, 14.2 hours); part 5: 4 and 9.
+18. fixed in content as the reader proposed: the question ends "with no $x =$ in front". A typed row records that `x=\frac{5\pi}{6}` is still refused by the engine; the engine row stands in the inbox.
+19. fixed, new numbers accepted: edges 10 m and 13 m, area 25 m^2. sin C = 25/65 = 5/13; C = 22.62 and 157.38 (bisect, and asin); cos C = -12/13 = -0.923077; c^2 = 269 + 240 = 509, c = 22.561 (also by the coordinates of the far corner); the acute bed's edge is sqrt29 = 5.39. Slips: 130 sin C, 65 cos C, 65C; 11.09 and 168.91, 22.62 and 337.38; 0.923077, 0.615385 (8/13), -0.852071 (-144/169); 5.3852, 16.4012, 509, 19.7231 (sqrt389). Freshness note for the main session: 5, 12, 13 also appears in trig `l2-ratios-that-stay`, `review-1` and `homework-3`; the reader's `proposed.py` did not search for 5/13 and 12/13. The setting, the area and the edge lengths differ from all three, so I applied the ruling; a later pass may prefer another triple.
+20. noted, no fix asked. With finding 17 the daylight item's last two parts are its own.
+
+### Graded answers, bands and `wrong` values changed (old to new), for the delta reader
+
+Series 1 (no graded value changes): `p-pendulum-swings` p2, `p-daily-tablet` p3 and `p-shop-orders` p4 gain `accept` forms; `p-shop-orders` p4 loses `wrong` `power-n` (`64\cdot1.5^{n}`).
+
+Series 2, `p-tin-display`:
+- p1 answer 27 to 53; n-steps 29 to 58, step-only 24 to 50.
+- p2 answer 192 to 305; no-halve 384 to 610, last-only 162 to 265, n-steps 204 to 330.
+- p3 answer 8 to 7; subtract 7 to 6, top 12 to 10.
+- p4 answer 160 to 266; seven-rows 140 to six-rows 228, five-left 147 to four-left 243, full 192 to 305.
+
+Series 3:
+- `p-pizza-toppings` p1 answer 56 to 330; ordered 336 to 7920, times 24 to 44, repeats 512 to three-orders 1320.
+- p2 answer 56 to 660; ordered 6720 and ordered-three 336 removed, one-size 330 added.
+- p3 answer 84 to 495; one-more 64 to 341, doubled 112 to 660, ordered 504 to 11880.
+- p4 answer 512 to 4096; no-plain 511 to 4095, row-eight 256 to row-eleven 2048.
+- `p-bracket-estimate` p5 `tol` 3e-05 to 6e-06 (answer 0.807955 unchanged); new wrong calculator 0.807983 (tol 6e-06).
+
+Trig 1:
+- `p-hexagon-tile` p1 answer `5\sqrt{3}` to `4\sqrt{3}` (form simplified; accept `\sqrt{48}`, `4\cdot\sqrt{3}`); added `\sqrt{125}` to `\sqrt{80}`, whole-side `10\sqrt{3}` to `8\sqrt{3}`, half-square `5\sqrt{2}` to `4\sqrt{2}`.
+- p2 answer `10\sqrt{3}` to `8\sqrt{3}` (form simplified; accept `\sqrt{192}`); half `5\sqrt{3}` to `4\sqrt{3}`, side `10` to `8`, long `20` to `16`.
+- p3 answer 400 to 256; root-as-three 130 to 88, root-left 273.21 to 174.85 (tol 0.5), cd-unsquared 310 to 200.
+- p4 answer 30 unchanged; new wrong half 0.5 (tol 0.0005) before radians (0.5236, tol 0.5 unchanged).
+- `p-desk-lamp` p1 and p5: `form` simplified added; accept `40\cdot\frac{\sqrt{3}}{2}` and `5(4\sqrt{3}-3)` removed. p3: new wrong ratio-tan 0.75 and ratio-sin 0.6 (tol 0.0005); radians tol 0.05 to 0.005.
+
+Trig 3:
+- `p-two-angles` p1 answer -0.882353 to -0.849057, tol 0.0001 to 0.0005; sign 0.882353 to 0.849057, one-minus 0.529412 to 0.471698, no-root 0.778547 to 0.720897 (each tol 0.0001 to 0.0005).
+- p3 answer 0.204706 to 0.269434; sign 0.698824 to 0.744906, sum-of-sines 0.750588 to 0.808302, cos-formula -0.978824 to -0.963019.
+- p4 answer -0.978824 to -0.963019; plus -0.715294 to -0.66717, sign 0.715294 to 0.66717.
+- p5 answer 168.19 to 164.37; principal 11.81 to 15.63, third 191.81 to 195.63, fourth 348.19 to 344.37.
+- `p-daylight-model` p4 answers [4, 8] to [2, 10]; no-shift "1, 5" to "7, 11"; below "2, 10" to above "4, 8".
+- p5 answer 4 to 8; outside 8 to 4, counted 5 to 9.
+- `p-garden-bed` p1 answer `30\sin C` to `65\sin C` (accept `\frac{1}{2}\cdot10\cdot13\sin C`, `65\sin(C)`); no-half `60\sin C` to `130\sin C`, cos `30\cos C` to `65\cos C`, angle `30C` to `65C`.
+- p2 answers [36.87, 143.13] to [22.62, 157.38]; no-half "17.46, 162.54" to "11.09, 168.91"; cos-rule "36.87, 323.13" to "22.62, 337.38".
+- p3 answer -0.8 to -0.923077; sign 0.8 to 0.923077, one-minus 0.4 to 0.615385, no-root -0.64 to -0.852071.
+- p4 answer 16.2788 to 22.561; sign 8.544 to 5.3852, pythagoras 13 to 16.4012, no-root 265 to 509, no-two 14.7309 to 19.7231.
+
+Trig 2: question text only (finding 12); no graded value changed.
+
+### Gates
+
+| check | result |
+|---|---|
+| `problems-series-numbers.py` and `problems-trig-numbers.py` (venv python) | 1475 and 1055 checks, 0 failures, exit 0 both |
+| `problems-series-grade.mjs` and `problems-trig-grade.mjs` (`--local-cdn`) | 692 and 912 checks, 0 failures, exit 0 both |
+| validator | 0 errors; four advisory warnings on the new `wrong` bands of finding 8 (see line 8) |
+| `fresh-check.mjs --file` on the six sets | 0 hits each |
+| playthrough `--problems`, six sets, `--local-cdn`, with and without `--mobile` | all 12 runs passed |
+| voice scan 35, `series` and `trig` | 0 and 0, both |
