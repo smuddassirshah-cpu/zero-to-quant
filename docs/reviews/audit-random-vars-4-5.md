@@ -122,3 +122,54 @@ Gates:
 - `random-vars-L4-5-concepts.py`: exit 0, 81 checks, 0 failed (no check edited). `problems-random-vars-numbers.py`, `fluency-random-vars-numbers.py`, `random-vars-1-perf-numbers.py`, `random-vars-L1-3-concepts.py`, `random-vars-L1-3-fixread.py`: all exit 0.
 - `voice-scan.py 35` over the course: 0 sentences over 35 words, 0 explanations over three sentences.
 - Playthrough, desktop and `--mobile`, all passed: lessons `l13`, `l14`, `l16`, `l17`, `l18`, `l19`, `l20`; sets `homework-4`, `homework-5`; `--problems random-vars/problems-5`.
+
+## Fix-pass read
+
+Round 1, fresh Fable reader, blind to this file until the rows were written. Read: `git diff 4bc3a770^..4bc3a770 -- app/content/courses/random-vars/` (10 files, 42 changed strings), each judged in its screen's context. Every number named was recomputed in a scratch script (all checks pass), including a simulation for the random-sum hypothesis and a quadrature for the regime mixture.
+
+| # | File | JSON path | Claim (short) | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | homework-4 | `items[2].explain.text` | Margins alone do not, in general, fix the cells | correct | Fréchet class has more than one member unless a margin is degenerate; "in general" covers that case |
+| 2 | homework-5 | `items[6].explain.text` | Var(N) = 400p(1−p); 23,200 at p = 0.2; cited by lesson name | correct | 24 × 900 + 64 × 25 = 23,200 |
+| 3 | homework-5 | `items[7].model` step 5 | A regime mixture usually has fatter tails than one normal of the same sd; the extra tail lowers E[ln(1+R)] | correct | Equal-mean scale mixture: E[s⁴] ≥ (E[s²])², so kurtosis above 3 and the −μ₄/4 Taylor term is larger; quadrature 0.009485 against 0.009519; "usually" covers unequal regime means |
+| 4 | l13 | `screens[8].explain.text` | 0.60 against 0.50; 0.12/0.52 ≈ 0.23; same turn-around, other numbers, in Conditional Probability | correct | 3/13 = 0.2308; the trading-signal lesson there uses neither 0.12 nor 0.52 |
+| 5 | l14 | `screens[5].explain.text` | Four cells fail; two defaults in pool 1 make two in pool 2 likelier, 0.20 against 0.10 | correct | Products of margins against the table: (1,1), (1,2), (2,1), (2,2) differ; 0.04/0.20 = 0.20 |
+| 6 | l14 | `summary.formula.note` | Margins prove nothing; beyond 2 by 2 neither does one matching cell | correct | In a 2 by 2 table a = (a+b)(a+c) forces ad = bc, so one cell does suffice there; the pool table is the 3 by 3 counterexample |
+| 7 | l14 | `summary.trap` | Same statement as the trap | correct | As row 6 |
+| 8 | l16 | `summary.ideas[2]` | Independent trials with chance p take 1/p trials on average | correct | Geometric mean; independence stated as a sufficient hypothesis |
+| 9 | l17 | `screens[4].prose` | "from earlier" in place of a lesson number | correct | Wording only |
+| 10 | l17 | `screens[6].prose` | "before" in place of a lesson number | correct | Wording only |
+| 11 | l17 | `screens[9].prose` | Proof ingredients: Var(Y) = E[Y²] − (E[Y])² and the law of total expectation | correct | Standard proof (Casella and Berger, Theorem 4.4.7) |
+| 12 | l17 | `screens[10].explain.text` | −£480 is 6 sds below the calm mean and one below the volatile mean; a calm-only model understates such days | correct | (120 + 480)/100 = 6; (−180 + 480)/300 = 1; 14,400/40,400 = 0.3564 |
+| 13 | l17 | `quiz[2].prose` | Y = X² is not constant | correct | Added hypothesis makes the `vary` option strictly wrong |
+| 14 | l17 | `quiz[2].widget.options[1].why` | E[Var(Y∣X)] = Var(Y) needs E[Y∣X] the same for every X | correct | Var(E[Y∣X]) = 0 exactly when E[Y∣X] is constant |
+| 15 | l18 | `screens[3].prose` | Law of total variance with N as the condition | correct | Var(S) = E[Var(S∣N)] + Var(E[S∣N]); right law for the table beside it |
+| 16 | l18 | `screens[5].feedback.correct` | 1.6042, as found earlier | correct | 77/48; the same value stands in the lesson on variance given information |
+| 17 | l18 | `screens[5].explain.text` | 0.875 + 0.7292 = 1.6042 | correct | Recomputed |
+| 18 | l18 | `screens[7].explain.text` | Law of total expectation gives E[S] = E[N E[X]] = E[N]E[X] | correct | E[S] = E[E[S∣N]]; right law for the formula beside it |
+| 19 | l18 | `screens[8].explain.text` | Proof assumed N independent of the fills; otherwise E[S∣N] is no longer N E[X] and the formulas can fail | correct | "Can" is right: for a stopping time N the mean formula still holds (Wald) while the variance formula fails; simulation E[S] 6.686 against E[N]E[X] 6.685, Var(S) 0.62 against formula 7.26 |
+| 20 | l18 | `screens[10].explain.text` | 23,200; with dependent count and fills the formulas could fail | correct | Recomputed; as row 19 |
+| 21 | l18 | `summary.ideas[2]` | Proof assumes N independent of the fills; without that, check the formulas | correct | As row 19 |
+| 22 | l18 | `quiz[2].widget.options[1].why` | The formulas assume fills independent of the count and of each other | correct | Hypotheses of the derivation as taught |
+| 23 | l18 | `quiz[2].explain.text` | If the count changes the fills' mean, E[S∣N] is no longer N E[X] | correct | E[S∣N = n] = n E[X∣N = n] |
+| 24 | l18 | `quiz[3].prose` | Claims independent of each other and of the count | correct | Hypothesis now stated; √172,000,000 = 13,115 |
+| 25 | l19 | `screens[6].feedback.byKey.equal` | Second-order gap σ²/(8μ^{3/2}) | correct | g″(μ) = −μ^{−3/2}/4, gap ≈ −g″σ²/2; numeric ratio 1.000 for small σ |
+| 26 | l19 | `screens[8].prose` | Jensen proved for a smooth convex g by the tangent at μ | correct | Tangent-line proof needs differentiability at μ |
+| 27 | l19 | `screens[8].explain.text` | At a kink any line through the point lying under the curve does the same job | correct | Supporting line of a convex function (Rockafellar, Theorem 23.4) |
+| 28 | l19 | `screens[9].feedback.byKey.sign` | Slip 12: the chord from −3 to 1 passes below the curve at the mean −1 | correct | Chord height −13 against curve height −1; slip value 12 is the gap with the sign reversed |
+| 29 | l19 | `screens[10].prose` | "as for covariance earlier" | correct | Wording only |
+| 30 | l19 | `screens[11].prose` | Each month independently +7% or −5% | correct | Mean 1%, sd 6%; independence is what the 120-month figures need |
+| 31 | l19 | `screens[11].explain.text` | Typical path e^0.982 = 2.67; average over paths 1.01^120 = 3.30; Kelly from the Limits course | correct | 120 × 0.0081827 = 0.9819; the median path has 60 up months, exactly e^0.982; Kelly is taught in Limits |
+| 32 | l19 | `summary.ideas[1]` | For a curve with no straight stretch, equality needs X constant | correct | Strict convexity gives equality only for degenerate X |
+| 33 | l19 | `quiz[1].feedback.byKey.sd` | Slip 0.5 is not the gap; 5 − 4 | correct | E[X²] = 5, (E[X])² = 4; line no longer misnames the slip |
+| 34 | l20 | `screens[2].feedback.byKey.one` | Slip 0.0313 is 0.5⁵; other five not up; 252 ways | correct | 0.5⁵ = 0.03125; 252 × 0.5¹⁰ = 0.2461 |
+| 35 | l20 | `screens[3].prose` | "as earlier in the course" | correct | Wording only |
+| 36 | l20 | `screens[4].widget.accept` | 3150 × 0.00002025 = 0.0638 | correct | 0.0625 × 0.04 × 0.0081 = 0.00002025 exactly; product 0.0637875 |
+| 37 | l20 | `screens[5].explain.text` | Mean needs no independence; adding variances needs uncorrelated waits, which independence gives | correct | Linearity; Var of a sum is the sum of variances when covariances vanish |
+| 38 | l20 | `screens[6].prose` | Law of total variance gives V = 0.6V + 1.5 | correct | E[Var(W∣trade 1)] = 0.6V; Var of means 1 and 3.5 is 0.4 × 0.6 × 2.5² = 1.5; V = 3.75 = 0.6/0.16 |
+| 39 | l20 | `quiz[2].prose` | Independent trials each succeed with chance 0.5 | correct | Hypothesis the negative binomial needs |
+| 40 | l20 | `quiz[3].explain.text` | r = 1 gives p(1−p)^{t−1}, the first-success wait from earlier | correct | Geometric pmf |
+| 41 | problems-5 | `items[0].parts[3].explain.text` | Law of total variance gives 0.25 × 31 + 2.25 × 220 = 502.75 | correct | 7.75 + 495; right law |
+| 42 | problems-5 | `items[2].parts[3].explain.text` | Law of total variance: 124 + 24 = 148 | correct | 0.6 × 180 + 0.4 × 40 = 124; 0.6 × 16 + 0.4 × 36 = 24 |
+
+Count: 42 rows, 42 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified. No "Eve's law", "Adam's law" or lesson-number citation remains in the course folder.
