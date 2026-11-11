@@ -28,7 +28,23 @@ from numbers_lib import Level  # noqa: E402
 
 x, y, X, P, w, a, b, lam, t = sp.symbols('x y X P w a b lam t', real=True)
 TR = standard_transformations + (implicit_multiplication_application, convert_xor)
-LOCAL = {'x': x, 'y': y, 'X': X, 'P': P, 'w': w}
+u, v, r = sp.symbols('u v r', real=True)
+LOCAL = {'x': x, 'y': y, 'X': X, 'P': P, 'w': w, 'u': u, 'v': v, 'r': r, 'pi': sp.pi, 'sqrt': sp.sqrt}
+
+
+def _sqrt(s):
+    r"""\sqrt{A} -> sqrt(A), braces matched (levels 4 and 5)."""
+    while '\\sqrt{' in s:
+        i = s.index('\\sqrt{')
+        j = i + 5
+        d, k = 0, j
+        while True:
+            d += {'{': 1, '}': -1}.get(s[k], 0)
+            if d == 0:
+                break
+            k += 1
+        s = s[:i] + f'sqrt({s[j + 1:k]})' + s[k + 1:]
+    return s
 
 
 # ---------------------------------------------------------------- helpers
@@ -73,7 +89,7 @@ def tex2sp(s):
     s = s.strip()
     if s.startswith('(') and s.endswith(')') and len(_split_top(s[1:-1])) == 2:
         return tuple(tex2sp(p) for p in _split_top(s[1:-1]))
-    s = _frac(s).replace('{', '(').replace('}', ')')
+    s = _sqrt(_frac(s)).replace('\\pi', ' pi ').replace('\\cdot', '*').replace('{', '(').replace('}', ')')
     return parse_expr(s, local_dict=LOCAL, transformations=TR)
 
 
@@ -444,6 +460,178 @@ num(lv, 2, 4, est, var_min * sp.Rational(102, 100) ** 2, {'sigma-lambda': var_mi
                                                        'whole-lambda': var_min + sol[lam]}, printed=(0.0351, round(line_min, 4)), agree=1e-3)
 lv.claim(abs(line_min - float(var_min) * 1.0404) < 1e-9 and round(float(var_min) * 1.0404, 4) == 0.0351, 'L3 item 2 part 5: exact 0.03375 x 1.0404 = 0.035114, a line search agrees')
 say(lv, 2, 4, 'feedback.correct', 0.00135)
+
+lv.check_wrongs('problems')
+results.append(lv)
+
+# ====================================================================== level 4
+# Method 2 here is scipy quadrature (dblquad / quad), a fine midpoint sum, Monte Carlo or bisection.
+from scipy import integrate as si  # noqa: E402
+import numpy as np  # noqa: E402
+
+U, V, R, TH = sp.symbols('u v r th', real=True)
+lv = Level('multivar', 4)
+
+# ---- item 0 p-weighted-rectangle: f = c x y^2 on [0,1] x [0,2]
+slice_ = sp.integrate(x * y ** 2, (x, 0, 1))
+lv.claim(abs(si.quad(lambda q: q * 1.7 ** 2, 0, 1)[0] - float(slice_.subs(y, 1.7))) < 1e-12, 'L4 item 0 part 1: quad of x(1.7)^2 matches the slice')
+expr(lv, 0, 0, slice_, {'wrong-var': sp.integrate(x * y ** 2, y), 'no-half': y ** 2})
+tot = sp.integrate(slice_, (y, 0, 2))
+tot_num = si.dblquad(lambda yy, xx: xx * yy ** 2, 0, 1, 0, 2)[0]
+c4 = 1 / tot
+num(lv, 0, 1, c4, 1 / tot_num, {'not-inverted': tot, 'no-third': 1 / (sp.Rational(1, 2) * 2 ** 3),
+                                'carried': 1 / sp.integrate(y ** 2, (y, 0, 2))}, printed=(0.75,))
+lv.claim(sp.Rational(1, 2) * 8 == 4 and 1 / sp.Rational(4) == sp.Rational(1, 4), 'L4 item 0 part 2: no-third slip takes int_0^2 y^2 dy as 8, total 4, c = 1/4')
+inner = sp.integrate(c4 * x * y ** 2, (y, 0, 2 * x))
+expr(lv, 0, 2, inner, {'rect-limits': sp.integrate(c4 * x * y ** 2, (y, 0, 2)), 'cube-two': c4 * x * 2 * x ** 3 / 3,
+                       'carried': sp.integrate(tot * x * y ** 2, (y, 0, 2 * x))})
+pev = sp.integrate(inner, (x, 0, 1))
+rng = np.random.default_rng(4)
+# method 2: draw (X, Y) by inverse CDFs (X has density 2x, Y has density 3y^2/8, independent) and count Y <= 2X
+XS = np.sqrt(rng.random(2_000_000))
+YS = 2 * rng.random(2_000_000) ** (1 / 3)
+mc = float(np.mean(YS <= 2 * XS))
+num(lv, 0, 3, pev, mc, {'rect-limits': 1, 'cube-two': sp.integrate(c4 * x * 2 * x ** 3 / 3, (x, 0, 1)), 'complement': 1 - pev,
+                        'carried': sp.integrate(sp.integrate(tot * x * y ** 2, (y, 0, 2 * x)), (x, 0, 1))}, printed=(0.4,), agree=2e-3)
+lv.claim(abs(si.dblquad(lambda yy, xx: 0.75 * xx * yy ** 2, 0, 1, 0, lambda xx: 2 * xx)[0] - 0.4) < 1e-10, 'L4 item 0 part 4: dblquad over y <= 2x gives 0.4')
+say(lv, 0, 1, 'feedback.correct', 8 / 6)
+
+# ---- item 1 p-corner-sprinkler: d = 9 - (x^2 + y^2) on the quarter disc of radius 3
+expr(lv, 1, 0, sp.sqrt(9 - x ** 2), {'straight': 3 - x, 'no-root': 9 - x ** 2})
+lv.claim(sp.solve(sp.Eq(x ** 2 + y ** 2, 9), y) == [-sp.sqrt(9 - x ** 2), sp.sqrt(9 - x ** 2)], 'L4 item 1 part 1: the edge solved for y')
+integrand = sp.expand((9 - R ** 2) * R)
+expr(lv, 1, 1, integrand, {'no-r': 9 - R ** 2, 'r-not-squared': (9 - R) * R})
+inner_r = sp.integrate(integrand, (R, 0, 3))
+num(lv, 1, 2, inner_r, si.quad(lambda q: 9 * q - q ** 3, 0, 3)[0], {'no-r': sp.integrate(9 - R ** 2, (R, 0, 3)), 'r-not-squared': sp.integrate((9 - R) * R, (R, 0, 3))}, printed=(20.25,))
+for val in (40.5, 20.25):
+    say(lv, 1, 2, 'feedback.correct', val)
+water = inner_r * sp.pi / 2
+cart = si.dblquad(lambda yy, xx: 9 - xx ** 2 - yy ** 2, 0, 3, 0, lambda xx: math.sqrt(9 - xx ** 2))[0]
+num(lv, 1, 3, water, cart, {'full-turn': inner_r * 2 * sp.pi, 'no-theta': inner_r, 'carried': 18 * sp.pi / 2}, printed=(31.81,), agree=1e-8)
+lv.claim(water == sp.Rational(81, 8) * sp.pi, 'L4 item 1 part 4: water = 81 pi / 8')
+aa = sp.symbols('aa', positive=True)
+half = [s_ for s_ in sp.solve(sp.Eq(sp.integrate(integrand, (R, 0, aa)), inner_r / 2), aa) if s_ < 3][0]
+a_bis = bisect(lambda q: (81 - (9 - q * q) ** 2) / 4 - 10.125, 0, 3)
+num(lv, 1, 4, half, a_bis, {'half-radius': 1.5, 'no-root': half ** 2, 'half-area': 3 / sp.sqrt(2)}, printed=(1.62, round(a_bis, 4)))
+lv.claim(sp.simplify(sp.integrate(integrand, (R, 0, aa)) - (81 - (9 - aa ** 2) ** 2) / 4) == 0, 'L4 item 1 part 5: int_0^a (9r - r^3) dr = (81 - (9 - a^2)^2) / 4')
+lv.claim(sp.simplify(half ** 2 - (9 - 9 / sp.sqrt(2))) == 0 and round(float(half ** 2), 3) == 2.636, 'L4 item 1 part 5: a^2 = 9 - 9/sqrt2 = 2.636')
+lv.claim(abs(float(water / 2) - float(sp.Rational(81, 16) * sp.pi)) < 1e-12, 'L4 item 1 part 5: half the water is 81 pi / 16')
+
+# ---- item 2 p-drone-landing: f = c exp(-(x^2 + y^2)/8)
+one = sp.integrate(sp.exp(-x ** 2 / 8), (x, -sp.oo, sp.oo))
+num(lv, 2, 0, one, si.quad(lambda q: math.exp(-q * q / 8), -np.inf, np.inf)[0], {'no-scale': sp.sqrt(sp.pi), 'inverted': sp.sqrt(sp.pi) / (2 * sp.sqrt(2)),
+                                                                                 'sigma-root8': sp.sqrt(8) * sp.sqrt(2 * sp.pi)}, printed=(5.0133,))
+lv.claim(sp.simplify(one - sp.sqrt(8 * sp.pi)) == 0, 'L4 item 2 part 1: the integral is sqrt(8 pi)')
+plane = sp.integrate(sp.exp(-R ** 2 / 8) * R, (R, 0, sp.oo)) * 2 * sp.pi
+lv.claim(sp.simplify(plane - one ** 2) == 0, 'L4 item 2 part 2: polar 2 pi x 4 equals the square of part 1')
+expr(lv, 2, 1, one ** 2, {'not-squared': one, 'doubled': 2 * one, 'carried': sp.pi})
+c_d = 1 / plane
+lv.claim(abs(float(c_d) * si.dblquad(lambda yy, xx: math.exp(-(xx * xx + yy * yy) / 8), -40, 40, -40, 40)[0] - 1) < 1e-8, 'L4 item 2 part 3: c times a dblquad of the plane is 1')
+expr(lv, 2, 2, c_d, {'not-inverted': plane, 'from-root': 1 / one, 'carried': 1 / sp.pi})
+say(lv, 2, 2, 'explain.text', round(float(c_d), 4))
+p2 = c_d * 2 * sp.pi * sp.integrate(sp.exp(-R ** 2 / 8) * R, (R, 0, 2))
+pts = rng.normal(0, 2, size=(2_000_000, 2))
+mc2 = float(np.mean((pts ** 2).sum(axis=1) <= 4))
+num(lv, 2, 3, p2, mc2, {'r-not-squared': 1 - sp.exp(-sp.Rational(2, 8)), 'no-2pi': p2 / (2 * sp.pi), 'outside': 1 - p2}, printed=(0.3935,), agree=2e-3)
+lv.claim(sp.simplify(p2 - (1 - sp.exp(-sp.Rational(1, 2)))) == 0, 'L4 item 2 part 4: the chance is 1 - e^(-1/2)')
+a90 = sp.sqrt(8 * sp.log(10))
+num(lv, 2, 4, a90, bisect(lambda q: 1 - math.exp(-q * q / 8) - 0.9, 0, 10), {'no-root': 8 * sp.log(10), 'tail-swap': sp.sqrt(8 * sp.log(sp.Rational(10, 9))), 'log10': sp.sqrt(8)}, printed=(4.29,))
+lv.claim(round(float(8 * sp.log(10)), 2) == 18.42 and round(math.log(10), 4) == 2.3026, 'L4 item 2 part 5: 8 ln 10 = 18.42, ln 10 = 2.3026')
+lv.claim(round(float(p2) * 100) == 39, 'L4 item 2 part 5: the explanation says 39%')
+
+lv.check_wrongs('problems')
+results.append(lv)
+
+# ====================================================================== level 5
+lv = Level('multivar', 5)
+z, mu = sp.symbols('z mu', real=True)
+
+# ---- item 0 p-three-strategies: G = 3x + 2y + z - (x^2 + y^2 + z^2) on the simplex
+G = 3 * x + 2 * y + z - (x ** 2 + y ** 2 + z ** 2)
+Gn = sp.lambdify((x, y, z), G)
+sol = sp.solve([sp.diff(G, q) - lam for q in (x, y, z)] + [x + y + z - 1], [x, y, z, lam], dict=True)[0]
+Gs = 3 * x + 2 * y + z - (x ** 2 + y ** 2 + z ** 2) / 2      # the no-two slip: d/dx(x^2) taken as x
+sol_slip = sp.solve([sp.diff(Gs, q) - lam for q in (x, y, z)] + [x + y + z - 1], [x, y, z, lam], dict=True)[0]
+# method 2: the same point by a fine search over the plane (z = 1 - x - y), no sign limit
+grid = np.linspace(-0.5, 1.5, 2001)
+gx_, gy_ = np.meshgrid(grid, grid)
+gv = Gn(gx_, gy_, 1 - gx_ - gy_)
+k = np.unravel_index(np.argmax(gv), gv.shape)
+xs_, ys_ = gx_[k], gy_[k]
+lam2 = 3 - 2 * xs_
+num(lv, 0, 0, sol[lam], lam2, {'no-two': sol_slip[lam], 'no-budget': 2}, printed=(1.3333,), agree=2e-3)
+num(lv, 0, 1, sol[z], 1 - xs_ - ys_, {'sign': -sol[z], 'carried': sol_slip[z], 'carried-budget': (1 - sp.Integer(2)) / 2}, printed=(-0.1667,), agree=2e-3)
+lv.claim(sol[x] == sp.Rational(5, 6) and sol[y] == sp.Rational(1, 3), 'L5 item 0 part 2: x = 5/6, y = 1/3')
+lv.claim(sol_slip[z] == 1 - sol_slip[lam], 'L5 item 0 part 2: the carried slip is z = 1 - lambda')
+pick(lv, 0, 2, 'edges')
+edge = sp.solve([sp.diff(G, x) - lam, sp.diff(G, y) - lam, sp.diff(G, z) - lam - mu, x + y + z - 1, z], [x, y, z, lam, mu], dict=True)[0]
+tt = np.linspace(0, 1, 100001)
+x_edge = tt[np.argmax(Gn(tt, 1 - tt, 0))]
+num(lv, 0, 3, edge[x], x_edge, {'clipped': sol[x], 'rescaled': sol[x] / (sol[x] + sol[y]), 'equal': sp.Rational(1, 2)}, printed=(0.75,), agree=1e-4)
+lv.claim(edge[lam] == sp.Rational(3, 2), 'L5 item 0 part 4: lambda = 1.5 on the edge')
+best = G.subs({x: edge[x], y: edge[y], z: 0})
+# method 2: brute force over the whole allowed triangle
+sv = gv.copy()
+sv[(gx_ < 0) | (gy_ < 0) | (1 - gx_ - gy_ < -1e-12)] = -np.inf
+brute = float(sv.max())
+num(lv, 0, 4, best, brute, {'infeasible': G.subs(sol), 'clipped': G.subs({x: sol[x], y: sol[y], z: 0}), 'corner': Gn(1, 0, 0)}, printed=(2.125,), agree=1e-6)
+ex0 = sp.solve([sp.diff(G, y) - sp.diff(G, z), y + z - 1], [y, z], dict=True)[0]
+lv.claim(ex0 == {y: sp.Rational(3, 4), z: sp.Rational(1, 4)} and G.subs({x: 0, **ex0}) == sp.Rational(9, 8), 'L5 item 0 part 5: edge x = 0 is best at (0, 3/4, 1/4) with 1.125')
+ey0 = sp.solve([sp.diff(G, x) - sp.diff(G, z), x + z - 1], [x, z], dict=True)[0]
+lv.claim(ey0 == {x: 1, z: 0} and Gn(1, 0, 0) == 2, 'L5 item 0 part 5: edge y = 0 peaks at the corner (1, 0, 0) with 2')
+lv.claim([Gn(0, 1, 0), Gn(0, 0, 1)] == [1, 0], 'L5 item 0 part 5: the other corners give 1 and 0')
+lv.claim(round(float(G.subs(sol)), 4) == 2.1667, 'L5 item 0 part 5: the short point gives 2.1667')
+for val in (2.25, 0.5, 0.5625, 0.0625):
+    say(lv, 0, 4, 'feedback.correct', val)
+
+# ---- item 1 p-dome-tent: floor x^2 + 4y^2 <= 4, roof 2 - (x^2 + 4y^2)/2, map x = 2u, y = v
+J = sp.Matrix([2 * U, V]).jacobian([U, V]).det()
+num(lv, 1, 0, abs(J), fd(lambda p, q: 2 * p, (0.3, 0.4), 0) * fd(lambda p, q: q, (0.3, 0.4), 1), {'inverse': 1 / abs(J), 'sum': 3})
+roof = 2 - (x ** 2 + 4 * y ** 2) / 2
+roof_uv = sp.expand(roof.subs({x: 2 * U, y: V}))
+expr(lv, 1, 1, roof_uv, {'no-square': 2 - (2 * U ** 2 + 4 * V ** 2) / 2, 'inverse-map': sp.expand(roof.subs({x: U / 2, y: V}))})
+vol = sp.integrate(sp.integrate((2 - 2 * R ** 2) * abs(J) * R, (R, 0, 1)), (TH, 0, 2 * sp.pi))
+vol2 = si.dblquad(lambda yy, xx: max(0.0, 2 - (xx * xx + 4 * yy * yy) / 2), -2, 2, lambda xx: -math.sqrt(max(0.0, 1 - xx * xx / 4)), lambda xx: math.sqrt(max(0.0, 1 - xx * xx / 4)))[0]
+expr(lv, 1, 2, vol, {'no-jacobian': vol / 2, 'no-r': 2 * sp.pi * sp.integrate((2 - 2 * R ** 2) * 2, (R, 0, 1)), 'carried': vol / 4})
+lv.claim(abs(float(vol) - vol2) < 1e-6, f'L5 item 1 part 3: a Cartesian dblquad of the roof gives {vol2:.8f} = 2 pi')
+lv.claim(sp.integrate(4 * (1 - R ** 2) * R, (R, 0, 1)) == 1, 'L5 item 1 part 3: int_0^1 4(1 - r^2) r dr = 1')
+mom = sp.integrate(sp.integrate((2 - 2 * R ** 2) ** 2 / 2 * abs(J) * R, (R, 0, 1)), (TH, 0, 2 * sp.pi))
+mom2 = si.dblquad(lambda yy, xx: max(0.0, 2 - (xx * xx + 4 * yy * yy) / 2) ** 2 / 2, -2, 2, lambda xx: -math.sqrt(max(0.0, 1 - xx * xx / 4)), lambda xx: math.sqrt(max(0.0, 1 - xx * xx / 4)))[0]
+expr(lv, 1, 3, mom, {'no-half': 2 * mom, 'no-jacobian': mom / 2})
+lv.claim(abs(float(mom) - mom2) < 1e-6 and sp.integrate((1 - R ** 2) ** 2 * R, (R, 0, 1)) == sp.Rational(1, 6), 'L5 item 1 part 4: dblquad agrees, int (1 - r^2)^2 r dr = 1/6')
+# method 2 for the average: Monte Carlo points in the box [-2,2] x [-1,1] x [0,2] kept under the roof
+P3 = rng.random((3_000_000, 3)) * np.array([4, 2, 2]) - np.array([2, 1, 0])
+inside = P3[:, 2] <= 2 - (P3[:, 0] ** 2 + 4 * P3[:, 1] ** 2) / 2
+num(lv, 1, 4, mom / vol, float(P3[inside, 2].mean()), {'roof': vol / (sp.pi * 2 * 1), 'no-half': 2 * mom / vol, 'flipped': vol / mom}, printed=(0.6667,), agree=3e-3)
+lv.claim(sp.pi * 2 * 1 == 2 * sp.pi, 'L5 item 1 part 5: the floor ellipse has area pi x 2 x 1 = 2 pi')
+say(lv, 1, 2, 'explain.text', round(float(vol), 2))
+
+# ---- item 2 p-triangle-field: f = x y^2 on the triangle (0,0), (4,0), (0,2); map x = 4u, y = 2v
+J2 = sp.Matrix([4 * U, 2 * V]).jacobian([U, V]).det()
+num(lv, 2, 0, abs(J2), fd(lambda p, q: 4 * p, (0.3, 0.4), 0) * fd(lambda p, q: 2 * q, (0.3, 0.4), 1), {'inverse': 1 / abs(J2), 'sum': 6})
+lv.claim(sp.Rational(1, 2) * abs(J2) == 4, 'L5 item 2 part 1: 8 x 1/2 = 4, the field area')
+uv2 = sp.integrate(sp.integrate(U * V ** 2, (V, 0, 1 - U)), (U, 0, 1))
+total = 128 * uv2
+cart2 = si.dblquad(lambda yy, xx: xx * yy ** 2, 0, 4, 0, lambda xx: 2 - xx / 2)[0]
+num(lv, 2, 1, total, cart2, {'no-jacobian': total / 8, 'square-two': 64 * uv2, 'inverse': 16 * uv2 / 8}, printed=(2.1333,))
+lv.claim(uv2 == sp.Rational(1, 60) and sp.integrate(U * (1 - U) ** 3 / 3, (U, 0, 1)) == sp.Rational(1, 60), 'L5 item 2 part 2: int u(1-u)^3/3 du = 1/60')
+avg = total / 4
+num(lv, 2, 2, avg, cart2 / 4, {'uv-area': total / sp.Rational(1, 2), 'carried': total / 8 / 4}, printed=(0.5333,))
+fx = x * y ** 2
+lv.claim(sp.solve([sp.diff(fx, x), sp.diff(fx, y)], [x, y], dict=True) == [{y: 0}], 'L5 item 2 part 4: grad f = 0 only on y = 0')
+hedge = fx.subs(x, 4 - 2 * y)
+ystar = [s_ for s_ in sp.solve(sp.diff(hedge, y), y) if s_ > 0][0]
+fmax = hedge.subs(y, ystar)
+# method 2: brute force on a fine grid over the closed triangle
+g2 = np.linspace(0, 4, 4001)
+h2 = np.linspace(0, 2, 2001)
+GX, GY = np.meshgrid(g2, h2)
+FV = np.where(GX / 4 + GY / 2 <= 1 + 1e-12, GX * GY ** 2, -np.inf)
+num(lv, 2, 3, fmax, float(FV.max()), {'corner': 0, 'mid-edge': fx.subs({x: 2, y: 1})}, printed=(2.3704,), agree=1e-5)
+lv.claim(ystar == sp.Rational(4, 3) and 4 - 2 * ystar == sp.Rational(4, 3) and fmax == sp.Rational(64, 27), 'L5 item 2 part 4: peak at (4/3, 4/3) with 64/27')
+share = avg / fmax
+num(lv, 2, 4, share, (cart2 / 4) / float(FV.max()), {'mid-edge': avg / 2, 'inverted': fmax / avg, 'total': total / fmax}, printed=(0.225,), agree=1e-5)
+lv.claim(share == sp.Rational(9, 40), 'L5 item 2 part 5: share = 9/40')
 
 lv.check_wrongs('problems')
 results.append(lv)
