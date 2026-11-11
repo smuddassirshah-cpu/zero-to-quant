@@ -301,7 +301,7 @@
      },
      {
       "id": "half",
-      "value": "11, 29"
+      "value": "11, 29.8"
      }
     ]
    },
@@ -324,7 +324,7 @@
     "generic": "Assign each share to the nearer of 10 and 25.6, then average each group.",
     "byKey": {
      "stay": "You kept the old centres. Assign the shares again first: 12 and 14 change sides.",
-     "half": "You moved each centre halfway. k-means moves it all the way to its group's mean."
+     "half": "You moved each centre halfway, to 11 and 29.8. k-means moves it all the way to its group's mean."
     }
    },
    "explain": {
@@ -385,7 +385,7 @@
     "wrong": [
      {
       "id": "unsq",
-      "value": 12,
+      "value": 16,
       "tol": {
        "abs": 0
       }
@@ -646,9 +646,14 @@
       "call": "inertia(P, [0, 0, 1, 1], [[0, 0.5], [5.5, 5]])",
       "expect": "1.0",
       "compare": "isclose"
+     },
+     {
+      "call": "kmeans_step([[0, 0], [0, 6], [4, 3]], [[0, 5], [3, 3]])[0].tolist()",
+      "expect": "[1, 0, 1]",
+      "compare": "equal"
      }
     ],
-    "how": "Check runs 9 hidden tests: two rounds on the six shares, two inertias, a centre that wins nothing, a tie at 11 between centres 10 and 12, and a 2-D case of four points. Centres are rounded to 4 places."
+    "how": "Check runs 10 hidden tests: two rounds on the six shares, two inertias, a centre that wins nothing, a tie at 11 between centres 10 and 12, and a 2-D case of four points. The last has three 2-D points where squared distance and summed absolute gaps disagree. Centres are rounded to 4 places."
    },
    "hints": [
     {
@@ -1016,7 +1021,7 @@
      {
       "id": "c",
       "text": "Ten starts are too few; raise `n_init` until the groups appear",
-      "why": "You blamed the starts. Ten starts found the lowest raw inertia; the raw inertia itself rewards the wrong cut."
+      "why": "You blamed the starts. More starts lower the raw inertia only from 842.33 to 842.15, and purity then falls to 0.73. The raw inertia itself rewards the wrong cut."
      },
      {
       "id": "d",
@@ -1043,7 +1048,7 @@
     "correct": "After `StandardScaler` the same call puts every share with its planted group.",
     "generic": "Ask what a distance between two shares is made of, in these units.",
     "byKey": {
-     "c": "That is the trap: more starts minimise the same raw inertia, which is dominated by volatility. Scaling changes the objective; starts do not.",
+     "c": "That is the trap: more starts minimise the same raw inertia, which is dominated by volatility, and purity falls to 0.73. Scaling changes the objective; starts do not.",
      "b": "That is the trap of trusting $k$: the groups are wrong because the units are, not because of $k$."
     }
    },
@@ -1761,7 +1766,7 @@
     }
    },
    "explain": {
-    "text": "The cut at 0.70 crosses 3 branches under complete linkage and 2 under single linkage. The linkage is a choice that changes the answer. So is the height of the cut.",
+    "text": "The cut at 0.70 crosses 3 branches under complete linkage and 2 under single linkage. The linkage and the height of the cut are choices that change the answer. Only heights mean anything: leaves drawn side by side need not be close.",
     "canvas": {
      "highlight": [
       "s7",
@@ -2022,7 +2027,7 @@
     }
    },
    "explain": {
-    "text": "$3 \\times 190 = 570$ pairs instead of 1,770, a third of the work. The clusters only say where to look: a pair is worth trading after a cointegration test on data the clustering never saw. A cluster is a starting point for testing, not evidence that a pair will converge."
+    "text": "$3 \\times 190 = 570$ pairs instead of 1,770, a third of the work. The clusters only say where to look: a pair is worth trading only after its spread is tested, on data the clustering never saw, for pulling back to a steady level. A cluster is a starting point for testing, not evidence that a pair will converge."
    }
   }
  ],
@@ -2035,7 +2040,7 @@
   "formula": {
    "name": "Inertia",
    "tex": "W = \\sum_{j=1}^{k} \\sum_{i \\in C_j} \\lVert x_i - \\mu_j \\rVert^2",
-   "note": "It always falls as $k$ grows; look for an elbow, not a minimum."
+   "note": "The best inertia never rises as $k$ grows; look for an elbow, not a minimum."
   },
   "trap": "Clustering raw columns lets the largest unit decide the groups, and an elbow or a cut is a choice, not a fact about the market."
  },
@@ -2090,7 +2095,7 @@
      {
       "id": "c",
       "text": "At $k = 7$, where the inertia is lowest of all",
-      "why": "You chose the lowest inertia. It always falls with more groups, down to 0 at one row each."
+      "why": "You chose the lowest inertia. The best inertia always falls with more groups, down to 0 at one row each."
      },
      {
       "id": "d",
@@ -2104,7 +2109,7 @@
     "generic": "Compare each drop with the one before it."
    },
    "explain": {
-    "text": "The drops are 198, 125, 62, 37, 30 and 20: each a little smaller, with no sharp bend. Inertia falls for every extra $k$, even on noise. The stocks fell 120, 62.39, 14.16, then 11.24, a real elbow at 3."
+    "text": "The drops are 198, 125, 62, 37, 30 and 20: each a little smaller, with no sharp bend. The best inertia falls for every extra $k$, even on noise. The stocks fell 120, 62.39, 14.16, then 11.24, a real elbow at 3."
    }
   },
   {
