@@ -58,16 +58,16 @@ const gradeNumSet = (spec, text) => { const r = G.numSetGrade(spec, text); retur
 /* typed forms, keyed by the widget's answer (or its answers joined by " | ") */
 const T = {
   '\\frac{7}{10}': [['\\frac{7}{10}', 'ok'], ['7/10', 'ok'], ['0.7', 'form'], ['\\frac{42}{60}', 'form'], ['\\frac{84}{120}', 'form'], ['\\frac{7}{120}', 'top-only']],
-  'x-3': [['x-3', 'ok'], ['-3+x', 'ok'], ['x+3', 'wrong-bracket'], ['-3', 'cancel-xsq'], ['x^2-9', 'no'], ['\\frac{x-3}{x}', 'no']],
+  'x-3': [['x-3', 'ok'], ['-3+x', 'ok'], ['x+3', 'wrong-bracket'], ['-3', 'cancel-xsq'], ['x^2-9', 'no'], ['(x-3)', 'ok'], ['\\frac{x^2-9}{x+3}', 'form'], ['\\frac{(x-3)(x+3)}{x+3}', 'form'], ['\\frac{x-3}{x}', 'whole']],
   '2(x+2)': [['2(x+2)', 'ok'], ['2(2+x)', 'ok'], ['(x+2)\\cdot2', 'ok'], ['2x+4', 'form'], ['\\frac{(x^2-4)(2x+6)}{(x+3)(x-2)}', 'form'], ['\\frac{x^2-4}{x+3}\\times\\frac{2x+6}{x-2}', 'form'], ['x+2', 'lost-two'], ['2(x-2)', 'sign']],
   'x(x+2)': [['x(x+2)', 'ok'], ['(x+2)x', 'ok'], ['x^2+2x', 'form'], ['\\frac{1}{x(x+2)}', 'flip-first'], ['\\frac{x^2+x}{x-2}\\div\\frac{x+1}{x^2-4}', 'form']],
-  '2x+1': [['2x+1', 'ok'], ['1+2x', 'ok'], ['x+1+x', 'ok'], ['2', 'tops'], ['2x+2', 'one-twice'], ['x(x+1)', 'no']],
-  'x+8': [['x+8', 'ok'], ['8+x', 'ok'], ['3x+6-2x+2', 'ok'], ['3(x+2)-2(x-1)', 'form'], ['x+4', 'lost-minus'], ['5x+4', 'added']],
+  '2x+1': [['2x+1', 'ok'], ['1+2x', 'ok'], ['x+1+x', 'ok'], ['2', 'tops'], ['2x+2', 'one-twice'], ['x(x+1)', 'no'], ['\\frac{2x+1}{x(x+1)}', 'whole']],
+  'x+8': [['x+8', 'ok'], ['8+x', 'ok'], ['3x+6-2x+2', 'ok'], ['3(x+2)-2(x-1)', 'form'], ['x+4', 'lost-minus'], ['5x+4', 'added'], ['\\frac{x+8}{(x-1)(x+2)}', 'whole']],
   '(x-1)(x-2)(x+3)': [['(x-1)(x-2)(x+3)', 'ok'], ['(x+3)(x-1)(x-2)', 'ok'], ['(x-1)(x^2+x-6)', 'form'], ['x^3-7x+6', 'form'], ['(x+1)(x+2)(x-3)', 'signs']],
   '(x-1)^2(x+2)': [['(x-1)^2(x+2)', 'ok'], ['(x+2)(x-1)^2', 'ok'], ['(x-1)(x-1)(x+2)', 'ok'], ['(x-1)(x^2+x-2)', 'form'], ['x^3-3x+2', 'form'], ['(x+1)^2(x-2)', 'signs'], ['(x-1)(x+2)', 'lost-square']],
   '3x+4y=26': [['3x+4y=26', 'ok'], ['y=-\\frac{3}{4}x+\\frac{13}{2}', 'ok'], ['y=-0.75x+6.5', 'ok'], ['4y=26-3x', 'ok'], ['y-2=-\\frac{3}{4}(x-6)', 'ok'], ['26=3x+4y', 'ok'],
     ['4x-3y=18', 'radius-gradient'], ['3x+4y=1', 'through-centre'], ['-\\frac{3}{4}x+\\frac{13}{2}', 'no']],
-  '5x-2': [['5x-2', 'ok'], ['-2+5x', 'ok'], ['2x-2+3x', 'ok'], ['2(x-1)+3x', 'form'], ['5', 'tops'], ['5x-1', 'one-unmultiplied']],
+  '5x-2': [['5x-2', 'ok'], ['-2+5x', 'ok'], ['2x-2+3x', 'ok'], ['2(x-1)+3x', 'form'], ['5', 'tops'], ['5x-1', 'one-unmultiplied'], ['\\frac{5x-2}{x(x-1)}', 'whole']],
   '(x+1)(x-2)(x-3)': [['(x+1)(x-2)(x-3)', 'ok'], ['(x-3)(x-2)(x+1)', 'ok'], ['(x+1)(x^2-5x+6)', 'form'], ['x^3-4x^2+x+6', 'form'], ['(x-1)(x+2)(x+3)', 'signs']],
   '(x-2)(2x-1)(x+3)': [['(x-2)(2x-1)(x+3)', 'ok'], ['(2x-1)(x+3)(x-2)', 'ok'], ['(x-2)(2x^2+5x-3)', 'form'], ['2x^3+x^2-13x+6', 'form'], ['(x+2)(2x+1)(x-3)', 'signs'], ['(x-2)(x-1)(x+3)', 'lost-two']],
   /* numeric sets */
@@ -75,7 +75,7 @@ const T = {
   '3 | -4': [['3, -4', 'ok'], ['x = -4, x = 3', 'ok'], ['3', 'count'], ['-3, 4', 'signs']],
   '4 | -4': [['4, -4', 'ok'], ['\\pm 4', 'ok'], ['y = 4 or y = -4', 'ok'], ['16, -16', 'no-root'], ['4', 'count']],
   '10 | 30': [['10, 30', 'ok'], ['30, 10', 'ok'], ['p = 10 or p = 30', 'ok'], ['-10, -30', 'signs'], ['20', 'count']],
-  '1 | -3': [['1, -3', 'ok'], ['-3, 1', 'ok'], ['-1, 3', 'signs'], ['1', 'count']],
+  '-1 | -3': [['-1, -3', 'ok'], ['-3, -1', 'ok'], ['1, 3', 'signs'], ['-1', 'count']],
   '10 | -10': [['10, -10', 'ok'], ['\\pm 10', 'ok'], ['k = 10 or k = -10', 'ok'], ['4.47, -4.47', 'used-r-squared'], ['4.472, -4.472', 'used-r-squared'], ['10', 'count']],
 };
 
