@@ -45,8 +45,37 @@ Format: `N. file | JSON path | severity | problem | evidence and basis | exact f
 
 ## Overlap with the earlier reads
 
-To be filled after the blind commit.
+Read after the blind commit (e82844b2): `docs/reviews/review-1.5.md` (conditional section and its fix pass) and `docs/reviews/review-problems-1.5-a.md` to `-d.md` (only `-b` and the delta in `-c` cover conditional problems-4 and problems-5). Counted: findings about meaning in the files in scope. Sentence counts, answer-form sentences, notation, freshness and difficulty labels are left out.
+
+Earlier conceptual findings in scope (all fixed before this audit, and the fixed text read clean here):
+
+| Earlier read | Location | Finding | Also found here |
+|---|---|---|---|
+| review-1.5 | l20 quiz `q-coins-space` | A correct reading ("same, different" are equally likely) marked wrong | no, fixed text is sound |
+| review-1.5 | l23 screens[7] explain | "certain" for 0.99996 | no, fixed |
+| review-1.5 | l23 quiz `q-pool` `half` | Feedback names two slips, neither gives 0.5 | no, fixed |
+| review-1.5 | l25 screens[8] `all` | Slip value does not match its diagnosis | no, fixed |
+| review-1.5 | l25 screens[9] `sign` | Slip value does not match its diagnosis | no, fixed |
+| review-1.5 | l26 summary, screens[6], quiz[1] | "Hit rate" used for P(flash given up) | no, fixed |
+| review-1.5 | l26 screens[8] explain | Hit rate treated as the win chance | no, fixed |
+| review-1.5 | l26 screens[8] | Kelly given without its premise | no, fixed |
+| review-problems-1.5-b | problems-5 `p-doubling-desk` part 3 | Key −22.546 rejects the stated route | no, fixed |
+| review-problems-1.5-b | problems-4 `p-dated-coins` part 3, `p-two-flags` parts 1, 2 | Report with no stated procedure | no at these locations (fixed); same class as findings 3, 4, 5 here |
+
+| | Count |
+|---|---|
+| Found by this audit only | 11 (findings 1 to 11) |
+| Found by an earlier read only | 10 |
+| Found by both | 0 |
+
+Of the 11, one is `wrong` (finding 8, the roulette slip), and it is new: no earlier read found it. Two classes recur. The unstated-procedure class of review-problems-1.5-b finding 5 was fixed in problems-4 only, and is still present in the lessons, review-4 and homework-4 (findings 3, 4, 5). The slip-value class of review-1.5 (l25) recurs once in l22 (finding 8). Both are raised in `docs/BACKLOG-INBOX.md`.
 
 ## Checks
 
-To be filled after the blind commit.
+- Concepts script: `python3 docs/reports/conditional-L4-5-concepts.py` exits 1 with 79 checks, 12 failing. Every failing check is tagged with its finding (`[F1]` twice, `[F2]` to `[F11]` once each) and passes once the fix text above is in. The other 67 pass. Run time about 3 seconds.
+- Validator: `node tools/validate.mjs` from `app/`: 0 errors, 4666 warnings; `content/manifest.json` unchanged.
+- `docs/reports/problems-conditional-numbers.py`: exit 0 (1177 checks, 0 failures) with `sympy` on the path. In a fresh sandbox it exits 1 on `import sympy`; it was run with `pip install --target <scratch> sympy` and `PYTHONPATH`.
+- `docs/reports/conditional-4-perf-numbers.py`: exit 0 (FAILURES: 0).
+- No other number script covers these levels (`fluency-conditional-numbers.py` is l7 and `conditional-2-perf-numbers.py` is level 2).
+- Playthrough with `--local-cdn`, desktop and `--mobile`: l18 to l26 (`--lesson`), review-4, review-5, homework-4, homework-5 (`--set`), problems-4, problems-5 (`--problems`): all "ok", "All passed" in both modes. homework-4 reports its one performance starter failing, as it should.
+- Code widgets, run in CPython 3.13: l20 `screens[7]` solution 9 of 9 hidden tests, starter 0; seed 4 prints 0.32979 and 0.49198 (stated 0.330 and 0.492). homework-4 `h-host-rules-code` solution 11 of 11, starter 0. homework-5 `h-share-after-run` solution 5 of 5, starter 0; the seeded share is 0.5129133081098864 as stored.
