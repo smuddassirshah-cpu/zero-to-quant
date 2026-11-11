@@ -1,0 +1,138 @@
+{
+  "id": "ci-shift-picks",
+  "name": "Locum shifts with rest days",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-6",
+    "dp-1d",
+    "shift-picks"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 1020,
+  "fn": "best_shifts",
+  "returns": "a list `[total, days]`",
+  "brief": "A locum doctor is offered one shift on each of `n` days, and day `i` pays `pay[i]` pounds. After working a day the doctor must rest the next, so no two worked days are neighbours. Return `[total, days]`: the most pay possible, and the fewest days worked in a plan that earns it.\n\nWrite `best_shifts(pay)`.\n\nExample. For `[3, 1, 2, 0, 3]` working days 0, 2 and 4 earns £8, and no plan earns more. The answer is `[8, 3]`.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ days, each paying from £0 to £10,000.",
+    "$O(n)$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "pay",
+      "type": "list",
+      "len": [
+        1,
+        100000
+      ],
+      "of": "int",
+      "range": [
+        0,
+        10000
+      ]
+    }
+  ],
+  "hint": "Keep, for the days so far, the best pair (pay, minus the days worked). Compare pairs as tuples, so more pay wins and then fewer days.",
+  "starter": "def best_shifts(pay):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "best_shifts([3, 1, 2, 0, 3])",
+      "expect": "[8, 3]",
+      "compare": "equal",
+      "note": "Days 0, 2 and 4 pay £3, £2 and £3; working day 3 instead of day 2 or 4 adds nothing."
+    },
+    {
+      "call": "best_shifts([2, 5, 3, 0])",
+      "expect": "[5, 1]",
+      "compare": "equal",
+      "note": "Day 1 alone and days 0 and 2 both earn £5, so the fewest days is 1."
+    }
+  ],
+  "tests": [
+    {
+      "call": "best_shifts([0])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([7])",
+      "expect": "[7, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([0, 0, 0])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([4, 4])",
+      "expect": "[4, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([1, 2, 1])",
+      "expect": "[2, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([2, 1, 2])",
+      "expect": "[4, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([5, 0, 0, 5])",
+      "expect": "[10, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([3, 3, 3, 3])",
+      "expect": "[6, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([1, 9, 8, 1, 0, 6])",
+      "expect": "[16, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([0, 4, 0, 0, 4, 0, 3])",
+      "expect": "[11, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([6, 0, 0, 6, 6, 0])",
+      "expect": "[12, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "best_shifts([(i * 7 + i * i) % 23 for i in range(100000)])",
+      "expect": "[634780, 43478]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def best_shifts(pay):\n    before, last = (0, 0), (0, 0)\n    for x in pay:\n        before, last = last, max(last, (before[0] + x, before[1] - 1))\n    return [last[0], -last[1]]\n",
+  "notes": [
+    "The best plan for the first `i` days either rests on day `i` or works it after the best plan for the first `i - 1` days.",
+    "Comparing (pay, minus days) as one tuple settles the tie in the same step, so a £0 day is never counted.",
+    "One pass holding two tuples makes the work $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def best_shifts(pay):\n    before, last = [0, 0], [0, 0]\n    for x in pay:\n        take = [before[0] + x, before[1] + 1]\n        before, last = last, (take if take[0] >= last[0] else last)\n    return last\n",
+      "slip": "Taking the day whenever the pay ties counts extra days, such as days paying £0."
+    },
+    {
+      "code": "def best_shifts(pay):\n    even, odd = pay[0::2], pay[1::2]\n    if sum(odd) > sum(even):\n        return [sum(odd), sum(1 for x in odd if x)]\n    return [sum(even), sum(1 for x in even if x)]\n",
+      "slip": "Working every other day misses plans that rest two days in a row."
+    },
+    {
+      "code": "def best_shifts(pay):\n    n = len(pay)\n    total = [0] * n\n    days = [0] * n\n    total[0], days[0] = pay[0], 1 if pay[0] else 0\n    if n == 1:\n        return [total[0], days[0]]\n    total[1], days[1] = pay[1], 1 if pay[1] else 0\n    for i in range(2, n):\n        a, b = (total[i - 1], -days[i - 1]), (total[i - 2] + pay[i], -days[i - 2] - 1)\n        best = max(a, b)\n        total[i], days[i] = best[0], -best[1]\n    return [total[-1], days[-1]]\n",
+      "slip": "Setting day 1's best to its own pay forgets that working day 0 alone may pay more."
+    }
+  ]
+}

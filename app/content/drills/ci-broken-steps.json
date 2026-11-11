@@ -1,0 +1,147 @@
+{
+  "id": "ci-broken-steps",
+  "name": "A stairwell with broken steps",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-6",
+    "dp-1d",
+    "broken-steps"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 900,
+  "fn": "ways_up",
+  "returns": "a whole number",
+  "brief": "A fire stair has steps numbered 1 to `n` above the landing, which counts as step 0. Each stride climbs 1, 2 or 3 steps. The steps listed in `broken` are cracked, and no stride may end on one. Return the number of different stride sequences from the landing to step `n`, modulo `1_000_000_007`.\n\nWrite `ways_up(n, broken)`.\n\nExample. For `n = 5` and `broken = [2]`, steps 1 to 5 can be reached in 1, 0, 2, 3 and 5 ways, each the sum of the three counts below it with step 2 set to 0. The answer is 5.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$. The entries of `broken` are different whole numbers from 1 to `n`, in any order.",
+    "$O(n)$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "n",
+      "type": "int",
+      "range": [
+        1,
+        100000
+      ]
+    },
+    {
+      "arg": "broken",
+      "type": "list",
+      "len": [
+        0,
+        100000
+      ],
+      "of": "int",
+      "range": [
+        1,
+        100000
+      ],
+      "distinct": true
+    }
+  ],
+  "hint": "Let `ways[i]` count the sequences that end on step `i`. A broken step gets 0; any other step adds the counts of the three steps below it that exist.",
+  "starter": "def ways_up(n, broken):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "ways_up(5, [2])",
+      "expect": "5",
+      "compare": "equal",
+      "note": "Step 2 holds 0, so step 3 has 2, step 4 has 3 and step 5 has 5."
+    },
+    {
+      "call": "ways_up(4, [2, 3])",
+      "expect": "1",
+      "compare": "equal",
+      "note": "Only a stride of 1 and then a stride of 3 avoids both cracked steps."
+    }
+  ],
+  "tests": [
+    {
+      "call": "ways_up(1, [])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(1, [1])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(2, [])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(3, [])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(2, [1])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(6, [3, 4, 5])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(9, [9])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(8, [6, 2])",
+      "expect": "13",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(5, [1, 2])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(40, [13, 26, 39])",
+      "expect": "583750441",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(100000, [])",
+      "expect": "111787461",
+      "compare": "equal"
+    },
+    {
+      "call": "ways_up(100000, list(range(7, 100000, 7)))",
+      "expect": "459394928",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "solution": "def ways_up(n, broken):\n    mod = 1_000_000_007\n    bad = set(broken)\n    ways = [0] * (n + 1)\n    ways[0] = 1\n    for i in range(1, n + 1):\n        if i in bad:\n            continue\n        total = ways[i - 1]\n        if i >= 2:\n            total += ways[i - 2]\n        if i >= 3:\n            total += ways[i - 3]\n        ways[i] = total % mod\n    return ways[n]\n",
+  "notes": [
+    "A sequence ending on step `i` has a last stride of 1, 2 or 3, so its count is the sum of the three counts below.",
+    "A cracked step holds 0, which blocks every sequence through it without any special case.",
+    "One pass over the steps with a set of cracked steps makes the work $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def ways_up(n, broken):\n    mod = 1_000_000_007\n    bad = set(broken)\n    ways = [0] * (n + 1)\n    ways[0] = 1\n    for i in range(1, n + 1):\n        if i not in bad:\n            ways[i] = (ways[i - 1] + ways[i - 2] + ways[i - 3]) % mod\n    return ways[n]\n",
+      "slip": "Reading `ways[i - 2]` and `ways[i - 3]` without a bound check wraps round to the top of the list on the lowest steps."
+    },
+    {
+      "code": "def ways_up(n, broken):\n    mod = 1_000_000_007\n    bad = set(broken)\n    ways = [0] * (n + 1)\n    ways[0] = 1\n    for i in range(1, n + 1):\n        if i in bad:\n            continue\n        ways[i] = (ways[i - 1] + (ways[i - 2] if i >= 2 else 0)) % mod\n    return ways[n]\n",
+      "slip": "Allowing only strides of 1 and 2 forgets the stride of 3."
+    },
+    {
+      "code": "def ways_up(n, broken):\n    mod = 1_000_000_007\n    bad = set(broken)\n    ways = [1, 1, 2] + [0] * max(0, n - 2)\n    for i in range(3, n + 1):\n        if i not in bad:\n            ways[i] = (ways[i - 1] + ways[i - 2] + ways[i - 3]) % mod\n    return 0 if n in bad else ways[n]\n",
+      "slip": "Seeding steps 1 and 2 by hand ignores a cracked step among them."
+    }
+  ]
+}
