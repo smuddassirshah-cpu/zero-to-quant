@@ -234,3 +234,199 @@ WRONG["ci-switch-panel"] = [
     return None
 """, "the first working mask, whatever its size"),
 ]
+
+# ======================= drills six to ten =======================
+
+RINGS = """def turn_rings(grid, k):
+    rows, cols = len(grid), len(grid[0])
+    out = [row[:] for row in grid]
+    t = 0
+    while rows - 2 * t >= 2 and cols - 2 * t >= 2:
+        top, left, bottom, right = t, t, rows - 1 - t, cols - 1 - t
+        cells = [(top, j) for j in range(left, right)]
+        cells += [(i, right) for i in range(top, bottom)]
+        cells += [(bottom, j) for j in range(right, left, -1)]
+        cells += [(i, left) for i in range(bottom, top, -1)]
+        n = len(cells)
+        shift = k % n if t % 2 == 0 else -k % n
+        for idx, (i, j) in enumerate(cells):
+            a, b = cells[(idx + shift) % n]
+            out[a][b] = grid[i][j]
+        t += 1
+    return out
+"""
+WRONG["ci-ring-turns"] = [
+    (_sub(RINGS, ("shift = k % n if t % 2 == 0 else -k % n", "shift = k % (2 * (bottom - top + right - left)) if t % 2 == 0 else -k % (2 * (bottom - top + right - left) + 4)")), "the ring length miscounted at the corners"),
+    (_sub(RINGS, ("shift = k % n if t % 2 == 0 else -k % n", "shift = -k % n if t % 2 == 0 else k % n")), "the border turned anticlockwise"),
+    (_sub(RINGS, ("t % 2 == 0", "(min(rows, cols) // 2 - 1 - t) % 2 == 0")), "directions counted from the innermost ring"),
+    (_sub(RINGS, ("        n = len(cells)\n", "        n = 2 * (rows + cols) - 4\n")), "every ring reduced by the border's length"),
+    (_sub(RINGS, ("    out = [row[:] for row in grid]\n", "    out = grid\n    grid = [row[:] for row in grid]\n"), ("    return out\n", "    return out\n")), "grid changed in place (the caller's list is overwritten)"),
+    (_sub(RINGS, ("cells += [(i, left) for i in range(bottom, top, -1)]", "cells += [(i, left) for i in range(bottom, top - 1, -1)]")), "the top-left corner listed twice"),
+]
+
+CHECKS = """import bisect
+
+def fewest_checks(jobs):
+    marks = []
+    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):
+        have = bisect.bisect_right(marks, end) - bisect.bisect_left(marks, start)
+        minute = end
+        while have < need:
+            i = bisect.bisect_left(marks, minute)
+            if i == len(marks) or marks[i] != minute:
+                marks.insert(i, minute)
+                have += 1
+            minute -= 1
+    return len(marks)
+"""
+WRONG["ci-double-checks"] = [
+    (_sub(CHECKS, ("key=lambda job: (job[1], -job[0])", "key=lambda job: (job[0], job[1])")), "jobs taken by start"),
+    (_sub(CHECKS, ("bisect.bisect_right(marks, end) - bisect.bisect_left(marks, start)", "bisect.bisect_left(marks, end) - bisect.bisect_right(marks, start)")), "visits at the end minutes not counted"),
+    (_sub(CHECKS, ("        minute = end\n", "        minute = end\n        have = 0\n")), "visits already inside ignored, new ones still skip used minutes"),
+    (_sub(CHECKS, ("key=lambda job: (job[1], -job[0])", "key=lambda job: (job[1] - job[0], job[1])")), "shortest jobs first"),
+    ("""def fewest_checks(jobs):
+    marks = set()
+    for start, end, need in sorted(jobs, key=lambda job: job[1]):
+        have = sum(start <= m <= end for m in marks)
+        for minute in range(end - (need - have) + 1, end + 1):
+            marks.add(minute)
+    return len(marks)
+""", "missing visits added at the last minutes even when some are used"),
+    ("""def fewest_checks(jobs):
+    marks = []
+    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):
+        have = sum(start <= m <= end for m in marks)
+        minute = end
+        while have < need:
+            if minute not in marks[-need:]:
+                marks.append(minute)
+                have += 1
+            minute -= 1
+    return len(marks)
+""", "only the last few visits checked for a clash"),
+]
+
+FIT = """def first_fit(bookings, start, length):
+    slot = start
+    for s, e in bookings:
+        if e <= slot:
+            continue
+        if s >= slot + length:
+            break
+        slot = e
+    merged = []
+    for s, e in sorted(bookings + [[slot, slot + length]]):
+        if merged and s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+        else:
+            merged.append([s, e])
+    return [slot, merged]
+"""
+WRONG["ci-first-fit-slot"] = [
+    (_sub(FIT, ("        if s >= slot + length:\n", "        if s > slot:\n")), "the first gap after the slot taken, however short"),
+    (_sub(FIT, ("        if s >= slot + length:\n", "        if s > slot + length:\n")), "a booking starting at the job's end taken as a clash"),
+    (_sub(FIT, ("if merged and s <= merged[-1][1]:", "if merged and s <= merged[-1][1] + 1:")), "bookings one minute apart joined"),
+    (_sub(FIT, ("    slot = start\n", "    slot = 0\n"), ("    return [slot, merged]", "    return [max(slot, start), merged]")), "the search starts at minute 0"),
+    (_sub(FIT, ("        slot = e\n", "        slot = e\n        break\n")), "the slot moved past one booking only"),
+    ("""def first_fit(bookings, start, length):
+    slot = start
+    for s, e in bookings:
+        if e <= slot:
+            continue
+        if s >= slot + length:
+            break
+        slot = e
+    new = [slot, slot + length]
+    merged = []
+    for s, e in bookings:
+        if e == new[0]:
+            new[0] = s
+        elif s == new[1]:
+            new[1] = e
+        else:
+            merged.append([s, e])
+    merged.append(new)
+    return [slot, sorted(merged)]
+""", "only bookings that touch the new one joined"),
+]
+
+ROOMS = """import heapq
+
+def room_numbers(meetings, clean):
+    order = sorted(range(len(meetings)), key=lambda i: (meetings[i][0], i))
+    free = []
+    busy = []
+    opened = 0
+    rooms = [0] * len(meetings)
+    for i in order:
+        start, end = meetings[i]
+        while busy and busy[0][0] <= start:
+            heapq.heappush(free, heapq.heappop(busy)[1])
+        if free:
+            room = heapq.heappop(free)
+        else:
+            room = opened
+            opened += 1
+        rooms[i] = room
+        heapq.heappush(busy, (end + clean, room))
+    return rooms
+"""
+WRONG["ci-room-numbers"] = [
+    (_sub(ROOMS, ("(end + clean, room)", "(end, room)")), "cleaning time ignored"),
+    (_sub(ROOMS, ("key=lambda i: (meetings[i][0], i)", "key=lambda i: i")), "meetings placed in list order"),
+    (_sub(ROOMS, ("heapq.heappush(free, heapq.heappop(busy)[1])", "free.append(heapq.heappop(busy)[1])"), ("room = heapq.heappop(free)", "room = free.pop()")), "the room freed last reused first"),
+    (_sub(ROOMS, ("        while busy and busy[0][0] <= start:\n", "        if busy and busy[0][0] <= start:\n")), "one room released per meeting"),
+    (_sub(ROOMS, ("key=lambda i: (meetings[i][0], i)", "key=lambda i: (meetings[i][0], -i)")), "ties in start taken last in the list first"),
+    (_sub(ROOMS, ("heapq.heappush(free, heapq.heappop(busy)[1])", "free.append(heapq.heappop(busy)[1])"), ("room = heapq.heappop(free)", "room = free.pop(0)")), "free rooms handed out in the order they were freed"),
+]
+
+LOOP = """def loop_starts(fuel, burn):
+    n = len(fuel)
+    pre = [0] * (n + 1)
+    for i in range(n):
+        pre[i + 1] = pre[i] + fuel[i] - burn[i]
+    total = pre[n]
+    later = [0] * (n + 1)
+    later[n] = pre[n]
+    for i in range(n - 1, -1, -1):
+        later[i] = min(pre[i], later[i + 1])
+    starts = []
+    earlier = float('inf')
+    for s in range(n):
+        if s:
+            earlier = min(earlier, pre[s])
+        if later[s + 1] >= pre[s] and earlier + total >= pre[s]:
+            starts.append(s)
+    return starts
+"""
+WRONG["ci-loop-starts"] = [
+    (_sub(LOOP, ("if later[s + 1] >= pre[s] and earlier + total >= pre[s]:", "if later[s + 1] >= pre[s]:")), "the stretch after passing depot 0 not checked"),
+    (_sub(LOOP, ("if later[s + 1] >= pre[s] and earlier + total >= pre[s]:", "if total >= 0 and earlier + total >= pre[s]:")), "the stretch before depot 0 not checked"),
+    (_sub(LOOP, ("        if s:\n            earlier = min(earlier, pre[s])\n", "        if s > 1:\n            earlier = min(earlier, pre[s - 1])\n")), "the earlier minimum stops one depot short"),
+    ("""def loop_starts(fuel, burn):
+    pre, run = [], 0
+    for f, b in zip(fuel, burn):
+        pre.append(run)
+        run += f - b
+    if run < 0:
+        return []
+    low = min(pre)
+    return [s for s, p in enumerate(pre) if p == low]
+""", "the depots at the lowest prefix, right only when the loop nets to zero"),
+    ("""def loop_starts(fuel, burn):
+    n = len(fuel)
+    if sum(fuel) < sum(burn):
+        return []
+    starts, tank, start = [], 0, 0
+    for k in range(2 * n):
+        i = k % n
+        tank += fuel[i] - burn[i]
+        if tank < 0:
+            tank, start = 0, k + 1
+        elif k - start + 1 >= n and start < n and start not in starts:
+            starts.append(start)
+            start += 1
+            tank -= fuel[start - 1] - burn[start - 1]
+    return sorted(starts)
+""", "a sliding start that drops the first depot's gain without re-checking"),
+]

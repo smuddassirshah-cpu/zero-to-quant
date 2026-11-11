@@ -152,3 +152,208 @@ STATED = {
                         (lambda: [s for s in ["1000", "1100", "0011", "0111"] if int(s, 2) == 15], []),
                         (lambda: 0b0110 < 0b1001, True)],
 }
+
+# ======================= drills six to ten =======================
+
+def v_rings(a):
+    g, k = a["grid"], a["k"]
+    assert 1 <= len(g) <= 100 and all(len(r) == len(g[0]) for r in g) and 1 <= len(g[0]) <= 100, "rectangular"
+    assert 0 <= k <= 10**9
+
+def v_checks(a):
+    for s, e, need in a["jobs"]:
+        assert 0 <= s <= e <= 10**9 and 1 <= need <= 5 and need <= e - s + 1, "job shape"
+    assert len(a["jobs"]) <= 10000
+
+def v_fit(a):
+    b = a["bookings"]
+    assert all(0 <= s < e <= 10**9 for s, e in b), "0 <= s < e"
+    assert all(b[i][1] <= b[i + 1][0] for i in range(len(b) - 1)), "sorted, no overlap"
+    assert 0 <= a["start"] <= 10**9 and 1 <= a["length"] <= 10**9
+
+def v_rooms(a):
+    assert all(0 <= s < e <= 10**9 for s, e in a["meetings"]), "start < end"
+    assert 0 <= a["clean"] <= 10**6
+
+def v_loop(a):
+    f, b = a["fuel"], a["burn"]
+    assert len(f) == len(b) and 1 <= len(f) <= 100000, "same length"
+
+VALID.update({"ci-ring-turns": v_rings, "ci-double-checks": v_checks, "ci-first-fit-slot": v_fit,
+              "ci-room-numbers": v_rooms, "ci-loop-starts": v_loop})
+
+def turn_rings(grid, k):
+    R, C = len(grid), len(grid[0])
+    if k <= 30:
+        # brute force: k single steps, each ring moved by one cell along its border
+        g = [r[:] for r in grid]
+        for _ in range(k):
+            h = [r[:] for r in g]
+            t = 0
+            while R - 2 * t >= 2 and C - 2 * t >= 2:
+                a, b, c, d = t, t, R - 1 - t, C - 1 - t
+                path = [(a, j) for j in range(b, d + 1)] + [(i, d) for i in range(a + 1, c + 1)] + \
+                       [(c, j) for j in range(d - 1, b - 1, -1)] + [(i, b) for i in range(c - 1, a, -1)]
+                n = len(path)
+                for x in range(n):
+                    src, dst = (path[x], path[(x + 1) % n]) if t % 2 == 0 else (path[(x + 1) % n], path[x])
+                    h[dst[0]][dst[1]] = g[src[0]][src[1]]
+                t += 1
+            g = h
+        return g
+    # by formula: each cell's ring and place along it, moved and mapped back
+    def place(i, j, t):
+        h, w = R - 2 * t, C - 2 * t
+        i, j = i - t, j - t
+        if i == 0: return j
+        if j == w - 1: return w - 1 + i
+        if i == h - 1: return w - 1 + h - 1 + (w - 1 - j)
+        return 2 * (w - 1) + (h - 1) + (h - 1 - i)
+    def cell(p, t):
+        h, w = R - 2 * t, C - 2 * t
+        if p < w - 1: return (t, t + p)
+        p -= w - 1
+        if p < h - 1: return (t + p, t + w - 1)
+        p -= h - 1
+        if p < w - 1: return (t + h - 1, t + w - 1 - p)
+        p -= w - 1
+        return (t + h - 1 - p, t)
+    out = [r[:] for r in grid]
+    for i in range(R):
+        for j in range(C):
+            t = min(i, j, R - 1 - i, C - 1 - j)
+            if R - 2 * t < 2 or C - 2 * t < 2:
+                continue
+            n = 2 * (R - 2 * t) + 2 * (C - 2 * t) - 4
+            q = (place(i, j, t) + (k if t % 2 == 0 else -k)) % n
+            a, b = cell(q, t)
+            out[a][b] = grid[i][j]
+    return out
+
+def fewest_checks(jobs):
+    if not jobs:
+        return 0
+    lo, hi = min(s for s, _, _ in jobs), max(e for _, e, _ in jobs)
+    if hi - lo <= 15:
+        # brute force: the smallest set of minutes in the span that serves every job
+        span = range(lo, hi + 1)
+        for size in range(len(span) + 1):
+            for pick in combinations(span, size):
+                if all(sum(s <= m <= e for m in pick) >= need for s, e, need in jobs):
+                    return size
+    # the latest-free-minutes greedy with a set of used minutes (a scan for short jobs, a sorted list for long ones)
+    used, order = set(), []
+    for s, e, need in sorted(jobs, key=lambda j: (j[1], -j[0])):
+        if e - s <= 1000:
+            have = sum(m in used for m in range(s, e + 1))
+        else:
+            have = bisect.bisect_right(order, e) - bisect.bisect_left(order, s)
+        m = e
+        while have < need:
+            if m not in used:
+                used.add(m)
+                bisect.insort(order, m)
+                have += 1
+            m -= 1
+    return len(used)
+
+def first_fit(bookings, start, length):
+    # brute force: try `start` and every booking end after it, in order, against every booking
+    cands = sorted({start} | {e for _, e in bookings if e >= start})
+    slot = next(c for c in cands if all(e <= c or s >= c + length for s, e in bookings))
+    # join by a sweep over start (+1) and end (-1) events: a block ends where the count falls to 0
+    ev = sorted([(s, 1) for s, _ in bookings + [[slot, slot + length]]] + [(e, -1) for _, e in bookings + [[slot, slot + length]]],
+                key=lambda x: (x[0], -x[1]))
+    out, depth = [], 0
+    for x, dlt in ev:
+        if depth == 0 and dlt == 1:
+            begin = x
+        depth += dlt
+        if depth == 0:
+            out.append([begin, x])
+    return [slot, out]
+
+def room_numbers(meetings, clean):
+    n = len(meetings)
+    order = sorted(range(n), key=lambda i: (meetings[i][0], i))
+    if n <= 2000:
+        # brute force: scan the rooms from 0
+        ready, out = [], [0] * n
+        for i in order:
+            s, e = meetings[i]
+            r = next((r for r, t in enumerate(ready) if t <= s), len(ready))
+            if r == len(ready):
+                ready.append(0)
+            ready[r] = e + clean
+            out[i] = r
+        return out
+    # segment tree over room numbers holding each room's free minute; leftmost room free by `start`
+    size = 1
+    while size < n: size *= 2
+    INF = float("inf")
+    tree = [INF] * (2 * size)       # unopened rooms read as free from minus infinity, set below
+    for r in range(n):
+        tree[size + r] = -1
+    for p in range(size - 1, 0, -1):
+        tree[p] = min(tree[2 * p], tree[2 * p + 1])
+    out = [0] * n
+    for i in order:
+        s, e = meetings[i]
+        p = 1
+        while p < size:
+            p = 2 * p if tree[2 * p] <= s else 2 * p + 1
+        r = p - size
+        out[i] = r
+        tree[p] = e + clean
+        p //= 2
+        while p:
+            tree[p] = min(tree[2 * p], tree[2 * p + 1])
+            p //= 2
+    return out
+
+def loop_starts(fuel, burn):
+    n = len(fuel)
+    gain = [f - b for f, b in zip(fuel, burn)]
+    if n <= 2000:
+        # brute force: drive from every depot
+        out = []
+        for s in range(n):
+            tank, ok = 0, True
+            for k in range(n):
+                tank += gain[(s + k) % n]
+                if tank < 0:
+                    ok = False
+                    break
+            if ok:
+                out.append(s)
+        return out
+    # doubled prefix sums with a sliding-window minimum over the next n prefixes
+    P = [0]
+    for k in range(2 * n):
+        P.append(P[-1] + gain[k % n])
+    out, dq = [], deque()
+    for j in range(2 * n, 0, -1):          # window P[s+1 .. s+n], built from the right
+        while dq and P[dq[-1]] >= P[j]:
+            dq.pop()
+        dq.append(j)
+        s = j - 1
+        if s < n:
+            while dq[0] > s + n:
+                dq.popleft()
+            if P[dq[0]] - P[s] >= 0:
+                out.append(s)
+    return sorted(out)
+
+INDEP.update({"ci-ring-turns": turn_rings, "ci-double-checks": fewest_checks, "ci-first-fit-slot": first_fit,
+              "ci-room-numbers": room_numbers, "ci-loop-starts": loop_starts})
+SLOW_IDX.update({"ci-ring-turns": [2], "ci-room-numbers": [3, 4, 5], "ci-loop-starts": [3, 4, 5]})
+STATED.update({
+    "ci-ring-turns": [(lambda: turn_rings([[4, 7, 1], [9, 5, 2], [8, 3, 6]], 1), [[9, 4, 7], [8, 5, 1], [3, 6, 2]])],
+    "ci-double-checks": [(lambda: fewest_checks([[1, 4, 2], [3, 6, 2], [6, 8, 1]]), 3),
+                         (lambda: all(sum(s <= m <= e for m in (3, 4, 6)) >= need for s, e, need in [[1, 4, 2], [3, 6, 2], [6, 8, 1]]), True)],
+    "ci-first-fit-slot": [(lambda: first_fit([[2, 5], [5, 9], [12, 14], [16, 20]], 6, 3), [9, [[2, 14], [16, 20]]])],
+    "ci-room-numbers": [(lambda: room_numbers([[0, 30], [5, 10], [12, 40], [35, 50]], 2), [0, 1, 1, 0]), (lambda: (10 + 2, 30 + 2), (12, 32))],
+    "ci-loop-starts": [(lambda: loop_starts([3, 1, 4, 0], [1, 2, 2, 3]), [0]),
+                       (lambda: [f - b for f, b in zip([3, 1, 4, 0], [1, 2, 2, 3])], [2, -1, 2, -3]),
+                       (lambda: list(accumulate([2, -1, 2, -3])), [2, 1, 3, 0]), (lambda: list(accumulate([2, -3])), [2, -1])],
+})

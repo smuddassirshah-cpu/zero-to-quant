@@ -1,0 +1,159 @@
+{
+  "id": "ci-double-checks",
+  "name": "Inspection minutes that cover every job",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "intervals",
+  "tags": [
+    "pack-8",
+    "double-checks"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1620,
+  "fn": "fewest_checks",
+  "returns": "an integer",
+  "brief": "A safety inspector walks a factory at whole minutes she chooses, at most once in each minute. Each job `[start, end, need]` runs from minute `start` to minute `end`, both included, and must be seen at `need` different minutes while it runs. One visit counts for every job running at that minute.\n\nWrite `fewest_checks(jobs)`, which returns the fewest visits that give every job its `need`.\n\nExample. For `jobs = [[1, 4, 2], [3, 6, 2], [6, 8, 1]]`, visits at minutes 3, 4 and 6 work: the first job sees 3 and 4, the second sees 3, 4 and 6, and the third sees 6. Two visits cannot serve all three jobs, so the answer is 3.",
+  "constraints": [
+    "At most $10{,}000$ jobs, with $0 \\le$ `start` $\\le$ `end` $\\le 10^9$ and $1 \\le$ `need` $\\le 5$; a job is never asked for more minutes than it runs.",
+    "Sorting the jobs and placing each visit with a binary search is the target; trying sets of minutes is far too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "jobs",
+      "type": "list",
+      "len": [
+        0,
+        10000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          3,
+          3
+        ],
+        "of": "int",
+        "range": [
+          0,
+          1000000000
+        ]
+      }
+    }
+  ],
+  "hint": "Take the jobs by end time. Count the visits already inside the current job, and place any that are missing as late as possible: at `end`, then `end - 1`, skipping minutes already used. A late visit serves the most jobs still to come.",
+  "starter": "def fewest_checks(jobs):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "fewest_checks([[1, 4, 2], [3, 6, 2], [6, 8, 1]])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Minutes 3 and 4 serve the first two jobs, and minute 6 serves the last two."
+    },
+    {
+      "call": "fewest_checks([[0, 2, 3], [1, 1, 1]])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "The first job needs all three of its minutes, and minute 1 serves the second as well."
+    }
+  ],
+  "tests": [
+    {
+      "call": "fewest_checks([])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[5, 5, 1]])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[0, 4, 1], [5, 9, 1]])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[0, 10, 3], [8, 10, 3]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[0, 10, 3], [7, 9, 2], [2, 3, 1]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[1, 3, 2], [3, 5, 2], [5, 7, 2]])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[0, 5, 2], [4, 5, 2], [0, 1, 2]])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[10, 20, 1], [12, 14, 2], [14, 30, 3], [25, 26, 2], [0, 11, 1]])",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[0, 1000000000, 5], [999999998, 1000000000, 3], [0, 4, 5]])",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[2, 6, 4], [4, 8, 4], [0, 3, 1], [7, 9, 2]])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[3, 7, 2], [5, 6, 2], [1, 4, 2], [0, 8, 5]])",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[5, 7, 2], [1, 3, 1], [7, 8, 1]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[4, 5, 1], [0, 5, 3], [5, 8, 2]])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[(i * 7919) % 99991 * 10, (i * 7919) % 99991 * 10 + 4 + i % 17, 1 + i % 5] for i in range(10000)])",
+      "expect": "30000",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_checks([[i, i + 9, 5] for i in range(0, 100000, 10)])",
+      "expect": "50000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The change from covering each job once is the count `need`, so each job is checked for how many visits it already holds, and new visits must skip minutes already used.",
+  "solution": "import bisect\n\ndef fewest_checks(jobs):\n    marks = []\n    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):\n        have = bisect.bisect_right(marks, end) - bisect.bisect_left(marks, start)\n        minute = end\n        while have < need:\n            i = bisect.bisect_left(marks, minute)\n            if i == len(marks) or marks[i] != minute:\n                marks.insert(i, minute)\n                have += 1\n            minute -= 1\n    return len(marks)\n",
+  "notes": [
+    "Taken by end, the latest free minutes of a job serve every later job at least as well as any other minutes inside it.",
+    "Visits already inside a job count towards its need, and a new visit can never reuse a minute.",
+    "The sort costs $O(n \\log n)$, and each visit costs a binary search and an insert near the end of the sorted list."
+  ],
+  "planted": [
+    {
+      "code": "import bisect\n\ndef fewest_checks(jobs):\n    marks = []\n    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):\n        have = bisect.bisect_right(marks, end) - bisect.bisect_left(marks, start)\n        minute = start\n        while have < need:\n            i = bisect.bisect_left(marks, minute)\n            if i == len(marks) or marks[i] != minute:\n                marks.insert(i, minute)\n                have += 1\n            minute += 1\n    return len(marks)\n",
+      "slip": "Placing new visits from the start of a job wastes them on minutes later jobs cannot use."
+    },
+    {
+      "code": "import bisect\n\ndef fewest_checks(jobs):\n    marks = []\n    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):\n        have = bisect.bisect_right(marks, end) - bisect.bisect_left(marks, start)\n        for minute in range(end, end - (need - have), -1):\n            bisect.insort(marks, minute)\n    return len(marks)\n",
+      "slip": "Adding visits at the end minutes without checking which are used counts the same minute twice."
+    },
+    {
+      "code": "def fewest_checks(jobs):\n    marks = []\n    for start, end, need in sorted(jobs, key=lambda job: (job[1], -job[0])):\n        if not any(start <= m <= end for m in marks):\n            marks.extend(range(end, end - need, -1))\n    return len(marks)\n",
+      "slip": "Adding visits only to a job that has none treats one visit as enough for a job that needs more."
+    }
+  ]
+}
