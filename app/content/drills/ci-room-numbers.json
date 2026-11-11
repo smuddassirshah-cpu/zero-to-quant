@@ -1,0 +1,174 @@
+{
+  "id": "ci-room-numbers",
+  "name": "Room numbers with cleaning time",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "intervals",
+  "tags": [
+    "pack-8",
+    "room-numbers"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1980,
+  "fn": "room_numbers",
+  "returns": "a list of room numbers",
+  "brief": "A clinic books `meetings`, each `[start, end]`, holding a room from minute `start` up to, but not including, minute `end`. After a meeting a room needs `clean` minutes of cleaning, so a room whose meeting ended at `e` is free again from minute `e + clean`. Rooms are numbered 0, 1, 2 and so on, and the clinic opens a new room only when none is free.\n\nMeetings are placed in order of start; meetings with the same start go in their order in the list. Each takes the lowest-numbered room that is free at its start.\n\nWrite `room_numbers(meetings, clean)`, which returns the room of each meeting, in the order of `meetings`.\n\nExample. For `meetings = [[0, 30], [5, 10], [12, 40], [35, 50]]` and `clean = 2`, room 1 is free again at 12, so the third meeting takes it. At 35 room 0 is free again (from 32) and room 1 is not, so the answer is `[0, 1, 1, 0]`.",
+  "constraints": [
+    "At most $50{,}000$ meetings, with $0 \\le$ `start` $<$ `end` $\\le 10^9$ and $0 \\le$ `clean` $\\le 10^6$.",
+    "$O(n \\log n)$ time is the target. Scanning the rooms for each meeting is too slow when many rooms are open; a sorted list kept with `bisect` is fast enough at this size.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "meetings",
+      "type": "list",
+      "len": [
+        0,
+        50000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          2,
+          2
+        ],
+        "of": "int",
+        "range": [
+          0,
+          1000000000
+        ]
+      }
+    },
+    {
+      "arg": "clean",
+      "type": "int",
+      "range": [
+        0,
+        1000000
+      ]
+    }
+  ],
+  "hint": "Keep two heaps: busy rooms keyed by the minute they are free again, and free room numbers. Before each meeting, move every room whose free minute has come from the busy heap to the free heap, then take the smallest free number.",
+  "starter": "def room_numbers(meetings, clean):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "room_numbers([[0, 30], [5, 10], [12, 40], [35, 50]], 2)",
+      "expect": "[0, 1, 1, 0]",
+      "compare": "equal",
+      "note": "Room 1 is free from minute 12, and room 0 from minute 32."
+    },
+    {
+      "call": "room_numbers([[8, 9], [0, 8], [0, 3]], 0)",
+      "expect": "[0, 0, 1]",
+      "compare": "equal",
+      "note": "The two meetings at 0 go in list order. At minute 8 both rooms are free, and the lower number, 0, is taken."
+    }
+  ],
+  "tests": [
+    {
+      "call": "room_numbers([], 5)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[3, 4]], 0)",
+      "expect": "[0]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 5], [5, 9]], 0)",
+      "expect": "[0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 5], [5, 9]], 1)",
+      "expect": "[0, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 5], [6, 9]], 1)",
+      "expect": "[0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 10], [0, 3], [0, 6], [4, 8], [7, 9]], 0)",
+      "expect": "[0, 1, 2, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 2], [0, 4], [3, 7], [5, 6], [5, 9]], 1)",
+      "expect": "[0, 1, 0, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[10, 20], [10, 15], [10, 12], [13, 30], [16, 18], [21, 22]], 0)",
+      "expect": "[0, 1, 2, 2, 1, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 100], [1, 2], [3, 4], [2, 3], [5, 6]], 0)",
+      "expect": "[0, 1, 1, 1, 1]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 1000000000], [999999999, 1000000000], [5, 6], [1000, 1001]], 1000000)",
+      "expect": "[0, 1, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "room_numbers([[0, 4], [0, 4], [0, 4], [6, 7], [6, 7], [8, 9]], 2)",
+      "expect": "[0, 1, 2, 0, 1, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), max(r), sum(r), r[:4], r[-4:]))(room_numbers([[0, 1000000000]] * 25000 + [[1 + 2 * j, 2 + 2 * j] for j in range(25000)], 0))",
+      "expect": "(50000, 25000, 937487500, [0, 1, 2, 3], [25000, 25000, 25000, 25000])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), max(r), sum(r), r[:4], r[-4:]))(room_numbers([[0, 10]] * 25000 + [[100 + j, 101 + j] for j in range(25000)], 0))",
+      "expect": "(50000, 24999, 312487500, [0, 1, 2, 3], [0, 0, 0, 0])",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), max(r), sum(r), r[:4], r[-4:]))(room_numbers([[(i * 7919) % 50021, (i * 7919) % 50021 + 1 + i % 400] for i in range(50000)], 3))",
+      "expect": "(50000, 206, 5075285, [0, 67, 111, 204], [34, 162, 123, 29])",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method keeps each room's free minute in a list and scans it from room 0 for every meeting, which is $O(n^2)$ when many rooms stay busy. A `min` over a set of free rooms is as slow when many are free. The step to the target is two heaps, one of busy rooms by free minute and one of free room numbers. The change from counting the rooms needed is the cleaning gap and the lowest-number rule, which make each meeting's room the answer.",
+  "solution": "import heapq\n\ndef room_numbers(meetings, clean):\n    order = sorted(range(len(meetings)), key=lambda i: (meetings[i][0], i))\n    free = []\n    busy = []\n    opened = 0\n    rooms = [0] * len(meetings)\n    for i in order:\n        start, end = meetings[i]\n        while busy and busy[0][0] <= start:\n            heapq.heappush(free, heapq.heappop(busy)[1])\n        if free:\n            room = heapq.heappop(free)\n        else:\n            room = opened\n            opened += 1\n        rooms[i] = room\n        heapq.heappush(busy, (end + clean, room))\n    return rooms\n",
+  "notes": [
+    "Rooms leave the busy heap in order of their free minute, and the free heap hands out the lowest number in $O(\\log n)$.",
+    "A room is free when its free minute is at most the meeting's start, so a meeting may begin the minute cleaning ends; ties in start keep list order.",
+    "Each meeting pushes and pops each heap at most once, so the work is $O(n \\log n)$."
+  ],
+  "planted": [
+    {
+      "code": "import heapq\n\ndef room_numbers(meetings, clean):\n    order = sorted(range(len(meetings)), key=lambda i: (meetings[i][0], i))\n    busy = []\n    opened = 0\n    rooms = [0] * len(meetings)\n    for i in order:\n        start, end = meetings[i]\n        if busy and busy[0][0] <= start:\n            room = heapq.heappop(busy)[1]\n        else:\n            room = opened\n            opened += 1\n        rooms[i] = room\n        heapq.heappush(busy, (end + clean, room))\n    return rooms\n",
+      "slip": "Taking the room that became free first, not the lowest-numbered free room, gives the right count but the wrong numbers."
+    },
+    {
+      "code": "import heapq\n\ndef room_numbers(meetings, clean):\n    order = sorted(range(len(meetings)), key=lambda i: meetings[i])\n    free = []\n    busy = []\n    opened = 0\n    rooms = [0] * len(meetings)\n    for i in order:\n        start, end = meetings[i]\n        while busy and busy[0][0] <= start:\n            heapq.heappush(free, heapq.heappop(busy)[1])\n        if free:\n            room = heapq.heappop(free)\n        else:\n            room = opened\n            opened += 1\n        rooms[i] = room\n        heapq.heappush(busy, (end + clean, room))\n    return rooms\n",
+      "slip": "Sorting by start and then end puts the shorter of two meetings with the same start first, against the list order."
+    },
+    {
+      "code": "import heapq\n\ndef room_numbers(meetings, clean):\n    order = sorted(range(len(meetings)), key=lambda i: (meetings[i][0], i))\n    free = []\n    busy = []\n    opened = 0\n    rooms = [0] * len(meetings)\n    for i in order:\n        start, end = meetings[i]\n        while busy and busy[0][0] < start:\n            heapq.heappush(free, heapq.heappop(busy)[1])\n        if free:\n            room = heapq.heappop(free)\n        else:\n            room = opened\n            opened += 1\n        rooms[i] = room\n        heapq.heappush(busy, (end + clean, room))\n    return rooms\n",
+      "slip": "A strict comparison keeps a room busy in the very minute its cleaning ends."
+    },
+    {
+      "code": "def room_numbers(meetings, clean):\n    order = sorted(range(len(meetings)), key=lambda i: (meetings[i][0], i))\n    ready = []\n    rooms = [0] * len(meetings)\n    for i in order:\n        start, end = meetings[i]\n        for room, t in enumerate(ready):\n            if t <= start:\n                break\n        else:\n            room = len(ready)\n            ready.append(0)\n        ready[room] = end + clean\n        rooms[i] = room\n    return rooms\n",
+      "slip": "Scanning every room from room 0 for each meeting is $O(n^2)$ when thousands of rooms stay busy."
+    },
+    {
+      "code": "import heapq\n\ndef room_numbers(meetings, clean):\n    order = sorted(range(len(meetings)), key=lambda i: (meetings[i][0], i))\n    free = set()\n    busy = []\n    opened = 0\n    rooms = [0] * len(meetings)\n    for i in order:\n        start, end = meetings[i]\n        while busy and busy[0][0] <= start:\n            free.add(heapq.heappop(busy)[1])\n        if free:\n            room = min(free)\n            free.remove(room)\n        else:\n            room = opened\n            opened += 1\n        rooms[i] = room\n        heapq.heappush(busy, (end + clean, room))\n    return rooms\n",
+      "slip": "Taking `min` over a set of free rooms is $O(n)$ a meeting when thousands of rooms are free."
+    },
+    {
+      "code": "def room_numbers(meetings, clean):\n    order = sorted(range(len(meetings)), key=lambda i: (meetings[i][0], i))\n    ready = []\n    rooms = [0] * len(meetings)\n    for i in order:\n        start, end = meetings[i]\n        room = None\n        for r in range(len(ready) - 1, -1, -1):\n            if ready[r] <= start:\n                room = r\n        if room is None:\n            room = len(ready)\n            ready.append(0)\n        ready[room] = end + clean\n        rooms[i] = room\n    return rooms\n",
+      "slip": "Scanning the rooms from the top down for the lowest free one still looks at every room each time."
+    }
+  ]
+}

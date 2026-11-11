@@ -1,0 +1,160 @@
+{
+  "id": "ci-ring-bonuses",
+  "name": "Bonus tokens round a table",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "greedy",
+  "tags": [
+    "pack-8",
+    "ring-bonuses"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2160,
+  "fn": "ring_bonuses",
+  "returns": "an integer",
+  "brief": "The `n` traders of a desk sit round a circular table, and `scores[i]` is the score of trader `i`. Trader `n - 1` sits between trader `n - 2` and trader 0. Each trader gets at least one bonus token, and anyone who scored strictly more than a neighbour must get strictly more tokens than that neighbour. Equal scores carry no rule.\n\nWrite `ring_bonuses(scores)`, which returns the fewest tokens in total.\n\nExample. For `scores = [3, 1, 2, 5]`, trader 1 has the lowest score and gets 1. Trader 2 then needs 2, and trader 3 needs more than both trader 2 and trader 0. Trader 0 beats trader 1 and gets 2, so trader 3 gets 3. The answer is $2 + 1 + 2 + 3 = 8$.",
+  "constraints": [
+    "$1 \\le n \\le 100{,}000$ traders, with $0 \\le$ `scores[i]` $\\le 10^9$.",
+    "$O(n)$ time is the target. Sweeping round the table one way until nothing changes is $O(n^2)$ on a long run of falling scores.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "scores",
+      "type": "list",
+      "len": [
+        1,
+        100000
+      ],
+      "of": "int",
+      "range": [
+        0,
+        1000000000
+      ]
+    }
+  ],
+  "hint": "A trader with the lowest score needs no more than 1 token, so cut the circle there and repeat that trader at the far end. On that line, one pass from the left and one from the right give each trader the tokens its rises need, and the larger of the two is the answer.",
+  "starter": "def ring_bonuses(scores):\n    # your code here\n    return len(scores)\n",
+  "examples": [
+    {
+      "call": "ring_bonuses([3, 1, 2, 5])",
+      "expect": "8",
+      "compare": "equal",
+      "note": "Trader 3 sits next to trader 0, so it needs more than both trader 0 and trader 2."
+    },
+    {
+      "call": "ring_bonuses([4, 4, 4])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Equal scores carry no rule, so one token each is enough."
+    }
+  ],
+  "tests": [
+    {
+      "call": "ring_bonuses([7])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([3, 5])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([5, 5])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([1, 2, 3])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([2, 2, 1, 2])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([5, 4, 3, 1, 2])",
+      "expect": "12",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([2, 3, 4, 5, 1])",
+      "expect": "15",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([6, 2, 4, 9, 8, 7])",
+      "expect": "17",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([1, 3, 3, 3, 2, 4, 6, 5])",
+      "expect": "14",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([9, 8, 7, 1, 2, 3, 10, 11])",
+      "expect": "24",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([0, 1000000000, 0, 1000000000])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([abs((i + 30000) % 100000 - 50000) for i in range(100000)])",
+      "expect": "2500100000",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([abs((i + 30000) % 100000 - 50000) for i in range(100000)][::-1])",
+      "expect": "2500100000",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([(i * 37) % 1000 for i in range(100000)])",
+      "expect": "1401400",
+      "compare": "equal"
+    },
+    {
+      "call": "ring_bonuses([(i * 7919) % 100003 for i in range(100000)])",
+      "expect": "682324",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The obvious method raises any trader who has too few tokens and repeats the sweep round the table until nothing changes, which is $O(n^2)$ on a long falling run, in either direction of sweep. The step to the target is to cut the circle at a lowest score and run the two passes of the straight-line version. The change from the straight-line task is the circle: the two ends are neighbours, so a run of rising scores can cross from the last trader to the first.",
+  "solution": "def ring_bonuses(scores):\n    n = len(scores)\n    low = scores.index(min(scores))\n    line = scores[low:] + scores[:low] + [scores[low]]\n    left = [1] * (n + 1)\n    for i in range(1, n + 1):\n        if line[i] > line[i - 1]:\n            left[i] = left[i - 1] + 1\n    right = [1] * (n + 1)\n    for i in range(n - 1, -1, -1):\n        if line[i] > line[i + 1]:\n            right[i] = right[i + 1] + 1\n    return sum(max(a, b) for a, b in zip(left[:n], right[:n]))\n",
+  "notes": [
+    "A lowest score can never be strictly more than a neighbour, so that trader gets 1 token, and cutting the circle there loses no rule.",
+    "On the cut line each trader needs one more than the length of the rising run that ends at it from either side, and the larger of the two meets both.",
+    "Each pass is $O(n)$, so the work is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def ring_bonuses(scores):\n    n = len(scores)\n    left = [1] * n\n    for i in range(1, n):\n        if scores[i] > scores[i - 1]:\n            left[i] = left[i - 1] + 1\n    right = [1] * n\n    for i in range(n - 2, -1, -1):\n        if scores[i] > scores[i + 1]:\n            right[i] = right[i + 1] + 1\n    return sum(max(a, b) for a, b in zip(left, right))\n",
+      "slip": "Running the straight-line passes from trader 0 forgets that the last trader and the first are neighbours."
+    },
+    {
+      "code": "def ring_bonuses(scores):\n    n = len(scores)\n    low = scores.index(min(scores))\n    line = scores[low:] + scores[:low] + [scores[low]]\n    left = [1] * (n + 1)\n    for i in range(1, n + 1):\n        if line[i] >= line[i - 1]:\n            left[i] = left[i - 1] + 1\n    right = [1] * (n + 1)\n    for i in range(n - 1, -1, -1):\n        if line[i] >= line[i + 1]:\n            right[i] = right[i + 1] + 1\n    return sum(max(a, b) for a, b in zip(left[:n], right[:n]))\n",
+      "slip": "Giving more tokens for an equal score breaks the rule that equal scores carry no rule, and costs extra tokens."
+    },
+    {
+      "code": "def ring_bonuses(scores):\n    n = len(scores)\n    left = [1] * n\n    for i in range(1, n):\n        if scores[i] > scores[i - 1]:\n            left[i] = left[i - 1] + 1\n    right = [1] * n\n    for i in range(n - 2, -1, -1):\n        if scores[i] > scores[i + 1]:\n            right[i] = right[i + 1] + 1\n    tokens = [max(a, b) for a, b in zip(left, right)]\n    if n > 1 and scores[0] > scores[-1]:\n        tokens[0] = max(tokens[0], tokens[-1] + 1)\n    if n > 1 and scores[-1] > scores[0]:\n        tokens[-1] = max(tokens[-1], tokens[0] + 1)\n    return sum(tokens)\n",
+      "slip": "Patching only the two end traders after the straight-line passes misses a run that carries on across the join."
+    },
+    {
+      "code": "def ring_bonuses(scores):\n    n = len(scores)\n    tokens = [1] * n\n    changed = True\n    while changed:\n        changed = False\n        for i in range(n):\n            for j in ((i - 1) % n, (i + 1) % n):\n                if scores[i] > scores[j] and tokens[i] <= tokens[j]:\n                    tokens[i] = tokens[j] + 1\n                    changed = True\n    return sum(tokens)\n",
+      "slip": "Sweeping forwards until nothing changes moves a falling run one place a sweep, which is $O(n^2)$."
+    },
+    {
+      "code": "def ring_bonuses(scores):\n    n = len(scores)\n    tokens = [1] * n\n    changed = True\n    while changed:\n        changed = False\n        for i in range(n - 1, -1, -1):\n            for j in ((i - 1) % n, (i + 1) % n):\n                if scores[i] > scores[j] and tokens[i] <= tokens[j]:\n                    tokens[i] = tokens[j] + 1\n                    changed = True\n    return sum(tokens)\n",
+      "slip": "Sweeping backwards until nothing changes is as slow on a run of rising scores."
+    }
+  ]
+}
