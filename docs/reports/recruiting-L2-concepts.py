@@ -85,6 +85,46 @@ print('info l7 s10 / hw2: long minus short,      all shares %.4f, survivors only
 check('survivorship flatters the long leg (the claim as taught holds for long positions)', L_sur > L_all)
 print('info: the long-short figure can move either way, because the losers that go bust are profits for the short leg')
 
+
+# Fix pass (audit): the sign of the long-short bias depends on why shares leave the data.
+# Three toy markets, no true momentum in returns. 'floor': bankruptcy after a long fall (-100%).
+# 'takeover': recent winners bought out at a +30% premium. 'crash': recent winners collapse (-100%).
+def ls_bias(scenario, seed=8, S=2000, M=240):
+    g = np.random.default_rng(seed)
+    rr = g.normal(0.005, 0.10, (S, M))
+    dead = np.full(S, M); live_now = np.ones(S, bool); px = np.ones(S)
+    for t in range(M):
+        px *= 1 + rr[:, t]
+        past = np.prod(1 + rr[:, max(0, t - 11):t + 1], axis=1)
+        if scenario == 'floor':
+            hit = live_now & (px < 0.25); rr[hit, t] = -1.0
+        elif scenario == 'crash':
+            hit = live_now & (past > 1.6) & (g.random(S) < 0.03); rr[hit, t] = -1.0
+        else:
+            hit = live_now & (past > 1.6) & (g.random(S) < 0.08); rr[hit, t] += 0.30
+        dead[hit] = t; live_now &= ~hit
+
+    def ls(univ):
+        out = []
+        for t in range(12, M - 1):
+            idx = np.where(univ & (dead > t))[0]
+            o = np.argsort(np.prod(1 + rr[idx, t - 11:t + 1], axis=1)); k = len(idx) // 10
+            out.append(rr[idx[o[-k:]], t + 1].mean() - rr[idx[o[:k]], t + 1].mean())
+        return np.mean(out)
+    return ls(dead == M) - ls(np.ones(S, bool))   # survivors only minus all shares
+
+
+biases = {sc: ls_bias(sc) for sc in ('floor', 'takeover', 'crash')}
+print('info fix pass: survivors-only minus all shares, long-short monthly: ' +
+      ', '.join('%s %+.4f' % kv for kv in biases.items()))
+check('fix pass: long-short survivorship bias takes both signs across plausible markets',
+      min(biases.values()) < -0.002 and max(biases.values()) > 0.002)
+key = [o for o in l7['screens'][10]['widget']['options'] if o.get('correct')][0]['text']
+texts = [key, l7['screens'][10]['hints'][2]['text'], l7['screens'][10]['explain']['text'],
+         J('homework-2')['items'][4]['widget']['model']]
+check('fix pass: l7 s10 key, hint, explain and hw2 model assert no direction for the long-short bias',
+      not any(re.search(r'overstat|flatter|looks better', t) for t in texts) and 'delisted' in key)
+
 # ---- l8 ----
 l8 = J('l8-why-this-firm')
 check('l8 s4 45 s = 97.5 words key', l8['screens'][4]['widget']['answer'] == words(45))
