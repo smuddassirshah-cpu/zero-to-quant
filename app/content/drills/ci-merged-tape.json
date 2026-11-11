@@ -17,9 +17,9 @@
   "pace": 1980,
   "fn": "merge_ways",
   "returns": "an integer",
-  "brief": "Two feeds `a` and `b` were merged into one string `tape` by a process that keeps each feed's letters in order. Nobody logged which letter came from which feed.\n\nWrite `merge_ways(a, b, tape)`, which returns the number of ways to share out the letters of `tape` between the two feeds so that they spell `a` and `b` in order, modulo 1,000,000,007. Two ways differ when some position of `tape` goes to a different feed. If `tape` cannot be made this way, the answer is 0.\n\nExample. For `a = 'ab'`, `b = 'a'` and `tape = 'aab'`, the letter from `b` can be the first or the second `a` of the tape, so the answer is 2.",
+  "brief": "Two feeds `a` and `b` were merged into one string `tape` by a process that keeps each feed's letters in order. Nobody logged which letter came from which feed.\n\nWrite `merge_ways(a, b, tape)`, which returns the number of ways to share out the letters of `tape` between the two feeds so that they spell `a` and `b` in order, modulo 1,000,000,007. Two ways differ when some position of `tape` goes to a different feed. If `tape` cannot be made this way, the answer is 0. Empty `a`, `b` and `tape` give 1: there is one way to share out nothing.\n\nExample. For `a = 'ab'`, `b = 'a'` and `tape = 'aab'`, the letter from `b` can be the first or the second `a` of the tape, so the answer is 2.",
   "constraints": [
-    "`a` and `b` hold $0$ to $300$ lower-case letters each, and `tape` holds $0$ to $600$.",
+    "`a` and `b` hold $0$ to $150$ lower-case letters each, and `tape` holds $0$ to $300$.",
     "$O(|a| \\cdot |b|)$ time is the target. Recursing on which feed gave the next letter, without remembering answers, is too slow.",
     "All the tests in a run share one 5-second limit in the browser.",
     {
@@ -27,7 +27,7 @@
       "type": "str",
       "len": [
         0,
-        300
+        150
       ],
       "pattern": "[a-z]*"
     },
@@ -36,7 +36,7 @@
       "type": "str",
       "len": [
         0,
-        300
+        150
       ],
       "pattern": "[a-z]*"
     },
@@ -45,7 +45,7 @@
       "type": "str",
       "len": [
         0,
-        600
+        300
       ],
       "pattern": "[a-z]*"
     }
@@ -129,22 +129,22 @@
       "compare": "equal"
     },
     {
-      "call": "merge_ways('a' * 300, 'a' * 300, 'a' * 600)",
-      "expect": "272165270",
+      "call": "merge_ways('a' * 150, 'a' * 150, 'a' * 300)",
+      "expect": "956301965",
       "compare": "equal"
     },
     {
-      "call": "merge_ways(''.join('ab'[(i * i) % 7 % 2] for i in range(300)), ''.join('ab'[(i * 3) % 5 % 2] for i in range(300)), ''.join('ab'[(i * i) % 7 % 2] for i in range(150)) + ''.join('ab'[(i * 3) % 5 % 2] for i in range(300)) + ''.join('ab'[(i * i) % 7 % 2] for i in range(150, 300)))",
-      "expect": "20",
+      "call": "merge_ways(''.join('ab'[(i * i) % 7 % 2] for i in range(150)), ''.join('ab'[(i * 3) % 5 % 2] for i in range(150)), ''.join('ab'[(i * i) % 7 % 2] for i in range(75)) + ''.join('ab'[(i * 3) % 5 % 2] for i in range(150)) + ''.join('ab'[(i * i) % 7 % 2] for i in range(75, 150)))",
+      "expect": "12",
       "compare": "equal"
     },
     {
-      "call": "merge_ways('ab' * 150, 'ba' * 150, 'ab' * 300)",
-      "expect": "978150986",
+      "call": "merge_ways('ab' * 75, 'ba' * 75, 'ab' * 150)",
+      "expect": "133231804",
       "compare": "equal"
     },
     {
-      "call": "merge_ways('a' * 300, 'a' * 299, 'a' * 600)",
+      "call": "merge_ways('', 'q', 'r')",
       "expect": "0",
       "compare": "equal"
     }
@@ -163,11 +163,11 @@
     },
     {
       "code": "MOD = 10 ** 9 + 7\n\ndef merge_ways(a, b, tape):\n    n, m = len(a), len(b)\n    ways = [[0] * (m + 1) for _ in range(n + 1)]\n    ways[0][0] = 1\n    for i in range(n + 1):\n        for j in range(m + 1):\n            if i + j == 0 or i + j > len(tape):\n                continue\n            ch = tape[i + j - 1]\n            total = 0\n            if i and a[i - 1] == ch:\n                total += ways[i - 1][j]\n            if j and b[j - 1] == ch:\n                total += ways[i][j - 1]\n            ways[i][j] = total % MOD\n    return ways[n][m]\n",
-      "slip": "Skipping the length check counts sharings of a tape too short for the two feeds."
+      "slip": "Skipping the length check counts sharings of the first letters of a tape that is too long for the two feeds."
     },
     {
       "code": "def merge_ways(a, b, tape):\n    n, m = len(a), len(b)\n    if n + m != len(tape):\n        return 0\n    row = [1] + [0] * m\n    for j in range(1, m + 1):\n        row[j] = row[j - 1] if b[j - 1] == tape[j - 1] else 0\n    for i in range(1, n + 1):\n        cur = [row[0] if a[i - 1] == tape[i - 1] else 0]\n        for j in range(1, m + 1):\n            ch = tape[i + j - 1]\n            cur.append((row[j] if a[i - 1] == ch else 0) + (cur[j - 1] if b[j - 1] == ch else 0))\n        row = cur\n    return row[m]\n",
-      "slip": "Leaving out the modulus returns the full count, which for long runs of one letter has well over a hundred digits."
+      "slip": "Leaving out the modulus returns the full count, which for long runs of one letter has well over eighty digits."
     },
     {
       "code": "MOD = 10 ** 9 + 7\n\ndef merge_ways(a, b, tape):\n    if len(a) + len(b) != len(tape):\n        return 0\n\n    def ways(i, j):\n        if i == len(a) and j == len(b):\n            return 1\n        total = 0\n        if i < len(a) and a[i] == tape[i + j]:\n            total += ways(i + 1, j)\n        if j < len(b) and b[j] == tape[i + j]:\n            total += ways(i, j + 1)\n        return total\n\n    return ways(0, 0) % MOD\n",

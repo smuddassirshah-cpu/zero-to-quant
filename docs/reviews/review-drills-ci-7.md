@@ -63,3 +63,57 @@ Clean (no finding of their own; statement complete, notes true, every candidate 
 The statements are complete: output order and the handling of equal items are fixed in all three list drills, so exactly one answer is right, and no `expect` is wrong. The small tests are well aimed: 83 of 87 candidates fall, most to a test under ten items. Two classes matter for protocol 6. First, a right solution failing on the page by recursion depth is new here and will be in any pack with a 300 by 300 table: an engine item, and until it is fixed a line for the level brief ("a test a top-down solution should pass stays under 300 calls deep"). Second, the ruled-out method passing once it is pruned or given a shortcut (findings 6 and 8) is the class pack 5 showed four times: plant the slow method with a cut-off and with the obvious closed-form shortcut, not once.
 
 Every proposed `expect` above was computed by the model solution and by `mine.py` (`extra_checks.py`, `resize.py`, `misc_checks.py`), and by the brute force of `checks.py` where the input is small; findings 7 to 10 and 13 were also checked by hand. Planted[2].slip of finding 1: $\binom{300}{150}$ has 89 digits.
+
+## Fix pass
+
+Applied with targeted edits to 11 drills (`ci-merged-tape`, `ci-mirror-pieces`, `ci-priced-edits`, `ci-tolerant-common`, `ci-three-feed-common`, `ci-smooth-orderings`, `ci-hold-limit`, `ci-trace-count`, `ci-light-cargo`, plus `ci-long-mirrors` and `ci-drop-point-routes` for the depth fault), `docs/reports/drills-ci-7-check.py`, `docs/reports/drills-ci-7.md` and `docs/BACKLOG-INBOX.md`. Fixed 16, disputed 0 (one detail of finding 10 changed, below), deferred 0 (the engine side goes to the inbox). "Two agree" means the model solution and a second solution of my own (the scratchpad `topdown.py` solutions with `lru_cache` or a dict, a brute force, or by hand), run natively and in Chromium; the check script's independent method also agrees on every test.
+
+1. `ci-merged-tape` sizes: fixed. Constraints[0] and the `len` objects at 150, 150 and 300; tests[11] to [13] as in `resize_tests.json`; planted[2].slip says "well over eighty digits". Disputed in part: the review's tests[14] (150 + 149) is dropped, because the validator allows at most 15 tests and finding 10 adds one; tests[3] and [7] still catch the missing length check.
+2. `ci-mirror-pieces` sizes: fixed. Constraints[0] "1 to 150 letters"; tests[9], [10], [12] as proposed.
+3. `ci-priced-edits` sizes: fixed. Constraints[0] "1 to 150"; tests[10] over `range(150)`.
+4. `ci-tolerant-common` sizes: fixed. Constraints[0] and `len` objects at 150; tests[10] and [11] as proposed.
+   - Chromium: a top-down `@lru_cache` solution and a dict-memo solution of mine pass every test of all four drills (`planted-check` on a scratch copy: all four report "passes all"); the plain recursion of `ci-merged-tape` and the full recursion of `ci-mirror-pieces` still run past 12 s in Pyodide (12.0 s, cut off; models 0.016 and 0.015 s).
+   - Same fault elsewhere, found by my own top-down solutions: `ci-long-mirrors` (a top-down `is_palindrome(i, j)` on the old `'a' * 1000` goes 500 calls deep and stops Python) now at most 300 letters, tests[10] to [12] at 300 letters; `ci-drop-point-routes` (a generator inside each call went 400 calls deep on 200 by 200) now at most 80 by 80, tests[11] to [13] at 80. The other nine drills pass with `lru_cache` solutions or recurse at most 150 calls deep.
+5. `ci-merged-tape` brief: fixed as proposed.
+6. `ci-mirror-pieces` tests: fixed. Added the 150-letter tape (`'3\n36'`) as tests[13] (14 tests); planted[3] is the two-ended greedy (fails tests[13]) and planted[5] the cut-off search (cut off at 12 s in Pyodide on tests[13]); both slips are true.
+7. `ci-three-feed-common` tests: fixed. `('zzyyxx', 'xyyzx', 'zxzyzz')` = 2 added; planted[2] is the best of three pairs (fails tests[13]); slow plant last.
+8. `ci-smooth-orderings` tests: fixed. The 11-order test with `d = 90` = 32659200 added (14 tests); planted[4] is the formula-then-walk, cut off at 12 s.
+9. `ci-tolerant-common`, `ci-three-feed-common` tests: fixed. `([0, 2, 6, 3], [0, 4, 5, 2], 1)` = 3 and `('yx', 'yx', 'y')` = 1 added (tests 13 and 15). I added no planted entry for these three candidates, which fail only on these small tests.
+10. `ci-merged-tape` tests: fixed. `('', 'q', 'r')` = 0 added as the last test (15 tests, not 16: see 1).
+11. `ci-merged-tape` planted[1].slip: fixed as proposed.
+12. `ci-trace-count` tests[11]: fixed as proposed.
+13. `ci-hold-limit` examples[1] and tests[8]: fixed as proposed. The example's note is reworded: the limit of 3 crates does not bind because only the 4 and 3 tonne crates fit together within 9 tonnes (the review's "room for every crate" would be false). Stated-number row in the check script updated.
+14. `how` of the three drills: fixed, the review's three closing sentences.
+15. `ci-light-cargo` how: fixed as proposed.
+16. `ci-light-cargo` hint shortened as proposed; `ci-three-feed-common` pace 1,800 (`index.json` holds no pace).
+
+### Added or changed tests, and the solutions that agree on `expect`
+
+- merged-tape: `'a' * 150` three ways = 956301965; the two-pattern test at 150 = 12; `'ab' * 75`, `'ba' * 75`, `'ab' * 150` = 133231804; `('', 'q', 'r')` = 0 (model, my lru and dict recursions; the check script's table of ways).
+- mirror-pieces: tests[9] `'1\n2\n150\n2\n2'`, [10] `'1\n1\n2\n1\n1\n2\n1'`, [12] `'1\n2\n1'`, [13] `'3\n36'` (model, my lru and dict recursions, the check script's brute force by set of cuts for short tapes and its table by length).
+- priced-edits: tests[10] = 157 (model, my lru and dict recursions).
+- tolerant-common: tests[10] = 22, [11] = 7, new `([0, 2, 6, 3], [0, 4, 5, 2], 1)` = 3 (model, my lru and dict recursions; the last also by hand: 0 with 0, 6 with 5, 3 with 2).
+- three-feed-common: `('zzyyxx', 'xyyzx', 'zxzyzz')` = 2 (`zx`); `('yx', 'yx', 'y')` = 1 (model, my lru recursion).
+- smooth-orderings: `[40, 10, 90, 20, 110, 60, 30, 100, 70, 50, 80]`, `d = 90` = 32659200 (model, the check script's orders divided by shuffles, and by hand: only 10 and 110 may not be neighbours, 11! - 2 x 10! = 39,916,800 - 7,257,600).
+- hold-limit: example `([4, 3, 6], [45, 20, 40], 9, 3)` = 65; tests[8] `([12, 17, 26], [70, 90, 150], 45, 2)` = 240 (model, my lru recursion; by hand 17 + 26 = 43 tonnes earn 240, no heavier pair fits).
+- trace-count: tests[11] = 729019462 (model, my lru recursion and the check script's table).
+- drop-point-routes: tests[11] = 159545374, [12] = 545388158, [13] = 712361278 (model, my lru recursion with and without a generator, the check script's flag state).
+- long-mirrors: tests[10] `'a' * 300`, `k = 1` = 45150 (= 300 x 301 / 2), [11] = 6237, [12] `'mn' * 150`, `k = 299` = 2 (model, a slice-and-compare count of mine).
+
+### Constraint changes
+
+- merged-tape: `a`, `b` 0 to 150 (was 300), `tape` 0 to 300 (was 600); objects `len` follow.
+- mirror-pieces: each tape 1 to 150 letters (was 400); the 3,000 letters in all stays; the text `len` object is unchanged.
+- priced-edits: codes 1 to 150 letters (was 300); the 100,000 total of products stays.
+- tolerant-common: each feed 0 to 150 ticks (was 300); objects `len` follow.
+- long-mirrors: $n \le 300$ (was 1,000); `tape` `len` follows.
+- drop-point-routes: at most 80 rows and 80 columns (was 200); `grid` `len` and the row `len` follow.
+
+### Gates
+
+- `docs/reports/drills-ci-7-check.py`: exit 0, 15 drills, 0 errors, 40 stated numbers; it now also runs top-down solutions at a limit of 340 frames, allows several slow plants after the wrong ones, and has the new sizes. With `--pyodide` on the four drills with a changed plant or test: models 0.016 to 0.094 s, every obvious method cut off at 12 s.
+- `node tools/validate.mjs`: 0 errors; `index.json` unchanged, rows in step. `manifest.json` restored, not committed.
+- `node tools/planted-check.mjs --drill <11 changed ids> --require --local-cdn <pkgs>`: 11 drills checked, 42 planted solutions, 0 failures.
+- `node tools/playthrough.mjs --drill <11 ids> --local-cdn <pkgs>`: All passed; with `--mobile`: All passed.
+- `voice-scan.py 35` on the 15 pack files: 561 sentences, 0 over 35 words, 0 explanations over three sentences.
+- Inbox: one [Must] bullet under `Raised later (fix drills ci 7):` for the engine fix and a check.

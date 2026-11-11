@@ -248,7 +248,7 @@ def v_edits(a):
     prices, q, pairs = parse_edits(a["text"])
     assert len(prices) == 3 and all(1 <= p <= 100 for p in prices), "prices"
     assert 1 <= q <= 50 and len(pairs) == q, "query count"
-    assert all(len(p) == 2 and all(re.fullmatch("[a-z]{1,300}", w) for w in p) for p in pairs), "codes"
+    assert all(len(p) == 2 and all(re.fullmatch("[a-z]{1,150}", w) for w in p) for p in pairs), "codes"
     assert sum(len(s) * len(t) for s, t in pairs) <= 100000, "product total"
 
 def _edit_search(s, t, ins, dele, sub):
@@ -413,7 +413,7 @@ def parse_tapes(text):
 def v_mirror(a):
     q, tapes = parse_tapes(a["text"])
     assert 1 <= q <= 50 and len(tapes) == q, "tape count"
-    assert all(re.fullmatch("[a-z]{1,400}", t) for t in tapes), "tapes"
+    assert all(re.fullmatch("[a-z]{1,150}", t) for t in tapes), "tapes"
     assert sum(map(len, tapes)) <= 3000, "letters in all"
 
 def solve_mirror_pieces(text):
@@ -595,7 +595,7 @@ def stated_numbers():
              ("ci-priced-edits", "kite to kit, ab to ba", I["ci-priced-edits"]("4 1 2\n2\nkite kit\nab ba\n"), "1\n4")]
     rows += [("ci-hold-limit", "three 2-tonne crates", I["ci-hold-limit"]([2, 2, 2], [4, 4, 4], 6, 3), 12),
              ("ci-hold-limit", "answer", I["ci-hold-limit"]([5, 2, 2, 2], [9, 4, 4, 4], 6, 2), 9),
-             ("ci-hold-limit", "example 2", I["ci-hold-limit"]([3, 4, 5], [30, 50, 60], 8, 3), 90)]
+             ("ci-hold-limit", "example 2", I["ci-hold-limit"]([4, 3, 6], [45, 20, 40], 9, 3), 65)]
     rows += [("ci-pillar-queens", "4 guards on an open 4 by 4 floor", I["ci-pillar-queens"](["...."] * 4, 4), 2),
              ("ci-pillar-queens", "answer", I["ci-pillar-queens"]([".#..", "....", "....", "...."], 4), 1),
              ("ci-pillar-queens", "pairs of squares on 3 by 3", comb(9, 2), 36),
@@ -636,10 +636,13 @@ def check_stated():
 
 # ======================= slow plants =======================
 # planted solutions that are right but too slow (always the last entry): (drill id, index)
-SLOW_PLANTED = {("ci-trace-count", 3), ("ci-mirror-pieces", 3), ("ci-three-feed-common", 2), ("ci-even-desks", 2),
-                ("ci-merged-tape", 3), ("ci-light-cargo", 3), ("ci-smooth-orderings", 3)}
+# a drill may have several; they come after every wrong one. The last of them (the plain search) is the obvious method.
+SLOW_PLANTED = {("ci-trace-count", 3), ("ci-mirror-pieces", 4), ("ci-mirror-pieces", 5), ("ci-three-feed-common", 3),
+                ("ci-even-desks", 2), ("ci-merged-tape", 3), ("ci-light-cargo", 3), ("ci-smooth-orderings", 3),
+                ("ci-smooth-orderings", 4)}
 # the obvious method timed in Pyodide for each difficulty 4 and 5 drill: its planted index
-OBVIOUS = {d: k for d, k in SLOW_PLANTED}
+OBVIOUS = {"ci-trace-count": 3, "ci-mirror-pieces": 4, "ci-three-feed-common": 3, "ci-even-desks": 2,
+           "ci-merged-tape": 3, "ci-light-cargo": 3, "ci-smooth-orderings": 3}
 
 # ======================= running =======================
 
@@ -767,8 +770,8 @@ for did in IDS:
     caught = []
     for k, p in enumerate(pl):
         if (did, k) in SLOW_PLANTED:
-            if k != len(pl) - 1:
-                err(f"{did}: slow planted[{k}] is not last")
+            if any((did, j) not in SLOW_PLANTED for j in range(k, len(pl))):
+                err(f"{did}: slow planted[{k}] is followed by a planted solution that is not slow")
             r = run_isolated(p["code"], d["tests"], limit=5)
             if r["failed"] != "timeout":
                 err(f"{did}: planted[{k}] is meant to be too slow but finished ({r})")
@@ -807,6 +810,269 @@ for did in IDS:
     if d["pattern"] not in ("dp", "backtracking"): err(f"{did}: pattern {d['pattern']}")
     if f"Submit runs {len(d['tests'])} hidden tests" not in d["how"]: err(f"{did}: how test count")
     print(f"{did}: d{d['difficulty']} {len(d['tests'])} tests ok, model {dt:.2f} s, starter fails at {sres['failed']}, planted fail at {caught}")
+
+# ======================= top-down solutions must stay shallow =======================
+# On the drill page Python stops with no message once a recursion is about 450 to 500 frames deep, so a right
+# solution written top down (functools.lru_cache, a dict, a generator inside each call) must stay under about
+# 340 frames on every test. Each candidate below is right; none may hit a RecursionError at that limit.
+TOPDOWN = {}
+TOPDOWN['ci-merged-tape'] = [('lru', '''
+from functools import lru_cache
+MOD = 10 ** 9 + 7
+def merge_ways(a, b, tape):
+    if len(a) + len(b) != len(tape):
+        return 0
+    @lru_cache(maxsize=None)
+    def go(i, j):
+        if i == len(a) and j == len(b):
+            return 1
+        t = 0
+        if i < len(a) and a[i] == tape[i + j]:
+            t += go(i + 1, j)
+        if j < len(b) and b[j] == tape[i + j]:
+            t += go(i, j + 1)
+        return t % MOD
+    return go(0, 0)
+'''), ('dict', '''
+MOD = 10 ** 9 + 7
+def merge_ways(a, b, tape):
+    if len(a) + len(b) != len(tape):
+        return 0
+    memo = {}
+    def go(i, j):
+        if i == len(a) and j == len(b):
+            return 1
+        if (i, j) in memo:
+            return memo[(i, j)]
+        t = 0
+        if i < len(a) and a[i] == tape[i + j]:
+            t += go(i + 1, j)
+        if j < len(b) and b[j] == tape[i + j]:
+            t += go(i, j + 1)
+        memo[(i, j)] = t % MOD
+        return memo[(i, j)]
+    return go(0, 0)
+''')]
+TOPDOWN['ci-mirror-pieces'] = [('lru-generator', '''
+from functools import lru_cache
+def solve_mirror_pieces(text):
+    tok = text.split()
+    out = []
+    for tape in tok[1:1 + int(tok[0])]:
+        n = len(tape)
+        @lru_cache(maxsize=None)
+        def fewest(i):
+            if i == n:
+                return 0
+            return min(1 + fewest(j) for j in range(i + 1, n + 1) if tape[i:j] == tape[i:j][::-1])
+        out.append(str(fewest(0)))
+    return '\\n'.join(out)
+'''), ('dict-loop', '''
+def solve_mirror_pieces(text):
+    tok = text.split()
+    out = []
+    for tape in tok[1:1 + int(tok[0])]:
+        n = len(tape)
+        memo = {n: 0}
+        def fewest(i):
+            if i in memo:
+                return memo[i]
+            best = n
+            for j in range(i + 1, n + 1):
+                s = tape[i:j]
+                if s == s[::-1]:
+                    best = min(best, 1 + fewest(j))
+            memo[i] = best
+            return best
+        out.append(str(fewest(0)))
+    return '\\n'.join(out)
+''')]
+TOPDOWN['ci-priced-edits'] = [('lru-delete-first', '''
+from functools import lru_cache
+def solve_priced_edits(text):
+    tok = text.split()
+    ins, dele, rep = int(tok[0]), int(tok[1]), int(tok[2])
+    q = int(tok[3])
+    out = []
+    for k in range(q):
+        s, t = tok[4 + 2 * k], tok[5 + 2 * k]
+        @lru_cache(maxsize=None)
+        def cost(i, j):
+            if i == len(s):
+                return ins * (len(t) - j)
+            if j == len(t):
+                return dele * (len(s) - i)
+            if s[i] == t[j]:
+                return cost(i + 1, j + 1)
+            return min(dele + cost(i + 1, j), ins + cost(i, j + 1), rep + cost(i + 1, j + 1))
+        out.append(str(cost(0, 0)))
+    return '\\n'.join(out)
+'''), ('dict', '''
+def solve_priced_edits(text):
+    tok = text.split()
+    ins, dele, rep = int(tok[0]), int(tok[1]), int(tok[2])
+    q = int(tok[3])
+    out = []
+    for k in range(q):
+        s, t = tok[4 + 2 * k], tok[5 + 2 * k]
+        memo = {}
+        def cost(i, j):
+            if (i, j) in memo:
+                return memo[(i, j)]
+            if i == len(s):
+                r = ins * (len(t) - j)
+            elif j == len(t):
+                r = dele * (len(s) - i)
+            else:
+                r = min(dele + cost(i + 1, j), ins + cost(i, j + 1), (0 if s[i] == t[j] else rep) + cost(i + 1, j + 1))
+            memo[(i, j)] = r
+            return r
+        out.append(str(cost(0, 0)))
+    return '\\n'.join(out)
+''')]
+TOPDOWN['ci-tolerant-common'] = [('lru', '''
+from functools import lru_cache
+def tolerant_common(a, b, tol):
+    @lru_cache(maxsize=None)
+    def best(i, j):
+        if i == 0 or j == 0:
+            return 0
+        if abs(a[i - 1] - b[j - 1]) <= tol:
+            return 1 + best(i - 1, j - 1)
+        return max(best(i - 1, j), best(i, j - 1))
+    return best(len(a), len(b))
+'''), ('dict', '''
+def tolerant_common(a, b, tol):
+    memo = {}
+    def best(i, j):
+        if i == 0 or j == 0:
+            return 0
+        if (i, j) not in memo:
+            if abs(a[i - 1] - b[j - 1]) <= tol:
+                memo[(i, j)] = 1 + best(i - 1, j - 1)
+            else:
+                memo[(i, j)] = max(best(i - 1, j), best(i, j - 1))
+        return memo[(i, j)]
+    return best(len(a), len(b))
+''')]
+TOPDOWN['ci-drop-point-routes'] = [('lru', '''
+from functools import lru_cache
+def drop_point_routes(grid):
+    R, K = len(grid), len(grid[0])
+    @lru_cache(maxsize=None)
+    def go(i, j, met):
+        if i >= R or j >= K or grid[i][j] == '#':
+            return 0
+        met = met or grid[i][j] == 'P'
+        if i == R - 1 and j == K - 1:
+            return 1 if met else 0
+        return (go(i + 1, j, met) + go(i, j + 1, met)) % (10 ** 9 + 7)
+    return go(0, 0, False)
+''')]
+TOPDOWN['ci-drop-point-routes'].append(('lru-gen', '''
+from functools import lru_cache
+def drop_point_routes(grid):
+    R, K = len(grid), len(grid[0])
+    @lru_cache(maxsize=None)
+    def go(i, j, met):
+        if i >= R or j >= K or grid[i][j] == '#':
+            return 0
+        met = met or grid[i][j] == 'P'
+        if i == R - 1 and j == K - 1:
+            return 1 if met else 0
+        return sum(go(i + di, j + dj, met) for di, dj in ((1, 0), (0, 1))) % (10 ** 9 + 7)
+    return go(0, 0, False)
+'''))
+TOPDOWN['ci-three-feed-common'] =[('lru', '''
+from functools import lru_cache
+def three_feed_common(a, b, c):
+    @lru_cache(maxsize=None)
+    def go(i, j, k):
+        if i == len(a) or j == len(b) or k == len(c):
+            return 0
+        if a[i] == b[j] == c[k]:
+            return 1 + go(i + 1, j + 1, k + 1)
+        return max(go(i + 1, j, k), go(i, j + 1, k), go(i, j, k + 1))
+    return go(0, 0, 0)
+''')]
+TOPDOWN['ci-hold-limit'] = [('lru', '''
+from functools import lru_cache
+def hold_value(weights, values, cap, k):
+    n = len(weights)
+    @lru_cache(maxsize=None)
+    def go(i, room, left):
+        if i == n or left == 0:
+            return 0
+        best = go(i + 1, room, left)
+        if weights[i] <= room:
+            best = max(best, values[i] + go(i + 1, room - weights[i], left - 1))
+        return best
+    return go(0, cap, k)
+''')]
+TOPDOWN['ci-trace-count'] = [('lru', '''
+from functools import lru_cache
+def trace_count(board, word):
+    R, K = len(board), len(board[0])
+    @lru_cache(maxsize=None)
+    def go(i, j, p):
+        if board[i][j] != word[p]:
+            return 0
+        if p == len(word) - 1:
+            return 1
+        t = 0
+        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            x, y = i + di, j + dj
+            if 0 <= x < R and 0 <= y < K:
+                t += go(x, y, p + 1)
+        return t % (10 ** 9 + 7)
+    return sum(go(i, j, 0) for i in range(R) for j in range(K)) % (10 ** 9 + 7)
+''')]
+TOPDOWN['ci-light-cargo'] = [('lru', '''
+from functools import lru_cache
+def light_cargo(weights, values, cap):
+    n = len(weights)
+    @lru_cache(maxsize=None)
+    def least(i, v):
+        if v <= 0:
+            return 0
+        if i == n:
+            return float('inf')
+        return min(least(i + 1, v), weights[i] + least(i + 1, v - values[i]))
+    return max(v for v in range(sum(values) + 1) if least(0, v) <= cap)
+''')]
+TOPDOWN['ci-long-mirrors'] = [('lru', '''
+from functools import lru_cache
+def long_mirrors(tape, k):
+    n = len(tape)
+    @lru_cache(maxsize=None)
+    def pal(i, j):
+        if i >= j:
+            return True
+        return tape[i] == tape[j] and pal(i + 1, j - 1)
+    return sum(1 for i in range(n) for j in range(i + k - 1, n) if pal(i, j))
+''')]
+
+def check_depth():
+    import inspect
+    for did, cands in TOPDOWN.items():
+        if did not in IDS:
+            continue
+        d = json.load(open(os.path.join(DRILLS, did + ".json")))
+        for label, code in cands:
+            ns = {}
+            exec(code, ns)
+            base = len(inspect.stack())
+            sys.setrecursionlimit(base + 340)
+            try:
+                for c in d["tests"] + d["examples"]:
+                    if eval(c["call"], ns) != eval(c["expect"]):
+                        err(f"{did}: top-down {label} fails {c['call'][:50]}")
+            except RecursionError:
+                err(f"{did}: top-down {label} goes deeper than 340 frames on {c['call'][:60]}")
+            finally:
+                sys.setrecursionlimit(20000)
+
+check_depth()
 check_stated()
 print(f"stated numbers recomputed: {len(stated_numbers())}")
 if len(IDS) == 15 and dict(diffs) != {2: 3, 3: 5, 4: 5, 5: 2}: err(f"difficulty mix {dict(diffs)}")

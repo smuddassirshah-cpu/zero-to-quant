@@ -14,7 +14,7 @@
     "ci-timed"
   ],
   "difficulty": 4,
-  "pace": 2040,
+  "pace": 1800,
   "fn": "three_feed_common",
   "returns": "an integer",
   "brief": "Three surveillance feeds record a trader's actions as strings of lower-case letters, one letter per action. An analyst wants the longest run of actions that appears, in order, in all three feeds, where the actions need not sit next to each other.\n\nWrite `three_feed_common(a, b, c)`, which returns the length of the longest string that is a subsequence of `a`, of `b` and of `c`. A subsequence keeps the order of the letters but may skip any of them.\n\nExample. For `'buyhold'`, `'bidsold'` and `'bolds'`, the string `'bold'` keeps its order in all three, and no five letters do. The answer is 4.",
@@ -131,9 +131,19 @@
       "call": "three_feed_common('ab' * 25, 'ba' * 25, 'a' * 25 + 'b' * 25)",
       "expect": "25",
       "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('zzyyxx', 'xyyzx', 'zxzyzz')",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "three_feed_common('yx', 'yx', 'y')",
+      "expect": "1",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method recurses on the three ends without remembering answers, branching three ways at every mismatch, so it runs out of time on strings of 50 letters. The step to the target is a three-dimensional table filled once per cell. Unlike the longest common subsequence of two strings, a third string is added, and solving two of them first and then the third does not work.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The obvious method recurses on the three ends without remembering answers, branching three ways at every mismatch, so it runs out of time on strings of 50 letters. The step to the target is a three-dimensional table filled once per cell. Unlike the longest common subsequence of two strings, a third string is added, and solving two of them first and then the third does not work. This is the standard table for three strings; only the data is new.",
   "solution": "def three_feed_common(a, b, c):\n    nb, nc = len(b), len(c)\n    prev = [[0] * (nc + 1) for _ in range(nb + 1)]\n    for x in a:\n        cur = [[0] * (nc + 1)]\n        for j in range(1, nb + 1):\n            y = b[j - 1]\n            up, diag, left = prev[j], prev[j - 1], cur[j - 1]\n            row = [0]\n            for k in range(1, nc + 1):\n                if x == y == c[k - 1]:\n                    row.append(diag[k - 1] + 1)\n                else:\n                    row.append(max(up[k], left[k], row[k - 1]))\n            cur.append(row)\n        prev = cur\n    return prev[nb][nc]\n",
   "notes": [
     "When the last letters of all three strings agree, keeping that letter is never worse, as with two strings.",
@@ -148,6 +158,10 @@
     {
       "code": "def three_feed_common(a, b, c):\n    def common(s, t):\n        prev = [0] * (len(t) + 1)\n        for x in s:\n            cur = [0]\n            for j, y in enumerate(t):\n                cur.append(prev[j] + 1 if x == y else max(prev[j + 1], cur[j]))\n            prev = cur\n        return prev[-1]\n\n    return min(common(a, b), common(b, c), common(a, c))\n",
       "slip": "The smallest of the three pairwise answers can be more than any string all three share."
+    },
+    {
+      "code": "def three_feed_common(a, b, c):\n    def common(s, t):\n        best = [[''] * (len(t) + 1) for _ in range(len(s) + 1)]\n        for i in range(1, len(s) + 1):\n            for j in range(1, len(t) + 1):\n                if s[i - 1] == t[j - 1]:\n                    best[i][j] = best[i - 1][j - 1] + s[i - 1]\n                else:\n                    best[i][j] = max(best[i - 1][j], best[i][j - 1], key=len)\n        return best[len(s)][len(t)]\n\n    return max(len(common(common(a, b), c)), len(common(common(b, c), a)), len(common(common(a, c), b)))\n",
+      "slip": "Matching one longest common subsequence of a pair with the third feed, for each of the three pairs, still keeps letters that the third feed cannot use."
     },
     {
       "code": "def three_feed_common(a, b, c):\n    def best(i, j, k):\n        if i == len(a) or j == len(b) or k == len(c):\n            return 0\n        if a[i] == b[j] == c[k]:\n            return 1 + best(i + 1, j + 1, k + 1)\n        return max(best(i + 1, j, k), best(i, j + 1, k), best(i, j, k + 1))\n\n    return best(0, 0, 0)\n",

@@ -7,18 +7,18 @@ Brief: `docs/briefs/drills-ci-packs-5-8.md`, row "Pack 7", on top of `docs/brief
 | `ci-drop-point-routes` | grid routes with blocked cells, through at least one drop point | dp | 2 | 1020 | no | 14 | 3 |
 | `ci-spaced-picks` | subsets with a minimum gap, in list order | backtracking | 2 | 960 | no | 12 | 3 |
 | `ci-long-mirrors` | palindromic substrings of length at least `k` | dp | 2 | 960 | no | 13 | 3 |
-| `ci-tolerant-common` | longest common subsequence, match within a tolerance | dp | 3 | 1440 | no | 12 | 3 |
+| `ci-tolerant-common` | longest common subsequence, match within a tolerance | dp | 3 | 1440 | no | 13 | 3 |
 | `ci-priced-edits` | edit distance with three prices | dp | 3 | 1500 | yes | 12 | 3 |
 | `ci-hold-limit` | 0/1 knapsack with a crate limit | dp | 3 | 1440 | no | 12 | 3 |
 | `ci-pillar-queens` | `q` queens on a board with pillars | backtracking | 3 | 1380 | no | 14 | 3 |
 | `ci-invoice-matches` | combinations with duplicates, at most `k` items | backtracking | 3 | 1320 | no | 12 | 3 |
 | `ci-trace-count` | word traces on a grid, revisits allowed, counted | dp | 4 | 1980 | no | 13 | 3 + slow |
-| `ci-mirror-pieces` | splitting a string into fewest palindromes | dp | 4 | 2040 | yes | 13 | 3 + slow |
-| `ci-three-feed-common` | longest common subsequence of three strings | dp | 4 | 2040 | no | 13 | 2 + slow |
+| `ci-mirror-pieces` | splitting a string into fewest palindromes | dp | 4 | 2040 | yes | 14 | 4 + 2 slow |
+| `ci-three-feed-common` | longest common subsequence of three strings | dp | 4 | 1800 | no | 15 | 3 + slow |
 | `ci-even-desks` | partition into two equal-size groups, closest sums | dp | 4 | 2040 | no | 12 | 2 + slow |
 | `ci-merged-tape` | ways a string interleaves two others | dp | 4 | 1980 | no | 15 | 3 + slow |
 | `ci-light-cargo` | 0/1 knapsack indexed by value, huge weights | dp | 5 | 2520 | no | 12 | 3 + slow |
-| `ci-smooth-orderings` | permutations with duplicates under a neighbour rule, counted | backtracking | 5 | 2700 | no | 13 | 3 + slow |
+| `ci-smooth-orderings` | permutations with duplicates under a neighbour rule, counted | backtracking | 5 | 2700 | no | 14 | 3 + 2 slow |
 
 Mix: three at 2, five at 3, five at 4, two at 5; two stdin drills (`ci-priced-edits`, `ci-mirror-pieces`). Every idea of the row is covered: grid paths with blocked cells (drop-point routes), edit distance (priced edits), longest common subsequence (tolerant common, three-feed common), 0/1 knapsack and partition into equal sums (hold limit, light cargo, even desks), palindromic substrings (long mirrors), subsets (spaced picks), permutations and combinations with duplicates (smooth orderings, invoice matches), placing queens (pillar queens), a word search on a grid (trace count), splitting a string into valid parts (mirror pieces). No problem of pack 6 is used (no climbing, tiling, coin change, decoding, word break, trading or maximum subarray).
 
@@ -34,7 +34,7 @@ Measured by `drills-ci-7-check.py --pyodide <pkgs>`: Pyodide 0.27.7 under node, 
 | `ci-mirror-pieces` | 0.11 s | over 12 s (stopped) | try every mirrored first piece and recurse, unremembered |
 | `ci-three-feed-common` | 0.10 s | over 12 s (stopped) | recurse on the three ends, unremembered |
 | `ci-even-desks` | 0.03 s | over 12 s (stopped) | every choice of `m` traders (`combinations`) |
-| `ci-merged-tape` | 0.07 s | over 12 s (stopped) | recurse on which feed gave the next letter, unremembered |
+| `ci-merged-tape` | 0.02 s | over 12 s (stopped) | recurse on which feed gave the next letter, unremembered |
 | `ci-light-cargo` | 0.04 s | over 15 s (stopped) | the knapsack table over weight |
 | `ci-smooth-orderings` | 0.04 s | over 12 s (stopped) | build each distinct sequence one at a time |
 
@@ -61,3 +61,10 @@ Every target is under 0.2 s, more than a factor of 25 inside the limit, and each
 `node tools/fresh-check.mjs --drill <id>`: 0 hits for all 15. Taught setups avoided by design: `count_paths` and `min_path_cost` (graphs-dp l16), so the grid drill counts routes through a drop point; `lcs_length` and `edit_distance` (l15), so the drills add a tolerance, prices or a third string; `knapsack` (l14) and `unbounded_knapsack` (homework-4), so the knapsacks add a crate limit or index by value; `n_queens` (l11), so the board has pillars and fewer guards than rows; `subsets`, `permutations` (l10), `combos` (l11) and `combination_sum` (homework-3), so the drills add a gap, a cap on `k` items or a neighbour rule; `longest_palindrome` (coding-int l6), so the palindrome drills count long stretches and cut into fewest pieces; `ci-board-words` (pack 4), so the grid word drill counts traces with revisits; `dsa-split-prices`, `dsa-free-desk-square` and `dsa-server-loads`; contests l11 (meet in the middle, a tour over subsets), so no drill asks for the best subset under a limit. Every example and test input was written for these drills. Each `how` ends with a sentence saying what changed from the classic and why it changes the code.
 
 `app/content/manifest.json` was rewritten by the validator and is not committed.
+
+## Fix pass (second read of pack 7)
+
+- Recursion depth. On the drill page Python stops silently about 450 to 500 frames deep (about 200 to 250 calls with a generator in each). The tests a top-down solution has to pass now stay under about 300 frames: `ci-merged-tape` at most 150 + 150 letters (tape 300), `ci-mirror-pieces` tapes of at most 150 letters, `ci-priced-edits` codes of at most 150, `ci-tolerant-common` feeds of at most 150 ticks. A search of my own found two more: `ci-long-mirrors` (a top-down `is_palindrome(i, j)` goes n / 2 calls deep, 500 on the old 1,000-letter test) now at most 300 letters, and `ci-drop-point-routes` (a generator in each call went 400 calls deep on a 200 by 200 floor) now at most 80 by 80. The other nine drills recurse at most 150 calls deep.
+- Confirmed in Chromium (`planted-check` on a scratch copy, my own solutions as `planted`): a top-down `@lru_cache` solution and a dict-memo solution pass every test of the four drills, and `@lru_cache` solutions pass `ci-drop-point-routes`, `ci-three-feed-common`, `ci-hold-limit`, `ci-trace-count` and `ci-light-cargo`. `drills-ci-7-check.py` now runs the same style of solutions at a limit of 340 frames.
+- Pyodide timings after resizing (`drills-ci-7-check.py --pyodide`): model `ci-merged-tape` 0.016 s, `ci-mirror-pieces` 0.015 s, `ci-three-feed-common` 0.094 s, `ci-smooth-orderings` 0.057 s. The ruled-out method (the last-but-one or last slow plant) is still cut off at 12 s on all four. In `planted-check` the two new slow plants (the cut-off search of `ci-mirror-pieces`, the formula-then-walk of `ci-smooth-orderings`) fail on the time limit.
+- `ci-merged-tape` has 15 tests, not the 16 the review's finding 10 counts: the validator allows at most 15, so the 300 by 299 length-mismatch test (now 150 by 149) was dropped; tests[3] and [7] still catch a missing length check.
