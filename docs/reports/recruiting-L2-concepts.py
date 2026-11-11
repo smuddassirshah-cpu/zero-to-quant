@@ -179,9 +179,12 @@ check('hw2-why-1 85 words is under 40 s', 85 / WPM * 60 < 40)
 m = h2['hw2-project-account']['widget']['model']
 paras = [p for p in m.split('\n\n') if re.match(r'^\*[^*]+\(about \d+ s\)\.\*', p)]
 n = sum(len(re.sub(r'^\*[^*]*\*', '', p).split()) for p in paras)
-check('hw2 project account is about 210 words', abs(n - 210) <= 12, 'counted %d' % n)
-check('hw2 210 words is 1 min 36 s to 1 min 37 s', 96 <= 210 / WPM * 60 <= 97.5, '%.1f s' % (210 / WPM * 60))
-check('hw2 section times 12+25+34+25 = 96 s', 12 + 25 + 34 + 25 == 96)
+check('hw2 project account is about 220 words', abs(n - 220) <= 5, 'counted %d' % n)
+check('hw2 counted words take 1 min 41 s (100.5 to 101.5 s)', 100.5 <= n / WPM * 60 <= 101.5, '%.1f s' % (n / WPM * 60))
+last = len(re.sub(r'^\*[^*]*\*', '', paras[-1]).split())
+check('hw2 last section is about 30 s', abs(last / WPM * 60 - 30) <= 1, '%d words, %.1f s' % (last, last / WPM * 60))
+check('hw2 stated figures in the model', 'about 220 words: 1 minute 41 seconds' in m and '(about 30 s)' in m)
+check('hw2 section times 12+25+34+30 = 101 s', 12 + 25 + 34 + 30 == 101)
 cv = h2['hw2-cv']['widget']['model']
 dates = re.findall(r'(?:[A-Z][a-z]{2} )?20\d\d to (?:[A-Z][a-z]{2} )?(?:20\d\d|now)', cv)
 month_style = [bool(re.match(r'[A-Z][a-z]{2} ', d)) for d in dates]
