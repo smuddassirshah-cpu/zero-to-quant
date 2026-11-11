@@ -15,7 +15,7 @@ of the bands. Exit 0 when all pass.
 
 Run: <scratchpad>/venv/bin/python docs/reports/problems-functions-numbers.py
 """
-import json, os, re, sys, itertools
+import json, math, os, re, sys, itertools
 from fractions import Fraction as F
 from math import isclose
 import sympy as sp
@@ -297,29 +297,40 @@ def level2(L):
     stated('candle 0.4 h in minutes', 24, (out - 10) * 60)
     pick(L, 'p-candle-burn', 4, 't-axis')
 
-    # p-path-and-pipe: A(-2, 1), B(4, 4), D(5, -3)
-    m1, c1 = line_through((-2, 1), (4, 4))
-    m1f, c1f = line_by_floats((-2, 1), (4, 4))
-    num(L, 'p-path-and-pipe', 1, m1, m1f, {'flipped': 1 / m1, 'lost-minus': F(3, 2)})
-    path = sp.Rational(1, 2) * x + 2
-    ok(c1 == 2 and isclose(c1f, 2), 'path: c = 2 two ways')
+    # p-path-and-pipe: A(-2, 1), B(5, 29), D(12, 23)
+    m1, c1 = line_through((-2, 1), (5, 29))
+    m1f, c1f = line_by_floats((-2, 1), (5, 29))
+    num(L, 'p-path-and-pipe', 1, m1, m1f, {'flipped': 1 / m1, 'lost-minus': F(28, 3)})
+    ok(L['p-path-and-pipe']['parts'][0]['widget']['tol']['abs'] == 0 and L['p-path-and-pipe']['parts'][0]['widget']['answer'] == 4, 'path: gradient 4 exact')
+    path = 4 * x + 9
+    ok(c1 == 9 and isclose(c1f, 9) and path.subs(x, 5) == 29, 'path: c = 9 two ways, B on the line')
     expr_part(L, 'p-path-and-pipe', 2, path, {
-        '0.5x+2': x / 2 + 2, '\\frac{x}{2}+2': x / 2 + 2, '\\frac{1}{2}x+2': x / 2 + 2, '2+0.5x': 2 + x / 2, '\\frac{x+4}{2}': (x + 4) / 2,
-        '0.5x+1': x / 2 + 1, '0.5x': x / 2, '2x+5': 2 * x + 5})
-    stated('path flipped c', 5, 1 - 2 * (-2))
+        '4x+9': 4 * x + 9, '9+4x': 9 + 4 * x,
+        '4x+1': 4 * x + 1, '4x-7': 4 * x - 7, '0.25x+1.5': x / 4 + sp.Rational(3, 2)})
+    stated('path c-first slip', 1, 1)
+    stated('path sign slip c', -7, 1 + 4 * (-2))
+    stated('path flipped slip c', 1.5, 1 - 0.25 * (-2))
     m2 = -1 / m1
     num(L, 'p-path-and-pipe', 3, m2, -1 / m1f, {'reciprocal': 1 / m1, 'negative': -m1, 'same': m1})
     ok(m1 * m2 == -1, 'path: gradients multiply to -1')
-    c2 = F(-3) - m2 * 5
-    pipe = -2 * x + 7
-    ok(c2 == 7 and sp.expand(pipe.subs(x, 5)) == -3, 'pipe: c = 7, passes D')
-    expr_part(L, 'p-path-and-pipe', 4, pipe, {'-2x+7': -2 * x + 7, '7-2x': 7 - 2 * x, '-2x-3': -2 * x - 3, '-2x-13': -2 * x - 13, '2x-13': 2 * x - 13})
-    stated('pipe sign slip c', -13, -3 + (-2) * 5)
-    stated('pipe reciprocal slip c', -13, -3 - 2 * 5)
+    c2 = F(23) - m2 * 12
+    pipe = -sp.Rational(1, 4) * x + 26
+    ok(c2 == 26 and sp.expand(pipe.subs(x, 12)) == 23, 'pipe: c = 26, passes D')
+    expr_part(L, 'p-path-and-pipe', 4, pipe, {
+        '-0.25x+26': -sp.Rational(1, 4) * x + 26, '26-0.25x': 26 - sp.Rational(1, 4) * x,
+        '-\\frac{x}{4}+26': -x / 4 + 26, '26-\\frac{x}{4}': 26 - x / 4, '-\\frac{1}{4}x+26': -x / 4 + 26,
+        '-0.25x+23': -x / 4 + 23, '-0.25x+20': -x / 4 + 20, '0.25x+20': x / 4 + 20})
+    stated('pipe sign slip c', 20, 23 + (-3))
+    stated('pipe reciprocal slip c', 20, 23 - 0.25 * 12)
     xm = sp.solve(sp.Eq(path, pipe), x)[0]
-    num(L, 'p-path-and-pipe', 5, xm, grid_zero(lambda v: (0.5 * v + 2) - (-2 * v + 7), -10, 10),
-        {'y-value': path.subs(x, xm), 'sign-x': F(5) / F(-3, 2), 'constants': F(9) / F(5, 2)}, agree=1e-7)
-    ok(path.subs(x, 2) == 3 and pipe.subs(x, 2) == 3, 'path and pipe meet at (2, 3)')
+    num(L, 'p-path-and-pipe', 5, xm, grid_zero(lambda v: (4 * v + 9) - (-0.25 * v + 26), -10, 10),
+        {'y-value': path.subs(x, xm), 'sign-x': F(17) / F(15, 4), 'constants': F(35) / F(17, 4)}, agree=1e-7)
+    ok(path.subs(x, 4) == 25 and pipe.subs(x, 4) == 25, 'path and pipe meet at (4, 25)')
+    # the foot of the perpendicular from D, by projection onto AB, is the same point and lies between A and B
+    dx, dy = 5 - (-2), 29 - 1
+    tproj = ((12 - (-2)) * dx + (23 - 1) * dy) / (dx * dx + dy * dy)
+    foot = (-2 + tproj * dx, 1 + tproj * dy)
+    ok(isclose(foot[0], 4) and isclose(foot[1], 25) and 0 < tproj < 1, 'pipe: foot by projection is (4, 25), between A and B')
 
     # p-two-gyms
     mB, cB = line_through((3, 104), (8, 194))
@@ -361,18 +372,22 @@ def level3(L):
     gbest = max(range(0, 2001), key=lambda i: Pf(i / 100)) / 100
     num(L, 'p-bakery-trays', 3, F(2 + 10, 2), gbest, {'half-top': 5, 'half-gap': 4})
     ok(vert == 6, 'bakery: vertex at 6 by calculus check')
-    num(L, 'p-bakery-trays', 4, P.subs(x, 6), max(Pf(i / 100) for i in range(0, 2001)), {'from-five': Pf(5), 'from-four': Pf(4), 'sign-square': 5 * 36 + 360 - 100})
-    pick(L, 'p-bakery-trays', 5, 'left')
+    pick(L, 'p-bakery-trays', 4, 'left')
+    num(L, 'p-bakery-trays', 5, P.subs(x, 6), max(Pf(i / 100) for i in range(0, 2001)), {'from-five': Pf(5), 'from-four': Pf(4), 'sign-square': 5 * 36 + 360 - 100})
     ok(all(Pf(v + 0.01) > Pf(v) for v in [i / 10 for i in range(0, 59)]) and all(Pf(v + 0.01) < Pf(v) for v in [6 + i / 10 for i in range(0, 60)]), 'bakery: rises below 6, falls above')
     stated('bakery P(2) check', 0, -20 + 120 - 100)
 
     # p-sledge-cyclist
     s = sp.Rational(1, 2) * t ** 2
     sf = lambda v: 0.5 * v * v
-    num(L, 'p-sledge-cyclist', 1, s.subs(t, 4), sf(4), {'no-square': 0.5 * 4, 'whole-square': (0.5 * 4) ** 2, 'no-half': 16})
-    num(L, 'p-sledge-cyclist', 2, F(8, 4), sf(4) / 4, {'times': 32, 'distance': 8})
+    num(L, 'p-sledge-cyclist', 1, s.subs(t, 5), sf(5), {'no-square': 0.5 * 5, 'whole-square': (0.5 * 5) ** 2, 'no-half': 25})
+    num(L, 'p-sledge-cyclist', 2, F(25, 2) / 5, sf(5) / 5, {'times': 12.5 * 5, 'distance': 12.5})
+    ok(sf(5) / 5 < 3, 'sledge: average over 5 s is below the cyclist 3 m/s')
     meet = [r for r in sp.solve(sp.Eq(s, 3 * t), t) if r > 0][0]
     num(L, 'p-sledge-cyclist', 3, meet, grid_zero(lambda v: sf(v) - 3 * v, 0.5, 20), {'no-half': 3, 'lost-t': sp.sqrt(6)}, agree=1e-7)
+    lostt = [z for z in L['p-sledge-cyclist']['parts'][2]['widget']['wrong'] if z['id'] == 'lost-t'][0]
+    ok(lostt['tol']['abs'] == 0.05 and abs(lostt['value'] - math.sqrt(6)) <= 0.05, 'sledge: lost-t band is 0.05 about sqrt 6')
+    ok(abs(2.5 - lostt['value']) > lostt['tol']['abs'] and abs(2 - lostt['value']) > lostt['tol']['abs'], 'sledge: a retyped 2.5 or 2 is outside the lost-t band')
     num(L, 'p-sledge-cyclist', 4, s.subs(t, meet), 3 * 6, {'from-three': 3 * 3, 'no-half': 36})
     pick(L, 'p-sledge-cyclist', 5, 'sledge')
     hh = 1e-6
@@ -396,6 +411,9 @@ def level3(L):
     ok(sum(1 for a, b in zip(signs, signs[1:]) if a != b) == 1, 'cultures: one crossing on 0 to 20')
     pick(L, 'p-two-cultures', 3, 'once')
     num(L, 'p-two-cultures', 4, cross, cross_b, {'midway': 3.5, 'whole-hour': 3, 'too-late': 3.4}, dp=1, agree=1e-9)
+    stated('cultures 2^3.3 given in the question', 9.849, 2 ** 3.3, 0.0005)
+    stated('cultures 2^3.4 given in the question', 10.556, 2 ** 3.4, 0.0005)
+    stated('cultures M ahead by 300 at 3 hours, restated in part 3', 300, Mf(3) - Nf(3))
     stated('cultures N(3.3)', 1970, Nf(3.3), 0.5)
     stated('cultures M(3.3)', 1990, Mf(3.3))
     stated('cultures N(3.4)', 2111, Nf(3.4), 0.5)
@@ -406,19 +424,22 @@ def level3(L):
     num(L, 'p-two-cultures', 5, Mf(3.3), Nf(float(cross)), {'at-three': Mf(3), 'at-four': Mf(4), 'n-at-three': Nf(3)}, dp=-2, agree=0.01)
     ok(abs(Nf(3.3) - 2000) <= 50 and abs(Mf(3.3) - 2000) <= 50, 'cultures: 1970 and 1990 both inside the band of 2000')
 
-    # p-track-cubic
-    h = x ** 3 - 6 * x ** 2 + 9 * x
-    hf = lambda v: v ** 3 - 6 * v ** 2 + 9 * v
-    num(L, 'p-track-cubic', 1, h.subs(x, 2), hf(2.0), {'all-plus': 8 + 24 + 18, 'cube-as-times': 6 - 24 + 18})
-    ok(sp.expand(x * (x - 3) ** 2 - h) == 0, 'track: factorised form')
-    numset(L, 'p-track-cubic', 2, sorted(set(sp.solve(h, x))), brute_whole(hf, 0, -100, 100), {'signs': [0, -3]})
+    # p-track-cubic: h(x) = x(x - 6)^2 on 0 <= x <= 8
+    h = x ** 3 - 12 * x ** 2 + 36 * x
+    hf = lambda v: v ** 3 - 12 * v ** 2 + 36 * v
+    num(L, 'p-track-cubic', 1, h.subs(x, 4), hf(4.0), {'all-plus': 64 + 192 + 144, 'cube-as-times': 12 - 192 + 144})
+    ok(sp.expand(x * (x - 6) ** 2 - h) == 0, 'track: factorised form')
+    numset(L, 'p-track-cubic', 2, sorted(set(sp.solve(h, x))), brute_whole(hf, 0, -100, 100), {'signs': [0, -6]})
     tp = sorted(sp.solve(sp.diff(h, x), x))
-    ok(tp == [1, 3] and h.subs(x, 3) == 0 and h.subs(x, 1) == 4, 'track: turning points (1, 4) and (3, 0)')
+    ok(tp == [2, 6] and h.subs(x, 6) == 0 and h.subs(x, 2) == 32, 'track: turning points (2, 32) and (6, 0)')
     pick(L, 'p-track-cubic', 3, 'middle')
-    ok(all(hf(v + 0.01) < hf(v) for v in [1 + i / 100 for i in range(1, 199)]), 'track: falls on 1 to 3')
-    sols = sorted(r for r in set(sp.solve(sp.Eq(h, 4), x)) if 0 <= r <= 4)
-    numset(L, 'p-track-cubic', 4, sols, [v for v in range(0, 5) if hf(v) == 4], {'roots': [0, 3], 'turns': [1, 3]})
-    stated('track h(4)', 4, 64 - 96 + 36)
+    ok(all(hf(v + 0.01) < hf(v) for v in [2 + i / 100 for i in range(1, 399)]), 'track: falls on 2 to 6')
+    ok(all(hf(v + 0.01) > hf(v) for v in [i / 100 for i in range(0, 199)]) and all(hf(v + 0.01) > hf(v) for v in [6 + i / 100 for i in range(1, 199)]), 'track: rises on 0 to 2 and on 6 to 8')
+    sols = sorted(r for r in set(sp.solve(sp.Eq(h, 32), x)) if 0 <= r <= 8)
+    numset(L, 'p-track-cubic', 4, sols, [v for v in range(0, 9) if hf(v) == 32], {'roots': [0, 6], 'turns': [2, 6]})
+    stated('track h(8)', 32, 512 - 768 + 288)
+    stated('track h(4)', 16, 64 - 192 + 144)
+    ok(sp.expand((x - 2) ** 2 * (x - 8) - (h - 32)) == 0, 'track: h(x) - 32 = (x - 2)^2 (x - 8)')
 
 
 run_level(3, level3)
