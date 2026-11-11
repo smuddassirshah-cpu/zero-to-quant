@@ -193,40 +193,47 @@ def run_level(nn, fn):
 
 # ================================================================== level 1
 def level1(L):
-    # cinema: (x+3)(x+8)
-    block = sp.expand((x + 3) * (x + 8))
-    ok(block == x**2 + 11*x + 24, 'cinema: expansion')
-    ok(all(sum(1 for r in range(xx + 3) for s in range(xx + 8)) == block.subs(x, xx) for xx in range(1, 15)), 'cinema: seat count by rows')
-    expr_part(L, 'p-cinema-block', 1, 'x^2+11x+24', {'corner': 'x^2+24', 'added': 'x^2+11x+11', 'swapped': 'x^2+24x+11'})
-    new = block - 6
-    ok(sp.factor(new) == (x + 2) * (x + 9), 'cinema: factor x^2+11x+18')
-    pairs = [(a, 18 // a) for a in range(1, 19) if 18 % a == 0 and a <= 18 // a]
-    ok([q for q in pairs if sum(q) == 11] == [(2, 9)], 'cinema: factor pair by search')
-    expr_part(L, 'p-cinema-block', 2, '(x+2)(x+9)', {'sum-nine': '(x+3)(x+6)', 'one-eighteen': '(x+1)(x+18)', 'signs': '(x-2)(x-9)'})
-    num(L, 'p-cinema-block', 3, ((x + 2) * (x + 9)).subs(x, 10), block.subs(x, 10) - 6,
-        {'kept': 13 * 18, 'sum-nine': 13 * 16, 'one-eighteen': 11 * 28})
-    stated('cinema: 12 x 19', 228, 12 * 19); stated('cinema: 100+110+24', 234, 100 + 110 + 24)
+    # cinema: (x+4)(x+11), 8 seats out
+    block = sp.expand((x + 4) * (x + 11))
+    ok(block == x**2 + 15*x + 44, 'cinema: expansion')
+    ok(all(sum(1 for r in range(xx + 4) for s in range(xx + 11)) == block.subs(x, xx) for xx in range(1, 25)), 'cinema: seat count by rows')
+    expr_part(L, 'p-cinema-block', 1, 'x^2+15x+44', {'corner': 'x^2+44', 'added': 'x^2+15x+15', 'swapped': 'x^2+44x+15'})
+    ok(4 + 11 == 15 and 4 * 11 == 44, 'cinema: strips 15x, corner 44')
+    new = block - 8
+    ok(new == x**2 + 15*x + 36 and sp.factor(new) == (x + 3) * (x + 12), 'cinema: factor x^2+15x+36')
+    pairs = [(a, 36 // a) for a in range(1, 37) if 36 % a == 0 and a <= 36 // a]
+    ok(pairs == [(1, 36), (2, 18), (3, 12), (4, 9), (6, 6)] and [sum(q) for q in pairs] == [37, 20, 15, 13, 12], 'cinema: pairs of 36 and their sums')
+    ok([q for q in pairs if sum(q) == 15] == [(3, 12)], 'cinema: factor pair by search')
+    expr_part(L, 'p-cinema-block', 2, '(x+3)(x+12)', {'sum-thirteen': '(x+4)(x+9)', 'square': '(x+6)^2', 'signs': '(x-3)(x-12)'})
+    ok(sp.expand((x + 4) * (x + 9)) == x**2 + 13*x + 36 and sp.expand((x + 6)**2) == x**2 + 12*x + 36, 'cinema: part 2 wrongs')
+    num(L, 'p-cinema-block', 3, ((x + 3) * (x + 12)).subs(x, 10), block.subs(x, 10) - 8,
+        {'kept': 14 * 21, 'sum-thirteen': 14 * 19, 'square': 16 * 16})
+    ok(sum(1 for r in range(13) for s in range(22)) == 286 and 294 - 8 == 286, 'cinema: 286 by counting seats')
+    stated('cinema: 13 x 22', 286, 13 * 22); stated('cinema: 100+150+44', 294, 100 + 150 + 44); stated('cinema: 14 x 21', 294, 14 * 21)
     pick(L, 'p-cinema-block', 4, 'no-middle')
-    kk = sp.solve(sp.Eq(2 * k, 11), k)[0]
-    ok(not kk.is_integer and kk == F(11, 2), 'cinema: 2k = 11 has k = 5.5')
-    ok(not any(sp.expand((x + kw)**2 - (x**2 + 11*x)).coeff(x, 1) == 0 for kw in range(-30, 31)), 'cinema: no whole k makes the middle term 11x')
-    ok(sp.expand((x + 4)**2) == x**2 + 8*x + 16 and sp.expand((x + 3)**2) == x**2 + 6*x + 9, 'cinema: distractor squares')
-    ok(24 - 8 == 16 and 24 - 15 == 9, 'cinema: seats taken out in distractors')
+    kk = sp.solve(sp.Eq(2 * k, 15), k)[0]
+    ok(not kk.is_integer and kk == F(15, 2), 'cinema: 2k = 15 has k = 7.5')
+    ok(not any(sp.expand((x + kw)**2 - (x**2 + 15*x)).coeff(x, 1) == 0 for kw in range(-30, 31)), 'cinema: no whole k makes the middle term 15x')
+    ok(sp.expand((x + 6)**2) == x**2 + 12*x + 36 and sp.expand((x + 5)**2) == x**2 + 10*x + 25, 'cinema: distractor squares')
+    ok(44 - 8 == 36 and 44 - 19 == 25 and math.isqrt(44)**2 != 44, 'cinema: seats taken out in distractors, 44 not a square')
 
-    # allotment
-    A = x**2 + 9*x + 20; B = 2*x**2 + 15*x + 28
-    ok(sp.factor(A) == (x + 4) * (x + 5), 'allotment: factor A')
-    expr_part(L, 'p-allotment-plots', 1, '(x+4)(x+5)', {'sum-twelve': '(x+2)(x+10)', 'sum-21': '(x+1)(x+20)'})
-    ok(sp.expand(sp.factor(B) - (x + 4) * (2*x + 7)) == 0, 'allotment: factor B')
-    ok([q for q in [(a, 56 // a) for a in range(1, 57) if 56 % a == 0] if sum(q) == 15] == [(7, 8), (8, 7)], 'allotment: split pair for ac = 56')
-    expr_part(L, 'p-allotment-plots', 2, '(x+4)(2x+7)', {'no-group': '(x+7)(x+8)', 'wrong-pair': '(2x+4)(x+7)'})
-    ok(sp.expand((2*x + 4) * (x + 7)) == 2*x**2 + 18*x + 28 and sp.expand((x + 7) * (x + 8)) == x**2 + 15*x + 56, 'allotment: slips expanded')
+    # allotment: A = (x+5)(x+6), B = (x+5)(2x+9)
+    A = x**2 + 11*x + 30; B = 2*x**2 + 19*x + 45
+    ok(sp.factor(A) == (x + 5) * (x + 6), 'allotment: factor A')
+    ok([q for q in [(a, 30 // a) for a in range(1, 31) if 30 % a == 0 and a <= 30 // a] if sum(q) == 11] == [(5, 6)], 'allotment: pair for 30 by search')
+    expr_part(L, 'p-allotment-plots', 1, '(x+5)(x+6)', {'sum-thirteen': '(x+3)(x+10)', 'sum-seventeen': '(x+2)(x+15)'})
+    ok(sp.expand((x + 3) * (x + 10)) == x**2 + 13*x + 30 and sp.expand((x + 2) * (x + 15)) == x**2 + 17*x + 30, 'allotment: part 1 slips expanded')
+    ok(sp.expand(sp.factor(B) - (x + 5) * (2*x + 9)) == 0, 'allotment: factor B')
+    ok([q for q in [(a, 90 // a) for a in range(1, 91) if 90 % a == 0] if sum(q) == 19] == [(9, 10), (10, 9)], 'allotment: split pair for ac = 90')
+    ok(sp.expand(2*x*(x + 5) + 9*(x + 5)) == B and sp.expand(2*x**2 + 10*x + 9*x + 45) == B, 'allotment: grouping')
+    expr_part(L, 'p-allotment-plots', 2, '(x+5)(2x+9)', {'no-group': '(x+9)(x+10)', 'wrong-pair': '(2x+5)(x+9)'})
+    ok(sp.expand((2*x + 5) * (x + 9)) == 2*x**2 + 23*x + 45 and sp.expand((x + 9) * (x + 10)) == x**2 + 19*x + 90, 'allotment: slips expanded')
     total = sp.factor(A + B)
-    ok(sp.simplify(total - 3 * (x + 4)**2) == 0, 'allotment: total factor')
-    expr_part(L, 'p-allotment-plots', 3, '3(x+4)^2', {'both-sides': '6(x+4)^2', 'lost-square': '3(x+4)'})
-    num(L, 'p-allotment-plots', 4, (3 * (x + 4)**2).subs(x, 6), A.subs(x, 6) + B.subs(x, 6),
+    ok(sp.simplify(total - 3 * (x + 5)**2) == 0 and sp.expand((x + 6) + (2*x + 9)) == 3*x + 15, 'allotment: total factor')
+    expr_part(L, 'p-allotment-plots', 3, '3(x+5)^2', {'both-sides': '6(x+5)^2', 'lost-square': '3(x+5)'})
+    num(L, 'p-allotment-plots', 4, (3 * (x + 5)**2).subs(x, 5), A.subs(x, 5) + B.subs(x, 5),
         {'three-squared': (3 * 10)**2, 'both-sides': 6 * 100})
-    stated('allotment: plot A at 6', 110, 10 * 11); stated('allotment: plot B at 6', 190, 10 * 19)
+    stated('allotment: plot A at 5', 110, 10 * 11); stated('allotment: plot B at 5', 190, 10 * 19)
 
     # steel plates
     steel = (6*x)**2 - 3**2
@@ -252,22 +259,22 @@ def level2(L):
     h = 15 + 10*t - 5*t**2
     # q from completing the square, then from the maximum on a grid
     q = sp.expand(h + 5 * (t - 1)**2)
-    ok(q.free_symbols == set(), 'stone: q is a number')
+    ok(q.free_symbols == set(), 'flare: q is a number')
     hmax = max(float(h.subs(t, i / 1000)) for i in range(0, 3001))
     num(L, 'p-cliff-stone', 1, q, hmax, {'sign': 15 - 5, 'no-five': 15 + 1})
     roots = sp.solve(sp.Eq(h, 0), t)
-    ok(sorted(roots) == [-1, 3], 'stone: sea roots')
+    ok(sorted(roots) == [-1, 3], 'flare: sea roots')
     land = [i / 1000 for i in range(1, 5001) if abs(float(h.subs(t, i / 1000))) < 1e-9]
     num(L, 'p-cliff-stone', 2, max(roots), land[0],
         {'negative': -1, 'no-root': 1 + 4, 'carried': 1 + math.sqrt(2)})
-    ok(sp.expand(5 * (t - 3) * (t + 1) - (5*t**2 - 10*t - 15)) == 0, 'stone: factorised check')
+    ok(sp.expand(5 * (t - 3) * (t + 1) - (5*t**2 - 10*t - 15)) == 0, 'flare: factorised check')
     top = sp.solve(sp.Eq(h, 15), t)
     numset(L, 'p-cliff-stone', 3, top, [z for z in range(-5, 6) if h.subs(t, z) == 15], {'sign': [0, -2]})
     e18 = sp.solve(sp.Eq(h, 18), t)
     g18 = [z for z in (1 - math.sqrt(0.4), 1 + math.sqrt(0.4))]
-    ok(all(abs(float(h.subs(t, z)) - 18) < 1e-9 for z in g18), 'stone: 18 m roots put back')
+    ok(all(abs(float(h.subs(t, z)) - 18) < 1e-9 for z in g18), 'flare: 18 m roots put back')
     numset(L, 'p-cliff-stone', 4, [float(z) for z in e18], g18, {'no-root': [0.6, 1.4], 'times-five': [1 - math.sqrt(10), 1 + math.sqrt(10)]}, dp=2)
-    stated('stone: sqrt 0.4', 0.632, math.sqrt(0.4), 5e-4)
+    stated('flare: sqrt 0.4', 0.632, math.sqrt(0.4), 5e-4)
 
     # bus
     gap = t**2 - (6*t - 10)
@@ -276,17 +283,22 @@ def level2(L):
     ok(min(float(gap.subs(t, i / 100)) for i in range(0, 1001)) > 0, 'bus: gap never zero on a grid')
     qq = sp.expand(gap - (t - 3)**2)
     num(L, 'p-bus-chase', 2, qq, min(float(gap.subs(t, i / 1000)) for i in range(0, 10001)), {'start': 10, 'halved': 10 - 3, 'sign': 10 + 9}, agree=1e-6)
-    sam = t**2 - 6*t + 7
-    ok(sp.expand(sam - ((t - 3)**2 - 2)) == 0, 'bus: Sam square form')
+    sam = t**2 - 6*t + 6
+    ok(sp.expand(sam - ((t - 3)**2 - 3)) == 0 and sp.expand(gap - sam) == 4, 'bus: Sam square form, 4 m less than Jo')
     sr = sorted(sp.solve(sam, t))
     first = next(i / 100000 for i in range(0, 1000000) if float(sam.subs(t, i / 100000)) <= 0)
-    num(L, 'p-bus-chase', 3, sr[0], first, {'larger': sr[1], 'half-root': 3 - math.sqrt(8), 'no-root': 3 - 2}, dp=2, agree=2e-5)
-    stated('bus: 3 - 1.414', 1.586, 3 - 1.414); stated('bus: sqrt 2', 1.414, math.sqrt(2), 5e-4)
+    num(L, 'p-bus-chase', 3, sr[0], first, {'larger': sr[1], 'half-root': 3 - math.sqrt(12), 'no-root': 3 - 3}, dp=2, agree=2e-5)
+    stated('bus: 3 - 1.732', 1.268, 3 - 1.732); stated('bus: sqrt 3', 1.732, math.sqrt(3), 5e-4)
+    ok(abs((6 - math.sqrt(36 - 4 * 6)) / 2 - float(sr[0])) < 1e-12, 'bus: Sam by the formula')
+    ok(abs(float(sam.subs(t, sr[0]))) < 1e-9, 'bus: Sam root put back')
     vs = sp.solve(sp.Eq(sp.discriminant(t**2 - v*t + 10, t), 0), v)
     vmin = max(vs)
     slow = next(i / 100000 for i in range(600000, 700000) if (i / 100000)**2 - 40 >= 0)
     num(L, 'p-bus-chase', 4, vmin, slow, {'no-root': 40, 'no-four': math.sqrt(10)}, dp=2, agree=2e-5)
     stated('bus: extra speed', 0.32, float(vmin) - 6, 5e-3)
+    ok(6.32**2 < 40 < 6.33**2, 'bus 4: 6.32 falls short of the bus, 6.33 reaches it')
+    wb = L['p-bus-chase']['parts'][3]['widget']
+    ok(wb['tol']['abs'] == 0.006 and all(abs(z - float(vmin)) <= wb['tol']['abs'] for z in (6.32, 6.325, 6.33)) and all(abs(z - float(vmin)) > wb['tol']['abs'] for z in (6.3, 6.31, 6.34)), 'bus 4: band takes 6.32, 6.325 and 6.33, refuses 6.3, 6.31 and 6.34')
 
     # cans
     tri = n * (n + 1) / 2
