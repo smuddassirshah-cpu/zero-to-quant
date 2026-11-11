@@ -107,6 +107,7 @@ Verdict counts are at the foot. Files are under `app/content/courses/random-vars
 | screens[6].prose | P(g(X) = y) = Σ_{x: g(x) = y} p_X(x) | correct | BH section 3.7 |
 | screens[6].widget.options | P((X − 7)² = 4) = 8/36; slips 4/36, 3/36, 16/36 | correct | totals 5 and 9 |
 | screens[7].widget.rows | Call payoff pmf 0.61, 0.30, 0.09 | correct | script |
+| screens[7].explain.text | The call pays something with chance only 0.39 | correct | 0.30 + 0.09; a chance, not a count of paths |
 | screens[8].widget | P(L = −1000) = 0.09 for L = −250X; slips 0.04, 0.13 | correct | script |
 | screens[8].explain.text | x ↦ −250x is one-to-one and reverses order | correct | strictly decreasing |
 | summary | Three ideas, formula, "apply g to the values, never to the probabilities" | correct | as above |
@@ -422,4 +423,4 @@ Verdict counts are at the foot. Files are under `app/content/courses/random-vars
 
 ## Counts
 
-Rows: 341. Verdicts: correct 329, imprecise 11, misleading 1, wrong 0, unverified 0. Three of the l12 rows marked imprecise are one finding (finding 1); the eleven imprecise rows map to findings 1 to 9 and the misleading row to finding 10. Many rows cover a key together with its slip values or a block of per-cell feedback lines; each value in such a row was recomputed singly, by hand or in the script.
+Rows: 342. Verdicts: correct 330, imprecise 11, misleading 1, wrong 0, unverified 0. Three of the l12 rows marked imprecise are one finding (finding 1); the eleven imprecise rows map to findings 1 to 9 and the misleading row to finding 10. Many rows cover a key together with its slip values or a block of per-cell feedback lines; each value in such a row was recomputed singly, by hand or in the script.

@@ -2,7 +2,7 @@
 
 Reader: Fable, 11 Nov 2026, blind to the round 1 audit (`audit-random-vars-1-3.md`), its ledger, its concepts and fix-read scripts and every earlier review until the ledger and the findings below were committed (commit "WIP"). Scope: lessons l1 to l12, `review-1` to `review-3`, `homework-1` to `homework-3`, `problems-1` to `problems-3`, `fluency-l9-measuring-spread.json`. Stage 1, full ledger.
 
-- Ledger: `docs/reports/audit-random-vars-1-3-r2-ledger.md`, 341 rows: correct 329, imprecise 11, misleading 1, wrong 0, unverified 0.
+- Ledger: `docs/reports/audit-random-vars-1-3-r2-ledger.md`, 342 rows: correct 330, imprecise 11, misleading 1, wrong 0, unverified 0.
 - Script: `docs/reports/random-vars-L1-3-concepts-r2.py`, 173 checks (exact recomputation of keys and slip values, the engine's seeded explore runs reproduced, Monte Carlo for each empirical claim), exit 0.
 
 ## Verdict
@@ -45,8 +45,37 @@ No claim in scope is false as stated. Every graded key, every `wrong[]` value an
 - `node tools/validate.mjs 2>&1 | tail -5` (from `app/`): 0 errors, 4863 warnings.
 - `python3 docs/reports/random-vars-L1-3-concepts-r2.py`: 173 checks, 0 failed, exit 0.
 - Course number scripts: `random-vars-1-perf-numbers.py` exit 0, `problems-random-vars-numbers.py` exit 0, `fluency-random-vars-numbers.py` exit 0. No `random-vars-L1..L3-numbers.py` exists in `docs/reports/`.
+- Round 1 scripts, run after the blind commit: `random-vars-L1-3-concepts.py` exit 0, `random-vars-L1-3-fixread.py` exit 0.
 - Playthrough: not run; no grading defect is suspected.
 
 ## Overlap with earlier reads
 
-Filled after the commit "WIP"; see the section below.
+Read after the blind commit `f7df39f2`: `docs/reviews/audit-random-vars-1-3.md` (round 1 findings, fix pass, fix-pass read and follow-up), `docs/reviews/review-1.5.md` (random-vars section and fix pass) and `docs/reviews/review-problems-1.5-a.md` to `-d.md` (searched for each of this round's ten findings). Only conceptual findings on levels 1 to 3 are counted.
+
+| Finding | This round | Earlier read |
+|---|---|---|
+| l12 summary and `screens[5]`: mix below the average of sds, no positive-weights condition | 1 | seen by round 1 and listed under "Notes that are not findings" (read for weights between 0 and 1); not raised |
+| l5 `screens[8]`: "more draws shrink that gap" | 2 | not found |
+| l5 `screens[7]`: "for any discrete random variable" | 3 | not found (round 1 noted that every variable in scope is finite) |
+| l6 `screens[9]`: days not said to be independent | 4 | not found |
+| review-2 `items[8]`: the same | 5 | not found |
+| l8 `screens[5]`: birthdays not said to be independent | 6 | not found |
+| homework-2 `items[2]`: the same | 7 | not found |
+| l12 `screens[7]`: "derived it with a Lagrange multiplier" | 8 | seen by round 1 and noted as sound ("exists and contains it"); the formula there comes from one derivative |
+| l7 `screens[6]` slip line: "fails here, because X depends completely on itself" | 9 | not found (round 1 findings 2 and 3 fixed five sibling strings of this class; this one was left) |
+| homework-2 `items[10]` part 4: "how many traders expect" | 10 | not found |
+| Round 1 audit findings 1 to 10 (two `wrong`: l7 `screens[2]`, l7 `quiz[2]` with homework-2 `items[6]`) | not found: fixed before this read; each fixed string is a `correct` row in this ledger | audit round 1 |
+| Round 1 fix-pass read: l10 `screens[9]` conditions of the √252 rule; l3 `screens[10]` "worst 5%" | not found: fixed; both strings are `correct` rows here | fix-pass read |
+| review-1.5 and review-problems-1.5: l6 `one-up` slip, l11 `count` slip, homework-2 overround, problems-3 % unit, problems-2 `carried` slip | not found: fixed; each value recomputed in the script | reviews |
+
+Counts: this round only 10; earlier reads only 17 (10 from the round 1 audit, 2 from its fix-pass read, 5 from the reviews); both 0. Two of the ten (1 and 8) were looked at by round 1 and judged not findings, so eight are new to every earlier read.
+
+New `wrong` findings that no earlier read found: **0**. There is no `wrong` in this round, so none sits on original text and none on fix-pass text. All ten findings are on original text: none of the 17 strings changed by the fix pass and its follow-up (`git diff d67c2d45~1 44205fb1`, eight files) is a finding path. Those 17 strings were each read again here as ledger rows and are `correct`.
+
+On the convergence rule (at most one new `wrong` per three levels): this round meets it with zero.
+
+One round 1 note is worth keeping in view and is not raised here either: homework-3 `items[6]` part (d) asks for the sd "if $\rho$ were 1", which these two-point marginals cannot reach; it is sound as a formula exercise.
+
+## Inbox
+
+Two bullets appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit random-vars, round 2):": a content lint for multi-step chances multiplied without "independent" in the prose (findings 4 to 7), and one for lessons cited by number (five strings in levels 1 to 3).
