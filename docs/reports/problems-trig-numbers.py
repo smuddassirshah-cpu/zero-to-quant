@@ -379,6 +379,88 @@ if L2:
     num(L2, 'p-observation-wheel', 5, 5 + (sp.pi - sp.Rational(3, 10) * sp.pi) / (sp.pi / 10), t2,
         {'no-shift': 7, 'half-period': 18, 'mirror-start': 2}, agree=1e-9)
 
+# ================================================================ LEVEL 3
+L3 = load(3)
+if L3:
+    explain_len(L3)
+    # ---- p-two-angles: second route is the angles themselves, found by inverse functions
+    Adeg = 180 - deg(math.asin(8 / 17))
+    Bdeg = deg(math.acos(24 / 25))
+    sA, cA, cB, sB = F(8, 17), F(-15, 17), F(24, 25), F(7, 25)
+    ok(sA**2 + cA**2 == 1 and sB**2 + cB**2 == 1, 'angles: both pairs satisfy the identity')
+    num(L3, 'p-two-angles', 1, cA, math.cos(rad(Adeg)),
+        {'sign': -cA, 'one-minus': 1 - sA, 'no-root': 1 - sA**2}, asked=-0.8824, printed=None)
+    num(L3, 'p-two-angles', 2, sB, math.sin(rad(Bdeg)),
+        {'negative': -sB, 'one-minus': 1 - cB, 'no-root': 1 - cB**2}, printed='0.28')
+    sAB, cAB = sA * cB + cA * sB, cA * cB - sA * sB
+    ok(sAB == F(87, 425) and cAB == F(-416, 425) and 87**2 + 416**2 == 425**2, 'angles: 87/425, -416/425 and the identity check')
+    num(L3, 'p-two-angles', 3, sAB, math.sin(rad(Adeg + Bdeg)),
+        {'sign': sA * cB - cA * sB, 'sum-of-sines': sA + sB, 'cos-formula': cAB}, asked=0.2047, printed='0.2047')
+    ok(sA * cB + (-cA) * sB == sA * cB - cA * sB, 'angles p3: the sign slip and the minus-formula slip give one value')
+    num(L3, 'p-two-angles', 4, cAB, math.cos(rad(Adeg + Bdeg)),
+        {'plus': cA * cB + sA * sB, 'sign': (-cA) * cB - sA * sB}, asked=-0.9788, printed='-0.9788')
+    ab_e = 180 - sp.asin(sp.Rational(87, 425)) / DEG
+    num(L3, 'p-two-angles', 5, ab_e, Adeg + Bdeg,
+        {'principal': deg(math.asin(87 / 425)), 'third': 180 + deg(math.asin(87 / 425)), 'fourth': 360 - deg(math.asin(87 / 425))},
+        asked=168.2, extra_ok=(180 - 11.8, deg(math.atan2(0.2047, -0.9788))), printed='168.2')
+    ok(abs(Adeg - 151.9) < 0.05 and abs(Bdeg - 16.3) < 0.05 and abs(deg(math.asin(0.2047)) - 11.8) < 0.05, 'angles p5: printed 151.9, 16.3, 11.8')
+
+    # ---- p-quadratic-in-sine
+    s = SYM['s']
+    lhs = sp.expand(2 * (1 - s**2) + 3 * s - 3)
+    ok(sp.simplify(lhs / (2 * s**2 - 3 * s + 1)) == -1, 'quad p1: substitution gives -(2s^2 - 3s + 1)')
+    expr_part(L3, 'p-quadratic-in-sine', 1, 2 * s**2 - 3 * s + 1,
+              {'not-distributed': s**2 - 3 * s + 2, 'cos-as-sin': 2 * s**2 + 3 * s - 3, 'moved-3': 2 * s**2 - 3 * s - 5}, equation=True)
+    ok(sp.expand((1 - s**2) + 3 * s - 3) == -(s**2 - 3 * s + 2), 'quad p1: the undistributed slip is s^2 - 3s + 2')
+    q = lambda v: 2 * v * v - 3 * v + 1
+    num_set(L3, 'p-quadratic-in-sine', 2, sp.solve(2 * s**2 - 3 * s + 1, s), [bisect(q, 0, 0.75), bisect(q, 0.75, 2)],
+            {'signs': [-0.5, -1], 'carried': [1, 2]})
+    zz = sp.Symbol('z'); ok(sorted(sp.solve(zz**2 - 3 * zz + 2, zz)) == [1, 2] and sorted(sp.solve(2 * zz**2 + 3 * zz + 1, zz)) == [-1, sp.Rational(-1, 2)], 'quad p2: slips solve their equations')
+    xx = sp.Symbol('x', real=True)
+    sols = sp.solveset(2 * sp.cos(xx)**2 + 3 * sp.sin(xx) - 3, xx, sp.Interval(0, 2 * sp.pi))
+    exact_deg = sorted(sp.nsimplify(v / DEG) for v in sols)
+    fx = lambda d: 2 * math.cos(rad(d))**2 + 3 * math.sin(rad(d)) - 3
+    brute = [d for d in range(0, 361) if abs(fx(d)) < 1e-12]
+    num_set(L3, 'p-quadratic-in-sine', 3, exact_deg, brute, {'cos-rule': [30, 90, 330], 'tan-rule': [30, 90, 210]})
+    ok(abs(math.sin(rad(330)) + 0.5) < 1e-12 and abs(math.sin(rad(210)) + 0.5) < 1e-12, 'quad p3: 330 and 210 have sine -0.5, so they are wrong')
+    expr_part(L3, 'p-quadratic-in-sine', 4, 5 * sp.pi / 6,
+              {'degrees': sp.Integer(150), 'middle': sp.pi / 2, 'half': 5 * sp.pi / 12})
+    ok(abs(max(sols, key=lambda v: float(v)) - 5 * sp.pi / 6) == 0 and abs(rad(max(brute)) - ev(5 * sp.pi / 6)) < 1e-12, 'quad p4: largest root two ways')
+
+    # ---- p-daylight-model
+    a3 = (F(164, 10) - F(76, 10)) / 2
+    Lm = lambda t: 4.4 * math.sin(math.pi / 6 * (t - 3)) + 12
+    g3 = [i / 1000 for i in range(0, 12001)]
+    num(L3, 'p-daylight-model', 1, a3, (max(map(Lm, g3)) - min(map(Lm, g3))) / 2,
+        {'range': 2 * a3, 'longest': 16.4, 'midline': 12}, agree=1e-6, printed='4.4')
+    ok(abs(Lm(6) - 16.4) < 1e-12 and abs(Lm(12) - 7.6) < 1e-12, 'daylight: the model gives 16.4 in month 6 and 7.6 in month 12')
+    expr_part(L3, 'p-daylight-model', 2, sp.pi / 6, {'period': sp.Integer(12), 'half-cycle': sp.pi / 3, 'flipped': 6 / sp.pi})
+    num(L3, 'p-daylight-model', 3, 6 - sp.Rational(12, 4), bisect(lambda t: Lm(t) - 12, 0.5, 5.5),
+        {'peak': 6, 'falling': 9, 'trough': 12}, agree=1e-9)
+    tt3 = sp.Symbol('t', real=True)
+    roots = sp.solveset(sp.Rational(22, 5) * sp.sin(sp.pi / 6 * (tt3 - 3)) + 12 - sp.Rational(71, 5), tt3, sp.Interval(0, 12))
+    num_set(L3, 'p-daylight-model', 4, list(roots), [bisect(lambda t: Lm(t) - 14.2, 3, 6), bisect(lambda t: Lm(t) - 14.2, 6, 9)],
+            {'no-shift': [1, 5], 'below': [2, 10]})
+    ok(abs(4.4 * math.sin(math.pi / 6 * 1) + 12 - 14.2) < 1e-12 and abs(Lm(2) - 9.8) < 1e-12 and abs(Lm(10) - 9.8) < 1e-12, 'daylight p4: slips solve their own equations')
+    above = sum(1 for t in g3[:-1] if Lm(t + 0.0005) > 14.2) / 1000
+    num(L3, 'p-daylight-model', 5, 8 - 4, above, {'outside': 12 - 4, 'counted': len(range(4, 9))}, agree=1e-3)
+
+    # ---- p-garden-bed
+    Cs = SYM['C']
+    expr_part(L3, 'p-garden-bed', 1, 30 * sp.sin(Cs), {'no-half': 60 * sp.sin(Cs), 'cos': 30 * sp.cos(Cs), 'angle': 30 * Cs}, syms=(Cs,))
+    tri = lambda c: abs(12 * 5 * math.sin(c)) / 2  # shoelace on (0,0), (12,0), 5(cos c, sin c)
+    shoe = lambda c: abs(12 * (5 * math.sin(c)) - 0 * (5 * math.cos(c))) / 2
+    ok(all(abs(shoe(c) - 30 * math.sin(c)) < 1e-12 for c in (0.4, 1.1, 2.5)), 'garden p1: shoelace area equals 30 sin C')
+    c1 = deg(bisect(lambda c: 30 * math.sin(c) - 18, 0.01, math.pi / 2))
+    c2 = deg(bisect(lambda c: 30 * math.sin(c) - 18, math.pi / 2, math.pi - 0.01))
+    num_set(L3, 'p-garden-bed', 2, [sp.asin(sp.Rational(3, 5)) / DEG, 180 - sp.asin(sp.Rational(3, 5)) / DEG], [c1, c2],
+            {'no-half': [deg(math.asin(0.3)), 180 - deg(math.asin(0.3))], 'cos-rule': [36.87, 360 - 36.87]}, asked=[36.87, 143.13])
+    num(L3, 'p-garden-bed', 3, sp.Rational(-4, 5), math.cos(rad(c2)), {'sign': 0.8, 'one-minus': 0.4, 'no-root': -0.64}, printed='-0.8')
+    far = (5 * math.cos(rad(c2)), 5 * math.sin(rad(c2)))
+    num(L3, 'p-garden-bed', 4, sp.sqrt(265), math.dist(far, (12, 0)),
+        {'sign': math.sqrt(73), 'pythagoras': 13, 'no-root': 265, 'no-two': math.sqrt(169 + 48)}, asked=16.28, printed='16.28')
+    ok(abs(math.sqrt(73) - 8.54) < 0.005, 'garden p4: printed 8.54')
+
 # ================================================================ report
 print(f'numbers: {checks} checks, {len(fails)} failures')
 for f in fails:
