@@ -1,6 +1,6 @@
 """Recompute every number in app/content/courses/testing/problems-<n>.json twice (docs/briefs/chained.md check 1).
 
-Levels 1, 2 and 4 so far. Method 1 is exact: sympy, with the likelihood, information or table written out and solved or
+Levels 1 to 4. Method 1 is exact: sympy, with the likelihood, information or table written out and solved or
 summed symbolically. Method 2 takes another route: a score root found numerically, information as the variance of
 the score by summing over the Poisson or exponential law, a Monte Carlo estimate (seeded) where a mean or variance is
 claimed, a brute search over n for a sample size. For each numeric part the script checks: the two methods agree;
@@ -389,6 +389,99 @@ if L2 is not None:
         {'flipped': 1 - share, 'power': 1 - b_, 'carried': 200 * b_ / (9800 * a_ + 200 * b_)}, agree=0.01, round_tol=0.005)
     ok(abs(131.1 / 483 - 0.27) < 0.005 and round(float(9800 * a_), 1) == 351.8 and round(float(200 * (1 - b_)), 1) == 131.1, 'p-blood-screen: printed 351.8, 131.1, 0.27')
     pick(L2, 'p-blood-screen', 5, 'right')
+
+def bh_count(pv, q):
+    """Benjamini-Hochberg by the rule: the largest rank k with p_(k) <= kq/N."""
+    s = sorted(pv)
+    N = len(s)
+    return max([k for k in range(1, N + 1) if s[k - 1] <= sp.Rational(k, 1) * q / N] or [0])
+
+
+L3 = load(3)
+if L3 is not None:
+    from statsmodels.stats.multitest import multipletests
+    Phi = stats.norm.cdf
+    # ---------- p-gene-screen: 40 genes, eight smallest p-values listed, the rest above 0.05 ----------
+    a = sp.Rational(1, 20)
+    fwer = 1 - (1 - a) ** 40
+    null_p = rng.uniform(size=(200000, 40))                                      # route 2: simulated null families
+    num(L3, 'p-gene-screen', 1, fwer, (null_p.min(axis=1) <= 0.05).mean(),
+        {'expected': 40 * a, 'no-complement': (1 - a) ** 40, 'single': a}, agree=0.003, round_tol=0.00006)
+    bonf = a / 40
+    fw_b = 1 - (1 - bonf) ** 40
+    num(L3, 'p-gene-screen', 2, fw_b, (null_p.min(axis=1) <= 0.00125).mean(),
+        {'bound': a, 'no-complement': (1 - bonf) ** 40, 'carried': fwer}, agree=0.002, round_tol=0.00006)
+    small = [sp.Rational(x) for x in ('0.0004', '0.0011', '0.0019', '0.0052', '0.0060', '0.0081', '0.0150', '0.031')]
+    rest = [sp.Rational(1, 10) + sp.Rational(i, 100) for i in range(32)]           # stand-ins for the other 32, all above 0.05
+    pv = small + rest
+    fl = [float(x) for x in pv]
+    nb = sum(1 for x in pv if x <= bonf)
+    num(L3, 'p-gene-screen', 3, nb, multipletests(fl, 0.05, 'bonferroni')[0].sum(),
+        {'unadjusted': sum(1 for x in pv if x < a), 'bh': bh_count(pv, a)})
+    first_fail = next(k for k in range(1, 41) if sorted(pv)[k - 1] > k * bonf) - 1
+    num(L3, 'p-gene-screen', 4, bh_count(pv, a), multipletests(fl, 0.05, 'fdr_bh')[0].sum(),
+        {'first-fail': first_fail, 'bonferroni': nb, 'unadjusted': sum(1 for x in pv if x < a)})
+    ok(first_fail == 3 and sp.Rational('0.0052') > 4 * bonf and sp.Rational('0.0060') <= 5 * bonf and 8 * bonf == sp.Rational(1, 100),
+       'p-gene-screen: rank 4 fails, rank 5 passes, rank-8 bar 0.01')
+    pick(L3, 'p-gene-screen', 5, 'right')
+
+    # ---------- p-fund-managers: 8 managers, H has SR 0.9 over 9 years, BH at q = 0.10 ----------
+    tH = sp.Rational(9, 10) * sp.sqrt(9)
+    num(L3, 'p-fund-managers', 1, tH, 0.9 / (1 / math.sqrt(9)), {'over-root': sp.Rational(9, 10) / 3, 'times-t': sp.Rational(81, 10)})
+    ok(round(Phi(2.7), 4) == 0.9965, 'p-fund-managers: Phi(2.7)')
+    pH = 1 - sp.Rational(9965, 10000)
+    num(L3, 'p-fund-managers', 2, pH, stats.norm.sf(2.7), {'two-sided': 2 * pH, 'lower': 1 - pH}, agree=5e-5, round_tol=0.00006)
+    others = [sp.Rational(x) for x in ('0.0006', '0.014', '0.052', '0.058', '0.09', '0.31', '0.62')]
+    q = sp.Rational(1, 10)
+    allp = others + [pH]
+    ff = next(k for k in range(1, 9) if sorted(allp)[k - 1] > k * q / 8) - 1
+    num(L3, 'p-fund-managers', 3, bh_count(allp, q), multipletests([float(x) for x in allp], 0.10, 'fdr_bh')[0].sum(),
+        {'first-fail': ff, 'bonferroni': sum(1 for x in allp if x <= q / 8), 'unadjusted': sum(1 for x in allp if x <= q)})
+    ok(bh_count(others + [1 - pH], q) == 2 and bh_count(others + [2 * pH], q) == 5, 'p-fund-managers p3: a lower-tail p gives 2; a doubled p still 5')
+    ok(1000 * 0.0035 < 4, 'p-fund-managers p2: fewer than 4 in 1,000')
+
+    # ---------- p-checkout-designs: 25 pages, best p 0.004, holdout p 0.03 ----------
+    p0 = sp.Rational(4, 1000)
+    mn = 1 - (1 - p0) ** 25
+    null25 = rng.uniform(size=(400000, 25)).min(axis=1)
+    num(L3, 'p-checkout-designs', 1, mn, (null25 <= 0.004).mean(),
+        {'single': p0, 'bonferroni': 25 * p0, 'no-complement': (1 - p0) ** 25}, agree=0.002, round_tol=0.00006)
+    sid = 1 - sp.Rational(95, 100) ** sp.Rational(1, 25)
+    sid_root = optimize.brentq(lambda p: 1 - (1 - p) ** 25 - 0.05, 1e-6, 0.1)
+    num(L3, 'p-checkout-designs', 2, sid, sid_root, {'bonferroni': sp.Rational(5, 100) / 25, 'no-root': sp.Rational(5, 100), 'power-25': 1 - sp.Rational(95, 100) ** 25},
+        round_tol=0.00006)
+    ok(round(float(sp.Rational(95, 100) ** sp.Rational(1, 25)), 6) == 0.99795 and 0.004 / float(sid) > 1.9, 'p-checkout-designs p2: 0.997950; 0.004 about twice it')
+    pick(L3, 'p-checkout-designs', 3, 'holdout')
+    p3 = sp.Rational(3, 100)
+    m3 = 1 - (1 - p3) ** 25
+    num(L3, 'p-checkout-designs', 4, m3, (null25 <= 0.03).mean(), {'single': p3, 'bonferroni': 25 * p3, 'no-complement': (1 - p3) ** 25},
+        agree=0.003, round_tol=0.00006)
+    ok(round(0.97 ** 25, 4) == 0.4670 and round(0.996 ** 25, 4) == 0.9047 and round(0.95 ** 40, 4) == 0.1285 and round(0.99875 ** 40, 4) == 0.9512,
+       'printed powers 0.4670, 0.9047, 0.1285, 0.9512')
+
+    # ---------- p-biomarker-field: 380 nulls, 20 real, bars |z| > 2 and |z| > 3 ----------
+    ok(round(2 * stats.norm.sf(2), 4) == 0.0455 and round(2 * stats.norm.sf(3), 4) == 0.0027, 'p-biomarker-field: tail chances 0.0455 and 0.0027')
+    m_real = 2 + stats.norm.ppf(0.9)                                               # a real centre that passes |z| > 2 with chance 0.9
+    ok(abs(stats.norm.sf(3 - m_real) + stats.norm.cdf(-3 - m_real) - 0.6) < 0.02, 'p-biomarker-field: power 0.9 at 2 goes with about 0.6 at 3')
+    p2, p3_ = sp.Rational(455, 10000), sp.Rational(27, 10000)
+    f2 = 380 * p2
+    nulls = rng.standard_normal((20000, 380))                                     # route 2: simulated fields of 380 nulls
+    num(L3, 'p-biomarker-field', 1, f2, (np.abs(nulls) > 2).sum(axis=1).mean() * float(p2) / (2 * stats.norm.sf(2)),
+        {'all-400': 400 * p2, 'one-sided': 380 * p2 / 2}, agree=0.05, round_tol=0.005)
+    real = rng.binomial(1, 0.9, size=(20000, 20)).sum(axis=1)                     # real finds at power 0.9
+    sh2 = f2 / (f2 + 18)
+    num(L3, 'p-biomarker-field', 2, sh2, float(f2) / (float(f2) + real.mean()),
+        {'true-share': 1 - sh2, 'over-400': f2 / 400, 'no-power': f2 / (f2 + 20)}, agree=0.003, round_tol=0.0006)
+    f3 = 380 * p3_
+    num(L3, 'p-biomarker-field', 3, f3, (np.abs(nulls) > 3).sum(axis=1).mean() * float(p3_) / (2 * stats.norm.sf(3)),
+        {'all-400': 400 * p3_, 'old-bar': f2}, agree=0.03, round_tol=0.0006)
+    sh3 = f3 / (f3 + 12)
+    real3 = rng.binomial(1, 0.6, size=(20000, 20)).sum(axis=1)
+    num(L3, 'p-biomarker-field', 4, sh3, float(f3) / (float(f3) + real3.mean()),
+        {'old-power': f3 / (f3 + 18), 'true-share': 1 - sh3, 'carried': 400 * p3_ / (400 * p3_ + 12)}, agree=0.002, round_tol=0.0006)
+    ok(round(float(f2 / f3)) == 17 and abs(1 - 0.9973 ** 380 - 0.64) < 0.005, 'p-biomarker-field: factor about 17; chance of any false find about 0.64')
+    pick(L3, 'p-biomarker-field', 5, 'trade')
+    prints(L3, 'p-biomarker-field', 2, ['0.490', '17.29'])
 
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
