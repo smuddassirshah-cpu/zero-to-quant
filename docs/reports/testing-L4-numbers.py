@@ -209,7 +209,7 @@ two(1240 / 20, 62, 0, 'non-overlapping windows'); E('l18', 'quiz[3].explain.text
 # ---------------------------------------------------------------- review-4
 two(Fr(16, 2), 2 * 4, 0, 'r-gamma shape 8'); E('review', 'items[0].widget.answer', 8)
 se_r = two(math.sqrt(0.55 * 0.45 / 400), 1 / math.sqrt(400 / 0.2475), 1e-15, 'r-se-hit'); E('review', 'items[2].widget.answer', r(se_r, 4)); E('review', 'items[2].explain.text', r(1.96 * se_r, 3))
-E('review', 'items[3].widget.answer', 0.8)
+E('review', 'items[3].widget.answer', 0.6)
 lr_r = two(2 * (60 * math.log(1.2) + 40 * math.log(0.8)), 2 * (stats.binom.logpmf(60, 100, 0.6) - stats.binom.logpmf(60, 100, 0.5)), 1e-9, 'r-lrt-coin')
 E('review', 'items[4].widget.answer', r(lr_r, 3)); E('review', 'items[4].explain.text', r(chi2sf(lr_r, 1), 4))
 T23 = np.array([[30, 50, 20], [20, 30, 50]]); r23 = stats.chi2_contingency(T23, correction=False)
@@ -299,6 +299,68 @@ planted = {
 }
 for name, src in planted.items():
     lv.claim(src != sol and fails(src, gw) > 0, f'homework code catches planted bug: {name}')
+
+# ---------------------------------------------------------------- fix pass: tolerances accept the key rounded to 2 places, and the corrected items
+def widget_at(file, *path):
+    o = J(file)
+    for k in path:
+        o = o[k]
+    return o['widget'], o
+
+
+def accepts(file, path, value):
+    w, _ = widget_at(file, *path)
+    return abs(float(value) - w['answer']) <= w['tol'].get('abs', 0) + 1e-9
+
+
+for file, path, exact, shown in [
+        ('l15-sharpness-of-the-peak', ('screens', 1), 7 / 0.6 - 3 / 0.4, 4.17),
+        ('l16-best-possible-precision', ('screens', 4), 20 / 9, 2.22),
+        ('l17-ratio-of-likelihoods', ('screens', 4), 2 * (120 * math.log(1.2) - 50 * 0.4), 3.76),
+        ('l17-ratio-of-likelihoods', ('screens', 10), 100 * math.log(1.345 / 1.00) + 100 * math.log(1.345 / 1.69), 6.81),
+        ('l17-ratio-of-likelihoods', ('screens', 2), sum(stats.binom.pmf(k, 20, 0.6) for k in range(15, 21)), 0.13),
+        ('l18-counts-against-expectations', ('screens', 1), chi2sf(5.4, 4), 0.25),
+        ('l15-sharpness-of-the-peak', ('screens', 7), math.sqrt(2 / 252), 0.09),
+        ('review-4', ('items', 8), 2 / math.sqrt(50), 0.28),
+        ('homework-4', ('items', 0), 0.8 ** 10, 0.11),
+        ('homework-4', ('items', 6), Phi(0.5 * 4 - 1.645), 0.64)]:
+    w, _ = widget_at(file, *path)
+    lv.claim(abs(w['answer'] - exact) < 6e-4, f'{file} {path} key {w["answer"]} equals {exact:.5g}')
+    lv.claim(accepts(file, path, shown), f'{file} {path}: the key rounded to {shown} is accepted (tol {w["tol"]})')
+    lv.claim(all(abs(x['value'] - w['answer']) > w['tol']['abs'] for x in w.get('wrong', [])), f'{file} {path}: wrong values stay outside the widened tolerance')
+# the two-place table readings and the hint sum
+lv.claim(accepts('homework-4', ('items', 6), 0.6368) and accepts('homework-4', ('items', 6), 0.6406), 'h-np-normal accepts both two-place table readings')
+lv.claim(accepts('l18-counts-against-expectations', ('screens', 3), 2 * 2.657) and accepts('l18-counts-against-expectations', ('screens', 3), 5.311), 'l18 s3 accepts double the hint sum 2.657')
+lv.claim(not accepts('l18-counts-against-expectations', ('screens', 3), 2.656), 'l18 s3 rejects the undoubled sum')
+Ob = np.array([62, 45, 48, 41, 54])
+two(13.337 - 4.741 - 1.959 - 8.136 + 4.156, np.sum(Ob * np.log(Ob / 50.0)), 0.002, 'l18 s3 column sum 2.656 (printed entries vs exact)'); two(2 * np.sum(Ob * np.log(Ob / 50.0)), 5.311, 0.001, 'l18 s3 G')
+# l17 s10: the accept line prints 29.639 and 22.833
+two(100 * math.log(1.345) + 100 * math.log(1.345 / 1.69), 6.806, 0.0006, 'l17 s10 total'); two(sum(100 * math.log(1.345 / v_) for v_ in (1.00,)), 29.639, 0.0006, 'l17 s10 first term'); two(-100 * math.log(1.345 / 1.69), 22.833, 0.0006, 'l17 s10 second term')
+E('l17', 'screens[10].widget.accept', 29.639); E('l17', 'screens[10].widget.accept', 22.833)
+# l15 q-overlap: 254 daily returns give 250 overlapping 5-day returns; 254 prices give 253 returns and 249 windows
+two(254 - 5 + 1, 250, 0, 'q-overlap windows from 254 returns'); two((254 - 1) - 5 + 1, 249, 0, 'prices route: 254 prices, 253 returns, 249 windows')
+two(len([i for i in range(254) if i + 5 <= 254]), 250, 0, 'q-overlap windows by enumeration')
+lv.claim('254 daily returns' in json.dumps(J('l15-sharpness-of-the-peak')['quiz'][1]) and '254 daily prices' not in json.dumps(J('l15-sharpness-of-the-peak')['quiz'][1]), 'q-overlap says 254 daily returns')
+# l14 s1: the order's chance rises to 0.7 then falls; the ratio is flat at 1/120
+oc = lambda p_: p_ ** 7 * (1 - p_) ** 3
+lv.claim(oc(0.5) < oc(0.7) and oc(0.9) < oc(0.7) and round(oc(0.7), 5) == 0.00222 and round(oc(0.9), 5) == 0.00048, 'l14 s1: the order chance moves, rising to 0.7 then falling')
+two(oc(0.7) / stats.binom.pmf(7, 10, 0.7), 1 / 120, 1e-12, 'l14 s1: ratio 1/120 at 0.7'); two(oc(0.3) / stats.binom.pmf(7, 10, 0.3), 1 / 120, 1e-12, 'l14 s1: ratio 1/120 at 0.3')
+# review-4 r-eff: bound 0.03, variance 0.05
+w_, it_ = widget_at('review-4', 'items', 3)
+two(Fr(3, 100) / Fr(5, 100), 0.6, 1e-12, 'r-eff 0.6'); two(0.03 / 0.05, 1 - 0.02 / 0.05, 1e-12, 'r-eff by 1 - gap/variance'); two(1 / 0.6, 1.6667, 1e-4, 'r-eff data ratio')
+lv.claim(w_['answer'] == 0.6 and [x['value'] for x in w_['wrong']] == [1.6667, 0.02], 'r-eff key 0.6 with wrong 1.6667 and 0.02 only')
+lv.claim('0.8' not in json.dumps(it_) and '0.04' not in json.dumps(it_) and '1.25' not in json.dumps(it_), 'r-eff keeps no trace of the old 0.04, 0.8, 1.25')
+# homework h-analyst: 40 equal-width cells on (-6, 6), n = 250, normal fitted at 0.05 and 1.2
+from scipy.integrate import quad
+edges = np.linspace(-6, 6, 41)
+Ec = 250 * np.diff(stats.norm.cdf(edges, 0.05, 1.2))
+Eq = [250 * quad(lambda x: math.exp(-(x - 0.05) ** 2 / 2.88) / math.sqrt(2 * math.pi * 1.44), a_, b_)[0] for a_, b_ in zip(edges[:-1], edges[1:])]
+Ei = [250 * (Phi((b_ - 0.05) / 1.2) - Phi((a_ - 0.05) / 1.2)) for a_, b_ in zip(edges[:-1], edges[1:])]
+lv.claim(int((Ec < 1).sum()) == sum(e < 1 for e in Eq) == sum(e < 1 for e in Ei) == 20, 'h-analyst: 20 of 40 cells expect under 1 (cdf, quadrature, standardised)')
+lv.claim(int((Ec < 5).sum()) == sum(e < 5 for e in Eq) == 26, 'h-analyst: 26 cells expect under 5')
+hwj = json.dumps(J('homework-4')['items'][7])
+lv.claim('20 cells had expected counts below 1' in hwj and 'With 20 cells expecting under 1' in hwj and '31' not in hwj, 'h-analyst prompt and model both say 20 and not 31')
+
 
 lv.check_wrongs()
 lv.report()

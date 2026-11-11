@@ -106,3 +106,36 @@ No finding touches a theorem's truth: the five `wrong` items are three grading o
 
 - A validator advisory for numeric keys whose own rounding is rejected: when `answer` has more decimal places than `tol` admits (the key rounded to 2 places, or to one place fewer than written, falls outside `tol`), warn. Findings 1, 2 and 12 are this class; the number-sense L4 review found the same class with π.
 - `fresh-check` does not read the literals inside a code item's `tests[].call` or `examples[].call`, so a homework code test that reuses a lesson's dataset (finding 22) is not reported.
+
+## Fix pass
+
+Basis sources: DeGroot and Schervish (DS) 4th ed.; Casella and Berger (CB) 2nd ed. All numbers recomputed twice (closed form and SciPy, quadrature or enumeration) in `docs/reports/testing-L4-numbers.py`.
+
+1. l17 s10: fixed. Tolerance 0.006 (6.81 accepted, 29.64 and -6.806 outside); accept line `29.639 - 22.833`. Check: 100 ln 1.345 = 29.639, 100 ln(1.345/1.69) = -22.833, total 6.806.
+2. l15 s1, l16 s4, l17 s4: fixed. Tolerance 0.005 each (4.17, 2.22, 3.76 accepted; every wrong value outside). Also widened for the same fault where the 2-place key is a natural answer: l17 s2 (0.1256, tol 0.005), l18 s1 (0.2487, tol 0.0015), l15 s7 (0.0891, tol 0.001), review-4 r-param (0.2828, tol 0.003), homework h-rb-zero (0.1074, tol 0.003); all `wrong[]` stay outside. Keys with tiny magnitude (0.0458, 0.0445, 0.024, 0.0099, 0.0249, 0.0025) left, since 2 places would erase them.
+3. homework h-analyst: fixed, 20 cells (not 31). Enumerated by normal cdf, by quadrature and by standardised cdf: 20 of 40 cells expect under 1, 26 under 5. Prompt and model both say 20; no other line of the item gives a count.
+4. l14 s1 `rises`: fixed. Order chance p^7 (1-p)^3 is 0.00222 at 0.7 and 0.00048 at 0.9, so it moves but does not rise throughout; option and `why` now say "moves".
+5. l15 q-overlap: fixed. 254 prices give 253 returns and 249 windows; 254 daily returns give 254 - 5 + 1 = 250 windows. Prose now says 254 daily returns.
+6. l13 s3: fixed (slope of the log-likelihood set to 0, no "score").
+7. l17 s4: fixed. Basis CB 8.2.1: lambda = sup over the null / sup over all, so 0 <= Lambda <= 1 and small values reject. Sentence inserted.
+8. l17: fixed. (a) "nested" defined in s6. (b) quiz[1] re-worded: normal is the t only as nu goes to infinity, the edge of the range (CB 10.3.1 needs the null to fix parameters inside the range). (c) "random effect" replaced by "a variance parameter".
+9. l16 s9: fixed. Basis CB 7.3.9: the bound holds for unbiased estimators; for sigma the 1/sqrt(2n) figure is asymptotic (CB 10.1.12). Sentence now "no unbiased estimator improves much on either figure".
+10. l17 s2 and summary: fixed. Basis DS 9.2 (Neyman-Pearson) and CB 8.3.12: the LRT maximises power among all tests with size at most alpha, so a smaller-size test (0.0156) is covered. Wording now "same size or smaller".
+11. l18 s2: fixed (upper-tail sentence). Basis DS 10.1: X^2 is a sum of squares, departures from the null only inflate it.
+12. l18 s3: fixed. Tolerance 0.005; the 2.656 `wrong` stays outside; hint now "about 2.656".
+13. homework h-np-normal: fixed. Tolerance 0.003; 0.6368 and 0.6406 accepted, 0.05, 0.3613 and 0.4113 outside.
+14. l15 s10: fixed (relative to its size). Mean SE sqrt(sigma^2/n) vs volatility sigma/sqrt(2n): ratio sqrt 2 in absolute terms, so the claim is relative.
+15. l16 s4 feedback `unbiased`: fixed (no Jensen).
+16. l17 summary 3: fixed (no "score tests").
+17. l16 summary 2: fixed. Basis CB 10.1.12: median efficiency is 2/pi only asymptotically (normal); (n-2)/n for (n-1)/sum x: variance lambda^2/(n-2) against bound lambda^2/n.
+18. l14 s3 and s8: fixed (unique MLE; "The MLE of lambda").
+19. l18 s10: fixed (p = 0.043 worded as rejection at 5%).
+20. l18 s7 `percent`: fixed (now an outcome).
+21. l15 s9: fixed (observed information defined).
+22. review-4 r-eff: fixed (0.03 over 0.05 = 0.6; wrong 1.6667 and 0.02). homework h-gof-code: left as the reader advised; its first test and example reuse the l18 s6 sample (30, 62, 56, 32, 20 split 12, 6, 2), not re-keyed by hand. Deferred.
+
+Changed graded values (old -> new, working):
+- review-4 r-eff answer 0.8 -> 0.6 (0.03/0.05); wrong inv 1.25 -> 1.6667 (0.05/0.03), wrong gap 0.01 -> 0.02 (0.05 - 0.03); accept line updated.
+- Tolerances: l17 s10 0.003 -> 0.006; l15 s1 0.001 -> 0.005; l16 s4 0.002 -> 0.005; l17 s4 0.002 -> 0.005; l17 s2 0.0005 -> 0.005; l18 s3 0.003 -> 0.005; l18 s1 0.001 -> 0.0015; l15 s7 0.0003 -> 0.001; homework h-np-normal 0.001 -> 0.003; homework h-rb-zero 0.0005 -> 0.003; review-4 r-param 0.0005 -> 0.003. `r-eff` wrong 1 tolerance 0.001 -> 0.005. No other answer or `wrong` value changed. h-analyst's 31 -> 20 is prose in an ungraded longform item.
+
+Gates: number script exit 0 (523 of 523). `read-numbers.py`: 402 of 404; the two failures are its hard-coded old values (r-eff 0.04/0.05 = 0.8, and "below1 == 31"), which now disagree with the corrected content on purpose. `run-code.py`: exit 0, all code items pass. Validator 0 errors. Voice scan: 0 explanations over three sentences; 1 sentence over 35 words, in homework-3 (level 3, not touched). Playthrough with `--local-cdn`, with and without `--mobile`: l13 to l18, review-4, homework-4 all pass (16 runs). `h-cr-poisson` and its rubric unchanged, so `testing-4-perf.md` is unchanged.
