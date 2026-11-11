@@ -2086,3 +2086,8 @@ Raised later (quadratics L4):
 Raised later (review testing 4):
 - [Could] validator advisory: a `numeric` key (or editable table cell) whose own rounding is rejected. When `answer` rounded to 2 places (keys of 1 or more), or to one place fewer than written, falls outside `tol`, warn. `testing` L4 had four (l15 s1 4.1667 at 0.001, l16 s4 2.2222 at 0.002, l17 s4 3.757 at 0.002, l17 s10 6.806 at 0.003, whose `accept` line itself prints the rejected 6.81); the probe is in `docs/reviews/testing-4-scripts/read-numbers.py` (tolerance probe).
 - [Could] `fresh-check`: read the number lists inside a code item's `tests[].call`, `tests[].setup` and `examples[].call`. `testing/homework-4` `h-gof-code` reuses the `l18` screen 6 sample (30, 62, 56, 32 and a tail of 20) as its first test and the tool reports 0 hits.
+
+Raised later (review quadratics 4):
+- [Could] `expression` with `form: "factorised"` accepts a numeric factor left uncancelled: `\frac{4(x+2)}{2}` grades correct for the key `2(x+2)` and `\frac{2x(x+2)}{2}` for `x(x+2)` (quadratics l15 screens 4 and 5; probe in `docs/reviews/quadratics-4-scripts/probe-grade.mjs`). A quotient by a number should fail the shape.
+- [Could] `plane` polygons: `label` sits at the centroid with no way to move it, so on a polygon that straddles an axis it lands on the tick labels (quadratics l18 screen 0, the "?" on the tilted square reads "4 ? 3" at 440 px). A `labelAt: [x, y]` on polygons, as functions have, would fix it.
+- [Could] `plane` function labels: with `labelAt` near the left edge the label is drawn to the left of the point and clipped at 440 px (quadratics l19 screens 0, 2 and 5, `labelAt: -7` on `y = x + k` reads ") = x + k"). Flip the label inside the plot when it would cross the edge.
