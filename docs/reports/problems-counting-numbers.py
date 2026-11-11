@@ -81,8 +81,8 @@ def check_numeric(item, k, value, slips, allowed=(), rounded=None):
 # Numbers a byKey line restates from an earlier part or from the slip's own working (each recomputed here).
 EXTRA = {
     ('p-tulip-bed', 3): [factorial(8), comb(8, 4)],                       # 1680 x 24 = 40320 carried; 70 groups
-    ('p-ice-cream-van', 2): [comb(11, 3) * 6 * 6],                         # 990 x 6 = 5940 cones from the part 1 slip
-    ('p-ice-cream-van', 3): [comb(11, 3) * comb(11, 3) * 6],               # 165 x 990 = 163350
+    ('p-ice-cream-van', 2): [comb(14, 3) * 6 * 6],                         # 364 x 6 x 6 = 13104 cones from the part 1 slip
+    ('p-ice-cream-van', 3): [comb(14, 3) * comb(14, 3) * 6],               # 364 x 2184 = 794976
     ('p-signal-flags', 2): [2 * factorial(6) // factorial(4)],             # 60, the doubled block
     ('p-signal-flags', 3): [factorial(7), 105 - 60, factorial(6) // factorial(4)],  # 5040, 45, 30
     ('p-leisure-centre', 3): [17 - 1],                                     # 17 x 16 ordered picks
@@ -199,7 +199,7 @@ check_numeric(it, 1, orders, {'four': 4, 'repeats': 4 ** 4})
 check_numeric(it, 2, rows, {'added': groups + orders, 'carried': perm(8, 4) * orders}, [perm(8, 4)])
 check_numeric(it, 3, beds, {'added': rows + 4, 'no-order': groups * 4, 'carried': perm(8, 4) * orders * 4})
 
-# p-team-photo: 7 players, captain C in the middle place (index 3), twins T1 T2 side by side
+# p-team-photo (netball line-up): 7 players, captain C in the middle place (index 3), twins T1 T2 side by side
 it = L1['p-team-photo']
 people = ['C', 'T1', 'T2', 'a', 'b', 'c', 'd']
 allp = list(itertools.permutations(people))
@@ -233,16 +233,21 @@ check_numeric(it, 1, matches, {'half': pairs // 2, 'carried': 56 * 2})
 check_numeric(it, 2, 9, {'halved': 36, 'one-factor': 8}, [56, 72])
 check_numeric(it, 3, cup, {'ordered': perm(9, 6), 'no-divide': perm(9, 3), 'times': 54}, [504])
 
-# p-ice-cream-van: 11 flavours, 3 scoops
+# p-ice-cream-van: 14 flavours, 3 scoops (renumbered from 11 in the 0.3 a fix pass)
 it = L1['p-ice-cream-van']
-cups = comb(11, 3); agree(cups, len(list(itertools.combinations(range(11), 3))), 'cups')
-cones = cups * 6; agree(cones, len(list(itertools.permutations(range(11), 3))), 'cones')
-items = cups + cones; agree(items, len(set(itertools.combinations(range(11), 3)) | set(('cone',) + q for q in itertools.permutations(range(11), 3))), 'items')
+cups = comb(14, 3); agree(cups, len(list(itertools.combinations(range(14), 3))), 'cups')
+agree(cups, 364, 'cups pinned')
+cones = cups * 6; agree(cones, len(list(itertools.permutations(range(14), 3))), 'cones')
+agree(cones, 2184, 'cones pinned')
+items = cups + cones; agree(items, len(set(itertools.combinations(range(14), 3)) | set(('cone',) + q for q in itertools.permutations(range(14), 3))), 'items')
+agree(items, 2548, 'items pinned')
 orders_ = items * 5; agree(orders_, len(list(itertools.product(range(items), ['t1', 't2', 't3', 't4', 'none']))), 'ice orders')
-check_numeric(it, 0, cups, {'ordered': 990, 'repeats': 11 ** 3, 'times': 33})
-check_numeric(it, 1, cones, {'times-three': cups * 3, 'added': cups + 6, 'carried': 990 * 6}, [990])
-check_numeric(it, 2, items, {'multiplied': cups * cones, 'carried': 990 + 5940})
+agree(orders_, 12740, 'purchases pinned')
+check_numeric(it, 0, cups, {'ordered': 14 * 13 * 12, 'repeats': 14 ** 3, 'times': 14 * 3}, [13])
+check_numeric(it, 1, cones, {'times-three': cups * 3, 'added': cups + 6, 'carried': 2184 * 6}, [2184, 13])
+check_numeric(it, 2, items, {'multiplied': cups * cones, 'carried': 2184 + 13104})
 check_numeric(it, 3, orders_, {'no-none': items * 4, 'added': items + 5, 'carried': cups * cones * 5})
+agree(len({364, 2184, 2548, 12740, 2744, 42, 1092, 370, 13104, 794976, 15288, 10192, 2553, 3974880}), 14, 'ice values distinct')
 
 # ================================================================= LEVEL 2
 L2 = load(2)
@@ -401,7 +406,7 @@ for n in (1, 2, 3):
         lv.expect('problems', 'items[0].parts[3].explain', 6720)
         lv.expect('problems', 'items[1].parts[3].explain', 192)
         lv.expect('problems', 'items[2].parts[3].explain', 84)
-        lv.expect('problems', 'items[3].parts[3].explain', 5775)
+        lv.expect('problems', 'items[3].parts[3].explain', 12740)
     if n == 2:
         lv.expect('problems', 'items[0].parts[3].explain', 0.714)
         lv.expect('problems', 'items[1].parts[3].explain', 0.043)

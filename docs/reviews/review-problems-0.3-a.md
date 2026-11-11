@@ -181,3 +181,45 @@ Run from the repo root; `<venv>` and `<pkgs>` are the scratchpad paths of `docs/
 - `fresh-grep.py [--wide]`: settings and numbers of each problem searched across the course, `counting-chance` and the exams.
 - `forms.py`: shape, skills, form sentences, restated values, reading load.
 - `skim.py <file> [width]`, `peek.py <file> <regex>`: one line per screen or item, for the lesson read.
+
+## Fix pass
+
+I recomputed every changed number before writing it: the 14-flavour counts by formula (`comb`, `perm`) and by enumeration of every cup, cone and item (`docs/reports/problems-counting-numbers.py`, now pinned to 364, 2184, 2548 and 12740, so a revert fails it), and each `wrong` value from its slip. The new stated figures are all restatements of earlier answers (720, 3500, 40 and 70, the vector components). `problems-counting-numbers.py`: 1759 checks, exit 0. `problems-functions-4-numbers.py`: 444 checks, exit 0. Engine graders (`grade-check.mjs` run on the fixed content, its stale rows for the old ice-cream totals and the one refused single fraction updated): 675 checks, 0 failures, 1 finding (sail ring part 4 takes the unopened route, deliberately, see finding 4). Status: fixed 15, disputed 0, deferred 0 (engine items are in the inbox).
+
+1. Orienteering part 5: fixed. The question restates the 3500 m and the grid scale; answer, `wrong` and feedback unchanged.
+2. Grain merchant part 4: fixed. The question restates h' = (40, 70) and d; answer 115 and `wrong` unchanged.
+3. Orienteering part 4 and power line part 5: fixed. Both restate the vectors and the 100 m scale; orienteering part 4 now says "Give a whole number of metres".
+4. Sail ring part 3: fixed with `"form": "simplified"` and a `byKey.form` line. Part 4 left without it, as asked. Engine graders on the fixed content: the key, both `accept` forms, $\tfrac{r+s}{3}$ and $\tfrac{r}{3}+\tfrac{s}{3}$ grade correct; $\tfrac{2}{3}(\tfrac{1}{2}r+\tfrac{1}{2}s)$ returns `form`.
+5. Orienteering parts 1 and 2, power line parts 1 and 2: fixed. Each says "Type it as (across, up), such as (3, -1)."
+6. Ice-cream van: fixed with 14 flavours, every line, prose, `wrong`, feedback and explain renumbered. Check: $\binom{14}{3} = \tfrac{14 \cdot 13 \cdot 12}{6} = 364$ and enumeration of 364 sets; $P(14,3) = 2184 = 364 \times 6$ and enumeration of 2184 stacks; $364 + 2184 = 2548$; $2548 \times 5 = 12740$. Reader's table agrees.
+7. Team photo: fixed. Prose now has a coach lining up the 7 players of a netball team to be introduced before a match. The item id stays.
+8. Team photo part 4: fixed. The question restates the 720 and asks how many of those also have the twins side by side; answer 192 unchanged.
+9. Ice-cream part 4: fixed. "purchases" replaces "orders" in the question and the explanation.
+10. Leisure centre part 4: fixed. The question opens with the 17/80 of part 3 and the reason for counting pairs.
+11. Leisure centre part 1 explanation: fixed, no S and G symbols.
+12. Quiz team part 3: fixed. "Using 330 teams in all and 5 with no girls".
+13. Car park part 2: fixed with `"form": "simplified"` and a `byKey.form` line. Engine graders: `2.5t-2`, `-2+2.5t`, `C(t)=2.5t-2`, `2.50t-2`, $\tfrac{5}{2}t-2$ pass; `3+2.5(t-2)`, `3+2.5t-5` and `2.5(t-2)+3` return `form`. The single fraction $\tfrac{5t-4}{2}$ is now refused with the `form` line (the engine item in the inbox), which I judge acceptable for a rarely typed form.
+14. Ticket bonus part 2: fixed with `"form": "simplified"` and a `byKey.form` line. `5n-100`, `-100+5n`, `5(n-20)` pass; `0.2(25n-500)` returns `form`.
+15. Photo mount parts 2 and 3, ticket bonus part 2: fixed. Each generic line ends with the sentence telling the learner to type the rule alone.
+
+Four engine bullets added to `docs/BACKLOG-INBOX.md` under `Raised later (review problems 0.3 a):`. Report tables: `docs/reports/problems-counting.md` (freshness paragraph) and `problems-functions-4.md` updated.
+
+Gates: validator 0 errors. `fresh-check.mjs --file` 0 hits on all four sets. Playthrough `--problems` with `--local-cdn`, four sets, desktop and `--mobile`: all passed. Voice scan 35 on `counting` and `functions`: 0 and 0. The reader's `mine.py` and `proposed.py` still hold the old ice-cream numbers and now report failures; they record the state at ee4f68a and were not edited.
+
+### Parts changed (for a delta reader to recompute)
+
+Counting problems-1 `p-ice-cream-van` (14 flavours in place of 11; answer, `accept` and `wrong` values):
+
+| part | answer old to new | `wrong` old to new |
+|---|---|---|
+| 1 | 165 to 364 | ordered 990 to 2184; repeats 1331 to 2744; times 33 to 42 |
+| 2 | 990 to 2184 | times-three 495 to 1092; added 171 to 370; carried 5940 to 13104 |
+| 3 | 1155 to 2548 | multiplied 163350 to 794976; carried 6930 to 15288 |
+| 4 | 5775 to 12740 | no-none 4620 to 10192; added 1160 to 2553; carried 816750 to 3974880 |
+
+Form added (`"form": "simplified"`, plus a `byKey.form` line; answers, `accept` and `wrong` values unchanged):
+- counting problems-3 `p-sail-ring` part 3 (key $\tfrac{1}{3}r + \tfrac{1}{3}s$).
+- functions problems-4 `p-car-park` part 2 (key $2.5t - 2$).
+- functions problems-4 `p-ticket-bonus` part 2 (key $5n - 100$).
+
+Nothing else changed a graded answer, band or `wrong` value; the other items are question, prose, explanation or generic-feedback wording.
