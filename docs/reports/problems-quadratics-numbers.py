@@ -445,12 +445,14 @@ def level4(L):
     num(L, 'p-windy-ride', 3, speed[0], 16 / 2, {'small-root': roots[0]})
     ratio = sp.simplify((9 / (v - 2)) / (16 / v))
     top4 = sp.cancel(ratio * 16 * (v - 2))
-    expr_part(L, 'p-windy-ride', 4, str(top4), {'not-flipped': '144', 'dropped-v': '9', 'whole': '9v/(16(v-2))'})
+    expr_part(L, 'p-windy-ride', 4, str(top4), {'not-flipped': '144', 'dropped-v': '9', 'whole': '9v/(16(v-2))', 'number': '72'})
     ok(sp.simplify(ratio - 9 * v / (16 * (v - 2))) == 0 and top4 == 9 * v, 'ride: ratio 9v / 16(v - 2), top 9v')
     # second route: the top is (9/(v-2)) / (16/v) times the stated bottom, at five points; flipping the wrong way does not give it
     ok(all(sp.Rational(9, k - 2) / sp.Rational(16, k) * 16 * (k - 2) == 9 * k for k in (3, 5, 8, 11, sp.Rational(1, 3))), 'ride: top 9v at five points')
     ok(all(sp.Rational(16, k) / sp.Rational(9, k - 2) * 16 * (k - 2) != 9 * k for k in (3, 5, 8, 11)), 'ride: the upside-down ratio has no top 9v over that bottom')
     p4 = L['p-windy-ride']['parts'][3]
+    ok(top4.subs(v, 8) == 72 == 9 * 8 and speed[0] == 8 and 'v = 8' in p4['feedback']['byKey']['number'], 'ride p4: the number slip 72 is the top at v = 8, the speed of part 3, and its line says v = 8 (finding 9)')
+    ok('fraction, and it is right' not in p4['feedback']['byKey']['whole'] and 'ratio' in p4['feedback']['byKey']['whole'], 'ride p4: the whole line no longer calls the typed-back ratio right')
     ok('16(v - 2)' in p4['question'] and 'Type the top' in p4['question'] and 'form' not in p4['widget'] and 'whole' in p4['feedback']['byKey'], 'ride p4: asks for the top, has a whole line')
     ok(L['p-windy-ride']['parts'][0]['feedback']['byKey'].get('whole') is not None, 'ride p1: whole line')
     ok(L['p-windy-ride']['parts'][2]['widget']['unit'] == 'km/h' and L['p-park-pond']['parts'][0]['widget']['unit'] == 'm' and L['p-storage-crate']['parts'][4]['widget']['unit'] == 'm\u00b3', 'units km/h, m, m3')

@@ -148,7 +148,7 @@ def pois_lrt(V):
     lhat = sp.Rational(s, n)
     ll = lambda lam: s * sp.log(lam) - n * lam          # Poisson log-likelihood, constants dropped
     key = 2 * (ll(lhat) - ll(lam0))
-    return key, {'not-doubled': key / 2, 'no-mean-term': 2 * s * sp.log(lhat / lam0)}
+    return key, {'not-doubled': key / 2, 'no-mean-term': 2 * s * sp.log(lhat / lam0), 'score-form': (s - n * lam0) ** 2 / sp.Integer(n * lam0)}
 
 
 def expected_cell(V):
@@ -175,7 +175,10 @@ def two_by_two(V):
     C = [t[0][j] + t[1][j] for j in range(2)]
     E = [[sp.Rational(R[i] * C[j], N) for j in range(2)] for i in range(2)]
     terms = [(t[i][j] - E[i][j]) ** 2 / E[i][j] for i in range(2) for j in range(2)]
-    return sum(terms), {'one-cell': terms[0], 'no-divide': sum((t[i][j] - E[i][j]) ** 2 for i in range(2) for j in range(2))}
+    obs = sum((t[i][j] - E[i][j]) ** 2 / t[i][j] for i in range(2) for j in range(2))                # divided by the observed counts
+    g = 2 * sum(t[i][j] * sp.log(t[i][j] / E[i][j]) for i in range(2) for j in range(2))                # the likelihood-ratio G
+    return sum(terms), {'one-cell': terms[0], 'no-divide': sum((t[i][j] - E[i][j]) ** 2 for i in range(2) for j in range(2)),
+                        'over-observed': obs, 'likelihood-ratio': g}
 
 
 def indep_df(V):
@@ -240,15 +243,12 @@ def extra():
         V = {k: float(it['vars'][k]) for k in ('n', 'lam0', 'dv')}
         s_, n, l0 = V['n'] * V['lam0'] + V['dv'], V['n'], V['lam0']
         tol = it['tol']['abs']
-        for places in (4, 5):         # the prompt says to keep at least 4 places: the log of the ratio, or the ratio itself
+        for places in (4, 5):         # the prompt says to keep the ratio as a fraction and at least 4 places in a logarithm
             lg = round(math.log(s_ / (n * l0)), places)
             x2 = 2 * (s_ * lg - V['dv'])
-            x2r = 2 * (s_ * math.log(round(s_ / (n * l0), places)) - V['dv'])
-            n_ += 2
+            n_ += 1
             if abs(x2 - it['answer']) > tol:
                 bad.append(('poisson-ratio log', it['seed'], places, x2, it['answer']))
-            if abs(x2r - it['answer']) > tol:
-                bad.append(('poisson-ratio ratio', it['seed'], places, x2r, it['answer']))
         n_ += 1
         if tol != 0.05 or any(abs(w['value'] - it['answer']) <= 2 * tol for w in it['wrong']):
             bad.append(('poisson-ratio band', it['seed']))
@@ -260,8 +260,62 @@ def extra():
     for it in ck.sample('fluency-l17-ratio-of-likelihoods', 'wilks-df'):
         p, r = int(it['vars']['p']), int(it['vars']['r'])
         n_ += 1
-        if f"{p - r} of them stay free" not in it['prompt'] or 'fixes' in it['prompt'] or it['answer'] != r:
+        if f"leaves {p - r} free" not in it['prompt'] or 'stay free' in it['prompt'] or it['answer'] != r:   # review-delta-holes finding 10: no 'Under the null hypothesis 1 of them stay free'
             bad.append(('wilks-df prompt', it['seed'], it['prompt']))
+    # ---- review-delta-holes findings 2 and 3: 200 draws each. The right working is accepted in every draw; every wrong method
+    # (its own formula, written here from the definition, not read from the family's lets) is refused in every draw. The engine's
+    # grader accepts a typed value v when |v - answer| <= tol, so "refused" means that distance exceeds the band.
+    for it in ck.sample('fluency-l18-counts-against-expectations', 'two-by-two'):
+        V = {k: float(it['vars'][k]) for k in 'abcd'}
+        O = [V['a'], V['b'], V['c'], V['d']]
+        N = sum(O)
+        r1, r2, c1, c2 = O[0] + O[1], O[2] + O[3], O[0] + O[2], O[1] + O[3]
+        Ex = [r1 * c1 / N, r1 * c2 / N, r2 * c1 / N, r2 * c2 / N]
+        x2 = sum((o - e) ** 2 / e for o, e in zip(O, Ex))
+        tol = it['tol']['abs']
+        right = [x2, sum((o - round(e, 2)) ** 2 / round(e, 2) for o, e in zip(O, Ex)),
+                 sum((o - round(e, 3)) ** 2 / round(e, 3) for o, e in zip(O, Ex))]
+        wrongs = {'over-observed': sum((o - e) ** 2 / o for o, e in zip(O, Ex)),
+                  'likelihood-ratio': 2 * sum(o * math.log(o / e) for o, e in zip(O, Ex)),
+                  'no-divide': sum((o - e) ** 2 for o, e in zip(O, Ex)),
+                  'one-cell': (O[0] - Ex[0]) ** 2 / Ex[0]}
+        n_ += len(right) + len(wrongs)
+        for v in right:
+            if abs(v - it['answer']) > tol:
+                bad.append(('two-by-two right working refused', it['seed'], v, it['answer']))
+        for k, v in wrongs.items():
+            if abs(v - it['answer']) <= tol:
+                bad.append(('two-by-two wrong method accepted', it['seed'], k, v, it['answer']))
+        n_ += 1
+        if abs(x2 - wrongs['over-observed']) <= 0.11 or abs(x2 - wrongs['likelihood-ratio']) <= 0.11 or abs(wrongs['likelihood-ratio'] - wrongs['over-observed']) <= 0.11:
+            bad.append(('two-by-two where clause: a slip is within 0.11 of the key', it['seed']))
+    for it in ck.sample('fluency-l17-ratio-of-likelihoods', 'poisson-ratio-test'):
+        n, l0, dv = float(it['vars']['n']), float(it['vars']['lam0']), float(it['vars']['dv'])
+        s_ = n * l0 + dv
+        tol = it['tol']['abs']
+        lr = 2 * (s_ * math.log(s_ / (n * l0)) - dv)
+        right = [lr] + [2 * (s_ * round(math.log(s_ / (n * l0)), p) - dv) for p in (4, 5)]
+        wrongs = {'score': dv ** 2 / (n * l0),
+                  'wald': dv ** 2 / s_,   # the Wald form, also refused by the same clause
+                  
+                  'not-doubled': lr / 2,
+                  'no-mean-term': 2 * s_ * math.log(s_ / (n * l0))}
+        n_ += len(right) + len(wrongs)
+        for v in right:
+            if abs(v - it['answer']) > tol:
+                bad.append(('poisson-ratio right working refused', it['seed'], v, it['answer']))
+        for k, v in wrongs.items():
+            if abs(v - it['answer']) <= tol:
+                bad.append(('poisson-ratio wrong method accepted', it['seed'], k, v, it['answer']))
+    # each new slip has its own wrong entry, so a learner who makes it gets its line, not the generic one
+    for fam_set, fam in (('fluency-l18-counts-against-expectations', 'two-by-two'), ('fluency-l17-ratio-of-likelihoods', 'poisson-ratio-test')):
+        for it in ck.sample(fam_set, fam)[:20]:
+            ids = {w['id'] for w in it['wrong']}
+            n_ += 1
+            if fam == 'two-by-two' and not {'over-observed', 'likelihood-ratio'} <= ids:
+                bad.append((fam, 'wrong entries missing', it['seed'], sorted(ids)))
+            if fam == 'poisson-ratio-test' and 'score-form' not in ids:
+                bad.append((fam, 'wrong entry missing', it['seed'], sorted(ids)))
     print('review-holes extra: %d checks, %d failures' % (n_, len(bad)))
     for b in bad[:20]:
         print('FAIL', b)
