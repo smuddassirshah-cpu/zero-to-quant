@@ -26,7 +26,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', '..', 'app', 'tools'))
 from numbers_lib import Level  # noqa: E402
 
-x, t, n, b = sp.symbols('x t n b', positive=True)
+x, t, n, b, u = sp.symbols('x t n b u', positive=True)
 TR = standard_transformations + (implicit_multiplication_application, convert_xor)
 
 
@@ -53,7 +53,7 @@ def tex2sp(s):
     s = frac(s)
     s = re.sub(r'e\^\{', ' exp{', s)
     s = s.replace('\\ln', ' log').replace('{', '(').replace('}', ')')
-    return parse_expr(s, local_dict={'x': x, 't': t, 'n': n, 'exp': sp.exp, 'log': sp.log}, transformations=TR)
+    return parse_expr(s, local_dict={'x': x, 't': t, 'n': n, 'u': u, 'exp': sp.exp, 'log': sp.log}, transformations=TR)
 
 
 def W(lv, i, j):
@@ -358,12 +358,134 @@ num(lv, 3, 4, first, true_first, {'linear': lin, 'one-short': first // 2})
 lv.claim(abs(pred[4] - 0.12) < 0.005 and abs(pred[8] - 0.031) < 0.0005 and abs(pred[16] - 0.0077) < 0.00005, 'L3 p-signal-average part 5: printed predictions 0.12, 0.031, 0.0077')
 
 lv.check_wrongs()
+lv3 = lv
+
+# ====================================================================== level 4
+lv = Level('integrals', 4)
+PI = math.pi
+
+
+def bisect(g, lo, hi, target, steps=80):
+    """Increasing g: the point where g crosses target."""
+    for _ in range(steps):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if g(mid) < target else (lo, mid)
+    return lo
+
+
+# p-impact-kernel: w(t) = 1 / (sqrt t (1 + sqrt t)(2 + sqrt t))
+wl = lambda q: 1 / (math.sqrt(q) * (1 + math.sqrt(q)) * (2 + math.sqrt(q)))
+lv.claim(all(wl(q) < 1 / (2 * math.sqrt(q)) for q in (1e-6, 0.01, 0.5, 1, 4, 100)), 'L4 p-impact-kernel part 1: w(t) < 1/(2 sqrt t)')
+bound = sp.limit(sp.integrate(1 / (2 * sp.sqrt(t)), (t, b, 4)), b, 0, '+')
+num(lv, 0, 0, bound, quad(lambda q: 0.5 / math.sqrt(q), 0, 4)[0], {
+    'no-half': sp.integrate(1 / sp.sqrt(t), (t, 0, 4)), 'unit-rule': sp.Rational(1, 2) * 1 / (1 - sp.Rational(1, 2))}, agree=1e-6)
+gu = 2 / ((1 + u) * (2 + u))
+lv.claim(sp.simplify(sp.integrate(wl_ := 1 / (sp.sqrt(t) * (1 + sp.sqrt(t)) * (2 + sp.sqrt(t))), t).subs(t, u ** 2)
+                     - sp.integrate(gu, u)).free_symbols == set(), 'L4 p-impact-kernel part 2: u = sqrt t turns w dt into 2 du/((1+u)(2+u))')
+lv.claim(sp.apart(gu, u) == 2 / (u + 1) - 2 / (u + 2), 'L4 p-impact-kernel part 2: cover-up A = 2, B = -2')
+expr(lv, 0, 1, sp.integrate(gu, u), integrand=gu, var=u, slips={
+    'sign': 2 * sp.log(2 + u) - 2 * sp.log(1 + u), 'no-two': sp.log(1 + u) - sp.log(2 + u), 'plus': 2 * sp.log(1 + u) + 2 * sp.log(2 + u)})
+I4k = sp.integrate(gu, (u, 0, 2))
+lv.claim(sp.simplify(I4k - 2 * sp.log(sp.Rational(3, 2))) == 0, 'L4 p-impact-kernel part 3: exact 2 ln(3/2)')
+num(lv, 0, 2, I4k, quad(wl, 0, 4, limit=200)[0], {
+    't-limits': sp.integrate(gu, (u, 0, 4)), 'sign': -I4k, 'no-two': I4k / 2}, printed=0.811, agree=1e-6)
+Gu = sp.integrate(gu, u)
+Iall = sp.simplify(sp.limit(Gu.subs(u, b), b, sp.oo) - Gu.subs(u, 0))
+lv.claim(sp.simplify(Iall - 2 * sp.log(2)) == 0, 'L4 p-impact-kernel part 4: exact 2 ln 2')
+num(lv, 0, 3, Iall, quad(wl, 0, 1, limit=200)[0] + quad(wl, 1, math.inf, limit=200)[0], {
+    'no-two': Iall / 2, 'sign': -Iall, 'top-only': sp.limit(2 * sp.log((1 + b) / (2 + b)), b, sp.oo)}, printed=1.386, agree=1e-6)
+share = I4k / Iall
+num(lv, 0, 4, share, quad(wl, 0, 4, limit=200)[0] / (quad(wl, 0, 1, limit=200)[0] + quad(wl, 1, math.inf, limit=200)[0]), {
+    'inverse': 1 / share, 't-limits': sp.integrate(gu, (u, 0, 4)) / Iall}, printed=0.585, agree=1e-6)
+lv.claim(abs(0.811 / 1.386 - 0.585) < 0.0005, 'L4 p-impact-kernel part 5: the restated 0.811 / 1.386 also gives 0.585')
+lv.claim(round(float(share) * 100) == 58, 'L4 p-impact-kernel part 5: about 58%')
+lv.claim(abs(1e8 ** 1.5 * wl(1e8) - 1) < 1e-3, 'L4 p-impact-kernel part 5: w(t) falls like t^{-3/2}')
+
+# p-flared-mouth: y = (1 - x^2)^{-1/4}, discs pi y^2 = pi / sqrt(1 - x^2)
+fm = lambda q: PI / math.sqrt(1 - q * q)
+bnd = sp.pi * sp.integrate((1 - x) ** sp.Rational(-1, 2), (x, 0, 1))
+num(lv, 1, 0, bnd, PI * quad(lambda q: (1 - q) ** -0.5, 0, 1)[0], {
+    'no-pi': bnd / sp.pi, 'p-plus': sp.pi / (1 + sp.Rational(1, 2))}, printed=6.283, agree=1e-6)
+lv.claim(all(1 / math.sqrt(1 - q * q) <= 1 / math.sqrt(1 - q) for q in (0, 0.3, 0.9, 0.9999)), 'L4 p-flared-mouth part 1: the comparison holds')
+Vh = sp.integrate(sp.pi / sp.sqrt(1 - x ** 2), (x, 0, sp.Rational(1, 2)))
+lv.claim(sp.simplify(Vh - sp.pi ** 2 / 6) == 0 and sp.asin(sp.Rational(1, 2)) == sp.pi / 6, 'L4 p-flared-mouth part 2: pi^2/6, theta limit pi/6')
+num(lv, 1, 1, Vh, quad(fm, 0, 0.5)[0], {
+    'x-limits': sp.pi * sp.Rational(1, 2), 'no-pi': Vh / sp.pi, 'tan-form': sp.pi * sp.atan(sp.Rational(1, 2))}, printed=1.645)
+Vw = sp.limit(sp.pi * sp.asin(b), b, 1, '-')
+num(lv, 1, 2, Vw, quad(fm, 0, 1, limit=200)[0], {
+    'no-pi': Vw / sp.pi, 'tan-form': sp.pi * sp.atan(1), 'x-limits': sp.pi * 1}, printed=4.935, agree=1e-6)
+lv.claim(float(Vw) < 2 * PI and float(Vw) < 5, 'L4 p-flared-mouth part 3: below the bound 2 pi and under 5')
+bh = sp.sin(sp.pi / 4)
+num(lv, 1, 3, bh, bisect(lambda q: quad(fm, 0, q)[0], 0, 1, PI ** 2 / 4), {'half-x': sp.Rational(1, 2), 'no-sine': sp.pi / 4}, printed=0.707, agree=1e-6)
+lv.claim(abs(1 - float(bh) - 0.293) < 0.0005, 'L4 p-flared-mouth part 4: the last 0.293 m')
+lv.claim(sp.simplify(Vh / Vw - sp.Rational(1, 3)) == 0, 'L4 p-flared-mouth part 4: x <= 1/2 holds a third')
+
+# p-dish-and-spindle: f(x) = x / ((x + 1)(x + 2)) on [0, 2]
+fd = x / ((x + 1) * (x + 2))
+fdl = sp.lambdify(x, fd)
+pf = sp.apart(fd, x)
+lv.claim(pf == -1 / (x + 1) + 2 / (x + 2), f'L4 p-dish-and-spindle part 1: apart gives {pf}')
+Bc = sp.limit(fd * (x + 2), x, -2)
+num(lv, 2, 0, Bc, fdl(-2 + 1e-9) * 1e-9, {'sign': -Bc, 'top-one': sp.limit((x + 2) / ((x + 1) * (x + 2)), x, -2)}, agree=1e-6)
+VYx = 2 * sp.pi * sp.integrate(x * fd, (x, 0, 2))
+lv.claim(sp.simplify(VYx - 2 * sp.pi * (2 + sp.log(3) - 4 * sp.log(2))) == 0, 'L4 p-dish-and-spindle part 2: exact form')
+lv.claim(sp.simplify(sp.apart(x * fd, x) - (1 + 1 / (x + 1) - 4 / (x + 2))) == 0, 'L4 p-dish-and-spindle part 2: division and split')
+lv.claim(sp.apart((3 * x + 2) / ((x + 1) * (x + 2)), x) == -1 / (x + 1) + 4 / (x + 2), 'L4 p-dish-and-spindle part 2: (3x + 2) split')
+nodiv = 2 * sp.pi * sp.integrate(1 / (x + 1) - 4 / (x + 2), (x, 0, 2))
+VXx = sp.pi * sp.integrate(fd ** 2, (x, 0, 2))
+num(lv, 2, 1, VYx, 2 * PI * quad(lambda q: q * fdl(q), 0, 2)[0], {
+    'no-divide': nodiv, 'no-2pi': VYx / (2 * sp.pi), 'disc': VXx}, printed=2.048)
+lv.claim(sp.simplify(VYx - nodiv - 4 * sp.pi) == 0, 'L4 p-dish-and-spindle part 2: the no-divide slip is short by 4 pi')
+lv.claim(abs(float(VYx / (2 * sp.pi)) - 0.326) < 0.0005, 'L4 p-dish-and-spindle part 2: integral alone 0.326')
+lv.claim(sp.simplify(fd ** 2 - (1 / (x + 1) ** 2 - 4 / ((x + 1) * (x + 2)) + 4 / (x + 2) ** 2)) == 0, 'L4 p-dish-and-spindle part 3: stated square')
+lv.claim(sp.simplify(VXx - sp.pi * (sp.Rational(5, 3) + 4 * sp.log(sp.Rational(2, 3)))) == 0, 'L4 p-dish-and-spindle part 3: exact form')
+lv.claim(sp.integrate(1 / (x + 1) ** 2, (x, 0, 2)) == sp.Rational(2, 3) and sp.integrate(4 / (x + 2) ** 2, (x, 0, 2)) == 1,
+         'L4 p-dish-and-spindle part 3: squares give 2/3 and 1')
+lv.claim(sp.simplify(sp.integrate(-4 / ((x + 1) * (x + 2)), (x, 0, 2)) + 4 * sp.log(sp.Rational(3, 2))) == 0, 'L4 p-dish-and-spindle part 3: middle term -4 ln(3/2)')
+I_f = sp.integrate(fd, (x, 0, 2))
+lv.claim(sp.simplify(I_f - sp.log(sp.Rational(4, 3))) == 0, 'L4 p-dish-and-spindle part 3: integral of f is ln(4/3)')
+num(lv, 2, 2, VXx, PI * quad(lambda q: fdl(q) ** 2, 0, 2)[0], {
+    'square-integral': sp.pi * I_f ** 2, 'no-square': sp.pi * I_f, 'cross-term': sp.pi * sp.Rational(5, 3)}, printed=0.141)
+lv.claim(abs(float(sp.pi * I_f ** 2) - 0.260) < 0.0005, 'L4 p-dish-and-spindle part 4: squared-integral V_x 0.260')
+ratio = VYx / VXx
+num(lv, 2, 3, ratio, (2 * PI * quad(lambda q: q * fdl(q), 0, 2)[0]) / (PI * quad(lambda q: fdl(q) ** 2, 0, 2)[0]), {
+    'inverse': 1 / ratio, 'square-integral': VYx / (sp.pi * I_f ** 2)}, printed=15, agree=1e-6)
+lv.claim(abs(float(VYx) - 2.0485) < 0.00005 and abs(float(VXx) - 0.1408) < 0.00005, 'L4 p-dish-and-spindle part 4: restated 2.0485 and 0.1408')
+lv.claim(round(2.0485 / 0.1408, 2) == 14.55 and round(float(ratio), 2) == 14.55 and round(float(ratio)) == 15, 'L4 p-dish-and-spindle part 4: 14.55, nearest 15')
+fmax = sp.maximum(fd, x, sp.Interval(0, 2))
+lv.claim(sp.simplify(fmax - fd.subs(x, sp.sqrt(2))) == 0 and abs(float(fmax) - 0.17) < 0.005, f'L4 p-dish-and-spindle part 4: max of f is f(sqrt 2) = {float(fmax):.4f}')
+
+# p-rubber-seal: disc (x - 3)^2 + y^2 <= 1 about the y-axis
+th = sp.Symbol('theta', real=True)
+shell = lambda q: 2 * PI * q * 2 * math.sqrt(max(0.0, 1 - (q - 3) ** 2))
+lv.claim(sp.simplify((2 * sp.pi * (3 + sp.sin(th)) * 2 * sp.cos(th) * sp.cos(th)) - 4 * sp.pi * (3 + sp.sin(th)) * sp.cos(th) ** 2) == 0,
+         'L4 p-rubber-seal prose: x = 3 + sin theta gives 4 pi (3 + sin theta) cos^2 theta')
+C2 = sp.integrate(sp.cos(th) ** 2, (th, -sp.pi / 2, sp.pi / 2))
+num(lv, 3, 0, C2, quad(lambda q: math.cos(q) ** 2, -PI / 2, PI / 2)[0], {
+    'x-limits': sp.integrate(sp.cos(th) ** 2, (th, 2, 4)), 'no-half': 2 * C2, 'quarter': sp.integrate(sp.cos(th) ** 2, (th, 0, sp.pi / 2))}, printed=1.571)
+S2 = sp.integrate(sp.sin(th) * sp.cos(th) ** 2, (th, -sp.pi / 2, sp.pi / 2))
+num(lv, 3, 1, S2, quad(lambda q: math.sin(q) * math.cos(q) ** 2, -PI / 2, PI / 2)[0], {
+    'half-range': sp.integrate(sp.sin(th) * sp.cos(th) ** 2, (th, 0, sp.pi / 2)),
+    'x-limits': sp.integrate(sp.sin(th) * sp.cos(th) ** 2, (th, 2, 4))}, printed=0, agree=1e-9)
+Vs = 4 * sp.pi * (3 * C2 + S2)
+lv.claim(sp.simplify(Vs - 6 * sp.pi ** 2) == 0, 'L4 p-rubber-seal part 3: 6 pi^2')
+num(lv, 3, 2, Vs, quad(shell, 2, 4, limit=200)[0], {
+    'no-half': 4 * sp.pi * 3 * 2 * C2, 'no-radius': 4 * sp.pi * C2, 'quarter': 4 * sp.pi * 3 * sp.pi / 4}, printed=59.22, agree=1e-6)
+lv.claim(abs(2 * PI ** 2 - 19.74) < 0.005, 'L4 p-rubber-seal part 4: 2 pi^2 is about 19.74')
+lv.claim(sp.simplify(Vs - sp.pi * 1 ** 2 * 2 * sp.pi * 3) == 0, 'L4 p-rubber-seal part 4: area times centre path')
+pick(lv, 3, 3, 'a')
+Rs = sp.solve(sp.Eq(2 * sp.pi ** 2 * sp.Symbol('R'), 100), sp.Symbol('R'))[0]
+num(lv, 3, 4, Rs, 3 * 100 / quad(shell, 2, 4, limit=200)[0], {
+    'no-half': 100 / (4 * sp.pi ** 2), 'area-times-R': 100 / sp.pi}, printed=5.07, agree=1e-6)
+lv.claim(abs(100 / (6 * PI ** 2) - 1.69) < 0.005 and abs(3 * 100 / (6 * PI ** 2) - float(Rs)) < 1e-12, 'L4 p-rubber-seal part 5: scale 1.69 gives the same R')
+
+lv.check_wrongs()
 
 # ---------------------------------------------------------------- report
 bad = []
-for L in (lv1, lv2, lv):
+for L in (lv1, lv2, lv3, lv):
     bad += [r for r in L.results if not r[0]]
-total = sum(len(L.results) for L in (lv1, lv2, lv))
+total = sum(len(L.results) for L in (lv1, lv2, lv3, lv))
 print(f'integrals problems: {total - len(bad)} of {total} checks passed')
 for r in bad:
     print('BAD', r[1], r[2])
