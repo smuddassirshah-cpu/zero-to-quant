@@ -79,3 +79,22 @@ One round 1 note is worth keeping in view and is not raised here either: homewor
 ## Inbox
 
 Two bullets appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit random-vars, round 2):": a content lint for multi-step chances multiplied without "independent" in the prose (findings 4 to 7), and one for lessons cited by number (five strings in levels 1 to 3).
+
+## Fix pass
+
+Fixer: Opus, 11 Nov 2026. Seven files changed: `l5`, `l6`, `l7`, `l8`, `l12`, `review-2`, `homework-2`. No key, option, slip value, test or code changed; prose, explain, feedback and summary strings only.
+
+1. fixed. Basis: $(w\sigma_X + (1-w)\sigma_Y)^2 - \operatorname{Var}(P) = 2w(1-w)\sigma_X\sigma_Y(1-\rho)$, positive only when $0 < w < 1$; recomputed the lesson's own short mix ($w = -0.27$, $\rho = 0.8$): sd 7.89% against a weighted average of 4.6%. The three pastes applied as proposed; the ideas line now says "weighted average", which the sentence needs once weights are named.
+2. fixed. Basis: the weak law bounds the chance of a large gap, not the gap on each run (Blitzstein and Hwang 10.2); a single seeded path can and does widen. Paste applied.
+3. fixed. Basis: Ross 4.3 and Blitzstein and Hwang 4.1 require $\sum |x| P(X=x) < \infty$ for countably many values; every variable in these levels is finite, and the uncapped game in `homework-2` is the counterexample. Paste applied.
+4. fixed. Basis: $P(\text{up, up}) = P(\text{up})P(\text{up} \mid \text{up})$, which is 0.16 only under an added assumption; "independently of the day before" is stated as the model's assumption, enough for the key (0.16 × £100 = £16, as only up, up ends above £102), not claimed as necessary.
+5. fixed. Basis: as 4; under the stated independence $0.25 \times (60.5 - 50) = 2.625$.
+6. fixed. Basis: $P(B_i = B_j) = \sum_d P(B_i = d)P(B_j = d) = 1/365$ under independence of uniform birthdays; independence is the stated model assumption that the key and the 0.5073 slip need.
+7. fixed. Basis: as 6, for $n$ people.
+8. fixed differently. Basis: read `multivar/l12-min-variance.json`: the general formula comes "from one derivative" after substituting $w_2 = 1 - w_1$, and a separate screen shows "a multiplier on $w_1 + w_2 = 1$ gives the same weights". New sentence: "The minimum variance portfolio lesson in Multivariable Calculus reaches the same weight by substitution and with a Lagrange multiplier." It names both methods that lesson uses and drops the lesson number.
+9. fixed differently. Basis: the proposed "guaranteed only for independent variables" repeats the necessary-condition error, since $E[XY] = E[X]E[Y]$ holds exactly when $X$ and $Y$ are uncorrelated. New line: "Independence would make that product rule safe, but $X$ is not independent of itself." For the die the gap is $\tfrac{91}{6} - \tfrac{49}{4} = \tfrac{35}{12} \ne 0$.
+10. fixed. Basis: the model answer and rubric give $40 \times \tfrac{1}{40} = 1$, an expected count; the prompt now asks for that quantity. Paste applied.
+
+Lessons cited by number (inbox bullet): the five strings replaced by titles. `l8` `screens[2].question`, `screens[7].explain` and `screens[8].explain` now cite "the long-run average lesson" (`l5` holds the indicator edge case); `homework-2` `items[3].explain` cites "the fair price lesson" (`l6` holds $E[X - c] = E[X] - c$); `l12` `screens[7].prose` under finding 8. Number citations in levels 4 and 5 (`l17` to `l20`) were left for the agent editing those levels.
+
+Gates: validator 0 errors, 4864 warnings; `random-vars-L1-3-concepts-r2.py`, `random-vars-L1-3-concepts.py`, `random-vars-L1-3-fixread.py`, `random-vars-1-perf-numbers.py`, `problems-random-vars-numbers.py`, `fluency-random-vars-numbers.py` all exit 0 (no check needed updating); voice scan 35: 0 sentences over, 0 explanations over three sentences; playthrough of the seven changed files, desktop and `--mobile`: all passed.
