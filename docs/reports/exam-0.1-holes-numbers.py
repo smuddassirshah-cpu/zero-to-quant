@@ -88,11 +88,12 @@ check(abs(C / math.pi - 15.92) < 0.005, 'e-pit-area diameter 15.92')
 numeric('e-pit-area', round(r1), {'diameter-as-radius': round(math.pi * (C / math.pi) ** 2),
                                    'half-round': round(math.pi * (C / 2) ** 2), 'edge-as-radius': round(math.pi * C ** 2)})
 
-# e-partner-number: HCF x LCM / 36, against a search over 1..1000
-r1 = 6 * 180 // 36
-r2 = [b for b in range(1, 1001) if math.gcd(36, b) == 6 and 36 * b // math.gcd(36, b) == 180]
-check(r1 == 30 and r2 == [30], f'e-partner-number 30 both routes, unique ({r2})')
-numeric('e-partner-number', r1, {'no-divide': 6 * 180, 'lcm-over': 180 / 36, 'upside-down': 6 * 36 / 180})
+# e-partner-number: HCF x LCM / 24, against a search over 1..2000
+r1 = 8 * 168 // 24
+r2 = [b for b in range(1, 2001) if math.gcd(24, b) == 8 and 24 * b // math.gcd(24, b) == 168]
+check(r1 == 56 and r2 == [56], f'e-partner-number 56 both routes, unique ({r2})')
+check(math.gcd(24, 24 * 8) == 24, 'e-partner-number slip 192 has HCF 24 with 24')
+numeric('e-partner-number', r1, {'no-divide': 8 * 168, 'lcm-over': 168 / 24, 'times-hcf': 24 * 8})
 
 # e-five-counts: the working, against every sorted 5-tuple of whole numbers 0..40
 sols = []
