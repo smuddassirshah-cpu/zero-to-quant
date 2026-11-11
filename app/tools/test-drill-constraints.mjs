@@ -60,7 +60,8 @@ const run = () => { const r = spawnSync('node', [path.join(copy, 'tools/validate
 const shipped = run();
 const warnCount = (shipped.match(/\[no-constraints\]/g) || []).length;
 check('as shipped: 0 errors', /\b0 errors\b/.test(shipped.split('\n').slice(-4).join('\n')), shipped.split('\n').slice(-4).join(' | '));
-check('as shipped: every non-sample drill warns once (none states machine constraints yet)', warnCount === real.length, `${warnCount} warnings for ${real.length} drills`);
+const noObj = real.filter(d => !(Array.isArray(d.constraints) && d.constraints.some(c => c && typeof c === 'object'))).length;
+check('as shipped: every non-sample drill without machine constraints warns once', warnCount === noObj, `${warnCount} warnings for ${noObj} drills without them (${real.length} drills)`);
 console.log(`note: ${warnCount} of ${real.length} drills carry [no-constraints]`);
 /* a synthetic drill, listed, edited per case */
 const base = JSON.parse(fs.readFileSync(path.join(HERE, 'fixtures/drill-page/drill-aa-page.json'), 'utf8'));
