@@ -1,0 +1,147 @@
+{
+  "id": "ci-long-stairwell",
+  "name": "Strides up a very tall tower",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-6",
+    "dp-1d",
+    "long-stairwell"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2040,
+  "fn": "stride_ways",
+  "returns": "a whole number",
+  "brief": "A climbing robot goes up a tower of `n` steps, starting at step 0 and stopping exactly on step `n`. Each stride climbs one of the numbers of steps in `strides`, and different orders of the same strides count as different climbs. Return the number of climbs, modulo `1_000_000_007`.\n\nWrite `stride_ways(n, strides)`.\n\nExample. For `n = 4` and `strides = [1, 2]` the climbs are 1+1+1+1, 1+1+2, 1+2+1, 2+1+1 and 2+2. The answer is 5.",
+  "constraints": [
+    "$0 \\le n \\le 10^{18}$. `strides` holds 1 to 8 different whole numbers from 1 to 8.",
+    "$O(m^3 \\log n)$ time is the target, where $m$ is the largest stride. A loop over the steps is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "n",
+      "type": "int",
+      "range": [
+        0,
+        1000000000000000000
+      ]
+    },
+    {
+      "arg": "strides",
+      "type": "list",
+      "len": [
+        1,
+        8
+      ],
+      "of": "int",
+      "range": [
+        1,
+        8
+      ],
+      "distinct": true
+    }
+  ],
+  "hint": "The count for step `i` is the sum of the counts `strides` below it, so the last `m` counts move forward by one fixed `m` by `m` matrix. Raise that matrix to the power `n` by repeated squaring.",
+  "starter": "def stride_ways(n, strides):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "stride_ways(4, [1, 2])",
+      "expect": "5",
+      "compare": "equal",
+      "note": "Five orders of 1s and 2s add up to 4."
+    },
+    {
+      "call": "stride_ways(7, [2, 3])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "The strides are two 2s and a 3, in 3 orders."
+    }
+  ],
+  "tests": [
+    {
+      "call": "stride_ways(0, [3])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(1, [2])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(5, [5])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(10, [1, 2])",
+      "expect": "89",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(12, [8, 4])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(30, [1, 3, 5])",
+      "expect": "390257",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(10 ** 18, [1])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(10 ** 18, [1, 2])",
+      "expect": "680057396",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(10 ** 18, [1, 2, 3, 4, 5, 6, 7, 8])",
+      "expect": "666198776",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(999999999999999989, [2, 7, 8])",
+      "expect": "577168887",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(123456789012345678, [3, 4])",
+      "expect": "885007370",
+      "compare": "equal"
+    },
+    {
+      "call": "stride_ways(10 ** 12, [1, 2, 3])",
+      "expect": "42418992",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. The obvious method keeps the last `m` counts and steps them forward one stair at a time, which is $O(n)$ and never finishes for $n$ near $10^{18}$. The step to the target is to write one step as a matrix and raise it to the power `n` by repeated squaring, which takes about 60 squarings. Unlike the usual stair count, `n` reaches $10^{18}$, so the table of counts is replaced by a power of its step matrix.",
+  "solution": "def stride_ways(n, strides):\n    mod = 1_000_000_007\n    m = max(strides)\n    step = [[0] * m for _ in range(m)]\n    for s in strides:\n        step[0][s - 1] = 1\n    for r in range(1, m):\n        step[r][r - 1] = 1\n\n    def mul(A, B):\n        C = []\n        for row in A:\n            out = [0] * m\n            for t, a in enumerate(row):\n                if a:\n                    for j, b in enumerate(B[t]):\n                        out[j] += a * b\n            C.append([x % mod for x in out])\n        return C\n\n    result = [[int(i == j) for j in range(m)] for i in range(m)]\n    while n:\n        if n & 1:\n            result = mul(result, step)\n        step = mul(step, step)\n        n >>= 1\n    return result[0][0]\n",
+  "notes": [
+    "The last `m` counts move one step by the same matrix every time, so `n` steps are the `n`th power of it.",
+    "The climb starts with a count of 1 on step 0 and 0 below it, which is why the answer is the top-left entry and not a row sum.",
+    "About $2 \\log_2 n$ products of $m$ by $m$ matrices make the work $O(m^3 \\log n)$."
+  ],
+  "planted": [
+    {
+      "code": "def stride_ways(n, strides):\n    mod = 1_000_000_007\n    m = len(strides)\n    step = [[0] * m for _ in range(m)]\n    for i, s in enumerate(sorted(strides)):\n        step[0][i] = 1\n    for r in range(1, m):\n        step[r][r - 1] = 1\n\n    def mul(A, B):\n        return [[sum(A[i][t] * B[t][j] for t in range(m)) % mod for j in range(m)] for i in range(m)]\n\n    result = [[int(i == j) for j in range(m)] for i in range(m)]\n    while n:\n        if n & 1:\n            result = mul(result, step)\n        step = mul(step, step)\n        n >>= 1\n    return result[0][0]\n",
+      "slip": "Sizing the matrix by the number of strides, not the largest stride, treats the strides as if they were 1, 2, 3 and so on."
+    },
+    {
+      "code": "def stride_ways(n, strides):\n    mod = 1_000_000_007\n    m = max(strides)\n    step = [[0] * m for _ in range(m)]\n    for s in strides:\n        step[0][s - 1] = 1\n    for r in range(1, m):\n        step[r][r - 1] = 1\n\n    def mul(A, B):\n        return [[sum(A[i][t] * B[t][j] for t in range(m)) % mod for j in range(m)] for i in range(m)]\n\n    result = [[int(i == j) for j in range(m)] for i in range(m)]\n    while n:\n        if n & 1:\n            result = mul(result, step)\n        step = mul(step, step)\n        n >>= 1\n    return sum(result[0]) % mod\n",
+      "slip": "Adding up the whole first row starts from a count of 1 on the steps below 0, where there should be none."
+    },
+    {
+      "code": "def stride_ways(n, strides):\n    mod = 1_000_000_007\n    m = max(strides)\n    window = [0] * (m - 1) + [1]\n    for _ in range(n):\n        nxt = sum(window[-s] for s in strides) % mod\n        window = window[1:] + [nxt]\n    return window[-1]\n",
+      "slip": "Stepping the last `m` counts forward one step at a time is right but takes $n$ steps, too slow."
+    }
+  ]
+}

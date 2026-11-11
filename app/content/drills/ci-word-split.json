@@ -1,0 +1,156 @@
+{
+  "id": "ci-word-split",
+  "name": "Fewest words in a run-together code",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-6",
+    "dp-1d",
+    "word-split"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2100,
+  "fn": "fewest_words",
+  "returns": "a whole number",
+  "brief": "A settlement system writes order codes run together without spaces. `words` lists the valid codes, and each may be used any number of times. Return the fewest codes that `text` splits into, reading it from start to end, or `-1` when it cannot be split.\n\nWrite `fewest_words(text, words)`.\n\nExample. For `text = 'bidaskbid'` and `words = ['bid', 'ask', 'bidask', 'kbi', 'd']`, the split `bid`, `ask`, `bid` uses three codes, but `bidask`, `bid` uses two. The answer is 2.",
+  "constraints": [
+    "`text` has 1 to 20,000 lower-case letters. `words` holds 1 to 5,000 different codes of 1 to 20 lower-case letters.",
+    "$O(n \\times L)$ set lookups is the target, where $L$ is the number of different code lengths. Plain recursion without a memo is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "text",
+      "type": "str",
+      "len": [
+        1,
+        20000
+      ],
+      "pattern": "[a-z]+"
+    },
+    {
+      "arg": "words",
+      "type": "list",
+      "len": [
+        1,
+        5000
+      ],
+      "distinct": true,
+      "of": {
+        "type": "str",
+        "len": [
+          1,
+          20
+        ],
+        "pattern": "[a-z]+"
+      }
+    }
+  ],
+  "hint": "Let `best[i]` be the fewest codes for the first `i` letters. For each code length `L`, if the `L` letters ending at `i` form a code, `best[i - L] + 1` is a candidate.",
+  "starter": "def fewest_words(text, words):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "fewest_words('bidaskbid', ['bid', 'ask', 'bidask', 'kbi', 'd'])",
+      "expect": "2",
+      "compare": "equal",
+      "note": "The long code `bidask` saves a piece over `bid` and `ask`."
+    },
+    {
+      "call": "fewest_words('payout', ['pa', 'pay', 'yout'])",
+      "expect": "2",
+      "compare": "equal",
+      "note": "Taking the longest code first, `pay`, leaves `out`, which cannot be split; `pa` then `yout` works."
+    }
+  ],
+  "tests": [
+    {
+      "call": "fewest_words('a', ['a'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('a', ['b'])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('abab', ['ab', 'a', 'b'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('abc', ['ab', 'bc'])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('fillfill', ['fill', 'fil', 'lf', 'l'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('xyzxy', ['x', 'y', 'z', 'xyz', 'zx', 'yzx'])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('pqrpqr', ['pq', 'rp', 'qr', 'p', 'pqrp'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('mmmmmmm', ['mm', 'mmm'])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('q' * 200, ['q', 'qq', 'qqq', 'qqqq', 'qqqqq'])",
+      "expect": "40",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttu', ['t', 'tt', 'ttt'])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('ab' * 10000, ['a', 'b', 'ab', 'ba', 'aba', 'bab', 'abab' * 5])",
+      "expect": "1000",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('c' * 19999 + 'd', ['c' * k for k in range(1, 21)] + ['cd'])",
+      "expect": "1001",
+      "compare": "equal"
+    },
+    {
+      "call": "fewest_words('ef' * 9999 + 'e', ['ef', 'fe', 'e', 'f' * 20])",
+      "expect": "10000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method is plain recursion that tries every code at the front and splits the rest, which repeats the same suffixes and runs out of time on the long runs of one letter. The step to the target is one table over the positions, each filled from the code lengths that end there. Unlike the yes-or-no word break, the answer is the fewest codes, so each position keeps a minimum instead of a flag.",
+  "solution": "def fewest_words(text, words):\n    vocab = set(words)\n    lengths = sorted({len(w) for w in words})\n    n = len(text)\n    big = n + 1\n    best = [0] + [big] * n\n    for i in range(1, n + 1):\n        b = big\n        for L in lengths:\n            if L > i:\n                break\n            if best[i - L] + 1 < b and text[i - L:i] in vocab:\n                b = best[i - L] + 1\n        best[i] = b\n    return best[n] if best[n] < big else -1\n",
+  "notes": [
+    "The fewest codes for the first `i` letters is one more than the best over the codes that end at `i`.",
+    "Greedy longest-first fails, as `payout` shows, so every code length must be tried at each position.",
+    "Each position checks at most 20 lengths with one set lookup each, so the work is $O(n \\times L)$."
+  ],
+  "planted": [
+    {
+      "code": "def fewest_words(text, words):\n    vocab = set(words)\n    longest = max(len(w) for w in words)\n    i, count = 0, 0\n    while i < len(text):\n        for L in range(min(longest, len(text) - i), 0, -1):\n            if text[i:i + L] in vocab:\n                i += L\n                count += 1\n                break\n        else:\n            return -1\n    return count\n",
+      "slip": "Taking the longest code at each point is a greedy that can strand the letters after it."
+    },
+    {
+      "code": "def fewest_words(text, words):\n    vocab = set(words)\n    lengths = sorted({len(w) for w in words})\n    n = len(text)\n    dead = set()\n    count = {n: 0}\n    stack = [0]\n    while stack:\n        i = stack[-1]\n        if i in count or i in dead:\n            stack.pop()\n            continue\n        for L in lengths:\n            j = i + L\n            if j <= n and text[i:j] in vocab and j not in dead:\n                if j in count:\n                    count[i] = count[j] + 1\n                    break\n                stack.append(j)\n                break\n        else:\n            dead.add(i)\n            stack.pop()\n    return count.get(0, -1)\n",
+      "slip": "Stopping at the first split found, trying short codes first, finds a split but not the fewest codes."
+    },
+    {
+      "code": "def fewest_words(text, words):\n    vocab = set(words)\n    longest = max(len(w) for w in words)\n\n    def go(i):\n        if i == len(text):\n            return 0\n        best = -1\n        for j in range(i + 1, min(len(text), i + longest) + 1):\n            if text[i:j] in vocab:\n                r = go(j)\n                if r >= 0 and (best < 0 or r + 1 < best):\n                    best = r + 1\n        return best\n\n    return go(0)\n",
+      "slip": "Plain recursion over every split is right but tries the same suffix again and again, too slow."
+    }
+  ]
+}

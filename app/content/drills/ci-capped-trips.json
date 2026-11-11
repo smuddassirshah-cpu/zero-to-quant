@@ -1,0 +1,159 @@
+{
+  "id": "ci-capped-trips",
+  "name": "A few trades with a fee",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-6",
+    "dp-1d",
+    "capped-trips"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2700,
+  "fn": "best_trips",
+  "returns": "a whole number",
+  "brief": "`prices` holds a share's price on each of `n` days. A trip is one buy and a later sale of one share; the trader holds at most one share and makes at most one trade a day. Each sale costs a broker's fee of `fee` pounds, and the trader may make at most `k` trips. Return the largest total profit after fees.\n\nWrite `best_trips(prices, k, fee)`.\n\nExample. For `[1, 6, 4, 9, 2, 8]`, `k = 2` and `fee = 1`, the trips 1 to 9 and 2 to 8 make 7 and 5 after fees. Three short trips would make more, but only two are allowed. The answer is 12.",
+  "constraints": [
+    "$1 \\le n \\le 3{,}000$ days with prices from 1 to 10,000; $1 \\le k \\le 30$; the fee is from 0 to 10,000 pounds.",
+    "$O(n \\times k)$ time is the target. Plain recursion over each day's choice is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "prices",
+      "type": "list",
+      "len": [
+        1,
+        3000
+      ],
+      "of": "int",
+      "range": [
+        1,
+        10000
+      ]
+    },
+    {
+      "arg": "k",
+      "type": "int",
+      "range": [
+        1,
+        30
+      ]
+    },
+    {
+      "arg": "fee",
+      "type": "int",
+      "range": [
+        0,
+        10000
+      ]
+    }
+  ],
+  "hint": "Keep two lists over the number of trips `j`: `hold[j]`, the best while holding the share of trip `j`, and `free[j]`, the best after `j` sales. Each day a sale moves `hold[j]` into `free[j]`, and a buy moves `free[j - 1]` into `hold[j]`.",
+  "starter": "def best_trips(prices, k, fee):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "best_trips([1, 6, 4, 9, 2, 8], 2, 1)",
+      "expect": "12",
+      "compare": "equal",
+      "note": "Joining 1 to 6 and 4 to 9 into one trip saves a trip and a fee."
+    },
+    {
+      "call": "best_trips([1, 6, 4, 9, 2, 8], 1, 1)",
+      "expect": "7",
+      "compare": "equal",
+      "note": "With one trip, 1 to 9 is best, making 8 less the fee."
+    }
+  ],
+  "tests": [
+    {
+      "call": "best_trips([5], 1, 0)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([3, 9], 1, 6)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([3, 9], 1, 2)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([9, 7, 4, 1], 3, 0)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([2, 5, 3, 6, 4, 7], 3, 0)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([2, 5, 3, 6, 4, 7], 3, 2)",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([2, 5, 3, 6, 4, 7], 1, 0)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([1, 10, 9, 20, 1, 4], 2, 0)",
+      "expect": "22",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([4, 8, 1, 3, 2, 9, 5, 6], 2, 1)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([6, 1, 3, 2, 8, 4, 9, 5, 7, 2, 10, 3, 4, 1, 6, 2, 9, 4, 3, 8, 1, 5, 7, 2, 6, 3, 9, 4, 8, 1, 7, 3, 5, 2, 9, 6, 4, 8, 1, 10], 6, 1)",
+      "expect": "43",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([(i * 7919 + i * i * 13) % 10000 + 1 for i in range(3000)], 30, 50)",
+      "expect": "293480",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([(i * 37) % 101 + 1 for i in range(3000)], 7, 0)",
+      "expect": "700",
+      "compare": "equal"
+    },
+    {
+      "call": "best_trips([1, 10000] * 1500, 30, 9998)",
+      "expect": "30",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method is plain recursion over (day, trips left, holding), which branches on each day and runs out of time on 40 days already. The step to the target is two lists over the trip count, updated once a day, so each state is worked out once. Unlike the usual trip limit with no costs, every sale pays a fee, so joining two rises into one trip can beat taking both.",
+  "solution": "def best_trips(prices, k, fee):\n    k = min(k, len(prices) // 2)\n    if k == 0:\n        return 0\n    hold = [-prices[0]] * (k + 1)\n    free = [0] * (k + 1)\n    for p in prices[1:]:\n        for j in range(k, 0, -1):\n            free[j] = max(free[j], hold[j] + p - fee)\n            hold[j] = max(hold[j], free[j - 1] - p)\n    return max(free)\n",
+  "notes": [
+    "Each day a sale moves `hold[j]` into `free[j]` and a buy moves `free[j - 1]` into `hold[j]`, so the lists hold the best of every plan so far.",
+    "Going through `j` from high to low uses yesterday's values in each update, so a share is never bought and sold on one day.",
+    "Each of the $n$ days updates $2k$ values, so the work is $O(n \\times k)$."
+  ],
+  "planted": [
+    {
+      "code": "def best_trips(prices, k, fee):\n    free, hold = 0, -prices[0]\n    for p in prices[1:]:\n        free, hold = max(free, hold + p - fee), max(hold, free - p)\n    return free\n",
+      "slip": "Solving the case with no limit on trips ignores `k`."
+    },
+    {
+      "code": "def best_trips(prices, k, fee):\n    gains = []\n    low = prices[0]\n    for a, b in zip(prices, prices[1:] + [0]):\n        if b < a:\n            if a - low > fee:\n                gains.append(a - low - fee)\n            low = b\n    gains.sort(reverse=True)\n    return sum(gains[:k])\n",
+      "slip": "Taking the `k` best separate rises misses the trip that spans a small dip and saves a fee or a trip."
+    },
+    {
+      "code": "def best_trips(prices, k, fee):\n    n = len(prices)\n\n    def go(i, left, holding):\n        if i == n:\n            return 0 if not holding else -10 ** 9\n        best = go(i + 1, left, holding)\n        if holding:\n            best = max(best, prices[i] - fee + go(i + 1, left, False))\n        elif left:\n            best = max(best, go(i + 1, left - 1, True) - prices[i])\n        return best\n\n    return go(0, k, False)\n",
+      "slip": "Plain recursion over each day's choice is right but repeats the same states, too slow."
+    }
+  ]
+}
