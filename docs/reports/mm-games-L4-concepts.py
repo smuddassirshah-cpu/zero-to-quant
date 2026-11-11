@@ -449,5 +449,17 @@ if 'Five more units of width would have saved 90' in t:
        'review-4 items[2].explain: "Five more units of width would have saved 90" (95 to 140 scores %d, saving %d; '
        '90 to 140 is ten more units)' % (score(95, 140, 95), score(100, 140, 95) - score(95, 140, 95)))
 
+# ---------------------------------------------------------------- 8. fix-pass text (audit fix pass)
+if 'Ten more units of width would have saved 90' in t:
+    ok(score(100, 140, 95) - score(90, 140, 95) == 90, 'review-4 items[2].explain: ten more units (90 to 140) save 90')
+if 'E 2.5 to 2.9' in opts['skewE']['text']:
+    ok(not no_arb_three((3.3, 3.7), (2.5, 2.9), (1.3, 1.7)) and close(2.5 + 1.3 - 3.7, 0.1),
+       'l16 screens[2] skewE (E 2.5 to 2.9) is traded through for 0.10 a set')
+ok(r == Fr(1, 5), 'l16 find_arb: selling L at 3.2 locks 0.20 on the worst face')
+gain = sum(1 for s in SUMS if abs(s - 7) < 2)
+loss = sum(1 for s in SUMS if abs(s - 7) > 2)
+if 'gains only on sums 6 to 8, 16 rolls in 36, and loses on 12' in J['l17-options-on-a-game']['screens'][8]['explain']['text']:
+    ok(gain == 16 and loss == 12, 'l17 screens[8].explain: short straddle at 2.0 gains on 16 rolls, loses on 12')
+
 print('%d checks passed, %d failed, %d notes' % (passed[0], len(fails), len(notes)))
 raise SystemExit(1 if fails else 0)
