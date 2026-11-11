@@ -201,7 +201,7 @@ a = F(200, 100) / 14
 rng = random.Random(5)
 fp = sum(sum(1 for _ in range(200) if rng.random() < 0.01) for _ in range(20000)) / 20000
 two(a, fp / 14, 0.002, 'share false (simulation tolerance 0.002)')
-numeric(S, 'ht-multiple-share-false', a, 3, {'gave-level': F(1, 100), 'pass-rate': F(14, 200)})   # 1 dp of a per cent = 3 dp of the fraction
+numeric(S, 'ht-multiple-share-false', a, 1, {'gave-level': F(1, 100), 'pass-rate': F(14, 200)})   # places of the per cent figure
 stated(S, 'ht-multiple-share-false', '2/14 \\\\approx 14.3\\\\%')
 
 # rg-fit-correlation-from-sums: closed form against least squares on built points with TSS 200 and RSS 50
@@ -315,7 +315,7 @@ n = 25
 a = sqrt(F(4, 100) * (F(1, n) + (1 - F(1, n)) * F(1, 4)))
 b = sqrt(sum((1 / n) * (1 / n) * 0.04 * (1 if i == j else 0.25) for i in range(n) for j in range(n)))
 key = two(a, b, 1e-12, 'portfolio vol')
-numeric(S, 'equicorrelation-many-assets-vol', key, 3, {'independent': sqrt(0.04 / n), 'many-asset-limit': sqrt(0.04 * 0.25)})
+numeric(S, 'equicorrelation-many-assets-vol', key, 1, {'independent': sqrt(0.04 / n), 'many-asset-limit': sqrt(0.04 * 0.25)})
 ok(F(4, 100) * (F(4, 100) + F(96, 100) * F(1, 4)) == F(112, 10000), 'variance 0.0112')
 
 # ---------------------------------------------------------------- finance-3
