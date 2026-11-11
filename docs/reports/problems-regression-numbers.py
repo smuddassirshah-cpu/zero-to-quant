@@ -94,6 +94,31 @@ def rounded_ok(items, iid, k, value, msg):
     ok(abs(float(value) - w['answer']) <= w['tol']['abs'] + 1e-12, f'{iid} p{k}: {msg} ({float(value)}) outside the band')
 
 
+def band_takes(items, iid, k, wid, values, msg):
+    """a wrong entry (or the key, wid=None) whose band takes every value a learner reaches by a rounded route"""
+    if items is None:
+        return
+    w = part(items, iid, k)['widget']
+    if wid is None:
+        v0, t0 = w['answer'], w['tol']['abs']
+    else:
+        x = next(y for y in w['wrong'] if y['id'] == wid)
+        v0, t0 = x['value'], x['tol']['abs']
+    for v in values:
+        ok(abs(float(v) - v0) <= t0 + 1e-12, f'{iid} p{k} {wid or "key"}: {msg} ({float(v)}) outside {v0} +- {t0}')
+
+
+def lacks(items, iid, k, pattern, msg):
+    """a stale value of a re-authored part is gone from every string of the part"""
+    if items is None:
+        return
+    ok(not re.search(pattern, json.dumps(part(items, iid, k), ensure_ascii=False)), f'{iid} p{k}: stale text ({msg})')
+
+
+def item_text(items, iid):
+    return items[iid]
+
+
 def pick(items, iid, k, cid):
     if items is None:
         return
@@ -169,7 +194,19 @@ if I:
     rise = (9 - xb) * 2000 / sxx
     b2 = np.polyfit(ages, price2, 1)[0]
     num(I, 'p-car-prices', 3, rise, b2 - np.polyfit(ages, price, 1)[0], {'no-deviation': F(2000, 40), 'raw-x': F(9 * 2000, 40), 'carried': F(5 * 2000, 136)}, rel=1e-9, unit='£')
-    num(I, 'p-car-prices', 4, bcar + rise, b2, {'wrong-way': bcar - rise, 'carried': bcar + 50, 'raw-x': bcar + 450}, unit='£')
+    # finding 19: part 4 asks for the corrected line's price at 9 years (mean point (4, 14,000), corrected slope -1,230)
+    ok(bcar + rise == -1230 and abs(b2 + 1230) < 1e-9, 'car: corrected slope -1,230 by both routes')
+    stated(14000, F(int(price2.sum()), 6), 'car corrected mean price')
+    stated(13667, F(int(price.sum()), 6), 'car old mean price', 0.5)
+    fit_b, fit_a = np.polyfit(ages, price2, 1)
+    line9 = F(int(price2.sum()), 6) + (bcar + rise) * (9 - xb)
+    num(I, 'p-car-prices', 4, line9, fit_a + fit_b * 9,
+        {'old-slope': F(int(price2.sum()), 6) + bcar * (9 - xb), 'raw-x': F(int(price2.sum()), 6) + (bcar + rise) * 9,
+         'wrong-way': F(int(price2.sum()), 6) + (bcar - rise) * (9 - xb), 'old-mean': F(int(price.sum()), 6) + (bcar + rise) * (9 - xb)}, rel=1e-9, unit='£')
+    ok(line9 == 7850 and abs(8200 - float(line9) - 350) < 1e-9, 'car: 7,850 at 9 years and the car sits 350 above its own line')
+    lacks(I, 'p-car-prices', 4, r'corrected slope\?', 'old question asked for the corrected slope')
+    lacks(I, 'p-car-prices', 4, r'-1430|-1030|1{,}430|1{,}030', 'old part 3 slips')
+    ok(part(I, 'p-car-prices', 4)['widget']['answer'] != -1230, 'car p4: the answer is no longer the sum printed in the question')
     p4 = np.array(price); p4[3] += 2000
     ok(abs(np.polyfit(ages, p4, 1)[0] - np.polyfit(ages, price, 1)[0]) < 1e-9, 'car: a slip on the 4-year-old car leaves the slope')
     ok(abs(250 / 1480 - 1 / 6) < 0.01, 'car: 250 is about a sixth of 1,480')
@@ -203,10 +240,18 @@ if I:
     Sxx = sum((F(int(t)) - 40) ** 2 for t in v); Sxy = sum((F(int(t)) - 40) * int(d) for t, d in zip(v, dist))
     bs = Sxy / Sxx
     pf = np.polyfit(v, dist, 1)
-    num(I, 'p-stopping-distances', 1, bs, pf[0], {'reverse': Sxx / Sxy, 'mixed': (Sxy / 4) / (Sxx / 5), 'through-origin': F(int(v @ dist), int(v @ v))}, unit='m per mph')
+    syy0 = sum((F(int(t)) - F(197, 5)) ** 2 for t in dist)
+    num(I, 'p-stopping-distances', 1, bs, pf[0], {'reverse': Sxx / Sxy, 'other-way': Sxy / syy0, 'mixed': (Sxy / 4) / (Sxx / 5), 'through-origin': F(int(v @ dist), int(v @ v))}, unit='m per mph')
+    # finding 12: the least squares slope of speed on distance is Sxy/Syy (statsmodels), not Sxx/Sxy, which is the slope turned upside down
+    sp_on_d = ols(v, dist).params[1]
+    ok(isclose(sp_on_d, float(Sxy / syy0), rel_tol=1e-12), 'stopping: statsmodels slope of speed on distance = Sxy/Syy')
+    ok(abs(float(Sxx / Sxy) - sp_on_d) > 0.005 and isclose(float(Sxx / Sxy) * float(Sxy / Sxx), 1.0), 'stopping: Sxx/Sxy is the reciprocal of the slope of distance on speed, not the slope of speed on distance')
+    band_takes(I, 'p-stopping-distances', 1, 'other-way', [sp_on_d, 0.65, 0.648], 'speed-on-distance slope and its roundings')
+    band_takes(I, 'p-stopping-distances', 1, 'reverse', [float(Sxx / Sxy), 0.66, 0.658], 'upside-down slope and its roundings')
+    ok(not any(abs(0.65 - float(Sxx / Sxy)) <= 0.004 for _ in [0]) and not any(abs(0.66 - sp_on_d) <= 0.004 for _ in [0]), 'stopping: 0.65 lands on other-way only, 0.66 on reverse only')
     yb = F(int(dist.sum()), 5)
     a_s = yb - bs * 40
-    num(I, 'p-stopping-distances', 2, a_s, pf[1], {'sign': yb + bs * 40, 'mean': yb, 'carried': yb - F(int(v @ dist), int(v @ v)) * 40}, rel=1e-9, unit='m')
+    num(I, 'p-stopping-distances', 2, a_s, pf[1], {'sign': yb + bs * 40, 'mean': yb, 'carried': yb - F(int(v @ dist), int(v @ v)) * 40, 'no-sign': -a_s}, rel=1e-9, unit='m')
     e40 = 36 - (a_s + bs * 40)
     num(I, 'p-stopping-distances', 3, e40, dist[2] - np.polyval(pf, 40), {'flipped': -e40, 'carried': 36 - (yb + bs * 40 + bs * 40), 'no-intercept': 36 - bs * 40}, rel=1e-9, unit='m')
     syy = sum((F(int(d)) - yb) ** 2 for d in dist)
@@ -219,6 +264,10 @@ if I:
     stated(85, a_s + bs * 70, 'stopping line at 70 mph')
     stated(34.8, syy - bs ** 2 * Sxx, 'stopping SSE')
     pick(I, 'p-stopping-distances', 5, 'curve')
+    # finding 13: the 40 mph residual (-3.4) is the largest of the five but about the size of the end misses (3.0 and 3.2)
+    ok(abs(resid[2]) > max(abs(resid[0]), abs(resid[4])) and abs(resid[2]) - max(abs(resid[0]), abs(resid[4])) < 0.5, 'stopping: the 40 mph miss is about the size of the end misses')
+    why_out = next(o for o in part(I, 'p-stopping-distances', 5)['widget']['options'] if o['id'] == 'outlier')['why']
+    ok('no larger' not in why_out and '3.0 and 3.2 m' in why_out, 'stopping: the false "no larger" sentence is gone')
 
 # ======================================================== level 2: inference
 I = load(2)
@@ -249,6 +298,10 @@ if I:
     ok(isclose(ff.rsquared, 0.2, rel_tol=1e-9), 'freight synthetic R^2')
     Fv = F(2, 10) / F(8, 10) * 40
     num(I, 'p-freight-summary', 1, Fv, ff.fvalue, {'no-df': F(1, 4), 'by-n': F(1, 4) * 42, 'n-1': F(1, 4) * 41})
+    # finding 16: SSR is the course's name (lesson 3) for the explained sum of squares; statsmodels calls it ess
+    ok(isclose(ff.ess / (ff.ssr / 40), ff.fvalue, rel_tol=1e-9) and isclose(ff.ess / (ff.ess + ff.ssr), 0.2, rel_tol=1e-9), 'freight: F = SSR/s^2 with SSR the explained sum of squares')
+    q1 = part(I, 'p-freight-summary', 1)['question']
+    ok('SSR' in q1 and 'explained sum of squares' in q1 and 'ESS' not in json.dumps(item_text(I, 'p-freight-summary'), ensure_ascii=False), 'freight: the course term SSR, defined, with no ESS left')
     tf = sqrt(Fv)
     num(I, 'p-freight-summary', 2, tf, ff.tvalues[1], {'no-root': 10, 'half': 5, 'carried': sqrt(10.5), 'carried-df': sqrt(0.25)})
     num(I, 'p-freight-summary', 3, 0.85 / 3.16, 0.85 / round(ff.tvalues[1], 2), {'times': 0.85 * 3.16, 'inverted': 3.16 / 0.85, 'carried-f': 0.085, 'carried': 0.85 / sqrt(10.5)})
@@ -277,7 +330,7 @@ if I:
     num(I, 'p-raw-intercept', 3, ta, exc.tvalues[0], {'raw': F(45, 100) / sea, 'beta': F(30, 100) / sea, 'carried-n': al / F(25, 1000), 'inverted': sea / al})
     need = lambda t0: ceil(100 * (2 / t0) ** 2 - 1e-12)
     nb = next(n for n in range(100, 1000) if float(al) * sqrt(n) / 2.5 >= 2)
-    num(I, 'p-raw-intercept', 4, need(float(ta)), nb, {'raw': need(1.8), 'linear': ceil(100 * 2 / 1.4), 'beta': need(1.2), 'round-down': need(1.4) - 1}, unit='months')
+    num(I, 'p-raw-intercept', 4, need(float(ta)), nb, {'raw': need(1.8), 'linear': ceil(100 * 2 / 1.4), 'beta': need(1.2), 'round-down': need(1.4) - 1, 'extra': need(float(ta)) - 100}, unit='months')
     ok(1.4 * sqrt(2.04) < 2 <= 1.4 * sqrt(2.05), 'alpha: 204 months fall short, 205 reach 2')
     stated(17, 205 / 12, 'alpha years', 0.1)
     stated(4.2, 12 * float(al), 'alpha a year')
@@ -319,8 +372,18 @@ if I:
     c0 = 30 + 5 * unit_noise(200, [g]) * np.sqrt(199)
     pw0 = 5 + 1.5 * g + 0.8 * c0 + 3 * unit_noise(200, [g, c0]) * np.sqrt(199)
     ratio = (long_.bse[1] / ols(pw0, g, c0).bse[1]) ** 2
-    num(I, 'p-power-price', 4, ceil(200 * vif), ceil(200 * ratio - 1e-9), {'root': 200 * 1.25, 'no-square': 200 * 2.5, 'carried': ceil(200 * 1.2994), 'round-down': ceil(200 * vif) - 1}, unit='days')
-    stated(312.5, 200 * vif, 'power days before rounding')
+    # finding 20: part 4 asks for the standard error with uncorrelated predictors, from a printed 0.05 and the VIF
+    ok(isclose(ratio, float(vif), rel_tol=1e-9), 'power: the squared ratio of gas-slope errors is the VIF')
+    se_ratio = long_.bse[1] / ols(pw0, g, c0).bse[1]
+    num(I, 'p-power-price', 4, 0.05 / sqrt(vif), 0.05 / se_ratio,
+        {'by-vif': 0.05 / vif, 'times': 0.05 * sqrt(vif), 'times-vif': 0.05 * vif, 'carried': 0.05 / sqrt(1 / (1 - F(48, 100) ** 2))}, rel=1e-9)
+    for v_ in (0.04, 0.040, round(0.05 / 1.25, 3)):
+        ok(abs(v_ - part(I, 'p-power-price', 4)['widget']['answer']) <= part(I, 'p-power-price', 4)['widget']['tol']['abs'], f'power p4: {v_} accepted')
+    ok(abs(0.05 / 1.5625 - 0.032) < 1e-12 and abs(0.05 * 1.25 - 0.0625) < 1e-12 and abs(0.05 * 1.5625 - 0.078125) < 1e-12, 'power p4: slip values 0.032, 0.0625, 0.0781')
+    lacks(I, 'p-power-price', 4, r'\b(313|312|312\.5|500|260|250)\b|days', 'old sample-size key, slips and wording')
+    lacks(I, 'p-power-price', 4, r'1/n', 'old homework-style sentence')
+    ok('standard error of 0.05' in part(I, 'p-power-price', 4)['question'] and 'VIF' in part(I, 'p-power-price', 4)['question'], 'power p4: new task text')
+    stated(312.5, 200 * vif, 'power days before rounding (no longer asked; kept as the old value)')
 
     # p-solar-output: synthetic 24 days with the stated centred moment matrix
     M = np.array([[40, 24, 88], [24, 30, 45], [88, 45, 250.]])
@@ -333,7 +396,7 @@ if I:
     b1 = F(30 * 88 - 24 * 45, det)
     num(I, 'p-solar-output', 1, b1, fs.params[1], {'simple': F(88, 40), 'cramer-sign': F(30 * 88 + 24 * 45, det), 'swapped': F(40 * 45 - 24 * 88, det)}, unit='MWh per hour')
     b2 = (45 - 24 * b1) / 30
-    num(I, 'p-solar-output', 2, b2, fs.params[2], {'simple': F(45, 30), 'sign': (45 + 24 * b1) / 30, 'carried': (45 - 24 * F(22, 10)) / 30}, unit='MWh per °C')
+    num(I, 'p-solar-output', 2, b2, fs.params[2], {'simple': F(45, 30), 'sign': (45 + 24 * b1) / 30, 'carried': (45 - 24 * F(22, 10)) / 30, 'no-sign': -b2}, unit='MWh per °C')
     ok(b2 == F(40 * 45 - 24 * 88, det), 'solar: b2 by back-substitution equals Cramer')
     sse_s = 250 - b1 * 88 - b2 * 45
     num(I, 'p-solar-output', 3, sse_s, fs.ssr, {'sign': 250 - b1 * 88 + b2 * 45, 'ess': b1 * 88 + b2 * 45, 'carried': 250 - F(22, 10) * 88 - F(-26, 100) * 45}, unit='MWh²')
@@ -355,7 +418,7 @@ if I:
     h = 5
     fac = sqrt(1 + 2 * sum((1 - F(j, h)) ** 2 for j in range(1, h)))
     fac2 = np.sqrt(1 + 2 * np.sum(np.square(1 - np.arange(1, h) / h)))
-    num(I, 'p-overlap-signal', 4, t3 / fac, 3.5 / fac2, {'no-root': 3.5 / 3.4, 'no-two': 3.5 / sqrt(2.2), 'times': 3.5 * fac, 'carried': (0.21 / 0.18) / fac}, rel=1e-9)
+    num(I, 'p-overlap-signal', 4, t3 / fac, 3.5 / fac2, {'no-root': 3.5 / 3.4, 'no-two': 3.5 / sqrt(2.2), 'times': 3.5 * fac, 'carried': (0.21 / 0.18) / fac, 'root-h': 3.5 / sqrt(5)}, rel=1e-9)
     rounded_ok(I, 'p-overlap-signal', 4, 3.5 / 1.84, 'dividing by the factor rounded to 1.84')
     rounded_ok(I, 'p-overlap-signal', 4, 3.5 / 1.844, 'dividing by 1.844')
     stated(1.2, sum((1 - F(j, h)) ** 2 for j in range(1, h)), 'overlap sum')
@@ -373,10 +436,62 @@ if I:
     ok(stats.t.ppf(0.975, 500) < 1.97, 't cut-off on 500 df is about 1.96')
     pick(I, 'p-overlap-signal', 5, 'not-sig')
 
+    # findings 14 and 15: what HAC does with overlapping returns, and when the naive t is honest.
+    # y_t = next-5-day return, x_t = past-5-day return built from the same daily returns, no true effect, 503 days.
+    # Route 1: statsmodels cov_type="HAC" (Bartlett weights, maxlags L). Route 2: a hand-coded Newey-West sandwich. Both on the same draws.
+    def newey_west_t(X, y_, L):
+        b_ = np.linalg.lstsq(X, y_, rcond=None)[0]
+        e_ = y_ - X @ b_
+        u_ = X * e_[:, None]
+        S_ = u_.T @ u_
+        for j in range(1, L + 1):
+            G_ = u_[j:].T @ u_[:-j]
+            S_ += (1 - j / (L + 1)) * (G_ + G_.T)
+        A_ = np.linalg.inv(X.T @ X)
+        return b_[1] / np.sqrt((A_ @ S_ @ A_)[1, 1])
+
+    rs = np.random.default_rng(2611)
+    n_, h_, runs = 503, 5, 2000
+    naive_t, hand_t = [], {4: [], 8: [], 20: []}
+    sm_t, sm_hand = {4: [], 8: [], 20: []}, {4: [], 8: [], 20: []}
+    ind_t = []
+    for i_ in range(runs):
+        r_ = rs.normal(size=n_ + 2 * h_)
+        c_ = np.concatenate([[0], np.cumsum(r_)])
+        t_ = np.arange(h_ - 1, h_ - 1 + n_)
+        xs_ = c_[t_ + 1] - c_[t_ + 1 - h_]
+        ys_ = c_[t_ + 1 + h_] - c_[t_ + 1]
+        X_ = sm.add_constant(xs_)
+        f_ = sm.OLS(ys_, X_).fit()
+        naive_t.append(f_.tvalues[1])
+        for L_ in (4, 8, 20):
+            hand_t[L_].append(newey_west_t(X_, ys_, L_))
+            if i_ < 200:
+                sm_t[L_].append(sm.OLS(ys_, X_).fit(cov_type='HAC', cov_kwds={'maxlags': L_}).tvalues[1])
+                sm_hand[L_].append(hand_t[L_][-1])
+        # an independent daily signal: fresh each day, same overlapping outcome
+        xi_ = rs.normal(size=n_)
+        ind_t.append(sm.OLS(ys_, sm.add_constant(xi_)).fit().tvalues[1])
+    for L_ in (4, 8, 20):
+        ok(np.max(np.abs(np.array(sm_t[L_]) - np.array(sm_hand[L_]))) < 1e-9, f'overlap: hand-coded Newey-West t equals statsmodels HAC t at {L_} lags')
+        sd_h, rej = np.std(hand_t[L_]), np.mean(np.abs(hand_t[L_]) > 1.96)
+        ok(1.08 <= sd_h <= 1.30, f'overlap: sd of the HAC t at {L_} lags is {sd_h:.3f}, above 1 (HAC goes only part of the way)')
+        ok(0.07 <= rej <= 0.14, f'overlap: HAC at {L_} lags rejects a true zero {rej:.3f} of the time, about one time in ten')
+    print(f'NOTE overlap simulation ({runs} runs): naive t sd {np.std(naive_t):.2f}, independent-signal naive t sd {np.std(ind_t):.2f}; HAC t sd '
+          + ', '.join(f'{L_} lags {np.std(hand_t[L_]):.2f} (|t| > 1.96 in {100 * np.mean(np.abs(hand_t[L_]) > 1.96):.0f}%)' for L_ in (4, 8, 20)))
+    ok(abs(np.std(naive_t) - float(fac)) < 0.12, f'overlap: sd of the naive t {np.std(naive_t):.3f} against the factor {float(fac):.3f}')
+    ok(0.9 <= np.std(ind_t) <= 1.1, f'overlap: with an independent daily signal the naive t is honest, sd {np.std(ind_t):.3f}')
+    ok(np.mean(np.abs(naive_t) > 1.96) > 0.25, 'overlap: the naive t rejects a true zero more than a quarter of the time')
+    # the explanation's wording and the prose's hypothesis are in the file
+    ex4 = part(I, 'p-overlap-signal', 4)['explain']['text']
+    ok('much the same' not in ex4 and 'one time in ten' in ex4, 'overlap p4: the false HAC sentence is gone')
+    ok('5-day rolling average' in item_text(I, 'p-overlap-signal')['prose'] and 'both overlap' in part(I, 'p-overlap-signal', 4)['question'], 'overlap: prose and part 4 state the overlapping-signal hypothesis')
+    stated(1.90, 3.5 / float(fac), 'overlap honest t', 0.005)
+
     # p-bond-fund-weeks
     pred = F(5, 100) - F(8, 100) * 10 - F(3, 100) * (-5)
     num(I, 'p-bond-fund-weeks', 1, pred / 100, float(np.dot([0.05, -0.08, -0.03], [1, 10, -5])) / 100,
-        {'spread-sign': (F(5, 100) - F(8, 10) - F(15, 100)) / 100, 'no-intercept': (pred - F(5, 100)) / 100, 'all-signs': (F(5, 100) + F(8, 10) - F(15, 100)) / 100}, unit='%')
+        {'spread-sign': (F(5, 100) - F(8, 10) - F(15, 100)) / 100, 'no-intercept': (pred - F(5, 100)) / 100, 'all-signs': (F(5, 100) + F(8, 10) - F(15, 100)) / 100, 'no-sign': -pred / 100}, unit='%')
     e8 = F(-90, 100) - pred
     num(I, 'p-bond-fund-weeks', 2, e8 / 100, (-0.90 - np.dot([0.05, -0.08, -0.03], [1, 10, -5])) / 100, {'flipped': -e8 / 100, 'carried': 0, 'no-intercept': (F(-90, 100) - (pred - F(5, 100))) / 100}, unit='%')
     e = [F(20, 100), F(30, 100), F(25, 100), F(10, 100), F(-10, 100), F(-20, 100), F(-25, 100)]
@@ -394,6 +509,32 @@ if I:
     rounded_ok(I, 'p-bond-fund-weeks', 4, 1 - 0.22 / 2, 'the route from d = 0.22')
     stated(0.405, sum(t * t for t in full8), 'bond eight squares')
     pick(I, 'p-bond-fund-weeks', 5, 'hac')
+    # finding 17: the lag-1 autocorrelation of the eight residuals worked directly is 0.73 (end terms 0.32)
+    from statsmodels.tsa.stattools import acf
+    r1 = float(sum(full8[i] * full8[i - 1] for i in range(1, 8)) / sum(t * t for t in full8))
+    stated(0.73, r1, 'bond lag-1 autocorrelation worked directly', 0.005)
+    stated(0.73, acf(ar, nlags=1, fft=False)[1], 'bond lag-1 autocorrelation by statsmodels acf', 0.005)
+    stated(0.32, float((full8[0] ** 2 + full8[-1] ** 2) / sum(t * t for t in full8)), 'bond end terms share of the squares', 0.005)
+    ex4b = part(I, 'p-bond-fund-weeks', 4)['explain']['text']
+    ok('0.73' in ex4b and 'rough' in ex4b, 'bond p4: explanation carries the 0.73 caveat')
+    # finding 15: echoing residuals make the usual slope error too small only when the predictor echoes as well (simulation, AR(1) errors rho = 0.9)
+    rs2 = np.random.default_rng(15)
+    def slope_sd_vs_naive(rho_x, rho_e=0.9, n=200, reps=3000):
+        slopes, naive = [], []
+        for _ in range(reps):
+            ee = np.zeros(n); xx = np.zeros(n)
+            ne, nx = rs2.normal(size=n), rs2.normal(size=n)
+            for t in range(1, n):
+                ee[t] = rho_e * ee[t - 1] + ne[t]
+                xx[t] = rho_x * xx[t - 1] + nx[t]
+            f = sm.OLS(ee, sm.add_constant(xx)).fit()                      # true slope 0
+            slopes.append(f.params[1]); naive.append(f.bse[1])
+        return np.std(slopes) / np.mean(naive)
+    iid_x, ar_x = slope_sd_vs_naive(0.0), slope_sd_vs_naive(0.9)
+    print(f'NOTE bond: true sd of the slope / usual SE with AR(1) errors 0.9: independent predictor {iid_x:.2f}, echoing predictor {ar_x:.2f}')
+    ok(0.85 <= iid_x <= 1.15, f'bond: with an independent predictor the usual slope error is about right (true sd / usual SE = {iid_x:.2f})')
+    ok(ar_x > 2.0, f'bond: with an echoing predictor the usual slope error is far too small (true sd / usual SE = {ar_x:.2f})')
+    ok('both echo' in next(o for o in part(I, 'p-bond-fund-weeks', 5)['widget']['options'] if o['id'] == 'cautious')['why'], 'bond p5: cautious line states its hypothesis')
 
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
