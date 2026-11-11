@@ -1,0 +1,132 @@
+{
+  "id": "fluency-l18-counts-against-expectations",
+  "lesson": "l18-counts-against-expectations",
+  "title": "Fluency: counts against expectations",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "expected-cell",
+      "weight": 1,
+      "skill": "an expected count under independence",
+      "vars": {
+        "tot": { "int": [100, 400], "step": 20 },
+        "rt": { "int": [20, 240] },
+        "ct": { "int": [20, 240] },
+        "w": { "pick": [["days", "had a buy signal", "were up days", "buy-signal days that were up"], ["trades", "were buys", "were partial fills", "partial buys"], ["fills", "were at venue A", "were late", "late fills at venue A"], ["loans", "were to small firms", "defaulted", "defaults by small firms"]], "as": ["units", "rowtxt", "coltxt", "celltxt"] }
+      },
+      "let": {
+        "key": "rt*ct/tot",
+        "avg": "(rt + ct)/2",
+        "prod": "rt*ct"
+      },
+      "where": ["rt <= 0.85*tot", "ct <= 0.85*tot", "rt*ct/tot >= 5"],
+      "prompt": "Of {tot} {units}, {rt} {rowtxt} and {ct} {coltxt}. Under independence, what is the expected count of {celltxt}? Give 2 decimal places.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.005 }, "placeholder": "A number such as 42.50", "accept": "${key:dp2}$, within 0.005" },
+      "wrong": [
+        { "id": "averaged", "value": "{avg}", "tol": { "abs": 0.005 }, "line": "You averaged the two totals. Independence multiplies the shares: row total times column total, over {tot}." },
+        { "id": "no-divide", "value": "{prod}", "tol": { "abs": 0.005 }, "line": "You multiplied the two totals but did not divide by the grand total, {tot}." }
+      ],
+      "solution": [
+        "$E = \\dfrac{{\\text{{row total}} \\times \\text{{column total}}}}{{N}}$.",
+        "$E = {rt} \\times {ct} \\div {tot} \\approx {key:dp2}$."
+      ]
+    },
+    {
+      "id": "goodness-of-fit",
+      "weight": 2,
+      "skill": "Pearson's statistic against equal chances",
+      "vars": {
+        "ee": { "int": [20, 60] },
+        "d1": { "int": [-9, 9] },
+        "d2": { "int": [-9, 9] },
+        "d3": { "int": [-9, 9] },
+        "w": { "pick": [["fills", "four venues", "venue"], ["trades", "four hours of the session", "hour"], ["defaults", "four regions", "region"], ["complaints", "four branches", "branch"]], "as": ["units", "cells", "cell"] }
+      },
+      "let": {
+        "d4": "-(d1 + d2 + d3)",
+        "tot": "4*ee",
+        "o1": "ee + d1",
+        "o2": "ee + d2",
+        "o3": "ee + d3",
+        "o4": "ee - d1 - d2 - d3",
+        "ss": "d1^2 + d2^2 + d3^2 + (d1 + d2 + d3)^2",
+        "key": "ss/ee",
+        "byo": "d1^2/(ee + d1) + d2^2/(ee + d2) + d3^2/(ee + d3) + (d1 + d2 + d3)^2/(ee - d1 - d2 - d3)"
+      },
+      "where": ["abs(d1 + d2 + d3) <= 12", "abs(d1) + abs(d2) + abs(d3) >= 6", "abs(key - byo) > 0.02"],
+      "prompt": "{tot} {units} fall across {cells} as {o1}, {o2}, {o3} and {o4}. If each {cell} is equally likely, what is Pearson's $X^2$? Give 2 decimal places.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.005 }, "placeholder": "A number such as 3.25", "accept": "${key:dp2}$, within 0.005" },
+      "wrong": [
+        { "id": "no-divide", "value": "{ss}", "tol": { "abs": 0.005 }, "line": "You added the squared gaps but did not divide each by its expected count, {ee}." },
+        { "id": "over-observed", "value": "{byo}", "tol": { "abs": 0.005 }, "line": "You divided each squared gap by the observed count. Pearson's statistic divides by the expected count, {ee}." }
+      ],
+      "solution": [
+        "Each {cell} expects ${tot} \\div 4 = {ee}$.",
+        "The squared gaps are ${d1^2}$, ${d2^2}$, ${d3^2}$ and ${d4^2}$, which sum to ${ss}$.",
+        "$X^2 = {ss} \\div {ee} \\approx {key:dp2}$, on 3 degrees of freedom."
+      ]
+    },
+    {
+      "id": "two-by-two",
+      "weight": 2,
+      "skill": "Pearson's statistic for a 2 by 2 table",
+      "vars": {
+        "a": { "int": [15, 70] },
+        "b": { "int": [15, 70] },
+        "c": { "int": [15, 70] },
+        "d": { "int": [15, 70] },
+        "w": { "pick": [["days", "buy-signal days", "sell-signal days", "up", "down"], ["orders", "buys", "sells", "filled", "missed"], ["loans", "to small firms", "to large firms", "repaid", "defaulted"]], "as": ["units", "rowa", "rowb", "cola", "colb"] }
+      },
+      "let": {
+        "tot": "a + b + c + d",
+        "r1": "a + b",
+        "r2": "c + d",
+        "c1": "a + c",
+        "e11": "(a + b)*(a + c)/(a + b + c + d)",
+        "gap": "abs(a*d - b*c)/(a + b + c + d)",
+        "key": "(a + b + c + d)*(a*d - b*c)^2/((a + b)*(c + d)*(a + c)*(b + d))",
+        "one": "(a - (a + b)*(a + c)/(a + b + c + d))^2/((a + b)*(a + c)/(a + b + c + d))",
+        "nodiv": "4*(a*d - b*c)^2/(a + b + c + d)^2"
+      },
+      "where": ["a*d != b*c", "key >= 0.5", "key <= 20"],
+      "prompt": "Of {tot} {units}, {r1} were {rowa}: {a} {cola} and {b} {colb}. The other {r2} were {rowb}: {c} {cola} and {d} {colb}. What is $X^2$ for independence? Give 2 decimal places. Keep at least 2 decimal places in each expected count.",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.05 }, "placeholder": "A number such as 6.67", "accept": "${key:dp2}$, within 0.05" },
+      "wrong": [
+        { "id": "one-cell", "value": "{one}", "tol": { "abs": 0.05 }, "line": "You stopped at the first cell. A 2 by 2 table has four cells, each off by the same gap, and each adds its own term." },
+        { "id": "no-divide", "value": "{nodiv}", "tol": { "abs": 0.05 }, "line": "You added the four squared gaps but did not divide each by its expected count." }
+      ],
+      "solution": [
+        "The first cell expects ${r1} \\times {c1} \\div {tot} \\approx {e11:dp2}$, so every cell is off by $|O - E| \\approx {gap:dp3}$.",
+        "Dividing that squared gap by each of the four expected counts and adding gives $X^2 \\approx {key:dp2}$, on 1 degree of freedom."
+      ]
+    },
+    {
+      "id": "independence-df",
+      "weight": 1,
+      "skill": "degrees of freedom for a test of independence",
+      "vars": {
+        "r": { "int": [2, 6] },
+        "c": { "int": [2, 8] },
+        "w": { "pick": [["regime", "trade result"], ["venue", "fill type"], ["signal level", "price move"], ["sector", "rating"]], "as": ["rowname", "colname"] }
+      },
+      "let": {
+        "key": "(r - 1)*(c - 1)",
+        "cells": "r*c - 1",
+        "sum": "r + c - 2"
+      },
+      "where": ["r <= c"],
+      "prompt": "A test of independence uses a table of {rowname} by {colname} with {r} rows and {c} columns. How many degrees of freedom does $X^2$ have?",
+      "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0 }, "placeholder": "A whole number" },
+      "wrong": [
+        { "id": "cells-minus-one", "value": "{cells}", "tol": { "abs": 0 }, "line": "You took the cells minus 1, the rule for a fixed null. Estimating the margins costs {sum} more, which leaves $(r - 1)(c - 1)$." },
+        { "id": "margins", "value": "{sum}", "tol": { "abs": 0 }, "line": "You added $r - 1$ and $c - 1$. Those are the margins estimated; the degrees of freedom are their product.", "when": "r*c - r - c + 1 != r + c - 2" }
+      ],
+      "solution": [
+        "Degrees of freedom are $(r - 1)(c - 1)$ for independence.",
+        "$({r} - 1)({c} - 1) = {key}$."
+      ]
+    }
+  ]
+}

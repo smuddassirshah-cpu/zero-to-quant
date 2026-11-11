@@ -1961,9 +1961,15 @@ const checkDrill = (file, id, d, cur) => {
       if (!p || typeof p !== 'object' || Array.isArray(p)) { err(file, `planted[${i}]`, 'a planted entry is { "code": "<a wrong solution>", "slip": "<one sentence naming the mistake>" }'); return; }
       if (typeof p.code !== 'string' || !/\S/.test(p.code)) err(file, `planted[${i}].code`, 'code is a non-empty string: the wrong solution');
       if (typeof p.slip !== 'string' || !/\S/.test(p.slip)) err(file, `planted[${i}].slip`, 'slip is a non-empty string: one sentence naming the mistake');
-      Object.keys(p).forEach(k => { if (!['code', 'slip'].includes(k)) warn(file, `planted[${i}].${k}`, `unknown field "${k}" in a planted entry`); });
+      if (p.nearMiss !== undefined && typeof p.nearMiss !== 'boolean') err(file, `planted[${i}].nearMiss`, 'nearMiss is true or false: true marks the plant whose method is one step short of the target');
+      Object.keys(p).forEach(k => { if (!['code', 'slip', 'nearMiss'].includes(k)) warn(file, `planted[${i}].${k}`, `unknown field "${k}" in a planted entry`); });
     });
   }
+  /* ENGINE-BACKLOG 918 (protocol 6, "the method one step short of the target passes the hidden tests"): a `ci-` or `dsa-` drill carries a planted
+     near-miss: the method one step short of the target (the slower order, the greedy without the exchange case, the off-by-one window), marked
+     "nearMiss": true. tools/planted-check.mjs runs it like any plant, so it must fail a hidden test. Advisory: no drill is refused for lacking one. */
+  if (d.sample !== true && /^(ci|dsa)-/.test(String(file.split('/').pop())) && !(Array.isArray(d.planted) && d.planted.some(p => p && p.nearMiss === true)))
+    warn(file, 'planted', '[near-miss] no planted solution is marked "nearMiss": true: add the method one step short of the target (the slower order, the greedy without the exchange case, the off-by-one window) with a slip, and check it with node tools/planted-check.mjs --drill <id> --near-miss');
   if (d.pack !== undefined && (typeof d.pack !== 'string' || !KEBAB.test(d.pack))) err(file, 'pack', 'pack is a kebab-case name: the group a mock paper draws from ("drills/<pack>")');   // ENGINE-BACKLOG 468
 };
 

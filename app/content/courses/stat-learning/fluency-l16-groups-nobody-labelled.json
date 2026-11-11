@@ -1,0 +1,363 @@
+{
+  "id": "fluency-l16-groups-nobody-labelled",
+  "lesson": "l16-groups-nobody-labelled",
+  "title": "Fluency: centres, inertia and linkage",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "assign-and-update",
+      "weight": 2,
+      "skill": "one assign and update step of k-means",
+      "vars": {
+        "v1": {
+          "int": [
+            5,
+            14
+          ]
+        },
+        "g2": {
+          "int": [
+            1,
+            6
+          ]
+        },
+        "g3": {
+          "int": [
+            1,
+            8
+          ]
+        },
+        "g4": {
+          "int": [
+            2,
+            12
+          ]
+        },
+        "g5": {
+          "int": [
+            1,
+            8
+          ]
+        },
+        "c1": {
+          "int": [
+            6,
+            16
+          ]
+        },
+        "gc": {
+          "int": [
+            2,
+            14
+          ]
+        },
+        "what": {
+          "pick": [
+            [
+              "volatilities",
+              "%"
+            ],
+            [
+              "spreads",
+              " bp"
+            ],
+            [
+              "daily volumes",
+              " million shares"
+            ]
+          ],
+          "as": [
+            "feat",
+            "unit"
+          ]
+        }
+      },
+      "let": {
+        "v2": "v1 + g2",
+        "v3": "v1 + g2 + g3",
+        "v4": "v1 + g2 + g3 + g4",
+        "v5": "v1 + g2 + g3 + g4 + g5",
+        "c2": "c1 + gc",
+        "k1": "if(abs(v1 - c1 - gc) < abs(v1 - c1), 1, 0)",
+        "k2": "if(abs(v1 + g2 - c1 - gc) < abs(v1 + g2 - c1), 1, 0)",
+        "k3": "if(abs(v1 + g2 + g3 - c1 - gc) < abs(v1 + g2 + g3 - c1), 1, 0)",
+        "k4": "if(abs(v1 + g2 + g3 + g4 - c1 - gc) < abs(v1 + g2 + g3 + g4 - c1), 1, 0)",
+        "k5": "if(abs(v1 + g2 + g3 + g4 + g5 - c1 - gc) < abs(v1 + g2 + g3 + g4 + g5 - c1), 1, 0)",
+        "n2": "k1 + k2 + k3 + k4 + k5",
+        "s2": "k1*v1 + k2*(v1 + g2) + k3*(v1 + g2 + g3) + k4*(v1 + g2 + g3 + g4) + k5*(v1 + g2 + g3 + g4 + g5)",
+        "key": "(k1*v1 + k2*(v1 + g2) + k3*(v1 + g2 + g3) + k4*(v1 + g2 + g3 + g4) + k5*(v1 + g2 + g3 + g4 + g5))/(k1 + k2 + k3 + k4 + k5)",
+        "all": "(5*v1 + 4*g2 + 3*g3 + 2*g4 + g5)/5",
+        "withc": "(k1*v1 + k2*(v1 + g2) + k3*(v1 + g2 + g3) + k4*(v1 + g2 + g3 + g4) + k5*(v1 + g2 + g3 + g4 + g5) + c1 + gc)/(k1 + k2 + k3 + k4 + k5 + 1)"
+      },
+      "where": [
+        "2*v1 != 2*c1 + gc",
+        "2*(v1 + g2) != 2*c1 + gc",
+        "2*(v1 + g2 + g3) != 2*c1 + gc",
+        "2*(v1 + g2 + g3 + g4) != 2*c1 + gc",
+        "2*(v1 + g2 + g3 + g4 + g5) != 2*c1 + gc",
+        "n2 >= 2",
+        "n2 <= 4",
+        "abs(key - all) > 0.02",
+        "abs(key - withc) > 0.02"
+      ],
+      "prompt": "Five shares have {feat} {v1}, {v2}, {v3}, {v4} and {v5}{unit}. Two centres sit at {c1} and {c2}. After one step of assigning each share to its nearest centre and updating, where is the second centre? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "A number such as 25.60",
+        "accept": "${key:dp2}$, within 0.005"
+      },
+      "wrong": [
+        {
+          "id": "all-shares",
+          "value": "{all}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "You averaged all five shares. The second centre moves to the mean of the {n2} shares nearer to it than to {c1}."
+        },
+        {
+          "id": "kept-centre",
+          "value": "{withc}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "You counted the old centre, {c2}, as one of the points. The update averages the shares only."
+        },
+        {
+          "id": "percent-sign",
+          "value": "{((k1*v1 + k2*(v1 + g2) + k3*(v1 + g2 + g3) + k4*(v1 + g2 + g3 + g4) + k5*(v1 + g2 + g3 + g4 + g5))/(k1 + k2 + k3 + k4 + k5))/100}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "Type the number alone, with no % sign after it."
+        }
+      ],
+      "solution": [
+        "The shares nearer {c2} than {c1} are the {n2} largest, with total {s2}.",
+        "The second centre moves to their mean, ${s2} \\div {n2} \\approx {key:dp2}$."
+      ]
+    },
+    {
+      "id": "group-inertia",
+      "weight": 1,
+      "skill": "a group's sum of squares about its centre",
+      "vars": {
+        "m": {
+          "int": [
+            12,
+            40
+          ]
+        },
+        "e1": {
+          "int": [
+            -9,
+            9
+          ]
+        },
+        "e2": {
+          "int": [
+            -9,
+            9
+          ]
+        },
+        "e3": {
+          "int": [
+            -9,
+            9
+          ]
+        },
+        "feat": {
+          "pick": [
+            "volatilities",
+            "spreads in basis points",
+            "daily volumes in millions"
+          ]
+        }
+      },
+      "let": {
+        "e4": "-(e1 + e2 + e3)",
+        "x1": "m + e1",
+        "x2": "m + e2",
+        "x3": "m + e3",
+        "x4": "m - e1 - e2 - e3",
+        "key": "e1^2 + e2^2 + e3^2 + (e1 + e2 + e3)^2",
+        "unsq": "abs(e1) + abs(e2) + abs(e3) + abs(e1 + e2 + e3)",
+        "avg": "(e1^2 + e2^2 + e3^2 + (e1 + e2 + e3)^2)/4"
+      },
+      "where": [
+        "abs(e1 + e2 + e3) <= 9",
+        "e1 != e2",
+        "e2 != e3",
+        "e1 != e3",
+        "e1 + e2 + e3 != -e1",
+        "e1 + e2 + e3 != -e2",
+        "e1 + e2 + e3 != -e3",
+        "e1^2 + e2^2 + e3^2 + (e1 + e2 + e3)^2 > 12"
+      ],
+      "prompt": "One group holds four shares with {feat} {x1}, {x2}, {x3} and {x4}. What is its sum of squares about its own centre?",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number"
+      },
+      "wrong": [
+        {
+          "id": "unsquared",
+          "value": "{unsq}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You added the distances without squaring them. Inertia sums squared distances."
+        },
+        {
+          "id": "averaged",
+          "value": "{avg}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "You divided by 4. Inertia is the sum of the squared distances, not their mean."
+        }
+      ],
+      "solution": [
+        "The centre is the mean, {m}, so the gaps are ${e1}$, ${e2}$, ${e3}$ and ${e4}$.",
+        "Their squares sum to ${key}$."
+      ]
+    },
+    {
+      "id": "linkage-distance",
+      "weight": 1,
+      "skill": "a merged group's distance under a linkage",
+      "vars": {
+        "da": {
+          "int": [
+            30,
+            95
+          ],
+          "step": 5
+        },
+        "db": {
+          "int": [
+            30,
+            95
+          ],
+          "step": 5
+        },
+        "lk": {
+          "pick": [
+            [
+              "single",
+              "Single",
+              "nearest",
+              0
+            ],
+            [
+              "complete",
+              "Complete",
+              "farthest",
+              1
+            ],
+            [
+              "average",
+              "Average",
+              "mean of the two",
+              2
+            ]
+          ],
+          "as": [
+            "name",
+            "cname",
+            "rule",
+            "code"
+          ]
+        },
+        "pair": {
+          "pick": [
+            [
+              "B1",
+              "B2",
+              "M1"
+            ],
+            [
+              "M1",
+              "M2",
+              "U"
+            ],
+            [
+              "A",
+              "B",
+              "C"
+            ]
+          ],
+          "as": [
+            "p1",
+            "p2",
+            "p3"
+          ]
+        }
+      },
+      "let": {
+        "a": "da/100",
+        "b2": "db/100",
+        "lo": "min(da, db)/100",
+        "hi": "max(da, db)/100",
+        "mid": "(da + db)/200",
+        "key": "if(code == 0, min(da, db)/100, if(code == 1, max(da, db)/100, (da + db)/200))"
+      },
+      "where": [
+        "da != db"
+      ],
+      "prompt": "Shares {p1} and {p2} have merged into one group. Share {p3} is at distance {a} from {p1} and {b2} from {p2}. Under {name} linkage, what is the group's distance to {p3}? Give the exact value.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "A number such as 0.675",
+        "accept": "${key:dp3}$, within 0.0005"
+      },
+      "wrong": [
+        {
+          "id": "nearest",
+          "value": "{lo}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You took the nearest member, the rule of single linkage. {cname} linkage uses the {rule}.",
+          "when": "code != 0"
+        },
+        {
+          "id": "farthest",
+          "value": "{hi}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You took the farthest member, the rule of complete linkage. {cname} linkage uses the {rule}.",
+          "when": "code != 1"
+        },
+        {
+          "id": "averaged",
+          "value": "{mid}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You averaged the two distances, the rule of average linkage. {cname} linkage uses the {rule}.",
+          "when": "code != 2"
+        }
+      ],
+      "solution": [
+        "Under {name} linkage the group's distance is the {rule} of {a} and {b2}.",
+        "That is ${key:dp3}$."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,333 @@
+{
+  "id": "fluency-l17-ratio-of-likelihoods",
+  "lesson": "l17-ratio-of-likelihoods",
+  "title": "Fluency: ratios of likelihoods",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "binomial-ratio",
+      "weight": 2,
+      "skill": "a likelihood ratio for a hit rate",
+      "vars": {
+        "n": {
+          "int": [
+            8,
+            20
+          ]
+        },
+        "k": {
+          "int": [
+            2,
+            18
+          ]
+        },
+        "p1": {
+          "pick": [
+            0.3,
+            0.4,
+            0.6,
+            0.7
+          ]
+        },
+        "who": {
+          "pick": [
+            "strategy",
+            "signal",
+            "trader"
+          ]
+        }
+      },
+      "let": {
+        "up": "2*p1",
+        "dn": "2 - 2*p1",
+        "m": "n - k",
+        "key": "(2*p1)^k*(2 - 2*p1)^(n - k)",
+        "inv": "1/((2*p1)^k*(2 - 2*p1)^(n - k))",
+        "wins": "(2*p1)^k"
+      },
+      "where": [
+        "n - k >= 2",
+        "key >= 0.1",
+        "key <= 30",
+        "abs(key - 1/key) > 0.002",
+        "abs(key - (2*p1)^k) > 0.002"
+      ],
+      "prompt": "A {who} wins {k} of {n} trades. What is the likelihood ratio $\\tfrac{{L({p1})}}{{L(0.5)}}$ for a hit rate of {p1} against 0.5? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "A number such as 5.049",
+        "accept": "${key:dp3}$, within 0.0005"
+      },
+      "wrong": [
+        {
+          "id": "inverted",
+          "value": "{inv}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You gave $\\tfrac{{L(0.5)}}{{L({p1})}}$, the ratio the other way up."
+        },
+        {
+          "id": "wins-only",
+          "value": "{wins}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You used the wins only. The {m} losses add a factor $\\left(\\tfrac{{{1 - p1}}}{{0.5}}\\right)^{{{m}}}$."
+        }
+      ],
+      "solution": [
+        "$\\tfrac{{L({p1})}}{{L(0.5)}} = \\left(\\tfrac{{{p1}}}{{0.5}}\\right)^{{{k}}}\\left(\\tfrac{{{1 - p1}}}{{0.5}}\\right)^{{{m}}} = {up}^{{{k}}} \\times {dn}^{{{m}}}$.",
+        "That is about ${key:dp3}$."
+      ]
+    },
+    {
+      "id": "two-log-likelihoods",
+      "weight": 1,
+      "skill": "the likelihood-ratio statistic from two fits",
+      "vars": {
+        "l0h": {
+          "int": [
+            2000,
+            9000
+          ]
+        },
+        "g": {
+          "int": [
+            5,
+            60
+          ]
+        },
+        "n": {
+          "pick": [
+            250,
+            500,
+            1000,
+            2000
+          ]
+        },
+        "what": {
+          "pick": [
+            "returns",
+            "trades",
+            "days of volume"
+          ]
+        }
+      },
+      "let": {
+        "l0": "-l0h/10",
+        "l1": "-l0h/10 + g/10",
+        "gap": "g/10",
+        "key": "2*g/10",
+        "neg": "-2*g/10"
+      },
+      "where": [],
+      "prompt": "Two nested models fitted to {n} {what} have maximised log-likelihoods ${l0}$ under the null and ${l1}$ for the full model. What is $-2\\ln\\Lambda$? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.04
+        },
+        "placeholder": "A number such as 6.6",
+        "accept": "${key:dp1}$"
+      },
+      "wrong": [
+        {
+          "id": "not-doubled",
+          "value": "{gap}",
+          "tol": {
+            "abs": 0.04
+          },
+          "line": "You gave the gap in log-likelihood. The statistic doubles it: $2[\\ell(\\hat\\theta) - \\ell(\\hat\\theta_0)]$."
+        },
+        {
+          "id": "sign",
+          "value": "{neg}",
+          "tol": {
+            "abs": 0.04
+          },
+          "line": "You subtracted the wrong way. The full model fits at least as well, so $-2\\ln\\Lambda$ is never negative."
+        }
+      ],
+      "solution": [
+        "$-2\\ln\\Lambda = 2[\\ell_{{\\text{{full}}}} - \\ell_{{\\text{{null}}}}] = 2 \\times {gap}$.",
+        "That is ${key:dp1}$."
+      ]
+    },
+    {
+      "id": "wilks-df",
+      "weight": 1,
+      "skill": "degrees of freedom of a likelihood-ratio test",
+      "vars": {
+        "p": {
+          "int": [
+            2,
+            9
+          ]
+        },
+        "r": {
+          "int": [
+            1,
+            8
+          ]
+        },
+        "what": {
+          "pick": [
+            "daily returns",
+            "trade counts",
+            "fill sizes",
+            "default rates"
+          ]
+        }
+      },
+      "let": {
+        "free": "p - r"
+      },
+      "where": [
+        "r < p"
+      ],
+      "prompt": "A model for {what} has {p} parameters. Under the null hypothesis {free} of them stay free and the rest are fixed at given values. How many degrees of freedom has the $\\chi^2$ limit of $-2\\ln\\Lambda$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{r}",
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number"
+      },
+      "wrong": [
+        {
+          "id": "all-parameters",
+          "value": "{p}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You counted every parameter of the model. The degrees of freedom count only those the null removes."
+        },
+        {
+          "id": "free-under-null",
+          "value": "{free}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You counted the parameters left free under the null. Count the ones it fixes.",
+          "when": "p - r != r"
+        }
+      ],
+      "solution": [
+        "Free parameters in the full model minus free parameters under the null: ${p} - {free} = {r}$."
+      ]
+    },
+    {
+      "id": "poisson-ratio-test",
+      "weight": 1,
+      "skill": "a likelihood-ratio statistic for a Poisson mean",
+      "vars": {
+        "n": {
+          "int": [
+            20,
+            80
+          ],
+          "step": 5
+        },
+        "lam0": {
+          "pick": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "dv": {
+          "int": [
+            -30,
+            30
+          ],
+          "not": [
+            0
+          ]
+        },
+        "w": {
+          "pick": [
+            [
+              "trades",
+              "minutes",
+              "a minute"
+            ],
+            [
+              "orders",
+              "hours",
+              "an hour"
+            ],
+            [
+              "claims",
+              "days",
+              "a day"
+            ],
+            [
+              "quotes",
+              "seconds",
+              "a second"
+            ]
+          ],
+          "as": [
+            "things",
+            "units",
+            "per"
+          ]
+        }
+      },
+      "let": {
+        "s": "n*lam0 + dv",
+        "ratio": "(n*lam0 + dv)/(n*lam0)",
+        "key": "2*((n*lam0 + dv)*ln((n*lam0 + dv)/(n*lam0)) - dv)",
+        "half": "(n*lam0 + dv)*ln((n*lam0 + dv)/(n*lam0)) - dv",
+        "nomean": "2*(n*lam0 + dv)*ln((n*lam0 + dv)/(n*lam0))"
+      },
+      "where": [
+        "n*lam0 + dv >= 5",
+        "key >= 0.2",
+        "key <= 15"
+      ],
+      "prompt": "{s} {things} arrive in {n} {units}. For the Poisson null $\\lambda_0 = {lam0}$ {per}, $-2\\ln\\Lambda = 2\\big[\\sum x_i \\ln\\tfrac{{\\hat\\lambda}}{{\\lambda_0}} - n(\\hat\\lambda - \\lambda_0)\\big]$. What is it? Give 2 decimal places. Keep at least 4 decimal places in any logarithm.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.05
+        },
+        "placeholder": "A number such as 3.76",
+        "accept": "${key:dp2}$, within 0.05"
+      },
+      "wrong": [
+        {
+          "id": "not-doubled",
+          "value": "{half}",
+          "tol": {
+            "abs": 0.05
+          },
+          "line": "You left out the factor 2 in front of the bracket."
+        },
+        {
+          "id": "no-mean-term",
+          "value": "{nomean}",
+          "tol": {
+            "abs": 0.05
+          },
+          "line": "You dropped $n(\\hat\\lambda - \\lambda_0) = {dv}$ from the bracket."
+        }
+      ],
+      "solution": [
+        "$\\hat\\lambda = {s} \\div {n}$, so $\\tfrac{{\\hat\\lambda}}{{\\lambda_0}} = {ratio:frac}$ and $n(\\hat\\lambda - \\lambda_0) = {dv}$.",
+        "$-2\\ln\\Lambda = 2\\big[{s}\\ln {ratio:frac} {-dv:+}\\big] \\approx {key:dp2}$, on 1 degree of freedom."
+      ]
+    }
+  ]
+}

@@ -357,6 +357,243 @@ JOBS = [
     ('functions/fluency-l8-line-through-two-points', 'line-equation', f8_line),
 ]
 
+# ==== Level 4 (fluency and problems quadratics 4) ===================================================
+# Method 2: sympy works each key from the vars alone (sqrt and its square factor, cancel and factor on the
+# rational expressions, solve on the cleared equation, rem and div on the polynomials) and each slip from the
+# step the learner got wrong; a second route (trial division, substitution, numeric evaluation) is checked too.
+SETS4 = {}
+
+
+def wtol4(ref, fam, wid):
+    if ref not in SETS4:
+        SETS4[ref] = json.load(open(os.path.join(APP, 'content', 'courses', *ref.split('/')) + '.json'))
+    f = next(z for z in SETS4[ref]['families'] if z['id'] == fam)
+    w = next(z for z in f['wrong'] if z['id'] == wid)
+    return float((w.get('tol') or {}).get('abs', 0))
+
+
+def num4(it, ref, key, slips, tol=0.0):
+    tag = f"{it['family']} seed {it['seed']}"
+    check(abs(float(it['answer']) - float(key)) <= 1e-9, f"{tag}: key {it['answer']} is {key}")
+    want = {k for k, v in slips.items() if v is not None}
+    got = {w['id']: float(w['value']) for w in it['wrong']}
+    check(set(got) == want, f"{tag}: slips offered {sorted(got)} are {sorted(want)}")
+    for wid, val in got.items():
+        if wid in want:
+            check(abs(val - float(slips[wid])) <= 1e-6, f"{tag}: slip {wid} {val} is {float(slips[wid])}")
+        check(abs(val - float(key)) > tol + wtol4(ref, it['family'], wid), f"{tag}: slip {wid} outside the key band")
+    vals = list(got.items())
+    for i in range(len(vals)):
+        for j in range(i + 1, len(vals)):
+            check(abs(vals[i][1] - vals[j][1]) > wtol4(ref, it['family'], vals[i][0]) + wtol4(ref, it['family'], vals[j][0]),
+                  f"{tag}: slips {vals[i][0]} and {vals[j][0]} apart")
+
+
+def expr4(it, key, slips, v, form=None):
+    """key, slips: sympy expressions (None = slip not offered); every wrong offered must be its slip and differ from the key
+    and from every other wrong."""
+    x = sp.Symbol(v)
+    tag = f"{it['family']} seed {it['seed']}"
+    got = tval(it['answer'], x)
+    check(sp.simplify(got - key) == 0, f"{tag}: key {it['answer']} equals {key}")
+    if form == 'expanded':
+        check('(' not in it['answer'], f"{tag}: key has no bracket")
+    if form in ('factorised', 'factorised-fully'):
+        outside = re.sub(r'\([^()]*\)', '()', it['answer'])
+        check('()' in outside and not re.search(r'(?<!^)[+-]', outside), f"{tag}: key {it['answer']} is a product")
+    want = {k for k, e in slips.items() if e is not None}
+    offered = {w['id']: tval(w['tex'], x) for w in it['wrong']}
+    check(set(offered) == want, f"{tag}: slips offered {sorted(offered)} are {sorted(want)}")
+    for wid, e in offered.items():
+        check(sp.simplify(e - key) != 0, f"{tag}: wrong {wid} differs from the key")
+        if wid in want:
+            check(sp.simplify(e - slips[wid]) == 0, f"{tag}: wrong {wid} is the slip {slips[wid]}")
+    ids = list(offered)
+    for i in range(len(ids)):
+        for j in range(i + 1, len(ids)):
+            check(sp.simplify(offered[ids[i]] - offered[ids[j]]) != 0, f"{tag}: wrongs {ids[i]} and {ids[j]} differ")
+
+
+Q14 = 'quadratics/fluency-l14-roots-that-stay'
+Q15 = 'quadratics/fluency-l15-fractions-with-letters'
+Q16 = 'quadratics/fluency-l16-adding-and-solving'
+Q17 = 'quadratics/fluency-l17-dividing-polynomials'
+
+
+def q14_simplest(it, V):
+    n = int(re.search(r'\\sqrt\{(\d+)\}', it['prompt']).group(1))
+    s = sp.sqrt(n)                      # sympy writes it as a*sqrt(b) with b square-free
+    a = s.as_coeff_Mul()[0]
+    big = max(d for d in range(1, n + 1) if n % (d * d) == 0)
+    check(a == big and sp.factorint(n // big ** 2) and all(e == 1 for e in sp.factorint(n // big ** 2).values()),
+          f"simplest {n}: largest square factor {big}^2, rest square-free")
+    k = int(V['k'])
+    j = int(V['j'])
+    early = min(p for p in sp.factorint(k)) if not sp.isprime(k) else None
+    check((early or 0) == j, f"simplest {n}: the smallest prime of {k} is the early stop {j}")
+    num4(it, Q14, a, {'stopped-early': early, 'square-not-root': a * a})
+
+
+def q14_collect(it, V):
+    m = re.search(r'\\sqrt\{(\d+)\} ([+-]) \\sqrt\{(\d+)\}\$ to \$k\\sqrt\{(\d+)\}', it['prompt'])
+    A, op, B, r = int(m.group(1)), m.group(2), int(m.group(3)), int(m.group(4))
+    sgn = 1 if op == '+' else -1
+    tot = sp.sqrt(A) + sgn * sp.sqrt(B)
+    key = sp.simplify(tot / sp.sqrt(r))
+    check(key.is_integer, f"collect {A} {op} {B}: a whole number of sqrt({r})")
+    check(abs(float(tot) - float(key) * r ** 0.5) < 1e-9, f"collect {A} {op} {B}: decimal check")
+    p, q = sp.sqrt(sp.Rational(A, r)), sp.sqrt(sp.Rational(B, r))
+    nr = p * p + sgn * q * q
+    num4(it, Q14, key, {'no-roots': nr, 'sign': (p + q) if sgn < 0 and nr != p + q else None})
+
+
+def q14_conj(it, V):
+    m = re.search(r'\\dfrac\{(\d+)\}\{(\d+) ([+-]) \\sqrt\{(\d+)\}\}', it['prompt'])
+    c, p, op, q = int(m.group(1)), int(m.group(2)), m.group(3), int(m.group(4))
+    sgn = 1 if op == '+' else -1
+    bottom = sp.expand((p + sgn * sp.sqrt(q)) * (p - sgn * sp.sqrt(q)))
+    check(bottom.is_integer, f"conj {p} {op} sqrt{q}: the bottom is rational")
+    check(bottom >= 1 and p * p > q, f"conj {p} {op} sqrt{q}: the new bottom {bottom} is a whole number of at least 1")
+    check(f"{p} {'-' if sgn > 0 else '+'} \\sqrt{{{q}}}" in it['prompt'], f"conj {p}: the conjugate named is the right one")
+    check(abs(float(c / (p + sgn * q ** 0.5)) - float(c * (p - sgn * q ** 0.5) / bottom)) < 1e-9, f"conj {p}: same value after rationalising")
+    num4(it, Q14, bottom, {'added': p * p + q, 'squared-q': p * p - q * q})
+
+
+def q15_cancel(it, V):
+    a, b, c, v = int(V['a']), int(V['b']), int(V['c']), V['v']
+    x = sp.Symbol(v)
+    top, bot = sp.expand((x + a) * (x + b)), sp.expand((x + a) * (x + c))
+    q = sp.cancel(top / bot)
+    check(sp.simplify(q - (x + b) / (x + c)) == 0, f"cancel {a},{b},{c}: cancels to (x+b)/(x+c)")
+    check(abs(float((top / bot).subs(x, sp.Rational(7, 3))) - float(((x + b) / (x + c)).subs(x, sp.Rational(7, 3)))) < 1e-12, f"cancel: value at 7/3")
+    check(sp.denom(sp.together(q)) == x + c, f"cancel {a},{b},{c}: the bottom left is x + c")
+    expr4(it, sp.numer(sp.together(q)),
+          {'shared-bracket': x + a, 'sign-slip': x - b, 'whole': (x + b) / (x + c)}, v, 'expanded')
+
+
+def q15_mult(it, V):
+    a, b, k, v = int(V['a']), int(V['b']), int(V['k']), V['v']
+    x = sp.Symbol(v)
+    e = (x ** 2 - a * a) / (x + b) * (k * x + k * b) / (x - a)
+    key = sp.factor(sp.cancel(e))
+    check(sp.simplify(key - k * (x + a)) == 0, f"mult {a},{b},{k}: {key}")
+    expr4(it, key, {'sign': k * (x - a), 'number-lost': x + a}, v, 'factorised')
+
+
+def q15_div(it, V):
+    a, b, v = int(V['a']), int(V['b']), V['v']
+    x = sp.Symbol(v)
+    e = ((x ** 2 + a * x) / (x - b)) / ((x + a) / (x ** 2 - b * b))
+    key = sp.factor(sp.cancel(e))
+    check(sp.simplify(key - x * (x + b)) == 0, f"div {a},{b}: {key}")
+    expr4(it, key, {'sign': x * (x - b), 'letter-lost': x + b}, v, 'factorised')
+
+
+def q16_add(it, V, sign=1):
+    p, q, a, b, v = int(V['p']), int(V['q']), int(V['a']), int(V['b']), V['v']
+    x = sp.Symbol(v)
+    total = sp.together(p / (x + a) + sign * q / (x + b))
+    top = sp.expand(sp.cancel(total * (x + a) * (x + b)))
+    check(sp.expand(top - (p * (x + b) + sign * q * (x + a))) == 0, f"add {p},{q}: cross-multiplied top")
+    return x, top, p, q, a, b, v
+
+
+def q16_addtops(it, V):
+    x, top, p, q, a, b, v = q16_add(it, V)
+    check(it['prompt'].endswith('Type the top, simplified, with no brackets.'), f"add-tops seed {it['seed']}: the prompt rules out a bracketed top")
+    expr4(it, top, {'own-bottoms': sp.expand(p * (x + a) + q * (x + b)), 'tops-added': sp.Integer(p + q),
+                          'whole': top / ((x + a) * (x + b))}, v, 'simplified')
+
+
+def q16_subtops(it, V):
+    x, top, p, q, a, b, v = q16_add(it, V, -1)
+    check(it['prompt'].endswith('Type the top, simplified, with no brackets.'), f"subtract-tops seed {it['seed']}: the prompt rules out a bracketed top")
+    own = sp.expand(p * (x + a) - q * (x + b))
+    lost = sp.expand(p * (x + b) - q * x + q * a)
+    expr4(it, top, {'sign-lost': lost, 'own-bottoms': own if sp.expand(own - lost) != 0 else None,
+                          'whole': top / ((x + a) * (x + b))}, v, 'simplified')
+
+
+def q16_roots(it, V):
+    A, B, k = int(V['aa']), int(V['bb']), int(V['k'])
+    x = sp.Symbol('x')
+    sols = sp.solve(sp.Eq(A / x + B / (x + k), 1), x)
+    sols = sorted(sols)
+    tag = f"roots seed {it['seed']}"
+    check(sorted(float(z) for z in it['answers']) == [float(z) for z in sols], f"{tag}: answers {it['answers']} are {sols}")
+    for z in sols:
+        check(abs(A / float(z) + B / (float(z) + k) - 1) < 1e-12, f"{tag}: {z} satisfies the equation")
+    w = it['wrong'][0]
+    check(w['id'] == 'signs' and sorted(float(t) for t in w['value'].split(',')) == sorted(-float(z) for z in sols), f"{tag}: signs slip")
+    check(sorted(-float(z) for z in sols) != [float(z) for z in sols], f"{tag}: signs slip is not the key set")
+
+
+def q16_reject(it, V):
+    a, b = int(V['a']), int(V['b'])
+    x = sp.Symbol('x')
+    sols = sp.solve(sp.Eq(b * x / (x - a), a * b / (x - a) + x), x)
+    check(sols == [b], f"reject {a},{b}: sympy keeps only {sols}")
+    cleared = sp.solve(sp.Eq(b * x, a * b + x * (x - a)), x)
+    check(sorted(cleared) == sorted({a, b}), f"reject {a},{b}: clearing gives {cleared}")
+    num4(it, Q16, b, {'kept-bad': a, 'sign': -b})
+
+
+def q17_rem(it, V):
+    lc, b, c, d, a = (int(V[z]) for z in ('lc', 'b', 'c', 'd', 'a'))
+    x = sp.Symbol('x')
+    f = lc * x ** 3 + b * x ** 2 + c * x + d
+    r = sp.rem(f, x - a, x)
+    check(r == f.subs(x, a), f"rem {f} by x-{a}: long division agrees with f(a)")
+    num4(it, Q17, r, {'sign': f.subs(x, -a), 'no-constant': f.subs(x, a) - d})
+
+
+def q17_k(it, V):
+    a, k, c = int(V['a']), int(V['k']), int(V['c'])
+    x, K = sp.symbols('x K')
+    d = -(a ** 3 + k * a * a + c * a)
+    check(f"{'+' if d > 0 else '-'}{abs(d)}$" in it['prompt'].replace(' ', ''), f"k {a}: the constant {d} is shown")
+    f = x ** 3 + K * x ** 2 + c * x + d
+    key = sp.solve(f.subs(x, a), K)[0]
+    check(sp.rem(f.subs(K, key), x - a, x) == 0, f"k {a}: (x - {a}) divides with k = {key}")
+    neg = sp.solve(f.subs(x, -a), K)[0]
+    lin = sp.solve(a ** 3 + K * a + c * a + d, K)[0]
+    num4(it, Q17, key, {'sign': neg if abs(neg - key) > 0.02 else None,
+                       'power-dropped': lin if abs(lin - key) > 0.02 and abs(lin - neg) > 0.02 and a != 1 else None})
+
+
+def q17_quot(it, V):
+    a, p, q, v = int(V['a']), int(V['p']), int(V['q']), V['v']
+    x = sp.Symbol(v)
+    f = sp.expand((x - a) * (x ** 2 + p * x + q))
+    quo, r = sp.div(f, x - a, x)
+    check(r == 0 and sp.expand(quo - (x ** 2 + p * x + q)) == 0, f"quot {f}: exact, quotient {quo}")
+    # the slip: synthetic division run with -a in place of a
+    co = sp.Poly(f, x).all_coeffs()
+    s1 = co[1] + (-a) * co[0]
+    s0 = co[2] + (-a) * s1
+    check('multiplied out' in it['prompt'], f"quot seed {it['seed']}: the prompt asks for the quotient multiplied out")
+    expr4(it, quo, {'sign': x ** 2 + s1 * x + s0, 'constant-sign': x ** 2 + p * x - q}, v, 'expanded')
+
+
+def q17_cubic(it, V):
+    r, s, u, v = int(V['r']), int(V['s']), int(V['u']), V['v']
+    x = sp.Symbol(v)
+    f = sp.expand((x - r) * (x - s) * (x - u))
+    fl = sp.factor_list(f)
+    check(fl[0] == 1 and len(fl[1]) == 3 and all(sp.Poly(g, x).degree() == 1 for g, _ in fl[1]), f"cubic {f}: three linear factors")
+    trial = [z for z in sp.divisors(abs(int(f.subs(x, 0)))) for z in (z, -z) if f.subs(x, z) == 0]
+    check(sorted(set(trial)) == sorted([r, s, u]), f"cubic {f}: trial of the constant's factors finds {sorted(set(trial))}")
+    expr4(it, sp.factor(f), {'signs': (x + r) * (x + s) * (x + u),
+                             'one-sign': (x + r) * (x - s) * (x - u) if s + u != 0 else None}, v, 'factorised-fully')
+
+
+JOBS += [
+    (Q14, 'simplest-surd', q14_simplest), (Q14, 'collect-surds', q14_collect), (Q14, 'conjugate-bottom', q14_conj),
+    (Q15, 'cancel-common-bracket', q15_cancel), (Q15, 'multiply-and-cancel', q15_mult), (Q15, 'divide-and-cancel', q15_div),
+    (Q16, 'add-tops', q16_addtops), (Q16, 'subtract-tops', q16_subtops), (Q16, 'solve-two-roots', q16_roots), (Q16, 'reject-root', q16_reject),
+    (Q17, 'remainder', q17_rem), (Q17, 'find-k', q17_k), (Q17, 'quotient', q17_quot), (Q17, 'factorise-cubic', q17_cubic),
+]
+
 for ref, fam, fn in JOBS:
     run(ref, fam, fn)
 print(f"{len(JOBS)} families, {N} draws each, {count} checks")

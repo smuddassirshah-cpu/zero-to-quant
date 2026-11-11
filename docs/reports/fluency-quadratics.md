@@ -61,3 +61,46 @@ Checks for the widening pass:
 5. I read 20 draws of every new or changed family, and scanned 200 of each for `1x`, `+-`, `--`, `^1`, `0x`, `+0`, `/1`: no hits. Fixed on reading: an unclear factor-dropped line, a "no-square-root" line, bare minus signs outside maths in the decimal-roots accept line, and unsimplified surds such as $\sqrt{60}$.
 
 Still blocked: none.
+
+## Level 4
+
+Four sets, fourteen families (brief `docs/briefs/fluency.md`; skill `quad-rational`, new this session, and `quad-solve`). The sets follow the lessons' own instruction words and shapes: "in simplest surd form, $a\sqrt{b}$", "Type the top", "a number times one bracket", "over the common denominator", "Factorise ... fully".
+
+- l14-roots-that-stay: the largest square factor, collecting like surds, and the conjugate step of rationalising.
+- l15-fractions-with-letters: cancelling a common bracket, multiplying and dividing with cancelling across.
+- l16-adding-and-solving: adding and subtracting over a product denominator, clearing fractions to a quadratic, rejecting a root that makes a bottom zero.
+- l17-dividing-polynomials: remainder theorem, factor theorem for a coefficient, the quotient, and a cubic factorised fully.
+
+Considered and left out: l18-circles-on-a-grid (distance and the circle's equation: procedural, but the brief names fractions, division and surds for this pass, and the centre-and-radius answer is a pair with a reading step); l19-line-meets-curve (a substitution then a judgement on the discriminant: a problem, not a drill; it is in `problems-4`).
+
+| set | family | distinct prompts in 200 | `form` | slips |
+| --- | --- | --- | --- | --- |
+| fluency-l14-roots-that-stay | simplest-surd (numeric) | 133 | none | stopped-early (`when` the root is composite), square-not-root |
+| | collect-surds (numeric) | 145 | none | no-roots, sign (minus only) |
+| | conjugate-bottom (numeric) | 185 | none | added, squared-q |
+| fluency-l15-fractions-with-letters | cancel-common-bracket | 198 | expanded | shared-bracket, sign-slip, whole |
+| | multiply-and-cancel | 187 | factorised | sign, number-lost |
+| | divide-and-cancel | 166 | factorised | sign, letter-lost |
+| fluency-l16-adding-and-solving | add-tops | 200 | simplified | own-bottoms, tops-added |
+| | subtract-tops | 199 | simplified | sign-lost, own-bottoms |
+| | solve-two-roots (numeric set) | 76 | none | signs (and `count`) |
+| | reject-root (numeric) | 117 | none | kept-bad, sign |
+| fluency-l17-dividing-polynomials | remainder (numeric) | 200 | none | sign, no-constant |
+| | find-k (numeric) | 174 | none | sign, power-dropped |
+| | quotient | 194 | expanded | sign, constant-sign |
+| | factorise-cubic | 143 | factorised-fully | signs, one-sign |
+
+Notes. A surd typed as an expression is graded by value and no `form` refuses $\sqrt{72}$ for $6\sqrt{2}$ (ENGINE-BACKLOG 670), so l14 asks for the number in front, as the lesson's own screen does. l15 asks for the top over a given bottom, as l15 s3 does; the multiply and divide keys carry `factorised`, and `test-fluency` confirms the retyped prompt is refused. l16 `solve-two-roots` draws from 90 tuples $(A, B, k, r, s)$ with whole, distinct roots that make no bottom zero; `reject-root` is $\tfrac{bx}{x - a} = \tfrac{ab}{x - a} + x$, whose cleared quadratic has roots $a$ and $b$. l17 `factorise-cubic` draws from 92 triples of distinct non-zero roots, one of them within 2 of zero so that trial division finds it fast.
+
+### Checks
+
+1. `docs/reports/fluency-quadratics-numbers.py` extended (sympy: `sqrt` and `factorint`, `cancel` and `factor`, `solve` on the uncleared equation, `rem`, `div`, `factor_list`; second routes: a search for the largest square, values at $x = \tfrac{7}{3}$, substitution back, trial of the constant's divisors), 200 draws a family: 55,533 of 55,533 checks across all 36 families, exit 0.
+2. Validator: 0 errors, 4,664 warnings before and after (none on these files). `test-fluency.mjs --local-cdn`: 304, 304, 309 and 308 passed, no coinciding-slip notes after two `when` fixes (`sign` against `no-roots` when $p - q = 1$; `one-sign` against `signs` when two roots are opposite).
+3. Playthrough `--fluency` of the four sets, desktop and `--mobile`: green. The 440 px shots of l15 (item, wrong answer) read: no layout fault.
+4. Voice scan 35 on the course folder: 0 and 0.
+5. I read 20 drawn items of every family as a learner would, and scanned 200 of each for `1x`, `+-`, `x^1`, `0x`, double minus, `+0` and float artefacts: no hits after fixes. Fixed on reading: `x -3` spacing in brackets, `1k` and `1(y+4)` coefficients, `+0` when $k = 0$ in find-k, and a quotient working that named a constant as "the $x$ term". A division by zero in a `let` of `simplest-surd` had been rejecting every prime-root draw silently (164 of 364): an `if` now guards it.
+
+### Engine limits (inbox)
+
+- A surd answer cannot be asked as an expression in simplest form (ENGINE-BACKLOG 670 still open): raised again.
+- "Type the top" is the only way to ask for a cancelled fraction: no `form` is known to refuse an uncancelled fraction equal to the key (review-quadratics-4 finding 19), so a family cannot ask for the whole simplified fraction.

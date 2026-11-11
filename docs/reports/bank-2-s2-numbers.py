@@ -1,0 +1,520 @@
+#!/usr/bin/env python3
+"""Bank part 2, session 2: every key, slip and stated figure in statistics-2, finance-2 and behavioural-6, by two routes.
+
+Standard library only (runs under plain python3). numbers_lib.py has no Bank loader yet (B2-E4), so the JSON is read here.
+Route A is exact (Fraction) or closed form; route B is enumeration, a seeded simulation with a stated tolerance, a
+numerical solve or a step-by-step loop that shares no code with route A. Each slip is computed by carrying out the
+slip its byKey line names. Each value is then asserted at its path in the JSON. Exit 0 means every check passed.
+"""
+import json, math, os, random, re, sys
+from fractions import Fraction as F
+from math import sqrt, exp, log, erf, erfc, pi
+from statistics import NormalDist
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+BANK = os.path.join(HERE, '..', '..', 'app', 'content', 'bank')
+FILES = ['statistics-2', 'finance-2', 'behavioural-6']
+DATA = {f: json.load(open(os.path.join(BANK, f + '.json'), encoding='utf-8')) for f in FILES}
+ITEMS = {(f, it['id']): it for f in FILES for it in DATA[f]['items']}
+fails, checks = [], [0]
+N = NormalDist()
+
+
+def ok(cond, label):
+    checks[0] += 1
+    if not cond:
+        fails.append(label)
+        print('FAIL', label)
+
+
+def close(a, b, tol, label):
+    ok(abs(float(a) - float(b)) <= tol, f'{label}: {float(a)!r} vs {float(b)!r} (tol {tol})')
+
+
+def two(a, b, tol, label):
+    """Route A and route B agree; returns route A."""
+    close(a, b, tol, label + ' [two routes]')
+    return float(a)
+
+
+def item(f, i):
+    it = ITEMS.get((f, i))
+    ok(it is not None, f'{f}/{i} exists')
+    return it
+
+
+def numeric(f, i, key, asked_dp, slips):
+    """key: the computed value. asked_dp: places the question asks for (None for a whole number).
+    slips: {wrong id: computed slip value}. Checks the stored answer, its band, every wrong value and band, and byKey."""
+    it = item(f, i)
+    w = it['widget']
+    ok(w['kind'] == 'numeric', f'{f}/{i}: numeric')
+    scale = 100 if w.get('unit') == '%' else 1
+    ans, tol = w['answer'], w['tol']['abs']
+    lab = f'{f}/{i}'
+    ok(abs(ans - float(key)) <= tol + 1e-12, f'{lab}: computed key {float(key)} inside stored band {ans} +- {tol}')
+    if asked_dp is not None:
+        rounded = round(float(key) * scale, asked_dp) / scale
+        ok(abs(rounded - ans) <= tol + 1e-12, f'{lab}: rounded key {rounded} inside band')
+        close(ans, key, 0.5 * 10 ** -asked_dp / scale, f'{lab}: stored answer within half a unit of the exact value')
+    else:
+        ok(float(key) == round(float(key)) and ans == key, f'{lab}: whole-number key {key} stored exactly')
+    ids = {x['id']: x for x in w['wrong']}
+    ok(set(ids) == set(slips), f'{lab}: wrong ids {sorted(ids)} match computed slips {sorted(slips)}')
+    ok(len(ids) >= 2, f'{lab}: at least two wrong entries')
+    for wid, v in slips.items():
+        x = ids.get(wid)
+        if not x:
+            continue
+        v = float(v)
+        ok(abs(x['value'] - v) <= x['tol']['abs'] + 1e-12, f'{lab}.{wid}: computed slip {v} inside its band {x["value"]} +- {x["tol"]["abs"]}')
+        if asked_dp is not None:
+            ok(abs(x['value'] - round(v * scale, asked_dp) / scale) <= x['tol']['abs'] + 1e-12, f'{lab}.{wid}: slip as rounded inside its band')
+        ok(abs(x['value'] - ans) > tol + x['tol']['abs'], f'{lab}.{wid}: band does not touch the key band')
+        ok(wid in it['feedback'].get('byKey', {}), f'{lab}.{wid}: byKey line')
+        ok(x['tol']['abs'] <= 0.5 * abs(x['value']) or x['value'] == 0, f'{lab}.{wid}: band not over half the value')
+    vals = sorted(w['wrong'], key=lambda x: x['value'])
+    for a, b in zip(vals, vals[1:]):
+        ok(b['value'] - a['value'] > a['tol']['abs'] + b['tol']['abs'], f'{lab}: wrong bands {a["id"]} and {b["id"]} apart')
+    return it
+
+
+def stated(f, i, phrase):
+    """A figure computed above is printed in the item (any field)."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    ok(phrase in blob, f'{f}/{i}: states "{phrase}"')
+
+
+def choice(f, i, key_text_part):
+    it = item(f, i)
+    opts = it['widget']['options']
+    corr = [o for o in opts if o.get('correct')]
+    ok(len(opts) == 4 and len(corr) == 1, f'{f}/{i}: four options, one correct')
+    ok(key_text_part in corr[0]['text'], f'{f}/{i}: key text')
+    ok(all(o.get('why') for o in opts if not o.get('correct')), f'{f}/{i}: why on each distractor')
+    others = max(len(o['text']) for o in opts if not o.get('correct'))
+    ok(len(corr[0]['text']) - others <= 9, f'{f}/{i}: key not longer than the longest distractor by more than 9')
+    ok(it['widget'].get('shuffle', True) is True, f'{f}/{i}: shuffle on')
+    ok(len({o['text'] for o in opts}) == 4, f'{f}/{i}: options distinct')
+    return it
+
+
+def fmt(x, dp):
+    return f'{x:.{dp}f}'
+
+
+def ols(x, y):
+    """Simple least squares with intercept: slope, its usual standard error, residuals."""
+    n = len(x)
+    mx, my = sum(x) / n, sum(y) / n
+    sxx = sum((a - mx) ** 2 for a in x)
+    b = sum((a - mx) * (c - my) for a, c in zip(x, y)) / sxx
+    a0 = my - b * mx
+    res = [c - a0 - b * a for a, c in zip(x, y)]
+    return b, sqrt(sum(r * r for r in res) / (n - 2) / sxx), res
+
+
+S, FI, B = 'statistics-2', 'finance-2', 'behavioural-6'
+
+
+def solve(A, b):
+    """Gaussian elimination with partial pivoting."""
+    n = len(A)
+    M = [row[:] + [b[i]] for i, row in enumerate(A)]
+    for c in range(n):
+        p = max(range(c, n), key=lambda r: abs(M[r][c]))
+        M[c], M[p] = M[p], M[c]
+        for r in range(n):
+            if r != c:
+                f = M[r][c] / M[c][c]
+                M[r] = [x - f * y for x, y in zip(M[r], M[c])]
+    return [M[i][n] / M[i][i] for i in range(n)]
+
+
+def r2_fit(cols, y):
+    """R squared and adjusted R squared of y on an intercept and the given columns, by the normal equations."""
+    n = len(y)
+    X = [[1.0] + [c[i] for c in cols] for i in range(n)]
+    k = len(X[0])
+    beta = solve([[sum(X[i][a] * X[i][b] for i in range(n)) for b in range(k)] for a in range(k)], [sum(X[i][a] * y[i] for i in range(n)) for a in range(k)])
+    my = sum(y) / n
+    rss = sum((y[i] - sum(beta[j] * X[i][j] for j in range(k))) ** 2 for i in range(n))
+    R = 1 - rss / sum((v - my) ** 2 for v in y)
+    return R, 1 - (1 - R) * (n - 1) / (n - k), beta, rss
+
+
+def bs(S0, K, T, r, sig):
+    d1 = (log(S0 / K) + (r + sig * sig / 2) * T) / (sig * sqrt(T))
+    return S0 * N.cdf(d1) - K * exp(-r * T) * N.cdf(d1 - sig * sqrt(T))
+
+
+# ---------------------------------------------------------------- statistics-2
+# es-mle-two-coins-ratio: Fraction of sequence probabilities against enumeration of all 32 sequences
+a = (F(8, 10) ** 4 * F(2, 10)) / F(1, 2) ** 5
+seqs = [[(s >> k) & 1 for k in range(5)] for s in range(32)]
+lik = lambda p: sum(math.prod(p if h else 1 - p for h in sq) for sq in seqs if sum(sq) == 4)
+key = two(a, lik(0.8) / lik(0.5), 1e-12, 'likelihood ratio')
+numeric(S, 'es-mle-two-coins-ratio', key, 2, {'upside-down': 1 / a, 'all-heads': F(8, 10) ** 5 / F(1, 2) ** 5})
+ok(F(8, 10) ** 4 * F(2, 10) == F(8192, 100000) and F(1, 2) ** 5 == F(3125, 100000), 'stated 0.08192 and 0.03125')
+
+# shrinkage-mse-best-multiplier: calculus against a grid search of the mean squared error
+mse = lambda c: c * c * 3 + (c - 1) ** 2 * 9
+a = F(9, 9 + 3)
+cbest = min((k / 100000 for k in range(200001)), key=mse)
+key = two(a, cbest, 1e-5, 'best multiplier')
+ok(all(mse(k / 1000) >= mse(0.75) - 1e-12 for k in range(-2000, 3000)), 'claim: 0.75 gives the smallest error')
+ok(mse(F(3, 4)) == F(9, 4) and mse(1) == 3, 'error falls from 3 to 2.25')
+numeric(S, 'shrinkage-mse-best-multiplier', key, 3, {'unbiased': 1, 'equal-split': F(3, 3 + 3)})   # "as a decimal": checked to 3 places
+
+# es-intervals-poll-margin: binomial standard error against a seeded simulation of the poll
+p = F(240, 400)
+a = 1.96 * sqrt(p * (1 - p) / 400) * 100
+rng = random.Random(17)
+shares = [sum(rng.random() < 0.6 for _ in range(400)) / 400 for _ in range(20000)]
+ms = sum(shares) / len(shares)
+b = 1.96 * sqrt(sum((s - ms) ** 2 for s in shares) / (len(shares) - 1)) * 100
+key = two(a, b, 0.05, 'margin in points (simulation tolerance 0.05)')
+numeric(S, 'es-intervals-poll-margin', key, 1, {'used-half': 1.96 * sqrt(0.25 / 400) * 100, 'no-multiplier': sqrt(0.24 / 400) * 100})
+ok(fmt(sqrt(0.24 / 400), 4) == '0.0245', 'standard error 0.0245')
+
+# es-bayes-prior-and-sample: precision weights against a midpoint integral of prior times likelihood
+a = (F(0) * F(1, 4) + F(3) * 1) / (F(1, 4) + 1) / 100
+grid = [-10 + (k + 0.5) * 1e-4 for k in range(200000)]
+dens = [exp(-m * m / 8 - (m - 3) ** 2 / 2) for m in grid]
+b = sum(m * d for m, d in zip(grid, dens)) / sum(dens) / 100
+key = two(a, b, 1e-8, 'posterior mean')
+numeric(S, 'es-bayes-prior-and-sample', key, 1, {'plain-average': F(15, 1000), 'weights-swapped': (F(0) * 1 + F(3) * F(1, 4)) / F(5, 4) / 100})
+
+# ht-setup-ten-paired-days: closed form against ten built differences with that mean and sd
+a = 1.2 / (1.5 / sqrt(10))
+base = [(-1) ** k for k in range(10)]                    # mean 0, sum of squares 10
+d = [1.2 + 1.5 * sqrt(9 / 10) * v for v in base]          # sample sd 1.5
+md = sum(d) / 10
+sd = sqrt(sum((x - md) ** 2 for x in d) / 9)
+key = two(a, md / (sd / sqrt(10)), 1e-12, 'paired t')
+numeric(S, 'ht-setup-ten-paired-days', key, 2, {'no-root': 1.2 / 1.5, 'root-nine': 1.2 / (1.5 / 3)})
+ok(fmt(1.5 / sqrt(10), 3) == '0.474' and fmt(1.2 / 0.474, 2) == '2.53', 'stated 0.474 and 2.53')
+
+# ht-pvalue-z-two-and-a-half: NormalDist against erfc
+a = 2 * (1 - N.cdf(2.5))
+two(a, erfc(2.5 / sqrt(2)), 1e-12, 'two-sided p at 2.5')
+ok(fmt(a, 3) == '0.012' and fmt(a / 2, 3) == '0.006' and fmt(1 - N.cdf(1.96), 3) == '0.025', 'options 0.012, 0.006, 0.025')
+ok(fmt(a / 2, 4) == '0.0062' and fmt(a, 4) == '0.0124' and 0.01 < a < 0.05, 'stated 0.0062, 0.0124; significant at 5% not 1%')
+choice(S, 'ht-pvalue-z-two-and-a-half', '0.012')
+
+# ht-pvalue-bigger-sample: scaling rule against recomputing z from a mean, sd and n
+a = 2.4 * sqrt(2.25)
+n0 = 100
+mean_ = 2.4 * 1.0 / sqrt(n0)                             # sd 1, n 100 gives z 2.4
+key = two(a, mean_ / (1.0 / sqrt(2.25 * n0)), 1e-12, 'new z')
+numeric(S, 'ht-pvalue-bigger-sample', key, 1, {'times-n': 2.4 * 2.25, 'divided': 2.4 / 1.5})
+
+# ht-errors-equal-error-cutoff: symmetry against a bisection on the two error curves
+lo, hi = 0.0, 3.0
+for _ in range(100):
+    mid = (lo + hi) / 2
+    lo, hi = (mid, hi) if (1 - N.cdf(mid)) > N.cdf(mid - 3) else (lo, mid)
+two(1.5, lo, 1e-9, 'equal-error cut-off')
+a = 1 - N.cdf(1.5)
+key = two(a, 0.5 * erfc(1.5 / sqrt(2)), 1e-12, 'common error rate')
+numeric(S, 'ht-errors-equal-error-cutoff', key, 4, {'added-both': 2 * a, 'cutoff-at-three': 1 - N.cdf(3)})
+ok(N.cdf(3 - 3) == 0.5, 'cut-off at 3 has type II error 0.5')
+
+# rg-fit-point-at-the-mean: least squares before and after, against the normal equations
+b1, _, _ = ols([1, 2, 3], [2, 3, 7])
+b2, _, _ = ols([1, 2, 3, 2], [2, 3, 7, 10])
+_, _, beta, _ = r2_fit([[1, 2, 3, 2]], [2, 3, 7, 10])
+two(b2, beta[1], 1e-12, 'slope after, by normal equations')
+ok(abs(b1 - 2.5) < 1e-12 and abs(b2 - 2.5) < 1e-12, 'slope stays 2.5')
+ok(abs((4 - 2.5 * 2) - (-1)) < 1e-12 and abs(beta[0] - 0.5) < 1e-12, 'intercept moves from -1 to 0.5')
+for h in (-50, 0, 10, 99):                                # claim: whatever the height, the slope is unchanged
+    ok(abs(ols([1, 2, 3, 2], [2, 3, 7, h])[0] - 2.5) < 1e-12, f'slope 2.5 with the new point at height {h}')
+choice(S, 'rg-fit-point-at-the-mean', 'It stays 2.5')
+
+# rg-multiple-useless-predictor: seeded count against the exact chance P(|t_47| < 1)
+rng = random.Random(2)
+fell_adj = fell_r2 = 0
+for _ in range(2000):
+    x1 = [rng.gauss(0, 1) for _ in range(50)]
+    y = [0.5 * v + rng.gauss(0, 1) for v in x1]
+    z = [rng.gauss(0, 1) for _ in range(50)]
+    R1, A1, _, _ = r2_fit([x1], y)
+    R2, A2, _, _ = r2_fit([x1, z], y)
+    fell_adj += A2 < A1
+    fell_r2 += R2 < R1 - 1e-12
+nu = 47
+tpdf = lambda t: math.gamma((nu + 1) / 2) / (sqrt(nu * pi) * math.gamma(nu / 2)) * (1 + t * t / nu) ** (-(nu + 1) / 2)
+p_t = sum(tpdf(-1 + (k + 0.5) * 1e-5) for k in range(200000)) * 1e-5   # adjusted R^2 falls exactly when |t| < 1
+two(fell_adj / 2000, p_t, 3 * sqrt(p_t * (1 - p_t) / 2000), 'adjusted R^2 fell (tolerance three binomial sds)')
+ok(fell_adj == 1362 and fell_r2 == 0, f'printed counts {fell_adj} and {fell_r2}')
+choice(S, 'rg-multiple-useless-predictor', 'cannot fall')
+stated(S, 'rg-multiple-useless-predictor', 'fell in 1,362 and $R^2$ in none')
+
+# collinear-features-inflation-factor: 1/(1 - r^2) against the diagonal of the inverse correlation matrix
+a = 1 / (1 - F(81, 100))
+inv11 = solve([[1, 0.9], [0.9, 1]], [1, 0])[0]
+key = two(a, inv11, 1e-12, 'variance inflation factor')
+numeric(S, 'collinear-features-inflation-factor', key, 2, {'one-minus-r': 1 / (1 - F(9, 10)), 'standard-error-factor': sqrt(a)})
+
+# ts-forecast-two-steps-ahead: closed form against iterating the forecast
+a = 10 + F(6, 10) ** 2 * 5
+f_ = 15.0
+for _ in range(2):
+    f_ = 10 + 0.6 * (f_ - 10)
+key = two(a, f_, 1e-12, 'two-step forecast')
+numeric(S, 'ts-forecast-two-steps-ahead', key, 1, {'one-step': 10 + F(6, 10) * 5, 'no-mean': F(36, 100) * 15})
+
+# ts-acf-two-day-variance-ratio: 1 + rho against a seeded MA(1) with that lag-1 autocorrelation
+a = 1 + F(-15, 100)
+th = (-1 + sqrt(1 - 4 * 0.15 ** 2)) / (2 * 0.15)          # MA(1) theta with theta/(1 + theta^2) = -0.15
+two(th / (1 + th * th), -0.15, 1e-12, 'MA(1) autocorrelation')
+rng = random.Random(23)
+e = [rng.gauss(0, 1) for _ in range(400001)]
+r = [e[t] + th * e[t - 1] for t in range(1, 400001)]
+two_day = [r[t] + r[t + 1] for t in range(0, 399999, 2)]
+var1 = sum(v * v for v in r) / len(r)
+var2 = sum(v * v for v in two_day) / len(two_day)
+key = two(a, var2 / (2 * var1), 0.01, 'variance ratio (simulation tolerance 0.01)')
+numeric(S, 'ts-acf-two-day-variance-ratio', key, 2, {'independent': 1, 'sign': 1 + F(15, 100)})
+
+# measurement-error-noisy-regressor: attenuation formula against a seeded regression on noisy x
+a = F(12, 10) * F(5, 5 + 3)
+rng = random.Random(29)
+xt = [rng.gauss(0, sqrt(5)) for _ in range(200000)]
+yy = [1.2 * v + rng.gauss(0, 1) for v in xt]
+xo = [v + rng.gauss(0, sqrt(3)) for v in xt]
+key = two(a, ols(xo, yy)[0], 0.01, 'attenuated slope (simulation tolerance 0.01)')
+numeric(S, 'measurement-error-noisy-regressor', key, 2, {'no-attenuation': F(12, 10), 'wrong-way': F(12, 10) * F(8, 5)})
+ok(F(5, 8) == F(625, 1000), 'reliability ratio 0.625')
+
+# dl-clt-mean-of-hundred: NormalDist against erfc
+a = 1 - N.cdf((5.8 - 5) / (4 / sqrt(100)))
+key = two(a, 0.5 * erfc(2 / sqrt(2)), 1e-12, 'tail beyond z = 2')
+numeric(S, 'dl-clt-mean-of-hundred', key, 4, {'no-root': 1 - N.cdf(0.8 / 4), 'both-tails': 2 * key})
+
+# ---------------------------------------------------------------- finance-2
+# fi-interest-three-payments-pv: annuity formula against a sum of discounted payments
+a = 500 * (1 - 1.08 ** -3) / 0.08
+b = sum(500 / 1.08 ** t for t in (1, 2, 3))
+key = two(a, b, 1e-9, 'present value')
+numeric(FI, 'fi-interest-three-payments-pv', key, 2, {'not-discounted': 1500, 'all-three-years': 1500 / 1.08 ** 3})
+ok([fmt(500 / 1.08 ** t, 2) for t in (1, 2, 3)] == ['462.96', '428.67', '396.92'], 'stated parts')
+
+# fi-bonds-zero-coupon-yield: root against a bisection on the price
+a = (100 / 78.35) ** 0.2 - 1
+lo, hi = 0.0, 0.2
+for _ in range(100):
+    mid = (lo + hi) / 2
+    lo, hi = (mid, hi) if 100 / (1 + mid) ** 5 > 78.35 else (lo, mid)
+key = two(a, lo, 1e-12, 'zero yield')
+numeric(FI, 'fi-bonds-zero-coupon-yield', key, 2, {'simple-interest': 21.65 / 78.35 / 5, 'gain-over-five': 21.65 / 5 / 100})   # 2 dp of a per cent
+ok(fmt(1.05 ** 5, 5) == '1.27628' and fmt(100 / 78.35, 5) == '1.27632', 'stated 1.27628 and 1.27632')
+
+# fi-forwards-rich-forward: fair value against a cash-flow ledger of the arbitrage
+fair = F(200) * F(103, 100) - 4
+a = 205 - fair
+ledger = -200 + 200 + 4 + 205 - 200 * 1.03              # buy share, borrow, dividend, deliver, repay
+key = two(a, ledger, 1e-9, 'arbitrage profit')
+numeric(FI, 'fi-forwards-rich-forward', int(a), None, {'no-dividend': 205 - 200 * F(103, 100), 'dividend-twice': 205 - (206 - 8)})
+
+# fi-forwards-futures-daily-loss
+a = 10 * 50 * (4000 - 3960)
+b = sum(50 * 1 for _ in range(10) for _ in range(40))
+two(a, b, 0, 'futures loss')
+numeric(FI, 'fi-forwards-futures-daily-loss', a, None, {'one-contract': 50 * 40, 'points-times-contracts': 10 * 40})
+
+# op-strategies-covered-call-at-fifty: payoff formula against a ledger
+a = (45 - 40) + 2
+b = 50 - 40 + 2 - max(50 - 45, 0)
+two(a, b, 0, 'covered call profit')
+numeric(FI, 'op-strategies-covered-call-at-fifty', a, None, {'no-cap': 50 - 40 + 2, 'no-premium': 45 - 40})
+
+# op-strategies-butterfly-best-case: closed form against a scan of the expiry payoff
+cost = F(1250, 100) - 2 * 6 + F(250, 100)
+pay = lambda s: max(s - 90, 0) - 2 * max(s - 100, 0) + max(s - 110, 0)
+best = max(pay(k / 10) for k in range(0, 2001))
+two(10 - cost, best - float(cost), 1e-12, 'largest butterfly profit')
+numeric(FI, 'op-strategies-butterfly-best-case', int(10 - cost), None, {'ignored-cost': 10, 'gave-cost': cost})
+
+# op-parity-call-under-its-floor: floor less price against the worst case over expiry prices
+a = F(100 - 95) - F(450, 100)
+worst = min(-4.50 + 100 + max(s - 95, 0) - s for s in [k / 10 for k in range(0, 3001)])
+key = two(a, worst, 1e-9, 'smallest locked-in profit')
+numeric(FI, 'op-parity-call-under-its-floor', key, 2, {'gave-floor': 5, 'gave-price': F(45, 10)})
+
+# gamma-pnl-break-even-move: closed form against a bisection on gamma gain less theta
+a = sqrt(2 * 0.045 / 0.04)
+lo, hi = 0.0, 5.0
+for _ in range(100):
+    mid = (lo + hi) / 2
+    lo, hi = (mid, hi) if 0.5 * 0.04 * mid * mid < 0.045 else (lo, mid)
+key = two(a, lo, 1e-9, 'break-even move')
+numeric(FI, 'gamma-pnl-break-even-move', key, 1, {'no-half': sqrt(0.045 / 0.04), 'no-root': 2 * 0.045 / 0.04})
+
+# digital-option-at-the-money: N(d2) against a seeded simulation, and against a call-spread limit
+d2 = -0.3 * sqrt(0.25) / 2
+a = N.cdf(d2)
+spread = (bs(50, 49.999, 0.25, 0, 0.3) - bs(50, 50.001, 0.25, 0, 0.3)) / 0.002
+key = two(a, spread, 1e-6, 'digital by a tight call spread')
+rng = random.Random(41)
+hits = sum(50 * exp(-0.045 / 4 + 0.15 * rng.gauss(0, 1)) > 50 for _ in range(400000))
+two(a, hits / 400000, 0.003, 'digital by simulation (tolerance 0.003)')
+numeric(FI, 'digital-option-at-the-money', key, 4, {'one-half': 0.5, 'used-d1': N.cdf(-d2)})
+ok(fmt(d2, 3) == '-0.075', 'd2 = -0.075')
+
+# tp-multistep-two-step-call: risk-neutral Fraction against replication by backward induction with shares and cash
+q = (1 - F(8, 10)) / (F(125, 100) - F(8, 10))
+a = q * q * (40 * F(125, 100) ** 2 - 40)
+up, dn = F(125, 100), F(8, 10)
+
+
+def replicate(s, steps):
+    if steps == 0:
+        return max(s - 40, 0)
+    vu, vd = replicate(s * up, steps - 1), replicate(s * dn, steps - 1)
+    delta = (vu - vd) / (s * up - s * dn)
+    return delta * s + (vu - delta * s * up)              # shares plus cash (zero rate)
+
+
+two(a, replicate(F(40), 2), 0, 'two-step call')
+ok(q == F(4, 9) and a == F(40, 9), 'q = 4/9, price 40/9')
+numeric(FI, 'tp-multistep-two-step-call', a, 2, {'even-chances': F(1, 4) * F(45, 2), 'q-once': q * F(45, 2)})
+
+# ms-book-weighted-mid
+a = (F(9998, 100) * 100 + F(10002, 100) * 900) / 1000
+b = 99.98 + (100.02 - 99.98) * 900 / 1000                 # mid moves towards the ask by the bid's share of size
+key = two(a, b, 1e-12, 'weighted mid')
+numeric(FI, 'ms-book-weighted-mid', key, 3, {'own-side': (F(9998, 100) * 900 + F(10002, 100) * 100) / 1000, 'plain-mid': 100})
+
+# ms-costs-impact-four-times-size
+a = 40 * sqrt(16 / 4)
+k_ = 40 / sqrt(0.04)
+two(a, k_ * sqrt(0.16), 1e-9, 'square-root impact')
+numeric(FI, 'ms-costs-impact-four-times-size', int(round(a)), None, {'linear': 40 * 4, 'no-change': 40})
+
+# ms-mm-spread-less-drift
+a = F(1000) * (F(1) - F(4, 10)) / 100
+b = sum(0.01 - 0.004 for _ in range(1000))
+key = two(a, b, 1e-9, 'market-making result')
+numeric(FI, 'ms-mm-spread-less-drift', int(a), None, {'ignored-move': 10, 'added-move': 14})
+
+# gv-risk-two-desks: closed form against a seeded simulation of the two desks' P&L quantile
+a = sqrt(1 + 1 + 2 * 0.5)
+rng = random.Random(43)
+z99 = N.inv_cdf(0.99)
+pnl = []
+for _ in range(400000):
+    u = rng.gauss(0, 1)
+    v = 0.5 * u + sqrt(0.75) * rng.gauss(0, 1)
+    pnl.append((u + v) / z99)                              # each desk's VaR is 1, so its sd is 1/z99
+pnl.sort()
+key = two(a, -pnl[int(0.01 * len(pnl))], 0.02, 'combined VaR (simulation tolerance 0.02)')
+numeric(FI, 'gv-risk-two-desks', key, 3, {'added': 2, 'no-correlation': sqrt(2)})
+
+# exotic-ranking-basket-or-calls: seeded simulation against a one-dimensional integral with a closed-form inner price
+sig, rho, T = 0.25, 0.3, 1.0
+half_calls = bs(100, 100, T, 0, sig)
+rng = random.Random(1)
+tot = 0.0
+for _ in range(400000):
+    z1 = rng.gauss(0, 1)
+    z2 = rho * z1 + sqrt(1 - rho * rho) * rng.gauss(0, 1)
+    s1 = 100 * exp(-sig * sig / 2 + sig * z1)
+    s2 = 100 * exp(-sig * sig / 2 + sig * z2)
+    tot += max((s1 + s2) / 2 - 100, 0)
+basket_mc = tot / 400000
+
+
+def inner(z1):
+    """E[max((s1 + s2)/2 - 100, 0) | z1]: half a call on s2, struck at 200 - s1, s2 lognormal given z1."""
+    s1 = 100 * exp(-sig * sig / 2 + sig * z1)
+    sd = sig * sqrt(1 - rho * rho)
+    fwd = 100 * exp(-sig * sig / 2 + sig * rho * z1 + sd * sd / 2)
+    k = 200 - s1
+    if k <= 0:
+        return (s1 + fwd) / 2 - 100
+    d1 = (log(fwd / k) + sd * sd / 2) / sd
+    return 0.5 * (fwd * N.cdf(d1) - k * N.cdf(d1 - sd))
+
+
+h = 1e-3
+basket_int = sum(inner(-8 + (k + 0.5) * h) * N.pdf(-8 + (k + 0.5) * h) for k in range(16000)) * h
+two(basket_mc, basket_int, 0.05, 'basket call (simulation tolerance 0.05)')
+two(half_calls, 100 * erf(sig / 2 / sqrt(2)), 1e-9, 'at-the-money call two ways')
+ok(fmt(half_calls, 2) == '9.95' and fmt(basket_int, 2) == '8.05', f'printed £9.95 and £8.05 ({half_calls}, {basket_int})')
+ok(half_calls > basket_int, 'claim: the half calls cost more')
+choice(FI, 'exotic-ranking-basket-or-calls', 'two half calls')
+stated(FI, 'exotic-ranking-basket-or-calls', 'the half calls cost £9.95 and the basket call about £8.05')
+
+# ---------------------------------------------------------------- behavioural-6: figures in the models
+loss = F(45, 100)
+ok(fmt(float(loss ** 5) * 100, 1) == '1.8', 'five losses at 55% wins: 1.8%')
+state = {0: F(1)}
+for _ in range(40):                                        # route A: exact chain on the current losing run
+    new = {}
+    for k, pr in state.items():
+        new[0] = new.get(0, 0) + pr * (1 - loss)
+        if k + 1 < 5:
+            new[k + 1] = new.get(k + 1, 0) + pr * loss
+    state = new
+p_run = 1 - sum(state.values())
+rng = random.Random(47)
+sims = 0
+for _ in range(100000):                                    # route B: seeded games of 40 trades
+    run = best_run = 0
+    for _ in range(40):
+        run = run + 1 if rng.random() < 0.45 else 0
+        best_run = max(best_run, run)
+    sims += best_run >= 5
+two(p_run, sims / 100000, 0.005, 'run of five losses in 40 trades (simulation tolerance 0.005)')
+ok(abs(float(p_run) - 1 / 3) < 0.02, f'about one game in three ({float(p_run)})')
+stated(B, 'reasoning-aloud-five-losses-running', 'about 1.8 per cent')
+stated(B, 'reasoning-aloud-five-losses-running', 'about one game in three')
+se = sqrt(0.25 / 250)
+two(se, sqrt(sum((x - 0.5) ** 2 * 0.5 for x in (0, 1)) / 250), 1e-12, 'standard error of a hit rate over 250 days')
+ok(round(se * 100) == 3 and abs((0.53 - 0.5) / se - 1) < 0.06, 'about 3 points, one standard error')
+ok(54 - 51 == 3 and 58 - 50 == 8, 'edge three points, not eight')
+ok(42 - 30 == 12, 'too-much-to-do: 42 hours needed against 30 free')
+
+# ---------------------------------------------------------------- behavioural-6 (rule 11)
+for it in DATA[B]['items']:
+    w = it['widget']
+    lab = f'{B}/{it["id"]}'
+    ok(w['kind'] == 'longform' and 'prose' not in it, f'{lab}: longform, no prose')
+    words = len(w['model'].split())
+    ok(120 <= words <= 180, f'{lab}: model {words} words')
+    ok([r['points'] for r in w['rubric']] == [2, 2, 2, 2, 1, 1], f'{lab}: rubric 2,2,2,2,1,1')
+    q = it['question']
+    ok(q.startswith('Answer aloud, then type it: ') and 3 <= len(q.split(': ', 1)[1].split()) <= 6 and q.endswith('.'), f'{lab}: question line')
+    txt = (w['prompt'] + ' ' + ' '.join(r['text'] for r in w['rubric'])).lower()
+    if 'two minutes' in txt:
+        ok(it['pace'] == 120, f'{lab}: pace 120 for two minutes')
+    if 'ninety seconds' in txt:
+        ok(it['pace'] == 90, f'{lab}: pace 90 for ninety seconds')
+    ok(it['feedback'] == {'correct': 'Compare your answer with the model and tick the rubric.', 'generic': 'Open the model answer and mark each rubric line.'}, f'{lab}: feedback lines')
+qs = [it['question'] for it in DATA[B]['items']]
+ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
+ok(backtests <= 1, f'at most one backtest story ({backtests})')
+
+# ---------------------------------------------------------------- whole-file checks
+allids = []
+for fn in sorted(os.listdir(BANK)):
+    if fn.endswith('.json'):
+        allids += [it['id'] for it in json.load(open(os.path.join(BANK, fn), encoding='utf-8'))['items']]
+dups = {x for x in allids if allids.count(x) > 1}
+ok(not dups, f'item ids unique across the bank ({sorted(dups)})')
+for f in FILES:
+    ok(DATA[f]['id'] == f, f'{f}: id is the file name')
+    for it in DATA[f]['items']:
+        ok(('requires' in it) == (it['difficulty'] >= 4), f'{f}/{it["id"]}: requires only at difficulty 4 and 5')
+        ok(it['source'] == 'Original' and len(it['tags']) == 1, f'{f}/{it["id"]}: source and one tag')
+        ok(it['difficulty'] in (2, 3, 4, 5), f'{f}/{it["id"]}: difficulty 2 to 5')
+        blob = json.dumps(it, ensure_ascii=False)
+        ok(not re.search(r'\bpercent\b', blob.lower()) and '!' not in blob and '—' not in blob, f'{f}/{it["id"]}: voice (no percent, !, em-dash)')
+
+counts = {f: len(DATA[f]['items']) for f in FILES}
+ok(counts == {'statistics-2': 15, 'finance-2': 15, 'behavioural-6': 8}, f'item counts {counts}')
+
+print(f'{checks[0]} checks, {len(fails)} failed')
+sys.exit(1 if fails else 0)

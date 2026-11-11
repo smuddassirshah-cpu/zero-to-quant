@@ -1,0 +1,339 @@
+{
+  "id": "fluency-l13-matching-moments",
+  "lesson": "l13-matching-moments",
+  "title": "Fluency: matching moments",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "exponential-rate",
+      "weight": 1,
+      "skill": "the moment estimate of an exponential rate",
+      "vars": {
+        "g1": {
+          "int": [
+            1,
+            12
+          ]
+        },
+        "g2": {
+          "int": [
+            1,
+            12
+          ]
+        },
+        "g3": {
+          "int": [
+            1,
+            12
+          ]
+        },
+        "g4": {
+          "int": [
+            1,
+            12
+          ]
+        },
+        "g5": {
+          "int": [
+            1,
+            12
+          ]
+        },
+        "w": {
+          "pick": [
+            [
+              "trades",
+              "seconds",
+              "second"
+            ],
+            [
+              "quotes",
+              "seconds",
+              "second"
+            ],
+            [
+              "defaults",
+              "months",
+              "month"
+            ],
+            [
+              "outages",
+              "days",
+              "day"
+            ]
+          ],
+          "as": [
+            "things",
+            "units",
+            "unit"
+          ]
+        }
+      },
+      "let": {
+        "tot": "g1 + g2 + g3 + g4 + g5",
+        "xbar": "(g1 + g2 + g3 + g4 + g5)/5",
+        "key": "5/(g1 + g2 + g3 + g4 + g5)",
+        "per": "1/(g1 + g2 + g3 + g4 + g5)"
+      },
+      "where": [
+        "abs(xbar - key) > 0.01",
+        "g1 + g2 + g3 + g4 + g5 != 5"
+      ],
+      "prompt": "Five gaps between {things}, in {units}: {g1}, {g2}, {g3}, {g4} and {g5}. Model each gap as exponential with rate $\\lambda$ per {unit}. What is the moment estimate $\\hat\\lambda$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "A number such as 0.250",
+        "accept": "${key:dp3}$, within 0.0005"
+      },
+      "wrong": [
+        {
+          "id": "gave-mean",
+          "value": "{xbar}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You gave the mean gap, $\\bar x = {xbar}$. The model's mean is $\\tfrac{{1}}{{\\lambda}}$, so the rate is its reciprocal."
+        },
+        {
+          "id": "total",
+          "value": "{per}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You took 1 over the total, {tot}. Match the mean: $\\tfrac{{1}}{{\\lambda}} = \\bar x$, the total over 5."
+        }
+      ],
+      "solution": [
+        "$\\bar x = {tot} \\div 5 = {xbar}$.",
+        "Setting $\\tfrac{{1}}{{\\lambda}} = \\bar x$ gives $\\hat\\lambda = \\tfrac{{1}}{{{xbar}}} \\approx {key:dp3}$ per {unit}."
+      ]
+    },
+    {
+      "id": "gamma-shape",
+      "weight": 1,
+      "skill": "the moment estimate of a Gamma shape",
+      "vars": {
+        "what": {
+          "pick": [
+            "Fill sizes, in hundreds of shares,",
+            "Daily volumes, in millions of shares,",
+            "Claim sizes, in thousands of pounds,",
+            "Repair times, in hours,"
+          ]
+        },
+        "m": {
+          "int": [
+            2,
+            30
+          ]
+        },
+        "v": {
+          "int": [
+            2,
+            80
+          ]
+        }
+      },
+      "let": {
+        "key": "m^2/v",
+        "rate": "m/v",
+        "inv": "v/m^2"
+      },
+      "where": [
+        "m^2/v >= 0.5",
+        "m^2/v <= 40",
+        "abs(m^2/v - m/v) > 0.02",
+        "abs(m^2/v - v/m^2) > 0.02"
+      ],
+      "prompt": "{what} have sample mean {m} and sample variance {v} (divisor $n$). Fitting a Gamma with shape $a$ and rate $\\lambda$ by moments, what is $\\hat a$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "A number such as 3.00",
+        "accept": "${key:dp2}$, within 0.005"
+      },
+      "wrong": [
+        {
+          "id": "gave-rate",
+          "value": "{rate}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "You gave the rate, $\\tfrac{{\\bar x}}{{\\hat\\sigma^2}}$. The shape is the mean times the rate, $\\tfrac{{\\bar x^2}}{{\\hat\\sigma^2}}$."
+        },
+        {
+          "id": "inverted",
+          "value": "{inv}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "You turned the fraction over. Dividing the variance $\\tfrac{{a}}{{\\lambda^2}}$ into the squared mean $\\tfrac{{a^2}}{{\\lambda^2}}$ leaves $a$."
+        }
+      ],
+      "solution": [
+        "Mean $\\tfrac{{a}}{{\\lambda}} = {m}$ and variance $\\tfrac{{a}}{{\\lambda^2}} = {v}$, so the mean over the variance is $\\hat\\lambda$ and the mean times $\\hat\\lambda$ is $\\hat a$.",
+        "$\\hat a = \\tfrac{{\\bar x^2}}{{\\hat\\sigma^2}} = {m^2} \\div {v} \\approx {key:dp2}$."
+      ]
+    },
+    {
+      "id": "gamma-rate",
+      "weight": 1,
+      "skill": "the moment estimate of a Gamma rate",
+      "vars": {
+        "what": {
+          "pick": [
+            "Fill sizes, in hundreds of shares,",
+            "Daily volumes, in millions of shares,",
+            "Claim sizes, in thousands of pounds,",
+            "Repair times, in hours,"
+          ]
+        },
+        "m": {
+          "int": [
+            2,
+            30
+          ]
+        },
+        "v": {
+          "int": [
+            2,
+            80
+          ]
+        }
+      },
+      "let": {
+        "key": "m/v",
+        "shape": "m^2/v",
+        "inv": "v/m"
+      },
+      "where": [
+        "m/v >= 0.05",
+        "m/v <= 5",
+        "abs(m/v - v/m) > 0.002",
+        "abs(m^2/v - m/v) > 0.002"
+      ],
+      "prompt": "{what} have sample mean {m} and sample variance {v} (divisor $n$). Fitting a Gamma with shape $a$ and rate $\\lambda$ by moments, what is $\\hat\\lambda$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "A number such as 0.500",
+        "accept": "${key:dp3}$, within 0.0005"
+      },
+      "wrong": [
+        {
+          "id": "inverted",
+          "value": "{inv}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You divided the variance by the mean. The variance over the mean is $\\tfrac{{1}}{{\\lambda}}$, so the rate is the mean over the variance."
+        },
+        {
+          "id": "gave-shape",
+          "value": "{shape}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You gave the shape, $\\tfrac{{\\bar x^2}}{{\\hat\\sigma^2}}$. The rate is $\\tfrac{{\\bar x}}{{\\hat\\sigma^2}}$."
+        }
+      ],
+      "solution": [
+        "Mean over variance is $\\tfrac{{a/\\lambda}}{{a/\\lambda^2}} = \\lambda$.",
+        "$\\hat\\lambda = {m} \\div {v} \\approx {key:dp3}$."
+      ]
+    },
+    {
+      "id": "uniform-moment",
+      "weight": 1,
+      "skill": "the moment estimate of a uniform end point",
+      "vars": {
+        "what": {
+          "pick": [
+            "Four fill sizes, in hundreds of shares,",
+            "Four delays, in seconds,",
+            "Four order sizes, in lots,"
+          ]
+        },
+        "x1": {
+          "int": [
+            1,
+            8
+          ]
+        },
+        "g2": {
+          "int": [
+            1,
+            7
+          ]
+        },
+        "g3": {
+          "int": [
+            1,
+            7
+          ]
+        },
+        "g4": {
+          "int": [
+            1,
+            9
+          ]
+        }
+      },
+      "let": {
+        "x2": "x1 + g2",
+        "x3": "x1 + g2 + g3",
+        "x4": "x1 + g2 + g3 + g4",
+        "tot": "4*x1 + 3*g2 + 2*g3 + g4",
+        "xbar": "(4*x1 + 3*g2 + 2*g3 + g4)/4",
+        "key": "(4*x1 + 3*g2 + 2*g3 + g4)/2",
+        "big": "x1 + g2 + g3 + g4"
+      },
+      "where": [
+        "key != big"
+      ],
+      "prompt": "{what} drawn from a uniform on $(0, \\theta)$, are {x1}, {x2}, {x3} and {x4}. What is the moment estimate of $\\theta$? Give the exact value.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A number such as 12.5"
+      },
+      "wrong": [
+        {
+          "id": "gave-mean",
+          "value": "{xbar}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You gave the sample mean. The uniform's mean is $\\tfrac{{\\theta}}{{2}}$, so $\\hat\\theta = 2\\bar x$."
+        },
+        {
+          "id": "largest",
+          "value": "{big}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You gave the largest draw, the maximum-likelihood estimate. The method of moments matches the mean: $\\hat\\theta = 2\\bar x$."
+        }
+      ],
+      "solution": [
+        "$\\bar x = {tot} \\div 4 = {xbar}$, and the model's mean is $\\tfrac{{\\theta}}{{2}}$.",
+        "$\\hat\\theta = 2\\bar x = {key}$."
+      ]
+    }
+  ]
+}

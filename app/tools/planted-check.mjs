@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /* Planted-wrong-solution check (ENGINE-BACKLOG 844). Run from app/:
-     node tools/planted-check.mjs --drill <id> [--drill <id2>] | --all-drills [--require] [--local-cdn <pkgs>]
+     node tools/planted-check.mjs --drill <id> [--drill <id2>] | --all-drills [--require] [--near-miss] [--local-cdn <pkgs>]
    A drill may carry `planted`: [{ "code": "<a plausibly wrong solution>", "slip": "<one sentence naming the mistake>" }].
    Each drill's starter, every planted solution and the model solution run against the hidden tests in the real runtime (Pyodide, or the
    C++ toolchain), through `playthrough.mjs --drill <id> --planted`, so the runner is playthrough's own.
    Passes when the model solution passes every hidden test and the starter and every planted solution fail at least one.
    --require also fails a drill with fewer than two planted solutions; without it, drills with none are counted and skipped.
+   --near-miss (ENGINE-BACKLOG 918) also fails a drill none of whose planted solutions is marked "nearMiss": true: the near-miss is the method one step short of the
+   target (the slower order, the greedy without the exchange case, the off-by-one window). It is run like any plant, so it must fail a hidden test.
    Prints one line per failure and a one-line summary; exits 1 on any failure. ZQ_APP_DIR points it at a copy of app/ (the test uses this). */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,13 +17,14 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = process.env.ZQ_APP_DIR ? path.resolve(process.env.ZQ_APP_DIR) : path.resolve(HERE, '..');
 const DRILLS = path.join(APP, 'content', 'drills');
 const argv = process.argv.slice(2), ids = [], pass = [];
-let all = false, require = false;
+let all = false, require = false, nearMiss = false;
 const die = (m) => { console.error(`planted-check: ${m}`); process.exit(2); };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--drill') { const v = argv[++i]; if (!v || v.startsWith('--')) die('--drill needs an id'); ids.push(v); }
   else if (a === '--all-drills') all = true;
   else if (a === '--require') require = true;
+  else if (a === '--near-miss') nearMiss = true;
   else if (a === '--local-cdn') { pass.push(a); if (argv[i + 1] && !argv[i + 1].startsWith('--')) pass.push(argv[++i]); }
   else if (a === '--help' || a === '-h') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('*/')[0].replace(/^#!.*\n\/\* ?/, '')); process.exit(0); }
   else die(`unknown argument ${a} (try --help)`);
@@ -36,6 +39,7 @@ let skipped = 0;
 for (const id of want) {
   const d = JSON.parse(fs.readFileSync(path.join(DRILLS, id + '.json'), 'utf8'));
   const n = Array.isArray(d.planted) ? d.planted.length : 0;
+  if (nearMiss && !(Array.isArray(d.planted) && d.planted.some(p => p && p.nearMiss === true))) lines.push(`FAIL ${id}: no planted solution is marked "nearMiss": true (the method one step short of the target)`);
   if (require && n < 2) lines.push(`FAIL ${id}: ${n} planted solution${n === 1 ? '' : 's'}, --require wants at least two`);
   if (n) withPlanted.push(id); else if (!require) skipped++;
 }

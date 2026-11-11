@@ -1,0 +1,381 @@
+{
+  "id": "fluency-l17-a-small-network",
+  "lesson": "l17-a-small-network",
+  "title": "Fluency: a forward pass and one step",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 12,
+  "families": [
+    {
+      "id": "forward-pass",
+      "weight": 2,
+      "skill": "the output of a two-unit network",
+      "vars": {
+        "a1": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "a2": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "c1": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "b1": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "b2": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "c2": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "v1": {
+          "int": [
+            -4,
+            4
+          ],
+          "not": [
+            0
+          ]
+        },
+        "v2": {
+          "int": [
+            -4,
+            4
+          ],
+          "not": [
+            0
+          ]
+        },
+        "d": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "x1": {
+          "int": [
+            -2,
+            3
+          ]
+        },
+        "x2": {
+          "int": [
+            -2,
+            3
+          ]
+        }
+      },
+      "let": {
+        "u1": "a1*x1 + a2*x2 + c1",
+        "u2": "b1*x1 + b2*x2 + c2",
+        "h1": "max(0, a1*x1 + a2*x2 + c1)",
+        "h2": "max(0, b1*x1 + b2*x2 + c2)",
+        "key": "v1*max(0, a1*x1 + a2*x2 + c1) + v2*max(0, b1*x1 + b2*x2 + c2) + d",
+        "norelu": "v1*(a1*x1 + a2*x2 + c1) + v2*(b1*x1 + b2*x2 + c2) + d",
+        "nod": "v1*max(0, a1*x1 + a2*x2 + c1) + v2*max(0, b1*x1 + b2*x2 + c2)"
+      },
+      "where": [
+        "a1*x1 + a2*x2 + c1 < 0 or b1*x1 + b2*x2 + c2 < 0",
+        "a1*x1 + a2*x2 + c1 > 0 or b1*x1 + b2*x2 + c2 > 0",
+        "key != norelu",
+        "norelu != nod"
+      ],
+      "prompt": "A network has $h_1 = \\max(0,\\, {a1:c}x_1 {a2:+c}x_2 {c1:+})$, $h_2 = \\max(0,\\, {b1:c}x_1 {b2:+c}x_2 {c2:+})$ and output $z = {v1:c}h_1 {v2:+c}h_2 {d:+}$. What is $z$ at $(x_1, x_2) = ({x1}, {x2})$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number"
+      },
+      "wrong": [
+        {
+          "id": "no-relu",
+          "value": "{norelu}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You kept a negative input to a hidden unit. The ReLU turns it into 0."
+        },
+        {
+          "id": "no-output-bias",
+          "value": "{nod}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You left out the output's bias, ${d}$."
+        }
+      ],
+      "solution": [
+        "The hidden inputs are ${u1}$ and ${u2}$, so $h_1 = {h1}$ and $h_2 = {h2}$.",
+        "$z = {v1} \\times {h1} {v2:+} \\times {h2} {d:+} = {key}$."
+      ]
+    },
+    {
+      "id": "parameter-count",
+      "weight": 1,
+      "skill": "the number of parameters in a network",
+      "vars": {
+        "a": {
+          "int": [
+            2,
+            20
+          ]
+        },
+        "b": {
+          "int": [
+            2,
+            32
+          ]
+        },
+        "c": {
+          "pick": [
+            1,
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "let": {
+        "l1": "a*b + b",
+        "l2": "b*c + c",
+        "key": "a*b + b + b*c + c",
+        "nobias": "a*b + b*c",
+        "units": "a + b + c"
+      },
+      "where": [],
+      "prompt": "How many parameters, weights and biases together, has a {a}–{b}–{c} network with one hidden layer?",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number"
+      },
+      "wrong": [
+        {
+          "id": "no-biases",
+          "value": "{nobias}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You counted the weights only. Every unit after the inputs also has a bias: {b + c} more."
+        },
+        {
+          "id": "units",
+          "value": "{units}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You counted the units. Each arrow carries a weight, so a layer from $a$ to $b$ units has $ab + b$ parameters."
+        }
+      ],
+      "solution": [
+        "A layer from $a$ units to $b$ units has $ab + b$ parameters: ${a} \\times {b} + {b} = {l1}$ and ${b} \\times {c} + {c} = {l2}$.",
+        "In all ${l1} + {l2} = {key}$."
+      ]
+    },
+    {
+      "id": "slope-first-weight",
+      "weight": 2,
+      "skill": "the slope of the loss for the first weight",
+      "vars": {
+        "x": {
+          "int": [
+            1,
+            4
+          ]
+        },
+        "w1": {
+          "pick": [
+            0.5,
+            1,
+            1.5,
+            2
+          ]
+        },
+        "w2": {
+          "int": [
+            -3,
+            3
+          ],
+          "not": [
+            0
+          ]
+        },
+        "y": {
+          "int": [
+            -4,
+            10
+          ]
+        }
+      },
+      "let": {
+        "h": "w1*x",
+        "yh": "w2*w1*x",
+        "err": "w2*w1*x - y",
+        "key": "(w2*w1*x - y)*w2*x",
+        "g2": "(w2*w1*x - y)*w1*x",
+        "nochain": "(w2*w1*x - y)*x"
+      },
+      "where": [
+        "w2*w1*x != y",
+        "key != g2",
+        "key != nochain",
+        "g2 != nochain"
+      ],
+      "prompt": "For $\\hat y = w_2\\max(0, w_1 x)$ and $L = \\tfrac12(\\hat y - y)^2$, take $x = {x}$, $y = {y}$, $w_1 = {w1}$ and $w_2 = {w2}$. What is $\\partial L/\\partial w_1$? Give the exact value.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "A number such as -4"
+      },
+      "wrong": [
+        {
+          "id": "slope-for-w2",
+          "value": "{g2}",
+          "tol": {
+            "abs": 0.0001
+          },
+          "line": "That is $\\partial L/\\partial w_2 = (\\hat y - y)h$. For $w_1$ the chain passes through $w_2$ and $x$: $(\\hat y - y)\\,w_2\\,x$."
+        },
+        {
+          "id": "dropped-w2",
+          "value": "{nochain}",
+          "tol": {
+            "abs": 0.0001
+          },
+          "line": "You dropped the factor $w_2 = {w2}$ that links the hidden unit to the output."
+        }
+      ],
+      "solution": [
+        "$h = {w1} \\times {x} = {h}$, so $\\hat y = {yh}$ and $\\hat y - y = {err}$.",
+        "The unit is on, so $\\partial L/\\partial w_1 = (\\hat y - y)\\,w_2\\,x = {err} \\times {w2:()} \\times {x} = {key}$."
+      ]
+    },
+    {
+      "id": "one-step",
+      "weight": 1,
+      "skill": "one gradient step on a weight",
+      "vars": {
+        "w": {
+          "pick": [
+            -1,
+            -0.5,
+            0.5,
+            1,
+            1.5,
+            2
+          ]
+        },
+        "g": {
+          "int": [
+            -12,
+            12
+          ],
+          "not": [
+            0
+          ]
+        },
+        "eta": {
+          "pick": [
+            0.01,
+            0.05,
+            0.1,
+            0.2
+          ]
+        },
+        "name": {
+          "pick": [
+            "w_1",
+            "w_2"
+          ]
+        }
+      },
+      "let": {
+        "move": "eta*g",
+        "key": "w - eta*g",
+        "uphill": "w + eta*g",
+        "norate": "w - g"
+      },
+      "where": [],
+      "prompt": "A weight ${name} = {w}$ has slope $\\partial L/\\partial {name} = {g}$. What is ${name}$ after one gradient step of size $\\eta = {eta}$? Give the exact value.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "A number such as 0.9"
+      },
+      "wrong": [
+        {
+          "id": "uphill",
+          "value": "{uphill}",
+          "tol": {
+            "abs": 0.0001
+          },
+          "line": "You moved with the slope. A gradient step moves against it: subtract $\\eta$ times the slope."
+        },
+        {
+          "id": "no-rate",
+          "value": "{norate}",
+          "tol": {
+            "abs": 0.0001
+          },
+          "line": "You subtracted the whole slope. The step is $\\eta = {eta}$ times the slope."
+        }
+      ],
+      "solution": [
+        "The step moves ${name}$ by $-\\eta \\times {g:()} = {-move}$.",
+        "${w} {-move:+} = {key}$."
+      ]
+    }
+  ]
+}

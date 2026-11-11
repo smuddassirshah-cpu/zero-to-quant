@@ -1138,6 +1138,25 @@ const main = async () => {
                   await overflowAt('a wrong part with its feedback');
                 }
               } else if (!r.ok && !(wrongSeen && c.screenIndex === 0 && c.part === c.parts - 1)) fails.push(`item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: the authored answer was not correct, key ${JSON.stringify(r.key)}${wrong ? ' (first attempt)' : ''}`);
+              /* ENGINE-BACKLOG 914: with --mobile, once a part is checked the fixed feedback bar must not sit over that part's answer box: at 440 x 956, scrolled to the end, the last
+                 answer control of the item ends above the bar's top edge */
+              if (wrong && EXTRA.some(v => v.w === 440)) {
+                const was2 = curVp;
+                await setVp({ w: 440, h: 956 }, 300);
+                const cover = await page.evaluate(() => {
+                  const body = document.querySelector('.lsn-set-body'), foot = document.querySelector('.lsn-set-foot');
+                  if (!body || !foot) return null;
+                  let sc = body.parentElement; while (sc && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+                  const els = [...body.querySelectorAll('input, textarea, math-field, select, [contenteditable="true"], [role="textbox"]')].filter(e => e.getBoundingClientRect().height > 0);
+                  const last = els[els.length - 1];
+                  if (!last) return null;
+                  const lb = last.getBoundingClientRect().bottom, ft = foot.getBoundingClientRect().top;
+                  const lt = last.getBoundingClientRect().top;
+                  return lb > ft + 1 && lt < innerHeight ? { over: Math.round(lb - ft), foot: Math.round(foot.getBoundingClientRect().height) } : null;
+                });
+                if (cover) fails.push(`item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: at 440 px the feedback bar covers ${cover.over} px of the part's answer box (bar ${cover.foot} px high)`);
+                await setVp(was2, 200);
+              }
               /* --shots: every part of every problem at 440 px, answered and checked, in the first attempt only (<set>-i<item>-p<part>-440.png), so choice, expression and long parts are seen */
               if (opt.shots && wrong) {
                 const was = curVp;
@@ -1942,7 +1961,7 @@ const main = async () => {
         for (let i = 0; i < pl.length; i++) {
           await page.evaluate((s2) => ZQDrill.setCode(s2), pl[i].code + tag);
           const r = await drillSubmit();
-          if (r.ok) bad.push(`planted[${i}] passes all ${r.total} hidden tests (slip: ${pl[i].slip})`);
+          if (r.ok) bad.push(`${pl[i].nearMiss === true ? 'near-miss ' : ''}planted[${i}] passes all ${r.total} hidden tests (slip: ${pl[i].slip})`);
         }
         await page.evaluate((s2) => ZQDrill.setCode(s2), file.solution);
         const ref = await drillSubmit();

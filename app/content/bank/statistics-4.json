@@ -1,0 +1,740 @@
+{
+  "id": "statistics-4",
+  "name": "Interview statistics, set 4",
+  "description": "Statistics questions of the kind asked in online assessments and first rounds: standard errors, precision bounds, permutation tests, power, regression to the mean, F tests, leverage, EWMA and GARCH volatility and spurious regression. Each item keeps its own schedule.",
+  "items": [
+    {
+      "id": "es-estimators-error-of-the-vol",
+      "difficulty": 4,
+      "skills": ["es-estimators"],
+      "tags": ["es-estimators"],
+      "role": ["research", "strats", "trader"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 120,
+      "requires": ["estimation/l2-estimates-vary"],
+      "prose": "You have 50 daily returns, taken to be normal. Their sample standard deviation is 1.2%.",
+      "question": "What is the large-sample standard error of that standard deviation, in per cent to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0012,
+        "tol": {
+          "abs": 5e-05
+        },
+        "unit": "%",
+        "accept": "0.12%: 1.2 divided by the root of 100.",
+        "label": "Standard error",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "root-of-n",
+            "value": 0.0017,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "divided-by-n",
+            "value": 0.0002,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The standard error is 0.12%.",
+        "generic": "Not quite right. A standard deviation from n normal values has a standard error of about $\\sigma/\\sqrt{2n}$.",
+        "byKey": {
+          "root-of-n": "You divided by the root of 50, the rule for a mean. For a standard deviation, divide by the root of 2n, which is 100.",
+          "divided-by-n": "You divided by 50 rather than by a root. The error shrinks with the root of 2n, so divide 1.2 by 10."
+        }
+      },
+      "explain": {
+        "text": "For normal data the sample standard deviation has a large-sample standard error of $\\sigma/\\sqrt{2n}$. Here that is $1.2/\\sqrt{100} = 0.12$ per cent. A rough 95% range for the true figure is 0.96% to 1.44%."
+      }
+    },
+    {
+      "id": "es-mle-best-precision-rate",
+      "difficulty": 4,
+      "skills": ["es-mle", "ht-theory"],
+      "tags": ["es-mle"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 120,
+      "requires": ["testing/l16-best-possible-precision"],
+      "prose": "You run 100 independent yes-or-no trials. Each is a success with true chance 0.2.",
+      "question": "What is the smallest standard deviation an unbiased estimator of that chance can have? Give it as a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.04,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.04: the root of 0.16/100.",
+        "label": "Smallest standard deviation",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "gave-variance",
+            "value": 0.0016,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "one-trial",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. No unbiased estimator does better than 0.04.",
+        "generic": "Not quite right. Find the information in 100 trials and invert it.",
+        "byKey": {
+          "gave-variance": "You gave the bound on the variance, 0.0016. The question asks for the standard deviation, which is its root.",
+          "one-trial": "You used the information in one trial. With 100 trials the information is 100 times larger, so divide by 100 inside the root."
+        }
+      },
+      "explain": {
+        "text": "One trial carries information $1/(p(1 - p)) = 6.25$, so 100 trials carry 625. The Cramér-Rao bound on the variance is $1/625 = 0.0016$, a standard deviation of 0.04. The sample proportion reaches the bound."
+      }
+    },
+    {
+      "id": "es-intervals-two-desk-gap",
+      "difficulty": 3,
+      "skills": ["es-intervals", "es-estimators"],
+      "tags": ["es-intervals"],
+      "role": ["research", "strats", "trader"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 100,
+      "prose": "Two desks are watched for 50 days each. Desk A makes a mean of £10.4k a day and desk B £9.6k. Each has a daily standard deviation of £2k. Use 1.96 for a 95% interval.",
+      "question": "What is the lower end of the 95% interval for the gap, in £ thousands to 3 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.016,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.016: 0.8 less 1.96 times 0.4.",
+        "label": "Lower end",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "one-mean",
+            "value": 0.246,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "upper-end",
+            "value": 1.584,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The interval starts at 0.016, just above zero.",
+        "generic": "Not quite right. The gap has the standard errors of both means in it.",
+        "byKey": {
+          "one-mean": "You used the error of one mean, $2/\\sqrt{50}$. The gap carries both errors, so its error is $\\sqrt{0.08 + 0.08} = 0.4$.",
+          "upper-end": "You gave the upper end. Subtract 1.96 standard errors from the gap of 0.8 instead."
+        }
+      },
+      "explain": {
+        "text": "The gap is $10.4 - 9.6 = 0.8$ thousand. Its standard error is $\\sqrt{4/50 + 4/50} = 0.4$. The lower end is $0.8 - 1.96 \\times 0.4 = 0.016$, just above zero."
+      }
+    },
+    {
+      "id": "es-bayes-three-from-three",
+      "difficulty": 4,
+      "skills": ["es-bayes", "es-mle"],
+      "tags": ["es-bayes"],
+      "role": ["research", "strats", "trader"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 100,
+      "requires": ["estimation/l12-updating-a-belief"],
+      "prose": "Your prior on a success rate is uniform from 0 to 1. The first three trials all succeed.",
+      "question": "What is the chance that the fourth trial succeeds? Give it as a decimal or a fraction.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "4/5, or 0.8.",
+        "label": "Chance of a fourth success",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "no-prior",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-failure",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The chance is 4/5.",
+        "generic": "Not quite right. Treat the uniform prior as counts seen before the data.",
+        "byKey": {
+          "no-prior": "You used 3/3 and left the prior out. A uniform prior acts like one success and one failure seen before.",
+          "one-failure": "You added one failure but no success, giving 3/4. A uniform prior adds one of each, so the chance is 4/5."
+        }
+      },
+      "explain": {
+        "text": "A uniform prior is Beta(1, 1), so three successes give Beta(4, 1). The chance of a fourth success is its mean, $4/5 = 0.8$. This is Laplace's rule of succession."
+      }
+    },
+    {
+      "id": "sm-nonpar-shuffled-labels",
+      "difficulty": 3,
+      "skills": ["sm-nonpar"],
+      "tags": ["sm-nonpar"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 120,
+      "prose": "Group A holds the values 8 and 9, and group B holds 1, 2 and 3. You test whether A has the higher mean by shuffling the five labels.",
+      "question": "What is the one-sided permutation p-value, as a decimal?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "1/10, or 0.1.",
+        "label": "p-value",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "ordered-pairs",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "two-sided",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. One split in 10 is as extreme.",
+        "generic": "Not quite right. Count the ways to choose which two values form group A.",
+        "byKey": {
+          "ordered-pairs": "You counted 20 ordered pairs but only one order of 8 and 9. Count both orders, or use the 10 unordered pairs.",
+          "two-sided": "You doubled the p-value for a two-sided test. The question asks only whether A is higher."
+        }
+      },
+      "explain": {
+        "text": "There are $\\binom{5}{2} = 10$ ways to choose which two values form group A. Only 8 and 9 give a gap in means as large as the one seen, 6.5. So the p-value is $1/10 = 0.1$."
+      }
+    },
+    {
+      "id": "ht-setup-one-or-two-sided",
+      "difficulty": 2,
+      "skills": ["ht-setup"],
+      "tags": ["ht-setup"],
+      "role": ["research", "strats", "trader"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 60,
+      "prose": "A test statistic comes out at z = 1.8. You test at the 5% level.",
+      "question": "Is the result significant?",
+      "widget": {
+        "kind": "choice",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "a",
+            "text": "Yes one-sided, with p = 0.036, but not two-sided, with p = 0.072",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes both ways, since 1.8 is above the one-sided cut-off of 1.645",
+            "why": "You used the one-sided cut-off for both tests. A two-sided test at 5% needs z beyond 1.96."
+          },
+          {
+            "id": "c",
+            "text": "No either way, since a z under 1.96 fails every test at the 5% level",
+            "why": "You used the two-sided cut-off for both tests. A one-sided test at 5% needs only 1.645, and 1.8 clears it."
+          },
+          {
+            "id": "d",
+            "text": "Yes two-sided, with p = 0.036, but not one-sided, with p = 0.072",
+            "why": "You swapped the two p-values. The two-sided p-value is double the one-sided one, so it is the larger."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Only the one-sided test rejects.",
+        "generic": "Not quite right. Compare 1.8 with the one-sided and two-sided 5% cut-offs."
+      },
+      "explain": {
+        "text": "The one-sided p-value is $1 - \\Phi(1.8) = 0.036$, under 5%. The two-sided p-value doubles it to 0.072, over 5%. Choose the side before you see the data."
+      }
+    },
+    {
+      "id": "ht-multiple-better-of-two",
+      "difficulty": 5,
+      "skills": ["ht-multiple"],
+      "tags": ["ht-multiple"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 150,
+      "requires": ["testing/l12-data-snooping"],
+      "prose": "You backtest two independent strategies with no skill, so each t statistic is standard normal. You keep the strategy with the larger t.",
+      "question": "What is the expected value of the t statistic you keep, to 3 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5642,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "0.564: $1/\\sqrt{\\pi}$.",
+        "label": "Expected t",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "no-selection",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one-size",
+            "value": 0.798,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Picking the better of two adds about 0.564 with no skill at all.",
+        "generic": "Not quite right. Write the larger of two values as their average plus half their gap.",
+        "byKey": {
+          "no-selection": "You took the mean of one statistic, 0. Keeping the larger of two picks the better draw, so its mean is above zero.",
+          "one-size": "You found the mean size of one statistic, $\\sqrt{2/\\pi}$. The larger of two exceeds their average by half their gap, which has mean $1/\\sqrt{\\pi}$."
+        }
+      },
+      "explain": {
+        "text": "The larger of X and Y is $(X + Y)/2 + |X - Y|/2$. The first part has mean 0, and $X - Y$ has sd $\\sqrt{2}$, so $E|X - Y| = 2/\\sqrt{\\pi}$. The kept t statistic averages $1/\\sqrt{\\pi} \\approx 0.564$."
+      }
+    },
+    {
+      "id": "power-half-the-effect",
+      "difficulty": 2,
+      "skills": ["rq-stats"],
+      "tags": ["power"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 60,
+      "prose": "A test needs 150 observations to reach 80% power against the effect you planned for. The true effect turns out to be half that size.",
+      "question": "How many observations give the same power now?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 600,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "600: four times 150.",
+        "label": "Observations",
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "doubled",
+            "value": 300,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "root-two",
+            "value": 212,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Half the effect needs four times the data.",
+        "generic": "Not quite right. Ask how the test statistic grows with n.",
+        "byKey": {
+          "doubled": "You doubled n for half the effect. The test statistic grows with the root of n, so you need four times the data.",
+          "root-two": "You scaled n by the root of two. The effect sits beside $\\sqrt{n}$, so n must grow by the square of 2."
+        }
+      },
+      "explain": {
+        "text": "Power depends on the effect times $\\sqrt{n}$. Halving the effect needs $\\sqrt{n}$ to double, so n grows fourfold. That is $4 \\times 150 = 600$ observations."
+      }
+    },
+    {
+      "id": "rg-fit-next-year-return",
+      "difficulty": 3,
+      "skills": ["rg-fit"],
+      "tags": ["rg-fit"],
+      "role": ["research", "strats", "trader"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 90,
+      "prose": "Across funds, the return in one year and the return in the next have correlation 0.5. Each year the mean is 6% and the standard deviation 10%. One fund made 26% this year.",
+      "question": "Using the regression line, what is its expected return next year, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.16,
+        "tol": {
+          "abs": 5e-05
+        },
+        "unit": "%",
+        "accept": "16%: 6 plus half of 20.",
+        "label": "Expected return",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "no-pull",
+            "value": 0.26,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "halved-return",
+            "value": 0.13,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Half the lead carries over, giving 16%.",
+        "generic": "Not quite right. Forecast the lead over the mean, not the return itself.",
+        "byKey": {
+          "no-pull": "You expected the same 26% again. With correlation 0.5, only half of the 20-point lead over the mean carries over.",
+          "halved-return": "You halved the whole return. Halve the lead over the mean, 20 points, then add back the mean of 6%."
+        }
+      },
+      "explain": {
+        "text": "The slope is $0.5 \\times 10/10 = 0.5$, so half of the lead over the mean carries over. The lead is $26 - 6 = 20$ points. The forecast is $6 + 0.5 \\times 20 = 16$ per cent."
+      }
+    },
+    {
+      "id": "rg-inference-overall-f",
+      "difficulty": 4,
+      "skills": ["rg-inference", "rg-fit"],
+      "tags": ["rg-inference"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 120,
+      "requires": ["regression/l7-summary-table"],
+      "prose": "A regression with 3 predictors and an intercept is fitted to 44 observations. Its $R^2$ is 0.3.",
+      "question": "What is the overall F statistic, to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.7143,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "40/7, or 5.71.",
+        "label": "F statistic",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "df-41",
+            "value": 5.86,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "no-df",
+            "value": 0.43,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. F is 40/7, about 5.71.",
+        "generic": "Not quite right. Divide each part of $R^2$ by its degrees of freedom first.",
+        "byKey": {
+          "df-41": "You used 41 residual degrees of freedom. Count the intercept too: $44 - 3 - 1 = 40$.",
+          "no-df": "You divided $R^2$ by $1 - R^2$ and stopped. Divide each by its degrees of freedom, 3 and 40."
+        }
+      },
+      "explain": {
+        "text": "F is $(R^2/k)/((1 - R^2)/(n - k - 1))$ with $k = 3$ and $n - k - 1 = 40$. That is $0.1/0.0175 = 5.71$. Each share of $R^2$ is divided by its own degrees of freedom."
+      }
+    },
+    {
+      "id": "rg-diagnostics-most-leverage",
+      "difficulty": 2,
+      "skills": ["rg-diagnostics", "rg-fit"],
+      "tags": ["rg-diagnostics"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 60,
+      "prose": "A straight line is fitted by least squares to five points. Their x values are 1, 2, 3, 4 and 20.",
+      "question": "Which point has the most leverage?",
+      "widget": {
+        "kind": "choice",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "a",
+            "text": "The point at x = 20, far from the other x values",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The point at x = 1, the smallest of the x values",
+            "why": "You picked the smallest x. Leverage grows with distance from the mean x, which is 6, and 1 is only 5 away."
+          },
+          {
+            "id": "c",
+            "text": "The point at x = 3, the centre of the first four",
+            "why": "You picked the centre of the cluster. Leverage is measured from the mean of all five x values, which is 6."
+          },
+          {
+            "id": "d",
+            "text": "All five have the same leverage in a straight line",
+            "why": "You gave each point the same pull. A point's leverage rises with its squared distance from the mean x."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The point at 20 has leverage 0.984.",
+        "generic": "Not quite right. Leverage depends on how far x is from the mean x."
+      },
+      "explain": {
+        "text": "Leverage is $1/n + (x - \\bar{x})^2/S_{xx}$, with $\\bar{x} = 6$ and $S_{xx} = 250$. At x = 20 it is $0.2 + 196/250 = 0.984$. Every other point has 0.3 or less."
+      }
+    },
+    {
+      "id": "rg-multiple-dummy-and-slope",
+      "difficulty": 2,
+      "skills": ["rg-multiple", "rg-fit"],
+      "tags": ["rg-multiple"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 60,
+      "prose": "A fitted model is $y = 3 + 2x + 4D + 1.5xD$, where D is 1 for one group and 0 for the other.",
+      "question": "What is the fitted value at x = 2 for the group with D = 1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 14,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "14: 3 + 4 + 4 + 3.",
+        "label": "Fitted value",
+        "placeholder": "a number",
+        "wrong": [
+          {
+            "id": "no-interaction",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "other-group",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The fitted value is 14.",
+        "generic": "Not quite right. With D = 1, both the intercept and the slope change.",
+        "byKey": {
+          "no-interaction": "You left out the term $1.5xD$, which adds 3 at x = 2 when D = 1.",
+          "other-group": "You set D to 0, which gives the other group's fit. With D = 1, add $4 + 1.5 \\times 2$ as well."
+        }
+      },
+      "explain": {
+        "text": "With D = 1 the line is $y = 7 + 3.5x$: the dummy shifts the intercept by 4 and the slope by 1.5. At x = 2 that is $7 + 3.5 \\times 2 = 14$."
+      }
+    },
+    {
+      "id": "gv-models-ewma-after-a-shock",
+      "difficulty": 3,
+      "skills": ["gv-models"],
+      "tags": ["gv-models"],
+      "role": ["research", "strats", "trader"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 100,
+      "prose": "A risk model tracks daily volatility by EWMA with decay 0.94. It went into today at 1%, and then the share moved 3%.",
+      "question": "What is the updated daily volatility, in per cent to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.012166,
+        "tol": {
+          "abs": 5e-05
+        },
+        "unit": "%",
+        "accept": "1.22%: the root of 1.48.",
+        "label": "New volatility",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "averaged-vols",
+            "value": 0.0112,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "weights-swapped",
+            "value": 0.0292,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. About 1.22% a day.",
+        "generic": "Not quite right. Update the variance, then take the root.",
+        "byKey": {
+          "averaged-vols": "You averaged the volatilities, $0.94 \\times 1 + 0.06 \\times 3$. EWMA averages variances, so square first and take the root last.",
+          "weights-swapped": "You put 0.94 on today's squared return. The decay 0.94 weights yesterday's variance, and the new return gets 0.06."
+        }
+      },
+      "explain": {
+        "text": "EWMA updates the variance: $0.94 \\times 1^2 + 0.06 \\times 3^2 = 1.48$. The new volatility is $\\sqrt{1.48} \\approx 1.22$ per cent. A single 3% day lifts the estimate by more than a fifth."
+      }
+    },
+    {
+      "id": "gv-forecast-long-run-vol",
+      "difficulty": 3,
+      "skills": ["gv-models", "gv-forecast"],
+      "tags": ["gv-forecast"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 100,
+      "prose": "A GARCH(1,1) model of daily returns has $\\omega = 0.0000045$, $\\alpha = 0.10$ and $\\beta = 0.88$.",
+      "question": "What is the long-run daily volatility, in per cent to 1 decimal place?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.015,
+        "tol": {
+          "abs": 5e-05
+        },
+        "unit": "%",
+        "accept": "1.5%: the root of 0.000225.",
+        "label": "Long-run volatility",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "annualised",
+            "value": 0.238,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-minus-beta",
+            "value": 0.006,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The long-run volatility is 1.5% a day.",
+        "generic": "Not quite right. Find the long-run variance first, then take its root.",
+        "byKey": {
+          "annualised": "You scaled the figure to a year. The question asks for the daily volatility, the root of 0.000225.",
+          "one-minus-beta": "You divided $\\omega$ by $1 - \\beta$ alone. The long-run variance divides by $1 - \\alpha - \\beta = 0.02$."
+        }
+      },
+      "explain": {
+        "text": "The long-run variance is $\\omega/(1 - \\alpha - \\beta) = 0.0000045/0.02 = 0.000225$. Its root is 0.015, or 1.5% a day. The closer $\\alpha + \\beta$ is to 1, the slower the pull back to this level."
+      }
+    },
+    {
+      "id": "co-spurious-two-walks",
+      "difficulty": 4,
+      "skills": ["co-spurious"],
+      "tags": ["co-spurious"],
+      "role": ["research", "strats"],
+      "style": "statistics",
+      "source": "Original",
+      "pace": 120,
+      "requires": ["coint/l1-two-walks"],
+      "prose": "You simulate two random walks that are independent of each other. You regress the level of one on the level of the other by least squares.",
+      "question": "What should you expect from the usual t statistic of the slope?",
+      "widget": {
+        "kind": "choice",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "a",
+            "text": "It lands beyond 1.96 in size far more often than 5% of the time",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It stays near zero, as it does for two unrelated series of data",
+            "why": "You treated the levels as independent draws. Each walk drifts, so the two often trend together by chance."
+          },
+          {
+            "id": "c",
+            "text": "It can be trusted whenever the fitted $R^2$ of the regression is high",
+            "why": "You took a high $R^2$ as proof. Regressions of one walk on another often show a high $R^2$ too."
+          },
+          {
+            "id": "d",
+            "text": "It becomes a valid test once the walks run for more than 100 steps",
+            "why": "You expected more data to fix it. With walks, a longer sample makes false rejections more common, not less."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The usual t test rejects far too often for two walks.",
+        "generic": "Not quite right. Ask whether the levels of a random walk are independent draws."
+      },
+      "explain": {
+        "text": "Random walks wander, so least squares finds slopes that the usual errors call significant. In 1,000 simulated pairs of 500 steps, 88.0% had a t statistic beyond 1.96 in size. After differencing both series, 5.0% did, close to the 5% of a valid test."
+      }
+    }
+  ]
+}
