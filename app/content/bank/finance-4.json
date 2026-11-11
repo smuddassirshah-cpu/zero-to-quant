@@ -1,0 +1,749 @@
+{
+  "id": "finance-4",
+  "name": "Interview finance, set 4",
+  "description": "Finance questions of the kind asked in online assessments and first rounds: forward rates, convexity, combined Sharpe ratios, digitals, early exercise, hedging, a lookback tree, auctions, order types and straddles. Each item keeps its own schedule.",
+  "items": [
+    {
+      "id": "fi-interest-one-year-forward-rate",
+      "difficulty": 3,
+      "skills": ["fi-interest"],
+      "tags": ["fi-interest"],
+      "role": ["strats", "trader"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 90,
+      "prose": "The one-year interest rate is 3% and the two-year rate is 4%, both compounded once a year.",
+      "question": "What rate for the second year alone does this imply, in per cent to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.050097,
+        "tol": {
+          "abs": 4e-05
+        },
+        "unit": "%",
+        "accept": "5.01%: $1.04^2/1.03 - 1$.",
+        "label": "Forward rate",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 0.05,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "gap",
+            "value": 0.01,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The second-year rate is about 5.01%.",
+        "generic": "Not quite right. Grow £1 over two years, then divide out the first year.",
+        "byKey": {
+          "linear": "You used $2 \\times 4 - 3 = 5$, which ignores compounding. Grow £1 for two years at 4%, then divide out the first year at 3%.",
+          "gap": "You gave the gap between the two rates. The second year must make up for the first year's lower rate as well."
+        }
+      },
+      "explain": {
+        "text": "£1 grows to $1.04^2 = 1.0816$ over two years, and to 1.03 in the first year. The second year must give $1.0816/1.03 = 1.050097$. That is a forward rate of 5.01%."
+      }
+    },
+    {
+      "id": "fi-bonds-duration-and-convexity",
+      "difficulty": 4,
+      "skills": ["fi-bonds"],
+      "tags": ["fi-bonds"],
+      "role": ["strats", "trader"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 100,
+      "requires": ["markets/l6-yield"],
+      "prose": "A bond has modified duration 8 and convexity 80. Its yield rises by 1 percentage point.",
+      "question": "Using duration and convexity, what is the change in its price, in per cent to 1 decimal place? Use a minus sign for a fall.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.076,
+        "tol": {
+          "abs": 5e-05
+        },
+        "unit": "%",
+        "accept": "-7.6%: -8 plus 0.4.",
+        "label": "Price change",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "duration-only",
+            "value": -0.08,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "no-half",
+            "value": -0.072,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "sign",
+            "value": 0.076,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The price falls about 7.6%.",
+        "generic": "Not quite right. Add half the convexity times the squared yield change to the duration term.",
+        "byKey": {
+          "duration-only": "You used duration alone, which gives -8%. Convexity adds back $\\tfrac{1}{2} \\times 80 \\times 0.01^2$, which is 0.4 points.",
+          "no-half": "You left out the half in the convexity term. It is $\\tfrac{1}{2} \\times 80 \\times 0.0001 = 0.004$, not 0.008.",
+          "sign": "You gave a rise. A bond's price falls when its yield rises, and convexity only softens the fall."
+        }
+      },
+      "explain": {
+        "text": "The change is $-D\\,\\Delta y + \\tfrac{1}{2} C (\\Delta y)^2$ with $\\Delta y = 0.01$. That is $-0.08 + 0.004 = -0.076$. The price falls about 7.6%."
+      }
+    },
+    {
+      "id": "fi-equity-combine-two-sharpes",
+      "difficulty": 4,
+      "skills": ["fi-equity"],
+      "tags": ["fi-equity"],
+      "role": ["trader", "research", "strats"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 120,
+      "requires": ["markets/l8-measuring-returns"],
+      "prose": "Two strategies have Sharpe ratios 0.6 and 0.8, and their returns are uncorrelated. You can hold them in any mix.",
+      "question": "What is the highest Sharpe ratio a mix can reach, to 1 decimal place?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.0,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "1.0: the root of 0.36 + 0.64.",
+        "label": "Best Sharpe ratio",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "average",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sum",
+            "value": 1.4,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The best mix has a Sharpe ratio of 1.0.",
+        "generic": "Not quite right. For uncorrelated strategies, the squared Sharpe ratios add.",
+        "byKey": {
+          "average": "You averaged the two ratios. Uncorrelated bets diversify, so the best mix beats both.",
+          "sum": "You added the ratios. For uncorrelated strategies the squares add, so the best ratio is $\\sqrt{0.36 + 0.64}$."
+        }
+      },
+      "explain": {
+        "text": "With uncorrelated returns, the best mix weights each strategy by its Sharpe ratio over its volatility. The squared Sharpe ratios then add: $0.36 + 0.64 = 1$. The best ratio is $\\sqrt{1} = 1.0$, above either alone."
+      }
+    },
+    {
+      "id": "fi-forwards-implied-rate",
+      "difficulty": 3,
+      "skills": ["fi-forwards"],
+      "tags": ["fi-forwards"],
+      "role": ["strats", "trader"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 90,
+      "prose": "A share trades at £100 and pays no dividends. Its six-month forward price is £102.",
+      "question": "What continuously compounded annual interest rate does this imply, in per cent to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.039605,
+        "tol": {
+          "abs": 4e-05
+        },
+        "unit": "%",
+        "accept": "3.96%: $2 \\ln 1.02$.",
+        "label": "Implied rate",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "simple",
+            "value": 0.04,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "annual-effective",
+            "value": 0.0404,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The implied rate is about 3.96%.",
+        "generic": "Not quite right. Solve $F = S e^{rT}$ for r with T = 0.5.",
+        "byKey": {
+          "simple": "You doubled the 2% six-month gain, which is simple interest. With continuous compounding the rate is $2 \\ln 1.02$.",
+          "annual-effective": "You compounded the 2% over two halves, $1.02^2 - 1$. That is the annual effective rate, not the continuous one."
+        }
+      },
+      "explain": {
+        "text": "No arbitrage gives $F = S e^{rT}$, so $102 = 100 e^{r/2}$. Then $r = 2 \\ln 1.02 \\approx 0.0396$. That is 3.96% a year."
+      }
+    },
+    {
+      "id": "digital-option-from-two-calls",
+      "difficulty": 4,
+      "skills": ["tp-riskneutral", "tp-bs"],
+      "tags": ["digital-option"],
+      "role": ["strats", "trader"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 100,
+      "requires": ["trees/l15-digitals"],
+      "prose": "Calls on the same share and expiry cost £5.90 at strike 98 and £3.70 at strike 102. A digital pays £1 if the share ends above 100.",
+      "question": "Roughly what is the digital worth, in pounds to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.55,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "0.55: 2.20 divided by 4.",
+        "label": "Digital price",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "no-width",
+            "value": 2.2,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "half-width",
+            "value": 1.1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. About £0.55.",
+        "generic": "Not quite right. Build a call spread across 100 and scale it to pay £1.",
+        "byKey": {
+          "no-width": "You took the call spread's price, 2.20, as the digital's. The spread pays up to £4, so divide by the width of 4.",
+          "half-width": "You divided by 2. The strikes are 4 apart, so the spread pays as much as 4 digitals."
+        }
+      },
+      "explain": {
+        "text": "Long the 98 call and short the 102 call pays from £0 to £4 across the strikes. A quarter of that spread is close to a £1 digital at 100. Its price is $(5.90 - 3.70)/4 = 0.55$ pounds."
+      }
+    },
+    {
+      "id": "op-strategies-protective-put-floor",
+      "difficulty": 2,
+      "skills": ["op-strategies", "op-parity"],
+      "tags": ["op-strategies"],
+      "role": ["trader", "strats"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 60,
+      "prose": "You hold one share bought at £120. You buy a put with strike 110 for £3 to protect it.",
+      "question": "What is the largest possible loss at expiry, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "13: £10 on the share plus the £3 premium.",
+        "label": "Largest loss",
+        "placeholder": "a number",
+        "wrong": [
+          {
+            "id": "no-premium",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "took-off-premium",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The most you can lose is £13.",
+        "generic": "Not quite right. Find the lowest value of the share and put together, then add up what you paid.",
+        "byKey": {
+          "no-premium": "You left out the £3 paid for the put. The loss is the £10 fall to the strike plus the premium.",
+          "took-off-premium": "You took the premium off the loss. The premium is a cost, so add it to the £10 fall."
+        }
+      },
+      "explain": {
+        "text": "Below 110 the put makes up any further fall, so the pair is worth at least £110. You paid $120 + 3 = 123$ in all. The worst case is $123 - 110 = 13$ pounds."
+      }
+    },
+    {
+      "id": "op-parity-exercise-before-dividend",
+      "difficulty": 4,
+      "skills": ["op-parity"],
+      "tags": ["op-parity"],
+      "role": ["strats", "trader"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 120,
+      "requires": ["options/l11-exercise-early"],
+      "prose": "You hold an American call with strike £50 on a share at £60. Tomorrow the share pays its last dividend before expiry, £2.00. After the dividend, the European put with the same strike would be worth £0.50. Interest on the strike to expiry is £0.30.",
+      "question": "Should you exercise today?",
+      "widget": {
+        "kind": "choice",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "a",
+            "text": "Yes: the £2.00 dividend beats the £0.80 you give up",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "No: you should never exercise an American call early",
+            "why": "You used the rule for a share with no dividend. A large enough dividend makes early exercise of a call pay."
+          },
+          {
+            "id": "c",
+            "text": "No: holding keeps £0.80 of value that exercise loses",
+            "why": "You weighed the £0.80 alone. Exercising today also captures the £2.00 dividend, which is larger."
+          },
+          {
+            "id": "d",
+            "text": "It makes no difference, as parity holds either way",
+            "why": "You treated the two choices as equal. Parity values the held call at £8.80, below the £10 from exercising."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Exercising gains about £1.20.",
+        "generic": "Not quite right. Compare the dividend with the put value and the interest on the strike."
+      },
+      "explain": {
+        "text": "Exercising today gives $60 - 50 = 10$ pounds. If you hold, parity after the dividend values the call at $58 - 49.70 + 0.50 = 8.80$ pounds. Exercise wins by £1.20, the dividend less the put and the interest."
+      }
+    },
+    {
+      "id": "gamma-pnl-hedger-trades",
+      "difficulty": 3,
+      "skills": ["tp-bs"],
+      "tags": ["gamma-pnl"],
+      "role": ["trader", "strats"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 75,
+      "prose": "You are long a three-month at-the-money call on a £100 share, with volatility 20% and zero rates. You are short shares, so the position is delta neutral. The share then rises to £101.",
+      "question": "What must you do to stay delta neutral?",
+      "widget": {
+        "kind": "choice",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "a",
+            "text": "Sell more shares, since the call's delta has risen",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Buy shares back, since the call's delta has fallen",
+            "why": "You had delta moving the wrong way. A long call's delta rises with the share, because its gamma is positive."
+          },
+          {
+            "id": "c",
+            "text": "Do nothing, since the hedge was already set up",
+            "why": "You treated the hedge as fixed. Delta changes as the share moves, so the hedge must be rebalanced."
+          },
+          {
+            "id": "d",
+            "text": "Buy more calls, so as to add to the long gamma",
+            "why": "You added options rather than adjusting shares. More calls raise the delta further and widen the gap."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. You sell shares after a rise.",
+        "generic": "Not quite right. Ask which way the call's delta moves when the share rises."
+      },
+      "explain": {
+        "text": "A long call has positive gamma, so its delta rises as the share rises. Here it goes from 0.52 to 0.56, so you sell 0.04 shares per call. Selling after rises and buying after falls is how the long-gamma hedger earns."
+      }
+    },
+    {
+      "id": "op-greeks-put-delta-from-call",
+      "difficulty": 2,
+      "skills": ["op-greeks"],
+      "tags": ["op-greeks"],
+      "role": ["trader", "strats"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 45,
+      "prose": "A European call on a share with no dividends has delta 0.62.",
+      "question": "What is the delta of the put with the same strike and expiry, to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.38,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "-0.38: 0.62 less 1.",
+        "label": "Put delta",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.38,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "copied-call",
+            "value": -0.62,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The put's delta is -0.38.",
+        "generic": "Not quite right. Differentiate put-call parity with respect to the share price.",
+        "byKey": {
+          "sign": "You dropped the sign. A put loses value as the share rises, so its delta is negative.",
+          "copied-call": "You gave the call's delta with a minus sign. Parity says the put's delta is the call's less 1."
+        }
+      },
+      "explain": {
+        "text": "Put-call parity, $C - P = S - Ke^{-rT}$, gives $\\Delta_C - \\Delta_P = 1$. So the put's delta is $0.62 - 1 = -0.38$."
+      }
+    },
+    {
+      "id": "tp-multistep-lookback-two-step",
+      "difficulty": 5,
+      "skills": ["tp-multistep", "tp-riskneutral"],
+      "tags": ["tp-multistep"],
+      "role": ["strats", "research"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 180,
+      "requires": ["trees/l5-two-steps"],
+      "prose": "A share starts at £100. Each step it is multiplied by 1.2 or 0.8, the interest rate is zero, and there are two steps. An option pays the highest price on the path, the start included, less 100.",
+      "question": "What is the option worth today, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "16: (44 + 20 + 0 + 0)/4.",
+        "label": "Option value",
+        "placeholder": "a number",
+        "wrong": [
+          {
+            "id": "plain-call",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "paying-paths",
+            "value": 32,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The option is worth £16.",
+        "generic": "Not quite right. List the four paths, find each one's highest price, and weight them by the risk-neutral chances.",
+        "byKey": {
+          "plain-call": "You priced a call on the final price, which pays only on up-up. The path's high also pays 20 on up-down.",
+          "paying-paths": "You averaged over the two paying paths alone. Each of the four paths has weight 1/4, including the two that pay 0."
+        }
+      },
+      "explain": {
+        "text": "With zero rates the up chance is $(1 - 0.8)/(1.2 - 0.8) = 0.5$, so each path has weight 1/4. The highs less 100 are 44, 20, 0 and 0. The price is $(44 + 20)/4 = 16$ pounds."
+      }
+    },
+    {
+      "id": "ms-book-opening-auction",
+      "difficulty": 4,
+      "skills": ["ms-book", "ms-orders"],
+      "tags": ["ms-book"],
+      "role": ["trader", "developer"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 120,
+      "requires": ["micro/l12-venues"],
+      "prose": "Before the open, the buy orders are 300 at £10.3, 200 at £10.2 and 400 at £10.1. The sell orders are 250 at £10.0, 300 at £10.1 and 300 at £10.2. The auction picks the single price that trades the most shares.",
+      "question": "How many shares trade in the auction?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 550,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "550, at £10.1.",
+        "label": "Shares traded",
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "cleared-high",
+            "value": 500,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all-sells",
+            "value": 850,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. 550 shares trade at £10.1.",
+        "generic": "Not quite right. At each price, the volume is the smaller of the shares bid and the shares offered.",
+        "byKey": {
+          "cleared-high": "You cleared at £10.2, where only 500 shares are bid. At £10.1, 900 shares are bid and 550 offered.",
+          "all-sells": "You matched every sell order. At any one price, the volume is the smaller of the shares bid and offered."
+        }
+      },
+      "explain": {
+        "text": "Volume at a price is the lesser of bids at or above it and offers at or below it. That gives 250 at £10.0, 550 at £10.1, 500 at £10.2 and 300 at £10.3. The auction clears 550 shares at £10.1."
+      }
+    },
+    {
+      "id": "ms-orders-immediate-or-cancel",
+      "difficulty": 2,
+      "skills": ["ms-orders", "ms-costs"],
+      "tags": ["ms-orders"],
+      "role": ["trader", "developer"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 60,
+      "prose": "You send an immediate-or-cancel order to buy 1,000 shares with limit £30.05. The offers are 400 at £30.03, 300 at £30.05 and 600 at £30.06.",
+      "question": "How many shares fill?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 700,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "700: 400 at £30.03 and 300 at £30.05.",
+        "label": "Shares filled",
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "ignored-limit",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "first-level",
+            "value": 400,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. 700 shares fill and 300 are cancelled.",
+        "generic": "Not quite right. Take every offer at or under the limit, then cancel the rest.",
+        "byKey": {
+          "ignored-limit": "You filled the whole order. The limit stops it at £30.05, so the 600 at £30.06 are out of reach.",
+          "first-level": "You stopped at the best offer. The order takes every level up to its limit, so the 300 at £30.05 fill too."
+        }
+      },
+      "explain": {
+        "text": "The order takes 400 at £30.03 and 300 at £30.05, which is 700 shares. Nothing else is at or under the limit. Immediate-or-cancel then cancels the other 300 rather than leaving them on the book."
+      }
+    },
+    {
+      "id": "ms-costs-participation-time",
+      "difficulty": 2,
+      "skills": ["ms-costs", "ms-book"],
+      "tags": ["ms-costs"],
+      "role": ["trader", "research"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 60,
+      "prose": "You must buy 60,000 shares without trading more than 10% of market volume. The market trades 150,000 shares an hour.",
+      "question": "How many hours will the order take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4: 15,000 shares an hour.",
+        "label": "Hours",
+        "placeholder": "a number",
+        "wrong": [
+          {
+            "id": "no-rate",
+            "value": 0.4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rate-twice",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The order takes 4 hours.",
+        "generic": "Not quite right. Work out how many shares an hour you may trade.",
+        "byKey": {
+          "no-rate": "You divided by the whole market volume. You may take only 10% of it, which is 15,000 shares an hour.",
+          "rate-twice": "You applied the 10% twice, giving 1,500 shares an hour. Your rate is 10% of 150,000, which is 15,000."
+        }
+      },
+      "explain": {
+        "text": "Your share of volume is $0.1 \\times 150{,}000 = 15{,}000$ shares an hour. The order needs $60{,}000/15{,}000 = 4$ hours. A slower rate lowers the impact but leaves more time for the price to drift."
+      }
+    },
+    {
+      "id": "option-estimate-straddle-implied-move",
+      "difficulty": 3,
+      "skills": ["tp-bs"],
+      "tags": ["option-estimate"],
+      "role": ["trader", "strats"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 90,
+      "prose": "A share at £50 reports results tomorrow. The at-the-money straddle that expires the day after costs £4.00. Take a straddle as worth 0.8 times the one-standard-deviation move.",
+      "question": "What one-standard-deviation move does the straddle imply, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "accept": "10%: £5 on a £50 share.",
+        "label": "Implied move",
+        "placeholder": "a percentage",
+        "wrong": [
+          {
+            "id": "no-factor",
+            "value": 0.08,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "times-factor",
+            "value": 0.064,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The straddle implies a move of about 10%.",
+        "generic": "Not quite right. Divide the straddle by 0.8 to get the move in pounds first.",
+        "byKey": {
+          "no-factor": "You divided the straddle by the share price. The straddle is 0.8 of the move, so the move is £4 over 0.8, which is £5.",
+          "times-factor": "You multiplied by 0.8. The straddle is the smaller number, so divide it by 0.8 to get the move."
+        }
+      },
+      "explain": {
+        "text": "The move is $4/0.8 = 5$ pounds, which is 10% of £50. Black-Scholes at zero rates gives 10.03%, so the rule is close. The 0.8 comes from $\\sqrt{2/\\pi} \\approx 0.798$."
+      }
+    },
+    {
+      "id": "tp-bs-delta-and-finishing-chance",
+      "difficulty": 4,
+      "skills": ["tp-bs"],
+      "tags": ["tp-bs"],
+      "role": ["strats", "trader"],
+      "style": "finance",
+      "source": "Original",
+      "pace": 90,
+      "requires": ["trees/l10-black-scholes"],
+      "prose": "A European call on a share with no dividends has Black-Scholes delta 0.30. Rates are zero.",
+      "question": "What is the risk-neutral chance that it finishes in the money?",
+      "widget": {
+        "kind": "choice",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "a",
+            "text": "Below 30%: it is $\\Phi(d_2)$, and $d_2$ is less than $d_1$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Exactly 30%: delta is the chance of finishing in the money",
+            "why": "You took delta as the chance of finishing in the money. Delta is $\\Phi(d_1)$, and the chance is $\\Phi(d_2)$."
+          },
+          {
+            "id": "c",
+            "text": "Above 30%: it is $\\Phi(d_2)$, and $d_2$ is more than $d_1$",
+            "why": "You had $d_2$ above $d_1$. In fact $d_2 = d_1 - \\sigma\\sqrt{T}$, so it is the smaller."
+          },
+          {
+            "id": "d",
+            "text": "About 70%: one minus the delta, since the call is cheap",
+            "why": "You subtracted delta from 1. That is the size of the put's delta, not a chance of finishing in the money."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The chance is below the delta.",
+        "generic": "Not quite right. Compare the formulas for delta and for the chance of finishing in the money."
+      },
+      "explain": {
+        "text": "Delta is $\\Phi(d_1)$, while the risk-neutral chance of finishing in the money is $\\Phi(d_2)$, with $d_2 = d_1 - \\sigma\\sqrt{T}$. At 25% volatility and six months, a delta of 0.30 goes with a chance of 24.2%. The gap grows with volatility and time."
+      }
+    }
+  ]
+}
