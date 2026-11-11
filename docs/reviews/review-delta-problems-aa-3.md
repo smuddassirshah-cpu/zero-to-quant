@@ -94,3 +94,28 @@ Of the 20 findings of the first read, 18 are fixed in content as its "Fix pass" 
 - Fix pass 0.3 c: `wrong` 0, `unclear` 0, `minor` 5 (c1 to c5).
 
 Both fix passes can stand as merged. c1 and c2 are the two worth a pass: each re-authored for freshness and landed on numbers the topic already uses.
+
+## Fix pass
+
+All 6 findings applied (b1, c1 to c5), with one deviation from ruling (a): the pizza pair 15 and 16 was dropped for 18 and 19 because the new numbers were not absent. 16 x 15 x 14 x 13 = 43680 is printed in `topic-0.3` (a code count) and is part 3's `ordered` slip; $\binom{16}{4} = 1820$ is a `wrong` value in `series/review-2`; $\binom{16}{3} = 560$ is a printed portfolio count in `counting/homework-2` and `l8`. 18 and 19 appear nowhere in `counting`, `series`, `trig`, `topic-0.3` or `stage-0` (every printed value searched as a whole number, with and without a comma). Verified: validator 0 errors; voice scan 0 and 0; the three numbers scripts (series 1,481, trig 1,086, exp-log 1,217 checks) and three grade scripts (series 704, trig 938, exp-log 695) all exit 0 with 0 failures; `--problems` playthrough on `series/problems-1`, `series/problems-3`, `trig/problems-1`, `trig/problems-3`, `exp-log/problems-3`, each with and without `--mobile`: all passed.
+
+- b1 fixed: `p-weekly-target` part 4 `tol` 0.00005. Takes 0.0249, 0.02490, 0.024907, 0.024908, 0.024933; refuses 0.0248 and 0.0250. The `carried` wrong band (0.0259 +- 0.00005) does not meet it.
+- c1 fixed (deviation above): `p-pizza-toppings` re-keyed to 18 toppings and a 19th, every answer, `wrong` value and printed line recomputed by formula and by `itertools` enumeration.
+- c2 fixed: `p-daylight-model` parts 4 and 5 re-keyed to a level of 10 hours (sine -5/11); exact and by `bisect` and a 12,000-step scan.
+- c3 fixed: `p-shop-orders` part 4 `accept` gains `96(1.5)^{n-2}` and `96\cdot(1.5)^{n-2}`. The grade script proves the engine takes the plain-text `96(1.5)^(n-2)` and `96*(1.5)^(n-2)` as well as both bracketed LaTeX forms, and still refuses `96(1.5)^(n-1)` and `96(1.5)^(n-3)`.
+- c4 fixed by ruling: `5(4\sqrt{3}-3)` stays refused. `p-desk-lamp` part 5 now has `feedback.byKey.form`: "That is equal, but not in the form asked. Multiply out any bracket and work out any fraction, to give a multiple of $\sqrt{3}$ minus a whole number." The player shows `byKey[key]` before the engine's stock line (`player.js` `notYetLine`), and the widget returns key `form` for this typing, so the learner sees this line. `20\sqrt{3}-\frac{30}{2}` is still accepted (as the reader found); no engine edit.
+- c5 fixed: `p-hexagon-tile` part 4 `radians` `tol` 0.005 (takes 0.52, 0.524, 0.5236) and a new `radians-whole` (1, `tol` 0) with the `radians` line. 0.87, 0.866, 0.58 and 0.577 now fall in no band. `half` (0.5) no longer sits inside another band.
+- Standing advisories: no edit, as ruled.
+
+Changed graded values (old to new, with the working):
+
+- Pizzas, 18 toppings (old 11). P1: 330 to 3060 = (18 x 17 x 16 x 15)/4! = 73440/24; `ordered` 7920 to 73440; `times` 44 to 72 = 18 x 4; `three-orders` 1320 to 12240 = 73440/6.
+- P2 (4 or 14 toppings, old 4 or 7): 660 to 6120 = 2 x 3060 (C(18,14) = C(18,4)); `one-size` 330 to 3060.
+- P3 (19th topping, old 12th): 495 to 3876 = 3060 + C(18,3) = 3060 + 816, and C(19,4) = 93024/24 = 3876; `one-more` 341 to 3078 = 3060 + 18; `doubled` 660 to 6120; `ordered` 11880 to 93024 = 19 x 18 x 17 x 16. Printed 165 to 816 = 4896/6.
+- P4 (row 19 begins 1, 19, 171, 969, 3876): 4096 to 524288 = 2^19; `no-plain` 4095 to 524287; `row-eleven` 2048 renamed `row-eighteen`, 262144 = 2^18.
+- Daylight, level 10 hours (old 9.8). sin(pi/6 (t - 3)) = (10 - 12)/4.4 = -5/11; asin(5/11) = 0.4719; t = 3 - 6(0.4719)/pi = 2.0988 and t = 3 + 6(pi + 0.4719)/pi = 9.9012.
+- Part 4: answers 2 and 10 to 2.1 and 9.9 (`tol` 0.01 unchanged; takes 2.10, 9.90, 2.0988, 9.9012; refuses 2, 10). `no-shift` "7, 11" to "6.9, 11.1": 6(pi + 0.4719)/pi = 6.9012 and 6(2pi - 0.4719)/pi = 11.0988. `above` "4, 8" to "3.9, 8.1": sine +5/11 gives t = 3 + 0.9012 = 3.9012 and 3 + 6(pi - 0.4719)/pi = 8.0988 (14 hours: 12 + 4.4 x 5/11).
+- Part 5: answer 8 to 7.8, `tol` 0 to 0.05 ("1 decimal place"): 9.9012 - 2.0988 = 7.8024; `outside` 4 to 4.2 (12 - 7.8, `tol` 0.05); `counted` 9 renamed `whole-months` and set to 8 (`tol` 0.05; the crossings rounded to 2 and 10 give 10 - 2).
+- Weekly target part 4: answer 0.0249 unchanged, `tol` 0.0001 to 0.00005 (0.0747/3 = 0.0249, 0.074724/3 = 0.024908, 0.0748/3 = 0.024933).
+- Hexagon part 4: answer 30 unchanged. `radians` `tol` 0.5 to 0.005 around 0.5236 = pi/6; new `radians-whole` value 1 = round(0.5236). 0.866 = cos 30 and 0.577 = tan 30 are now unbanded.
+- Shop part 4 and lamp part 5: no graded value changed (`accept` forms and a `form` line only).

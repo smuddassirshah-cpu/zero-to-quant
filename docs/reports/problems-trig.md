@@ -53,3 +53,5 @@ My own reading against the course's lessons, quizzes, reviews, homework, fluency
 ## Engine limits (to `docs/BACKLOG-INBOX.md`)
 
 Two bullets under "Raised later (problems trig)": the numeric field refuses a trailing degree sign, and the Accepted line's raw LaTeX met again.
+
+Fix pass, delta aa-3: daylight parts 4 and 5 now use a level of 10 hours (sine = -5/11; t = 2.10 and 9.90; 7.8 months); hexagon part 4 `radians` band is 0.5236 +- 0.005 with a `radians-whole` entry (1); desk lamp part 5 has its own `form` line (`5(4\sqrt{3}-3)` stays refused). Numbers and grade scripts updated; both exit 0.

@@ -59,3 +59,5 @@ Read by hand against the course's 13 lessons, quizzes, three reviews, three home
 ## Engine limits
 
 Two bullets to `docs/BACKLOG-INBOX.md` under "Raised later (problems exp-log):": the Accepted line prints `accept` forms as raw LaTeX source; the fixed feedback bar covers the last part's input at 440 px.
+
+Fix pass, delta aa-3: weekly target part 4 tolerance is 0.00005 (takes 0.0249, 0.024908 and 0.024933; refuses 0.0248 and 0.0250). Numbers and grade scripts updated; both exit 0.

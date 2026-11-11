@@ -59,3 +59,5 @@ Read by hand against the 13 lessons, their quizzes, three reviews, three homewor
 ## Engine limits
 
 Two bullets to `docs/BACKLOG-INBOX.md` under "Raised later (problems series):": a plain-text power with a bracketed exponent (`80*0.9^(n-1)`) grades wrong (fix pass of 0.3 c: the bracketed-base spellings are now `accept` forms in pendulum 2, tablet 3 and shop 4, so the text fallback passes them); the feedback bar and raw-LaTeX Accepted line met again.
+
+Fix pass, delta aa-3: pizza toppings now 18 and a 19th (answers 3060, 6120, 3876, 524288; the pair 15 and 16 was dropped because 43680 is in topic-0.3, 1820 in series/review-2 and 560 in counting); shop orders part 4 also accepts `96(1.5)^{n-2}` and `96\cdot(1.5)^{n-2}`. The numbers script and grade script were updated; both exit 0.

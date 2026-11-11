@@ -268,10 +268,19 @@ if L1:
     v1 = (C[0] - A[0], C[1] - A[1]); v2 = (Dp[0] - A[0], Dp[1] - A[1])
     cad = deg(math.acos((v1[0] * v2[0] + v1[1] * v2[1]) / (math.hypot(*v1) * math.hypot(*v2))))
     num(L1, 'p-hexagon-tile', 4, sp.asin(sp.Rational(1, 2)) / DEG, cad,
-        {'angle-d': 60, 'tan': deg(math.atan(8 / 16)), 'half': math.sin(rad(cad)), 'radians': math.asin(0.5)}, extra_ok=(), agree=1e-9)
+        {'angle-d': 60, 'tan': deg(math.atan(8 / 16)), 'half': math.sin(rad(cad)), 'radians': math.asin(0.5), 'radians-whole': round(math.asin(0.5))}, extra_ok=(), agree=1e-9)
     hx = L1['p-hexagon-tile']['parts']
     ok([x['id'] for x in hx[3]['widget']['wrong']].index('half') < [x['id'] for x in hx[3]['widget']['wrong']].index('radians'), 'hex p4: half entry sits before the wide radians band (finding 8)')
-    ok(within(0.5236, 0.5236, 0.5) and within(0.52, 0.5236, 0.5) and within(1, 0.5236, 0.5), 'hex p4: radians band still takes 0.5236, 0.52 and 1')
+    # fix pass, delta aa-3 (c5): the radians band is +- 0.005, and a whole-number radian value has its own entry
+    rb = {x['id']: x for x in hx[3]['widget']['wrong']}
+    ok(rb['radians']['tol']['abs'] == 0.005 and rb['radians-whole']['value'] == 1 and rb['radians-whole']['tol']['abs'] == 0, 'hex p4: radians band 0.5236 +- 0.005 and radians-whole 1 exactly')
+    ok(within(0.5236, 0.5236, 0.005) and within(0.52, 0.5236, 0.005) and within(0.524, 0.5236, 0.005) and within(1, 1, 0), 'hex p4: radians bands take 0.5236, 0.52, 0.524 and 1')
+    ok(round(math.asin(0.5)) == 1, 'hex p4: pi/6 = 0.5236 rounds to 1 as a whole number')
+    cosv, tanv = math.cos(rad(30)), math.tan(rad(30))
+    ok(all(not within(v, 0.5236, 0.005) and not within(v, 1, 0) and not within(v, 0.5, 0.0005) and not within(v, 30, 0) for v in (0.87, 0.866, 0.58, 0.577)), 'hex p4: 0.87, 0.866, 0.58 and 0.577 (cos and tan of 30) are in no band')
+    ok(abs(cosv - 0.866) < 1e-3 and abs(tanv - 0.577) < 1e-3, 'hex p4: cos 30 = 0.866 and tan 30 = 0.577')
+    ok(hx[3]['feedback']['byKey']['radians-whole'] == hx[3]['feedback']['byKey']['radians'], 'hex p4: radians-whole has the radians line')
+    ok(not within(0.5, 0.5236, 0.005 + 0.0005), 'hex p4: half (0.5 +- 0.0005) no longer sits inside the radians band')
     ok(all(hx[i]['widget'].get('form') == 'simplified' for i in (0, 1)), 'hex p1, p2: form simplified (finding 10)')
     ok(hx[0]['widget']['accept'] == ['\\sqrt{48}', '4\\cdot\\sqrt{3}'] and hx[1]['widget']['accept'] == ['\\sqrt{192}'], 'hex accept forms: the four unworked ones are cut')
 
@@ -318,6 +327,11 @@ if L1:
     expr_part(L1, 'p-desk-lamp', 5, 20 * s3 - 15,
               {'above': 20 * s3 + 15, 'cos-30': 5 * s3, 'whole-arm': 20 * s3 - 30})
     ok(abs(ev(20 * s3 - 15) - Bo[1]) < 1e-12, 'lamp p5: exact height equals the coordinate route')
+    # fix pass, delta aa-3 (c4): 5(4 sqrt 3 - 3) stays refused by the simplified check, and the form line says which form is wanted
+    lp5 = L1['p-desk-lamp']['parts'][4]
+    ok(same(tex2sp('5(4\\sqrt{3}-3)'), 20 * s3 - 15), 'lamp p5: 5(4 sqrt 3 - 3) is equal to the key')
+    fl = lp5['feedback']['byKey'].get('form', '')
+    ok('multiply out' in fl.lower() and 'sqrt{3}' in fl and 'not simplified' not in fl and 'collect' not in fl, 'lamp p5: the form line names the wanted shape (a multiple of sqrt 3 minus a whole number)')
 
 
 # ================================================================ LEVEL 2
@@ -454,15 +468,27 @@ if L3:
     expr_part(L3, 'p-daylight-model', 2, sp.pi / 6, {'period': sp.Integer(12), 'half-cycle': sp.pi / 3, 'flipped': 6 / sp.pi})
     num(L3, 'p-daylight-model', 3, 6 - sp.Rational(12, 4), bisect(lambda t: Lm(t) - 12, 0.5, 5.5),
         {'peak': 6, 'falling': 9, 'trough': 12}, agree=1e-9)
-    tt3 = sp.Symbol('t', real=True)
-    roots = sp.solveset(sp.Rational(22, 5) * sp.sin(sp.pi / 6 * (tt3 - 3)) + 12 - sp.Rational(49, 5), tt3, sp.Interval(0, 12))
-    num_set(L3, 'p-daylight-model', 4, list(roots), [bisect(lambda t: Lm(t) - 9.8, 0, 3), bisect(lambda t: Lm(t) - 9.8, 9, 12)],
-            {'no-shift': [7, 11], 'above': [4, 8]})
-    ok(abs(Lm(2) - 9.8) < 1e-12 and abs(Lm(10) - 9.8) < 1e-12 and abs((9.8 - 12) / 4.4 + 0.5) < 1e-12, 'daylight p4: the sine is -0.5 at t = 2 and t = 10')
-    ok(all(abs(math.sin(math.pi * t / 6) + 0.5) < 1e-12 for t in (7, 11)) and abs(Lm(4) - 14.2) < 1e-12 and abs(Lm(8) - 14.2) < 1e-12, 'daylight p4: slips solve their own equations (7, 11 and 4, 8)')
-    ok(abs(math.pi / 6 * (2 - 3) + math.pi / 6) < 1e-12 and abs(math.pi / 6 * (10 - 3) - 7 * math.pi / 6) < 1e-12 and sorted(list(roots)) == [2, 10], 'daylight p4: angles -pi/6 and 7pi/6; roots 2 and 10 exactly')
-    above = sum(1 for t in g3[:-1] if Lm(t + 0.0005) > 9.8) / 1000
-    num(L3, 'p-daylight-model', 5, 10 - 2, above, {'outside': 12 - 8, 'counted': len(range(2, 11))}, agree=1e-3)
+    # fix pass, delta aa-3 (c2): the level is 10 hours, so sin(pi/6 (t - 3)) = -5/11, not -1/2
+    s_lvl = sp.Rational(10 - 12, 1) / sp.Rational(22, 5)
+    ok(s_lvl == -sp.Rational(5, 11), 'daylight p4: the sine is (10 - 12) / 4.4 = -5/11 exactly')
+    u1 = sp.asin(sp.Rational(5, 11))
+    roots = [3 - 6 * u1 / sp.pi, 3 + 6 * (sp.pi + u1) / sp.pi]
+    num_set(L3, 'p-daylight-model', 4, roots, [bisect(lambda t: Lm(t) - 10, 0, 3), bisect(lambda t: Lm(t) - 10, 9, 12)],
+            {'no-shift': [6.9, 11.1], 'above': [3.9, 8.1]}, asked=[2.1, 9.9])
+    ok(abs(Lm(float(roots[0])) - 10) < 1e-12 and abs(Lm(float(roots[1])) - 10) < 1e-12, 'daylight p4: the model gives 10 hours at both roots')
+    ok(abs(float(roots[0]) - 2.0988) < 5e-5 and abs(float(roots[1]) - 9.9012) < 5e-5 and abs(float(roots[0] + roots[1]) - 12) < 1e-12, 'daylight p4: roots 2.0988 and 9.9012, symmetric about t = 6')
+    ok(abs(math.asin(5 / 11) - 0.4719) < 5e-5 and abs(math.pi + 0.4719 - 3.6135) < 5e-5, 'daylight p4: u = -0.4719 and pi + 0.4719 = 3.6135 as printed')
+    sl = [float(r) for r in (6 * (math.pi + math.asin(5 / 11)) / math.pi, 6 * (2 * math.pi - math.asin(5 / 11)) / math.pi)]
+    ok(abs(sl[0] - 6.9012) < 1e-4 and abs(sl[1] - 11.0988) < 1e-4, 'daylight p4: no-shift slips 6.90 and 11.10 solve sin(pi t / 6) = -5/11')
+    ok(all(abs(math.sin(math.pi * t_ / 6) + 5 / 11) < 1e-3 for t_ in (6.9, 11.1)), 'daylight p4: 6.9 and 11.1 have sine -5/11 to 3 dp')
+    ok(abs(Lm(3.9) - 14) < 0.02 and abs(Lm(8.1) - 14) < 0.02 and abs(12 + 4.4 * 5 / 11 - 14) < 1e-12, 'daylight p4: above slips 3.9 and 8.1 give 14 hours (sine +5/11)')
+    above = sum(1 for t_ in g3[:-1] if Lm(t_ + 0.0005) > 10) / 1000
+    num(L3, 'p-daylight-model', 5, float(roots[1] - roots[0]), above, {'outside': 12 - 7.8, 'whole-months': 10 - 2}, asked=9.90 - 2.10, agree=2e-3)
+    ok(abs(above - 7.8024) < 2e-3 and abs(12 - above - 4.1976) < 2e-3, 'daylight p5: 7.8 months above, 4.2 below, by a 12,000-step scan')
+    ok(L3['p-daylight-model']['parts'][4]['widget']['tol']['abs'] == 0.05, 'daylight p5: one decimal place band 7.8 +- 0.05 (takes 7.80 and 7.8024, refuses 7.7 and 7.9)')
+    ok(not within(7.7, 7.8, 0.05) and not within(7.9, 7.8, 0.05) and within(7.8024, 7.8, 0.05), 'daylight p5: band edges')
+    for pp in (3, 4):
+        ok('9.8' not in L3['p-daylight-model']['parts'][pp]['question'] + L3['p-daylight-model']['parts'][pp]['feedback']['correct'], f'daylight p{pp + 1}: no 9.8 left')
 
     # ---- p-garden-bed: edges 10 m and 13 m, area 25 m^2
     Cs = SYM['C']
