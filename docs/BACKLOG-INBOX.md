@@ -2192,3 +2192,7 @@ Raised later (problems regression):
 Raised later (problems vectors):
 - [Could] `expression` widget, matrix answers: nothing on screen says how to type a matrix before the learner answers (the Accepted line shows `[[a, b], [c, d]]` only after grading), so every matrix part of `vectors/problems-2` and `problems-3` (nine parts) carries the sentence "Type it row by row, as `[[a, b], [c, d]]`." A matrix template key on the algebra keyboard, or a `placeholder` shown in the empty field, would let the questions drop it.
 - [Could] `tools/grade-regression.mjs` grades the whole content folder; checking one new set's `wrong` routing took a scratch folder holding only that file, passed as `--content`. A `--file <path>` option (or a problem-set mode that prints any `wrong` entry not landing on its own key) would make it a cheap author check before hand-back.
+
+Raised later (problems testing):
+- [Could] `fresh-check.mjs --file` on a problem set lists the standard levels and cut-offs (0.05, 0.01, 1.645, 1.96, 0.0455, 6.18) as shared parameters: each of the 19 advisories on `testing/problems-1` to `problems-3` held at least one such constant. Wanted: a stoplist of textbook constants, as the prose check has for instruction sentences.
+- [Could] `[wrong-band]` and `[tight-band]` do not notice a value that is a rounding tie at the asked places (a slip of exactly 8.645 asked to 2 places, typed as 8.64 or 8.65). Wanted: a warning when a key or `wrong` value sits within 1e-9 of a half unit of the asked rounding, so the author widens the band to take both neighbours.
