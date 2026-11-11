@@ -361,20 +361,20 @@ if I is not None:
     e1, e2 = r1 - r1 ** 2 / 2, r2 - r2 ** 2 / 2
     num(I, 'p-two-months', 1, e1, 0.08 - 0.0064 / 2, {'no-half': r1 - r1 ** 2, 'plus': r1 + r1 ** 2 / 2, 'just-r': r1}, dp=4)
     b1 = r1 ** 3 / 3 * 10 ** 5
-    num(I, 'p-two-months', 2, b1, 0.08 ** 3 / 3 * 1e5, {'factorial': r1 ** 3 / 6 * 10 ** 5, 'no-divide': r1 ** 3 * 10 ** 5, 'kept-term': r1 ** 2 / 2 * 10 ** 5}, dp=1)
+    num(I, 'p-two-months', 2, b1, 0.08 ** 3 / 3 * 1e5, {'factorial': r1 ** 3 / 6 * 10 ** 5, 'no-divide': r1 ** 3 * 10 ** 5, 'kept-term': r1 ** 2 / 2 * 10 ** 5, 'unscaled': r1 ** 3 / 3}, dp=1)
     ok(abs((lg(0.08) - float(e1)) * 1e5 - 16.10) < 0.005 and (lg(0.08) - float(e1)) * 1e5 < float(b1), 'true error 16.10e-5 under the bound')
     num(I, 'p-two-months', 3, e2, -0.05 - 0.0025 / 2, {'sign': r2 + r2 ** 2 / 2, 'just-r': r2, 'no-half': r2 - r2 ** 2}, dp=5)
     M = 2 / (1 + r2) ** 3
     Mnum = max(2 / (1 + x) ** 3 for x in [-0.05 + 0.05 * j / 1000 for j in range(1001)])
     b2 = M * abs(r2) ** 3 / 6 * 10 ** 5
     num(I, 'p-two-months', 4, b2, Mnum * 0.05 ** 3 / 6 * 1e5,
-        {'wrong-end': 2 * abs(r2) ** 3 / 6 * 10 ** 5, 'two-factorial': M * abs(r2) ** 3 / 2 * 10 ** 5, 'no-m': abs(r2) ** 3 / 6 * 10 ** 5}, dp=2)
+        {'wrong-end': 2 * abs(r2) ** 3 / 6 * 10 ** 5, 'two-factorial': M * abs(r2) ** 3 / 2 * 10 ** 5, 'no-m': abs(r2) ** 3 / 6 * 10 ** 5, 'unscaled': b2 / 10 ** 5}, dp=2)
     true2 = abs(lg(-0.05) - float(e2)) * 1e5
     ok(abs(true2 - 4.33) < 0.005 and true2 > float(abs(r2) ** 3 / 3 * 10 ** 5) and true2 < float(b2), 'true error 4.33e-5: above 4.17, under 4.86')
     ok(abs(float(M) - 2.3327) < 0.00005, 'M = 2.3327')
     tot = R(1707, 100) + R(486, 100)
     num(I, 'p-two-months', 5, tot, 17.07 + 4.86,
-        {'subtracted': R(1707, 100) - R(486, 100), 'wrong-end': R(1707, 100) + R(417, 100), 'first-only': R(1707, 100)}, dp=1)
+        {'subtracted': R(1707, 100) - R(486, 100), 'wrong-end': R(1707, 100) + R(417, 100), 'first-only': R(1707, 100), 'unscaled': tot / 10 ** 5}, dp=1)
     ok(abs(float(b1 + b2) - 21.93) < 0.005, 'unrounded bounds also sum to 21.93')
     truetot = log(1.08 * 0.95)
     ok(round(truetot, 6) == 0.025668 and abs((truetot - 0.02555) * 1e5 - 11.8) < 0.05 and float(e1 + e2) == 0.02555, 'true total 0.025668, 11.8e-5 above')
@@ -391,7 +391,7 @@ if I is not None:
     num(I, 'p-tail-bound', 3, a(5) / a(4), 0.4 / 5, {'over-four': xv / 4, 'x-only': xv, 'upside-down': a(4) / a(5)})
     ok(all(a(k + 1) / a(k) <= R(8, 100) for k in range(4, 30)), 'later ratios at most 0.08')
     tail = a(4) / (1 - R(8, 100))
-    num(I, 'p-tail-bound', 4, tail * 10 ** 4, 0.4 ** 4 / 24 * sum(0.08 ** j for j in range(60)) * 1e4, {'first-term': a(4) * 10 ** 4, 'over-four': a(4) / (1 - xv / 4) * 10 ** 4, 'lagrange': lag * 10 ** 4}, dp=2)
+    num(I, 'p-tail-bound', 4, tail * 10 ** 4, 0.4 ** 4 / 24 * sum(0.08 ** j for j in range(60)) * 1e4, {'first-term': a(4) * 10 ** 4, 'over-four': a(4) / (1 - xv / 4) * 10 ** 4, 'lagrange': lag * 10 ** 4, 'unscaled': tail}, dp=2)
     ok(abs((exp(0.4) - float(T3)) * 1e4 - 11.58) < 0.005 and exp(0.4) - float(T3) < float(tail), 'true error 11.58e-4 under the tail bound')
     ub = R(1490667, 10 ** 6) + R(11594, 10 ** 7)
     num(I, 'p-tail-bound', 5, ub, 1.490667 + 0.0011594,
