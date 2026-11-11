@@ -371,6 +371,22 @@ no_stale(T_, 3, 'p-garden-bed', '30\\sin', '36.87', '143.13', '16.28', 'tfrac{4}
 # quadratic in sine 4
 ok(sp.Rational(150, 180) * sp.pi == 5 * sp.pi / 6 and 'with no $x =$ in front' in part(T_, 3, 'p-quadratic-in-sine', 4)['question'], 'quadratic 4')
 
+# =============================== numbers of the fixes this review proposes ===============================
+# finding 1 (pizza): 15 toppings and a 16th
+ok(math.comb(15, 4) == c(15, 4) == 1365 == 15 * 14 * 13 * 12 // 24 and 15 * 14 * 13 * 12 == 32760 and 32760 // 6 == 5460 and 15 * 4 == 60, 'proposed pizza 1')
+ok(math.comb(15, 11) == 1365 and 2 * 1365 == 2730, 'proposed pizza 2')
+ok(math.comb(15, 3) == c(15, 3) == 455 and 1365 + 455 == 1820 == math.comb(16, 4) and 1365 + 15 == 1380 and 16 * 15 * 14 * 13 == 43680 and 43680 // 24 == 1820, 'proposed pizza 3')
+ok([math.comb(16, k) for k in range(5)] == [1, 16, 120, 560, 1820] and sum(math.comb(16, k) for k in range(17)) == 2 ** 16 == 65536 and 2 ** 15 == 32768, 'proposed pizza 4')
+# finding 2 (daylight): 10 hours, where the sine is -5/11
+u = sp.asin(sp.Rational(-5, 11))
+t1, t2 = 3 + 6 * u / sp.pi, 3 + 6 * (sp.pi - u) / sp.pi
+b1, b2 = bisect(lambda z: L(z) - 10, 0, 6), bisect(lambda z: L(z) - 10, 6, 12)
+ok(abs(float(t1) - b1) < 1e-9 and abs(float(t2) - b2) < 1e-9 and round(b1, 2) == 2.1 and round(b2, 2) == 9.9 and round(b2 - b1, 1) == 7.8 and abs((10 - 12) / 4.4 + 5 / 11) < 1e-12,
+   f'proposed daylight: {b1} {b2}')
+ok(round(float(u), 4) == -0.4719 and round(3 + 6 * 0.4719 / math.pi, 2) == 3.9 and round(9 - 6 * 0.4719 / math.pi, 2) == 8.1, 'proposed daylight slips: the +5/11 times 3.90 and 8.10')
+ns10 = [bisect(lambda z: math.sin(math.pi * z / 6) + 5 / 11, 6, 9), bisect(lambda z: math.sin(math.pi * z / 6) + 5 / 11, 9, 12)]
+ok([round(z, 2) for z in ns10] == [6.9, 11.1], f'proposed daylight no-shift: {ns10}')
+
 # =============================== all nine files: bands ===============================
 nparts = 0
 band = lambda v, tol: (v - (tol or {}).get('abs', 0), v + (tol or {}).get('abs', 0))
