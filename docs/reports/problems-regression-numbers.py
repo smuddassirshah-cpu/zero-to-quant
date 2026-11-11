@@ -270,9 +270,9 @@ if I:
     ok(isclose(raw.params[0], 0.45, abs_tol=1e-9) and isclose(raw.params[1], 0.6, abs_tol=1e-9), 'raw fit gives 0.45 and 0.6')
     exc = ols(ye, xm)
     al = F(45, 100) - (1 - F(6, 10)) * F(25, 100)
-    num(I, 'p-raw-intercept', 1, al / 100, exc.params[0] / 100, {'raw': F(45, 10000), 'beta': (F(45, 100) - F(6, 10) * F(25, 100)) / 100, 'sign': (F(45, 100) + F(4, 10) * F(25, 100)) / 100, 'decimal': F(35, 10000) / 100}, unit='%')
+    num(I, 'p-raw-intercept', 1, al / 100, exc.params[0] / 100, {'raw': F(45, 10000), 'beta': (F(45, 100) - F(6, 10) * F(25, 100)) / 100, 'sign': (F(45, 100) + F(4, 10) * F(25, 100)) / 100}, unit='%')
     sea = F(25, 10) / 10
-    num(I, 'p-raw-intercept', 2, sea / 100, exc.bse[0] / 100, {'by-n': F(25, 10) / 100 / 100, 'variance': F(625, 100) / 100 / 100, 'decimal': sea / 10000}, unit='%')
+    num(I, 'p-raw-intercept', 2, sea / 100, exc.bse[0] / 100, {'by-n': F(25, 10) / 100 / 100, 'variance': F(625, 100) / 100 / 100}, unit='%')
     ta = al / sea
     num(I, 'p-raw-intercept', 3, ta, exc.tvalues[0], {'raw': F(45, 100) / sea, 'beta': F(30, 100) / sea, 'carried-n': al / F(25, 1000), 'inverted': sea / al})
     need = lambda t0: ceil(100 * (2 / t0) ** 2 - 1e-12)
@@ -287,7 +287,7 @@ if I:
     yg = line_with(50, xg, 0.1, 0.74, 588)
     fg = ols(yg, xg)
     sg = sqrt(F(588, 48))
-    num(I, 'p-grocer-beta', 1, sg / 100, np.sqrt(fg.scale) / 100, {'by-n': sqrt(588 / 50) / 100, 'n-1': sqrt(588 / 49) / 100, 'no-root': F(1225, 10000), 'decimal': 0.035 / 100}, unit='%')
+    num(I, 'p-grocer-beta', 1, sg / 100, np.sqrt(fg.scale) / 100, {'by-n': sqrt(588 / 50) / 100, 'n-1': sqrt(588 / 49) / 100, 'no-root': F(1225, 10000)}, unit='%')
     seb = sg / sqrt(49 * 25)
     num(I, 'p-grocer-beta', 2, seb, fg.bse[1], {'no-n': sg / 5, 'variance': sg / sqrt(49 * 5), 'no-root': F(1225, 100) / 1225})
     tb = (0.74 - 1) / seb
@@ -347,7 +347,7 @@ if I:
 
     # p-overlap-signal
     s3 = sqrt(F(4500, 500))
-    num(I, 'p-overlap-signal', 1, s3 / 100, np.sqrt(4500 / (503 - 3)) / 100, {'by-n': sqrt(4500 / 503) / 100, 'no-root': F(9, 100), 'decimal': F(3, 10000)}, unit='%')
+    num(I, 'p-overlap-signal', 1, s3 / 100, np.sqrt(4500 / (503 - 3)) / 100, {'by-n': sqrt(4500 / 503) / 100, 'no-root': F(9, 100)}, unit='%')
     se3 = sqrt(9 * 0.0004)
     num(I, 'p-overlap-signal', 2, se3, np.sqrt(np.diag(9 * np.diag([0.0004, 0.001, 0.002])))[0], {'no-root-c': 3 * 0.0004, 's2c': 9 * 0.0004, 'carried': 9 * 0.02})
     t3 = 0.21 / se3
@@ -376,7 +376,7 @@ if I:
     # p-bond-fund-weeks
     pred = F(5, 100) - F(8, 100) * 10 - F(3, 100) * (-5)
     num(I, 'p-bond-fund-weeks', 1, pred / 100, float(np.dot([0.05, -0.08, -0.03], [1, 10, -5])) / 100,
-        {'spread-sign': (F(5, 100) - F(8, 10) - F(15, 100)) / 100, 'no-intercept': (pred - F(5, 100)) / 100, 'all-signs': (F(5, 100) + F(8, 10) - F(15, 100)) / 100, 'decimal': pred / 10000}, unit='%')
+        {'spread-sign': (F(5, 100) - F(8, 10) - F(15, 100)) / 100, 'no-intercept': (pred - F(5, 100)) / 100, 'all-signs': (F(5, 100) + F(8, 10) - F(15, 100)) / 100}, unit='%')
     e8 = F(-90, 100) - pred
     num(I, 'p-bond-fund-weeks', 2, e8 / 100, (-0.90 - np.dot([0.05, -0.08, -0.03], [1, 10, -5])) / 100, {'flipped': -e8 / 100, 'carried': 0, 'no-intercept': (F(-90, 100) - (pred - F(5, 100))) / 100}, unit='%')
     e = [F(20, 100), F(30, 100), F(25, 100), F(10, 100), F(-10, 100), F(-20, 100), F(-25, 100)]
