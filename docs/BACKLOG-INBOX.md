@@ -1981,3 +1981,6 @@ Raised later (problems taylor):
 - [Could] Met again: fresh-check loosened triage on `taylor/problems-2.json` is 22 form-sentence hits of 24 ("Give an exact fraction, or a decimal to # places"). Same want as the markov bullets: drop the required form sentences before the n-gram match.
 Raised later (problems multivar):
 - [Could] numeric and expression `answers` sets: a value cannot be a pair, because commas separate the values, so "give every stationary point" cannot be asked as points. multivar problems-3 `p-two-level-points` part 1 asks for the $x$-values instead and states $y = x$ in the feedback. Accept a bracketed pair as one value inside a set (`(0, 0), (1, 1)`).
+
+Raised later (delta session AA):
+- [Should] expression widget: the grader reads only the real part of a value. Where both sides are complex at a sample point it should compare both parts or skip the point, and it should not pass a pair with no real point checked. Today `\frac{4}{\sqrt{1-2s}}` grades equal to `\frac{1}{\sqrt{1-2s}}` and `\sqrt{x-5}` equals `3\sqrt{x-5}`, so slips written as a scaled root would shadow the answer (`docs/reviews/delta-session-aa-scripts/expr_probe.mjs`). No present item is marked wrongly (`expr_scale_scan.mjs`: no `expression` answer grades equal to twice itself). Related to the sampling-range bullet under "problems fix pass d".

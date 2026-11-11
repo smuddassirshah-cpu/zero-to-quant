@@ -14,7 +14,7 @@ Brief: `docs/briefs/drills-1.1-1.9.md` (pack `py`, agent B), on top of `docs/bri
 | `py-gap-aware-returns` | l7-gaps, l9-returns-with-shift | a return across a missing close stays NaN | 1 | 480 | Series | 11 | 3 |
 | `py-combined-desk-pnl` | l13-joining-on-dates | outer join on the date, 0 for a silent desk | 2 | 720 | Series | 11 | 3 |
 | `py-prior-zscore` | l10-rolling, l9-returns-with-shift | rolling window ending yesterday, flat window NaN | 3 | 960 | Series | 10 | 4 |
-| `py-excess-vs-benchmark` | l12-split-apply-combine, l13-joining-on-dates | returns inside each ticker, index return before the merge | 3 | 1140 | Series | 10 | 4 |
+| `py-excess-vs-benchmark` | l12-split-apply-combine, l13-joining-on-dates | returns inside each ticker, index return before the merge | 3 | 1140 | Series | 11 | 5 |
 | `py-month-hit-rate` | l11-daily-to-monthly, l12-split-apply-combine | month-end returns, drop the first NaN, group by calendar month | 3 | 1080 | Series | 11 | 4 |
 
 Mix 4 / 5 / 3 at difficulty 1 / 2 / 3 (the brief's 3 : 4 : 3 for 12, rounded as its 25-drill row is). Each brief says what the function returns and how the tests read it.
