@@ -1,0 +1,159 @@
+{
+  "id": "ci-tolerant-common",
+  "name": "Lining up two close feeds",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "dp-2d",
+    "tolerant-common"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1440,
+  "fn": "tolerant_common",
+  "returns": "an integer",
+  "brief": "Two venues report the same instrument, but their tick prices, in pence, can differ slightly. An analyst lines the two feeds `a` and `b` up by choosing ticks from each and pairing them in order, so that paired ticks differ by at most `tol`.\n\nWrite `tolerant_common(a, b, tol)`, which returns the largest number of pairs possible. The chosen ticks need not sit next to each other in either feed, but each tick is used at most once and the pairs keep the order of both feeds.\n\nExample. For `a = [100, 104, 99, 107]`, `b = [98, 101, 106]` and `tol = 1`, the ticks 100 and 101 can pair, and so can 99 and 98, but those two pairs cross. Either one can be followed by 107 with 106, so the answer is 2.",
+  "constraints": [
+    "Each feed holds $0$ to $300$ ticks from $0$ to $1{,}000{,}000$, and $0 \\le$ `tol` $\\le 1{,}000{,}000$.",
+    "$O(nm)$ time is the target for feeds of $n$ and $m$ ticks.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "a",
+      "type": "list",
+      "len": [
+        0,
+        300
+      ],
+      "of": "int",
+      "range": [
+        0,
+        1000000
+      ]
+    },
+    {
+      "arg": "b",
+      "type": "list",
+      "len": [
+        0,
+        300
+      ],
+      "of": "int",
+      "range": [
+        0,
+        1000000
+      ]
+    },
+    {
+      "arg": "tol",
+      "type": "int",
+      "range": [
+        0,
+        1000000
+      ]
+    }
+  ],
+  "hint": "This is the longest common subsequence with a looser test for a match. Fill a table whose cell `(i, j)` holds the best count for the first `i` ticks of `a` and the first `j` ticks of `b`.",
+  "starter": "def tolerant_common(a, b, tol):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "tolerant_common([100, 104, 99, 107], [98, 101, 106], 1)",
+      "expect": "2",
+      "compare": "equal",
+      "note": "The pairs (100, 101) and (99, 98) cross, so only one of them can stay."
+    },
+    {
+      "call": "tolerant_common([5, 1, 2, 3], [1, 2, 3, 5], 0)",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Pairing the first 5 with the last 5 leaves nothing after it; skipping it gives 3 pairs."
+    }
+  ],
+  "tests": [
+    {
+      "call": "tolerant_common([], [4, 5], 3)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([40], [], 0)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([40], [43], 3)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([40], [44], 3)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([7, 7, 7], [7, 7], 0)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([20, 1, 2, 3, 4], [1, 2, 3, 4, 21], 1)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([10, 20, 30], [31, 21, 11], 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([10, 20, 30], [31, 21, 11], 10)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([500, 650, 512, 640, 700], [505, 645, 515, 702], 5)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([0, 1000000], [1000000, 0], 1000000)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([(i * 7919) % 1009 for i in range(300)], [(i * 104729 + 17) % 1013 for i in range(300)], 4)",
+      "expect": "44",
+      "compare": "equal"
+    },
+    {
+      "call": "tolerant_common([(i * i * 31) % 997 for i in range(300)], [(i * i * 37 + 5) % 991 for i in range(280)], 0)",
+      "expect": "16",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. Unlike the longest common subsequence, ticks match when they are close rather than equal, so only the match test changes, and a `tol` of 0 gives the classic.",
+  "solution": "def tolerant_common(a, b, tol):\n    prev = [0] * (len(b) + 1)\n    for x in a:\n        cur = [0]\n        for j, y in enumerate(b):\n            if abs(x - y) <= tol:\n                cur.append(prev[j] + 1)\n            else:\n                cur.append(max(prev[j + 1], cur[j]))\n        prev = cur\n    return prev[-1]\n",
+  "notes": [
+    "When the last ticks of both feeds are within `tol`, pairing them is never worse, so each cell reads only three neighbours.",
+    "Taking the first close tick of `b` for each tick of `a` is a greedy that can use up ticks a better pairing needs.",
+    "The table has $(n + 1)(m + 1)$ cells, each filled in $O(1)$, so the work is $O(nm)$."
+  ],
+  "planted": [
+    {
+      "code": "def tolerant_common(a, b, tol):\n    j = count = 0\n    for x in a:\n        k = j\n        while k < len(b) and abs(x - b[k]) > tol:\n            k += 1\n        if k < len(b):\n            count += 1\n            j = k + 1\n    return count\n",
+      "slip": "Pairing each tick of `a` with the first close tick left in `b` can use up the ticks that later pairs need."
+    },
+    {
+      "code": "def tolerant_common(a, b, tol):\n    prev = [0] * (len(b) + 1)\n    for x in a:\n        cur = [0]\n        for j, y in enumerate(b):\n            if x == y:\n                cur.append(prev[j] + 1)\n            else:\n                cur.append(max(prev[j + 1], cur[j]))\n        prev = cur\n    return prev[-1]\n",
+      "slip": "Testing for equal ticks ignores the tolerance."
+    },
+    {
+      "code": "def tolerant_common(a, b, tol):\n    prev = [0] * (len(b) + 1)\n    for x in a:\n        cur = [0]\n        for j, y in enumerate(b):\n            if abs(x - y) < tol:\n                cur.append(prev[j] + 1)\n            else:\n                cur.append(max(prev[j + 1], cur[j]))\n        prev = cur\n    return prev[-1]\n",
+      "slip": "Using `<` refuses two ticks that differ by exactly `tol`."
+    }
+  ]
+}
