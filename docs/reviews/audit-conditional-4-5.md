@@ -178,3 +178,12 @@ All eleven audit findings are met by the diff: each keyed answer is now the only
 - Finding 6: the fixer's condition (a variable that affects both the choice and the outcome) is the back-door condition and is tighter than the auditor's "fixed before the choice". l24 and problems-5 agree.
 - Finding 11: the fixer dropped "a stricter threshold" for "fewer designs with no edge pass". That is sound: a stricter threshold cuts power as well as false passes, so its effect on the posterior is not guaranteed.
 - Not in the diff and not raised by the audit: review-4 `r-which-half` option `knowing` still reads "Monty Hall with a host who knows: the chance switching wins" with no tie-break. Asked before any door is named, 2/3 holds for every tie-break, so it is right as worded.
+
+## Fix pass (follow-up)
+
+Applies the two findings of `## Fix-pass read`. Both screens were read in full first. Own check: exact enumeration in a scratch script (Fractions, both trades, all 390 x 390 minute pairs for l21); no graded key, option, hint or canvas changed.
+
+1. `l20-two-children.json` trade transfer (screens[9]) `explain.text`, last sentence | fixed (reader's wording) | Basis: under the stated protocol you fix the question in advance, and a yes removes only loss-loss: 0.36 / 0.84 = 3/7. The trader chooses nothing here, so the closing line is now a counterfactual: "Had the trader chosen which fact to report, he would have chosen your filter, and that is where survivorship bias begins." Explain stays at three sentences.
+2. `l21-tuesday-boy.json` 10:17 transfer (screens[9]) `explain.text`, last sentence | fixed (reader's wording) | Basis: enumeration of a reporter who picks a winning trade at random and names its minute gives likelihood 1/390 for "10:17" from win-win and from each one-win outcome, 0 from loss-loss, so the posterior is 3/7, not the prior 9/25. The report carries the news that a trade won; only the minute is empty. New sentence: "A report that just named a winner's minute would tell you only that a trade won, and the answer would stay at $\tfrac{3}{7}$." The same run confirms the screen's key: the compliance protocol gives 779/1299 = 0.5997.
+
+Gates: validator 0 errors; `conditional-L4-5-concepts.py`, `conditional-L4-5-fixread.py`, `conditional-4-perf-numbers.py` exit 0 (no check tested the old strings); voice scan 35 on both files 0 and 0; playthrough of both lessons desktop and `--mobile` with `--local-cdn` all passed.
