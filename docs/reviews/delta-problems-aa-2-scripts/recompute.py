@@ -377,6 +377,22 @@ w = W('equations', 4, 'p-salt-solutions', 1)
 ok(any(z['id'] == 'both-letters' and z['tex'] == '0.15x+0.4y=0.25(x+y)' for z in w['wrong']) and '0.15x+0.4y=0.25(500)' in w['accept'] and 'as one number' in part('equations', 4, 'p-salt-solutions', 1)['question'], 'salt solutions part 1')
 ok(49 + 32 == 81 and math.isqrt(81) == 9 and 81 - 7 * 9 == 18 and W('equations', 4, 'p-remote-cars', 3)['answer'] == 9 and W('equations', 4, 'p-remote-cars', 4)['answer'] == 18, 'remote cars parts 3 and 4')
 
+# ====================== proposed (finding 2): the drone within 6 m, off the exam's 0.3935 ======================
+import glob  # noqa: E402
+
+exam = json.load(open('app/content/exams/topic-1.3.json'))
+gd = next(i for i in exam['items'] if i['id'] == 'c-gauss-disc')
+ok('0.3935' in json.dumps(gd) and close(W('multivar', 4, 'p-drone-landing', 4)['answer'], 0.3935), 'exam item c-gauss-disc and the drone part 4 no longer share 0.3935')
+p6 = 1 - math.exp(-36 / 32)
+p6n = integrate.dblquad(lambda yy_, xx_: c * math.exp(-(xx_ * xx_ + yy_ * yy_) / 32), -6, 6, lambda xx_: -math.sqrt(36 - xx_ * xx_), lambda xx_: math.sqrt(36 - xx_ * xx_))[0]
+ok(close(p6, p6n, 1e-7) and f'{p6:.4f}' == '0.6753', f'proposed: within 6 m is {p6}')
+ok(f'{1 - math.exp(-6 / 32):.4f}' == '0.1710' and f'{p6 / (2 * math.pi):.4f}' == '0.1075' and f'{math.exp(-36 / 32):.4f}' == '0.3247', 'proposed: the three slips')
+rad6 = float(sp.integrate(sp.exp(-r ** 2 / 32) * r, (r, 0, 6)))
+ok(close(c * rad6, p6 / (2 * math.pi), 1e-9) and close(rad6, 16 * p6), 'proposed: radial integral 16(1 - e^-9/8)')
+ok(1.4 < a90 / 6 < 1.45, 'proposed: 8.58 / 6')
+ok(not any(v in json.dumps(json.load(open(f_))) for v in ('0.6753', '0.3247', '0.1710', '0.1075')
+           for f_ in ['app/content/exams/topic-1.3.json'] + glob.glob('app/content/courses/multivar/*.json')), 'proposed: a new value is already in multivar or the 1.3 exam')
+
 # ====================== every numeric part of the 17 changed files ======================
 FILES = [('limits', 4), ('limits', 5), ('integrals', 4), ('multivar', 4), ('equations', 2), ('equations', 3), ('functions', 1), ('functions', 2), ('functions', 3),
          ('counting', 1), ('counting', 2), ('counting', 3), ('functions', 4), ('quadratics', 1), ('quadratics', 2), ('quadratics', 3), ('equations', 4)]

@@ -117,6 +117,15 @@ for (const [course, n, id] of ITEMS) {
     }
   });
 }
+/* Ruling on car park part 2: an accept[] entry cannot rescue the single fraction, because the shape check runs on what was typed. */
+{
+  const set = JSON.parse(fs.readFileSync('app/content/courses/functions/problems-4.json', 'utf8'));
+  const w = set.items.find((x) => x.id === 'p-car-park').parts[1].widget;
+  const w2 = { ...w, accept: [...w.accept, '\\frac{5t-4}{2}', '(5t-4)/2'] };
+  say(gradeExpr(w2, '\\frac{5t-4}{2}') === 'form' && gradeExpr(w2, '(5t-4)/2') === 'form', null, 'car park part 2: with the single fraction added to accept[] it is no longer refused');
+  const w3 = { ...w }; delete w3.form;
+  say(gradeExpr(w3, '\\frac{5t-4}{2}') === true && gradeExpr(w3, '3+2.5(t-2)') === true, null, 'car park part 2: without the form the fraction and the unworked line do not both pass');
+}
 for (const r of TYPED) if (!used.has(r)) { fails++; console.log('FAIL    row not used: ' + r.slice(0, 5).join(' ')); }
 console.log(`grade.mjs: ${nItems} items, ${nParts} parts, ${TYPED.length} typed rows; ${checks} checks, ${fails} failures, ${findings} finding rows`);
 process.exit(fails ? 1 : 0);
