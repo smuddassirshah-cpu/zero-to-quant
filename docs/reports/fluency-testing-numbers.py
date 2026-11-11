@@ -45,7 +45,165 @@ def sharpe(V):
     return key, {'times-t': sr * T, 'over-root': sr / sp.sqrt(T)}
 
 
+# ---- Level 4 (lessons l13, l15, l17, l18). Each key is rebuilt from the vars by a route of its own:
+# moment equations solved by sympy, information as minus the expected second derivative of a sympy log-density,
+# likelihoods as products of densities, and Pearson's statistic summed cell by cell from expected counts.
+p_, lam_, sig_, x_, a_, l_ = sp.symbols('p lam sig x a l', positive=True)
+
+
+def mom_exponential(V):
+    gaps = [V['g%d' % i] for i in range(1, 6)]
+    xbar = sum(gaps) / sp.Integer(5)
+    key = sp.solve(sp.Eq(1 / l_, xbar), l_)[0]
+    return key, {'gave-mean': xbar, 'total': 1 / sum(gaps)}
+
+
+def gamma_moments(V):
+    sol = sp.solve([sp.Eq(a_ / l_, V['m']), sp.Eq(a_ / l_ ** 2, V['v'])], [a_, l_], dict=True)[0]
+    return sol[a_], sol[l_]
+
+
+def mom_gamma_shape(V):
+    a, lam = gamma_moments(V)
+    return a, {'gave-rate': lam, 'inverted': 1 / a}
+
+
+def mom_gamma_rate(V):
+    a, lam = gamma_moments(V)
+    return lam, {'inverted': 1 / lam, 'gave-shape': a}
+
+
+def mom_uniform(V):
+    xs = [V['x1'], V['x1'] + V['g2'], V['x1'] + V['g2'] + V['g3'], V['x1'] + V['g2'] + V['g3'] + V['g4']]
+    th = sp.symbols('th', positive=True)
+    xbar = sum(xs) / sp.Integer(4)
+    key = sp.solve(sp.Eq(sp.integrate(x_ / th, (x_, 0, th)), xbar), th)[0]
+    return key, {'gave-mean': xbar, 'largest': max(xs)}
+
+
+def info(logf, par, dist):
+    """Fisher information as -E[d2 logf / d par2], the expectation over the named distribution's x values."""
+    d2 = sp.diff(logf, par, 2)
+    return sp.simplify(-dist(d2))
+
+
+def bern_info(V):
+    p, n = V['p'], V['n']
+    logf = x_ * sp.log(p_) + (1 - x_) * sp.log(1 - p_)
+    one = info(logf, p_, lambda e: e.subs(x_, 1) * p_ + e.subs(x_, 0) * (1 - p_)).subs(p_, p)
+    return n * one, {'one-trade': one, 'variance': n * p * (1 - p)}
+
+
+def pois_se(V):
+    lam, n = V['lam'], V['n']
+    logf = x_ * sp.log(lam_) - lam_
+    one = info(logf, lam_, lambda e: e.subs(x_, lam_)).subs(lam_, lam)   # E[X] = lam, and d2 is linear in x
+    se = 1 / sp.sqrt(n * one)
+    return se, {'no-root': se ** 2, 'information-flipped': 1 / sp.sqrt(n * lam)}
+
+
+def exp_se(V):
+    lam, n = V['lam'], V['n']
+    logf = sp.log(lam_) - lam_ * x_
+    one = info(logf, lam_, lambda e: e.subs(x_, 1 / lam_)).subs(lam_, lam)
+    se = 1 / sp.sqrt(n * one)
+    return se, {'no-root': se ** 2, 'information-flipped': 1 / sp.sqrt(n * lam ** 2)}
+
+
+def vol_se(V):
+    s, n = V['sig'], V['n']
+    logf = -sp.log(sig_) - x_ ** 2 / (2 * sig_ ** 2)
+    one = info(logf, sig_, lambda e: e.subs(x_ ** 2, sig_ ** 2)).subs(sig_, s)   # E[X^2] = sigma^2
+    se = 1 / sp.sqrt(n * one)
+    # SE of sigma^2 by the chain rule: I(sigma^2) = I(sigma) / (2 sigma)^2
+    se_var = 1 / sp.sqrt(n * one / (2 * s) ** 2)
+    return se, {'no-two': s / sp.sqrt(n), 'variance-se': se_var}
+
+
+def binom_lr(V):
+    n, k, p1 = V['n'], V['k'], V['p1']
+    L = lambda p: sp.binomial(n, k) * p ** k * (1 - p) ** (n - k)
+    key = L(p1) / L(sp.Rational(1, 2))
+    return key, {'inverted': 1 / key, 'wins-only': (p1 / sp.Rational(1, 2)) ** k}
+
+
+def two_ll(V):
+    l0 = -V['l0h'] / sp.Integer(10)
+    l1 = l0 + V['g'] / sp.Integer(10)
+    return 2 * (l1 - l0), {'not-doubled': l1 - l0, 'sign': 2 * (l0 - l1)}
+
+
+def wilks_df(V):
+    p, r = V['p'], V['r']
+    free_full, free_null = p, p - r
+    w = {'all-parameters': p}
+    if free_null != free_full - free_null:
+        w['free-under-null'] = free_null
+    return free_full - free_null, w
+
+
+def pois_lrt(V):
+    n, lam0, dv = V['n'], V['lam0'], V['dv']
+    s = n * lam0 + dv
+    lhat = sp.Rational(s, n)
+    ll = lambda lam: s * sp.log(lam) - n * lam          # Poisson log-likelihood, constants dropped
+    key = 2 * (ll(lhat) - ll(lam0))
+    return key, {'not-doubled': key / 2, 'no-mean-term': 2 * s * sp.log(lhat / lam0)}
+
+
+def expected_cell(V):
+    tot, rt, ct = V['tot'], V['rt'], V['ct']
+    key = tot * (sp.Rational(rt, tot) * sp.Rational(ct, tot))
+    return key, {'averaged': sp.Rational(rt + ct, 2), 'no-divide': rt * ct}
+
+
+def gof(V):
+    e = V['ee']
+    d = [V['d1'], V['d2'], V['d3']]
+    d.append(-sum(d))
+    obs = [e + di for di in d]
+    exp_ = [sp.Rational(sum(obs), 4)] * 4
+    key = sum((o - ex) ** 2 / ex for o, ex in zip(obs, exp_))
+    return key, {'no-divide': sum((o - ex) ** 2 for o, ex in zip(obs, exp_)),
+                 'over-observed': sum((o - ex) ** 2 / o for o, ex in zip(obs, exp_))}
+
+
+def two_by_two(V):
+    t = [[V['a'], V['b']], [V['c'], V['d']]]
+    N = sum(map(sum, t))
+    R = [sum(r) for r in t]
+    C = [t[0][j] + t[1][j] for j in range(2)]
+    E = [[sp.Rational(R[i] * C[j], N) for j in range(2)] for i in range(2)]
+    terms = [(t[i][j] - E[i][j]) ** 2 / E[i][j] for i in range(2) for j in range(2)]
+    return sum(terms), {'one-cell': terms[0], 'no-divide': sum((t[i][j] - E[i][j]) ** 2 for i in range(2) for j in range(2))}
+
+
+def indep_df(V):
+    r, c = V['r'], V['c']
+    key = (r * c - 1) - ((r - 1) + (c - 1))     # cells minus 1, minus the estimated margins
+    w = {'cells-minus-one': r * c - 1}
+    if key != r + c - 2:
+        w['margins'] = r + c - 2
+    return key, w
+
+
 ck = Checker('testing')
+ck.add('fluency-l13-matching-moments', 'exponential-rate', mom_exponential)
+ck.add('fluency-l13-matching-moments', 'gamma-shape', mom_gamma_shape)
+ck.add('fluency-l13-matching-moments', 'gamma-rate', mom_gamma_rate)
+ck.add('fluency-l13-matching-moments', 'uniform-moment', mom_uniform)
+ck.add('fluency-l15-sharpness-of-the-peak', 'bernoulli-information', bern_info)
+ck.add('fluency-l15-sharpness-of-the-peak', 'poisson-se', pois_se)
+ck.add('fluency-l15-sharpness-of-the-peak', 'exponential-se', exp_se)
+ck.add('fluency-l15-sharpness-of-the-peak', 'volatility-se', vol_se)
+ck.add('fluency-l17-ratio-of-likelihoods', 'binomial-ratio', binom_lr)
+ck.add('fluency-l17-ratio-of-likelihoods', 'two-log-likelihoods', two_ll)
+ck.add('fluency-l17-ratio-of-likelihoods', 'wilks-df', wilks_df)
+ck.add('fluency-l17-ratio-of-likelihoods', 'poisson-ratio-test', pois_lrt)
+ck.add('fluency-l18-counts-against-expectations', 'expected-cell', expected_cell)
+ck.add('fluency-l18-counts-against-expectations', 'goodness-of-fit', gof)
+ck.add('fluency-l18-counts-against-expectations', 'two-by-two', two_by_two)
+ck.add('fluency-l18-counts-against-expectations', 'independence-df', indep_df)
 ck.add('fluency-l2-measuring-surprise', 'z-null-zero', z_zero)
 ck.add('fluency-l2-measuring-surprise', 'z-null-nonzero', z_nonzero)
 ck.add('fluency-l4-t-test', 't-statistic', t_stat)

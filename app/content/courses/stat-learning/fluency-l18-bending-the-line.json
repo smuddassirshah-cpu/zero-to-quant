@@ -1,0 +1,294 @@
+{
+  "id": "fluency-l18-bending-the-line",
+  "lesson": "l18-bending-the-line",
+  "title": "Fluency: hinges, slopes and basis counts",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "hinge-value",
+      "weight": 2,
+      "skill": "the value of a one-knot linear spline",
+      "vars": {
+        "a": {
+          "int": [
+            -5,
+            10
+          ],
+          "not": [
+            0
+          ]
+        },
+        "b": {
+          "int": [
+            -3,
+            5
+          ],
+          "not": [
+            0
+          ]
+        },
+        "d": {
+          "int": [
+            -4,
+            4
+          ],
+          "not": [
+            0
+          ]
+        },
+        "c": {
+          "int": [
+            2,
+            8
+          ]
+        },
+        "x0": {
+          "int": [
+            0,
+            12
+          ]
+        }
+      },
+      "let": {
+        "line": "a + b*x0",
+        "hinge": "max(0, x0 - c)",
+        "key": "a + b*x0 + d*max(0, x0 - c)",
+        "nohinge": "a + b*x0",
+        "always": "a + b*x0 + d*(x0 - c)",
+        "noa": "b*x0 + d*max(0, x0 - c)"
+      },
+      "where": [
+        "x0 != c",
+        "x0 < c or noa != nohinge",
+        "x0 > c or noa != always"
+      ],
+      "prompt": "A linear spline is $f(x) = {a} {b:+c}x {d:+c}(x - {c})^+$. What is $f({x0})$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number"
+      },
+      "wrong": [
+        {
+          "id": "ignored-hinge",
+          "value": "{nohinge}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You left out the hinge. Past the knot at {c}, $(x - {c})^+ = {hinge}$.",
+          "when": "x0 > c"
+        },
+        {
+          "id": "hinge-on-left",
+          "value": "{always}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You used $x - {c}$ itself. Left of the knot the hinge $(x - {c})^+$ is 0.",
+          "when": "x0 < c"
+        },
+        {
+          "id": "no-intercept",
+          "value": "{noa}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You left out the constant term, ${a}$."
+        }
+      ],
+      "solution": [
+        "At $x = {x0}$ the line gives ${line}$ and $(x - {c})^+ = {hinge}$.",
+        "$f({x0}) = {line} {d:+} \\times {hinge} = {key}$."
+      ]
+    },
+    {
+      "id": "slope-in-a-region",
+      "weight": 2,
+      "skill": "the slope of a two-knot linear spline",
+      "vars": {
+        "bh": {
+          "int": [
+            1,
+            10
+          ]
+        },
+        "d1h": {
+          "int": [
+            -6,
+            6
+          ],
+          "not": [
+            0
+          ]
+        },
+        "d2h": {
+          "int": [
+            -6,
+            6
+          ],
+          "not": [
+            0
+          ]
+        },
+        "k1": {
+          "int": [
+            2,
+            10
+          ]
+        },
+        "gap": {
+          "int": [
+            3,
+            15
+          ]
+        },
+        "rg": {
+          "pick": [
+            [
+              "between the two knots",
+              1
+            ],
+            [
+              "beyond the second knot",
+              2
+            ]
+          ],
+          "as": [
+            "where",
+            "r"
+          ]
+        }
+      },
+      "let": {
+        "b": "bh/2",
+        "d1": "d1h/2",
+        "d2": "d2h/2",
+        "k2": "k1 + gap",
+        "key": "bh/2 + d1h/2 + if(r == 2, d2h/2, 0)",
+        "coef": "if(r == 1, d1h/2, d2h/2)",
+        "noearlier": "bh/2 + if(r == 2, d2h/2, 0)"
+      },
+      "where": [
+        "abs(key - coef) > 0.01",
+        "abs(key - noearlier) > 0.01",
+        "abs(coef - noearlier) > 0.01"
+      ],
+      "prompt": "A linear spline has slope {b} on $x$, knots at {k1} and {k2}, and hinge coefficients ${d1}$ and ${d2}$. What is its slope {where}?",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "A number such as 1.5"
+      },
+      "wrong": [
+        {
+          "id": "coefficient-only",
+          "value": "{coef}",
+          "tol": {
+            "abs": 0.0001
+          },
+          "line": "You gave the hinge's coefficient alone. It is added to the slope already in force."
+        },
+        {
+          "id": "skipped-knot",
+          "value": "{noearlier}",
+          "tol": {
+            "abs": 0.0001
+          },
+          "line": "You skipped a hinge. Every knot to the left has switched its hinge on, so add each coefficient once you pass its knot."
+        }
+      ],
+      "solution": [
+        "Each hinge adds its coefficient to the slope once $x$ passes its knot, starting from {b}.",
+        "So the slope {where} is ${key}$."
+      ]
+    },
+    {
+      "id": "coefficient-count",
+      "weight": 1,
+      "skill": "the number of coefficients in a spline",
+      "vars": {
+        "k": {
+          "int": [
+            2,
+            12
+          ]
+        },
+        "kind": {
+          "pick": [
+            [
+              "cubic",
+              "interior knots",
+              4,
+              "counting the constant"
+            ],
+            [
+              "linear",
+              "knots",
+              2,
+              "counting the intercept"
+            ]
+          ],
+          "as": [
+            "deg",
+            "kn",
+            "add",
+            "cnt"
+          ]
+        },
+        "feat": {
+          "pick": [
+            "order size",
+            "maturity",
+            "loan age",
+            "hour of the day"
+          ]
+        }
+      },
+      "let": {
+        "key": "k + add",
+        "noconst": "k + add - 1",
+        "base": "add"
+      },
+      "where": [],
+      "prompt": "A {deg} spline in {feat} has {k} {kn}. How many coefficients does it have, {cnt}?",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number"
+      },
+      "wrong": [
+        {
+          "id": "no-constant",
+          "value": "{noconst}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You left out the constant. The first piece has {base} coefficients, the constant among them, and each knot adds one."
+        },
+        {
+          "id": "knots-only",
+          "value": "{k}",
+          "tol": {
+            "abs": 0
+          },
+          "line": "You counted only the knots' terms. The first piece's {base} coefficients come before them."
+        }
+      ],
+      "solution": [
+        "A {deg} piece has {base} coefficients, and each of the {k} knots adds one term.",
+        "${base} + {k} = {key}$."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,344 @@
+{
+  "id": "fluency-l15-sharpness-of-the-peak",
+  "lesson": "l15-sharpness-of-the-peak",
+  "title": "Fluency: information and standard errors",
+  "n": 20,
+  "pass": 0.9,
+  "minutes": 10,
+  "families": [
+    {
+      "id": "bernoulli-information",
+      "weight": 1,
+      "skill": "the Fisher information in n trades",
+      "vars": {
+        "p": {
+          "pick": [
+            0.1,
+            0.2,
+            0.25,
+            0.3,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.75,
+            0.8,
+            0.9
+          ]
+        },
+        "n": {
+          "int": [
+            10,
+            400
+          ],
+          "step": 10
+        },
+        "who": {
+          "pick": [
+            "strategy",
+            "signal",
+            "trader",
+            "model"
+          ]
+        }
+      },
+      "let": {
+        "q": "1 - p",
+        "pq": "p*(1 - p)",
+        "key": "n/(p*(1 - p))",
+        "one": "1/(p*(1 - p))",
+        "var": "n*p*(1 - p)"
+      },
+      "where": [
+        "abs(n*p*(1 - p) - 1/(p*(1 - p))) > 0.02"
+      ],
+      "prompt": "A {who} wins each trade with chance $p = {p}$, independently. What is the Fisher information about $p$ in {n} trades? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "A number such as 476.19",
+        "accept": "${key:dp2}$, within 0.005"
+      },
+      "wrong": [
+        {
+          "id": "one-trade",
+          "value": "{one}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "That is the information in one trade. Independent trades add their information, so multiply by {n}."
+        },
+        {
+          "id": "variance",
+          "value": "{var}",
+          "tol": {
+            "abs": 0.005
+          },
+          "line": "You gave $np(1 - p)$, the variance of the win count. Information is $\\tfrac{{n}}{{p(1 - p)}}$, the other way up."
+        }
+      ],
+      "solution": [
+        "One trade carries $I(p) = \\tfrac{{1}}{{p(1 - p)}} = \\tfrac{{1}}{{{pq}}}$.",
+        "{n} trades carry ${n} \\div {pq} \\approx {key:dp2}$."
+      ]
+    },
+    {
+      "id": "poisson-se",
+      "weight": 1,
+      "skill": "the standard error of a Poisson mean",
+      "vars": {
+        "lam": {
+          "pick": [
+            0.5,
+            1.5,
+            2,
+            2.5,
+            3,
+            4,
+            5,
+            6,
+            8
+          ]
+        },
+        "n": {
+          "int": [
+            10,
+            120
+          ],
+          "step": 5
+        },
+        "w": {
+          "pick": [
+            [
+              "Trade counts per minute",
+              "minutes"
+            ],
+            [
+              "Claims per day",
+              "days"
+            ],
+            [
+              "Defaults per quarter",
+              "quarters"
+            ],
+            [
+              "Calls per hour",
+              "hours"
+            ]
+          ],
+          "as": [
+            "what",
+            "units"
+          ]
+        }
+      },
+      "let": {
+        "key": "sqrt(lam/n)",
+        "noroot": "lam/n",
+        "flip": "sqrt(1/(n*lam))"
+      },
+      "where": [
+        "abs(lam/n - sqrt(1/(n*lam))) > 0.002"
+      ],
+      "prompt": "{what} are Poisson. Over {n} {units} the MLE is $\\hat\\lambda = {lam}$. What is the standard error of $\\hat\\lambda$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "A number such as 0.400",
+        "accept": "${key:dp3}$, within 0.0005"
+      },
+      "wrong": [
+        {
+          "id": "no-root",
+          "value": "{noroot}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You gave $\\tfrac{{1}}{{nI}}$, the variance. The standard error is its square root."
+        },
+        {
+          "id": "information-flipped",
+          "value": "{flip}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You used $I(\\lambda) = \\lambda$. One Poisson count carries $I(\\lambda) = \\tfrac{{1}}{{\\lambda}}$."
+        }
+      ],
+      "solution": [
+        "One count carries $I(\\lambda) = \\tfrac{{1}}{{\\lambda}}$, so $nI(\\hat\\lambda) = \\tfrac{{{n}}}{{{lam}}}$.",
+        "$\\mathrm{{SE}} = \\tfrac{{1}}{{\\sqrt{{nI}}}} = \\sqrt{{{lam}/{n}}} \\approx {key:dp3}$."
+      ]
+    },
+    {
+      "id": "exponential-se",
+      "weight": 1,
+      "skill": "the standard error of an exponential rate",
+      "vars": {
+        "lam": {
+          "pick": [
+            0.5,
+            1.5,
+            2,
+            2.5,
+            3,
+            4,
+            5
+          ]
+        },
+        "n": {
+          "int": [
+            10,
+            200
+          ],
+          "step": 5
+        },
+        "w": {
+          "pick": [
+            [
+              "Fill delays",
+              "fills",
+              "second"
+            ],
+            [
+              "Gaps between quotes",
+              "gaps",
+              "second"
+            ],
+            [
+              "Times between failures",
+              "failures",
+              "day"
+            ],
+            [
+              "Waits for a reply",
+              "waits",
+              "minute"
+            ]
+          ],
+          "as": [
+            "what",
+            "units",
+            "unit"
+          ]
+        }
+      },
+      "let": {
+        "key": "lam/sqrt(n)",
+        "noroot": "lam^2/n",
+        "flip": "1/(lam*sqrt(n))"
+      },
+      "where": [
+        "abs(lam^2/n - 1/(lam*sqrt(n))) > 0.002"
+      ],
+      "prompt": "{what} are exponential. From {n} {units} the MLE of the rate is $\\hat\\lambda = {lam}$ per {unit}. What is the standard error of $\\hat\\lambda$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "A number such as 0.200",
+        "accept": "${key:dp3}$, within 0.0005"
+      },
+      "wrong": [
+        {
+          "id": "no-root",
+          "value": "{noroot}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You gave $\\tfrac{{1}}{{nI}}$, the variance. The standard error is its square root."
+        },
+        {
+          "id": "information-flipped",
+          "value": "{flip}",
+          "tol": {
+            "abs": 0.0005
+          },
+          "line": "You used $I(\\lambda) = \\lambda^2$. One exponential gap carries $I(\\lambda) = \\tfrac{{1}}{{\\lambda^2}}$."
+        }
+      ],
+      "solution": [
+        "One observation carries $I(\\lambda) = \\tfrac{{1}}{{\\lambda^2}}$, so $nI(\\hat\\lambda) = \\tfrac{{{n}}}{{{lam^2}}}$.",
+        "$\\mathrm{{SE}} = \\tfrac{{\\hat\\lambda}}{{\\sqrt n}} = \\tfrac{{{lam}}}{{\\sqrt{{{n}}}}} \\approx {key:dp3}$."
+      ]
+    },
+    {
+      "id": "volatility-se",
+      "weight": 1,
+      "skill": "the standard error of a volatility estimate",
+      "vars": {
+        "sig": {
+          "pick": [
+            0.8,
+            1,
+            1.2,
+            1.5,
+            2,
+            2.5,
+            3
+          ]
+        },
+        "n": {
+          "int": [
+            20,
+            500
+          ],
+          "step": 4
+        },
+        "per": {
+          "pick": [
+            "a day",
+            "a week",
+            "a month"
+          ]
+        }
+      },
+      "let": {
+        "key": "sig/sqrt(2*n)",
+        "notwo": "sig/sqrt(n)",
+        "varse": "sig^2*sqrt(2/n)"
+      },
+      "where": [],
+      "prompt": "Returns are normal with known mean 0 and $\\sigma = {sig}\\%$ {per}. What is the standard error of $\\hat\\sigma$ from {n} returns, in percentage points? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": "{key}",
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "A number such as 0.0445",
+        "accept": "${key:dp4}$, within 0.00005"
+      },
+      "wrong": [
+        {
+          "id": "no-two",
+          "value": "{notwo}",
+          "tol": {
+            "abs": 5e-05
+          },
+          "line": "You used $I(\\sigma) = \\tfrac{{1}}{{\\sigma^2}}$, the information for a mean. For a volatility $I(\\sigma) = \\tfrac{{2}}{{\\sigma^2}}$."
+        },
+        {
+          "id": "variance-se",
+          "value": "{varse}",
+          "tol": {
+            "abs": 5e-05
+          },
+          "line": "You gave the standard error of $\\hat\\sigma^2$, $\\sqrt{{2\\sigma^4/n}}$. Information is per parameter: for $\\hat\\sigma$ it is $\\tfrac{{\\sigma}}{{\\sqrt{{2n}}}}$."
+        }
+      ],
+      "solution": [
+        "One return carries $I(\\sigma) = \\tfrac{{2}}{{\\sigma^2}}$, so $\\mathrm{{SE}}(\\hat\\sigma) = \\tfrac{{\\sigma}}{{\\sqrt{{2n}}}}$.",
+        "$\\tfrac{{{sig}}}{{\\sqrt{{{2*n}}}}} \\approx {key:dp4}$ points."
+      ]
+    }
+  ]
+}

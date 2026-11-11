@@ -1,0 +1,902 @@
+{
+  "id": "problems-4",
+  "course": "stat-learning",
+  "level": 4,
+  "title": "Problems: margins, clusters, networks and splines",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-spam-filter",
+      "difficulty": 3,
+      "skills": [
+        "sl-flexible",
+        "sl-setup"
+      ],
+      "prose": "A spam filter is a linear support vector machine on two standardised features. It has $w = (1.5, -2)$ and $b = 0.5$, and a positive decision value means spam.",
+      "parts": [
+        {
+          "question": "What is the margin, the distance from the centre line to either edge? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.4,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "gave-norm",
+                "value": 2.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "street-width",
+                "value": 0.8,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "squared-norm",
+                "value": 0.16,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\lVert w \\rVert = \\sqrt{2.25 + 4} = 2.5$, so the margin is $\\tfrac{1}{2.5} = 0.4$.",
+            "generic": "Not quite. On an edge $w \\cdot x + b = \\pm 1$, so the margin is $\\tfrac{1}{\\lVert w \\rVert}$.",
+            "byKey": {
+              "gave-norm": "That is $\\lVert w \\rVert$ itself. The margin is 1 over it.",
+              "street-width": "That is the whole street, edge to edge. The margin is half of it.",
+              "squared-norm": "You divided by $\\lVert w \\rVert^2 = 6.25$. Divide by $\\lVert w \\rVert = 2.5$."
+            }
+          },
+          "explain": {
+            "text": "The distance from $x$ to the centre line is $\\tfrac{|w \\cdot x + b|}{\\lVert w \\rVert}$, and an edge has $|w \\cdot x + b| = 1$. With $\\lVert w \\rVert = 2.5$ the margin is 0.4."
+          }
+        },
+        {
+          "question": "An email has features $(0.2, 0.3)$. Using $\\lVert w \\rVert = 2.5$ from part 1, how far is it from the centre line? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.08,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "decision-value",
+                "value": 0.2,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "squared-norm",
+                "value": 0.032,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$w \\cdot x + b = 0.3 - 0.6 + 0.5 = 0.2$, so the distance is $\\tfrac{0.2}{2.5} = 0.08$.",
+            "generic": "Not quite. Work out $w \\cdot x + b$, then divide by $\\lVert w \\rVert$.",
+            "byKey": {
+              "decision-value": "That is the decision value, which counts margins. Divide by $\\lVert w \\rVert = 2.5$.",
+              "squared-norm": "You divided by $\\lVert w \\rVert^2 = 6.25$. Divide by 2.5.",
+              "carried": "You took the margin to be 2.5, part 1's slip. The distance is the decision value times the margin 0.4: 0.08."
+            }
+          },
+          "explain": {
+            "text": "The decision value is $1.5(0.2) - 2(0.3) + 0.5 = 0.2$. Dividing by $\\lVert w \\rVert = 2.5$ gives 0.08: a fifth of a margin from the centre line."
+          }
+        },
+        {
+          "question": "Using the margin 0.4 from part 1, suppose this email is a training row labelled spam. Where does it sit in the fitted street?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "inside",
+                "text": "Inside the street on the spam side, so it is a support vector",
+                "correct": true
+              },
+              {
+                "id": "outside",
+                "text": "Outside the street on the spam side, so it does not move the fit",
+                "why": "Outside means further than the margin, 0.4. The email is 0.08 from the centre line."
+              },
+              {
+                "id": "wrong-side",
+                "text": "On the non-spam side, misclassified",
+                "why": "Its decision value, 0.2, is positive: the spam side."
+              },
+              {
+                "id": "edge",
+                "text": "Exactly on the spam edge",
+                "why": "On the edge the decision value is 1. Here it is 0.2."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Right. 0.08 is less than the margin 0.4, so the email is inside the street. It helps hold the street in place.",
+            "generic": "Not quite. Compare the email's distance, 0.08, with the margin, 0.4.",
+            "byKey": {
+              "outside": "Outside means further than the margin, 0.4. The email is 0.08 from the centre line.",
+              "wrong-side": "Its decision value, 0.2, is positive: the spam side.",
+              "edge": "On the edge the decision value is 1. Here it is 0.2."
+            }
+          },
+          "explain": {
+            "text": "A decision value between 0 and 1 is inside the street on the positive side. A training point inside the street pays for its intrusion and is a support vector; moving it moves the fit."
+          }
+        },
+        {
+          "question": "On a validation split an RBF support vector machine ties with this linear filter at 0.93. Which do you keep?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "linear",
+                "text": "The linear filter: on a tie the simpler model, which the team can read, wins",
+                "correct": true
+              },
+              {
+                "id": "rbf",
+                "text": "The RBF machine, since a kernel can bend where the data bend",
+                "why": "It can, but on this split it buys nothing. A tie goes to the simpler, more explainable model."
+              },
+              {
+                "id": "test",
+                "text": "Whichever scores higher on the test emails",
+                "why": "Choosing on the test rows uses them up: the score you then report is no longer honest."
+              },
+              {
+                "id": "both",
+                "text": "Average the two machines' decision values",
+                "why": "That adds a second model to explain for no measured gain."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Right. A tie on validation goes to the simpler learner.",
+            "generic": "Not quite. Choose on validation, and break a tie towards the simpler model.",
+            "byKey": {
+              "rbf": "It can, but on this split it buys nothing. A tie goes to the simpler, more explainable model.",
+              "test": "Choosing on the test rows uses them up: the score you then report is no longer honest.",
+              "both": "That adds a second model to explain for no measured gain."
+            }
+          },
+          "explain": {
+            "text": "Validation cannot tell the two learners apart. So the one with fewer moving parts and readable weights wins. The test rows are kept for one honest score."
+          }
+        },
+        {
+          "question": "The linear filter is right on 0.93 of 500 test emails, and 90% of them are not spam. What is the $t$ statistic of its hit rate against that base rate? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.24,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "own-rate",
+                "value": 2.63,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "coin",
+                "value": 19.23,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$t = \\tfrac{0.93 - 0.9}{\\sqrt{0.9 \\times 0.1/500}} = \\tfrac{0.03}{0.01342} \\approx 2.24$.",
+            "generic": "Not quite. Use $t = \\tfrac{\\hat h - b}{\\sqrt{b(1 - b)/n}}$ with $b = 0.9$.",
+            "byKey": {
+              "own-rate": "You used the filter's own hit rate in the standard error. Under the base rate the spread is $\\sqrt{0.9 \\times 0.1/500}$.",
+              "no-root": "You divided by $\\sqrt{0.9 \\times 0.1} = 0.3$ and left out $n = 500$.",
+              "coin": "You compared with a coin's 0.5. Always labelling 'not spam' already scores 0.9."
+            }
+          },
+          "explain": {
+            "text": "The edge is 0.03, or 15 emails in 500, and its standard error under the base rate is 0.0134. So $t \\approx 2.24$: a real edge, though a small one over always answering 'not spam'."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-order-sizes",
+      "difficulty": 4,
+      "skills": [
+        "sl-flexible",
+        "sl-linear"
+      ],
+      "prose": "A desk groups six order sizes, as % of daily volume: 2, 4, 6, 18, 22 and 26. It runs k-means with two centres, starting at 3 and 8, then fits a linear spline with a knot between the groups.",
+      "parts": [
+        {
+          "question": "Assign each order to its nearest centre, then move each centre to the mean of its orders. Where is the second centre after this one round?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 18,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "all-orders",
+                "value": 13,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "kept-centre",
+                "value": 16,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "six-misassigned",
+                "value": 22,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "6 is 3 from centre 1 and 2 from centre 2. So 6, 18, 22 and 26 join centre 2, and $\\tfrac{72}{4} = 18$.",
+            "generic": "Not quite. Send each order to the nearer centre, then average each group.",
+            "byKey": {
+              "all-orders": "You averaged all six orders. Centre 2 moves to the mean of its own orders only.",
+              "kept-centre": "You counted the old centre, 8, as a point. The update averages the orders only.",
+              "six-misassigned": "You sent 6 to centre 1. It is 3 from 3 and only 2 from 8."
+            }
+          },
+          "explain": {
+            "text": "Orders 2 and 4 go to centre 1, which stays at 3. Orders 6, 18, 22 and 26 go to centre 2, whose mean is 18."
+          }
+        },
+        {
+          "question": "Starting from centres 3 and 18, repeat assign and update until nothing moves. Where does the second centre settle?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 22,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-reassign",
+                "value": 18,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "all-orders",
+                "value": 13,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "6 is now nearer 3 than 18. The groups become 2, 4, 6 and 18, 22, 26, with centres 4 and 22. Assigning again changes nothing.",
+            "generic": "Not quite. Assign each order again with the moved centres before you average.",
+            "byKey": {
+              "no-reassign": "You kept 6 in group 2. With centres 3 and 18 it is 3 from the first and 12 from the second.",
+              "all-orders": "You averaged all six orders. Each centre moves to the mean of its own group."
+            }
+          },
+          "explain": {
+            "text": "The second round moves 6 to the first group, so the centres become 4 and 22. A third assignment keeps every order where it is, so the loop stops."
+          }
+        },
+        {
+          "question": "Using the settled centres 4 and 22 from part 2, what is the inertia of the two groups?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 40,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "unsquared",
+                "value": 12,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "averaged",
+                "value": 6.67,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 91,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(4 + 0 + 4) + (16 + 0 + 16) = 40$.",
+            "generic": "Not quite. Add each order's squared distance to its own centre.",
+            "byKey": {
+              "unsquared": "You added plain distances, $2 + 0 + 2 + 4 + 0 + 4$. Inertia squares them.",
+              "averaged": "You divided by the six orders. Inertia is the sum, not the mean.",
+              "carried": "You used centres 3 and 18, before the loop settled. At 4 and 22 the inertia is 40."
+            }
+          },
+          "explain": {
+            "text": "The first group sits 2, 0 and 2 from 4, the second 4, 0 and 4 from 22. Squared and added that is 40."
+          }
+        },
+        {
+          "question": "The desk puts one knot halfway between the settled centres 4 and 22 and fits $f(x) = 1 + 2.5x - 1.8(x - c)^+$ bp, with $c$ that knot. What does it predict for an order of 20% of volume? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 38.4,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-hinge",
+                "value": 51,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sign",
+                "value": 63.6,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "knot-at-centre",
+                "value": 22.2,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 33.9,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The knot is at 13, so $f(20) = 1 + 50 - 1.8 \\times 7 = 38.4$ bp.",
+            "generic": "Not quite. Find the knot, then add the hinge term $-1.8(20 - c)^+$ to the line.",
+            "byKey": {
+              "no-hinge": "You left out the hinge. Past the knot at 13, $(20 - 13)^+ = 7$.",
+              "sign": "You added the hinge term. Its coefficient is $-1.8$, so it bends the line down.",
+              "knot-at-centre": "You put the knot at the first centre, 4. Halfway between 4 and 22 is 13.",
+              "carried": "You put the knot halfway between 3 and 18, at 10.5. The settled centres give 13."
+            }
+          },
+          "explain": {
+            "text": "The knot is $\\tfrac{4 + 22}{2} = 13$. The line gives $1 + 2.5 \\times 20 = 51$, and the hinge takes off $1.8 \\times 7 = 12.6$, leaving 38.4 bp."
+          }
+        },
+        {
+          "question": "Splitting an order into two halves, each traded once the first's impact has faded, costs $f(s/2)$ bp instead of $f(s)$. Using $f(20) = 38.4$ from part 4, how many bp does splitting a 20% order save? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12.4,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "summed-halves",
+                "value": -13.6,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "negative-hinge",
+                "value": 7,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "carried",
+                "value": 25,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$f(10) = 1 + 25 = 26$, since 10 is left of the knot, so the saving is $38.4 - 26 = 12.4$ bp.",
+            "generic": "Not quite. Work out $f(10)$, then subtract it from $f(20)$.",
+            "byKey": {
+              "summed-halves": "You added the two halves' costs in bp. Each half costs 26 bp of its own size, so the order costs 26 bp in all.",
+              "negative-hinge": "You used $(10 - 13) = -3$ in the hinge. Left of the knot $(x - 13)^+ = 0$.",
+              "carried": "You used $f(20) = 51$, the line without its hinge. With 38.4 the saving is 12.4 bp."
+            }
+          },
+          "explain": {
+            "text": "At 10% the hinge is off, so $f(10) = 26$ bp. The bend makes large orders cheaper per unit than the line says, and splitting saves $38.4 - 26 = 12.4$ bp."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-one-unit",
+      "difficulty": 5,
+      "skills": [
+        "sl-flexible",
+        "sl-linear"
+      ],
+      "prose": "A network with one hidden ReLU unit predicts a delivery time $\\hat y$, in hours, from a distance $x$ in tens of km: $h = \\max(0, w_1 x + b_1)$ and $\\hat y = v h + d$. Its weights are $w_1 = 0.5$, $b_1 = -1$, $v = 2$ and $d = 1$. One training row has $x = 8$ and $y = 10$, with loss $L = \\tfrac12(\\hat y - y)^2$.",
+      "parts": [
+        {
+          "question": "What is the prediction $\\hat y$ for this row?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-hidden-bias",
+                "value": 9,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-output-bias",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$h = \\max(0, 4 - 1) = 3$, so $\\hat y = 2 \\times 3 + 1 = 7$ hours.",
+            "generic": "Not quite. Work out the hidden unit first, then the output.",
+            "byKey": {
+              "no-hidden-bias": "You left out $b_1 = -1$, so $h$ came out as 4. It is $\\max(0, 4 - 1) = 3$.",
+              "no-output-bias": "You left out the output's bias, $d = 1$."
+            }
+          },
+          "explain": {
+            "text": "The unit's input is $0.5 \\times 8 - 1 = 3$, which is positive, so $h = 3$ and $\\hat y = 2 \\times 3 + 1 = 7$ hours."
+          }
+        },
+        {
+          "question": "Using $\\hat y = 7$ from part 1, what is the loss $L$? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4.5,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-half",
+                "value": 9,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "unsquared",
+                "value": -1.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$L = \\tfrac12(7 - 10)^2 = \\tfrac12 \\times 9 = 4.5$.",
+            "generic": "Not quite. Square the error, then halve it.",
+            "byKey": {
+              "no-half": "You squared the error but left out the $\\tfrac12$.",
+              "unsquared": "You halved the error without squaring it. A loss is never negative.",
+              "carried": "You used $\\hat y = 9$, part 1's slip. With $\\hat y = 7$ the loss is 4.5."
+            }
+          },
+          "explain": {
+            "text": "The error is $7 - 10 = -3$ hours, so $L = \\tfrac12 \\times 9 = 4.5$."
+          }
+        },
+        {
+          "question": "Using the error $\\hat y - y = -3$, what is $\\partial L/\\partial w_1$?",
+          "widget": {
+            "kind": "numeric",
+            "answer": -48,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "slope-for-v",
+                "value": -9,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "dropped-x",
+                "value": -6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sign",
+                "value": 48,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "carried",
+                "value": -16,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The unit is on, so $\\partial L/\\partial w_1 = (\\hat y - y) \\cdot v \\cdot x = -3 \\times 2 \\times 8 = -48$.",
+            "generic": "Not quite. Chain three local slopes: the error, $v$, and $x$.",
+            "byKey": {
+              "slope-for-v": "That is $\\partial L/\\partial v = (\\hat y - y)h$. For $w_1$ the chain runs through $v$ and $x$.",
+              "dropped-x": "You stopped at $(\\hat y - y)v$, which is the slope for $b_1$. The weight $w_1$ multiplies $x = 8$.",
+              "sign": "You lost the sign of the error. The prediction is too low, so $L$ falls as $w_1$ rises.",
+              "carried": "You used the error $9 - 10 = -1$ from part 1's slip. With $-3$ the slope is $-48$."
+            }
+          },
+          "explain": {
+            "text": "The loss changes with $\\hat y$ at rate $-3$, $\\hat y$ with $h$ at rate $v = 2$, and $h$ with $w_1$ at rate $x = 8$ while the unit is on. The product is $-48$."
+          }
+        },
+        {
+          "question": "Take one gradient step of size $\\eta = 0.01$ on $w_1$ alone, using the slope $-48$ from part 3. What is the new $w_1$? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.98,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "uphill",
+                "value": 0.02,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-rate",
+                "value": 48.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.59,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$w_1 \\to 0.5 - 0.01 \\times (-48) = 0.5 + 0.48 = 0.98$.",
+            "generic": "Not quite. Subtract $\\eta$ times the slope from $w_1$.",
+            "byKey": {
+              "uphill": "You moved with the slope. A step moves against it: $0.5 - 0.01 \\times (-48)$.",
+              "no-rate": "You subtracted the whole slope. The step is $\\eta = 0.01$ times it.",
+              "carried": "You used the slope $-9$, which belongs to $v$. The slope for $w_1$ is $-48$."
+            }
+          },
+          "explain": {
+            "text": "The slope is negative, so raising $w_1$ lowers the loss. A step of 0.01 against it moves $w_1$ from 0.5 to 0.98."
+          }
+        },
+        {
+          "question": "The unit switches on where $w_1 x + b_1 = 0$, so it is a hinge with a knot there. With $b_1 = -1$ and $w_1 = 0.98$ from part 4, where is the knot now, in tens of km? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.02,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "old-knot",
+                "value": 2,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sign",
+                "value": -1.02,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 1.695,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$x = \\tfrac{-b_1}{w_1} = \\tfrac{1}{0.98} \\approx 1.020$, so the bend moves in from 2 to about 1.02.",
+            "generic": "Not quite. Solve $0.98x - 1 = 0$ for $x$.",
+            "byKey": {
+              "old-knot": "That is the knot before the step, $\\tfrac{1}{0.5}$. With $w_1 = 0.98$ it moves.",
+              "sign": "You solved $0.98x + 1 = 0$. The bias is $-1$, so the knot is at $+\\tfrac{1}{0.98}$.",
+              "carried": "You used $w_1 = 0.59$, from the slope for $v$. With 0.98 the knot is at 1.020."
+            }
+          },
+          "explain": {
+            "text": "A ReLU unit is a hinge: for $w_1 > 0$, $\\max(0, w_1 x + b_1) = w_1\\,(x - c)^+$ with $c = -\\tfrac{b_1}{w_1}$. Here $c = \\tfrac{1}{0.98} \\approx 1.020$, so one step moved the bend from 20 km to about 10.2 km."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-renewals",
+      "difficulty": 4,
+      "skills": [
+        "sl-flexible",
+        "sl-setup",
+        "sl-tradeoff"
+      ],
+      "prose": "A subscription firm predicts whether a customer renews from 6 standardised features. It has 400 training rows, with a validation split carved from them, and 500 test rows. On the test rows 70% of customers renew.",
+      "parts": [
+        {
+          "question": "How many parameters, weights and biases together, has a 6–16–1 network?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 129,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-biases",
+                "value": 112,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "units",
+                "value": 23,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(6 \\times 16 + 16) + (16 \\times 1 + 1) = 112 + 17 = 129$.",
+            "generic": "Not quite. A layer from $a$ units to $b$ units has $ab + b$ parameters.",
+            "byKey": {
+              "no-biases": "You counted the weights only. The 16 hidden units and the output each add a bias: 17 more.",
+              "units": "You counted the units. Each arrow carries a weight: $6 \\times 16$ of them into the hidden layer."
+            }
+          },
+          "explain": {
+            "text": "The hidden layer has $6 \\times 16 = 96$ weights and 16 biases, and the output 16 weights and 1 bias: 129 in all, against 400 training rows."
+          }
+        },
+        {
+          "question": "On validation, logistic regression and the 6–16–1 network tie at 0.78, and an RBF support vector machine scores 0.77. Using the 129 parameters from part 1, which learner do you take to the test rows?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "logistic",
+                "text": "Logistic regression: the tie goes to the simpler model, with 7 parameters against 129",
+                "correct": true
+              },
+              {
+                "id": "network",
+                "text": "The network, since its 129 parameters can fit any shape the data hold",
+                "why": "Its flexibility bought nothing on validation. A tie goes to the simpler, more explainable model."
+              },
+              {
+                "id": "svm",
+                "text": "The support vector machine, since a kernel generalises best",
+                "why": "It scored 0.77, below the two that tie at 0.78."
+              },
+              {
+                "id": "all-three",
+                "text": "All three, and report the best of their test scores",
+                "why": "Choosing on the test rows uses them up. Choose on validation and report one test score."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Right. Logistic regression has $6 + 1 = 7$ parameters and ties the network's 129.",
+            "generic": "Not quite. Choose on validation and break a tie towards the simpler learner.",
+            "byKey": {
+              "network": "Its flexibility bought nothing on validation. A tie goes to the simpler, more explainable model.",
+              "svm": "It scored 0.77, below the two that tie at 0.78.",
+              "all-three": "Choosing on the test rows uses them up. Choose on validation and report one test score."
+            }
+          },
+          "explain": {
+            "text": "With equal validation scores, the learner with 7 parameters wins. It varies less on new rows than one with 129, and is easier to explain. The test rows then give it one honest score."
+          }
+        },
+        {
+          "question": "Logistic regression scores 0.74 on the 500 test rows. What is the $t$ statistic of its hit rate against the base rate? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.95,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "own-rate",
+                "value": 2.04,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 0.0873,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "coin",
+                "value": 10.73,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$t = \\tfrac{0.74 - 0.7}{\\sqrt{0.7 \\times 0.3/500}} = \\tfrac{0.04}{0.0205} \\approx 1.95$.",
+            "generic": "Not quite. Use $t = \\tfrac{\\hat h - b}{\\sqrt{b(1 - b)/n}}$ with $b = 0.7$ and $n = 500$.",
+            "byKey": {
+              "own-rate": "You used the learner's own rate, 0.74, in the standard error. Under the base rate it is $\\sqrt{0.7 \\times 0.3/500}$.",
+              "no-root": "You divided by $\\sqrt{0.21}$ and left out $n = 500$.",
+              "coin": "You compared with a coin's 0.5. Predicting 'renews' for everyone already scores 0.7."
+            }
+          },
+          "explain": {
+            "text": "The edge is 0.04, or 20 customers in 500, and its standard error under the base rate is 0.0205. A $t$ of 1.95 is just short of 2: suggestive, not convincing."
+          }
+        },
+        {
+          "question": "With the same edge of 0.04 over 0.7, how many test rows make $t$ at least 3?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1182,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "rounded-down",
+                "value": 1181,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 34.37,
+                "tol": {
+                  "abs": 1
+                }
+              },
+              {
+                "id": "carried",
+                "value": 1083,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{0.04}{\\sqrt{0.21/n}} \\ge 3$ needs $n \\ge \\tfrac{9 \\times 0.21}{0.0016} = 1181.25$. Round up: $n = 1182$ rows.",
+            "generic": "Not quite. Solve $\\tfrac{0.04\\sqrt n}{\\sqrt{0.21}} = 3$ for $n$, then round up.",
+            "byKey": {
+              "rounded-down": "1,181 rows give $t$ just under 3. Round up to 1,182.",
+              "no-square": "You solved for $\\sqrt n$ and stopped. Square it: $34.37^2 \\approx 1181.3$, so 1,182 rows.",
+              "carried": "You used the learner's own rate in the standard error, part 3's slip. With $0.7 \\times 0.3$ you need 1,182."
+            }
+          },
+          "explain": {
+            "text": "$t$ grows with $\\sqrt n$, so raising $t$ from 1.95 to 3 needs about $(3/1.95)^2 = 2.4$ times the rows. Exactly, $n \\ge \\tfrac{9 \\times 0.21}{0.04^2} = 1181.25$; round up to $n = 1182$."
+          }
+        }
+      ]
+    }
+  ]
+}
