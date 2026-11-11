@@ -1280,17 +1280,17 @@ def room_numbers(meetings, clean):
 add('stop_buy_remainder_rests', 'ci-stop-cascade', 'the unfilled part of a market buy waits and takes later sells', STOP.replace('    last, volume = None, 0', '    last, volume = None, 0\n    owed = 0').replace('''        if kind == 'B':
             buy(int(tokens[pos + 1]))
             pos += 2''', '''        if kind == 'B':
-            have = sum(a[2] for a in asks) if len(asks) < 50 else 10 ** 12
+            before = volume
             want = int(tokens[pos + 1])
             buy(want)
-            owed += max(0, want - have)
+            owed += want - (volume - before)
             pos += 2''').replace('''            if kind == 'S':
                 heapq.heappush(asks, [price, seq, qty])''', '''            if kind == 'S':
                 heapq.heappush(asks, [price, seq, qty])
                 if owed:
-                    take = min(owed, qty)
-                    owed -= take
-                    buy(take)'''))
+                    before = volume
+                    buy(owed)
+                    owed -= volume - before'''))
 add('stop_sell_at_stop_price_trades', 'ci-stop-cascade', 'a waiting stop also fires when a sell arrives at or below its price', STOP.replace('''            if kind == 'S':
                 heapq.heappush(asks, [price, seq, qty])''', '''            if kind == 'S':
                 heapq.heappush(asks, [price, seq, qty])
@@ -1376,6 +1376,7 @@ EQUIVALENT = ['grace_gap_from_start_sorted_end_desc', 'robot_blocked_turns_round
               'rings_shift_mod_missing_inner', 'loop_suffix_min_only_total_zero_assumed',
               'bonus_cut_at_last_lowest_no_far_end', 'spiral_le_in_search', 'spiral_perimeter_ring_sizes',
               'spiral_square_tmax', 'hops_seen_to_skips_blocked_window', 'hops_dp_int_inf_small',
-              'loop_nonneg_gain_and_total']
+              'loop_nonneg_gain_and_total', 'stop_sell_at_stop_price_trades',
+              'fit_job_inside_gap_needs_whole_minutes_after_start', 'checks_have_from_tail_run']
 RIGHT_AFTER_ALL = {k: C.pop(k) for k in EQUIVALENT}
 CANDIDATES = C
