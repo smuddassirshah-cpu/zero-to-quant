@@ -570,6 +570,70 @@ def smooth_orderings(sizes, d):
 VALID["ci-smooth-orderings"] = lambda a: None
 INDEP["ci-smooth-orderings"] = smooth_orderings
 
+# ======================= stated numbers in briefs, notes and `how`, recomputed =======================
+from math import comb, factorial
+
+def stated_numbers():
+    """(drill, the claim, value computed here, value stated in the text)"""
+    I = INDEP
+    rows = []
+    # drop-point routes: two routes get past the shelf, one meets the drop point; 3 routes from a P start
+    g = ["..P", ".#.", "..."]
+    every = sum(1 for p in set(permutations("RRDD")) if all(
+        g[i][j] != "#" for i, j in [(sum(1 for s in p[:k] if s == "D"), sum(1 for s in p[:k] if s == "R")) for k in range(5)]))
+    rows += [("ci-drop-point-routes", "routes past the shelf", every, 2),
+             ("ci-drop-point-routes", "answer", I["ci-drop-point-routes"](g), 1),
+             ("ci-drop-point-routes", "routes from a P start", I["ci-drop-point-routes"](["P..", "..."]), 3)]
+    rows += [("ci-spaced-picks", "answer", I["ci-spaced-picks"]([8, 3, 5], 4), [[3], [3, 8], [5], [8]])]
+    rows += [("ci-long-mirrors", "answer", I["ci-long-mirrors"]("abaab", 2), 3),
+             ("ci-long-mirrors", "zzzz with k = 3", I["ci-long-mirrors"]("zzzz", 3), 3)]
+    rows += [("ci-tolerant-common", "answer", I["ci-tolerant-common"]([100, 104, 99, 107], [98, 101, 106], 1), 2),
+             ("ci-tolerant-common", "example 2", I["ci-tolerant-common"]([5, 1, 2, 3], [1, 2, 3, 5], 0), 3)]
+    rows += [("ci-priced-edits", "one replacement", _edit_search("abc", "axc", 10 ** 6, 10 ** 6, 5), 5),
+             ("ci-priced-edits", "a delete and an insert", 3 + 1, 4),
+             ("ci-priced-edits", "answer", I["ci-priced-edits"]("1 3 5\n1\nabc axc\n"), "4"),
+             ("ci-priced-edits", "kite to kit, ab to ba", I["ci-priced-edits"]("4 1 2\n2\nkite kit\nab ba\n"), "1\n4")]
+    rows += [("ci-hold-limit", "three 2-tonne crates", I["ci-hold-limit"]([2, 2, 2], [4, 4, 4], 6, 3), 12),
+             ("ci-hold-limit", "answer", I["ci-hold-limit"]([5, 2, 2, 2], [9, 4, 4, 4], 6, 2), 9),
+             ("ci-hold-limit", "example 2", I["ci-hold-limit"]([3, 4, 5], [30, 50, 60], 8, 3), 90)]
+    rows += [("ci-pillar-queens", "4 guards on an open 4 by 4 floor", I["ci-pillar-queens"](["...."] * 4, 4), 2),
+             ("ci-pillar-queens", "answer", I["ci-pillar-queens"]([".#..", "....", "....", "...."], 4), 1),
+             ("ci-pillar-queens", "pairs of squares on 3 by 3", comb(9, 2), 36),
+             ("ci-pillar-queens", "pairs out of view", I["ci-pillar-queens"](["..."] * 3, 2), 8)]
+    rows += [("ci-invoice-matches", "answer", I["ci-invoice-matches"]([20, 50, 30, 20, 10], 50, 2), [[20, 30], [50]]),
+             ("ci-invoice-matches", "with k = 3, [10, 20, 20] appears", [10, 20, 20] in I["ci-invoice-matches"]([20, 50, 30, 20, 10], 50, 3), True)]
+    rows += [("ci-trace-count", "answer", I["ci-trace-count"](["ab", "ba"], "aba"), 2 * 2 * 2)]
+    rows += [("ci-mirror-pieces", "answer", I["ci-mirror-pieces"]("1\nabacdc\n"), "2"),
+             ("ci-mirror-pieces", "abaab and xyz", I["ci-mirror-pieces"]("2\nabaab\nxyz\n"), "2\n3"),
+             ("ci-mirror-pieces", "aba then a, b", 1 + 2, 3)]
+    rows += [("ci-three-feed-common", "answer", I["ci-three-feed-common"]("buyhold", "bidsold", "bolds"), 4),
+             ("ci-three-feed-common", "bold is common", all(_is_sub("bold", s) for s in ("buyhold", "bidsold", "bolds")), True)]
+    rows += [("ci-even-desks", "10 alone against the rest", abs(10 - (1 + 2 + 3)), 4),
+             ("ci-even-desks", "answer", I["ci-even-desks"]([1, 2, 3, 10]), 6),
+             ("ci-even-desks", "example 2 totals", (3 + 5 + 7, 2 + 4 + 9), (15, 15)),
+             ("ci-even-desks", "40 choose 20, in billions", round(comb(40, 20) / 1e9), 138)]
+    rows += [("ci-merged-tape", "answer", I["ci-merged-tape"]("ab", "a", "aab"), 2)]
+    rows += [("ci-light-cargo", "second and third parcels", 450000 + 500000, 950000),
+             ("ci-light-cargo", "answer", I["ci-light-cargo"]([600000, 450000, 500000], [7, 4, 5], 1000000), 9),
+             ("ci-light-cargo", "example 2", I["ci-light-cargo"]([30, 50, 51], [3, 5, 5], 101), 10),
+             ("ci-light-cargo", "value table cells", 80 * 30 + 1, 2401)]
+    rows += [("ci-smooth-orderings", "sequences of 1, 2, 2, 4", len(set(permutations([1, 2, 2, 4]))), 12),
+             ("ci-smooth-orderings", "with 1 and 4 side by side", sum(1 for p in set(permutations([1, 2, 2, 4])) if any({x, y} == {1, 4} for x, y in zip(p, p[1:]))), 6),
+             ("ci-smooth-orderings", "answer", I["ci-smooth-orderings"]([1, 2, 2, 4], 2), 6),
+             ("ci-smooth-orderings", "11 factorial", factorial(11), 39916800)]
+    return rows
+
+def check_stated():
+    rows = stated_numbers()
+    for did, claim, got, said in rows:
+        if did in IDS and got != said:
+            err(f"{did}: stated number '{claim}' is {said} but computes to {got}")
+    for did in IDS:                          # the brief's worked answer is the first example's expect
+        d = json.load(open(os.path.join(DRILLS, did + ".json")))
+        said = [s2 for x, c, _, s2 in rows if x == did and c == "answer"]
+        if len(said) != 1 or eval(d["examples"][0]["expect"]) != said[0]:
+            err(f"{did}: the brief's worked answer {said} is not the first example's expect")
+
 # ======================= slow plants =======================
 # planted solutions that are right but too slow (always the last entry): (drill id, index)
 SLOW_PLANTED = {("ci-trace-count", 3), ("ci-mirror-pieces", 3), ("ci-three-feed-common", 2), ("ci-even-desks", 2),
@@ -743,6 +807,8 @@ for did in IDS:
     if d["pattern"] not in ("dp", "backtracking"): err(f"{did}: pattern {d['pattern']}")
     if f"Submit runs {len(d['tests'])} hidden tests" not in d["how"]: err(f"{did}: how test count")
     print(f"{did}: d{d['difficulty']} {len(d['tests'])} tests ok, model {dt:.2f} s, starter fails at {sres['failed']}, planted fail at {caught}")
+check_stated()
+print(f"stated numbers recomputed: {len(stated_numbers())}")
 if len(IDS) == 15 and dict(diffs) != {2: 3, 3: 5, 4: 5, 5: 2}: err(f"difficulty mix {dict(diffs)}")
 if len(IDS) == 15 and stdin != 2: err(f"{stdin} stdin drills")
 print(f"{len(IDS)} drills, {len(errors)} errors")
