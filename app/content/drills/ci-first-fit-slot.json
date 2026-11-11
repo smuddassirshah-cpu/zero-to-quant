@@ -101,11 +101,6 @@
       "compare": "equal"
     },
     {
-      "call": "first_fit([[0, 3], [3, 6], [10, 12]], 20, 4)",
-      "expect": "[20, [[0, 6], [10, 12], [20, 24]]]",
-      "compare": "equal"
-    },
-    {
       "call": "first_fit([[1, 2], [4, 6], [7, 10], [13, 20]], 3, 3)",
       "expect": "[10, [[1, 2], [4, 6], [7, 20]]]",
       "compare": "equal"
@@ -144,9 +139,19 @@
       "call": "(lambda r: (r[0], len(r[1]), r[1][:2], r[1][-2:]))(first_fit([[30 * i, 30 * i + 20 + (i % 3) * 5] for i in range(100000)], 1500000, 10))",
       "expect": "(1500050, 66666, [[0, 20], [30, 55]], [[2999910, 2999935], [2999940, 2999990]])",
       "compare": "equal"
+    },
+    {
+      "call": "first_fit([[3, 4]], 1, 1)",
+      "expect": "[1, [[1, 2], [3, 4]]]",
+      "compare": "equal"
+    },
+    {
+      "call": "first_fit([[7, 8]], 5, 5)",
+      "expect": "[8, [[7, 13]]]",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The change from inserting a fixed interval is the search for the slot and the joining of touching bookings, including pairs that already touched before the job was added.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The change from inserting a fixed interval is the search for the slot and the joining of touching bookings, including pairs that already touched before the job was added.",
   "solution": "def first_fit(bookings, start, length):\n    slot = start\n    for s, e in bookings:\n        if e <= slot:\n            continue\n        if s >= slot + length:\n            break\n        slot = e\n    merged = []\n    for s, e in sorted(bookings + [[slot, slot + length]]):\n        if merged and s <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], e)\n        else:\n            merged.append([s, e])\n    return [slot, merged]\n",
   "notes": [
     "The bookings are sorted, so the slot only moves forward and each booking is looked at once.",
@@ -165,6 +170,14 @@
     {
       "code": "def first_fit(bookings, start, length):\n    slot = start\n    for s, e in bookings:\n        if s >= slot and s < slot + length:\n            slot = e\n    merged = []\n    for s, e in sorted(bookings + [[slot, slot + length]]):\n        if merged and s <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], e)\n        else:\n            merged.append([s, e])\n    return [slot, merged]\n",
       "slip": "Looking only at bookings that start at or after the slot misses one already running at `start`."
+    },
+    {
+      "code": "def first_fit(bookings, start, length):\n    prev = 0\n    slot = None\n    for s, e in bookings:\n        if prev >= start and s - prev >= length:\n            slot = prev\n            break\n        prev = e\n    if slot is None:\n        slot = max(start, prev)\n\n    merged = []\n    for s, e in sorted(bookings + [[slot, slot + length]]):\n        if merged and s <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], e)\n        else:\n            merged.append([s, e])\n    return [slot, merged]\n",
+      "slip": "Trying only gaps that begin at or after `start` misses a gap that `start` falls inside, so the job is pushed past it."
+    },
+    {
+      "code": "def first_fit(bookings, start, length):\n    prev = 0\n    slot = None\n    for s, e in bookings:\n        if s - prev >= length and s > start:\n            slot = max(start, prev)\n            break\n        prev = e\n    if slot is None:\n        slot = max(start, prev)\n\n    merged = []\n    for s, e in sorted(bookings + [[slot, slot + length]]):\n        if merged and s <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], e)\n        else:\n            merged.append([s, e])\n    return [slot, merged]\n",
+      "slip": "Judging a gap by its whole length, though `start` sits part way along it, accepts a gap with too little room left after `start`."
     }
   ]
 }

@@ -66,3 +66,54 @@ Format: `N. file | JSON path | tag | what is wrong | exact fix`. Tags: `wrong` =
 | `ci-spiral-cells` | clean (5 candidates, all caught; four right variants accepted) |
 | `ci-stone-hops` | two tests to swap (3) |
 | `ci-stop-cascade` | two tests to swap (2); wording on `bisect` and recursion (10, 13) |
+
+## Fix pass
+
+Applied with targeted edits to 13 drills of pack 8, `docs/reports/drills-ci-8-check.py` (with `drills-ci-8-indep.py`), `docs/reports/drills-ci-8.md` and the two `index.json` rows. Fixed 18, disputed 0, deferred 0. "Two agree" means the model solution and the second reader's own solution (`drills-ci-8-scripts/mine.py`), run natively; the check script's independent method (brute force or a different algorithm) also agrees on every test, and the small ones were also worked by hand.
+
+1. `ci-first-fit-slot` tests: fixed. Both tests added; old tests[5] (start past the last booking, covered by the empty list and test 3) folded out to stay at 15; planted[3] and [4] are `fit_gap_must_begin_after_start` and `fit_gap_size_only`.
+2. `ci-stop-cascade` tests: fixed. tests[11] and tests[6] replaced as proposed; planted[3] `stop_highest_price_ever`, planted[4] `stop_buy_remainder_rests`.
+3. `ci-stone-hops` tests: fixed. tests[3] and tests[5] replaced as proposed; planted[3] and [4] are the two level-scan candidates, the three slow plants are now [5] to [7].
+4. `ci-double-checks` tests[2]: fixed; planted[3] is `checks_window_last_five`.
+5. `ci-switch-panel` tests: fixed. Both tests added; old tests[13] (a second 4-switch pair search like tests[12]) folded out to stay at 15; planted[3] `switch_dedupe_equal`, planted[4] `switch_sizes_from_one`.
+6. `ci-rest-days` test: fixed, 15 tests; planted[2] `rest_default_one`, the slow plant is now [3].
+7. `ci-ring-bonuses` recursion: fixed by saying it, not by resizing: constraints[1] now says a run of rising scores can be 50,000 long and a recursion from trader to trader goes too deep for Python here, so use loops. The sizes stay because the long runs are what fail the one-way sweeps (both still fail in Pyodide).
+8. `ci-k-bit-count` sizes: fixed as proposed (400 queries; tests[11] `range(400)`, tests[12] `* 300`; `len` object `[1, 400]`). Measured in Pyodide: digit recursion 0.85 s (was 4.4 s), factor 5.9 of the 5 s; model 0.01 s; the two obvious methods still run past 12 s. Recorded in `docs/reports/drills-ci-8.md`.
+9. `ci-ring-turns` brief: fixed as proposed; one row and one column are tested by tests[1] and [2] (a whole grid of one line stays put), and a single tile by tests[0].
+10. `bisect` wording: fixed in `ci-room-numbers` and `ci-stop-cascade` constraints[1] ("also pass, by a smaller margin than two heaps, but heaps are the target"). Re-measured in Pyodide: rooms 0.73 and 1.24 s, stops 0.70 and 1.40 s, models 0.31 and 0.44 s; the report gives the range.
+11. `ci-robot-floor` constraints[1]: fixed as proposed.
+12. `ci-robot-floor` brief: fixed as proposed (`F` joined to a number `k`, as in `F5`).
+13. `ci-stop-cascade` constraints[1]: fixed, one sentence added about 20,000 stops from one event and a loop instead of recursion. The first sentence of constraints[1] was split in two to stay under 35 words.
+14. `ci-loop-starts` how: fixed as proposed (names `Where to start a delivery loop`, checked against `dsa-loop-depots`).
+15. Prose and objects: fixed. `ci-k-bit-count` "1 to 400 queries"; `ci-spiral-cells` "1 to 10,000 steps in `ks`"; `ci-ring-turns` tiles from -10^6 to 10^6; `ci-rest-days` "lowercase words of 1 to 10 letters, `rest` names at most 26 machines".
+16. `ci-ring-turns` notes[2]: fixed as proposed.
+17. `ci-room-numbers` example: fixed. Meetings `[[0, 28], [4, 9], [11, 40], [33, 50]]`, `clean = 2`, answer `[0, 1, 1, 0]`; brief and note follow; the `STATED` row of the check script follows.
+18. Swap: fixed. `ci-double-checks` difficulty 4, pace 1,980, with the sentence in `how`; `ci-room-numbers` difficulty 3, pace 1,620; both `index.json` rows. At difficulty 4 the check script requires a slow plant, so I added one (every set of minutes by size, built lazily; cut off at 12 s in Pyodide, model 0.07 s) as the last planted entry. My first version used `combinations` over the range of minutes, which builds a tuple of a billion items and crashed the Pyodide run; the lazy version replaced it.
+
+### Added or changed tests, and the solutions that agree on `expect`
+
+Each test lies inside the drill's `constraints` (the validator checks it: 0 errors). Model, `mine.py` and the check script's independent method agree on all of them; the by-hand line is the derivation.
+
+- first-fit-slot: `first_fit([[3, 4]], 1, 1)` = `[1, [[1, 2], [3, 4]]]` (job 1 to 2 fits before 3; 2 and 3 do not touch); `first_fit([[7, 8]], 5, 5)` = `[8, [[7, 13]]]` (the gap 5 to 7 is 2 long, so the job goes at 8 and joins the booking).
+- stop-cascade: `'5\nS 9 3\nB 1\nS 1 2\nT 7 1\nT 2 2\n'` = `'- 0\n9 1\n9 1\n1 2\n1 2'` (by hand: the first buy trades one share at 9; the sell at 1 joins with no trade; stop 7 is already reached by last price 9, fires and buys one share at 1, so the line reads `1 2`; stop 2 then waits, because the last price 1 is below it, where the highest-price candidate fires it); `'4\nS 5 1\nB 3\nS 6 2\nB 1\n'` = `'- 0\n5 1\n5 1\n6 2'` (the buy of 3 takes one share and drops 2; the later sell at 6 stays until the buy of 1).
+- stone-hops: `fewest_hops('.....~~~..', 2, 4)` = -1 (stone 9 can be reached only from places 5 to 7, all water); `fewest_hops('.......~~~...', 3, 5)` = -1 (stone 12 only from 7 to 9, all water).
+- double-checks: `fewest_checks([[1, 5, 5], [5, 14, 4], [9, 13, 2]])` = 8 (minutes 1 to 5, then 14, 13 and 12 as late as they go; the third job holds 13 and 12).
+- switch-panel: `fewest_switches(['110', '110', '011'], '011')` = `[2]`; `fewest_switches(['101', '011'], '000')` = `[]`.
+- rest-days: `run_days(['saw', 'kiln', 'saw', 'saw'], {'kiln': 3})` = `[1, 2, 3, 4]` (a machine missing from `rest` works every day).
+- k-bit-count: tests[11] with 400 queries = `(400, 738923856, [1, 0, 0], [1048721, 202947, 36048])`; tests[12] with 300 copies = `(1, 400, 30284005485024837)` (model, `mine.py`, the digit recursion `R_kbits_digit_dp`).
+- Removed: first-fit-slot old tests[5], switch-panel old tests[13] (folded, to stay at 15 tests; both drills still fail every planted and every further wrong solution).
+
+The ten candidates and where each now fails (planted-check, Chromium and Pyodide): all ten are planted and fail on the new test named above.
+
+### Constraint changes
+
+- ring-bonuses constraints[1]: adds the recursion sentence. stop-cascade constraints[1]: `bisect` wording and the 20,000-stops sentence. room-numbers constraints[1]: `bisect` wording.
+- k-bit-count constraints[0] "1 to 400 queries" and `len` `[1, 400]` (was at most 2,000). robot-floor constraints[1] and brief reworded (no change of what is accepted). spiral-cells constraints[0] "1 to 10,000 steps". ring-turns constraints[0] names the tile range. rest-days constraints[0] names the name length and the 26 machines.
+
+### Gate results
+
+- `drills-ci-8-check.py`: `15 drills, 0 errors`, exit 0; `--pyodide` on double-checks, k-bit-count and stone-hops: models 0.07, 0.01 and 0.27 s, every slow plant cut off at 12 s.
+- `node tools/validate.mjs`: 0 errors; index rows in step (difficulty of `ci-double-checks` 4, `ci-room-numbers` 3).
+- `planted-check.mjs --require --local-cdn` for the 13 changed drills: 69 planted solutions, 0 failures (in four runs, one more run for double-checks after its slow plant changed).
+- `playthrough.mjs --drill <id> --local-cdn`, desktop and `--mobile`, for all 13 changed drills: All passed.
+- `voice-scan.py 35` on `app/content/drills`: 0 sentences over 35 words, 0 explanations over three sentences.

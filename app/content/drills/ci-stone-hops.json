@@ -80,8 +80,8 @@
       "compare": "equal"
     },
     {
-      "call": "fewest_hops('.....', 2, 2)",
-      "expect": "2",
+      "call": "fewest_hops('.....~~~..', 2, 4)",
+      "expect": "-1",
       "compare": "equal"
     },
     {
@@ -90,8 +90,8 @@
       "compare": "equal"
     },
     {
-      "call": "fewest_hops('......', 4, 5)",
-      "expect": "1",
+      "call": "fewest_hops('.......~~~...', 3, 5)",
+      "expect": "-1",
       "compare": "equal"
     },
     {
@@ -159,6 +159,14 @@
     {
       "code": "def fewest_hops(stones, lo, hi):\n    n = len(stones)\n    if n == 1:\n        return 0\n    hops, reach, edge = 0, 0, 0\n    for i in range(n - 1):\n        if stones[i] == '.':\n            reach = max(reach, i + hi)\n        if i == edge:\n            if reach <= edge:\n                return -1\n            hops, edge = hops + 1, reach\n            if edge >= n - 1:\n                return hops\n    return -1\n",
       "slip": "The level-by-level reach count of the classic task ignores both `lo` and stones that cannot be reached."
+    },
+    {
+      "code": "def fewest_hops(stones, lo, hi):\n    n = len(stones)\n    if n == 1:\n        return 0\n    a = b = 0\n    hops = 0\n    while True:\n        na, nb = a + lo, min(b + hi, n - 1)\n        if na > n - 1 or na > nb:\n            return -1\n        cand = [j for j in range(na, nb + 1) if stones[j] == '.']\n        hops += 1\n        if not cand:\n            return -1\n        if cand[-1] == n - 1:\n            return hops\n        if (cand[0], cand[-1]) == (a, b):\n            return -1\n        a, b = cand[0], cand[-1]\n        if hops > n:\n            return -1\n",
+      "slip": "Keeping each level of the search as one stretch of places, scanned from its first stone plus `lo` to its last plus `hi`, counts stones that no stone of the level can reach."
+    },
+    {
+      "code": "def fewest_hops(stones, lo, hi):\n    n = len(stones)\n    a = b = 0\n    hops = 0\n    while b < n - 1:\n        na = nb = -1\n        for j in range(max(a + lo, b + 1), min(b + hi, n - 1) + 1):\n            if stones[j] == '.':\n                if na < 0:\n                    na = j\n                nb = j\n        if na < 0:\n            return -1\n        a, b = na, nb\n        hops += 1\n    return hops\n",
+      "slip": "Keeping only the first and last stone of each level and scanning from the first plus `lo` to the last plus `hi` reaches places that no stone can hop to."
     },
     {
       "code": "from collections import deque\n\ndef fewest_hops(stones, lo, hi):\n    n = len(stones)\n    dist = [-1] * n\n    dist[0] = 0\n    queue = deque([0])\n    while queue:\n        i = queue.popleft()\n        if i == n - 1:\n            return dist[i]\n        for j in range(i + lo, min(i + hi, n - 1) + 1):\n            if stones[j] == '.' and dist[j] < 0:\n                dist[j] = dist[i] + 1\n                queue.append(j)\n    return -1\n",

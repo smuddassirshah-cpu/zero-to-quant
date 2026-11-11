@@ -18,7 +18,7 @@
   "returns": "a list of day numbers",
   "brief": "A workshop runs one job a day, in the order of the list `tasks`, starting on day 1. Each job names the machine it uses. After a machine works on day `d`, it must rest for `rest[m]` whole days, so its next job runs on day `d + rest[m] + 1` at the earliest. A machine missing from `rest` needs no rest. When the next job's machine is resting, the workshop waits; a later job may not go first.\n\nWrite `run_days(tasks, rest)`, which returns the day each job runs, in the order of `tasks`.\n\nExample. For `tasks = ['kiln', 'drum', 'kiln', 'kiln', 'drum']` and `rest = {'kiln': 2, 'drum': 0}`, the kiln works on day 1 and the drum on day 2. The kiln may work again on day 4, then on day 7, and the drum follows on day 8. The answer is `[1, 2, 4, 7, 8]`.",
   "constraints": [
-    "At most $100{,}000$ jobs. Machine names are short lowercase words, and each rest is $0$ to $10^9$ days.",
+    "At most $100{,}000$ jobs. Machine names are lowercase words of 1 to 10 letters, `rest` names at most 26 machines, and each rest is $0$ to $10^9$ days.",
     "$O(n)$ time is the target; the days can run far past $n$.",
     "All the tests in a run share one 5-second limit in the browser.",
     {
@@ -132,9 +132,14 @@
       "call": "(lambda r: (r[:3], r[-1]))(run_days(['mill'] * 100000, {'mill': 1000000000}))",
       "expect": "([1, 1000000002, 2000000003], 99999000100000)",
       "compare": "equal"
+    },
+    {
+      "call": "run_days(['saw', 'kiln', 'saw', 'saw'], {'kiln': 3})",
+      "expect": "[1, 2, 3, 4]",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The change from the standard task scheduler is a rest per machine, kept in a dict with a default of none, and the day of every job rather than only the total.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. The change from the standard task scheduler is a rest per machine, kept in a dict with a default of none, and the day of every job rather than only the total.",
   "solution": "def run_days(tasks, rest):\n    ready = {}\n    day = 0\n    days = []\n    for machine in tasks:\n        day = max(day + 1, ready.get(machine, 0))\n        ready[machine] = day + rest.get(machine, 0) + 1\n        days.append(day)\n    return days\n",
   "notes": [
     "The order is fixed, so each job's day follows from the previous job's day and its machine's ready day alone.",
@@ -149,6 +154,10 @@
     {
       "code": "def run_days(tasks, rest):\n    ready = {}\n    day = 0\n    days = []\n    for machine in tasks:\n        day = max(day + 1, ready.get(machine, 0))\n        ready[machine] = day + rest[machine] + 1\n        days.append(day)\n    return days\n",
       "slip": "Reading `rest[machine]` directly fails on a machine that is missing from the dict."
+    },
+    {
+      "code": "def run_days(tasks, rest):\n    ready, day, out = {}, 0, []\n    for m in tasks:\n        day = max(day + 1, ready.get(m, 0))\n        ready[m] = day + rest.get(m, 1) + 1\n        out.append(day)\n    return out\n",
+      "slip": "Giving a machine that is missing from `rest` one rest day makes it wait when it needs none."
     },
     {
       "code": "def run_days(tasks, rest):\n    last = {}\n    day = 0\n    days = []\n    for machine in tasks:\n        day += 1\n        while machine in last and day - last[machine] <= rest.get(machine, 0):\n            day += 1\n        last[machine] = day\n        days.append(day)\n    return days\n",

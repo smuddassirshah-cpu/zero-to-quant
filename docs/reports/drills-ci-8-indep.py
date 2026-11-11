@@ -138,7 +138,7 @@ def fewest_switches(switches, target):
 INDEP = {"ci-grace-sessions": merge_with_grace, "ci-rest-days": run_days, "ci-robot-floor": solve_robot_floor,
          "ci-one-bit-apart": one_bit_pairs, "ci-switch-panel": fewest_switches}
 
-SLOW_IDX = {"ci-rest-days": [2], "ci-one-bit-apart": [3]}
+SLOW_IDX = {"ci-rest-days": [3], "ci-one-bit-apart": [3]}
 
 # ======================= numbers stated in the briefs, recomputed by the independent methods =======================
 STATED = {
@@ -346,13 +346,13 @@ def loop_starts(fuel, burn):
 
 INDEP.update({"ci-ring-turns": turn_rings, "ci-double-checks": fewest_checks, "ci-first-fit-slot": first_fit,
               "ci-room-numbers": room_numbers, "ci-loop-starts": loop_starts})
-SLOW_IDX.update({"ci-ring-turns": [2], "ci-room-numbers": [3, 4, 5], "ci-loop-starts": [3, 4, 5]})
+SLOW_IDX.update({"ci-ring-turns": [2], "ci-room-numbers": [3, 4, 5], "ci-loop-starts": [3, 4, 5], "ci-double-checks": [4]})
 STATED.update({
     "ci-ring-turns": [(lambda: turn_rings([[4, 7, 1], [9, 5, 2], [8, 3, 6]], 1), [[9, 4, 7], [8, 5, 1], [3, 6, 2]])],
     "ci-double-checks": [(lambda: fewest_checks([[1, 4, 2], [3, 6, 2], [6, 8, 1]]), 3),
                          (lambda: all(sum(s <= m <= e for m in (3, 4, 6)) >= need for s, e, need in [[1, 4, 2], [3, 6, 2], [6, 8, 1]]), True)],
     "ci-first-fit-slot": [(lambda: first_fit([[2, 5], [5, 9], [12, 14], [16, 20]], 6, 3), [9, [[2, 14], [16, 20]]])],
-    "ci-room-numbers": [(lambda: room_numbers([[0, 30], [5, 10], [12, 40], [35, 50]], 2), [0, 1, 1, 0]), (lambda: (10 + 2, 30 + 2), (12, 32))],
+    "ci-room-numbers": [(lambda: room_numbers([[0, 28], [4, 9], [11, 40], [33, 50]], 2), [0, 1, 1, 0]), (lambda: (9 + 2, 28 + 2), (11, 30))],
     "ci-loop-starts": [(lambda: loop_starts([3, 1, 4, 0], [1, 2, 2, 3]), [0]),
                        (lambda: [f - b for f, b in zip([3, 1, 4, 0], [1, 2, 2, 3])], [2, -1, 2, -3]),
                        (lambda: list(accumulate([2, -1, 2, -3])), [2, 1, 3, 0]), (lambda: list(accumulate([2, -3])), [2, -1])],
@@ -602,8 +602,8 @@ def solve_stop_cascade(text):
 
 INDEP.update({"ci-stone-hops": fewest_hops, "ci-k-bit-count": count_k_bits, "ci-ring-bonuses": ring_bonuses,
               "ci-spiral-cells": spiral_cells, "ci-stop-cascade": solve_stop_cascade})
-SLOW_IDX.update({"ci-stone-hops": [3, 4, 5], "ci-k-bit-count": [3, 4], "ci-ring-bonuses": [3, 4],
-                 "ci-spiral-cells": [3, 4, 5], "ci-stop-cascade": [3, 4, 5]})
+SLOW_IDX.update({"ci-stone-hops": [5, 6, 7], "ci-k-bit-count": [3, 4], "ci-ring-bonuses": [3, 4],
+                 "ci-spiral-cells": [3, 4, 5], "ci-stop-cascade": [5, 6, 7]})
 STATED.update({
     "ci-stone-hops": [(lambda: fewest_hops("..~.~..", 2, 3), 2), (lambda: 6 - 0 > 3, True)],
     "ci-k-bit-count": [(lambda: count_k_bits([[5, 12, 2]]), [5]),
