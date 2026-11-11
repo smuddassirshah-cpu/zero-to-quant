@@ -1,0 +1,162 @@
+{
+  "id": "ci-grace-sessions",
+  "name": "Login sessions with a grace gap",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "intervals",
+  "tags": [
+    "pack-8",
+    "grace-sessions"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 960,
+  "fn": "merge_with_grace",
+  "returns": "a list of `[start, end, count]` lists",
+  "brief": "A trading desk logs each login session as `[start, end]` in minutes, with `start <= end`. The sessions come in any order and may overlap. Two sessions count as one visit when the later one starts at most `grace` minutes after the earlier one ends. A visit grows as sessions join it, so its end is the latest end of its sessions.\n\nWrite `merge_with_grace(sessions, grace)`. It returns each visit as `[start, end, count]`, where `count` is the number of sessions in it, sorted by start.\n\nExample. For `sessions = [[30, 45], [0, 10], [12, 20], [50, 52], [44, 47]]` and `grace = 2`, the session at 12 starts 2 minutes after 10, so it joins. The session at 50 starts 3 minutes after 47 and does not. The answer is `[[0, 20, 2], [30, 47, 2], [50, 52, 1]]`.",
+  "constraints": [
+    "At most $100{,}000$ sessions, with $0 \\le$ `start` $\\le$ `end` $\\le 10^9$, and $0 \\le$ `grace` $\\le 10^9$.",
+    "$O(n \\log n)$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "sessions",
+      "type": "list",
+      "len": [
+        0,
+        100000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          2,
+          2
+        ],
+        "of": "int",
+        "range": [
+          0,
+          1000000000
+        ]
+      }
+    },
+    {
+      "arg": "grace",
+      "type": "int",
+      "range": [
+        0,
+        1000000000
+      ]
+    }
+  ],
+  "hint": "Sort the sessions by start. Keep the visit being built: a session joins it when its start is at most the visit's end plus `grace`, and the visit's end becomes the larger of the two ends.",
+  "starter": "def merge_with_grace(sessions, grace):\n    # your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "merge_with_grace([[30, 45], [0, 10], [12, 20], [50, 52], [44, 47]], 2)",
+      "expect": "[[0, 20, 2], [30, 47, 2], [50, 52, 1]]",
+      "compare": "equal",
+      "note": "The gap from 10 to 12 is within the grace; the gap from 47 to 50 is not."
+    },
+    {
+      "call": "merge_with_grace([[0, 100], [10, 20], [30, 40]], 0)",
+      "expect": "[[0, 100, 3]]",
+      "compare": "equal",
+      "note": "The first session covers the other two, so the visit keeps its end of 100."
+    }
+  ],
+  "tests": [
+    {
+      "call": "merge_with_grace([], 5)",
+      "expect": "[]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[7, 7]], 0)",
+      "expect": "[[7, 7, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[0, 5], [7, 9]], 2)",
+      "expect": "[[0, 9, 2]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[0, 5], [7, 9]], 1)",
+      "expect": "[[0, 5, 1], [7, 9, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[5, 8], [1, 2], [5, 8]], 0)",
+      "expect": "[[1, 2, 1], [5, 8, 2]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[3, 10], [3, 4], [11, 12]], 1)",
+      "expect": "[[3, 12, 3]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[40, 41], [0, 60], [10, 15], [62, 70], [72, 72]], 2)",
+      "expect": "[[0, 72, 5]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[0, 10], [2, 3], [12, 13]], 1)",
+      "expect": "[[0, 10, 2], [12, 13, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[100, 200], [0, 1], [3, 4], [6, 7], [9, 50]], 2)",
+      "expect": "[[0, 50, 4], [100, 200, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[0, 0], [1, 1], [3, 3], [6, 6], [10, 10]], 1)",
+      "expect": "[[0, 1, 2], [3, 3, 1], [6, 6, 1], [10, 10, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[900, 950], [0, 1], [1000000000, 1000000000]], 1000000000)",
+      "expect": "[[0, 1000000000, 3]]",
+      "compare": "equal"
+    },
+    {
+      "call": "merge_with_grace([[20, 25], [0, 30], [31, 31], [33, 40]], 1)",
+      "expect": "[[0, 31, 3], [33, 40, 1]]",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[0], r[-1], sum(v[2] for v in r)))(merge_with_grace([[(i * 7919) % 100003 * 40, (i * 7919) % 100003 * 40 + (i * 31) % 47] for i in range(100000)], 3))",
+      "expect": "(78720, [0, 0, 1], [4000040, 4000112, 2], 100000)",
+      "compare": "equal"
+    },
+    {
+      "call": "(lambda r: (len(r), r[0], r[-1], sum(v[2] for v in r)))(merge_with_grace([[(i * 7919) % 100003 * 40, (i * 7919) % 100003 * 40 + (i * 31) % 47] for i in range(100000)], 0))",
+      "expect": "(85104, [0, 0, 1], [4000040, 4000112, 2], 100000)",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The change from merging plain overlaps is the grace gap and the count, so the join test reads the visit's end plus `grace`, and each visit keeps a tally.",
+  "solution": "def merge_with_grace(sessions, grace):\n    visits = []\n    for start, end in sorted(sessions):\n        if visits and start <= visits[-1][1] + grace:\n            visit = visits[-1]\n            visit[1] = max(visit[1], end)\n            visit[2] += 1\n        else:\n            visits.append([start, end, 1])\n    return visits\n",
+  "notes": [
+    "Once the sessions are sorted by start, a session can only join the visit built last.",
+    "The visit's end is the largest end so far, not the end of the last session, since one long session can cover shorter ones.",
+    "The sort costs $O(n \\log n)$ and the pass is $O(n)$."
+  ],
+  "planted": [
+    {
+      "code": "def merge_with_grace(sessions, grace):\n    visits = []\n    for start, end in sorted(sessions):\n        if visits and start < visits[-1][1] + grace:\n            visits[-1][1] = max(visits[-1][1], end)\n            visits[-1][2] += 1\n        else:\n            visits.append([start, end, 1])\n    return visits\n",
+      "slip": "A strict comparison splits a session that starts exactly `grace` minutes after the visit ends."
+    },
+    {
+      "code": "def merge_with_grace(sessions, grace):\n    visits = []\n    for start, end in sorted(sessions):\n        if visits and start <= visits[-1][1] + grace:\n            visits[-1][1] = end\n            visits[-1][2] += 1\n        else:\n            visits.append([start, end, 1])\n    return visits\n",
+      "slip": "Taking the last session's end shrinks a visit when a short session sits inside a long one."
+    },
+    {
+      "code": "def merge_with_grace(sessions, grace):\n    visits = []\n    for start, end in sessions:\n        if visits and start <= visits[-1][1] + grace:\n            visits[-1][1] = max(visits[-1][1], end)\n            visits[-1][2] += 1\n        else:\n            visits.append([start, end, 1])\n    return visits\n",
+      "slip": "Reading the sessions in the order given, without sorting, misses joins between sessions that arrive apart."
+    }
+  ]
+}
