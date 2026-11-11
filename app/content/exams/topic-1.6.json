@@ -2,7 +2,7 @@
   "id": "topic-1.6",
   "topic": "1.6",
   "name": "Statistics topic exam",
-  "minutes": 60,
+  "minutes": 70,
   "pass": 0.7,
   "skills": {
     "es-estimators": "Estimators and sampling distributions",
@@ -17,7 +17,9 @@
     "rg-fit": "Fitting a line",
     "rg-inference": "Inference on coefficients",
     "rg-diagnostics": "Assumptions and diagnostics",
-    "rg-multiple": "Multiple regression"
+    "rg-multiple": "Multiple regression",
+    "ht-theory": "Estimation theory",
+    "ht-likelihood": "Likelihood-ratio and chi-squared tests"
   },
   "items": [
     {
@@ -1236,77 +1238,6 @@
       }
     },
     {
-      "id": "s-summary-dw",
-      "difficulty": 3,
-      "skills": [
-        "rg-diagnostics"
-      ],
-      "title": "Reading the summary",
-      "prose": "A fund holds illiquid loans and marks them once a month. Its 60 monthly returns, in %, are regressed on the market and a credit factor. This is the `summary()`.",
-      "canvas": {
-        "kind": "console",
-        "params": {
-          "title": "res.summary(), fund on mkt and credit (narrowed to fit)",
-          "lines": [
-            "                   OLS Regression Results",
-            "============================================================",
-            "Dep. Variable:             fund  R-squared:            0.635",
-            "Model:                      OLS  Adj. R-squared:       0.622",
-            "Method:           Least Squares  F-statistic:          49.56",
-            "No. Observations:            60  Prob (F-statistic): 3.38e-13",
-            "Df Residuals:                57  Log-Likelihood:     -94.381",
-            "Df Model:                     2  AIC:                  194.8",
-            "Covariance Type:      nonrobust  BIC:                  201.0",
-            "============================================================",
-            "           coef  std err       t  P>|t|   [0.025  0.975]",
-            "const    0.6507    0.156   4.175  0.000    0.339   0.963",
-            "mkt      0.3410    0.036   9.360  0.000    0.268   0.414",
-            "credit   0.4456    0.095   4.701  0.000    0.256   0.635",
-            "============================================================",
-            "Omnibus:                  3.646  Durbin-Watson:        0.788",
-            "Prob(Omnibus):            0.162  Jarque-Bera (JB):     1.897",
-            "Skew:                     0.114  Prob(JB):             0.387",
-            "Kurtosis:                 2.159  Cond. No.              4.37",
-            "============================================================"
-          ]
-        },
-        "state": {}
-      },
-      "question": "Tap the line that tells you whether one month's residual tends to repeat the last.",
-      "widget": {
-        "kind": "tap-regions",
-        "answer": [
-          "l16"
-        ],
-        "max": 1,
-        "countWord": "lines"
-      },
-      "feedback": {
-        "correct": "Durbin-Watson is 0.788, far below 2: the residuals echo from month to month.",
-        "generic": "Not quite right. Find the statistic that compares each residual with the one before it.",
-        "byKey": {
-          "l17": "Prob(Omnibus) and Jarque-Bera test whether the residuals look normal. They say nothing about order in time.",
-          "l6": "Prob (F-statistic) tests whether the factors matter jointly. It assumes independent months; it does not check them.",
-          "l9": "Covariance Type says these errors assume independent months. It states the assumption but does not test it.",
-          "l13": "That row tests the market's coefficient. It does not check how the residuals run in time.",
-          "l18": "Skew and Prob(JB) describe the shape of the residuals, not how one month follows the last."
-        }
-      },
-      "explain": {
-        "text": "Durbin-Watson is about $2(1 - \\rho)$, so $d = 0.788$ means a residual autocorrelation near 0.6. Smoothed marks on illiquid loans do exactly this. The nonrobust errors assume independent months, so refit with HAC errors before trusting any $t$.",
-        "canvas": {
-          "shade": {
-            "dw": [
-              "l16"
-            ]
-          },
-          "tone": {
-            "l9": "muted"
-          }
-        }
-      }
-    },
-    {
       "id": "s-bootstrap-order",
       "difficulty": 3,
       "skills": [
@@ -1359,6 +1290,177 @@
       "explain": {
         "text": "$k = 0.025 \\times 2{,}000 = 50$ values go from each end, leaving ranks 51 to 1,950. Drawing with replacement makes each resample differ from the data. Resampling single days assumes independent days; autocorrelated returns need blocks."
       }
+    },
+    {
+      "id": "s-uniform-moments",
+      "difficulty": 3,
+      "pace": 120,
+      "skills": [
+        "ht-theory"
+      ],
+      "title": "When the mean says nothing",
+      "prose": "A pricing model's rounding errors, in ticks, are uniform on $(-\\theta, \\theta)$, so $E[X] = 0$ and $E[X^2] = \\tfrac{\\theta^2}{3}$. Over 50 quotes the errors have mean 0.02 and mean square $\\tfrac{1}{n}\\sum x_i^2 = 0.12$.",
+      "question": "What is the method-of-moments estimate $\\hat\\theta$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "ticks",
+        "accept": "0.60: $\\sqrt{3 \\times 0.12}$ (0.599 from the variance $0.12 - 0.02^2$ is also accepted)",
+        "wrong": [
+          {
+            "id": "no-root",
+            "value": 0.36,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "no-three",
+            "value": 0.3464,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "two-mean",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{\\hat\\theta^2}{3} = 0.12$, so $\\hat\\theta = \\sqrt{0.36} = 0.6$ ticks.",
+        "generic": "Not quite right. The first moment is 0 whatever $\\theta$ is, so match the second moment instead.",
+        "byKey": {
+          "no-root": "You solved for $\\hat\\theta^2$. Take the square root: $\\sqrt{0.36} = 0.6$.",
+          "no-three": "You set $\\hat\\theta^2 = 0.12$. The model's second moment is $\\tfrac{\\theta^2}{3}$, so $\\hat\\theta^2 = 3 \\times 0.12$.",
+          "two-mean": "You used $2\\bar x$, the estimate for a uniform on $(0, \\theta)$. Here the mean is 0 for every $\\theta$, so it fixes nothing."
+        }
+      },
+      "explain": {
+        "text": "The model's mean is 0 for every $\\theta$, so the mean equation cannot fix $\\theta$; the sample's 0.02 is noise. The second moment can: $\\tfrac{\\hat\\theta^2}{3} = 0.12$ gives $\\hat\\theta^2 = 0.36$. So $\\hat\\theta = 0.6$ ticks."
+      }
+    },
+    {
+      "id": "s-chi-order-mix",
+      "difficulty": 3,
+      "pace": 200,
+      "skills": [
+        "ht-likelihood",
+        "ht-pvalue"
+      ],
+      "title": "Does the order mix fit?",
+      "prose": "A broker's model says 50% of its orders are limit orders, 30% market orders and 20% stop orders. A sample of 200 orders holds 86 limit, 74 market and 40 stop orders.",
+      "parts": [
+        {
+          "question": "Fill in Pearson's $X^2$ for the model, to 2 decimal places, and its degrees of freedom.",
+          "widget": {
+            "kind": "table",
+            "columns": [
+              "$X^2$",
+              "Degrees of freedom"
+            ],
+            "rows": [
+              [
+                {
+                  "edit": true,
+                  "answer": 5.2267,
+                  "tol": {
+                    "abs": 0.005
+                  },
+                  "wrong": [
+                    {
+                      "id": "over-observed",
+                      "value": 4.93,
+                      "tol": {
+                        "abs": 0.005
+                      }
+                    },
+                    {
+                      "id": "no-divide",
+                      "value": 392,
+                      "tol": {
+                        "abs": 0.5
+                      }
+                    }
+                  ]
+                },
+                {
+                  "edit": true,
+                  "answer": 2,
+                  "tol": {
+                    "abs": 0
+                  },
+                  "wrong": [
+                    {
+                      "id": "cells",
+                      "value": 3,
+                      "tol": {
+                        "abs": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            ]
+          },
+          "feedback": {
+            "correct": "Expected 100, 60 and 40, so $X^2 = 1.96 + 3.27 + 0 = 5.23$ on 2 degrees of freedom.",
+            "generic": "Not quite right. Expected counts are 200 times each share; add $\\tfrac{(O - E)^2}{E}$ over the three cells.",
+            "byKey": {
+              "r0c0": "The expected counts are 100, 60 and 40. Each cell adds $\\tfrac{(O - E)^2}{E}$.",
+              "r0c1": "Three cells with a fixed total leave two free counts, and the model fixes every share.",
+              "over-observed": "You divided by the observed counts. Pearson's statistic divides by the expected counts, 100 and 60.",
+              "no-divide": "You added the squared gaps, $196 + 196$, without dividing each by its expected count.",
+              "cells": "You counted the cells. The fixed total of 200 takes one away, and no parameter was estimated, so it is $3 - 1$."
+            }
+          },
+          "explain": {
+            "text": "The expected counts are $200 \\times 0.5 = 100$, $200 \\times 0.3 = 60$ and $200 \\times 0.2 = 40$. So $X^2 = \\tfrac{14^2}{100} + \\tfrac{14^2}{60} + 0 = 1.96 + 3.27 = 5.23$. Three cells with a fixed total and no estimated parameter give 2 degrees of freedom."
+          }
+        },
+        {
+          "prose": "The 5% cut-offs of $\\chi^2$ are 3.841 on 1 degree of freedom, 5.991 on 2 and 7.815 on 3.",
+          "question": "What do you conclude at the 5% level?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "a",
+                "text": "Keep the model: 5.23 is below 5.991",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Reject the model: 5.23 is above 3.841",
+                "why": "You used the cut-off for 1 degree of freedom. Three cells with a fixed total give 2."
+              },
+              {
+                "id": "c",
+                "text": "Reject the model: the market orders are 14 over",
+                "why": "One cell's gap is not a test. The statistic weighs every cell against its expected count."
+              },
+              {
+                "id": "d",
+                "text": "No test: one expected count is too small",
+                "why": "The smallest expected count is 40, far above the usual 5."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "5.23 is below 5.991, so the data do not reject the model at 5%.",
+            "generic": "Not quite right. Compare $X^2$ with the cut-off for its degrees of freedom."
+          },
+          "explain": {
+            "text": "On 2 degrees of freedom the 5% cut-off is 5.991, and $X^2 = 5.23$ is below it. The p-value is $e^{-5.23/2} \\approx 0.073$, above 0.05. So the order mix is consistent with the model at 5%."
+          }
+        }
+      ]
     },
     {
       "id": "s-bh-tap",
@@ -1706,6 +1808,222 @@
       "explain": {
         "text": "The Sharpe ratio's $t$ equals the mean over its standard error, $\\bar r/(s/\\sqrt n)$. Searching $N$ strategies multiplies the chance of a lucky one, so Bonferroni multiplies $p$ by $N$.\n\n```python\nss = sum((r - mean) ** 2 for r in monthly)\nsd = math.sqrt(ss / (n - 1))\nsharpe = mean / sd * math.sqrt(12)\nt = sharpe * math.sqrt(n / 12)\np = 1 - phi(t)\np_adj = min(1.0, n_tried * p)\n```"
       }
+    },
+    {
+      "id": "s-pool-rates",
+      "difficulty": 4,
+      "pace": 240,
+      "skills": [
+        "ht-likelihood"
+      ],
+      "title": "Same rate in two pools?",
+      "prose": "Over the same 30 minutes, dark pool A printed 90 trades and dark pool B printed 60. Model each count as Poisson. The null says the two pools share one rate; the alternative gives each its own.",
+      "question": "Fill in $-2\\ln\\Lambda$, to 2 decimal places, and the degrees of freedom of its $\\chi^2$ limit.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$-2\\ln\\Lambda$",
+          "Degrees of freedom"
+        ],
+        "rows": [
+          [
+            {
+              "edit": true,
+              "answer": 6.0406,
+              "tol": {
+                "abs": 0.005
+              },
+              "wrong": [
+                {
+                  "id": "no-two",
+                  "value": 3.0203,
+                  "tol": {
+                    "abs": 0.005
+                  }
+                },
+                {
+                  "id": "pearson",
+                  "value": 6.0,
+                  "tol": {
+                    "abs": 0.001
+                  }
+                },
+                {
+                  "id": "sign",
+                  "value": -6.0406,
+                  "tol": {
+                    "abs": 0.005
+                  }
+                }
+              ]
+            },
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "model-size",
+                  "value": 2,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "$-2\\ln\\Lambda = 2\\big[90\\ln\\tfrac{90}{75} + 60\\ln\\tfrac{60}{75}\\big] = 6.04$, on 1 degree of freedom.",
+        "generic": "Not quite right. Under the null both counts expect 75. Under the alternative each pool's rate is its own count.",
+        "byKey": {
+          "r0c0": "Each count's fitted mean is 75 under the null and the count itself under the alternative. The Poisson log-likelihood ratio is $\\sum O\\ln\\tfrac{O}{75}$; double it.",
+          "r0c1": "The full model has two rates and the null one. Count the parameters the null removes.",
+          "no-two": "You gave $\\ln$ of the likelihood ratio, 3.02. Wilks' theorem is about twice that.",
+          "pearson": "You found Pearson's $X^2$, $\\tfrac{15^2}{75} + \\tfrac{15^2}{75}$. It approximates the likelihood-ratio statistic but is not it.",
+          "sign": "You put the null on top without the minus sign. $-2\\ln\\Lambda$ is never negative.",
+          "model-size": "You counted the parameters of the full model. The degrees of freedom count what the null removes: $2 - 1$."
+        }
+      },
+      "explain": {
+        "text": "Under the null the shared rate gives each pool $\\tfrac{150}{2} = 75$ expected trades; under the alternative each gets its own count. The Poisson terms leave $-2\\ln\\Lambda = 2\\big[90\\ln 1.2 + 60\\ln 0.8\\big] = 2(16.41 - 13.39) \\approx 6.04$. The null removes one parameter, so compare with $\\chi^2_1$: 6.04 is above 3.841, and the data reject one shared rate at 5%."
+      }
+    },
+    {
+      "id": "s-pareto-losses",
+      "difficulty": 4,
+      "pace": 360,
+      "skills": [
+        "ht-theory"
+      ],
+      "title": "Tail losses: summary, estimate, floor",
+      "prose": "Losses above £1m, in £m, follow a Pareto model with density $f(x \\mid \\alpha) = \\alpha x^{-(\\alpha + 1)}$ for $x > 1$, so $\\ln f = \\ln\\alpha - (\\alpha + 1)\\ln x$. A desk has 80 independent losses with $\\sum \\ln x_i = 32$.",
+      "parts": [
+        {
+          "question": "Which statistic is sufficient for $\\alpha$?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "a",
+                "text": "$\\sum \\ln x_i$",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "$\\sum x_i$",
+                "why": "That is the sufficient statistic for exponential data. Here the density holds $x$ through a power, so the product of the $x_i$ appears."
+              },
+              {
+                "id": "c",
+                "text": "$\\max x_i$",
+                "why": "The maximum is sufficient when the support moves with the parameter, as for a uniform. Here the support, $x > 1$, is fixed."
+              },
+              {
+                "id": "d",
+                "text": "The median of the $x_i$",
+                "why": "The joint density does not factor through the median. Two samples with one median can have different likelihoods for $\\alpha$."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The joint density is $\\alpha^n \\exp\\big(-(\\alpha + 1)\\sum\\ln x_i\\big)$, a function of $\\alpha$ and $\\sum \\ln x_i$ only.",
+            "generic": "Not quite right. Multiply the 80 densities and see which summary of the data meets $\\alpha$."
+          },
+          "explain": {
+            "text": "$\\prod \\alpha x_i^{-(\\alpha + 1)} = \\alpha^n \\big(\\prod x_i\\big)^{-(\\alpha + 1)} = \\alpha^n e^{-(\\alpha + 1)\\sum\\ln x_i}$. The data meet $\\alpha$ only through $\\sum \\ln x_i$, so by the factorisation theorem it is sufficient. The product $\\prod x_i$ carries the same information."
+          }
+        },
+        {
+          "question": "What is the maximum-likelihood estimate $\\hat\\alpha$?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "a number",
+            "accept": "2.5: $\\tfrac{80}{32}$",
+            "wrong": [
+              {
+                "id": "upside-down",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "exponent",
+                "value": 1.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{n}{\\alpha} - \\sum\\ln x_i = 0$ gives $\\hat\\alpha = \\tfrac{80}{32} = 2.5$.",
+            "generic": "Not quite right. Differentiate $n\\ln\\alpha - (\\alpha + 1)\\sum\\ln x_i$ in $\\alpha$ and set it to 0.",
+            "byKey": {
+              "upside-down": "You gave $\\tfrac{32}{80}$. The slope $\\tfrac{n}{\\alpha} - \\sum \\ln x_i$ is 0 at $\\alpha = \\tfrac{n}{\\sum\\ln x_i}$.",
+              "exponent": "You found $\\alpha + 1 = 2.5$. The power $\\alpha + 1$ drops out on differentiating: the slope is $\\tfrac{n}{\\alpha} - \\sum\\ln x_i$."
+            }
+          },
+          "explain": {
+            "text": "The log-likelihood is $\\ell(\\alpha) = 80\\ln\\alpha - (\\alpha + 1) \\times 32$. Its slope $\\tfrac{80}{\\alpha} - 32$ is 0 at $\\alpha = 2.5$, and $\\ell'' = -\\tfrac{80}{\\alpha^2} < 0$, so it is a peak. So $\\hat\\alpha = 2.5$."
+          }
+        },
+        {
+          "question": "Take $\\alpha = 2.5$. What is the Cramér-Rao bound for the variance of an unbiased estimator of $\\alpha$ from the 80 losses? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.078125,
+            "tol": {
+              "abs": 0.0001
+            },
+            "placeholder": "a number",
+            "accept": "0.0781: $\\tfrac{\\alpha^2}{n} = \\tfrac{6.25}{80}$",
+            "wrong": [
+              {
+                "id": "sd",
+                "value": 0.2795,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "info",
+                "value": 12.8,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "alpha-not-squared",
+                "value": 0.03125,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$I(\\alpha) = \\tfrac{1}{\\alpha^2}$, so the bound is $\\tfrac{1}{nI(\\alpha)} = \\tfrac{6.25}{80} = 0.0781$.",
+            "generic": "Not quite right. Find $I(\\alpha) = -E\\big[\\tfrac{\\partial^2}{\\partial\\alpha^2}\\ln f\\big]$ for one loss, then the bound is $\\tfrac{1}{nI(\\alpha)}$.",
+            "byKey": {
+              "sd": "You took the square root, a standard error. The bound is on the variance.",
+              "info": "You gave $nI(\\alpha) = \\tfrac{80}{6.25}$, the information in the sample. The bound is its reciprocal.",
+              "alpha-not-squared": "You used $\\tfrac{\\alpha}{n}$. The second derivative of $\\ln\\alpha$ is $-\\tfrac{1}{\\alpha^2}$, so $I(\\alpha) = \\tfrac{1}{\\alpha^2}$."
+            }
+          },
+          "explain": {
+            "text": "$\\tfrac{\\partial^2}{\\partial\\alpha^2}\\ln f = -\\tfrac{1}{\\alpha^2}$, which holds no data, so one loss carries $I(\\alpha) = \\tfrac{1}{\\alpha^2}$. The support $x > 1$ does not move with $\\alpha$, so the bound applies. It is $\\tfrac{1}{80 I(\\alpha)} = \\tfrac{2.5^2}{80} = 0.078125$, a standard error of about 0.28."
+          }
+        }
+      ]
     },
     {
       "id": "s-factor-code",

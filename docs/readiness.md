@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 556 | 0 | 556 | 324 | 1328 |
+| Required | 556 | 0 | 556 | 325 | 1328 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 499 | 2260 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 500 | 2260 |
 <!-- /generated -->
 
 **Dependency conflicts**
