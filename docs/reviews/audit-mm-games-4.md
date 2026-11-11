@@ -195,3 +195,18 @@ Blind read of the content-string diff of fix commit `6bc15e4e` (`git diff 6bc15e
 6. homework-4.json | items[0].widget.starter and items[0].widget.solution (docstring) | imprecise | minor | Layout only: the edited docstring line `face (payoff plus cash) and keep those above 0. Return (profit, trades) for the` is 82 characters where every other line is under 60, so it wraps or scrolls on a phone. No change of meaning. | Line lengths read from the JSON. | In both strings replace the docstring text from `(at the bid).` to its end with: `(at the bid). Score each by its profit on the worst\n    face (payoff plus cash) and keep those above 0.\n    Return (profit, trades) for the best: highest profit,\n    then fewest trades, then the first in sorted order;\n    trades is a sorted tuple of (name, \"buy\" or \"sell\").\n    With none: (Fr(0), ()).\"\"\"`
 
 No `wrong` and no `serious` finding. The arbitrage definition, the board rule, both code items and every changed key and distractor hold.
+
+## Fix pass (fix-pass read follow-up)
+
+Six findings: 6 fixed, 0 disputed. No key, option, test or rubric changed.
+
+1. Fixed. l15-arbitrage-in-a-book.json `screens[0].explain.text`. Basis: Shreve I, Def. 1.1.2 (no chance of loss, some chance of gain), the form screens[9] and summary.ideas[0] use. Third sentence now: "That is an **arbitrage**: a trade that cannot lose on any outcome and gains on at least one." The second sentence still states the £1 a unit gain.
+2. Fixed. l16-several-contracts.json `screens[10].widget.how`. Basis: the solution returns `max(0, min(net) + cash)`, so a worst-face total of 0 gives 0 whatever the other faces pay. Now: "A combination that can lose, or only break even, on some face returns 0."
+3. Fixed. l17-options-on-a-game.json `screens[8].explain.text`. Basis: short straddle at strike 7 for 2.0 pays 2 − |S − 7|; counted over 36 rolls: gain 16 (sums 6 to 8), level 8 (sums 5, 9), loss 12 (sums 2 to 4, 10 to 12). Third sentence now ends "and loses on 12 rolls in 36."
+4. Fixed. l17-options-on-a-game.json `summary.ideas[2]`. Basis: same count; 16 gains in 36 is under half, so "often" was wrong in spirit. Now: "A short straddle gains near the middle and owes most at the extremes; a revealed die moves every option."
+5. Fixed. review-4.json `items[9].prose`. Basis: Kelly f = 0.2 (£10) and f = 0.5 − 0.5/2 = 0.25 (£12.50); scaled by 15/22.5 gives £6.67 and £8.33; my own grid of expected log wealth with £15 at risk gives £5.10 and £9.90 (growth 3.98320 against 3.98188). The prompt now states the method, so the key £8.33 is right by construction: "At most £15 at risk in the round, so scale both Kelly stakes by the same factor." Key, wrong values and feedback unchanged.
+6. Fixed. homework-4.json `items[0].widget.starter` and `items[0].widget.solution` docstring rewrapped; longest line now 57 characters; wording unchanged; the two docstrings are identical. Run: solution passes 10 of 10 (9 hidden tests plus example), starter fails 10 of 10.
+
+Concepts script: the l17 check at the straddle count matched the old text "and loses on 12"; it now matches "and loses on 12 rolls in 36" (same assertion).
+
+Gates: validator 0 errors; `mm-games-L4-concepts.py` 297 passed, 0 failed, exit 0; voice scan 35 over the course 0 and 0; playthrough of l15, l16, l17, review-4 and homework-4, desktop and `--mobile`, all passed.
