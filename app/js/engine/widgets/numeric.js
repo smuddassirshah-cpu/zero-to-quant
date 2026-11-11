@@ -29,8 +29,7 @@
       const t = input.value.trim();
       if (!t) return NaN;
       if (isSet) { const sv = G().numSetValues(t, { percent: pct }); return sv.length && sv.every(Number.isFinite) ? sv[0] : NaN; }
-      const v = G().parseNum(t);
-      return pct && !t.includes('%') ? v / 100 : v;
+      return G().numValue(t, spec);
     };
     const syncHelp = () => { const t = input.value.trim(); help.hidden = !t || Number.isFinite(parsed()) || (isSet ? /[,;]\s*$|[-−+]\s*$|\/\s*$|\b(?:o|or|a|an|and)\s*$/.test(t) : /^[-−]?[\d.,]*\/?$/.test(t)); };
     input.addEventListener('input', () => { syncHelp(); ctx.change && ctx.change({ text: input.value }); });
@@ -38,9 +37,10 @@
       if (spec.accept) return 'Accepted: ' + G().inline(spec.accept);
       if (isSet) { const st = spec.tol || { abs: 0 }; return `Accepted: ${G().setAnswerText(spec)}, in either order${st.rel ? ` (each within ${G().fmtNum(st.rel * 100)}%)` : st.abs ? ` (each within ${G().fmtNum(st.abs)})` : ''}`; }
       const t = spec.tol || { abs: 0 }, a = +spec.answer, k = pct ? 100 : 1;
-      if (t.rel) return `Accepted: ${G().fmtNum(a * k * (1 - t.rel))} to ${G().fmtNum(a * k * (1 + t.rel))}`;
-      if (t.abs) return `Accepted: ${G().fmtNum((a - t.abs) * k)} to ${G().fmtNum((a + t.abs) * k)}`;
-      return `Accepted: ${G().fmtNum(a * k)} exactly`;
+      const sc = +spec.scale, tail = Number.isFinite(sc) && sc > 0 && sc !== 1 ? `, or the unscaled value ${G().fmtNum(a * sc)}` : ''; // ENGINE-BACKLOG 907
+      if (t.rel) return `Accepted: ${G().fmtNum(a * k * (1 - t.rel))} to ${G().fmtNum(a * k * (1 + t.rel))}${tail}`;
+      if (t.abs) return `Accepted: ${G().fmtNum((a - t.abs) * k)} to ${G().fmtNum((a + t.abs) * k)}${tail}`;
+      return `Accepted: ${G().fmtNum(a * k)} exactly${tail}`;
     };
     const showAccept = () => { acc.innerHTML = acceptText(); acc.hidden = false; Z.mathify && Z.mathify(acc); };
     const mark = (k) => { field.classList.remove('correct', 'wrong', 'wd-rev'); if (k) field.classList.add(k); };
@@ -56,11 +56,7 @@
       dirty: () => input.value !== '',
       grade() {
         if (isSet) { const r = G().numSetGrade(spec, input.value); return { ok: r.ok, key: r.key, line: r.line, detail: r.detail }; }
-        const v = parsed();
-        if (!Number.isFinite(v)) return { ok: false, key: null, detail: { value: null } };
-        const ok = G().within(v, +spec.answer, spec.tol);
-        const w = ok ? null : G().matchWrong(v, spec.wrong, { abs: 1e-9 });
-        return { ok, key: w ? w.id : null, detail: { value: v } };
+        return G().numGrade(spec, input.value);
       },
       lock() { input.readOnly = true; },
       unlock() { input.readOnly = false; mark(null); clearWhy(); acc.hidden = true; },

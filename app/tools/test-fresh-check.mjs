@@ -79,6 +79,37 @@ r = run(['--file', join(root, 'courses/c1/review-2.json'), '--no-code']);
 check('three shared non-trivial numbers with a lesson screen: advisory line, exit 0 (614)', r.status === 0 && /3 shared numbers/.test(r.stdout) && /1 advisory/.test(r.stdout), r.stdout);
 check('--shared-numbers 0 switches it off', !/shared numbers \(/.test(run(['--file', join(root, 'courses/c1/review-2.json'), '--no-code', '--shared-numbers', '0']).stdout));
 
+// ENGINE-BACKLOG 893: a problem-set item that shares a displayed formula, or two stated parameters, with a lesson, quiz, review, homework or exam of its
+// course. The first four are the pre-fix texts of reuses the second readers found by hand (docs/reviews/review-problems-1.3-a, -1.3-b, -0.2-a), each
+// against the unit of the course it repeated; the tool found none of them before.
+const sc = (id, prose, q) => ({ id, prose, question: q, widget: num(1) });
+put('courses/s1/course.json', { id: 's1' });
+put('courses/s1/homework-1.json', { id: 'homework-1', items: [sc('h-derive-falling-area', 'Take the falling curve $f(x) = 9 - x^2$ on $[1, 3]$ and split the interval into strips of equal width.', 'What is the area?')] });
+put('courses/s1/review-3.json', { id: 'review-3', items: [sc('r-log-return-product', 'A price follows $P(t) = 40e^{0.06t}(1 + 0.02t)$ and the desk tracks its growth.', 'What is the rate of growth?')] });
+put('courses/s1/l1-tangent.json', { id: 'l1', screens: [{ type: 'ladder', title: 'T', prose: 'Tangent lines.', question: 'The cube root $f(x) = x^{1/3}$ has $f(8) = 2$ and $f\'(x) = \\tfrac13 x^{-2/3}$. Estimate the root of 8.06.', widget: num(2) }], quiz: [] });
+put('courses/s1/l9-lines.json', { id: 'l9', screens: [{ type: 'ladder', title: 'L', prose: 'A pipe follows $y = 0.5x + 2$ and another pipe is parallel to it.', question: 'What is the gradient?', widget: num(0.5) }], quiz: [] });
+put('courses/s1/l2-vols.json', { id: 'l2', screens: [{ type: 'ladder', title: 'V', prose: 'Asset A has volatility 31.5 and asset B 22.75 with an index of 1604.', question: 'Which is larger?', widget: num(1) }], quiz: [] });
+put('courses/s1/problems-1.json', { id: 'problems-1', items: [
+  sc('p-falling-parabola', 'Take the falling curve $f(x) = 9 - x^2$ on $[0, 3]$. We split the interval into strips of equal width.', 'What is the area under the curve?'),
+  sc('p-relative-strength', 'A price follows $P(t) = 40e^{0.06t}$ and an index follows another curve.', 'What is the ratio?'),
+  sc('p-cube-root', 'You want the cube root of 8.06 and take $f(x) = x^{1/3}$ with $f\'(x) = \\tfrac{1}{3}x^{-2/3}$.', 'What is the estimate?'),
+  sc('p-path-and-pipe', 'A path follows the line $y = 0.5x + 2$ across the field, and a pipe runs parallel.', 'What is the gradient of the pipe?'),
+  sc('p-two-assets', 'A fund holds asset A with volatility 31.5 and asset B with volatility 22.75, so that the index reads 1604.', 'What is the blend?'),
+  sc('p-fresh', 'A bag holds 7 red and 5 blue marbles and a child draws three without looking.', 'What is the chance all three are red?'),
+] });
+r = run(['--file', join(root, 'courses/s1/problems-1.json'), '--no-code']);
+const setLines = r.stdout.split('\n');
+const line = (id, re) => setLines.some((l) => l.includes(`problems-1.json:items[${id}]`) && re.test(l));
+check('set reuse: the same curve as a homework item shares a formula (falling parabola)', line(0, /homework-1\.json:items\[0\].*shared formula f\(x\)=9-x\^2/), r.stdout);
+check('set reuse: a formula inside a longer one of a review item (relative strength)', line(1, /review-3\.json:items\[0\].*shared formula P\(t\)=40e\^\{0\.06t\}/), r.stdout);
+check('set reuse: the same function as a lesson screen (cube root)', line(2, /l1-tangent\.json:screens\[0\].*shared formula f\(x\)=x\^\{1\/3\}/), r.stdout);
+check('set reuse: the same line as a lesson screen (path and pipe)', line(3, /l9-lines\.json:screens\[0\].*shared formula y=0\.5x\+2/), r.stdout);
+check('set reuse: two specific parameters shared with a lesson screen (volatilities)', line(4, /l2-vols\.json:screens\[0\].*2 shared parameters \(31\.5 22\.75\)|l2-vols\.json:screens\[0\].*3 shared parameters/), r.stdout);
+check('set reuse: an item with nothing shared is clean, and the lines are advisory (exit 0, "advisory")', !setLines.some((l) => l.includes('problems-1.json:items[5]')) && r.status === 0 && /advisory/.test(r.stdout), r.stdout);
+check('set reuse: --no-set-reuse switches it off', !/shared formula|shared parameters/.test(run(['--file', join(root, 'courses/s1/problems-1.json'), '--no-code', '--no-set-reuse']).stdout));
+check('set reuse: a review or homework set is not scanned for it (only problem sets)', !/shared formula/.test(run(['--file', join(root, 'courses/s1/review-3.json'), '--no-code']).stdout));
+check('set reuse: --shared-params 4 needs four specific parameters', !/shared parameters/.test(run(['--file', join(root, 'courses/s1/problems-1.json'), '--no-code', '--shared-params', '4']).stdout));
+
 rmSync(root, { recursive: true, force: true });
 console.log(fails ? `${fails} failed` : 'all passed');
 process.exit(fails ? 1 : 0);

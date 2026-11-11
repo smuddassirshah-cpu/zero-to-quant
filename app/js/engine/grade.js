@@ -10,6 +10,10 @@
      maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget, 6 s budget
      exprEqual(ce, a, b, { functions })  symbolic equivalence after simplify, with a 6-point numeric second opinion; real and
                                    imaginary parts both compared when an i appears; vectors and matrices entry by entry
+     exprGrade(ce, spec, latex, ascii)   the whole grade of one typed expression, { ok, key, line }: equal to answer or accept (typed left side
+                                   dropped, `domain` sampling ranges, both parts of a complex value), then the shape of `form` (an answer
+                                   that is a solved relation also needs "solved"); the expression widget, the tests and tools/grade-regression.mjs all call it
+     numGrade(spec, text), numValue, numText   one numeric answer: a letter and = before the number and a unit after it are dropped, `scale`
      exprFormOk(ce, form, latex)   the shape check of form "factorised-fully" or "completed-square" (shapeFactorised, shapeFullyFactorised,
                                    shapeCompletedSquare are the same checks on MathJSON; ENGINE-BACKLOG 830, 831)
      exprSetGrade(ce, spec, text), numSetGrade(spec, text)   a set answer (spec.answers with unordered: true): { ok, key, line };
@@ -207,8 +211,29 @@
   const GREEK = 'alpha|beta|gamma|delta|varepsilon|epsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|rho|varrho|sigma|varsigma|tau|upsilon|phi|varphi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega';
   const CALLHEAD = new RegExp(`(?<![A-Za-z\\\\])([A-Za-z]|\\\\(?:${GREEK})(?![A-Za-z]))((?:_(?:[A-Za-z0-9]|\\{[^{}]*\\}))?(?:\\^(?:[A-Za-z0-9]|\\{[^{}]*\\}))?)(\\s*)(?=\\\\left\\s*\\(|\\()`, 'g');
   const uncall = (t, fns) => t.replace(CALLHEAD, (m, b, sc, sp) => ((fns || []).includes(b) || (fns || []).includes(b.replace(/^\\/, '')) ? m : `${b}${sc}\\cdot `));
+  /* ENGINE-BACKLOG 906 and 908, plain-text spellings the engine misreads before they reach it:
+       12,000-s and 12{,}000-s      a thousands comma (three digits after a comma, not at the end of a bracket or a list: (2,100) stays a pair)
+       80*0.9^(n-1), 2^(n-1)        a power whose exponent is a bracket group: ^( ... ) is ^{( ... )}, as the keyboard writes it
+       0.25(500), 1.5\left(2\right)   a decimal directly before a bracket: the engine reads 0.25(500) as the repeating decimal 0.25500500..., it is a product */
+  const THOUSANDS = /(?<![\d.,])(\d{1,3}(?:(?:,|\{,\})\d{3})+)(?![\d,;)\]]|\s*\\right)/g;
+  const caretParen = (t) => {
+    let out = '', i = 0;
+    while (i < t.length) {
+      if (t[i] === '^') {
+        const m = /^\^\s*(?:\\left\s*)?\(/.exec(t.slice(i));
+        if (m) {
+          let d = 0, j = i + m[0].length - 1;
+          for (; j < t.length; j++) { if (t[j] === '(') d++; else if (t[j] === ')' && --d === 0) break; }
+          if (j < t.length) { out += '^{' + t.slice(i + 1, j + 1).trim() + '}'; i = j + 1; continue; }
+        }
+      }
+      out += t[i++];
+    }
+    return out;
+  };
+  const tidy = (t) => caretParen(String(t).replace(THOUSANDS, (m) => m.replace(/\{,\}|,/g, '')).replace(/(\d*\.\d+)(?=\s*(?:\\left\s*)?\()/g, '$1\\cdot '));
   const prep = (s, cx, fns) => {
-    let t = normI(s).replace(/(?:\\left\s*)?\\langle\s*/g, '(').replace(/(?:\\right\s*)?\\rangle/g, ')').replace(/\\epsilon(?![A-Za-z])|[εϵ]/g, '\\varepsilon')
+    let t = tidy(normI(s)).replace(/(?:\\left\s*)?\\langle\s*/g, '(').replace(/(?:\\right\s*)?\\rangle/g, ')').replace(/\\epsilon(?![A-Za-z])|[εϵ]/g, '\\varepsilon')
       /* P32-expr-D: D and N are products, whatever follows (Dt, 4Dx, tD, N(0,1), D(t)). The engine reads D and N as its operators
          (D t is the tuple ["Tuple","D","t"]). A screen can keep the operator reading before a letter by listing "D" or "N" in `functions`. */
       .replace(/(?<!\\[A-Za-z]*)(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?=([A-Za-z])?)/g, (m, c, nx) => (nx && (fns || []).includes(c) ? m : `\\mathrm{${c}}`));
@@ -299,6 +324,7 @@
     if (!want && got) return `The answer is a single value, not ${got.vec ? 'a vector' : 'a matrix'}.`;
     return `Your answer has ${shapeWord(got)}. The answer has ${shapeWord(want)}.`;
   };
+  let DOMAIN = null; // the sampling ranges of the comparison in progress (exprEqual sets it from opts.domain)
   const scalarEqual = (ce, A, B, counting, cx, ints, prop) => {
     let sym = false;
     if (!prop) { try { sym = !!A.simplify().isEqual(B.simplify()); } catch { sym = false; } }
@@ -306,28 +332,37 @@
     try { vars = [...new Set([...(A.unknowns || []), ...(B.unknowns || [])])].filter(v => !(cx && v === 'iota')); } catch { vars = []; }
     const num = (E, sub) => { try { const v = (sub ? E.subs(sub) : E).N(); const x = v.re ?? v.valueOf(); return typeof x === 'number' ? x : NaN; } catch { return NaN; } };
     /* complex mode: [re, im] from our evaluator; an unsupported function falls back to the engine's N() */
+    /* ENGINE-BACKLOG 898: real mode uses the same evaluator, so a root of a negative number is imaginary (not undefined) and both
+       parts are compared: sqrt(x-5) is not 3 sqrt(x-5). It is also exact where the engine's N() flushes a tiny term to 0
+       (400e^{-8u} at u = 2.9), so 400/e^{8u} equals it. A form the evaluator does not know falls back to the engine as before. */
     const val = (E, p) => {
-      if (!cx) return [num(E, p), 0];
       const env = { iota: [0, 1] }; for (const k in p || {}) env[k] = [p[k], 0];
       try { return cxEval(E.json, env); } catch { /* engine fallback below */ }
+      if (!cx) return [num(E, p), 0];
       try { const v = E.subs({ ...(p || {}), iota: ce.box(['Complex', 0, 1]) }).N(); return [typeof v.re === 'number' ? v.re : NaN, typeof v.im === 'number' ? v.im : 0]; } catch { return [NaN, NaN]; }
     };
     const fin = (z) => Number.isFinite(z[0]) && Number.isFinite(z[1]);
     const close = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(x), Math.abs(y));
     let seed = 20240531; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
     const draw = () => { let v; do { v = 0.3 + 2.7 * rnd(); } while (Math.abs(v - 1) < 0.08); return +v.toFixed(6); };
+    /* ENGINE-BACKLOG 898: a symbol with a range in the item's `domain` ({ "s": [0.05, 0.9] }) is drawn from that range */
+    const dom = DOMAIN || {};
+    const drawIn = (v) => { const r = dom[v]; if (!Array.isArray(r) || r.length !== 2 || !(r[1] > r[0])) return draw(); return +(r[0] + (r[1] - r[0]) * rnd()).toFixed(6); };
     const drawInt = () => 1 + Math.floor(rnd() * 12);
     /* P32-expr-int: a symbol listed in `integers` takes six distinct whole numbers from 1 to 9 (its own fixed order, so two
        integer symbols differ), the rest keep 0.3 to 3. Own generator: draws for other symbols are unchanged. */
     const useInts = ints && ints.length ? vars.filter(v => ints.includes(v)) : [];
     const orders = {};
     useInts.forEach((v, j) => { let s2 = 1013 + 7919 * (j + 1); const r2 = () => { s2 = (s2 * 1103515245 + 12345) % 2147483648; return s2 / 2147483648; }; const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9]; for (let n = 8; n > 0; n--) { const m = Math.floor(r2() * (n + 1)); [pool[n], pool[m]] = [pool[m], pool[n]]; } orders[v] = pool; });
-    const pts = !vars.length ? [null] : counting ? Array.from({ length: 24 }, () => Object.fromEntries(vars.map(v => [v, drawInt()]))) : Array.from({ length: 6 }, (_, i) => Object.fromEntries(vars.map(v => [v, orders[v] ? orders[v][i] : draw()])));
+    const pts = !vars.length ? [null] : counting ? Array.from({ length: 24 }, () => Object.fromEntries(vars.map(v => [v, drawInt()]))) : Array.from({ length: 6 }, (_, i) => Object.fromEntries(vars.map(v => [v, orders[v] ? orders[v][i] : drawIn(v)])));
     let checked = 0, numeric = true, k = null;
     for (const p of pts) {
       const x = val(A, p), y = val(B, p), fx = fin(x), fy = fin(y);
       if (!fx && !fy) continue;
       if (counting && (!fx || !fy)) continue; // outside a factorial's domain (a negative factorial): not a counting point
+      /* real mode: a side that is imaginary here (a root of a negative number) against a side the engine leaves undefined (arcsin 1.5)
+         is a point outside the real domain of one of them, not a difference */
+      if (!cx && !prop && fx !== fy && Math.abs((fx ? x : y)[1]) > 1e-12) continue;
       if (prop) { /* item 618: equal up to one constant multiple k (x * k = y at every point); real values only */
         if (!fx || !fy || x[1] !== 0 || y[1] !== 0) { numeric = false; break; }
         const zx = Math.abs(x[0]) < 1e-12, zy = Math.abs(y[0]) < 1e-12;
@@ -356,7 +391,8 @@
   const withParsed = (ce, s, fns, fn) => scoped(ce, () => fn(ce.parse(prep(s, hasImag(s), fns))));
   const exprEqual = (ce, a, b, opts) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
-    return scoped(ce, () => exprEqualIn(ce, a, b, opts && opts.functions, opts && opts.integers));
+    const prev = DOMAIN; DOMAIN = (opts && opts.domain) || null;
+    try { return scoped(ce, () => exprEqualIn(ce, a, b, opts && opts.functions, opts && opts.integers)); } finally { DOMAIN = prev; }
   };
   /* Item 618: equations and inequalities. splitRel(s) -> { l, r, rel } for one top-level relation (rel: eq, lt, le, ne; > and
      >= are turned round into lt and le), null for no relation, 'many' for a chain. Two relations are compared as equations
@@ -381,12 +417,25 @@
   const SYM0 = `(?:[A-Za-z]|\\\\(?:${GREEK})|\\\\(?:text|mathrm|operatorname)${BRACED})`;
   const SYM1 = `(?:(?:\\\\(?:hat|bar|tilde|vec|dot|overline)\\s*\\{\\s*${SYM0}\\s*\\})|${SYM0})`;
   const SUB = `(?:_(?:[A-Za-z0-9]|\\\\infty|\\\\(?:${GREEK})|${BRACED}))`;
-  const SYM = `${SYM1}${SUB}?(?:'+|\\^\\*|\\^\\{\\\\prime\\}|\\^\\{\\*\\})?`;
+  const SYM = `${SYM1}${SUB}?(?:'+|\\^\\*|\\^\\{\\\\prime\\}|\\^\\{\\*\\}|\\^\\{-1\\})?`;
   const SYMBOL = new RegExp(`^\\s*${SYM}\\s*$`);
   const CALLSYM = new RegExp(`^\\s*${SYM}\\s*(?:\\\\left\\s*)?\\(\\s*${SYM}(?:\\s*,\\s*${SYM})*\\s*(?:\\\\right\\s*)?\\)\\s*$`);
   /* a name of two or more letters (OB, TM, AB: a segment) is a label too, unless one of its letters is a symbol of the authored answer */
   const nameFree = (t, b) => /^\s*[A-Za-z]{2,}\s*$/.test(t) && !String(b).replace(/\\[A-Za-z]+/g, '').split('').some(c => /[A-Za-z]/.test(c) && t.includes(c));
-  const isLabel = (t, b) => SYMBOL.test(t) || CALLSYM.test(t) || nameFree(t, b);
+  /* ENGINE-BACKLOG 904: a call whose brackets hold anything (m(e(x)), B(T(n)), f(-x), gf(x), f^{-1}(x)) is a label when its head
+     letters are not symbols of the authored answer: the head is one symbol (with a subscript, a prime or ^{-1}) or a run of two or three
+     letters, and the closing bracket is the end of the text. */
+  const CALLLABEL = new RegExp(`^\\s*((?:[A-Za-z]|\\\\(?:${GREEK}))(?:_(?:[A-Za-z0-9]|\\{[^{}]*\\}))?(?:\\^\\{-1\\}|\\^-1|'+)?|[A-Za-z]{2,3})\\s*(?:\\\\left\\s*)?\\(`);
+  const callLabel = (t, b) => {
+    const m = CALLLABEL.exec(t); if (!m) return false;
+    const open = m[0].length - 1; let d = 0, j = open;
+    for (; j < t.length; j++) { if (t[j] === '(') d++; else if (t[j] === ')' && --d === 0) break; }
+    if (j >= t.length || t.slice(j + 1).trim() !== '') return false;
+    const head = m[1].replace(/\^\{-1\}|\^-1|'+|_(?:[A-Za-z0-9]|\{[^{}]*\})/g, '').replace(/\\[A-Za-z]+/g, '').replace(/[^A-Za-z]/g, '');
+    const inAnswer = String(b).replace(/\\[A-Za-z]+/g, ''), inside = t.slice(open + 1, j).replace(/\\[A-Za-z]+/g, ''); // x(x + 1) is a product, f(x) is a call
+    return !!head && ![...head].some(c => inAnswer.includes(c) || inside.includes(c));
+  };
+  const isLabel = (t, b) => SYMBOL.test(t) || CALLSYM.test(t) || nameFree(t, b) || callLabel(t, b);
   const relEqual = (ce, ra, rb, cx, fns, ints) => {
     if (ra.rel !== rb.rel) return false;
     const diff = (x) => ce.parse(`\\left(${prep(x.l, cx, fns)}\\right)-\\left(${prep(x.r, cx, fns)}\\right)`);
@@ -567,6 +616,156 @@
     try { return withParsed(ce, latex, fns, (e) => (form === 'factorised-fully' ? shapeFullyFactorised(e.json) : shapeCompletedSquare(e.json))); } catch { return true; }
   };
 
+  /* ---------- The grade of one typed expression: equal, then the shape (ENGINE-BACKLOG 898, 902, 904, 905) ----------
+     exprGrade(ce, spec, latex, ascii) is what the expression widget returns for a single answer, so the widget, the tests and the
+     regression tool grade alike: { ok, key, line }. Key null is a wrong answer in no wrong[] entry; "form" is equal but misshapen.
+       dropLabel    a typed left side ("y =", "A =", "m(e(x)) =", "f^{-1}(x) =") is dropped before the shape check, as before the equality test
+       form solved  an equation or inequality with one side a lone letter and the other free of it (905). Not asked for, it still applies
+                    when the authored answer is such a relation with a number on the other side (h \le 10, t < 7.5, x = 4): the
+                    question retyped, or a half-solved line, then has the key "form" instead of grading correct
+       simplified   (902) like terms collected and no bracket left open in a sum (3 + 2.5(t - 2)); a single fraction of a collected
+                    numerator over a whole number in lowest terms (5t - 4)/2 passes; anything else is judged as before (no bigger than simplify()) */
+  /* The shape checks on canonical MathJSON for a constant answer (ENGINE-BACKLOG 596), shared with the widget (Z.widgets.exprForms).
+     A constant answer (no free symbol but the imaginary unit, which the grader reads as the symbol iota) must be evaluated:
+     reducible() finds what a learner left undone: two plain numbers added or multiplied, a quotient or power with a complex
+     base, a division by a complex number, a product with a bracket that holds i. rectangular() is a + bi: one real part and
+     one imaginary term (a number, a surd or a fraction times i), nothing reducible. */
+  const hasI = (j) => j === 'iota' || (Array.isArray(j) && j.some(hasI));
+  const isLit = (j) => typeof j === 'number' || (j && typeof j === 'object' && !Array.isArray(j) && 'num' in j) || jh(j) === 'Rational' || (jh(j) === 'Negate' && isLit(ja(j)[0]));
+  const isSum = (j) => jh(j) === 'Add' || jh(j) === 'Subtract';
+  const reducible = (j) => {
+    if (!Array.isArray(j)) return false;
+    const h = jh(j), a = ja(j);
+    if ((h === 'Add' || h === 'Subtract') && a.filter(isLit).length > 1) return true;
+    if (h === 'Multiply' && (a.filter(isLit).length > 1 || a.some(x => isSum(x) && hasI(x)))) return true;
+    if (h === 'Divide' && (hasI(a[1]) || (isSum(a[0]) && hasI(a[0])))) return true;
+    if (h === 'Power' && hasI(a[0]) && a[0] !== 'iota') return true;
+    return a.some(reducible);
+  };
+  const imagTerm = (j) => {
+    if (j === 'iota') return true;
+    const h = jh(j), a = ja(j);
+    if (h === 'Negate') return imagTerm(a[0]);
+    if (h === 'Multiply') { const w = a.filter(hasI); return w.length === 1 && w[0] === 'iota' && a.length === 2; }
+    if (h === 'Divide') return imagTerm(a[0]) && !hasI(a[1]);
+    return false;
+  };
+  const rectangular = (j) => {
+    if (reducible(j)) return false;
+    if (!hasI(j)) return true;                                   // a real number is a + 0i
+    const r = jh(j) === 'Negate' && isSum(ja(j)[0]) ? ja(j)[0] : j;
+    if (isSum(r)) { const w = ja(r).filter(hasI); return w.length === 1 && imagTerm(w[0]); }
+    return imagTerm(r);
+  };
+  const exprForms = { reducible, rectangular, hasI };
+  const exprOpts = (spec) => ({ functions: Array.isArray(spec.functions) ? spec.functions : [], integers: Array.isArray(spec.integers) ? spec.integers : [], domain: spec.domain && typeof spec.domain === 'object' ? spec.domain : null });
+  const dropLabel = (ce, s, forms, fo) => {
+    const ra = splitRel(s);
+    if (!ra || ra === 'many' || ra.rel !== 'eq') return s;
+    for (const b of forms) {
+      if (splitRel(b)) continue;
+      const side = isLabel(ra.l, b) ? ra.r : isLabel(ra.r, b) ? ra.l : null;
+      if (side != null && side.trim()) return side;
+      try { if (ra.l.trim() && ra.r.trim() && exprEqual(ce, ra.l, ra.r, fo)) return ra.r; } catch { /* keep the whole text */ }
+    }
+    return s;
+  };
+  const lettersOf = (t) => String(t).replace(/\\[A-Za-z]+/g, '').replace(/[^A-Za-z]/g, '');
+  const loneSym = (side, other) => SYMBOL.test(side) && ![...lettersOf(side)].some(c => lettersOf(other).includes(c));
+  const solvedShape = (typed) => { const r = splitRel(typed); return !!r && r !== 'many' && (loneSym(r.l, r.r) || loneSym(r.r, r.l)); };
+  const autoSolved = (spec) => {
+    const r = typeof spec.answer === 'string' ? splitRel(spec.answer) : null;
+    return !!r && r !== 'many' && ((SYMBOL.test(r.l) && !lettersOf(r.r)) || (SYMBOL.test(r.r) && !lettersOf(r.l)));
+  };
+  const exprFormOf = (spec) => spec.form || (autoSolved(spec) ? 'solved' : null);
+  const jsize = (j) => (Array.isArray(j) ? 1 + ja(j).reduce((a, x) => a + jsize(x), 0) : 1);
+  const jHasSum = (j) => jh(j) === 'Add' || jh(j) === 'Subtract' || ja(j).some(jHasSum);
+  const jIsSum = (j) => jh(j) === 'Add' || jh(j) === 'Subtract';
+  const monoFactor = (f) => typeof f === 'string' || (jh(f) === 'Power' && typeof ja(f)[0] === 'string' && Number.isInteger(jLit(ja(f)[1])) && jLit(ja(f)[1]) >= 0) || (jh(f) === 'Square' && typeof ja(f)[0] === 'string');
+  /* a term that is a number times symbols and whole powers of symbols: its key says which terms are like terms */
+  const monoOf = (t) => {
+    t = jNeg(t);
+    if (jLit(t) != null) return { key: '' };
+    if (monoFactor(t)) return { key: JSON.stringify([JSON.stringify(t)]) };
+    if (jh(t) === 'Multiply') {
+      const f = ja(t).filter(x => jLit(x) == null);
+      if (f.length && f.every(monoFactor) && ja(t).filter(x => jLit(x) != null).length <= 1) return { key: JSON.stringify(f.map(x => JSON.stringify(x)).sort()) };
+    }
+    return null;
+  };
+  /* an unopened bracket: a product with a bracketed sum among its factors, or a sum raised to a whole power of 2 or more */
+  const bracketTerm = (t) => {
+    t = jNeg(t);
+    if (jh(t) === 'Multiply') return ja(t).some(x => jIsSum(jNeg(x)) || bracketTerm(x));
+    if (jh(t) === 'Power' || jh(t) === 'Square') return jIsSum(ja(t)[0]) && (jh(t) === 'Square' || (Number.isInteger(jLit(ja(t)[1])) && jLit(ja(t)[1]) >= 2));
+    return false;
+  };
+  const coefList = (terms) => terms.map(t => { t = jNeg(t); if (jLit(t) != null) return jLit(t); if (jh(t) === 'Multiply') return ja(t).reduce((c, x) => (jLit(x) != null ? c * jLit(x) : c), 1); return 1; });
+  const collected = (terms) => { const seen = new Set(); for (const t of terms) { const m = monoOf(t); if (!m) return null; if (seen.has(m.key)) return false; seen.add(m.key); } return true; };
+  /* true or false when the shape is decided here, null to leave it to the old comparison with simplify() */
+  const simplestVerdict = (j) => {
+    const terms = jh(j) === 'Add' ? ja(j) : [j];
+    if (terms.length > 1 && terms.some(bracketTerm)) return false;
+    const c = collected(terms);
+    if (c != null) return c;
+    if (terms.length !== 1) return null;
+    const t = jNeg(j);
+    if (jh(t) !== 'Multiply') return null;
+    const a = ja(t), sum = a.filter(x => jh(x) === 'Add');
+    if (a.length !== 2 || sum.length !== 1) return null;
+    const k = a.find(x => jh(x) !== 'Add');
+    if (jh(k) === 'Rational' && Math.abs(jLit(ja(k)[0])) === 1) { // a fraction: the sum over a whole number d, in lowest terms
+      const nt = ja(sum[0]), d = Math.abs(jLit(ja(k)[1])), co = coefList(nt);
+      if (!Number.isInteger(d) || co.some(x => !Number.isInteger(x))) return null;
+      return collected(nt) === true && co.reduce(gcdI, d) === 1;
+    }
+    return jLit(k) != null && !Number.isInteger(jLit(k)) ? false : null; // a decimal or a fraction a/b (a not 1) times a bracket is not simplest
+  };
+  const exprShapeOk = (ce, spec, L, fo) => {
+    const form = exprFormOf(spec);
+    if (form === 'fraction') return shapeFraction(L);
+    if (form === 'exact-angle') return shapeExactAngle(L);
+    if (form === 'solved') return solvedShape(L);
+    if (!form || !ce) return true;
+    try {
+      return withParsed(ce, L, fo.functions, (e) => {
+        const j = e.json;
+        if (form === 'expanded') return jIsSum(j) ? ja(j).every(t => !jHasSum(t)) : !jHasSum(j);
+        if (form === 'factorised') return shapeFactorised(j);
+        if (form === 'factorised-fully') return shapeFullyFactorised(j);
+        if (form === 'completed-square') return shapeCompletedSquare(j);
+        const constant = !(e.unknowns || []).filter(v => v !== 'iota').length;   // a constant answer must be evaluated, not retyped from the prompt
+        if (form === 'rectangular') return constant ? exprForms.rectangular(j) : true;
+        if (form === 'simplified') {
+          if (constant && exprForms.reducible(j)) return false;
+          const v = simplestVerdict(j); if (v != null) return v;
+          try { return jsize(j) <= jsize(e.simplify().json); } catch { return true; }
+        }
+        return true;
+      });
+    } catch { return true; }
+  };
+  const FORM_LINE = { fraction: 'That is equal, but write it as a whole number or one fraction in lowest terms, with no decimal point.', 'exact-angle': 'That is equal, but write the angle in radians as a multiple of pi in lowest terms, with no degrees.', 'factorised-fully': 'Factorise fully: a bracket still has a common factor.', 'completed-square': 'Write it as a bracket squared plus a number.', rectangular: 'That is equal, but not in the form a + bi: work out the real and imaginary parts.', expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.', solved: 'That is equal, but not solved: get the letter on its own on one side, with the number on the other.' };
+  const exprGrade = (ce, spec, L, A) => {
+    const fo = exprOpts(spec), forms = [spec.answer, ...(spec.accept || [])].filter(Boolean);
+    const equal = (inL, inA, target) => {
+      if (ce && (spec.upToConstant ? exprEqualUpToConstant(ce, inL, target, fo) : exprEqual(ce, inL, target, fo))) return true; // item 200: + C need not be listed
+      const n = normExpr(inA || inL);
+      return !!n && n === normExpr(target);
+    };
+    if (!String(L ?? '').trim()) return { ok: false, key: null };
+    const same = forms.some(f => equal(L, A, f));
+    const shaped = same && exprShapeOk(ce, spec, ce ? dropLabel(ce, L, forms, fo) : L, fo);
+    let key = null, line;
+    if (same && !shaped) { key = 'form'; line = FORM_LINE[exprFormOf(spec)]; }
+    else if (!same) {
+      const w = (spec.wrong || []).find(x => x.tex && equal(L, A, x.tex)); key = w ? w.id : null;
+      /* item 433: a vector or matrix answer of the wrong size gets its own key and a line saying how many entries */
+      if (!w && ce) { const sl = exprShapeLine(ce, spec.answer, L, fo.functions); if (sl) { key = 'length'; line = sl; } }
+    }
+    return { ok: shaped, key, line };
+  };
+
   /* ---------- Set answers (ENGINE-BACKLOG 832): answers: [...] with unordered: true ----------
      The learner types the values separated by commas (2, -5), or "x = 2 or x = -5", "x = 2 and x = -5", {2, -5}; a plus-or-minus
      (3 \pm \sqrt{2}, or ± or +- in a numeric field) stands for both values. Each value is graded as a single answer would be,
@@ -625,7 +824,7 @@
     const vals = exprSetValues(text), keys = spec.answers.map(String);
     if (!vals.length) return { ok: false, key: null };
     if (vals.length !== keys.length) return { ok: false, key: 'count', line: countLine(keys.length, vals.length) };
-    const fo = { functions: Array.isArray(spec.functions) ? spec.functions : [], integers: Array.isArray(spec.integers) ? spec.integers : [] };
+    const fo = exprOpts(spec);
     const eq = (v, k) => (ce && exprEqual(ce, v, k, fo)) || (!!normExpr(v) && normExpr(v) === normExpr(k));
     if (setMatch(vals, keys, eq)) return { ok: true, key: null };
     const w = (spec.wrong || []).find(x => x && typeof x.tex === 'string' && setMatch(vals, exprSetValues(x.tex), eq));
@@ -658,6 +857,37 @@
       return setMatch(vals, wv, eq(x.tol ?? { abs: 1e-9 }));
     });
     return { ok: false, key: w ? w.id : null, detail: { value: vals } };
+  };
+
+  /* ---------- A single numeric answer (ENGINE-BACKLOG 906, 907) ----------
+     numText drops what a learner writes around the number: a letter and = before it ("b = 12", "x_1 = 3") and a unit after it
+     ("22 cm", "3500 m", "115°", "40 km/h", "£" stays before as ever). A one-letter unit is dropped only when it is the field's own `unit`
+     (so "3x" is not 3); two or more letters are always a unit word. spec.scale, a number such as 1e-5, is for a part asked "in units
+     of 10^-5": the answer is stored in those units and the true value (0.0000486 or 4.86e-5) is accepted too, with its band scaled. */
+  const numText = (text, spec = {}) => {
+    let t = String(text ?? '').trim().replace(/^(?:[A-Za-z](?:_(?:[A-Za-z0-9]|\{[^{}]*\}))?|\\[A-Za-z]+)\s*=(?!=)\s*/, '');
+    const m = /^(.*?[\d.])\s*(°|\\circ|\^\\circ|\^\{\\circ\}|[A-Za-zµ]+(?:[/·][A-Za-zµ]+)*(?:\^?-?[23²³])?)\.?$/.exec(t);
+    if (m) {
+      const u = m[2], own = String(spec.unit || '').replace(/\s+/g, '').toLowerCase();
+      if (/^(?:°|\\circ|\^\\circ|\^\{\\circ\})$/.test(u) || u.toLowerCase() === own || u.replace(/[^A-Za-zµ]/g, '').length >= 2) t = m[1];
+    }
+    return t;
+  };
+  const numValue = (text, spec = {}) => {
+    const t = numText(text, spec);
+    if (!t.trim()) return NaN;
+    const v = parseNum(t);
+    return spec.unit === '%' && !t.includes('%') ? v / 100 : v;
+  };
+  const scaleOf = (spec) => (Number.isFinite(+spec.scale) && +spec.scale > 0 && +spec.scale !== 1 ? +spec.scale : null);
+  const numGrade = (spec, text) => {
+    const v = numValue(text, spec);
+    if (!Number.isFinite(v)) return { ok: false, key: null, detail: { value: null } };
+    const s = scaleOf(spec), vs = s ? [v, v / s] : [v];
+    const ok = vs.some(x => within(x, +spec.answer, spec.tol));
+    let w = null;
+    if (!ok) for (const x of vs) { w = matchWrong(x, spec.wrong, { abs: 1e-9 }); if (w) break; }
+    return { ok, key: w ? w.id : null, detail: { value: v } };
   };
 
   /* ---------- Authored answers, in the shape each widget's set() accepts ---------- */
@@ -847,5 +1077,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { plainFns, shapeFraction, shapeExactAngle, parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, shapeFactorised, shapeFullyFactorised, shapeCompletedSquare, exprFormOk, setPieces, exprSetValues, setMatch, isSetSpec, setAnswerText, exprSetGrade, numSetValues, numSetGrade, countLine, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { plainFns, shapeFraction, shapeExactAngle, parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, shapeFactorised, shapeFullyFactorised, shapeCompletedSquare, exprFormOk, exprGrade, exprForms, exprOpts, dropLabel, solvedShape, numText, numValue, numGrade, setPieces, exprSetValues, setMatch, isSetSpec, setAnswerText, exprSetGrade, numSetValues, numSetGrade, countLine, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();

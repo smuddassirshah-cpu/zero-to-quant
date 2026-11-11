@@ -215,7 +215,102 @@ const wrongBandNarrow = (file, where, w, ctx) => {
     if (hw < half * 0.999) warn(file, `${where}.wrong[${i}]`, `[wrong-band] wrong "${x.id || i}" (${x.value}, band +-${+hw.toPrecision(3)}) is narrower than the rounding the question asks for (${d} decimal place${d === 1 ? '' : 's'}, +-${+half.toPrecision(3)}), so a learner who rounds this slip as asked misses it; widen its tol or give the value at the asked rounding`);
   });
 };
-const FLOAT_EXPECT = /(?:^|[\[(,\s])-?\d+\.\d*[1-9]\d*(?:e[+-]?\d+)?(?=[\]),\s]|$)/i;
+/* ENGINE-BACKLOG 894, 909: [tight-band] and [wide-wrong-band], advisories on a numeric part's tolerance (docs/AUTHORING.md section 5)
+     [tight-band]       a learner who gives what the part itself says must be inside answer +- tol:
+                          the answer rounded as the question asks (to k decimal places);
+                          the number the part's own feedback.correct or explain.text prints after its last "=" or "\approx" (a "\times 10^k" figure,
+                          a part asked "in units of" and a part with a scale are skipped);
+                          and an unrounded stored answer (more than k + 2 decimals) with tol.abs of 0.5 * 10^-k or less, where a working that carries
+                          rounded figures lands one unit out (use 10^-k)
+     [wide-wrong-band]  a wrong[] value whose band is wider than half its own value (it would swallow neighbours and the answer's rounding) */
+const printedValue = (text, unit) => {
+  const spans = [...String(text || '').matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)].map(m => m[1] ?? m[2]);
+  for (let i = spans.length - 1; i >= 0; i--) {
+    const sp = spans[i], a = sp.lastIndexOf('\\approx'), e = sp.lastIndexOf('=');
+    if (a < 0 && e < 0) continue;
+    const tail = (a > e ? sp.slice(a + 7) : sp.slice(e + 1)).trim().replace(/^[£\\]?(?:pounds)?\s*/, '');
+    const fr = /^(-?)\s*\\[dt]?frac\{\s*(-?[\d.,]+)\s*\}\{\s*([\d.,]+)\s*\}\s*(.*)$/.exec(tail);
+    const nm = /^(-?)\s*(\d[\d,]*(?:\.\d+)?|\.\d+)\s*(.*)$/.exec(tail);
+    let v, rest;
+    if (fr) { v = (fr[1] ? -1 : 1) * (+fr[2].replace(/,/g, '') / +fr[3].replace(/,/g, '')); rest = fr[4]; }
+    else if (nm) { v = (nm[1] ? -1 : 1) * +nm[2].replace(/,/g, ''); rest = nm[3]; }
+    else return null;
+    if (!Number.isFinite(v) || /^\\(?:times|cdot)\s*10/.test(rest)) return null;
+    const pct = /^\\?%/.test(rest) || /^\\(?:text|mathrm)\{\s*\\?%/.test(rest);
+    return unit === '%' ? (pct ? v / 100 : null) : (pct ? null : v);
+  }
+  return null;
+};
+const bandRules = (file, where, w, ctx) => {
+  if (typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
+  const ans = w.answer, hw = halfWidth(ans, w.tol), q = String(ctx.question || ''), scaled = w.scale != null || /units? of\b/i.test(q) || /10\s*\^/.test(q);
+  const toPlaces = (t) => { const m = stripMathsAndCode(t || '').toLowerCase().match(/\bto\s+(zero|one|two|three|four|five|six|\d)\s+(?:decimal\s+)?places?\b/); return m ? (WORD_NUM[m[1]] ?? +m[1]) : null; };   // "a decimal to 4 places"
+  const d = roundingAsked(ctx.question) ?? roundingAsked(ctx.prose) ?? toPlaces(ctx.question);
+  if (d != null && !scaled) {
+    const step = Math.pow(10, -d) / (w.unit === '%' ? 100 : 1), rounded = Math.round(ans / step) * step;
+    if (Math.abs(rounded - ans) > hw + 1e-12) warn(file, `${where}`, `[tight-band] the answer ${ans} rounded as the question asks (${d} decimal place${d === 1 ? '' : 's'}) is ${+rounded.toPrecision(12)}, outside its band +-${+hw.toPrecision(3)}: a learner who rounds correctly is marked wrong`);
+    else if (decimalsOf(ans) > d + (w.unit === '%' ? 4 : 2) && hw <= 0.5 * Math.pow(10, -d) / (w.unit === '%' ? 100 : 1) * 1.001) warn(file, `${where}`, `[tight-band] the stored answer ${ans} has more decimals than the ${d} asked for and the band +-${+hw.toPrecision(3)} is half a unit of the last place: a working that keeps rounded figures lands one unit out; use a band of 1 unit (${+Math.pow(10, -d).toPrecision(3)})`);
+  }
+  if (!scaled) {
+    [['feedback.correct', isObj(ctx.feedback) ? ctx.feedback.correct : null], ['explain.text', isObj(ctx.explain) ? ctx.explain.text : null]].forEach(([name, text]) => {
+      if (scaled || typeof text !== 'string') return;
+      const v = printedValue(text, w.unit);
+      /* only a figure within 2% of the answer: the same quantity rounded differently. A last "=" is often a step, not the answer, and a far figure is not a band fault */
+      if (v != null && Math.abs(v - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans)) && Math.abs(v - ans) <= 0.02 * Math.abs(ans)) warn(file, `${where}`, `[tight-band] ${name} prints ${+v.toPrecision(10)} after its last "=" or "\\approx", outside the answer ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the explanation is marked wrong`);
+    });
+  }
+  (Array.isArray(w.wrong) ? w.wrong : []).forEach((x, i) => {
+    if (!isObj(x) || typeof x.value !== 'number' || !Number.isFinite(x.value) || x.value === 0) return;
+    const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
+    if (wh > 0.5 * Math.abs(x.value)) warn(file, `${where}.wrong[${i}]`, `[wide-wrong-band] wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, over half its own value: it takes in answers that are not this slip`);
+  });
+};
+/* ENGINE-BACKLOG 910: [wrong-equals-answer], an expression wrong[].tex that the grader reads as the answer (or an accept form), so the entry can never
+   fire. The grade is the widget's own (ZQ.grade.exprGrade). With --local-cdn <pkgs> (or ZQ_LOCAL_CDN) the Compute Engine decides equality, as in the app;
+   without it only the written text is compared after normalisation, which finds the plain repeats. */
+let graderP;
+const grader = () => {
+  if (graderP !== undefined) return graderP;
+  graderP = null;
+  try {
+    const ci = process.argv.indexOf('--local-cdn'), cdn = ci > 0 ? process.argv[ci + 1] : process.env.ZQ_LOCAL_CDN;
+    const g = { console, setTimeout, clearTimeout, document: { addEventListener() {}, querySelector() { return null; } }, navigator: {} };
+    g.window = g; g.globalThis = g; vm.createContext(g);
+    let ce = null;
+    const ceFile = cdn && path.join(path.resolve(cdn), 'cortex-js-compute-engine-0.30.2', 'package', 'dist', 'compute-engine.min.umd.js');
+    if (ceFile && fs.existsSync(ceFile)) { vm.runInContext(fs.readFileSync(ceFile, 'utf8'), g); const C = g.ComputeEngine.ComputeEngine || g.ComputeEngine; ce = new C(); }
+    g.ZQ = {};
+    vm.runInContext(fs.readFileSync(path.join(APP, 'js/engine/grade.js'), 'utf8'), g);
+    graderP = { G: g.ZQ.grade, ce };
+  } catch { graderP = null; }
+  return graderP;
+};
+const exprWrongEqual = (file, where, w) => {
+  if (!Array.isArray(w.wrong) || typeof w.answer !== 'string') return;
+  const gr = grader(); if (!gr) return;
+  w.wrong.forEach((x, i) => {
+    if (!isObj(x) || typeof x.tex !== 'string' || !x.tex.trim()) return;
+    let r = null; try { r = gr.G.exprGrade(gr.ce, { ...w, kind: 'expression', wrong: [] }, x.tex, x.tex); } catch { r = null; }
+    if (r && (r.ok || r.key === 'form')) err(file, `${where}.wrong[${i}].tex`, `[wrong-equals-answer] wrong "${x.id}" (${x.tex}) grades equal to the answer or an accept form${gr.ce ? '' : ' (written text only; run with --local-cdn <pkgs> to compare by value)'}, so it can never fire`);
+  });
+};
+/* ENGINE-BACKLOG 911: a numeric accept line that says "any form equal to" something the field cannot type (it takes numbers and fractions only) */
+const acceptFormTail = (text) => {
+  const m = /any form equal to\s*(\$\$[^$]+\$\$|\$[^$]+\$|[^\s,;:]+)/i.exec(String(text || ''));
+  if (!m) return null;
+  let v = m[1].replace(/^\$+|\$+$/g, '').trim();
+  if (v.includes('\\approx')) v = v.split('\\approx')[0].trim();
+  if (v.includes('=')) v = v.split('=').pop().trim();
+  if (!/[\d\\]/.test(v)) return null;                                          // a word ("it"), not a value
+  v = v.replace(/\\[dt]?frac\s*(\d)\s*(\d)(?!\d)/g, '$1/$2').replace(/\\[dt]?frac\{\s*([^{}]*?)\s*\}\{\s*([^{}]*?)\s*\}/g, '$1/$2').replace(/\\[,;! ]|\s+/g, '').replace(/[−–]/g, '-').replace(/[.]+$/, '');
+  return v;
+};
+const acceptFormCheck = (file, where, w) => {
+  if (typeof w.accept !== 'string') return;
+  const v = acceptFormTail(w.accept);
+  if (v != null && !/^-?(?:\d[\d,]*(?:\.\d+)?|\.\d+)(?:\/-?(?:\d[\d,]*(?:\.\d+)?|\.\d+))?%?$/.test(v)) warn(file, `${where}.accept`, `[accept-form] "any form equal to ${v}": the numeric field takes numbers, decimals and fractions of numbers only, so it cannot take this form; state the value to the decimal places asked`);
+};
+const FLOAT_EXPECT =/(?:^|[\[(,\s])-?\d+\.\d*[1-9]\d*(?:e[+-]?\d+)?(?=[\]),\s]|$)/i;
 const tolCase = (file, at, t) => {
   if (t.tol == null) return;
   if (!(isObj(t.tol) && (typeof t.tol.rel === 'number' || typeof t.tol.abs === 'number') && Object.values(t.tol).every(v => typeof v === 'number' && v >= 0))) err(file, `${at}.tol`, 'tol is { "rel": r } or { "abs": x } (or both), for compare: "isclose"');
@@ -535,8 +630,11 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       }
       if ((typeof w.answer !== 'number' || !Number.isFinite(w.answer)) && !(typeof w.answer === 'string' && /^\{\{\s*carry\.[A-Za-z0-9_.]+\s*\}\}$/.test(w.answer))) err(file, `${where}.answer`, 'numeric answer must be a number (or one {{carry.name}} placeholder)');
       tol(w.tol, `${where}.tol`);
+      if (w.scale != null && !(typeof w.scale === 'number' && Number.isFinite(w.scale) && w.scale > 0 && w.scale !== 1)) err(file, `${where}.scale`, 'scale is a positive number other than 1, for a part asked in units of 10^-k (1e-5): the true value is accepted as well as the scaled one');
       wrongCannotFire(file, where, w.answer, w.tol, w.wrong);
       wrongBandNarrow(file, where, w, ctx);
+      bandRules(file, where, w, ctx);   // ENGINE-BACKLOG 894, 909
+      acceptFormCheck(file, where, w);   // ENGINE-BACKLOG 911
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (w.wrong || []).forEach((x, i) => { if (typeof x.value !== 'number') err(file, `${where}.wrong[${i}].value`, 'must be a number'); if (x.tol) tol(x.tol, `${where}.wrong[${i}].tol`); });
       text(w.accept, `${where}.accept`);
@@ -585,7 +683,15 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       else [['answer', w.answer], ...(Array.isArray(w.accept) ? w.accept.map((a, i) => [`accept[${i}]`, a]) : [])].forEach(([f, v]) => { if (typeof v !== 'string') return; for (const m of v.matchAll(/\(-1\)\^(?:\{\s*(?:-?\s*)?([A-Za-z]|\\[A-Za-z]+)(?![A-Za-z])[^{}]*\}|(?:-?\s*)?([A-Za-z]))/g)) { const sym = m[1] || m[2]; if (!(w.integers || []).includes(sym)) { warn(file, `${where}.${f}`, `(-1)^{${sym}} cannot be graded at non-integer points: add integers: ["${sym}"] to this expression`); break; } } });
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
-      if (w.form != null) { if (!['expanded', 'factorised', 'factorised-fully', 'completed-square', 'simplified', 'rectangular', 'fraction', 'exact-angle'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised", "factorised-fully", "completed-square", "simplified", "rectangular" (a + bi), "fraction" or "exact-angle"'); keys.add('form'); }
+      exprWrongEqual(file, where, w);   // ENGINE-BACKLOG 910
+      if (w.form != null) { if (!['expanded', 'factorised', 'factorised-fully', 'completed-square', 'simplified', 'rectangular', 'fraction', 'exact-angle', 'solved'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised", "factorised-fully", "completed-square", "simplified", "rectangular" (a + bi), "fraction", "exact-angle" or "solved"'); keys.add('form'); }
+      /* ENGINE-BACKLOG 905: an answer that is an equation or inequality with a lone letter on one side and a number on the other has the key "form" without form being set (the question retyped is equal but not solved) */
+      else if (typeof w.answer === 'string' && /[<>=]|\\(?:le|ge|leq|geq|ne|neq|lt|gt)(?![A-Za-z])/.test(w.answer)) keys.add('form');
+      /* ENGINE-BACKLOG 898: domain is the sampling range of each symbol, { "s": [0.05, 0.9] } */
+      if (w.domain != null) {
+        if (!isObj(w.domain) || !Object.keys(w.domain).length) err(file, `${where}.domain`, 'domain maps a symbol to its sampling range, for example { "s": [0.05, 0.9] }');
+        else Object.entries(w.domain).forEach(([k, r]) => { if (!/^(?:[A-Za-z]|\\[A-Za-z]+)$/.test(k) || !(Array.isArray(r) && r.length === 2 && r.every(n => typeof n === 'number' && Number.isFinite(n)) && r[0] < r[1])) err(file, `${where}.domain.${k}`, 'a domain entry is one symbol and [low, high] with low below high'); });
+      }
       break;
     case 'slider':
       ['min', 'max', 'step'].forEach(f => { if (typeof w[f] !== 'number') err(file, `${where}.${f}`, 'must be a number'); });
@@ -1387,7 +1493,7 @@ const checkItem = (file, where, it, ctx) => {
   checkText(file, `${where}.prose`, it.prose); checkText(file, `${where}.question`, it.question);
   if (!it.question) err(file, `${where}.question`, 'required field missing');
   if (!it.widget) { err(file, `${where}.widget`, 'required field missing'); return null; }
-  const keys = checkWidget(file, `${where}.widget`, it.widget, it.canvas, { question: it.question, prose: it.prose, allowLongform: ctx.allowLongform });
+  const keys = checkWidget(file, `${where}.widget`, it.widget, it.canvas, { question: it.question, prose: it.prose, allowLongform: ctx.allowLongform, feedback: it.feedback, explain: it.explain });
   checkFeedback(file, `${where}.feedback`, it.feedback, keys);
   checkExplain(file, `${where}.explain`, it.explain, { required: true });
   checkShuffledPosition(file, where, it);
@@ -1423,7 +1529,7 @@ const checkParts = (file, where, it, ctx) => {
     if (!isObj(p.widget)) { err(file, `${at}.widget`, 'required field missing'); return; }
     if (p.widget.kind === 'longform') err(file, `${at}.widget`, 'a part cannot be longform: the learner marks a written answer, which a follow-up cannot wait for');
     if (ctx.label === 'bank' && p.widget.kind === 'code') err(file, `${at}.widget`, 'a code part cannot run in the bank deck');
-    const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, prose: p.prose ?? it.prose, allowLongform: false });
+    const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, prose: p.prose ?? it.prose, allowLongform: false, feedback: p.feedback, explain: p.explain ?? it.explain });
     checkFeedback(file, `${at}.feedback`, p.feedback, keys);
     checkExplain(file, `${at}.explain`, p.explain);
     checkShuffledPosition(file, at, p, it);
