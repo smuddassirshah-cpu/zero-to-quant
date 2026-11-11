@@ -23,8 +23,8 @@
     "kind": "code",
     "language": "python",
     "prelude": "from fractions import Fraction, Fraction as Fr\nPAY = {\"A\": [1, 2, 3, 4, 5, 6], \"E\": [0, 2, 0, 4, 0, 6], \"F\": [1, 0, 3, 0, 5, 0],\n       \"H\": [0, 0, 0, 4, 5, 6], \"L\": [1, 2, 3, 0, 0, 0], \"U\": [1] * 6}\nFAIR = {\"A\": (Fr(\"3.4\"), Fr(\"3.6\")), \"E\": (Fr(\"1.9\"), Fr(\"2.1\")), \"F\": (Fr(\"1.4\"), Fr(\"1.6\")),\n        \"H\": (Fr(\"2.4\"), Fr(\"2.6\")), \"L\": (Fr(\"0.9\"), Fr(\"1.1\")), \"U\": (Fr(\"0.95\"), Fr(\"1.05\"))}\ndef q(**kw):\n    d = dict(FAIR)\n    for k, v in kw.items():\n        d[k] = (Fr(v[0]), Fr(v[1]))\n    return d\n",
-    "starter": "from itertools import combinations, product\n\n\ndef find_all_arb(contracts, quotes):\n    \"\"\"contracts: {name: [payoff on faces 1..6]};\n    quotes: {name: (bid, ask)}. Try every set of 1 to 3\n    contracts, each bought once (at the ask) or sold once\n    (at the bid). Keep those whose total payoff is the\n    same on every face and whose profit (that payoff plus\n    the cash) is above 0. Return (profit, trades) for the\n    best: highest profit, then fewest trades, then the\n    first in sorted order; trades is a sorted tuple of\n    (name, \"buy\" or \"sell\"). With none: (Fr(0), ()).\"\"\"\n    ...\n",
-    "solution": "from itertools import combinations, product\n\n\ndef find_all_arb(contracts, quotes):\n    \"\"\"contracts: {name: [payoff on faces 1..6]};\n    quotes: {name: (bid, ask)}. Try every set of 1 to 3\n    contracts, each bought once (at the ask) or sold once\n    (at the bid). Keep those whose total payoff is the\n    same on every face and whose profit (that payoff plus\n    the cash) is above 0. Return (profit, trades) for the\n    best: highest profit, then fewest trades, then the\n    first in sorted order; trades is a sorted tuple of\n    (name, \"buy\" or \"sell\"). With none: (Fr(0), ()).\"\"\"\n    best = None\n    names = sorted(quotes)\n    for k in (1, 2, 3):\n        for combo in combinations(names, k):\n            for sides in product((1, -1), repeat=k):\n                net = [sum(s * contracts[n][f] for n, s in zip(combo, sides))\n                       for f in range(6)]\n                if len(set(net)) != 1:\n                    continue\n                cash = sum(-quotes[n][1] if s > 0 else quotes[n][0]\n                           for n, s in zip(combo, sides))\n                profit = net[0] + cash\n                if profit <= 0:\n                    continue\n                trades = tuple(sorted((n, \"buy\" if s > 0 else \"sell\")\n                                      for n, s in zip(combo, sides)))\n                key = (-profit, len(trades), trades)\n                if best is None or key < best[0]:\n                    best = (key, (profit, trades))\n    return best[1] if best else (Fr(0), ())\n",
+    "starter": "from itertools import combinations, product\n\n\ndef find_all_arb(contracts, quotes):\n    \"\"\"contracts: {name: [payoff on faces 1..6]};\n    quotes: {name: (bid, ask)}. Try every set of 1 to 3\n    contracts, each bought once (at the ask) or sold once\n    (at the bid). Score each by its profit on the worst\n    face (payoff plus cash) and keep those above 0. Return (profit, trades) for the\n    best: highest profit, then fewest trades, then the\n    first in sorted order; trades is a sorted tuple of\n    (name, \"buy\" or \"sell\"). With none: (Fr(0), ()).\"\"\"\n    ...\n",
+    "solution": "from itertools import combinations, product\n\n\ndef find_all_arb(contracts, quotes):\n    \"\"\"contracts: {name: [payoff on faces 1..6]};\n    quotes: {name: (bid, ask)}. Try every set of 1 to 3\n    contracts, each bought once (at the ask) or sold once\n    (at the bid). Score each by its profit on the worst\n    face (payoff plus cash) and keep those above 0. Return (profit, trades) for the\n    best: highest profit, then fewest trades, then the\n    first in sorted order; trades is a sorted tuple of\n    (name, \"buy\" or \"sell\"). With none: (Fr(0), ()).\"\"\"\n    best = None\n    names = sorted(quotes)\n    for k in (1, 2, 3):\n        for combo in combinations(names, k):\n            for sides in product((1, -1), repeat=k):\n                net = [sum(s * contracts[n][f] for n, s in zip(combo, sides))\n                       for f in range(6)]\n                cash = sum(-quotes[n][1] if s > 0 else quotes[n][0]\n                           for n, s in zip(combo, sides))\n                profit = min(net) + cash\n                if profit <= 0:\n                    continue\n                trades = tuple(sorted((n, \"buy\" if s > 0 else \"sell\")\n                                      for n, s in zip(combo, sides)))\n                key = (-profit, len(trades), trades)\n                if best is None or key < best[0]:\n                    best = (key, (profit, trades))\n    return best[1] if best else (Fr(0), ())\n",
     "examples": [
      {
       "call": "find_all_arb(PAY, q(U=('1.1', '1.2')))",
@@ -67,19 +67,29 @@
       "call": "find_all_arb(PAY, q(A=('3.7', '3.8'), U=('0.9', '0.95')))",
       "expect": "(Fraction(1, 20), (('U', 'buy'),))",
       "compare": "equal"
+     },
+     {
+      "call": "find_all_arb({'L': PAY['L'], 'U': PAY['U']}, {'L': (Fr('3.1'), Fr('3.2')), 'U': FAIR['U']})",
+      "expect": "(Fraction(1, 10), (('L', 'sell'),))",
+      "compare": "equal"
+     },
+     {
+      "call": "find_all_arb({'A': PAY['A'], 'H': PAY['H']}, {'A': (Fr('2.2'), Fr('2.3')), 'H': FAIR['H']})",
+      "expect": "(Fraction(1, 10), (('A', 'buy'), ('H', 'sell')))",
+      "compare": "equal"
      }
     ],
-    "how": "Check runs 7 hidden tests: five planted arbitrages and two consistent sets with none. Profits are exact Fractions."
+    "how": "Check runs 9 hidden tests: seven planted arbitrages and two consistent sets with none. Profits are exact Fractions."
    },
    "feedback": {
     "correct": "The search finds every planted arbitrage and none in a fair set.",
-    "generic": "Some tests failed. Check that the payoff is constant on every face, and the tie-break.",
+    "generic": "Some tests failed. Check the profit on the worst face, and the tie-break.",
     "byKey": {
      "error": "Your code stopped with an error. Check that `...` is replaced."
     }
    },
    "explain": {
-    "text": "A cheap A is bought against selling E and F, for 0.10. Cheap H and L are bought against selling A, for 0.20. A fair set returns nothing, however hard you search."
+    "text": "A cheap A bought against selling E and F locks 0.10. Buying A at 2.3 and selling H at 2.4 locks at least 0.10: A never pays less than H. A fair set returns nothing, however hard you search."
    }
   },
   {
@@ -175,11 +185,11 @@
      },
      {
       "id": "combo",
-      "text": "Find a combination whose payoffs cancel, or are equal, on every face."
+      "text": "Find a combination to test, such as one whose payoffs cancel on every face."
      },
      {
       "id": "cash",
-      "text": "Price it at the quotes: buy at asks, sell at bids. Is the cash positive?"
+      "text": "Price it at the quotes: buy at asks, sell at bids. Is it in profit on every face?"
      },
      {
       "id": "size",
@@ -188,7 +198,7 @@
      {
       "id": "trade",
       "text": "Trade the biggest-looking gap first, then check the payoffs.",
-      "why": "Trading before checking can leave a leg open. A gap is only an arbitrage once the payoffs cancel."
+      "why": "Trading before checking can leave a leg open. A gap is only an arbitrage once no face can lose."
      }
     ],
     "answer": [
@@ -205,12 +215,12 @@
     "correct": "Payoffs, combination, cash, size.",
     "generic": "Not quite right. The payoffs come first; the size comes last.",
     "byKey": {
-     "trade": "Trading before checking can leave a leg open. A gap is only an arbitrage once the payoffs cancel.",
+     "trade": "Trading before checking can leave a leg open. A gap is only an arbitrage once no face can lose.",
      "left-out": "Every check belongs except trading first."
     }
    },
    "explain": {
-    "text": "The payoff table shows which combinations cancel. Only then does the cash say whether there is a profit. The size at each price says how much of it you can take."
+    "text": "The payoff table shows what each combination pays on each face. With the cash added, a profit on every face is money for sure. The size at each price says how much of it you can take."
    }
   },
   {

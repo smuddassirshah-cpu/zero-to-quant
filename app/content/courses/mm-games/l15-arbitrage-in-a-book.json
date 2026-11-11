@@ -853,37 +853,37 @@
    "hints": [
     {
      "rung": "nudge",
-     "text": "An arbitrage needs two things. Check each plan for both."
+     "text": "An arbitrage can lose on no roll. Find each plan's worst roll."
     },
     {
      "rung": "point",
-     "text": "Payoffs that cancel on every roll, and positive cash.",
+     "text": "Add the cash to what each plan pays on its worst roll.",
      "highlight": [
       "r0"
      ]
     },
     {
      "rung": "step",
-     "text": "The first has negative cash; the second does not cancel."
+     "text": "The first loses £0.10 on every roll. The second loses when the second die shows 4 or more."
     }
    ],
    "feedback": {
     "correct": "Neither.",
-    "generic": "Not quite right. Check the cash and whether the legs cancel on every roll.",
+    "generic": "Not quite right. Add the cash and check each plan's worst roll.",
     "byKey": {
      "first": "The legs cancel, but you pay 0.10 more than you receive. A sure loss is not an arbitrage.",
      "second": "You left the second die unhedged. If it rolls 6, A costs you 6 against the £3.50 you took in."
     }
    },
    "explain": {
-    "text": "The first plan cancels but loses £0.10 for sure. The second takes cash but leaves the second die open. An arbitrage needs both: legs that cancel on every outcome, and money in."
+    "text": "The first plan cancels but loses £0.10 for sure. The second takes cash but leaves the second die open. An arbitrage can lose on no roll, and each plan loses on some."
    }
   },
   {
    "type": "problem",
    "difficulty": 2,
    "title": "A fair board",
-   "prose": "Another bookmaker offers evens, 2 to 1 and 5 to 1 on three exclusive outcomes.",
+   "prose": "Another bookmaker offers evens, 2 to 1 and 5 to 1 on three outcomes. Exactly one of them happens.",
    "question": "Which stakes lock a profit?",
    "widget": {
     "kind": "choice",
@@ -1024,7 +1024,7 @@
     "generic": "Not quite right. Multiply £1,000 by all three rates, then subtract £1,000.",
     "byKey": {
      "total": "That is what you end with. The profit is £12.",
-     "rev": "You went round the other way."
+     "rev": "You have the sign reversed. The loop ends at £1,012, above £1,000, so the profit is positive."
     }
    },
    "explain": {
@@ -1042,7 +1042,7 @@
    "type": "generalise",
    "difficulty": 2,
    "title": "What makes an arbitrage",
-   "prose": "An arbitrage is a set of trades whose payoffs cancel on every outcome, with money left over. On a board with odds $o_i$ to 1 on exclusive outcomes, it exists when\n$$\\sum_i \\frac{1}{o_i + 1} < 1.$$\nThe size is capped by the depth at each price.",
+   "prose": "An arbitrage is a set of trades that cannot lose on any outcome and gains on at least one. The plainest kind has payoffs that cancel on every outcome, with money left over. On a board with odds $o_i$ to 1 on outcomes of which exactly one happens, it exists when\n$$\\sum_i \\frac{1}{o_i + 1} < 1.$$\nThe size is capped by the depth at each price.",
    "question": "Odds of evens, 3 to 1 and 4 to 1. Staking £10, £5 and £4, what is locked?",
    "widget": {
     "kind": "numeric",
@@ -1105,8 +1105,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "from fractions import Fraction\n\n\ndef cross_arb(asks, bids):\n    \"\"\"asks of one dealer, bids of another, each a list of\n    (price, size) sorted best first. Match the cheapest ask\n    with the highest bid while ask < bid.\n    Return (units, profit).\"\"\"\n    ...\n\n\ndef book_arb(odds):\n    \"\"\"odds: list of o for o-to-1 bets on exclusive outcomes.\n    Return (stakes, profit) per £1 of payout as Fractions,\n    or ([], Fraction(0)) if there is no arbitrage.\"\"\"\n    ...\n",
-    "solution": "from fractions import Fraction\n\n\ndef cross_arb(asks, bids):\n    \"\"\"asks of one dealer, bids of another, each a list of\n    (price, size) sorted best first. Match the cheapest ask\n    with the highest bid while ask < bid.\n    Return (units, profit).\"\"\"\n    a = [list(x) for x in asks]\n    b = [list(x) for x in bids]\n    i = j = 0\n    units, profit = 0, 0\n    while i < len(a) and j < len(b) and a[i][0] < b[j][0]:\n        q = min(a[i][1], b[j][1])\n        units += q\n        profit += q * (b[j][0] - a[i][0])\n        a[i][1] -= q\n        b[j][1] -= q\n        if a[i][1] == 0:\n            i += 1\n        if b[j][1] == 0:\n            j += 1\n    return units, profit\n\n\ndef book_arb(odds):\n    \"\"\"odds: list of o for o-to-1 bets on exclusive outcomes.\n    Return (stakes, profit) per £1 of payout as Fractions,\n    or ([], Fraction(0)) if there is no arbitrage.\"\"\"\n    stakes = [Fraction(1, o + 1) for o in odds]\n    profit = 1 - sum(stakes)\n    if profit <= 0:\n        return [], Fraction(0)\n    return stakes, profit\n",
+    "starter": "from fractions import Fraction\n\n\ndef cross_arb(asks, bids):\n    \"\"\"asks of one dealer, bids of another, each a list of\n    (price, size) sorted best first. Match the cheapest ask\n    with the highest bid while ask < bid.\n    Return (units, profit).\"\"\"\n    ...\n\n\ndef book_arb(odds):\n    \"\"\"odds: list of o for o-to-1 bets; exactly one outcome happens.\n    Return (stakes, profit) per £1 of payout as Fractions,\n    or ([], Fraction(0)) if there is no arbitrage.\"\"\"\n    ...\n",
+    "solution": "from fractions import Fraction\n\n\ndef cross_arb(asks, bids):\n    \"\"\"asks of one dealer, bids of another, each a list of\n    (price, size) sorted best first. Match the cheapest ask\n    with the highest bid while ask < bid.\n    Return (units, profit).\"\"\"\n    a = [list(x) for x in asks]\n    b = [list(x) for x in bids]\n    i = j = 0\n    units, profit = 0, 0\n    while i < len(a) and j < len(b) and a[i][0] < b[j][0]:\n        q = min(a[i][1], b[j][1])\n        units += q\n        profit += q * (b[j][0] - a[i][0])\n        a[i][1] -= q\n        b[j][1] -= q\n        if a[i][1] == 0:\n            i += 1\n        if b[j][1] == 0:\n            j += 1\n    return units, profit\n\n\ndef book_arb(odds):\n    \"\"\"odds: list of o for o-to-1 bets; exactly one outcome happens.\n    Return (stakes, profit) per £1 of payout as Fractions,\n    or ([], Fraction(0)) if there is no arbitrage.\"\"\"\n    stakes = [Fraction(1, o + 1) for o in odds]\n    profit = 1 - sum(stakes)\n    if profit <= 0:\n        return [], Fraction(0)\n    return stakes, profit\n",
     "examples": [
      {
       "call": "book_arb([2, 3, 4])",
@@ -1244,16 +1244,16 @@
  ],
  "summary": {
   "ideas": [
-   "An arbitrage is a set of trades whose payoffs cancel on every outcome, with money left over.",
+   "An arbitrage cannot lose on any outcome and gains on at least one. Payoffs that cancel, with money left over, are the plainest kind.",
    "Size it by the depth: match the best offer with the best bid while the offer is below the bid.",
-   "On a board, implied chances totalling below 1 lock a profit. Exactly 1 is fair; above 1 is the margin."
+   "When exactly one outcome happens, implied chances totalling below 1 lock a profit. Exactly 1 is fair; above 1 is the overround."
   ],
   "formula": {
    "name": "Board arbitrage",
    "tex": "\\sum_i \\frac{1}{o_i + 1} < 1",
    "note": "Stake $1/(o_i + 1)$ of the payout on each outcome."
   },
-  "trap": "Calling a trade arbitrage when a leg is missing or the cash is negative: both conditions must hold."
+  "trap": "Calling a trade arbitrage when some outcome loses money, through a missing leg or negative cash."
  },
  "quiz": [
   {
@@ -1305,7 +1305,7 @@
   {
    "id": "q-implied",
    "difficulty": 2,
-   "prose": "Odds of 1 to 1, 2 to 1 and 3 to 1 on three exclusive outcomes.",
+   "prose": "Odds of 1 to 1, 2 to 1 and 3 to 1 on three outcomes. Exactly one of them happens.",
    "question": "What do the implied chances add to? Give 4 places.",
    "widget": {
     "kind": "numeric",
@@ -1333,7 +1333,7 @@
     }
    },
    "explain": {
-    "text": "$1/2 + 1/3 + 1/4 = 13/12$, above 1. The board favours the bookmaker, so there is no arbitrage. The excess, 1/12, is the bookmaker's margin."
+    "text": "$1/2 + 1/3 + 1/4 = 13/12$, above 1. The board favours the bookmaker, so there is no arbitrage. The excess, 1/12, is called the overround."
    },
    "tags": [
     "arbitrage"

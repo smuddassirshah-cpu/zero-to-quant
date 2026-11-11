@@ -74,3 +74,31 @@ Run on branch `worktree-agent-a3943be3d29330bd0`, content unchanged.
 - Engine limits: none found. No bullet added to `docs/BACKLOG-INBOX.md`.
 
 Proposed fixes were checked against the voice gate by hand: all under 35 words, no exclamation marks or em-dashes. In fix 5, "bet a a little more" is intended: the first "a" is the bet's name.
+
+## Fix pass
+
+Fixer: Opus, content commit `6bc15e4e`. Each basis below was established independently (derivation or a run of code in `scratchpad/chk.py` and `scratchpad/hw.py`, outside the repo), not taken from the audit.
+
+Definition used for arbitrage: the standard one (Björk, *Arbitrage Theory in Continuous Time*; Delbaen and Schachermayer): a set of trades that cannot lose on any outcome and gains on at least one, counting the cash. Trades whose payoffs cancel, with money left over, are taught as the plainest kind. The two code widgets now return the profit locked on the worst face, which finds every sure-profit arbitrage; a weak one (zero on some faces, never negative) still returns 0, and the text never says 0 means "no arbitrage".
+
+1. **fixed.** Basis: interval score width + 20 × miss; 100 to 140 on 95 scores 140, 90 to 140 scores 50 (10 more units, saving 90); 95 to 140 scores 45. `review-4.json` `items[2].explain.text`.
+2. **fixed, with code repaired.** Basis: selling L (pays at most 3) at 3.2 nets at least 0.20 on every face; old `find_arb` returned 0 on it (run). Text: l15 `screens[9].prose`, `summary.ideas[0]`, `summary.trap`, `screens[6].hints[0..2].text`, `screens[6].feedback.generic`, `screens[6].explain.text`; l16 `screens[10].prose`, `.widget.how`, `.hints[1..2].text`, `.feedback.generic`, `.explain.text`; homework-4 `items[2].widget.lines[1].text`, `lines[2].text`, `lines[4].why`, `feedback.byKey.trade`, `explain.text`. Code: l16 `screens[10].widget.starter` and `.solution` (docstring; solution now `max(0, min(net) + cash)`), `.tests` (two added); homework-4 `items[0].widget.starter` and `.solution` (docstring; solution drops the constant-payoff filter, profit `min(net) + cash`), `.tests` (two added), `.how`, `feedback.generic`, `explain.text`. Went beyond the audit's wording-only fix because `find_all_arb` asks for "a sure profit" yet missed dominance trades.
+3. **fixed.** Basis: stakes £20, £15, £12 on 2, 3, 4 to 1 lose all £47 if an unlisted outcome occurs; the Dutch-book bound needs a partition. l15 `screens[9].prose`, `screens[7].prose`, `quiz[1].prose` (same defect, not named by the audit), `summary.ideas[2]`, `screens[10].widget.starter` and `.solution` (`book_arb` docstring only); review-4 `items[4].prose`.
+4. **fixed.** Basis: old skewE bids 2.3 + 1.3 = 3.6 < 3.7 and asks 2.7 + 1.7 = 4.4 > 3.3, so no trade-through; new E 2.5 to 2.9 gives 2.5 + 1.3 − 3.7 = 0.10 flat on every face (A = E + F). l16 `screens[2].widget.options[2].text`, `.why`, `feedback.byKey.skewE`.
+5. **fixed.** Basis: grid search of expected log growth under a £30 cap (independent bets): best about £6.05, £7.80, £16.15 (0.03259) against equal scaling 0.03240. l18 `screens[4].explain.text`, `summary.ideas[1]`; review-4 `items[9].explain.text` (clarity only; the claim was already true of the rule).
+6. **fixed.** Basis: enumeration of 36 rolls: |S − 7| ≤ 1 on 16, = 2 on 8, ≥ 3 on 12. My text gives the counts rather than the audit's "keeps most of its premium near 7", which fails at 6 and 8 (keeps half). l17 `screens[8].explain.text`.
+7. **fixed.** Basis: 2-call and 12-put are each worth 5; 9-call 5/18. l17 `quiz[0].explain.text`.
+8. **fixed.** Basis: overround 13/12 − 1 = 1/12; hold on a balanced book 1 − 12/13 = 1/13. l15 `quiz[1].explain.text`, `summary.ideas[2]` (with fix 3).
+9. **fixed.** Basis: −12 = 1,000 − 1,012, a sign error; no reverse rates are quoted. l15 `screens[8].feedback.byKey.rev`.
+10. **fixed.** Basis: Binomial(10, 0.9): P(6) = 0.0112, P(≤ 6) = 0.0128. l14 `summary.ideas[2]`.
+11. **fixed.** Basis: Binomial(21, 0.1): P(≥ 4 misses) = 0.152; a shifted mean also raises misses. l14 `screens[11].explain.text`.
+12. **fixed (softened, not verified).** No web access. (a) guide attribution removed and the battery and desk claim reduced to "may" and "can": l14 `screens[11].prose`. (b) "six or seven hits in ten" removed; kept only that people often make 90% ranges too narrow (the well-known overconfidence finding): l14 `screens[7].explain.text`. (c) "Desks do this by rule" replaced by a normative line: l18 `screens[11].explain.text`.
+
+A. **fixed.** l16 `screens[11].explain.text`: now "Options on a dice game, later in this level, use the same parity."
+B. No change (the audit records no finding).
+
+Graded items changed. No numeric key or slip value changed. Keyed option text: l16 `screens[2]` option `skewE` (distractor; key `good` unchanged, recomputed above). Order lines: homework-4 `items[2]` `combo` and `cash` texts (answer order unchanged). Hidden tests added: l16 `screens[10]` `find_arb(PAY, {'L': (3.2, 3.3)}, {'L': -1}) == 1/5` (3.2 − 3 on faces 3) and `find_arb(PAY, {'A': (0.8, 0.9)}, {'A': 1}) == 1/10` (1 − 0.9 on face 1); homework-4 `items[0]` L sold at 3.1 against L and U gives (1/10, L sell) (3.1 − 3; L with U gives only 0.05) and A bought at 2.3 against H sold at 2.4 gives (1/10, A buy, H sell) (A − H = L ≥ 0, zero on faces 4 to 6). All seven old tests per widget were re-run under the new solutions with the same results; old solutions fail the new tests, starters fail all. No rubric changed.
+
+Concepts script: section 8 added with four checks for the new text (ten units, new skewE traded through, find_arb on L, straddle counts). The old checks keyed on the replaced text now skip.
+
+Gates: validator 0 errors (4,137 warnings, as before; manifest unchanged); concepts script exit 0 (297 checks, 0 failed, 5 notes, all unconditional notes on the old wording's counterexamples); `mm-games-3-perf-numbers.py` exit 0; voice scan 35: 0 and 0; playthrough with `--local-cdn` of l14 to l18, review-4 and homework-4, desktop and `--mobile`: all passed (review-4 10 of 10; homework-4 9 of 9, 40 of 40 marks).
