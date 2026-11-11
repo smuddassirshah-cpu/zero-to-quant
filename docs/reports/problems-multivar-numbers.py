@@ -415,16 +415,18 @@ lv.claim(exact65 == sp.Rational(51875, 1000) and ex65[x] == sp.Rational(21, 4) a
 lv.claim(abs(max(Pn(q / 10000, 6.5 - q / 10000) for q in range(0, 65001)) - 51.875) < 1e-9, 'L3 item 1 part 5: line search on x + y = 6.5 gives 51.875')
 say(lv, 1, 4, 'feedback.correct', 51.875)
 
-# ---- item 2 p-min-variance-pair: vols 0.3, 0.2, rho 0.25
-s1_, s2_, rho = sp.Rational(3, 10), sp.Rational(1, 5), sp.Rational(1, 4)
+# ---- item 2 p-min-variance-pair: vols 0.4, 0.25, rho 0.3 (fix pass 1.3 b: was 0.3, 0.2, 0.25)
+s1_, s2_, rho = sp.Rational(4, 10), sp.Rational(1, 4), sp.Rational(3, 10)
 cov = rho * s1_ * s2_
-lv.claim(2 * cov == sp.Rational(3, 100), 'L3 item 2 prose: 2 rho sigma1 sigma2 = 0.03')
+lv.claim(2 * cov == sp.Rational(6, 100), 'L3 item 2 prose: 2 rho sigma1 sigma2 = 0.06')
+lv.claim(s1_ ** 2 == sp.Rational(16, 100) and s2_ ** 2 == sp.Rational(625, 10000), 'L3 item 2 prose: variances 0.16 and 0.0625')
 var = w ** 2 * s1_ ** 2 + (1 - w) ** 2 * s2_ ** 2 + 2 * w * (1 - w) * cov
 quad_ = sp.expand(var)
 import numpy as np  # noqa: E402
 ws = np.linspace(-1, 2, 31)
 coef = np.polyfit(ws, [float(var.subs(w, q)) for q in ws], 2)
-lv.claim(np.allclose(coef, [0.1, -0.05, 0.04]), 'L3 item 2 part 1: a numerical fit of the variance gives 0.1, -0.05, 0.04')
+lv.claim(np.allclose(coef, [0.1625, -0.065, 0.0625]), 'L3 item 2 part 1: a numerical fit of the variance gives 0.1625, -0.065, 0.0625')
+lv.claim(sp.Rational(16, 100) + sp.Rational(625, 10000) - sp.Rational(6, 100) == sp.Rational(1625, 10000) and -sp.Rational(125, 1000) + sp.Rational(6, 100) == -sp.Rational(65, 1000), 'L3 item 2 part 1: explain arithmetic 0.16 + 0.0625 - 0.06 and -0.125 + 0.06')
 no_cross = sp.expand(w ** 2 * s1_ ** 2 + (1 - w) ** 2 * s2_ ** 2)
 half_cross = sp.expand(w ** 2 * s1_ ** 2 + (1 - w) ** 2 * s2_ ** 2 + w * (1 - w) * cov)
 expr(lv, 2, 0, quad_, {'no-cross': no_cross, 'half-cross': half_cross})
@@ -433,33 +435,37 @@ wstar = sp.solve(sp.diff(quad_, w), w)[0]
 wformula = (s2_ ** 2 - rho * s1_ * s2_) / (s1_ ** 2 + s2_ ** 2 - 2 * rho * s1_ * s2_)
 vn = sp.lambdify(w, quad_)
 wgrid = min((q / 100000 for q in range(0, 100001)), key=vn)
-num(lv, 2, 1, wstar, wgrid, {'no-two': sp.Rational(5, 100) / sp.Rational(1, 10), 'gave-b': 1 - wstar,
+num(lv, 2, 1, wstar, wgrid, {'no-two': sp.Rational(65, 1000) / sp.Rational(1625, 10000), 'gave-b': 1 - wstar,
                               'carried': sp.solve(sp.diff(no_cross, w), w)[0]}, agree=1e-5)
-lv.claim(wstar == wformula, 'L3 item 2 part 2: the lesson formula gives 0.25 too')
+lv.claim(wstar == wformula and wstar == sp.Rational(1, 5), 'L3 item 2 part 2: the lesson formula gives 0.2 too')
+lv.claim(sp.diff(quad_, w) == sp.Rational(325, 1000) * w - sp.Rational(65, 1000), 'L3 item 2 part 2: derivative 0.325w - 0.065')
 var_min = quad_.subs(w, wstar)
 num(lv, 2, 2, sp.sqrt(var_min), math.sqrt(min(vn(q / 100000) for q in range(0, 100001))),
-    {'variance': var_min, 'weighted': wstar * s1_ + (1 - wstar) * s2_, 'carried-half': sp.sqrt(quad_.subs(w, sp.Rational(1, 2)))}, printed=(0.1837,))
-lv.claim(var_min == sp.Rational(3375, 100000), 'L3 item 2 part 3: variance 0.03375')
-for v in (0.00625, 0.0125, 0.03375):
+    {'variance': var_min, 'weighted': wstar * s1_ + (1 - wstar) * s2_, 'carried-half': sp.sqrt(quad_.subs(w, sp.Rational(65, 1000) / sp.Rational(1625, 10000)))}, printed=(0.2366,))
+lv.claim(var_min == sp.Rational(56, 1000), 'L3 item 2 part 3: variance 0.056')
+lv.claim(sp.Rational(1625, 10000) * sp.Rational(4, 100) == sp.Rational(65, 10000) and sp.Rational(65, 10000) - sp.Rational(13, 1000) + sp.Rational(625, 10000) == var_min, 'L3 item 2 part 3: 0.0065 - 0.013 + 0.0625 = 0.056')
+lv.claim(wstar * s1_ + (1 - wstar) * s2_ == sp.Rational(28, 100) and abs(float(sp.sqrt(sp.Rational(625, 10000))) - 0.25) < 1e-12, 'L3 item 2 part 3: weighted 0.28, B volatility 0.25 above sigma_p')
+for v in (0.0065, 0.013, 0.0625, 0.056):
     say(lv, 2, 2, 'feedback.correct', v)
 w1, w2 = sp.symbols('w1 w2', real=True)
 V2 = w1 ** 2 * s1_ ** 2 + w2 ** 2 * s2_ ** 2 + 2 * w1 * w2 * cov
-lv.claim(sp.expand(sp.diff(V2, w1) - (sp.Rational(18, 100) * w1 + sp.Rational(3, 100) * w2)) == 0, 'L3 item 2 part 4: dV/dw1 = 0.18 w1 + 0.03 w2')
+lv.claim(sp.expand(sp.diff(V2, w1) - (sp.Rational(32, 100) * w1 + sp.Rational(6, 100) * w2)) == 0, 'L3 item 2 part 4: dV/dw1 = 0.32 w1 + 0.06 w2')
 sol = sp.solve([sp.diff(V2, w1) - lam, sp.diff(V2, w2) - lam, w1 + w2 - 1], [w1, w2, lam], dict=True)[0]
-lv.claim(sol[w1] == sp.Rational(1, 4) and sol[w2] == sp.Rational(3, 4), 'L3 item 2 part 4: Lagrange gives w = (0.25, 0.75)')
-lam_at = sp.diff(V2, w1).subs({w1: sp.Rational(1, 4), w2: sp.Rational(3, 4)})
-num(lv, 2, 3, sol[lam], 2 * float(var_min), {'variance': var_min, 'no-cross': sp.Rational(18, 100) * sp.Rational(1, 4)})
-lv.claim(lam_at == sol[lam] and sp.diff(V2, w2).subs({w1: sp.Rational(1, 4), w2: sp.Rational(3, 4)}) == sol[lam], 'L3 item 2 part 4: both partials equal 0.0675')
-for v in (0.045, 0.0225, 0.06, 0.0075):
-    say(lv, 2, 3, 'feedback.correct' if v in (0.045, 0.0225) else 'explain.text', v)
+lv.claim(sol[w1] == sp.Rational(1, 5) and sol[w2] == sp.Rational(4, 5), 'L3 item 2 part 4: Lagrange gives w = (0.2, 0.8)')
+lam_at = sp.diff(V2, w1).subs({w1: sp.Rational(1, 5), w2: sp.Rational(4, 5)})
+num(lv, 2, 3, sol[lam], 2 * float(var_min), {'variance': var_min, 'no-cross': sp.Rational(32, 100) * sp.Rational(1, 5)})
+lv.claim(lam_at == sol[lam] and sol[lam] == sp.Rational(112, 1000) and sp.diff(V2, w2).subs({w1: sp.Rational(1, 5), w2: sp.Rational(4, 5)}) == sol[lam], 'L3 item 2 part 4: both partials equal 0.112')
+lv.claim(sp.diff(V2, w2) == sp.Rational(125, 1000) * w2 + sp.Rational(6, 100) * w1, 'L3 item 2 part 4: dV/dw2 = 0.125 w2 + 0.06 w1')
+for v in (0.064, 0.048, 0.112, 0.1, 0.012):
+    say(lv, 2, 3, 'feedback.correct' if v in (0.064, 0.048, 0.112) else 'explain.text', v)
 est = var_min + sol[lam] * sp.Rational(2, 100)
 # method 2: minimise the variance on w1 + w2 = 1.02 by a line search
 vb = sp.lambdify((w1, w2), V2)
 line_min = min(vb(q / 100000, 1.02 - q / 100000) for q in range(0, 102001))
 num(lv, 2, 4, est, var_min * sp.Rational(102, 100) ** 2, {'sigma-lambda': var_min + var_min * sp.Rational(2, 100), 'no-change': var_min,
-                                                       'whole-lambda': var_min + sol[lam]}, printed=(0.0351, round(line_min, 4)), agree=1e-3)
-lv.claim(abs(line_min - float(var_min) * 1.0404) < 1e-9 and round(float(var_min) * 1.0404, 4) == 0.0351, 'L3 item 2 part 5: exact 0.03375 x 1.0404 = 0.035114, a line search agrees')
-say(lv, 2, 4, 'feedback.correct', 0.00135)
+                                                       'whole-lambda': var_min + sol[lam]}, printed=(0.05824, 0.0582, round(line_min, 4)), agree=1e-3)
+lv.claim(abs(line_min - float(var_min) * 1.0404) < 1e-9 and round(float(var_min) * 1.0404, 4) == 0.0583 and est == sp.Rational(5824, 100000), 'L3 item 2 part 5: estimate 0.05824; exact 0.056 x 1.0404 = 0.0582624, a line search agrees')
+say(lv, 2, 4, 'feedback.correct', 0.00224)
 
 lv.check_wrongs('problems')
 results.append(lv)

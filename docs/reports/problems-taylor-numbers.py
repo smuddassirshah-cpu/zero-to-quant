@@ -150,25 +150,27 @@ def bondf(cfs):
 I = load(1)
 if I is not None:
     ok(len(I) >= 3 and len(I) <= 5, 'set 1: item count')
-    # p-cube-root-27
-    f = X ** R(1, 3)
-    a = 27
+    # p-cube-root-27 (fix pass 1.3 b: now the fourth root of 16.32 about 16; the id is kept)
+    f = X ** R(1, 4)
+    a = 16
     fa, f1, f2 = f.subs(X, a), sp.diff(f, X).subs(X, a), sp.diff(f, X, 2).subs(X, a)
-    ok(fa == 3 and f1 == R(1, 27) and f2 == R(-2, 2187), 'cube root derivatives')
-    ff = lambda x: x ** (1 / 3)
-    ok(abs(dnum(ff, 27) - 1 / 27) < 1e-8 and abs(d2num(ff, 27) + 2 / 2187) < 1e-6, 'cube root numeric derivatives')
-    expr(I, 'p-cube-root-27', 1, 3 + (X - 27) / 27)
-    h = R(81, 100)
+    ok(fa == 2 and f1 == R(1, 32) and f2 == R(-3, 2048), 'fourth root derivatives')
+    ff = lambda x: x ** 0.25
+    ok(abs(dnum(ff, 16) - 1 / 32) < 1e-8 and abs(d2num(ff, 16) + 3 / 2048) < 1e-6, 'fourth root numeric derivatives')
+    ok(sp.diff(f, X, 2) == R(-3, 16) * X ** R(-7, 4) and 16 ** R(-3, 4) == R(1, 8) and 16 ** R(-7, 4) == R(1, 128), 'fourth root: f\'\' formula, 16^(-3/4) = 1/8, 16^(-7/4) = 1/128')
+    expr(I, 'p-cube-root-27', 1, 2 + (X - 16) / 32)
+    h = R(32, 100)
     L = fa + f1 * h
-    num(I, 'p-cube-root-27', 2, L, 3 + 0.81 / 27,
-        {'ninth': 3 + h / 9, 'third': 3 + h / 3, 'whole-x': 3 + R(2781, 100) / 27}, dp=4)
+    num(I, 'p-cube-root-27', 2, L, 2 + 0.32 / 32,
+        {'eighth': 2 + h / 8, 'quarter': 2 + h / 4, 'whole-x': 2 + R(1632, 100) / 32}, dp=4)
     err = f2 / 2 * h ** 2
-    num(I, 'p-cube-root-27', 3, err, -0.6561 / 2187,
-        {'no-half': f2 * h ** 2, 'h-not-squared': f2 / 2 * h, 'sign': -err}, dp=5)
-    num(I, 'p-cube-root-27', 4, L + err, 3.03 - 0.0003,
-        {'sign': L - err, 'no-half': L + 2 * err, 'ninth-carried': 3 + h / 9 + err}, dp=4)
-    ok(abs(round(27.81 ** (1 / 3), 4) - 3.0297) < 1e-12, 'cube root of 27.81 is 3.0297 to 4 places')
-    ok(abs(float(L - 27.81 ** (1 / 3)) - 0.000295) < 1e-5, 'true tangent error about 0.0003')
+    ok(h ** 2 == R(1024, 10000) and err == R(-75, 1000000), 'fourth root: h^2 = 0.1024 and error exactly -0.000075')
+    num(I, 'p-cube-root-27', 3, err, -0.1024 * 3 / 2048 / 2,
+        {'no-half': f2 * h ** 2, 'h-not-squared': f2 / 2 * h, 'sign': -err}, dp=6)
+    num(I, 'p-cube-root-27', 4, L + err, 2.01 - 0.000075,
+        {'sign': L - err, 'no-half': L + 2 * err, 'eighth-carried': 2 + h / 8 + err}, dp=6)
+    ok(abs(round(16.32 ** 0.25, 6) - 2.009926) < 1e-12, 'fourth root of 16.32 is 2.009926 to 6 places')
+    ok(abs(float(L + err) - 16.32 ** 0.25) < 1e-6 and abs(float(L - 16.32 ** 0.25) - 0.000075) < 1e-6, 'corrected estimate within 1e-6 of the true root; tangent error about 0.000075')
 
     # p-newton-cubic
     g = X ** 3 + X - 3
@@ -204,6 +206,8 @@ if I is not None:
     dv01 = -dPr * R(1, 10000) * lots
     num(I, 'p-loss-limit', 3, dv01, 354.43 / 10000 * 40000,
         {'one-lot': -dPr / 10000, 'hundredfold': -dPr * R(1, 100) * lots, 'price-not-slope': R(9637, 100) / 10000 * lots}, dp=0)
+    ok(abs(4 * 103 / 1.04 ** 5 - 338.63397) < 1e-5 and abs(float(4 * 103 / R(104, 100) ** 5) - 338.63397) < 1e-5, 'loss-limit term 4 x 103 / 1.04^5 = 338.6340 (not 338.6338)')
+    ok(round(2.7737 + 5.3340 + 7.6932 + 338.6340, 4) == 354.4349 and abs(sum(t * c / 1.04 ** (t + 1) for t, c in cf.items()) - 354.4349) < 5e-4, 'loss-limit terms 2.7737 + 5.3340 + 7.6932 + 338.6340 = 354.4349')
     ok(abs(float(-dP) / 10000 * lots - 1417.74) < 0.005, 'DV01 from the unrounded slope is 1417.74')
     dv = R(141772, 100)
     move = 50000 / dv
@@ -225,6 +229,8 @@ if I is not None:
     ok(abs(sum(1 / 1.05 ** t for t in (1, 2, 3)) - 2.723248) < 5e-7, 'annuity factor 2.723248')
     num(I, 'p-loan-rate', 2, dV, dnum(vf, 0.05),
         {'no-t': -V / R(105, 100), 'power-t': dV * R(105, 100), 'positive': -dV}, dp=2, agree=1e-7)
+    ok(round(3 / 1.05 ** 4, 6) == 2.468107 and round(float(3 / R(105, 100) ** 4), 6) == 2.468107, 'loan-rate term 3 / 1.05^4 = 2.468107 (not 2.468108)')
+    ok(abs(0.907029 + 1.727675 + 2.468107 - 5.102811) < 1e-9 and round(sum(t / 1.05 ** (t + 1) for t in (1, 2, 3)), 5) == 5.10281, 'loan-rate printed terms add to 5.102811; the true sum 5.1028121 rounds to the printed 5.10281')
     ok(abs(sum(t / 1.05 ** (t + 1) for t in (1, 2, 3)) - 5.10281) < 5e-6, 'slope factor 5.10281')
     Vr, dVr = R(1007602, 100), R(-1888040, 100)
     D = -dVr / Vr
@@ -397,6 +403,37 @@ if I is not None:
     num(I, 'p-tail-bound', 5, ub, 1.490667 + 0.0011594,
         {'lagrange': T3 + lag, 'lower': T3 + a(4), 'over-four': T3 + a(4) / (1 - xv / 4)}, dp=5, agree=2e-7)
     ok(round(float(T3 + a(4)), 5) == 1.49173 and float(T3 + a(4)) < exp(0.4) < float(ub) and round(exp(0.4), 5) == 1.49182, 'bounds hold; e^0.4 = 1.49182')
+
+    # fix pass 1.3 b: bands of the scaled parts, and the sign-free reading of p-two-months part 5
+    def inband(iid, k, val, wid=None):
+        w = I[iid]['parts'][k - 1]['widget']
+        if wid is None:
+            return abs(val - w['answer']) <= w['tol']['abs'] + 1e-12
+        e = [x for x in w['wrong'] if x['id'] == wid][0]
+        return abs(val - e['value']) <= e['tol']['abs'] + 1e-12
+    ok(inband('p-two-months', 4, 4.854) and inband('p-two-months', 4, 4.85) and inband('p-two-months', 4, 4.86) and not inband('p-two-months', 4, 4.17), 'two-months part 4: band takes 4.85 (M kept as 2.33), 4.86 and refuses 4.17')
+    ok(abs(2.33 * 0.000125 / 6 * 1e5 - 4.854) < 0.001, 'two-months part 4: M = 2.33 gives 4.854')
+    ok(inband('p-tail-bound', 4, 11.60) and inband('p-tail-bound', 4, 11.59) and inband('p-tail-bound', 4, 10.67 / 0.92) and inband('p-tail-bound', 4, 10.667 / 0.92) and not inband('p-tail-bound', 4, 11.58)
+       and not inband('p-tail-bound', 4, 10.67) and not inband('p-tail-bound', 4, 11.85) and not inband('p-tail-bound', 4, 16.0), 'tail-bound part 4: band takes 11.59 and 11.60, refuses the true error 11.58, 10.67, 11.85 and 16')
+    # every other slip of the part, typed unscaled, stays outside each unscaled band
+    others = {('p-two-months', 2): [r1 ** 3 / 6, r1 ** 3, r1 ** 2 / 2],
+              ('p-two-months', 4): [2 * abs(r2) ** 3 / 6, M * abs(r2) ** 3 / 2, abs(r2) ** 3 / 6],
+              ('p-two-months', 5): [(R(1707, 100) - R(486, 100)) / 10 ** 5, (R(1707, 100) + R(417, 100)) / 10 ** 5, R(1707, 100) / 10 ** 5],
+              ('p-tail-bound', 4): [a(4), a(4) / (1 - xv / 4), lag]}
+    for (iid, k), vals in others.items():
+        ok(inband(iid, k, float(tail if iid == 'p-tail-bound' else {2: b1, 4: b2, 5: tot}[k] / 10 ** 5), 'unscaled'), f'{iid} part {k}: unscaled band holds the bound itself')
+        for v in vals:
+            sv = float(v) * (1 if iid == 'p-tail-bound' else 1)
+            ok(not inband(iid, k, sv, 'unscaled'), f'{iid} part {k}: unscaled band must not catch the other slip {sv}')
+    for v in (0.00853, 0.0000853, 0.000512, 0.0032, 0.0000417, 0.0001221, 0.0016, 0.0010667, 0.0000204):
+        ok(not any(inband(i_, k_, v, 'unscaled') for i_, k_ in others), f'unscaled bands refuse the unrelated small number {v}')
+    ol = [x for x in load(1)['p-loss-limit']['parts'][2]['widget']['wrong'] if x['id'] == 'one-lot'][0]
+    ok(abs(0.35 - ol['value']) > ol['tol']['abs'] and abs(0.14 - ol['value']) > ol['tol']['abs'] and abs(0.0354 - ol['value']) <= ol['tol']['abs'], 'loss-limit part 3: one-lot band holds 0.0354 only')
+    # signs of the two errors in p-two-months: opposite, so the safe bound without signs is the sum and the true total error is the difference
+    d1 = lg(0.08) - float(e1)
+    d2 = lg(-0.05) - float(e2)
+    ok(d1 > 0 and d2 < 0 and abs(d1 * 1e5 - 16.10) < 0.005 and abs(d2 * 1e5 + 4.33) < 0.005 and abs((d1 + d2) * 1e5 - 11.8) < 0.05, 'two-months: errors +16.10 and -4.33 (opposite signs), total 11.8')
+    ok(abs(float(tot) - 21.93) < 1e-9 and abs(float(tot) - 17.07) > 4 and abs(d1 + d2) * 1e5 < 17.07, 'two-months part 5: the sum 21.93 is the sign-free bound; the true total error is below even the first bound')
 
     # p-big-gain
     an = 1.8 ** n / n

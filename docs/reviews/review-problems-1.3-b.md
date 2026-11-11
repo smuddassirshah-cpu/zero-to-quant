@@ -155,3 +155,49 @@ One fix pass on Sonnet covers all of it. Findings 8 and 9 change graded answers,
 | `dump.py`, `exprs.py` | compact dumps for reading | `python3` |
 
 All run from the repo root.
+
+## Fix pass
+
+Applied by targeted edits to `taylor/problems-1.json`, `-3.json`, `multivar/problems-2.json`, `-3.json`; the two number scripts updated and exit 0 (`problems-taylor-numbers.py` 937 checks, `problems-multivar-numbers.py` 727 of 727, run with the scratchpad venv). `multivar/problems-4` and `-5` untouched. Item ids kept (`p-cube-root-27` now holds the fourth-root problem).
+
+1. `p-two-months` part 5: fixed. Basis (my own): the item fixes the signs, with true errors $+16.10$ and $-4.33$ (in $10^{-5}$) from $\ln 1.08 - 0.0768$ and $\ln 0.95 + 0.05125$, so the real total error is their sum, 11.8, below the larger bound; a bound on a size ignores sign, so $17.07 + 4.86 = 21.93$ stays right for a question that says to ignore signs. Question, `subtracted`, `first-only`, `generic` and `explain` reworded as proposed; the whole item reads true (parts 2 and 4 explains state only true errors). The script now checks the signs and the total.
+2. `p-newton-cubic` part 3 `below` `why`: fixed. Basis: for $f' > 0$ and $f'' > 0$ the tangent lies under the curve, so its zero sits at or above the root from either side; from $x_0 = 1$ the step gave 1.25 > 1.2134 (crossed), from $x_1$ it cannot cross. New `why` says so.
+3. `p-tail-bound` part 4: fixed. `tol` 0.008; $10.67 / 0.92 = 11.598$ and $10.667 / 0.92 = 11.594$ both accepted, 11.58, 10.67, 11.85 and 16 refused (script).
+4. `p-two-months` part 4: fixed. `tol` 0.01 ($2.33 \times 0.000125 / 6 = 4.854$ accepted, 4.17 refused); question now says what bound to find.
+5. Five loose bands: fixed. `unscaled` `tol.abs` 0.000001 (part 2), 0.0000005 (part 4), 0.000001 (part 5), 0.000005 (`p-tail-bound` part 4); `one-lot` 0.005. The script checks that each holds its own value and refuses every other slip and nine unrelated small numbers. The validator now warns `[wrong-band]` on these five (a heuristic that ignores the units); raised in `docs/BACKLOG-INBOX.md`.
+6. Printed terms: fixed. $4 \times 103 / 1.04^5 = 338.63397$ gives 338.6340 (two places; sum 354.4349); $3 / 1.05^4 = 2.4681074$ gives 2.468107 (sum of printed terms 5.102811, true sum 5.1028121, printed "5.10281" stands). Both recomputed twice in the script.
+7. `p-newton-cubic` part 3 correct option: fixed, "Above: the tangent at $x_1$ reaches 0 before the curve does".
+8. `p-cube-root-27`: fixed as proposed, the fourth root about 16 (my recompute: slope $\tfrac14 \cdot \tfrac18 = \tfrac1{32}$; $L(16.32) = 2.01$; $f''(16) = -\tfrac{3}{16} \cdot \tfrac{1}{128} = -\tfrac{3}{2048}$; error exactly $-0.000075$; corrected 2.009925 against the true 2.0099259). Part 4 `explain` says "within $0.000001$" instead of the reader's "matches to 5 places", which rounds either way.
+9. `p-min-variance-pair`: fixed as proposed (40%, 25%, correlation 0.3; checked by sympy, a polynomial fit, a grid search and a line search; $w = 0.2$, $\sigma_p^2 = 0.056$, $\sigma_p = 0.2366$, $\lambda = 0.112$, estimate 0.05824 against exact 0.0582624). Part 4 no longer says "free" for numbers. Part 5 asks for 5 places, since the answer has five.
+10. Freshness of `p-tail-bound` and `p-three-halves`: no edit, as ruled.
+11. `p-two-book-risk` part 5: fixed, "shrinks with the square of the step".
+12. Tooling: reader had no bullet in the inbox for it, so added under `Raised later (review problems 1.3 b):` in `docs/BACKLOG-INBOX.md` (freshness formula advisory, wide-band advisory, plus the `[wrong-band]` false positive on `unscaled` entries). No engine file edited.
+
+Counts: 11 fixed, 0 disputed, 1 deferred to the engine (12), 1 no-edit by ruling (10).
+
+### Graded answers, bands and `wrong` values changed (for the delta reader)
+
+Taylor `problems-1`, `p-cube-root-27` (all four parts new; ids `slope-ninth`, `slope-third`, `ninth`, `third`, `ninth-carried` renamed `slope-eighth`, `slope-quarter`, `eighth`, `quarter`, `eighth-carried`):
+- part 1 answer `3+\frac{x-27}{27}` to `2+\frac{x-16}{32}`; accept now `2+(x-16)/32`, `2+\frac{1}{32}(x-16)`, `\frac{3}{2}+\frac{x}{32}`, `1.5+x/32`; wrong `3+\frac{x-27}{9}`, `3+\frac{x-27}{3}`, `x^{1/3}+...` to `2+\frac{x-16}{8}`, `2+\frac{x-16}{4}`, `x^{1/4}+\frac{1}{4}x^{-3/4}(x-16)`.
+- part 2 answer 3.03 to 2.01 (tol 5e-5); wrong 3.09, 3.27, 4.03 to 2.04, 2.08, 2.51.
+- part 3 answer -0.0003 to -0.000075 (tol 5e-6 to 5e-7); wrong -0.0006, -0.00037, 0.0003 to -0.00015, -0.000234, 0.000075 (tol 5e-7).
+- part 4 answer 3.0297 to 2.009925 (tol 5e-7); wrong 3.0303, 3.0294, 3.0897 to 2.010075, 2.00985, 2.039925 (tol 5e-7).
+- `p-loss-limit` part 3 `one-lot`: 0.0354 unchanged, tol 0.5 to 0.005. Printed digits 338.6338 to 338.6340 (parts 2 feedback and explain), `p-loan-rate` part 2 explain 2.468108 to 2.468107 (no value changed).
+- `p-newton-cubic` part 3: option text and `below` `why` only.
+
+Taylor `problems-3`:
+- `p-two-months` part 2 `unscaled` (0.0001707) tol 0.05 to 0.000001; part 4 answer 4.86 tol 0.005 to 0.01, `unscaled` (4.86e-05) tol 0.005 to 0.0000005; part 5 answer 21.93 unchanged (question and feedback only), `unscaled` (0.0002193) tol 0.05 to 0.000001.
+- `p-tail-bound` part 4 answer 11.594 tol 0.005 to 0.008; `unscaled` (0.0011594) tol 0.005 to 0.000005.
+
+Multivar `problems-3`, `p-min-variance-pair` (all five parts new):
+- part 1 answer `0.1w^2-0.05w+0.04` to `0.1625w^2-0.065w+0.0625`; accept `\frac{w^2}{10}-\frac{w}{20}+\frac{1}{25}` to `\frac{13w^2}{80}-\frac{13w}{200}+\frac{1}{16}`; wrong `no-cross` `0.13w^2-0.08w+0.04` to `0.2225w^2-0.125w+0.0625`, `half-cross` `0.115w^2-0.065w+0.04` to `0.1925w^2-0.095w+0.0625`.
+- part 2 answer 0.25 to 0.2; wrong 0.5, 0.75, 0.3077 to 0.4, 0.8, 0.2809.
+- part 3 answer 0.1837 to 0.2366; wrong 0.03375, 0.225, 0.2 to 0.056, 0.28, 0.25.
+- part 4 answer 0.0675 to 0.112; wrong 0.03375, 0.045 to 0.056, 0.064.
+- part 5 answer 0.0351 (tol 5e-5) to 0.05824 (tol 0.0001); wrong 0.0344, 0.03375, 0.10125 to 0.05712 (tol 0.0001), 0.056 (tol 0.0001), 0.168 (tol 6e-5); `accept` added.
+
+Multivar `problems-2` `p-two-book-risk` part 5: wording only.
+
+### Gates
+
+Validator 0 errors. `fresh-check.mjs --file` 0 hits on all four changed sets. `playthrough --problems` with `--local-cdn`, with and without `--mobile`: taylor 1, taylor 3, multivar 2, multivar 3 all passed. Voice scan 35: taylor 0 and 0, multivar 0 and 0. Number scripts: exit 0 both.
