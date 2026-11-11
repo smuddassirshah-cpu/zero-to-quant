@@ -453,6 +453,7 @@ def q14_conj(it, V):
     sgn = 1 if op == '+' else -1
     bottom = sp.expand((p + sgn * sp.sqrt(q)) * (p - sgn * sp.sqrt(q)))
     check(bottom.is_integer, f"conj {p} {op} sqrt{q}: the bottom is rational")
+    check(bottom >= 1 and p * p > q, f"conj {p} {op} sqrt{q}: the new bottom {bottom} is a whole number of at least 1")
     check(f"{p} {'-' if sgn > 0 else '+'} \\sqrt{{{q}}}" in it['prompt'], f"conj {p}: the conjugate named is the right one")
     check(abs(float(c / (p + sgn * q ** 0.5)) - float(c * (p - sgn * q ** 0.5) / bottom)) < 1e-9, f"conj {p}: same value after rationalising")
     num4(it, Q14, bottom, {'added': p * p + q, 'squared-q': p * p - q * q})
@@ -499,14 +500,18 @@ def q16_add(it, V, sign=1):
 
 def q16_addtops(it, V):
     x, top, p, q, a, b, v = q16_add(it, V)
-    expr4(it, top, {'own-bottoms': sp.expand(p * (x + a) + q * (x + b)), 'tops-added': sp.Integer(p + q)}, v, 'simplified')
+    check(it['prompt'].endswith('Type the top, simplified, with no brackets.'), f"add-tops seed {it['seed']}: the prompt rules out a bracketed top")
+    expr4(it, top, {'own-bottoms': sp.expand(p * (x + a) + q * (x + b)), 'tops-added': sp.Integer(p + q),
+                          'whole': top / ((x + a) * (x + b))}, v, 'simplified')
 
 
 def q16_subtops(it, V):
     x, top, p, q, a, b, v = q16_add(it, V, -1)
+    check(it['prompt'].endswith('Type the top, simplified, with no brackets.'), f"subtract-tops seed {it['seed']}: the prompt rules out a bracketed top")
     own = sp.expand(p * (x + a) - q * (x + b))
     lost = sp.expand(p * (x + b) - q * x + q * a)
-    expr4(it, top, {'sign-lost': lost, 'own-bottoms': own if sp.expand(own - lost) != 0 else None}, v, 'simplified')
+    expr4(it, top, {'sign-lost': lost, 'own-bottoms': own if sp.expand(own - lost) != 0 else None,
+                          'whole': top / ((x + a) * (x + b))}, v, 'simplified')
 
 
 def q16_roots(it, V):
@@ -566,6 +571,7 @@ def q17_quot(it, V):
     co = sp.Poly(f, x).all_coeffs()
     s1 = co[1] + (-a) * co[0]
     s0 = co[2] + (-a) * s1
+    check('multiplied out' in it['prompt'], f"quot seed {it['seed']}: the prompt asks for the quotient multiplied out")
     expr4(it, quo, {'sign': x ** 2 + s1 * x + s0, 'constant-sign': x ** 2 + p * x - q}, v, 'expanded')
 
 

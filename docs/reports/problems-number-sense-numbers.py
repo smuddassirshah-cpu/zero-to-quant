@@ -105,42 +105,53 @@ def factors(n):
 
 # ================================================================== level 4
 def level4(L):
-    # ---- hall tiles
-    W, H = 432, 540
-    ok(sp.factorint(W) == {2: 4, 3: 3} and sp.factorint(H) == {2: 2, 3: 3, 5: 1}, 'tiles: the stated prime forms')
+    # ---- kitchen floor tiles (360 cm by 600 cm)
+    W, H = 360, 600
+    ok(sp.factorint(W) == {2: 3, 3: 2, 5: 1} and sp.factorint(H) == {2: 3, 3: 1, 5: 2}, 'tiles: the stated prime forms')
+    ok('primes' not in L['p-hall-tiles']['prose'] and '360' in L['p-hall-tiles']['prose'] and '600' in L['p-hall-tiles']['prose'],
+       'tiles: the prose gives the lengths and no prime forms')
     hcf = sp.igcd(W, H)
     common = [d for d in factors(W) if H % d == 0]
-    num(L, 'p-hall-tiles', 1, hcf, max(common), {'lcm': sp.ilcm(W, H), 'threes-only': 27})
-    ok(sp.ilcm(W, H) == 2 ** 4 * 3 ** 3 * 5, 'tiles: LCM 2,160 from the primes')
-    num(L, 'p-hall-tiles', 2, sp.divisor_count(108), len(common), {'indices-multiplied': 2 * 3, 'indices-added': 3 + 4,
+    num(L, 'p-hall-tiles', 1, hcf, max(common), {'lcm': sp.ilcm(W, H), 'missing-prime': 2 ** 3 * 3})
+    ok(sp.ilcm(W, H) == 2 ** 3 * 3 ** 2 * 5 ** 2 == 1800, 'tiles: LCM 1,800 from the primes')
+    ok(hcf == 2 ** 3 * 3 * 5 == 120 and 24 == sp.igcd(W, H) // 5 and W % 24 == 0 and H % 24 == 0, 'tiles: 120 from the shared primes; 24 drops the 5 and still divides both')
+    num(L, 'p-hall-tiles', 2, sp.divisor_count(120), len(common), {'indices-multiplied': 3 * 1 * 1, 'indices-added': (3 + 1) + (1 + 1) + (1 + 1),
                                                                    'lcm-carried': sp.divisor_count(sp.ilcm(W, H))})
-    tiles = sum(1 for i in range(0, W, 108) for j in range(0, H, 108))
-    num(L, 'p-hall-tiles', 3, (W // 108) * (H // 108), tiles, {'rows-added': W // 108 + H // 108, 'threes-carried': (W // 27) * (H // 27)})
-    area = F(20 * 108 * 108, 10000)
-    num(L, 'p-hall-tiles', 4, area, F(432, 100) * F(540, 100), {'hundred': F(20 * 108 * 108, 100), 'cm-squared': 20 * 108 * 108}, dp=3)
-    stated('tiles: one tile', 11664, 108 * 108)
-    stated('tiles: floor cm2', 233280, 20 * 108 * 108)
-    stated('tiles: 4.32 x 5.4', 23.328, 4.32 * 5.4, 1e-9)
-    text_has(L, 'p-hall-tiles', 4, '11{,}664', '233{,}280', '23.328')
+    ok(sp.divisor_count(120) == (3 + 1) * (1 + 1) * (1 + 1) == 16 and max(common) == 120 and min(common) == 1, 'tiles: 16 sides from 1 cm to 120 cm')
+    ok(sp.divisor_count(1800) == 36 and 3 + 1 + 1 == 5, 'tiles: 36 factors of 1,800')
+    tiles = sum(1 for i in range(0, W, 120) for j in range(0, H, 120))
+    num(L, 'p-hall-tiles', 3, (W // 120) * (H // 120), tiles, {'rows-added': W // 120 + H // 120, 'small-tile-carried': (W // 24) * (H // 24)})
+    area = F(15 * 120 * 120, 10000)
+    num(L, 'p-hall-tiles', 4, area, F(360, 100) * F(600, 100), {'hundred': F(15 * 120 * 120, 100), 'cm-squared': 15 * 120 * 120})
+    stated('tiles: one tile', 14400, 120 * 120)
+    stated('tiles: floor cm2', 216000, 15 * 120 * 120)
+    stated('tiles: 3.6 x 6', 21.6, 3.6 * 6, 1e-9)
+    text_has(L, 'p-hall-tiles', 4, '14{,}400', '216{,}000', '21.6')
+    ok(L['p-hall-tiles']['parts'][0]['widget']['unit'] == 'cm' and L['p-hall-tiles']['parts'][3]['widget']['unit'] == 'm\u00b2', 'tiles: units cm and m2')
 
-    # ---- lawn and pond
-    pond = sp.pi * 3 ** 2
-    num(L, 'p-lawn-pond', 1, pond, 9 * 3.141592653589793, {'diameter': sp.pi * 36, 'circumference': sp.pi * 6}, dp=2,
-        pis=lambda P: P * 9)
-    for wid, f in (('diameter', lambda P: P * 36), ('circumference', lambda P: P * 6)):
+    # ---- courtyard and basin (14 m by 11 m, 5 m across)
+    basin = sp.pi * F(5, 2) ** 2
+    num(L, 'p-lawn-pond', 1, basin, 6.25 * 3.141592653589793, {'diameter': sp.pi * 25, 'circumference': sp.pi * 5}, dp=2,
+        pis=lambda P: P * 6.25)
+    for wid, f in (('diameter', lambda P: P * 25), ('circumference', lambda P: P * 5)):
         z = next(w for w in L['p-lawn-pond']['parts'][0]['widget']['wrong'] if w['id'] == wid)
         for P in (3.14, 22 / 7, float(sp.pi)):
-            ok(abs(round(f(P), 2) - z['value']) <= z['tol']['abs'], f'pond: slip {wid} with pi {P:.4f} still names the slip')
-    lawn = 12 * 9
-    num(L, 'p-lawn-pond', 2, F(lawn) - F('28.27'), sum(1 for i in range(12) for j in range(9)) - 28.27,
-        {'circumference-carried': F(lawn) - F('18.85'), 'perimeter': 2 * (12 + 9) - F('28.27')}, dp=2,
-        pis=lambda P: lawn - round(P * 9, 2))
-    need = F('79.73') / 20
-    boxes = next(b for b in range(1, 10) if 20 * b >= F('79.73'))
-    num(L, 'p-lawn-pond', 3, -(-F('79.73') // 20), boxes, {'rounded-down': F('79.73') // 20, 'circumference-carried': -(-F('89.15') // 20),
-                                                           'whole-lawn': -(-F(lawn) // 20)})
-    stated('pond: 79.73 / 20', 3.99, round(float(need), 2))
-    stated('pond: 89.15 / 20 rounds up to 5', 5, -(-F('89.15') // 20))
+            ok(abs(round(f(P), 2) - z['value']) <= z['tol']['abs'], f'basin: slip {wid} with pi {P:.4f} still names the slip')
+    ok(round(float(basin), 2) == 19.63 and abs(3.14 * 6.25 - 19.625) < 1e-12, 'basin: 19.63, and 19.625 with pi = 3.14')
+    ok(abs(float(sp.pi * 5) - float(basin)) > 1, 'basin: area and distance round are different numbers')
+    court = 14 * 11
+    num(L, 'p-lawn-pond', 2, F(court) - F('19.63'), sum(1 for i in range(14) for j in range(11)) - 19.63,
+        {'circumference-carried': F(court) - F('15.71'), 'perimeter': 2 * (14 + 11) - F('19.63')}, dp=2,
+        pis=lambda P: court - round(P * 6.25, 2))
+    need = F('134.37') / 15
+    tins = next(b for b in range(1, 20) if 15 * b >= F('134.37'))
+    num(L, 'p-lawn-pond', 3, -(-F('134.37') // 15), tins, {'rounded-down': F('134.37') // 15, 'circumference-carried': -(-F('138.29') // 15),
+                                                           'whole-courtyard': -(-F(court) // 15)})
+    stated('basin: 134.37 / 15', 8.96, round(float(need), 2))
+    stated('basin: 138.29 / 15 rounds up to 10', 10, -(-F('138.29') // 15))
+    stated('basin: 9 tins cover 135 and 8 cover 120', 135 - 120, 15)
+    ok(9 * 15 >= 134.37 > 8 * 15 and 135 > 134.37, 'basin: 9 tins just enough')
+    ok(L['p-lawn-pond']['parts'][0]['widget']['unit'] == 'm\u00b2' and L['p-lawn-pond']['parts'][1]['widget']['unit'] == 'm\u00b2', 'basin: units m2')
 
     # ---- cycle commute
     t = [26, 31, 24, 52, 27]
@@ -176,6 +187,9 @@ def level4(L):
     num(L, 'p-meshing-gears', 4, round(float(dist)), round(240 * 18.84955592 / 100),
         {'radius': round(float(per_min * 2 * sp.pi * 6 / 100)), 'centimetres': float(per_min * sp.pi * 6)}, pis=lambda P: round(240 * P * 6 / 100))
     ok(abs(float(dist) - 45) <= 0.5 and abs(round(float(dist), 2) - 45.24) < 1e-9, 'gears: 45.24 m rounds to 45')
+    q4 = L['p-meshing-gears']['parts'][3]
+    ok('4 \\times 60 = 240' in q4['question'] and q4['widget']['unit'] == 'm', 'gears p4: the question carries the 240 turns it uses, unit m')
+    ok(L['p-cycle-commute']['parts'][3]['widget']['unit'] == 'km/h' and L['p-cycle-commute']['parts'][4]['widget']['unit'] == 'm/s', 'commute: units km/h and m/s')
     stated('gears: one turn', 18.85, round(float(6 * sp.pi), 2))
     stated('gears: 240 x 18.85', 4524, 240 * 18.85)
 

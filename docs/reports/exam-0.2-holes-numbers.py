@@ -69,25 +69,30 @@ check(slip == [F(1, 2)], 'e-two-desks tops-and-bottoms slip gives 0.5')
 it = items['e-two-desks']
 numeric('e-two-desks', it['widget'], it['feedback'], it['explain']['text'], 3, {'kept-negative': -2, 'tops-and-bottoms': 0.5, 'desk-b': 6})
 
-# e-diameter-ends: midpoint and half distance, against the circle through both ends
-P, Q = (-5, 2), (7, 18)
-cx, cy = F(P[0] + Q[0], 2), F(P[1] + Q[1], 2)
-rad = math.dist(P, Q) / 2
-check((cx, cy) == (1, 10) and rad == 10, f'e-diameter-ends centre ({cx}, {cy}), radius {rad}')
-check(all((x - 1) ** 2 + (y - 10) ** 2 == 100 for x, y in (P, Q)), 'e-diameter-ends both ends on (x-1)^2 + (y-10)^2 = 100')
-check(12 ** 2 + 16 ** 2 == 400, 'e-diameter-ends 12^2 + 16^2 = 400')
-# the angle in a semicircle: a third point on the circle sees PQ at a right angle
-R = (9, 4)   # (9-1)^2 + (4-10)^2 = 64 + 36
-check((R[0] - 1) ** 2 + (R[1] - 10) ** 2 == 100 and (P[0] - R[0]) * (Q[0] - R[0]) + (P[1] - R[1]) * (Q[1] - R[1]) == 0,
-      'e-diameter-ends second route: (9, 4) on the circle sees the diameter at a right angle')
-row = items['e-diameter-ends']['widget']['rows'][0]
-want = [(1, {'half-gap-x': 6}), (10, {'half-gap-y': 8}), (10, {'full-diameter': 20})]
-for cell, (k, ws) in zip(row, want):
-    check(abs(cell['answer'] - k) < 1e-9, f'e-diameter-ends cell {k}')
-    for w in cell['wrong']:
-        check(abs(w['value'] - ws[w['id']]) < 1e-9 and abs(w['value'] - k) > band(cell['tol']) + band(w['tol']), f'e-diameter-ends wrong {w["id"]}')
-        check(w['id'] in items['e-diameter-ends']['feedback']['byKey'], f'e-diameter-ends wrong {w["id"]} has a line')
-check((Q[0] - P[0]) / 2 == 6 and (Q[1] - P[1]) / 2 == 8 and math.dist(P, Q) == 20, 'e-diameter-ends slips 6, 8, 20')
+# e-diameter-ends: centre given, radius from the distance rule, against half the diameter and against every lattice point
+P, Q, Cc = (-4, -6), (6, 18), (1, 6)
+r1 = math.sqrt((P[0] - Cc[0]) ** 2 + (P[1] - Cc[1]) ** 2)           # centre to an end: 5 across, 12 down
+r2 = math.dist(P, Q) / 2                                             # half the distance between the ends
+check(r1 == r2 == 13 and 5 ** 2 + 12 ** 2 == 13 ** 2, f'e-diameter-ends radius {r1} and {r2}')
+check(Cc == ((P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2), 'e-diameter-ends the given centre is the midpoint of the ends')
+check(all((x - 1) ** 2 + (y - 6) ** 2 == 169 for x, y in (P, Q)), 'e-diameter-ends both ends on (x-1)^2 + (y-6)^2 = 169')
+# the angle in a semicircle: a third point on the circle sees AB at a right angle
+R = (13 + 1, 6)   # (14-1)^2 + 0 = 169
+check((R[0] - 1) ** 2 + (R[1] - 6) ** 2 == 169 and (P[0] - R[0]) * (Q[0] - R[0]) + (P[1] - R[1]) * (Q[1] - R[1]) == (-18) * (-8) + (-12) * 12 == 0,
+      'e-diameter-ends second route: (14, 6) on the circle sees the diameter at a right angle')
+# expanded form: x^2 + y^2 - 2x - 12y + 1 + 36 - 169 = 0, checked at every lattice point near the circle
+check(1 + 36 - 169 == -132, 'e-diameter-ends expanded constant -132')
+ok = all(((x - 1) ** 2 + (y - 6) ** 2 == 169) == (x * x + y * y - 2 * x - 12 * y - 132 == 0) for x in range(-20, 22) for y in range(-20, 32))
+on = [(x, y) for x in range(-20, 22) for y in range(-20, 32) if (x - 1) ** 2 + (y - 6) ** 2 == 169]
+check(ok and P in on and Q in on, f'e-diameter-ends accept form agrees on a grid ({len(on)} lattice points on the circle)')
+w = items['e-diameter-ends']['widget']
+check(w['answer'] == '(x-1)^2+(y-6)^2=169' and w['accept'] == ['x^2+y^2-2x-12y-132=0'], 'e-diameter-ends key and accept')
+slips = {'signs': '(x+1)^2+(y+6)^2=169', 'radius-not-squared': '(x-1)^2+(y-6)^2=13', 'full-diameter': '(x-1)^2+(y-6)^2=676'}
+check({x['id']: x['tex'] for x in w['wrong']} == slips, 'e-diameter-ends wrong entries')
+check(13 ** 2 == 169 and 26 ** 2 == 676 and math.dist(P, Q) == 26 and (-Cc[0], -Cc[1]) == (-1, -6), 'e-diameter-ends slips 169, 13, 676, signs')
+for k in slips:
+    check(k in items['e-diameter-ends']['feedback']['byKey'], f'e-diameter-ends wrong {k} has a line')
+check('midpoint' not in json.dumps(items['e-diameter-ends']) and 'halfway' not in items['e-diameter-ends']['prose'], 'e-diameter-ends needs no midpoint')
 
 
 # e-cubic-remainder

@@ -433,8 +433,9 @@ def level4(L):
     # ---- windy ride
     T = sp.together(16 / v + 9 / (v - 2))
     top = sp.expand(sp.cancel(T * v * (v - 2)))
-    expr_part(L, 'p-windy-ride', 1, str(top).replace('*', ''), {'own-bottoms': '25v-18', 'tops-added': '25'})
+    expr_part(L, 'p-windy-ride', 1, str(top).replace('*', ''), {'own-bottoms': '25v-18', 'tops-added': '25', 'whole': '(25v-32)/(v(v-2))'})
     ok(top == 25 * v - 32, 'ride: top 25v - 32')
+    ok(all(sp.Rational(16, k) + sp.Rational(9, k - 2) == sp.Rational(1) * (25 * k - 32) / (k * (k - 2)) for k in (3, 5, 7, 11, sp.Rational(1, 3))), 'ride: top 25v - 32 at five points (second route)')
     roots = sorted(sp.solve(sp.Eq(16 / v + 9 / (v - 2), sp.Rational(7, 2)), v))
     by_time = [z for z in (sp.Rational(k, 7) for k in range(1, 200)) if z != 2 and abs(float(16 / z + 9 / (z - 2)) - 3.5) < 1e-12]
     slip_roots = sorted(sp.solve(7 * v ** 2 - 64 * v + 36, v))
@@ -443,8 +444,16 @@ def level4(L):
     speed = [z for z in roots if z - 2 > 0]
     num(L, 'p-windy-ride', 3, speed[0], 16 / 2, {'small-root': roots[0]})
     ratio = sp.simplify((9 / (v - 2)) / (16 / v))
-    expr_part(L, 'p-windy-ride', 4, '9v/(16(v-2))', {'not-flipped': '144/(v(v-2))', 'upside-down': '16(v-2)/(9v)'})
-    ok(sp.simplify(ratio - 9 * v / (16 * (v - 2))) == 0, 'ride: ratio 9v / 16(v - 2)')
+    top4 = sp.cancel(ratio * 16 * (v - 2))
+    expr_part(L, 'p-windy-ride', 4, str(top4), {'not-flipped': '144', 'dropped-v': '9', 'whole': '9v/(16(v-2))'})
+    ok(sp.simplify(ratio - 9 * v / (16 * (v - 2))) == 0 and top4 == 9 * v, 'ride: ratio 9v / 16(v - 2), top 9v')
+    # second route: the top is (9/(v-2)) / (16/v) times the stated bottom, at five points; flipping the wrong way does not give it
+    ok(all(sp.Rational(9, k - 2) / sp.Rational(16, k) * 16 * (k - 2) == 9 * k for k in (3, 5, 8, 11, sp.Rational(1, 3))), 'ride: top 9v at five points')
+    ok(all(sp.Rational(16, k) / sp.Rational(9, k - 2) * 16 * (k - 2) != 9 * k for k in (3, 5, 8, 11)), 'ride: the upside-down ratio has no top 9v over that bottom')
+    p4 = L['p-windy-ride']['parts'][3]
+    ok('16(v - 2)' in p4['question'] and 'Type the top' in p4['question'] and 'form' not in p4['widget'] and 'whole' in p4['feedback']['byKey'], 'ride p4: asks for the top, has a whole line')
+    ok(L['p-windy-ride']['parts'][0]['feedback']['byKey'].get('whole') is not None, 'ride p1: whole line')
+    ok(L['p-windy-ride']['parts'][2]['widget']['unit'] == 'km/h' and L['p-park-pond']['parts'][0]['widget']['unit'] == 'm' and L['p-storage-crate']['parts'][4]['widget']['unit'] == 'm\u00b3', 'units km/h, m, m3')
     num(L, 'p-windy-ride', 5, ratio.subs(v, 8), (9 / 6) / (16 / 8), {'upside-down': 1 / ratio.subs(v, 8), 'small-root': ratio.subs(v, roots[0])})
     stated('ride: 2 hours out', 2, 16 / 8); stated('ride: 1.5 hours home', 1.5, 9 / 6)
 
@@ -456,6 +465,7 @@ def level4(L):
     co = sp.Poly(V, x).all_coeffs()
     s1 = co[1] + 2 * co[0]
     s0 = co[2] + 2 * s1
+    ok('multiplied out' in L['p-storage-crate']['parts'][1]['question'] and L['p-storage-crate']['parts'][1]['widget']['form'] == 'expanded', 'crate p2: the question names the form')
     expr_part(L, 'p-storage-crate', 2, str(qt).replace('**', '^').replace('*', ''), {'sign': f'x^2+{s1}x+{s0}', 'constant-sign': 'x^2+2x+3'})
     expr_part(L, 'p-storage-crate', 3, '(x+2)(x+3)(x-1)', {'signs': '(x+2)(x-3)(x+1)', 'one-root-sign': '(x+2)(x+3)(x+1)'})
     ok(sp.factor(V) == (x - 1) * (x + 2) * (x + 3), 'crate: sympy factor')

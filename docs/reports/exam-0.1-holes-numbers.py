@@ -50,7 +50,9 @@ def numeric(iid, key, wrongs):
 r1 = 15 * 60 * 60 * 6.5
 r2 = sum(15 for _ in range(int(6.5 * 3600)))                     # count second by second
 check(r1 == r2 == 351000, 'e-feed-updates 351,000 both routes')
-numeric('e-feed-updates', r1, {'minutes-only': 15 * 60 * 6.5, 'hours-only': 15 * 6.5, 'six-hours': 15 * 3600 * 6})
+numeric('e-feed-updates', r1, {'minutes-only': 15 * 60 * 6.5, 'hours-only': 15 * 6.5, 'six-hours': 15 * 3600 * 6,
+                                'six-fifty': 15 * (6 * 3600 + 50 * 60)})
+check(15 * (6 * 3600 + 50 * 60) == 369000 and sum(15 for _ in range(6 * 3600 + 50 * 60)) == 369000, 'e-feed-updates six-fifty slip 369,000 both routes')
 
 # e-prime-table: trial division up to the root, against a sieve
 def prime_trial(m):
@@ -86,7 +88,14 @@ for pi_ in (3.14, F(22, 7)):
 check(abs(C / (2 * math.pi) - 7.958) < 0.0005, 'e-pit-area radius 7.958')
 check(abs(C / math.pi - 15.92) < 0.005, 'e-pit-area diameter 15.92')
 numeric('e-pit-area', round(r1), {'diameter-as-radius': round(math.pi * (C / math.pi) ** 2),
-                                   'half-round': round(math.pi * (C / 2) ** 2), 'edge-as-radius': round(math.pi * C ** 2)})
+                                   'half-round': round(math.pi * (C / 2) ** 2), 'edge-as-radius': round(math.pi * C ** 2),
+                                   'rounded-radius': round(math.pi * round(C / (2 * math.pi)) ** 2)})
+# rounded-radius: r rounded to 8 before squaring; second route with 3.14 and 22/7, all inside the 201 +- 0.5 band
+check(round(math.pi * 64) == 201 and abs(3.14 * 64 - 201) <= 0.5 and abs(float(F(22, 7) * 64) - 201) <= 0.5,
+      'e-pit-area rounded-radius slip 201 (pi, 3.14, 22/7 all inside the band)')
+for key in ('e-plan-hall', 'e-pit-area'):
+    check(items[key]['widget'].get('unit') == 'm²' and items[key]['widget']['placeholder'] == 'a number', f'{key} unit m² and placeholder a number')
+check(items['e-five-counts']['title'] == 'Four summaries, five days', 'e-five-counts title says summaries (the range is not an average)')
 
 # e-partner-number: HCF x LCM / 24, against a search over 1..2000
 r1 = 8 * 168 // 24
