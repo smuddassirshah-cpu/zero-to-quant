@@ -99,7 +99,10 @@ def wrong_checks(part, tag, slips, key, tol):
         for y in w.get('wrong', []):
             if y is not x:
                 yt = y.get('tol', w['tol'])['abs']
-                ok(abs(x['value'] - y['value']) > wt + yt, f'{tag}: wrongs {x["id"]} and {y["id"]} overlap')
+                # the widget takes the first match: a band may sit inside a LATER, wider band (finding 8), never inside an earlier one;
+                # two bands that only partly overlap are refused
+                d, ix, iy = abs(x['value'] - y['value']), w['wrong'].index(x), w['wrong'].index(y)
+                ok(d > wt + yt or (d <= yt and ix < iy) or (d <= wt and iy < ix), f'{tag}: wrongs {x["id"]} and {y["id"]} overlap')
 
 
 def num_set(items, iid, k, exact, alt, slips, asked=None):
@@ -246,26 +249,31 @@ if L1:
         asked=18.92, extra_ok=(math.sqrt(400 - 6.49**2), 20 * 35 / 37), printed='18.92', agree=1e-9)
     ok(abs(math.sqrt(400 - 6.49**2) - 18.92) < 0.005 and abs(400 - 6.49**2 - 357.88) < 0.005, 'zip p4: printed 357.88 and 18.92')
 
-    # ---- p-hexagon-tile: corners at 10(cos 60k, sin 60k), A at k = 0 and going round
-    P = [(10 * math.cos(rad(60 * k)), 10 * math.sin(rad(60 * k))) for k in range(6)]
+    # ---- p-hexagon-tile: corners at 8(cos 60k, sin 60k), A at k = 0 and going round
+    P = [(8 * math.cos(rad(60 * k)), 8 * math.sin(rad(60 * k))) for k in range(6)]
     A, B, C, Dp = P[0], P[1], P[2], P[3]
     O = (0.0, 0.0)
     # height of triangle OAB: distance from A to the line OB
     hA = abs(B[0] * A[1] - B[1] * A[0]) / math.dist(O, B)
     s3 = sp.sqrt(3)
-    expr_part(L1, 'p-hexagon-tile', 1, 5 * s3,
-              {'added': sp.sqrt(125), 'whole-side': 10 * s3, 'half-square': 5 * sp.sqrt(2)})
-    ok(abs(ev(5 * s3) - hA) < 1e-12 and abs(ev(sp.sqrt(10**2 - 5**2)) - hA) < 1e-12, 'hex p1: height by distance to OB and by Pythagoras')
-    expr_part(L1, 'p-hexagon-tile', 2, 10 * s3, {'half': 5 * s3, 'side': sp.Integer(10), 'long': sp.Integer(20)})
-    ok(abs(math.dist(A, C) - ev(10 * s3)) < 1e-12 and abs(math.dist(A, C) - 2 * hA) < 1e-12, 'hex p2: AC from coordinates')
-    ok(abs(math.dist(A, Dp) - 20) < 1e-12 and abs(math.dist(C, Dp) - 10) < 1e-12, 'hex p3: AD = 20, CD = 10')
-    num(L1, 'p-hexagon-tile', 3, (10 * s3)**2 + 10**2, math.dist(A, C)**2 + math.dist(C, Dp)**2,
-        {'root-as-three': 10 * 3 + 100, 'root-left': 100 * math.sqrt(3) + 100, 'cd-unsquared': 300 + 10}, agree=1e-9)
+    expr_part(L1, 'p-hexagon-tile', 1, 4 * s3,
+              {'added': sp.sqrt(80), 'whole-side': 8 * s3, 'half-square': 4 * sp.sqrt(2)})
+    ok(abs(ev(4 * s3) - hA) < 1e-12 and abs(ev(sp.sqrt(8**2 - 4**2)) - hA) < 1e-12 and sp.sqrt(48) == 4 * s3, 'hex p1: height by distance to OB and by Pythagoras')
+    expr_part(L1, 'p-hexagon-tile', 2, 8 * s3, {'half': 4 * s3, 'side': sp.Integer(8), 'long': sp.Integer(16)})
+    ok(abs(math.dist(A, C) - ev(8 * s3)) < 1e-12 and abs(math.dist(A, C) - 2 * hA) < 1e-12 and sp.sqrt(192) == 8 * s3, 'hex p2: AC from coordinates')
+    ok(abs(math.dist(A, Dp) - 16) < 1e-12 and abs(math.dist(C, Dp) - 8) < 1e-12, 'hex p3: AD = 16, CD = 8')
+    num(L1, 'p-hexagon-tile', 3, (8 * s3)**2 + 8**2, math.dist(A, C)**2 + math.dist(C, Dp)**2,
+        {'root-as-three': 8 * 3 + 64, 'root-left': 64 * math.sqrt(3) + 64, 'cd-unsquared': 192 + 8}, agree=1e-9)
     # angle CAD by vectors
     v1 = (C[0] - A[0], C[1] - A[1]); v2 = (Dp[0] - A[0], Dp[1] - A[1])
     cad = deg(math.acos((v1[0] * v2[0] + v1[1] * v2[1]) / (math.hypot(*v1) * math.hypot(*v2))))
     num(L1, 'p-hexagon-tile', 4, sp.asin(sp.Rational(1, 2)) / DEG, cad,
-        {'angle-d': 60, 'tan': deg(math.atan(10 / 20)), 'radians': math.asin(0.5)}, extra_ok=(), agree=1e-9)
+        {'angle-d': 60, 'tan': deg(math.atan(8 / 16)), 'half': math.sin(rad(cad)), 'radians': math.asin(0.5)}, extra_ok=(), agree=1e-9)
+    hx = L1['p-hexagon-tile']['parts']
+    ok([x['id'] for x in hx[3]['widget']['wrong']].index('half') < [x['id'] for x in hx[3]['widget']['wrong']].index('radians'), 'hex p4: half entry sits before the wide radians band (finding 8)')
+    ok(within(0.5236, 0.5236, 0.5) and within(0.52, 0.5236, 0.5) and within(1, 0.5236, 0.5), 'hex p4: radians band still takes 0.5236, 0.52 and 1')
+    ok(all(hx[i]['widget'].get('form') == 'simplified' for i in (0, 1)), 'hex p1, p2: form simplified (finding 10)')
+    ok(hx[0]['widget']['accept'] == ['\\sqrt{48}', '4\\cdot\\sqrt{3}'] and hx[1]['widget']['accept'] == ['\\sqrt{192}'], 'hex accept forms: the four unworked ones are cut')
 
     # ---- p-lake-markers: P at the origin, A along the axis, B at 55 degrees
     Pp, Ap, Bp = (0.0, 0.0), (60.0, 0.0), (45 * math.cos(rad(55)), 45 * math.sin(rad(55)))
@@ -299,7 +307,10 @@ if L1:
     aob = sp.atan(sp.Rational(30, 40)) / DEG
     aob_alt = deg(math.atan2(Ao[1], Ao[0]) - math.atan2(Bo[1], Bo[0]))
     num(L1, 'p-desk-lamp', 3, aob, aob_alt,
-        {'flipped': deg(math.atan(40 / 30)), 'sine': deg(math.asin(30 / 40)), 'radians': math.atan(0.75)}, asked=36.9, agree=1e-9)
+        {'flipped': deg(math.atan(40 / 30)), 'sine': deg(math.asin(30 / 40)), 'ratio-tan': 30 / 40, 'ratio-sin': 30 / 50, 'radians': math.atan(0.75)}, asked=36.9, extra_ok=(), agree=1e-9)
+    lp = L1['p-desk-lamp']['parts']
+    ok(within(0.64, 0.6435, 0.005) and within(0.644, 0.6435, 0.005) and not within(0.6, 0.6435, 0.005) and not within(0.75, 0.6435, 0.005), 'lamp p3: radians band 0.005 takes 0.64 and 0.644, leaves 0.6 and 0.75 to their own entries')
+    ok(all(lp[i]['widget'].get('form') == 'simplified' for i in (0, 4)) and lp[0]['widget']['accept'] == ['\\sqrt{1200}'] and lp[4]['widget']['accept'] == ['-15+20\\sqrt{3}'], 'lamp p1, p5: form simplified, unworked accept forms cut (finding 10)')
     hb = 50 * sp.sin((60 - aob) * DEG)
     num(L1, 'p-desk-lamp', 4, hb, Bo[1],
         {'angle-aob': 50 * math.sin(rad(36.9)), 'sixty': 50 * math.sin(rad(60)), 'cos': 50 * math.cos(rad(23.1)), 'added': 50 * math.sin(rad(96.9))},
@@ -384,26 +395,31 @@ L3 = load(3)
 if L3:
     explain_len(L3)
     # ---- p-two-angles: second route is the angles themselves, found by inverse functions
-    Adeg = 180 - deg(math.asin(8 / 17))
+    Adeg = 180 - deg(math.asin(28 / 53))
     Bdeg = deg(math.acos(24 / 25))
-    sA, cA, cB, sB = F(8, 17), F(-15, 17), F(24, 25), F(7, 25)
-    ok(sA**2 + cA**2 == 1 and sB**2 + cB**2 == 1, 'angles: both pairs satisfy the identity')
+    sA, cA, cB, sB = F(28, 53), F(-45, 53), F(24, 25), F(7, 25)
+    ok(sA**2 + cA**2 == 1 and sB**2 + cB**2 == 1 and 28**2 + 45**2 == 53**2, 'angles: both pairs satisfy the identity')
+    ok(abs(math.cos(rad(Adeg)) - float(cA)) < 1e-12, 'angles: cos A = -45/53 from the angle')
     num(L3, 'p-two-angles', 1, cA, math.cos(rad(Adeg)),
-        {'sign': -cA, 'one-minus': 1 - sA, 'no-root': 1 - sA**2}, asked=-0.8824, printed=None)
+        {'sign': -cA, 'one-minus': 1 - sA, 'no-root': 1 - sA**2}, asked=-0.849, printed=None)
+    ok('-45/53' in L3['p-two-angles']['parts'][0]['widget']['accept'] and within(-0.85, -45 / 53, 0.0005) is False and within(-0.849, -45 / 53, 0.0005), 'angles p1: band 0.0005 takes -0.849 and refuses -0.85')
     num(L3, 'p-two-angles', 2, sB, math.sin(rad(Bdeg)),
         {'negative': -sB, 'one-minus': 1 - cB, 'no-root': 1 - cB**2}, printed='0.28')
     sAB, cAB = sA * cB + cA * sB, cA * cB - sA * sB
-    ok(sAB == F(87, 425) and cAB == F(-416, 425) and 87**2 + 416**2 == 425**2, 'angles: 87/425, -416/425 and the identity check')
+    ok(sAB == F(357, 1325) and cAB == F(-1276, 1325) and 357**2 + 1276**2 == 1325**2, 'angles: 357/1325, -1276/1325 and the identity check')
+    ok(28 * 24 == 672 and 45 * 7 == 315 and 45 * 24 == 1080 and 28 * 7 == 196 and 53 * 25 == 1325 and F(672 - 315, 1325) == sAB and F(-1080 - 196, 1325) == cAB, 'angles: printed numerators')
     num(L3, 'p-two-angles', 3, sAB, math.sin(rad(Adeg + Bdeg)),
-        {'sign': sA * cB - cA * sB, 'sum-of-sines': sA + sB, 'cos-formula': cAB}, asked=0.2047, printed='0.2047')
-    ok(sA * cB + (-cA) * sB == sA * cB - cA * sB, 'angles p3: the sign slip and the minus-formula slip give one value')
+        {'sign': sA * cB - cA * sB, 'sum-of-sines': sA + sB, 'cos-formula': cAB}, asked=0.2694, printed='0.2694')
+    ok(sA * cB + (-cA) * sB == sA * cB - cA * sB and sA * cB - cA * sB == F(987, 1325), 'angles p3: the sign slip and the minus-formula slip give one value, 987/1325')
     num(L3, 'p-two-angles', 4, cAB, math.cos(rad(Adeg + Bdeg)),
-        {'plus': cA * cB + sA * sB, 'sign': (-cA) * cB - sA * sB}, asked=-0.9788, printed='-0.9788')
-    ab_e = 180 - sp.asin(sp.Rational(87, 425)) / DEG
+        {'plus': cA * cB + sA * sB, 'sign': (-cA) * cB - sA * sB}, asked=-0.9630, printed='-0.9630')
+    ok(cA * cB + sA * sB == F(-884, 1325) and (-cA) * cB - sA * sB == F(884, 1325), 'angles p4: slips 884/1325')
+    ab_e = 180 - sp.asin(sp.Rational(357, 1325)) / DEG
     num(L3, 'p-two-angles', 5, ab_e, Adeg + Bdeg,
-        {'principal': deg(math.asin(87 / 425)), 'third': 180 + deg(math.asin(87 / 425)), 'fourth': 360 - deg(math.asin(87 / 425))},
-        asked=168.2, extra_ok=(180 - 11.8, deg(math.atan2(0.2047, -0.9788))), printed='168.2')
-    ok(abs(Adeg - 151.9) < 0.05 and abs(Bdeg - 16.3) < 0.05 and abs(deg(math.asin(0.2047)) - 11.8) < 0.05, 'angles p5: printed 151.9, 16.3, 11.8')
+        {'principal': deg(math.asin(357 / 1325)), 'third': 180 + deg(math.asin(357 / 1325)), 'fourth': 360 - deg(math.asin(357 / 1325))},
+        asked=164.4, extra_ok=(180 - 15.6, deg(math.atan2(0.2694, -0.9630))), printed='164.4')
+    ok(abs(Adeg - 148.1) < 0.05 and abs(Bdeg - 16.3) < 0.05 and abs(deg(math.asin(0.2694)) - 15.6) < 0.05, 'angles p5: printed 148.1, 16.3, 15.6')
+    ok(round(Adeg + Bdeg, 2) == 164.37 and round(deg(math.asin(0.2694)), 2) == 15.63, 'angles p5: 164.37 and 15.63')
 
     # ---- p-quadratic-in-sine
     s = SYM['s']
@@ -425,6 +441,7 @@ if L3:
     ok(abs(math.sin(rad(330)) + 0.5) < 1e-12 and abs(math.sin(rad(210)) + 0.5) < 1e-12, 'quad p3: 330 and 210 have sine -0.5, so they are wrong')
     expr_part(L3, 'p-quadratic-in-sine', 4, 5 * sp.pi / 6,
               {'degrees': sp.Integer(150), 'middle': sp.pi / 2, 'half': 5 * sp.pi / 12})
+    ok(L3['p-quadratic-in-sine']['parts'][3]['question'].endswith('with no $x =$ in front.'), 'quad p4: question asks for no x = in front (finding 18)')
     ok(abs(max(sols, key=lambda v: float(v)) - 5 * sp.pi / 6) == 0 and abs(rad(max(brute)) - ev(5 * sp.pi / 6)) < 1e-12, 'quad p4: largest root two ways')
 
     # ---- p-daylight-model
@@ -438,28 +455,31 @@ if L3:
     num(L3, 'p-daylight-model', 3, 6 - sp.Rational(12, 4), bisect(lambda t: Lm(t) - 12, 0.5, 5.5),
         {'peak': 6, 'falling': 9, 'trough': 12}, agree=1e-9)
     tt3 = sp.Symbol('t', real=True)
-    roots = sp.solveset(sp.Rational(22, 5) * sp.sin(sp.pi / 6 * (tt3 - 3)) + 12 - sp.Rational(71, 5), tt3, sp.Interval(0, 12))
-    num_set(L3, 'p-daylight-model', 4, list(roots), [bisect(lambda t: Lm(t) - 14.2, 3, 6), bisect(lambda t: Lm(t) - 14.2, 6, 9)],
-            {'no-shift': [1, 5], 'below': [2, 10]})
-    ok(abs(4.4 * math.sin(math.pi / 6 * 1) + 12 - 14.2) < 1e-12 and abs(Lm(2) - 9.8) < 1e-12 and abs(Lm(10) - 9.8) < 1e-12, 'daylight p4: slips solve their own equations')
-    above = sum(1 for t in g3[:-1] if Lm(t + 0.0005) > 14.2) / 1000
-    num(L3, 'p-daylight-model', 5, 8 - 4, above, {'outside': 12 - 4, 'counted': len(range(4, 9))}, agree=1e-3)
+    roots = sp.solveset(sp.Rational(22, 5) * sp.sin(sp.pi / 6 * (tt3 - 3)) + 12 - sp.Rational(49, 5), tt3, sp.Interval(0, 12))
+    num_set(L3, 'p-daylight-model', 4, list(roots), [bisect(lambda t: Lm(t) - 9.8, 0, 3), bisect(lambda t: Lm(t) - 9.8, 9, 12)],
+            {'no-shift': [7, 11], 'above': [4, 8]})
+    ok(abs(Lm(2) - 9.8) < 1e-12 and abs(Lm(10) - 9.8) < 1e-12 and abs((9.8 - 12) / 4.4 + 0.5) < 1e-12, 'daylight p4: the sine is -0.5 at t = 2 and t = 10')
+    ok(all(abs(math.sin(math.pi * t / 6) + 0.5) < 1e-12 for t in (7, 11)) and abs(Lm(4) - 14.2) < 1e-12 and abs(Lm(8) - 14.2) < 1e-12, 'daylight p4: slips solve their own equations (7, 11 and 4, 8)')
+    ok(abs(math.pi / 6 * (2 - 3) + math.pi / 6) < 1e-12 and abs(math.pi / 6 * (10 - 3) - 7 * math.pi / 6) < 1e-12 and sorted(list(roots)) == [2, 10], 'daylight p4: angles -pi/6 and 7pi/6; roots 2 and 10 exactly')
+    above = sum(1 for t in g3[:-1] if Lm(t + 0.0005) > 9.8) / 1000
+    num(L3, 'p-daylight-model', 5, 10 - 2, above, {'outside': 12 - 8, 'counted': len(range(2, 11))}, agree=1e-3)
 
-    # ---- p-garden-bed
+    # ---- p-garden-bed: edges 10 m and 13 m, area 25 m^2
     Cs = SYM['C']
-    expr_part(L3, 'p-garden-bed', 1, 30 * sp.sin(Cs), {'no-half': 60 * sp.sin(Cs), 'cos': 30 * sp.cos(Cs), 'angle': 30 * Cs}, syms=(Cs,))
-    tri = lambda c: abs(12 * 5 * math.sin(c)) / 2  # shoelace on (0,0), (12,0), 5(cos c, sin c)
-    shoe = lambda c: abs(12 * (5 * math.sin(c)) - 0 * (5 * math.cos(c))) / 2
-    ok(all(abs(shoe(c) - 30 * math.sin(c)) < 1e-12 for c in (0.4, 1.1, 2.5)), 'garden p1: shoelace area equals 30 sin C')
-    c1 = deg(bisect(lambda c: 30 * math.sin(c) - 18, 0.01, math.pi / 2))
-    c2 = deg(bisect(lambda c: 30 * math.sin(c) - 18, math.pi / 2, math.pi - 0.01))
-    num_set(L3, 'p-garden-bed', 2, [sp.asin(sp.Rational(3, 5)) / DEG, 180 - sp.asin(sp.Rational(3, 5)) / DEG], [c1, c2],
-            {'no-half': [deg(math.asin(0.3)), 180 - deg(math.asin(0.3))], 'cos-rule': [36.87, 360 - 36.87]}, asked=[36.87, 143.13])
-    num(L3, 'p-garden-bed', 3, sp.Rational(-4, 5), math.cos(rad(c2)), {'sign': 0.8, 'one-minus': 0.4, 'no-root': -0.64}, printed='-0.8')
-    far = (5 * math.cos(rad(c2)), 5 * math.sin(rad(c2)))
-    num(L3, 'p-garden-bed', 4, sp.sqrt(265), math.dist(far, (12, 0)),
-        {'sign': math.sqrt(73), 'pythagoras': 13, 'no-root': 265, 'no-two': math.sqrt(169 + 48)}, asked=16.28, printed='16.28')
-    ok(abs(math.sqrt(73) - 8.54) < 0.005, 'garden p4: printed 8.54')
+    expr_part(L3, 'p-garden-bed', 1, 65 * sp.sin(Cs), {'no-half': 130 * sp.sin(Cs), 'cos': 65 * sp.cos(Cs), 'angle': 65 * Cs}, syms=(Cs,))
+    shoe = lambda c: abs(13 * (10 * math.sin(c)) - 0 * (10 * math.cos(c))) / 2   # shoelace on (0,0), (13,0), 10(cos c, sin c)
+    ok(all(abs(shoe(c) - 65 * math.sin(c)) < 1e-12 for c in (0.4, 1.1, 2.5)), 'garden p1: shoelace area equals 65 sin C')
+    c1 = deg(bisect(lambda c: 65 * math.sin(c) - 25, 0.01, math.pi / 2))
+    c2 = deg(bisect(lambda c: 65 * math.sin(c) - 25, math.pi / 2, math.pi - 0.01))
+    num_set(L3, 'p-garden-bed', 2, [sp.asin(sp.Rational(5, 13)) / DEG, 180 - sp.asin(sp.Rational(5, 13)) / DEG], [c1, c2],
+            {'no-half': [deg(math.asin(25 / 130)), 180 - deg(math.asin(25 / 130))], 'cos-rule': [22.62, 360 - 22.62]}, asked=[22.62, 157.38])
+    ok(5**2 + 12**2 == 13**2 and F(25, 65) == F(5, 13) and round(c1, 2) == 22.62 and round(c2, 2) == 157.38, 'garden p2: sin C = 5/13; 22.62 and 157.38')
+    num(L3, 'p-garden-bed', 3, sp.Rational(-12, 13), math.cos(rad(c2)),
+        {'sign': 12 / 13, 'one-minus': 1 - 5 / 13, 'no-root': -(144 / 169)}, asked=-0.923)
+    far = (10 * math.cos(rad(c2)), 10 * math.sin(rad(c2)))
+    num(L3, 'p-garden-bed', 4, sp.sqrt(509), math.dist(far, (13, 0)),
+        {'sign': math.sqrt(29), 'pythagoras': math.sqrt(269), 'no-root': 509, 'no-two': math.sqrt(269 + 120)}, asked=22.56, printed='22.56')
+    ok(100 + 169 + 240 == 509 and abs(math.sqrt(29) - 5.39) < 0.005 and abs(math.sqrt(269) - 16.40) < 0.005, 'garden p4: printed 509, 5.39 and 16.40')
 
 # ================================================================ report
 print(f'numbers: {checks} checks, {len(fails)} failures')

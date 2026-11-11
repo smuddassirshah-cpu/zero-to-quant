@@ -71,12 +71,46 @@ const T = [
   [3, 'p-garden-bed', 4, '16.28', true], [3, 'p-garden-bed', 4, '16.279', true], [3, 'p-garden-bed', 4, '16.3', false], [3, 'p-garden-bed', 4, '8.54', 'sign'], [3, 'p-garden-bed', 4, '13', 'pythagoras'], [3, 'p-garden-bed', 4, '265', 'no-root'], [3, 'p-garden-bed', 4, '14.73', 'no-two'],
 ];
 
+/* Fix pass, problems 0.3 c: the rows of every renumbered or reshaped part (hexagon, lamp 1 3 5, two angles 1 3 4 5, daylight 4 5, garden 1 to 4, and the
+   labelled angle of quadratic part 4) are replaced by the rows below; the other rows stand as they were. */
+const NEW = [
+  [1, 'p-hexagon-tile', 1, '4\\sqrt{3}', true], [1, 'p-hexagon-tile', 1, '4\\sqrt3', true], [1, 'p-hexagon-tile', 1, '\\sqrt{48}', true], [1, 'p-hexagon-tile', 1, 'sqrt(48)', true], [1, 'p-hexagon-tile', 1, '4\\cdot\\sqrt{3}', true],
+  [1, 'p-hexagon-tile', 1, '\\sqrt{8^2-4^2}', false], [1, 'p-hexagon-tile', 1, '8\\sin(60^\\circ)', false], [1, 'p-hexagon-tile', 1, '6.93', false], [1, 'p-hexagon-tile', 1, '\\sqrt{80}', 'added'], [1, 'p-hexagon-tile', 1, '8\\sqrt{3}', 'whole-side'], [1, 'p-hexagon-tile', 1, '4\\sqrt{2}', 'half-square'], [1, 'p-hexagon-tile', 1, '4', false],
+  [1, 'p-hexagon-tile', 2, '8\\sqrt{3}', true], [1, 'p-hexagon-tile', 2, '\\sqrt{192}', true], [1, 'p-hexagon-tile', 2, '2\\cdot4\\sqrt{3}', false], [1, 'p-hexagon-tile', 2, '13.86', false], [1, 'p-hexagon-tile', 2, '4\\sqrt{3}', 'half'], [1, 'p-hexagon-tile', 2, '8', 'side'], [1, 'p-hexagon-tile', 2, '16', 'long'],
+  [1, 'p-hexagon-tile', 3, '256', true], [1, 'p-hexagon-tile', 3, '88', 'root-as-three'], [1, 'p-hexagon-tile', 3, '174.8', 'root-left'], [1, 'p-hexagon-tile', 3, '200', 'cd-unsquared'], [1, 'p-hexagon-tile', 3, '192', false],
+  [1, 'p-hexagon-tile', 4, '30', true], [1, 'p-hexagon-tile', 4, '60', 'angle-d'], [1, 'p-hexagon-tile', 4, '27', 'tan'], [1, 'p-hexagon-tile', 4, '26.57', 'tan'], [1, 'p-hexagon-tile', 4, '0.5', 'half'], [1, 'p-hexagon-tile', 4, '0.5236', 'radians'], [1, 'p-hexagon-tile', 4, '0.52', 'radians'], [1, 'p-hexagon-tile', 4, '1', 'radians'], [1, 'p-hexagon-tile', 4, '31', false],
+  [1, 'p-desk-lamp', 1, '20\\sqrt{3}', true], [1, 'p-desk-lamp', 1, '\\sqrt{1200}', true], [1, 'p-desk-lamp', 1, '40\\times\\frac{\\sqrt{3}}{2}', false], [1, 'p-desk-lamp', 1, '40\\sin(60^\\circ)', false], [1, 'p-desk-lamp', 1, '34.64', false], [1, 'p-desk-lamp', 1, '20', 'sin-30'], [1, 'p-desk-lamp', 1, '40\\sqrt{3}', 'no-half'],
+  [1, 'p-desk-lamp', 3, '36.9', true], [1, 'p-desk-lamp', 3, '36.87', true], [1, 'p-desk-lamp', 3, '36.8', false], [1, 'p-desk-lamp', 3, '53.1', 'flipped'], [1, 'p-desk-lamp', 3, '48.6', 'sine'], [1, 'p-desk-lamp', 3, '0.64', 'radians'], [1, 'p-desk-lamp', 3, '0.644', 'radians'], [1, 'p-desk-lamp', 3, '0.6435', 'radians'],
+  [1, 'p-desk-lamp', 3, '0.6', 'ratio-sin'], [1, 'p-desk-lamp', 3, '0.75', 'ratio-tan'], [1, 'p-desk-lamp', 3, '0.65', false], [1, 'p-desk-lamp', 3, '0.5', false],
+  [1, 'p-desk-lamp', 5, '20\\sqrt{3}-15', true], [1, 'p-desk-lamp', 5, '-15+20\\sqrt{3}', true], [1, 'p-desk-lamp', 5, '5(4\\sqrt{3}-3)', false], [1, 'p-desk-lamp', 5, '40\\sin(60^\\circ)-30\\sin(30^\\circ)', false], [1, 'p-desk-lamp', 5, '19.64', false], [1, 'p-desk-lamp', 5, '20\\sqrt{3}+15', 'above'], [1, 'p-desk-lamp', 5, '5\\sqrt{3}', 'cos-30'],
+  [3, 'p-two-angles', 1, '-45/53', true], [3, 'p-two-angles', 1, '-0.849057', true], [3, 'p-two-angles', 1, '-0.849', true], [3, 'p-two-angles', 1, '-0.85', false], [3, 'p-two-angles', 1, '-0.88', false], [3, 'p-two-angles', 1, '45/53', 'sign'], [3, 'p-two-angles', 1, '0.4717', 'one-minus'], [3, 'p-two-angles', 1, '2025/2809', 'no-root'],
+  [3, 'p-two-angles', 3, '0.2694', true], [3, 'p-two-angles', 3, '357/1325', true], [3, 'p-two-angles', 3, '0.269', false], [3, 'p-two-angles', 3, '0.7449', 'sign'], [3, 'p-two-angles', 3, '0.8083', 'sum-of-sines'], [3, 'p-two-angles', 3, '-0.963', 'cos-formula'],
+  [3, 'p-two-angles', 4, '-0.9630', true], [3, 'p-two-angles', 4, '-1276/1325', true], [3, 'p-two-angles', 4, '-0.96', false], [3, 'p-two-angles', 4, '-0.6672', 'plus'], [3, 'p-two-angles', 4, '0.6672', 'sign'],
+  [3, 'p-two-angles', 5, '164.4', true], [3, 'p-two-angles', 5, '164.37', true], [3, 'p-two-angles', 5, '164.3', false], [3, 'p-two-angles', 5, '15.6', 'principal'], [3, 'p-two-angles', 5, '195.6', 'third'], [3, 'p-two-angles', 5, '344.4', 'fourth'],
+  [3, 'p-quadratic-in-sine', 4, 'x=\\frac{5\\pi}{6}', false /* engine limit, inbox: the question now says "with no x = in front" */],
+  [3, 'p-daylight-model', 4, '2, 10', true], [3, 'p-daylight-model', 4, 't = 10, t = 2', true], [3, 'p-daylight-model', 4, '2', 'count'], [3, 'p-daylight-model', 4, '7, 11', 'no-shift'], [3, 'p-daylight-model', 4, '4, 8', 'above'],
+  [3, 'p-daylight-model', 5, '8', true], [3, 'p-daylight-model', 5, '4', 'outside'], [3, 'p-daylight-model', 5, '9', 'counted'],
+  [3, 'p-garden-bed', 1, '65\\sin C', true], [3, 'p-garden-bed', 1, '65\\sin(C)', true], [3, 'p-garden-bed', 1, '65sin(C)', true], [3, 'p-garden-bed', 1, '\\frac{1}{2}\\times10\\times13\\sin C', true], [3, 'p-garden-bed', 1, '130\\sin C', 'no-half'], [3, 'p-garden-bed', 1, '65\\cos C', 'cos'], [3, 'p-garden-bed', 1, '65C', 'angle'],
+  [3, 'p-garden-bed', 2, '22.62, 157.38', true], [3, 'p-garden-bed', 2, '157.38, 22.62', true], [3, 'p-garden-bed', 2, '22.62', 'count'], [3, 'p-garden-bed', 2, '22.6, 157.4', false], [3, 'p-garden-bed', 2, '11.09, 168.91', 'no-half'], [3, 'p-garden-bed', 2, '22.62, 337.38', 'cos-rule'],
+  [3, 'p-garden-bed', 3, '-12/13', true], [3, 'p-garden-bed', 3, '-0.923', true], [3, 'p-garden-bed', 3, '-0.9231', true], [3, 'p-garden-bed', 3, '-0.92', false], [3, 'p-garden-bed', 3, '12/13', 'sign'], [3, 'p-garden-bed', 3, '8/13', 'one-minus'], [3, 'p-garden-bed', 3, '-0.852', 'no-root'],
+  [3, 'p-garden-bed', 4, '22.56', true], [3, 'p-garden-bed', 4, '22.561', true], [3, 'p-garden-bed', 4, '22.6', false], [3, 'p-garden-bed', 4, '5.385', 'sign'], [3, 'p-garden-bed', 4, '16.4', 'pythagoras'], [3, 'p-garden-bed', 4, '509', 'no-root'], [3, 'p-garden-bed', 4, '19.72', 'no-two'],
+];
+const REPLACED = new Set(NEW.map((r) => r.slice(0, 3).join('|')));
+const TT = [...T.filter((r) => !REPLACED.has(r.slice(0, 3).join('|'))), ...NEW];
+
+/* the widget's own "simplified" check on a constant (expression.js), loaded as the second reader's probe.mjs did */
+g.ZQ.widgets = { register() {}, dataPanel() { return null; } }; g.ZQ.h = () => ({}); g.ZQ.esc = (x) => x;
+vm.runInContext(fs.readFileSync('app/js/engine/widgets/expression.js', 'utf8'), g);
+const size = (j) => (Array.isArray(j) ? 1 + j.slice(1).reduce((a, x) => a + size(x), 0) : 1);
+const simplifiedOk = (L) => G.withParsed(ce, L, [], (e) => { const j = e.json; const constant = !(e.unknowns || []).filter((v) => v !== 'iota').length; if (constant && g.ZQ.widgets.exprForms.reducible(j)) return false; try { return size(j) <= size(e.simplify().json); } catch { return true; } });
+
 let checks = 0, fails = 0;
 const say = (ok, msg) => { checks++; if (!ok) { fails++; console.log('FAIL ' + msg); } };
 const exprOk = (w, L) => {
   const fo = { functions: w.functions || [], integers: w.integers || [] };
-  const eq = (t) => { try { return !!G.exprEqual(ce, L, t, fo); } catch { return false; } };
-  return [w.answer, ...(w.accept || [])].some(eq) && (!w.form || G.exprFormOk(ce, w.form, L, fo.functions));
+  const eq = (t) => { try { return !!G.exprEqual(ce, L, t, fo) || (!!G.normExpr(L) && G.normExpr(L) === G.normExpr(t)); } catch { return false; } };
+  const shape = () => { if (!w.form) return true; if (w.form === 'simplified') { try { return !!simplifiedOk(L); } catch { return true; } } if (w.form === 'exact-angle') return !!G.shapeExactAngle(L); return G.exprFormOk(ce, w.form, L, fo.functions); };
+  return [w.answer, ...(w.accept || [])].some(eq) && shape();
 };
 /* numeric single: { ok, key } */
 const numGrade = (w, text) => {
@@ -99,7 +133,7 @@ for (const n of sets) {
   const set = JSON.parse(fs.readFileSync(`app/content/courses/trig/problems-${n}.json`, 'utf8'));
   for (const it of set.items) it.parts.forEach((p, i) => {
     const w = p.widget, where = `${n} ${it.id} p${i + 1}`;
-    const typed = T.filter((r) => r[0] === n && r[1] === it.id && r[2] === i + 1);
+    const typed = TT.filter((r) => r[0] === n && r[1] === it.id && r[2] === i + 1);
     if (w.kind === 'numeric' && !Array.isArray(w.answers)) {
       say(G.within(w.answer, w.answer, w.tol), `${where}: answer outside band`);
       for (const x of w.wrong || []) say(!G.within(x.value, w.answer, w.tol), `${where}: wrong ${x.id} inside answer band`);
@@ -124,7 +158,7 @@ for (const n of sets) {
       else say(!got.ok && got.key === r[4], `${where}: typed "${r[3]}" gives ${JSON.stringify(got)}, wanted key ${r[4]}`);
     }
   });
-  for (const r of T.filter((x) => x[0] === n)) say(set.items.some((it) => it.id === r[1] && it.parts[r[2] - 1]), `typed row for missing part ${r[1]} p${r[2]}`);
+  for (const r of TT.filter((x) => x[0] === n)) say(set.items.some((it) => it.id === r[1] && it.parts[r[2] - 1]), `typed row for missing part ${r[1]} p${r[2]}`);
 }
 console.log(`grade: ${checks} checks, ${fails} failures`);
 process.exit(fails ? 1 : 0);
