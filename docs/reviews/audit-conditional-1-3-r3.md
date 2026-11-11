@@ -102,3 +102,18 @@ Run on the worktree after the blind commit, content unchanged. CPython 3 for eve
 ## Engine
 
 No engine fault found. Numeric grading adds 1e-12 slack to a zero tolerance (`app/js/engine/widgets/_base.js`, `within`), so the exact keys of the fluency set are safe against floating-point noise. One tool item is added to `docs/BACKLOG-INBOX.md` under "Raised later (audit conditional):": a validator advisory for a slip value that equals the key rounded to one place fewer where the question names no places (finding 4; second sighting of the class).
+
+## Fix pass
+
+Fixer: Opus, 11 Nov 2026. Each finding verified before it was applied.
+
+1. **fixed.** Basis: with 70% analysts and a 0.5 prior, P(A up) = P(B up) = 0.5 but P(both up) = 0.5(0.49) + 0.5(0.09) = 0.29, so the calls are dependent overall and independent only given the direction. Auditor's text applied.
+2. **fixed.** Basis: the odds form multiplies ratios only when P(E1 and E2 | H) factorises, and the same given not H; independence is a property of events, not of numbers. Auditor's text applied.
+3. **fixed.** Basis: both reports are likelier in a downgrade year, so they were dependent overall from the start; what multiplies ratios, and what the new fact breaks, is independence given the truth. Auditor's texts (a), (b), (c) applied. Part 3's key (2 reports) is unchanged: 54/17 × 3 = 9.53 < 19 and × 9 = 28.6 ≥ 19.
+4. **fixed.** Option chosen: ask for 4 places; key and slip unchanged. Key recomputed twice: 0.01 × 0.9 + 0.99 × 0.05 = 0.0585, and 1 − (0.001 + 0.9405) = 0.0585. Slip 0.009 + 0.05 = 0.059. Key band [0.0583, 0.0587] and slip band [0.0589, 0.0591] are disjoint, so a right answer to 4 places can no longer be graded as the slip.
+5. **fixed differently.** Instead of a caption saying the leaves are not path products, the tree now has a second level ("Book": 3 or more, Fewer) with the regime tails 0.3222 / 0.6778 and 0.0002 / 0.9998 as branch chances, and leaves that are path products: 0.06444, 0.13556, 0.00016, 0.79984 (sum 1 exactly). Leaf values start hidden (`values: false`) so the learner still multiplies, and the explanation shows them. Tails recomputed twice (1 − P(0, 1, 2) and the sum of P(3..10)): 0.32220 and 0.00022. Key 0.0646 ± 0.0001 and every slip value unchanged. Sentences on the screen rechecked against the new leaves: prose now says "The second branches show ..."; hint 2 "The recession path carries most of it" with highlight `r-t`; generic "Multiply along each path that ends in 3 or more, then add."; `avg` "You averaged the two regime tails equally"; explanation highlights `r-t` and `n-t`. The `0.2 × 0.3222 + 0.8 × 0.0002 = 0.0646` lines and "5.6 times" (0.0646 / 0.0115 = 5.62) stay true.
+6. **fixed.** Basis: Grimmett and Stirzaker 1.5 define independence of a family by the product rule on every finite subfamily, which is mutual independence. Auditor's sentence added to `l15` `summary.formula.note`.
+
+Script updated: `docs/reports/conditional-L3-concepts-r2.py` tested the old l17 `screens[5]` prose string and leaf keys `r`, `n`. It now checks the new prose string, reads the tails from the second-level branches, and runs the generic tree check on that tree (it no longer exempts it).
+
+Gates: validator 0 errors (4,666 warnings, unchanged; manifest unchanged). Exit 0: `conditional-L1-3-concepts-r3.py` (942 checks), `fluency-conditional-numbers.py`, `problems-conditional-numbers.py`, `conditional-2-perf-numbers.py`, the three round 1 and three round 2 concepts scripts, `conditional-L1-3-fixread-r2.py`. Voice scan 35 on the course folder: 0 and 0. Playthrough with `--local-cdn` of l8, l11, l15, l17, review-2 (`--set`) and problems-2 (`--problems`): all passed, desktop and `--mobile`.
