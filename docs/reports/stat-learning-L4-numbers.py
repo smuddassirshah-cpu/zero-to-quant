@@ -478,7 +478,7 @@ ok(npar([2, 3, 1]) == 13 and close(zh[0], 3.5) and close(round(ph[0], 2), 0.97),
 lv.expect("homework", "items[2].parts[1].widget.answer", 3.5)
 ok(5 * 4 - 3 * 4 == 8 and (4 + 3 - 1) * 3 == 18 and 2 * 64 + 64 + 64 * 5 + 5 == 517, "homework 8, 18, 517")
 lv.expect("homework", "items[3].widget.answer", 8)
-lv.expect("homework", "items[9].model", 517)
+lv.expect("homework", "items[8].model", 517)
 st = SVC(kernel="rbf", C=1, gamma=1).fit(Xr, yr)
 hand = [float(st.dual_coef_[0] @ np.exp(-1.0 * ((st.support_vectors_ - p) ** 2).sum(1)) + st.intercept_[0]) for p in ([0, 0], [1.5, 0], [0.3, -2.1])]
 ok(np.allclose(hand, st.decision_function([[0, 0], [1.5, 0], [0.3, -2.1]])) and np.round(hand, 6).tolist() == [2.127469, -0.082931, -1.539442], "homework RBF by hand equals decision_function")
@@ -628,16 +628,16 @@ lv.expect("l19", "screens[8].widget.how", 6)
 # review r-few-rows: 25 features, 10 knots each
 ok(SplineTransformer(n_knots=10).fit_transform(np.random.default_rng(0).normal(size=(80, 25))).shape == (80, 300) and 25 * (10 + 3 - 1) == 300, "review r-few-rows: 300 spline columns")
 lv.expect("review", "items[8].widget.options[3].why", 300)
-# homework h-pick-learner (new item, index 7)
+# homework h-pick-learner (new item, index 9)
 se_h = math.sqrt(0.56 * 0.44 / 400)
 val_h = [0.61, 0.61, 0.60, 0.59, 0.58]; test_h = [0.59, 0.60, 0.62, 0.58, 0.61]
 pick = val_h.index(max(val_h))
 ok(pick == 0 and close(round((test_h[pick] - 0.56) / se_h, 2), 1.21) and close(float(F(3, 100) ** 2 / (F(56, 100) * F(44, 100) / 400)) ** 0.5, 0.03 / se_h, 1e-12) and close(round(se_h, 4), 0.0248), "homework h-pick-learner: t 1.21 (se 0.0248)")
 ok([round((max(test_h) - 0.56) / se_h, 2), round((test_h[1] - 0.56) / se_h, 2), round((0.59 - 0.5) / math.sqrt(0.25 / 400), 2), round((0.61 - 0.56) / se_h, 2)] == [2.42, 1.61, 3.6, 2.01], "homework h-pick-learner slips 2.42, 1.61, 3.6, 2.01")
-lv.expect("homework", "items[7].widget.answer", 1.21)
+lv.expect("homework", "items[9].widget.answer", 1.21)
 for j, val in enumerate([2.42, 1.61, 3.6, 2.01]):
-    lv.expect("homework", f"items[7].widget.wrong[{j}].value", val)
-lv.expect("homework", "items[7].explain.text", 0.0248)
+    lv.expect("homework", f"items[9].widget.wrong[{j}].value", val)
+lv.expect("homework", "items[9].explain.text", 0.0248)
 lv.expect("homework", "items[6].prose", "each round is one assignment and the update that follows it")
 
 lv.check_wrongs()
