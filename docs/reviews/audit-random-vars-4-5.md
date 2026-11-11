@@ -74,6 +74,21 @@ Pattern: `N. file | JSON path | severity | serious or minor | problem | evidence
 
 ## Overlap with earlier reads
 
-Filled after the ledger and findings were committed.
+Earlier reads of this scope: `docs/reviews/review-1.5.md` (level 4 lessons, review and homework; findings 71 to 80 with fix pass 57 to 66), `docs/reviews/review-problems-1.5-d.md` section A (problem sets 4 and 5; findings 9 to 11) and `docs/reviews/review-delta-session-aa.md` (finding 10). Level 5's lessons, review and homework had an author report (`docs/reports/random-vars-5.md`) but no second-reader review, so this audit is their first independent read.
 
-OVERLAP-PLACEHOLDER
+| | count |
+|---|---|
+| Conceptual findings found by this audit only | 19 |
+| Found by the earlier reviews only | 3 |
+| Found by both | 0 |
+
+The three found only by the earlier reviews are slip values that did not match their feedback: `l14` `screens[6]` `var` (4/9 called a variance), `l16` `screens[4]` `third` (4/3 against a why that gives 1) and `problems-5` `p-startup-rounds` `count-squared` (3.3584 against 3.3640). All three were fixed before this read, and the fixed values recompute correctly here. The earlier reviews' other lines on this scope are voice, sentence length and part-chaining notes, which are not counted.
+
+Two points on fix-pass text:
+
+- Finding 1's sentence was written by the review-1.5 fix pass (its line 57). The fix cured the course order and left the claim that the table is the same one.
+- Findings 15 and 16 are the same class as the earlier `var` and `third` findings (a slip whose feedback names a quantity the value does not equal). That class has now been seen four times in this course; an inbox bullet proposes a script check.
+
+## Inbox
+
+Four bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit random-vars):` a slip-value against named-quantity check, a lint for lessons cited by number, a named-law introduction check, and the `sympy` dependency of two number scripts.
