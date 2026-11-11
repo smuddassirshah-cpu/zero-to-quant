@@ -138,9 +138,9 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 <!-- generated:totals:trader -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 453 | 0 | 453 | 262 | 953 |
+| Required | 453 | 0 | 453 | 262 | 952 |
 | Recommended | 194 | 0 | 194 | 101 | 488 |
-| Learn header (required plus recommended) | 647 | 0 | 647 | 363 | 1441 |
+| Learn header (required plus recommended) | 647 | 0 | 647 | 363 | 1440 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 556 | 0 | 556 | 324 | 1329 |
+| Required | 556 | 0 | 556 | 325 | 1328 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 499 | 2261 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 500 | 2260 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -400,9 +400,9 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 <!-- generated:totals:developer -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 233 | 0 | 233 | 120 | 560 |
-| Recommended | 254 | 0 | 254 | 152 | 685 |
-| Learn header (required plus recommended) | 487 | 0 | 487 | 272 | 1245 |
+| Required | 233 | 0 | 233 | 120 | 559 |
+| Recommended | 254 | 0 | 254 | 152 | 684 |
+| Learn header (required plus recommended) | 487 | 0 | 487 | 272 | 1243 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -787,9 +787,9 @@ Undecided never reads "ready". It reads "foundation done" once the required cour
 <!-- generated:totals:undecided -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 263 | 0 | 263 | 154 | 564 |
+| Required | 263 | 0 | 263 | 155 | 564 |
 | Recommended | 0 | 0 | 0 | 0 | 0 |
-| Learn header (required plus recommended) | 263 | 0 | 263 | 154 | 564 |
+| Learn header (required plus recommended) | 263 | 0 | 263 | 155 | 564 |
 <!-- /generated -->
 
 **Dependency conflicts**
