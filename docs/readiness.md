@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 556 | 0 | 556 | 324 | 1329 |
+| Required | 556 | 0 | 556 | 324 | 1328 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 499 | 2261 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 499 | 2260 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -401,8 +401,8 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
 | Required | 233 | 0 | 233 | 120 | 559 |
-| Recommended | 254 | 0 | 254 | 152 | 685 |
-| Learn header (required plus recommended) | 487 | 0 | 487 | 272 | 1244 |
+| Recommended | 254 | 0 | 254 | 152 | 684 |
+| Learn header (required plus recommended) | 487 | 0 | 487 | 272 | 1243 |
 <!-- /generated -->
 
 **Dependency conflicts**
