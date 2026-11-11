@@ -1,0 +1,156 @@
+{
+  "id": "ci-safest-walk",
+  "name": "The walk furthest from the cameras",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "graphs",
+  "tags": [
+    "pack-5",
+    "safest-walk"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2700,
+  "fn": "safest_walk",
+  "returns": "a whole number",
+  "brief": "A courier crosses a yard, `grid`, a list of equal-length strings, from the top-left cell to the bottom-right cell. `#` is a wall, `.` is open ground and `G` is a camera post, which can be walked past and through. Each move goes to the cell above, below, left or right, never into a wall. A cell's cover is its distance to the nearest camera counted in rows plus columns, `abs(dr) + abs(dc)`; walls do not block a camera. A walk's cover is the least cover of any cell on it, both ends included. Return the greatest cover of any walk, or `-1` when the walls cut the corners apart.\n\nWrite `safest_walk(grid)`.\n\nExample. In `['...', '.G.', '...']` every corner has cover 2 and every edge middle has cover 1. Any walk between opposite corners passes an edge middle, so the answer is 1.",
+  "constraints": [
+    "At most $250$ rows and $250$ columns, with at least one camera. The top-left and bottom-right cells are never walls.",
+    "$O(\\text{rows} \\times \\text{cols} \\times \\log(\\text{rows} \\times \\text{cols}))$ time is the target. Measuring each cell against every camera is too slow with thousands of cameras.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "grid",
+      "type": "list",
+      "len": [
+        1,
+        250
+      ],
+      "of": {
+        "type": "str",
+        "len": [
+          1,
+          250
+        ],
+        "pattern": "[#.G]+"
+      }
+    }
+  ],
+  "hint": "A breadth-first search from all cameras at once, ignoring walls, gives every cell its cover. Then grow the walk from the top-left with a heap that always takes the cell of highest cover reached so far, as Dijkstra does with costs.",
+  "starter": "def safest_walk(grid):\n    # your code here\n    return -1\n",
+  "examples": [
+    {
+      "call": "safest_walk(['...', '.G.', '...'])",
+      "expect": "1",
+      "compare": "equal",
+      "note": "Every walk between opposite corners passes a cell beside the camera."
+    },
+    {
+      "call": "safest_walk(['G..#', '.#..', '....'])",
+      "expect": "0",
+      "compare": "equal",
+      "note": "The start sits 0 from the camera, so every walk has cover 0."
+    },
+    {
+      "call": "safest_walk(['....', '###.', 'G...'])",
+      "expect": "2",
+      "compare": "equal",
+      "note": "The only walk runs along the top and down the right side. Its lowest cover is 2, at the start."
+    }
+  ],
+  "tests": [
+    {
+      "call": "safest_walk(['G'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['.G'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['.#', '#G'])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['.......', '.#####.', 'G......'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['.....', '.....', '..G..', '.....', '.....'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['....G', '.....', '.....', '.....', '.....'])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['......', '.####.', '.#..#.', '.#G.#.', '......'])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['.....', '####.', '.....', '.####', 'G....'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['G......', '.......', '.......', '...#...', '.......', '.......', '......G'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['........', '.G....#.', '......#.', '####..#.', '......#G', '........'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk(['.#....', '.#.##.', '.#.#G.', '...#..', '##.#..', '......'])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk([''.join('G' if (i * 250 + j) % 23 == 7 else '#' if (i * 31 + j * 17) % 9 == 0 and 0 < i < 249 else '.' for j in range(250)) for i in range(250)])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk([''.join('G' if i in (60, 190) and j % 2 == 0 else '#' if j == 125 and i not in (0, 249) else '.' for j in range(250)) for i in range(250)])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "safest_walk([''.join('G' if (i * 7 + j * 13) % 47 == 0 and (i, j) != (0, 0) else '.' for j in range(250)) for i in range(250)])",
+      "expect": "2",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method measures each cell against every camera, then tries each cover level from the top with a fresh search, which runs out of time with thousands of cameras. The step to the target is one search from all cameras at once for the covers, and one Dijkstra-style walk with a heap that keeps the best cover so far. Unlike an open grid, walls block the courier but not the cameras, so the cover search ignores walls while the walk respects them.",
+  "solution": "import heapq\nfrom collections import deque\n\ndef safest_walk(grid):\n    rows, cols = len(grid), len(grid[0])\n    cover = [[-1] * cols for _ in range(rows)]\n    queue = deque()\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == 'G':\n                cover[i][j] = 0\n                queue.append((i, j))\n    while queue:\n        i, j = queue.popleft()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and cover[a][b] < 0:\n                cover[a][b] = cover[i][j] + 1\n                queue.append((a, b))\n    best = [[-1] * cols for _ in range(rows)]\n    best[0][0] = cover[0][0]\n    heap = [(-cover[0][0], 0, 0)]\n    while heap:\n        s, i, j = heapq.heappop(heap)\n        s = -s\n        if s < best[i][j]:\n            continue\n        if (i, j) == (rows - 1, cols - 1):\n            return s\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and grid[a][b] != '#':\n                t = min(s, cover[a][b])\n                if t > best[a][b]:\n                    best[a][b] = t\n                    heapq.heappush(heap, (-t, a, b))\n    return -1\n",
+  "notes": [
+    "A search from every camera at once, through walls, gives each cell its row-plus-column distance to the nearest camera.",
+    "The walk's cover is a minimum along the route, so the start cell's own cover caps every walk.",
+    "One search fills the covers and the heap walk handles each cell once, so the work is $O(\\text{rows} \\times \\text{cols} \\times \\log(\\text{rows} \\times \\text{cols}))$."
+  ],
+  "planted": [
+    {
+      "code": "import heapq\nfrom collections import deque\n\ndef safest_walk(grid):\n    rows, cols = len(grid), len(grid[0])\n    cover = [[-1] * cols for _ in range(rows)]\n    queue = deque()\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == 'G':\n                cover[i][j] = 0\n                queue.append((i, j))\n    while queue:\n        i, j = queue.popleft()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and cover[a][b] < 0 and grid[a][b] != '#':\n                cover[a][b] = cover[i][j] + 1\n                queue.append((a, b))\n    best = [[-2] * cols for _ in range(rows)]\n    best[0][0] = cover[0][0]\n    heap = [(-cover[0][0], 0, 0)]\n    while heap:\n        s, i, j = heapq.heappop(heap)\n        s = -s\n        if s < best[i][j]:\n            continue\n        if (i, j) == (rows - 1, cols - 1):\n            return s\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and grid[a][b] != '#':\n                t = min(s, cover[a][b])\n                if t > best[a][b]:\n                    best[a][b] = t\n                    heapq.heappush(heap, (-t, a, b))\n    return -1\n",
+      "slip": "Letting walls block the camera search measures walking distance, which the brief rules out."
+    },
+    {
+      "code": "import heapq\nfrom collections import deque\n\ndef safest_walk(grid):\n    rows, cols = len(grid), len(grid[0])\n    cover = [[-1] * cols for _ in range(rows)]\n    queue = deque()\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == 'G':\n                cover[i][j] = 0\n                queue.append((i, j))\n    while queue:\n        i, j = queue.popleft()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and cover[a][b] < 0:\n                cover[a][b] = cover[i][j] + 1\n                queue.append((a, b))\n    top = rows + cols\n    best = [[-1] * cols for _ in range(rows)]\n    best[0][0] = top\n    heap = [(-top, 0, 0)]\n    while heap:\n        s, i, j = heapq.heappop(heap)\n        s = -s\n        if s < best[i][j]:\n            continue\n        if (i, j) == (rows - 1, cols - 1):\n            return s if (i, j) != (0, 0) else cover[0][0]\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and grid[a][b] != '#':\n                t = min(s, cover[a][b])\n                if t > best[a][b]:\n                    best[a][b] = t\n                    heapq.heappush(heap, (-t, a, b))\n    return -1\n",
+      "slip": "Starting the walk's cover above every real value leaves out the start cell's own cover."
+    },
+    {
+      "code": "from collections import deque\n\ndef safest_walk(grid):\n    rows, cols = len(grid), len(grid[0])\n    cams = [(i, j) for i in range(rows) for j in range(cols) if grid[i][j] == 'G']\n    far = [[min(abs(i - a) + abs(j - b) for a, b in cams) for j in range(cols)] for i in range(rows)]\n    for level in range(far[0][0], -1, -1):\n        seen = {(0, 0)}\n        queue = deque([(0, 0)])\n        while queue:\n            i, j = queue.popleft()\n            if (i, j) == (rows - 1, cols - 1):\n                return level\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and (a, b) not in seen and grid[a][b] != '#' and far[a][b] >= level:\n                    seen.add((a, b))\n                    queue.append((a, b))\n    return -1\n",
+      "slip": "Measuring each cell against every camera and retrying each level from the top is right but too slow with thousands of cameras."
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "id": "ci-checkpoint-route",
+  "name": "A courier route through a checkpoint",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "graphs",
+  "tags": [
+    "pack-5",
+    "stdin",
+    "checkpoint-route"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1380,
+  "fn": "solve_checkpoint_route",
+  "returns": "a string",
+  "brief": "A courier crosses a warehouse floor from `S` to `E` and must scan a parcel at `C` on the way. The floor is a grid: `#` is a shelf, and every other cell can be walked on. Each move goes to the cell above, below, left or right, and a cell may be crossed more than once. The input comes as one string.\n\nThe first line holds `r` and `c`, the numbers of rows and columns.\n\nThe next `r` lines each hold one row of `c` characters from `#`, `.`, `S`, `C` and `E`. Each of `S`, `C` and `E` appears exactly once.\n\nWrite `solve_checkpoint_route(text)`, which returns the fewest moves from `S` to `E` that pass through `C`, as a string, or `'-1'` when no such route exists.\n\nExample. For the rows `.S#.E`, `..#..`, `.....` and `C....`, the shortest walk from `S` to `E` takes 7 moves, but `C` is 4 moves from `S` and 7 from `E`. The answer is `'11'`.",
+  "constraints": [
+    "$1 \\le r, c \\le 300$. Lines may carry extra spaces at either end, and the text may end with blank lines.",
+    "$O(r \\times c)$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "text",
+      "type": "str",
+      "len": [
+        5,
+        100000
+      ]
+    }
+  ],
+  "hint": "Read the tokens with `text.split()`. Run a breadth-first search from `S` to `C` and a fresh one from `C` to `E`, then add the two counts. A route that cannot reach `C` or cannot leave it gives `'-1'`.",
+  "starter": "def solve_checkpoint_route(text):\n    # your code here\n    return ''\n",
+  "examples": [
+    {
+      "call": "solve_checkpoint_route('4 5\\n.S#.E\\n..#..\\n.....\\nC....\\n')",
+      "expect": "'11'",
+      "compare": "equal",
+      "note": "`C` is 4 moves from `S` and 7 moves from `E`, so the route takes 11."
+    },
+    {
+      "call": "solve_checkpoint_route('3 3\\nS.E\\n###\\nC..\\n')",
+      "expect": "'-1'",
+      "compare": "equal",
+      "note": "A row of shelves cuts `C` off from both `S` and `E`."
+    }
+  ],
+  "tests": [
+    {
+      "call": "solve_checkpoint_route('1 3\\nSCE\\n')",
+      "expect": "'2'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('1 3\\nCSE\\n\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('  2 3 \\n  S#E  \\n  C.. \\n')",
+      "expect": "'4'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('3 3\\nS#C\\n.#.\\n..E\\n')",
+      "expect": "'8'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('3 4\\nS..E\\n####\\nC...\\n')",
+      "expect": "'-1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('3 3\\nS.C\\n.#.\\nE..\\n')",
+      "expect": "'6'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('2 2\\nSE\\nC#\\n')",
+      "expect": "'3'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('4 4\\nS.#C\\n..#.\\n#...\\nE##.\\n')",
+      "expect": "'-1'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('3 5\\nC#S#E\\n.#.#.\\n.....\\n')",
+      "expect": "'14'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('5 5\\nE...#\\n###.#\\nS.#.#\\n#.#..\\n#...C\\n')",
+      "expect": "'14'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('300 300\\n' + '\\n'.join(('S' if r == 0 else 'C' if r == 299 else '.') + '.' * 298 + ('E' if r == 0 else '.') for r in range(300)) + '\\n')",
+      "expect": "'897'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('299 300\\n' + '\\n'.join(('S' + '.' * 299 if r == 0 else '.' * 299 + 'C' if r == 298 else '.' * 300 if r % 2 == 0 else ('.' + '#' * 299 if r % 4 == 1 else '#' * 299 + '.')) for r in range(299)).replace('S..', 'S.E', 1) + '\\n')",
+      "expect": "'89700'",
+      "compare": "equal"
+    },
+    {
+      "call": "solve_checkpoint_route('300 300\\n' + '\\n'.join('S' + '.' * 298 + 'E' if r == 0 else '#' * 150 + 'C' + '#' * 149 if r == 299 else '.' * 300 if r < 298 else '#' * 300 for r in range(300)))",
+      "expect": "'-1'",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "from collections import deque\n\ndef solve_checkpoint_route(text):\n    tokens = text.split()\n    rows, cols = int(tokens[0]), int(tokens[1])\n    grid = tokens[2:2 + rows]\n    where = {}\n    for i, row in enumerate(grid):\n        for j, ch in enumerate(row):\n            if ch in 'SCE':\n                where[ch] = (i, j)\n\n    def steps(src, dst):\n        dist = [[-1] * cols for _ in range(rows)]\n        dist[src[0]][src[1]] = 0\n        queue = deque([src])\n        while queue:\n            i, j = queue.popleft()\n            if (i, j) == dst:\n                return dist[i][j]\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and dist[a][b] < 0 and grid[a][b] != '#':\n                    dist[a][b] = dist[i][j] + 1\n                    queue.append((a, b))\n        return -1\n\n    first = steps(where['S'], where['C'])\n    second = steps(where['C'], where['E'])\n    if first < 0 or second < 0:\n        return '-1'\n    return str(first + second)\n",
+  "notes": [
+    "A shortest route through `C` is a shortest route to `C` followed by a shortest route from it.",
+    "The second search starts afresh, because the courier may cross cells the first leg used.",
+    "Two breadth-first searches each visit every cell once, so the work is $O(r \\times c)$."
+  ],
+  "planted": [
+    {
+      "code": "from collections import deque\n\ndef solve_checkpoint_route(text):\n    tokens = text.split()\n    rows, cols = int(tokens[0]), int(tokens[1])\n    grid = tokens[2:2 + rows]\n    where = {ch: (i, j) for i, row in enumerate(grid) for j, ch in enumerate(row) if ch in 'SCE'}\n    dist = {where['S']: 0}\n    queue = deque([where['S']])\n    while queue:\n        i, j = queue.popleft()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and (a, b) not in dist and grid[a][b] != '#':\n                dist[(a, b)] = dist[(i, j)] + 1\n                queue.append((a, b))\n    return str(dist.get(where['E'], -1))\n",
+      "slip": "Searching straight from `S` to `E` ignores the checkpoint."
+    },
+    {
+      "code": "from collections import deque\n\ndef solve_checkpoint_route(text):\n    tokens = text.split()\n    rows, cols = int(tokens[0]), int(tokens[1])\n    grid = tokens[2:2 + rows]\n    where = {ch: (i, j) for i, row in enumerate(grid) for j, ch in enumerate(row) if ch in 'SCE'}\n    seen = set()\n\n    def steps(src, dst):\n        seen.add(src)\n        queue = deque([(src, 0)])\n        while queue:\n            (i, j), d = queue.popleft()\n            if (i, j) == dst:\n                return d\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and (a, b) not in seen and grid[a][b] != '#':\n                    seen.add((a, b))\n                    queue.append(((a, b), d + 1))\n        return -1\n\n    first = steps(where['S'], where['C'])\n    second = steps(where['C'], where['E'])\n    if first < 0 or second < 0:\n        return '-1'\n    return str(first + second)\n",
+      "slip": "Keeping the first search's marks blocks the second leg from cells the courier may cross again."
+    },
+    {
+      "code": "from collections import deque\n\ndef solve_checkpoint_route(text):\n    tokens = text.split()\n    rows, cols = int(tokens[0]), int(tokens[1])\n    grid = tokens[2:2 + rows]\n    where = {ch: (i, j) for i, row in enumerate(grid) for j, ch in enumerate(row) if ch in 'SCE'}\n\n    def steps(src, dst):\n        dist = {src: 0}\n        queue = deque([src])\n        while queue:\n            i, j = queue.popleft()\n            if (i, j) == dst:\n                return dist[(i, j)]\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and (a, b) not in dist and grid[a][b] != '#':\n                    dist[(a, b)] = dist[(i, j)] + 1\n                    queue.append((a, b))\n        return -1\n\n    return str(steps(where['S'], where['C']) + steps(where['C'], where['E']))\n",
+      "slip": "Adding the two counts without checking for `-1` reports a number when a leg is impossible."
+    }
+  ]
+}

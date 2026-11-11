@@ -1,0 +1,165 @@
+{
+  "id": "ci-flood-reach",
+  "name": "Where a burst main floods",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "graphs",
+  "tags": [
+    "pack-5",
+    "flood-reach"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 960,
+  "fn": "wet_cells",
+  "returns": "a whole number",
+  "brief": "A water main bursts on a hillside estate. The ground is a grid of cell heights in metres, given as `heights`, a list of equal-length rows. Water starts in the cell at row `r`, column `c`. It runs from a cell to the cell above, below, left or right when that cell is no higher than the cell the water is in. Return how many cells get wet, the first one included.\n\nWrite `wet_cells(heights, r, c)`.\n\nExample. For `heights = [[5, 4, 6], [3, 4, 2], [8, 1, 7]]` and the start `(0, 0)`, water reaches 4 and 3 beside the 5. From the 4 it runs on to the middle 4, then to the 2 and the 1. The 6, 8 and 7 stay dry, so the answer is 6.",
+  "constraints": [
+    "At most $400$ rows and $400$ columns; heights are whole numbers from $0$ to $10^6$. `(r, c)` is a cell of the grid.",
+    "$O(\\text{rows} \\times \\text{cols})$ time is the target. A wet region can hold every cell, too deep for Python recursion, so keep your own stack or queue.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "heights",
+      "type": "list",
+      "len": [
+        1,
+        400
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          1,
+          400
+        ],
+        "of": "int",
+        "range": [
+          0,
+          1000000
+        ]
+      }
+    },
+    {
+      "arg": "r",
+      "type": "int",
+      "range": [
+        0,
+        399
+      ]
+    },
+    {
+      "arg": "c",
+      "type": "int",
+      "range": [
+        0,
+        399
+      ]
+    }
+  ],
+  "hint": "Mark the start cell and put it on a stack. Pop a cell, count it, and push each unmarked neighbour no higher than it, marking it as you push.",
+  "starter": "def wet_cells(heights, r, c):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "wet_cells([[5, 4, 6], [3, 4, 2], [8, 1, 7]], 0, 0)",
+      "expect": "6",
+      "compare": "equal",
+      "note": "The water runs 5 to 4 to 4, then on to 2 and 1; the 3 is wet from the start cell. Six cells in all."
+    },
+    {
+      "call": "wet_cells([[2, 2], [2, 2]], 1, 0)",
+      "expect": "4",
+      "compare": "equal",
+      "note": "Flat ground counts as no higher, so water covers all four cells."
+    }
+  ],
+  "tests": [
+    {
+      "call": "wet_cells([[7]], 0, 0)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[3, 1, 2, 0]], 0, 0)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[7, 2, 5, 5], [9, 9, 9, 9]], 0, 0)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[9, 9, 9], [9, 1, 9], [9, 9, 9]], 1, 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[9, 9, 9], [9, 1, 9], [9, 9, 9]], 0, 0)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[1, 5, 2], [1, 1, 1]], 0, 1)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[4], [4], [6], [3], [0]], 2, 0)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[0, 3, 0], [3, 3, 3], [0, 3, 6]], 2, 2)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[1000000, 0], [0, 1000000]], 0, 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[6, 5, 4, 3], [1, 2, 3, 4], [2, 9, 9, 9]], 0, 0)",
+      "expect": "7",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[0] * 400 for _ in range(400)], 200, 200)",
+      "expect": "160000",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[i + j for j in range(400)] for i in range(400)], 399, 399)",
+      "expect": "160000",
+      "compare": "equal"
+    },
+    {
+      "call": "wet_cells([[i + j for j in range(400)] for i in range(400)], 0, 0)",
+      "expect": "1",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "def wet_cells(heights, r, c):\n    rows, cols = len(heights), len(heights[0])\n    seen = [[False] * cols for _ in range(rows)]\n    seen[r][c] = True\n    stack = [(r, c)]\n    count = 0\n    while stack:\n        i, j = stack.pop()\n        count += 1\n        h = heights[i][j]\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and not seen[a][b] and heights[a][b] <= h:\n                seen[a][b] = True\n                stack.append((a, b))\n    return count\n",
+  "notes": [
+    "A flood fill from one cell, where a step is allowed only downhill or on the level.",
+    "The test compares each neighbour with the cell the water is in, not with the start cell.",
+    "Each cell is pushed at most once, so the work is $O(\\text{rows} \\times \\text{cols})$."
+  ],
+  "planted": [
+    {
+      "code": "def wet_cells(heights, r, c):\n    rows, cols = len(heights), len(heights[0])\n    top = heights[r][c]\n    seen = {(r, c)}\n    stack = [(r, c)]\n    while stack:\n        i, j = stack.pop()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and (a, b) not in seen and heights[a][b] <= top:\n                seen.add((a, b))\n                stack.append((a, b))\n    return len(seen)\n",
+      "slip": "Comparing each neighbour with the start cell lets water climb back up after it has run down."
+    },
+    {
+      "code": "def wet_cells(heights, r, c):\n    rows, cols = len(heights), len(heights[0])\n    seen = {(r, c)}\n    stack = [(r, c)]\n    while stack:\n        i, j = stack.pop()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and (a, b) not in seen and heights[a][b] < heights[i][j]:\n                seen.add((a, b))\n                stack.append((a, b))\n    return len(seen)\n",
+      "slip": "Using `<` stops the water on level ground, which the brief says it crosses."
+    },
+    {
+      "code": "def wet_cells(heights, r, c):\n    rows, cols = len(heights), len(heights[0])\n    seen = set()\n\n    def flow(i, j):\n        seen.add((i, j))\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and (a, b) not in seen and heights[a][b] <= heights[i][j]:\n                flow(a, b)\n\n    flow(r, c)\n    return len(seen)\n",
+      "slip": "A recursive fill is right on small grids but runs out of call depth when the wet region is large."
+    }
+  ]
+}

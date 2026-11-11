@@ -1,0 +1,157 @@
+{
+  "id": "ci-first-circular-rule",
+  "name": "The rule that first makes a loop",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "graphs",
+  "tags": [
+    "pack-5",
+    "first-circular-rule"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 2040,
+  "fn": "first_cycle_rule",
+  "returns": "a whole number",
+  "brief": "A build system for `n` modules, numbered 0 to `n - 1`, takes ordering rules one at a time. Each rule `[a, b]` in `rules` says module `a` must be built before module `b`; `[a, a]` asks a module to wait for itself. Return the position in `rules`, counting from 0, of the first rule after which the rules so far contain a loop of waits. Return `-1` if they never do.\n\nWrite `first_cycle_rule(n, rules)`.\n\nExample. For `n = 4` and `rules = [[0, 1], [1, 2], [0, 2], [2, 3], [3, 1]]`, the rule `[0, 2]` adds a second path but no loop. The rule `[3, 1]` closes the loop 1, 2, 3, so the answer is 4.",
+  "constraints": [
+    "$1 \\le n \\le 20{,}000$ modules and at most $20{,}000$ rules.",
+    "$O((n + m) \\log m)$ time is the target for $m$ rules. Searching the graph before each new rule is too slow when the searches are long.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "n",
+      "type": "int",
+      "range": [
+        1,
+        20000
+      ]
+    },
+    {
+      "arg": "rules",
+      "type": "list",
+      "len": [
+        0,
+        20000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          2,
+          2
+        ],
+        "of": "int",
+        "range": [
+          0,
+          19999
+        ]
+      }
+    }
+  ],
+  "hint": "Whether the first `k` rules hold a loop can only change from no to yes as `k` grows. Test a prefix with one topological sort by waiting counts, and binary search on `k`.",
+  "starter": "def first_cycle_rule(n, rules):\n    # your code here\n    return -1\n",
+  "examples": [
+    {
+      "call": "first_cycle_rule(4, [[0, 1], [1, 2], [0, 2], [2, 3], [3, 1]])",
+      "expect": "4",
+      "compare": "equal",
+      "note": "Rule 2 joins two paths without a loop; rule 4 closes 1, 2, 3."
+    },
+    {
+      "call": "first_cycle_rule(3, [[2, 1], [1, 0], [2, 0]])",
+      "expect": "-1",
+      "compare": "equal",
+      "note": "Every rule points from a higher number to a lower one, so no loop forms."
+    }
+  ],
+  "tests": [
+    {
+      "call": "first_cycle_rule(1, [])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(1, [[0, 0]])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(2, [[0, 1], [0, 1], [1, 0]])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(3, [[0, 1], [1, 2], [0, 2]])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(3, [[0, 1], [1, 2], [2, 0], [1, 1]])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(5, [[3, 3], [0, 1], [1, 0]])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(4, [[0, 1], [2, 3], [1, 2], [3, 0], [0, 2]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(6, [[0, 1], [1, 2], [3, 4], [4, 5], [2, 3], [5, 0], [5, 1]])",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(5, [[0, 2], [1, 2], [2, 3], [2, 4], [3, 4], [4, 1]])",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(4, [[1, 0], [2, 1], [3, 2], [3, 0], [2, 0]])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(20000, [[i, i + 1] for i in range(19998, -1, -1)] + [[19999, 0]])",
+      "expect": "19999",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(20000, [[i, i + 1] for i in range(19998, 9999, -1)] + [[19999, 10000]] + [[i, i + 1] for i in range(9999, -1, -1)])",
+      "expect": "9999",
+      "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(20000, [[i // 2, i] for i in range(19999, 0, -1)])",
+      "expect": "-1",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method searches from `b` for `a` before adding each rule `[a, b]`. That is a full search per rule, and when the rules arrive along a chain from its far end it runs out of time. The step to the target is a binary search on the number of rules, with one topological sort to test each prefix.",
+  "solution": "def first_cycle_rule(n, rules):\n    def prefix_loops(k):\n        after = [[] for _ in range(n)]\n        waits = [0] * n\n        for a, b in rules[:k]:\n            after[a].append(b)\n            waits[b] += 1\n        ready = [j for j in range(n) if waits[j] == 0]\n        done = 0\n        while ready:\n            j = ready.pop()\n            done += 1\n            for x in after[j]:\n                waits[x] -= 1\n                if waits[x] == 0:\n                    ready.append(x)\n        return done < n\n\n    if not prefix_loops(len(rules)):\n        return -1\n    lo, hi = 1, len(rules)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if prefix_loops(mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo - 1\n",
+  "notes": [
+    "Adding rules never removes a loop, so the prefixes with a loop are all those from some point on, which a binary search finds.",
+    "A loop here follows the direction of the rules; two paths that meet, as in a diamond, are not a loop.",
+    "Each test is one topological sort in $O(n + m)$, and there are $O(\\log m)$ of them."
+  ],
+  "planted": [
+    {
+      "code": "def first_cycle_rule(n, rules):\n    parent = list(range(n))\n\n    def find(x):\n        while parent[x] != x:\n            parent[x] = parent[parent[x]]\n            x = parent[x]\n        return x\n\n    for i, (a, b) in enumerate(rules):\n        x, y = find(a), find(b)\n        if x == y:\n            return i\n        parent[x] = y\n    return -1\n",
+      "slip": "Union-find ignores the direction of the rules, so two paths that meet count as a loop."
+    },
+    {
+      "code": "def first_cycle_rule(n, rules):\n    seen = set()\n    for i, (a, b) in enumerate(rules):\n        if a == b or (b, a) in seen:\n            return i\n        seen.add((a, b))\n    return -1\n",
+      "slip": "Checking only for a rule and its reverse misses a loop through three or more modules."
+    },
+    {
+      "code": "def first_cycle_rule(n, rules):\n    after = [[] for _ in range(n)]\n    for i, (a, b) in enumerate(rules):\n        seen = {b}\n        stack = [b]\n        while stack:\n            u = stack.pop()\n            for w in after[u]:\n                if w not in seen:\n                    seen.add(w)\n                    stack.append(w)\n        if a in seen:\n            return i\n        after[a].append(b)\n    return -1\n",
+      "slip": "Searching from `b` for `a` before each rule is right, but each search can cover the whole chain, too slow."
+    }
+  ]
+}
