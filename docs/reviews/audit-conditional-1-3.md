@@ -135,3 +135,61 @@ Gates:
 - Concept scripts: L1 exit 0 (145 checks), L2 exit 0 (165), L3 exit 0 (155). Number scripts: `conditional-2-perf-numbers.py`, `fluency-conditional-numbers.py`, `problems-conditional-numbers.py` all exit 0. The checks for findings 21 and 22 were tightened to require the new wording.
 - Voice scan 35 on the course folder: 0 sentences over 35 words, 0 explanations over three sentences.
 - Playthrough with `--local-cdn` of the 17 changed files (11 lessons, review-1, review-2, homework-1, homework-2, problems-1 and problems-3 with `--problems`), desktop and `--mobile`: All passed, exit 0 both.
+
+## Fix-pass read
+
+Round 1. Fresh reader, blind to the audit, ledger and concepts scripts. Read: `git diff c4ec159e~1 c4ec159e -- app/content/courses/conditional` (17 files, 41 changed strings), each in the context of its whole screen or item. Numbers recomputed by exact enumeration or direct calculation in one Python run (dice, cards, coins, binomial tails, odds updates, a 1,000,000-draw search for counterexamples to the l8 claim, a 100,000-draw check of the review-2 identity). Voice: `voice-scan.py 35` gives 0 and 0; no exclamation marks, em-dashes or American spellings in the new text.
+
+Result: 41 rows; 39 `correct`, 2 `imprecise` (both minor), 0 `wrong`, 0 `misleading`, 0 `unverified`. Every changed item still agrees with its graded key, wrong options, feedback, hints and explain.
+
+| File | JSON path | New sentence (short) | Verdict | Basis |
+|---|---|---|---|---|
+| homework-1 | items.2.prose | You ask whether at least one roll is a 6; answer yes | correct | Enumeration: 11 pairs hold a 6, one is (6, 6), so 1/11, the key. Asking a fixed yes or no question makes the news the event itself (Bar-Hillel and Falk 1982; Grinstead and Snell 4.1). |
+| homework-1 | items.6.prose | You ask whether at least one is an ace; answer yes | correct | C(52,3) - C(48,3) = 4804; 4/4804 = 1/1201, the key. |
+| homework-2 | items.4.explain.text | Rare condition makes (1-b)/b huge, so only a far smaller f/h can offset it | imprecise | Posterior is at least 1/2 exactly when f/h is at most b/(1-b). "Far smaller" has no stated comparison. Finding 1. |
+| homework-2 | items.6.prompt | adds P(E given not H) > 0 | correct | Needed so the posterior odds have a non-zero bottom; with P(H) < 1 it gives P(not H given E) > 0. |
+| homework-2 | items.6.model | Second is not 0 because P(E given not H) > 0 | correct | P(not H given E) = P(E given not H) P(not H) / P(E), both factors positive. Parts (b) and (c) recomputed: 2/13, n > 2.61, 0.766, 0.983. |
+| homework-2 | items.6.rubric.0.text | notes P(E) > 0 and P(E given not H) > 0 | correct | Matches prompt and model. |
+| l10-odds-form | screens.3.widget.options.2.why | Gain in probability changes as the start moves; the arrow does not | correct | With ratio 18 the gain is 0.144, 0.567, 0.619, 0.585, 0.447 at start 0.01, 0.1, 0.19, 0.3, 0.5: it rises then falls. Log-odds step is ln 18 throughout. |
+| l10-odds-form | screens.8.prose | Whether or not a trend has begun, each signal fires independently | correct | Conditional independence given each hypothesis is the condition for ratios to multiply (odds form, Ross 3.3). 0.25 x 1.5^n = 0.375, 0.5625, 0.844, 1.266: key 4. |
+| l11-updating-twice | screens.0.prose | Second test errs independently of the first, both with and without the condition | correct | States conditional independence given each state. (2/13)(0.9) / ((2/13)(0.9) + (11/13)(0.05)) = 36/47, the key. |
+| l11-updating-twice | screens.9.explain.text | Sources that share their errors count for less than their number | correct | A copy has ratio 1; posterior 0.7 against 0.845 for two independent calls. |
+| l11-updating-twice | summary.ideas.2 | Evidence that shares its errors counts for less than its number | correct | Same derivation; agrees with screen 9. |
+| l12-many-hypotheses | screens.7.prose | Hypotheses that cannot overlap and whose priors add to 1 | correct | Bayes' formula over a partition (Ross 3.3): disjoint with total prior 1 is what the law of total probability needs. |
+| l13-knowing-nothing | screens.4.explain.text | Product and conditional tests agree whenever P(B) > 0 | correct | P(A given B) = P(A) iff P(A and B) = P(A)P(B) when P(B) > 0; matches the lesson's formula note. |
+| l14-independent-trials | screens.9.explain.text | Hit rate of 70% or more only about a quarter of the time | correct | P(X >= 7), n = 10, p = 0.55 is 0.26604. |
+| l15-pairwise | screens.6.widget.options.1.text | Only a range: anything from 0 to 1/4 fits | correct | With P(all three) = t the eight regions are t (centre and the three singles) and 1/4 - t (the three pair-only regions and "none"). All are non-negative exactly for 0 <= t <= 1/4. |
+| l15-pairwise | summary.trap | Pairwise independence does not fix the chance of all three | correct | Same derivation; lesson shows 1/4 and 0. |
+| l16-conditional-independence | screens.8.explain.text | Conditioning on a shared effect can link its causes, as it does here | correct | 0.2/0.28 = 0.714 given the alert; 0.02/0.10 = 0.2 given alert and drop. "Can" is right: the effect need not depend on both causes. |
+| l16-conditional-independence | summary.formula.note | Equivalent to P(B given A and C) = P(B given C) when P(A and C) > 0 | correct | Divide the product form by P(A given C) > 0. |
+| l16-conditional-independence | summary.trap | Multiply inside each branch first, then weight the branches and add | correct | P(A and B) = sum over c of P(c) P(A given c) P(B given c). |
+| l16-conditional-independence | quiz.2.explain.text | Can make independent causes dependent, as it does here | correct | Crash implies loss, so P(bad call given loss and crash) = P(bad call) < P(bad call given loss). |
+| l17-correlated-defaults | screens.6.explain.text | Binomial inside each regime, then weight each tail by its regime's chance and add | correct | 0.2 x tail(0.2) + 0.8 x tail(0.0125) = 0.0646; binomial at 0.05 gives 0.0115. |
+| l17-correlated-defaults | screens.10.prose | Models priced slices as if defaults were only weakly linked; independence is the limiting case | correct | Hull, Options, Futures and Other Derivatives, ch. 8 (securitisation and the 2007 crisis) and the Gaussian copula chapter; Coval, Jurek and Stafford (2009). |
+| l17-correlated-defaults | screens.10.explain.text | 0.0646, not the independent model's 0.0115: 5.6 times as much | correct | Unrounded ratio 5.617. |
+| l3-shrinking | screens.3.prose | You ask one question: does at least one die show a 5? Yes, nothing more | correct | 11 pairs hold a 5, the key. Protocol stated, as for homework-1. |
+| l3-shrinking | screens.4.prose | Same news as before: yes, at least one die shows a 5 | correct | 1/11 by enumeration, the key. |
+| l3-shrinking | screens.5.explain.text | Last line needs no counting, so it is taken as the definition when outcomes are not equally likely | correct | Ross 3.2: P(A given B) = P(A and B)/P(B) is the definition; the lesson's formula note carries P(B) > 0. |
+| l3-shrinking | screens.7.prose | You ask: did at least one finish up? Yes | correct | Three equal outcomes remain; 1/3, the key. |
+| l3-shrinking | summary.ideas.2 | Divide by the total to get P(A and B)/P(B); that form is the definition for any outcomes | correct | Ross 3.2. |
+| l3-shrinking | summary.trap | At least one 5 leaves 11 outcomes; first is a 5 leaves 6 | correct | Enumeration: 11 and 6. |
+| l5-trees | screens.10.prose | Stock closes above your limit price 52% of the time | imprecise | Internally consistent with the key (0.6 x 0.45 = 0.27; slip 0.312). But the figures force P(close above limit given no fill) = (0.52 - 0.27)/0.4 = 0.625. Finding 2. |
+| l5-trees | screens.10.feedback.byKey.unconditional | You used 0.52, the chance the stock closes above your price | correct | Matches the prose and the slip value 0.6 x 0.52 = 0.312. Reworded with the prose if finding 2 is taken. |
+| l8-base-rates | screens.4.explain.text | Much rarer than the false-positive rate: most positives are false | correct | False exceed true iff f(1-b) > hb. With b < f/10 and any h up to 1, no counterexample in 1,000,000 draws. Unqualified "rare" fails: b = 0.01, f = 0.001, h = 0.9 gives 9.9% false. |
+| l8-base-rates | screens.6.explain.text | A positive cannot be turned into a chance without the base rate | correct | Posterior hb/(hb + f(1-b)) depends on b: 0.15 against 0.89 here. |
+| l8-base-rates | screens.7.feedback.correct | When b is far below f, false positives swamp the true ones | correct | 0.0495 against 0.009; same inequality. |
+| l8-base-rates | screens.7.explain.text | A condition much rarer than the false-positive rate makes most positives false | correct | Same inequality. |
+| l8-base-rates | summary.ideas.1 | Much rarer than the false-positive rate: false positives outnumber true | correct | Same inequality. |
+| problems-1 | items.0.parts.1.question | You ask a friend who peeks: at least one 8? Yes | correct | 15 pairs hold an 8, two total 10: 2/15, the key. |
+| problems-3 | items.1.parts.3.explain.text | Can make independent causes dependent, as it does here | correct | 0.3/0.475 = 0.632 falls to 0.3. |
+| problems-3 | items.3.prose | Sentence split: each pair of desks shares one price feed. Feed F is read by... | correct | Wording only; P(calm) = 1/2 by enumeration of the 8 feed states. |
+| review-1 | items.3.prose | You ask whether at least two landed heads; yes | correct | HHT, HTH, THH, HHH: 1/4, the key. |
+| review-2 | items.7.widget.options.1.why | Equal only when P(A) = P(B) or P(A and B) = 0 | correct | P(A and B)(1/P(B) - 1/P(A)) = 0; 100,000 random cases, 0 mismatches. |
+
+Findings
+
+1. homework-2.json | items.4.explain.text | imprecise | minor | "only a far smaller $\tfrac{f}{h}$ can offset it" compares with nothing: the earlier "even a small" was removed, so the reader cannot tell how small is small enough. | From the last line, the posterior reaches $\tfrac{1}{2}$ exactly when $\tfrac{f}{h} \cdot \tfrac{1 - b}{b} \le 1$, that is $\tfrac{f}{h} \le \tfrac{b}{1 - b}$ (for $b = 0.01$, $\tfrac{1}{99}$). | Replace the last sentence with (JSON-escaped): "A rare condition makes $\\tfrac{1 - b}{b}$ huge, so only an $\\tfrac{f}{h}$ about as small as $\\tfrac{b}{1 - b}$ can offset it."
+
+2. l5-trees.json | screens.10.prose (and screens.10.feedback.byKey.unconditional) | imprecise | minor | The 52% is now the chance of closing above the limit price. With fill chance 0.6 and 0.45 after a fill, that forces the close above the limit on only 62.5% of unfilled days. An unfilled buy limit means the price mostly stayed above the limit, so that figure should be near 1. The key 0.27 and slip 0.312 are unaffected. | Derivation: $(0.52 - 0.6 \times 0.45) / 0.4 = 0.625$; equivalently 15% of all days close at or below the limit with no fill. Limit-order mechanics as in Harris, *Trading and Exchanges*, ch. 4. | Make the 52% a comparison that is not tied to the limit price. Prose, last sentence: "A buy made on any day, with no limit, is profitable at the close 52% of the time." Feedback `unconditional`: "You used 0.52, the chance for a buy made on any day. The branch after Filled is conditional on a fill: 0.45." The explain line ("Using the day's 0.52 would give 0.312...") can stay.
+
+Not a changed line, noted only: l8-base-rates.json still carries the unqualified goal line "See how a rare condition makes most positive tests false", which is looser than the corrected screens.
