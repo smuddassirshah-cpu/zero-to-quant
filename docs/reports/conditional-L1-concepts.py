@@ -325,7 +325,8 @@ ok(F(4, 22100) / shown_ace == F(1, 425), 'homework-1 h-aces: show-one-card proto
 n_at_least = sum(1 for r in two if 5 in r)
 n_first = sum(1 for r in two if r[0] == 5)
 swapped = says('l3-shrinking', 'summary.trap', '“At least one is a 5” is not “the first is a 5”. The first leaves 6 outcomes; the second leaves 11.')
-ok((n_at_least, n_first) == (11, 6) and not swapped, 'l3 summary.trap gives each statement its own count (finding 21)',
+fixed = says('l3-shrinking', 'summary.trap', '“At least one is a 5” is not “the first is a 5”. The first leaves 11 outcomes; the second leaves 6.')
+ok((n_at_least, n_first) == (11, 6) and not swapped and fixed, 'l3 summary.trap gives each statement its own count (finding 21)',
    f'"at least one is a 5" leaves {n_at_least} outcomes and "the first is a 5" leaves {n_first}; the trap says 6 and 11 in that order')
 
 report('conditional L1 concepts')

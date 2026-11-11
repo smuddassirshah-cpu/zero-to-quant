@@ -369,7 +369,8 @@ eq(L, 'items[3].parts[4]', 1 - (1 - triple) ** 8)
 add_then_multiply = wpr(sector, upA) * wpr(sector, upB)                       # weight each branch and add, then multiply: 0.25
 multiply_then_add = wpr(sector, lambda s: upA(s) and upB(s))                # multiply inside each branch, then weight and add: 0.34
 backwards = says('l16-conditional-independence', 'summary.trap', 'Weight each branch and add before you multiply anything')
-ok(add_then_multiply == D('0.25') and multiply_then_add == D('0.34') and not backwards, 'l16 summary.trap names the right order of steps (finding 22)',
+forwards = says('l16-conditional-independence', 'summary.trap', 'Multiply inside each branch first, then weight the branches and add')
+ok(add_then_multiply == D('0.25') and multiply_then_add == D('0.34') and not backwards and forwards, 'l16 summary.trap names the right order of steps (finding 22)',
    'adding before multiplying gives 0.25, the trap answer; the true 0.34 multiplies inside each branch first')
 
 report('conditional L3 concepts')
