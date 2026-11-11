@@ -62,3 +62,16 @@ All earlier fixes were re-read in place and hold: the rounding-edge caveat, the 
 - `docs/reports/odes-L4-numbers.py`: exit 0.
 - `docs/reports/odes-L4-concepts.py` (round 1): exit 0.
 - Inbox: two bullets under "Raised later (audit odes):" in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fixer, 11 Nov 2026. No graded key, option, tolerance, canvas value, hidden test or code changed.
+
+1. `l17` `screens[5].canvas.state.caption` | **fixed** | Basis: `plane.js` gives a function `slot: f.colour`, `canvases.css` maps `.cvb-c3` to `var(--s3)`, and `tokens.css` sets `--s3` to #1BAF7A (light) and #199E70 (dark), both green; RK4 is `colour: 1`, `--s1` #2A78D6, blue. The canvas README names slots only by number, so the word comes from the tokens. Caption now "Green: Euler's 63 steps. Blue: RK4's 63 steps."
+2. `l18` `screens[6].explain.text` and `feedback.correct` | **fixed differently** | Basis: the band is $|D - D^*| < 5 \times 10^{-5}$ (screen 3), and $0.789215 - 0.789080 = 1.35 \times 10^{-4} = 2.7 \times$ the band. `feedback.correct` takes the audit's text. The explain's first sentence takes the audit's text; I dropped the audit's "the print differs too" sentence and kept the original closing sentence on pence, so the explain stays at three sentences and keeps the trap's point. The option text and hints already argue from the band.
+3. `l16` `screens[7].prose` | **fixed** | Basis: $1 - h\lambda$ with $\lambda = 10$ is $1 - 0.5 = 0.5$ at $h = 0.05$ and $1 - 1 = 0$ at $h = 0.1$; for another $\lambda$ the numbers differ. Sentence now "With $\lambda = 10$, the factor is 0.5 at $h = 0.05$ and 0 at $h = 0.1$."
+4. `l18` `screens[7].prose` | **fixed** | Basis: Vasicek $r$ is an Ornstein-Uhlenbeck (Gaussian) process, so $I = \int_0^5 r\,dt$ is normal and $E[e^{-I}] = e^{-E[I] + \frac12\mathrm{Var}(I)}$ by the normal moment-generating function; Jensen alone gives only the direction. Recomputed $\frac12\mathrm{Var}(I)/\sigma^2$ from the closed form $\frac{1}{\kappa^2}\left[T - \frac{2(1 - e^{-\kappa T})}{\kappa} + \frac{1 - e^{-2\kappa T}}{2\kappa}\right]$ with $\kappa = 0.5$, $T = 5$: 4.6432, and the price gap £0.0367; unchanged. Prose now "Then $I$ is normal, so the price gains a factor $e^{\frac12\mathrm{Var}(I)}$; here it is $e^{4.643\sigma^2}$. The factor is above 1 because $e^{-I}$ is convex."
+
+Not touched (no finding, noted only): `l16` `screens[7].prose` still names "lesson 12" twice, against the voice rule on lesson numbers.
+
+Gates: validator 0 errors (manifest unchanged); `odes-L4-concepts-r2.py` 116 checks, 0 failed, exit 0 (no check string changed); `odes-L4-numbers.py` and `odes-L4-concepts.py` exit 0; voice scan 35 on the odes folder 0 and 0; playthrough of l16, l17, l18 with `--local-cdn`, desktop and `--mobile`: all passed.
