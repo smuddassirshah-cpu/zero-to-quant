@@ -2044,3 +2044,7 @@ Raised later (problems series):
 Raised later (problems trig):
 - [Could] numeric field: a trailing degree sign is refused. `30°` (and `30^\circ` from the maths keyboard) gives NaN in `parseNum`, so a learner who answers an angle question "in degrees" with the sign gets the generic line, not credit (trig problems-1 `p-hexagon-tile` part 4; every angle part of the three sets is the same). Strip a final `°`, `^\circ` or `\degree` before parsing, as the per cent sign is handled.
 - [Could] Met again (trig problems 1 to 3): the expression Accepted line prints `accept` strings as raw LaTeX in code type (`40\cdot\frac{\sqrt{3}}{2}`, `-2s^2+3s-1=0`, `\frac{2\pi}{20}` at 440 px). Same want as the exp-log and functions bullets: render them as maths.
+
+Raised later (review problems 0.3 b):
+- [Could] validator, `unit: "%"` numeric parts: warn when the `decimal` entry's band, read as typed decimals, holds another `wrong` value or a given value retyped. exp-log problems-3 `p-weekly-target` 5 (0.0249 and 0.0259 typed land on `decimal`, whose line prints the answer 2.52) and `p-monthly-deposit` 2 (0.048 and 0.0491). A band of 5e-07 on answers under 5% avoids it (`docs/reviews/review-problems-0.3-b.md` finding 7).
+- [Could] validator or `numbers_lib`: on a part that asks for the first whole number above a stated value ("Using $n \approx 5.80$ ... whole months"), warn when rounding that value to the nearest whole number gives the key, so the direction of rounding is not tested (exp-log problems-2: three of five such parts; finding 5).
