@@ -1334,7 +1334,23 @@
         verdict.innerHTML = `<div class="lsn-chip is-${pok ? 'ok' : 'no'}"><span class="lsn-chip-ic">${icon(pok ? 'check' : 'cross', 'sm')}</span><div class="lsn-chip-tx"><div class="lsn-chip-h"><b>${pok ? 'Correct.' : 'Not quite right.'}</b></div>${r.line ? `<span>${G().inline(strip(r.line, pok ? 'Correct.' : 'Not quite right.'))}</span>` : ''}</div></div>`;
       }
       dots(); sync();
+      clearBar();
+      requestAnimationFrame(clearBar); setTimeout(clearBar, 250);   // the bar grows again once the maths in the verdict is drawn
     };
+    /* ENGINE-BACKLOG 914: on a narrow screen the feedback bar sits over the page's end once the verdict is in. Scroll the part just checked
+       so its answer box ends above the bar (never so far that its top leaves the scroller). */
+    const clearBar = () => {
+      const foot = wrap.querySelector('.lsn-set-foot');
+      if (!foot || !wrap.isConnected) return;
+      const boxes = [...body.querySelectorAll('input, textarea, math-field, select, [contenteditable="true"], [role="textbox"]')].filter(e => e.getBoundingClientRect().height > 0);
+      const last = boxes[boxes.length - 1];
+      let sc = body.parentElement;
+      while (sc && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+      if (!last || !sc) return;
+      const lr = last.getBoundingClientRect(), over = lr.bottom - (foot.getBoundingClientRect().top - 12);
+      if (over > 0) sc.scrollTop += Math.min(over, Math.max(0, lr.top - sc.getBoundingClientRect().top - 8));
+    };
+    window.addEventListener('resize', () => { if (wrap.isConnected && (st0 === 'ok' || st0 === 'no')) clearBar(); });
     const onPrimary = () => {
       if (primary.disabled) return;
       if (st0 === 'engaged') return doCheck();
