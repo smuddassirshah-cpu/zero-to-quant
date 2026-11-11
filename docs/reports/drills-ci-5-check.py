@@ -650,7 +650,7 @@ def cheapest_with_coupon(n, roads, src, dst):
         for half in range(-1, len(roads)):
             near = defaultdict(list)
             for i, (a, b, w) in enumerate(roads):
-                w2 = w // 2 if i == half else w
+                w2 = w // 2 if i == half and src not in (a, b) else w   # the voucher is refused on a road at src
                 near[a].append((b, w2)); near[b].append((a, w2))
             d = _dijkstra(n, near, src)[dst]
             if d is not None: found.append(d)
@@ -663,6 +663,8 @@ def cheapest_with_coupon(n, roads, src, dst):
         return -1
     best = to[dst]
     for a, b, w in roads:
+        if src in (a, b):
+            continue   # the voucher is refused on a road at src
         for x, y in ((a, b), (b, a)):
             if to[x] is not None and back[y] is not None:
                 best = min(best, to[x] + w // 2 + back[y])
@@ -706,10 +708,14 @@ INDEP = {"ci-reclaimed-land": largest_after_each, "ci-ferry-timetable": solve_fe
 # ======================= slow methods kept out of `planted` =======================
 SLOW = {}
 # planted solutions that are right but too slow (always the last entry): (drill id, index)
-SLOW_PLANTED = {(d, 2) for d in ("ci-wall-break-route", "ci-nearest-depot", "ci-reclaimed-land", "ci-ferry-timetable",
-                                  "ci-first-circular-rule", "ci-half-fare-route", "ci-safest-walk")}
-# the obvious method timed in Pyodide for each difficulty 4 and 5 drill: a planted index, or "s<k>" for SLOW[did][k]
-OBVIOUS = {d: 2 for d, _ in SLOW_PLANTED}
+# (the slow ones are always the last entries; those with a turned-round, sorted or sweeping variant have several)
+SLOW_IDX = {"ci-wall-break-route": [3], "ci-nearest-depot": [2], "ci-reclaimed-land": [2, 3], "ci-ferry-timetable": [2, 3, 4],
+            "ci-first-circular-rule": [2, 3], "ci-half-fare-route": [4], "ci-safest-walk": [2], "ci-stuck-jobs": [3]}
+SLOW_PLANTED = {(d, k) for d, ks in SLOW_IDX.items() for k in ks}
+# the slow methods timed in Pyodide: planted indices (each over all hidden tests; the model must stay under 1 s)
+OBVIOUS = dict(SLOW_IDX)
+# the backward search on first-circular-rule is bound by 20,000 rules: about 4.5 s in CPython, over 10 s in Pyodide (--pyodide is the gate)
+SLOW_NATIVE = {("ci-first-circular-rule", 3): 3}
 
 # ======================= running =======================
 
@@ -778,7 +784,7 @@ def pyodide_time(code, cases, cap=12.0):
         open(js, "w").write(PYO_JS)
         pkg = os.path.join(PYODIDE, "pyodide-0.27.7", "package")
         try:
-            r = subprocess.run(["node", js, pkg, spec, script], capture_output=True, text=True, timeout=cap + 60)
+            r = subprocess.run(["node", js, pkg, spec, script], capture_output=True, text=True, timeout=cap + 8)
         except subprocess.TimeoutExpired:
             return {"s": cap, "ok": None}
         line = [l for l in r.stdout.splitlines() if l.startswith("PYO ")]
@@ -787,6 +793,7 @@ def pyodide_time(code, cases, cap=12.0):
         return json.loads(line[-1][4:])
 
 diffs = Counter()
+INDEX = json.load(open(os.path.join(DRILLS, "index.json")))
 stdin = 0
 timings = {}
 for did in IDS:
@@ -828,9 +835,9 @@ for did in IDS:
     caught = []
     for k, p in enumerate(pl):
         if (did, k) in SLOW_PLANTED:
-            if k != len(pl) - 1:
-                err(f"{did}: slow planted[{k}] is not last")
-            r = run_isolated(p["code"], d["tests"], limit=5)
+            if k < len(pl) - len(SLOW_IDX[did]):
+                err(f"{did}: slow planted[{k}] is not in the last entries")
+            r = run_isolated(p["code"], d["tests"], limit=SLOW_NATIVE.get((did, k), 5))
             if r["failed"] != "timeout":
                 err(f"{did}: planted[{k}] is meant to be too slow but finished ({r})")
             caught.append("timeout (slow plant)")
@@ -857,17 +864,16 @@ for did in IDS:
             err(f"{did}: difficulty {d['difficulty']} needs an obvious method in OBVIOUS")
         if "obvious method" not in d["how"] or "step to the target" not in d["how"]:
             err(f"{did}: how must name the obvious method and the step to the target")
-        if PYODIDE and did in OBVIOUS:
-            src = OBVIOUS[did]
-            code = pl[src][ "code"] if isinstance(src, int) else SLOW[did][int(src[1:])]
-            tm = pyodide_time(d["solution"], d["tests"])
-            ts = pyodide_time(code, d["tests"])
-            timings[did] = (tm["s"], ts["s"])
-            if tm["s"] is None or tm["s"] > 1.0 or not tm["ok"]:
-                err(f"{did}: model in Pyodide {tm}")
+    if PYODIDE and did in OBVIOUS:
+        tm = pyodide_time(d["solution"], d["tests"])
+        if tm["s"] is None or tm["s"] > 1.0 or not tm["ok"]:
+            err(f"{did}: model in Pyodide {tm}")
+        for src in OBVIOUS[did]:
+            ts = pyodide_time(pl[src]["code"], d["tests"])
+            timings[(did, src)] = (tm["s"], ts["s"])
             if ts["s"] is None or ts["s"] <= 5.0:
-                err(f"{did}: obvious method in Pyodide {ts}")
-            print(f"  {did}: Pyodide model {tm['s']} s, obvious {ts['s']} s{' (cut off)' if ts['s'] and ts['s'] >= 12 else ''}")
+                err(f"{did}: slow planted[{src}] in Pyodide {ts}")
+            print(f"  {did}: Pyodide model {tm['s']} s, slow planted[{src}] {ts['s']} s{' (cut off)' if ts['s'] and ts['s'] >= 12 else ''}")
     diffs[d["difficulty"]] += 1
     stdin += "stdin" in d["tags"]
     if d["tags"][0] != "pack-5": err(f"{did}: tags must start pack-5")
@@ -878,6 +884,9 @@ for did in IDS:
     if d["pack"] != "ci" or d["course"] != "coding-int": err(f"{did}: pack or course")
     if d["pattern"] != "graphs": err(f"{did}: pattern {d['pattern']}")
     if f"Submit runs {len(d['tests'])} hidden tests" not in d["how"]: err(f"{did}: how test count")
+    row = [r for r in INDEX if r["id"] == did]
+    if len(row) != 1 or row[0]["difficulty"] != d["difficulty"] or row[0]["name"] != d["name"]:
+        err(f"{did}: index row out of step with the drill")
     print(f"{did}: d{d['difficulty']} {len(d['tests'])} tests ok, model {dt:.2f} s, starter fails at {sres['failed']}, planted fail at {caught}, slow methods time out at {slow_out}")
 if FULL and dict(diffs) != {2: 3, 3: 5, 4: 5, 5: 2}: err(f"difficulty mix {dict(diffs)}")
 if FULL and stdin != 2: err(f"{stdin} stdin drills")

@@ -12,11 +12,11 @@
     "ci-patterns",
     "ci-timed"
   ],
-  "difficulty": 4,
-  "pace": 2040,
+  "difficulty": 5,
+  "pace": 2580,
   "fn": "first_cycle_rule",
   "returns": "a whole number",
-  "brief": "A build system for `n` modules, numbered 0 to `n - 1`, takes ordering rules one at a time. Each rule `[a, b]` in `rules` says module `a` must be built before module `b`; `[a, a]` asks a module to wait for itself. Return the position in `rules`, counting from 0, of the first rule after which the rules so far contain a loop of waits. Return `-1` if they never do.\n\nWrite `first_cycle_rule(n, rules)`.\n\nExample. For `n = 4` and `rules = [[0, 1], [1, 2], [0, 2], [2, 3], [3, 1]]`, the rule `[0, 2]` adds a second path but no loop. The rule `[3, 1]` closes the loop 1, 2, 3, so the answer is 4.",
+  "brief": "A build system for `n` modules, numbered 0 to `n - 1`, takes ordering rules one at a time. Each rule `[a, b]` in `rules` says module `a` must be built before module `b`; `[a, a]` asks a module to wait for itself, which is a loop on its own. Return the position in `rules`, counting from 0, of the first rule after which the rules so far contain a loop of waits. Return `-1` if they never do.\n\nWrite `first_cycle_rule(n, rules)`.\n\nExample. For `n = 4` and `rules = [[0, 1], [1, 2], [0, 2], [2, 3], [3, 1]]`, the rule `[0, 2]` adds a second path but no loop. The rule `[3, 1]` closes the loop 1, 2, 3, so the answer is 4.",
   "constraints": [
     "$1 \\le n \\le 20{,}000$ modules and at most $20{,}000$ rules.",
     "$O((n + m) \\log m)$ time is the target for $m$ rules. Searching the graph before each new rule is too slow when the searches are long.",
@@ -131,9 +131,14 @@
       "call": "first_cycle_rule(20000, [[i // 2, i] for i in range(19999, 0, -1)])",
       "expect": "-1",
       "compare": "equal"
+    },
+    {
+      "call": "first_cycle_rule(20000, [[i, i + 1] for i in range(4999)] + [[i, i + 1] for i in range(9998, 4999, -1)] + [[4900 + k % 100, 5000 + k // 100] for k in range(10000)] + [[9999, 0]])",
+      "expect": "19998",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method searches from `b` for `a` before adding each rule `[a, b]`. That is a full search per rule, and when the rules arrive along a chain from its far end it runs out of time. The step to the target is a binary search on the number of rules, with one topological sort to test each prefix.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method searches from `b` for `a` before adding each rule `[a, b]`. That is a full search per rule, and searching from either end it runs out of time when the searches are long. The step to the target is a binary search on the number of rules, with one topological sort to test each prefix.",
   "solution": "def first_cycle_rule(n, rules):\n    def prefix_loops(k):\n        after = [[] for _ in range(n)]\n        waits = [0] * n\n        for a, b in rules[:k]:\n            after[a].append(b)\n            waits[b] += 1\n        ready = [j for j in range(n) if waits[j] == 0]\n        done = 0\n        while ready:\n            j = ready.pop()\n            done += 1\n            for x in after[j]:\n                waits[x] -= 1\n                if waits[x] == 0:\n                    ready.append(x)\n        return done < n\n\n    if not prefix_loops(len(rules)):\n        return -1\n    lo, hi = 1, len(rules)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if prefix_loops(mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo - 1\n",
   "notes": [
     "Adding rules never removes a loop, so the prefixes with a loop are all those from some point on, which a binary search finds.",
@@ -152,6 +157,10 @@
     {
       "code": "def first_cycle_rule(n, rules):\n    after = [[] for _ in range(n)]\n    for i, (a, b) in enumerate(rules):\n        seen = {b}\n        stack = [b]\n        while stack:\n            u = stack.pop()\n            for w in after[u]:\n                if w not in seen:\n                    seen.add(w)\n                    stack.append(w)\n        if a in seen:\n            return i\n        after[a].append(b)\n    return -1\n",
       "slip": "Searching from `b` for `a` before each rule is right, but each search can cover the whole chain, too slow."
+    },
+    {
+      "code": "def first_cycle_rule(n, rules):\n    before = [[] for _ in range(n)]\n    for i, (a, b) in enumerate(rules):\n        seen = {a}; stack = [a]\n        while stack:\n            u = stack.pop()\n            for w in before[u]:\n                if w not in seen:\n                    seen.add(w); stack.append(w)\n        if b in seen: return i\n        before[b].append(a)\n    return -1\n",
+      "slip": "Searching back from `a` for `b` before each rule is the same full search turned round, and still covers a long chain for every rule, too slow."
     }
   ]
 }

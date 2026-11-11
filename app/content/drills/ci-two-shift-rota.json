@@ -118,6 +118,11 @@
       "compare": "equal"
     },
     {
+      "call": "max_day_shift(5, [[0, 1], [0, 2], [0, 3]])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
       "call": "max_day_shift(200000, [[i, i + 1] for i in range(199999)])",
       "expect": "100000",
       "compare": "equal"
@@ -133,7 +138,7 @@
       "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. Unlike a plain check that a split exists, the answer is the largest day shift, so each group's two sides must be counted and the larger kept.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. Unlike a plain check that a split exists, the answer is the largest day shift, so each group's two sides must be counted and the larger kept.",
   "solution": "from collections import deque\n\ndef max_day_shift(n, clashes):\n    near = [[] for _ in range(n)]\n    for a, b in clashes:\n        near[a].append(b)\n        near[b].append(a)\n    side = [-1] * n\n    total = 0\n    for s in range(n):\n        if side[s] >= 0:\n            continue\n        side[s] = 0\n        count = [1, 0]\n        queue = deque([s])\n        while queue:\n            u = queue.popleft()\n            for w in near[u]:\n                if side[w] < 0:\n                    side[w] = 1 - side[u]\n                    count[side[w]] += 1\n                    queue.append(w)\n                elif side[w] == side[u]:\n                    return -1\n        total += max(count)\n    return total\n",
   "notes": [
     "A split exists exactly when the clash graph is bipartite, which a two-colouring search finds.",
@@ -152,6 +157,10 @@
     {
       "code": "from collections import deque\n\ndef max_day_shift(n, clashes):\n    near = {}\n    for a, b in clashes:\n        near.setdefault(a, []).append(b)\n        near.setdefault(b, []).append(a)\n    side = {}\n    total = 0\n    for s in near:\n        if s in side:\n            continue\n        side[s] = 0\n        count = [1, 0]\n        queue = deque([s])\n        while queue:\n            u = queue.popleft()\n            for w in near[u]:\n                if w not in side:\n                    side[w] = 1 - side[u]\n                    count[side[w]] += 1\n                    queue.append(w)\n                elif side[w] == side[u]:\n                    return -1\n        total += max(count)\n    return total\n",
       "slip": "Walking only the staff named in a clash leaves out people with no clash, who can all work days."
+    },
+    {
+      "code": "from collections import deque\ndef max_day_shift(n, clashes):\n    near = [[] for _ in range(n)]\n    for a, b in clashes:\n        near[a].append(b); near[b].append(a)\n    side = [-1] * n\n    for s in range(n):\n        if side[s] >= 0: continue\n        side[s] = 0; q = deque([s])\n        while q:\n            u = q.popleft()\n            for w in near[u]:\n                if side[w] < 0: side[w] = 1 - side[u]; q.append(w)\n                elif side[w] == side[u]: return -1\n    return max(side.count(0), side.count(1))\n",
+      "slip": "Taking the larger colour over the whole desk, not group by group, misses a group whose larger side has the other colour."
     }
   ]
 }

@@ -19,6 +19,7 @@
   "brief": "A satellite image of a shipping lane marks oil as `#` and clear water as `.`, given as `grid`, a list of equal-length strings. A slick is a group of `#` cells joined through shared sides. Two slicks have the same shape when one can be slid onto the other, without turning or flipping it. Return how many slicks have a shape that no other slick shares.\n\nWrite `lone_shapes(grid)`.\n\nExample. In `['#.#', '#.#', '...', '##.']` the two upright pairs have the same shape and the flat pair has its own. So the answer is 1.",
   "constraints": [
     "At most $300$ rows and $300$ columns.",
+    "One slick can hold every cell, too deep for Python recursion.",
     "$O(\\text{rows} \\times \\text{cols})$ time is the target, using a hashable description of each shape.",
     "All the tests in a run share one 5-second limit in the browser.",
     {
@@ -66,11 +67,6 @@
       "compare": "equal"
     },
     {
-      "call": "lone_shapes(['#.#'])",
-      "expect": "0",
-      "compare": "equal"
-    },
-    {
       "call": "lone_shapes(['##.', '.#.', '...', '#..', '##.'])",
       "expect": "2",
       "compare": "equal"
@@ -111,6 +107,16 @@
       "compare": "equal"
     },
     {
+      "call": "lone_shapes(['#.#', '.#.', '...', '.##'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "lone_shapes(['##...', '.##..', '.....', '..##.', '.##..'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
       "call": "lone_shapes([('#' * (i // 2 + 1) + '.' + '#.' * 150)[:300] if i % 2 == 0 else '.' * 300 for i in range(300)])",
       "expect": "149",
       "compare": "equal"
@@ -119,9 +125,14 @@
       "call": "lone_shapes([''.join('#' if (i % 3 < 2 and j % 3 < 2) or (i, j) == (0, 2) else '.' for j in range(300)) for i in range(300)])",
       "expect": "1",
       "compare": "equal"
+    },
+    {
+      "call": "lone_shapes(['#' * 300] * 300)",
+      "expect": "1",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. Unlike counting distinct shapes, only slicks whose shape is never repeated count, so each shape needs a tally, not just a set.",
+  "how": "Submit runs 15 hidden tests. Each answer must equal the expected value. Unlike counting distinct shapes, only slicks whose shape is never repeated count, so each shape needs a tally, not just a set.",
   "solution": "def lone_shapes(grid):\n    rows, cols = len(grid), len(grid[0])\n    seen = [[False] * cols for _ in range(rows)]\n    shapes = []\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] != '#' or seen[r][c]:\n                continue\n            seen[r][c] = True\n            stack = [(r, c)]\n            cells = []\n            while stack:\n                i, j = stack.pop()\n                cells.append((i - r, j - c))\n                for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                    if 0 <= a < rows and 0 <= b < cols and grid[a][b] == '#' and not seen[a][b]:\n                        seen[a][b] = True\n                        stack.append((a, b))\n            shapes.append(frozenset(cells))\n    counts = {}\n    for s in shapes:\n        counts[s] = counts.get(s, 0) + 1\n    return sum(1 for s in shapes if counts[s] == 1)\n",
   "notes": [
     "Offsets from a slick's first cell in reading order are the same for every slid copy, so they name the shape.",
@@ -140,6 +151,18 @@
     {
       "code": "def lone_shapes(grid):\n    rows, cols = len(grid), len(grid[0])\n    seen = set()\n    shapes = set()\n    for r in range(rows):\n        for c in range(cols):\n            if grid[r][c] != '#' or (r, c) in seen:\n                continue\n            seen.add((r, c))\n            stack = [(r, c)]\n            cells = []\n            while stack:\n                i, j = stack.pop()\n                cells.append((i - r, j - c))\n                for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                    if 0 <= a < rows and 0 <= b < cols and grid[a][b] == '#' and (a, b) not in seen:\n                        seen.add((a, b))\n                        stack.append((a, b))\n            shapes.add(frozenset(cells))\n    return len(shapes)\n",
       "slip": "Counting distinct shapes answers a different question: a shape seen twice still counts once."
+    },
+    {
+      "code": "def lone_shapes(grid):\n    R, C = len(grid), len(grid[0]); seen = set(); count = {}\n    for r in range(R):\n        for c in range(C):\n            if grid[r][c] == '#' and (r, c) not in seen:\n                seen.add((r, c)); stack = [(r, c)]; cells = []\n                while stack:\n                    i, j = stack.pop(); cells.append((i - r, j - c))\n                    for a in (i - 1, i, i + 1):\n                        for b in (j - 1, j, j + 1):\n                            if 0 <= a < R and 0 <= b < C and grid[a][b] == '#' and (a, b) not in seen:\n                                seen.add((a, b)); stack.append((a, b))\n                k = frozenset(cells); count[k] = count.get(k, 0) + 1\n    return sum(1 for v in count.values() if v == 1)\n",
+      "slip": "Joining slicks through corners as well as sides merges two slicks that only touch at a corner."
+    },
+    {
+      "code": "def lone_shapes(grid):\n    R, C = len(grid), len(grid[0]); seen = set(); count = {}\n    for r in range(R):\n        for c in range(C):\n            if grid[r][c] == '#' and (r, c) not in seen:\n                seen.add((r, c)); stack = [(r, c)]; cells = []\n                while stack:\n                    i, j = stack.pop(); cells.append((i, j))\n                    for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                        if 0 <= a < R and 0 <= b < C and grid[a][b] == '#' and (a, b) not in seen:\n                            seen.add((a, b)); stack.append((a, b))\n                r0 = min(i for i, _ in cells); c0 = min(j for _, j in cells)\n                rows = {}; cols = {}\n                for i, j in cells:\n                    rows[i - r0] = rows.get(i - r0, 0) + 1; cols[j - c0] = cols.get(j - c0, 0) + 1\n                k = (tuple(sorted(rows.items())), tuple(sorted(cols.items())))\n                count[k] = count.get(k, 0) + 1\n    return sum(1 for v in count.values() if v == 1)\n",
+      "slip": "Naming a shape by its cells in each row and each column gives two different shapes one name."
+    },
+    {
+      "code": "def lone_shapes(grid):\n    R, C = len(grid), len(grid[0]); seen = set(); count = {}\n    def fill(i, j, r, c, cells):\n        seen.add((i, j)); cells.append((i - r, j - c))\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < R and 0 <= b < C and grid[a][b] == '#' and (a, b) not in seen:\n                fill(a, b, r, c, cells)\n    for r in range(R):\n        for c in range(C):\n            if grid[r][c] == '#' and (r, c) not in seen:\n                cells = []; fill(r, c, r, c, cells)\n                k = frozenset(cells); count[k] = count.get(k, 0) + 1\n    return sum(1 for v in count.values() if v == 1)\n",
+      "slip": "A recursive fill runs out of call depth on a slick of many cells."
     }
   ]
 }
