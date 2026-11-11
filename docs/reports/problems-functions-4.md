@@ -44,3 +44,4 @@ Each later part restates the value or rule it uses. Carried slips: `carried` 4.7
 | fresh-check `--file` | 0 hits |
 
 Engine limits: two "Met again" bullets in `docs/BACKLOG-INBOX.md` under `Raised later (problems functions):` (raw LaTeX in the Accepted line; no form that refuses an unexpanded rule but takes a factorised one).
+- Second read fix (0.3 a): car park part 2 and bonus part 2 carry `"form": "simplified"` (the question's own unsimplified line is refused); the three generic lines on typed left sides end with a sentence to type the rule alone.

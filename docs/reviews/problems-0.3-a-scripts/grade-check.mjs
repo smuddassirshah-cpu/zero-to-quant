@@ -34,8 +34,8 @@ const TYPED = [
   // counting 1: whole-number counts
   [C, 1, 'p-tulip-bed', 4, '6720', T], [C, 1, 'p-tulip-bed', 4, '6,720', T], [C, 1, 'p-tulip-bed', 4, '6 720', T], [C, 1, 'p-tulip-bed', 3, '1,680', T],
   [C, 1, 'p-tulip-bed', 1, '70.0', T], [C, 1, 'p-tulip-bed', 2, '4!', F], [C, 1, 'p-team-photo', 1, '5,040', T], [C, 1, 'p-team-photo', 1, '7!', F],
-  [C, 1, 'p-team-photo', 4, '192', T], [C, 1, 'p-five-a-side', 3, '9', T], [C, 1, 'p-five-a-side', 3, '-8', F], [C, 1, 'p-ice-cream-van', 4, '5,775', T],
-  [C, 1, 'p-ice-cream-van', 3, '1,155', T],
+  [C, 1, 'p-team-photo', 4, '192', T], [C, 1, 'p-five-a-side', 3, '9', T], [C, 1, 'p-five-a-side', 3, '-8', F], [C, 1, 'p-ice-cream-van', 4, '12,740', T],
+  [C, 1, 'p-ice-cream-van', 3, '2,548', T],
   // counting 2: chances as a fraction or a decimal to 3 places
   [C, 2, 'p-signal-flags', 4, '5/7', T], [C, 2, 'p-signal-flags', 4, '75/105', T], [C, 2, 'p-signal-flags', 4, '0.714', T], [C, 2, 'p-signal-flags', 4, '0.7143', T],
   [C, 2, 'p-signal-flags', 4, '0.71', F], [C, 2, 'p-signal-flags', 4, '0.7', F],
@@ -83,7 +83,7 @@ const TYPED = [
   [FN, 4, 'p-fountain-jet', 4, '3.75, 11.25', T], [FN, 4, 'p-fountain-jet', 4, '11.25, 3.75', T], [FN, 4, 'p-fountain-jet', 4, '3.75 and 11.25', T], [FN, 4, 'p-fountain-jet', 4, '3.75 m, 11.25 m', F],
   [FN, 4, 'p-fountain-jet', 4, 'x = 3.75, x = 11.25', T], [FN, 4, 'p-fountain-jet', 4, '15/4, 45/4', T], [FN, 4, 'p-fountain-jet', 4, '3.75', F], [FN, 4, 'p-fountain-jet', 4, '3.8, 11.3', F],
   [FN, 4, 'p-car-park', 1, '9.25', T], [FN, 4, 'p-car-park', 1, '£9.25', T], [FN, 4, 'p-car-park', 1, '9.3', F], [FN, 4, 'p-car-park', 1, '925', F],
-  [FN, 4, 'p-car-park', 2, '2.5t-2', T], [FN, 4, 'p-car-park', 2, '-2+2.5t', T], [FN, 4, 'p-car-park', 2, 'C(t)=2.5t-2', T], [FN, 4, 'p-car-park', 2, '\\frac{5t-4}{2}', T], [FN, 4, 'p-car-park', 2, '2.50t-2', T],
+  [FN, 4, 'p-car-park', 2, '2.5t-2', T], [FN, 4, 'p-car-park', 2, '-2+2.5t', T], [FN, 4, 'p-car-park', 2, 'C(t)=2.5t-2', T], [FN, 4, 'p-car-park', 2, '\\frac{5t-4}{2}', F], [FN, 4, 'p-car-park', 2, '2.50t-2', T],
   [FN, 4, 'p-car-park', 2, '3+2.5(t-2)', F, RETYPE], [FN, 4, 'p-car-park', 2, '3+2.5t-5', F, 'a line of the working, not yet collected, grades correct on an "as simply as possible" part'],
   [FN, 4, 'p-car-park', 2, '2.5(t-2)+3', F, RETYPE],
   [FN, 4, 'p-car-park', 3, '5.9', T], [FN, 4, 'p-car-park', 3, '5.90', T], [FN, 4, 'p-car-park', 3, '59/10', T], [FN, 4, 'p-car-park', 3, '5.9 hours', F], [FN, 4, 'p-car-park', 3, '5.54', F],
