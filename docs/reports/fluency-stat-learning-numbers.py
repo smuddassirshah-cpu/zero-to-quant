@@ -74,7 +74,8 @@ def kmeans_step(V):
     grp = [v for v, l in zip(vals, lab) if l == 1]
     exact = sum(grp) / R(len(grp))
     assert abs(f(exact) - km.cluster_centers_[1][0]) < 1e-9, (exact, km.cluster_centers_)
-    return exact, {'all-shares': sum(vals) / R(5), 'kept-centre': (sum(grp) + c2) / R(len(grp) + 1)}
+    return exact, {'all-shares': sum(vals) / R(5), 'kept-centre': (sum(grp) + c2) / R(len(grp) + 1),
+                   'percent-sign': exact / 100}   # a typed % is read as a hundredth (review-holes-1.6-2.1 finding 19)
 
 
 def group_ss(V):
@@ -212,4 +213,35 @@ ck.add('fluency-l17-a-small-network', 'one-step', step)
 ck.add('fluency-l18-bending-the-line', 'hinge-value', hinge_value)
 ck.add('fluency-l18-bending-the-line', 'slope-in-a-region', slope_region)
 ck.add('fluency-l18-bending-the-line', 'coefficient-count', coef_count)
+
+# ---- review-holes-1.6-2.1 fixes: % entry clear of the answer and the others (19), prompts (14, 22, 23)
+def extra():
+    bad, n_ = [], 0
+    for it in ck.sample('fluency-l16-groups-nobody-labelled', 'assign-and-update'):
+        w = [x for x in it['wrong'] if x['id'] == 'percent-sign']
+        n_ += 1
+        tol = it['tol']['abs']
+        if len(w) != 1 or abs(w[0]['value'] - it['answer'] / 100) > 1e-9 or abs(w[0]['value'] - it['answer']) <= 2 * tol \
+                or any(abs(x['value'] - w[0]['value']) <= 2 * tol for x in it['wrong'] if x is not w[0]):
+            bad.append(('assign-and-update percent-sign', it['seed']))
+    for it in ck.sample('fluency-l16-groups-nobody-labelled', 'linkage-distance'):
+        n_ += 1
+        if not it['prompt'].rstrip().endswith('Give the exact value.'):
+            bad.append(('linkage-distance prompt', it['seed']))
+    for it in ck.sample('fluency-l15-widest-street', 'margin'):
+        n_ += 1
+        if 'edges at $w \\cdot x + b = \\pm 1$' not in it['prompt']:
+            bad.append(('margin prompt', it['seed'], it['prompt']))
+    for it in ck.sample('fluency-l18-bending-the-line', 'slope-in-a-region'):
+        n_ += 1
+        if 'left of its first knot' not in it['prompt'] or ' on $x$' in it['prompt']:
+            bad.append(('slope-in-a-region prompt', it['seed'], it['prompt']))
+    print('review-holes extra: %d checks, %d failures' % (n_, len(bad)))
+    for b in bad[:20]:
+        print('FAIL', b)
+    return bad
+
+
+if extra():
+    sys.exit(1)
 ck.run()

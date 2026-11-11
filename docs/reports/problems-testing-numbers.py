@@ -110,10 +110,15 @@ if L4 is not None:
     # Monte Carlo of (n - 1)/sum x at lam = 0.4: its variance should sit near lam^2/(n - 2)
     sims = (n - 1) / rng.exponential(1 / 0.4, size=(200000, n)).sum(axis=1)
     ok(abs(sims.mean() - 0.4) < 0.002 and abs(sims.var() / float(var_unb) - 1) < 0.02, 'p-disk-failures: simulation of the unbiased estimator')
-    num(L4, 'p-disk-failures', 5, crb / var_unb, sp.Rational(n - 2, n),
-        {'inverted': var_unb / crb, 'n-minus-one': crb / (lam_mom ** 2 / (n - 1)), 'carried': sp.Rational(632, 10000) / var_unb},   # part 3's printed 0.0632 used as the bound
-        round_tol=0.005)
-    prints(L4, 'p-disk-failures', 5, ['0.004211', '0.95'])
+    # part 5 (turned round, review-holes-1.6-2.1 finding 9): the smallest n with efficiency (n - 2)/n >= 0.99
+    nn = sp.Symbol('nn', positive=True)
+    n_alg = sp.solve(sp.Eq((nn - 2) / nn, sp.Rational(99, 100)), nn)[0]                       # route 1: algebra, 2 / 0.01
+    n_brute = next(k for k in range(3, 10000) if (lam_mom ** 2 / k) / (lam_mom ** 2 / (k - 2)) >= sp.Rational(99, 100))   # route 2: search on the ratio
+    num(L4, 'p-disk-failures', 5, n_alg, n_brute, {'numerator': n_alg - 2, 'efficiency-now': crb / var_unb}, round_tol=0.0006)
+    sims200 = 199 / rng.exponential(1 / 0.4, size=(40000, 200)).sum(axis=1)
+    ok(abs(0.4 ** 2 / 200 / sims200.var() - 0.99) < 0.02, 'p-disk-failures p5: simulated efficiency at n = 200 is near 0.99')
+    ok(sp.Rational(198, 200) == sp.Rational(99, 100) and sp.Rational(38, 40) == sp.Rational(19, 20) and (n_brute - 1 - 2) / (n_brute - 1) < 0.99, 'p-disk-failures p5: 198/200 = 0.99, 38/40 = 0.95, and 199 gaps fall short')
+    prints(L4, 'p-disk-failures', 5, ['n \\ge 200', 'n = 200', '0.95'])
 
     # ---------- p-website-signups: 12 Poisson hours totalling 54 ----------
     pick(L4, 'p-website-signups', 1, 'total')

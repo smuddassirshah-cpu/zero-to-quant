@@ -42,7 +42,8 @@ def numeric(iid, key, wrongs):
         check(abs(x['value'] - v) <= band(x['tol']) + 1e-9, f'{iid} wrong {k} {x["value"]} = slip {v:.6g}')
         check(abs(x['value'] - a) > t + band(x['tol']), f'{iid} wrong {k} outside the key band')
         check(k in it['feedback']['byKey'], f'{iid} wrong {k} has a byKey line')
-    check(any(abs(x - a) <= max(t, 1e-9) for x in _numbers(it['explain']['text'])), f'{iid} explanation states the key')
+    sc = 100 if w.get('unit') == '%' else 1          # a % part: the key is the fraction, the text prints the percentage
+    check(any(abs(x - a * sc) <= max(t, 1e-9) * sc for x in _numbers(it['explain']['text'])), f'{iid} explanation states the key')
 
 
 # e-spline-slope: f(m) = 4 - m + 2(m - 3)^+ + 1.5(m - 7)^+
@@ -103,26 +104,23 @@ check(abs(gv + 0.12) < 1e-6, 'unit-gradient dL/dv = -0.12 (the slope-v slip) by 
 check(loss(w1, w2 + 0.01 * 2.4, v) < loss(w1, w2, v), 'unit-gradient a step against the slope lowers the loss')
 numeric('e-unit-gradient', g1, {'used-x1': (yhat - y) * v * x1, 'slope-v': (yhat - y) * h, 'sign': -g1, 'no-half': 2 * g1})
 
-# e-report-which
-tab = items['e-report-which']['canvas']['params']['rows']
-val = {r[0]: float(r[1]) for r in tab}; test = {r[0]: float(r[2]) for r in tab}
-pick = max(val, key=val.get)
-check(pick == 'RBF support vector machine' and test[pick] == 0.63, f'report-which validation picks {pick}, test {test[pick]}')
-pick2 = sorted(val.items(), key=lambda kv: -kv[1])[0][0]           # second route: sort the rows by validation
-check(pick2 == pick and max(test, key=test.get) == 'Additive spline model', 'report-which sort agrees; best on test is a different learner')
-mean = sum(test.values()) / 4
-check(max(test.values()) == 0.67 and max(val.values()) == 0.72 and abs(mean - 0.6525) < 1e-12, f'report-which distractors 0.67, 0.72, {mean}')
-check(len(set(val.values())) == 4, 'report-which no validation tie')
-opts = {o['text'].split(',')[0]: o for o in items['e-report-which']['widget']['options']}
-check(set(opts) == {'0.63', '0.67', '0.72', '0.6525'} and opts['0.63'].get('correct'), 'report-which option values, key 0.63')
-hw = json.load(open(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'stat-learning', 'homework-4.json'), encoding='utf8'))
-hp = next(i for i in hw['items'] if i['id'] == 'h-pick-learner')['prose']
-mine = set(val.values()) | set(test.values())
-check(not (mine & {round(v, 6) for v in _numbers(hp)}), 'report-which shares no accuracy with homework h-pick-learner')
+# e-odds-update (back in place of e-report-which, review-holes-1.6-2.1 finding 4): logistic coefficient read as odds
+odds2 = 0.10 / 0.90 * math.exp(0.45 * 2)            # route 1: odds times e^(0.45 x 2 turns)
+p1 = odds2 / (1 + odds2)
+logit2 = math.log(0.10 / 0.90) + 0.45 * 2            # route 2: add on the log-odds scale, then the logistic function
+p2 = 1 / (1 + math.exp(-logit2))
+check(abs(p1 - p2) < 1e-12 and abs(p1 - 0.2146) < 5e-5, f'odds-update probability {p1:.4f} two ways ({p2:.4f})')
+check(abs(odds2 - 0.2733) < 5e-5 and abs(0.1 * math.exp(0.9) - 0.2460) < 5e-5, 'odds-update odds 0.273 and the multiplied probability 0.246')
+check(abs(round(0.273 / 1.273, 3) - 0.214) < 1e-12 and abs(0.273 / 1.273 - 0.215) <= 0.0015, 'odds-update the printed 0.273 / 1.273 is inside the band')
+numeric('e-odds-update', p1, {'prob-times': 0.1 * math.exp(0.9), 'odds-as-prob': odds2})
+check(items['e-odds-update']['widget']['unit'] == '%' and items['e-odds-update']['skills'] == ['sl-classify'], 'odds-update unit % and skill sl-classify')
+check('e-report-which' not in items, 'e-report-which is out (its choice-on-validation point is in e-code-honest-report and e-best-of-n)')
+for pid in ('e-spline-slope', 'e-kmeans-spreads'):
+    check(items[pid]['widget']['placeholder'] == 'a number', f'{pid} placeholder invites no unit words')
 
 # replaced items gone, every skill still covered, ramp
-gone = ['e-leak-rows', 'e-oob-overlap', 'e-odds-update', 'e-ridge-shrink', 'e-walk-first-test']
-check(not any(g in items for g in gone), 'five replaced items removed')
+gone = ['e-leak-rows', 'e-oob-overlap', 'e-report-which', 'e-ridge-shrink', 'e-walk-first-test']
+check(not any(g in items for g in gone), 'five dropped items out (e-odds-update back, e-report-which out)')
 used = {s for i in doc['items'] for s in i.get('skills', [])}
 check(set(doc['skills']) <= used, 'every exam skill covered')
 for s in ('vl-leakage', 'vl-time', 'en-bagging', 'sl-classify', 'sl-regularise', 'vl-cv'):

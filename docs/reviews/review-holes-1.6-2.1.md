@@ -184,3 +184,59 @@ Finding classes seen three times or more:
 - A unit typed after the number that the field will not read: 5, 8, 20 (and 19), the pattern review's finding 9 again.
 - A story or task reused that `fresh-check` does not report: 3, 9, 13.
 - A general statement without its hypothesis: 2, 7, 14, 15 (the class of `review-stat-learning-4.md`; here two are in `testing`).
+
+## Fix pass
+
+Fix agent, Sonnet. Targeted edits only, to the named files. No disputes: every corrected number was recomputed by two routes (see the number scripts) and agrees with the reader. 21 fixed, 2 deferred, 0 disputed. The three `wrong` findings are 1 (the Pearson line), 2 (the sufficiency rule) and 10 (the gradient step).
+
+A. Exam items and skill tags
+
+1. `s-pool-rates`: fixed. `question` asks for 5-place logarithms; `byKey.pearson` reads "6.00 is Pearson's $X^2$ ... With 5 places, $-2\ln\Lambda = 6.04$." Key 6.0406, band 0.005 and the `pearson` entry unchanged. Checked: logs to 5 places give 6.0408 and to 4 places 6.0420, both inside the band; logs to 3 places give 6.0 exactly, which is Pearson's value (2 x 15^2/75 = 6.0), outside the band.
+2. `s-pareto-losses` option c: fixed, inside the item rewrite of finding 3: "The largest value is sufficient for a uniform on $(0, \theta)$, whose upper end is the parameter. Here the support, $0 < x < 1$, is fixed." Basis: the factorisation theorem. For $U(0, \theta)$ the joint density is $\theta^{-n}\mathbf 1\{\max x_i < \theta\}$, so the data meet $\theta$ through the maximum; for a fixed support they meet it through $\sum \ln x_i$ only (the item's first part).
+3. `s-pareto-losses` freshness: fixed as proposed. Recovery rates on defaulted loans, density $\theta x^{\theta - 1}$ on $(0, 1)$, $n = 80$, $\sum\ln x_i = -32$. Keys kept (option a, 2.5, 0.078125). Part 2 `wrong`: `upside-down` 0.4, `exponent` 3.5 (was 1.5: it is now $\theta - 1 = 2.5$), new `sign` $-2.5$. Part 3 `wrong` id `alpha-not-squared` renamed `theta-not-squared`, value 0.03125 as before. Every text line, `accept` and `explain` rewritten from $\alpha$ to $\theta$; item id unchanged. Recomputed: $\hat\theta = -n/\sum\ln x_i$ by algebra and by numerical maximisation; $I(\theta) = 1/\theta^2$ by a numerical second derivative; the bound 6.25/80 by $I$, and the simulated variance of the MLE (Beta(2.5, 1) draws) is near it.
+4. `topic-2.1` coverage: fixed for `stat-learning` l10, deferred for `ensembles` l7. `e-odds-update` is back (the author's original item, key 21.5%, band 0.0015, `unit` "%", difficulty 3) in the place of `e-report-which`. Recomputed: odds $0.1111 \times e^{0.9} = 0.2733$, probability 0.21462; and on the log-odds scale $\operatorname{logit}(0.1) + 0.9$ through the logistic function, 0.21462. Every skill is still examined (sl-setup by `e-gap-reading`, `e-code-ridge-inter`, `e-code-honest-report`; sl-tradeoff by `e-gap-reading`, `e-bias-var-table`, `e-explain-note`; sl-classify gains the item). Level 4 keeps `e-street-inside` (l15), `e-kmeans-spreads` (l16), `e-unit-gradient` (l17), `e-spline-slope` (l18). The ramp stays 6, 15, 6, 3 (30 items). `node tools/test-exam-minutes.mjs`: all passed. Deferred: the `ensembles` l7 gap (no out-of-bag item). Putting `e-oob-overlap` back means giving up `e-importance-claims` or `e-rf-variance`, a lesson-coverage choice, and the alternative is a line in `KNOWN_ISSUES.md`, a file outside this pass. For the main session to decide.
+5. `e-spline-slope`, `e-kmeans-spreads`: fixed, `placeholder` "a number" on both.
+6. `ht-pvalue` on `r-chi-23`: deferred. It is optional and the item is in `courses/testing/review-4.json`, not a file named for this pass.
+
+B. `testing/problems-4.json`
+
+7. `p-website-signups` part 1: fixed, both places: "The largest value is sufficient for a uniform on $(0, \theta)$. Poisson probabilities depend on the data through the total."
+8. A unit typed after the number: fixed where content can: `p-one-unit` part 1 gets `"unit": "h"` (the field then reads "7 h"; checked in the engine grader). The multi-word units ("a day", "sign-ups", "a night") are an engine matter, already in the inbox: deferred.
+9. `p-disk-failures` part 5: fixed, turned round as proposed: "How many gaps make its efficiency at least 0.99?" Key 200 (whole number, band 0), `wrong` `numerator` 198, `efficiency-now` 0.95. Recomputed: $(n - 2)/n \ge 0.99$ gives $n \ge 200$ by algebra and by a search over $n$; 198/200 = 0.99 exactly and 199 gaps fall short; a simulation at $n = 200$ gives an efficiency near 0.99; 38/40 = 0.95 at $n = 40$.
+
+C. `stat-learning/problems-4.json`
+
+10. `p-one-unit`: fixed with the fuller fix. I chose a step that lowers the loss, because level 4's chain and the lesson (l17) teach that a step against the slope lowers the loss; keeping 0.01 would turn the part into a lesson about overshoot that the lesson does not draw. $\eta = 0.002$: new $w_1 = 0.5 + 0.096 = 0.596$; prediction $2 \times (0.596 \times 8 - 1) + 1 = 8.536$; loss $\tfrac12 \times 1.464^2 = 1.0716$, down from 4.5 (also by forward evaluation in code; the old step gives 14.68 and 10.95, and the largest step that does not raise the loss is 0.0078). Part 4: answer 0.596 (3 decimal places), `uphill` 0.404, `no-rate` 48.5, `carried` 0.518. Part 5: answer 1.678, `old-knot` 2, `sign` $-1.678$, `carried` 1.931 ($1/0.518$); explanation "from 20 km to about 16.8 km". Part 4 `explain` now says the step takes the prediction from 7 to 8.536 hours and the loss from 4.5 to about 1.07.
+11. `p-order-sizes` parts 1 and 2: fixed. New `wrong` `percent-sign` 0.18 and 0.22 (band 0), each with the line "That is the right centre. Type the number alone, with no % sign." Checked in the engine grader: "18%" now lands on `percent-sign` with a line.
+12. `p-order-sizes` part 3: fixed. New `wrong` `not-settled` 226 with the line proposed; `carried` 91 kept. Recomputed: $1 + 1 + 144 + 0 + 16 + 64 = 226$ and $1 + 1 + 9 + 0 + 16 + 64 = 91$.
+13. `p-spam-filter` part 4: fixed as proposed. Typed, "Refitted with a smaller $C$ ... what is the margin now? Give 3 decimal places." Key 0.667 (band 0.0005), `gave-norm` 1.5, `street-width` 1.333, `unchanged` 0.4. Recomputed: $\lVert w\rVert = \sqrt{0.81 + 1.44} = 1.5$; the refit is 0.6 times the old $(w, b)$, the same centre line; margin by geometry from a point on the new edge; growth factor 5/3. The set now has 17 of 19 parts typed.
+14. `p-spam-filter` `prose` and family `margin`: fixed, both say the edges are $w \cdot x + b = \pm 1$.
+15. `p-renewals` part 2 `explain`: fixed, "As a rule it varies less ...".
+
+D. Fluency sets
+
+16. `two-by-two`: fixed. 2 decimal places, band and both `wrong` bands 0.05, `accept` "${key:dp2}$, within 0.05", solution prints `{key:dp2}`. I added the sentence "Keep at least 2 decimal places in each expected count.": with that, none of 200 draws is refused for expected counts kept to 2 or 3 places or for the solution's own printed figures (a working at 1 place is outside the band in some draws and is not promised). No `wrong` entry is within twice the band of the answer.
+17. `poisson-ratio-test`: fixed. 2 decimal places, bands 0.05, `accept` and solution at `dp2`, and "Keep at least 4 decimal places in any logarithm." None of 200 draws is refused for a log or a ratio kept to 4 or 5 places (3 places is refused in some draws, which is why the sentence is there). No `wrong` entry within twice the band.
+18. `volatility-se`: fixed. `percent-sign` entry as proposed; on 200 draws it is clear of the answer and both other entries.
+19. `assign-and-update`: fixed. `percent-sign` entry with the family's `key` written out in full; clear in 200 draws.
+20. `exponential-rate`, `exponential-se` units: deferred, engine (already in the inbox).
+21. `wilks-df`: fixed with the proposed prompt (the answer is no longer printed). `wrong` lines still fit. Checked on 200 draws: the prompt prints the free count and never "fixes".
+22. `slope-in-a-region`: fixed, "has slope {b} left of its first knot".
+23. `linkage-distance`: fixed, "Give the exact value." (the fuller fix is for the author).
+
+Number scripts, all exit 0 with the scratchpad venv: `exam-1.6-holes-numbers.py` 99 of 99; `exam-2.1-holes-numbers.py` 82 of 82; `problems-testing-numbers.py` 307 checks, 0 failures; `problems-stat-learning-numbers.py` 331, 0; `fluency-testing-numbers.py` 12,174 (2,200 are the new band, % and prompt checks over 200 draws a family), 0; `fluency-stat-learning-numbers.py` 8,000 (800 new), 0.
+
+Reader's scripts rerun. `mine.py`: the only differences are the changed items (`disk` 5, `orders` 1 to 3, `unit` 4 and 5, `pareto` 2 and 3: 14 lines, each the new key or the new `wrong` id of this pass), and it stops at `e-report-which`, which is out. `fluency-read.py` (a copy with the prompt patterns of the new `wilks-df` and `slope-in-a-region` prompts, run on 580 fresh draws): 5,474 checks, 0 failures, 3 notes (the uniform-moment note, not asked), against 65 notes before: the band notes of findings 16 and 17 are gone. `fluency-probe.mjs` (engine grader, every draw): 3,237 checks, 0 failures; the classes left are the multi-word units (engine) and a typed % now marked wrong with the `percent-sign` line. `grade-probe.mjs`: 541 checks; its 13 failures are rows holding the old keys of the changed parts (`p-disk-failures` 5, `p-one-unit` 4 and 5); "7 h" is read, "18%" and "22%" get their line, and the unit-word rows left are the engine matter.
+
+Gates (from `app/`, local CDN): validator 0 errors, 4,857 warnings, none new on these files (the warnings on the two exams are on older items, as the reader noted); `test-exam-minutes.mjs` all passed (56 exams); `test-fluency.mjs --unit-only` 290 of 290, and each changed set 304 or 308 of the same with `--local-cdn`; playthrough `--exam topic-1.6`, `--exam topic-2.1`, `--problems testing/problems-4`, `--problems stat-learning/problems-4`, and `--fluency` for the six changed sets, all passed, with and without `--mobile`; voice scan 35: `exams` 0 and 0, `stat-learning` 0 and 0, `testing` 0 explanations and 1 sentence over 35 words, in `homework-3.json` (not in scope, as before).
+
+Changed graded answers, tolerances, forms and exam items (for the main session):
+
+- `topic-1.6` `s-pareto-losses`: story and notation changed (Pareto losses to recovery rates, $\alpha$ to $\theta$). Part 2 `wrong` `exponent` 1.5 to 3.5, new `sign` $-2.5$. Part 3 `wrong` id `alpha-not-squared` to `theta-not-squared`. Keys 2.5, 0.078125 and option a unchanged.
+- `topic-1.6` `s-pool-rates`: question text and `pearson` line only; key, bands and `wrong` unchanged.
+- `topic-2.1`: `e-report-which` (choice) out, `e-odds-update` (numeric, key 0.215 as a fraction, band 0.0015, `unit` "%", `wrong` 0.246 and 0.273) in, same position and difficulty; `e-spline-slope` and `e-kmeans-spreads` placeholders only.
+- `stat-learning/problems-4` `p-one-unit`: part 1 `unit` "h"; part 4 $\eta$ 0.01 to 0.002, answer 0.98 to 0.596, `uphill` 0.02 to 0.404, `carried` 0.59 to 0.518; part 5 answer 1.02 to 1.678, `sign` $-1.02$ to $-1.678$, `carried` 1.695 to 1.931.
+- `p-order-sizes`: new `wrong` `percent-sign` 0.18 (part 1) and 0.22 (part 2), `not-settled` 226 (part 3). Keys unchanged.
+- `p-spam-filter` part 4: a choice replaced by a numeric part (key 0.667, band 0.0005, `wrong` 1.5, 1.333, 0.4).
+- `testing/problems-4` `p-disk-failures` part 5: key 0.95 (band 0.0005) to 200 (whole number, band 0); `wrong` `inverted`, `n-minus-one`, `carried` replaced by 198 and 0.95.
+- Fluency `two-by-two` and `poisson-ratio-test`: places 3 to 2, key band and `wrong` bands 0.0005 to 0.05, a "keep at least" sentence added; keys unchanged. `volatility-se` and `assign-and-update`: new `wrong` `percent-sign`. Prompt-only: `wilks-df`, `margin`, `slope-in-a-region`, `linkage-distance` (answers and `wrong` values unchanged).

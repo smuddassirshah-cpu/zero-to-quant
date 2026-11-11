@@ -1818,7 +1818,7 @@
       ],
       "title": "Same rate in two pools?",
       "prose": "Over the same 30 minutes, dark pool A printed 90 trades and dark pool B printed 60. Model each count as Poisson. The null says the two pools share one rate; the alternative gives each its own.",
-      "question": "Fill in $-2\\ln\\Lambda$, to 2 decimal places, and the degrees of freedom of its $\\chi^2$ limit.",
+      "question": "Fill in $-2\\ln\\Lambda$, to 2 decimal places, and the degrees of freedom of its $\\chi^2$ limit. Keep 5 decimal places in each logarithm.",
       "widget": {
         "kind": "table",
         "columns": [
@@ -1883,7 +1883,7 @@
           "r0c0": "Each count's fitted mean is 75 under the null and the count itself under the alternative. The Poisson log-likelihood ratio is $\\sum O\\ln\\tfrac{O}{75}$; double it.",
           "r0c1": "The full model has two rates and the null one. Count the parameters the null removes.",
           "no-two": "You gave $\\ln$ of the likelihood ratio, 3.02. Wilks' theorem is about twice that.",
-          "pearson": "You found Pearson's $X^2$, $\\tfrac{15^2}{75} + \\tfrac{15^2}{75}$. It approximates the likelihood-ratio statistic but is not it.",
+          "pearson": "6.00 is Pearson's $X^2$, $\\tfrac{15^2}{75} + \\tfrac{15^2}{75}$. Logarithms rounded to 3 places give it too. With 5 places, $-2\\ln\\Lambda = 6.04$.",
           "sign": "You put the null on top without the minus sign. $-2\\ln\\Lambda$ is never negative.",
           "model-size": "You counted the parameters of the full model. The degrees of freedom count what the null removes: $2 - 1$."
         }
@@ -1899,11 +1899,11 @@
       "skills": [
         "ht-theory"
       ],
-      "title": "Tail losses: summary, estimate, floor",
-      "prose": "Losses above £1m, in £m, follow a Pareto model with density $f(x \\mid \\alpha) = \\alpha x^{-(\\alpha + 1)}$ for $x > 1$, so $\\ln f = \\ln\\alpha - (\\alpha + 1)\\ln x$. A desk has 80 independent losses with $\\sum \\ln x_i = 32$.",
+      "title": "Recovery rates: summary, estimate, floor",
+      "prose": "Recovery rates on defaulted loans, as fractions $x$ between 0 and 1, follow the density $f(x \\mid \\theta) = \\theta x^{\\theta - 1}$, so $\\ln f = \\ln\\theta + (\\theta - 1)\\ln x$. A desk has 80 independent recoveries with $\\sum \\ln x_i = -32$.",
       "parts": [
         {
-          "question": "Which statistic is sufficient for $\\alpha$?",
+          "question": "Which statistic is sufficient for $\\theta$?",
           "widget": {
             "kind": "choice",
             "options": [
@@ -1920,25 +1920,25 @@
               {
                 "id": "c",
                 "text": "$\\max x_i$",
-                "why": "The maximum is sufficient when the support moves with the parameter, as for a uniform. Here the support, $x > 1$, is fixed."
+                "why": "The largest value is sufficient for a uniform on $(0, \\theta)$, whose upper end is the parameter. Here the support, $0 < x < 1$, is fixed."
               },
               {
                 "id": "d",
                 "text": "The median of the $x_i$",
-                "why": "The joint density does not factor through the median. Two samples with one median can have different likelihoods for $\\alpha$."
+                "why": "The joint density does not factor through the median. Two samples with one median can have different likelihoods for $\\theta$."
               }
             ]
           },
           "feedback": {
-            "correct": "The joint density is $\\alpha^n \\exp\\big(-(\\alpha + 1)\\sum\\ln x_i\\big)$, a function of $\\alpha$ and $\\sum \\ln x_i$ only.",
-            "generic": "Not quite right. Multiply the 80 densities and see which summary of the data meets $\\alpha$."
+            "correct": "The joint density is $\\theta^n \\exp\\big((\\theta - 1)\\sum\\ln x_i\\big)$, a function of $\\theta$ and $\\sum \\ln x_i$ only.",
+            "generic": "Not quite right. Multiply the 80 densities and see which summary of the data meets $\\theta$."
           },
           "explain": {
-            "text": "$\\prod \\alpha x_i^{-(\\alpha + 1)} = \\alpha^n \\big(\\prod x_i\\big)^{-(\\alpha + 1)} = \\alpha^n e^{-(\\alpha + 1)\\sum\\ln x_i}$. The data meet $\\alpha$ only through $\\sum \\ln x_i$, so by the factorisation theorem it is sufficient. The product $\\prod x_i$ carries the same information."
+            "text": "$\\prod \\theta x_i^{\\theta - 1} = \\theta^n \\big(\\prod x_i\\big)^{\\theta - 1} = \\theta^n e^{(\\theta - 1)\\sum\\ln x_i}$. The data meet $\\theta$ only through $\\sum \\ln x_i$, so by the factorisation theorem it is sufficient. The product $\\prod x_i$ carries the same information."
           }
         },
         {
-          "question": "What is the maximum-likelihood estimate $\\hat\\alpha$?",
+          "question": "What is the maximum-likelihood estimate $\\hat\\theta$?",
           "widget": {
             "kind": "numeric",
             "answer": 2.5,
@@ -1946,7 +1946,7 @@
               "abs": 0.005
             },
             "placeholder": "a number",
-            "accept": "2.5: $\\tfrac{80}{32}$",
+            "accept": "2.5: $-\\tfrac{80}{-32}$",
             "wrong": [
               {
                 "id": "upside-down",
@@ -1957,7 +1957,14 @@
               },
               {
                 "id": "exponent",
-                "value": 1.5,
+                "value": 3.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sign",
+                "value": -2.5,
                 "tol": {
                   "abs": 0.005
                 }
@@ -1965,19 +1972,20 @@
             ]
           },
           "feedback": {
-            "correct": "$\\tfrac{n}{\\alpha} - \\sum\\ln x_i = 0$ gives $\\hat\\alpha = \\tfrac{80}{32} = 2.5$.",
-            "generic": "Not quite right. Differentiate $n\\ln\\alpha - (\\alpha + 1)\\sum\\ln x_i$ in $\\alpha$ and set it to 0.",
+            "correct": "$\\tfrac{n}{\\theta} + \\sum\\ln x_i = 0$ gives $\\hat\\theta = -\\tfrac{80}{-32} = 2.5$.",
+            "generic": "Not quite right. Differentiate $n\\ln\\theta + (\\theta - 1)\\sum\\ln x_i$ in $\\theta$ and set it to 0.",
             "byKey": {
-              "upside-down": "You gave $\\tfrac{32}{80}$. The slope $\\tfrac{n}{\\alpha} - \\sum \\ln x_i$ is 0 at $\\alpha = \\tfrac{n}{\\sum\\ln x_i}$.",
-              "exponent": "You found $\\alpha + 1 = 2.5$. The power $\\alpha + 1$ drops out on differentiating: the slope is $\\tfrac{n}{\\alpha} - \\sum\\ln x_i$."
+              "upside-down": "You gave $\\tfrac{32}{80}$. The slope $\\tfrac{n}{\\theta} + \\sum \\ln x_i$ is 0 at $\\theta = -\\tfrac{n}{\\sum\\ln x_i}$.",
+              "exponent": "You set $\\theta - 1 = 2.5$. The power drops out on differentiating: the slope is $\\tfrac{n}{\\theta} + \\sum\\ln x_i$.",
+              "sign": "You lost a sign. $\\sum \\ln x_i = -32$ is negative, so $\\hat\\theta = -\\tfrac{n}{\\sum\\ln x_i}$ is positive."
             }
           },
           "explain": {
-            "text": "The log-likelihood is $\\ell(\\alpha) = 80\\ln\\alpha - (\\alpha + 1) \\times 32$. Its slope $\\tfrac{80}{\\alpha} - 32$ is 0 at $\\alpha = 2.5$, and $\\ell'' = -\\tfrac{80}{\\alpha^2} < 0$, so it is a peak. So $\\hat\\alpha = 2.5$."
+            "text": "The log-likelihood is $\\ell(\\theta) = 80\\ln\\theta - 32(\\theta - 1)$. Its slope $\\tfrac{80}{\\theta} - 32$ is 0 at $\\theta = 2.5$, and $\\ell'' = -\\tfrac{80}{\\theta^2} < 0$, so it is a peak. So $\\hat\\theta = 2.5$."
           }
         },
         {
-          "question": "Take $\\alpha = 2.5$. What is the Cramér-Rao bound for the variance of an unbiased estimator of $\\alpha$ from the 80 losses? Give 4 decimal places.",
+          "question": "Take $\\theta = 2.5$. What is the Cramér-Rao bound for the variance of an unbiased estimator of $\\theta$ from the 80 recoveries? Give 4 decimal places.",
           "widget": {
             "kind": "numeric",
             "answer": 0.078125,
@@ -1985,7 +1993,7 @@
               "abs": 0.0001
             },
             "placeholder": "a number",
-            "accept": "0.0781: $\\tfrac{\\alpha^2}{n} = \\tfrac{6.25}{80}$",
+            "accept": "0.0781: $\\tfrac{\\theta^2}{n} = \\tfrac{6.25}{80}$",
             "wrong": [
               {
                 "id": "sd",
@@ -2002,7 +2010,7 @@
                 }
               },
               {
-                "id": "alpha-not-squared",
+                "id": "theta-not-squared",
                 "value": 0.03125,
                 "tol": {
                   "abs": 0.0001
@@ -2011,16 +2019,16 @@
             ]
           },
           "feedback": {
-            "correct": "$I(\\alpha) = \\tfrac{1}{\\alpha^2}$, so the bound is $\\tfrac{1}{nI(\\alpha)} = \\tfrac{6.25}{80} = 0.0781$.",
-            "generic": "Not quite right. Find $I(\\alpha) = -E\\big[\\tfrac{\\partial^2}{\\partial\\alpha^2}\\ln f\\big]$ for one loss, then the bound is $\\tfrac{1}{nI(\\alpha)}$.",
+            "correct": "$I(\\theta) = \\tfrac{1}{\\theta^2}$, so the bound is $\\tfrac{1}{nI(\\theta)} = \\tfrac{6.25}{80} = 0.0781$.",
+            "generic": "Not quite right. Find $I(\\theta) = -E\\big[\\tfrac{\\partial^2}{\\partial\\theta^2}\\ln f\\big]$ for one recovery, then the bound is $\\tfrac{1}{nI(\\theta)}$.",
             "byKey": {
               "sd": "You took the square root, a standard error. The bound is on the variance.",
-              "info": "You gave $nI(\\alpha) = \\tfrac{80}{6.25}$, the information in the sample. The bound is its reciprocal.",
-              "alpha-not-squared": "You used $\\tfrac{\\alpha}{n}$. The second derivative of $\\ln\\alpha$ is $-\\tfrac{1}{\\alpha^2}$, so $I(\\alpha) = \\tfrac{1}{\\alpha^2}$."
+              "info": "You gave $nI(\\theta) = \\tfrac{80}{6.25}$, the information in the sample. The bound is its reciprocal.",
+              "theta-not-squared": "You used $\\tfrac{\\theta}{n}$. The second derivative of $\\ln\\theta$ is $-\\tfrac{1}{\\theta^2}$, so $I(\\theta) = \\tfrac{1}{\\theta^2}$."
             }
           },
           "explain": {
-            "text": "$\\tfrac{\\partial^2}{\\partial\\alpha^2}\\ln f = -\\tfrac{1}{\\alpha^2}$, which holds no data, so one loss carries $I(\\alpha) = \\tfrac{1}{\\alpha^2}$. The support $x > 1$ does not move with $\\alpha$, so the bound applies. It is $\\tfrac{1}{80 I(\\alpha)} = \\tfrac{2.5^2}{80} = 0.078125$, a standard error of about 0.28."
+            "text": "$\\tfrac{\\partial^2}{\\partial\\theta^2}\\ln f = -\\tfrac{1}{\\theta^2}$, which holds no data, so one recovery carries $I(\\theta) = \\tfrac{1}{\\theta^2}$. The support $0 < x < 1$ does not move with $\\theta$, so the bound applies. It is $\\tfrac{1}{80 I(\\theta)} = \\tfrac{2.5^2}{80} = 0.078125$, a standard error of about 0.28."
           }
         }
       ]
