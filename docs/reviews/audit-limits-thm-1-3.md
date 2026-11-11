@@ -145,3 +145,61 @@ Fixer: Opus, 11 Nov 2026. Each basis is the fixer's own. All edits are text-only
 28. fixed differently. The curve is the sampling spread of the estimate, not a distribution for the true value; the axis is now plain "Sharpe ratio" (the prose already names the band as estimate plus or minus two standard errors), which avoids the auditor's long label.
 
 Gates: validator 0 errors; concepts script 77 checks, exit 0; `fluency-limits-thm-numbers.py`, `limits-thm-1-perf-numbers.py`, `limits-thm-2-perf-numbers.py`, `limits-thm-3-perf-numbers.py`, `problems-limits-thm-numbers.py` exit 0; voice scan 35 on the course: 0 over 35 words, 0 explanations over three sentences; playthrough of the 12 changed lessons and homework-3, desktop and `--mobile`: all 26 runs "All passed" (one batch was re-run after an external `pkill` of playthrough processes).
+
+## Fix-pass read
+
+Round 1. Fresh Fable reader, blind to this file until the rows below were written. Diff read: `git diff 515ea5a2^..515ea5a2 -- app/content/courses/limits-thm/` (12 lessons and homework-3). Numbers recomputed with scipy; the clustering claim checked by simulation (GARCH(1,1), a = 0.1, b = 0.85, 200,000 blocks of 20 days: excess kurtosis of 20-day sums 1.03 against 0.07 for the same days shuffled).
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | homework-3 | `items[2].explain.text` | The Chebyshev proof needs finite variance; for identically distributed draws the law holds with a finite mean alone | correct | Khinchin's weak law (Casella and Berger 5.5; Durrett 2.2). The item's prose already states independence, so no hypothesis is dropped. |
+| 2 | homework-3 | `items[7].prompt` | Part 4 now assumes none has skill and the 10 are independent | correct | The product rule in the model answer needs independence; now stated. |
+| 3 | homework-3 | `items[7].model` | Best of 10 independent strategies shows t of 1.30 or more with chance about 0.64 | correct | 1 − Φ(1.30) = 0.0968; 1 − 0.9032^10 = 0.639. SR = 1.058, t = 1.296, n = 900 also recomputed. |
+| 4 | homework-3 | `items[7].prompt` | Sharpe ratio computed from raw daily returns, with no risk-free rate stated | imprecise, minor | The lesson now defines the Sharpe ratio on excess returns and takes the rate as 0 "in this lesson". The homework is a separate file and never says so. Fix below. |
+| 5 | l1 | `quiz[1].explain.text` | X lands near 0 or near 10 far more often than Bin(10, 0.4) predicts | correct | Positive dependence at a fixed marginal 0.4 raises Var(X) above 2.4 and moves mass to both ends; perfect dependence gives P(0) = 0.6, P(10) = 0.4. |
+| 6 | l10 | `screens[9].prose` | Trades are independent, so Var of the average is σ²/n | correct | Variances of independent terms add; uncorrelated would do, and nothing is said to be necessary. |
+| 7 | l10 | `screens[9].explain.text` | 4,000 independent trades suffice, whatever the shape; about 1,083 if normal | correct | 4/(0.01n) ≤ 0.1 gives 4,000; (1.645 × 2/0.1)² = 1,082.4, so 1,083. |
+| 8 | l11 | `screens[2].feedback.correct` | A symmetric, light-tailed start reaches the bell quickly | correct | Berry-Esseen and the Edgeworth expansion: the 1/√n term is the skewness, the 1/n term the excess kurtosis. |
+| 9 | l11 | `screens[2].explain.text` | Speed depends on lopsidedness and tail weight; the exponential's lean fades like 1/√n | correct | Skewness of the mean of n exponentials is 2/√n. |
+| 10 | l11 | `screens[4].explain.text` | This form assumes independent, identical draws and finite σ²; other forms relax the first two | correct | Lindeberg-Levy against Lindeberg-Feller and martingale or mixing forms (Billingsley, sections 27 and 35). Agrees with the screen's key (finite variance). |
+| 11 | l11 | `screens[8].prose` | Returns here are log returns, which add across days | correct | ln(S_n/S_0) is the sum of the daily log returns. |
+| 12 | l11 | `screens[8].explain.text` | With volatility clustering the approach is slower than for independent days | correct | Simulation above; Cont (2001), stylised facts 4 and 6. |
+| 13 | l11 | `screens[9].explain.text` | Positively correlated positions would widen the bell | correct | Var of the sum is nσ² + n(n − 1)ρσ², larger than nσ² when ρ > 0. |
+| 14 | l11 | `summary.ideas[0]` | Rescaled sums of independent, identically distributed draws with finite variance approach N(0, 1) | correct | Lindeberg-Levy; stated as the conditions of this form, in line with row 10. |
+| 15 | l12 | `screens[4].prose` | Replacing σ by the sample sd leaves t close to N(0, 1) over hundreds of days | correct | Slutsky; Student t with 250 or more degrees of freedom has 97.5% point 1.97. |
+| 16 | l12 | `screens[5].prose` | A Sharpe ratio uses returns above the risk-free rate; this lesson takes that rate as 0 | correct | Sharpe (1994). Later screens (P and Q, the 1.0 fund, the £10m book, quiz) all use raw means, which agrees with a rate of 0. |
+| 17 | l12 | `screens[5].widget.lines[2].text` | Annualised Sharpe ratio, mean excess return over its sd, is μ√252/σ | correct | 252μ/(√252 σ) for independent days; equals the excess-return form at rate 0. |
+| 18 | l12 | `screens[8].canvas.params.xLabel` | Axis label "Sharpe ratio" | correct | The band is estimate ± 2 standard errors; the neutral label no longer reads as a posterior. |
+| 19 | l12 | `summary.ideas[2]` | Sharpe ratio, mean excess return over sd, has standard error about 1/√T | correct | Lo (2002): √((1 + SR²/2)/T), about 1/√T for small SR; "about" covers it. |
+| 20 | l13 | `screens[9].question` | Asks for the normal estimate with the continuity correction | correct | Unambiguous; the prose gives Φ(2.146), which is (29.5 − 20)/4.427. Key 1 − 0.98406 = 0.0159. |
+| 21 | l13 | `screens[9].widget.wrong[1]` | `nocc` = 0.0119, tolerance 0.0003 | correct | 1 − Φ(10/√19.6) = 1 − Φ(2.2588) = 0.011949. Band [0.0116, 0.0122] is clear of the key band [0.0156, 0.0162], of `var` 0.314 and `phi` 0.9841. Starting at 30.5 gives 0.0089, also clear. |
+| 22 | l13 | `screens[9].feedback.byKey.nocc` | "That starts at 30, without the correction. Start at 29.5." | correct | Matches the slip's value and the generic line. |
+| 23 | l13 | `summary.ideas[2]` | For p near 0 with np(1 − p) small the Poisson does better; for p near 1 count failures | correct | Le Cam: Poisson error is at most about p. Stated as sufficient only; the last screen (Poisson 0.0218 against exact 0.0207 at np(1 − p) = 19.6) does not contradict it. |
+| 24 | l2 | `screens[5].explain.text` | If fills get likelier with waiting, the chance is not the same each minute and the geometric model fails | correct | Geometric means constant hazard P(X = k given X ≥ k) = p; a rising hazard breaks it. |
+| 25 | l3 | `screens[5].explain.text` | The limit 2(1 − 2/n) → 2 points to variance λ; summing the pmf confirms it | correct | A limit of variances need not be the variance of the limit; E[X(X − 1)] = λ² from the pmf gives Var = λ. |
+| 26 | l4 | `screens[7].explain.text` | First factor is 0.8 and each later one is smaller | correct | 0.8, 0.789, 0.778, 0.765, 0.75; product 0.2817 against 0.8^5 = 0.3277. |
+| 27 | l4 | `quiz[2].explain.text` | The mean is the same with or without replacement | correct | Linearity needs no independence: nK/N = 2 either way. |
+| 28 | l6 | `screens[3].prose` | Independent arrivals at a steady rate give an exponential wait | correct | Poisson process inter-arrival times (Ross, Introduction to Probability Models, 5.3). |
+| 29 | l6 | `screens[9].explain.text` | The hazard is a rate per year, close to a yearly chance when small | correct | 1 − e^(−0.02) = 0.0198. |
+| 30 | l6 | `screens[10].prose` | With only the range known, the uniform is a common default | correct | A modelling choice, now stated as one. |
+| 31 | l6 | `screens[10].explain.text` | The uniform is the maximum-entropy density on an interval; a default, not a fact about fills | correct | Cover and Thomas, chapter 12. 64/12 = 5.33, sd 2.309. |
+| 32 | l6 | `summary.ideas[0]` | Uniform is the usual default when only the range is known | correct | As row 30. |
+| 33 | l6 | `quiz[1].prose` | Orders arrive independently at a steady rate, 0.25 a day | correct | Gives the exponential gap the item uses; e^(−2) = 0.1353. |
+| 34 | l6 | `quiz[3].prose` | Independent arrivals at a steady 2 a minute, so gaps are exponential with mean 30 seconds | correct | 1/λ = 0.5 minutes. |
+| 35 | l7 | `screens[3].explain.text` | A 2.3% day comes roughly once every two months of trading | correct | 1/Φ(−2) = 43.96 trading days, 2.1 months at 21 days a month. No "one day in 44" phrase is in the lesson. |
+| 36 | l7 | `screens[9].prose` | The 99% VaR is the loss exceeded on 1% of days, quoted positive; find r with P(R < r) = 0.01, VaR is −r | correct | Hull, Options, Futures and Other Derivatives, VaR chapter. Sign and unit agree with the key and the "Daily return (%)" axis. |
+| 37 | l7 | `screens[9].widget.label` | "Cut-off return r in percent" | correct | Matches the question, the key −2.74 and the four slips. A learner who types the VaR, +2.74, gets the generic line, not the `sign` slip (2.841 ± 0.01). |
+| 38 | l7 | `screens[9].explain.text` | r ≈ −2.74%, so the VaR is quoted as a 2.74% loss | correct | 0.05 − 2.3263 × 1.2 = −2.7416. The next screen's 25 expected breaches still agrees. |
+| 39 | l8 | `screens[6].prose` | Expected price £54.16, a rise of about 8.3% | correct | e^0.08 = 1.08329; 50 × 1.08329 = 54.16. |
+| 40 | l8 | `screens[6].widget.options[3].text` | Option `sure`: "More than 0.6, since it is expected to rise about 8.3%" | correct | Same figure as the prose; still a wrong option, since the median is £50. |
+| 41 | l9 | `screens[1].explain.text` | One card has sd £3 against a mean of £1; noisier draws need more of them | correct | √(100 × 0.1 − 1) = 3. A die has sd 1.71 against mean 3.5. |
+| 42 | l9 | `screens[4].feedback.correct` | The law says the chance of a miss tends to 0, for any margin | correct | The weak law as stated on the screen; "bounds" was Chebyshev, not the law. |
+| 43 | l9 | `summary.formula.note` | Assumes independent, identically distributed draws with finite mean; the variance line needs finite σ²; weaker conditions also give the law | correct | Khinchin; Var of the mean is σ²/n for uncorrelated draws with finite variance; Etemadi and Chebyshev forms are the weaker conditions. |
+
+Count: 43 rows; 42 correct, 0 wrong, 1 imprecise (minor), 0 misleading, 0 unverified.
+
+Fix for row 4 (`homework-3.json`, `items[7].prompt`, first paragraph). Replace "mean 0.06% a day, sd 0.9% a day. She tested" with:
+
+> mean 0.06% a day, sd 0.9% a day. Take the risk-free rate as 0. She tested
+
+Optional, not a finding: `l7` `screens[9]` could catch a learner who types the VaR itself with a slip `var` at value 0.02741, tolerance 0.0001, feedback "That is the VaR, the size of the loss. The question asks for the return $r$, which is negative."
