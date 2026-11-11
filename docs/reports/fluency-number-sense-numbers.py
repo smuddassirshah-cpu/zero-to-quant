@@ -311,7 +311,8 @@ def l15_count(it, V):
     pairs = (key + 1) // 2
     check(pairs == len([d for d in range(1, n + 1) if n % d == 0 and d * d <= n]), f"l15 {n}: factor pairs counted")
     mul = int(sp.prod(fa.values()))
-    item4(it, R15, key, {'pairs': pairs if pairs != mul else None, 'no-plus-one': mul})
+    item4(it, R15, key, {'pairs': pairs if pairs != mul else None, 'no-plus-one': mul if mul > 1 else None})
+    check((mul > 1) == any(e != 1 for e in fa.values()) or mul == 1, f"l15 {n}: the no-plus-one slip is offered only when some index is above 1")
 
 
 R16 = 'number-sense/fluency-l16-shared-factors'
@@ -343,6 +344,8 @@ def l16_other(it, V):
     cands = [x for x in range(1, g * l + 1) if sp.igcd(m, x) == g and sp.ilcm(m, x) == l]
     check(cands == [n], f"l16 other {m}: the only number with HCF {g} and LCM {l} is {n} ({cands})")
     a, b = m // g, n // g
+    check(m != g and m // g > 1, f"l16 other {m}: the given number is not the HCF itself (a > 1), so the LCM {l} printed is not the answer")
+    check(n != l, f"l16 other {m}: the answer {n} is not the LCM printed in the prompt")
     item4(it, R16, n, {'lcm-over-hcf': l // g if a != g else None, 'product': g * l}, text_has=[f"${m}$", f"${g}$", f"${l}$"])
 
 
@@ -485,6 +488,9 @@ def l19_table(it, V):
     data = [v for v in range(5) for _ in range(f[v])]
     key = F(sum(data), len(data))
     check(f"${len(data)}$" in it['prompt'], f"table seed {it['seed']}: the count {len(data)} is stated")
+    # read the counts back from the prompt alone: "$f0$ unit had 0, $f1$ had 1, ..."
+    mm = re.search(r'\$(\d+)\$ \w+ had 0, \$(\d+)\$ had 1, \$(\d+)\$ had 2, \$(\d+)\$ had 3 and \$(\d+)\$ had 4', it['prompt'])
+    check(mm is not None and [int(z) for z in mm.groups()] == f, f"table seed {it['seed']}: the prompt says which value had which count")
     check(abs(round(float(key), 2) - float(key)) <= 0.01, f"table seed {it['seed']}: 2 dp accepted")
     item4(it, R19, key, {'values-only': F(2), 'rows': F(sum(data), 5)}, tol=0.01)
 
