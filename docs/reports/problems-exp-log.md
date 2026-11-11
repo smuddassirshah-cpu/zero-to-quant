@@ -13,7 +13,7 @@ Files: `app/content/courses/exp-log/problems-1.json` to `problems-3.json`. Numbe
 | problems-2 | p-fault-search | 3 (3 / 0) | l5, l6 | 3 |
 | problems-2 | p-forty-doublings | 4 (4 / 0) | l5, l6, l7 | 4 |
 | problems-2 | p-drawdown-recovery | 4 (4 / 0) | l6, l7, l8 (and l2) | 5 |
-| problems-2 | p-app-users | 4 (3 / 1) | l7, l8 (and l2) | 4 |
+| problems-2 | p-app-users | 4 (3 / 1) | l2, l7, l8 | 4 |
 | problems-3 | p-savings-doubling | 4 (4 / 0) | l9, l10, l12 (and l3) | 3 |
 | problems-3 | p-weekly-target | 5 (5 / 0) | l10, l11 | 4 |
 | problems-3 | p-log-chart-line | 4 (4 / 0) | l10, l12, l13 | 5 |
@@ -21,7 +21,7 @@ Files: `app/content/courses/exp-log/problems-1.json` to `problems-3.json`. Numbe
 
 Typed parts: level 1 16 of 16, level 2 14 of 15, level 3 17 of 17. The one choice part (app users, part 2) is a judgement: the first move before taking logs. Every lesson of each level appears in at least one problem and every problem draws on at least two. Level 1 uses no logarithm: counts are found step by step, and halving or doubling steps come from the l4 law $a^{x+h} = a^x a^h$.
 
-Chains. Level 1: a rule, then a negative and a half power of it, then the factor between those two times as $2^k$; a yearly factor, 2 years, 4 years by the 2-year factor, then the total loss (68.36%, not 100%); a 2-year factor, its square root, the rate, then 18 months as $1.25^{3/2}$; the base from $(3, 64)$, the doubling step, where the curve reaches 2,048, then the mirror curve. Level 2: halvings of a batch, a day by the product law, a week trapped between 18 and 19; $\log 2^{40}$, the power of ten, the leading figure, further doublings by change of base; two falls, the gain back (56.25%), $1.08^n = 1.25^2$ by the power law, the whole month; a rule, the first move, the solve, the whole month. Level 3: a continuous balance, its doubling time, three doublings, then 1.5 doublings at half the time; a week of log returns, Friday's close, the log return still needed, split over three weeks, back to a simple return; a log-chart gradient, its doubling time, the price 4 years in, its height on the chart; a monthly factor, the matching continuous rate, a 5-year log return, the balance.
+Chains. Level 1: a rule, then a negative and a half power of it, then the factor between those two times as $2^k$; a yearly factor, 2 years, 4 years by the 2-year factor, then the total loss (68.36%, not 100%); a 2-year factor, its square root, the rate, then 18 months as $1.25^{3/2}$; the base from $(3, 64)$, the doubling step, where the curve reaches 2,048, then the mirror curve. Level 2: halvings of a batch, a day by the product law, a week trapped between 18 and 19; $\log 2^{40}$, the power of ten, the leading figure, further doublings to £$10^{16}$ by change of base (13.15, so 14); two falls, the gain back (56.25%), $1.11^n = 1.25^2$ by the power law (4.28), the whole month (5); a rule, the change-of-base form of $\log_{1.3} 25$, the solve, the whole month. Level 3: a continuous balance, its doubling time, three doublings, then 1.5 doublings at half the time; a week of log returns, Friday's close, the log return still needed ($\ln \tfrac{45}{41.76} = 0.0747$), split over three weeks (0.0249), back to a simple return (2.52%); a log-chart gradient, its doubling time, the price 4 years in, its height on the chart; a monthly factor, the matching continuous rate, a 5-year log return (the bridge $\ln e^{rt} = rt$ is stated in the part), the balance.
 
 ## Checks
 
