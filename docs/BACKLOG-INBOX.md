@@ -2038,3 +2038,7 @@ Raised later (review problems 0.3 a):
 - [Could] numeric field: a number followed by a unit word or a degree sign (`22 cm`, `3500 m`, `115°`) does not parse, though `£75` in front does. Stripping a trailing unit that the question names, or a `unit` shown after the field on these parts, would save a retype.
 - [Could] validator: a later part whose question uses a symbol or a quantity that only an earlier part's answer supplies, even when its lead-in restates some other value (counting problems-3 `p-orienteering` 5 and `p-grain-merchant` 4 each restated one value and left out the one that mattered).
 
+
+Raised later (review problems 0.3 b):
+- [Could] validator, `unit: "%"` numeric parts: warn when the `decimal` entry's band, read as typed decimals, holds another `wrong` value or a given value retyped. exp-log problems-3 `p-weekly-target` 5 (0.0249 and 0.0259 typed land on `decimal`, whose line prints the answer 2.52) and `p-monthly-deposit` 2 (0.048 and 0.0491). A band of 5e-07 on answers under 5% avoids it (`docs/reviews/review-problems-0.3-b.md` finding 7).
+- [Could] validator or `numbers_lib`: on a part that asks for the first whole number above a stated value ("Using $n \approx 5.80$ ... whole months"), warn when rounding that value to the nearest whole number gives the key, so the direction of rounding is not tested (exp-log problems-2: three of five such parts; finding 5).
