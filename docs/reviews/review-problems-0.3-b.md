@@ -128,3 +128,45 @@ Raised in `docs/BACKLOG-INBOX.md` under `Raised later (review problems 0.3 b):`.
 
 - Validator: on a `unit: "%"` part, warn when the `decimal` entry's band, read as typed decimals, holds another `wrong` value or a retyped given value (finding 7).
 - Validator or author script: on a "first whole number above" part, warn when rounding the stated earlier value to the nearest whole number gives the key (finding 5).
+
+## Fix pass
+
+Applied with targeted edits to `problems-1.json` to `-3.json` (content only). Every changed number was computed twice (exact with sympy or fractions, then bisection, a power series for e^x, or stepping the story month by month); both scripts were updated (new checks, and checks that accepted old or new values tightened to the new) and exit 0.
+
+1. Fixed. `p-yeast-culture` 1 `added` line replaced as given. Basis: $3000 + 2^1 = 3002$ against $3000 \times 2 = 6000$, true at n = 1.
+2. Fixed. Weekly 3 to 5 re-keyed to the values the questions name. Basis: $\ln(45/41.76) = 0.074724$ (sympy, and bisection on the exp series); the Monday route $\ln 1.125 - 0.043 = 0.074783$ agrees to 4 dp (0.0748), so both stay accepted. Part 4: $0.0747 / 3 = 0.0249$ (and $0.074724/3 = 0.024908$, inside the band). Part 5: $e^{0.0249} - 1 = 0.0252126$ (series and sympy), band 0.025213 +- 5e-5 takes 2.52 and 2.521, refuses 2.51 and 2.53. Slip values recomputed: cube root of 0.0747 = 0.42115, 3 x 0.0747 = 0.2241, 0.0776/3 = 0.02587. Every printed 0.0748 in parts 3 and 4 now reads 0.0747, except the Monday-route check line in part 3's `explain`.
+3. Fixed. Deposit 3 question carries the bridge "growing at a continuous rate r for t years multiplies by $e^{rt}$, so the log return, the log of that factor, is $\ln(e^{rt}) = rt$". Basis: $\ln(e^{x}) = x$ (l10); $5 \times 0.0479 = 0.2395$ unchanged. Key and feedback unchanged.
+4. Fixed, with a stronger re-key than the reader's, because part 4 as the reader gave it still rounds to the key by the nearest whole (9.83 to 10). The target is now £$10^{16}$: factor needed $10^{16}/(1.10 \times 10^{12}) \approx 9091$, $\log 9091 = 3.9586$, $3.9586/0.30103 = 13.15$, so 14 (check by loop: $2^{53} = 9.007 \times 10^{15} < 10^{16} < 2^{54}$, and $40 + 14 = 54$). It uses part 3's $1.10 \times 10^{12}$ as the reader wanted, and now tests the direction too (nearest rounding gives 13, which is `rounded-down`). Finding 5's second item (forty-doublings 4) is therefore fixed here, not deferred.
+5. Fixed (drawdown), disputed in part (forty-doublings 2). Growth 11% a month: $n = 2\log 1.25/\log 1.11 = 0.19382/0.04532 = 4.2767$ rounded route, 4.2764 exact (sympy; bisection on $1.11^n = 1.5625$). Month 4: $32000 \times 1.11^4 = 48{,}578$; month 5: 53,922 (month-by-month loop). Whole months 5; nearest rounding gives 4. Slips recomputed (2.14, 0.23, 5.11, 3.22, 1.41, and 7). Forty-doublings 2 asks for the whole-number part n with $10^n \le 2^{40} < 10^{n+1}$, a floor by definition; 12.0412 rounding to 12 is a coincidence of the number, and the slip it tests (13, the upper end) is a real one. No change.
+6. Fixed. Coin 4 `tol` `{"abs": 1}`: takes 1397, 1398, 1397.5, 1397.54, refuses 1399 and 1396.
+7. Fixed. `decimal` bands now +-5e-7 in fraction units (weekly 5: 0.000252; deposit 2: 0.000479). Checked in both scripts: 0.0252 and 0.02521 (0.0479 and 0.04793) typed land on `decimal`; 0.0249 and 0.0259 (0.048 and 0.0491) do not.
+8. Fixed. App-users 3 `simple` 80 and its line. Basis: $2000 + 600n = 50{,}000$ gives $n = 48000/600 = 80$.
+9. Fixed. Savings 4 `years` 2606.4. Basis: $2400 e^{0.055 \times 1.5} = 2606.397$ (series), and by doublings $2400 \times 2^{1.5/12.6} = 2606.4$.
+10. Fixed. App-users 2 is now the change-of-base choice as given, option ids `ratio` (key), `quotient`, `difference`, `numbers`; part 3 question is "Using $n = \log 25 / \log 1.3$"; part 3 `generic` adjusted to match. Basis: $\log_{1.3} 25 = \ln 25/\ln 1.3 = 12.2687$ (bisection on $1.3^n = 25$); $\log(25/1.3) = 1.3979 - 0.1139 = 1.284$; $25/1.3 = 19.23$ and $1.3^{19.23} \approx 155 > 25$. The report table now lists l2, l7, l8.
+11. Fixed. Curve-point 4 wording "in the y-axis".
+12. Fixed. Log-chart dates 2017 to 2025 (8 years, unchanged), part 3 "start of 2021" (4 years in).
+
+Engine and validator findings (inbox): deferred, no edit.
+
+Gates: number script 1213 checks, 0 failures, exit 0. Grade script 690 checks, 0 failures. Validator 0 errors. `fresh-check.mjs --file` on each set: 0 hits. Voice scan 35 on the course folder: 0 and 0. Playthrough `--problems` sets 1, 2, 3, with and without `--mobile`: All passed.
+
+### Parts whose graded answer, band or `wrong` value changed (for the delta reader)
+
+Set 1
+- `p-rare-coin` 4: band `abs` 1.5 to 1 (key 1397.54 unchanged).
+- `p-yeast-culture` 1, `p-curve-point` 4: text only.
+
+Set 2
+- `p-forty-doublings` 4: answer 10 to 14; `rounded-down` 9 to 13; `tenfold-steps` 3 to 4; `total` 50 to 54; accept "14". Question now ends at £$10^{16}$.
+- `p-drawdown-recovery` (prose 8% to 11%) 3: answer 5.7989 to 4.2764 (tol 0.006), accept "4.28"; `no-power` 2.9 to 2.14; `inverted` 0.17 to 0.23; `simple` 7.03 to 5.11; `carried` 4.37 to 3.22; `divided-numbers` 1.45 to 1.41.
+- `p-drawdown-recovery` 4: answer 6 to 5; `rounded-down` 5 to 4; `with-falls` 8 to 7.
+- `p-app-users` 2: choice re-written, keyed `divide` to `ratio` (ids `quotient`, `difference`, `numbers` new).
+- `p-app-users` 3: `simple` 83.33 to 80.
+
+Set 3
+- `p-savings-doubling` 4: `years` 2606.2 to 2606.4.
+- `p-weekly-target` 3: answer 0.074783 to 0.074724 (tol 0.0001); `inverted` -0.0748 to -0.0747; accept leads with 0.0747.
+- `p-weekly-target` 4: answer 0.024928 to 0.0249 (tol 0.0001); `cube-root` 0.4213 to 0.4212; `times-three` 0.2244 to 0.2241; `carried` 0.0259 unchanged.
+- `p-weekly-target` 5: answer 0.025241 to 0.025213 (tol 5e-5); `decimal` tol 5e-5 to 5e-7 (value 0.000252).
+- `p-monthly-deposit` 2: `decimal` tol 5e-5 to 5e-7 (value 0.000479).
+- `p-monthly-deposit` 3, `p-log-chart-line` 1 and 3: text only (bridge sentence; dates).

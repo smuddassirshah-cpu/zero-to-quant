@@ -226,6 +226,10 @@ def level1():
         {'halfway': (1250 + 1562.5) / 2, 'simple': 1000 * (1 + 1.5 * 0.25), 'one-year': 1250, 'two-years': 1562.5, 'carried': 1000 * 1.28125 ** 1.5},
         asked=round(v18), extra_ok=(1000 * 1.118 ** 3, 1397, 1398, 1000 * 1.1180 ** 3), printed=True)
     stated('coin: 1.25^1.5 to 5 dp', round(1.25 ** 1.5, 5), 1.39754)
+    cw = L['p-rare-coin']['parts'][3]['widget']
+    ok(cw['tol']['abs'] == 1, 'coin 4: band is +-1')
+    ok(not within(1399, cw['answer'], cw['tol']['abs']) and not within(1396, cw['answer'], cw['tol']['abs']), 'coin 4: 1399 or 1396 accepted')
+    ok(all(within(v, cw['answer'], cw['tol']['abs']) for v in (1397, 1398, 1397.5, 1397.54)), 'coin 4: a sensible entry refused')
 
     # p-curve-point
     a = sp.Integer(64) ** sp.Rational(1, 3)
@@ -275,10 +279,16 @@ def level2():
     num(L, 'p-forty-doublings', 3, m, 2 ** 40 / 10 ** 12, {'fraction-part': 0.0412, 'one-plus': 1.0412}, agree=1e-3, asked=1.10, extra_ok=(1.1,))
     stated('forty: exact 2^40', 2 ** 40, 1099511627776)
     stated('forty: 10^0.0412 to 4 dp', round(m, 4), 1.0995)
-    d = math.ceil((15 - p1) / l2)
-    num(L, 'p-forty-doublings', 4, d, first_whole(lambda j: 2 ** (40 + j) > 10 ** 15), {'rounded-down': 9, 'tenfold-steps': round(15 - p1), 'total': 40 + d})
-    stated('forty: gap / log 2', round((15 - 12.0412) / l2, 2), 9.83)
-    stated('forty: 12.0412 + 9 log 2', round(12.0412 + 9 * l2, 2), 14.75)
+    d = math.ceil((16 - p1) / l2)
+    num(L, 'p-forty-doublings', 4, d, first_whole(lambda j: 2 ** (40 + j) > 10 ** 16), {'rounded-down': 13, 'tenfold-steps': round(16 - p1), 'total': 40 + d})
+    stated('forty: key is 14', d, 14)
+    stated('forty: gap / log 2', round((16 - 12.0412) / l2, 2), 13.15)
+    stated('forty: factor needed 10^16 / 1.10e12', round(10 ** 16 / 1.10e12), 9091)
+    stated('forty: log 9091 to 4 dp', round(ev(sp.log(9091, 10)), 4), 3.9586)
+    stated('forty: log 9091 / log 2', round(3.9586 / l2, 2), 13.15)
+    ok(2 ** 13 == 8192 and 8192 < 10 ** 16 / 1.10e12 < 2 ** 14, 'forty: 2^13 short, 2^14 enough')
+    ok(2 ** 53 < 10 ** 16 < 2 ** 54, 'forty: 2^53 < 10^16 < 2^54')
+    ok(round(13.1503) == 13 and d == 14, 'forty: nearest rounding of 13.15 gives 13, not the key')
 
     # p-drawdown-recovery
     v1 = 50000 * F(4, 5) ** 2
@@ -290,28 +300,40 @@ def level2():
     num(L, 'p-drawdown-recovery', 2, gain, (50000 - walk) / walk, {'two-twenties': 0.40, 'the-loss': 0.36, 'factor': F(50000) / v1, 'carried': F(50000, 30000) - 1, 'decimal': float(gain) / 100}, pct=True)
     stated('recovery: 32000 * 1.2^2', 32000 * 1.2 ** 2, 46080, 1e-6)
     stated('recovery: 1.5625 = 1.25^2', F(50000) / v1, F(5, 4) ** 2)
-    nexact = ev(2 * sp.log(sp.Rational(5, 4)) / sp.log(sp.Rational(27, 25)))
-    nround = 2 * 0.09691 / 0.03342
-    num(L, 'p-drawdown-recovery', 3, nexact, bisect(lambda x: 1.08 ** x - 1.5625, 0, 20),
-        {'no-power': 0.09691 / 0.03342, 'inverted': 0.03342 / (2 * 0.09691), 'simple': 0.5625 / 0.08, 'carried': ev(sp.log(1.4) / sp.log(1.08)), 'divided-numbers': 1.5625 / 1.08},
-        asked=5.80, extra_ok=(nround,))
+    nexact = ev(2 * sp.log(sp.Rational(5, 4)) / sp.log(sp.Rational(111, 100)))
+    nround = 2 * 0.09691 / 0.04532
+    num(L, 'p-drawdown-recovery', 3, nexact, bisect(lambda x: 1.11 ** x - 1.5625, 0, 20),
+        {'no-power': 0.09691 / 0.04532, 'inverted': 0.04532 / (2 * 0.09691), 'simple': 0.5625 / 0.11, 'carried': ev(sp.log(1.4) / sp.log(sp.Rational(111, 100))), 'divided-numbers': 1.5625 / 1.11},
+        asked=4.28, extra_ok=(nround,))
     stated('recovery: log 1.25 to 5 dp', round(ev(sp.log(1.25, 10)), 5), 0.09691)
-    stated('recovery: log 1.08 to 5 dp', round(ev(sp.log(1.08, 10)), 5), 0.03342)
-    stated('recovery: 0.19382 / 0.03342', round(0.19382 / 0.03342, 2), 5.80)
-    mm = first_whole(lambda j: 32000 * F(27, 25) ** j > 50000)
-    num(L, 'p-drawdown-recovery', 4, mm, math.ceil(nexact), {'rounded-down': 5, 'with-falls': mm + 2})
-    stated('recovery: month 5', round(32000 * 1.08 ** 5), 47018)
-    stated('recovery: month 6', round(32000 * 1.08 ** 6), 50780)
+    stated('recovery: log 1.11 to 5 dp', round(ev(sp.log(1.11, 10)), 5), 0.04532)
+    stated('recovery: 0.19382 / 0.04532', round(0.19382 / 0.04532, 2), 4.28)
+    stated('recovery: 2 * 0.09691', 2 * 0.09691, 0.19382)
+    ok('11%' in L['p-drawdown-recovery']['prose'] and '8%' not in L['p-drawdown-recovery']['prose'], 'recovery: prose growth rate is 11%')
+    mm = first_whole(lambda j: 32000 * F(111, 100) ** j > 50000)
+    num(L, 'p-drawdown-recovery', 4, mm, math.ceil(nexact), {'rounded-down': 4, 'with-falls': mm + 2})
+    stated('recovery: month 4', round(32000 * 1.11 ** 4), 48578)
+    stated('recovery: month 5', round(32000 * 1.11 ** 5), 53922)
+    ok(round(nexact) == 4 and mm == 5, 'recovery: nearest rounding of n gives 4, not the key 5')
 
     # p-app-users
     expr_part(L, 'p-app-users', 1, 2000 * sp.Rational(13, 10) ** n, {'rate-only': 2000 * sp.Rational(3, 10) ** n, 'joined': 2600 ** n, 'steady': 2000 + 600 * n}, 'n')
-    pick(L, 'p-app-users', 2, 'divide', F(50000, 2000) == 25)
+    quot = ev(sp.log(sp.Rational(25) / sp.Rational(13, 10), 10))
+    ratio = ev(sp.log(25, 10) / sp.log(sp.Rational(13, 10), 10))
+    pick(L, 'p-app-users', 2, 'ratio', F(50000, 2000) == 25 and abs(ratio - ev(sp.log(25) / sp.log(sp.Rational(13, 10)))) < 1e-12
+         and abs(ratio - bisect(lambda x: 1.3 ** x - 25, 0, 50)) < 1e-9 and abs(quot - 1.284) < 5e-4
+         and abs(ev(sp.log(25, 10) - sp.log(sp.Rational(13, 10), 10)) - quot) < 1e-12
+         and abs(25 / 1.3 - 19.23) < 5e-3 and 1.3 ** (25 / 1.3) > 100 and abs(quot - ratio) > 1)
+    ok({o['id'] for o in L['p-app-users']['parts'][1]['widget']['options']} == {'ratio', 'quotient', 'difference', 'numbers'}, 'app 2: option ids')
+    stated('app: log 25/1.3 to 3 dp', round(quot, 3), 1.284)
+    stated('app: 1.3^19.23 to 0 dp', round(1.3 ** 19.23), 155, 1)
     nu = ev(sp.log(25) / sp.log(sp.Rational(13, 10)))
     num(L, 'p-app-users', 3, nu, bisect(lambda x: 1.3 ** x - 25, 0, 50),
-        {'joined': ev(sp.log(50000) / sp.log(2600)), 'divided': 25 / 1.3, 'rate-only': ev(sp.log(25) / sp.log(sp.Rational(3, 10))), 'simple': 25 / 0.3},
+        {'joined': ev(sp.log(50000) / sp.log(2600)), 'divided': 25 / 1.3, 'rate-only': ev(sp.log(25) / sp.log(sp.Rational(3, 10))), 'simple': (50000 - 2000) / 600},
         asked=12.27, extra_ok=(1.3979 / 0.1139, 1.39794 / 0.11394))
     stated('app: log 25 to 4 dp', round(ev(sp.log(25, 10)), 4), 1.3979)
     stated('app: log 1.3 to 4 dp', round(ev(sp.log(1.3, 10)), 4), 0.1139)
+    stated('app: fixed 600 a month reaches 50,000 at n = 80', 2000 + 600 * 80, 50000)
     num(L, 'p-app-users', 4, first_whole(lambda j: 2000 * F(13, 10) ** j > 50000), math.ceil(nu), {'rounded-down': 12, 'joined': math.ceil(ev(sp.log(50000) / sp.log(2600)))})
     stated('app: month 12', round(2000 * 1.3 ** 12), 46596)
     stated('app: month 13', round(2000 * 1.3 ** 13), 60575)
@@ -339,6 +361,9 @@ def level3():
         {'halfway-pounds': (2400 + 19200) / 2, 'midpoint': (4800 + 9600) / 2, 'years': ev(2400 * sp.exp(r * sp.Rational(3, 2)))},
         asked=round(half_db), extra_ok=(direct, round(direct), 2400 * 2.8284, round(2400 * 2.8284)), agree=1e-9)
     stated('savings: 2 sqrt 2 to 4 dp', round(2 * math.sqrt(2), 4), 2.8284)
+    yrs = [x for x in L['p-savings-doubling']['parts'][3]['widget']['wrong'] if x['id'] == 'years'][0]['value']
+    stated('savings: years slip 2400 e^(0.055 * 1.5) to 1 dp', round(2400 * exp_series(0.055 * 1.5), 1), yrs, 1e-9)
+    stated('savings: years slip by doublings', round(2400 * 2 ** (1.5 / 12.6), 1), 2606.4, 0.05)
 
     # p-weekly-target
     lr = [F(30, 1000), F(-12, 1000), F(45, 1000), F(-20, 1000)]
@@ -349,17 +374,36 @@ def level3():
     num(L, 'p-weekly-target', 1, tot, ln_b(prices[-1] / 40), {'signs': sum(abs(x) for x in lr), 'averaged': tot / 4})
     fri = ev(40 * sp.exp(sp.Rational(43, 1000)))
     num(L, 'p-weekly-target', 2, fri, prices[-1], {'one-plus': 40 * 1.043, 'added': 40.043, 'carried': ev(40 * sp.exp(sp.Rational(107, 1000)))}, asked=41.76, extra_ok=(40 * 1.04394,))
-    need = ev(sp.log(sp.Rational(45, 40)) - sp.Rational(43, 1000))
-    num(L, 'p-weekly-target', 3, need, ln_b(45 / prices[-1]), {'simple': (45 - 41.76) / 41.76, 'from-monday': ev(sp.log(sp.Rational(9, 8))), 'inverted': -need, 'difference': 45 - 41.76},
-        asked=0.0748, extra_ok=(ev(sp.log(45 / sp.Float(41.76))), 0.0747, round(0.1178 - 0.043, 4)))
+    need = ev(sp.log(sp.Rational(4500, 4176)))  # the value the question names: Friday's close of 41.76
+    num(L, 'p-weekly-target', 3, need, ln_b(45 / 41.76), {'simple': (45 - 41.76) / 41.76, 'from-monday': ev(sp.log(sp.Rational(9, 8))), 'inverted': -need, 'difference': 45 - 41.76},
+        asked=0.0747, extra_ok=(0.0748, round(0.1178 - 0.043, 4), ev(sp.log(sp.Rational(9, 8)) - sp.Rational(43, 1000))))
+    w3 = L['p-weekly-target']['parts'][2]['widget']
+    ok(w3['answer'] == 0.074724 and w3['tol']['abs'] == 0.0001, 'weekly 3: key 0.074724 +- 0.0001')
+    ok(within(0.0747, w3['answer'], w3['tol']['abs']) and within(0.0748, w3['answer'], w3['tol']['abs']), 'weekly 3: 0.0747 or 0.0748 refused')
+    ok(not within(0.0746, w3['answer'], w3['tol']['abs']) and not within(0.0749, w3['answer'], w3['tol']['abs']), 'weekly 3: 0.0746 or 0.0749 accepted')
+    ok(w3['accept'].startswith('0.0747'), 'weekly 3: accept leads with 0.0747')
+    stated('weekly: ln(45/41.76) to 4 dp', round(need, 4), 0.0747)
+    stated('weekly: ln 1.125 - 0.043 to 4 dp (Monday route)', round(math.log(1.125) - 0.043, 4), 0.0748)
+    stated('weekly: Friday close is 41.76 to 2 dp', round(40 * math.exp(0.043), 2), 41.76)
     stated('weekly: ln 1.125 to 4 dp', round(ev(sp.log(sp.Rational(9, 8))), 4), 0.1178)
-    wk = need / 3
-    num(L, 'p-weekly-target', 4, wk, ln_b((45 / prices[-1]) ** (1 / 3)), {'cube-root': 0.0748 ** (1 / 3), 'times-three': 3 * 0.0748, 'carried': 0.0776 / 3},
-        asked=0.0249, extra_ok=(0.0748 / 3, 0.0747 / 3))
-    simple = ev(sp.exp(need / 3) - 1)
-    num(L, 'p-weekly-target', 5, simple, (45 / prices[-1]) ** (1 / 3) - 1,
+    wk = sp.Rational(747, 10000) / 3  # the question names 0.0747
+    num(L, 'p-weekly-target', 4, wk, bisect(lambda x: 3 * x - 0.0747, 0, 1), {'cube-root': 0.0747 ** (1 / 3), 'times-three': 3 * 0.0747, 'carried': 0.0776 / 3},
+        asked=0.0249, extra_ok=(0.0748 / 3, ln_b((45 / 41.76) ** (1 / 3)), need / 3))
+    w4 = L['p-weekly-target']['parts'][3]['widget']
+    ok(w4['answer'] == 0.0249, 'weekly 4: key is 0.0249')
+    simple = ev(sp.exp(sp.Rational(249, 10000)) - 1)  # the question names 0.0249
+    num(L, 'p-weekly-target', 5, simple, exp_series(0.0249) - 1,
         {'log-as-simple': 0.0249, 'simple-split': ((45 - 41.76) / 41.76) / 3, 'decimal': 0.0252 / 100, 'e-power': exp_series(0.0249)},
-        pct=True, asked=0.0252, extra_ok=(exp_series(0.0249) - 1,))
+        pct=True, asked=0.0252, extra_ok=(0.0252, 0.02521, (45 / 41.76) ** (1 / 3) - 1))
+    w5 = L['p-weekly-target']['parts'][4]['widget']
+    dec5 = [x for x in w5['wrong'] if x['id'] == 'decimal'][0]
+    ok(w5['answer'] == 0.025213 and w5['tol']['abs'] == 5e-05, 'weekly 5: key 0.025213 +- 5e-5')
+    ok(not within(0.0251, w5['answer'], 5e-05) and not within(0.0253, w5['answer'], 5e-05), 'weekly 5: 2.51 or 2.53 accepted')
+    ok(dec5['tol']['abs'] == 5e-07, 'weekly 5: decimal band is +-5e-7')
+    ok(within(0.0252 / 100, dec5['value'], 5e-07) and within(0.02521 / 100, dec5['value'], 5e-07), 'weekly 5: decimal band refuses 0.0252 or 0.02521 typed')
+    ok(not within(0.0249 / 100, dec5['value'], 5e-07) and not within(0.0259 / 100, dec5['value'], 5e-07), 'weekly 5: decimal band takes 0.0249 or 0.0259 typed')
+    stated('weekly: e^0.0249 - 1 to 6 dp', round(math.exp(0.0249) - 1, 6), 0.025213)
+    stated('weekly: 41.76 e^0.0747 reaches 45', round(41.76 * math.exp(0.0747), 2), 45.0, 0.01)
     stated('weekly: e^0.043 to 5 dp', round(math.exp(0.043), 5), 1.04394)
     stated('weekly: e^0.0249 to 4 dp', round(math.exp(0.0249), 4), 1.0252)
     stated('weekly: 41.76 * 1.0252^3 reaches 45', round(41.76 * 1.0252 ** 3, 1), 45.0)
@@ -372,6 +416,9 @@ def level3():
         {'simple-total': (135 - 15) / 15 / 8, 'ratio-over-years': 9 / 8, 'yearly-factor': 9 ** (1 / 8) - 1, 'log10': ev(sp.log(9, 10) / 8), 'decimal': 0.2747 / 100},
         pct=True, asked=0.2747)
     stated('chart: ln 9 to 4 dp', round(ev(sp.log(9)), 4), 2.1972)
+    pr = L['p-log-chart-line']
+    ok('start of 2017' in pr['prose'] and 'start of 2025' in pr['prose'] and 2025 - 2017 == 8, 'chart: prose dates 2017 to 2025, 8 years')
+    ok('start of 2021' in pr['parts'][2]['question'] and 2017 + 4 == 2021, 'chart: part 3 date 2021, 4 years in')
     Tk = ev(sp.log(2) / kx)
     num(L, 'p-log-chart-line', 2, Tk, bisect(lambda x: exp_series(k * x) - 2, 0, 20),
         {'rule-72': 72 / 27.47, 'inverse': 1 / k, 'percent': ev(sp.log(2)) / 27.47, 'tripling': ev(sp.log(3) / kx)}, asked=2.52, extra_ok=(0.6931 / 0.2747,))
@@ -395,6 +442,13 @@ def level3():
     num(L, 'p-monthly-deposit', 2, rc, ln_b(float(g12)), {'quoted': 0.048, 'factor-rate': 1.0491 - 1, 'decimal': 0.0479 / 100, 'log10': ev(sp.log(1.0491, 10))},
         pct=True, asked=0.0479, extra_ok=(ev(sp.log(1.0491)),))
     stated('deposit: e^0.048 to 4 dp', round(math.exp(0.048), 4), 1.0492)
+    d2 = L['p-monthly-deposit']['parts'][1]['widget']
+    dec2 = [x for x in d2['wrong'] if x['id'] == 'decimal'][0]
+    ok(dec2['tol']['abs'] == 5e-07, 'deposit 2: decimal band is +-5e-7')
+    ok(within(0.0479 / 100, dec2['value'], 5e-07) and within(0.04793 / 100, dec2['value'], 5e-07), 'deposit 2: decimal band refuses 0.0479 or 0.04793 typed')
+    ok(not within(0.048 / 100, dec2['value'], 5e-07) and not within(0.0491 / 100, dec2['value'], 5e-07), 'deposit 2: decimal band takes 0.048 or 0.0491 typed')
+    ok('\\ln(e^{rt}) = rt' in L['p-monthly-deposit']['parts'][2]['question'], 'deposit 3: bridge sentence present')
+    stated('deposit: ln(e^(rt)) = rt at r = 0.0479, t = 5', ev(sp.log(sp.exp(sp.Rational(479, 10000) * 5))), 0.2395, 1e-12)
     lr5 = 5 * rc
     num(L, 'p-monthly-deposit', 3, lr5, ln_b(float(g12) ** 5), {'quoted': 5 * 0.048, 'simple': 1.0491 ** 5 - 1, 'one-year': 0.0479}, asked=0.2395, extra_ok=(5 * 0.0479,))
     end = float(6000 * F(1004, 1000) ** 60)
