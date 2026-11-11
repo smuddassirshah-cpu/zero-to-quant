@@ -90,7 +90,19 @@ Points pressed for this course, with the outcome.
 
 ## Overlap with the earlier reviews
 
-To be filled after the blind commit.
+Read after the blind pass was committed (commit "WIP: concept audit limits-thm L1 to L3 round 1"): `docs/reviews/review-1.5.md` (limits-thm section and its fix pass), `docs/reviews/review-problems-1.5-c.md` (sets 1 to 3), `docs/reviews/review-perf-retrofit-9.md` (the three derivation items). Their fix passes were applied before this audit, so the text audited here is the corrected text. Only conceptual findings are counted (meaning, hypothesis, convention, reasoning, or a slip value that does not match its stated slip); notation, sentence counts, tolerances, rubric marking and re-teaching notes are not.
+
+| | count | findings |
+|---|---|---|
+| Audit only | 28 | all 28 above |
+| Both | 0 | none |
+| Review only | 11 | all fixed before this read, so none could be found here (listed below) |
+
+Earlier conceptual findings this audit did not raise, because the text was already fixed: `review-1.5.md`: l1 "skill-free week" for a 55% strategy; l8 `screens[8]` slip `simple` value against its `why`; l9 `screens[5]` proof assumes a finite variance; l12 `screens[3]` "skill shows once" at an expected $t$ of 2; l12 SE of the Sharpe ratio without "for small Sharpe ratios"; homework-2 `items[6]` wrong reason for the normal VaR gap; homework-3 `items[7]` part 5 "any of these". `review-problems-1.5-c.md`: problems-2 `p-default-drag` slip value against its stated slip; problems-1 `p-block-calls` part 2 hand of four against "stops at the first taker". `review-perf-retrofit-9.md`: homework-3 `items[9]` exact claim unsupported; homework-2 `items[8]` sign of $D$.
+
+Each of those fixes was re-read as a ledger row and holds (rows 19, 207, 240, 294, 300, 223, 341, 360, 349, 346, 228). No finding here is in text written by a fix pass.
+
+The two families share ground without sharing a sentence: the earlier read added "assume a finite variance" and "for small Sharpe ratios", and this audit finds the neighbouring gaps (iid stated as needed, the Sharpe ratio without the risk-free rate, $\sigma$ as known). A single read missed all 28; all but one are minor.
 
 ## Checks
 
