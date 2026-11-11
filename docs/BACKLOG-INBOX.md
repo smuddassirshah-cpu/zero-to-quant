@@ -2166,3 +2166,7 @@ Raised later (fluency and problems quadratics 4):
 
 Raised later (bank 2 session 4):
 - [Could] `fresh-check.mjs` sees wording, not set-ups: `statistics-4` `gv-models-ewma-after-a-shock` is the same one-step EWMA update with decay 0.94 as `exams/stage-2` parts[1].items[8] (new numbers), and only `--min-run 10 --min-share 0` showed it, through a shared phrase; once the prose was reworded it shows nothing, though the template is unchanged. Wanted: an advisory line for a bank, exam or drill item that shares a named model parameter (a decay, a rate, a strike written as `\lambda = 0.94` or "decay 0.94") and its answer kind with a course or exam item, so a reused template is reported whatever the wording.
+
+Raised later (problems estimation):
+- [Could] Validator `[wrong-band]` on a "Give a whole number." part refuses a slip whose value is not whole (estimation `problems-1` `p-sulphur-labs` part 1: $6 / 9 = 0.667$ from dividing the sd by $n$), yet widening it to the asked rounding makes it `[wide-wrong-band]`. The slip was dropped. Wanted: for an integer part, accept a non-whole `wrong` value at its own band, or say in AUTHORING which rule wins.
+- [Could] Playthrough `--shots`: on a `choice` part at 440 px the fixed feedback sheet covers the lower options in the shot (estimation `problems-1` i4-p4, `problems-3` i4-p4), so the shot cannot show which option was chosen. Wanted: scroll the chosen option into view above the sheet before the shot.
