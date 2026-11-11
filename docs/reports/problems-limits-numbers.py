@@ -332,6 +332,87 @@ def level2(L):
 
 run_level(2, level2)
 
+
+# ------------------------------------------------------------------ level 3
+def level3(L):
+    # p-relative-strength
+    Pt = 40 * sp.exp(sp.Rational(6, 100) * t)
+    It = 2000 * sp.exp(sp.Rational(4, 100) * t)
+    Pf = lambda v: 40 * exp(0.06 * v)
+    If = lambda v: 2000 * exp(0.04 * v)
+    dP0 = sp.diff(Pt, t).subs(t, 0)
+    num(L, 'p-relative-strength', 1, dP0, dq(Pf, 0), {'no-chain': 40, 'no-forty': F(6, 100)}, agree=1e-6)
+    ok(sp.diff(It, t).subs(t, 0) == 80, 'ratio: I\'(0) = 80')
+    Rt = Pt / It
+    dR0 = sp.diff(Rt, t).subs(t, 0)
+    quot = (dP0 * 2000 - 40 * 80) / sp.Integer(2000) ** 2
+    ok(sp.simplify(dR0 - quot) == 0, 'ratio: quotient rule agrees with sympy')
+    num(L, 'p-relative-strength', 2, dR0, dq(lambda v: Pf(v) / If(v), 0),
+        {'swapped': -quot, 'no-square': F(4800 - 3200, 2000), 'rates': F(24, 800), 'no-chain': F(40 * 2000 - 40 * 80, 2000 ** 2)}, agree=1e-6)
+    ok(Rt.subs(t, 0) == sp.Rational(1, 50), 'ratio: R(0) = 0.02')
+    g = sp.simplify(sp.diff(sp.log(Rt), t))
+    num(L, 'p-relative-strength', 3, dR0 / Rt.subs(t, 0), g, {'added': F(10, 100), 'raw': F(4, 10000), 'share-only': F(6, 100)})
+
+    # p-research-price
+    n_ = (50 - p) ** 2
+    R_ = p * n_
+    nf = lambda v: (50 - v) ** 2
+    num(L, 'p-research-price', 1, sp.diff(n_, p).subs(p, 20), dq(nf, 20), {'lost-inner': 60, 'height': 900}, agree=1e-6)
+    num(L, 'p-research-price', 2, sp.diff(R_, p).subs(p, 20), dq(lambda v: v * nf(v), 20),
+        {'product-of-derivatives': -60, 'lost-inner': 900 + 20 * 60, 'one-term': 20 * -60}, agree=1e-6)
+    dR = sp.diff(R_, p)
+    expr_part(L, 'p-research-price', 3, dR, {'(50-p)(50-3p)': (50 - p) * (50 - 3 * p), '(p-50)(3p-50)': (p - 50) * (3 * p - 50),
+                                             '(50-3p)(50-p)': (50 - 3 * p) * (50 - p), '(50-p)(50+p)': (50 - p) * (50 + p)})
+    ok(sp.expand(1 * (50 - p) ** 2 + p * 2 * (50 - p) - (50 - p) * (50 + p)) == 0, 'feed: lost-inner gives (50-p)(50+p)')
+    roots = [v for v in sp.solve(dR, p) if v < 50]
+    ok(len(roots) == 1, 'feed: one flat price below 50')
+    grid = min((abs(float(dR.subs(p, sp.Rational(i, 10000)))), i / 10000) for i in range(100000, 300000))[1]
+    num(L, 'p-research-price', 4, roots[0], grid, {'two-p': 25}, dp=2, agree=1e-4)
+    stated('feed: R\'(20) by the factorised form', -300, ((50 - p) * (50 - 3 * p)).subs(p, 20), 0)
+
+    # p-weighted-pool
+    yx = sp.Function('Y')(x)
+    implicit = sp.diff(sp.Rational(4, 5) * sp.log(x) + sp.Rational(1, 5) * sp.log(yx), x)
+    slope = sp.solve(sp.Eq(implicit, 0), sp.diff(yx, x))[0].subs(yx, y)
+    ok(sp.simplify(slope + 4 * y / x) == 0, 'pool: dy/dx = -4y/x')
+    k0 = 100 ** 0.8 * 1600 ** 0.2
+    yexp = lambda v: (k0 / v ** 0.8) ** 5          # the curve solved for y
+    num(L, 'p-weighted-pool', 1, slope.subs({x: 100, y: 1600}), dq(yexp, 100, 1e-4),
+        {'no-weights': -F(1600, 100), 'swapped': -F(1, 4) * 16, 'upside-down': -4 * F(100, 1600), 'sign': 64}, agree=1e-6)
+    ysol = sp.Integer(1600) * (sp.Rational(100, 200)) ** 4
+    num(L, 'p-weighted-pool', 2, ysol, yexp(200), {'halved': 800, 'squared': 400})
+    ok(abs(200 ** 0.8 * 100 ** 0.2 - k0) < 1e-9, 'pool: (200, 100) is on the curve')
+    num(L, 'p-weighted-pool', 3, slope.subs({x: 200, y: 100}), dq(yexp, 200, 1e-4),
+        {'old-point': -64, 'halved': -4 * F(800, 200), 'upside-down': -4 * F(200, 100)}, agree=1e-6)
+    sec = (1600 - ysol) / (200 - 100)
+    num(L, 'p-weighted-pool', 4, sec, (yexp(100) - yexp(200)) / 100, {'start-price': 64, 'mid': F(64 + 2, 2), 'end-price': 2}, agree=1e-9)
+    ok(2 < sec < 64, 'pool: secant between the two tangent slopes')
+
+    # p-gas-season
+    s_ = 1 + sp.Rational(3, 10) * sp.cos(sp.pi * t / 6)
+    sf = lambda v: 1 + 0.3 * cos(pi * v / 6)
+    ds = sp.diff(s_, t)
+    SINt = sp.sin(sp.pi * t / 6)
+    expr_part(L, 'p-gas-season', 1, ds, {
+        '-0.05\\pi\\sin\\left(\\frac{\\pi t}{6}\\right)': -sp.Rational(1, 20) * sp.pi * SINt,
+        '-\\frac{\\pi}{20}\\sin\\left(\\frac{\\pi t}{6}\\right)': -sp.pi / 20 * SINt,
+        '-\\frac{\\pi}{20}\\sin\\left(\\frac{\\pi}{6}t\\right)': -sp.pi / 20 * SINt,
+        '-0.3\\sin\\left(\\frac{\\pi t}{6}\\right)': -sp.Rational(3, 10) * SINt,
+        '0.05\\pi\\sin\\left(\\frac{\\pi t}{6}\\right)': sp.pi / 20 * SINt})
+    num(L, 'p-gas-season', 2, ds.subs(t, 3), dq(sf, 3), {'lost-inner': -0.3, 'sign': sp.pi / 20}, dp=3, agree=1e-6)
+    D_ = (200 + 5 * t) * s_
+    Df = lambda v: (200 + 5 * v) * sf(v)
+    num(L, 'p-gas-season', 3, sp.diff(D_, t).subs(t, 3), dq(Df, 3),
+        {'product-of-derivatives': 5 * -sp.pi / 20, 'lost-inner': 5 + 215 * -0.3, 'one-term': 215 * -sp.pi / 20}, dp=2, agree=1e-6)
+    ok(s_.subs(t, 3) == 1, 'gas: s(3) = 1')
+    for route in (-0.157, -0.1571, -0.15708):
+        ok(abs(5 + 215 * route - (-28.77)) <= 0.02, f'gas: the rounded route {route} is accepted')
+    stated('gas: 215 x 0.05pi', 33.77, 215 * pi / 20, 0.005)
+    ok(min(range(0, 12), key=lambda v: float(ds.subs(t, v))) == 3, 'gas: the factor falls fastest at t = 3')
+
+
+run_level(3, level3)
+
 present = [n for n in (1, 2, 3) if load(n) is not None]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails:
