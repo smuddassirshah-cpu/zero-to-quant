@@ -148,6 +148,13 @@ same_fn(lambda x: (x * x - 4) / (x + 3) * (2 * x + 6) / (x - 2), lambda x: 2 * (
 same_fn(lambda x: (x * x + x) / (x - 2) / ((x + 1) / (x * x - 4)), lambda x: x * (x + 2), "l15 quotient = x(x + 2)")
 same_fn(lambda x: (x * x + 3 * x) / x, lambda x: x + 3, "l15 (x^2 + 3x)/x = x + 3")
 v = two(Fr(7, 3), (1 + 6) / (1 + 2), "l15 (x + 6)/(x + 2) at 1"); E(F, "screens[7].widget.answer", round(float(v), 4))
+import json as _json
+_w = _json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'quadratics', 'l15-fractions-with-letters.json')))["screens"][7]["widget"]
+_ok = lambda val, t: abs(val - _w["answer"]) <= t["abs"]
+lv.claim(_w["tol"] == {"abs": 0.005} and all(_ok(x, _w["tol"]) for x in (2.33, 2.333, 7 / 3)) and not any(_ok(x, _w["tol"]) for x in (2.32, 2.34, 3, 7)), "l15 s7 tolerance takes 2.33, 2.333 and 7/3 and refuses 2.32, 2.34, 3, 7")
+two(round(7 / 3, 2), 2.33, "l15 7/3 to 2 places is 2.33"); lv.claim("2.33" in _w["accept"], "l15 s7 accept line names 2.33")
+# l15 quiz[3]: (2x + 6)/2 = x + 3; the slip x + 4 takes 2 off the 6
+same_fn(lambda x: (2 * x + 6) / 2, lambda x: x + 3, "l15 quiz split (2x + 6)/2 = x + 3"); lv.claim(6 - 2 == 4, "l15 quiz slip x + 4")
 lv.claim(Fr(6 - 6, 3 - 1) == 0, "l15 (x + 6) = 3(x + 2) only at x = 0"); E(F, "screens[7].widget.wrong[0].value", 3); E(F, "screens[7].widget.wrong[1].value", 7)
 lv.claim(4 - 6 + 2 == 0 and 1 - 3 + 2 == 0 and simp(Fr(-2)) == -1, "l15 bottom zero at -2 and -1; simpler gives -1 at -2")
 E(F, "screens[8].prose", -1); lv.claim(9 - 15 + 6 == 0 and Fr(6, 2) == 3, "l15 x = -3 makes top 0; x = 0 gives 3"); E(F, "screens[8].widget.options[3].why", 3)
@@ -283,6 +290,19 @@ lv.claim(pval([1, 2, 0], Fr(0)) == 0 and pval([1, 2, 0], Fr(-2)) == 0, "l19 q0 r
 kq = two(Fr(-12, 4), -3, "l19 q2 12 + 4k = 0"); lv.claim(16 - 4 * (1 - kq) == 0 and 12 + 4 * (-4) == -4 and 4 + 1 == 5, "l19 q2 checks"); E(F, "quiz[2].widget.options[0].text", -3)
 lv.claim(pmul([5, 1], [1, -1]) == [5, -4, -1] and Fr(1, 25) + Fr(49, 25) == 2 and 2 * Fr(-1, 5) - 1 == Fr(-7, 5), "l19 q3 points (1, 1) and (-1/5, -7/5)")
 
+# fix pass: new statements in l17 and l18
+lv.claim(pmul([5, -6], [25, 20, 12]) == [125, -50, -60, -72] and [8 * c for c in [125, -50, -60, -72]] == [1000, -400, -480, -576], "l17 s10 cubic = 8(5x - 6)(25x^2 + 20x + 12)")
+lv.claim(1000 * Fr(6, 5) ** 3 == 1728 == 400 * Fr(6, 5) ** 2 + 480 * Fr(6, 5) + 576, "l17 s10 cost and receipts equal 1728 at x = 1.2")
+lv.claim(all(6 == a_ * (7 - a_ ** 2) for a_ in range(-6, 7) if a_ ** 3 - 7 * a_ + 6 == 0) and all(6 % a_ == 0 for a_ in range(-6, 7) if a_ and a_ ** 3 - 7 * a_ + 6 == 0) and [a_ for a_ in range(-6, 7) if a_ ** 3 - 7 * a_ + 6 == 0] == [-3, 1, 2], "l17 s5 whole-number roots divide 6: 6 = a(7 - a^2)")
+lv.claim(1 + 2 - 3 == 0, "l17 s5 roots sum to 0")
+lv.claim(pval([2, 3, -4, 5], Fr(-2)) == 9 and pmul([1, 2], [2, -1, -2]) == [2, 3, -4, -4], "l17 s4 division: g = (x + 2)(2x^2 - x - 2) + 9")
+lv.claim(pmul([2, 0], [1, 2]) == [2, 4, 0] and [a_ - b_ for a_, b_ in zip([2, 3, -4, 5], [2, 4, 0, 0])] == [0, -1, -4, 5], "l17 s4 first step 2x^2(x + 2) leaves -x^2 - 4x + 5")
+lv.claim(all((a_ + b_) ** 2 - 2 * a_ * b_ == a_ ** 2 + b_ ** 2 for a_ in range(1, 8) for b_ in range(1, 8)) and (3 + 4) ** 2 - 2 * 3 * 4 == 25, "l18 s0 general box identity (a + b)^2 - 2ab = a^2 + b^2")
+lv.claim(Fr(4, 3) == Fr(2 - -2, 6 - 3) and Fr(-3, 4) * Fr(4, 3) == -1, "l18 s7 radius gradient 4/3, tangent -3/4")
+lv.claim(math.isclose(math.sqrt(72), 2 * math.sqrt(18)) and math.sqrt(72) == math.sqrt(36 * 2) and (math.sqrt(9 + 16), math.sqrt(9) + math.sqrt(16)) == (5, 7), "l14 s7 sqrt72 = 2 sqrt18 (true, unfinished); sqrt(9 + 16) = 5")
+lv.claim(round(math.sqrt(252), 2) == 15.87 and 15 < math.sqrt(252) < 16, "l14 s9 sqrt252 just under 16")
+lv.claim(all(Fr(x_) / (x_ - 2) - (Fr(2) / (x_ - 2) + 3) == -2 for x_ in (3, 4, 5, Fr(1, 2))), "l16 s7 right side is always 2 more than the left")
+
 # =============================== review-4 ===============================
 F = "review"
 a48 = simplify_surd(48)[0]; a27 = simplify_surd(27)[0]; two((a48 + a27) * math.sqrt(3), math.sqrt(48) + math.sqrt(27), "r4 7 sqrt3")
@@ -290,7 +310,9 @@ E(F, "items[0].widget.answer", a48 + a27); E(F, "items[0].widget.wrong[0].value"
 two(4 / (math.sqrt(5) - 1), math.sqrt(5) + 1, "r4 4/(sqrt5 - 1) = sqrt5 + 1"); E(F, "items[1].explain.text", round(math.sqrt(5) + 1, 3))
 same_fn(lambda x: (x * x - x - 6) / (x * x - 4), lambda x: (x - 3) / (x - 2), "r4 cancel")
 same_fn(lambda x: 2 / x + 3 / (x - 1), lambda x: (5 * x - 2) / (x * (x - 1)), "r4 add")
-lv.claim(pval([1, -3, 2], Fr(2)) == 0 and Fr(3, 1) == 1 + Fr(6, 3), "r4 reject: x = 2 works"); E(F, "items[4].widget.answer", 2)
+same_fn(lambda x: 4 * (x + 1) - (x * x - 1 + 8), lambda x: -(x * x - 4 * x + 3), "r4 reject: cleared equation x^2 - 4x + 3")
+lv.claim(roots_quad(1, -4, 3)[1] == [1, 3] and pmul([1, -1], [1, -3]) == [1, -4, 3], "r4 reject: roots 1 and 3 two ways")
+lv.claim(Fr(4, 3 - 1) == 1 + Fr(8, 3 * 3 - 1) == 2 and 1 * 1 - 1 == 0, "r4 reject: x = 3 works (both 2); x = 1 zeroes x^2 - 1"); E(F, "items[4].widget.answer", 3); lv.claim(lv.text(F, "items[4].widget.accept") == "3", "r4 reject accept is 3")
 fr = [1, 2, -5, 1]; E(F, "items[5].widget.answer", two(pval(fr, Fr(2)), pdiv(fr, 2)[1], "r4 remainder 7")); E(F, "items[5].widget.wrong[0].value", pval(fr, Fr(-2)))
 lv.claim(pmul(pmul([1, 1], [1, -2]), [1, -3]) == [1, -4, 1, 6], "r4 cubic factorisation")
 lv.claim((-4) ** 2 + 1 + 8 == 25 and 16 + 1 - 8 == 9, "r4 circle r^2 25 and the slip 9"); E(F, "items[7].widget.rows[2][1].answer", 5); E(F, "items[7].widget.rows[2][1].wrong[1].value", 3)
@@ -312,9 +334,13 @@ aa = Fr(7 + -1, 3); bb = aa - 7
 lv.claim(aa == 2 and bb == -5 and pval([1, aa, bb, -6], Fr(-1)) == 0 and pval([1, aa, bb, -6], Fr(2)) == 0, "hw4 a = 2, b = -5")
 lv.claim(pmul(pmul([1, 1], [1, -2]), [1, 3]) == [1, 2, -5, -6], "hw4 p = (x + 1)(x - 2)(x + 3)")
 E(F, "items[3].widget.rows[0][1].answer", aa); E(F, "items[3].widget.rows[1][1].answer", bb)
-same_fn(lambda x: x * x + (x + 2) ** 2 - 10, lambda x: 2 * (x * x + 2 * x - 3), "hw4 circle-line substitution")
-lv.claim(pval([1, 2, -3], Fr(1)) == 0 and pval([1, 2, -3], Fr(-3)) == 0 and -3 + 2 == -1 and 9 + 1 == 10 and 1 + 9 == 10, "hw4 points (1, 3), (-3, -1)")
-E(F, "items[4].parts[2].widget.answer", round(two(dist((-3, -1), (1, 3)), 4 * math.sqrt(2), "hw4 chord 4 sqrt2"), 2))
+same_fn(lambda x: x * x + (x + 4) ** 2 - 10, lambda x: 2 * (x * x + 4 * x + 3), "hw4 circle-line substitution")
+lv.claim(pval([1, 4, 3], Fr(-1)) == 0 and pval([1, 4, 3], Fr(-3)) == 0 and pmul([1, 1], [1, 3]) == [1, 4, 3] and -3 + 4 == 1 and -1 + 4 == 3 and 9 + 1 == 10 and 1 + 9 == 10, "hw4 points (-3, 1), (-1, 3)")
+lv.claim(roots_quad(1, 4, 3)[1] == [-3, -1], "hw4 roots -1 and -3 by the formula")
+E(F, "items[4].parts[0].widget.answers[0]", -1); E(F, "items[4].parts[0].widget.answers[1]", -3); E(F, "items[4].parts[0].widget.wrong[0].value", "1, 3")
+E(F, "items[4].parts[1].widget.answer", 1); E(F, "items[4].parts[1].widget.wrong[0].value", -1)
+E(F, "items[4].parts[2].widget.answer", round(two(dist((-3, 1), (-1, 3)), 2 * math.sqrt(2), "hw4 chord 2 sqrt2"), 2)); two(math.hypot(2, 2) ** 2, 8, "hw4 squared chord 8")
+E(F, "items[4].parts[2].widget.wrong[0].value", 2 + 2); E(F, "items[4].parts[2].widget.wrong[1].value", 8)
 same_fn(lambda x: x * x + (2 * x + 7) ** 2 - 20, lambda x: 5 * x * x + 28 * x + 49 - 20, "hw4 tangent substitution at k = 7 (shape check)")
 lv.claim(all(16 * kk2 - 20 * (kk2 - 20) == 400 - 4 * kk2 for kk2 in (0, 1, 9, 100)) and 20 * (1 + 2 ** 2) == 100, "hw4 discriminant 400 - 4k^2, c^2 = r^2(1 + m^2)")
 E(F, "items[5].widget.answers[0]", 10); E(F, "items[5].widget.wrong[0].value", "4.47, -4.47")

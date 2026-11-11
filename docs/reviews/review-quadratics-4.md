@@ -102,3 +102,48 @@ Prerequisites: every idea used is taught earlier (point-gradient form in functio
 - `expression` with `form: "factorised"` accepts a number left uncancelled: `\frac{4(x+2)}{2}` for `2(x+2)`, `\frac{2x(x+2)}{2}` for `x(x+2)` (l15 s4, s5).
 - A `plane` polygon's label sits at the centroid and cannot be moved, so it lands on axis tick labels when the polygon straddles an axis (l18 s0).
 - A `plane` function label with `labelAt` near the left edge is clipped at 440 px instead of being flipped inside the plot (l19 s0).
+
+## Fix pass
+
+Status per finding (all applied by targeted edits; no dispute). Conceptual basis stated where the fix is a claim.
+
+1. fixed: `q17-one-real-root` option `two` `why` now says a cubic has exactly two different real roots only when one is repeated, as in $(x - 1)^2(x + 2)$; the keyed option "One" still follows (factor $x - 1$ gives one root; $x^2 + x + 2$ has discriminant $1 - 8 = -7$). Basis: a zero discriminant gives one double root (l8).
+2. fixed: l15 s7 `tol.abs` 0.001 to 0.005, `accept` "7/3, 2.33 or 2.333". $7/3 = 2.3333$: 2.33 is 0.0033 away (accepted), 2.34 is 0.0067 (refused), 3 and 7 stay wrong. Sweep of every numeric screen and item in the level: the other non-integer keys are exact fractions with a tolerance of 0.001 or 0.005 (l16 $-0.6$, 1.5, £2.40; l18 s10 and hw 5.66, both asking "to 2 decimal places"; review 2.75), so no other band refuses a sensible rounding where no precision is asked.
+3. fixed: l19 s2 prose, `summary.formula.note` and `summary.ideas[0]` now say "parabola or circle". Basis: a line into a parabola gives $ax^2 + bx + c$ in one variable; into a cubic it gives a cubic (l17), so the discriminant rule is not general.
+4. fixed: l18 s0 explanation adds $(a + b)^2 - 2ab = a^2 + b^2$ from the same box (four corner triangles of area $ab/2$ off a box of side $a + b$); checked for $a, b$ in 1 to 7 and at 3, 4. The dashed box is drawn (see 25).
+5. fixed: l16 s7 explanation says multiplying by $(x - 2)$ is multiplying by 0 at $x = 2$; the dropped sentence moved to `feedback.correct`; `summary.ideas[2]` carries the reason. Checked: $\tfrac{x}{x-2} - (\tfrac{2}{x-2} + 3) = -2$ at $x = 3, 4, 5, \tfrac{1}{2}$.
+6. fixed: l17 s4 prose shows the first step ($2x^2(x + 2) = 2x^3 + 4x^2$, leaving $-x^2 - 4x + 5$) and the next; hint 0 matches. Checked by subtracting coefficient lists and by $g(-2) = 9$.
+7. fixed: l14 s7 explanation now separates the sum slip from stopping early ($\sqrt{72} = \sqrt{36 \times 2} = 2\sqrt{18}$, true).
+8. fixed: `whole` wrong entry plus `byKey.whole` on l15 s3, l16 s2, l16 s3 and review `r4-add`. Proved through the engine graders in `quadratics-L4-grade.mjs`: each whole fraction grades `whole`, the top alone still `ok`.
+9. fixed: l17 s10 prose gives the reason for the cubic and says it factorises as $8(5x - 6)(25x^2 + 20x + 12)$. Checked: $(5x - 6)(25x^2 + 20x + 12) = 125x^3 - 50x^2 - 60x - 72$, times 8 is the cubic; at $x = 1.2$ both sides are 1728.
+10. fixed: l14 s7 `split-sum` line and `summary.trap` say "not over a sum" / "no such rule for a sum".
+11. fixed: l14 `q14-domain` explanation: "the number, not negative, whose square is $a$" (covers $a = 0$).
+12. fixed: l15 s2 defines a factor as anything that multiplies all the rest.
+13. fixed: l17 s3 prose and summary: the remainder is always $f(a)$; a factor is the case where it is 0 (from $f(x) = (x - a)q(x) + r$).
+14. fixed: l17 s5 prose derives that a whole-number root divides 6 ($6 = a(7 - a^2)$; checked for the roots $-3, 1, 2$), and the explanation checks $1 + 2 - 3 = 0$ against the missing $x^2$ term (the $x^2$ coefficient of $(x - r_1)(x - r_2)(x - r_3)$ is $-(r_1 + r_2 + r_3)$).
+15. fixed: l18 s7 prose gives the reason (the tangent point is the nearest point of the line to the centre, and the shortest distance to a line is along the perpendicular), then the gradients $\tfrac{4}{3}$ and $-\tfrac{3}{4}$.
+16. fixed: l18 s8 says a single point, not a circle.
+17. fixed: l15 `q15-split-over-two` option `cancel-all` is now $x + 4$ with the "took 2 off the 6" line ($2x \div 2 = x$, $6 - 2 = 4$; the key is $x + 3$).
+18. fixed: l14 `q14-approx` right option now "No: 1.414 is an approximation"; the square stays in the feedback and explanation.
+19. fixed: l15 s3 `form: "expanded"` with `byKey.form`. Graders: `x-3`, `-3+x`, `(x-3)` ok; $\tfrac{x^2-9}{x+3}$ and $\tfrac{(x-3)(x+3)}{x+3}$ give `form`. s4 and s5: engine limit, deferred (already in the inbox).
+20. fixed: review `r4-reject` is now $\tfrac{4}{x-1} = 1 + \tfrac{8}{x^2-1}$ (see values below).
+21. fixed: homework `hw4-circle-line` uses $y = x + 4$ (see values below). Line label `labelAt` 1.1 (the line leaves the 5 by 5 window at $x = 1$, so the earlier 2.6 was off the canvas); re-shot at 440 px, clear.
+22. fixed: l14 s9 adds the number-sense l11 sentence ($\sqrt{252} = 15.87$, just under 16), after the factorisation sentence so "the yearly figure" has its referent.
+23. fixed: homework `hw4-tangent-circle` explanation says the next item proves $c^2 = r^2(1 + m^2)$.
+24. fixed: l19 s1 explanation: substitute into the circle, not back into itself ($y = x + 1$ into $y = x + 1$ gives $0 = 0$).
+25. fixed in content: l19 `labelAt` -7 to -4 on screens 0, 2 and 5, re-shot at 440 px (label whole); l18 s0 dashed `box` polygon added, re-shot (drawn). Deferred (engine, already in the inbox): the "?" label on the tilted square still sits on the $y$-axis ticks because a polygon label cannot be moved.
+
+Changed graded values (old to new, with working):
+- l15 s7 `tol.abs`: 0.001 to 0.005. $|2.33 - 7/3| = 0.0033 \le 0.005$; $|2.34 - 7/3| = 0.0067 > 0.005$. Key 2.3333 unchanged.
+- review `r4-reject` answer 2 to 3, `accept` "3"; `not-rejected` stays 1. $4(x + 1) = x^2 + 7$ gives $x^2 - 4x + 3 = (x - 1)(x - 3)$; $x = 1$ zeroes $x - 1$; at $x = 3$, $\tfrac{4}{2} = 2 = 1 + \tfrac{8}{8}$. Second route: formula $(4 \pm 2)/2$.
+- hw `hw4-circle-line` part 1 answers $[1, -3]$ to $[-1, -3]$, wrong `signs` "-1, 3" to "1, 3". $x^2 + (x + 4)^2 = 10$ gives $2x^2 + 8x + 6 = 0$, so $(x + 1)(x + 3) = 0$.
+- part 2 answer $-1$ to $1$, wrong `circle-sign` 1 to $-1$. At $x = -3$, $y = -3 + 4 = 1$; check $9 + 1 = 10$.
+- part 3 answer 5.66 to 2.83, wrong `added` 8 to 4, `no-root` 32 to 8. Points $(-3, 1)$ and $(-1, 3)$: differences 2 and 2, $\sqrt{8} = 2\sqrt{2} = 2.828$.
+- New wrong keys `whole` (no value change): l15 s3, l16 s2, l16 s3, review `r4-add`; l15 s3 gains `form: "expanded"`.
+
+Gates:
+- `quadratics-L4-numbers.py` (Python 3 venv): exit 0, 490 of 490 (new checks for every new number; the old r4-reject, hw circle-line and l15 s7 checks tightened to the new values only).
+- `quadratics-L4-grade.mjs`: exit 0, 12 expression widgets, 6 numeric sets, 208 checks, 0 failures.
+- Reader `read-numbers.py`: still fails 4 checks, by construction. Three (`never over a sum`, `the positive number at a = 0`, `either two roots or none`) assert that the reviewed false claim is true, so they fail whatever the content says; the reader's script does not read the new wording, which was checked by hand above. The fourth (`r4 reject`) hard-codes the old equation $\tfrac{3}{x-1} = \ldots$ and compares its solution 2 with the new key 3; with the new equation sympy gives $x = 3$, which agrees.
+- Validator: 0 errors. Voice scan 35: 0 explanations over three sentences, 0 sentences over 35 words.
+- Playthrough with `--local-cdn`: l14 to l19, `review-4` and `homework-4` all pass with and without `--mobile`.
