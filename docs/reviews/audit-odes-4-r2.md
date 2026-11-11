@@ -35,11 +35,30 @@ No finding needs more than a sentence or two; no screen needs a rewrite.
 
 ## Overlap with earlier reads
 
-Filled after the blind commit.
+Read after the blind commit (`2a75a37c`): `docs/reviews/review-odes-4.md` (second read and its fix pass: 13 findings, 8 of them conceptual), `docs/reviews/audit-odes-4.md` (round 1: 10 findings, 3 wrong, 6 imprecise, 1 misleading, with its fix pass), and that file's fix-pass read (2 imprecise, both fixed).
+
+| | count |
+|---|---|
+| Conceptual findings by this audit only | 4 |
+| Conceptual findings by earlier reads only | 20 (review 8, audit round 1 10, fix-pass read 2; all fixed before this read) |
+| Found by both | 0 |
+
+`wrong` in this round: 1 (finding 1, minor). It is new: no earlier read mentions the caption's colours.
+
+Notes on the four:
+
+- Finding 1 (colour caption): original text, not fix-pass text. Three reads passed it. No read before this one compared a colour word with the slot drawn.
+- Finding 2 (l18 `screens[6]`): round 1's finding 1 looked at `screens[6].feedback.correct` while fixing `screens[3]` and left it, "because it is true of that value". That is right as a fact. This audit's point is narrower: after the fix to `screens[3]`, the explain's "so" argues the failure from the print, which the new `screens[3]` text says is not the test. It is a judgement call and the lowest priority of the four.
+- Finding 3 (l16 `screens[7]`): the review and round 1 both edited this prose (stiffness, "shrink", the eigenvalue sentence). The eigenvalue sentence the review added now sits between the general rule and the two numbers, which is what detaches them from $\lambda = 10$.
+- Finding 4 (l18 `screens[7]`): round 1 noted the Vasicek pricing drift here and checked the number by Monte Carlo, but did not raise the "because convex" wording.
+
+All earlier fixes were re-read in place and hold: the rounding-edge caveat, the `solve_ivp` prefix `0.0141640489531...`, the corrected console digits, $R(3)$, the six "Below what step" questions, "piecewise continuous", "of lower degree than den", the `steps_to_4dp` caveat, "In these tests", the content-named feedback in `h-which-exist`, the `f"{d:.2e}"` console and the three `2.718279744135166` keys. This read found no `wrong` in fix-pass text.
 
 ## Gates
 
-- Validator: 0 errors (4,666 warnings, none new; manifest unchanged).
+- Validator: 0 errors (4,666 warnings; manifest unchanged).
 - Playthrough with `--local-cdn`, desktop and `--mobile`: all five lessons, `review-4` and `homework-4` report "All passed".
 - `docs/reports/odes-L4-concepts-r2.py`: exit 1 (4 FINDING checks fail by design, 112 pass).
-- Number script and round 1 concepts script: run after the blind commit; results below.
+- `docs/reports/odes-L4-numbers.py`: exit 0.
+- `docs/reports/odes-L4-concepts.py` (round 1): exit 0.
+- Inbox: two bullets under "Raised later (audit odes):" in `docs/BACKLOG-INBOX.md`.
