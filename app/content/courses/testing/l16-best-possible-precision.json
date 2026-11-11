@@ -1,0 +1,1060 @@
+{
+ "id": "l16-best-possible-precision",
+ "course": "testing",
+ "title": "The best possible precision",
+ "minutes": 15,
+ "objectives": [
+  "Derive the Cramér-Rao bound and decide whether an unbiased estimator attains it."
+ ],
+ "skills": [
+  "ht-errors"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Daily returns are normal with unknown mean $\\mu$ and $\\sigma = 1$. From 101 days we can estimate $\\mu$ by the sample mean, by the sample median, or by the average of the first and last day. All three are unbiased. The chart shows each over 2,000 simulated samples.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": -1.5,
+      "max": 1.5,
+      "width": 0.1
+     },
+     "height": 260,
+     "xLabel": "estimate of $\\mu$ (true value 0)",
+     "yLabel": "share of samples",
+     "yMax": 0.4,
+     "groups": [
+      {
+       "id": "mean",
+       "label": "mean"
+      },
+      {
+       "id": "median",
+       "label": "median"
+      },
+      {
+       "id": "ends",
+       "label": "first and last"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "mean": {
+       "-0.45": 0.0005,
+       "-0.35": 0.002,
+       "-0.25": 0.018,
+       "-0.15": 0.1375,
+       "-0.05": 0.3475,
+       "0.05": 0.332,
+       "0.15": 0.14,
+       "0.25": 0.0205,
+       "0.35": 0.002
+      },
+      "median": {
+       "-0.45": 0.0005,
+       "-0.35": 0.008,
+       "-0.25": 0.047,
+       "-0.15": 0.1685,
+       "-0.05": 0.276,
+       "0.05": 0.29,
+       "0.15": 0.1495,
+       "0.25": 0.0505,
+       "0.35": 0.01
+      },
+      "ends": {
+       "-1.45": 0.023,
+       "-1.35": 0.007,
+       "-1.25": 0.0085,
+       "-1.15": 0.0145,
+       "-1.05": 0.018,
+       "-0.95": 0.02,
+       "-0.85": 0.0335,
+       "-0.75": 0.0335,
+       "-0.65": 0.0405,
+       "-0.55": 0.0455,
+       "-0.45": 0.0485,
+       "-0.35": 0.0555,
+       "-0.25": 0.0525,
+       "-0.15": 0.056,
+       "-0.05": 0.043,
+       "0.05": 0.051,
+       "0.15": 0.06,
+       "0.25": 0.05,
+       "0.35": 0.0435,
+       "0.45": 0.043,
+       "0.55": 0.0425,
+       "0.65": 0.0385,
+       "0.75": 0.033,
+       "0.85": 0.0345,
+       "0.95": 0.021,
+       "1.05": 0.0205,
+       "1.15": 0.018,
+       "1.25": 0.008,
+       "1.35": 0.008,
+       "1.45": 0.029
+      }
+     }
+    }
+   },
+   "question": "Rank the three from smallest spread to largest.",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Mean, then median, then first and last",
+      "correct": true
+     },
+     {
+      "id": "median-first",
+      "text": "Median, then mean, then first and last",
+      "why": "You trusted the median's robustness. With normal data and no outliers, the median wastes information: its bars are wider than the mean's."
+     },
+     {
+      "id": "ends-first",
+      "text": "First and last, then mean, then median",
+      "why": "Two days cannot beat 101. The first-and-last bars spread across the whole axis."
+     },
+     {
+      "id": "same",
+      "text": "All three spread the same, being unbiased",
+      "why": "Unbiased means centred at the truth. It says nothing about spread, and the chart shows three different widths."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the widths of the three sets of bars."
+    },
+    {
+     "rung": "step",
+     "text": "The mean's bars are the narrowest; the median's are a little wider; the first-and-last bars cover the axis."
+    }
+   ],
+   "feedback": {
+    "correct": "Mean, median, then first and last: the simulated sds are 0.100, 0.126 and 0.715.",
+    "generic": "Not quite. Look at how wide each colour spreads."
+   },
+   "explain": {
+    "text": "All three centre on 0, but their sds are 0.100, 0.126 and 0.715. The mean uses all 101 days evenly, the median mostly the middle ones, the last estimator only two. Could anything beat the mean?"
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Now run it live. Move the sample size: the chart re-simulates 1,000 samples of normal returns with $\\sigma = 1$ and draws the mean beside the first-and-last average.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": -1.5,
+      "max": 1.5,
+      "width": 0.1
+     },
+     "proportion": true,
+     "height": 240,
+     "xLabel": "estimate of $\\mu$",
+     "yLabel": "share of trials",
+     "yMax": 0.4,
+     "groups": [
+      {
+       "id": "mean",
+       "label": "mean"
+      },
+      {
+       "id": "ends",
+       "label": "first and last"
+      }
+     ],
+     "params": {
+      "m": 11
+     },
+     "sim": {
+      "trials": [
+       100,
+       1000
+      ],
+      "let": {
+       "xs": "sample(m, n())"
+      },
+      "outcome": "[mean(xs), (xs[0] + xs[m - 1]) / 2]",
+      "seed": 21
+     }
+    },
+    "state": {
+     "ran": 1000,
+     "caption": "Sample size 11"
+    },
+    "derive": {
+     "caption": "Sample size {{m}}"
+    },
+    "controls": [
+     {
+      "bind": "m",
+      "stops": [
+       11,
+       51,
+       101
+      ],
+      "start": 11,
+      "label": "sample size"
+     }
+    ]
+   },
+   "question": "As the sample size grows from 11 to 101, which estimator gets more precise?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mean",
+      "text": "Only the mean",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "Both, at the same rate",
+      "why": "The first-and-last average uses two days whatever the sample size. Its bars do not narrow."
+     },
+     {
+      "id": "ends",
+      "text": "Only the first and last average",
+      "why": "Watch which colour narrows when you move to 101."
+     },
+     {
+      "id": "neither",
+      "text": "Neither, since both are unbiased",
+      "why": "Unbiased is about the centre. The mean's spread falls like $\\tfrac{1}{\\sqrt n}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the chart at 11 and at 101."
+    },
+    {
+     "rung": "step",
+     "text": "The mean's sd falls from $\\tfrac{1}{\\sqrt{11}} = 0.30$ to $\\tfrac{1}{\\sqrt{101}} = 0.10$; the other stays at 0.71."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the mean tightens; the first-and-last average ignores the extra days.",
+    "generic": "Not quite. Watch each colour as the size changes."
+   },
+   "explain": {
+    "text": "The mean's variance is $\\tfrac{\\sigma^2}{n}$, so it keeps shrinking. The first-and-last average has variance $\\tfrac{\\sigma^2}{2}$ at every sample size. Unbiased estimators can differ hugely in precision.",
+    "canvas": {
+     "params": {
+      "m": 101
+     },
+     "caption": "Sample size 101"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Is there a floor? Take a regular model: support free of $\\theta$, differentiation under the integral allowed, and $0 < I(\\theta) < \\infty$. The **Cramér-Rao bound** says every **unbiased** estimator from $n$ independent observations has $$\\mathrm{Var}(\\hat\\theta) \\ge \\frac{1}{nI(\\theta)}.$$ An unbiased estimator that attains it is called **efficient**.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "mean",
+       "label": "mean"
+      },
+      {
+       "id": "median",
+       "label": "median"
+      }
+     ],
+     "height": 200,
+     "yLabel": "variance (2,000 samples)",
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "mean": 0.0101,
+      "median": 0.016
+     }
+    }
+   },
+   "question": "For the normal mean, $I(\\mu) = \\tfrac{1}{\\sigma^2}$. What is the bound with $\\sigma = 1$ and $n = 101$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0099,
+    "tol": {
+     "abs": 5e-05
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.0099: $\\tfrac{1}{101}$",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.0995,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "info",
+      "value": 101,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$nI(\\mu) = \\tfrac{n}{\\sigma^2}$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1}{101} = 0.0099$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{\\sigma^2}{n} = \\tfrac{1}{101} = 0.0099$: exactly the mean's variance, so the mean is efficient.",
+    "generic": "Not quite. Invert the total information.",
+    "byKey": {
+     "sd": "0.0995 is $\\tfrac{1}{\\sqrt{101}}$, an sd. The bound is on the variance.",
+     "info": "101 is the total information. The bound is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "The bound is $\\tfrac{\\sigma^2}{n} = 0.0099$, and $\\mathrm{Var}(\\bar X) = \\tfrac{\\sigma^2}{n}$ exactly. So no unbiased estimator of a normal mean beats the sample mean. The simulated 0.0101 is the same number up to noise."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "For large $n$ the median's variance is about $\\tfrac{\\pi}{2}\\cdot\\tfrac{\\sigma^2}{n}$, so its **efficiency**, bound over variance, is $\\tfrac{2}{\\pi} = 0.6366$. The simulation gave a ratio of 1.59 against the theory's $\\tfrac{\\pi}{2} = 1.5708$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "mean",
+       "label": "mean"
+      },
+      {
+       "id": "median",
+       "label": "median"
+      }
+     ],
+     "height": 200,
+     "yLabel": "variance",
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "mean": 0.0099,
+      "median": 0.0156
+     }
+    }
+   },
+   "question": "How many observations does the median need to match the precision of the mean from 101?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 158.7,
+    "tol": {
+     "abs": 1.2
+    },
+    "unit": "",
+    "placeholder": "observations",
+    "accept": "about 159: $101 \\times \\tfrac{\\pi}{2} = 158.7$",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 64.3,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "same",
+      "value": 101,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Equal variance: $\\tfrac{\\pi}{2}\\cdot\\tfrac{1}{m} = \\tfrac{1}{101}$."
+    },
+    {
+     "rung": "step",
+     "text": "$m = 101 \\times 1.5708$."
+    }
+   ],
+   "feedback": {
+    "correct": "$101 \\times \\tfrac{\\pi}{2} = 158.7$, about 57% more data.",
+    "generic": "Not quite. Set the median's variance equal to the mean's.",
+    "byKey": {
+     "inverse": "You multiplied by $\\tfrac{2}{\\pi}$. The median is the weaker estimator, so it needs more data, not less.",
+     "same": "With equal sample sizes the median's variance is 57% larger."
+    }
+   },
+   "explain": {
+    "text": "Setting $\\tfrac{\\pi}{2m} = \\tfrac{1}{101}$ gives $m = 158.7$. The median throws away about 36% of the information in normal data. With heavy tails the comparison can reverse; the bound applies to the model you assume."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Exponential fill delays with rate $\\lambda = 2$ a second, $n = 10$. The MLE is $\\tfrac{1}{\\bar x}$, and its mean is $E\\big[\\tfrac{1}{\\bar X}\\big] = \\tfrac{n\\lambda}{n - 1}$. The chart simulates it.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": 0,
+      "max": 7,
+      "width": 0.25
+     },
+     "proportion": true,
+     "height": 240,
+     "xLabel": "$1/\\bar x$ from 10 delays",
+     "yLabel": "share of trials",
+     "showMean": true,
+     "sim": {
+      "trials": [
+       1000,
+       10000
+      ],
+      "outcome": "1 / mean(sample(10, -log(1 - u()) / 2))",
+      "seed": 5
+     }
+    },
+    "state": {
+     "ran": 10000
+    }
+   },
+   "question": "What is $E\\big[\\tfrac{1}{\\bar X}\\big]$ here?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.2222,
+    "tol": {
+     "abs": 0.002
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "2.2222: $\\tfrac{20}{9}$",
+    "wrong": [
+     {
+      "id": "unbiased",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "n-plus",
+      "value": 1.8182,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $n = 10$ and $\\lambda = 2$ into $\\tfrac{n\\lambda}{n - 1}$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{20}{9} = 2.2222$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{20}{9} = 2.2222$: the MLE overshoots by 11%.",
+    "generic": "Not quite. Use $\\tfrac{n\\lambda}{n - 1}$.",
+    "byKey": {
+     "unbiased": "You assumed the MLE is unbiased. $\\tfrac{1}{\\bar X}$ is a convex function of $\\bar X$, so it overshoots.",
+     "n-plus": "You divided by $n + 1$. The formula has $n - 1$."
+    }
+   },
+   "explain": {
+    "text": "$E[\\tfrac{1}{\\bar X}] = \\tfrac{20}{9} = 2.2222$, and the simulated mean agrees. So the bound for unbiased estimators does not apply to the MLE directly. The fix, $\\tfrac{n - 1}{\\sum x_i}$, is unbiased."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "The unbiased $\\tfrac{n - 1}{\\sum x_i}$ has variance $\\tfrac{\\lambda^2}{n - 2}$. With $I(\\lambda) = \\tfrac{1}{\\lambda^2}$, the bound is $\\tfrac{\\lambda^2}{n}$. At $\\lambda = 2$ and $n = 10$ these are 0.5 and 0.4.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "est",
+       "label": "unbiased estimator"
+      },
+      {
+       "id": "cr",
+       "label": "bound"
+      }
+     ],
+     "height": 200,
+     "yLabel": "variance",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "est": 0.5,
+      "cr": 0.4
+     }
+    }
+   },
+   "question": "What is the efficiency of this estimator at $n = 10$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.8: $\\tfrac{0.4}{0.5}$",
+    "wrong": [
+     {
+      "id": "inverted",
+      "value": 1.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "diff",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Efficiency is the bound divided by the variance."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{0.4}{0.5}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{0.4}{0.5} = 0.8$. In general it is $\\tfrac{n - 2}{n}$, which tends to 1.",
+    "generic": "Not quite. Divide the bound by the variance.",
+    "byKey": {
+     "inverted": "You divided the variance by the bound. Efficiency is at most 1.",
+     "diff": "That is the gap between the two variances, not their ratio."
+    }
+   },
+   "explain": {
+    "text": "Efficiency is $\\tfrac{\\lambda^2/n}{\\lambda^2/(n - 2)} = \\tfrac{n - 2}{n} = 0.8$. The bound is not attained at any finite $n$, only in the limit. Likewise $s^2$ for a normal has variance $\\tfrac{2\\sigma^4}{n - 1}$ against the bound $\\tfrac{2\\sigma^4}{n}$: $\\tfrac{2}{9}$ against $\\tfrac{2}{10}$ at $n = 10$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "For normal data with $\\sigma = 1$ and $n = 10$, the bound for unbiased estimators of $\\sigma^2$ is $\\tfrac{2\\sigma^4}{n} = 0.2$. Dividing the sum of squares by $n + 1$ gives an estimator with mean squared error $\\tfrac{2\\sigma^4}{n + 1} = 0.1818$, below the bound.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "nm1",
+       "label": "divide by n − 1"
+      },
+      {
+       "id": "cr",
+       "label": "bound"
+      },
+      {
+       "id": "np1",
+       "label": "divide by n + 1"
+      }
+     ],
+     "height": 200,
+     "yLabel": "MSE",
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "nm1": 0.2222,
+      "cr": 0.2,
+      "np1": 0.1818
+     }
+    }
+   },
+   "question": "Does the $n + 1$ estimator contradict the Cramér-Rao bound?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "biased",
+      "text": "No: it is biased, and the bound covers unbiased estimators only",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: the bound must be wrong for small samples",
+      "why": "You applied the bound to a biased estimator. It speaks only of unbiased ones, and $\\tfrac{1}{n + 1}\\sum(x_i - \\bar x)^2$ is biased low."
+     },
+     {
+      "id": "mle",
+      "text": "No, because the $n + 1$ estimator is the MLE",
+      "why": "You linked the bound to the MLE. The MLE of $\\sigma^2$ divides by $n$, and the bound is about unbiasedness, not likelihood."
+     },
+     {
+      "id": "mse",
+      "text": "Yes: no estimator can have MSE below the bound",
+      "why": "The bound limits the variance of unbiased estimators. A biased estimator trades a little bias for less variance."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Re-read the bound's hypotheses."
+    },
+    {
+     "rung": "step",
+     "text": "$E\\big[\\tfrac{1}{n + 1}\\sum(x_i - \\bar x)^2\\big] = \\tfrac{n - 1}{n + 1}\\sigma^2 \\ne \\sigma^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "No contradiction: the bound is for unbiased estimators.",
+    "generic": "Not quite. Check which estimators the bound covers.",
+    "byKey": {
+     "yes": "The bound holds at every $n$ for unbiased estimators.",
+     "mle": "Attaining a bound and being the MLE are different properties."
+    }
+   },
+   "explain": {
+    "text": "The $n + 1$ estimator has mean $\\tfrac{9}{11}\\sigma^2$, so it is biased and the bound says nothing about it. Its lower MSE comes from accepting bias, the bias-variance trade of the estimation course. Being efficient and being the MLE are also different properties."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "We prove the bound in two parts. Let $\\hat\\theta(X)$ be unbiased and let $S = \\tfrac{\\partial}{\\partial\\theta}\\ln f(X \\mid \\theta)$ be the score of the whole sample, with $E[S] = 0$ and $\\mathrm{Var}(S) = nI(\\theta)$. Part 1 finds $\\mathrm{Cov}(\\hat\\theta, S)$.",
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$\\int \\hat\\theta(x)\\,f(x \\mid \\theta)\\,dx = \\theta$ for every $\\theta$: $\\hat\\theta$ is unbiased"
+     },
+     {
+      "id": "d2",
+      "text": "$\\int \\hat\\theta(x)\\,\\dfrac{\\partial f}{\\partial\\theta}\\,dx = 1$: differentiate both sides in $\\theta$, under the integral (regular model)"
+     },
+     {
+      "id": "d3",
+      "text": "$\\int \\hat\\theta(x)\\,S(x)\\,f(x \\mid \\theta)\\,dx = E[\\hat\\theta S] = 1$: write $\\tfrac{\\partial f}{\\partial\\theta} = S f$"
+     },
+     {
+      "id": "d4",
+      "text": "$\\mathrm{Cov}(\\hat\\theta, S) = E[\\hat\\theta S] - E[\\hat\\theta]\\,E[S] = 1$: the score has mean 0"
+     },
+     {
+      "id": "dx",
+      "text": "$\\mathrm{Cov}(\\hat\\theta, S) = \\theta$: the covariance with the score is the estimator's mean",
+      "why": "The mean of $\\hat\\theta$ is $\\theta$, but the covariance is $E[\\hat\\theta S] - \\theta \\cdot 0 = 1$."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4"
+    ],
+    "distractors": [
+     "dx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from unbiasedness, written as an integral."
+    },
+    {
+     "rung": "step",
+     "text": "Differentiate, rewrite with the score, subtract the product of means."
+    }
+   ],
+   "feedback": {
+    "correct": "Unbiased, differentiate, rewrite, covariance.",
+    "generic": "Not quite. Each line follows from the one before.",
+    "byKey": {
+     "dx": "The covariance subtracts $E[\\hat\\theta]E[S] = \\theta \\cdot 0$, leaving 1.",
+     "left-out": "One of the four true lines is missing."
+    }
+   },
+   "explain": {
+    "text": "Differentiating $E[\\hat\\theta] = \\theta$ under the integral turns the density into score times density. So $E[\\hat\\theta S] = 1$, and since $E[S] = 0$ that is the covariance. Unbiasedness and regularity are both used here."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Part 2 turns $\\mathrm{Cov}(\\hat\\theta, S) = 1$ into the bound. It uses $|\\rho| \\le 1$ for any two random variables with finite variances (the random variables course; the Cauchy-Schwarz inequality for random variables is the same fact).",
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "e1",
+      "text": "$\\rho = \\dfrac{\\mathrm{Cov}(\\hat\\theta, S)}{\\sqrt{\\mathrm{Var}(\\hat\\theta)\\,\\mathrm{Var}(S)}}$ and $\\rho^2 \\le 1$: a correlation lies in $[-1, 1]$"
+     },
+     {
+      "id": "e2",
+      "text": "$\\dfrac{1}{\\mathrm{Var}(\\hat\\theta)\\,nI(\\theta)} \\le 1$: put $\\mathrm{Cov} = 1$ from part 1 and $\\mathrm{Var}(S) = nI(\\theta)$"
+     },
+     {
+      "id": "e3",
+      "text": "$\\mathrm{Var}(\\hat\\theta) \\ge \\dfrac{1}{nI(\\theta)}$: multiply through by $\\mathrm{Var}(\\hat\\theta)$, both sides positive"
+     },
+     {
+      "id": "e4",
+      "text": "Equality holds exactly when $\\rho^2 = 1$, that is when $\\hat\\theta$ is a linear function of $S$: when the bound is attained"
+     },
+     {
+      "id": "ex",
+      "text": "$\\mathrm{Var}(\\hat\\theta) \\le \\dfrac{1}{nI(\\theta)}$: the correlation is at most 1",
+      "why": "That reverses the inequality. From $\\tfrac{1}{\\mathrm{Var}(\\hat\\theta)\\,nI} \\le 1$ the variance is at least $\\tfrac{1}{nI}$."
+     }
+    ],
+    "answer": [
+     "e1",
+     "e2",
+     "e3",
+     "e4"
+    ],
+    "distractors": [
+     "ex"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the correlation between $\\hat\\theta$ and $S$."
+    },
+    {
+     "rung": "step",
+     "text": "Correlation, substitute, rearrange, then say when equality holds."
+    }
+   ],
+   "feedback": {
+    "correct": "Correlation, substitute, rearrange, equality case.",
+    "generic": "Not quite. Each line uses the one before.",
+    "byKey": {
+     "ex": "The inequality runs the other way: the variance is at least the bound.",
+     "left-out": "One of the four true lines is missing."
+    }
+   },
+   "explain": {
+    "text": "$\\rho^2 = \\tfrac{1}{\\mathrm{Var}(\\hat\\theta)\\,nI(\\theta)} \\le 1$ rearranges to the bound. Equality needs $\\hat\\theta$ to be linear in the score, which is why $\\bar X$ attains it for a normal mean. For the unbiased exponential estimator it is not linear in the score, so the bound is missed."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "Daily returns have mean 0.04% and sd 1%. The sample mean is efficient for a normal mean, with standard error $\\tfrac{\\sigma}{\\sqrt n}$, so no unbiased estimator does better. A desk wants a $t$ statistic of 2 for the mean: $\\tfrac{0.04}{1/\\sqrt n} = 2$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      4000
+     ],
+     "y": [
+      0,
+      3
+     ],
+     "grid": true,
+     "height": 220,
+     "xLabel": "days $n$",
+     "yLabel": "$t = 0.04\\sqrt{n}$",
+     "functions": [
+      {
+       "id": "t",
+       "expr": "0.04*sqrt(x)",
+       "domain": [
+        0,
+        4000
+       ],
+       "label": "$t$",
+       "labelAt": 3500
+      }
+     ]
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "two",
+       "y": 2,
+       "label": "$t = 2$"
+      }
+     ]
+    }
+   },
+   "question": "How many days of returns are needed?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2500,
+    "tol": {
+     "abs": 1
+    },
+    "unit": "",
+    "placeholder": "days",
+    "accept": "2,500: $(2 \\times 1/0.04)^2$",
+    "wrong": [
+     {
+      "id": "no-square",
+      "value": 50,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "no-two",
+      "value": 625,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $0.04\\sqrt n = 2$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt n = 50$, so $n = 2{,}500$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt n = 50$, so $n = 2{,}500$ days, about 9.9 years.",
+    "generic": "Not quite. Solve for $\\sqrt n$, then square.",
+    "byKey": {
+     "no-square": "50 is $\\sqrt n$. Square it.",
+     "no-two": "625 gives $t = 1$. For $t = 2$, double $\\sqrt n$."
+    }
+   },
+   "explain": {
+    "text": "$n = (2 \\times 1/0.04)^2 = 2{,}500$ days, about 9.9 years at 252 days a year. Volatility was known to 5% after 200 days, and both are the best any estimator can do. That is why desks size risk from recent data and treat expected returns with suspicion.",
+    "canvas": {
+     "vlines": [
+      {
+       "id": "n",
+       "x": 2500,
+       "label": "2,500 days"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Cramér-Rao: in a regular model, an unbiased estimator from $n$ independent observations has $\\mathrm{Var}(\\hat\\theta) \\ge \\tfrac{1}{nI(\\theta)}$.",
+   "The sample mean of normal data and $\\tfrac{k}{n}$ for a hit rate attain it; the median reaches $\\tfrac{2}{\\pi}$ of it, and $\\tfrac{n - 1}{\\sum x_i}$ only $\\tfrac{n - 2}{n}$.",
+   "The bound needs unbiasedness and regularity: a biased estimator can have lower MSE, and the uniform escapes it."
+  ],
+  "formula": {
+   "name": "Cramér-Rao bound",
+   "tex": "\\mathrm{Var}(\\hat\\theta) \\ge \\frac{1}{nI(\\theta)}",
+   "note": "Proof: $\\mathrm{Cov}(\\hat\\theta, S) = 1$, then $\\rho^2 \\le 1$."
+  },
+  "trap": "Beating the bound with a biased estimator is no contradiction: the bound covers unbiased estimators only."
+ },
+ "quiz": [
+  {
+   "id": "q-uniform",
+   "difficulty": 3,
+   "prose": "For the uniform on $(0, \\theta)$ with $n = 10$ and $\\theta = 1$, the unbiased estimator $\\tfrac{n + 1}{n}\\max x_i$ has variance $\\tfrac{\\theta^2}{n(n + 2)} = \\tfrac{1}{120}$, far below the $\\tfrac{1}{n}$ rate.",
+   "question": "Why does this not break the Cramér-Rao bound?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "support",
+      "text": "The support moves with $\\theta$: the model is not regular",
+      "correct": true
+     },
+     {
+      "id": "biased",
+      "text": "The estimator is biased, so the bound is silent",
+      "why": "You looked for bias, but $\\tfrac{n + 1}{n}\\max x_i$ is unbiased. The model is what breaks the bound."
+     },
+     {
+      "id": "small",
+      "text": "The sample of 10 is too small for the bound to hold",
+      "why": "The bound holds at every $n$ in a regular model. Here the model is not regular."
+     },
+     {
+      "id": "info",
+      "text": "Its information is infinite, so the bound is 0",
+      "why": "The derivation needs differentiation under the integral, which fails before information is defined."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: the regularity conditions fail for the uniform.",
+    "generic": "Not quite. Check the hypotheses of the bound."
+   },
+   "explain": {
+    "text": "Differentiating under the integral needs the support free of $\\theta$, and $(0, \\theta)$ moves. So the bound does not apply. That is why a variance of $\\tfrac{1}{120}$, shrinking like $\\tfrac{1}{n^2}$, is possible."
+   }
+  },
+  {
+   "id": "q-hit",
+   "difficulty": 2,
+   "prose": "A hit rate is estimated by $\\tfrac{k}{n}$ from $n = 100$ independent trades with $p = 0.5$. Each trade carries $I(p) = \\tfrac{1}{p(1 - p)}$.",
+   "question": "What is the Cramér-Rao bound for unbiased estimators of $p$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0025,
+    "tol": {
+     "abs": 2e-05
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.0025: $\\tfrac{0.25}{100}$",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac{p(1 - p)}{n} = \\tfrac{0.25}{100} = 0.0025$, which $\\tfrac{k}{n}$ attains.",
+    "generic": "Not quite. Invert $nI(p)$.",
+    "byKey": {
+     "sd": "0.05 is the standard error. The bound is on the variance.",
+     "one": "0.25 is one trade's bound. Divide by $n$."
+    }
+   },
+   "explain": {
+    "text": "$nI(p) = \\tfrac{100}{0.25} = 400$, so the bound is $\\tfrac{1}{400} = 0.0025$. $\\mathrm{Var}(\\tfrac{K}{n}) = \\tfrac{p(1 - p)}{n} = 0.0025$, so the hit rate is efficient."
+   }
+  },
+  {
+   "id": "q-vol-bound",
+   "difficulty": 3,
+   "prose": "Returns are normal with known mean 0. For $\\sigma^2$, one return carries $I(\\sigma^2) = \\tfrac{1}{2\\sigma^4}$. Take $\\sigma^2 = 1$ and $n = 50$.",
+   "question": "What is the Cramér-Rao bound for unbiased estimators of $\\sigma^2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.04,
+    "tol": {
+     "abs": 0.0002
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.04: $\\tfrac{2}{50}$",
+    "wrong": [
+     {
+      "id": "sigma",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "sd",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac{2\\sigma^4}{n} = \\tfrac{2}{50} = 0.04$.",
+    "generic": "Not quite. Invert $nI(\\sigma^2)$.",
+    "byKey": {
+     "sigma": "0.01 is $\\tfrac{\\sigma^2}{2n}$, the bound for $\\sigma$ itself. The question is about $\\sigma^2$.",
+     "sd": "0.2 is the standard error. The bound is on the variance."
+    }
+   },
+   "explain": {
+    "text": "$nI(\\sigma^2) = \\tfrac{50}{2} = 25$, so the bound is $\\tfrac{1}{25} = 0.04$. With the mean known, $\\tfrac{1}{n}\\sum x_i^2$ is unbiased with variance $\\tfrac{2\\sigma^4}{n}$, so it attains the bound."
+   }
+  },
+  {
+   "id": "q-attain",
+   "difficulty": 3,
+   "question": "Which statement is true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "miss",
+      "text": "An MLE can miss the bound at every finite $n$",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "Every MLE attains the bound",
+      "why": "You read 'is the MLE' as 'attains the bound'. The exponential MLE $\\tfrac{1}{\\bar x}$ is biased, and even its unbiased fix misses the bound."
+     },
+     {
+      "id": "only",
+      "text": "Only the MLE can come close to the bound at all",
+      "why": "The unbiased $\\tfrac{n - 1}{\\sum x_i}$ is not the MLE, yet it reaches $\\tfrac{n - 2}{n}$ of the bound."
+     },
+     {
+      "id": "biased-too",
+      "text": "The bound limits biased estimators too",
+      "why": "The bound is for unbiased estimators; the $n + 1$ divisor beats it on MSE."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right: being the MLE does not guarantee attaining the bound.",
+    "generic": "Not quite. Recall the exponential example."
+   },
+   "explain": {
+    "text": "The exponential MLE is biased, and its unbiased fix reaches only $\\tfrac{n - 2}{n}$ of the bound. In a regular model the MLE attains the bound in the limit of large $n$. When an unbiased estimator attains it exactly, that estimator is the MLE."
+   }
+  }
+ ]
+}

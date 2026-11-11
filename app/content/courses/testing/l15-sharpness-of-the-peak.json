@@ -1,0 +1,1208 @@
+{
+ "id": "l15-sharpness-of-the-peak",
+ "course": "testing",
+ "title": "How sharp is the peak?",
+ "minutes": 15,
+ "objectives": [
+  "Compute the Fisher information of a model and use it for the standard error of a maximum likelihood estimate."
+ ],
+ "skills": [
+  "ht-setup",
+  "ht-errors"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Two strategies both win 70% of their trades: one over 10 trades, one over 100. The chart shows each log-likelihood, shifted so both peaks sit at 0 above $\\hat p = 0.7$. Drag point A along the first curve.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.45,
+      0.9
+     ],
+     "y": [
+      -3,
+      0.4
+     ],
+     "grid": true,
+     "height": 300,
+     "xLabel": "$p$",
+     "yLabel": "$\\ell(p) - \\ell(0.7)$",
+     "functions": [
+      {
+       "id": "f1",
+       "expr": "7*ln(x/0.7)+3*ln((1-x)/0.3)",
+       "label": "7 in 10",
+       "labelAt": 0.5
+      },
+      {
+       "id": "f2",
+       "expr": "70*ln(x/0.7)+30*ln((1-x)/0.3)",
+       "label": "70 in 100",
+       "labelAt": 0.8
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 0.7,
+       "y": 0,
+       "drag": true,
+       "on": "f1",
+       "label": "A"
+      },
+      {
+       "id": "p2",
+       "x": 0.7,
+       "y": 0,
+       "on": "f2",
+       "label": "B",
+       "colour": 2
+      }
+     ],
+     "caption": "At p = 0.70: A has fallen 0.000, B has fallen 0.000"
+    },
+    "derive": {
+     "p2.x": "p1.x",
+     "caption": "At p = {{fixed(p1.x, 2)}}: A has fallen {{fixed(-(7*ln(p1.x/0.7)+3*ln((1-p1.x)/0.3)), 3)}}, B has fallen {{fixed(-(70*ln(p1.x/0.7)+30*ln((1-p1.x)/0.3)), 3)}}"
+    }
+   },
+   "question": "Drag A to $p = 0.6$. How many times further has B fallen than A?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ten",
+      "text": "10 times",
+      "correct": true
+     },
+     {
+      "id": "root",
+      "text": "About 3.2 times, $\\sqrt{10}$",
+      "why": "You expected a square-root law. That is for standard errors; the fall itself scales with $n$, here by 10."
+     },
+     {
+      "id": "hundred",
+      "text": "100 times",
+      "why": "You squared the ratio of sample sizes. The log-likelihood is a sum over trades, so ten times the trades gives ten times the fall."
+     },
+     {
+      "id": "same",
+      "text": "The same",
+      "why": "The two peaks match, but the second curve is ten times as steep on each side. Read the caption at 0.6."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read both falls in the caption at $p = 0.6$."
+    },
+    {
+     "rung": "step",
+     "text": "A falls 0.216 and B falls 2.160."
+    }
+   ],
+   "feedback": {
+    "correct": "B falls ten times as far: its log-likelihood is ten copies of A's.",
+    "generic": "Not quite. Compare the two numbers in the caption at 0.6."
+   },
+   "explain": {
+    "text": "With 70 wins in 100, $\\ell(p)$ is exactly ten times the 7-in-10 curve, so every fall is ten times larger: 2.160 against 0.216 at $p = 0.6$. A sharper peak pins $p$ down more tightly. The rest of the lesson measures that sharpness.",
+    "canvas": {
+     "points": {
+      "p1": {
+       "x": 0.6
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The slope of the log-likelihood is called the **score**, $S(p) = \\tfrac{d\\ell}{dp}$. For $k$ wins in $n$ trades, $\\ell(p) = k\\ln p + (n - k)\\ln(1 - p)$, so $S(p) = \\tfrac{k}{p} - \\tfrac{n - k}{1 - p}$. The score is 0 at the peak.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.45,
+      0.9
+     ],
+     "y": [
+      -1.5,
+      0.4
+     ],
+     "grid": true,
+     "height": 300,
+     "xLabel": "$p$",
+     "yLabel": "$\\ell(p) - \\ell(0.7)$",
+     "functions": [
+      {
+       "id": "f1",
+       "expr": "7*ln(x/0.7)+3*ln((1-x)/0.3)",
+       "label": "7 in 10",
+       "labelAt": 0.5
+      }
+     ]
+    },
+    "state": {
+     "tangent": {
+      "f": "f1",
+      "x": 0.6,
+      "label": "tangent",
+      "lengthPx": 120
+     },
+     "points": [
+      {
+       "id": "q",
+       "x": 0.6,
+       "y": -0.216,
+       "on": "f1",
+       "label": "0.6"
+      }
+     ]
+    }
+   },
+   "question": "For 7 wins in 10, what is the score at $p = 0.6$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.1667,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "4.1667: $\\tfrac{7}{0.6} - \\tfrac{3}{0.4}$",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -4.1667,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "plus",
+      "value": 19.1667,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $k = 7$, $n = 10$, $p = 0.6$ into the score."
+    },
+    {
+     "rung": "point",
+     "text": "The tangent at 0.6 rises: the score is positive.",
+     "highlight": [
+      "tangent"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{7}{0.6} = 11.667$ and $\\tfrac{3}{0.4} = 7.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$S(0.6) = 11.6667 - 7.5 = 4.1667$: the curve still rises towards the peak.",
+    "generic": "Not quite. Subtract the loss term from the win term.",
+    "byKey": {
+     "sign": "The curve rises at 0.6, so the slope is positive. You subtracted the wrong way round.",
+     "plus": "You added the two terms. The losses pull the slope down: $\\tfrac{k}{p} - \\tfrac{n - k}{1 - p}$."
+    }
+   },
+   "explain": {
+    "text": "$S(0.6) = \\tfrac{7}{0.6} - \\tfrac{3}{0.4} = 4.1667$, the slope of the tangent. Below the peak the score is positive and above it negative. For one trade, $S = \\tfrac{X}{p} - \\tfrac{1 - X}{1 - p}$, whose mean at the true $p$ is $1 - 1 = 0$.",
+    "canvas": {
+     "highlight": [
+      "tangent"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The score varies from sample to sample. Its variance is the **Fisher information**, $I(\\theta) = \\mathrm{Var}(S)$, and in a regular model it also equals minus the expected second derivative, $-E[\\ell'']$: the curvature you felt. One trade gives $I(p) = \\tfrac{1}{p(1 - p)}$; $n$ independent trades give $n$ times that.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.45,
+      0.9
+     ],
+     "y": [
+      -3,
+      0.4
+     ],
+     "grid": true,
+     "height": 300,
+     "xLabel": "$p$",
+     "yLabel": "$\\ell(p) - \\ell(0.7)$",
+     "functions": [
+      {
+       "id": "f2",
+       "expr": "70*ln(x/0.7)+30*ln((1-x)/0.3)",
+       "label": "70 in 100",
+       "labelAt": 0.8
+      },
+      {
+       "id": "q2",
+       "expr": "-0.5*476.19*(x-0.7)^2",
+       "label": "curvature at the peak",
+       "labelAt": 0.55,
+       "dashed": true,
+       "colour": 3
+      }
+     ]
+    }
+   },
+   "question": "What is the information about $p$ in 100 trades at $p = 0.7$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 476.19,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "476.19: $\\tfrac{100}{0.21}$",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 4.7619,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "binvar",
+      "value": 21,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "inv",
+      "value": 0.0021,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First find $I(0.7)$ for one trade."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1}{0.7 \\times 0.3} = \\tfrac{1}{0.21} = 4.7619$, then multiply by 100."
+    }
+   ],
+   "feedback": {
+    "correct": "$100 \\times 4.7619 = 476.19$.",
+    "generic": "Not quite. Multiply one trade's information by the number of trades.",
+    "byKey": {
+     "one": "4.7619 is the information in one trade. Independent trades add their information.",
+     "binvar": "21 is $np(1 - p)$, the variance of the count. Information is its reciprocal times $n^2$.",
+     "inv": "0.0021 is $\\tfrac{p(1 - p)}{n}$, the variance of $\\hat p$. Information is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "One trade carries $\\tfrac{1}{0.21} = 4.7619$, so 100 trades carry 476.19. The dashed parabola $-\\tfrac12 \\times 476.19\\,(p - 0.7)^2$ hugs the curve near its peak. Ten trades give 47.62, a tenth of the curvature."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Now compute $I$ for three models from one observation's log-density. In each, the second derivative is a constant or a simple mean.",
+   "question": "Fill in $I(\\theta)$ at the value given.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Model",
+     "$\\ell$",
+     "$\\ell''$",
+     "$I$ at that value"
+    ],
+    "rows": [
+     [
+      "Normal mean, $\\sigma = 2$",
+      "$-\\tfrac{(x - \\mu)^2}{2\\sigma^2}$",
+      "$-\\tfrac{1}{\\sigma^2}$",
+      {
+       "edit": true,
+       "answer": 0.25,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "sigma",
+         "value": 0.5,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "Exponential rate, $\\lambda = 2$",
+      "$\\ln\\lambda - \\lambda x$",
+      "$-\\tfrac{1}{\\lambda^2}$",
+      {
+       "edit": true,
+       "answer": 0.25,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "exp-lam",
+         "value": 0.5,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "Poisson mean, $\\lambda = 2$",
+      "$x\\ln\\lambda - \\lambda$",
+      "$-\\tfrac{x}{\\lambda^2}$",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "pois-sq",
+         "value": 0.25,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$I = -E[\\ell'']$. When $\\ell''$ has no $x$, its mean is itself."
+    },
+    {
+     "rung": "step",
+     "text": "Normal $\\tfrac14$, exponential $\\tfrac{1}{4}$; for the Poisson $E[X] = \\lambda$, so $-E[\\ell''] = \\tfrac{\\lambda}{\\lambda^2} = \\tfrac{1}{\\lambda}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{1}{\\sigma^2} = 0.25$, $\\tfrac{1}{\\lambda^2} = 0.25$ and $\\tfrac{1}{\\lambda} = 0.5$.",
+    "generic": "Not quite. Take minus the mean of $\\ell''$.",
+    "byKey": {
+     "sigma": "You used $\\tfrac{1}{\\sigma}$. The second derivative is $-\\tfrac{1}{\\sigma^2}$, so $I = \\tfrac14$.",
+     "exp-lam": "You used $\\tfrac{1}{\\lambda}$. For the exponential rate, $\\ell'' = -\\tfrac{1}{\\lambda^2}$.",
+     "pois-sq": "You dropped the $x$ in $-\\tfrac{x}{\\lambda^2}$. Its mean is $-\\tfrac{\\lambda}{\\lambda^2} = -\\tfrac{1}{\\lambda}$."
+    }
+   },
+   "explain": {
+    "text": "For the normal mean and the exponential rate $\\ell''$ is a constant, so $I = \\tfrac{1}{\\sigma^2} = 0.25$ and $\\tfrac{1}{\\lambda^2} = 0.25$. For the Poisson, $-E[-\\tfrac{X}{\\lambda^2}] = \\tfrac{1}{\\lambda} = 0.5$. Each is per observation; $n$ observations give $n$ times as much."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "The large-sample fact. With independent observations, a smooth model whose support does not depend on $\\theta$, and the true $\\theta$ inside the parameter range, the MLE is approximately normal with variance $\\tfrac{1}{nI(\\theta)}$. Its standard error is $\\tfrac{1}{\\sqrt{nI(\\hat\\theta)}}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.55,
+      0.85
+     ],
+     "y": [
+      -3,
+      0.4
+     ],
+     "grid": true,
+     "height": 300,
+     "xLabel": "$p$",
+     "yLabel": "$\\ell(p) - \\ell(0.7)$",
+     "functions": [
+      {
+       "id": "f2",
+       "expr": "70*ln(x/0.7)+30*ln((1-x)/0.3)",
+       "label": "70 in 100",
+       "labelAt": 0.8
+      },
+      {
+       "id": "q2",
+       "expr": "-0.5*476.19*(x-0.7)^2",
+       "label": "normal approximation",
+       "labelAt": 0.56,
+       "dashed": true,
+       "colour": 3
+      }
+     ]
+    }
+   },
+   "question": "What is the standard error of $\\hat p = 0.7$ from 100 trades?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0458,
+    "tol": {
+     "abs": 0.0002
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.0458: $\\sqrt{0.21/100}$",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.0021,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "no-n",
+      "value": 0.4583,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "info",
+      "value": 476.19,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$nI(\\hat p) = 476.19$ from the last screen."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1}{\\sqrt{476.19}} = \\sqrt{\\tfrac{0.21}{100}}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{1}{\\sqrt{476.19}} = 0.0458$, the familiar $\\sqrt{\\hat p(1 - \\hat p)/n}$.",
+    "generic": "Not quite. Take one over the square root of the total information.",
+    "byKey": {
+     "var": "0.0021 is the variance. Take its square root.",
+     "no-n": "0.458 is $\\sqrt{0.21}$, one trade's spread. Use the information of all 100 trades.",
+     "info": "476.19 is the information itself. The standard error is one over its square root."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1}{\\sqrt{nI(\\hat p)}} = \\sqrt{\\tfrac{0.7 \\times 0.3}{100}} = 0.0458$, the standard error of a proportion from the estimation course. The dashed parabola is the normal approximation. The lines mark one standard error either side, 0.654 and 0.746.",
+    "canvas": {
+     "vlines": [
+      {
+       "id": "lo",
+       "x": 0.6542,
+       "label": "0.654"
+      },
+      {
+       "id": "hi",
+       "x": 0.7458,
+       "label": "0.746"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "In the estimation course a screen read: 'For normal returns its standard error is about $\\sigma/\\sqrt{2n}$; we take this as given.' Now we can pay that debt. With known mean 0, one return gives $\\ell(\\sigma) = -\\ln\\sigma - \\tfrac{x^2}{2\\sigma^2}$, so $\\ell'' = \\tfrac{1}{\\sigma^2} - \\tfrac{3x^2}{\\sigma^4}$ and $I(\\sigma) = \\tfrac{2}{\\sigma^2}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.85,
+      1.15
+     ],
+     "y": [
+      -6,
+      0.5
+     ],
+     "grid": true,
+     "height": 240,
+     "xLabel": "$\\sigma$ (% a day)",
+     "yLabel": "$\\ell(\\sigma) - \\ell(1)$",
+     "functions": [
+      {
+       "id": "l",
+       "expr": "-252*(ln(x)+1/(2*x^2)-0.5)",
+       "label": "252 days",
+       "labelAt": 0.9
+      }
+     ]
+    }
+   },
+   "question": "With $\\sigma = 1\\%$ a day and $n = 252$ days, what is the standard error of $\\hat\\sigma$, in percentage points?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0445,
+    "tol": {
+     "abs": 0.0002
+    },
+    "unit": "percentage points",
+    "placeholder": "decimal",
+    "accept": "0.0445: $\\tfrac{1}{\\sqrt{2 \\times 252}}$",
+    "wrong": [
+     {
+      "id": "no-two",
+      "value": 0.063,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.00198,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$nI(\\sigma) = \\tfrac{2n}{\\sigma^2}$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{\\sigma}{\\sqrt{2n}} = \\tfrac{1}{\\sqrt{504}}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{1}{\\sqrt{504}} = 0.0445$ percentage points, a relative error of 4.45%.",
+    "generic": "Not quite. Use $I(\\sigma) = \\tfrac{2}{\\sigma^2}$ per day.",
+    "byKey": {
+     "no-two": "0.063 is $\\tfrac{\\sigma}{\\sqrt n}$, the mean's standard error. Each return carries $\\tfrac{2}{\\sigma^2}$ about $\\sigma$.",
+     "var": "0.00198 is the variance $\\tfrac{\\sigma^2}{2n}$. Take its root."
+    }
+   },
+   "explain": {
+    "text": "$E[X^2] = \\sigma^2$ turns $\\ell''$ into $\\tfrac{1}{\\sigma^2} - \\tfrac{3}{\\sigma^2} = -\\tfrac{2}{\\sigma^2}$, so $I(\\sigma) = \\tfrac{2}{\\sigma^2}$. Then $\\mathrm{SE}(\\hat\\sigma) = \\tfrac{\\sigma}{\\sqrt{2n}} = 0.0445$ points with 252 days. That is the debt paid: a year pins volatility to within 4.45% of itself."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "An edge case. For one draw from the uniform on $(0, \\theta)$, $\\ell(\\theta) = -\\ln\\theta$ whenever $\\theta > x$. The support moves with $\\theta$, which breaks the hypotheses above. The chart shows the log-likelihood of the sample 1, 5, 9: its peak is a corner.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      20
+     ],
+     "y": [
+      -10,
+      0
+     ],
+     "grid": true,
+     "height": 220,
+     "xLabel": "$\\theta$",
+     "yLabel": "$\\ell(\\theta)$",
+     "functions": [
+      {
+       "id": "l",
+       "expr": "-3*ln(x)",
+       "domain": [
+        9,
+        20
+       ],
+       "label": "$-3\\ln\\theta$",
+       "labelAt": 14,
+       "endpoints": [
+        "closed",
+        null
+       ]
+      }
+     ]
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "mx",
+       "x": 9,
+       "label": "max 9"
+      }
+     ]
+    }
+   },
+   "question": "For one draw with $\\theta = 2$, what is the mean of the score $\\tfrac{d\\ell}{d\\theta}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "-0.5: the score is $-\\tfrac{1}{\\theta}$ for every draw",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pos",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Differentiate $-\\ln\\theta$."
+    },
+    {
+     "rung": "step",
+     "text": "The score is $-\\tfrac{1}{\\theta}$ for every $x$ in $(0, \\theta)$, so its mean is $-\\tfrac12$."
+    }
+   ],
+   "feedback": {
+    "correct": "The score is $-\\tfrac{1}{\\theta} = -0.5$ for every draw, so its mean is $-0.5$, not 0.",
+    "generic": "Not quite. Differentiate $-\\ln\\theta$.",
+    "byKey": {
+     "zero": "You assumed the score has mean 0. That needs the support to stay put as $\\theta$ moves; here it does not.",
+     "pos": "The derivative of $-\\ln\\theta$ is $-\\tfrac{1}{\\theta}$, negative."
+    }
+   },
+   "explain": {
+    "text": "The score is $-\\tfrac{1}{\\theta}$ whatever the draw, so its mean is $-0.5$ at $\\theta = 2$. The regularity that made $E[S] = 0$ fails because the support moves. So the information story does not apply: the MLE's error here shrinks like $\\tfrac{1}{n}$, faster than $\\tfrac{1}{\\sqrt n}$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague wants the standard error of the variance estimate $\\hat\\sigma^2$ from the same 252 days. She takes $I(\\sigma) = \\tfrac{2}{\\sigma^2}$ and writes $\\tfrac{1}{\\sqrt{nI}} = 0.0445$. Information depends on the parameter we write the model in: $I(\\sigma^2) = \\tfrac{I(\\sigma)}{(d\\sigma^2/d\\sigma)^2}$.",
+   "question": "With $\\sigma = 1\\%$, what is the standard error of $\\hat\\sigma^2$, in $\\%^2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0891,
+    "tol": {
+     "abs": 0.0003
+    },
+    "unit": "%²",
+    "placeholder": "decimal",
+    "accept": "0.0891: $\\sqrt{2\\sigma^4/n}$",
+    "wrong": [
+     {
+      "id": "used-sigma",
+      "value": 0.0445,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "no-chain",
+      "value": 0.0223,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\tfrac{d\\sigma^2}{d\\sigma} = 2\\sigma$."
+    },
+    {
+     "rung": "step",
+     "text": "$I(\\sigma^2) = \\tfrac{2/\\sigma^2}{4\\sigma^2} = \\tfrac{1}{2\\sigma^4}$, so the SE is $\\sqrt{\\tfrac{2\\sigma^4}{n}} = \\sqrt{\\tfrac{2}{252}}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$I(\\sigma^2) = \\tfrac{1}{2\\sigma^4}$, so $\\mathrm{SE} = \\sqrt{\\tfrac{2}{252}} = 0.0891\\ \\%^2$.",
+    "generic": "Not quite. Convert the information to the $\\sigma^2$ scale first.",
+    "byKey": {
+     "used-sigma": "0.0445 is the SE of $\\hat\\sigma$. You used the information about $\\sigma$ for a question about $\\sigma^2$.",
+     "no-chain": "You divided by $2\\sigma$ instead of multiplying. $\\hat\\sigma^2$ moves twice as fast as $\\hat\\sigma$ near $\\sigma = 1$."
+    }
+   },
+   "explain": {
+    "text": "The chain rule gives $I(\\sigma^2) = \\tfrac{2/\\sigma^2}{(2\\sigma)^2} = \\tfrac{1}{2\\sigma^4}$. So $\\mathrm{SE}(\\hat\\sigma^2) = \\sqrt{2/252} = 0.0891$, twice the SE of $\\hat\\sigma$ at $\\sigma = 1$. Information is per parameterisation; convert before you invert."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "Why does the score have mean 0? We assume the support $\\{x : f(x \\mid \\theta) > 0\\}$ does not depend on $\\theta$, and that we may differentiate under the integral.",
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$\\int f(x \\mid \\theta)\\,dx = 1$ for every $\\theta$: a density integrates to 1"
+     },
+     {
+      "id": "d2",
+      "text": "$\\int \\dfrac{\\partial f}{\\partial \\theta}\\,dx = 0$: differentiate both sides in $\\theta$, passing the derivative under the integral"
+     },
+     {
+      "id": "d3",
+      "text": "$\\dfrac{\\partial f}{\\partial\\theta} = f \\cdot \\dfrac{\\partial \\ln f}{\\partial\\theta}$: the derivative of $\\ln f$ is $\\tfrac{1}{f}\\tfrac{\\partial f}{\\partial\\theta}$"
+     },
+     {
+      "id": "d4",
+      "text": "$\\int \\dfrac{\\partial \\ln f}{\\partial\\theta}\\, f\\,dx = E[S] = 0$: this integral is the mean of the score"
+     },
+     {
+      "id": "dx",
+      "text": "$\\int \\dfrac{\\partial f}{\\partial \\theta}\\,dx = 1$: the derivative of the integral equals the integral",
+      "why": "The right side is the constant 1, whose derivative in $\\theta$ is 0."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4"
+    ],
+    "distractors": [
+     "dx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from what every density satisfies."
+    },
+    {
+     "rung": "step",
+     "text": "Integrate to 1, differentiate, rewrite $\\partial f$ as $f\\,\\partial\\ln f$, read off a mean."
+    }
+   ],
+   "feedback": {
+    "correct": "Integrate, differentiate, rewrite, read the mean.",
+    "generic": "Not quite. Each line follows from the one before.",
+    "byKey": {
+     "dx": "The derivative of the constant 1 is 0, not 1.",
+     "left-out": "One of the four true lines is missing."
+    }
+   },
+   "explain": {
+    "text": "Differentiating $\\int f\\,dx = 1$ under the integral gives $\\int \\partial_\\theta f\\,dx = 0$, and $\\partial_\\theta f = f\\,\\partial_\\theta \\ln f$ turns that into $E[S] = 0$. The step under the integral is where the support must not move. The homework differentiates once more to show $\\mathrm{Var}(S) = -E[\\ell'']$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Information in code",
+   "prose": "Write three functions. `observed_info` returns $-\\tfrac{\\ell(\\theta + h) - 2\\ell(\\theta) + \\ell(\\theta - h)}{h^2}$. In `mle_sd`, each repetition draws $n$ values of `rng.random()` and counts those below $p$. Return `statistics.pstdev` of the $k/n$ values, the spread with divisor `reps`.",
+   "question": "Complete `info_bernoulli`, `observed_info` and `mle_sd`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\nimport statistics\n\n\ndef info_bernoulli(p, n):\n    \"\"\"Fisher information about p in n independent trades.\"\"\"\n    ...\n\n\ndef observed_info(loglik, theta, h):\n    \"\"\"Minus the central second difference of loglik at theta, step h.\"\"\"\n    ...\n\n\ndef mle_sd(p, n, reps, seed):\n    \"\"\"Spread of k/n over reps simulated samples of n trades.\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import random\nimport statistics\n\n\ndef info_bernoulli(p, n):\n    \"\"\"Fisher information about p in n independent trades.\"\"\"\n    return n / (p * (1 - p))\n\n\ndef observed_info(loglik, theta, h):\n    \"\"\"Minus the central second difference of loglik at theta, step h.\"\"\"\n    return -(loglik(theta + h) - 2 * loglik(theta) + loglik(theta - h)) / h ** 2\n\n\ndef mle_sd(p, n, reps, seed):\n    \"\"\"Spread of k/n over reps simulated samples of n trades.\"\"\"\n    rng = random.Random(seed)\n    ests = []\n    for _ in range(reps):\n        k = sum(1 for _ in range(n) if rng.random() < p)\n        ests.append(k / n)\n    return statistics.pstdev(ests)\n",
+    "examples": [
+     {
+      "call": "info_bernoulli(0.5, 1)",
+      "expect": "4.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "info_bernoulli(0.5, 1)",
+      "expect": "4.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "info_bernoulli(0.7, 100)",
+      "expect": "476.19047619047615",
+      "compare": "isclose"
+     },
+     {
+      "call": "info_bernoulli(0.2, 50)",
+      "expect": "312.5",
+      "compare": "isclose"
+     },
+     {
+      "setup": "import math",
+      "call": "observed_info(lambda p: 70 * math.log(p) + 30 * math.log(1 - p), 0.7, 1e-4)",
+      "expect": "476.19",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "observed_info(lambda m: -sum((x - m) ** 2 for x in [1, 2, 3]) / 2, 2, 0.01)",
+      "expect": "3.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "import math",
+      "call": "observed_info(lambda l: 10 * math.log(l) - 5 * l, 2, 1e-3)",
+      "expect": "2.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "call": "mle_sd(0.7, 100, 2000, 1)",
+      "expect": "0.047388216889855644",
+      "compare": "isclose"
+     },
+     {
+      "call": "mle_sd(0.5, 10, 500, 3)",
+      "expect": "0.1527218386479157",
+      "compare": "isclose"
+     },
+     {
+      "call": "abs(mle_sd(0.7, 100, 2000, 1) - 1 / info_bernoulli(0.7, 100) ** 0.5) < 0.003",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests with `math.isclose` (the two simulations to the seed, so draw exactly as described). Standard library only."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Information for $n$ trades is $\\tfrac{n}{p(1 - p)}$."
+    },
+    {
+     "rung": "point",
+     "text": "For the second difference, evaluate `loglik` at three points."
+    },
+    {
+     "rung": "step",
+     "text": "In `mle_sd`, loop `reps` times, count `rng.random() < p` over `n` draws, store `k / n`, return `statistics.pstdev`."
+    }
+   ],
+   "feedback": {
+    "correct": "All three functions pass, and the simulated spread sits within 0.003 of $\\tfrac{1}{\\sqrt{nI}}$.",
+    "generic": "Some tests failed. Check the sign of the second difference and the divisor of the spread.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that every `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "The observed information of the coin is 476.19, the curvature at the peak. The simulation gives a spread of 0.0474 for $\\hat p$, against $\\tfrac{1}{\\sqrt{476.19}} = 0.0458$ from the information. Two thousand repetitions land within 0.002 of the large-sample answer."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A risk desk sizes positions by daily volatility. It wants the estimate good to 5% of itself, so it needs $\\tfrac{\\mathrm{SE}(\\hat\\sigma)}{\\sigma} = \\tfrac{1}{\\sqrt{2n}} = 0.05$ for normal returns with mean taken as 0.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      600
+     ],
+     "y": [
+      0,
+      0.2
+     ],
+     "grid": true,
+     "height": 220,
+     "xLabel": "days $n$",
+     "yLabel": "relative SE",
+     "functions": [
+      {
+       "id": "r",
+       "expr": "1/sqrt(2*x)",
+       "domain": [
+        10,
+        600
+       ],
+       "label": "$1/\\sqrt{2n}$",
+       "labelAt": 80
+      }
+     ]
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "five",
+       "y": 0.05,
+       "label": "5%"
+      }
+     ]
+    }
+   },
+   "question": "How many days of returns does the desk need?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 200,
+    "tol": {
+     "abs": 1
+    },
+    "unit": "",
+    "placeholder": "days",
+    "accept": "200: $2n = 400$",
+    "wrong": [
+     {
+      "id": "no-two",
+      "value": 400,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "no-root",
+      "value": 10,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Square both sides of $\\tfrac{1}{\\sqrt{2n}} = 0.05$."
+    },
+    {
+     "rung": "step",
+     "text": "$2n = \\tfrac{1}{0.0025} = 400$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2n = 400$, so $n = 200$ days.",
+    "generic": "Not quite. Square, then halve.",
+    "byKey": {
+     "no-two": "400 solves $\\tfrac{1}{\\sqrt n} = 0.05$. Each return carries information $\\tfrac{2}{\\sigma^2}$, hence the 2.",
+     "no-root": "10 solves $\\tfrac{1}{2n} = 0.05$. The standard error has a square root."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1}{\\sqrt{2n}} = 0.05$ gives $2n = 400$ and $n = 200$ days, under a year of data. The same 200 days pin down the mean return far worse. The next lesson asks whether any estimator could do better.",
+    "canvas": {
+     "vlines": [
+      {
+       "id": "n200",
+       "x": 200,
+       "label": "200 days"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The score is the slope of the log-likelihood. When the support does not move with $\\theta$, its mean at the true value is 0.",
+   "Fisher information is $\\mathrm{Var}(S) = -E[\\ell'']$: $\\tfrac{1}{p(1 - p)}$ per trade, $\\tfrac{1}{\\sigma^2}$, $\\tfrac{1}{\\lambda^2}$, $\\tfrac{1}{\\lambda}$, and $\\tfrac{2}{\\sigma^2}$ for a volatility.",
+   "For independent data from a regular model with $\\theta$ inside its range, the MLE is roughly normal with standard error $\\tfrac{1}{\\sqrt{nI(\\hat\\theta)}}$."
+  ],
+  "formula": {
+   "name": "Fisher information",
+   "tex": "I(\\theta) = \\mathrm{Var}\\Big(\\frac{\\partial \\ln f(X \\mid \\theta)}{\\partial\\theta}\\Big) = -E\\Big[\\frac{\\partial^2 \\ln f(X \\mid \\theta)}{\\partial\\theta^2}\\Big]",
+   "note": "Standard error of the MLE: $1/\\sqrt{nI(\\hat\\theta)}$."
+  },
+  "trap": "Information is per parameterisation: $I(\\sigma^2) = \\tfrac{1}{2\\sigma^4}$, not $I(\\sigma) = \\tfrac{2}{\\sigma^2}$."
+ },
+ "quiz": [
+  {
+   "id": "q-poisson-se",
+   "difficulty": 2,
+   "prose": "Trade counts per minute are Poisson. Over $n = 25$ minutes the MLE is $\\hat\\lambda = 4$; one count carries $I(\\lambda) = \\tfrac{1}{\\lambda}$.",
+   "question": "What is the standard error of $\\hat\\lambda$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.4: $\\sqrt{4/25}$",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.16,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "info",
+      "value": 6.25,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$nI = \\tfrac{25}{4} = 6.25$, so $\\mathrm{SE} = \\tfrac{1}{\\sqrt{6.25}} = 0.4$.",
+    "generic": "Not quite. Take one over the root of the total information.",
+    "byKey": {
+     "var": "0.16 is the variance. Take the root.",
+     "info": "6.25 is the information itself."
+    }
+   },
+   "explain": {
+    "text": "$nI(\\hat\\lambda) = \\tfrac{25}{4} = 6.25$, so the standard error is $\\tfrac{1}{\\sqrt{6.25}} = 0.4$ trades a minute. It matches $\\sqrt{\\hat\\lambda/n}$."
+   }
+  },
+  {
+   "id": "q-overlap",
+   "difficulty": 3,
+   "prose": "An analyst estimates a mean from 250 overlapping 5-day returns built from 254 daily prices, and adds their information as if they were 250 independent observations.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dependent",
+      "text": "Neighbouring returns share days, so the information is far less",
+      "correct": true
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing: information always adds across observations",
+      "why": "You added information across observations that are not independent. Adding needs independence: here neighbouring returns share four days."
+     },
+     {
+      "id": "more",
+      "text": "She undercounts: overlapping returns carry extra information each",
+      "why": "Overlap repeats the same daily moves; it creates no new information."
+     },
+     {
+      "id": "model",
+      "text": "Only the model's mean is affected, not its standard error",
+      "why": "The standard error comes from the information, which she has overstated."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Information adds only across independent observations.",
+    "generic": "Not quite. Ask what the overlapping returns have in common."
+   },
+   "explain": {
+    "text": "Each 5-day return shares four days with its neighbour, so the 250 returns hold about 254 days of news. Treating them as independent overstates the information and shrinks the standard error by about $\\sqrt5$."
+   }
+  },
+  {
+   "id": "q-exp-se",
+   "difficulty": 3,
+   "prose": "Fill delays are exponential. From $n = 100$ fills the MLE of the rate is $\\hat\\lambda = 2$ per second, and $I(\\lambda) = \\tfrac{1}{\\lambda^2}$.",
+   "question": "What is the standard error of $\\hat\\lambda$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "placeholder": "decimal",
+    "accept": "0.2: $\\tfrac{\\hat\\lambda}{\\sqrt n}$",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.04,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "poisson",
+      "value": 0.1414,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$nI = \\tfrac{100}{4} = 25$, so $\\mathrm{SE} = 0.2$.",
+    "generic": "Not quite. Use $I = \\tfrac{1}{\\lambda^2}$ per fill.",
+    "byKey": {
+     "var": "0.04 is the variance. Take its root.",
+     "poisson": "You used the Poisson information $\\tfrac{1}{\\lambda}$. For the exponential rate it is $\\tfrac{1}{\\lambda^2}$."
+    }
+   },
+   "explain": {
+    "text": "$nI(\\hat\\lambda) = \\tfrac{100}{4} = 25$, so $\\mathrm{SE}(\\hat\\lambda) = \\tfrac{1}{5} = 0.2$ per second."
+   }
+  },
+  {
+   "id": "q-sharp",
+   "difficulty": 3,
+   "prose": "A model's log-likelihood has a very sharp peak on a year of returns.",
+   "question": "What does the sharp peak tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "precise",
+      "text": "Within the model, the parameter is estimated precisely",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "The model is correct",
+      "why": "Sharpness measures precision inside the model. A wrong model can have a sharp peak at the wrong place."
+     },
+     {
+      "id": "unbiased",
+      "text": "The estimate is unbiased",
+      "why": "Curvature says nothing about bias; the uniform's sharp corner sits at a biased estimate."
+     },
+     {
+      "id": "future",
+      "text": "Future returns will be close to the estimate",
+      "why": "A precise mean or volatility does not make single returns predictable."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A sharp peak means a small standard error within the model.",
+    "generic": "Not quite. Curvature measures one thing."
+   },
+   "explain": {
+    "text": "Information measures how tightly the data pin down $\\theta$ if the model holds. It cannot check the model itself; a misspecified model can be confidently wrong."
+   }
+  }
+ ]
+}
