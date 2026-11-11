@@ -458,7 +458,7 @@ if 'E 2.5 to 2.9' in opts['skewE']['text']:
 ok(r == Fr(1, 5), 'l16 find_arb: selling L at 3.2 locks 0.20 on the worst face')
 gain = sum(1 for s in SUMS if abs(s - 7) < 2)
 loss = sum(1 for s in SUMS if abs(s - 7) > 2)
-if 'gains only on sums 6 to 8, 16 rolls in 36, and loses on 12' in J['l17-options-on-a-game']['screens'][8]['explain']['text']:
+if 'gains only on sums 6 to 8, 16 rolls in 36, and loses on 12 rolls in 36' in J['l17-options-on-a-game']['screens'][8]['explain']['text']:
     ok(gain == 16 and loss == 12, 'l17 screens[8].explain: short straddle at 2.0 gains on 16 rolls, loses on 12')
 
 print('%d checks passed, %d failed, %d notes' % (passed[0], len(fails), len(notes)))
