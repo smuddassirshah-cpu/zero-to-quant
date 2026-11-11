@@ -110,3 +110,38 @@ The two families share ground without sharing a sentence: the earlier read added
 - Course number scripts: `fluency-limits-thm-numbers.py`, `limits-thm-1-perf-numbers.py`, `limits-thm-2-perf-numbers.py`, `limits-thm-3-perf-numbers.py`, `problems-limits-thm-numbers.py` all exit 0. The last three need `scipy`, which was missing from the sandbox and was installed with pip for this run.
 - `docs/reports/limits-thm-L1-3-concepts.py`: 76 checks, 74 pass, exit 1. The two failing checks are findings 1 and 2 and pass once those sentences are fixed (the checks encode the content's claim; the fixer should replace them with the corrected figures).
 - Playthrough: not run; no grading defect is suspected.
+
+## Fix pass
+
+Fixer: Opus, 11 Nov 2026. Each basis is the fixer's own. All edits are text-only except finding 15, which adds one slip (`wrong` id `nocc`, value 0.0119, tol 0.0003, with its `byKey` line) to `l13` `screens[9]`; no key, option id, test or code changed. The `l7` `screens[9]` widget label was reworded with finding 18.
+
+1. fixed. $16/20 = 0.8$ exactly; $15/19 = 0.789 < 0.8$ and each factor $(16-i)/(20-i)$ falls with $i$. Concepts check rewritten to assert the corrected sentence.
+2. fixed. $1/(1 - \Phi(2)) = 1/0.02275 = 43.96$ days; at about 21 trading days a month that is 2.1 months. Concepts check now asserts about 42 days.
+3. fixed differently. The Sharpe ratio is the mean excess return over its sd (Sharpe 1994, J. Portfolio Management 21(1), section 1). Every l12 number takes raw daily means, so the definition screen now says once that the lesson takes the risk-free rate as 0, and the formula line and `summary.ideas[2]` say "mean excess return over sd". No numbers change.
+4. fixed. Lindeberg-Feller drops identical distribution (Billingsley, Probability and Measure, Thm 27.2), so iid is the assumption of this form, not a requirement; the finite variance stays.
+5. fixed differently. Khinchin's weak law needs iid with $E|X| < \infty$ (Durrett 4th ed. Thm 2.2.14); the shown line $\operatorname{Var}(\bar X_n) = \sigma^2/n$ also needs a finite $\sigma^2$, so the note now says both and that weaker conditions also give the law.
+6. fixed. Without identical distribution or Lindeberg's condition one draw can dominate (e.g. $X_k$ with sd $2^k$), so "identically distributed" is restored.
+7. fixed. Berry-Esseen: $\sup|F_n - \Phi| \le C\,E|X - \mu|^3/(\sigma^3\sqrt n)$, a third absolute moment, so tail weight matters as well as skew.
+8. fixed. $\ln(S_{20}/S_0) = \sum_{i} \ln(S_i/S_{i-1})$ while simple returns compound; one sentence states the log-return convention.
+9. fixed. $\operatorname{Var}(\sum X_i) = \sum \operatorname{Var} X_i + \sum_{i \ne j} \operatorname{Cov}(X_i, X_j)$: only positive covariance widens it.
+10. fixed. The item assumes independence with a common mean and variance, not identical laws; the finite-mean-only law is Khinchin's, for iid draws.
+11. fixed. $\operatorname{Var}(\bar X_n) = \sigma^2/n$ requires uncorrelated trades; independence now stated, and the bound holds for any shape with that variance, so "always" became "whatever the shape of one trade".
+12. fixed. The weak law states a limit, $P(|\bar X_n - \mu| > \epsilon) \to 0$; a bound for finite $n$ is Chebyshev's.
+13. fixed. Lindeberg-Lévy gives no rate; the valid comparison is with independent days.
+14. fixed. Poisson limit needs $p \to 0$ with $np$ fixed (Feller I, VI.5); for $p$ near 1 the failures $n - X \sim \text{Bin}(n, 1 - p)$ take that role; with $np(1-p)$ large the normal is fine.
+15. fixed. $1 - \Phi(10/\sqrt{19.6}) = 1 - \Phi(2.259) = 0.0119$; $1 - \Phi(9.5/\sqrt{19.6}) = 1 - \Phi(2.146) = 0.0159$. Question now asks for the corrected estimate; new slip `nocc` 0.0119 (band 0.0116 to 0.0122, clear of the key band 0.0156 to 0.0162). Concepts check added.
+16. fixed. Exponential gaps characterise the Poisson process, which needs independent increments at a constant rate (Ross, Introduction to Probability Models, 5.3); a rate alone allows evenly spaced trades.
+17. fixed. With hazard 0.02 the one-year default chance is $1 - e^{-0.02} = 0.0198$, so the hazard is a rate, near the yearly chance only when small.
+18. fixed. VaR is the loss level not exceeded with the stated confidence, quoted as a positive loss (Jorion, Value at Risk, 3rd ed., ch. 5), as `l5` already defines it in £m. The `l7` screen keeps its key $r = -2.74\%$ and now says the VaR is $-r$, a 2.74% loss; label reworded to "Cut-off return r in percent".
+19. fixed differently. With the sample sd, $t$ is Student $t_{n-1}$, within about 0.01 of $N(0, 1)$ at its 2.5% point for $n$ in the hundreds ($t_{250,0.975} = 1.970$ against 1.960). Wording shortened.
+20. fixed. $P(\max \ge c) = 1 - (1 - q)^{10}$ is the product rule, which needs independence; positively correlated variants give less.
+21. fixed. Convergence in distribution does not carry moments without uniform integrability; $E[X(X-1)] = \lambda^2$ from the pmf gives $\operatorname{Var} X = \lambda$ directly.
+22. fixed. The geometric needs a constant $p$ as well as independence; a rising chance breaks the model even with independent minutes.
+23. fixed. A common factor moves mass towards both ends, not onto 0 and 10 exactly.
+24. fixed. $E[X] = \sum E[I_k]$ by linearity regardless of dependence, so replacement makes no difference to the mean.
+25. fixed differently. $e^{0.08} - 1 = 0.0833$; text and option `sure` say "about 8.3%" (option id and its `why` unchanged).
+26. fixed. On a bounded interval the uniform maximises entropy (Cover and Thomas 2nd ed., 12.1); it is a modelling choice and scale-dependent (uniform in price is not uniform in log price).
+27. fixed. Card payout sd $= \sqrt{100 \times 0.1 - 1^2} = 3$ against mean 1; $\operatorname{Var}(\bar X_n) = \sigma^2/n$ depends on the sd, not skew; a symmetric $1 \pm 3$ bet has the same sd.
+28. fixed differently. The curve is the sampling spread of the estimate, not a distribution for the true value; the axis is now plain "Sharpe ratio" (the prose already names the band as estimate plus or minus two standard errors), which avoids the auditor's long label.
+
+Gates: validator 0 errors; concepts script 77 checks, exit 0; `fluency-limits-thm-numbers.py`, `limits-thm-1-perf-numbers.py`, `limits-thm-2-perf-numbers.py`, `limits-thm-3-perf-numbers.py`, `problems-limits-thm-numbers.py` exit 0; voice scan 35 on the course: 0 over 35 words, 0 explanations over three sentences; playthrough of the 12 changed lessons and homework-3, desktop and `--mobile`: all 26 runs "All passed" (one batch was re-run after an external `pkill` of playthrough processes).
