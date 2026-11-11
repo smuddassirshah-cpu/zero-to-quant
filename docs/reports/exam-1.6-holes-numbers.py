@@ -99,32 +99,44 @@ with np.errstate(divide='ignore', invalid='ignore'):
     Gs = 2 * (term(sa) + term(sb))
 check(abs((Gs > 3.841).mean() - 0.05) < 0.005, f'pool-rates simulated size {(Gs > 3.841).mean():.4f} near 0.05 (one degree of freedom)')
 
-# s-pareto-losses
-nloss, S = 80, 32.0
-ahat = nloss / S
-loglik = lambda al: nloss * math.log(al) - (al + 1) * S
-a2 = optimize.minimize_scalar(lambda al: -loglik(al), bounds=(0.1, 20), method='bounded').x
-check(ahat == 2.5 and abs(a2 - 2.5) < 1e-5, f'pareto alpha-hat 2.5: n / sum ln x and numeric maximisation ({a2:.6f})')
+# s-pareto-losses (recovery rates, density theta x^(theta - 1) on (0, 1)); fixed after review-holes-1.6-2.1 finding 3
+nloss, S = 80, -32.0
+ahat = -nloss / S
+loglik = lambda th: nloss * math.log(th) + (th - 1) * S
+a2 = optimize.minimize_scalar(lambda th: -loglik(th), bounds=(0.1, 20), method='bounded').x
+check(ahat == 2.5 and abs(a2 - 2.5) < 1e-5, f'recovery theta-hat 2.5: -n / sum ln x and numeric maximisation ({a2:.6f})')
+check(abs(loglik(2.5) - (80 * math.log(2.5) - 32 * 1.5)) < 1e-9 and loglik(2.4) < loglik(2.5) > loglik(2.6), 'recovery log-likelihood 80 ln theta - 32 (theta - 1) peaks at 2.5')
 h = 1e-4
-lnf = lambda al, xx: math.log(al) - (al + 1) * math.log(xx)
-d2 = (lnf(2.5 + h, 3.0) - 2 * lnf(2.5, 3.0) + lnf(2.5 - h, 3.0)) / h ** 2
-check(abs(-d2 - 1 / 2.5 ** 2) < 1e-4, f'pareto I(alpha) = 1/alpha^2 by numerical second derivative ({-d2:.6f})')
+lnf = lambda th, xx: math.log(th) + (th - 1) * math.log(xx)
+d2 = (lnf(2.5 + h, 0.3) - 2 * lnf(2.5, 0.3) + lnf(2.5 - h, 0.3)) / h ** 2
+check(abs(-d2 - 1 / 2.5 ** 2) < 1e-4, f'recovery I(theta) = 1/theta^2 by numerical second derivative ({-d2:.6f})')
 crb = 2.5 ** 2 / nloss
-sims = stats.pareto(b=2.5).rvs(size=(20000, nloss), random_state=7)
-ah = nloss / np.log(sims).sum(axis=1)
-check(abs(crb - 0.078125) < 1e-15 and abs(ah.var() / crb - 1) < 0.08, f'pareto bound 0.078125; simulated var of the MLE {ah.var():.4f} near it')
-check(abs(np.log(sims).mean() - 1 / 2.5) < 0.002, 'pareto ln X is exponential with mean 1/alpha (simulation)')
+sims = stats.beta(a=2.5, b=1).rvs(size=(20000, nloss), random_state=7)     # density theta x^(theta - 1) on (0, 1)
+ah = -nloss / np.log(sims).sum(axis=1)
+check(abs(crb - 0.078125) < 1e-15 and abs(ah.var() / crb - 1) < 0.08, f'recovery bound 0.078125; simulated var of the MLE {ah.var():.4f} near it')
+check(abs(np.log(sims).mean() + 1 / 2.5) < 0.002, 'recovery -ln X is exponential with mean 1/theta (simulation)')
+check(abs(stats.beta(a=2.5, b=1).pdf(0.3) - 2.5 * 0.3 ** 1.5) < 1e-12, 'recovery density theta x^(theta - 1) is the Beta(theta, 1) density (SciPy)')
 parts = items['s-pareto-losses']['parts']
-check([o['id'] for o in parts[0]['widget']['options'] if o.get('correct')] == ['a'] and parts[0]['widget']['options'][0]['text'] == '$\\sum \\ln x_i$', 'pareto sufficient statistic key')
-# factorisation check: two samples with one sum of logs give proportional likelihoods in alpha
-s1 = np.exp(rng.exponential(0.4, 80)); s2 = np.exp(rng.exponential(0.4, 80)); s2 = np.exp(np.log(s2) * np.log(s1).sum() / np.log(s2).sum())
-r = [nloss * math.log(al) - (al + 1) * np.log(s1).sum() - (nloss * math.log(al) - (al + 1) * np.log(s2).sum()) for al in (1.0, 2.5, 4.0)]
-check(max(r) - min(r) < 1e-8, 'pareto equal sum ln x gives a likelihood ratio free of alpha')
+check([o['id'] for o in parts[0]['widget']['options'] if o.get('correct')] == ['a'] and parts[0]['widget']['options'][0]['text'] == '$\\sum \\ln x_i$', 'recovery sufficient statistic key')
+# factorisation check: two samples with one sum of logs give a likelihood ratio free of theta
+s1 = rng.beta(2.5, 1, 80); s2 = rng.beta(2.5, 1, 80); s2 = np.exp(np.log(s2) * np.log(s1).sum() / np.log(s2).sum())
+r = [nloss * math.log(th) + (th - 1) * np.log(s1).sum() - (nloss * math.log(th) + (th - 1) * np.log(s2).sum()) for th in (1.0, 2.5, 4.0)]
+check(max(r) - min(r) < 1e-8 and abs(np.log(s1).sum() - np.log(s2).sum()) < 1e-9, 'recovery equal sum ln x gives a likelihood ratio free of theta')
 cell_or_widget('s-pareto-losses p2', parts[1]['widget'], parts[1]['feedback']['byKey'], ahat,
-               {'upside-down': S / nloss, 'exponent': ahat - 1}, parts[1]['explain']['text'])
+               {'upside-down': -S / nloss, 'exponent': ahat + 1, 'sign': -ahat}, parts[1]['explain']['text'])
 cell_or_widget('s-pareto-losses p3', parts[2]['widget'], parts[2]['feedback']['byKey'], crb,
-               {'sd': math.sqrt(crb), 'info': nloss / 2.5 ** 2, 'alpha-not-squared': 2.5 / nloss}, parts[2]['explain']['text'])
-check(round(math.sqrt(crb), 2) == 0.28, 'pareto standard error about 0.28')
+               {'sd': math.sqrt(crb), 'info': nloss / 2.5 ** 2, 'theta-not-squared': 2.5 / nloss}, parts[2]['explain']['text'])
+check(round(math.sqrt(crb), 2) == 0.28, 'recovery standard error about 0.28')
+
+# s-pool-rates fix (finding 1): the band takes the value a 5-place working prints, and 3-place logs land on Pearson's 6.00
+g5 = 2 * (90 * 0.18232 + 60 * -0.22314)
+g4 = 2 * (90 * 0.1823 + 60 * -0.2231)
+g3 = 2 * (90 * 0.182 + 60 * -0.223)
+w0 = row[0]
+check(abs(g5 - 6.0408) < 1e-9 and abs(g5 - w0['answer']) <= band(w0['tol']), f'pool-rates logs to 5 places give {g5:.4f}, inside the band')
+check(abs(g4 - w0['answer']) <= band(w0['tol']), f'pool-rates logs to 4 places give {g4:.4f}, inside the band')
+check(abs(g3 - 6.0) < 1e-12 and abs(2 * 15 ** 2 / 75 - 6.0) < 1e-12 and abs(g3 - w0['answer']) > band(w0['tol']), 'pool-rates logs to 3 places give 6.00, which is Pearson (outside the key band)')
+check('5 decimal places' in items['s-pool-rates']['question'] and '6.04' in items['s-pool-rates']['feedback']['byKey']['pearson'], 'pool-rates question asks for 5-place logs; the pearson line prints 6.04')
 
 # exam shape
 cnt = {d: sum(1 for i in doc['items'] if i['difficulty'] == d) for d in (2, 3, 4, 5)}

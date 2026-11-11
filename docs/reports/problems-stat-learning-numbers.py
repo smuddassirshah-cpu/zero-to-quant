@@ -108,7 +108,19 @@ if L4 is not None:
         {'decision-value': f, 'squared-norm': f / nrm ** 2, 'carried': f * nrm})   # decision value times a margin taken as 2.5
     ok(0 < f < 1 and abs(f) / nrm < 1 / nrm, 'p-spam-filter: email inside the street on the spam side')
     pick(L4, 'p-spam-filter', 3, 'inside')
-    pick(L4, 'p-spam-filter', 4, 'linear')
+    w2 = sp.Matrix([R(9, 10), R(-6, 5)])
+    b2 = R(3, 10)
+    nrm2 = sp.sqrt((w2.T * w2)[0])
+    ok(nrm2 == R(3, 2), 'p-spam-filter p4: refit norm 1.5')
+    ok(w2 == R(3, 5) * w and b2 == R(3, 5) * b, 'p-spam-filter p4: the refit is the old weights times 0.6, the same centre line')
+    w2n, b2n = np.array([0.9, -1.2]), 0.3
+    edge2 = (1 - b2n) * w2n / (w2n @ w2n)                      # a point on the new edge w.x + b = 1; its distance from the line
+    foot2 = edge2 - (w2n @ edge2 + b2n) / (w2n @ w2n) * w2n
+    num(L4, 'p-spam-filter', 4, 1 / nrm2, np.linalg.norm(edge2 - foot2),
+        {'gave-norm': nrm2, 'street-width': 2 / nrm2, 'unchanged': 1 / nrm})
+    ok((1 / nrm2) / (1 / nrm) == R(5, 3), 'p-spam-filter p4: the margin grows by 5/3 (0.4 to 0.667)')
+    ok(abs(float(1 / nrm2) - 0.667) <= 0.0005 and abs(float(2 / nrm2) - 1.333) <= 0.0005, 'p-spam-filter p4: 0.667 and 1.333 inside the printed bands')
+    ok('scaled so the street' in L4['p-spam-filter']['prose'] and L4['p-spam-filter']['parts'][3]['widget']['kind'] == 'numeric', 'p-spam-filter: prose states the scaling; part 4 is typed')
     t = t_null(R(93, 100), R(9, 10), 500)
     num(L4, 'p-spam-filter', 5, t, t_sm(0.93, 0.9, 500),
         {'own-rate': (R(93, 100) - R(9, 10)) / sp.sqrt(R(93, 100) * R(7, 100) / 500),
@@ -128,7 +140,7 @@ if L4 is not None:
     km1 = KMeans(2, init=np.array([[3.0], [8.0]]), n_init=1, max_iter=1, algorithm='lloyd').fit(X)
     num(L4, 'p-order-sizes', 1, c1[1], km1.cluster_centers_[1][0],
         {'all-orders': R(sum(xs), 6), 'kept-centre': (R(sum(v for v, l in zip(xs, lab1) if l == 1)) + 8) / 5,
-         'six-misassigned': R(18 + 22 + 26, 3)})
+         'six-misassigned': R(18 + 22 + 26, 3), 'percent-sign': c1[1] / 100})
     c = [R(3), R(18)]
     for _ in range(10):
         nc, lab = step(c)
@@ -136,12 +148,15 @@ if L4 is not None:
             break
         c = nc
     km = KMeans(2, init=np.array([[3.0], [18.0]]), n_init=1).fit(X)
-    num(L4, 'p-order-sizes', 2, c[1], km.cluster_centers_[1][0], {'no-reassign': c1[1], 'all-orders': R(sum(xs), 6)})
+    num(L4, 'p-order-sizes', 2, c[1], km.cluster_centers_[1][0], {'no-reassign': c1[1], 'all-orders': R(sum(xs), 6), 'percent-sign': c[1] / 100})
     ok(c == [4, 22], 'p-order-sizes: settled centres 4 and 22')
     inert = sum((v - c[l]) ** 2 for v, l in zip(xs, lab))
     num(L4, 'p-order-sizes', 3, inert, km.inertia_,
         {'unsquared': sum(abs(v - c[l]) for v, l in zip(xs, lab)), 'averaged': inert / 6,
-         'carried': sum((v - [3, 18][l]) ** 2 for v, l in zip(xs, lab))}, round_tol=0.005)
+         'carried': sum((v - [3, 18][l]) ** 2 for v, l in zip(xs, lab)),
+         'not-settled': sum((v - [3, 18][l]) ** 2 for v, l in zip(xs, [0, 0, 1, 1, 1, 1]))}, round_tol=0.005)
+    # route 2 for the two new slips: 6 kept in group 2 against centres 3 and 18, and a typed % read as a hundredth
+    ok(1 + 1 + 144 + 0 + 16 + 64 == 226 and abs(km1.cluster_centers_[1][0] / 100 - 0.18) < 1e-12 and abs(km.cluster_centers_[1][0] / 100 - 0.22) < 1e-12, 'p-order-sizes: not-settled 226, percent-sign 0.18 and 0.22')
     xx = sp.Symbol('x')
     knot = (c[0] + c[1]) / 2
 
@@ -183,18 +198,29 @@ if L4 is not None:
     num(L4, 'p-one-unit', 3, g, fd,
         {'slope-for-v': sp.diff(L, v).subs(at), 'dropped-x': sp.diff(L, b1).subs(at), 'sign': -g,
          'carried': (9 - yv) * 2 * xv}, agree=1e-5)
-    eta = R(1, 100)
+    eta = R(1, 500)
     new_w1 = R(1, 2) - eta * g
-    num(L4, 'p-one-unit', 4, new_w1, 0.5 - 0.01 * fd,
+    num(L4, 'p-one-unit', 4, new_w1, 0.5 - 0.002 * fd,
         {'uphill': R(1, 2) + eta * g, 'no-rate': R(1, 2) - g, 'carried': R(1, 2) - eta * sp.diff(L, v).subs(at)}, agree=1e-6)
     ws = sp.Symbol('ws')
     knot_exact = sp.solve(sp.Eq(new_w1 * ws - 1, 0), ws)[0]
     # route 2: scan x for the first point where the unit switches on
     grid = np.linspace(0, 3, 3_000_001)
-    first_on = grid[np.argmax(0.98 * grid - 1 > 0)]
+    first_on = grid[np.argmax(0.596 * grid - 1 > 0)]
     num(L4, 'p-one-unit', 5, knot_exact, first_on,
         {'old-knot': 2, 'sign': -knot_exact, 'carried': 1 / (R(1, 2) - eta * sp.diff(L, v).subs(at))}, agree=1e-5)
-    ok(abs(float(2 * new_w1) - 1.96) < 1e-12 and float(2 * R(1, 2)) == 1, 'p-one-unit: slope beyond the knot 1 to 1.96')
+    ok(abs(float(2 * new_w1) - 1.192) < 1e-12 and float(2 * R(1, 2)) == 1, 'p-one-unit: slope beyond the knot 1 to 1.192')
+    # the step must lower the loss (review-holes-1.6-2.1 finding 10): exact, then by forward evaluation
+    pred_new = yhat_on.subs({w1: new_w1, b1: -1, v: 2, d: 1})
+    loss_new = ((pred_new - yv) ** 2 / 2)
+    ok(new_w1 == R(149, 250) and pred_new == R(1067, 125) and abs(float(pred_new) - 8.536) < 1e-12, 'p-one-unit: w1 0.596, prediction 8.536')
+    ok(abs(float(loss_new) - 1.071648) < 1e-9 and abs(0.5 * (fwd(0.596, -1, 2, 1) - yv) ** 2 - 1.071648) < 1e-9, 'p-one-unit: loss 4.5 falls to 1.0716 (two routes)')
+    ok(float(loss_new) < float(L.subs(at)), 'p-one-unit: the step lowers the loss')
+    # the old eta = 0.01 overshoots (prediction 14.68, loss 10.95): the reason it was changed
+    ok(abs(0.5 * (fwd(0.98, -1, 2, 1) - yv) ** 2 - 10.9512) < 1e-9 and 0.5 * (fwd(0.98, -1, 2, 1) - yv) ** 2 > 4.5, 'p-one-unit: eta 0.01 would have raised the loss to 10.95')
+    ok(abs(2 * (0.6875 - 0.5) / 48 - 0.0078125) < 1e-12 and eta < R(1, 128), 'p-one-unit: eta 0.002 is below the largest eta, 0.0078, that lowers the loss')
+    ok(abs(float(knot_exact) - 1.67785) < 1e-5 and abs(float(1 / R(518, 1000)) - 1.9305) < 1e-4 and abs(float(10 * knot_exact) - 16.78) < 0.01, 'p-one-unit: knot 1.678 (16.8 km), the carried knot 1.931')
+    ok(L4['p-one-unit']['parts'][0]['widget'].get('unit') == 'h', 'p-one-unit p1: unit h, so 7 h is read')
 
     # ---------- p-renewals ----------
     sizes = [6, 16, 1]

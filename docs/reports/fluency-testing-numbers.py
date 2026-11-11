@@ -117,7 +117,7 @@ def vol_se(V):
     se = 1 / sp.sqrt(n * one)
     # SE of sigma^2 by the chain rule: I(sigma^2) = I(sigma) / (2 sigma)^2
     se_var = 1 / sp.sqrt(n * one / (2 * s) ** 2)
-    return se, {'no-two': s / sp.sqrt(n), 'variance-se': se_var}
+    return se, {'no-two': s / sp.sqrt(n), 'variance-se': se_var, 'percent-sign': se / 100}   # a typed % is read as a hundredth
 
 
 def binom_lr(V):
@@ -208,4 +208,66 @@ ck.add('fluency-l2-measuring-surprise', 'z-null-zero', z_zero)
 ck.add('fluency-l2-measuring-surprise', 'z-null-nonzero', z_nonzero)
 ck.add('fluency-l4-t-test', 't-statistic', t_stat)
 ck.add('fluency-l4-t-test', 'sharpe-t', sharpe)
+
+# ---- review-holes-1.6-2.1 fixes: the bands take what a rounded working prints (findings 16, 17), the % entry (18), the df prompt (21)
+import math  # noqa: E402
+
+
+def extra():
+    bad = []
+    n_ = 0
+    for it in ck.sample('fluency-l18-counts-against-expectations', 'two-by-two'):
+        V = {k: float(it['vars'][k]) for k in 'abcd'}
+        t = [[V['a'], V['b']], [V['c'], V['d']]]
+        N = sum(map(sum, t))
+        R = [sum(r) for r in t]
+        C = [t[0][0] + t[1][0], t[0][1] + t[1][1]]
+        tol = it['tol']['abs']
+        for places in (2, 3):         # the prompt says to keep at least 2 places in each expected count, then the four terms summed
+            E = [[round(R[i] * C[j] / N, places) for j in range(2)] for i in range(2)]
+            x2 = sum((t[i][j] - E[i][j]) ** 2 / E[i][j] for i in range(2) for j in range(2))
+            n_ += 1
+            if abs(x2 - it['answer']) > tol:
+                bad.append(('two-by-two', it['seed'], places, x2, it['answer']))
+        gap = round(abs(t[0][0] * t[1][1] - t[0][1] * t[1][0]) / N, 3)   # the solution's printed gap, with expected counts to 2 places
+        x2p = gap ** 2 * sum(1 / round(R[i] * C[j] / N, 2) for i in range(2) for j in range(2))
+        n_ += 2
+        if abs(x2p - it['answer']) > tol:
+            bad.append(('two-by-two printed', it['seed'], x2p, it['answer']))
+        if tol != 0.05 or any(abs(w['value'] - it['answer']) <= 2 * tol for w in it['wrong']):
+            bad.append(('two-by-two band', it['seed']))
+    for it in ck.sample('fluency-l17-ratio-of-likelihoods', 'poisson-ratio-test'):
+        V = {k: float(it['vars'][k]) for k in ('n', 'lam0', 'dv')}
+        s_, n, l0 = V['n'] * V['lam0'] + V['dv'], V['n'], V['lam0']
+        tol = it['tol']['abs']
+        for places in (4, 5):         # the prompt says to keep at least 4 places: the log of the ratio, or the ratio itself
+            lg = round(math.log(s_ / (n * l0)), places)
+            x2 = 2 * (s_ * lg - V['dv'])
+            x2r = 2 * (s_ * math.log(round(s_ / (n * l0), places)) - V['dv'])
+            n_ += 2
+            if abs(x2 - it['answer']) > tol:
+                bad.append(('poisson-ratio log', it['seed'], places, x2, it['answer']))
+            if abs(x2r - it['answer']) > tol:
+                bad.append(('poisson-ratio ratio', it['seed'], places, x2r, it['answer']))
+        n_ += 1
+        if tol != 0.05 or any(abs(w['value'] - it['answer']) <= 2 * tol for w in it['wrong']):
+            bad.append(('poisson-ratio band', it['seed']))
+    for it in ck.sample('fluency-l15-sharpness-of-the-peak', 'volatility-se'):
+        w = [x for x in it['wrong'] if x['id'] == 'percent-sign']
+        n_ += 1
+        if len(w) != 1 or abs(w[0]['value'] - it['answer'] / 100) > 1e-12 or any(abs(x['value'] - w[0]['value']) <= 1e-4 for x in it['wrong'] if x is not w[0]) or abs(w[0]['value'] - it['answer']) <= 1e-4:
+            bad.append(('volatility-se percent-sign', it['seed']))
+    for it in ck.sample('fluency-l17-ratio-of-likelihoods', 'wilks-df'):
+        p, r = int(it['vars']['p']), int(it['vars']['r'])
+        n_ += 1
+        if f"{p - r} of them stay free" not in it['prompt'] or 'fixes' in it['prompt'] or it['answer'] != r:
+            bad.append(('wilks-df prompt', it['seed'], it['prompt']))
+    print('review-holes extra: %d checks, %d failures' % (n_, len(bad)))
+    for b in bad[:20]:
+        print('FAIL', b)
+    return bad
+
+
+if extra():
+    sys.exit(1)
 ck.run()

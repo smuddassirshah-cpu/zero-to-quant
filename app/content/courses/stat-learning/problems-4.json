@@ -12,7 +12,7 @@
         "sl-flexible",
         "sl-setup"
       ],
-      "prose": "A spam filter is a linear support vector machine on two standardised features. It has $w = (1.5, -2)$ and $b = 0.5$, and a positive decision value means spam.",
+      "prose": "A spam filter is a linear support vector machine on two standardised features. It has $w = (1.5, -2)$ and $b = 0.5$, scaled so the street's edges are $w \\cdot x + b = \\pm 1$, and a positive decision value means spam.",
       "parts": [
         {
           "question": "What is the margin, the distance from the centre line to either edge? Give a decimal.",
@@ -147,43 +147,49 @@
           }
         },
         {
-          "question": "On a validation split an RBF support vector machine ties with this linear filter at 0.93. Which do you keep?",
+          "question": "Refitted with a smaller $C$, the filter has $w = (0.9, -1.2)$ and $b = 0.3$: the same centre line. Using the margin 0.4 from part 1, what is the margin now? Give 3 decimal places.",
           "widget": {
-            "kind": "choice",
-            "options": [
+            "kind": "numeric",
+            "answer": 0.667,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
               {
-                "id": "linear",
-                "text": "The linear filter: on a tie the simpler model, which the team can read, wins",
-                "correct": true
+                "id": "gave-norm",
+                "value": 1.5,
+                "tol": {
+                  "abs": 0.0005
+                }
               },
               {
-                "id": "rbf",
-                "text": "The RBF machine, since a kernel can bend where the data bend",
-                "why": "It can, but on this split it buys nothing. A tie goes to the simpler, more explainable model."
+                "id": "street-width",
+                "value": 1.333,
+                "tol": {
+                  "abs": 0.0005
+                }
               },
               {
-                "id": "test",
-                "text": "Whichever scores higher on the test emails",
-                "why": "Choosing on the test rows uses them up: the score you then report is no longer honest."
-              },
-              {
-                "id": "both",
-                "text": "Average the two machines' decision values",
-                "why": "That adds a second model to explain for no measured gain."
+                "id": "unchanged",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.0005
+                }
               }
             ]
           },
           "feedback": {
-            "correct": "Right. A tie on validation goes to the simpler learner.",
-            "generic": "Not quite. Choose on validation, and break a tie towards the simpler model.",
+            "correct": "$\\lVert w \\rVert = \\sqrt{0.81 + 1.44} = 1.5$, so the margin is $\\tfrac{1}{1.5} \\approx 0.667$.",
+            "generic": "Not quite. Find the new $\\lVert w \\rVert$, then the margin is $\\tfrac{1}{\\lVert w \\rVert}$.",
             "byKey": {
-              "rbf": "It can, but on this split it buys nothing. A tie goes to the simpler, more explainable model.",
-              "test": "Choosing on the test rows uses them up: the score you then report is no longer honest.",
-              "both": "That adds a second model to explain for no measured gain."
+              "gave-norm": "That is $\\lVert w \\rVert$ itself. The margin is 1 over it.",
+              "street-width": "That is the whole street, edge to edge. The margin is half of it.",
+              "unchanged": "That is the old margin. The new $\\lVert w \\rVert$ is 1.5."
             }
           },
           "explain": {
-            "text": "Validation cannot tell the two learners apart. So the one with fewer moving parts and readable weights wins. The test rows are kept for one honest score."
+            "text": "$\\lVert w \\rVert = \\sqrt{0.81 + 1.44} = 1.5$, so the margin is $\\tfrac{1}{1.5} \\approx 0.667$. A smaller $C$ charges less for intrusions, so the street widens, here by a factor of $\\tfrac{5}{3}$."
           }
         },
         {
@@ -273,6 +279,13 @@
                 "tol": {
                   "abs": 0
                 }
+              },
+              {
+                "id": "percent-sign",
+                "value": 0.18,
+                "tol": {
+                  "abs": 0
+                }
               }
             ]
           },
@@ -282,7 +295,8 @@
             "byKey": {
               "all-orders": "You averaged all six orders. Centre 2 moves to the mean of its own orders only.",
               "kept-centre": "You counted the old centre, 8, as a point. The update averages the orders only.",
-              "six-misassigned": "You sent 6 to centre 1. It is 3 from 3 and only 2 from 8."
+              "six-misassigned": "You sent 6 to centre 1. It is 3 from 3 and only 2 from 8.",
+              "percent-sign": "That is the right centre. Type the number alone, with no % sign."
             }
           },
           "explain": {
@@ -312,6 +326,13 @@
                 "tol": {
                   "abs": 0
                 }
+              },
+              {
+                "id": "percent-sign",
+                "value": 0.22,
+                "tol": {
+                  "abs": 0
+                }
               }
             ]
           },
@@ -320,7 +341,8 @@
             "generic": "Not quite. Assign each order again with the moved centres before you average.",
             "byKey": {
               "no-reassign": "You kept 6 in group 2. With centres 3 and 18 it is 3 from the first and 12 from the second.",
-              "all-orders": "You averaged all six orders. Each centre moves to the mean of its own group."
+              "all-orders": "You averaged all six orders. Each centre moves to the mean of its own group.",
+              "percent-sign": "That is the right centre. Type the number alone, with no % sign."
             }
           },
           "explain": {
@@ -357,6 +379,13 @@
                 "tol": {
                   "abs": 0
                 }
+              },
+              {
+                "id": "not-settled",
+                "value": 226,
+                "tol": {
+                  "abs": 0
+                }
               }
             ]
           },
@@ -366,7 +395,8 @@
             "byKey": {
               "unsquared": "You added plain distances, $2 + 0 + 2 + 4 + 0 + 4$. Inertia squares them.",
               "averaged": "You divided by the six orders. Inertia is the sum, not the mean.",
-              "carried": "You used centres 3 and 18, before the loop settled. At 4 and 22 the inertia is 40."
+              "carried": "You used centres 3 and 18, before the loop settled. At 4 and 22 the inertia is 40.",
+              "not-settled": "You left 6 in the second group, with centres 3 and 18. After the loop settles the groups are 2, 4, 6 and 18, 22, 26."
             }
           },
           "explain": {
@@ -508,7 +538,8 @@
                   "abs": 0
                 }
               }
-            ]
+            ],
+            "unit": "h"
           },
           "feedback": {
             "correct": "$h = \\max(0, 4 - 1) = 3$, so $\\hat y = 2 \\times 3 + 1 = 7$ hours.",
@@ -623,10 +654,10 @@
           }
         },
         {
-          "question": "Take one gradient step of size $\\eta = 0.01$ on $w_1$ alone, using the slope $-48$ from part 3. What is the new $w_1$? Give a decimal.",
+          "question": "Take one gradient step of size $\\eta = 0.002$ on $w_1$ alone, using the slope $-48$ from part 3. What is the new $w_1$? Give 3 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.98,
+            "answer": 0.596,
             "tol": {
               "abs": 0.0005
             },
@@ -634,7 +665,7 @@
             "wrong": [
               {
                 "id": "uphill",
-                "value": 0.02,
+                "value": 0.404,
                 "tol": {
                   "abs": 0.0005
                 }
@@ -648,7 +679,7 @@
               },
               {
                 "id": "carried",
-                "value": 0.59,
+                "value": 0.518,
                 "tol": {
                   "abs": 0.0005
                 }
@@ -656,23 +687,23 @@
             ]
           },
           "feedback": {
-            "correct": "$w_1 \\to 0.5 - 0.01 \\times (-48) = 0.5 + 0.48 = 0.98$.",
+            "correct": "$w_1 \\to 0.5 - 0.002 \\times (-48) = 0.5 + 0.096 = 0.596$.",
             "generic": "Not quite. Subtract $\\eta$ times the slope from $w_1$.",
             "byKey": {
-              "uphill": "You moved with the slope. A step moves against it: $0.5 - 0.01 \\times (-48)$.",
-              "no-rate": "You subtracted the whole slope. The step is $\\eta = 0.01$ times it.",
+              "uphill": "You moved with the slope. A step moves against it: $0.5 - 0.002 \\times (-48)$.",
+              "no-rate": "You subtracted the whole slope. The step is $\\eta = 0.002$ times it.",
               "carried": "You used the slope $-9$, which belongs to $v$. The slope for $w_1$ is $-48$."
             }
           },
           "explain": {
-            "text": "The slope is negative, so raising $w_1$ lowers the loss. A step of 0.01 against it moves $w_1$ from 0.5 to 0.98."
+            "text": "The slope is negative, so a small rise in $w_1$ lowers the loss. The step of 0.002 moves $w_1$ from 0.5 to 0.596. The prediction rises from 7 to 8.536 hours and the loss falls from 4.5 to about 1.07."
           }
         },
         {
-          "question": "The unit switches on where $w_1 x + b_1 = 0$, so it is a hinge with a knot there. With $b_1 = -1$ and $w_1 = 0.98$ from part 4, where is the knot now, in tens of km? Give 3 decimal places.",
+          "question": "The unit switches on where $w_1 x + b_1 = 0$, so it is a hinge with a knot there. With $b_1 = -1$ and $w_1 = 0.596$ from part 4, where is the knot now, in tens of km? Give 3 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 1.02,
+            "answer": 1.678,
             "tol": {
               "abs": 0.0005
             },
@@ -687,14 +718,14 @@
               },
               {
                 "id": "sign",
-                "value": -1.02,
+                "value": -1.678,
                 "tol": {
                   "abs": 0.0005
                 }
               },
               {
                 "id": "carried",
-                "value": 1.695,
+                "value": 1.931,
                 "tol": {
                   "abs": 0.0005
                 }
@@ -702,16 +733,16 @@
             ]
           },
           "feedback": {
-            "correct": "$x = \\tfrac{-b_1}{w_1} = \\tfrac{1}{0.98} \\approx 1.020$, so the bend moves in from 2 to about 1.02.",
-            "generic": "Not quite. Solve $0.98x - 1 = 0$ for $x$.",
+            "correct": "$x = \\tfrac{-b_1}{w_1} = \\tfrac{1}{0.596} \\approx 1.678$, so the bend moves in from 2 to about 1.68.",
+            "generic": "Not quite. Solve $0.596x - 1 = 0$ for $x$.",
             "byKey": {
-              "old-knot": "That is the knot before the step, $\\tfrac{1}{0.5}$. With $w_1 = 0.98$ it moves.",
-              "sign": "You solved $0.98x + 1 = 0$. The bias is $-1$, so the knot is at $+\\tfrac{1}{0.98}$.",
-              "carried": "You used $w_1 = 0.59$, from the slope for $v$. With 0.98 the knot is at 1.020."
+              "old-knot": "That is the knot before the step, $\\tfrac{1}{0.5}$. With $w_1 = 0.596$ it moves.",
+              "sign": "You solved $0.596x + 1 = 0$. The bias is $-1$, so the knot is at $+\\tfrac{1}{0.596}$.",
+              "carried": "You used $w_1 = 0.518$, from the slope for $v$. With 0.596 the knot is at 1.678."
             }
           },
           "explain": {
-            "text": "A ReLU unit is a hinge: for $w_1 > 0$, $\\max(0, w_1 x + b_1) = w_1\\,(x - c)^+$ with $c = -\\tfrac{b_1}{w_1}$. Here $c = \\tfrac{1}{0.98} \\approx 1.020$, so one step moved the bend from 20 km to about 10.2 km."
+            "text": "A ReLU unit is a hinge: for $w_1 > 0$, $\\max(0, w_1 x + b_1) = w_1\\,(x - c)^+$ with $c = -\\tfrac{b_1}{w_1}$. Here $c = \\tfrac{1}{0.596} \\approx 1.678$, so one step moved the bend from 20 km to about 16.8 km."
           }
         }
       ]
@@ -801,7 +832,7 @@
             }
           },
           "explain": {
-            "text": "With equal validation scores, the learner with 7 parameters wins. It varies less on new rows than one with 129, and is easier to explain. The test rows then give it one honest score."
+            "text": "With equal validation scores, the learner with 7 parameters wins. As a rule it varies less on new rows than one with 129, and it is easier to explain. The test rows then give it one honest score."
           }
         },
         {
