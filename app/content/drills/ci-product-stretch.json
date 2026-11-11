@@ -20,7 +20,7 @@
   "brief": "A signal is scored each hour by a whole-number factor in `factors`, which may be negative or 0. A stretch is two or more consecutive hours, and its score is the product of its factors. Return the largest score of any stretch, as an exact whole number.\n\nWrite `best_product_stretch(factors)`.\n\nExample. For `[2, -3, 0, 4, -1, -2]` the stretch 4, -1, -2 scores 8, and no stretch of two or more hours scores more. The answer is 8.",
   "constraints": [
     "$2 \\le n \\le 2{,}000$ factors, each between $-9$ and $9$.",
-    "$O(n)$ multiplications is the target. Products grow to thousands of digits, so trying every stretch is slow.",
+    "$O(n)$ multiplications is the target. Products grow to thousands of digits, so return the exact whole number.",
     "All the tests in a run share one 5-second limit in the browser.",
     {
       "arg": "factors",
@@ -117,14 +117,19 @@
       "call": "best_product_stretch([9] * 1000 + [-1] + [9] * 999)",
       "expect": "1747871251722651609659974619164660570529062487435188517811888011810686266227275489291486469864681111075608950696145276588771368435875508647514414202093638481872912380089977179381529628478320523519319142681504424059410890214500500647813935818925701905402605484098137956979368551025825239411318643997916523677044769662628646406540335627975329619264245079750470862462474091105444437355302146151475348090755330153269067933091699479889089824650841795567478606396975664557143737657027080403239977757865296846740093712377915770536094223688049108023244139183027962484411078464439516845227961935221269814753416782576455507316073751985374046064592546796043150737808314501684679758056905948759246368644416151863138085276603595816410945157599742077617618911601185155602080771746785959359879490191933389965271275403127925432247963269675912646103156343954375442792688936047041533537523137941310690833949767764290081333900380310406154723157882112449991673819054110440001",
       "compare": "equal"
+    },
+    {
+      "call": "best_product_stretch([-9, 2, 0])",
+      "expect": "0",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. Unlike the classic maximum product, a stretch needs at least two hours, so the best is read before the current factor alone is allowed in.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. Unlike the classic maximum product, a stretch needs at least two hours, so the best is read before the current factor alone is allowed in.",
   "solution": "def best_product_stretch(factors):\n    hi = lo = factors[0]\n    best = None\n    for x in factors[1:]:\n        a, b = hi * x, lo * x\n        top = a if a > b else b\n        if best is None or top > best:\n            best = top\n        hi = max(x, a, b)\n        lo = min(x, a, b)\n    return best\n",
   "notes": [
     "A negative factor swaps the largest and smallest products, so both are carried forward.",
     "The best is updated from `hi * x` and `lo * x` before `x` alone joins the candidates, which keeps every stretch at two hours or more.",
-    "Three multiplications per hour make the work $O(n)$ multiplications of growing integers."
+    "Two multiplications per hour make the work $O(n)$ multiplications of growing integers."
   ],
   "planted": [
     {
@@ -138,6 +143,10 @@
     {
       "code": "def best_product_stretch(factors):\n    hi = lo = factors[0]\n    best = 0\n    for x in factors[1:]:\n        a, b = hi * x, lo * x\n        best = max(best, a, b)\n        hi, lo = max(x, a, b), min(x, a, b)\n    return best\n",
       "slip": "Starting the best at 0 reports 0 when every stretch scores below it."
+    },
+    {
+      "code": "def best_product_stretch(factors):\n    best = None\n    for seq in (factors, factors[::-1]):\n        p, length = 1, 0\n        for x in seq:\n            if x == 0:\n                p, length = 1, 0\n                continue\n            p *= x\n            length += 1\n            if length >= 2 and (best is None or p > best):\n                best = p\n    if best is None:\n        return 0\n    return best\n",
+      "slip": "Running products from each end, restarted at every 0, forget that a stretch through a 0 scores 0, which beats a negative best."
     }
   ]
 }

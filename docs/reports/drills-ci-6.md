@@ -10,10 +10,10 @@ Brief: `docs/briefs/drills-ci-packs-5-8.md`, row "Pack 6", on top of `docs/brief
 | `ci-ring-stalls` | non-adjacent best sum on a ring, two empty between | 3 | 1500 | no | 13 | 3 |
 | `ci-change-ways` | coin change ways, many fares from one table | 3 | 1380 | yes | 12 | 3 |
 | `ci-product-stretch` | maximum product subarray of length two or more | 3 | 1440 | no | 13 | 3 |
-| `ci-paving-ways` | 3 by `n` domino tiling round drains, column masks | 3 | 1620 | no | 14 | 3 |
+| `ci-paving-ways` | 3 by `n` domino tiling round drains, column masks | 4 | 2100 | no | 15 | 5 |
 | `ci-cooldown-trades` | trading with a `k`-day rest after each sale | 3 | 1500 | no | 12 | 3 |
 | `ci-word-split` | word break, fewest words | 4 | 2100 | no | 13 | 2 + slow |
-| `ci-longest-rising` | patience sorting: length and smallest end | 4 | 1980 | no | 13 | 2 + slow |
+| `ci-longest-rising` | patience sorting: length and smallest end | 3 | 1500 | no | 14 | 5 |
 | `ci-tape-decodes` | decoding counts, a smudge is 0 to 9 | 4 | 2160 | yes | 13 | 2 + slow |
 | `ci-fewest-tokens` | coin change fewest coins, the payment with a tie rule | 4 | 2040 | no | 15 | 2 + slow |
 | `ci-long-stairwell` | climbing count for $n$ up to $10^{18}$, matrix power | 4 | 2040 | no | 12 | 2 + slow |
@@ -28,13 +28,13 @@ Measured by `drills-ci-6-check.py --pyodide <pkgs>`: Pyodide 0.27.7 under node (
 
 | id | target (model) | obvious method | obvious method is |
 | --- | --- | --- | --- |
-| `ci-word-split` | 0.07 s | over 12 s (stopped) | plain recursion over every split |
-| `ci-longest-rising` | 0.11 s | over 12 s (stopped) | $O(n^2)$ table, each reading against every earlier one |
+| `ci-word-split` | 0.09 s | over 12 s (stopped) | plain recursion over every split |
 | `ci-tape-decodes` | 0.22 s | over 12 s (stopped) | plain recursion over each reading of one or two characters |
-| `ci-fewest-tokens` | 0.06 s | over 12 s (stopped) | plain recursion over the first token |
+| `ci-fewest-tokens` | 0.04 s | over 12 s (stopped) | plain recursion over the first token |
 | `ci-long-stairwell` | 0.02 s | over 12 s (stopped) | the last `m` counts stepped forward one stair at a time |
-| `ci-nested-crates` | 0.56 s | over 12 s (stopped) | $O(n^2)$ table after sorting |
-| `ci-capped-trips` | 0.19 s | over 12 s (stopped) | plain recursion over (day, trips left, holding) |
+| `ci-nested-crates` | 0.91 s | over 12 s (stopped) | $O(n^2)$ table after sorting |
+| `ci-capped-trips` | 0.13 s | over 12 s (stopped) | plain recursion over (day, trips left, holding) |
+| `ci-paving-ways` | 0.11 s | over 12 s (stopped) | cell-by-cell backtracking (new test: 3 by 30, 299,303,201 pavings) |
 
 Every target is under 1 s, a factor of five inside the limit; every obvious method passes 5 s. The four recursions are defeated on time, not depth: each drill has a hidden test only 30 to 200 levels deep that branches exponentially (`'q' * 200` with codes of 1 to 5 letters and `'t' * 60 + 'u'`; 30 smudges and 40 ones; an amount of 60 with tokens 1, 2, 3; 40 days), before the long tests where the recursion would also hit the depth limit. Every model is iterative (the paving model recurses at most four levels to list its column moves), and the Pyodide run reports no recursion error. The obvious method is the last `planted` entry of each of these seven drills, and `how` names it and the step to the target.
 
@@ -60,3 +60,7 @@ Every target is under 1 s, a factor of five inside the limit; every obvious meth
 Worked numbers in the briefs (5, `[6, 2, 4]`, `[8, 3]`, 11, `'2\n2\n1'`, 8, 2, 5, 2, `[3, 5]`, `'19\n2'`, `[6, 5, 4]`, 5, 3, 12) are the `expect` of each drill's first example, computed by the model and recomputed by the independent method in the check script.
 
 `app/content/manifest.json` was rewritten by the validator and is not committed.
+
+## Fix pass (second read)
+
+Pyodide timings re-measured after the fix pass (the table above is updated): every target under 1 s (`ci-nested-crates` 0.91 s is the tightest, with the new 100,000-crate test), every obvious method cut off at 12 s. `ci-longest-rising` moved to difficulty 3 and left the table. The new slow plant of `ci-word-split` (every code tried at every position) runs 12.5 s in Pyodide on the 5,000-code test. `ci-capped-trips` is now difficulty 4 (pace 2,100), `ci-long-stairwell` 5 (2,520), `ci-paving-ways` 4 (2,100), `ci-longest-rising` 3 (1,500); mix still 3 / 5 / 5 / 2.

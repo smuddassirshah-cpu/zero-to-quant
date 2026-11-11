@@ -13,8 +13,8 @@
     "ci-patterns",
     "ci-timed"
   ],
-  "difficulty": 4,
-  "pace": 1980,
+  "difficulty": 3,
+  "pace": 1500,
   "fn": "rising_readings",
   "returns": "a list `[length, end]`",
   "brief": "`readings` holds a sensor's values in time order. A rising chain picks some readings, keeping their order, with each strictly above the one before. Return `[length, end]`: the length of the longest rising chain, and the smallest value a chain of that length can end on.\n\nWrite `rising_readings(readings)`.\n\nExample. For `[2, 9, 4, 8, 5]` the longest chains have three readings, such as 2, 4, 8 and 2, 4, 5. The smaller end is 5, so the answer is `[3, 5]`.",
@@ -117,9 +117,14 @@
       "call": "rising_readings([(i % 500) * 3 - (i // 500) for i in range(100000)])",
       "expect": "[500, 1298]",
       "compare": "equal"
+    },
+    {
+      "call": "rising_readings(list(range(0, 100000, 2)) + list(range(99999, 0, -2)))",
+      "expect": "[50001, 99999]",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method finds, for each reading, the longest chain ending there by checking every earlier reading, which is $O(n^2)$ and runs out of time on 100,000 readings. The step to the target is the list of smallest tails, kept sorted, so each reading costs one binary search. Unlike the usual task, which asks only for the length, the answer also needs the smallest end, which is the last entry of `tails` and not the reading that last made the list longer.",
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. The obvious method finds, for each reading, the longest chain ending there by checking every earlier reading, which is $O(n^2)$ and runs out of time on 100,000 readings. The step to the target is the list of smallest tails, kept sorted, so each reading costs one binary search. Unlike the usual task, which asks only for the length, the answer also needs the smallest end, which is the last entry of `tails` and not the reading that last made the list longer.",
   "solution": "from bisect import bisect_left\n\ndef rising_readings(readings):\n    tails = []\n    for x in readings:\n        k = bisect_left(tails, x)\n        if k == len(tails):\n            tails.append(x)\n        else:\n            tails[k] = x\n    return [len(tails), tails[-1]]\n",
   "notes": [
     "`tails` stays sorted, and a reading lowers the first tail at least as large, so each entry is the smallest end for its length.",
@@ -138,6 +143,14 @@
     {
       "code": "def rising_readings(readings):\n    n = len(readings)\n    length = [1] * n\n    for i in range(n):\n        for j in range(i):\n            if readings[j] < readings[i] and length[j] + 1 > length[i]:\n                length[i] = length[j] + 1\n    top = max(length)\n    return [top, min(readings[i] for i in range(n) if length[i] == top)]\n",
       "slip": "Comparing each reading with every earlier one is right but takes $O(n^2)$ time, too slow."
+    },
+    {
+      "code": "def rising_readings(readings):\n    tails = []\n    for x in readings:\n        k = len(tails)\n        while k and tails[k - 1] >= x:\n            k -= 1\n        if k == len(tails):\n            tails.append(x)\n        else:\n            tails[k] = x\n    return [len(tails), tails[-1]]\n",
+      "slip": "Scanning the tails from the far end for the place to put a reading is not a binary search, and costs $O(n \\times \\text{length})$ when the chain is long."
+    },
+    {
+      "code": "def rising_readings(readings):\n    tails = []\n    for x in readings:\n        for k, t in enumerate(tails):\n            if t >= x:\n                tails[k] = x\n                break\n        else:\n            tails.append(x)\n    return [len(tails), tails[-1]]\n",
+      "slip": "Scanning the tails from the front for the first one at least as large is not a binary search, and costs $O(n \\times \\text{length})$ when the chain is long."
     }
   ]
 }

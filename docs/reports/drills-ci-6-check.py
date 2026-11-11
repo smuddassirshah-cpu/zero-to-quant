@@ -535,10 +535,19 @@ INDEP = {"ci-broken-steps": ways_up, "ci-best-session": best_session, "ci-shift-
          "ci-longest-rising": rising_readings, "ci-tape-decodes": solve_tape_decodes, "ci-fewest-tokens": fewest_tokens,
          "ci-long-stairwell": stride_ways, "ci-nested-crates": longest_nest, "ci-capped-trips": best_trips}
 
-# planted solutions that are right but too slow (always the last entry): (drill id, index)
+# planted solutions that are right but too slow: (drill id, index). Each must run past 5 s natively, or, for the
+# few that finish natively in 4 to 5 s on the largest allowed input, past 5 s in Pyodide (see --pyodide).
 SLOW_PLANTED = {(d, 2) for d in ("ci-word-split", "ci-longest-rising", "ci-tape-decodes", "ci-fewest-tokens",
                                   "ci-long-stairwell", "ci-nested-crates", "ci-capped-trips")}
-OBVIOUS = {d: 2 for d, _ in SLOW_PLANTED}
+SLOW_PLANTED |= {("ci-best-session", 3), ("ci-word-split", 3), ("ci-longest-rising", 3), ("ci-longest-rising", 4),
+                 ("ci-nested-crates", 3), ("ci-paving-ways", 4)}
+SOFT_SLOW = {("ci-word-split", 3)}   # about 4.7 s natively on the 5,000-code test; the Pyodide run is the gate
+OBVIOUS = {d: 2 for d, _ in SLOW_PLANTED if d not in ("ci-best-session", "ci-paving-ways")}
+OBVIOUS["ci-paving-ways"] = 4
+EXPECT_PLANTED = {"ci-best-session": 4, "ci-shift-picks": 4, "ci-product-stretch": 4, "ci-paving-ways": 5,
+                  "ci-word-split": 4, "ci-longest-rising": 5, "ci-fewest-tokens": 5, "ci-nested-crates": 4,
+                  "ci-capped-trips": 6}   # planted count after the fix pass (finding: 12 wrong candidates added)
+WANT_DIFF = {"ci-longest-rising": 3, "ci-paving-ways": 4, "ci-capped-trips": 4, "ci-long-stairwell": 5}
 
 # ======================= running =======================
 
@@ -667,9 +676,10 @@ for did in IDS:
     caught = []
     for k, p in enumerate(pl):
         if (did, k) in SLOW_PLANTED:
-            if k != len(pl) - 1:
-                err(f"{did}: slow planted[{k}] is not last")
             r = run_isolated(p["code"], d["tests"], limit=5)
+            if (did, k) in SOFT_SLOW and r["failed"] is None and r["s"] >= 3.5:
+                caught.append(f"slow plant, {r['s']} s natively")
+                continue
             if r["failed"] != "timeout":
                 err(f"{did}: planted[{k}] is meant to be too slow but finished ({r})")
             caught.append("timeout (slow plant)")
@@ -680,6 +690,17 @@ for did in IDS:
         elif r["failed"] is None:
             err(f"{did}: planted[{k}] passes every hidden test ({p['slip']})")
         caught.append(f"test {r['failed']} in {r['s']} s")
+    if did in EXPECT_PLANTED and len(pl) != EXPECT_PLANTED[did]:
+        err(f"{did}: {len(pl)} planted, expected {EXPECT_PLANTED[did]}")
+    if did in WANT_DIFF and d["difficulty"] != WANT_DIFF[did]:
+        err(f"{did}: difficulty {d['difficulty']}, expected {WANT_DIFF[did]}")
+    if PYODIDE:
+        for (sd, sk) in sorted(SLOW_PLANTED):
+            if sd == did and (sd, sk) in SOFT_SLOW:
+                ts = pyodide_time(pl[sk]["code"], d["tests"])
+                if ts["s"] is None or ts["s"] <= 5.0:
+                    err(f"{did}: planted[{sk}] in Pyodide {ts}")
+                print(f"  {did}: planted[{sk}] in Pyodide {ts['s']} s")
     if d["difficulty"] >= 4:
         if did not in OBVIOUS:
             err(f"{did}: difficulty {d['difficulty']} needs an obvious method in OBVIOUS")
@@ -708,5 +729,10 @@ for did in IDS:
     print(f"{did}: d{d['difficulty']} {len(d['tests'])} tests ok, model {dt:.2f} s, starter fails at {sres['failed']}, planted fail at {caught}")
 if FULL and diffs != {2: 3, 3: 5, 4: 5, 5: 2}: err(f"difficulty mix {diffs}")
 if FULL and stdin != 2: err(f"{stdin} stdin drills")
+idx = {r["id"]: r for r in json.load(open(os.path.join(DRILLS, "index.json")))}
+for did in IDS:
+    d = json.load(open(os.path.join(DRILLS, did + ".json")))
+    if did not in idx or idx[did]["difficulty"] != d["difficulty"] or idx[did]["name"] != d["name"]:
+        err(f"{did}: index.json row out of step")
 print(f"{len(IDS)} drills, {len(errors)} errors")
 sys.exit(1 if errors else 0)
