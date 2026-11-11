@@ -1,0 +1,157 @@
+{
+  "id": "ci-drop-point-routes",
+  "name": "Routes past a drop point",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "dp-2d",
+    "drop-point-routes"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 1020,
+  "fn": "drop_point_routes",
+  "returns": "an integer",
+  "brief": "A picking robot crosses a warehouse floor from the top-left cell to the bottom-right cell, one step right or one step down at a time. The floor is `grid`, a list of equal-length strings: `#` is a shelf the robot cannot enter, `.` is open floor and `P` is a drop point.\n\nWrite `drop_point_routes(grid)`, which returns how many routes pass through at least one drop point, modulo 1,000,000,007. The start and end cells are part of every route.\n\nExample. For the rows `..P`, `.#.` and `...`, two routes get past the shelf. Only the one along the top row meets the drop point, so the answer is 1.",
+  "constraints": [
+    "At most $200$ rows and $200$ columns, all rows the same length. The top-left and bottom-right cells are never `#`.",
+    "$O(\\text{rows} \\times \\text{cols})$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "grid",
+      "type": "list",
+      "len": [
+        1,
+        200
+      ],
+      "of": {
+        "type": "str",
+        "len": [
+          1,
+          200
+        ],
+        "pattern": "[.#P]+"
+      }
+    }
+  ],
+  "hint": "Adding up the routes through each `P` counts a route twice when it meets two of them. Count every route, then the routes that meet no `P`, and subtract.",
+  "starter": "def drop_point_routes(grid):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "drop_point_routes(['..P', '.#.', '...'])",
+      "expect": "1",
+      "compare": "equal",
+      "note": "The route down the left side meets no drop point; the one along the top does."
+    },
+    {
+      "call": "drop_point_routes(['P..', '...'])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "The start cell is a drop point, so all 3 routes count."
+    },
+    {
+      "call": "drop_point_routes(['.P.', '.P.', '...'])",
+      "expect": "5",
+      "compare": "equal",
+      "note": "Two routes pass both drop points and are counted once each."
+    }
+  ],
+  "tests": [
+    {
+      "call": "drop_point_routes(['.'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['P'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.P..'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.#P.'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['....', '....'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['..', '.P'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.#', 'P.'])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.P', 'P.'])",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.PP', 'PP.', 'P..'])",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['..#.', '.P#.', '....', '#..P'])",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['...', '###', 'P..'])",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.' * 200] * 99 + ['.' * 99 + 'P' + '.' * 100] + ['.' * 200] * 100)",
+      "expect": "597841507",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes([''.join('#' if (i * 7 + j * 13) % 11 == 0 and 0 < i + j < 398 else 'P' if (i * 3 + j * 5) % 97 == 1 else '.' for j in range(200)) for i in range(200)])",
+      "expect": "132703758",
+      "compare": "equal"
+    },
+    {
+      "call": "drop_point_routes(['.' * 200] * 50 + ['.' * 50 + 'P' + '.' * 149] + ['.' * 200] * 99 + ['.' * 150 + 'P' + '.' * 49] + ['.' * 200] * 49)",
+      "expect": "882745930",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 14 hidden tests. Each answer must equal the expected value. Unlike a plain count of routes past shelves, the drop points need a second count, because one route can meet several of them.",
+  "solution": "MOD = 10 ** 9 + 7\n\ndef drop_point_routes(grid):\n    rows, cols = len(grid), len(grid[0])\n    every = [0] * cols   # routes into each cell of the current row\n    clear = [0] * cols   # the routes among them that have met no drop point\n    for i in range(rows):\n        for j in range(cols):\n            ch = grid[i][j]\n            if ch == '#':\n                every[j] = clear[j] = 0\n                continue\n            if i == 0 and j == 0:\n                a = c = 1\n            else:\n                a = every[j] + (every[j - 1] if j else 0)\n                c = clear[j] + (clear[j - 1] if j else 0)\n            every[j] = a % MOD\n            clear[j] = 0 if ch == 'P' else c % MOD\n    return (every[-1] - clear[-1]) % MOD\n",
+  "notes": [
+    "The routes through a drop point are all the routes less the routes that meet none.",
+    "A `P` cell passes nothing on to the count of routes that meet no drop point, and that includes the start cell.",
+    "Each cell is filled once from two neighbours, so the work is $O(\\text{rows} \\times \\text{cols})$."
+  ],
+  "planted": [
+    {
+      "code": "MOD = 10 ** 9 + 7\n\ndef drop_point_routes(grid):\n    rows, cols = len(grid), len(grid[0])\n\n    def count(si, sj, ei, ej):\n        ways = [[0] * cols for _ in range(rows)]\n        for i in range(si, ei + 1):\n            for j in range(sj, ej + 1):\n                if grid[i][j] == '#':\n                    continue\n                if (i, j) == (si, sj):\n                    ways[i][j] = 1\n                else:\n                    ways[i][j] = ((ways[i - 1][j] if i > si else 0) + (ways[i][j - 1] if j > sj else 0)) % MOD\n        return ways[ei][ej]\n\n    total = 0\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == 'P':\n                total += count(0, 0, i, j) * count(i, j, rows - 1, cols - 1)\n    return total % MOD\n",
+      "slip": "Adding up the routes through each drop point counts a route once for every drop point it meets."
+    },
+    {
+      "code": "MOD = 10 ** 9 + 7\n\ndef drop_point_routes(grid):\n    rows, cols = len(grid), len(grid[0])\n    every = [0] * cols\n    clear = [0] * cols\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == '#':\n                every[j] = clear[j] = 0\n            elif i == 0 and j == 0:\n                every[j] = clear[j] = 1\n            else:\n                left_e = every[j - 1] if j else 0\n                left_c = clear[j - 1] if j else 0\n                every[j] = (every[j] + left_e) % MOD\n                clear[j] = 0 if grid[i][j] == 'P' else (clear[j] + left_c) % MOD\n    return (every[-1] - clear[-1]) % MOD\n",
+      "slip": "Starting both counts at 1 forgets that the start cell itself may be a drop point."
+    },
+    {
+      "code": "def drop_point_routes(grid):\n    rows, cols = len(grid), len(grid[0])\n    every = [0] * cols\n    clear = [0] * cols\n    for i in range(rows):\n        for j in range(cols):\n            ch = grid[i][j]\n            if ch == '#':\n                every[j] = clear[j] = 0\n                continue\n            if i == 0 and j == 0:\n                a = c = 1\n            else:\n                a = every[j] + (every[j - 1] if j else 0)\n                c = clear[j] + (clear[j - 1] if j else 0)\n            every[j] = a\n            clear[j] = 0 if ch == 'P' else c\n    return every[-1] - clear[-1]\n",
+      "slip": "Leaving out the modulus returns the full count, which on a large floor runs to dozens of digits."
+    }
+  ]
+}

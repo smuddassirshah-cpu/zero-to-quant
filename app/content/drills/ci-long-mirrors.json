@@ -1,0 +1,146 @@
+{
+  "id": "ci-long-mirrors",
+  "name": "Long mirrored stretches",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "long-mirrors"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 2,
+  "pace": 960,
+  "fn": "long_mirrors",
+  "returns": "an integer",
+  "brief": "A radio log records call signs as one string `tape` of lower-case letters. An analyst looks for stretches that read the same forwards and backwards, but short ones are noise.\n\nWrite `long_mirrors(tape, k)`, which returns how many stretches of `tape` with length at least `k` read the same both ways. A stretch is a run of neighbouring letters, and stretches at different positions count separately even when their letters agree.\n\nExample. In `'abaab'` the stretches of length at least 2 that read the same both ways are `'aba'`, `'aa'` and `'baab'`, so for `k = 2` the answer is 3.",
+  "constraints": [
+    "$1 \\le n \\le 1{,}000$ letters and $1 \\le k \\le 1{,}000$; `k` may be longer than the tape.",
+    "$O(n^2)$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "tape",
+      "type": "str",
+      "len": [
+        1,
+        1000
+      ],
+      "pattern": "[a-z]+"
+    },
+    {
+      "arg": "k",
+      "type": "int",
+      "range": [
+        1,
+        1000
+      ]
+    }
+  ],
+  "hint": "Every such stretch grows outwards from a centre, which is either one letter or the gap between two. Grow from each of the $2n - 1$ centres while the two ends agree, and count the stretches whose length has reached `k`.",
+  "starter": "def long_mirrors(tape, k):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "long_mirrors('abaab', 2)",
+      "expect": "3",
+      "compare": "equal",
+      "note": "`'aba'` grows from the letter `b`, while `'aa'` and `'baab'` grow from the gap between the two `a`s."
+    },
+    {
+      "call": "long_mirrors('zzzz', 3)",
+      "expect": "3",
+      "compare": "equal",
+      "note": "`'zzz'` appears at two positions and counts twice, and `'zzzz'` makes 3."
+    }
+  ],
+  "tests": [
+    {
+      "call": "long_mirrors('q', 1)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('q', 2)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('ab', 1)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('aaaa', 1)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('abcba', 5)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('abccba', 4)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('xyz', 4)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('abababa', 3)",
+      "expect": "9",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('aabbaa', 2)",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('kayakdeedkayak', 4)",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('a' * 1000, 1)",
+      "expect": "500500",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors(''.join('ab'[(i * i) % 7 % 2] for i in range(1000)), 6)",
+      "expect": "70787",
+      "compare": "equal"
+    },
+    {
+      "call": "long_mirrors('mn' * 500, 999)",
+      "expect": "2",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. Unlike a count of every stretch that reads the same both ways, the floor `k` decides which stretches count as each centre grows.",
+  "solution": "def long_mirrors(tape, k):\n    n = len(tape)\n    count = 0\n    for centre in range(2 * n - 1):\n        lo, hi = centre // 2, (centre + 1) // 2\n        while lo >= 0 and hi < n and tape[lo] == tape[hi]:\n            if hi - lo + 1 >= k:\n                count += 1\n            lo -= 1\n            hi += 1\n    return count\n",
+  "notes": [
+    "Every stretch that reads the same both ways grows outwards from one letter or from the gap between two.",
+    "Stretches of even length grow from a gap, so growing from letters alone misses `'aa'` and `'baab'`.",
+    "There are $2n - 1$ centres and each grows at most $n / 2$ times, so the work is $O(n^2)$."
+  ],
+  "planted": [
+    {
+      "code": "def long_mirrors(tape, k):\n    n = len(tape)\n    count = 0\n    for centre in range(2 * n - 1):\n        lo, hi = centre // 2, (centre + 1) // 2\n        while lo >= 0 and hi < n and tape[lo] == tape[hi]:\n            if hi - lo + 1 > k:\n                count += 1\n            lo -= 1\n            hi += 1\n    return count\n",
+      "slip": "Counting lengths above `k` leaves out the stretches of length exactly `k`."
+    },
+    {
+      "code": "def long_mirrors(tape, k):\n    n = len(tape)\n    count = 0\n    for centre in range(n):\n        lo = hi = centre\n        while lo >= 0 and hi < n and tape[lo] == tape[hi]:\n            if hi - lo + 1 >= k:\n                count += 1\n            lo -= 1\n            hi += 1\n    return count\n",
+      "slip": "Growing only from letters misses every stretch of even length."
+    },
+    {
+      "code": "def long_mirrors(tape, k):\n    n = len(tape)\n    seen = set()\n    for i in range(n):\n        for j in range(i + k, n + 1):\n            piece = tape[i:j]\n            if piece == piece[::-1]:\n                seen.add(piece)\n    return len(seen)\n",
+      "slip": "Counting distinct stretches merges equal stretches found at different positions."
+    }
+  ]
+}

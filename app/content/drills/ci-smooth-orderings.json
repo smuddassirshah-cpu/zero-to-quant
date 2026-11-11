@@ -1,0 +1,154 @@
+{
+  "id": "ci-smooth-orderings",
+  "name": "Smooth orders of child orders",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "backtracking",
+  "tags": [
+    "pack-7",
+    "smooth-orderings"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 5,
+  "pace": 2700,
+  "fn": "smooth_orderings",
+  "returns": "an integer",
+  "brief": "An execution desk sends child orders with the sizes in `sizes`, in lots, one after another, and every order is sent exactly once. To keep its footprint smooth, two orders sent one after the other may differ in size by at most `d` lots. Orders of equal size are alike.\n\nWrite `smooth_orderings(sizes, d)`, which returns the number of different sequences of sizes that send every order. Two sequences are the same when they list the same sizes in the same order.\n\nExample. For `[1, 2, 2, 4]` and `d = 2`, the only pair that may not sit side by side is 1 and 4. Of the 12 sequences of these sizes, 6 put 1 and 4 together, so the answer is 6.",
+  "constraints": [
+    "$1 \\le n \\le 11$ orders of $1$ to $1{,}000$ lots, and $0 \\le d \\le 1{,}000$.",
+    "$O(2^n \\cdot n^2)$ time is the target. Building the sequences one at a time is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "sizes",
+      "type": "list",
+      "len": [
+        1,
+        11
+      ],
+      "of": "int",
+      "range": [
+        1,
+        1000
+      ]
+    },
+    {
+      "arg": "d",
+      "type": "int",
+      "range": [
+        0,
+        1000
+      ]
+    }
+  ],
+  "hint": "Count by the set of orders sent so far and the last one sent, as for a tour of a set of towns. Sort the sizes, and allow a copy of a size only after the copy before it has been sent, so each sequence is built once.",
+  "starter": "def smooth_orderings(sizes, d):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "smooth_orderings([1, 2, 2, 4], 2)",
+      "expect": "6",
+      "compare": "equal",
+      "note": "Treating 1 and 4 as one block next to two 2s gives 3 places for the block, in 2 orders: 6 sequences to remove."
+    },
+    {
+      "call": "smooth_orderings([3, 3, 3], 0)",
+      "expect": "1",
+      "compare": "equal",
+      "note": "The three orders are alike, so there is one sequence."
+    }
+  ],
+  "tests": [
+    {
+      "call": "smooth_orderings([8], 0)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([5, 9], 3)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([5, 9], 4)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([7] * 10, 0)",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([1, 2, 3, 4], 1)",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([1, 1, 2, 2], 1)",
+      "expect": "6",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([1, 1, 3, 3], 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([10, 20, 20, 30, 30, 30], 10)",
+      "expect": "12",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([4, 1, 7, 10, 13, 2], 3)",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1], 1000)",
+      "expect": "39916800",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 4)",
+      "expect": "50186",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([5, 5, 6, 6, 7, 7, 8, 8, 9, 9], 2)",
+      "expect": "3846",
+      "compare": "equal"
+    },
+    {
+      "call": "smooth_orderings([3, 1, 4, 1, 5, 9, 2, 6, 5, 3], 3)",
+      "expect": "1572",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method builds every distinct sequence one at a time, and with 11 different sizes and a loose `d` there are $39{,}916{,}800$ of them, 11 factorial, so it runs out of time. The step to the target is to count by the set of orders sent and the last one sent, so sequences that agree on those are added up once. Unlike counting the orders of a multiset, the rule on neighbours ties each step to the one before, which is why the last order is part of the state.",
+  "solution": "def smooth_orderings(sizes, d):\n    vals = sorted(sizes)\n    n = len(vals)\n    near = [[j for j in range(n) if abs(vals[i] - vals[j]) <= d] for i in range(n)]\n    ways = [[0] * n for _ in range(1 << n)]       # ways[sent][last]\n    for i in range(n):\n        if i == 0 or vals[i] != vals[i - 1]:      # start only from the first copy of a size\n            ways[1 << i][i] = 1\n    for sent in range(1 << n):\n        row = ways[sent]\n        for last in range(n):\n            w = row[last]\n            if not w:\n                continue\n            for j in near[last]:\n                if sent >> j & 1:\n                    continue\n                if j and vals[j] == vals[j - 1] and not sent >> (j - 1) & 1:\n                    continue                      # an equal size must wait for its earlier copy\n                ways[sent | 1 << j][j] += w\n    return sum(ways[-1])\n",
+  "notes": [
+    "The state is the set of orders sent so far and the last one sent, and the count for a state adds up every way to reach it.",
+    "Equal sizes are used in a fixed order, the earlier copy first, so no sequence of sizes is counted twice.",
+    "There are $2^n \\cdot n$ states with up to $n$ moves each, so the work is $O(2^n \\cdot n^2)$."
+  ],
+  "planted": [
+    {
+      "code": "def smooth_orderings(sizes, d):\n    n = len(sizes)\n    ways = [[0] * n for _ in range(1 << n)]\n    for i in range(n):\n        ways[1 << i][i] = 1\n    for sent in range(1 << n):\n        for last in range(n):\n            w = ways[sent][last]\n            if w:\n                for j in range(n):\n                    if not sent >> j & 1 and abs(sizes[last] - sizes[j]) <= d:\n                        ways[sent | 1 << j][j] += w\n    return sum(ways[-1])\n",
+      "slip": "Counting orders of the individual orders treats equal sizes as different, so a repeated size is counted once per shuffle of its copies."
+    },
+    {
+      "code": "def smooth_orderings(sizes, d):\n    vals = sorted(sizes)\n    n = len(vals)\n    ways = [[0] * n for _ in range(1 << n)]\n    for i in range(n):\n        if i == 0 or vals[i] != vals[i - 1]:\n            ways[1 << i][i] = 1\n    for sent in range(1 << n):\n        for last in range(n):\n            w = ways[sent][last]\n            if not w:\n                continue\n            for j in range(n):\n                if sent >> j & 1 or abs(vals[last] - vals[j]) >= d:\n                    continue\n                if j and vals[j] == vals[j - 1] and not sent >> (j - 1) & 1:\n                    continue\n                ways[sent | 1 << j][j] += w\n    return sum(ways[-1])\n",
+      "slip": "Using `>=` to refuse a step also refuses two sizes exactly `d` apart."
+    },
+    {
+      "code": "def smooth_orderings(sizes, d):\n    vals = sorted(sizes)\n    n = len(vals)\n    ways = [[0] * n for _ in range(1 << n)]\n    for i in range(n):\n        ways[1 << i][i] = 1\n    for sent in range(1 << n):\n        for last in range(n):\n            w = ways[sent][last]\n            if not w:\n                continue\n            for j in range(n):\n                if sent >> j & 1 or abs(vals[last] - vals[j]) > d:\n                    continue\n                if j and vals[j] == vals[j - 1] and not sent >> (j - 1) & 1:\n                    continue\n                ways[sent | 1 << j][j] += w\n    return sum(ways[-1])\n",
+      "slip": "Letting a sequence start from any copy of a size breaks the fixed order of copies, so a repeated first size is counted more than once."
+    },
+    {
+      "code": "from collections import Counter\n\ndef smooth_orderings(sizes, d):\n    left = Counter(sizes)\n    kinds = sorted(left)\n\n    def walk(last, placed):\n        if placed == len(sizes):\n            return 1\n        total = 0\n        for v in kinds:\n            if left[v] and (last is None or abs(v - last) <= d):\n                left[v] -= 1\n                total += walk(v, placed + 1)\n                left[v] += 1\n        return total\n\n    return walk(None, 0)\n",
+      "slip": "Building each distinct sequence one at a time is right but takes time in proportion to the number of sequences."
+    }
+  ]
+}
