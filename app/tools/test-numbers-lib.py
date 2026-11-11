@@ -64,6 +64,27 @@ ok_c = h1 and c1 and not c2 and s_missing and not s_false and s_true
 print(f"{'PASS' if ok_c else 'FAIL'} hyphenated key reads, claim records, stated fails only while the false wording is present")
 if not ok_c:
     sys.exit(1)
+# B2-E4: Bank("<file id>") reads items[<item id>] paths; expect with and without the file argument, a wrong id and a missing item fail, check_wrongs runs
+from numbers_lib import Bank
+with contextlib.redirect_stdout(io.StringIO()):
+    bk = Bank('probability-1')
+    b1 = bk.expect('items[dice-ev-ten-sided-reroll].widget.answer', 6.75)
+    b2 = bk.expect('probability-1', 'items[dice-ev-ten-sided-reroll].widget.answer', 6.75)
+    b3 = bk.expect('items[dice-ev-ten-sided-reroll].widget.answer', 6.5)
+    b4 = bk.expect('items[no-such-item].widget.answer', 1)
+    b5 = bk.expect('items[*].difficulty', 3)
+    bk.check_wrongs()
+    b6 = bk.claim(True, 'a claim') and not bk.claim(False, 'a false claim')
+    b7 = bk.stated('items[dice-ev-ten-sided-reroll].question', 'a sentence that is not in the text', False)
+ok_b = b1 and b2 and not b3 and not b4 and b5 and b6 and b7 and any(r[0] for r in bk.results)
+print(f"{'PASS' if ok_b else 'FAIL'} Bank: item-id paths, optional file argument, wrong value and missing item fail, claim, stated, check_wrongs")
+try:
+    Bank('no-such-file')
+    ok_b = False
+except SystemExit:
+    pass
+if not ok_b:
+    sys.exit(1)
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     bad = [

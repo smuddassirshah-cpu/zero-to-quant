@@ -1387,15 +1387,41 @@
         st0 = cur.ready() ? 'engaged' : 'idle'; sync();
         return ok;
       },
-      /* tools/playthrough.mjs --fluency: a wrong answer typed into the open item (a number far from any key, an expression no key equals) */
-      answerWrong: () => {
+      /* tools/playthrough.mjs --fluency: a wrong answer typed into the open item (a number far from any key, an expression no key equals).
+         ENGINE-BACKLOG 926: answerWrong(id) types the value of the wrong[] entry with that id (a per cent item as "6.18%") or picks the option with that id,
+         so --bank --why can deal each named slip; false when the open item has no such id. */
+      answerWrong: (id) => {
         if (!alive || !cur || !cur.widget || !(st0 === 'idle' || st0 === 'engaged')) return false;
         const k = cur.widget.kind;
+        const w = ((cur.partCount && cur.partCount() > 1 ? ((cur.step.spec.parts || [])[cur.part().index] || {}).widget : cur.item && cur.item.widget) || {});
+        if (id != null) {
+          if (k === 'choice' || k === 'multi') {
+            const o = (w.options || []).find(q => q.id === id && !q.correct);
+            if (!o) return false;
+            cur.widget.set(k === 'multi' ? [o.id] : o.id);
+          } else {
+            const e = (w.wrong || []).find(q => q && q.id === id);
+            if (!e) return false;
+            if (k === 'numeric' && Number.isFinite(+e.value)) cur.widget.set(w.unit === '%' ? G().fmtNum(+e.value * 100) + '%' : G().fmtNum(+e.value));   // a per cent field stores a fraction and is typed as 6.18%
+            else if (k === 'expression' && typeof e.tex === 'string') cur.widget.set(e.tex);
+            else return false;
+          }
+          st0 = cur.ready() ? 'engaged' : 'idle'; sync();
+          return true;
+        }
         if (k !== 'numeric' && k !== 'expression') return false;
         cur.widget.set(k === 'numeric' ? '-987654.321' : 'q^{7}+3');
         st0 = cur.ready() ? 'engaged' : 'idle'; sync();
         return true;
       },
+      /* tools/playthrough.mjs --bank (B2-E1): grade the open item, or the open part, as it stands, without marking it or recording a result
+         (the starter of a code item must fail its hidden tests before the solution is pasted) */
+      probe: async () => {
+        if (!alive || !cur || !cur.step || !cur.step.grade || !(st0 === 'idle' || st0 === 'engaged')) return null;
+        const r = await cur.step.grade();
+        return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null;
+      },
+      /* tools/playthrough.mjs --bank --why: a wrong answer that is a named wrong[] entry or a named distractor of the open item (or part) */
       check: async () => {
         if (st0 !== 'engaged') return null;
         await doCheck();
