@@ -59,3 +59,44 @@ Read by hand against the course's lessons, quizzes, reviews, homework and `topic
 ## Engine limits
 
 Three bullets to `docs/BACKLOG-INBOX.md` under "Raised later (problems equations)": `form: "simplified"` takes a factorised answer; the Accepted line on a `form` widget; an equation `wrong` with the key's root grades correct.
+
+## Set 4 (level 4, simultaneous equations; added after sets 1 to 3, whose sections above are unchanged)
+
+File: `app/content/courses/equations/problems-4.json`. Numbers: the level 4 section of `docs/reports/problems-equations-numbers.py` (the script now checks sets 1 to 4: 1137 checks, 0 failures, exit 0). Engine graders: `docs/reports/problems-equations-4-grade.mjs --local-cdn <pkgs>` (138 checks, 0 failures).
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-rowing-current | 4 (4 / 0) | l14, l17 | 3 |
+| problems-4 | p-seedling-trays | 4 (4 / 0) | l15, l17 (and l3) | 4 |
+| problems-4 | p-remote-cars | 4 (4 / 0) | l15, l16, l17 | 4 |
+| problems-4 | p-salt-solutions | 4 (4 / 0) | l14, l17 (and l8) | 5 |
+
+Typed parts 16 of 16; no part is a judgement between options, so there is no choice part. Every lesson of the level appears (l14 twice, l15 twice, l16 once, l17 four times) and every problem draws on at least two. Only ideas taught by l17: the curve parts use the two shapes l15 teaches, $t^2 = 7t$ (gather and take out $t$) and $t^2 = 81$ (two roots).
+
+Rowing: the second equation from words, elimination by adding (opposite signs), $c$ back from $b$, then a launch's time upstream with that current. Trays: "8 more" as $y = x + 8$, the swap with brackets, "twice as many small trays" as $2n$ (the l17 test with one tray), then the order counted against the words. Cars: line and curve by substitution (both times, the set widget), the second crossing read as a point on both graphs (l16), $t^2 = 81$ with $-9$ refused by the words (l17), then the gap. Salt: the salt equation from per cents, elimination after scaling by 0.15, $x$ back, then a 360 g batch through the 3 to 2 ratio every 25% batch keeps (the script derives $x = \tfrac32 y$ from $0.15x + 0.4y = 0.25(x + y)$).
+
+### Checks
+
+| check | problems-4 |
+|---|---|
+| numbers script | 0 failures, exit 0 (1137 checks for the four sets) |
+| validator | 0 errors; 0 warnings on the file (one O2 long sentence in salt part 4 split) |
+| playthrough `--local-cdn` | green (16 parts) |
+| playthrough `--mobile` | green; 440 px shots of every part read, no fault (an `accept` with `\frac` showed as raw TeX in the Accepted line, so plain forms now come first) |
+| voice scan 35 (course folder) | 0 and 0 |
+
+### Review 1.3 faults avoided
+
+- Bands: every answer is a whole number with `tol` 0, and each part names its unit or count ("in km/h", "in hours", "in metres", "in grams", "how many"); the script checks that and that each part's last printed figure in `feedback.correct` is the key. No `accept` line promises a form the field cannot take.
+- No loose `wrong` bands: all are 0 except two non-whole slips (2.3333 and 2.625 hours, 5.7931 plants) at 0.005, each clear of the key and of each other.
+- Slips from the part before carry their own entry: `carried` in rowing 3 ($b = 24$) and trays 3 (20 and 28), `carried` in cars 4 ($t = -9$), `carried` in salt 3 ($y = 312.5$). No slip gives the key: the script rebuilds every `wrong` from its named slip and finds each outside the band; the one coincidence is salt part 2, where swapped strengths give 300, the value of `other`, and that line covers both.
+- No dead end: each part's result is restated and used by the next, and each last part asks for the result the problem is about (the time upstream, the small trays ordered, the gap at the post, the batch size).
+- Expression answers use no function names; the key, every accept form, 66 typed strings and every `wrong` were put through `grade.js` with the local Compute Engine.
+
+### Fresh-check
+
+0 hits at the gate and 0 at `--min-run 8 --min-share 0`. Read by hand against the level's lessons, quizzes, `review-4`, `homework-4` and `topic-0.2`: the course uses cinema orders, a café, shares, brokers, data feeds, delta contracts, order books, bonds and options; here a river, seedling trays, two toy cars and salt solutions, none used in sets 1 to 3 either. Numbers chosen to miss the lines the course uses with $y = x^2$ ($2x$, $3x$, $5x$ in `review-4`, $6x$ against $2x^2$ in `homework-4`, $x^2 = 4$): here $7t$ and 81. Shapes that recur, judged acceptable: count and value (salt, as l17's contracts and `homework-4` `hw4-bonds`) with per cents and a ratio after it; "8 more" and "twice as many" (l17's own traps) on trays.
+
+### Engine limits
+
+One bullet to `docs/BACKLOG-INBOX.md` under "Raised later (problems equations)": a single numeric field refuses `b = 12`, where sets and expressions drop the letter. The trailing unit (`600 g`) is already in the inbox.
