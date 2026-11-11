@@ -4,7 +4,7 @@ Oct 5, 2026 · @Muddassir Shah
 
 ## Start here
 
-The full path is about 625 hours in the app and about 3,111 hours of outside study, deliberate work all of it: roughly 4.7 years at 15 hours a week, or about 2.8 years at 25. Without the pure maths items it is 571 hours in the app and 2,945 hours of outside study, about 4.5 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
+The full path is about 678 hours in the app and about 3,058 hours of outside study, deliberate work all of it: roughly 4.7 years at 15 hours a week, or about 2.8 years at 25. Without the pure maths items it is 624 hours in the app and 2,891 hours of outside study, about 4.5 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
 
 Zero means: you can read English, use a web browser and do arithmetic with a calculator. Nothing else is assumed, including school algebra or ever having written a line of code.
 
@@ -17,7 +17,7 @@ Four things to know before starting:
 
 ## The map
 
-Four stages, 625 hours in the app and 3,111 of outside study (571 and 2,945 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
+Four stages, 678 hours in the app and 3,058 of outside study (624 and 2,891 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
 
 Generated from the source by `node app/tools/curriculum-hours.mjs --write` (check with `--check`). The Learn header, stage cards and census read the same function, `app/js/hours.js`. Never type these figures by hand.
 
@@ -25,17 +25,17 @@ Generated from the source by `node app/tools/curriculum-hours.mjs --write` (chec
 | Stage | In the app | Outside study | Quant path in the app | Quant path outside study | At 15 h/week |
 | --- | --- | --- | --- | --- | --- |
 | 0. From nothing | 116 | 439 | 108 | 407 | 9 months |
-| 1. Foundations | 317 | 1,333 | 288 | 1,199 | 25 months |
+| 1. Foundations | 317 | 1,333 | 288 | 1,198 | 25 months |
 | 2. Intermediate | 114 | 826 | 114 | 826 | 14 months |
 | 3. Advanced | 131 | 460 | 114 | 460 | 8 months |
-| All stages | 678 | 3,058 | 624 | 2,892 | 57 months |
+| All stages | 678 | 3,058 | 624 | 2,891 | 57 months |
 
 Stage hours are the sum of topic hours; nothing stores them. In the app counts each lesson's minutes, a level review (20 min) and homework (45 min) unless the file states minutes, and the topic exam's minutes. Outside study is the stored hours less that, never below 0; months use the stored hours. Quant path leaves out the courses tagged Pure maths, at their lesson share of a topic's hours. Topic hours:
 
 | Topic | Name | In the app | Outside study | Lessons mapped | Lessons written |
 | --- | --- | --- | --- | --- | --- |
-| 0.1 | Number | 15 | 45 | 32 | 27 |
-| 0.2 | Algebra | 33 | 147 | 54 | 48 |
+| 0.1 | Number | 15 | 45 | 32 | 32 |
+| 0.2 | Algebra | 33 | 147 | 54 | 54 |
 | 0.3 | Precalculus | 33 | 167 | 52 | 52 |
 | 0.4 | Computer basics | 13 | 27 | 24 | 24 |
 | 0.5 | Mental arithmetic | 7 | 13 | 12 | 12 |
@@ -46,13 +46,13 @@ Stage hours are the sum of topic hours; nothing stores them. In the app counts e
 | 1.3 | Calculus | 47 | 153 | 69 | 69 |
 | 1.4 | Linear algebra | 27 | 123 | 53 | 53 |
 | 1.5 | Probability | 64 | 186 | 99 | 99 |
-| 1.6 | Statistics | 21 | 99 | 42 | 36 |
+| 1.6 | Statistics | 22 | 98 | 42 | 42 |
 | 1.7 | Finance basics | 28 | 72 | 55 | 55 |
 | 1.8 | Data structures and algorithms | 25 | 225 | 49 | 49 |
 | 1.9 | C++ | 18 | 122 | 35 | 35 |
 | 1.10 | Analysis and proof-based linear algebra | 22 | 108 | 43 | 43 |
 | 1.11 | Complex numbers, vector calculus and differential equations | 23 | 97 | 43 | 43 |
-| 2.1 | Machine learning | 29 | 171 | 55 | 50 |
+| 2.1 | Machine learning | 29 | 171 | 55 | 55 |
 | 2.2 | Time series | 20 | 40 | 36 | 36 |
 | 2.3 | Projects | 26 | 374 | 48 | 48 |
 | 2.4 | Contests | 10 | 130 | 16 | 16 |
@@ -74,7 +74,7 @@ Stage hours are the sum of topic hours; nothing stores them. In the app counts e
 
 Two habits run through every stage and are not on the map: 10 minutes of mental arithmetic a day from the first week, and three interview-style probability problems a week from item 1.5 onwards.
 
-## Stage 0: From nothing (about 97 h in the app, about 458 h of outside study)
+## Stage 0: From nothing (about 116 h in the app, about 439 h of outside study)
 
 This stage is everything the post takes for granted: school maths up to the edge of calculus, and enough computer skill to install and run things.
 
@@ -98,7 +98,7 @@ All of it is free except the 0.6 books. Do 0.1 to 0.3 in order; run 0.4 and 0.5 
 - [ ] Five short statements proved, one each by direct proof, contrapositive, contradiction, induction and counterexample, written so a stranger can check every step **[Pure maths]**
 - [ ] You can make a folder, write a ten-line Python script in it and run it from the terminal
 
-## Stage 1: Foundations (about 286 h in the app, about 1,364 h of outside study)
+## Stage 1: Foundations (about 317 h in the app, about 1,333 h of outside study)
 
 This is the post's Tier 1 put into a fixed order, with one resource chosen per topic. Python comes first so that every maths topic after it can be checked in code; C++ comes last of the original nine. Items 1.10 and 1.11 add what a maths degree teaches and the post leaves out: proof-based analysis and linear algebra, complex numbers, vector calculus and differential equations. Start 1.10 after 1.4 and 1.11 after 1.10; finish both before Stage 2.
 
@@ -183,7 +183,7 @@ Pricing models are differential equations, and Fourier methods for option pricin
 - **Cover, differential equations [Quant: desk quant and rates]:** first-order equations, linear second-order equations, systems and phase planes, stability, the Laplace transform, numerical solution with Euler and Runge-Kutta, a mean-reverting equation as the drift of an interest rate model.
 - **Exit:** the 18.03 final at 70%; solve one equation numerically in NumPy and match its closed form to four decimal places.
 
-## Stage 2: Intermediate (about 111 h in the app, about 829 h of outside study)
+## Stage 2: Intermediate (about 114 h in the app, about 826 h of outside study)
 
 This is the post's Tier 2. Choose a track before starting, because the three roles are interviewed differently and the post treats them as one.
 
