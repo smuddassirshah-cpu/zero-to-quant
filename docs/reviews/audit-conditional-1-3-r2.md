@@ -104,3 +104,27 @@ Run on the worktree at commit `74967a24`, content unchanged.
 ## Engine
 
 No engine fault found. One tool item is added to `docs/BACKLOG-INBOX.md` under the existing line "Raised later (audit conditional):": a validator warning for a `tree` canvas whose stated leaves are not its path products, with an opt-out for declared leaves (finding 2; a working check is `trees()` in `docs/reports/conditional_concepts_r2_lib.py`).
+
+## Fix pass
+
+Fixer: Opus, round 2. Each basis below was worked out before the auditor's evidence column was used.
+
+1. fixed. Basis: posterior ∝ prior × likelihood; products 0, 1/18, 1/24 over 7/72 give 0, 4/7, 3/7, and 3/7 > 1/3, so the 8-sided die gained (a hypothesis gains exactly when its likelihood beats P(E) = 7/72; 1/8 > 7/72). Text now says both dice gained because the 4-sided die's share was shared out, the 6-sided more.
+2. fixed. Basis: multiplication rule, leaf = 0.5 × branch: 0.245, 0.255, 0.045, 0.455 (sum 1); 0.245 + 0.045 = 0.29 and 0.245/0.29 = 49/58. Graded slips and canvas changed: tree leaves; slip `joint` 0.49 → 0.245 with feedback naming 0.29; new slip `likelihood` 0.49 with its own feedback; explain's tree route now 0.245 / 0.29. Key 49/58, hints and highlight unchanged and still consistent. L2 r2 script: the `A(... screens[8])` call now checks joint = 0.245 and likelihood = 0.49, and the finding 2 check now compares the actual `joint` slip value (as written it tested two constants and could never pass with "out of everything" in the text); it fails on the old content.
+3. fixed. Basis: loss = bad ∪ crash, so P(bad | loss, crash) = P(bad | crash) = P(bad) < P(bad)/P(loss) = P(bad | loss). The question now fixes the baseline as just after the loss; the `same` why says before any news; the explanation now says the chance falls back to where it was before any news.
+4. fixed. Basis: P(A | B) = P(A) iff A's share of the removed outcomes equals its share of the whole (for 0 < P(B) < 1); counter-example A = {1, 2}, remove {1, 6}: 1/3 → 1/4. Second sentence shortened to "half even, like the whole die, so the chance held" to keep it under 20 words.
+5. fixed. Basis: Blitzstein and Hwang 2.5 and 2.6; ratios multiply when P(E1 ∩ E2 | H) = P(E1 | H)P(E2 | H) and likewise given ¬H. All five places now state independence given each hypothesis. Grep of in-scope files for the same class found and fixed: homework-2 `items[5].prose` ("an independent out-of-sample test"), l11 `summary.ideas[1]`, `objectives[1]` and `objectives[2]`, `quiz[2].feedback.correct`, `screens[9].widget.options[3].why` (now "adds weight only when the second call tells you something new", which is the general condition). Left as shorthand where the same item already states the conditional form: l11 `screens[8].feedback.byKey.one`, `quiz[2].widget.options[1].text`, review-2 `items[5].feedback.byKey.added`, homework-2 `items[7]` option, problems-2 item 1 parts 2 to 4. Plain independence of events with no hypothesis (l3, l14, review-3) is correct as written.
+6. fixed. Basis: P(A ∩ B) = P(A)P(B) = 0.4 × 0.5 = 0.2 > 0 whenever both chances are positive.
+7. fixed. Basis: three tosses of a fair coin give events that are mutually, hence pairwise, independent, so "never" is false as a rule; the two-coin example shows pairwise does not imply mutual. Both lines now say "pairwise does not imply (give) mutual".
+8. fixed. Basis: row i's "Today" equals row i + 1's "Yesterday" for all 19 joins, so the pairs overlap; the testable claim is today's sign independent of yesterday's.
+9. fixed. Basis: a fair 4-sided die gives each face 1/4; 1/4 > 1/6 > 1/8 for a 3, so the comparison is across dice.
+10. fixed. Basis: enumeration of totals 10 to 12 gives six outcomes but three totals.
+
+Counts: 10 fixed, 0 fixed differently, 0 disputed.
+
+Gates (worktree, after the fixes):
+
+- `node tools/validate.mjs` (from `app/`): 0 errors, 4,667 warnings; `content/manifest.json` unchanged.
+- From the repo root, all exit 0: `conditional-L1-concepts-r2.py` (706 checks), `conditional-L2-concepts-r2.py` (831 checks, 0 failed), `conditional-L3-concepts-r2.py` (714), `conditional-L1-concepts.py`, `conditional-L2-concepts.py`, `conditional-L3-concepts.py`, `conditional-2-perf-numbers.py`, `fluency-conditional-numbers.py`, `problems-conditional-numbers.py`. No round 1 check needed changing.
+- `VOICE_BASE=app/content/courses/conditional/ python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words, 0 explanations over three sentences.
+- Playthrough with `--local-cdn`, desktop and `--mobile`: l1, l11, l12, l13, l15, l16, review-2, homework-1, homework-2, all "All passed", exit 0, 0 relaunches.

@@ -193,14 +193,14 @@ C(L, 'screens[6]', 'right', None, **{'old-prior': p1, 'no-prior': 0.81, 'squared
 S(L, 'screens[6].widget.options[1].text', '$0.766$', round(float(p2), 3) == 0.766)
 ORD(L, 'screens[7]', ['c1', 'c2', 'c3', 'c4'])
 two_calls = bayes(F(1, 2), F(49, 100), F(9, 100))
-A(L, 'screens[8]', two_calls, one=0.7, joint=0.49, either=1 - 0.09)
+A(L, 'screens[8]', two_calls, one=0.7, joint=F(1, 2) * F(49, 100), likelihood=0.49, either=1 - 0.09)
 ok('l11 s8 odds route', from_odds(F(7, 3) ** 2) == two_calls == F(49, 58))
 # FINDING 2 (wrong): trees(L) above fails on this screen's leaves. They show the
 # conditional rates 0.49, 0.51, 0.09, 0.91 (which add to 2), not the path chances
 # 0.245, 0.255, 0.045, 0.455. The slip feedback then calls 0.49 the joint chance.
 fbj = get(L, 'screens[8].feedback.byKey.joint')
 ok('l11 screens[8].feedback.byKey.joint calls 0.49 "up with both calls up, out of everything"; the joint chance is 0.245',
-   not ('out of everything' in fbj and abs(0.5 * 0.49 - 0.49) > 1e-9))
+   not ('out of everything' in fbj and abs(0.5 * 0.49 - next(w['value'] for w in get(L, 'screens[8].widget.wrong') if w['id'] == 'joint')) > 1e-9))
 C(L, 'screens[9]', 'right', from_odds(F(7, 3)), double=two_calls, none=0.5, more=0.91)
 S(L, 'summary.formula.note', 'err independently given $H$ and given $\\neg H$')
 A(L, 'quiz[0]', from_odds(odds(F(1, 5)) * 6), probs=1.2, **{'first-only': from_odds(odds(F(1, 5)) * 2), 'second-only': from_odds(odds(F(1, 5)) * 3)})
