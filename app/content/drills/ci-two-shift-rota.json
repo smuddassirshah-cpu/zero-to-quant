@@ -1,0 +1,157 @@
+{
+  "id": "ci-two-shift-rota",
+  "name": "The biggest day shift",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "graphs",
+  "tags": [
+    "pack-5",
+    "two-shift-rota"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1320,
+  "fn": "max_day_shift",
+  "returns": "a whole number",
+  "brief": "A trading desk has `n` staff, numbered 0 to `n - 1`, and each works either the day shift or the night shift. Each pair `[a, b]` in `clashes` names two different people who must work different shifts; a pair may repeat. Return the largest number of staff who can work days, or `-1` when no split keeps every clashing pair apart.\n\nWrite `max_day_shift(n, clashes)`.\n\nExample. For `n = 5` and `clashes = [[0, 1], [1, 2], [3, 4]]`, staff 0 and 2 go on one shift and 1 on the other, and 3 and 4 are split. The most on days is 2 from the first group and 1 from the second, so the answer is 3.",
+  "constraints": [
+    "$1 \\le n \\le 200{,}000$ staff and at most $250{,}000$ clashes.",
+    "$O(n + m)$ time is the target for $m$ clashes. A chain of clashes can be too deep for Python recursion.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "n",
+      "type": "int",
+      "range": [
+        1,
+        200000
+      ]
+    },
+    {
+      "arg": "clashes",
+      "type": "list",
+      "len": [
+        0,
+        250000
+      ],
+      "of": {
+        "type": "list",
+        "len": [
+          2,
+          2
+        ],
+        "of": "int",
+        "range": [
+          0,
+          199999
+        ]
+      }
+    }
+  ],
+  "hint": "Colour each group of linked staff with a breadth-first search, giving each neighbour the other shift. A clash between two people of the same colour means `-1`. Each group can be flipped on its own, so take the larger side of each.",
+  "starter": "def max_day_shift(n, clashes):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "max_day_shift(5, [[0, 1], [1, 2], [3, 4]])",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Staff 0 and 2 can work days together; one of 3 and 4 joins them."
+    },
+    {
+      "call": "max_day_shift(3, [[0, 1], [1, 2], [2, 0]])",
+      "expect": "-1",
+      "compare": "equal",
+      "note": "Three people who all clash cannot be split over two shifts."
+    }
+  ],
+  "tests": [
+    {
+      "call": "max_day_shift(1, [])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(4, [])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(2, [[0, 1], [1, 0]])",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(4, [[0, 1], [0, 2], [0, 3]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(7, [[5, 0], [5, 1], [5, 2], [3, 4]])",
+      "expect": "5",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(6, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(6, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [5, 0]])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(8, [[7, 6], [6, 5], [4, 3], [2, 1], [1, 0], [0, 2]])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(6, [[1, 0], [2, 0], [3, 0], [4, 1], [5, 1]])",
+      "expect": "3",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(5, [[3, 4], [4, 3], [2, 3]])",
+      "expect": "4",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(200000, [[i, i + 1] for i in range(199999)])",
+      "expect": "100000",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(200000, [[i, i + 1] for i in range(199999)] + [[0, 199998]])",
+      "expect": "-1",
+      "compare": "equal"
+    },
+    {
+      "call": "max_day_shift(200000, [[i, i + 100000] for i in range(100000)] + [[i, i + 1] for i in range(0, 99999, 3)])",
+      "expect": "100000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
+  "solution": "from collections import deque\n\ndef max_day_shift(n, clashes):\n    near = [[] for _ in range(n)]\n    for a, b in clashes:\n        near[a].append(b)\n        near[b].append(a)\n    side = [-1] * n\n    total = 0\n    for s in range(n):\n        if side[s] >= 0:\n            continue\n        side[s] = 0\n        count = [1, 0]\n        queue = deque([s])\n        while queue:\n            u = queue.popleft()\n            for w in near[u]:\n                if side[w] < 0:\n                    side[w] = 1 - side[u]\n                    count[side[w]] += 1\n                    queue.append(w)\n                elif side[w] == side[u]:\n                    return -1\n        total += max(count)\n    return total\n",
+  "notes": [
+    "A split exists exactly when the clash graph is bipartite, which a two-colouring search finds.",
+    "Each group's colours can be swapped without touching the others, so the larger side of every group goes on days.",
+    "Each person and each clash is handled a fixed number of times, so the work is $O(n + m)$."
+  ],
+  "planted": [
+    {
+      "code": "from collections import deque\n\ndef max_day_shift(n, clashes):\n    near = [[] for _ in range(n)]\n    for a, b in clashes:\n        near[a].append(b)\n        near[b].append(a)\n    side = [-1] * n\n    for s in range(n):\n        if side[s] >= 0:\n            continue\n        side[s] = 0\n        queue = deque([s])\n        while queue:\n            u = queue.popleft()\n            for w in near[u]:\n                if side[w] < 0:\n                    side[w] = 1 - side[u]\n                    queue.append(w)\n                elif side[w] == side[u]:\n                    return -1\n    return side.count(0)\n",
+      "slip": "Counting the colour each search starts with, without flipping groups, misses the larger side."
+    },
+    {
+      "code": "from collections import deque\n\ndef max_day_shift(n, clashes):\n    near = [[] for _ in range(n)]\n    for a, b in clashes:\n        near[a].append(b)\n        near[b].append(a)\n    side = [-1] * n\n    total = 0\n    for s in range(n):\n        if side[s] >= 0:\n            continue\n        side[s] = 0\n        count = [1, 0]\n        queue = deque([s])\n        while queue:\n            u = queue.popleft()\n            for w in near[u]:\n                if side[w] < 0:\n                    side[w] = 1 - side[u]\n                    count[side[w]] += 1\n                    queue.append(w)\n        total += max(count)\n    return total\n",
+      "slip": "Never checking an already coloured neighbour misses an odd loop of clashes, so `-1` is never returned."
+    },
+    {
+      "code": "from collections import deque\n\ndef max_day_shift(n, clashes):\n    near = {}\n    for a, b in clashes:\n        near.setdefault(a, []).append(b)\n        near.setdefault(b, []).append(a)\n    side = {}\n    total = 0\n    for s in near:\n        if s in side:\n            continue\n        side[s] = 0\n        count = [1, 0]\n        queue = deque([s])\n        while queue:\n            u = queue.popleft()\n            for w in near[u]:\n                if w not in side:\n                    side[w] = 1 - side[u]\n                    count[side[w]] += 1\n                    queue.append(w)\n                elif side[w] == side[u]:\n                    return -1\n        total += max(count)\n    return total\n",
+      "slip": "Walking only the staff named in a clash leaves out people with no clash, who can all work days."
+    }
+  ]
+}

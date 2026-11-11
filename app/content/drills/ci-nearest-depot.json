@@ -1,0 +1,149 @@
+{
+  "id": "ci-nearest-depot",
+  "name": "Streets each depot is nearest to",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "graphs",
+  "tags": [
+    "pack-5",
+    "nearest-depot"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1920,
+  "fn": "depot_shares",
+  "returns": "a list of two whole numbers",
+  "brief": "Two delivery firms share a town map, `grid`, a list of equal-length strings. `#` is a building, `.` is a street cell, `A` is a depot of the first firm and `B` a depot of the second. People walk to the cell above, below, left or right, through streets and depots. A street cell belongs to a firm when that firm's nearest depot is strictly nearer, by walking, than the other firm's. A tie, or a cell no depot can reach, belongs to neither. Return `[a, b]`, the numbers of street cells belonging to each firm.\n\nWrite `depot_shares(grid)`.\n\nExample. In `['A..B']` the left street cell is 1 step from `A` and 2 from `B`, and the right one the other way round. The answer is `[1, 1]`.",
+  "constraints": [
+    "At most $300$ rows and $300$ columns; there may be any number of depots of each firm, or none.",
+    "$O(\\text{rows} \\times \\text{cols})$ time is the target. A search from each depot in turn is too slow when there are many depots.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "grid",
+      "type": "list",
+      "len": [
+        1,
+        300
+      ],
+      "of": {
+        "type": "str",
+        "len": [
+          1,
+          300
+        ],
+        "pattern": "[#.AB]+"
+      }
+    }
+  ],
+  "hint": "Run one breadth-first search that starts from every `A` depot at once, and another from every `B` depot. Then compare the two distances in each street cell.",
+  "starter": "def depot_shares(grid):\n    # your code here\n    return [0, 0]\n",
+  "examples": [
+    {
+      "call": "depot_shares(['A..B'])",
+      "expect": "[1, 1]",
+      "compare": "equal",
+      "note": "Each street cell is nearer to the depot beside it."
+    },
+    {
+      "call": "depot_shares(['A.#', '..B', '#..'])",
+      "expect": "[2, 3]",
+      "compare": "equal",
+      "note": "`A` is nearer for the two cells beside it. `B` is nearer for the other three, the middle cell included at 1 step against 2."
+    }
+  ],
+  "tests": [
+    {
+      "call": "depot_shares(['.'])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['A'])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['A...'])",
+      "expect": "[3, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['A.B'])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['A..', '...', '..B'])",
+      "expect": "[2, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['A#.', '.#.', '.#B'])",
+      "expect": "[2, 2]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['A.A.B', '.....', 'B...B'])",
+      "expect": "[2, 3]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['..#..', 'A.#.B', '..#..', '#####', '.....'])",
+      "expect": "[5, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['B....A', '.####.', '......'])",
+      "expect": "[6, 6]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares(['A.....', '######', 'B.....'])",
+      "expect": "[5, 5]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares([''.join('A' if (i * 300 + j) % 997 == 0 else 'B' if (i * 300 + j) % 991 == 5 else '.' for j in range(300)) for i in range(300)])",
+      "expect": "[25680, 62319]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares([''.join('#' if (i * 13 + j * 7) % 11 == 0 else 'A' if (i * 300 + j) % 499 == 3 else 'B' if (i * 300 + j) % 503 == 7 else '.' for j in range(300)) for i in range(300)])",
+      "expect": "[23564, 56458]",
+      "compare": "equal"
+    },
+    {
+      "call": "depot_shares([''.join('A' if j == 0 and i % 2 == 0 else 'B' if j == 299 and i % 2 == 1 else '#' if j == 150 and i != 150 else '.' for j in range(300)) for i in range(300)])",
+      "expect": "[44850, 44550]",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method runs a breadth-first search from each depot in turn and keeps the smallest distance. That is one full search per depot, which runs out of time when the map holds hundreds of them. The step to the target is a search that starts from every depot of a firm at once, so each firm costs one search.",
+  "solution": "from collections import deque\n\ndef depot_shares(grid):\n    rows, cols = len(grid), len(grid[0])\n\n    def spread(mark):\n        dist = [[-1] * cols for _ in range(rows)]\n        queue = deque()\n        for i in range(rows):\n            for j in range(cols):\n                if grid[i][j] == mark:\n                    dist[i][j] = 0\n                    queue.append((i, j))\n        while queue:\n            i, j = queue.popleft()\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and dist[a][b] < 0 and grid[a][b] != '#':\n                    dist[a][b] = dist[i][j] + 1\n                    queue.append((a, b))\n        return dist\n\n    da, db = spread('A'), spread('B')\n    a_cells = b_cells = 0\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] != '.':\n                continue\n            x, y = da[i][j], db[i][j]\n            if x >= 0 and (y < 0 or x < y):\n                a_cells += 1\n            elif y >= 0 and (x < 0 or y < x):\n                b_cells += 1\n    return [a_cells, b_cells]\n",
+  "notes": [
+    "A search seeded with all of one firm's depots at distance 0 gives every cell its distance to that firm's nearest depot.",
+    "Keeping the two firms' distances apart is what lets a tie be seen; one shared search hands each tie to whichever depot was queued first.",
+    "Two searches and one comparison pass make the work $O(\\text{rows} \\times \\text{cols})$, however many depots there are."
+  ],
+  "planted": [
+    {
+      "code": "from collections import deque\n\ndef depot_shares(grid):\n    rows, cols = len(grid), len(grid[0])\n    owner = {}\n    queue = deque()\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] in 'AB':\n                owner[(i, j)] = grid[i][j]\n                queue.append((i, j))\n    while queue:\n        i, j = queue.popleft()\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and (a, b) not in owner and grid[a][b] != '#':\n                owner[(a, b)] = owner[(i, j)]\n                queue.append((a, b))\n    out = [0, 0]\n    for (i, j), who in owner.items():\n        if grid[i][j] == '.':\n            out[who == 'B'] += 1\n    return out\n",
+      "slip": "One shared search hands each tied cell to whichever depot reached it first, instead of to neither."
+    },
+    {
+      "code": "from collections import deque\n\ndef depot_shares(grid):\n    rows, cols = len(grid), len(grid[0])\n\n    def spread(mark):\n        dist = {}\n        queue = deque()\n        for i in range(rows):\n            for j in range(cols):\n                if grid[i][j] == mark:\n                    dist[(i, j)] = 0\n                    queue.append((i, j))\n        while queue:\n            i, j = queue.popleft()\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and (a, b) not in dist and grid[a][b] != '#':\n                    dist[(a, b)] = dist[(i, j)] + 1\n                    queue.append((a, b))\n        return dist\n\n    da, db = spread('A'), spread('B')\n    out = [0, 0]\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == '#':\n                continue\n            x, y = da.get((i, j)), db.get((i, j))\n            if x is not None and (y is None or x < y):\n                out[0] += 1\n            elif y is not None and (x is None or y < x):\n                out[1] += 1\n    return out\n",
+      "slip": "Counting the depot cells as well as the streets adds each firm's own depots to its share."
+    },
+    {
+      "code": "from collections import deque\n\ndef depot_shares(grid):\n    rows, cols = len(grid), len(grid[0])\n\n    def spread(mark):\n        dist = {}\n        queue = deque()\n        for i in range(rows):\n            for j in range(cols):\n                if grid[i][j] == mark:\n                    dist[(i, j)] = 0\n                    queue.append((i, j))\n        while queue:\n            i, j = queue.popleft()\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and (a, b) not in dist:\n                    dist[(a, b)] = dist[(i, j)] + 1\n                    queue.append((a, b))\n        return dist\n\n    da, db = spread('A'), spread('B')\n    out = [0, 0]\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] != '.':\n                continue\n            x, y = da.get((i, j)), db.get((i, j))\n            if x is not None and (y is None or x < y):\n                out[0] += 1\n            elif y is not None and (x is None or y < x):\n                out[1] += 1\n    return out\n",
+      "slip": "Letting the search walk through buildings measures straight-line steps, not walking distance."
+    },
+    {
+      "code": "from collections import deque\n\ndef depot_shares(grid):\n    rows, cols = len(grid), len(grid[0])\n    near = {'A': [[-1] * cols for _ in range(rows)], 'B': [[-1] * cols for _ in range(rows)]}\n    for si in range(rows):\n        for sj in range(cols):\n            mark = grid[si][sj]\n            if mark not in 'AB':\n                continue\n            best = near[mark]\n            dist = {(si, sj): 0}\n            queue = deque([(si, sj)])\n            while queue:\n                i, j = queue.popleft()\n                d = dist[(i, j)]\n                if best[i][j] < 0 or d < best[i][j]:\n                    best[i][j] = d\n                for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                    if 0 <= a < rows and 0 <= b < cols and (a, b) not in dist and grid[a][b] != '#':\n                        dist[(a, b)] = d + 1\n                        queue.append((a, b))\n    out = [0, 0]\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == '.':\n                x, y = near['A'][i][j], near['B'][i][j]\n                if x >= 0 and (y < 0 or x < y):\n                    out[0] += 1\n                elif y >= 0 and (x < 0 or y < x):\n                    out[1] += 1\n    return out\n",
+      "slip": "A search from each depot in turn is right but repeats a full search per depot, too slow on the maps with hundreds of depots."
+    }
+  ]
+}

@@ -170,8 +170,28 @@ def v_checkpoint(a):
 def v_jobs(a):
     assert all(0 <= x < a["n"] and 0 <= y < a["n"] for x, y in a["rules"])
 
+def v_rota(a):
+    assert all(x != y and 0 <= x < a["n"] and 0 <= y < a["n"] for x, y in a["clashes"])
+
+def v_route(a):
+    n = a["n"]
+    assert all(x != y and 0 <= x < n and 0 <= y < n and 1 <= w <= 1000 for x, y, w in a["roads"])
+    assert 0 <= a["src"] < n and 0 <= a["dst"] < n
+
+def v_shapes(a):
+    assert grid_ok(a["grid"], "#.")
+
+def v_wall(a):
+    g = a["grid"]
+    assert grid_ok(g, "#.SE") and "".join(g).count("S") == 1 and "".join(g).count("E") == 1
+
+def v_depot(a):
+    assert grid_ok(a["grid"], "#.AB")
+
 VALID = {"ci-flood-reach": v_flood, "ci-loop-cables": v_loop, "ci-line-from-pairs": v_line,
-         "ci-checkpoint-route": v_checkpoint, "ci-stuck-jobs": v_jobs}
+         "ci-checkpoint-route": v_checkpoint, "ci-stuck-jobs": v_jobs,
+         "ci-two-shift-rota": v_rota, "ci-cheapest-route": v_route, "ci-island-shapes": v_shapes,
+         "ci-wall-break-route": v_wall, "ci-nearest-depot": v_depot}
 
 # ======================= independent methods =======================
 
@@ -325,15 +345,174 @@ def stuck_jobs(n, rules):
                 bad[w] = True; st.append(w)
     return [v for v in range(n) if bad[v]]
 
+def max_day_shift(n, clashes):
+    if n <= 12:
+        best = -1
+        for mask in range(1 << n):
+            if all((mask >> a & 1) != (mask >> b & 1) for a, b in clashes):
+                best = max(best, bin(mask).count("1"))
+        return best
+    # union-find with parity: par_of[x] is x's shift relative to its root
+    par, rel = list(range(n)), [0] * n
+    def f(x):
+        path = []
+        while par[x] != x:
+            path.append(x); x = par[x]
+        acc = 0
+        for y in reversed(path):
+            acc ^= rel[y]; rel[y] = acc; par[y] = x
+        return x
+    for a, b in clashes:
+        ra, rb = f(a), f(b)
+        if ra == rb:
+            if rel[a] == rel[b]:
+                return -1
+        else:
+            par[ra] = rb; rel[ra] = rel[a] ^ rel[b] ^ 1
+    side = defaultdict(lambda: [0, 0])
+    for v in range(n):
+        r = f(v); side[r][rel[v]] += 1
+    return sum(max(s) for s in side.values())
+
+def cheapest_route(n, roads, src, dst):
+    near = defaultdict(list)
+    for a, b, w in roads:
+        near[a].append((b, w)); near[b].append((a, w))
+    if n <= 7:
+        best = None
+        def go(u, path, cost):
+            nonlocal best
+            if u == dst:
+                key = (cost, len(path), path[:])
+                if best is None or key < best:
+                    best = key
+                return
+            for v, w in near[u]:
+                if v not in path:
+                    path.append(v); go(v, path, cost + w); path.pop()
+        go(src, [src], 0)
+        return best[2] if best else []
+    # Dijkstra on the whole key (cost, roads, route), which only grows along a route
+    done = {}
+    heap = [(0, 0, (src,))]
+    while heap:
+        c, k, p = heapq.heappop(heap)
+        u = p[-1]
+        if u in done:
+            continue
+        done[u] = p
+        if u == dst:
+            return list(p)
+        for v, w in near[u]:
+            if v not in done:
+                heapq.heappush(heap, (c + w, k + 1, p + (v,)))
+    return []
+
+def lone_shapes(grid):
+    R, C = len(grid), len(grid[0])
+    par = {}
+    def f(x):
+        while par[x] != x:
+            par[x] = par[par[x]]; x = par[x]
+        return x
+    for i in range(R):
+        for j in range(C):
+            if grid[i][j] == "#":
+                par[(i, j)] = (i, j)
+                for a, b in ((i - 1, j), (i, j - 1)):
+                    if (a, b) in par:
+                        par[f((a, b))] = f((i, j))
+    groups = defaultdict(list)
+    for cell in par:
+        groups[f(cell)].append(cell)
+    keys = []
+    for cells in groups.values():
+        r0 = min(i for i, j in cells); c0 = min(j for i, j in cells)
+        keys.append(tuple(sorted((i - r0, j - c0) for i, j in cells)))
+    cnt = Counter(keys)
+    return sum(1 for k in keys if cnt[k] == 1)
+
+def _bfs_grid(grid, starts, passable):
+    R, C = len(grid), len(grid[0])
+    dist = {s: 0 for s in starts}; q = deque(starts)
+    while q:
+        i, j = q.popleft()
+        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+            if 0 <= a < R and 0 <= b < C and (a, b) not in dist and passable(a, b):
+                dist[(a, b)] = dist[(i, j)] + 1; q.append((a, b))
+    return dist
+
+def fewest_moves_one_break(grid):
+    R, C = len(grid), len(grid[0])
+    S = next((i, j) for i in range(R) for j in range(C) if grid[i][j] == "S")
+    E = next((i, j) for i in range(R) for j in range(C) if grid[i][j] == "E")
+    if R * C <= SMALL:
+        best = _bfs_grid(grid, [S], lambda a, b: grid[a][b] != "#").get(E, -1)
+        for i in range(R):
+            for j in range(C):
+                if grid[i][j] == "#":
+                    d = _bfs_grid(grid, [S], lambda a, b: grid[a][b] != "#" or (a, b) == (i, j)).get(E, -1)
+                    if d >= 0 and (best < 0 or d < best):
+                        best = d
+        return best
+    # search over states (cell, knocks used)
+    dist = {(S, 0): 0}; q = deque([(S, 0)])
+    while q:
+        (i, j), k = q.popleft()
+        if (i, j) == E:
+            return dist[((i, j), k)]
+        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+            if 0 <= a < R and 0 <= b < C:
+                nk = k + (grid[a][b] == "#")
+                if nk <= 1 and ((a, b), nk) not in dist:
+                    dist[((a, b), nk)] = dist[((i, j), k)] + 1; q.append(((a, b), nk))
+    return -1
+
+def depot_shares(grid):
+    R, C = len(grid), len(grid[0])
+    marks = {m: [(i, j) for i in range(R) for j in range(C) if grid[i][j] == m] for m in "AB"}
+    if R * C <= SMALL:
+        # a search from every depot on its own, keeping the smallest distance per firm
+        near = {m: {} for m in "AB"}
+        for m in "AB":
+            for s in marks[m]:
+                for cell, d in _bfs_grid(grid, [s], lambda a, b: grid[a][b] != "#").items():
+                    if cell not in near[m] or d < near[m][cell]:
+                        near[m][cell] = d
+    else:
+        # frontier sets, one layer at a time
+        near = {}
+        for m in "AB":
+            dist, front, d = {}, set(marks[m]), 0
+            while front:
+                for c in front: dist[c] = d
+                nxt = set()
+                for i, j in front:
+                    for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+                        if 0 <= a < R and 0 <= b < C and grid[a][b] != "#" and (a, b) not in dist:
+                            nxt.add((a, b))
+                front, d = nxt, d + 1
+            near[m] = dist
+    out = [0, 0]
+    for i in range(R):
+        for j in range(C):
+            if grid[i][j] == ".":
+                x, y = near["A"].get((i, j)), near["B"].get((i, j))
+                if x is not None and (y is None or x < y): out[0] += 1
+                elif y is not None and (x is None or y < x): out[1] += 1
+    return out
+
 INDEP = {"ci-flood-reach": wet_cells, "ci-loop-cables": loop_cables, "ci-line-from-pairs": rebuild_line,
-         "ci-checkpoint-route": solve_checkpoint_route, "ci-stuck-jobs": stuck_jobs}
+         "ci-checkpoint-route": solve_checkpoint_route, "ci-stuck-jobs": stuck_jobs,
+         "ci-two-shift-rota": max_day_shift, "ci-cheapest-route": cheapest_route, "ci-island-shapes": lone_shapes,
+         "ci-wall-break-route": fewest_moves_one_break, "ci-nearest-depot": depot_shares}
 
 # ======================= slow methods kept out of `planted` =======================
 SLOW = {}
 # planted solutions that are right but too slow (always the last entry): (drill id, index)
-SLOW_PLANTED = set()
-# the obvious method timed in Pyodide for each difficulty 4 and 5 drill: (drill id, planted index) or SLOW key
-OBVIOUS = {}
+SLOW_PLANTED = {("ci-wall-break-route", 3), ("ci-nearest-depot", 3)}
+# the obvious method timed in Pyodide for each difficulty 4 and 5 drill: a planted index, or "s<k>" for SLOW[did][k]
+OBVIOUS = {"ci-wall-break-route": 3, "ci-nearest-depot": 3}
 
 # ======================= running =======================
 
