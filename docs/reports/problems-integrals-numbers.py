@@ -137,29 +137,41 @@ def trap(f, a, c, m):
 # ====================================================================== level 1
 lv = Level('integrals', 1)
 
-# p-falling-parabola: f(x) = 9 - x^2 on [0, 3]
-fF = lambda q: 9 - q * q
-h6 = F(1, 2)
-R6 = sum(fF(h6 * k) for k in range(1, 7)) * h6
-L6 = sum(fF(h6 * k) for k in range(0, 6)) * h6
-Rn = sp.summation((9 - 9 * sp.Symbol('k') ** 2 / n ** 2) * 3 / n, (sp.Symbol('k'), 1, n))
-Rn_closed = 18 - sp.Rational(27, 2) / n - sp.Rational(9, 2) / n ** 2
-lv.claim(sp.simplify(Rn - Rn_closed) == 0, 'L1 p-falling-parabola: symbolic sum equals 18 - 27/(2n) - 9/(2n^2)')
-num(lv, 0, 0, R6, Rn_closed.subs(n, 6), {'left-ends': L6, 'no-width': R6 / h6}, printed=15.625)
-for v in (8.75, 8, 6.75, 5, 2.75, 31.25, 15.625):
+# p-falling-parabola: f(x) = 12 - 3x^2 on [0, 2]
+fF = lambda q: 12 - 3 * q * q
+kk = sp.Symbol('k')
+h4 = F(1, 2)
+R4 = sum(fF(h4 * k_) for k_ in range(1, 5)) * h4
+L4 = sum(fF(h4 * k_) for k_ in range(0, 4)) * h4
+lv.claim([fF(h4 * k_) for k_ in range(1, 5)] == [F(45, 4), 9, F(21, 4), 0] and sum(fF(h4 * k_) for k_ in range(1, 5)) == F(51, 2),
+         'L1 p-falling-parabola: heights 11.25, 9, 5.25, 0 sum to 25.5')
+Rn = sp.summation((12 - 12 * kk ** 2 / n ** 2) * 2 / n, (kk, 1, n))
+Rn_closed = 16 - 12 / n - 4 / n ** 2
+lv.claim(sp.simplify(Rn - Rn_closed) == 0, 'L1 p-falling-parabola: symbolic sum equals 16 - 12/n - 4/n^2')
+lv.claim(sp.simplify(Rn - (24 - 4 * (n + 1) * (2 * n + 1) / n ** 2)) == 0, 'L1 p-falling-parabola: R_n = 24 - 4(n+1)(2n+1)/n^2')
+num(lv, 0, 0, R4, Rn_closed.subs(n, 4), {'left-ends': L4, 'no-width': R4 / h4}, printed=12.75)
+lv.claim((R4, L4) == (F(51, 4), F(75, 4)), 'L1 p-falling-parabola: R_4 = 12.75 and L_4 = 18.75')
+for v in (11.25, 9, 5.25, 0, 25.5, 12.75):
     say(lv, 0, 0, 'feedback.correct', v)
-gap6 = abs(fF(3) - fF(0)) * F(3, 6)
-num(lv, 0, 1, R6 + gap6, L6, {'subtracted': R6 - gap6, 'no-length': R6 + 9 * F(1, 6)}, printed=20.125)
-say(lv, 0, 1, 'feedback.correct', 4.5)
-nmin = next(m for m in range(1, 10000) if F(27, m) <= F(1, 10))
-num(lv, 0, 2, nmin, math.ceil(27 / 0.1 - 1e-9), {'no-length': next(m for m in range(1, 10000) if F(9, m) <= F(1, 10)), 'strict': nmin + 1})
+gap4 = abs(fF(2) - fF(0)) * F(2, 4)
+lv.claim(gap4 == 6 and L4 - R4 == gap4, 'L1 p-falling-parabola part 2: gap 12 x 2/4 = 6 equals L_4 - R_4')
+num(lv, 0, 1, R4 + gap4, L4, {'subtracted': R4 - gap4, 'no-length': R4 + 12 * F(1, 4)}, printed=18.75)
+say(lv, 0, 1, 'feedback.correct', 6)
+nmin = next(m for m in range(1, 10000) if F(24, m) <= F(1, 10))
+num(lv, 0, 2, nmin, math.ceil(24 / 0.1 - 1e-9), {'no-length': next(m for m in range(1, 10000) if F(12, m) <= F(1, 10)), 'strict': next(m for m in range(1, 10000) if F(24, m) < F(1, 10))})
+lv.claim(nmin == 240, 'L1 p-falling-parabola part 3: smallest n is 240, gap exactly 0.1 there')
 expr(lv, 0, 3, Rn_closed, slips={
-    'left-ends': Rn_closed + 27 / n,
-    'nine': 9 - 9 * (n + 1) * (2 * n + 1) / (2 * n ** 2),
-    'no-width': sp.expand(sp.summation(9 - 9 * sp.Symbol('k') ** 2 / n ** 2, (sp.Symbol('k'), 1, n)))})
-lv.claim(Rn_closed.subs(n, 6) == sp.Rational(125, 8), 'L1 p-falling-parabola part 4: R_6 from the formula is 15.625')
-num(lv, 0, 4, sp.limit(Rn_closed, n, sp.oo), riemann(fF, 0, 3), {
-    'no-squares': 27, 'stopped': R6, 'nine': sp.limit(9 - 9 * (n + 1) * (2 * n + 1) / (2 * n ** 2), n, sp.oo)})
+    'left-ends': Rn_closed + 24 / n,
+    'once': 12 - 4 * (n + 1) * (2 * n + 1) / n ** 2,
+    'no-width': sp.expand(sp.summation(12 - 12 * kk ** 2 / n ** 2, (kk, 1, n)))})
+lv.claim(sp.simplify(sp.summation(12 - 12 * kk ** 2 / n ** 2, (kk, 1, n)) - (12 * n - 2 * (n + 1) * (2 * n + 1) / n)) == 0,
+         'L1 p-falling-parabola part 4: no-width form is 12n - 2(n+1)(2n+1)/n')
+lv.claim(sp.simplify(sp.summation((12 - 12 * kk ** 2 / n ** 2) * 2 / n, (kk, 0, n - 1)) - (16 + 12 / n - 4 / n ** 2)) == 0,
+         'L1 p-falling-parabola part 4: L_n = 16 + 12/n - 4/n^2 (the left-ends slip)')
+lv.claim(Rn_closed.subs(n, 4) == sp.Rational(51, 4), 'L1 p-falling-parabola part 4: R_4 from the formula is 12.75')
+num(lv, 0, 4, sp.limit(Rn_closed, n, sp.oo), riemann(fF, 0, 2), {
+    'no-squares': 24, 'stopped': R4, 'once': sp.limit(12 - 4 * (n + 1) * (2 * n + 1) / n ** 2, n, sp.oo)})
+lv.claim(sp.integrate(12 - 3 * x ** 2, (x, 0, 2)) == 16 and 24 - 16 == 8, 'L1 p-falling-parabola part 5: area 16 by antiderivative; box 24 less 8')
 
 # p-subscriptions: s(t) = 12 - 4t
 s1 = lambda q: 12 - 4 * q
@@ -230,6 +242,8 @@ num(lv, 1, 1, Cc, 16 * (1 - math.exp(0)) + 16, {'zero': 0, 'minus': -16})
 T4 = 16 - 16 * sp.exp(-2)
 vl = lambda q: 8 * math.exp(-0.5 * q)
 num(lv, 1, 2, T4, riemann(vl, 0, 4), {'no-c': -16 * sp.exp(-2), 'times-k': 4 * (1 - sp.exp(-2)), 'rate': vl(4)}, printed=13.83)
+lv.claim(W(lv, 1, 2)['tol']['abs'] == 0.01 and abs(16 - 16 * 0.1353 - float(T4)) <= 0.01 and abs(13.84 - float(T4)) <= 0.01 and abs(13.83 - float(T4)) <= 0.01,
+         'L2 p-turnover-decay part 3: band 0.01 takes 13.83, 13.84 and the working 13.8352')
 say(lv, 1, 2, 'feedback.correct', 2.17)
 tq = sp.solve(sp.Eq(16 - 16 * sp.exp(-t / 2), 12), t)[0]
 lo, hi = 0.0, 10.0
@@ -323,8 +337,11 @@ T2 = trap(ln, 0.5, 1.5, 2)
 T2x = sp.Rational(1, 2) * (sp.log(sp.Rational(1, 2)) / 2 + sp.log(sp.Rational(3, 2)) / 2)
 num(lv, 2, 0, T2x, T2, {'full-ends': 0.5 * (ln(0.5) + ln(1) + ln(1.5)), 'midpoint': 0.5 * (ln(0.75) + ln(1.25)),
                         'lost-strip': 0.5 * (0.5 * ln(0.5) + ln(1))}, printed=-0.0719)
-lv.claim(round(0.5 * (-0.3466 + 0 + 0.2027), 4) in (-0.0719, -0.072) and abs(ln(0.5) / 2 + 0.3466) < 5e-5 and abs(ln(1.5) / 2 - 0.2027) < 5e-5,
-         'L3 p-log-return part 1 explain: half-heights -0.3466 and 0.2027')
+lv.claim(round(0.5 * (-0.34657 + 0 + 0.20273), 4) == -0.0719 and abs(ln(0.5) / 2 + 0.34657) < 5e-6 and abs(ln(1.5) / 2 - 0.20273) < 5e-6,
+         'L3 p-log-return part 1 explain: half-heights -0.34657 and 0.20273 give -0.0719')
+lv.claim(W(lv, 2, 0)['tol']['abs'] == 0.0001 and abs(-0.0720 - float(T2x)) <= 0.0001 and abs(-0.0719 - float(T2x)) <= 0.0001
+         and abs(0.5 * (-0.3466 + 0.2027) - float(T2x)) <= 0.0001,
+         'L3 p-log-return part 1: band 0.0001 takes -0.0719, -0.0720 and the 4-figure working -0.07195')
 Eln = sp.integrate(sp.log(x), (x, sp.Rational(1, 2), sp.Rational(3, 2)))
 num(lv, 2, 1, Eln, quad(ln, 0.5, 1.5)[0], {'plus-x': (1.5 * ln(1.5) + 1.5) - (0.5 * ln(0.5) + 0.5),
                                            'uv-only': 1.5 * ln(1.5) - 0.5 * ln(0.5), 'estimate': T2}, printed=-0.0452)
@@ -348,6 +365,10 @@ T2s = trap(sl, 0, 4, 2)
 num(lv, 3, 3, 2 * (2 * sp.exp(-sp.Rational(1, 2)) + 2 * sp.exp(-2)), T2s, {
     'full-ends': 2 * (sl(0) + sl(2) + sl(4)), 'no-h': 0.5 * sl(0) + sl(2) + 0.5 * sl(4), 'midpoint': 2 * (sl(1) + sl(3))}, printed=2.967)
 lv.claim(abs(sl(2) - 1.2131) < 5e-5 and abs(sl(4) - 0.5413) < 5e-5, 'L3 p-signal-average part 4: s(2) and s(4) as printed')
+lv.claim(abs(sl(2) - 1.21306) < 5e-6 and abs(sl(4) / 2 - 0.27067) < 5e-6 and round(2 * (1.21306 + 0.27067), 3) == 2.967,
+         'L3 p-signal-average part 4 explain: 1.21306 and 0.27067 give 2.967')
+lv.claim(W(lv, 3, 3)['tol']['abs'] == 0.001 and abs(2.968 - float(T2s)) <= 0.001 and abs(2.967 - float(T2s)) <= 0.001 and abs(2 * (1.2131 + 0.2707) - float(T2s)) <= 0.001,
+         'L3 p-signal-average part 4: band 0.001 takes 2.967, 2.968 and the 4-place working 2.9676')
 e0 = float(I4) - T2s
 lv.claim(abs(e0 - 0.49) < 0.005, f'L3 p-signal-average part 5: error of T_2 is about 0.49 ({e0:.4f})')
 pred = {m_: 0.49 / (m_ / 2) ** 2 for m_ in (2, 4, 8, 16, 32)}

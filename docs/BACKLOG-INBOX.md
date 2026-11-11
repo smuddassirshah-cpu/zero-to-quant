@@ -1985,3 +1985,6 @@ Raised later (problems multivar):
 
 Raised later (delta session AA):
 - [Should] expression widget: the grader reads only the real part of a value. Where both sides are complex at a sample point it should compare both parts or skip the point, and it should not pass a pair with no real point checked. Today `\frac{4}{\sqrt{1-2s}}` grades equal to `\frac{1}{\sqrt{1-2s}}` and `\sqrt{x-5}` equals `3\sqrt{x-5}`, so slips written as a scaled root would shadow the answer (`docs/reviews/delta-session-aa-scripts/expr_probe.mjs`). No present item is marked wrongly (`expr_scale_scan.mjs`: no `expression` answer grades equal to twice itself). Related to the sampling-range bullet under "problems fix pass d".
+
+Raised later (review problems 1.3 a):
+- [Should] validator: an advisory `[tight-band]` when a numeric question says "decimal to $k$ places" (or "to $k$ decimal places"), the stored answer has more than $k + 2$ decimal digits and `tol.abs` is at most $0.5 \times 10^{-k}$; suggest $10^{-k}$. Seen three times (review-problems-1.5-c finding 1; limits and integrals problems 1.3 findings 2 to 4): a working kept to 4 figures lands one unit out. Also add one line to `docs/briefs/chained.md`: the tolerance accepts the value the explanation's own printed figures give.

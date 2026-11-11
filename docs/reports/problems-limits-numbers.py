@@ -321,6 +321,8 @@ def level2(L):
     s2 = (P.subs(r, sp.Rational(49, 1000)) - 100) / sp.Rational(-1, 1000)
     num(L, 'p-perpetuity-slope', 2, s2, (Pf(0.049) - Pf(0.05)) / (0.049 - 0.05),
         {'sign': -s2, 'no-divide': P.subs(r, sp.Rational(49, 1000)) - 100}, dp=0, agree=1e-9)
+    ok(L['p-perpetuity-slope']['parts'][1]['widget']['tol']['abs'] == 1 if isinstance(L, dict) else True, 'perp p2: band is abs 1 (penny route -2040 accepted)')
+    ok(round((round(5 / 0.049, 2) - 100) / -0.001) == -2040 and abs(-2040 - s2) <= 1 and abs(-2041 - s2) <= 1, 'perp p2: penny route -2040 and 4-place route -2041 both inside the band')
     stated('P(0.049)', 102.0408, P.subs(r, sp.Rational(49, 1000)), 0.00005)
     stated('rise 2.0408', 2.0408, P.subs(r, sp.Rational(49, 1000)) - 100, 0.00005)
     stated('exact -2040.82', -2040.82, s2, 0.005)
@@ -336,22 +338,25 @@ run_level(2, level2)
 # ------------------------------------------------------------------ level 3
 def level3(L):
     # p-relative-strength
-    Pt = 40 * sp.exp(sp.Rational(6, 100) * t)
-    It = 2000 * sp.exp(sp.Rational(4, 100) * t)
-    Pf = lambda v: 40 * exp(0.06 * v)
-    If = lambda v: 2000 * exp(0.04 * v)
+    Pt = 30 * sp.exp(sp.Rational(7, 100) * t)
+    It = 1500 * sp.exp(sp.Rational(5, 100) * t)
+    Pf = lambda v: 30 * exp(0.07 * v)
+    If = lambda v: 1500 * exp(0.05 * v)
     dP0 = sp.diff(Pt, t).subs(t, 0)
-    num(L, 'p-relative-strength', 1, dP0, dq(Pf, 0), {'no-chain': 40, 'no-forty': F(6, 100)}, agree=1e-6)
-    ok(sp.diff(It, t).subs(t, 0) == 80, 'ratio: I\'(0) = 80')
+    num(L, 'p-relative-strength', 1, dP0, dq(Pf, 0), {'no-chain': 30, 'no-thirty': F(7, 100)}, agree=1e-6)
+    ok(dP0 == sp.Rational(21, 10), 'ratio: P\'(0) = 2.1')
+    ok(sp.diff(It, t).subs(t, 0) == 75, 'ratio: I\'(0) = 1500 * 0.05 = 75')
     Rt = Pt / It
     dR0 = sp.diff(Rt, t).subs(t, 0)
-    quot = (dP0 * 2000 - 40 * 80) / sp.Integer(2000) ** 2
+    quot = (dP0 * 1500 - 30 * 75) / sp.Integer(1500) ** 2
     ok(sp.simplify(dR0 - quot) == 0, 'ratio: quotient rule agrees with sympy')
     num(L, 'p-relative-strength', 2, dR0, dq(lambda v: Pf(v) / If(v), 0),
-        {'swapped': -quot, 'no-square': F(4800 - 3200, 2000), 'rates': F(24, 800), 'no-chain': F(40 * 2000 - 40 * 80, 2000 ** 2)}, agree=1e-6)
+        {'swapped': -quot, 'no-square': F(3150 - 2250, 1500), 'rates': F(21, 750), 'no-chain': F(30 * 1500 - 30 * 75, 1500 ** 2)}, agree=1e-6)
+    ok(3150 - 2250 == 900 and 1500 ** 2 == 2250000 and quot == sp.Rational(900, 2250000), 'ratio: top 3150 - 2250 = 900 over 2,250,000')
     ok(Rt.subs(t, 0) == sp.Rational(1, 50), 'ratio: R(0) = 0.02')
     g = sp.simplify(sp.diff(sp.log(Rt), t))
-    num(L, 'p-relative-strength', 3, dR0 / Rt.subs(t, 0), g, {'added': F(10, 100), 'raw': F(4, 10000), 'share-only': F(6, 100)})
+    num(L, 'p-relative-strength', 3, dR0 / Rt.subs(t, 0), g, {'added': F(12, 100), 'raw': F(4, 10000), 'share-only': F(7, 100), 'decimal': F(2, 10000)})
+    ok(sp.Rational(7, 100) - sp.Rational(5, 100) == g == sp.Rational(1, 50), 'ratio: growth rate is 0.07 - 0.05 = 0.02, 2% a year')
 
     # p-research-price
     n_ = (50 - p) ** 2

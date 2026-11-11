@@ -135,3 +135,40 @@ One fix pass on Sonnet covers all of it. Findings 7 and 8 change graded answers,
 | `dump.py`, `exprs.py` | compact dumps for reading | `python3` |
 
 All run from the repo root.
+
+
+## Fix pass
+
+Edits are targeted JSON field edits (the files round-trip byte-identical, so the diff touches only the fields below). Every changed number was computed twice (sympy exact, then numeric or enumeration) in `docs/reports/problems-limits-numbers.py` and `docs/reports/problems-integrals-numbers.py`, both updated and exit 0 (limits 1253 checks, 0 failures; integrals 1064 of 1064; sets 4 and 5 untouched). The pins in those scripts check the new band exactly, so a reverted fix fails.
+
+1. Fixed. `p-perpetuity-slope` part 2: question now says to keep $P(0.049)$ to 4 places; `tol` and `sign` `tol` abs 1. The penny route -2040 and the 4-place route -2041 are both inside the band of -2040.82; both `wrong` values (2040.82, 2) are outside.
+2. Fixed. `p-signal-average` part 4: `tol` 0.001, `accept` "$2.967 \pm 0.001$", explain ends "$2(1.21306 + 0.27067) \approx 2.967$". 2.968 and 2.9676 are now accepted; wrongs (3.509, 1.484, 3.713) outside.
+3. Fixed. `p-log-return` part 1: `tol` 0.0001, `accept` "$-0.0719 \pm 0.0001$", explain uses -0.34657 and 0.20273. -0.0720 and -0.07195 accepted; wrongs outside.
+4. Fixed. `p-turnover-decay` part 3: `tol` 0.01, `accept` "$13.83 \pm 0.01$". 13.84 and 13.8352 accepted; wrongs (-2.17, 3.46, 1.08) outside.
+5. Fixed. `p-relative-strength` part 3: `wrong` `decimal` 0.0002 (tol 0.00001) with its `byKey` line; clear of the answer and of `raw`.
+6. Fixed. Five `accept` lines now promise only number forms ("$2\ln 4 \approx 2.77$, accepted as $2.77 \pm 0.005$" and the four like it: `p-order-size-tail` 4, `p-time-to-fill` 2, `p-signal-average` 2 and 3).
+7. Fixed. `p-falling-parabola` on $f(x) = 12 - 3x^2$ over $[0, 2]$, all five parts, recomputed here: heights 11.25, 9, 5.25, 0; $R_4 = 12.75$, $L_4 = 18.75$, gap 6; $n = 240$; $R_n = 16 - \tfrac{12}{n} - \tfrac{4}{n^2}$ (symbolic sum, the $24 - \tfrac{4(n+1)(2n+1)}{n^2}$ form, and at $n = 4$); area 16 by limit and by antiderivative. Slip `nine` renamed `once` in parts 4 and 5. Fresh-check 0 hits; the curve appears nowhere else in the course.
+8. Fixed. `p-relative-strength` on $P = 30e^{0.07t}$, $I = 1500e^{0.05t}$: $P'(0) = 2.1$, $I'(0) = 75$, $R'(0) = \tfrac{900}{2{,}250{,}000} = 0.0004$ (sympy and a central difference), growth 2%. Slip `no-forty` renamed `no-thirty`. No hit elsewhere in limits or the exams.
+9. No edit, as ruled (the part-1 by-parts step stands).
+10. Fixed. `p-inventory-penalty` part 2 correct option: "$C$ is continuous, with a corner: slope 4 from the left, 3 from the right" (72 characters against 67, 57, 57).
+11. Fixed. `p-inventory-penalty` part 1 question reworded as proposed.
+12. Not content. The reader had not added it, so one `[tight-band]` bullet is added to `docs/BACKLOG-INBOX.md` under `Raised later (review problems 1.3 a):`, noting the `docs/briefs/chained.md` line (no brief edited).
+
+Gates: validator 0 errors; `fresh-check.mjs --file` 0 hits on all five changed sets; playthrough `--problems` with `--local-cdn`, with and without `--mobile`, green for limits 2, limits 3, integrals 1, 2, 3; voice scan 35 on both course folders 0 and 0; the tables in `docs/reports/problems-limits.md` and `-integrals.md` updated where an item changed (setting text only; parts, lessons and difficulty unchanged).
+
+Graded values changed (a delta reader recomputes exactly this list; `tol` is abs):
+
+- limits `problems-2` `p-perpetuity-slope` part 2: answer -2040.82 unchanged; `tol` 0.5 to 1; `wrong` `sign` 2040.82 `tol` 0.5 to 1.
+- limits `problems-3` `p-relative-strength` (new setting):
+  - part 1: answer 2.4 to 2.1; `no-chain` 40 to 30; `no-forty` 0.06 renamed `no-thirty` 0.07.
+  - part 2: answer 0.0004 unchanged; `no-square` 0.8 to 0.6; `rates` 0.03 to 0.028; `no-chain` 0.0192 to 0.019; `swapped` -0.0004 unchanged.
+  - part 3: answer 0.02 (%) unchanged; `added` 0.1 to 0.12; `share-only` 0.06 to 0.07; `raw` 0.0004 unchanged; new `decimal` 0.0002 (tol 0.00001).
+- integrals `problems-1` `p-falling-parabola` (new curve):
+  - part 1: answer 15.625 to 12.75; `left-ends` 20.125 to 18.75; `no-width` 31.25 to 25.5.
+  - part 2: answer 20.125 to 18.75; `subtracted` 11.125 to 6.75; `no-length` 17.125 to 15.75.
+  - part 3: answer 270 to 240; `no-length` 90 to 120; `strict` 271 to 241.
+  - part 4: answer `18-\frac{27}{2n}-\frac{9}{2n^2}` to `16-\frac{12}{n}-\frac{4}{n^2}`; accept to `\frac{16n^2-12n-4}{n^2}` and `24-\frac{4(n+1)(2n+1)}{n^2}`; `left-ends` to `16+\frac{12}{n}-\frac{4}{n^2}`; `nine` renamed `once` `12-\frac{4(n+1)(2n+1)}{n^2}`; `no-width` to `12n-\frac{2(n+1)(2n+1)}{n}`.
+  - part 5: answer 18 to 16; `no-squares` 27 to 24; `stopped` 15.625 to 12.75; `nine` 0 renamed `once` 4.
+- integrals `problems-2` `p-turnover-decay` part 3: answer 13.8346 unchanged; `tol` 0.005 to 0.01.
+- integrals `problems-3` `p-signal-average` part 4: answer 2.96746 unchanged; `tol` 0.0005 to 0.001. `p-log-return` part 1: answer -0.07192 unchanged; `tol` 0.00005 to 0.0001.
+- Accept text only, no value change: `p-turnover-decay` part 4, `p-order-size-tail` part 4, `p-time-to-fill` part 2, `p-signal-average` parts 2 and 3; and the `p-inventory-penalty` option and question wording.
