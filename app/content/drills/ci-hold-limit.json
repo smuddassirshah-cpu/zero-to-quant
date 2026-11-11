@@ -1,0 +1,167 @@
+{
+  "id": "ci-hold-limit",
+  "name": "A hold with a crate limit",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "dp-2d",
+    "hold-limit"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 3,
+  "pace": 1440,
+  "fn": "hold_value",
+  "returns": "an integer",
+  "brief": "A cargo hold takes at most `cap` tonnes and has room for at most `k` crates. Crate `i` weighs `weights[i]` tonnes and earns `values[i]` pounds, and each crate goes in whole or not at all.\n\nWrite `hold_value(weights, values, cap, k)`, which returns the most the hold can earn, in pounds.\n\nExample. For weights `[5, 2, 2, 2]`, values `[9, 4, 4, 4]`, `cap = 6` and `k = 2`, the three crates of 2 tonnes fit by weight and would earn £12, but that is three crates. No pair with the 5-tonne crate fits, so the best is that crate alone, and the answer is 9.",
+  "constraints": [
+    "$1 \\le n \\le 50$ crates, weights from 1 to 400 tonnes, values from £1 to £10,000, $1 \\le$ `cap` $\\le 400$ and $1 \\le k \\le 50$.",
+    "$O(n \\cdot k \\cdot \\text{cap})$ time is the target.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "weights",
+      "type": "list",
+      "len": [
+        1,
+        50
+      ],
+      "of": "int",
+      "range": [
+        1,
+        400
+      ]
+    },
+    {
+      "arg": "values",
+      "type": "list",
+      "len": [
+        1,
+        50
+      ],
+      "of": "int",
+      "range": [
+        1,
+        10000
+      ]
+    },
+    {
+      "arg": "cap",
+      "type": "int",
+      "range": [
+        1,
+        400
+      ]
+    },
+    {
+      "arg": "k",
+      "type": "int",
+      "range": [
+        1,
+        50
+      ]
+    }
+  ],
+  "hint": "Add a crate count to the knapsack table: cell `(c, t)` is the best from at most `c` crates weighing at most `t`. For each crate, update the counts from `k` down to 1 and the weights from `cap` down.",
+  "starter": "def hold_value(weights, values, cap, k):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "hold_value([5, 2, 2, 2], [9, 4, 4, 4], 6, 2)",
+      "expect": "9",
+      "compare": "equal",
+      "note": "Three light crates earn more but break the limit of two crates."
+    },
+    {
+      "call": "hold_value([3, 4, 5], [30, 50, 60], 8, 3)",
+      "expect": "90",
+      "compare": "equal",
+      "note": "With room for every crate, the limit does not bind: the crates of 3 and 5 tonnes earn £90."
+    }
+  ],
+  "tests": [
+    {
+      "call": "hold_value([9], [100], 8, 1)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([8], [100], 8, 1)",
+      "expect": "100",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([1], [10], 5, 5)",
+      "expect": "10",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([2, 3, 4], [7, 1, 8], 9, 1)",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([1, 1, 1, 1], [5, 6, 7, 8], 4, 3)",
+      "expect": "21",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([6, 5, 5], [12, 9, 9], 10, 2)",
+      "expect": "18",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([3, 3, 3, 3, 3], [1, 2, 3, 4, 5], 400, 50)",
+      "expect": "15",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([4, 6, 2, 7, 3], [40, 54, 15, 60, 24], 13, 2)",
+      "expect": "114",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([10, 20, 30], [60, 100, 120], 50, 2)",
+      "expect": "220",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([(i * 37) % 97 + 1 for i in range(50)], [(i * 53) % 101 + 50 for i in range(50)], 400, 15)",
+      "expect": "1783",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([(i * 29) % 61 + 10 for i in range(50)], [(i * i * 7) % 9973 + 1 for i in range(50)], 400, 50)",
+      "expect": "85699",
+      "compare": "equal"
+    },
+    {
+      "call": "hold_value([400] * 50, [10000] * 50, 400, 50)",
+      "expect": "10000",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value. Unlike the plain 0/1 knapsack, the crate limit adds a count to the table, so the best load is taken over at most `k` crates.",
+  "solution": "def hold_value(weights, values, cap, k):\n    k = min(k, len(weights))\n    best = [[0] * (cap + 1) for _ in range(k + 1)]\n    for w, v in zip(weights, values):\n        for c in range(k, 0, -1):\n            row, fewer = best[c], best[c - 1]\n            for t in range(cap, w - 1, -1):\n                if fewer[t - w] + v > row[t]:\n                    row[t] = fewer[t - w] + v\n    return best[k][cap]\n",
+  "notes": [
+    "Cell `(c, t)` holds the best earnings from at most `c` crates weighing at most `t` tonnes in all.",
+    "Counting crates downwards keeps each crate to one use, because row `c - 1` still holds the totals from before that crate.",
+    "Each crate updates $k \\cdot \\text{cap}$ cells, so the work is $O(n \\cdot k \\cdot \\text{cap})$."
+  ],
+  "planted": [
+    {
+      "code": "def hold_value(weights, values, cap, k):\n    best = [0] * (cap + 1)\n    for w, v in zip(weights, values):\n        for t in range(cap, w - 1, -1):\n            best[t] = max(best[t], best[t - w] + v)\n    return best[cap]\n",
+      "slip": "The plain knapsack table ignores the limit of `k` crates."
+    },
+    {
+      "code": "def hold_value(weights, values, cap, k):\n    order = sorted(range(len(weights)), key=lambda i: values[i] / weights[i], reverse=True)\n    total = used = load = 0\n    for i in order:\n        if used < k and load + weights[i] <= cap:\n            load += weights[i]\n            total += values[i]\n            used += 1\n    return total\n",
+      "slip": "Filling the hold by value per tonne is a greedy that a heavier, richer crate beats."
+    },
+    {
+      "code": "def hold_value(weights, values, cap, k):\n    k = min(k, len(weights))\n    best = [[0] * (cap + 1) for _ in range(k + 1)]\n    for w, v in zip(weights, values):\n        for c in range(1, k + 1):\n            row, fewer = best[c], best[c - 1]\n            for t in range(cap, w - 1, -1):\n                if fewer[t - w] + v > row[t]:\n                    row[t] = fewer[t - w] + v\n    return best[k][cap]\n",
+      "slip": "Counting crates upwards lets row `c` read a row that already holds this crate, so one crate is loaded twice."
+    }
+  ]
+}

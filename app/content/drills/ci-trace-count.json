@@ -1,0 +1,165 @@
+{
+  "id": "ci-trace-count",
+  "name": "Counting traces of a word",
+  "course": "coding-int",
+  "pack": "ci",
+  "pattern": "dp",
+  "tags": [
+    "pack-7",
+    "dp-2d",
+    "trace-count"
+  ],
+  "skills": [
+    "ci-patterns",
+    "ci-timed"
+  ],
+  "difficulty": 4,
+  "pace": 1980,
+  "fn": "trace_count",
+  "returns": "an integer",
+  "brief": "A word game gives a board of letters as `board`, a list of equal-length strings, and a word `word`. A trace starts on a square holding the first letter, and each step moves to the square above, below, left or right holding the next letter. A trace may come back to a square it used before, but it never stays where it is.\n\nWrite `trace_count(board, word)`, which returns the number of different traces of `word`, modulo 1,000,000,007. Two traces differ when they use a different square at some step.\n\nExample. On `['ab', 'ba']` the word `'aba'` starts on either `a`, steps to either `b`, then steps to either `a`. That makes $2 \\times 2 \\times 2$ traces, so the answer is 8.",
+  "constraints": [
+    "At most $20$ rows and $20$ columns of lower-case letters, all rows the same length, and a word of 1 to 60 letters.",
+    "$O(L \\cdot \\text{rows} \\cdot \\text{cols})$ time is the target for a word of `L` letters. Following every trace one by one is too slow.",
+    "All the tests in a run share one 5-second limit in the browser.",
+    {
+      "arg": "board",
+      "type": "list",
+      "len": [
+        1,
+        20
+      ],
+      "of": {
+        "type": "str",
+        "len": [
+          1,
+          20
+        ],
+        "pattern": "[a-z]+"
+      }
+    },
+    {
+      "arg": "word",
+      "type": "str",
+      "len": [
+        1,
+        60
+      ],
+      "pattern": "[a-z]+"
+    }
+  ],
+  "hint": "Keep, for each square, the number of traces of the first `i` letters that end there. The counts for the next letter come from adding up each square's four neighbours that hold it.",
+  "starter": "def trace_count(board, word):\n    # your code here\n    return 0\n",
+  "examples": [
+    {
+      "call": "trace_count(['ab', 'ba'], 'aba')",
+      "expect": "8",
+      "compare": "equal",
+      "note": "Each `a` has two `b` neighbours, and each `b` has two `a` neighbours."
+    },
+    {
+      "call": "trace_count(['cat'], 'tat')",
+      "expect": "1",
+      "compare": "equal",
+      "note": "The trace returns to the `t` it started on, which is allowed."
+    },
+    {
+      "call": "trace_count(['xy', 'zw'], 'xw')",
+      "expect": "0",
+      "compare": "equal",
+      "note": "`w` is diagonal from `x`, and diagonal steps are not moves."
+    }
+  ],
+  "tests": [
+    {
+      "call": "trace_count(['q'], 'q')",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['q'], 'r')",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['a'], 'aa')",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['aa'], 'aaa')",
+      "expect": "2",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['ab'], 'abab')",
+      "expect": "1",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['ab', 'cd'], 'ad')",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['abc', 'bab', 'cba'], 'abc')",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['zzz', 'zzz', 'zzz'], 'zzzz')",
+      "expect": "192",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['tea', 'eat', 'ate'], 'tete')",
+      "expect": "8",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count(['a' * 20] * 20, 'a' * 60)",
+      "expect": "661650995",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count([''.join('ab'[(i + j) % 2] for j in range(20)) for i in range(20)], 'ab' * 30)",
+      "expect": "830825501",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count([''.join('abc'[(i * i + 3 * j) % 3] for j in range(19)) for i in range(20)], 'abcab' * 12)",
+      "expect": "0",
+      "compare": "equal"
+    },
+    {
+      "call": "trace_count([''.join('rst'[(i * 7 + j * j) % 3] for j in range(20)) for i in range(17)], 'rstsrtrsst' * 6)",
+      "expect": "0",
+      "compare": "equal"
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value. The obvious method follows every trace square by square, and the number of traces can grow fourfold with each letter, so it runs out of time on the large boards. The step to the target is to count the traces that end on each square after each letter, so traces that meet on a square are added up once. Unlike a word search, which asks whether a word can be traced without reusing a square, this counts traces and lets them return to a square.",
+  "solution": "MOD = 10 ** 9 + 7\n\ndef trace_count(board, word):\n    rows, cols = len(board), len(board[0])\n    ways = {(i, j): 1 for i in range(rows) for j in range(cols) if board[i][j] == word[0]}\n    for ch in word[1:]:\n        nxt = {}\n        for (i, j), w in ways.items():\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and board[a][b] == ch:\n                    nxt[(a, b)] = (nxt.get((a, b), 0) + w) % MOD\n        ways = nxt\n    return sum(ways.values()) % MOD\n",
+  "notes": [
+    "The traces of the first `i` letters ending on a square are the sum of those of `i - 1` letters ending on its matching neighbours.",
+    "Revisits are allowed, so the word-search habit of marking used squares undercounts.",
+    "Each letter looks at each square's four neighbours once, so the work is $O(L \\cdot \\text{rows} \\cdot \\text{cols})$."
+  ],
+  "planted": [
+    {
+      "code": "def trace_count(board, word):\n    rows, cols = len(board), len(board[0])\n    used = set()\n\n    def walk(i, j, k):\n        if k == len(word) - 1:\n            return 1\n        used.add((i, j))\n        total = 0\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and (a, b) not in used and board[a][b] == word[k + 1]:\n                total += walk(a, b, k + 1)\n        used.discard((i, j))\n        return total\n\n    return sum(walk(i, j, 0) for i in range(rows) for j in range(cols) if board[i][j] == word[0]) % (10 ** 9 + 7)\n",
+      "slip": "Marking squares as used, as in a word search, forbids the returns that the traces may make."
+    },
+    {
+      "code": "MOD = 10 ** 9 + 7\n\ndef trace_count(board, word):\n    rows, cols = len(board), len(board[0])\n    ways = {(i, j): 1 for i in range(rows) for j in range(cols) if board[i][j] == word[0]}\n    for ch in word[1:]:\n        nxt = {}\n        for (i, j), w in ways.items():\n            for di in (-1, 0, 1):\n                for dj in (-1, 0, 1):\n                    a, b = i + di, j + dj\n                    if (di or dj) and 0 <= a < rows and 0 <= b < cols and board[a][b] == ch:\n                        nxt[(a, b)] = (nxt.get((a, b), 0) + w) % MOD\n        ways = nxt\n    return sum(ways.values()) % MOD\n",
+      "slip": "Stepping to all eight neighbours counts diagonal steps, which are not moves."
+    },
+    {
+      "code": "def trace_count(board, word):\n    rows, cols = len(board), len(board[0])\n    ways = {(i, j): 1 for i in range(rows) for j in range(cols) if board[i][j] == word[0]}\n    for ch in word[1:]:\n        nxt = {}\n        for (i, j), w in ways.items():\n            for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n                if 0 <= a < rows and 0 <= b < cols and board[a][b] == ch:\n                    nxt[(a, b)] = nxt.get((a, b), 0) + w\n        ways = nxt\n    return sum(ways.values())\n",
+      "slip": "Leaving out the modulus returns the full count, which on a large board runs to dozens of digits."
+    },
+    {
+      "code": "MOD = 10 ** 9 + 7\n\ndef trace_count(board, word):\n    rows, cols = len(board), len(board[0])\n\n    def walk(i, j, k):\n        if k == len(word) - 1:\n            return 1\n        total = 0\n        for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):\n            if 0 <= a < rows and 0 <= b < cols and board[a][b] == word[k + 1]:\n                total += walk(a, b, k + 1)\n        return total\n\n    return sum(walk(i, j, 0) for i in range(rows) for j in range(cols) if board[i][j] == word[0]) % MOD\n",
+      "slip": "Following every trace one by one is right but takes time in proportion to the number of traces, which runs out of time."
+    }
+  ]
+}

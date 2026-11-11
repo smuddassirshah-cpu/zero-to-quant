@@ -298,6 +298,150 @@ def solve_priced_edits(text):
 VALID["ci-priced-edits"] = v_edits
 INDEP["ci-priced-edits"] = solve_priced_edits
 
+# ---- ci-hold-limit
+def v_hold(a):
+    assert len(a["weights"]) == len(a["values"]), "equal lengths"
+
+def hold_value(weights, values, cap, k):
+    n = len(weights)
+    if n <= 14:                              # every subset
+        best = 0
+        for mask in range(1 << n):
+            idx = [i for i in range(n) if mask >> i & 1]
+            if len(idx) <= k and sum(weights[i] for i in idx) <= cap:
+                best = max(best, sum(values[i] for i in idx))
+        return best
+    states = {(0, 0): 0}                     # (crates, exact weight) -> best value
+    for w, v in zip(weights, values):
+        nxt = dict(states)
+        for (c, t), val in states.items():
+            if c < k and t + w <= cap and nxt.get((c + 1, t + w), -1) < val + v:
+                nxt[(c + 1, t + w)] = val + v
+        states = nxt
+    return max(states.values())
+
+VALID["ci-hold-limit"] = v_hold
+INDEP["ci-hold-limit"] = hold_value
+
+# ---- ci-pillar-queens
+def v_queens(a):
+    b = a["board"]
+    assert rect(b) and len(b) == len(b[0]), "square"
+    assert a["q"] <= len(b), "q at most n"
+
+def queen_count(board, q):
+    n = len(board)
+    free = [(r, c) for r in range(n) for c in range(n) if board[r][c] == "."]
+    def apart(p, s):
+        return p[0] != s[0] and p[1] != s[1] and abs(p[0] - s[0]) != abs(p[1] - s[1])
+    if n <= 5:                               # every set of q free squares
+        return sum(1 for pick in combinations(free, q) if all(apart(p, s) for p, s in combinations(pick, 2)))
+    count = 0                                # squares in reading order, each taken or not
+    def walk(i, chosen):
+        nonlocal count
+        if len(chosen) == q:
+            count += 1
+            return
+        if len(free) - i < q - len(chosen):
+            return
+        walk(i + 1, chosen)
+        if all(apart(free[i], s) for s in chosen):
+            walk(i + 1, chosen + [free[i]])
+    walk(0, [])
+    return count
+
+VALID["ci-pillar-queens"] = v_queens
+INDEP["ci-pillar-queens"] = queen_count
+
+# ---- ci-invoice-matches
+def invoice_matches(amounts, target, k):
+    if len(amounts) <= 14:                   # every subset of invoices, made distinct
+        ways = set()
+        for mask in range(1 << len(amounts)):
+            pick = sorted(amounts[i] for i in range(len(amounts)) if mask >> i & 1)
+            if pick and len(pick) <= k and sum(pick) == target:
+                ways.add(tuple(pick))
+        return [list(w) for w in sorted(ways)]
+    have = sorted(Counter(amounts).items())  # how many of each amount to use
+    out = []
+    def walk(i, left, used, pick):
+        if left == 0:
+            out.append(sorted(pick))
+            return
+        if i == len(have) or used > k:
+            return
+        v, m = have[i]
+        for t in range(m + 1):
+            if t * v > left or used + t > k:
+                break
+            walk(i + 1, left - t * v, used + t, pick + [v] * t)
+    walk(0, target, 0, [])
+    return sorted(out)
+
+VALID["ci-invoice-matches"] = lambda a: None
+INDEP["ci-invoice-matches"] = invoice_matches
+
+# ---- ci-trace-count
+def v_trace(a):
+    assert rect(a["board"]), "rectangular"
+
+def trace_count(board, word):
+    rows, cols = len(board), len(board[0])
+    near = lambda i, j: [(a, b) for a, b in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)) if 0 <= a < rows and 0 <= b < cols]
+    if rows * cols <= 9 and len(word) <= 6:  # every sequence of squares
+        cells = [(i, j) for i in range(rows) for j in range(cols)]
+        return sum(1 for path in product(cells, repeat=len(word))
+                   if all(board[i][j] == word[k] for k, (i, j) in enumerate(path))
+                   and all(path[k + 1] in near(*path[k]) for k in range(len(word) - 1))) % MOD
+    # from the last letter back: tail[i][j] = traces of word[k:] starting on (i, j)
+    tail = [[1 if board[i][j] == word[-1] else 0 for j in range(cols)] for i in range(rows)]
+    for k in range(len(word) - 2, -1, -1):
+        tail = [[sum(tail[a][b] for a, b in near(i, j)) % MOD if board[i][j] == word[k] else 0 for j in range(cols)]
+                for i in range(rows)]
+    return sum(map(sum, tail)) % MOD
+
+VALID["ci-trace-count"] = v_trace
+INDEP["ci-trace-count"] = trace_count
+
+# ---- ci-mirror-pieces
+def parse_tapes(text):
+    lines = [l.strip() for l in text.split("\n")]
+    while lines and not lines[-1]:
+        lines.pop()
+    return int(lines[0]), lines[1:]
+
+def v_mirror(a):
+    q, tapes = parse_tapes(a["text"])
+    assert 1 <= q <= 50 and len(tapes) == q, "tape count"
+    assert all(re.fullmatch("[a-z]{1,400}", t) for t in tapes), "tapes"
+    assert sum(map(len, tapes)) <= 3000, "letters in all"
+
+def solve_mirror_pieces(text):
+    q, tapes = parse_tapes(text)
+    out = []
+    for t in tapes:
+        n = len(t)
+        if n <= 14:                          # every set of cuts
+            best = n
+            for mask in range(1 << (n - 1)):
+                cuts = [0] + [i + 1 for i in range(n - 1) if mask >> i & 1] + [n]
+                if all(t[a:b] == t[a:b][::-1] for a, b in zip(cuts, cuts[1:])):
+                    best = min(best, len(cuts) - 1)
+            out.append(best)
+            continue
+        pal = [[False] * n for _ in range(n)]  # a table of mirrored pieces, then fewest pieces from the right
+        for i in range(n - 1, -1, -1):
+            for j in range(i, n):
+                pal[i][j] = t[i] == t[j] and (j - i < 2 or pal[i + 1][j - 1])
+        rest = [0] * (n + 1)
+        for i in range(n - 1, -1, -1):
+            rest[i] = min(1 + rest[j + 1] for j in range(i, n) if pal[i][j])
+        out.append(rest[0])
+    return "\n".join(map(str, out))
+
+VALID["ci-mirror-pieces"] = v_mirror
+INDEP["ci-mirror-pieces"] = solve_mirror_pieces
+
 # ======================= slow plants =======================
 # planted solutions that are right but too slow (always the last entry): (drill id, index)
 SLOW_PLANTED = {("ci-trace-count", 3), ("ci-mirror-pieces", 3), ("ci-three-feed-common", 2), ("ci-even-desks", 2),
