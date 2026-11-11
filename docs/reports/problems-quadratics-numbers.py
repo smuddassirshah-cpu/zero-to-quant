@@ -259,22 +259,22 @@ def level2(L):
     h = 15 + 10*t - 5*t**2
     # q from completing the square, then from the maximum on a grid
     q = sp.expand(h + 5 * (t - 1)**2)
-    ok(q.free_symbols == set(), 'stone: q is a number')
+    ok(q.free_symbols == set(), 'flare: q is a number')
     hmax = max(float(h.subs(t, i / 1000)) for i in range(0, 3001))
     num(L, 'p-cliff-stone', 1, q, hmax, {'sign': 15 - 5, 'no-five': 15 + 1})
     roots = sp.solve(sp.Eq(h, 0), t)
-    ok(sorted(roots) == [-1, 3], 'stone: sea roots')
+    ok(sorted(roots) == [-1, 3], 'flare: sea roots')
     land = [i / 1000 for i in range(1, 5001) if abs(float(h.subs(t, i / 1000))) < 1e-9]
     num(L, 'p-cliff-stone', 2, max(roots), land[0],
         {'negative': -1, 'no-root': 1 + 4, 'carried': 1 + math.sqrt(2)})
-    ok(sp.expand(5 * (t - 3) * (t + 1) - (5*t**2 - 10*t - 15)) == 0, 'stone: factorised check')
+    ok(sp.expand(5 * (t - 3) * (t + 1) - (5*t**2 - 10*t - 15)) == 0, 'flare: factorised check')
     top = sp.solve(sp.Eq(h, 15), t)
     numset(L, 'p-cliff-stone', 3, top, [z for z in range(-5, 6) if h.subs(t, z) == 15], {'sign': [0, -2]})
     e18 = sp.solve(sp.Eq(h, 18), t)
     g18 = [z for z in (1 - math.sqrt(0.4), 1 + math.sqrt(0.4))]
-    ok(all(abs(float(h.subs(t, z)) - 18) < 1e-9 for z in g18), 'stone: 18 m roots put back')
+    ok(all(abs(float(h.subs(t, z)) - 18) < 1e-9 for z in g18), 'flare: 18 m roots put back')
     numset(L, 'p-cliff-stone', 4, [float(z) for z in e18], g18, {'no-root': [0.6, 1.4], 'times-five': [1 - math.sqrt(10), 1 + math.sqrt(10)]}, dp=2)
-    stated('stone: sqrt 0.4', 0.632, math.sqrt(0.4), 5e-4)
+    stated('flare: sqrt 0.4', 0.632, math.sqrt(0.4), 5e-4)
 
     # bus
     gap = t**2 - (6*t - 10)
@@ -283,17 +283,22 @@ def level2(L):
     ok(min(float(gap.subs(t, i / 100)) for i in range(0, 1001)) > 0, 'bus: gap never zero on a grid')
     qq = sp.expand(gap - (t - 3)**2)
     num(L, 'p-bus-chase', 2, qq, min(float(gap.subs(t, i / 1000)) for i in range(0, 10001)), {'start': 10, 'halved': 10 - 3, 'sign': 10 + 9}, agree=1e-6)
-    sam = t**2 - 6*t + 7
-    ok(sp.expand(sam - ((t - 3)**2 - 2)) == 0, 'bus: Sam square form')
+    sam = t**2 - 6*t + 6
+    ok(sp.expand(sam - ((t - 3)**2 - 3)) == 0 and sp.expand(gap - sam) == 4, 'bus: Sam square form, 4 m less than Jo')
     sr = sorted(sp.solve(sam, t))
     first = next(i / 100000 for i in range(0, 1000000) if float(sam.subs(t, i / 100000)) <= 0)
-    num(L, 'p-bus-chase', 3, sr[0], first, {'larger': sr[1], 'half-root': 3 - math.sqrt(8), 'no-root': 3 - 2}, dp=2, agree=2e-5)
-    stated('bus: 3 - 1.414', 1.586, 3 - 1.414); stated('bus: sqrt 2', 1.414, math.sqrt(2), 5e-4)
+    num(L, 'p-bus-chase', 3, sr[0], first, {'larger': sr[1], 'half-root': 3 - math.sqrt(12), 'no-root': 3 - 3}, dp=2, agree=2e-5)
+    stated('bus: 3 - 1.732', 1.268, 3 - 1.732); stated('bus: sqrt 3', 1.732, math.sqrt(3), 5e-4)
+    ok(abs((6 - math.sqrt(36 - 4 * 6)) / 2 - float(sr[0])) < 1e-12, 'bus: Sam by the formula')
+    ok(abs(float(sam.subs(t, sr[0]))) < 1e-9, 'bus: Sam root put back')
     vs = sp.solve(sp.Eq(sp.discriminant(t**2 - v*t + 10, t), 0), v)
     vmin = max(vs)
     slow = next(i / 100000 for i in range(600000, 700000) if (i / 100000)**2 - 40 >= 0)
     num(L, 'p-bus-chase', 4, vmin, slow, {'no-root': 40, 'no-four': math.sqrt(10)}, dp=2, agree=2e-5)
     stated('bus: extra speed', 0.32, float(vmin) - 6, 5e-3)
+    ok(6.32**2 < 40 < 6.33**2, 'bus 4: 6.32 falls short of the bus, 6.33 reaches it')
+    wb = L['p-bus-chase']['parts'][3]['widget']
+    ok(wb['tol']['abs'] == 0.006 and all(abs(z - float(vmin)) <= wb['tol']['abs'] for z in (6.32, 6.325, 6.33)) and all(abs(z - float(vmin)) > wb['tol']['abs'] for z in (6.3, 6.31, 6.34)), 'bus 4: band takes 6.32, 6.325 and 6.33, refuses 6.3, 6.31 and 6.34')
 
     # cans
     tri = n * (n + 1) / 2

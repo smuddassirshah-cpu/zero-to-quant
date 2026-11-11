@@ -9,7 +9,7 @@ Files: `app/content/courses/quadratics/problems-1.json` to `problems-3.json`. Nu
 | problems-1 | p-cinema-block | 4 (3 / 1) | l1, l2 | 3 |
 | problems-1 | p-allotment-plots | 4 (4 / 0) | l2, l3 | 4 |
 | problems-1 | p-steel-plates | 5 (5 / 0) | l1, l3, l4 | 5 |
-| problems-2 | p-cliff-stone | 4 (4 / 0) | l5, l6 | 3 |
+| problems-2 | p-cliff-stone (flare) | 4 (4 / 0) | l5, l6 | 3 |
 | problems-2 | p-bus-chase | 4 (4 / 0) | l6, l7, l8 | 5 |
 | problems-2 | p-can-stack | 4 (4 / 0) | l5, l7, l8 | 4 |
 | problems-3 | p-canal-arch | 4 (4 / 0) | l9, l10, l11, l12 | 4 |
@@ -18,9 +18,9 @@ Files: `app/content/courses/quadratics/problems-1.json` to `problems-3.json`. Nu
 
 Typed parts: level 1 12 of 13, level 2 12 of 12, level 3 12 of 13. Every lesson of a level appears in at least one problem and every problem draws on at least two. The two choice parts are judgements: whether any square block can be left (the middle term $2kx$), and whether the profit band lies inside or outside the roots.
 
-Level 1 (expressions only; nothing is solved). Cinema: expand, take out 6 seats and factorise, evaluate, then the judgement. Allotments: two factorisations (product and sum; split the middle term), the shared bracket joined into $3(x + 4)^2$ fully factorised, then evaluated. Steel plates: $36x^2 - 9$, fully factorised as $9(2x + 1)(2x - 1)$, a wider plate expanded and factorised by splitting (or as a difference of squares), then evaluated.
+Level 1 (expressions only; nothing is solved). Cinema: expand $(x + 4)(x + 11)$, take out 8 seats and factorise, evaluate, then the judgement. Allotments: two factorisations (product and sum; split the middle term), the shared bracket joined into $3(x + 5)^2$ (plots $x^2 + 11x + 30$ and $2x^2 + 19x + 45$) fully factorised, then evaluated. Steel plates: $36x^2 - 9$, fully factorised as $9(2x + 1)(2x - 1)$, a wider plate expanded and factorised by splitting (or as a difference of squares), then evaluated.
 
-Level 2. Stone: completed square gives the greatest height, the landing time from it, the cliff-top times by factorising (the lost root $t = 0$ has its own `count` line), then two times to 2 places. Bus: discriminant negative, the smallest gap from the square, a second runner's catch time, then the slowest speed for one root. Cans: 120 cans factorised, 100 cans by discriminant and formula, then the cans left over.
+Level 2. Flare fired from a ship's deck (was a stone from a cliff; story changed in the second-read fix): completed square gives the greatest height, the landing time from it, the deck-level times by factorising (the lost root $t = 0$ has its own `count` line), then two times to 2 places. Bus: discriminant negative, the smallest gap from the square, a second runner's catch time (Sam starts 6 m behind: $3 \pm \sqrt{3}$, 1.27 s), then the slowest speed for one root. Cans: 120 cans factorised, 100 cans by discriminant and formula, then the cans left over.
 
 Level 3. Arch: line of symmetry from the roots, the top, the completed square form, then the width above a barge's height. Bike hire: zero-demand price, best price halfway, most revenue, the best price with a unit cost (half the cost added), then the band where profit is at least £525. Sprinkler: the gap between water and bank, where they meet, the landing height, then the greatest gap at the gap's own vertex.
 
@@ -38,7 +38,7 @@ Besides the script, every answer, accept form and wrong form, and 85 typed strin
 
 ## Review 1.3 faults avoided
 
-- Bands take the printed working. Each 2-place part has `tol` 0.005 on the unrounded key, which takes the 2-place value and the 3-place figure the feedback prints (1.586, 13.651, 6.32; 0.37 and 1.63). The 3.125 part takes 3.13 and 3.12.
+- Bands take the printed working. Each 2-place part has `tol` 0.005 on the unrounded key, which takes the 2-place value and the 3-place figure the feedback prints (1.268, 13.651, 6.32; 0.37 and 1.63). The slowest-speed part has `tol` 0.006, so 6.32, 6.325 and 6.33 are all taken ($6.32^2 < 40 < 6.33^2$, so a careful learner rounds up). The 3.125 part takes 3.13 and 3.12.
 - Every numeric `accept` is a plain number the field reads; none promises a surd or a form.
 - No `%` units in these sets. Integer answers need no form; every other numeric part names one ("to 2 decimal places", "as a decimal").
 - Slips from the part before carry their own `wrong` where a learner would carry them ($q = 10$ into the landing time; a discriminant of 401 into the root; $(x + 3)(x + 6)$ into the seat count; $36x^2 - 5$ into the plate area).

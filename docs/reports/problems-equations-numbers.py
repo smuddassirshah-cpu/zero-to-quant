@@ -489,8 +489,14 @@ def level4(L):
 
     # p-salt-solutions: x + y = 500, 0.15x + 0.4y = 125
     expr_part(L, 'p-salt-solutions', 1, '0.15x+0.4y=125',
-              {'per-cent': '15x+40y=125', 'strength': '0.15x+0.4y=0.25', 'swapped': '0.4x+0.15y=125'})
+              {'per-cent': '15x+40y=125', 'strength': '0.15x+0.4y=0.25', 'swapped': '0.4x+0.15y=125', 'both-letters': '0.15x+0.4y=0.25(x+y)'})
     stated('salt: 25% of 500', 125, F(25, 100) * 500)
+    # the true both-letters balance: a different line from the key, but it gives the same x and y with x + y = 500
+    bl = sp.solve([sp.Eq(x + y, 500), sp.Eq(sp.Rational(15, 100) * x + sp.Rational(40, 100) * y, sp.Rational(25, 100) * (x + y))], [x, y])
+    ok(bl[x] == 300 and bl[y] == 200, 'salt: the both-letters balance with x + y = 500 gives 300 and 200')
+    ok(sp.expand(sp.Rational(15, 100) * x + sp.Rational(40, 100) * y - sp.Rational(25, 100) * (x + y)) != sp.expand(sp.Rational(15, 100) * x + sp.Rational(40, 100) * y - 125), 'salt: both-letters is not the key line')
+    ok(F(15, 100) * 300 + F(40, 100) * 200 == F(25, 100) * 500 == 125, 'salt: 45 + 80 = 125 = 25% of 500')
+    ok('0.15x+0.4y=0.25(500)' in L['p-salt-solutions']['parts'][0]['widget']['accept'] and 25 * 5 == 125, 'salt: accept line 0.25(500) is the key (0.25 times 500 = 125)')
     lin = sp.solve([sp.Eq(x + y, 500), sp.Eq(sp.Rational(15, 100) * x + sp.Rational(40, 100) * y, 125)], [x, y])
     salt = lambda u, v: F(15, 100) * u + F(40, 100) * v
     brute_y = brute(lambda v: salt(500 - v, v) == 125, 0, 500)
