@@ -13,7 +13,7 @@ Six findings: 1 `wrong`, 5 `imprecise`, 0 `misleading`. All six are `minor`; non
 ## Files
 
 - Ledger: `docs/reports/audit-py-found-1-3-r2-ledger.md`
-- Executed claims: `docs/reports/py-found-L1-3-r2-concepts.py` (447 checks, exit 0)
+- Executed claims: `docs/reports/py-found-L1-3-r2-concepts.py` (453 checks: 447 behaviour and harness checks pass; 6 `FINDING` checks read the six strings below and fail until they are fixed, so the script exits 1 today and 0 after the fix pass)
 
 ## Findings
 
@@ -55,8 +55,27 @@ They are harmless as scene-setting. If the fixer wants them out of the unverifie
 - `node tools/validate.mjs`: 0 errors, 4,531 warnings. The manifest was not changed.
 - `docs/reports/py-found-L1-numbers.py`: exit 1, 408 of 409 checks. `py-found-L2-numbers.py`: exit 1, 386 of 387. `py-found-L3-numbers.py`: exit 1, 178 of 179. Each fails exactly one check, the known harness limit for performance-task tests.
 - `node tools/grade-all.mjs --file` on review-1, review-2, review-3, homework-1, homework-2, homework-3: 0 failures each (31 choice and numeric widgets). It does not run code widgets; the concepts script's harness section runs all 58.
-- `docs/reports/py-found-L1-3-r2-concepts.py`: exit 0, 447 checks, CPython 3.13.18.
+- `docs/reports/py-found-L1-3-r2-concepts.py`: exit 1, 447 of 453 checks pass on CPython 3.13.18. The six failures are the `FINDING 1` to `FINDING 6` checks, one per finding; no behaviour or harness check fails.
 
 ## Overlap with earlier reads
 
-To be filled after the WIP commit.
+Read after the WIP commit `88e10066`: `docs/reviews/review-py-found-1-2.md`, the level 3 parts of `docs/reviews/review-py-found-3-4.md`, and `docs/reviews/audit-py-found-1-3.md` (round 1 audit, its fix pass, its fix-pass read and the follow-up fix pass). Earlier conceptual findings are counted as the round 1 audit counted them: 18 from the two reviews, 18 from the round 1 audit with 1 shared between them, and 2 from the fix-pass read. That is 37 distinct findings, all fixed before this read.
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| Round 2 only | 6 | findings 1 to 6 |
+| Earlier reads only | 37 | reviews 17, round 1 audit 17, shared by those two 1, fix-pass read 2 |
+| Both | 0 | none |
+
+New `wrong` findings that no earlier read found: **1** (finding 1, the `why` of option `6` in l7 `quiz[0]`). It is minor and touches no graded key.
+
+Notes on the overlap:
+
+- None of the 37 earlier findings recurs. Each corrected line was read blind as a ledger row and judged `correct`, with the concepts script reproducing the facts behind the round 1 `wrong` findings (`l1 isclose allowance 6e-26`, `l1 isclose(x,0) acts like ==`, `r1 str*2`, `hw2 commission`).
+- Finding 4 sits on a line the round 1 audit named (`l8` `summary.ideas[2]`, under its finding 7) for a different reason, the depth of the copy. The fix went to `screens[8].explain.text`; the summary line is unchanged since first authoring.
+- The pickaxe search of the history dates the strings of findings 1, 2 and 4 to the first authoring commits of 16 October. They are residues of authoring that two reads passed over, not text written by a fix pass.
+- The six findings are all of one kind: a sentence that states a rule a little wider or tighter than it holds. None is a key, a number, a slip value or code. Two reads and an audit had already removed that class from the graded material.
+
+## Inbox
+
+Three bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit py-found):`: a slip expression for choice options, a check of quoted interpreter messages, and a pointer to the reusable code-widget harness.

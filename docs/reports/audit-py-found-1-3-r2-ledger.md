@@ -5,7 +5,7 @@ Auditor: Fable, audit session 11, 12 Nov 2026. Scope: `app/content/courses/py-fo
 How the rows were made. Every prose block, option `why`, hint, feedback line, explain, summary line, model answer and rubric line was read in full and judged against a derivation, a named source or a run. Graded keys (`KEY:`) and slip values (`SLIP`) have their own rows. The table was then laid out by a script from the content files, so paths and claim text are exact (claims are cut at 110 characters; code blocks show as `[code]`). Rows of one screen that rest on the same run or derivation share one basis, written once and then shown as "as the row above"; a row that makes a claim of its own has its own basis. No claim-free line was dropped, so some rows (for example "Not quite right. Read the first failing test.") carry only the screen's basis.
 
 Basis vocabulary:
-- "run `label`" is a check of that name in `docs/reports/py-found-L1-3-r2-concepts.py` (447 checks, exit 0 on CPython 3.13.18). Checks marked "subprocess" run a real script in a fresh folder.
+- "run `label`" is a check of that name in `docs/reports/py-found-L1-3-r2-concepts.py` (453 checks on CPython 3.13.18: 447 behaviour and harness checks pass; the 6 `FINDING` checks fail until the findings are fixed). Checks marked "subprocess" run a real script in a fresh folder.
 - "harness" is the last section of the same script, a run of all 58 code widgets: each `solution` against its `tests` (all pass), each `starter` (none passes all), each `how` test count, and each `feedback.byKey.test-N` index. Examples were compared with the tests in a one-off run. The named slips were traced by hand to the first failing test.
 - "docs" is the Python 3.12 documentation, section named.
 

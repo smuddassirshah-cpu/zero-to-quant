@@ -3,9 +3,9 @@
 
 Run: python3 docs/reports/py-found-L1-3-r2-concepts.py
 Exits 0 when every claim the content makes holds. A check that fails because
-the content is wrong stays failing. Checks tagged KNOWN-FINDING document a
-finding of the audit and are reported but do not change the exit code only
-when they assert the CORRECT behaviour (they pass); see the audit file.
+the content is wrong stays failing: the last section reads the six strings of
+audit findings 1 to 6 and fails while each still holds its flawed wording, so
+the script exits 1 until the fix pass lands (447 behaviour checks pass today).
 
 Written on CPython 3.13; the app runs Pyodide 0.27.7 (CPython 3.12). Where the
 two could differ (error-message wording) the check matches the stable prefix
@@ -724,6 +724,25 @@ for pat in names:
                 keys = [int(k[5:]) for k in (sc.get("feedback") or {}).get("byKey", {}) if re.fullmatch(r"test-\d+", k)]
                 check(f"harness {tag} byKey test indices exist", all(1 <= k <= n for k in keys))
 check("harness found the code widgets", widgets == 58)
+
+# ---------------------------------------------------------------- findings
+# Each check reads the content string and fails while the flawed wording is
+# there. See docs/reviews/audit-py-found-1-3-r2.md for the fixes.
+
+
+def _text(fname, *keys):
+    node = json.load(open(glob.glob(os.path.join(COURSE, fname))[0], encoding="utf-8"))
+    for k in keys:
+        node = node[k]
+    return node
+
+
+check("FINDING 1 l7 quiz[0] option 6: 'put 1 into factor' gives 5, not 6", "You put 1 into" not in _text("l7-*.json", "quiz", 0, "widget", "options", 1, "why"))
+check("FINDING 2 l6 screens[7]: set() is not the only empty set", "only way" not in _text("l6-*.json", "screens", 7, "feedback", "correct"))
+check("FINDING 3 l3 screens[1]: commas, not brackets, make the tuple", "comma" in _text("l3-*.json", "screens", 1, "prose"))
+check("FINDING 4 l8 summary.ideas[2]: pure needs 'only' and no other effect", "A pure function reads its arguments and returns" not in _text("l8-*.json", "summary", "ideas", 2))
+check("FINDING 5 l12 screens[1]: first parameter is not always the object before the dot", "always the object before the dot" not in _text("l12-*.json", "screens", 1, "explain", "text"))
+check("FINDING 6 l1 screens[2]: a double holds about 16 digits, not 17", "about 17 significant" not in _text("l1-*.json", "screens", 2, "prose"))
 
 print(f"{N} checks, {len(FAILS)} failed (Python {sys.version.split()[0]})")
 sys.exit(1 if FAILS else 0)
