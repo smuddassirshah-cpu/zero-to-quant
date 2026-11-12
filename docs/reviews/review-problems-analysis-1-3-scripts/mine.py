@@ -57,27 +57,27 @@ def wrong(n, item, k, wid, mine):
 # p-cube-root-twenty
 lo, hi = Fr(2), Fr(3)
 trail = []
-for _ in range(3):
+for _ in range(4):
     m = (lo + hi) / 2
     if m ** 3 < 20:
         lo = m
     else:
         hi = m
     trail.append((lo, hi))
-ok(trail == [(Fr(5, 2), Fr(3)), (Fr(5, 2), Fr(11, 4)), (Fr(21, 8), Fr(11, 4))], "bisection trail")
+ok(trail == [(Fr(5, 2), Fr(3)), (Fr(5, 2), Fr(11, 4)), (Fr(21, 8), Fr(11, 4)), (Fr(43, 16), Fr(11, 4))], "bisection trail, four halvings")
 key(1, "p-cube-root-twenty", 1, lo)
 wrong(1, "p-cube-root-twenty", 1, "right-end", hi)
-wrong(1, "p-cube-root-twenty", 1, "two-steps", trail[1][0])
+wrong(1, "p-cube-root-twenty", 1, "one-short", trail[2][0])
 # route 2: floats against the true root
 r = 20 ** (1 / 3)
-ok(2.625 < r < 2.75 and 2.5 < r, "cube root of 20 in [2.625, 2.75]")
-ok(round(2.5 ** 3, 3) == 15.625 and round(2.75 ** 3, 2) == 20.80 and round(2.625 ** 3, 2) == 18.09, "cubes printed")
-key(1, "p-cube-root-twenty", 2, 21 ** 3 - 20 * 8 ** 3)
-ok(21 ** 3 == 9261 and 20 * 8 ** 3 == 10240 and 9261 - 10240 == -979, "miss")
-ok(Fr(21, 8) ** 3 - 20 == Fr(-979, 512), "miss, route 2: (p/q)^3 - 20 = miss / q^3")
-wrong(1, "p-cube-root-twenty", 2, "sign", 20 * 8 ** 3 - 21 ** 3)
-wrong(1, "p-cube-root-twenty", 2, "squares", 21 ** 2 - 20 * 8 ** 2)
-wrong(1, "p-cube-root-twenty", 2, "no-twenty", 21 ** 3 - 8 ** 3)
+ok(2.6875 < r < 2.75, "cube root of 20 in [2.6875, 2.75]")
+ok(round(2.5 ** 3, 3) == 15.625 and round(2.75 ** 3, 2) == 20.80 and round(2.625 ** 3, 2) == 18.09 and round(2.6875 ** 3, 2) == 19.41, "cubes printed")
+key(1, "p-cube-root-twenty", 2, 43 ** 3 - 20 * 16 ** 3)
+ok(43 ** 3 == 79507 and 20 * 16 ** 3 == 81920 and 79507 - 81920 == -2413, "miss")
+ok(Fr(43, 16) ** 3 - 20 == Fr(-2413, 4096), "miss, route 2: (p/q)^3 - 20 = miss / q^3")
+wrong(1, "p-cube-root-twenty", 2, "sign", 20 * 16 ** 3 - 43 ** 3)
+wrong(1, "p-cube-root-twenty", 2, "squares", 43 ** 2 - 20 * 16 ** 2)
+wrong(1, "p-cube-root-twenty", 2, "no-twenty", 43 ** 3 - 16 ** 3)
 k, q, p, s, n, N, eps = sp.symbols("k q p s n N varepsilon", positive=True)
 # p = 2k in p^3 = 20 q^3
 sol = sp.solve(sp.Eq((2 * k) ** 3, 20 * q ** 3), q ** 3)[0]
@@ -89,22 +89,23 @@ ok(all(pp ** 3 != 20 * qq ** 3 for qq in range(1, 400) for pp in range(2 * qq, 3
 # the inequality (s + 1/n)^3 <= s^3 + (3s^2 + 3s + 1)/n for n >= 1: difference is 3s(1/n - 1/n^2) + (1/n - 1/n^3) >= 0
 diff = sp.expand(s ** 3 + (3 * s ** 2 + 3 * s + 1) / n - (s + 1 / n) ** 3)
 ok(sp.simplify(diff - (3 * s * (n - 1) / n ** 2 + (n ** 2 - 1) / n ** 3)) == 0, "cube bound identity")
-sv = Fr(21, 8)
+sv = Fr(43, 16)
 top, bot = 3 * sv ** 2 + 3 * sv + 1, 20 - sv ** 3
-ok(float(top) == 29.546875 and float(bot) == 1.912109375, "top and bottom at 2.625")
-ok(float(3 * sv ** 2) == 20.671875 and float(3 * sv) == 7.875 and float(sv ** 3) == 18.087890625, "pieces at 2.625")
+ok(float(top) == 30.73046875 and float(bot) == 0.589111328125, "top and bottom at 2.6875")
+ok(float(3 * sv ** 2) == 21.66796875 and float(3 * sv) == 8.0625 and float(sv ** 3) == 19.410888671875, "pieces at 2.6875")
 bound = top / bot
-ok(round(float(bound), 2) == 15.45, "bound 15.45")
+ok(round(float(bound), 2) == 52.16, "bound 52.16")
 key(1, "p-cube-root-twenty", 4, math.floor(bound) + 1)
 wrong(1, "p-cube-root-twenty", 4, "round-down", math.floor(bound))
-ok(math.floor((top - 1) / bot) + 1 == 15 and round(float((top - 1) / bot), 2) == 14.93, "dropping +1 gives 14.93, so 15")
-ok(round(float(3 * sv ** 2 / bot), 1) == 10.8, "no-ones bound 10.8")
+ok(math.floor((top - 1) / bot) + 1 == 51 and round(float((top - 1) / bot), 2) == 50.47, "dropping +1 gives 50.47, so 51")
+wrong(1, "p-cube-root-twenty", 4, "no-plus-one", math.floor((top - 1) / bot) + 1)
+ok(round(float(3 * sv ** 2 / bot), 2) == 36.78, "no-ones bound 36.78")
 wrong(1, "p-cube-root-twenty", 4, "no-ones", math.floor(3 * sv ** 2 / bot) + 1)
-ok(round(float((sv + Fr(1, 16)) ** 3), 2) == 19.41 and (sv + Fr(1, 16)) ** 3 < 20, "(2.625 + 1/16)^3 = 19.41 < 20")
+ok(round(float((sv + Fr(1, 53)) ** 3), 2) == 19.82 and (sv + Fr(1, 53)) ** 3 < 20, "(2.6875 + 1/53)^3 = 19.82 < 20")
 # the bound is sufficient at every n beyond it (route 2: direct test), and is not the least n with s + 1/n in S
-ok(all((sv + Fr(1, nn)) ** 3 < 20 for nn in range(16, 2000)), "every n >= 16 puts 2.625 + 1/n in S")
+ok(all((sv + Fr(1, nn)) ** 3 < 20 for nn in range(53, 2000)), "every n >= 53 puts 2.6875 + 1/n in S")
 least = min(nn for nn in range(1, 100) if (sv + Fr(1, nn)) ** 3 < 20)
-print(f"NOTE 1 p-cube-root-twenty part 4: the least n with 2.625 + 1/n in S is {least}; the part asks for the least n beyond the bound, 16")
+print(f"NOTE 1 p-cube-root-twenty part 4: the least n with 2.6875 + 1/n in S is {least}; the part asks for the least n beyond the bound, 53")
 
 # p-climbing-fractions
 a = lambda nn: Fr(5 * nn - 4, nn + 1)
@@ -157,12 +158,12 @@ w = part(1, "p-diagonal-fraction", 4)["widget"]
 ok(all(abs(v - w["answer"]) <= w["tol"]["abs"] for v in (0.5544545, 0.5544544)), "7-place round and cut accepted")
 
 # ---------------------------------------------------------------- set 2
-an = lambda i: Fr(6 * i + 1, 2 * i + 5)
-bn = lambda i: Fr(2 * i - 2, i + 1)
-ok(sp.limit((6 * n + 1) / (2 * n + 5), n, sp.oo) == 3 and sp.limit((2 * n - 2) / (n + 1), n, sp.oo) == 2, "limits 3 and 2")
-ok(all(3 - an(i) == Fr(14, 2 * i + 5) and 2 - bn(i) == Fr(4, i + 1) for i in range(1, 400)), "gaps 14/(2n+5) and 4/(n+1), both below the limit")
-ok(sp.simplify(6 * n + 1 + 3 * (2 * n + 5) - (12 * n + 16)) == 0, "plus-one slip top is 16 in size")
-half = Fr(5, 100)
+an = lambda i: Fr(8 * i + 3, 2 * i + 5)
+bn = lambda i: Fr(3 * i - 1, i + 1)
+ok(sp.limit((8 * n + 3) / (2 * n + 5), n, sp.oo) == 4 and sp.limit((3 * n - 1) / (n + 1), n, sp.oo) == 3, "limits 4 and 3")
+ok(all(4 - an(i) == Fr(17, 2 * i + 5) and 3 - bn(i) == Fr(4, i + 1) for i in range(1, 400)), "gaps 17/(2n+5) and 4/(n+1), both below the limit")
+ok(3 + 4 * 5 == 23, "plus-one slip top is 23 in size")
+half = Fr(2, 100)
 
 
 def first_for_good(gap, e_, top=4000):
@@ -171,31 +172,32 @@ def first_for_good(gap, e_, top=4000):
     return (max(bad) + 1) if bad else 1
 
 
-g1 = lambda i: Fr(14, 2 * i + 5)
+g1 = lambda i: Fr(17, 2 * i + 5)
 g2 = lambda i: Fr(4, i + 1)
 gs = lambda i: g1(i) + g2(i)
 ok(all(g1(i) > g1(i + 1) and g2(i) > g2(i + 1) for i in range(1, 4000)), "both gaps fall")
 N1, N2 = first_for_good(g1, half), first_for_good(g2, half)
 key(2, "p-sum-law-band", 2, N1)
-ok(sp.Rational(280 - 5, 2) == sp.Rational(275, 2) and N1 == 138, "n > 137.5")
-wrong(2, "p-sum-law-band", 2, "round-down", 137)
-ok(f"{14 / 279:.4f}" == "0.0502", "gap at 137")
+ok(sp.Rational(850 - 5, 2) == sp.Rational(845, 2) and N1 == 423, "n > 422.5")
+wrong(2, "p-sum-law-band", 2, "round-down", 422)
+ok(f"{17 / 849:.5f}" == "0.02002", "gap at 422")
 wrong(2, "p-sum-law-band", 2, "full-band", first_for_good(g1, 2 * half))
 key(2, "p-sum-law-band", 3, N2)
-ok(g2(79) == half, "gap at 79 is 0.05 exactly")
-wrong(2, "p-sum-law-band", 3, "equal", 79)
+ok(g2(199) == half, "gap at 199 is 0.02 exactly")
+wrong(2, "p-sum-law-band", 3, "equal", 199)
 wrong(2, "p-sum-law-band", 3, "full-band", first_for_good(g2, 2 * half))
 key(2, "p-sum-law-band", 4, max(N1, N2))
 wrong(2, "p-sum-law-band", 4, "min", min(N1, N2))
 wrong(2, "p-sum-law-band", 4, "sum", N1 + N2)
-ok(all(abs(an(i) + bn(i) - 5) == gs(i) for i in range(1, 400)), "|a_n + b_n - 5| is the sum of the gaps")
+ok(all(abs(an(i) + bn(i) - 7) == gs(i) for i in range(1, 400)), "|a_n + b_n - 7| is the sum of the gaps")
 Ntrue = first_for_good(gs, 2 * half)
+ok(Ntrue == 311 and N2 == 200, "true N 311, N2 200")
 key(2, "p-sum-law-band", 5, Ntrue)
-ok(f"{float(gs(108)):.5f}" == "0.10005" and f"{float(gs(109)):.5f}" == "0.09914", "sum gap at 108 and 109")
+ok(f"{float(gs(310)):.5f}" == "0.04006" and f"{float(gs(311)):.5f}" == "0.03993", "sum gap at 310 and 311")
 wrong(2, "p-sum-law-band", 5, "proof", max(N1, N2))
 wrong(2, "p-sum-law-band", 5, "round-down", Ntrue - 1)
-# route 2: the quadratic 0.1 (2n+5)(n+1) = 14(n+1) + 4(2n+5)
-roots = sp.solve(sp.Eq(sp.Rational(1, 10) * (2 * n + 5) * (n + 1), 14 * (n + 1) + 4 * (2 * n + 5)), n)
+# route 2: the quadratic 0.04 (2n+5)(n+1) = 17(n+1) + 4(2n+5)
+roots = sp.solve(sp.Eq(sp.Rational(4, 100) * (2 * n + 5) * (n + 1), 17 * (n + 1) + 4 * (2 * n + 5)), n)
 ok(len(roots) == 1 and math.floor(roots[0]) + 1 == Ntrue, "true N by the quadratic")
 
 # p-root-recursion
@@ -315,8 +317,9 @@ true_n = min(i for i in range(1, 40) if abs(Fr(4, 25) - PS(i)) < Fr(1, 1000))
 print(f"NOTE 3 p-alternating-quarters part 4: the true error is first below 0.001 at n = {true_n}; the bound certifies n = {nb}")
 w5 = part(3, "p-alternating-quarters", 5)["widget"]
 s7 = [x for x in w5["wrong"] if x["id"] == "s7"][0]
-if abs(0.16 - s7["value"]) <= s7["tol"]["abs"]:
-    print("CLAIM 3 p-alternating-quarters part 5: 0.16 (the sum, and S_6 to 2 places) falls in the s7 band and is told 'That is S_7'")
+ok(abs(0.16 - s7["value"]) > s7["tol"]["abs"], "0.16 (the sum, and S_6 to 2 places) lies outside the s7 band")
+wrong(3, "p-alternating-quarters", 5, "sum", Fr(4, 25))
+ok(abs(0.1601 - s7["value"]) <= s7["tol"]["abs"] and abs(0.1597 - s7["value"]) > s7["tol"]["abs"], "0.1601 stays in s7, 0.1597 stays out")
 
 # p-cube-root-greedy
 mp.mp.dps = 30

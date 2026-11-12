@@ -99,3 +99,19 @@ Read against l1 to l14, the three reviews, the three homework sets and `exams/to
 ## Engine
 
 1. A "write as one fraction" `expression` part passes the question retyped. `p-climbing-fractions` part 2 accepts `5-\frac{5n-4}{n+1}` and `p-sum-law-band` part 1 accepts `3-\frac{6n+1}{2n+5}` and `\left|\frac{6n+1}{2n+5}-3\right|`. `"form": "simplified"` does not refuse them (`try-fix.mjs`), so there is no content fix. l6 "Simplify $|a_n - 2|$" is built the same way (not probed). Appended to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+1. `p-cube-root-twenty` part 1 onward: fixed with the review's four halvings. Recomputed by exact bisection (trail [2.5, 3], [2.5, 2.75], [2.625, 2.75], [2.6875, 2.75]) and by the sixteenths grid (floor(16 x 20^(1/3)) = 43). Part 1 key 2.625 to 2.6875 (`two-steps` 2.5 replaced by `one-short` 2.625). Part 2 key -979 to -2413 (`sign` 979 to 2413, `squares` -839 to -3271, `no-twenty` 8749 to 75411). Part 4 key 16 to 53 (bound 52.16; `round-down` 15 to 52, `no-ones` 11 to 37, new `no-plus-one` 51, the top without its +1 giving 50.47). Part 5 option, questions, lines and explanations carried through. The new numbers do not occur elsewhere in `app/content`.
+2. `p-cube-root-twenty` part 5 wording: fixed with the review's two sentences (`feedback.correct`, `explain.text`). Basis: l3 "Case two" (an upper bound below s breaks leastness); s - 1/n is an upper bound when s^3 > 20 for large n.
+3. `p-sum-law-band`: fixed with the review's sequences (8n+3)/(2n+5) to 4, (3n-1)/(n+1) to 3, epsilon 0.04. Gaps 17/(2n+5) and 4/(n+1) by symbolic simplification and by exact fractions for n up to 3000. Part 1 key and slips: `plus-one` 16/(2n+5) to 23/(2n+5), `sign` -17/(2n+5). Part 2 key 138 to 423 (`round-down` 137 to 422, `full-band` 68 to 211). Part 3 key 80 to 200 (`equal` 79 to 199, `full-band` 40 to 100). Part 4 key 138 to 423 (`min` 80 to 200, `sum` 218 to 623). Part 5 key 109 to 311 (`proof` 138 to 423, `round-down` 108 to 310; gaps 0.04006 at 310 and 0.03993 at 311, confirmed by the quadratic, root 310.48). Neither formula occurs elsewhere in `app/content`.
+4. `p-root-recursion` part 3 restatement: fixed, the question now says the terms rise and stay below 7, so the theorem gives L, with no step named that the part does not use.
+5. `p-alternating-quarters` part 5: fixed. `s7` band 0.0001 to 0.00005; new `sum` slip 0.16 (band 0.00004) with the review's line. Checked: 0.16 now reaches `sum`; 0.1601 and 0.1600952 reach `s7`; 0.1597 and 327/2048 still pass the key. Key unchanged.
+
+Counts: 5 fixed, 0 disputed, 0 deferred.
+
+Graded values changed, old to new: set 1 p-cube-root-twenty p1 2.625 to 2.6875, p2 -979 to -2413, p4 16 to 53; set 2 p-sum-law-band p2 138 to 423, p3 80 to 200, p4 138 to 423, p5 109 to 311 (p1 expression key 14/(2n+5) to 17/(2n+5)); set 3 none (a slip added, key unchanged). Wrong values changed as listed above.
+
+Scripts: `docs/reports/problems-analysis-numbers.py` updated (new keys, slips and stated numbers; 532 of 532, exit 0). Reader's `mine.py` updated likewise (435 of 435, exit 0, the finding 5 CLAIM line now a check); `proposed.py` unchanged (15 of 15).
+
+Gates: validator 0 errors, 4522 warnings (unchanged), `manifest.json` restored. `grade-all.mjs --file` on the three sets: 0 failures each. Voice scan 35: 0 and 0. Playthrough `--problems analysis/problems-1`, `-2`, `-3`, desktop and `--mobile`: all passed.

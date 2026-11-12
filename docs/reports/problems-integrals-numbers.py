@@ -11,6 +11,7 @@ Stated numbers in feedback and explanations are tied to their text with lv.expec
 
 Run: <scratchpad>/venv/bin/python docs/reports/problems-integrals-numbers.py   (exit 0 when all pass)
 """
+import json
 import math
 import os
 import re
@@ -31,6 +32,24 @@ TR = standard_transformations + (implicit_multiplication_application, convert_xo
 
 
 # ---------------------------------------------------------------- helpers
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%\u00b2' in text else 100)
+    return s
+
+
 def tex2sp(s):
     """Translate the small TeX subset used in these answers into sympy."""
     def frac(s):
@@ -72,6 +91,7 @@ def num(lv, i, j, exact, second, slips=None, printed=None, agree=1e-7):
         lv.claim(abs(printed - w['answer']) <= tol + 1e-12, f'{tag}: printed value {printed} is accepted by the tol')
     slips = slips or {}
     got = {d['id']: d for d in w.get('wrong', [])}
+    slips = derived_slips(slips, got, ex, json.dumps(w, ensure_ascii=False))
     lv.claim(set(got) == set(slips), f'{tag}: wrong ids {sorted(got)} all recomputed')
     for k, v in slips.items():
         if k in got:

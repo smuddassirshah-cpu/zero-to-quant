@@ -10,13 +10,31 @@ keyed option and the numbers its text states. Exit 0 when all pass.
 
 Run: <scratchpad>/venv/bin/python docs/reports/problems-random-vars-numbers.py
 """
-import json, os, sys, itertools
+import json, os, re, sys, itertools
 from fractions import Fraction as F
 from math import comb, isclose
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 COURSE = os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'random-vars')
 fails, checks = [], 0
+
+
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%²' in text else 100)
+    return s
 
 
 def load(n):
@@ -47,6 +65,7 @@ def num(items, iid, k, exact, alt, slips=None, round_tol=0.0005):
     ok(abs(w['answer'] - e) <= max(tol, 1e-9), f'{tag}: key {w["answer"]} vs computed {e} (tol {tol})')
     slips = slips or {}
     wrongs = {x['id']: x for x in w.get('wrong', [])}
+    slips = derived_slips(slips, wrongs, e, json.dumps(items[iid]['parts'][k - 1], ensure_ascii=False))
     ok(set(wrongs) == set(slips), f'{tag}: wrong ids {sorted(wrongs)} vs slips {sorted(slips)}')
     for wid, val in slips.items():
         if wid not in wrongs:

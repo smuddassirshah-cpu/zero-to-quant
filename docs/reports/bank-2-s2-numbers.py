@@ -23,6 +23,24 @@ fails, checks = [], [0]
 N = NormalDist()
 
 
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%\u00b2' in text else 100)
+    return s
+
+
 def ok(cond, label):
     checks[0] += 1
     if not cond:
@@ -63,6 +81,7 @@ def numeric(f, i, key, asked_dp, slips):
     else:
         ok(float(key) == round(float(key)) and ans == key, f'{lab}: whole-number key {key} stored exactly')
     ids = {x['id']: x for x in w['wrong']}
+    slips = derived_slips(slips, ids, float(key), json.dumps(w, ensure_ascii=False))
     ok(set(ids) == set(slips), f'{lab}: wrong ids {sorted(ids)} match computed slips {sorted(slips)}')
     ok(len(ids) >= 2, f'{lab}: at least two wrong entries')
     for wid, v in slips.items():
@@ -597,11 +616,17 @@ ok(eval(t['merge_ticks([(1, 10.0), (4, 10.5)], [(1, 9.5), (2, 10.0), (4, 11.0)])
 ok((10.0 + 9.5) / 2 == 9.75 and (10.5 + 11.0) / 2 == 10.75, 'merge_ticks: the means are exact in binary floats')
 ok(len(sorted(set(range(0, 100000, 2)) | set(range(0, 100000, 3)))) == 66667, 'merge_ticks: 66,667 different times in the large test')
 ok(sorted([(1, 10.0), (4, 10.5), (1, 9.5)])[0] == (1, 9.5), 'merge_ticks: sorted(a + b) would keep two ticks at time 1')
-stale_fc(CO, 'ds-pointers-merge-ticks', '10.2', '10.3', '9.9', 'At equal times', 'a = [(1, 1.0), (3, 1.0)]; b = [(2, 2.0)]', 'Neither list is changed:')
+stale_fc(CO, 'ds-pointers-merge-ticks', '10.2', '10.3', '9.9', 'At equal times', 'Neither list is changed:')
+# fix pass delta AC-2 added the old no-shared-time test back as test 11 on purpose (test 9 stays the shared-time test):
+# the old setting is now allowed in test 11 only, and nowhere else in the item.
+_it11 = item(CO, 'ds-pointers-merge-ticks')
+_old_setting = 'a = [(1, 1.0), (3, 1.0)]; b = [(2, 2.0)]'
+ok(len(_it11['widget']['tests']) == 11 and _it11['widget']['tests'][10]['setup'] == _old_setting, 'merge_ticks: the old setting is test 11')
+ok(_old_setting not in json.dumps(dict(_it11, widget=dict(_it11['widget'], tests=_it11['widget']['tests'][:10])), ensure_ascii=False), 'merge_ticks: stale setting is gone from everything but test 11')
 # delta finding 5: test 9 must have a shared time, or a solution that changes an argument only there passes
 _mt = item(CO, 'ds-pointers-merge-ticks')['widget']
 _c9 = _mt['tests'][8]
-ok('a = [(1, 4.0), (2, 1.0)]; b = [(1, 2.0), (3, 5.0)]' == _c9['setup'] and len(_mt['tests']) == 10, 'merge_ticks: test 9 is the shared-time test, still 10 tests')
+ok('a = [(1, 4.0), (2, 1.0)]; b = [(1, 2.0), (3, 5.0)]' == _c9['setup'] and len(_mt['tests']) == 11, 'merge_ticks: test 9 is the shared-time test, 11 tests since fix pass delta AC-2')
 _ns = {}
 exec(_c9['setup'], _ns)
 _by = {}

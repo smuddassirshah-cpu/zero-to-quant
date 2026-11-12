@@ -12,6 +12,7 @@ check the keyed option against the computed classification. Stated numbers are t
 
 Run: <scratchpad>/venv/bin/python docs/reports/problems-multivar-numbers.py   (exit 0 when all pass)
 """
+import json
 import math
 import os
 import re
@@ -30,6 +31,24 @@ x, y, X, P, w, a, b, lam, t = sp.symbols('x y X P w a b lam t', real=True)
 TR = standard_transformations + (implicit_multiplication_application, convert_xor)
 u, v, r = sp.symbols('u v r', real=True)
 LOCAL = {'x': x, 'y': y, 'X': X, 'P': P, 'w': w, 'u': u, 'v': v, 'r': r, 'pi': sp.pi, 'sqrt': sp.sqrt}
+
+
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%\u00b2' in text else 100)
+    return s
 
 
 def _sqrt(s):
@@ -114,6 +133,7 @@ def num(lv, i, j, exact, second, slips=None, printed=(), agree=1e-7):
         lv.claim(abs(pv - wd['answer']) <= tol + 1e-12, f'{tag}: printed value {pv} is accepted by the tol')
     slips = slips or {}
     got = {d['id']: d for d in wd.get('wrong', [])}
+    slips = derived_slips(slips, got, ex, json.dumps(wd, ensure_ascii=False))
     lv.claim(set(got) == set(slips), f'{tag}: wrong ids {sorted(got)} all recomputed')
     for k, v in slips.items():
         if k in got:

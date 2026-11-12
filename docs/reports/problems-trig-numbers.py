@@ -39,6 +39,24 @@ def load(n):
     return {it['id']: it for it in json.load(open(p))['items']} if os.path.exists(p) else None
 
 
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%\u00b2' in text else 100)
+    return s
+
+
 def within(v, key, tol):
     return abs(v - key) <= tol + 1e-12
 
@@ -79,15 +97,16 @@ def num(items, iid, k, exact, alt, slips, asked=None, extra_ok=(), printed=None,
     if printed is not None:
         ok(printed in part['feedback']['correct'].replace('{,}', ''), f'{tag}: printed {printed} not in feedback')
         ok(within(float(printed), key, tol), f'{tag}: printed {printed} refused')
-    wrong_checks(part, tag, slips, key, tol)
+    wrong_checks(part, tag, slips, key, tol, e)
     ok('Any form' not in w.get('accept', ''), f'{tag}: accept promises a form')
     ok(re.search(r'decimal|place|fraction|whole number|nearest', part['question']) is not None, f'{tag}: question names no form')
     return e
 
 
-def wrong_checks(part, tag, slips, key, tol):
+def wrong_checks(part, tag, slips, key, tol, exact=None):
     w = part['widget']
     ids = [x['id'] for x in w.get('wrong', [])]
+    slips = derived_slips(slips, ids, key if exact is None else exact, json.dumps(part, ensure_ascii=False))
     ok(set(ids) == set(slips), f'{tag}: wrong ids {ids} vs slips {list(slips)}')
     by = part['feedback'].get('byKey', {})
     for x in w.get('wrong', []):

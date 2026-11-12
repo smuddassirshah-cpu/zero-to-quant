@@ -103,27 +103,27 @@ def choice(items, iid, k, want):
 
 # ------------------------------------------------------------------ level 1
 def level1(it):
-    # p-leverage-calls: 40 accounts, 12 with P (leverage over 5), 15 with Q (call), 9 with both.
+    # p-leverage-calls: 40 parcels, 12 with P (weight over 5 kg), 15 with Q (heavy label), 9 with both.
     N, nP, nQ, nPQ = 40, 12, 15, 9
     acc = [(True, True)] * nPQ + [(True, False)] * (nP - nPQ) + [(False, True)] * (nQ - nPQ)
     acc += [(False, False)] * (N - len(acc))
-    ok(len(acc) == 40 and sum(p for p, _ in acc) == 12 and sum(q for _, q in acc) == 15, 'accounts built')
+    ok(len(acc) == 40 and sum(p for p, _ in acc) == 12 and sum(q for _, q in acc) == 15, 'parcels built')
     imp = lambda a, b: (not a) or b
     breakers = nP - nPQ
     num(it, 'p-leverage-calls', 1, breakers, sum(p and not q for p, q in acc), {'swapped': nQ - nPQ, 'both': nPQ})
     num(it, 'p-leverage-calls', 2, N - breakers, sum(imp(p, q) for p, q in acc),
         {'true-true': nPQ, 'breakers': breakers})
-    ok(N - nP == 28 and nPQ + 28 == 37, 'leverage: 28 vacuous accounts plus 9 = 37')
+    ok(N - nP == 28 and nPQ + 28 == 37, 'parcels: 28 vacuous parcels plus 9 = 37')
     conv_false = nQ - nPQ
     num(it, 'p-leverage-calls', 3, conv_false, sum(not imp(q, p) for p, q in acc),
         {'rule': breakers, 'true-count': N - conv_false})
     choice(it, 'p-leverage-calls', 4, 'right')
 
-    # p-spread-signal. Monday: close 8.40 vs 8.25, volume 2.6m vs 3m, spread 5p vs 4p.
-    P, Q, R = F('8.40') > F('8.25'), F('2.6') > 3, 5 > 4
+    # p-spread-signal (greenhouse). Monday: soil moisture 24% vs 30%, temperature 21 vs 25, tank 40 litres vs 50.
+    P, Q, R = 24 < 30, 21 > 25, 40 < 50
     num(it, 'p-spread-signal', 1, int(P) + int(Q) + int(R), sum([P, Q, R]), {'all': 3, 'one': 1})
     buy = (P or Q) and not R
-    ok(buy is False and (P or Q) is True, 'Monday: P or Q true, not R false, no buy')
+    ok(buy is False and (P or Q) is True, 'Monday: P or Q true, not R false, no watering')
     choice(it, 'p-spread-signal', 2, 'no-r')
     rows = list(itertools.product([True, False], repeat=3))
     ok(len(rows) == 8, '8 rows')
@@ -135,11 +135,22 @@ def level1(it):
     num(it, 'p-spread-signal', 4, 8 - false_rows, sum(imp(p or q, not r) for p, q, r in rows),
         {'as-and': by_hand, 'only-false-if': sum(not (p or q) for p, q, r in rows)})
     ok(sum(not (p or q) for p, q, r in rows) == 2, 'two rows with P and Q both false')
+    # finding 1: the `as-and` line. The 'and' rows and the failing rows are two different sets of 3 rows.
+    and_rows = {r for r in rows if (r[0] or r[1]) and not r[2]}
+    fail_rows = {r for r in rows if not imp(r[0] or r[1], not r[2])}
+    hold_rows = set(rows) - fail_rows
+    ok(len(and_rows) == 3 and len(fail_rows) == 3 and not (and_rows & fail_rows), 'and rows and failing rows: 3 each, no row shared')
+    ok(and_rows <= hold_rows and len(hold_rows - and_rows) == 2 and all(not (p or q) for p, q, r in hold_rows - and_rows),
+       'holds on the 3 and rows plus the 2 rows with P or Q false: 5')
+    as_and = it['p-spread-signal']['parts'][3]['feedback']['byKey']['as-and']
+    ok('also the count of rows where the implication fails' in as_and and 'which are also' not in as_and, 'as-and line states the count, not the rows')
 
-    # p-fund-thresholds: grid of returns, rows funds, columns years.
+    # p-fund-thresholds (dancers): grid of marks out of 10, rows dancers, columns judges.
     g = [[7, 3, 6, 2], [4, 8, 5, 1], [2, 6, 9, 4], [5, 4, 3, 9]]
     cells = it['p-fund-thresholds']['canvas']['params']['cells']
-    ok(cells == [[f'{v}%' for v in r] for r in g], 'fund grid matches the canvas')
+    ok(cells == [[str(v) for v in r] for r in g], 'mark grid matches the canvas (no % sign)')
+    ok(all(0 <= v <= 10 for r in g for v in r), 'every cell is a mark out of 10')
+    ok('%' not in json.dumps(it['p-fund-thresholds']), 'no % sign left in the dancers set (finding 3)')
     cols = list(zip(*g))
     A = lambda t: all(any(v > t for v in r) for r in g)
     B = lambda t: any(all(v > t for v in c) for c in cols)
@@ -147,8 +158,8 @@ def level1(it):
     ok(not B(5) and all(any(v <= 5 for v in c) for c in cols), 'negation of B(5) holds in the table')
     num(it, 'p-fund-thresholds', 2, sum(all(v > 5 for v in c) for c in cols),
         sum(min(c) > 5 for c in cols), {'some-fund': sum(any(v > 5 for v in c) for c in cols)})
-    ok([min(c) for c in cols] == [2, 3, 3, 1], 'lowest returns by year 2, 3, 3, 1')
-    ok([max(r) for r in g] == [7, 8, 9, 9], 'best years 7, 8, 9, 9')
+    ok([min(c) for c in cols] == [2, 3, 3, 1], 'lowest marks by judge 2, 3, 3, 1')
+    ok([max(r) for r in g] == [7, 8, 9, 9], 'best marks by dancer 7, 8, 9, 9')
     tB = max(t for t in range(-5, 20) if B(t))
     num(it, 'p-fund-thresholds', 3, max(min(c) for c in cols) - 1, tB,
         {'at-least': max(min(c) for c in cols), 'swapped': min(max(r) for r in g) - 1})
@@ -156,7 +167,11 @@ def level1(it):
     tA = max(t for t in range(-5, 20) if A(t))
     num(it, 'p-fund-thresholds', 4, min(max(r) for r in g) - 1, tA,
         {'at-least': min(max(r) for r in g), 'kept-b': tB, 'best-fund': max(max(r) for r in g) - 1})
-    ok(not A(7), 'A(7) false: F1 best year is 7')
+    ok(not A(7), 'A(7) false: D1 best mark is 7')
+    ok(all(A(t) and B(t) for t in range(-3, 3)) and all(A(t) for t in range(-3, 7)), 'A and B true for every smaller t')
+    for iid in ('p-leverage-calls', 'p-spread-signal', 'p-fund-thresholds'):
+        blob = json.dumps({k_: v_ for k_, v_ in it[iid].items() if k_ != 'id'}, ensure_ascii=False).lower()
+        ok(not re.search(r'account|broker|margin|leverage|trader|spread|volume|pence', blob), f'{iid}: an old noun is left')
 
 
 # ------------------------------------------------------------------ level 2
@@ -169,6 +184,7 @@ def level2(it):
     ok(sorted(A & B) == [12, 24, 36] and len(B) == 6, 'A and B: {12, 24, 36}, |B| = 6')
     subsets = [s for r in range(4) for s in itertools.combinations(sorted(A & B), r)]
     num(it, 'p-multiples-forty', 3, 2 ** 3, len(subsets), {'times-two': 2 * 3, 'no-empty': 2 ** 3 - 1})
+    ok('$|A| = 10$ and $|B| = 6$' in it['p-multiples-forty']['parts'][3]['question'], 'part 4 restates |A| = 10 and |B| = 6 (finding 10)')
     num(it, 'p-multiples-forty', 4, 10 + 6 - 3, len(A | B), {'no-overlap': 10 + 6, 'added': 10 + 6 + 3})
     num(it, 'p-multiples-forty', 5, 40 - 13, len((U - A) & (U - B)), {'carry-16': 40 - 16, 'wrong-law': len(U - (A & B))})
 
@@ -185,25 +201,33 @@ def level2(it):
     num(it, 'p-jobs-servers', 5, 1296 - 360, sum(len(set(f)) < 4 for f in funcs),
         {'added': 1296 + 360, 'carry-4096': 4096 - 360})
 
-    x, y = sp.symbols('x y')
-    f = 9 - 3 * x
-    inv = sp.solve(sp.Eq(f, y), x)[0]
-    choice(it, 'p-rule-and-domain', 1, 'right')
-    expr(it, 'p-rule-and-domain', 2, inv, ['y'])
-    ok(sp.simplify(f.subs(x, inv) - y) == 0, 'f(f^-1(y)) = y')
-    ok(sp.simplify(f.subs(x, (y - 9) / 3) - (18 - y)) == 0, 'sign slip gives 18 - y (stated)')
-    v1 = int(inv.subs(y, -6))
-    v2 = next(a for a in range(-100, 101) if 9 - 3 * a == -6)
+    # p-rule-and-domain: f_c(x) = c x - 4 on R. Claim: one-to-one exactly when c != 0; onto R exactly when c != 0.
+    c, x, y = sp.symbols('c x y')
+    fc = lambda cc, xx: cc * xx - 4
+    box = range(-20, 21)
+    ok(all((len({fc(cc, a) for a in box}) == len(box)) == (cc != 0) for cc in range(-12, 13)), 'f_c one-to-one on a box exactly when c != 0')
+    bad_c = [cc for cc in range(-50, 51) if len({fc(cc, a) for a in range(-5, 6)}) < 11]
+    ok(bad_c == [0] and fc(0, 1) == fc(0, 2) == -4, 'the only c in -50..50 that fails is 0; f_0(1) = f_0(2) = -4')
+    num(it, 'p-rule-and-domain', 1, int(sp.solve(sp.Eq(c, 0), c)[0]), bad_c[0], {'constant': -4, 'unit': 1})
+    ok(fc(1, 3) != fc(1, 4) and fc(1, 3) + 1 == 0, 'at c = 1 the rule x - 4 is one-to-one')
+    inv = sp.solve(sp.Eq(c * x - 4, y), x)[0]
+    expr(it, 'p-rule-and-domain', 2, inv, ['y', 'c'])
+    ok(sp.simplify((c * inv - 4) - y) == 0, 'f_c(f_c^-1(y)) = y')
+    ok(sp.simplify((c * ((y - 4) / c) - 4) - (y - 8)) == 0, 'sign slip gives y - 8 (stated)')
+    ok(all(cc * F(yy + 4, cc) - 4 == yy for cc in range(-9, 10) if cc for yy in range(-30, 31)), 'onto: every y is reached for c != 0')
+    ok(all(fc(0, a) != 1 for a in range(-100, 101)), 'f_0 is not onto: 1 is never reached')
+    v1 = int(inv.subs({c: -2, y: -10}))
+    v2 = next(a for a in range(-100, 101) if fc(-2, a) == -10)
     num(it, 'p-rule-and-domain', 3, v1, v2,
-        {'sign': int(((y - 9) / 3).subs(y, -6)), 'applied-f': int(f.subs(x, -6)), 'dropped-minus': int(inv.subs(y, 6))})
-    ok(9 - 3 * 5 == -6 and 9 - 3 * -5 == 24, 'checks f(5) = -6 and f(-5) = 24')
-    image = {9 - 3 * n for n in range(-100, 101)}
+        {'sign': int(((y - 4) / c).subs({c: -2, y: -10})), 'applied-f': fc(-2, -10), 'dropped-minus': int(((y + 4) / 2).subs(y, -10))})
+    ok(fc(-2, 3) == -10 and fc(-2, 7) == -18 and fc(-2, -3) == 2, 'checks f(3) = -10, f(7) = -18, f(-3) = 2')
+    image = {fc(4, n) for n in range(-100, 101)}
     missed_enum = sum(1 for yy in range(1, 31) if yy not in image)
-    missed_rule = sum(1 for yy in range(1, 31) if F(9 - yy, 3).denominator != 1)
+    missed_rule = sum(1 for yy in range(1, 31) if F(yy + 4, 4).denominator != 1)
     num(it, 'p-rule-and-domain', 4, missed_rule, missed_enum, {'hits': 30 - missed_rule, 'onto': 0})
-    ok(F(9 - 1, 3) == F(8, 3), 'y = 1 needs n = 8/3')
+    ok(F(1 + 4, 4) == F(5, 4) and sorted(yy for yy in range(1, 31) if yy in image) == list(range(4, 29, 4)), 'y = 1 needs n = 5/4; the reached numbers are 4, 8, ..., 28')
 
-    desk = {t: (t + 1) // 2 for t in range(1, 9)}
+    desk = {t: (t + 1) // 2 for t in range(1, 9)}   # ferry -> berth
     A2, B2 = {1, 2, 3, 5}, {2, 4, 6, 7}
     img = lambda X: {desk[t] for t in X}
     ok(img(B2) == {1, 2, 3, 4}, 'f(B) = {1, 2, 3, 4}')
@@ -225,20 +249,25 @@ def level2(it):
 # ------------------------------------------------------------------ level 3
 def level3(it):
     j, k, n = sp.symbols('j k n', integer=True)
-    m2n2 = sp.expand((2 * j + 1) ** 2 + (2 * k + 1) ** 2)
-    br = sp.expand((m2n2 - 2) / 4)
-    ok(br == j ** 2 + j + k ** 2 + k, 'odd squares bracket')
-    ok(all(((2 * a + 1) ** 2 + (2 * b + 1) ** 2) % 4 == 2 for a in range(-20, 21) for b in range(-20, 21)), 'remainder 2 by brute force')
+    # p-two-odd-squares (re-set): m, n leave remainder 1 on division by 5, then mn does.
+    prod = sp.expand((5 * j + 1) * (5 * k + 1))
+    br = sp.expand((prod - 1) / 5)
+    ok(br == 5 * j * k + j + k, 'product bracket')
+    ints = range(-90, 91)
+    ok(all((u * v) % 5 == 1 for u in ints for v in ints if u % 5 == 1 and v % 5 == 1), 'claim true on -90..90 for both factors')
+    ok(all(((5 * a + 1) * (5 * b + 1)) % 5 == 1 for a in range(-30, 31) for b in range(-30, 31)), 'remainder 1 by brute force on j, k')
     expr(it, 'p-two-odd-squares', 1, br, ['j', 'k'])
     choice(it, 'p-two-odd-squares', 2, 'right')
-    ok(1 ** 2 + 3 ** 2 == 10 and 12 % 4 == 0, 'stated: 1 + 9 = 10, 12 is a multiple of 4')
-    jj, kk = (7 - 1) // 2, (11 - 1) // 2
-    num(it, 'p-two-odd-squares', 3, int(br.subs({j: jj, k: kk})), (49 + 121 - 2) // 4,
-        {'squares-only': jj ** 2 + kk ** 2, 'whole-sum': 7 ** 2 + 11 ** 2})
-    ok(4 * 42 + 2 == 170 and jj + kk == 8, 'stated 170 = 4 x 42 + 2, j + k = 8')
-    cx = next(b for b in range(1, 50) if (16 + b * b) % 2 == 0 and not (4 % 2 == 1 and b % 2 == 1))
-    num(it, 'p-two-odd-squares', 4, 2, cx, {'odd-n': 1})
-    ok((16 + 1) % 2 == 1 and 16 + 4 == 20, 'n = 1 gives 17 odd, n = 2 gives 20')
+    ok(6 * 6 == 36 and 36 % 5 == 1 and 6 * 11 == 66 and 66 % 5 == 1 and 6 % 5 == 1 and 11 % 5 == 1, 'stated: 6 x 6 = 36 and 6 x 11 = 66 leave remainder 1 on division by 5')
+    jj, kk = (11 - 1) // 5, (16 - 1) // 5
+    num(it, 'p-two-odd-squares', 3, int(br.subs({j: jj, k: kk})), (11 * 16 - 1) // 5,
+        {'lost-middle': 5 * jj * kk, 'whole-product': 11 * 16})
+    ok(5 * 35 + 1 == 176 == 11 * 16 and jj + kk == 5 and 11 % 5 == 1 and 16 % 5 == 1, 'stated 176 = 5 x 35 + 1, j + k = 5')
+    # the converse (mn leaves 1, so m and n each leave 1) is false; with m = 4 the smallest positive n that refutes it is 4.
+    cx = next(b for b in range(1, 50) if (4 * b) % 5 == 1 and not (4 % 5 == 1 and b % 5 == 1))
+    num(it, 'p-two-odd-squares', 4, 4, cx, {'if-fails': 1})
+    ok([(4 * b) % 5 for b in (1, 2, 3, 4)] == [4, 3, 2, 1], 'products 4, 8, 12 leave 4, 3, 2; 16 leaves 1 (stated)')
+    ok(not all((u * v) % 5 != 1 or (u % 5 == 1 and v % 5 == 1) for u in range(1, 10) for v in range(1, 10)), 'the converse has counterexamples')
 
     S = lambda m: sum(3 * i - 2 for i in range(1, m + 1))
     gA, gB = (lambda m: 4 * m - 3), (lambda m: F(m * (3 * m - 1), 2))
@@ -250,7 +279,14 @@ def level3(it):
     ok(all(S(m) == gB(m) for m in range(1, 200)), 'guess B matches up to 199')
     step = sp.factor(k * (3 * k - 1) / 2 + 3 * k + 1)
     ok(sp.simplify(step - (k + 1) * (3 * k + 2) / 2) == 0, 'step factors as (k+1)(3k+2)/2')
-    expr(it, 'p-step-three-sum', 3, 3 * k + 2, ['k'])
+    numer = sp.expand(k * (3 * k - 1) + 2 * (3 * k + 1))
+    ok(numer == 3 * k ** 2 + 5 * k + 2 and sp.expand((k + 1) * (3 * k + 2)) == numer, 'numerator 3k^2 + 5k + 2 = (k+1)(3k+2)')
+    expr(it, 'p-step-three-sum', 3, numer, ['k'])
+    w3 = it['p-step-three-sum']['parts'][2]['widget']
+    ok(w3.get('form') == 'expanded' and w3['accept'] == ['3k^2+5k+2'], 'part 3 asks for the multiplied-out numerator and accepts no factored form (finding 17)')
+    ok('form' in it['p-step-three-sum']['parts'][2]['feedback']['byKey'], 'part 3 has a line for an equal answer in the wrong shape')
+    ok(sp.expand(k * (3 * k - 1) + (3 * k + 1)) == 3 * k ** 2 + 2 * k + 1, 'no-double slip 3k^2 + 2k + 1')
+    ok(sum(3 * i - 2 for i in range(1, 11)) == 145, 'S_10 = 145 by adding the ten terms (finding 16)')
     last = 118
     nn = (last + 2) // 3
     ok(3 * nn - 2 == last, 'n = 40 for last term 118')
@@ -267,15 +303,27 @@ def level3(it):
     xs = [a for a in range(-300, 301) if 6 * a + 9 * 2 == 102]
     num(it, 'p-six-nine-lots', 4, (102 - 18) // 6, xs[0] if len(xs) == 1 else None, {'no-y': 102 // 6, 'added': (102 + 18) // 6})
 
+    # p-even-test-contra (re-set): if n^2 + 2 is a multiple of 3, then n is not a multiple of 3.
     choice(it, 'p-even-test-contra', 1, 'right')
-    e = sp.expand((2 * k) ** 2 + 6 * (2 * k) + 1)
-    expr(it, 'p-even-test-contra', 2, sp.expand((e - 1) / 2), ['k'])
-    ok(all(((t * t + 6 * t + 1) % 2 == 0) == (t % 2 == 1) for t in range(-100, 101)), 'claim and converse by brute force')
+    T = range(-90, 91)
+    ok(all(t % 3 != 0 for t in T if (t * t + 2) % 3 == 0), 'claim true on -90..90')
+    ok(all((t * t + 2) % 3 == 0 for t in T if t % 3 != 0), 'its converse is true too (so "it is true here" in the option is right)')
+    ok(all(t % 3 == 0 for t in T if (t * t + 2) % 3 != 0), 'the inverse is a true statement here, and proves nothing about the claim')
+    ok(any(t % 3 != 0 and (t * t + 2) % 3 == 0 for t in range(-5, 6)), 'the "example" option is a true statement: n = 1 gives 3')
+    e = sp.expand((3 * k) ** 2 + 2)
+    br3 = sp.expand((e - 2) / 3)
+    ok(br3 == 3 * k ** 2, 'bracket 3k^2')
+    expr(it, 'p-even-test-contra', 2, br3, ['k'])
+    ok(all(((3 * t) ** 2 + 2) % 3 == 2 for t in T), 'remainder 2 for every multiple of 3')
+    ok(3 ** 2 + 2 == 11 and 6 ** 2 + 2 == 38 and 11 % 3 == 2 and 38 % 3 == 2, 'cases n = 3 and n = 6 (the "cases" option): neither value is a multiple of 3')
     choice(it, 'p-even-test-contra', 3, 'integer')
-    v = (-3) ** 2 + 6 * (-3) + 1
-    num(it, 'p-even-test-contra', 4, int(e.subs(k, sp.Rational(-3, 2))), v,
-        {'sign': abs(v), 'sign-6n': 9 + 18 + 1, 'minus-square': -9 - 18 + 1})
-    ok(v % 2 == 0, 'value at -3 is even')
+    nn = -6
+    kk3 = nn // 3
+    v = nn ** 2 + 2
+    num(it, 'p-even-test-contra', 4, int(br3.subs(k, kk3)), (v - 2) // 3,
+        {'sign': 3 * -(kk3 ** 2), 'n-squared': nn ** 2, 'whole': v})
+    ok(kk3 == -2 and v == 38 == 3 * 12 + 2 and v % 3 == 2, 'n = -6: k = -2, bracket 12, value 38 = 3 x 12 + 2')
+    ok(len({12, -12, 36, 38}) == 4, 'slips distinct')
 
 
 for nlev, fn in ((1, level1), (2, level2), (3, level3)):
