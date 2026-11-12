@@ -57,3 +57,44 @@ At the gate: 0 hits on all three sets. Advisories: none on `problems-1` and `pro
 ## Engine limits
 
 Two bullets in `docs/BACKLOG-INBOX.md` under "Raised later (problems eigen)". None blocked a problem.
+
+## Level 4: `problems-4` (Factorisations at work, l13 to l17)
+
+File `app/content/courses/eigen/problems-4.json`, 4 problems, 18 parts, `minutes` 45. Read first: the screens and quizzes of l13 to l17, `review-4`, `homework-4` and sets 1 to 3. The course's level 4 settings are finance (spreads, a credit generator, two-asset VaR, stock stress tests, hedges with futures); the set uses a chemical spill in two lagoons, two wind turbines, a runner's watch and a packaging machine. No matrix of the course is reused. `p-wind-pair` first used $\boldsymbol{\Sigma}$ with entries 16, 8 and 13, whose factor shared $L_{21} = 2$ and $L_{22} = \sqrt{13 - 4} = 3$ with `review-4` `r-chol` (9, 6, 13); it was changed to 16, 20 and 34 before hand-back.
+
+| set | item | parts (numeric / expression / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-linked-lagoons | 5 (3 / 2 / 0) | l13, l14 | 4 |
+| problems-4 | p-wind-pair | 4 (4 / 0 / 0) | l15, l16 | 5 |
+| problems-4 | p-track-laps | 4 (3 / 1 / 0) | l15, l17 | 4 |
+| problems-4 | p-machine-stops | 5 (3 / 1 / 1) | l13, l14 | 4 |
+
+Typed parts 17 of 18. The choice part is a judgement: what relabelling the machine's states does to the eigenvalues and the steady state.
+
+Chains. Lagoons: $\mathbf{B} = \mathbf{M}^{-1}\mathbf{A}\mathbf{M}$ has top-left entry $-5$; its triangular form gives the eigenvalues $-5$ and $-2$ of $\mathbf{A}$; the eigenvector $(3, -1)$ of $\mathbf{B}$ maps to $(2, -1)$ by $\mathbf{M}$; the start $(5, 2)$ has eigen-coordinates $(3, 1)$; the total after a week is $6e^{-2} + e^{-5} = 0.819$ kg. Turbines: $L_{22} = \sqrt{34 - 25} = 3$; un-mixing $(8, 4)$ gives $w_2 = -2$; the Mahalanobis distance is $\sqrt8 = 2.828$; the tail chance $e^{-4} = 0.0183$ (l16's fact $P(D \ge d) = e^{-d^2/2}$). Laps: Cholesky on $\mathbf{X}^T\mathbf{X}$ breaks with $L_{22} = 0$; the nonzero eigenvalue is the trace 45; $\boldsymbol{\beta}^+ = (1, 2)$; the new run predicts 15 minutes whichever best fit is used. Machine: eigenvalues 0 and $-0.8$; steady state $(0.75, 0.25)$; relabelling keeps the eigenvalues and moves the steady state to $(0.25, 0.75)$; $P(\text{Stopped at } 3 \mid \text{Stopped at } 0) = 0.25 + 0.75e^{-2.4} = 0.318$; within 0.01 of 0.25 after $\ln 75/0.8 = 5.40$ hours.
+
+Judgement calls:
+- `p-linked-lagoons` part 2 asks for the eigenvalues of $\mathbf{A}$ with $\mathbf{B}$ printed: the step is "similar matrices share eigenvalues" read off a triangular matrix, and the explain checks them on $\mathbf{A}$ by trace and determinant.
+- `p-wind-pair` part 2: the slip $L_{22} = \sqrt{34}$ carried gives $-1.03$, which rounds to $-1$, kept as `carried` (band 0.5). In an earlier draft the same slip rounded onto the key, so the numbers were chosen to keep it apart.
+- `p-track-laps` part 1 keys $L_{22} = 0$: the factor exists with a zero pivot, and the explain says why it cannot be used. The prediction in part 4 is the same for every best fit; the feedback says so.
+- `p-machine-stops` part 3 is the only choice part; parts 4 and 5 use its result (the team's order, Stopped first).
+- Whole-number parts carry non-whole slips at band 0.5 (`[wrong-band]`); negative keys ($-5$, $-2$ and the sets $\{-5, -2\}$, $\{0, -0.8\}$) each have a dropped-sign `wrong`.
+
+### Checks (level 4)
+
+| check | problems-4 |
+|---|---|
+| numbers script | 0 failures (2,182 checks in all, sets 1 to 4) |
+| validator | 0 errors; no warning on the file (total 4,582) |
+| `grade-all --file` | 18 widgets, 0 failures |
+| playthrough `--local-cdn` | green (18 parts, 8 typed slips routed) |
+| playthrough `--mobile` | green; 440 px shots read, no layout fault |
+| voice scan 35 (`VOICE_BASE` the course folder) | 0 and 0 |
+
+Numbers script, level 4: route 1 exact sympy (similarity, triangular eigenvalues, `LUsolve`, `cholesky`, nullspace, `pinv`, closed forms in $e^{\lambda t}$); route 2 SciPy `expm` for $e^{\mathbf{A}t}$ and $e^{\mathbf{Q}'t}$, `np.linalg.cholesky`, $\mathbf{x}^T\boldsymbol{\Sigma}^{-1}\mathbf{x}$, a 400,000-draw simulation of the tail chance, `np.linalg.pinv` and `lstsq`, a bisection on the `expm` entry for 5.40 hours. A planted run (0.829 for 0.819 in a working line, $-5(2, 1)$ for $-5(2, -1)$, key 0.328 for 0.318) failed four checks as it should.
+
+Stale checks repaired. At HEAD the script failed 95 of 1,613 checks, all on `problems-2` `p-river-gauges`: the fix pass of c336926 re-authored the item ($\mathbf{K}$ with rows $(8, 4, 4)$, $(4, 7, 3)$, $(4, 3, c)$, planned $c = 2.5$) after the script had been written for an earlier version. That section is rewritten for the current item (pivots 8, 5 and $c - 2.2$, $\mathbf{w} = (-0.4, -0.2, 1)$, variance 0.3, share 0.88, each by two routes) and now passes; its stale-token list covers both earlier versions.
+
+### Fresh-check (level 4)
+
+`fresh-check --file content/courses/eigen/problems-4.json --cross-numbers`: 0 hits at the gate, 25 advisories. 21 are shared small decimals on `p-machine-stops` (0.2, 0.6, 0.8, 0.12, 0.15, 2.4, 5.4, 7.2) against unrelated items (an insurer's claims table, a network gradient, a weather chain): chance. Three on `p-wind-pair` and `p-track-laps` count subscripts as numbers (22 and 21 from $L_{22}$ and $\Sigma_{21}$): see the inbox. Two shared formulas, $u_1 + u_2$ (l14) and $e^{-d^2/2}$ (l16), are the taught tools. At `--min-run 8 --min-share 0`: only the form sentences shared with other sets. By hand I grepped `app/content/` for every matrix, both data vectors, the nouns (lagoon, turbine, packaging, laps) and the keys: no shared setting; $(8, 4)$ and $(5, 2)$ occur only as unrelated working lines (`homework-1`, `topic-1.4`).

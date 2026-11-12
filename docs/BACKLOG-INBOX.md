@@ -2306,3 +2306,7 @@ Raised later (review problems 1.4 c):
 
 Raised later (session AC, main session):
 - [Could] `test-validate-band-rules.mjs` fails its value-comparison case (40 passed, 1 failed) when `ZQ_LOCAL_CDN` is set in the environment: the "without" run inherits the variable. Passes with `--local-cdn <pkgs>` (41) and with neither (40, one skip). Clear the variable for the "without" run.
+
+Raised later (problems eigen level 4):
+- [Could] `fresh-check.mjs --cross-numbers` reads subscripts as numbers: $L_{22}$ and $\Sigma_{21}$ give 22 and 21, so `eigen/problems-4` `p-wind-pair` and `p-track-laps` are listed against `least-squares/problems-2`, `stat-learning/l18` and `testing/problems-2` on "34 22 21" and "36 22 4.243". Wanted: strip `_{...}` and `_d` before collecting numbers, as the eigen numbers script does.
+- [Could] `fresh-check.mjs --cross-numbers` treats one- and two-place decimals of rates (0.2, 0.6, 0.8, 0.12, 0.15) as distinctive: 21 of the 25 advisories on `eigen/problems-4` `p-machine-stops` are such matches with unrelated items. Wanted: count a number of two significant figures or fewer as weak unless the pair also shares a three-figure number.

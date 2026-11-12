@@ -514,67 +514,69 @@ if I:
     vocab(I, iid, [A, 13, A.det(), 40, 36, 6, 9, area, sp.pi * 36, 2 * half])
     arith(I, iid)
 
-    # ---- p-river-gauges (re-authored in the fix pass: strain gauges on a cable, pivots and a null mix, K with c unknown)
+    # ---- p-river-gauges (re-authored twice in fix passes; now K = [[8, 4, 4], [4, 7, 3], [4, 3, c]] with planned c = 2.5)
     iid = 'p-river-gauges'
     c = sp.Symbol('c')
-    K = M([[4, 2, 1], [2, 3, 1], [1, 1, c]])
-    Kn = lambda cv: np.array([[4, 2, 1], [2, 3, 1], [1, 1, cv]], dtype=float)
-    # part 1: the second pivot. Route 1 exact elimination; route 2 the corner determinant over the first pivot, and NumPy's LU-free check
-    m21 = R(2, 4)
+    K = M([[8, 4, 4], [4, 7, 3], [4, 3, c]])
+    Kn = lambda cv: np.array([[8, 4, 4], [4, 7, 3], [4, 3, cv]], dtype=float)
+    ok(re.search(r'\\begin\{pmatrix\} 8 & 4 & 4', I[iid]['prose']) is not None and '2.5' in I[iid]['prose'], 'gauges: the current matrix and c = 2.5 are in the prose')
+    # part 1: the second pivot. Route 1 exact elimination; route 2 the corner determinant over the first pivot
+    m21 = K[1, 0] / K[0, 0]
     piv2 = K[1, 1] - m21 * K[0, 1]
-    num(I, iid, 1, piv2, np.linalg.det(Kn(0)[:2, :2]) / 4.0, {'multiplier-one': K[1, 1] - K[0, 1], 'multiplier-two': K[1, 1] - 2 * K[0, 1]})
-    ok(K[:2, :2].det() == 8 and 4 * piv2 == 12 - 4, 'gauges: corner determinant 8 = 4 x 2 = 12 - 4')
-    # part 2: the third pivot c - d. Route 1 exact elimination; route 2 det K / corner determinant, with det K from NumPy at three values of c
+    num(I, iid, 1, piv2, np.linalg.det(Kn(0)[:2, :2]) / 8.0, {'multiplier-one': K[1, 1] - K[0, 1], 'multiplier-two': K[1, 1] - K[1, 0] * K[0, 1]})
+    ok(K[:2, :2].det() == 40 and 8 * piv2 == 56 - 16 == 40, 'gauges: corner determinant 8 x 5 = 56 - 16 = 40')
+    # part 2: the third pivot c - d. Route 1 exact elimination; route 2 NumPy det K over the corner determinant at three values of c
     r2 = [0, piv2, K[1, 2] - m21 * K[0, 2]]
-    ok(r2 == [0, 2, R(1, 2)], 'gauges: row 2 after step 1 is (0, 2, 0.5)')
-    r3 = [0, K[2, 1] - R(1, 4) * K[0, 1], K[2, 2] - R(1, 4) * K[0, 2]]
-    ok(r3 == [0, R(1, 2), c - R(1, 4)], 'gauges: row 3 after step 1 is (0, 0.5, c - 0.25)')
+    ok(r2 == [0, 5, 1], 'gauges: row 2 after step 1 is (0, 5, 1)')
+    m31 = K[2, 0] / K[0, 0]
+    r3 = [0, K[2, 1] - m31 * K[0, 1], K[2, 2] - m31 * K[0, 2]]
+    ok(r3 == [0, 1, c - 2], 'gauges: row 3 after step 1 is (0, 1, c - 2)')
     m32 = r3[1] / r2[1]
+    ok(m32 == R(1, 5), 'gauges: second multiplier 1 / 5 = 0.2')
     piv3 = sp.expand(r3[2] - m32 * r2[2])
     dval = -(piv3 - c)
-    ok(m32 == R(1, 4), 'gauges: second multiplier 0.5 / 2 = 0.25')
     detK = sp.expand(K.det())
-    ok(detK == 8 * c - 3 and sp.expand(4 * piv2 * piv3 - detK) == 0, 'gauges: det K = 8c - 3 = 4 x 2 x (c - 0.375)')
-    d_np = [-(np.linalg.det(Kn(cv)) / np.linalg.det(Kn(0)[:2, :2]) - cv) for cv in (0.0, 0.5, 2.0)]
-    ok(np.allclose(d_np, 0.375), 'gauges: NumPy det K over the corner determinant gives c - 0.375 at three values of c')
-    num(I, iid, 2, dval, d_np[1], {'one-step': -(r3[2] - c), 'big-multiplier': -((r3[2] - r2[2] * r2[2]) - c),
+    ok(detK == 40 * c - 88 and sp.expand(8 * piv2 * piv3 - detK) == 0, 'gauges: det K = 40c - 88 = 40(c - 2.2)')
+    d_np = [-(np.linalg.det(Kn(cv)) / np.linalg.det(Kn(0)[:2, :2]) - cv) for cv in (0.0, 2.5, 4.0)]
+    ok(np.allclose(d_np, 2.2), 'gauges: NumPy det K over the corner determinant gives c - 2.2 at three values of c')
+    num(I, iid, 2, dval, d_np[1], {'one-step': -(r3[2] - c), 'big-multiplier': -((r3[2] - 1 * r2[2]) - c),
                                    'added': -((r3[2] + m32 * r2[2]) - c)})
-    # part 3: the null vector at c = 0.375. Route 1 exact nullspace scaled to a last entry of 1; route 2 the last right singular vector
+    # part 3: the null vector at c = 2.2. Route 1 exact nullspace; route 2 the last right singular vector
     Kb = K.subs(c, dval)
     wv = null1(Kb)
     _, _, vt = np.linalg.svd(Kn(float(dval)))
     obj(I, iid, 3, wv, vt[-1] / vt[-1][-1],
-        {'sign': M([-wv[0], -wv[1], 1]), 'swapped': M([wv[1], wv[0], 1]), 'no-b': M([-R(1, 4), wv[1], 1])})
-    ok(wv == M([-R(1, 8), -R(1, 4), 1]) and Kb * wv == sp.zeros(3, 1), 'gauges: w = (-0.125, -0.25, 1) and K(0.375) w = 0')
-    ok(Kb.rank() == 2 and all(x > 0 for x in (Kb[:1, :1].det(), Kb[:2, :2].det())), 'gauges: K(0.375) is singular with positive leading minors above it')
-    # part 4: w^T K w at the planned c = 0.5. Route 1 exact; route 2 NumPy; each slip from its own recipe
-    C5 = R(1, 2)
+        {'sign': M([-wv[0], -wv[1], 1]), 'swapped': M([wv[1], wv[0], 1]), 'no-b': M([-R(4, 8), wv[1], 1])})
+    ok(wv == M([-R(2, 5), -R(1, 5), 1]) and Kb * wv == sp.zeros(3, 1), 'gauges: w = (-0.4, -0.2, 1) and K(2.2) w = 0')
+    ok(4 * wv[0] + 3 * wv[1] + dval == 0 and 4 * wv[0] == R(-8, 5) and 3 * wv[1] == R(-3, 5), 'gauges: row 3 check -1.6 - 0.6 + 2.2 = 0')
+    ok(Kb.rank() == 2, 'gauges: K(2.2) is singular')
+    # part 4: w^T K w at the planned c = 2.5
+    C5 = R(5, 2)
     K5 = K.subs(c, C5)
     var4 = (wv.T * K5 * wv)[0]
-    ok(K5 * wv == M([0, 0, R(1, 8)]), 'gauges: K(0.5) w = (0, 0, 0.125)')
-    wn = np.array([-0.125, -0.25, 1.0])
-    num(I, iid, 4, var4, wn @ Kn(0.5) @ wn,
-        {'c-only': C5, 'sign': (M([-wv[0], -wv[1], 1]).T * K5 * M([-wv[0], -wv[1], 1]))[0], 'boundary': dval})
-    ok(sp.expand((wv.T * K * wv)[0] - (c - R(3, 8))) == 0, 'gauges: w^T K w = c - 0.375')
-    # part 5: the share explained. Route 1 exact fractions; route 2 the R-squared of C on A and B from the covariance matrix with NumPy
+    ok(K5 * wv == M([0, 0, R(3, 10)]), 'gauges: K(2.5) w = (0, 0, 0.3)')
+    ok([8 * wv[0], 4 * wv[1], 4 * wv[0], 7 * wv[1], 3 * wv[1]] == [R(-16, 5), R(-4, 5), R(-8, 5), R(-7, 5), R(-3, 5)], 'gauges: printed products -3.2, -0.8, -1.6, -1.4, -0.6')
+    wn = np.array([-0.4, -0.2, 1.0])
+    ws = M([-wv[0], -wv[1], 1])
+    num(I, iid, 4, var4, wn @ Kn(2.5) @ wn, {'c-only': C5, 'sign': (ws.T * K5 * ws)[0], 'boundary': dval})
+    ok(sp.expand((wv.T * K * wv)[0] - (c - dval)) == 0, 'gauges: w^T K w = c - 2.2')
+    # part 5: the share explained. Route 1 exact; route 2 the R-squared of C on A and B with NumPy
     share = 1 - var4 / C5
-    Kc = Kn(0.5)
+    Kc = Kn(2.5)
     beta = np.linalg.solve(Kc[:2, :2], Kc[:2, 2])
     r2_np = beta @ Kc[:2, 2] / Kc[2, 2]
     num(I, iid, 5, share, r2_np, {'unexplained': var4 / C5, 'not-scaled': 1 - var4})
-    ok(np.allclose(beta, [0.125, 0.25]) and share == (R(3, 8)) / C5, 'gauges: C = 0.125A + 0.25B in the regression, and the share is 0.375 / c')
-    # the planned c and the boundary give a model that is positive definite
-    ok(np.linalg.eigvalsh(Kn(0.5)).min() > 0 and np.linalg.eigvalsh(Kn(0.375)).min() < 1e-12, 'gauges: positive definite at c = 0.5, singular at c = 0.375')
-    vocab(I, iid, [K, 12, 8, piv2, r2, r3, R(1, 4), R(1, 8), m32, dval, R(1, 4) + R(1, 8), piv3, detK, wv, Kb * wv, 0.5, K5 * wv, var4, K5 * wv,
-                   R(3, 8), share, var4 / C5, R(3, 8) / C5, C5 - var4, 4 * R(-1, 8), 2 * R(-1, 4), R(-1, 8) * 2, 3 * R(-1, 4), -R(1, 8) - R(1, 4) + C5,
-                   -R(1, 8) - R(1, 4) + R(3, 8), 1 - var4, 0.5 / 2, R(1, 2) * R(1, 2), 0.5 * 0.5])
+    ok(np.allclose(beta, [0.4, 0.2]) and share == dval / C5, 'gauges: C = 0.4A + 0.2B in the regression, and the share is 2.2 / c')
+    ok(np.linalg.eigvalsh(Kn(2.5)).min() > 0 and abs(np.linalg.eigvalsh(Kn(2.2)).min()) < 1e-12, 'gauges: positive definite at c = 2.5, singular at c = 2.2')
+    vocab(I, iid, [K, 56, 16, 40, 88, piv2, r2, r3, m21, m32, dval, piv3, wv, ws, 8 * wv[0], 4 * wv[1], 4 * wv[0], 7 * wv[1], 3 * wv[1],
+                   K5 * wv, var4, C5, (ws.T * K5 * ws)[0], share, var4 / C5, 1 - var4, C5 - var4, -9, 1.8, R(-1, 2), 2.2, 2.5])
     arith(I, iid)
-    # stale-value check: nothing of the old river-gauges item (r = 0.2, correlation 0.8, bound 0.28, w = (1, -1.6, 1)) is left
-    old_tokens = [r'0\.28', r'1\.28', r'1\.6(?!\d)', r'-0\.16', r'0\.36', r'0\.64', r'0\.72', r'0\.8(?!\d)', r'r = 0\.2', r'correlation', r'2\.56', r'4\.56', r'standardis']
+    # stale-value check: nothing of the two earlier versions (r = 0.2 and bound 0.28; then c - 0.375 and w = (-0.125, -0.25, 1)) is left
+    old_tokens = [r'0\.28', r'1\.28', r'-0\.16', r'0\.36', r'0\.64', r'0\.72', r'r = 0\.2', r'correlation', r'2\.56', r'4\.56', r'standardis',
+                  r'0\.375', r'0\.125', r'0\.25(?!\d)', r'1\.6, 1']
     blob = ' '.join(t for _, t in strings(I[iid]))
     for tok in old_tokens:
         ok(not re.search(tok, blob), f'{iid}: stale token {tok} still in the item')
-    ok(re.search(r'\\begin\{pmatrix\} 4 & 2 & 1', I[iid]['prose']) is not None, 'gauges: the new matrix is in the prose')
 
     # ---- p-tank-thermometers
     iid = 'p-tank-thermometers'
@@ -725,6 +727,159 @@ if I:
                    45, 1161, 99, R(9 * 100, 1170), 0.8])
     arith(I, iid)
 
+
+# ======================================================== level 4: factorisations at work
+I = load(4)
+if I:
+    from scipy.linalg import expm, cholesky as sp_chol
+    E = sp.exp
+
+    # ---- p-linked-lagoons
+    iid = 'p-linked-lagoons'
+    A = M([[-4, 2], [1, -3]])
+    Mg = M([[1, 1], [0, 1]])
+    ok(Mg.inv() == M([[1, -1], [0, 1]]), 'lagoons: printed M inverse')
+    B = Mg.inv() * A * Mg
+    Bn = np.linalg.solve(npf(Mg), npf(A) @ npf(Mg))                       # route 2: solve, not invert
+    ok(B == M([[-5, 0], [1, -2]]) and np.allclose(Bn, npf(B)), 'lagoons: B as printed')
+    ok(A * Mg == M([[-4, -2], [1, -2]]), 'lagoons: AM as printed')
+    rev = Mg * A * Mg.inv()
+    num(I, iid, 1, B[0, 0], Bn[0, 0], {'sign': -B[0, 0], 'unchanged': A[0, 0], 'reversed': rev[0, 0]})
+    lam = sp.roots(sp.Matrix(A).charpoly().as_expr())
+    numset(I, iid, 2, list(B.eigenvals().keys()), eigvals_np(A),
+           {'sign': [5, 2], 'trace-det': [A.trace(), A.det()], 'a-diagonal': [A[0, 0], A[1, 1]]})
+    ok(sorted(lam) == [-5, -2] and A.det() == 10 and A.trace() == -7, 'lagoons: trace -7, det 10')
+    y = M([3, -1])
+    ok(B * y == -5 * y, 'lagoons: (3, -1) is an eigenvector of B for -5')
+    x = Mg * y
+    ok(A * x == -5 * x and A * x == M([-10, 5]), 'lagoons: A(2, -1) = (-10, 5)')
+    obj(I, iid, 3, x, eigvec_np(A, -5, fix=0) * 2, {'inverse': Mg.inv() * y, 'unmoved': y})
+    X = M([[1, 2], [1, -1]])
+    u0 = M([5, 2])
+    c = X.LUsolve(u0)
+    obj(I, iid, 4, c, np.linalg.solve(npf(X), npf(u0)).ravel(), {'swapped': M([c[1], c[0]]), 'w-coords': Mg.inv() * u0})
+    t = sp.Symbol('t')
+    ut = c[0] * E(-2 * t) * X[:, 0] + c[1] * E(-5 * t) * X[:, 1]
+    tot = (ut[0] + ut[1]).subs(t, 1)
+    u_num = expm(npf(A) * 1.0) @ npf(u0).ravel()                          # route 2: scipy expm
+    ok(sp.simplify(ut.subs(t, 0) - u0) == M([0, 0]), 'lagoons: u(0) = u0')
+    num(I, iid, 5, tot, u_num.sum(),
+        {'coefficients-only': (c[0] * E(-2) + c[1] * E(-5)), 'u1-only': ut[0].subs(t, 1),
+         'rates-swapped': c[0] * 2 * E(-5) + c[1] * E(-2), 'carried': 1 * 2 * E(-2) + 3 * 1 * E(-5)})
+    ok(round(float(E(-2)), 4) == 0.1353 and round(float(E(-5)), 4) == 0.0067 and round(6 * 0.1353 + 0.0067, 3) == 0.819,
+       'lagoons: printed exponentials and 0.819 from them')
+    ok(sp.simplify(ut[1].subs(t, 1) - (3 * E(-2) - E(-5))) == 0, 'lagoons: u2(1) = 3e^-2 - e^-5')
+    vocab(I, iid, [A, Mg, Mg.inv(), B, A * Mg, rev, y, x, A * x, c, u0, tot, 0.1353, 0.0067, 12, 10, -7, 0.819, 2 * c[0]])
+    arith(I, iid)
+
+    # ---- p-wind-pair
+    iid = 'p-wind-pair'
+    S = M([[16, 20], [20, 34]])
+    L = S.cholesky()
+    Ln = np.linalg.cholesky(npf(S))
+    ok(L == M([[4, 0], [5, 3]]) and np.allclose(Ln, npf(L)) and L * L.T == S, 'wind: L as printed')
+    num(I, iid, 1, L[1, 1], Ln[1, 1], {'no-subtract': sp.sqrt(34), 'subtract-sigma': sp.sqrt(34 - 20), 'no-root': 9})
+    xv = M([8, 4])
+    w = L.LUsolve(xv)
+    wn = np.linalg.solve(Ln, npf(xv).ravel())
+    num(I, iid, 2, w[1], wn[1], {'sign': -w[1], 'used-x1': R(4 - 5 * 8, 3), 'no-subtract': R(4, 3), 'carried': (4 - 10) / sp.sqrt(34)})
+    d2 = w.dot(w)
+    d2n = float(npf(xv).ravel() @ np.linalg.inv(npf(S)) @ npf(xv).ravel())      # route 2: x^T Sigma^-1 x
+    naive2 = R(8, 4) ** 2 + R(4) ** 2 / 34
+    num(I, iid, 3, sp.sqrt(d2), math.sqrt(d2n), {'squared': d2, 'ignore-correlation': sp.sqrt(naive2), 'carried': sp.sqrt(4 + 144)})
+    rng = np.random.default_rng(11)                                           # route 3: simulate the tail
+    Z = rng.standard_normal((400000, 2)) @ Ln.T
+    dd = np.einsum('ij,jk,ik->i', Z, np.linalg.inv(npf(S)), Z)
+    ok(abs((dd >= 8).mean() - math.exp(-4)) < 0.001, 'wind: simulated chance of d^2 >= 8 is e^-4')
+    num(I, iid, 4, E(-d2 / 2), math.exp(-d2n / 2),
+        {'used-d': E(-sp.sqrt(d2) / 2), 'no-half': E(-d2), 'carried': E(-naive2 / 2)})
+    ok(round(1 / math.exp(-4)) == 55, 'wind: one hour in 55')
+    cm, cs = S[1, 0] / S[0, 0] * 8, sp.sqrt(S[1, 1] - S[1, 0] ** 2 / S[0, 0])
+    ok((xv[1] - cm) / cs == w[1] and cs == L[1, 1] and cm == 10, 'wind: w2 is the conditional z-score, 2 sd below what turbine 1 led us to expect')
+    ok(R(8, 4) == 2 and float(4 / sp.sqrt(34)) < 2, 'wind: turbine 1 alone is 2 sd out, turbine 2 less')
+    vocab(I, iid, [S, L, xv, w, d2, sp.sqrt(d2), naive2, sp.sqrt(naive2), E(-4), 55, 34, 25, 9, 16, 20, 10, 12, -12, 2.828, 2.114, 0.0183, cm])
+    arith(I, iid)
+
+    # ---- p-track-laps
+    iid = 'p-track-laps'
+    Xr = M([[2, 4], [1, 2], [2, 4]])
+    yv = M([11, 5, 9])
+    G = Xr.T * Xr
+    ok(G == M([[9, 18], [18, 36]]), 'laps: X^T X as printed')
+    l11 = sp.sqrt(G[0, 0]); l21 = G[1, 0] / l11; l22sq = G[1, 1] - l21 ** 2
+    # route 2: the last pivot of elimination on G (Cholesky's L22^2) and NumPy's refusal
+    piv = npf(G)[1, 1] - npf(G)[1, 0] ** 2 / npf(G)[0, 0]
+    try:
+        np.linalg.cholesky(npf(G) + np.diag([0, -1e-9]))
+        refused = False
+    except np.linalg.LinAlgError:
+        refused = True
+    ok(refused, 'laps: NumPy refuses the Cholesky factor of X^T X just below singular')
+    num(I, iid, 1, sp.sqrt(l22sq), math.sqrt(max(piv, 0)), {'root-36': 6, 'subtract-entry': sp.sqrt(36 - 18)})
+    ev = [e for e in G.eigenvals() if e != 0]
+    num(I, iid, 2, ev[0], max(np.linalg.eigvalsh(npf(G))), {'diagonal': G[1, 1], 'first-entry': G[0, 0]})
+    ok(G * M([1, 2]) == M([45, 90]), 'laps: X^T X (1, 2) = (45, 90)')
+    s1 = sp.sqrt(ev[0]); v1 = M([1, 2]) / sp.sqrt(5); u1 = Xr * v1 / s1
+    ok(sp.simplify(u1 - M([2, 1, 2]) / 3) == M([0, 0, 0]), 'laps: u1 = (2, 1, 2)/3')
+    ok(sp.simplify(u1.dot(yv)) == 15 and sp.sqrt(5) * sp.sqrt(45) == 15, 'laps: u1 . y = 15 and sqrt5 sqrt45 = 15')
+    bp = (v1 * u1.T / s1) * yv
+    ok(sp.simplify(bp - Xr.pinv() * yv) == M([0, 0]), 'laps: X^+ y by sympy pinv')
+    obj(I, iid, 3, bp.applyfunc(sp.simplify), np.linalg.pinv(npf(Xr)) @ npf(yv).ravel(),
+        {'all-km': M([5, 0]), 'all-laps': M([0, R(5, 2)])})
+    for alt in (M([5, 0]), M([0, R(5, 2)])):
+        ok(sp.simplify(Xr * alt - Xr * bp) == M([0, 0, 0]) and alt.norm() > bp.norm(), 'laps: other fits are equally good and longer')
+    ok(M([5, 0]).norm() == 5 and bp.norm() == sp.sqrt(5), 'laps: lengths 5 and sqrt 5')
+    ok(G[0, 0] * 5 == (Xr.T * yv)[0] and (Xr.T * yv) == M([45, 90]), 'laps: beta1 + 2 beta2 = 5 from the normal equations')
+    new = M([3, 6])
+    pred = new.dot(bp)
+    num(I, iid, 4, pred, float(np.array([3, 6]) @ np.linalg.lstsq(npf(Xr), npf(yv).ravel(), rcond=None)[0]),
+        {'laps-as-km': M([3, 3]).dot(bp), 'km-only': 3 * bp[0]})
+    ok(new.dot(M([5, 0])) == pred, 'laps: (5, 0) predicts 15 too')
+    vocab(I, iid, [Xr, yv, G, l11, l21, 45, 90, 15, 22, 18, R(5, 2), 2.5, pred, 36, 9])
+    arith(I, iid)
+
+    # ---- p-machine-stops
+    iid = 'p-machine-stops'
+    Q = M([[R(-1, 5), R(3, 5)], [R(1, 5), R(-3, 5)]])
+    ok(all(sum(Q[:, j]) == 0 for j in range(2)), 'machine: columns add to 0')
+    numset(I, iid, 1, list(Q.eigenvals().keys()), eigvals_np(Q),
+           {'sign': [0, R(4, 5)], 'diagonal': [Q[0, 0], Q[1, 1]]})
+    ok(Q.det() == 0 and Q.trace() == R(-4, 5), 'machine: det 0 and trace -0.8')
+    ss = Q.nullspace()[0]; ss = ss / sum(ss)
+    Pn = expm(npf(Q) * 200.0)                                                 # route 2: P(t) for large t
+    obj(I, iid, 2, ss, Pn[:, 0], {'swapped': M([ss[1], ss[0]]), 'unscaled': 4 * ss})
+    ok(R(1, 5) * ss[0] == R(3, 5) * ss[1] == R(3, 20), 'machine: balance 0.15 an hour')
+    Sw = M([[0, 1], [1, 0]])
+    Qp = Sw.inv() * Q * Sw
+    ok(Qp == M([[R(-3, 5), R(1, 5)], [R(3, 5), R(-1, 5)]]) and Qp.charpoly().as_expr() == Q.charpoly().as_expr(), 'machine: Q\' as printed, same polynomial')
+    ssp = Sw.inv() * ss
+    ok(Qp * ssp == M([0, 0]) and ssp == M([R(1, 4), R(3, 4)]), 'machine: team steady state (0.25, 0.75)')
+    ok(Qp * M([1, -1]) == R(-4, 5) * M([1, -1]), 'machine: (1, -1) is an eigenvector of Q\' for -0.8')
+    pick(I, iid, 3, 'moved')
+    tt = sp.Symbol('t')
+    ok(ssp + R(3, 4) * M([1, -1]) == M([1, 0]), 'machine: (1, 0) = (0.25, 0.75) + 0.75(1, -1)')
+    pS = R(1, 4) + R(3, 4) * E(R(-4, 5) * tt)
+    ok(np.isclose(float(pS.subs(tt, 3)), expm(npf(Qp) * 3.0)[0, 0]), 'machine: formula matches expm')
+    num(I, iid, 4, pS.subs(tt, 3), expm(npf(Qp) * 3.0)[0, 0],
+        {'running-chance': R(3, 4) + R(1, 4) * E(R(-12, 5)), 'no-steady': R(3, 4) * E(R(-12, 5)),
+         'restart-rate': R(1, 4) + R(3, 4) * E(R(-9, 5)), 'one-hour': pS.subs(tt, 1)})
+    ok(round(math.exp(-2.4), 4) == 0.0907 and round(0.25 + 0.75 * 0.0907, 3) == 0.318, 'machine: 0.0907 and 0.318 from it')
+    ok(np.isclose(expm(npf(Q) * 3.0)[0, 0], 0.75 + 0.25 * math.exp(-2.4)), 'machine: running-chance slip is the Running entry of P(3)')
+    tstar = sp.log(75) / R(4, 5)
+    # route 2: bisection on the expm entry
+    lo, hi = 0.0, 50.0
+    for _ in range(100):
+        mid = (lo + hi) / 2
+        if expm(npf(Qp) * mid)[0, 0] - 0.25 > 0.01:
+            lo = mid
+        else:
+            hi = mid
+    num(I, iid, 5, tstar, lo,
+        {'running-start': sp.log(25) / R(4, 5), 'no-coefficient': sp.log(100) / R(4, 5),
+         'restart-rate': sp.log(75) / R(3, 5), 'multiplied': sp.log(75) * R(4, 5)})
+    ok(round(math.log(75), 3) == 4.317 and round(4.317 / 0.8, 2) == 5.40, 'machine: ln 75 = 4.317 and 5.40 from it')
+    vocab(I, iid, [Q, ss, Qp, ssp, 0.12, R(3, 20), pS.subs(tt, 3), 0.0907, 0.318, 0.773, 0.587, -0.8, 0.8, 75, 4.317, tstar, 5.4, 0.01, 3, R(-4, 5) * 3, R(1, 4) / R(1, 100), R(3, 4) / R(1, 100)])
+    arith(I, iid)
 
 print(f"{checks} checks, {len(fails)} failures")
 for f in fails:
