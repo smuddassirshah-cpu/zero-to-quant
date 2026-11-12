@@ -18,6 +18,7 @@ import { openHarness } from './lib/validate-harness.mjs';
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2), ci = argv.indexOf('--local-cdn');
 const cdn = ci >= 0 ? path.resolve(argv[ci + 1]) : process.env.ZQ_LOCAL_CDN ? path.resolve(process.env.ZQ_LOCAL_CDN) : null;
+delete process.env.ZQ_LOCAL_CDN; /* the "without" run must not inherit the CDN from the environment (session AC) */
 const h = openHarness({ name: 'band', fixtures: ['problems'] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
 const tmp = h.dir;
 const copy = h.dir;
