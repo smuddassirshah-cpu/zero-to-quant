@@ -67,9 +67,44 @@ Pattern: `N. file | JSON path | severity, tag | problem | evidence and basis | e
 
 ## Overlap
 
-To be filled after the WIP commit, once the round 1 audit and the earlier reviews have been read.
+Filled after the WIP commit `d873e3b3`. Earlier reads of this scope, all read now:
+
+- `docs/reviews/audit-random-vars-4-5.md`: round 1 audit (19 findings: 3 `wrong`, 16 `imprecise`), its Fix pass (19 fixed) and its Fix-pass read (42 rows, all `correct`).
+- `docs/reviews/review-1.5.md`, lines 71 to 80 (level 4 lessons, review and homework).
+- `docs/reviews/review-problems-1.5-d.md`, section A, findings 9 to 11 (problem sets 4 and 5).
+- `docs/reviews/review-delta-session-aa.md`, finding 10 (problems-4 wording).
+- `docs/reviews/fix-pct-keys.md` (percentage keys of l19 `screens[11]` and review-5 `items[5]`) and `docs/reviews/review-precision-3.2.md` rows 64 and 65. Neither raises a conceptual finding on this scope.
+
+| | count |
+|---|---|
+| Conceptual findings found by this audit only | 11 |
+| Found by earlier reads only | 22 |
+| Found by both | 0 |
+
+The 22 are round 1's 19 findings plus the 3 slip-and-feedback findings that round 1 counted from the earlier reviews. All 22 were fixed before this read, so this audit read the fixed text. It judged each fixed string `correct` in the ledger, which agrees with the round 1 Fix-pass read. A round 2 reader cannot re-find a fixed finding, so "both: 0" measures only that no earlier read raised any of the 11 here.
+
+Each of this audit's findings against the earlier reads:
+
+| # | finding | severity | found by any earlier read? |
+|---|---|---|---|
+| 1 | l20 `screens[9]` tree shows 0.5, 0.2, 0.3 | wrong | No. No earlier read mentions this canvas. **New `wrong`.** |
+| 2 | l16 `screens[5]` slip `three` feedback | imprecise | No. review-1.5 line 79 is about the `three` slip of homework-4 `h-ht`, a different item. |
+| 3 | l18 `screens[2]` "Sds do not add, variances do" | imprecise | No. |
+| 4 | l18 `quiz[2]` "When do they fail?" | imprecise | No. Round 1 finding 8 fixed the summary, `screens[8]` and the option `rand` why on this class, and judged the keyed option of `quiz[2]` right. The stem and the feedback kept the "fail when dependent" reading. |
+| 5 | l15 `screens[8]` "conditional beta" | imprecise | Seen and passed. Round 1 lists it under "Notes that are not findings" as close enough to practitioner usage. This audit disagrees: the screen gives no market move size, so no beta can be read. Counted as found by this audit only. |
+| 6 | homework-4 `h-ht` "beats" | misleading | No. |
+| 7 | homework-5 `items[4]` independence of days unsaid | imprecise | No. Round 1 findings 4 and 9 are the same class on other items (l16 summary, l20 `quiz[2]`, l18 `quiz[3]`). |
+| 8 | review-5 `items[8]` fees independent of each other unsaid | imprecise | No. Same class as round 1 finding 9. |
+| 9 | homework-5 `items[7]` median stated as exact | imprecise | No. Round 1 finding 5 and its fix changed Step 5 of the same model answer, not Step 2. |
+| 10 | problems-4 `p-late-buses` part 4, option `small` | imprecise | No. review-problems-1.5-d lists `p-late-buses` as clean. |
+| 11 | problems-5 `p-startup-rounds` part 5 explain | imprecise | No. review-problems-1.5-d finding 10 is about the `count-squared` slip of part 3. |
+
+`wrong` findings that no earlier read found: **1** (finding 1), over two levels. It is in text that neither the round 1 fix pass nor its fix-pass read touched (`screens[9].canvas` is not in the fix diff).
+
+Classes seen again: independence left out of a prompt whose key needs it (findings 7 and 8) has now been raised in both rounds on five items of this course. An inbox bullet below proposes a check.
 
 ## Inbox
 
 - Validator (warning): a `tree` canvas whose branch chances are identical to a tree on an earlier screen of the same lesson, on a screen whose prose states chances that match none of them. This would have caught finding 1 (l20 `screens[9]` reuses the `screens[4]` tree under new chances).
 - Validator (warning), wording lint for the independence class: flag "do not add" or "fail" next to "sds", "variances" or "formulas" when the sentence has no "independent" or "uncorrelated" (findings 3 and 4). Low precision, so a warning only.
+- Script (reader aid): list every item whose key or explain uses a product of chances, $-n\,p_i p_j$, $r/p$ or the random-sum variance while its prose has none of "independent", "independently" or "multinomial". Raised twice in round 1 (findings 4 and 9) and twice here (findings 7 and 8), so the class has passed the three-sightings rule.

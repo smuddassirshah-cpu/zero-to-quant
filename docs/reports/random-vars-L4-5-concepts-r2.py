@@ -482,7 +482,7 @@ chk('l20 s9 key', key(S[9]['widget']), multi([6, 0, 4], [0.6, 0, 0.4]), 5e-5)
 chk('l20 s9 one slip', slip(S[9]['widget'], 'one'), 0.6 ** 6 * 0.4 ** 4, 5e-5)
 # FAILS ON PURPOSE (finding 1): the screen's tree still shows the earlier stock, 0.5 / 0.2 / 0.3,
 # while the prose and the key use 0.6 / 0 / 0.4.
-tree = [b['p'] for b in S[9]['canvas']['params']['levels'][0]['branches']]
+tree = [float(b['p']) for b in S[9]['canvas']['params']['levels'][0]['branches']]
 chk('l20 s9 canvas tree matches the prose chances 0.6 / 0 / 0.4', tree, [0.6, 0, 0.4])
 run_code(S[10]['widget'], 'l20 s10 code')
 chk('l20 s11 key', key(S[11]['widget']), sum(comb(10, k) * 0.4 ** k * 0.6 ** (10 - k) for k in range(3)), 5e-5)
