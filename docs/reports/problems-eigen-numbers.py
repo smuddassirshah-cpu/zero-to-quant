@@ -563,6 +563,105 @@ if I:
     arith(I, iid)
 
 
+# ======================================================== level 3: the SVD
+I = load(3)
+if I:
+    # ---- p-branch-sales
+    iid = 'p-branch-sales'
+    A = M([[4, 4], [3, 3], [2, -2]])
+    An = npf(A)
+    G = A.T * A
+    num(I, iid, 1, G[0, 1], (An.T @ An)[0, 1], {'diagonal-or-sign': 16 + 9 + 4, 'aat': (A * A.T)[0, 1]})
+    ok(G[0, 0] == 29 and G[0, 1] == 21, 'sales: A^T A')
+    Uq, sq, Vq = np.linalg.svd(An, full_matrices=False)          # route 2: NumPy SVD
+    numset(I, iid, 2, list(G.eigenvals().keys()), sq ** 2,
+           {'entries': [29, 21], 'carried': list(M([[29, 29], [29, 29]]).eigenvals().keys())})
+    s1 = sp.sqrt(50)
+    v1 = M([1, 1]) / sp.sqrt(2)
+    ok(G * v1 == 50 * v1 and G * M([1, -1]) == 8 * M([1, -1]), 'sales: eigenvectors of A^T A')
+    u1 = sp.simplify(A * v1 / s1)
+    un = Uq[:, 0] * np.sign(Uq[0, 0])
+    obj(I, iid, 3, u1, un, {'unscaled': A * M([1, 1]), 'no-root': A * M([1, 1]) / 50})
+    ok(u1.dot(u1) == 1, 'sales: u1 has length 1')
+    A1 = s1 * u1 * v1.T
+    A1n = sq[0] * np.outer(Uq[:, 0], Vq[0])
+    obj(I, iid, 4, A1[:, 0], A1n[:, 0], {'u-only': u1, 'carried': s1 * A * M([1, 1]) * v1[0]})
+    ok(A1[:, 1] == A1[:, 0] and A - A1 == M([[0, 0], [0, 0], [2, -2]]), 'sales: A_1 columns equal, error rows')
+    en = lambda X: sum(t ** 2 for t in X)
+    share = en(A1) / en(A)
+    num(I, iid, 5, share, np.sum(A1n ** 2) / np.sum(An ** 2),
+        {'unsquared': s1 / (s1 + sp.sqrt(8)), 'error-share': en(A - A1) / en(A), 'half': R(1, 2)})
+    vocab(I, iid, [G, A * A.T, 50, 8, en(A), en(A1), A * M([1, 1]), 10, u1, 0.64, 0.36, 400, 25, 32, 18, A1, 2 * (16 + 9),
+                   s1 / (s1 + sp.sqrt(8)), en(A - A1) / en(A), share, 16, 9])
+    arith(I, iid)
+
+    # ---- p-crab-sizes
+    iid = 'p-crab-sizes'
+    wd = [68, 74, 60, 46, 52]
+    cl = [59, 42, 40, 38, 21]
+    mw, mc = R(sum(wd), 5), R(sum(cl), 5)
+    ok(mw == 60 and mc == 40, 'crabs: means 60 and 40')
+    Xd = M([[a - mw, b - mc] for a, b in zip(wd, cl)])
+    Sg = Xd.T * Xd / 4
+    Cn = np.cov(np.array(wd, float), np.array(cl, float))           # route 2: NumPy's covariance (ddof 1)
+    num(I, iid, 1, Sg[0, 1], Cn[0, 1], {'over-n': (Xd.T * Xd)[0, 1] / 5, 'no-divide': (Xd.T * Xd)[0, 1],
+                                        'raw': R(sum(a * b for a, b in zip(wd, cl)), 4)})
+    ok(Sg == M([[130, 90], [90, R(365, 2)]]), 'crabs: the stated covariance matrix')
+    numset(I, iid, 2, list(Sg.eigenvals().keys()), np.linalg.eigvalsh(Cn),
+           {'diagonal': [130, R(365, 2)], 'over-n': list((Sg * 4 / 5).eigenvals().keys())})
+    vecs_printed = np.array([[0.8, -0.6], [-0.6, -0.8]])
+    ok(np.allclose(Cn @ vecs_printed, vecs_printed @ np.diag([62.5, 250])), 'crabs: the printed eigh output is valid')
+    pc = null1(Sg - 250 * sp.eye(2))
+    pc = pc / pc.norm()
+    pc = pc * (1 if abs(pc[1]) >= abs(pc[0]) and pc[1] > 0 or abs(pc[0]) > abs(pc[1]) and pc[0] > 0 else -1)
+    _, vn = np.linalg.eigh(Cn)
+    v_np = vn[:, -1] * np.sign(vn[np.argmax(abs(vn[:, -1])), -1])
+    obj(I, iid, 3, pc, v_np, {'first-column': M([0.8, -0.6]).applyfunc(sp.nsimplify), 'no-flip': -pc})
+    x1 = Xd[0, :].T
+    z1 = x1.dot(pc)
+    scores = (np.array([wd, cl], float).T - [60, 40]) @ v_np
+    num(I, iid, 4, z1, scores[0], {'no-flip': -z1, 'raw': M([68, 59]).dot(pc), 'pc2': x1.dot(M([R(4, 5), R(-3, 5)]))})
+    zs = z1 / sp.sqrt(250)
+    num(I, iid, 5, zs, scores[0] / np.std(scores, ddof=1),
+        {'variance': z1 / 250, 'total': z1 / sp.sqrt(Sg.trace()), 'pc2-sd': z1 / sp.sqrt(R(125, 2))})
+    vocab(I, iid, [Xd, [a * b for a, b in Xd.tolist()], (Xd.T * Xd)[0, 1], 72, R(sum(a * b for a, b in zip(wd, cl)), 4), Sg,
+                   Sg.trace(), 130 * R(365, 2), 8100, Sg.det(), 250, R(125, 2), pc, 4.8, 15.2, z1, 88, -5, sp.sqrt(250), zs,
+                   z1 / 250, z1 / sp.sqrt(Sg.trace()), z1 / sp.sqrt(R(125, 2)), 200, 50, 0.8, 0.6, 68 - 60, 59 - 40])
+    arith(I, iid)
+
+    # ---- p-site-anomalies
+    iid = 'p-site-anomalies'
+    s = [30, 15, 6, 3]
+    n = 31
+    rng = np.random.default_rng(7)                                  # route 2: build a real demeaned 31 by 4 matrix
+    Z = rng.standard_normal((n, 4))
+    Z -= Z.mean(axis=0)
+    Uz, _ = np.linalg.qr(Z)
+    Vz, _ = np.linalg.qr(rng.standard_normal((4, 4)))
+    Xc = Uz @ np.diag(s) @ Vz.T
+    ok(np.allclose(Xc.mean(axis=0), 0) and np.allclose(np.linalg.svd(Xc, compute_uv=False), s), 'sites: built matrix')
+    lam = [R(t * t, n - 1) for t in s]
+    tot = sum(lam)
+    num(I, iid, 1, tot, np.var(Xc, axis=0, ddof=1).sum(),
+        {'no-divide': sum(t * t for t in s), 'over-n': R(sum(t * t for t in s), n), 'unsquared': R(sum(s), n - 1)})
+    ev = np.sort(np.linalg.eigvalsh(np.cov(Xc.T)))[::-1]
+    sh2 = (lam[0] + lam[1]) / tot
+    num(I, iid, 2, sh2, ev[:2].sum() / ev.sum(),
+        {'unsquared': R(s[0] + s[1], sum(s)), 'pc1-only': lam[0] / tot, 'carried': (lam[0] + lam[1]) / sum(t * t for t in s)})
+    cum = [sum(lam[:k]) / tot for k in range(1, 5)]
+    k = next(i + 1 for i, c in enumerate(cum) if c >= R(99, 100))
+    kn = int(np.argmax(np.cumsum(ev) / ev.sum() >= 0.99)) + 1
+    num(I, iid, 3, k, kn, {'two': 2, 'all': 4})
+    U2, s2, V2 = np.linalg.svd(Xc, full_matrices=False)
+    Xk = U2[:, :k] @ np.diag(s2[:k]) @ V2[:k]
+    num(I, iid, 4, sum(t * t for t in s[k:]), np.sum((Xc - Xk) ** 2),
+        {'unsquared': s[3], 'rank-two': s[2] ** 2 + s[3] ** 2, 'kept': sum(t * t for t in s[:3])})
+    vocab(I, iid, [[t * t for t in s], sum(t * t for t in s), lam, tot, lam[0] + lam[1], sh2, cum, sum(lam[:3]), sum(s), 31,
+                   R(sum(t * t for t in s), n), R(sum(s), n - 1), R(s[0] + s[1], sum(s)), (lam[0] + lam[1]) / sum(t * t for t in s),
+                   45, 1161, 99, R(9 * 100, 1170), 0.8])
+    arith(I, iid)
+
+
 print(f"{checks} checks, {len(fails)} failures")
 for f in fails:
     print("FAIL", f)
