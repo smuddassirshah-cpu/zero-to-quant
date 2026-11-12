@@ -157,3 +157,7 @@ Sweeps with nothing to report: frequency phrases against their numbers (rows 10,
 ### Findings
 
 1. l10-bound-that-holds.json | `screens[8].explain.text` | imprecise | minor | "A fat-tailed model sits between" reads as a rule for every fat-tailed model, and the lower half of it is not general. | The count of 3 sd days is measured in the model's own sd, and very heavy tails inflate that sd. A Student $t$ with $\nu$ degrees of freedom expects 3.46, 3.31 and 2.60 days in 250 for $\nu = 3, 4, 6$, but 0.60 for $\nu = 2.05$ and 0.13 for $\nu = 2.01$, both under the normal's 0.7 (`250 * 2 * t.sf(3 * sqrt(nu/(nu-2)), nu)`, printed by the script). The example itself is right: 3.31 rounds to 3. | Replace the second sentence with: `A fat-tailed model can sit between: a Student $t$ with 4 degrees of freedom expects about 3.` The explanation stays at three sentences.
+
+## Follow-up (fix-pass read)
+
+Applied by an Opus fixer (commit `d6349c90`), read by the orchestrator. `l10-bound-that-holds.json` `screens[8].explain.text`: "A fat-tailed model sits between" is now "A fat-tailed model can sit between". Basis, recomputed by the fixer: expected three-sd days in 250, two-sided, each model's own sd: normal 0.675, Student t with 4 degrees of freedom 3.31, with 2.01 degrees of freedom 0.134. No sibling sentence carries the claim. Gates re-run green.
