@@ -715,3 +715,14 @@ Counts are entries of this triage. Each change is for an engine agent; none was 
 
 8. Leave out of the "do not grade correct themselves" count any answer that holds a template: `{...}` in a `fluency-*.json` family (class T8, 256, of which 13 are fixtures under `tools/fixtures/fluency`) and `{{carry...}}` (class T9, 1). With those out the count is 0. Better, draw each family as `fluency-selfgrade.mjs` does here and grade the realised answers: 10,240 draws, none refused, none of 20,198 wrong values graded correct.
 9. Do not walk `tools/fixtures` when `--content` is the app folder, or report fixtures apart from content.
+
+## Fix pass
+
+Probe: `triage-bands-ab-scripts/probe-fix.mjs` (real grader). Each answer recomputed: 7/sqrt8 = 2.4749; 6/13 = 0.46154; 0.625 x 20 / 1.05 = 11.9048; 0.4 x 10 / 1.02 = 3.9216; 6/sqrt560 = 0.25355. Each refused value is now accepted, one step short (2.46, 0.45, 11.89, 3.91, 0.24) is still refused, every `wrong` value keeps its own line. Validator 0 errors, `[tight-band]` gone on all five; `alpha-L2-numbers.py` exits 0; playthrough green at both widths for each file.
+
+- fixed: `alpha/l7-ranks-and-z.json` q4: `tol.abs` 0.002 -> 0.005
+- fixed: `conditional/review-5.json` r-low-prior: `tol.abs` 0.0005 -> 0.005
+- fixed: `cpp-pricing/l6-binomial-cpp.json` q-one-step: `tol.abs` 0.001 -> 0.005
+- fixed: `cpp-pricing/review-2.json` r-one-step-put: `tol.abs` 0.001 -> 0.005
+- fixed: `regression/l5-how-sure.json` q-month-sd: `tol.abs` 0.003 -> 0.005
+- deferred: `stage-3.json` r-t-bar (2.76) and r-best-of-twenty (0.22): no lesson teaches a three-place standard error or a z-table lookup (backtest and momentum-rep lessons use z = 2.24 only as a stated figure), so the band is left at 0.005. Authors may instead restate the working.
