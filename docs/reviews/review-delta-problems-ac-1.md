@@ -77,3 +77,13 @@ Voice, all nine items: British spelling, no exclamation mark, no dash, no dollar
 All three fix passes can stand as merged. c1 is the one worth a pass: the item was re-authored for freshness and its first part landed on a quiz of the lesson it draws on.
 
 Not checked: nothing rendered in a browser and no playthrough (by instruction); the three `wrong` matrices of courier parts 1 and 2 were not typed (known engine fault).
+
+## Fix pass
+
+Scope: c1 and c2 only, in `app/content/courses/eigen/problems-2.json` `p-river-gauges`. b1 left alone as instructed. Edits were targeted string replacements; no id, `course.json` or other item touched.
+
+- c1 fixed. Prose matrix is now $\begin{pmatrix}8&4&4\\4&7&3\\4&3&c\end{pmatrix}$, planned $c = 2.5$. Keys, old to new: part 1 2 to 5 (`multiplier-one` 1 to 3, `multiplier-two` -1 to -9); part 2 0.375 to 2.2 (`one-step` 0.25 to 2, `big-multiplier` 0.5 to 3, `added` 0.125 to 1.8); part 3 $(-0.125, -0.25, 1)$ to $(-0.4, -0.2, 1)$ with the six `accept` forms re-written (`sign` $(0.4, 0.2, 1)$, `swapped` $(-0.2, -0.4, 1)$, `no-b` $(-0.5, -0.2, 1)$); part 4 0.125 to 0.3 (`c-only` 0.5 to 2.5, `sign` 1.625 to 9.1, `boundary` 0.375 to 2.2); part 5 0.75 to 0.88 (`unexplained` 0.25 to 0.12, `not-scaled` 0.875 to 0.7). Questions, `correct`, `generic`, `byKey` and `explain` lines follow the review text exactly.
+- c2 fixed. "Write $z_A$, $z_B$ and $z_C$ for the noise in the three readings." added to the end of the prose.
+- Recomputed, none disputed: `fix_recompute.py` (committed) checks every key and `wrong` value by exact fractions and by NumPy/sympy (Cholesky pivots, `det = 40c - 88`, sympy null space, SVD null vector, eigvalsh positive definiteness at c = 2.0, 2.2, 2.5, regression slopes (0.4, 0.2), residual 0.3, $R^2 = 0.88$, $\mathbf{K}(0.4, 0.2, 1) = (8, 6, 4.7)$, w'Kw = 9.1). All proposed values were right, including the `no-b` slip from $8a + 4 = 0$.
+- Freshness: grep of `app/content/` for the matrix rows, `40c - 88`, the new null vector and `c - 2.2` hits only `eigen/problems-2.json`; the only `8 & 4` / `4 & 7` hits elsewhere are other matrices.
+- Checks: `validate.mjs` 0 errors (manifest restored); `recompute.py` (updated to the new values) 545 checks, 0 failures; `grade.mjs` (updated) 421 checks, 0 failures, 1 FINDING row (b1, unchanged); playthrough `--problems eigen/problems-2`, desktop and `--mobile`: All passed, 5 typed slips routed.
