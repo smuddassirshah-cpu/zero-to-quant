@@ -2322,3 +2322,7 @@ Raised later (session AC, main session, protocol 6):
 - [Should] `fresh-check.mjs` misses reuse inside a course: a problem set that takes a lesson's, quiz's, review's or homework's numbers, its matrix (also a scalar multiple or transpose of it) or a sentence. Seen in `review-problems-ratio-1-3.md`, `review-problems-number-sense-1-3.md`, `review-problems-eigen-4.md` and `review-delta-problems-ac-1.md`. Add a same-course mode that compares a set's number tuples and matrices (up to scale and transpose) and 8-word shingles against every other file of its course, and gate on it.
 - [Could] `[percent-form]` fires on "in %²" (24 widgets); and setting `unit: "%"` requires the key as a fraction, so the rule's own advice cannot be followed without a re-key.
 - [Could] Worktree base: a check script for briefs (`tools/worktree-base.sh`) that resets a worktree not descended from the development branch, so the step is one line.
+
+Raised later (delta AC-3):
+- [Could] `numText` does not read a currency code before the number (`CHF 27.50`) or a currency sign after it (`540 €`), even when it equals the widget's `unit` (`ratio/problems-3` `p-coffee-suppliers` part 1, `p-villa-split` parts 1 and 3). Drop a leading code or word equal to `unit`; let `UNIT_TAIL` take a trailing `€`, `£` or `$` equal to `unit`.
+- [Could] `numText` does not read `°C` typed on a field whose unit is "degrees". `unitCanon` could treat `°C`, "degrees" and "degrees C" as one unit.

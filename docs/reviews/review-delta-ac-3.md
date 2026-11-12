@@ -76,3 +76,20 @@ Scope 4, bands pass.
 - Part C, `r-t-bar` (2.744 to 2.764): honest. It takes 2.75 and 2.76 and refuses 2.74, 2.77 and 2.8. Of 13 workings tried, the band takes only sound ones (exact; se kept as 0.163 or 0.1634; $\sqrt{360}$ as 19 or 18.97; 359 under the root; the same statistic in annual units). It refuses se as 0.16 (2.81), $\sqrt{360}$ as 20, sd over $n$, no root, years, and variance for sd. The explanation's new clause is true.
 - Part C, `r-best-of-twenty` (0.219 to 0.231): honest. It takes 0.22 and 0.23 and refuses 0.21, 0.24 and 0.25. Accepted workings: exact, $p = 0.0127$, tables at $z = 2.23$ or 2.24, $p = 0.013$, $1 - 0.775$, and the Poisson form $1 - e^{-20p}$. Refused: $p = 0.012$ or 0.01, added chances at any $p$, two-sided $p$, one variant, a wrong sd. A miscount of the variants cannot be told apart at 2 places: 21 gave 0.23 before the pass, and 19 gives 0.22 now; 18 and 22 are refused. "0.22 from table values" is true at $z = 2.24$. The printed 0.775 comes from the unrounded $p$; from 0.0127 it is 0.7744.
 - Part D: the four merged duplicates are equal by recompute ($(n+1)/(n+1) = 1$; $\tfrac{1}{1 + 1/x^2} = \tfrac{x^2}{1 + x^2}$; integral without the Jacobian 3 and area 3; four nodes either way), each merged line names both slips, and `(n+1)/(n+1)` and `x^2/(1+x^2)` typed reach the merged id. The six narrowed pairs no longer meet, and each value typed reaches its own id: 1 and 0.999 (and 1023/1024); 0 and 0.14; 5.2253 and 5.2222 (Euler at 0.04 and 0.02 and the exact value recomputed by two routes each); 0.0222 and 0.0217; 0 and 0.5; 8.00 and 7.97. The trees values 7.97 and 4.29 follow from Black-Scholes at $r = 0$.
+
+## Fix pass
+
+Fixed 8, disputed 0, deferred 2 (engine; main session ruled 2.2 stands). Graded answers changed: 1 key re-set and 1 key band narrowed (4.1, 4.3).
+
+- 1.1 fixed: `ratio/problems-3` `p-partners-profit` part 3 `generic` now says "the 15 parts of the whole" (3 + 4 + 8 = 15; 2,850 / 3 = 950, 950 x 15 = 14,250 by the key).
+- 1.2 deferred: engine (`numText` currency code before the number); added to `docs/BACKLOG-INBOX.md` under "Raised later (delta AC-3)".
+- 1.3 deferred: engine (`UNIT_TAIL` currency sign); same inbox entry.
+- 2.1 fixed: `p-linked-lagoons` part 1 `unchanged` now names both $\mathbf{A}$ and $\mathbf{A}\mathbf{M}$ and the left multiplication (row 2 minus row 1: -3 - 2 = -5, by hand and by the script's sympy product).
+- 2.2 ruled by the main session: stands, no change (different topics, a standard two-state chain).
+- 3.1 fixed: `number-sense/problems-2` `p-moor-weather` parts 2 and 3 `unit` set to "°C"; the author's unit expectation in `docs/reports/problems-number-sense-numbers.py` (line 520) updated to match.
+- 3.2 fixed: `p-rye-loaves` part 2 `rounded-up` now "One more loaf needs a full 1/5 kg, but only a sixth of that is left. She bakes 4."
+- 4.1 fixed: `integrals/problems-4` `p-dish-and-spindle` part 4 key 15, tol 0.5, accept "15, or any value from 14.5 to 15.5". 2.0485 / 0.1408 = 14.55 and exact 14.5526; 14.55 and 14.6 pass, 14 and 16 refused. The integrals number script's claim (key within tol of the exact ratio, 0.447 under 0.5) holds. That script has 12 pre-existing BAD claims on problems-1 to 3, none on this item, untouched.
+- 4.2 fixed: `numerics/l12-stiff-equations` screen 0 gains `exact-rounded` (0.0523, abs 0.00002) and its `byKey` line. Bands: exact 0.052233 to 0.052273, rounded 0.05228 to 0.05232, small up to 0.052232: none meet.
+- 4.3 fixed: `stat-learning/review-2` `r-test-r2` key tol 0.0003 (band -0.0225 to -0.0219); `model-base` -0.0217 (abs 0.00015, band -0.02185 to -0.02155) with its line. 1 - 9.2/9.0 = -0.02222 and (9.0 - 9.2)/9.2 = -0.02174 by two routes; -0.0217 now refused and routed.
+
+Gates: validator 0 errors, `manifest.json` restored. `grade-all.mjs --local-cdn --file` on all seven edited files: 0 failures each. Number scripts: ratio 0, eigen 0, number-sense 0 (exit codes). Playthrough with and without `--mobile`, `--local-cdn`, on the seven edited files (`--problems` for the five sets, `--lesson numerics/l12-stiff-equations`, `--set stat-learning/review-2`): All passed, 14 of 14.
