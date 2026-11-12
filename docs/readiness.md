@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 556 | 0 | 556 | 341 | 1312 |
+| Required | 556 | 0 | 556 | 343 | 1310 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 516 | 2244 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 518 | 2242 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -533,9 +533,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 580 | 0 | 580 | 347 | 1325 |
+| Required | 580 | 0 | 580 | 349 | 1323 |
 | Recommended | 234 | 0 | 234 | 123 | 500 |
-| Learn header (required plus recommended) | 814 | 0 | 814 | 470 | 1825 |
+| Learn header (required plus recommended) | 814 | 0 | 814 | 472 | 1823 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -660,9 +660,9 @@ Same learner as Strats, plus the pricing mathematics.
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 657 | 0 | 657 | 388 | 1472 |
+| Required | 657 | 0 | 657 | 390 | 1470 |
 | Recommended | 239 | 0 | 239 | 127 | 443 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 515 | 1915 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 517 | 1913 |
 <!-- /generated -->
 
 **Dependency conflicts**
