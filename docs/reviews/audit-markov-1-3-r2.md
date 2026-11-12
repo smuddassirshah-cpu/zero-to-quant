@@ -53,11 +53,32 @@ These are the classes the brief asked for by name. Each was read line by line; n
 - `docs/reports/fluency-markov-numbers.py`: exit 0 (1,788 checks over 3 families, 0 failures).
 - `docs/reports/markov-2-perf-numbers.py`: exit 0 (0 failures).
 - `docs/reports/markov-L1-3-concepts-r2.py`: exit 1 (1,537 checks, 1 failed on purpose: finding 1).
-- Playthrough of the in-scope files only, with `--local-cdn`: 12 lessons, 6 sets, 3 problem sets and the fluency set. Desktop: all passed, exit 0. `--mobile`: see the overlap section's closing note.
+- Playthrough of the in-scope files only, with `--local-cdn`: 12 lessons, 6 sets, 3 problem sets and the fluency set. Desktop: all passed, exit 0. `--mobile`: all passed, exit 0.
 
 ## Overlap with earlier reads
 
-To be filled after the WIP commit.
+Read after the WIP commit `87bb8ab2`: the round 1 audit `docs/reviews/audit-markov-1-3.md` with its Fix pass, Fix-pass read and Follow-up, its ledger `docs/reports/audit-markov-1-3-ledger.md`, `docs/reviews/review-1.5.md` (section "markov"), `docs/reviews/review-problems-1.5-c.md` (markov sets 1 to 3) and `docs/reviews/review-perf-retrofit-8.md` (markov `hw-absorb-code`).
+
+Earlier conceptual findings in this scope: 21. Round 1 audit, 16 (2 wrong, 12 imprecise, 2 misleading). Fix-pass read, 1 (l4 `screens[10].feedback.byKey.total`). `review-1.5.md`, 2 (l2 "half again the A route"; l12 "a 6.5% fall on day 71"). `review-problems-1.5-c.md`, 2 (`p-rfq-rounds` prose; `p-merger-arb` part 5). All 21 were fixed before this read, so none could be found again. I read each fixed text blind, and each is a `correct` row in my ledger (rows 7, 10, 25, 42, 44, 64, 85, 91, 108, 110, 114, 139, 148, 165, 181, 207, 219 and 236; row 192 holds for round 1's hypothesis and is finding 5 for another).
+
+| | count |
+|---|---|
+| Conceptual findings, this read only | 8 |
+| Conceptual findings, earlier reads only (all already fixed) | 21 |
+| Found by both | 0 |
+
+Each finding of this read against the earlier reads, stated plainly:
+
+1. Finding 1 (`wrong`, l2 `quiz[0].feedback.byKey.squared`): **no earlier read found it.** The round 1 ledger has one row for l2 `q[0]` (key and slip values, `correct`) and does not judge the feedback line. This is the one new `wrong` for the convergence rule.
+2. Finding 2 (imprecise, l2 `quiz[3]` option `entry` and `screens[8]` `cubed`): no earlier read found it. Round 1 rows for `q[3]` and `s[8]` are `correct`.
+3. Finding 3 (imprecise, l12 "prices"): no earlier read found it. It is the class of round 1 finding 3 (problems-3 "fair price"), in another file. Round 1 and the fix-pass read both judged l12's one-touch number sound because the walk is a fair bet; I agree, and the key is unchanged. Neither read the `screens[6]` sentence "prices a walk with drift" or asked that the hypothesis be said.
+4. Finding 4 (imprecise, l5 `screens[4]`): no earlier read found it (round 1 row `correct`).
+5. Finding 5 (imprecise, l11 `screens[3]` formula): related to round 1 finding 10, which fixed the same sentence for the other missing hypothesis (k ≤ m). The fix-pass read saw the m > 0 point and passed it ("The lesson's levels are all above the start"). Screen 9 of the same lesson and problems-3 use a level below the start, so I keep it. Counted as this read only.
+6. Finding 6 (imprecise, l11 `screens[9].feedback.correct`): no earlier read found it.
+7. Finding 7 (imprecise, l10 "thousands of bets"): round 1 saw the phrase and judged it `correct` ("mean 1,904 bets, loosely thousands"). The two reads differ on a matter of wording; the fix costs nothing and states the computed figure.
+8. Finding 8 (imprecise, l12 `screens[3]`): no earlier read found it (round 1 row `correct`).
+
+New `wrong` that no earlier read found: 1 (finding 1, minor). New findings of any severity that no earlier read found: 8, all minor.
 
 ## Inbox
 
