@@ -128,7 +128,7 @@ check("l14 exponential pair factors (independent, not jointly normal)",
 # ---------------------------------------------------------------- l15
 l15 = load("l15-new-variables.json")
 expect(l15, "The bars average about 0.5.", "l15 bars question")
-cov_hits = expect(l15, "strictly increasing or strictly decreasing and $x = g^{-1}(y)$ differentiable", "l15 change of variables prose")
+cov_hits = expect(l15, "For strictly decreasing $g$, like $-\\tfrac12\\ln U$, $F_Y(y) = 1 - F_X(x)$.", "l15 change of variables prose")
 expect(l15, "You divided by the 2 from the exponent where you should multiply.", "l15 inv why")
 expect(l15, "The 2 from the exponent multiplies:", "l15 inv feedback")
 expect(l15, "A strictly increasing or strictly decreasing $g$ with $g' \\ne 0$ keeps a density.", "l15 atom explain", explain=True)
