@@ -138,9 +138,9 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 <!-- generated:totals:trader -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 453 | 0 | 453 | 266 | 949 |
+| Required | 453 | 0 | 453 | 269 | 945 |
 | Recommended | 194 | 0 | 194 | 113 | 476 |
-| Learn header (required plus recommended) | 647 | 0 | 647 | 379 | 1425 |
+| Learn header (required plus recommended) | 647 | 0 | 647 | 382 | 1421 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 556 | 0 | 556 | 343 | 1310 |
+| Required | 556 | 0 | 556 | 347 | 1305 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 518 | 2242 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 522 | 2237 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -400,9 +400,9 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 <!-- generated:totals:developer -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 233 | 0 | 233 | 121 | 559 |
+| Required | 233 | 0 | 233 | 125 | 555 |
 | Recommended | 254 | 0 | 254 | 152 | 684 |
-| Learn header (required plus recommended) | 487 | 0 | 487 | 273 | 1243 |
+| Learn header (required plus recommended) | 487 | 0 | 487 | 277 | 1239 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -533,9 +533,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 580 | 0 | 580 | 349 | 1323 |
+| Required | 580 | 0 | 580 | 353 | 1319 |
 | Recommended | 234 | 0 | 234 | 123 | 500 |
-| Learn header (required plus recommended) | 814 | 0 | 814 | 472 | 1823 |
+| Learn header (required plus recommended) | 814 | 0 | 814 | 476 | 1819 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -660,9 +660,9 @@ Same learner as Strats, plus the pricing mathematics.
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 657 | 0 | 657 | 390 | 1470 |
+| Required | 657 | 0 | 657 | 394 | 1466 |
 | Recommended | 239 | 0 | 239 | 127 | 443 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 517 | 1913 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 521 | 1909 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -787,9 +787,9 @@ Undecided never reads "ready". It reads "foundation done" once the required cour
 <!-- generated:totals:undecided -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 263 | 0 | 263 | 156 | 562 |
+| Required | 263 | 0 | 263 | 160 | 559 |
 | Recommended | 0 | 0 | 0 | 0 | 0 |
-| Learn header (required plus recommended) | 263 | 0 | 263 | 156 | 562 |
+| Learn header (required plus recommended) | 263 | 0 | 263 | 160 | 559 |
 <!-- /generated -->
 
 **Dependency conflicts**
