@@ -2322,3 +2322,8 @@ Raised later (session AC, main session, protocol 6):
 - [Should] `fresh-check.mjs` misses reuse inside a course: a problem set that takes a lesson's, quiz's, review's or homework's numbers, its matrix (also a scalar multiple or transpose of it) or a sentence. Seen in `review-problems-ratio-1-3.md`, `review-problems-number-sense-1-3.md`, `review-problems-eigen-4.md` and `review-delta-problems-ac-1.md`. Add a same-course mode that compares a set's number tuples and matrices (up to scale and transpose) and 8-word shingles against every other file of its course, and gate on it.
 - [Could] `[percent-form]` fires on "in %²" (24 widgets); and setting `unit: "%"` requires the key as a fraction, so the rule's own advice cannot be followed without a re-key.
 - [Could] Worktree base: a check script for briefs (`tools/worktree-base.sh`) that resets a worktree not descended from the development branch, so the step is one line.
+
+Raised later (audit delta batch 2):
+- Numeric widget, per cent asked but no `unit: "%"`: a typed "2.1%" is read as 0.021 and a right answer is marked wrong (now with the `decimal` line). Read a trailing % as the bare number when the label or question asks for per cent. Seen: measure-prob l15 screens[5], mm-games l11 screens[3] and quiz[1], mm-games review-3 items[5].
+- Validator: warn when a numeric `accept` line quotes "± x" and x differs from `tol.abs` (conditional review-5 `r-low-prior`), and when a fluency numeric `placeholder` equals the key of a reachable draw (odes fluency-l2-separable `discount`, 81.87).
+- Validator: warn when a slip's `abs` band is wide against its own value, for example above a quarter of a non-zero slip value (mm-games review-3 `decimal`, 0.0087 ± 0.005, which takes another slip typed with a % sign).
