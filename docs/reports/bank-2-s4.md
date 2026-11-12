@@ -88,3 +88,43 @@ Answers that differ from the brief: **0 keys; 3 slips, 1 question form.**
 - `coding-4.json` waits for B2-E1 to B2-E5.
 - `[bank-family]` (B2-E5) and `numbers_lib.Bank` (B2-E4) are not built; families were checked by hand and the script reads the JSON itself.
 - B2-E3: the phone pass of step 3 is still empty for `--bank`.
+
+## Coding file
+
+`app/content/bank/coding-4.json`, 12 items, written after engine pass AB-2 (ENGINE-BACKLOG 920 to 925), in the house style of `coding-3` (`docs/reports/bank-2-s3.md`, "Coding file"). Checks are in `docs/reports/bank-2-s4-numbers.py` (sections "coding helpers" and "coding-4"), run with the scratchpad venv Python and `g++ -std=c++20`.
+
+| Step | Result |
+| --- | --- |
+| 1. Validator | `0 errors, 4856 warnings`, the baseline without the file; 0 warnings name `coding-4` (no `[bank-code]`, `[bank-family]`, `[O2-long-sentence]`). |
+| 2. Numbers | `venv/bin/python docs/reports/bank-2-s4-numbers.py`: `1189 checks, 0 failed`, exit 0, about 20 s (two slow near-misses run to their 5 s limit). |
+| 3. Playthrough | `--bank coding-4 --local-cdn <pkgs>`: 12 of 12, 6 starters fail first. `--mobile`: 24 of 24 at 1280 and 440 px. `--why`: 12 of 12. All passed. |
+| 4. Freshness | `fresh-check.mjs --bank coding-4`: 0 hits, exit 0; `--min-run 10` and `--min-share 0`: 0 hits, no advisory. By hand: `at-recursion` style nested lists appear in `algo-think` (`homework-2` `h-flatten`, `l5` nested folders), but no task weights by depth; `ci-live-median` is a running median, not windows of three; `ci-hold-limit` is a knapsack. No task repeated. |
+| 5. Voice | `voice-scan.py 35 --summary` on the bank folder: 0 and 0. |
+
+Counts: D2 1, D3 7, D4 4 (4 with `requires`); 6 code, 3 numeric, 3 choice; families as section 3 (`pf-idioms`, `pf-classes`, `at-search`, `ds-arrays`, `ds-pointers`, `ds-trees`, `gd-dp`, `gd-traversal`, `edge-case-list`, `simulation-rules`, `bit-lowest`, `defined-vs-undefined`, one each). Session totals as above.
+
+### Each code task: tests, twin and near-misses
+
+| Item | Twin | Near-misses run, and the first test each fails |
+| --- | --- | --- |
+| pf-idioms-count-above-mean | the mean as a `Fraction` | at or above the mean (3): `[4, 4, 4]`; no guard: `[]` |
+| ds-arrays-local-peaks | window maximum is the middle and occurs once | at least (`[1, 3, 4]`): the brief's list; ends included: same, and `[9, 1, 9]` |
+| ds-pointers-median-of-three | each window sorted | middle element (`[1, 4, 2]`); one window short: `[5, 1, 4, 2, 8]`, `[1, 2, 3]` |
+| simulation-rules-settle-day | list of business days ahead, indexed | add the lag then skip (8): `(4, 2, {7})`; skip weekends then add the holiday count: `(4, 1, {5})`, a holiday on a Saturday |
+| at-search-smallest-n | `math.isqrt` then adjust | float square root: one row short at 999,999,998,765,257,142 (it is right at $10^{18}$ itself); counting up: right on the 7 small tests, past 5 s at $10^{18}$ |
+| gd-dp-dice-total-ways | inclusion-exclusion, and every face tuple for up to 4 dice | plain recursion: right on the 7 small tests, past 5 s on 40 dice to 140 |
+
+Edge cases: empty and one-element lists, ties and plateaus, negatives, a trade on a weekend, a holiday week, lag 0, a 100,000-long list for each list task, $10^{18}$, and 40 dice (a 31-digit count, exact in Python).
+
+### Reading items
+
+Each runs its own lines: `pf-classes-shared-class-list` prints 2 (a class with a list per object gives 1; appending to a copy gives 0); `ds-trees-heap-trace` prints 6, also worked by hand with `sorted`; `bit-lowest-and-count` prints 7 (bit index 2 gives 5, highest bit 32 gives 35); `edge-case-list-median-test` runs `median` on each option against `statistics.median`; `gd-traversal-depth-first-order` runs the search, a breadth-first queue and a stack of pushes (the three orders of the key and two distractors); `defined-vs-undefined-wraparound` is checked by constant evaluation: `0u - 1 == 4294967295u` compiles, and `constexpr int y = INT_MAX + 1;` is rejected.
+
+### Differences from section 5
+
+Answers that differ from the brief: **0 keys; 1 trap value restated; 1 task renamed.**
+
+- `at-search-smallest-n`: the function is `rows_needed(target)`, set as rows of a coin triangle, because `smallest_n` is already a function name in `counting-chance/homework-3` and `analysis/l6-epsilon-and-n` (other tasks). The float trap is right at $10^{18}$ itself, so a hidden test at $T(1{,}414{,}213{,}561) + 1$ catches it; a test with a negative target was added.
+- `simulation-rules-settle-day`: the brief's trap "`trade_day + lag` then skipping forward gives 8 for the first" does not follow: it gives 7 on `(3, 2, set())`, which is right. It gives 8 on `(4, 2, {7})` (key 9), which the explanation now states.
+- `pf-classes-shared-class-list`: the brief's slip 0 has no slip named; it is "appended to a copy".
+- No item swapped; no family changed.
