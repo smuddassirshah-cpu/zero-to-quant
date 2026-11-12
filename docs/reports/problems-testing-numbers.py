@@ -444,40 +444,54 @@ if L3 is not None:
     # ---------- p-gene-screen (re-authored, review-problems-1.6-b finding 9): 60 genes, Bonferroni and BH at 10% ----------
     q = sp.Rational(1, 10)
     bonf = q / 60
-    small = [sp.Rational(x) for x in ('0.0004', '0.0021', '0.0038', '0.0071', '0.0079', '0.0125', '0.0190', '0.034')]
-    rest = [sp.Rational(11, 100) + sp.Rational(i, 1000) for i in range(52)]        # stand-ins for the other 52, all above 0.1
+    small = [sp.Rational(x) for x in ('0.0004', '0.0021', '0.0055', '0.0058', '0.0090', '0.0096', '0.0190', '0.034')]
+    rest = [sp.Rational(21, 100) + sp.Rational(i, 1000) for i in range(52)]        # stand-ins for the other 52, all above 0.2
     pv = small + rest
     fl = [float(x) for x in pv]
-    ok(len(pv) == 60 and all(x > sp.Rational(1, 10) for x in rest), 'p-gene-screen: 60 p-values, the other 52 above 0.1')
+    ok(len(pv) == 60 and all(x > sp.Rational(1, 5) for x in rest) and 'all above 0.2' in L3['p-gene-screen']['prose'], 'p-gene-screen: 60 p-values, the other 52 above 0.2 (stated in the prose, so the count at any q up to 0.2 is determined)')
     bar_root = optimize.brentq(lambda p: min(1.0, p * 60) - 0.10, 1e-6, 0.1)       # route 2: where the Bonferroni-adjusted p reaches 0.10
     num(L3, 'p-gene-screen', 1, bonf, bar_root, {'unadjusted': q, 'times-m': q * 60, 'five-percent': sp.Rational(5, 100) / 60}, round_tol=1e-6)
     ok(round(float(bonf), 6) == 0.001667 and abs(0.10 / 60 * 60 - 0.10) < 1e-12, 'p-gene-screen p1: 0.001667 to 6 places; the 60 bars add to 0.10')
     nb = sum(1 for x in pv if x <= bonf)
     num(L3, 'p-gene-screen', 2, nb, multipletests(fl, 0.10, 'bonferroni')[0].sum(), {'unadjusted': sum(1 for x in pv if x < q), 'bh': bh_count(pv, q)})
     first_fail = next(k for k in range(1, 61) if sorted(pv)[k - 1] > k * q / 60) - 1
+    passes = sum(1 for k in range(1, 61) if sorted(pv)[k - 1] <= k * q / 60)           # ranks that pass their own bar: 1, 2, 4 and 6
+    adj = [min(min(60 * float(sorted(pv)[j - 1]) / j for j in range(k, 61)), 1.0) for k in range(1, 61)]   # route 3: BH-adjusted p-values
     num(L3, 'p-gene-screen', 3, bh_count(pv, q), multipletests(fl, 0.10, 'fdr_bh')[0].sum(),
-        {'first-fail': first_fail, 'bonferroni': nb, 'unadjusted': sum(1 for x in pv if x < q)})
-    ok(first_fail == 3 and sp.Rational('0.0071') > 4 * bonf and sp.Rational('0.0079') <= 5 * bonf and 8 * bonf > sp.Rational('0.0133')
-       and sp.Rational('0.0125') > 6 * bonf and sp.Rational('0.0190') > 7 * bonf and sp.Rational('0.034') > 8 * bonf,
-       'p-gene-screen p3: ranks 1 to 3 pass, 4 fails, 5 passes, 6 to 8 fail')
-    ok([round(float(k * bonf), 5) for k in (4, 5, 8)] == [0.00667, 0.00833, 0.01333], 'p-gene-screen p3: printed bars 0.00667, 0.00833, 0.01333')
-    # part 4: the smallest q at which rank 5 stays in, algebra and then bisection on the BH rule itself
-    q5 = sp.Rational('0.0079') * 60 / 5
+        {'first-fail': first_fail, 'bonferroni': nb, 'unadjusted': sum(1 for x in pv if x < q), 'count-passes': passes})
+    ok(sum(1 for a_ in adj if a_ <= 0.10) == 6 and bh_count(pv, q) == 6, 'p-gene-screen p3: BH rejects 6 by the rule, by statsmodels and by adjusted p-values')
+    ok(first_fail == 2 and passes == 4 and sp.Rational('0.0055') > 3 * bonf and sp.Rational('0.0058') <= 4 * bonf and sp.Rational('0.0090') > 5 * bonf and sp.Rational('0.0096') <= 6 * bonf
+       and sp.Rational('0.0190') > 7 * bonf and sp.Rational('0.034') > 8 * bonf and sp.Rational('0.0021') <= 2 * bonf and sp.Rational('0.0004') <= bonf,
+       'p-gene-screen p3: ranks 1 and 2 pass, 3 fails, 4 passes, 5 fails, 6 passes, 7 and 8 fail')
+    ok([round(float(k * bonf), 5) for k in (3, 4, 5, 6, 8)] == [0.005, 0.00667, 0.00833, 0.01, 0.01333], 'p-gene-screen p3: printed bars 0.005, 0.00667, 0.00833, 0.01, 0.01333')
+    ok(bh_count(pv, q) != 5 and sp.Rational('0.0071') not in pv, 'p-gene-screen p3: no longer the 5 of p-fund-managers p3 (fresh structure: rank 3 fails inside the list, ranks 4 and 6 pass)')
+    # part 4: the smallest q at which rank 6 stays in, algebra and then bisection on the BH rule itself
+    q6 = sp.Rational('0.0096') * 60 / 6
     lo, hi = 0.0, 0.2
     for _ in range(60):
         mid = (lo + hi) / 2
-        if multipletests(fl, mid, 'fdr_bh')[0].sum() >= 5:
+        if multipletests(fl, mid, 'fdr_bh')[0].sum() >= 6:
             hi = mid
         else:
             lo = mid
-    q4 = sp.Rational('0.0071') * 60 / 4
-    num(L3, 'p-gene-screen', 4, q5, hi, {'no-divide': sp.Rational('0.0079') * 60, 'first-fail': q4, 'bar': 5 * q / 60}, agree=1e-6, round_tol=0.0006)
-    ok(q5 == sp.Rational(948, 10000) and q4 == sp.Rational(1065, 10000), 'p-gene-screen p4: 0.0948 for rank 5, 0.1065 for rank 4')
-    ok(multipletests(fl, 0.0949, 'fdr_bh')[0].sum() == 5 and multipletests(fl, 0.0947, 'fdr_bh')[0].sum() == 3,
-       'p-gene-screen p4: at q = 0.0949 BH rejects 5, at 0.0947 only 3 (rank 5 is the step)')
-    ok(multipletests(fl, 0.15, 'fdr_bh')[0].sum() == 6 and bh_count(pv, sp.Rational(15, 100)) == 6, 'p-gene-screen p5: at q = 0.15 BH rejects 6, so the list changes')
+    q5 = sp.Rational('0.0090') * 60 / 5
+    q3 = sp.Rational('0.0055') * 60 / 3
+    num(L3, 'p-gene-screen', 4, q6, hi, {'no-divide': sp.Rational('0.0096') * 60, 'rank-five': q5, 'bar': 6 * q / 60}, agree=1e-6, round_tol=0.0006)
+    ok(q6 == sp.Rational(96, 1000) and q5 == sp.Rational(108, 1000) and q3 == sp.Rational(11, 100), 'p-gene-screen p4: 0.096 for rank 6, 0.108 for rank 5, 0.11 for rank 3')
+    ok(multipletests(fl, 0.0961, 'fdr_bh')[0].sum() == 6 and multipletests(fl, 0.0959, 'fdr_bh')[0].sum() == 4,
+       'p-gene-screen p4: at q = 0.0961 BH rejects 6, at 0.0959 only 4 (rank 6 is the step)')
+    ok(multipletests(fl, 0.15, 'fdr_bh')[0].sum() == 6 and bh_count(pv, sp.Rational(15, 100)) == 6, 'p-gene-screen p5: at q = 0.15 BH still rejects 6, so the option must use a q that changes the list')
+    ok(multipletests(fl, 0.20, 'fdr_bh')[0].sum() == 7 and bh_count(pv, sp.Rational(1, 5)) == 7 and sp.Rational('0.0190') <= 7 * sp.Rational(1, 5) / 60
+       and round(7 * 0.2 / 60, 5) == 0.02333 and sp.Rational('0.034') > 8 * sp.Rational(1, 5) / 60, 'p-gene-screen p5: at q = 0.20 the bar for rank 7 is 0.02333, 0.0190 is under it, BH rejects 7: the list grows')
+    gw = L3['p-gene-screen']['parts'][4]
+    ok(all('q = 0.20' in t and '0.02333' in t and '0.0190' in t for t in (gw['widget']['options'][3]['why'], gw['feedback']['byKey']['q-same'])) and 'q-same' in gw['feedback']['byKey'],
+       'p-gene-screen p5: q-same line and why print q = 0.20, 0.02333 and 0.0190')
+    ok('average share' in gw['widget']['options'][0]['text'] and 'independent tests' in gw['feedback']['correct'] and 'independent' in L3['p-gene-screen']['prose'], 'p-gene-screen p5: the keyed BH option says the average share; the hypothesis (independent tests) is in the prose and the correct line')
+    ok(len(gw['widget']['options'][0]['text']) <= 1.5 * max(len(o['text']) for o in gw['widget']['options'][1:]), 'p-gene-screen p5: the keyed option is not a giveaway by length')
+    ok(sp.Rational('0.0055') * 60 / 3 > q and 6 * q / 60 == sp.Rational(1, 100) and sp.Rational('0.0055') > 3 * q / 60, 'p-gene-screen p5: rank 3 fails its bar at 10% (0.0055 against 0.005), so the rank-three option is false')
+    ok(all(('whole number' in L3['p-gene-screen']['parts'][k]['question']) for k in (1, 2)), 'p-gene-screen p2, p3: state the form, a whole number')
     pick(L3, 'p-gene-screen', 5, 'right')
-    stale(L3, 'p-gene-screen', ['0.8715', '0.1285', '0.00125', '0.0488', '0.9512', '40 genes', '0.0011', '0.0052', '0.0060', '0.0081', '0.031', '0.05}{40'])
+    stale(L3, 'p-gene-screen', ['0.0948', '0.1065', '0.0071', '0.0079', '0.0038', '0.0125', '0.474', '0.8715', '0.1285', '0.00125', '0.0488', '0.9512', '40 genes', '0.0011', '0.0052', '0.0060', '0.0081', '0.031', '0.05}{40'])
 
     # ---------- p-fund-managers: 8 managers, H has SR 0.9 over 9 years, BH at q = 0.10 ----------
     tH = sp.Rational(9, 10) * sp.sqrt(9)
@@ -519,6 +533,11 @@ if L3 is not None:
     waste = 18 * bar18 * 4000
     ok(waste == 200 and abs(18 * 0.002778 * 4000 - 200) < 0.1 and 18 * pg * 4000 == 3600, 'p-checkout-designs p5: expected waste 3600 falls to 200')
     pick(L3, 'p-checkout-designs', 5, 'power')
+    ok('suppose a few pages really are better' in L3['p-checkout-designs']['parts'][4]['question'].replace('Now s', 's'), 'p-checkout-designs p5: the question supposes some pages really are better, so the keyed power cost applies')
+    sd_bar = 1 - (1 - pg) ** sp.Rational(1, 18)
+    sd_carried = float(1 - (1 - sp.Rational(2846, 1000000)) ** 18)                 # the Sidak slip of part 3, carried into part 4 and worked correctly
+    ok(abs(sd_carried - 0.05) <= 5e-05 and abs(float(1 - (1 - sd_bar) ** 18) - 0.05) < 1e-12 and 'Šidák' in L3['p-checkout-designs']['parts'][3]['feedback']['byKey']['bound'],
+       'p-checkout-designs p4: the Sidak bar carried gives 0.0500, which lands on bound, whose line now says so')
     stale(L3, 'p-checkout-designs', ['25 ', '0.004', '0.002050', '0.00205', '0.9047', '0.0953', '0.533', '0.97', '0.996', '0.03', 'holdout'])
     prints(L3, 'p-checkout-designs', 4, ['0.9512', '0.0488'])
     prints(L3, 'p-checkout-designs', 5, ['0.6028', '3,600', '200'])
@@ -539,7 +558,7 @@ if L3 is not None:
        'p-biomarker-field p2: 3.1 is the lowest bar with null tail at most 1/380; 4.712 and 1.938 false finds at 2.5 and 2.8')
     pick(L3, 'p-biomarker-field', 2, 'c31')
     real3 = rng.binomial(20, 0.75, size=200000)
-    num(L3, 'p-biomarker-field', 3, 20 * sp.Rational(75, 100), real3.mean(), {'old-bar': 20 * sp.Rational(90, 100), 'all-real': 20, 'next-bar': 20 * sp.Rational(61, 100)},
+    num(L3, 'p-biomarker-field', 3, 20 * sp.Rational(75, 100), real3.mean(), {'old-bar': 20 * sp.Rational(90, 100), 'all-real': 20, 'next-bar': 20 * sp.Rational(61, 100), 'lower-bar': 20 * sp.Rational(84, 100)},
         agree=0.02, round_tol=0.5)
     f31 = 380 * sp.Rational(19, 10000)
     sh = f31 / (f31 + 15)
