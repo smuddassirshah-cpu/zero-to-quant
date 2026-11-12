@@ -449,6 +449,120 @@ if I:
 
 
 
+# ======================================================== level 2: symmetric matrices
+from sympy.parsing.sympy_parser import convert_xor
+
+
+def poly(items, iid, k, exact, values, slips):
+    """An expression part holding a polynomial: key and accept forms equal `exact`; route 2 is
+    `values`, a list of (point, NumPy value) pairs; each wrong equals its slip and differs."""
+    p = part(items, iid, k)
+    w, tag = p['widget'], f'{iid} p{k}'
+    rr = sp.Symbol('r')
+    P = lambda s: parse_expr(s, local_dict={'r': rr}, transformations=TR + (convert_xor,))
+    ok(w['kind'] == 'expression', f'{tag}: not expression')
+    for x, val in values:
+        ok(abs(float(exact.subs(rr, x)) - val) < 1e-9, f'{tag}: routes differ at r = {x}')
+    for form in [w['answer']] + w.get('accept', []):
+        ok(sp.expand(P(form) - exact) == 0, f'{tag}: form {form} differs from the key')
+    got = {x['id']: P(x['tex']) for x in w.get('wrong', [])}
+    ok(set(got) == set(slips) and set(got) <= set(p['feedback'].get('byKey', {})), f'{tag}: wrong ids or byKey lines')
+    for wid, val in slips.items():
+        ok(sp.expand(got[wid] - val) == 0 and sp.expand(got[wid] - exact) != 0, f'{tag}: wrong {wid}')
+
+
+I = load(2)
+if I:
+    # ---- p-oval-pond
+    iid = 'p-oval-pond'
+    x, y = sp.symbols('x y')
+    A = M([[5, 2], [2, 8]])
+    X2 = M([x, y])
+    ok(sp.expand((X2.T * A * X2)[0] - (5 * x ** 2 + 4 * x * y + 8 * y ** 2)) == 0, 'pond: A gives the stated form')
+    f = lambda a, b: 5 * a * a + 4 * a * b + 8 * b * b
+    hxy = (f(1, 1) - f(1, -1) - f(-1, 1) + f(-1, -1)) / 4.0 / 2.0   # route 2: half the mixed second difference
+    num(I, iid, 1, A[0, 1], hxy, {'whole-cross': 2 * A[0, 1]})
+    numset(I, iid, 2, sp.solve(A.charpoly(sp.Symbol('l')).as_expr(), sp.Symbol('l')), np.linalg.eigvalsh(npf(A)),
+           {'diagonal': [5, 8], 'sign': [-4, -9]})
+    ql = null1(A - 4 * sp.eye(2), 0) * 2
+    qn = eigvec_np(A, 4, 0) * 2
+    obj(I, iid, 3, ql, qn, {'big': null1(A - 9 * sp.eye(2), 0) * 2, 'sign': M([2, -ql[1]])})
+    ok(ql.dot(null1(A - 9 * sp.eye(2))) == 0, 'pond: the axes are perpendicular')
+    u = ql / ql.norm()
+    half = sp.sqrt(R(36, 4))
+    un = np.array([2.0, -1.0]) / np.sqrt(5)
+    tn = np.sqrt(36 / (un @ npf(A) @ un))                           # route 2: walk out along the unit vector
+    num(I, iid, 4, half, tn, {'short': sp.sqrt(R(36, 9)), 'no-root': R(36, 4), 'full-axis': 2 * half})
+    ok(sp.simplify((u.T * A * u)[0] * half ** 2 - 36) == 0, 'pond: (3 u) is on the edge')
+    area = sp.pi * half * sp.sqrt(R(36, 9))
+    num(I, iid, 5, area, np.pi * 36 / np.sqrt(np.linalg.det(npf(A))),
+        {'no-root': sp.pi * 9 * 4, 'full-axes': sp.pi * 6 * 4, 'one-axis': sp.pi * 9})
+    vocab(I, iid, [A, 13, A.det(), 40, 36, 6, 9, area, sp.pi * 36, 2 * half])
+    arith(I, iid)
+
+    # ---- p-river-gauges
+    iid = 'p-river-gauges'
+    r = sp.Symbol('r')
+    e8 = R(8, 10)
+    Cr = M([[1, e8, r], [e8, 1, e8], [r, e8, 1]])
+    num(I, iid, 1, Cr[:2, :2].det(), np.linalg.det(np.array([[1, 0.8], [0.8, 1]])), {'plus': 1 + e8 ** 2, 'no-square': 1 - e8})
+    dC = sp.expand(Cr.det())
+    poly(I, iid, 2, dC, [(t, np.linalg.det(npf(Cr.subs(r, t)))) for t in (0.1, 0.5, 0.9)],
+         {'cross-sign': -r ** 2 - R(128, 100) * r - R(28, 100), 'no-square': R(128, 100) * r - R(28, 100)})
+    ok(sp.expand(Cr.det() - (Cr[:2, :2].det() - e8 * (e8 - e8 * r) + r * (e8 * e8 - r))) == 0, 'gauges: stated expansion')
+    roots = sorted(sp.solve(dC, r))
+    lo, hi = 0.0, 0.6                                               # route 2: bisection on the smallest NumPy eigenvalue
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if np.linalg.eigvalsh(npf(Cr.subs(r, mid)))[0] <= 0 else (lo, mid)
+    num(I, iid, 3, roots[0], hi, {'other-root': roots[1], 'carried': max(sp.solve(-r ** 2 - R(128, 100) * r - R(28, 100), r))})
+    ok(roots == [R(28, 100), 1] and sp.sqrt(R(16384, 10000) - R(112, 100)) == R(72, 100), 'gauges: roots 0.28 and 1, root 0.72')
+    Cb = Cr.subs(r, roots[0])
+    wv = null1(Cb, 0)
+    _, _, vt = np.linalg.svd(npf(Cb))
+    num(I, iid, 4, wv[1], vt[-1][1] / vt[-1][0], {'dropped-sign': -wv[1], 'no-r': -1 / e8})
+    ok(wv[2] == 1 and Cb * wv == sp.zeros(3, 1), 'gauges: w = (1, a, 1) is the null vector')
+    C2 = Cr.subs(r, R(2, 10))
+    var = (wv.T * C2 * wv)[0]
+    sq = sum(t ** 2 for t in wv)
+    cross = sum(wv[i] * wv[j] * C2[i, j] for i in range(3) for j in range(i + 1, 3))
+    num(I, iid, 5, var, npf(wv).ravel() @ npf(C2) @ npf(wv).ravel(),
+        {'dropped-sign': -var, 'bound': (wv.T * Cb * wv)[0], 'no-double': sq + cross})
+    ok(sp.expand((wv.T * Cr * wv)[0] - (2 * r - R(56, 100))) == 0, 'gauges: w^T C w = 2r - 0.56')
+    vocab(I, iid, [e8 ** 2, 1 - e8 ** 2, R(128, 100), R(28, 100), R(64, 100), R(16384, 10000), R(112, 100), R(72, 100),
+                   wv, sq, cross, 2 * R(2, 10), R(56, 100), var, 0.2, 2 * cross, sq - 1, R(128, 100) / e8, 1 + roots[0], wv[1] ** 2])
+    arith(I, iid)
+
+    # ---- p-tank-thermometers
+    iid = 'p-tank-thermometers'
+    S = M([[3, 1, 1], [1, 3, 1], [1, 1, 3]])
+    ev = np.linalg.eigvalsh(npf(S))
+    one = M([1, 1, 1])
+    l1 = (S * one)[0]
+    ok(S * one == l1 * one, 'thermo: (1, 1, 1) is an eigenvector')
+    num(I, iid, 1, l1, ev[-1], {'diagonal': 3, 'all-entries': sum(S * one)})
+    xb = M([1, -1, 0])
+    l2 = (S * xb)[0]
+    ok(S * xb == l2 * xb and xb.dot(one) == 0, 'thermo: (1, -1, 0) is an eigenvector, perpendicular to (1, 1, 1)')
+    num(I, iid, 2, l2, ev[0], {'added': 3 + 1, 'sign': (S * xb)[1]})
+    l3 = S.trace() - l1 - l2
+    num(I, iid, 3, l3, ev[1], {'no-second': S.trace() - l1, 'no-first': S.trace() - l2})
+    w = one / 3
+    v4 = (w.T * S * w)[0]
+    num(I, iid, 4, v4, npf(w).ravel() @ npf(S) @ npf(w).ravel(), {'no-length': l1, 'ninth': l1 / 9})
+    wt = M([R(1, 2), R(3, 10), R(2, 10)])
+    dd = wt - w
+    ok(sum(dd) == 0 and dd == M([R(1, 6), R(-1, 30), R(-2, 15)]) and dd.dot(dd) == R(42, 900), 'thermo: d and |d|^2')
+    v5 = (wt.T * S * wt)[0]
+    ok(v5 == v4 + l2 * dd.dot(dd), 'thermo: the two parts add')
+    num(I, iid, 5, v5, npf(wt).ravel() @ npf(S) @ npf(wt).ravel(),
+        {'no-eigenvalue': v4 + dd.dot(dd), 'd-only': l2 * dd.dot(dd), 'no-cov': 3 * wt.dot(wt)})
+    ok(wt.dot(wt) == R(38, 100) and wt[0] * wt[1] + wt[0] * wt[2] + wt[1] * wt[2] == R(31, 100), 'thermo: 0.38 and 0.31')
+    vocab(I, iid, [S * one, S * xb, S.trace(), l3, v4, w.dot(w), dd, dd.dot(dd), 900, 42, v5, l2 * dd.dot(dd), R(38, 100),
+                   R(31, 100), 3 * R(38, 100), 2 * R(31, 100), wt, R(15, 100), R(1, 10), R(6, 100), 0.1, 6, 30, 15])
+    arith(I, iid)
+
+
 print(f"{checks} checks, {len(fails)} failures")
 for f in fails:
     print("FAIL", f)
