@@ -352,27 +352,37 @@ def bs(S0, K, T, r, sig, kind='call'):
     return K * exp(-r * T) * N.cdf(-d2) - S0 * N.cdf(-d1)
 
 
-# op-parity-price-the-put
-a = 3.10 - 50 + 52 * exp(-0.02)
+def stale_fc(f, i, *old):
+    """Re-authored item: none of the old setting's figures is left anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in old:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
+# op-parity-price-the-put (re-authored after review bank 2 b: share 80, strike 84, three months, 6%, call 4.10)
+a = 4.10 - 80 + 84 * exp(-0.06 * 0.25)
 lo, hi = 0.01, 2.0
 for _ in range(200):                                               # implied vol from the call, then price the put
     mid = (lo + hi) / 2
-    lo, hi = (mid, hi) if bs(50, 52, 0.5, 0.04, mid) < 3.10 else (lo, mid)
-b = bs(50, 52, 0.5, 0.04, lo, 'put')
+    lo, hi = (mid, hi) if bs(80, 84, 0.25, 0.06, mid) < 4.10 else (lo, mid)
+b = bs(80, 84, 0.25, 0.06, lo, 'put')
 key = two(a, b, 1e-6, 'put by parity and by Black-Scholes at the implied vol')
-numeric(FI, 'op-parity-price-the-put', key, 2, {'undiscounted': 3.10 - 50 + 52, 'signs-swapped': 3.10 + 50 - 52 * exp(-0.02)})
-ok(fmt(52 * exp(-0.02), 2) == '50.97', '52e^-0.02 is 50.97')
-ok(abs(3.10 - 50 + 50.97 - 4.07) < 1e-9, '3.10 - 50 + 50.97 = 4.07')
-stated(FI, 'op-parity-price-the-put', '3.10 - 50 + 50.97 = 4.07')
+two(84 * exp(-0.015), 84 / sum(0.015 ** k / math.factorial(k) for k in range(30)), 1e-9, 'discounted strike two ways')
+numeric(FI, 'op-parity-price-the-put', key, 2, {'undiscounted': 4.10 - 80 + 84, 'signs-swapped': 4.10 + 80 - 84 * exp(-0.015)})
+ok(fmt(84 * exp(-0.015), 2) == '82.75', '84e^-0.015 is 82.75')
+ok(abs(4.10 - 80 + 82.75 - 6.85) < 1e-9, '4.10 - 80 + 82.75 = 6.85')
+stated(FI, 'op-parity-price-the-put', '4.10 - 80 + 82.75 = 6.85')
+stale_fc(FI, 'op-parity-price-the-put', '50.97', '£52', '£3.10', '4.07', '0.02}', 'six months')
 
-# op-strategies-bull-spread-breakeven
-net = F(6) - F(2)
-a = 100 + net
-pay = lambda s: max(s - 100, 0) - max(s - 110, 0) - 4
-b = next(k / 100 for k in range(9000, 12000) if pay(k / 100) >= 0)  # scan the expiry payoff
+# op-strategies-bull-spread-breakeven (re-authored: buy the 40 call for 7, sell the 50 call for 3)
+net = F(7) - F(3)
+a = 40 + net
+pay = lambda s: max(s - 40, 0) - max(s - 50, 0) - 4
+b = next(k / 100 for k in range(3000, 6000) if pay(k / 100) >= 0)  # scan the expiry payoff
 two(a, b, 0, 'break-even')
-numeric(FI, 'op-strategies-bull-spread-breakeven', int(a), None, {'one-premium': 100 + 6, 'both-premiums': 100 + 6 + 2})
-stated(FI, 'op-strategies-bull-spread-breakeven', '6 - 2 = 4')
+numeric(FI, 'op-strategies-bull-spread-breakeven', int(a), None, {'one-premium': 40 + 7, 'both-premiums': 40 + 7 + 3})
+stated(FI, 'op-strategies-bull-spread-breakeven', '7 - 3 = 4')
+stale_fc(FI, 'op-strategies-bull-spread-breakeven', '104', '106', '108', '100-strike', '110', '£6', '£2')
 
 # op-greeks-second-order-estimate
 a = F(4) + F(45, 100) * 2 + F(1, 2) * F(5, 100) * 4
@@ -381,7 +391,7 @@ b = quad(0)
 for k in range(2000):
     b += (quad((k + 1) / 1000) - quad(k / 1000))
 key = two(a, b, 1e-9, 'delta-gamma estimate')
-numeric(FI, 'op-greeks-second-order-estimate', float(a), 2, {'delta-only': 4 + 0.9, 'no-half': 4 + 0.9 + 0.05 * 4})
+numeric(FI, 'op-greeks-second-order-estimate', float(a), 2, {'delta-only': 4 + 0.9, 'no-half': 4 + 0.9 + 0.05 * 4, 'change-only': float(a) - 4})
 stated(FI, 'op-greeks-second-order-estimate', '0.45 \\\\times 2 + 0.5 \\\\times 0.05 \\\\times 4 = 1')
 stated(FI, 'op-greeks-second-order-estimate', '\\\\tfrac{1}{2} \\\\times 0.05 \\\\times 2^2 = 0.10')
 
@@ -491,6 +501,9 @@ def stop_fill(trade, stop, limit=None):
 
 ok(stop_fill(93, 95) == 93 and stop_fill(93, 95, 95) == 'resting at limit', 'stop fills near 93; stop-limit rests')
 choice(FI, 'ms-orders-stop-through-a-gap', 'stop-limit rests unfilled')
+_it = item(FI, 'ms-orders-stop-through-a-gap')
+ok(_it['difficulty'] == 3 and _it.get('requires') == ['micro/l4-market-or-limit'], 'stop item: difficulty 3, requires l4-market-or-limit')
+ok('wakes once a trade prints at or below its stop price' in _it['prose'], 'stop item: prose defines the trigger')
 
 # greek-signs-calendar-spread: Black-Scholes closed forms against finite differences, r = 0, S = K = 100, vol 20%
 
@@ -509,21 +522,25 @@ def greeks_fd(T, S0=100.0, sig=0.2, h=1e-3):
     return gam, veg, the
 
 
-net_c = [x - y for x, y in zip(greeks_closed(1.0), greeks_closed(0.25))]
-net_f = [x - y for x, y in zip(greeks_fd(1.0), greeks_fd(0.25))]
+# re-authored after review bank 2 b: buy the one-month call, sell the six-month call
+net_c = [x - y for x, y in zip(greeks_closed(1 / 12), greeks_closed(0.5))]
+net_f = [x - y for x, y in zip(greeks_fd(1 / 12), greeks_fd(0.5))]
 for nm, x, y, t in zip(('gamma', 'vega', 'theta'), net_c, net_f, (1e-4, 1e-3, 1e-3)):
     two(x, y, t, f'calendar net {nm}')
-ok(net_c[0] < 0 < net_c[1] and net_c[2] > 0, 'signs: gamma negative, vega positive, theta positive')
-ok(fmt(net_c[0], 4) == '-0.0200' and fmt(net_c[1], 2) == '19.77' and fmt(net_c[2], 2) == '4.00', f'net figures {net_c}')
-choice(FI, 'greek-signs-calendar-spread', 'Negative gamma, positive vega, positive theta')
-stated(FI, 'greek-signs-calendar-spread', 'gamma is -0.0200, vega +19.77 and theta +4.00 a year')
+ok(net_c[0] > 0 > net_c[1] and net_c[2] < 0, 'signs: gamma positive, vega negative, theta negative')
+ok(fmt(net_c[0], 4) == '0.0409' and fmt(net_c[1], 2) == '-16.63' and fmt(net_c[2], 2) == '-8.19', f'net figures {net_c}')
+choice(FI, 'greek-signs-calendar-spread', 'Positive gamma, negative vega, negative theta')
+stated(FI, 'greek-signs-calendar-spread', 'gamma is +0.0409, vega -16.63 and theta -8.19 a year')
+stale_fc(FI, 'greek-signs-calendar-spread', 'one-year', 'three-month', '19.77', '-0.0200', '+4.00')
+_c = [o for o in item(FI, 'greek-signs-calendar-spread')['widget']['options'] if o.get('correct')][0]
+ok(_c['text'] == 'Positive gamma, negative vega, negative theta', 'calendar key is the reverse of the old one')
 
 # gv-risk-one-day-var
 a = F(3000000) * F(12, 1000) * F(2326, 1000)
 b = 3_000_000 * 0.012 * NormalDist(0, 1).inv_cdf(0.99)              # 2.326 is the rounded 99% point
 two(a, b, 3000000 * 0.012 * 0.0005, 'VaR with the exact 99% point (within the rounding of 2.326)')
 ok(a == 83736, 'VaR 83,736 exactly with 2.326')
-numeric(FI, 'gv-risk-one-day-var', int(a), None, {'used-1-645': 3000000 * 0.012 * 1.645, 'ten-day': float(a) * sqrt(10)})
+numeric(FI, 'gv-risk-one-day-var', int(a), None, {'used-1-645': 3000000 * 0.012 * 1.645, 'ten-day': float(a) * sqrt(10), 'one-sd': 3000000 * 0.012})
 ok(round(float(a) * sqrt(10)) == 264796 and 3000000 * 0.012 == 36000, 'ten-day slip 264,796; sd 36,000')
 stated(FI, 'gv-risk-one-day-var', '2.326 \\\\times 36{,}000 = 83{,}736')
 
@@ -590,27 +607,36 @@ def tests_of(i):
 code('ds-arrays-sign-changes',
      "from itertools import groupby\ndef sign_changes(pnl):\n    runs = [k for k, _ in groupby(x > 0 for x in pnl if x != 0)]\n    return max(len(runs) - 1, 0)\n",
      {'neighbours, zeros kept': "def sign_changes(pnl):\n    return sum(1 for a, b in zip(pnl, pnl[1:]) if a * b < 0)\n",
-      'zero as a third sign': "def sign_changes(pnl):\n    s = [(x > 0) - (x < 0) for x in pnl]\n    return sum(1 for a, b in zip(s, s[1:]) if a != b)\n"})
+      'zero as a third sign': "def sign_changes(pnl):\n    s = [(x > 0) - (x < 0) for x in pnl]\n    return sum(1 for a, b in zip(s, s[1:]) if a != b)\n",
+      'flat day read as a loss (review bank 2 b, finding 11)': "def sign_changes(pnl):\n    return sum(1 for a, b in zip(pnl, pnl[1:]) if (a > 0) != (b > 0))\n"})
 t = tests_of('ds-arrays-sign-changes')
+ok(t['sign_changes([1, 0, 2, 0, -3])'] == '1' and t['sign_changes([0, 5, -1])'] == '1', 'sign_changes: a flat day between two gains, and a leading flat day, give 1 each')
 ok(t['sign_changes([3, -1, 0, -2, 5, 0, 0, -4])'] == '3' and t['sign_changes([-1, 0, 1])'] == '1', 'sign_changes: the brief values 3 and 1')
 ok(eval(t['sign_changes([1, 0, -1] * 30000)']) == 2 * 30000 - 1, 'sign_changes: 60,000 alternating non-zero days give 59,999 flips')
 
-# ds-hashing-price-mode. Route B: sort the distinct prices by (count by list scan, price) and take the last.
+# ds-hashing-price-mode (re-authored after review bank 2 b as modal_prices: every most frequent price, highest first).
+# Route B: count each price by a list scan, keep those at the top count, sort them descending.
 code('ds-hashing-price-mode',
-     "def price_mode(prices):\n    if len(prices) == 0:\n        return None\n    return sorted(set(prices), key=lambda v: (prices.count(v), v))[-1]\n",
-     {'max(set(xs), key=xs.count)': "def price_mode(prices):\n    return max(set(prices), key=prices.count)\n",
-      'guarded, no tie rule': "def price_mode(prices):\n    if not prices:\n        return None\n    return max(set(prices), key=prices.count)\n",
-      'Counter.most_common': "from collections import Counter\ndef price_mode(prices):\n    return Counter(prices).most_common(1)[0][0] if prices else None\n"})
+     "def modal_prices(prices):\n    if len(prices) == 0:\n        return []\n    top = max(prices.count(v) for v in set(prices))\n    return sorted([v for v in set(prices) if prices.count(v) == top], reverse=True)\n",
+     {'only one price': "def modal_prices(prices):\n    if not prices:\n        return []\n    return [max(set(prices), key=prices.count)]\n",
+      'lowest first': "def modal_prices(prices):\n    if not prices:\n        return []\n    top = max(prices.count(v) for v in set(prices))\n    return sorted(v for v in set(prices) if prices.count(v) == top)\n",
+      'repeats only (count of 2 or more)': "def modal_prices(prices):\n    return sorted((v for v in set(prices) if prices.count(v) >= 2), reverse=True)\n",
+      'Counter.most_common(1)': "from collections import Counter\ndef modal_prices(prices):\n    return [Counter(prices).most_common(1)[0][0]] if prices else []\n"})
 t = tests_of('ds-hashing-price-mode')
-ok([t[k] for k in ('price_mode([101, 100, 101, 100, 99])', 'price_mode([5])', 'price_mode([])', 'price_mode([7, 8, 9])')] == ['101', '5', 'None', '9'], 'price_mode: the brief values')
-ok(max(set([101, 100, 99]), key=[101, 100, 101, 100, 99].count) == 100, 'price_mode: the set method returns 100 on the brief tie')
+ok([t[k] for k in ('modal_prices([101, 100, 101, 100, 99])', 'modal_prices([5])', 'modal_prices([])', 'modal_prices([7, 8, 9])')] == ['[101, 100]', '[5]', '[]', '[9, 8, 7]'], 'modal_prices: the stated values')
+ok(sorted({x for x in [101, 100, 101, 100, 99] if [101, 100, 101, 100, 99].count(x) == 2}, reverse=True) == [101, 100], 'modal_prices: 101 and 100 tie at two')
+stale_fc(CO, 'ds-hashing-price-mode', 'price_mode', 'highest of the tied', 'returns the price that occurs most often')
 
 # edge-case-list-to-pence. Route B: decimal.Decimal on the cleaned text.
 code('edge-case-list-to-pence',
      "from decimal import Decimal\ndef to_pence(text):\n    s = text.strip().replace('£', '').replace(',', '')\n    return int(Decimal(s) * 100)\n",
      {'int(float(s) * 100)': "def to_pence(text):\n    s = text.strip().replace('£', '').replace(',', '')\n    return int(float(s) * 100)\n",
       'decimals not padded': "def to_pence(text):\n    s = text.strip()\n    sign = -1 if s.startswith('-') else 1\n    s = s.lstrip('-').replace('£', '').replace(',', '')\n    p, _, d = s.partition('.')\n    return sign * (int(p) * 100 + int(d or 0))\n"})
+# review bank 2 b, finding 21c: a function that returns 1999.0 for "£19.99" must fail the type test
+_cl = cc.run("from decimal import Decimal\ndef to_pence(text):\n    return float(Decimal(text.strip().replace('£', '').replace(',', '')) * 100)\n", item(CO, 'edge-case-list-to-pence')['widget']['tests'])
+ok(sum(1 for p, _ in _cl if not p) == 1 and not _cl[-1][0], 'to_pence: a float-returning twin with the right values fails only the type test')
 t = tests_of('edge-case-list-to-pence')
+ok(t['type(to_pence("£0.29")).__name__'] == "'int'", 'to_pence: the type test expects int')
 brief = {'"£1,234.50"': 123450, '"0.07"': 7, '"12"': 1200, '"£3.5"': 350, '"-£2.05"': -205, '"£0.29"': 29, '" £19.99 "': 1999}
 ok(all(t[f'to_pence({k})'] == str(v) for k, v in brief.items()), 'to_pence: the seven brief values')
 ok([int(float(s) * 100) for s in ('0.29', '-2.05', '19.99')] == [28, -204, 1998], 'to_pence: the float trap gives 28, -204 and 1998')
@@ -645,25 +671,43 @@ ok(F(sum(comb(16, j) for j in range(13, 17)), 2 ** 16) == F(697, 65536) and [com
 ok(F(sum(comb(10, j) for j in range(5, 11)), 1024) == F(319, 512), 'binom_tail(10, 5) = 319/512')
 ok(F(sum(comb(3, j) for j in (2, 3)), 8) == F(1, 2), 'prose: binom_tail(3, 2) = 1/2')
 stated(CO, 'pf-functions-binom-tail', '(560 + 120 + 16 + 1)/65{,}536 = 697/65{,}536')
+ok('`math.comb(n, j)` counts the ways to choose which `j` flips are heads.' in item(CO, 'pf-functions-binom-tail')['prose'], 'binom_tail: prose gives math.comb')
+ok(item(CO, 'pf-functions-binom-tail')['requires'] == ['py-found/l7-arguments', 'conditional/l14-independent-trials'], 'binom_tail: requires the lesson that teaches comb')
 
-# pf-types-round-half-even: run the line; the slips round halves up and down with decimal.
-from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_DOWN, ROUND_HALF_EVEN
+# pf-types-round-half-even (re-authored after review bank 2 b): int, round and // on negative numbers in one line.
+# Route A runs the line; route B uses decimal (half to even) and math.floor / math.trunc.
+from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN, ROUND_DOWN
 it_ = item(CO, 'pf-types-round-half-even')
 key = cc.eval_line(it_['prose'])
-rnd = lambda mode: sum(int(Decimal(s).quantize(Decimal(1), rounding=mode)) for s in ('0.5', '1.5', '2.5'))
-two(key, rnd(ROUND_HALF_EVEN), 0, 'round half even')
-numeric(CO, 'pf-types-round-half-even', key, None, {'half-up': rnd(ROUND_HALF_UP), 'half-down': rnd(ROUND_HALF_DOWN)})
-ok([round(0.5), round(1.5), round(2.5)] == [0, 2, 2], 'round gives 0, 2, 2')
+b_ = int(Decimal('-3.5').quantize(Decimal(1), rounding=ROUND_DOWN)) + int(Decimal('-3.5').quantize(Decimal(1), rounding=ROUND_HALF_EVEN)) + math.floor(-9 / 2)
+two(key, b_, 0, 'int + round + floor division')
+all_zero = math.trunc(-3.5) + math.trunc(-3.5) + math.trunc(-9 / 2)                      # every term cut towards zero
+half_up = math.floor(-3.5 + 0.5) + math.trunc(-3.5) + math.floor(-9 / 2)                                         # round(-3.5) read as -3 (half up, towards +infinity)
+numeric(CO, 'pf-types-round-half-even', key, None, {'all-towards-zero': all_zero, 'half-up': half_up})
+ok((int(-3.5), round(-3.5), -9 // 2) == (-3, -4, -5) and key == -12 and all_zero == -10 and half_up == -11, 'terms -3, -4, -5; sum -12; slips -10 and -11')
+stale_fc(CO, 'pf-types-round-half-even', '0.5', '1.5', '2.5', '6', '"value": 3')
 
-# pf-functions-default-list: run the lines; the slips with a fresh list and with every call seeing three items.
+# pf-functions-default-list (re-authored after review bank 2 b: a default dict, three calls, sizes summed)
+# route A runs the lines; route B replays the calls on one explicit dict. Slips: a fresh dict each call, the count of x returned.
 it_ = item(CO, 'pf-functions-default-list')
 key = cc.run_snippet(it_['prose'])['total']
-def add_fresh(x, acc=None):
-    acc = [] if acc is None else acc
-    acc.append(x)
-    return len(acc)
-two(key, sum(range(1, 4)), 0, 'default list total')
-numeric(CO, 'pf-functions-default-list', key, None, {'fresh-list': add_fresh(1) + add_fresh(2) + add_fresh(3), 'three-each': 3 * 3})
+def mark_fresh(x, seen=None):
+    seen = {} if seen is None else seen
+    seen[x] = seen.get(x, 0) + 1
+    return len(seen)
+shared, replay = {}, []
+for x_ in ('a', 'b', 'a'):
+    shared[x_] = shared.get(x_, 0) + 1
+    replay.append(len(shared))
+two(key, sum(replay), 0, 'default dict total')
+count_of_x = []
+shared2 = {}
+for x_ in ('a', 'b', 'a'):
+    shared2[x_] = shared2.get(x_, 0) + 1
+    count_of_x.append(shared2[x_])
+numeric(CO, 'pf-functions-default-list', key, None, {'fresh-dict': mark_fresh('a') + mark_fresh('b') + mark_fresh('a'), 'count-of-x': sum(count_of_x)})
+ok(replay == [1, 2, 2] and key == 5 and sum(count_of_x) == 4, 'calls return 1, 2, 2; total 5; count of x gives 4')
+stale_fc(CO, 'pf-functions-default-list', 'acc=', 'add(', '[1, 2, 3', '"value": 6', 'three-each', 'fresh-list')
 
 # complexity-read-doubling-inner: count the inner steps; n log2 n at n = 1,024; the ratio to n log n is flat.
 it_ = item(CO, 'complexity-read-doubling-inner')
@@ -704,16 +748,18 @@ ok(xs_[6:1:-2] == [6, 4, 2], 'ends-swapped slip is 6, 4 and 2')
 # integer-division-toward-zero (C++ reading): compile and run the C++ lines; run the Python lines.
 it_ = item(CO, 'integer-division-toward-zero')
 ns_ = cc.run_snippet(it_['prose'])
-ok((ns_['q'], ns_['r']) == (-4, 1), 'Python: -7 // 2 = -4, -7 % 2 = 1')
-ok(math.floor(-7 / 2) == -4 and -7 - 2 * (-4) == 1, 'Python route B: floor and remainder')
+# re-authored after review bank 2 b: 7 divided by -2 (the divisor carries the sign)
+ok((ns_['q'], ns_['r']) == (-4, -1), 'Python: 7 // -2 = -4, 7 % -2 = -1')
+ok(math.floor(7 / -2) == -4 and 7 - (-2) * (-4) == -1, 'Python route B: floor and remainder')
 cpp_body = cc.snippet(it_['prose'], 'cpp')[0]
-out = cc.cpp('#include <cstdio>\nint main() {\n' + cpp_body + 'static_assert(-7 / 2 == -3 && -7 % 2 == -1);\nstd::printf("%d %d\\n", q, r);\n}\n')
+out = cc.cpp('#include <cstdio>\nint main() {\n' + cpp_body + 'static_assert(7 / -2 == -3 && 7 % -2 == 1);\nstd::printf("%d %d\\n", q, r);\n}\n')
 if out is not None:
-    ok(out.split() == ['-3', '-1'], f'C++: -7 / 2 = -3, -7 % 2 = -1 (ran: {out.strip()})')
-ok(math.trunc(-7 / 2) == -3 and -7 - 2 * (-3) == -1, 'C++ route B: truncation and remainder')
-choice(CO, 'integer-division-toward-zero', 'C++: -3 and -1. Python: -4 and 1.')
+    ok(out.split() == ['-3', '1'], f'C++: 7 / -2 = -3, 7 % -2 = 1 (ran: {out.strip()})')
+ok(math.trunc(7 / -2) == -3 and 7 - (-2) * (-3) == 1, 'C++ route B: truncation and remainder')
+choice(CO, 'integer-division-toward-zero', 'C++: -3 and 1. Python: -4 and -1.')
 opts = {o['text']: o for o in it_['widget']['options']}
-ok(set(opts) == {'C++: -3 and -1. Python: -4 and 1.', 'C++: -3 and -1. Python: -3 and -1.', 'C++: -4 and 1. Python: -4 and 1.', 'C++: -4 and 1. Python: -3 and -1.'}, 'C++ reading: the four sign patterns of the brief')
+ok(set(opts) == {'C++: -3 and 1. Python: -4 and -1.', 'C++: -3 and 1. Python: -3 and 1.', 'C++: -4 and -1. Python: -4 and -1.', 'C++: -4 and -1. Python: -3 and 1.'}, 'C++ reading: the four sign patterns')
+stale_fc(CO, 'integer-division-toward-zero', '-7', '-1. Python: -4 and 1')
 
 # coding-1 file shape (section 2): six code, five reasoning (numeric or choice), one C++ reading choice
 kinds = [x['widget']['kind'] for x in DATA[CO]['items']]
@@ -730,7 +776,8 @@ dups = {x for x in allids if allids.count(x) > 1}
 ok(not dups, f'item ids unique across the bank ({sorted(dups)})')
 for f in FILES:
     for it in DATA[f]['items']:
-        ok(('requires' in it) == (it['difficulty'] >= 4), f'{f}/{it["id"]}: requires only at difficulty 4 and 5')
+        # accepted exception to brief rule 16 (review bank 2 b, finding 1): the stop item is difficulty 3 and has requires
+        ok(('requires' in it) == (it['difficulty'] >= 4 or it['id'] == 'ms-orders-stop-through-a-gap'), f'{f}/{it["id"]}: requires only at difficulty 4 and 5')
         ok(it['source'] == 'Original' and len(it['tags']) == 1, f'{f}/{it["id"]}: source and one tag')
         ok(it['difficulty'] in (2, 3, 4, 5), f'{f}/{it["id"]}: difficulty 2 to 5')
 
