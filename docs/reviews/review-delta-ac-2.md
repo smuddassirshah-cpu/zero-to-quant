@@ -89,3 +89,14 @@ Fix pass c, drills ci packs 5 to 8:
 - The four `bank-2-s<n>-numbers.py` author scripts and the four `drills-ci-<n>-check.py` scripts were not rerun (`s3` takes about seven minutes, over the two-minute limit of this read).
 - Validator warnings were not listed by file; only the totals were read (0 errors).
 - Freshness of the four re-authored statistics items and of the two re-authored exam items against the courses was not re-read.
+
+## Fix pass
+
+Four findings applied by targeted edits; none disputed, none deferred. No hidden test removed, swapped or resized.
+
+- 1 (unclear): `bank/coding-1.json` `pf-types-round-half-even` `byKey.half-up` and `.half-away` reworded as the review proposes, each naming both routes (`round(-1.5)` as -1 or `-9 // 2` as -4; `round(-4.5)` as -5 or `int(-1.5)` as -2). Ids, values and bands unchanged.
+- 2 (minor): `bank/coding-2.json` `ds-pointers-merge-ticks` test 11 added (no shared time, lists unchanged), `how` now says 11. Model and my solution pass all; starter fails; `x-sort-into-b` now caught at [11]; all 23 recorded candidates still fail.
+- 3 (minor): `runner_up_gap([7, 0, 7])` expect `7` added as test 10, `how` says 10. Model and `two-max` pass; `x-falsy-second` now caught at [10]; all 45 candidates fail (0 pass now). Expect agrees with the brute route in `proposed_code.py`.
+- 4 (minor): `exams/topic-2.1.json` `e-odds-update` `wrong[3]` (`decimal`) `tol.abs` 0.0005 to 0.00006. `grade.mjs`: 345 checks, 0 failures, 0 FINDING rows (was 6): key and every accept form still pass, every `wrong[]` value is refused and routed, and `0.2`, `0.201`, `0.2008`, `0.12`, `0.1205`, `0.15` go to the generic line. One `[wrong-band]` advisory is expected, as the review says.
+
+Checks: validator 0 errors (manifest restored); playthrough of `coding-1`, `coding-2` (desktop and `--mobile`) and `topic-2.1` (desktop and `--mobile`) all passed.
