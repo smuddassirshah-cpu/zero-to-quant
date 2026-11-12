@@ -73,8 +73,13 @@ def tex2py(s):
             out += '(pi)'
             k += 3
         elif s.startswith('\\ln', k):
-            out += 'log'
             k += 3
+            m = re.match(r'\d+', s[k:])
+            if m:
+                out += f'log({m.group(0)})'
+                k += len(m.group(0))
+            else:
+                out += 'log'
         elif s[k] == '^':
             k += 1
             if s[k] == '{':
@@ -309,9 +314,107 @@ def level1():
     return c
 
 
+def cdiff(F, z0, h=1e-4):
+    """Central difference along the real axis: exact for quadratics up to rounding."""
+    return (F(z0 + h) - F(z0 - h)) / (2 * h)
+
+
+# ================================================================== level 2
+def level2():
+    c = Checker(2)
+    # ---- item 1: the mesh map f(z) = z^2 - 4z near 3 + 2i
+    f = lambda q: q ** 2 - 4 * q
+    z0, n0 = R(5, 2) + 3 * I, 2.5 + 3j
+    c.expr(0, 1, sp.expand(f(z0)), f(n0), {'square-parts': R(25, 4) + 9 * I - 4 * z0, 'i-squared': R(25, 4) + 9 + 15 * I - 4 * z0})
+    zs = sp.Symbol('zs')
+    d0 = sp.diff(f(zs), zs).subs(zs, z0)
+    nd = cdiff(f, n0)
+    c.expr(0, 2, sp.expand(d0), nd, {'no-four': 2 * z0, 'not-doubled': z0 - 4})
+    c.lv.claim(abs(cdiff(f, n0) - (f(n0 + 1e-4j) - f(n0 - 1e-4j)) / 2e-4j) < 1e-8, 'item 1: the quotient agrees along the real and imaginary directions')
+    c.num(0, 3, sp.Abs(d0), abs(nd), {'no-root': 37, 'added': 7, 'carried-no-four': abs(5 + 6j)})
+    c.num(0, 4, sp.atan2(sp.im(d0), sp.re(d0)) * 180 / pi, deg(cmath.phase(nd)),
+          {'inverted': deg(math.atan(1 / 6)), 'radians': cmath.phase(nd), 'carried-no-four': deg(math.atan(6 / 5))})
+    U = lambda X, Y: f(complex(X, Y)).real
+    V = lambda X, Y: f(complex(X, Y)).imag
+    h = 1e-4
+    ux, uy = (U(2.5 + h, 3) - U(2.5 - h, 3)) / (2 * h), (U(2.5, 3 + h) - U(2.5, 3 - h)) / (2 * h)
+    vx, vy = (V(2.5 + h, 3) - V(2.5 - h, 3)) / (2 * h), (V(2.5, 3 + h) - V(2.5, 3 - h)) / (2 * h)
+    c.num(0, 5, sp.Abs(d0) ** 2 * R(1, 10000), (ux * vy - uy * vx) * 1e-4,
+          {'not-squared': sp.sqrt(37) * R(1, 10000), 'side-only': sp.sqrt(37) / 100, 'unchanged': R(1, 10000)})
+    c.vocab(0, [n0, -2.75 + 15j, 10 + 12j, 6.25, 9, 15, 36, 37, 0.0001, 0.01, 180, 1.406, 80.5])
+
+    # ---- item 2: the plate, u = 2xy + 3x
+    u_ = 2 * x * y + 3 * x
+    v_ = sp.integrate(sp.diff(u_, x), y)
+    v_ = v_ + sp.integrate(-sp.diff(u_, y) - sp.diff(v_, x), x)
+    c.lv.claim(sp.simplify(sp.diff(u_, x) - sp.diff(v_, y)) == 0 and sp.simplify(sp.diff(u_, y) + sp.diff(v_, x)) == 0, 'item 2: u + iv meets both Cauchy-Riemann equations')
+    c.lv.claim(sp.diff(u_, x, 2) + sp.diff(u_, y, 2) == 0, 'item 2: u is harmonic')
+
+    def v_line(X, Y, Z, T, Uu):          # route 2: integrate (-u_y, u_x) along the straight path from 0 to (X, Y)
+        fx = lambda s_: -(2 * (s_ * X)) * X + (2 * (s_ * Y) + 3) * Y
+        return integrate.quad(fx, 0, 1, epsabs=1e-13)[0]
+    c.expr(1, 1, v_, v_line, {'signs': -v_, 'no-g': y ** 2 + 3 * y, 'no-y-part': -x ** 2})
+    F = 3 * z - I * z ** 2
+    c.lv.claim(sp.simplify(sp.expand(F.subs(z, x + I * y)) - (u_ + I * v_)) == 0, 'item 2: 3z - iz^2 expands to u + iv')
+    c.expr(1, 2, F, lambda X, Y, Z, T, Uu: complex(float(u_.subs({x: Z, y: 0})), float(v_.subs({x: Z, y: 0}))),
+           {'plus': 3 * z + I * z ** 2, 'no-i': 3 * z - z ** 2, 'only-square': -I * z ** 2})
+    Fn = lambda q: 3 * q - 1j * q ** 2
+    d1 = sp.expand(sp.diff(F, z).subs(z, 1 + I))
+    un = sp.lambdify((x, y), u_)
+    vn = sp.lambdify((x, y), v_)
+    nux, nvx = (un(1 + h, 1) - un(1 - h, 1)) / (2 * h), (vn(1 + h, 1) - vn(1 - h, 1)) / (2 * h)
+    nuy = (un(1, 1 + h) - un(1, 1 - h)) / (2 * h)
+    c.expr(1, 3, d1, complex(nux, nvx), {'i-squared': 1 - 2 * I, 'carried-plus': sp.expand((3 + 2 * I * z).subs(z, 1 + I)),
+                                       'no-chain': sp.expand((3 - I * z).subs(z, 1 + I))})
+    c.lv.claim(abs(cdiff(Fn, 1 + 1j) - complex(sp.N(d1))) < 1e-8, 'item 2: a difference quotient of 3z - iz^2 at 1 + i gives 5 - 2i')
+    c.num(1, 4, -sp.im(d1), nuy, {'sign': -2, 'real-part': 5})
+    c.num(1, 5, sp.Abs(d1), math.hypot(nux, nuy), {'no-root': 29, 'added': 7, 'carried-i-squared': abs(1 - 2j)})
+    c.vocab(1, [25, 4, 29, 5 - 2j, 2 - 2j])
+
+    # ---- item 3: logarithm branches at w = -4 sqrt3 + 4i
+    w = -4 * sqrt(3) + 4 * I
+    wn = complex(sp.N(w))
+    c.num(2, 1, sp.Abs(w), abs(wn), {'added': 4 * sqrt(3) + 4, 'no-root': 64})
+    c.expr(2, 2, sp.arg(w), cmath.phase(wn), {'arctan': sp.atan(sp.im(w) / sp.re(w)), 'reference': pi / 6, 'inverted': pi - sp.atan(-sp.re(w) / sp.im(w))})
+    sol = sp.log(8) + I * (sp.arg(w) - 2 * pi)
+    nsol = cmath.log(wn) - 2j * math.pi
+    c.lv.claim(abs(cmath.exp(nsol) - wn) < 1e-12 and -2 * math.pi < nsol.imag <= 0, 'item 3: e^z = w and the imaginary part is in (-2 pi, 0]')
+    c.expr(2, 3, sol, nsol, {'principal': sp.log(8) + 5 * pi * I / 6, 'no-log': 8 - 7 * pi * I / 6, 'dropped-turn': sp.log(8) - 5 * pi * I / 6})
+    dl = (cmath.log(wn + 1e-5) - cmath.log(wn - 1e-5)) / 2e-5
+    c.num(2, 4, 1 / sp.Abs(w), abs(dl), {'no-inverse': 8, 'log-of-modulus': sp.log(8), 'squared': R(1, 64)})
+    c.num(2, 5, sp.exp(-5 * pi / 6), abs(wn ** 1j), {'sign': sp.exp(5 * pi / 6), 'carried-branch': sp.exp(7 * pi / 6), 'unit': 1})
+    c.vocab(2, [wn, 48, 16, 64, 4 * 3 ** 0.5, 5 * math.pi / 6, 1 / 64, 2 * math.pi])
+
+    # ---- item 4: f = |z|^2 + z
+    uu = x ** 2 + y ** 2 + x
+    vv = y
+    fz = lambda q: abs(q) ** 2 + q
+    c.expr(3, 1, uu, lambda X, Y, Z, T, Uu: fz(complex(X, Y)).real, {'square': x ** 2 - y ** 2 + x, 'no-x': x ** 2 + y ** 2})
+    e1 = sp.diff(uu, x) - sp.diff(vv, y)
+    e2 = sp.diff(uu, y) + sp.diff(vv, x)
+    def cr(X, Y, which):
+        U_ = lambda a, b: fz(complex(a, b)).real
+        V_ = lambda a, b: fz(complex(a, b)).imag
+        if which == 1:
+            return (U_(X + h, Y) - U_(X - h, Y)) / (2 * h) - (V_(X, Y + h) - V_(X, Y - h)) / (2 * h)
+        return (U_(X, Y + h) - U_(X, Y - h)) / (2 * h) + (V_(X + h, Y) - V_(X - h, Y)) / (2 * h)
+    c.expr(3, 2, e1, lambda X, Y, Z, T, Uu: cr(X, Y, 1), {'no-v': 2 * x + 1, 'swapped': 2 * y - 1})
+    c.expr(3, 3, e2, lambda X, Y, Z, T, Uu: cr(X, Y, 2), {'carried-square': -2 * y, 'no-u': 0})
+    hh = R(1, 100) * I
+    q = sp.expand(sp.simplify(((hh * sp.conjugate(hh)) + hh) / hh))
+    c.expr(3, 4, q, (fz(0.01j) - fz(0)) / 0.01j, {'sign': 1 + R(1, 100) * I, 'no-modulus': 1})
+    quot = [(fz(1e-6 * cmath.exp(1j * a)) - fz(0)) / (1e-6 * cmath.exp(1j * a)) for a in np.linspace(0, 2 * math.pi, 9)]
+    c.lv.claim(max(abs(qq - 1) for qq in quot) < 1e-5, 'item 4: the quotient at 0 tends to 1 from every direction')
+    off = [(fz(0.5 + 1e-6 * cmath.exp(1j * a)) - fz(0.5)) / (1e-6 * cmath.exp(1j * a)) for a in (0, math.pi / 2)]
+    c.lv.claim(abs(off[0] - off[1]) > 0.5, 'item 4: at z = 0.5 the quotient depends on direction, so no derivative there')
+    c.pick(3, 5, 'a')
+    c.vocab(3, [0.01j, 0.0001, 0.01])
+    return c
+
+
 if __name__ == '__main__':
     done = []
-    for f in (level1,):
+    for f in (level1, level2):
         ch = f()
         ch.finish()
         done.append(ch)
