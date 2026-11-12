@@ -121,3 +121,71 @@ Fixer: Opus, round 1. Every finding re-derived before editing; each digit writte
 Counts: 20 fixed (11 as the auditor wrote, 9 differently), 0 disputed. Auditor text judged wrong or unsafe: finding 3 ("often" unsourced), 6 ("far bigger than the spread" against several pence), 10 ("cruder"), 18 ("usually" unsourced). No `FINDING` check needed changing: each now passes because its phrase is gone or its value is right.
 
 Gates: validator 0 errors; `micro-L1-3-concepts.py` 1,064 checks, 0 failed, exit 0; `micro-3-perf-numbers.py` 510 of 510, exit 0; voice gate 35 for micro 0 and 0; `grade-all --file l6-impact.json` 0 failures; playthroughs of the 13 edited files, plain and `--mobile`, with `--local-cdn`: 26 of 26 "All passed".
+
+## Fix-pass read
+
+Blind read of `git show f3613609 -- app/content/courses/micro` (13 files). Each changed sentence or value is a row, read with its whole screen or item. Voice scan at 35 reports 0 and 0; the diff adds no em-dash or exclamation mark.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | homework-1 | items[3].feedback.byKey.no-rest | Resting the 500 at £100.14 gives 2p; they rest at £100.15, one tick below £100.16 | correct | Derivation: £100.16 − £100.14 = 2p, the slip value; key £100.16 − £100.15 = 1p |
+| 2 | homework-3 | items[4].feedback.correct | Ties are broken "by this task's rules" | correct | Matches the prose rule (surplus, then lowest price) and the solution's key |
+| 3 | l1 | screens[6].explain s1 | In continuous trading on one exchange the best bid sits below the best ask | correct | Harris, *Trading and Exchanges*, ch. 6 (continuous order-driven matching) |
+| 4 | l1 | screens[9].options[1].why | Exchange fees are charged separately; the gap goes to the poster | correct | Harris ch. 6 and ch. 14 |
+| 5 | l1 | screens[9].explain s3 | The spread pays makers for costs and risks, including informed trading | correct | Harris ch. 14 (order processing, inventory, adverse selection); Glosten and Milgrom 1985 |
+| 6 | l1 | summary.trap | A single quoted price may be bid, mid or last trade | correct | Harris ch. 4; convention |
+| 7 | l1 | quiz[3].prose | "During continuous trading" condition on the crossed feed | correct | Excludes auctions and halts; key unchanged and unique |
+| 8 | l1 | quiz[3].options[2].why | In continuous trading the best bid sits below the best ask | correct | As row 3 |
+| 9 | l1 | quiz[3].feedback.correct | A crossed book on one exchange cannot stand in continuous trading | correct | As row 3; agrees with the explain |
+| 10 | l10 | screens[10].prose | Desk policy and a supposed 2% overnight gap | correct | Hypothetical; 2% of 2,000 × £5.00 is £200, as the explain and `fees` why say |
+| 11 | l10 | screens[10].question | "Why does the desk go flat" | correct | Consistent with prose and key |
+| 12 | l10 | screens[10].options[1].why | The desk chooses to go flat because of the risk | correct | Variance $q^2\sigma^2\tau$; no exchange rule closes share positions daily |
+| 13 | l11 | screens[9].explain s3 | Waiting does not help with informed flow you cannot spot | correct | Glosten and Milgrom 1985, section 1 (anonymous order flow); agrees with the keyed cancel on a sweep |
+| 14 | l12 | screens[6].prose | "This pool" matches at the lit mid | correct | Stated as this pool's rule; £5.01 − £5.00 = 1p, × 20,000 = £200 |
+| 15 | l12 | screens[8].prose | Dark pool: hidden orders, matched here at mid | correct | Scoped to the lesson's pool |
+| 16 | l12 | screens[8].explain s3 | Best execution: all sufficient steps for the best possible result; a router is one way | correct | MiFID II Article 27(1); FCA COBS 11.2A |
+| 17 | l12 | summary.ideas[1] | Dark pools, in this lesson, match at mid | correct | Agrees with rows 14 and 15 |
+| 18 | l4 | screens[6].feedback.correct | Bid inside the gap; the mid is a natural choice | correct | Agrees with the key (only option inside the gap) |
+| 19 | l4 | screens[6].explain s1 and s2 | Any bid above £4.90 jumps the queue; a lower bid saves more but fills less often | correct | Price priority, Harris ch. 6; limit-order trade-off, Harris ch. 4 |
+| 20 | l4 | screens[6].explain s3 | Some venues offer mid-point orders that peg a bid to the mid | correct | Pegged orders, Harris ch. 4; mid-point peg types in the Nasdaq and Cboe order-type guides |
+| 21 | l4 | quiz[3].prose | News pushes the price up about 10p a minute | correct | Hypothetical; gives $c \approx 10$p for a one-minute wait |
+| 22 | l4 | quiz[3].options[0].text | Miss cost far bigger than the half-spread saved | correct | $h + c = 12$p against $h = 2$p; only option that buys now |
+| 23 | l4 | quiz[3].options[1].why | A minute risks about 10p against a saving of 2p | correct | Lesson convention: a fill saves $h = 2$p against the mid |
+| 24 | l4 | quiz[3].explain | £40; £200; break-even $10/14 \approx 0.7$ | correct | $2{,}000 \times 2$p = £40; $2{,}000 \times 10$p = £200; $c/(2h + c) = 10/14 = 0.714$ |
+| 25 | l6 | screens[7].prose | $50/n$ bp is as if each slice's push were proportional to its size, not the square-root rule | correct | Derivation: linear impact $k(Q/n)$ per slice gives $kQ/n$; the square-root rule would give $50/\sqrt{n}$. Minimum of $50/n + 2n$ at $n = 5$, 20 bp |
+| 26 | l6 | quiz[0].widget.answer | 20.0233 | correct | $(10{,}000 + 10{,}010 + 10{,}025)/1{,}500 = 30{,}035/1{,}500 = 20.02333$. Prompt asks three places; band 20.0228 to 20.0238 accepts 20.023 and 20.0233, rejects 20.02. Slips: 20.00 (first level); $36{,}050/1{,}800 = 20.0278$ (all 800), band 20.0273 to 20.0283. No overlap |
+| 27 | l6 | quiz[0].widget.accept | £20.023 with the sum shown | correct | As row 26 |
+| 28 | l6 | quiz[0].feedback.correct | £20.023 | correct | As row 26 |
+| 29 | l6 | quiz[0].explain | £30,035 for 1,500 shares, £20.023 each | correct | As row 26 |
+| 30 | l6 | quiz[2].feedback.correct | £3,050 is 305 bp of £100,000 | correct | $5{,}000 \times 1$p + $15{,}000 \times 20$p = £3,050; $20{,}000 \times$ £5.00 = £100,000; 3.05%. Only the keyed option counts the missed shares |
+| 31 | l7 | screens[3].explain s3 | Microprice £100.133 leans up, further than the mid's move to £100.125 | correct | $(100.14 \times 5{,}000 + 100.10 \times 1{,}000)/6{,}000 = 100.1333$; new mid $(100.10 + 100.15)/2 = 100.125$ |
+| 32 | l7 | screens[8].options[1].why | A mid-centred quote sells at £100.14 before a likely rise | correct | Centres 100.13, 100.12, 100.14, 100.11; only 100.13 is nearest 100.1333 |
+| 33 | l7 | summary.ideas[1] s1 | The microprice leans the way the mid is likely to move | correct | Weight $Q_b$ on the ask: Stoikov 2018, section 2 (weighted mid, imbalance) |
+| 34 | l7 | summary.ideas[1] s2 | In a one-tick book it predicts the next mid better than the mid | correct | At the next move, squared error $h^2(1 - 2I(2p - 1) + I^2)$ against $h^2$; smaller when $2p - 1 > I/2$. Simulation: 0.137 and 0.171 against 0.250. Gould and Bonart 2016 for large-tick shares |
+| 35 | l7 | quiz[3].prose | The test is the mid one second later, in a one-tick share | imprecise | F1 |
+| 36 | l7 | quiz[3].explain s3 | A shift of $I$ half-ticks is about the right size | imprecise | F2 |
+| 37 | l8 | screens[8].prose | A volume cap, often 10%, keeps impact in check | correct | Participation-rate limits, Kissell and Glantz, *Optimal Trading Strategies*; the course's square-root rule gives 63 bp at 10%, so "little impact" was rightly dropped |
+| 38 | l8 | quiz[3].prose | Indices down about 4%, then a further 5% to 6% in minutes, mostly recovered | correct | CFTC and SEC, *Findings Regarding the Market Events of May 6, 2010*, executive summary |
+| 39 | l8 | quiz[3].options[1].text | "worth 5% to 6% less" | correct | Matches row 38; still a wrong reading, as its `why` says |
+| 40 | l9 | screens[3].prose s4 | Earlier lessons wrote $s$ for the whole spread; from here it is half | correct | l1 formula $s = a - b$; l7 $m + I\,s/2$; l10 and l11 use half-spread $s$ |
+| 41 | review-2 | items[5].canvas.params.columns[2] | "Depth at the best bid" for £ amounts | correct | £3m / £15,000 = 200, as the explain says |
+| 42 | review-3 | items[2].options[0].text | Most informed traders cannot be told apart in advance | unverified | F3 |
+| 43 | review-3 | items[2].options[1].why | If she could spot every informed trader, adverse selection would not exist | correct | Glosten and Milgrom 1985: the spread comes from not knowing who is informed |
+| 44 | review-3 | items[2].feedback.correct | She cannot see most of the informed flow, so waiting filters little | unverified | F3 |
+| 45 | review-3 | items[2].explain s1 | Most informed orders look like any other until the price moves | unverified | F3 |
+| 46 | review-3 | items[2].explain s2 | Pulling on a sweep helps; unspotted informed flow still arrives | correct | Agrees with l11 screens[9] |
+| 47 | review-3 | items[2].explain s3 | Only a spread of at least $\alpha\delta$, with $\alpha$ the informed share of that flow, covers it | imprecise | F4 |
+
+Counts: 47 rows. correct 41, imprecise 3, unverified 3, wrong 0, misleading 0.
+
+### Findings
+
+F1. l7-where-is-the-price | quiz[3].prose | imprecise | minor | The condition "one tick wide" is right, but the horizon is not. The microprice shifts by $I$ half-ticks whether or not the mid moves within a second. With a move chance $q$ in the second and an up chance $(1 + I)/2$, squared errors are $q h^2$ for the mid and $q h^2 - I^2 h^2 (2q - 1)$ for the microprice. The microprice wins on that measure only when $q > 1/2$. Simulation of a one-tick queue book (adds 0.8, removals 1.0 per side, horizon 2): the mid moved in 12% of runs and squared error was 0.031 for the mid against 0.041 for the microprice. At the next move the microprice won in both models (0.137 and 0.171 against 0.250). The key stays right by correlation (0.51 to 0.73) and at the next move. Fix, prose: "A researcher measures how well two prices predict the mid just after its next move, across a day of quotes in a share that trades one tick wide." No key changes.
+
+F2. l7-where-is-the-price | quiz[3].explain.text, third sentence | imprecise | minor | "A shift of $I$ half-ticks is about the right size" holds only if the up chance at the next move is $Q_b/(Q_a + Q_b)$. In the simulation the fitted slope of the move on $I$ half-ticks was 1.3 to 1.7. Fix, third sentence: "In a book one tick wide the mid moves half a tick when one side empties, so a shift of up to half a tick is the right scale." Basis: $|I| \le 1$, so the shift $I\,s/2$ is at most half a tick, the size of the move.
+
+F3. review-3 | items[2].widget.options[0].text, feedback.correct, explain.text first sentence | unverified | minor | "Most informed traders", "most of the informed flow" and "Most informed orders" state a share of real informed flow as fact. Glosten and Milgrom assume anonymity; no source here fixes the share that can be spotted. The fixes keep the key and agree with option b's `why`. Option a: "She cannot tell every informed trader apart in advance; those she misses trade whenever she does quote". feedback.correct: "She cannot see all of the informed flow coming, so waiting filters only part of it." explain, first sentence: "Without a clear signal, an informed order looks like any other until the price moves."
+
+F4. review-3 | items[2].explain.text, third sentence | imprecise | minor | Two slips. Level 3 defines $\alpha\delta$ as the half-spread (l9 screens[3] now says $s$ is half the spread; l11 quiz slip `half` grades the difference), so "a spread of at least $\alpha\delta$" is half the needed width. And "that flow" points back to "the informed flow she cannot spot", whose informed share is 1. Fix: "Only a half-spread of at least $\alpha\delta$, with $\alpha$ the informed share of the flow she still quotes to, covers it." Basis: zero profit needs $(1 - \alpha)s = \alpha(\delta - s)$, so $s = \alpha\delta$.
+
+Against the audit and its fix pass, read afterwards: no row contradicts a finding or an applied fix on a graded value. Two rows qualify them. F1 and F2 narrow finding 11: the fix-pass basis calls the lesson's race a fair gambler's ruin with $P = Q_b/(Q_a + Q_b)$, but with market orders only it is a binomial race ($Q_a = 1$, $Q_b = 5$ gives $1 - (1/2)^5 = 0.97$, not $5/6$), and the one-second horizon is untested. F3 and F4 question the auditor's own "Most informed" wording in finding 17 and the fixer's added $\alpha$ clause.
