@@ -390,6 +390,116 @@ if I:
     arith(I, iid)
 
 
+# ======================================================== level 2: projections
+def qr_np(cols):
+    """NumPy QR with the signs fixed so that diag(R) > 0, as Gram-Schmidt gives."""
+    Q, Rm = np.linalg.qr(np.column_stack([npf(c).ravel() for c in cols]))
+    D = np.diag(np.sign(np.diag(Rm)))
+    return Q @ D, D @ Rm
+
+
+I = load(2)
+if I:
+    # ---- p-grey-pixel
+    iid = 'p-grey-pixel'
+    g, b = M([1, 1, 1]), M([200, 140, 80])
+    P = g * g.T / g.dot(g)
+    Id = sp.eye(3)
+    gb = npf(g).ravel()
+    coef = np.linalg.lstsq(gb[:, None], npf(b).ravel(), rcond=None)[0][0]
+    obj(I, iid, 1, P * b, coef * gb, {'no-divide': g * g.T * b})
+    col = (Id - P) * b
+    obj(I, iid, 2, col, npf(b).ravel() - coef * gb, {'reversed': -col, 'carried': b - g * g.T * b})
+    ok(col.dot(g) == 0, 'grey: the colour part is orthogonal to g')
+    F = P + R(1, 2) * (Id - P)
+    Fn = np.outer(gb, gb) / 3 + 0.5 * (np.eye(3) - np.outer(gb, gb) / 3)
+    Fb = F * b
+    obj(I, iid, 3, Fb, Fn @ npf(b).ravel(), {'halved-all': b / 2, 'grey-halved': R(1, 2) * P * b + (Id - P) * b})
+    ok(P * P == P and P * (Id - P) == sp.zeros(3, 3) and F * F == P + R(1, 4) * (Id - P), 'grey: P^2 = P and F^2 = P + (I - P)/4')
+    obj(I, iid, 4, F * Fb, Fn @ (Fn @ npf(b).ravel()), {'projection': Fb, 'halved-twice-all': Fb / 2})
+    vocab(I, iid, [g.dot(b), P * b, col, Fb, F * Fb, g * g.T * b, b - g * g.T * b, b / 2, R(1, 2) * P * b + (Id - P) * b,
+                   Fb / 2, col / 2, col / 4, g.dot(b) / 3])
+    arith(I, iid)
+
+    # ---- p-power-line
+    iid = 'p-power-line'
+    a, b, J = M([4, 3]), M([2, 9]), M([8, 6])
+    an, bn = npf(a).ravel(), npf(b).ravel()
+    xh = a.dot(b) / a.dot(a)
+    xn = np.linalg.lstsq(an[:, None], bn, rcond=None)[0][0]
+    num(I, iid, 1, xh, xn, {'no-divide': a.dot(b), 'by-length': a.dot(b) / norm(a)})
+    p = xh * a
+    e = b - p
+    obj(I, iid, 2, e, bn - xn * an, {'p-not-e': p, 'added': b + p, 'carried': b - (a.dot(b) / norm(a)) * a})
+    ok(e.dot(a) == 0, 'power: e is perpendicular to a')
+    dist = norm(e)
+    num(I, iid, 3, dist, abs(an[0] * bn[1] - an[1] * bn[0]) / np.linalg.norm(an),
+        {'along': norm(p), 'to-origin': norm(b), 'squared': e.dot(e)})
+    ok(J == 2 * a, 'power: the pylon J = (8, 6) is on the line')
+    extra = sp.sqrt(e.dot(e) + (p - J).dot(p - J)) - dist
+    num(I, iid, 4, extra, np.linalg.norm(bn - npf(J).ravel()) - np.linalg.norm(bn - xn * an),
+        {'added': norm(p - J), 'total': norm(b - J), 'squares': (b - J).dot(b - J) - e.dot(e)})
+    vocab(I, iid, [a.dot(b), a.dot(a), 8, 27, xh, p, e, b + p, b - 7 * a, 7, dist, e.dot(e), norm(p), 85, norm(b), e[0] ** 2,
+                   e[1] ** 2, e[0] * a[0], norm(p - J), (b - J).dot(b - J), norm(b - J), extra, J])
+    arith(I, iid)
+
+    # ---- p-solar-drone
+    iid = 'p-solar-drone'
+    a1, a2, b = M([1, 0, 2]), M([0, 1, 1]), M([-2, 1, 9])
+    A = a1.row_join(a2)
+    n = A.T.nullspace()[0]
+    n = n / n[2]
+    nn = np.cross(npf(a1).ravel(), npf(a2).ravel())
+    obj(I, iid, 1, n, nn / nn[2], {'sign': M([-2, 1, 1]), 'one-edge': M([-a1[2] / a1[0], 0, 1])})
+    e = (n.dot(b) / n.dot(n)) * n
+    xn = np.linalg.lstsq(npf(A), npf(b).ravel(), rcond=None)[0]
+    pn = npf(A) @ xn
+    ns = M([-2, 1, 1])
+    obj(I, iid, 2, e, npf(b).ravel() - pn, {'no-divide': n.dot(b) * n, 'carried': (ns.dot(b) / ns.dot(ns)) * ns})
+    p = b - e
+    obj(I, iid, 3, p, pn, {'added': b + e, 'carried': b - n.dot(b) * n})
+    ok(A.T * (b - p) == M([0, 0]), 'solar: the error is perpendicular to both edges')
+    x = A[:2, :].LUsolve(p[:2, :])
+    ok(A * x == p, 'solar: p is in the plane')
+    obj(I, iid, 4, x, xn, {'straight-down': b[:2, :], 'carried': (b + e)[:2, :]})
+    ok(A.T * A == M([[5, 2], [2, 2]]) and A.T * b == M([16, 10]), 'solar: stated normal equations')
+    ok(2 * (b + e)[0] + (b + e)[1] == -13, 'solar: the added point fails the plane test')
+    vocab(I, iid, [n, n.dot(b), n.dot(n), e, p, b + e, b - n.dot(b) * n, (ns.dot(b) / ns.dot(ns)) * ns, ns.dot(b) / ns.dot(ns),
+                   n.dot(b) * n, x, A.T * b, A.T * A, -13, 11])
+    arith(I, iid)
+
+    # ---- p-dye-mix
+    iid = 'p-dye-mix'
+    a1, a2, b = M([2, 3, 6]), M([8, 5, 3]), M([9, 17, 13])
+    A = a1.row_join(a2)
+    Qn, Rn = qr_np([a1, a2])
+    q1 = a1 / norm(a1)
+    r12 = q1.dot(a2)
+    num(I, iid, 1, r12, Rn[0, 1], {'no-unit': a1.dot(a2), 'coefficient': a1.dot(a2) / a1.dot(a1)})
+    v = a2 - r12 * q1
+    q2 = v / norm(v)
+    obj(I, iid, 2, q2, Qn[:, 1], {'not-normalised': v, 'used-a1': a2 - r12 * a1})
+    Q = q1.row_join(q2)
+    Rm = M([[norm(a1), r12], [0, norm(v)]])
+    ok(Q * Rm == A and Rm == M([[7, 7], [0, 7]]), 'dye: A = QR with R = [[7, 7], [0, 7]]')
+    Qtb = Q.T * b
+    obj(I, iid, 3, Qtb, Qn.T @ npf(b).ravel(), {'a-not-q': A.T * b, 'used-a2': M([Qtb[0], a2.dot(b) / 7])})
+    xh = Rm.LUsolve(Qtb)
+    xl, res, _, _ = np.linalg.lstsq(npf(A), npf(b).ravel(), rcond=None)
+    obj(I, iid, 4, xh, xl, {'top-down': M([Qtb[0] / Rm[0, 0], Qtb[1] / Rm[1, 1]]), 'transposed': Rm.T.LUsolve(Qtb)})
+    ok(xh == (A.T * A).LUsolve(A.T * b), 'dye: QR agrees with the normal equations')
+    e = b - A * xh
+    slip = M([Qtb[0] / Rm[0, 0], Qtb[1] / Rm[1, 1]])
+    num(I, iid, 5, norm(e), math.sqrt(res[0]),
+        {'squared': e.dot(e), 'carried': norm(b - A * slip), 'lengths': norm(b) - norm(A * xh)})
+    ok(e.dot(a1) == 0 and e.dot(a2) == 0 and b.dot(b) == Qtb.dot(Qtb) + e.dot(e), 'dye: miss perpendicular, Pythagoras')
+    vocab(I, iid, [a1.dot(a2), r12, norm(a1), v, a2 - r12 * a1, r12 * q1, 16, 15, 18, 36, 9, Qtb, A.T * b, a2.dot(b) / 7,
+                   18, 51, 78, 54, 34, 39, xh, slip, A * xh, e, e.dot(e), b.dot(b), Qtb.dot(Qtb), norm(b - A * slip),
+                   norm(b) - norm(A * xh), e[0] * a1[0], e[1] * a1[1], e[2] * a1[2], e[0] * a2[0], e[1] * a2[1], e[2] * a2[2],
+                   Rm[0, 1] * xh[1], Qtb[0]])
+    arith(I, iid)
+
+
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
