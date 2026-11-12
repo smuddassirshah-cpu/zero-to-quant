@@ -111,9 +111,22 @@ def parse_obj(s):
     if s.startswith('[['):
         rows = re.findall(r'\[([^\[\]]*)\]', s[1:-1])
         return M([[parse_entry(x) for x in r.split(',')] for r in rows])
+    m = re.fullmatch(r'(\\frac\{[^{}]*\}\{[^{}]*\}|[0-9.]+)\s*\(([^()]*)\)', s)      # a number in front: \frac{1}{3}(1, 3), 0.5(7, 1)
+    if m:
+        return parse_entry(m.group(1)) * parse_obj('(' + m.group(2) + ')')
+    m = re.fullmatch(r'\(([^()]*)\)/([0-9.]+)', s)                                       # a number behind: (1, 3)/3
+    if m:
+        return parse_obj('(' + m.group(1) + ')') / parse_entry(m.group(2))
     if s[0] in '([' and s[-1] in ')]':
         return M([[parse_entry(x) for x in s[1:-1].split(',')]])
     return M([[parse_entry(s)]])
+
+
+def stale(items, iid, olds):
+    """Fix pass 1.4 b: a re-authored item must hold none of its old strings, anywhere (prose, parts, keys, wrong, accept)."""
+    blob = json.dumps(items[iid], ensure_ascii=False)
+    for o in olds:
+        ok(json.dumps(o, ensure_ascii=False)[1:-1] not in blob, f'{iid}: stale string {o!r} still present')
 
 
 def same(A, B):
@@ -346,8 +359,8 @@ if I:
 
     # ---- p-courier-rounds
     iid = 'p-courier-rounds'
-    A = M([[0, 3, 1], [2, 1, 2], [0, 6, 5]])
-    b = M([15, 14, 39])
+    A = M([[0, 3, 2], [4, 1, 1], [0, 6, 7]])
+    b = M([18, 15, 45])
     P = M([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
     P13 = M([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
     ok((P13 * A)[0, 0] == 0 and (P * A)[0, 0] != 0, 'courier: only the 1-2 swap gives a pivot')
@@ -356,17 +369,23 @@ if I:
     L, U = eliminate(P * A)
     ok(L * U == P * A, 'courier: PA = LU')
     obj(I, iid, 2, L, np.array([[1, 0, 0], [0, 1, 0], [0, 6 / 3, 1]]), {'signs': L.T.T - 2 * 2 * M([[0, 0, 0], [0, 0, 0], [0, 1, 0]]) * 1, 'transposed': L.T})
-    ok(U == M([[2, 1, 2], [0, 3, 1], [0, 0, 3]]), 'courier: U as stated in part 4')
+    ok(U == M([[4, 1, 1], [0, 3, 2], [0, 0, 3]]), 'courier: U as stated in part 4')
+    ok(list(P * A) == [4, 1, 1, 0, 3, 2, 0, 6, 7] and L[2, 1] == 2, 'courier: PA rows (4, 1, 1), (0, 3, 2), (0, 6, 7) and l32 = 2')
     c = forward(L, P * b)
     Lsg = M([[1, 0, 0], [0, 1, 0], [0, -2, 1]])
     obj(I, iid, 3, c, np.linalg.solve(npf(L), npf(P * b).ravel()), {'unswapped': forward(L, b), 'signs': forward(Lsg, P * b)})
     x = backward(U, c)
     nod = backward(sp.eye(3) + U - sp.diag(*U.diagonal()), c)
+    ok(list(P * b) == [15, 18, 45] and list(c) == [15, 18, 9], 'courier: Pb = (15, 18, 45), c = (15, 18, 9)')
+    ok(list(forward(L, b)) == [18, 15, 15] and list(forward(Lsg, P * b)) == [15, 18, 81] and list(nod) == [6, 0, 9] and list(x) == [2, 4, 3],
+       'courier: slips (18, 15, 15), (15, 18, 81), (6, 0, 9); answer (2, 4, 3)')
+    ok(A * M([2, 4, 3]) == b and np.allclose(npf(A) @ np.array([2., 4, 3]), [18, 15, 45]), 'courier: (2, 4, 3) gives b both ways')
+    stale(I, iid, ['(14, 15, 9)', '(15, 14, 11)', '(14, 15, 69)', '(-10, 6, 9)', '(14, 15, 39)', '(15, 14, 39)', 'Round 1 had 3 large and 1 signed-for drop', '2x = 4', '(14 - 4 - 6)/2'])
     obj(I, iid, 4, x, np.linalg.solve(npf(A), npf(b).ravel()), {'no-divide': nod, 'reversed': M(list(reversed(list(x))))})
     rnd = M([5, 2, 4])
     num(I, iid, 5, rnd.dot(x), float(np.dot([5, 2, 4], np.linalg.solve(npf(A), npf(b).ravel()))), {'reversed': rnd.dot(M(list(reversed(list(x)))))})
     vocab(I, iid, [P * b, c, x, U, L, forward(L, b), forward(Lsg, P * b), nod, rnd.dot(x), 5 * x[0], 2 * x[1], 4 * x[2],
-                   3 * x[1], 2 * x[0], 6 / 3, 2 * 15, c[2], 15 - x[2], 14 - x[1] - 2 * x[2], 2 * x[2]])
+                   3 * x[1], 2 * x[0], 6 / 3, 2 * 18, c[2], 18 - 2 * x[2], 15 - x[1] - x[2], 2 * x[2], 3 * x[2], 4 * x[0], 45])
     arith(I, iid)
 
     # ---- p-roaster-beans
@@ -470,20 +489,26 @@ if I:
     ok(M.hstack(m1, m2) * ab == M4[:, 2], 'gantry: m3 = -2 m1 + 2 m2 exactly')
     ok(list(M.hstack(m1, m2) * (-ab)) == [0, -2, 4], 'gantry: sign slip gives (0, -2, 4)')
     cs = sp.Symbol('c')
-    Ab = M4.row_join(M([3, 1, cs]))
+    Ab = M4.row_join(M([6, 2, cs]))
     e3 = Ab[2, :] - 2 * Ab[0, :] + 2 * (Ab[1, :])
     cval = sp.solve(e3[3], cs)[0]
     # second route: reach (3, 1, c) with m1, m2 and read c
-    x12 = np.linalg.solve(np.array([[1, 1], [0, 1.]]), [3, 1.])
-    num(I, iid, 3, cval, 2 * x12[0], {'half-step': sp.solve((Ab[2, :] - 2 * Ab[0, :])[3], cs)[0], 'sign': kk[0]})
-    base = M([2, 1, 0])
+    x12 = np.linalg.solve(np.array([[1, 1], [0, 1.]]), [6, 2.])
+    hs = sp.solve((Ab[2, :] - 2 * Ab[0, :])[3], cs)[0]
+    num(I, iid, 3, cval, 2 * x12[0], {'half-step': hs, 'sign': kk[0]})
+    ok(cval == 8 and hs == 12 and sp.solve(hs * 0 + cs - 12 + 2 * 2, cs)[0] == 8 and list(x12) == [4, 2], 'gantry: c = 8, half-step 12, x = (4, 2)')
+    base = M([4, 2, 0])
     nvec = M([2, -2, 1])
-    ok(M4 * nvec == sp.zeros(3, 1) and M4 * base == M([3, 1, 4]), 'gantry: (2, -2, 1) in N and (2, 1, 0) reaches the point')
+    ok(M4 * nvec == sp.zeros(3, 1) and M4 * base == M([6, 2, 8]), 'gantry: (2, -2, 1) in N and (4, 2, 0) reaches the point')
     tgt = base + nvec
-    alt = np.linalg.lstsq(npf(M4)[:, :2], np.array([3, 1, 4.]) - npf(M4)[:, 2], rcond=None)[0]
+    alt = np.linalg.lstsq(npf(M4)[:, :2], np.array([6, 2, 8.]) - npf(M4)[:, 2], rcond=None)[0]
     obj(I, iid, 4, tgt, np.array([alt[0], alt[1], 1.]), {'no-motor-3': base, 'sign': base + M([-2, 2, 1])})
     ok(M4 * M([-2, 2, 1]) != sp.zeros(3, 1), 'gantry: (-2, 2, 1) is not in the nullspace')
-    vocab(I, iid, [r3, ab, -ab, M4[:, 2], 2 * 2, cval, tgt, nvec, base, 6, 8, k_ + 4, -2 * 2])
+    ok(list(tgt) == [6, 0, 1] and M4 * tgt == M([6, 2, 8]) and M4 * (base + M([-2, 2, 1])) != M([6, 2, 8]) and list(base + M([-2, 2, 1])) == [2, 4, 1],
+       'gantry: key (6, 0, 1) reaches (6, 2, 8); sign slip (2, 4, 1) misses')
+    ok(M4 * M([4, 2, 0]) == M([6, 2, 8]) and np.allclose(npf(M4) @ np.array([6., 0, 1]), [6, 2, 8]), 'gantry: second route, both builds reach (6, 2, 8)')
+    stale(I, iid, ['(3, 1, c)', '(3, 1, 4)', '(4, -1, 1)', '(2, 1, 0)', '(0, 3, 1)', '$c = 2 \\times 2 = 4$', '$c - 6 = 0$', '$c - 4 = 0$', 'x_1 = 2$, so $c = 4'])
+    vocab(I, iid, [r3, ab, -ab, M4[:, 2], 2 * 2, cval, tgt, nvec, base, 6, 8, 12, k_ + 4, -2 * 2, 2 * 4])
     arith(I, iid)
 
     # ---- p-futures-packages
@@ -499,24 +524,27 @@ if I:
     obj(I, iid, 2, nsv, nb / nb[2], {'sign': M([1, -1, 1])})
     ok(f == s1 - s2 and list(s1 - s2 + f) == [2, -4, 2], 'packages: f = s1 - s2, and the sign slip sums to (2, -4, 2)')
     cs = sp.Symbol('c')
-    Ab = S.row_join(M([4, -1, cs]))
+    Ab = S.row_join(M([5, -2, cs]))
     R2 = Ab[1, :] + Ab[0, :]
     R3 = Ab[2, :] + R2
     cval = sp.solve(R3[3], cs)[0]
-    num(I, iid, 3, cval, -(4 - 1), {'sign': -cval, 'stale-rhs': sp.solve(cs + Ab[1, 3], cs)[0]})
-    ok(R2[3] == 3 and sum([4, -1, cval]) == 0, 'packages: row 2 right side 3, entries sum to 0')
-    tgt = M([4, -1, cval])
-    x0 = M([4, 3, 0])
-    ok(S * x0 == tgt, 'packages: (4, 3, 0) builds the target')
+    num(I, iid, 3, cval, -(5 - 2), {'sign': -cval, 'stale-rhs': sp.solve(cs + Ab[1, 3], cs)[0]})
+    ok(R2[3] == 3 and sum([5, -2, cval]) == 0, 'packages: row 2 right side 3, entries sum to 0')
+    tgt = M([5, -2, cval])
+    x0 = M([5, 3, 0])
+    ok(S * x0 == tgt, 'packages: (5, 3, 0) builds the target')
     sol0 = np.linalg.lstsq(npf(S)[:, :2], npf(tgt).ravel(), rcond=None)[0]
-    obj(I, iid, 4, x0, np.array([sol0[0], sol0[1], 0.]), {'sign': M([4, -3, 0])})
-    ok(list(S * M([4, -3, 0])) == [4, -7, 3], 'packages: sign slip June -7')
+    obj(I, iid, 4, x0, np.array([sol0[0], sol0[1], 0.]), {'sign': M([5, -3, 0])})
+    ok(list(S * M([5, -3, 0])) == [5, -8, 3], 'packages: sign slip June -8')
     x2 = x0 + 2 * nsv
-    ok(S * x2 == tgt and x2[2] == 2, 'packages: (2, 5, 2) builds the target with 2 butterflies')
+    ok(S * x2 == tgt and x2[2] == 2, 'packages: (3, 5, 2) builds the target with 2 butterflies')
     alt = np.linalg.lstsq(npf(S)[:, :2], npf(tgt).ravel() - 2 * npf(f).ravel(), rcond=None)[0]
     obj(I, iid, 5, x2, np.array([alt[0], alt[1], 2.]), {'sign': x0 + 2 * M([1, -1, 1]), 'nullspace-only': 2 * nsv})
-    ok(list(S * (x0 + 2 * M([1, -1, 1]))) == [8, -9, 1], 'packages: sign slip gives (8, -9, 1)')
-    vocab(I, iid, [S, nsv, R2, R3.subs(cs, 0), tgt, x0, x2, 2 * nsv, M([2, -4, 2]), M([8, -9, 1]), -7, 4 - 1 + 3, 6, 3])
+    ok(list(S * (x0 + 2 * M([1, -1, 1]))) == [9, -10, 1], 'packages: sign slip (7, 1, 2) gives (9, -10, 1)')
+    ok(list(x2) == [3, 5, 2] and list(tgt) == [5, -2, -3] and np.allclose(npf(S) @ np.array([3., 5, 2]), [5, -2, -3]), 'packages: key (3, 5, 2) builds (5, -2, -3) both ways')
+    ok(sp.solve(cs + Ab[1, 3], cs)[0] == 2 and 5 - 2 + 3 == 6 and -2 + 5 == 3, 'packages: stale-rhs slip 2, sign slip entries sum 6, row 2 becomes 3')
+    stale(I, iid, ['(4, -1, c)', '(4, -1, -3)', '(4, 3, 0)', '(4, -3, 0)', '(2, 5, 2)', '(6, 1, 2)', '(8, -9, 1)', '-4 - 3 = -7', '4 - 1 + c', '4 - 1 + 3', '$x_1 = 4$', '(4, 3, c + 3)', 'old $-1$'])
+    vocab(I, iid, [S, nsv, R2, R3.subs(cs, 0), tgt, x0, x2, 2 * nsv, M([2, -4, 2]), M([9, -10, 1]), x0 + 2 * M([1, -1, 1]), -8, 5 - 2 + 3, 6, 3, -5 - 3, 5 - 2 + cval, 5, -2 + 5])
     arith(I, iid)
 
     # ---- p-coin-hopper
@@ -566,11 +594,13 @@ if I:
     T = M([[3, k_], [2, 4]])
     dT = cofactor_row1(T)
     ok(sp.expand(dT - (12 - 2 * k_)) == 0, 'cutter: det T = 12 - 2k as stated')
-    T1 = T.subs(k_, 1)
+    T1 = T.subs(k_, 2)
     # second route: the image of a square of side sqrt(5), by the shoelace formula
     sq = np.sqrt(5) * np.array([[0, 0], [1, 0], [1, 1], [0, 1.]])
     img = sq @ npf(T1).T
-    num(I, iid, 1, 5 * cofactor_row1(T1), shoelace(img), {'plus': 5 * (12 + 2), 'diagonal': 5 * 12})
+    num(I, iid, 1, 5 * cofactor_row1(T1), shoelace(img), {'plus': 5 * (12 + 4), 'diagonal': 5 * 12})
+    ok(T1.det() == 8 and 5 * T1.det() == 40 and 5 * (12 + 4) == 80 and abs(np.linalg.det(npf(T1)) - 8) < 1e-9, 'cutter: at k = 2 det 8, area 40, plus slip 80, diagonal slip 60')
+    stale(I, iid, ['With $k = 1$', '3 \\times 4 - 1 \\times 2', '= 10$', '5 \\times 10', '= 50 cm', 'bc = 1 \\times 2'])
     kk = sp.solve(dT, k_)
     scan = [kv for kv in np.arange(-10, 10.5, 0.5) if abs(np.linalg.det(npf(T.subs(k_, kv)))) < 1e-9]
     num(I, iid, 2, kk[0], scan[0], {'sign': -kk[0], 'factor': sp.solve(12 - k_, k_)[0]})
@@ -588,7 +618,7 @@ if I:
     nsp = T6.nullspace()[0]
     obj(I, iid, 4, nsp * 2 / nsp[0], np.array([2, -2 * npf(T6)[0, 0] / npf(T6)[0, 1]]), {'sign': M([2, 1]), 'perpendicular': M([2, -3])})
     ok(T6 * M([2, 1]) == M([12, 8]) and T6 * M([2, -3]) == M([-12, -8]) and M([2, -3]).dot(M([3, 2])) == 0, 'cutter: byKey images')
-    vocab(I, iid, [dT.subs(k_, 1), 12, 50, 70, 60, 24, T6, cval, M([6, 4]), M([12, 8]), M([-12, -8]), 6 - 6, R(2, 3)])
+    vocab(I, iid, [dT.subs(k_, 2), 12, 40, 80, 60, 24, T6, cval, M([6, 4]), M([12, 8]), M([-12, -8]), 6 - 6, R(2, 3)])
     arith(I, iid)
 
     # ---- p-deformed-part

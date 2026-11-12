@@ -108,9 +108,22 @@ def parse_obj(s):
     if s.startswith('[['):
         rows = re.findall(r'\[([^\[\]]*)\]', s[1:-1])
         return M([[parse_entry(x) for x in r.split(',')] for r in rows])
+    m = re.fullmatch(r'(\\frac\{[^{}]*\}\{[^{}]*\}|[0-9.]+)\s*\(([^()]*)\)', s)      # a number in front: \frac{1}{7}(6, 2, -3), 2(-2, -1, 1)
+    if m:
+        return parse_entry(m.group(1)) * parse_obj('(' + m.group(2) + ')')
+    m = re.fullmatch(r'\(([^()]*)\)/([0-9.]+)', s)                                       # a number behind: (6, 2, -3)/7
+    if m:
+        return parse_obj('(' + m.group(1) + ')') / parse_entry(m.group(2))
     if s[0] in '([' and s[-1] in ')]':
         return M([[parse_entry(x) for x in s[1:-1].split(',')]])
     return M([[parse_entry(s)]])
+
+
+def stale(items, iid, olds):
+    """Fix pass 1.4 b: a re-authored item must hold none of its old strings, anywhere (prose, parts, keys, wrong, accept)."""
+    blob = json.dumps(items[iid], ensure_ascii=False)
+    for o in olds:
+        ok(json.dumps(o, ensure_ascii=False)[1:-1] not in blob, f'{iid}: stale string {o!r} still present')
 
 
 def same(A, B):
@@ -289,7 +302,8 @@ if I:
     obj(I, iid, 1, y, yn, {'sign': M([1, (-1 - cs) / 2, cs]), 'b-sign': M([1, (1 + 1) / 2, 1])})
     c = sp.Symbol('c')
     cval = sp.solve(y.dot(M([4, 6, c])), c)[0]
-    num(I, iid, 2, cval, -(yn[0] * 4 + yn[1] * 6) / yn[2], {'sign': 4 - 6, 'added': 4 + 6})
+    num(I, iid, 2, cval, -(yn[0] * 4 + yn[1] * 6) / yn[2], {'sign': 4 - 6, 'added': 4 + 6, 'added-solved': sp.solve(4 + 6 + c, c)[0]})
+    ok(sp.solve(4 + 6 + c, c)[0] == -10 and sp.solve(4 - 6 + c, c)[0] == 2, 'hall: the added slip solved gives -10; the key is 2')
     b = M([4, 6, cval])
     x = M([b.dot(a1) / a1.dot(a1), b.dot(a2) / a2.dot(a2)])
     xn = np.linalg.lstsq(npf(A), npf(b).ravel(), rcond=None)[0]
@@ -304,6 +318,9 @@ if I:
     ok(y.dot(b2) != 0, 'hall: (4, 6, 5) is out of reach of two directions')
     obj(I, iid, 4, x3, x3n, {'kept-plan': M([x[0], x[1], x3[2]]), 'no-divide-y': M([x3[0], x3[1], y.dot(b2)]),
                              'no-divide': B.T * b2, 'sign': M([x3[0], -x3[1], x3[2]])})
+    xf = M([R(1, 2) * 7, R(1, 2) * -1, R(1, 2) * 2])
+    ok(xf == x3 and all(same(parse_obj(f), row(x3)) for f in ['\\frac{1}{2}(7, -1, 2)', '0.5(7, -1, 2)']), 'hall: the number-in-front forms equal (3.5, -0.5, 1)')
+    stale(I, iid, ['height $c$', '(4, 6, c)', '4 - 6 + c', '$c = 2$', 'With $c = 2$'])
     vocab(I, iid, [y, cval, b, x, A.T * b, a1.dot(a1), a2.dot(a2), x3, B.T * b2, y.dot(b2), b2 - b,
                    M([1, 2, 1]).dot(M([1, 1, 1])), 4 - 6 - 2, 21 / R(6), y.dot(y), B.LUsolve(b2 - b), x3[1]])
     arith(I, iid)
@@ -316,8 +333,10 @@ if I:
     c4 = c4 / c4[0]
     c4n = nullvec_np(C3.T)
     c4n = c4n / c4n[0]
-    ok(c2.dot(c1) == 0 and c2.dot(c2) != 0, 'codes: c2 passes against c1 only')
-    obj(I, iid, 1, c4, c4n, {'c1-only': c2, 'flipped': -c4})
+    ok(c2.dot(c1) == 0 and c2.dot(c3) == 0 and c2.dot(c2) == 4, 'codes: c2 is orthogonal to c1 and to c3, and has dot product 4 with itself')
+    ok(abs(npf(c2).ravel() @ npf(c1).ravel()) + abs(npf(c2).ravel() @ npf(c3).ravel()) < 1e-12 and npf(c2).ravel() @ npf(c2).ravel() == 4, 'codes: the same by NumPy')
+    obj(I, iid, 1, c4, c4n, {'c2-itself': c2, 'flipped': -c4})
+    stale(I, iid, ['c1-only', 'passes the test against $\\mathbf{c}_1$ only'])
     C = C3.row_join(c4)
     xs = M([3, 1, -1, 2])
     r = C * xs
@@ -341,13 +360,15 @@ if I:
     e1, e2, e3 = gs_exact([a1, a2, a3])
     en, Qn, Rn = gs_np([a1, a2, a3])
     t = a2.dot(a1) / a1.dot(a1)
-    obj(I, iid, 1, e2, en[1], {'length-not-squared': a2 - (a2.dot(a1) / norm(a1)) * a1, 'added': a2 + t * a1})
+    obj(I, iid, 1, e2, en[1], {'length-not-squared': a2 - (a2.dot(a1) / norm(a1)) * a1, 'added': a2 + t * a1, 'normalised': e2 / norm(e2)})
     area = norm(a1) * norm(e2)
     num(I, iid, 2, area, np.linalg.norm(np.cross(npf(a1).ravel(), npf(a2).ravel())),
         {'slanted': norm(a1) * norm(a2), 'triangle': area / 2})
     q1, q2 = a1 / norm(a1), e2 / norm(e2)
     orig = a3 - (a3.dot(a1) / a1.dot(a1)) * a1 - (a3.dot(a2) / a2.dot(a2)) * a2
-    obj(I, iid, 3, e3, en[2], {'originals': orig, 'unit-skipped': a3 - a3.dot(q1) * q1 - a3.dot(e2) * e2})
+    obj(I, iid, 3, e3, en[2], {'originals': orig, 'unit-skipped': a3 - a3.dot(q1) * q1 - a3.dot(e2) * e2, 'normalised': e3 / norm(e3)})
+    ok(norm(e2) == 3 and norm(e3) == 3 and list(e2 / 3) == [R(2, 3), R(-2, 3), R(-1, 3)] and list(e3 / 3) == [R(1, 3), R(2, 3), R(-2, 3)], 'cell: unit vectors (2/3, -2/3, -1/3) and (1/3, 2/3, -2/3)')
+    stale(I, iid, ['determinant of the three edges'])
     ok(orig == M([R(-3, 5), 0, R(-24, 5)]), 'cell: the originals slip is (-0.6, 0, -4.8)')
     vol = area * norm(e3)
     detn = abs(np.linalg.det(np.column_stack([npf(a1).ravel(), npf(a2).ravel(), npf(a3).ravel()])))
@@ -371,7 +392,8 @@ if I:
     _, e2 = gs_exact([s1, s2])
     en, _, _ = gs_np([s1, s2])
     obj(I, iid, 2, e2, en[1], {'no-divide': s2 - s2.dot(s1) * s1, 'added': s2 + (s2.dot(s1) / s1.dot(s1)) * s1,
-                               'carried': gs_exact([s1, roll_slip])[1]})
+                               'carried': gs_exact([s1, roll_slip])[1], 'normalised': e2 / norm(e2)})
+    ok(norm(e2) == 2 and list(e2 / 2) == [R(-1, 2), R(1, 2), R(-1, 2), R(1, 2)], 'rotor: unit vector (-1/2, 1/2, -1/2, 1/2)')
     r1, r2 = A[0, :].T, A[1, :].T
     basis = M.hstack(r1, r2, s1, e2)
     ok(all(basis[:, i].dot(basis[:, j]) == 0 for i in range(4) for j in range(i + 1, 4)), 'rotor: four orthogonal vectors')
@@ -464,6 +486,8 @@ if I:
     obj(I, iid, 4, x, xn, {'straight-down': b[:2, :], 'carried': (b + e)[:2, :]})
     ok(A.T * A == M([[5, 2], [2, 2]]) and A.T * b == M([16, 10]), 'solar: stated normal equations')
     ok(2 * (b + e)[0] + (b + e)[1] == -13, 'solar: the added point fails the plane test')
+    ok(all(same(parse_obj(f), row(e)) for f in ['2(-2, -1, 1)']) and list(e) == [-4, -2, 2], 'solar: 2(-2, -1, 1) equals e = (-4, -2, 2)')
+    stale(I, iid, ['inspection drone', 'the drone', ' drone '])
     vocab(I, iid, [n, n.dot(b), n.dot(n), e, p, b + e, b - n.dot(b) * n, (ns.dot(b) / ns.dot(ns)) * ns, ns.dot(b) / ns.dot(ns),
                    n.dot(b) * n, x, A.T * b, A.T * A, -13, 11])
     arith(I, iid)
@@ -482,6 +506,7 @@ if I:
     Q = q1.row_join(q2)
     Rm = M([[norm(a1), r12], [0, norm(v)]])
     ok(Q * Rm == A and Rm == M([[7, 7], [0, 7]]), 'dye: A = QR with R = [[7, 7], [0, 7]]')
+    ok(all(same(parse_obj(f), row(q2)) for f in ['\\frac{1}{7}(6, 2, -3)', '(6, 2, -3)/7']) and q2 == M([R(6, 7), R(2, 7), R(-3, 7)]), 'dye: the number-in-front forms equal q2')
     Qtb = Q.T * b
     obj(I, iid, 3, Qtb, Qn.T @ npf(b).ravel(), {'a-not-q': A.T * b, 'used-a2': M([Qtb[0], a2.dot(b) / 7])})
     xh = Rm.LUsolve(Qtb)
@@ -552,6 +577,7 @@ if I:
     e = (b.dot(y) / y.dot(y)) * y
     xl = np.linalg.lstsq(npf(A), npf(b).ravel(), rcond=None)[0]
     obj(I, iid, 2, e, npf(b).ravel() - npf(A) @ xl, {'no-divide': b.dot(y) * y, 'gave-p': b - e})
+    ok(all(same(parse_obj(f), row(e)) for f in ['0.1(5, -8, 3)', '\\frac{1}{10}(5, -8, 3)']) and e == R(1, 10) * y, 'ramp: the number-in-front forms equal e = 0.1y')
     p = b - e
     xh = A[:2, :].LUsolve(p[:2, :])
     ok(A * xh == p, 'ramp: p is in C(A)')
@@ -566,14 +592,16 @@ if I:
 
     # ---- p-gas-hubs
     iid = 'p-gas-hubs'
-    t = M([-1, 0, 1, 2, 3])
+    t = M([0, 1, 2, 3, 4])
     yN = M([R(7, 2), 0, R(-1, 2), -3, -5])
     yS = M([2, 1, -2, -2, -4])
     A = M.hstack(sp.ones(5, 1), t)
     An = npf(A)
     G = A.T * A
-    num(I, iid, 1, G[1, 1], (An.T @ An)[1, 1], {'sum': sum(t), 'sum-squared': sum(t) ** 2})
-    ok(G == M([[5, 5], [5, 15]]) and A.T * yN == M([-5, -25]) and A.T * yS == M([-5, -20]), 'hubs: printed arrays')
+    num(I, iid, 1, G[1, 1], (An.T @ An)[1, 1], {'count': G[0, 0], 'sum': sum(t), 'sum-squared': sum(t) ** 2})
+    ok(G == M([[5, 10], [10, 30]]) and A.T * yN == M([-5, -30]) and A.T * yS == M([-5, -25]), 'hubs: stated arrays [[5, 10], [10, 30]], [-5, -30], [-5, -25]')
+    ok(np.array_equal(An.T @ An, [[5, 10], [10, 30]]) and np.allclose(An.T @ npf(yN).ravel(), [-5, -30]) and np.allclose(An.T @ npf(yS).ravel(), [-5, -25]), 'hubs: the same arrays by NumPy')
+    ok(G[0, 0] == 5 and sum(t) == 10 and sum(t) ** 2 == 100 and sum(v ** 2 for v in t) == 30, 'hubs: count 5, sum 10, sum squared 100, sum of squares 30')
     xN = G.LUsolve(A.T * yN)
     xS = G.LUsolve(A.T * yS)
     lN = np.linalg.lstsq(An, npf(yN).ravel(), rcond=None)[0]
@@ -581,6 +609,9 @@ if I:
     diag = lambda v: M([v[0] / G[0, 0], v[1] / G[1, 1]])
     obj(I, iid, 2, xN, lN, {'diagonal': diag(A.T * yN), 'swapped': M([xN[1], xN[0]]), 'no-sign': M([xN[0], -xN[1]])})
     obj(I, iid, 3, xS, lS, {'diagonal': diag(A.T * yS), 'no-sign': M([xS[0], -xS[1]])})
+    ok(list(xN) == [3, -2] and list(xS) == [2, R(-3, 2)], 'hubs: fits (3, -2) and (2, -1.5)')
+    ok(list(diag(A.T * yN)) == [-1, -1] and list(diag(A.T * yS)) == [-1, R(-5, 6)], 'hubs: diagonal slips (-1, -1) and (-1, -5/6)')
+    ok(np.allclose(np.polyfit([0, 1, 2, 3, 4], [3.5, 0, -0.5, -3, -5], 1), [-2, 3]) and np.allclose(np.polyfit([0, 1, 2, 3, 4], [2, 1, -2, -2, -4], 1), [-1.5, 2]), 'hubs: polyfit agrees')
     sprd = yN - yS
     lD = np.linalg.lstsq(An, npf(sprd).ravel(), rcond=None)[0]   # route 2: fit the spread directly
     obj(I, iid, 4, xN - xS, lD, {'added': xN + xS, 'reversed': xS - xN})
@@ -593,9 +624,13 @@ if I:
     num(I, iid, 5, r2_exact(list(sprd), list(fit)), np.corrcoef(npf(t).ravel(), npf(sprd).ravel())[0, 1] ** 2,
         {'ratio': sseD / sstD, 'added-sse': 1 - (eN.dot(eN) + eS.dot(eS)) / sstD, 'hub-n': r2_exact(list(yN), list(A * xN))})
     sstN = sum((v - sum(yN) / 5) ** 2 for v in yN)
+    ok(list(xN - xS) == [1, R(-1, 2)] and list(xN + xS) == [5, R(-7, 2)] and list(xS - xN) == [-1, R(1, 2)] and list(fit) == [1, R(1, 2), 0, R(-1, 2), -1] and sseD == 5 and sstD == R(15, 2),
+       'hubs: spread fit (1, -0.5), slips (5, -3.5) and (-1, 0.5), fitted spread, SSE 5, SST 7.5')
+    stale(I, iid, ['[[5, 5], [5, 15]]', '[-5, -20]', 'prints', '(1, -2)', '(1,-2)', '(0.5, -1.5)', '(0.5,-1.5)', '(0.5, -0.5)', '(0.5,-0.5)', '1 + 0 + 1 + 4 + 9', 'off-diagonal 5s',
+                   't = (-1, 0, 1, 2, 3)', '(-1, -5/3)', '(-1, -4/3)', '(1.5, -3.5)', '(0.5, 1.5)', '= 15$', '0.5 - 0.5t'])
     vocab(I, iid, [t, yN, yS, G, A.T * yN, A.T * yS, xN, xS, diag(A.T * yN), diag(A.T * yS), xN - xS, xN + xS, sprd, fit, eD,
                    sseD, sstD, r2_exact(list(sprd), list(fit)), sseD / sstD, eN.dot(eN), eS.dot(eS), eN.dot(eN) + eS.dot(eS),
-                   1 - (eN.dot(eN) + eS.dot(eS)) / sstD, sstN, r2_exact(list(yN), list(A * xN)), 10, -20, -15, 25, 15, [v ** 2 for v in t]])
+                   1 - (eN.dot(eN) + eS.dot(eS)) / sstD, sstN, r2_exact(list(yN), list(A * xN)), 10, -20, -15, 25, 30, 100, -30, -1 - 2 * xN[1], [v ** 2 for v in t]])
     arith(I, iid)
 
 
