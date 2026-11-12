@@ -90,7 +90,7 @@
      <dir>/yowasp-clang-21.1.4-3/package/...               for /npm/@yowasp/clang@21.1.4-3/... (the C++ compiler)
    (npm pack pyodide@0.27.7 mathlive@0.105.0 @cortex-js/compute-engine@0.30.2 @yowasp/clang@21.1.4-3, then untar each
    into <name>-<version>/.)
-   The directory can also come from the ZQ_LOCAL_CDN environment variable. Google Fonts are stubbed with empty CSS.
+   The directory can also come from the ZQ_LOCAL_CDN environment variable. Google Fonts are stubbed with empty CSS unless <dir>/fonts/fonts.css exists (tools/fetch-local-cdn.sh), then the real ones are served.
    Without the flag those requests go to the network, and their failures are not counted as errors.
 
    Exit status: 0 when everything passed, 1 on any failure (a readable list is printed), 2 on a setup problem. */
@@ -371,10 +371,20 @@ const main = async () => {
     if (opt.localCdn) {
       await ctx.route(/^https:\/\/cdn\.jsdelivr\.net\//, async (route) => {
         const f = cdnFile(new URL(route.request().url()));
+        if (process.env.ZQ_CDN_DELAY_MS) await new Promise(r => setTimeout(r, +process.env.ZQ_CDN_DELAY_MS || 0));   // reproduces a slow real CDN: every local-CDN file waits this long
         if (f && fs.existsSync(f) && fs.statSync(f).isFile()) return route.fulfill({ status: 200, body: fs.readFileSync(f), headers: { 'content-type': MIME[path.extname(f)] || 'application/octet-stream', 'access-control-allow-origin': '*' } });
         return route.fulfill({ status: 404, body: '' });
       });
-      await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, body: '', headers: { 'content-type': 'text/css' } }));
+      /* Google Fonts: the real stylesheet and files when <local-cdn>/fonts/fonts.css exists (tools/fetch-local-cdn.sh fetches them), so widths match CI; else empty CSS */
+      const fontsDir = path.join(opt.localCdn, 'fonts'), realFonts = fs.existsSync(path.join(fontsDir, 'fonts.css'));
+      await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => {
+        if (realFonts) {
+          const u = new URL(r.request().url());
+          const f = u.hostname === 'fonts.googleapis.com' ? path.join(fontsDir, 'fonts.css') : path.join(fontsDir, 'gstatic', path.normalize(u.pathname).replace(/^([/\\]|\.\.)+/, ''));
+          if (f.startsWith(fontsDir) && fs.existsSync(f) && fs.statSync(f).isFile()) return r.fulfill({ status: 200, body: fs.readFileSync(f), headers: { 'content-type': f.endsWith('.css') ? 'text/css' : 'font/woff2', 'access-control-allow-origin': '*' } });
+        }
+        return r.fulfill({ status: 200, body: '', headers: { 'content-type': 'text/css' } });
+      });
     }
     page = await ctx.newPage();
     page.on('console', (m) => {
@@ -760,11 +770,14 @@ const main = async () => {
     };
     /* A review with timed: { lockAtZero: true } is sat once with the clock moved to zero after one answer: it must end by
        itself, with the unanswered items missed and the review recorded (no real timer is waited for) */
+    /* where the page stood when a wait timed out, so a failure line explains itself */
+    const stood = async () => { try { return await page.evaluate(() => JSON.stringify({ hash: location.hash, test: window.ZQ && ZQ.test ? ZQ.test.current() : null, zqset: !!window.ZQSet, body: (document.querySelector('main') || document.body).innerText.replace(/\s+/g, ' ').slice(0, 160) })); } catch { return 'page not readable'; } };
     const timedChecks = async (st, timed) => {
       where = '#' + st.route;
       const fails = [];
       const t0 = Date.now();
       try {
+        await unlockRoute(st.route);   // the timed checks run before playSet, which would unlock: a shard that holds this review without its lessons met it locked
         await go('review');
         await page.evaluate(() => { delete window.ZQ.test; });
         await go(st.route);
@@ -785,7 +798,7 @@ const main = async () => {
         }
         console.log(`${fails.length ? 'FAIL' : 'ok  '} ${st.id} (timed ${timed.seconds} s, clock at zero), ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
-        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        fails.push('threw: ' + String(e.message || e).split('\n')[0] + ' ' + await stood());
         console.log(`FAIL ${st.id} (timed)  threw`);
       }
       fails.forEach(f => failures.push(`#${st.route}: ${f}`));
@@ -836,7 +849,7 @@ const main = async () => {
         if (!/Time ran out/.test(sum.late)) fails.push(`the summary does not say that time ran out: "${sum.late}"`);
         console.log(`${fails.length ? 'FAIL' : 'ok  '} ${st.id} (timed parts)  clock at zero in part 2: credit ${credit}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
-        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        fails.push('threw: ' + String(e.message || e).split('\n')[0] + ' ' + await stood());
         console.log(`FAIL ${st.id} (timed parts)  threw`);
       }
       fails.forEach(f => failures.push(`#${st.route}: ${f}`));
@@ -1014,7 +1027,8 @@ const main = async () => {
             if (c.kind === 'done') break;
             if (c.kind !== 'item') { fails.push(`unexpected state ${c.kind} in the set`); break; }
             if (c.state === 'idle' || c.state === 'engaged') {
-              prompts.push(await page.evaluate(() => (document.querySelector('.lsn-set-body') || {}).innerText || ''));
+              /* the question line only: the body also holds the answer widget, whose text changes while the maths editor loads ("Loading the maths editor", then the editor, or the text fallback after 6 s on a slow CDN) */
+              prompts.push(await page.evaluate(() => { const b = document.querySelector('.lsn-set-body'); const q = b && b.querySelector('.lsn-q'); return ((q || b || {}).innerText || '').trim(); }));
               const miss = wrong && c.screenIndex < wrong;
               if (c.screenIndex === 0) await shot(`${label}-item-1`);
               const applied = await page.evaluate((m) => (m ? ZQ.test.answerWrong() : ZQ.test.answerCorrect()), !!miss);
@@ -1063,7 +1077,7 @@ const main = async () => {
         await page.evaluate(() => { delete window.ZQ.test; });
         await go('review');
         const again = await play(`fluency/${course}/${id}/101`, 0);
-        if (a && again && JSON.stringify(a.prompts) !== JSON.stringify(again.prompts)) fails.push('the same seed drew different questions');
+        if (a && again && JSON.stringify(a.prompts) !== JSON.stringify(again.prompts)) { const k = a.prompts.findIndex((x, j) => x !== again.prompts[j]); fails.push(`the same seed drew different questions (first difference at question ${k + 1} of ${a.prompts.length} and ${again.prompts.length}: ${JSON.stringify(a.prompts[k])} then ${JSON.stringify(again.prompts[k])}; first attempt ${JSON.stringify(a.prompts)}; second ${JSON.stringify(again.prompts)})`); }
         const p3 = await play(`fluency/${course}/${id}`, 0);   // a fresh seed, every answer right
         if (p3 && again && JSON.stringify(p3.prompts) === JSON.stringify(again.prompts)) fails.push('Go again drew the same questions as the last attempt (a new seed was expected)');
         if (p3) {
@@ -1939,16 +1953,18 @@ const main = async () => {
     const briefClipped = () => page.evaluate(() => {
       const root = document.querySelector('.drl, .drlc');
       if (!root) return '';
+      const say = (e, r, lim) => `${(e.textContent || e.tagName).trim().slice(0, 60)}" (${e.tagName.toLowerCase()} in ${(() => { const c = []; for (let n = e.parentElement; n && c.length < 4 && n !== root; n = n.parentElement) c.push(n.tagName.toLowerCase() + (n.className && typeof n.className === 'string' ? '.' + n.className.trim().split(/\s+/).slice(0, 2).join('.') : '')); return c.join(' < '); })()}; right ${Math.round(r.right)} past ${Math.round(lim)}`;
       for (const e of root.querySelectorAll('.drl-brief-in *, .drlc-in *')) {
         const r = e.getBoundingClientRect();
-        if (!r.width || e.closest('.drl-hl, .drl-sh-code, .drl-ed-main, .drl-gut, .drlc-code, .drl-sh, .katex-mathml')) continue;
+        /* .katex svg: a radical's path is 400000 units wide and clipped by its own overflow-hidden box by design (its rect is the unclipped geometry); the rest of the formula is still checked */
+        if (!r.width || e.closest('.drl-hl, .drl-sh-code, .drl-ed-main, .drl-gut, .drlc-code, .drl-sh, .katex-mathml, .katex svg')) continue;
         for (let n = e.parentElement; n && n !== document.body; n = n.parentElement) {
           const ox = getComputedStyle(n).overflowX;
           if (ox === 'visible') continue;
-          if ((ox === 'hidden' || ox === 'clip') && r.right > n.getBoundingClientRect().right + 1) return (e.textContent || e.tagName).trim().slice(0, 60);
+          if ((ox === 'hidden' || ox === 'clip') && r.right > n.getBoundingClientRect().right + 1) return say(e, r, n.getBoundingClientRect().right);
           break;
         }
-        if (r.right > window.innerWidth + 1) return (e.textContent || e.tagName).trim().slice(0, 60);
+        if (r.right > window.innerWidth + 1) return say(e, r, window.innerWidth);
       }
       return '';
     });
@@ -1976,7 +1992,7 @@ const main = async () => {
         const bad = await drillReady(cpp);
         if (bad) { mine.push(bad); throw new Error(bad); }
         if (ANY_EXTRA && await wide()) mine.push(`the page is wider than the ${curVp.w} px window`);
-        if (ANY_EXTRA) { const c = await briefClipped(); if (c) mine.push(`the brief runs past the right edge at ${curVp.w} px: "${c}"`); }
+        if (ANY_EXTRA) { const c = await briefClipped(); if (c) mine.push(`the brief runs past the right edge at ${curVp.w} px: "${c})`); }
         const pill0 = await page.evaluate(() => { const t = document.querySelector('.drl-sw-t'); return t ? t.textContent : null; });
         if (!pill0 || !/^\d+:\d\d$/.test(pill0)) mine.push(`the stopwatch pill is missing or unreadable (${pill0})`);
         await shot('drill-' + id);

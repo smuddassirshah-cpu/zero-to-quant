@@ -54,5 +54,26 @@ for spec in "${NPM_PKGS[@]}"; do
   rm -rf "$tmp"; trap - EXIT
 done
 
+# Google Fonts (optional, best effort): the stylesheet index.html asks for, with its woff2 files, so a local run sees the same text widths as the
+# real site. Without it playthrough.mjs stubs the fonts with empty CSS. Layout: <dir>/fonts/fonts.css and <dir>/fonts/gstatic/<path on fonts.gstatic.com>.
+FONTS="$DIR/fonts"
+if [ -f "$FONTS/.complete" ]; then
+  echo "skip google fonts (present)"
+else
+  echo "fetch google fonts"
+  UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+  URL="$(grep -o 'https://fonts.googleapis.com/css2[^"]*' "$(dirname "$0")/../index.html" | head -1 || true)"
+  if [ -n "$URL" ] && mkdir -p "$FONTS/gstatic" && curl -fsSL --retry 3 -m 60 -A "$UA" -o "$FONTS/fonts.css" "$URL"; then
+    ok=1
+    for u in $(grep -o 'https://fonts.gstatic.com/[^)]*' "$FONTS/fonts.css" | sort -u); do
+      f="$FONTS/gstatic/${u#https://fonts.gstatic.com/}"
+      [ -s "$f" ] || { mkdir -p "$(dirname "$f")"; curl -fsSL --retry 3 -m 60 -o "$f" "$u" || ok=0; }
+    done
+    if [ "$ok" = 1 ]; then touch "$FONTS/.complete"; else echo "google fonts: some files failed; rerun to retry"; fi
+  else
+    echo "google fonts not reachable: skipped"; rm -f "$FONTS/fonts.css"
+  fi
+fi
+
 echo "done: $DIR"
 du -sh "$DIR"

@@ -78,7 +78,8 @@ else {
     const v = spawnSync('node', [path.join(copy, 'tools/validate.mjs')], { cwd: copy, encoding: 'utf8' });
     return v.stdout + v.stderr;
   };
-  const play = (id, mobile) => { const r = spawnSync('node', [path.join(copy, 'tools/playthrough.mjs'), '--drill', id, ...(mobile ? ['--mobile'] : []), ...cdn], { env: { ...process.env, ZQ_APP_DIR: copy }, encoding: 'utf8', timeout: 400000 }); return { out: (r.stdout || '') + (r.stderr || ''), code: r.status }; };
+  // CI: the copy is in the OS temp dir, where the workspace node_modules does not resolve; play with the in-place tool, pointed at the copy
+  const play = (id, mobile) => { const r = spawnSync('node', [path.join(HERE, 'playthrough.mjs'), '--drill', id, ...(mobile ? ['--mobile'] : []), ...cdn], { env: { ...process.env, ZQ_APP_DIR: copy }, encoding: 'utf8', timeout: 400000 }); return { out: (r.stdout || '') + (r.stderr || ''), code: r.status }; };
   const good = JSON.parse(fs.readFileSync(path.join(HERE, 'fixtures/drill-page/drill-aa-page.json'), 'utf8'));
   const vout = place(good);
   check('the fixture drill validates', /\b0 errors\b/.test(vout), vout.split('\n').filter(l => /^error/.test(l)).join(' | '));
@@ -93,6 +94,12 @@ else {
   check('an unbreakable line in the brief fails --mobile', w.code !== 0 && /the brief runs past the right edge at 440 px/.test(w.out), w.out.split('\n').slice(-6).join(' | '));
   const wd = play(wide.id, false);
   check('the same drill is fine on desktop', wd.code === 0, wd.out.split('\n').slice(-4).join(' | '));
+  /* a radical's svg path is 400000 units wide inside its own clipped box (the five drills that failed on CI); it is not a brief running past the edge */
+  const rad = JSON.parse(JSON.stringify(good)); rad.id = 'drill-aa-radical'; rad.name = 'Drill page radical fixture';
+  rad.brief = 'The scale is $\\sqrt{252}$ a year, and the spread is $\\sqrt{\\frac{a}{b}}$ per period.';
+  place(rad);
+  const rm = play(rad.id, true);
+  check('a radical in the brief does not fail --mobile', rm.code === 0 && !/runs past/.test(rm.out), rm.out.split('\n').slice(-6).join(' | '));
   fs.rmSync(tmp, { recursive: true, force: true });
 }
 console.log(bad ? `${bad} failed` : 'all passed');
