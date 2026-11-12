@@ -1,0 +1,336 @@
+name: acceptance
+
+# The session's acceptance suite on real jsDelivr (no --local-cdn for Pyodide, YoWASP or MathLive). What runs, how to read a failure: docs/CI.md.
+on:
+  workflow_dispatch:
+    inputs:
+      shards:
+        description: "Playthrough shards per viewport (1 to 64)"
+        default: "16"
+      suite:
+        description: "Which part to run"
+        type: choice
+        default: full
+        options: [full, static, tests, play, extras]
+  push:
+    branches: [claude/amazing-wright-d4mx7i]
+    # .github/actions is added to the brief's filter: the shared setup step lives there and a change to it must re-run the suite
+    paths: ["app/**", ".github/workflows/**", ".github/actions/**"]
+
+concurrency:
+  group: acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+    working-directory: app
+
+jobs:
+  # ---------------------------------------------------------------------------------------------------------------
+  plan:
+    name: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      n: ${{ steps.p.outputs.n }}
+      shards: ${{ steps.p.outputs.shards }}
+      static: ${{ steps.p.outputs.static }}
+      tests: ${{ steps.p.outputs.tests }}
+      play: ${{ steps.p.outputs.play }}
+      extras: ${{ steps.p.outputs.extras }}
+    steps:
+      - id: p
+        env:
+          SHARDS_IN: ${{ inputs.shards }}
+          SUITE_IN: ${{ inputs.suite }}
+        run: |
+          set -o pipefail
+          n="${SHARDS_IN:-16}"; suite="${SUITE_IN:-full}"
+          case "$n" in ''|*[!0-9]*) echo "::error::shards must be a whole number, got '$n'"; exit 1 ;; esac
+          if [ "$n" -lt 1 ] || [ "$n" -gt 64 ]; then echo "::error::shards must be 1 to 64, got $n"; exit 1; fi
+          on() { case "$suite" in full|"$1") echo true ;; *) echo false ;; esac; }
+          { echo "n=$n"; echo "shards=[$(seq -s, 1 "$n")]"
+            echo "static=$(on static)"; echo "tests=$(on tests)"; echo "play=$(on play)"; echo "extras=$(on extras)"; } >> "$GITHUB_OUTPUT"
+          echo "suite $suite, $n shards" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # Validator, readiness sums, the test-file coverage check, grade-all, and every test that needs no browser.
+  static:
+    name: static
+    needs: plan
+    if: needs.plan.outputs.static == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      secs: ${{ steps.clock.outputs.secs }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/zq-setup
+        with: { cdn: "true" }
+      - name: Validator (0 errors)
+        run: node tools/validate.mjs 2>&1 | tail -40
+      - name: Readiness sums
+        run: node tools/readiness-sums.mjs 2>&1 | tail -40
+      - name: Every tools/test-* file is run by exactly one job
+        run: node tools/ci-coverage.mjs 2>&1 | tail -40
+      - name: grade-all (keys, bands and slip routing, no browser)
+        run: node tools/grade-all.mjs --local-cdn "$ZQ_CDN_LEAN" 2>&1 | tail -40
+      - name: Tests that need no browser
+        run: |
+          bash tools/ci-run.sh <<'EOF'
+          node tools/test-capstone.mjs
+          node tools/test-cumulative.mjs
+          node tools/test-drill-constraints.mjs
+          node tools/test-exam-minutes.mjs
+          node tools/test-expr-equations.mjs --local-cdn "$ZQ_CDN_LEAN"
+          node tools/test-fluency-reach.mjs
+          node tools/test-fresh-check.mjs
+          node tools/test-grade-ab3.mjs --local-cdn "$ZQ_CDN_LEAN"
+          node tools/test-grade-all.mjs --local-cdn "$ZQ_CDN_LEAN"
+          node tools/test-hours-split.mjs
+          node tools/test-lint-dup-keys.mjs
+          bash tools/test-merge-wave.sh
+          node tools/test-met-rule.mjs
+          python3 tools/test-numbers-lib.py
+          node tools/test-perf-reports.mjs
+          node tools/test-rubric-passes.mjs
+          EOF
+      - id: clock
+        if: always()
+        run: |
+          s=$(( $(date +%s) - ZQ_T0 )); echo "secs=$s" >> "$GITHUB_OUTPUT"
+          echo "static: wall clock ${s} s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # Every test that needs Chromium or Pyodide. Three legs so the longest (test-fluency) does not hold the rest. The grading leg gets the lean
+  # local CDN (Compute Engine and MathLive) because its unit parts need the Compute Engine as a file; the other legs use the real CDN.
+  tests-browser:
+    name: tests-browser (${{ matrix.leg }})
+    needs: plan
+    if: needs.plan.outputs.tests == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        leg: [grading, ui, python]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            app
+            .github
+      - uses: ./.github/actions/zq-setup
+        with:
+          playwright: "true"
+          cdn: ${{ matrix.leg == 'grading' && 'true' || 'false' }}
+          python: ${{ matrix.leg == 'python' && 'true' || 'false' }}
+      - name: Grading tests (real widgets in Chromium, desktop and mobile)
+        if: matrix.leg == 'grading'
+        run: |
+          bash tools/ci-run.sh <<'EOF'
+          node tools/test-answer-forms.mjs --local-cdn "$ZQ_CDN_LEAN"
+          node tools/test-engine-runtime.mjs --local-cdn "$ZQ_CDN_LEAN"
+          node tools/test-engine-runtime.mjs --local-cdn "$ZQ_CDN_LEAN" --mobile
+          node tools/test-problems.mjs --local-cdn "$ZQ_CDN_LEAN"
+          node tools/test-fluency.mjs --local-cdn "$ZQ_CDN_LEAN"
+          EOF
+      - name: Interface tests (desktop and mobile)
+        if: matrix.leg == 'ui'
+        run: |
+          bash tools/ci-run.sh <<'EOF'
+          node tools/test-check-first.mjs
+          node tools/test-check-first.mjs --mobile
+          node tools/test-today-tested-out.mjs
+          node tools/test-today-tested-out.mjs --mobile
+          node tools/test-playthrough-overflow.mjs
+          node tools/test-playthrough-tall.mjs
+          EOF
+      - name: Python and C++ tests (Pyodide and YoWASP from jsDelivr)
+        if: matrix.leg == 'python'
+        run: |
+          bash tools/ci-run.sh <<'EOF'
+          node tools/test-bank-code.mjs
+          node tools/test-drill-page.mjs
+          node tools/test-drill-recursion.mjs
+          node tools/test-planted-check.mjs
+          EOF
+      - id: clock
+        if: always()
+        run: |
+          echo "tests-browser (${{ matrix.leg }}): wall clock $(( $(date +%s) - ZQ_T0 )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # The test-validate-* files, each called by name with no flags (another change is making them fast). Only the band-rules test is given the
+  # Compute Engine through the environment, so its value comparison runs instead of being skipped.
+  validate-tests:
+    name: validate-tests
+    needs: plan
+    if: needs.plan.outputs.tests == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      secs: ${{ steps.clock.outputs.secs }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/zq-setup
+        with: { cdn: "true" }
+      - name: test-validate-*
+        run: |
+          bash tools/ci-run.sh <<'EOF'
+          node tools/test-validate-answer-forms.mjs
+          ZQ_LOCAL_CDN="$ZQ_CDN_LEAN" node tools/test-validate-band-rules.mjs
+          node tools/test-validate-capstone.mjs
+          node tools/test-validate-drill-index.mjs
+          node tools/test-validate-fluency.mjs
+          node tools/test-validate-near-miss.mjs
+          node tools/test-validate-o2.mjs
+          node tools/test-validate-perf.mjs
+          node tools/test-validate-problems.mjs
+          node tools/test-validate-review-pass.mjs
+          node tools/test-validate-session-v-b.mjs
+          node tools/test-validate-session.mjs
+          node tools/test-validate-shown-arithmetic.mjs
+          node tools/test-validate-shuffled-position.mjs
+          node tools/test-validate-table-slip-key.mjs
+          node tools/test-validate-table-wrong.mjs
+          node tools/test-validate-versions.mjs
+          node tools/test-validate-why.mjs
+          node tools/test-validate-wrong-fire.mjs
+          EOF
+      - id: clock
+        if: always()
+        run: |
+          s=$(( $(date +%s) - ZQ_T0 )); echo "secs=$s" >> "$GITHUB_OUTPUT"
+          echo "validate-tests: wall clock ${s} s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # playthrough --all in N shards, desktop and --mobile. The routes run in the extras job (--routes-only), so --no-routes here keeps shard 1 even.
+  play:
+    name: play ${{ matrix.shard }} ${{ matrix.vp }}
+    needs: plan
+    if: needs.plan.outputs.play == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+        vp: [desktop, mobile]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            app
+            .github
+      - uses: ./.github/actions/zq-setup
+        with: { playwright: "true" }
+      # ---- SLOT: playthrough --changed --cache (NOT WIRED; another change is building the flag and tools/.green-cache.json) -------------------
+      # Restore here, one cache per viewport and shard, so a run that touches little replays little:
+      #   - uses: actions/cache@v4
+      #     with:
+      #       path: app/tools/.green-cache.json
+      #       key: green-${{ matrix.vp }}-${{ matrix.shard }}-${{ github.sha }}
+      #       restore-keys: green-${{ matrix.vp }}-${{ matrix.shard }}-
+      # and add `--changed --cache tools/.green-cache.json` to the playthrough command in the next step. actions/cache saves the file after the
+      # job, so only a green leg refreshes it.
+      # ---------------------------------------------------------------------------------------------------------------------------------------
+      - name: playthrough --all --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n }} (${{ matrix.vp }})
+        env:
+          SHARD: ${{ matrix.shard }}
+          N: ${{ needs.plan.outputs.n }}
+          VP: ${{ matrix.vp }}
+        run: |
+          set -o pipefail
+          flag=""; [ "$VP" = mobile ] && flag="--mobile"
+          node tools/playthrough.mjs --all --shard "$SHARD/$N" --no-routes $flag 2>&1 | tee "$RUNNER_TEMP/play.log" | tail -40
+      - name: Failing lines
+        if: failure()
+        run: grep -E '^(FAIL|PLANTED-FAIL)' "$RUNNER_TEMP/play.log" | head -40 || true
+      - id: clock
+        if: always()
+        run: |
+          echo "play ${{ matrix.shard }} ${{ matrix.vp }}: wall clock $(( $(date +%s) - ZQ_T0 )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # The other playthrough modes. --problems all and --fluency-all honour --shard (their items are in the sharded item list), so they are split.
+  # --drills does not: it plays every drill file and then the session, in one process. It is split here by naming the drills (--drill <id>, repeated),
+  # and the session play (--session) runs in drills-1 only.
+  extras:
+    name: extras ${{ matrix.part }} ${{ matrix.vp }}
+    needs: plan
+    if: needs.plan.outputs.extras == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        vp: [desktop, mobile]
+        part: [problems-1, problems-2, fluency-1, fluency-2, fluency-3, fluency-4, drills-1, drills-2, drills-3, routes-1]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            app
+            .github
+      - uses: ./.github/actions/zq-setup
+        with: { playwright: "true" }
+      - name: playthrough ${{ matrix.part }} (${{ matrix.vp }})
+        env:
+          PART: ${{ matrix.part }}
+          VP: ${{ matrix.vp }}
+        run: |
+          set -o pipefail
+          kind="${PART%-*}"; i="${PART##*-}"
+          flag=""; [ "$VP" = mobile ] && flag="--mobile"
+          case "$kind" in
+            problems) args="--problems all --shard $i/2" ;;
+            fluency)  args="--fluency-all --shard $i/4" ;;
+            routes)   args="--routes-only" ;;
+            drills)
+              ids=$(ls content/drills | grep '\.json$' | grep -v '^index\.json$' | sed 's/\.json$//' | sort | awk -v i="$i" '(NR-1) % 3 == i-1')
+              args=$(for d in $ids; do printf -- '--drill %s ' "$d"; done)
+              [ "$i" = 1 ] && args="$args--session"
+              echo "drills in this part: $(echo "$ids" | wc -l)" ;;
+          esac
+          # word splitting of $args is intended: it is a list of flags
+          node tools/playthrough.mjs $args $flag 2>&1 | tee "$RUNNER_TEMP/extras.log" | tail -40
+      - name: Failing lines
+        if: failure()
+        run: grep -E '^(FAIL|PLANTED-FAIL)' "$RUNNER_TEMP/extras.log" | head -40 || true
+      - id: clock
+        if: always()
+        run: |
+          echo "extras ${{ matrix.part }} ${{ matrix.vp }}: wall clock $(( $(date +%s) - ZQ_T0 )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # One status to read: green only if every job that was asked for succeeded (a job left out by the `suite` input shows as skipped).
+  acceptance:
+    name: acceptance
+    if: always()
+    needs: [plan, static, tests-browser, validate-tests, play, extras]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Summary and verdict
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -o pipefail
+          {
+            echo "### acceptance"
+            echo
+            echo "| job | result | wall clock |"
+            echo "| --- | --- | --- |"
+            echo "$NEEDS" | jq -r 'to_entries[] | "| \(.key) | \(.value.result) | \(if .value.outputs.secs then (.value.outputs.secs + " s") else "see the legs" end) |"'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          bad=$(echo "$NEEDS" | jq -r 'to_entries[] | select(.value.result != "success" and .value.result != "skipped") | .key' | paste -sd, -)
+          if [ -n "$bad" ]; then echo "::error::not green: $bad"; exit 1; fi
+          echo "all green"
