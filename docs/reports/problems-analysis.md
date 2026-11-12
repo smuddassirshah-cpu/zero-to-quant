@@ -39,6 +39,7 @@ Own-course grep (key numbers and setting of each problem, own folder first, then
 - p-root-recursion ($\sqrt{4a_n + 21}$, $a_1 = 1$, $\sqrt{41}$, 6000, 14): 0 in analysis. The planned $\sqrt{3a_n + 10}$ is the topic exam's recursion; replaced before writing.
 - p-two-strands-cauchy ($(-1)^n(2 - \tfrac3n)$, 3.071, 6): 0 anywhere.
 - p-telescoping-tail ($\tfrac{1}{(n+1)(n+3)}$, $n^2 + 4n + 7$, 998): 0 anywhere; $\tfrac5{12}$ is common elsewhere (other courses, unrelated).
+- p-telescoping-tail is review-3's $\tfrac{2}{n(n+2)}$ series with the index moved by one and halved; kept on the reader's judgement (second read of problems analysis 1 to 3, close cousin, sum, tail and comparison parts new).
 - p-alternating-quarters ($(-1)^{n+1}\tfrac{n}{4^n}$, $\tfrac5{1024}$, $\tfrac{327}{2048}$): 0 in analysis. $\sum \tfrac{n}{3^n}$ (taylor homework-3) was avoided.
 - p-cube-root-greedy ($\sum \tfrac{(-1)^{n+1}}{\sqrt[3]{n}}$, $T = 0.2$, 0.2063, $-0.4237$, 0.2697): only l3's $\sqrt[3]5$ shares the symbol. $\sum \tfrac{(-1)^{n+1}}{\sqrt n}$ (l13, l14, review-3) was avoided.
 

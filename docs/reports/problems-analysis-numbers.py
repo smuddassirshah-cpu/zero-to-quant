@@ -149,28 +149,30 @@ def ceil_above(x):
 # ---------------------------------------------------------------- Level 1
 I = 'p-cube-root-twenty'
 lo, hi = F(2), F(3)
-for _ in range(3):
+for _ in range(4):
     mid = (lo + hi) / 2
     lo, hi = (mid, hi) if mid ** 3 < 20 else (lo, mid)
-alt_lo = F(math.floor(8 * 20 ** (1 / 3)), 8)          # the grid of eighths holds the cube root in [21/8, 22/8)
-two_lo = F(5, 2)                                       # after two halvings: [2.5, 2.75]
-num(1, I, 1, lo, alt_lo, {'right-end': hi, 'two-steps': two_lo})
-ok(hi == F(11, 4), 'L1 P1 right end after 3 halvings is 2.75')
-miss = 21 ** 3 - 20 * 8 ** 3
-num(1, I, 2, miss, float((F(21, 8) ** 3 - 20) * 512), {'sign': -miss, 'squares': 21 ** 2 - 20 * 8 ** 2, 'no-twenty': 21 ** 3 - 8 ** 3})
+alt_lo = F(math.floor(16 * 20 ** (1 / 3)), 16)        # the grid of sixteenths holds the cube root in [43/16, 44/16)
+two_lo = F(21, 8)                                      # after three halvings: [2.625, 2.75]
+num(1, I, 1, lo, alt_lo, {'right-end': hi, 'one-short': two_lo})
+ok(hi == F(11, 4) and lo == F(43, 16), 'L1 P1 interval after 4 halvings is [43/16, 11/4]')
+miss = 43 ** 3 - 20 * 16 ** 3
+ok(miss == -2413, 'L1 P2 miss -2413')
+num(1, I, 2, miss, float((F(43, 16) ** 3 - 20) * 4096), {'sign': -miss, 'squares': 43 ** 2 - 20 * 16 ** 2, 'no-twenty': 43 ** 3 - 16 ** 3})
 expr(1, I, 3, (2 * k) ** 3 / 4, {'no-divide': (2 * k) ** 3, 'half-only': (2 * k) ** 3 / 2, 'cube-two': k ** 3 / 2})
-sv = F(21, 8)
+sv = F(43, 16)
 top, bot = 3 * sv ** 2 + 3 * sv + 1, 20 - sv ** 3
 bound = top / bot
 n1 = ceil_above(bound)
-n1_alt = first(lambda m: 2.625 ** 3 + (3 * 2.625 ** 2 + 3 * 2.625 + 1) / m < 20)
-num(1, I, 4, n1, n1_alt, {'round-down': n1 - 1, 'no-ones': ceil_above(3 * sv ** 2 / bot)})
-ok(ceil_above((3 * sv ** 2 + 3 * sv) / bot) == n1 - 1, 'L1 P1 p4 dropping the +1 lands on the round-down slip (15)')
-ok(top == F(29546875, 10 ** 6) and bot == F(1912109375, 10 ** 9), 'L1 P1 p4 top 29.546875 and bottom 1.912109375')
-says(1, I, 4, 'correct', 'about 15.45'); ok(abs(float(bound) - 15.45) < 0.005, 'L1 P1 bound ~15.45')
-ok(abs((2.625 + 1 / 16) ** 3 - 19.41) < 0.005 and (2.625 + 1 / 16) ** 3 < 20, 'L1 P1 (2.625+1/16)^3 ~ 19.41 < 20')
-ok(abs(float(sv ** 3) - 18.087890625) < 1e-12 and abs(2.75 ** 3 - 20.796875) < 1e-12, 'L1 P1 cubes 18.0879 and 20.7969')
-ok(sp.Integer(20) ** sp.Rational(1, 3) not in (sp.Rational(1),) and sp.Rational(21, 8) < sp.cbrt(20) < sp.Rational(11, 4), 'L1 P1 cube root of 20 in [2.625, 2.75]')
+n1_alt = first(lambda m: 2.6875 ** 3 + (3 * 2.6875 ** 2 + 3 * 2.6875 + 1) / m < 20)
+num(1, I, 4, n1, n1_alt, {'round-down': n1 - 1, 'no-plus-one': ceil_above((top - 1) / bot), 'no-ones': ceil_above(3 * sv ** 2 / bot)})
+ok(n1 == 53 and ceil_above((top - 1) / bot) == 51 and ceil_above(3 * sv ** 2 / bot) == 37, 'L1 P1 p4 key 53, no-plus-one 51, no-ones 37')
+ok(abs(float((top - 1) / bot) - 50.47) < 0.005 and abs(float(3 * sv ** 2 / bot) - 36.78) < 0.005, 'L1 P1 p4 slip bounds 50.47 and 36.78')
+ok(top == F(3073046875, 10 ** 8) and bot == F(589111328125, 10 ** 12), 'L1 P1 p4 top 30.73046875 and bottom 0.589111328125')
+says(1, I, 4, 'correct', 'about 52.16'); ok(abs(float(bound) - 52.16) < 0.005, 'L1 P1 bound ~52.16')
+ok(abs((2.6875 + 1 / 53) ** 3 - 19.82) < 0.005 and (2.6875 + 1 / 53) ** 3 < 20, 'L1 P1 (2.6875+1/53)^3 ~ 19.82 < 20')
+ok(abs(float(sv ** 3) - 19.410888671875) < 1e-12 and abs(2.75 ** 3 - 20.796875) < 1e-12 and abs(2.625 ** 3 - 18.087890625) < 1e-12, 'L1 P1 cubes 19.4109, 20.7969 and 18.0879')
+ok(sp.Integer(20) ** sp.Rational(1, 3) not in (sp.Rational(1),) and sp.Rational(43, 16) < sp.cbrt(20) < sp.Rational(11, 4), 'L1 P1 cube root of 20 in [2.6875, 2.75]')
 choice(1, I, 5, 'root')
 
 I = 'p-climbing-fractions'
@@ -213,24 +215,26 @@ choice(1, I, 5, 'uncountable')
 
 # ---------------------------------------------------------------- Level 2
 I = 'p-sum-law-band'
-A_n, B_n = (6 * n + 1) / (2 * n + 5), (2 * n - 2) / (n + 1)
-ok(sp.limit(A_n, n, sp.oo) == 3 and sp.limit(B_n, n, sp.oo) == 2, 'L2 P4 limits 3 and 2')
-expr(2, I, 1, sp.simplify(3 - A_n), {'plus-one': 16 / (2 * n + 5), 'sign': -14 / (2 * n + 5)})
-ok(sp.simplify(2 - B_n - 4 / (n + 1)) == 0, 'L2 P4 |b_n - 2| = 4/(n+1)')
-ga = lambda m: F(14, 2 * m + 5)
+A_n, B_n = (8 * n + 3) / (2 * n + 5), (3 * n - 1) / (n + 1)
+ok(sp.limit(A_n, n, sp.oo) == 4 and sp.limit(B_n, n, sp.oo) == 3, 'L2 P4 limits 4 and 3')
+expr(2, I, 1, sp.simplify(4 - A_n), {'plus-one': 23 / (2 * n + 5), 'sign': -17 / (2 * n + 5)})
+ok(sp.simplify(3 - B_n - 4 / (n + 1)) == 0, 'L2 P4 |b_n - 3| = 4/(n+1)')
+ga = lambda m: F(17, 2 * m + 5)
 gb = lambda m: F(4, m + 1)
-N1 = first(lambda m: all(ga(j) < F(1, 20) for j in range(m, m + 50)))
-num(2, I, 2, N1, ceil_above(F(280 - 5, 2)), {'round-down': N1 - 1, 'full-band': first(lambda m: ga(m) < F(1, 10))})
-ok(abs(float(ga(137)) - 0.0502) < 5e-5, 'L2 P4 gap at 137 ~ 0.0502')
-N2 = first(lambda m: gb(m) < F(1, 20))
-num(2, I, 3, N2, ceil_above(80 - 1), {'equal': N2 - 1, 'full-band': first(lambda m: gb(m) < F(1, 10))})
+N1 = first(lambda m: all(ga(j) < F(1, 50) for j in range(m, m + 50)))
+num(2, I, 2, N1, ceil_above(F(850 - 5, 2)), {'round-down': N1 - 1, 'full-band': first(lambda m: ga(m) < F(1, 25))})
+ok(N1 == 423, 'L2 P4 N1 = 423')
+ok(abs(float(ga(422)) - 0.02002) < 5e-6 and ga(422) > F(1, 50), 'L2 P4 gap at 422 ~ 0.02002')
+N2 = first(lambda m: gb(m) < F(1, 50))
+ok(N2 == 200 and gb(199) == F(1, 50), 'L2 P4 N2 = 200, gap at 199 exactly 0.02')
+num(2, I, 3, N2, ceil_above(200 - 1), {'equal': N2 - 1, 'full-band': first(lambda m: gb(m) < F(1, 25))})
 num(2, I, 4, max(N1, N2), sorted([N1, N2])[-1], {'min': min(N1, N2), 'sum': N1 + N2})
-true_gap = lambda m: abs(F(6 * m + 1, 2 * m + 5) + F(2 * m - 2, m + 1) - 5)
+true_gap = lambda m: abs(F(8 * m + 3, 2 * m + 5) + F(3 * m - 1, m + 1) - 7)
 ok(all(true_gap(m) == ga(m) + gb(m) for m in range(1, 400)), 'L2 P4 both below their limits: true gap is the sum')
-NT = first(lambda m: all(true_gap(j) < F(1, 10) for j in range(m, 2000)))
-NT_alt = first(lambda m: 14 / (2 * m + 5) + 4 / (m + 1) < 0.1)
+NT = first(lambda m: all(true_gap(j) < F(1, 25) for j in range(m, 2000)))
+NT_alt = first(lambda m: 17 / (2 * m + 5) + 4 / (m + 1) < 0.04)
 num(2, I, 5, NT, NT_alt, {'proof': max(N1, N2), 'round-down': NT - 1})
-ok(abs(float(true_gap(108)) - 0.10005) < 5e-6 and abs(float(true_gap(109)) - 0.09914) < 5e-6, 'L2 P4 gaps 0.10005 at 108, 0.09914 at 109')
+ok(NT == 311 and N1 == 423 and N2 == 200 and abs(float(true_gap(310)) - 0.04006) < 5e-6 and abs(float(true_gap(311)) - 0.03993) < 5e-6, 'L2 P4 true N 311 (gaps 0.04006 at 310, 0.03993 at 311), proof 423')
 
 I = 'p-root-recursion'
 seq = [mp.mpf(1)]
@@ -312,7 +316,7 @@ ok(first(lambda m: sz(m) < F(1, 1000)) == n8 + 1, 'L3 P8 the a_n slip also gives
 ok(abs(float(sz(6)) - 0.00146) < 5e-6 and abs(float(sz(7)) - 0.00043) < 5e-6, 'L3 P8 a_6 ~ 0.00146 and a_7 ~ 0.00043')
 S = lambda M: sum((-1) ** (j + 1) * sz(j) for j in range(1, M + 1))
 S6 = S(6)
-num(3, I, 5, S6, sum((-1) ** (j + 1) * j / 4 ** j for j in range(1, 7)), {'s4': S(4), 'sizes': sum(sz(j) for j in range(1, 7)), 's7': S(7)}, rounded=0.1597)
+num(3, I, 5, S6, sum((-1) ** (j + 1) * j / 4 ** j for j in range(1, 7)), {'s4': S(4), 'sizes': sum(sz(j) for j in range(1, 7)), 's7': S(7), 'sum': F(4, 25)}, rounded=0.1597)
 ok(S6 == F(327, 2048) and sum([1024, -512, 192, -64, 20, -6]) == 654, 'L3 P8 S_6 = 654/4096 = 327/2048')
 total = sp.summation((-1) ** (sp.Symbol('j') + 1) * sp.Symbol('j') / 4 ** sp.Symbol('j'), (sp.Symbol('j'), 1, sp.oo))
 ok(sp.nsimplify(total) == sp.Rational(4, 25) and abs(mp.nsum(lambda j: (-1) ** (j + 1) * j / 4 ** j, [1, mp.inf]) - 0.16) < 1e-12, 'L3 P8 the sum is 4/25 two ways')
