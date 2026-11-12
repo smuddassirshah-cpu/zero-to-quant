@@ -318,13 +318,21 @@ fair = F(200) * F(103, 100) - 4
 a = 205 - fair
 ledger = -200 + 200 + 4 + 205 - 200 * 1.03              # buy share, borrow, dividend, deliver, repay
 key = two(a, ledger, 1e-9, 'arbitrage profit')
-numeric(FI, 'fi-forwards-rich-forward', int(a), None, {'no-dividend': 205 - 200 * F(103, 100), 'dividend-twice': 205 - (206 - 8)})
+numeric(FI, 'fi-forwards-rich-forward', int(a), None, {'no-dividend': 205 - 200 * F(103, 100), 'dividend-twice': 205 - (206 - 8), 'fair-value': 200 * F(103, 100) - 4})
+
+def stale_fc(f, i, *old):
+    """Re-authored item: none of the old setting's figures is left anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in old:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
 
 # fi-forwards-futures-daily-loss
 a = 10 * 50 * (4000 - 3960)
 b = sum(50 * 1 for _ in range(10) for _ in range(40))
 two(a, b, 0, 'futures loss')
-numeric(FI, 'fi-forwards-futures-daily-loss', a, None, {'one-contract': 50 * 40, 'points-times-contracts': 10 * 40})
+numeric(FI, 'fi-forwards-futures-daily-loss', a, None, {'one-contract': 50 * 40, 'points-times-contracts': 10 * 40, 'signed': -a})
+ok('positive number' in item(FI, 'fi-forwards-futures-daily-loss')['question'], 'daily loss: the question states the sign convention')
 
 # op-strategies-covered-call-at-fifty: payoff formula against a ledger
 a = (45 - 40) + 2
@@ -333,11 +341,16 @@ two(a, b, 0, 'covered call profit')
 numeric(FI, 'op-strategies-covered-call-at-fifty', a, None, {'no-cap': 50 - 40 + 2, 'no-premium': 45 - 40})
 
 # op-strategies-butterfly-best-case: closed form against a scan of the expiry payoff
-cost = F(1250, 100) - 2 * 6 + F(250, 100)
-pay = lambda s: max(s - 90, 0) - 2 * max(s - 100, 0) + max(s - 110, 0)
+# re-authored after review bank 2 b: calls at 70, 80 and 90 cost 13.00, 6.50 and 2.00
+cost = F(1300, 100) - 2 * F(650, 100) + F(200, 100)
+pay = lambda s: max(s - 70, 0) - 2 * max(s - 80, 0) + max(s - 90, 0)
 best = max(pay(k / 10) for k in range(0, 2001))
 two(10 - cost, best - float(cost), 1e-12, 'largest butterfly profit')
 numeric(FI, 'op-strategies-butterfly-best-case', int(10 - cost), None, {'ignored-cost': 10, 'gave-cost': cost})
+ok(cost == 2 and 10 - cost == 8 == (80 - 70) - 2, 'butterfly cost 2, largest profit 8')
+stated(FI, 'op-strategies-butterfly-best-case', '13.00 - 2 \\\\times 6.50 + 2.00 = 2')
+stated(FI, 'op-strategies-butterfly-best-case', '10 - 2 = 8')
+stale_fc(FI, 'op-strategies-butterfly-best-case', '12.50', '2.50', '£7', '£3', '£6.00', '100 calls', '110', 'at 100')
 
 # op-parity-call-under-its-floor: floor less price against the worst case over expiry prices
 a = F(100 - 95) - F(450, 100)
@@ -381,13 +394,18 @@ def replicate(s, steps):
 
 two(a, replicate(F(40), 2), 0, 'two-step call')
 ok(q == F(4, 9) and a == F(40, 9), 'q = 4/9, price 40/9')
-numeric(FI, 'tp-multistep-two-step-call', a, 2, {'even-chances': F(1, 4) * F(45, 2), 'q-once': q * F(45, 2)})
+numeric(FI, 'tp-multistep-two-step-call', a, 2, {'even-chances': F(1, 4) * F(45, 2), 'q-once': q * F(45, 2), 'top-payoff': F(45, 2)})
 
-# ms-book-weighted-mid
-a = (F(9998, 100) * 100 + F(10002, 100) * 900) / 1000
-b = 99.98 + (100.02 - 99.98) * 900 / 1000                 # mid moves towards the ask by the bid's share of size
-key = two(a, b, 1e-12, 'weighted mid')
-numeric(FI, 'ms-book-weighted-mid', key, 3, {'own-side': (F(9998, 100) * 900 + F(10002, 100) * 100) / 1000, 'plain-mid': 100})
+# ms-book-weighted-mid (re-authored after review bank 2 b: shares to add to the offer so that the weighted mid is 100.00)
+# route A: solve (99.98 A + 100.02 * 900) / (900 + A) = 100 exactly; route B: scan the offer size one share at a time
+A_ = (F(10002, 100) - 100) * 900 / (100 - F(9998, 100))
+b = next(n for n in range(0, 5000) if (F(9998, 100) * n + F(10002, 100) * 900) / (900 + n) == 100)
+two(A_, b, 0, 'offer size that gives a weighted mid of 100.00')
+key = two(A_ - 100, b - 100, 0, 'shares to add')
+numeric(FI, 'ms-book-weighted-mid', key, None, {'size-wanted': A_, 'size-now': 100})
+ok((F(9998, 100) * 100 + F(10002, 100) * 900) / 1000 == F(100016, 1000), 'the old weighted mid was 100.016 with an offer of 100')
+stated(FI, 'ms-book-weighted-mid', '0.02A = 18')
+stale_fc(FI, 'ms-book-weighted-mid', '100.016', '9{,}998', 'next trade', '99.984')
 
 # ms-costs-impact-four-times-size
 a = 40 * sqrt(16 / 4)
@@ -399,7 +417,7 @@ numeric(FI, 'ms-costs-impact-four-times-size', int(round(a)), None, {'linear': 4
 a = F(1000) * (F(1) - F(4, 10)) / 100
 b = sum(0.01 - 0.004 for _ in range(1000))
 key = two(a, b, 1e-9, 'market-making result')
-numeric(FI, 'ms-mm-spread-less-drift', int(a), None, {'ignored-move': 10, 'added-move': 14})
+numeric(FI, 'ms-mm-spread-less-drift', int(a), None, {'ignored-move': 10, 'added-move': 14, 'in-pence': 1000 * F(6, 10)})
 
 # gv-risk-two-desks: closed form against a seeded simulation of the two desks' P&L quantile
 a = sqrt(1 + 1 + 2 * 0.5)

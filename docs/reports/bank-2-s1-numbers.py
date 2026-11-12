@@ -332,27 +332,37 @@ def bs(S0, K, T, r, sig, kind='call'):
     return K * exp(-r * T) * N.cdf(-d2) - S0 * N.cdf(-d1)
 
 
-# op-parity-price-the-put
-a = 3.10 - 50 + 52 * exp(-0.02)
+def stale_fc(f, i, *old):
+    """Re-authored item: none of the old setting's figures is left anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in old:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
+# op-parity-price-the-put (re-authored after review bank 2 b: share 80, strike 84, three months, 6%, call 4.10)
+a = 4.10 - 80 + 84 * exp(-0.06 * 0.25)
 lo, hi = 0.01, 2.0
 for _ in range(200):                                               # implied vol from the call, then price the put
     mid = (lo + hi) / 2
-    lo, hi = (mid, hi) if bs(50, 52, 0.5, 0.04, mid) < 3.10 else (lo, mid)
-b = bs(50, 52, 0.5, 0.04, lo, 'put')
+    lo, hi = (mid, hi) if bs(80, 84, 0.25, 0.06, mid) < 4.10 else (lo, mid)
+b = bs(80, 84, 0.25, 0.06, lo, 'put')
 key = two(a, b, 1e-6, 'put by parity and by Black-Scholes at the implied vol')
-numeric(FI, 'op-parity-price-the-put', key, 2, {'undiscounted': 3.10 - 50 + 52, 'signs-swapped': 3.10 + 50 - 52 * exp(-0.02)})
-ok(fmt(52 * exp(-0.02), 2) == '50.97', '52e^-0.02 is 50.97')
-ok(abs(3.10 - 50 + 50.97 - 4.07) < 1e-9, '3.10 - 50 + 50.97 = 4.07')
-stated(FI, 'op-parity-price-the-put', '3.10 - 50 + 50.97 = 4.07')
+two(84 * exp(-0.015), 84 / sum(0.015 ** k / math.factorial(k) for k in range(30)), 1e-9, 'discounted strike two ways')
+numeric(FI, 'op-parity-price-the-put', key, 2, {'undiscounted': 4.10 - 80 + 84, 'signs-swapped': 4.10 + 80 - 84 * exp(-0.015)})
+ok(fmt(84 * exp(-0.015), 2) == '82.75', '84e^-0.015 is 82.75')
+ok(abs(4.10 - 80 + 82.75 - 6.85) < 1e-9, '4.10 - 80 + 82.75 = 6.85')
+stated(FI, 'op-parity-price-the-put', '4.10 - 80 + 82.75 = 6.85')
+stale_fc(FI, 'op-parity-price-the-put', '50.97', '£52', '£3.10', '4.07', '0.02}', 'six months')
 
-# op-strategies-bull-spread-breakeven
-net = F(6) - F(2)
-a = 100 + net
-pay = lambda s: max(s - 100, 0) - max(s - 110, 0) - 4
-b = next(k / 100 for k in range(9000, 12000) if pay(k / 100) >= 0)  # scan the expiry payoff
+# op-strategies-bull-spread-breakeven (re-authored: buy the 40 call for 7, sell the 50 call for 3)
+net = F(7) - F(3)
+a = 40 + net
+pay = lambda s: max(s - 40, 0) - max(s - 50, 0) - 4
+b = next(k / 100 for k in range(3000, 6000) if pay(k / 100) >= 0)  # scan the expiry payoff
 two(a, b, 0, 'break-even')
-numeric(FI, 'op-strategies-bull-spread-breakeven', int(a), None, {'one-premium': 100 + 6, 'both-premiums': 100 + 6 + 2})
-stated(FI, 'op-strategies-bull-spread-breakeven', '6 - 2 = 4')
+numeric(FI, 'op-strategies-bull-spread-breakeven', int(a), None, {'one-premium': 40 + 7, 'both-premiums': 40 + 7 + 3})
+stated(FI, 'op-strategies-bull-spread-breakeven', '7 - 3 = 4')
+stale_fc(FI, 'op-strategies-bull-spread-breakeven', '104', '106', '108', '100-strike', '110', '£6', '£2')
 
 # op-greeks-second-order-estimate
 a = F(4) + F(45, 100) * 2 + F(1, 2) * F(5, 100) * 4
@@ -361,7 +371,7 @@ b = quad(0)
 for k in range(2000):
     b += (quad((k + 1) / 1000) - quad(k / 1000))
 key = two(a, b, 1e-9, 'delta-gamma estimate')
-numeric(FI, 'op-greeks-second-order-estimate', float(a), 2, {'delta-only': 4 + 0.9, 'no-half': 4 + 0.9 + 0.05 * 4})
+numeric(FI, 'op-greeks-second-order-estimate', float(a), 2, {'delta-only': 4 + 0.9, 'no-half': 4 + 0.9 + 0.05 * 4, 'change-only': float(a) - 4})
 stated(FI, 'op-greeks-second-order-estimate', '0.45 \\\\times 2 + 0.5 \\\\times 0.05 \\\\times 4 = 1')
 stated(FI, 'op-greeks-second-order-estimate', '\\\\tfrac{1}{2} \\\\times 0.05 \\\\times 2^2 = 0.10')
 
@@ -471,6 +481,9 @@ def stop_fill(trade, stop, limit=None):
 
 ok(stop_fill(93, 95) == 93 and stop_fill(93, 95, 95) == 'resting at limit', 'stop fills near 93; stop-limit rests')
 choice(FI, 'ms-orders-stop-through-a-gap', 'stop-limit rests unfilled')
+_it = item(FI, 'ms-orders-stop-through-a-gap')
+ok(_it['difficulty'] == 3 and _it.get('requires') == ['micro/l4-market-or-limit'], 'stop item: difficulty 3, requires l4-market-or-limit')
+ok('wakes once a trade prints at or below its stop price' in _it['prose'], 'stop item: prose defines the trigger')
 
 # greek-signs-calendar-spread: Black-Scholes closed forms against finite differences, r = 0, S = K = 100, vol 20%
 
@@ -489,21 +502,25 @@ def greeks_fd(T, S0=100.0, sig=0.2, h=1e-3):
     return gam, veg, the
 
 
-net_c = [x - y for x, y in zip(greeks_closed(1.0), greeks_closed(0.25))]
-net_f = [x - y for x, y in zip(greeks_fd(1.0), greeks_fd(0.25))]
+# re-authored after review bank 2 b: buy the one-month call, sell the six-month call
+net_c = [x - y for x, y in zip(greeks_closed(1 / 12), greeks_closed(0.5))]
+net_f = [x - y for x, y in zip(greeks_fd(1 / 12), greeks_fd(0.5))]
 for nm, x, y, t in zip(('gamma', 'vega', 'theta'), net_c, net_f, (1e-4, 1e-3, 1e-3)):
     two(x, y, t, f'calendar net {nm}')
-ok(net_c[0] < 0 < net_c[1] and net_c[2] > 0, 'signs: gamma negative, vega positive, theta positive')
-ok(fmt(net_c[0], 4) == '-0.0200' and fmt(net_c[1], 2) == '19.77' and fmt(net_c[2], 2) == '4.00', f'net figures {net_c}')
-choice(FI, 'greek-signs-calendar-spread', 'Negative gamma, positive vega, positive theta')
-stated(FI, 'greek-signs-calendar-spread', 'gamma is -0.0200, vega +19.77 and theta +4.00 a year')
+ok(net_c[0] > 0 > net_c[1] and net_c[2] < 0, 'signs: gamma positive, vega negative, theta negative')
+ok(fmt(net_c[0], 4) == '0.0409' and fmt(net_c[1], 2) == '-16.63' and fmt(net_c[2], 2) == '-8.19', f'net figures {net_c}')
+choice(FI, 'greek-signs-calendar-spread', 'Positive gamma, negative vega, negative theta')
+stated(FI, 'greek-signs-calendar-spread', 'gamma is +0.0409, vega -16.63 and theta -8.19 a year')
+stale_fc(FI, 'greek-signs-calendar-spread', 'one-year', 'three-month', '19.77', '-0.0200', '+4.00')
+_c = [o for o in item(FI, 'greek-signs-calendar-spread')['widget']['options'] if o.get('correct')][0]
+ok(_c['text'] == 'Positive gamma, negative vega, negative theta', 'calendar key is the reverse of the old one')
 
 # gv-risk-one-day-var
 a = F(3000000) * F(12, 1000) * F(2326, 1000)
 b = 3_000_000 * 0.012 * NormalDist(0, 1).inv_cdf(0.99)              # 2.326 is the rounded 99% point
 two(a, b, 3000000 * 0.012 * 0.0005, 'VaR with the exact 99% point (within the rounding of 2.326)')
 ok(a == 83736, 'VaR 83,736 exactly with 2.326')
-numeric(FI, 'gv-risk-one-day-var', int(a), None, {'used-1-645': 3000000 * 0.012 * 1.645, 'ten-day': float(a) * sqrt(10)})
+numeric(FI, 'gv-risk-one-day-var', int(a), None, {'used-1-645': 3000000 * 0.012 * 1.645, 'ten-day': float(a) * sqrt(10), 'one-sd': 3000000 * 0.012})
 ok(round(float(a) * sqrt(10)) == 264796 and 3000000 * 0.012 == 36000, 'ten-day slip 264,796; sd 36,000')
 stated(FI, 'gv-risk-one-day-var', '2.326 \\\\times 36{,}000 = 83{,}736')
 
@@ -696,7 +713,8 @@ dups = {x for x in allids if allids.count(x) > 1}
 ok(not dups, f'item ids unique across the bank ({sorted(dups)})')
 for f in FILES:
     for it in DATA[f]['items']:
-        ok(('requires' in it) == (it['difficulty'] >= 4), f'{f}/{it["id"]}: requires only at difficulty 4 and 5')
+        # accepted exception to brief rule 16 (review bank 2 b, finding 1): the stop item is difficulty 3 and has requires
+        ok(('requires' in it) == (it['difficulty'] >= 4 or it['id'] == 'ms-orders-stop-through-a-gap'), f'{f}/{it["id"]}: requires only at difficulty 4 and 5')
         ok(it['source'] == 'Original' and len(it['tags']) == 1, f'{f}/{it["id"]}: source and one tag')
         ok(it['difficulty'] in (2, 3, 4, 5), f'{f}/{it["id"]}: difficulty 2 to 5')
 

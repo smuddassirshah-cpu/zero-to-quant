@@ -431,7 +431,8 @@ numeric(FI, 'digital-option-from-two-calls', key, 2, {'no-width': F(220, 100), '
 a = 120 + 3 - 110
 scan = max(123 - (s_ + max(110 - s_, 0)) for s_ in (k / 10 for k in range(0, 3001)))
 key = two(a, scan, 1e-9, 'largest loss')
-numeric(FI, 'op-strategies-protective-put-floor', key, None, {'no-premium': 120 - 110, 'took-off-premium': 120 - 110 - 3})
+numeric(FI, 'op-strategies-protective-put-floor', key, None, {'no-premium': 120 - 110, 'took-off-premium': 120 - 110 - 3, 'signed': -key})
+ok('positive number' in item(FI, 'op-strategies-protective-put-floor')['question'], 'protective put: the question states the sign convention')
 
 # op-parity-exercise-before-dividend: parity value of holding against the dividend rule
 exercise = 60 - 50
@@ -503,7 +504,9 @@ a = max(cands.values())
 scan = max(vol(k / 100) for k in range(990, 1041))
 key = two(a, scan, 0, 'auction volume')
 ok(cands == {10.0: 250, 10.1: 550, 10.2: 500, 10.3: 300}, f'volumes by price {cands}')
-numeric(FI, 'ms-book-opening-auction', key, None, {'cleared-high': cands[10.2], 'all-sells': sum(q_ for q_, _ in sells)})
+numeric(FI, 'ms-book-opening-auction', key, None, {'cleared-high': cands[10.2], 'all-sells': sum(q_ for q_, _ in sells), 'gave-price': 10.1})
+_blob = json.dumps(item(FI, 'ms-book-opening-auction'), ensure_ascii=False)
+ok(not re.search(r'£10\.\d(?!\d)', _blob) and '£10.10' in _blob and '£10.00' in _blob, 'auction: money in pence to two places throughout')
 
 # ms-orders-immediate-or-cancel: level sum against a share-by-share fill
 offers = [(400, 30.03), (300, 30.05), (600, 30.06)]

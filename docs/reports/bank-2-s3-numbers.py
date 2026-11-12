@@ -345,12 +345,20 @@ key = two(a, v, 1e-9, 'bond price')
 numeric(FI, 'fi-bonds-three-year-coupon', key, 2, {'par': 100, 'not-discounted': sum(cfs)})
 ok([fmt(c / 1.04 ** (t + 1), 3) for t, c in enumerate(cfs)] == ['5.769', '5.547', '94.234'], 'stated parts')
 
+def stale_fc(f, i, *old):
+    """Re-authored item: none of the old setting's figures is left anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in old:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
 # fi-bonds-pound-per-basis-point: duration rule against a finite difference of a price with that duration
 a = F(98, 100) * 10_000_000 * F(45, 10) * F(1, 10000)
 price = lambda dy: 9_800_000 * exp(-4.5 * dy)          # a price whose modified duration is 4.5 at dy = 0
 b = (price(-0.00005) - price(0.00005)) / 0.0001 * 0.0001
 key = two(a, b, 0.01, 'loss per basis point')
-numeric(FI, 'fi-bonds-pound-per-basis-point', int(a), None, {'face-not-price': 10_000_000 * 4.5 * 0.0001, 'ten-basis-points': 9_800_000 * 4.5 * 0.001})
+numeric(FI, 'fi-bonds-pound-per-basis-point', int(a), None, {'face-not-price': 10_000_000 * 4.5 * 0.0001, 'ten-basis-points': 9_800_000 * 4.5 * 0.001, 'signed': -int(a)})
+ok('positive number' in item(FI, 'fi-bonds-pound-per-basis-point')['question'], 'pound per basis point: the question states the sign convention')
 
 # fi-forwards-geared-loss: balance sheet against the gearing identity r_e = r_a + (D/E)(r_a - r_d)
 a = (F(200000) * F(9, 10) - F(100000) * F(104, 100) - 100000) / 100000
@@ -358,18 +366,25 @@ b = -0.10 + (100000 / 100000) * (-0.10 - 0.04)
 key = two(a, b, 1e-12, 'geared return')
 numeric(FI, 'fi-forwards-geared-loss', key, 0, {'no-interest': 2 * F(-1, 10), 'no-gearing': F(-1, 10), 'sign': -key})
 
-# fi-forwards-currency-forward: covered interest parity against a round trip of 1 pound
-a = F(125, 100) * F(105, 100) / F(103, 100)
-b = (1.25 * 1.05) / (1 * 1.03)
+# fi-forwards-currency-forward (re-authored after review bank 2 b): a euro costs 0.8600 pounds; 4.5% in pounds, 2% in euros
+# covered interest parity against a round trip of 1 euro
+a = F(86, 100) * F(1045, 1000) / F(102, 100)
+b = (0.86 * 1.045) / (1 * 1.02)
 key = two(a, b, 1e-12, 'currency forward')
-numeric(FI, 'fi-forwards-currency-forward', key, 4, {'rates-swapped': 1.25 * 1.03 / 1.05, 'added-gap': 1.25 * (1 + 0.05 - 0.03)})
-stated(FI, 'fi-forwards-currency-forward', '1.3125/1.03 \\\\approx 1.2743')
+numeric(FI, 'fi-forwards-currency-forward', key, 4, {'rates-swapped': 0.86 * 1.02 / 1.045, 'added-gap': 0.86 * (1 + 0.045 - 0.02)})
+ok(fmt(0.86 * 1.045, 4) == '0.8987' and fmt(key, 4) == '0.8811', 'stated figures 0.8987 and 0.8811')
+stated(FI, 'fi-forwards-currency-forward', '0.8987/1.02 \\\\approx 0.8811')
+stale_fc(FI, 'fi-forwards-currency-forward', '1.25', '1.2743', '1.3125', 'dollar', '1.03')
 
-# op-payoff-short-strangle-loss: premiums less payoffs, against a scan of the payoff
-sp = lambda s: 2.20 + 1.80 - max(95 - s, 0) - max(s - 105, 0)
-a = F(220 + 180, 100) - (95 - 88)
-key = two(a, sp(88), 1e-12, 'strangle P&L at 88')
-numeric(FI, 'op-payoff-short-strangle-loss', int(key), None, {'no-premium': -(95 - 88), 'premium-only': 4})
+# op-payoff-short-strangle-loss (re-authored after review bank 2 b: sell the 90 put for 3.20 and the 110 call for 2.80; share at 81)
+# premiums less payoffs, against a scan of the payoff
+sp = lambda s: 3.20 + 2.80 - max(90 - s, 0) - max(s - 110, 0)
+a = F(320 + 280, 100) - (90 - 81)
+key = two(a, sp(81), 1e-12, 'strangle P&L at 81')
+numeric(FI, 'op-payoff-short-strangle-loss', int(key), None, {'no-premium': -(90 - 81), 'premium-only': 6})
+stated(FI, 'op-payoff-short-strangle-loss', '3.20 + 2.80 = 6')
+stated(FI, 'op-payoff-short-strangle-loss', '90 - 81 = 9')
+stale_fc(FI, 'op-payoff-short-strangle-loss', '95', '105', '88', '2.20', '1.80', '£7', '£4')
 
 # op-strategies-one-by-two-breakeven: closed form against a scan of the expiry payoff
 pay = lambda s: max(s - 100, 0) - 2 * max(s - 110, 0) - 5 + 2 * 2.5
@@ -383,7 +398,7 @@ numeric(FI, 'op-strategies-one-by-two-breakeven', a, None, {'peak': 110, 'two-fo
 a = 100 + F(720 - 510, 100) / F(98, 100)
 spot = 7.20 - 5.10 + 100 * 0.98
 key = two(a, spot / 0.98, 1e-9, 'implied forward')
-numeric(FI, 'op-parity-implied-forward', key, 2, {'not-compounded': 100 + 2.10, 'gave-spot': spot})
+numeric(FI, 'op-parity-implied-forward', key, 2, {'not-compounded': 100 + 2.10, 'gave-spot': spot, 'gap-only': 2.10 / 0.98})
 ok(fmt(2.10 / 0.98, 4) == '2.1429', 'gap 2.1429')
 
 # op-greeks-vol-move-pnl: vega rule against a finite repricing with a linear-in-vol price
@@ -443,14 +458,20 @@ for _ in range(450):                                      # one share at a time 
     left[best[0]] -= 1
     got[best[0]] += 1
 two(a, got['B'], 0, 'shares B buys')
-numeric(FI, 'ms-book-who-gets-filled', a, None, {'time-first': fill(book, 450, lambda o: o[3])['B'], 'filled-in-full': 300})
+numeric(FI, 'ms-book-who-gets-filled', a, None, {'time-first': fill(book, 450, lambda o: o[3])['B'], 'filled-in-full': 300, 'left-after-c': 450 - 100})
 
-# ms-costs-shortfall-with-unfilled: Fraction against a paper-portfolio comparison
-a = 6000 * (F(2506, 100) - 25) + 4000 * (F(2520, 100) - 25) + 30
-paper = 10000 * (25.20 - 25.00)
-real = 6000 * (25.20 - 25.06) - 30
+# ms-costs-shortfall-with-unfilled (re-authored after review bank 2 b: 8,000 decided at 12.50; 5,000 filled at 12.54; close 12.70; commission 25)
+# Fraction against a paper-portfolio comparison
+a = 5000 * (F(1254, 100) - F(1250, 100)) + 3000 * (F(1270, 100) - F(1250, 100)) + 25
+paper = 8000 * (12.70 - 12.50)
+real = 5000 * (12.70 - 12.54) - 25
 key = two(a, paper - real, 1e-6, 'implementation shortfall')
-numeric(FI, 'ms-costs-shortfall-with-unfilled', int(a), None, {'filled-only': 6000 * F(6, 100) + 30, 'no-commission': a - 30})
+numeric(FI, 'ms-costs-shortfall-with-unfilled', int(a), None, {'filled-only': 5000 * F(4, 100) + 25, 'no-commission': a - 25, 'filled-cost': 5000 * F(4, 100)})
+ok(a == 825 and 5000 * F(4, 100) == 200 and 3000 * F(20, 100) == 600, 'shortfall 825 = 200 + 600 + 25')
+stated(FI, 'ms-costs-shortfall-with-unfilled', '= 200$ pounds')
+stated(FI, 'ms-costs-shortfall-with-unfilled', '= 600$ pounds')
+ok(item(FI, 'ms-costs-shortfall-with-unfilled')['requires'] == ['micro/l6-impact'], 'shortfall item requires micro/l6-impact, which teaches shortfall')
+stale_fc(FI, 'ms-costs-shortfall-with-unfilled', '25.00', '25.06', '25.20', '10,000', '6,000', '4,000', '1,190', '£30', '360')
 
 # tp-bs-vega-rule: S N'(d1) sqrt(T) against a finite difference in vol, and the 0.4 rule
 a = 100 * N.pdf(0.2 * 0.5 / 2) * 0.5 / 100
@@ -458,7 +479,7 @@ b = (bs(100, 100, 0.25, 0, 0.2001) - bs(100, 100, 0.25, 0, 0.1999)) / 0.0002 / 1
 key = two(a, b, 1e-6, 'vega per vol point')
 rule = F(4, 10) * 100 * F(1, 2) / 100
 ok(abs(float(rule) - key) < 0.005, 'the 0.4 rule sits inside the key band')
-numeric(FI, 'tp-bs-vega-rule', key, 2, {'no-time': F(4, 10) * 100 / 100, 'used-t': F(4, 10) * 100 * F(1, 4) / 100})
+numeric(FI, 'tp-bs-vega-rule', key, 2, {'no-time': F(4, 10) * 100 / 100, 'used-t': F(4, 10) * 100 * F(1, 4) / 100, 'per-unit-vol': 100 * N.pdf(0.05) * 0.5})
 ok(fmt(key, 4) == '0.1992', 'exact 0.1992')
 
 # ---------------------------------------------------------------- behavioural-7 (rule 11)
