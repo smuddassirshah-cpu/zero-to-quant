@@ -224,7 +224,15 @@ K(f, 'q1', 0.55, row=0.5, col_sum=1.1, bull_only=0.45)
 # Off the diagonal p_ij^2 is not the chance of any two-step path from i to j (the lesson's own trap says so).
 p = BB
 two_step_paths_bear_bull = [p[1][0] * p[0][0], p[1][1] * p[1][0]]
-ok(p[1][0] ** 2 in two_step_paths_bear_bull, 'FINDING 1 (fails on purpose) l2 quiz[0] byKey.squared: 0.2^2 "keeps one path", yet it is the chance of no two-step path from bear to bull')
+# Fix pass: the check now reads the content. 0.2^2 is no two-step path, and the feedback must say so.
+fb_sq = item(f, 'q0')['feedback']['byKey']['squared']
+ok(p[1][0] ** 2 not in two_step_paths_bear_bull and 'matches no path' in fb_sq and 'keeps one path' not in fb_sq,
+   'FINDING 1 (fixed) l2 quiz[0] byKey.squared: 0.2^2 is the chance of no two-step path, and the feedback says so')
+fb_cu = item(f, 's8')['feedback']['byKey']['cubed']
+ok(0.01 ** 3 != float(CR3[0][2]) and 'matches no path' in fb_cu and 'keeps the impossible' not in fb_cu,
+   'FINDING 2 (fixed) l2 s8 byKey.cubed: 0.01^3 is no path, and the feedback says so')
+ok('keeps one route' not in [o for o in item(f, 'q3')['widget']['options'] if o['id'] == 'entry'][0]['why'],
+   'FINDING 2 (fixed) l2 quiz[3] option entry no longer says the entrywise product keeps one route')
 # quiz[3] option 'entry': (P^2)_ij (P^3)_ij "keeps one route through the middle". A route is (P^2)_im (P^3)_mj for one m.
 P2, P3 = mpow(W, 2), mpow(W, 3)
 off_diag = [P2[i][j] * P3[i][j] in [P2[i][m] * P3[m][j] for m in range(3)] for i in range(3) for j in range(3) if i != j]
