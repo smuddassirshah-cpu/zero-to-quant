@@ -126,3 +126,42 @@ Reuse by problem (the ruling of session AB): story or sentence shared with the c
 ## Engine
 
 Two bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (review problems proof 1-3):` (the `%` reading of finding 3, and a same-course question-sentence check for `fresh-check`).
+
+## Fix pass
+
+Edits are targeted to the three problem sets; no problem id, skill list or lesson was changed. Every new key and slip was computed by two routes (`docs/reports/problems-proof-numbers.py`: formula, then enumeration or a search over a box; `review-problems-proof-1-3-scripts/fix-pass.py`: a rebuild from the files). Each claim a new text states was checked true or false by exhaustive search; each false one has its smallest counterexample verified.
+
+Status: fixed 15, not asked 2 (findings 9 and 11), disputed 0, deferred 0. Where a fix differs from the proposal, the line says why.
+
+1. `p-spread-signal` part 4 `as-and`: fixed with the reader's line (3 'and' rows and 3 failing rows are different sets; the implication holds on the 3 'and' rows plus the 2 rows with $P \lor Q$ false). Verified by enumeration.
+2. `p-spread-signal` Monday prompt: fixed by the re-set of finding 5 (the figures are read on Monday and nothing refers to yesterday).
+3. `p-fund-thresholds` `%` entry: fixed by the re-set of finding 4: the grid and every sentence carry plain marks, so no `%` is shown or typed.
+4. `p-fund-thresholds`: re-set as four judges marking four dancers out of 10 (rows D1 to D4, columns J1 to J4). The grid values are unchanged, so keys 0, 2 and 6 and every `wrong` value stand; the negation of B(5), "A and B true for every smaller $t$", A(7) false and B(3) false were re-checked by search.
+5. `p-spread-signal`: re-set as a greenhouse controller ($P$ soil below 30%, $Q$ air above 25 °C, $R$ tank under 50 litres). Monday 24%, 21 °C and 40 litres gives $P$ true, $Q$ false, $R$ true: 2, and no watering. The truth-table keys 3 and 5 are unchanged.
+6. `p-leverage-calls`: re-set as 40 parcels (rule: over 5 kg implies a heavy label; 12, 15 and 9). Keys 3, 37, 6 and the negation stand; every line re-worded by hand.
+7. `p-rule-and-domain`: re-set, beyond the reader's least fix, because its parts 1 to 3 were three lesson screens. New rule $f_c(x) = cx - 4$. Part 1 asks the one value of $c$ at which the division by $c$ in the one-to-one proof fails (0; claim checked: one-to-one exactly for $c \ne 0$ over $c$ from -50 to 50, and $f_0(1) = f_0(2) = -4$). Part 2 solves $cx - 4 = y$ (key $\tfrac{y+4}{c}$). Part 3 takes $c = -2$ and asks which $x$ has $f(x) = -10$ (3; slips 7, 16, -3 from the sign, the applied $f$ and the dropped minus). Part 4 is $g(n) = 4n - 4$ on $\mathbb{Z}$, how many of 1 to 30 are missed (23; the 7 reached are 4, 8, ..., 28). The lesson's "which opening" choice is gone; the proof step is tested through the value of $c$ instead.
+8. `p-shift-images`: re-set as eight ferries at four berths, morning and evening sailings. Keys 3, 3, 1 and the choice stand; every string re-worded.
+9. `p-jobs-servers`: no change asked (the level's task with new numbers).
+10. `p-multiples-forty` part 4: fixed, it restates $|A| = 10$ and $|B| = 6$.
+11. `p-multiples-forty` prose: no change asked.
+12. `p-two-odd-squares` part 4: fixed by the re-set below, and what is refuted is now the true converse of the stated claim.
+13. `p-two-odd-squares`: re-set (the exam item 22 twin is gone). Not the reader's mod-3 proposal: that claim shares "multiples of 3 and contrapositive" ground with `p-even-test-contra` as re-set, with `p-six-nine-lots` and with `review-3` item 8, so I used remainder 1 on division by 5. Claim: $m = 5j + 1$, $n = 5k + 1$ give $mn = 5(5jk + j + k) + 1$ (true for both factors from -60 to 60). Part 3 is $m = 11$, $n = 16$ (bracket 35, $176 = 5 \times 35 + 1$; slips 30 and 176). Part 4: the converse (remainder 1 for $mn$ forces remainder 1 for each factor) is false. With $m = 4$ the products for $n = 1, 2, 3$ leave 4, 3, 2 and $n = 4$ gives 16, so the smallest refuting $n$ is 4 (slip 1, where the 'if' part fails). Part 2 options: add, restate, cases.
+14. `p-even-test-contra`: re-set with the reader's claim "if $n^2 + 2$ is a multiple of 3, then $n$ is not a multiple of 3" (true on -90 to 90; its converse is true too, as the `converse` option says). Parts 1 to 3 as proposed (bracket $3k^2$, slips $9k^2$ and $k^2$, the integer reason).
+15. `p-even-test-contra` part 4: fixed by the re-set. $n = -6$ is a multiple of 3, so it runs the proof and uses part 2's bracket: 12 (slips -12, 36, 38).
+16. `p-step-three-sum` part 2: fixed as proposed (question "Add the first ten terms"; the generic and correct lines no longer point to guess B).
+17. `p-step-three-sum` part 3: reworked. It asks for the numerator multiplied out, $\tfrac{k(3k-1)}{2} + (3k+1) = \tfrac{\square}{2}$, key $3k^2 + 5k + 2$, with `form: "expanded"` and no factored `accept`, so $(k+1)(3k+2)$ typed from guess B is refused on a `form` line that does not give the answer. A learner can still expand the target backwards; that is the same algebra as the step, so I judge this honest inside one box.
+
+Graded values changed (old to new). `p-rule-and-domain`: part 1 choice to numeric 0 (slips -4, 1); part 2 key $\tfrac{9-y}{3}$ to $\tfrac{y+4}{c}$; part 3 key 5 to 3 (slips -5, 27, 1 to 7, 16, -3); part 4 key 20 to 23 (slip 10 to 7). `p-two-odd-squares`: part 1 key $j^2+j+k^2+k$ to $5jk+j+k$; part 3 key 42 to 35 (slips 34, 170 to 30, 176); part 4 key 2 to 4. `p-step-three-sum`: part 3 key $3k+2$ to $3k^2+5k+2$ (slips now $3k^2+2k+1$, $3k^2-k$, $3k+2$). `p-even-test-contra`: part 2 key $2k^2+6k$ to $3k^2$; part 4 key -8 to 12 (slips 8, 28, -26 to -12, 36, 38); parts 1 and 3 are choices with new text. Option ids of `p-two-odd-squares` part 2 and `p-even-test-contra` part 3 changed. No problem id, part count or skill changed.
+
+Freshness, by eye and by grep of every lesson, quiz, review and homework of `proof`, `exams/topic-0.6.json` and `exams/stage-0.json` (nouns, key numbers and settings):
+- `p-leverage-calls` (parcels, heavy label, 5 kg): no match; the broker and margin story is gone.
+- `p-spread-signal` (greenhouse, soil, tank, 24%, 21 °C, 40 litres): no match.
+- `p-fund-thresholds` (judges, dancers, marks out of 10): no match (only the verb "judged" in `l1`).
+- `p-rule-and-domain` ($cx - 4$, $-2x - 4$, $4n - 4$, $f_c$): no match; the lessons use $3x + 2$, $5x - 1$, $2x - 6$, $5x - 7$ and the seating function. The value -10 appears elsewhere only as a slip of another function.
+- `p-shift-images` (ferries, berths, sailings): no match; the seating story of `l8` and `l9` is gone.
+- `p-two-odd-squares` (remainder 1 on division by 5, $5j + 1$, 11 times 16, 35, 176): no match; division by 4 and the exam's $a^2 + b^2$ are gone. `l12` has "remainder 1 on division by each $p_i$" for Euclid's $N$, another task.
+- `p-even-test-contra` ($n^2 + 2$, multiple of 3, $3k^2$, $n = -6$): `stage-0` has "$n^2 + 2n$" (a sequence term) and `homework-3` has $3k^2$ inside the $n^3 - n$ induction, neither the claim nor the key. `review-3` item 8 and `homework-3` item 5 share the topic (multiples of 3, contrapositive) but not the claim, bracket or numbers.
+- `p-step-three-sum` (numerator $3k^2 + 5k + 2$): no match; `review-3` item 5 and `homework-3` item 1 share the step template only.
+`fresh-check.mjs --file --cross-numbers` on the three sets: 0 hits each.
+
+Gates. `docs/reports/problems-proof-numbers.py`: 612 checks, 0 failures, exit 0 (updated for every changed problem, with new checks for the `as-and` rows, the claims, the leftover-noun scan, the no-`%` grid, the `form` line and the accept list of finding 17). Reader scripts in `review-problems-proof-1-3-scripts/`: `fix-pass.py` (new, 75 checks, 0 failures) and `grade-probe.mjs` (rows updated for the re-set parts: 37 typed parts, 528 checks, 225 reader rows, 0 failures; the factored $(k+1)(3k+2)$ lands on the `form` line). `mine.py` is the pre-fix script: its checks on the re-set problems describe the old text and are superseded by `fix-pass.py`. Validator: 0 errors, 4522 warnings (one fewer than before; none names the three files). `grade-all.mjs --file` on each set: 0 failures. Voice scan 35: 0 and 0; no exclamation mark added, no em-dash. Playthrough `--problems proof/problems-1` to `-3`, desktop and `--mobile`: all six passed.
