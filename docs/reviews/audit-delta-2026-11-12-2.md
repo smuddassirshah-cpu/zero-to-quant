@@ -126,3 +126,25 @@ Opus fixer, 12 Nov 2026. Each finding was re-derived from the content and `app/j
 Siblings checked, none needing a fix: every numeric widget in the three mm-games and conditional files for `accept` bands against `tol`, for slip bands overlapping, and for mirror or decimal slips narrower than the key. `r-fraud-flag` states $\pm 0.0005$ with tolerance 0.0005, which agrees.
 
 Gates: validator 0 errors, 4,522 warnings; `delta-2026-11-12-2-concepts.py` exit 0 (15,843 checks, no check edited); number scripts conditional-2-perf, conditional-4-perf, mm-games-3-perf, odes-L1 to L4 all exit 0; voice gate 35 at 0 and 0 for mm-games, conditional and odes; playthrough of the six edited files plain and `--mobile` with `--local-cdn`, all passed.
+
+## Fix-pass read
+
+Read blind, from `git show 8f028fe9 -- app/content/courses`, before the findings above were opened. Each row covers the whole item around the changed line. Band edges are inclusive: `within` in `app/js/engine/grade.js` adds $10^{-9}$ to an absolute tolerance. A typed `%` divides the entry by 100 where the widget has no `%` unit.
+
+| # | File | JSON path | Claim | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | conditional/problems-5.json | items[3] `p-doubling-desk` parts[2].widget.wrong[3] `sign` tol.abs 0.005 to 0.01 | The band 22.54 to 22.56 catches the positive of every value the key accepts | correct | Exact: $q = (31/32)^{20} = 0.529949$, $-20q/(1-q) = -22.5486$. Rounded route the prompt asks for: $10.598/0.4701 = 22.5441$, so 22.54. With 0.53: 22.5532. All three lie in the band, which mirrors the key band ($-22.55 \pm 0.01$). Other slips are $-31$, $-20$, $-10.598$: no overlap. Profit of a quitter is negative under the only reading, so no correct answer is positive. |
+| 2 | conditional/review-5.json | items `r-low-prior` widget.accept | "any form equal to $\tfrac{6}{13}$, or $0.4615 \pm 0.005$" | correct | Bayes: $0.18/(0.18 + 0.21) = 6/13 = 0.461538$. Key 0.4615 with tol.abs 0.005, so the line now states the graded band. The explain's 0.46 is inside it. Slips 0.6 and 0.8571 are outside. |
+| 3 | mm-games/review-3.json | items `r-residual` widget.wrong `decimal` tol.abs 0.005 to 0.0002 | The band 0.0085 to 0.0089 catches 0.87% typed as a decimal or with a % sign | correct | $2\sqrt{0.19} = 0.871780$. Decimal forms 0.0087, 0.008718 (from the 0.4359 shown) and 0.00872 (from the 0.436 shown) are all in the band. A typed "0.87%" parses to 0.0087 and gets this line, which tells the learner to drop the sign. Key band 0.865 to 0.875 and slips 0.38 and 0.2 (each ± 0.005) are far outside. The old band, 0.0037 to 0.0137, gave this line to unrelated small entries. |
+| 4 | odes/fluency-l2-separable.json | families `discount` widget.placeholder | "For example 123.45" is not a key on any draw | correct | Enumerated all 729 draws ($p$ 100 to 900, $r$ 1 to 9, years 2 to 10). The nearest key is 123.76 ($p = 200$, $rT = 0.48$), 0.31 away against a tolerance of 0.0051. The nearest slip value is 122.78. The old 81.87 was the key at $p = 100$, $rT = 0.2$. |
+| 5 | odes/fluency-l3-integrating-factor.json | families `constant-coefficient` prompt | "Solve $v' = av - as$ for $v(t)$, with $v(0) = y_0$" | correct | The key $(y_0 - s)e^{at} + s$ is a function of $t$ and satisfies the equation and the start. The name is the template's `{v}`, so it reads $y(t)$, $B(t)$ or $L(t)$ to match the equation on every draw. |
+| 6 | odes/fluency-l7-characteristic-equation.json | families `fit-two-roots` prompt | "... $= 0$ for $y(t)$, with $y(0)$ and $y'(0)$" | correct | The unknown is the literal $y$ in the equation, key and slips for every draw, and the key is in $t$. Key check: $y(0) = c_1 + c_2$, $y'(0) = r_1c_1 + r_2c_2$. |
+| 7 | odes/fluency-l7-characteristic-equation.json | families `repeated-root` prompt | Same wording as row 6 | correct | Literal $y$ throughout, key $(y_0 + kt)e^{rt}$ in $t$. Key check: $y(0) = y_0$, $y'(0) = k + ry_0$. |
+
+Count: 7 rows, 7 `correct`, 0 `wrong`, 0 `imprecise`, 0 `misleading`, 0 `unverified`. No findings.
+
+Voice: the three changed strings a learner reads (rows 2, 4, 5 to 7) have no em-dash or exclamation mark and stay under 35 words.
+
+Note, outside the diff and not a finding: the three "Solve" prompts in `fluency-l2-separable.json` keep the form without "for $y(t)$". They write $\tfrac{dy}{dt}$, so the variable is already shown.
+
+After reading findings 1 to 5 and the fix pass above: no row contradicts them. Rows 1 to 7 reach the same bands and counts by separate recomputation (22.5441, 0.008718, 729 draws, nearest key 0.31 away).
