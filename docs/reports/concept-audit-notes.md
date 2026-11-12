@@ -128,4 +128,4 @@ Issues
 - Two fixers in one wave overwrote each other's temp file in the shared scratchpad; one re-applied its edits from a saved patch and re-ran its gates. Diffs were checked to stay in each course folder before merging. Agent prompts now say "use your own `mktemp -d` folder".
 - Gates were re-run by the orchestrator after the last merge of each course: scripts exit 0, voice 35 at 0 and 0, playthroughs desktop and mobile with the local CDN (random-vars 18, markov 12, limits-thm L1 to L3 20, limits-thm L4 20).
 - (open, engine) Inbox bullets this session: random-vars 4-5 round 2 3, markov round 2 1, limits-thm round 2 2 (review and homework sets have no number script), limits-thm L4 2 (shown products that do not reproduce; universal-wording list).
-- Content branch during the session: see the next-steps file for whether it moved.
+- Content branch during the session: no new commit (tip d8567329, 09:23 UTC).
