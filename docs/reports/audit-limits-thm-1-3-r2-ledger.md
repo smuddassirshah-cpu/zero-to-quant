@@ -355,11 +355,11 @@ Verdicts: `correct`, `wrong`, `imprecise`, `misleading`, `unverified`.
 | l11 | s[1].explain | sum and average give the same Z | correct | algebra |
 | l11 | s[2] | uniform average at n = 3 is within 0.01 of each normal bar; exponential is not | correct | script: l11 s2, MC uniform |
 | l11 | s[2].options[1].why | almost nothing below −1.5 against the normal's 0.07 | correct | Φ(−1.5) = 0.067 |
-| l11 | s[2].explain | lean fades roughly like 1/√n; speed depends on skew and tails | correct | Berry–Esseen, Durrett 3.4.9 |
-| l11 | s[3] | 1,000 single draws show the exponential shape, not a bell | correct | Glivenko–Cantelli; the CLT concerns sums |
-| l11 | s[4].prose | CLT: iid, mean μ, finite variance; standardised average tends to N(0,1) | correct | Lindeberg–Lévy, Durrett 3.4.1 |
+| l11 | s[2].explain | lean fades roughly like 1/√n; speed depends on skew and tails | correct | Berry-Esseen, Durrett 3.4.9 |
+| l11 | s[3] | 1,000 single draws show the exponential shape, not a bell | correct | Glivenko-Cantelli; the CLT concerns sums |
+| l11 | s[4].prose | CLT: iid, mean μ, finite variance; standardised average tends to N(0,1) | correct | Lindeberg-Lévy, Durrett 3.4.1 |
 | l11 | s[4].w.options | finite variance is the condition this form cannot do without; 30 is a rule of thumb | correct | for the σ/√n scaling stated |
-| l11 | s[4].explain | other forms relax independence and identical distribution | correct | Lindeberg–Feller; martingale CLT |
+| l11 | s[4].explain | other forms relax independence and identical distribution | correct | Lindeberg-Feller; martingale CLT |
 | l11 | s[5].w.lines | standardised sum equals standardised average | correct | algebra |
 | l11 | s[5].explain | S_n ≈ N(nμ, nσ²) for large n | correct | CLT restated |
 | l11 | s[6] | 50 exponential orders: 1 − Φ(1.4142) = 0.0786; slips 0.9214, 0.4207 | correct | script |
@@ -420,7 +420,7 @@ Verdicts: `correct`, `wrong`, `imprecise`, `misleading`, `unverified`.
 | l13 | s[5].prose | rule: P(X ≤ k) ≈ Φ((k + 0.5 − np)/√(np(1−p))) | correct | Ross 5.4.1 |
 | l13 | s[5] | P(X=12) from 11.5 to 12.5: 0.161 against exact 0.162 | correct | script |
 | l13 | s[5].explain | rule of thumb is cautious near p = 0.5 | correct | symmetric case |
-| l13 | s[6].w.lines | binomial as a sum of indicators, CLT, half-unit step | correct | De Moivre–Laplace |
+| l13 | s[6].w.lines | binomial as a sum of indicators, CLT, half-unit step | correct | De Moivre-Laplace |
 | l13 | s[7] | Bin(100, 0.02): exact 0.0508, Poisson 0.0527, normal 0.0371; use the Poisson | correct | script |
 | l13 | s[7].options[2].why | normal is 27% too low | correct | (0.0508 − 0.0371)/0.0508 |
 | l13 | s[7].explain | for p near 1 count failures | correct | symmetry of the binomial |

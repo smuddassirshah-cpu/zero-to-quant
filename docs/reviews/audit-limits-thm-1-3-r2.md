@@ -25,7 +25,7 @@ Pattern: `N. file | JSON path | severity, tag | problem | evidence and basis | e
 
 7. `l3-rare-events.json` | `screens[4].feedback.byKey.zero` | imprecise, minor | "About one module in five is clean" for a chance of 0.2231, which is one in 4.5. | $e^{-1.5} = 0.2231$. Script check KNOWN F7. | Set the line to: `A mean of 1.5 does not force a bug. More than one module in five is clean.`
 
-8. `problems-3.json` | `items[0].parts[3].widget.options[2].why` | imprecise, minor | "The theorem needs enough spread" turns a rule of thumb about a finite-sample approximation into a condition of the central limit theorem. The theorem holds for these draws; the fit at $n = 250$ is what is poor. | Lindeberg–Lévy needs only iid draws with finite variance (Durrett 3.4.1). Lesson 13 says "rule of thumb" each time. Script check KNOWN F8. | Set the `why` to: `The theorem is a limit, and at this $n$ the bell still fits poorly. With $p = 0.0228$ the bars lean against 0, and $np(1 - p)$ is below the usual 10.`
+8. `problems-3.json` | `items[0].parts[3].widget.options[2].why` | imprecise, minor | "The theorem needs enough spread" turns a rule of thumb about a finite-sample approximation into a condition of the central limit theorem. The theorem holds for these draws; the fit at $n = 250$ is what is poor. | Lindeberg-Lévy needs only iid draws with finite variance (Durrett 3.4.1). Lesson 13 says "rule of thumb" each time. Script check KNOWN F8. | Set the `why` to: `The theorem is a limit, and at this $n$ the bell still fits poorly. With $p = 0.0228$ the bars lean against 0, and $np(1 - p)$ is below the usual 10.`
 
 9. `problems-3.json` | `items[0].parts[1].explain.text`, third sentence | misleading, minor | "the day almost never does" for a chance of 0.0228. The next part counts 5.7 losing days a year on that chance. | $1/0.0228 \approx 44$ days. Script check KNOWN F9. | Replace the third sentence with: `One trade alone loses often; a whole day loses about once in 44.`
 
@@ -56,15 +56,34 @@ These are empirical remarks about markets that I could not establish without dat
 - Validator, from `app/`: `node tools/validate.mjs` gives `0 errors, 5023 warnings`. `content/manifest.json` restored afterwards.
 - Number scripts: `problems-limits-thm-numbers.py` exit 0 (1,539 checks, 0 failures); `fluency-limits-thm-numbers.py` exit 0 (3,537 checks, 0 failures); `limits-thm-1-perf-numbers.py` exit 0 (41 of 41); `limits-thm-2-perf-numbers.py` exit 0 (64 of 64); `limits-thm-3-perf-numbers.py` exit 0 (67 of 67).
 - Concepts script: `limits-thm-L1-3-concepts-r2.py` exit 1, 226 checks, the 11 on-purpose failures only.
-- Playthrough with `--local-cdn`, selectors only: 13 lessons, 6 review and homework sets (`--set`), 3 problem sets (`--problems`), 2 fluency sets (`--fluency`). Desktop: all passed. Mobile: see the line added below once run.
+- Playthrough with `--local-cdn`, selectors only: 13 lessons, 6 review and homework sets (`--set`), 3 problem sets (`--problems`), 2 fluency sets (`--fluency`). Desktop: all three runs exit 0, "All passed" (19 lesson and set lines, 3 problem sets, 2 fluency sets). `--mobile`: the same three runs exit 0, "All passed". Browser relaunches: 0.
 
 ## Overlap with earlier reads
 
-Filled after the WIP commit; see the section appended below.
+Read after the WIP commit (`2a840cd3`): `docs/reviews/audit-limits-thm-1-3.md` with its Fix pass, Fix-pass read and Follow-up; `docs/reviews/review-1.5.md` (limits-thm section and fix pass); `docs/reviews/review-problems-1.5-c.md` and `-d.md` (sets 1 to 3); `docs/reviews/review-perf-retrofit-9.md` (the three derivation items); the round 1 ledger and concepts script. Only conceptual findings are counted, as in round 1.
+
+| | count | findings |
+|---|---|---|
+| This round only | 11 | all 11 above (1 wrong, 9 imprecise, 1 misleading; all minor) |
+| Both | 0 | none |
+| Earlier reads only | 40 | round 1 audit 28; its fix-pass read 1 (with one sibling, 4a); earlier reviews 11. All were fixed before this read, so none could be found here |
+
+For each `wrong` of this round, whether an earlier read found it:
+
+- Finding 1 (`review-2` `r-pareto-mean`, slip `half`): no earlier read found it. `review-1.5.md` does not mention the item; the round 1 ledger has no row for this slip, and no number script recomputes it (`grep pareto` over `docs/reports/limits-thm*` and the round 1 ledger returns nothing). Round 1 states that every `wrong[]` value and slip line was recomputed; this one was missed.
+
+New `wrong` that no earlier read found: 1 (minor) in three levels.
+
+Other points from the comparison.
+
+- None of the 11 strings was written by a fix pass. `git log -S` puts each at the original authoring commits (20 Oct for the lessons and `review-2`; 10 Nov for `problems-3`).
+- The 40 earlier findings were re-read here as ordinary ledger rows, and every fixed text holds: for example `l4` `screens[7]` (first factor 0.8), `l7` `screens[3]` (once every two months), `l12` `screens[5]` (excess return, rate taken as 0), `l11` `screens[4]` ("this form assumes"), `l9` `summary.formula.note`, `l13` `screens[9]` (`nocc` 0.0119), `problems-2` `p-default-drag` slips 0.5438 and 0.5173, homework-3 `items[9]` exact figures (checked here to $n = 600$).
+- Neighbouring gaps. Round 1 finding 13 corrected the second sentence of `l11` `screens[8].explain`; finding 11 here is the third sentence of the same explain. Round 1 findings 4, 5 and 11 removed "needs" from the limit theorems; findings 2, 5 and 11 here are the same class (a sufficient condition written as necessary) in `l1`, `l10` and `l11`. Round 1 finding 2 was a frequency phrase; findings 6, 7 and 9 here are the same class.
+- The round 1 fix-pass read simulated the clustering claim with normal shocks (20-day excess kurtosis 1.03 against 0.07 shuffled) and so checked only "slower than for independent days". Neither earlier read tested "summing 20 days thins the tails" against the daily figure; the note above records that it holds for fat-tailed daily shocks and not for normal ones.
 
 ## Inbox
 
 Bullets for the orchestrator to file; `docs/BACKLOG-INBOX.md` is not edited here.
 
-- Validator or number-script rule: recompute review-set slip values from the route their `byKey` line names. `review-2` `r-pareto-mean` `half` (0.5 against a named route worth 2/3) passed every gate. This is the slip-naming class again.
+- Number scripts: the review sets of limits-thm levels 1 to 3 have no number script (`problems-limits-thm-numbers.py`, the fluency script and the three perf scripts cover problems, fluency and the derivation items only). `review-2` `r-pareto-mean` `half` (0.5 against a named route worth 2/3) passed every gate and two reads. Add review and homework slip values to a course number script, each recomputed from the route its `byKey` line names. This is the slip-naming class again.
 - Lint, warning only: flag "without independence", "needs independence", "only for independent", "fails for" and "would block" in content strings for a manual read. Three of this round's findings (2, 5, 11) are a sufficient condition written as a necessary one.
