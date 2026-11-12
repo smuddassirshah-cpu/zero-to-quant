@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Bank part 2, session 3: every key, slip and stated figure in statistics-3, finance-3 and behavioural-7, by two routes.
+"""Bank part 2, session 3: every key, slip and stated figure in statistics-3, finance-3, behavioural-7 and coding-3, by two routes.
+
+coding-3: each solution runs on every example and hidden test, the untouched starter fails, a brute-force twin agrees on every
+test, and each named trap (near-miss) fails a hidden test; the slow trap runs in a fresh CPython with a 5 s limit. Reading
+items run their own lines (NumPy when present; C++ with g++ -std=c++20).
 
 Standard library only (runs under plain python3). numbers_lib.py has no Bank loader yet (B2-E4), so the JSON is read here.
 Route A is exact (Fraction) or closed form; route B is enumeration, a seeded simulation with a stated tolerance, a
@@ -13,7 +17,7 @@ from statistics import NormalDist
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BANK = os.path.join(HERE, '..', '..', 'app', 'content', 'bank')
-FILES = ['statistics-3', 'finance-3', 'behavioural-7']
+FILES = ['statistics-3', 'finance-3', 'behavioural-7', 'coding-3']
 DATA = {f: json.load(open(os.path.join(BANK, f + '.json'), encoding='utf-8')) for f in FILES}
 ITEMS = {(f, it['id']): it for f in FILES for it in DATA[f]['items']}
 fails, checks = [], [0]
@@ -478,6 +482,373 @@ ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
 
+# ---------------------------------------------------------------- coding helpers (code items, rule 12; reading items, rule 13)
+import io, contextlib, subprocess, tempfile, time, shutil
+
+
+def code_cases(it):
+    w = it['widget']
+    return w['examples'], w['tests']
+
+
+def run_case(ns_src, c, impl=None, name=None):
+    """Run one case as the bank harness does: exec setup, eval call, eval expect, compare with ==. Returns (passed, seconds)."""
+    ns = {}
+    t0 = time.perf_counter()
+    try:
+        if impl is not None:
+            ns[name] = impl
+        else:
+            exec(ns_src, ns)
+        if c.get('setup'):
+            exec(c['setup'], ns)
+        a = eval(c['call'], ns)
+        e = eval(c['expect'], ns)
+        good = (a == e)
+    except Exception:
+        good = False
+    return bool(good), time.perf_counter() - t0
+
+
+def slow_case(src, c, limit=5.0):
+    """Run one case of src in a fresh CPython with a time limit: 'timeout', 'wrong' or 'pass'."""
+    prog = src + '\n' + (c.get('setup') or '') + f'\nimport sys\nsys.exit(0 if ({c["call"]}) == ({c["expect"]}) else 3)\n'
+    with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as fh:
+        fh.write(prog)
+        path = fh.name
+    try:
+        r = subprocess.run([sys.executable, path], timeout=limit, capture_output=True)
+        return 'pass' if r.returncode == 0 else 'wrong'
+    except subprocess.TimeoutExpired:
+        return 'timeout'
+    finally:
+        os.unlink(path)
+
+
+def code_item(f, i, fn, brute, traps, slow_traps=(), expect_count=None):
+    """solution passes every example and test (each under 1 s in CPython), the untouched starter fails, the brute-force twin
+    agrees with every stated expect, each named trap fails at least one hidden test; slow traps time out (5 s) on a named test."""
+    it = item(f, i)
+    lab = f'{f}/{i}'
+    w = it['widget']
+    ok(w['kind'] == 'code' and w.get('language', 'python') == 'python', f'{lab}: Python code item')
+    ok(w['starter'].strip().endswith('...') and w['starter'].startswith(f'def {fn}('), f'{lab}: starter is the signature with ...')
+    ok(it['question'] == f'Complete `{fn}`.' and f'`{fn}(' in it['prose'], f'{lab}: question and worked call in prose')
+    ok(240 <= it['pace'] <= 480, f'{lab}: pace 240 to 480')
+    ex, ts = code_cases(it)
+    ok(len(ex) == 2 and 6 <= len(ts) <= 10, f'{lab}: 2 examples, 6 to 10 tests ({len(ts)})')
+    ok(all(c.get('compare') == 'equal' for c in ex + ts), f'{lab}: compare equal')
+    m = re.match(r'Submit runs (\d+) hidden tests\. Each result must equal the expected (whole number|value)\.$', w['how'])
+    ok(m and int(m.group(1)) == len(ts), f'{lab}: how line counts {len(ts)} tests')
+    for c in ex + ts:
+        good, secs = run_case(w['solution'], c)
+        ok(good, f'{lab}: solution passes {c["call"]}')
+        ok(secs < 1.0, f'{lab}: solution under 1 s on {c["call"]} ({secs:.3f} s)')
+        ok(run_case(None, c, impl=brute, name=fn)[0], f'{lab}: brute-force twin agrees on {c["call"]} = {c["expect"]}')
+    for c in ex:
+        ok(any(c['call'] == t['call'] for t in ts), f'{lab}: example {c["call"]} is also a hidden test')
+    ok(not all(run_case(w['starter'], c)[0] for c in ts), f'{lab}: untouched starter fails')
+    ok(sum(not run_case(w['starter'], c)[0] for c in ts) >= 1, f'{lab}: starter fails at least one test')
+    for name, src in traps.items():
+        failed = [c['call'] for c in ts if not run_case(src, c)[0]]
+        ok(failed, f'{lab}: trap "{name}" fails a hidden test')
+        print(f'  trap {lab} "{name}" fails {len(failed)} of {len(ts)}: {failed[0][:70] if failed else "NONE"}')
+    for name, src, call in slow_traps:
+        c = next(t for t in ts if t['call'] == call)
+        small = [t for t in ts if t is not c and not t.get('setup') and len(t['call']) < 60 and '**' not in t['call'] and ' * ' not in t['call']]
+        ok(all(run_case(src, t)[0] for t in small), f'{lab}: slow trap "{name}" is right on the small tests')
+        res = slow_case(src, c)
+        ok(res == 'timeout', f'{lab}: slow trap "{name}" runs past 5 s on {call} ({res})')
+        print(f'  slow trap {lab} "{name}" right on {len(small)} small tests, {res} at 5 s on {call[:70]}')
+    return it
+
+
+def run_prose(it, lang='python'):
+    """Execute the fenced block of a reading item and return what it prints."""
+    m = re.search(r'```' + lang + r'\n(.*?)```', it['prose'], re.S)
+    ok(m is not None, f'{it["id"]}: fenced {lang} block')
+    body = m.group(1)
+    ok(len(body.strip('\n').split('\n')) <= 8, f'{it["id"]}: at most eight lines of code')
+    buf = io.StringIO()
+    if lang == 'python':
+        with contextlib.redirect_stdout(buf):
+            exec(body, {})
+    return body, buf.getvalue().strip()
+
+
+def cpp_run(src):
+    """Compile and run a C++ program with g++ -std=c++20; returns stdout, or None (with a printed warning) when no compiler."""
+    cxx = shutil.which('g++') or shutil.which('clang++')
+    if not cxx:
+        print('WARNING: no C++ compiler, C++ check skipped (not a pass)')
+        return None
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, 'a.cpp')
+    open(p, 'w').write(src)
+    r = subprocess.run([cxx, '-std=c++20', '-O0', p, '-o', os.path.join(d, 'a.out')], capture_output=True, text=True)
+    ok(r.returncode == 0, f'C++ compiles: {r.stderr[:200]}')
+    out = subprocess.run([os.path.join(d, 'a.out')], capture_output=True, text=True).stdout.strip()
+    shutil.rmtree(d)
+    return out
+
+
+def cpp_compiles(src):
+    cxx = shutil.which('g++') or shutil.which('clang++')
+    if not cxx:
+        print('WARNING: no C++ compiler, C++ check skipped (not a pass)')
+        return None
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, 'a.cpp')
+    open(p, 'w').write(src)
+    r = subprocess.run([cxx, '-std=c++20', '-fsyntax-only', p], capture_output=True, text=True)
+    shutil.rmtree(d)
+    return r.returncode == 0
+
+
+# ---------------------------------------------------------------- coding-3
+C = 'coding-3'
+from collections import Counter
+from itertools import combinations
+
+
+# pf-idioms-trend-direction. Brute: the set of signs of every difference.
+def trend_brute(xs):
+    signs = set()
+    for i in range(1, len(xs)):
+        d = xs[i] - xs[i - 1]
+        signs.add((d > 0) - (d < 0))
+    return 1 if signs == {1} else -1 if signs == {-1} else 0
+
+
+code_item(C, 'pf-idioms-trend-direction', 'trend', trend_brute, {
+    'first against last': 'def trend(xs):\n    if len(xs) < 2:\n        return 0\n    return (xs[-1] > xs[0]) - (xs[-1] < xs[0])\n',
+    'not strict (<= and >=)': 'def trend(xs):\n    p = list(zip(xs, xs[1:]))\n    if not p:\n        return 0\n    if all(a <= b for a, b in p):\n        return 1\n    if all(a >= b for a, b in p):\n        return -1\n    return 0\n'})
+
+
+# at-sort-largest-gap. Brute: pop values off a heap one at a time (no call to sorted).
+def gap_brute(xs):
+    import heapq
+    h = list(xs)
+    heapq.heapify(h)
+    best, prev = 0, None
+    while h:
+        v = heapq.heappop(h)
+        if prev is not None:
+            best = max(best, v - prev)
+        prev = v
+    return best
+
+
+ok(gap_brute([10, 3, 8, 20]) == 10 and gap_brute([1, 1, 50, 50]) == 49, 'heap twin sanity')
+code_item(C, 'at-sort-largest-gap', 'largest_gap', gap_brute, {
+    'gaps in input order': 'def largest_gap(xs):\n    return max((abs(b - a) for a, b in zip(xs, xs[1:])), default=0)\n',
+    'max less min': 'def largest_gap(xs):\n    return max(xs) - min(xs) if xs else 0\n'})
+ok(abs(3 - 10) == 7 and abs(8 - 3) == 5 and abs(20 - 8) == 12, 'explain: input-order gaps 7, 5, 12')
+
+
+# at-greedy-orders-to-fill. Brute: every subset, smallest size first (small cases); a heap of the largest (all cases).
+def fill_brute(sizes, target):
+    if target <= 0:
+        return 0
+    if len(sizes) <= 12:
+        for k in range(1, len(sizes) + 1):
+            if any(sum(c) >= target for c in combinations(sizes, k)):
+                return k
+        return -1
+    import heapq
+    h = [-s for s in sizes]
+    heapq.heapify(h)
+    got, k = 0, 0
+    while h and got < target:
+        got -= heapq.heappop(h)
+        k += 1
+    return k if got >= target else -1
+
+
+code_item(C, 'at-greedy-orders-to-fill', 'orders_to_fill', fill_brute, {
+    'input order': 'def orders_to_fill(sizes, target):\n    if target <= 0:\n        return 0\n    s = 0\n    for k, x in enumerate(sizes, 1):\n        s += x\n        if s >= target:\n            return k\n    return -1\n',
+    'strict: total above the target': 'def orders_to_fill(sizes, target):\n    if target <= 0:\n        return 0\n    s = 0\n    for k, x in enumerate(sorted(sizes, reverse=True), 1):\n        s += x\n        if s > target:\n            return k\n    return -1\n'})
+ok(200 + 50 + 400 >= 450 and 200 + 50 < 450 and 400 + 200 >= 450 and 400 < 450, 'input order takes 3, largest first takes 2')
+
+
+# at-search-count-in-range. Brute: a Counter over every whole number in the range (no halving).
+def range_brute(xs, lo, hi):
+    if hi < lo:
+        return 0
+    c = Counter(xs)
+    if hi - lo <= 2 * len(c):
+        return sum(c[v] for v in range(lo, hi + 1))
+    return sum(n for v, n in c.items() if lo <= v <= hi)
+
+
+BIG = 'sum(count_in_range(xs, k, k + 10) for k in range(0, 2000000, 2000))'
+code_item(C, 'at-search-count-in-range', 'count_in_range', range_brute, {
+    'no guard for hi below lo': 'from bisect import bisect_left, bisect_right\ndef count_in_range(xs, lo, hi):\n    return bisect_right(xs, hi) - bisect_left(xs, lo)\n',
+}, slow_traps=[('linear scan, O(n) per call', 'def count_in_range(xs, lo, hi):\n    return sum(1 for x in xs if lo <= x <= hi)\n', BIG)])
+from bisect import bisect_left as _bl, bisect_right as _br
+ok(_br([1, 3, 3, 5, 8, 8, 9], 2) - _bl([1, 3, 3, 5, 8, 8, 9], 9) == -5, 'trap value: -5 for (9, 2)')
+two(len(range(6, 1000001, 2)), (1000000 - 6) // 2 + 1, 0, 'evens from 6 to 1,000,000: 499,998')
+two(sum(len(range(k, k + 11, 2)) for k in range(0, 2000000, 2000)), 1000 * 6, 0, '1,000 windows of 6 evens')
+
+
+# simulation-rules-clip-position. Brute: fill one share at a time while the limit holds.
+def clip_brute(orders, limit):
+    pos, out = 0, []
+    for q in orders:
+        step = 1 if q > 0 else -1
+        done = 0
+        for _ in range(abs(q)):
+            if abs(pos + step) > limit:
+                break
+            pos += step
+            done += step
+        out.append(done)
+    return out
+
+
+code_item(C, 'simulation-rules-clip-position', 'apply_orders', clip_brute, {
+    'reject a breaching order whole': 'def apply_orders(orders, limit):\n    pos, out = 0, []\n    for q in orders:\n        if abs(pos + q) <= limit:\n            pos += q\n            out.append(q)\n        else:\n            out.append(0)\n    return out\n',
+    'clip the long side only': 'def apply_orders(orders, limit):\n    pos, out = 0, []\n    for q in orders:\n        new = min(limit, pos + q)\n        out.append(new - pos)\n        pos = new\n    return out\n'})
+ok(clip_brute([6, 7, -20, 3], 10) == [6, 4, -20, 3], 'prose example')
+ns = {}
+exec('def apply_orders(orders, limit):\n    pos, out = 0, []\n    for q in orders:\n        if abs(pos + q) <= limit:\n            pos += q\n            out.append(q)\n        else:\n            out.append(0)\n    return out\n', ns)
+ok(ns['apply_orders']([6, 7, -20, 3], 10) == [6, 0, 0, 3], 'brief trap value [6, 0, 0, 3]')
+
+
+# at-recursion-depth-weighted-sum. Brute: read the repr character by character, tracking bracket depth.
+def depth_brute(x):
+    s, d, total, i = repr(x), 0, 0, 0
+    while i < len(s):
+        ch = s[i]
+        if ch == '[':
+            d += 1
+        elif ch == ']':
+            d -= 1
+        elif ch == '-' or ch.isdigit():
+            j = i + 1
+            while j < len(s) and s[j].isdigit():
+                j += 1
+            total += int(s[i:j]) * d
+            i = j
+            continue
+        i += 1
+    return total
+
+
+code_item(C, 'at-recursion-depth-weighted-sum', 'depth_sum', depth_brute, {
+    'plain sum': 'def depth_sum(x):\n    return sum(depth_sum(v) if isinstance(v, list) else v for v in x)\n',
+    'top list at depth 0': 'def depth_sum(x, d=0):\n    return sum(depth_sum(v, d + 1) if isinstance(v, list) else v * d for v in x)\n'})
+two(1 + 2 * (2 + 3) + 3 * 4, depth_brute([1, [2, 3], [[4]]]), 0, 'depth sum 23')
+two(5 - 2 + 6 + 12, depth_brute([5, [-1, [2, [3]]]]), 0, 'depth sum 21')
+ok(1 + 2 + 3 + 4 == 10 and 5 - 1 + 2 + 3 == 9, 'plain sums 10 and 9')
+two(7 * 200, depth_brute(__import__('functools').reduce(lambda a, _: [a], range(199), [7])), 0, 'deep test: 7 at depth 200')
+two(500500 + 2 * 1000, sum(range(1, 1001)) + 2000, 0, 'wide test 502,500')
+ok(200 < 300, 'deep test stays under the 300-call limit for a generator in each call (AUTHORING Deep recursion)')
+
+# pf-idioms-stable-ties: run the lines; slips by carrying them out
+it = choice(C, 'pf-idioms-stable-ties', "['c', 'b', 'a']")
+body, out = run_prose(it)
+ok(out == "['c', 'b', 'a']", f'stable ties prints {out}')
+pairs = [("b", 2), ("a", 2), ("c", 1)]
+ok([t[0] for t in sorted(pairs, key=lambda t: (t[1], t[0]))] == ['c', 'a', 'b'], 'slip: tie broken by letter')
+ok([t[0] for t in sorted(pairs)] == ['a', 'b', 'c'], 'slip: sorted by letter')
+ok([t[0] for t in pairs] == ['b', 'a', 'c'], 'slip: input order')
+texts = {o['text'] for o in it['widget']['options']}
+ok(texts == {"['c', 'b', 'a']", "['c', 'a', 'b']", "['a', 'b', 'c']", "['b', 'a', 'c']"}, 'stable ties option texts')
+
+# at-search-stuck-loop: run with a step cap
+it = choice(C, 'at-search-stuck-loop', 'never ends')
+m = re.search(r'```python\n(.*?)```', it['prose'], re.S)
+ok(len(m.group(1).strip('\n').split('\n')) <= 8, 'stuck loop: at most eight lines')
+
+
+def trace(xs, x, le=False, cap=50):
+    lo, hi = 0, len(xs)
+    seen = []
+    for _ in range(cap):
+        if not (lo <= hi if le else lo < hi):
+            return 'ended', seen
+        mid = (lo + hi) // 2
+        if mid >= len(xs):
+            return 'index error', seen
+        if xs[mid] < x:
+            lo = mid
+        else:
+            hi = mid
+        seen.append((lo, hi, mid))
+    return 'stuck', seen
+
+
+st, seen = trace([1, 3, 5, 7], 6)
+ok(st == 'stuck' and seen[:3] == [(2, 4, 2), (2, 3, 3), (2, 3, 2)] and seen[-1] == (2, 3, 2), f'stuck at lo 2, hi 3: {seen[:3]}')
+st2, seen2 = trace([1, 3, 5, 7], 6, le=True)
+ok(st2 == 'stuck' and seen2[-1][0] == 2, f'with lo <= hi still stuck at lo 2 ({st2})')
+ok((2 + 3) // 2 == 2, 'explain: mid (2 + 3) // 2 = 2')
+ok(isinstance(10 ** 40 + 10 ** 40, int), 'Python ints do not overflow')
+lo, hi = 0, 4
+while lo < hi:                                          # with lo = mid + 1 the search ends at the insertion point
+    mid = (lo + hi) // 2
+    if [1, 3, 5, 7][mid] < 6:
+        lo = mid + 1
+    else:
+        hi = mid
+ok(lo == 3, 'fixed search ends at index 3')
+
+# ds-stacks-push-pop-trace
+it = item(C, 'ds-stacks-push-pop-trace')
+body, out = run_prose(it)
+key = int(out)
+pushes = [3, 5, None, 2, 7, None, None]
+from collections import deque
+q, popped = deque(), []
+for p in pushes:                                         # slip: pop from the front
+    if p is None:
+        popped.append(q.popleft())
+    else:
+        q.append(p)
+two(key, 5 + 7 + 2, 0, 'stack pops 14')
+numeric(C, 'ds-stacks-push-pop-trace', key, None, {'from-front': sum(popped), 'every-value': 3 + 5 + 2 + 7, 'two-pops': 5 + 7})
+ok(popped == [3, 5, 2], 'queue order 3, 5, 2')
+
+# gd-dp-table-size
+it = item(C, 'gd-dp-table-size')
+body, out = run_prose(it)
+two(int(out), (6 + 1) * (9 + 1), 0, 'LCS table 70 cells')
+ok(len('MARKET') == 6 and len('SPREADING') == 9, 'lengths 6 and 9')
+numeric(C, 'gd-dp-table-size', int(out), None, {'no-empty-prefix': 6 * 9, 'added-lengths': 6 + 9, 'added-padded': 7 + 10})
+
+# np-broadcast-column-plus-row: NumPy if present, and a hand broadcast
+it = item(C, 'np-broadcast-column-plus-row')
+try:
+    import numpy
+    body, out = run_prose(it)
+    npv = int(out)
+except ImportError:
+    print('WARNING: NumPy missing; broadcast checked by hand only')
+    npv = None
+A_, B_ = [1, 2, 3], [10, 20, 30, 40]
+hand = sum(a + b for a in A_ for b in B_)
+if npv is not None:
+    two(npv, hand, 0, 'broadcast sum: NumPy against the double loop')
+two(hand, 4 * 6 + 3 * 100, 0, 'broadcast sum 324')
+numeric(C, 'np-broadcast-column-plus-row', hand, None,
+        {'added-sums': sum(A_) + sum(B_), 'swapped-counts': 3 * sum(A_) + 4 * sum(B_), 'paired-by-position': sum(a + b for a, b in zip(A_, B_))})
+ok(sum(A_) == 6 and sum(B_) == 100 and [a + b for a, b in zip(A_, B_)] == [11, 22, 33], 'byKey figures 6, 100, 11, 22, 33')
+
+# virtual-dispatch-missing-virtual: compile and run, and the virtual variant
+it = choice(C, 'virtual-dispatch-missing-virtual', "'B'")
+m = re.search(r'```cpp\n(.*?)```', it['prose'], re.S)
+snippet = m.group(1)
+ok(len(snippet.strip('\n').split('\n')) <= 8, 'virtual: at most eight lines')
+decls, stmts = snippet.split('\n\n')
+prog = '#include <cstdio>\n' + decls + '\nint main() {\n' + stmts + '\nstd::printf("%c", c);\n}\n'
+out = cpp_run(prog)
+if out is not None:
+    ok(out == 'B', f'C++ non-virtual prints {out}')
+    out_v = cpp_run(prog.replace('struct B { char name', 'struct B { virtual char name'))
+    ok(out_v == 'D', f'C++ with virtual prints {out_v}')
+
+
 # ---------------------------------------------------------------- whole-file checks
 allids = []
 for fn in sorted(os.listdir(BANK)):
@@ -495,7 +866,7 @@ for f in FILES:
         ok(not re.search(r'\bpercent\b', blob.lower()) and '!' not in blob and '—' not in blob, f'{f}/{it["id"]}: voice (no percent, !, em-dash)')
 
 counts = {f: len(DATA[f]['items']) for f in FILES}
-ok(counts == {'statistics-3': 15, 'finance-3': 15, 'behavioural-7': 8}, f'item counts {counts}')
+ok(counts == {'statistics-3': 15, 'finance-3': 15, 'behavioural-7': 8, 'coding-3': 12}, f'item counts {counts}')
 
 print(f'{checks[0]} checks, {len(fails)} failed')
 sys.exit(1 if fails else 0)
