@@ -58,3 +58,26 @@ These five ledger rows are `unverified`: plausible, but I could not tie them to 
 - `node tools/grade-all.mjs --file ... --local-cdn <pkgs>`: review-1 (8 widgets), review-2 (9), review-3 (9), homework-1 (6), homework-2 (6), homework-3 (5): 0 failures each, exit 0.
 - Concepts script: exit 0.
 - Code items (own CPython run): l2 9/9, l6 12/12, l7 10/10, l9 9/9, l11 8/8, homework-1 9/9, homework-2 10/10, homework-3 9/9; starters fail (l7's starter passes only its two `None` tests).
+
+## Overlap with earlier reads
+
+Read after the ledger and findings were committed (WIP commit `709c32ad`): `docs/reviews/review-1.7.md` (micro part and its fix pass), `docs/reviews/audit-micro-1-3.md` (round 1 audit, fix pass, fix-pass read and its follow-up) and the micro lines of `docs/reviews/review-perf-retrofit-12.md`.
+
+Earlier conceptual findings: review-1.7 raised 12, the round 1 audit 20, its fix-pass read 4, and the performance retrofit read 2: 38 in all. All were fixed before this read, so this audit read the fixed text and could re-find one only where a fix left a residue.
+
+| | count | which |
+|---|---|---|
+| Found by this audit only | 7 | findings 1, 2, 4, 5, 6, 7, 8 |
+| Found by an earlier read only | 37 | review-1.7: 11; round 1 audit: 20; round 1 fix-pass read: 4; perf retrofit 12: 2 |
+| Found by both | 1 | finding 3: review-1.7 raised the UK's removal of the dark volume cap on l12 screens[7]; its fix corrected the option's `why` and left the `byKey` line |
+
+New `wrong` findings that no earlier read found: **0**. This audit has no `wrong` finding at all; all eight findings are `imprecise` and `minor`.
+
+Notes on agreement and difference.
+
+- Finding 2 (Avellaneda-Stoikov $\tau$). The round 1 audit lists "the skew rule $m = V - \gamma q$ with $\gamma = A\sigma^2\tau$ against Avellaneda and Stoikov" under checked and clean. The formula is right; the point here is the meaning of $\tau$ and the "into the close" sentence, which round 1 did not raise.
+- l8 screens[8] "often 10%". My blind verdict is `unverified`. The round 1 fix-pass read passed the same sentence citing Kissell and Glantz, *Optimal Trading Strategies*, on participation-rate limits. I have not checked that source for the 10% figure; the hedge "for example 10%" removes the question either way.
+- l7 summary and quiz[3] (round 1 finding 11 and fix-pass findings F1, F2). The fixed text scopes the prediction claim to a one-tick book and to the mid just after its next move. My simulation, written blind, tests exactly that claim and supports it (squared error 0.55 and 0.59 against 1.00 in half-ticks squared).
+- The round 1 keys changed by its fix pass (l6 quiz[0] to 20.0233, homework-1 `h-bp`, `h-sell-walk`, homework-3 `old-k`) all recompute correctly here.
+
+Convergence: at most one new `wrong` per three levels is allowed; this round found none. The fix pass for the eight minor findings and its fix-pass read remain.
