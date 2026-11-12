@@ -146,3 +146,39 @@ So 10 of 10 `wrong` findings, including all 3 serious ones, were found by no ear
 
 - Validator or number-script rule: where a feedback line says "`V` is `a × b`" (or `a^n`) with literal numbers, recompute the product from the digits shown and warn when it does not round to `V`. Four cases in this level (finding 20). The slip-names-the-wrong-quantity class also appears four more times here (findings 5, 7, 8, 10).
 - Validator warning list for universal wording in explanations: "any other", "does not split", "exactly when", "always", "never", "needs independence". Print them for the second reader. Findings 1, 2, 3 and 9 would each have been listed.
+
+## Fix pass
+
+Fixer: Opus. Each fix rests on the basis given here, checked separately from the auditor's. Every proposed sentence was read as a claim before use. No graded key, `wrong[]` value, slip value or hidden test changed. No script assertion changed: the ten `FINDING` checks test for the old wording only, and they pass on the new text.
+
+| # | status | final text where it differs from the audit | basis |
+|---|---|---|---|
+| 1 | fixed with different text | Explain as proposed. Trap: "Zero covariance does not prove independence either, though for jointly normal pairs it does." (word order only) | Casella and Berger 4.5: zero covariance is necessary for independence, and sufficient only under joint normality (bivariate normal density factors at $\rho = 0$). |
+| 2 | fixed with different text | Explain: "A strictly increasing or strictly decreasing $g$ with $g' \ne 0$ keeps a density." `screens[3].prose`: "with $g$ strictly increasing or strictly decreasing and $x = g^{-1}(y)$ differentiable". `summary.ideas[0]`: "For strictly monotone $g$ with a differentiable inverse it gives". | The audit's "strictly monotone keeps a density" is itself false: take $g = F^{-1}$ for a strictly increasing singular CDF $F$ and $X$ uniform; then $g(X)$ has CDF $F$ and no density. Also a $C^1$ strictly increasing $g$ with $g' = 0$ on a fat Cantor set $Z$ maps $Z$ to a null set holding $P(X \in Z) > 0$. Casella and Berger Thm 2.1.5 assumes a differentiable inverse, so the condition is added. |
+| 3 | fixed with different text | "Independence is enough for the product rule. Without it $E[e^{tX}e^{tY}]$ can fail to split, so check independence first." | Derivation: adding to the uniform $3 \times 3$ table a perturbation with zero row, column and anti-diagonal sums keeps both marginals and the law of $X + Y$, so the product holds for a dependent pair. Independence is sufficient (C and B Thm 4.2.12), not necessary. |
+| 4 | fixed with different text | "So a search over ten skill-free strategies turns up a best of 2 or more about one time in five. That is not the chance that a reported best of 2 is luck, which also depends on how common skill is." | Bayes: $P(\text{luck} \mid \text{best} \ge 2)$ needs a prior share of skilled strategies; 0.2056 is $P(\text{best} \ge 2 \mid \text{no skill})$. The audit's "one skill-free team in five" introduced teams the item does not mention. |
+| 5 | fixed | | $x = e^{-2y}$: $\lvert dx/dy\rvert = 2e^{-2y}$, $\lvert dy/dx\rvert = \tfrac12 e^{2y}$; the option $\tfrac12 e^{-2y}$ is $e^{-2y} \div 2$. |
+| 6 | fixed | | $f_Y(t - x) > 0$ iff $x \in [t - 1, t]$ for $Y \sim U(0, 1)$. |
+| 7 | fixed, plus sibling | Sibling `screens[7].feedback.generic`: "Not quite right. Count every split of 0.5 into $x$ and $0.5 - x$." (old "not just $x = 0.5$" also misnamed the product as a split) | $f_X(0.5)f_Y(0.5)$ is the joint density at $(0.5, 0.5)$, on $x + y = 1$; the split $x = 0.5$ is $(0.5, 0)$. |
+| 8 | fixed | | $P(\max \le 3) = (3/6)^2 = 9/36$, the cells with maximum 1, 2 or 3. |
+| 9 | fixed | | $X_{(3)} > c$ iff at most 2 of 4 are $\le c$ iff at least 2 are $> c$. Enumeration of the 16 above/below patterns at $c = 0.6$ gives 0.5248, equal to the Beta(3, 2) tail; a simulation of 400,000 sorted quadruples gives 0.5246. |
+| 10 | fixed with different text | "You divided the exponent by 4. Multiplying four copies multiplies the exponent by 4: $-\tfrac12 \times 4 = -2$." | $-\tfrac12 \div 4 = -\tfrac18$; $\left((1 - 2s)^{-1/2}\right)^4 = (1 - 2s)^{-2}$. |
+| 11 | fixed | | Casella and Berger Def 5.3.4 (Student's $t$ needs $Z$ and $V$ independent). |
+| 12 | fixed | | Convolution and "variances add" both use independence (or zero correlation for the variance). |
+| 13 | fixed with different text | `screens[10].prose`: "For independent continuous draws a tie has probability 0, so the maximum comes from one draw alone." Formula note and `ideas[0]` as proposed. | $P(X = Y) = \int P(Y = x)\,dF_X(x) = 0$ for independent atomless draws; $F(t)^n$ is the product rule for independent draws. |
+| 14 | fixed | | Markov's step $P(S \ge a) \le e^{-ta}E[e^{tS}]$ holds only for $t > 0$. |
+| 15 | fixed | | Feller vol. 1, III.4: the arcsine law is the limit as the walk's length grows. |
+| 16 | fixed | | Exponential gaps characterise a Poisson process; a rate alone does not fix the gap law. |
+| 17 | fixed | | $\mathrm{Var}(Z^2) = E[Z^4] - 1 = 2$ needs kurtosis 3. |
+| 18 | fixed | | The sketch uses $M_{Z_n}(t) = M_Y(t/\sqrt n)^n$, which needs identical distributions. |
+| 19 | fixed with different text | "The mean of 20,000 trials has sd $\tfrac{\sigma}{\sqrt{20000}}$, with $\sigma$ the sd of one $k$th smallest. For $n = 5$, $k = 2$ that is $\tfrac{0.18}{\sqrt{20000}} \approx 0.0013$, so the mean usually lands within 0.003 of $\tfrac13$." | Beta(2, 4) variance $8/252$, sd 0.178; $0.178/141.4 = 0.00126$. "Within about 0.001" was under one sd; 0.003 is 2.4 sd. |
+| 20 | fixed with different text, plus siblings | (a) as proposed. (b) "0.9063 is $5 \times 0.181269$." (c) "0.3573 is $20 \times 0.017864$." (d) $0.982136^{20}$ in `accept`, `hints[1]` ($\Phi(2.1) = 0.982136$), `hints[2]` and `feedback.correct`. | The audit's digits fail its own rule: $20 \times 0.01786 = 0.3572$ and $1 - 0.98214^{20} = 0.3026$; $5 \times 0.18127 = 0.90635$ sits on a rounding tie. Now $5 \times 0.181269 = 0.906345$, $20 \times 0.017864 = 0.35728$, $1 - 0.982136^{20} = 0.30268$. |
+| 21 | fixed | | Exp(rate 2): mean 0.5, median $\ln 2 / 2 = 0.347$, mode 0. |
+| 22 | fixed with different text | "It agrees with the rule $\tfrac{\lambda_A}{\lambda_A + \lambda_B} = \tfrac{1}{1+2}$ for the chance that A, the clock with rate 1, is first." | $f = e^{-x}\cdot 2e^{-2y}$, so A has rate 1; $\int_0^\infty e^{-x}e^{-2x}dx = \tfrac13$. |
+
+Sibling fixes (same class, not named in the audit):
+- `review-4` `r-best10`: `accept` and `feedback.correct` showed $1 - 0.9772^{10} = 0.2056$, but $1 - 0.9772^{10} = 0.2060$; now $0.97725^{10}$ ($1 - 0.97725^{10} = 0.20557$). `byKey.times` showed $10 \times 0.0228$ for 0.2275; now $10 \times 0.02275$.
+- `l17` `screens[8]`: `accept` showed $1 - (1 - 0.1813)^5 = 0.6321$, but the shown digits give 0.6322; `accept` and `hints[1]` now use $(e^{-0.2})^5 = e^{-1}$.
+- `l16` `screens[7].feedback.generic` (finding 7 row).
+
+Gates: concepts script exit 0 (563 checks, 0 failed); `problems-limits-thm-numbers.py`, `fluency-limits-thm-numbers.py`, `limits-thm-L1-3-concepts-r2.py` exit 0; validator 0 errors (manifest unchanged); voice scan 35: 0 and 0; playthrough desktop and `--mobile` with `--local-cdn` of l14 to l19, `review-4`, `homework-4`, `problems-4`: all passed.
