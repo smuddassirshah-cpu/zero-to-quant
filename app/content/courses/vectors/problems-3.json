@@ -85,7 +85,9 @@
             "answer": "\\begin{pmatrix}3&-1\\\\-2&4\\end{pmatrix}",
             "keyboard": "algebra",
             "accept": [
-              "[[3, -1], [-2, 4]]"
+              "[[3, -1], [-2, 4]]",
+              "10[[0.3, -0.1], [-0.2, 0.4]]",
+              "\\frac{1}{0.1}[[0.3, -0.1], [-0.2, 0.4]]"
             ],
             "wrong": [
               {
@@ -362,13 +364,46 @@
         "la-inverse",
         "la-product"
       ],
-      "prose": "A camera sensor leaks light between its red and green channels. It reads $\\mathbf{r} = \\mathbf{M}\\mathbf{t}$, where $\\mathbf{t}$ holds the true red and green and $\\mathbf{M} = \\begin{pmatrix}0.8&0.3\\\\0.2&0.7\\end{pmatrix}$. One pixel reads $\\mathbf{r} = (130, 70)$.",
+      "prose": "A camera sensor leaks light between its red and green channels, then an amplifier scales the channels. It reads $\\mathbf{r} = \\mathbf{D}\\mathbf{M}\\mathbf{t}$, where $\\mathbf{t}$ holds the true red and green, the leak is $\\mathbf{M} = \\begin{pmatrix}0.7&0.2\\\\0.1&0.6\\end{pmatrix}$ and the gain is $\\mathbf{D} = \\begin{pmatrix}2&0\\\\0&1\\end{pmatrix}$. One pixel reads $\\mathbf{r} = (200, 60)$.",
       "parts": [
         {
-          "question": "$\\mathbf{M}$ sends the unit square of true colours to a parallelogram. What is its area? Give a decimal.",
+          "question": "Write the single matrix $\\mathbf{C}$ with $\\mathbf{r} = \\mathbf{C}\\mathbf{t}$. Type it row by row, as `[[a, b], [c, d]]`.",
+          "widget": {
+            "kind": "expression",
+            "answer": "\\begin{pmatrix}1.4&0.4\\\\0.1&0.6\\end{pmatrix}",
+            "keyboard": "algebra",
+            "accept": [
+              "[[1.4, 0.4], [0.1, 0.6]]",
+              "[[7/5, 2/5], [1/10, 3/5]]"
+            ],
+            "wrong": [
+              {
+                "id": "order",
+                "tex": "\\begin{pmatrix}1.4&0.2\\\\0.2&0.6\\end{pmatrix}"
+              },
+              {
+                "id": "entrywise",
+                "tex": "\\begin{pmatrix}1.4&0\\\\0&0.6\\end{pmatrix}"
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The amplifier acts after the leak, so $\\mathbf{C} = \\mathbf{D}\\mathbf{M}$, with row 1 of $\\mathbf{M}$ doubled: $\\begin{pmatrix}1.4&0.4\\\\0.1&0.6\\end{pmatrix}$.",
+            "generic": "Not quite. The step that acts first sits on the right: $\\mathbf{D}\\mathbf{M}$.",
+            "byKey": {
+              "order": "That is $\\mathbf{M}\\mathbf{D}$, which scales first and leaks after. The sensor leaks first.",
+              "entrywise": "You multiplied matching entries. Each entry of a product is a row of $\\mathbf{D}$ dotted with a column of $\\mathbf{M}$."
+            }
+          },
+          "explain": {
+            "text": "Leak first, then gain: $\\mathbf{C} = \\mathbf{D}\\mathbf{M}$. Row 1 of $\\mathbf{D}$, $(2, 0)$, doubles row 1 of $\\mathbf{M}$, and row 2, $(0, 1)$, keeps row 2."
+          }
+        },
+        {
+          "question": "Using $\\mathbf{C}$ from part 1, by what factor does the sensor scale areas? Give a decimal.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.5,
+            "answer": 0.8,
             "tol": {
               "abs": 0.0005
             },
@@ -376,14 +411,21 @@
             "wrong": [
               {
                 "id": "added",
-                "value": 0.62,
+                "value": 0.88,
                 "tol": {
                   "abs": 0.0005
                 }
               },
               {
                 "id": "diagonal",
-                "value": 0.56,
+                "value": 0.84,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "leak-only",
+                "value": 0.4,
                 "tol": {
                   "abs": 0.0005
                 }
@@ -391,137 +433,145 @@
             ]
           },
           "feedback": {
-            "correct": "The area is $|\\det\\mathbf{M}| = |0.8 \\times 0.7 - 0.3 \\times 0.2| = 0.56 - 0.06 = 0.5$.",
-            "generic": "Not quite. The area is $|ad - bc|$.",
+            "correct": "$\\det\\mathbf{C} = 1.4 \\times 0.6 - 0.4 \\times 0.1 = 0.84 - 0.04 = 0.8$.",
+            "generic": "Not quite. The factor is $|ad - bc|$ for $\\mathbf{C}$.",
             "byKey": {
-              "added": "You added $bc$. The area is $|ad - bc| = 0.56 - 0.06$.",
-              "diagonal": "That is $ad$ alone. Take away $bc = 0.06$."
+              "added": "You added $bc$. The factor is $|ad - bc| = 0.84 - 0.04$.",
+              "diagonal": "That is $ad$ alone. Take away $bc = 0.04$.",
+              "leak-only": "That is $\\det\\mathbf{M}$, the leak alone. The amplifier doubles areas too, so use $\\mathbf{C}$."
             }
           },
           "explain": {
-            "text": "A matrix scales every area by $|\\det\\mathbf{M}|$, and $\\det\\mathbf{M} = 0.56 - 0.06 = 0.5$. It is not 0, so the leak can be undone."
+            "text": "A matrix scales every area by $|\\det\\mathbf{C}|$, which is $0.84 - 0.04 = 0.8$. It is also $\\det\\mathbf{D} \\times \\det\\mathbf{M} = 2 \\times 0.4$, and not 0, so the sensor can be undone."
           }
         },
         {
-          "question": "Using $\\det\\mathbf{M} = 0.5$ from part 1, find $\\mathbf{M}^{-1}$. Type it row by row, as `[[a, b], [c, d]]`.",
+          "question": "Using $\\det\\mathbf{C} = 0.8$ from part 2, find $\\mathbf{C}^{-1}$. Type it row by row, as `[[a, b], [c, d]]`.",
           "widget": {
             "kind": "expression",
-            "answer": "\\begin{pmatrix}1.4&-0.6\\\\-0.4&1.6\\end{pmatrix}",
+            "answer": "\\begin{pmatrix}0.75&-0.5\\\\-0.125&1.75\\end{pmatrix}",
             "keyboard": "algebra",
             "accept": [
-              "[[1.4, -0.6], [-0.4, 1.6]]",
-              "[[7/5, -3/5], [-2/5, 8/5]]"
+              "[[0.75, -0.5], [-0.125, 1.75]]",
+              "[[3/4, -1/2], [-1/8, 7/4]]",
+              "1.25[[0.6, -0.4], [-0.1, 1.4]]",
+              "\\frac{1}{0.8}[[0.6, -0.4], [-0.1, 1.4]]"
             ],
             "wrong": [
               {
                 "id": "no-divide",
-                "tex": "\\begin{pmatrix}0.7&-0.3\\\\-0.2&0.8\\end{pmatrix}"
+                "tex": "\\begin{pmatrix}0.6&-0.4\\\\-0.1&1.4\\end{pmatrix}"
               },
               {
                 "id": "times-det",
-                "tex": "\\begin{pmatrix}0.35&-0.15\\\\-0.1&0.4\\end{pmatrix}"
+                "tex": "\\begin{pmatrix}0.48&-0.32\\\\-0.08&1.12\\end{pmatrix}"
               },
               {
                 "id": "no-negate",
-                "tex": "\\begin{pmatrix}1.4&0.6\\\\0.4&1.6\\end{pmatrix}"
+                "tex": "\\begin{pmatrix}0.75&0.5\\\\0.125&1.75\\end{pmatrix}"
+              },
+              {
+                "id": "leak-only",
+                "tex": "\\begin{pmatrix}1.5&-0.5\\\\-0.25&1.75\\end{pmatrix}"
               }
             ]
           },
           "feedback": {
-            "correct": "Swap the diagonal, negate the rest and divide by 0.5: $\\mathbf{M}^{-1} = \\begin{pmatrix}1.4&-0.6\\\\-0.4&1.6\\end{pmatrix}$.",
-            "generic": "Not quite. Swap $a$ and $d$, negate $b$ and $c$, then divide by $\\det\\mathbf{M}$.",
+            "correct": "Swap the diagonal, negate the rest and divide by 0.8: $\\mathbf{C}^{-1} = \\begin{pmatrix}0.75&-0.5\\\\-0.125&1.75\\end{pmatrix}$.",
+            "generic": "Not quite. Swap $a$ and $d$, negate $b$ and $c$, then divide by $\\det\\mathbf{C}$.",
             "byKey": {
-              "no-divide": "You did not divide by $\\det\\mathbf{M} = 0.5$, which doubles every entry.",
-              "times-det": "You multiplied by 0.5. Dividing by 0.5 doubles each entry instead.",
-              "no-negate": "The off-diagonal entries change sign: $-b$ and $-c$."
+              "no-divide": "You did not divide by $\\det\\mathbf{C} = 0.8$, which multiplies every entry by 1.25.",
+              "times-det": "You multiplied by 0.8. Dividing by 0.8 multiplies each entry by 1.25 instead.",
+              "no-negate": "The off-diagonal entries change sign: $-b$ and $-c$.",
+              "leak-only": "That is $\\mathbf{M}^{-1}$, which undoes the leak alone. $\\mathbf{C}$ includes the gain."
             }
           },
           "explain": {
-            "text": "$\\dfrac{1}{0.5}\\begin{pmatrix} 0.7 & -0.3 \\\\ -0.2 & 0.8 \\end{pmatrix} = \\begin{pmatrix}1.4&-0.6\\\\-0.4&1.6\\end{pmatrix}$. Check: row 1 times column 1 of $\\mathbf{M}$ is $1.12 - 0.12 = 1$."
+            "text": "$\\dfrac{1}{0.8}\\begin{pmatrix} 0.6 & -0.4 \\\\ -0.1 & 1.4 \\end{pmatrix} = \\begin{pmatrix}0.75&-0.5\\\\-0.125&1.75\\end{pmatrix}$. Check: row 1 of $\\mathbf{C}^{-1}$ times column 1 of $\\mathbf{C}$ is $1.05 - 0.05 = 1$."
           }
         },
         {
-          "question": "A colleague codes the fix as `Minv * r`, with `Minv = np.linalg.inv(M)` and `r = np.array([130, 70])`. NumPy's `*` works entry by entry, so column $j$ of `Minv` is scaled by `r[j]`. Using $\\mathbf{M}^{-1} = \\begin{pmatrix}1.4&-0.6\\\\-0.4&1.6\\end{pmatrix}$ from part 2, what is entry `[0, 1]` of the result, row 0 and column 1? Give a whole number.",
-          "widget": {
-            "kind": "numeric",
-            "answer": -42,
-            "tol": {
-              "abs": 0
-            },
-            "placeholder": "a number",
-            "wrong": [
-              {
-                "id": "matrix-product",
-                "value": 140,
-                "tol": {
-                  "abs": 0
-                }
-              },
-              {
-                "id": "entry-10",
-                "value": -52,
-                "tol": {
-                  "abs": 0
-                }
-              },
-              {
-                "id": "entry-00",
-                "value": 182,
-                "tol": {
-                  "abs": 0
-                }
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "Entry `[0, 1]` is $-0.6 \\times 70 = -42$. `*` returns a $2 \\times 2$ array with no sums.",
-            "generic": "Not quite. Multiply the entry in row 0, column 1 of $\\mathbf{M}^{-1}$ by `r[1]` = 70.",
-            "byKey": {
-              "matrix-product": "That is the first entry of $\\mathbf{M}^{-1}\\mathbf{r}$, the right answer to a different line, `Minv @ r`. `*` does no sums.",
-              "entry-10": "That is entry `[1, 0]`, $-0.4 \\times 130$. NumPy counts the row first.",
-              "entry-00": "That is entry `[0, 0]`, $1.4 \\times 130$. Column 1 is the second column."
-            }
-          },
-          "explain": {
-            "text": "`Minv * r` scales the columns: $\\begin{pmatrix} 182 & -42 \\\\ -52 & 112 \\end{pmatrix}$. It is a $2 \\times 2$ array, not the true colour, though adding along each row would give it."
-          }
-        },
-        {
-          "question": "The fix should be `Minv @ r`. Using $\\mathbf{M}^{-1}$ from part 2, what are the pixel's true red and green? Give $\\mathbf{t}$ as $(x, y)$.",
+          "question": "Using $\\mathbf{C}^{-1}$ from part 3, what are the pixel's true red and green? The pixel reads $\\mathbf{r} = (200, 60)$. Give $\\mathbf{t}$ as $(x, y)$.",
           "widget": {
             "kind": "expression",
-            "answer": "(140, 60)",
+            "answer": "(120, 80)",
             "keyboard": "algebra",
             "accept": [
-              "(140,60)",
-              "[140, 60]"
+              "(120,80)",
+              "[120, 80]"
             ],
             "wrong": [
               {
-                "id": "no-divide",
-                "tex": "(70, 30)"
-              },
-              {
                 "id": "forward",
-                "tex": "(125, 75)"
+                "tex": "(304, 56)"
               },
               {
-                "id": "column-sums",
-                "tex": "(130, 70)"
+                "id": "leak-only",
+                "tex": "(270, 55)"
+              },
+              {
+                "id": "no-divide",
+                "tex": "(96, 64)"
+              },
+              {
+                "id": "swapped",
+                "tex": "(80, 120)"
               }
             ]
           },
           "feedback": {
-            "correct": "$\\mathbf{M}^{-1}(130, 70) = (182 - 42,\\ -52 + 112) = (140, 60)$.",
-            "generic": "Not quite. Each entry is a row of $\\mathbf{M}^{-1}$ dotted with $(130, 70)$.",
+            "correct": "$\\mathbf{C}^{-1}(200, 60) = (150 - 30,\\ -25 + 105) = (120, 80)$.",
+            "generic": "Not quite. Each entry is a row of $\\mathbf{C}^{-1}$ dotted with $(200, 60)$.",
             "byKey": {
-              "no-divide": "That uses $\\mathbf{M}^{-1}$ before dividing by 0.5, so each value is halved.",
-              "forward": "That applies $\\mathbf{M}$ again, leaking more light. Undo it with $\\mathbf{M}^{-1}$.",
-              "column-sums": "That adds down the columns of part 3's array, which gives back the reading. Add along the rows instead."
+              "forward": "That applies $\\mathbf{C}$ again, leaking and amplifying more. Undo the sensor with $\\mathbf{C}^{-1}$.",
+              "leak-only": "That uses $\\mathbf{M}^{-1}$ alone and forgets the gain. Use $\\mathbf{C}^{-1}$ from part 3.",
+              "no-divide": "That uses $\\mathbf{C}^{-1}$ before dividing by 0.8, so each value is 0.8 times too small.",
+              "swapped": "The values are the wrong way round. The true red comes first."
             }
           },
           "explain": {
-            "text": "$\\mathbf{t} = \\mathbf{M}^{-1}\\mathbf{r}$ dots each row with $(130, 70)$: $(140, 60)$. Check: $\\mathbf{M}(140, 60) = (112 + 18,\\ 28 + 42) = (130, 70)$."
+            "text": "$\\mathbf{t} = \\mathbf{C}^{-1}\\mathbf{r}$ dots each row with $(200, 60)$: $(120, 80)$. Check: $\\mathbf{M}(120, 80) = (100, 60)$, and the gain doubles the red to $(200, 60)$."
+          }
+        },
+        {
+          "question": "Using parts 1 and 3, which order recovers $\\mathbf{t}$ from $\\mathbf{r} = \\mathbf{D}\\mathbf{M}\\mathbf{t}$ one stage at a time?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "gain-first",
+                "text": "Undo the gain first, with $\\mathbf{D}^{-1}$, then the leak, with $\\mathbf{M}^{-1}$",
+                "correct": true
+              },
+              {
+                "id": "leak-first",
+                "text": "Undo the leak first, with $\\mathbf{M}^{-1}$, then the gain, with $\\mathbf{D}^{-1}$",
+                "why": "That applies $\\mathbf{M}^{-1}$ to $\\mathbf{D}\\mathbf{M}\\mathbf{t}$, which is not $\\mathbf{M}\\mathbf{t}$. The stage that acted last is undone first."
+              },
+              {
+                "id": "either",
+                "text": "Either order, since the two undoing matrices give the same product",
+                "why": "Matrix products depend on order. $\\mathbf{M}^{-1}\\mathbf{D}^{-1}$ and $\\mathbf{D}^{-1}\\mathbf{M}^{-1}$ are different matrices here."
+              },
+              {
+                "id": "sum",
+                "text": "Add $\\mathbf{M}^{-1}$ and $\\mathbf{D}^{-1}$, then apply the sum",
+                "why": "The inverse of a product is a product of inverses, in reverse order. A sum of inverses undoes nothing here."
+              }
+            ],
+            "layout": "stack"
+          },
+          "feedback": {
+            "correct": "The sensor leaks first and amplifies last, so the amplifier is undone first. Here $\\mathbf{D}^{-1}(200, 60) = (100, 60)$, and $\\mathbf{M}^{-1}(100, 60) = (120, 80)$.",
+            "generic": "Not quite. The stage that acted last has to be undone first.",
+            "byKey": {
+              "leak-first": "That applies $\\mathbf{M}^{-1}$ to $\\mathbf{D}\\mathbf{M}\\mathbf{t}$, which is not $\\mathbf{M}\\mathbf{t}$. The stage that acted last is undone first.",
+              "either": "Matrix products depend on order. $\\mathbf{M}^{-1}\\mathbf{D}^{-1}$ and $\\mathbf{D}^{-1}\\mathbf{M}^{-1}$ are different matrices here.",
+              "sum": "The inverse of a product is a product of inverses, in reverse order. A sum of inverses undoes nothing here."
+            }
+          },
+          "explain": {
+            "text": "A product is undone in reverse order: $(\\mathbf{D}\\mathbf{M})^{-1} = \\mathbf{M}^{-1}\\mathbf{D}^{-1}$. So $\\mathbf{D}^{-1}$ halves the red first, and $\\mathbf{M}^{-1}$ then gives $(120, 80)$."
           }
         }
       ]
@@ -544,7 +594,9 @@
             "keyboard": "algebra",
             "accept": [
               "[[6+2k, 2+k], [5, 2]]",
-              "[[2k+6, k+2], [5, 2]]"
+              "[[2k+6, k+2], [5, 2]]",
+              "[[2(k+3), 2+k], [5, 2]]",
+              "[[2(3+k), 2+k], [5, 2]]"
             ],
             "wrong": [
               {
@@ -626,7 +678,7 @@
             "correct": "$2 - k = 0$ at $k = 2$. Then the two steps squash the plane onto a line.",
             "generic": "Not quite. Find where $\\det\\mathbf{C}_k = 0$.",
             "byKey": {
-              "added": "That solves $22 + 9k = 0$, from adding the products. With $ad - bc$ the determinant is $2 - k$."
+              "added": "That solves $22 + 9k = 0$, from adding the products, or $2 + k = 0$, a sign slip. The determinant is $2 - k$, which is 0 at $k = 2$."
             }
           },
           "explain": {
