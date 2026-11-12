@@ -139,6 +139,16 @@ r = run(['--bank', 'long', '--no-code']);
 check('a stem run of 8 words at a low share is an advisory line (exit 0)', r.status === 0 && /stem shares \d+ words/.test(r.stdout) && /advisory/.test(r.stdout), r.stdout);
 check('--no-question-run switches the stem advisory off', !/stem shares/.test(run(['--bank', 'long', '--no-code', '--no-question-run']).stdout));
 
+// Protocol 6: --cross-numbers, an item reusing another item's numbers under new words (and standard constants alone are not a reuse).
+put('courses/c1/review-9.json', { id: 'review-9', items: [{ id: 'r1', prose: 'A desk books 4,812 trades at a mean of 37.5 basis points with spread 8.25.', question: 'What is the total?', widget: num(37.5) }, { id: 'r2', prose: 'Use the 5% level, z = 1.96, on 100 trials, with 0.05 in each tail.', question: 'Which test is it?', widget: num(1.96) }] });
+put('bank/xnum.json', { id: 'xnum', items: [{ id: 'x1', tags: ['t'], prose: 'Fund managers log 4812 deals; their average edge is 37.5 bp and the bid-offer gap is 8.25.', question: 'Give the sum.', widget: num(1) }, { id: 'x2', tags: ['t'], prose: 'A coin test at 5%, z = 1.96, runs 100 times with 0.05 a tail.', question: 'Which rule applies?', widget: num(2) }] });
+r = run(['--bank', 'xnum', '--no-code', '--cross-numbers']);
+check('--cross-numbers: three shared figures under new words is an advisory (exit 0)', r.status === 0 && /bank\/xnum\.json:items\[0\]\s+<-\s+courses\/c1\/review-9\.json:items\[0\]\s+3 shared numbers/.test(r.stdout), r.stdout);
+check('--cross-numbers: standard constants alone are not listed', !/items\[1\]\s+<-.*shared numbers/.test(r.stdout), r.stdout);
+check('without --cross-numbers the mode is off', !/shared numbers/.test(run(['--bank', 'xnum', '--no-code']).stdout));
+r = run(['--cross-numbers-all']);
+check('--cross-numbers-all lists the pair once', (r.stdout.match(/4812|shared numbers \(/g) || []).length >= 1 && (r.stdout.match(/review-9\.json:items\[0\]|xnum\.json:items\[0\]/g) || []).length === 2, r.stdout);
+
 rmSync(root, { recursive: true, force: true });
 console.log(fails ? `${fails} failed` : 'all passed');
 process.exit(fails ? 1 : 0);

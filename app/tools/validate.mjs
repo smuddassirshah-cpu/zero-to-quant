@@ -228,7 +228,7 @@ const printedValue = (text, unit) => {
   for (let i = spans.length - 1; i >= 0; i--) {
     const sp = spans[i], a = sp.lastIndexOf('\\approx'), e = sp.lastIndexOf('=');
     if (a < 0 && e < 0) continue;
-    const tail = (a > e ? sp.slice(a + 7) : sp.slice(e + 1)).trim().replace(/^[£\\]?(?:pounds)?\s*/, '');
+    const tail = (a > e ? sp.slice(a + 7) : sp.slice(e + 1)).replace(/\{,\}/g, ',').trim().replace(/^[£\\]?(?:pounds)?\s*/, '');
     const fr = /^(-?)\s*\\[dt]?frac\{\s*(-?[\d.,]+)\s*\}\{\s*([\d.,]+)\s*\}\s*(.*)$/.exec(tail);
     const nm = /^(-?)\s*(\d[\d,]*(?:\.\d+)?|\.\d+)\s*(.*)$/.exec(tail);
     let v, rest;
@@ -241,28 +241,49 @@ const printedValue = (text, unit) => {
   }
   return null;
 };
+/* ENGINE-BACKLOG 936 and 938 (SESSION PROTOCOL 6, finding classes seen three times in docs/reviews):
+     [percent-form]  a numeric part whose question asks for the answer "in %", "in per cent" or "as a percentage" with neither unit "%" nor a wrong[] entry for the
+                     percent-or-decimal confusion (a value at the key over 100 or times 100, or an id naming percent or decimal): a typed % or the decimal the working ends
+                     in gets only the generic line
+     [negative-key]  a numeric key below zero with no wrong[] entry holding its absolute value: the dropped sign gets only the generic line */
+const PERCENT_ASKED = /\bin\s*(?:\\?%|per\s?cent\b|percent(?:age)?\b)|\bas\s+(?:a\s+)?(?:\\?%|per\s?cent\b|percent(?:age)?\b)|\bin\s+percentage\s+points?\b/i;
+const closeTo = (a, b) => Math.abs(a - b) <= 1e-6 * Math.max(1, Math.abs(b));
+const percentNegativeRules = (file, where, w, ctx) => {
+  const ans = w.answer, wr = (Array.isArray(w.wrong) ? w.wrong : []).filter(x => isObj(x) && typeof x.value === 'number');
+  if (w.unit !== '%' && PERCENT_ASKED.test(String(ctx.question || '').replace(/\$\$|\$/g, ' '))) {
+    const hasSlip = wr.some(x => closeTo(x.value, ans / 100) || closeTo(x.value, ans * 100) || /per-?cent|decimal|pct|percent/i.test(String(x.id || '')));
+    if (!hasSlip) warn(file, `${where}`, '[percent-form] the question asks for the answer in per cent but the field has no unit "%" and no wrong entry for the percent-or-decimal confusion: a learner who types the % sign, or the decimal the working ends in, gets only the generic line; set unit "%" (key as a fraction) or add a wrong entry at the key over 100 (or times 100)');
+  }
+  if (ans < 0 && !wr.some(x => closeTo(x.value, -ans) || Math.abs(x.value + ans) <= halfWidth(ans, w.tol) + 1e-9)) warn(file, `${where}`, `[negative-key] the key ${ans} is negative and no wrong entry holds its absolute value ${-ans}: a learner who drops the sign gets only the generic line`);
+};
 const bandRules = (file, where, w, ctx) => {
   if (typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
+  percentNegativeRules(file, where, w, ctx);
   const ans = w.answer, hw = halfWidth(ans, w.tol), q = String(ctx.question || ''), scaled = w.scale != null || /units? of\b/i.test(q) || /10\s*\^/.test(q);
   const toPlaces = (t) => { const m = stripMathsAndCode(t || '').toLowerCase().match(/\bto\s+(zero|one|two|three|four|five|six|\d)\s+(?:decimal\s+)?places?\b/); return m ? (WORD_NUM[m[1]] ?? +m[1]) : null; };   // "a decimal to 4 places"
   const d = roundingAsked(ctx.question) ?? roundingAsked(ctx.prose) ?? toPlaces(ctx.question);
   if (d != null && !scaled) {
     const step = Math.pow(10, -d) / (w.unit === '%' ? 100 : 1), rounded = Math.round(ans / step) * step;
     if (Math.abs(rounded - ans) > hw + 1e-12) warn(file, `${where}`, `[tight-band] the answer ${ans} rounded as the question asks (${d} decimal place${d === 1 ? '' : 's'}) is ${+rounded.toPrecision(12)}, outside its band +-${+hw.toPrecision(3)}: a learner who rounds correctly is marked wrong`);
-    else if (decimalsOf(ans) > d + (w.unit === '%' ? 4 : 2) && hw <= 0.5 * Math.pow(10, -d) / (w.unit === '%' ? 100 : 1) * 1.001) warn(file, `${where}`, `[tight-band] the stored answer ${ans} has more decimals than the ${d} asked for and the band +-${+hw.toPrecision(3)} is half a unit of the last place: a working that keeps rounded figures lands one unit out; use a band of 1 unit (${+Math.pow(10, -d).toPrecision(3)})`);
+    else if (decimalsOf(ans) > d + (w.unit === '%' ? 4 : 2) && hw <= 0.5 * Math.pow(10, -d) / (w.unit === '%' ? 100 : 1) * 1.001 && Math.abs(Math.abs(ans / step - Math.trunc(ans / step)) - 0.5) <= 0.1) warn(file, `${where}`, `[tight-band] the stored answer ${ans} has more decimals than the ${d} asked for and the band +-${+hw.toPrecision(3)} is half a unit of the last place: a working that keeps rounded figures lands one unit out; use a band of 1 unit (${+Math.pow(10, -d).toPrecision(3)})`);
   }
   if (!scaled) {
     [['feedback.correct', isObj(ctx.feedback) ? ctx.feedback.correct : null], ['explain.text', isObj(ctx.explain) ? ctx.explain.text : null]].forEach(([name, text]) => {
       if (scaled || typeof text !== 'string') return;
       const v = printedValue(text, w.unit);
       /* only a figure within 2% of the answer: the same quantity rounded differently. A last "=" is often a step, not the answer, and a far figure is not a band fault */
-      if (v != null && Math.abs(v - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans)) && Math.abs(v - ans) <= 0.02 * Math.abs(ans)) warn(file, `${where}`, `[tight-band] ${name} prints ${+v.toPrecision(10)} after its last "=" or "\\approx", outside the answer ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the explanation is marked wrong`);
+      /* triage-bands-ab rule 1: only a figure that is the answer rounded to fewer places, and not one of the part's own wrong values */
+      const roundedFewer = v != null && decimalsOf(v) < decimalsOf(ans) && Math.abs(Math.round(ans * Math.pow(10, decimalsOf(v))) / Math.pow(10, decimalsOf(v)) - v) <= 1e-9 * Math.max(1, Math.abs(v));
+      const isSlip = (Array.isArray(w.wrong) ? w.wrong : []).some(x => isObj(x) && typeof x.value === 'number' && closeTo(x.value, v));
+      if (roundedFewer && !isSlip && Math.abs(v - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans)) && Math.abs(v - ans) <= 0.02 * Math.abs(ans)) warn(file, `${where}`, `[tight-band] ${name} prints ${+v.toPrecision(10)} after its last "=" or "\\approx", outside the answer ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the explanation is marked wrong`);
     });
   }
   (Array.isArray(w.wrong) ? w.wrong : []).forEach((x, i) => {
     if (!isObj(x) || typeof x.value !== 'number' || !Number.isFinite(x.value) || x.value === 0) return;
     const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
-    if (wh > 0.5 * Math.abs(x.value)) warn(file, `${where}.wrong[${i}]`, `[wide-wrong-band] wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, over half its own value: it takes in answers that are not this slip`);
+    /* triage-bands-ab rule 6: only a band that reaches the answer band or another wrong value (a right answer's line or another slip's line could be taken) */
+    const lo = x.value - wh, hi = x.value + wh, reaches = (lo <= ans + hw && hi >= ans - hw) || (Array.isArray(w.wrong) ? w.wrong : []).some((y, j) => j !== i && isObj(y) && typeof y.value === 'number' && y.value >= lo && y.value <= hi);
+    if (wh > 0.5 * Math.abs(x.value) && reaches) warn(file, `${where}.wrong[${i}]`, `[wide-wrong-band] wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, over half its own value: it takes in answers that are not this slip`);
   });
 };
 /* ENGINE-BACKLOG 910: [wrong-equals-answer], an expression wrong[].tex that the grader reads as the answer (or an accept form), so the entry can never
