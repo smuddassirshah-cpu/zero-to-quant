@@ -28,6 +28,11 @@ def show(name, only=None):
             print('TESTS:')
             for t in w['tests']:
                 print('   ', t['call'], '=>', t['expect'], t.get('compare'))
+            for kind in ('examples', 'tests'):
+                for i, c in enumerate(w[kind]):
+                    extra = {k: v for k, v in c.items() if k not in ('call', 'expect', 'compare')}
+                    if extra:
+                        print(f'    {kind} {i + 1} also has', str(extra)[:500])
             print('HOW:', w.get('how'))
             print('SOLUTION:\n' + w['solution'])
             print('extra=', [k for k in w if k not in ('kind', 'language', 'starter', 'examples', 'tests', 'how', 'solution')])
