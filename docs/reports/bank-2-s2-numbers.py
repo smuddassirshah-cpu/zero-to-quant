@@ -266,7 +266,7 @@ p_t = sum(tpdf(-1 + (k + 0.5) * 1e-5) for k in range(200000)) * 1e-5   # adjuste
 two(fell_adj / 2000, p_t, 3 * sqrt(p_t * (1 - p_t) / 2000), 'adjusted R^2 fell (tolerance three binomial sds)')
 ok(fell_r2 == 0 and 0.6 < p_t < 0.72 and 0.6 < fell_adj / 2000 < 0.72, f'about two times in three: exact {p_t:.3f}, simulated {fell_adj / 2000:.3f}; R^2 fell {fell_r2} times')
 choice(S, 'rg-multiple-useless-predictor', 'cannot fall')
-stated(S, 'rg-multiple-useless-predictor', "whenever the new coefficient's t statistic is below 1 in size, which pure noise manages about two times in three")
+stated(S, 'rg-multiple-useless-predictor', "so it falls whenever the new coefficient's t statistic is below 1 in size. Pure noise manages that about two times in three.")
 stale(S, 'rg-multiple-useless-predictor', ['1,362', 'seeded', '2,000'])
 
 # collinear-features-inflation-factor: 1/(1 - r^2) against the diagonal of the inverse correlation matrix
