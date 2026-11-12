@@ -8,7 +8,9 @@
 ## Commands
 - Serve: `app/run.sh` then open `http://localhost:8080` in Chrome.
 - Validate content (run from `app/`): `node tools/validate.mjs 2>&1 | tail -5` (0 errors required; it rewrites `content/manifest.json`).
-- Play through (run from `app/`): `node tools/playthrough.mjs --lesson <course>/<id> | --set <course>/<id> | --exam <id> | --all [--mobile] [--why] [--local-cdn <pkgs>] 2>&1 | tail -30`.
+- Play through (run from `app/`): `node tools/playthrough.mjs --lesson <course>/<id> | --set <course>/<id> | --exam <id> | --all [--changed] [--mobile] [--why] [--local-cdn <pkgs>] 2>&1 | tail -30`. `--changed` replays only items whose content or engine hash differs from the last green run.
+- Grading without a browser (run from `app/`): `node tools/grade-all.mjs [--file <path>] --local-cdn <pkgs>`. Validator tests run on `tools/fixtures/mini-app` and take under five minutes together.
+- CI: `.github/workflows/acceptance.yml` runs the full acceptance on every push; see `docs/CI.md`.
 - Progress count: see the Python snippet in `PROGRESS.md` history or count `l*.json` against `course.json` maps.
 
 ## Conventions
@@ -25,8 +27,9 @@
 2. Work the next unchecked task in PLAN.md. Course-correction (2c) tasks run before any content expansion until 2c items 1 to 5 are ticked.
 3. Waves: three or four agents, each in its own worktree, each owning one course for up to three levels, committing per level with the level in the message. Start a wave only with more than half the usage window left. Merge with `app/tools/merge-wave.sh`; read its tail only.
 4. A level is handed to a second reader only with: validator 0 errors, voice scan 0 and 0, a committed number-recompute script that passes, playthrough green with and without `--mobile`. Otherwise it goes back to its author.
-5. Check chain per level: author self-check, one second read that runs the author's script, one fix pass on Sonnet, playthrough of changed files. No separate answer-check pass.
+5. Check chain per level: author self-check (the author plays its own files), one second read that runs the author's script and `grade-all.mjs --file`, with no browser, one fix pass on Sonnet that plays only the files it edits. Engine agents run the tests they touched. No separate answer-check pass. Nobody replays an unchanged file locally.
 6. Any finding class seen three times in docs/reviews becomes a validator rule or script before the next wave; raise it as an engine item.
 7. Stay thin: never read large files, logs or full output. Reports under 200 words; detail to files.
-8. Before ending: commit, tick PLAN, one PROGRESS line dated from `git log`, record decisions and issues.
-9. Last: write NEXT_PROMPT.md (exact next task, context not in state files, files to touch, acceptance check, expected census figures; under 300 words) and print it in full.
+8. Acceptance at the final HEAD: validator 0 errors, `playthrough.mjs --changed` on what the session touched, and a green run of `.github/workflows/acceptance.yml` on the pushed HEAD (`docs/CI.md`). No local full `--all`.
+9. Before ending: commit, tick PLAN, one PROGRESS line dated from `git log`, record decisions and issues.
+10. Last: write NEXT_PROMPT.md (exact next task, context not in state files, files to touch, acceptance check, expected census figures; under 300 words) and print it in full.
