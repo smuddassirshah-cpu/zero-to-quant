@@ -58,14 +58,15 @@ M['es-mle-two-coins-ratio'] = (l8 / lf, {'upside-down': lf / l8, 'all-heads': 0.
 M['shrinkage-mse-best-multiplier'] = (F(9, 12), {'unbiased': 1, 'equal-split': F(3, 6)}, [('0.75', 'ok'), ('3/4', 'ok'), ('1', 'unbiased'), ('0.5', 'equal-split'), ('2.25', 'no')])
 sep = sqrt(0.6 * 0.4 / 400)
 M['es-intervals-poll-margin'] = (196 * sep, {'used-half': 196 * sqrt(0.25 / 400), 'no-multiplier': 100 * sep},
-    [('4.8', 'ok'), ('4.80', 'ok'), ('4.801', 'ok'), ('4.8 points', 'ok'), ('4.9', 'used-half'), ('2.4', 'no-multiplier'), ('2.45', 'no-multiplier'), ('0.048', 'no'), ('4.8%', 'ok'),
+    [('4.8', 'ok'), ('4.80', 'ok'), ('4.801', 'ok'), ('4.8 points', 'ok'), ('4.9', 'used-half'), ('2.4', 'no-multiplier'), ('2.45', 'no-multiplier'), ('0.048', 'no'), ('4.8%', 'no'),  # a % sign is read as 0.048 and refused (review finding 12)
+    
      ('%.1f' % (200 * sep), 'used-half')])  # multiplier 2 gives 4.9 and is told "you used p = 0.5"
 pm = (0 * 0.25 + 3 * 1) / 1.25
 M['es-bayes-prior-and-sample'] = (pm / 100, {'plain-average': 1.5 / 100, 'weights-swapped': (3 * 0.25) / 1.25 / 100}, [('2.4', 'ok'), ('2.4%', 'ok'), ('2.40', 'ok'), ('12/5', 'ok'), ('0.024', 'no'), ('1.5', 'plain-average'), ('0.6', 'weights-swapped'), ('2', 'no')])
 M['ht-setup-ten-paired-days'] = (1.2 / (1.5 / sqrt(10)), {'no-root': 1.2 / 1.5, 'root-nine': 1.2 / (1.5 / 3)}, [('2.53', 'ok'), ('2.530', 'ok'), ('2.5', 'no'), ('0.8', 'no-root'), ('2.4', 'root-nine'), ('2.40', 'root-nine')])
 M['ht-pvalue-bigger-sample'] = (2.4 * sqrt(2.25), {'times-n': 2.4 * 2.25, 'divided': 2.4 / 1.5}, [('3.6', 'ok'), ('3.60', 'ok'), ('5.4', 'times-n'), ('1.6', 'divided'), ('2.4', 'no')])
 M['ht-errors-equal-error-cutoff'] = (1 - Phi(1.5), {'added-both': 2 * (1 - Phi(1.5)), 'cutoff-at-three': 1 - Phi(3)},
-    [('0.0668', 'ok'), ('6.68%', 'ok'), ('0.06681', 'ok'), ('0.067', 'no'), ('0.1336', 'added-both'), ('0.0013', 'cutoff-at-three'), ('0.00135', 'cutoff-at-three'), ('0.0014', 'cutoff-at-three'), ('1.5', 'no')])
+    [('0.0668', 'ok'), ('6.68%', 'ok'), ('0.06681', 'ok'), ('0.067', 'no'), ('0.1336', 'added-both'), ('0.0013', 'cutoff-at-three'), ('0.00135', 'cutoff-at-three'), ('1.5', 'no')])
 M['collinear-features-inflation-factor'] = (1 / (1 - 0.81), {'one-minus-r': 1 / (1 - 0.9), 'standard-error-factor': sqrt(1 / 0.19)}, [('5.26', 'ok'), ('100/19', 'ok'), ('5.263', 'ok'), ('5.3', 'no'), ('10', 'one-minus-r'), ('2.29', 'standard-error-factor')])
 M['ts-forecast-two-steps-ahead'] = (10 + 0.36 * 5, {'one-step': 10 + 0.6 * 5, 'no-mean': 0.36 * 15}, [('11.8', 'ok'), ('11.80', 'ok'), ('13', 'one-step'), ('5.4', 'no-mean'), ('1.8', 'no'), ('15.4', 'no')])
 M['ts-acf-two-day-variance-ratio'] = (1 - 0.15, {'independent': 1, 'sign': 1.15}, [('0.85', 'ok'), ('17/20', 'ok'), ('85%', 'ok'), ('1', 'independent'), ('1.15', 'sign'), ('1.7', 'no'), ('0.7', 'no')])

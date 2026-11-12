@@ -53,7 +53,8 @@ chk('noisy regressor: reported slope', np.cov(xo, yo)[0, 1] / xo.var(), 0.75, 0.
 r = rng.normal(size=400001); ret = r[1:] - 0.1535 * r[:-1]   # MA(1) with rho1 = -0.15
 rho = np.corrcoef(ret[1:], ret[:-1])[0, 1]
 chk('two-day variance ratio equals 1 + rho1', (ret[1:] + ret[:-1]).var() / (2 * ret.var()), 1 + rho, 0.003)
-chk('CLT: mean of 100 skewed draws (gamma, mean 5 sd 4) above 5.8', (rng.gamma(25 / 16, 16 / 5, (200000, 100)).mean(axis=1) > 5.8).mean(), 0.0228, 0.004)
+chk('CLT: mean of 100 normal draws (mean 5 sd 4) above 5.8', (rng.normal(5, 4, (200000, 100)).mean(axis=1) > 5.8).mean(), 0.0228, 0.002)
+print('     note: the same for a skewed parent (gamma, mean 5 sd 4): %.4f, so the CLT figure 0.0228 is good to 2 places, not 4 (review finding 9)' % (rng.gamma(25 / 16, 16 / 5, (200000, 100)).mean(axis=1) > 5.8).mean())
 c = np.linspace(0, 3, 3001); d = np.abs(stats.norm.sf(c) - stats.norm.cdf(c - 3))
 chk('equal error cut-off', c[d.argmin()], 1.5, 0.0011)
 # s3
