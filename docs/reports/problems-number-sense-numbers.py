@@ -517,7 +517,7 @@ def figures_1_to_3():
 UNITS = {
     1: {'p-garden-beds': ['beds', None, None, None], 'p-rye-loaves': [None, 'loaves', 'kg', None], 'p-two-printers': [None, None, 'hours', 'minutes'],
         'p-squash-jugs': [None, None, 'litres', 'litres', None]},
-    2: {'p-moor-weather': ['\u00b0C', 'degrees', 'degrees', '\u00b0C'], 'p-golf-card': [None, None, None, None], 'p-taxi-split': ['\u00a3', '\u00a3', 'p', '\u00a3']},
+    2: {'p-moor-weather': ['\u00b0C', '\u00b0C', '\u00b0C', '\u00b0C'], 'p-golf-card': [None, None, None, None], 'p-taxi-split': ['\u00a3', '\u00a3', 'p', '\u00a3']},
     3: {'p-cube-tub': ['cubes'] * 3, 'p-stationery-bill': ['\u00a3'] * 4, 'p-comet-probe': ['hours', 'hours', 'years', 'years']},
 }
 for nn, per in UNITS.items():
