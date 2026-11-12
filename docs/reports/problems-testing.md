@@ -16,12 +16,12 @@ Lessons read first: l1 to l12, with the quizzes, reviews 1 to 3 and homework 1 t
 | problems-2 | p-tyre-brands | 4 (3 / 1) | l7, l8 | 3 |
 | problems-2 | p-running-shoes | 5 (4 / 1) | l6, l8 | 5 |
 | problems-2 | p-blood-screen | 5 (4 / 1) | l5, l7 | 4 |
-| problems-3 | p-gene-screen | 5 (4 / 1) | l9, l10 | 4 |
+| problems-3 | p-gene-screen | 5 (4 / 1) | l9, l10 | 5 |
 | problems-3 | p-fund-managers | 3 (3 / 0) | l10, l11 | 3 |
-| problems-3 | p-checkout-designs | 4 (3 / 1) | l9, l10, l12 | 4 |
-| problems-3 | p-biomarker-field | 5 (4 / 1) | l9, l10, l12 | 5 |
+| problems-3 | p-checkout-designs | 5 (4 / 1) | l9, l10 | 3 |
+| problems-3 | p-biomarker-field | 5 (3 / 2) | l9, l10, l12 | 4 |
 
-Typed parts: 14 of 18, 15 of 19, 14 of 17. Each choice part is a judgement: which hypotheses, which test and cut-off, which plan, what a p-value or a flag means, which next step is honest, what Bonferroni and BH promise. Every lesson of each level appears, and every problem draws on two or more.
+Typed parts: 14 of 18, 15 of 19, 14 of 18 (after the fix pass below). Each choice part is a judgement: which hypotheses, which test and cut-off, which plan, what a p-value or a flag means, which next step is honest, what Bonferroni and BH promise. Every lesson of each level appears, and every problem draws on two or more.
 
 Chains. Every non-final part's result is used by a later part, restated in that part's question. Examples: the standard error 3 g, $z = -2.3$, p = 0.0107 against $\alpha = 0.01$; $\bar x = 18$, $s = 2$, $t = -2.121$, the cut-off 1.895, then the smallest advert rejected, 19.34 hours; the tails 13, 79 and 299 of 4096 to the smallest rejecting count, 10; the centre 2.25, power 0.7274, the either-rule 0.9257 against one 72-plot trial at 0.9379; $\alpha = 0.0359$, $\beta = 0.3446$, 483 flags, a share of 0.27; the Bonferroni 0.00125, its family chance 0.0488, then 2 against BH's 5 (rank 4 fails, rank 5 passes); 17.29 and 1.026 false finds, shares 0.490 and 0.079. Each `carried` entry is the answer from the commonest slip of the part before, where the learner could reach it with the values given; where that slip needs a $\Phi$ value the part does not give, no `carried` entry is written (it could not fire).
 
@@ -70,3 +70,7 @@ The script caught one of my slips while drafting: the carried slip in part 5 of 
 ## Engine limits
 
 One bullet in `docs/BACKLOG-INBOX.md` under "Raised later (fluency and problems testing 4)". None blocked a problem.
+
+## Fix pass (review-problems-1.6-b, problems-1 to 3)
+
+`p-gene-screen`, `p-checkout-designs` and `p-biomarker-field` were re-authored with a new task structure and new numbers, because each reworked a lesson or exam task (finding 9). Genes: 60 tests at 10%, the Bonferroni bar, its count, BH past a failing rank, then the smallest $q$ that keeps rank 5 (new step). Checkout pages: 18 pages, expected launches and their cost at £4,000 a launch, the Bonferroni bar and the chance of any useless launch under it. Biomarkers: a table of four bars, the per-null chance that keeps expected false finds at 1, the lowest bar that meets it, the real finds and false share there, and why a false share is not a chance of any false find. The other minor findings are small edits listed in `docs/reviews/review-problems-1.6-b.md`. Numbers script: 1,120 checks, 0 failures, a stale-value check on each re-authored item. Fresh-check: 0 hits and no advisory on `problems-3`.
