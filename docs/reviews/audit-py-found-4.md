@@ -78,3 +78,20 @@ Pattern: `N. file | JSON path | severity | serious or minor | problem | evidence
 - Sorting: `key`, `reverse=True`, `sorted` returning a new list while `.sort()` changes the caller's list, stability with a price key against sorting whole tuples (`h4-sweep-offers`), text against date order.
 - Testing: float `==` fails on `mean([0.1, 0.2])`; a hand-worked value separates the three volatility mistakes; a test that asserts only `> 0` passes on every mistake; pytest collects only `test`-prefixed functions; an unguarded script fails on import under pytest. `pytest.approx` is not taught, so there is nothing to check.
 - A weak test noted, not a concept error: l15 screens[9] test 6 counts `assert` lines, so two lines of `assert True` satisfy tests 5 and 6. It goes to the inbox.
+
+## Overlap with the earlier review
+
+Read after the WIP commit: `docs/reviews/review-py-found-3-4.md`, level 4 part. Its conceptual findings on level 4 (severity wrong or misleading) are numbers 2, 5, 6, 7, 10, 11, 12, 13, 14 and 15. Its fix pass applied all ten before this audit, and I confirmed each fix in the content I read. So none was open for me to find, and the "review only" count is not a miss rate for this read.
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| Audit only | 21 | Findings 1 to 21 above |
+| Review only | 10 | Review findings 2, 5, 6, 7, 10, 11, 12, 13, 14, 15 (all fixed before this read) |
+| Both | 0 | |
+
+Notes on the overlap.
+
+- Three strings of finding 21 were read and passed by the review, or written by its fix pass. It lists "Remember lesson 1" and "the generator from lesson 13" as cross-references checked and right (my finding 21 agrees they are right, and objects only to citing by number). Its fix 27 wrote "as `splitlines()` did in l10", so that part of finding 21 is on fix-pass text.
+- Review finding 6 (an empty test passed l15 screens[9]) was fixed by counting `assert` lines. The residue, that `assert True` twice still passes, is in the inbox, not in my findings.
+- The five review findings named in the numbers script's docstring (see "Blind rule") are 2, 5, 6, 7 and 10. None is among my 21.
+- The review's voice, layout and continuity findings (16 to 20, 25 to 27) are outside this count.
