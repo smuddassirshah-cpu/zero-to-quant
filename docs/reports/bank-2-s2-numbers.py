@@ -209,74 +209,32 @@ key = two(a, md / (sd / sqrt(10)), 1e-12, 'paired t')
 numeric(S, 'ht-setup-ten-paired-days', key, 2, {'no-root': 1.2 / 1.5, 'root-nine': 1.2 / (1.5 / 3)})
 ok(fmt(1.5 / sqrt(10), 3) == '0.474' and fmt(1.2 / 0.474, 2) == '2.53', 'stated 0.474 and 2.53')
 
-# ht-pvalue-z-two-and-a-half: NormalDist against erfc
-a = 2 * (1 - N.cdf(2.2))                                    # fix pass finding 19: z = 2.2 (the id keeps its old name)
-two(a, erfc(2.2 / sqrt(2)), 1e-12, 'two-sided p at 2.2')
-ok(fmt(a, 3) == '0.028' and fmt(a / 2, 3) == '0.014' and fmt(1 - N.cdf(1.96), 3) == '0.025', 'options 0.028, 0.014, 0.025')
-ok(fmt(a / 2, 4) == '0.0139' and fmt(a, 3) == '0.028' and 0.01 < a < 0.05, 'stated 0.0139, 0.028; significant at 5% not 1%')
-choice(S, 'ht-pvalue-z-two-and-a-half', '0.028')
-stale(S, 'ht-pvalue-z-two-and-a-half', ['2.5', '0.012', '0.006', '0.0062', '0.0124'])
-ok(abs(a - 0.025) > 0.002 and abs(a / 2 - 0.014) < 0.0005, 'the 0.028 and 0.025 options are distinguishable at 3 places')
+# ht-pvalue-z-two-and-a-half: NormalDist against erfc (delta finding 3: z = 2.05; the id keeps its old name; z = 2.2 is a testing lesson's own example)
+a = 2 * (1 - N.cdf(2.05))
+two(a, erfc(2.05 / sqrt(2)), 1e-12, 'two-sided p at 2.05')
+h_ = 1e-4                                                   # route C: midpoint integral of the density beyond 2.05
+integ_ = sum(exp(-((2.05 + (k + 0.5) * h_) ** 2) / 2) for k in range(int(8 / h_))) * h_ / sqrt(2 * pi)
+two(a / 2, integ_, 1e-7, 'tail beyond 2.05 by a midpoint integral')
+ok(fmt(a, 3) == '0.040' and fmt(a / 2, 3) == '0.020' and fmt(1 - N.cdf(1.96), 3) == '0.025', 'options 0.040, 0.020, 0.025')
+ok(fmt(a / 2, 4) == '0.0202' and fmt(a, 3) == '0.040' and 0.01 < a < 0.05, 'stated 0.0202, 0.040; significant at 5% not 1%')
+choice(S, 'ht-pvalue-z-two-and-a-half', '0.040')
+stale(S, 'ht-pvalue-z-two-and-a-half', ['2.5', '0.012', '0.006', '0.0062', '0.0124', '2.2', '0.028', '0.0139', '0.014', '0.0278'])
+stated(S, 'ht-pvalue-z-two-and-a-half', 'A test statistic is z = 2.05')
+ok(abs(a - 0.025) > 0.002 and abs(a / 2 - 0.020) < 0.0005 and abs(a - 0.050) > 0.005, 'the 0.040, 0.025 and 0.050 options are distinguishable at 3 places; one tail is 0.020')
 
-# ht-pvalue-bigger-sample: scaling rule against recomputing z from a mean, sd and n
-a = 2.4 * sqrt(2.25)
-n0 = 100
-mean_ = 2.4 * 1.0 / sqrt(n0)                             # sd 1, n 100 gives z 2.4
-key = two(a, mean_ / (1.0 / sqrt(2.25 * n0)), 1e-12, 'new z')
-numeric(S, 'ht-pvalue-bigger-sample', key, 1, {'times-n': 2.4 * 2.25, 'divided': 2.4 / 1.5})
-
-# ht-errors-equal-error-cutoff: symmetry against a bisection on the two error curves
-lo, hi = 0.0, 3.0
-for _ in range(100):
-    mid = (lo + hi) / 2
-    lo, hi = (mid, hi) if (1 - N.cdf(mid)) > N.cdf(mid - 3) else (lo, mid)
-two(1.5, lo, 1e-9, 'equal-error cut-off')
-a = 1 - N.cdf(1.5)
-key = two(a, 0.5 * erfc(1.5 / sqrt(2)), 1e-12, 'common error rate')
-numeric(S, 'ht-errors-equal-error-cutoff', key, 4, {'added-both': 2 * a, 'cutoff-at-three': 1 - N.cdf(3)})
-ok(N.cdf(3 - 3) == 0.5, 'cut-off at 3 has type II error 0.5')
-
-# rg-fit-point-at-the-mean: least squares before and after, against the normal equations
-b1, _, _ = ols([1, 2, 3], [2, 3, 7])
-b2, _, _ = ols([1, 2, 3, 2], [2, 3, 7, 10])
-_, _, beta, _ = r2_fit([[1, 2, 3, 2]], [2, 3, 7, 10])
-two(b2, beta[1], 1e-12, 'slope after, by normal equations')
-ok(abs(b1 - 2.5) < 1e-12 and abs(b2 - 2.5) < 1e-12, 'slope stays 2.5')
-ok(abs((4 - 2.5 * 2) - (-1)) < 1e-12 and abs(beta[0] - 0.5) < 1e-12, 'intercept moves from -1 to 0.5')
-for h in (-50, 0, 10, 99):                                # claim: whatever the height, the slope is unchanged
-    ok(abs(ols([1, 2, 3, 2], [2, 3, 7, h])[0] - 2.5) < 1e-12, f'slope 2.5 with the new point at height {h}')
-choice(S, 'rg-fit-point-at-the-mean', 'It stays 2.5')
-
-# rg-multiple-useless-predictor: seeded count against the exact chance P(|t_47| < 1)
-rng = random.Random(2)
-fell_adj = fell_r2 = 0
-for _ in range(2000):
-    x1 = [rng.gauss(0, 1) for _ in range(50)]
-    y = [0.5 * v + rng.gauss(0, 1) for v in x1]
-    z = [rng.gauss(0, 1) for _ in range(50)]
-    R1, A1, _, _ = r2_fit([x1], y)
-    R2, A2, _, _ = r2_fit([x1, z], y)
-    fell_adj += A2 < A1
-    fell_r2 += R2 < R1 - 1e-12
-    t2 = (R2 - R1) / (1 - R2) * 47                            # t squared of the added coefficient, from the two R^2 values
-    ok((A2 < A1) == (t2 < 1), 'fix pass 11: adjusted R^2 falls exactly when |t| < 1')
-nu = 47
-tpdf = lambda t: math.gamma((nu + 1) / 2) / (sqrt(nu * pi) * math.gamma(nu / 2)) * (1 + t * t / nu) ** (-(nu + 1) / 2)
-p_t = sum(tpdf(-1 + (k + 0.5) * 1e-5) for k in range(200000)) * 1e-5   # adjusted R^2 falls exactly when |t| < 1
-two(fell_adj / 2000, p_t, 3 * sqrt(p_t * (1 - p_t) / 2000), 'adjusted R^2 fell (tolerance three binomial sds)')
-ok(fell_r2 == 0 and 0.6 < p_t < 0.72 and 0.6 < fell_adj / 2000 < 0.72, f'about two times in three: exact {p_t:.3f}, simulated {fell_adj / 2000:.3f}; R^2 fell {fell_r2} times')
-choice(S, 'rg-multiple-useless-predictor', 'cannot fall')
-stated(S, 'rg-multiple-useless-predictor', "so it falls whenever the new coefficient's t statistic is below 1 in size. Pure noise manages that about two times in three.")
 stale(S, 'rg-multiple-useless-predictor', ['1,362', 'seeded', '2,000'])
 
 # collinear-features-inflation-factor: 1/(1 - r^2) against the diagonal of the inverse correlation matrix
-a = 1 / (1 - F(36, 100))                                      # fix pass finding 8: correlation 0.6
-inv11 = solve([[1, 0.6], [0.6, 1]], [1, 0])[0]
+# (delta finding 1: correlation 0.5; 0.6 is a regression problem set's own value, 0.8, 0.75 and 0.9 are taken too)
+a = 1 / (1 - F(25, 100))
+inv11 = solve([[1, 0.5], [0.5, 1]], [1, 0])[0]
 key = two(a, inv11, 1e-12, 'variance inflation factor')
-numeric(S, 'collinear-features-inflation-factor', key, 2, {'one-minus-r': 1 / (1 - F(6, 10)), 'standard-error-factor': sqrt(a)})
-ok(a == F(25, 16) and F(6, 10) ** 2 == F(36, 100) and 1 / (1 - 0.36) == 1 / 0.64, '0.6 squared is 0.36 and 1/0.64 = 25/16')
-stated(S, 'collinear-features-inflation-factor', '1/0.64 \\\\approx 1.56')
-stale(S, 'collinear-features-inflation-factor', ['0.9', '0.81', '0.19', '5.26', '5.2632', '2.29', '"value": 10,'])
+numeric(S, 'collinear-features-inflation-factor', key, 2, {'one-minus-r': 1 / (1 - F(1, 2)), 'standard-error-factor': sqrt(a)})
+ok(a == F(4, 3) and F(1, 2) ** 2 == F(1, 4) and 1 / (1 - 0.25) == 1 / 0.75, '0.5 squared is 0.25 and 1/0.75 = 4/3')
+ok(1 / (1 - 0.5) == 2 and fmt(sqrt(a), 2) == '1.15', 'slips: no square gives 2, the root gives 1.15')
+stated(S, 'collinear-features-inflation-factor', '1/0.75 \\\\approx 1.33')
+stated(S, 'collinear-features-inflation-factor', 'a third larger than uncorrelated predictors would give')
+stale(S, 'collinear-features-inflation-factor', ['0.9', '0.81', '0.19', '5.26', '5.2632', '2.29', '"value": 10,', '0.6', '0.36', '0.64', '1.56', '1.5625', '1.25', 'one and a half'])
 
 # ts-forecast-two-steps-ahead: closed form against iterating the forecast
 a = 10 + F(6, 10) ** 2 * 5
@@ -524,12 +482,17 @@ ok(abs((0.83 - 0.80) / 0.02 - 1.5) < 1e-9 and abs((0.83 - 0.80) / se - 1.5) < 0.
 ok(91 - 80 == 11 and 84 - 80 == 4, 'edge four points, not eleven')
 ok(item(B, 'project-account-too-good-to-be-true')['pace'] == 150, 'fix pass 24: pace 150')
 stated(B, 'project-account-too-good-to-be-true', 'the model\'s edge was four points, not eleven')
-stated(B, 'project-account-too-good-to-be-true', 'one and a half standard errors above the baseline')
-stale(B, 'project-account-too-good-to-be-true', ['currency', 'hit rate', '58 per cent', '54 per cent', '53 per cent', 'moving average', 'three points of hit rate'])
+stated(B, 'project-account-too-good-to-be-true', 'On it the model scored 83 per cent and the same baseline 80. The standard error of the model\'s score is about 2 points, so the edge is one and a half of them.')   # delta finding 17: the baseline is scored on the held-out cohort too
+ok(83 - 80 == 3 and abs(3 / 2 - 1.5) < 1e-12 and abs(se * 100 - 1.88) < 0.005, 'held-out edge: 3 points over a standard error of about 2 is one and a half (1.88 exactly)')
+stale(B, 'project-account-too-good-to-be-true', ['currency', 'hit rate', '58 per cent', '54 per cent', '53 per cent', 'moving average', 'three points of hit rate', 'The standard error there', 'standard errors above the baseline'])
 # after-rejection-applied-before (finding 22): six unexplained steps a problem fell to one over fourteen sessions
 ok(6 > 1 and 14 > 0, 'count of unfollowed steps fell from about six to one over fourteen sessions')
 stated(B, 'after-rejection-applied-before', 'Over fourteen sessions that count fell from about six a problem to one.')
-stale(B, 'after-rejection-applied-before', ['arithmetic', 'eighty-question', '45 correct', 'trading society', 'timed test'])
+stated(B, 'after-rejection-applied-before', "Each Thursday at the programming society's pairing night I solved two problems aloud, and my partner counted the steps she could not follow.")   # delta finding 14b
+stated(B, 'after-rejection-applied-before', 'I am applying again because I still want work where my code is tested by a market the same day')            # delta finding 14a: the reason the rubric line asks for
+stale(B, 'after-rejection-applied-before', ['arithmetic', 'eighty-question', '45 correct', 'trading society', 'timed test', 'shared screen', 'with a friend', 'my reasons for wanting the role have not changed'])
+_m14 = item(B, 'after-rejection-applied-before')['widget']
+ok(120 <= len(_m14['model'].split()) <= 180 and _m14['rubric'][4]['text'] == 'Says why you still want this role', 'after-rejection: 120 to 180 words and rubric line 5 is the reason for wanting the role, which the model now gives')
 # final-round-questions-for-us (finding 25)
 stated(B, 'final-round-questions-for-us', 'which tells me what to prepare before I start.')
 stale(B, 'final-round-questions-for-us', ['Neither question is answered on a careers page'])
@@ -608,7 +571,13 @@ code('edge-case-list-second-largest',
       'second smallest less the smallest (finding fix)': "def runner_up_gap(xs):\n    s = sorted(set(xs))\n    return s[1] - s[0] if len(s) >= 2 else None\n",
       'largest less the smallest': "def runner_up_gap(xs):\n    return max(xs) - min(xs) if len(set(xs)) >= 2 else None\n"})
 t = tests_of('edge-case-list-second-largest')
-ok([t[k] for k in ('runner_up_gap([9, 9, 6])', 'runner_up_gap([4])', 'runner_up_gap([2, 2])', 'runner_up_gap([-1, -5, -3])', 'runner_up_gap([])', 'runner_up_gap([1, 8])', 'runner_up_gap([1, 2, 10])')] == ['3', 'None', 'None', '2', 'None', '7', '8'], 'runner_up_gap: the stated values')
+ok([t[k] for k in ('runner_up_gap([9, 9, 6])', 'runner_up_gap([4])', 'runner_up_gap([2, 2])', 'runner_up_gap([-1, -5, -2])', 'runner_up_gap([])', 'runner_up_gap([1, 8])', 'runner_up_gap([1, 2, 10])')] == ['3', 'None', 'None', '1', 'None', '7', '8'], 'runner_up_gap: the stated values (delta finding 15: the negative case is not evenly spaced)')
+_abs = "def runner_up_gap(xs):\n    d = sorted(set(abs(x) for x in xs))\n    return d[-1] - d[-2] if len(d) > 1 else None\n"
+_rt = cc.run(_abs, item(CO, 'edge-case-list-second-largest')['widget']['tests'])
+ok(not all(p for p, _ in _rt) and [k + 1 for k, (p, _) in enumerate(_rt) if not p] == [4], 'runner_up_gap: a candidate that compares sizes (abs) fails the negative test, and only that one')
+ok(cc.run(_abs, [{'call': 'runner_up_gap([-1, -5, -3])', 'expect': '2', 'compare': 'equal'}])[0][0], 'runner_up_gap: the old evenly spaced negative test was passed by that candidate')
+_d = sorted(set([-1, -5, -2]))
+ok(_d[-1] - _d[-2] == 1 and abs(-1) - abs(-2) != 1 and 'runner_up_gap([-1, -5, -3])' not in json.dumps(item(CO, 'edge-case-list-second-largest')), 'runner_up_gap([-1, -5, -2]) is 1 by a sort of the distinct values; sizes would give -1 after the sort of abs values (3)')
 ok(sorted([9, 9, 6])[-1] - sorted([9, 9, 6])[-2] == 0, 'runner_up_gap: sorted(xs)[-2] gives a gap of 0 for [9, 9, 6]')
 stale_fc(CO, 'edge-case-list-second-largest', 'second_largest')
 
@@ -628,7 +597,35 @@ ok(eval(t['merge_ticks([(1, 10.0), (4, 10.5)], [(1, 9.5), (2, 10.0), (4, 11.0)])
 ok((10.0 + 9.5) / 2 == 9.75 and (10.5 + 11.0) / 2 == 10.75, 'merge_ticks: the means are exact in binary floats')
 ok(len(sorted(set(range(0, 100000, 2)) | set(range(0, 100000, 3)))) == 66667, 'merge_ticks: 66,667 different times in the large test')
 ok(sorted([(1, 10.0), (4, 10.5), (1, 9.5)])[0] == (1, 9.5), 'merge_ticks: sorted(a + b) would keep two ticks at time 1')
-stale_fc(CO, 'ds-pointers-merge-ticks', '10.2', '10.3', '9.9', 'At equal times')
+stale_fc(CO, 'ds-pointers-merge-ticks', '10.2', '10.3', '9.9', 'At equal times', 'a = [(1, 1.0), (3, 1.0)]; b = [(2, 2.0)]', 'Neither list is changed:')
+# delta finding 5: test 9 must have a shared time, or a solution that changes an argument only there passes
+_mt = item(CO, 'ds-pointers-merge-ticks')['widget']
+_c9 = _mt['tests'][8]
+ok('a = [(1, 4.0), (2, 1.0)]; b = [(1, 2.0), (3, 5.0)]' == _c9['setup'] and len(_mt['tests']) == 10, 'merge_ticks: test 9 is the shared-time test, still 10 tests')
+_ns = {}
+exec(_c9['setup'], _ns)
+_by = {}
+for _t, _p in _ns['a'] + _ns['b']:
+    _by.setdefault(_t, []).append(_p)
+ok(eval(_c9['expect'], {}) == ([(t, sum(ps) / len(ps)) for t, ps in sorted(_by.items())], [(1, 4.0), (2, 1.0)], [(1, 2.0), (3, 5.0)]), 'merge_ticks: test 9 expects the grouped means and both inputs unchanged')
+_old9 = {"setup": "a = [(1, 1.0), (3, 1.0)]; b = [(2, 2.0)]", "call": "(merge_ticks(a, b), a, b)", "expect": "([(1, 1.0), (2, 2.0), (3, 1.0)], [(1, 1.0), (3, 1.0)], [(2, 2.0)])", "compare": "equal"}
+_mut = {'writes each mean back into a': "def merge_ticks(a, b):\n    db = dict(b)\n    for i, (t, p) in enumerate(a):\n        if t in db: a[i] = (t, (p + db[t]) / 2)\n    seen = {t for t, _ in a}\n    return sorted(a + [x for x in b if x[0] not in seen])\n",
+        'deletes each shared tick from b': "def merge_ticks(a, b):\n    out = []\n    tb = {t: k for k, (t, _) in enumerate(b)}\n    drop = []\n    for t, p in a:\n        if t in tb: out.append((t, (p + b[tb[t]][1]) / 2)); drop.append(tb[t])\n        else: out.append((t, p))\n    for k in reversed(drop): del b[k]\n    return sorted(out + b)\n"}
+for _nm, _src in _mut.items():
+    _r = cc.run(_src, _mt['tests'])
+    print(f'  near-miss {CO}/ds-pointers-merge-ticks [{_nm}] fails tests {[k + 1 for k, (p, _) in enumerate(_r) if not p]}')
+    ok([k + 1 for k, (p, _) in enumerate(_r) if not p] == [9], f'merge_ticks: [{_nm}] fails test 9 and only test 9')
+    ok(cc.run(_src, [_old9])[0][0], f'merge_ticks: [{_nm}] passed the old test 9 (no shared time), which is why it was replaced')
+# delta finding 7: the prose states a size and the large test uses it
+ok('each can hold 50,000 ticks.' in item(CO, 'ds-pointers-merge-ticks')['prose'] and ' is `[(1, 9.75)]`.' in item(CO, 'ds-pointers-merge-ticks')['prose'] and 'changed:' not in item(CO, 'ds-pointers-merge-ticks')['prose'], 'merge_ticks: prose states 50,000 ticks and the colon before the example is gone')
+_ns = {}
+exec(_mt['tests'][9]['setup'], _ns)
+ok(len(_ns['a']) == 50000 and len(_ns['b']) == 33334, 'merge_ticks: the large test has 50,000 and 33,334 ticks, within the stated size')
+_scan = "def merge_ticks(a, b):\n    db = dict(b)\n    out = [(t, (p + db[t]) / 2) if t in db else (t, p) for t, p in a]\n    ta = {t for t, _ in a}\n    out += [x for x in b if x[0] not in ta]\n    return sorted(out)\n"
+ok(all(p for p, _ in cc.run(_scan, _mt['tests'])), 'merge_ticks: a dict-lookup solution is right on all ten tests')
+_scan_b = "def merge_ticks(a, b):\n    out = []\n    for t, p in a:\n        m = [q for u, q in b if u == t]\n        out.append((t, (p + m[0]) / 2) if m else (t, p))\n    ta = {t for t, _ in a}\n    out += [x for x in b if x[0] not in ta]\n    return sorted(out)\n"
+_rb = cc.run(_scan_b, _mt['tests'])
+ok([k + 1 for k, (p, _) in enumerate(_rb) if not p] == [10], 'merge_ticks: a list scan of b for each tick of a is right on 1 to 9 and stopped for time on test 10 (the stated size)')
 
 # ds-arrays-round-trips. Route B: running positions by itertools.accumulate, then count zeros reached from non-zero.
 code('ds-arrays-round-trips',
@@ -664,7 +661,24 @@ ok(sorted(net_, key=lambda s: -net_[s])[-1] == 'FGH', 'explain: with signed quan
 ok({'KT': 6 - 4, 'LP': 7}['LP'] > {'KT': 6 - 4}['KT'] and abs(6) + abs(-4) > 7, 'prose example: net totals favour LP (7 against 2), sizes favour KT (10 against 7)')
 # the large test: 5,000 symbols, 100,000 trades; a scan of every trade for every symbol must not finish in time
 _t = item(CO, 'pf-collections-top-symbols')['widget']['tests'][-1]
-ok('5000' in _t['setup'] and '100000' in _t['setup'], 'busiest_symbols: the large test has 5,000 symbols and 100,000 trades')
+ok('20000' in _t['setup'] and '100000' in _t['setup'] and 'S%05d' in _t['setup'], 'busiest_symbols: the large test has 20,000 symbols and 100,000 trades (delta finding 10)')
+ok('There can be 100,000 trades in 20,000 symbols. For example, `busiest_symbols(' in item(CO, 'pf-collections-top-symbols')['prose'] and 'trades: `' not in item(CO, 'pf-collections-top-symbols')['prose'], 'busiest_symbols: prose states both sizes, no colon before the example')
+_trd = [("S%05d" % (i % 20000), (i % 7) - 3) for i in range(100000)]                  # route A: a Counter with a first-seen index
+from collections import Counter as _Counter
+_cn, _first = _Counter(), {}
+for _i, (_s, _q) in enumerate(_trd):
+    _first.setdefault(_s, _i)
+    _cn[_s] += abs(_q)
+_want = sorted(_cn, key=lambda s: (-_cn[s], _first[s]))[:3]
+_tot = {j: sum(abs(((j + 20000 * m) % 7) - 3) for m in range(5)) for j in range(20000)}   # route B: each symbol's five trades summed directly
+_top = max(_tot.values())
+_tied = [j for j in range(20000) if _tot[j] == _top]
+ok(_top == 11 and _tied[:3] == [4, 5, 11] and len(_tied) > 3, 'busiest_symbols: the top total is 11, shared by many symbols, the first three being S00004, S00005 and S00011 (the tie rule decides)')
+ok(_want == ['S00004', 'S00005', 'S00011'] and _t['expect'] == repr(_want), 'busiest_symbols: the large test expects the first three tied symbols, by two routes')
+_names = "def busiest_symbols(trades, k):\n    names, t = [], {}\n    for s, q in trades:\n        if s not in names: names.append(s)\n        t[s] = t.get(s, 0) + abs(q)\n    return sorted(names, key=lambda s: -t[s])[:k]\n"
+_rn = cc.run(_names, item(CO, 'pf-collections-top-symbols')['widget']['tests'])
+print('  near-miss coding-2/pf-collections-top-symbols [keeps first-seen order in a list] fails tests', [k + 1 for k, (p, _) in enumerate(_rn) if not p])
+ok([k + 1 for k, (p, _) in enumerate(_rn) if not p] == [10], 'busiest_symbols: a first-seen list gives right answers on 1 to 9 and is stopped for time on test 10 (20,000 symbols)')
 stale_fc(CO, 'pf-collections-top-symbols', 'top_symbols', 'alphabetical order', '1000)')
 
 # gd-dp-walk-above-zero. Route B: a depth-first count of the walks up to n = 22, the ballot formula above.

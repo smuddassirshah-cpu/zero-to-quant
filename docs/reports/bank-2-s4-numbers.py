@@ -762,7 +762,17 @@ code_item(C, 'pf-idioms-count-above-mean', 'above_mean', above_brute, {
     'at or above the mean': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = sum(xs) / len(xs)\n    return sum(1 for x in xs if x >= m)\n',
     'no guard for the empty list': 'def above_mean(xs):\n    m = sum(xs) / len(xs)\n    return sum(1 for x in xs if x > m)\n',
     'mean cut by int (review bank 2 b, finding 12)': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = int(sum(xs) / len(xs))\n    return sum(1 for x in xs if x > m)\n',
-    'mean rounded to a whole number': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = round(sum(xs) / len(xs))\n    return sum(1 for x in xs if x > m)\n'})
+    'mean rounded to a whole number': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = round(sum(xs) / len(xs))\n    return sum(1 for x in xs if x > m)\n',
+    # delta finding 13: half of the largest plus the smallest splits the old tests like the mean; [0, 6, 10, 10, 10] does not
+    'midrange, half of the largest plus the smallest': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = (max(xs) + min(xs)) / 2\n    return sum(1 for x in xs if x > m)\n',
+    'median': 'def above_mean(xs):\n    if not xs:\n        return 0\n    s = sorted(xs)\n    m = s[len(s) // 2]\n    return sum(1 for x in xs if x > m)\n',
+    'quadratic mean': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = (sum(x * x for x in xs) / len(xs)) ** 0.5\n    return sum(1 for x in xs if x > m)\n'})
+# delta finding 13: the test above_mean([0, 6, 10, 10, 10]) (mean 7.2, so 3; the midrange 5 gives 4, the median 10 gives 0)
+_am = {c['call']: c['expect'] for c in item(C, 'pf-idioms-count-above-mean')['widget']['tests']}
+ok(_am['above_mean([0, 6, 10, 10, 10])'] == '3' and 'above_mean([0, 0, 0, 1])' not in _am and len(_am) == 10, 'above_mean: the test [0, 6, 10, 10, 10] expects 3 and replaced [0, 0, 0, 1]; still 10 tests')
+_xs = [0, 6, 10, 10, 10]
+ok(_Fr(sum(_xs), len(_xs)) == _Fr(36, 5) and len([x for x in _xs if x > _Fr(36, 5)]) == 3 and above_brute(_xs) == 3, 'above_mean([0, 6, 10, 10, 10]): mean 36/5 = 7.2, three values above it, by Fraction and by the brute twin')
+ok(len([x for x in _xs if x > (max(_xs) + min(_xs)) / 2]) == 4 and len([x for x in _xs if x > sorted(_xs)[2]]) == 0, 'the midrange 5 gives 4 and the median 10 gives 0')
 ok(above_brute([-1, -2]) == 1 and above_brute([-4, -1, -1, -1]) == 3 and int((-1 - 2) / 2) == -1 and int(-7 / 4) == -1, 'above_mean: means -1.5 and -1.75 are cut to -1 by int')
 ok(sum(1 for x in [4, 4, 4] if x >= 4) == 3 and _Fr(1 + 2 + 3 + 10, 4) == 4, 'slip 3 for [4, 4, 4]; mean 4 in the prose')
 

@@ -109,8 +109,10 @@ key = two(a, b, 1e-5, 'mle rate')
 numeric(S, 'es-mle-waits-between-trades', key, 4, {'mean-wait': F(sum(waits), 6), 'five-gaps': 5 / 30})
 two(F(sum(waits), 6), statistics.mean(waits), 1e-12, 'mean wait')
 stated(S, 'es-mle-waits-between-trades', '6/30 = 0.2')
-stated(S, 'es-mle-waits-between-trades', 'the time between six of your own fills')   # fix pass finding 16
-stale(S, 'es-mle-waits-between-trades', ['quiet share'])
+stated(S, 'es-mle-waits-between-trades', 'You time six gaps between your own fills, in seconds: 4, 9, 2, 7, 5 and 3.')   # delta finding 6
+ok(len(waits) == 6 and 'six gaps' in item(S, 'es-mle-waits-between-trades')['prose'], 'es-mle-waits: six gaps are listed and the prose says six gaps, not six fills')
+ok(len([4, 9, 2, 7, 5, 3]) == len(re.findall(r'\d+', item(S, 'es-mle-waits-between-trades')['prose'].split('seconds:')[1].split('.')[0])), 'es-mle-waits: the prose lists as many numbers as the six gaps it names')
+stale(S, 'es-mle-waits-between-trades', ['quiet share', 'six of your own fills'])
 
 # es-biasvar-four-closes
 xs = [4, 7, 9, 12]
@@ -265,17 +267,19 @@ two(a, b, 0.01, 'MA(1) lag-1 (simulation, tol 0.01)')
 numeric(S, 'ts-acf-ma1-first-lag', float(a), 2, {'coefficient': 0.75, 'unsquared': 0.75 / 1.75})
 stated(S, 'ts-acf-ma1-first-lag', '0.75/1.5625 = 0.48')
 
-# sample-size-for-signal-sharpe-years
-a = (3 / 0.7) ** 2                                                 # fix pass finding 10: t of 3
+# sample-size-for-signal-sharpe-years (delta finding 4: true Sharpe 1.1, t of 3; no course item has 1.1 with an expected t)
+a = (F(3) / F(11, 10)) ** 2                                        # route A: exact, (3/1.1)^2 = 900/121
 lo, hi = 0.0, 100.0
-for _ in range(200):                                               # bisection on 0.7 sqrt(T) = 3
+for _ in range(200):                                               # route B: bisection on 1.1 sqrt(T) = 3
     mid = (lo + hi) / 2
-    lo, hi = (mid, hi) if 0.7 * sqrt(mid) < 3 else (lo, mid)
+    lo, hi = (mid, hi) if 1.1 * sqrt(mid) < 3 else (lo, mid)
 key = two(a, lo, 1e-9, 'Sharpe years')
-numeric(S, 'sample-size-for-signal-sharpe-years', key, 1, {'no-square': 3 / 0.7, 'aimed-at-two': (2 / 0.7) ** 2})
-stated(S, 'sample-size-for-signal-sharpe-years', '(3/0.7)^2 \\\\approx 18.37')
-ok(fmt(a, 2) == '18.37' and fmt(F(900, 49), 2) == '18.37', '18.37 printed, two routes')
-stale(S, 'sample-size-for-signal-sharpe-years', ['8.16', 'used-1-96', 'reaches 2', '8.163', '(2/0.7)^2'])
+numeric(S, 'sample-size-for-signal-sharpe-years', key, 1, {'no-square': 3 / 1.1, 'aimed-at-two': (2 / 1.1) ** 2})
+ok(a == F(900, 121) and abs(float(a) - 7.438) < 5e-4, 'years (3/1.1)^2 = 900/121 = 7.438')
+stated(S, 'sample-size-for-signal-sharpe-years', '(3/1.1)^2 \\\\approx 7.44')
+ok(fmt(a, 2) == '7.44' and fmt(F(900, 121), 1) == '7.4', '7.44 and 7.4 printed, two routes')
+ok(fmt(3 / 1.1, 1) == '2.7' and fmt((2 / 1.1) ** 2, 1) == '3.3', 'slips 2.7 (3/1.1) and 3.3 (t of 2)')
+stale(S, 'sample-size-for-signal-sharpe-years', ['8.16', 'used-1-96', 'reaches 2', '8.163', '(2/0.7)^2', '0.7', '18.4', '18.37', '18.367', '4.3', '8.2', 'reaches 3, to 1 decimal place'])
 
 # correlation-bounds-highest-third
 rxy, ryz = 0.28, 0.96
@@ -578,8 +582,9 @@ ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
 stated(B, 'why-us-a-first-year-day', 'one timed estimation round a day')
 stale(B, 'why-us-a-first-year-day', ['nine seconds', 'twenty minutes', 'arithmetic'])
 stated(B, 'project-account-decision-to-redo', 'next-day footfall at one railway station')
-stated(B, 'project-account-decision-to-redo', 'copying the same weekday a week earlier')
-stale(B, 'project-account-decision-to-redo', ['electricity', 'demand', 'last week'])
+stated(B, 'project-account-decision-to-redo', 'retrained on the first three years only and tested on the fourth')   # delta finding 16
+stated(B, 'project-account-decision-to-redo', "barely better than the station's average for that month")
+stale(B, 'project-account-decision-to-redo', ['electricity', 'demand', 'last week', 'copying the same weekday', 'earlier years only', 'the final year'])
 ok(round(4.9 - 2.8, 1) == 2.1, 'decision-to-redo: 2.8% rose to 4.9% (a gap of 2.1 points)')
 stated(B, 'star-story-unpopular-decision', 'The other four wanted a neural network')
 stated(B, 'star-story-unpopular-decision', 'so I asked her to rerun my comparison herself.')
@@ -627,18 +632,24 @@ ok([t[k] for k in ('modal_prices([101, 100, 101, 100, 99])', 'modal_prices([5])'
 ok(sorted({x for x in [101, 100, 101, 100, 99] if [101, 100, 101, 100, 99].count(x) == 2}, reverse=True) == [101, 100], 'modal_prices: 101 and 100 tie at two')
 stale_fc(CO, 'ds-hashing-price-mode', 'price_mode', 'highest of the tied', 'returns the price that occurs most often')
 
+from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN, ROUND_DOWN
 # edge-case-list-to-pence. Route B: decimal.Decimal on the cleaned text.
 code('edge-case-list-to-pence',
      "from decimal import Decimal\ndef to_pence(text):\n    s = text.strip().replace('£', '').replace(',', '')\n    return int(Decimal(s) * 100)\n",
      {'int(float(s) * 100)': "def to_pence(text):\n    s = text.strip().replace('£', '').replace(',', '')\n    return int(float(s) * 100)\n",
-      'decimals not padded': "def to_pence(text):\n    s = text.strip()\n    sign = -1 if s.startswith('-') else 1\n    s = s.lstrip('-').replace('£', '').replace(',', '')\n    p, _, d = s.partition('.')\n    return sign * (int(p) * 100 + int(d or 0))\n"})
+      'decimals not padded': "def to_pence(text):\n    s = text.strip()\n    sign = -1 if s.startswith('-') else 1\n    s = s.lstrip('-').replace('£', '').replace(',', '')\n    p, _, d = s.partition('.')\n    return sign * (int(p) * 100 + int(d or 0))\n",
+      # delta finding 8: a minus looked for before the spaces are stripped
+      'minus tested before strip': "def to_pence(text):\n    neg = text.startswith('-')\n    s = text.replace('£', '').replace(',', '').strip()\n    p, _, d = s.partition('.')\n    pence = int((d + '00')[:2])\n    if neg: return -(abs(int(p or '0')) * 100 + pence)\n    return int(p or '0') * 100 + pence\n",
+      'no strip, minus at index 0': "def to_pence(text):\n    s = text\n    sign = -1 if s[:1] == '-' else 1\n    if sign < 0: s = s[1:]\n    s = s.replace('£', '').replace(',', '')\n    p, _, d = s.partition('.')\n    return sign * (int(p or '0') * 100 + int((d.strip() + '00')[:2]))\n"})
 # review bank 2 b, finding 21c: a function that returns 1999.0 for "£19.99" must fail the type test
 _cl = cc.run("from decimal import Decimal\ndef to_pence(text):\n    return float(Decimal(text.strip().replace('£', '').replace(',', '')) * 100)\n", item(CO, 'edge-case-list-to-pence')['widget']['tests'])
 ok(sum(1 for p, _ in _cl if not p) == 1 and not _cl[-1][0], 'to_pence: a float-returning twin with the right values fails only the type test')
 t = tests_of('edge-case-list-to-pence')
 ok(t['type(to_pence("£0.29")).__name__'] == "'int'", 'to_pence: the type test expects int')
-brief = {'"£1,234.50"': 123450, '"0.07"': 7, '"12"': 1200, '"£3.5"': 350, '"-£2.05"': -205, '"£0.29"': 29, '" £19.99 "': 1999}
-ok(all(t[f'to_pence({k})'] == str(v) for k, v in brief.items()), 'to_pence: the seven brief values')
+brief = {'"£1,234.50"': 123450, '"0.07"': 7, '"12"': 1200, '"£3.5"': 350, '" -£2.05 "': -205, '"£0.29"': 29, '" £19.99 "': 1999}
+ok(all(t[f'to_pence({k})'] == str(v) for k, v in brief.items()), 'to_pence: the seven brief values (the minus case now with spaces round it, delta finding 8)')
+ok('to_pence("-£2.05")' not in t and 'to_pence("-0.5")' in t and t['to_pence("-0.5")'] == '-50', 'to_pence: the bare "-£2.05" test is gone; "-0.5" still tests a minus with no space')
+ok(Decimal(' -£2.05 '.strip().replace('£', '')) * 100 == -205 and int(round(float(' -£2.05 '.strip().replace('£', '')) * 100)) == -205, 'to_pence: " -£2.05 " is -205 by Decimal and by a rounded float')
 ok([int(float(s) * 100) for s in ('0.29', '-2.05', '19.99')] == [28, -204, 1998], 'to_pence: the float trap gives 28, -204 and 1998')
 ok(0.29 * 100 < 29, 'explain: float 0.29 * 100 is just under 29')
 
@@ -674,18 +685,25 @@ stated(CO, 'pf-functions-binom-tail', '(560 + 120 + 16 + 1)/65{,}536 = 697/65{,}
 ok('`math.comb(n, j)` counts the ways to choose which `j` flips are heads.' in item(CO, 'pf-functions-binom-tail')['prose'], 'binom_tail: prose gives math.comb')
 ok(item(CO, 'pf-functions-binom-tail')['requires'] == ['py-found/l7-arguments', 'conditional/l14-independent-trials'], 'binom_tail: requires the lesson that teaches comb')
 
-# pf-types-round-half-even (re-authored after review bank 2 b): int, round and // on negative numbers in one line.
+# pf-types-round-half-even (re-authored after review bank 2 b; delta finding 12: two halves of different parity, so half-to-even and the school rule differ)
 # Route A runs the line; route B uses decimal (half to even) and math.floor / math.trunc.
-from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN, ROUND_DOWN
 it_ = item(CO, 'pf-types-round-half-even')
 key = cc.eval_line(it_['prose'])
-b_ = int(Decimal('-3.5').quantize(Decimal(1), rounding=ROUND_DOWN)) + int(Decimal('-3.5').quantize(Decimal(1), rounding=ROUND_HALF_EVEN)) + math.floor(-9 / 2)
-two(key, b_, 0, 'int + round + floor division')
-all_zero = math.trunc(-3.5) + math.trunc(-3.5) + math.trunc(-9 / 2)                      # every term cut towards zero
-half_up = math.floor(-3.5 + 0.5) + math.trunc(-3.5) + math.floor(-9 / 2)                                         # round(-3.5) read as -3 (half up, towards +infinity)
-numeric(CO, 'pf-types-round-half-even', key, None, {'all-towards-zero': all_zero, 'half-up': half_up})
-ok((int(-3.5), round(-3.5), -9 // 2) == (-3, -4, -5) and key == -12 and all_zero == -10 and half_up == -11, 'terms -3, -4, -5; sum -12; slips -10 and -11')
-stale_fc(CO, 'pf-types-round-half-even', '0.5', '1.5', '2.5', '6', '"value": 3')
+dq = lambda x, mode: int(Decimal(x).quantize(Decimal(1), rounding=mode))
+b_ = dq('-1.5', ROUND_DOWN) + dq('-1.5', ROUND_HALF_EVEN) + dq('-4.5', ROUND_HALF_EVEN) + math.floor(-9 / 2)
+two(key, b_, 0, 'int + round + round + floor division')
+all_zero = math.trunc(-1.5) + math.trunc(-1.5) + math.trunc(-4.5) + math.trunc(-9 / 2)                       # every term cut towards zero
+half_up = math.trunc(-1.5) + math.floor(-1.5 + 0.5) + math.floor(-4.5 + 0.5) + math.floor(-9 / 2)            # each half read upwards, towards +infinity
+half_away = math.trunc(-1.5) + dq('-1.5', ROUND_HALF_UP) + dq('-4.5', ROUND_HALF_UP) + math.floor(-9 / 2)     # the school rule: each half away from zero
+two(half_up, -1 + math.floor(F(-3, 2) + F(1, 2)) + math.floor(F(-9, 2) + F(1, 2)) + F(-9, 2) // 1, 0, 'half up, by Fractions')
+two(half_away, -1 - math.floor(F(3, 2) + F(1, 2)) - math.floor(F(9, 2) + F(1, 2)) + F(-9, 2) // 1, 0, 'half away, by Fractions (floor of |x| + 1/2, sign put back)')
+numeric(CO, 'pf-types-round-half-even', key, None, {'all-towards-zero': all_zero, 'half-up': half_up, 'half-away': half_away})
+ok((int(-1.5), round(-1.5), round(-4.5), -9 // 2) == (-1, -2, -4, -5) and key == -12, 'terms -1, -2, -4, -5; sum -12')
+ok(all_zero == -10 and half_up == -11 and half_away == -13, 'slips -10, -11 and -13')
+# the old line, round(-3.5), could not tell half-to-even from the school rule; the new one can
+ok(round(-3.5) == dq('-3.5', ROUND_HALF_UP) == -4 and round(-4.5) != dq('-4.5', ROUND_HALF_UP) and key != half_away, 'round(-3.5) hid the difference; round(-4.5) shows it, so the school rule no longer gives the key')
+stated(CO, 'pf-types-round-half-even', '-1 - 2 - 4 - 5 = -12')
+stale_fc(CO, 'pf-types-round-half-even', '0.5', '2.5', '6', '"value": 3', '-3.5', 'three terms', '-3, -4 and -5', '-3 - 4 - 5')
 
 # pf-functions-default-list (re-authored after review bank 2 b: a default dict, three calls, sizes summed)
 # route A runs the lines; route B replays the calls on one explicit dict. Slips: a fresh dict each call, the count of x returned.

@@ -186,16 +186,19 @@ close(q_closed, 0.05, 0.0005, '11.07 is the 5% point')
 ok(float(a) > 11.07, 'statistic beats the 5% point')
 stated(S, 'ht-setup-die-sixty-rolls', '134/10 = 13.4')
 
-# weak-signal-daily-edge
-a = F(4, 100) / (F(1) / 25)                                   # fix pass finding 16: 0.04% over 625 days
-b = 0.0004 / (0.01 / sqrt(625))
+# weak-signal-daily-edge (delta finding 2: 0.07% a day, sd 1.4%, 1,225 days; the 0.04%, 1%, 625 and 2,500 are a testing lesson's own)
+a = F(7, 100) / (F(14, 10) / 35)                              # route A: exact, standard error 1.4% over 35
+b = 0.0007 / (0.014 / sqrt(1225))                             # route B: floats, all in fractions of a unit
 key = two(a, b, 1e-12, 't statistic')
-numeric(S, 'weak-signal-daily-edge', key, 2, {'no-root': F(4, 100) / 1, 'annual-sharpe': 0.04 * sqrt(252)})
-n2 = next(n for n in range(1, 10000) if 0.04 * sqrt(n) >= 2 - 1e-12)
-two(n2, (2 / 0.04) ** 2, 0, 'days for t = 2')
-stated(S, 'weak-signal-daily-edge', '2,500 days')
-stated(S, 'weak-signal-daily-edge', 'the root of the 625 days')
-stale(S, 'weak-signal-daily-edge', ['400', '1,600', '0.05', '0.79', '1/20'])
+numeric(S, 'weak-signal-daily-edge', key, 2, {'no-root': F(7, 100) / F(14, 10), 'annual-sharpe': 0.07 / 1.4 * sqrt(252)})
+ok(a == F(7, 4) and 35 * 35 == 1225 and F(14, 10) / 35 == F(4, 100), 't = 7/4; the standard error is 0.04%')
+n3 = next(n for n in range(1, 100000) if 0.0007 / 0.014 * sqrt(n) >= 3.5 - 1e-12)
+two(n3, (3.5 / 0.05) ** 2, 1e-6, 'days for t = 3.5')
+two(n3, 4 * 1225, 0, 'four times the data gives t = 3.5, 4,900 days')
+stated(S, 'weak-signal-daily-edge', '4,900 days')
+stated(S, 'weak-signal-daily-edge', 'To double it to 3.5')
+stated(S, 'weak-signal-daily-edge', 'the root of the 1,225 days')
+stale(S, 'weak-signal-daily-edge', ['400', '1,600', '1/20', '625', '2,500', '0.63', '1/25', 'Correct. t = 1.00', '0.04/0.04', '\\\\sqrt{625}', 'reach t = 2'])
 
 # ht-errors-sample-for-power: the formula against a count-up on exact two-sided power
 n_formula = ((1.96 + 0.8416) * 10 / 2) ** 2
@@ -414,7 +417,9 @@ stale_fc(FI, 'fi-forwards-currency-forward', '1.25', '1.2743', '1.3125', 'dollar
 sp = lambda s: 3.20 + 2.80 - max(90 - s, 0) - max(s - 110, 0)
 a = F(320 + 280, 100) - (90 - 81)
 key = two(a, sp(81), 1e-12, 'strangle P&L at 81')
-numeric(FI, 'op-payoff-short-strangle-loss', int(key), None, {'no-premium': -(90 - 81), 'premium-only': 6})
+numeric(FI, 'op-payoff-short-strangle-loss', int(key), None, {'no-premium': -(90 - 81), 'premium-only': 6, 'unsigned': abs(int(key))})   # delta finding 11: the size without the minus sign
+two(abs(int(key)), (90 - 81) - (320 + 280) // 100, 0, 'unsigned loss: 9 less 6')
+stated(FI, 'op-payoff-short-strangle-loss', 'so type -3.')
 stated(FI, 'op-payoff-short-strangle-loss', '3.20 + 2.80 = 6')
 stated(FI, 'op-payoff-short-strangle-loss', '90 - 81 = 9')
 stale_fc(FI, 'op-payoff-short-strangle-loss', '95', '105', '88', '2.20', '1.80', '£7', '£4')
@@ -769,14 +774,20 @@ from bisect import bisect_left as _bl, bisect_right as _br
 ok(_br([1, 3, 3, 5, 8, 8, 9], 2) - _bl([1, 3, 3, 5, 8, 8, 9], 9) == -5, 'trap value: -5 for (9, 2)')
 two(len(range(6, 1000001, 2)), (1000000 - 6) // 2 + 1, 0, 'evens from 6 to 1,000,000: 499,998')
 two(sum(len(range(k, k + 11, 2)) for k in range(0, 2000000, 2000)), 1000 * 6, 0, '1,000 windows of 6 evens')
-# review bank 2 b, finding 15: 300 calls that each reach far to the right; a halve-then-walk function runs past 5 s
+# delta finding 9 (first read b, finding 15): 3,000 calls that each reach far to the right, so a copying slice, a halve-then-walk and a linear scan all run past the limit
 _ct = item(C, 'at-search-count-in-range')['widget']['tests'][-1]
-ok(_ct['call'] == 'sum(count_in_range(xs, k, 10**7) for k in range(0, 600, 2))' and _ct['expect'] == '299955150', 'count_in_range: the wide-range test')
-two(sum(1000000 - k // 2 for k in range(0, 600, 2)), 299955150, 0, 'count_in_range: evens from k up to 1,999,998, summed over 300 values of k')
-two(300 * 10 ** 6 - 299 * 300 // 2, 299955150, 0, 'count_in_range: the same by an arithmetic series')
+ok(_ct['call'] == 'sum(count_in_range(xs, k, 10**7) for k in range(0, 6000, 2))' and _ct['expect'] == '2995501500', 'count_in_range: the wide-range test, 3,000 calls')
+two(sum(1000000 - k // 2 for k in range(0, 6000, 2)), 2995501500, 0, 'count_in_range: evens from k up to 1,999,998, summed over 3,000 values of k')
+two(3000 * 10 ** 6 - 2999 * 3000 // 2, 2995501500, 0, 'count_in_range: the same by an arithmetic series')
+stale_fc(C, 'at-search-count-in-range', 'range(0, 600, 2)', '299955150"')
 _walk = 'from bisect import bisect_left\ndef count_in_range(xs, lo, hi):\n    if hi < lo:\n        return 0\n    i = bisect_left(xs, lo)\n    j = i\n    while j < len(xs) and xs[j] <= hi:\n        j += 1\n    return j - i\n'
 ok(all(run_case(_walk, c)[0] for c in item(C, 'at-search-count-in-range')['widget']['tests'][:7]), 'count_in_range: halve-then-walk is right on the small tests')
 ok(slow_case(_walk, _ct) == 'timeout', 'count_in_range: halve-then-walk runs past 5 s on the wide-range test')
+_slice = 'from bisect import bisect_left, bisect_right\ndef count_in_range(xs, lo, hi):\n    return len(xs[bisect_left(xs, lo):bisect_right(xs, hi)])\n'
+ok(all(run_case(_slice, c)[0] for c in item(C, 'at-search-count-in-range')['widget']['tests'][:7]), 'count_in_range: len of the slice between the two bisects is right on the small tests (right values, not O(log n))')
+# CPython here copies 1,000,000 values a call: the slice solution takes about 11 s on this test, 9.2 s in Pyodide (measured by pyo_time.mjs); the model takes 0.001 s
+ok(slow_case(_slice, _ct, limit=2.0) == 'timeout', 'count_in_range: the copying slice runs past 2 s in CPython on the wide-range test (9 s in Pyodide, over the 5 s limit)')
+ok(slow_case(item(C, 'at-search-count-in-range')['widget']['solution'], _ct, limit=2.0) == 'pass', 'count_in_range: the model passes the wide-range test well inside 2 s')
 
 
 # simulation-rules-clip-position. Brute: fill one share at a time while the limit holds.
