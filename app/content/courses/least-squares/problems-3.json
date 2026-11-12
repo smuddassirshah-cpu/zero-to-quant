@@ -260,7 +260,9 @@
             "accept": [
               "(0.5,-0.8,0.3)",
               "(1/2, -4/5, 3/10)",
-              "[0.5, -0.8, 0.3]"
+              "[0.5, -0.8, 0.3]",
+              "0.1(5, -8, 3)",
+              "\\frac{1}{10}(5, -8, 3)"
             ],
             "wrong": [
               {
@@ -368,28 +370,35 @@
       "skills": [
         "ls-fit"
       ],
-      "prose": "An energy desk regresses each day's gas price change at two hubs on that day's temperature anomaly $t$, in °C. Over five days $t = (-1, 0, 1, 2, 3)$, hub N moved $\\mathbf{y}_N = (3.5, 0, -0.5, -3, -5)$ and hub S moved $\\mathbf{y}_S = (2, 1, -2, -2, -4)$, in pence per therm. The code builds `A = np.column_stack([np.ones(5), t])`.",
+      "prose": "An energy desk regresses each day's gas price change at two hubs on that day's temperature anomaly $t$, in °C. Over five days $t = (0, 1, 2, 3, 4)$, hub N moved $\\mathbf{y}_N = (3.5, 0, -0.5, -3, -5)$ and hub S moved $\\mathbf{y}_S = (2, 1, -2, -2, -4)$, in pence per therm. The code builds `A = np.column_stack([np.ones(5), t])`.",
       "parts": [
         {
           "question": "What number does `(A.T @ A)[1, 1]` hold? Give a whole number.",
           "widget": {
             "kind": "numeric",
-            "answer": 15,
+            "answer": 30,
             "tol": {
               "abs": 0
             },
             "placeholder": "a number",
             "wrong": [
               {
-                "id": "sum",
+                "id": "count",
                 "value": 5,
                 "tol": {
                   "abs": 0
                 }
               },
               {
+                "id": "sum",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
                 "id": "sum-squared",
-                "value": 25,
+                "value": 100,
                 "tol": {
                   "abs": 0
                 }
@@ -397,85 +406,86 @@
             ]
           },
           "feedback": {
-            "correct": "Entry $[1, 1]$ is $\\mathbf{t} \\cdot \\mathbf{t} = 1 + 0 + 1 + 4 + 9 = 15$.",
+            "correct": "Entry $[1, 1]$ is $\\mathbf{t} \\cdot \\mathbf{t} = 0 + 1 + 4 + 9 + 16 = 30$.",
             "generic": "Not quite. Entry $[i, j]$ of `A.T @ A` is column $i$ dotted with column $j$, counting from 0.",
             "byKey": {
-              "sum": "That is $\\sum t_i$, the off-diagonal entry. Entry $[1, 1]$ is the column $t$ dotted with itself.",
-              "sum-squared": "That is $(\\sum t_i)^2$. Square each $t_i$ first, then add: $1 + 0 + 1 + 4 + 9$."
+              "count": "That is entry `[0, 0]`, the count. NumPy counts from 0, so `[1, 1]` is the bottom-right entry.",
+              "sum": "That is $\\sum t_i = 10$, the off-diagonal entry. Entry $[1, 1]$ is the column $t$ dotted with itself.",
+              "sum-squared": "That is $(\\sum t_i)^2$. Square each $t_i$ first, then add: $0 + 1 + 4 + 9 + 16$."
             }
           },
           "explain": {
-            "text": "`A.T @ A` is $2 \\times 2$, and its entry $[1, 1]$ is the second column dotted with itself. So it is $\\sum t_i^2 = 15$; the other entries are 5, the count, and $\\sum t_i = 5$."
+            "text": "`A.T @ A` is $2 \\times 2$, and its entry $[1, 1]$ is the second column dotted with itself. So it is $\\sum t_i^2 = 30$; the other entries are 5, the count, and $\\sum t_i = 10$."
           }
         },
         {
-          "question": "With 15 from part 1, `A.T @ A` prints `[[5, 5], [5, 15]]`, and `A.T @ yN` prints `[-5, -25]`. Solve the normal equations for hub N's fit $(\\hat\\alpha, \\hat\\beta)$.",
+          "question": "With 30 from part 1, `A.T @ A` holds `[[5, 10], [10, 30]]`, and `A.T @ yN` holds `[-5, -30]`. Solve the normal equations for hub N's fit $(\\hat\\alpha, \\hat\\beta)$.",
           "widget": {
             "kind": "expression",
-            "answer": "(1, -2)",
+            "answer": "(3, -2)",
             "keyboard": "algebra",
             "placeholder": "(a, b)",
             "accept": [
-              "(1,-2)",
-              "[1, -2]"
+              "(3,-2)",
+              "[3, -2]"
             ],
             "wrong": [
               {
                 "id": "diagonal",
-                "tex": "(-1, -5/3)"
+                "tex": "(-1, -1)"
               },
               {
                 "id": "swapped",
-                "tex": "(-2, 1)"
+                "tex": "(-2, 3)"
               },
               {
                 "id": "no-sign",
-                "tex": "(1, 2)"
+                "tex": "(3, 2)"
               }
             ]
           },
           "feedback": {
-            "correct": "$5\\hat\\alpha + 5\\hat\\beta = -5$ and $5\\hat\\alpha + 15\\hat\\beta = -25$. Subtracting gives $10\\hat\\beta = -20$, so $\\hat\\beta = -2$ and $\\hat\\alpha = 1$.",
-            "generic": "Not quite. Write the two normal equations and subtract the first from the second.",
+            "correct": "$5\\hat\\alpha + 10\\hat\\beta = -5$ and $10\\hat\\alpha + 30\\hat\\beta = -30$. Twice the first off the second gives $10\\hat\\beta = -20$, so $\\hat\\beta = -2$ and $\\hat\\alpha = 3$.",
+            "generic": "Not quite. Write the two normal equations and take twice the first off the second.",
             "byKey": {
-              "diagonal": "You divided each entry by the diagonal, as if the off-diagonal 5s were 0. Solve both equations together.",
-              "swapped": "That swaps the two. $\\hat\\alpha$ comes first: subtracting the equations gives $10\\hat\\beta = -20$, so $\\hat\\beta = -2$.",
-              "no-sign": "Subtracting $5\\hat\\alpha + 5\\hat\\beta = -5$ from $5\\hat\\alpha + 15\\hat\\beta = -25$ gives $10\\hat\\beta = -20$, so the slope is negative."
+              "diagonal": "You divided each entry by the diagonal, as if the off-diagonal 10s were 0. Solve both equations together.",
+              "swapped": "That swaps the two. $\\hat\\alpha$ comes first: taking twice the first off the second gives $10\\hat\\beta = -20$, so $\\hat\\beta = -2$.",
+              "no-sign": "Taking twice $5\\hat\\alpha + 10\\hat\\beta = -5$ off $10\\hat\\alpha + 30\\hat\\beta = -30$ gives $10\\hat\\beta = -20$, so the slope is negative."
             }
           },
           "explain": {
-            "text": "The normal equations are $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{y}_N$, as `np.linalg.solve(A.T @ A, A.T @ yN)` solves them. Subtracting removes $\\hat\\alpha$ and leaves $\\hat\\beta = -2$, then $\\hat\\alpha = -1 - \\hat\\beta = 1$."
+            "text": "The normal equations are $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{y}_N$, as `np.linalg.solve(A.T @ A, A.T @ yN)` solves them. Taking twice the first equation off the second removes $\\hat\\alpha$ and leaves $\\hat\\beta = -2$, then $\\hat\\alpha = -1 - 2\\hat\\beta = 3$."
           }
         },
         {
-          "question": "`A.T @ yS` prints `[-5, -20]`. Using the same `A.T @ A` as part 2, `[[5, 5], [5, 15]]`, find hub S's fit $(\\hat\\alpha, \\hat\\beta)$. Give exact decimals.",
+          "question": "`A.T @ yS` holds `[-5, -25]`. Using the same `A.T @ A` as part 2, `[[5, 10], [10, 30]]`, find hub S's fit $(\\hat\\alpha, \\hat\\beta)$. Give exact decimals.",
           "widget": {
             "kind": "expression",
-            "answer": "(0.5, -1.5)",
+            "answer": "(2, -1.5)",
             "keyboard": "algebra",
             "placeholder": "(a, b)",
             "accept": [
-              "(0.5,-1.5)",
-              "(1/2, -3/2)",
-              "[0.5, -1.5]"
+              "(2,-1.5)",
+              "(2, -3/2)",
+              "[2, -1.5]"
             ],
             "wrong": [
               {
                 "id": "diagonal",
-                "tex": "(-1, -4/3)"
+                "tex": "(-1, -5/6)"
               },
               {
                 "id": "no-sign",
-                "tex": "(0.5, 1.5)"
+                "tex": "(2, 1.5)"
               }
             ]
           },
           "feedback": {
-            "correct": "$5\\hat\\alpha + 5\\hat\\beta = -5$ and $5\\hat\\alpha + 15\\hat\\beta = -20$. Subtracting gives $10\\hat\\beta = -15$, so $\\hat\\beta = -1.5$ and $\\hat\\alpha = 0.5$.",
-            "generic": "Not quite. Only the right-hand side has changed: subtract the first equation from the second again.",
+            "correct": "$5\\hat\\alpha + 10\\hat\\beta = -5$ and $10\\hat\\alpha + 30\\hat\\beta = -25$. Twice the first off the second gives $10\\hat\\beta = -15$, so $\\hat\\beta = -1.5$ and $\\hat\\alpha = 2$.",
+            "generic": "Not quite. Only the right-hand side has changed: take twice the first equation off the second again.",
             "byKey": {
-              "diagonal": "You divided each entry by the diagonal, as if the off-diagonal 5s were 0. Solve both equations together.",
-              "no-sign": "Subtracting the equations gives $10\\hat\\beta = -15$, so the slope is negative: $-1.5$."
+              "diagonal": "You divided each entry by the diagonal, as if the off-diagonal 10s were 0. Solve both equations together.",
+              "no-sign": "Taking twice the first off the second gives $10\\hat\\beta = -15$, so the slope is negative: $-1.5$."
             }
           },
           "explain": {
@@ -483,42 +493,42 @@
           }
         },
         {
-          "question": "A trader holds the spread, long hub N and short hub S, so its daily change is $\\mathbf{y}_N - \\mathbf{y}_S$. Using the fits $(1, -2)$ and $(0.5, -1.5)$ from parts 2 and 3, what is the spread's least squares fit $(\\hat\\alpha, \\hat\\beta)$? Give exact decimals.",
+          "question": "A trader holds the spread, long hub N and short hub S, so its daily change is $\\mathbf{y}_N - \\mathbf{y}_S$. Using the fits $(3, -2)$ and $(2, -1.5)$ from parts 2 and 3, what is the spread's least squares fit $(\\hat\\alpha, \\hat\\beta)$? Give exact decimals.",
           "widget": {
             "kind": "expression",
-            "answer": "(0.5, -0.5)",
+            "answer": "(1, -0.5)",
             "keyboard": "algebra",
             "placeholder": "(a, b)",
             "accept": [
-              "(0.5,-0.5)",
-              "(1/2, -1/2)",
-              "[0.5, -0.5]"
+              "(1,-0.5)",
+              "(1, -1/2)",
+              "[1, -0.5]"
             ],
             "wrong": [
               {
                 "id": "added",
-                "tex": "(1.5, -3.5)"
+                "tex": "(5, -3.5)"
               },
               {
                 "id": "reversed",
-                "tex": "(-0.5, 0.5)"
+                "tex": "(-1, 0.5)"
               }
             ]
           },
           "feedback": {
-            "correct": "$\\hat{\\mathbf{x}}$ is linear in $\\mathbf{y}$, so the spread's fit is $(1, -2) - (0.5, -1.5) = (0.5, -0.5)$.",
+            "correct": "$\\hat{\\mathbf{x}}$ is linear in $\\mathbf{y}$, so the spread's fit is $(3, -2) - (2, -1.5) = (1, -0.5)$.",
             "generic": "Not quite. $\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{y}$ is linear in $\\mathbf{y}$.",
             "byKey": {
               "added": "That is the fit of $\\mathbf{y}_N + \\mathbf{y}_S$. The trader is short hub S, so subtract its fit.",
-              "reversed": "That is hub S minus hub N. The spread is long N: $(1, -2) - (0.5, -1.5)$."
+              "reversed": "That is hub S minus hub N. The spread is long N: $(3, -2) - (2, -1.5)$."
             }
           },
           "explain": {
-            "text": "$\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{y}$ is a fixed matrix times $\\mathbf{y}$, so the fit of a difference is the difference of the fits. That gives $(0.5, -0.5)$ with no new solve."
+            "text": "$\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{y}$ is a fixed matrix times $\\mathbf{y}$, so the fit of a difference is the difference of the fits. That gives $(1, -0.5)$ with no new solve."
           }
         },
         {
-          "question": "Using the spread's fit $(0.5, -0.5)$ from part 4, its daily changes $\\mathbf{y}_N - \\mathbf{y}_S = (1.5, -1, 1.5, -1, -1)$ have mean 0. What is $R^2$ for the spread's fit? Give 3 decimal places.",
+          "question": "Using the spread's fit $(1, -0.5)$ from part 4, its daily changes $\\mathbf{y}_N - \\mathbf{y}_S = (1.5, -1, 1.5, -1, -1)$ have mean 0. What is $R^2$ for the spread's fit? Give 3 decimal places.",
           "widget": {
             "kind": "numeric",
             "answer": 0.3333,
@@ -551,7 +561,7 @@
             ]
           },
           "feedback": {
-            "correct": "The fitted spread is $0.5 - 0.5t = (1, 0.5, 0, -0.5, -1)$, leaving residuals $(0.5, -1.5, 1.5, -0.5, 0)$ with $\\sum e_i^2 = 5$. With $\\sum y_i^2 = 7.5$, $R^2 = 1 - 5/7.5 = 0.333$.",
+            "correct": "The fitted spread is $1 - 0.5t = (1, 0.5, 0, -0.5, -1)$, leaving residuals $(0.5, -1.5, 1.5, -0.5, 0)$ with $\\sum e_i^2 = 5$. With $\\sum y_i^2 = 7.5$, $R^2 = 1 - 5/7.5 = 0.333$.",
             "generic": "Not quite. Find the spread's residuals from its fit, then $R^2 = 1 - \\sum e_i^2 / \\sum (y_i - \\bar{y})^2$.",
             "byKey": {
               "ratio": "That is $\\sum e_i^2 / \\sum (y_i - \\bar{y})^2 = 5/7.5$, the share left unexplained. $R^2$ is 1 minus it.",
