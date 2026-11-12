@@ -386,7 +386,10 @@ key('e-ftc-both-limits', dF, tol=1e-6)
 ex._rec(abs(dF + 1 / 65) < 1e-7, f'e-ftc-both-limits: numerical F\'(2) = {dF:.8f} = -1/65', '')
 wrong('e-ftc-both-limits', 'no-chain', 1 / (1 + 8 ** 2) - 1 / (1 + 2 ** 2))
 wrong('e-ftc-both-limits', 'upper-only', 12 / 65)
-allow('e-ftc-both-limits', 1 / 65, 12 / 65, 12, 65, 5, 3)
+# negative-key pass: `sign` is the absolute value of the computed key (negative, so it differs); its byKey line uses 12/65, 1/5 = 13/65
+ex._rec(dF < 0 and abs(1 / 5 - 12 / 65 - 1 / 65) < 1e-12, 'e-ftc-both-limits: the computed key is negative, 12/65 - 1/5 = -1/65', '')
+wrong('e-ftc-both-limits', 'sign', abs(dF))
+allow('e-ftc-both-limits', 1 / 65, 12 / 65, 12, 65, 5, 3, 13)
 say('e-ftc-both-limits', 'explain.text', '0.0154')
 
 # e-closed-sets: a sequence check for each set that is not closed

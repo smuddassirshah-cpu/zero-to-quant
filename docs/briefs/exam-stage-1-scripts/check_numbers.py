@@ -711,6 +711,9 @@ rec(abs(integral.real) < 1e-9 and abs(both.real) < 1e-9, 'd-residue: the integra
 key('d-residue', round(float(integral.imag), 6))
 wrong('d-residue', 'both-poles', round(float(both.imag), 6))
 wrong('d-residue', 'no-2pi', round(float(integral.imag) / (2 * math.pi), 6))
+# negative-key pass: `sign` is the absolute value of the computed key (the key is negative, so it differs)
+rec(integral.imag < 0, 'd-residue: the computed key is negative')
+wrong('d-residue', 'sign', abs(round(float(integral.imag), 6)))
 allow('d-residue', round(float(integral.imag), 4))
 
 P_ = lambda x, y: x * x * y
@@ -738,6 +741,12 @@ def fine_ode(T, m=20000):
 key('d-damped-value', round(fine_ode(1.0), 6))
 wrong('d-damped-value', 'no-sine', round(math.exp(-2) * math.cos(3), 6))
 allow('d-damped-value', 13)
+# negative-key pass: `sign` is the absolute value of the computed key; its byKey line states cos 3 and (2/3) sin 3
+_dv = round(fine_ode(1.0), 6)
+rec(_dv < 0, 'd-damped-value: the computed key is negative')
+rec(abs(_dv - math.exp(-2) * (math.cos(3) + 2 / 3 * math.sin(3))) < 1e-5, 'd-damped-value: closed form e^-2 (cos 3 + (2/3) sin 3) agrees with the integration')
+wrong('d-damped-value', 'sign', abs(_dv))
+allow('d-damped-value', math.cos(3), 2 / 3 * math.sin(3))
 
 rk_t = code_py('d-rk4-rate')
 closed = {1: 0.04 - 0.03 * math.exp(-3), 2: math.e, 3: math.exp(-2.25)}

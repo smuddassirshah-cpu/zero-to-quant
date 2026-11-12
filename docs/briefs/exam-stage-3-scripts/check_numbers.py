@@ -364,6 +364,11 @@ wrong('r-t-bar', 'no-root', round(0.45 / 3.1, 6), 0)
 wrong('r-t-bar', 'years', round(0.45 * math.sqrt(30) / 3.1, 6), 0)
 correct_ids('r-t-bar', ['a'], 1)
 allow('r-t-bar', 0.45, 3.1, 360, se8, 2.75, 2016)
+# bands pass: the explanation adds '2.76 if you keep the rounded 0.163'; recomputed, and inside the widened band
+_t_rounded = 0.45 / 0.163
+rec(abs(_t_rounded - 2.76) < 0.005, 'r-t-bar: 0.45 / 0.163 = 2.7607 rounds to 2.76')
+rec(abs(W('r-t-bar', 0)['answer'] - _t_rounded) <= W('r-t-bar', 0)['tol']['abs'] + 1e-12, 'r-t-bar: the rounded-se route 2.7607 is inside the band')
+allow('r-t-bar', _t_rounded)
 
 caps = np.array([5.0] * 9 + [0.05])
 rr = np.array([0.01] * 9 + [0.60])
@@ -399,6 +404,11 @@ rec(abs(float((draws > 1).mean()) - p11) < 0.0005, 'r-best-of-twenty: one simula
 wrong('r-best-of-twenty', 'one-variant', round(p11, 6))
 wrong('r-best-of-twenty', 'added-chances', round(20 * p11, 6))
 allow('r-best-of-twenty', 20, 5, 1, p11, (1 - p11) ** 20, exact11)
+# bands pass: the explanation adds '0.22 from table values' (z = 2.24 gives 0.9875 per variant); recomputed, inside the widened band
+_table11 = 1 - 0.9875 ** 20
+rec(abs(_table11 - 0.22) < 0.005 and abs(1 - 0.775 - exact11) < 0.001, 'r-best-of-twenty: 1 - 0.9875^20 = 0.2224 rounds to 0.22; 1 - 0.775 = 0.225')
+rec(abs(W('r-best-of-twenty')['answer'] - _table11) <= W('r-best-of-twenty')['tol']['abs'] + 1e-12, 'r-best-of-twenty: the table route 0.2224 is inside the band')
+allow('r-best-of-twenty', _table11)
 
 # C16: the counts by the normal tails, and a simulation of the passes
 tn2, tr2 = 200 * (1 - N01.cdf(2)), 100 * N01.cdf(1.5)

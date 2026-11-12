@@ -23,6 +23,24 @@ fails, checks = [], [0]
 N = NormalDist()
 
 
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%\u00b2' in text else 100)
+    return s
+
+
 def ok(cond, label):
     checks[0] += 1
     if not cond:
@@ -63,6 +81,7 @@ def numeric(f, i, key, asked_dp, slips):
     else:
         ok(float(key) == round(float(key)) and ans == key, f'{lab}: whole-number key {key} stored exactly')
     ids = {x['id']: x for x in w['wrong']}
+    slips = derived_slips(slips, ids, float(key), json.dumps(w, ensure_ascii=False))
     ok(set(ids) == set(slips), f'{lab}: wrong ids {sorted(ids)} match computed slips {sorted(slips)}')
     ok(len(ids) >= 2, f'{lab}: at least two wrong entries')
     for wid, v in slips.items():
