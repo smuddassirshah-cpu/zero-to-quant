@@ -412,9 +412,133 @@ def level2():
     return c
 
 
+def trap_loop(F, centre, radius, n=4000):
+    """Trapezium rule round |z - centre| = radius, anticlockwise: spectrally accurate for analytic F."""
+    ts = np.linspace(0, 2 * math.pi, n, endpoint=False)
+    zs_ = centre + radius * np.exp(1j * ts)
+    return complex(np.sum(F(zs_) * 1j * radius * np.exp(1j * ts)) * (2 * math.pi / n))
+
+
+def cquad(F, a, b):
+    re_ = integrate.quad(lambda s_: F(s_).real, a, b, epsabs=1e-13, epsrel=1e-12, limit=200)[0]
+    im_ = integrate.quad(lambda s_: F(s_).imag, a, b, epsabs=1e-13, epsrel=1e-12, limit=200)[0]
+    return complex(re_, im_)
+
+
+# ================================================================== level 3
+def level3():
+    c = Checker(3)
+    # ---- item 1: the flower bed
+    g = 3 * t + I * t ** 2
+    integrand = sp.expand(sp.conjugate(g) * sp.diff(g, t))
+    gn = lambda s_: 3 * s_ + 1j * s_ ** 2
+    dgn = lambda s_: 3 + 2j * s_
+    c.expr(0, 1, integrand, lambda X, Y, Z, T, Uu: gn(T).conjugate() * dgn(T),
+           {'used-z': sp.expand(g * sp.diff(g, t)), 'i-squared': 9 * t - 2 * t ** 3 + 3 * I * t ** 2, 'no-dgamma': sp.conjugate(g)})
+    curve = sp.integrate(integrand, (t, 0, 1))
+    ncurve = cquad(lambda s_: gn(s_).conjugate() * dgn(s_), 0, 1)
+    c.expr(0, 2, curve, ncurve, {'carried-i-squared': sp.integrate(9 * t - 2 * t ** 3 + 3 * I * t ** 2, (t, 0, 1)), 'antiderivative': sp.expand((3 + I) ** 2 / 2)})
+    seg = sp.integrate(sp.expand(sp.conjugate((3 + I) * t) * (3 + I)), (t, 0, 1))
+    nseg = cquad(lambda s_: ((3 + 1j) * s_).conjugate() * (3 + 1j), 0, 1)
+    c.num(0, 3, seg, nseg.real, {'no-half': 10, 'used-z': sp.re(sp.expand((3 + I) ** 2 / 2))})
+    loop_z2 = cquad(lambda s_: gn(s_) ** 2 * dgn(s_), 0, 1) - cquad(lambda s_: ((3 + 1j) * s_) ** 2 * (3 + 1j), 0, 1)
+    c.lv.claim(abs(loop_z2) < 1e-10, 'item 1 part 4: the loop integral of z^2 is 0 numerically')
+    c.pick(0, 4, 'a')
+    area = sp.simplify((curve - seg) / (2 * I))
+    narea = integrate.quad(lambda X: X / 3 - X ** 2 / 9, 0, 3)[0]
+    c.num(0, 5, area, narea, {'no-two': 1, 'sign': -area})
+    c.vocab(0, [3 + 1j, 4.5, 0.5, 1.5, 10, 2 / 4, 9 / 2, 4 + 3j])
+
+    # ---- item 2: lighthouse flashes, Cauchy(1, 3)
+    zc = sp.Symbol('zc')
+    q = zc ** 2 - 2 * zc + 10
+    poles = sp.solve(q, zc)
+    up = [pp for pp in poles if sp.im(pp) > 0][0]
+    nup = [pp for pp in np.roots([1, -2, 10]) if pp.imag > 0][0]
+    c.expr(1, 1, up, nup, {'lower': sp.conjugate(up), 'minus-b': -sp.conjugate(up), 'no-root': 1 + 9 * I})
+    res = sp.residue(1 / q, zc, up)
+    nres = 1e-7 / ((nup + 1e-7) ** 2 - 2 * (nup + 1e-7) + 10)
+    c.lv.claim(abs(complex(sp.N(res)) - nres) < 1e-6, 'item 2: (z - a)/q(z) near the pole tends to the residue')
+    c.expr(1, 2, res, complex(sp.N(1 / sp.diff(q, zc).subs(zc, up))), {'no-i': R(1, 6), 'plus': I / 6, 'q-prime': 1 / (2 * up)})
+    integral = sp.simplify(2 * pi * I * res)
+    nint = integrate.quad(lambda X: 1 / (X * X - 2 * X + 10), -np.inf, np.inf)[0]
+    cc = 1 / integral
+    c.num(1, 3, cc, 1 / nint, {'integral': integral, 'both-poles': 1 / (2 * integral), 'no-two': 2 / integral})
+    phi = lambda uu: sp.simplify(cc * 2 * pi * I * sp.residue(sp.exp(I * uu * zc) / q, zc, up))
+    phi1 = phi(1)
+    cn = float(sp.N(cc))
+    c.lv.claim(sp.simplify(phi1 - sp.exp(-3 + I)) == 0, 'item 2: phi(1) = e^{-3 + i} by residues')
+    # route 2 for phi: Y = X - 1 has density c/(y^2 + 9), symmetric, so E[e^{iuY}] = 2 int_0^inf c cos(uy)/(y^2 + 9) dy
+    ny = lambda uu: 2 * integrate.quad(lambda Y: cn / (Y * Y + 9), 0, np.inf, weight='cos', wvar=uu)[0]
+    c.num(1, 4, sp.Abs(phi1), abs(ny(1.0)), {'sign': sp.exp(3), 'no-c': sp.exp(-3) * integral, 'standard': sp.exp(-1)})
+    phiM = sp.simplify(phi(R(1, 2)) ** 2)
+    rng = np.random.default_rng(11)
+    xs = 1 + 3 * np.tan(math.pi * (rng.random((2, 400000)) - 0.5))
+    mc = abs(np.mean(np.exp(1j * xs.mean(axis=0))))
+    c.lv.claim(abs(mc - math.exp(-3)) < 0.004, f'item 2: Monte Carlo |E e^(iM)| for the mean of two flashes is {mc:.4f}, near e^-3')
+    c.num(1, 5, sp.Abs(phiM), abs(ny(0.5)) ** 2, {'no-half': sp.exp(-6), 'one-factor': sp.exp(-R(3, 2))})
+    c.vocab(1, [1 + 3j, 4, 40, 36, 2, 9, 6, 1 / 6, 3 / math.pi, math.pi / 3, 1.5, 0.5, 3, 1 / 2,
+                 362, 402])   # 362 and 402: the token reader joins sqrt{-36}}{2} and sqrt{4 - 40}}{2} when it drops braces
+
+    # ---- item 3: share moments from phi at complex points
+    S0, r, sg, T = 64, R(5, 100), R(25, 100), R(8, 10)
+    drift = (r - sg ** 2 / 2) * T
+    s2 = sg ** 2 * T
+    mu = sp.log(S0) + drift
+    c.num(2, 1, drift, (0.05 - 0.25 ** 2 / 2) * 0.8, {'sign': -drift, 'no-half': (r - sg ** 2) * T, 'no-sigma': r * T})
+    phi_s = lambda uu: sp.exp(I * mu * uu - s2 * uu ** 2 / 2)
+    ES = sp.simplify(phi_s(-I))
+    dens = lambda Lx: math.exp(-(Lx - float(mu)) ** 2 / (2 * float(s2))) / math.sqrt(2 * math.pi * float(s2))
+    nES = integrate.quad(lambda Lx: math.exp(Lx) * dens(Lx), float(mu) - 12, float(mu) + 12, epsabs=1e-12, epsrel=1e-13)[0]
+    c.num(2, 2, ES, nES, {'minus': sp.exp(mu - s2 / 2), 'no-var': sp.exp(mu), 'discounted': S0})
+    c.lv.claim(sp.simplify(sp.exp(-r * T) * ES - S0) == 0, 'item 3: e^{-rT} E[S_T] = S_0')
+    ES2 = sp.simplify(phi_s(-2 * I))
+    nES2 = integrate.quad(lambda Lx: math.exp(2 * Lx) * dens(Lx), float(mu) - 12, float(mu) + 12, epsabs=1e-10, epsrel=1e-13)[0]
+    c.num(2, 3, ES2, nES2, {'mean-squared': ES ** 2, 'minus': sp.exp(2 * mu - 2 * s2)})
+    E1, E2 = sp.Float('66.612'), sp.Float('4664.6')
+    c.lv.claim(round(float(sp.N(ES)), 3) == 66.612 and round(float(sp.N(ES2)), 1) == 4664.6, 'item 3: the restated moments are the computed ones rounded')
+    c.num(2, 4, sp.sqrt(E2 - E1 ** 2), math.sqrt(4664.6 - 66.612 ** 2),
+          {'variance': E2 - E1 ** 2, 'not-squared': sp.sqrt(E2 - E1), 'log-sd': 64 * 0.25 * math.sqrt(0.8)})
+    c.lv.claim(round(float(sp.N(sp.sqrt(ES2 - ES ** 2))), 2) == 15.08, 'item 3: unrounded moments give the same 15.08')
+    psi0 = sp.exp(-r * T) * E2 / 2
+    from scipy.stats import norm
+    def call(K):
+        if K <= 0:
+            return 64.0
+        d1 = (math.log(64 / K) + (0.05 + 0.25 ** 2 / 2) * 0.8) / (0.25 * math.sqrt(0.8))
+        return 64 * norm.cdf(d1) - K * math.exp(-0.04) * norm.cdf(d1 - 0.25 * math.sqrt(0.8))
+    area_c = integrate.quad(call, 0, 64, limit=200)[0] + integrate.quad(call, 64, 2000, limit=400)[0]   # int e^k C dk = int C(K) dK
+    c.lv.claim(abs(area_c - float(sp.N(sp.exp(-r * T) * ES2 / 2))) < 1e-5, f'item 3: the area under Black-Scholes call prices, {area_c:.4f}, is e^(-rT) E[S^2]/2')
+    c.num(2, 5, psi0, math.exp(-0.04) * 4664.6 / 2, {'no-discount': E2 / 2, 'no-two': sp.exp(-r * T) * E2, 'wrong-sign': sp.exp(r * T) * E2 / 2})
+    c.lv.claim(round(area_c) == 2241, 'item 3: the unrounded second moment gives the same 2241')
+    c.vocab(2, [64, 0.05, 0.25, 0.8, 0.0625, 0.03125, 0.01875, 0.015, 0.025, 0.04, 0.03, 0.1, 0.13, 0.08, 4096, 66.612, 4664.6, 4437.2, 227.44, 227.4, 25, 30, 0.5, 2, 1 / 2,
+                 4664.62])   # 4664.62: the token reader joins 4664.6}{2} when it drops braces
+
+    # ---- item 4: print stages
+    phX = 1 / (1 - 2 * I * u) ** 2
+    c.expr(3, 1, phX, lambda X, Y, Z, T_, Uu: (1 / (1 - 2j * Uu)) * (1 / (1 - 2j * Uu)),
+           {'added': 2 / (1 - 2 * I * u), 'doubled-u': 1 / (1 - 4 * I * u)})
+    zp = sp.solve(1 - 2 * I * zc, zc)[0]
+    c.expr(3, 2, zp, np.roots([-2j, 1])[0], {'sign': -zp, 'real': R(1, 2)})
+    d1_ = sp.diff(1 / (1 - 2 * I * zc) ** 2, zc).subs(zc, 0)
+    d2_ = sp.diff(1 / (1 - 2 * I * zc) ** 2, zc, 2).subs(zc, 0)
+    Fx = lambda w_: 1 / (1 - 2j * w_) ** 2
+    I2 = trap_loop(lambda w_: Fx(w_) / w_ ** 2, 0, 0.25)
+    I3 = trap_loop(lambda w_: Fx(w_) / w_ ** 3, 0, 0.25)
+    c.lv.claim(abs(I2.imag) < 1e-10 and abs(I3.real) < 1e-10, 'item 4: the z^2 loop integral is real and the z^3 one imaginary')
+    c.num(3, 3, sp.simplify(2 * pi * I * d1_), I2.real, {'sign': 8 * pi, 'one-stage': 2 * pi * I * sp.diff(1 / (1 - 2 * I * zc), zc).subs(zc, 0)})
+    c.lv.claim(sp.simplify(pi * I * d2_ + 24 * pi * I) == 0 and abs(I3 - (-24j * math.pi)) < 1e-9, 'item 4: the z^3 loop integral is -24 pi i (both routes)')
+    c.num(3, 4, sp.simplify(d1_ / I), (I2 / (2j * math.pi) / 1j).real, {'sign': -4, 'one-stage': 2})
+    EX2 = -d2_
+    c.num(3, 5, EX2 - (d1_ / I) ** 2, (-(I3 / (2j * math.pi)) * 2).real - 16, {'no-factorial': -d2_ / 2 - 16, 'second-moment': EX2, 'mean-not-squared': EX2 - 4})
+    c.lv.claim(abs(np.var(rng.exponential(2, (2, 400000)).sum(axis=0)) - 8) < 0.15, 'item 4: Monte Carlo variance of two exponential stages of mean 2 is near 8')
+    c.vocab(3, [0.25, 0.5, 24, 16, 12, 8, 25.13, 2 * math.pi])
+    return c
+
+
 if __name__ == '__main__':
     done = []
-    for f in (level1, level2):
+    for f in (level1, level2, level3):
         ch = f()
         ch.finish()
         done.append(ch)
