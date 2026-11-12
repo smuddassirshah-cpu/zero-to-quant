@@ -105,15 +105,15 @@ for i, v in slips.items():
     if abs(whole - Fr(str(s['value']))) >= Fr(str(s['tol']['abs'])):
         claims.append(f'1/p-platform-fee.4: slip {i} is {float(v)*100:.3f}%; as the part asks, {round(v*100)}%, which is outside or on the edge of its band {s["value"]} +- {s["tol"]["abs"]}')
 
-# p-phone-rise: £30.00, inflation 3.2% plus 3.9 points, SIM-only £12.00
+# p-phone-rise: £30.00, inflation 3.2% plus 3.9 points, SIM-only £14.00 (fix pass)
 rise = pc(Fr(32, 10)) + pc(Fr(39, 10))
 key(1, 'p-phone-rise', 1, rise, (3.2 + 3.9) / 100, {'one-place': rise * 10, 'no-move': rise * 100})
 key(1, 'p-phone-rise', 2, 1 + rise, 1 + 0.071, {'fall': 1 - rise, 'rise-only': rise, 'one-place': 1 + rise * 10})
 new = 30 * (1 + rise)
 key(1, 'p-phone-rise', 3, new, 30 + pct_build(30, 7.1), {'rise-only': 30 * rise, 'one-place': 30 * (1 + 10 * rise), 'fall': 30 * (1 - rise)})
-slips = {'old-price': Fr(12, 30), 'upside-down': new / 12, 'saving': (new - 12) / new}
-key(1, 'p-phone-rise', 4, Fr(12) / new, 12 / 32.13, slips, shown=0.373)
-ok(new - 12 == Fr(2013, 100), 'saving 20.13')
+slips = {'old-price': Fr(14, 30), 'upside-down': new / 14, 'saving': (new - 14) / new}
+key(1, 'p-phone-rise', 4, Fr(14) / new, 14 / 32.13, slips, shown=0.436)
+ok(new - 14 == Fr(1813, 100), 'saving 18.13')
 for i, v in slips.items():
     s = stored(1, 'p-phone-rise', 4, i)
     one = Fr(round(v * 1000), 1000)
@@ -159,7 +159,7 @@ if abs(Fr(round(alt * 10000), 10000) - Fr(str(w['answer']))) >= Fr(str(w['tol'][
 # p-laptop-sale: £561.00 after 15% off, after a 10% rise
 sale = Fr(561)
 pre = sale / Fr(85, 100)
-key(2, 'p-laptop-sale', 1, pre, 561 / 0.85, {'added': sale * Fr(115, 100)})
+key(2, 'p-laptop-sale', 1, pre, 561 / 0.85, {'added': sale * Fr(115, 100), 'off-again': sale * Fr(85, 100)})
 orig = pre / Fr(11, 10)
 key(2, 'p-laptop-sale', 2, orig, 660 / 1.1, {'took-off': pre * Fr(9, 10), 'added-carried': sale * Fr(115, 100) / Fr(11, 10)})
 ok(600 * Fr(11, 10) == 660 and 660 * Fr(85, 100) == 561, 'check lines')
@@ -214,30 +214,30 @@ ok(abs(50746.60 * 1.0247 - 52000) < 1, 'check line 50,746.60 x 1.0247')
 claims.append(f'2/p-fund-six-months.2: the slip "added" from the exact March value is £{float(mar*(1+3*pc(9))):.2f}, stored from the rounded one; fine. The compounding slip one-month (x1.09 once) £{39185.69*1.09:.2f} has no line')
 
 # ------------------------------------------------------------------ set 3
-# p-partners-profit: 18,000 : 24,000 : 30,000
-st = [18000, 24000, 30000]
+# p-partners-profit (fix pass): 12,000 : 16,000 : 32,000
+st = [12000, 16000, 32000]
 g = math.gcd(*st)
 r3 = [x // g for x in st]
-ok(r3 == [3, 4, 5] and g == 6000, 'ratio 3:4:5')
-key(3, 'p-partners-profit', 1, Fr(sum(r3)), sum(st) / 6000, {'thousands': sum(x // 1000 for x in st), 'halved': sum(x // 2000 for x in st)})
-key(3, 'p-partners-profit', 2, Fr(9600) * 5 / 12, 9600 * 30000 / 72000, {'equal': Fr(9600, 3), 'one-part': Fr(9600, 12)})
-if Fr(9600) * 4 / 12 == Fr(9600, 3):
+ok(r3 == [3, 4, 8] and g == 4000, 'ratio 3:4:8')
+key(3, 'p-partners-profit', 1, Fr(sum(r3)), sum(st) / 4000, {'thousands': sum(x // 1000 for x in st), 'halved': sum(x // 2000 for x in st)})
+key(3, 'p-partners-profit', 2, Fr(9600) * 8 / 15, 9600 * 32000 / 60000, {'equal': Fr(9600, 3), 'one-part': Fr(9600, 15)})
+if any(Fr(9600) * k / 15 == Fr(9600, 3) for k in (3, 4, 8)):
     claims.append('3/p-partners-profit.2: wrong "equal" 3,200 is also the share of the £24,000 partner (4 parts); that learner is told "You split the profit equally"')
-key(3, 'p-partners-profit', 3, Fr(2850) / 3 * 12, 2850 * 72000 / 18000, {'own-parts': 2850 * 3, 'one-part-share': 2850 * 12})
-key(3, 'p-partners-profit', 4, Fr(11900) * 2 / 14, 11900 * 12000 / 84000, {'old-parts': Fr(11900) * 2 / 12, 'equal': Fr(11900, 4)})
-ok(Fr(12000, 6000) == 2 and 11900 / 14 == 850, 'new partner 2 parts, one part 850')
+key(3, 'p-partners-profit', 3, Fr(2850) / 3 * 15, 2850 * 60000 / 12000, {'own-parts': 2850 * 3, 'one-part-share': 2850 * 15})
+key(3, 'p-partners-profit', 4, Fr(11900) * 2 / 17, 11900 * 8000 / 68000, {'old-parts': Fr(11900) * 2 / 15, 'equal': Fr(11900, 4)})
+ok(Fr(8000, 4000) == 2 and 11900 / 17 == 700, 'new partner 2 parts, one part 700')
 
-# p-print-run: 36,000 leaflets, 5 presses 12 hours, £14 a press-hour, rival £2.20 per 100
-ph = 5 * 12
-key(3, 'p-print-run', 1, Fr(ph, 8), 12 * 5 / 8, {'direct': Fr(12 * 8, 5), 'subtracted': 12 - 3})
-key(3, 'p-print-run', 2, Fr(ph) * 14, 8 * 7.5 * 14, {'direct': 8 * Fr(96, 5) * 14, 'one-press': Fr(15, 2) * 14})
-ok(5 * 12 * 14 == 840, 'five presses cost the same')
+# p-print-run: 36,000 leaflets, 4 presses 15 hours (fix pass), £14 a press-hour, rival £2.20 per 100
+ph = 4 * 15
+key(3, 'p-print-run', 1, Fr(ph, 8), 15 * 4 / 8, {'direct': Fr(15 * 8, 4), 'subtracted': 15 - 4})
+key(3, 'p-print-run', 2, Fr(ph) * 14, 8 * 7.5 * 14, {'direct': 8 * Fr(30) * 14, 'one-press': Fr(15, 2) * 14})
+ok(4 * 15 * 14 == 840, 'four presses cost the same')
 key(3, 'p-print-run', 3, Fr(840, 36), 840 / 36000 * 1000, {'per-leaflet': Fr(840, 36000), 'upside-down': Fr(36000, 840)}, shown=23.33)
 rival = Fr(220, 100) * 10
 ok(rival == 22 and rival < Fr(840, 36) and abs(23.33 - 22 - 1.33) < 1e-9 and abs(36 * 1.33 - 48) < 0.5 and 840 - 36 * 22 == 48, 'rival 22.00, saves 48')
 opts = {o['id']: o for o in part(3, 'p-print-run', 4)['widget']['options']}
 ok(opts['rival'].get('correct') is True and sum(1 for o in opts.values() if o.get('correct')) == 1, 'choice key rival')
-if Fr(220, 100) < Fr(840, 36):
+if Fr(220, 100) < Fr(840, 36) and 'Scale' not in opts['shop']['why']:
     claims.append('3/p-print-run.4 why "shop": comparing £2.20 with £23.33 unscaled makes the rival look cheaper, so that working does not lead to the shop; and two options print the scaled prices, so the part asks only which of 22.00 and 23.33 is smaller')
 
 # p-coffee-suppliers: 12 kg CHF 330, 15 kg EUR 441, £1 = CHF 1.10 = EUR 1.20, 90 kg a month

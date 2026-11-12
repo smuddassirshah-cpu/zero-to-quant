@@ -112,3 +112,29 @@ Chains. Each later part restates the value it uses, except `p-platform-fee` part
 - Explanations: all agree with their keys and have at most three sentences. Voice: no sentence over 35 words, no exclamation mark or dash, British spelling, £ for money, euros and francs written as the lessons write them.
 - Level: every idea is taught by the end of its level (percentages under 1% in l1 and l2, percentage points in l3, four-place multipliers in l4, simple against compound in l8, fixed products in l11, dividing by a rate in l13), with the square root from the stated prerequisite. Every `skills` id is carried by a lesson of the level.
 - Set shape: four problems a set, three to five parts, a 5 in each, 46 of 48 parts typed, both choices are judgements.
+
+## Fix pass
+
+Status: fixed 14 findings, disputed 0, deferred 1 (finding 6, by the orchestrator's ruling: the single common fraction 3/8 may stand). The engine note is now in `docs/BACKLOG-INBOX.md` under `Raised later (problems ratio):`.
+
+1. platform-fee part 4, fixed: `one-place` tol 0.002, `upside-down` tol 0.006 (8 and 122, 123 now sit inside with room; key band and `account-base` untouched).
+2. phone-rise part 4, fixed: `upside-down` and `saving` tol 0.001 (reworked with finding 5; typed 229.5 and 56.4 reach their lines).
+3. savings-tax part 4, fixed: `same` why now "The tax-free account pays £702 and the taxed one keeps £696.80, which is £5.20 less." (828 - 0.4 x 328 = 696.80; 18,000 x 0.039 = 702; gap 5.20, two routes).
+4. platform-fee part 3, fixed: question restates "The 0.35% fee is taken from the £8,400 account."
+5. phone-rise, fixed: SIM-only deal £14.00. Key 0.3735 to 0.4357 (14 / 32.13 = 0.43573; exact fractions and float), `old-price` 0.4 to 0.4667, `upside-down` 2.6775 to 2.295, `saving` 0.6265 to 0.5643 (18.13 / 32.13), tols 0.001; accept "37.3%" to "43.6%"; correct, two byKey lines and explain follow. Parts 1 to 3 unchanged. Grep: "SIM-only" with £14.00 is in no other ratio, number-sense or equations file.
+6. pension-split part 1, deferred by ruling: 3/8 is a single common fraction and may stand (the level's own fact as a first step); story and later numbers are new.
+7. laptop-sale part 3, fixed: `sale-base` tol 0.001.
+8. laptop-sale part 1, fixed: `off-again` 476.85 (561 x 0.85, two routes), tol 0.005, with the proposed byKey line.
+9. share-week prose, fixed: "A share closes at ...".
+10. partners-profit part 1, fixed with finding 11: the question asks only for the count.
+11. partners-profit, fixed: stakes £12,000, £16,000, £32,000, ratio 3 : 4 : 8 (gcd 4,000, checked by listing). Part 1 key 15, `thousands` 60 (12+16+32), `halved` 30. Part 2 key 5,120 (9,600 / 15 = 640, x 8), `one-part` 640, `equal` 3,200. Part 3 key 14,250 (2,850 / 3 = 950, x 15), `one-part-share` 42,750. Part 4 key 1,400 (11,900 / 17 = 700, x 2), `old-parts` 1,586.67, `equal` 2,975. All lines and explanations follow. Fresh grep: "12{,}000 : 16", "3 : 4 : 8", 14,250 and 5,120 (ratio) occur in no other course file; £32,000 and £16,000 appear in `ratio/homework-3` as an unrelated £80,000 split, judged chance.
+12. partners-profit part 2 `equal`, closed by finding 11: 3,200 is no partner's share (1,920, 2,560 or 5,120).
+13. print-run, fixed: four presses, 15 hours (product still 60; parts 3 and 4 and the keys of parts 2 to 4 unchanged). Part 1 `direct` 19.2 to 30, `subtracted` 9 to 11; part 2 `direct` 2,150.4 to 3,360 (8 x 30 x 14), tol 0; correct, byKey and explain follow. `review-3` r-pumps still has the product 60 with other numbers and another story; judged distinct.
+14. print-run part 4, fixed: options "The rival printer", "The shop's own presses", "They cost the same"; `shop` why is the proposed line; `same` and `correct` stay.
+15. unit boxes, fixed: `CHF` on `p-coffee-suppliers` part 1, `€` on `p-villa-split` parts 1 and 3.
+
+Graded values changed (old to new): p-phone-rise p4 key 0.3735 to 0.4357, old-price 0.4 to 0.4667, upside-down 2.6775 to 2.295, saving 0.6265 to 0.5643; p-laptop-sale p1 wrong +1 (off-again 476.85); p-partners-profit p1 key 12 to 15, thousands 72 to 60, halved 36 to 30; p2 key 4,000 to 5,120, one-part 800 to 640; p3 key 11,400 to 14,250, one-part-share 34,200 to 42,750; p4 key 1,700 to 1,400, old-parts 1,983.33 to 1,586.67; p-print-run p1 direct 19.2 to 30, subtracted 9 to 11; p2 direct 2,150.4 to 3,360. Band-only changes: platform-fee p4 (2), phone-rise p4, laptop-sale p3.
+
+Scripts: `docs/reports/problems-ratio-numbers.py` updated to the new values (1,003 checks, exit 0, tolerances and unit checks added); the reader's `mine.py` updated likewise (1,246 checks, 0 failures, exit 0; its remaining CLAIM lines are findings left or notes). `proposed.py` is unchanged and still passes (33 of 33).
+
+Gates: validator 0 errors, 4,520 warnings, none on the three sets, `manifest.json` unchanged; `grade-all.mjs --local-cdn --file` 0 failures on all three (17, 15, 16 widgets); voice scan 35: 0 and 0; `playthrough --problems ratio/problems-1`, `-2`, `-3`, each desktop and `--mobile`: all six passed.

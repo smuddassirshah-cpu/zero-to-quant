@@ -155,6 +155,12 @@ def level1(L):
     share = F(24) / fee
     num(L, 'p-platform-fee', 4, share, 24 / 29.4, {'upside-down': fee / 24, 'account-base': F(24, 8400), 'one-place': F(24) / (10 * fee)}, dp=0, pct=True)
     ok(F(24) < fee, 'fee: the rival is cheaper, as the explanation says')
+    # fix pass: the slips rounded as asked (nearest whole per cent) sit inside bands with room
+    wr4 = {z['id']: z for z in L['p-platform-fee']['parts'][3]['widget']['wrong']}
+    ok(wr4['one-place']['tol']['abs'] == 0.002 and wr4['upside-down']['tol']['abs'] == 0.006, 'fee p4: bands as fixed')
+    ok(abs(0.08 - float(F(24) / (10 * fee))) < wr4['one-place']['tol']['abs'], 'fee p4: 8 reaches one-place')
+    ok(all(abs(v - 1.225) < wr4['upside-down']['tol']['abs'] for v in (1.22, 1.23)), 'fee p4: 122 and 123 reach upside-down')
+    ok('£8,400' in L['p-platform-fee']['parts'][2]['question'] and '0.35%' in L['p-platform-fee']['parts'][2]['question'], 'fee p3: restated')
 
     # ---- phone contract £30.00, inflation 3.2% plus 3.9 points
     rise = F(32, 1000) + F(39, 1000)
@@ -163,9 +169,14 @@ def level1(L):
     num(L, 'p-phone-rise', 2, m, 1.071, {'fall': 1 - rise, 'rise-only': rise, 'one-place': 1 + 10 * rise})
     newp = 30 * m
     num(L, 'p-phone-rise', 3, newp, 30 + build(30, 71), {'rise-only': 30 * rise, 'one-place': 30 * (1 + 10 * rise), 'fall': 30 * (1 - rise)}, dp=2)
-    sim = F(12) / newp
-    num(L, 'p-phone-rise', 4, sim, 12 / 32.13, {'old-price': F(12, 30), 'upside-down': newp / 12, 'saving': (newp - 12) / newp}, dp=1, pct=True)
-    stated('phone: the saving', 20.13, float(newp - 12), 1e-9)
+    sim = F(14) / newp
+    num(L, 'p-phone-rise', 4, sim, 14 / 32.13, {'old-price': F(14, 30), 'upside-down': newp / 14, 'saving': (newp - 14) / newp}, dp=1, pct=True)
+    stated('phone: the saving', 18.13, float(newp - 14), 1e-9)
+    text_has(L, 'p-phone-rise', 4, '£14.00', '43.6%', '£18.13')
+    # fix pass: slips rounded as asked (1 dp) reach their lines
+    for wid, shown in (('old-price', 46.7), ('upside-down', 229.5), ('saving', 56.4)):
+        z = next(z for z in L['p-phone-rise']['parts'][3]['widget']['wrong'] if z['id'] == wid)
+        ok(abs(shown / 100 - z['value']) <= z['tol']['abs'], f'phone p4: {wid} typed as {shown} misses its band')
 
     # ---- savings £18,000 at 4.6%, £500 allowance, 40% tax
     interest = F(18000) * F(46, 1000)
@@ -202,10 +213,12 @@ def level2(L):
     # ---- laptop £561.00 after 15% off, after a 10% rise
     sale = F(561)
     before = sale / F(85, 100)
-    num(L, 'p-laptop-sale', 1, before, 561 * 100 / 85, {'added': sale * F(115, 100)})
+    num(L, 'p-laptop-sale', 1, before, 561 * 100 / 85, {'added': sale * F(115, 100), 'off-again': sale * F(85, 100)})
+    ok(sale * F(85, 100) == F(47685, 100), 'laptop: off-again 476.85')
     orig = before / F(11, 10)
     num(L, 'p-laptop-sale', 2, orig, 660 * 10 / 11, {'took-off': before * F(9, 10), 'added-carried': sale * F(115, 100) / F(11, 10)})
     ch = (sale - orig) / orig
+    ok(next(z for z in L['p-laptop-sale']['parts'][2]['widget']['wrong'] if z['id'] == 'sale-base')['tol']['abs'] == 0.001, 'laptop p3: sale-base band 0.001')
     num(L, 'p-laptop-sale', 3, ch, 1.1 * 0.85 - 1, {'sign': -ch, 'added': F(10, 100) - F(15, 100), 'sale-base': (sale - orig) / sale}, dp=1, pct=True)
 
     # ---- fund £6,250 -> £7,840 over two years
@@ -253,27 +266,29 @@ def level2(L):
 
 # ================================================================== level 3
 def level3(L):
-    # ---- partners £18,000, £24,000, £30,000
-    stakes = [18000, 24000, 30000]
+    # ---- partners £12,000, £16,000, £32,000 (fix pass: renumbered from 18,000, 24,000, 30,000)
+    stakes = [12000, 16000, 32000]
     g = math.gcd(*stakes)
     simp = [x // g for x in stakes]
-    ok(g == 6000 and simp == [3, 4, 5], 'partners: simplest form 3 : 4 : 5')
-    listing = sum(1 for x in stakes for _ in range(x // 6000))
+    ok(g == 4000 and simp == [3, 4, 8], 'partners: simplest form 3 : 4 : 8')
+    listing = sum(1 for x in stakes for _ in range(x // 4000))
     num(L, 'p-partners-profit', 1, sum(simp), listing, {'thousands': sum(x // 1000 for x in stakes), 'halved': sum(x // 2000 for x in stakes)})
-    part = F(9600, 12)
-    num(L, 'p-partners-profit', 2, 5 * part, 9600 * 30000 / 72000, {'equal': F(9600, 3), 'one-part': part})
-    tot = F(2850, 3) * 12
-    num(L, 'p-partners-profit', 3, tot, 2850 * 72000 / 18000, {'own-parts': 2850 * 3, 'one-part-share': 2850 * 12})
-    ok(math.gcd(12000, 6000) == 6000 and 12000 // 6000 == 2, 'partners: £12,000 is 2 parts')
-    new = F(11900, 14) * 2
-    num(L, 'p-partners-profit', 4, new, 11900 * 12000 / 84000, {'old-parts': F(11900, 12) * 2, 'equal': F(11900, 4)}, dp=2)
+    part = F(9600, 15)
+    num(L, 'p-partners-profit', 2, 8 * part, 9600 * 32000 / 60000, {'equal': F(9600, 3), 'one-part': part})
+    tot = F(2850, 3) * 15
+    num(L, 'p-partners-profit', 3, tot, 2850 * 60000 / 12000, {'own-parts': 2850 * 3, 'one-part-share': 2850 * 15})
+    ok(math.gcd(12000, 4000) == 4000 and 12000 // 4000 == 3, 'partners: £12,000 is 3 parts')
+    new = F(11900, 17) * 2
+    num(L, 'p-partners-profit', 4, new, 11900 * 8000 / 68000, {'old-parts': F(11900, 15) * 2, 'equal': F(11900, 4)}, dp=2)
+    ok(8000 // g == 2 and sum(simp) + 2 == 17, 'partners: 8,000 is 2 parts, 17 in all')
+    ok(F(9600, 3) not in (3 * part, 4 * part, 8 * part), 'partners: the equal split is no partner\'s share')
 
-    # ---- print run: 5 presses, 12 hours, 36,000 leaflets
-    ph = 5 * 12
+    # ---- print run: 4 presses, 15 hours, 36,000 leaflets (fix pass: was 5 presses, 12 hours)
+    ph = 4 * 15
     t8 = F(ph, 8)
-    num(L, 'p-print-run', 1, t8, 12 * 5 / 8, {'direct': F(12 * 8, 5), 'subtracted': 12 - 3})
+    num(L, 'p-print-run', 1, t8, 15 * 4 / 8, {'direct': F(15 * 8, 4), 'subtracted': 15 - 4})
     cost = 8 * t8 * 14
-    num(L, 'p-print-run', 2, cost, 5 * 12 * 14, {'direct': 8 * F(96, 5) * 14, 'one-press': t8 * 14})
+    num(L, 'p-print-run', 2, cost, 4 * 15 * 14, {'direct': 8 * F(15 * 8, 4) * 14, 'one-press': t8 * 14})
     per = cost / 36
     num(L, 'p-print-run', 3, per, 840 / 36000 * 1000, {'per-leaflet': cost / 36000, 'upside-down': F(36000) / cost}, dp=2)
     rival = 10 * F('2.20')
@@ -281,6 +296,9 @@ def level3(L):
     stated('print: rival per 1,000', 22.00, rival)
     stated('print: difference', 1.33, round(float(per - rival), 2))
     stated('print: whole-order saving', 48, float(cost - 36 * rival))
+    ok(all(o['text'] in ('The rival printer', "The shop's own presses", 'They cost the same') for o in L['p-print-run']['parts'][3]['widget']['options']), 'print p4: options leave the scaling to the learner')
+    ok(L['p-coffee-suppliers']['parts'][0]['widget'].get('unit') == 'CHF', 'coffee p1: unit CHF')
+    ok(L['p-villa-split']['parts'][0]['widget'].get('unit') == '€' and L['p-villa-split']['parts'][2]['widget'].get('unit') == '€', 'villa p1, p3: unit euro')
 
     # ---- coffee suppliers
     sw = F(330, 12)
