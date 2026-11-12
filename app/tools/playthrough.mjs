@@ -11,6 +11,15 @@
                                                            (1-based) runs the items whose zero-based index % n === i-1, so shards 1/4 to 4/4 cover each item once. The routes and
                                                            their checks run in shard 1 only; --routes-only with any other shard has no items and passes with a note. Prints "shard i/n: K of N items"
      node app/tools/playthrough.mjs --all --list           print the item ids (lesson/, set/, exam/) the run would play, one per line, and exit (works with --shard; no browser)
+     node app/tools/playthrough.mjs --all --changed        green-hash cache (tools/green-cache.mjs): every item that passes is recorded in app/tools/.green-cache.json (git-ignored) under kind, id and
+                                                           viewport mode with one hash of the item's file, its course.json, the data files it names, its manifest entries and the engine (js, css, index.html,
+                                                           vendor, playthrough.mjs, green-cache.mjs, the pinned CDN versions). --changed works with every item-selecting flag (--all, --sets, --exams, --drills, --fluency-all,
+                                                           --problems all, --bank, --lesson and the rest), with --shard (the shard is taken first, then the filter, so shards partition identically on every machine) and with --list
+                                                           (no browser, about a second), and plays only items whose hash is absent from or different to the cache. It prints "changed: K of N items (cache <file>)" and exits at once when K is 0.
+                                                           A run without --changed behaves as before and seeds the cache; --no-cache records nothing; --cache <file> names another cache (concurrent shards may share one: writes lock, re-read, merge
+                                                           and rename). A failed item, or any item after Python or the C++ compiler failed to load, is never recorded; --why, --headed and --shots still record. A mode is the viewports played
+                                                           (desktop, mobile, narrow, tablet); a green for desktop+mobile also covers desktop. Drills run at the extra widths only, so their mode has no desktop. The route checks are one item ("routes")
+                                                           hashed over all of content/ (their reads cannot be bounded) and tools/fixtures; content/manifest.json counts only through normalised slices, never as bytes.
      node app/tools/playthrough.mjs --sets                 every written level review and homework only
      node app/tools/playthrough.mjs --exams                every exam in content/exams only (combine with --sets)
      node app/tools/playthrough.mjs --set number-sense/review-1   one review or homework (repeatable)
@@ -90,6 +99,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createHasher, readCache, writeGreen, makeLookup, keyOf } from './green-cache.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = process.env.ZQ_APP_DIR ? path.resolve(process.env.ZQ_APP_DIR) : path.resolve(HERE, '..');   // item 701: the overflow test plays a temporary copy
@@ -99,7 +109,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, planted: false, sessionRun: false, all: false, shard: null, list: false, fluencyIds: [], problemsIds: [], problemsAll: false };
+const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, planted: false, sessionRun: false, all: false, shard: null, list: false, fluencyIds: [], problemsIds: [], problemsAll: false, changed: false, noCache: false, cache: null };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -127,6 +137,9 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--session') opt.sessionRun = true;
   else if (a === '--all') opt.all = true;
   else if (a === '--list') opt.list = true;
+  else if (a === '--changed') opt.changed = true;   // engine pass AC: replay only the items whose hash is not in the green cache (tools/green-cache.mjs)
+  else if (a === '--no-cache') opt.noCache = true;
+  else if (a === '--cache') opt.cache = path.resolve(next());
   else if (a === '--shard') { const v = next(), m = /^(\d+)\/(\d+)$/.exec(v); if (!m || +m[1] < 1 || +m[2] < 1 || +m[1] > +m[2]) die(`--shard needs i/n with 1 <= i <= n (for example 2/4), got "${v}"`); opt.shard = { i: +m[1], n: +m[2] }; }
   else if (a === '--help' || a === '-h') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('*/')[0].replace(/^#!.*\n\/\* ?/, '')); process.exit(0); }
   else die(`unknown argument ${a} (try --help)`);
@@ -137,9 +150,9 @@ for (let i = 0; i < argv.length; i++) {
    Resizing sets the width and height of every pass; it does not emulate touch. */
 const DESKTOP = { w: 1280, h: 860 };
 const EXTRA = [];
-if (opt.mobile) EXTRA.push({ w: 440, h: 956 });
-if (opt.narrow) EXTRA.push({ w: 390, h: 844 });
-if (opt.tablet) EXTRA.push({ w: 1032, h: 1376 }, { w: 1376, h: 1032 });
+if (opt.mobile) EXTRA.push({ w: 440, h: 956, mode: 'mobile' });
+if (opt.narrow) EXTRA.push({ w: 390, h: 844, mode: 'narrow' });
+if (opt.tablet) EXTRA.push({ w: 1032, h: 1376, mode: 'tablet' }, { w: 1376, h: 1032, mode: 'tablet' });
 const ANY_EXTRA = EXTRA.length > 0;
 let curVp = DESKTOP;
 const onlySets = !opt.all && (opt.sets || opt.exams);
@@ -170,6 +183,9 @@ const loadPlaywright = async () => {
 
 /* ---------- What to play ---------- */
 const readJSON = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
+/* the bank files that are dealt (samples left out) and every drill file, as bankPlay and the drill phase list them; --changed needs them before the browser starts */
+const bankNamesAll = () => { const dir = path.join(CONTENT, 'bank'); return fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /^[a-z0-9-]+\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort().filter(n => { try { return readJSON(path.join(dir, n + '.json')).sample !== true; } catch { return true; } }) : []; };
+const drillNamesAll = () => fs.readdirSync(path.join(CONTENT, 'drills')).filter(f => f.endsWith('.json') && f !== 'index.json').map(f => f.replace(/\.json$/, '')).sort();
 /* item 515: numeric widgets with unit "%" anywhere in a lesson file, with the forms a learner would type for the authored key */
 const pctWidgets = (root) => {
   const out = [], seen = (v, at) => {
@@ -280,7 +296,6 @@ const cdnFile = (u) => {
 
 /* ---------- Run ---------- */
 const main = async () => {
-  const { chromium } = await loadPlaywright();
   const { lessons: allLessons, courses, sets: allSets, exams: allExams, fluency: allFluency, problems: allProblems } = writtenLessons();
   const lessons0 = opt.lessonsOn ? (opt.lessons.length ? opt.lessons : allLessons) : [];
   for (const l of opt.lessons) if (!allLessons.includes(l)) die(`--lesson ${l}: no such written lesson (the file must exist and be listed in its course.json)`);
@@ -294,15 +309,51 @@ const main = async () => {
   const fluency0 = opt.fluencyIds.length ? opt.fluencyIds : (opt.all || opt.fluencyAll) ? allFluency : [];
   /* ENGINE-BACKLOG 550: the full ordered item list is lessons, then sets, then exams; --shard i/n keeps the items whose index % n === i-1 */
   const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...fluency0.map(id => ({ k: 'fluency', id })), ...problems0.map(id => ({ k: 'problems', id })), ...exams0.map(id => ({ k: 'exam', id }))];
-  const mine = opt.shard ? full.filter((_, ix) => ix % opt.shard.n === opt.shard.i - 1) : full;
+  const mine0 = opt.shard ? full.filter((_, ix) => ix % opt.shard.n === opt.shard.i - 1) : full;
+  /* engine pass AC: the green-hash cache (tools/green-cache.mjs). Sharding is applied first, then --changed filters this shard's items, so shards partition the
+     same way on every machine whatever each cache holds. Every item's hash is taken here, before anything is played, so an edit made during the run is never recorded as green. */
+  const modesAll = ['desktop', ...new Set(EXTRA.map(v => v.mode))];
+  const modesOf = (kind) => kind === 'drill-planted' ? ['desktop'] : (kind === 'drill' || kind === 'session') ? (ANY_EXTRA ? [...new Set(EXTRA.map(v => v.mode))] : ['desktop']) : modesAll;
+  const cacheFile = opt.cache || path.join(HERE, '.green-cache.json');
+  const hasher = (opt.changed || !opt.noCache) ? createHasher({ appDir: APP, selfFile: fileURLToPath(import.meta.url) }) : null;
+  const snap = new Map();
+  const hashOf = (kind, id) => { const k = kind + '|' + id; if (!snap.has(k)) { let h = null; try { h = hasher.itemHash(kind, id); } catch { h = null; } snap.set(k, h); } return snap.get(k); };
+  const lookup = opt.changed ? makeLookup(readCache(cacheFile)) : null;
+  const stale = (kind, id) => { if (!lookup) return true; const h = hashOf(kind, id); return h == null || !lookup(kind, id, modesOf(kind), h); };
+  const bank0 = opt.bankIds.length ? (opt.bankIds.includes('all') ? bankNamesAll() : opt.bankIds) : [];
+  const drillKind = opt.planted ? 'drill-planted' : 'drill';
+  const drill0 = drillRun ? (opt.drillsAll ? drillNamesAll() : opt.drillIds) : [];
+  const session0 = !!(drillRun && !opt.planted && (opt.sessionRun || opt.drillsAll));
+  const routes0 = !!(opt.routes && (!opt.shard || opt.shard.i === 1));
+  const mine = opt.changed ? mine0.filter(m => stale(m.k, m.id)) : mine0;
+  const bankSel = opt.changed ? bank0.filter(id => stale('bank', id)) : bank0;
+  const drillSel = opt.changed ? drill0.filter(id => stale(drillKind, id)) : drill0;
+  const runSession = session0 && (!opt.changed || stale('session', 'sample-session'));
+  const runRoutes = routes0 && (!opt.changed || stale('routes', 'routes'));
   const lessons = lessons0.filter(id => mine.some(m => m.k === 'lesson' && m.id === id));
   const sets = sets0.filter(st => mine.some(m => m.k === 'set' && m.id === st.id));
   const exams = exams0.filter(id => mine.some(m => m.k === 'exam' && m.id === id));
   const fluencySets = fluency0.filter(id => mine.some(m => m.k === 'fluency' && m.id === id));
   const problemSets = problems0.filter(id => mine.some(m => m.k === 'problems' && m.id === id));
-  if (opt.list) { mine.forEach(m => console.log(`${m.k}/${m.id}`)); return; }
-  if (opt.shard) console.log(`shard ${opt.shard.i}/${opt.shard.n}: ${mine.length} of ${full.length} items${opt.routes ? (opt.shard.i === 1 ? ', plus the routes and their checks' : ', routes run in shard 1 only') : ''}`);
-  const runRoutes = opt.routes && (!opt.shard || opt.shard.i === 1);
+  if (opt.changed) {
+    const nAll = mine0.length + bank0.length + drill0.length + (session0 ? 1 : 0) + (routes0 ? 1 : 0), nCh = mine.length + bankSel.length + drillSel.length + (runSession ? 1 : 0) + (runRoutes ? 1 : 0);
+    const line = `changed: ${nCh} of ${nAll} items (cache ${cacheFile})`;
+    if (opt.list) {
+      console.error(line);
+      mine.forEach(m => console.log(`${m.k}/${m.id}`));
+      bankSel.forEach(id => console.log(`bank/${id}`)); drillSel.forEach(id => console.log(`${drillKind}/${id}`));
+      if (runSession) console.log('session/sample-session'); if (runRoutes) console.log('routes');
+      return;
+    }
+    console.log(line);
+    if (!nCh) { console.log('Nothing changed since the last green run.'); return; }
+  } else if (opt.list) { mine.forEach(m => console.log(`${m.k}/${m.id}`)); return; }
+  if (opt.shard) console.log(`shard ${opt.shard.i}/${opt.shard.n}: ${mine0.length} of ${full.length} items${opt.routes ? (opt.shard.i === 1 ? ', plus the routes and their checks' : ', routes run in shard 1 only') : ''}`);
+  const chromium = (await loadPlaywright()).chromium;
+  /* greens are collected as the items finish and written in batches (and at the end), after a sweep that drops any item named in a failure or a console error */
+  const pending = [];
+  let greenOff = false;   // set when Python or the C++ compiler could not load: nothing more is recorded in this run
+  const noteGreen = (kind, id) => { if (opt.noCache || greenOff) return; const h = hashOf(kind, id); if (h) pending.push({ kind, id, h }); };
   const { proc, base } = await startServer();
   let browser = null, ctx = null, page = null, relaunches = 0, browserGone = false;
   const failures = [], consoleErrors = [];
@@ -335,6 +386,17 @@ const main = async () => {
     page.on('pageerror', (e) => consoleErrors.push({ where, text: 'Uncaught ' + (e.stack || e.message) }));
     page.on('requestfailed', (r) => { if (!IGNORE_HOSTS.test(hostOf(r.url()))) consoleErrors.push({ where, text: `request failed: ${r.url()} (${r.failure() && r.failure().errorText})` }); });
     page.on('response', (r) => { if (r.status() >= 400 && r.url().startsWith(base)) consoleErrors.push({ where, text: `HTTP ${r.status()} ${r.url().slice(base.length)}` }); });
+  };
+  /* engine pass AC: write the greens. A sweep first drops any item whose id appears as a whole token in a failure line or a console error's place; a batch is
+     held back until a few more items have finished (a late console error is attributed to the item that was open when it arrived). */
+  const tokenIn = (id, texts) => { const re = new RegExp('(?<![\\w-])' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\w-])'); return texts.some(t => re.test(t)); };
+  const flushGreens = (final) => {
+    if (opt.noCache || !pending.length || (!final && pending.length < 12)) return;
+    const texts = [...failures, ...consoleErrors.map(e => e.where + ' ' + e.text)];
+    const take = final ? pending.splice(0) : pending.splice(0, pending.length - 2);
+    const out = {};
+    for (const g of take) if (!tokenIn(g.id, texts)) out[keyOf(g.kind, g.id, modesOf(g.kind))] = g.h;
+    try { writeGreen(cacheFile, out); } catch (e) { console.log(`note  the green cache ${cacheFile} could not be written: ${e.message}`); }
   };
   try {
     await openBrowser();
@@ -441,6 +503,7 @@ const main = async () => {
         try { await fn(); } catch (e) { failures.push(`${label}: threw ${String(e.message || e).split('\n')[0]}`); }
       } else if (thrown) failures.push(`${label}: threw ${String(thrown.message || thrown).split('\n')[0]}`);
       played++;
+      if (failures.length === f0 && consoleErrors.length === e0) { const i = label.indexOf('/'); noteGreen(label.slice(0, i), label.slice(i + 1)); flushGreens(false); }
       if (process.env.ZQ_TEST_CLOSE_AFTER && ++nItems === +process.env.ZQ_TEST_CLOSE_AFTER) { console.log(`     (test hook: closing the context after item ${nItems})`); try { await ctx.close(); } catch { /* closed */ } }
     };
 
@@ -454,8 +517,9 @@ const main = async () => {
       const lang = has.cpp ? 'The C++ compiler' : 'Python', wait = has.cpp ? 300000 : 90000;
       try {
         await page.waitForFunction(() => ![...document.querySelectorAll('.wd-py')].some(e => ['idle', 'loading', 'restarting', 'running'].includes(e.dataset.s)), null, { timeout: Math.max(opt.timeout, wait) });
-      } catch { return `${lang} did not become ready within ${wait / 1000} s`; }
+      } catch { greenOff = true; return `${lang} did not become ready within ${wait / 1000} s`; }
       const bad = await page.evaluate(() => { const e = [...document.querySelectorAll('.wd-py')].find(x => x.dataset.s === 'unavailable'); return e ? (e.title || 'unavailable') : null; });
+      if (bad) greenOff = true;
       return bad ? `${lang} could not load, so the code tests did not run (pass --local-cdn without CDN access): ${bad}` : null;
     };
 
@@ -1705,6 +1769,7 @@ const main = async () => {
       const want = ids.includes('all') ? names : ids;
       for (const id of want) if (!names.includes(id)) die(`--bank ${id}: no such file in content/bank (${names.join(', ')})`);
       let tot = 0, bad = 0;
+      const bankFailed = new Set();
       const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
       const textOf = (x) => String(x || '').replace(/\$|\\[a-z]+|[*_`{}\\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
       /* the slips of an item (or of its part): [{ id, what }] from wrong[] and the distractors of a choice */
@@ -1828,10 +1893,11 @@ const main = async () => {
           const badN = mine.filter(u => res[u]).length;
           mine.forEach(u => { if (res[u]) { console.log(`FAIL ${u}${tag}: ${res[u]}`); failures.push(`#bank/${id}${tag}: ${u}: ${res[u]}`); } });
           console.log(`${badN ? 'FAIL' : 'ok  '} --bank ${id}${tag}  ${mine.length - badN} of ${mine.length} items right from the key${codeN ? `, ${codeN} starter${codeN === 1 ? '' : 's'} fail first` : ''}${opt.why ? `, ${slipN} slip lines shown` : ''}${reqs.length ? `, ${reqs.length} requires lessons unlocked` : ''}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-          tot += mine.length; bad += badN;
+          tot += mine.length; bad += badN; if (badN || !mine.length) bankFailed.add(id);
         }
       }
       if (curVp !== DESKTOP) await setVp(DESKTOP, 300);
+      want.forEach(id => { if (!bankFailed.has(id)) noteGreen('bank', id); });
       console.log(`bank total: ${tot - bad} of ${tot} items passed in ${want.length} file${want.length === 1 ? '' : 's'}${EXTRA.length ? ` at ${[DESKTOP, ...EXTRA].map(v => v.w).join(', ')} px` : ''}`);
     };
     /* An exam sat with Date.now skewed: item 3 takes 90 s, the others 4 s. The result has a pace line and per-question
@@ -1889,7 +1955,7 @@ const main = async () => {
     const drillReady = async (cpp) => {
       const wait = cpp ? 300000 : 90000;
       try { await page.waitForFunction(() => window.ZQDrill && ZQDrill.status() === 'ready', null, { timeout: Math.max(opt.timeout, wait) }); return null; }
-      catch { return `${cpp ? 'The C++ compiler' : 'Python'} did not become ready within ${wait / 1000} s`; }
+      catch { greenOff = true; return `${cpp ? 'The C++ compiler' : 'Python'} did not become ready within ${wait / 1000} s`; }
     };
     /* submit through the hook and wait until the run has finished; resolves to { ok, passed, total } */
     const drillSubmit = async () => {
@@ -2100,20 +2166,22 @@ const main = async () => {
       await page.evaluate(() => { location.hash = '#today'; });
       await page.waitForTimeout(300);
     };
-    const drillPhase = opt.drillIds.length || opt.drillsAll || opt.sessionRun;
+    const drillPhase = drillRun && (opt.planted ? drillSel.length : (drillSel.length || runSession));
     if (drillPhase && opt.planted) {
-      const ids = opt.drillsAll ? drillIdsAll() : opt.drillIds;
+      const ids = drillSel;
       for (const id of ids) if (!drillIdsAll().includes(id)) die(`--drill ${id}: no such file in content/drills`);
-      for (const id of ids) await plantedOne(id);
+      for (const id of ids) { await plantedOne(id); noteGreen('drill-planted', id); }
     } else if (drillPhase) {
-      const ids = opt.drillsAll ? drillIdsAll() : opt.drillIds;
+      const ids = drillSel;
       for (const id of ids) if (!drillIdsAll().includes(id)) die(`--drill ${id}: no such file in content/drills`);
       for (const v of ANY_EXTRA ? EXTRA : [DESKTOP]) {
         if (ANY_EXTRA) await setVp(v);
         for (const id of ids) await drillOne(id);
-        if (opt.sessionRun || opt.drillsAll) await sessionPlay();
+        if (runSession) await sessionPlay();
         await unskewClock();
       }
+      ids.forEach(id => noteGreen('drill', id));
+      if (runSession && !failures.some(f => /^session:/.test(f)) && !consoleErrors.some(e => e.where === '#drill/session')) noteGreen('session', 'sample-session');
       if (ANY_EXTRA) await setVp(DESKTOP, 200);
     }
     /* Engine samples ("sample": true) load by route but appear in no learner-facing list or count (ENGINE-BACKLOG 467, 468) */
@@ -2656,7 +2724,7 @@ const main = async () => {
     };
 
     /* Every other route once */
-    if (opt.bankIds.length) await bankPlay(opt.bankIds);
+    if (bankSel.length) await bankPlay(bankSel);
     /* ENGINE-BACKLOG 828: the weekly mixed review on Today. A fresh profile with six levels met (six courses): nothing is due on the first day; with the
        state clock moved eight days on, the card appears in Due, above the fluency practice rows; "Not today" keeps it due; the review is played right
        through (twenty items, at most four from one course), recorded, and the card clears; it is due again seven days after that. */
@@ -2764,6 +2832,7 @@ const main = async () => {
       fails.forEach(f => failures.push(`#weekly: ${f}`));
     };
     if (runRoutes) {
+      const routeF0 = failures.length, routeE0 = consoleErrors.length;
       /* the route checks (bank counts, samples hidden from You) assume a fresh profile; after played items (--all, shard 1) start one */
       if (played > 0) await freshSetup();
       const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^topic-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')) : [];
@@ -2818,10 +2887,12 @@ const main = async () => {
       await versionChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;
       if (paceExam) await paceExamChecks(paceExam);
+      if (failures.length === routeF0 && consoleErrors.length === routeE0) noteGreen('routes', 'routes');
     }
   } finally {
     await cleanup();
   }
+  flushGreens(true);
 
   /* Report */
   const byWhere = {};
