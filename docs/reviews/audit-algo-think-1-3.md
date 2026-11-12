@@ -85,4 +85,16 @@ Findings: 22 (wrong 3, imprecise 18, misleading 1); serious 2, minor 20. Two fur
 
 ## Overlap with the earlier read
 
-To be filled after the WIP commit.
+Read after WIP commit `67c114de`: `docs/reviews/review-1.8.md` (it covers algo-think, ds and graphs-dp; only its algo-think findings are counted) and `docs/reviews/voice-1.8-algo-think.txt` (sentence lengths only, nothing conceptual).
+
+The earlier read made 11 algo-think findings. Two are conceptual: `homework-3` `items[1]` option `b` ("each coin is at least double the one below" given as the rule that makes greedy safe; 1, 4, 9 refutes it) and `l3-memory` `screens[4]` (a 32-bit build "reports roughly half"; it is about 20 bytes against 32). Both were fixed in its fix pass, and this audit checked the fixed text and found it right (ledger rows `homework-3 i1` and `l3 s4.ex`). The other nine are not conceptual: tests that let a slower solution pass (three), a sentence that did not parse (one), explanations over three sentences (two), sentence length (one) and chart labels (two).
+
+| Conceptual findings | Count |
+|---|---|
+| Found by this audit only | 22 (wrong 3, imprecise 18, misleading 1) |
+| Found by the earlier review only | 2 (both already fixed) |
+| Found by both | 0 |
+
+New `wrong` findings that no earlier read found: **3** (findings 1, 2 and 3), over three levels. That is above the convergence limit of one per three levels, so the course needs another blind round after the fix pass.
+
+Note for the fixer: the earlier fix pass (its item 13) already quotes "about $3.4n$" for quickselect, which agrees with finding 17; the lesson text still says "about $2n$".
