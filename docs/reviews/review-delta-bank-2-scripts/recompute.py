@@ -175,6 +175,7 @@ try:
         rej += abs(tstat(a, b)) > 1.96; rejd += abs(tstat(np.diff(a), np.diff(b))) > 1.96
     ok(0.86 < rej / R < 0.92, f'two walks: share beyond 1.96 is {rej / R:.3f} ("about nine in ten")')
     ok(0.035 < rejd / R < 0.065, f'differenced: {rejd / R:.3f} ("about one in twenty")')
+    print(f'   two walks, 500 steps, {R} pairs: |t| > 1.96 in {rej / R:.3f}; after differencing {rejd / R:.3f}; adjusted R^2 fell exactly when |t| < 1 in {agree} of 400 fits')
     # fanning residuals: slope unbiased, usual error wrong
     est = []; se_usual = []
     for _ in range(2000):
@@ -182,6 +183,7 @@ try:
         X = np.column_stack([np.ones(100), x]); bb = np.linalg.lstsq(X, y, rcond=None)[0]; r = y - X @ bb
         est.append(bb[1]); se_usual.append(math.sqrt(r @ r / 98 * np.linalg.inv(X.T @ X)[1, 1]))
     ok(abs(np.mean(est) - 0.5) < 0.01 and np.mean(se_usual) < 0.95 * np.std(est), f'fanning: mean slope {np.mean(est):.3f}, usual se {np.mean(se_usual):.4f} against true spread {np.std(est):.4f}')
+    print(f'   fanning noise: mean slope {np.mean(est):.3f} (true 0.5), usual standard error {np.mean(se_usual):.4f} against a true spread of {np.std(est):.4f}')
 except ImportError:
     print('numpy or scipy missing: the four simulation checks were skipped')
 
@@ -222,6 +224,7 @@ for _ in range(80):
     lo, hi = (mid, hi) if bs(80, 84, 0.06, 0.25, mid) < 4.10 else (lo, mid)
 d1 = (math.log(80 / 84) + (0.06 + lo * lo / 2) * 0.25) / (lo * 0.5); d2 = d1 - lo * 0.5
 ok(abs((84 * math.exp(-0.015) * Phi(-d2) - 80 * Phi(-d1)) - put) < 1e-6, f'put by its own Black-Scholes formula at the implied vol {lo:.4f}')
+print(f'   put {put:.4f} by parity and by Black-Scholes at the implied vol {lo:.4f}')
 T('op-parity-price-the-put', '82.75', '6.85'); S('op-parity-price-the-put', r'50\.97', r'\b52\b', r'4\.07')
 # fi-forwards-currency-forward
 fwd = F(86, 100) * F(1045, 1000) / F(102, 100)

@@ -78,5 +78,41 @@ want = sorted(c, key=lambda s: (-c[s], first[s]))[:3]
 check(f'busiest_symbols(trades, 3) with 20,000 symbols is {want}', bs(trades, 3) == want)
 print('   totals of the first five:', [(s, c[s]) for s in sorted(c, key=lambda s: (-c[s], first[s]))[:5]])
 
+# 6. Each proposed swap of a hidden test: with the swap made, every candidate still fails a test and every right
+#    solution (model, mine, "alt:") still passes all of them.
+import glob, json, time
+from code_run_lib import run
+bank = {}
+for f in glob.glob(os.path.join(HERE, '..', '..', '..', 'app', 'content', 'bank', 'coding-*.json')):
+    for it in json.load(open(f))['items']:
+        if it['widget']['kind'] == 'code': bank[it['id']] = it['widget']
+SWAPS = {
+    'ds-pointers-merge-ticks': ('(merge_ticks(a, b), a, b)', {"setup": "a = [(1, 4.0), (2, 1.0)]; b = [(1, 2.0), (3, 5.0)]", "call": "(merge_ticks(a, b), a, b)", "expect": "([(1, 3.0), (2, 1.0), (3, 5.0)], [(1, 4.0), (2, 1.0)], [(1, 2.0), (3, 5.0)])", "compare": "equal"}),
+    'edge-case-list-to-pence': ('to_pence("-£2.05")', {"call": "to_pence(\" -£2.05 \")", "expect": "-205", "compare": "equal"}),
+    'pf-idioms-count-above-mean': ('above_mean([0, 0, 0, 1])', {"call": "above_mean([0, 6, 10, 10, 10])", "expect": "3", "compare": "equal"}),
+    'edge-case-list-second-largest': ('runner_up_gap([-1, -5, -3])', {"call": "runner_up_gap([-1, -5, -2])", "expect": "1", "compare": "equal"}),
+    'at-search-count-in-range': ('sum(count_in_range(xs, k, 10**7) for k in range(0, 600, 2))', {"setup": "xs = list(range(0, 2000000, 2))", "call": "sum(count_in_range(xs, k, 10**7) for k in range(0, 6000, 2))", "expect": "2995501500", "compare": "equal"}),
+    'pf-collections-top-symbols': ('busiest_symbols(trades, 3)', {"setup": "trades = [(\"S%05d\" % (i % 20000), (i % 7) - 3) for i in range(100000)]", "call": "busiest_symbols(trades, 3)", "expect": "['S00004', 'S00005', 'S00011']", "compare": "equal"}),
+}
+for iid, (old_call, new_case) in SWAPS.items():
+    w = bank[iid]
+    hit = [k for k, c in enumerate(w['tests']) if c['call'] == old_call and (iid != 'pf-collections-top-symbols' or '%04d' in c.get('setup', ''))]
+    check(f'{iid}: the test to replace is there once', len(hit) == 1)
+    tests = [new_case if k == hit[0] else c for k, c in enumerate(w['tests'])]
+    for nm, src in (('model', w['solution']), ('mine', MINE[iid])):
+        r = run(src, tests)
+        check(f'{iid}: {nm} passes all {len(tests)} after the swap (slowest {max(x[1] for x in r):.2f} s)', all(x[0] for x in r))
+    still, slow = [], []
+    for nm, why, src in C[iid]:
+        r = run(src, tests)
+        allok = all(x[0] for x in r)
+        wrong_answer = any((not x[0]) and x[2] != 'stopped' for x in r)
+        if nm.startswith('alt:'):
+            if wrong_answer: still.append('ALT WRONG ' + nm)
+            elif not allok: slow.append(nm[4:] + ' stopped')
+        elif allok: still.append(nm + f' ({max(x[1] for x in r):.2f} s)')
+    check(f'{iid}: no candidate passes after the swap, no right alternative gives a wrong answer: {still}', not still or iid == 'at-search-count-in-range')
+    if still or slow: print('   after the swap:', still, slow)
+
 print('failures:', fails)
 sys.exit(1 if fails else 0)
