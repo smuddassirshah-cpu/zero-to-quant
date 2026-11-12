@@ -285,64 +285,62 @@ ok(r2S > 0.9, "gas: temperature explains hub S well too (explain of part 5)")
 bands(it, 1); bands(it, 5, extra_ok=(0.333, 0.3333), extra_no=(0.33, 0.334))
 stale(it, [r"\(1, -2\)", r"0\.5, -1\.5\)", r"\(0\.5, -0\.5\)", r"= 15\b", r"-5/3", r"-4/3", r"1\.5, -3\.5"])
 
-# ------------------------------------------------------------------ strain gauges (eigen/problems-2 p-river-gauges)
+# ------------------------------------------------------------------ strain gauges (eigen/problems-2 p-river-gauges), re-keyed in the AC-1 fix pass
 it = item("p-river-gauges")
 c = sp.symbols("c")
-K = sp.Matrix([[4, 2, 1], [2, 3, 1], [1, 1, c]])
-ok(r"4 & 2 & 1 \\ 2 & 3 & 1 \\ 1 & 1 & c" in it["prose"] and "c = 0.5" in it["prose"], "gauges prose prints K and c")
+R_ = sp.Rational
+K = sp.Matrix([[8, 4, 4], [4, 7, 3], [4, 3, c]])
+ok(r"8 & 4 & 4 \\ 4 & 7 & 3 \\ 4 & 3 & c" in it["prose"] and "c = 2.5" in it["prose"], "gauges prose prints K and c")
+ok("z_A" in it["prose"] and "z_B" in it["prose"] and "z_C" in it["prose"], "gauges prose defines z_A, z_B, z_C")
 E = K.copy()
-E[1, :] = E[1, :] - sp.Rational(1, 2) * E[0, :]
-piv2 = E[1, 1]
-key_num(it, 1, piv2)
-ok(K[:2, :2].det() / 4 == 2, "gauges second pivot by the corner determinant")
-wrong(it, 1, "multiplier-one", 3 - 1 * 2); wrong(it, 1, "multiplier-two", 3 - 2 * 2)
-ok(list(E[1, :]) == [0, 2, sp.Rational(1, 2)], "gauges row 2 after step 1")
-E[2, :] = E[2, :] - sp.Rational(1, 4) * E[0, :]
-ok(list(E[2, :]) == [0, sp.Rational(1, 2), c - sp.Rational(1, 4)], "gauges row 3 after step 1")
+E[1, :] = E[1, :] - R_(1, 2) * E[0, :]
+key_num(it, 1, E[1, 1])
+ok(K[:2, :2].det() / 8 == 5, "gauges second pivot by the corner determinant")
+wrong(it, 1, "multiplier-one", 7 - 1 * 4); wrong(it, 1, "multiplier-two", 7 - 4 * 4)
+ok(list(E[1, :]) == [0, 5, 1], "gauges row 2 after step 1")
+E[2, :] = E[2, :] - R_(1, 2) * E[0, :]
+ok(list(E[2, :]) == [0, 1, c - 2], "gauges row 3 after step 1")
 E[2, :] = E[2, :] - (E[2, 1] / E[1, 1]) * E[1, :]
 d = sp.simplify(c - E[2, 2])
 key_num(it, 2, d)
-ok(sp.simplify(K.det() - (8 * c - 3)) == 0 and sp.simplify(K.det() / K[:2, :2].det() - (c - sp.Rational(3, 8))) == 0, "gauges det 8c - 3; third pivot c - 3/8")
-for cv in (0.3, 0.375, 0.5):
+ok(sp.simplify(K.det() - (40 * c - 88)) == 0 and sp.simplify(K.det() / K[:2, :2].det() - (c - R_(11, 5))) == 0, "gauges det 40c - 88; third pivot c - 11/5")
+for cv in (2.0, 2.2, 2.5):
     ev = np.linalg.eigvalsh(np.array(K.subs(c, cv), float)).min()
-    ok((ev > 1e-12) == (cv > 0.375), f"gauges positive definite at c = {cv}: {cv > 0.375} (eigvalsh)")
-wrong(it, 2, "one-step", sp.Rational(1, 4))
-wrong(it, 2, "big-multiplier", sp.Rational(1, 4) + sp.Rational(1, 2) * sp.Rational(1, 2))
-wrong(it, 2, "added", sp.Rational(1, 4) - sp.Rational(1, 8))
-K0 = K.subs(c, sp.Rational(3, 8))
+    ok((ev > 1e-12) == (cv > 2.2), f"gauges positive definite at c = {cv}: {cv > 2.2} (eigvalsh)")
+wrong(it, 2, "one-step", 2); wrong(it, 2, "big-multiplier", 2 + 1 * 1); wrong(it, 2, "added", 2 - R_(1, 5))
+K0 = K.subs(c, R_(11, 5))
 ns = K0.nullspace()[0]; ns = ns / ns[2]
 key_vec(it, 3, tuple(F(int(x.p), int(x.q)) for x in ns))
-ok(list(ns) == [sp.Rational(-1, 8), sp.Rational(-1, 4), 1], "gauges null vector exact")
+ok(list(ns) == [R_(-2, 5), R_(-1, 5), 1], "gauges null vector exact")
 vt = np.linalg.svd(np.array(K0, float))[2][-1]
-ok(np.allclose(vt / vt[2], [-0.125, -0.25, 1]), "gauges null vector by SVD")
-wrong(it, 3, "sign", (F(1, 8), F(1, 4), 1)); wrong(it, 3, "swapped", (F(-1, 4), F(-1, 8), 1))
-wrong(it, 3, "no-b", (F(-1, 4), F(-1, 4), 1))           # 4a + 1 = 0 with 2b left out
-w = sp.Matrix([sp.Rational(-1, 8), sp.Rational(-1, 4), 1])
-K5 = K.subs(c, sp.Rational(1, 2))
-ok(list(K5 * w) == [0, 0, sp.Rational(1, 8)], "gauges Kw at c = 0.5")
+ok(np.allclose(vt / vt[2], [-0.4, -0.2, 1]), "gauges null vector by SVD")
+wrong(it, 3, "sign", (F(2, 5), F(1, 5), 1)); wrong(it, 3, "swapped", (F(-1, 5), F(-2, 5), 1))
+wrong(it, 3, "no-b", (F(-1, 2), F(-1, 5), 1))           # 8a + 4 = 0 with 4b left out
+w = sp.Matrix([R_(-2, 5), R_(-1, 5), 1])
+K5 = K.subs(c, R_(5, 2))
+ok(list(K5 * w) == [0, 0, R_(3, 10)], "gauges Kw at c = 2.5")
 q = (w.T * K5 * w)[0]
 key_num(it, 4, q)
-Kn = np.array(K5, float); wn = np.array([-0.125, -0.25, 1])
-ok(close(wn @ Kn @ wn, 0.125), "gauges w^T K w by NumPy")
-ws = sp.Matrix([sp.Rational(1, 8), sp.Rational(1, 4), 1])
-wrong(it, 4, "sign", (ws.T * K5 * ws)[0]); wrong(it, 4, "c-only", sp.Rational(1, 2)); wrong(it, 4, "boundary", sp.Rational(3, 8))
-# "removes what A and B predict of C": the population regression of C on A and B
+Kn = np.array(K5, float); wn = np.array([-0.4, -0.2, 1])
+ok(close(wn @ Kn @ wn, 0.3), "gauges w^T K w by NumPy")
+ws = sp.Matrix([R_(2, 5), R_(1, 5), 1])
+wrong(it, 4, "sign", (ws.T * K5 * ws)[0]); wrong(it, 4, "c-only", R_(5, 2)); wrong(it, 4, "boundary", R_(11, 5))
 beta = np.linalg.solve(Kn[:2, :2], Kn[:2, 2])
-ok(np.allclose(beta, [0.125, 0.25]), "gauges regression of C on A and B has slopes (0.125, 0.25)")
+ok(np.allclose(beta, [0.4, 0.2]), "gauges regression of C on A and B has slopes (0.4, 0.2)")
 resid_var = Kn[2, 2] - Kn[:2, 2] @ beta
-ok(close(resid_var, 0.125), "gauges residual variance 0.125")
-key_num(it, 5, 1 - q / sp.Rational(1, 2))
-ok(close(1 - resid_var / Kn[2, 2], 0.75), "gauges R^2 by the regression")
+ok(close(resid_var, 0.3), "gauges residual variance 0.3")
+key_num(it, 5, 1 - q / R_(5, 2))
+ok(close(1 - resid_var / Kn[2, 2], 0.88), "gauges R^2 by the regression")
 rng = np.random.default_rng(7)
 Z = rng.multivariate_normal(np.zeros(3), Kn, size=400_000)
 bh = np.linalg.lstsq(Z[:, :2], Z[:, 2], rcond=None)[0]
 r2 = 1 - np.var(Z[:, 2] - Z[:, :2] @ bh) / np.var(Z[:, 2])
-ok(abs(r2 - 0.75) < 0.01 and np.abs(bh - [0.125, 0.25]).max() < 0.01, f"gauges R^2 by simulation ({r2:.4f})")
-wrong(it, 5, "unexplained", sp.Rational(1, 4)); wrong(it, 5, "not-scaled", 1 - sp.Rational(1, 8))
+ok(abs(r2 - 0.88) < 0.01 and np.abs(bh - [0.4, 0.2]).max() < 0.01, f"gauges R^2 by simulation ({r2:.4f})")
+wrong(it, 5, "unexplained", R_(3, 25)); wrong(it, 5, "not-scaled", 1 - R_(3, 10))
 for n in (1, 2, 4, 5):
     bands(it, n)
-says(it, 2, "explain", "8c - 3"); says(it, 5, "explain", "0.375/c")
-stale(it, [r"river", r"correlation", r"standardis", r"0\.28", r"1\.28", r"0\.72"])
+says(it, 2, "explain", "40c - 88"); says(it, 5, "explain", "2.2/c")
+stale(it, [r"river", r"correlation", r"standardis", r"0\.375", r"0\.125", r"8c - 3", r"1\.625", r"c = 0\.5"])
 
 # ------------------------------------------------------------------ tank part 5 (eigen/problems-2)
 it = item("p-tank-thermometers")
