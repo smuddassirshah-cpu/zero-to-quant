@@ -60,23 +60,23 @@ flow = same(1 - both, F(beds - int(pot) - bean, beds), 'garden flowers')
 rose = same(F(1, 2) * flow, F((beds - int(pot) - bean), 2 * beds), 'garden roses')
 ok(rose * beds == F(7, 2), 'garden: roses are three and a half beds')
 E[1, 'p-garden-beds'] = [
-    (pot, {'one-fifth': F(beds, 5), 'flipped': beds * F(5, 2)}),
+    (bean, {'flipped': beds * 4, 'three-quarters': F(3, 4) * beds}),
     (both, {'tops-bottoms': F(2 + 1, 5 + 4), 'tops-kept': F(2 + 1, 20)}),
     (flow, {'carried': 1 - F(3, 9), 'beds': beds - pot - bean}),
     (rose, {'doubled': 2 * flow, 'added-half': F(1, 2) + flow, 'carried': F(1, 2) * (1 - F(3, 9))}),
 ]
 
-# p-rye-loaves: 5/6 kg, 1/4 kg a loaf. Route 2 in units of 1/24 kg: 20 units of flour, 6 a loaf.
-fl, lf = F(5, 6), F(1, 4)
-n1 = same(fl / lf, F(20, 6), 'rye quotient')
-whole = same(math.floor(n1), 20 // 6, 'rye whole loaves')
-left = same(fl - whole * lf, F(20 % 6, 24), 'rye left')
-share = same(left / fl, F(20 % 6, 20), 'rye share')
-ok(n1 == 3 + F(1, 3) and F(1, 3) * lf == left, 'rye: 3 1/3, and a third of a loaf is 1/12 kg')
+# p-rye-loaves: 5/6 kg, 1/5 kg a loaf. Route 2 in units of 1/30 kg: 25 units of flour, 6 a loaf.
+fl, lf = F(5, 6), F(1, 5)
+n1 = same(fl / lf, F(25, 6), 'rye quotient')
+whole = same(math.floor(n1), 25 // 6, 'rye whole loaves')
+left = same(fl - whole * lf, F(25 % 6, 30), 'rye left')
+share = same(left / fl, F(25 % 6, 25), 'rye share')
+ok(n1 == 4 + F(1, 6) and F(1, 6) * lf == left == F(1, 30) and share == F(1, 25), 'rye: 4 1/6, a sixth of a fifth kg is 1/30 kg, share 1/25')
 E[1, 'p-rye-loaves'] = [
     (n1, {'multiplied': fl * lf, 'wrong-flip': F(6, 5) * lf}),
     (whole, {'rounded-up': math.ceil(n1), 'carried': math.floor(fl * lf)}),
-    (left, {'one-loaf': fl - lf, 'tops-bottoms': F(5 - 3, 6 - 4), 'loaf-third': n1 - whole}),
+    (left, {'one-loaf': fl - lf, 'tops-bottoms': F(5 - 4, 6 - 5), 'loaf-sixth': n1 - whole}),
     (share, {'multiplied': left * fl, 'flipped': fl / left, 'carried': (fl - lf) / fl}),
 ]
 
@@ -91,8 +91,8 @@ ok(F(4, 11) < a and rest < F(1, 3) and hrs * 60 == 46 + F(2, 3) and mins == 106 
 E[1, 'p-two-printers'] = [
     (h1, {'tops-bottoms': F(3 + 1, 8 + 3), 'multiplied': a * b}),
     (rest, {'carried': 1 - F(4, 11), 'count': 7}),
-    (hrs, {'multiplied': rest * a, 'flipped': a / rest, 'printer-b': rest / b}),
-    (mins, {'rest-only': hrs * 60, 'hundred': 100 + hrs * 100, 'carried-flipped': 60 + (a / rest) * 60}),
+    (hrs, {'multiplied': rest * a, 'flipped': a / rest, 'printer-b': rest / b, 'minutes': hrs * 60}),
+    (mins, {'rest-only': hrs * 60, 'hundred': 100 + hrs * 100, 'carried-flipped': 60 + (a / rest) * 60, 'hours': 1 + hrs}),
 ]
 
 # p-squash-jugs: two jugs of 3/4 litre; cordial 4/9 of A, 5/12 of B. Route 2: units of 1/144 litre (jug 108).
@@ -106,7 +106,7 @@ ok(cb == F(5, 16) and 2 * jug == F(3, 2) and sb * 36 == 15 and sa > sb and sb < 
    and ca < sa and ca < jug and F(6, 19) < ca and sa < F(1, 2) and sb < F(1, 2),
    'squash: 5/16, 3/2, 15/36, A stronger, bowl between, 1/3 below both, 6/19 below 1/3, both under a half')
 E[1, 'p-squash-jugs'] = [
-    (top, {'top-kept': 4, 'added': 4 + (36 - 9)}),
+    (top, {'top-kept': 4, 'added': 4 + (36 - 9), 'whole-fraction': sa}),
     ('choice', 'a'),
     (ca, {'added': sa + jug, 'divided': sa / jug}),
     (tot, {'tops-bottoms': F(1 + 5, 3 + 16), 'carried': (sa + jug) + cb}),
@@ -148,7 +148,7 @@ ok(F(28, 100) > F(5, 18) and abs(float(F(28, 100) - F(5, 18)) - 0.002) < 0.0005,
 E[2, 'p-golf-card'] = [
     (r1, {'sign': -r1, 'eagle-one': 4 * -1 - 1 + 3 + 2, 'no-signs': sum(abs(h) for h in holes)}),
     (mean, {'sign': -mean, 'plus-as-minus': F(r1 - 2 - 6 - 3, 4), 'total': sum(rounds)}),
-    (dec, {'truncated': dp(F(5, 18), 3, ROUND_DOWN), 'flipped': F(18, 5)}),
+    (dec, {'truncated': dp(F(5, 18), 3, ROUND_DOWN), 'flipped': F(18, 5), 'unrounded': F(5, 18)}),
     ('choice', 'rival'),
 ]
 
@@ -162,19 +162,19 @@ ok(divmod(17, 6) == (2, 5) and divmod(50, 6) == (8, 2) and divmod(20, 6) == (3, 
    and 5 * 283 == 1415, 'taxi: 2 r 5, then 8 r 2, then 3 r 2; 1,698 pence; £14.15')
 E[2, 'p-taxi-split'] = [
     (s4, {'flipped': dp(F(6, 17), 4), 'remainder': 2.5}),
-    (pen, {'rounded-up': 2.84, 'one-dp': dp(each, 1)}),
+    (pen, {'rounded-up': 2.84, 'one-dp': dp(each, 1), 'unrounded': 2.8333, 'pence': 283}),
     (short, {'sign': -short, 'pounds': short / 100, 'carried-up': 6 * 284 - 1700}),
-    (sixth, {'same': 2.83, 'wrong-way': 2.83 - 0.02, 'shortfall': 0.02}),
+    (sixth, {'same': 2.83, 'wrong-way': 2.83 - 0.02, 'shortfall': 0.02, 'pence': 285}),
 ]
 
 # ---------------------------------------------------------------- set 3
 # p-cube-tub. Route 2: loops.
-N = 1500
+N = 2169
 edge = same(max(n for n in range(1, 50) if n ** 3 <= N), math.floor(N ** (1 / 3) + 1e-9), 'cube edge')
 over = same(N - edge ** 3, N - edge * edge * edge, 'cube left over')
 side = same(math.isqrt(int(over)), over ** 0.5, 'cube square side')
-ok(11 ** 3 == 1331 and 12 ** 3 == 1728 and 11 * 11 == 121 and 121 * 11 == 1331 and side ** 2 == over
-   and 12 ** 2 == 144 and 14 ** 2 == 196, 'cube: 1,331, 1,728, 121, 13 squared is 169, 144 and 196')
+ok(12 ** 3 == 1728 and 13 ** 3 == 2197 and 12 * 12 == 144 and 144 * 12 == 1728 and side ** 2 == over == 441
+   and 20 ** 2 == 400 and 22 ** 2 == 484, 'cube: 1,728, 2,197, 144, 21 squared is 441, 400 and 484')
 E[3, 'p-cube-tub'] = [
     (edge, {'rounded-up': edge + 1, 'square-root': math.sqrt(N), 'thirds': N / 3}),
     (over, {'squared': N - edge ** 2, 'carried-up': N - (edge + 1) ** 3, 'times-three': N - edge * 3}),
@@ -206,7 +206,7 @@ ok(year == 8760 and F(12, 10) / 4 == F(3, 10) and 30000 / 8760 > 30000 / 9000 an
 E[3, 'p-comet-probe'] = [
     (hrs_j, {'kept-point': 3 * 10 ** 5, 'added-indices': F(3, 10) * 10 ** 13, 'short': 3 * 10 ** 3}),
     (y1, {'truncated': 8000, 'two-sf': 8800}),
-    (est_y, {'inverted': 9000 / 30000, 'carried': sig1(30000 / 8000)}),
+    (est_y, {'inverted': 9000 / 30000, 'carried': sig1(30000 / 8000), 'unrounded': 30000 / 9000}),
     (yrs, {'nine-thousand': dp(F(30000, 9000), 1), 'carried': dp(F(300000, 8760), 1), 'days': 30000 / 24}),
 ]
 
@@ -261,6 +261,17 @@ for n in (1, 2, 3):
                 ok(hi1 < lo2, f'{at}: wrong bands {i1} and {i2} overlap')
         ok(typed * 3 >= total * 2, f'{it["id"]}: typed parts at least two thirds')
 
+UNITS = {1: {'p-garden-beds': ['beds', None, None, None], 'p-rye-loaves': [None, 'loaves', 'kg', None],
+             'p-two-printers': [None, None, 'hours', 'minutes'], 'p-squash-jugs': [None, None, 'litres', 'litres', None]},
+         2: {'p-moor-weather': ['\u00b0C', 'degrees', 'degrees', '\u00b0C'], 'p-golf-card': [None] * 4, 'p-taxi-split': ['\u00a3', '\u00a3', 'p', '\u00a3']},
+         3: {'p-cube-tub': ['cubes'] * 3, 'p-stationery-bill': ['\u00a3'] * 4, 'p-comet-probe': ['hours', 'hours', 'years', 'years']}}
+for n in (1, 2, 3):
+    for it in json.load(open(f'{BASE}problems-{n}.json'))['items']:
+        for k, (u, p) in enumerate(zip(UNITS[n][it['id']], it['parts']), 1):
+            ok(p['widget'].get('unit') == u, f'problems-{n} {it["id"]} part {k}: unit {p["widget"].get("unit")!r} against {u!r}')
+d2 = json.load(open(f'{BASE}problems-2.json'))
+ok(d2['items'][1]['parts'][2]['widget']['tol']['abs'] == 0.0001 and d2['items'][2]['parts'][1]['widget']['tol']['abs'] == 0.0005,
+   'rounding parts: tol 0.0001 on golf 3 and 0.0005 on taxi 2, so the unrounded value is refused')
 ok(nparts == 40, f'40 parts read, found {nparts}')
 print(f'mine.py: {checks} checks, {fails} failures; {nparts} parts, {nwrong} wrong values')
 sys.exit(1 if fails else 0)

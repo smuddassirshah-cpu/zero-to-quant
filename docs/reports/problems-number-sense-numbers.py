@@ -301,7 +301,10 @@ def level1(L):
     beds = list(range(20))
     pot = F(2, 5) * 20
     pot_list = [b for b in beds if b % 5 < 2]                   # 2 beds in every 5
-    exact_part(L, 'p-garden-beds', 1, pot, len(pot_list), {'one-fifth': F(20, 5), 'flipped': 20 * F(5, 2)})
+    bean_list = [b for b in beds if b % 4 == 0]                 # 1 bed in every 4
+    exact_part(L, 'p-garden-beds', 1, F(1, 4) * 20, len(bean_list), {'flipped': 20 * 4, 'three-quarters': F(3, 4) * 20})
+    ok(L['p-garden-beds']['parts'][0]['question'] == 'How many beds are beans?', 'garden p1: asks for the beans (review finding 1; l1 quiz 4 asks 2/5 of 20)')
+    ok(pot == 8 and len(pot_list) == 8, 'garden: potatoes 8 beds, used in part 2 and 3')
     both = F(2, 5) + F(1, 4)
     beans = 20 // 4
     frac_part(L, 'p-garden-beds', 2, both, F(len(pot_list) + beans, 20), {'tops-bottoms': F(3, 9), 'tops-kept': F(3, 20)})
@@ -313,20 +316,26 @@ def level1(L):
     stated('garden: beans beds', 5, beans)
     stated('garden: 8 + 5', 13, both * 20)
 
-    # ---- rye loaves: 5/6 kg, 1/4 kg a loaf
-    flour, loaf = F(5, 6), F(1, 4)
+    # ---- rye loaves: 5/6 kg, 1/5 kg a loaf (review finding 2: was 1/4, shared with homework-1 item 3)
+    flour, loaf = F(5, 6), F(1, 5)
     fits = flour / loaf
-    # count quarters of 1/24 kg: 5/6 = 20/24 and 1/4 = 6/24
-    frac_part(L, 'p-rye-loaves', 1, fits, F(20, 6), {'multiplied': flour * loaf, 'wrong-flip': F(6, 5) * loaf})
-    ok(fits == 3 + F(1, 3), 'rye: 3 1/3')
+    # count fifths in thirtieths of a kilogram: 5/6 = 25/30 and 1/5 = 6/30
+    frac_part(L, 'p-rye-loaves', 1, fits, F(25, 6), {'multiplied': flour * loaf, 'wrong-flip': F(6, 5) * loaf})
+    ok(fits == 4 + F(1, 6), 'rye: 4 1/6')
     whole = int(fits)
     exact_part(L, 'p-rye-loaves', 2, whole, max(k for k in range(10) if k * loaf <= flour), {'rounded-up': whole + 1, 'carried': int(flour * loaf)})
     left = flour - whole * loaf
-    frac_part(L, 'p-rye-loaves', 3, left, F(20 - 18, 24), {'one-loaf': flour - loaf, 'tops-bottoms': F(5 - 3, 6 - 4), 'loaf-third': fits - whole})
-    ok((fits - whole) * loaf == left, 'rye: a third of a quarter kg is 1/12 kg')
+    frac_part(L, 'p-rye-loaves', 3, left, F(25 - 24, 30), {'one-loaf': flour - loaf, 'tops-bottoms': F(5 - 4, 6 - 5), 'loaf-sixth': fits - whole})
+    ok((fits - whole) * loaf == left == F(1, 30), 'rye: a sixth of a fifth kg is 1/30 kg')
     share = left / flour
-    frac_part(L, 'p-rye-loaves', 4, share, F(2, 20), {'multiplied': left * flour, 'flipped': flour / left, 'carried': (flour - loaf) / flour})
-    stated('rye: 3 loaves use', 0.75, whole * loaf)
+    frac_part(L, 'p-rye-loaves', 4, share, F(6, 150), {'multiplied': left * flour, 'flipped': flour / left, 'carried': (flour - loaf) / flour})
+    ok(share == F(1, 25) and (flour - loaf) / flour == F(19, 30) * F(6, 5) == F('0.76'), 'rye: 1/25 and the carried 0.76')
+    stated('rye: 4 loaves use', 0.8, whole * loaf)
+    stated('rye: 24/30 and 25/30', F(1, 30), F(25, 30) - F(24, 30))
+    pr = L['p-rye-loaves']
+    ok('tfrac{1}{4}' not in json.dumps(pr), 'rye: no quarter-kilogram text is left')
+    ok('tfrac{1}{6}' in pr['parts'][1]['feedback']['byKey']['carried'] and 'part 1 answer below 1' in pr['parts'][1]['feedback']['byKey']['carried'],
+       'rye p2: carried line names a part 1 answer below 1 (finding 7)')
 
     # ---- two printers: A 3/8 an hour, B 1/3 an hour
     a, b = F(3, 8), F(1, 3)
@@ -341,15 +350,16 @@ def level1(L):
     while done < rest:
         done += a / 9
         steps += 1
-    frac_part(L, 'p-two-printers', 3, t, F(steps, 9), {'multiplied': rest * a, 'flipped': a / rest, 'printer-b': rest / b})
+    frac_part(L, 'p-two-printers', 3, t, F(steps, 9), {'multiplied': rest * a, 'flipped': a / rest, 'printer-b': rest / b, 'minutes': t * 60})
     total = 60 + t * 60
-    frac_part(L, 'p-two-printers', 4, total, 60 + F(7 * 60, 9), {'rest-only': t * 60, 'hundred': 100 + t * 100, 'carried-flipped': 60 + (a / rest) * 60})
+    frac_part(L, 'p-two-printers', 4, total, 60 + F(7 * 60, 9), {'rest-only': t * 60, 'hundred': 100 + t * 100, 'carried-flipped': 60 + (a / rest) * 60, 'hours': 1 + t})
     ok(total == 106 + F(2, 3) and t * 60 == 46 + F(2, 3), 'printers: 46 2/3 and 106 2/3 minutes')
     stated('printers: 420/9', F(420, 9), t * 60)
 
     # ---- squash jugs: 3/4 litre each, A 4/9, B 5/12
     jug, sa, sb = F(3, 4), F(4, 9), F(5, 12)
-    exact_part(L, 'p-squash-jugs', 1, sa * 36, 36 // 9 * 4, {'top-kept': 4, 'added': 4 + 27}, printed=False)
+    exact_part(L, 'p-squash-jugs', 1, sa * 36, 36 // 9 * 4, {'top-kept': 4, 'added': 4 + 27, 'whole-fraction': sa}, printed=False)
+    ok('rename jug B' in L['p-squash-jugs']['parts'][1]['question'] and 'is full' in L['p-squash-jugs']['prose'], 'squash: part 2 asks for the renaming; jugs are full (findings 3, 6)')
     ok(sb * 36 == 15 and sa > sb, 'squash: 16/36 against 15/36, A stronger')
     keyed(L, 'p-squash-jugs', 2, 'a')
     ca = sa * jug
@@ -389,14 +399,18 @@ def level2(L):
     exact_part(L, 'p-golf-card', 1, tot, sum(card), {'sign': -tot, 'eagle-one': -4 - 1 + 3 + 2, 'no-signs': sum(abs(x) for x in card)})
     rounds = [tot, 2, -6, -3]
     mean = F(sum(rounds), 4)
+    ok('mean' not in json.dumps(L['p-golf-card']['parts'][1]) and 'average' in L['p-golf-card']['parts'][1]['question'], 'golf p2: says average, not mean (finding 9)')
     exact_part(L, 'p-golf-card', 2, mean, sp.Rational(-1 + 2 - 6 - 3, 4), {'sign': -mean, 'plus-as-minus': F(-1 - 2 - 6 - 3, 4), 'total': sum(rounds)})
     under = sum(1 for x in card if x < 0)
     ok(under == 5, 'golf: under par on 5 holes')
     d = F(5, 18)
     ok(round(float(d), 3) == 0.278 and str(float(d)).startswith('0.2777'), 'golf: 0.2777... to 0.278')
-    exact_part(L, 'p-golf-card', 3, F('0.278'), round(5 / 18, 3), {'truncated': F(int(d * 1000), 1000), 'flipped': F(18, 5)})
+    exact_part(L, 'p-golf-card', 3, F('0.278'), round(5 / 18, 3), {'truncated': F(int(d * 1000), 1000), 'flipped': F(18, 5), 'unrounded': d})
     w3 = L['p-golf-card']['parts'][2]['widget']
-    ok(abs(float(d) - w3['answer']) <= w3['tol']['abs'] and abs(0.277 - w3['answer']) > w3['tol']['abs'], 'golf p3: 0.2777... accepted, 0.277 not')
+    ok(w3['tol']['abs'] == 0.0001, 'golf p3: tol 0.0001 (finding 10)')
+    for typed in (5 / 18, 0.27778, 0.2778, 0.277):
+        ok(abs(typed - w3['answer']) > w3['tol']['abs'], f'golf p3: {typed} must not be accepted')
+    ok(abs(0.278 - w3['answer']) <= w3['tol']['abs'], 'golf p3: 0.278 accepted')
     keyed(L, 'p-golf-card', 4, 'rival')
     ok(F(28, 100) > d and float(F(28, 100) - d) < 0.0023, 'golf p4: 0.28 beats 0.2777... by about 0.002')
 
@@ -405,29 +419,34 @@ def level2(L):
     exact_part(L, 'p-taxi-split', 1, F('2.8333'), round(17 / 6, 4), {'flipped': F('0.3529'), 'remainder': F('2.5')})
     ok(abs(float(share) - 2.8333) <= 0.0001 and round(6 / 17, 4) == 0.3529, 'taxi: 17/6 and 6/17 to 4 places')
     pen = F(round(float(share) * 100), 100)
-    exact_part(L, 'p-taxi-split', 2, pen, round(2.8333, 2), {'rounded-up': F('2.84'), 'one-dp': F('2.8')})
+    exact_part(L, 'p-taxi-split', 2, pen, round(2.8333, 2), {'rounded-up': F('2.84'), 'one-dp': F('2.8'), 'unrounded': F('2.8333'), 'pence': 283})
+    w2 = L['p-taxi-split']['parts'][1]['widget']
+    ok(w2['tol']['abs'] == 0.0005 and abs(2.8333 - w2['answer']) > w2['tol']['abs'] and abs(float(share) - w2['answer']) > w2['tol']['abs'], 'taxi p2: tol 0.0005, 2.8333 and 17/6 not accepted (finding 10)')
     diff = 6 * 283 - 1700
     exact_part(L, 'p-taxi-split', 3, diff, sum([283] * 6) - 1700, {'sign': -diff, 'pounds': F(diff, 100), 'carried-up': 6 * 284 - 1700})
     last = 17 - 5 * pen
-    exact_part(L, 'p-taxi-split', 4, last, pen - F(diff, 100), {'same': pen, 'wrong-way': pen + F(diff, 100), 'shortfall': F(-diff, 100)})
+    exact_part(L, 'p-taxi-split', 4, last, pen - F(diff, 100), {'same': pen, 'wrong-way': pen + F(diff, 100), 'shortfall': F(-diff, 100), 'pence': 285})
     stated('taxi: five pay', 14.15, 5 * pen)
     stated('taxi: 1,698', 1698, 6 * 283)
 
 
 # ================================================================== level 3
 def level3(L):
-    # ---- cube tub
-    n = 1500
+    # ---- cube tub (review finding 15: was 1,500, the number of homework-3 item 3)
+    n = 2169
     edge = sp.integer_nthroot(n, 3)[0]
     exact_part(L, 'p-cube-tub', 1, edge, max(k for k in range(1, 50) if k ** 3 <= n),
                {'rounded-up': edge + 1, 'square-root': sp.integer_nthroot(n, 2)[0], 'thirds': n // 3})
-    ok(11 ** 3 == 1331 and 12 ** 3 == 1728 and 38 ** 2 <= n < 39 ** 2, 'cube: 1,331 and 1,728; root 1,500 is 38.7')
+    ok(12 ** 3 == 1728 and 13 ** 3 == 2197 and 46 ** 2 <= n < 47 ** 2, 'cube: 1,728 and 2,197; root 2,169 is 46.57')
     left = n - edge ** 3
-    exact_part(L, 'p-cube-tub', 2, left, n - 11 * 11 * 11, {'squared': n - 11 ** 2, 'carried-up': n - 12 ** 3, 'times-three': n - 33})
+    exact_part(L, 'p-cube-tub', 2, left, n - 12 * 12 * 12, {'squared': n - 12 ** 2, 'carried-up': n - 13 ** 3, 'times-three': n - 12 * 3})
     side = sp.integer_nthroot(left, 2)
-    ok(side[1], 'cube: 169 is a perfect square')
+    ok(side[1], 'cube: 441 is a perfect square')
     exact_part(L, 'p-cube-tub', 3, side[0], next(k for k in range(1, 100) if k * k == left), {'halved': F(left, 2), 'quartered': F(left, 4)}, printed=False)
-    ok(12 ** 2 == 144 and 14 ** 2 == 196, 'cube: 144 and 196 either side')
+    ok(20 ** 2 == 400 and 22 ** 2 == 484 and 12 ** 2 == 144 and 12 * 3 == 36, 'cube: 400 and 484 either side, 144, 36')
+    ok(left == 441 and edge == 12 and side[0] == 21, 'cube: 12, 441, 21')
+    ct = L['p-cube-tub']
+    ok('2,169' in ct['prose'] and 'Asha' in ct['prose'] and '1,500' not in json.dumps(ct), 'cube: 2,169 cubes, Asha named, no 1,500 left (findings 13, 15)')
 
     # ---- stationery bill
     est = 40 * 5 + 20
@@ -436,6 +455,7 @@ def level3(L):
     bill = 38 * F('4.85') + F('19.50')
     exact_part(L, 'p-stationery-bill', 2, bill, sum([4.85] * 38) + 19.5, {'bracket': 38 * (F('4.85') + F('19.50')), 'boxes-only': 38 * F('4.85')})
     calc = 38 * F('4.85') + F('19.50') / 3
+    ok('follows the order of operations' in L['p-stationery-bill']['parts'][2]['question'], 'bill p3: the calculator follows the order of operations (finding 12)')
     exact_part(L, 'p-stationery-bill', 3, calc, 184.3 + 6.5, {'intended': F('67.93'), 'delivery-share': F('19.50') / 3})
     sh = bill / 3
     exact_part(L, 'p-stationery-bill', 4, F('67.93'), round(203.8 / 3, 2),
@@ -452,7 +472,7 @@ def level3(L):
     exact_part(L, 'p-comet-probe', 2, r1, round(yr, -3), {'truncated': 8000, 'two-sf': 8800}, printed=False)
     ok(yr == 8760, 'comet: 8,760 hours')
     est = hours / r1
-    exact_part(L, 'p-comet-probe', 3, int(float(f'{float(est):.1g}')), round(30000 / 9000), {'inverted': F(3, 10), 'carried': int(float(f'{30000 / 8000:.1g}'))})
+    exact_part(L, 'p-comet-probe', 3, int(float(f'{float(est):.1g}')), round(30000 / 9000), {'inverted': F(3, 10), 'carried': int(float(f'{30000 / 8000:.1g}')), 'unrounded': F(10, 3)})
     ok(30000 / 8000 == 3.75, 'comet: 3.75 rounds to 4')
     yrs = hours / yr
     exact_part(L, 'p-comet-probe', 4, F('3.4'), round(30000 / 8760, 1), {'nine-thousand': F('3.3'), 'carried': F('34.2'), 'days': hours / 24})
@@ -487,11 +507,23 @@ def figures_1_to_3():
     stated('bill: 6.50', 6.5, F('19.50') / 3)
     stated('bill: 925.30', 925.3, 38 * (F('4.85') + F('19.50')))
     stated('bill: about 73', 73, round(220 / 3))
-    stated('cube: 121', 121, 11 ** 2)
-    stated('cube: 33', 33, 11 * 3)
+    stated('cube: 144', 144, 12 ** 2)
+    stated('cube: 36', 36, 12 * 3)
     stated('comet: 30 / 9', 3.33, 30 / 9, 0.004)
     stated('comet: 1,250 days', 1250, 30000 / 24)
     stated('comet: 3.42', 3.42, 30000 / 8760, 0.005)
+
+
+UNITS = {
+    1: {'p-garden-beds': ['beds', None, None, None], 'p-rye-loaves': [None, 'loaves', 'kg', None], 'p-two-printers': [None, None, 'hours', 'minutes'],
+        'p-squash-jugs': [None, None, 'litres', 'litres', None]},
+    2: {'p-moor-weather': ['\u00b0C', 'degrees', 'degrees', '\u00b0C'], 'p-golf-card': [None, None, None, None], 'p-taxi-split': ['\u00a3', '\u00a3', 'p', '\u00a3']},
+    3: {'p-cube-tub': ['cubes'] * 3, 'p-stationery-bill': ['\u00a3'] * 4, 'p-comet-probe': ['hours', 'hours', 'years', 'years']},
+}
+for nn, per in UNITS.items():
+    for it in json.load(open(os.path.join(COURSE, f'problems-{nn}.json')))['items']:
+        for kk, (u, part) in enumerate(zip(per[it['id']], it['parts']), 1):
+            ok(part['widget'].get('unit') == u, f'{it["id"]} p{kk}: unit {part["widget"].get("unit")!r} vs {u!r} (finding 8)')
 
 
 figures_1_to_3()
