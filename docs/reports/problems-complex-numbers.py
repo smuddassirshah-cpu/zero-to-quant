@@ -243,6 +243,7 @@ def level1():
     zz = z1 * z2 / (z1 + z2)
     c.expr(0, 2, Z, zz, {'split': R(23, 6) + 7 * I, 'minus-squares': sp.expand((23 + 14 * I) * (6 - 2 * I)) / 32,
                          'wrong-factor': sp.expand((23 + 14 * I) * (6 + 2 * I)) / 40})
+    c.lv.claim(sp.simplify((23 + 14 * I) * (6 + 2 * I) / ((6 + 2 * I) * (6 + 2 * I)) - Z) == 0, 'item 1 part 2: top and bottom both times 6 + 2i gives the right Z, so wrong-factor keeps 40 below')
     modZ = sp.sqrt(sp.re(Z) ** 2 + sp.im(Z) ** 2)
     c.num(0, 3, modZ, abs(zz), {'no-root': sp.re(Z) ** 2 + sp.im(Z) ** 2, 'added': sp.re(Z) + sp.im(Z),
                                 'carried-split': abs(23 / 6 + 7j)})
@@ -260,7 +261,7 @@ def level1():
     c.expr(1, 1, w, nr, {'minus-b': -sp.conjugate(w), 'no-half': R(3, 2) + sqrt(3) * I, 'lower': sp.conjugate(w)})
     c.num(1, 2, sp.Abs(w), abs(nr), {'no-root': sp.Abs(w) ** 2, 'added': 1.5 + 0.866, 'carried-no-half': abs(1.5 + math.sqrt(3) * 1j)})
     c.lv.claim(sp.simplify(sp.Abs(w) ** 2 - 3) == 0, 'item 2: |w|^2 = 9/4 + 3/4 = 3')
-    c.expr(1, 3, sp.arg(w), cmath.phase(nr), {'inverted': sp.atan(sp.re(w) / sp.im(w)), 'carried-minus-b': sp.arg(-sp.conjugate(w))})
+    c.expr(1, 3, sp.arg(w), cmath.phase(nr), {'inverted': sp.atan(sp.re(w) / sp.im(w)), 'carried-minus-b': sp.arg(-sp.conjugate(w)), 'degrees': 30})
     w6 = sp.expand(w ** 6)
     c.num(1, 4, w6, (nr ** 6).real, {'sign': 27, 'angle-only': -1, 'carried-modulus-3': -(3 ** 6)})
     n_first = next(n for n in range(1, 50) if sp.im(sp.expand(w ** n)) == 0 and sp.re(sp.expand(w ** n)) > 0)
@@ -272,7 +273,7 @@ def level1():
     cc = R(-81, 2) + R(81, 2) * sqrt(3) * I
     cn = complex(sp.N(cc))
     c.num(2, 1, sp.Abs(cc), abs(cn), {'added': R(81, 2) + R(81, 2) * sqrt(3), 'no-root': 6561, 'no-root3': abs(-40.5 + 40.5j)})
-    c.expr(2, 2, sp.arg(cc), cmath.phase(cn), {'arctan': sp.atan(sp.im(cc) / sp.re(cc)), 'reference': pi / 3, 'swapped': pi - sp.atan(-sp.re(cc) / sp.im(cc))})
+    c.expr(2, 2, sp.arg(cc), cmath.phase(cn), {'arctan': sp.atan(sp.im(cc) / sp.re(cc)), 'reference': pi / 3, 'swapped': pi - sp.atan(-sp.re(cc) / sp.im(cc)), 'degrees': 120})
     zc = sp.Symbol('zc')
     lamps = [sp.nsimplify(sp.expand_complex(L)) for L in sp.solve(zc ** 4 - cc, zc)]
     c.lv.claim(len(lamps) == 4, 'item 3: sympy finds four lamps')
@@ -302,7 +303,7 @@ def level1():
     om = sp.exp(2 * pi * I / 3)
     A, B, C = 12, sp.expand_complex(12 * om), sp.expand_complex(7 * om ** 2)
     nB, nC = 12 * cmath.exp(2j * math.pi / 3), 7 * cmath.exp(4j * math.pi / 3)
-    c.num(3, 1, sp.im(B), nB.imag, {'swapped': 6, 'unscaled': sp.sin(2 * pi / 3), 'degrees': 12 * math.sin(math.radians(2 * math.pi / 3))})
+    c.num(3, 1, sp.im(B), nB.imag, {'swapped': 12 * math.cos(2 * math.pi / 3), 'real-size': abs(12 * math.cos(2 * math.pi / 3)), 'unscaled': sp.sin(2 * pi / 3), 'degrees': 12 * math.sin(math.radians(2 * math.pi / 3))})
     c.expr(3, 2, C, nC, {'sin-sign': sp.conjugate(C), 'swapped': -R(7, 2) * sqrt(3) - R(7, 2) * I})
     N = sp.expand(A + B + C)
     nN = 12 + nB + nC
@@ -310,6 +311,13 @@ def level1():
     c.lv.claim(sp.simplify(sp.expand_complex(N + 5 * om ** 2)) == 0, 'item 4: N = -5 omega^2 (1 + omega + omega^2 = 0)')
     c.num(3, 4, sp.Abs(N), abs(nN), {'added': sp.re(N) + sp.im(N), 'squared': 25, 'carried-sin-sign': sp.Abs(sp.expand(A + B + sp.conjugate(C)))})
     c.num(3, 5, sp.arg(N) * 180 / pi, deg(cmath.phase(nN)), {'inverted': 30, 'omega-squared': 240, 'radians': pi / 3})
+    # fix pass: units and the wording that asks for an exact answer
+    for (i_, k_, un) in ((0, 4, 'A'), (2, 5, 'm'), (3, 4, 'A')):
+        c.lv.claim(c.part(i_, k_)['widget'].get('unit') == un, f'item {i_ + 1} part {k_}: unit {un} on the widget')
+    for (i_, k_) in ((1, 1), (2, 3), (2, 4), (3, 2), (3, 3)):
+        c.lv.claim('exactly as $p + qi$' in c.part(i_, k_)['question'], f'item {i_ + 1} part {k_}: the question asks exactly')
+    for (i_, k_) in ((2, 4), (3, 2), (3, 3)):
+        c.lv.claim('one fraction times $i$' in c.part(i_, k_)['question'], f'item {i_ + 1} part {k_}: the question names the form of the imaginary part')
     c.vocab(3, [nB, nC, 7 / 2, 25 / 4, 75 / 4, 120, 240, 2.094, 180, 2 * math.pi / 3, 19 / 2, 6 * 3 ** 0.5, 0.5, 75])
     return c
 
@@ -325,7 +333,7 @@ def level2():
     # ---- item 1: the mesh map f(z) = z^2 - 4z near 3 + 2i
     f = lambda q: q ** 2 - 4 * q
     z0, n0 = R(5, 2) + 3 * I, 2.5 + 3j
-    c.expr(0, 1, sp.expand(f(z0)), f(n0), {'square-parts': R(25, 4) + 9 * I - 4 * z0, 'i-squared': R(25, 4) + 9 + 15 * I - 4 * z0})
+    c.expr(0, 1, sp.expand(f(z0)), f(n0), {'square-parts': R(25, 4) + 9 * I - 4 * z0, 'no-cross': R(25, 4) - 9 - 4 * z0, 'i-squared': R(25, 4) + 9 + 15 * I - 4 * z0})
     zs = sp.Symbol('zs')
     d0 = sp.diff(f(zs), zs).subs(zs, z0)
     nd = cdiff(f, n0)
@@ -371,44 +379,59 @@ def level2():
     c.num(1, 5, sp.Abs(d1), math.hypot(nux, nuy), {'no-root': 29, 'added': 7, 'carried-i-squared': abs(1 - 2j)})
     c.vocab(1, [25, 4, 29, 5 - 2j, 2 - 2j])
 
-    # ---- item 3: logarithm branches at w = -4 sqrt3 + 4i
-    w = -4 * sqrt(3) + 4 * I
+    # ---- item 3: logarithm branches at w = -8 + 15i
+    w = -8 + 15 * I
     wn = complex(sp.N(w))
-    c.num(2, 1, sp.Abs(w), abs(wn), {'added': 4 * sqrt(3) + 4, 'no-root': 64})
-    c.expr(2, 2, sp.arg(w), cmath.phase(wn), {'arctan': sp.atan(sp.im(w) / sp.re(w)), 'reference': pi / 6, 'inverted': pi - sp.atan(-sp.re(w) / sp.im(w))})
-    sol = sp.log(8) + I * (sp.arg(w) - 2 * pi)
+    c.num(2, 1, sp.Abs(w), abs(wn), {'added': 8 + 15, 'no-root': 289})
+    c.num(2, 2, sp.N(sp.arg(w), 15), cmath.phase(wn),
+          {'arctan': math.atan(15 / -8), 'reference': math.atan(15 / 8), 'inverted': math.pi - math.atan(8 / 15), 'degrees': deg(cmath.phase(wn))})
+    c.lv.claim(round(float(sp.N(sp.arg(w))), 4) == 2.0608 and abs(float(sp.N(sp.arg(w))) - (math.pi - math.atan(15 / 8))) < 1e-12, 'item 3 part 2: Arg w = pi - arctan(15/8) = 2.0608')
+    c.lv.claim(sp.re(w) < 0 < sp.im(w), 'item 3: w is in the second quadrant')
+    sol = sp.log(17) + I * (sp.arg(w) - 2 * pi)
     nsol = cmath.log(wn) - 2j * math.pi
     c.lv.claim(abs(cmath.exp(nsol) - wn) < 1e-12 and -2 * math.pi < nsol.imag <= 0, 'item 3: e^z = w and the imaginary part is in (-2 pi, 0]')
-    c.expr(2, 3, sol, nsol, {'principal': sp.log(8) + 5 * pi * I / 6, 'no-log': 8 - 7 * pi * I / 6, 'dropped-turn': sp.log(8) - 5 * pi * I / 6})
-    dl = (cmath.log(wn + 1e-5) - cmath.log(wn - 1e-5)) / 2e-5
-    c.num(2, 4, 1 / sp.Abs(w), abs(dl), {'no-inverse': 8, 'log-of-modulus': sp.log(8), 'squared': R(1, 64)})
-    c.num(2, 5, sp.exp(-5 * pi / 6), abs(wn ** 1j), {'sign': sp.exp(5 * pi / 6), 'carried-branch': sp.exp(7 * pi / 6), 'unit': 1})
-    c.vocab(2, [wn, 48, 16, 64, 4 * 3 ** 0.5, 5 * math.pi / 6, 1 / 64, 2 * math.pi])
+    c.lv.claim(abs(math.exp(math.log(17)) - 17) < 1e-12 and abs(sp.N(sp.re(sol)) - math.log(17)) < 1e-12, 'item 3: Re z = ln 17')
+    c.num(2, 3, sp.N(sp.im(sol), 15), nsol.imag,
+          {'sign': -nsol.imag, 'principal': cmath.phase(wn), 'dropped-turn': -cmath.phase(wn)})
+    c.lv.claim(round(2.0608 - 2 * math.pi, 4) == -4.2224 and round(nsol.imag, 4) == -4.2224, 'item 3 part 3: the restated Arg w and the exact one both give -4.2224')
+    dl = (cmath.log(wn + 1e-6) - cmath.log(wn - 1e-6)) / 2e-6
+    c.num(2, 4, 1 / sp.Abs(w), abs(dl), {'no-inverse': 17, 'log-of-modulus': sp.log(17), 'squared': R(1, 289)})
+    c.lv.claim(wn.imag > 0 or wn.real < 0, 'item 3 part 4: w is off the cut (the negative real axis)')
+    c.num(2, 5, sp.exp(-sp.arg(w)), abs(wn ** 1j), {'sign': math.exp(2.0608), 'carried-branch': math.exp(4.2224), 'unit': 1})
+    c.lv.claim(round(abs(wn ** 1j), 4) == 0.1274 and round(math.exp(-2.0608), 4) == 0.1274, 'item 3 part 5: restated and exact Arg w both give 0.1274')
+    c.vocab(2, [wn, 64, 225, 289, 17, 1.0808, 2.0608, 0.49, 2.6516, 118.07, 4.2224, 6.2832, 2.8332, 1 / 17, 1 / 289, 0.0588, 0.1274, 2 * math.pi, 15 / 8, -15 / 8, 8 / 15])
 
-    # ---- item 4: f = |z|^2 + z
-    uu = x ** 2 + y ** 2 + x
-    vv = y
-    fz = lambda q: abs(q) ** 2 + q
-    c.expr(3, 1, uu, lambda X, Y, Z, T, Uu: fz(complex(X, Y)).real, {'square': x ** 2 - y ** 2 + x, 'no-x': x ** 2 + y ** 2})
+    # ---- item 4: f = z^2 + 2|z|^2 + 4z
+    fz = lambda q: q ** 2 + 2 * abs(q) ** 2 + 4 * q
+    zz_ = x + I * y
+    fexp = sp.expand(zz_ ** 2 + 2 * (x ** 2 + y ** 2) + 4 * zz_)
+    uu, vv = sp.re(fexp), sp.im(fexp)
+    c.lv.claim(sp.simplify(vv - (2 * x * y + 4 * y)) == 0, 'item 4: v = 2xy + 4y as the prose says')
+    c.expr(3, 1, uu, lambda X, Y, Z, T, Uu: fz(complex(X, Y)).real,
+           {'no-mod': x ** 2 - y ** 2 + 4 * x, 'one-copy': 2 * x ** 2 + 4 * x, 'no-linear': 3 * x ** 2 + y ** 2})
     e1 = sp.diff(uu, x) - sp.diff(vv, y)
     e2 = sp.diff(uu, y) + sp.diff(vv, x)
+
     def cr(X, Y, which):
-        U_ = lambda a, b: fz(complex(a, b)).real
-        V_ = lambda a, b: fz(complex(a, b)).imag
+        U_ = lambda a_, b_: fz(complex(a_, b_)).real
+        V_ = lambda a_, b_: fz(complex(a_, b_)).imag
         if which == 1:
             return (U_(X + h, Y) - U_(X - h, Y)) / (2 * h) - (V_(X, Y + h) - V_(X, Y - h)) / (2 * h)
         return (U_(X, Y + h) - U_(X, Y - h)) / (2 * h) + (V_(X + h, Y) - V_(X - h, Y)) / (2 * h)
-    c.expr(3, 2, e1, lambda X, Y, Z, T, Uu: cr(X, Y, 1), {'no-v': 2 * x + 1, 'swapped': 2 * y - 1})
-    c.expr(3, 3, e2, lambda X, Y, Z, T, Uu: cr(X, Y, 2), {'carried-square': -2 * y, 'no-u': 0})
+    c.expr(3, 2, e1, lambda X, Y, Z, T, Uu: cr(X, Y, 1), {'no-v': sp.diff(uu, x), 'short-v': sp.diff(uu, x) - 2 * x})
+    c.expr(3, 3, e2, lambda X, Y, Z, T, Uu: cr(X, Y, 2), {'minus': sp.diff(uu, y) - sp.diff(vv, x), 'no-v': sp.diff(uu, y)})
+    c.lv.claim(sp.simplify(e1 - 4 * x) == 0 and sp.simplify(e2 - 4 * y) == 0, 'item 4: the two equations leave 4x and 4y')
     hh = R(1, 100) * I
-    q = sp.expand(sp.simplify(((hh * sp.conjugate(hh)) + hh) / hh))
-    c.expr(3, 4, q, (fz(0.01j) - fz(0)) / 0.01j, {'sign': 1 + R(1, 100) * I, 'no-modulus': 1})
-    quot = [(fz(1e-6 * cmath.exp(1j * a)) - fz(0)) / (1e-6 * cmath.exp(1j * a)) for a in np.linspace(0, 2 * math.pi, 9)]
-    c.lv.claim(max(abs(qq - 1) for qq in quot) < 1e-5, 'item 4: the quotient at 0 tends to 1 from every direction')
-    off = [(fz(0.5 + 1e-6 * cmath.exp(1j * a)) - fz(0.5)) / (1e-6 * cmath.exp(1j * a)) for a in (0, math.pi / 2)]
+    q = sp.expand(sp.simplify((hh ** 2 + 2 * hh * sp.conjugate(hh) + 4 * hh) / hh))
+    c.expr(3, 4, q, (fz(0.01j) - fz(0)) / 0.01j,
+           {'sign': 4 + R(1, 100) * I, 'mod-as-square': sp.expand((3 * hh ** 2 + 4 * hh) / hh), 'no-linear': sp.expand((hh ** 2 + 2 * hh * sp.conjugate(hh)) / hh)})
+    quot = [(fz(1e-6 * cmath.exp(1j * a_)) - fz(0)) / (1e-6 * cmath.exp(1j * a_)) for a_ in np.linspace(0, 2 * math.pi, 9)]
+    c.lv.claim(max(abs(qq - 4) for qq in quot) < 1e-5, 'item 4: the quotient at 0 tends to 4 from every direction')
+    off = [(fz(0.5 + 1e-6 * cmath.exp(1j * a_)) - fz(0.5)) / (1e-6 * cmath.exp(1j * a_)) for a_ in (0, math.pi / 2)]
     c.lv.claim(abs(off[0] - off[1]) > 0.5, 'item 4: at z = 0.5 the quotient depends on direction, so no derivative there')
+    c.lv.claim(sp.simplify(sp.diff(uu, x).subs({x: 0, y: 0}) + I * sp.diff(vv, x).subs({x: 0, y: 0}) - 4) == 0, 'item 4: f\'(0) = u_x + i v_x = 4 at 0')
     c.pick(3, 5, 'a')
-    c.vocab(3, [0.01j, 0.0001, 0.01])
+    c.vocab(3, [0.01j, 0.0001, 0.0002, 0.0003, 0.04, 0.02, 0.01, 4 - 0.01j, 6, 4])
     return c
 
 
@@ -449,36 +472,40 @@ def level3():
     c.num(0, 5, area, narea, {'no-two': 1, 'sign': -area})
     c.vocab(0, [3 + 1j, 4.5, 0.5, 1.5, 10, 2 / 4, 9 / 2, 4 + 3j])
 
-    # ---- item 2: lighthouse flashes, Cauchy(1, 3)
+    # ---- item 2: lighthouse flashes, Cauchy(location 0.5, scale 2.5): density c / (2x^2 - 2x + 13)
     zc = sp.Symbol('zc')
-    q = zc ** 2 - 2 * zc + 10
+    q = 2 * zc ** 2 - 2 * zc + 13
     poles = sp.solve(q, zc)
     up = [pp for pp in poles if sp.im(pp) > 0][0]
-    nup = [pp for pp in np.roots([1, -2, 10]) if pp.imag > 0][0]
-    c.expr(1, 1, up, nup, {'lower': sp.conjugate(up), 'minus-b': -sp.conjugate(up), 'no-root': 1 + 9 * I})
+    nup = [pp for pp in np.roots([2, -2, 13]) if pp.imag > 0][0]
+    c.lv.claim(sp.simplify(up - (R(1, 2) + R(5, 2) * I)) == 0, 'item 2: the upper pole is 1/2 + 5i/2 (location 0.5, scale 2.5)')
+    c.expr(1, 1, up, nup, {'lower': sp.conjugate(up), 'minus-b': -sp.conjugate(up), 'no-four': (2 + 10 * I) / 2})
     res = sp.residue(1 / q, zc, up)
-    nres = 1e-7 / ((nup + 1e-7) ** 2 - 2 * (nup + 1e-7) + 10)
+    nres = 1e-7 / (2 * (nup + 1e-7) ** 2 - 2 * (nup + 1e-7) + 13)
     c.lv.claim(abs(complex(sp.N(res)) - nres) < 1e-6, 'item 2: (z - a)/q(z) near the pole tends to the residue')
-    c.expr(1, 2, res, complex(sp.N(1 / sp.diff(q, zc).subs(zc, up))), {'no-i': R(1, 6), 'plus': I / 6, 'q-prime': 1 / (2 * up)})
+    c.lv.claim(sp.simplify(sp.diff(q, zc).subs(zc, up) - 10 * I) == 0, "item 2: q'(a) = 10i")
+    c.expr(1, 2, res, complex(sp.N(1 / sp.diff(q, zc).subs(zc, up))), {'no-i': R(1, 10), 'plus': I / 10, 'q-prime': 1 / (4 * up)})
     integral = sp.simplify(2 * pi * I * res)
-    nint = integrate.quad(lambda X: 1 / (X * X - 2 * X + 10), -np.inf, np.inf)[0]
+    nint = integrate.quad(lambda X: 1 / (2 * X * X - 2 * X + 13), -np.inf, np.inf)[0]
     cc = 1 / integral
     c.num(1, 3, cc, 1 / nint, {'integral': integral, 'both-poles': 1 / (2 * integral), 'no-two': 2 / integral})
     phi = lambda uu: sp.simplify(cc * 2 * pi * I * sp.residue(sp.exp(I * uu * zc) / q, zc, up))
     phi1 = phi(1)
     cn = float(sp.N(cc))
-    c.lv.claim(sp.simplify(phi1 - sp.exp(-3 + I)) == 0, 'item 2: phi(1) = e^{-3 + i} by residues')
-    # route 2 for phi: Y = X - 1 has density c/(y^2 + 9), symmetric, so E[e^{iuY}] = 2 int_0^inf c cos(uy)/(y^2 + 9) dy
-    ny = lambda uu: 2 * integrate.quad(lambda Y: cn / (Y * Y + 9), 0, np.inf, weight='cos', wvar=uu)[0]
-    c.num(1, 4, sp.Abs(phi1), abs(ny(1.0)), {'sign': sp.exp(3), 'no-c': sp.exp(-3) * integral, 'standard': sp.exp(-1)})
+    c.lv.claim(sp.simplify(phi1 - sp.exp(I / 2 - R(5, 2))) == 0, 'item 2: phi(1) = e^{i/2 - 5/2} by residues')
+    # route 2 for phi: Y = X - 0.5 has density (c/2)/(y^2 + 6.25), symmetric, so E[e^{iuY}] = 2 int_0^inf (c/2) cos(uy)/(y^2 + 6.25) dy
+    ny = lambda uu: 2 * integrate.quad(lambda Y: (cn / 2) / (Y * Y + 6.25), 0, np.inf, weight='cos', wvar=uu)[0]
+    c.num(1, 4, sp.Abs(phi1), abs(ny(1.0)), {'sign': sp.exp(R(5, 2)), 'no-c': sp.exp(-R(5, 2)) * integral, 'standard': sp.exp(-1)})
     phiM = sp.simplify(phi(R(1, 2)) ** 2)
     rng = np.random.default_rng(11)
-    xs = 1 + 3 * np.tan(math.pi * (rng.random((2, 400000)) - 0.5))
+    xs = 0.5 + 2.5 * np.tan(math.pi * (rng.random((2, 400000)) - 0.5))
     mc = abs(np.mean(np.exp(1j * xs.mean(axis=0))))
-    c.lv.claim(abs(mc - math.exp(-3)) < 0.004, f'item 2: Monte Carlo |E e^(iM)| for the mean of two flashes is {mc:.4f}, near e^-3')
-    c.num(1, 5, sp.Abs(phiM), abs(ny(0.5)) ** 2, {'no-half': sp.exp(-6), 'one-factor': sp.exp(-R(3, 2))})
-    c.vocab(1, [1 + 3j, 4, 40, 36, 2, 9, 6, 1 / 6, 3 / math.pi, math.pi / 3, 1.5, 0.5, 3, 1 / 2,
-                 362, 402])   # 362 and 402: the token reader joins sqrt{-36}}{2} and sqrt{4 - 40}}{2} when it drops braces
+    c.lv.claim(abs(mc - math.exp(-2.5)) < 0.004, f'item 2: Monte Carlo |E e^(iM)| for the mean of two flashes is {mc:.4f}, near e^-2.5')
+    c.num(1, 5, sp.Abs(phiM), abs(ny(0.5)) ** 2, {'no-half': sp.exp(-5), 'one-factor': sp.exp(-R(5, 4))})
+    c.lv.claim(round(float(sp.N(sp.Abs(phi1))), 4) == 0.0821, 'item 2: 0.0821 is |phi(1)| and |phi_M(1)|')
+    c.vocab(1, [0.5 + 2.5j, 0.5, 2.5, 4, 104, 100, 10, 2, 13, 1, 5, 52, 6.25, 0.1, 5 / math.pi, math.pi / 5, 2 * math.pi / 5, math.pi / 10, 1.25, 0.25,
+                12.1825, 0.0516, 0.3679, 0.0067, 0.2865, 0.0821, 1.592, 0.628, 0.796, 3.183, 1 / 52, 5 / 52, 1.5,
+                210, 1004, 1044])   # token reader joins fractions when it drops braces: sqrt{-100}}{4}, sqrt{4 - 104}}{4}
 
     # ---- item 3: share moments from phi at complex points
     S0, r, sg, T = 64, R(5, 100), R(25, 100), R(8, 10)
@@ -490,7 +517,11 @@ def level3():
     ES = sp.simplify(phi_s(-I))
     dens = lambda Lx: math.exp(-(Lx - float(mu)) ** 2 / (2 * float(s2))) / math.sqrt(2 * math.pi * float(s2))
     nES = integrate.quad(lambda Lx: math.exp(Lx) * dens(Lx), float(mu) - 12, float(mu) + 12, epsabs=1e-12, epsrel=1e-13)[0]
-    c.num(2, 2, ES, nES, {'minus': sp.exp(mu - s2 / 2), 'no-var': sp.exp(mu), 'discounted': S0})
+    c.lv.claim(abs(float(sp.N(ES)) - nES) < 1e-6 and round(nES, 3) == 66.612, 'item 3: E[S_T] = 66.612 by both routes (it is handed to part 4)')
+    nphi3 = abs(integrate.quad(lambda Lx: math.cos(3 * Lx) * dens(Lx), float(mu) - 12, float(mu) + 12, epsabs=1e-13, limit=400)[0]
+                + 1j * integrate.quad(lambda Lx: math.sin(3 * Lx) * dens(Lx), float(mu) - 12, float(mu) + 12, epsabs=1e-13, limit=400)[0])
+    c.lv.claim(abs(abs(complex(sp.N(phi_s(3)))) - float(sp.N(sp.exp(-s2 * 9 / 2)))) < 1e-12, 'item 3 part 2: |phi(3)| from the closed form equals e^{-0.225}')
+    c.num(2, 2, sp.exp(-s2 * 9 / 2), nphi3, {'no-square': sp.exp(-s2 * 3 / 2), 'no-half': sp.exp(-s2 * 9), 'sign': sp.exp(s2 * 9 / 2)})
     c.lv.claim(sp.simplify(sp.exp(-r * T) * ES - S0) == 0, 'item 3: e^{-rT} E[S_T] = S_0')
     ES2 = sp.simplify(phi_s(-2 * I))
     nES2 = integrate.quad(lambda Lx: math.exp(2 * Lx) * dens(Lx), float(mu) - 12, float(mu) + 12, epsabs=1e-10, epsrel=1e-13)[0]
@@ -498,7 +529,9 @@ def level3():
     E1, E2 = sp.Float('66.612'), sp.Float('4664.6')
     c.lv.claim(round(float(sp.N(ES)), 3) == 66.612 and round(float(sp.N(ES2)), 1) == 4664.6, 'item 3: the restated moments are the computed ones rounded')
     c.num(2, 4, sp.sqrt(E2 - E1 ** 2), math.sqrt(4664.6 - 66.612 ** 2),
-          {'variance': E2 - E1 ** 2, 'not-squared': sp.sqrt(E2 - E1), 'log-sd': 64 * 0.25 * math.sqrt(0.8)})
+          {'variance': E2 - E1 ** 2, 'not-squared': sp.sqrt(E2 - E1), 'log-sd': 64 * 0.25 * math.sqrt(0.8), 'own-rounding': math.sqrt(4665 - 66.61 ** 2)})
+    c.lv.claim(abs(float(sp.N(ES2 - ES ** 2)) - 227.47) <= 0.08 and abs(float(E2 - E1 ** 2) - 227.47) <= 0.08 and round(float(sp.N(ES2 - ES ** 2)), 1) == 227.5, 'item 3 part 4: the variance band 227.47 +- 0.08 takes the variance from rounded and from unrounded moments')
+    c.lv.claim(abs(float(E2 - E1 ** 2) - 227.44) < 0.005 and abs(math.sqrt(4665 - 66.61 ** 2) - 15.1) < 0.005, 'item 3 part 4: 227.44 from the handed moments; own-rounding 15.10 from 66.61 and 4665')
     c.lv.claim(round(float(sp.N(sp.sqrt(ES2 - ES ** 2))), 2) == 15.08, 'item 3: unrounded moments give the same 15.08')
     psi0 = sp.exp(-r * T) * E2 / 2
     from scipy.stats import norm
@@ -512,7 +545,7 @@ def level3():
     c.num(2, 5, psi0, math.exp(-0.04) * 4664.6 / 2, {'no-discount': E2 / 2, 'no-two': sp.exp(-r * T) * E2, 'wrong-sign': sp.exp(r * T) * E2 / 2})
     c.lv.claim(round(area_c) == 2241, 'item 3: the unrounded second moment gives the same 2241')
     c.vocab(2, [64, 0.05, 0.25, 0.8, 0.0625, 0.03125, 0.01875, 0.015, 0.025, 0.04, 0.03, 0.1, 0.13, 0.08, 4096, 66.612, 4664.6, 4437.2, 227.44, 227.4, 25, 30, 0.5, 2, 1 / 2,
-                 4664.62])   # 4664.62: the token reader joins 4664.6}{2} when it drops braces
+                 4664.62, 0.9277, 0.6376, 1.2523, 0.7985, 0.225, 0.45, 0.075, 9, 66.61, 4665, 15.1, 15.08])   # 4664.62: the token reader joins 4664.6}{2} when it drops braces
 
     # ---- item 4: print stages
     phX = 1 / (1 - 2 * I * u) ** 2
