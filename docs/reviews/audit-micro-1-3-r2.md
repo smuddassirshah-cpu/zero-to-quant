@@ -81,3 +81,25 @@ Notes on agreement and difference.
 - The round 1 keys changed by its fix pass (l6 quiz[0] to 20.0233, homework-1 `h-bp`, `h-sell-walk`, homework-3 `old-k`) all recompute correctly here.
 
 Convergence: at most one new `wrong` per three levels is allowed; this round found none. The fix pass for the eight minor findings and its fix-pass read remain.
+
+## Fix pass
+
+Fixer: Opus, 12 Nov 2026. Content strings only; no graded key, tolerance, `wrong[]` value or slip value changed.
+
+| # | Status | Basis |
+|---|---|---|
+| 1 | fixed differently | Both functions read `bids[0]` first, so the hidden test `microprice([], ...)` fails at `bids[0]`, not `asks[0]`. New text: "Without the check, `bids[0]` or `asks[0]` on an empty list raises `IndexError`." |
+| 2 | fixed differently | Avellaneda and Stoikov (2008): $r = s - q\gamma\sigma^2(T - t)$, so $\tau = T - t$ and the skew tends to 0 as $t \to T$. s7 prose as proposed; s10 sentence reworded to keep under 20 words: "Counting the night in $\tau$, the skew rule agrees: ..." plus "In the model itself $\tau$ stops at the close, so its skew fades as the close nears." Explanation stays at three sentences. |
+| 3 | fixed | MiFIR Art. 5 volume cap (EU; kept, as a single cap, by the 2024 MiFIR review); UK removed the double volume cap; US Reg ATS has no volume cap. |
+| 4 | fixed | Screen 0 sets the 16:30 closing auction, so "closing price" applies. LSE MIT201 closing-price hierarchy: uncross, else a VWAP of late continuous trades, else the last automated trade. All are earlier trades. |
+| 5 | fixed | $E = h + c - p(2h + c)$, $dE/dp = -(2h + c)$, so +0.01 in $p$ cuts $E$ by $0.01(2h + c)$. |
+| 6 | fixed differently | l11 as proposed. review-3 `full` slip (value 4 = full spread $2s$ with $s = 2$) now names the mistake: "You counted the full 4p spread. On average one trade earns at most the half-spread, 2p." Bound: $E[\text{profit}] = s - \alpha\delta \le s$. |
+| 7 | fixed differently | Discrete check from the derive: min(buyers, sellers) is 700, 1,200, 1,000 at 500p, 501p, 502p; lines cross at $501 + 300/1{,}100 \approx 501.27$p; slider step is 1. New text: "Shares traded follow the lower of the two lines, peaking at 501p, just below where they cross." Also the correct option on the same screen now reads "near where the two lines cross" (key id unchanged). |
+| 8 | fixed | Kyle (1985) names tightness, depth and resiliency; "a guide to how fast the book refills" keeps volume as a proxy, matching the lesson's own trap. |
+| U1 l8 s6 explain | fixed (stated condition) | Tied to the lesson's own data: "Here, makers quote wide while unsure of the price after the open, then tight once volume is heavy." No general intraday claim remains. |
+| U2 l8 summary ideas[2] | fixed differently | Auditor's hedge used "often"; new text scopes it to the lesson: "in this lesson's day the spread is wide after the open and tight before the close". |
+| U3 l8 s8 prose | fixed | "for example 10%": the figure is now an example the screen then uses, not a market claim. |
+| U4 l10 s8 explain | fixed differently | Rewritten as a hypothetical: "An options desk left short the share after a large client trade would skew its quotes the same way." No claim about what desks do. |
+| U5 l11 s9 explain | fixed | "as fast as their systems allow" removes the unsourced timescale. |
+
+Gates: validator 0 errors, 4531 warnings (unchanged), manifest unchanged; voice scan 35 on micro: 0 and 0; `micro-L1-3-r2-concepts.py`, `micro-3-perf-numbers.py` exit 0; `micro-L1-3-concepts.py` exit 0 once `sympy` is on the path (without it the script stops at `import sympy`, a pre-existing environment gap); playthrough desktop and `--mobile` green for l7, l8, l10, l11, l12, homework-1, review-3.
