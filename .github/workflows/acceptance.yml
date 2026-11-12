@@ -12,6 +12,16 @@ on:
         type: choice
         default: full
         options: [full, static, tests, play, extras]
+      mode:
+        description: "changed: replay only what the green-hash cache says changed. full: replay everything and reseed the cache"
+        type: choice
+        default: full
+        options: [full, changed]
+  # Weekly full run, so cache drift cannot hide a fault for long. Sunday 03:17 UTC: no one is pushing, and the odd minute keeps clear of the
+  # top-of-hour queue. A scheduled run reads this file from the DEFAULT branch only (main) and runs main's code: it fires only once this
+  # workflow is merged there (docs/CI.md). Until then, run the dispatch with mode full by hand.
+  schedule:
+    - cron: "17 3 * * 0"
   push:
     branches: [claude/amazing-wright-d4mx7i]
     # .github/actions is added to the brief's filter: the shared setup step lives there and a change to it must re-run the suite
@@ -37,6 +47,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       n: ${{ steps.p.outputs.n }}
+      mode: ${{ steps.p.outputs.mode }}
       shards: ${{ steps.p.outputs.shards }}
       static: ${{ steps.p.outputs.static }}
       tests: ${{ steps.p.outputs.tests }}
@@ -48,15 +59,20 @@ jobs:
         env:
           SHARDS_IN: ${{ inputs.shards }}
           SUITE_IN: ${{ inputs.suite }}
+          MODE_IN: ${{ inputs.mode }}
+          EVENT: ${{ github.event_name }}
         run: |
           set -o pipefail
           n="${SHARDS_IN:-16}"; suite="${SUITE_IN:-full}"
+          # a push replays what changed; a dispatch or the weekly schedule replays everything (and reseeds the cache) unless a dispatch asks for changed
+          if [ "$EVENT" = push ]; then mode=changed; else mode="${MODE_IN:-full}"; fi
+          case "$mode" in changed|full) ;; *) echo "::error::mode must be changed or full, got '$mode'"; exit 1 ;; esac
           case "$n" in ''|*[!0-9]*) echo "::error::shards must be a whole number, got '$n'"; exit 1 ;; esac
           if [ "$n" -lt 1 ] || [ "$n" -gt 64 ]; then echo "::error::shards must be 1 to 64, got $n"; exit 1; fi
           on() { case "$suite" in full|"$1") echo true ;; *) echo false ;; esac; }
-          { echo "n=$n"; echo "shards=[$(seq -s, 1 "$n")]"
+          { echo "n=$n"; echo "mode=$mode"; echo "shards=[$(seq -s, 1 "$n")]"
             echo "static=$(on static)"; echo "tests=$(on tests)"; echo "play=$(on play)"; echo "extras=$(on extras)"; } >> "$GITHUB_OUTPUT"
-          echo "suite $suite, $n shards" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "suite $suite, $n shards, mode $mode" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------------------------------------------
   # Validator, readiness sums, the test-file coverage check, grade-all, and every test that needs no browser.
@@ -84,6 +100,7 @@ jobs:
         run: |
           bash tools/ci-run.sh <<'EOF'
           node tools/test-capstone.mjs
+          node tools/test-ci-cache-keys.mjs
           node tools/test-cumulative.mjs
           node tools/test-drill-constraints.mjs
           node tools/test-exam-minutes.mjs
@@ -231,18 +248,18 @@ jobs:
             app
             .github
       - uses: ./.github/actions/zq-setup
-        with: { playwright: "true" }
-      # ---- SLOT: playthrough --changed --cache (NOT WIRED; another change is building the flag and tools/.green-cache.json) -------------------
-      # Restore here, one cache per viewport and shard, so a run that touches little replays little:
-      #   - uses: actions/cache@v4
-      #     with:
-      #       path: app/tools/.green-cache.json
-      #       key: green-${{ matrix.vp }}-${{ matrix.shard }}-${{ github.sha }}
-      #       restore-keys: green-${{ matrix.vp }}-${{ matrix.shard }}-
-      # and add `--changed --cache tools/.green-cache.json` to the playthrough command in the next step. actions/cache saves the file after the
-      # job, so only a green leg refreshes it.
-      # ---------------------------------------------------------------------------------------------------------------------------------------
-      - name: playthrough --all --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n }} (${{ matrix.vp }})
+      # The green-hash cache (docs/CI.md, "The green-hash cache"): this job's own file, restored from the newest cache under its prefix (the prefix ends
+      # in "-", so shard 1 never matches shard 10). A full run restores nothing: it replays everything and saves a fresh file. The cache is saved under a
+      # key unique to this attempt (caches are immutable), only when the job was not cancelled and recorded something new.
+      - name: Restore the green cache
+        if: needs.plan.outputs.mode == 'changed'
+        uses: actions/cache/restore@v4
+        with:
+          path: app/tools/.green-cache.json
+          key: green-play-${{ needs.plan.outputs.n }}-${{ matrix.vp }}-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: green-play-${{ needs.plan.outputs.n }}-${{ matrix.vp }}-${{ matrix.shard }}-
+      - name: Select the changed items (no browser)
+        id: sel
         env:
           SHARD: ${{ matrix.shard }}
           N: ${{ needs.plan.outputs.n }}
@@ -250,10 +267,43 @@ jobs:
         run: |
           set -o pipefail
           flag=""; [ "$VP" = mobile ] && flag="--mobile"
-          node tools/playthrough.mjs --all --shard "$SHARD/$N" --no-routes $flag 2>&1 | tee "$RUNNER_TEMP/play.log" | tail -40
+          args="--all --shard $SHARD/$N --no-routes $flag"
+          echo "PT_ARGS=$args" >> "$GITHUB_ENV"
+          PT_ARGS="$args" bash tools/ci-green.sh select "play $SHARD $VP"
+      - name: Install Playwright (only when something changed)
+        if: steps.sel.outputs.k != '0'
+        uses: ./.github/actions/zq-playwright
+      - name: playthrough --all --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n }} (${{ matrix.vp }}, ${{ needs.plan.outputs.mode }}, ${{ steps.sel.outputs.k }} of ${{ steps.sel.outputs.n }})
+        if: steps.sel.outputs.k != '0'
+        env:
+          MODE: ${{ needs.plan.outputs.mode }}
+        run: |
+          set -o pipefail
+          chg=""; [ "$MODE" = changed ] && chg="--changed"
+          node tools/playthrough.mjs $PT_ARGS $chg --cache tools/.green-cache.json 2>&1 | tee "$RUNNER_TEMP/play.log" | tail -40
       - name: Failing lines
         if: failure()
         run: grep -E '^(FAIL|PLANTED-FAIL)' "$RUNNER_TEMP/play.log" | head -40 || true
+      - name: Did the cache grow
+        id: fin
+        if: ${{ !cancelled() && steps.sel.outputs.k != '0' }}
+        env:
+          BEFORE: ${{ steps.sel.outputs.before }}
+        run: bash tools/ci-green.sh dirty "$BEFORE"
+      - name: Save the green cache
+        if: ${{ !cancelled() && steps.fin.outputs.dirty == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: app/tools/.green-cache.json
+          key: green-play-${{ needs.plan.outputs.n }}-${{ matrix.vp }}-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Record changed K of N
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: changed-play-${{ matrix.vp }}-${{ matrix.shard }}
+          path: ${{ runner.temp }}/changed.txt
+          retention-days: 1
+          if-no-files-found: ignore
       - id: clock
         if: always()
         run: |
@@ -281,8 +331,16 @@ jobs:
             app
             .github
       - uses: ./.github/actions/zq-setup
-        with: { playwright: "true" }
-      - name: playthrough ${{ matrix.part }} (${{ matrix.vp }})
+      # The green-hash cache: the same scheme as the play job (this job's own file, newest under its prefix, saved under a key unique to the attempt).
+      - name: Restore the green cache
+        if: needs.plan.outputs.mode == 'changed'
+        uses: actions/cache/restore@v4
+        with:
+          path: app/tools/.green-cache.json
+          key: green-extras-${{ matrix.vp }}-${{ matrix.part }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: green-extras-${{ matrix.vp }}-${{ matrix.part }}-
+      - name: Select the changed items (no browser)
+        id: sel
         env:
           PART: ${{ matrix.part }}
           VP: ${{ matrix.vp }}
@@ -300,11 +358,43 @@ jobs:
               [ "$i" = 1 ] && args="$args--session"
               echo "drills in this part: $(echo "$ids" | wc -l)" ;;
           esac
-          # word splitting of $args is intended: it is a list of flags
-          node tools/playthrough.mjs $args $flag 2>&1 | tee "$RUNNER_TEMP/extras.log" | tail -40
+          echo "PT_ARGS=$args $flag" >> "$GITHUB_ENV"
+          PT_ARGS="$args $flag" bash tools/ci-green.sh select "extras $PART $VP"
+      - name: Install Playwright (only when something changed)
+        if: steps.sel.outputs.k != '0'
+        uses: ./.github/actions/zq-playwright
+      - name: playthrough ${{ matrix.part }} (${{ matrix.vp }}, ${{ needs.plan.outputs.mode }}, ${{ steps.sel.outputs.k }} of ${{ steps.sel.outputs.n }})
+        if: steps.sel.outputs.k != '0'
+        env:
+          MODE: ${{ needs.plan.outputs.mode }}
+        run: |
+          set -o pipefail
+          chg=""; [ "$MODE" = changed ] && chg="--changed"
+          # word splitting of $PT_ARGS is intended: it is a list of flags
+          node tools/playthrough.mjs $PT_ARGS $chg --cache tools/.green-cache.json 2>&1 | tee "$RUNNER_TEMP/extras.log" | tail -40
       - name: Failing lines
         if: failure()
         run: grep -E '^(FAIL|PLANTED-FAIL)' "$RUNNER_TEMP/extras.log" | head -40 || true
+      - name: Did the cache grow
+        id: fin
+        if: ${{ !cancelled() && steps.sel.outputs.k != '0' }}
+        env:
+          BEFORE: ${{ steps.sel.outputs.before }}
+        run: bash tools/ci-green.sh dirty "$BEFORE"
+      - name: Save the green cache
+        if: ${{ !cancelled() && steps.fin.outputs.dirty == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: app/tools/.green-cache.json
+          key: green-extras-${{ matrix.vp }}-${{ matrix.part }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Record changed K of N
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: changed-extras-${{ matrix.vp }}-${{ matrix.part }}
+          path: ${{ runner.temp }}/changed.txt
+          retention-days: 1
+          if-no-files-found: ignore
       - id: clock
         if: always()
         run: |
@@ -322,14 +412,34 @@ jobs:
       run:
         working-directory: .
     steps:
+      # each play and extras job uploads one line, "<job>: changed K of N" (a cancelled job uploads none)
+      - name: Fetch the changed K of N lines
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: changed-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/changed
       - name: Summary and verdict
         env:
           NEEDS: ${{ toJSON(needs) }}
+          MODE: ${{ needs.plan.outputs.mode }}
+          EVENT: ${{ github.event_name }}
+          CH: ${{ runner.temp }}/changed
         run: |
           set -o pipefail
           {
             echo "### acceptance"
             echo
+            echo "mode: **${MODE:-unknown}** (${EVENT}). changed: replays only what the green-hash cache could not vouch for; full: replays everything and reseeds the cache."
+            echo
+            if ls "$CH"/*.txt > /dev/null 2>&1; then
+              echo '```'
+              cat "$CH"/*.txt | sort -V
+              cat "$CH"/*.txt | awk '{ k += $(NF-2); n += $NF } END { printf "total: changed %d of %d across %d jobs\n", k, n, NR }'
+              echo '```'
+              echo
+            fi
             echo "| job | result | wall clock |"
             echo "| --- | --- | --- |"
             echo "$NEEDS" | jq -r 'to_entries[] | "| \(.key) | \(.value.result) | \(if .value.outputs.secs then (.value.outputs.secs + " s") else "see the legs" end) |"'

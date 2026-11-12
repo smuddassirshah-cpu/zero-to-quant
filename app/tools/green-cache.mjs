@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const sha = (b) => crypto.createHash('sha1').update(b).digest('hex');
@@ -55,6 +56,30 @@ export const makeLookup = (entries) => {
     by.get(key).push([new Set(String(mode).split('+')), h]);
   }
   return (kind, id, modes, hash) => (by.get(kind + '|' + id) || []).some(([set, h]) => h === hash && modes.every(m => set.has(m)));
+};
+
+/* ---------- The browser: the Playwright version is part of the engine hash (the Chromium build follows from it) ----------
+   The installed package is read from package.json without importing it (so --list needs no browser): node_modules up the tree from app/, then NODE_PATH, then the
+   global root. When none is installed (CI's pre-install selection step), ZQ_PLAYWRIGHT_VERSION, which .github/actions/zq-playwright exports from its pin, stands in; the
+   installed version wins whenever it is there, so a drifted install changes the hash. No version at all hashes as "none". */
+let pwMemo;
+export const playwrightVersion = ({ appDir, roots, env = process.env } = {}) => {
+  const memoable = !roots && appDir === undefined;
+  if (memoable && pwMemo !== undefined) return pwMemo;
+  const cand = [];
+  if (roots) cand.push(...roots);
+  else {
+    for (let d = path.resolve(appDir || process.cwd()), prev = null; d !== prev; prev = d, d = path.dirname(d)) cand.push(path.join(d, 'node_modules'));
+    (env.NODE_PATH || '').split(path.delimiter).filter(Boolean).forEach(p => cand.push(p));
+  }
+  let v = null;
+  const tryRoot = (r) => { try { const j = JSON.parse(fs.readFileSync(path.join(r, 'playwright', 'package.json'), 'utf8')); if (j && typeof j.version === 'string') v = j.version; } catch { /* not here */ } };
+  for (const r of cand) { tryRoot(r); if (v) break; }
+  if (!v && !roots) { try { tryRoot(execSync('npm root -g', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10000 }).trim()); } catch { /* no npm */ } }
+  if (!v && env.ZQ_PLAYWRIGHT_VERSION) v = String(env.ZQ_PLAYWRIGHT_VERSION).trim();
+  v = v || 'none';
+  if (memoable) pwMemo = v;
+  return v;
 };
 
 /* ---------- Hashing ---------- */
@@ -195,7 +220,7 @@ export const createHasher = ({ appDir, selfFile }) => {
     const files = [...walk(path.join(appDir, 'js')), ...walk(path.join(appDir, 'css')), path.join(appDir, 'index.html'), ...walk(path.join(appDir, 'vendor'))];
     const cdn = new Set();
     for (const p of files) if (/\.(js|mjs|html|css)$/.test(p)) { let t = ''; try { t = fs.readFileSync(p, 'utf8'); } catch { /* skip */ } for (const m of t.matchAll(/(?:\/npm\/((?:@[\w.-]+\/)?[\w.-]+@\d[\w.-]*)|\/(pyodide\/v\d[\d.]*))/g)) cdn.add(m[1] || m[2]); }
-    eng = sha(['js/css/index/vendor ' + filesHash(files), 'playthrough ' + sha(fs.readFileSync(selfFile)), 'green-cache ' + sha(fs.readFileSync(SELF)), 'cdn ' + [...cdn].sort().join(',')].join('\n'));
+    eng = sha(['js/css/index/vendor ' + filesHash(files), 'playthrough ' + sha(fs.readFileSync(selfFile)), 'green-cache ' + sha(fs.readFileSync(SELF)), 'cdn ' + [...cdn].sort().join(','), 'playwright ' + playwrightVersion({ appDir })].join('\n'));
     return eng;
   };
   /* itemHash(kind, id): the engine hash plus what the kind's page reads */

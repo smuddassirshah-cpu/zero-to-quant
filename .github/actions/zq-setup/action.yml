@@ -21,24 +21,15 @@ runs:
       with:
         node-version: "22"
 
-    - name: Playwright browser cache
-      if: inputs.playwright == 'true'
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/ms-playwright
-        key: pw-1.63.0-chromium-shell-${{ runner.os }}
-
-    # There is no package.json: the tools do import('playwright'), which resolves from the workspace root.
-    - name: Install Playwright 1.63.0 and Chromium
-      if: inputs.playwright == 'true'
+    # The Playwright version is part of the green-hash engine hash (tools/green-cache.mjs). The installed package is what is hashed; this pin stands in
+    # before the install, so the play and extras jobs can select changed items without a browser. Keep it equal to the pin in zq-playwright.
+    - name: Pin for the green-hash engine hash
       shell: bash
-      working-directory: ${{ github.workspace }}
-      run: |
-        set -o pipefail
-        npm i --no-save --no-package-lock --no-audit --no-fund playwright@1.63.0 2>&1 | tail -5
-        npx playwright install --with-deps --only-shell chromium 2>&1 | tail -5
-        # tools run from a temp copy of app/ cannot resolve the workspace node_modules; the loaders fall back to NODE_PATH
-        echo "NODE_PATH=${{ github.workspace }}/node_modules" >> "$GITHUB_ENV"
+      run: echo "ZQ_PLAYWRIGHT_VERSION=1.63.0" >> "$GITHUB_ENV"
+
+    - name: Playwright and Chromium
+      if: inputs.playwright == 'true'
+      uses: ./.github/actions/zq-playwright
 
     - uses: actions/setup-python@v5
       if: inputs.python == 'true'

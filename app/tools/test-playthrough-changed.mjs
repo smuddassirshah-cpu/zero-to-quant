@@ -10,7 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createHasher, readCache, writeGreen, keyOf } from './green-cache.mjs';
+import { createHasher, readCache, writeGreen, keyOf, playwrightVersion } from './green-cache.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), APP = path.resolve(HERE, '..');
 const PT = path.join(HERE, 'playthrough.mjs');
@@ -102,6 +102,31 @@ undo();
 const inCache = new Set(Object.keys(readCache(cache)).map(k => k.split('|').slice(0, 2).join('/')));
 ok(shardsOk && new Set(union).size === union.length && union.includes(`lesson/${L1}`), `shards 1/3 to 3/3 list each changed item once, each within its own unfiltered shard (${union.length} items, ${inCache.size} seeded)`);
 ok(!run(['--all', '--no-routes', '--shard', '1/3', '--changed', '--list', '--cache', cache]).stderr.includes('NaN'), '--shard with --changed prints its changed line');
+
+/* 7b. what the cache may be trusted for (engine pass AC part 5): the same viewport, and the same browser. Seeded at desktop, nothing is green for --mobile or --tablet;
+   the installed Playwright version is in the engine hash, so a different version (a new Chromium) lists everything, and the same version lists nothing. */
+r = changed();
+ok(r.ids.length === 0, `precondition: the desktop-seeded cache lists nothing at desktop (${r.err.trim()})`);
+r = changed(['--mobile']);
+ok(r.ids.length === 9 && /changed: 9 of 9 items/.test(r.err), `a cache written at desktop is not green for --mobile (${r.err.trim()})`);
+r = changed(['--tablet']);
+ok(r.ids.length === 9, `a cache written at desktop is not green for --tablet (${r.ids.length} of 9)`);
+const fakePw = path.join(tmp, 'node_modules', 'playwright');
+fs.mkdirSync(fakePw, { recursive: true });
+const setPw = (v) => fs.writeFileSync(path.join(fakePw, 'package.json'), JSON.stringify({ name: 'playwright', version: v }));
+setPw('1.63.0'); seed();
+r = changed();
+ok(r.ids.length === 0, `Playwright 1.63.0 seeded: nothing changed (${r.err.trim()})`);
+setPw('1.64.0');
+r = changed();
+ok(r.ids.length === 9, `Playwright 1.64.0 installed: the whole cache is stale (${r.err.trim()})`);
+const e1 = playwrightVersion({ roots: [path.join(tmp, 'node_modules')], env: {} });
+ok(e1 === '1.64.0', `playwrightVersion reads the installed package.json (${e1})`);
+ok(playwrightVersion({ roots: [path.join(tmp, 'nowhere')], env: { ZQ_PLAYWRIGHT_VERSION: '1.63.0' } }) === '1.63.0', 'with nothing installed the pinned ZQ_PLAYWRIGHT_VERSION stands in (the CI selection step before the browser install)');
+ok(playwrightVersion({ roots: [path.join(tmp, 'node_modules')], env: { ZQ_PLAYWRIGHT_VERSION: '1.63.0' } }) === '1.64.0', 'an installed version beats the pin');
+ok(playwrightVersion({ roots: [path.join(tmp, 'nowhere')], env: {} }) === 'none', 'no version at all is "none"');
+fs.rmSync(path.join(tmp, 'node_modules'), { recursive: true, force: true });
+seed();   // back to the ambient browser for the rest
 
 /* 8. a real run: a passing lesson is recorded, a failing one (invalid JSON) is not, and --no-cache records nothing */
 const good = `content/courses/${L1.split('/')[0]}/${L1.split('/')[1]}.json`, brk = `content/courses/${L2.split('/')[0]}/${L2.split('/')[1]}.json`;
