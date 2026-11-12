@@ -112,3 +112,17 @@ Notes from the authors' reports, for the fixer.
 ## Inbox
 
 Three bullets appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit delta batch 2)": a typed % sign on a per cent question without `unit: "%"`; a validator check of a numeric `accept` line and of a fluency placeholder against the key; a validator check on a slip band wide against its own value.
+
+## Fix pass
+
+Opus fixer, 12 Nov 2026. Each finding was re-derived from the content and `app/js/engine/grade.js` before any edit. No key, slip value, id or test changed.
+
+1. fixed. `app/content/courses/mm-games/review-3.json` `items[5].widget.wrong[2].tol` (`r-residual`, slip `decimal`): `abs` 0.005 to 0.0002. Basis: `parseNum` divides a typed "0.38%" by 100 to 0.0038, which lay inside the old band 0.0037 to 0.0137 and drew the `decimal` line; the new band 0.0085 to 0.0089 holds $2\sqrt{0.19}/100 = 0.008718$ and the rounded 0.00872 and 0.0088, and meets neither the key band nor the `var` and `lin` bands.
+2. fixed. `app/content/courses/conditional/problems-5.json` `items[3].parts[2].widget.wrong[3].tol` (slip `sign`): `abs` 0.005 to 0.01. Basis: $0.5299 \times 20 / 0.4701 = 22.5441$, outside the old band 22.545 to 22.555; the new band 22.54 to 22.56 also holds the unrounded 22.5486 and meets no other band, as every other band is negative.
+3. fixed. `app/content/courses/conditional/review-5.json` `items[4].widget.accept` (`r-low-prior`): "$0.4615 \pm 0.0005$" to "$0.4615 \pm 0.005$". Basis: the key tolerance is 0.005, so 0.46 is graded right; $6/13 = 0.46154$, and the line now states the band the engine applies.
+4. fixed. `app/content/courses/odes/fluency-l3-integrating-factor.json` `families[1].prompt`; `app/content/courses/odes/fluency-l7-characteristic-equation.json` `families[2].prompt` and `families[3].prompt`: inserted "for ${v}(t)$," (l3) and "for $y(t)$," (l7) before "with". Basis: the expression grader compares over the union of both sides' unknowns, so an answer in $x$ against a key in $t$ fails; no other family in the three sets leaves the variable unnamed (l2 writes $d/dt$ and $d/dT$, `find-the-factor` asks for $\mu(t)$, the other l7 families ask for roots).
+5. fixed. `app/content/courses/odes/fluency-l2-separable.json` `families[3].widget.placeholder` (`discount`): "For example 81.87" to "For example 123.45". Basis: enumerating all 729 draws gives 3 with key 81.87 and none within 0.31 of 123.45; the savings placeholder 15569.31 is at least 68.69 from all 819 savings keys, so it stays.
+
+Siblings checked, none needing a fix: every numeric widget in the three mm-games and conditional files for `accept` bands against `tol`, for slip bands overlapping, and for mirror or decimal slips narrower than the key. `r-fraud-flag` states $\pm 0.0005$ with tolerance 0.0005, which agrees.
+
+Gates: validator 0 errors, 4,522 warnings; `delta-2026-11-12-2-concepts.py` exit 0 (15,843 checks, no check edited); number scripts conditional-2-perf, conditional-4-perf, mm-games-3-perf, odes-L1 to L4 all exit 0; voice gate 35 at 0 and 0 for mm-games, conditional and odes; playthrough of the six edited files plain and `--mobile` with `--local-cdn`, all passed.
