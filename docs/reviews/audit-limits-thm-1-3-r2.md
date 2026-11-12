@@ -87,3 +87,39 @@ Bullets for the orchestrator to file; `docs/BACKLOG-INBOX.md` is not edited here
 
 - Number scripts: the review sets of limits-thm levels 1 to 3 have no number script (`problems-limits-thm-numbers.py`, the fluency script and the three perf scripts cover problems, fluency and the derivation items only). `review-2` `r-pareto-mean` `half` (0.5 against a named route worth 2/3) passed every gate and two reads. Add review and homework slip values to a course number script, each recomputed from the route its `byKey` line names. This is the slip-naming class again.
 - Lint, warning only: flag "without independence", "needs independence", "only for independent", "fails for" and "would block" in content strings for a manual read. Three of this round's findings (2, 5, 11) are a sufficient condition written as a necessary one.
+
+## Fix pass
+
+Fixer: Opus, own basis per finding (sources named, or a derivation recomputed with sympy and scipy in a scratch run, not with the auditor's script).
+
+1. `review-2` `r-pareto-mean` slip `half`: fixed. Changed the slip value (0.5 to 0.6667, id and tol kept) and the feedback to the auditor's text, so the named route gives the slip. Basis: $\int_1^\infty 2x^{-4}\,dx = [-\tfrac{2}{3}x^{-3}]_1^\infty = \tfrac23$, sympy `2/3` and `quad` 0.66667; no route to 0.5 is natural, so the value moved, not the route. 0.6667 is clear of the key 2 and the slip 1.
+2. `l1` `screens[7]`: fixed. Basis: Bienaymé, $\operatorname{Var}(\sum I_i) = \sum \operatorname{Var} I_i + \sum_{i \ne j} \operatorname{Cov}$; zero covariance suffices (Ross, A First Course in Probability, 7.4).
+3. `l8` `screens[0]` `drop`: fixed. Basis: $\tfrac12(100 + 50) = 75$, the mean move size; $\tfrac12(100 - 50) = 25$ is the true mean move.
+4. `l10` `screens[3]` `flipped`: fixed. Basis: Markov's $E[X]/a$ exceeds 1 whenever $a < E[X]$ and is then valid but empty (here $10/2 = 5$).
+5. `l10` `summary.trap`: fixed. Basis: $X \ge 0$ is sufficient; $X = \pm 1$ equally likely breaks it at $a = 1$ (0.5 against 0), while $N(1, 1)$ at $a = 3$ keeps it (0.0228 against 0.333).
+6. `l7` `screens[4]`: fixed. Basis: $\Phi(-0.5)/\Phi(-2) = 0.30854/0.02275 = 13.56$.
+7. `l3` `screens[4]` `zero`: fixed. Basis: $e^{-1.5} = 0.2231 > 0.2$, one in 4.48.
+8. `problems-3` `p-maker-days` part 3 `why`: fixed. Basis: Lindeberg-Lévy needs only iid with finite variance (Durrett, Probability: Theory and Examples, 3.4.1); $np(1 - p) = 250 \times 0.02275 \times 0.97725 = 5.56$, below 10.
+9. `problems-3` part 1 explain: fixed with different text: `One trade alone loses often; a whole day loses only about one day in 44.` "Once in 44" left the unit implicit. Basis: $1/0.02275 = 43.96$; 5.69 days in 250.
+10. `l9` `screens[0]`: fixed. Basis: $\bar X_n - 3.5 = \tfrac1n \sum (X_i - 3.5)$ with the sum of sd $1.708\sqrt n$, so the miss shrinks like $1/\sqrt n$; small steps alone do not converge (harmonic sum).
+11. `l11` `screens[8]` third sentence: fixed. Basis: $t_2$ has $\int_{|x|<u} x^2 f \sim 2 \ln u$, slowly varying, so it lies in the normal domain of attraction with infinite variance (Feller vol. 2, IX.8 and XVII.5).
+
+Siblings: none of the eleven errors repeats in review, homework or problems echoes (grep over levels 1 to 3). "The binomial needs independence" (`l1`) left: it states the model's assumption, not a theorem's hypothesis.
+
+### Unverified market remarks
+
+- `l9` `screens[7]`: softened to a hypothetical, `A P&L with a tail this fat would behave the same way.` Basis: for iid draws with $E|X| = \infty$ the average does not converge (Durrett 2.4, converse of the strong law).
+- `l9` `screens[8]`: replaced with arithmetic, `Over 20 trades the average is fuzzy by about 0.45%, enough to hide an edge of 0.1% a trade.` Basis: $2/\sqrt{20} = 0.447$, so 0.1% is under a quarter of one sd. ("return" dropped to meet the 20-word target.)
+- `l10` `screens[3]`: softened to a condition, `If volume seldom strays far from 2 million, the true chance is much smaller.` Basis: Chebyshev, sd 1 million gives at most $1/64$.
+- `l10` `screens[8]`: replaced with a computed model, `A fat-tailed model sits between: a Student $t$ with 4 degrees of freedom expects about 3.` Basis: unit-sd $t_4$, $2\,P(T_4 > 3\sqrt2) = 0.01324$, times 250 is 3.3 (scipy); $t_3$ and $t_5$ give 3.5 and 2.9.
+
+### l11 `screens[8]`, "summing 20 days thins the tails"
+
+Condition stated: the first sentence now reads `In real returns, summing 20 days thins the tails, so monthly returns look more normal than daily ones.`, and the sibling `why` of option `further` reads `In real returns, summing pulls the shape towards the bell.` Basis: the auditor's note holds on my own run, a normal-shock GARCH(1,1) (0.02, 0.08, 0.90) over 2 million days gives excess kurtosis 1.32 daily, 1.67 at 20 days. For real data it is Cont (2001), Quantitative Finance 1, stylised fact 4 (aggregational Gaussianity). The key is unchanged.
+
+### Gates
+
+- `limits-thm-L1-3-concepts-r2.py` exit 0 (226 checks, 0 failed); `limits-thm-L1-3-concepts.py`, `problems-limits-thm-numbers.py`, `fluency-limits-thm-numbers.py` and the three perf scripts exit 0. No assertion needed changing.
+- Validator 0 errors, 5024 warnings (one new O2 warning: the 28-word `l9` `screens[0]` sentence, kept whole because splitting it would make four sentences). `content/manifest.json` unchanged.
+- Voice scan 35: 0 and 0.
+- Playthrough with `--local-cdn`, desktop and `--mobile`: `l1`, `l3`, `l7`, `l8`, `l9`, `l10`, `l11`, `--set review-2`, `--problems problems-3`, all "All passed", 0 relaunches.
