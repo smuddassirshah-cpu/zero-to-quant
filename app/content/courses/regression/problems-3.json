@@ -1,0 +1,978 @@
+{
+  "id": "problems-3",
+  "course": "regression",
+  "level": 3,
+  "title": "Problems: many variables",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-power-price",
+      "difficulty": 4,
+      "skills": [
+        "rg-multiple"
+      ],
+      "prose": "An analyst explains the day-ahead power price by the gas price and the carbon price, over 200 days. With both predictors the gas slope is 1.5 and the carbon slope 0.8. Gas has standard deviation 10 and carbon 5, each in its own units. On gas alone the slope is 1.74.",
+      "parts": [
+        {
+          "question": "When carbon is left out, the gas slope becomes $1.5 + 0.8\\delta$, where $\\delta$ is the slope of carbon on gas. What is $\\delta$? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-divide",
+                "value": 0.24,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "sign",
+                "value": -0.3,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "times",
+                "value": 0.192,
+                "tol": {
+                  "abs": 0.003
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.5 + 0.8\\delta = 1.74$ gives $\\delta = 0.24/0.8 = 0.30$.",
+            "generic": "Not quite. Set $1.5 + 0.8\\delta$ equal to the slope on gas alone.",
+            "byKey": {
+              "no-divide": "0.24 is the extra slope, $0.8\\delta$. Divide by 0.8 to get $\\delta$.",
+              "sign": "Gas alone gives the larger slope, so the extra is $+0.24$ and $\\delta$ is positive.",
+              "times": "You multiplied 0.24 by 0.8. The extra slope is $0.8\\delta$, so divide."
+            }
+          },
+          "explain": {
+            "text": "Gas alone picks up carbon's effect in proportion to how carbon moves with gas. The extra 0.24 is $0.8\\delta$, so $\\delta = 0.30$."
+          }
+        },
+        {
+          "question": "Using $\\delta = 0.30$, what is the correlation between gas and carbon? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.6,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 0.15,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "same",
+                "value": 0.3,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.48,
+                "tol": {
+                  "abs": 0.003
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\delta = r\\,s_{\\text{carbon}}/s_{\\text{gas}}$, so $r = 0.30 \\times 10/5 = 0.60$.",
+            "generic": "Not quite. A slope is the correlation times the ratio of standard deviations.",
+            "byKey": {
+              "inverted": "You multiplied by $5/10$. The slope of carbon on gas has carbon's spread on top, so $r = \\delta \\times 10/5$.",
+              "same": "A slope equals the correlation only when the two spreads match. Here they are 10 and 5.",
+              "carried": "That uses $\\delta = 0.24$ from a slip in part 1. With 0.30, $r = 0.60$."
+            }
+          },
+          "explain": {
+            "text": "The slope of carbon on gas is $r$ times carbon's spread over gas's. So $0.30 = r \\times 5/10$, and $r = 0.60$."
+          }
+        },
+        {
+          "question": "Using $r = 0.60$, what is the variance inflation factor of the gas slope in the two-predictor fit? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.5625,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-square",
+                "value": 2.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "root",
+                "value": 1.25,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "r2",
+                "value": 0.36,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "carried",
+                "value": 1.2994,
+                "tol": {
+                  "abs": 0.003
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\mathrm{VIF} = 1/(1 - 0.6^2) = 1/0.64 = 1.5625$.",
+            "generic": "Not quite. $\\mathrm{VIF} = 1/(1 - R_j^2)$, and with two predictors $R_j^2 = r^2$.",
+            "byKey": {
+              "no-square": "That is $1/(1 - r)$. The VIF uses $R_j^2 = r^2 = 0.36$.",
+              "root": "1.25 is the root of the VIF, the factor on the standard error. The VIF is on the variance.",
+              "r2": "0.36 is $R_j^2$. The VIF is $1/(1 - 0.36)$.",
+              "carried": "That uses $r = 0.48$ from a slip in part 2. With $r = 0.60$ the VIF is 1.5625."
+            }
+          },
+          "explain": {
+            "text": "With two predictors, regressing gas on carbon gives $R_j^2 = r^2 = 0.36$. So the VIF is $1/0.64 = 1.5625$: the gas slope's variance is 56% larger than with uncorrelated predictors."
+          }
+        },
+        {
+          "question": "The two-predictor fit reports a standard error of 0.05 for the gas slope. Using $\\mathrm{VIF} = 1.5625$, what would it be with uncorrelated predictors, the same spreads and the same noise? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.04,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "by-vif",
+                "value": 0.032,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "times",
+                "value": 0.0625,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "times-vif",
+                "value": 0.0781,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.0439,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\mathrm{SE} \\propto \\sqrt{\\mathrm{VIF}}$, so $0.05 / \\sqrt{1.5625} = 0.05 / 1.25 = 0.04$.",
+            "generic": "Not quite. The VIF multiplies the variance, so the standard error carries its square root.",
+            "byKey": {
+              "by-vif": "You divided by the VIF itself, 1.5625. The VIF is on the variance, so the standard error carries its root, 1.25.",
+              "times": "You multiplied by 1.25. Collinearity makes the error larger, so uncorrelated predictors give a smaller one: divide.",
+              "times-vif": "You multiplied by the VIF. Uncorrelated predictors give a smaller error: divide by the root of the VIF, 1.25.",
+              "carried": "That uses a VIF of 1.2994 from a slip in part 3. With 1.5625 the answer is 0.04."
+            }
+          },
+          "explain": {
+            "text": "The variance carries the factor 1.5625, so the standard error carries $\\sqrt{1.5625} = 1.25$. With uncorrelated predictors it would be $0.05 / 1.25 = 0.04$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-solar-output",
+      "difficulty": 5,
+      "skills": [
+        "rg-multiple",
+        "rg-inference"
+      ],
+      "prose": "A solar farm models daily output $y$ (MWh) on sunshine hours $x_1$ and air temperature $x_2$ (°C) over 24 days. Measured from their means, the sums of squares and products are $S_{11} = 40$, $S_{12} = 24$, $S_{22} = 30$, $S_{1y} = 88$, $S_{2y} = 45$ and $S_{yy} = 250$.",
+      "parts": [
+        {
+          "question": "With centred predictors the intercept drops out, and the slopes solve $40b_1 + 24b_2 = 88$ and $24b_1 + 30b_2 = 45$. What is $b_1$, in MWh per hour of sunshine? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "unit": "MWh per hour",
+            "wrong": [
+              {
+                "id": "simple",
+                "value": 2.2,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "cramer-sign",
+                "value": 5.9615,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "swapped",
+                "value": -0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Multiply the first equation by 30 and the second by 24, then subtract: $624b_1 = 1{,}560$, so $b_1 = 2.50$.",
+            "generic": "Not quite. Eliminate $b_2$ between the two equations.",
+            "byKey": {
+              "simple": "$88/40 = 2.2$ is the slope on sunshine alone. With temperature in the model, solve both equations together.",
+              "cramer-sign": "You added the cross term. Eliminating $b_2$ gives $(30 \\times 88 - 24 \\times 45)/(40 \\times 30 - 24^2)$.",
+              "swapped": "That is $b_2$, the temperature slope. $b_1$ multiplies 40 in the first equation."
+            }
+          },
+          "explain": {
+            "text": "Eliminate $b_2$: $30 \\times 88 - 24 \\times 45 = 1{,}560$ and $40 \\times 30 - 24^2 = 624$, so $b_1 = 2.5$ MWh per hour of sunshine, holding temperature fixed. These are the normal equations $\\mathbf{X}^T\\mathbf{X}\\hat{\\boldsymbol\\beta} = \\mathbf{X}^T\\mathbf{y}$ for the two slopes."
+          }
+        },
+        {
+          "question": "Using $b_1 = 2.5$, what is $b_2$, in MWh per °C? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "unit": "MWh per °C",
+            "wrong": [
+              {
+                "id": "simple",
+                "value": 1.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sign",
+                "value": 3.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "carried",
+                "value": -0.26,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "no-sign",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$30b_2 = 45 - 24 \\times 2.5 = -15$, so $b_2 = -0.50$.",
+            "generic": "Not quite. Put $b_1 = 2.5$ into the second equation.",
+            "byKey": {
+              "simple": "$45/30 = 1.5$ is the slope on temperature alone. Holding sunshine fixed, take $24 \\times 2.5$ off first.",
+              "sign": "You added $24 \\times 2.5$. It moves to the other side: $30b_2 = 45 - 60$.",
+              "carried": "That uses $b_1 = 2.2$ from a slip in part 1. With 2.5, $b_2 = -0.5$.",
+              "no-sign": "$45 - 60 = -15$, so $b_2$ is negative: $-0.5$."
+            }
+          },
+          "explain": {
+            "text": "On its own, temperature has slope $45/30 = 1.5$, because hot days are sunny days. Holding sunshine fixed, a warmer day yields 0.5 MWh less, since hot panels are less efficient."
+          }
+        },
+        {
+          "question": "The explained sum of squares is $b_1S_{1y} + b_2S_{2y}$. Using $b_1 = 2.5$ and $b_2 = -0.5$, what is SSE, in MWh²? Give your answer to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 52.5,
+            "tol": {
+              "abs": 0.05
+            },
+            "unit": "MWh²",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 7.5,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "ess",
+                "value": 197.5,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "carried",
+                "value": 68.1,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "ESS $= 2.5 \\times 88 - 0.5 \\times 45 = 197.5$, so SSE $= 250 - 197.5 = 52.5$.",
+            "generic": "Not quite. Find the explained sum, then take it from $S_{yy} = 250$.",
+            "byKey": {
+              "sign": "You added $0.5 \\times 45$. With $b_2 = -0.5$ the temperature term subtracts.",
+              "ess": "197.5 is the explained sum. SSE is what is left of 250.",
+              "carried": "That uses $b_1 = 2.2$ and $b_2 = -0.26$, from a slip in part 1. With 2.5 and $-0.5$, SSE is 52.5."
+            }
+          },
+          "explain": {
+            "text": "The fit explains 197.5 of the total 250 and leaves an SSE of 52.5 MWh². The negative $b_2$ makes the temperature term subtract."
+          }
+        },
+        {
+          "question": "Using $\\mathrm{SSE} = 52.5$, what is $s^2$, the residual variance statsmodels reports as `scale`? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "unit": "MWh²",
+            "wrong": [
+              {
+                "id": "by-n",
+                "value": 2.1875,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "n-2",
+                "value": 2.3864,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "n-1",
+                "value": 2.2826,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "carried",
+                "value": 3.2429,
+                "tol": {
+                  "abs": 0.003
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$s^2 = 52.5/(24 - 2 - 1) = 52.5/21 = 2.50$.",
+            "generic": "Not quite. Divide SSE by $n - k - 1$.",
+            "byKey": {
+              "by-n": "That divides by 24. Three coefficients were fitted, so divide by 21.",
+              "n-2": "$n - 2$ is for one predictor. With two predictors and an intercept, divide by $24 - 3 = 21$.",
+              "n-1": "That divides by 23. The residuals lose one degree of freedom for each of the three coefficients.",
+              "carried": "That uses SSE $= 68.1$ from a slip in part 3. With 52.5, $s^2 = 2.5$."
+            }
+          },
+          "explain": {
+            "text": "Three coefficients were fitted, the intercept and two slopes, so the residuals keep $n - k - 1 = 21$ degrees of freedom. Then $s^2 = 52.5/21 = 2.5$ MWh²."
+          }
+        },
+        {
+          "question": "Using $s^2 = 2.5$ and the total variance $S_{yy}/(n - 1)$, what is the adjusted $R^2$? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.77,
+            "tol": {
+              "abs": 0.001
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "plain",
+                "value": 0.79,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "n",
+                "value": 0.76,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.79875,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "carried-n2",
+                "value": 0.780455,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\bar R^2 = 1 - 2.5/(250/23) = 1 - 0.23 = 0.770$.",
+            "generic": "Not quite. Compare $s^2$ with $S_{yy}/23$, each a variance per degree of freedom.",
+            "byKey": {
+              "plain": "0.79 is the plain $R^2$, $197.5/250$. The adjusted one charges for the two predictors.",
+              "n": "That divides $S_{yy}$ by 24. The total has $n - 1 = 23$ degrees of freedom.",
+              "carried": "That uses $s^2 = 2.1875$, the divide-by-$n$ slip in part 4. With 2.5 the answer is 0.770.",
+              "carried-n2": "That uses $s^2 = 2.386$, the $n - 2$ slip in part 4. With 2.5 the answer is 0.770."
+            }
+          },
+          "explain": {
+            "text": "Adjusted $R^2$ compares variances, each per degree of freedom: $1 - s^2/(S_{yy}/23) = 0.77$. It equals $1 - (1 - 0.79) \\times 23/21$, a little below the plain $R^2$ of 0.79."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-overlap-signal",
+      "difficulty": 5,
+      "skills": [
+        "rg-diagnostics",
+        "rg-inference"
+      ],
+      "prose": "A strategist regresses each day's next-5-day return, in %, on two signals over 503 days, with a constant. Each signal is a 5-day rolling average, so it shares 4 days with its neighbour. The fit has $\\mathrm{SSE} = 4{,}500$, in %². The diagonal entry of $(\\mathbf{X}^T\\mathbf{X})^{-1}$ for signal A is 0.0004, and signal A's coefficient is 0.21.",
+      "parts": [
+        {
+          "question": "What is the residual standard deviation $s$, in %? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.03,
+            "tol": {
+              "abs": 5e-05
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "by-n",
+                "value": 0.02991,
+                "tol": {
+                  "abs": 3e-05
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 0.09,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$s^2 = 4{,}500/(503 - 2 - 1) = 9$, so $s = 3.00\\%$.",
+            "generic": "Not quite. Divide SSE by $n - k - 1$, then take the root.",
+            "byKey": {
+              "by-n": "That divides by 503. The fit used three coefficients, so divide by 500.",
+              "no-root": "9 is $s^2$, in %². Take its root."
+            }
+          },
+          "explain": {
+            "text": "Three coefficients were fitted, so the residuals keep $503 - 3 = 500$ degrees of freedom. Then $s^2 = 4{,}500/500 = 9$ and $s = 3\\%$."
+          }
+        },
+        {
+          "question": "Using $s = 3\\%$, what is the usual standard error of signal A's coefficient? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.06,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-root-c",
+                "value": 0.0012,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "s2c",
+                "value": 0.0036,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.18,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\mathrm{SE} = \\sqrt{s^2 \\times 0.0004} = 3 \\times 0.02 = 0.06$.",
+            "generic": "Not quite. Take the root of $s^2$ times the diagonal entry.",
+            "byKey": {
+              "no-root-c": "That is $s \\times 0.0004$. The entry multiplies $s^2$, and the error is the root: $3 \\times \\sqrt{0.0004}$.",
+              "s2c": "0.0036 is the variance of the coefficient. Its root is the standard error.",
+              "carried": "That uses $s = 9$, the slip in part 1. With $s = 3$, $\\mathrm{SE} = 0.06$."
+            }
+          },
+          "explain": {
+            "text": "The covariance matrix of the coefficients is $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$. Signal A's standard error is the root of $9 \\times 0.0004$, which is 0.06."
+          }
+        },
+        {
+          "question": "Using $\\mathrm{SE} = 0.06$, what is the $t$ statistic statsmodels prints for signal A? Give your answer to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.5,
+            "tol": {
+              "abs": 0.05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "carried",
+                "value": 1.1667,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 58.33,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 0.2857,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$t = 0.21/0.06 = 3.5$.",
+            "generic": "Not quite. Divide the coefficient by its standard error.",
+            "byKey": {
+              "carried": "That divides by 0.18, from a slip in part 2. With 0.06, $t = 3.5$.",
+              "no-root": "That divides by the variance 0.0036. Divide by the error, 0.06.",
+              "inverted": "That is $0.06/0.21$. The estimate goes on top."
+            }
+          },
+          "explain": {
+            "text": "$t = \\hat\\beta/\\mathrm{SE} = 3.5$, far past the usual cut-off of about 1.96 on 500 degrees of freedom. But the usual error assumes independent residuals."
+          }
+        },
+        {
+          "question": "The returns and the signals both overlap by 4 days in 5. The naive $t$ is then too big by a factor of about $\\sqrt{1 + 2\\sum_{j=1}^{h-1}(1 - j/h)^2}$, with $h = 5$. Using the naive $t = 3.5$, what is the honest $t$? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.8981,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-root",
+                "value": 1.0294,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-two",
+                "value": 2.3597,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "times",
+                "value": 6.4537,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.6327,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "root-h",
+                "value": 1.5652,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The sum is $0.64 + 0.36 + 0.16 + 0.04 = 1.2$, the factor is $\\sqrt{3.4} \\approx 1.844$, and $3.5/1.844 \\approx 1.90$.",
+            "generic": "Not quite. Work out the factor for $h = 5$, then divide the naive $t$ by it.",
+            "byKey": {
+              "no-root": "You divided by 3.4. The factor is its root, about 1.844.",
+              "no-two": "You left out the 2. The factor is $\\sqrt{1 + 2 \\times 1.2}$.",
+              "times": "The naive $t$ is too big, so divide by the factor.",
+              "carried": "That starts from $t = 1.17$, a slip in part 3. From 3.5 the honest $t$ is about 1.90.",
+              "root-h": "You divided by $\\sqrt 5$. The factor is $\\sqrt{1 + 2 \\times 1.2} = \\sqrt{3.4}$."
+            }
+          },
+          "explain": {
+            "text": "Overlap makes neighbouring residuals share news, so the naive error is too small by a factor of about 1.844. Dividing gives an honest $t$ of about 1.90. HAC errors go only part of the way: in simulation they still reject a true zero about one time in ten."
+          }
+        },
+        {
+          "question": "Using the honest $t$ of about 1.90, what should the strategist conclude about signal A at 5%?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "not-sig",
+                "text": "Not significant at 5%: the naive $t$ counted overlapping returns as independent",
+                "correct": true
+              },
+              {
+                "id": "naive",
+                "text": "Signal A is significant, since the summary prints $t = 3.5$",
+                "why": "That $t$ treats 503 overlapping returns as independent. Corrected for overlap it is about 1.90, below 1.96."
+              },
+              {
+                "id": "no-effect",
+                "text": "Signal A has no effect on returns",
+                "why": "Not significant is not zero. The data are consistent with an effect but cannot rule out none."
+              },
+              {
+                "id": "hc1",
+                "text": "Refit with HC1 errors, which fix overlapping windows",
+                "why": "HC1 allows for changing variance only. Overlap is autocorrelation, which needs HAC errors with lags."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.90 < 1.96$: after the overlap correction the signal no longer clears 5%.",
+            "generic": "Not quite. Compare the honest $t$ with about 1.96."
+          },
+          "explain": {
+            "text": "The summary's $t$ and $p$ assume independent residuals, which overlapping windows break. With the honest $t$ near 1.90 the signal is suggestive, not established; a test on non-overlapping returns, or HAC errors, comes next."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-bond-fund-weeks",
+      "difficulty": 4,
+      "skills": [
+        "rg-multiple",
+        "rg-diagnostics"
+      ],
+      "prose": "A bond fund regresses its weekly return $y$, in %, on the week's change in the 10-year gilt yield $x_1$ and in credit spreads $x_2$, both in basis points, over 8 weeks. The fit is $\\hat y = 0.05 - 0.08x_1 - 0.03x_2$. The residuals for weeks 1 to 7 are 0.20, 0.30, 0.25, 0.10, $-0.10$, $-0.20$ and $-0.25$, in %.",
+      "parts": [
+        {
+          "question": "In week 8 the yield rose 10 bp and spreads fell 5 bp. What return does the model predict, in %? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.006,
+            "tol": {
+              "abs": 5e-05
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "spread-sign",
+                "value": -0.009,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-intercept",
+                "value": -0.0065,
+                "tol": {
+                  "abs": 3e-05
+                }
+              },
+              {
+                "id": "all-signs",
+                "value": 0.007,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-sign",
+                "value": 0.006,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.05 - 0.08 \\times 10 - 0.03 \\times (-5) = 0.05 - 0.80 + 0.15 = -0.60\\%$.",
+            "generic": "Not quite. Multiply each slope by its own change, minding the fall in spreads.",
+            "byKey": {
+              "spread-sign": "Spreads fell, so $x_2 = -5$ and $-0.03 \\times (-5) = +0.15$.",
+              "no-intercept": "You left out the intercept, 0.05.",
+              "all-signs": "The slopes carry minus signs: a rise in yields costs the fund, $-0.08 \\times 10 = -0.80$.",
+              "no-sign": "The yield rise costs more than the spreads give back, so the prediction is negative: $-0.60\\%$."
+            }
+          },
+          "explain": {
+            "text": "Each slope multiplies its own change, holding the other fixed. The yield rise costs 0.80%, the tighter spreads give back 0.15%, and the intercept adds 0.05%, for $-0.60\\%$."
+          }
+        },
+        {
+          "question": "Week 8's return was $-0.90\\%$. Using the prediction of $-0.60\\%$, what is week 8's residual, in %? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.003,
+            "tol": {
+              "abs": 5e-05
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "flipped",
+                "value": 0.003,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0,
+                "tol": {
+                  "abs": 3e-05
+                }
+              },
+              {
+                "id": "no-intercept",
+                "value": -0.0025,
+                "tol": {
+                  "abs": 3e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$e_8 = -0.90 - (-0.60) = -0.30\\%$.",
+            "generic": "Not quite. A residual is actual minus fitted.",
+            "byKey": {
+              "flipped": "That is fitted minus actual. The residual is $-0.90 - (-0.60)$.",
+              "carried": "That uses $-0.90\\%$, the spread-sign slip of part 1, as the prediction. With $-0.60\\%$ the residual is $-0.30\\%$.",
+              "no-intercept": "That uses $-0.65\\%$, the prediction without the intercept. With $-0.60\\%$ the residual is $-0.30\\%$."
+            }
+          },
+          "explain": {
+            "text": "Actual minus fitted: the fund lost 0.30% more than the model said. The eight residuals now add to 0, as they must with an intercept."
+          }
+        },
+        {
+          "question": "The first seven residuals' squares add to 0.315, and their six squared changes, $(e_t - e_{t-1})^2$, add to 0.0875. Using $e_8 = -0.30$, what is the Durbin-Watson statistic over all 8 weeks? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2222,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-week-8",
+                "value": 0.2778,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "flipped",
+                "value": 0.963,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "fitted",
+                "value": 0.3111,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 4.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The top gains $(-0.30 + 0.25)^2 = 0.0025$ and the bottom $0.09$, so $d = 0.09/0.405 \\approx 0.22$.",
+            "generic": "Not quite. Add week 8's change to the top and its square to the bottom.",
+            "byKey": {
+              "no-week-8": "That is $0.0875/0.315$, the first seven weeks only. Week 8 adds 0.0025 on top and 0.09 below.",
+              "flipped": "That uses $e_8 = +0.30$, the sign slip of part 2. With $-0.30$ the change from week 7 is only $-0.05$.",
+              "fitted": "That uses $-0.60$, the fitted value, as the residual. Week 8's residual is $-0.30$.",
+              "inverted": "That is the sum of squares over the squared changes. $d$ has the changes on top."
+            }
+          },
+          "explain": {
+            "text": "Week 8 adds one change, $(e_8 - e_7)^2 = 0.0025$, and one square, $e_8^2 = 0.09$. So $d = 0.09/0.405 \\approx 0.22$, far below the 2 of independent residuals."
+          }
+        },
+        {
+          "question": "Using $d \\approx 0.22$, what is the estimated autocorrelation $\\hat\\rho$ of the residuals, from $d \\approx 2(1 - \\hat\\rho)$? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.8889,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "half",
+                "value": 0.1111,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "no-two",
+                "value": 0.7778,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.8611,
+                "tol": {
+                  "abs": 0.003
+                }
+              },
+              {
+                "id": "carried-flip",
+                "value": 0.5185,
+                "tol": {
+                  "abs": 0.003
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\hat\\rho \\approx 1 - d/2 = 1 - 0.11 = 0.89$.",
+            "generic": "Not quite. Solve $d = 2(1 - \\hat\\rho)$ for $\\hat\\rho$.",
+            "byKey": {
+              "half": "0.11 is $d/2$. Take it from 1.",
+              "no-two": "That is $1 - d$. Halve $d$ first: $1 - 0.11$.",
+              "carried": "That uses $d = 0.278$, the week-7 slip of part 3. With 0.22, $\\hat\\rho \\approx 0.89$.",
+              "carried-flip": "That uses $d = 0.963$, from the sign slip. With 0.22, $\\hat\\rho \\approx 0.89$."
+            }
+          },
+          "explain": {
+            "text": "Halve $d$ and take it from 1, which gives $\\hat\\rho \\approx 0.89$. With only 8 weeks the rule is rough: the lag-1 correlation worked directly is 0.73. Either way, each week's miss carries most of the week before's."
+          }
+        },
+        {
+          "question": "Using $\\hat\\rho \\approx 0.89$, which standard errors should the fund report for its two slopes?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "hac",
+                "text": "HAC errors, `cov_type=\"HAC\"` with some lags, which allow for residuals that echo from week to week",
+                "correct": true
+              },
+              {
+                "id": "hc1",
+                "text": "HC1 errors, `cov_type=\"HC1\"`, which allow for a funnel",
+                "why": "HC1 corrects for changing variance. These residuals are autocorrelated, which HC1 ignores."
+              },
+              {
+                "id": "sum-zero",
+                "text": "The usual errors, since the residuals add to 0",
+                "why": "Residuals of a fit with an intercept always add to 0. That says nothing about their order."
+              },
+              {
+                "id": "cautious",
+                "text": "The usual errors, since positive autocorrelation makes them too large and so cautious",
+                "why": "With residuals and predictors that both echo, the usual errors are too small: 8 echoing weeks hold less news than 8 independent ones."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\hat\\rho \\approx 0.89$ is strong autocorrelation, which HAC errors are built for.",
+            "generic": "Not quite. Ask which assumption $d \\approx 0.22$ breaks."
+          },
+          "explain": {
+            "text": "A Durbin-Watson near 0 says neighbouring residuals move together, so the errors are not independent. HAC errors allow for that; HC1 handles only changing variance. With just 8 weeks, a longer record is the real cure."
+          }
+        }
+      ]
+    }
+  ]
+}

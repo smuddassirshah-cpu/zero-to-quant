@@ -1,6 +1,38 @@
 # Problem sets: testing (brief `docs/briefs/chained.md`)
 
-Files: `app/content/courses/testing/problems-4.json`. Numbers: `docs/reports/problems-testing-numbers.py` (exits 0, 309 checks). Levels 1 to 3 have no set yet.
+Files: `app/content/courses/testing/problems-1.json` to `problems-4.json`. Numbers: `docs/reports/problems-testing-numbers.py` (exits 0, 1,019 checks over the four sets; the level 4 part is unchanged).
+
+## Levels 1 to 3 (`problems-1.json`, `problems-2.json`, `problems-3.json`)
+
+Lessons read first: l1 to l12, with the quizzes, reviews 1 to 3 and homework 1 to 3 (settings listed to stay clear of them). Settings new to the course: cereal boxes, phone batteries, a wine taster, pizza deliveries; fertiliser trials, tyre brands, running shoes, a blood screen; a gene screen, fund managers under BH, checkout pages, a field of biomarkers.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-1 | p-cereal-boxes | 5 (3 / 2) | l1, l2, l3 | 3 |
+| problems-1 | p-phone-battery | 5 (4 / 1) | l1, l3, l4 | 5 |
+| problems-1 | p-wine-taster | 4 (4 / 0) | l1, l3 | 4 |
+| problems-1 | p-pizza-delivery | 4 (3 / 1) | l2, l3, l4 | 4 |
+| problems-2 | p-fertiliser-trials | 5 (4 / 1) | l5, l6 | 4 |
+| problems-2 | p-tyre-brands | 4 (3 / 1) | l7, l8 | 3 |
+| problems-2 | p-running-shoes | 5 (4 / 1) | l6, l8 | 5 |
+| problems-2 | p-blood-screen | 5 (4 / 1) | l5, l7 | 4 |
+| problems-3 | p-gene-screen | 5 (4 / 1) | l9, l10 | 5 |
+| problems-3 | p-fund-managers | 3 (3 / 0) | l10, l11 | 3 |
+| problems-3 | p-checkout-designs | 5 (4 / 1) | l9, l10 | 3 |
+| problems-3 | p-biomarker-field | 5 (3 / 2) | l9, l10, l12 | 4 |
+
+Typed parts: 14 of 18, 15 of 19, 14 of 18 (after the fix pass below). Each choice part is a judgement: which hypotheses, which test and cut-off, which plan, what a p-value or a flag means, which next step is honest, what Bonferroni and BH promise. Every lesson of each level appears, and every problem draws on two or more.
+
+Chains. Every non-final part's result is used by a later part, restated in that part's question. Examples: the standard error 3 g, $z = -2.3$, p = 0.0107 against $\alpha = 0.01$; $\bar x = 18$, $s = 2$, $t = -2.121$, the cut-off 1.895, then the smallest advert rejected, 19.34 hours; the tails 13, 79 and 299 of 4096 to the smallest rejecting count, 10; the centre 2.25, power 0.7274, the either-rule 0.9257 against one 72-plot trial at 0.9379; $\alpha = 0.0359$, $\beta = 0.3446$, 483 flags, a share of 0.27; the Bonferroni 0.00125, its family chance 0.0488, then 2 against BH's 5 (rank 4 fails, rank 5 passes); 17.29 and 1.026 false finds, shares 0.490 and 0.079. Each `carried` entry is the answer from the commonest slip of the part before, where the learner could reach it with the values given; where that slip needs a $\Phi$ value the part does not give, no `carried` entry is written (it could not fire).
+
+Form and bands. Every non-whole numeric part names its form ("Give n decimal places.", "Give a decimal.", "Give the nearest whole number.", "Round up to a whole runner."). Where a part gives a rounded $\Phi$, the key is what that value gives, and the band also takes the unrounded route where they differ (tyres part 3 band 0.0001 takes 0.0117 and 0.0118; the screen's 483 from rounded and unrounded rates; the shares at 2 places). The $t$ of the phones keeps a band of 0.001 so a 3-place standard error (0.707) still lands. A rounding tie (8.645 at 2 places) has its `wrong` band set to take both neighbours. All answers that are chances are fractions, so a typed "1.07%" reads as 0.0107 and is right; no key is in per cent units, so no `percent-sign` entry is needed. Single-letter units typed after the number are read through the widget's `unit` (`g` for the cereal standard error, `s` for the shoe differences); multi-letter units (hours, minutes, mm) are dropped by the field.
+
+Checks. Numbers script 0 failures, two routes a part (exact fractions or sympy against SciPy, statsmodels `multipletests`, `ttest_1samp`, `ttest_rel`, `ttest_ind_from_stats`, enumeration of all 4096 sequences, seeded simulation of null families, brute search over $n$); each `wrong` value matched to its slip, outside the key's band and clear of the others. Validator 0 errors and 0 warnings on the three files (first drafts had key-length, long-sentence and explain-answer advisories, all rewritten). Playthrough `--local-cdn` green for each set (18, 19, 17 parts), and with `--mobile` green; the 440 px shots of every part were read, no layout fault. Voice scan 35 on the course folder: 0 explanations over three sentences; the one long sentence is the old one in `homework-3.json`.
+
+Fresh-check (`--file`, then `--min-run 8 --min-share 0` for triage): 0 hits on each set. Advisories are shared constants only: the levels 0.05 and 0.01, the cut-offs 1.645 and 1.96, $1 - 0.95^2 = 0.0975$ (given, not asked, in the fertiliser plan), 6.18 from the power formula, $P(|Z| > 2) = 0.0455$ from l12, one p-value (0.004) shared with `homework-2` `h-abstract` in another story, and stock phrasing ("what is the chance of at least one false"). A first draft of `problems-3` item 4 was the `homework-3` `h-vendor` setting with new numbers (best of 200 signals, the Bonferroni bar and the rule of thumb); it was replaced by the biomarker field before commit.
+
+Notes for the reader. `p-fertiliser-trials` part 5 states the either rule's $\alpha$ from independence, an idea l9 names later. `p-gene-screen` part 5 asks what Bonferroni and BH promise, the l10 idea of FWER against FDR, but about two lists side by side rather than one. The running-shoes sample size uses the level's normal formula $n = 6.18(\sigma/\delta)^2$ with the sd of a difference.
+
 
 ## Level 4: `problems-4.json` (estimation theory and likelihood tests)
 
@@ -38,3 +70,7 @@ The script caught one of my slips while drafting: the carried slip in part 5 of 
 ## Engine limits
 
 One bullet in `docs/BACKLOG-INBOX.md` under "Raised later (fluency and problems testing 4)". None blocked a problem.
+
+## Fix pass (review-problems-1.6-b, problems-1 to 3)
+
+`p-gene-screen`, `p-checkout-designs` and `p-biomarker-field` were re-authored with a new task structure and new numbers, because each reworked a lesson or exam task (finding 9). Genes: 60 tests at 10%, the Bonferroni bar, its count, BH past a failing rank, then the smallest $q$ that keeps rank 5 (new step). Checkout pages: 18 pages, expected launches and their cost at £4,000 a launch, the Bonferroni bar and the chance of any useless launch under it. Biomarkers: a table of four bars, the per-null chance that keeps expected false finds at 1, the lowest bar that meets it, the real finds and false share there, and why a false share is not a chance of any false find. The other minor findings are small edits listed in `docs/reviews/review-problems-1.6-b.md`. Numbers script: 1,120 checks, 0 failures, a stale-value check on each re-authored item. Fresh-check: 0 hits and no advisory on `problems-3`.

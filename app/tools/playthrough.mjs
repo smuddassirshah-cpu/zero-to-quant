@@ -1178,6 +1178,50 @@ const main = async () => {
           await overflowAt('the Problem set result page');
           return sum;
         };
+        /* ENGINE-BACKLOG 931: the slips of every part, typed the way a learner types them. Pass k answers, in each problem, its k-th named slip (a `wrong[]` entry of an
+           expression or numeric field; a matrix is typed [[a, b], [c, d]] and a vector (a, b)) and every other part right. The slip must not be marked right, must
+           reach its own key and must show its own byKey line. Without --why only the matrix and vector slips are dealt (the form most easily mis-routed). */
+        const vecTex = (t) => typeof t === 'string' && (/\\begin\{[pbv]?matrix\}/.test(t) || (/^\s*[\[(]/.test(t) && t.includes(',')) || /\\langle/.test(t));
+        const slipsOf = (pt) => { const w = (pt && pt.widget) || {}; return (w.wrong || []).filter(x => x && x.id && ((w.kind === 'expression' && typeof x.tex === 'string' && (opt.why || vecTex(x.tex))) || (w.kind === 'numeric' && opt.why && Number.isFinite(+x.value)))); };
+        /* one slip per problem in each pass (a problem's result carries the key of its first wrong part, so two slips in one problem could not be told apart) */
+        const entriesOf = (it) => (it.parts || []).flatMap((pt, j) => slipsOf(pt).map(sl => ({ part: j, sl })));
+        const maxSlips = Math.max(0, ...items.map(it => entriesOf(it).length));
+        let slipN = 0;
+        const slipPlay = async (k) => {
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go('review');
+          await go(`problems/${course}/${id}`);
+          await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(150);
+          let guard = 0;
+          while (++guard < 400) {
+            const c = await page.evaluate(() => ZQ.test.current());
+            if (c.kind === 'done') break;
+            if (c.kind !== 'item') { fails.push(`slip pass ${k + 1}: unexpected state ${c.kind}`); break; }
+            if (c.state === 'idle' || c.state === 'engaged') {
+              const pt = ((items[c.screenIndex] || {}).parts || [])[c.part || 0], en = entriesOf(items[c.screenIndex] || {})[k], sl = en && en.part === (c.part || 0) ? en.sl : null;
+              const put = await page.evaluate(([sid]) => (sid && ZQ.test.answerWrong(sid, true) ? 'slip' : ZQ.test.answerCorrect() ? 'right' : 'none'), [sl && sl.id]);
+              if (put === 'none') { fails.push(`slip pass ${k + 1}: item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: nothing could be typed`); break; }
+              const r = await page.evaluate(async () => { const x = await ZQ.test.check(); return x ? { ok: !!x.ok, key: x.key ?? null, pending: !!x.pending } : null; });
+              if (put === 'slip') {
+                const at = `item ${c.screenIndex + 1} part ${(c.part || 0) + 1} slip "${sl.id}"`;
+                const fb = (pt.feedback || {}), line = (fb.byKey && fb.byKey[sl.id]) || '';
+                const shown = await page.evaluate(() => { const x = document.querySelector('.lsn-verdict'); return x ? x.innerText.replace(/\s+/g, ' ').trim() : ''; });
+                const nt = (x) => String(x || '').replace(/\s+/g, ' ').trim().toLowerCase(), lead = nt(String(line).split('$')[0]).replace(/[`*]/g, '');   // markdown marks (code ticks, bold) are not in the rendered text   // the prose before the first formula (a formula renders twice in innerText)
+                if (!r || r.pending) fails.push(`${at}: nothing was graded`);
+                else if (r.ok) fails.push(`${at}: typed as a learner would, it was marked right`);
+                else if (r.key !== sl.id) fails.push(`${at}: typed as a learner would, it reached the key ${JSON.stringify(r.key)}, not its own${/single value|components|rows and/.test(shown) ? ` (shown: "${shown.slice(0, 90)}")` : ''}`);
+                else if (lead.length >= 8 && !nt(shown).includes(lead.slice(0, 40))) fails.push(`${at}: it showed "${shown.slice(0, 80)}", not its own byKey line`);
+                else slipN++;
+              }
+            }
+            await page.evaluate(() => ZQ.test.continue());
+            await page.waitForTimeout(100);
+          }
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go('review');
+        };
         const xp0 = await page.evaluate(() => ZQ.state.xp);
         const a = await play(true);
         const rec1 = await page.evaluate(([c, i]) => ZQ.state.problems.get(c, i), [course, id]);
@@ -1215,6 +1259,9 @@ const main = async () => {
         await go('review');
         const part = await page.evaluate(([c, i]) => ZQ.state.problems.get(c, i), [course, id]);
         if (!part || part.attempts !== 2) fails.push(`leaving part way counted as an attempt: ${JSON.stringify(part)}`);
+        /* the slip passes finish whole sets, so they run last (they count as attempts) */
+        for (let k = 0; k < maxSlips; k++) await slipPlay(k);
+        if (maxSlips) note += `, ${slipN} typed slip${slipN === 1 ? '' : 's'} routed`;
         console.log(`${fails.length ? 'FAIL' : 'ok  '} ${label}  ${note}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
         fails.push('threw: ' + String(e.message || e).split('\n')[0]);
@@ -1545,6 +1592,8 @@ const main = async () => {
        moved forward by days without waiting; the exam clock reads performance.now and is not affected. */
     const skew = (sec) => page.evaluate((n) => { if (window.__skew === undefined) { window.__skew = 0; const real = Date.now.bind(Date); Date.now = () => real() + window.__skew * 1000; } window.__skew += n; return window.__skew; }, sec);
     const unskew = () => page.evaluate(() => { window.__skew = 0; });
+    /* the deck's deals (uids) and each dealt item's pace, recorded as the page asks for them (B2-E2: the pace of the second item sets how long it "takes") */
+    const installDeals = () => page.evaluate(() => { if (!window.__deals) { const orig = ZQ.select.bankDeck; window.__deals = []; window.__paces = {}; ZQ.select.bankDeck = async (o) => { const a = await orig(o); window.__deals.push(a.map(x => x.uid)); a.forEach(x => { window.__paces[x.uid] = x.pace; }); return a; }; } });
     const bankFiles = () => (fs.existsSync(path.join(CONTENT, 'bank')) ? fs.readdirSync(path.join(CONTENT, 'bank')).filter(f => /^[a-z0-9-]+\.json$/.test(f)).map(f => readJSON(path.join(CONTENT, 'bank', f))).filter(d => d.sample !== true) : []);   // a sample file is hidden from the deck
     const bankChecks = async () => {
       const docs = bankFiles();
@@ -1573,7 +1622,8 @@ const main = async () => {
         const fams = await page.evaluate(() => ZQ.select.bankDeck({ n: 500 }).then(a => a.map(x => x.family)));
         let adj = 0; for (let k = 1; k < Math.min(fams.length, 8) ; k++) if (fams[k] === fams[k - 1]) adj++;
         if (new Set(fams).size > 1 && adj > 1) fails.push(`families are not mixed: ${adj} neighbours share a family`);
-        /* 3. a deck sitting: one item "takes" 200 s, the rest 3 s; the summary has the pace line */
+        /* 3. a deck sitting: the second item "takes" its pace plus 20 s, the rest 3 s; the summary has the pace line */
+        await installDeals();
         await go('review');
         await page.evaluate(() => { delete window.ZQ.test; });
         await go('bank');
@@ -1581,23 +1631,30 @@ const main = async () => {
         await shot('bank-start');
         await page.evaluate(() => ZQ.test.continue());
         await page.waitForFunction(() => ZQ.test.current().kind === 'item', null, { timeout: opt.timeout });
+        /* B2-E2: the second item "takes" its own pace plus 20 s (200 s when it has none), so exactly one item is over pace whatever the paces are (a code item has 240 to 480) */
+        const deal0 = await page.evaluate(() => window.__deals[window.__deals.length - 1]);
+        const pace2 = await page.evaluate((u) => window.__paces[u], deal0[1]);
+        const long2 = typeof pace2 === 'number' && pace2 > 0 ? pace2 + 20 : 200;
         let n = 0, guard = 0;
         while ((await page.evaluate(() => ZQ.test.current().kind)) !== 'done' && ++guard < 60) {
           const c = await page.evaluate(() => ZQ.test.current());
           if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
-            await skew(n === 1 ? 200 : 3); n++;
+            await skew(n === 1 ? long2 : 3); n++;
+            /* a code item needs Python; without it (no --local-cdn and no network) the item is not held against the deck */
+            const needPy = await page.evaluate(() => !!document.querySelector('.wd-py')), pyBad = needPy ? await waitPython() : null;
             await page.evaluate(() => ZQ.test.answerCorrect());
             const r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, seconds: r.seconds } : null; });
-            if (!r || !r.ok) fails.push(`deck item ${n}: not correct`);
+            if (pyBad) console.log(`note  deck item ${n} is a code item and Python did not load (${pyBad.slice(0, 60)}): not held against the deck`);
+            else if (!r || !r.ok) fails.push(`deck item ${n}: not correct`);
             else if (typeof r.seconds !== 'number') fails.push(`deck item ${n}: no seconds on the result`);
-            else if (n === 2 && r.seconds < 190) fails.push(`deck item 2 should have taken about 200 s, read ${r.seconds}`);
+            else if (n === 2 && r.seconds < long2 - 10) fails.push(`deck item 2 should have taken about ${long2} s (its pace plus 20), read ${r.seconds}`);
           }
           await page.evaluate(() => ZQ.test.continue());
           await page.waitForTimeout(100);
         }
         const sum = await page.evaluate(() => ({ pace: (document.querySelector('.hw-pace') || {}).textContent || '', note: (document.querySelector('.hw-redo') || {}).textContent || '', rows: document.querySelectorAll('.hw-res li').length, wide: document.documentElement.scrollWidth > window.innerWidth + 1 }));
         if (!/Average .* a question/.test(sum.pace)) fails.push(`the summary has no average pace: "${sum.pace}"`);
-        if (!/Over pace: 1 of /.test(sum.pace)) fails.push(`the summary does not name the one item over pace: "${sum.pace}"`);
+        if (typeof pace2 === 'number' && pace2 > 0 && !/Over pace: 1 of /.test(sum.pace)) fails.push(`the summary does not name the one item over pace (item 2, pace ${pace2} s): "${sum.pace}"`);
         if (new Set(docs.flatMap(d => d.items.map(it => it.tags[0]))).size > 1 && !/Slowest famil/.test(sum.pace)) fails.push(`the summary does not name the slowest families: "${sum.pace}"`);
         if (!/tomorrow|in 3 days|in 7 days|in 30 days/.test(sum.note)) fails.push(`the summary does not say when questions return: "${sum.note}"`);
         if (sum.wide) fails.push('the bank summary is wider than the window');
@@ -1635,7 +1692,12 @@ const main = async () => {
 
     /* ---------- --bank <file>: every item of one bank file, dealt through the deck and answered right from its key ----------
        Items still locked by `requires` are unlocked by importing a save with those lessons finished; every other drawable item is
-       walked to the 30-day box so the deck holds only the file's items (the schedule is cleared before each file). Reports pass or fail per item. */
+       walked to the 30-day box so the deck holds only the file's items (the schedule is cleared before each file). Reports pass or fail per item.
+       B2-E1: a Python `code` item (or part) is first graded with its untouched starter, which must fail its hidden tests, then with its `solution` pasted
+       (answerCorrect), which must pass every one. B2-E3: with --mobile (or --narrow, --tablet) the whole loop repeats at each extra viewport and fails on
+       sideways scroll. B2-E6: a longform item's row on the result list shows its widget.prompt.
+       --why (ENGINE-BACKLOG 926): each item with named slips is dealt once more per `wrong[]` id and per distractor, alone in the deck, answered with that slip
+       (ZQ.test.answerWrong(id)); the shown feedback must be that id's feedback.byKey line, else the option's `why`, else the generic line. */
     const bankPlay = async (ids) => {
       const dir = path.join(CONTENT, 'bank');
       const all = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /^[a-z0-9-]+\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort() : [];
@@ -1643,68 +1705,134 @@ const main = async () => {
       const want = ids.includes('all') ? names : ids;
       for (const id of want) if (!names.includes(id)) die(`--bank ${id}: no such file in content/bank (${names.join(', ')})`);
       let tot = 0, bad = 0;
-      for (const id of want) {
-        where = `#bank/${id}`;
-        const doc = readJSON(path.join(dir, id + '.json')), t0 = Date.now();
-        const byUid = {}; doc.items.forEach(it => { byUid[`bank/${doc.id}/${it.id}`] = it; });
-        const mine = Object.keys(byUid), reqs = [...new Set(doc.items.flatMap(it => it.requires || []))];
-        const res = {}, note = (uid, msg) => { if (!res[uid]) res[uid] = msg; };
-        try {
-          const imp = await page.evaluate((reqs) => { const d = JSON.parse(ZQ.state.export()); delete d.bank; d.lessons = d.lessons || {}; reqs.forEach(r => { if (!d.lessons[r] || !d.lessons[r].done) d.lessons[r] = { attempts: 1, done: true, firstTry: true, xp: 0, bestQuiz: 1, mastered: false, perfect: false, completedAt: Date.now(), secondsSpent: 600, position: null, positionAt: null }; }); return ZQ.state.import(JSON.stringify(d)); }, reqs);
-          if (!imp || !imp.ok) throw new Error('could not import the unlocking save');
-          const drawable = await page.evaluate(() => ZQ.select.bankDeck({ n: 2000 }).then(a => a.map(x => x.uid)));
-          mine.filter(u => !drawable.includes(u)).forEach(u => note(u, 'not drawable after unlocking its requires'));
-          const others = drawable.filter(u => !mine.includes(u));
-          await page.evaluate((us) => { for (let k = 0; k < 4; k++) ZQ.state.bankResult({ results: us.map(uid => ({ uid, ok: true, seconds: 1, family: 'x' })) }); }, others);
-          await page.evaluate(() => { if (!window.__deals) { const orig = ZQ.select.bankDeck; window.__deals = []; ZQ.select.bankDeck = async (o) => { const a = await orig(o); window.__deals.push(a.map(x => x.uid)); return a; }; } });
-          const played = new Set(), todo = () => mine.filter(u => !played.has(u) && !res[u]);
-          for (let sit = 0; sit < Math.ceil(mine.length / 8) + 4 && todo().length; sit++) {
+      const wideNow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      const textOf = (x) => String(x || '').replace(/\$|\\[a-z]+|[*_`{}\\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+      /* the slips of an item (or of its part): [{ id, what }] from wrong[] and the distractors of a choice */
+      const slipsOf = (w) => (!w ? [] : [...(w.wrong || []).filter(x => x && x.id).map(x => ({ id: x.id, what: 'wrong' })), ...((w.kind === 'choice' || w.kind === 'multi') ? (w.options || []).filter(o => !o.correct && o.id).map(o => ({ id: o.id, what: 'option', why: o.why })) : [])]);
+      for (const vp of [DESKTOP, ...EXTRA]) {
+        if (curVp !== vp) await setVp(vp, 300);
+        const tag = vp === DESKTOP ? '' : ` at ${vp.w} px`;
+        for (const id of want) {
+          where = `#bank/${id}${tag}`;
+          const doc = readJSON(path.join(dir, id + '.json')), t0 = Date.now();
+          const byUid = {}; doc.items.forEach(it => { byUid[`bank/${doc.id}/${it.id}`] = it; });
+          const mine = Object.keys(byUid), reqs = [...new Set(doc.items.flatMap(it => it.requires || []))];
+          const res = {}, note = (uid, msg) => { if (!res[uid]) res[uid] = msg; };
+          let codeN = 0, slipN = 0;
+          /* an untouched starter must fail its hidden tests; Python must be up first */
+          const starterFails = async (uid, at) => {
+            const py = await waitPython();
+            if (py) { note(uid, `${at}${py}`); return; }
+            const pr = await page.evaluate(() => (ZQ.test.probe ? ZQ.test.probe() : null));
+            if (!pr || pr.pending) note(uid, `${at}the starter could not be graded`);
+            else if (pr.ok) note(uid, `${at}the untouched starter passes every hidden test`);
+            else codeN++;
+          };
+          /* a save with the file's `requires` lessons finished and every drawable item but `keepOnly` walked to the 30-day box */
+          const unlockAndClear = async (keepOnly) => {
+            const imp = await page.evaluate((reqs) => { const d = JSON.parse(ZQ.state.export()); delete d.bank; d.lessons = d.lessons || {}; reqs.forEach(r => { if (!d.lessons[r] || !d.lessons[r].done) d.lessons[r] = { attempts: 1, done: true, firstTry: true, xp: 0, bestQuiz: 1, mastered: false, perfect: false, completedAt: Date.now(), secondsSpent: 600, position: null, positionAt: null }; }); return ZQ.state.import(JSON.stringify(d)); }, reqs);
+            if (!imp || !imp.ok) throw new Error('could not import the unlocking save');
+            const drawable = await page.evaluate(() => ZQ.select.bankDeck({ n: 2000 }).then(a => a.map(x => x.uid)));
+            const others = drawable.filter(u => !keepOnly.includes(u));
+            await page.evaluate((us) => { for (let k = 0; k < 4; k++) ZQ.state.bankResult({ results: us.map(uid => ({ uid, ok: true, seconds: 1, family: 'x' })) }); }, others);
+            return drawable;
+          };
+          const sitStart = async () => {
             await go('review');
             await page.evaluate(() => { delete window.ZQ.test; });
             await go('bank');
             await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
             await page.evaluate(() => ZQ.test.continue());
             await page.waitForFunction(() => ZQ.test.current().kind === 'item', null, { timeout: opt.timeout });
-            const deal = await page.evaluate(() => window.__deals[window.__deals.length - 1]);
-            let guard = 0;
-            while ((await page.evaluate(() => ZQ.test.current().kind)) !== 'done' && ++guard < 40) {
-              const c = await page.evaluate(() => ZQ.test.current());
-              if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
-                const uid = deal[c.screenIndex], it = byUid[uid];
-                if (!it) { await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(() => ZQ.test.check()); }
-                else {
-                  if (!(await page.evaluate(() => ZQ.test.answerCorrect()))) note(uid, 'answerCorrect had nothing to answer');
-                  if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) note(uid, 'the page is wider than the window');
-                  let r = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
-                  /* an item with parts: part k+1 opens on continue once part k is checked; the item is right when every part is */
-                  for (let q = 1; it.parts && q < it.parts.length; q++) {
+            return page.evaluate(() => window.__deals[window.__deals.length - 1]);
+          };
+          try {
+            const drawable = await unlockAndClear(mine);
+            mine.filter(u => !drawable.includes(u)).forEach(u => note(u, 'not drawable after unlocking its requires'));
+            await installDeals();
+            const played = new Set(), todo = () => mine.filter(u => !played.has(u) && !res[u]);
+            for (let sit = 0; sit < Math.ceil(mine.length / 8) + 4 && todo().length; sit++) {
+              const deal = await sitStart();
+              let guard = 0;
+              while ((await page.evaluate(() => ZQ.test.current().kind)) !== 'done' && ++guard < 40) {
+                const c = await page.evaluate(() => ZQ.test.current());
+                if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
+                  const uid = deal[c.screenIndex], it = byUid[uid];
+                  if (!it) { await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(() => ZQ.test.check()); }
+                  else {
+                    const w0 = it.widget || (it.parts && it.parts[0].widget) || {};
+                    if (w0.kind === 'code' && (w0.language || 'python') === 'python') await starterFails(uid, it.parts ? 'part 1: ' : '');
+                    if (!(await page.evaluate(() => ZQ.test.answerCorrect()))) note(uid, 'answerCorrect had nothing to answer');
+                    if (await wideNow()) note(uid, `the page is wider than the ${vp.w} px window`);
+                    let r = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
+                    let why = r && !r.ok && w0.kind === 'code' ? await codeWhy() : '';
+                    /* an item with parts: part k+1 opens on continue once part k is checked; the item is right when every part is */
+                    for (let q = 1; it.parts && q < it.parts.length; q++) {
+                      await page.evaluate(() => ZQ.test.continue());
+                      const wq = it.parts[q].widget || {};
+                      if (wq.kind === 'code' && (wq.language || 'python') === 'python') await starterFails(uid, `part ${q + 1}: `);
+                      await page.evaluate(() => ZQ.test.answerCorrect());
+                      const rq = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
+                      if (rq && !rq.ok && !why && wq.kind === 'code') why = await codeWhy();
+                      r = { ok: !!(r && r.ok && rq && rq.ok) };
+                    }
+                    if (w0.kind === 'longform') {
+                      await page.evaluate(() => { [...document.querySelectorAll('input[type=checkbox]')].filter(n => n.offsetParent && !n.checked).forEach(b => b.click()); });
+                      const r2 = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
+                      const last = await page.evaluate(() => { const x = ZQ.test.results(); return x.length ? !!x[x.length - 1].ok : false; });
+                      r = { ok: (r2 && r2.ok) || (r && r.ok) || last };
+                    }
+                    if (await wideNow()) note(uid, `the page is wider than the ${vp.w} px window after checking`);
+                    if (!r || !r.ok) note(uid, `the right answer was not accepted${why}`); else played.add(uid);
+                  }
+                }
+                await page.evaluate(() => ZQ.test.continue());
+                await page.waitForTimeout(100);
+              }
+              /* the result list: nothing is wider than the window, and a longform row shows its widget.prompt (B2-E6) */
+              if (await wideNow()) deal.filter(u => byUid[u]).forEach(u => note(u, `the result page is wider than the ${vp.w} px window`));
+              const rows = await page.evaluate(() => [...document.querySelectorAll('.hw-res li')].map(n => n.textContent || ''));
+              deal.forEach((u, k) => { const it = byUid[u], pr = it && it.widget && it.widget.kind === 'longform' && it.widget.prompt; if (pr && rows[k] !== undefined && !textOf(rows[k]).includes(textOf(pr).slice(0, 24))) note(u, `its result row does not show the widget.prompt: "${String(rows[k]).replace(/\s+/g, ' ').slice(0, 70)}"`); });
+            }
+            mine.filter(u => !played.has(u)).forEach(u => note(u, 'never dealt'));
+            /* --why: each named slip, dealt alone */
+            if (opt.why) {
+              for (const uid of mine) {
+                const it = byUid[uid];
+                if (!it || res[uid]) continue;
+                const parts = it.parts || [it];
+                for (let k = 0; k < parts.length; k++) {
+                  const w = parts[k].widget || {}, fb = parts[k].feedback || it.feedback || {};
+                  if (w.kind === 'code' || w.kind === 'longform') continue;
+                  for (const sl of slipsOf(w)) {
+                    if (res[uid]) break;
+                    await unlockAndClear([uid]);
+                    const deal = await sitStart();
+                    if (deal.length !== 1 || deal[0] !== uid) { note(uid, `--why: the deck dealt ${JSON.stringify(deal)} for the slip "${sl.id}"`); break; }
+                    for (let q = 0; q < k; q++) { await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(() => ZQ.test.check()); await page.evaluate(() => ZQ.test.continue()); }
+                    const put = await page.evaluate((x) => ZQ.test.answerWrong(x, true), sl.id);
+                    if (!put) { note(uid, `--why: could not give the slip "${sl.id}"`); break; }
+                    const r = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok, line: r.line || '' }));
+                    const exp = (fb.byKey && fb.byKey[sl.id]) || sl.why || fb.generic || '';
+                    if (!r) note(uid, `--why: the slip "${sl.id}" could not be checked`);
+                    else if (r.ok) note(uid, `--why: the slip "${sl.id}" was marked right`);
+                    else if (textOf(r.line) !== textOf(exp)) note(uid, `--why: the slip "${sl.id}" showed "${String(r.line).slice(0, 70)}", not its own line "${String(exp).slice(0, 70)}"`);
+                    else slipN++;
                     await page.evaluate(() => ZQ.test.continue());
-                    await page.evaluate(() => ZQ.test.answerCorrect());
-                    const rq = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
-                    r = { ok: !!(r && r.ok && rq && rq.ok) };
                   }
-                  if (((it.widget || (it.parts && it.parts[0].widget) || {}).kind) === 'longform') {
-                    await page.evaluate(() => { [...document.querySelectorAll('input[type=checkbox]')].filter(n => n.offsetParent && !n.checked).forEach(b => b.click()); });
-                    const r2 = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
-                    const last = await page.evaluate(() => { const x = ZQ.test.results(); return x.length ? !!x[x.length - 1].ok : false; });
-                    r = { ok: (r2 && r2.ok) || (r && r.ok) || last };
-                  }
-                  if (!r || !r.ok) note(uid, 'the right answer was not accepted'); else played.add(uid);
                 }
               }
-              await page.evaluate(() => ZQ.test.continue());
-              await page.waitForTimeout(100);
             }
-          }
-          mine.filter(u => !played.has(u)).forEach(u => note(u, 'never dealt'));
-          if (opt.shots) await shot(`bank-${id}`);
-        } catch (e) { mine.forEach(u => note(u, 'threw: ' + String(e.message || e).split('\n')[0])); }
-        const badN = mine.filter(u => res[u]).length;
-        mine.forEach(u => { if (res[u]) { console.log(`FAIL ${u}: ${res[u]}`); failures.push(`#bank/${id}: ${u}: ${res[u]}`); } });
-        console.log(`${badN ? 'FAIL' : 'ok  '} --bank ${id}  ${mine.length - badN} of ${mine.length} items right from the key${reqs.length ? `, ${reqs.length} requires lessons unlocked` : ''}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-        tot += mine.length; bad += badN;
+            if (opt.shots) await shot(`bank-${id}`);
+          } catch (e) { mine.forEach(u => note(u, 'threw: ' + String(e.message || e).split('\n')[0])); }
+          const badN = mine.filter(u => res[u]).length;
+          mine.forEach(u => { if (res[u]) { console.log(`FAIL ${u}${tag}: ${res[u]}`); failures.push(`#bank/${id}${tag}: ${u}: ${res[u]}`); } });
+          console.log(`${badN ? 'FAIL' : 'ok  '} --bank ${id}${tag}  ${mine.length - badN} of ${mine.length} items right from the key${codeN ? `, ${codeN} starter${codeN === 1 ? '' : 's'} fail first` : ''}${opt.why ? `, ${slipN} slip lines shown` : ''}${reqs.length ? `, ${reqs.length} requires lessons unlocked` : ''}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+          tot += mine.length; bad += badN;
+        }
       }
-      console.log(`bank total: ${tot - bad} of ${tot} items passed in ${want.length} file${want.length === 1 ? '' : 's'}`);
+      if (curVp !== DESKTOP) await setVp(DESKTOP, 300);
+      console.log(`bank total: ${tot - bad} of ${tot} items passed in ${want.length} file${want.length === 1 ? '' : 's'}${EXTRA.length ? ` at ${[DESKTOP, ...EXTRA].map(v => v.w).join(', ')} px` : ''}`);
     };
     /* An exam sat with Date.now skewed: item 3 takes 90 s, the others 4 s. The result has a pace line and per-question
        seconds, and the attempt keeps itemSeconds, one per question. Time never changes the marks (everything is right). */

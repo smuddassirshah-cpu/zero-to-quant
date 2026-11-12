@@ -138,9 +138,9 @@ Plan: probability, numeracy, uncertainty, communication and games first. Machine
 <!-- generated:totals:trader -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 453 | 0 | 453 | 263 | 951 |
-| Recommended | 194 | 0 | 194 | 104 | 485 |
-| Learn header (required plus recommended) | 647 | 0 | 647 | 367 | 1436 |
+| Required | 453 | 0 | 453 | 266 | 949 |
+| Recommended | 194 | 0 | 194 | 113 | 476 |
+| Learn header (required plus recommended) | 647 | 0 | 647 | 379 | 1425 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -269,9 +269,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 556 | 0 | 556 | 330 | 1323 |
+| Required | 556 | 0 | 556 | 343 | 1310 |
 | Recommended | 340 | 0 | 340 | 175 | 932 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 505 | 2255 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 518 | 2242 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -533,9 +533,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 580 | 0 | 580 | 338 | 1334 |
-| Recommended | 234 | 0 | 234 | 121 | 503 |
-| Learn header (required plus recommended) | 814 | 0 | 814 | 459 | 1837 |
+| Required | 580 | 0 | 580 | 349 | 1323 |
+| Recommended | 234 | 0 | 234 | 123 | 500 |
+| Learn header (required plus recommended) | 814 | 0 | 814 | 472 | 1823 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -660,9 +660,9 @@ Same learner as Strats, plus the pricing mathematics.
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
-| Required | 657 | 0 | 657 | 379 | 1481 |
-| Recommended | 239 | 0 | 239 | 125 | 445 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 504 | 1926 |
+| Required | 657 | 0 | 657 | 390 | 1470 |
+| Recommended | 239 | 0 | 239 | 127 | 443 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 517 | 1913 |
 <!-- /generated -->
 
 **Dependency conflicts**

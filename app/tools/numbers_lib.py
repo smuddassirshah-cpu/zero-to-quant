@@ -1,5 +1,10 @@
 """Shared number-check helper for level number scripts (ENGINE-BACKLOG 573). Pure standard library.
 
+Bank files (B2-E4): `Bank("statistics-1")` loads content/bank/<file id>.json with the same expect, claim, claim_text, stated, check_wrongs and
+report. A path names an item by its id: bank.expect("items[beta-binomial-posterior-mean].widget.answer", 0.642857) (the file argument is
+optional: bank.expect(path, value) and bank.expect("statistics-1", path, value) both work; claim_text(path, phrase, ok) and stated(path, phrase, ok) take no file), and [*] fans out. Hidden tests of a code item are
+checked by running its `solution` in CPython in the script itself; check_wrongs reads numeric wrong[] values as for a level.
+
 Use from docs/reports/<course>-L<n>-numbers.py:
     import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
     from numbers_lib import Level
@@ -32,7 +37,8 @@ import re
 import sys
 
 COURSES = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'content', 'courses')
-_PART = re.compile(r'([A-Za-z_][\w-]*)|\[(\d+|\*)\]')   # a key may hold a hyphen: feedback.byKey.test-3 (ENGINE-BACKLOG 606)
+BANK = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'content', 'bank')
+_PART = re.compile(r'([A-Za-z_][\w-]*)|\[([^\]]+)\]')   # a key may hold a hyphen: feedback.byKey.test-3 (ENGINE-BACKLOG 606)
 
 
 def _strings(x):
@@ -61,6 +67,11 @@ def _walk(node, path):
                 if not isinstance(n, list):
                     raise KeyError(f'[*] on a non-list in {path}')
                 nxt.extend(n)
+            elif not idx.isdigit():                       # [<item id>]: the list element whose "id" it is (bank files, B2-E4)
+                hit = [x for x in n if isinstance(x, dict) and x.get('id') == idx] if isinstance(n, list) else []
+                if len(hit) != 1:
+                    raise KeyError(f'no element with id "{idx}" in {path}')
+                nxt.append(hit[0])
             else:
                 if not isinstance(n, list) or int(idx) >= len(n):
                     raise KeyError(f'no index {idx} in {path}')
@@ -231,3 +242,35 @@ class Level:
         print(f'numbers_lib: {len(self.results) - len(bad)} of {len(self.results)} checks passed')
         if bad:
             sys.exit(1)
+
+
+class Bank(Level):
+    """One interview bank file, content/bank/<file id>.json (B2-E4). Paths read items[<item id>].widget.answer; item parts read
+    items[<id>].parts[<n>].widget...; the file argument of expect and text may be left out, and claim_text and stated take none."""
+
+    def __init__(self, file_id):
+        self.course, self.n, self.id, self.results = 'bank', 0, file_id, []
+        p = os.path.join(BANK, f'{file_id}.json')
+        if not os.path.exists(p):
+            raise SystemExit(f'numbers_lib: no bank file {file_id} ({p})')
+        with open(p, encoding='utf8') as f:
+            self.files = {file_id: json.load(f)}
+
+    def _file(self, ref):
+        if ref in (None, self.id, 'bank'):
+            return self.id, self.files[self.id]
+        raise KeyError(f'file "{ref}" is not the bank file {self.id}')
+
+    def expect(self, *a, fmt=None):
+        ref, path, value = a if len(a) == 3 else (None, *a)
+        return super().expect(ref, path, value, fmt=fmt)
+
+    def text(self, *a):
+        ref, path = a if len(a) == 2 else (None, *a)
+        return super().text(ref, path)
+
+    def claim_text(self, path, phrase, ok, label=None):
+        return Level.claim_text(self, None, path, phrase, ok, label)
+
+    def stated(self, path, phrase, ok):
+        return Level.claim_text(self, None, path, phrase, ok)

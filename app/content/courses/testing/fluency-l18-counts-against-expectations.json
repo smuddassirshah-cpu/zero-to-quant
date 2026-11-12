@@ -73,10 +73,10 @@
       "weight": 2,
       "skill": "Pearson's statistic for a 2 by 2 table",
       "vars": {
-        "a": { "int": [15, 70] },
-        "b": { "int": [15, 70] },
-        "c": { "int": [15, 70] },
-        "d": { "int": [15, 70] },
+        "a": { "int": [10, 70] },
+        "b": { "int": [10, 70] },
+        "c": { "int": [10, 70] },
+        "d": { "int": [10, 70] },
         "w": { "pick": [["days", "buy-signal days", "sell-signal days", "up", "down"], ["orders", "buys", "sells", "filled", "missed"], ["loans", "to small firms", "to large firms", "repaid", "defaulted"]], "as": ["units", "rowa", "rowb", "cola", "colb"] }
       },
       "let": {
@@ -88,14 +88,18 @@
         "gap": "abs(a*d - b*c)/(a + b + c + d)",
         "key": "(a + b + c + d)*(a*d - b*c)^2/((a + b)*(c + d)*(a + c)*(b + d))",
         "one": "(a - (a + b)*(a + c)/(a + b + c + d))^2/((a + b)*(a + c)/(a + b + c + d))",
-        "nodiv": "4*(a*d - b*c)^2/(a + b + c + d)^2"
+        "nodiv": "4*(a*d - b*c)^2/(a + b + c + d)^2",
+        "obs": "(a*d - b*c)^2/(a + b + c + d)^2*(1/a + 1/b + 1/c + 1/d)",
+        "g": "2*(a*ln(a*(a + b + c + d)/((a + b)*(a + c))) + b*ln(b*(a + b + c + d)/((a + b)*(b + d))) + c*ln(c*(a + b + c + d)/((c + d)*(a + c))) + d*ln(d*(a + b + c + d)/((c + d)*(b + d))))"
       },
-      "where": ["a*d != b*c", "key >= 0.5", "key <= 20"],
+      "where": ["a*d != b*c", "key >= 0.5", "key <= 25", "abs(key - obs) > 0.11", "abs(key - g) > 0.11", "abs(g - obs) > 0.11"],
       "prompt": "Of {tot} {units}, {r1} were {rowa}: {a} {cola} and {b} {colb}. The other {r2} were {rowb}: {c} {cola} and {d} {colb}. What is $X^2$ for independence? Give 2 decimal places. Keep at least 2 decimal places in each expected count.",
       "widget": { "kind": "numeric", "answer": "{key}", "tol": { "abs": 0.05 }, "placeholder": "A number such as 6.67", "accept": "${key:dp2}$, within 0.05" },
       "wrong": [
         { "id": "one-cell", "value": "{one}", "tol": { "abs": 0.05 }, "line": "You stopped at the first cell. A 2 by 2 table has four cells, each off by the same gap, and each adds its own term." },
-        { "id": "no-divide", "value": "{nodiv}", "tol": { "abs": 0.05 }, "line": "You added the four squared gaps but did not divide each by its expected count." }
+        { "id": "no-divide", "value": "{nodiv}", "tol": { "abs": 0.05 }, "line": "You added the four squared gaps but did not divide each by its expected count." },
+        { "id": "over-observed", "value": "{obs}", "tol": { "abs": 0.05 }, "line": "You divided each squared gap by the observed count. Divide by the expected count." },
+        { "id": "likelihood-ratio", "value": "{g}", "tol": { "abs": 0.05 }, "line": "That is $G$, the likelihood-ratio statistic. Pearson's $X^2$ divides each squared gap by its expected count." }
       ],
       "solution": [
         "The first cell expects ${r1} \\times {c1} \\div {tot} \\approx {e11:dp2}$, so every cell is off by $|O - E| \\approx {gap:dp3}$.",

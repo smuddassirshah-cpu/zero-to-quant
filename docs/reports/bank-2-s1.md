@@ -97,3 +97,39 @@ Answers that differ from the brief: **0 keys; 1 slip.**
 - `coding-1.json` waits for B2-E1 to B2-E5.
 - `[bank-family]` (B2-E5) is not built; the families were checked by hand against section 3.
 - `numbers_lib.Bank` (B2-E4) is not built; the script reads the JSON itself.
+
+## Coding file
+
+Written after engine pass AB-2 (B2-E1 to B2-E5, ENGINE-BACKLOG 920 to 924): `app/content/bank/coding-1.json`, 12 items. Number checks: the coding section of `docs/reports/bank-2-s1-numbers.py`, with the shared runner `docs/reports/bank_2_code_check.py` beside it (standard library; it judges results as `app/js/engine/widgets/code.js` `__zq_judge` does, 5 s per case).
+
+| Step | Result |
+| --- | --- |
+| 1. Validator | `0 errors, 4857 warnings` (the baseline after AB-2); no warning names `coding-1` (no `[bank-code]`, `[bank-family]`, `[key-length]`, `[O2-long-sentence]`). |
+| 2. Numbers | `<scratchpad>/venv/bin/python docs/reports/bank-2-s1-numbers.py`: `1065 checks, 0 failed`, exit 0 (704 before the coding section). |
+| 3. Playthrough | `--bank coding-1 --local-cdn <pkgs>`: 12 of 12, 6 starters fail first, `All passed.`; with `--mobile` 24 of 24 at 1280 and 440 px; with `--why` 14 slip lines shown (every `wrong` id and distractor). `--routes-only`: `All passed.` The 440 px result page was read from `--shots`: no fault. |
+| 4. Freshness | `fresh-check.mjs --bank coding-1`: 0 hits at the default, at `--min-run 10` and at `--min-run 8 --min-share 0`; no advisory. Judged by hand below. |
+| 5. Voice | `voice-scan.py 35 --summary` on the bank folder: 0 and 0. |
+| 6. Wrong answers route | `--why`: 8 `wrong` ids (four numeric items) and 6 distractors, each shows its own line. |
+
+Counts: D2 4, D3 7, D4 1 (the "D3 6, D4 2" in the counts note above was my slip: section 5 gives one D4 item, `pf-functions-binom-tail`); 6 code, 4 numeric, 2 choice; one item with `requires`. Families: `pf-types` 3, `pf-functions` 2, `integer-division` 2, `ds-arrays`, `ds-hashing`, `edge-case-list`, `complexity-read`, `at-complexity` 1 each, as section 3. Session 1 now totals D2 12, D3 25, D4 11, D5 2; numeric 32, choice 4, code 6, longform 8 (section 2).
+
+**Code items (house style for sessions 3 and 4).** `question` is "Complete `<name>`."; `prose` gives the rule, one worked call and the largest size the tests use; `starter` is the signature with `...` (plus `from fractions import Fraction` where the result is a `Fraction`); two `examples`; `how` as proposed above with the real count; `feedback.correct` "Every hidden test passed."; `generic` names a case to try. Eight hidden tests, ten for `to_pence` and nine for `lot_round`.
+
+| Item | Route A | Route B (brute force) | Near-misses run, and the tests they fail |
+| --- | --- | --- | --- |
+| ds-arrays-sign-changes | model | `groupby` runs of sign | neighbours with zeros kept (1, 5, 7, 8); zero as a third sign (1, 5, 7, 8) |
+| ds-hashing-price-mode | model | sort distinct prices by (`list.count`, price) | `max(set(xs), key=xs.count)` (1, 3 to 6); the same guarded (1, 4 to 6); `Counter.most_common` (4, 5) |
+| edge-case-list-to-pence | model | `Decimal` | `int(float(s) * 100)` gives 28, -204, 1998 (5, 6, 7); decimals not padded gives 305 (4, 9) |
+| integer-division-lot-round | model | `Decimal` rounded down | `qty // lot * lot` gives -300 (1, 3, 7, 9); `int(qty / lot) * lot` at $10^{18} - 1$ (8, 9) |
+| pf-types-parse-fix | model | regular expression | `split("=")` with no limit (2, 7); no empty guard (4); tags left as text (1 to 3, 5 to 7) |
+| pf-functions-binom-tail | model | every sequence to n = 16, Pascal row above | float result (all 8); more than k (1 to 3, 5, 7, 8); negative k not clamped (6) |
+
+Each starter fails; each brute force passes every example and test and equals the model value by value. Reasoning items run their own fenced lines (`round`, the default list, the doubling loop counted, the tripling loop, the slice); each slip is produced by carrying it out (`Decimal` half-up and half-down, a fresh-list `add`, `xs[7:2:-1]`, `xs[6:1:-2]`). The C++ item compiles its own lines with `g++ -std=c++20` and a `static_assert`, prints `-3 -1`, and runs the Python lines (`-4 1`).
+
+**Differences from section 5: 0 keys; 2 items.**
+
+- `pf-types-parse-fix`: the ticker `VOD.L` is a real company, so the item uses the invented `ABC.L` (rule 2). Same structure and answers.
+- `pf-types-backward-slice`: the slip 12 is kept, but "started at 6" alone gives `[6, 4]` = 10. The `byKey` line says what gives 12: starting at 6 and keeping 2 (`[6, 4, 2]`).
+- Added, not changed: size limits in the prose (100,000 days; quantities to $10^{18}$; n to 1,000) and tests at them; the second near-miss for `lot_round` (float division above $2^{53}$).
+
+**Freshness judged by hand** (grep of `content/courses`, `content/drills` and `exams`): no function name is used by a drill or a course code item (`to_pence` is not `pounds_to_pence` of `drills/cpp-cash-split`, a C++ float conversion). `pf-types-round-half-even` uses the rule of `py-found/homework-1` (`round(2.5) + round(3.5)`) with other values; the brief fixes this one, so it is kept for the second reader to judge. `integer-division-toward-zero` shares `-7 / 2` with the `cpp/l2-fixed-types` ladder screen, which asks the C++ quotient only; the bank item asks quotient and remainder in two languages. `pf-functions-default-list` shares the rule of `py-found/l7-arguments` and `review-2` (`history=[]`), which ask which definition is safe; the bank item counts the calls.

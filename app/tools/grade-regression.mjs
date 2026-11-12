@@ -8,6 +8,8 @@
    --root names the app folder whose js/engine and content are read (default: this one), so the "before" run can be taken
    from an export of an earlier commit (git archive <commit> app | tar -x -C <dir>) and the content kept the same.
    --content <dir> reads content from another app folder than --root (default: --root).
+   A Fluency family (an object with `vars`), a `{{carry...}}` answer and anything under tools/fixtures are not graded (templates and fixtures, not authored
+   texts); a --diff against an output file written before this change reports them as GONE.
    --diff prints every outcome that differs (file, path, text, before, after) and exits 1 if any does. Documented in
    docs/AUTHORING.md (section 3, "Grader regression"). Exit 0 same, 1 changed, 2 setup problem. */
 import fs from 'node:fs';
@@ -62,9 +64,12 @@ const collect = () => {
   for (const file of walk(CONTENT)) {
     let data; try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
     const rel = path.relative(CONTENT, file);
+    if (/(^|[\\/])tools[\\/]fixtures[\\/]/.test(rel)) continue;   // triage-bands-ab 9: test fixtures are not content
     const go = (v, p) => {
       if (Array.isArray(v)) v.forEach((x, i) => go(x, `${p}[${i}]`));
       else if (v && typeof v === 'object') {
+        if (v.vars && typeof v.vars === 'object' && !Array.isArray(v.vars)) return;   // triage-bands-ab 8: a Fluency family is a template ({x} slots), drawn at run time, not an authored text
+        if (typeof v.answer === 'string' && /\{\{carry/.test(v.answer)) return;   // a carried value, known only when the learner reaches it
         if ((v.kind === 'expression' && (typeof v.answer === 'string' || Array.isArray(v.answers))) || (v.kind === 'numeric' && (v.answer != null || Array.isArray(v.answers)))) {
           const set = Array.isArray(v.answers) && v.unordered === true;
           const texts = [];
@@ -77,7 +82,7 @@ const collect = () => {
             texts.push(['answer', set ? v.answers.map(fmt).join(', ') : fmt(v.answer)]);
             (v.wrong || []).forEach((w, i) => { if (w && w.value != null) texts.push([`wrong[${i}]`, typeof w.value === 'string' ? w.value : fmt(w.value)]); });
           }
-          texts.forEach(([what, text]) => jobs.push({ id: `${rel} ${p} ${what}`, spec: v, text }));
+          texts.filter(([, text]) => !/\{\{carry/.test(String(text))).forEach(([what, text]) => jobs.push({ id: `${rel} ${p} ${what}`, spec: v, text }));
         }
         Object.entries(v).forEach(([k, x]) => go(x, `${p}.${k}`));
       }

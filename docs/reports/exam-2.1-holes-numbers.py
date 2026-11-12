@@ -104,16 +104,27 @@ check(abs(gv + 0.12) < 1e-6, 'unit-gradient dL/dv = -0.12 (the slope-v slip) by 
 check(loss(w1, w2 + 0.01 * 2.4, v) < loss(w1, w2, v), 'unit-gradient a step against the slope lowers the loss')
 numeric('e-unit-gradient', g1, {'used-x1': (yhat - y) * v * x1, 'slope-v': (yhat - y) * h, 'sign': -g1, 'no-half': 2 * g1})
 
-# e-odds-update (back in place of e-report-which, review-holes-1.6-2.1 finding 4): logistic coefficient read as odds
-odds2 = 0.10 / 0.90 * math.exp(0.45 * 2)            # route 1: odds times e^(0.45 x 2 turns)
+# e-odds-update (review-delta-holes finding 4: a resting order's fill probability, so it no longer repeats stat-learning homework-3 h-odds3)
+odds2 = 0.40 / 0.60 * math.exp(-0.6 * 2)            # route 1: odds times e^(-0.6 x 2 ticks)
 p1 = odds2 / (1 + odds2)
-logit2 = math.log(0.10 / 0.90) + 0.45 * 2            # route 2: add on the log-odds scale, then the logistic function
+logit2 = math.log(0.40 / 0.60) - 0.6 * 2             # route 2: add on the log-odds scale, then the logistic function
 p2 = 1 / (1 + math.exp(-logit2))
-check(abs(p1 - p2) < 1e-12 and abs(p1 - 0.2146) < 5e-5, f'odds-update probability {p1:.4f} two ways ({p2:.4f})')
-check(abs(odds2 - 0.2733) < 5e-5 and abs(0.1 * math.exp(0.9) - 0.2460) < 5e-5, 'odds-update odds 0.273 and the multiplied probability 0.246')
-check(abs(round(0.273 / 1.273, 3) - 0.214) < 1e-12 and abs(0.273 / 1.273 - 0.215) <= 0.0015, 'odds-update the printed 0.273 / 1.273 is inside the band')
-numeric('e-odds-update', p1, {'prob-times': 0.1 * math.exp(0.9), 'odds-as-prob': odds2})
+check(abs(p1 - p2) < 1e-12 and abs(p1 - 0.16722) < 5e-6, f'odds-update probability {p1:.5f} two ways ({p2:.5f})')
+check(abs(odds2 - 0.2008) < 5e-5 and abs(0.4 * math.exp(-1.2) - 0.1205) < 5e-5, 'odds-update odds 0.201 and the multiplied probability 0.120')
+check(abs(round(0.40 / 0.60, 3) - 0.667) < 1e-12 and round(math.exp(-1.2), 3) == 0.301 and round(odds2, 3) == 0.201, 'odds-update printed 0.667, 0.301 and 0.201')
+check(abs(0.201 / 1.201 - 0.167) <= 0.0015 and abs(0.667 * 0.301 / (1 + 0.667 * 0.301) - 0.167) <= 0.0015, 'odds-update the printed 0.201 / 1.201 is inside the band')
+odds_up = 0.40 / 0.60 * math.exp(1.2)
+numeric('e-odds-update', p1, {'prob-times': 0.4 * math.exp(-1.2), 'odds-as-prob': odds2, 'sign': odds_up / (1 + odds_up), 'decimal': p1 / 100})
 check(items['e-odds-update']['widget']['unit'] == '%' and items['e-odds-update']['skills'] == ['sl-classify'], 'odds-update unit % and skill sl-classify')
+# no stale figure of the leverage version (finding 4): none of its numbers or words is left anywhere in the item
+txt = json.dumps(items['e-odds-update'])
+stale = [t for t in ('0.45', '0.273', '0.246', '0.215', '0.111', '21.5', '0.9', '2.46', '1.273', 'leverage', 'default', 'turns') if t in txt]
+check(not stale, f'odds-update no figure or word of the old version is left {stale}')
+fb = items['e-odds-update']['feedback']
+check('0.667' in fb['correct'] and '0.201' in fb['correct'] and '16.7%' in fb['correct'] and 'e^{-1.2}' in fb['generic'], 'odds-update feedback states 0.667, 0.201, 16.7 and e^-1.2')
+check('0.201' in fb['byKey']['odds-as-prob'] and 'e^{1.2}' in fb['byKey']['sign'] and '16.7' in fb['byKey']['decimal'], 'odds-update byKey lines state 0.201, e^1.2 and 16.7')
+ex = items['e-odds-update']['explain']['text']
+check('0.40/0.60 = 0.667' in ex and '0.301' in ex and '0.201/1.201 = 16.7' in ex, 'odds-update explain states 0.667, 0.301, 0.201/1.201')
 check('e-report-which' not in items, 'e-report-which is out (its choice-on-validation point is in e-code-honest-report and e-best-of-n)')
 for pid in ('e-spline-slope', 'e-kmeans-spreads'):
     check(items[pid]['widget']['placeholder'] == 'a number', f'{pid} placeholder invites no unit words')

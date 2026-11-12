@@ -1,0 +1,848 @@
+{
+  "id": "problems-3",
+  "course": "testing",
+  "level": 3,
+  "title": "Problems: testing many things",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-gene-screen",
+      "difficulty": 5,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "A lab tests 60 genes for a link with a disease, one test per gene. Treat the 60 tests as independent. The eight smallest p-values, sorted, are 0.0004, 0.0021, 0.0055, 0.0058, 0.0090, 0.0096, 0.0190 and 0.034. The other 52 are all above 0.2.",
+      "parts": [
+        {
+          "question": "The lab wants at most a 10% chance of any false link across its 60 tests. What bar does Bonferroni give each gene? Give 6 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.001667,
+            "tol": {
+              "abs": 5e-07
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "unadjusted",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "times-m",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "five-percent",
+                "value": 0.000833,
+                "tol": {
+                  "abs": 5e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{0.10}{60} = 0.001667$.",
+            "generic": "Not quite. Bonferroni divides the family's target by the number of tests.",
+            "byKey": {
+              "unadjusted": "That is the family's target itself. Each of the 60 tests gets a share of it: $\\tfrac{0.10}{60}$.",
+              "times-m": "You multiplied by 60. Bonferroni divides, so that the 60 bars together add to at most 0.10.",
+              "five-percent": "You used 5%. This lab's target is 10%, so the bar is $\\tfrac{0.10}{60}$."
+            }
+          },
+          "explain": {
+            "text": "Each of the 60 tests gets one sixtieth of the 10% budget, 0.001667. By the union bound, the 60 bars add to 0.10. So the chance of any false link is at most 10%."
+          }
+        },
+        {
+          "question": "Using the bar 0.001667 from part 1, how many genes does Bonferroni reject? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "unadjusted",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "bh",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Only 0.0004 is at most 0.001667. The next, 0.0021, is above it.",
+            "generic": "Not quite. Compare each p-value with 0.001667.",
+            "byKey": {
+              "unadjusted": "That counts every p-value under 0.10. Bonferroni compares each with 0.001667.",
+              "bh": "That is BH's count, with a rising bar. Bonferroni holds every gene to the single bar 0.001667."
+            }
+          },
+          "explain": {
+            "text": "Bonferroni uses one bar for all 60 genes. Only the smallest p-value, 0.0004, falls under it, so it rejects 1."
+          }
+        },
+        {
+          "question": "BH at $q = 0.10$ gives rank $k$ the bar $k \\times 0.001667$, $k$ times the bar from part 1. It rejects every rank up to the largest one under its bar. How many genes does BH reject? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 6,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "first-fail",
+                "value": 2,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "bonferroni",
+                "value": 1,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "unadjusted",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "count-passes",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Ranks 1 and 2 pass. Rank 3 fails (0.0055 against 0.005) and rank 4 passes (0.0058 against 0.00667). Rank 5 fails (0.0090 against 0.00833) and rank 6 passes (0.0096 against 0.01). Ranks 7 and 8 fail, so BH rejects 6.",
+            "generic": "Not quite. Find the largest rank $k$ with $p_{(k)} \\le k \\times 0.001667$, then reject ranks 1 to $k$.",
+            "byKey": {
+              "first-fail": "You stopped at rank 3, where 0.0055 is above 0.005. BH keeps going: rank 6, 0.0096, is under 0.01.",
+              "bonferroni": "That is Bonferroni's count. BH's bar rises with the rank: 0.001667, 0.003333, 0.005 and so on.",
+              "unadjusted": "That counts every p-value under 0.10. BH's bars for ranks 1 to 8 run from 0.001667 to 0.01333.",
+              "count-passes": "You counted the ranks that pass their own bars. BH rejects every rank up to the largest one that passes, so ranks 3 and 5 come in too."
+            }
+          },
+          "explain": {
+            "text": "The bars for ranks 1 to 8 rise in steps of 0.001667, to 0.01333. The largest rank under its bar is 6, so BH rejects the six smallest, ranks 3 and 5 included."
+          }
+        },
+        {
+          "question": "BH kept 6 genes at $q = 0.10$. Rank 6 stays in when $p_{(6)} \\le \\tfrac{6q}{60}$. Using $p_{(6)} = 0.0096$, what is the smallest $q$ that keeps it? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.096,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "no-divide",
+                "value": 0.576,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "rank-five",
+                "value": 0.108,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "bar",
+                "value": 0.01,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.0096 \\le \\tfrac{6q}{60}$ gives $q \\ge 0.0096 \\times 10 = 0.096$.",
+            "generic": "Not quite. Solve $0.0096 = \\tfrac{6q}{60}$ for $q$.",
+            "byKey": {
+              "no-divide": "You multiplied 0.0096 by 60 and left out the division by 6. Rank 6's bar is $\\tfrac{6q}{60}$, so $q = \\tfrac{60 \\times 0.0096}{6}$.",
+              "rank-five": "That is the $q$ that rank 5 needs, $\\tfrac{60 \\times 0.0090}{5}$. Rank 6 is the one asked about, and it needs less.",
+              "bar": "That is rank 6's bar at $q = 0.10$. The question asks for $q$, so solve $0.0096 = \\tfrac{6q}{60}$."
+            }
+          },
+          "explain": {
+            "text": "Rank 6 stays in once $q \\ge \\tfrac{60 \\times 0.0096}{6} = 0.096$. That is just under 0.10, so BH at 10% keeps it. Ranks 3 and 5, which alone would need $q = 0.11$ and $q = 0.108$, come in with it."
+          }
+        },
+        {
+          "question": "Using parts 2 to 4, which statement about the two lists is right?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "right",
+                "text": "Bonferroni keeps the chance of any false link at most 10%; BH keeps the average share of false links at most 10%",
+                "correct": true
+              },
+              {
+                "id": "same",
+                "text": "Both lists keep the chance of any false link at 10%, so the longer list is better",
+                "why": "BH controls the false discovery rate, an average share. The chance of at least one false link among BH's 6 can be higher than 10%."
+              },
+              {
+                "id": "rank-three",
+                "text": "BH's list leaves out rank 3, since 0.0055 fails its bar",
+                "why": "BH rejects every rank up to the largest one that passes. Rank 6 passes, so ranks 1 to 6 are all in, rank 3 included."
+              },
+              {
+                "id": "q-same",
+                "text": "Raising $q$ to 0.20 would leave BH's list unchanged",
+                "why": "At $q = 0.20$ the bar for rank 7 is 0.02333, and 0.0190 is under it, so the list grows."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Bonferroni controls the family-wise error rate at 10%. BH controls the false discovery rate at 10% for independent tests, so it can afford a longer list: 6 genes against 1.",
+            "generic": "Not quite. Ask what each method promises: a chance of any false link, or an average share.",
+            "byKey": {
+              "same": "BH controls the false discovery rate, an average share. The chance of at least one false link among BH's 6 can be higher than 10%.",
+              "rank-three": "BH rejects every rank up to the largest one that passes. Rank 6 passes, so ranks 1 to 6 are all in, rank 3 included.",
+              "q-same": "At $q = 0.20$ the bar for rank 7 is 0.02333, and 0.0190 is under it, so the list grows."
+            }
+          },
+          "explain": {
+            "text": "Bonferroni holds the chance of even one false link to at most 10%, which costs power. BH lets a few false links in, on average at most 10% of its list, and finds more."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-fund-managers",
+      "difficulty": 3,
+      "skills": [
+        "ht-multiple",
+        "ht-pvalue"
+      ],
+      "prose": "A pension consultant screens 8 fund managers with independent track records. She tests each annualised Sharpe ratio against 0, one-sided, and uses BH to hold the false discovery rate at 10%. Manager H has a Sharpe ratio of 0.9 over 9 years.",
+      "parts": [
+        {
+          "question": "What is manager H's $t$ statistic? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.7,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "over-root",
+                "value": 0.3,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "times-t",
+                "value": 8.1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$t = \\mathrm{SR}\\sqrt T = 0.9 \\times \\sqrt 9 = 2.7$.",
+            "generic": "Not quite. Multiply the Sharpe ratio by the square root of the years.",
+            "byKey": {
+              "over-root": "You divided by $\\sqrt 9$. The standard error of a Sharpe ratio is $\\tfrac{1}{\\sqrt T}$, so $t$ multiplies by $\\sqrt T$.",
+              "times-t": "You multiplied by 9 years. The $t$ statistic grows with $\\sqrt T = 3$."
+            }
+          },
+          "explain": {
+            "text": "Over 9 years the Sharpe ratio has standard error $\\tfrac{1}{3}$. So 0.9 sits $0.9 \\times 3 = 2.7$ standard errors above 0."
+          }
+        },
+        {
+          "question": "Using $t = 2.7$ from part 1 and $\\Phi(2.7) = 0.9965$, what is H's one-sided p-value? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0035,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "two-sided",
+                "value": 0.007,
+                "tol": {
+                  "abs": 0.00015
+                }
+              },
+              {
+                "id": "lower",
+                "value": 0.9965,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$p = 1 - \\Phi(2.7) = 1 - 0.9965 = 0.0035$.",
+            "generic": "Not quite. Take the upper tail beyond $t = 2.7$.",
+            "byKey": {
+              "two-sided": "You doubled the tail. Her test asks only whether the Sharpe ratio is above 0.",
+              "lower": "That is the area below 2.7. The one-sided p-value is the area above it."
+            }
+          },
+          "explain": {
+            "text": "The upper tail beyond 2.7 holds 0.0035. A manager with no skill would show a record this good fewer than 4 times in 1,000."
+          }
+        },
+        {
+          "question": "The other seven p-values are 0.0006, 0.014, 0.052, 0.058, 0.09, 0.31 and 0.62. With H's p-value, 0.0035 from part 2, BH at $q = 0.10$ compares the $k$-th smallest with $\\tfrac{0.10k}{8} = 0.0125k$. How many managers does it reject?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "first-fail",
+                "value": 3,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "bonferroni",
+                "value": 2,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "unadjusted",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Sorted: 0.0006, 0.0035, 0.014, 0.052, 0.058. Ranks 1 to 3 pass, and rank 4 fails (0.052 against 0.05). Rank 5 passes (0.058 against 0.0625), and no later rank does, so BH rejects 5.",
+            "generic": "Not quite. Sort the eight p-values, then find the largest rank $k$ with $p_{(k)} \\le 0.0125k$.",
+            "byKey": {
+              "first-fail": "You stopped at rank 4, where 0.052 is above 0.05. BH keeps going: rank 5, 0.058, is under 0.0625.",
+              "bonferroni": "Two is what Bonferroni at 0.0125 keeps, and what BH gives if H's p is taken as 0.9965. With p = 0.0035, the largest rank under its bar is 5.",
+              "unadjusted": "That counts every p-value up to 0.10. BH's bar for rank $k$ is only $0.0125k$."
+            }
+          },
+          "explain": {
+            "text": "H's 0.0035 sorts second. The largest rank under its bar is 5, so BH backs five managers, the one at rank 4 included."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-checkout-designs",
+      "difficulty": 3,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "An online shop tests 18 new checkout pages against its current page, each with a two-sided test at 5% on the same month of traffic. Treat the 18 tests as independent, and suppose no page truly differs. The shop launches every page that passes, and each launch costs £4,000 in engineering time.",
+      "parts": [
+        {
+          "question": "How many launches does the shop expect from the 18 pages? Give 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.9,
+            "tol": {
+              "abs": 0.05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "one-sided",
+                "value": 0.45,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "all-pages",
+                "value": 18,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "complement",
+                "value": 17.1,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each page passes with chance 0.05, and expectations add: $18 \\times 0.05 = 0.9$.",
+            "generic": "Not quite. Multiply the number of pages by the chance that one passes.",
+            "byKey": {
+              "one-sided": "You used one tail, 0.025. A two-sided test passes a null page with chance 0.05.",
+              "all-pages": "That is the number of pages. Each launches only if it passes, which is 5% of the time.",
+              "complement": "That is how many pages fail, $18 \\times 0.95$. The shop launches the ones that pass, at 5%."
+            }
+          },
+          "explain": {
+            "text": "Each of the 18 null pages passes with chance 0.05. So the shop expects $18 \\times 0.05 = 0.9$ launches, nearly one useless page a month."
+          }
+        },
+        {
+          "question": "Using 0.9 launches from part 1, what do the useless launches cost the shop on average? Give pounds, as a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3600,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "£",
+            "placeholder": "pounds",
+            "wrong": [
+              {
+                "id": "all-pages",
+                "value": 72000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one-launch",
+                "value": 4000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "thousands",
+                "value": 3.6,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "0.9 launches at £4,000 each cost £3,600.",
+            "generic": "Not quite. Multiply the expected launches by the cost of one.",
+            "byKey": {
+              "all-pages": "That launches all 18 pages. The shop launches only the ones that pass, 0.9 on average.",
+              "one-launch": "That is one launch. The shop expects 0.9 of them, not 1.",
+              "thousands": "You left out the thousand. One launch costs £4,000."
+            }
+          },
+          "explain": {
+            "text": "Expected cost is the expected number of launches times the cost of one: 0.9 times £4,000 is £3,600. Every one of those launches is a page that does nothing."
+          }
+        },
+        {
+          "question": "The shop now uses the Bonferroni bar, for a 5% chance of any false launch across the 18 pages. What bar does each test use? Give 6 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.002778,
+            "tol": {
+              "abs": 5e-07
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "unadjusted",
+                "value": 0.05,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "times-n",
+                "value": 0.9,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sidak",
+                "value": 0.002846,
+                "tol": {
+                  "abs": 5e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{0.05}{18} = 0.002778$.",
+            "generic": "Not quite. Bonferroni divides the family's target by the number of tests.",
+            "byKey": {
+              "unadjusted": "That is the family's target itself. Each of the 18 tests gets a share of it: $\\tfrac{0.05}{18}$.",
+              "times-n": "You multiplied by 18. Bonferroni divides, so that the 18 bars together add to at most 0.05.",
+              "sidak": "That is the Šidák bar, $1 - 0.95^{1/18}$, a little larger. The question asks for Bonferroni: $\\tfrac{0.05}{18}$."
+            }
+          },
+          "explain": {
+            "text": "Bonferroni gives each of the 18 tests one eighteenth of the 5% budget, 0.002778. That bar is stricter than 0.05 for every page."
+          }
+        },
+        {
+          "question": "Using the bar 0.002778 from part 3, what is the chance of at least one useless launch? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0488,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "bound",
+                "value": 0.05,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-complement",
+                "value": 0.9512,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.6028,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "All 18 stay quiet with chance $(1 - 0.002778)^{18} = 0.9512$, so at least one launch has chance $1 - 0.9512 = 0.0488$.",
+            "generic": "Not quite. Find the chance that every page stays quiet at the new bar, then take the complement.",
+            "byKey": {
+              "bound": "0.05 is the union bound, which Bonferroni guarantees, and what the Šidák bar gives. With the bar 0.002778 the exact chance is a little lower.",
+              "no-complement": "That is $0.997222^{18}$, the chance that all 18 stay quiet. Take its complement.",
+              "carried": "That is the chance at 5% per page, $1 - 0.95^{18}$. At 0.002778 per page the 18 quiet chances are each 0.997222."
+            }
+          },
+          "explain": {
+            "text": "Each useless page now launches with chance 0.002778. The chance that none does is 0.9512. So the chance of at least one is 0.0488, just under the 0.05 budget."
+          }
+        },
+        {
+          "question": "Under the bar from part 3, the expected waste is $18 \\times 0.002778 \\times$ £4,000 = £200. Now suppose a few pages really are better. Using parts 2 to 4, what does the stricter bar cost the shop?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "power",
+                "text": "Pages that do improve checkout must also clear the stricter bar, so fewer of them are found",
+                "correct": true
+              },
+              {
+                "id": "free",
+                "text": "Nothing: a stricter bar only removes useless launches",
+                "why": "A page that truly helps must pass the same stricter test. It is more likely to be missed."
+              },
+              {
+                "id": "never",
+                "text": "The shop can never launch a page again",
+                "why": "A page with a p-value under 0.002778 still passes. The bar is strict, not closed."
+              },
+              {
+                "id": "safe",
+                "text": "Nothing, because the expected waste is now £0, so anything that passes is safe to launch",
+                "why": "Expected waste is £200, not £0, and the chance of at least one useless launch is still 0.0488."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Expected waste falls from £3,600 to £200, and the chance of any useless launch from 0.6028 to 0.0488. The price is power: a better page must now clear 0.002778.",
+            "generic": "Not quite. Ask what the same stricter bar does to a page that really is better.",
+            "byKey": {
+              "free": "A page that truly helps must pass the same stricter test. It is more likely to be missed.",
+              "never": "A page with a p-value under 0.002778 still passes. The bar is strict, not closed.",
+              "safe": "Expected waste is £200, not £0, and the chance of at least one useless launch is still 0.0488."
+            }
+          },
+          "explain": {
+            "text": "A stricter bar removes most useless launches, but it applies to good pages too. A page with a real gain is found less often, so the shop trades power for a cleaner list."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-biomarker-field",
+      "difficulty": 4,
+      "skills": [
+        "ht-multiple",
+        "ht-errors"
+      ],
+      "prose": "A medical field has tested 400 candidate biomarkers, each with a two-sided $z$ test. Suppose 380 have no effect and 20 have a real one, and treat the 400 tests as independent. The field is choosing a bar $|z| > c$. For each bar the table gives the chance that a null passes and the chance that a real biomarker passes. At $c = 2.5$ they are 0.0124 and 0.90. At 2.8 they are 0.0051 and 0.84. At 3.1 they are 0.0019 and 0.75. At 3.5 they are 0.00047 and 0.61.",
+      "parts": [
+        {
+          "question": "The field wants to expect at most 1 false find from its 380 nulls. How large can a null's pass chance be? Give 6 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.002632,
+            "tol": {
+              "abs": 5e-07
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "over-400",
+                "value": 0.0025,
+                "tol": {
+                  "abs": 5e-07
+                }
+              },
+              {
+                "id": "times",
+                "value": 380,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "five-percent",
+                "value": 0.000132,
+                "tol": {
+                  "abs": 5e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Expected false finds are $380 \\times$ the pass chance. Setting that to 1 gives $\\tfrac{1}{380} = 0.002632$.",
+            "generic": "Not quite. Expected false finds are the number of nulls times the pass chance of one null.",
+            "byKey": {
+              "over-400": "You divided by all 400. Only the 380 nulls can give a false find, so the chance is $\\tfrac{1}{380}$.",
+              "times": "You multiplied 1 by 380. Expected false finds are 380 times a null's pass chance, so that chance is $\\tfrac{1}{380}$.",
+              "five-percent": "You divided 0.05 by 380, the Bonferroni bar for a 5% chance of any false find. The target here is one expected false find: $\\tfrac{1}{380}$."
+            }
+          },
+          "explain": {
+            "text": "Each of the 380 nulls passes with the same chance, and expectations add. So $380 \\times \\text{chance} \\le 1$ needs a chance of at most $\\tfrac{1}{380} = 0.002632$."
+          }
+        },
+        {
+          "question": "Using 0.002632 from part 1, which is the lowest bar with a null pass chance at most that?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "c31",
+                "text": "$c = 3.1$",
+                "correct": true
+              },
+              {
+                "id": "c25",
+                "text": "$c = 2.5$",
+                "why": "At 2.5 a null passes with chance 0.0124, so 380 nulls give $380 \\times 0.0124 = 4.712$ false finds, over 1."
+              },
+              {
+                "id": "c28",
+                "text": "$c = 2.8$",
+                "why": "At 2.8 a null passes with chance 0.0051, so 380 nulls give $380 \\times 0.0051 = 1.938$ false finds, over 1."
+              },
+              {
+                "id": "c35",
+                "text": "$c = 3.5$",
+                "why": "3.5 keeps a null at 0.00047, under 0.002632, but it is not the lowest bar that does. A bar higher than needed costs power: 0.61 against 0.75."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "At 3.1 a null passes with chance 0.0019, under 0.002632. At 2.8 it is 0.0051, which is over.",
+            "generic": "Not quite. Find the first bar in the table, from the lowest, whose null pass chance is at most 0.002632.",
+            "byKey": {
+              "c25": "At 2.5 a null passes with chance 0.0124, so 380 nulls give $380 \\times 0.0124 = 4.712$ false finds, over 1.",
+              "c28": "At 2.8 a null passes with chance 0.0051, so 380 nulls give $380 \\times 0.0051 = 1.938$ false finds, over 1.",
+              "c35": "3.5 keeps a null at 0.00047, under 0.002632, but it is not the lowest bar that does. A bar higher than needed costs power: 0.61 against 0.75."
+            }
+          },
+          "explain": {
+            "text": "Of the table's bars, 3.1 is the lowest that meets it, with 0.0019. A higher bar only costs power."
+          }
+        },
+        {
+          "question": "At the bar 3.1, how many of the 20 real biomarkers does the field expect to find? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 15,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "old-bar",
+                "value": 18,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "all-real",
+                "value": 20,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "next-bar",
+                "value": 12,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "lower-bar",
+                "value": 17,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A real biomarker passes the bar 3.1 with chance 0.75, so $20 \\times 0.75 = 15$.",
+            "generic": "Not quite. Multiply the 20 real biomarkers by the chance that a real one passes at 3.1.",
+            "byKey": {
+              "old-bar": "That uses 0.90, the pass chance at 2.5. At 3.1 a real biomarker passes with chance 0.75.",
+              "all-real": "That counts all 20. A real biomarker passes only 75% of the time at this bar.",
+              "next-bar": "That uses 0.61, the pass chance at 3.5. The bar chosen in part 2 is 3.1, with chance 0.75.",
+              "lower-bar": "That uses 0.84, the pass chance at 2.8. The bar chosen in part 2 is 3.1, with chance 0.75."
+            }
+          },
+          "explain": {
+            "text": "Real effects are found with chance 0.75 at this bar. So the field expects $20 \\times 0.75 = 15$ real finds, and misses 5."
+          }
+        },
+        {
+          "question": "Using 15 real finds from part 3, what share of all finds at 3.1 are false? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0459,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "true-share",
+                "value": 0.9541,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "over-400",
+                "value": 0.0018,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-power",
+                "value": 0.0348,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "False finds: $380 \\times 0.0019 = 0.722$. False share: $\\tfrac{0.722}{0.722 + 15} = \\tfrac{0.722}{15.722} \\approx 0.0459$.",
+            "generic": "Not quite. Count the false finds from the 380 nulls, then divide by all the finds, false and real.",
+            "byKey": {
+              "true-share": "That is the share of finds that are real. The question asks for the false share, $\\tfrac{0.722}{15.722}$.",
+              "over-400": "You divided the false finds by all 400 biomarkers. The share is out of the finds, $0.722 + 15$.",
+              "no-power": "You counted all 20 real biomarkers as finds. At this bar only 15 of them pass."
+            }
+          },
+          "explain": {
+            "text": "At the bar 3.1 the field expects 15.722 finds, of which 0.722 are false. So about 4.6% of its finds are false."
+          }
+        },
+        {
+          "question": "Using part 4, what does the false share 0.0459 tell the field?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "share",
+                "text": "About 1 in 22 finds is expected to be false, yet at least one false find is about as likely as not",
+                "correct": true
+              },
+              {
+                "id": "fwer",
+                "text": "The chance of at least one false find across the field is 0.0459",
+                "why": "That is the share of finds that are false. With 380 independent nulls at 0.0019 each, the chance of at least one false find is $1 - 0.9981^{380} \\approx 0.51$."
+              },
+              {
+                "id": "per-find",
+                "text": "Each find is false with chance 0.0019, the null pass chance at this bar",
+                "why": "0.0019 is the chance that a null passes, not the share of finds that are false."
+              },
+              {
+                "id": "none",
+                "text": "The bar has removed every false find, so none is expected any more",
+                "why": "0.722 false finds are still expected, and one or more happens in about half of all fields."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "False finds are about 4.6% of the finds. Yet 380 nulls at 0.0019 each give at least one with chance $1 - 0.9981^{380} \\approx 0.51$.",
+            "generic": "Not quite. A share of finds and the chance of at least one false find are different things.",
+            "byKey": {
+              "fwer": "That is the share of finds that are false. With 380 independent nulls at 0.0019 each, the chance of at least one false find is $1 - 0.9981^{380} \\approx 0.51$.",
+              "per-find": "0.0019 is the chance that a null passes, not the share of finds that are false.",
+              "none": "0.722 false finds are still expected, and one or more happens in about half of all fields."
+            }
+          },
+          "explain": {
+            "text": "A false share is an average over finds. It does not say that no false find occurs: with so many nulls, one or more is more likely than not."
+          }
+        }
+      ]
+    }
+  ]
+}

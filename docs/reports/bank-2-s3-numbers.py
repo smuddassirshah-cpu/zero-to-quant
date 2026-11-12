@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Bank part 2, session 3: every key, slip and stated figure in statistics-3, finance-3 and behavioural-7, by two routes.
+"""Bank part 2, session 3: every key, slip and stated figure in statistics-3, finance-3, behavioural-7 and coding-3, by two routes.
+
+coding-3: each solution runs on every example and hidden test, the untouched starter fails, a brute-force twin agrees on every
+test, and each named trap (near-miss) fails a hidden test; the slow trap runs in a fresh CPython with a 5 s limit. Reading
+items run their own lines (NumPy when present; C++ with g++ -std=c++20).
 
 Standard library only (runs under plain python3). numbers_lib.py has no Bank loader yet (B2-E4), so the JSON is read here.
 Route A is exact (Fraction) or closed form; route B is enumeration, a seeded simulation with a stated tolerance, a
@@ -13,7 +17,7 @@ from statistics import NormalDist
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BANK = os.path.join(HERE, '..', '..', 'app', 'content', 'bank')
-FILES = ['statistics-3', 'finance-3', 'behavioural-7']
+FILES = ['statistics-3', 'finance-3', 'behavioural-7', 'coding-3']
 DATA = {f: json.load(open(os.path.join(BANK, f + '.json'), encoding='utf-8')) for f in FILES}
 ITEMS = {(f, it['id']): it for f in FILES for it in DATA[f]['items']}
 fails, checks = [], [0]
@@ -99,6 +103,13 @@ def choice(f, i, key_text_part):
     return it
 
 
+def stale(f, i, olds):
+    """Fix pass: none of the old values or phrases of a re-authored item survives anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in olds:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
 def fmt(x, dp):
     return f'{x:.{dp}f}'
 
@@ -175,14 +186,19 @@ close(q_closed, 0.05, 0.0005, '11.07 is the 5% point')
 ok(float(a) > 11.07, 'statistic beats the 5% point')
 stated(S, 'ht-setup-die-sixty-rolls', '134/10 = 13.4')
 
-# weak-signal-daily-edge
-a = F(5, 100) / (F(1) / 20)
-b = 0.0005 / (0.01 / sqrt(400))
+# weak-signal-daily-edge (delta finding 2: 0.07% a day, sd 1.4%, 1,225 days; the 0.04%, 1%, 625 and 2,500 are a testing lesson's own)
+a = F(7, 100) / (F(14, 10) / 35)                              # route A: exact, standard error 1.4% over 35
+b = 0.0007 / (0.014 / sqrt(1225))                             # route B: floats, all in fractions of a unit
 key = two(a, b, 1e-12, 't statistic')
-numeric(S, 'weak-signal-daily-edge', key, 2, {'no-root': F(5, 100) / 1, 'annual-sharpe': 0.05 * sqrt(252)})
-n2 = next(n for n in range(1, 10000) if 0.05 * sqrt(n) >= 2 - 1e-12)
-two(n2, (2 / 0.05) ** 2, 0, 'days for t = 2')
-stated(S, 'weak-signal-daily-edge', '1,600 days')
+numeric(S, 'weak-signal-daily-edge', key, 2, {'no-root': F(7, 100) / F(14, 10), 'annual-sharpe': 0.07 / 1.4 * sqrt(252)})
+ok(a == F(7, 4) and 35 * 35 == 1225 and F(14, 10) / 35 == F(4, 100), 't = 7/4; the standard error is 0.04%')
+n3 = next(n for n in range(1, 100000) if 0.0007 / 0.014 * sqrt(n) >= 3.5 - 1e-12)
+two(n3, (3.5 / 0.05) ** 2, 1e-6, 'days for t = 3.5')
+two(n3, 4 * 1225, 0, 'four times the data gives t = 3.5, 4,900 days')
+stated(S, 'weak-signal-daily-edge', '4,900 days')
+stated(S, 'weak-signal-daily-edge', 'To double it to 3.5')
+stated(S, 'weak-signal-daily-edge', 'the root of the 1,225 days')
+stale(S, 'weak-signal-daily-edge', ['400', '1,600', '1/20', '625', '2,500', '0.63', '1/25', 'Correct. t = 1.00', '0.04/0.04', '\\\\sqrt{625}', 'reach t = 2'])
 
 # ht-errors-sample-for-power: the formula against a count-up on exact two-sided power
 n_formula = ((1.96 + 0.8416) * 10 / 2) ** 2
@@ -193,7 +209,10 @@ ok(power(196) < 0.8 <= power(197), 'claim: 197 is the smallest n with power 80%'
 ok(fmt(power(196), 4) == '0.7995', f'power at 196 is {power(196)}')
 ok(fmt(n_formula, 1) == '196.2' and fmt(2.8016 * 5, 3) == '14.008', 'stated 196.2 and 14.008')
 numeric(S, 'ht-errors-sample-for-power', key, None,
-        {'no-power': math.ceil((1.96 * 5) ** 2), 'one-sided': math.ceil(((1.645 + 0.8416) * 5) ** 2), 'rounded-down': math.floor(n_formula)})
+        {'no-power': math.ceil((1.96 * 5) ** 2), 'one-sided': math.ceil(((1.645 + 0.8416) * 5) ** 2), 'rounded-down': math.floor(n_formula),
+         'two-groups': two(math.ceil(2 * (2.8016 * 5) ** 2), next(n for n in range(1, 2000) if 2 * ((1.96 + 0.8416) * 5) ** 2 <= n), 0, 'doubled variance')})
+ok(item(S, 'ht-errors-sample-for-power')['difficulty'] == 4 and item(S, 'ht-errors-sample-for-power')['requires'] == ['testing/l6-power'], 'fix pass 17: difficulty 4, requires kept')
+stated(S, 'ht-errors-sample-for-power', '(2.8016 \\\\times 5)^2')
 stated(S, 'ht-errors-sample-for-power', '79.95%')
 
 # ht-multiple-share-false: expected false passes over passes, against a seeded simulation of 200 null signals
@@ -229,18 +248,22 @@ for _ in range(40000):
     errs.append(1 + 0.5 * mx + rng.gauss(0, 2) - pred)
 b = sqrt(sum(e * e for e in errs) / len(errs))
 key = two(a, b, 0.02, 'prediction standard error (simulation tolerance 0.02)')
-numeric(S, 'rg-inference-new-observation', key, 2, {'fitted-mean': F(2, 5), 'noise-only': 2})
+numeric(S, 'rg-inference-new-observation', key, 2, {'fitted-mean': F(2, 5), 'noise-only': 2, 'added-errors': F(2) + F(2, 5)})   # fix pass 18: 2 + 0.4 = 2.4
+ok(2 + 0.4 > 2 * sqrt(1 + 1 / 25), 'adding the errors overstates the root-sum-square')
 ok(fmt(4 + 0.16, 2) == '4.16', 'variances add to 4.16')
 
 # rg-diagnostics-fanning-residuals: seeded simulation against the sandwich formula on fresh designs
 rng = random.Random(20261111)
-slopes, ses = [], []
+slopes, ses, hc = [], [], []
 for _ in range(4000):
     x = [rng.uniform(0, 10) for _ in range(50)]
     y = [1 + 0.5 * a_ + rng.gauss(0, 0.2 * a_) for a_ in x]
-    b1, se1, _ = ols(x, y)
+    b1, se1, res1 = ols(x, y)
     slopes.append(b1)
     ses.append(se1)
+    mx1 = sum(x) / 50
+    sxx1 = sum((a_ - mx1) ** 2 for a_ in x)
+    hc.append(sqrt(50 / 48 * sum((a_ - mx1) ** 2 * r_ * r_ for a_, r_ in zip(x, res1)) / sxx1 ** 2))   # robust (HC1) error
 m_s = sum(slopes) / len(slopes)
 sd_s = sqrt(sum((s - m_s) ** 2 for s in slopes) / (len(slopes) - 1))
 rep = sum(ses) / len(ses)
@@ -257,11 +280,20 @@ for _ in range(4000):                                     # route B: exact condi
 two(sd_s, sqrt(sum(true_v) / len(true_v)), 0.002, 'true spread of the slope')
 two(rep, sqrt(sum(rep_v) / len(rep_v)), 0.002, 'reported standard error (route B is the root of the mean variance)')
 two(m_s, 0.5, 0.003, 'slope unbiased')
-ok(fmt(m_s, 3) == '0.500' and fmt(rep, 3) == '0.057' and fmt(sd_s, 3) == '0.063', f'printed figures {m_s} {rep} {sd_s}')
 ok(rep < sd_s, 'claim: the usual error misstates (understates) the spread')
+two(sum(hc) / len(hc), sd_s, 0.004, 'fix pass 1: robust errors repair the spread (average HC1 error against the true spread)')
+# a noise that moves with x breaks the unbiasedness (the false general sentence is gone): slope of a design where E(noise | x) = 0.5 x
+rng = random.Random(5)
+sl_bad = []
+for _ in range(2000):
+    x = [rng.uniform(0, 10) for _ in range(50)]
+    y = [1 + 0.5 * a_ + 0.5 * a_ + rng.gauss(0, 0.2 * a_) for a_ in x]
+    sl_bad.append(ols(x, y)[0])
+two(sum(sl_bad) / len(sl_bad), 1.0, 0.01, 'fix pass 1: without the condition the slope is biased (1.00 for a true 0.5)')
 choice(S, 'rg-diagnostics-fanning-residuals', 'stays unbiased')
-stated(S, 'rg-diagnostics-fanning-residuals', 'slopes average 0.500 for a true 0.5')
-stated(S, 'rg-diagnostics-fanning-residuals', 'averages 0.057, against a true spread of 0.063')
+stated(S, 'rg-diagnostics-fanning-residuals', 'the noise averages zero at every x')
+stated(S, 'rg-diagnostics-fanning-residuals', 'Robust standard errors repair it without moving the slope.')
+stale(S, 'rg-diagnostics-fanning-residuals', ['0.500', '0.057', '0.063', 'whatever the noise', '4,000', '0.2x'])
 
 # rg-multiple-partial-out: residual on residual against the 2 x 2 normal equations
 rng = random.Random(7)
@@ -282,11 +314,14 @@ two(fwl, full, 1e-9, 'Frisch-Waugh-Lovell equals the full regression')
 simple = ols(x1, y)[0]
 raw = ols(x1, ry)[0]                     # residual of y on x2 against the raw x1
 avg = (simple + ols(x2, y)[0]) / 2
-ok(fmt(fwl, 3) == '1.981' and fmt(simple, 3) == '2.888', f'printed figures {fwl} {simple}')
 ok(min(abs(simple - full), abs(raw - full), abs(avg - full)) > 0.1, f'each distractor recipe misses: {simple} {raw} {avg}')
+rho2 = s12 * s12 / (s11 * s22)                             # fix pass 12: cleaning y alone scales the slope by 1 - rho^2, exactly in sample
+two(raw, full * (1 - rho2), 1e-9, 'slope of cleaned y on raw x1 equals the full slope times one minus the squared correlation')
+ok(abs(fwl - full) < 1e-9, 'exact in this sample (intercepts in every regression)')
 choice(S, 'rg-multiple-partial-out', 'residual on residual')
-stated(S, 'rg-multiple-partial-out', 'both give 1.981')
-stated(S, 'rg-multiple-partial-out', 'gives 2.888')
+stated(S, 'rg-multiple-partial-out', 'The match is exact in every sample, provided each regression has an intercept.')
+stated(S, 'rg-multiple-partial-out', 'scaled down by the factor one minus the squared correlation of the predictors')
+stale(S, 'rg-multiple-partial-out', ['1.981', '2.888', '20,000'])
 
 # ts-forecast-half-life: logs against a bisection on 0.75^k = 0.5
 a = log(0.5) / log(0.75)
@@ -299,16 +334,21 @@ numeric(S, 'ts-forecast-half-life', key, 1, {'linear-decay': F(1, 2) / F(1, 4), 
 ok(fmt(a, 2) == '2.41' and round(0.75 ** 2 * 100) == 56 and round(0.75 ** 3 * 100) == 42, 'stated 2.41, 56% and 42%')
 
 # ts-acf-noise-band: 1.96/sqrt(n) against a seeded simulation of lag-1 autocorrelations of white noise
-a = 1.96 / sqrt(400)
+a = 1.96 / sqrt(625)                                          # fix pass finding 4: 625 observations
 rng = random.Random(3)
 rs = []
 for _ in range(4000):
-    z = [rng.gauss(0, 1) for _ in range(400)]
-    mz = sum(z) / 400
-    rs.append(sum((z[t] - mz) * (z[t + 1] - mz) for t in range(399)) / sum((v - mz) ** 2 for v in z))
+    z = [rng.gauss(0, 1) for _ in range(625)]
+    mz = sum(z) / 625
+    rs.append(sum((z[t] - mz) * (z[t + 1] - mz) for t in range(624)) / sum((v - mz) ** 2 for v in z))
 sd_r = sqrt(sum(r * r for r in rs) / len(rs))
 key = two(a, 1.96 * sd_r, 0.004, 'noise band (simulation tolerance 0.004)')
-numeric(S, 'ts-acf-noise-band', key, 3, {'no-multiplier': 1 / sqrt(400), 'divided-by-n': 1.96 / 400})
+numeric(S, 'ts-acf-noise-band', key, 4, {'no-multiplier': 1 / sqrt(625), 'divided-by-n': 1.96 / 625, 'rule-of-two': 2 / sqrt(625)})
+two(F(196, 100) / 25, F(784, 10000), 0, 'band is exactly 0.0784')
+ok(round(2 / 25, 4) != round(1.96 / 25, 4) and abs(0.08 - 0.0784) > 5e-5 * 2, 'the rule-of-two slip is refused, not accepted')
+stated(S, 'ts-acf-noise-band', '1.96/25 = 0.0784')
+stated(S, 'ts-acf-noise-band', 'Using 1.96')
+stale(S, 'ts-acf-noise-band', ['400', '0.098', '0.05', '1/20', '0.005'])
 
 # equicorrelation-many-assets-vol: the equicorrelation formula against the full 25 x 25 double sum
 n = 25
@@ -341,12 +381,20 @@ key = two(a, v, 1e-9, 'bond price')
 numeric(FI, 'fi-bonds-three-year-coupon', key, 2, {'par': 100, 'not-discounted': sum(cfs)})
 ok([fmt(c / 1.04 ** (t + 1), 3) for t, c in enumerate(cfs)] == ['5.769', '5.547', '94.234'], 'stated parts')
 
+def stale_fc(f, i, *old):
+    """Re-authored item: none of the old setting's figures is left anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in old:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
 # fi-bonds-pound-per-basis-point: duration rule against a finite difference of a price with that duration
 a = F(98, 100) * 10_000_000 * F(45, 10) * F(1, 10000)
 price = lambda dy: 9_800_000 * exp(-4.5 * dy)          # a price whose modified duration is 4.5 at dy = 0
 b = (price(-0.00005) - price(0.00005)) / 0.0001 * 0.0001
 key = two(a, b, 0.01, 'loss per basis point')
-numeric(FI, 'fi-bonds-pound-per-basis-point', int(a), None, {'face-not-price': 10_000_000 * 4.5 * 0.0001, 'ten-basis-points': 9_800_000 * 4.5 * 0.001})
+numeric(FI, 'fi-bonds-pound-per-basis-point', int(a), None, {'face-not-price': 10_000_000 * 4.5 * 0.0001, 'ten-basis-points': 9_800_000 * 4.5 * 0.001, 'signed': -int(a)})
+ok('positive number' in item(FI, 'fi-bonds-pound-per-basis-point')['question'], 'pound per basis point: the question states the sign convention')
 
 # fi-forwards-geared-loss: balance sheet against the gearing identity r_e = r_a + (D/E)(r_a - r_d)
 a = (F(200000) * F(9, 10) - F(100000) * F(104, 100) - 100000) / 100000
@@ -354,18 +402,27 @@ b = -0.10 + (100000 / 100000) * (-0.10 - 0.04)
 key = two(a, b, 1e-12, 'geared return')
 numeric(FI, 'fi-forwards-geared-loss', key, 0, {'no-interest': 2 * F(-1, 10), 'no-gearing': F(-1, 10), 'sign': -key})
 
-# fi-forwards-currency-forward: covered interest parity against a round trip of 1 pound
-a = F(125, 100) * F(105, 100) / F(103, 100)
-b = (1.25 * 1.05) / (1 * 1.03)
+# fi-forwards-currency-forward (re-authored after review bank 2 b): a euro costs 0.8600 pounds; 4.5% in pounds, 2% in euros
+# covered interest parity against a round trip of 1 euro
+a = F(86, 100) * F(1045, 1000) / F(102, 100)
+b = (0.86 * 1.045) / (1 * 1.02)
 key = two(a, b, 1e-12, 'currency forward')
-numeric(FI, 'fi-forwards-currency-forward', key, 4, {'rates-swapped': 1.25 * 1.03 / 1.05, 'added-gap': 1.25 * (1 + 0.05 - 0.03)})
-stated(FI, 'fi-forwards-currency-forward', '1.3125/1.03 \\\\approx 1.2743')
+numeric(FI, 'fi-forwards-currency-forward', key, 4, {'rates-swapped': 0.86 * 1.02 / 1.045, 'added-gap': 0.86 * (1 + 0.045 - 0.02)})
+ok(fmt(0.86 * 1.045, 4) == '0.8987' and fmt(key, 4) == '0.8811', 'stated figures 0.8987 and 0.8811')
+stated(FI, 'fi-forwards-currency-forward', '0.8987/1.02 \\\\approx 0.8811')
+stale_fc(FI, 'fi-forwards-currency-forward', '1.25', '1.2743', '1.3125', 'dollar', '1.03')
 
-# op-payoff-short-strangle-loss: premiums less payoffs, against a scan of the payoff
-sp = lambda s: 2.20 + 1.80 - max(95 - s, 0) - max(s - 105, 0)
-a = F(220 + 180, 100) - (95 - 88)
-key = two(a, sp(88), 1e-12, 'strangle P&L at 88')
-numeric(FI, 'op-payoff-short-strangle-loss', int(key), None, {'no-premium': -(95 - 88), 'premium-only': 4})
+# op-payoff-short-strangle-loss (re-authored after review bank 2 b: sell the 90 put for 3.20 and the 110 call for 2.80; share at 81)
+# premiums less payoffs, against a scan of the payoff
+sp = lambda s: 3.20 + 2.80 - max(90 - s, 0) - max(s - 110, 0)
+a = F(320 + 280, 100) - (90 - 81)
+key = two(a, sp(81), 1e-12, 'strangle P&L at 81')
+numeric(FI, 'op-payoff-short-strangle-loss', int(key), None, {'no-premium': -(90 - 81), 'premium-only': 6, 'unsigned': abs(int(key))})   # delta finding 11: the size without the minus sign
+two(abs(int(key)), (90 - 81) - (320 + 280) // 100, 0, 'unsigned loss: 9 less 6')
+stated(FI, 'op-payoff-short-strangle-loss', 'so type -3.')
+stated(FI, 'op-payoff-short-strangle-loss', '3.20 + 2.80 = 6')
+stated(FI, 'op-payoff-short-strangle-loss', '90 - 81 = 9')
+stale_fc(FI, 'op-payoff-short-strangle-loss', '95', '105', '88', '2.20', '1.80', '£7', '£4')
 
 # op-strategies-one-by-two-breakeven: closed form against a scan of the expiry payoff
 pay = lambda s: max(s - 100, 0) - 2 * max(s - 110, 0) - 5 + 2 * 2.5
@@ -379,7 +436,7 @@ numeric(FI, 'op-strategies-one-by-two-breakeven', a, None, {'peak': 110, 'two-fo
 a = 100 + F(720 - 510, 100) / F(98, 100)
 spot = 7.20 - 5.10 + 100 * 0.98
 key = two(a, spot / 0.98, 1e-9, 'implied forward')
-numeric(FI, 'op-parity-implied-forward', key, 2, {'not-compounded': 100 + 2.10, 'gave-spot': spot})
+numeric(FI, 'op-parity-implied-forward', key, 2, {'not-compounded': 100 + 2.10, 'gave-spot': spot, 'gap-only': 2.10 / 0.98})
 ok(fmt(2.10 / 0.98, 4) == '2.1429', 'gap 2.1429')
 
 # op-greeks-vol-move-pnl: vega rule against a finite repricing with a linear-in-vol price
@@ -439,14 +496,20 @@ for _ in range(450):                                      # one share at a time 
     left[best[0]] -= 1
     got[best[0]] += 1
 two(a, got['B'], 0, 'shares B buys')
-numeric(FI, 'ms-book-who-gets-filled', a, None, {'time-first': fill(book, 450, lambda o: o[3])['B'], 'filled-in-full': 300})
+numeric(FI, 'ms-book-who-gets-filled', a, None, {'time-first': fill(book, 450, lambda o: o[3])['B'], 'filled-in-full': 300, 'left-after-c': 450 - 100})
 
-# ms-costs-shortfall-with-unfilled: Fraction against a paper-portfolio comparison
-a = 6000 * (F(2506, 100) - 25) + 4000 * (F(2520, 100) - 25) + 30
-paper = 10000 * (25.20 - 25.00)
-real = 6000 * (25.20 - 25.06) - 30
+# ms-costs-shortfall-with-unfilled (re-authored after review bank 2 b: 8,000 decided at 12.50; 5,000 filled at 12.54; close 12.70; commission 25)
+# Fraction against a paper-portfolio comparison
+a = 5000 * (F(1254, 100) - F(1250, 100)) + 3000 * (F(1270, 100) - F(1250, 100)) + 25
+paper = 8000 * (12.70 - 12.50)
+real = 5000 * (12.70 - 12.54) - 25
 key = two(a, paper - real, 1e-6, 'implementation shortfall')
-numeric(FI, 'ms-costs-shortfall-with-unfilled', int(a), None, {'filled-only': 6000 * F(6, 100) + 30, 'no-commission': a - 30})
+numeric(FI, 'ms-costs-shortfall-with-unfilled', int(a), None, {'filled-only': 5000 * F(4, 100) + 25, 'no-commission': a - 25, 'filled-cost': 5000 * F(4, 100)})
+ok(a == 825 and 5000 * F(4, 100) == 200 and 3000 * F(20, 100) == 600, 'shortfall 825 = 200 + 600 + 25')
+stated(FI, 'ms-costs-shortfall-with-unfilled', '= 200$ pounds')
+stated(FI, 'ms-costs-shortfall-with-unfilled', '= 600$ pounds')
+ok(item(FI, 'ms-costs-shortfall-with-unfilled')['requires'] == ['micro/l6-impact'], 'shortfall item requires micro/l6-impact, which teaches shortfall')
+stale_fc(FI, 'ms-costs-shortfall-with-unfilled', '25.00', '25.06', '25.20', '10,000', '6,000', '4,000', '1,190', '£30', '360')
 
 # tp-bs-vega-rule: S N'(d1) sqrt(T) against a finite difference in vol, and the 0.4 rule
 a = 100 * N.pdf(0.2 * 0.5 / 2) * 0.5 / 100
@@ -454,7 +517,7 @@ b = (bs(100, 100, 0.25, 0, 0.2001) - bs(100, 100, 0.25, 0, 0.1999)) / 0.0002 / 1
 key = two(a, b, 1e-6, 'vega per vol point')
 rule = F(4, 10) * 100 * F(1, 2) / 100
 ok(abs(float(rule) - key) < 0.005, 'the 0.4 rule sits inside the key band')
-numeric(FI, 'tp-bs-vega-rule', key, 2, {'no-time': F(4, 10) * 100 / 100, 'used-t': F(4, 10) * 100 * F(1, 4) / 100})
+numeric(FI, 'tp-bs-vega-rule', key, 2, {'no-time': F(4, 10) * 100 / 100, 'used-t': F(4, 10) * 100 * F(1, 4) / 100, 'per-unit-vol': 100 * N.pdf(0.05) * 0.5})
 ok(fmt(key, 4) == '0.1992', 'exact 0.1992')
 
 # ---------------------------------------------------------------- behavioural-7 (rule 11)
@@ -475,8 +538,415 @@ for it in DATA[B]['items']:
     ok(it['feedback'] == {'correct': 'Compare your answer with the model and tick the rubric.', 'generic': 'Open the model answer and mark each rubric line.'}, f'{lab}: feedback lines')
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+
+# star-story-chose-to-stop (fix pass finding 20, disputed in part): eight weeks; 3 weeks + 8 working days = 23 working days sunk
+sunk_days = 3 * 5 + 8
+two(sunk_days, 23, 0, 'sunk working days')
+two(F(sunk_days, 5) + 3, F(38, 5), 0, 'weeks used: 4.6 sunk plus the last three weeks is 7.6')
+ok(F(sunk_days, 5) + 3 <= 8, 'the story fits an eight-week placement (7.6 weeks)')
+ok(not (F(sunk_days, 5) + 3 <= 6), 'it did not fit the old six weeks')
+stated(B, 'star-story-chose-to-stop', 'I spent eight weeks in a materials lab')
+stated(B, 'star-story-chose-to-stop', 'about 23 working days')
+stated(B, 'star-story-chose-to-stop', 'the next eight days')
+stale(B, 'star-story-chose-to-stop', ['six weeks', 'eleven days'])
+for it in DATA[B]['items']:
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'], f'{B}/{it["id"]}: rubric line checkable from the text')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
+
+# ---------------------------------------------------------------- coding helpers (code items, rule 12; reading items, rule 13)
+import io, contextlib, subprocess, tempfile, time, shutil
+
+
+def code_cases(it):
+    w = it['widget']
+    return w['examples'], w['tests']
+
+
+def run_case(ns_src, c, impl=None, name=None):
+    """Run one case as the bank harness does: exec setup, eval call, eval expect, compare with ==. Returns (passed, seconds)."""
+    ns = {}
+    t0 = time.perf_counter()
+    try:
+        if impl is not None:
+            ns[name] = impl
+        else:
+            exec(ns_src, ns)
+        if c.get('setup'):
+            exec(c['setup'], ns)
+        a = eval(c['call'], ns)
+        e = eval(c['expect'], ns)
+        good = (a == e)
+    except Exception:
+        good = False
+    return bool(good), time.perf_counter() - t0
+
+
+def slow_case(src, c, limit=5.0):
+    """Run one case of src in a fresh CPython with a time limit: 'timeout', 'wrong' or 'pass'."""
+    prog = src + '\n' + (c.get('setup') or '') + f'\nimport sys\nsys.exit(0 if ({c["call"]}) == ({c["expect"]}) else 3)\n'
+    with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as fh:
+        fh.write(prog)
+        path = fh.name
+    try:
+        r = subprocess.run([sys.executable, path], timeout=limit, capture_output=True)
+        return 'pass' if r.returncode == 0 else 'wrong'
+    except subprocess.TimeoutExpired:
+        return 'timeout'
+    finally:
+        os.unlink(path)
+
+
+def code_item(f, i, fn, brute, traps, slow_traps=(), expect_count=None):
+    """solution passes every example and test (each under 1 s in CPython), the untouched starter fails, the brute-force twin
+    agrees with every stated expect, each named trap fails at least one hidden test; slow traps time out (5 s) on a named test."""
+    it = item(f, i)
+    lab = f'{f}/{i}'
+    w = it['widget']
+    ok(w['kind'] == 'code' and w.get('language', 'python') == 'python', f'{lab}: Python code item')
+    ok(w['starter'].strip().endswith('...') and w['starter'].startswith(f'def {fn}('), f'{lab}: starter is the signature with ...')
+    ok(it['question'] == f'Complete `{fn}`.' and f'`{fn}(' in it['prose'], f'{lab}: question and worked call in prose')
+    ok(240 <= it['pace'] <= 480, f'{lab}: pace 240 to 480')
+    ex, ts = code_cases(it)
+    ok(len(ex) == 2 and 6 <= len(ts) <= 10, f'{lab}: 2 examples, 6 to 10 tests ({len(ts)})')
+    ok(all(c.get('compare') == 'equal' for c in ex + ts), f'{lab}: compare equal')
+    m = re.match(r'Submit runs (\d+) hidden tests\. Each result must equal the expected (whole number|value)\.$', w['how'])
+    ok(m and int(m.group(1)) == len(ts), f'{lab}: how line counts {len(ts)} tests')
+    for c in ex + ts:
+        good, secs = run_case(w['solution'], c)
+        ok(good, f'{lab}: solution passes {c["call"]}')
+        ok(secs < 1.0, f'{lab}: solution under 1 s on {c["call"]} ({secs:.3f} s)')
+        ok(run_case(None, c, impl=brute, name=fn)[0], f'{lab}: brute-force twin agrees on {c["call"]} = {c["expect"]}')
+    for c in ex:
+        ok(any(c['call'] == t['call'] for t in ts), f'{lab}: example {c["call"]} is also a hidden test')
+    ok(not all(run_case(w['starter'], c)[0] for c in ts), f'{lab}: untouched starter fails')
+    ok(sum(not run_case(w['starter'], c)[0] for c in ts) >= 1, f'{lab}: starter fails at least one test')
+    for name, src in traps.items():
+        failed = [c['call'] for c in ts if not run_case(src, c)[0]]
+        ok(failed, f'{lab}: trap "{name}" fails a hidden test')
+        print(f'  trap {lab} "{name}" fails {len(failed)} of {len(ts)}: {failed[0][:70] if failed else "NONE"}')
+    for name, src, call in slow_traps:
+        c = next(t for t in ts if t['call'] == call)
+        small = [t for t in ts if t is not c and not t.get('setup') and len(t['call']) < 60 and '**' not in t['call'] and ' * ' not in t['call']]
+        ok(all(run_case(src, t)[0] for t in small), f'{lab}: slow trap "{name}" is right on the small tests')
+        res = slow_case(src, c)
+        ok(res == 'timeout', f'{lab}: slow trap "{name}" runs past 5 s on {call} ({res})')
+        print(f'  slow trap {lab} "{name}" right on {len(small)} small tests, {res} at 5 s on {call[:70]}')
+    return it
+
+
+def run_prose(it, lang='python'):
+    """Execute the fenced block of a reading item and return what it prints."""
+    m = re.search(r'```' + lang + r'\n(.*?)```', it['prose'], re.S)
+    ok(m is not None, f'{it["id"]}: fenced {lang} block')
+    body = m.group(1)
+    ok(len(body.strip('\n').split('\n')) <= 8, f'{it["id"]}: at most eight lines of code')
+    buf = io.StringIO()
+    if lang == 'python':
+        with contextlib.redirect_stdout(buf):
+            exec(body, {})
+    return body, buf.getvalue().strip()
+
+
+def cpp_run(src):
+    """Compile and run a C++ program with g++ -std=c++20; returns stdout, or None (with a printed warning) when no compiler."""
+    cxx = shutil.which('g++') or shutil.which('clang++')
+    if not cxx:
+        print('WARNING: no C++ compiler, C++ check skipped (not a pass)')
+        return None
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, 'a.cpp')
+    open(p, 'w').write(src)
+    r = subprocess.run([cxx, '-std=c++20', '-O0', p, '-o', os.path.join(d, 'a.out')], capture_output=True, text=True)
+    ok(r.returncode == 0, f'C++ compiles: {r.stderr[:200]}')
+    out = subprocess.run([os.path.join(d, 'a.out')], capture_output=True, text=True).stdout.strip()
+    shutil.rmtree(d)
+    return out
+
+
+def cpp_compiles(src):
+    cxx = shutil.which('g++') or shutil.which('clang++')
+    if not cxx:
+        print('WARNING: no C++ compiler, C++ check skipped (not a pass)')
+        return None
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, 'a.cpp')
+    open(p, 'w').write(src)
+    r = subprocess.run([cxx, '-std=c++20', '-fsyntax-only', p], capture_output=True, text=True)
+    shutil.rmtree(d)
+    return r.returncode == 0
+
+
+# ---------------------------------------------------------------- coding-3
+C = 'coding-3'
+from collections import Counter
+from itertools import combinations
+
+
+# pf-idioms-trend-direction. Brute: the set of signs of every difference.
+def trend_brute(xs):
+    signs = set()
+    for i in range(1, len(xs)):
+        d = xs[i] - xs[i - 1]
+        signs.add((d > 0) - (d < 0))
+    return 1 if signs == {1} else -1 if signs == {-1} else 0
+
+
+code_item(C, 'pf-idioms-trend-direction', 'trend', trend_brute, {
+    'first against last': 'def trend(xs):\n    if len(xs) < 2:\n        return 0\n    return (xs[-1] > xs[0]) - (xs[-1] < xs[0])\n',
+    'not strict (<= and >=)': 'def trend(xs):\n    p = list(zip(xs, xs[1:]))\n    if not p:\n        return 0\n    if all(a <= b for a, b in p):\n        return 1\n    if all(a >= b for a, b in p):\n        return -1\n    return 0\n',
+    'first and last pairs only (review bank 2 b, finding 17)': 'def trend(xs):\n    if len(xs) < 2:\n        return 0\n    a = (xs[1] > xs[0]) - (xs[1] < xs[0])\n    b = (xs[-1] > xs[-2]) - (xs[-1] < xs[-2])\n    return a if a == b else 0\n'})
+_tt = {c['call']: c['expect'] for c in item(C, 'pf-idioms-trend-direction')['widget']['tests']}
+ok(_tt['trend([1, 5, 3, 4, 6])'] == '0' and _tt['trend([-5, -3, -3, -1])'] == '0', 'trend: a dip inside the list, and a repeat inside the list, give 0')
+ok(trend_brute([1, 5, 3, 4, 6]) == 0 and trend_brute([-5, -3, -3, -1]) == 0 and trend_brute([-5, -3, -1]) == 1, 'trend twin: 0, 0 and 1')
+
+
+# at-sort-largest-gap. Brute: pop values off a heap one at a time (no call to sorted).
+def gap_brute(xs):
+    import heapq
+    h = list(xs)
+    heapq.heapify(h)
+    best, prev = 0, None
+    while h:
+        v = heapq.heappop(h)
+        if prev is not None:
+            best = max(best, v - prev)
+        prev = v
+    return best
+
+
+ok(gap_brute([10, 3, 8, 20]) == 10 and gap_brute([1, 1, 50, 50]) == 49, 'heap twin sanity')
+code_item(C, 'at-sort-largest-gap', 'largest_gap', gap_brute, {
+    'gaps in input order': 'def largest_gap(xs):\n    return max((abs(b - a) for a, b in zip(xs, xs[1:])), default=0)\n',
+    'max less min': 'def largest_gap(xs):\n    return max(xs) - min(xs) if xs else 0\n'})
+ok(abs(3 - 10) == 7 and abs(8 - 3) == 5 and abs(20 - 8) == 12, 'explain: input-order gaps 7, 5, 12')
+
+
+# at-greedy-orders-to-fill. Brute: every subset, smallest size first (small cases); a heap of the largest (all cases).
+def fill_brute(sizes, target):
+    if target <= 0:
+        return 0
+    if len(sizes) <= 12:
+        for k in range(1, len(sizes) + 1):
+            if any(sum(c) >= target for c in combinations(sizes, k)):
+                return k
+        return -1
+    import heapq
+    h = [-s for s in sizes]
+    heapq.heapify(h)
+    got, k = 0, 0
+    while h and got < target:
+        got -= heapq.heappop(h)
+        k += 1
+    return k if got >= target else -1
+
+
+code_item(C, 'at-greedy-orders-to-fill', 'orders_to_fill', fill_brute, {
+    'input order': 'def orders_to_fill(sizes, target):\n    if target <= 0:\n        return 0\n    s = 0\n    for k, x in enumerate(sizes, 1):\n        s += x\n        if s >= target:\n            return k\n    return -1\n',
+    'strict: total above the target': 'def orders_to_fill(sizes, target):\n    if target <= 0:\n        return 0\n    s = 0\n    for k, x in enumerate(sorted(sizes, reverse=True), 1):\n        s += x\n        if s > target:\n            return k\n    return -1\n'})
+ok(200 + 50 + 400 >= 450 and 200 + 50 < 450 and 400 + 200 >= 450 and 400 < 450, 'input order takes 3, largest first takes 2')
+# review bank 2 b, finding 21b: max then remove, once per order taken, changes sizes and is quadratic on 100,000 orders of size 1
+_g = item(C, 'at-greedy-orders-to-fill')
+ok('There can be 100,000 orders.' in _g['prose'], 'greedy: the prose gives the size')
+_gt = _g['widget']['tests'][-1]
+ok(_gt['setup'] == 'sizes = [1] * 100000' and _gt['call'] == 'orders_to_fill(sizes, 100000)' and _gt['expect'] == '100000', 'greedy: the large test takes all 100,000 orders')
+_gs = 'def orders_to_fill(sizes, target):\n    if target <= 0:\n        return 0\n    n, got = 0, 0\n    while got < target and sizes:\n        m = max(sizes)\n        sizes.remove(m)\n        got += m\n        n += 1\n    return n if got >= target else -1\n'
+ok(all(run_case(_gs, c)[0] for c in _g['widget']['tests'] if not c.get('setup')), 'greedy: max-and-remove is right on the small tests')
+ok(slow_case(_gs, _gt) == 'timeout', 'greedy: max-and-remove runs past 5 s on the large test')
+
+
+# at-search-count-in-range. Brute: a Counter over every whole number in the range (no halving).
+def range_brute(xs, lo, hi):
+    if hi < lo:
+        return 0
+    c = Counter(xs)
+    if hi - lo <= 2 * len(c):
+        return sum(c[v] for v in range(lo, hi + 1))
+    return sum(n for v, n in c.items() if lo <= v <= hi)
+
+
+BIG = 'sum(count_in_range(xs, k, k + 10) for k in range(0, 2000000, 2000))'
+code_item(C, 'at-search-count-in-range', 'count_in_range', range_brute, {
+    'no guard for hi below lo': 'from bisect import bisect_left, bisect_right\ndef count_in_range(xs, lo, hi):\n    return bisect_right(xs, hi) - bisect_left(xs, lo)\n',
+}, slow_traps=[('linear scan, O(n) per call', 'def count_in_range(xs, lo, hi):\n    return sum(1 for x in xs if lo <= x <= hi)\n', BIG)])
+from bisect import bisect_left as _bl, bisect_right as _br
+ok(_br([1, 3, 3, 5, 8, 8, 9], 2) - _bl([1, 3, 3, 5, 8, 8, 9], 9) == -5, 'trap value: -5 for (9, 2)')
+two(len(range(6, 1000001, 2)), (1000000 - 6) // 2 + 1, 0, 'evens from 6 to 1,000,000: 499,998')
+two(sum(len(range(k, k + 11, 2)) for k in range(0, 2000000, 2000)), 1000 * 6, 0, '1,000 windows of 6 evens')
+# delta finding 9 (first read b, finding 15): 3,000 calls that each reach far to the right, so a copying slice, a halve-then-walk and a linear scan all run past the limit
+_ct = item(C, 'at-search-count-in-range')['widget']['tests'][-1]
+ok(_ct['call'] == 'sum(count_in_range(xs, k, 10**7) for k in range(0, 6000, 2))' and _ct['expect'] == '2995501500', 'count_in_range: the wide-range test, 3,000 calls')
+two(sum(1000000 - k // 2 for k in range(0, 6000, 2)), 2995501500, 0, 'count_in_range: evens from k up to 1,999,998, summed over 3,000 values of k')
+two(3000 * 10 ** 6 - 2999 * 3000 // 2, 2995501500, 0, 'count_in_range: the same by an arithmetic series')
+stale_fc(C, 'at-search-count-in-range', 'range(0, 600, 2)', '299955150"')
+_walk = 'from bisect import bisect_left\ndef count_in_range(xs, lo, hi):\n    if hi < lo:\n        return 0\n    i = bisect_left(xs, lo)\n    j = i\n    while j < len(xs) and xs[j] <= hi:\n        j += 1\n    return j - i\n'
+ok(all(run_case(_walk, c)[0] for c in item(C, 'at-search-count-in-range')['widget']['tests'][:7]), 'count_in_range: halve-then-walk is right on the small tests')
+ok(slow_case(_walk, _ct) == 'timeout', 'count_in_range: halve-then-walk runs past 5 s on the wide-range test')
+_slice = 'from bisect import bisect_left, bisect_right\ndef count_in_range(xs, lo, hi):\n    return len(xs[bisect_left(xs, lo):bisect_right(xs, hi)])\n'
+ok(all(run_case(_slice, c)[0] for c in item(C, 'at-search-count-in-range')['widget']['tests'][:7]), 'count_in_range: len of the slice between the two bisects is right on the small tests (right values, not O(log n))')
+# CPython here copies 1,000,000 values a call: the slice solution takes about 11 s on this test, 9.2 s in Pyodide (measured by pyo_time.mjs); the model takes 0.001 s
+ok(slow_case(_slice, _ct, limit=2.0) == 'timeout', 'count_in_range: the copying slice runs past 2 s in CPython on the wide-range test (9 s in Pyodide, over the 5 s limit)')
+ok(slow_case(item(C, 'at-search-count-in-range')['widget']['solution'], _ct, limit=2.0) == 'pass', 'count_in_range: the model passes the wide-range test well inside 2 s')
+
+
+# simulation-rules-clip-position. Brute: fill one share at a time while the limit holds.
+def clip_brute(orders, limit):
+    pos, out = 0, []
+    for q in orders:
+        step = 1 if q > 0 else -1
+        done = 0
+        for _ in range(abs(q)):
+            if abs(pos + step) > limit:
+                break
+            pos += step
+            done += step
+        out.append(done)
+    return out
+
+
+code_item(C, 'simulation-rules-clip-position', 'apply_orders', clip_brute, {
+    'reject a breaching order whole': 'def apply_orders(orders, limit):\n    pos, out = 0, []\n    for q in orders:\n        if abs(pos + q) <= limit:\n            pos += q\n            out.append(q)\n        else:\n            out.append(0)\n    return out\n',
+    'clip the long side only': 'def apply_orders(orders, limit):\n    pos, out = 0, []\n    for q in orders:\n        new = min(limit, pos + q)\n        out.append(new - pos)\n        pos = new\n    return out\n'})
+ok(clip_brute([6, 7, -20, 3], 10) == [6, 4, -20, 3], 'prose example')
+ns = {}
+exec('def apply_orders(orders, limit):\n    pos, out = 0, []\n    for q in orders:\n        if abs(pos + q) <= limit:\n            pos += q\n            out.append(q)\n        else:\n            out.append(0)\n    return out\n', ns)
+ok(ns['apply_orders']([6, 7, -20, 3], 10) == [6, 0, 0, 3], 'brief trap value [6, 0, 0, 3]')
+
+
+# at-recursion-depth-weighted-sum. Brute: read the repr character by character, tracking bracket depth.
+def depth_brute(x):
+    s, d, total, i = repr(x), 0, 0, 0
+    while i < len(s):
+        ch = s[i]
+        if ch == '[':
+            d += 1
+        elif ch == ']':
+            d -= 1
+        elif ch == '-' or ch.isdigit():
+            j = i + 1
+            while j < len(s) and s[j].isdigit():
+                j += 1
+            total += int(s[i:j]) * d
+            i = j
+            continue
+        i += 1
+    return total
+
+
+code_item(C, 'at-recursion-depth-weighted-sum', 'depth_sum', depth_brute, {
+    'plain sum': 'def depth_sum(x):\n    return sum(depth_sum(v) if isinstance(v, list) else v for v in x)\n',
+    'top list at depth 0': 'def depth_sum(x, d=0):\n    return sum(depth_sum(v, d + 1) if isinstance(v, list) else v * d for v in x)\n'})
+two(1 + 2 * (2 + 3) + 3 * 4, depth_brute([1, [2, 3], [[4]]]), 0, 'depth sum 23')
+two(5 - 2 + 6 + 12, depth_brute([5, [-1, [2, [3]]]]), 0, 'depth sum 21')
+ok(1 + 2 + 3 + 4 == 10 and 5 - 1 + 2 + 3 == 9, 'plain sums 10 and 9')
+two(7 * 200, depth_brute(__import__('functools').reduce(lambda a, _: [a], range(199), [7])), 0, 'deep test: 7 at depth 200')
+two(500500 + 2 * 1000, sum(range(1, 1001)) + 2000, 0, 'wide test 502,500')
+ok(200 < 300, 'deep test stays under the 300-call limit for a generator in each call (AUTHORING Deep recursion)')
+
+# pf-idioms-stable-ties: run the lines; slips by carrying them out
+it = choice(C, 'pf-idioms-stable-ties', "['c', 'b', 'a']")
+body, out = run_prose(it)
+ok(out == "['c', 'b', 'a']", f'stable ties prints {out}')
+pairs = [("b", 2), ("a", 2), ("c", 1)]
+ok([t[0] for t in sorted(pairs, key=lambda t: (t[1], t[0]))] == ['c', 'a', 'b'], 'slip: tie broken by letter')
+ok([t[0] for t in sorted(pairs)] == ['a', 'b', 'c'], 'slip: sorted by letter')
+ok([t[0] for t in pairs] == ['b', 'a', 'c'], 'slip: input order')
+texts = {o['text'] for o in it['widget']['options']}
+ok(texts == {"['c', 'b', 'a']", "['c', 'a', 'b']", "['a', 'b', 'c']", "['b', 'a', 'c']"}, 'stable ties option texts')
+
+# at-search-stuck-loop: run with a step cap
+it = choice(C, 'at-search-stuck-loop', 'never ends')
+m = re.search(r'```python\n(.*?)```', it['prose'], re.S)
+ok(len(m.group(1).strip('\n').split('\n')) <= 8, 'stuck loop: at most eight lines')
+
+
+def trace(xs, x, le=False, cap=50):
+    lo, hi = 0, len(xs)
+    seen = []
+    for _ in range(cap):
+        if not (lo <= hi if le else lo < hi):
+            return 'ended', seen
+        mid = (lo + hi) // 2
+        if mid >= len(xs):
+            return 'index error', seen
+        if xs[mid] < x:
+            lo = mid
+        else:
+            hi = mid
+        seen.append((lo, hi, mid))
+    return 'stuck', seen
+
+
+st, seen = trace([1, 3, 5, 7], 6)
+ok(st == 'stuck' and seen[:3] == [(2, 4, 2), (2, 3, 3), (2, 3, 2)] and seen[-1] == (2, 3, 2), f'stuck at lo 2, hi 3: {seen[:3]}')
+st2, seen2 = trace([1, 3, 5, 7], 6, le=True)
+ok(st2 == 'stuck' and seen2[-1][0] == 2, f'with lo <= hi still stuck at lo 2 ({st2})')
+ok((2 + 3) // 2 == 2, 'explain: mid (2 + 3) // 2 = 2')
+ok(isinstance(10 ** 40 + 10 ** 40, int), 'Python ints do not overflow')
+lo, hi = 0, 4
+while lo < hi:                                          # with lo = mid + 1 the search ends at the insertion point
+    mid = (lo + hi) // 2
+    if [1, 3, 5, 7][mid] < 6:
+        lo = mid + 1
+    else:
+        hi = mid
+ok(lo == 3, 'fixed search ends at index 3')
+
+# ds-stacks-push-pop-trace
+it = item(C, 'ds-stacks-push-pop-trace')
+body, out = run_prose(it)
+key = int(out)
+pushes = [3, 5, None, 2, 7, None, None]
+from collections import deque
+q, popped = deque(), []
+for p in pushes:                                         # slip: pop from the front
+    if p is None:
+        popped.append(q.popleft())
+    else:
+        q.append(p)
+two(key, 5 + 7 + 2, 0, 'stack pops 14')
+numeric(C, 'ds-stacks-push-pop-trace', key, None, {'from-front': sum(popped), 'every-value': 3 + 5 + 2 + 7, 'two-pops': 5 + 7})
+ok(popped == [3, 5, 2], 'queue order 3, 5, 2')
+
+# gd-dp-table-size
+it = item(C, 'gd-dp-table-size')
+body, out = run_prose(it)
+two(int(out), (6 + 1) * (9 + 1), 0, 'LCS table 70 cells')
+ok(len('MARKET') == 6 and len('SPREADING') == 9, 'lengths 6 and 9')
+numeric(C, 'gd-dp-table-size', int(out), None, {'no-empty-prefix': 6 * 9, 'added-lengths': 6 + 9, 'added-padded': 7 + 10})
+
+# np-broadcast-column-plus-row: NumPy if present, and a hand broadcast
+it = item(C, 'np-broadcast-column-plus-row')
+try:
+    import numpy
+    body, out = run_prose(it)
+    npv = int(out)
+except ImportError:
+    print('WARNING: NumPy missing; broadcast checked by hand only')
+    npv = None
+A_, B_ = [1, 2, 3], [10, 20, 30, 40]
+hand = sum(a + b for a in A_ for b in B_)
+if npv is not None:
+    two(npv, hand, 0, 'broadcast sum: NumPy against the double loop')
+two(hand, 4 * 6 + 3 * 100, 0, 'broadcast sum 324')
+numeric(C, 'np-broadcast-column-plus-row', hand, None,
+        {'added-sums': sum(A_) + sum(B_), 'swapped-counts': 3 * sum(A_) + 4 * sum(B_), 'paired-by-position': sum(a + b for a, b in zip(A_, B_))})
+ok(sum(A_) == 6 and sum(B_) == 100 and [a + b for a, b in zip(A_, B_)] == [11, 22, 33], 'byKey figures 6, 100, 11, 22, 33')
+
+# virtual-dispatch-missing-virtual: compile and run, and the virtual variant
+it = choice(C, 'virtual-dispatch-missing-virtual', "'B'")
+m = re.search(r'```cpp\n(.*?)```', it['prose'], re.S)
+snippet = m.group(1)
+ok(len(snippet.strip('\n').split('\n')) <= 8, 'virtual: at most eight lines')
+decls, stmts = snippet.split('\n\n')
+prog = '#include <cstdio>\n' + decls + '\nint main() {\n' + stmts + '\nstd::printf("%c", c);\n}\n'
+out = cpp_run(prog)
+if out is not None:
+    ok(out == 'B', f'C++ non-virtual prints {out}')
+    out_v = cpp_run(prog.replace('struct B { char name', 'struct B { virtual char name'))
+    ok(out_v == 'D', f'C++ with virtual prints {out_v}')
+
 
 # ---------------------------------------------------------------- whole-file checks
 allids = []
@@ -495,7 +965,7 @@ for f in FILES:
         ok(not re.search(r'\bpercent\b', blob.lower()) and '!' not in blob and '—' not in blob, f'{f}/{it["id"]}: voice (no percent, !, em-dash)')
 
 counts = {f: len(DATA[f]['items']) for f in FILES}
-ok(counts == {'statistics-3': 15, 'finance-3': 15, 'behavioural-7': 8}, f'item counts {counts}')
+ok(counts == {'statistics-3': 15, 'finance-3': 15, 'behavioural-7': 8, 'coding-3': 12}, f'item counts {counts}')
 
 print(f'{checks[0]} checks, {len(fails)} failed')
 sys.exit(1 if fails else 0)

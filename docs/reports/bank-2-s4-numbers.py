@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Bank part 2, session 4: every key, slip and stated figure in statistics-4, finance-4 and behavioural-8, by two routes.
+"""Bank part 2, session 4: every key, slip and stated figure in statistics-4, finance-4, behavioural-8 and coding-4, by two routes.
+
+coding-4: each solution runs on every example and hidden test, the untouched starter fails, a brute-force twin agrees on every
+test, and each named trap (near-miss) fails a hidden test; slow traps run in a fresh CPython with a 5 s limit. Reading
+items run their own lines; the C++ item is checked by constant evaluation with g++ -std=c++20 -fsyntax-only.
 
 Standard library only (runs under plain python3). numbers_lib.py has no Bank loader yet (B2-E4), so the JSON is read here.
 Route A is exact (Fraction) or closed form; route B is enumeration, a seeded simulation with a stated tolerance, a
@@ -14,7 +18,7 @@ from statistics import NormalDist
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BANK = os.path.join(HERE, '..', '..', 'app', 'content', 'bank')
-FILES = ['statistics-4', 'finance-4', 'behavioural-8']
+FILES = ['statistics-4', 'finance-4', 'behavioural-8', 'coding-4']
 DATA = {f: json.load(open(os.path.join(BANK, f + '.json'), encoding='utf-8')) for f in FILES}
 ITEMS = {(f, it['id']): it for f in FILES for it in DATA[f]['items']}
 fails, checks = [], [0]
@@ -81,6 +85,13 @@ def numeric(f, i, key, asked, slips):
     for a, b in zip(vals, vals[1:]):
         ok(b['value'] - a['value'] > a['tol']['abs'] + b['tol']['abs'], f'{lab}: wrong bands {a["id"]} and {b["id"]} apart')
     return it
+
+
+def stale(f, i, olds):
+    """Fix pass: none of the old values or phrases of a re-authored item survives anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in olds:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
 
 
 def stated(f, i, phrase):
@@ -179,6 +190,7 @@ key = two(a, b, 1e-12, 'lower end')
 numeric(S, 'es-intervals-two-desk-gap', key, 3,
         {'one-mean': 0.8 - 1.96 * 2 / sqrt(50), 'upper-end': F(8, 10) + F(196, 100) * F(4, 10)})
 ok(fmt(2 / sqrt(50), 3) == '0.283', 'one-mean error 0.283')
+stated(S, 'es-intervals-two-desk-gap', 'Two desks are watched on different days, 50 days each, so treat their results as independent.')   # fix pass 7
 
 # es-bayes-three-from-three: Laplace's rule against a midpoint integral of p * p^3 / p^3
 a = F(3 + 1, 3 + 2)
@@ -274,25 +286,27 @@ def fit(X, y):
 
 
 rng = random.Random(10)
-X = [[1.0] + [rng.gauss(0, 1) for _ in range(3)] for _ in range(44)]
-y0 = [rng.gauss(0, 1) for _ in range(44)]
+X = [[1.0] + [rng.gauss(0, 1) for _ in range(4)] for _ in range(65)]      # fix pass finding 3: 4 predictors, 65 observations, R^2 0.2
+y0 = [rng.gauss(0, 1) for _ in range(65)]
 yh = fit(X, y0)
-my = sum(y0) / 44
+my = sum(y0) / 65
 expl = [v - my for v in yh]
 res = [u - v for u, v in zip(y0, yh)]
 ess, rss = sum(v * v for v in expl), sum(v * v for v in res)
-y1 = [my + e * sqrt(0.3 / ess) + r * sqrt(0.7 / rss) for e, r in zip(expl, res)]     # TSS 1, R^2 0.3
+y1 = [my + e * sqrt(0.2 / ess) + r * sqrt(0.8 / rss) for e, r in zip(expl, res)]     # TSS 1, R^2 0.2
 yh1 = fit(X, y1)
-m1 = sum(y1) / 44
+m1 = sum(y1) / 65
 tss1 = sum((v - m1) ** 2 for v in y1)
 rss1 = sum((u - v) ** 2 for u, v in zip(y1, yh1))
-close(1 - rss1 / tss1, 0.3, 1e-9, 'built data has R^2 0.3')
-b = ((tss1 - rss1) / 3) / (rss1 / 40)
-a = (F(3, 10) / 3) / (F(7, 10) / 40)
+close(1 - rss1 / tss1, 0.2, 1e-9, 'built data has R^2 0.2')
+b = ((tss1 - rss1) / 4) / (rss1 / 60)
+a = (F(1, 5) / 4) / (F(4, 5) / 60)
 key = two(a, b, 1e-8, 'overall F')
-ok(a == F(40, 7), 'F = 40/7')
-numeric(S, 'rg-inference-overall-f', key, 2, {'df-41': (F(3, 10) / 3) / (F(7, 10) / 41), 'no-df': F(3, 10) / F(7, 10)})
-ok(F(7, 10) / 40 == F(175, 10000), '0.7/40 = 0.0175')
+ok(a == F(15, 4), 'F = 15/4')
+numeric(S, 'rg-inference-overall-f', key, 2, {'df-61': (F(1, 5) / 4) / (F(4, 5) / 61), 'no-df': F(1, 5) / F(4, 5)})
+ok(F(4, 5) / 60 == F(1, 75) and fmt(1 / 75, 6) == '0.013333' and fmt(0.05 / (1 / 75), 2) == '3.75', '0.8/60 = 0.013333 and 0.05/0.013333 = 3.75')
+stated(S, 'rg-inference-overall-f', '$k = 4$ and $n - k - 1 = 60$')
+stale(S, 'rg-inference-overall-f', ['44', '5.71', '5.86', '0.43', '40/7', '0.0175', 'df-41', '$k = 3$'])
 
 # rg-diagnostics-most-leverage: formula against the diagonal of the hat matrix X (X'X)^-1 X'
 xv = [1, 2, 3, 4, 20]
@@ -369,9 +383,14 @@ ok(lev100 < lev, f'claim: the longer sample rejects more often ({lev100} at 100 
 ok(abs(dif - 0.05) < 0.02 and lev > 0.5, f'differenced rate near 5% ({dif}); levels far above ({lev})')
 CO = {'levels': fmt(100 * lev, 1), 'diffs': fmt(100 * dif, 1)}
 print('co-spurious figures:', CO, 'at 100 steps', lev100)
+# fix pass 13: the explanation gives "about nine in ten" and "about one in twenty", not the seeded run (20,000 pairs gave 89.2% in review)
+ok(0.85 < lev < 0.93, f'about nine pairs in ten at 500 steps ({lev})')
+ok(0.03 < dif < 0.07, f'about one in twenty after differencing ({dif})')
 choice(S, 'co-spurious-two-walks', 'far more often than 5%')
-stated(S, 'co-spurious-two-walks', f'500 steps, {CO["levels"]}% had')
-stated(S, 'co-spurious-two-walks', f'{CO["diffs"]}% did')
+stated(S, 'co-spurious-two-walks', 'about nine pairs in ten show a t statistic beyond 1.96 in size')
+stated(S, 'co-spurious-two-walks', 'Differencing both series first brings that back to about one in twenty.')
+stated(S, 'co-spurious-two-walks', 'Each walk wanders')
+stale(S, 'co-spurious-two-walks', ['88.0%', '5.0%', '1,000 simulated', 'drifts'])
 if len(sys.argv) > 1 and sys.argv[1] == '--co-figs':
     json.dump(CO, open(sys.argv[2], 'w'))
 
@@ -427,7 +446,8 @@ numeric(FI, 'digital-option-from-two-calls', key, 2, {'no-width': F(220, 100), '
 a = 120 + 3 - 110
 scan = max(123 - (s_ + max(110 - s_, 0)) for s_ in (k / 10 for k in range(0, 3001)))
 key = two(a, scan, 1e-9, 'largest loss')
-numeric(FI, 'op-strategies-protective-put-floor', key, None, {'no-premium': 120 - 110, 'took-off-premium': 120 - 110 - 3})
+numeric(FI, 'op-strategies-protective-put-floor', key, None, {'no-premium': 120 - 110, 'took-off-premium': 120 - 110 - 3, 'signed': -key})
+ok('positive number' in item(FI, 'op-strategies-protective-put-floor')['question'], 'protective put: the question states the sign convention')
 
 # op-parity-exercise-before-dividend: parity value of holding against the dividend rule
 exercise = 60 - 50
@@ -499,7 +519,9 @@ a = max(cands.values())
 scan = max(vol(k / 100) for k in range(990, 1041))
 key = two(a, scan, 0, 'auction volume')
 ok(cands == {10.0: 250, 10.1: 550, 10.2: 500, 10.3: 300}, f'volumes by price {cands}')
-numeric(FI, 'ms-book-opening-auction', key, None, {'cleared-high': cands[10.2], 'all-sells': sum(q_ for q_, _ in sells)})
+numeric(FI, 'ms-book-opening-auction', key, None, {'cleared-high': cands[10.2], 'all-sells': sum(q_ for q_, _ in sells), 'gave-price': 10.1})
+_blob = json.dumps(item(FI, 'ms-book-opening-auction'), ensure_ascii=False)
+ok(not re.search(r'£10\.\d(?!\d)', _blob) and '£10.10' in _blob and '£10.00' in _blob, 'auction: money in pence to two places throughout')
 
 # ms-orders-immediate-or-cancel: level sum against a share-by-share fill
 offers = [(400, 30.03), (300, 30.05), (600, 30.06)]
@@ -565,6 +587,9 @@ for it in DATA[B]['items']:
     ok(it['feedback'] == {'correct': 'Compare your answer with the model and tick the rubric.', 'generic': 'Open the model answer and mark each rubric line.'}, f'{lab}: feedback lines')
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+for it in DATA[B]['items']:   # fix pass finding 27
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'], f'{B}/{it["id"]}: rubric line checkable from the text')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
 
@@ -593,6 +618,399 @@ ok(abs(cut - F(1, 3)) < F(1, 100), f'project model: 3.1 against 4.6 is about a t
 ok(3 * 20 == 60, 'dull-task model: three Fridays of twenty sheets is sixty sheets')
 stated(B, 'star-story-dull-task-done-well', 'sixty sheets')
 
+# ---------------------------------------------------------------- coding helpers (code items, rule 12; reading items, rule 13)
+import io, contextlib, subprocess, tempfile, time, shutil
+
+
+def code_cases(it):
+    w = it['widget']
+    return w['examples'], w['tests']
+
+
+def run_case(ns_src, c, impl=None, name=None):
+    """Run one case as the bank harness does: exec setup, eval call, eval expect, compare with ==. Returns (passed, seconds)."""
+    ns = {}
+    t0 = time.perf_counter()
+    try:
+        if impl is not None:
+            ns[name] = impl
+        else:
+            exec(ns_src, ns)
+        if c.get('setup'):
+            exec(c['setup'], ns)
+        a = eval(c['call'], ns)
+        e = eval(c['expect'], ns)
+        good = (a == e)
+    except Exception:
+        good = False
+    return bool(good), time.perf_counter() - t0
+
+
+def slow_case(src, c, limit=5.0):
+    """Run one case of src in a fresh CPython with a time limit: 'timeout', 'wrong' or 'pass'."""
+    prog = src + '\n' + (c.get('setup') or '') + f'\nimport sys\nsys.exit(0 if ({c["call"]}) == ({c["expect"]}) else 3)\n'
+    with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as fh:
+        fh.write(prog)
+        path = fh.name
+    try:
+        r = subprocess.run([sys.executable, path], timeout=limit, capture_output=True)
+        return 'pass' if r.returncode == 0 else 'wrong'
+    except subprocess.TimeoutExpired:
+        return 'timeout'
+    finally:
+        os.unlink(path)
+
+
+def code_item(f, i, fn, brute, traps, slow_traps=(), expect_count=None):
+    """solution passes every example and test (each under 1 s in CPython), the untouched starter fails, the brute-force twin
+    agrees with every stated expect, each named trap fails at least one hidden test; slow traps time out (5 s) on a named test."""
+    it = item(f, i)
+    lab = f'{f}/{i}'
+    w = it['widget']
+    ok(w['kind'] == 'code' and w.get('language', 'python') == 'python', f'{lab}: Python code item')
+    ok(w['starter'].strip().endswith('...') and w['starter'].startswith(f'def {fn}('), f'{lab}: starter is the signature with ...')
+    ok(it['question'] == f'Complete `{fn}`.' and f'`{fn}(' in it['prose'], f'{lab}: question and worked call in prose')
+    ok(240 <= it['pace'] <= 480, f'{lab}: pace 240 to 480')
+    ex, ts = code_cases(it)
+    ok(len(ex) == 2 and 6 <= len(ts) <= 10, f'{lab}: 2 examples, 6 to 10 tests ({len(ts)})')
+    ok(all(c.get('compare') == 'equal' for c in ex + ts), f'{lab}: compare equal')
+    m = re.match(r'Submit runs (\d+) hidden tests\. Each result must equal the expected (whole number|value)\.$', w['how'])
+    ok(m and int(m.group(1)) == len(ts), f'{lab}: how line counts {len(ts)} tests')
+    for c in ex + ts:
+        good, secs = run_case(w['solution'], c)
+        ok(good, f'{lab}: solution passes {c["call"]}')
+        ok(secs < 1.0, f'{lab}: solution under 1 s on {c["call"]} ({secs:.3f} s)')
+        ok(run_case(None, c, impl=brute, name=fn)[0], f'{lab}: brute-force twin agrees on {c["call"]} = {c["expect"]}')
+    for c in ex:
+        ok(any(c['call'] == t['call'] for t in ts), f'{lab}: example {c["call"]} is also a hidden test')
+    ok(not all(run_case(w['starter'], c)[0] for c in ts), f'{lab}: untouched starter fails')
+    ok(sum(not run_case(w['starter'], c)[0] for c in ts) >= 1, f'{lab}: starter fails at least one test')
+    for name, src in traps.items():
+        failed = [c['call'] for c in ts if not run_case(src, c)[0]]
+        ok(failed, f'{lab}: trap "{name}" fails a hidden test')
+        print(f'  trap {lab} "{name}" fails {len(failed)} of {len(ts)}: {failed[0][:70] if failed else "NONE"}')
+    for name, src, call, small_calls in slow_traps:
+        c = next(t for t in ts if t['call'] == call)
+        small = [t for t in ts if t['call'] in small_calls]
+        ok(len(small) == len(small_calls), f'{lab}: small tests named for the slow trap exist')
+        ok(all(run_case(src, t)[0] for t in small), f'{lab}: slow trap "{name}" is right on the small tests')
+        res = slow_case(src, c)
+        ok(res == 'timeout', f'{lab}: slow trap "{name}" runs past 5 s on {call} ({res})')
+        print(f'  slow trap {lab} "{name}" right on {len(small)} small tests, {res} at 5 s on {call[:70]}')
+    return it
+
+
+def run_prose(it, lang='python'):
+    """Execute the fenced block of a reading item and return what it prints."""
+    m = re.search(r'```' + lang + r'\n(.*?)```', it['prose'], re.S)
+    ok(m is not None, f'{it["id"]}: fenced {lang} block')
+    body = m.group(1)
+    ok(len(body.strip('\n').split('\n')) <= 8, f'{it["id"]}: at most eight lines of code')
+    buf = io.StringIO()
+    if lang == 'python':
+        with contextlib.redirect_stdout(buf):
+            exec(body, {})
+    return body, buf.getvalue().strip()
+
+
+def cpp_run(src):
+    """Compile and run a C++ program with g++ -std=c++20; returns stdout, or None (with a printed warning) when no compiler."""
+    cxx = shutil.which('g++') or shutil.which('clang++')
+    if not cxx:
+        print('WARNING: no C++ compiler, C++ check skipped (not a pass)')
+        return None
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, 'a.cpp')
+    open(p, 'w').write(src)
+    r = subprocess.run([cxx, '-std=c++20', '-O0', p, '-o', os.path.join(d, 'a.out')], capture_output=True, text=True)
+    ok(r.returncode == 0, f'C++ compiles: {r.stderr[:200]}')
+    out = subprocess.run([os.path.join(d, 'a.out')], capture_output=True, text=True).stdout.strip()
+    shutil.rmtree(d)
+    return out
+
+
+def cpp_compiles(src):
+    cxx = shutil.which('g++') or shutil.which('clang++')
+    if not cxx:
+        print('WARNING: no C++ compiler, C++ check skipped (not a pass)')
+        return None
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, 'a.cpp')
+    open(p, 'w').write(src)
+    r = subprocess.run([cxx, '-std=c++20', '-fsyntax-only', p], capture_output=True, text=True)
+    shutil.rmtree(d)
+    return r.returncode == 0
+
+
+
+# ---------------------------------------------------------------- coding-4
+C = 'coding-4'
+from fractions import Fraction as _Fr
+from itertools import product
+from math import comb
+
+
+# pf-idioms-count-above-mean. Brute: the mean as a Fraction.
+def above_brute(xs):
+    if len(xs) == 0:
+        return 0
+    m = _Fr(sum(xs), len(xs))
+    return len([x for x in xs if x > m])
+
+
+code_item(C, 'pf-idioms-count-above-mean', 'above_mean', above_brute, {
+    'at or above the mean': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = sum(xs) / len(xs)\n    return sum(1 for x in xs if x >= m)\n',
+    'no guard for the empty list': 'def above_mean(xs):\n    m = sum(xs) / len(xs)\n    return sum(1 for x in xs if x > m)\n',
+    'mean cut by int (review bank 2 b, finding 12)': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = int(sum(xs) / len(xs))\n    return sum(1 for x in xs if x > m)\n',
+    'mean rounded to a whole number': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = round(sum(xs) / len(xs))\n    return sum(1 for x in xs if x > m)\n',
+    # delta finding 13: half of the largest plus the smallest splits the old tests like the mean; [0, 6, 10, 10, 10] does not
+    'midrange, half of the largest plus the smallest': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = (max(xs) + min(xs)) / 2\n    return sum(1 for x in xs if x > m)\n',
+    'median': 'def above_mean(xs):\n    if not xs:\n        return 0\n    s = sorted(xs)\n    m = s[len(s) // 2]\n    return sum(1 for x in xs if x > m)\n',
+    'quadratic mean': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = (sum(x * x for x in xs) / len(xs)) ** 0.5\n    return sum(1 for x in xs if x > m)\n'})
+# delta finding 13: the test above_mean([0, 6, 10, 10, 10]) (mean 7.2, so 3; the midrange 5 gives 4, the median 10 gives 0)
+_am = {c['call']: c['expect'] for c in item(C, 'pf-idioms-count-above-mean')['widget']['tests']}
+ok(_am['above_mean([0, 6, 10, 10, 10])'] == '3' and 'above_mean([0, 0, 0, 1])' not in _am and len(_am) == 10, 'above_mean: the test [0, 6, 10, 10, 10] expects 3 and replaced [0, 0, 0, 1]; still 10 tests')
+_xs = [0, 6, 10, 10, 10]
+ok(_Fr(sum(_xs), len(_xs)) == _Fr(36, 5) and len([x for x in _xs if x > _Fr(36, 5)]) == 3 and above_brute(_xs) == 3, 'above_mean([0, 6, 10, 10, 10]): mean 36/5 = 7.2, three values above it, by Fraction and by the brute twin')
+ok(len([x for x in _xs if x > (max(_xs) + min(_xs)) / 2]) == 4 and len([x for x in _xs if x > sorted(_xs)[2]]) == 0, 'the midrange 5 gives 4 and the median 10 gives 0')
+ok(above_brute([-1, -2]) == 1 and above_brute([-4, -1, -1, -1]) == 3 and int((-1 - 2) / 2) == -1 and int(-7 / 4) == -1, 'above_mean: means -1.5 and -1.75 are cut to -1 by int')
+ok(sum(1 for x in [4, 4, 4] if x >= 4) == 3 and _Fr(1 + 2 + 3 + 10, 4) == 4, 'slip 3 for [4, 4, 4]; mean 4 in the prose')
+
+
+# ds-arrays-local-peaks. Brute: the window's maximum is the middle value and occurs once.
+def peaks_brute(xs):
+    out = []
+    for i in range(len(xs)):
+        if 0 < i < len(xs) - 1:
+            w = xs[i - 1:i + 2]
+            if max(w) == xs[i] and w.count(xs[i]) == 1:
+                out.append(i)
+    return out
+
+
+code_item(C, 'ds-arrays-local-peaks', 'local_peaks', peaks_brute, {
+    'at least both neighbours': 'def local_peaks(xs):\n    return [i for i in range(1, len(xs) - 1) if xs[i - 1] <= xs[i] >= xs[i + 1]]\n',
+    'ends included': 'def local_peaks(xs):\n    n = len(xs)\n    return [i for i in range(n) if (i == 0 or xs[i - 1] < xs[i]) and (i == n - 1 or xs[i] > xs[i + 1])]\n',
+    'loop from index 0, wrapping to the last value (review bank 2 b, finding 13)': 'def local_peaks(xs):\n    return [i for i in range(len(xs) - 1) if xs[i - 1] < xs[i] > xs[i + 1]]\n'})
+ok(peaks_brute([5, 1, 2]) == [] and peaks_brute([9, 1, 9, 3]) == [2], 'local_peaks twin: [] for [5, 1, 2], [2] for [9, 1, 9, 3]')
+ns = {}
+exec('def lp(xs):\n    return [i for i in range(1, len(xs) - 1) if xs[i - 1] <= xs[i] >= xs[i + 1]]\n', ns)
+ok(ns['lp']([1, 3, 2, 4, 4, 1, 5]) == [1, 3, 4], 'brief trap value [1, 3, 4]')
+two(len(range(1, 99999, 2)), 49999, 0, 'peaks in [0, 1] * 50000: odd indices 1 to 99,997')
+
+
+# ds-pointers-median-of-three. Brute: sort each window and take the middle.
+def med_brute(xs):
+    return [sorted(xs[i:i + 3])[1] for i in range(len(xs) - 2)]
+
+
+code_item(C, 'ds-pointers-median-of-three', 'median3', med_brute, {
+    'middle element of each window': 'def median3(xs):\n    return [xs[i + 1] for i in range(len(xs) - 2)]\n',
+    'one window short': 'def median3(xs):\n    return [sorted(xs[i:i + 3])[1] for i in range(len(xs) - 3)]\n'})
+ok([[5, 1, 4, 2, 8][i + 1] for i in range(3)] == [1, 4, 2], 'brief trap value [1, 4, 2]')
+two(sum(range(1, 99999)), 99998 * 99999 // 2, 0, 'sum of medians of 0..99,999: 4,999,850,001')
+
+
+# simulation-rules-settle-day. Brute: list every business day ahead and index it.
+def settle_brute(trade_day, lag, holidays):
+    if lag == 0:
+        return trade_day
+    span = range(trade_day + 1, trade_day + 2 * lag + len(holidays) + 10)
+    biz = [d for d in span if d % 7 not in (5, 6) and d not in holidays]
+    return biz[lag - 1]
+
+
+code_item(C, 'simulation-rules-settle-day', 'settle_day', settle_brute, {
+    'add the lag, then skip forward': 'def settle_day(trade_day, lag, holidays):\n    d = trade_day + lag\n    while d % 7 >= 5 or d in holidays:\n        d += 1\n    return d\n',
+    'skip weekends, then add the number of holidays': 'def settle_day(trade_day, lag, holidays):\n    d, left = trade_day, lag\n    while left:\n        d += 1\n        if d % 7 < 5:\n            left -= 1\n    extra = sum(1 for h in holidays if trade_day < h <= d)\n    while extra:\n        d += 1\n        if d % 7 < 5 and d not in holidays:\n            extra -= 1\n    return d\n'})
+ns = {}
+exec('def cal(t, l, h):\n    d = t + l\n    while d % 7 >= 5 or d in h:\n        d += 1\n    return d\n', ns)
+ok(ns['cal'](3, 2, set()) == 7 and ns['cal'](4, 2, {7}) == 8, 'add-then-skip gives 7 on the first test (right) and 8 on the second')
+ok(3 % 7 == 3 and 7 % 7 == 0 and 5 % 7 == 5 and 6 % 7 == 6, 'day 3 is Thursday, 7 a Monday, 5 and 6 the weekend')
+two(settle_brute(0, 260, set()), 52 * 7, 0, '260 business days from a Monday: 52 weeks')
+
+
+# at-search-smallest-n (rows_needed). Brute: integer square root, then adjust.
+def rows_brute(target):
+    if target <= 0:
+        return 0
+    n = (math.isqrt(8 * target + 1) - 1) // 2
+    while n * (n + 1) // 2 < target:
+        n += 1
+    while n > 0 and (n - 1) * n // 2 >= target:
+        n -= 1
+    return n
+
+
+FLOAT = 'import math\ndef rows_needed(target):\n    if target <= 0:\n        return 0\n    return math.ceil((math.sqrt(8 * target + 1) - 1) / 2)\n'
+COUNT = 'def rows_needed(target):\n    n = 0\n    while n * (n + 1) // 2 < target:\n        n += 1\n    return n\n'
+SMALL_N = ['rows_needed(0)', 'rows_needed(1)', 'rows_needed(7)', 'rows_needed(10)', 'rows_needed(11)', 'rows_needed(3)', 'rows_needed(-5)']
+HALF_FLOAT = 'def rows_needed(target):\n    lo, hi = 0, 2 * 10 ** 9\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if mid * (mid + 1) / 2 >= target:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n'
+code_item(C, 'at-search-smallest-n', 'rows_needed', rows_brute, {'float square root': FLOAT, 'halving with a float triangle (review bank 2 b, finding 14)': HALF_FLOAT},
+          slow_traps=[('count up one row at a time', COUNT, 'rows_needed(10**18)', SMALL_N)])
+ns = {}
+exec(FLOAT, ns)
+ok(ns['rows_needed'](10 ** 18) == 1414213562, 'float formula is right at 10^18 itself')
+ns_h = {}
+exec(HALF_FLOAT, ns_h)
+n1 = 1414213500
+ok(rows_brute(999999912498231751) == 1414213501 and ns_h['rows_needed'](999999912498231751) == n1, 'finding 14: the float halving gives 1,414,213,500 where 1,414,213,501 is needed')
+two(n1 * (n1 + 1) // 2 + 1, 999999912498231751, 0, 'that target is T(1,414,213,500) + 1')
+ok((n1 * (n1 + 1)) / 2 >= 999999912498231751 and n1 * (n1 + 1) // 2 < 999999912498231751, 'the float triangle of 1,414,213,500 rows rounds up past the target, the exact one falls short')
+ok(ns['rows_needed'](999999998765257142) == 1414213561, 'float formula is one row short at 999,999,998,765,257,142')
+n0 = 1414213561
+two(n0 * (n0 + 1) // 2 + 1, 999999998765257142, 0, 'that target is T(1,414,213,561) + 1')
+ok(999999998765257142 <= 10 ** 18, 'the float test is inside the stated range')
+k = 1414213562
+ok(k * (k + 1) // 2 >= 10 ** 18 > (k - 1) * k // 2, '1,414,213,562 is the smallest n for 10^18')
+ok(2 * 10 ** 9 * (2 * 10 ** 9 + 1) // 2 >= 10 ** 18 and math.ceil(math.log2(2 * 10 ** 9)) == 31, 'upper bound 2 x 10^9 covers 10^18; about 31 halvings')
+
+
+# gd-dp-dice-total-ways. Brute: inclusion-exclusion (closed form), and every face tuple for n up to 4.
+def dice_brute(n, total):
+    if total < 0:
+        return 0
+    if n == 0:
+        return 1 if total == 0 else 0
+    if n <= 4:
+        return sum(1 for f in product(range(1, 7), repeat=n) if sum(f) == total)
+    s = 0
+    for j in range(n + 1):
+        top = total - 6 * j - 1
+        if top < n - 1:
+            break
+        s += (-1) ** j * comb(n, j) * comb(top, n - 1)
+    return s if n <= total <= 6 * n else 0
+
+
+PLAIN = 'def dice_ways(n, total):\n    if n == 0:\n        return 1 if total == 0 else 0\n    return sum(dice_ways(n - 1, total - f) for f in range(1, 7) if total - f >= 0)\n'
+code_item(C, 'gd-dp-dice-total-ways', 'dice_ways', dice_brute, {},
+          slow_traps=[('plain recursion without a table', PLAIN, 'dice_ways(40, 140)',
+                       ['dice_ways(2, 7)', 'dice_ways(3, 10)', 'dice_ways(0, 0)', 'dice_ways(2, 13)', 'dice_ways(0, 3)', 'dice_ways(1, 6)', 'dice_ways(3, -1)'])])
+ok(dice_brute(3, 10) == sum(1 for f in product(range(1, 7), repeat=3) if sum(f) == 10) == 27, '27 for three dice to 10')
+
+def stale_fc(f, i, *old):
+    """Re-authored item: none of the old setting's figures is left anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in old:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
+# pf-classes-shared-class-list (re-authored after review bank 2 b: a shared list beside a private count)
+# route A runs the lines; route B replays the two constructors by hand. Slips: an own list each (7), a shared cap (9).
+it = item(C, 'pf-classes-shared-class-list')
+body, out = run_prose(it)
+
+
+class PitOwn:
+    cap = 5
+
+    def __init__(self, name):
+        self.names = []
+        self.names.append(name)
+        self.cap += 1
+
+
+class PitShared:
+    cap = 5
+    names = []
+
+    def __init__(self, name):
+        self.names.append(name)
+        PitShared.cap += 1
+
+
+a1, b1 = PitOwn('x'), PitOwn('y')
+a2, b2 = PitShared('x'), PitShared('y')
+numeric(C, 'pf-classes-shared-class-list', int(out), None, {'own-list': len(a1.names) + a1.cap, 'shared-cap': len(a2.names) + a2.cap})
+# route B: the constructors by hand: one list on the class, a private cap that starts from the class value 5
+names_, caps_ = [], {}
+for n_ in ('x', 'y'):
+    names_.append(n_)
+    caps_[n_] = 5 + 1
+two(int(out), len(names_) + caps_['x'], 0, 'a shared list of two plus a private cap of 6')
+ok(int(out) == 8 and len(a1.names) + a1.cap == 7 and len(a2.names) + a2.cap == 9, 'prints 8; own list gives 7; shared cap gives 9')
+stale_fc(C, 'pf-classes-shared-class-list', 'Book', 'levels', 'copied-list')
+
+# ds-trees-heap-trace
+import heapq
+it = item(C, 'ds-trees-heap-trace')
+body, out = run_prose(it)
+h = [5, 1, 8, 3, 2]
+srt = sorted(h)
+a_, rest = srt[0], srt[1:]                               # by hand: smallest out, then push 4 and take the smallest
+b_ = min(rest + [4])
+rest2 = sorted(rest + [4])[1:]
+two(int(out), a_ + b_ + rest2[0], 0, 'heap trace 1 + 2 + 3')
+h2 = [5, 1, 8, 3, 2]
+heapq.heapify(h2)
+heapq.heappop(h2)
+numeric(C, 'ds-trees-heap-trace', int(out), None, {'pushed-value': a_ + 4 + h2[0], 'old-top': a_ + b_ + b_})
+ok(sorted(h2) == [2, 3, 5, 8], 'after the pop: 2, 3, 5, 8')
+
+# bit-lowest-and-count
+it = item(C, 'bit-lowest-and-count')
+body, out = run_prose(it)
+x_ = 44
+low = 1 << ((x_ & -x_).bit_length() - 1)
+two(int(out), low + format(x_, 'b').count('1'), 0, 'bit trick 4 + 3')
+ok(format(44, 'b') == '101100' and 44 == 32 + 8 + 4, '44 is 101100')
+numeric(C, 'bit-lowest-and-count', int(out), None,
+        {'bit-index': (x_ & -x_).bit_length() - 1 + 3, 'highest-bit': (1 << (x_.bit_length() - 1)) + 3})
+
+# edge-case-list-median-test: run median on each option
+it = choice(C, 'edge-case-list-median-test', '[4, 1, 3, 2]')
+m = re.search(r'```python\n(.*?)```', it['prose'], re.S)
+ns = {}
+exec(m.group(1), ns)
+import statistics as _st
+ok(ns['median']([4, 1, 3, 2]) == 3 and _st.median([4, 1, 3, 2]) == 2.5, 'returns 3, median 2.5')
+try:
+    ns['median']([])
+    ok(False, '[] should raise')
+except IndexError:
+    ok(True, '[] raises IndexError')
+ok(ns['median']([5]) == 5 and ns['median']([3, 1, 2]) == 2 == _st.median([3, 1, 2]), '[5] and [3, 1, 2] are right')
+ok({o['text'] for o in it['widget']['options']} == {'`[4, 1, 3, 2]`', '`[]`', '`[5]`', '`[3, 1, 2]`'}, 'median option texts')
+
+# gd-traversal-depth-first-order: run it; slips as named
+it = choice(C, 'gd-traversal-depth-first-order', 'A, B, D, F, C, E')
+m = re.search(r'```python\n(.*?)```', it['prose'], re.S)
+ok(len(m.group(1).strip('\n').split('\n')) <= 8, 'dfs: at most eight lines')
+ns = {}
+exec(m.group(1), ns)
+ok(', '.join(ns['seen']) == 'A, B, D, F, C, E', f'dfs order {ns["seen"]}')
+g_ = ns['g']
+order, qq = [], ['A']                                    # breadth first
+while qq:
+    v = qq.pop(0)
+    if v in order:
+        continue
+    order.append(v)
+    qq += [w for w in g_[v] if w not in order]
+ok(', '.join(order) == 'A, B, C, D, E, F', 'slip: breadth first')
+st, rev = ['A'], []                                      # stack of pushes, neighbours in list order
+while st:
+    v = st.pop()
+    if v in rev:
+        continue
+    rev.append(v)
+    st += [w for w in g_[v] if w not in rev]
+ok(', '.join(rev) == 'A, C, E, F, D, B', 'slip: stack pushes give reversed neighbours')
+texts = {o['text'] for o in it['widget']['options']}
+ok(texts == {'A, B, D, F, C, E', 'A, B, C, D, E, F', 'A, B, D, C, E, F', 'A, C, E, F, D, B'}, 'dfs option texts')
+
+# defined-vs-undefined-wraparound: constant evaluation with g++
+it = choice(C, 'defined-vs-undefined-wraparound', '4,294,967,295')
+good = cpp_compiles('#include <climits>\nstatic_assert(sizeof(int) == 4 && sizeof(unsigned) == 4);\n'
+                    'constexpr unsigned u = 0;\nconstexpr auto x = u - 1;\nstatic_assert(x == 4294967295u);\nint main() {}\n')
+bad = cpp_compiles('#include <climits>\nconstexpr int i = INT_MAX;\nconstexpr auto y = i + 1;\nint main() {}\n')
+if good is not None:
+    ok(good, 'unsigned 0 - 1 is 4,294,967,295 in a constant expression')
+    ok(bad is False, 'INT_MAX + 1 is rejected in a constant expression (undefined)')
+two(2 ** 32 - 1, 4294967295, 0, '2^32 - 1')
+
+
 # ---------------------------------------------------------------- whole-file checks
 allids = []
 for fn in sorted(os.listdir(BANK)):
@@ -610,7 +1028,7 @@ for f in FILES:
         ok(not re.search(r'\bpercent\b', blob.lower()) and '!' not in blob and '—' not in blob, f'{f}/{it["id"]}: voice (no percent, !, em-dash)')
 
 counts = {f: len(DATA[f]['items']) for f in FILES}
-ok(counts == {'statistics-4': 15, 'finance-4': 15, 'behavioural-8': 8}, f'item counts {counts}')
+ok(counts == {'statistics-4': 15, 'finance-4': 15, 'behavioural-8': 8, 'coding-4': 12}, f'item counts {counts}')
 
 print(f'{checks[0]} checks, {len(fails)} failed')
 sys.exit(1 if fails else 0)
