@@ -243,3 +243,13 @@ Voice on the 44 strings: no exclamation marks, no em-dashes, no US spellings, no
 Findings
 
 1. l15-new-variables.json | screens[3].prose | imprecise | minor | The fix added "or strictly decreasing" but kept "the chain rule on $F_Y(y) = F_X(x)$". That identity holds only for increasing $g$. For decreasing $g$, $F_Y(y) = 1 - F_X(x)$. The screen's own map $Y = -\tfrac12\ln U$ is decreasing, so a learner who checks the stated step finds it false there. The final formula and its hypotheses are right. | $F_Y(0.3) = 1 - e^{-0.6} = 0.4512$ against $F_U(e^{-0.6}) = 0.5488$ (script check "l15 prose"). Casella and Berger, Theorems 2.1.3 and 2.1.5: $F_Y(y) = F_X(g^{-1}(y))$ for increasing $g$ and $1 - F_X(g^{-1}(y))$ for decreasing $g$. | Replace the prose with: `You went from $U$ to $Y$ through the CDF. Let $Y = g(X)$ with $x = g^{-1}(y)$ differentiable. For strictly increasing $g$, $F_Y(y) = F_X(x)$. For strictly decreasing $g$, $F_Y(y) = 1 - F_X(x)$. Either way the chain rule gives $$f_Y(y) = f_X(x)\left|\frac{dx}{dy}\right|.$$` (in JSON, each backslash doubled).
+
+## Follow-up (fix-pass read)
+
+Finding 1, `l15-new-variables.json` `screens[3].prose`.
+
+Old: `You went from $U$ to $Y$ through the CDF. For $Y = g(X)$ with $g$ strictly increasing or strictly decreasing and $x = g^{-1}(y)$ differentiable, the chain rule on $F_Y(y) = F_X(x)$ gives $$f_Y(y) = f_X(x)\left|\frac{dx}{dy}\right|.$$`
+
+New: `You went from $U$ to $Y$ through the CDF. Let $Y = g(X)$ with $x = g^{-1}(y)$ differentiable. For strictly increasing $g$, $F_Y(y) = F_X(x)$. For strictly decreasing $g$, like $-\tfrac12\ln U$, $F_Y(y) = 1 - F_X(x)$. Either way the chain rule gives $$f_Y(y) = f_X(x)\left|\frac{dx}{dy}\right|,$$ since $\tfrac{dx}{dy} < 0$ exactly when $g$ decreases.`
+
+Basis: increasing $g$ gives $f_Y = f_X\,dx/dy$ with $dx/dy > 0$; decreasing $g$ gives $P(X \ge x) = 1 - F_X(x)$, so $f_Y = -f_X\,dx/dy$ with $dx/dy < 0$ (Casella and Berger, Theorems 2.1.3 and 2.1.5). For $Y = -\tfrac12\ln U$: $F_Y(y) = P(U \ge e^{-2y}) = 1 - e^{-2y}$, density $2e^{-2y}$, rate 2; simulated mean 0.500, $F_Y(0.3) = 0.4506$ against 0.4512. Sibling statements (`summary.ideas[0]`, `screens[10].explain.text`, hints) state only the final rule and its hypotheses, so they stand. Script: `limits-thm-L4-fixread.py` line 131 tested the old wording; it now anchors on the new decreasing-case sentence, and the identity check finds `1 - F_X` (662 checks, 0 failed).
