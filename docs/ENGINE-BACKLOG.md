@@ -2166,11 +2166,90 @@ Bank part 2 engine pass (engine pass AB-2, `docs/reports/engine-pass-ab-2.md`; t
 926 status: done. runSet hook `answerWrong(id)` types the `wrong[]` value of that id (a `unit: "%"` field is typed as `6.18%`, the stored value times 100), the `tex` of an expression slip, or picks that option of a choice or multi; false when the item has no such id; with no id it is unchanged. `--bank <file> --why` deals each item alone once per `wrong[]` id and distractor (the rest of the bank walked to box 30), answers the slip and fails when the line shown is not `byKey[id]`, else the option's `why`, else `generic`, or when the slip is marked right. Code and longform items are skipped. Test: `tools/test-bank-code.mjs` (fixture slips built in the test). On `finance-1`: 32 slip lines shown, 15 of 15.
 927. Done [Could] `fresh-check.mjs`: a shuffled choice's option texts were joined in file order. [inbox: bank 2 session 1 b]
 927 status: done. in a choice or multi that shuffles (the default), `collect` reads each option on its own and puts a break between them, so no run spans two options; `shuffle: false` keeps them joined. `tools/test-fresh-check.mjs`.
-928. [Could] Validator `[wrong-band]`: a slip on a rounding half at the asked places. [inbox: bank 2 session 3]
-928 status: open. not a bank tool and not small (the rule reads the exact working, which is often not given); needs a decision on warning when the stored value is a half at the asked places or its band covers only one neighbour.
+928. Done [Could] Validator `[wrong-band]`: a slip on a rounding half at the asked places. [inbox: bank 2 session 3]
+928 status: done (engine pass AB part 3, with item 961). the rule already warns on a tie whose band is under half a unit and is quiet for a band of half a unit; cases pinned in `tools/test-validate-band-rules.mjs`, AUTHORING section 7 says so. No code change.
 929. Done [Should] `fresh-check.mjs`: a reused question line below the share gate. [inbox: bank 2 session 2]
 929 status: done. for a `--bank`, `--exam` or `--drill` target an advisory line (exit 0, `stem shares n words`) reports a run of 8 or more words in the stem (`prose` and `question`; read as the prose and question together because the inbox case sat in the prose) shared with another unit at any share; `--question-run n`, `--no-question-run`. It does not fire for `finance-2` `fi-forwards-rich-forward` on current content (nothing of 8 words is shared there now). `tools/test-fresh-check.mjs`.
 930. [Could] `fresh-check.mjs` sees wording, not set-ups: a shared named model parameter and answer kind (a decay 0.94, a rate, a strike). [inbox: bank 2 session 4]
 930 status: open. needs a parameter extractor (`\lambda = 0.94`, "decay 0.94") and an answer-kind comparison; the existing `scanSetReuse` parameter test (two shared specific numbers) is the nearest and is limited to problem sets; not started.
 
 Last inbox heading numbered: "Raised later (bank 2 session 4)" for the bank bullets only (920 to 930); the other bullets of "Raised later (review holes 0.1 and 0.2)" and later headings are still unnumbered.
+
+Engine pass AB part 3 (`docs/reports/engine-pass-ab-3.md`: grader faults found by second readers; every inbox bullet under the headings "Raised later (fluency and problems number-sense 4 / quadratics 4 / testing 4)", "(review holes 0.1 and 0.2)", "(review holes 1.6 and 2.1)", "(problems estimation)", "(problems regression)", "(problems vectors)", "(problems testing)", "(review problems 1.6 a)", "(review problems testing, vectors)" and "(problems elimination)"):
+
+931. Done [Must] `expression` matrix answers: `[[a, b], [c, d]]` (and MathLive's `\left\lbrack` spelling, and `((a, b), (c, d))`) was not read as a matrix, so no `wrong[].tex` stored as a `pmatrix` could fire and every wrong matrix was told "That is a single value". [inbox: review problems testing, vectors]
+931 status: done. `grade.js` `itemsOf` reads a list or tuple of equal-length lists or tuples as a matrix: it has rows and columns for the `length` line, is compared entry by entry with a `pmatrix` and meets every `wrong[].tex` as the key does (the 20 slip lines of `vectors/problems-2` and `-3` fire; an unnamed wrong 2 by 2 matrix gets the generic line, not "single value"). `tools/test-grade-ab3.mjs` Part 1 (six typing forms of right and wrong matrices and vectors); AUTHORING section 3, Vectors and matrices.
+932. Done [Could] `expression`: a number in front of a vector or matrix (`\frac{1}{5}(3,4)`, `10[[0.3, -0.1], [-0.2, 0.4]]`) was not multiplied in; entries factored (`[[2(k+3), k+2], [5, 2]]`) were refused. [inbox: review problems testing, vectors; review problems 1.4 a findings 2 and 6]
+932 status: done. a number before or after a vector or matrix scales its entries (`\frac{1}{10}[[3, -1], [-2, 4]]`, `0.2(3, 4)`, `[[..]]/10`, `\frac{(3, 4)}{5}`, `2\begin{pmatrix}..`); `scaledLiteral` cuts the text because the engine's own parse of these is an error or a wrong tuple. A letter directly before the bracket stays a call (`f(1, 2)`). Factored entries read through item 931. `tools/test-grade-ab3.mjs` Part 2; AUTHORING section 3.
+933. Done [Could] The numeric field stops at unit words and a caret after the number (`234 m^2`, `234 square metres`, `20 km an hour`, `0.4 a day`, `-12 GWh per °C`, `2.5 bp a year`, `21 million shares`, `7 h`) even with `unit` set. [inbox: review holes 1.6 and 2.1; review holes 0.1 and 0.2 (units, one bullet); problems regression (multi-word unit); review problems 1.6 a (third sighting)]
+933 status: done. `numText` drops any run of words after the number and, with a `unit` declared, recognises it written any way (`unitCanon`: `m²`, `m^2`, `m2`, `square metres`, `sq m`, `metres squared` are one unit; `km/h`, `kph`, `km per hour`, `km an hour`; `7 h` for hours, `3 metres` for m); a `%` before the words is kept (`0.35% a month`). Still by design: a one-letter unit with no `unit` declared (`3x` is not 3). The validator advisory "question names a unit but the widget has no `unit`" is item 960 (open). `tools/test-grade-ab3.mjs` Part 3; AUTHORING section 3.
+934. Done [Could] A plus sign before a positive number (`+42`, `+250`) is not read by the numeric field. [inbox: review problems 1.6 a]
+934 status: done. `parseNum` drops a leading plus sign (`+42`, `+£250`, `£+250`, `+2%`); a negative key with a typed `+3` still reaches its `sign` slip. `tools/test-grade-ab3.mjs` Part 4.
+935. Done [Should] `form: "simplified"` gives two verdicts for a whole number times a bracket (`3(x-4)` passes, `2(4x-13)` does not). [inbox: review holes 0.1 and 0.2]
+935 status: done. a whole number other than 1 times a bracketed sum is refused like a decimal one (key `form`), as the prompts "with no brackets" and the 902 rule ("no bracket left open in a sum") say; a form the author lists as `answer` or in `accept` always passes. `tools/grade-regression.mjs` over every authored text: no real answer changes (six unrendered `{poly(...)}` placeholders of `quadratics/fluency-l16` and `trig/fluency-l4` now pass because they equal their own template text). `tools/test-grade-ab3.mjs` Part 5; AUTHORING section 3.
+936. Done [Should] Validator rule, class seen four times: a numeric part asked "in %" or "as a percentage" with no `unit: "%"` and no slip for the percent-or-decimal confusion. [inbox: review problems 1.6 a]
+936 status: done. validator warning `[percent-form]`: the question says "in %", "in per cent", "as a percentage" or "in percentage points" and the field has neither `unit: "%"` nor a `wrong` entry at the key over 100 or times 100 (or an id naming percent or decimal). 74 on current content (estimation 16, garch 13, regression 6, stat-models 5, random-vars 5, linear-maps 4, exams 3, momentum-rep 3, mm-games 3, and 1 to 2 in 11 other courses and the bank). `tools/test-validate-band-rules.mjs`; AUTHORING section 7.
+937. Done [Could] `\ell(\lambda) =` or `\ell =` typed before an expression answer is not dropped as a label. [inbox: review problems 1.6 a]
+937 status: done. `\ell` and `\mathcal{...}` count as symbols for the label check (`SYM0`, `CALLLABEL`), so `\ell(\lambda) =`, `\ell =` and `\mathcal{L}(\theta) =` are dropped like `L(p) =`; a call of the answer's own letters is still not a label. `tools/test-grade-ab3.mjs` Part 4; AUTHORING (typed left side).
+938. Done [Could] Validator advisory: a numeric part with a negative key and no `wrong` entry at minus the key. [inbox: review problems 1.6 a]
+938 status: done. validator warning `[negative-key]`: a numeric key below zero and no `wrong` value at its absolute value. 241 on current content (exams 21, vectors 11, functions 11, research-int 10, markov 10, and 40 more courses). `tools/test-validate-band-rules.mjs`; AUTHORING section 7.
+939. Done [Should] The problem-set playthrough grades an `expression` part only with its stored `answer` and `wrong[].tex`; a matrix slip typed as the question asks was never tried. [inbox: review problems testing, vectors]
+939 status: done. `playthrough.mjs --problems <set>` plays one extra pass per slip index, each problem answering its k-th named slip typed as a learner would (a matrix `[[a, b], [c, d]]`, a vector `(a, b)`) in the real field, and fails a slip that is marked right, reaches another key or shows another byKey line (matrix and vector slips always; every expression and numeric slip with `--why`). `ZQ.test.answerWrong(id, true)` types the slip that way; `--bank --why` uses it too. Run over every set with matrix or vector slips: see the report. The unit test cannot see the real field, which is why this pass exists. The validator rule candidate (a `pmatrix` slip on a "row by row" part) is not needed now that every form is read.
+940. Done [Could] Validator rule candidate: a `wrong[].tex` holding `\begin{pmatrix}` on a part whose question says "Type it row by row". [inbox: review problems testing, vectors]
+940 status: done (not needed). once the grader reads every typing form (item 931) the stored form of a slip no longer decides whether it fires; `tools/test-grade-ab3.mjs` Part 1 and the typed-slip pass of item 939 hold it.
+941. [Could] Fluency formats: no format writes a thousands separator (`{x:,}` giving `3{,}300{,}000`). [inbox: fluency and problems number-sense 4]
+941 status: open.
+942. [Could] Expression `form` for a product of primes (`2^3 \times 3^2 \times 5`). [inbox: fluency and problems number-sense 4]
+942 status: open.
+943. [Could] `fluency-sample.mjs --json` leaves out a `wrong` entry's own `tol`. [inbox: fluency and problems number-sense 4]
+943 status: open.
+944. [Should] Expression `form` for a surd constant in simplest form (`simplified` lets $\sqrt{72}$ pass for $6\sqrt{2}$; ENGINE-BACKLOG 670 again). [inbox: fluency and problems quadratics 4]
+944 status: open.
+945. [Should] Expression `form` for a cancelled algebraic fraction (the typed-back division of `quadratics/problems-4` `p-windy-ride` part 4 also passes). [inbox: fluency and problems quadratics 4; review holes 0.1 and 0.2]
+945 status: open. `form: "simplified"` still refuses only the two uncancelled forms; the division, a fraction over a fraction and the flipped product pass.
+946. [Could] `fresh-check.mjs` cannot see a story reused with new numbers and words (a per-course list of setting nouns). [inbox: review holes 0.1 and 0.2]
+946 status: open.
+947. [Could] Validator rules from classes seen three times: `form: "expanded"` with no "multiplied out", "expand" or "no brackets" in the prompt; "Type the top" with no `whole` slip. [inbox: review holes 0.1 and 0.2]
+947 status: open.
+948. [Could] Fluency: a text var from a `pick` cannot hold a placeholder. [inbox: fluency and problems testing 4]
+948 status: open.
+949. [Could] Validator `[wrong-band]` on a "Give a whole number." part refuses a slip whose value is not whole; widening it makes it `[wide-wrong-band]`. [inbox: problems estimation]
+949 status: open. needs a rule decision (accept a non-whole value at its own band for an integer part, or say in AUTHORING which rule wins).
+950. [Could] Playthrough `--shots`: on a `choice` part at 440 px the feedback sheet covers the lower options in the shot. [inbox: problems estimation]
+950 status: open.
+951. [Should] A numeric field whose `unit` is not `%` reads a typed % as a hundredth and marks it wrong with the generic line (`stat-learning/problems-4` `p-order-sizes`, `stat-learning/fluency-l16`, `testing/fluency-l15`). [inbox: review holes 1.6 and 2.1]
+951 status: open (engine). The validator side is item 936 (`[percent-form]` finds the parts that ask for per cent without `unit: "%"`); the field itself still reads `18%` in a field with no `%` unit as 0.18.
+952. [Could] `fresh-check.mjs --exam topic-1.6` gives no hit for `s-pareto-losses` against `estimation/homework-2` (shared formula, a `longform` item's `model` not read). [inbox: review holes 1.6 and 2.1]
+952 status: open.
+953. [Could] Validator rule candidate: `k` decimal places with a half-unit band while the prompt holds `\ln` or "$X^2$". [inbox: review holes 1.6 and 2.1]
+953 status: open.
+954. [Could] `census.mjs` or the exam number scripts: list each lesson whose key term no exam item holds. [inbox: review holes 1.6 and 2.1]
+954 status: open.
+955. [Could] A `unit: "%"` part cannot name the slip of typing the decimal (0.0035 for 0.35%): the grader could return a built-in key `decimal` with a default line. [inbox: problems regression; review problems testing, vectors (the decimal its own working prints)]
+955 status: open. the same class as item 951 from the other side.
+956. [Could] The Accepted line prints the band from the stored key's full decimals. [inbox: problems regression]
+956 status: open.
+957. [Could] `expression` matrix answers: nothing on screen says how to type a matrix before answering (a matrix template key or a `placeholder`). [inbox: problems vectors]
+957 status: open.
+958. [Could] `tools/grade-regression.mjs`: a `--file <path>` option for checking one new set's `wrong` routing. [inbox: problems vectors]
+958 status: open. `playthrough.mjs --problems <set>` (item 939) now checks a set's matrix and vector slips through the real field; the unit-level `--file` is not added.
+959. [Could] `fresh-check.mjs --file` lists the standard constants (0.05, 0.01, 1.645, 1.96, ...) as shared parameters. [inbox: problems testing]
+959 status: open.
+960. [Could] Validator advisory: the question names a one-letter unit ("in hours", "in metres", "in grams", "in seconds") and the widget has no `unit`. [inbox: review problems testing, vectors; review holes 0.1 and 0.2 (a validator rule for a numeric question that names a unit)]
+960 status: open.
+961. [Could] `[wrong-band]` and `[tight-band]` do not notice a value that is a rounding tie at the asked places (8.645 to 2 places). [inbox: problems testing]
+961 status: done (with item 928's ruling). the existing rule already warns on a tie whose band is under half a unit (`tie-slip-with-a-narrow-band`, `tie-slip-with-the-default-band`, `tie-key-with-a-narrow-band`), and stays quiet for a band of half a unit, which takes in both neighbours; the cases are pinned in `tools/test-validate-band-rules.mjs` and AUTHORING section 7 says so. No code change. Item 928 is closed by the same finding.
+962. [Could] Number-script rule candidate: a `wrong` value worked from exact inputs with a half-step band where the question hands the learner a rounded input. [inbox: review problems 1.6 a]
+962 status: open.
+963. [Could] `fresh-check.mjs --file` passes a task repeated with new numbers (a masked-number run over question sentences). [inbox: review problems 1.6 a]
+963 status: open.
+964. [Could] Validator candidates from the testing read: a `wrong` value that equals the key rounded one place shorter; a `wrong` band under 0.005 on a part with no places asked; a doubled-tail slip with a half-unit band. [inbox: review problems testing, vectors]
+964 status: open.
+965. [Could] `fresh-check.mjs` cannot see two vectors reused under other names and scales (an item and a lesson screen sharing two coordinate pairs). [inbox: review problems testing, vectors]
+965 status: open.
+966. [Could] An inline `pmatrix` of two or more rows in a part's `question` is set at full height inside the line on a 440 px phone: a validator advisory, or render it in `\textstyle`. [inbox: problems elimination]
+966 status: open.
+967. [Could] `fresh-check.mjs --file` reports a shared two-term linear equation (`2y+z=7`) as a shared formula. [inbox: problems elimination]
+967 status: open.
+
+Last inbox headings numbered by engine pass AB part 3: every bullet under the headings named above (931 to 967); the bank 2 bullets (920 to 930) and "Raised later (bank 2 session 4)" were numbered earlier.

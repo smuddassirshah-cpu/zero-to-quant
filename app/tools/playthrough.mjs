@@ -1178,6 +1178,50 @@ const main = async () => {
           await overflowAt('the Problem set result page');
           return sum;
         };
+        /* ENGINE-BACKLOG 931: the slips of every part, typed the way a learner types them. Pass k answers, in each problem, its k-th named slip (a `wrong[]` entry of an
+           expression or numeric field; a matrix is typed [[a, b], [c, d]] and a vector (a, b)) and every other part right. The slip must not be marked right, must
+           reach its own key and must show its own byKey line. Without --why only the matrix and vector slips are dealt (the form most easily mis-routed). */
+        const vecTex = (t) => typeof t === 'string' && (/\\begin\{[pbv]?matrix\}/.test(t) || (/^\s*[\[(]/.test(t) && t.includes(',')) || /\\langle/.test(t));
+        const slipsOf = (pt) => { const w = (pt && pt.widget) || {}; return (w.wrong || []).filter(x => x && x.id && ((w.kind === 'expression' && typeof x.tex === 'string' && (opt.why || vecTex(x.tex))) || (w.kind === 'numeric' && opt.why && Number.isFinite(+x.value)))); };
+        /* one slip per problem in each pass (a problem's result carries the key of its first wrong part, so two slips in one problem could not be told apart) */
+        const entriesOf = (it) => (it.parts || []).flatMap((pt, j) => slipsOf(pt).map(sl => ({ part: j, sl })));
+        const maxSlips = Math.max(0, ...items.map(it => entriesOf(it).length));
+        let slipN = 0;
+        const slipPlay = async (k) => {
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go('review');
+          await go(`problems/${course}/${id}`);
+          await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(150);
+          let guard = 0;
+          while (++guard < 400) {
+            const c = await page.evaluate(() => ZQ.test.current());
+            if (c.kind === 'done') break;
+            if (c.kind !== 'item') { fails.push(`slip pass ${k + 1}: unexpected state ${c.kind}`); break; }
+            if (c.state === 'idle' || c.state === 'engaged') {
+              const pt = ((items[c.screenIndex] || {}).parts || [])[c.part || 0], en = entriesOf(items[c.screenIndex] || {})[k], sl = en && en.part === (c.part || 0) ? en.sl : null;
+              const put = await page.evaluate(([sid]) => (sid && ZQ.test.answerWrong(sid, true) ? 'slip' : ZQ.test.answerCorrect() ? 'right' : 'none'), [sl && sl.id]);
+              if (put === 'none') { fails.push(`slip pass ${k + 1}: item ${c.screenIndex + 1} part ${(c.part || 0) + 1}: nothing could be typed`); break; }
+              const r = await page.evaluate(async () => { const x = await ZQ.test.check(); return x ? { ok: !!x.ok, key: x.key ?? null, pending: !!x.pending } : null; });
+              if (put === 'slip') {
+                const at = `item ${c.screenIndex + 1} part ${(c.part || 0) + 1} slip "${sl.id}"`;
+                const fb = (pt.feedback || {}), line = (fb.byKey && fb.byKey[sl.id]) || '';
+                const shown = await page.evaluate(() => { const x = document.querySelector('.lsn-verdict'); return x ? x.innerText.replace(/\s+/g, ' ').trim() : ''; });
+                const nt = (x) => String(x || '').replace(/\s+/g, ' ').trim().toLowerCase(), lead = nt(String(line).split('$')[0]);   // the prose before the first formula (a formula renders twice in innerText)
+                if (!r || r.pending) fails.push(`${at}: nothing was graded`);
+                else if (r.ok) fails.push(`${at}: typed as a learner would, it was marked right`);
+                else if (r.key !== sl.id) fails.push(`${at}: typed as a learner would, it reached the key ${JSON.stringify(r.key)}, not its own${/single value|components|rows and/.test(shown) ? ` (shown: "${shown.slice(0, 90)}")` : ''}`);
+                else if (lead.length >= 8 && !nt(shown).includes(lead.slice(0, 40))) fails.push(`${at}: it showed "${shown.slice(0, 80)}", not its own byKey line`);
+                else slipN++;
+              }
+            }
+            await page.evaluate(() => ZQ.test.continue());
+            await page.waitForTimeout(100);
+          }
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go('review');
+        };
         const xp0 = await page.evaluate(() => ZQ.state.xp);
         const a = await play(true);
         const rec1 = await page.evaluate(([c, i]) => ZQ.state.problems.get(c, i), [course, id]);
@@ -1215,6 +1259,9 @@ const main = async () => {
         await go('review');
         const part = await page.evaluate(([c, i]) => ZQ.state.problems.get(c, i), [course, id]);
         if (!part || part.attempts !== 2) fails.push(`leaving part way counted as an attempt: ${JSON.stringify(part)}`);
+        /* the slip passes finish whole sets, so they run last (they count as attempts) */
+        for (let k = 0; k < maxSlips; k++) await slipPlay(k);
+        if (maxSlips) note += `, ${slipN} typed slip${slipN === 1 ? '' : 's'} routed`;
         console.log(`${fails.length ? 'FAIL' : 'ok  '} ${label}  ${note}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
         fails.push('threw: ' + String(e.message || e).split('\n')[0]);
@@ -1763,7 +1810,7 @@ const main = async () => {
                     const deal = await sitStart();
                     if (deal.length !== 1 || deal[0] !== uid) { note(uid, `--why: the deck dealt ${JSON.stringify(deal)} for the slip "${sl.id}"`); break; }
                     for (let q = 0; q < k; q++) { await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(() => ZQ.test.check()); await page.evaluate(() => ZQ.test.continue()); }
-                    const put = await page.evaluate((x) => ZQ.test.answerWrong(x), sl.id);
+                    const put = await page.evaluate((x) => ZQ.test.answerWrong(x, true), sl.id);
                     if (!put) { note(uid, `--why: could not give the slip "${sl.id}"`); break; }
                     const r = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok, line: r.line || '' }));
                     const exp = (fb.byKey && fb.byKey[sl.id]) || sl.why || fb.generic || '';

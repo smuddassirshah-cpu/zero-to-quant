@@ -241,8 +241,24 @@ const printedValue = (text, unit) => {
   }
   return null;
 };
+/* ENGINE-BACKLOG 936 and 938 (SESSION PROTOCOL 6, finding classes seen three times in docs/reviews):
+     [percent-form]  a numeric part whose question asks for the answer "in %", "in per cent" or "as a percentage" with neither unit "%" nor a wrong[] entry for the
+                     percent-or-decimal confusion (a value at the key over 100 or times 100, or an id naming percent or decimal): a typed % or the decimal the working ends
+                     in gets only the generic line
+     [negative-key]  a numeric key below zero with no wrong[] entry holding its absolute value: the dropped sign gets only the generic line */
+const PERCENT_ASKED = /\bin\s*(?:\\?%|per\s?cent\b|percent(?:age)?\b)|\bas\s+(?:a\s+)?(?:\\?%|per\s?cent\b|percent(?:age)?\b)|\bin\s+percentage\s+points?\b/i;
+const closeTo = (a, b) => Math.abs(a - b) <= 1e-6 * Math.max(1, Math.abs(b));
+const percentNegativeRules = (file, where, w, ctx) => {
+  const ans = w.answer, wr = (Array.isArray(w.wrong) ? w.wrong : []).filter(x => isObj(x) && typeof x.value === 'number');
+  if (w.unit !== '%' && PERCENT_ASKED.test(String(ctx.question || '').replace(/\$\$|\$/g, ' '))) {
+    const hasSlip = wr.some(x => closeTo(x.value, ans / 100) || closeTo(x.value, ans * 100) || /per-?cent|decimal|pct|percent/i.test(String(x.id || '')));
+    if (!hasSlip) warn(file, `${where}`, '[percent-form] the question asks for the answer in per cent but the field has no unit "%" and no wrong entry for the percent-or-decimal confusion: a learner who types the % sign, or the decimal the working ends in, gets only the generic line; set unit "%" (key as a fraction) or add a wrong entry at the key over 100 (or times 100)');
+  }
+  if (ans < 0 && !wr.some(x => closeTo(x.value, -ans) || Math.abs(x.value + ans) <= halfWidth(ans, w.tol) + 1e-9)) warn(file, `${where}`, `[negative-key] the key ${ans} is negative and no wrong entry holds its absolute value ${-ans}: a learner who drops the sign gets only the generic line`);
+};
 const bandRules = (file, where, w, ctx) => {
   if (typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
+  percentNegativeRules(file, where, w, ctx);
   const ans = w.answer, hw = halfWidth(ans, w.tol), q = String(ctx.question || ''), scaled = w.scale != null || /units? of\b/i.test(q) || /10\s*\^/.test(q);
   const toPlaces = (t) => { const m = stripMathsAndCode(t || '').toLowerCase().match(/\bto\s+(zero|one|two|three|four|five|six|\d)\s+(?:decimal\s+)?places?\b/); return m ? (WORD_NUM[m[1]] ?? +m[1]) : null; };   // "a decimal to 4 places"
   const d = roundingAsked(ctx.question) ?? roundingAsked(ctx.prose) ?? toPlaces(ctx.question);

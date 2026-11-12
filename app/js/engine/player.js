@@ -1390,7 +1390,15 @@
       /* tools/playthrough.mjs --fluency: a wrong answer typed into the open item (a number far from any key, an expression no key equals).
          ENGINE-BACKLOG 926: answerWrong(id) types the value of the wrong[] entry with that id (a per cent item as "6.18%") or picks the option with that id,
          so --bank --why can deal each named slip; false when the open item has no such id. */
-      answerWrong: (id) => {
+      answerWrong: (id, typed) => {
+        /* ENGINE-BACKLOG 931: with typed, an expression slip stored as a pmatrix is typed the way a learner types it from the question:
+           [[a, b], [c, d]] for a matrix, (a, b) for a column or a row; anything else as stored */
+        const asTyped = (tex) => {
+          const m = /^\s*\\begin\{[pbv]?matrix\}([\s\S]*)\\end\{[pbv]?matrix\}\s*$/.exec(tex);
+          if (!m) return tex;
+          const rows = m[1].split('\\\\').map(r => r.trim()).filter(Boolean).map(r => r.split('&').map(x => x.trim()));
+          return rows.length > 1 && rows[0].length > 1 ? '[[' + rows.map(r => r.join(', ')).join('], [') + ']]' : '(' + [].concat(...rows).join(', ') + ')';
+        };
         if (!alive || !cur || !cur.widget || !(st0 === 'idle' || st0 === 'engaged')) return false;
         const k = cur.widget.kind;
         const w = ((cur.partCount && cur.partCount() > 1 ? ((cur.step.spec.parts || [])[cur.part().index] || {}).widget : cur.item && cur.item.widget) || {});
@@ -1403,7 +1411,7 @@
             const e = (w.wrong || []).find(q => q && q.id === id);
             if (!e) return false;
             if (k === 'numeric' && Number.isFinite(+e.value)) cur.widget.set(w.unit === '%' ? G().fmtNum(+e.value * 100) + '%' : G().fmtNum(+e.value));   // a per cent field stores a fraction and is typed as 6.18%
-            else if (k === 'expression' && typeof e.tex === 'string') cur.widget.set(e.tex);
+            else if (k === 'expression' && typeof e.tex === 'string') cur.widget.set(typed ? asTyped(e.tex) : e.tex);
             else return false;
           }
           st0 = cur.ready() ? 'engaged' : 'idle'; sync();

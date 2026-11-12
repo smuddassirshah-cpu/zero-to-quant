@@ -6,6 +6,8 @@
      [wide-wrong-band]     a wrong band over half its own value
      [accept-form]         "any form equal to" something the numeric field cannot type
      [wrong-equals-answer] an expression wrong[].tex the grader reads as the answer (error); the written-text comparison always, the value comparison with --local-cdn
+     [percent-form]        (ENGINE-BACKLOG 936) a question asking "in %" with no unit "%" and no percent-or-decimal slip
+     [negative-key]        (938) a negative key with no wrong entry at its absolute value
      form "solved", domain and scale are accepted when well formed and refused when not
    Usage: node tools/test-validate-band-rules.mjs [--local-cdn <pkgs>]. Exit 0 pass, 1 failure. */
 import fs from 'node:fs';
@@ -54,6 +56,16 @@ const CASES = [
   [4, 0, 'domain-malformed', 'Write the rule.', expr('\\arcsin(s)', { domain: { s: [0.9, 0.05] } }), OK_FB, OK_EX, [['error', 'domain.s']]],
   [4, 1, 'scale-malformed', 'What is the rate, in units of $10^{-5}$?', num(4.86, { abs: 0.005 }, { scale: -1 }), OK_FB, OK_EX, [['error', '.scale']]],
   [4, 2, 'scale-well-formed', 'What is the rate, in units of $10^{-5}$?', num(4.86, { abs: 0.005 }, { scale: 1e-5 }), OK_FB, OK_EX, [['nowarn', '.scale']]],
+  [5, 0, 'percent-asked-with-no-unit-and-no-slip', 'What is the return, in %?', num(5.4, { abs: 0.05 }), OK_FB, OK_EX, [['warn', '[percent-form]']]],
+  [5, 1, 'percent-asked-with-unit-percent', 'Give the return as a percentage.', num(0.054, { abs: 0.0005 }, { unit: '%' }), OK_FB, OK_EX, [['nowarn', '[percent-form]']]],
+  [5, 2, 'percent-asked-with-the-decimal-slip', 'What is the return, in per cent? Give 1 decimal place.', num(5.4, { abs: 0.05 }, { wrong: [{ id: 'decimal', value: 0.054, tol: { abs: 0.0005 } }] }), OK_FB, OK_EX, [['nowarn', '[percent-form]']]],
+  [5, 3, 'negative-key-with-no-absolute-value-slip', 'What is the change?', num(-12, { abs: 0 }, { wrong: [{ id: 'other', value: 7, tol: { abs: 0 } }] }), OK_FB, OK_EX, [['warn', '[negative-key]']]],
+  [5, 4, 'negative-key-with-its-absolute-value', 'What is the change?', num(-12, { abs: 0 }, { wrong: [{ id: 'sign', value: 12, tol: { abs: 0 } }] }), OK_FB, OK_EX, [['nowarn', '[negative-key]']]],
+  [6, 0, 'a-positive-key-asked-in-units', 'What is the length, in metres?', num(12, { abs: 0 }), OK_FB, OK_EX, [['nowarn', '[percent-form]'], ['nowarn', '[negative-key]']]],
+  [6, 1, 'tie-slip-with-a-narrow-band', 'What is the total? Give 2 decimal places.', num(10, { abs: 0.005 }, { wrong: [{ id: 'tie', value: 8.645, tol: { abs: 0.0049 } }] }), OK_FB, OK_EX, [['warn', '[wrong-band]']]],
+  [6, 2, 'tie-slip-with-the-default-band', 'What is the total? Give 2 decimal places.', num(10, { abs: 0.005 }, { wrong: [{ id: 'tie', value: 8.645 }] }), OK_FB, OK_EX, [['warn', '[wrong-band]']]],
+  [6, 3, 'tie-slip-with-a-half-unit-band', 'What is the total? Give a decimal to 2 places.', num(10, { abs: 0.005 }, { wrong: [{ id: 'tie', value: 8.645, tol: { abs: 0.005 } }] }), OK_FB, OK_EX, [['nowarn', '[wrong-band]']]],
+  [6, 4, 'tie-key-with-a-narrow-band', 'What is the total? Give a decimal to 2 places.', num(8.645, { abs: 0.004 }), OK_FB, OK_EX, [['warn', '[tight-band]']]],
 ];
 const items = [...new Set(CASES.map((c) => c[0]))];
 while (d.items.length < items.length) d.items.push(JSON.parse(JSON.stringify(d.items[0])));
