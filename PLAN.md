@@ -288,6 +288,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [ ] Every course closed under the convergence rule (at most one new `wrong` per three levels)
 
 ### 6. Engine
+- [ ] Test and run time (user, 12 Nov; NEXT_PROMPT session AC tasks 1 to 3): CI acceptance workflow, `--changed` green-hash cache, fixtures-only validator tests, node grading check, protocol edits so the chain stops replaying unchanged files
 - [ ] Engine pass 7 (session V: items 591 to 616 done in passes A, B and 7; open: the rest of 340 to 422 and the deferred list in `docs/reports/engine-pass-7.md`): backlog items 340 to 422 plus `docs/BACKLOG-INBOX.md` (was in flight; status block "Seventh pass" may be partial). Number inbox bullets from 424, clear the inbox, document in AUTHORING.md and canvas READMEs
 - [x] Session W engine items: 617 (Today: a pass moves Today on unless the lesson is reopened from Learn or the map; `test-today-tested-out.mjs`), 618 to 620 (expression grader compares equations as equations and strips labelled left sides; `test-expr-equations.mjs` 129 of 129), 621 (Learn exam chip shows the minutes the exam runs; `test-exam-minutes.mjs`)
 - [ ] Engine pass 8: whatever the inbox holds after Stage 2 and 3 content lands
