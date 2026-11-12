@@ -202,7 +202,11 @@ if I:
     line9 = F(int(price2.sum()), 6) + (bcar + rise) * (9 - xb)
     num(I, 'p-car-prices', 4, line9, fit_a + fit_b * 9,
         {'old-slope': F(int(price2.sum()), 6) + bcar * (9 - xb), 'raw-x': F(int(price2.sum()), 6) + (bcar + rise) * 9,
-         'wrong-way': F(int(price2.sum()), 6) + (bcar - rise) * (9 - xb), 'old-mean': F(int(price.sum()), 6) + (bcar + rise) * (9 - xb)}, rel=1e-9, unit='£')
+         'wrong-way': F(int(price2.sum()), 6) + (bcar - rise) * (9 - xb), 'old-mean': F(int(price.sum()), 6) + (bcar + rise) * (9 - xb),
+         'both-old': F(int(price.sum()), 6) + bcar * (9 - xb)}, rel=1e-9, unit='£')
+    old_b, old_a = np.polyfit(ages, price, 1)
+    both = next(x for x in part(I, 'p-car-prices', 4)['widget']['wrong'] if x['id'] == 'both-old')
+    ok(abs(old_a + old_b * 9 - 6266.67) < 0.01 and abs(13667 - 1480 * 5 - 6267) < 1e-9 and abs(both['value'] - (old_a + old_b * 9)) <= both['tol']['abs'] and both['tol']['abs'] == 1 and abs(both['value'] - 7517) > 2 and abs(both['value'] - 6600) > 2, 'car p4: both-old 6,267 is the uncorrected line at 9 years (6,266.67 from the first fit), clear of the other slips')
     ok(line9 == 7850 and abs(8200 - float(line9) - 350) < 1e-9, 'car: 7,850 at 9 years and the car sits 350 above its own line')
     lacks(I, 'p-car-prices', 4, r'corrected slope\?', 'old question asked for the corrected slope')
     lacks(I, 'p-car-prices', 4, r'-1430|-1030|1{,}430|1{,}030', 'old part 3 slips')

@@ -207,6 +207,24 @@ def acos_deg_np(u, v):
 
 M = sp.Matrix
 # ======================================================== level 1: vectors
+def decimal_line(items, iid, k, lands, misses):
+    """The `decimal` slip of a % part (fix pass of review-delta-problems-ab-1, finding 1). A decimal typed in a % field is read as
+    t / 100. The band must take the decimal form of the key and its sensible roundings (`lands`) and no other wrong value
+    typed as a decimal (`misses`); the line must name no number."""
+    p = part(items, iid, k)
+    w, tag = p['widget'], f'{iid} p{k}'
+    x = next(y for y in w['wrong'] if y['id'] == 'decimal')
+    ok(w.get('unit') == '%', f'{tag}: a % part')
+    hit = lambda t: abs(t / 100 - x['value']) <= x['tol']['abs'] + 1e-12
+    for t in lands:
+        ok(hit(t), f'{tag}: typed decimal {t} should land on the decimal line')
+    for t in misses:
+        ok(not hit(t), f'{tag}: typed {t} must not land on the decimal line')
+    ok(x['tol']['abs'] < 0.0001, f'{tag}: the decimal band is narrow')
+    line = p['feedback']['byKey']['decimal']
+    ok(not re.search(r'\d', line.replace('by 100', '')) and 'multiply your decimal by 100' in line, f'{tag}: the decimal line names no number and hands over no answer')
+
+
 I = load(1)
 if I:
     # p-charging-robot (re-authored, review-problems-1.4-a findings 8 and 9): u = (4, 1), v = (1, 3), charger (11, 11)
@@ -248,6 +266,7 @@ if I:
     num(I, 'p-active-bets', 2, ar, np.dot([0.4, 0.45, 0.15], [0.02, -0.01, 0.04]) - np.dot([0.5, 0.3, 0.2], [0.02, -0.01, 0.04]),
         {'flipped': -ar, 'fund': ww.dot(rr), 'benchmark': bw.dot(rr), 'decimal': ar / 100})
     stated(I, 'p-active-bets', 2, '-0.55', ar * 100, -0.55, 2)
+    decimal_line(I, 'p-active-bets', 2, [float(ar), -0.006], [-0.0095, -0.01, -0.0145, 0.0055, 0.0095, 0.015])
     na = aa.norm()
     num(I, 'p-active-bets', 3, na, np.linalg.norm([-0.1, 0.15, -0.05]),
         {'no-root': aa.dot(aa), 'abs-sum': sum(abs(x) for x in aa), 'sum': sum(aa)}, rel=1e-3)
@@ -289,6 +308,7 @@ if I:
     R1 = w0.dot(c)
     num(I, 'p-stress-hedge', 1, R1, np.dot([0.6, 0.3, 0.1], [0.01, -0.12, 0.08]), {'unweighted': sum(c), 'equal': sum(c) / 3, 'decimal': R1 / 100})
     stated(I, 'p-stress-hedge', 1, '-2.2', R1 * 100, -2.2, 1)
+    decimal_line(I, 'p-stress-hedge', 1, [float(R1), round(float(R1), 2)], [-0.016, -0.03, -0.01, -0.0146, -0.0073])
     ok('2 decimal places' in part(I, 'p-stress-hedge', 1)['question'], 'hedge p1: asks for 2 places, so the decimal slip -0.0002 is at the asked rounding')
     h = sp.Symbol('h')
     move = M([0, -1, 1])
@@ -303,11 +323,13 @@ if I:
     num(I, 'p-stress-hedge', 3, R2, np.dot([0.6, 0.19, 0.21], [-0.03, 0.04, -0.02]),
         {'old': w0.dot(s), 'shift-added': w0.dot(s) - hh * move.dot(s), 'decimal': R2 / 100})
     stated(I, 'p-stress-hedge', 3, '-1.46', R2 * 100, -1.46, 2)
+    decimal_line(I, 'p-stress-hedge', 3, [float(R2), round(float(R2), 3)], [-0.008, -0.0066, -0.01, -0.0014, -0.022, -0.0073])
     ok(hh * move.dot(s) == R(-66, 10000), 'hedge: the move costs 0.0066 in the rate rise')
     R3 = w1.dot((c + s) / 2)
     num(I, 'p-stress-hedge', 4, R3, np.dot([0.6, 0.19, 0.21], (np.array([0.01, -0.12, 0.08]) + np.array([-0.03, 0.04, -0.02])) / 2),
         {'unhedged': w0.dot((c + s) / 2), 'no-half': w1.dot(c + s), 'decimal': R3 / 100})
     stated(I, 'p-stress-hedge', 4, '-0.73', R3 * 100, -0.73, 2)
+    decimal_line(I, 'p-stress-hedge', 4, [float(R3), round(float(R3), 3)], [-0.0146, -0.008, -0.015, -0.01, -0.0066])
     ok(abs(float(w0.dot((c + s) / 2))) / abs(float(R3)) > 1.9, 'hedge: roughly halves the central loss')
 
 # ======================================================== level 2: matrices
@@ -377,6 +399,7 @@ if I:
     cut_rounded = 1 - 0.00376 / 0.01910
     num(I, 'p-factor-risk', 5, cut, 1 - (e2n @ Fn @ e2n) / (wn @ (Bn @ Fn @ Bn.T) @ wn),
         {'ratio': var2 / var1, 'difference': var1 - var2, 'volatility': 1 - sp.sqrt(var2 / var1), 'decimal': cut / 100}, rel=1e-9)
+    decimal_line(I, 'p-factor-risk', 5, [float(cut), round(float(cut), 3), round(float(cut), 2), round(float(cut), 1)], [0.76, 0.85, 0.77, 0.75, 0.197, 0.015, 0.556])
     ok(abs(cut_rounded - 0.8031) < 5e-5 and abs(cut_rounded - 0.803) <= 0.0005 and abs(float(cut) - 0.803) <= 0.0005, 'factor p5: the rounded and the exact cut both sit in the 80.3% band')
     ok(abs((0.01910 - 0.00376) - 0.01534) < 1e-12 and abs(float(var1 - var2) - 0.01534) < 1e-5, 'factor p5: the fall in variance is 0.01534 from the rounded variances (0.015347 unrounded)')
     stale(I, 'p-factor-risk', ['(0.5, 0.3, 0.2)', '1.2', '0.0225', '0.0064', '1.04', '0.02415', '0.00472', '0.0263', '16.2', '0.025116', 'bt-w'])
@@ -463,6 +486,7 @@ if I:
     tt = Ci * rd
     obj(I, 'p-colour-sensor', 4, tt.T, np.linalg.solve(Dn @ Mn, [200, 60.]),
         {'forward': (Cs * rd).T, 'leak-only': (Ms.inv() * rd).T, 'no-divide': (adj(Cs) * rd).T, 'swapped': M([[tt[1], tt[0]]])})
+    ok('\\frac{5}{4}[[0.6, -0.4], [-0.1, 1.4]]' in part(I, 'p-colour-sensor', 3)['widget']['accept'] and same(parse_obj('\\frac{5}{4}[[0.6, -0.4], [-0.1, 1.4]]'), Ci), 'sensor p3: the form 5/4 times the adjugate is accepted and equals the key')
     ok(Ms * tt == M([100, 60]) and Ds * Ms * tt == rd, 'sensor p4: M(120, 80) = (100, 60); the gain doubles the red to (200, 60)')
     pick(I, 'p-colour-sensor', 5, 'gain-first')
     ok(Ms.inv() * Ds.inv() == Ci and Ds.inv() * Ms.inv() != Ci and Ds.inv() * rd == M([100, 60]) and Ms.inv() * M([100, 60]) == tt,
