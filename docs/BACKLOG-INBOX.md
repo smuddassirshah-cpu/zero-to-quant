@@ -2213,6 +2213,18 @@ Raised later (audit markov 1-3):
 - [Could] Content lint: "needs independence" (or "requires independence") in a string that also names a variance, mean or sum. The class "independence stated as necessary where uncorrelated is enough" has now been seen in `limits-thm` (audit-limits-thm-1-3 findings 4 and 5) and `markov` (`l9-coin-flip-walk` `screens[6].explain`, audit-markov-1-3 finding 9). An advisory warning that prints the sentence is enough.
 - [Could] Reader checklist line for `docs/LEVEL-BRIEF.md`: where an item asks for a "fair price" or "price" of a contract on a modelled share, check that the stated chances make the share itself a fair bet (with no interest, $q u + (1 - q) d = 1$). If not, the item should ask for the expected pay-out instead (audit-markov-1-3 finding 3, `problems-3` `p-barrier-note`; lesson 12's one-touch passes the check).
 
+Raised later (audit random-vars 4-5, round 2):
+- [Could] Validator warning: a `tree` canvas whose branch chances equal a tree on an earlier screen of the same lesson, on a screen whose prose states chances that match none of them (l20 `screens[9]` reused the `screens[4]` tree under new chances; the one `wrong` of the round).
+- [Could] Wording lint, warning only: "do not add" or "fail" next to "sds", "variances" or "formulas" in a sentence with no "independent" or "uncorrelated".
+- [Could] Reader aid script: list items whose key or explain multiplies chances, or uses the multinomial covariance or the random-sum variance, while the prose has none of "independent", "independently", "multinomial". Class now seen four times in random-vars.
+
+Raised later (audit markov 1-3, round 2):
+- [Could] Concept lint: list every content string with "fair price" or "prices" next to a probability, for a reader to check the model is a fair bet or the text says "expected pay-out" (l12; the round 2 fix-pass read found the class again in the fixer's own sentence).
+
+Raised later (audit limits-thm 1-3, round 2):
+- [Should] Number scripts: the review and homework sets of limits-thm levels 1 to 3 have no number script. `review-2` `r-pareto-mean` slip `half` (0.5 against a named route worth 2/3) passed every gate and two reads. Recompute each slip from the route its `byKey` line names. The slip-naming class, eighth sighting.
+- [Could] Lint, warning only: "without independence", "needs independence", "only for independent", "fails for", "would block" in content strings, for a manual read (three findings of this round state a sufficient condition as necessary).
+
 Raised later (problems regression):
 - [Could] A `unit: "%"` part cannot name the slip of typing the decimal (0.0035 for 0.35%, read as 0.0035%): the slip's value is far below the asked rounding, so `[wrong-band]` wants a band that `[wide-wrong-band]` refuses. Five such `wrong` entries were dropped from `regression/problems-2` and `problems-3`. Wanted: the grader returns a built-in key (say `decimal`, with a default line) when a `%` field's value is the key divided by 100.
 - [Could] The numeric field drops a unit typed after the number only when it is one token (`MWh`, `days`), so a learner who types the shown multi-word unit (`-12 GWh per °C`, `2.5 MWh per hour`, `-0.5 MWh per °C`) is refused, and a `%²` unit cannot be given at all (variance parts in % were asked as standard deviations instead). Wanted: strip the field's own `unit` text however many words it has.
