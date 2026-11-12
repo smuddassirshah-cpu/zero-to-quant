@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* Second read, elimination and least-squares problem sets: the content fixes proposed in the review, tried on in-memory
    copies of the widgets with the real grader. Nothing is written.
-     - `accept` forms for an answer typed as a number times a vector (findings 5, 13, 14)
+     - `accept` forms for an answer typed as a number times a vector (findings 5, 8, 13)
      - a `normalised` wrong entry on three Gram-Schmidt parts (finding 12)
-     - a second value, -10, for the `added` slip of p-hall-drone part 2 (finding 10)
+     - a second value, -10, for the `added` slip of p-hall-drone part 2 (finding 9)
    node docs/reviews/review-problems-1.4-b-scripts/try-fix.mjs --local-cdn <pkgs>      (from the repo root) */
 import fs from 'node:fs';
 import path from 'node:path';

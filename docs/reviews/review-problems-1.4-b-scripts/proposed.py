@@ -24,23 +24,23 @@ def ok(cond, label):
 t = lambda v: tuple(v)
 
 # finding 1: p-courier-rounds on new rounds, same minutes (2, 4, 3)
-A = M([[0, 2, 1], [3, 1, 2], [0, 4, 5]]); x = M([2, 4, 3]); b = A * x
-ok(t(b) == (11, 16, 31), 'courier: b = (11, 16, 31)')
+A = M([[0, 3, 2], [4, 1, 1], [0, 6, 7]]); x = M([2, 4, 3]); b = A * x
+ok(t(b) == (18, 15, 45), 'courier: b = (18, 15, 45)')
 P = M([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
 PA = P * A
 ok(PA[0, 0] != 0 and A[2, 0] == 0, 'courier: only the swap of rows 1 and 2 works')
 l32 = PA[2, 1] / PA[1, 1]
 U = PA.copy(); U[2, :] = U[2, :] - l32 * U[1, :]
-ok(l32 == 2 and t(U.row(2)) == (0, 0, 3), 'courier: l32 = 2, U row 3 = (0, 0, 3)')
+ok(l32 == 2 and tuple(map(tuple, U.tolist())) == ((4, 1, 1), (0, 3, 2), (0, 0, 3)), 'courier: l32 = 2, U = (4, 1, 1), (0, 3, 2), (0, 0, 3)')
 Pb = P * b
 c = M([Pb[0], Pb[1], Pb[2] - 2 * Pb[1]])
-ok(t(Pb) == (16, 11, 31) and t(c) == (16, 11, 9), 'courier: Pb = (16, 11, 31), c = (16, 11, 9)')
-ok((b[0], b[1], b[2] - 2 * b[1]) == (11, 16, -1), 'courier: unswapped slip (11, 16, -1)')
-ok(Pb[2] + 2 * Pb[1] == 53, 'courier: signs slip c3 = 53')
-z = c[2] / 3; y = (c[1] - z) / 2; xx = (c[0] - y - 2 * z) / 3
+ok(t(Pb) == (15, 18, 45) and t(c) == (15, 18, 9), 'courier: Pb = (15, 18, 45), c = (15, 18, 9)')
+ok((b[0], b[1], b[2] - 2 * b[1]) == (18, 15, 15), 'courier: unswapped slip (18, 15, 15)')
+ok(Pb[2] + 2 * Pb[1] == 81, 'courier: signs slip c3 = 81')
+z = c[2] / 3; y = (c[1] - 2 * z) / 3; xx = (c[0] - y - z) / 4
 ok((xx, y, z) == (2, 4, 3), 'courier: back substitution gives (2, 4, 3)')
-nz = c[2]; ny = c[1] - nz; nx = c[0] - ny - 2 * nz
-ok((nx, ny, nz) == (-4, 2, 9), 'courier: no-divide slip (-4, 2, 9)')
+nz = c[2]; ny = c[1] - 2 * nz; nx = c[0] - ny - nz
+ok((nx, ny, nz) == (6, 0, 9), 'courier: no-divide slip (6, 0, 9)')
 ok(5 * 2 + 2 * 4 + 4 * 3 == 30 and 5 * 3 + 2 * 4 + 4 * 2 == 31, 'courier: part 5 unchanged, 30 and 31')
 
 # finding 2: p-vinyl-cutter part 1 at k = 2
@@ -64,14 +64,14 @@ ok(t(S * M([5, 3, 0])) == (5, -2, -3) and (S * M([5, -3, 0]))[1] == -8, 'futures
 ok(t(M([5, 3, 0]) + 2 * M([-1, 1, 1])) == (3, 5, 2) and t(S * M([3, 5, 2])) == (5, -2, -3), 'futures: two butterflies (3, 5, 2)')
 ok(t(M([5, 3, 0]) + 2 * M([1, -1, 1])) == (7, 1, 2) and t(S * M([7, 1, 2])) == (9, -10, 1), 'futures: sign slip (7, 1, 2) gives (9, -10, 1)')
 
-# finding 10: p-hall-drone part 2, the slip solved
+# finding 9: p-hall-drone part 2, the slip solved
 ok(sp.solve(4 + 6 + cs, cs)[0] == -10, 'hall-drone: 4 + 6 + c = 0 gives -10')
 
 # finding 12: the unit vectors
 for v, n in ((M([2, -2, -1]), 3), (M([1, 2, -2]), 3), (M([-1, 1, -1, 1]), 2)):
     ok(v.norm() == n, f'normalised: |{t(v)}| = {n}')
 
-# finding 16: p-gas-hubs on t = (0, 1, 2, 3, 4)
+# finding 14: p-gas-hubs on t = (0, 1, 2, 3, 4)
 tt = M([0, 1, 2, 3, 4]); yN = M([R(7, 2), 0, R(-1, 2), -3, -5]); yS = M([2, 1, -2, -2, -4])
 A = sp.ones(5, 1).row_join(tt)
 ATA = A.T * A
