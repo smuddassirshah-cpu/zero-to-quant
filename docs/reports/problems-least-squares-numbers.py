@@ -430,7 +430,7 @@ if I:
     num(I, iid, 1, xh, xn, {'no-divide': a.dot(b), 'by-length': a.dot(b) / norm(a)})
     p = xh * a
     e = b - p
-    obj(I, iid, 2, e, bn - xn * an, {'p-not-e': p, 'added': b + p, 'carried': b - (a.dot(b) / norm(a)) * a})
+    obj(I, iid, 2, e, bn - xn * an, {'p-not-e': p, 'added': b + p, 'carried': b - (a.dot(b) / norm(a)) * a, 'sign': M([-e[0], e[1]])})
     ok(e.dot(a) == 0, 'power: e is perpendicular to a')
     dist = norm(e)
     num(I, iid, 3, dist, abs(an[0] * bn[1] - an[1] * bn[0]) / np.linalg.norm(an),
