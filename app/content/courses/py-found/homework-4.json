@@ -289,7 +289,7 @@
         "pf-modules",
         "pf-functions"
       ],
-      "prose": "Finish the tool. `python summary.py prices.csv` summarises a file of daily closes; `python summary.py weekly.csv 52` uses 52 periods a year to annualise. The file may be in any order, with UK dates. The helpers from this level are in the starter. In this browser `sys.argv` is `['']`, so the guard prints its usage line.",
+      "prose": "Finish the tool. `python summary.py prices.csv` summarises a file of daily closes; `python summary.py weekly.csv 52` uses 52 periods a year to annualise. The file may be in any order, with UK dates. The helpers from this level are in the starter. The first line keeps the label `Days`; it counts the closes, whatever the period. In this browser `sys.argv` is `['']`, so the guard prints its usage line.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -384,8 +384,8 @@
       "question": "Explain the most likely cause of each wrong number, with the arithmetic or reasoning that points to it. For each, give one `assert` with a hand-worked value that fails on the buggy code.",
       "widget": {
         "kind": "longform",
-        "prompt": "A colleague's script summarises a fund from a vendor file. It reports annualised volatility of 412% and a maximum drawdown of 0%. The fund fell about 9% from its high during the period, and its vendor sends files newest first with UK dates.",
-        "model": "**The 412% volatility.** The daily standard deviation was multiplied by 252, not $\\sqrt{252}$. A daily sd of about 1.63% gives $1.63\\% \\times 252 \\approx 411\\%$, but $1.63\\% \\times 15.87 \\approx 25.9\\%$. Variances of independent days add, so only the variance scales with 252.\n\n*Test:* `assert math.isclose(annualised_vol([0.01, -0.01]), math.sqrt(0.0002 * 252))`. The value is worked out by hand: mean 0, squared distances 0.0002 over $n - 1 = 1$. The bug gives 3.56 and fails.\n\n**The 0% drawdown.** The fund fell over the period, so a drawdown of 0 means the closes were processed in the wrong order. The vendor file is newest first; read top to bottom, a falling fund looks like a rising one, and a rising path has no drawdown. Sorting the date text would not fix it either, because `dd/mm/yyyy` sorts by day first.\n\n*Test:* a `sort_rows` or `read_closes` test with a newest-first file that crosses a month end, for example 27/03 to 02/04, asserting the first close is the oldest. And `assert math.isclose(max_drawdown([50.0, 40.0, 60.0, 45.0]), 0.25)`.\n\n**A second cause to rule out.** If `max_drawdown` calls `max(dd, default=0.0)` on a generator that something else already consumed, it returns 0 silently. Build the list of closes once with `list(...)`.\n\n**Order of work.** Write each test first, watch it fail on the current code, then fix the function until it passes. Keep the script lines under `if __name__ == \"__main__\":` so pytest can import the functions.",
+        "prompt": "A colleague's script summarises a fund from a vendor file. It reports annualised volatility of 412% and a maximum drawdown of 6%. The fund fell about 9% from its high during the period, and its vendor sends files newest first with UK dates.",
+        "model": "**The 412% volatility.** The daily standard deviation was multiplied by 252, not $\\sqrt{252}$. 412% over 252 is a daily sd of about 1.63%. Then $1.63\\% \\times 252 \\approx 411\\%$, the reported 412% up to rounding, but $1.63\\% \\times 15.87 \\approx 25.9\\%$. Variances of independent days add, so only the variance scales with 252.\n\n*Test:* `assert math.isclose(annualised_vol([0.01, -0.01]), math.sqrt(0.0002 * 252))`. The value is worked out by hand: mean 0, squared distances 0.0002 over $n - 1 = 1$. The bug gives 3.56 and fails.\n\n**The 6% drawdown.** A fall of 9% from the high is itself a drawdown of 9%, so the maximum cannot be 6%. The vendor file is newest first, so read top to bottom the closes run backwards in time and every rise becomes a fall. `max_drawdown` then measures the largest rise from a low to a later high, as a share of that high, not the 9% fall. That figure can land above or below 9%, and it is 0 only if the fund never rose on any day. Sorting the date text would not fix it either, because `dd/mm/yyyy` sorts by day first.\n\n*Test:* a `sort_rows` or `read_closes` test with a newest-first file that crosses a month end, for example 27/03 to 02/04, asserting the first close is the oldest. A `max_drawdown` assert with a known answer is worth keeping, but it passes on this bug: the function is right and its input is in the wrong order.\n\n**A second cause to rule out.** If `max_drawdown` calls `max(dd, default=0.0)` on a generator that something else already consumed, it returns 0 silently, so it cannot give 6%. Build the list of closes once with `list(...)` all the same.\n\n**Order of work.** Write each test first, watch it fail on the current code, then fix the function until it passes. Keep the script lines under `if __name__ == \"__main__\":` so pytest can import the functions.",
         "rubric": [
           {
             "points": 2,
@@ -393,7 +393,7 @@
           },
           {
             "points": 1,
-            "text": "Supports it with arithmetic: about 1.6% daily times 252 is about 410%"
+            "text": "Supports it with arithmetic: 412% over 252 is about 1.6% a day, a plausible daily figure"
           },
           {
             "points": 2,
@@ -401,7 +401,7 @@
           },
           {
             "points": 1,
-            "text": "Explains why a falling fund read backwards shows no drawdown"
+            "text": "Explains that, read backwards, `max_drawdown` measures the largest rise to a later high, not the fall"
           },
           {
             "points": 2,
@@ -409,7 +409,7 @@
           },
           {
             "points": 2,
-            "text": "Gives a test for date order or for `max_drawdown` with a known answer"
+            "text": "Gives a date-order test with a known answer that fails on a newest-first file"
           }
         ]
       },
@@ -418,7 +418,7 @@
         "generic": "Compare your answer with the model and tick the rubric."
       },
       "explain": {
-        "text": "Both numbers are impossible for a fund that fell 9%: no fund has 412% vol, and a fall means a drawdown. Each points to one specific bug, and each bug is caught by one assert with a value worked out by hand."
+        "text": "Both numbers are impossible for a fund that fell 9% from its high: no fund has 412% vol, and that fall alone is a drawdown of 9%. Each points to one specific bug, and each bug is caught by one assert with a value worked out by hand."
       }
     },
     {
@@ -474,7 +474,7 @@
       "pace": 1200,
       "title": "A buy order against the offers",
       "prose": "Sellers post offers on a share's order book, each a pair `(price, size)`: a price in £ and a whole number of shares above zero. A buy order for `qty` shares takes the cheapest offer first. At the same price, the offer listed first in the book goes first. The last offer it takes from may be used only in part.",
-      "question": "Write a generator `sweep_offers(qty, offers)` that yields `(price, shares)` for each offer the order takes from. It stops when `qty` shares are bought or the offers run out. `offers` may be any iterable, a generator included, and must be left unchanged. A `qty` that is not above zero raises `ValueError`. Then write `average_price(qty, offers)`, which loops over `sweep_offers` and returns the average £ price per share bought, or `None` when nothing is bought.",
+      "question": "Write a generator `sweep_offers(qty, offers)` that yields `(price, shares)` for each offer the order takes from. It stops when `qty` shares are bought or the offers run out. `offers` may be any iterable, a generator included, and must be left unchanged. A `qty` that is not above zero raises `ValueError` on the first `next`: a generator's body does not run at the call. Then write `average_price(qty, offers)`, which loops over `sweep_offers` and returns the average £ price per share bought, or `None` when nothing is bought.",
       "widget": {
         "kind": "code",
         "language": "python",
@@ -598,7 +598,7 @@
           "test-5": "Test 5 passes the offers as a generator. It has no `len` or `.sort()`, and it can be read only once. Pass it to `sorted` and loop over the new list.",
           "test-6": "Test 6 checks the caller's book after a sweep. `.sort()` or `.remove()` change it; `sorted` works on a new list.",
           "test-7": "Test 7 asks for the first fill with `next` and checks that `sweep_offers` is a generator. A function that returns a list, or `iter` of one, is not: yield each fill.",
-          "test-8": "Test 8 orders 0 shares. Raise `ValueError` with `raise`; an `assert` raises `AssertionError` instead.",
+          "test-8": "Test 8 orders 0 shares. Raise `ValueError` with `raise`; an `assert` raises `AssertionError` instead. In a generator the error appears on the first `next`, not at the call.",
           "test-9": "Test 9 orders 0 shares from an empty book. Check `qty` before anything else.",
           "test-10": "Test 10 buys 300 at £4.50 and 150 at £4.52, so the average is £2,028 over 450 shares. Read the fills once: a spent generator gives nothing the second time.",
           "test-11": "Test 11 buys nothing from an empty book, so return `None` before dividing by zero shares.",

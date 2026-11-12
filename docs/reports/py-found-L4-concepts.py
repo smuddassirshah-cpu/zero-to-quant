@@ -653,18 +653,46 @@ for s_ in range(500):
         nonzero += 1
 mono = [100.0 * 0.995 ** i for i in range(20)]
 check('h4-debug: a path that falls every day, read backwards, has drawdown 0', max(drawdowns(mono[::-1])) == 0.0 and max(drawdowns(mono)) > 0.09)
-check('FINDING 2 (h4 items[6]): a falling fund read newest first shows 0%% only if it fell every day (simulated: %d of 500 falling paths are non-zero); the prompt must say so' % nonzero,
-      nonzero < 25 or re.search(r'every day|each day|never rose|on every', prompt) is not None)
+# Fix pass: finding 2 fixed differently. The prompt now reports a non-zero 6%, below the stated 9% fall, and the model
+# says what a backwards read really measures. The check asserts that property instead of "the prompt says every day".
+def largest_rise(p):
+    return max(1 - p[i] / max(p[i:]) for i in range(len(p)))
+rev_eq = above = below = 0
+for s_ in range(500):
+    r_ = random.Random(s_)
+    path = [100.0]
+    for _ in range(20):
+        path.append(path[-1] * (1 + r_.gauss(-0.005, 0.012)))
+    rv, tv = max(drawdowns(path[::-1])), max(drawdowns(path))
+    rev_eq += abs(rv - largest_rise(path)) < 1e-12
+    above += rv > tv
+    below += rv < tv
+rep_dd = re.search(r'maximum drawdown of (\d+(?:\.\d+)?)%', prompt)
+check('FINDING 2 (h4 items[6]): read backwards, max_drawdown is the largest rise to a later high (%d of 500), above the true figure on %d paths and below on %d; the prompt must report a non-zero figure below the 9%% fall and the model must say so' % (rev_eq, above, below),
+      rev_eq == 500 and above > 0 and below > 0 and rep_dd is not None and 0 < float(rep_dd.group(1)) < 9 and 'fell about 9% from its high' in prompt
+      and 'largest rise from a low to a later high' in model and 'never rose on any day' in model
+      and 'looks like a rising one' not in model and 'no drawdown' not in get('h4', 'items[6].widget.rubric[3].text'))
 check('FINDING 3 (h4 items[6].widget.model): the max_drawdown assert passes on the date-order bug, so it cannot be the test "that fails on the buggy code"',
       not (max(drawdowns(q)) == 0.25 and 'And `assert math.isclose(max_drawdown([50.0, 40.0, 60.0, 45.0]), 0.25)`' in model))
 check('FINDING 4 (l15 summary.ideas[0]): "never ==" drops the abs_tol the lesson needs near zero',
       not ('never `==`' in get('l15', 'summary.ideas[0]') and not math.isclose(1e-18, 0.0) and 0.5 + 0.25 == 0.75))
 bad = [p_ for p_, s_ in strings('l15') if p_.startswith('screens[6]') and re.search(r'15\.87\b(?!\d)', s_) and '19.05' in s_ and r'\times' in s_]
 check('FINDING 5 (l15 screens[6]): the shown product 1.2 x 15.87 is 19.04, not 19.05', not (round(1.2 * 15.87, 2) != 19.05 and bad), bad)
-bad = [p_ for p_, s_ in strings('r4') if p_.startswith('items[4]') and '15.87' in s_ and re.search(r'15\.87\b(?!\d)', s_)]
-check('FINDING 6 (review-4 items[4]): the shown product 0.02121 x 15.87 is 33.66%, not 33.67%', not (round(0.02121 * 15.87, 4) != 0.3367 and bad), bad)
-check('FINDING 7 (h4 items[6].widget.model): 1.63% x 252 is 411%, not the 412% in the prompt',
-      not ('412%' in prompt and '1.63\\% \\times 252 \\approx 411\\%' in model))
+# Fix pass: finding 6 fixed differently in feedback.correct (root carried to 0.021213, times 15.87). The check asserts
+# that every root shown times every multiplier shown in an items[4] string rounds to the key, 33.67%.
+bad = []
+for p_, s_ in strings('r4'):
+    if p_.startswith('items[4]') and re.search(r'15\.87', s_):
+        roots = [float(x) for x in re.findall(r'(?<![\d.])0\.0212\d*', s_)]
+        mults = [float(x) for x in re.findall(r'15\.87\d*', s_)]
+        if any(round(r * m, 4) != 0.3367 for r in roots for m in mults):
+            bad.append(p_)
+check('FINDING 6 (review-4 items[4]): every shown root times the shown sqrt(252) rounds to 33.67%', not bad, bad)
+# Fix pass: finding 7 fixed differently. The model keeps 1.63% (412 / 252 = 1.6349 to two places) and says that
+# 411% is the reported 412% up to rounding; the check asserts those digits reproduce.
+check('FINDING 7 (h4 items[6].widget.model): the daily sd is derived from 412% and the products reproduce it up to rounding',
+      '412% over 252 is a daily sd of about 1.63%' in model and 'up to rounding' in model and round(412 / 252, 2) == 1.63
+      and round(1.63 * 252) == 411 and round(1.63 * 15.87, 1) == 25.9 and '412%' in prompt)
 check('FINDING 8 (l15 screens[5]): independence is used as a fact; it is an assumption of the model',
       re.search(r'[Aa]ssum|[Tt]reat the days as independent|[Ss]uppose', get('l15', 'screens[5].prose')) is not None)
 check('FINDING 9 (review-4 items[6].prose): "Daily returns are roughly independent" stated as an empirical fact',
