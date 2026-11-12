@@ -498,10 +498,23 @@ two(p_run, sims / 100000, 0.005, 'run of five losses in 40 trades (simulation to
 ok(abs(float(p_run) - 1 / 3) < 0.02, f'about one game in three ({float(p_run)})')
 stated(B, 'reasoning-aloud-five-losses-running', 'about 1.8 per cent')
 stated(B, 'reasoning-aloud-five-losses-running', 'about one game in three')
-se = sqrt(0.25 / 250)
-two(se, sqrt(sum((x - 0.5) ** 2 * 0.5 for x in (0, 1)) / 250), 1e-12, 'standard error of a hit rate over 250 days')
-ok(round(se * 100) == 3 and abs((0.53 - 0.5) / se - 1) < 0.06, 'about 3 points, one standard error')
-ok(54 - 51 == 3 and 58 - 50 == 8, 'edge three points, not eight')
+# project-account-too-good-to-be-true (fix pass finding 21): accuracy 91 then 84 per cent, baseline 80, held-out 83 per cent on 400 students
+se = sqrt(0.83 * 0.17 / 400)
+two(se, sqrt(sum((x - 0.83) ** 2 * (0.83 if x else 0.17) for x in (0, 1)) / 400), 1e-12, 'standard error of an accuracy of 83 per cent over 400 students')
+ok(round(se * 100) == 2, f'about 2 points ({se * 100:.2f})')
+ok(abs((0.83 - 0.80) / 0.02 - 1.5) < 1e-9 and abs((0.83 - 0.80) / se - 1.5) < 0.1, 'three points are about one and a half standard errors')
+ok(91 - 80 == 11 and 84 - 80 == 4, 'edge four points, not eleven')
+ok(item(B, 'project-account-too-good-to-be-true')['pace'] == 150, 'fix pass 24: pace 150')
+stated(B, 'project-account-too-good-to-be-true', 'the model\'s edge was four points, not eleven')
+stated(B, 'project-account-too-good-to-be-true', 'one and a half standard errors above the baseline')
+stale(B, 'project-account-too-good-to-be-true', ['currency', 'hit rate', '58 per cent', '54 per cent', '53 per cent', 'moving average', 'three points of hit rate'])
+# after-rejection-applied-before (finding 22): six unexplained steps a problem fell to one over fourteen sessions
+ok(6 > 1 and 14 > 0, 'count of unfollowed steps fell from about six to one over fourteen sessions')
+stated(B, 'after-rejection-applied-before', 'Over fourteen sessions that count fell from about six a problem to one.')
+stale(B, 'after-rejection-applied-before', ['arithmetic', 'eighty-question', '45 correct', 'trading society', 'timed test'])
+# final-round-questions-for-us (finding 25)
+stated(B, 'final-round-questions-for-us', 'which tells me what to prepare before I start.')
+stale(B, 'final-round-questions-for-us', ['Neither question is answered on a careers page'])
 ok(42 - 30 == 12, 'too-much-to-do: 42 hours needed against 30 free')
 
 # ---------------------------------------------------------------- behavioural-6 (rule 11)
@@ -524,6 +537,21 @@ qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
+
+# fix pass: no two of the 62 behavioural models share a story (a run of eight words in common) and no rubric line judges delivery
+import itertools
+GR = {}
+for k in range(1, 9):
+    for it in json.load(open(os.path.join(BANK, f'behavioural-{k}.json'), encoding='utf-8'))['items']:
+        wds = re.findall(r"[a-z0-9']+", it['widget']['model'].lower())
+        for i in range(len(wds) - 7):
+            GR.setdefault(tuple(wds[i:i + 8]), set()).add((k, it['id']))
+        if k >= 5:
+            for r in it['widget']['rubric']:
+                ok('no filler' not in r['text'] and 'stops cleanly' not in r['text'].lower(), f'behavioural-{k}/{it["id"]}: rubric line checkable from the text')
+shared = {g: ks for g, ks in GR.items() if len(ks) > 1}
+ok(not shared, f'no two of 62 models share a run of eight words ({[(" ".join(g), sorted(ks)) for g, ks in list(shared.items())[:2]]})')
+ok(sum(1 for k in range(1, 9) for _ in json.load(open(os.path.join(BANK, f'behavioural-{k}.json'), encoding='utf-8'))['items']) == 62, '62 behavioural items')
 
 # ---------------------------------------------------------------- coding-2 (rules 12 and 13; bank_2_code_check.py beside this script)
 sys.path.insert(0, HERE)

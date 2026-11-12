@@ -584,6 +584,9 @@ for it in DATA[B]['items']:
     ok(it['feedback'] == {'correct': 'Compare your answer with the model and tick the rubric.', 'generic': 'Open the model answer and mark each rubric line.'}, f'{lab}: feedback lines')
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+for it in DATA[B]['items']:   # fix pass finding 27
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'], f'{B}/{it["id"]}: rubric line checkable from the text')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
 

@@ -557,6 +557,20 @@ for it in DATA[B]['items']:
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
 
+# fix pass (review-bank-2-a findings 22, 23, 26, 27): re-authored stories carry none of the old story, rubric lines are checkable
+stated(B, 'why-us-a-first-year-day', 'one timed estimation round a day')
+stale(B, 'why-us-a-first-year-day', ['nine seconds', 'twenty minutes', 'arithmetic'])
+stated(B, 'project-account-decision-to-redo', 'next-day footfall at one railway station')
+stated(B, 'project-account-decision-to-redo', 'copying the same weekday a week earlier')
+stale(B, 'project-account-decision-to-redo', ['electricity', 'demand', 'last week'])
+ok(round(4.9 - 2.8, 1) == 2.1, 'decision-to-redo: 2.8% rose to 4.9% (a gap of 2.1 points)')
+stated(B, 'star-story-unpopular-decision', 'The other four wanted a neural network')
+stated(B, 'star-story-unpopular-decision', 'so I asked her to rerun my comparison herself.')
+stale(B, 'star-story-unpopular-decision', ['Four of us'])
+for it in DATA[B]['items']:
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'] and 'stops cleanly' not in r['text'].lower(), f'{B}/{it["id"]}: rubric line checkable from the text: {r["text"][:40]}')
+
 # ---------------------------------------------------------------- coding-1 (rules 12 and 13; bank_2_code_check.py beside this script)
 sys.path.insert(0, HERE)
 import bank_2_code_check as cc

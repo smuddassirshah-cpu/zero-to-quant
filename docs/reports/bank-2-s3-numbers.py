@@ -512,6 +512,20 @@ for it in DATA[B]['items']:
     ok(it['feedback'] == {'correct': 'Compare your answer with the model and tick the rubric.', 'generic': 'Open the model answer and mark each rubric line.'}, f'{lab}: feedback lines')
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+
+# star-story-chose-to-stop (fix pass finding 20, disputed in part): eight weeks; 3 weeks + 8 working days = 23 working days sunk
+sunk_days = 3 * 5 + 8
+two(sunk_days, 23, 0, 'sunk working days')
+two(F(sunk_days, 5) + 3, F(38, 5), 0, 'weeks used: 4.6 sunk plus the last three weeks is 7.6')
+ok(F(sunk_days, 5) + 3 <= 8, 'the story fits an eight-week placement (7.6 weeks)')
+ok(not (F(sunk_days, 5) + 3 <= 6), 'it did not fit the old six weeks')
+stated(B, 'star-story-chose-to-stop', 'I spent eight weeks in a materials lab')
+stated(B, 'star-story-chose-to-stop', 'about 23 working days')
+stated(B, 'star-story-chose-to-stop', 'the next eight days')
+stale(B, 'star-story-chose-to-stop', ['six weeks', 'eleven days'])
+for it in DATA[B]['items']:
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'], f'{B}/{it["id"]}: rubric line checkable from the text')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
 
