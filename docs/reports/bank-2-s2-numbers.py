@@ -102,6 +102,13 @@ def choice(f, i, key_text_part):
     return it
 
 
+def stale(f, i, olds):
+    """Fix pass: none of the old values or phrases of a re-authored item survives anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in olds:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
 def fmt(x, dp):
     return f'{x:.{dp}f}'
 
@@ -168,6 +175,7 @@ key = two(a, cbest, 1e-5, 'best multiplier')
 ok(all(mse(k / 1000) >= mse(0.75) - 1e-12 for k in range(-2000, 3000)), 'claim: 0.75 gives the smallest error')
 ok(mse(F(3, 4)) == F(9, 4) and mse(1) == 3, 'error falls from 3 to 2.25')
 numeric(S, 'shrinkage-mse-best-multiplier', key, 3, {'unbiased': 1, 'equal-split': F(3, 3 + 3)})   # "as a decimal": checked to 3 places
+ok(item(S, 'shrinkage-mse-best-multiplier')['difficulty'] == 4 and item(S, 'shrinkage-mse-best-multiplier')['requires'] == ['research-int/l6-bias-variance-aloud'], 'fix pass 17: difficulty 4, requires kept')
 
 # es-intervals-poll-margin: binomial standard error against a seeded simulation of the poll
 p = F(240, 400)
@@ -179,6 +187,9 @@ b = 1.96 * sqrt(sum((s - ms) ** 2 for s in shares) / (len(shares) - 1)) * 100
 key = two(a, b, 0.05, 'margin in points (simulation tolerance 0.05)')
 numeric(S, 'es-intervals-poll-margin', key, 1, {'used-half': 1.96 * sqrt(0.25 / 400) * 100, 'no-multiplier': sqrt(0.24 / 400) * 100})
 ok(fmt(sqrt(0.24 / 400), 4) == '0.0245', 'standard error 0.0245')
+two(2 * sqrt(0.24 / 400) * 100, 1.96 * sqrt(0.25 / 400) * 100, 0.01, 'fix pass 15: 2 for 1.96 and p = 0.5 both land on 4.9')
+close(round(2 * sqrt(0.24 / 400) * 100, 1), 4.9, 1e-9, 'fix pass 15: 2 in place of 1.96 prints 4.9')
+stated(S, 'es-intervals-poll-margin', 'or 2 in place of 1.96')
 
 # es-bayes-prior-and-sample: precision weights against a midpoint integral of prior times likelihood
 a = (F(0) * F(1, 4) + F(3) * 1) / (F(1, 4) + 1) / 100
@@ -199,11 +210,13 @@ numeric(S, 'ht-setup-ten-paired-days', key, 2, {'no-root': 1.2 / 1.5, 'root-nine
 ok(fmt(1.5 / sqrt(10), 3) == '0.474' and fmt(1.2 / 0.474, 2) == '2.53', 'stated 0.474 and 2.53')
 
 # ht-pvalue-z-two-and-a-half: NormalDist against erfc
-a = 2 * (1 - N.cdf(2.5))
-two(a, erfc(2.5 / sqrt(2)), 1e-12, 'two-sided p at 2.5')
-ok(fmt(a, 3) == '0.012' and fmt(a / 2, 3) == '0.006' and fmt(1 - N.cdf(1.96), 3) == '0.025', 'options 0.012, 0.006, 0.025')
-ok(fmt(a / 2, 4) == '0.0062' and fmt(a, 4) == '0.0124' and 0.01 < a < 0.05, 'stated 0.0062, 0.0124; significant at 5% not 1%')
-choice(S, 'ht-pvalue-z-two-and-a-half', '0.012')
+a = 2 * (1 - N.cdf(2.2))                                    # fix pass finding 19: z = 2.2 (the id keeps its old name)
+two(a, erfc(2.2 / sqrt(2)), 1e-12, 'two-sided p at 2.2')
+ok(fmt(a, 3) == '0.028' and fmt(a / 2, 3) == '0.014' and fmt(1 - N.cdf(1.96), 3) == '0.025', 'options 0.028, 0.014, 0.025')
+ok(fmt(a / 2, 4) == '0.0139' and fmt(a, 3) == '0.028' and 0.01 < a < 0.05, 'stated 0.0139, 0.028; significant at 5% not 1%')
+choice(S, 'ht-pvalue-z-two-and-a-half', '0.028')
+stale(S, 'ht-pvalue-z-two-and-a-half', ['2.5', '0.012', '0.006', '0.0062', '0.0124'])
+ok(abs(a - 0.025) > 0.002 and abs(a / 2 - 0.014) < 0.0005, 'the 0.028 and 0.025 options are distinguishable at 3 places')
 
 # ht-pvalue-bigger-sample: scaling rule against recomputing z from a mean, sd and n
 a = 2.4 * sqrt(2.25)
@@ -245,19 +258,25 @@ for _ in range(2000):
     R2, A2, _, _ = r2_fit([x1, z], y)
     fell_adj += A2 < A1
     fell_r2 += R2 < R1 - 1e-12
+    t2 = (R2 - R1) / (1 - R2) * 47                            # t squared of the added coefficient, from the two R^2 values
+    ok((A2 < A1) == (t2 < 1), 'fix pass 11: adjusted R^2 falls exactly when |t| < 1')
 nu = 47
 tpdf = lambda t: math.gamma((nu + 1) / 2) / (sqrt(nu * pi) * math.gamma(nu / 2)) * (1 + t * t / nu) ** (-(nu + 1) / 2)
 p_t = sum(tpdf(-1 + (k + 0.5) * 1e-5) for k in range(200000)) * 1e-5   # adjusted R^2 falls exactly when |t| < 1
 two(fell_adj / 2000, p_t, 3 * sqrt(p_t * (1 - p_t) / 2000), 'adjusted R^2 fell (tolerance three binomial sds)')
-ok(fell_adj == 1362 and fell_r2 == 0, f'printed counts {fell_adj} and {fell_r2}')
+ok(fell_r2 == 0 and 0.6 < p_t < 0.72 and 0.6 < fell_adj / 2000 < 0.72, f'about two times in three: exact {p_t:.3f}, simulated {fell_adj / 2000:.3f}; R^2 fell {fell_r2} times')
 choice(S, 'rg-multiple-useless-predictor', 'cannot fall')
-stated(S, 'rg-multiple-useless-predictor', 'fell in 1,362 and $R^2$ in none')
+stated(S, 'rg-multiple-useless-predictor', "whenever the new coefficient's t statistic is below 1 in size, which pure noise manages about two times in three")
+stale(S, 'rg-multiple-useless-predictor', ['1,362', 'seeded', '2,000'])
 
 # collinear-features-inflation-factor: 1/(1 - r^2) against the diagonal of the inverse correlation matrix
-a = 1 / (1 - F(81, 100))
-inv11 = solve([[1, 0.9], [0.9, 1]], [1, 0])[0]
+a = 1 / (1 - F(36, 100))                                      # fix pass finding 8: correlation 0.6
+inv11 = solve([[1, 0.6], [0.6, 1]], [1, 0])[0]
 key = two(a, inv11, 1e-12, 'variance inflation factor')
-numeric(S, 'collinear-features-inflation-factor', key, 2, {'one-minus-r': 1 / (1 - F(9, 10)), 'standard-error-factor': sqrt(a)})
+numeric(S, 'collinear-features-inflation-factor', key, 2, {'one-minus-r': 1 / (1 - F(6, 10)), 'standard-error-factor': sqrt(a)})
+ok(a == F(25, 16) and F(6, 10) ** 2 == F(36, 100) and 1 / (1 - 0.36) == 1 / 0.64, '0.6 squared is 0.36 and 1/0.64 = 25/16')
+stated(S, 'collinear-features-inflation-factor', '1/0.64 \\\\approx 1.56')
+stale(S, 'collinear-features-inflation-factor', ['0.9', '0.81', '0.19', '5.26', '5.2632', '2.29', '"value": 10,'])
 
 # ts-forecast-two-steps-ahead: closed form against iterating the forecast
 a = 10 + F(6, 10) ** 2 * 5
@@ -281,19 +300,25 @@ key = two(a, var2 / (2 * var1), 0.01, 'variance ratio (simulation tolerance 0.01
 numeric(S, 'ts-acf-two-day-variance-ratio', key, 2, {'independent': 1, 'sign': 1 + F(15, 100)})
 
 # measurement-error-noisy-regressor: attenuation formula against a seeded regression on noisy x
-a = F(12, 10) * F(5, 5 + 3)
+a = F(14, 10) * F(7, 7 + 3)                                   # fix pass finding 9: slope 1.4, variance 7, noise 3
 rng = random.Random(29)
-xt = [rng.gauss(0, sqrt(5)) for _ in range(200000)]
-yy = [1.2 * v + rng.gauss(0, 1) for v in xt]
+xt = [rng.gauss(0, sqrt(7)) for _ in range(200000)]
+yy = [1.4 * v + rng.gauss(0, 1) for v in xt]
 xo = [v + rng.gauss(0, sqrt(3)) for v in xt]
 key = two(a, ols(xo, yy)[0], 0.01, 'attenuated slope (simulation tolerance 0.01)')
-numeric(S, 'measurement-error-noisy-regressor', key, 2, {'no-attenuation': F(12, 10), 'wrong-way': F(12, 10) * F(8, 5)})
-ok(F(5, 8) == F(625, 1000), 'reliability ratio 0.625')
+numeric(S, 'measurement-error-noisy-regressor', key, 2, {'no-attenuation': F(14, 10), 'wrong-way': F(14, 10) * F(10, 7)})
+ok(F(7, 10) == F(7, 7 + 3) and a == F(98, 100), 'reliability ratio 0.7 and slope 0.98')
+stated(S, 'measurement-error-noisy-regressor', '1.4 \\\\times 0.7 = 0.98')
+ok(a != F(3, 4), 'the key is no longer the 0.75 of shrinkage-mse-best-multiplier')
+stale(S, 'measurement-error-noisy-regressor', ['1.2', '0.75', '0.625', '5/8', '8/5', '1.92', '0.75'])
 
 # dl-clt-mean-of-hundred: NormalDist against erfc
 a = 1 - N.cdf((5.8 - 5) / (4 / sqrt(100)))
 key = two(a, 0.5 * erfc(2 / sqrt(2)), 1e-12, 'tail beyond z = 2')
-numeric(S, 'dl-clt-mean-of-hundred', key, 4, {'no-root': 1 - N.cdf(0.8 / 4), 'both-tails': 2 * key})
+numeric(S, 'dl-clt-mean-of-hundred', key, 3, {'no-root': 1 - N.cdf(0.8 / 4), 'both-tails': 2 * key})   # fix pass 14: 3 places
+stated(S, 'dl-clt-mean-of-hundred', 'to 3 decimal places')
+stated(S, 'dl-clt-mean-of-hundred', 'about $1 - \\\\Phi(2) \\\\approx 0.023$')
+stale(S, 'dl-clt-mean-of-hundred', ['0.0228', '4 decimal places', '0.4207'])
 
 # ---------------------------------------------------------------- finance-2
 # fi-interest-three-payments-pv: annuity formula against a sum of discounted payments
