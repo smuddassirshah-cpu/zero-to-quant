@@ -76,4 +76,19 @@ Conventions against standard usage. Quoted spread, half-spread against the mid, 
 
 ## Overlap with the earlier review
 
-Pending: filled after the ledger and findings were committed.
+Read after the ledger and findings were committed (commit "WIP: micro L1-3 ledger and findings"): `docs/reviews/review-1.7.md`, micro parts. It raised 20 micro findings. Twelve are conceptual (a meaning, a route, a market fact or a missing datum); eight are form (missing byKey lines, full stops, sentence counts, a duplicate quiz, bare £ in maths, code formatting, one shown digit). All were fixed in its fix pass, and this audit read the fixed text.
+
+| | count | which |
+|---|---|---|
+| Found by this audit only | 20 | findings 1 to 20 |
+| Found by the earlier review only | 12 | l4 q-urgent (no spread in the prose); l6 q-walk `all-third` (value matched no slip); l7 (microprice is the weighted mid, not Stoikov's estimator); l10 s5 ("drifts to 18"); l11 s5 (what l9 promised); l12 s2 (self-contradicting fill rule); l12 and homework-3 (payment for order flow is a US practice; the UK dropped the dark cap); review-1 r-marketable (`market` route); homework-1 h-bp (`bid` value) and h-sell-walk (`all-levels` value); homework-2 longform (e) (no prices); homework-3 h-best-s (`old-k` value) |
+| Found by both | 0 | |
+
+Two items were read by both and yielded different defects.
+
+- l6 quiz[0] (finding 8). The earlier review found that the `all-third` slip matched no route and wrote that £20.030 "is the correct answer". Its fix changed the third level to 800 shares and kept the key. The key was wrong before and after: 30,035/1,500 = 20.0233. A single read missed the one serious wrong in this course while looking straight at it.
+- l4 quiz[3] (finding 6). The earlier review added the 4p spread to the prose. The mismatch between 2,000 shares and £500 a penny was not raised.
+
+The performance task was also read in `docs/reviews/review-perf-retrofit-12.md` (two precision findings, MI3-1 and MI3-2, both fixed). This audit found nothing further in it.
+
+Miss rate of a single read, on these counts: the earlier review found none of the 20 findings here. Its own 12 were fixed before this read, so this audit could not find them again. The two reads saw different texts, so the counts bound the miss rate from below only.
