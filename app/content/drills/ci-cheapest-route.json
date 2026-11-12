@@ -172,7 +172,8 @@
     },
     {
       "code": "import heapq\n\ndef cheapest_route(n, roads, src, dst):\n    near = [[] for _ in range(n)]\n    for a, b, cost in roads:\n        near[a].append((b, cost))\n        near[b].append((a, cost))\n    best = [None] * n\n    came = [None] * n\n    best[src] = (0, 0)\n    heap = [(0, 0, src)]\n    while heap:\n        c, k, u = heapq.heappop(heap)\n        if (c, k) > best[u]:\n            continue\n        for v, w in near[u]:\n            cand = (c + w, k + 1)\n            if best[v] is None or cand < best[v] or (cand == best[v] and u < came[v]):\n                if best[v] is None or cand < best[v]:\n                    heapq.heappush(heap, (c + w, k + 1, v))\n                best[v] = cand\n                came[v] = u\n    if best[dst] is None:\n        return []\n    route = [dst]\n    while route[-1] != src:\n        route.append(came[route[-1]])\n    return route[::-1]\n",
-      "slip": "Breaking a tie by the smaller previous town settles the end of the route, not its first towns."
+      "slip": "Breaking a tie by the smaller previous town settles the end of the route, not its first towns.",
+      "nearMiss": true
     },
     {
       "code": "import heapq\ndef cheapest_route(n, roads, src, dst):\n    w = {}\n    for a, b, c in roads:\n        w[(a, b)] = c; w[(b, a)] = c\n    adj = [[] for _ in range(n)]\n    for (a, b), c in w.items(): adj[a].append((b, c))\n    done = set()\n    heap = [(0, 0, (src,))]\n    while heap:\n        cost, k, path = heapq.heappop(heap)\n        u = path[-1]\n        if u in done: continue\n        done.add(u)\n        if u == dst: return list(path)\n        for v, c in adj[u]:\n            if v not in done: heapq.heappush(heap, (cost + c, k + 1, path + (v,)))\n    return []\n",
