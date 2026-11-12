@@ -742,7 +742,10 @@ def above_brute(xs):
 
 code_item(C, 'pf-idioms-count-above-mean', 'above_mean', above_brute, {
     'at or above the mean': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = sum(xs) / len(xs)\n    return sum(1 for x in xs if x >= m)\n',
-    'no guard for the empty list': 'def above_mean(xs):\n    m = sum(xs) / len(xs)\n    return sum(1 for x in xs if x > m)\n'})
+    'no guard for the empty list': 'def above_mean(xs):\n    m = sum(xs) / len(xs)\n    return sum(1 for x in xs if x > m)\n',
+    'mean cut by int (review bank 2 b, finding 12)': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = int(sum(xs) / len(xs))\n    return sum(1 for x in xs if x > m)\n',
+    'mean rounded to a whole number': 'def above_mean(xs):\n    if not xs:\n        return 0\n    m = round(sum(xs) / len(xs))\n    return sum(1 for x in xs if x > m)\n'})
+ok(above_brute([-1, -2]) == 1 and above_brute([-4, -1, -1, -1]) == 3 and int((-1 - 2) / 2) == -1 and int(-7 / 4) == -1, 'above_mean: means -1.5 and -1.75 are cut to -1 by int')
 ok(sum(1 for x in [4, 4, 4] if x >= 4) == 3 and _Fr(1 + 2 + 3 + 10, 4) == 4, 'slip 3 for [4, 4, 4]; mean 4 in the prose')
 
 
@@ -759,7 +762,9 @@ def peaks_brute(xs):
 
 code_item(C, 'ds-arrays-local-peaks', 'local_peaks', peaks_brute, {
     'at least both neighbours': 'def local_peaks(xs):\n    return [i for i in range(1, len(xs) - 1) if xs[i - 1] <= xs[i] >= xs[i + 1]]\n',
-    'ends included': 'def local_peaks(xs):\n    n = len(xs)\n    return [i for i in range(n) if (i == 0 or xs[i - 1] < xs[i]) and (i == n - 1 or xs[i] > xs[i + 1])]\n'})
+    'ends included': 'def local_peaks(xs):\n    n = len(xs)\n    return [i for i in range(n) if (i == 0 or xs[i - 1] < xs[i]) and (i == n - 1 or xs[i] > xs[i + 1])]\n',
+    'loop from index 0, wrapping to the last value (review bank 2 b, finding 13)': 'def local_peaks(xs):\n    return [i for i in range(len(xs) - 1) if xs[i - 1] < xs[i] > xs[i + 1]]\n'})
+ok(peaks_brute([5, 1, 2]) == [] and peaks_brute([9, 1, 9, 3]) == [2], 'local_peaks twin: [] for [5, 1, 2], [2] for [9, 1, 9, 3]')
 ns = {}
 exec('def lp(xs):\n    return [i for i in range(1, len(xs) - 1) if xs[i - 1] <= xs[i] >= xs[i + 1]]\n', ns)
 ok(ns['lp']([1, 3, 2, 4, 4, 1, 5]) == [1, 3, 4], 'brief trap value [1, 3, 4]')
@@ -812,11 +817,18 @@ def rows_brute(target):
 FLOAT = 'import math\ndef rows_needed(target):\n    if target <= 0:\n        return 0\n    return math.ceil((math.sqrt(8 * target + 1) - 1) / 2)\n'
 COUNT = 'def rows_needed(target):\n    n = 0\n    while n * (n + 1) // 2 < target:\n        n += 1\n    return n\n'
 SMALL_N = ['rows_needed(0)', 'rows_needed(1)', 'rows_needed(7)', 'rows_needed(10)', 'rows_needed(11)', 'rows_needed(3)', 'rows_needed(-5)']
-code_item(C, 'at-search-smallest-n', 'rows_needed', rows_brute, {'float square root': FLOAT},
+HALF_FLOAT = 'def rows_needed(target):\n    lo, hi = 0, 2 * 10 ** 9\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if mid * (mid + 1) / 2 >= target:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n'
+code_item(C, 'at-search-smallest-n', 'rows_needed', rows_brute, {'float square root': FLOAT, 'halving with a float triangle (review bank 2 b, finding 14)': HALF_FLOAT},
           slow_traps=[('count up one row at a time', COUNT, 'rows_needed(10**18)', SMALL_N)])
 ns = {}
 exec(FLOAT, ns)
 ok(ns['rows_needed'](10 ** 18) == 1414213562, 'float formula is right at 10^18 itself')
+ns_h = {}
+exec(HALF_FLOAT, ns_h)
+n1 = 1414213500
+ok(rows_brute(999999912498231751) == 1414213501 and ns_h['rows_needed'](999999912498231751) == n1, 'finding 14: the float halving gives 1,414,213,500 where 1,414,213,501 is needed')
+two(n1 * (n1 + 1) // 2 + 1, 999999912498231751, 0, 'that target is T(1,414,213,500) + 1')
+ok((n1 * (n1 + 1)) / 2 >= 999999912498231751 and n1 * (n1 + 1) // 2 < 999999912498231751, 'the float triangle of 1,414,213,500 rows rounds up past the target, the exact one falls short')
 ok(ns['rows_needed'](999999998765257142) == 1414213561, 'float formula is one row short at 999,999,998,765,257,142')
 n0 = 1414213561
 two(n0 * (n0 + 1) // 2 + 1, 999999998765257142, 0, 'that target is T(1,414,213,561) + 1')
@@ -849,32 +861,48 @@ code_item(C, 'gd-dp-dice-total-ways', 'dice_ways', dice_brute, {},
                        ['dice_ways(2, 7)', 'dice_ways(3, 10)', 'dice_ways(0, 0)', 'dice_ways(2, 13)', 'dice_ways(0, 3)', 'dice_ways(1, 6)', 'dice_ways(3, -1)'])])
 ok(dice_brute(3, 10) == sum(1 for f in product(range(1, 7), repeat=3) if sum(f) == 10) == 27, '27 for three dice to 10')
 
-# pf-classes-shared-class-list: run the lines; slips by carrying them out
+def stale_fc(f, i, *old):
+    """Re-authored item: none of the old setting's figures is left anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in old:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
+# pf-classes-shared-class-list (re-authored after review bank 2 b: a shared list beside a private count)
+# route A runs the lines; route B replays the two constructors by hand. Slips: an own list each (7), a shared cap (9).
 it = item(C, 'pf-classes-shared-class-list')
 body, out = run_prose(it)
 
 
-class Own:
-    def __init__(self):
-        self.levels = []
+class PitOwn:
+    cap = 5
 
-    def add(self, x):
-        self.levels.append(x)
-
-
-class Copied:
-    levels = []
-
-    def add(self, x):
-        list(self.levels).append(x)
+    def __init__(self, name):
+        self.names = []
+        self.names.append(name)
+        self.cap += 1
 
 
-p_, q_ = Own(), Own()
-p_.add(1); q_.add(2)
-c1, c2 = Copied(), Copied()
-c1.add(1); c2.add(2)
-numeric(C, 'pf-classes-shared-class-list', int(out), None, {'own-list': len(p_.levels), 'copied-list': len(c1.levels)})
-two(int(out), len([1, 2]), 0, 'shared list holds 1 and 2')
+class PitShared:
+    cap = 5
+    names = []
+
+    def __init__(self, name):
+        self.names.append(name)
+        PitShared.cap += 1
+
+
+a1, b1 = PitOwn('x'), PitOwn('y')
+a2, b2 = PitShared('x'), PitShared('y')
+numeric(C, 'pf-classes-shared-class-list', int(out), None, {'own-list': len(a1.names) + a1.cap, 'shared-cap': len(a2.names) + a2.cap})
+# route B: the constructors by hand: one list on the class, a private cap that starts from the class value 5
+names_, caps_ = [], {}
+for n_ in ('x', 'y'):
+    names_.append(n_)
+    caps_[n_] = 5 + 1
+two(int(out), len(names_) + caps_['x'], 0, 'a shared list of two plus a private cap of 6')
+ok(int(out) == 8 and len(a1.names) + a1.cap == 7 and len(a2.names) + a2.cap == 9, 'prints 8; own list gives 7; shared cap gives 9')
+stale_fc(C, 'pf-classes-shared-class-list', 'Book', 'levels', 'copied-list')
 
 # ds-trees-heap-trace
 import heapq

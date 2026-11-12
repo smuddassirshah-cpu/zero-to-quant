@@ -545,25 +545,37 @@ t = tests_of('pf-idioms-argmax-last')
 ok([t[k] for k in ('argmax_last([3, 7, 7, 1])', 'argmax_last([])', 'argmax_last([-2])', 'argmax_last([1, 2, 3])')] == ['2', 'None', '0', '2'], 'argmax_last: the brief values')
 ok([3, 7, 7, 1].index(max([3, 7, 7, 1])) == 1, 'argmax_last: the index method gives 1')
 
-# edge-case-list-second-largest. Route B: sorted distinct values with a length check.
+# edge-case-list-second-largest (re-authored after review bank 2 b as runner_up_gap: the largest less the next different value).
+# Route B: a one-pass scan for the top two different values.
 code('edge-case-list-second-largest',
-     "def second_largest(xs):\n    s = sorted(set(xs))\n    return s[-2] if len(s) >= 2 else None\n",
-     {'sorted(xs)[-2]': "def second_largest(xs):\n    return sorted(xs)[-2]\n",
-      'distinct, no guard': "def second_largest(xs):\n    return sorted(set(xs))[-2]\n",
-      'guarded, repeats kept': "def second_largest(xs):\n    s = sorted(xs)\n    return s[-2] if len(s) >= 2 else None\n"})
+     "def runner_up_gap(xs):\n    first = second = None\n    for x in xs:\n        if first is None or x > first:\n            first, second = x, first\n        elif x != first and (second is None or x > second):\n            second = x\n    return None if second is None else first - second\n",
+     {'sorted(xs)[-2]': "def runner_up_gap(xs):\n    if len(xs) < 2:\n        return None\n    s = sorted(xs)\n    return s[-1] - s[-2]\n",
+      'distinct, no guard': "def runner_up_gap(xs):\n    s = sorted(set(xs))\n    return s[-1] - s[-2]\n",
+      'guarded, repeats kept': "def runner_up_gap(xs):\n    s = sorted(xs)\n    return s[-1] - s[-2] if len(s) >= 2 else None\n",
+      'second smallest less the smallest (finding fix)': "def runner_up_gap(xs):\n    s = sorted(set(xs))\n    return s[1] - s[0] if len(s) >= 2 else None\n",
+      'largest less the smallest': "def runner_up_gap(xs):\n    return max(xs) - min(xs) if len(set(xs)) >= 2 else None\n"})
 t = tests_of('edge-case-list-second-largest')
-ok([t[k] for k in ('second_largest([5, 5, 3])', 'second_largest([4])', 'second_largest([2, 2])', 'second_largest([-1, -5, -3])', 'second_largest([])')] == ['3', 'None', 'None', '-3', 'None'], 'second_largest: the brief values')
-ok(sorted([5, 5, 3])[-2] == 5 and sorted([2, 2])[-2] == 2, 'second_largest: sorted(xs)[-2] gives 5 and 2')
+ok([t[k] for k in ('runner_up_gap([9, 9, 6])', 'runner_up_gap([4])', 'runner_up_gap([2, 2])', 'runner_up_gap([-1, -5, -3])', 'runner_up_gap([])', 'runner_up_gap([1, 8])', 'runner_up_gap([1, 2, 10])')] == ['3', 'None', 'None', '2', 'None', '7', '8'], 'runner_up_gap: the stated values')
+ok(sorted([9, 9, 6])[-1] - sorted([9, 9, 6])[-2] == 0, 'runner_up_gap: sorted(xs)[-2] gives a gap of 0 for [9, 9, 6]')
+stale_fc(CO, 'edge-case-list-second-largest', 'second_largest')
 
-# ds-pointers-merge-ticks. Route B: a stable sort on the time alone, a before b.
+# ds-pointers-merge-ticks (re-authored after review bank 2 b: ticks at one time are combined at the mean price, inputs unchanged).
+# Route B: group the prices by time in a dict and take each group's mean.
 code('ds-pointers-merge-ticks',
-     "def merge_ticks(a, b):\n    return sorted(a + b, key=lambda t: t[0])\n",
+     "def merge_ticks(a, b):\n    by = {}\n    for t, p in list(a) + list(b):\n        by.setdefault(t, []).append(p)\n    return [(t, sum(ps) / len(ps)) for t, ps in sorted(by.items())]\n",
      {'sorted(a + b)': "def merge_ticks(a, b):\n    return sorted(a + b)\n",
-      'two pointers with <': "def merge_ticks(a, b):\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i][0] < b[j][0]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n",
-      'heapq.merge on whole tuples': "import heapq\ndef merge_ticks(a, b):\n    return list(heapq.merge(a, b))\n"})
+      'dict overwrite, no mean': "def merge_ticks(a, b):\n    d = dict(a)\n    d.update(dict(b))\n    return sorted(d.items())\n",
+      'a wins a shared time': "def merge_ticks(a, b):\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i][0] <= b[j][0]:\n            if a[i][0] == b[j][0]:\n                j += 1\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n",
+      'floor-division mean': "def merge_ticks(a, b):\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i][0] == b[j][0]:\n            out.append((a[i][0], (a[i][1] + b[j][1]) // 2)); i += 1; j += 1\n        elif a[i][0] < b[j][0]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n",
+      'tails dropped': "def merge_ticks(a, b):\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i][0] == b[j][0]:\n            out.append((a[i][0], (a[i][1] + b[j][1]) / 2)); i += 1; j += 1\n        elif a[i][0] < b[j][0]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out\n",
+      'pop(0) from both feeds, inputs emptied (finding 21a)': "def merge_ticks(a, b):\n    out = []\n    while a and b:\n        if a[0][0] == b[0][0]:\n            x, y = a.pop(0), b.pop(0)\n            out.append((x[0], (x[1] + y[1]) / 2))\n        elif a[0][0] < b[0][0]:\n            out.append(a.pop(0))\n        else:\n            out.append(b.pop(0))\n    return out + a + b\n",
+      'a.extend(b) in place (finding 21a)': "def merge_ticks(a, b):\n    a.extend(b)\n    a.sort(key=lambda t: t[0])\n    out = []\n    for t, p in a:\n        if out and out[-1][0] == t:\n            out[-1] = (t, (out[-1][1] + p) / 2)\n        else:\n            out.append((t, p))\n    return out\n"})
 t = tests_of('ds-pointers-merge-ticks')
-ok(eval(t['merge_ticks([(1, 10.0), (4, 10.2)], [(1, 9.9), (2, 10.1), (4, 10.3)])']) == [(1, 10.0), (1, 9.9), (2, 10.1), (4, 10.2), (4, 10.3)], 'merge_ticks: the brief value')
-ok(sorted([(1, 10.0), (4, 10.2), (1, 9.9), (2, 10.1), (4, 10.3)])[0] == (1, 9.9), 'merge_ticks: sorted(a + b) puts (1, 9.9) first')
+ok(eval(t['merge_ticks([(1, 10.0), (4, 10.5)], [(1, 9.5), (2, 10.0), (4, 11.0)])']) == [(1, 9.75), (2, 10.0), (4, 10.75)], 'merge_ticks: the stated value, means 9.75 and 10.75')
+ok((10.0 + 9.5) / 2 == 9.75 and (10.5 + 11.0) / 2 == 10.75, 'merge_ticks: the means are exact in binary floats')
+ok(len(sorted(set(range(0, 100000, 2)) | set(range(0, 100000, 3)))) == 66667, 'merge_ticks: 66,667 different times in the large test')
+ok(sorted([(1, 10.0), (4, 10.5), (1, 9.5)])[0] == (1, 9.5), 'merge_ticks: sorted(a + b) would keep two ticks at time 1')
+stale_fc(CO, 'ds-pointers-merge-ticks', '10.2', '10.3', '9.9', 'At equal times')
 
 # ds-arrays-round-trips. Route B: running positions by itertools.accumulate, then count zeros reached from non-zero.
 code('ds-arrays-round-trips',
@@ -579,17 +591,28 @@ for k_, t_ in enumerate([5, -5, 3, 2, -5, 0, -1, 1], 1):
     pos_ += t_
 ok(ends_ == [2, 5, 8], 'explain: the trips end at the 2nd, 5th and 8th trades')
 
-# pf-collections-top-symbols. Route B: collections.Counter totals and heapq.nsmallest on (minus total, symbol).
+# pf-collections-top-symbols (re-authored after review bank 2 b as busiest_symbols: the largest total size traded, ties by first trade).
+# Route B: Counter of sizes with an explicit first-trade index, sorted on (minus total, first index).
 code('pf-collections-top-symbols',
-     "import heapq\nfrom collections import Counter\ndef top_symbols(trades, k):\n    c = Counter()\n    for s, q in trades:\n        c[s] += q\n    return heapq.nsmallest(k, c, key=lambda s: (-c[s], s))\n",
-     {'stable sort by total alone': "def top_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + q\n    return sorted(t, key=lambda s: -t[s])[:k]\n",
-      'Counter.most_common': "from collections import Counter\ndef top_symbols(trades, k):\n    c = Counter()\n    for s, q in trades:\n        c[s] += q\n    return [s for s, _ in c.most_common(k)]\n",
-      'reverse on (total, symbol)': "def top_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + q\n    return sorted(t, key=lambda s: (t[s], s), reverse=True)[:k]\n"})
+     "from collections import Counter\ndef busiest_symbols(trades, k):\n    c, first = Counter(), {}\n    for i, (s, q) in enumerate(trades):\n        first.setdefault(s, i)\n        c[s] += abs(q)\n    return sorted(c, key=lambda s: (-c[s], first[s]))[:k]\n",
+     {'net quantity': "def busiest_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + q\n    return sorted(t, key=lambda s: -t[s])[:k]\n",
+      'ties A to Z': "def busiest_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + abs(q)\n    return sorted(t, key=lambda s: (-t[s], s))[:k]\n",
+      'reverse sort': "def busiest_symbols(trades, k):\n    t, f = {}, {}\n    for i, (s, q) in enumerate(trades):\n        f.setdefault(s, i)\n        t[s] = t.get(s, 0) + abs(q)\n    return sorted(t, key=lambda s: (t[s], f[s]), reverse=True)[:k]\n",
+      'number of trades': "def busiest_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + 1\n    return sorted(t, key=lambda s: -t[s])[:k]\n",
+      'absolute value of the net': "def busiest_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + q\n    return sorted(t, key=lambda s: -abs(t[s]))[:k]\n",
+      'a scan of every trade for each symbol (finding 24)': "def busiest_symbols(trades, k):\n    syms = []\n    for s, _ in trades:\n        if s not in syms:\n            syms.append(s)\n    tot = {s: sum(abs(q) for t, q in trades if t == s) for s in syms}\n    return sorted(syms, key=lambda s: -tot[s])[:k]\n"})
 tot_ = {}
-for s_, q_ in [("TUV", 300), ("FGH", 500), ("TUV", 200), ("BCD", 500), ("MNO", 100)]:
-    tot_[s_] = tot_.get(s_, 0) + q_
-ok(tot_ == {'TUV': 500, 'FGH': 500, 'BCD': 500, 'MNO': 100}, 'top_symbols: three symbols tie at 500')
-ok(sorted(tot_, key=lambda s: -tot_[s])[:2] == ['TUV', 'FGH'], 'top_symbols: the stable sort by total alone gives TUV first')
+for s_, q_ in [("TUV", 300), ("FGH", -500), ("TUV", -200), ("BCD", 500), ("MNO", 100)]:
+    tot_[s_] = tot_.get(s_, 0) + abs(q_)
+ok(tot_ == {'TUV': 500, 'FGH': 500, 'BCD': 500, 'MNO': 100}, 'busiest_symbols: three symbols tie at 500 in size')
+ok(sorted(tot_, key=lambda s: -tot_[s])[:2] == ['TUV', 'FGH'], 'busiest_symbols: the stable sort gives TUV then FGH')
+net_ = {'TUV': 100, 'FGH': -500, 'BCD': 500, 'MNO': 100}
+ok(sorted(net_, key=lambda s: -net_[s])[-1] == 'FGH', 'explain: with signed quantities FGH would rank last')
+ok({'KT': 6 - 4, 'LP': 7}['LP'] > {'KT': 6 - 4}['KT'] and abs(6) + abs(-4) > 7, 'prose example: net totals favour LP (7 against 2), sizes favour KT (10 against 7)')
+# the large test: 5,000 symbols, 100,000 trades; a scan of every trade for every symbol must not finish in time
+_t = item(CO, 'pf-collections-top-symbols')['widget']['tests'][-1]
+ok('5000' in _t['setup'] and '100000' in _t['setup'], 'busiest_symbols: the large test has 5,000 symbols and 100,000 trades')
+stale_fc(CO, 'pf-collections-top-symbols', 'top_symbols', 'alphabetical order', '1000)')
 
 # gd-dp-walk-above-zero. Route B: a depth-first count of the walks up to n = 22, the ballot formula above.
 code('gd-dp-walk-above-zero',
@@ -604,6 +627,18 @@ ok(eval(t['nonneg_walk_counts(10)']) == {0: 42, 2: 90, 4: 75, 6: 35, 8: 9, 10: 1
 ok(t['nonneg_walk_counts(20)[0]'] == str(catalan(10)) == '16796', 'walks: n = 20 has 16,796 at 0 (Catalan 10)')
 ok(t['sum(nonneg_walk_counts(22).values())'] == str(comb(22, 11)), 'walks: n = 22 has C(22, 11) walks in all')
 ok(t['nonneg_walk_counts(60)[0]'] == str(catalan(30)) and t['sum(nonneg_walk_counts(60).values())'] == str(comb(60, 30)), 'walks: n = 60 gives Catalan 30 at 0 and C(60, 30) in all')
+# review bank 2 b, finding 16: the ballot count at height 2 in exact integers (route A), and by an integer table over the steps (route B)
+row_ = {0: 1}
+for _ in range(60):
+    nxt_ = {}
+    for p_, w_ in row_.items():
+        for q_ in (p_ + 1, p_ - 1):
+            if q_ >= 0:
+                nxt_[q_] = nxt_.get(q_, 0) + w_
+    row_ = nxt_
+ok(t['nonneg_walk_counts(60)[2]'] == str(row_[2]) == str(comb(60, 29) - comb(60, 28)) == '10729649537134605', 'walks: n = 60 at height 2 is C(60, 29) - C(60, 28), 10,729,649,537,134,605')
+ok(int(float(row_[2])) != row_[2] and row_[2] > 2 ** 53, 'walks: that count is above 2^53, so a float cannot hold it (a float ballot formula gives ...604)')
+
 ok(2 ** 60 > 10 ** 18, 'explain: listing walks means up to 2^60 of them')
 
 # pf-collections-first-of-ties: run the lines; route B scans the words keeping the first top count.
@@ -630,6 +665,7 @@ key = cc.run_snippet(it_['prose'])['total']
 two(key, 3 * (10 + 2), 0, 'late binding')
 early = sum(f(10) for f in [lambda x, i=i: x + i for i in range(3)])
 numeric(CO, 'pf-functions-late-binding', key, None, {'bound-early': early, 'ignored-i': 3 * 10})
+ok(item(CO, 'pf-functions-late-binding')['requires'] == ['py-found/l14-sorting-by-what-matters'], 'late binding: requires the lesson that introduces lambda')
 
 # at-recursion-count-the-calls: count by instrumenting the item's own function; route B by the call recurrence.
 it_ = item(CO, 'at-recursion-count-the-calls')

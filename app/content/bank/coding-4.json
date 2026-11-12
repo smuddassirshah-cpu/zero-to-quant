@@ -60,11 +60,6 @@
             "compare": "equal"
           },
           {
-            "call": "above_mean([7])",
-            "expect": "0",
-            "compare": "equal"
-          },
-          {
             "call": "above_mean([0, 0, 0, 1])",
             "expect": "1",
             "compare": "equal"
@@ -83,9 +78,19 @@
             "call": "above_mean(list(range(100001)))",
             "expect": "50000",
             "compare": "equal"
+          },
+          {
+            "call": "above_mean([-1, -2])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "above_mean([-4, -1, -1, -1])",
+            "expect": "3",
+            "compare": "equal"
           }
         ],
-        "how": "Submit runs 9 hidden tests. Each result must equal the expected whole number.",
+        "how": "Submit runs 10 hidden tests. Each result must equal the expected whole number.",
         "solution": "def above_mean(xs):\n    if not xs:\n        return 0\n    total, n = sum(xs), len(xs)\n    return sum(1 for x in xs if x * n > total)\n"
       },
       "feedback": {
@@ -168,17 +173,22 @@
             "compare": "equal"
           },
           {
-            "call": "local_peaks([3])",
+            "call": "len(local_peaks([0, 1] * 50000))",
+            "expect": "49999",
+            "compare": "equal"
+          },
+          {
+            "call": "local_peaks([5, 1, 2])",
             "expect": "[]",
             "compare": "equal"
           },
           {
-            "call": "len(local_peaks([0, 1] * 50000))",
-            "expect": "49999",
+            "call": "local_peaks([9, 1, 9, 3])",
+            "expect": "[2]",
             "compare": "equal"
           }
         ],
-        "how": "Submit runs 9 hidden tests. Each result must equal the expected value.",
+        "how": "Submit runs 10 hidden tests. Each result must equal the expected value.",
         "solution": "def local_peaks(xs):\n    return [i for i in range(1, len(xs) - 1) if xs[i - 1] < xs[i] > xs[i + 1]]\n"
       },
       "feedback": {
@@ -460,9 +470,14 @@
             "call": "rows_needed(999999998765257142)",
             "expect": "1414213562",
             "compare": "equal"
+          },
+          {
+            "call": "rows_needed(999999912498231751)",
+            "expect": "1414213501",
+            "compare": "equal"
           }
         ],
-        "how": "Submit runs 9 hidden tests. Each result must equal the expected whole number.",
+        "how": "Submit runs 10 hidden tests. Each result must equal the expected whole number.",
         "solution": "def rows_needed(target):\n    lo, hi = 0, 2 * 10**9\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if mid * (mid + 1) // 2 >= target:\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n"
       },
       "feedback": {
@@ -593,27 +608,27 @@
       "requires": [
         "py-found/l12-data-with-behaviour"
       ],
-      "prose": "```python\nclass Book:\n    levels = []\n    def add(self, x):\n        self.levels.append(x)\np, q = Book(), Book()\np.add(1); q.add(2)\nprint(len(p.levels))\n```",
+      "prose": "```python\nclass Pit:\n    cap, names = 5, []\n    def __init__(self, name):\n        self.names.append(name)\n        self.cap += 1\n\na, b = Pit(\"x\"), Pit(\"y\")\nprint(len(a.names) + a.cap)\n```",
       "question": "What does this print?",
       "widget": {
         "kind": "numeric",
-        "answer": 2,
+        "answer": 8,
         "tol": {
           "abs": 0
         },
-        "accept": "2.",
+        "accept": "8: the shared list holds 2 names and `a.cap` is 6.",
         "label": "Printed value",
         "wrong": [
           {
             "id": "own-list",
-            "value": 1,
+            "value": 7,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "copied-list",
-            "value": 0,
+            "id": "shared-cap",
+            "value": 9,
             "tol": {
               "abs": 0
             }
@@ -621,15 +636,15 @@
         ]
       },
       "feedback": {
-        "correct": "Correct. 2: both objects share one list.",
-        "generic": "Not quite right. Ask where `levels` lives.",
+        "correct": "Correct. 8: one shared list and a private `cap`.",
+        "generic": "Not quite right. Ask which of the two attributes each object ends up owning.",
         "byKey": {
-          "own-list": "You gave each object its own list. `levels = []` in the class body makes one list, shared through the class by p and q.",
-          "copied-list": "You took `self.levels` to be a copy, so the appends were lost. It is the class's own list, and both appends change it."
+          "own-list": "You gave each object its own list. `names` lives in the class body, so a and b share one list of two names.",
+          "shared-cap": "You counted `cap` as shared too. `self.cap += 1` makes a new attribute on `a`, so `a.cap` is 6 and `Pit.cap` stays 5."
         }
       },
       "explain": {
-        "text": "The class body runs once, so `Book.levels` is a single list. `self.levels.append` finds that list through the class and changes it in place. After both calls it holds 1 and 2, so its length is 2."
+        "text": "`names` is one list on the class, so both objects append to it and its length is 2. `self.cap += 1` reads the class value 5 and stores 6 on `a` alone. So the print shows $2 + 6 = 8$."
       }
     },
     {
