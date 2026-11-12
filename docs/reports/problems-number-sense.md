@@ -1,6 +1,6 @@
 # Problem sets: number-sense (brief `docs/briefs/chained.md`)
 
-File: `app/content/courses/number-sense/problems-4.json` (level 4 only; levels 1 to 3 have no set yet). Numbers: `docs/reports/problems-number-sense-numbers.py` (exits 0, 275 checks).
+File: `app/content/courses/number-sense/problems-4.json` (level 4; levels 1 to 3 are in the section at the end). Numbers: `docs/reports/problems-number-sense-numbers.py` (exits 0, 275 checks).
 
 ## Set
 
@@ -42,3 +42,42 @@ Read by hand against the course's lessons, quizzes, reviews and homework: they u
 ## Engine limits
 
 None new for the problem set. The Fluency limits are in the fluency report.
+
+# Levels 1 to 3 (session AC)
+
+Files: `problems-1.json` (4 items, 17 parts), `problems-2.json` (3 items, 12 parts), `problems-3.json` (3 items, 11 parts). Numbers: the same script, now `level1` to `level4` plus `figures_1_to_3` (928 checks, 0 failures, exit 0).
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-1 | p-garden-beds | 4 (4 / 0) | l1, l2, l3, l4 | 3 |
+| problems-1 | p-rye-loaves | 4 (4 / 0) | l5, l1, l2, l3 | 4 |
+| problems-1 | p-two-printers | 4 (4 / 0) | l3, l5, l4 | 4 |
+| problems-1 | p-squash-jugs | 5 (4 / 1) | l2, l4, l3, l5 | 5 |
+| problems-2 | p-moor-weather | 4 (4 / 0) | l6, l8, l9 | 4 |
+| problems-2 | p-golf-card | 4 (3 / 1) | l8, l9, l7, l6 | 5 |
+| problems-2 | p-taxi-split | 4 (4 / 0) | l7, l6, l8 | 3 |
+| problems-3 | p-cube-tub | 3 (3 / 0) | l10, l11 | 3 |
+| problems-3 | p-stationery-bill | 4 (4 / 0) | l13, l12 | 4 |
+| problems-3 | p-comet-probe | 4 (4 / 0) | l14, l10, l13 | 5 |
+
+Typed parts 38 of 40; the two choices are judgements (which jug is stronger once both are in thirty-sixths; whether 0.28 or $0.2777\ldots$ is larger). Level 1 uses no decimals: every key is a fraction (tol 0.0005, "Any form equal to"), typed as `a/b` or a mixed number. Each later part restates the value it uses and carries the slip from the commonest error before it (tops-and-bottoms sums carried into the remainder, $\tfrac{5}{24}$ into whole loaves, $-8.5$ into the 11 pm change, £2.84 into the shortfall, an edge of 12 into the leftover, 8,000 hours into the years, 300,000 hours into part 4). Negative keys each have a `sign` wrong at the absolute value; rounded keys use one unit of the last place, or half where a slip lies within one unit (0.277 against 0.278, 2.84 against 2.83, 3.3 against 3.4).
+
+## Checks
+
+| check | result |
+|---|---|
+| numbers script | 928 checks, 0 failures; exact `Fraction`/sympy against listing, counting, floats or a step-by-step walk for every part; every key, band, `accept`, printed figure, slip value, byKey line and band overlap; `[negative-key]`; numbers_lib `check_wrongs` clean on sets 1 to 4 |
+| validator | 0 errors; no warning on the three files (4,582 in all) |
+| grade-all `--local-cdn` | 0 failures on each set (17, 12 and 11 widgets) |
+| playthrough `--local-cdn` | green, desktop and `--mobile`; 440 px shots read, no layout fault |
+| voice scan 35 (course folder) | 0 and 0 |
+
+Shots led to one change: the keyed choice options first carried their reason ("Jug A: 16/36 is more than 15/36") while the others did not; all options are now bare.
+
+## Fresh-check
+
+`--file` on each set: 0 hits at the gate; at `--min-run 8 --min-share 0` one hit, set 2 against set 3 on "to the nearest penny. Give the value in pounds" (a form sentence; different settings). `--cross-numbers`: 19 advisory pairs, all small shared values (0.15, 0.35, 0.65, 0.7 from twentieths; 0.125 and 0.875; 36, 48, 72 from thirty-sixths against l17's areas; 169, 121, 144 as squares in `mock-oa-trader-2`; 3.3 and 3.33 in `opt-dash`). Judged chance: no shared setting, sentence or story. A grep of the settings (garden beds, rye loaves, printers and leaflets, squash and cordial, a moor weather station, a golf card, a taxi fare, a tub of cubes, a stationery bill, a comet probe) and of the distinctive figures (£17 by 6, £4.85 and £19.50, $1.2 \times 10^9$) across `app/content/` finds none in this course; elsewhere only a rye loaf count in `testing/problems-4` and a leaflet in `conditional/l7`, unrelated.
+
+## Engine limits
+
+One bullet under "Raised later (problems number-sense)": the numeric field does not read `3 \times 10^4`.
