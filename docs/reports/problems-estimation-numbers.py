@@ -27,6 +27,24 @@ fails, checks = [], 0
 FORM = re.compile(r'decimal|places?\b|fraction|whole number|nearest|per cent|%', re.I)
 
 
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%²' in text else 100)
+    return s
+
+
 def ok(cond, msg):
     global checks
     checks += 1
@@ -72,6 +90,7 @@ def num(items, iid, k, exact, alt, slips=None, rel=1e-9, pct=False):
         ok(w.get('placeholder') != 'decimal', f'{tag}: whole-number part with the placeholder "decimal"')
     slips = slips or {}
     wrongs = {x['id']: x for x in w.get('wrong', [])}
+    slips = derived_slips(slips, wrongs, e / sc, json.dumps(p, ensure_ascii=False))
     ok(set(wrongs) == set(slips), f'{tag}: wrong ids {sorted(wrongs)} vs slips {sorted(slips)}')
     ok(set(wrongs) <= set(p['feedback'].get('byKey', {})), f'{tag}: byKey lines missing')
     ok(set(p['feedback'].get('byKey', {})) <= set(wrongs), f'{tag}: byKey line with no wrong entry')

@@ -30,6 +30,24 @@ from numbers_lib import Level, _numbers  # noqa: E402
 fails, checks = [], 0
 
 
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries.
+
+    sign: the absolute value of the computed key (the sign-dropped answer).
+    decimal: the computed key over 100 (over 10,000 where the part is in %^2).
+    Each is then compared with the content value inside its tolerance, and must lie
+    outside the key band, by the ordinary slip checks below."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%\u00b2' in text else 100)
+    return s
+
+
 def ok(cond, msg):
     global checks
     checks += 1
@@ -65,6 +83,7 @@ def check_numeric(item, k, value, slips, allowed=(), rounded=None):
         ok(abs(w['answer'] - float(last)) <= band(w) or abs(float(last) - float(value)) < 1e-9,
            f'{lab}: feedback prints {last}, outside the band')
     ids = [x['id'] for x in w['wrong']]
+    slips = derived_slips(slips, ids, float(value), json.dumps(p, ensure_ascii=False))
     ok(sorted(ids) == sorted(slips), f'{lab}: wrong ids {ids} vs slips {sorted(slips)}')
     for x in w['wrong']:
         sv = slips.get(x['id'])
