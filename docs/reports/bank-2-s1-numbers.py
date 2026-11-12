@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Bank part 2, session 1: every key, slip and stated figure in statistics-1, finance-1 and behavioural-5, by two routes.
+"""Bank part 2, session 1: every key, slip and stated figure in statistics-1, finance-1, behavioural-5 and coding-1, by two routes.
+
+coding-1 uses bank_2_code_check.py (beside this script): each code item's solution, brute-force twin, starter and named
+near-miss methods run on its own tests; reasoning items run their own snippet; the C++ item compiles with g++ -std=c++20.
 
 Standard library only (runs under plain python3). numbers_lib.py has no Bank loader yet (B2-E4), so the JSON is read here.
 Route A is exact (Fraction) or closed form; route B is enumeration, a seeded simulation with a stated tolerance, or a
@@ -13,7 +16,7 @@ from statistics import NormalDist
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BANK = os.path.join(HERE, '..', '..', 'app', 'content', 'bank')
-FILES = ['statistics-1', 'finance-1', 'behavioural-5']
+FILES = ['statistics-1', 'finance-1', 'behavioural-5', 'coding-1']
 DATA = {f: json.load(open(os.path.join(BANK, f + '.json'), encoding='utf-8')) for f in FILES}
 ITEMS = {(f, it['id']): it for f in FILES for it in DATA[f]['items']}
 fails, checks = [], [0]
@@ -534,6 +537,156 @@ for it in DATA[B]['items']:
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
 
+# ---------------------------------------------------------------- coding-1 (rules 12 and 13; bank_2_code_check.py beside this script)
+sys.path.insert(0, HERE)
+import bank_2_code_check as cc
+CO = 'coding-1'
+print('coding-1 near-miss runs:')
+
+
+def code(i, brute, traps):
+    return cc.check_code(ok, f'{CO}/{i}', item(CO, i), brute, traps)
+
+
+def tests_of(i):
+    return {c['call']: c['expect'] for c in item(CO, i)['widget']['tests']}
+
+
+# ds-arrays-sign-changes. Route B: runs of equal sign among the non-zero days (itertools.groupby).
+code('ds-arrays-sign-changes',
+     "from itertools import groupby\ndef sign_changes(pnl):\n    runs = [k for k, _ in groupby(x > 0 for x in pnl if x != 0)]\n    return max(len(runs) - 1, 0)\n",
+     {'neighbours, zeros kept': "def sign_changes(pnl):\n    return sum(1 for a, b in zip(pnl, pnl[1:]) if a * b < 0)\n",
+      'zero as a third sign': "def sign_changes(pnl):\n    s = [(x > 0) - (x < 0) for x in pnl]\n    return sum(1 for a, b in zip(s, s[1:]) if a != b)\n"})
+t = tests_of('ds-arrays-sign-changes')
+ok(t['sign_changes([3, -1, 0, -2, 5, 0, 0, -4])'] == '3' and t['sign_changes([-1, 0, 1])'] == '1', 'sign_changes: the brief values 3 and 1')
+ok(eval(t['sign_changes([1, 0, -1] * 30000)']) == 2 * 30000 - 1, 'sign_changes: 60,000 alternating non-zero days give 59,999 flips')
+
+# ds-hashing-price-mode. Route B: sort the distinct prices by (count by list scan, price) and take the last.
+code('ds-hashing-price-mode',
+     "def price_mode(prices):\n    if len(prices) == 0:\n        return None\n    return sorted(set(prices), key=lambda v: (prices.count(v), v))[-1]\n",
+     {'max(set(xs), key=xs.count)': "def price_mode(prices):\n    return max(set(prices), key=prices.count)\n",
+      'guarded, no tie rule': "def price_mode(prices):\n    if not prices:\n        return None\n    return max(set(prices), key=prices.count)\n",
+      'Counter.most_common': "from collections import Counter\ndef price_mode(prices):\n    return Counter(prices).most_common(1)[0][0] if prices else None\n"})
+t = tests_of('ds-hashing-price-mode')
+ok([t[k] for k in ('price_mode([101, 100, 101, 100, 99])', 'price_mode([5])', 'price_mode([])', 'price_mode([7, 8, 9])')] == ['101', '5', 'None', '9'], 'price_mode: the brief values')
+ok(max(set([101, 100, 99]), key=[101, 100, 101, 100, 99].count) == 100, 'price_mode: the set method returns 100 on the brief tie')
+
+# edge-case-list-to-pence. Route B: decimal.Decimal on the cleaned text.
+code('edge-case-list-to-pence',
+     "from decimal import Decimal\ndef to_pence(text):\n    s = text.strip().replace('£', '').replace(',', '')\n    return int(Decimal(s) * 100)\n",
+     {'int(float(s) * 100)': "def to_pence(text):\n    s = text.strip().replace('£', '').replace(',', '')\n    return int(float(s) * 100)\n",
+      'decimals not padded': "def to_pence(text):\n    s = text.strip()\n    sign = -1 if s.startswith('-') else 1\n    s = s.lstrip('-').replace('£', '').replace(',', '')\n    p, _, d = s.partition('.')\n    return sign * (int(p) * 100 + int(d or 0))\n"})
+t = tests_of('edge-case-list-to-pence')
+brief = {'"£1,234.50"': 123450, '"0.07"': 7, '"12"': 1200, '"£3.5"': 350, '"-£2.05"': -205, '"£0.29"': 29, '" £19.99 "': 1999}
+ok(all(t[f'to_pence({k})'] == str(v) for k, v in brief.items()), 'to_pence: the seven brief values')
+ok([int(float(s) * 100) for s in ('0.29', '-2.05', '19.99')] == [28, -204, 1998], 'to_pence: the float trap gives 28, -204 and 1998')
+ok(0.29 * 100 < 29, 'explain: float 0.29 * 100 is just under 29')
+
+# integer-division-lot-round. Route B: decimal division rounded towards zero (ROUND_DOWN).
+code('integer-division-lot-round',
+     "from decimal import Decimal, ROUND_DOWN, getcontext\ngetcontext().prec = 50\ndef lot_round(qty, lot):\n    return int((Decimal(qty) / Decimal(lot)).to_integral_value(rounding=ROUND_DOWN)) * lot\n",
+     {'qty // lot * lot': "def lot_round(qty, lot):\n    return qty // lot * lot\n",
+      'int(qty / lot) * lot': "def lot_round(qty, lot):\n    return int(qty / lot) * lot\n"})
+t = tests_of('integer-division-lot-round')
+ok([t[f'lot_round({a})'] for a in ('-250, 100', '250, 100', '-99, 100', '300, 100', '-300, 100')] == ['-200', '200', '0', '300', '-300'], 'lot_round: the brief values')
+ok(-250 // 100 * 100 == -300 and -250 // 100 == -3, 'lot_round: floor gives -3 lots, -300')
+ok(float(2 ** 53 + 1) == float(2 ** 53) and 10 ** 18 > 2 ** 53, 'explain: a float cannot hold every whole number above 2^53')
+
+# pf-types-parse-fix. Route B: a regular expression over tag=value fields, read in order.
+code('pf-types-parse-fix',
+     "import re\ndef parse_fix(msg):\n    return {int(t): v for t, v in re.findall(r'(?:^|;)(\\d+)=([^;]*)', msg)}\n",
+     {'split("=") without a limit': "def parse_fix(msg):\n    out = {}\n    if not msg:\n        return out\n    for f in msg.split(';'):\n        tag, value = f.split('=')\n        out[int(tag)] = value\n    return out\n",
+      'no guard for the empty string': "def parse_fix(msg):\n    out = {}\n    for f in msg.split(';'):\n        tag, _, value = f.partition('=')\n        out[int(tag)] = value\n    return out\n",
+      'tags left as text': "def parse_fix(msg):\n    return dict(f.split('=', 1) for f in msg.split(';')) if msg else {}\n"})
+ok(''.split(';') == [''], 'explain: "".split(";") is [""]')
+
+# pf-functions-binom-tail. Route B: enumeration of every sequence up to n = 16, a Pascal-row recurrence above.
+code('pf-functions-binom-tail',
+     "from fractions import Fraction\nfrom itertools import product\ndef binom_tail(n, k):\n    if n <= 16:\n        hits = sum(1 for s in product((0, 1), repeat=n) if sum(s) >= k)\n        return Fraction(hits, 2 ** n)\n    row = [1]\n    for _ in range(n):\n        row = [a + b for a, b in zip([0] + row, row + [0])]\n    return Fraction(sum(c for j, c in enumerate(row) if j >= k), 2 ** n)\n",
+     {'a float result': "from fractions import Fraction\nfrom math import comb\ndef binom_tail(n, k):\n    return sum(comb(n, j) for j in range(max(k, 0), n + 1)) / 2 ** n\n",
+      'more than k': "from fractions import Fraction\nfrom math import comb\ndef binom_tail(n, k):\n    return Fraction(sum(comb(n, j) for j in range(max(k + 1, 0), n + 1)), 2 ** n)\n",
+      'negative k not clamped': "from fractions import Fraction\nfrom math import comb\ndef binom_tail(n, k):\n    return Fraction(sum(comb(n, j) for j in range(k, n + 1)), 2 ** n)\n"})
+t = tests_of('pf-functions-binom-tail')
+ok(F(sum(comb(16, j) for j in range(13, 17)), 2 ** 16) == F(697, 65536) and [comb(16, j) for j in (13, 14, 15, 16)] == [560, 120, 16, 1], 'binom_tail(16, 13) = (560 + 120 + 16 + 1)/65,536')
+ok(F(sum(comb(10, j) for j in range(5, 11)), 1024) == F(319, 512), 'binom_tail(10, 5) = 319/512')
+ok(F(sum(comb(3, j) for j in (2, 3)), 8) == F(1, 2), 'prose: binom_tail(3, 2) = 1/2')
+stated(CO, 'pf-functions-binom-tail', '(560 + 120 + 16 + 1)/65{,}536 = 697/65{,}536')
+
+# pf-types-round-half-even: run the line; the slips round halves up and down with decimal.
+from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_DOWN, ROUND_HALF_EVEN
+it_ = item(CO, 'pf-types-round-half-even')
+key = cc.eval_line(it_['prose'])
+rnd = lambda mode: sum(int(Decimal(s).quantize(Decimal(1), rounding=mode)) for s in ('0.5', '1.5', '2.5'))
+two(key, rnd(ROUND_HALF_EVEN), 0, 'round half even')
+numeric(CO, 'pf-types-round-half-even', key, None, {'half-up': rnd(ROUND_HALF_UP), 'half-down': rnd(ROUND_HALF_DOWN)})
+ok([round(0.5), round(1.5), round(2.5)] == [0, 2, 2], 'round gives 0, 2, 2')
+
+# pf-functions-default-list: run the lines; the slips with a fresh list and with every call seeing three items.
+it_ = item(CO, 'pf-functions-default-list')
+key = cc.run_snippet(it_['prose'])['total']
+def add_fresh(x, acc=None):
+    acc = [] if acc is None else acc
+    acc.append(x)
+    return len(acc)
+two(key, sum(range(1, 4)), 0, 'default list total')
+numeric(CO, 'pf-functions-default-list', key, None, {'fresh-list': add_fresh(1) + add_fresh(2) + add_fresh(3), 'three-each': 3 * 3})
+
+# complexity-read-doubling-inner: count the inner steps; n log2 n at n = 1,024; the ratio to n log n is flat.
+it_ = item(CO, 'complexity-read-doubling-inner')
+def inner_steps(n):
+    steps = 0
+    for i in range(n):
+        j = 1
+        while j < n:
+            j *= 2
+            steps += 1
+    return steps
+two(inner_steps(1024), 1024 * 10, 0, 'inner steps at n = 1,024')
+ratios = [inner_steps(n) / (n * math.ceil(math.log2(n))) for n in (64, 256, 1024, 4096)]
+ok(max(ratios) - min(ratios) < 1e-12, 'steps / (n ceil(log2 n)) is constant: O(n log n)')
+ok(inner_steps(4096) / inner_steps(1024) < 4.9 and inner_steps(4096) / inner_steps(1024) > 4.5, 'quadrupling n multiplies the work by 4.8, not 16 or 4')
+choice(CO, 'complexity-read-doubling-inner', 'O(n \\log n)')
+stated(CO, 'complexity-read-doubling-inner', '1{,}024 \\\\times 10 = 10{,}240')
+
+# at-complexity-tripling-loop: run the lines; first power of 3 at or above 1,000 by logarithms.
+it_ = item(CO, 'at-complexity-tripling-loop')
+key = cc.run_snippet(it_['prose'])['count']
+two(key, math.ceil(math.log(1000, 3)), 0, 'tripling count')
+numeric(CO, 'at-complexity-tripling-loop', key, None, {'stopped-early': sum(1 for k in range(1, 20) if 3 ** k < 1000), 'divided': 1000 // 3})
+ok(3 ** 7 == 2187 and 3 ** 6 == 729, '3^6 = 729 and 3^7 = 2,187')
+
+# pf-types-backward-slice: run the lines; route B lists the indices 7, 5, 3 by a loop.
+it_ = item(CO, 'pf-types-backward-slice')
+key = cc.run_snippet(it_['prose'])['total']
+idx, k_ = [], 7
+while k_ > 2:
+    idx.append(k_)
+    k_ -= 2
+two(key, sum(idx), 0, 'backward slice')
+xs_ = list(range(10))
+numeric(CO, 'pf-types-backward-slice', key, None, {'step-one': sum(xs_[7:2:-1]), 'ends-swapped': sum(xs_[6:1:-2])})
+ok(xs_[6:1:-2] == [6, 4, 2], 'ends-swapped slip is 6, 4 and 2')
+
+# integer-division-toward-zero (C++ reading): compile and run the C++ lines; run the Python lines.
+it_ = item(CO, 'integer-division-toward-zero')
+ns_ = cc.run_snippet(it_['prose'])
+ok((ns_['q'], ns_['r']) == (-4, 1), 'Python: -7 // 2 = -4, -7 % 2 = 1')
+ok(math.floor(-7 / 2) == -4 and -7 - 2 * (-4) == 1, 'Python route B: floor and remainder')
+cpp_body = cc.snippet(it_['prose'], 'cpp')[0]
+out = cc.cpp('#include <cstdio>\nint main() {\n' + cpp_body + 'static_assert(-7 / 2 == -3 && -7 % 2 == -1);\nstd::printf("%d %d\\n", q, r);\n}\n')
+if out is not None:
+    ok(out.split() == ['-3', '-1'], f'C++: -7 / 2 = -3, -7 % 2 = -1 (ran: {out.strip()})')
+ok(math.trunc(-7 / 2) == -3 and -7 - 2 * (-3) == -1, 'C++ route B: truncation and remainder')
+choice(CO, 'integer-division-toward-zero', 'C++: -3 and -1. Python: -4 and 1.')
+opts = {o['text']: o for o in it_['widget']['options']}
+ok(set(opts) == {'C++: -3 and -1. Python: -4 and 1.', 'C++: -3 and -1. Python: -3 and -1.', 'C++: -4 and 1. Python: -4 and 1.', 'C++: -4 and 1. Python: -3 and -1.'}, 'C++ reading: the four sign patterns of the brief')
+
+# coding-1 file shape (section 2): six code, five reasoning (numeric or choice), one C++ reading choice
+kinds = [x['widget']['kind'] for x in DATA[CO]['items']]
+ok(kinds.count('code') == 6 and kinds.count('numeric') == 4 and kinds.count('choice') == 2, f'coding-1 kinds {kinds}')
+ok(sorted(x['difficulty'] for x in DATA[CO]['items']) == [2] * 4 + [3] * 7 + [4], 'coding-1 difficulties: D2 4, D3 7, D4 1')
+ok(all(x['style'] == 'coding' for x in DATA[CO]['items']), 'coding-1 style')
+
 # ---------------------------------------------------------------- whole-file checks
 allids = []
 for fn in sorted(os.listdir(BANK)):
@@ -548,7 +701,7 @@ for f in FILES:
         ok(it['difficulty'] in (2, 3, 4, 5), f'{f}/{it["id"]}: difficulty 2 to 5')
 
 counts = {f: len(DATA[f]['items']) for f in FILES}
-ok(counts == {'statistics-1': 15, 'finance-1': 15, 'behavioural-5': 8}, f'item counts {counts}')
+ok(counts == {'statistics-1': 15, 'finance-1': 15, 'behavioural-5': 8, 'coding-1': 12}, f'item counts {counts}')
 
 print(f'{checks[0]} checks, {len(fails)} failed')
 sys.exit(1 if fails else 0)

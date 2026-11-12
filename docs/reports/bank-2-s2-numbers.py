@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Bank part 2, session 2: every key, slip and stated figure in statistics-2, finance-2 and behavioural-6, by two routes.
+"""Bank part 2, session 2: every key, slip and stated figure in statistics-2, finance-2, behavioural-6 and coding-2, by two routes.
+
+coding-2 uses bank_2_code_check.py (beside this script): each code item's solution, brute-force twin, starter and named
+near-miss methods run on its own tests; reasoning items run their own snippet; the C++ item compiles with g++ -std=c++20.
 
 Standard library only (runs under plain python3). numbers_lib.py has no Bank loader yet (B2-E4), so the JSON is read here.
 Route A is exact (Fraction) or closed form; route B is enumeration, a seeded simulation with a stated tolerance, a
@@ -13,7 +16,7 @@ from statistics import NormalDist
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BANK = os.path.join(HERE, '..', '..', 'app', 'content', 'bank')
-FILES = ['statistics-2', 'finance-2', 'behavioural-6']
+FILES = ['statistics-2', 'finance-2', 'behavioural-6', 'coding-2']
 DATA = {f: json.load(open(os.path.join(BANK, f + '.json'), encoding='utf-8')) for f in FILES}
 ITEMS = {(f, it['id']): it for f in FILES for it in DATA[f]['items']}
 fails, checks = [], [0]
@@ -497,6 +500,207 @@ ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
 
+# ---------------------------------------------------------------- coding-2 (rules 12 and 13; bank_2_code_check.py beside this script)
+sys.path.insert(0, HERE)
+import bank_2_code_check as cc
+import contextlib, io
+from math import comb
+CO = 'coding-2'
+print('coding-2 near-miss runs:')
+
+
+def code(i, brute, traps):
+    return cc.check_code(ok, f'{CO}/{i}', item(CO, i), brute, traps)
+
+
+def tests_of(i):
+    return {c['call']: c['expect'] for c in item(CO, i)['widget']['tests']}
+
+
+# pf-idioms-argmax-last. Route B: max over the reversed list (max keeps the first, which is the last original).
+code('pf-idioms-argmax-last',
+     "def argmax_last(xs):\n    n = len(xs)\n    if n == 0:\n        return None\n    i = max(range(n), key=lambda j: xs[n - 1 - j])\n    return n - 1 - i\n",
+     {'xs.index(max(xs))': "def argmax_last(xs):\n    return xs.index(max(xs)) if xs else None\n",
+      'strict > in a loop': "def argmax_last(xs):\n    best = None\n    for i, x in enumerate(xs):\n        if best is None or x > xs[best]:\n            best = i\n    return best\n",
+      'max over indices': "def argmax_last(xs):\n    return max(range(len(xs)), key=xs.__getitem__) if xs else None\n"})
+t = tests_of('pf-idioms-argmax-last')
+ok([t[k] for k in ('argmax_last([3, 7, 7, 1])', 'argmax_last([])', 'argmax_last([-2])', 'argmax_last([1, 2, 3])')] == ['2', 'None', '0', '2'], 'argmax_last: the brief values')
+ok([3, 7, 7, 1].index(max([3, 7, 7, 1])) == 1, 'argmax_last: the index method gives 1')
+
+# edge-case-list-second-largest. Route B: sorted distinct values with a length check.
+code('edge-case-list-second-largest',
+     "def second_largest(xs):\n    s = sorted(set(xs))\n    return s[-2] if len(s) >= 2 else None\n",
+     {'sorted(xs)[-2]': "def second_largest(xs):\n    return sorted(xs)[-2]\n",
+      'distinct, no guard': "def second_largest(xs):\n    return sorted(set(xs))[-2]\n",
+      'guarded, repeats kept': "def second_largest(xs):\n    s = sorted(xs)\n    return s[-2] if len(s) >= 2 else None\n"})
+t = tests_of('edge-case-list-second-largest')
+ok([t[k] for k in ('second_largest([5, 5, 3])', 'second_largest([4])', 'second_largest([2, 2])', 'second_largest([-1, -5, -3])', 'second_largest([])')] == ['3', 'None', 'None', '-3', 'None'], 'second_largest: the brief values')
+ok(sorted([5, 5, 3])[-2] == 5 and sorted([2, 2])[-2] == 2, 'second_largest: sorted(xs)[-2] gives 5 and 2')
+
+# ds-pointers-merge-ticks. Route B: a stable sort on the time alone, a before b.
+code('ds-pointers-merge-ticks',
+     "def merge_ticks(a, b):\n    return sorted(a + b, key=lambda t: t[0])\n",
+     {'sorted(a + b)': "def merge_ticks(a, b):\n    return sorted(a + b)\n",
+      'two pointers with <': "def merge_ticks(a, b):\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i][0] < b[j][0]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n",
+      'heapq.merge on whole tuples': "import heapq\ndef merge_ticks(a, b):\n    return list(heapq.merge(a, b))\n"})
+t = tests_of('ds-pointers-merge-ticks')
+ok(eval(t['merge_ticks([(1, 10.0), (4, 10.2)], [(1, 9.9), (2, 10.1), (4, 10.3)])']) == [(1, 10.0), (1, 9.9), (2, 10.1), (4, 10.2), (4, 10.3)], 'merge_ticks: the brief value')
+ok(sorted([(1, 10.0), (4, 10.2), (1, 9.9), (2, 10.1), (4, 10.3)])[0] == (1, 9.9), 'merge_ticks: sorted(a + b) puts (1, 9.9) first')
+
+# ds-arrays-round-trips. Route B: running positions by itertools.accumulate, then count zeros reached from non-zero.
+code('ds-arrays-round-trips',
+     "from itertools import accumulate\ndef round_trips(trades):\n    p = [0] + list(accumulate(trades))\n    return sum(1 for prev, now in zip(p, p[1:]) if now == 0 and prev != 0)\n",
+     {'every zero position': "def round_trips(trades):\n    pos, count = 0, 0\n    for t in trades:\n        pos += t\n        if pos == 0:\n            count += 1\n    return count\n",
+      'crossings counted too': "def round_trips(trades):\n    pos, count = 0, 0\n    for t in trades:\n        new = pos + t\n        if (new == 0 and pos != 0) or pos * new < 0:\n            count += 1\n        pos = new\n    return count\n"})
+t = tests_of('ds-arrays-round-trips')
+ok([t[k] for k in ('round_trips([5, -5, 3, 2, -5, 0, -1, 1])', 'round_trips([0, 0])', 'round_trips([])', 'round_trips([2, -4, 2])')] == ['3', '0', '0', '1'], 'round_trips: the brief values')
+pos_, ends_ = 0, []
+for k_, t_ in enumerate([5, -5, 3, 2, -5, 0, -1, 1], 1):
+    if pos_ + t_ == 0 and pos_ != 0:
+        ends_.append(k_)
+    pos_ += t_
+ok(ends_ == [2, 5, 8], 'explain: the trips end at the 2nd, 5th and 8th trades')
+
+# pf-collections-top-symbols. Route B: collections.Counter totals and heapq.nsmallest on (minus total, symbol).
+code('pf-collections-top-symbols',
+     "import heapq\nfrom collections import Counter\ndef top_symbols(trades, k):\n    c = Counter()\n    for s, q in trades:\n        c[s] += q\n    return heapq.nsmallest(k, c, key=lambda s: (-c[s], s))\n",
+     {'stable sort by total alone': "def top_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + q\n    return sorted(t, key=lambda s: -t[s])[:k]\n",
+      'Counter.most_common': "from collections import Counter\ndef top_symbols(trades, k):\n    c = Counter()\n    for s, q in trades:\n        c[s] += q\n    return [s for s, _ in c.most_common(k)]\n",
+      'reverse on (total, symbol)': "def top_symbols(trades, k):\n    t = {}\n    for s, q in trades:\n        t[s] = t.get(s, 0) + q\n    return sorted(t, key=lambda s: (t[s], s), reverse=True)[:k]\n"})
+tot_ = {}
+for s_, q_ in [("TUV", 300), ("FGH", 500), ("TUV", 200), ("BCD", 500), ("MNO", 100)]:
+    tot_[s_] = tot_.get(s_, 0) + q_
+ok(tot_ == {'TUV': 500, 'FGH': 500, 'BCD': 500, 'MNO': 100}, 'top_symbols: three symbols tie at 500')
+ok(sorted(tot_, key=lambda s: -tot_[s])[:2] == ['TUV', 'FGH'], 'top_symbols: the stable sort by total alone gives TUV first')
+
+# gd-dp-walk-above-zero. Route B: a depth-first count of the walks up to n = 22, the ballot formula above.
+code('gd-dp-walk-above-zero',
+     "from math import comb\ndef nonneg_walk_counts(n):\n    if n <= 22:\n        out = {}\n        def go(pos, left):\n            if left == 0:\n                out[pos] = out.get(pos, 0) + 1\n                return\n            go(pos + 1, left - 1)\n            if pos > 0:\n                go(pos - 1, left - 1)\n        go(0, n)\n        return out\n    return {h: comb(n, (n - h) // 2) - (comb(n, (n - h) // 2 - 1) if (n - h) // 2 >= 1 else 0)\n            for h in range(n % 2, n + 1, 2)}\n",
+     {'all 2^n paths listed': "from itertools import product\ndef nonneg_walk_counts(n):\n    out = {}\n    for steps in product((1, -1), repeat=n):\n        pos, okay = 0, True\n        for s in steps:\n            pos += s\n            if pos < 0:\n                okay = False\n                break\n        if okay:\n            out[pos] = out.get(pos, 0) + 1\n    return out\n",
+      'depth-first, pruned at -1': "def nonneg_walk_counts(n):\n    out = {}\n    def go(pos, left):\n        if left == 0:\n            out[pos] = out.get(pos, 0) + 1\n            return\n        go(pos + 1, left - 1)\n        if pos > 0:\n            go(pos - 1, left - 1)\n    go(0, n)\n    return out\n",
+      'the floor at 0 left out': "def nonneg_walk_counts(n):\n    c = {0: 1}\n    for _ in range(n):\n        d = {}\n        for p, w in c.items():\n            for q in (p + 1, p - 1):\n                d[q] = d.get(q, 0) + w\n        c = d\n    return c\n",
+      'unreachable ends kept': "def nonneg_walk_counts(n):\n    row = [1] + [0] * n\n    for _ in range(n):\n        row = [(row[1] if len(row) > 1 else 0)] + [row[p - 1] + (row[p + 1] if p + 1 <= n else 0) for p in range(1, n + 1)]\n    return dict(enumerate(row))\n"})
+t = tests_of('gd-dp-walk-above-zero')
+catalan = lambda m: comb(2 * m, m) // (m + 1)
+ok(eval(t['nonneg_walk_counts(10)']) == {0: 42, 2: 90, 4: 75, 6: 35, 8: 9, 10: 1} and sum(eval(t['nonneg_walk_counts(10)']).values()) == 252 == comb(10, 5), 'walks: n = 10 has 42 at 0 and 252 in all')
+ok(t['nonneg_walk_counts(20)[0]'] == str(catalan(10)) == '16796', 'walks: n = 20 has 16,796 at 0 (Catalan 10)')
+ok(t['sum(nonneg_walk_counts(22).values())'] == str(comb(22, 11)), 'walks: n = 22 has C(22, 11) walks in all')
+ok(t['nonneg_walk_counts(60)[0]'] == str(catalan(30)) and t['sum(nonneg_walk_counts(60).values())'] == str(comb(60, 30)), 'walks: n = 60 gives Catalan 30 at 0 and C(60, 30) in all')
+ok(2 ** 60 > 10 ** 18, 'explain: listing walks means up to 2^60 of them')
+
+# pf-collections-first-of-ties: run the lines; route B scans the words keeping the first top count.
+it_ = item(CO, 'pf-collections-first-of-ties')
+ns_ = cc.run_snippet(it_['prose'])
+words_ = 'to be or not to be'.split()
+cnt_ = {w: words_.count(w) for w in words_}
+first_ = None
+for w in cnt_:
+    if first_ is None or cnt_[w] > cnt_[first_]:
+        first_ = w
+ok(ns_['best'] == first_ == 'to', 'first of ties: best is "to"')
+ok(ns_['d'] == {'to': 2, 'be': 2, 'or': 1, 'not': 1}, 'first of ties: the counts')
+last_tie = None
+for w in cnt_:
+    if last_tie is None or cnt_[w] >= cnt_[last_tie]:
+        last_tie = w
+ok(last_tie == 'be' and list(ns_['d'])[-1] == 'not', 'first of ties: "be" is the later tie, "not" the last key inserted')
+choice(CO, 'pf-collections-first-of-ties', '"to"')
+
+# pf-functions-late-binding: run the lines; the slips bind i early and leave i out.
+it_ = item(CO, 'pf-functions-late-binding')
+key = cc.run_snippet(it_['prose'])['total']
+two(key, 3 * (10 + 2), 0, 'late binding')
+early = sum(f(10) for f in [lambda x, i=i: x + i for i in range(3)])
+numeric(CO, 'pf-functions-late-binding', key, None, {'bound-early': early, 'ignored-i': 3 * 10})
+
+# at-recursion-count-the-calls: count by instrumenting the item's own function; route B by the call recurrence.
+it_ = item(CO, 'at-recursion-count-the-calls')
+ns_ = cc.run_snippet(it_['prose'])
+calls_ = [0]
+orig_ = ns_['f']
+def counted(n):
+    calls_[0] += 1
+    return orig_(n)
+ns_['f'] = counted
+value_ = counted(12)
+calls = lambda n: 1 if n <= 1 else 1 + calls(n // 2) + calls(n // 3)
+leaves = lambda n: 1 if n <= 1 else leaves(n // 2) + leaves(n // 3)
+two(calls_[0], calls(12), 0, 'calls of f(12)')
+ok(value_ == 7 and leaves(12) == 7 and calls(12) - leaves(12) == 6, 'f(12) is 7: 7 calls return 1, 6 add')
+numeric(CO, 'at-recursion-count-the-calls', calls_[0], None, {'gave-value': value_, 'no-first': calls_[0] - 1})
+
+# ds-hashing-list-membership: count the comparisons of each version with an id type that counts its == calls.
+it_ = item(CO, 'ds-hashing-list-membership')
+class Id:
+    eqs = 0
+    def __init__(self, v): self.v = v
+    def __eq__(self, o):
+        Id.eqs += 1
+        return self.v == o.v
+    def __hash__(self): return hash(self.v)
+def cost(kind, n):
+    Id.eqs = 0
+    ids = [Id(k) for k in range(n)]
+    if kind == 'set':
+        seen = set()
+        for x in ids:
+            if x not in seen:
+                seen.add(x)
+    else:
+        seen = [] if kind != 'tuple' else ()
+        for x in ids:
+            if x not in seen:
+                seen = seen + (x,) if kind == 'tuple' else seen
+                if kind == 'list':
+                    seen.append(x)
+                if kind == 'sorted':
+                    seen.append(x)
+                    seen.sort(key=lambda y: y.v)
+    return Id.eqs
+for kind in ('list', 'tuple', 'sorted'):
+    ok(cost(kind, 2000) == 2000 * 1999 // 2, f'list membership: {kind} makes n(n - 1)/2 comparisons at n = 2,000')
+ok(cost('set', 2000) <= 2000, 'list membership: the set makes at most one comparison per id')
+# the item's own lines, on 2,000 different ids, then with the key's change (a set and add)
+lines_ = cc.snippet(it_['prose'])[0]
+def run_lines(src, n):
+    Id.eqs = 0
+    ns = {'ids': [Id(k) for k in range(n)]}
+    exec(src, ns)
+    return Id.eqs, ns['repeats']
+two(run_lines(lines_, 2000)[0], cost('list', 2000), 0, 'list membership: the item lines make n(n - 1)/2 comparisons')
+set_src = lines_.replace('seen = []', 'seen = set()').replace('seen.append(x)', 'seen.add(x)')
+ok(set_src != lines_ and run_lines(set_src, 2000) == (0, 0), 'list membership: with a set the item lines make no comparisons on different ids')
+ok(run_lines(lines_, 2000)[1] == 0, 'list membership: different ids give no repeats')
+two(sum(range(20000)), 20000 * 19999 // 2, 0, 'comparisons for 20,000 ids')
+ok(sum(range(20000)) == 199990000, '199,990,000 comparisons')
+stated(CO, 'ds-hashing-list-membership', '0 + 1 + \\\\dots + 19{,}999 = 199{,}990{,}000')
+choice(CO, 'ds-hashing-list-membership', 'set')
+
+# pf-idioms-spent-generator: run the lines and capture what they print; route B by the sum-of-squares formula.
+it_ = item(CO, 'pf-idioms-spent-generator')
+buf_ = io.StringIO()
+with contextlib.redirect_stdout(buf_):
+    cc.run_snippet(it_['prose'])
+ok(buf_.getvalue() == '14 0\n', f'spent generator prints "14 0" (printed {buf_.getvalue()!r})')
+two(sum(x * x for x in range(4)), 3 * 4 * 7 // 6, 0, 'sum of squares 0 to 3')
+choice(CO, 'pf-idioms-spent-generator', '`14 0`')
+
+# copy-vs-move-vector-copy (C++ reading): compile and run the C++ lines; run the Python lines.
+it_ = item(CO, 'copy-vs-move-vector-copy')
+ns_ = cc.run_snippet(it_['prose'])
+ok((len(ns_['v']), len(ns_['w'])) == (4, 4) and ns_['v'] is ns_['w'], 'Python: one list of 4, two names')
+cpp_body = cc.snippet(it_['prose'], 'cpp')[0]
+out = cc.cpp('#include <cstdio>\n#include <vector>\nint main() {\n' + cpp_body + 'std::printf("%zu %zu %d\\n", v.size(), w.size(), int(v.data() != w.data()));\n}\n')
+if out is not None:
+    ok(out.split() == ['3', '4', '1'], f'C++: v has 3, w has 4, separate storage (ran: {out.strip()})')
+choice(CO, 'copy-vs-move-vector-copy', 'C++: 3 and 4. Python: 4 and 4.')
+
+# coding-2 file shape (section 2): six code, five reasoning (numeric or choice), one C++ reading choice
+kinds = [x['widget']['kind'] for x in DATA[CO]['items']]
+ok(kinds.count('code') == 6 and kinds.count('numeric') == 2 and kinds.count('choice') == 4, f'coding-2 kinds {kinds}')
+ok(sorted(x['difficulty'] for x in DATA[CO]['items']) == [2] * 3 + [3] * 7 + [4, 5], 'coding-2 difficulties: D2 3, D3 7, D4 1, D5 1')
+ok(all(x['style'] == 'coding' for x in DATA[CO]['items']), 'coding-2 style')
+
 # ---------------------------------------------------------------- whole-file checks
 allids = []
 for fn in sorted(os.listdir(BANK)):
@@ -510,11 +714,11 @@ for f in FILES:
         ok(('requires' in it) == (it['difficulty'] >= 4), f'{f}/{it["id"]}: requires only at difficulty 4 and 5')
         ok(it['source'] == 'Original' and len(it['tags']) == 1, f'{f}/{it["id"]}: source and one tag')
         ok(it['difficulty'] in (2, 3, 4, 5), f'{f}/{it["id"]}: difficulty 2 to 5')
-        blob = json.dumps(it, ensure_ascii=False)
+        blob = json.dumps(it, ensure_ascii=False).replace('!=', '')   # Python's != in code is not an exclamation mark
         ok(not re.search(r'\bpercent\b', blob.lower()) and '!' not in blob and '—' not in blob, f'{f}/{it["id"]}: voice (no percent, !, em-dash)')
 
 counts = {f: len(DATA[f]['items']) for f in FILES}
-ok(counts == {'statistics-2': 15, 'finance-2': 15, 'behavioural-6': 8}, f'item counts {counts}')
+ok(counts == {'statistics-2': 15, 'finance-2': 15, 'behavioural-6': 8, 'coding-2': 12}, f'item counts {counts}')
 
 print(f'{checks[0]} checks, {len(fails)} failed')
 sys.exit(1 if fails else 0)

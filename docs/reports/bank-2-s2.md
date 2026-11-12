@@ -87,3 +87,38 @@ Answers that differ from the brief: **0 keys; 1 slip value, 1 printed figure.**
 - `coding-2.json` waits for B2-E1 to B2-E5 (it holds the hardest code item, `gd-dp-walk-above-zero`).
 - `fi-forwards-rich-forward` shares a setup family with two `markets` items (above).
 - B2-E3, B2-E4 and B2-E5 are still open, as in session 3.
+
+## Coding file
+
+Written after engine pass AB-2: `app/content/bank/coding-2.json`, 12 items. Number checks: the coding section of `docs/reports/bank-2-s2-numbers.py`, which imports `docs/reports/bank_2_code_check.py` (session 1's runner). House style as session 1's "Coding file" section.
+
+| Step | Result |
+| --- | --- |
+| 1. Validator | `0 errors, 4857 warnings`, the baseline; no warning names `coding-2`. |
+| 2. Numbers | `<scratchpad>/venv/bin/python docs/reports/bank-2-s2-numbers.py`: `1119 checks, 0 failed`, exit 0 (749 before), about 26 s. A planted wrong expect (16,795 for 16,796) fails it three ways. The script's voice check now ignores Python's `!=`. |
+| 3. Playthrough | `--bank coding-2 --local-cdn <pkgs>`: 12 of 12, 6 starters fail first, `All passed.`; `--mobile --why`: 24 of 24 at 1280 and 440 px, 16 slip lines shown at each width. `--routes-only`: `All passed.` |
+| 4. Freshness | `fresh-check.mjs --bank coding-2`: 0 hits; one stem advisory, then at `--min-run 8 --min-share 0` one hit, against `coding-int/review-4` items[2] (a multi that asks which inputs are edge cases of `second_largest`; run 9, share 0.27). The task differs (choose tests, not write the function); the prose was rewritten and the hit is gone at every setting. |
+| 5. Voice | 0 and 0 on the bank folder. |
+| 6. Wrong answers route | `--why`: 4 `wrong` ids and 12 distractors, each shows its own line. |
+
+Counts: D2 3, D3 7, D4 1, D5 1; 6 code, 2 numeric, 4 choice; two with `requires`. Families: `pf-idioms` 2, `pf-collections` 2, `pf-functions`, `at-recursion`, `ds-arrays`, `ds-hashing`, `ds-pointers`, `gd-dp`, `edge-case-list`, `copy-vs-move` 1 each (section 3). Session 2 now totals D2 12, D3 19, D4 16, D5 3; numeric 28, choice 8, code 6, longform 8.
+
+| Item | Route B (brute force) | Near-misses run, and the tests they fail |
+| --- | --- | --- |
+| pf-idioms-argmax-last | `max` over the reversed list | `xs.index(max(xs))` gives 1; strict `>`; `max` over indices (each 1, 5 to 8) |
+| edge-case-list-second-largest | `sorted(set(xs))` with a length check | `sorted(xs)[-2]` gives 5 and 2 (1 to 3, 5, 7, 8); distinct, no guard (2, 3, 5); guarded, repeats kept (1, 3, 7, 8) |
+| ds-pointers-merge-ticks | stable sort on the time alone | `sorted(a + b)`; two pointers with `<`; `heapq.merge` on whole tuples (each 1, 5, 8) |
+| ds-arrays-round-trips | `accumulate` positions | every zero position gives 4 and 2 (1, 2, 7); crossings counted too (4) |
+| pf-collections-top-symbols | `Counter` and `heapq.nsmallest` | stable sort by total alone; `most_common` (each 1, 2, 4, 7); reverse on (total, symbol) (1, 2, 4, 7, 8) |
+| gd-dp-walk-above-zero | depth-first count to n = 22, ballot formula above | all $2^n$ paths listed, and depth-first pruned at -1: both out of time at n = 60 (8, 9); the floor left out (2 to 9); unreachable ends kept (2 to 5) |
+
+Reasoning items run their own lines: `max(d, key=d.get)` is "to" (the later tie "be" and the last key "not" checked); the lambdas give 36, and binding i early gives 33; an instrumented `f` makes 13 calls (6 that add, 7 that return 1); the snippet prints `14 0`. `ds-hashing-list-membership` runs its own lines on 2,000 ids of a type that counts `==`: $n(n-1)/2$ comparisons for the list, a tuple and a re-sorted list, none for the set; $0 + 1 + \dots + 19{,}999 = 199{,}990{,}000$ two ways. The C++ item compiles its lines with `g++ -std=c++20` and prints sizes 3 and 4 with separate storage; the Python lines give one list of 4.
+
+**Differences from section 5: 0 keys; 3 items.**
+
+- `pf-collections-top-symbols`: real tickers (`VOD`, `BP`, `AZN`, `HSBA`) replaced by invented ones (`TUV`, `FGH`, `BCD`, `MNO`) in the same pattern, rule 2. The answers read `["BCD", "FGH"]` and `["BCD", "FGH", "TUV"]`; the trap still gives the first-appearance order.
+- `gd-dp-walk-above-zero`: the hidden tests add n = 60 (Catalan 30 at 0, $\binom{60}{30}$ in all) and the prose says n reaches 60. In CPython, listing all $2^{22}$ paths ran inside the 5 s limit and a pruned depth-first count passes n = 22 easily, so n = 22 alone does not force the table method. n = 22 stays as a test.
+- `ds-hashing-list-membership`: the brief's dedupe loop is in `contests/l2-limits-to-complexity` (a step-count question), so the snippet counts repeats with `if x in seen`, as the brief's wording has it. The timing figures were dropped for a comparison count the script reproduces.
+- Also: `second_largest` prose reworded for freshness (above).
+
+**Freshness by hand:** none of the six function names occurs in a drill or a course code item; `lambda x: x + i`, `"to be or not"`, `n // 3`, `auto w = v` and `sum(g)` occur nowhere else in content.
