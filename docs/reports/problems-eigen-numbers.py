@@ -99,6 +99,18 @@ def parse_entry(s):
 def parse_obj(s):
     """'(a, b)', '[a, b]' or '[[a, b], [c, d]]' -> sympy Matrix (a vector as one row)."""
     s = s.strip()
+    terms, depth, cur = [], 0, ''
+    for ch in s:                                   # a sum of terms such as 16(3, 1) + (2, 1)
+        depth += ch in '([{'
+        depth -= ch in ')]}'
+        if ch == '+' and depth == 0 and cur.strip():
+            terms.append(cur)
+            cur = ''
+        else:
+            cur += ch
+    terms.append(cur)
+    if len(terms) > 1:
+        return sum((parse_obj(x) for x in terms[1:]), parse_obj(terms[0]))
     m = re.match(r'^(.+?)\s*([\(\[][^()\[\]]*[\)\]])$', s)
     if m:
         return parse_entry(m.group(1)) * parse_obj(m.group(2))
@@ -300,6 +312,8 @@ ok(len(fails) == _n + 2 and 'false step' in fails[_n] and '47' in fails[_n + 1],
 del fails[_n:_n + 2]
 ok(same(parse_obj(r'\frac{1}{5}(3, 2)'), M([[R(3, 5), R(2, 5)]])) and same(parse_obj('0.25(1, 2, 1)'), M([[R(1, 4), R(1, 2), R(1, 4)]])),
    'self-test: a number in front of a vector is multiplied in')
+ok(same(parse_obj('16(3, 1) + (2, 1)'), M([[50, 17]])) and same(parse_obj('(48, 16) + (2, 1)'), M([[50, 17]])),
+   'self-test: a number times a vector plus a vector is added up')
 
 
 def scaled(x, entry=-1):
@@ -438,7 +452,7 @@ if I:
     lab = M([(Lf * xa)[0] / xa[0], (Lf * xb)[0] / xb[0]])
     lvals = sorted(np.linalg.eigvals(npf(Lf)).real)
     obj(I, iid, 4, lab, [lvals[0], lvals[1]],
-        {'kept-m': M([la, 0]), 'no-half': 2 * lab, 'halved-only': M([la / 2, 0])})
+        {'kept-m': M([la, 0]), 'no-half': 2 * lab, 'halved-only': M([la / 2, 0]), 'order': M([lab[1], lab[0]])})
     ok(e1 == s + h * xb + R(1, 4) * xa, 'frog: start split')
     p3 = (Lf ** 3 * e1)[0]
     num(I, iid, 5, p3, (np.linalg.matrix_power(npf(Lf), 3) @ np.array([1.0, 0, 0]))[0],
@@ -500,38 +514,67 @@ if I:
     vocab(I, iid, [A, 13, A.det(), 40, 36, 6, 9, area, sp.pi * 36, 2 * half])
     arith(I, iid)
 
-    # ---- p-river-gauges
+    # ---- p-river-gauges (re-authored in the fix pass: strain gauges on a cable, pivots and a null mix, K with c unknown)
     iid = 'p-river-gauges'
-    r = sp.Symbol('r')
-    e8 = R(8, 10)
-    Cr = M([[1, e8, r], [e8, 1, e8], [r, e8, 1]])
-    num(I, iid, 1, Cr[:2, :2].det(), np.linalg.det(np.array([[1, 0.8], [0.8, 1]])), {'plus': 1 + e8 ** 2, 'no-square': 1 - e8})
-    dC = sp.expand(Cr.det())
-    poly(I, iid, 2, dC, [(t, np.linalg.det(npf(Cr.subs(r, t)))) for t in (0.1, 0.5, 0.9)],
-         {'cross-sign': -r ** 2 - R(128, 100) * r - R(28, 100), 'no-square': R(128, 100) * r - R(28, 100)})
-    ok(sp.expand(Cr.det() - (Cr[:2, :2].det() - e8 * (e8 - e8 * r) + r * (e8 * e8 - r))) == 0, 'gauges: stated expansion')
-    roots = sorted(sp.solve(dC, r))
-    lo, hi = 0.0, 0.6                                               # route 2: bisection on the smallest NumPy eigenvalue
-    for _ in range(60):
-        mid = (lo + hi) / 2
-        lo, hi = (mid, hi) if np.linalg.eigvalsh(npf(Cr.subs(r, mid)))[0] <= 0 else (lo, mid)
-    num(I, iid, 3, roots[0], hi, {'other-root': roots[1], 'carried': max(sp.solve(-r ** 2 - R(128, 100) * r - R(28, 100), r))})
-    ok(roots == [R(28, 100), 1] and sp.sqrt(R(16384, 10000) - R(112, 100)) == R(72, 100), 'gauges: roots 0.28 and 1, root 0.72')
-    Cb = Cr.subs(r, roots[0])
-    wv = null1(Cb, 0)
-    _, _, vt = np.linalg.svd(npf(Cb))
-    num(I, iid, 4, wv[1], vt[-1][1] / vt[-1][0], {'dropped-sign': -wv[1], 'no-r': -1 / e8})
-    ok(wv[2] == 1 and Cb * wv == sp.zeros(3, 1), 'gauges: w = (1, a, 1) is the null vector')
-    C2 = Cr.subs(r, R(2, 10))
-    var = (wv.T * C2 * wv)[0]
-    sq = sum(t ** 2 for t in wv)
-    cross = sum(wv[i] * wv[j] * C2[i, j] for i in range(3) for j in range(i + 1, 3))
-    num(I, iid, 5, var, npf(wv).ravel() @ npf(C2) @ npf(wv).ravel(),
-        {'dropped-sign': -var, 'bound': (wv.T * Cb * wv)[0], 'no-double': sq + cross})
-    ok(sp.expand((wv.T * Cr * wv)[0] - (2 * r - R(56, 100))) == 0, 'gauges: w^T C w = 2r - 0.56')
-    vocab(I, iid, [e8 ** 2, 1 - e8 ** 2, R(128, 100), R(28, 100), R(64, 100), R(16384, 10000), R(112, 100), R(72, 100),
-                   wv, sq, cross, 2 * R(2, 10), R(56, 100), var, 0.2, 2 * cross, sq - 1, R(128, 100) / e8, 1 + roots[0], wv[1] ** 2])
+    c = sp.Symbol('c')
+    K = M([[4, 2, 1], [2, 3, 1], [1, 1, c]])
+    Kn = lambda cv: np.array([[4, 2, 1], [2, 3, 1], [1, 1, cv]], dtype=float)
+    # part 1: the second pivot. Route 1 exact elimination; route 2 the corner determinant over the first pivot, and NumPy's LU-free check
+    m21 = R(2, 4)
+    piv2 = K[1, 1] - m21 * K[0, 1]
+    num(I, iid, 1, piv2, np.linalg.det(Kn(0)[:2, :2]) / 4.0, {'multiplier-one': K[1, 1] - K[0, 1], 'multiplier-two': K[1, 1] - 2 * K[0, 1]})
+    ok(K[:2, :2].det() == 8 and 4 * piv2 == 12 - 4, 'gauges: corner determinant 8 = 4 x 2 = 12 - 4')
+    # part 2: the third pivot c - d. Route 1 exact elimination; route 2 det K / corner determinant, with det K from NumPy at three values of c
+    r2 = [0, piv2, K[1, 2] - m21 * K[0, 2]]
+    ok(r2 == [0, 2, R(1, 2)], 'gauges: row 2 after step 1 is (0, 2, 0.5)')
+    r3 = [0, K[2, 1] - R(1, 4) * K[0, 1], K[2, 2] - R(1, 4) * K[0, 2]]
+    ok(r3 == [0, R(1, 2), c - R(1, 4)], 'gauges: row 3 after step 1 is (0, 0.5, c - 0.25)')
+    m32 = r3[1] / r2[1]
+    piv3 = sp.expand(r3[2] - m32 * r2[2])
+    dval = -(piv3 - c)
+    ok(m32 == R(1, 4), 'gauges: second multiplier 0.5 / 2 = 0.25')
+    detK = sp.expand(K.det())
+    ok(detK == 8 * c - 3 and sp.expand(4 * piv2 * piv3 - detK) == 0, 'gauges: det K = 8c - 3 = 4 x 2 x (c - 0.375)')
+    d_np = [-(np.linalg.det(Kn(cv)) / np.linalg.det(Kn(0)[:2, :2]) - cv) for cv in (0.0, 0.5, 2.0)]
+    ok(np.allclose(d_np, 0.375), 'gauges: NumPy det K over the corner determinant gives c - 0.375 at three values of c')
+    num(I, iid, 2, dval, d_np[1], {'one-step': -(r3[2] - c), 'big-multiplier': -((r3[2] - r2[2] * r2[2]) - c),
+                                   'added': -((r3[2] + m32 * r2[2]) - c)})
+    # part 3: the null vector at c = 0.375. Route 1 exact nullspace scaled to a last entry of 1; route 2 the last right singular vector
+    Kb = K.subs(c, dval)
+    wv = null1(Kb)
+    _, _, vt = np.linalg.svd(Kn(float(dval)))
+    obj(I, iid, 3, wv, vt[-1] / vt[-1][-1],
+        {'sign': M([-wv[0], -wv[1], 1]), 'swapped': M([wv[1], wv[0], 1]), 'no-b': M([-R(1, 4), wv[1], 1])})
+    ok(wv == M([-R(1, 8), -R(1, 4), 1]) and Kb * wv == sp.zeros(3, 1), 'gauges: w = (-0.125, -0.25, 1) and K(0.375) w = 0')
+    ok(Kb.rank() == 2 and all(x > 0 for x in (Kb[:1, :1].det(), Kb[:2, :2].det())), 'gauges: K(0.375) is singular with positive leading minors above it')
+    # part 4: w^T K w at the planned c = 0.5. Route 1 exact; route 2 NumPy; each slip from its own recipe
+    C5 = R(1, 2)
+    K5 = K.subs(c, C5)
+    var4 = (wv.T * K5 * wv)[0]
+    ok(K5 * wv == M([0, 0, R(1, 8)]), 'gauges: K(0.5) w = (0, 0, 0.125)')
+    wn = np.array([-0.125, -0.25, 1.0])
+    num(I, iid, 4, var4, wn @ Kn(0.5) @ wn,
+        {'c-only': C5, 'sign': (M([-wv[0], -wv[1], 1]).T * K5 * M([-wv[0], -wv[1], 1]))[0], 'boundary': dval})
+    ok(sp.expand((wv.T * K * wv)[0] - (c - R(3, 8))) == 0, 'gauges: w^T K w = c - 0.375')
+    # part 5: the share explained. Route 1 exact fractions; route 2 the R-squared of C on A and B from the covariance matrix with NumPy
+    share = 1 - var4 / C5
+    Kc = Kn(0.5)
+    beta = np.linalg.solve(Kc[:2, :2], Kc[:2, 2])
+    r2_np = beta @ Kc[:2, 2] / Kc[2, 2]
+    num(I, iid, 5, share, r2_np, {'unexplained': var4 / C5, 'not-scaled': 1 - var4})
+    ok(np.allclose(beta, [0.125, 0.25]) and share == (R(3, 8)) / C5, 'gauges: C = 0.125A + 0.25B in the regression, and the share is 0.375 / c')
+    # the planned c and the boundary give a model that is positive definite
+    ok(np.linalg.eigvalsh(Kn(0.5)).min() > 0 and np.linalg.eigvalsh(Kn(0.375)).min() < 1e-12, 'gauges: positive definite at c = 0.5, singular at c = 0.375')
+    vocab(I, iid, [K, 12, 8, piv2, r2, r3, R(1, 4), R(1, 8), m32, dval, R(1, 4) + R(1, 8), piv3, detK, wv, Kb * wv, 0.5, K5 * wv, var4, K5 * wv,
+                   R(3, 8), share, var4 / C5, R(3, 8) / C5, C5 - var4, 4 * R(-1, 8), 2 * R(-1, 4), R(-1, 8) * 2, 3 * R(-1, 4), -R(1, 8) - R(1, 4) + C5,
+                   -R(1, 8) - R(1, 4) + R(3, 8), 1 - var4, 0.5 / 2, R(1, 2) * R(1, 2), 0.5 * 0.5])
     arith(I, iid)
+    # stale-value check: nothing of the old river-gauges item (r = 0.2, correlation 0.8, bound 0.28, w = (1, -1.6, 1)) is left
+    old_tokens = [r'0\.28', r'1\.28', r'1\.6(?!\d)', r'-0\.16', r'0\.36', r'0\.64', r'0\.72', r'0\.8(?!\d)', r'r = 0\.2', r'correlation', r'2\.56', r'4\.56', r'standardis']
+    blob = ' '.join(t for _, t in strings(I[iid]))
+    for tok in old_tokens:
+        ok(not re.search(tok, blob), f'{iid}: stale token {tok} still in the item')
+    ok(re.search(r'\\begin\{pmatrix\} 4 & 2 & 1', I[iid]['prose']) is not None, 'gauges: the new matrix is in the prose')
 
     # ---- p-tank-thermometers
     iid = 'p-tank-thermometers'
@@ -550,16 +593,22 @@ if I:
     w = one / 3
     v4 = (w.T * S * w)[0]
     num(I, iid, 4, v4, npf(w).ravel() @ npf(S) @ npf(w).ravel(), {'no-length': l1, 'ninth': l1 / 9})
-    wt = M([R(1, 2), R(3, 10), R(2, 10)])
+    wt = M([R(6, 10), R(25, 100), R(15, 100)])
     dd = wt - w
-    ok(sum(dd) == 0 and dd == M([R(1, 6), R(-1, 30), R(-2, 15)]) and dd.dot(dd) == R(42, 900), 'thermo: d and |d|^2')
+    ok(sum(dd) == 0 and dd == M([R(4, 15), R(-1, 12), R(-11, 60)]) and dd.dot(dd) == R(67, 600), 'thermo: d and |d|^2')
     v5 = (wt.T * S * wt)[0]
     ok(v5 == v4 + l2 * dd.dot(dd), 'thermo: the two parts add')
     num(I, iid, 5, v5, npf(wt).ravel() @ npf(S) @ npf(wt).ravel(),
         {'no-eigenvalue': v4 + dd.dot(dd), 'd-only': l2 * dd.dot(dd), 'no-cov': 3 * wt.dot(wt)})
-    ok(wt.dot(wt) == R(38, 100) and wt[0] * wt[1] + wt[0] * wt[2] + wt[1] * wt[2] == R(31, 100), 'thermo: 0.38 and 0.31')
-    vocab(I, iid, [S * one, S * xb, S.trace(), l3, v4, w.dot(w), dd, dd.dot(dd), 900, 42, v5, l2 * dd.dot(dd), R(38, 100),
-                   R(31, 100), 3 * R(38, 100), 2 * R(31, 100), wt, R(15, 100), R(1, 10), R(6, 100), 0.1, 6, 30, 15])
+    ok(v5 == R(189, 100) and wt.dot(wt) == R(445, 1000) and wt[0] * wt[1] + wt[0] * wt[2] + wt[1] * wt[2] == R(2775, 10000), 'thermo: 1.89, 0.445 and 0.2775')
+    ok(abs(float(3 * wt.dot(wt)) - 1.335) < 1e-12 and abs(float(2 * (wt[0] * wt[1] + wt[0] * wt[2] + wt[1] * wt[2])) - 0.555) < 1e-12, 'thermo: 1.335 and 0.555')
+    stale = [r'0\.0467', r'0\.093', r'0\.62', r'0\.38', r'0\.31', r'1\.76', r'0\.5, 0\.3', r'0\.06']
+    blob = ' '.join(t for _, t in strings(I[iid]))
+    for tok in stale:
+        ok(not re.search(tok, blob), f'{iid}: stale token {tok} from the old weights')
+    vocab(I, iid, [S * one, S * xb, S.trace(), l3, v4, w.dot(w), dd, dd.dot(dd), 600, 67, 12, 11, 60, v5, l2 * dd.dot(dd), R(445, 1000),
+                   R(2775, 10000), 3 * R(445, 1000), 2 * R(2775, 10000), wt, R(15, 100), R(9, 100), R(375, 10000), 0.1, 6, 30, 15,
+                   round(float(dd.dot(dd)), 4), round(float(2 * dd.dot(dd)), 3), 2 * (wt[0] * wt[1] + wt[0] * wt[2] + wt[1] * wt[2])])
     arith(I, iid)
 
 
@@ -611,6 +660,10 @@ if I:
            {'diagonal': [130, R(365, 2)], 'over-n': list((Sg * 4 / 5).eigenvals().keys())})
     vecs_printed = np.array([[0.8, -0.6], [-0.6, -0.8]])
     ok(np.allclose(Cn @ vecs_printed, vecs_printed @ np.diag([62.5, 250])), 'crabs: the printed eigh output is valid')
+    _vals_np, _vecs_np = np.linalg.eigh(Cn)
+    ok(np.allclose(_vals_np, [62.5, 250]) and all(np.allclose(abs(_vecs_np[:, j]), abs(vecs_printed[:, j])) for j in (0, 1)), 'crabs: eigh gives the printed columns up to a sign')
+    ok(any(np.allclose(_vecs_np[:, j], -vecs_printed[:, j]) for j in (0, 1)), 'crabs: this NumPy returns a sign different from the colleague run, so part 3 must say it was a colleague run')
+    ok('colleague' in part(I, iid, 3)['question'] and 'either sign' in part(I, iid, 3)['question'], 'crabs: part 3 words the output as a colleague run and says a sign may differ')
     pc = null1(Sg - 250 * sp.eye(2))
     pc = pc / pc.norm()
     pc = pc * (1 if abs(pc[1]) >= abs(pc[0]) and pc[1] > 0 or abs(pc[0]) > abs(pc[1]) and pc[0] > 0 else -1)
@@ -624,9 +677,18 @@ if I:
     zs = z1 / sp.sqrt(250)
     num(I, iid, 5, zs, scores[0] / np.std(scores, ddof=1),
         {'variance': z1 / 250, 'total': z1 / sp.sqrt(Sg.trace()), 'pc2-sd': z1 / sp.sqrt(R(125, 2))})
+    # the value the feedback itself prints: 20 / 15.811 and 20 / 15.81 both give 1.265 to 3 places, and so does the exact value
+    ok(round(20 / 15.811, 3) == 1.265 and round(20 / 15.81, 3) == 1.265 and round(float(zs), 3) == 1.265 and round(20 / math.sqrt(250), 6) == 1.264911,
+       'crabs: 1.265 by 15.811, by 15.81 and exactly')
+    ok(round(math.sqrt(250), 3) == 15.811, 'crabs: sqrt 250 = 15.811')
+    ok(part(I, iid, 5)['widget']['answer'] == 1.265 and part(I, iid, 5)['widget']['tol']['abs'] == 0.0005 and 'places' in part(I, iid, 5)['question'], 'crabs: part 5 asks for 3 places with answer 1.265')
+    stale = [r'15\.81(?!\d)', r'1\.26(?!\d)', r'1\.13(?!\d)']
+    blob = ' '.join(t for _, t in strings(I[iid]))
+    for tok in stale:
+        ok(not re.search(tok, blob), f'{iid}: stale 2-place token {tok}')
     vocab(I, iid, [Xd, [a * b for a, b in Xd.tolist()], (Xd.T * Xd)[0, 1], 72, R(sum(a * b for a, b in zip(wd, cl)), 4), Sg,
                    Sg.trace(), 130 * R(365, 2), 8100, Sg.det(), 250, R(125, 2), pc, 4.8, 15.2, z1, 88, -5, sp.sqrt(250), zs,
-                   z1 / 250, z1 / sp.sqrt(Sg.trace()), z1 / sp.sqrt(R(125, 2)), 200, 50, 0.8, 0.6, 68 - 60, 59 - 40])
+                   z1 / 250, z1 / sp.sqrt(Sg.trace()), z1 / sp.sqrt(R(125, 2)), 200, 50, 0.8, 0.6, 68 - 60, 59 - 40, 15.811, 1.265])
     arith(I, iid)
 
     # ---- p-site-anomalies
@@ -655,7 +717,9 @@ if I:
     U2, s2, V2 = np.linalg.svd(Xc, full_matrices=False)
     Xk = U2[:, :k] @ np.diag(s2[:k]) @ V2[:k]
     num(I, iid, 4, sum(t * t for t in s[k:]), np.sum((Xc - Xk) ** 2),
-        {'unsquared': s[3], 'rank-two': s[2] ** 2 + s[3] ** 2, 'kept': sum(t * t for t in s[:3])})
+        {'unsquared': s[3], 'rank-two': s[2] ** 2 + s[3] ** 2, 'kept': sum(t * t for t in s[:3]), 'variance': lam[3]})
+    ok(lam[3] == R(3, 10) and np.isclose(np.sort(np.linalg.eigvalsh(np.cov(Xc.T)))[0], 0.3), 'sites: PC4 variance 9 / 30 = 0.3 by eigvalsh of the covariance')
+    ok('0.962' in part(I, iid, 3)['question'] and '3 components' in part(I, iid, 4)['question'], 'sites: parts 3 and 4 restate 0.962 and 3 components')
     vocab(I, iid, [[t * t for t in s], sum(t * t for t in s), lam, tot, lam[0] + lam[1], sh2, cum, sum(lam[:3]), sum(s), 31,
                    R(sum(t * t for t in s), n), R(sum(s), n - 1), R(s[0] + s[1], sum(s)), (lam[0] + lam[1]) / sum(t * t for t in s),
                    45, 1161, 99, R(9 * 100, 1170), 0.8])
