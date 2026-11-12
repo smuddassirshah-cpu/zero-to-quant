@@ -1,19 +1,18 @@
 #!/usr/bin/env node
-/* Scratch cases for the generated fluency set rules (ENGINE-BACKLOG 812, 813, 816). Copies app/ to a temp folder, writes the fixture
+/* Scratch cases for the generated fluency set rules (ENGINE-BACKLOG 812, 813, 816). Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs), writes the fixture
    set into the copy's course folder as a real set (so nothing under app/content is touched), breaks one thing per case and expects
    the validator to report it (or, for the first case, nothing). One PASS or FAIL line per case, exit 1 on a failure.
    Run from anywhere: node app/tools/test-validate-fluency.mjs */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-fluency-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = (...args) => { try { return { out: execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), ...args], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
+const h = openHarness({ name: 'fluency', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = (...args) => h.validate(args);
 const fixture = JSON.parse(fs.readFileSync(path.join(APP, 'tools/fixtures/fluency/fluency-l3-opening-brackets.json'), 'utf8'));
 delete fixture.sample; delete fixture.course;
 const dir = path.join(copy, 'content/courses/equations');

@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 /* Scratch cases for ENGINE-BACKLOG 584: a table byKey key equal to an editable cell id warns ([table-slip-key]) when that cell has wrong[] entries.
-   Copies app/ to a temp folder and edits one table screen of algo-think l1-counting-work. Run: node app/tools/test-validate-table-slip-key.mjs. Exit 1 on a failure. */
+   Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs) and edits one table screen of algo-think l1-counting-work. Run: node app/tools/test-validate-table-slip-key.mjs. Exit 1 on a failure. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-tsk-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = () => { try { return { out: execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), '--no-manifest'], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 28 }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
+const h = openHarness({ name: 'tsk', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = () => h.validate();
 const f = path.join(copy, 'content', 'courses', 'algo-think', 'l1-counting-work.json');
 const orig = fs.readFileSync(f, 'utf8');
 let fails = 0;

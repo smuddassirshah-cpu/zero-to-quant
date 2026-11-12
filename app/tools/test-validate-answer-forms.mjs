@@ -5,16 +5,15 @@
    expects the validator to report it (or, for the first cases, nothing about that screen).
    Run: node app/tools/test-validate-answer-forms.mjs. One PASS or FAIL line per case, exit 1 on a failure. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-af-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = () => { try { return execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), '--no-manifest'], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 28 }); } catch (e) { return String(e.stdout || '') + String(e.stderr || ''); } };
+const h = openHarness({ name: 'af', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = () => h.validate().out;
 const f = path.join(copy, 'content', 'courses', 'algo-think', 'l11-sorting-by-hand.json');
 const orig = fs.readFileSync(f, 'utf8');
 let fails = 0;

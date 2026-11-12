@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 /* Scratch cases for lesson `session` and the duration-prose warning (PLAN 2c item 10, ENGINE-BACKLOG 556 to 558). Part 1 tests the matcher
-   (tools/duration-prose.mjs) directly; part 2 copies app/ to a temp folder, edits one lesson per case and expects the validator to report it
+   (tools/duration-prose.mjs) directly; part 2 copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs), edits one lesson per case and expects the validator to report it
    (or, for "ok", nothing). Run from anywhere: node app/tools/test-validate-session.mjs. One PASS or FAIL line per case, exit 1 on a failure.
    The repo is never touched. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 import { durationHits, statedMinutes } from './duration-prose.mjs';
 
 let failed = 0;
@@ -29,14 +28,14 @@ report('matcher: only the first two screens', statedMinutes({ screens: [{ prose:
 
 /* Part 2: the validator on a scratch copy */
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-session-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = (extra = ['--no-manifest']) => { try { return { out: execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), ...extra], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 28 }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
+const h = openHarness({ name: 'session', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = (extra = ['--no-manifest']) => h.validate(extra);
 
 /* a lesson whose opening prose states no duration, first screen not a title-less oddity */
 const root = path.join(copy, 'content', 'courses');
-const ignore = JSON.parse(fs.readFileSync(path.join(copy, 'tools', 'duration-prose-ignore.json'), 'utf8'));
+const ignore = JSON.parse(fs.readFileSync(path.join(APP, 'tools', 'duration-prose-ignore.json'), 'utf8'));
 let target = null;
 outer: for (const cid of fs.readdirSync(root).sort()) {
   const cj = path.join(root, cid, 'course.json');

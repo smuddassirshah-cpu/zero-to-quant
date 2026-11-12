@@ -1,19 +1,18 @@
 #!/usr/bin/env node
-/* Scratch cases for the problem-set rules (ENGINE-BACKLOG 845 to 851; docs/AUTHORING.md section 5). Copies app/ to a temp folder, writes the fixture set
+/* Scratch cases for the problem-set rules (ENGINE-BACKLOG 845 to 851; docs/AUTHORING.md section 5). Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs), writes the fixture set
    (tools/fixtures/problems) into the copy's equations folder as problems-3.json (level 3 of that course), breaks one thing per case and expects the validator to
    report it (or, for the first case, nothing and a manifest entry). Nothing under app/content is touched. One PASS or FAIL line per case, exit 1 on a failure.
    Run from anywhere: node app/tools/test-validate-problems.mjs */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-problems-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = (...args) => { try { return { out: execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), ...args], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
+const h = openHarness({ name: 'problems', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = (...args) => h.validate(args);
 const fixture = JSON.parse(fs.readFileSync(path.join(APP, 'tools/fixtures/problems/problems-fixture-3.json'), 'utf8'));
 const dir = path.join(copy, 'content/courses/equations');
 fs.rmSync(path.join(copy, 'tools/fixtures/problems'), { recursive: true, force: true });   // the copy holds only the case's set

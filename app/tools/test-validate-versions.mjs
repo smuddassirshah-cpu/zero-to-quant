@@ -1,19 +1,17 @@
 #!/usr/bin/env node
-/* Scratch cases for the mock-version rules (ENGINE-BACKLOG 547). Copies app/ to a temp folder, applies tools/apply-item6-content.mjs
+/* Scratch cases for the mock-version rules (ENGINE-BACKLOG 547). Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs). The mini root already holds the versions
    there (so the copy is valid), then breaks one thing per case and expects the validator to report it (or, for "ok", nothing).
    Run from anywhere: node app/tools/test-validate-versions.mjs. One PASS or FAIL line per case, exit 1 on a failure. The repo is never touched. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-versions-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = (cmd, args) => { try { return { out: execFileSync('node', [path.join(copy, 'tools', cmd), ...args], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
-run('apply-item6-content.mjs', []);
+const h = openHarness({ name: 'versions' });   // a scratch copy of tools/fixtures/mini-app, which already holds the -2 and -3 versions that apply-item6-content.mjs writes into the real exams
+const tmp = h.dir;
+const copy = h.dir;
+const run = (cmd, args) => h.validate(args);
 const exam = (id) => path.join(copy, 'content', 'exams', id + '.json');
 const prepFile = path.join(copy, 'content', 'prep.json');
 const edit = (f, fn) => { const j = JSON.parse(fs.readFileSync(f, 'utf8')); fn(j); fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n'); };
