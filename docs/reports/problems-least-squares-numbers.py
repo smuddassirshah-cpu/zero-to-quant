@@ -500,6 +500,105 @@ if I:
     arith(I, iid)
 
 
+# ======================================================== level 3: least squares
+def r2_exact(y, yhat):
+    ybar = sum(y) / len(y)
+    return 1 - sum((a - b) ** 2 for a, b in zip(y, yhat)) / sum((a - ybar) ** 2 for a in y)
+
+
+I = load(3)
+if I:
+    # ---- p-runner-heart
+    iid = 'p-runner-heart'
+    xs = [8, 9, 10, 11, 12]
+    ys = [128, 135, 139, 146, 152]
+    xbar, ybar = R(sum(xs), 5), R(sum(ys), 5)
+    dx = [x - xbar for x in xs]
+    dy = [y - ybar for y in ys]
+    sxy = sum(a * b for a, b in zip(dx, dy))
+    sxx = sum(a * a for a in dx)
+    xv, yv = np.array(xs, dtype=float), np.array(ys, dtype=float)
+    num(I, iid, 1, sxy, np.cov(xv, yv, ddof=0)[0, 1] * 5, {'uncentred': sum(a * b for a, b in zip(xs, ys)), 'sxx': sxx})
+    be = sxy / sxx
+    pf = np.polyfit(xv, yv, 1)
+    num(I, iid, 2, be, pf[0], {'over-n': sxy / 5, 'upside-down': sxx / sxy})
+    al = ybar - be * xbar
+    num(I, iid, 3, al, pf[1], {'sign': ybar + be * xbar, 'no-xbar': ybar - be})
+    A5 = M([[1, x] for x in xs])
+    ok((A5.T * A5).LUsolve(A5.T * M(ys)) == M([al, be]), 'runner: the normal equations give (81, 5.9)')
+    xs6, ys6 = xs + [10], ys + [146]
+    A6 = M([[1, x] for x in xs6])
+    fit6 = (A6.T * A6).LUsolve(A6.T * M(ys6))
+    pf6 = np.polyfit(np.array(xs6, dtype=float), np.array(ys6, dtype=float), 1)
+    ok(fit6[1] == be and math.isclose(pf6[0], float(be)), 'runner: the slope stays 5.9 with the sixth run')
+    ok(146 - (al + be * 10) == 6, 'runner: the sixth run is 6 above the line')
+    pick(I, iid, 4, 'same')
+    num(I, iid, 5, fit6[0], pf6[1], {'old': al, 'full-shift': al + 6, 'mean-only': R(sum(ys6), 6)})
+    vocab(I, iid, [xbar, ybar, dx, dy, [a * b for a, b in zip(dx, dy)], sxy, sxx, sum(ys), sum(a * b for a, b in zip(xs, ys)),
+                   be, sxy / 5, sxx / sxy, be * xbar, al, ybar + be * xbar, ybar - be, R(sum(ys6), 6), fit6[0], al + 6,
+                   146 - (al + be * 10), [a * a for a in dx]])
+    arith(I, iid)
+
+    # ---- p-ramp-ball
+    iid = 'p-ramp-ball'
+    A = M([[1, 1], [1, 4], [1, 9]])
+    b = M([R(65, 10), R(202, 10), R(463, 10)])
+    y = A.T.nullspace()[0]
+    y = 5 * y / y[0]
+    yn = nullvec_np(A.T)
+    yn = 5 * yn / yn[0]
+    num(I, iid, 1, y[1], yn[1], {'sign': -y[1]})
+    ok(y[2] == 3, 'ramp: y = (5, -8, 3)')
+    e = (b.dot(y) / y.dot(y)) * y
+    xl = np.linalg.lstsq(npf(A), npf(b).ravel(), rcond=None)[0]
+    obj(I, iid, 2, e, npf(b).ravel() - npf(A) @ xl, {'no-divide': b.dot(y) * y, 'gave-p': b - e})
+    p = b - e
+    xh = A[:2, :].LUsolve(p[:2, :])
+    ok(A * xh == p, 'ramp: p is in C(A)')
+    obj(I, iid, 3, xh, xl, {'swapped': M([xh[1], xh[0]])})
+    ok(A.T * A == M([[3, 14], [14, 98]]) and A.T * b == M([73, 504]) and (A.T * A) * xh == A.T * b, 'ramp: stated normal equations')
+    pred = xh[0] + xh[1] * 25
+    num(I, iid, 4, pred, np.array([1.0, 25.0]) @ xl,
+        {'t-not-squared': xh[0] + xh[1] * 5, 'no-intercept': xh[1] * 25, 'swapped': xh[1] + xh[0] * 25})
+    vocab(I, iid, [y, b.dot(y), y.dot(y), b.dot(y) / y.dot(y), e, b.dot(y) * y, p, xh, b[0] * y[0], b[1] * y[1], b[2] * y[2],
+                   4 * y[1], 9 * y[2], A.T * A, A.T * b, pred, 25, xh[1] * 25, xh[0] + xh[1] * 5, xh[1] + xh[0] * 25, 9 * xh[1]])
+    arith(I, iid)
+
+    # ---- p-gas-hubs
+    iid = 'p-gas-hubs'
+    t = M([-1, 0, 1, 2, 3])
+    yN = M([R(7, 2), 0, R(-1, 2), -3, -5])
+    yS = M([2, 1, -2, -2, -4])
+    A = M.hstack(sp.ones(5, 1), t)
+    An = npf(A)
+    G = A.T * A
+    num(I, iid, 1, G[1, 1], (An.T @ An)[1, 1], {'sum': sum(t), 'sum-squared': sum(t) ** 2})
+    ok(G == M([[5, 5], [5, 15]]) and A.T * yN == M([-5, -25]) and A.T * yS == M([-5, -20]), 'hubs: printed arrays')
+    xN = G.LUsolve(A.T * yN)
+    xS = G.LUsolve(A.T * yS)
+    lN = np.linalg.lstsq(An, npf(yN).ravel(), rcond=None)[0]
+    lS = np.linalg.lstsq(An, npf(yS).ravel(), rcond=None)[0]
+    diag = lambda v: M([v[0] / G[0, 0], v[1] / G[1, 1]])
+    obj(I, iid, 2, xN, lN, {'diagonal': diag(A.T * yN), 'swapped': M([xN[1], xN[0]]), 'no-sign': M([xN[0], -xN[1]])})
+    obj(I, iid, 3, xS, lS, {'diagonal': diag(A.T * yS), 'no-sign': M([xS[0], -xS[1]])})
+    sprd = yN - yS
+    lD = np.linalg.lstsq(An, npf(sprd).ravel(), rcond=None)[0]   # route 2: fit the spread directly
+    obj(I, iid, 4, xN - xS, lD, {'added': xN + xS, 'reversed': xS - xN})
+    fit = A * (xN - xS)
+    eD = sprd - fit
+    ok(list(sprd) == [R(3, 2), -1, R(3, 2), -1, -1] and sum(sprd) == 0, 'hubs: stated spread, mean 0')
+    eN, eS = yN - A * xN, yS - A * xS
+    sstD = sum((v - sum(sprd) / 5) ** 2 for v in sprd)
+    sseD = eD.dot(eD)
+    num(I, iid, 5, r2_exact(list(sprd), list(fit)), np.corrcoef(npf(t).ravel(), npf(sprd).ravel())[0, 1] ** 2,
+        {'ratio': sseD / sstD, 'added-sse': 1 - (eN.dot(eN) + eS.dot(eS)) / sstD, 'hub-n': r2_exact(list(yN), list(A * xN))})
+    sstN = sum((v - sum(yN) / 5) ** 2 for v in yN)
+    vocab(I, iid, [t, yN, yS, G, A.T * yN, A.T * yS, xN, xS, diag(A.T * yN), diag(A.T * yS), xN - xS, xN + xS, sprd, fit, eD,
+                   sseD, sstD, r2_exact(list(sprd), list(fit)), sseD / sstD, eN.dot(eN), eS.dot(eS), eN.dot(eN) + eS.dot(eS),
+                   1 - (eN.dot(eN) + eS.dot(eS)) / sstD, sstN, r2_exact(list(yN), list(A * xN)), 10, -20, -15, 25, 15, [v ** 2 for v in t]])
+    arith(I, iid)
+
+
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
