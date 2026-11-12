@@ -152,8 +152,7 @@
     },
     {
       "code": "def spiral_cells(rows, cols, ks):\n    def before(t):\n        return rows * cols - (rows - 2 * t) * (cols - 2 * t)\n    last = (min(rows, cols) - 1) // 2\n    out = []\n    for k in ks:\n        lo, hi = 0, last\n        while lo < hi:\n            mid = (lo + hi + 1) // 2\n            if before(mid) < k:\n                lo = mid\n            else:\n                hi = mid - 1\n        t = lo\n        p = k - before(t) - 1\n        h, w = cols - 2 * t, rows - 2 * t\n        if p < w:\n            out.append([t, t + p])\n        elif p < w + h - 1:\n            out.append([t + p - w + 1, t + w - 1])\n        elif p < 2 * w + h - 2:\n            out.append([t + h - 1, t + w - 1 - (p - w - h + 2)])\n        else:\n            out.append([t + h - 1 - (p - 2 * w - h + 3), t])\n    return out\n",
-      "slip": "Swapping the ring's height and width is right only on a square field.",
-      "nearMiss": true
+      "slip": "Swapping the ring's height and width is right only on a square field."
     },
     {
       "code": "def spiral_cells(rows, cols, ks):\n    want = {}\n    for i, k in enumerate(ks):\n        want.setdefault(k, []).append(i)\n    out = [None] * len(ks)\n    r, c, dr, dc = 0, 0, 0, 1\n    top, left, bottom, right = 0, 0, rows - 1, cols - 1\n    for step in range(1, rows * cols + 1):\n        for i in want.pop(step, []):\n            out[i] = [r, c]\n        if not want:\n            break\n        if dc == 1 and c == right:\n            dr, dc, top = 1, 0, top + 1\n        elif dr == 1 and r == bottom:\n            dr, dc, right = 0, -1, right - 1\n        elif dc == -1 and c == left:\n            dr, dc, bottom = -1, 0, bottom - 1\n        elif dr == -1 and r == top:\n            dr, dc, left = 0, 1, left + 1\n        r, c = r + dr, c + dc\n    return out\n",
@@ -161,7 +160,8 @@
     },
     {
       "code": "def spiral_cells(rows, cols, ks):\n    out = []\n    for k in ks:\n        t, h, w = 0, rows, cols\n        while h >= 2 and w >= 2 and k > 2 * (h + w) - 4:\n            k -= 2 * (h + w) - 4\n            t, h, w = t + 1, h - 2, w - 2\n        p = k - 1\n        if p < w:\n            out.append([t, t + p])\n        elif p < w + h - 1:\n            out.append([t + p - w + 1, t + w - 1])\n        elif p < 2 * w + h - 2:\n            out.append([t + h - 1, t + w - 1 - (p - w - h + 2)])\n        else:\n            out.append([t + h - 1 - (p - 2 * w - h + 3), t])\n    return out\n",
-      "slip": "Skipping one ring at a time for each step still takes $5 \\times 10^8$ rings on a large field."
+      "slip": "Skipping one ring at a time for each step still takes $5 \\times 10^8$ rings on a large field.",
+      "nearMiss": true
     },
     {
       "code": "def spiral_cells(rows, cols, ks):\n    order = sorted(range(len(ks)), key=lambda i: ks[i])\n    out = [None] * len(ks)\n    t, h, w, done = 0, rows, cols, 0\n    for i in order:\n        k = ks[i]\n        while h >= 2 and w >= 2 and k > done + 2 * (h + w) - 4:\n            done += 2 * (h + w) - 4\n            t, h, w = t + 1, h - 2, w - 2\n        p = k - done - 1\n        if p < w:\n            out[i] = [t, t + p]\n        elif p < w + h - 1:\n            out[i] = [t + p - w + 1, t + w - 1]\n        elif p < 2 * w + h - 2:\n            out[i] = [t + h - 1, t + w - 1 - (p - w - h + 2)]\n        else:\n            out[i] = [t + h - 1 - (p - 2 * w - h + 3), t]\n    return out\n",

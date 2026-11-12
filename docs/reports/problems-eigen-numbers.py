@@ -737,23 +737,25 @@ if I:
     # ---- p-linked-lagoons
     iid = 'p-linked-lagoons'
     A = M([[-4, 2], [1, -3]])
-    Mg = M([[1, 1], [0, 1]])
-    ok(Mg.inv() == M([[1, -1], [0, 1]]), 'lagoons: printed M inverse')
+    Mg = M([[1, 0], [1, 1]])
+    ok(Mg.inv() == M([[1, 0], [-1, 1]]), 'lagoons: printed M inverse')
     B = Mg.inv() * A * Mg
     Bn = np.linalg.solve(npf(Mg), npf(A) @ npf(Mg))                       # route 2: solve, not invert
-    ok(B == M([[-5, 0], [1, -2]]) and np.allclose(Bn, npf(B)), 'lagoons: B as printed')
-    ok(A * Mg == M([[-4, -2], [1, -2]]), 'lagoons: AM as printed')
+    ok(B == M([[-2, 2], [0, -5]]) and np.allclose(Bn, npf(B)), 'lagoons: B as printed')
+    ok(A * Mg == M([[-2, 2], [-2, -3]]), 'lagoons: AM as printed')
     rev = Mg * A * Mg.inv()
-    num(I, iid, 1, B[0, 0], Bn[0, 0], {'sign': -B[0, 0], 'unchanged': A[0, 0], 'reversed': rev[0, 0]})
+    num(I, iid, 1, B[1, 1], Bn[1, 1], {'sign': -B[1, 1], 'unchanged': A[1, 1], 'reversed': rev[1, 1]})
+    ok(B[1, 1] == -5 and A[1, 1] == -3 and rev[1, 1] == -1, 'lagoons: part 1 key -5, wrongs 5, -3, -1')
     lam = sp.roots(sp.Matrix(A).charpoly().as_expr())
     numset(I, iid, 2, list(B.eigenvals().keys()), eigvals_np(A),
            {'sign': [5, 2], 'trace-det': [A.trace(), A.det()], 'a-diagonal': [A[0, 0], A[1, 1]]})
     ok(sorted(lam) == [-5, -2] and A.det() == 10 and A.trace() == -7, 'lagoons: trace -7, det 10')
-    y = M([3, -1])
-    ok(B * y == -5 * y, 'lagoons: (3, -1) is an eigenvector of B for -5')
+    y = M([2, -3])
+    ok(B * y == -5 * y, 'lagoons: (2, -3) is an eigenvector of B for -5')
     x = Mg * y
     ok(A * x == -5 * x and A * x == M([-10, 5]), 'lagoons: A(2, -1) = (-10, 5)')
     obj(I, iid, 3, x, eigvec_np(A, -5, fix=0) * 2, {'inverse': Mg.inv() * y, 'unmoved': y})
+    ok(list(Mg.inv() * y) == [2, -5] and list(Mg.inv() * M([5, 2])) == [5, -3], 'lagoons: wrongs (2, -5) and (5, -3)')
     X = M([[1, 2], [1, -1]])
     u0 = M([5, 2])
     c = X.LUsolve(u0)
@@ -840,45 +842,46 @@ if I:
 
     # ---- p-machine-stops
     iid = 'p-machine-stops'
-    Q = M([[R(-1, 5), R(3, 5)], [R(1, 5), R(-3, 5)]])
+    Q = M([[R(-1, 10), R(2, 5)], [R(1, 10), R(-2, 5)]])
     ok(all(sum(Q[:, j]) == 0 for j in range(2)), 'machine: columns add to 0')
     numset(I, iid, 1, list(Q.eigenvals().keys()), eigvals_np(Q),
-           {'sign': [0, R(4, 5)], 'diagonal': [Q[0, 0], Q[1, 1]]})
-    ok(Q.det() == 0 and Q.trace() == R(-4, 5), 'machine: det 0 and trace -0.8')
+           {'sign': [0, R(1, 2)], 'diagonal': [Q[0, 0], Q[1, 1]]})
+    ok(Q.det() == 0 and Q.trace() == R(-1, 2), 'machine: det 0 and trace -0.5')
     ss = Q.nullspace()[0]; ss = ss / sum(ss)
     Pn = expm(npf(Q) * 200.0)                                                 # route 2: P(t) for large t
-    obj(I, iid, 2, ss, Pn[:, 0], {'swapped': M([ss[1], ss[0]]), 'unscaled': 4 * ss})
-    ok(R(1, 5) * ss[0] == R(3, 5) * ss[1] == R(3, 20), 'machine: balance 0.15 an hour')
+    obj(I, iid, 2, ss, Pn[:, 0], {'swapped': M([ss[1], ss[0]]), 'unscaled': 5 * ss})
+    ok(list(ss) == [R(4, 5), R(1, 5)], 'machine: steady state (0.8, 0.2)')
+    ok(R(1, 10) * ss[0] == R(2, 5) * ss[1] == R(2, 25), 'machine: balance 0.08 an hour')
     Sw = M([[0, 1], [1, 0]])
     Qp = Sw.inv() * Q * Sw
-    ok(Qp == M([[R(-3, 5), R(1, 5)], [R(3, 5), R(-1, 5)]]) and Qp.charpoly().as_expr() == Q.charpoly().as_expr(), 'machine: Q\' as printed, same polynomial')
+    ok(Qp == M([[R(-2, 5), R(1, 10)], [R(2, 5), R(-1, 10)]]) and Qp.charpoly().as_expr() == Q.charpoly().as_expr(), 'machine: Q\' as printed, same polynomial')
     ssp = Sw.inv() * ss
-    ok(Qp * ssp == M([0, 0]) and ssp == M([R(1, 4), R(3, 4)]), 'machine: team steady state (0.25, 0.75)')
-    ok(Qp * M([1, -1]) == R(-4, 5) * M([1, -1]), 'machine: (1, -1) is an eigenvector of Q\' for -0.8')
+    ok(Qp * ssp == M([0, 0]) and ssp == M([R(1, 5), R(4, 5)]), 'machine: team steady state (0.2, 0.8)')
+    ok(Qp * M([1, -1]) == R(-1, 2) * M([1, -1]), 'machine: (1, -1) is an eigenvector of Q\' for -0.5')
     pick(I, iid, 3, 'moved')
     tt = sp.Symbol('t')
-    ok(ssp + R(3, 4) * M([1, -1]) == M([1, 0]), 'machine: (1, 0) = (0.25, 0.75) + 0.75(1, -1)')
-    pS = R(1, 4) + R(3, 4) * E(R(-4, 5) * tt)
-    ok(np.isclose(float(pS.subs(tt, 3)), expm(npf(Qp) * 3.0)[0, 0]), 'machine: formula matches expm')
-    num(I, iid, 4, pS.subs(tt, 3), expm(npf(Qp) * 3.0)[0, 0],
-        {'running-chance': R(3, 4) + R(1, 4) * E(R(-12, 5)), 'no-steady': R(3, 4) * E(R(-12, 5)),
-         'restart-rate': R(1, 4) + R(3, 4) * E(R(-9, 5)), 'one-hour': pS.subs(tt, 1)})
-    ok(round(math.exp(-2.4), 4) == 0.0907 and round(0.25 + 0.75 * 0.0907, 3) == 0.318, 'machine: 0.0907 and 0.318 from it')
-    ok(np.isclose(expm(npf(Q) * 3.0)[0, 0], 0.75 + 0.25 * math.exp(-2.4)), 'machine: running-chance slip is the Running entry of P(3)')
-    tstar = sp.log(75) / R(4, 5)
+    ok(ssp + R(4, 5) * M([1, -1]) == M([1, 0]), 'machine: (1, 0) = (0.2, 0.8) + 0.8(1, -1)')
+    pS = R(1, 5) + R(4, 5) * E(R(-1, 2) * tt)
+    ok(np.isclose(float(pS.subs(tt, 5)), expm(npf(Qp) * 5.0)[0, 0]), 'machine: formula matches expm')
+    num(I, iid, 4, pS.subs(tt, 5), expm(npf(Qp) * 5.0)[0, 0],
+        {'running-chance': R(4, 5) + R(1, 5) * E(R(-5, 2)), 'no-steady': R(4, 5) * E(R(-5, 2)),
+         'restart-rate': R(1, 5) + R(4, 5) * E(R(-2, 1)), 'one-hour': pS.subs(tt, 1)})
+    ok(round(math.exp(-2.5), 4) == 0.0821 and round(0.2 + 0.8 * 0.0821, 3) == 0.266, 'machine: 0.0821 and 0.266 from it')
+    ok(np.isclose(expm(npf(Q) * 5.0)[0, 0], 0.8 + 0.2 * math.exp(-2.5)), 'machine: running-chance slip is the Running entry of P(5)')
+    tstar = sp.log(80) / R(1, 2)
     # route 2: bisection on the expm entry
     lo, hi = 0.0, 50.0
     for _ in range(100):
         mid = (lo + hi) / 2
-        if expm(npf(Qp) * mid)[0, 0] - 0.25 > 0.01:
+        if expm(npf(Qp) * mid)[0, 0] - 0.2 > 0.01:
             lo = mid
         else:
             hi = mid
     num(I, iid, 5, tstar, lo,
-        {'running-start': sp.log(25) / R(4, 5), 'no-coefficient': sp.log(100) / R(4, 5),
-         'restart-rate': sp.log(75) / R(3, 5), 'multiplied': sp.log(75) * R(4, 5)})
-    ok(round(math.log(75), 3) == 4.317 and round(4.317 / 0.8, 2) == 5.40, 'machine: ln 75 = 4.317 and 5.40 from it')
-    vocab(I, iid, [Q, ss, Qp, ssp, 0.12, R(3, 20), pS.subs(tt, 3), 0.0907, 0.318, 0.773, 0.587, -0.8, 0.8, 75, 4.317, tstar, 5.4, 0.01, 3, R(-4, 5) * 3, R(1, 4) / R(1, 100), R(3, 4) / R(1, 100)])
+        {'running-start': sp.log(20) / R(1, 2), 'no-coefficient': sp.log(100) / R(1, 2),
+         'restart-rate': sp.log(80) / R(2, 5), 'multiplied': sp.log(80) * R(1, 2)})
+    ok(round(math.log(80), 3) == 4.382 and round(4.382 / 0.5, 2) == 8.76, 'machine: ln 80 = 4.382 and 8.76 from it')
+    vocab(I, iid, [Q, ss, Qp, ssp, 0.04, R(2, 25), pS.subs(tt, 5), 0.0821, 0.266, 0.816, 0.685, -0.5, 0.5, 80, 4.382, tstar, 8.76, 8.8, 0.01, 5, R(-1, 2) * 5, R(1, 5) / R(1, 100), R(4, 5) / R(1, 100)])
     arith(I, iid)
 
 print(f"{checks} checks, {len(fails)} failures")

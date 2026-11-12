@@ -43,7 +43,8 @@ ok(list(Mi * y) == [2, -5], 'fix 1: wrong inverse (2, -5), unmoved (2, -3)')
 ok(list(Mi * sp.Matrix([5, 2])) == [5, -3], 'fix 1: wrong w-coords of part 4 becomes (5, -3)')
 texts = {f: re.sub(r'\s+', '', open(f).read().replace('\\\\', '\\')) for f in glob.glob('app/content/courses/eigen/*.json')}
 hits = sorted(f.split('/')[-1] for f, t in texts.items() if re.search(r'-2&2\\\\0&-5|\[\[-2,2\],\[0,-5\]\]', t))
-ok(not hits, f'fix 1: the new B stands nowhere in the eigen course {hits}')
+hits = [h for h in hits if h != 'problems-4.json']
+ok(not hits, f'fix 1: the new B stands nowhere else in the eigen course {hits}')
 
 # ---- finding 2: the machine generator is twice l14's credit generator
 src = open('app/content/courses/eigen/l14-continuous-time.json').read()

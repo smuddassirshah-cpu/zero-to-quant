@@ -98,3 +98,13 @@ Sample: 12 `ci-` drills drawn at random (seed 20261112, `review-problems-eigen-4
 | `ci-van-pairs` | 2 | true | Strict `<` refuses a pair weighing exactly `cap`: the tie case missed. |
 
 Judged not a true near-miss: 1 of 12 (`ci-spiral-cells`; move the mark to plant 4, which is time-based, as `ci-target-blocks` plant 0 is). Two more are true but borderline (`ci-line-from-pairs`, `ci-rest-days`). No sign of plants marked only to quiet the validator: 11 of 12 are the target method short by one case or one order.
+
+## Fix pass
+
+- Finding 1 fixed: `p-linked-lagoons` now uses M = (1 0; 1 1), M^-1 = (1 0; -1 1), w2 = u2 - u1; B = (-2 2; 0 -5) (AM = (-2 2; -2 -3)). Recomputed by sympy and by `solve`. Keys unchanged (-5; -5, -2; (2, -1); (3, 1); 0.819). Wrong values changed: part 1 `unchanged` -4 to -3, `reversed` -3 to -1 (`sign` 5 stays); part 3 `inverse` (4, -1) to (2, -5), `unmoved` (3, -1) to (2, -3); part 4 `w-coords` (3, 2) to (5, -3). Part 3's y is now (2, -3). No other eigen file holds the new B.
+- Finding 2 fixed: stop rate 0.1, restart rate 0.4, Q = (-0.1 0.4; 0.1 -0.4), part 4 at 5 hours. Graded keys changed: part 1 {0, -0.8} to {0, -0.5}; part 2 (0.75, 0.25) to (0.8, 0.2) (accept list rebuilt); part 4 0.318 to 0.266; part 5 5.40 to 8.76. Wrong values: part 1 "0, 0.8" to "0, 0.5", "-0.2, -0.6" to "-0.1, -0.4"; part 2 (0.25, 0.75) to (0.2, 0.8), (3, 1) to (4, 1); part 4 0.773/0.068/0.374/0.587 to 0.816/0.066/0.308/0.685; part 5 4.02/5.76/7.20/3.45 to 5.99/9.21/10.96/2.19. Part 3 choice: same option stays correct, text and `why` lines renumbered. Verified by exact matrix exponential, a scan in t, and the reader's numbers in `proposed.py`.
+- Finding 3 fixed: part 3 question now restates the eigenvalues 0 and -0.5 and the steady state (0.8, 0.2) with Running first.
+- Finding 4 fixed: `carried` line of `p-wind-pair` part 2 now says "a wrong $L_{22}$, such as $\sqrt{34}$ or 9". No value changed.
+- Near-miss sample: `nearMiss` moved from plant 2 to plant 4 in `app/content/drills/ci-spiral-cells.json`; `planted-check --near-miss`: 1 drill, 6 planted solutions, 0 failures.
+- Scripts: `docs/reports/problems-eigen-numbers.py` updated (new matrices, keys, slips, vocab 8.8) and exits 0 (2,189 checks, 0 failures); `mine.py` and `proposed.py` updated to the new values and exit 0 (the latter excludes problems-4 itself from its freshness grep).
+- Gates: validator 0 errors, no warning on the eigen file; `grade-all --file` 18 widgets, 0 failures; voice scan 0 and 0; playthrough `--problems eigen/problems-4` desktop and `--mobile` both All passed; `manifest.json` restored.
