@@ -36,6 +36,7 @@ except NameError:  # Pyodide runPython: the JSON files sit in the working direct
     ROOT = os.getcwd()
 if not os.path.exists(os.path.join(ROOT, 'l1-why-not-0-3.json')):
     ROOT = os.getcwd()
+ROOT = os.environ.get('PYFOUND_ROOT', ROOT)  # a scratch copy, to try fixes without touching the repo
 
 LESSONS = ['l1-why-not-0-3', 'l2-slicing', 'l3-unpacking', 'l4-one-line-lists', 'l5-lookup-by-name', 'l6-membership',
            'l7-arguments', 'l8-who-changes-the-list', 'l9-splitting-files', 'l10-reading-a-csv',
@@ -58,8 +59,20 @@ def ok(label, cond, detail='', finding=None):
         failed.append((label, detail))
 
 
-def chk(label, fn, finding=None):
-    """fn() returns a truthy value when the content's claim holds."""
+def chk(label, fn, finding=None, only_if=None, unless=None):
+    """fn() returns a truthy value when the content's claim holds.
+
+    A finding check is tied to the content: with only_if=(file, path, phrase) it counts as passed once the phrase has
+    left that string; with unless=(file, path, phrase) it counts as passed once the phrase is there. So the script
+    exits 0 when the findings are fixed, and a revert fails again.
+    """
+    global passed
+    if only_if is not None and only_if[2] not in str(node(only_if[0], only_if[1])):
+        passed += 1
+        return
+    if unless is not None and unless[2] in str(node(unless[0], unless[1])):
+        passed += 1
+        return
     try:
         res = fn()
         ok(label, bool(res), '' if res else 'claim does not hold', finding)
@@ -317,9 +330,11 @@ chk('C l1 s3 byKey: 0.1 * 3 and 0.7 + 0.1', lambda: repr(0.1 * 3) == '0.30000000
 chk('C l1 s4: the two isclose lines print True, False', lambda: math.isclose(0.1 + 0.2, 0.3) and not math.isclose(0.1 + 0.2 - 0.3, 0.0))
 chk('C l1 s4: allowed gap next to 0.3 is about 3e-10', lambda: abs(1e-9 * max(abs(s), 0.3) - 3e-10) < 1e-11)
 chk('C l1 s4 hints[1]: "on the second line the larger number is 0.0"',
-    lambda: max(abs(0.1 + 0.2 - 0.3), abs(0.0)) == 0.0, finding=1)
+    lambda: max(abs(0.1 + 0.2 - 0.3), abs(0.0)) == 0.0, finding=1,
+    only_if=('l1-why-not-0-3', 'screens[4].hints[1].text', 'the larger number is 0.0'))
 chk('C l1 s4 explain.canvas r1c2: the allowed gap on line 2 is 0',
-    lambda: 1e-9 * max(abs(0.1 + 0.2 - 0.3), abs(0.0)) == 0.0, finding=1)
+    lambda: 1e-9 * max(abs(0.1 + 0.2 - 0.3), abs(0.0)) == 0.0 and node('l1-why-not-0-3', 'screens[4].explain.canvas.values.r1c2') == '0', finding=1,
+    unless=('l1-why-not-0-3', 'screens[4].explain.canvas.values.r1c2', '10'))
 chk('C l1 s4 explain: abs_tol fixes it', lambda: math.isclose(0.1 + 0.2 - 0.3, 0.0, abs_tol=1e-9))
 chk('C l1 s8 o1: isclose(pnl, 0.0) acts like ==', lambda: all(math.isclose(x, 0.0) == (x == 0.0) for x in (0.0, 5e-17, -1e-300, 1e-9, 0.4)))
 chk('C l1 s5: a - b without abs passes test 3 wrongly', lambda: (10.00 - 10.01 < 0.005) is True)
@@ -351,7 +366,8 @@ chk('C l2 s4: prices[-0:] is the whole list', lambda: c6[-0:] == c6 and c6[len(c
 chk('C l2 s5 byKey: a slice from 0 gives [101.2, 104.0]', lambda: (c6 + [102.7, 101.9, 103.6, 105.2])[0::5] == [101.2, 104.0] and [1, 2, 3][4::5] == [])
 chk('C l2 s6/s7: assignment never copies; a slice of a list is a new list', lambda: (lambda a: (a is a, a[:] is not a, a[:] == a))([1.0, 2.0]) == (True, True, True))
 chk('C l2 s7 prose: a[:] is a "full" copy (inner lists are shared: the copy is one level deep)',
-    lambda: (lambda a: a[:][0] is not a[0])([[1.0], [2.0]]), finding=3)
+    lambda: (lambda a: a[:][0] is not a[0])([[1.0], [2.0]]), finding=3,
+    only_if=('l2-slicing', 'screens[7].prose', 'full copy'))
 chk('C l2 s9: len(range(10)[2:7]) == 5', lambda: len(list(range(10))[2:7]) == 5)
 chk('C l2 s10: means', lambda: math.isclose(sum((c6 + [102.7, 101.9, 103.6, 105.2])[-5:]), 517.4) and math.isclose(sum((c6 + [102.7, 101.9, 103.6, 105.2])[:5]) / 5, 101.40))
 chk('C l2 q0/q1: reversed copy; slice past the end; index past the end', lambda: [1, 2, 3][::-1] == [3, 2, 1] and [1, 2, 3, 4][2:10] == [3, 4] and raises(IndexError, lambda: [1, 2, 3, 4][10]) and [1, 2, 3][-1:] == [3])
@@ -382,7 +398,8 @@ def _tuple_assign():
 chk('C l3 s3: tuple item assignment raises the stated TypeError', _tuple_assign)
 chk('C l3 s5: zip stops at the shorter list', lambda: list(zip(["Mon", "Tue", "Wed"], [101.20, 99.80])) == [("Mon", 101.2), ("Tue", 99.8)])
 chk('C l3 s5 o2.why: "zip never complains about lengths" (zip(..., strict=True) raises ValueError, Python 3.10 on)',
-    lambda: not raises(ValueError, lambda: list(zip([1, 2, 3], [1, 2], strict=True))), finding=4)
+    lambda: not raises(ValueError, lambda: list(zip([1, 2, 3], [1, 2], strict=True))), finding=4,
+    only_if=('l3-unpacking', 'screens[5].widget.options[2].why', 'never complains'))
 chk('C l3 s6 byKey: dividing by the later close gives about 0.0476', lambda: abs(5 / 105 - 0.0476) < 1e-4)
 chk('C l3 s7: split gives strings; str * str is a TypeError; int ignores the newline', lambda: "VOD,72.50,100\n".split(",") == ['VOD', '72.50', '100\n'] and raises(TypeError, lambda: '72.50' * '100\n') and float('72.50') * int('100\n') == 7250.0 and '72.50' + '100' == '72.50100')
 chk('C l3 s8: join needs strings; f-string :.2f', lambda: raises(TypeError, lambda: ",".join(["VOD", 72.5])) and f"{72.5:.2f}" == '72.50' and ",".join("a,b".split(",")) == "a,b")
@@ -457,7 +474,7 @@ def _worst_case():
 
 
 chk('C l6 summary.ideas[0]: "x in s takes about one step however big s is" (average case; with clashing hashes a miss here costs 500 comparisons)',
-    _worst_case, finding=5)
+    _worst_case, finding=5, only_if=('l6-membership', 'summary.ideas[0]', 'about one step however big'))
 chk('C l6 s4 explain: a million orders: five billion against about a million', lambda: 10 ** 6 * 5000 == 5 * 10 ** 9)
 chk('C l6 s7 feedback: set() is the way to write an empty set; there is no empty-set literal', lambda: type(eval('{}')) is dict and set() == set([]))
 chk('C l6 s7: {} is a dict', lambda: type({}) is dict and type(set()) is set and type({"BP", "VOD"}) is set)
@@ -545,13 +562,16 @@ def _reset_clear():
 
 chk('C l8 s3: assigning to a parameter leaves the caller alone; clear() empties the object', _reset_clear)
 chk('C l8 s3 explain: "Methods change objects; = moves names" (str.upper changes nothing; d[k] = v and xs[0] = v change the object)',
-    lambda: (lambda xs: (xs.__setitem__(0, 9), xs)[1])([1, 2]) == [1, 2], finding=6)
+    lambda: (lambda xs: (xs.__setitem__(0, 9), xs)[1])([1, 2]) == [1, 2], finding=6,
+    only_if=('l8-who-changes-the-list', 'screens[3].explain.text', 'Methods change objects'))
 chk('C l8 s4 o1.why: "a method that changes a list in place returns None" (pop changes the list and returns the item)',
-    lambda: [1, 2, 3].pop() is None, finding=6)
+    lambda: [1, 2, 3].pop() is None, finding=6,
+    only_if=('l8-who-changes-the-list', 'screens[4].widget.options[1].why', 'A method that changes a list in place returns'))
 chk('C l8 s4: sort returns None, sorted a new list', lambda: (lambda p: (sorted(p), p.sort(), p))([4.91, 4.72]) == ([4.72, 4.91], None, [4.72, 4.91]))
 chk('C l8 s1/s9: list(a), dict(d), xs + [1] build new objects', lambda: (lambda a, d: list(a) is not a and dict(d) is not d and (a + [1]) is not a)([5, 8], {"BP": 1}))
 chk('C l8 s8 explain: with dict(book) "every change lands on the copy" (a list stored as a value is shared with the original)',
-    lambda: (lambda h: (dict(h)["BP"].append(4.91), len(h["BP"]))[1])({"BP": [4.80, 4.85]}) == 2, finding=7)
+    lambda: (lambda h: (dict(h)["BP"].append(4.91), len(h["BP"]))[1])({"BP": [4.80, 4.85]}) == 2, finding=7,
+    only_if=('l8-who-changes-the-list', 'screens[8].explain.text', 'every change lands on the copy'))
 chk('C l8 s10: book value', lambda: math.isclose(500 * 4.85 + 1000 * 0.72, 3145.0) and math.isclose(-20 * 118.50 + 300 * 4.85, -915.0))
 
 # ---- l9 modules (run with real files in a temporary folder)
@@ -617,7 +637,7 @@ def _shadow_math():
 
 
 chk('C l9 s7 explain: a file named math.py hides the real module ("the script\'s folder is searched first"); math is built in here and in Pyodide, so it is not hidden',
-    _shadow_math, finding=9)
+    _shadow_math, finding=9, unless=('l9-splitting-files', 'screens[7].explain.text', 'built into'))
 
 
 def _import_package():
@@ -636,7 +656,8 @@ def _import_package():
     return not (is_folder and built_in)
 
 
-chk('C l9 s0 byKey.q-d-c: "import only loads .py files" (a folder imports as a package; sys and math have no .py file)', _import_package, finding=8)
+chk('C l9 s0 byKey.q-d-c: "import only loads .py files" (a folder imports as a package; sys and math have no .py file)', _import_package, finding=8,
+    only_if=('l9-splitting-files', 'screens[0].feedback.byKey.q-d-c', 'only loads `.py` files'))
 chk('C l9 s3: dividing two strings raises the stated TypeError', lambda: (lambda: "105" / "100") and raises(TypeError, lambda: "105" / "100"))
 random.seed(7)
 first = [random.choice([0.99, 1.01]) for _ in range(3)]
@@ -667,7 +688,7 @@ def _global_seed_side_effect():
 
 
 chk('C l9 s10 solution: calling walk() leaves the caller\'s own random sequence untouched (it reseeds the shared generator)',
-    _global_seed_side_effect, finding=10)
+    _global_seed_side_effect, finding=10, unless=('l9-splitting-files', 'screens[10].explain.text', 'random.Random'))
 chk('C l9 q1/q3: Counter.most_common(1); int * str repeats', lambda: __import__('collections').Counter(["up", "down", "up", "up", "down"]).most_common(1) == [('up', 3)] and 3 * "2.50" == '2.502.502.50')
 
 # ---- l10 csv
@@ -688,7 +709,8 @@ chk('C l10 q2: a wrong format raises ValueError; %Y-%m-%d reads it', lambda: rai
 # ---- l11 exceptions
 chk('C l11 s0/s2: what float can and cannot read', lambda: all(raises(ValueError, lambda v=v: float(v)) for v in ("n/a", "", "1,234.50", "-")) and float(" 99.80 ") == 99.8 and raises(TypeError, lambda: float(None)))
 chk('C l11 s2 prose: "keep what float can read" keeps only prices (float also reads nan, inf and 1e5)',
-    lambda: all(raises(ValueError, lambda v=v: float(v)) for v in ("nan", "inf", "-Infinity")), finding=12)
+    lambda: all(raises(ValueError, lambda v=v: float(v)) for v in ("nan", "inf", "-Infinity")), finding=12,
+    unless=('l11-when-things-go-wrong', 'screens[2].prose', 'nan'))
 
 
 def _zde():
@@ -745,7 +767,8 @@ class _OnlyRepr:
 
 chk('C l12 s4 explain: str() falls back to __repr__ when there is no __str__', lambda: str(_OnlyRepr()) == 'R' and str([_OnlyRepr()]) == '[R]')
 chk('C l12 s4 explain: "str() and lists fall back to __repr__" (a list never tries __str__: it uses __repr__ even when __str__ exists)',
-    lambda: str([_Both()]) == '[S]', finding=13)
+    lambda: str([_Both()]) == '[S]', finding=13,
+    only_if=('l12-data-with-behaviour', 'screens[4].explain.text', '`str()` and lists fall back'))
 chk('C l12 s4 byKey: a __repr__ that prints and returns None raises TypeError', lambda: raises(TypeError, lambda: repr(type('P', (), {'__repr__': lambda self: None})())))
 
 
@@ -800,7 +823,8 @@ chk('C review-1 i0 o2.why: names the quantity that the line computes (it says "p
     lambda: 'product' not in T('review-1', 'items[0].widget.options[2].why'), finding=14)
 chk('C review-1 i4: -4.35 * 100', lambda: repr(-4.35 * 100) == '-434.99999999999994' and int(-4.35 * 100) == -434 and round(-4.35 * 100) == -435 and math.floor(-4.35 * 100) == -435)
 chk('C review-1 i6 o2.why: "only string times string fails" (string times float fails too)',
-    lambda: not raises(TypeError, lambda: '4.85' * 2.0), finding=15)
+    lambda: not raises(TypeError, lambda: '4.85' * 2.0), finding=15,
+    only_if=('review-1', 'items[6].widget.options[2].why', 'Only string times string fails'))
 
 # ---- review-2, review-3
 chk('C review-2 i7: list() as a default is still made once; a tuple has no append', lambda: (lambda f: f(1) is f(2))(eval('lambda p, history=list(): history')) and raises(AttributeError, lambda: ().append(1)))
@@ -834,7 +858,8 @@ chk('C hw1 i7 prompt: the script prints "mismatch: 0.30 vs 0.30"', lambda: sum([
 chk('C hw1 i7 model: both fixes work', lambda: abs(sum([0.10, 0.20]) - 0.30) < 0.005 and sum(round(f * 100) for f in [0.10, 0.20]) == round(0.30 * 100) and math.isclose(0.1 + 0.2 - 0.3, 0.0, abs_tol=0.005))
 chk('C hw1 i7 model: "0.30 is stored as 0.29999999999999998" is 0.30 to 17 places', lambda: ('%.17f' % 0.30) in T('homework-1', 'items[7].model'), finding=16)
 chk('C hw1 i7 model: isclose(0.1 + 0.2 - 0.3, 0.0) is False "because one billionth of 0.0 is 0" (the larger number is the drift, not 0.0)',
-    lambda: max(abs(0.1 + 0.2 - 0.3), 0.0) == 0.0, finding=16)
+    lambda: max(abs(0.1 + 0.2 - 0.3), 0.0) == 0.0, finding=16,
+    only_if=('homework-1', 'items[7].model', 'one billionth of 0.0 is 0'))
 chk('C hw1 i8 o1: an if before the for needs an else', lambda: raises(SyntaxError, lambda: compile('[t if p * q > 1000 for t, p, q in trades]', 'x', 'eval')))
 
 # ---- homework-2
@@ -879,7 +904,8 @@ def book_weights(book, prices, cash=0.0):
 
 
 chk('C hw2 i8 solution: `total == 0` returns None for a hedged book whose legs are 0.3 against 0.1 + 0.2 (weights of 1e16 come back)',
-    lambda: book_weights({"A": 1, "B": -1, "C": -1}, {"A": 0.3, "B": 0.1, "C": 0.2}) is None, finding=18)
+    lambda: book_weights({"A": 1, "B": -1, "C": -1}, {"A": 0.3, "B": 0.1, "C": 0.2}) is None, finding=18,
+    unless=('homework-2', 'items[8].explain.text', 'abs(total)'))
 chk('C hw2 i8: stated weights', lambda: math.isclose(750 / 4000, 0.1875) and math.isclose(6 / 14, 0.42857142857142855) and 6 // 14 == 0)
 
 # ---- homework-3

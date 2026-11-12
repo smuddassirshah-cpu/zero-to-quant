@@ -4,7 +4,7 @@ Scope: `app/content/courses/py-found/` l1 to l12, review-1 to review-3, homework
 
 Ledger: `docs/reports/audit-py-found-1-3-ledger.md`, 201 rows: 181 correct, 6 wrong, 11 imprecise, 3 misleading, 0 unverified. Findings: 18 (5 wrong, 10 imprecise, 3 misleading; 1 serious, 17 minor). No graded key, slip value, hidden test or model solution is wrong.
 
-Script: `docs/reports/py-found-L1-3-concepts.py` (run `python3 -I docs/reports/py-found-L1-3-concepts.py` from the repo root). Three blocks. A: all 58 Python code widgets, model solution against every example and hidden test, untouched starter against the same tests (every solution passes, every starter fails). B: 110 "what does it print" and "what happens" items; the prose block is run, the keyed option must describe the run and every other option must not, with quoted error messages compared with the real ones. C: 178 hand-written checks of claims in prose, hints, feedback and explanations, one Monte Carlo check (200,000 paths) among them. Result under CPython 3.13.18: 955 checks pass, 20 fail by design, each named `FINDING n`, 0 unexpected failures, exit 1. The same file run inside Pyodide 0.27.7 (CPython 3.12.7, the learners' runtime): 954 pass, the same 20 fail by design, 0 unexpected failures. The script exits 0 once the findings are fixed (finding 11 rests on the library reference, not on a failing check).
+Script: `docs/reports/py-found-L1-3-concepts.py` (run `python3 -I docs/reports/py-found-L1-3-concepts.py` from the repo root). Three blocks. A: all 58 Python code widgets, model solution against every example and hidden test, untouched starter against the same tests (every solution passes, every starter fails). B: 110 "what does it print" and "what happens" items; the prose block is run, the keyed option must describe the run and every other option must not, with quoted error messages compared with the real ones. C: 178 hand-written checks of claims in prose, hints, feedback and explanations, one Monte Carlo check (200,000 paths) among them. Result under CPython 3.13.18: 955 checks pass, 20 fail by design, each named `FINDING n`, 0 unexpected failures, exit 1. The same file run inside Pyodide 0.27.7 (CPython 3.12.7, the learners' runtime): 954 pass, the same 20 fail by design, 0 unexpected failures. Each `FINDING` check is tied to the string it concerns, so the script exits 0 once the fixes below are pasted in and fails again on a revert (checked by pasting every fix into a scratch copy: all old strings were found, the script then passed 975 checks and exited 0, and the voice scan at 35 gave 0 and 0). Finding 11 rests on the library reference, not on a failing check.
 
 Method: every learner-facing string in the 18 files was read. Every stated output, error name and error message was executed, not recalled, in both runtimes. Import claims were run with real files in a temporary folder. Cost claims were counted with an instrumented `__eq__`, never timed.
 
@@ -65,3 +65,38 @@ No content was changed, so no browser playthrough was run; the audit needs none.
 - `docs/reports/py-found-L1-numbers.py`: exit 1, 407 of 408 checks. `-L2-`: exit 1, 386 of 387. `-L3-`: exit 1, 178 of 179. The one failure in each is the level's performance task (homework-1 items[9], homework-2 items[8], homework-3 items[8]). It is a harness limit, not a content error: `py_found_read12.check_code` does not read `setup`, `prelude`, `compare: "raises"` or `isclose` on nested values, which the performance tasks added later. The three items pass block A of the concepts script in both runtimes and pass their own `-perf-numbers` scripts. Raised in the inbox.
 - `docs/reports/py-found-L1-3-concepts.py`: exit 1 by design, 20 `FINDING` checks, 0 unexpected failures (CPython 3.13.18 and Pyodide 0.27.7).
 - `node tools/grade-all.mjs --file <path> --local-cdn <pkgs>` on each of the 18 files: exit 0 and "0 failures" for every file (144 choice and numeric widgets). `grade-all.mjs` grades choice and numeric widgets and, by its own header, leaves code widgets out. The 58 code widgets (solution passes, starter fails) were therefore run by block A of the concepts script, under CPython and under Pyodide.
+
+## Overlap with the earlier reviews (step 7)
+
+Read after the ledger and the findings above were committed: `docs/reviews/review-py-found-1-2.md` (29 findings with a fix pass; L1 and L2) and the level 3 parts of `docs/reviews/review-py-found-3-4.md` (27 findings with a fix pass). Counted as conceptual: findings about a claim, key, distractor, slip feedback or explanation. Not counted: key length, voice, layout, freshness, renames, test coverage wording and everything in level 4. On that count the earlier reviews hold 18 conceptual findings inside L1 to L3: review-1-2 findings 1 to 8, 10 to 14 (13), and review-3-4 findings 1, 3, 4, 8, 9 (5). All 18 were fixed before this audit, so the text I read was the corrected one.
+
+| Conceptual findings | Count | Which |
+|---|---|---|
+| Audit only | 17 | findings 1 to 5 and 7 to 18 |
+| Earlier review only | 17 | review-1-2: 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14; review-3-4: 1, 3, 4, 8, 9 (all fixed before the audit) |
+| Both | 1 | finding 6 and review-1-2 finding 11: the rule "a mutating method returns `None`", which `pop` breaks. The review fixed l8 `summary.ideas[1]` and the comment in `screens[9]`; the audit finds the same rule still stated in `screens[4].widget.options[1].why` and `quiz[1].feedback.generic` |
+
+Two audit-only findings are residues of the earlier fix pass, not of the first authoring. Finding 14 ("not the product"): fix 21 changed review-1 `items[0]` from `0.1 * 3` to `1.1 + 2.2` and did not touch the third option's why. Finding 17 ("`commission(20000.00)`"): fix 27 moved homework-2 `items[3]` to new tests and left `byKey.test-1` on the old call. This is the pattern the brief's fix-pass read exists for.
+
+The earlier reviews' findings I did not raise, with what the ledger found in the corrected text:
+
+- review-1-2 1 (l1 `quiz[3]` keyed `False` for `0.6 + 0.1 == 0.7`): now `0.2 + 0.4 == 0.6`; block B runs it and the key holds.
+- review-1-2 2 and 3 (l1 "every check with a tenth"; "they lean the same way"): now scoped to "here" and "each sum is rounded again"; ledger rows l1 s3 and s6, correct.
+- review-1-2 4 (l1 "keeps 53 binary digits and drops the rest"): now "the nearest value with 53 binary digits"; correct.
+- review-1-2 5 (l1 s9 "a broker would reject 499"): now "leaves £1.10 idle"; correct.
+- review-1-2 6 and 7 (l2 s2 option not reachable; l2 s3 wrong set): the option is `closes[-3:-1]` and the set is `c1`; block C confirms both.
+- review-1-2 8 (l2 "holds j - i items" as a rule): now limited to ends inside the list; correct.
+- review-1-2 10 (l3 starred name collects a tuple): now "the list `[72.5, 100]`"; block C confirms.
+- review-1-2 12 (homework-1 `no-start` named another slip): 17 is `closes[3:]`; block C confirms.
+- review-1-2 13 (l5 s9 explain against test 7): `byKey.test-7` and the new last sentence agree with the test; block A.
+- review-1-2 14 (review-1 "repeats its characters"): now "repeats the whole string"; correct.
+- review-3-4 1 (l11 `quiz[2]` keyed `None 0.025`): now `ret(100.00, 125.00)` and `None 0.25`; block B runs it.
+- review-3-4 3 (homework-3 model line numbers): 5, 21, 22 and 28, counted again by hand; correct.
+- review-3-4 4 (l9 s2 "a log return always sits a little below"): now "never above the simple one, and they match only when the price is unchanged"; block C checks the inequality.
+- review-3-4 8 and 9 (l10 s0 `byKey.r3c1`; l10 s1 "quotes and all"): both reworded; correct.
+
+Since every review finding was fixed before I read, the table measures what one read left behind (17 findings, 5 of them `wrong`, none in a graded key), not what a blind audit would have missed of the reviews' 18. Two of the reviews' findings were wrong graded keys (review-1-2 1 and review-3-4 1); block B of the concepts script now executes every predict-the-output key in the learners' runtime, so that class is closed for these levels.
+
+## Inbox
+
+Three bullets were appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit py-found):": the level number scripts' code runner does not read `setup`, `prelude`, `raises` or nested `isclose` (three scripts exit 1); `grade-all.mjs` leaves code widgets out, so "second read runs `grade-all --file`" does not cover a code course; a `byKey.test-N` line that quotes a call other than the test's own is not caught by any tool (finding 17).
