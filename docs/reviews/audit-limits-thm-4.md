@@ -101,7 +101,46 @@ The ledger has 19 imprecise rows because findings 2, 11, 13 and 20 each cover se
 
 ## Overlap with earlier reads
 
-PENDING: filled after the WIP commit.
+Read after the WIP commit `2cc7bcce`.
+
+**Is a second read of level 4's lessons, review and homework on record? No.** `docs/reviews/review-1.5.md` is the second read of topic 1.5 and its scope line names `limits-thm`, but it is dated 21 October and the level was first committed on 27 October (`39d6582d`). Its limits-thm findings stop at l12 and `homework-3`. `docs/reports/stage-status-2026-11-03.md` lists the level as "Finalised" on the strength of that review. No `answers-*.md`, `recheck-*.md` or `review-perf-retrofit-*.md` file covers l14 to l19, `review-4` or `homework-4`.
+
+Earlier reads that touch the level in part:
+
+| earlier read | what it covered | conceptual findings in scope |
+|---|---|---|
+| `docs/reviews/review-problems-1.5-d.md` (section A) | full second read of `problems-4` | finding 5 (`p-part-errors` part 3: "An MGF pins down its distribution" lacked "finite near 0"), finding 7 (`p-ticket-stages` part 3: `rates` feedback did not name the slip). Findings 6 (coverage of l15) and 8 (grader sampling range) are not conceptual. It lists `p-dealer-quotes` as clean. |
+| `docs/reviews/review-precision-3.2.md` rows 46 and 47 | summary fields only (`summary.ideas`, `summary.trap`, `summary.formula.note`) with an "only / never / any" word | row 47: l19 `summary.trap` said "$M_{X+Y}$ is a product, and only for independent variables", marked False and fixed. Row 46 (l14 formula note) holds. |
+| `docs/reviews/triage-bands-ab.md` line 263 | tolerance band of l17 `screens[8]` slip `maxcdf` | none (harmless band note) |
+| `docs/reviews/review-delta-session-aa.md` item 11 | formatting of `problems-4` after its fix pass | none |
+| `docs/reports/limits-thm-4.md` (author report) | every stated number by two routes | none; it is a number check and agrees with my script on every figure |
+
+All three earlier conceptual findings were fixed before this audit, and I judged the fixed lines correct.
+
+| conceptual findings | count |
+|---|---|
+| found by this audit only | 22 |
+| found by earlier reads only | 3 (all fixed before this audit: `review-problems-1.5-d` 5 and 7, `review-precision-3.2` row 47) |
+| found by both | 0 |
+
+One pair is the same class at different paths: my finding 3 (l19 `screens[6].explain`, independence stated as necessary) and precision row 47 (l19 `summary.trap`). The precision scan read summary fields only, so the explanation on the trap screen kept the error after the summary was fixed.
+
+Each `wrong` finding against the earlier reads:
+
+| finding | found by an earlier read? |
+|---|---|
+| 1 (l14 `screens[10]` "any other pair") | no; file never second-read |
+| 2 (l15 `screens[10]` "non-constant monotone") | no; file never second-read |
+| 3 (l19 `screens[6]` product rule "needs independence") | no at this path; the same class was found and fixed in `summary.trap` by `review-precision-3.2` row 47 |
+| 4 (`review-4` `r-best10` transposed conditional) | no; file never second-read |
+| 5 (l15 `screens[3]` `inv` feedback) | no |
+| 6 (l16 `screens[1]` "centred on $t$") | no |
+| 7 (l16 `screens[7]` `prod` feedback) | no |
+| 8 (l17 `screens[10]` "totals") | no |
+| 9 (`problems-4` `p-dealer-quotes` part 5 explain) | no; `review-problems-1.5-d` read this part and listed the problem as clean |
+| 10 (`problems-4` `p-part-errors` part 1 `power` feedback) | no; `review-problems-1.5-d` finding 8 looked at slips `one` and `added` of the same part, not `power` |
+
+So 10 of 10 `wrong` findings, including all 3 serious ones, were found by no earlier read. Two of them (9 and 10) sit in the one file that did have a full second read.
 
 ## Inbox
 
