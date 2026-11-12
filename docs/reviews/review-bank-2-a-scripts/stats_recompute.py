@@ -123,6 +123,30 @@ lr = 0.0000045 / (1 - 0.10 - 0.88)
 M['gv-forecast-long-run-vol'] = (sqrt(lr), {'annualised': sqrt(lr) * sqrt(252), 'one-minus-beta': sqrt(0.0000045 / 0.12)},
     [('1.5', 'ok'), ('1.5%', 'ok'), ('1.50', 'ok'), ('0.015', 'no'), ('23.8', 'annualised'), ('0.6', 'one-minus-beta'), ('0.61', 'one-minus-beta'), ('0.0225', 'no'), ('0.02', 'no')])
 
+# ---------- fix pass: items re-authored or given a new slip (values recomputed here, still independent of the author scripts) ----------
+M['es-bayes-seven-in-ten'] = (F(3 + 7, 3 + 1 + 10), {'no-prior': F(7, 10), 'one-each': F(1 + 7, 2 + 10)},
+    [('5/7', 'ok'), ('0.7143', 'ok'), ('0.714', 'ok'), ('0.71', 'no'), ('71.43%', 'ok'), ('0.7', 'no-prior'), ('2/3', 'one-each'), ('0.6667', 'one-each')])
+M['rg-inference-t-from-r-squared'] = (sqrt(0.2 * 25 / 0.8), {'no-one-minus': sqrt(0.2 * 25), 'used-n': sqrt(0.2 * 27 / 0.8), 'no-root': 0.2 * 25 / 0.8},
+    [('2.5', 'ok'), ('2.50', 'ok'), ('5/2', 'ok'), ('2.6', 'used-n'), ('2.598', 'used-n'), ('2.24', 'no-one-minus'), ('6.25', 'no-root'), ('2.4', 'no'), ('-2.5', 'no')])
+M['sample-size-for-signal-sharpe-years'] = ((3 / 0.7) ** 2, {'no-square': 3 / 0.7, 'aimed-at-two': (2 / 0.7) ** 2},
+    [('18.4', 'ok'), ('18.37', 'ok'), ('18.367', 'ok'), ('900/49', 'ok'), ('18.4 years', 'ok'), ('18', 'no'), ('4.3', 'no-square'), ('4.29', 'no-square'), ('8.2', 'aimed-at-two'), ('8.16', 'aimed-at-two')])
+M['collinear-features-inflation-factor'] = (1 / (1 - 0.6 ** 2), {'one-minus-r': 1 / (1 - 0.6), 'standard-error-factor': sqrt(1 / (1 - 0.36))},
+    [('1.56', 'ok'), ('25/16', 'ok'), ('1.5625', 'ok'), ('1.6', 'no'), ('2.5', 'one-minus-r'), ('1.25', 'standard-error-factor')])
+M['measurement-error-noisy-regressor'] = (1.4 * 7 / 10, {'no-attenuation': 1.4, 'wrong-way': 1.4 * 10 / 7},
+    [('0.98', 'ok'), ('49/50', 'ok'), ('1.4', 'no-attenuation'), ('2', 'wrong-way'), ('0.7', 'no')])
+M['dl-clt-mean-of-hundred'] = (1 - Phi(2), {'no-root': 1 - Phi(0.2), 'both-tails': 2 * (1 - Phi(2))},
+    [('0.023', 'ok'), ('0.0228', 'ok'), ('2.28%', 'ok'), ('0.02275', 'ok'), ('0.02', 'no'), ('0.025', 'no'), ('0.421', 'no-root'), ('0.046', 'both-tails'), ('0.0455', 'both-tails'), ('0.9772', 'no')])
+M['weak-signal-daily-edge'] = (0.04 / (1 / sqrt(625)), {'no-root': 0.04 / 1, 'annual-sharpe': 0.04 / 1 * sqrt(252)},
+    [('1', 'ok'), ('1.00', 'ok'), ('1.0', 'ok'), ('0.04', 'no-root'), ('0.63', 'annual-sharpe'), ('0.8', 'no'), ('25', 'no')])
+M['ht-errors-sample-for-power'] = (math.ceil(nn), {'no-power': math.ceil((1.96 * 5) ** 2), 'one-sided': math.ceil(((1.645 + 0.8416) * 5) ** 2), 'rounded-down': math.floor(nn), 'two-groups': math.ceil(2 * nn)},
+    [('197', 'ok'), ('196', 'rounded-down'), ('196.2', 'no'), ('97', 'no-power'), ('155', 'one-sided'), ('393', 'two-groups'), ('394', 'no')])
+M['rg-inference-new-observation'] = (2 * sqrt(1 + 1 / 25), {'fitted-mean': 2 / 5, 'noise-only': 2, 'added-errors': 2 + 0.4},
+    [('2.04', 'ok'), ('2.040', 'ok'), ('2.0', 'noise-only'), ('2', 'noise-only'), ('0.4', 'fitted-mean'), ('2.4', 'added-errors'), ('4.16', 'no')])
+M['ts-acf-noise-band'] = (1.96 / sqrt(625), {'no-multiplier': 1 / 25, 'divided-by-n': 1.96 / 625, 'rule-of-two': 2 / 25},
+    [('0.0784', 'ok'), ('0.07840', 'ok'), ('0.078', 'no'), ('0.08', 'rule-of-two'), ('0.04', 'no-multiplier'), ('0.0031', 'divided-by-n'), ('0.003', 'no'), ('0.1', 'no')])
+M['rg-inference-overall-f'] = (F(1, 5) / 4 / (F(4, 5) / 60), {'df-61': 0.05 / (0.8 / 61), 'no-df': 0.2 / 0.8},
+    [('3.75', 'ok'), ('15/4', 'ok'), ('3.750', 'ok'), ('3.8', 'no'), ('3.81', 'df-61'), ('0.25', 'no-df')])
+
 # ---------- compare with content ----------
 fails = 0; probes = []; seen = set()
 def fail(msg):

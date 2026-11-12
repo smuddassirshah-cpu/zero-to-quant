@@ -103,6 +103,13 @@ def choice(f, i, key_text_part):
     return it
 
 
+def stale(f, i, olds):
+    """Fix pass: none of the old values or phrases of a re-authored item survives anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in olds:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
 def fmt(x, dp):
     return f'{x:.{dp}f}'
 
@@ -180,13 +187,15 @@ ok(float(a) > 11.07, 'statistic beats the 5% point')
 stated(S, 'ht-setup-die-sixty-rolls', '134/10 = 13.4')
 
 # weak-signal-daily-edge
-a = F(5, 100) / (F(1) / 20)
-b = 0.0005 / (0.01 / sqrt(400))
+a = F(4, 100) / (F(1) / 25)                                   # fix pass finding 16: 0.04% over 625 days
+b = 0.0004 / (0.01 / sqrt(625))
 key = two(a, b, 1e-12, 't statistic')
-numeric(S, 'weak-signal-daily-edge', key, 2, {'no-root': F(5, 100) / 1, 'annual-sharpe': 0.05 * sqrt(252)})
-n2 = next(n for n in range(1, 10000) if 0.05 * sqrt(n) >= 2 - 1e-12)
-two(n2, (2 / 0.05) ** 2, 0, 'days for t = 2')
-stated(S, 'weak-signal-daily-edge', '1,600 days')
+numeric(S, 'weak-signal-daily-edge', key, 2, {'no-root': F(4, 100) / 1, 'annual-sharpe': 0.04 * sqrt(252)})
+n2 = next(n for n in range(1, 10000) if 0.04 * sqrt(n) >= 2 - 1e-12)
+two(n2, (2 / 0.04) ** 2, 0, 'days for t = 2')
+stated(S, 'weak-signal-daily-edge', '2,500 days')
+stated(S, 'weak-signal-daily-edge', 'the root of the 625 days')
+stale(S, 'weak-signal-daily-edge', ['400', '1,600', '0.05', '0.79', '1/20'])
 
 # ht-errors-sample-for-power: the formula against a count-up on exact two-sided power
 n_formula = ((1.96 + 0.8416) * 10 / 2) ** 2
@@ -197,7 +206,10 @@ ok(power(196) < 0.8 <= power(197), 'claim: 197 is the smallest n with power 80%'
 ok(fmt(power(196), 4) == '0.7995', f'power at 196 is {power(196)}')
 ok(fmt(n_formula, 1) == '196.2' and fmt(2.8016 * 5, 3) == '14.008', 'stated 196.2 and 14.008')
 numeric(S, 'ht-errors-sample-for-power', key, None,
-        {'no-power': math.ceil((1.96 * 5) ** 2), 'one-sided': math.ceil(((1.645 + 0.8416) * 5) ** 2), 'rounded-down': math.floor(n_formula)})
+        {'no-power': math.ceil((1.96 * 5) ** 2), 'one-sided': math.ceil(((1.645 + 0.8416) * 5) ** 2), 'rounded-down': math.floor(n_formula),
+         'two-groups': two(math.ceil(2 * (2.8016 * 5) ** 2), next(n for n in range(1, 2000) if 2 * ((1.96 + 0.8416) * 5) ** 2 <= n), 0, 'doubled variance')})
+ok(item(S, 'ht-errors-sample-for-power')['difficulty'] == 4 and item(S, 'ht-errors-sample-for-power')['requires'] == ['testing/l6-power'], 'fix pass 17: difficulty 4, requires kept')
+stated(S, 'ht-errors-sample-for-power', '(2.8016 \\\\times 5)^2')
 stated(S, 'ht-errors-sample-for-power', '79.95%')
 
 # ht-multiple-share-false: expected false passes over passes, against a seeded simulation of 200 null signals
@@ -233,18 +245,22 @@ for _ in range(40000):
     errs.append(1 + 0.5 * mx + rng.gauss(0, 2) - pred)
 b = sqrt(sum(e * e for e in errs) / len(errs))
 key = two(a, b, 0.02, 'prediction standard error (simulation tolerance 0.02)')
-numeric(S, 'rg-inference-new-observation', key, 2, {'fitted-mean': F(2, 5), 'noise-only': 2})
+numeric(S, 'rg-inference-new-observation', key, 2, {'fitted-mean': F(2, 5), 'noise-only': 2, 'added-errors': F(2) + F(2, 5)})   # fix pass 18: 2 + 0.4 = 2.4
+ok(2 + 0.4 > 2 * sqrt(1 + 1 / 25), 'adding the errors overstates the root-sum-square')
 ok(fmt(4 + 0.16, 2) == '4.16', 'variances add to 4.16')
 
 # rg-diagnostics-fanning-residuals: seeded simulation against the sandwich formula on fresh designs
 rng = random.Random(20261111)
-slopes, ses = [], []
+slopes, ses, hc = [], [], []
 for _ in range(4000):
     x = [rng.uniform(0, 10) for _ in range(50)]
     y = [1 + 0.5 * a_ + rng.gauss(0, 0.2 * a_) for a_ in x]
-    b1, se1, _ = ols(x, y)
+    b1, se1, res1 = ols(x, y)
     slopes.append(b1)
     ses.append(se1)
+    mx1 = sum(x) / 50
+    sxx1 = sum((a_ - mx1) ** 2 for a_ in x)
+    hc.append(sqrt(50 / 48 * sum((a_ - mx1) ** 2 * r_ * r_ for a_, r_ in zip(x, res1)) / sxx1 ** 2))   # robust (HC1) error
 m_s = sum(slopes) / len(slopes)
 sd_s = sqrt(sum((s - m_s) ** 2 for s in slopes) / (len(slopes) - 1))
 rep = sum(ses) / len(ses)
@@ -261,11 +277,20 @@ for _ in range(4000):                                     # route B: exact condi
 two(sd_s, sqrt(sum(true_v) / len(true_v)), 0.002, 'true spread of the slope')
 two(rep, sqrt(sum(rep_v) / len(rep_v)), 0.002, 'reported standard error (route B is the root of the mean variance)')
 two(m_s, 0.5, 0.003, 'slope unbiased')
-ok(fmt(m_s, 3) == '0.500' and fmt(rep, 3) == '0.057' and fmt(sd_s, 3) == '0.063', f'printed figures {m_s} {rep} {sd_s}')
 ok(rep < sd_s, 'claim: the usual error misstates (understates) the spread')
+two(sum(hc) / len(hc), sd_s, 0.004, 'fix pass 1: robust errors repair the spread (average HC1 error against the true spread)')
+# a noise that moves with x breaks the unbiasedness (the false general sentence is gone): slope of a design where E(noise | x) = 0.5 x
+rng = random.Random(5)
+sl_bad = []
+for _ in range(2000):
+    x = [rng.uniform(0, 10) for _ in range(50)]
+    y = [1 + 0.5 * a_ + 0.5 * a_ + rng.gauss(0, 0.2 * a_) for a_ in x]
+    sl_bad.append(ols(x, y)[0])
+two(sum(sl_bad) / len(sl_bad), 1.0, 0.01, 'fix pass 1: without the condition the slope is biased (1.00 for a true 0.5)')
 choice(S, 'rg-diagnostics-fanning-residuals', 'stays unbiased')
-stated(S, 'rg-diagnostics-fanning-residuals', 'slopes average 0.500 for a true 0.5')
-stated(S, 'rg-diagnostics-fanning-residuals', 'averages 0.057, against a true spread of 0.063')
+stated(S, 'rg-diagnostics-fanning-residuals', 'the noise averages zero at every x')
+stated(S, 'rg-diagnostics-fanning-residuals', 'Robust standard errors repair it without moving the slope.')
+stale(S, 'rg-diagnostics-fanning-residuals', ['0.500', '0.057', '0.063', 'whatever the noise', '4,000', '0.2x'])
 
 # rg-multiple-partial-out: residual on residual against the 2 x 2 normal equations
 rng = random.Random(7)
@@ -286,11 +311,14 @@ two(fwl, full, 1e-9, 'Frisch-Waugh-Lovell equals the full regression')
 simple = ols(x1, y)[0]
 raw = ols(x1, ry)[0]                     # residual of y on x2 against the raw x1
 avg = (simple + ols(x2, y)[0]) / 2
-ok(fmt(fwl, 3) == '1.981' and fmt(simple, 3) == '2.888', f'printed figures {fwl} {simple}')
 ok(min(abs(simple - full), abs(raw - full), abs(avg - full)) > 0.1, f'each distractor recipe misses: {simple} {raw} {avg}')
+rho2 = s12 * s12 / (s11 * s22)                             # fix pass 12: cleaning y alone scales the slope by 1 - rho^2, exactly in sample
+two(raw, full * (1 - rho2), 1e-9, 'slope of cleaned y on raw x1 equals the full slope times one minus the squared correlation')
+ok(abs(fwl - full) < 1e-9, 'exact in this sample (intercepts in every regression)')
 choice(S, 'rg-multiple-partial-out', 'residual on residual')
-stated(S, 'rg-multiple-partial-out', 'both give 1.981')
-stated(S, 'rg-multiple-partial-out', 'gives 2.888')
+stated(S, 'rg-multiple-partial-out', 'The match is exact in every sample, provided each regression has an intercept.')
+stated(S, 'rg-multiple-partial-out', 'scaled down by the factor one minus the squared correlation of the predictors')
+stale(S, 'rg-multiple-partial-out', ['1.981', '2.888', '20,000'])
 
 # ts-forecast-half-life: logs against a bisection on 0.75^k = 0.5
 a = log(0.5) / log(0.75)
@@ -303,16 +331,21 @@ numeric(S, 'ts-forecast-half-life', key, 1, {'linear-decay': F(1, 2) / F(1, 4), 
 ok(fmt(a, 2) == '2.41' and round(0.75 ** 2 * 100) == 56 and round(0.75 ** 3 * 100) == 42, 'stated 2.41, 56% and 42%')
 
 # ts-acf-noise-band: 1.96/sqrt(n) against a seeded simulation of lag-1 autocorrelations of white noise
-a = 1.96 / sqrt(400)
+a = 1.96 / sqrt(625)                                          # fix pass finding 4: 625 observations
 rng = random.Random(3)
 rs = []
 for _ in range(4000):
-    z = [rng.gauss(0, 1) for _ in range(400)]
-    mz = sum(z) / 400
-    rs.append(sum((z[t] - mz) * (z[t + 1] - mz) for t in range(399)) / sum((v - mz) ** 2 for v in z))
+    z = [rng.gauss(0, 1) for _ in range(625)]
+    mz = sum(z) / 625
+    rs.append(sum((z[t] - mz) * (z[t + 1] - mz) for t in range(624)) / sum((v - mz) ** 2 for v in z))
 sd_r = sqrt(sum(r * r for r in rs) / len(rs))
 key = two(a, 1.96 * sd_r, 0.004, 'noise band (simulation tolerance 0.004)')
-numeric(S, 'ts-acf-noise-band', key, 3, {'no-multiplier': 1 / sqrt(400), 'divided-by-n': 1.96 / 400})
+numeric(S, 'ts-acf-noise-band', key, 4, {'no-multiplier': 1 / sqrt(625), 'divided-by-n': 1.96 / 625, 'rule-of-two': 2 / sqrt(625)})
+two(F(196, 100) / 25, F(784, 10000), 0, 'band is exactly 0.0784')
+ok(round(2 / 25, 4) != round(1.96 / 25, 4) and abs(0.08 - 0.0784) > 5e-5 * 2, 'the rule-of-two slip is refused, not accepted')
+stated(S, 'ts-acf-noise-band', '1.96/25 = 0.0784')
+stated(S, 'ts-acf-noise-band', 'Using 1.96')
+stale(S, 'ts-acf-noise-band', ['400', '0.098', '0.05', '1/20', '0.005'])
 
 # equicorrelation-many-assets-vol: the equicorrelation formula against the full 25 x 25 double sum
 n = 25
@@ -479,6 +512,20 @@ for it in DATA[B]['items']:
     ok(it['feedback'] == {'correct': 'Compare your answer with the model and tick the rubric.', 'generic': 'Open the model answer and mark each rubric line.'}, f'{lab}: feedback lines')
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+
+# star-story-chose-to-stop (fix pass finding 20, disputed in part): eight weeks; 3 weeks + 8 working days = 23 working days sunk
+sunk_days = 3 * 5 + 8
+two(sunk_days, 23, 0, 'sunk working days')
+two(F(sunk_days, 5) + 3, F(38, 5), 0, 'weeks used: 4.6 sunk plus the last three weeks is 7.6')
+ok(F(sunk_days, 5) + 3 <= 8, 'the story fits an eight-week placement (7.6 weeks)')
+ok(not (F(sunk_days, 5) + 3 <= 6), 'it did not fit the old six weeks')
+stated(B, 'star-story-chose-to-stop', 'I spent eight weeks in a materials lab')
+stated(B, 'star-story-chose-to-stop', 'about 23 working days')
+stated(B, 'star-story-chose-to-stop', 'the next eight days')
+stale(B, 'star-story-chose-to-stop', ['six weeks', 'eleven days'])
+for it in DATA[B]['items']:
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'], f'{B}/{it["id"]}: rubric line checkable from the text')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
 

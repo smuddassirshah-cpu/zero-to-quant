@@ -86,6 +86,13 @@ def stated(f, i, phrase):
     ok(phrase in blob, f'{f}/{i}: states "{phrase}"')
 
 
+def stale(f, i, olds):
+    """Fix pass: none of the old values or phrases of a re-authored item survives anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in olds:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
 def fmt(x, dp):
     return f'{x:.{dp}f}'
 
@@ -102,6 +109,8 @@ key = two(a, b, 1e-5, 'mle rate')
 numeric(S, 'es-mle-waits-between-trades', key, 4, {'mean-wait': F(sum(waits), 6), 'five-gaps': 5 / 30})
 two(F(sum(waits), 6), statistics.mean(waits), 1e-12, 'mean wait')
 stated(S, 'es-mle-waits-between-trades', '6/30 = 0.2')
+stated(S, 'es-mle-waits-between-trades', 'the time between six of your own fills')   # fix pass finding 16
+stale(S, 'es-mle-waits-between-trades', ['quiet share'])
 
 # es-biasvar-four-closes
 xs = [4, 7, 9, 12]
@@ -122,14 +131,16 @@ key = two(a, b, 0, 'halved width n')
 numeric(S, 'es-intervals-halve-the-width', int(key), None, {'doubled-n': 128, 'halved-n': 32})
 stated(S, 'es-intervals-halve-the-width', '4 \\\\times 64 = 256')
 
-# es-bayes-seven-in-ten: Beta(2,2) + 7H 3T = Beta(9,5)
-a = F(2 + 7, 2 + 2 + 10)
+# es-bayes-seven-in-ten (fix pass finding 2): Beta(3,1) prior + 7 on time, 3 late = Beta(10,4)
+a = F(3 + 7, 3 + 1 + 10)
 grid = [(k + 0.5) / 200000 for k in range(200000)]
-dens = [p ** 8 * (1 - p) ** 4 for p in grid]                        # unnormalised Beta(9,5) density, midpoint rule
+dens = [p ** 9 * (1 - p) ** 3 for p in grid]                        # unnormalised Beta(10,4) density, midpoint rule
 b = sum(p * d for p, d in zip(grid, dens)) / sum(dens)
 key = two(a, b, 1e-6, 'posterior mean')
-numeric(S, 'es-bayes-seven-in-ten', key, 4, {'no-prior': F(7, 10), 'one-each': F(8, 12)})
-stated(S, 'es-bayes-seven-in-ten', '9/14 \\\\approx 0.6429')
+numeric(S, 'es-bayes-seven-in-ten', key, 4, {'no-prior': F(7, 10), 'one-each': F(1 + 7, 2 + 10)})
+ok(a == F(5, 7), 'posterior mean is 5/7')
+stated(S, 'es-bayes-seven-in-ten', '10/14 \\\\approx 0.7143')
+stale(S, 'es-bayes-seven-in-ten', ['Beta(2, 2)', '9/14', '0.642857', '0.6429', 'coin', 'heads', 'Beta(9, 5)'])
 
 # ht-pvalue-thirteen-of-sixteen
 a = 2 * F(sum(comb(16, k) for k in range(13, 17)), 2 ** 16)
@@ -161,6 +172,9 @@ two_sided = (1 - N.cdf((1.96 * se - 4) / se)) + N.cdf((-1.96 * se - 4) / se)
 numeric(S, 'power-one-sided-shift', a, 4, {'miss-rate': 1 - a, 'two-sided': two_sided})
 ok(abs(zz - 0.355) < 1e-9 and abs(crit - 3.29) < 1e-9 and se == 2, 'se 2, line 3.29, z 0.355')
 stated(S, 'power-one-sided-shift', '\\\\Phi(0.355) \\\\approx 0.6387')
+stated(S, 'power-one-sided-shift', 'You are told $\\\\Phi(0.355) = 0.6387$.')           # fix pass finding 6: the table value is given
+close(N.cdf(0.355), 0.6387, 5e-5, 'Phi(0.355) given in the prose')
+close(0.5 * (1 + erf(0.355 / sqrt(2))), 0.6387, 5e-5, 'Phi(0.355) given in the prose [two routes]')
 
 # multiple-testing-how-many-tests
 p2 = 2 * (1 - N.cdf(3.2))
@@ -190,15 +204,15 @@ two(sqrt(r2), sxy / sqrt(sxx * syy), 0.005, 'correlation (simulation, tol 0.005)
 numeric(S, 'two-regressions-two-slopes', 0.5, 4, {'no-root': 0.25, 'ratio': 0.1 / 2.5})
 stated(S, 'two-regressions-two-slopes', 'r^2 = 2.5 \\\\times 0.1 = 0.25')
 
-# rg-inference-t-from-r-squared
-a = sqrt(0.2 * 100 / 0.8)
+# rg-inference-t-from-r-squared (fix pass finding 5): 27 points, R^2 = 0.2, slope positive
+a = sqrt(0.2 * 25 / 0.8)
 # route B: build 102 points with R^2 exactly 0.2 and run least squares with its own standard error
 rng = random.Random(3)
-xv = [rng.gauss(0, 1) for _ in range(102)]
-mx = sum(xv) / 102
+xv = [rng.gauss(0, 1) for _ in range(27)]
+mx = sum(xv) / 27
 xc = [x - mx for x in xv]
-e = [rng.gauss(0, 1) for _ in range(102)]
-me = sum(e) / 102
+e = [rng.gauss(0, 1) for _ in range(27)]
+me = sum(e) / 27
 e = [v - me for v in e]
 beta_e = sum(u * v for u, v in zip(xc, e)) / sum(u * u for u in xc)
 e = [v - beta_e * u for u, v in zip(xc, e)]                       # residual part orthogonal to x
@@ -209,10 +223,15 @@ bhat = sum(u * v for u, v in zip(xc, yv)) / sx2
 res = [v - bhat * u for u, v in zip(xc, yv)]
 ss_res = sum(r * r for r in res); ss_tot = sum(v * v for v in yv)
 ok(abs(1 - ss_res / ss_tot - 0.2) < 1e-12, 'constructed data has R^2 = 0.2')
-b = bhat / sqrt(ss_res / 100 / sx2)
+ok(bhat > 0, "slope positive")
+b = bhat / sqrt(ss_res / 25 / sx2)
+b_used_n = bhat / sqrt(ss_res / 27 / sx2)                      # divisor n in place of n - 2
 key = two(a, b, 1e-9, 't from R^2')
-numeric(S, 'rg-inference-t-from-r-squared', key, 1, {'no-one-minus': sqrt(0.2 * 100), 'no-root': 0.2 * 100 / 0.8})
-stated(S, 'rg-inference-t-from-r-squared', '0.2 \\\\times 100 / 0.8 = 25')
+numeric(S, 'rg-inference-t-from-r-squared', key, 2, {'no-one-minus': sqrt(0.2 * 25), 'used-n': two(sqrt(0.2 * 27 / 0.8), b_used_n, 1e-9, 'slip: n in place of n - 2'), 'no-root': 0.2 * 25 / 0.8})
+ok(round(sqrt(0.2 * 27 / 0.8), 2) != round(key, 2), 'the n slip and the key differ at the asked place (2.60 against 2.50)')
+stated(S, 'rg-inference-t-from-r-squared', '0.2 \\\\times 25 / 0.8 = 6.25')
+stated(S, 'rg-inference-t-from-r-squared', 'The slope is positive.')
+stale(S, 'rg-inference-t-from-r-squared', ['102', '0.2 \\\\times 100', 'Correct. t = 5.0', 'sits under the line.", "no-root": "You gave $t^2$. Take the square root of 25'])
 
 # rg-multiple-left-out-factor
 a = F(15, 10) + F(-2) * F(4, 10)
@@ -247,15 +266,16 @@ numeric(S, 'ts-acf-ma1-first-lag', float(a), 2, {'coefficient': 0.75, 'unsquared
 stated(S, 'ts-acf-ma1-first-lag', '0.75/1.5625 = 0.48')
 
 # sample-size-for-signal-sharpe-years
-a = (2 / 0.7) ** 2
+a = (3 / 0.7) ** 2                                                 # fix pass finding 10: t of 3
 lo, hi = 0.0, 100.0
-for _ in range(200):                                               # bisection on 0.7 sqrt(T) = 2
+for _ in range(200):                                               # bisection on 0.7 sqrt(T) = 3
     mid = (lo + hi) / 2
-    lo, hi = (mid, hi) if 0.7 * sqrt(mid) < 2 else (lo, mid)
+    lo, hi = (mid, hi) if 0.7 * sqrt(mid) < 3 else (lo, mid)
 key = two(a, lo, 1e-9, 'Sharpe years')
-numeric(S, 'sample-size-for-signal-sharpe-years', key, 1, {'no-square': 2 / 0.7, 'used-1-96': (1.96 / 0.7) ** 2})
-stated(S, 'sample-size-for-signal-sharpe-years', '(2/0.7)^2 \\\\approx 8.16')
-ok(fmt(a, 2) == '8.16', '8.16 printed')
+numeric(S, 'sample-size-for-signal-sharpe-years', key, 1, {'no-square': 3 / 0.7, 'aimed-at-two': (2 / 0.7) ** 2})
+stated(S, 'sample-size-for-signal-sharpe-years', '(3/0.7)^2 \\\\approx 18.37')
+ok(fmt(a, 2) == '18.37' and fmt(F(900, 49), 2) == '18.37', '18.37 printed, two routes')
+stale(S, 'sample-size-for-signal-sharpe-years', ['8.16', 'used-1-96', 'reaches 2', '8.163', '(2/0.7)^2'])
 
 # correlation-bounds-highest-third
 rxy, ryz = 0.28, 0.96
@@ -536,6 +556,20 @@ for it in DATA[B]['items']:
         ok(it['pace'] == 90, f'{lab}: pace 90 for ninety seconds')
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+
+# fix pass (review-bank-2-a findings 22, 23, 26, 27): re-authored stories carry none of the old story, rubric lines are checkable
+stated(B, 'why-us-a-first-year-day', 'one timed estimation round a day')
+stale(B, 'why-us-a-first-year-day', ['nine seconds', 'twenty minutes', 'arithmetic'])
+stated(B, 'project-account-decision-to-redo', 'next-day footfall at one railway station')
+stated(B, 'project-account-decision-to-redo', 'copying the same weekday a week earlier')
+stale(B, 'project-account-decision-to-redo', ['electricity', 'demand', 'last week'])
+ok(round(4.9 - 2.8, 1) == 2.1, 'decision-to-redo: 2.8% rose to 4.9% (a gap of 2.1 points)')
+stated(B, 'star-story-unpopular-decision', 'The other four wanted a neural network')
+stated(B, 'star-story-unpopular-decision', 'so I asked her to rerun my comparison herself.')
+stale(B, 'star-story-unpopular-decision', ['Four of us'])
+for it in DATA[B]['items']:
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'] and 'stops cleanly' not in r['text'].lower(), f'{B}/{it["id"]}: rubric line checkable from the text: {r["text"][:40]}')
 
 # ---------------------------------------------------------------- coding-1 (rules 12 and 13; bank_2_code_check.py beside this script)
 sys.path.insert(0, HERE)

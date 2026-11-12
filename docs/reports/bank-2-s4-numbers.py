@@ -87,6 +87,13 @@ def numeric(f, i, key, asked, slips):
     return it
 
 
+def stale(f, i, olds):
+    """Fix pass: none of the old values or phrases of a re-authored item survives anywhere in it."""
+    blob = json.dumps(item(f, i), ensure_ascii=False)
+    for o in olds:
+        ok(o not in blob, f'{f}/{i}: stale value "{o}" is gone')
+
+
 def stated(f, i, phrase):
     """A figure computed above is printed in the item (any field)."""
     blob = json.dumps(item(f, i), ensure_ascii=False)
@@ -183,6 +190,7 @@ key = two(a, b, 1e-12, 'lower end')
 numeric(S, 'es-intervals-two-desk-gap', key, 3,
         {'one-mean': 0.8 - 1.96 * 2 / sqrt(50), 'upper-end': F(8, 10) + F(196, 100) * F(4, 10)})
 ok(fmt(2 / sqrt(50), 3) == '0.283', 'one-mean error 0.283')
+stated(S, 'es-intervals-two-desk-gap', 'Two desks are watched on different days, 50 days each, so treat their results as independent.')   # fix pass 7
 
 # es-bayes-three-from-three: Laplace's rule against a midpoint integral of p * p^3 / p^3
 a = F(3 + 1, 3 + 2)
@@ -278,25 +286,27 @@ def fit(X, y):
 
 
 rng = random.Random(10)
-X = [[1.0] + [rng.gauss(0, 1) for _ in range(3)] for _ in range(44)]
-y0 = [rng.gauss(0, 1) for _ in range(44)]
+X = [[1.0] + [rng.gauss(0, 1) for _ in range(4)] for _ in range(65)]      # fix pass finding 3: 4 predictors, 65 observations, R^2 0.2
+y0 = [rng.gauss(0, 1) for _ in range(65)]
 yh = fit(X, y0)
-my = sum(y0) / 44
+my = sum(y0) / 65
 expl = [v - my for v in yh]
 res = [u - v for u, v in zip(y0, yh)]
 ess, rss = sum(v * v for v in expl), sum(v * v for v in res)
-y1 = [my + e * sqrt(0.3 / ess) + r * sqrt(0.7 / rss) for e, r in zip(expl, res)]     # TSS 1, R^2 0.3
+y1 = [my + e * sqrt(0.2 / ess) + r * sqrt(0.8 / rss) for e, r in zip(expl, res)]     # TSS 1, R^2 0.2
 yh1 = fit(X, y1)
-m1 = sum(y1) / 44
+m1 = sum(y1) / 65
 tss1 = sum((v - m1) ** 2 for v in y1)
 rss1 = sum((u - v) ** 2 for u, v in zip(y1, yh1))
-close(1 - rss1 / tss1, 0.3, 1e-9, 'built data has R^2 0.3')
-b = ((tss1 - rss1) / 3) / (rss1 / 40)
-a = (F(3, 10) / 3) / (F(7, 10) / 40)
+close(1 - rss1 / tss1, 0.2, 1e-9, 'built data has R^2 0.2')
+b = ((tss1 - rss1) / 4) / (rss1 / 60)
+a = (F(1, 5) / 4) / (F(4, 5) / 60)
 key = two(a, b, 1e-8, 'overall F')
-ok(a == F(40, 7), 'F = 40/7')
-numeric(S, 'rg-inference-overall-f', key, 2, {'df-41': (F(3, 10) / 3) / (F(7, 10) / 41), 'no-df': F(3, 10) / F(7, 10)})
-ok(F(7, 10) / 40 == F(175, 10000), '0.7/40 = 0.0175')
+ok(a == F(15, 4), 'F = 15/4')
+numeric(S, 'rg-inference-overall-f', key, 2, {'df-61': (F(1, 5) / 4) / (F(4, 5) / 61), 'no-df': F(1, 5) / F(4, 5)})
+ok(F(4, 5) / 60 == F(1, 75) and fmt(1 / 75, 6) == '0.013333' and fmt(0.05 / (1 / 75), 2) == '3.75', '0.8/60 = 0.013333 and 0.05/0.013333 = 3.75')
+stated(S, 'rg-inference-overall-f', '$k = 4$ and $n - k - 1 = 60$')
+stale(S, 'rg-inference-overall-f', ['44', '5.71', '5.86', '0.43', '40/7', '0.0175', 'df-41', '$k = 3$'])
 
 # rg-diagnostics-most-leverage: formula against the diagonal of the hat matrix X (X'X)^-1 X'
 xv = [1, 2, 3, 4, 20]
@@ -373,9 +383,14 @@ ok(lev100 < lev, f'claim: the longer sample rejects more often ({lev100} at 100 
 ok(abs(dif - 0.05) < 0.02 and lev > 0.5, f'differenced rate near 5% ({dif}); levels far above ({lev})')
 CO = {'levels': fmt(100 * lev, 1), 'diffs': fmt(100 * dif, 1)}
 print('co-spurious figures:', CO, 'at 100 steps', lev100)
+# fix pass 13: the explanation gives "about nine in ten" and "about one in twenty", not the seeded run (20,000 pairs gave 89.2% in review)
+ok(0.85 < lev < 0.93, f'about nine pairs in ten at 500 steps ({lev})')
+ok(0.03 < dif < 0.07, f'about one in twenty after differencing ({dif})')
 choice(S, 'co-spurious-two-walks', 'far more often than 5%')
-stated(S, 'co-spurious-two-walks', f'500 steps, {CO["levels"]}% had')
-stated(S, 'co-spurious-two-walks', f'{CO["diffs"]}% did')
+stated(S, 'co-spurious-two-walks', 'about nine pairs in ten show a t statistic beyond 1.96 in size')
+stated(S, 'co-spurious-two-walks', 'Differencing both series first brings that back to about one in twenty.')
+stated(S, 'co-spurious-two-walks', 'Each walk wanders')
+stale(S, 'co-spurious-two-walks', ['88.0%', '5.0%', '1,000 simulated', 'drifts'])
 if len(sys.argv) > 1 and sys.argv[1] == '--co-figs':
     json.dump(CO, open(sys.argv[2], 'w'))
 
@@ -569,6 +584,9 @@ for it in DATA[B]['items']:
     ok(it['feedback'] == {'correct': 'Compare your answer with the model and tick the rubric.', 'generic': 'Open the model answer and mark each rubric line.'}, f'{lab}: feedback lines')
 qs = [it['question'] for it in DATA[B]['items']]
 ok(len(set(qs)) == len(qs), 'behavioural question lines are distinct')
+for it in DATA[B]['items']:   # fix pass finding 27
+    for r in it['widget']['rubric']:
+        ok('no filler' not in r['text'], f'{B}/{it["id"]}: rubric line checkable from the text')
 backtests = sum('backtest' in it['widget']['model'].lower() for it in DATA[B]['items'])
 ok(backtests <= 1, f'at most one backtest story ({backtests})')
 

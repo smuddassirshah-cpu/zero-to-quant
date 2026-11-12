@@ -99,3 +99,69 @@ Format: `N. file | item id | severity | problem and evidence | fix`.
 ## Engine
 
 Appended to `docs/BACKLOG-INBOX.md` under `Raised later (review bank 2 a):`, four bullets: a validator rule for author-check sentences; a numbers-and-noun freshness check for bank items; the pace clock on `longform` items; a trailing % on a field asked in percentage points.
+
+## Fix pass
+
+Applied with targeted edits to `app/content/bank/statistics-1` to `-4.json` and `behavioural-5` to `-8.json` only. Rulings from the main session: a bank item may practise the same standard task as its lesson with its own setting and numbers, but may not share numbers, a sentence or a story with a lesson, quiz, review, homework or exam item. Every changed number is in `docs/reports/bank-2-s1-numbers.py` to `s4-numbers.py` by two routes, with a stale-value check for each re-authored item.
+
+### Statistics
+
+1. fanning-residuals: fixed. The prose now states the hypothesis ("the noise averages zero at every x"), and the explanation is the reader's three sentences (unbiased when the noise averages zero at every x, the usual error wrong, robust errors repair it). Checked: slope 1.00 for a true 0.5 when the noise moves with x; the robust (HC1) error averages the true spread to within 0.004. The seeded figures are gone.
+2. es-bayes-seven-in-ten: fixed with the reader's text (Beta(3, 1), 7 of 10 parcels on time, key 5/7 = 0.7143, wrong 0.7 and 2/3). Beta(10, 4) mean by a midpoint integral: 0.714286. The id keeps "seven in ten".
+3. rg-inference-overall-f: fixed. 4 predictors, 65 observations, R² 0.2: F = 0.05/(0.8/60) = 3.75 (15/4); slips 3.81 (61 degrees of freedom) and 0.25. Confirmed against a fitted least-squares build with R² exactly 0.2.
+4. ts-acf-noise-band: fixed. 625 observations, "Using 1.96", 4 places: key 0.0784, slips 0.04, 0.0031 and a new `rule-of-two` 0.08. The probe at "0.08" now gets its own line.
+5. rg-inference-t-from-r-squared: fixed, with new numbers as the ruling asks (the reader's 2-place fix alone would leave the slip and key close). 27 points, R² 0.2, "The slope is positive", 2 places: key 2.50, `used-n` 2.60 (sqrt(0.2 × 27/0.8) = 2.598), `no-one-minus` 2.24, `no-root` 6.25. The slip and the key now differ after rounding; the "-2.5" probe is refused.
+6. power-one-sided-shift: fixed. The prose now says "You are told Φ(0.355) = 0.6387" (0.63870 by two routes).
+7. es-intervals-two-desk-gap: fixed. The prose says the desks are watched on different days, so the results are independent.
+8. collinear-features-inflation-factor: fixed with the reader's text. Correlation 0.6: VIF 1/0.64 = 1.5625; slips 2.5 and 1.25.
+9. measurement-error-noisy-regressor: fixed with the reader's text. Slope 1.4, variance 7, noise 3: 0.98; slips 1.4 and 2. It no longer shares its key with the shrinkage item.
+10. sample-size-for-signal-sharpe-years: fixed. t of 3: (3/0.7)² = 18.367; slips 4.3 and `aimed-at-two` 8.2.
+11. rg-multiple-useless-predictor: fixed. The seeded counts are gone. "Adjusted R² charges for each coefficient, so it falls whenever the new coefficient's t statistic is below 1 in size. Pure noise manages that about two times in three." Checked: P(|t| < 1) on 47 degrees of freedom is 0.678, and in 2,000 fits the fall of adjusted R² coincides with t² < 1 in every fit.
+12. rg-multiple-partial-out: fixed. The explanation gives the exact-in-sample statement and the factor on a cleaned-y-only slope. Checked exact: the slope of cleaned y on raw x1 equals the full slope times one minus the squared correlation of the predictors (to 1e-9).
+13. co-spurious-two-walks: fixed. "About nine pairs in ten" and "about one in twenty" replace the seeded run (20,000 pairs: 0.892); `why` says "wanders".
+14. dl-clt-mean-of-hundred: fixed. 3 places, key 0.02275 at tolerance 0.0005, accept "0.023", slips 0.421 and 0.046. The `both-tails` band is 0.001 wide (not 0.0005) so that the unrounded 0.0455 still gets its line; it does not touch the key band.
+15. es-intervals-poll-margin: fixed for (b): `used-half` also names "2 in place of 1.96". (a), a trailing % sign, is the engine bullet already raised.
+16. See the class rulings below. Two of the fourteen were changed because they shared numbers or a sentence: weak-signal-daily-edge (0.04% over 625 days, t = 1.00, 2,500 days for t = 2, annual-sharpe slip 0.63) and es-mle-waits-between-trades (first sentence reworded, "six of your own fills"). Twelve are kept under the ruling.
+17. shrinkage-mse-best-multiplier and ht-errors-sample-for-power: fixed, difficulty 4, `requires` kept. `audit.py` now prints these two as the only differences from the brief's table, which is intended.
+18. ht-errors-sample-for-power gets `two-groups` 393 (ceil of 2 × 196.2 = 392.4); rg-inference-new-observation gets `added-errors` 2.4. The other 23 may stand.
+19. ht-pvalue-z-two-and-a-half: fixed. z = 2.2: options 0.028 (key), 0.014, 0.025, 0.050; 2(1 − Φ(2.2)) = 0.0278, one tail 0.0139. The id keeps "two-and-a-half"; a rename is a list item for the orchestrator.
+
+### Behavioural
+
+20. star-story-chose-to-stop: fixed, and disputed in part. "six weeks" becomes "eight weeks" as proposed. The proposed "about eight days" for what was sunk is wrong: the sunk effort is three weeks plus eight working days, 15 + 8 = 23 working days. The model now says "about 23 working days", and the placement is eight weeks: 23/5 + 3 = 7.6 weeks.
+21. project-account-too-good-to-be-true: fixed with the reader's dropout story (159 words; 91, 84, baseline 80, held-out 83 on 400 students, standard error 0.0188, 1.5 standard errors). It is no longer a backtest.
+22. after-rejection-applied-before and why-us-a-first-year-day: fixed with the reader's text (live coding story, 160 words; the estimation-round sentence).
+23. project-account-decision-to-redo: fixed (railway station footfall, same weekday a week earlier).
+24. too-good pace: fixed, 150.
+25. final-round-questions-for-us: fixed (rubric line 3 and the model's last clause of the second question). The model earns 10 on the new rubric.
+26. star-story-unpopular-decision: fixed ("The other four", "so I asked her to rerun my comparison herself").
+27. Rubric lines: fixed in 22 lines and the one "Stops cleanly" line. The reader's wording is used for the 14 narrative prompts (star-story, cv-lines, after-rejection): "Under 300 words, told in the order it happened". The 8 non-narrative prompts (why-us, final-round, return-offer, project-account-one-number) read "Under 300 words", because "the order it happened" does not apply. video-answer line 5 reads "Ends within two sentences of the check".
+
+### Class rulings applied
+
+- (a) Reuse. The six re-authored for shared numbers or a sentence: findings 2, 3, 4, 8, 9, 10. Two more changed for the same reason: weak-signal-daily-edge and es-mle-waits-between-trades. Searches (`find.py`) for each new set of numbers across the named courses, exams and part 1 find no item that shares them.
+- (b) Seeded-simulation explanations: findings 1, 11, 12, 13 now give the reasoning, with no author-run figure.
+- (c) Statements missing their condition: findings 1, 5, 6, 7, 14.
+- No two of the 62 behavioural models share a run of eight words (checked in `bank-2-s2-numbers.py`); the three repeated stories are re-authored and each file has at most one backtest story.
+
+### Every key, band or item that changed
+
+Graded answers changed (8): es-bayes-seven-in-ten 0.642857 to 0.714286; rg-inference-overall-f 5.7143 to 3.75; ts-acf-noise-band 0.098 to 0.0784 (band 0.0005 to 0.00005); rg-inference-t-from-r-squared 5 to 2.5 (band 0.04 to 0.005); collinear-features-inflation-factor 5.2632 to 1.5625; measurement-error-noisy-regressor 0.75 to 0.98; sample-size-for-signal-sharpe-years 8.163 to 18.367; ht-pvalue-z-two-and-a-half, correct option "About 0.012" to "About 0.028". weak-signal-daily-edge keeps key 1 (its slips changed).
+Bands and slips changed: the wrong values of each item above; dl-clt-mean-of-hundred (key 0.02275 unchanged, band 0.00005 to 0.0005, wrong 0.4207 to 0.421 and 0.0455 to 0.046 at 0.001 for `both-tails`, question to 3 places). New `wrong` entries: ts-acf-noise-band `rule-of-two`, rg-inference-t-from-r-squared `used-n`, ht-errors-sample-for-power `two-groups`, rg-inference-new-observation `added-errors`. Changed line: `used-half` of es-intervals-poll-margin.
+Difficulty 5 to 4: shrinkage-mse-best-multiplier, ht-errors-sample-for-power. Pace 120 to 150: project-account-too-good-to-be-true.
+Text only (key unchanged): power-one-sided-shift, es-intervals-two-desk-gap, rg-diagnostics-fanning-residuals, rg-multiple-useless-predictor, rg-multiple-partial-out, co-spurious-two-walks, es-mle-waits-between-trades, es-intervals-poll-margin.
+Behavioural models changed: star-story-chose-to-stop, project-account-too-good-to-be-true, after-rejection-applied-before, why-us-a-first-year-day, project-account-decision-to-redo, final-round-questions-for-us, star-story-unpopular-decision. Rubric lines changed: 22 time-and-order lines, the video-answer line, and final-round line 3. Every rubric still sums to 10 (2, 2, 2, 2, 1, 1), and each edited model was marked against its rubric and earns 10.
+
+### Kept under the ruling (12 of the 14 in finding 16)
+
+es-mle-two-coins-ratio, shrinkage-mse-best-multiplier, es-intervals-poll-margin, es-bayes-prior-and-sample, es-bayes-arrivals-per-day, ts-forecast-half-life, es-estimators-error-of-the-vol, es-bayes-three-from-three, ht-multiple-better-of-two, gv-forecast-long-run-vol, rg-diagnostics-fanning-residuals, two-regressions-two-slopes. Each practises the standard task of its lesson with its own setting and numbers. The other two of the fourteen, weak-signal-daily-edge and es-mle-waits-between-trades, shared numbers or a sentence and were changed.
+
+### Gates
+
+- Numbers scripts, scratchpad venv: `bank-2-s1-numbers.py` exit 0 (1172 checks), `s2` exit 0 (3389), `s3` exit 0 (1363), `s4` exit 0 (1259).
+- Reader's scripts: `stats_recompute.py` exit 0 (52 of 52 keys; its expected values for the re-authored items updated to the new numbers, recomputed independently); `probe.mjs probes.json` 366 probes, 0 differ; `audit.py` exit 0 (pace difference gone; the two difficulty differences are finding 17); `behavioural_numbers.py` exit 0 (its two hard-coded story checks updated to the new stories); `fixes.py` exit 0; `stats_sim.py` exit 0; `walks.py` exit 0 (0.892).
+- `node tools/validate.mjs`: 0 errors; no warning names any of the eight files (two long-sentence warnings the edits caused were shortened). `manifest.json` untouched.
+- `voice-scan.py 35` on the bank folder: explanations over three sentences 0, sentences over 35 words 0.
+- `fresh-check.mjs --bank` on all eight files: 0 hits (advisory lines are stock stems and shared constants, none on a changed number).
+- `playthrough.mjs --bank <file>` for the eight files, desktop, `--mobile` and `--why`, with `--local-cdn`: 24 of 24 runs green.
+- Deferred: the id `ht-pvalue-z-two-and-a-half` now describes z = 2.2 (ids are not renamed here); a trailing % in a percentage-points field stays in the inbox.
