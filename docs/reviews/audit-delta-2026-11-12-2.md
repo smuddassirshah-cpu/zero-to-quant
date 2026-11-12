@@ -86,4 +86,29 @@ Eleven families. Every key, every `wrong` value, every stated constant and every
 
 ## Overlap with earlier reads
 
-Filled after the ledger and findings were committed. See the section at the end.
+Read only after commit ee09d100 ("WIP: delta batch 2 ledger and findings").
+
+What exists. `docs/reviews/review-delta-ac-3.md` reads four fix passes (ratio, eigen, number-sense) and parts B, C and D of the bands pass. None of its items is in this batch, so it has no finding on these changes. No second read of the negative-key pass, of part A of the bands pass (the `decimal` slips) or of the odes fluency sets is on file; only the authors' reports are (`docs/reports/negative-key-pass.md`, `bands-pass-ac.md`, `fluency-odes.md`). `docs/reviews/triage-bands-ab.md` proposed the `r-low-prior` tolerance and did not mention its `accept` line. `docs/reviews/audit-delta-2026-11-11-1.md` asked for the homework-3 rubric change and its fix-pass read found the new line correct, as this audit does.
+
+Conceptual findings on the content in scope:
+
+| course | audit only | earlier read only | both |
+|---|---|---|---|
+| puzzles | 0 | 0 | 0 |
+| game-theory | 0 | 0 | 0 |
+| coding-int | 0 | 0 | 0 |
+| measure-prob | 0 | 0 | 0 |
+| mm-games | 1 | 0 | 0 |
+| recruiting | 0 | 0 | 0 |
+| conditional | 2 | 0 | 0 |
+| odes | 2 | 0 | 0 |
+| total | 5 | 0 | 0 |
+
+Notes from the authors' reports, for the fixer.
+- Finding 1: the bands pass set each `decimal` band to "at least half a unit where the question asks for decimal places", which is how 0.0087 came to carry ±0.005. With the proposed ±0.0002 the validator still reports 0 errors and the same 4,522 warnings (tried and reverted), so the rule's worry about a new `[wrong-band]` advisory does not arise here.
+- Finding 2: the negative-key pass copied each new band from a neighbouring slip (0.005 here), not from the key (0.01).
+- Finding 5: the fluency report's reading pass looked for rendering faults, not for a placeholder that equals a key.
+
+## Inbox
+
+Three bullets appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit delta batch 2)": a typed % sign on a per cent question without `unit: "%"`; a validator check of a numeric `accept` line and of a fluency placeholder against the key; a validator check on a slip band wide against its own value.
