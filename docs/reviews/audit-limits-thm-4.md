@@ -182,3 +182,64 @@ Sibling fixes (same class, not named in the audit):
 - `l16` `screens[7].feedback.generic` (finding 7 row).
 
 Gates: concepts script exit 0 (563 checks, 0 failed); `problems-limits-thm-numbers.py`, `fluency-limits-thm-numbers.py`, `limits-thm-L1-3-concepts-r2.py` exit 0; validator 0 errors (manifest unchanged); voice scan 35: 0 and 0; playthrough desktop and `--mobile` with `--local-cdn` of l14 to l19, `review-4`, `homework-4`, `problems-4`: all passed.
+
+## Fix-pass read
+
+Commit read: `309e891c` (limits-thm L4 audit round 1: fix pass), course folder only, 44 changed strings in nine files. Read blind: the audit, its ledger, the concepts script and the earlier reviews were not opened. Each string was read in its screen or item as it now stands (prompt, key, `accept`, tolerances, slips, canvas data, neighbouring sentences, summary). Checks: `docs/reports/limits-thm-L4-fixread.py` (659 checks; sympy, enumeration and Monte Carlo; exit 1 because of finding 1, exit 0 once it is fixed).
+
+No change touched a graded number: every edit inside an `accept`, hint or feedback field changed displayed digits or words only. Keys 0.6321, 0.3027, 0.2056, 0.6875 and 1/3 were recomputed and sit inside their tolerances; no slip overlaps a key.
+
+| # | file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-4 | items[6].explain.text | Mean of 20,000 trials has sd σ/√20000; for n=5, k=2 that is 0.18/√20000 ≈ 0.0013, so the mean usually lands within 0.003 of 1/3 | correct | X(2) of 5 is Beta(2,4), sd 0.1782; 0.18/141.42 = 0.00127; 0.003 is 2.4 sd, 400 simulated means: over 95% inside; hidden tol 0.01 is above 4 sd for all four tests. Casella and Berger 5.4 |
+| 2 | l14 | screens[1].explain.text | Rule λ_A/(λ_A+λ_B) = 1/(1+2) is the chance that A, the rate-1 clock, is first | correct | sympy double integral of 2e^{-x-2y} over y > x is 1/3; general rate integral gives λ_A/(λ_A+λ_B); marginal of x is e^{-x}; polygon is y ≥ x. Ross, Introduction to Probability Models 5.2.3 |
+| 3 | l14 | screens[10].explain.text | Uncorrelated means independent for jointly normal pairs; for other pairs it can fail, as Y = X² shows | correct | Cov(X, X²) = 0 for X uniform on [-1, 1]; "can fail" is right since the exponential pair of the same item is non-normal, uncorrelated and independent. Blitzstein and Hwang 7.3, 7.5 |
+| 4 | l14 | summary.trap | Zero covariance does not prove independence, though for jointly normal pairs it does | correct | As row 3; Casella and Berger 4.5 |
+| 5 | l15 | screens[1].question | The bars average about 0.5 | correct | Y = −½ ln U is Exp(2), mean 0.5; simulated mean 0.500 |
+| 6 | l15 | screens[3].prose | For g strictly increasing or strictly decreasing with differentiable inverse, the chain rule on F_Y(y) = F_X(x) gives f_Y = f_X·\|dx/dy\| | imprecise | Formula and hypotheses are right (Casella and Berger Thm 2.1.5). The identity F_Y(y) = F_X(x) holds only for increasing g; for decreasing g it is 1 − F_X(x). The screen's own map is decreasing: F_Y(0.3) = 0.4512, F_U(e^{-0.6}) = 0.5488. Finding 1 |
+| 7 | l15 | screens[3].widget.options[3].why | ½e^{-2y}: divided by the 2 where it should multiply; \|dx/dy\| = 2e^{-2y} | correct | d/dy e^{-2y} = −2e^{-2y}; the option is the key with 2 replaced by ½ |
+| 8 | l15 | screens[3].feedback.byKey.inv | The 2 from the exponent multiplies | correct | As row 7; agrees with the hint and the key |
+| 9 | l15 | screens[10].explain.text | A strictly increasing or decreasing g with g′ ≠ 0 keeps a density; a flat stretch leaves an atom, 0.6915 at 0 | correct | Inverse function theorem gives a differentiable inverse; Φ(0.5) = 0.6915. Casella and Berger 2.1 |
+| 10 | l15 | screens[11].feedback.correct | 100 × 0.09516 = 9.516 | correct | 1 − e^{-0.1} = 0.095163; product 9.516 exactly as shown; key unchanged |
+| 11 | l15 | summary.ideas[0] | For strictly monotone g with a differentiable inverse the CDF method gives f_X(x)\|dx/dy\| | correct | Casella and Berger Thm 2.1.5; agrees with row 9 |
+| 12 | l16 | screens[1].prose | Flip Y's density and slide it to cover [t − 1, t] | correct | f_Y(t − x) with Y uniform on [0, 1] is non-zero for t − 1 ≤ x ≤ t; canvas domain is ["t - 1", "t"] |
+| 13 | l16 | screens[7].widget.options[0].why | f_X(0.5)f_Y(0.5) is the joint density of both fills at 0.5, a pair that adds to 1 | correct | Independent fills: joint density is the product; 0.5 + 0.5 = 1 |
+| 14 | l16 | screens[7].feedback.generic | Count every split of 0.5 into x and 0.5 − x | correct | Convolution integral over 0 ≤ x ≤ 0.5 gives 0.5; simulated density 0.50. Blitzstein and Hwang 8.2 |
+| 15 | l16 | screens[7].feedback.byKey.prod | The density at 0.5 adds up every split | correct | As row 14 |
+| 16 | l16 | screens[8].prose | Two independent strategies, X ~ N(2, 3²), Y ~ N(1, 4²) | correct | Independence now stated where the key N(3, 5²) needs it; 9 + 16 = 25 |
+| 17 | l16 | screens[10].prose | Desk B loses independently of desk A | correct | The convolution of A and −L needs independence; now stated |
+| 18 | l17 | screens[8].widget.accept | 1 − (e^{-0.2})^5 = 1 − e^{-1} = 0.6321 | correct | Display only; key still 0.6321; (e^{-0.2})^5 = e^{-1}, 1 − 0.36788 = 0.63212 |
+| 19 | l17 | screens[8].hints[1].text | None default with chance (e^{-0.2})^5 = e^{-1} | correct | As row 18 |
+| 20 | l17 | screens[8].feedback.byKey.five | 0.9063 is 5 × 0.181269 | correct | 1 − e^{-0.2} = 0.181269; product 0.906345; slip value 0.9063 unchanged |
+| 21 | l17 | screens[10].prose | For independent continuous draws a tie has probability 0, so the maximum comes from one draw alone | correct | P(X = Y) = 0 for independent continuous X, Y; without independence (X = Y) it fails, so the added word is needed. No ties in 200,000 simulated rows |
+| 22 | l17 | screens[10].feedback.byKey.cdf | 0.25 is P(max ≤ 3) = (½)², which includes a maximum of 1 or 2 | correct | Enumeration of 36 cells: 9 with max ≤ 3, maxima 1, 2, 3 |
+| 23 | l17 | screens[11].widget.accept | 1 − Φ(2.1)^20 = 1 − 0.982136^20 ≈ 0.3027 | correct | Display only; key still 0.3027; Φ(2.1) = 0.9821356; 0.982136^20 = 0.69733; simulation 0.303 |
+| 24 | l17 | screens[11].hints[1].text | Φ(2.1) = 0.982136 | correct | scipy norm.cdf |
+| 25 | l17 | screens[11].hints[2].text | 1 − 0.982136^20 | correct | As row 23 |
+| 26 | l17 | screens[11].feedback.correct | 1 − 0.982136^20 = 0.3027 | correct | As row 23 |
+| 27 | l17 | screens[11].feedback.byKey.times | 0.3573 is 20 × 0.017864 | correct | 1 − 0.982136 = 0.017864; product 0.35728; slip value unchanged |
+| 28 | l17 | summary.ideas[0] | For n independent draws with CDF F: P(max ≤ t) = F(t)^n, P(min > t) = (1 − F(t))^n | correct | Casella and Berger 5.4; fails for dependent draws, so the hypothesis is needed |
+| 29 | l17 | summary.formula.note | For independent continuous draws ties have chance 0 | correct | As row 21 |
+| 30 | l18 | screens[0].prose | Trades arrive as a Poisson process at 2 a minute, so each gap is exponential with mean half a minute | correct | Ross 5.3.3; a rate alone would not fix the gap law; third arrival Gamma(3, rate 2) by KS test |
+| 31 | l18 | screens[4].question | Six independent standard normal returns squared and added; Var(V) | correct | Chi-square(6), variance 12; simulated 12.0; key unchanged |
+| 32 | l18 | screens[5].prose | With V chi-square on n df and independent of Z, Z/√(V/n) has the t distribution | correct | Casella and Berger Def 5.3.4; simulation: dependent Z and V give a different tail beyond ±2 |
+| 33 | l18 | screens[8].explain.text | The arcsine law describes the share of time a long fair random walk spends positive | correct | Feller vol. 1, III.4 (limit law); walk of 1,000 steps: share below 0.25 about 1/3; a four-step walk is not close |
+| 34 | l18 | summary.ideas[1] | Sum of n independent squared standard normals is chi-square, Gamma(a = n/2, λ = ½); with Z independent of V the ratio is t | correct | Rate convention kept (λ = ½ is a rate, matching the formula box); Casella and Berger 5.3 |
+| 35 | l19 | screens[6].explain.text | Independence is enough for the product rule; without it E[e^{tX}e^{tY}] can fail to split | correct | Sufficient, not necessary: script builds a dependent pair whose sum has the product MGF; Y = X gives M(2t) ≠ M(t)². Blitzstein and Hwang 6.4 |
+| 36 | l19 | screens[8].prose | X_i independent and identically distributed with mean μ, sd σ | correct | The first line of the derivation uses a common M_Y, so iid is needed; agrees with line `mgf` |
+| 37 | l19 | summary.ideas[2] | Chernoff bounds a tail by min over t > 0 of e^{-ta}M(t)^n | correct | Markov on e^{tS} needs t > 0 for an upper tail; agrees with the Chernoff screen; script shows the unrestricted minimum is not a bound. Mitzenmacher and Upfal 4.2 |
+| 38 | l19 | summary.formula.tex | P(S ≥ a) ≤ min_{t>0} e^{-ta}M(t)^n | correct | As row 37 |
+| 39 | problems-4 | items[2].parts[4].explain.text | X(3) > 0.5 exactly when at least 2 of 4 quotes are above 0.5; fails with 0 or 1 above, (1+4)/16; P = 11/16; Beta(3, 2) integral agrees | correct | Enumeration of 16 patterns at thresholds 0.3, 0.5, 0.8 matches the Beta(3, 2) tail; sympy integral 11/16; prose states uniform and independent |
+| 40 | problems-4 | items[3].parts[0].feedback.byKey.power | (1−2s)^{-1/8}: divided the exponent by 4; four copies multiply it by 4: −½ × 4 = −2 | correct | −½ ÷ 4 = −1/8 is the option; −½ × 4 = −2 is the key |
+| 41 | review-4 | items[4].widget.accept | 1 − Φ(2)^10 = 1 − 0.97725^10 ≈ 0.2056 | correct | Display only; key still 0.2056; Φ(2) = 0.977250; 0.97725^10 = 0.79443 |
+| 42 | review-4 | items[4].feedback.correct | 1 − 0.97725^10 = 0.2056 | correct | As row 41 |
+| 43 | review-4 | items[4].feedback.byKey.times | 0.2275 is 10 × 0.02275 | correct | Product exact; slip value unchanged |
+| 44 | review-4 | items[4].explain.text | Φ(2)^10 = 0.7944; a search over ten skill-free strategies turns up a best of 2 or more about one time in five; that is not the chance a reported best of 2 is luck, which depends on how common skill is | correct | 0.2056 is P(best ≥ 2 given no skill). By Bayes' rule P(no skill given best ≥ 2) moves from 0.69 to 0.03 as the share of skilled searches goes from 0.1 to 0.9 (script example, skill worth one sd). Neither the inverse reading nor a new error; three sentences |
+
+Counts: 44 rows; 43 correct, 0 wrong, 1 imprecise, 0 misleading, 0 unverified.
+
+Voice on the 44 strings: no exclamation marks, no em-dashes, no US spellings, no lesson numbers, no sentence over 35 words, no explanation over three sentences.
+
+Findings
+
+1. l15-new-variables.json | screens[3].prose | imprecise | minor | The fix added "or strictly decreasing" but kept "the chain rule on $F_Y(y) = F_X(x)$". That identity holds only for increasing $g$. For decreasing $g$, $F_Y(y) = 1 - F_X(x)$. The screen's own map $Y = -\tfrac12\ln U$ is decreasing, so a learner who checks the stated step finds it false there. The final formula and its hypotheses are right. | $F_Y(0.3) = 1 - e^{-0.6} = 0.4512$ against $F_U(e^{-0.6}) = 0.5488$ (script check "l15 prose"). Casella and Berger, Theorems 2.1.3 and 2.1.5: $F_Y(y) = F_X(g^{-1}(y))$ for increasing $g$ and $1 - F_X(g^{-1}(y))$ for decreasing $g$. | Replace the prose with: `You went from $U$ to $Y$ through the CDF. Let $Y = g(X)$ with $x = g^{-1}(y)$ differentiable. For strictly increasing $g$, $F_Y(y) = F_X(x)$. For strictly decreasing $g$, $F_Y(y) = 1 - F_X(x)$. Either way the chain rule gives $$f_Y(y) = f_X(x)\left|\frac{dx}{dy}\right|.$$` (in JSON, each backslash doubled).
