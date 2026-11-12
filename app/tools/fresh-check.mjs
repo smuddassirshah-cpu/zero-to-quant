@@ -6,6 +6,9 @@
 //                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
 //   --file content/courses/<c>/review-1.json (or homework-2.json) checks a course set against everything else, code items included, and
 //   lists as advisory (exit 0) any item sharing three or more non-trivial numbers with one lesson screen of its course (--shared-numbers n, 0 off).
+// Cross-content numbers (protocol 6, review-delta-bank-2 findings 1 to 4): --cross-numbers [n] lists, as advisory, any target item sharing n or more (default 3) distinctive numbers
+//   with an item of any other file (course screens, quizzes, sets, exams, the bank), and --cross-numbers-all does it for every item of the content (each pair once). The numbers are those the
+//   item states (its prose, question, options, explanation and right-answer line) and its numeric keys and slip values; standard constants (0.05, 1.96, ...) and any number that more than 1000 items hold are left out; a pair needs n shared numbers of which at least two are held by 300 items or fewer (--cross-df, --cross-weak). A lesson screen or quiz item against another lesson's is not listed; --cross-numbers-all lists the pairs, most shared numbers first.
 // Exit 1 on any hit. A hit is a shared word n-gram (default 8 tokens, numbers normalised to "#")
 // or a 5-word shingle Jaccard at or above the threshold (default 0.5).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -86,6 +89,23 @@ function numbersOf(strings) {
   return out;
 }
 const SHARED_NUMS = Number(opt('--shared-numbers', 3));
+// Cross-content numbers: the stated numbers plus the numeric answers, slip values and option figures of a unit, minus standard constants.
+const CONSTS = new Set(['0.5', '0.25', '0.75', '0.1', '0.05', '0.01', '0.001', '0.025', '0.975', '0.95', '0.99', '0.9', '1.5', '1.96', '1.645', '2.576', '2.33', '3.14', '3.1416', '2.718', '1.414', '0.693', '0.6931', '0.0001', '0.005', '0.0005']);
+function keyNumbers(node, out = []) {
+  if (Array.isArray(node)) { for (const v of node) keyNumbers(v, out); return out; }
+  if (node && typeof node === 'object') {
+    for (const [k, v] of Object.entries(node)) {
+      if (k === 'answer' && typeof v === 'number') out.push(String(+v.toPrecision(10)));
+      else if (k === 'answers' && Array.isArray(v)) v.forEach((x) => typeof x === 'number' && out.push(String(+x.toPrecision(10))));
+      else if (k === 'wrong' && Array.isArray(v)) v.forEach((w) => w && typeof w.value === 'number' && out.push(String(+w.value.toPrecision(10))));
+      else if (k === 'options' && Array.isArray(v)) v.forEach((o) => typeof o === 'string' && out.push(o));
+      else if (k === 'explain' && v && typeof v.text === 'string') out.push(v.text);
+      else if (k === 'feedback' && v && typeof v.correct === 'string') out.push(v.correct);
+      else if (!['feedback', 'explain', 'hints', 'hint', 'why', 'solution', 'starter', 'tests', 'rubric', 'model'].includes(k)) keyNumbers(v, out);
+    }
+  }
+  return out;
+}
 // ENGINE-BACKLOG 893: the displayed formulas of a unit (its $..$ and $$..$$ spans, and each side of an = or \approx in them), with spaces, \left \right,
 // \, and \tfrac dropped, kept when they hold three or more tokens. A problem-set item that shares one with a lesson, quiz, review, homework, exam or
 // other set of its course, or two or more of its stated parameters (--shared-params, default 2), is reported as advisory.
@@ -109,7 +129,7 @@ const SHARED_PARAMS = Number(opt('--shared-params', 2)), BOILER_F = Number(opt('
 function unitsOf(file, rel) {
   const d = rd(file), u = [];
   const qOf = (node) => (node && typeof node === 'object' ? [node.prose, node.question, ...(Array.isArray(node.parts) ? node.parts.flatMap((p) => [p && p.prose, p && p.question]) : [])].filter((x) => typeof x === 'string') : []);
-  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, qtk: tokens(qOf(node)), nums: numbersOf(out), forms: formulasOf(out) }); };
+  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, qtk: tokens(qOf(node)), nums: numbersOf(out), xn: [...numbersOf([...out, ...keyNumbers(node)])].filter((n) => !CONSTS.has(n)), forms: formulasOf(out) }); };
   if (rel.startsWith('courses/')) {
     (d.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s));
     const qz = Array.isArray(d.quiz) ? d.quiz : d.quiz?.items ?? [];
@@ -300,6 +320,28 @@ function scanCode(rel, abs = join(C, rel)) {
   return hits;
 }
 
+// Cross-content numbers (see the header): an inverted index from number to units, so a number held by many units (a stock figure) is dropped.
+const CROSS = has('--cross-numbers') || has('--cross-numbers-all');
+const CROSS_N = Number(opt('--cross-numbers', 3)) || 3, CROSS_DF = Number(opt('--cross-df', 300)), CROSS_WEAK = Number(opt('--cross-weak', 1000));
+const xIdx = new Map();
+if (CROSS) corpus.forEach((x, i) => { for (const n of x.xn ?? []) { let a = xIdx.get(n); if (!a) xIdx.set(n, (a = [])); a.push(i); } });
+function scanCross(rel, targetUnits, selfId) {
+  if (!CROSS) return [];
+  const hits = [];
+  for (const t of targetUnits) {
+    const cnt = new Map();
+    for (const n of t.xn ?? []) { const a = xIdx.get(n) ?? []; if (a.length > CROSS_WEAK) continue; for (const i of a) { const s = corpus[i]; if (s.file === rel && s.path === t.path) continue; const c = cnt.get(i) ?? cnt.set(i, { all: [], strong: 0 }).get(i); c.all.push(n); if (a.length <= CROSS_DF) c.strong++; } }
+    for (const [i, c] of cnt) {
+      const s = corpus[i], shared = c.all;
+      if (/^courses\/[^/]+\/l\d/.test(rel) && /^courses\/[^/]+\/l\d/.test(s.file)) continue;   // two lessons teaching their own worked numbers
+      if (shared.length < CROSS_N || c.strong < 2 || s.file === rel || (selfId && s.id === selfId && s.file.startsWith('exams/') && rel.startsWith('exams/'))) continue;
+      if (has('--cross-numbers-all') && `${rel}:${t.path}` > `${s.file}:${s.path}`) continue;   // each pair once
+      hits.push({ target: `${rel}:${t.path}`, source: `${s.file}:${s.path}`, kind: 'cross-numbers', ngram: shared.slice(0, 6).join(' '), count: shared.length, score: 0 });
+    }
+  }
+  return hits;
+}
+
 // Targets.
 const targets = [];
 const direct = opt('--file', null);
@@ -310,6 +352,8 @@ if (direct) {
   const rel = !inC.startsWith('..') && !isAbsolute(inC) ? inC.split(sep).join('/') : `${opt('--as', 'exams')}/${direct.split('/').pop()}`;
   const r = unitsOf(abs, rel);
   targets.push({ rel, units: r.units, id: r.id, abs });
+} else if (has('--cross-numbers-all')) {
+  for (const rel of listAll()) targets.push({ rel, units: unitsOf(join(C, rel), rel).units, id: fileIds[rel] });
 } else if (has('--all-exams')) {
   for (const f of jsonFiles(join(C, 'exams'))) { const rel = `exams/${f}`; targets.push({ rel, units: unitsOf(join(C, rel), rel).units, id: fileIds[rel] }); }
 } else {
@@ -325,17 +369,18 @@ if (direct) {
 }
 // One line per target item and source file: the best hit (an n-gram hit beats a score, then the higher score).
 const best = new Map();
-for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...scanNumbers(t.rel, t.units), ...scanQuestionRuns(t.rel, t.units, t.id), ...scanSetReuse(t.rel, t.units), ...(has('--no-code') ? [] : scanCode(t.rel, t.abs))]) {
+for (const t of targets) for (const h of has('--cross-numbers-all') ? scanCross(t.rel, t.units, t.id) : [...scan(t.rel, t.units, t.id), ...scanNumbers(t.rel, t.units), ...scanQuestionRuns(t.rel, t.units, t.id), ...scanCross(t.rel, t.units, t.id), ...scanSetReuse(t.rel, t.units), ...(has('--no-code') ? [] : scanCode(t.rel, t.abs))]) {
   const k = `${h.target}|${h.kind === 'code-name' ? 'name:' + h.ngram : h.source.split(':')[0]}`, o = best.get(k);
-  const RANK = { 'code-name': 4, ngram: 3, jaccard: 2, formula: 1.6, params: 1.5, 'question-run': 1.2, numbers: 1 };
+  const RANK = { 'code-name': 4, ngram: 3, jaccard: 2, formula: 1.6, params: 1.5, 'question-run': 1.2, numbers: 1, 'cross-numbers': 0.9 };
   if (!o || RANK[h.kind] > RANK[o.kind] || (h.kind === o.kind && ((h.count ?? 0) > (o.count ?? 0) || (h.run ?? 0) > (o.run ?? 0) || ((h.run ?? 0) === (o.run ?? 0) && h.score > o.score)))) best.set(k, h);
 }
 const all = [...best.values()];
-const ADVISORY = new Set(['numbers', 'formula', 'params', 'question-run']);   // shared numbers, a shared formula and shared parameters are advisory: a table of critical values is shared on purpose
+if (CROSS) all.sort((x, y) => (y.kind === 'cross-numbers') - (x.kind === 'cross-numbers') || (y.kind === 'cross-numbers' ? y.count - x.count : 0));
+const ADVISORY = new Set(['numbers', 'formula', 'params', 'question-run', 'cross-numbers']);   // shared numbers, a shared formula and shared parameters are advisory: a table of critical values is shared on purpose
 const hard = all.filter((h) => !ADVISORY.has(h.kind));
 if (has('--json')) console.log(JSON.stringify(all, null, 1));
 else {
-  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'formula' ? `shared formula ${h.ngram}` : h.kind === 'params' ? `${h.count} shared parameters (${h.ngram})` : h.kind === 'question-run' ? `stem shares ${h.run} words ("${h.ngram}"), share ${h.share}` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
+  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' || h.kind === 'cross-numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'formula' ? `shared formula ${h.ngram}` : h.kind === 'params' ? `${h.count} shared parameters (${h.ngram})` : h.kind === 'question-run' ? `stem shares ${h.run} words ("${h.ngram}"), share ${h.share}` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
   console.log(`${hard.length} hit(s) in ${targets.length} target file(s)${all.length > hard.length ? `, ${all.length - hard.length} advisory (shared numbers, formulas, parameters and stem runs: read them, they may be a shared table of constants or a stock phrase)` : ''}`);
 }
 process.exitCode = hard.length ? 1 : 0;   // not process.exit: piped output must flush

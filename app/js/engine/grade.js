@@ -36,7 +36,7 @@
   const parseNum = (s, { percent = false } = {}) => {
     const mixed = String(s ?? '').trim().replace(/[−–]/g, '-').match(/^(-?\d+)\s+(\d+)\/(\d+)$/); // mixed number 1 1/2
     if (mixed) return +mixed[3] ? (+mixed[1] + Math.sign(+mixed[1] || 1) * (+mixed[2] / +mixed[3])) / (percent ? 100 : 1) : NaN;
-    let v = String(s ?? '').trim().replace(/[\s ]+/g, '').replace(/[−–]/g, '-').replace(/^[£$€]/, '').replace(/^(-)[£$€]/, '$1');
+    let v = String(s ?? '').trim().replace(/[\s ]+/g, '').replace(/[−–]/g, '-').replace(/^\+/, '').replace(/^[£$€]/, '').replace(/^(-)[£$€]/, '$1').replace(/^\+/, '');   // a leading plus sign (+42, +£250, £+250), ENGINE-BACKLOG 934
     if (!v) return NaN;
     if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(v)) v = v.replace(/,/g, ''); // 1,000 and 12,345.6
     let pct = false;
@@ -303,16 +303,99 @@
   const itemsOf = (ce, E) => {
     const j = E.json; const h = Array.isArray(j) ? j[0] : null, a = Array.isArray(j) ? j.slice(1) : [];
     let list = null, r = 0, c = 0;
-    if ((h === 'Tuple' || h === 'List') && a.length > 1 && !a.some(x => Array.isArray(x) && x[0] === 'List')) { list = a; r = 1; c = a.length; }
+    const row = (x) => Array.isArray(x) && (x[0] === 'List' || x[0] === 'Tuple');
+    /* ENGINE-BACKLOG 931: a list or tuple of equal-length lists or tuples is a matrix, whichever brackets were typed ([[a, b], [c, d]], ((a, b), (c, d))) */
+    if ((h === 'Tuple' || h === 'List') && a.length >= 1 && a.every(x => row(x) && x.length === a[0].length && x.length >= 2) && !(a.length === 1 && h === 'Tuple')) { const rows = a.map(x => x.slice(1)); r = rows.length; c = rows[0].length; list = [].concat(...rows); }
+    else if ((h === 'Tuple' || h === 'List') && a.length > 1 && !a.some(x => Array.isArray(x) && x[0] === 'List')) { list = a; r = 1; c = a.length; }
     else if (h === 'Matrix' && Array.isArray(a[0])) { const rows = a[0].slice(1).map(x => x.slice(1)); r = rows.length; c = r ? rows[0].length : 0; list = [].concat(...rows); }
     if (!list || !list.length) return null;
     return { items: list.map(x => ce.box(x)), vec: r === 1 || c === 1, n: list.length, r, c };
+  };
+  /* ENGINE-BACKLOG 932: a number times a vector or matrix typed in text: \frac{1}{10}[[3, -1], [-2, 4]], 0.2(3, 4), [[3, -1], [-2, 4]]/10,
+     \frac{(3, 4)}{5}, 2\begin{pmatrix}..\end{pmatrix}. The engine's own parse of these is wrong or an error, so the text is cut here: the
+     literal group (a pmatrix, or brackets holding a comma) and the scalar around it; each entry is the scalar times that entry. */
+  const bracketText = (s) => String(s).replace(/\\(?:left|right)(?![A-Za-z])\s*/g, '').replace(/\\lbrack(?![A-Za-z])/g, '[').replace(/\\rbrack(?![A-Za-z])/g, ']').replace(/\\langle(?![A-Za-z])/g, '(').replace(/\\rangle(?![A-Za-z])/g, ')').replace(/\\lparen(?![A-Za-z])/g, '(').replace(/\\rparen(?![A-Za-z])/g, ')').replace(/\\[,;:! ]/g, ' ').replace(/[−–]/g, '-').replace(/[(\[]\s*(\\begin\{[pbvBV]?matrix\}[\s\S]*?\\end\{[pbvBV]?matrix\})\s*[)\]]/g, '$1');
+  const closeAt = (t, i) => {                                   // the index just after the bracket group opening at t[i], else -1
+    const st = [];
+    for (let j = i; j < t.length; j++) {
+      const ch = t[j];
+      if (ch === '(' || ch === '[') st.push(ch === '(' ? ')' : ']');
+      else if (ch === ')' || ch === ']') { if (st.pop() !== ch) return -1; if (!st.length) return j + 1; }
+    }
+    return -1;
+  };
+  const splitTop = (t, sep) => {                                // t cut at the separator outside every bracket, brace and \begin..\end
+    const out = []; let d = 0, from = 0;
+    for (let j = 0; j < t.length; j++) {
+      const ch = t[j];
+      if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch)) d--;
+      else if (t.startsWith('\\begin{', j)) d++; else if (t.startsWith('\\end{', j)) d--;
+      else if (d === 0 && t.startsWith(sep, j)) { out.push(t.slice(from, j)); from = j + sep.length; j += sep.length - 1; }
+    }
+    out.push(t.slice(from)); return out;
+  };
+  const wholeGroup = (t) => { const x = t.trim(); return (x[0] === '(' || x[0] === '[') && closeAt(x, 0) === x.length ? x.slice(1, -1) : null; };
+  const literalRows = (inner) => {                              // the rows of entry texts of a bracket literal, null when it is not one
+    const parts = splitTop(inner, ',').map(x => x.trim());
+    if (parts.length > 1 || (parts.length === 1 && wholeGroup(parts[0]) != null && splitTop(wholeGroup(parts[0]), ',').length > 1)) {
+      const rows = parts.map(wholeGroup);
+      if (rows.every(x => x != null)) { const cells = rows.map(x => splitTop(x, ',').map(y => y.trim())); return cells.every(c => c.length === cells[0].length && c.every(Boolean)) ? cells : null; }
+      return parts.length > 1 && parts.every(Boolean) ? [parts] : null;
+    }
+    return null;
+  };
+  const SCALAR_END = /(?:\\cdot|\\times|\*)\s*$/;
+  const scaledLiteral = (s) => {                                // { k: scalar tex, rows: [[entry tex]] } or null (no scalar, or no literal)
+    const t = bracketText(s);
+    let lit = null;
+    for (let i = 0; i < t.length && !lit; i++) {
+      const env = /^\\begin\{(p|b|v|B|V|)matrix\}/.exec(t.slice(i));
+      if (env) { const endTag = `\\end{${env[1]}matrix}`, e = t.indexOf(endTag, i); if (e < 0) return null; lit = { start: i, end: e + endTag.length, rows: splitTop(t.slice(i + env[0].length, e), '\\\\').filter(x => x.trim()).map(r => splitTop(r, '&').map(y => y.trim())) }; break; }
+      if (t[i] === '(' || t[i] === '[') {
+        const e = closeAt(t, i); if (e < 0) return null;
+        const rows = literalRows(t.slice(i + 1, e - 1));
+        if (rows) lit = { start: i, end: e, rows }; else i = e - 1;
+      }
+    }
+    if (!lit || !lit.rows.length || lit.rows.some(r => r.length !== lit.rows[0].length || r.some(x => !x))) return null;
+    let P = t.slice(0, lit.start), S = t.slice(lit.end), num = [], den = [];
+    const fr = /\\frac\s*\{\s*$/.exec(P), fs = /^\s*\}\s*\{(.*)\}\s*$/.exec(S);
+    if (fr && fs) { P = P.slice(0, fr.index); S = ''; den.push(fs[1]); }                 // \frac{LIT}{d}; \frac{k}{d}LIT is not cut here
+    if (P.trim()) {
+      let p = P.replace(SCALAR_END, '').trim();
+      const op = p !== P.trim();
+      if (/^[+-]$/.test(p)) p += '1';
+      if (!p || (!op && /[A-Za-z]$/.test(p) && !/\\[A-Za-z]+$/.test(p))) return null;   // f(1, 2) is a call, not a scalar
+      num.push(p);
+    }
+    if (S.trim()) {
+      const m1 = /^\s*(?:\\cdot|\\times|\*)\s*(.+)$/.exec(S), m2 = /^\s*(?:\/|\\div)\s*(.+)$/.exec(S);
+      if (m1) num.push(m1[1]); else if (m2) den.push(m2[1]); else return null;
+    }
+    if (!num.length && !den.length) return null;
+    const k = `\\frac{${num.length ? num.map(x => `\\left(${x}\\right)`).join('\\cdot ') : '1'}}{${den.length ? den.map(x => `\\left(${x}\\right)`).join('\\cdot ') : '1'}}`;
+    return { k, rows: lit.rows };
+  };
+  /* the boxed entries of a vector or matrix typed as s (scaled or not), null for a single value or text the engine cannot read */
+  const itemsOfText = (ce, s, fns, cx) => {
+    const sc = scaledLiteral(s);
+    if (sc) {
+      const K = ce.parse(prep(sc.k, cx, fns)); if (K.isValid === false) return null;
+      const rows = sc.rows.map(r => r.map(x => { const E = ce.parse(prep(x, cx, fns)); if (E.isValid === false) throw NOPE; return ce.box(['Multiply', K.json, E.json]); }));
+      return { items: [].concat(...rows), vec: rows.length === 1 || rows[0].length === 1, n: rows.length * rows[0].length, r: rows.length, c: rows[0].length };
+    }
+    const E = ce.parse(prep(s, cx, fns));
+    return E.isValid === false ? null : itemsOf(ce, E);
   };
   const sameShape = (p, q) => p.vec && q.vec ? p.n === q.n : !p.vec && !q.vec && p.r === q.r && p.c === q.c;
   const parseLatex = (ce, s, fns) => { const cx = hasImag(s); const E = ce.parse(prep(s, cx, fns)); return E.isValid === false ? undefined : E; };
   /* exprShape: undefined when the input does not parse, null for one value, else { n, r, c, vec } */
   const exprShape = (ce, s, fns) => {
-    try { const E = parseLatex(ce, s, fns); if (!E) return undefined; const it = itemsOf(ce, E); return it ? { n: it.n, r: it.r, c: it.c, vec: it.vec } : null; } catch { return undefined; }
+    try {
+      const cx = hasImag(s), sc = scaledLiteral(s) ? itemsOfText(ce, s, fns, cx) : null;
+      if (sc) return { n: sc.n, r: sc.r, c: sc.c, vec: sc.vec };
+      const E = parseLatex(ce, s, fns); if (!E) return undefined; const it = itemsOf(ce, E); return it ? { n: it.n, r: it.r, c: it.c, vec: it.vec } : null;
+    } catch { return undefined; }
   };
   const shapeWord = (p) => p.vec ? `${p.n} component${p.n === 1 ? '' : 's'}` : `${p.r} rows and ${p.c} columns`;
   /* The feedback line when the learner's vector or matrix has the wrong shape (key "length"), else null */
@@ -414,7 +497,7 @@
   /* Item 620: what may stand beside the "=" and be dropped: a symbol (letter, Greek letter, \text{...}), optionally decorated
      (\hat, \bar, a prime), subscripted (S_\infty, u_{n+1}, x_{\text{max}}); or a call of such a head on symbols (f(x), g(t), f(x,y)). */
   const BRACED = '\\{(?:[^{}]|\\{[^{}]*\\})*\\}';
-  const SYM0 = `(?:[A-Za-z]|\\\\(?:${GREEK})|\\\\(?:text|mathrm|operatorname)${BRACED})`;
+  const SYM0 = `(?:[A-Za-z]|\\\\(?:${GREEK}|ell(?![A-Za-z]))|\\\\(?:text|mathrm|mathcal|operatorname)${BRACED})`;   // \\ell and \\mathcal{L} are symbols too (ENGINE-BACKLOG 937)
   const SYM1 = `(?:(?:\\\\(?:hat|bar|tilde|vec|dot|overline)\\s*\\{\\s*${SYM0}\\s*\\})|${SYM0})`;
   const SUB = `(?:_(?:[A-Za-z0-9]|\\\\infty|\\\\(?:${GREEK})|${BRACED}))`;
   const SYM = `${SYM1}${SUB}?(?:'+|\\^\\*|\\^\\{\\\\prime\\}|\\^\\{\\*\\}|\\^\\{-1\\})?`;
@@ -425,13 +508,13 @@
   /* ENGINE-BACKLOG 904: a call whose brackets hold anything (m(e(x)), B(T(n)), f(-x), gf(x), f^{-1}(x)) is a label when its head
      letters are not symbols of the authored answer: the head is one symbol (with a subscript, a prime or ^{-1}) or a run of two or three
      letters, and the closing bracket is the end of the text. */
-  const CALLLABEL = new RegExp(`^\\s*((?:[A-Za-z]|\\\\(?:${GREEK}))(?:_(?:[A-Za-z0-9]|\\{[^{}]*\\}))?(?:\\^\\{-1\\}|\\^-1|'+)?|[A-Za-z]{2,3})\\s*(?:\\\\left\\s*)?\\(`);
+  const CALLLABEL = new RegExp(`^\\s*((?:[A-Za-z]|\\\\(?:${GREEK}|ell))(?:_(?:[A-Za-z0-9]|\\{[^{}]*\\}))?(?:\\^\\{-1\\}|\\^-1|'+)?|[A-Za-z]{2,3})\\s*(?:\\\\left\\s*)?\\(`);
   const callLabel = (t, b) => {
     const m = CALLLABEL.exec(t); if (!m) return false;
     const open = m[0].length - 1; let d = 0, j = open;
     for (; j < t.length; j++) { if (t[j] === '(') d++; else if (t[j] === ')' && --d === 0) break; }
     if (j >= t.length || t.slice(j + 1).trim() !== '') return false;
-    const head = m[1].replace(/\^\{-1\}|\^-1|'+|_(?:[A-Za-z0-9]|\{[^{}]*\})/g, '').replace(/\\[A-Za-z]+/g, '').replace(/[^A-Za-z]/g, '');
+    const head = m[1].replace(/\\ell(?![A-Za-z])/g, 'l').replace(/\^\{-1\}|\^-1|'+|_(?:[A-Za-z0-9]|\{[^{}]*\})/g, '').replace(/\\[A-Za-z]+/g, '').replace(/[^A-Za-z]/g, '');
     const inAnswer = String(b).replace(/\\[A-Za-z]+/g, ''), inside = t.slice(open + 1, j).replace(/\\[A-Za-z]+/g, ''); // x(x + 1) is a product, f(x) is a call
     return !!head && ![...head].some(c => inAnswer.includes(c) || inside.includes(c));
   };
@@ -466,10 +549,13 @@
     let A, B;
     const counting = /!|\\[dt]?binom|\\choose/.test(String(a) + String(b)); // factorials only evaluate at whole numbers
     const cx = hasImag(a) || hasImag(b);
-    try { A = ce.parse(prep(a, cx, fns)); B = ce.parse(prep(b, cx, fns)); } catch { return false; }
-    if (A.isValid === false || B.isValid === false) return false;
     let IA = null, IB = null;
-    try { IA = itemsOf(ce, A); IB = itemsOf(ce, B); } catch { IA = IB = null; }
+    if (scaledLiteral(a) || scaledLiteral(b)) { try { IA = itemsOfText(ce, a, fns, cx); IB = itemsOfText(ce, b, fns, cx); } catch { IA = IB = null; } }   // 932: a number times a vector or matrix
+    if (!IA && !IB) {
+      try { A = ce.parse(prep(a, cx, fns)); B = ce.parse(prep(b, cx, fns)); } catch { return false; }
+      if (A.isValid === false || B.isValid === false) return false;
+      try { IA = itemsOf(ce, A); IB = itemsOf(ce, B); } catch { IA = IB = null; }   // 931: a vector or matrix in any typing form
+    }
     if (IA || IB) return !!(IA && IB && sameShape(IA, IB) && IA.items.every((x, k) => scalarEqual(ce, x, IB.items[k], counting, cx, ints)));
     return scalarEqual(ce, A, B, counting, cx, ints);
   };
@@ -719,7 +805,7 @@
       if (!Number.isInteger(d) || co.some(x => !Number.isInteger(x))) return null;
       return collected(nt) === true && co.reduce(gcdI, d) === 1;
     }
-    return jLit(k) != null && !Number.isInteger(jLit(k)) ? false : null; // a decimal or a fraction a/b (a not 1) times a bracket is not simplest
+    return jLit(k) != null && !(Number.isInteger(jLit(k)) && Math.abs(jLit(k)) === 1) ? false : null; // a number other than 1 (a whole number, a decimal, a fraction a/b) times a bracket is not simplest (ENGINE-BACKLOG 935)
   };
   const exprShapeOk = (ce, spec, L, fo) => {
     const form = exprFormOf(spec);
@@ -727,6 +813,7 @@
     if (form === 'exact-angle') return shapeExactAngle(L);
     if (form === 'solved') return solvedShape(L);
     if (!form || !ce) return true;
+    if (form === 'simplified' && [spec.answer, ...(spec.accept || [])].some(f => f && normExpr(f) === normExpr(L))) return true;   // the author's own forms always pass (5(n - 20) beside 5n - 100)
     try {
       return withParsed(ce, L, fo.functions, (e) => {
         const j = e.json;
@@ -864,12 +951,32 @@
      ("22 cm", "3500 m", "115°", "40 km/h", "£" stays before as ever). A one-letter unit is dropped only when it is the field's own `unit`
      (so "3x" is not 3); two or more letters are always a unit word. spec.scale, a number such as 1e-5, is for a part asked "in units
      of 10^-5": the answer is stored in those units and the true value (0.0000486 or 4.86e-5) is accepted too, with its band scaled. */
+  /* ENGINE-BACKLOG 933: the unit a learner types after the number, in words or with a caret ("234 m^2", "234 square metres", "20 km an hour",
+     "0.4 a day", "-12 GWh per °C"). unitCanon folds a unit to one spelling (m², m^2, m2, square metres, sq m, metres squared are m2; km/h, kph,
+     km per hour, kilometres an hour are km/h) so the field's own `unit` is recognised however it is written; any run of words of two or more
+     letters is dropped as before. */
+  const UNIT_ABBR = { metre: 'm', meter: 'm', kilometre: 'km', kilometer: 'km', centimetre: 'cm', centimeter: 'cm', millimetre: 'mm', second: 's', sec: 's', minute: 'min', hour: 'h', hr: 'h', hrs: 'h', year: 'yr', yrs: 'yr', millisecond: 'ms', microsecond: 'µs', us: 'µs', nanosecond: 'ns', gram: 'g', kilogram: 'kg', megabyte: 'mb', gigabyte: 'gb', percent: '%', bps: 'bp', kph: 'km/h', per: '/', an: '/', a: '/', each: '/', every: '/' };
+  const unitCanon = (u) => {
+    const t = String(u ?? '').toLowerCase().replace(/\\(?:text|mathrm)\s*\{([^}]*)\}/g, '$1').replace(/\^\s*\{?\s*([23])\s*\}?/g, '$1').replace(/²/g, '2').replace(/³/g, '3').replace(/[{}]/g, '').replace(/\bper cent\b/g, 'percent').replace(/\bbasis points?\b/g, 'bp').replace(/\//g, ' / ').replace(/\./g, '');
+    const w = t.split(/\s+/).filter(Boolean).map(x => { const y = x.length > 3 && x.endsWith('s') && !x.endsWith('ss') ? x.slice(0, -1) : x; return UNIT_ABBR[y] || UNIT_ABBR[x] || y; });
+    const out = [];
+    for (let i = 0; i < w.length; i++) {
+      if ((w[i] === 'square' || w[i] === 'sq') && i + 1 < w.length) { out.push(w[++i] + '2'); continue; }
+      if ((w[i] === 'cubic' || w[i] === 'cu') && i + 1 < w.length) { out.push(w[++i] + '3'); continue; }
+      if (w[i] === 'squared' && out.length) { out[out.length - 1] += '2'; continue; }
+      if (w[i] === 'cubed' && out.length) { out[out.length - 1] += '3'; continue; }
+      out.push(w[i]);
+    }
+    return out.join('');
+  };
+  const UNIT_WORD = '[A-Za-zµ°]+(?:[/·][A-Za-zµ°]+)*(?:\\^\\{?-?[23]\\}?|\\^?-?[23]|[²³])?';
+  const UNIT_TAIL = new RegExp(`^(.*?[\\d.]%?)\\s*(°|\\\\circ|\\^\\\\circ|\\^\\{\\\\circ\\}|${UNIT_WORD}(?:\\.?\\s+${UNIT_WORD})*)\\.?$`);
   const numText = (text, spec = {}) => {
     let t = String(text ?? '').trim().replace(/^(?:[A-Za-z](?:_(?:[A-Za-z0-9]|\{[^{}]*\}))?|\\[A-Za-z]+)\s*=(?!=)\s*/, '');
-    const m = /^(.*?[\d.])\s*(°|\\circ|\^\\circ|\^\{\\circ\}|[A-Za-zµ]+(?:[/·][A-Za-zµ]+)*(?:\^?-?[23²³])?)\.?$/.exec(t);
+    const m = UNIT_TAIL.exec(t);
     if (m) {
       const u = m[2], own = String(spec.unit || '').replace(/\s+/g, '').toLowerCase();
-      if (/^(?:°|\\circ|\^\\circ|\^\{\\circ\})$/.test(u) || u.toLowerCase() === own || u.replace(/[^A-Za-zµ]/g, '').length >= 2) t = m[1];
+      if (/^(?:°|\\circ|\^\\circ|\^\{\\circ\})$/.test(u) || u.replace(/\s+/g, '').toLowerCase() === own || (own && unitCanon(u) === unitCanon(spec.unit)) || u.replace(/[^A-Za-zµ]/g, '').length >= 2) t = m[1];
     }
     return t;
   };
