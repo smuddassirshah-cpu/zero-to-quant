@@ -99,6 +99,9 @@ def parse_entry(s):
 def parse_obj(s):
     """'(a, b)', '[a, b]', '[[a, b], [c, d]]' or a pmatrix -> sympy Matrix."""
     s = s.strip()
+    pre = re.fullmatch(r'(\\frac\{[^{}]*\}\{[^{}]*\}|[\d.]+)\s*(\[\[.*\]\]|\(.*\))', s, re.S)
+    if pre and not s.startswith(('(', '[', '\\begin')):
+        return parse_entry(pre.group(1)) * parse_obj(pre.group(2))                  # "10[[...]]", "\\frac{1}{5}(3,4)": a number times the object
     m = re.fullmatch(r'\\begin\{pmatrix\}(.*)\\end\{pmatrix\}', s, re.S)
     if m:
         rows = [r.split('&') for r in m.group(1).split('\\\\')]
@@ -180,6 +183,13 @@ def pick(items, iid, k, cid):
     ok(all(o.get('why') for o in opts if not o.get('correct')), f'{iid} p{k}: a distractor has no why')
 
 
+def stale(items, iid, old_values):
+    """Re-authored item: none of the old setting's figures may remain in its text (review-problems-1.4-a finding 8)."""
+    text = text_of(items[iid])
+    for v in old_values:
+        ok(v not in text, f'{iid}: stale value {v} still in the item')
+
+
 def stated(items, iid, k, phrase, value, printed, places):
     """The phrase is in the part's text, and `printed` is `value` rounded to `places`."""
     ok(phrase in text_of(part(items, iid, k)), f'{iid} p{k}: phrase not found: {phrase}')
@@ -199,25 +209,34 @@ M = sp.Matrix
 # ======================================================== level 1: vectors
 I = load(1)
 if I:
-    # p-charging-robot
-    u, v, T = M([3, 1]), M([1, 2]), M([9, 8])
+    # p-charging-robot (re-authored, review-problems-1.4-a findings 8 and 9): u = (4, 1), v = (1, 3), charger (11, 11)
+    u, v, T = M([4, 1]), M([1, 3]), M([11, 11])
     ab = M.hstack(u, v).LUsolve(T)
-    obj(I, 'p-charging-robot', 1, ab.T, np.linalg.solve(np.array([[3, 1], [1, 2.]]), [9, 8.]), {'swapped': [[3, 2]]})
+    obj(I, 'p-charging-robot', 1, ab.T, np.linalg.solve(np.array([[4, 1], [1, 3.]]), [11, 11.]), {'swapped': [[3, 2]]})
     a, b = ab
+    ok(ab == M([2, 3]) and 4 * 3 + 2 * 1 == 14, 'robot: a = 2, b = 3; the swapped slip gives 14, not 11')
+    ok(3 * (4 * 2 + 3) - (2 + 9) == 22 and 11 * a == 22 and b == 11 - 8, 'robot p1: three times the first, less the second, leaves 11a = 22; b = 3')
     L1, L2 = a * u, b * v
     d12 = L1.dot(L2)
-    num(I, 'p-charging-robot', 2, d12, 2 * 3 * float(np.dot([3, 1], [1, 2])),
+    num(I, 'p-charging-robot', 2, d12, 2 * 3 * float(np.dot([4, 1], [1, 3])),
         {'unweighted': u.dot(v), 'only-u': (a * u).dot(v), 'only-v': u.dot(b * v)})
+    ok(L1 == M([8, 2]) and L2 == M([3, 9]) and u.dot(v) == 7 and 6 * 7 == 42, 'robot: 2u = (8, 2), 3v = (3, 9), u.v = 7')
     th = sp.acos(d12 / (L1.norm() * L2.norm()))
-    ok(th == sp.pi / 4, 'robot: angle is exactly pi/4')
-    num(I, 'p-charging-robot', 3, deg(float(th)), acos_deg_np([6, 2], [3, 6]),
-        {'radians': float(th), 'no-root': deg(math.acos(30 / (40 * 45)))})
-    stated(I, 'p-charging-robot', 3, r'\approx 0.7071', d12 / (L1.norm() * L2.norm()), 0.7071, 4)
-    stated(I, 'p-charging-robot', 3, r'\approx 42.43', sp.sqrt(1800), 42.43, 2)
+    num(I, 'p-charging-robot', 3, deg(float(th)), acos_deg_np([8, 2], [3, 9]),
+        {'radians': float(th), 'no-root': deg(math.acos(42 / (68 * 90)))})
+    ok(abs(deg(float(th)) - deg(float(sp.acos(u.dot(v) / (u.norm() * v.norm()))))) < 1e-9, 'robot: the angle between the legs is the angle between u and v')
+    stated(I, 'p-charging-robot', 3, r'\approx 0.5369', d12 / (L1.norm() * L2.norm()), 0.5369, 4)
+    stated(I, 'p-charging-robot', 3, r'\approx 78.23', sp.sqrt(6120), 78.23, 2)
+    ok(L1.dot(L1) == 68 and L2.dot(L2) == 90, 'robot: |2u|^2 = 68 and |3v|^2 = 90')
     straight = sp.sqrt(L1.dot(L1) + 2 * d12 + L2.dot(L2))
-    num(I, 'p-charging-robot', 4, straight, np.linalg.norm([9, 8.]),
-        {'no-cross': sp.sqrt(85), 'path': L1.norm() + L2.norm(), 'minus': sp.sqrt(85 - 60), 'no-root': 145}, rel=1e-3)
-    ok(abs(float(straight) - 12.04) <= 0.005, 'robot: 12.04 is the 2 dp value')
+    path = L1.norm() + L2.norm()
+    diff = path - straight
+    num(I, 'p-charging-robot', 4, diff, np.linalg.norm([8, 2.]) + np.linalg.norm([3, 9.]) - np.linalg.norm([11, 11.]),
+        {'straight': straight, 'path': path, 'no-cross': path - sp.sqrt(L1.dot(L1) + L2.dot(L2))}, rel=1e-9)
+    ok(straight == sp.sqrt(242) and 11 ** 2 + 11 ** 2 == 242 and abs(float(straight) - 15.56) <= 0.005 and abs(float(path) - 17.73) <= 0.005,
+       'robot p4: straight line sqrt(242) = 15.56, path 17.73')
+    ok(abs((8.25 + 9.49 - 15.56) - 2.18) < 1e-9 and abs((17.73 - 15.56) - 2.18) <= 0.015 and abs(float(diff) - 2.18) <= 0.015, 'robot p4: rounded routes stay in the 2.18 band')
+    stale(I, 'p-charging-robot', ['(3, 1)', '(1, 2)', '(9, 8)', '(6, 2)', '(3, 6)', 'sqrt{40}', 'sqrt{45}', '12.04', '145', '1800'])
 
     # p-active-bets
     bw, ww, rr = M([R(5, 10), R(3, 10), R(2, 10)]), M([R(4, 10), R(45, 100), R(15, 100)]), M([R(2, 100), R(-1, 100), R(4, 100)])
@@ -227,7 +246,8 @@ if I:
     ok(sum(aa) == 0, 'active weights add to 0')
     ar = aa.dot(rr)
     num(I, 'p-active-bets', 2, ar, np.dot([0.4, 0.45, 0.15], [0.02, -0.01, 0.04]) - np.dot([0.5, 0.3, 0.2], [0.02, -0.01, 0.04]),
-        {'flipped': -ar, 'fund': ww.dot(rr), 'benchmark': bw.dot(rr)})
+        {'flipped': -ar, 'fund': ww.dot(rr), 'benchmark': bw.dot(rr), 'decimal': ar / 100})
+    stated(I, 'p-active-bets', 2, '-0.55', ar * 100, -0.55, 2)
     na = aa.norm()
     num(I, 'p-active-bets', 3, na, np.linalg.norm([-0.1, 0.15, -0.05]),
         {'no-root': aa.dot(aa), 'abs-sum': sum(abs(x) for x in aa), 'sum': sum(aa)}, rel=1e-3)
@@ -267,7 +287,9 @@ if I:
     # p-stress-hedge
     w0, c, s = M([R(6, 10), R(3, 10), R(1, 10)]), M([R(1, 100), R(-12, 100), R(8, 100)]), M([R(-3, 100), R(4, 100), R(-2, 100)])
     R1 = w0.dot(c)
-    num(I, 'p-stress-hedge', 1, R1, np.dot([0.6, 0.3, 0.1], [0.01, -0.12, 0.08]), {'unweighted': sum(c), 'equal': sum(c) / 3})
+    num(I, 'p-stress-hedge', 1, R1, np.dot([0.6, 0.3, 0.1], [0.01, -0.12, 0.08]), {'unweighted': sum(c), 'equal': sum(c) / 3, 'decimal': R1 / 100})
+    stated(I, 'p-stress-hedge', 1, '-2.2', R1 * 100, -2.2, 1)
+    ok('2 decimal places' in part(I, 'p-stress-hedge', 1)['question'], 'hedge p1: asks for 2 places, so the decimal slip -0.0002 is at the asked rounding')
     h = sp.Symbol('h')
     move = M([0, -1, 1])
     hh = sp.solve((w0 + h * move).dot(c), h)[0]
@@ -279,11 +301,13 @@ if I:
     ok(w1 == M([R(6, 10), R(19, 100), R(21, 100)]) and sum(w1) == 1 and w1.dot(c) == 0, 'hedge: new weights stated, sum to 1, perpendicular to crash')
     R2 = w1.dot(s)
     num(I, 'p-stress-hedge', 3, R2, np.dot([0.6, 0.19, 0.21], [-0.03, 0.04, -0.02]),
-        {'old': w0.dot(s), 'shift-added': w0.dot(s) - hh * move.dot(s)})
+        {'old': w0.dot(s), 'shift-added': w0.dot(s) - hh * move.dot(s), 'decimal': R2 / 100})
+    stated(I, 'p-stress-hedge', 3, '-1.46', R2 * 100, -1.46, 2)
     ok(hh * move.dot(s) == R(-66, 10000), 'hedge: the move costs 0.0066 in the rate rise')
     R3 = w1.dot((c + s) / 2)
     num(I, 'p-stress-hedge', 4, R3, np.dot([0.6, 0.19, 0.21], (np.array([0.01, -0.12, 0.08]) + np.array([-0.03, 0.04, -0.02])) / 2),
-        {'unhedged': w0.dot((c + s) / 2), 'no-half': w1.dot(c + s)})
+        {'unhedged': w0.dot((c + s) / 2), 'no-half': w1.dot(c + s), 'decimal': R3 / 100})
+    stated(I, 'p-stress-hedge', 4, '-0.73', R3 * 100, -0.73, 2)
     ok(abs(float(w0.dot((c + s) / 2))) / abs(float(R3)) > 1.9, 'hedge: roughly halves the central loss')
 
 # ======================================================== level 2: matrices
@@ -319,31 +343,43 @@ if I:
     num(I, 'p-site-plan', 4, phi, np.degrees(np.arctan2(ground_step[1], ground_step[0])),
         {'plan-angle': 90, 'clockwise': deg(float(sp.acos((Rm.T * M([0, 10]))[0] / 10))), 'theta': deg(th)}, rel=1e-9)
     ok(abs(phi - (90 + deg(th))) < 1e-9, 'site: angle is 90 + theta')
+    q4 = part(I, 'p-site-plan', 4)['question']
+    ok('between 0 and 180' in q4 and 'step from the borehole to the well' in q4 and 'pipe make with' not in q4, 'site p4: asks for the step, in degrees between 0 and 180')
+    ok(abs((180 - phi) - 53.1) < 0.05 and abs(deg(float(sp.acos((Rm.T * M([0, 10]))[0] / 10))) - (180 - phi)) < 1e-9, 'site p4: the clockwise slip 53.1 is the acute angle 180 - phi and the angle of (6, 8)')
+    ok((Rm.T * M([0, 10])) == M([6, 8]) and Rm * M([0, 10]) == M([-6, 8]), 'site p4: R^T(0, 10) = (6, 8) and R(0, 10) = (-6, 8)')
 
-    # p-factor-risk
-    Bm = M([[R(12, 10), R(4, 10)], [R(8, 10), R(-5, 10)], [1, 1]])
-    wv = M([R(1, 2), R(3, 10), R(1, 5)])
-    Fm = M([[R(225, 10000), R(3, 1000)], [R(3, 1000), R(64, 10000)]])
-    pick(I, 'p-factor-risk', 1, 'bt-w')
-    ok(Bm.T.shape == (2, 3) and (Bm.T * wv).shape == (2, 1) and (Bm * Bm.T * wv).shape == (3, 1), 'factor: sizes of the options')
+    # p-factor-risk (re-authored, finding 8): hedge the market exposure with a future
+    Bm = M([[R(11, 10), R(3, 10)], [R(9, 10), R(-2, 10)], [R(14, 10), R(6, 10)]])
+    wv = M([R(4, 10), R(35, 100), R(25, 100)])
+    Fm = M([[R(144, 10000), R(3, 1000)], [R(3, 1000), R(49, 10000)]])
+    Bn, wn, Fn = np.array([[1.1, 0.3], [0.9, -0.2], [1.4, 0.6]]), np.array([0.4, 0.35, 0.25]), np.array([[0.0144, 0.003], [0.003, 0.0049]])
     e = Bm.T * wv
-    Bn, wn, Fn = np.array([[1.2, 0.4], [0.8, -0.5], [1.0, 1.0]]), np.array([0.5, 0.3, 0.2]), np.array([[0.0225, 0.003], [0.003, 0.0064]])
-    obj(I, 'p-factor-risk', 2, e.T, wn @ Bn, {'unweighted': M([[3, R(9, 10)]]), 'equal': M([[1, R(3, 10)]])})
-    ok(M([[sum(Bm[:, 0]), sum(Bm[:, 1])]]) == M([[3, R(9, 10)]]), 'factor: unweighted column sums')
-    Fe = Fm * e
-    obj(I, 'p-factor-risk', 3, Fe.T, Fn @ (Bn.T @ wn),
-        {'diagonal': (M.diag(Fm[0, 0], Fm[1, 1]) * e).T, 'wrong-order': M([[Fe[1], Fe[0]]])})
-    var = (e.T * Fe)[0]
-    var_alt = wn @ (Bn @ Fn @ Bn.T) @ wn
-    num(I, 'p-factor-risk', 4, var, var_alt,
-        {'diagonal': (e.T * M.diag(Fm[0, 0], Fm[1, 1]) * e)[0], 'no-f': (e.T * e)[0], 'sum': sum(Fe)})
-    stated(I, 'p-factor-risk', 4, '0.025116 + 0.00118', e[0] * Fe[0], 0.025116, 6)
-    ok(e[1] * Fe[1] == R(118, 100000), 'factor: second term 0.00118')
-    ok(2 * e[0] * e[1] * Fm[0, 1] == R(156, 100000), 'factor: cross term 0.00156')
-    vol = sp.sqrt(var)
-    num(I, 'p-factor-risk', 5, vol, np.sqrt(var_alt), {'diagonal': sp.sqrt((e.T * M.diag(Fm[0, 0], Fm[1, 1]) * e)[0]), 'no-root': var}, rel=1e-9)
-    stated(I, 'p-factor-risk', 5, r'\approx 0.1622', vol, 0.1622, 4)
-    stated(I, 'p-factor-risk', 5, '15.7%', sp.sqrt((e.T * M.diag(Fm[0, 0], Fm[1, 1]) * e)[0]) * 100, 15.7, 1)
+    obj(I, 'p-factor-risk', 1, e.T, wn @ Bn,
+        {'unweighted': M([[sum(Bm[:, 0]), sum(Bm[:, 1])]]), 'equal': M([[sum(Bm[:, 0]) / 3, sum(Bm[:, 1]) / 3]])})
+    ok(e == M([R(1105, 1000), R(1, 5)]) and sum(wv) == 1, 'factor: e = (1.105, 0.2), weights add to 1')
+    x_h = e[0] - R(1, 2)
+    num(I, 'p-factor-risk', 2, x_h, (wn @ Bn)[0] - 0.5, {'to-zero': e[0], 'added': e[0] + R(1, 2), 'size': e[1] - R(1, 2)})
+    hedge = x_h * M([1, R(1, 4)])
+    e2 = e - hedge
+    obj(I, 'p-factor-risk', 3, e2.T, wn @ Bn - 0.605 * np.array([1, 0.25]),
+        {'market-only': M([[e2[0], e[1]]]), 'size-whole': M([[e2[0], e[1] - x_h]]), 'added': (e + hedge).T})
+    ok(hedge == M([R(605, 1000), R(15125, 100000)]) and e2 == M([R(1, 2), R(4875, 100000)]), 'factor: hedge (0.605, 0.15125), hedged exposures (0.5, 0.04875)')
+    var2 = (e2.T * Fm * e2)[0]
+    e2n = np.array([0.5, 0.04875])
+    num(I, 'p-factor-risk', 4, var2, e2n @ Fn @ e2n,
+        {'diagonal': (e2.T * M.diag(Fm[0, 0], Fm[1, 1]) * e2)[0], 'no-f': (e2.T * e2)[0], 'unhedged': (e.T * Fm * e)[0]})
+    t1, t2, t3 = e2[0] ** 2 * Fm[0, 0], 2 * e2[0] * e2[1] * Fm[0, 1], e2[1] ** 2 * Fm[1, 1]
+    ok(t1 == R(36, 10000) and abs(float(t2) - 0.000146) < 5e-7 and abs(float(t3) - 0.000012) < 5e-7 and t1 + t2 + t3 == var2, 'factor p4: terms 0.0036 + 0.000146 + 0.000012')
+    ok(abs(float(t2 / var2) - 0.04) < 0.005, 'factor p4: the cross term is about 4% of the total')
+    var1 = (e.T * Fm * e)[0]
+    ok(abs(float(var1) - 0.01910) < 5e-6 and abs(wn @ (Bn @ Fn @ Bn.T) @ wn - float(var1)) < 1e-12, 'factor p5: unhedged variance 0.01910, by the w^T B F B^T w route too')
+    cut = 1 - var2 / var1
+    cut_rounded = 1 - 0.00376 / 0.01910
+    num(I, 'p-factor-risk', 5, cut, 1 - (e2n @ Fn @ e2n) / (wn @ (Bn @ Fn @ Bn.T) @ wn),
+        {'ratio': var2 / var1, 'difference': var1 - var2, 'volatility': 1 - sp.sqrt(var2 / var1), 'decimal': cut / 100}, rel=1e-9)
+    ok(abs(cut_rounded - 0.8031) < 5e-5 and abs(cut_rounded - 0.803) <= 0.0005 and abs(float(cut) - 0.803) <= 0.0005, 'factor p5: the rounded and the exact cut both sit in the 80.3% band')
+    ok(abs((0.01910 - 0.00376) - 0.01534) < 1e-12 and abs(float(var1 - var2) - 0.01534) < 1e-5, 'factor p5: the fall in variance is 0.01534 from the rounded variances (0.015347 unrounded)')
+    stale(I, 'p-factor-risk', ['(0.5, 0.3, 0.2)', '1.2', '0.0225', '0.0064', '1.04', '0.02415', '0.00472', '0.0263', '16.2', '0.025116', 'bt-w'])
 
     # p-bakery-costs
     Qm = M([[R(1, 2), R(3, 10)], [R(1, 10), R(1, 5)], [R(1, 20), R(1, 5)]])
@@ -408,23 +444,30 @@ if I:
         {'swapped': M([[x5[1], x5[0]]]), 'no-divide': (adj(A5) * M([64, 22])).T})
     ok(adj(A5) * M([64, 22]) == M([144, 72]), 'paint: 320 - 176 = 144 and -192 + 264 = 72')
 
-    # p-colour-sensor
-    Ms = M([[R(8, 10), R(3, 10)], [R(2, 10), R(7, 10)]])
-    Mn = np.array([[0.8, 0.3], [0.2, 0.7]])
-    rd = M([130, 70])
-    corners = Mn @ np.array([[0, 1, 1, 0], [0, 0, 1, 1.]])
+    # p-colour-sensor (re-authored, finding 8): a leak, then a gain; the inverse of a product
+    Ms = M([[R(7, 10), R(2, 10)], [R(1, 10), R(6, 10)]])
+    Ds = M([[2, 0], [0, 1]])
+    Mn, Dn = np.array([[0.7, 0.2], [0.1, 0.6]]), np.diag([2., 1.])
+    Cs = Ds * Ms
+    obj(I, 'p-colour-sensor', 1, Cs, Dn @ Mn, {'order': Ms * Ds, 'entrywise': Ds.multiply_elementwise(Ms)})
+    corners = (Dn @ Mn) @ np.array([[0, 1, 1, 0], [0, 0, 1, 1.]])
     shoelace = 0.5 * abs(sum(corners[0, i] * corners[1, (i + 1) % 4] - corners[0, (i + 1) % 4] * corners[1, i] for i in range(4)))
-    num(I, 'p-colour-sensor', 1, abs(Ms.det()), shoelace, {'added': Ms[0, 0] * Ms[1, 1] + Ms[0, 1] * Ms[1, 0], 'diagonal': Ms[0, 0] * Ms[1, 1]})
-    Mi = Ms.inv()
-    obj(I, 'p-colour-sensor', 2, Mi, np.linalg.inv(Mn), {'no-divide': adj(Ms), 'times-det': adj(Ms) * Ms.det(), 'no-negate': M([[R(14, 10), R(6, 10)], [R(4, 10), R(16, 10)]])})
-    star = np.linalg.inv(Mn) * np.array([130, 70.])
-    num(I, 'p-colour-sensor', 3, Mi[0, 1] * rd[1], star[0, 1], {'matrix-product': (Mi * rd)[0], 'entry-10': Mi[1, 0] * rd[0], 'entry-00': Mi[0, 0] * rd[0]}, rel=1e-9)
-    ok(np.allclose(star, [[182, -42], [-52, 112]]) and np.allclose(star.sum(axis=1), [140, 60]) and np.allclose(star.sum(axis=0), [130, 70]),
-       'sensor: the * array, its row sums and its column sums')
-    tt = Mi * rd
-    obj(I, 'p-colour-sensor', 4, tt.T, np.linalg.solve(Mn, [130, 70.]),
-        {'no-divide': (adj(Ms) * rd).T, 'forward': (Ms * rd).T, 'column-sums': rd.T})
-    ok(Ms * tt == rd, 'sensor: M(140, 60) = (130, 70)')
+    num(I, 'p-colour-sensor', 2, abs(Cs.det()), shoelace,
+        {'added': Cs[0, 0] * Cs[1, 1] + Cs[0, 1] * Cs[1, 0], 'diagonal': Cs[0, 0] * Cs[1, 1], 'leak-only': abs(Ms.det())})
+    ok(Cs.det() == Ds.det() * Ms.det() == R(4, 5) and Ds.det() == 2 and Ms.det() == R(2, 5), 'sensor p2: det C = det D x det M = 2 x 0.4 = 0.8')
+    Ci = Cs.inv()
+    obj(I, 'p-colour-sensor', 3, Ci, np.linalg.inv(Dn @ Mn),
+        {'no-divide': adj(Cs), 'times-det': adj(Cs) * Cs.det(), 'no-negate': M([[R(3, 4), R(1, 2)], [R(1, 8), R(7, 4)]]), 'leak-only': Ms.inv()})
+    ok(Ci == adj(Cs) / Cs.det() and (Ci * Cs)[0, 0] == 1 and R(75, 100) * R(14, 10) - R(5, 10) * R(1, 10) == 1, 'sensor p3: the 2 x 2 recipe and the check 1.05 - 0.05 = 1')
+    rd = M([200, 60])
+    tt = Ci * rd
+    obj(I, 'p-colour-sensor', 4, tt.T, np.linalg.solve(Dn @ Mn, [200, 60.]),
+        {'forward': (Cs * rd).T, 'leak-only': (Ms.inv() * rd).T, 'no-divide': (adj(Cs) * rd).T, 'swapped': M([[tt[1], tt[0]]])})
+    ok(Ms * tt == M([100, 60]) and Ds * Ms * tt == rd, 'sensor p4: M(120, 80) = (100, 60); the gain doubles the red to (200, 60)')
+    pick(I, 'p-colour-sensor', 5, 'gain-first')
+    ok(Ms.inv() * Ds.inv() == Ci and Ds.inv() * Ms.inv() != Ci and Ds.inv() * rd == M([100, 60]) and Ms.inv() * M([100, 60]) == tt,
+       'sensor p5: (DM)^-1 = M^-1 D^-1; D^-1 r = (100, 60); the other order is a different matrix')
+    stale(I, 'p-colour-sensor', ['(130, 70)', '(140, 60)', '0.8&0.3', '0.56', '0.62', '182', 'Minv', 'linalg', '(70, 30)', '(125, 75)'])
 
     # p-engraver-dial
     Ae = M([[3, 1], [2, 1]])
@@ -441,6 +484,10 @@ if I:
     k0 = sp.solve(dC, k_)[0]
     num(I, 'p-engraver-dial', 3, k0, [kv for kv in range(-5, 6) if abs(np.linalg.det(np.array([[2, kv], [1, 1.]]) @ np.array([[3, 1], [2, 1.]]))) < 1e-9][0],
         {'added': sp.solve(added, k_)[0]})
+    ok(sp.solve(2 + k_, k_) == [-2] and abs(float(sp.solve(added, k_)[0]) - (-2.444)) < 0.001 and abs(-2 - float(sp.solve(added, k_)[0])) <= 0.5,
+       'engraver p3: k = -2 (2 + k = 0) lands on the added band, as the byKey line now says')
+    ok('2 + k = 0' in part(I, 'p-engraver-dial', 3)['feedback']['byKey']['added'], 'engraver p3: the added line names the sign slip too')
+    ok(all(f in part(I, 'p-engraver-dial', 1)['widget']['accept'] for f in ('[[2(k+3), 2+k], [5, 2]]', '[[2(3+k), 2+k], [5, 2]]')), 'engraver p1: factorised typings accepted')
     C1 = Ck.subs(k_, 1)
     ok(C1 == M([[8, 3], [5, 2]]) and C1.det() == 1, 'engraver: C_1 and its determinant')
     obj(I, 'p-engraver-dial', 4, C1.inv(), np.linalg.inv(np.array([[8, 3], [5, 2.]])),
