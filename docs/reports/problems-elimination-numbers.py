@@ -545,6 +545,100 @@ if I:
     arith(I, iid)
 
 
+# ======================================================== level 3: determinants
+def cofactor_row1(A):
+    """Exact determinant by cofactor expansion along row 1 (method 1); np.linalg.det is method 2."""
+    A = M(A)
+    if A.shape == (1, 1):
+        return A[0, 0]
+    return sum((-1) ** j * A[0, j] * cofactor_row1(A.minor_submatrix(0, j)) for j in range(A.shape[1]))
+
+
+def shoelace(pts):
+    x, y = np.array(pts, dtype=float).T
+    return 0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
+
+
+I = load(3)
+if I:
+    # ---- p-vinyl-cutter
+    iid = 'p-vinyl-cutter'
+    T = M([[3, k_], [2, 4]])
+    dT = cofactor_row1(T)
+    ok(sp.expand(dT - (12 - 2 * k_)) == 0, 'cutter: det T = 12 - 2k as stated')
+    T1 = T.subs(k_, 1)
+    # second route: the image of a square of side sqrt(5), by the shoelace formula
+    sq = np.sqrt(5) * np.array([[0, 0], [1, 0], [1, 1], [0, 1.]])
+    img = sq @ npf(T1).T
+    num(I, iid, 1, 5 * cofactor_row1(T1), shoelace(img), {'plus': 5 * (12 + 2), 'diagonal': 5 * 12})
+    kk = sp.solve(dT, k_)
+    scan = [kv for kv in np.arange(-10, 10.5, 0.5) if abs(np.linalg.det(npf(T.subs(k_, kv)))) < 1e-9]
+    num(I, iid, 2, kk[0], scan[0], {'sign': -kk[0], 'factor': sp.solve(12 - k_, k_)[0]})
+    ok(dT.subs(k_, -6) == 24, 'cutter: det at k = -6 is 24')
+    T6 = T.subs(k_, kk[0])
+    ok(T6[:, 1] == 2 * T6[:, 0] and T6.rank() == 1, 'cutter: at k = 6 column 2 = 2 column 1')
+    xs, ys = sp.symbols('x y')
+    ok(sp.expand(T6 * M([xs, ys]) - (xs + 2 * ys) * M([3, 2])) == sp.zeros(2, 1), 'cutter: T(x, y) = (x + 2y)(3, 2)')
+    cval = 6 * R(2, 3)
+    rnd = np.random.default_rng(1).normal(size=(50, 2)) @ npf(T6).T
+    slope = np.polyfit(rnd[:, 0], rnd[:, 1], 1)[0]
+    num(I, iid, 3, cval, 6 * slope, {'row': 6 * R(6, 3)})
+    nv = M([2, -1])
+    ok(T6 * nv == sp.zeros(2, 1), 'cutter: T(2, -1) = 0')
+    nsp = T6.nullspace()[0]
+    obj(I, iid, 4, nsp * 2 / nsp[0], np.array([2, -2 * npf(T6)[0, 0] / npf(T6)[0, 1]]), {'sign': M([2, 1]), 'perpendicular': M([2, -3])})
+    ok(T6 * M([2, 1]) == M([12, 8]) and T6 * M([2, -3]) == M([-12, -8]) and M([2, -3]).dot(M([3, 2])) == 0, 'cutter: byKey images')
+    vocab(I, iid, [dT.subs(k_, 1), 12, 50, 70, 60, 24, T6, cval, M([6, 4]), M([12, 8]), M([-12, -8]), 6 - 6, R(2, 3)])
+    arith(I, iid)
+
+    # ---- p-deformed-part
+    iid = 'p-deformed-part'
+    D = M([[2, 1, 0], [0, 3, 1], [1, 0, 2]])
+    dD = cofactor_row1(D)
+    num(I, iid, 1, dD, np.linalg.det(npf(D)), {'no-sign': D[0, 0] * D.minor(0, 0) + D[0, 1] * D.minor(0, 1), 'diagonal': D[0, 0] * D[1, 1] * D[2, 2]})
+    ok([D.minor(0, j) for j in range(3)] == [6, -1, -3], 'part: row 1 minors 6, -1, -3')
+    L, U = eliminate(D)
+    ok(L[2, 1] == R(-1, 6) and list(U[2, :]) == [0, 0, R(13, 6)], 'part: l32 = -1/6 and third pivot 13/6')
+    ok(list((D[2, :] - R(1, 2) * D[0, :])) == [0, R(-1, 2), 2], 'part: row 3 after column 1')
+    ok(U[0, 0] * U[1, 1] * U[2, 2] == dD, 'part: pivots multiply to the determinant')
+    num(I, iid, 2, U[2, 2], np.linalg.det(npf(D)) / (2 * 3), {'sign': 2 - R(1, 6)})
+    vol = 15 * abs(dD)
+    num(I, iid, 3, vol, 15 * abs(np.linalg.det(npf(D))), {'no-sign': 15 * 11, 'diagonal': 15 * 12})
+    Dp = M([D[2, :], 2 * D[1, :], D[0, :]])
+    dDp = cofactor_row1(Dp)
+    num(I, iid, 4, dDp, np.linalg.det(npf(Dp)), {'swap-ignored': 2 * dD, 'scale-ignored': -dD, 'scale-squared': -4 * dD})
+    ok(dDp == -2 * dD, 'part: swap and doubling give -2 det D')
+    num(I, iid, 5, vol * abs(dDp), 15 * abs(np.linalg.det(npf(Dp) @ npf(D))), {'signed': vol * dDp, 'scale-ignored': vol * abs(dD)})
+    vocab(I, iid, [dD, 11, 12, 6, -1, -3, R(13, 6), R(-1, 6), R(1, 6), R(1, 2), -R(1, 2), vol, dDp, vol * abs(dDp), vol * 13, 165, 180,
+                   2 - R(1, 6), 2 * 6, 3 * 2, 13, 26, 52, 2.167, 15])
+    arith(I, iid)
+
+    # ---- p-draw-bet
+    iid = 'p-draw-bet'
+    P = M([[10, 10, 0], [0, 0, 10], [0, 10, 10]])
+    Hc, Yc, Xc = P[:, 0], P[:, 1], P[:, 2]
+    ok(list(Hc) == [10, 0, 0] and list(Yc) == [10, 0, 10] and list(Xc) == [0, 10, 10], 'bets: columns match the prose (home, draw, away)')
+    dP = cofactor_row1(P)
+    num(I, iid, 1, dP, np.linalg.det(npf(P)), {'diagonal': P[0, 0] * P[1, 1] * P[2, 2], 'plus': 10 * (0 * 10 + 10 * 10)})
+    d = M([0, 10, 0])
+    Pd = P.row_join(d)
+    rk = Pd.rank()
+    num(I, iid, 2, 4 - rk, 4 - np.linalg.matrix_rank(npf(Pd)), {'none': 0, 'rank': rk})
+    w = P.LUsolve(d)
+    obj(I, iid, 3, w, np.linalg.solve(npf(P), npf(d).ravel()), {'sign': -w, 'no-sale': M([1, 1, 1])})
+    ok(list(P * M([1, 1, 1])) == [20, 10, 20] and list(P * (-w)) == [0, -10, 0], 'bets: byKey payoffs')
+    prices = M([R(450, 100), R(700, 100), R(580, 100)])
+    cp = prices.dot(w)
+    # second route: state prices q from the three bets, then the draw bet is 10 q_draw
+    q = np.linalg.solve(npf(P).T, np.array([4.5, 7.0, 5.8]))
+    num(I, iid, 4, cp, 10 * q[1], {'all-plus': sum(prices), 'sign': -cp})
+    ok(np.allclose(q, [0.45, 0.33, 0.25]), 'bets: state prices 0.45, 0.33, 0.25 (sum 1.03, the overround)')
+    profit = 50 * (cp - R(3))
+    num(I, iid, 5, profit, 50 * (10 * q[1] - 3.0), {'per-bet': cp - 3, 'reversed': -profit})
+    vocab(I, iid, [dP, -100, 1000, 100, w, -w, M([20, 10, 20]), prices, cp, sum(prices), profit, cp - 3, 3, 50, 4.5 + 5.8, 7.0, rk, 4 - rk])
+    arith(I, iid)
+
+
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
