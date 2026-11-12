@@ -39,8 +39,8 @@ print('code widgets run:', check_code(lv))
 s = 0.1 + 0.2
 lv.expect('l1', 'screens[0].feedback.correct', repr(s))                        # 0.30000000000000004
 lv.claim(s != 0.3, 'l1 0.1 + 0.2 != 0.3 in CPython')
-lv.expect('l1', 'screens[0].explain.text', '0.29999999999999998')
-lv.claim(str(D(0.3)).startswith('0.29999999999999998'), 'l1 0.3 is stored as 0.29999999999999998... (truncated, as the table)')
+lv.expect('l1', 'screens[0].explain.text', '0.29999999999999999')
+lv.claim(f'{0.3:.17f}' == '0.29999999999999999', 'l1 0.3 is stored as 0.29999999999999999 to 17 places (rounded; the table shows 20 places)')
 gap = s - 0.3
 lv.claim(abs(gap - 5.551115123125783e-17) < 1e-30, 'l1 the gap is 5.55e-17')
 lv.claim(round(gap, 17) == 6e-17, 'l1 "about 0.00000000000000006" and "6 x 10^-17" (5.55e-17 to one figure)')
