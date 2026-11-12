@@ -2225,6 +2225,10 @@ Raised later (audit limits-thm 1-3, round 2):
 - [Should] Number scripts: the review and homework sets of limits-thm levels 1 to 3 have no number script. `review-2` `r-pareto-mean` slip `half` (0.5 against a named route worth 2/3) passed every gate and two reads. Recompute each slip from the route its `byKey` line names. The slip-naming class, eighth sighting.
 - [Could] Lint, warning only: "without independence", "needs independence", "only for independent", "fails for", "would block" in content strings, for a manual read (three findings of this round state a sufficient condition as necessary).
 
+Raised later (audit limits-thm 4):
+- [Should] Validator or number-script rule: where a feedback line says "V is a × b" (or a^n) with literal numbers, recompute the product from the digits shown and warn when it does not round to V. Four cases in limits-thm level 4. The slip-names-the-wrong-quantity class appears four more times in the same level.
+- [Could] Validator warning list of universal wording in explanations ("any other", "does not split", "exactly when", "always", "never", "needs independence"), printed for the second reader. Four of the level's ten `wrong` findings would have been listed.
+
 Raised later (problems regression):
 - [Could] A `unit: "%"` part cannot name the slip of typing the decimal (0.0035 for 0.35%, read as 0.0035%): the slip's value is far below the asked rounding, so `[wrong-band]` wants a band that `[wide-wrong-band]` refuses. Five such `wrong` entries were dropped from `regression/problems-2` and `problems-3`. Wanted: the grader returns a built-in key (say `decimal`, with a default line) when a `%` field's value is the key divided by 100.
 - [Could] The numeric field drops a unit typed after the number only when it is one token (`MWh`, `days`), so a learner who types the shown multi-word unit (`-12 GWh per °C`, `2.5 MWh per hour`, `-0.5 MWh per °C`) is refused, and a `%²` unit cannot be given at all (variance parts in % were asked as standard deviations instead). Wanted: strip the field's own `unit` text however many words it has.
