@@ -1,17 +1,16 @@
-# NEXT_PROMPT: session AB
+# NEXT_PROMPT: session AC
 
-Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4mx7i` only: work detached at its origin, push `HEAD:` to it, rebase on divergence, never reset. Build the local CDN and venv in the background first (commands in `docs/LEVEL-BRIEF.md`). Long jobs with `setsid nohup`, shards in a separate worktree, one browser job per agent, at most four agents. A shard takes about 80 minutes: run two runners in parallel from the start.
+Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4mx7i`: push every commit there (session AB pushed the harness branch too). Build the local CDN and the venv first: `bash app/tools/fetch-local-cdn.sh <pkgs>`; `uv venv --python 3.12 --seed <venv>` then `uv pip install numpy==2.0.2 pandas==2.2.3 matplotlib==3.8.4 pytest==8.1.1 sympy scipy scikit-learn==1.6.1 statsmodels`. Long jobs with `setsid nohup`; poll result files. Commit an `engine-dev` worktree from the main session at least hourly. Run shards alone: `test-validate-*` files take 25 minutes beside two shards and 10 alone. `test-bank-code`, `test-drill-page`, `test-planted-check` need `--local-cdn <pkgs>` as an argument; `test-answer-forms` needs `ZQ_LOCAL_CDN`; `test-validate-band-rules` needs neither.
 
-Expected census: lessons 1,236; levels 283; reviews 283 (items 2,558); exams 29 topic, 4 stage, 16 mock; drills 270; Fluency sets 83 (families 257); problem sets 62 (items 237); bank 200; hours 3,695 gap 0; edges 266; validator 0 errors.
+Expected census: lessons 1,236; levels 283; reviews 283 (items 2,558); exams 29 topic, 4 stage, 16 mock; drills 270; Fluency sets 100 (families 318); problem sets 87 (items 332); bank 36 files, 400 items; hours 3,695 gap 0; edges 266; validator 0 errors.
 
-Merge `origin/claude/fable-audit` at start and close; replay the files it changed. Agent briefs end "start nothing in the background; hand back once", "do not commit `manifest.json`", "commit work in progress", "write only inside your own worktree". The main session commits for `engine-dev`.
+Merge `origin/claude/fable-audit` at start and close. Agent brief tail and the acceptance list: DECISIONS, session AB. A re-authored item is grepped for its numbers across `app/content/` (DECISIONS, session AB).
 
 Tasks, in order:
-1. Delta read of the fix passes in `docs/reviews/review-drills-ci-5.md` to `-8.md`.
-2. Engine pass: the [Must] silent stop on deep recursion on the drill page (KNOWN_ISSUES, session AA), with a check across all 270 drills; ENGINE-BACKLOG 914; a protocol 6 rule for "method one step short of the target passes".
-3. Bank part 2 (200 items), PLAN 2d.
-4. Four new levels (`number-sense`, `quadratics`, `testing`, `stat-learning` level 4): topic exam items, Option B skills, Fluency, problem sets.
-5. M chained problems for the remaining maths, probability and statistics levels.
-6. Triage: 149 `[tight-band]`, 37 `[wide-wrong-band]`, 198 answers noted by `grade-regression.mjs`.
+1. Delta reads owed (KNOWN_ISSUES, session AB): fix passes of `review-problems-1.4-b.md`, `-1.4-c.md`, `review-delta-bank-2.md`, `review-delta-holes.md`, `review-delta-problems-ab-1.md`, `review-delta-drills-ci-5-8.md`.
+2. Content passes from the new rules: `[percent-form]` 74 parts, `[negative-key]` 240, `[tight-band]` 26, `[near-miss]` 190 drills; `stage-3` `r-t-bar` and `r-best-of-twenty`.
+3. M chained problems, PLAN 2d: `eigen` 4, `number-sense` 1 to 3, `ratio`, then 0.6, 1.10, 1.11, 2.1 levels 1 to 3, 2.2, 2.5, 2.6, 3.2, 3.4.
+4. Engine: open items 941 to 967, first 944, 945, 951, 955; the two reuse cases `--cross-numbers` misses.
+5. 63 drills past the safe recursion depth (`docs/reports/engine-pass-ab.md`): state the limit or resize.
 
-Do not raise the pilot. Acceptance: validator 0 errors, readiness-sums OK, all `tools/test-*`, four shards, `--problems all`, `--drills`, `--fluency-all`, routes green at the final HEAD, state files, NEXT_PROMPT for session AC.
+Do not raise the pilot. Acceptance at the final HEAD; NEXT_PROMPT for session AD.
