@@ -111,3 +111,24 @@ Counts: `problems-1` 2 wrong, 0 unclear, 1 minor; `problems-2` 0 wrong, 2 unclea
 - Shape: 3 problems a set, 4 or 5 parts each, typed parts 12 of 15, 12 of 13 and 13 of 13, one difficulty 5 in each set, explanations at most three sentences.
 - Freshness, matrices: $\begin{pmatrix}1&2\\0&1\end{pmatrix}$ ($T$ on lines in `p-curve-report`, never printed) and $\operatorname{diag}(2, 1)$ (the weights, never printed as a matrix) are stock; the Gram matrix $\begin{pmatrix}3&6\\6&15\end{pmatrix}$ of `p-two-signal-fit` is never printed and is 3 times a matrix in `eigen` l9 and `vectors` l10; $\mathbf{P} = \begin{pmatrix}1&2\\1&3\end{pmatrix}$ of `p-futures-exposure` matches `vectors/problems-3` `p-engraver-dial` $\begin{pmatrix}3&1\\2&1\end{pmatrix}$ only after a transpose and a swap, and two distractors of `topic-1.10` item 19 after a swap, in other roles. None is a reuse. $\mathbf{A}$, $[T]_{\mathcal{B}}$, the $2 \times 4$ matrix, the dual basis, $T$ of `p-currency-duals` and every data matrix match nothing in 3,977 matrices.
 - Freshness, settings: `p-hedge-baskets`, `p-hedge-curves`, `p-scenario-space`, `p-curve-report`, `p-futures-exposure`, `p-slope-adjusted` and `p-two-signal-fit` share no setting with a lesson, review, homework or exam item (l7's factor-neutral portfolios, l6's option book and l14's hedge are other stories). $T(x^2) = x^2 - 2x$ in `p-slope-adjusted` equals $q_1$ of `homework-1`'s last item by chance, in another role.
+
+## Fix pass
+
+All 12 findings fixed; 0 disputed; 0 deferred. Recomputed first: $(s,t)=(1,-1)$ gives $(2,-1,-2,1)$; $\mathbf{u}\oplus(-4,-30) = (0,0)-(3,40) = (-3,-40)$; entrywise slip position $(\tfrac{29}{6},\tfrac{35}{6})$; $11x+2y$ on the test moves gives $(57,46)$; $\psi\circ T = 11x+12y$, values 67 and 56.
+
+1. fixed: `p-hedge-baskets` part 2 explain now says $(s,t) = (1,-1)$.
+2. fixed: `usual-negative` line now says $(-3,-40)$.
+3. fixed: `p-scenario-space` part 4 explain lists $\mathbf{c}$ alone, a line or the whole plane.
+4. fixed: all 13 strings of `problems-2` now use $\ker T$, $\operatorname{im} T$, "kernel", "image" (ids unchanged).
+5. fixed: `p-slope-adjusted` part 2 option d is now "$T$ maps $\mathcal{P}_2(\mathbb{R})$ to itself, so its kernel is $\{0\}$." with the review's `why` ($p \mapsto p'$ counter-example).
+6. fixed: `p-curve-report` part 5 explain restricted to degree at most 2.
+7. fixed: `p-curve-report` part 4 question restates $T(a+bt) = (a+2b, b)$.
+8. fixed: `carried-entrywise` option and `byKey` line added to `p-futures-exposure` part 4.
+9. fixed: `p-currency-duals` re-storied (robot-arm gauge, mm, mV, test moves, gearbox); all numbers kept. Grep: no robot arm or gearbox elsewhere; "kiosk" appears only in `functions/problems-1` (a fee line, other course) and two DSA drills.
+10. fixed: `p-index-beta` re-storied (noon temperature in °C, kiosk takings in £ hundreds); all numbers kept.
+11. fixed: `carried-three` option $(57, 46)$ and `byKey` line added to `p-currency-duals` part 4.
+12. fixed: `p-index-beta` part 3 question restates $\langle\mathbf{a},\mathbf{b}\rangle = 2$.
+
+Graded values changed: none (keys, `accept` and `wrong` values all unchanged; two new `wrong` entries added, which are carried slips: $(\tfrac{29}{6},\tfrac{35}{6})$ and $(57,46)$; option d text changed, still wrong).
+
+Gates: validator 0 errors, no warning on the three files, `manifest.json` untouched. `grade-all.mjs --local-cdn` 0 failures on all three (15, 13, 13 widgets). Voice scan 35: 0 and 0. `problems-linear-maps-numbers.py` exit 0 (new FP-* checks); `mine.py` updated for the two new `wrong` ids and the three corrected statements: 582 checks, 0 failures, 0 CLAIM lines. Playthrough `--problems linear-maps/problems-1|2|3`, desktop and `--mobile`: all passed.

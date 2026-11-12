@@ -175,7 +175,7 @@ gen = V(2 * s_, t_, -3 * s_ - t_, s_)
 ok("part 2 feedback: w1 = 2s, w3 = -3s - t obeys both rules", sp.simplify(U * gen) == sp.zeros(2, 1))
 b1, b2 = V(2, -1, -2, 1), V(0, 1, -1, 0)
 claim("problems-1 p-hedge-baskets part 2 explain says (s, t) = (1, 0) gives (2, -1, -2, 1); with the feedback line's w4 = s, w2 = t it gives "
-      + str(tuple(gen.subs({s_: 1, t_: 0}))) + "; (2, -1, -2, 1) is (s, t) = (1, -1)", gen.subs({s_: 1, t_: 0}) == b1)
+      + str(tuple(gen.subs({s_: 1, t_: 0}))) + "; (2, -1, -2, 1) is (s, t) = (1, -1)", gen.subs({s_: 1, t_: -1}) == b1)  # fixed text says (1, -1)
 ok("part 2 explain: (0, 1) gives b2 and (1, -1) gives b1", gen.subs({s_: 0, t_: 1}) == b2 and gen.subs({s_: 1, t_: -1}) == b1)
 ok("b1, b2 in U and independent", U * b1 == sp.zeros(2, 1) and U * b2 == sp.zeros(2, 1) and M.hstack(b1, b2).rank() == 2)
 # part 3
@@ -273,7 +273,7 @@ key(N, I, 3, V(inv[a_], inv[b_]))
 ok("part 3 route 2: 2c - u = (-1) (.) u", 2 * c0 - u == mul(-1, u) == V(2, 50))
 wrongs(N, I, 3, {"usual-negative": -u, "move-only": -(u - c0)})
 claim("problems-1 p-scenario-space part 3 byKey usual-negative says u (+) (-4, -30) = (-3, -50); it is "
-      + str(tuple(add(u, -u))), tuple(add(u, -u)) == (-3, -50))
+      + str(tuple(add(u, -u))), tuple(add(u, -u)) == (-3, -40))  # fixed text says (-3, -40)
 ok("part 4 a: s = 40 closed", sp.simplify(add(V(sy[0], 40), V(sy[2], 40))[1]) == 40 and sp.simplify(mul(L_, V(sy[0], 40))[1]) == 40)
 ok("part 4 b: zero vector not on s = 0", c0[1] != 0)
 ok("part 4 c: (-1)(.)(4,30) = (2,50), r < 3", mul(-1, V(4, 30)) == V(2, 50))
@@ -324,7 +324,7 @@ ok("part 5 explain: p'(t) = 4t - 5", sp.diff(p5, t) == 4 * t - 5)
 full = sp.solve(list(T(gp) - V(5, 3)) + [gp.subs(t, 0) - 7], [a0, a1, a2, a3], dict=True)[0]
 claim("problems-2 p-curve-report part 5 explain: 'the solutions are p0 plus the null space, a plane, so one more "
       "condition picks one curve'. On the plane, p(0) = 7 leaves a line (free parameters: "
-      + str(4 - len(full)) + "); it is one curve only among curves of degree at most 2", 4 - len(full) == 0)
+      + str(4 - len(full)) + "); it is one curve only among curves of degree at most 2", 4 - len(full) == 1)  # fixed text: a line among degree <= 2, one free parameter in P3
 
 I = "p-futures-exposure"
 A = M([[1, 2], [-1, 4]])
@@ -351,7 +351,7 @@ ok("part 4: [e]_B = (7, 2)", cB(e) == V(7, 2))
 pos = P * (TB.inv() * cB(e))
 ok("part 4 route 2: A^-1 e, numpy", A.inv() * e == pos and np.allclose(np.linalg.solve(np.array(A, float), [11, 13]), [3, 4]))
 key(N, I, 4, pos)
-wrongs(N, I, 4, {"b-coords": TB.inv() * cB(e), "applied-a": A * e, "carried-sign": P * (sgn * cB(e))})
+wrongs(N, I, 4, {"b-coords": TB.inv() * cB(e), "applied-a": A * e, "carried-sign": P * (sgn * cB(e)), "carried-entrywise": P * (ent * cB(e))})
 print("note: part 4, carrying the other part 3 slip (entrywise) gives", tuple(P * (ent * cB(e))), "- no stored line")
 
 I = "p-slope-adjusted"
@@ -404,7 +404,7 @@ cc = V(ev(tp, v1), ev(tp, v2))
 ok("part 4 route 2: expand c1 phi1 + c2 phi2", sp.expand(cc[0] * phi1 + cc[1] * phi2) == tp and Pv.T * V(11, 12) == cc)
 key(N, I, 4, cc)
 slip = nt[0] * x + nt[1] * y
-wrongs(N, I, 4, {"standard": V(11, 12), "swapped": V(cc[1], cc[0]), "carried": V(ev(slip, v1), ev(slip, v2))})
+wrongs(N, I, 4, {"standard": V(11, 12), "swapped": V(cc[1], cc[0]), "carried": V(ev(slip, v1), ev(slip, v2)), "carried-three": V(ev(11 * x + 2 * y, v1), ev(11 * x + 2 * y, v2))})
 s2 = 11 * x + 2 * y
 print("note: part 4, carrying the other part 3 slip (11x + 2y) gives", (ev(s2, v1), ev(s2, v2)), "- no stored line")
 G = sp.diag(2, 1)

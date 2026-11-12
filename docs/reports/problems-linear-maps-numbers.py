@@ -299,6 +299,19 @@ for (fid, iid), vals in computed.items():
             else:
                 check(name, sp.simplify(got - want) == 0, True)
 
+# Fix pass (second read, finding 1, 2, 6, 8, 11)
+_s, _t = 1, -1  # w = (2s, t, -3s - t, s)
+vcheck("FP-1 hedge basis b1 = (s,t)=(1,-1)", [2 * _s, _t, -3 * _s - _t, _s], [2, -1, -2, 1])
+vcheck("FP-1 (s,t)=(0,1)", [0, 1, -1, 0], [0, 1, -1, 0])
+vcheck("FP-2 u (+) (-4,-30)", add(u, np.array([-4, -30])), [-3, -40]); vcheck("FP-2 alt", np.array([0, 0]) - cc, [-3, -40])
+_Pm = sp.Matrix([[1, 2], [1, 3]]); _Ti = sp.Matrix([[F(1, 3), -F(2, 3)], [0, F(1, 2)]])
+vcheck("FP-8 entrywise slip coords", list(sp.Matrix([[F(1, 3), F(1, 4)], [0, F(1, 2)]]) * sp.Matrix([7, 2])), [F(17, 6), 1])
+vcheck("FP-8 entrywise slip position", list(_Pm * sp.Matrix([[F(1, 3), F(1, 4)], [0, F(1, 2)]]) * sp.Matrix([7, 2])), [F(29, 6), F(35, 6)])
+vcheck("FP-8 key", list(_Pm * _Ti * sp.Matrix([7, 2])), [3, 4])
+vcheck("FP-11 carried-three", [5 * 11 + 2, 4 * 11 + 2], [57, 46]); vcheck("FP-11 key", [5 * 11 + 12, 4 * 11 + 12], [67, 56])
+_pp = sp.symbols("tt"); _p0 = 3 * _pp - 1 + 2 * (_pp - 2) ** 2
+check("FP-6 deg<=2 line: p(0)=7 gives lambda 2", _p0.subs(_pp, 0), 7)
+
 print("\n%d failures" % len(fails))
 for f_ in fails:
     print("  ", f_)
