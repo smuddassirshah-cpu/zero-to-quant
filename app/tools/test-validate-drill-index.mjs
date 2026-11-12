@@ -1,19 +1,18 @@
 #!/usr/bin/env node
-/* Scratch cases for the drill-index rules (ENGINE-BACKLOG 859). Copies app/ to a temp folder, breaks one thing per case and expects the validator to report it
+/* Scratch cases for the drill-index rules (ENGINE-BACKLOG 859). Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs), breaks one thing per case and expects the validator to report it
    (or, for the first case, nothing). Rules: a row of drills/index.json must agree with its drill file on name, course and difficulty; a row naming a drill with
    no file is an error; a non-sample drill file with no row is an error. Nothing under app/content is touched.
    Run from anywhere: node app/tools/test-validate-drill-index.mjs. One PASS or FAIL line per case, exit 1 on a failure. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-drill-index-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = () => { try { return { out: execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), '--no-manifest'], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
+const h = openHarness({ name: 'drill-index', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = () => h.validate();
 const dir = path.join(copy, 'content/drills');
 const idxFile = path.join(dir, 'index.json');
 const original = fs.readFileSync(idxFile, 'utf8');

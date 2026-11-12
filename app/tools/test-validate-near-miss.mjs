@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Scratch cases for the [near-miss] rule (ENGINE-BACKLOG 918, SESSION PROTOCOL 6, docs/AUTHORING.md section 5 "Planted wrong solutions").
-   A `ci-` or `dsa-` drill should carry a planted solution marked "nearMiss": true, the method one step short of the target. Copies app/ to a temp folder,
+   A `ci-` or `dsa-` drill should carry a planted solution marked "nearMiss": true, the method one step short of the target. Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs),
    adds fixture drills made from tools/fixtures/planted/planted-py-caught.json, and reads the validator and `planted-check --near-miss`:
      ci- drill, planted entry marked nearMiss      no [near-miss] warning
      ci- drill, planted entry not marked           a [near-miss] warning
@@ -11,14 +11,14 @@
    planted-check --near-miss names a drill with no marked plant (a drill with no plants at all runs no browser, so this needs no Python).
    Usage: node tools/test-validate-near-miss.mjs. Exit 0 pass, 1 failure. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url)), APP = path.resolve(HERE, '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-near-miss-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
+const h = openHarness({ name: 'near-miss' });   // a scratch copy of tools/fixtures/mini-app
+const tmp = h.dir;
+const copy = h.dir;
 const base = JSON.parse(fs.readFileSync(path.join(HERE, 'fixtures/planted/planted-py-caught.json'), 'utf8'));
 const plant = base.planted[0];
 const put = (id, over, planted) => {
@@ -31,8 +31,8 @@ put('dsa-nm-none', {}, undefined);
 put('py-nm-none', {}, undefined);
 put('ci-nm-sample', { sample: true }, undefined);
 put('ci-nm-badtype', {}, [{ ...plant, nearMiss: 'yes' }]);
-const v = spawnSync('node', [path.join(copy, 'tools/validate.mjs')], { cwd: copy, encoding: 'utf8', maxBuffer: 1 << 26 });
-const out = (v.stdout || '') + (v.stderr || '');
+const v = h.validate([]);
+const out = v.out;
 let bad = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok ? '' : '  ' + detail}`); if (!ok) bad++; };
 const lines = out.split('\n');

@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 /* Scratch cases for the session V validator pass B (ENGINE-BACKLOG 600 series): 584 refinement, 585 default shuffle and exclusions,
    [shuffle-false], [float-example], [wrong-band], [float-artefact], [math-thousands-comma], and the schema fields required, tracks and form.
-   Copies app/ to a temp folder and edits algo-think l1-counting-work (screens 2 and 3), first-python l8-many-values, exam topic-0.7 and mock-oa-strats.
+   Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs) and edits algo-think l1-counting-work (screens 2 and 3), first-python l8-many-values, exam topic-0.7 and mock-oa-strats.
    Run: node app/tools/test-validate-session-v-b.mjs. Exit 1 on a failure. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-vb-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = () => { try { return { out: execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), '--no-manifest'], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 28 }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
+const h = openHarness({ name: 'vb', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = () => h.validate();
 const files = {
   lesson: path.join(copy, 'content', 'courses', 'algo-think', 'l1-counting-work.json'),
   code: path.join(copy, 'content', 'courses', 'first-python', 'l8-many-values.json'),

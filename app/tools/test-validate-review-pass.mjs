@@ -1,18 +1,17 @@
 #!/usr/bin/env node
-/* Scratch cases for the level-review pass rule (ENGINE-BACKLOG 574). Copies app/ to a temp folder, removes `pass` from one mapped level
+/* Scratch cases for the level-review pass rule (ENGINE-BACKLOG 574). Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs), removes `pass` from one mapped level
    review and expects the validator to report it; the untouched copy must report none. Run: node app/tools/test-validate-review-pass.mjs.
    One PASS or FAIL line per case, exit 1 on a failure. The repo is never touched. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-pass-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
-const run = () => { try { return { out: execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), '--no-manifest'], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 28 }), code: 0 }; } catch (e) { return { out: String(e.stdout || '') + String(e.stderr || ''), code: e.status || 1 }; } };
+const h = openHarness({ name: 'pass', fixtures: [] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
+const run = () => h.validate();
 const f = path.join(copy, 'content', 'courses', 'odes', 'review-1.json');
 const doc = JSON.parse(fs.readFileSync(f, 'utf8'));
 let fails = 0;

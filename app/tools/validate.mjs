@@ -5,6 +5,10 @@
    node tools/validate.mjs --summary    also print lesson counts per course and every mapped lesson not yet written
    node tools/validate.mjs --no-manifest   do not rewrite content/manifest.json
    node tools/validate.mjs --prep <file>   check <file> instead of content/prep.json (and leave the manifest alone)
+   node tools/validate.mjs --root <dir>    check the content folder <dir> instead of app/content (tools/lib/validate-harness.mjs and the test-validate-*
+                                           scratch tests use it on a small copy). The folder above <dir> then plays the part of app/ for the files
+                                           that sit beside content: <dir>/../tools/fixtures/{problems,fluency} and <dir>/../tools/perf-pending.json.
+                                           Messages show paths from that folder (content/courses/...). Add --no-manifest to leave <dir>/manifest.json alone.
 
    It loads curriculum.json, every course.json, every lesson, level review, homework, exam and drill file, and checks
    the schema and the semantic rules. Missing lesson, review and homework files are warnings (they show as "Not yet
@@ -28,7 +32,9 @@ const interleaveEngine = createRequire(import.meta.url)('../js/engine/canvas/int
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '..');
-const CONTENT = path.join(APP, 'content');
+const rootArg = process.argv.indexOf('--root');
+const CONTENT = rootArg > 0 && process.argv[rootArg + 1] ? path.resolve(process.argv[rootArg + 1]) : path.join(APP, 'content');
+const BASE = path.dirname(CONTENT);   // app/ for the real content; the folder holding a scratch content folder for --root (its tools/ sits beside content/)
 const args = new Set(process.argv.slice(2));
 const SUMMARY = args.has('--summary');
 const prepArg = process.argv.indexOf('--prep');
@@ -38,7 +44,7 @@ const WRITE_MANIFEST = !args.has('--no-manifest') && !PREP_FILE;
 
 /* ---------- Reporting ---------- */
 const problems = [];
-const rel = (f) => path.relative(APP, f) || f;
+const rel = (f) => path.relative(f.startsWith(CONTENT + path.sep) ? BASE : APP, f) || f;
 const err = (file, where, msg) => problems.push({ level: 'error', file: rel(file), where, msg });
 const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(file), where, msg });
 
@@ -2137,7 +2143,7 @@ Object.entries(C.courses || {}).forEach(([id, c]) => {
 });
 
 /* Performance tasks (ENGINE-BACKLOG 529): the verb rule per written level, the one-task rule, the grandfather list (tools/perf-pending.json) and the manifest rows */
-let perfPending = new Set(); try { const j = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-pending.json'), 'utf8')); perfPending = new Set(Array.isArray(j.levels) ? j.levels : []); } catch { /* none: nothing is grandfathered */ }
+let perfPending = new Set(); try { const j = JSON.parse(fs.readFileSync(path.join(BASE, 'tools', 'perf-pending.json'), 'utf8')); perfPending = new Set(Array.isArray(j.levels) ? j.levels : []); } catch { /* none: nothing is grandfathered */ }
 const perfManifest = {};   // "course/L<n>" -> { file, item, kind, how }: js/content.js reads it so the met rule needs no extra fetch
 const perfStats = { matched: 0, withTask: 0, pending: 0, levels: new Set() };
 const perfLevel = (file, cid, n, objs, lessonsWritten, sets) => {
@@ -2258,7 +2264,7 @@ Object.keys(C.courses || {}).forEach(cid => {
     guard(file, () => perfLevel(file, cid, lv.n, objs, lessonsWritten, sets));
     /* ENGINE-BACKLOG 573: a written level's number script must import numbers_lib and read the lesson JSON through numbers_lib (a missing script is out of scope here) */
     if (lessonsWritten && sets.review && sets.homework) {
-      const nf = path.join(APP, '..', 'docs', 'reports', `${cid}-L${lv.n}-numbers.py`);
+      const nf = path.join(BASE, '..', 'docs', 'reports', `${cid}-L${lv.n}-numbers.py`);
       if (fs.existsSync(nf)) { const t = fs.readFileSync(nf, 'utf8'); if (!/\bLevel\(/.test(t) || !/(^|\n)\s*(from\s+numbers_lib\s+import|import\s+numbers_lib)/.test(t)) warn(nf, '', 'the number script never uses numbers_lib (an import of numbers_lib and Level(): it does not check the stated numbers in the lesson JSON'); }
     }
   });
@@ -2300,7 +2306,7 @@ Object.keys(C.courses || {}).forEach(cid => {
 });
 
 /* The fluency fixtures (tools/fixtures/fluency, never content): checked like a real set, so the sampler and the rules are exercised on every run */
-fluencyFixtures().forEach(ff => {
+fluencyFixtures(path.join(BASE, 'tools', 'fixtures', 'fluency')).forEach(ff => {
   const fr = readJSON(ff);
   if (!isObj(fr.data)) return;
   const cid = fr.data.course, D = cur.courseDocs[cid];
@@ -2310,7 +2316,7 @@ fluencyFixtures().forEach(ff => {
 
 /* The problem-set fixtures (tools/fixtures/problems, never content): checked like a real set, so the rules run on every validation */
 {
-  const fxDir = path.join(APP, 'tools', 'fixtures', 'problems');
+  const fxDir = path.join(BASE, 'tools', 'fixtures', 'problems');
   let fxs = []; try { fxs = fs.readdirSync(fxDir).filter(f => f.endsWith('.json')).sort(); } catch { /* none */ }
   fxs.forEach(f => {
     const ff = path.join(fxDir, f), fr = readJSON(ff);
@@ -2322,7 +2328,7 @@ fluencyFixtures().forEach(ff => {
 }
 
 /* perf-pending.json: a key that is not a level is stale; one count line for the rest */
-[...perfPending].filter(k => !perfStats.levels.has(k)).forEach(k => warn(path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-pending.json'), k, 'not a level on any course map: remove it'));
+[...perfPending].filter(k => !perfStats.levels.has(k)).forEach(k => warn(path.join(BASE, 'tools', 'perf-pending.json'), k, 'not a level on any course map: remove it'));
 if (perfStats.pending) warn('tools/perf-pending.json', '', `${perfStats.pending} rule-matched level${perfStats.pending === 1 ? '' : 's'} have no performance task yet (grandfathered; matched ${perfStats.matched}, with a task ${perfStats.withTask}); see docs/AUTHORING.md section 5`);
 
 /* Exams */

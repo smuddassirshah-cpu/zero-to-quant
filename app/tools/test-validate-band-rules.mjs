@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Scratch cases for the answer-band and answer-form rules of engine pass AA 2 (ENGINE-BACKLOG 894, 898, 905, 907, 909, 910, 911; docs/AUTHORING.md section 5).
-   Copies app/ to a temp folder, writes the problem-set fixture into the copy's equations folder as problems-3.json, plants one case in each part
+   Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs), writes the problem-set fixture into the copy's equations folder as problems-3.json, plants one case in each part
    (all in one file, so the validator runs once), and reads the report by part. Nothing under app/content is touched.
      [tight-band]          the answer rounded as the question asks, a figure the part's own feedback or explanation prints, an unrounded answer with a half-unit band
      [wide-wrong-band]     a wrong band over half its own value
@@ -11,21 +11,20 @@
      form "solved", domain and scale are accepted when well formed and refused when not
    Usage: node tools/test-validate-band-rules.mjs [--local-cdn <pkgs>]. Exit 0 pass, 1 failure. */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { openHarness } from './lib/validate-harness.mjs';
 
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2), ci = argv.indexOf('--local-cdn');
 const cdn = ci >= 0 ? path.resolve(argv[ci + 1]) : process.env.ZQ_LOCAL_CDN ? path.resolve(process.env.ZQ_LOCAL_CDN) : null;
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'zq-band-'));
-const copy = path.join(tmp, 'app');
-fs.cpSync(APP, copy, { recursive: true, filter: (s) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(s) });
+const h = openHarness({ name: 'band', fixtures: ['problems'] });   // a scratch copy of tools/fixtures/mini-app (see lib/validate-harness.mjs)
+const tmp = h.dir;
+const copy = h.dir;
 fs.rmSync(path.join(copy, 'tools/fixtures/problems'), { recursive: true, force: true });
 const fixture = JSON.parse(fs.readFileSync(path.join(APP, 'tools/fixtures/problems/problems-fixture-3.json'), 'utf8'));
 const file = path.join(copy, 'content/courses/equations/problems-3.json');
-const run = (...a) => { try { return execFileSync('node', [path.join(copy, 'tools', 'validate.mjs'), '--no-manifest', ...a], { cwd: copy, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { return String(e.stdout || '') + String(e.stderr || ''); } };
+const run = (...a) => h.validate(['--no-manifest', ...a]).out;
 
 const d = JSON.parse(JSON.stringify(fixture)); d.id = 'problems-3';
 const num = (answer, tol, extra = {}) => ({ kind: 'numeric', answer, tol, ...extra });

@@ -54,8 +54,7 @@ export const loadSet = (ref) => {
   const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
   return { file, doc, course: c === 'fixture' ? doc.course : c };
 };
-export const fixtureFiles = () => {
-  const dir = path.join(APP, 'tools/fixtures/fluency');
+export const fixtureFiles = (dir = path.join(APP, 'tools/fixtures/fluency')) => {
   return fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort().map((f) => path.join(dir, f)) : [];
 };
 
