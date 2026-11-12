@@ -131,3 +131,14 @@ Voice on the changed strings: no exclamation marks, no em-dashes, longest senten
 ### Finding
 
 1. l12-price-paths.json | screens[9].explain.text, third sentence | imprecise | serious | "Desks price with the up-chance that makes the walk fair, whatever its real drift" is true only if "the walk" is the price itself and interest is nil. This screen models the price as a unit-step walk, so there it holds. But the lesson's own binomial model, and its summary, make the walk the log price ("multiplies by $u$ or $d = 1/u$, so the log price is a simple walk"). A learner will read the sentence as "price with a fair log walk", or "keep the equal chance". That is not the pricing rule. | Hull, Binomial trees: $p = (e^{r\Delta t} - d)/(u - d)$. With no interest and $d = 1/u$ this is $1/(1 + u)$, below one half: 0.4975 for $u = 1.01$, 0.4545 for $u = 1.2$. For the lesson's $u = 1.25$, $d = 0.8$ model it is $0.2/0.45 = 0.444$, not the 0.5 the lesson uses. Under that chance the price is a fair bet ($qu + (1-q)d = 1$) and the log walk drifts down. Shreve vol. I, 1.2 states the same: the discounted price, not the log price, is the martingale. Script checks `l12 multiplicative tree`. The dropped hypotheses are "the price" and "after interest". Tagged serious because it leaves a wrong pricing rule in the one model the lesson names; the size of the error is small for small steps. | Replace the third sentence with: "Desks price with the up-chance that makes the price itself a fair bet after interest, whatever its real drift." (19 words; the first two sentences stay.)
+
+## Follow-up (fix-pass read)
+
+One row changed, `l12-price-paths.json` `screens[9].explain.text`, third sentence.
+
+- Old: "Desks price with the up-chance that makes the walk fair, whatever its real drift."
+- New: "With no interest, desks price with the up-chance that makes the price itself a fair bet, whatever its real drift."
+
+Basis: Hull, Binomial trees, and Shreve vol. I, 1.2: the pricing chance makes the discounted price, not the log price, a martingale; with no interest that is q = (1 − d)/(u − d), 4/9 for u = 1.25, d = 0.8 (qu + (1 − q)d = 1), and 1/2 for this screen's unit-step price walk. The reader's "after interest" was not used, since the lesson only says "Ignore interest"; the condition is stated instead, and "fair bet" is already the screen's own term.
+
+Siblings checked, no change: `screens[9].hints[0]` and `screens[9].explain.text` sentence 2 speak of the item's walk, which is the price itself, with no interest, so both hold; `screens[6]`, `summary.ideas[1]` and `quiz[q-drift-reflect]` state chances, not prices. Key £26.32 recomputed twice: 2 × P(S_20 ≥ 6) = 2 × 0.131588 and an absorbing-barrier recursion 0.263176, × £100 = £26.32. Gates: six scripts exit 0, validator 0 errors, voice scan 0 and 0, playthrough green with and without `--mobile`.
