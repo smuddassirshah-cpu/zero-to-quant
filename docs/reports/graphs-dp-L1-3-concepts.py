@@ -134,13 +134,21 @@ def check_l2():
         for v in sorted(path3k[u]):
             if v not in rseen:
                 rgo(v)
-    try:
-        rgo(0)
-        rec_fails = False
-    except RecursionError:
-        rec_fails = True
-    claim("l2 s4 fb test-7 (fix pass): a self-calling search fails the 3,000 path at the 1,000 limit",
-          rec_fails and sys.getrecursionlimit() == 1000 and "1,000 nested calls" in l2["screens"][4]["feedback"]["byKey"]["test-7"])
+    # fix-pass follow-up: the page's worker sets the limit to 3,000 (drill-worker.js); the test must fail at 1,000 and at 3,000
+    old_limit = sys.getrecursionlimit()
+    rec_fails = True
+    for lim in (1000, 3000):
+        sys.setrecursionlimit(lim)
+        rseen.clear()
+        try:
+            rgo(0)
+            rec_fails = False
+        except RecursionError:
+            pass
+    sys.setrecursionlimit(old_limit)
+    t7 = l2["screens"][4]["feedback"]["byKey"]["test-7"]
+    claim("l2 s4 fb test-7 (follow-up): a self-calling search goes 3,000 deep and fails at limits 1,000 and 3,000",
+          rec_fails and "goes 3,000 calls deep, past Python's recursion limit" in t7 and "1,000" not in t7)
     # pop(0) worst case: star of V nodes
     V = 2000
     q, moves = list(range(V)), 0
@@ -195,6 +203,30 @@ def check_l3():
     except RecursionError:
         claim("l3 s3 RecursionError", True)
     claim("l3 s7 default limit about 1,000", 900 <= sys.getrecursionlimit() <= 1100, sys.getrecursionlimit())
+    # fix-pass follow-up: every stated 1,000 is the default, and every failing depth also fails at the page's 3,000
+    l3t = json.dumps(l3, ensure_ascii=False)
+    claim("l3 every 'about 1,000' names the default",
+          l3t.count("1,000") == l3t.count("1,000 by default") + l3t.count("1,000 frames by default") == 3, l3t.count("1,000"))
+    deep_ok = True
+    old_limit = sys.getrecursionlimit()
+    for lim in (1000, 3000):
+        sys.setrecursionlimit(lim)
+        for n in (5000,):  # l3 s7 chain of 5,000 trades; l8 test 9 chain of 5,000
+            seen5 = set()
+
+            def go5(u):
+                seen5.add(u)
+                if u + 1 < n and u + 1 not in seen5:
+                    go5(u + 1)
+            try:
+                go5(0)
+                deep_ok = False
+            except RecursionError:
+                pass
+    sys.setrecursionlimit(old_limit)
+    claim("l3 s7 and l8 test 9: 5,000 deep fails at limits 1,000 and 3,000", deep_ok)
+    for f in ("l4-islands", "l8-groups"):
+        claim(f + " states no 1,000 recursion limit", "limit of about 1,000" not in json.dumps(J(f)) and "limit is about 1,000" not in json.dumps(J(f)))
     hc = sol(l3, l3["screens"][9])["has_cycle"]
     claim("l3 s9 diamond is not a cycle", hc({"hedge": ["delta", "vega"], "delta": ["spot"], "vega": ["spot"], "spot": []}) is False)
     # quiz q-post: R(S(U), T)

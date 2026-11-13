@@ -184,3 +184,23 @@ Fresh read of the fixer's diff `c933cd50~1..c933cd50` under `app/content/courses
    Note, outside the diff: lesson 3 says "about 1,000" for the same limit in several places. That is true of Python as shipped and was not changed by the fixer, so it is not a row here.
 
 No other row needs a change. The reader's scripts are in its scratch folder and are not committed.
+
+## Fix-pass follow-up
+
+Scope: the recursion-limit finding of the fix-pass read and its note outside the diff, across L1 to L3. Engine facts, read not edited: every lesson, review and homework code widget runs in `app/js/screens/drill-worker.js` (`app/js/engine/widgets/code.js` starts it; no other Python runner exists in `app/js`). That worker calls `sys.setrecursionlimit(3000)` at the start of every run. Bare Pyodide 0.27.7 and CPython 3.13 default to 1,000. Depths were run in CPython 3.13 and in Pyodide 0.27.7 under node, at limits 1,000 and 3,000, inside two wrapper frames and an `exec`: every depth below raised `RecursionError` at both limits; a 1,500-node path passes at 3,000 and fails at 1,000. Rule used: a stated 1,000 is called the default; where the page's run is the point, no figure is given. No test, key or slip changed.
+
+| # | File | JSON path | Status | Basis |
+|---|---|---|---|---|
+| 1 | l2-level-by-level.json | screens[4].feedback.byKey.test-7 | fixed (reader's text) | Test 7 is a 3,000-node path from node 0; one call per node nests 3,000 calls, so it fails at 1,000 and at 3,000 (run). |
+| 2 | l3-going-deep.json | screens[3].widget.options[2=hang].why | fixed | "about 1,000 frames by default" is true of Python as shipped; the triangle with no `seen` fails at either limit (992 and 2,992 calls made in Pyodide). |
+| 3 | l3-going-deep.json | screens[3].feedback.byKey.hang | fixed | Figure dropped: "once they pass its limit" holds at 1,000 and 3,000. |
+| 4 | l3-going-deep.json | screens[7].prose | fixed | Default named; Algorithmic Thinking states about 1,000 (for example `algo-think/l5-calls-itself.json`), so the back-reference stands. The 5,000 chain fails at 3,000 too. |
+| 5 | l3-going-deep.json | screens[7].hints[2=step].text | fixed | 5,000 frames is past both limits (run). |
+| 6 | l3-going-deep.json | screens[7].explain.text | fixed | "passes 1,000" replaced by "passes the recursion limit"; the screen's 5,000 chain is past both. |
+| 7 | l3-going-deep.json | summary.ideas[2] | fixed | Default named, as row 2. |
+| 8 | l4-islands.json | screens[6].widget.options[0=all].text | fixed | 300 × 300 = 90,000 calls, past both limits (90,000-node chain run); figure dropped. |
+| 9 | l8-groups.json | screens[5].widget.how | fixed | Naive `union` with `parent[ra] = rb` on the chain builds 0 → 1 → … → 4,999; a recursive `find(0)` nests 5,000 calls and fails at both limits (run). The solution's iterative `find` passes. |
+
+Left as written, true at both limits: `l3-going-deep.json` screens[5].widget.how (5,000 nodes, "deeper than Python's recursion limit"), `homework-1.json` test-10 (3,000 calls deep), `review-1.json` test-7 (5,001 nodes), `l13-climbing-stairs.json` code widget `how` and feedback test-6 (`stairs(5000)`, no figure). Level 4 files state no recursion limit.
+
+Script: `docs/reports/graphs-dp-L1-3-concepts.py` now runs the test-7 recursion at both limits and checks the new text, checks every "1,000" in lesson 3 says "by default", runs a 5,000-deep recursion at both limits, and checks l4 and l8 state no 1,000 limit: 231 checks, 0 failed, exit 0. Gates: validator 0 errors, voice scan 35 at 0 and 0, number scripts 1 to 3 exit 0, playthrough of l2, l3, l4 and l8 green on desktop and `--mobile`.
