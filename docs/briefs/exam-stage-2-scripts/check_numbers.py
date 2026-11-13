@@ -230,6 +230,21 @@ allow('a-leak-steps', 120, 2015, 2024, 20)
 correct_ids('a-curves-meet', ['a'])
 allow('a-curves-meet', 1.02, 1.05, 0.80)
 
+# a-spline-columns (sl-flexible): route A is scikit-learn's own column count, route B the lesson's K + 4 per input
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import SplineTransformer
+_Xs = np.random.default_rng(5).normal(size=(180, 5)); _Xs[:, 3:] = (_Xs[:, 3:] > 0)
+_ct = ColumnTransformer([('s', SplineTransformer(n_knots=6, degree=3), [0, 1, 2])], remainder='passthrough').fit(_Xs)
+cols_a = _ct.transform(_Xs).shape[1]
+cols_b = 3 * (4 + (6 - 2)) + 2
+rec(cols_a == cols_b, f'a-spline-columns: two routes agree ({cols_a} and {cols_b})')
+key('a-spline-columns', cols_a)
+wrong('a-spline-columns', 'knots-only', 3 * 6 + 2)
+wrong('a-spline-columns', 'no-constant', 3 * (3 + 4) + 2)
+wrong('a-spline-columns', 'no-flags', cols_a - 2)
+rec(W('a-spline-columns')['answer'] not in (3 * 6 + 2, 3 * 7 + 2, 24), 'a-spline-columns: the key is none of its slips')
+allow('a-spline-columns', 3, 6, 3, 2, 4, 8)
+
 y6 = np.array([-14, -9, -2, 5, 7, 18], float)
 lad = lambda v_: min(float(np.abs(v_ - c_).sum()) for c_ in np.linspace(-20, 20, 4001))      # the best centre, by search: the median
 par6 = lad(y6)

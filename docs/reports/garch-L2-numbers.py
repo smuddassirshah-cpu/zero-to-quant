@@ -270,7 +270,7 @@ _p8 = lv._file(L)[1]['screens'][8]
 claim('l7 s8 table has 5 columns and every row has 5 cells', len(_p8['canvas']['params']['columns']) == 5 and all(len(x) == 5 for x in _p8['canvas']['params']['rows']))
 claim('l7 s8 hints[1] highlights the log-likelihood cell of the decimal row', _p8['canvas']['params']['columns'][4] == 'Log-likelihood' and _p8['hints'][1]['highlight'] == ['r1c4'])
 fd = fit_garch(r)                                  # CPython's decimal fit (the browser's is in the table)
-E(L, 'screens[8].explain.text', R(fd.x[1], 2)); E(L, 'screens[8].explain.text', R(fd.x[2], 2))
+# the explain states no desktop figures: where a desktop SciPy stops depends on its version
 dec_ll_pct = -neg_loglik(fd.x, r) - 2000 * math.log(100)  # the same fit's log-likelihood in % terms
 claim('CPython decimal fit also stalls far below the peak (> 100 units)', -nll_fit - dec_ll_pct > 100); E(L, 'screens[8].hints[2].text', round(-nll_fit - (-2800.14)))
 E(L, 'screens[8].hints[1].text', f'{w_ * 1e-4:.8f}'.rstrip('0'))
@@ -288,8 +288,9 @@ for i, v in enumerate(f1000):
     E(L, f'screens[10].canvas.params.rows[1][{i + 1}]', f'{v:.4f}')
 E(L, 'screens[10].canvas.params.rows[1][4]', f'{f1000[1] + f1000[2]:.4f}'); E(L, 'screens[10].explain.text', round(math.log(0.5) / math.log(f1000[1] + f1000[2])))
 fA = fit_garch(ap)
-E(L, 'screens[10].canvas.params.rows[3][3]', f'{fA.x[2]:.4f}'); E(L, 'screens[10].canvas.params.rows[3][2]', f'{fA.x[1]:.4f}')
-claim('CPython fit of A: alpha 0, beta 1, not converged', fA.x[1] < 1e-6 and abs(fA.x[2] - 1) < 1e-4)
+claim('l7 s10 table has three rows: the unreproducible desktop row is gone', len(lv._file(L)[1]['screens'][10]['canvas']['params']['rows']) == 3)
+claim('l7 s8 explain no longer states desktop alpha 0.17, beta 0.08', '0.17' not in lv.text(L, 'screens[8].explain.text'))
+# Series A (browser row 3) is Pyodide-only: SciPy 1.18.1 gives alpha 0.04 and 1.14.1 gives 0.25 and 0.28 (the lesson's point: the stop is version-specific)
 E(L, 'screens[11].widget.answer', R(math.log(0.5) / math.log(0.99), 2)); E(L, 'screens[11].widget.wrong[2].value', R(math.log(0.5) / math.log(0.9), 2))
 E(L, 'screens[11].canvas.state.points[0].label', R(math.log(0.5) / math.log(R(pers, 4)), 1)); E(L, 'screens[11].canvas.state.points[1].label', R(math.log(0.5) / math.log(0.98), 1))
 E(L, 'quiz[0].widget.answer', 0.05 + 0.10 + 1.70); E(L, 'quiz[0].widget.wrong[1].value', R(0.05 + 0.85 + 0.20, 2))
