@@ -98,3 +98,36 @@ Notes on the comparison:
 - Code widget feedback is keyed only by the first failing test. 13 of 90 `test-N` lines here name a mistake that an earlier test catches. A content field that carries the planted mistake beside each `test-N` line (as `tools/planted-check.mjs` does for drills), checked by a node tool, would make this class a validator failure. The harness in `docs/reports/contests-L1-3-concepts.py` (`run_py`, `mutant`) is a working model of it.
 - `tools/grade-all.mjs` skips `code` widgets. Solutions and starters are only checked in the browser playthrough. The local Pyodide package runs under node (`loadPyodide` from the `--local-cdn` folder), so a node check of solution passes and starter fails is possible without a browser.
 - A numeric answer that is a whole-number count with `tol.abs` of 1 or more accepts neighbouring wrong counts (finding 21). A validator warning for `tol.abs >= 1` on an integer `answer` would surface these for a decision.
+
+## Fix pass
+
+Fixer: Opus, own worktree. Every `test-N` line was checked by running the mistake it names as a submission in Pyodide 0.27.7 under node (the page's interpreter, recursion limit 3,000, the code.js harness rebuilt by hand), and the two C++ mistakes with native clang++ `-O1` (they use only `int` and `long long`). No graded key, hidden test, solution, starter or lesson id changed. One tolerance changed (finding 21).
+
+| # | Status | Fixer's basis |
+|---|---|---|
+| 1 | fixed differently | The Note is optional on Codeforces, and problem A's legend holds the rule. Reworded as two sentences ("opens with a legend, a story that states the rule") to keep each under 20 words. |
+| 2 | fixed differently | The statement's legend lines state "strictly greater" and "the first day is always a fresh high". Auditor's text applied, with "constraints" for "limits" in the explain. |
+| 3 | fixed | `best = 0` first fails test 5 (returns 0); `if not best` first fails test 6 (returns 4), run in Pyodide. |
+| 4 | fixed | The 1.25·10⁷-pair loop took 0.5 to 0.9 s in CPython 3.13 and 1.3 to 2.4 s in Pyodide, bare and with a body: "about a second or more" holds. |
+| 5 | fixed | Thresholds 26, 500, 10⁴ first fail test 6 (`n^3`); 465³ = 100,544,625 and 500³ = 1.25·10⁸, both over 10⁸. |
+| 6 | fixed | `<` first fails test 1 (2 for 4); `sorted(set(xs))` first fails test 3 (0 for 6). Test 1's sums 1+2, 1+3, 1+4, 2+3 are 3, 4, 5, 5. |
+| 7 | fixed | Dropping values above k, and dropping negatives, both first fail test 5. |
+| 8 | fixed | A `pos` that does not move fails test 1; one recursive call per test case raises RecursionError at test 7 in Pyodide. |
+| 9 | fixed | A maximum from 0 prints `-4 0` on test 1 (clang++ run). Test 4: −5−3−4 = −12, maximum −3. |
+| 10 | fixed | An `int` sum (and a 32-bit sum, as the page's `long`) first fails test 3; `unsigned` and a maximum from 0 fail test 1. No mistake found that reaches test 6, so the line now only states its sums, 5·10⁹ and −2·10⁹. |
+| 11 | fixed | p − 2 ≈ 10⁹ < 2³⁰ = 1,073,741,824, so about 30 squarings; each squaring doubles the exponent (CLRS 4e 31.6). |
+| 12 | fixed | Termination needs a whole-number quantity that changes strictly at every move and cannot pass a bound (Engel, ch. 1); the pair game's rising sum shows the bound is needed. l8 `screens[9].prose` and `summary.ideas[2]` now carry the condition; l8 `screens[5].explain.text` and homework-2 `items[3].widget.model` now say the sum is a whole number above 0. review-2 makes no termination claim. The homework-2 rubric line was left unchanged (graded criterion, and it makes no false claim). |
+| 13 | fixed | The `permutations` search took 4.35 s on test 8 in Pyodide here (3.9 s of it at n = 12), against the 5 s limit, so a slower device stops there. |
+| 14 | fixed differently | Sort by start and sort by length both first fail test 1 and return 1 with this loop (not 2), so the new test-1 line says "keeps too few" for length rather than "loses B and D". Test-6, test-7 and `how` as the auditor wrote. |
+| 15 | fixed | `<` first fails test 1 and returns 9; B and D give 4 + 7 = 11 with risk 2 + 4 = 6. |
+| 16 | fixed differently | A list of n cells raises IndexError on test 1 (update (5, 7, 1), n = 8). For test 3 the fixer found a mistake that reaches it, a running sum that skips day 0 (returns 0, 0, 0, 2, 2), so the test-3 line names it; values 1, 1, 1, 3, 3 recomputed. |
+| 17 | fixed | Plain alternation and `-1` for odd n both first fail test 3; 99,999 // 2 = 49,999. |
+| 18 | fixed | Alerting at starts first fails test 1 (4 for 2). A plain "sort by start, alert at the end" with `s > last` passes test 2 by luck (it first fails test 7), but the same with a containment check alerts at 10 then 3 and first fails test 2, as the new line describes. |
+| 19 | fixed | After two updates days 1 and 2 hold 3 + 2 = 5; `>=` returns 2 on test 1. |
+| 20 | fixed | With no −1 branch the search first fails test 3. Test 10's largest day is at most 10 × 10⁵ = 10⁶ < 10⁹, so −1. |
+| 21 | fixed | 2²⁹ = 536,870,912 < 10⁹ + 1 ≤ 2³⁰ = 1,073,741,824, so the key 30 is exactly right and 29 is wrong. `tol` set to `{ "abs": 0 }`; wrong value 29 (`floor`) added with its line. |
+| 22 | fixed differently | `list(case)` and `case[:]` both first fail test 7 (TypeError on an int); unpacking the case fails test 1 instead, so the line names the two copies that do reach test 7. No copy, or `copy.copy`, first fails test 9, which keeps its deepcopy line. |
+
+Script: `docs/reports/contests-L1-3-concepts.py` pinned the old lines with checks that failed by design. Each FINDING check now reads "FINDING n fixed" and tests the corrected line through `fixed()`; checks were added for findings 12, 21 and 22 and two mutants (l4 `case[:]`, l12 day 0 skipped). It exits 0.
+
+Fix-pass gates: validator 0 errors (manifest unchanged; course warnings as before the fix); concepts script 318 checks, 0 failing, exit 0; number scripts 5 of 5 passed; `grade-all.mjs --file` 0 failures on all 13 changed files; voice scan at 35: 0 sentences over, 0 explanations over three sentences; playthrough of the 10 lessons and 3 sets green on desktop and with `--mobile`.

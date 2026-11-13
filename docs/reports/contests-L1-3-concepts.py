@@ -5,7 +5,8 @@ Parts, all run on the content's own code and data:
   A. every code widget (37 Python, 2 C++): the solution passes its hidden tests, the starter fails;
   B. every `feedback.byKey.test-N` line that names a mistake: a submission with that mistake
      must pass tests 1..N-1 and fail test N. A check that fails because the content is wrong is
-     labelled FINDING n (the number in docs/reviews/audit-contests-1-3.md) and stays failing;
+     labelled FINDING n (the number in docs/reviews/audit-contests-1-3.md). Since the fix pass each such
+     check reads "FINDING n fixed" and tests the corrected line (fixed()), so the script exits 0;
   C. worked examples, stated numbers and general claims, recomputed or brute-forced;
   D. speed claims, timed with wide margins (ratios, not absolute times).
 
@@ -261,6 +262,13 @@ def mutant(label, w, code, n, got=None, limit=20, finding=None):
     return ff, (res[ff - 1][1] if ff else None)
 
 
+def fixed(finding, f, key, i, tkey, has=None, lacks=None):
+    """Fix pass: the line on the test a mistake first fails now names it (has), and the old line no longer does (lacks)."""
+    line = ((DOC[f][key][i].get('feedback') or {}).get('byKey') or {}).get(tkey, '')
+    ck('FINDING %d fixed: %s %s[%d] %s' % (finding, f, key, i, tkey),
+       bool(line) and (has is None or has in line) and (lacks is None or lacks not in line), line)
+
+
 # ---- l1
 w = W('l1-reading-statements', 'screens', 9)
 mutant('l1 parse drops the last line', w, '''def parse(text):
@@ -298,7 +306,7 @@ BEST0 = '''def new_highs(xs):
         if x > best: c += 1; best = x
     return c'''
 mutant('l1 best = 0', w, BEST0, 5, got=lambda g: g == 0)
-mutant('l1 test-6 line names best = 0, which fails test 5', w, BEST0, 6, finding=3)
+fixed(3, 'l1-reading-statements', 'screens', 10, 'test-6', has='is None')
 mutant('l1 falsy best (the mistake that does reach test 6)', w, '''def new_highs(xs):
     c = 0; best = None
     for x in xs:
@@ -323,12 +331,14 @@ T500 = '''def budget_class(n):
     if n <= 10**8: return "n"
     return "log n"'''
 mutant("l2 table's 500", w, T500, 6)
-mutant("l2 test-7 line names the table's 500, which fails test 6", w, T500, 7, finding=5)
+fixed(5, 'l2-limits-to-complexity', 'screens', 9, 'test-6', has='rule of thumb')
+fixed(5, 'l2-limits-to-complexity', 'screens', 9, 'test-7', lacks='rule of thumb')
 mutant('l2 unguarded 2 ** n', w, w['solution'].replace('n <= 60 and ', ''), 15, limit=CAP)
 w = W('l2-limits-to-complexity', 'screens', 10)
 STRICT = w['solution'].replace('<= k', '< k')
 mutant('l2 < for <= fails the first test', w, STRICT, 1, got=lambda g: g == 2)
-mutant('l2 test-3 line says use <=, but < fails test 1', w, STRICT, 3, finding=6)
+fixed(6, 'l2-limits-to-complexity', 'screens', 10, 'test-1', has='<=')
+fixed(6, 'l2-limits-to-complexity', 'screens', 10, 'test-3', has='duplicates', lacks='<=')
 mutant('l2 duplicates removed (the mistake that does reach test 3)', w, w['solution'].replace('sorted(xs)', 'sorted(set(xs))'), 3)
 mutant('l2 values above k dropped (reaches test 5)', w, w['solution'].replace('sorted(xs)', 'sorted(x for x in xs if x <= k)'), 5)
 mutant('l2 every pair on the argument', w, '''def pair_sums_at_most(xs, k):
@@ -372,7 +382,7 @@ for _ in range(t):
     print(sum(a), max(a))''', 5)
 NOPOS = w['solution'].replace('    pos += n\n', '')
 mutant('l3 S pos not moved past the values fails the first test', w, NOPOS, 1)
-mutant('l3 S test-7 line names a pos that does not move, which fails test 1', w, NOPOS, 7, finding=8)
+fixed(8, 'l3-fast-io', 'screens', 9, 'test-7', has='calls itself', lacks='pos')
 mutant('l3 S recursion over the test cases (a mistake that does reach test 7)', w, '''import sys
 data = sys.stdin.read().split()
 out = []
@@ -395,10 +405,11 @@ if CXX:
     INTSUM = sol.replace('long long sum = 0, best = 0;', 'int sum = 0; long long best = 0;')
     BESTZ = sol.replace('if (i == 0 || x > best)', 'if (x > best)')
     cmut('l3 C++ int sum', INTSUM, 3)
-    cmut('l3 C++ test-6 line names an int sum, which fails test 3', INTSUM, 6, finding=10)
+    fixed(10, 'l3-fast-io', 'screens', 10, 'test-6', lacks='`int`')
     cmut('l3 C++ unsigned sum fails the first test', sol.replace('long long sum = 0, best = 0;', 'unsigned sum = 0; long long best = 0;'), 1)
     cmut('l3 C++ maximum from 0 fails the first test', BESTZ, 1)
-    cmut('l3 C++ test-4 line names a maximum from 0, which fails test 1', BESTZ, 4, finding=9)
+    fixed(9, 'l3-fast-io', 'screens', 10, 'test-1', has='first value')
+    fixed(9, 'l3-fast-io', 'screens', 10, 'test-4', lacks='from 0')
 
 # ---- l4
 w = W('l4-stress-testing', 'screens', 7)
@@ -406,6 +417,7 @@ sol = w['solution']
 mutant('l4 new Random each trial', w, sol.replace('    rng = random.Random(seed)\n', '').replace('case = gen(rng)', 'case = gen(random.Random(seed))'), 2)
 mutant('l4 one trial too many', w, sol.replace('range(trials)', 'range(trials + 1)'), 4)
 mutant('l4 list(case) copy', w, sol.replace('fast(copy.deepcopy(case)) != brute(copy.deepcopy(case))', 'fast(list(case)) != brute(list(case))'), 7)
+mutant('l4 case[:] copy (named by the fixed test-7 line)', w, sol.replace('fast(copy.deepcopy(case)) != brute(copy.deepcopy(case))', 'fast(case[:]) != brute(case[:])'), 7)
 mutant('l4 no copies', w, sol.replace('fast(copy.deepcopy(case)) != brute(copy.deepcopy(case))', 'fast(case) != brute(case)'), 9,
        got=lambda g: same(g, ([1, 1, 2, 4, 6, 10], 2)))
 if HAVE_PYTEST:
@@ -520,8 +532,9 @@ BYSTART = sol.replace('key=lambda x: x[1]', 'key=lambda x: x[0]')
 BYLEN = sol.replace('key=lambda x: x[1]', 'key=lambda x: x[1] - x[0]')
 mutant('l10 sort by start fails the first test', w, BYSTART, 1, got=lambda g: g == 1)
 mutant('l10 sort by length fails the first test', w, BYLEN, 1)
-mutant('l10 test-6 line names a sort by start, which fails test 1', w, BYSTART, 6, finding=14)
-mutant('l10 test-7 line names a sort by length, which fails test 1', w, BYLEN, 7, finding=14)
+fixed(14, 'l10-greedy-proofs', 'screens', 4, 'test-1', has='Sort by end')
+fixed(14, 'l10-greedy-proofs', 'screens', 4, 'test-6', lacks='Sort by')
+fixed(14, 'l10-greedy-proofs', 'screens', 4, 'test-7', lacks='Sort by')
 mutant('l10 check against every kept meeting', w, '''def max_non_overlapping(intervals):
     kept = []
     for s, e in sorted(intervals, key=lambda x: x[1]):
@@ -566,7 +579,8 @@ mutant('l11 n = 0 special case, max over fitting subsets', w, '''def best_subset
     return max(out)''', 3)
 LT = sol.replace('risk <= limit', 'risk < limit')
 mutant('l11 < for <= fails the first test', w, LT, 1, got=lambda g: g == 9)
-mutant('l11 test-5 line says at most means <=, but < fails test 1', w, LT, 5, finding=15)
+fixed(15, 'l11-bitmasks', 'screens', 3, 'test-1', has='<=')
+fixed(15, 'l11-bitmasks', 'screens', 3, 'test-5', lacks='<=')
 w = W('l11-bitmasks', 'screens', 5)
 mutant('l11 count: empty set never counted', w, '''def count_subsets_with_sum(xs, target):
     n = len(xs)
@@ -602,7 +616,10 @@ sol = w['solution']
 mutant('l12 skips l == r', w, sol.replace('    for l, r, v in updates:\n', '    for l, r, v in updates:\n        if l == r: continue\n'), 2)
 NCELLS = sol.replace('[0] * (n + 1)', '[0] * n')
 mutant('l12 n cells fails the first test', w, NCELLS, 1)
-mutant('l12 test-3 line names a list of n cells, which fails test 1', w, NCELLS, 3, finding=16)
+fixed(16, 'l12-difference-arrays', 'screens', 4, 'test-1', has='n + 1')
+fixed(16, 'l12-difference-arrays', 'screens', 4, 'test-3', has='day 0', lacks='n + 1')
+mutant('l12 running sum skips day 0 (the mistake the test-3 line names)', w,
+       sol.replace('    for i in range(n):\n        run += d[i]\n        out.append(run)', '    out.append(0)\n    for i in range(1, n):\n        run += d[i]\n        out.append(run)'), 3)
 mutant('l12 scan every update for each day', w, '''def apply_ranges(n, updates):
     return [sum(u[2] for u in updates if u[0] <= i <= u[1]) for i in range(n)]''', 7)
 mutant('l12 loop over each range', w, '''def apply_ranges(n, updates):
@@ -629,7 +646,7 @@ w = W('review-3', 'items', 1)
 mutant('r3 ring: no n = 1 case', w, 'def ring_string(n):\n    return "ab" * (n // 2) + ("c" if n % 2 else "")', 1)
 ALT = 'def ring_string(n):\n    if n == 1: return -1\n    return ("ab" * n)[:n]'
 mutant('r3 ring: alternate only', w, ALT, 3)
-mutant('r3 ring test-9 line names a wrong last letter for odd n, which fails test 3', w, ALT, 9, finding=17)
+fixed(17, 'review-3', 'items', 1, 'test-9', has='49,999', lacks='neighbours')
 
 # ---- homework-1
 w = W('homework-1', 'items', 0)
@@ -687,7 +704,7 @@ ATSTART = '''def fewest_alerts(windows):
         if not any(s <= t <= e for t in alerts): alerts.append(s)
     return len(alerts)'''
 mutant('hw3 alerts: alert at each start fails the first test', w, ATSTART, 1)
-mutant("hw3 alerts test-2 line names an alert at a window's start, which fails test 1", w, ATSTART, 2, finding=18)
+fixed(18, 'homework-3', 'items', 0, 'test-2', has='Sort by end', lacks='start')
 mutant('hw3 alerts: sort by start, alert at the end (the mistake that does reach test 2)', w, '''def fewest_alerts(windows):
     alerts = []
     for s, e in sorted(windows):
@@ -716,8 +733,19 @@ mutant('hw3 cap: no -1 branch', w, sol.replace('    if not over(len(updates)):\n
 GE = sol.replace('run > cap', 'run >= cap')
 NOCHECK = sol.replace('    if not over(len(updates)):\n        return -1\n', '')
 mutant('hw3 cap: >= for > fails the first test', w, GE, 1, got=lambda g: g == 2)
-mutant('hw3 cap test-4 line names >= for >, which fails test 1', w, GE, 4, finding=19)
-mutant('hw3 cap test-10 line names a search with no -1 check, which fails test 3', w, NOCHECK, 10, finding=20)
+fixed(19, 'homework-3', 'items', 2, 'test-1', has='> cap')
+fixed(20, 'homework-3', 'items', 2, 'test-3', has='Check all')
+fixed(20, 'homework-3', 'items', 2, 'test-10', lacks='Check all')
+# Fix pass, findings 12, 21 and 22: the texts and the tolerance as changed
+L8 = DOC['l8-invariants']
+ck('FINDING 12 fixed: l8 monovariant carries a bound', all('bound' in s for s in (L8['screens'][9]['prose'], L8['summary']['ideas'][2]))
+   and 'only rises' not in L8['screens'][9]['prose'] and 'above 0' in L8['screens'][5]['explain']['text']
+   and 'above 0' in DOC['homework-2']['items'][3]['widget']['model'])
+w5 = W('l2-limits-to-complexity', 'screens', 5)
+ck('FINDING 21 fixed: l2 halvings graded exactly, 29 has its own line', w5['answer'] == 30 and w5['tol'] == {'abs': 0}
+   and any(x['id'] == 'floor' and x['value'] == 29 for x in w5['wrong']) and 2**29 < 10**9 + 1 <= 2**30
+   and 'floor' in DOC['l2-limits-to-complexity']['screens'][5]['feedback']['byKey'])
+fixed(22, 'l4-stress-testing', 'screens', 7, 'test-7', has='deepcopy', lacks='as it is')
 mutant('hw3 cap: apply and scan per update', w, '''def first_over_cap(n, updates, cap):
     a = [0] * n
     for k, (l, r, v) in enumerate(updates, 1):
