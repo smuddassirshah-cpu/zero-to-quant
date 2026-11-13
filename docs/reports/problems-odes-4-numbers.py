@@ -38,35 +38,39 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 d = json.load(open(os.path.join(HERE, "..", "..", "app", "content", "courses", "odes", "problems-4.json")))
 items = {i["id"]: i for i in d["items"]}
 
-# ------------------------------------------------ p-test-rig
-F = sp.laplace_transform(8 * sp.exp(-3 * t), t, s, noconds=True)
-check("rig L{8e^-3t} exact", sp.simplify(F - 8 / (s + 3)), 0)
-check("rig L{8e^-3t} at s=1 by quadrature", quad(lambda u: math.exp(-u) * 8 * math.exp(-3 * u), 0, 60)[0], 8 / 4, 1e-8)
+# ------------------------------------------------ p-test-rig (y'' + 6y' + 8y = 24e^-8t)
+F = sp.laplace_transform(24 * sp.exp(-8 * t), t, s, noconds=True)
+check("rig L{24e^-8t} exact", sp.simplify(F - 24 / (s + 8)), 0)
+check("rig L{24e^-8t} at s=1 by quadrature", quad(lambda u: math.exp(-u) * 24 * math.exp(-8 * u), 0, 60)[0], 24 / 9, 1e-8)
 Y = sp.simplify(F / (s**2 + 6 * s + 8))
-check("rig Y exact", sp.simplify(Y - 8 / ((s + 2) * (s + 3) * (s + 4))), 0)
+check("rig Y exact", sp.simplify(Y - 24 / ((s + 2) * (s + 4) * (s + 8))), 0)
 check("rig factor", sp.expand((s + 2) * (s + 4) - (s**2 + 6 * s + 8)), 0)
-res = {p: sp.limit((s - p) * Y, s, p) for p in (-2, -3, -4)}
-check("rig residue -2", res[-2], 4); check("rig residue -3", res[-3], -8); check("rig residue -4", res[-4], 4)
+res = {p: sp.limit((s - p) * Y, s, p) for p in (-2, -4, -8)}
+check("rig residue -2", res[-2], 2); check("rig residue -4", res[-4], -3); check("rig residue -8", res[-8], 1)
 check("rig residues sum (y(0)=0)", sum(res.values()), 0)
-check("rig apart (route 2)", sp.simplify(sp.apart(Y, s) - (4 / (s + 2) - 8 / (s + 3) + 4 / (s + 4))), 0)
-differs("rig part3", -8, [8, 4], 0)
+check("rig apart (route 2)", sp.simplify(sp.apart(Y, s) - (2 / (s + 2) - 3 / (s + 4) + 1 / (s + 8))), 0)
+differs("rig part3", -3, [3, 2], 0)
+# not l15's example shifted and scaled: poles not equally spaced
+truth("rig poles unequally spaced (not l15 shifted)", (-4) - (-8) != (-2) - (-4))
 tt = sp.symbols("tt", real=True)
 yy = sp.Function("y")
-sol = sp.dsolve(yy(tt).diff(tt, 2) + 6 * yy(tt).diff(tt) + 8 * yy(tt) - 8 * sp.exp(-3 * tt), yy(tt),
+sol = sp.dsolve(yy(tt).diff(tt, 2) + 6 * yy(tt).diff(tt) + 8 * yy(tt) - 24 * sp.exp(-8 * tt), yy(tt),
                 ics={yy(0): 0, yy(tt).diff(tt).subs(tt, 0): 0}).rhs
-ykey = 4 * sp.exp(-2 * tt) - 8 * sp.exp(-3 * tt) + 4 * sp.exp(-4 * tt)
+ykey = 2 * sp.exp(-2 * tt) - 3 * sp.exp(-4 * tt) + sp.exp(-8 * tt)
 check("rig y(t) dsolve vs key", sp.simplify(sol - ykey), 0)
-check("rig y(t) factored form", sp.simplify(ykey - 4 * sp.exp(-2 * tt) * (1 - sp.exp(-tt))**2), 0)
+check("rig y(t) factored form (u = e^-2t)", sp.simplify(ykey - sp.exp(-2 * tt) * (1 - sp.exp(-2 * tt))**2 * (sp.exp(-2 * tt) + 2)), 0)
 check("rig y'(0)", sp.diff(ykey, tt).subs(tt, 0), 0)
-num = solve_ivp(lambda u, z: [z[1], 8 * math.exp(-3 * u) - 6 * z[1] - 8 * z[0]], [0, 3], [0, 0], rtol=1e-11, atol=1e-13, dense_output=True)
+num = solve_ivp(lambda u, z: [z[1], 24 * math.exp(-8 * u) - 6 * z[1] - 8 * z[0]], [0, 5], [0, 0], rtol=1e-11, atol=1e-13, dense_output=True)
 check("rig y(1) numeric vs closed", num.sol(1)[0], float(ykey.subs(tt, 1)), 1e-8)
-check("rig carried-sign y(0)", 4 + 8 + 4, 16)
+check("rig carried-sign y(0)", 2 + 3 + 1, 6)
 grid = np.linspace(0, 5, 500001); yv = num.sol(grid)[0]
-check("rig peak exact 1/4", sp.Rational(4, 16), 0.25)
-check("rig peak by grid search", yv.max(), 0.25, 1e-6); check("rig peak time grid", grid[yv.argmax()], math.log(2), 1e-4)
-check("rig slip no-four 1/16", 1 / 16, 0.0625); check("rig slip time ln2", round(math.log(2), 4), 0.6931)
-check("rig slip y(1)", round(float(ykey.subs(tt, 1)), 4), 0.2163)
-differs("rig part5", 0.25, [0.0625 + 0.0005, 0.6931 - 0.0005, 0.2163 + 0.0005], 0.0005)
+peak = (6 * math.sqrt(3) - 9) / 4
+check("rig peak exact", peak, 0.348076, 1e-6)
+check("rig peak by grid search", yv.max(), peak, 1e-8); check("rig peak time grid", grid[yv.argmax()], 0.5 * math.log(1 + math.sqrt(3)), 1e-4)
+check("rig u at peak", (math.sqrt(3) - 1) / 2, 0.3660, 5e-5)
+check("rig slip time", round(0.5 * math.log(1 + math.sqrt(3)), 4), 0.5025)
+check("rig slip y(1)", round(float(ykey.subs(tt, 1)), 4), 0.2161)
+differs("rig part5", 0.3481, [0.366 + 0.0005, 0.5025 + 0.0005, 0.2161 + 0.0005], 0.0005)
 
 # ------------------------------------------------ p-skydiver-check
 V = sp.simplify((sp.Rational(49, 5) / s) / (s + sp.Rational(1, 5)))
@@ -165,7 +169,7 @@ differs("dose part5", 73, [208, 72, 52], 0)
 
 # ------------------------------------------------ keys stored in the JSON
 want = {
-    "p-test-rig": [8 / (s + 3), 8 / ((s + 2) * (s + 3) * (s + 4)), -8, ykey, 0.25],
+    "p-test-rig": [24 / (s + 8), 24 / ((s + 2) * (s + 4) * (s + 8)), -3, ykey, 0.3481],
     "p-skydiver-check": [V, 16.1543, 17.64, 16.1504, 4],
     "p-dose-simulator": [[-6, -0.5], -2, 0.3333, 0.4642, 73],
 }

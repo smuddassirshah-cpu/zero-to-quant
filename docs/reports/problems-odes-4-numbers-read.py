@@ -96,62 +96,67 @@ for it in DOC["items"]:
             ok(x["id"] in p["feedback"]["byKey"], f"{it['id']}: wrong {x['id']} has a line")
 ok(any(it["difficulty"] == 5 for it in DOC["items"]) and Fr(typed, total) >= Fr(2, 3), "a 5 in the set; two thirds typed")
 
-# ---------------------------------------------------------------- p-test-rig
+# ---------------------------------------------------------------- p-test-rig (y'' + 6y' + 8y = 24e^(-8t))
 P = "p-test-rig"
-force = 8 * sp.exp(-3 * t)
+force = 24 * sp.exp(-8 * t)
 F1 = L(force)
-ok(eq(F1, 8 / (S + 3)), "L{8e^(-3t)} = 8/(s+3) by laplace_transform")
-sv = sp.Rational(7, 5)
-ok(abs(mp.quad(lambda u: mp.exp(-mp.mpf(7) / 5 * u) * 8 * mp.exp(-3 * u), [0, mp.inf]) - mp.mpf(8) / (mp.mpf(7) / 5 + 3)) < 1e-20, "the same by the defining integral at s = 1.4")
+ok(eq(F1, 24 / (S + 8)), "L{24e^(-8t)} = 24/(s+8) by laplace_transform")
+ok(abs(mp.quad(lambda u: mp.exp(-mp.mpf(7) / 5 * u) * 24 * mp.exp(-8 * u), [0, mp.inf]) - mp.mpf(24) / (mp.mpf(7) / 5 + 8)) < 1e-20, "the same by the defining integral at s = 1.4")
 ok(eq(tex(W(P, 1)["answer"]), F1), "part 1 key")
 w = {x["id"]: tex(x["tex"]) for x in W(P, 1)["wrong"]}
-ok(eq(w["sign"], L(8 * sp.exp(3 * t))) and eq(w["no-eight"], L(sp.exp(-3 * t))), "part 1 slips: transform of 8e^(3t); the 8 dropped")
+ok(eq(w["sign"], L(24 * sp.exp(8 * t))) and eq(w["no-factor"], L(sp.exp(-8 * t))), "part 1 slips: transform of 24e^(8t); the 24 dropped")
 ok(all(not eq(v, F1) for v in w.values()), "part 1 wrong differ from key")
 # part 2
 Ysym = sp.Symbol("Y")
 Y = sp.solve(sp.Eq(S**2 * Ysym + 6 * S * Ysym + 8 * Ysym, F1), Ysym)[0]
-ok(eq(Y, 8 / ((S + 2) * (S + 3) * (S + 4))), "Y = 8/((s+2)(s+3)(s+4))")
+ok(eq(Y, 24 / ((S + 2) * (S + 4) * (S + 8))), "Y = 24/((s+2)(s+4)(s+8))")
 ok(eq(tex(W(P, 2)["answer"]), Y) and all(eq(tex(a), Y) for a in W(P, 2)["accept"]), "part 2 key and accept forms")
 ok(sp.factor(S**2 + 6 * S + 8) == (S + 2) * (S + 4) and sorted(sp.roots(S**2 + 6 * S + 8)) == [-4, -2], "s^2 + 6s + 8 = (s+2)(s+4)")
 w = {x["id"]: tex(x["tex"]) for x in W(P, 2)["wrong"]}
-ok(eq(w["carried-sign"], (8 / (S - 3)) / (S**2 + 6 * S + 8)), "part 2 carried-sign: 8/(s-3) carried")
-ok(eq(w["root-signs"], 8 / ((S + 3) * (S - 2) * (S - 4))), "part 2 root-signs")
+ok(eq(w["carried-sign"], (24 / (S - 8)) / (S**2 + 6 * S + 8)), "part 2 carried-sign: 24/(s-8) carried")
+ok(eq(w["root-signs"], 24 / ((S + 8) * (S - 2) * (S - 4))), "part 2 root-signs")
 ok(all(not eq(v, Y) for v in w.values()), "part 2 wrong differ from key")
 # part 3
-res = {p: sp.residue(Y, S, p) for p in (-2, -3, -4)}
-ok(res == {-2: 4, -3: -8, -4: 4}, "residues 4, -8, 4 by sympy residue")
-ok(sp.apart(Y, S) == 4 / (S + 2) - 8 / (S + 3) + 4 / (S + 4), "the same by apart")
-ok(W(P, 3)["answer"] == -8 and {x["id"]: x["value"] for x in W(P, 3)["wrong"]} == {"sign": 8, "other-pole": 4}, "part 3 key and slips")
+res = {p: sp.residue(Y, S, p) for p in (-2, -4, -8)}
+ok(res == {-2: 2, -4: -3, -8: 1}, "residues 2, -3, 1 by sympy residue")
+ok(sp.apart(Y, S) == 2 / (S + 2) - 3 / (S + 4) + 1 / (S + 8), "the same by apart")
+ok(W(P, 3)["answer"] == -3 and {x["id"]: x["value"] for x in W(P, 3)["wrong"]} == {"sign": 3, "other-pole": 2}, "part 3 key and slips")
 ok(sum(res.values()) == 0, "explain: the residues add to 0 = y(0)")
 # part 4
-y = 4 * sp.exp(-2 * t) - 8 * sp.exp(-3 * t) + 4 * sp.exp(-4 * t)
+y = 2 * sp.exp(-2 * t) - 3 * sp.exp(-4 * t) + sp.exp(-8 * t)
 yinv = sp.inverse_laplace_transform(Y, S, t)
 ok(eq(yinv.subs(sp.Heaviside(t), 1), y), "y by inverse_laplace_transform")
 ok(eq(sp.diff(y, t, 2) + 6 * sp.diff(y, t) + 8 * y, force) and y.subs(t, 0) == 0 and sp.diff(y, t).subs(t, 0) == 0, "y satisfies the equation and both starting values")
 ok(eq(tex(W(P, 4)["answer"]), y) and all(eq(tex(a), y) for a in W(P, 4)["accept"]), "part 4 key and accept forms")
-ok(eq(y, 4 * sp.exp(-2 * t) * (1 - sp.exp(-t)) ** 2), "y = 4e^(-2t)(1 - e^(-t))^2")
 w = {x["id"]: tex(x["tex"]) for x in W(P, 4)["wrong"]}
-ok(eq(w["exp-sign"], y.subs(t, -t)) and eq(w["carried-sign"], 4 * sp.exp(-2 * t) + 8 * sp.exp(-3 * t) + 4 * sp.exp(-4 * t)), "part 4 slips")
-ok(w["carried-sign"].subs(t, 0) == 16, "carried-sign line: y(0) = 16")
-ok((-8 + 24 - 16, 4 - 8 + 4) == (0, 0), "feedback sums y(0) and y'(0)")
-# part 5
-crit = sp.solve(sp.diff(y, t), t)
-ok(crit == [sp.log(2)], "y' = 0 only at t = ln 2 (t > 0)")
-peak = sp.simplify(y.subs(t, sp.log(2)))
-ok(peak == sp.Rational(1, 4), "peak 1/4")
+ok(eq(w["exp-sign"], y.subs(t, -t)) and eq(w["carried-sign"], 2 * sp.exp(-2 * t) + 3 * sp.exp(-4 * t) + sp.exp(-8 * t)), "part 4 slips")
+ok(w["carried-sign"].subs(t, 0) == 6, "carried-sign line: y(0) = 6")
+ok((2 - 3 + 1, -4 + 12 - 8) == (0, 0), "feedback sums y(0) and y'(0)")
+# part 5: peak by calculus (u = e^(-2t)) and by a fine grid
+u = sp.Symbol("u", positive=True)
+yu = 2 * u - 3 * u**2 + u**4
+ok(sp.expand(sp.diff(yu, u) - 2 * (u - 1) * (2 * u**2 + 2 * u - 1)) == 0, "printed dy/du = 2(u-1)(2u^2+2u-1)")
+ok(sp.expand(yu - u * (1 - u) ** 2 * (u + 2)) == 0, "y = u(1-u)^2(u+2) >= 0: no overshoot")
+ur = [r for r in sp.solve(2 * u**2 + 2 * u - 1, u) if 0 < r < 1]
+ok(ur == [(sp.sqrt(3) - 1) / 2], "root in (0, 1): (sqrt 3 - 1)/2")
+peak = sp.simplify(yu.subs(u, ur[0]))
+ok(sp.simplify(peak - (6 * sp.sqrt(3) - 9) / 4) == 0, "peak (6 sqrt 3 - 9)/4")
+tp = sp.log(1 + sp.sqrt(3)) / 2
+ok(sp.simplify(y.subs(t, tp) - peak) == 0, "y at t = ln(1 + sqrt 3)/2 is the peak")
 grid = np.linspace(0, 12, 1200001)
-yg = 4 * np.exp(-2 * grid) - 8 * np.exp(-3 * grid) + 4 * np.exp(-4 * grid)
-ok(abs(yg.max() - 0.25) < 1e-9 and abs(grid[yg.argmax()] - math.log(2)) < 1e-4 and yg.min() >= -1e-15, "peak 0.25 at ln 2 by grid; y never negative")
-ok(abs(W(P, 5)["answer"] - 0.25) <= W(P, 5)["tol"]["abs"], "part 5 key")
-slips = {"no-four": 1 / 16, "time": math.log(2), "at-one": float(y.subs(t, 1))}
+yg = 2 * np.exp(-2 * grid) - 3 * np.exp(-4 * grid) + np.exp(-8 * grid)
+ok(abs(yg.max() - float(peak)) < 1e-9 and abs(grid[yg.argmax()] - float(tp)) < 1e-4 and yg.min() >= -1e-15, "peak by grid; y never negative")
+ok(abs(W(P, 5)["answer"] - float(peak)) <= W(P, 5)["tol"]["abs"] and round(float(peak), 3) == 0.348, "part 5 key 0.3481, prints 0.348")
+slips = {"u-value": float(ur[0]), "time": float(tp), "at-one": float(y.subs(t, 1))}
 for x in W(P, 5)["wrong"]:
     ok(abs(slips[x["id"]] - x["value"]) <= x["tol"]["abs"], f"part 5 wrong {x['id']} holds its slip value")
 band_clear(W(P, 5))
-ok(round(math.log(2), 4) == 0.6931 and round(float(y.subs(t, 1)), 4) == 0.2163, "ln 2 = 0.6931, y(1) = 0.2163")
-# the reuse of finding 1: Y is 4 times lesson 15's Y at s + 2
+# reuse guard (finding 1): not lesson 15's Y shifted and scaled; fails if the old item returns
 Y15 = 2 / (S * (S + 1) * (S + 2))
-ok(eq(Y, 4 * Y15.subs(S, S + 2)), "CLAIM (finding 1): Y(s) = 4 Y_l15(s + 2), l15 screens[3]")
-ok(eq(y, 4 * sp.exp(-2 * t) * (1 - 2 * sp.exp(-t) + sp.exp(-2 * t))), "CLAIM (finding 1): y = 4e^(-2t) times l15's y = 1 - 2e^(-t) + e^(-2t)")
+ok(not any(eq(Y, c * Y15.subs(S, S + k)) for c in (1, 2, 4, 8, 12, 24) for k in range(0, 9)), "Y is no shift and scale of l15 screens[3]")
+ok(len({-2 - -4, -4 - -8}) == 2, "pole gaps unequal")
+# finding 2: the RK4 limit is stated for real negative lambda
+ok("real negative" in text_of("p-dose-simulator"), "RK4 limit stated for real negative lambda")
 
 # ---------------------------------------------------------------- p-skydiver-check
 P = "p-skydiver-check"
@@ -296,7 +301,7 @@ ok(math.exp(-6) < 0.003 and math.exp(-0.5 * 6) < 0.05, "explain: fast mode gone 
 
 # ---------------------------------------------------------------- printed numbers present in the text
 for item, bits in {
-    "p-test-rig": ["\\dfrac{8}{(-1)(1)} = -8", "\\dfrac{8}{(1)(2)} = 4", "\\dfrac{8}{(-2)(-1)} = 4", "4 \\cdot \\tfrac{1}{16} = 0.25"],
+    "p-test-rig": ["\\dfrac{24}{(-2)(4)} = -3", "\\dfrac{24}{(2)(6)} = 2", "\\dfrac{24}{(-6)(-4)} = 1", "\\tfrac{6\\sqrt3 - 9}{4} \\approx 0.348"],
     "p-skydiver-check": ["17.64 - 16.1543 = 1.4857", "\\tfrac13 \\times 48.4512 = 16.1504", "0.000207", "0.0000119", "f(16.464) = 6.5072"],
     "p-dose-simulator": ["n > 51.7", "4 \\times 52", "\\dfrac{2.7853}{6} \\approx 0.4642"],
 }.items():

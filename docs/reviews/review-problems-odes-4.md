@@ -40,3 +40,12 @@ Every key, every `wrong` value, every Laplace transform and inverse, every Euler
 2. `fresh-check --file` in same-course mode gave 0 hits and 0 advisories on a problem whose transform is a lesson's shifted and scaled (finding 1). A rational function's pole gaps and residue ratios are unchanged by a shift and a scale; nothing compares them.
 
 Inbox: two bullets under `Raised later (review problems odes 4):`.
+
+## Fix pass
+
+1. Fixed. `p-test-rig` replaced by the reader's item ($24e^{-8t}$ forcing, poles $-2, -4, -8$). Keys recomputed with sympy (`dsolve`, `apart`, `inverse_laplace_transform`, grid search): $\frac{24}{s+8}$; $\frac{24}{(s+2)(s+4)(s+8)}$; $-3$; $2e^{-2t} - 3e^{-4t} + e^{-8t}$; peak $\frac{6\sqrt3 - 9}{4} = 0.34808$ at $t = 0.5025$ (key 0.3481, tolerance 0.0005). `proposed.py` 40 checks, 0 failures. Grep of `app/content` for $24e^{-8t}$, $6y' + 8y$ and the key numbers: no same-topic hit (`topic-1.11` has $e^{-8t}$ in another equation; 0.348 elsewhere is unrelated statistics).
+2. Fixed. Part 4 of `p-dose-simulator` now opens "For a real negative $\lambda$"; key 0.4642 unchanged.
+
+Scripts: `problems-odes-4-numbers.py` (rig section and key table) and `problems-odes-4-numbers-read.py` (rig section, printed-text list, reuse guard, real-negative check) updated; both exit 0 (156 checks in the reader's), both exit 1 on the previous content.
+
+Gates: validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 0 failures; playthrough `--problems odes/problems-4` green with and without `--mobile`. Graded answers changed: 5 (all of `p-test-rig`).
