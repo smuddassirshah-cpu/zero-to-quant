@@ -167,7 +167,7 @@ def keys_of(name):
 EXPECT_KEYS = {
     'l13 A peaks': ['test-2', 'test-3', 'test-4', 'test-5', 'test-6'],
     'l13 B shortest_cover': ['test-3', 'test-5', 'test-8', 'test-9'],
-    'l13 C min_capacity': ['test-10', 'test-11', 'test-2', 'test-4'],
+    'l13 C min_capacity': ['test-1', 'test-10', 'test-11', 'test-2', 'test-4'],  # test-1 added by the round 2 fix pass
     'l13 D grid_moves': ['test-1', 'test-2', 'test-3', 'test-9'],
     'l14 decayed_score': ['test-2', 'test-7'],
     'l14 icpc_rank_key': ['test-1', 'test-5'],
@@ -301,6 +301,26 @@ def min_capacity(weights, k):
         else: lo = mid + 1
     return lo
 ''', 'test-4')
+# round 2 fix pass: test-1 names a can_ship that says 11 ships in 3 days (it drops the overflowing order), called by min_capacity
+mutant('l13 C min_capacity', 'can_ship drops the overflowing order; min_capacity calls it (returns 8)', """
+def can_ship(weights, k, cap):
+    days, load = 1, 0
+    for w in weights:
+        if w > cap: return False
+        if load + w > cap:
+            days += 1; load = 0
+        else:
+            load += w
+    return days <= k
+
+def min_capacity(weights, k):
+    lo, hi = max(weights), sum(weights)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if can_ship(weights, k, mid): hi = mid
+        else: lo = mid + 1
+    return lo
+""", 'test-1')
 # a greedy with no explicit "heavier than the van" test is not a mistake on test 4: the order still opens a second day
 key, _ = run(WIDGETS['l13 C min_capacity'][0]['widget'], SOL_C.replace('        if w > cap:\n            return False\n', ''))
 ck('B l13 C: the solution without its `w > cap` line still passes all 11 tests', key is None, key)

@@ -76,6 +76,8 @@ def min_cap(w, k):
 assert days_needed([4, 8, 2, 7, 5, 3], 11) == 4 and days_needed([4, 8, 2, 7, 5, 3], 12) <= 3
 E('l13', 'screens[5].widget.tests[0].expect', min_cap([4, 8, 2, 7, 5, 3], 3)[0])
 K('l13', 'screens[5].feedback.byKey', 'test-2', days_needed([4, 8, 2, 7, 5, 3], 11))
+K('l13', 'screens[5].feedback.byKey', 'test-1', min_cap([4, 8, 2, 7, 5, 3], 3)[0])          # 12 (round 2 fix)
+K('l13', 'screens[5].feedback.byKey', 'test-1', days_needed([4, 8, 2, 7, 5, 3], 11))   # 4 days
 w40 = closes(40, 32, 1, 100)
 ans40, calls40 = min_cap(w40, 2)
 E('l13', 'screens[5].widget.tests[8].expect', ans40)                                  # 909
@@ -186,8 +188,10 @@ E('l14', 'screens[6].explain.canvas.points.p.y', round(f(xs), 1))               
 E('l14', 'screens[6].hints[2].text', round(f(xs)))
 E('l14', 'screens[6].explain.text', round(f(60))); E('l14', 'screens[6].explain.text', round(f(0)))
 E('l14', 'screens[6].canvas.state.points[0].y', f(10))
-# concept fix: leaving D the moment it is solved moves the best cap to 60 - 15 ln(8/3), about 45
-E('l14', 'screens[6].explain.text', round(60 - 15 * math.log(8 / 3)))
+# round 2 concept fix: once a solved problem may be left, E first (the better rate) then D with the rest expects
+# 1800(1 - e^-4) - 1000 e^-1.2 (10/7)(1 - e^-2.8), about 1,363 (D first with its best cap, 60 - 15 ln(8/3), gives about 1,229)
+_e_first = 1800 * (1 - math.exp(-4)) - 1000 * math.exp(-1.2) * (10 / 7) * (1 - math.exp(-2.8))
+E('l14', 'screens[6].explain.text', round(_e_first))
 E('l14', 'screens[6].feedback.byKey.all', round(f(60))); E('l14', 'screens[6].feedback.byKey.none', round(f(0)))
 E('l14', 'screens[11].explain.text', 12000 * 0.01 * 5); E('l14', 'screens[11].explain.text', 3000 * 0.01 * 25)   # 600, 750
 E('l14', 'screens[8].feedback.correct', 'seven'); assert int(702 / 96) == 7
