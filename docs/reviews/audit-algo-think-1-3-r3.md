@@ -87,3 +87,54 @@ Fixer: Opus, 13 Nov 2026. Text only: no test, cap, starter, solution or graded k
 Scripts: `algo-think-L1-3-r3-concepts.py` now 325 checks, exit 0. Changed: the three `error` expectations are now `test-1`; the three-read l9 submission now expects `test-12` (no longer skipped); the Part A check "a correct three-comparison search stays within the 45-read cap" can pass only with a test change, so it is printed as a recorded inbox item and replaced by checks of the new text (39 and 50 reads; 20 passes). Added: the l6 raised-limit check and nine submissions (above, plus a two-read search that passes). Round 1 and round 2 concepts scripts and both perf scripts exit 0.
 
 Gates: validator 0 errors (4,537 warnings, manifest unchanged); voice scan 35: 0 and 0; playthrough of l5, l6, l7, l9, l10 and l12, desktop and `--mobile`, all green.
+
+## Fix-pass read
+
+Reader: fresh, blind to the audit, its ledger and the fixer's notes. Diff read: `git diff b6ecc7af~1 b6ecc7af -- app/content/courses/algo-think/` (6 files, 19 changed strings).
+
+How it was checked. Every code submission below ran through the real `js/screens/drill-worker.js` in Chromium (Playwright, Pyodide 0.27.7 served from the local `pkgs` copy), with the code built by the widget's own `ZQ.widgets.codeImports.harness` and, for l9, a copy of `loadHarness` for the prelude. Seven solutions pass, seven starters fail at test 1 with a value (not `error`).
+
+When `error` shows (read from `code.js` `grade()` and `runCases0`, and `drill-worker.js` `drl_run`): the key is `error` only when the run returns a run-level error. That is a load error (syntax error, or any exception or stack overflow while the learner's file runs at top level, before test 1), a time-out before test 1, a package load over two minutes, or a worker crash. An exception, a time-out or a stack overflow inside a test goes on that test's row, and the key is `test-N` for the first failing row. `Check` is disabled until Python is ready, and an unavailable Python has its own key. Ran: a syntax error on all seven widgets gives `error`; a top-level `NameError` and a top-level endless recursion give `error`; every in-test `RecursionError` and `TypeError` below gives `test-N`.
+
+| # | File | JSON path | New text (short) | Verdict | Basis |
+|---|---|---|---|---|---|
+| 1 | l5-calls-itself | screens[5].feedback.byKey.test-6 | Expects 1024; `RecursionError` means `power` never reaches its base case | correct | Ran: `power` with no base case, and `power(x, n)` not shrinking: tests 1 to 5 pass, test 6 `RecursionError`. $2^{10} = 1024$. |
+| 2 | l5-calls-itself | screens[5].feedback.byKey.error | Code stopped before the tests finished, for example at a syntax error | correct | True of each case that gives `error` (list above); ran syntax error, key `error`. |
+| 3 | l5-calls-itself | screens[9].feedback.byKey.test-1 | Expects £395.75; smaller total, subfolder skipped; `TypeError`, dict added as a number | correct | $120.5 - 40 + 15.25 + 300 = 395.75$. Ran: add every item gives `TypeError` (`int` and `dict`) at test 1; skip dicts gives 0 at test 1. |
+| 4 | l5-calls-itself | screens[9].feedback.byKey.error | Same `error` sentence | correct | As row 2; ran. |
+| 5 | l6-call-stack | screens[3].widget.options[1].why | Limit $10^9$ does run `sum_to(5000)`, in this page and standard Python 3.12; memory grows with `n` | correct | Ran: page worker in Chromium, `sum_to(5000)` = 12,502,500 (and 50,000 deep also runs); CPython 3.12.3 and 3.13.18 the same; Pyodide 0.27.7 under node the same. One frame per waiting call. |
+| 6 | l6-call-stack | screens[3].feedback.byKey.limit | Raised limit runs it; about 5,000 frames wait at once | correct | Same runs. Depth is 5,001 frames, "about 5,000". Agrees with prose (fails at the default limit: ran, `RecursionError` at 1,000 and 3,000). |
+| 7 | l6-call-stack | screens[7].widget.options[1].why | Plain walk at 50,000 runs with limit 100,000; a generator inside `max` runs out of the browser's stack long before | imprecise | Each sentence is true (runs below). But the same screen's `explain.text` still says "the call stack cannot hold 50,000 frames", which this line now contradicts. See finding 1. |
+| 8 | l7-split-in-half | screens[5].feedback.byKey.test-1 | Expects 9; `RecursionError` means a half did not shrink | correct | Ran: split `lo` to `mid` and `mid` to `hi` gives `RecursionError` at test 1. max of 7, 2, 9, 4 is 9. |
+| 9 | l7-split-in-half | screens[5].feedback.byKey.error | Same `error` sentence | correct | As row 2; ran. |
+| 10 | l9-halving | screens[3].prose | At most 45 reads; a million values need at most 20 passes; read once a pass | correct | The list has 1,000,000 values; $2^{19} < 10^6 < 2^{20}$, so at most 20 passes (recurrence over range sizes also gives 20). One read a pass: 20 reads on each of tests 11 and 12. |
+| 11 | l9-halving | screens[3].widget.how | Two searches of a million values that allow at most 45 reads | correct | Tests 11 and 12 test `big.looks <= 45`. |
+| 12 | l9-halving | screens[3].feedback.byKey.test-11 | At most 45; a scan reads up to a million; halving at most 20 passes | correct | Ran: a scan passes tests 1 to 10 and fails test 11 (1,000,000 reads, inside the time limit). The `==`, `>`, `<` order reads 58 on test 11 and also lands here. |
+| 13 | l9-halving | screens[3].feedback.byKey.test-12 | A miss takes all 20 passes; three reads a pass needs 50 | imprecise | This miss takes 20 passes and the `==`, `<`, `>` order reads 50, failing test 12 only (ran). But a miss on a million values takes 19 or 20 passes, and the `<`, `>`, `==` order also reads up to three times a pass yet needs 30 and passes. See finding 2. |
+| 14 | l10-search-the-answer | screens[3].feedback.byKey.test-4 | No True from 0 to 100, expects `None`; return a number only when in range and True | correct | `x > 100` is False on 0 to 100. Ran: bare `return a` gives 101 at test 4, and the range `lo` to `hi` with `return a` gives 100; both pass tests 1 to 3. |
+| 15 | l10-search-the-answer | screens[4].feedback.byKey.error | Same `error` sentence | correct | As row 2; ran. |
+| 16 | l10-search-the-answer | screens[4].feedback.byKey.test-2 | Range 0 to 0 holds no True; `None - 1` raises `TypeError`; end at `n + 1` | correct | Ran: range ending at `n` passes test 1 (7) and raises `TypeError` (`NoneType` and `int`) at test 2. |
+| 17 | l12-merge-sort | screens[3].feedback.byKey.test-1 | `RecursionError` means the base case misses one value | correct | Ran: base case `len(xs) == 0` gives `RecursionError` at test 1 (`xs[0:]` of one value is itself). |
+| 18 | l12-merge-sort | screens[3].feedback.byKey.test-2 | Empty list; `RecursionError` means the base case misses it | correct | Ran: base case `len(xs) == 1` passes test 1 and gives `RecursionError` at test 2. |
+| 19 | l12-merge-sort | screens[3].feedback.byKey.error | Same `error` sentence | correct | As row 2; ran. |
+
+Read counts on l9 tests 11 and 12 (CPython, the item's own `Looks` class; three of these orders also ran in the page and agree). Both tests take 20 passes; test 12 moves right 10 times and left 10 times.
+
+| Search | Test 11 reads | Test 12 reads | Result |
+|---|---|---|---|
+| one read a pass | 20 | 20 | passes |
+| two reads, `==` first | 39 | 40 | passes |
+| two reads, `<` or `>` first | 21 or 40 | 30 | passes |
+| three reads, `==`, `<`, `>` | 39 | 50 | fails test 12 |
+| three reads, `==`, `>`, `<` | 58 | 50 | fails test 11 |
+| three reads, `<`, `>`, `==` | 22 | 30 | passes |
+| three reads, `>`, `==`, `<` | 59 | 40 | fails test 11 |
+
+Runs for l6 (what was run, not reasoned). Chromium page worker: `sum_to(5000)` fails at the page's limit of 3,000; with `sys.setrecursionlimit(10**9)` it returns 12,502,500. A plain recursive walk of a 50,000-deep chain with the limit at 100,000 returns. A walk that recurses through a generator inside `max` passes at depths 100 to 400 and fails from 500 up, with the worker's stack-overflow message. CPython 3.12.3 and 3.13.18 (local): the same for `sum_to` and the plain walk; the generator walk there passes at 1,000 and raises `RecursionError` at 5,000, which the line does not speak to (it says "in this page"). Pyodide 0.27.7 under node: `sum_to(5000)` and the plain 50,000 walk run; the generator walk passes at 300 and dies with `RangeError: Maximum call stack size exceeded` at 1,000. Nothing in this section rests on reasoning alone except that "standard Python 3.12" is taken from the 3.12.3 run.
+
+### Findings
+
+1. l6-call-stack.json | screens[7].widget.options[1].why against screens[7].explain.text | imprecise, minor | The new line says a plain walk "then runs, with 50,000 frames waiting", while the screen's unchanged explanation says "the call stack cannot hold 50,000 frames". Both cannot stand; the new line is the true one (ran, page and CPython 3.12). | Fix, in `explain.text`, first sentence: `A Python list can hold 50,000 items with ease, while the default recursion limit stops the call stack far short of 50,000 frames.` Basis: default limit 1,000 in standard Python and 3,000 in the page (prose of screens[3]).
+2. l9-halving.json | screens[3].feedback.byKey.test-12 | imprecise, minor | "a miss takes all 20 passes" reads as a rule; a miss on 1,000,000 values takes 19 or 20 (recurrence over range sizes), and this one takes 20. "Up to three times a pass needs 50" holds for the `==`, `<`, `>` order only; the `<`, `>`, `==` order needs 30 and passes. | Fix: `Test 12 also allows at most 45 reads, and this miss takes all 20 passes. A search that tests `==`, then `<`, then `>` reads `xs[mid]` up to three times a pass: 50 reads here, though its answer is right. Read it once into a variable.` Basis: 10 right moves at 2 reads and 10 left moves at 3 reads, $20 + 30 = 50$; ran in the page, first failure test 12.
+
+Counts: 19 rows; 17 correct, 2 imprecise (both minor), 0 wrong, 0 misleading, 0 unverified.
