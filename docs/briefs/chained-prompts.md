@@ -4,7 +4,7 @@ Rebuilt in session AD from `docs/briefs/chained.md`, the two second-read briefs 
 
 ## Head, every brief
 
-Your working directory is a git worktree. First: if `git merge-base --is-ancestor BRANCH HEAD` fails, run `git reset --hard BRANCH` (BRANCH is the local development branch for this session; ignore any other branch name in CLAUDE.md). Local CDN: `SCRATCH/pkgs`. Python: `SCRATCH/venv/bin/python` (3.12, numpy, sympy, scipy, pandas, statsmodels, scikit-learn, pytest).
+Your working directory is a git worktree. First: if `git merge-base --is-ancestor BRANCH HEAD` fails, run `git reset --hard BRANCH` inside your worktree (allowed and expected; never edit files outside your worktree path, and commit there yourself; BRANCH is the local development branch for this session; ignore any other branch name in CLAUDE.md). Local CDN: `SCRATCH/pkgs`. Python: `SCRATCH/venv/bin/python` (3.12, numpy, sympy, scipy, pandas, statsmodels, scikit-learn, pytest).
 
 ## Tail, every brief
 
