@@ -306,4 +306,4 @@ Session X (7 to 9 Nov):
 - (session AD) 14 files say "counterclockwise" (the `vector-calc` lessons among them) against 40 with "anticlockwise": a voice pass is owed.
 - (session AD) CI job `number-scripts` always runs all 358 scripts (about 8 minutes); `--changed` exists in the runner but the job passes no base ref. `requirements.txt` leaves SciPy unpinned.
 - (session AD) Agents: worktrees still start stale; two fixers would not reset because the branch is checked out in the main checkout (one edited the main checkout by absolute path, one cut a local branch). Briefs now say the reset inside the worktree is allowed and that nothing outside the worktree is edited. `engine-dev` and `test-fixer` definitions say "no git write": state in each brief that the agent commits.
-- (session AD) The fresh inbox holds 17 bullets raised today, not numbered.
+- (session AD) The fresh inbox holds 34 bullets, not numbered: 17 raised today, 17 from the audit branch merged at close.
