@@ -137,3 +137,13 @@ Rows read: 16. Verdicts: 14 correct, 2 imprecise, 0 wrong, 0 misleading, 0 unver
 Note, outside the diff: l8-liquidity.json `summary.formula.note` (line 1175) still reads "(often 0.1)" while the fixed prose at line 914 now says "for example 10%". For agreement, change to `(for example 0.1)`. Minor.
 
 No `wrong` row, so nothing counts towards the convergence rule.
+
+## Fix-pass follow-up
+
+| # | File | JSON path | Status | Basis |
+|---|---|---|---|---|
+| F1 (row 3) | l10-inventory.json | calls item (transfer, "How do you move your call quotes") `explain.text`, last sentence | fixed differently | The screen's "you" already is the options maker, short 2,000 calls, so the auditor's "an options desk left short calls" restates the screen. New sentence states the transfer point inside the inventory model only, with no delta or put-quote claim: "The inventory rule from shares carries over: whatever instrument you are short, you raise both your quotes in it." Agrees with key `up` and `feedback.correct`. |
+| F2 (row 15) | l8-liquidity.json | `summary.ideas[2]` | fixed differently | Replaced the unconditional "liquidity vanishes in a crisis" with the lesson's own crisis data: spread series 4 bp calm to 40 bp peak, 40/4 = 10, and 4 x 10 = 40, matching the screen's "rose tenfold" (line 799). Avoids importing a claim the lesson does not show. |
+| F3 (note) | l8-liquidity.json | `summary.formula.note` | fixed | "(often 0.1)" to "(for example 0.1)", agreeing with the derive prose "for example 10%" (line 914). |
+
+Gates: validator 0 errors (manifest unchanged); voice scan 35 on micro 0 and 0; micro-3-perf-numbers.py and micro-L1-3-r2-concepts.py exit 0; micro-L1-3-concepts.py fails before any check with a pre-existing `ModuleNotFoundError: No module named 'sympy'`, unrelated to these strings; playthrough of micro/l8-liquidity and micro/l10-inventory green, desktop and `--mobile`.
