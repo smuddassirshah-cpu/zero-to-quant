@@ -83,3 +83,20 @@ Scope 4, complex (arguments principal, in $(-\pi, \pi]$).
 Bank items.
 - `es-intervals-poll-margin`: key $1.96\sqrt{0.6 \times 0.4/400} = 4.801$ points; 4.8, 4.80 and 4.801 are accepted; `used-half` (4.9) and `no-multiplier` (2.4, 2.45) reach their lines. Only the `decimal` band is at fault (5.1).
 - `ds-pointers-merge-ticks`: tests 1 and 2 repeat the two visible examples; no two tests are identical; test 10 carries the stated size. Of tests 1 to 8 and 10, no recorded candidate needs any one alone, but `floor-mean` and `x-int-mean` fail only tests 1 and 10, so those two stay. Test 7 is the one that repeats a case (5.2).
+
+## Fix pass
+
+- 1.1 fixed: `proof/problems-3` `p-two-odd-squares` part 2, `restate` text and why and `add` why as proposed (the remainder rule is no longer called false or "the claim in other words").
+- 1.2 fixed: `proof/problems-2` `p-shift-images` part 4, `sizes` text now "Equal sizes: $A$ and $B$ hold the same number of ferries".
+- 2.1 fixed: `analysis/problems-1` `p-cube-root-twenty` part 2 `generic` now "Cube 43 and 16" ($43^3 = 79507$, $20 \times 16^3 = 81920$, miss $-2413$).
+- 2.2 fixed: `analysis/problems-2` `p-sum-law-band` `sign` now $a_n - 4$ (limit 4, $a_n - 4 = -\tfrac{17}{2n+5}$).
+- 2.3 fixed: `analysis/problems-3` `p-alternating-quarters` part 5 `sum` now "rounded to 2 places" ($S_6 = 0.1597$ cut is 0.15, rounded 0.16).
+- 3.1 fixed: `linear-maps/problems-3` `p-index-beta` part 1 `generic` now "the two lists".
+- 4.1 fixed: `complex/problems-3` `p-share-moments` part 4 `own-rounding` as proposed (15.08 from 66.612 and 4664.6).
+- 5.1 fixed: `bank/statistics-2` `es-intervals-poll-margin` `decimal` tol 0.0004 (band 0.04761 to 0.04841) and its `byKey.decimal` line as proposed. The check "slip as rounded inside its band" in `docs/reports/bank-2-s2-numbers.py` now skips the `decimal` entry, which is a unit slip and cannot lie in a rounded-to-1-place band.
+- 5.2 deferred: test 7 of `ds-pointers-merge-ticks` kept (hidden tests are never removed, DECISIONS session AC); `coding-2.json` untouched.
+- Extra grep of the four sets for old story words (broker, leverage, fund, trader, desk, hedge, scenario, currency, stock, profit) and old numbers (21 and 8 cubes, -979, 9261, $a_n - 3$, 66.61, 0.0729, 0.955, 0.0498, $1 + 3i$): only ids (`p-leverage-calls`, `p-fund-thresholds`, `some-fund`, `best-fund`, `traders`, `p-currency-duals`) and items never re-set (finance stories in `linear-maps` problems-1 and 2, `p-two-signal-fit`) remain; `p-share-moments` 66.61 is now the intended own-rounding value. Nothing else stale.
+
+Graded answers changed: none (the `decimal` band narrows from 0.05 to 0.0004; it is a `wrong` entry, no correct answer changes).
+
+Gates: validator 0 errors; `grade-all.mjs --local-cdn --file` 0 failures on all 8 edited files; number scripts proof 612, analysis 532, linear-maps and complex 1,037 exit 0; `bank-2-s2-numbers.py` 1,478 checks, 1 failed, the 11-hidden-tests count only; voice scan 0 and 0 on all four courses; playthrough desktop and `--mobile` with `--local-cdn` all passed (`--bank statistics-2`; `--problems` analysis 1 to 3, complex 3, linear-maps 3, proof 2 and 3).

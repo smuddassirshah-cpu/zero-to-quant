@@ -90,7 +90,7 @@ def numeric(f, i, key, asked_dp, slips):
             continue
         v = float(v)
         ok(abs(x['value'] - v) <= x['tol']['abs'] + 1e-12, f'{lab}.{wid}: computed slip {v} inside its band {x["value"]} +- {x["tol"]["abs"]}')
-        if asked_dp is not None:
+        if asked_dp is not None and wid != 'decimal':  # decimal slip is a unit slip, banded tightly (delta AC-4 5.1)
             ok(abs(x['value'] - round(v * scale, asked_dp) / scale) <= x['tol']['abs'] + 1e-12, f'{lab}.{wid}: slip as rounded inside its band')
         ok(abs(x['value'] - ans) > tol + x['tol']['abs'], f'{lab}.{wid}: band does not touch the key band')
         ok(wid in it['feedback'].get('byKey', {}), f'{lab}.{wid}: byKey line')
