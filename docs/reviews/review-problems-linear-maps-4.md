@@ -42,3 +42,11 @@ Every key, every `wrong` value and every printed number is right. No finding of 
 2. `p-curvature-operator` part 5: the question's own left side typed before the answer, `T^t(x^3) = x^3+6tx`, is refused on the generic line. `dropLabel` reads `y =` and `f^{-1}(x) =` but not an operator power applied to an argument.
 
 Inbox: one bullet under `Raised later (review problems linear-maps 4):`.
+
+## Fix pass
+
+1. Fixed. Question of `items[0].parts[0]` now opens with the three-entry list and $\dim\mathbb{C}^2 = 2$; key $(8, -7)$ rechecked from $\mathbf{S}^2\mathbf{v} = (41, 16 - 8i)$.
+2. Fixed. "Cubic" replaced by "polynomial of degree at most 3" or "$p$ in $\mathcal{P}_3(\mathbb{R})$" in prose, generic, correct and explain; no key changed.
+3. Fixed. Part 5 now rests on the blocks $J_2(1) \oplus J_2(1)$ of part 3; key $x^3 + 6tx$ unchanged (checked, $T^2(x^3) = x^3 + 12x$).
+
+Gates: validator 0 errors; voice scan 0 and 0; author script exit 0; reader script exit 0 (193 checks); `grade-all.mjs --file` 0 failures; playthrough `--problems linear-maps/problems-4` green with and without `--mobile`. Graded answers changed: 0.
