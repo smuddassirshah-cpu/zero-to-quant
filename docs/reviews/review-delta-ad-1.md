@@ -55,3 +55,10 @@ Tags: `wrong`, `misleading`, `reuse`, `voice`, `continuity`.
 
 - `p-cycloid-arch` part 3: $P = -\tfrac{5y}{6}$ also meets the literal wording for this one region, but only with the value $\tfrac{5\pi}{2}$ that part 4 has yet to find. No learner reaches it.
 - `p-test-rig` part 5: the `time` band (0.5025, tolerance 0.0005) takes the three-place rounding 0.503 only through the grader's $10^{-9}$ slack. It does take it.
+
+## Fix pass
+
+1. Not applied. Main session ruling: a simple quadratic with small whole roots, shared with a factorising exercise of another topic that asks a different task, stands, like the single common fraction of the session AC ruling. `analysis/problems-5` `p-accumulated-cubic` is unchanged. In `docs/reports/delta-ad-numbers.py` its FINDING row is now a passing check that records the ruling and asserts the current function and keys (it fails if the item changes).
+2. Fixed. `vector-calc/problems-2` `p-cycloid-arch` part 5: `inverse` now "You divided the area by $\iint_D y\,dA$. ...", `no-half` now "That uses $5\pi$ for $\iint_D y\,dA$, without the $\tfrac12$ from part 3." The row asserts the new text. No graded answer changed.
+
+Gates: `delta-ad-numbers.py` 647 checks, 0 failures, 0 FINDING rows, exit 0; `problems-vector-calc-numbers.py` (782 of 782) and `-numbers-read.py` (826, 0 failed) exit 0; validator 0 errors (manifest restored); `grade-all.mjs --file vector-calc/problems-2.json` 0 failures; `playthrough.mjs --problems vector-calc/problems-2` green with and without `--mobile`.

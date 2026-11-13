@@ -228,8 +228,12 @@ gone(it, '[0, 5]', '[0, 5)', 't^2 - 4t + 3', '(t - 1)(t - 3)', '(x - 1)(x - 3)',
 only_decimals(it, {'0.07', '1028.6', '0.07004', '14.5', '146.21'})
 # reuse guard: the integrand must not be a quadratic another course factorises (the fix pass's own rule for (t-2)(t-6))
 qs = nrm(open(C + 'quadratics/l2-product-and-sum.json').read().replace('\\\\', '\\'))
-chk('cubic: quadratics/l2-product-and-sum does not factorise the same quadratic q^2 - 12q + 27 = (q - 3)(q - 9)',
-    not ('q^2-12q+27' in qs and '(q-3)(q-9)' in qs), finding='1 (reuse)')
+# Main session ruling (finding 1 of review-delta-ad-1.md, not applied): a simple quadratic with small whole roots, shared with a
+# factorising exercise of another topic that asks a different task, stands, like the single common fraction of the session AC
+# ruling. The check asserts the item is still the ruled one, so the script fails if the function or keys change.
+chk('cubic: ruling, t^2 - 12t + 27 stands (shared with quadratics/l2-product-and-sum, a different task)',
+    'q^2-12q+27' in qs and '(q-3)(q-9)' in qs and 't^2 - 12t + 27 = (t - 3)(t - 9)' in it['prose'] and it['parts'][0]['widget']['answer'] == '\\frac{x^3}{3}-6x^2+27x'
+    and it['parts'][1]['widget']['answers'] == [3, 9] and it['parts'][2]['widget']['answer'] == 180 and it['parts'][4]['widget']['answer'] == 1029)
 # the proposed replacement of finding 1: f = t^2 - 24t + 108 = (t - 6)(t - 18) on [0, 27], epsilon 0.11
 f2 = t ** 2 - 24 * t + 108; F2 = sp.integrate(f2.subs(t, u), (u, 0, x))
 chk('proposal: factorisations', sp.expand((t - 6) * (t - 18) - f2) == 0 and sp.expand(F2 - x * (x - 18) ** 2 / 3) == 0 and sp.expand(F2 - (x ** 3 / 3 - 12 * x ** 2 + 108 * x)) == 0)
@@ -427,7 +431,11 @@ bands(it, 4, 2.5 * math.pi, [7.85], {'no-half': 5 * math.pi, 'sign': -2.5 * math
 bands(it, 5, 5 / 6, [0.833], {'inverse': 1.2, 'no-half': 5 / 3})
 has(it, 'mean height', '\\bar y = \\frac{1}{A}\\iint_D ydA', 'a function of $y$ alone with $P = 0$ on the axis $y = 0$', 'below half way')
 gone(it, 'centroid', 'well below')
-chk('cycloid: no undefined "moment" left from the centroid wording', 'moment' not in text(it), finding='2 (continuity)')
+chk('cycloid: no undefined "moment" left from the centroid wording', 'moment' not in text(it))
+bk = it['parts'][4]['feedback']['byKey']
+chk('cycloid: part 5 inverse and no-half name the integral, not "the moment"',
+    bk['inverse'] == 'You divided the area by $\\iint_D y\\,dA$. $\\bar y = \\iint_D y\\,dA \\div A$.'
+    and bk['no-half'] == 'That uses $5\\pi$ for $\\iint_D y\\,dA$, without the $\\tfrac12$ from part 3.')
 
 # ---- finding 10 wording in the quadrilateral problem
 chk('quadrilateral: "normal form of Green\'s theorem" in the explain', "The normal form of Green's theorem" in text(V2['p-quadrilateral-plot']))
