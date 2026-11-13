@@ -7,6 +7,7 @@ Run:  python3 docs/reports/algo-think-L1-3-r2-concepts.py          (CPython; wri
 Exit 0 only if every content claim checked here holds. A check that fails because the content is wrong
 stays failing: each such line names its finding in docs/reviews/audit-algo-think-1-3-r2.md.
 Expected on the content as audited: 6 failing checks (findings 1 to 7; finding 8 has no failing check), exit 1.
+Fix pass (13 Nov 2026): each FINDING check is replaced by a check of the corrected text ("fixed:"), exit 0.
 """
 import sys, math, random, bisect, time, tracemalloc, itertools, functools
 
@@ -139,8 +140,9 @@ ok('l4 tripling not always fewer copies than doubling (n=4) nor more (n=10)', gr
 c10 = grow(1000, 10, 1, 10)
 ok('l4 grow-by-10: 49,500 copies, last resize at append 991, about n^2/20', c10[0] == 49500 and [i + 1 for i, c in enumerate(c10[1]) if c][-1] == 991 and abs(49500 / (1000 ** 2 / 20) - 1) < 0.02 and 48 < 49500 / 1023 < 50)
 # Findings 3 and 4: l4 S7 fb "to-1000" says "The array is never full at 1,000 here"; review-1 I6 says "not full at 1,000 within these appends".
-ok('FINDING 3 and 4, l4 S7 / review-1 I6: array "never full at 1,000" (it is full after the 1,000th append)', not (c10[2] == 1000 and c10[3] == 1000))
 c100 = grow(1000, 100, 1, 100)
+# Fixed text: "You counted a resize at size 1,000. The array fills there, but no append follows, so nothing is copied."
+ok('fixed: findings 3 and 4, l4 S7 / review-1 I6: full at 1,000 after append 1,000, no copy then; slips 50,500 and 5,500 add 1,000', all(g[2] == 1000 and g[3] == 1000 and g[1][999] == 0 for g in (c10, c100)) and (c10[0] + 1000, c100[0] + 1000) == (50500, 5500) and [i for i, c in enumerate(c100[1]) if c][-1] == 900)
 ok('review-1 fixed 100: 4,500; hw1 start 4: 124, 252 with 128', c100[0] == 4500 and grow(100, 4)[0] == 124 and 124 + 128 == 252)
 ok('hw1 copies_fixed', grow(5, 1, 1, 1)[0] == 10 and grow(10 ** 6, 10, 1, 10)[0] == 49999500000 and grow(11, 10, 1, 10)[0] == 10)
 ok('l4 pop(0) drain 499,500 shifts', sum(range(1000)) == 499500)
@@ -454,7 +456,7 @@ m = 20000; shuffled = list(range(m)); rng.shuffle(shuffled)
 c_sorted, c_rev, c_rand = sort_cmps(range(m)), sort_cmps(range(m, 0, -1)), sort_cmps(shuffled)
 ok('l11 sorted() is O(n) on ordered input and about n log2 n on random input', c_sorted == m - 1 and 0.8 * m * math.log2(m) < c_rand < 1.1 * m * math.log2(m))
 # Finding 7: l11 Q3 option c says O(n) "is only for input already in order"; reversed input is O(n) too.
-ok('FINDING 7, l11 Q3: sorted() is O(n) "only for input already in order" (reversed input also costs n - 1 comparisons)', c_rev > 5 * m)
+ok('fixed: finding 7, l11 Q3: O(n) is the best case, ordered or strictly falling input (n - 1 comparisons each)', c_sorted == m - 1 and c_rev == m - 1)
 ok('l11 Q3 fix text: exactly reversed input costs n - 1 comparisons', c_rev == m - 1)
 
 # ---------------------------------------------------------------- L12 merge sort
@@ -487,7 +489,18 @@ ok('l12 external sort: 13 runs of about 15 GB fit 16 GB', 15 < 200 / 13 < 16)
 # Finding 2: l12 S2 fb test-9 says "Sorting the joined list, or pop(0), is too slow" (limit: 5 seconds per homework-2 I5).
 a50, b50 = list(range(0, 100000, 2)), list(range(1, 100000, 2))
 t0 = time.time(); srt = sorted(a50 + b50); dt = time.time() - t0
-ok('FINDING 2, l12 S2 fb test-9: "Sorting the joined list ... is too slow" (it takes milliseconds and passes test 9)', not (srt == list(range(100000)) and dt < 1.0))
+ok('l12 S2 test 9: sorted(a + b) passes it in milliseconds, so the feedback no longer names it', srt == list(range(100000)) and dt < 1.0)
+# Fixed text: "A recursive merge hits Python's recursion limit there, and `out = out + [x]` is too slow."
+# The page sets the limit to 3,000 (js/screens/drill-worker.js).
+# Measured in Pyodide 0.27.7 (fix pass): out = out + [x] 9.3 s against the 5 s case limit; pop(0) 0.9 s, passes.
+def merge_rec(a, b):
+    if not a: return list(b)
+    if not b: return list(a)
+    return [a[0]] + merge_rec(a[1:], b) if a[0] <= b[0] else [b[0]] + merge_rec(a, b[1:])
+_lim = sys.getrecursionlimit(); sys.setrecursionlimit(3000)
+ok('fixed: finding 2, l12 S2 fb test-9: a recursive merge of 100,000 values raises RecursionError at limit 3,000', merge_rec([1, 3], [2, 4]) == [1, 2, 3, 4] and raises(lambda: merge_rec(a50, b50), RecursionError))
+sys.setrecursionlimit(_lim)
+ok('fixed: finding 2, rebuilding the output each step copies n(n-1)/2 = 4,999,950,000 references, 50,000 times a linear merge', sum(range(100000)) == 4999950000 and sum(range(100000)) // 100000 > 49000)
 
 # ---------------------------------------------------------------- L13 quicksort
 def partition(xs, lo, hi, cnt=None):
@@ -523,7 +536,7 @@ for p in itertools.permutations(range(7)):
 ok('l13 21 is the most for 7 values (last pivot, every order)', wq == 21)
 # Finding 6: l13 S5 slip 14 ("You assumed even splits"): even splits of 7 cost 6 + 2 + 2 = 10, not 14.
 best7 = min((lambda cc: (quicksort(p, cnt=cc), cc[0])[1])([0]) for p in itertools.permutations(range(7)))
-ok('FINDING 6, l13 S5 slip 14 "You assumed even splits" (even splits of 7 values cost 10 comparisons)', best7 == 14)
+ok('fixed: finding 6, l13 S5 slip 14 is 7 comparisons on each of 2 levels; even splits really cost 10', best7 == 10 and 7 * 2 == 14)
 ok('l13 not stable: [(5,a),(5,b),(1,c)] -> c, b, a', quicksort([(5, 'a'), (5, 'b'), (1, 'c')], key=lambda t: t[0]) == [(1, 'c'), (5, 'b'), (5, 'a')])
 n = 20001; tot = 0; reps = 30
 for _ in range(reps):
@@ -558,7 +571,7 @@ c = [0]; quicksort([7] * 400, cnt=c)
 ok('l13 Lomuto on equal values is quadratic', c[0] == 400 * 399 // 2)
 # Finding 5: homework-3 I6 fb test-8: "Test 8 is already sorted. A fixed end pivot makes that O(n^2)". Test 8 asks for k = 1 (the largest).
 c = [0]; r = quickselect(list(range(5000)), 5000 - 1, c, pivot='last')
-ok('FINDING 5, homework-3 I6 test 8: a fixed last pivot is O(n^2) on it (it takes n - 1 = 4,999 comparisons)', not (r == 4999 and c[0] == 4999))
+ok('fixed: finding 5, homework-3 I6 test 8: a fixed last pivot is linear there (4,999 comparisons), so the feedback no longer names it', r == 4999 and c[0] == 4999)
 def qsel_first(xs, k):
     xs = list(xs); lo, hi, c = 0, len(xs) - 1, [0]
     while lo < hi:
@@ -568,6 +581,25 @@ def qsel_first(xs, k):
         else: lo = p + 1
     return c[0]
 ok('homework-3 I6 fix text: a fixed first pivot is quadratic on test 8 (12,497,500 comparisons)', qsel_first(range(5000), 4999) == 5000 * 4999 // 2)
+# Fixed text: "a recursive version nests about 5,000 calls. That is past Python's recursion limit" (3,000 on the page).
+# Measured in Pyodide 0.27.7 (fix pass): the loop form with a first pivot passes test 8 in 0.5 s; the recursive form fails.
+def qsel_first_rec(xs, k):
+    xs = list(xs); d = [0, 0]
+    def go(lo, hi, depth):
+        d[1] = max(d[1], depth)
+        if lo >= hi: return xs[lo]
+        xs[lo], xs[hi] = xs[hi], xs[lo]; p = partition(xs, lo, hi)
+        if k == p: return xs[p]
+        return go(lo, p - 1, depth + 1) if k < p else go(p + 1, hi, depth + 1)
+    return go(0, len(xs) - 1, 1), d[1]
+_lim = sys.getrecursionlimit(); sys.setrecursionlimit(10000)
+_v, _dep = qsel_first_rec(range(5000), 4999)
+sys.setrecursionlimit(3000)
+ok('fixed: finding 5, recursive first-pivot quickselect on test 8 nests 5,000 calls; RecursionError at limit 3,000', _v == 4999 and _dep == 5000 and raises(lambda: qsel_first_rec(range(5000), 4999), RecursionError))
+sys.setrecursionlimit(_lim)
+# Fix pass, same screen: fb test-2 used to name index k - 1, which already fails test 1 (k = 1), so test-2 never showed for it.
+_x = [7, 2, 9, 4, 1, 8, 5]
+ok('fix pass: homework-3 I6 index k - 1 fails test 1 (gives 1, not 9); index n - k gives 9 and 7', sorted(_x)[1 - 1] == 1 and (sorted(_x)[7 - 1], sorted(_x)[7 - 3]) == (9, 7))
 c = [0]; quickselect(list(range(3000)), 1500, c, pivot='last')
 ok('l13 S8 test 7: a fixed last pivot is quadratic there (about 3.4 million comparisons)', c[0] == sum(range(1500, 3000)))
 sizes = [(i * 7919) % 10007 for i in range(100001)]
@@ -621,11 +653,11 @@ ok('l14 Q2 fractional knapsack 38 (ratios 5, 3, 2); all values 48', [v / w for w
 cap, got = 10, 0
 for w, v in sorted(items, key=lambda t: -t[1]):
     if w <= cap: cap -= w; got += v
-ok('FINDING 1, l14 Q2 slip 30 "You took whole items by value: 20 and 10" (by value gives 20 + 18 = 38)', got == 30)
+ok('fixed: finding 1, l14 Q2: whole items by value give 38, so the slip 30 no longer names that method', got == 38)
 cap, got = 10, 0
 for w, v in sorted(items):
     if w <= cap: cap -= w; got += v
-ok('l14 Q2: the two lightest items whole give 30 (the proposed fix text)', got == 30)
+ok('l14 Q2: the two lightest items whole give 30 (the fixed text); lightest first with parts gives 33', got == 30 and 20 + 10 + 1 * 18 / 6 == 33)
 
 # ---------------------------------------------------------------- reviews and homework
 ok('review-1: 570, 1200, 8000; 9x pairs', 190 * 3 == 570 and 20 * 20 * 3 == 1200 and abs((6000 * 5999 / 2) / (2000 * 1999 / 2) - 9) < 0.01 and abs(6000 * 5999 / 2 / 1.8e7 - 1) < 0.01)
