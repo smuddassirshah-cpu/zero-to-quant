@@ -83,3 +83,32 @@ One disagreement to record. The earlier review states that window re-slicing tim
 - Sources named in the ledger without a run (CLRS, Knuth, Bentley, Hull, the CPython and pandas sources, the CME overview) were cited from memory of the named section. They were not reopened in this session.
 - Code ran in CPython 3.13, not in Pyodide 0.27.7. No check depends on a behaviour that differs between CPython 3.12 and 3.13, but Pyodide timing was not measured.
 - Severity of finding 12 is a judgement. The graded keys are right for the measure asked; the finding is that one name is used for two measures without saying so. A fixer may reasonably rate it minor.
+
+## Fix pass
+
+Opus fixer, audit session 11. Every new sentence and code line was checked by a run (CPython 3.13) or a derivation; the concepts script tests each corrected text under a tag ending "(fix pass)", and keeps the round 1 evidence as "[basis]" lines.
+
+1. fixed. Doubling from capacity 1 copies $2^k - 1 < 2n$ items for $n$ appends; run for $n < 5000$ (17 appends give 31).
+2. fixed. `list.remove` stops at the first match (identity first, then one `__eq__`); timed: 10 times the length gives about 10 times the cost, as for `pop(0)`.
+3. fixed differently. Pointers are at indices 1 and 5, so 2 is not at an end; squares sort to `[1, 4, 9, 16, 36, 49]`, so 4 goes second. The next slot here is the fifth, not the last, so the line ends "not the fifth".
+4. fixed. Put struck at £100 plus call at £105 gives `[10, 5, 0, 0, 5, 10]` at £90 to £115 (run); a strangle has two strikes, so the six numbers are expiry prices.
+5. fixed. Run: the trap returns 6 on `'abcbdae'` (right answer 5) and 3 on `'abcbd'` (right answer 3).
+6. fixed. The bug adds `xs[k-1] - xs[k]` per slide, which telescopes to `xs[0] - xs[k]`; checked on 2,000 random lists.
+7. fixed. Slip `kept` changed 15 to 16: adding without dropping gives $5 + 1 + 4 + 6 = 16$, and $6 + 4 + 6 = 16$. No clash with the key 10 or slip 5.
+8. fixed. Slip `off` changed 9 to 10: `pre[4] - pre[0] = 10 - 0 = 10`, and $4 - 3 + 6 + 3 = 10$. No clash with the key 6 or slip 3.
+9. fixed. With `d > 0`, `i == j` gives gap 0 < `d`, so `j` moves on with or without the guard; the new line states test 6 and its answer, `True` (run).
+10. fixed differently. "Rows before row `r`" still reads loosely; the line now says `P[r][c]` sums every cell in rows 0 to `r - 1` and columns 0 to `c - 1`, which gives $14 - 4 - 7 + 2 = 5$ (run).
+11. fixed (worded "already makes 22"). Run: the growing window reaches 20 at `[12, 3, 7]` = 22.
+12. fixed differently. l8 `screens[5].prose` now says the drawdown is measured here in pounds and is usually quoted as a fraction of the peak, as in py-found and pytest (both checked in their files). homework-2 `items[7].prompt` adds "in pounds", so the model's identities in (c) hold as stated; the brief asked for the convention once, so (c) is unchanged. Keys 15 and 80 unchanged.
+13. fixed differently. Run: the best buy-before-sell pair is 9, and both pairs that make 12 sell before they buy (days 1 and 5). New text: look-ahead can reach £9 but never beat it; beating it needs a sale before the purchase (a misaligned index) or fills at other prices.
+14. fixed differently. "This exchange uses price-time priority: at one price, orders fill in arrival order." Price-time priority means best price first, then arrival order at one price; pro-rata markets exist (CME matching algorithms), so the rule is stated as this exchange's.
+15. fixed. All three now state a desk's reading, this exchange's design, or the teaching reason, with no claim about markets or interviews.
+16. fixed. Test 11 now uses $w = 20000$; run: the deque solution gives `[200000, 199999, 199998]` in 0.03 s, while slicing 2,001 of the 180,001 windows already takes 0.32 s (about 29 s for all). `how` changed to match.
+17. fixed. Run: the unguarded line raises `IndexError` at `i = 0`; with `dq and` the loop gives `[5, 4, 4, 6]`, matching the lesson's solution.
+18. fixed differently. "The deepest nesting is the tallest a stack of open brackets ever grows." Checked on five strings, including `(1 + (2 * (3 - 4)))` at 3.
+
+Ledger `unverified` rows 202, 212, 225 and 239 are findings 15 and 16; none was left over.
+
+Script changes: `docs/reports/ds-L1-3-concepts.py` now tests the corrected texts (the 11 failing checks were rewritten as "(fix pass)" checks, with the old evidence kept as passing "[basis]" lines) and adds checks for findings 4, 9, 10, 12 and 16. 167 pass, 0 fail, exit 0; all 32 code widgets: solution passes, starter fails, l11 `screens[6]` with the new test.
+
+Gates: validator 0 errors (4531 warnings, as before; manifest unchanged); `ds-4-perf-numbers.py` exit 0; voice scan 35 on ds: 0 and 0; `grade-all --file` on review-2, review-3, homework-2: 0 failures; playthrough desktop and `--mobile` of l1, l5, l6, l8, l10, l11, l12, l13, review-2, review-3 and homework-2: all green.

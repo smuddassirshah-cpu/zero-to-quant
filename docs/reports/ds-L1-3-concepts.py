@@ -6,9 +6,11 @@ marks as "run". Written against CPython 3.13 (Pyodide 0.27.7 is CPython 3.12;
 nothing here depends on a 3.13-only behaviour).
 
 A check prints PASS or FAIL. A FAIL means the content's claim is false as
-stated; each FAIL is a finding in docs/reviews/audit-ds-1-3.md. Lines tagged
-[fix] verify the auditor's own proposed fix text. The script exits 0 only when
-every content claim holds, so it exits 1 until the findings are fixed.
+stated; each round 1 FAIL was a finding in docs/reviews/audit-ds-1-3.md. Lines
+tagged [fix] verify the auditor's own proposed fix text. After the fix pass the
+checks tagged "(fix pass)" test the corrected content text, and "[basis]" lines
+keep the evidence that the round 1 text was false. The script exits 0 only when
+every content claim holds.
 """
 import sys
 import time
@@ -42,9 +44,9 @@ def doubling_copies(appends, cap=1):
 check("l1.s4 16 appends make 15 copies", doubling_copies(16) == 15)
 check("hw1 h-doubling 1000 appends make 1023 copies", doubling_copies(1000) == 1023)
 bad = [n for n in range(1, 2000) if doubling_copies(n) >= n]
-check("l1.s4 explain 'copies always fewer than the appends'", not bad,
+check("[basis] round 1 text 'copies always fewer than the appends' was false", bad and doubling_copies(17) == 31,
       f"false for {len(bad)} of 1999 n; first n={bad[0]}: {doubling_copies(bad[0])} copies; n=17 gives {doubling_copies(17)}")
-check("[fix] copies always fewer than twice the appends",
+check("l1.s4 explain (fix pass) 'with doubling, copies always fewer than twice the appends'",
       all(doubling_copies(n) < 2 * n for n in range(1, 5000)))
 check("l1.s4 wrong values 120, 31", sum(range(16)) == 120 and 1 + 2 + 4 + 8 + 16 == 31)
 
@@ -115,8 +117,20 @@ w = [Cnt(i) for i in range(20)]
 probe = Cnt(0)  # equal to w[0] but a different object, so == must run
 Cnt.n = 0
 w.remove(probe)
-check("l1.s10 option 'remove(window[0])' is 'two linear steps' (search is linear)", Cnt.n > 1,
+check("l1.s10 option (fix pass) 'remove finds the value at index 0 on its first comparison'", Cnt.n == 1,
       f"the search stops after {Cnt.n} comparison; with the same object identity matches with 0 calls")
+
+
+def t_remove_front(n, reps=200):
+    a = list(range(n)); t0 = time.perf_counter()
+    for _ in range(reps):
+        a.remove(a[0]); a.append(0)
+    return (time.perf_counter() - t0) / reps
+
+
+tr_small, tr_big = min(t_remove_front(10**5) for _ in range(3)), min(t_remove_front(10**6) for _ in range(3))
+check("l1.s10 option (fix pass) 'then shifts the rest left: the same linear cost as pop(0)' (timing)",
+      tr_big > 4 * tr_small, f"{tr_small:.2e}s vs {tr_big:.2e}s per remove at n = 1e5 and 1e6")
 d = deque(maxlen=3)
 for i in range(5):
     d.append(i)
@@ -234,8 +248,9 @@ for _ in range(3000):
     ok &= (res is not None) == exists and len(sums) <= max(n - 1, 0)
 check("l5 two pointers correct on sorted input, at most n-1 sums (3000 random lists)", ok)
 sq = sorted(x * x for x in [-7, -3, -1, 2, 4, 6])
-check("l5.s4 feedback c3 '2 is nearest zero, its square is the smallest, first slot'", sq[0] == 4,
-      f"squares sorted {sq}: -1 is nearest zero; 4 is second smallest")
+check("l5.s4 feedback c3 (fix pass) '2 is not at an end; its square, 4, is second smallest, second slot'",
+      sq.index(4) == 1 and [-7, -3, -1, 2, 4, 6].index(2) not in (1, 5),
+      f"squares sorted {sq}; pointers at 1 and 5, 2 sits at index 3")
 xs5 = [3, 8, 1, 9, 4]
 for i in range(len(xs5)):
     xs5[i], xs5[-1 - i] = xs5[-1 - i], xs5[i]
@@ -272,9 +287,8 @@ def lu(s):
 
 
 check("l6.s6 trap returns 3 on 'abba'", lu_bug("abba") == 3 and lu("abba") == 2)
-check("l6.s6 prose 'this version passes abcbdae'", lu_bug("abcbdae") == lu("abcbdae"),
-      f"buggy version returns {lu_bug('abcbdae')}, correct is {lu('abcbdae')}")
-check("[fix] buggy version passes 'abcbd'", lu_bug("abcbd") == lu("abcbd") == 3)
+check("[basis] round 1 text: the buggy version fails 'abcbdae'", lu_bug("abcbdae") == 6 and lu("abcbdae") == 5)
+check("l6.s6 prose (fix pass) 'this version passes abcbd'", lu_bug("abcbd") == lu("abcbd") == 3)
 check("l6 longest_unique tests", [lu(s) for s in ["abcbdae", "pwwkew", "tmmzuxt", ""]] == [5, 3, 5, 0])
 
 
@@ -289,16 +303,26 @@ def shrink(xs, k):
 
 check("l6 shrinking window", shrink([2, 3, 1, 2, 4, 3], 7) == [4, 4, 3, 3, 2] and shrink([5, -4, 6], 6) == [3]
       and min(shrink([1, 4, 2, 3, 5], 8)) == 2 and min(shrink([12, 3, 7, 9, 4, 15, 2], 20)) == 3)
-check("hw2 h-min-volume feedback '[12,3,7,9] is the first window to reach 20'",
-      shrink([12, 3, 7, 9, 4, 15, 2], 20)[0] == 4, "the first window to reach 20 is [12, 3, 7] = 22, length 3")
+check("hw2 h-min-volume feedback (fix pass) '[12,3,7,9] reaches 20, but [12,3,7] already makes 22'",
+      sum([12, 3, 7, 9]) >= 20 and sum([12, 3, 7]) == 22 and shrink([12, 3, 7, 9, 4, 15, 2], 20)[0] == 3)
 # l6 quiz off-by-one update: total_k = correct_k + x[0] - x[k]
 xs = [3, 9, 3, 5, 3, 1]; w = 2
 tot = sum(xs[:w]); wrong_ok = []
 for right in range(w, len(xs)):
     tot += xs[right] - xs[right - w + 1]
     wrong_ok.append(tot == sum(xs[right - w + 1:right + 1]))
-check("l6 quiz option 'every sum after the first is wrong'", not any(wrong_ok),
+check("[basis] round 1 text 'every sum after the first is wrong' was false", any(wrong_ok),
       f"on {xs}, w=2 the buggy update is right at steps {[i for i, o in enumerate(wrong_ok) if o]}: error is x[0]-x[k]")
+random.seed(61)
+ok6 = True
+for _ in range(2000):
+    v = [random.randint(-9, 9) for _ in range(random.randint(2, 12))]; ww = random.randint(1, len(v) - 1)
+    tb = sum(v[:ww])
+    for right in range(ww, len(v)):
+        k = right - ww + 1
+        tb += v[right] - v[right - ww + 1]
+        ok6 &= tb - sum(v[k:right + 1]) == v[0] - v[k]
+check("l6 quiz option (fix pass) 'after k slides the sum is off by xs[0] - xs[k]' (2000 random lists)", ok6)
 check("l6 max_window_sum big test", sum(range(180000, 200000)) == 3799990000 and 180001 * 20000 > 3.5e9)
 
 p = [3, -1, 4, 2, -5, 6]
@@ -330,10 +354,10 @@ check("l7 counts", cnt([2, -1, 1, 3, -2, 2], 3) == 5 and cnt([0, 0, 0], 0) == 6 
 cum = [120, 40, 240, 290, 140, 230, 190, 370, 310, 420]
 check("l7.s9", cum[6] - cum[2] == -50 and max(max(cum[:i + 1]) - cum[i] for i in range(10)) == 150)
 r2 = [0, 4, 1, 7, 10, 6]
-check("review-2 r-range slip 'off' = 9 is pre[4]-pre[0]", r2[4] - r2[0] == 9,
-      f"pre[4]-pre[0] = {r2[4] - r2[0]}; 9 is pre[4]-pre[2] = {r2[4] - r2[2]}")
-check("review-2 r-slide slip 'kept' = 15 is 'added without dropping'", 6 + 4 + 6 == 15,
-      f"adding 4 and 6 without dropping gives {6 + 4 + 6}; 15 = 5 + 4 + 6 keeps the 5 and drops the 1")
+check("review-2 r-range slip 'off' (fix pass) = 10 is pre[4]-pre[0]", r2[4] - r2[0] == 10 == sum([4, -3, 6, 3])
+      and 10 not in (6, 3))
+check("review-2 r-slide slip 'kept' (fix pass) = 16 is 'added without dropping'", 6 + 4 + 6 == 16 == sum([5, 1, 4, 6])
+      and 16 not in (10, 5))
 G = [[2, -1, 3], [0, 4, 1], [5, -2, 2]]
 P = [[0] * 4 for _ in range(4)]
 for r_ in range(3):
@@ -382,9 +406,10 @@ for x in [-2, 5, -1, 4, -6, 3]:
     run = max(run + x, 0); trace.append(run); bst = max(bst, run)
 check("l8 quiz Kadane trace", trace == [0, 5, 4, 8, 2, 5] and bst == 8)
 # l8.s9: the ceiling already assumes perfect foresight, so look-ahead cannot beat it
-check("l8.s9 explain 'a look-ahead bug is a common cause of beating best_trade'",
-      max(px[j] - px[i] for j in range(10) for i in range(j)) > 9,
-      "max over ALL buy-before-sell pairs on these closes is 9: perfect foresight reaches 9, never 12")
+pairs12 = [(b, s) for b in range(10) for s in range(10) if px[s] - px[b] == 12]
+check("l8.s9 explain (fix pass) 'look-ahead can reach 9 but never beat it; 12 needs a sale before its purchase'",
+      max(px[j] - px[i] for j in range(10) for i in range(j)) == 9 and pairs12 and all(s < b for b, s in pairs12),
+      f"(buy day, sell day) pairs making 12: {pairs12}")
 # drawdown convention: absolute and fractional can pick different episodes
 dd = [100, 60, 200, 130]
 ab = max((max(dd[:i + 1]) - dd[i], i) for i in range(4)); fr = max(((max(dd[:i + 1]) - dd[i]) / max(dd[:i + 1]), i) for i in range(4))
@@ -506,7 +531,9 @@ try:
     res = msw([5, 3, 4, 1, 2, 6], 3, guard=False); ok = res == [5, 4, 4, 6]; note = ""
 except IndexError as e:
     ok = False; note = f"IndexError on the first pass: {e}"
-check("l11.s7 explain fix 'if dq[0] <= i - w: dq.popleft()' before the back pops", ok, note)
+check("[basis] round 1 fix line without 'dq and' raises IndexError", not ok and "IndexError" in note, note)
+check("l11.s7 explain (fix pass) 'if dq and dq[0] <= i - w: dq.popleft()' before the back pops",
+      msw([5, 3, 4, 1, 2, 6], 3, guard=True) == [5, 4, 4, 6])
 
 
 def t_drain(n, use_deque):
@@ -681,8 +708,29 @@ def infix_peak(expr):
         elif t == ")":
             vals.pop()   # two operands collapse to one result
     return peak
-check("review-3 r-depth prose 'deepest nesting tells you how many intermediate results a stack evaluator holds'",
-      infix_peak("(1 + (2 * (3 - 4)))") == 3, f"depth 3 but a two-stack evaluator holds {infix_peak('(1 + (2 * (3 - 4)))')} operands at once")
+check("[basis] round 1 text: a two-stack evaluator holds more values than the depth",
+      infix_peak("(1 + (2 * (3 - 4)))") == 4, f"depth 3 but a two-stack evaluator holds {infix_peak('(1 + (2 * (3 - 4)))')} operands at once")
+
+
+def bracket_peak(s):
+    st, peak, d = [], 0, 0
+    for ch in s:
+        if ch == "(":
+            st.append(ch); peak = max(peak, len(st))
+        elif ch == ")":
+            st.pop()
+    return peak
+
+
+def nest_depth(s):
+    d = m = 0
+    for ch in s:
+        d += ch == "("; d -= ch == ")"; m = max(m, d)
+    return m
+
+
+check("review-3 r-depth prose (fix pass) 'deepest nesting is the tallest a stack of open brackets grows'",
+      all(bracket_peak(s) == nest_depth(s) for s in ["(1 + (2 * (3 - 4)))", "()()", "((()))(())", "", "(a)(b(c))"]))
 
 # homework-2 h-difference: the i == j guard never fires when d > 0
 def hpd(nums, d, guard):
@@ -711,8 +759,20 @@ for _ in range(4000):
     truth = any(v[b] - v[a] == d_ for a in range(len(v)) for b in range(a + 1, len(v)))
     ok &= g[0] == ng[0] == truth
 check("[basis] hw2 h-difference: with d > 0 the answer is the same with or without the i == j guard (4000 lists)", ok)
-check("[fix] l11 test with w = 20000 has the same first three maxima",
+check("l11.s6 test 11 (fix pass) with w = 20000 has the same first three maxima",
       msw(list(range(200000, 0, -1)), 20000)[:3] == [200000, 199999, 199998])
+check("l11.s6 how (fix pass): slicing each window at w = 20000 reads about 3.6 billion values",
+      (200000 - 20000 + 1) * 20000 == 3600020000)
+check("hw2 h-difference feedback test-6 (fix pass) '[2, 2, 5], d = 3 is True'",
+      hpd([2, 2, 5], 3, True)[0] is True)
+P2 = [[sum(G[a][b] for a in range(r) for b in range(c)) for c in range(4)] for r in range(4)]
+check("hw2 h-2d prose (fix pass) 'P[r][c] sums rows 0 to r-1 and columns 0 to c-1'",
+      P2[3][3] - P2[1][3] - P2[3][1] + P2[1][1] == 5 and (P2[3][3], P2[1][3], P2[3][1], P2[1][1]) == (14, 4, 7, 2))
+check("l5 quiz strangle (fix pass) payoffs at six expiry prices, put 100 and call 105",
+      [max(100 - s, 0) + max(s - 105, 0) for s in range(90, 116, 5)] == [10, 5, 0, 0, 5, 10])
+check("l8.s5 (fix pass) running high gives the fractional drawdown's peak too",
+      all(max(1 - v[j] / v[i] for i in range(j + 1)) == 1 - v[j] / max(v[:j + 1])
+          for v in ([102, 110, 104, 98, 101, 107, 95, 99, 103, 97], [100, 60, 200, 130]) for j in range(len(v))))
 
 # ------------------------------------------------- every code widget, run
 # Each Python code widget in levels 1 to 3: the solution must pass every
