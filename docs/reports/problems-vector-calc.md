@@ -43,3 +43,32 @@ Reuse grep, each hit judged:
 - `fresh-check --cross-numbers`: 0 hits, 15 advisories, all on `p-quadrilateral-plot` sharing three small whole numbers (from 21, 23, 28, 29, 42, 70, 84) with items in brainteasers, equations, markov, mental, testing and functions files. Other courses, unrelated settings: coincidence, not reuse.
 
 Checks: validator 0 errors, no warning on the file (two `[wrong-band]` warnings on fractional slips in whole-number parts went when I replaced those slips, and two long questions were split); voice scan 0 and 0; `grade-all --file`: 17 widgets, 0 failures; playthrough desktop (`--why`) and `--mobile` green; screenshots at 440 px read, no layout fault; number script exit 0.
+
+## Level 3: `problems-3.json` (surfaces and space, 55 minutes)
+
+| Item | Parts | Kinds | Lessons drawn on | Difficulty |
+|---|---|---|---|---|
+| `p-saddle-roof` | 4 | expression (vector), expression, numeric, numeric | l9 (graph parametrisation, normal, $dS$, area), l10 (upward flux) | 3 |
+| `p-open-tank` | 4 | expression, numeric, numeric, numeric | l11 (flux out of a closed box), l10 (flux through one face) | 4 |
+| `p-slanted-ellipse` | 5 | expression (vector) x 2, expression, numeric, numeric | l12 (circulation by Stokes), l9 (the plane piece and its normal), l10 (flux of the curl) | 4 |
+| `p-can-curl` | 5 | expression (vector), numeric x 4 | l12 (Stokes on the base disc), l11 (closed surface, $\nabla \cdot (\nabla \times \mathbf F) = 0$), l10 (flux through the lid) | 5 |
+
+18 parts, all typed. Every lesson appears; each item draws on at least two. Skills `vk-surface`, `vk-theorems`.
+
+Reuse grep, each hit judged:
+- `[0, 2] \times [0, 1] \times [0, 3]` is the box of l11's code screen ("Both sides by machine"). My first tank used that box; I moved it to $[0, 4] \times [0, 1] \times [0, 2]$ with the field $(xz, y^2, 3z)$, which appear nowhere in the course.
+- `z = xy` in homework-1 and l4: the term $f_z = xy$ of a potential, not a surface. `saddle` in l5: the flow of $\nabla(x^2 - y^2)$. Our saddle surface over $x^2 + y^2 \le 3$ is new.
+- `x^2 + y^2 \le 4` in homework-3, l11, l12: discs under other surfaces (a cylinder of height 3, a paraboloid). The ellipse cut by $z = 2 - x$ and the field $(-yz, xz, xy + 3y)$ are new. The text `2 - x` elsewhere is only part of $y^2 - x^2$ or of `x1 * y2 - x2 * y1` in code.
+- The can: fresh-check listed the shared formula $x^2 + y^2 = 9$ with my own `problems-1` bead circle, so I resized the can to $x^2 + y^2 = 16$. `16\pi` and `32\pi` then occur in review-3 (the flux of $(x, y, z)$ out of a sphere of radius 2, and its slip $16\pi$) and l11, review-1: single multiples of $\pi$ in unrelated settings. `14\pi` (homework-2, an annulus integral) and `18\pi` (review-1, a work) likewise.
+- `lid` occurs in l9 to l12 and homework-3 as the word for closing a surface; our tank and can are new stories ("tank" and "can" are in no course file).
+- `fresh-check --cross-numbers` after the changes: 0 hits, 0 advisories.
+
+Checks: validator 0 errors, no warning on the file (one `[O2-explain-answer]` and one long question fixed); voice scan 0 and 0; `grade-all --file`: 18 widgets, 0 failures; playthrough desktop (`--why`) and `--mobile` green; screenshots at 440 px read, no layout fault; number script exit 0 (748 checks over the three sets).
+
+## Number script
+
+`problems-vector-calc-numbers.py` checks each numeric key two ways: sympy on the hand-derived integrand or region, and scipy `quad`, `dblquad` or `tplquad` on the field along the parametrised curve or surface, with derivatives by central differences (never the hand formula). Every `wrong` value is recomputed from its named slip, shown outside the key band and clear of the other slips, and has a `byKey` line. Expression keys, accepted forms and wrong forms are compared with the sympy truth at random points. Key figures printed in feedback and explain are checked as text, and `numbers_lib.Level.check_wrongs` runs on each set.
+
+## Engine limits
+
+Two bullets in `docs/BACKLOG-INBOX.md` under `Raised later (problems vector-calc):` (the explain-answer check misses exact forms; small whole numbers drive cross-course advisories).

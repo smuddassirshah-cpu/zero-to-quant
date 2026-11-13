@@ -364,5 +364,136 @@ if 2 in SETS:
     bad = [r for r in L.results if not r[0]]
     ok(not bad, f'L2 numbers_lib check_wrongs: {len(bad)} failures')
 
+# ---------------------------------------------------------------- level 3
+def surf_flux(F, r, u0, u1, v0, v1):
+    """flux of F through r(u, v) with normal r_u x r_v, both partials by central differences, by dblquad"""
+    h = 1e-6
+    def g(vv, uu):
+        ru = (np.array(r(uu + h, vv)) - np.array(r(uu - h, vv))) / (2 * h)
+        rv = (np.array(r(uu, vv + h)) - np.array(r(uu, vv - h))) / (2 * h)
+        return float(np.dot(F(*r(uu, vv)), np.cross(ru, rv)))
+    return integrate.dblquad(g, u0, u1, v0, v1, epsabs=1e-9, epsrel=1e-9)[0]
+
+
+def surf_area(r, u0, u1, v0, v1):
+    h = 1e-6
+    def g(vv, uu):
+        ru = (np.array(r(uu + h, vv)) - np.array(r(uu - h, vv))) / (2 * h)
+        rv = (np.array(r(uu, vv + h)) - np.array(r(uu, vv - h))) / (2 * h)
+        return float(np.linalg.norm(np.cross(ru, rv)))
+    return integrate.dblquad(g, u0, u1, v0, v1, epsabs=1e-9, epsrel=1e-9)[0]
+
+
+def curl3(F):
+    P, Q, R = F
+    return sp.Matrix([sp.diff(R, y) - sp.diff(Q, z), sp.diff(P, z) - sp.diff(R, x), sp.diff(Q, x) - sp.diff(P, y)])
+
+
+def div3(F):
+    return sp.diff(F[0], x) + sp.diff(F[1], y) + sp.diff(F[2], z)
+
+
+def work3(F, r, a0, b0):
+    return integrate.quad(lambda s: float(np.dot(F(*r(s)), d1(r, s))), a0, b0, limit=200, epsabs=1e-10, epsrel=1e-10)[0]
+
+
+if 3 in SETS:
+    # R1 saddle z = xy over x^2 + y^2 <= 3, polar parameters (rho, theta)
+    rr, th = sp.symbols('rr th', positive=True)
+    R = sp.Matrix([x, y, x * y])
+    N = R.diff(x).cross(R.diff(y))
+    expr(3, 'p-saddle-roof', 1, tuple(N), {'sign': (y, x, sp.Integer(1)), 'swap': (-x, -y, sp.Integer(1))})
+    nN = sp.sqrt(sp.expand(N.dot(N)))
+    expr(3, 'p-saddle-roof', 2, nN, {'no-root': sp.expand(N.dot(N)), 'no-one': sp.sqrt(x**2 + y**2)})
+    pol = {x: rr * sp.cos(th), y: rr * sp.sin(th)}
+    area = sp.integrate(sp.integrate(sp.simplify(nN.subs(pol)) * rr, (rr, 0, sp.sqrt(3))), (th, 0, 2 * sp.pi))
+    rp = lambda q, w: (q * np.cos(w), q * np.sin(w), q * np.cos(w) * q * np.sin(w))
+    arean = surf_area(rp, 0, np.sqrt(3), 0, 2 * PI)
+    no_r = 2 * sp.pi * sp.integrate(sp.sqrt(1 + rr**2), (rr, 0, sp.sqrt(3)))
+    ok(sp.simplify(area - 14 * sp.pi / 3) == 0, 'L3 R1 area 14 pi / 3')
+    num(3, 'p-saddle-roof', 3, area, arean, {'no-r': no_r, 'flat': 3 * sp.pi}, rounded=14.66, agree=1e-6)
+    Fv = sp.Matrix([y, x, 5])
+    fl = sp.integrate(sp.integrate(sp.expand(Fv.dot(N)).subs(pol) * rr, (rr, 0, sp.sqrt(3))), (th, 0, 2 * sp.pi))
+    fln = surf_flux(lambda X, Y, Z: (Y, X, 5), rp, 0, np.sqrt(3), 0, 2 * PI)
+    zonly = 5 * 3 * sp.pi
+    signn = sp.integrate(sp.integrate(sp.expand(Fv.dot(sp.Matrix([y, x, 1]))).subs(pol) * rr, (rr, 0, sp.sqrt(3))), (th, 0, 2 * sp.pi))
+    num(3, 'p-saddle-roof', 4, fl, fln, {'down': -fl, 'z-only': zonly, 'sign-normal': signn}, rounded=32.99, agree=1e-6)
+    text(3, 'p-saddle-roof', 3, '\\tfrac{14\\pi}{3} \\approx 14.66', '\\tfrac73')
+    text(3, 'p-saddle-roof', 4, '\\tfrac{21\\pi}{2} \\approx 32.99', '\\tfrac{9\\pi}{2}')
+
+    # R2 open tank [0,4]x[0,1]x[0,2], F = (xz, y^2, 3z)
+    F = sp.Matrix([x * z, y**2, 3 * z]); Fn = lambda X, Y, Z: (X * Z, Y**2, 3 * Z)
+    dv = div3(F)
+    expr(3, 'p-open-tank', 1, dv, {'wrong-var': x + 2 * y + 3, 'drop-const': z + 2 * y})
+    box = lambda e: sp.integrate(e, (x, 0, 4), (y, 0, 1), (z, 0, 2))
+    tot = box(dv)
+    totn = integrate.tplquad(lambda Z, Y, X: Z + 2 * Y + 3, 0, 4, 0, 1, 0, 2)[0]
+    # third method: the six faces one by one with dblquad of F . n
+    faces = {
+        'x0': integrate.dblquad(lambda Z, Y: -Fn(0, Y, Z)[0], 0, 1, 0, 2)[0], 'x4': integrate.dblquad(lambda Z, Y: Fn(4, Y, Z)[0], 0, 1, 0, 2)[0],
+        'y0': integrate.dblquad(lambda Z, X: -Fn(X, 0, Z)[1], 0, 4, 0, 2)[0], 'y1': integrate.dblquad(lambda Z, X: Fn(X, 1, Z)[1], 0, 4, 0, 2)[0],
+        'z0': integrate.dblquad(lambda Y, X: -Fn(X, Y, 0)[2], 0, 4, 0, 1)[0], 'z2': integrate.dblquad(lambda Y, X: Fn(X, Y, 2)[2], 0, 4, 0, 1)[0]}
+    ok(abs(sum(faces.values()) - float(tot)) < 1e-8, 'L3 R2 six faces add to the divergence integral')
+    num(3, 'p-open-tank', 2, tot, totn, {'drop-const': box(z + 2 * y), 'wrong-var': box(x + 2 * y + 3)})
+    lid = F[2].subs(z, 2) * 4
+    num(3, 'p-open-tank', 3, lid, faces['z2'], {'wrong-area': F[2].subs(z, 2) * 8, 'no-z': 3 * 4})
+    walls = tot - lid
+    num(3, 'p-open-tank', 4, walls, sum(v for kf, v in faces.items() if kf != 'z2'), {'added': tot + lid, 'from-16': box(z + 2 * y) - lid})
+    ok(abs(faces['x4'] - 8) < 1e-9 and abs(faces['y1'] - 8) < 1e-9, 'L3 R2 walls x = 4 and y = 1 give 8 each')
+    text(3, 'p-open-tank', 2, '8 + 8 + 24 = 40')
+    text(3, 'p-open-tank', 4, '40 - 24 = 16')
+
+    # R3 plane z = 2 - x inside x^2 + y^2 = 4, F = (-yz, xz, xy + 3y)
+    F = sp.Matrix([-y * z, x * z, x * y + 3 * y])
+    cF = curl3(F)
+    expr(3, 'p-slanted-ellipse', 1, tuple(cF), {'reversed': tuple(-cF), 'half': (sp.Integer(3), -y, z)})
+    S = sp.Matrix([x, y, 2 - x]); N = S.diff(x).cross(S.diff(y))
+    expr(3, 'p-slanted-ellipse', 2, tuple(N), {'fx': (sp.Integer(-1), sp.Integer(0), sp.Integer(1)), 'down': (sp.Integer(-1), sp.Integer(0), sp.Integer(-1))})
+    integrand = sp.expand(cF.dot(N).subs(z, 2 - x))
+    expr(3, 'p-slanted-ellipse', 3, integrand, {'z-left': 3 + 2 * z, 'fx': sp.expand(cF.dot(sp.Matrix([-1, 0, 1])).subs(z, 2 - x))})
+    disc = lambda e, rad=2: sp.integrate(sp.integrate(sp.expand(e).subs(pol) * rr, (rr, 0, rad)), (th, 0, 2 * sp.pi))
+    circ = disc(integrand)
+    Fn = lambda X, Y, Z: (-Y * Z, X * Z, X * Y + 3 * Y)
+    circn = work3(Fn, lambda s: (2 * np.cos(s), 2 * np.sin(s), 2 - 2 * np.cos(s)), 0, 2 * PI)
+    ok(sp.simplify(circ - 28 * sp.pi) == 0, 'L3 R3 circulation 28 pi')
+    num(3, 'p-slanted-ellipse', 4, circ, circn, {'fx': disc(1 - 2 * x), 'unit-disc': disc(integrand, 1), 'extra-root': circ * sp.sqrt(2)}, rounded=87.96)
+    c = sp.Symbol('c')
+    Fc = sp.Matrix([-y * z, x * z, x * y + c * y])
+    circ_c = disc(curl3(Fc).dot(N).subs(z, 2 - x))
+    cs = sp.solve(sp.Eq(circ_c, 0), c)
+    ok(cs == [-4], f'L3 R3 c = {cs}')
+    cn = work3(lambda X, Y, Z: (-Y * Z, X * Z, X * Y - 4 * Y), lambda s: (2 * np.cos(s), 2 * np.sin(s), 2 - 2 * np.cos(s)), 0, 2 * PI)
+    num(3, 'p-slanted-ellipse', 5, cs[0], -4 + cn, {'sign': -cs[0]}, agree=1e-6)
+    ok(sp.simplify(circ_c - 4 * sp.pi * (c + 4)) == 0, 'L3 R3 circulation 4 pi (c + 4)')
+    text(3, 'p-slanted-ellipse', 4, '28\\pi \\approx 87.96')
+
+    # R4 can x^2 + y^2 = 16, 0 <= z <= 2, F = (2y - z^2, x + xz + 3z, xy)
+    F = sp.Matrix([2 * y - z**2, x + x * z + 3 * z, x * y])
+    Fn = lambda X, Y, Z: (2 * Y - Z**2, X + X * Z + 3 * Z, X * Y)
+    cF = curl3(F)
+    slipF = sp.Matrix([cF[0] + x, cF[1], cF[2]])                    # Q_z taken as 3, not x + 3
+    expr(3, 'p-can-curl', 1, tuple(cF), {'reversed': tuple(-cF), 'qz-slip': tuple(slipF)})
+    dc = sp.simplify(div3(cF))
+    num(3, 'p-can-curl', 2, dc, 0, {'qz-slip': div3(slipF)})
+    base = work3(Fn, lambda s: (4 * np.cos(s), 4 * np.sin(s), 0), 0, 2 * PI)
+    base_s = disc(cF[2].subs(z, 0), 4)
+    num(3, 'p-can-curl', 3, base_s, base, {'sign': -base_s, 'radius': cF[2].subs(z, 0) * 4 * sp.pi}, rounded=-50.27)
+    cFn = sp.lambdify((x, y, z), list(cF), 'numpy')
+    lid_s = disc(cF[2].subs(z, 2), 4)
+    lidn = surf_flux(lambda X, Y, Z: cFn(X, Y, Z), lambda q, w: (q * np.cos(w), q * np.sin(w), 2.0), 0, 4, 0, 2 * PI)
+    num(3, 'p-can-curl', 4, lid_s, lidn, {'z0': -lid_s, 'radius': 4 * sp.pi}, rounded=50.27, agree=1e-6)
+    side = 0 - lid_s - (-base_s)        # total 0 = side + lid + base(outward, normal down) with base outward = -base_s
+    # independent: the side by dblquad on (4cos w, 4sin w, h), outward normal r_w x r_h
+    siden = surf_flux(lambda X, Y, Z: cFn(X, Y, Z), lambda w, hh: (4 * np.cos(w), 4 * np.sin(w), hh), 0, 2 * PI, 0, 2)
+    num(3, 'p-can-curl', 5, side, siden, {'added': 0 - lid_s - base_s, 'sign': -side, 'no-base': -lid_s}, rounded=-100.53, agree=1e-6)
+    ok(sp.simplify(side + 32 * sp.pi) == 0, 'L3 R4 side -32 pi')
+    text(3, 'p-can-curl', 3, '-16\\pi \\approx -50.27', '-32\\sin^2 t + 16\\cos^2 t')
+    text(3, 'p-can-curl', 5, '-32\\pi \\approx -100.53')
+
+    L = Level('vector-calc', 3)
+    L.check_wrongs('problems')
+    bad = [r_ for r_ in L.results if not r_[0]]
+    ok(not bad, f'L3 numbers_lib check_wrongs: {len(bad)} failures')
+
 print(f'{checks - len(fails)} of {checks} checks passed')
 sys.exit(1 if fails else 0)
