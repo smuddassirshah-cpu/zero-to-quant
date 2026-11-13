@@ -607,7 +607,7 @@ check('D l4 misc', raises(plus_eq, KeyError, "'VOD'") and (dd['BP'], len(dd)) ==
       and Counter('') == Counter('') and Counter('Listen') != Counter('silent') and Counter('dirty room') != Counter('dormitory'))
 bad_check = lambda a, b: all(a.count(c) == b.count(c) for c in a)
 check('D l4 s6 option d is called wrong as well as slow: ab and abc pass it', bad_check('ab', 'abc') and Counter('ab') != Counter('abc')
-      and 'It is wrong too: `ab` and `abc` pass' in W(S(4, 6))['options'][3]['why'], finding=12)
+      and 'Without a length check it is wrong too: `ab` and `abc` pass' in W(S(4, 6))['options'][3]['why'], finding=12)
 check('D hw1 most_common tie', Counter(['VOD', 'BP', 'VOD', 'AZN', 'BP']).most_common(1)[0][0] == 'VOD')
 x5 = [3, 8, 1, 9, 4]
 for i in range(len(x5)):
