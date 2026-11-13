@@ -757,9 +757,36 @@ ok(slow_case(_gs, _gt) == 'timeout', 'greedy: max-and-remove runs past 5 s on th
 
 
 # at-search-count-in-range. Brute: a Counter over every whole number in the range (no halving).
+_RANGE_CACHE = {}
+
+
 def range_brute(xs, lo, hi):
     if hi < lo:
         return 0
+    if len(xs) > 1000:
+        # large lists (the wide-range tests call this 3,000 times on one list): a Counter per call took hours. Count once per list,
+        # then walk the sorted distinct values by hand; the closed-form `two(...)` checks below stay the independent route for those tests.
+        key = id(xs)
+        if key not in _RANGE_CACHE:
+            ks = sorted(Counter(xs).items())
+            cum, t = [], 0
+            for _v, n in ks:
+                t += n
+                cum.append(t)
+            _RANGE_CACHE.clear()
+            _RANGE_CACHE[key] = ([v for v, _n in ks], cum, xs)
+        vs, cum, _keep = _RANGE_CACHE[key]
+
+        def upto(x):  # number of values <= x, by a hand-written binary search
+            a, b = 0, len(vs)
+            while a < b:
+                m = (a + b) // 2
+                if vs[m] <= x:
+                    a = m + 1
+                else:
+                    b = m
+            return cum[a - 1] if a else 0
+        return upto(hi) - upto(lo - 1)
     c = Counter(xs)
     if hi - lo <= 2 * len(c):
         return sum(c[v] for v in range(lo, hi + 1))

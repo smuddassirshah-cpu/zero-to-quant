@@ -1,0 +1,372 @@
+{
+  "id": "problems-4",
+  "course": "odes",
+  "level": 4,
+  "title": "Transforms and numerical solution: chained problems",
+  "minutes": 40,
+  "items": [
+    {
+      "id": "p-test-rig",
+      "difficulty": 4,
+      "skills": ["de-laplace"],
+      "prose": "A test rig shakes a mounted sensor that starts at rest. Its displacement $y(t)$, in cm, after $t$ seconds obeys $y'' + 6y' + 8y = 24e^{-8t}$ with $y(0) = 0$ and $y'(0) = 0$. We solve it with the Laplace transform, $Y = \\mathcal{L}\\{y\\}$.",
+      "parts": [
+        {
+          "question": "Find the transform of the forcing, $\\mathcal{L}\\{24e^{-8t}\\}$. Give it as a function of $s$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "\\frac{24}{s+8}",
+            "keyboard": "algebra",
+            "accept": ["24/(s+8)"],
+            "wrong": [
+              { "id": "sign", "tex": "\\frac{24}{s-8}" },
+              { "id": "no-factor", "tex": "\\frac{1}{s+8}" }
+            ],
+            "placeholder": "in s"
+          },
+          "feedback": {
+            "correct": "The table gives $\\mathcal{L}\\{e^{at}\\} = \\dfrac{1}{s - a}$. With $a = -8$ and the factor 24 carried through, $\\dfrac{24}{s + 8}$.",
+            "generic": "Not quite. Use $\\mathcal{L}\\{e^{at}\\} = \\dfrac{1}{s - a}$ with $a = -8$, and keep the 24.",
+            "byKey": {
+              "sign": "That is the transform of $24e^{8t}$. Here $a = -8$, so $s - a = s + 8$.",
+              "no-factor": "Transforms are linear: the 24 stays in front, $24 \\cdot \\dfrac{1}{s + 8}$."
+            }
+          },
+          "explain": { "text": "From the definition, $\\int_0^\\infty e^{-st} \\cdot 24e^{-8t}\\,dt = 24\\int_0^\\infty e^{-(s + 8)t}\\,dt = \\dfrac{24}{s + 8}$ for $s > -8$." }
+        },
+        {
+          "question": "Using $\\mathcal{L}\\{24e^{-8t}\\} = \\dfrac{24}{s + 8}$ and the starting values, transform the equation and solve for $Y(s)$. Give it as a function of $s$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "\\frac{24}{(s+2)(s+4)(s+8)}",
+            "keyboard": "algebra",
+            "accept": ["24/((s+2)(s+4)(s+8))", "\\frac{24}{(s+8)(s^2+6s+8)}"],
+            "wrong": [
+              { "id": "carried-sign", "tex": "\\frac{24}{(s-8)(s+2)(s+4)}" },
+              { "id": "root-signs", "tex": "\\frac{24}{(s+8)(s-2)(s-4)}" }
+            ],
+            "placeholder": "in s"
+          },
+          "feedback": {
+            "correct": "Both starting values are 0, so $\\mathcal{L}\\{y''\\} = s^2Y$ and $\\mathcal{L}\\{y'\\} = sY$. Then $(s^2 + 6s + 8)Y = \\dfrac{24}{s + 8}$, and $s^2 + 6s + 8 = (s + 2)(s + 4)$.",
+            "generic": "Not quite. Transform each term, collect $Y$, and factor $s^2 + 6s + 8$.",
+            "byKey": {
+              "carried-sign": "That uses $\\dfrac{24}{s - 8}$ for the forcing. The forcing $24e^{-8t}$ transforms to $\\dfrac{24}{s + 8}$.",
+              "root-signs": "$s^2 + 6s + 8$ has roots $-2$ and $-4$, so it factors as $(s + 2)(s + 4)$."
+            }
+          },
+          "explain": { "text": "The starting values enter only through the derivative rules, and here both add nothing. So $Y = \\dfrac{24}{(s + 2)(s + 4)(s + 8)}$, with poles at $-2$, $-4$ and $-8$." }
+        },
+        {
+          "question": "Using $Y = \\dfrac{24}{(s + 2)(s + 4)(s + 8)}$, find the residue at the pole $s = -4$ by cover-up. Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -3,
+            "tol": { "abs": 0 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "sign", "value": 3, "tol": { "abs": 0 } },
+              { "id": "other-pole", "value": 2, "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "Hide $(s + 4)$ and put $s = -4$: $\\dfrac{24}{(-4 + 2)(-4 + 8)} = \\dfrac{24}{(-2)(4)} = -3$.",
+            "generic": "Not quite. Cover the factor $(s + 4)$ and put $s = -4$ in what is left.",
+            "byKey": {
+              "sign": "$-4 + 2 = -2$, so the denominator is $(-2)(4) = -8$ and the residue is negative.",
+              "other-pole": "2 is the residue at $-2$. At $-4$ the leftover factors are $(-2)(4)$."
+            }
+          },
+          "explain": { "text": "The other two residues are $\\dfrac{24}{(2)(6)} = 2$ at $-2$ and $\\dfrac{24}{(-6)(-4)} = 1$ at $-8$. At $-4$ the residue is $-3$, and the three add to 0, as they must when $y(0) = 0$." }
+        },
+        {
+          "question": "Using the residues 2, $-3$ and 1 at the poles $-2$, $-4$ and $-8$, invert $Y$. Give $y(t)$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "2e^{-2t}-3e^{-4t}+e^{-8t}",
+            "keyboard": "algebra",
+            "accept": ["2e^(-2t)-3e^(-4t)+e^(-8t)"],
+            "wrong": [
+              { "id": "exp-sign", "tex": "2e^{2t}-3e^{4t}+e^{8t}" },
+              { "id": "carried-sign", "tex": "2e^{-2t}+3e^{-4t}+e^{-8t}" }
+            ],
+            "placeholder": "in t"
+          },
+          "feedback": {
+            "correct": "Each pole $p$ with residue $c$ gives $ce^{pt}$: $y = 2e^{-2t} - 3e^{-4t} + e^{-8t}$. Check: $y(0) = 2 - 3 + 1 = 0$ and $y'(0) = -4 + 12 - 8 = 0$.",
+            "generic": "Not quite. A term $\\dfrac{c}{s - p}$ inverts to $ce^{pt}$.",
+            "byKey": {
+              "exp-sign": "$\\dfrac{2}{s + 2}$ is $\\dfrac{2}{s - (-2)}$, which inverts to $2e^{-2t}$. The pole itself goes in the exponent.",
+              "carried-sign": "That takes $+3$ at $-4$. Then $y(0) = 6$, not 0: the residue at $-4$ is $-3$."
+            }
+          },
+          "explain": { "text": "With $u = e^{-2t}$ it reads $y = 2u - 3u^2 + u^4 = u(1 - u)^2(u + 2)$, never negative. The sensor moves out and settles back, with no overshoot past rest." }
+        },
+        {
+          "question": "Using $y = 2e^{-2t} - 3e^{-4t} + e^{-8t}$, find the largest displacement of the sensor, in cm. Put $u = e^{-2t}$, so $y = 2u - 3u^2 + u^4$ and $\\tfrac{dy}{du} = 2(u - 1)(2u^2 + 2u - 1)$. Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3481,
+            "tol": { "abs": 0.0005 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "u-value", "value": 0.366, "tol": { "abs": 0.0005 } },
+              { "id": "time", "value": 0.5025, "tol": { "abs": 0.0005 } },
+              { "id": "at-one", "value": 0.2161, "tol": { "abs": 0.0005 } }
+            ]
+          },
+          "feedback": {
+            "correct": "In $(0, 1)$, $\\tfrac{dy}{du} = 0$ needs $2u^2 + 2u - 1 = 0$, so $u = \\tfrac{\\sqrt3 - 1}{2} \\approx 0.3660$. Then $y = 2u - 3u^2 + u^4 = \\tfrac{6\\sqrt3 - 9}{4} \\approx 0.348$ cm.",
+            "generic": "Not quite. Solve $2u^2 + 2u - 1 = 0$ for the $u$ in $(0, 1)$, then put it into $y = 2u - 3u^2 + u^4$.",
+            "byKey": {
+              "u-value": "That is $u = e^{-2t}$ at the peak, about 0.366. Put it into $y = 2u - 3u^2 + u^4$ for the displacement.",
+              "time": "That is the time of the peak, $t = \\tfrac12\\ln(1 + \\sqrt3) \\approx 0.503$ s. The question asks for the displacement there.",
+              "at-one": "That is $y(1)$. The peak comes earlier, at $t \\approx 0.503$ s, where $y$ is larger."
+            }
+          },
+          "explain": { "text": "The root $u = 1$ is the start, $t = 0$, where $y = 0$. The other root in $(0, 1)$ is $u = \\tfrac{\\sqrt3 - 1}{2}$, at $t \\approx 0.503$ s, and there $y = \\tfrac{6\\sqrt3 - 9}{4} \\approx 0.348$ cm." }
+        }
+      ]
+    },
+    {
+      "id": "p-skydiver-check",
+      "difficulty": 5,
+      "skills": ["de-laplace", "de-numeric", "de-first"],
+      "prose": "A skydiver drops from rest out of a hovering balloon. With air drag proportional to speed, her speed $v$, in m/s, after $t$ seconds obeys $v' = 9.8 - 0.2v$ with $v(0) = 0$. We find $v(2)$ in closed form, then check two numerical methods against it.",
+      "parts": [
+        {
+          "question": "Transform the equation, with $V = \\mathcal{L}\\{v\\}$, and solve for $V(s)$. Give it as a function of $s$.",
+          "widget": {
+            "kind": "expression",
+            "answer": "\\frac{9.8}{s(s+0.2)}",
+            "keyboard": "algebra",
+            "accept": ["9.8/(s(s+0.2))", "\\frac{49}{s(5s+1)}"],
+            "wrong": [
+              { "id": "constant", "tex": "\\frac{9.8}{s+0.2}" },
+              { "id": "sign", "tex": "\\frac{9.8}{s(s-0.2)}" }
+            ],
+            "placeholder": "in s"
+          },
+          "feedback": {
+            "correct": "$sV - v(0) = \\dfrac{9.8}{s} - 0.2V$ with $v(0) = 0$, so $(s + 0.2)V = \\dfrac{9.8}{s}$ and $V = \\dfrac{9.8}{s(s + 0.2)}$.",
+            "generic": "Not quite. Transform $v'$ to $sV - v(0)$ and the constant 9.8 to $\\dfrac{9.8}{s}$, then collect $V$.",
+            "byKey": {
+              "constant": "The constant 9.8 is a function of $t$ too: its transform is $\\dfrac{9.8}{s}$, not 9.8.",
+              "sign": "The drag term $-0.2v$ moves across as $+0.2V$, so the factor is $s + 0.2$."
+            }
+          },
+          "explain": { "text": "The poles are $0$ and $-0.2$: a constant part and a part that dies away. The constant part is the terminal speed." }
+        },
+        {
+          "question": "Using $V = \\dfrac{9.8}{s(s + 0.2)}$, invert by partial fractions and find $v(2)$. Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 16.1543,
+            "tol": { "abs": 0.0001 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "no-divide", "value": 3.2309, "tol": { "abs": 0.0001 } },
+              { "id": "carried-constant", "value": 6.5691, "tol": { "abs": 0.0001 } },
+              { "id": "carried-sign", "value": 24.0994, "tol": { "abs": 0.0001 } }
+            ]
+          },
+          "feedback": {
+            "correct": "Cover-up gives $\\dfrac{9.8}{0.2} = 49$ at $s = 0$ and $\\dfrac{9.8}{-0.2} = -49$ at $s = -0.2$. So $v = 49(1 - e^{-0.2t})$ and $v(2) = 49(1 - e^{-0.4}) \\approx 16.1543$.",
+            "generic": "Not quite. Find the residues at $s = 0$ and $s = -0.2$ by cover-up, invert, then put $t = 2$.",
+            "byKey": {
+              "no-divide": "That is $9.8(1 - e^{-0.4})$. Cover-up divides 9.8 by the leftover factor 0.2, giving residues $\\pm 49$.",
+              "carried-constant": "That is $9.8e^{-0.4}$, from $V = \\dfrac{9.8}{s + 0.2}$. With $\\dfrac{9.8}{s}$ for the constant, $v = 49(1 - e^{-0.2t})$.",
+              "carried-sign": "That is $49(e^{0.4} - 1)$, from the factor $s - 0.2$, a speed that grows for ever. The drag makes it $s + 0.2$."
+            }
+          },
+          "explain": { "text": "$v = 49(1 - e^{-0.2t})$ climbs towards 49 m/s, the terminal speed. At $t = 2$, $e^{-0.4} = 0.670320$, so $v(2) = 49 \\times 0.329680 = 16.1543$." }
+        },
+        {
+          "question": "The closed form gives $v(2) = 16.1543$. Now take Euler's method with $h = 1$: two steps from $v = 0$. What does it give for $v(2)$? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 17.64,
+            "tol": { "abs": 0.005 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "same-slope", "value": 19.6, "tol": { "abs": 0.005 } }
+            ]
+          },
+          "feedback": {
+            "correct": "Step 1: slope $9.8$, so $v_1 = 9.8$. Step 2: slope $9.8 - 0.2 \\times 9.8 = 7.84$, so $v_2 = 9.8 + 7.84 = 17.64$.",
+            "generic": "Not quite. Each step adds $h$ times the slope $9.8 - 0.2v$ read at the start of that step.",
+            "byKey": {
+              "same-slope": "You used the starting slope 9.8 for both steps, as one step of $h = 2$ would. Read the slope again at $v_1 = 9.8$: it is 7.84."
+            }
+          },
+          "explain": { "text": "Euler reads each slope at the start of its step, when drag is smallest, so it overshoots. Its error here is $17.64 - 16.1543 = 1.4857$ m/s." }
+        },
+        {
+          "question": "Now take one RK4 step with $h = 2$ from $v = 0$, using $k_1 = f(v_0)$, $k_2 = f(v_0 + \\tfrac h2 k_1)$, $k_3 = f(v_0 + \\tfrac h2 k_2)$, $k_4 = f(v_0 + hk_3)$ with $f(v) = 9.8 - 0.2v$. What does it give for $v(2)$? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 16.1504,
+            "tol": { "abs": 0.0001 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "plain-mean", "value": 16.1896, "tol": { "abs": 0.0001 } },
+              { "id": "no-h", "value": 8.0752, "tol": { "abs": 0.0001 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$k_1 = 9.8$, $k_2 = f(9.8) = 7.84$, $k_3 = f(7.84) = 8.232$, $k_4 = f(16.464) = 6.5072$. Then $v_1 = \\tfrac26(9.8 + 2 \\times 7.84 + 2 \\times 8.232 + 6.5072) = \\tfrac13 \\times 48.4512 = 16.1504$.",
+            "generic": "Not quite. Find the four slopes in turn, then step by $\\tfrac h6(k_1 + 2k_2 + 2k_3 + k_4)$.",
+            "byKey": {
+              "plain-mean": "You took the plain mean of the four slopes. RK4 weights the middle two twice: $\\tfrac16(k_1 + 2k_2 + 2k_3 + k_4)$.",
+              "no-h": "You divided the weighted sum by 6 but did not multiply by $h = 2$."
+            }
+          },
+          "explain": { "text": "One RK4 step of 2 s gives 16.1504 against the true 16.1543, an error of about $0.0039$ m/s. Euler's two steps erred by 1.4857 with half as many slope readings." }
+        },
+        {
+          "question": "RK4 with one step errs by $0.0039$. RK4 is fourth order, so doubling the number of steps divides the error by about 16. Doubling $n$ from 1, what is the first $n$ predicted to match $v(2)$ to four decimal places, an error below $5 \\times 10^{-5}$? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4,
+            "tol": { "abs": 0 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "half-unit", "value": 2, "tol": { "abs": 0 } },
+              { "id": "first-order", "value": 128, "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "The predicted errors are $0.0039$ at $n = 1$, $0.0039/16 \\approx 0.00024$ at $n = 2$ and $0.0039/256 \\approx 0.000015$ at $n = 4$. The first below $0.00005$ is $n = 4$. Run for real, RK4 errs by 0.000207 at $n = 2$ and 0.0000119 at $n = 4$, which agree.",
+            "generic": "Not quite. Divide $0.0039$ by 16 for each doubling and stop at the first value below $0.00005$.",
+            "byKey": {
+              "half-unit": "At $n = 2$ the error is about $0.00024$, below $5 \\times 10^{-4}$ but not below $5 \\times 10^{-5}$. Four decimals needs one more doubling.",
+              "first-order": "That divides the error by 2 for each doubling, as for Euler. RK4 divides it by 16."
+            }
+          },
+          "explain": { "text": "With $n = 4$ steps the predicted error is $0.0039/256$, about $1.5 \\times 10^{-5}$, inside the band. The check should still run $n = 8$ and see the two answers agree." }
+        }
+      ]
+    },
+    {
+      "id": "p-dose-simulator",
+      "difficulty": 4,
+      "skills": ["de-numeric"],
+      "prose": "A clinic's simulator follows a tablet's drug from the gut into the blood. The amounts $g$ and $b$, in mg, after $t$ hours obey $g' = -6g$ and $b' = 6g - 0.5b$. The simulator steps both equations at once with equal steps over 24 hours, and every step must be stable.",
+      "parts": [
+        {
+          "question": "The system is $\\mathbf{x}' = \\mathbf{A}\\mathbf{x}$ with $\\mathbf{x} = (g, b)$. Find both eigenvalues of $\\mathbf{A}$. Give two numbers, separated by a comma, as exact decimals.",
+          "widget": {
+            "kind": "numeric",
+            "answers": [-6, -0.5],
+            "unordered": true,
+            "tol": { "abs": 0 },
+            "placeholder": "two numbers, comma between",
+            "wrong": [
+              { "id": "signs", "value": "6, 0.5", "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\mathbf{A} = \\begin{pmatrix}-6&0\\\\6&-0.5\\end{pmatrix}$ is triangular, so its eigenvalues are the diagonal entries, $-6$ and $-0.5$.",
+            "generic": "Not quite. Write $\\mathbf{A}$ row by row from the two equations. It is triangular, so read the diagonal.",
+            "byKey": {
+              "signs": "Both amounts decay, so both eigenvalues are negative: $-6$ and $-0.5$.",
+              "count": "A $2 \\times 2$ matrix has two eigenvalues: give both."
+            }
+          },
+          "explain": { "text": "The fast mode, $-6$, empties the gut within the first hour. The slow mode, $-0.5$, clears the blood over several hours." }
+        },
+        {
+          "question": "Using the eigenvalue $-6$ from part 1, Euler multiplies that mode by $1 + h\\lambda$ each step. What is the factor for $h = 0.5$? Give its exact value.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -2,
+            "tol": { "abs": 0 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "abs", "value": 2, "tol": { "abs": 0 } },
+              { "id": "slow-mode", "value": 0.75, "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$1 + 0.5 \\times (-6) = 1 - 3 = -2$. The gut amount flips sign and doubles in size every step.",
+            "generic": "Not quite. Put $h = 0.5$ and $\\lambda = -6$ into $1 + h\\lambda$.",
+            "byKey": {
+              "abs": "The size is 2, but the sign matters: $1 - 3 = -2$, so the simulated gut amount swings negative.",
+              "slow-mode": "That is the factor for the slow mode, $1 + 0.5 \\times (-0.5)$. The fast mode, $-6$, sets the limit."
+            }
+          },
+          "explain": { "text": "A factor of $-2$ makes the simulated gut amount swing between signs and grow, though the true amount decays. Half-hour Euler steps are useless here." }
+        },
+        {
+          "question": "Using $\\lambda = -6$, Euler is stable when $|1 + h\\lambda| < 1$. Below what step $h$, in hours, is it stable? Give an exact fraction or a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3333,
+            "tol": { "abs": 0.0001 },
+            "placeholder": "fraction or decimal",
+            "accept": "1/3, or 0.3333",
+            "wrong": [
+              { "id": "slow-mode", "value": 4, "tol": { "abs": 0 } },
+              { "id": "no-two", "value": 0.1667, "tol": { "abs": 0.0001 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$|1 - 6h| < 1$ means $0 < 6h < 2$, so $h < \\tfrac{2}{6} = \\tfrac13 \\approx 0.3333$ hours, 20 minutes.",
+            "generic": "Not quite. Solve $|1 - 6h| < 1$: the step needs $6h < 2$.",
+            "byKey": {
+              "slow-mode": "That is $2/0.5$, the limit for the slow mode alone. Every mode must be stable, so the fast mode decides.",
+              "no-two": "That solves $6h < 1$. The factor $1 - 6h$ may go down to $-1$, so the condition is $6h < 2$."
+            }
+          },
+          "explain": { "text": "The limit is $h < 2/6 = \\tfrac13$ hour, 20 minutes, set by the gut's fast mode. The slow mode alone would allow 4 hours." }
+        },
+        {
+          "question": "For a real negative $\\lambda$, RK4 on $y' = \\lambda y$ is stable when $h|\\lambda| < 2.7853$. Using $\\lambda = -6$, below what step $h$, in hours, is RK4 stable? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.4642,
+            "tol": { "abs": 0.0001 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "slow-mode", "value": 5.5706, "tol": { "abs": 0.0001 } },
+              { "id": "euler", "value": 0.3333, "tol": { "abs": 0.0001 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$h < \\dfrac{2.7853}{6} \\approx 0.4642$ hours, about 28 minutes.",
+            "generic": "Not quite. Divide RK4's limit 2.7853 by $|\\lambda| = 6$.",
+            "byKey": {
+              "slow-mode": "That is $2.7853/0.5$, the slow mode's limit. The fast mode, 6, decides.",
+              "euler": "That is Euler's limit, $2/6$. RK4's region reaches 2.7853, a little further."
+            }
+          },
+          "explain": { "text": "RK4 allows $2.7853/6 = 0.4642$ hours, against Euler's $\\tfrac13$. The gain is under 40%, though each RK4 step costs four slope readings." }
+        },
+        {
+          "question": "Using the limits $h < \\tfrac13$ for Euler and $h < 0.4642$ for RK4, with equal steps over 24 hours: Euler reads one slope a step, RK4 four. How many slope readings does the cheaper stable run need? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 73,
+            "tol": { "abs": 0 },
+            "placeholder": "a number",
+            "wrong": [
+              { "id": "rk4", "value": 208, "tol": { "abs": 0 } },
+              { "id": "edge", "value": 72, "tol": { "abs": 0 } },
+              { "id": "rk4-steps", "value": 52, "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "Euler needs $24/n < \\tfrac13$, so $n > 72$: 73 steps and 73 readings. RK4 needs $24/n < 0.4642$, so $n > 51.7$: 52 steps and 208 readings. Euler's 73 is cheaper.",
+            "generic": "Not quite. For each method find the fewest $n$ with $24/n$ below its limit, then count readings: $n$ for Euler, $4n$ for RK4.",
+            "byKey": {
+              "rk4": "That is RK4's cost, $4 \\times 52$. Euler's stable run needs only 73 readings.",
+              "edge": "At $n = 72$ the step is exactly $\\tfrac13$, where $|1 - 6h| = 1$: not stable. The limit is strict, so 73.",
+              "rk4-steps": "52 is RK4's fewest steps, but each step reads four slopes, 208 in all."
+            }
+          },
+          "explain": { "text": "Euler's stable run needs 73 slope readings and RK4's needs 208, so Euler is cheaper when stability alone decides. RK4 earns its cost when the run must also be accurate." }
+        }
+      ]
+    }
+  ]
+}

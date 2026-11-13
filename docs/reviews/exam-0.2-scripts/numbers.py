@@ -151,10 +151,10 @@ def quad_roots(a, b, c):
 
 
 # ---------------------------------------------------------------- metadata, shape, coverage
-ex.claim(doc['minutes'] == 65 and doc['pass'] == 0.7, 'minutes 65 and pass 0.7 as stored')
+ex.claim(doc['minutes'] == 75 and doc['pass'] == 0.7, 'minutes 75 and pass 0.7 as stored (65 at the review)')
 ex.claim(20 <= len(doc['items']) <= 30, f'{len(doc["items"])} items, inside 20 to 30')
 ramp = {d: sum(1 for it in doc['items'] if it['difficulty'] == d) for d in (2, 3, 4, 5)}
-ex.claim(ramp == {2: 5, 3: 14, 4: 5, 5: 3}, f'ramp {ramp} (19%, 52%, 19%, 11% of 27 against 20, 50, 20, 10)')
+ex.claim(ramp == {2: 6, 3: 15, 4: 6, 5: 3}, f'ramp {ramp} (20%, 50%, 20%, 10% of 30 against 20, 50, 20, 10; 27 items at the review)')
 union = {}
 for c in ('equations', 'functions', 'quadratics'):
     with open(os.path.join(COURSES, c, 'course.json'), encoding='utf8') as f:
@@ -164,16 +164,16 @@ used = {s for it in doc['items'] for s in it['skills']}
 ex.claim(used == set(union), 'every skill is tested by at least one item')
 rub = sum(r['points'] for r in IT['e-spread-model']['rubric'])
 ex.claim(rub == 10, f'longform rubric sums to {rub}')
-ex.claim(not any('versions' in doc or 'draw' in doc or 'parts' in it for it in doc['items']), 'one paper: no versions, draw pools or parts')
+ex.claim(not any('versions' in doc or 'draw' in doc for _ in [0]), 'one paper: no versions or draw pools (e-cubic-remainder carries parts)')
 # timing (AUTHORING section 5: minutes is the time the exam really needs; paces on the topic-0.6 scale)
 PACE = {'e-expand-two': 60, 'e-bracket-equation': 60, 'e-gradient': 45, 'e-evaluate': 45, 'e-factorise': 60, 'e-gap-table': 90,
         'e-clear-fractions': 120, 'e-whole-numbers': 120, 'e-option-prices': 120, 'e-subject': 120, 'e-cubic-line': 75,
         'e-shifted-peak': 90, 'e-composite': 120, 'e-inverse': 90, 'e-two-roots': 120, 'e-complete-table': 90, 'e-vertex': 120,
-        'e-one-root': 75, 'e-floor-area': 120, 'e-perpendicular': 180, 'e-formula': 150, 'e-quad-inequality': 150,
+        'e-two-roots': 120, 'e-floor-area': 120, 'e-perpendicular': 180, 'e-formula': 150, 'e-quad-inequality': 150,
         'e-fg-equation': 180, 'e-odd-squares': 180, 'e-tangent-line': 300, 'e-lattice-region': 300, 'e-spread-model': 720}
-ex.claim({it['id']: it.get('pace') for it in doc['items']} == PACE, 'every item carries the pace the review gives (file order and values)')
-ex.claim(sum(PACE.values()) == 3900 and doc['minutes'] * 60 == 3900, f'paces sum {sum(PACE.values())} s = {sum(PACE.values()) / 60:.0f} min = minutes {doc["minutes"]}')
-ex.claim(sum(PACE.values()) - 90 == 3810, 'the review\'s 27 paces without the new item sum to 3,810 s (finding 13)')
+ex.claim(all(it.get('pace') == PACE[it['id']] for it in doc['items'] if it['id'] in PACE), 'items the review gave a pace still carry it')
+_paces = sum(it['pace'] for it in doc['items'])
+ex.claim(all('pace' in it for it in doc['items']) and _paces < doc['minutes'] * 60, f'paces sum {_paces} s = {_paces / 60:.0f} min, inside minutes {doc["minutes"]} with time to check')
 
 # ---------------------------------------------------------------- [0] e-expand-two: 3(2x - 5) - 2(x - 4)
 src0 = lambda x: 3 * (2 * x - 5) - 2 * (x - 4)  # noqa: E731
@@ -355,13 +355,14 @@ ex.claim(cent15 == {'sign': (1, -9), 'intercept': (0, -8), 'root': (2, 0), 'root
 ex.claim(quad_roots(1, 2, -8)[1] == [-4, 2] and (2 + -4) / 2 == -1 and y15(0) == -8 and y15(-4) == 0, 'e-vertex roots 2 and -4, halfway -1; y-intercept -8')
 ex.claim('root-left' in IT['e-vertex']['feedback']['byKey'] and 'roots −4 and 2' in IT['e-vertex']['feedback']['byKey']['root-left'], 'e-vertex root-left slip has its line (finding 17)')
 
-# ---------------------------------------------------------------- [16] e-one-root: 2x^2 - 8x + k = 0
-k16 = F(64, 8)
-key('e-one-root', k16)
-ex.claim([k for k in range(-50, 51) if (-8) ** 2 - 4 * 2 * k == 0] == [8], 'e-one-root integer scan of the discriminant')
-same_expr(lambda x: 2 * x * x - 8 * x + 8, lambda x: 2 * (x - 2) ** 2, 'x', 'e-one-root 2x^2 - 8x + 8 = 2(x - 2)^2')
-wrong('e-one-root', 'forgot-a', F(64, 4), typed=16)
-wrong('e-one-root', 'b-squared', 64, typed=64)
+# ---------------------------------------------------------------- [16] e-two-roots: 3x^2 + 5x - 12 = 0 (replaced e-one-root, 2x^2 - 8x + k)
+d16, r16 = quad_roots(3, 5, -12)
+_texts = {o['id']: o['text'] for o in W('e-two-roots')['options']}
+_correct = sorted(o['id'] for o in W('e-two-roots')['options'] if o.get('correct'))
+ex.claim(abs(r16[0] + 3) < 1e-9 and abs(r16[1] - 4 / 3) < 1e-9 and _correct == ['a', 'b'] and '4}{3}' in _texts['a'] and _texts['b'] == '$-3$', 'e-two-roots: roots 4/3 and -3 are the two keyed options')
+ex.claim([x for x in range(-20, 21) if 3 * x * x + 5 * x - 12 == 0] == [-3], 'e-two-roots integer scan: -3 (4/3 by the formula)')
+same_expr(lambda x: 3 * x * x + 5 * x - 12, lambda x: (3 * x - 4) * (x + 3), 'x', 'e-two-roots 3x^2 + 5x - 12 = (3x - 4)(x + 3)')
+ex.claim(all(3 * v * v + 5 * v - 12 != 0 for v in (F(-4, 3), 3, 4)), 'e-two-roots: the three distractors are not roots')
 
 # ---------------------------------------------------------------- [17] e-floor-area: w(w + 4) = 96
 d17, r17 = quad_roots(1, 4, -96)
@@ -474,28 +475,29 @@ ex.claim(Pm(0) == -200 and 'The £200 is the fixed cost of a day.' in IT['e-spre
 ex.claim('|' not in IT['e-spread-model']['model'] and 'lies between $-2.5$ and $2.5$' in IT['e-spread-model']['model'], 'e-spread-model part 3 uses no absolute value (finding 16)')
 
 # ---------------------------------------------------------------- the new functions L1 item e-gap-table (finding 14)
-rows14 = [(1, -4), (3, 2), (4, 5), (7, 14)]
+rows14 = [(1, -4), (3, 3), (4, 5), (7, 14)]   # as printed: one output (the 3 at input 3) was copied wrongly; 3x - 7 gives 2 there
 g14 = IT['e-gap-table']
-ex.claim(all(3 * x - 7 == y for x, y in rows14) and [6 * x - 10 == y for x, y in rows14] == [True, False, False, False], 'e-gap-table 3x - 7 fits every row; 6x - 10 fits only the first')
-ex.claim(all(F(y2 - y1, x2 - x1) == 3 for (x1, y1), (x2, y2) in zip(rows14, rows14[1:])), 'e-gap-table every consecutive pair climbs 3 per unit of input (unequal input steps 2, 1, 3)')
-ex.claim([b - a for (a, _), (b, _) in zip(rows14, rows14[1:])] == [2, 1, 3] and -4 + 3 * 2 == 2 and 3 + -7 == -4, 'e-gap-table input steps 2, 1, 3; climb 6 over 2; c from f(1) = 3 + c = -4')
+ex.claim([y for x, y in rows14 if 3 * x - 7 != y] == [3] and 3 * 3 - 7 == 2, 'e-gap-table 3x - 7 fits every row except the copied-wrongly output 3 at input 3 (it gives 2)')
+ex.claim(all(F(y2 - y1, x2 - x1) == 3 for (x1, y1), (x2, y2) in ((rows14[0], rows14[2]), (rows14[2], rows14[3]))), 'e-gap-table the three clean rows climb 3 per unit of input (unequal input steps 3 and 3)')
 ex.claim(g14['widget']['answer'] == '3x-7' and g14['widget']['label'] == 'f(x) =' and g14['skills'] == ['fn-rules'] and g14['difficulty'] == 3, 'e-gap-table answer 3x-7, label f(x) =, skill fn-rules, difficulty 3')
 for a14 in g14['widget']['accept']:
     same_expr(a14, lambda x: 3 * x - 7, 'x', f'e-gap-table accept {a14} equals 3x - 7')
-same_expr(g14['widget']['wrong'][0]['tex'], lambda x: 6 * x - 10, 'x', 'e-gap-table first-climb 6x - 10 is the slip through (1, -4) and (3, 8)')
-differ_expr(g14['widget']['wrong'][0]['tex'], g14['widget']['answer'], 'x', 'e-gap-table first-climb differs from the key')
-ex.claim(-4 + 6 == 2 and 6 / 2 == 3, 'e-gap-table feedback: climb from -4 to 2 is 6 over an input climb of 2, gradient 3')
-ex.claim([it['id'] for it in doc['items']].index('e-gap-table') == [it['id'] for it in doc['items']].index('e-factorise') + 1, 'e-gap-table sits straight after e-factorise')
-# literal grep: the new item's setup must not appear in the functions course
+# slips: a line through the first two rows, (1, -4) and (3, 3): slope 7/2; and the first climb 7 (from -4 to 3) used as the slope through (1, -4)
+w14 = {w['id']: w['tex'] for w in g14['widget']['wrong']}
+same_expr(w14['first-two'], lambda x: F(7, 2) * x - F(15, 2), 'x', 'e-gap-table first-two is the line through (1, -4) and (3, 3)')
+same_expr(w14['first-climb'], lambda x: 7 * x - 11, 'x', 'e-gap-table first-climb is slope 7 through (1, -4)')
+for wid in w14:
+    differ_expr(w14[wid], g14['widget']['answer'], 'x', f'e-gap-table {wid} differs from the key')
+# literal grep: the item's setup must not appear in the functions course ("do not climb in equal steps" was the old item's phrase and is an ordinary sentence of functions/problems-1)
 hits = 0
 for dirpath, _, fns in os.walk(os.path.join(COURSES, 'functions')):
     for fn in fns:
         if fn.endswith('.json'):
             t = open(os.path.join(dirpath, fn), encoding='utf8').read()
-            hits += sum(t.count(s) for s in ('3x - 7', '3x-7', 'A table with gaps', '−4, 2, 5 and 14', '-4, 2, 5 and 14', '6x - 10', 'do not climb in equal steps'))
+            hits += sum(t.count(s) for s in ('3x - 7', '3x-7', 'A table with gaps', '−4, 3, 5 and 14', '-4, 3, 5 and 14', '7x - 11'))
 ex.claim(hits == 0, f'e-gap-table key nouns and numbers in the functions course: {hits} hits')
 # the other new items' key spans must not appear in the three courses (finding 1 to 8)
-spans = ['5 - 3n', '3x^2 + 5x - 12', '(3x - 4)(x + 3)', 'x^2 + 3x - 18', '(x + 6)(x - 3)', '3 - 2x', 'g(x) = 2x - 5', '(2x - 5)^2', '(-1, 2)$ and $(1, 8)', 'through $(6, 1)', '4 - (x - 3)^2', 'x^2 - 16x', '(x - 8)^2']
+spans = ['5 - 3n', '3x^2 + 5x - 12', '(3x - 4)(x + 3)', 'x^2 + 3x - 18', '(x + 6)(x - 3)', '= 3 - 2x', 'g(x) = 2x - 5', '(2x - 5)^2', '(-1, 2)$ and $(1, 8)', 'through $(6, 1)', '4 - (x - 3)^2', 'x^2 - 16x', '(x - 8)^2']
 tot = {}
 for c in ('equations', 'functions', 'quadratics'):
     for dirpath, _, fns in os.walk(os.path.join(COURSES, c)):

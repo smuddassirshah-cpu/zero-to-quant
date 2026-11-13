@@ -1,4 +1,4 @@
-"""Recompute every stated number in linear-maps problems-1 to problems-3.
+"""Recompute every stated number in linear-maps problems-1 to problems-4.
 
 Each answer is found twice: exactly (sympy) and by a second, independent
 route (numpy least squares, direct substitution, or brute-force search).
@@ -311,6 +311,163 @@ vcheck("FP-8 key", list(_Pm * _Ti * sp.Matrix([7, 2])), [3, 4])
 vcheck("FP-11 carried-three", [5 * 11 + 2, 4 * 11 + 2], [57, 46]); vcheck("FP-11 key", [5 * 11 + 12, 4 * 11 + 12], [67, 56])
 _pp = sp.symbols("tt"); _p0 = 3 * _pp - 1 + 2 * (_pp - 2) ** 2
 check("FP-6 deg<=2 line: p(0)=7 gives lambda 2", _p0.subs(_pp, 0), 7)
+
+# ---------------------------------------------------------------- level 4
+# problems-4: route 1 exact (sympy, complex where needed), route 2 numpy.
+I_ = sp.I
+
+
+def ccheck(name, a, b):
+    """Exact equality of sympy (possibly complex) vectors or scalars."""
+    a = sp.Matrix(a) if isinstance(a, (list, tuple)) else a
+    b = sp.Matrix(b) if isinstance(b, (list, tuple)) else b
+    ok = sp.simplify(a - b) == (sp.zeros(*a.shape) if hasattr(a, "shape") else 0)
+    if not ok:
+        fails.append(name)
+    print(("ok  " if ok else "FAIL"), name, a, b)
+
+
+def cdiffers(name, key, wrongs):
+    for w in wrongs:
+        if sp.simplify(sp.Matrix(key) - sp.Matrix(w)) == sp.zeros(len(key), 1):
+            fails.append(name + " wrong==key " + str(w))
+    print("ok   wrongs differ:", name)
+
+
+# p-footbridge-modes
+S4 = sp.Matrix([[6, 2 + I_], [2 - I_, 2]])
+ccheck("L4 S self-adjoint", S4.H, S4)
+v4 = sp.Matrix([1, 0])
+Sv = S4 * v4; S2v = S4 * Sv
+ccheck("L4 Sv", Sv, [6, 2 - I_]); ccheck("L4 S^2 v", S2v, [41, 16 - 8 * I_])
+aa, bb = sp.symbols("aa bb")
+sol4 = sp.solve(list(S2v - aa * Sv - bb * v4), [aa, bb], dict=True)[0]
+ccheck("L4 (a,b) exact", [sol4[aa], sol4[bb]], [8, -7])
+Sn = np.array([[6, 2 + 1j], [2 - 1j, 2]]); vn = np.array([1, 0])
+abn = np.linalg.lstsq(np.column_stack([Sn @ vn, vn]), Sn @ Sn @ vn, rcond=None)[0]
+vcheck("L4 (a,b) numpy lstsq", abn.real, [8, -7]); check("L4 (a,b) imag 0", np.abs(abn.imag).max(), 0, 1e-12)
+# slips: (2+i)(2-i) taken as 3 -> first entry 39 -> b = 39 - 48; sign slip b = +7
+vcheck("L4 slip i-squared", [8, 39 - 48], [8, -9]); cdiffers("L4 part1", [8, -7], [[8, -9], [8, 7]])
+zz = sp.symbols("zz")
+roots4 = sorted(sp.solve(zz**2 - 8 * zz + 7, zz))
+vcheck("L4 roots exact", roots4, [1, 7]); vcheck("L4 eigvals numpy", sorted(np.linalg.eigvalsh(Sn)), [1, 7])
+vcheck("L4 roots of z^2+8z+7 (signs slip)", sorted(sp.solve(zz**2 + 8 * zz + 7, zz)), [-7, -1])
+w4 = (S4 - sp.eye(2)) * v4
+ccheck("L4 w = (S-I)v", w4, [5, 2 - I_]); ccheck("L4 S w = 7 w", S4 * w4, 7 * w4)
+ccheck("L4 (S-7I)(S-I)v = 0", (S4 - 7 * sp.eye(2)) * w4, [0, 0])
+ccheck("L4 slip other-factor (S-7I)v", (S4 - 7 * sp.eye(2)) * v4, [-1, 2 - I_])
+ccheck("L4 slip plus (S+I)v", (S4 + sp.eye(2)) * v4, [7, 2 - I_])
+cdiffers("L4 part3", [5, 2 - I_], [[-1, 2 - I_], [7, 2 - I_]])
+u1 = sp.symbols("u1")
+ipc = lambda p, q: sum(pi * sp.conjugate(qi) for pi, qi in zip(p, q))
+u4 = sp.Matrix([sp.solve(ipc([u1, 5], list(w4)), u1)[0], 5])
+ccheck("L4 u perpendicular, second entry 5", u4, [-2 - I_, 5]); ccheck("L4 S u = u", S4 * u4, u4)
+null1 = (S4 - sp.eye(2)).nullspace()[0]; null1 = null1 * 5 / null1[1]
+ccheck("L4 u by kernel of S - I (route 2)", null1, u4)
+u_nc = sp.Matrix([sp.solve(u1 * w4[0] + 5 * w4[1], u1)[0], 5])
+ccheck("L4 slip no-conjugate", u_nc, [-2 + I_, 5]); check("L4 slip no-conjugate is not eigen", int((S4 * u_nc - u_nc).norm() == 0), 0)
+cdiffers("L4 part4", [-2 - I_, 5], [[-2 + I_, 5], [2 + I_, 5]])
+nw2 = sp.simplify(ipc(list(w4), list(w4))); nu2 = sp.simplify(ipc(list(u4), list(u4)))
+check("L4 |w|^2", nw2, 30); check("L4 |u|^2", nu2, 30)
+frac = sp.Rational(7) * sp.Abs(w4[0])**2 / nw2 / S4[0, 0]
+check("L4 fraction exact 35/36", frac, sp.Rational(35, 36))
+vals, vecs = np.linalg.eigh(Sn)
+check("L4 fraction numpy eigh", vals[1] * abs(vecs[0, 1])**2 / Sn[0, 0].real, 35 / 36)
+check("L4 decomposition S11", 7 * sp.Rational(25, 30) + 1 * sp.Abs(u4[0])**2 / nu2, 6)
+check("L4 key band takes 0.972", int(abs(0.972 - 0.9722) <= 0.0005 and abs(35 / 36 - 0.9722) <= 0.0005), 1)
+for nm, wv, true in [("weight", 0.833, 5 / 6), ("trace-share", 0.875, 7 / 8), ("power", 5.833, 35 / 6)]:
+    check("L4 slip " + nm + " band holds its slip", int(abs(wv - true) <= 0.001), 1)
+    check("L4 slip " + nm + " outside key band", int(abs(wv - 0.9722) > 0.0005 + 0.001), 1)
+
+# p-spring-linkage
+K4 = sp.Matrix([[4, -2, 2], [-2, 5, 0], [2, 0, 3]])
+ccheck("L4 K symmetric", K4.T, K4)
+qa, qb, qc = sp.Matrix([1, 2, 2]), sp.Matrix([2, 1, -2]), sp.Matrix([2, -2, 1])
+ccheck("L4 K a = 4a", K4 * qa, 4 * qa); ccheck("L4 K b = b", K4 * qb, qb); ccheck("L4 K c = 7c", K4 * qc, 7 * qc)
+Kn = np.array(K4.tolist(), dtype=float)
+vcheck("L4 K eigenvalues numpy", np.linalg.eigvalsh(Kn), [1, 4, 7])
+nb = (K4 - sp.eye(3)).nullspace(); check("L4 dim ker(K-I) = 1", len(nb), 1)
+ccheck("L4 eigvec for 1, first entry 2", nb[0] * 2 / nb[0][0], qb)
+vcheck("L4 slip entry K(1,2,2)[1]", [(K4 * qa)[1]], [8]); check("L4 trace", K4.trace(), 12)
+ccheck("L4 K(2,-1,0)", K4 * sp.Matrix([2, -1, 0]), [10, -9, 4]); check("L4 (2,-1,0) in plane", qa.dot(sp.Matrix([2, -1, 0])), 0)
+cdiffers("L4 spring part2", [2, 1, -2], [[2, -1, 0], [2, -1, -2]])
+cr = qa.cross(qb); ccheck("L4 cross product", cr, [-6, 6, -3]); ccheck("L4 third eigvec scaled", cr * 2 / cr[0], qc)
+check("L4 (1,2,2).(2,2,1)", qa.dot(sp.Matrix([2, 2, 1])), 8)
+cdiffers("L4 spring part3", [2, -2, 1], [[2, 2, 1], [-6, 6, -3]])
+ccheck("L4 K(2,-2,1)", K4 * qc, [14, -14, 7]); check("L4 trace route", 12 - 4 - 1, 7)
+F4 = sp.Matrix([28, 0, 0])
+x_sp = sum([((F4.dot(q / 3)) / lam) * (q / 3) for q, lam in [(qa, 4), (qb, 1), (qc, 7)]], sp.zeros(3, 1))
+ccheck("L4 x spectral sum", x_sp, [15, 6, -10]); ccheck("L4 x = K^-1 F (route 2)", K4.LUsolve(F4), [15, 6, -10])
+vcheck("L4 x numpy solve", np.linalg.solve(Kn, [28, 0, 0]), [15, 6, -10])
+vcheck("L4 coefficients <F,q_i>", [F4.dot(q / 3) for q in (qa, qb, qc)], [F(28, 3), F(56, 3), F(56, 3)])
+ccheck("L4 slip times = K F", K4 * F4, [112, -56, 56])
+ccheck("L4 slip unit (no 1/3)", sum([((F4.dot(q)) / lam) * q for q, lam in [(qa, 4), (qb, 1), (qc, 7)]], sp.zeros(3, 1)), [135, 54, -90])
+ccheck("L4 explain K x", K4 * sp.Matrix([15, 6, -10]), [28, 0, 0])
+cdiffers("L4 spring part5", [15, 6, -10], [[112, -56, 56], [135, 54, -90]])
+
+# p-curvature-operator: T p = p + p'' on P_3, basis (1, x, x^2, x^3)
+basis4 = [sp.Integer(1), x, x**2, x**3]
+Tp4 = lambda p: sp.expand(p + sp.diff(p, x, 2))
+coords = lambda p: [sp.Poly(p, x).coeff_monomial(x**k) for k in range(4)]
+MT4 = sp.Matrix([coords(Tp4(b)) for b in basis4]).T
+vcheck("L4 coords T(x^3)", coords(Tp4(x**3)), [0, 6, 0, 1])
+vcheck("L4 slip one-derivative", coords(sp.expand(x**3 + sp.diff(x**3, x))), [0, 0, 3, 1])
+cdiffers("L4 curv part1", [0, 6, 0, 1], [[0, 0, 3, 1], [0, 3, 0, 1]])
+N4 = MT4 - sp.eye(4)
+d1, d2, d3 = [4 - (N4**k).rank() for k in (1, 2, 3)]
+vcheck("L4 (d1, d2) exact", [d1, d2], [2, 4]); check("L4 d3", d3, 4)
+Nn = np.array(N4.tolist(), dtype=float)
+vcheck("L4 (d1, d2) numpy", [4 - np.linalg.matrix_rank(np.linalg.matrix_power(Nn, k)) for k in (1, 2)], [2, 4])
+check("L4 dim ker by hand: p''=0 iff p in span(1,x)", len([b for b in basis4 if sp.diff(b, x, 2) == 0]), 2)
+cdiffers("L4 curv part2", [2, 4], [[1, 2], [4, 4]])
+dd = [0, d1, d2, d3]; atleast = [dd[k] - dd[k - 1] for k in (1, 2, 3)]
+sizes = sorted([k for k in (1, 2, 3) for _ in range(atleast[k - 1] - (atleast[k] if k < 3 else 0))])
+vcheck("L4 block sizes", sizes, [2, 2])
+J4 = sp.Matrix(sp.BlockDiagMatrix(sp.Matrix([[1, 1], [0, 1]]), sp.Matrix([[1, 1], [0, 1]])))
+Pj, Jj = MT4.jordan_form(); ccheck("L4 sympy jordan_form", Jj, J4)
+# J_3(1)+J_1(1): d = (2, 3), so the slip 3,1 is refused by d2 = 4
+J31 = sp.Matrix(sp.BlockDiagMatrix(sp.Matrix([[1, 1, 0], [0, 1, 1], [0, 0, 1]]), sp.Matrix([[1]])))
+vcheck("L4 slip three-one has d=(2,3)", [4 - (J31 - sp.eye(4)).rank(), 4 - ((J31 - sp.eye(4))**2).rank()], [2, 3])
+vcheck("L4 (alg, geom)", [sum(sizes), len(sizes)], [4, 2])
+check("L4 char poly", sp.expand(MT4.charpoly(zz).as_expr() - (zz - 1)**4), 0)
+Pc = sp.Matrix([coords(6 * x), coords(x**3), coords(sp.Integer(2)), coords(x**2)]).T
+ccheck("L4 chain basis (6x, x^3, 2, x^2) gives J", Pc.inv() * MT4 * Pc, J4)
+tt = sp.symbols("tt", integer=True, positive=True)
+pw = sp.expand(x**3 + tt * 6 * x)
+for tv in range(1, 7):
+    p_ = x**3
+    for _ in range(tv):
+        p_ = Tp4(p_)
+    check(f"L4 T^{tv}(x^3) by repeated T", sp.expand(p_ - pw.subs(tt, tv)), 0)
+    vcheck(f"L4 T^{tv} by matrix power", list((MT4**tv) * sp.Matrix([0, 0, 0, 1])), [0, 6 * tv, 0, 1])
+check("L4 slip no-t differs at t=2", int(sp.expand((x**3 + 6 * x) - pw.subs(tt, 2)) != 0), 1)
+check("L4 slip power differs at t=2", int(sp.expand((x**3 + 6**2 * x) - pw.subs(tt, 2)) != 0), 1)
+
+# keys stored in problems-4.json read back
+d4 = json.load(open(os.path.join(CDIR, "problems-4.json")))
+want4 = {
+    "p-footbridge-modes": [[8, -7], [1, 7], [5, 2 - I_], [-2 - I_, 5], 35 / 36],
+    "p-spring-linkage": [4, [2, 1, -2], [2, -2, 1], 7, [15, 6, -10]],
+    "p-curvature-operator": [[0, 6, 0, 1], [2, 4], [2, 2], [4, 2], pw],
+}
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+TR = standard_transformations + (implicit_multiplication_application,)
+for it in d4["items"]:
+    for k, (part, want) in enumerate(zip(it["parts"], want4[it["id"]]), 1):
+        wd = part["widget"]; name = f"key problems-4 {it['id']} part {k}"
+        if "answers" in wd:
+            vcheck(name, sorted(wd["answers"]), sorted(want))
+        elif isinstance(wd["answer"], (int, float)):
+            check(name, wd["answer"], want, wd["tol"]["abs"] + 1e-12)
+        else:
+            s_ = wd["answer"].strip()
+            if s_.startswith("("):
+                ents = [parse_expr(e.replace("i", "I"), transformations=TR) for e in s_[1:-1].split(",")]
+                ccheck(name, ents, want)
+            else:
+                got = parse_expr(s_.replace("^", "**").replace("6tx", "6*tt*x"), local_dict={"x": x, "tt": tt}, transformations=TR)
+                check(name, sp.expand(got - want), 0)
+check("L4 every part keyed", sum(len(i["parts"]) for i in d4["items"]), 15)
 
 print("\n%d failures" % len(fails))
 for f_ in fails:

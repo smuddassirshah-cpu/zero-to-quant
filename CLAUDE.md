@@ -10,6 +10,7 @@
 - Validate content (run from `app/`): `node tools/validate.mjs 2>&1 | tail -5` (0 errors required; it rewrites `content/manifest.json`).
 - Play through (run from `app/`): `node tools/playthrough.mjs --lesson <course>/<id> | --set <course>/<id> | --exam <id> | --all [--changed] [--mobile] [--why] [--local-cdn <pkgs>] 2>&1 | tail -30`. `--changed` replays only items whose content or engine hash differs from the last green run.
 - Grading without a browser (run from `app/`): `node tools/grade-all.mjs [--file <path>] --local-cdn <pkgs>`. Validator tests run on `tools/fixtures/mini-app` and take under five minutes together.
+- Number scripts (run from `app/`): `node tools/run-number-scripts.mjs [--only <paths>] [--changed]` with the venv Python; CI job `number-scripts` runs them all. Reuse: `node tools/fresh-check.mjs --file <path>` (same-course mode on problem sets; waivers in `tools/same-course-waivers.json`).
 - CI: `.github/workflows/acceptance.yml` runs the full acceptance on every push; see `docs/CI.md`.
 - Progress count: see the Python snippet in `PROGRESS.md` history or count `l*.json` against `course.json` maps.
 

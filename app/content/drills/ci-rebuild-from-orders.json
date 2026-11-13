@@ -114,12 +114,16 @@
     },
     {
       "code": "def rebuild(pre, ino):\n    if not pre:\n        return None\n    root = pre[0]\n    i = ino.index(root)\n    return (root, rebuild(pre[1:i], ino[:i]), rebuild(pre[i:], ino[i + 1:]))\n",
-      "slip": "The left part's slice of `pre` is one id short, so its last id lands in the right part.",
-      "nearMiss": true
+      "slip": "The left part's slice of `pre` is one id short, so its last id lands in the right part."
     },
     {
       "code": "def rebuild(pre, ino):\n    tree = None\n\n    def insert(node, v):\n        if node is None:\n            return (v, None, None)\n        if v < node[0]:\n            return (node[0], insert(node[1], v), node[2])\n        return (node[0], node[1], insert(node[2], v))\n    for v in pre:\n        tree = insert(tree, v)\n    return tree\n",
       "slip": "Inserting `pre` into a search tree ignores `ino`, so it only works when the ids happen to be in search order."
+    },
+    {
+      "code": "def rebuild(pre, ino):\n    pos = 0\n    def build(lo, hi):\n        nonlocal pos\n        if lo >= hi:\n            return None\n        root = pre[pos]\n        pos += 1\n        mid = ino.index(root)\n        left = build(lo, mid)\n        right = build(mid + 1, hi)\n        return (root, left, right)\n    return build(0, len(ino))\n",
+      "slip": "Searching the whole of ino for each root is right but takes $O(n)$ a node, far too slow for 100,000 ids.",
+      "nearMiss": true
     }
   ]
 }

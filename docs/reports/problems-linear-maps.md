@@ -1,4 +1,4 @@
-# Problem sets: linear-maps, levels 1 to 3 (brief `docs/briefs/chained.md`)
+# Problem sets: linear-maps, levels 1 to 4 (brief `docs/briefs/chained.md`)
 
 Files: `app/content/courses/linear-maps/problems-1.json`, `problems-2.json`, `problems-3.json` (3 problems each, 40 minutes each). Numbers: `docs/reports/problems-linear-maps-numbers.py` (exit 0, 202 checks, 0 failures; it also reads every stored key back from the JSON, 37 of 37 typed parts).
 
@@ -59,3 +59,48 @@ Result per problem after the changes (course folder / rest of content):
 ## Backlog
 
 Two bullets appended to `docs/BACKLOG-INBOX.md` under "Raised later (problems linear-maps):".
+
+## Level 4 (`problems-4.json`, Operators)
+
+File: `app/content/courses/linear-maps/problems-4.json` (3 problems, 15 parts, 40 minutes). Numbers: the level-4 block of `docs/reports/problems-linear-maps-numbers.py` (whole script exit 0, 0 failures; 90 `L4` lines, keys of all 15 parts read back from the JSON).
+
+| set | item | parts (numeric / expression / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-footbridge-modes | 5 (2 / 3 / 0) | l15 (Axler 5.19 method over $\mathbb{C}$), l16 (real eigenvalues, perpendicular eigenvectors with the conjugate), l17 (decomposition $\sum \lambda\mathbf{q}\mathbf{q}^*$) | 5 |
+| problems-4 | p-spring-linkage | 5 (2 / 3 / 0) | l16 (perpendicular eigenvectors), l17 (orthonormal eigenbasis, solving by the spectral sum) | 4 |
+| problems-4 | p-curvature-operator | 5 (1 / 4 / 0) | l18 (kernels of powers, too few eigenvectors), l19 (block sizes from $d_k$, multiplicities, powers of $J_2$) | 4 |
+
+Typed parts 15 of 15; no choice part. Every numeric part states its form ("a whole number", "two whole numbers, separated by a comma", "an exact fraction or a decimal to 3 places").
+
+Chains. $\mathbf{S} = \begin{pmatrix}6&2+i\\2-i&2\end{pmatrix}$, $\mathbf{v} = (1, 0)$: $(a, b) = (8, -7)$, roots 1 and 7, $\mathbf{w} = (\mathbf{S} - \mathbf{I})\mathbf{v} = (5, 2 - i)$, $\mathbf{u} = (-2 - i, 5)$ from $\langle \mathbf{u}, \mathbf{w} \rangle = 0$, share $\tfrac{35}{36} \approx 0.972$ of $S_{11}$. $\mathbf{K} = \begin{pmatrix}4&-2&2\\-2&5&0\\2&0&3\end{pmatrix}$: $\lambda = 4$ on $(1, 2, 2)$, $(2, 1, -2)$ for 1, $(2, -2, 1)$ by perpendicularity, its eigenvalue 7, $\mathbf{x} = \mathbf{K}^{-1}(28, 0, 0) = (15, 6, -10)$ by the spectral sum. $Tp = p + p''$ on $\mathcal{P}_3$: $T(x^3) \mapsto (0, 6, 0, 1)$, $d = (2, 4)$, blocks 2, 2, multiplicities $(4, 2)$, $T^t(x^3) = x^3 + 6tx$. Each later part restates the value it uses.
+
+Slips with lines (each `wrong` value checked in the script): $(2 + i)(2 - i)$ taken as 3, sign of $b$, roots with signs flipped, the other factor $(\mathbf{S} - 7\mathbf{I})\mathbf{v}$, the inner product without the conjugate ($(-2 + i, 5)$, not an eigenvector), $\tfrac56$ without the eigenvalue, $\tfrac78$ (share of the trace), $\tfrac{35}{6}$ (power, not share); entry or trace read as $\lambda$, a vector in the plane that is not an eigenvector, cross-product sign and scale, $\mathbf{K}\mathbf{F}$ instead of $\mathbf{K}^{-1}\mathbf{F}$, unit vectors left unnormalised; $p'$ for $p''$, one derivative factor, $d = (1, 2)$ (one chain), $(4, 4)$, blocks 3, 1 (whose $d_2$ is 3), multiplicities swapped, $T(x^3)$ for every $t$.
+
+Judgement calls a reader may question:
+- `p-footbridge-modes` part 5 uses $\mathbf{S} = 7\mathbf{q}_1\mathbf{q}_1^* + \mathbf{q}_2\mathbf{q}_2^*$ for a Hermitian matrix. l17 proves the real theorem; the question states the decomposition, and it follows here from l16 (two perpendicular unit eigenvectors are a basis of $\mathbb{C}^2$).
+- `p-spring-linkage` part 5 gives the formula $\mathbf{x} = \sum \langle \mathbf{F}, \mathbf{q}_i \rangle\mathbf{q}_i/\lambda_i$; a learner may solve $\mathbf{K}\mathbf{x} = \mathbf{F}$ by elimination instead, which is a valid second route, not working back from a printed target.
+- `p-spring-linkage` part 3 can be done by a cross product (from `vectors`) or by two equations; both are in the feedback.
+- `p-curvature-operator` part 3 is a numeric set with a repeated value, `[2, 2]`, typed "2, 2" as AUTHORING section 3 allows.
+
+## Level 4 checks
+
+1. Numbers script: exit 0. Route 1 exact (sympy: `solve`, `nullspace`, `rank`, `jordan_form`, `LUsolve`, complex conjugates), route 2 another method (numpy `lstsq`, `eigvalsh`, `eigh`, `solve`, `matrix_rank` of powers, repeated application of $T$ for $t = 1$ to 6, the matrix power). Every `wrong` value rebuilt from its slip and shown to differ from the key; the 3-place bands of part 5 take 0.972 and $\tfrac{35}{36}$ and hold each slip.
+2. Validator: 0 errors; no warning on `problems-4.json` (three `[O2-explain-answer]` fixed by stating the key in the explanation).
+3. Playthrough `--problems linear-maps/problems-4 --local-cdn <pkgs>`: green on desktop and with `--mobile` (3 problems, 15 parts, 18 typed slips routed). Shots at 440 px read: the $3 \times 3$ matrices in the prose and the feedback set cleanly, no overflow.
+4. Voice scan 35 on the course folder: 0 and 0.
+5. `grade-all.mjs --file problems-4.json --local-cdn`: 15 widgets, 0 failures.
+
+## Level 4 freshness
+
+`fresh-check --file`: 0 hits; 2 advisories, the basis $(1, x, x^2, x^3)$ shared with l4 and l5 (stock).
+
+Reuse (DECISIONS AB, and the `reuse` findings of `review-problems-linear-maps-1-3.md`, which were lesson-hook settings retold). I read l15 to l19, `review-4` and `homework-4` first and listed their settings: AR(2) companion matrices and cycles, principal portfolios from a covariance, equicorrelated assets, the hump-shaped response of a Jordan block, the shift on $\mathcal{P}_2$, rotations, weighted adjoints, Hermitian $2 \times 2$ examples, power iteration by deflation. None is used: the settings are a footbridge's two sensors, a spring linkage, and the operator $p \mapsto p + p''$. A first idea, differentiation on $\operatorname{span}(e^{2x}, xe^{2x}, x^2e^{2x}, e^{-x})$, was dropped: its single chain and $d = (1, 2, 3)$ retell the shift chain of l18 and l19.
+
+Matrices: a scratch scan (`SCRATCH/author-linear-maps/matrices.py`) compared $\mathbf{S}$, $\mathbf{S} - \mathbf{I}$, $\mathbf{S} - 7\mathbf{I}$, $\mathbf{K}$, $\mathbf{K} - \mathbf{I}$, $[T]$, $[T] - \mathbf{I}$ and the Jordan form with every `pmatrix` and canvas `rows` matrix in `app/content`, up to a scalar, the transpose and any reordering of rows and columns: 0 matches (the scan finds l17's matrix and l16's and review-4's Hermitian matrices when asked, so it reads complex entries).
+
+Grep per problem (course folder, then `app/content`):
+- `p-footbridge-modes`: "accelerometer", "footbridge" nowhere; "vibration sensor" only in `stat-learning` (clustering), so the item says accelerometers. $(8, -7)$, $(5, 2 - i)$, $\tfrac{35}{36}$ not in the course.
+- `p-spring-linkage`: "spring", "linkage", "stiffness matrix" not in the course (stiffness appears in `numerics` as stiff equations). $(1, 2, 2)$ is l12's vector $\mathbf{u}$ in a Cauchy-Schwarz example, a single vector in another role; $(2, 1, -2)$, $(2, -2, 1)$, $(15, 6, -10)$ not found.
+- `p-curvature-operator`: $p + p''$, $x^3 + 6x$ not found; $\mathcal{P}_3$ is common (l6, l8 differentiate it into $\mathcal{P}_2$, `problems-2` reports a curve). $(2, 4)$ and $(4, 2)$ occur as unrelated small pairs.
+
+Backlog: one bullet under "Raised later (problems linear-maps level 4):".

@@ -313,7 +313,7 @@ near('l18 s6 simulated mean of X2 is near 3, not 4', 3.0, stat.mean(), 0.1)
 # ================================================================ review-4
 near('rev r-gamma', key('rev', 'items', 0), 16 / 2); near('rev r-se-hit', key('rev', 'items', 2), math.sqrt(0.55 * 0.45 / 400)); wrongs('rev', 'items', 2, {'var': 0.2475 / 400, 'one': math.sqrt(0.2475)})
 near('rev r-se-hit nI', 1616.2, 400 / 0.2475, 0.05); near('rev r-se-hit interval half-width', 0.049, 1.96 * math.sqrt(0.2475 / 400))
-near('rev r-eff', key('rev', 'items', 3), 0.04 / 0.05)
+near('rev r-eff', key('rev', 'items', 3), 0.03 / 0.05)
 lrc = 2 * (stats.binom.logpmf(60, 100, 0.6) - stats.binom.logpmf(60, 100, 0.5))
 near('rev r-lrt-coin', key('rev', 'items', 4), lrc); near('rev r-lrt-coin p', 0.0448, stats.chi2.sf(lrc, 1)); wrongs('rev', 'items', 4, {'half': lrc / 2, 'wins': 2 * 60 * math.log(1.2)})
 c = stats.chi2_contingency([[30, 50, 20], [20, 30, 50]], correction=False)
@@ -351,7 +351,7 @@ near('hw h-analyst se median 0.095', 0.095, math.sqrt(math.pi / 2 * 1.44 / 250))
 near('hw h-analyst chi2_7 cut-off', 14.067, stats.chi2.ppf(0.95, 7)); near('hw h-analyst 1/0.3', 3.3, 1 / 0.3, 0.05)
 edges = np.linspace(-6, 6, 41); ecount = 250 * np.diff(stats.norm.cdf(edges, 0.05, 1.2))
 below1 = int((ecount < 1).sum()); below5 = int((ecount < 5).sum())
-rec(below1 == 31, 'hw h-analyst claim 3: "31 cells had expected counts below 1"', f'the fitted normal gives {below1} of 40 below 1 and {below5} below 5')
+rec(below1 == 20, 'hw h-analyst claim 3: "20 cells had expected counts below 1" (content changed from 31)', f'the fitted normal gives {below1} of 40 below 1 and {below5} below 5')
 rec(stats.chi2.sf(61.3, 39) < 0.05 and stats.chi2.sf(61.3, 37) < 0.05, 'hw h-analyst 61.3 rejects on 39 and on 37 df')
 # h-cr-poisson: the identities of the model answer
 lam_s, n_s = 3.0, 12

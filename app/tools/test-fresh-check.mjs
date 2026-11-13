@@ -149,6 +149,55 @@ check('without --cross-numbers the mode is off', !/shared numbers/.test(run(['--
 r = run(['--cross-numbers-all']);
 check('--cross-numbers-all lists the pair once', (r.stdout.match(/4812|shared numbers \(/g) || []).length >= 1 && (r.stdout.match(/review-9\.json:items\[0\]|xnum\.json:items\[0\]/g) || []).length === 2, r.stdout);
 
+// ENGINE-BACKLOG 972: same-course reuse in a problem set (numbers, matrices up to a scalar and a transpose, shared sentences). The true positives are the shapes
+// the second readers found by hand in sessions AB and AC: a lesson's matrix doubled, a homework number set times four, a review's sentence with its number shifted.
+const sentence = (t) => `The greedy rule: if the running total is at most $T = ${t}$, take the next unused positive term; otherwise take the next unused negative term.`;
+const pm = (a, b, c, d) => `$\\begin{pmatrix}${a} & ${b} \\\\ ${c} & ${d}\\end{pmatrix}$`;
+const stockLine = 'Remember that every statement needs a reason given beside it before moving on.';
+put('courses/k1/course.json', { id: 'k1' });
+put('courses/k1/l1-matrix.json', { id: 'l1', screens: [{ type: 'ladder', title: 'M', prose: `Take ${pm(4, 1, 2, 3)} and look at what it does. ${stockLine}`, question: 'What is the determinant?', widget: num(10) }], quiz: [] });
+put('courses/k1/homework-1.json', { id: 'homework-1', items: [sc('h-users', 'An app has 243 users in month one, 364 in month two and 728 in month three, and the desk logs the totals.', 'What is the total?'), sc('h-greedy', sentence('1'), 'What is the second term?')] });
+put('courses/k1/l2-nums.json', { id: 'l2', screens: [{ type: 'ladder', title: 'N', prose: `A fund starts with 8431.75 pounds, earns 17.32 in fees and pays 905.5 to its manager. ${stockLine}`, question: 'What remains?', widget: num(1) }], quiz: [] });
+for (const k of [3, 4, 5, 6]) put(`courses/k1/l${k}-stock.json`, { id: `l${k}`, screens: [{ type: 'ladder', title: 'S', prose: `Lesson ${k} on its own topic number ${k * 7}. ${stockLine}`, question: 'Why?', widget: num(1) }], quiz: [] });
+const pset = (items) => ({ id: 'problems-1', course: 'k1', level: 1, title: 'P', minutes: 20, items });
+put('courses/k1/problems-1.json', pset([
+  { id: 'p-doubled', prose: 'A desk applies a transform.', parts: [{ question: `The transform is ${pm(8, 2, 4, 6)}. What is its trace?`, widget: num(14) }] },
+  { id: 'p-transposed-third', prose: 'Another transform.', parts: [{ question: `It is $\\frac{1}{3}\\begin{pmatrix}4 & 2 \\\\ 1 & 3\\end{pmatrix}$. What is its trace?`, widget: num(2) }] },
+  { id: 'p-times-four', prose: 'An app has 972 users in month one, 1456 in month two and 2912 in month three.', question: 'What is the total?', widget: num(5340) },
+  { id: 'p-same-numbers', prose: 'A fund starts with 8431.75 pounds, earns 17.32 in fees and pays 905.5 to its manager.', question: 'What is the net?', widget: num(1) },
+  { id: 'p-shifted', prose: sentence('0.2'), question: 'What is the third term?', widget: num(1) },
+  { id: 'p-identity', prose: `Take ${pm(1, 0, 0, 1)} and ${pm(0, 0, 0, 0)} and ${pm(5, 0, 0, 5)}.`, question: 'What is the trace?', widget: num(2) },
+  { id: 'p-other-matrix', prose: `Take ${pm(7, 1, 5, 9)}.`, question: 'What is its trace?', widget: num(16) },
+  { id: 'p-small-numbers', prose: 'A bag holds 7 red, 12 blue and 18 green marbles in 2024 and half of them, 1/2 or 3/8 of the bag, are chipped.', question: 'How many are red?', widget: num(7) },
+  { id: 'p-stock-sentence', prose: `A new topic about options on a stock. ${stockLine}`, question: 'What is the delta?', widget: num(1) },
+  { id: 'p-two-numbers', prose: 'A fund starts with 8431.75 pounds and earns 17.32 in fees.', question: 'What is the net?', widget: num(1) },
+]));
+const scFile = (extra = []) => run(['--file', join(root, 'courses/k1/problems-1.json'), '--no-code', ...extra]);
+r = scFile();
+const sl = r.stdout.split('\n').filter((l) => l.startsWith('[same-course-reuse]'));
+const hitFor = (id, kind) => sl.find((l) => l.includes(`  ${id}  `) && l.includes(`  ${kind}  `));
+check('same-course: a lesson matrix doubled is an error (matrix, exit 1)', /^\[same-course-reuse\] error/.test(hitFor('p-doubled', 'matrix') ?? '') && r.status === 1 && /l1-matrix\.json:screens\[0\]/.test(hitFor('p-doubled', 'matrix')), r.stdout);
+check('same-course: a third of the transpose is the same matrix', /error/.test(hitFor('p-transposed-third', 'matrix') ?? ''), r.stdout);
+check('same-course: the identity, the zero matrix and a multiple of the identity are ignored', !sl.some((l) => l.includes('  p-identity  ')), r.stdout);
+check('same-course: a different matrix is clean', !sl.some((l) => l.includes('  p-other-matrix  ')), r.stdout);
+check('same-course: a homework figure set times four is a numbers warning', /^\[same-course-reuse\] warn/.test(hitFor('p-times-four', 'numbers') ?? '') && /scale factor 4/.test(hitFor('p-times-four', 'numbers')) && /homework-1\.json:items\[0\]/.test(hitFor('p-times-four', 'numbers')), r.stdout);
+check('same-course: three shared numbers are a numbers warning, two are not', /warn/.test(hitFor('p-same-numbers', 'numbers') ?? '') && !sl.some((l) => l.includes('  p-two-numbers  ')), r.stdout);
+check('same-course: a sentence with its number shifted is a text error (13 shared words)', /^\[same-course-reuse\] error/.test(hitFor('p-shifted', 'text') ?? '') && /13 shared words/.test(hitFor('p-shifted', 'text')) && /homework-1\.json:items\[1\]/.test(hitFor('p-shifted', 'text')), r.stdout);
+check('same-course: small whole numbers, a year and common fractions are not numbers', !sl.some((l) => l.includes('  p-small-numbers  ')), r.stdout);
+check('same-course: a sentence held by five or more files is boilerplate and is dropped', !sl.some((l) => l.includes('  p-stock-sentence  ')), r.stdout);
+check('same-course: --no-same-course switches it off', !/\[same-course-reuse\]/.test(scFile(['--no-same-course']).stdout));
+check('same-course: a set item is not held against itself or another course', !sl.some((l) => /problems-1\.json:items/.test(l.split('<-')[1] ?? '')), r.stdout);
+// waivers: the item field, and the waiver file by name (the real file is read from tools/, so the field is the tested path here)
+const waivedSet = pset([{ id: 'p-doubled', reuseWaiver: 'pre-existing, owed a content fix', prose: 'A ferry company models its routes.', parts: [{ question: `Its route map is ${pm(8, 2, 4, 6)}, a scaled copy. Name the sum of the diagonal.?`, widget: num(14) }] }]);
+put('courses/k2/course.json', { id: 'k2' });
+put('courses/k2/l1-matrix.json', { id: 'l1', screens: [{ type: 'ladder', title: 'M', prose: `Take ${pm(4, 1, 2, 3)} and look at what it does.`, question: 'What is the determinant?', widget: num(10) }], quiz: [] });
+put('courses/k2/problems-2.json', { ...waivedSet, id: 'problems-2', course: 'k2' });
+r = run(['--file', join(root, 'courses/k2/problems-2.json'), '--no-code']);
+check('same-course: a "reuseWaiver" on the item turns the error into a waived line (exit 0)', r.status === 0 && /\[same-course-reuse\] waived .*p-doubled/.test(r.stdout), r.stdout);
+check('same-course: a review is scanned only with --same-course', !/\[same-course-reuse\]/.test(run(['--file', join(root, 'courses/k1/homework-1.json'), '--no-code']).stdout) && /\[same-course-reuse\]/.test(run(['--file', join(root, 'courses/k1/homework-1.json'), '--no-code', '--same-course']).stdout));
+const sa = spawnSync('node', [join(dirname(TOOL), 'same-course-reuse.mjs'), '--content', root, '--all'], { encoding: 'utf8' });
+check('same-course-reuse.mjs --all gates (exit 1, errors counted by kind, waived ones apart)', sa.status === 1 && /[1-9]\d* error\(s\) \(numbers 0, matrix [1-9]\d*, text [1-9]/.test(sa.stdout) && /1 waived|[1-9]\d* waived/.test(sa.stdout), sa.stdout);
+
 rmSync(root, { recursive: true, force: true });
 console.log(fails ? `${fails} failed` : 'all passed');
 process.exit(fails ? 1 : 0);

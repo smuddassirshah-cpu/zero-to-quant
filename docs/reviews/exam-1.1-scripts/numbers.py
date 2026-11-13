@@ -187,8 +187,8 @@ ex.claim(near(44 / 55 - 1, -0.2, 1e-12) and near(21.85 / 19 - 1, 0.15, 1e-12), '
 
 # ---------------------------------------------------------------- e-gen-once (finding 15a, py-found L4)
 out, _, ns = run_snippet(code_of('e-gen-once'))
-ex.claim(out == '2 0' and strip_ticks(opt('e-gen-once', 'a')) == '2 0' and correct_ids('e-gen-once') == ['a'], f'e-gen-once prints {out!r}')
-ex.claim(strip_ticks(opt('e-gen-once', 'b')) == '2 2' and strip_ticks(opt('e-gen-once', 'c')) == '3 0', 'e-gen-once b is a restart, c counts the closes')
+ex.claim(out == '2' and strip_ticks(opt('e-gen-once', 'a')) == '2' and correct_ids('e-gen-once') == ['a'], f'e-gen-once prints {out!r} (item rewritten after the review: break leaves the generator paused, list(g) collects the last two returns)')
+ex.claim([strip_ticks(opt('e-gen-once', k_)) for k_ in 'bcd'] == ['4', '0', '3'], 'e-gen-once options 4 (a restart), 0 (the loop took them all) and 3 (one return too many)')
 _, _, ns = run_snippet('def gains(closes):\n    for a, b in zip(closes, closes[1:]):\n        yield b / a - 1\n\nx = list(gains([100.0, 110.0, 99.0]))')
 ex.claim([round(v_, 4) for v_ in ns['x']] == [0.1, -0.1], 'e-gen-once explain: the two returns are 0.1 and -0.1; list accepts a generator, so no TypeError')
 
@@ -331,8 +331,8 @@ ex.claim(sorted(k_ for k_, v_ in rb.items() if v_ == 'FAIL') == correct_ids('e-a
 ex.claim(all(v_ == 'pass' for v_ in rg.values()), f'e-assert-catch: every assert passes on a correct max_drawdown: {rg}')
 ns_ = {'math': math}
 exec(buggy_src, ns_)
-ex.claim([round(ns_['max_drawdown'](x_), 4) for x_ in ([100.0, 80.0], [100.0, 120.0, 90.0], [100.0, 110.0, 121.0], [50.0, 100.0, 75.0])] == [0.2, 0.1, 0.0, 0.0],
-         'e-assert-catch explain: the buggy code gives 0.2, 0.1, 0.0, 0.0 (0.1 and 0.0 on the two rising paths)')
+ex.claim([round(ns_['max_drawdown'](x_), 4) for x_ in ([100.0, 60.0, 120.0, 108.0], [200.0, 150.0, 220.0, 187.0])] == [0.1, 0.15],
+         'e-assert-catch explain: the buggy code gives 0.1 and 0.15 against a true 0.4 and 0.25 on the paths through 60.0 and 150.0')
 
 # ---------------------------------------------------------------- e-exit-pipeline (run on a newest-first file with gaps)
 csv = 'date,close\n2024-03-08,104.0\n2024-03-07,\n2024-03-06,101.0\n2024-03-05,100.0\n2024-03-04,\n2024-03-01,98.0\n'

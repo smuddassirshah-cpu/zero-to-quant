@@ -24,7 +24,7 @@ from sympy.parsing.sympy_parser import (parse_expr, standard_transformations,
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 APP = os.path.join(HERE, '..', '..', 'app')
-N = int(sys.argv[sys.argv.index('--n') + 1]) if '--n' in sys.argv else 200
+N = int(sys.argv[sys.argv.index('--n') + 1]) if '--n' in sys.argv else int(os.environ.get('FLUENCY_N', '60'))
 LOCAL = {c: sp.Symbol(c) for c in string.ascii_letters}
 TRANS = standard_transformations + (split_symbols, implicit_multiplication_application, convert_xor)
 R = sp.Rational

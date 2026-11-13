@@ -52,6 +52,20 @@ def printed_value(text):
     return float(hits[-1].group(2)) if hits else None
 
 
+def derived_slips(slips, wrongs, e, text=''):
+    """Slips the script derives itself for the `sign` / `sign2` and `decimal` wrong entries (as problems-limits-thm-numbers.py):
+    sign is the absolute value of the computed key, decimal the key over 100 (over 10,000 where the part is in %^2)."""
+    s = dict(slips or {})
+    for wid in wrongs:
+        if wid in s:
+            continue
+        if re.fullmatch(r'sign\d*', wid):
+            s[wid] = abs(e)
+        elif wid == 'decimal':
+            s[wid] = e / (10000 if '%²' in text else 100)
+    return s
+
+
 def num(items, iid, k, exact, alt, slips=None, dp=None, agree=1e-7, printed=True):
     """Part k (1-based) of item iid: a numeric key. exact, alt: the value two ways; dp: rounding asked."""
     if items is None:
@@ -74,6 +88,7 @@ def num(items, iid, k, exact, alt, slips=None, dp=None, agree=1e-7, printed=True
             ok(abs(pv - w['answer']) <= tol + 1e-9, f'{tag}: printed {pv} not accepted by tol {tol}')
     slips = slips or {}
     wrongs = {z['id']: z for z in w.get('wrong', [])}
+    slips = derived_slips(slips, wrongs, e, json.dumps(part, ensure_ascii=False))
     ok(set(wrongs) == set(slips), f'{tag}: wrong ids {sorted(wrongs)} vs slips {sorted(slips)}')
     bykey = part['feedback'].get('byKey', {})
     for wid, val in slips.items():

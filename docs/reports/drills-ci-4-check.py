@@ -35,7 +35,7 @@ IDS = ["ci-right-edge-view", "ci-read-preorder", "ci-busiest-links", "ci-first-m
 SMALL = 12
 # planted solutions that are right but too slow: each must time out on a hidden test (they come last in
 # `planted`, because a timed-out run restarts Python in the browser; see BACKLOG-INBOX, drills ci 2)
-SLOW_PLANTED = {("ci-live-median", 3), ("ci-stock-by-prefix", 3)}
+SLOW_PLANTED = {("ci-live-median", 3), ("ci-stock-by-prefix", 3), ("ci-read-preorder", 3), ("ci-rebuild-from-orders", 3)}
 FULL = len(sys.argv) == 1
 if not FULL:
     IDS = sys.argv[1:]          # check only these drills (the mix check is then skipped)

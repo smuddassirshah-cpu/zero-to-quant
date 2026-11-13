@@ -2,6 +2,8 @@
 // Freshness check (ENGINE-BACKLOG 588). Flags items whose prose, question or widget prompt text
 // copies a lesson screen, quiz, review, homework or other exam item, even with changed numbers.
 // Problem sets (893): --file courses/<c>/problems-<n>.json also lists, as advisory, a shared displayed formula or two shared parameters with its course (--shared-params n, --no-set-reuse).
+// Same-course reuse (972): for problems-<n>.json (any course file with --same-course, off with --no-same-course) each item is also held against every other file of its course: numbers, matrices up to a scalar and a transpose, shared sentences
+//   ([same-course-reuse] lines; an error fails the run, a warning does not; waivers in tools/same-course-waivers.json). Thresholds are those of tools/same-course-reuse.mjs, which also runs on its own (--all).
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
 //                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
 //   --file content/courses/<c>/review-1.json (or homework-2.json) checks a course set against everything else, code items included, and
@@ -14,6 +16,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadCorpus as loadSameCourse, scanSet as scanSameCourse, fmtHit as fmtSameCourse } from './same-course-reuse.mjs';
 
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : d; };
@@ -377,10 +380,21 @@ for (const t of targets) for (const h of has('--cross-numbers-all') ? scanCross(
 const all = [...best.values()];
 if (CROSS) all.sort((x, y) => (y.kind === 'cross-numbers') - (x.kind === 'cross-numbers') || (y.kind === 'cross-numbers' ? y.count - x.count : 0));
 const ADVISORY = new Set(['numbers', 'formula', 'params', 'question-run', 'cross-numbers']);   // shared numbers, a shared formula and shared parameters are advisory: a table of critical values is shared on purpose
+// Same-course reuse (972): a problem set by default, any other course file with --same-course.
+const sameLines = [];
+let sameErrors = 0;
+if (!has('--no-same-course') && !CROSS) {
+  const sc = targets.filter((t) => (has('--same-course') ? /^courses\/[^/]+\/[^/]+\.json$/ : /^courses\/[^/]+\/problems-\d+\.json$/).test(t.rel));
+  if (sc.length) {
+    const corpus = loadSameCourse(C);
+    for (const t of sc) { const doc = rd(join(C, t.rel)); for (const h of scanSameCourse(corpus, t.rel, doc)) { sameLines.push(fmtSameCourse(h, doc)); if (h.level === 'error' && !h.waived) sameErrors++; } }
+  }
+}
 const hard = all.filter((h) => !ADVISORY.has(h.kind));
-if (has('--json')) console.log(JSON.stringify(all, null, 1));
+if (has('--json')) console.log(JSON.stringify([...all, ...sameLines.map((l) => ({ kind: 'same-course-reuse', line: l }))], null, 1));
 else {
+  for (const l of sameLines) console.log(l);
   for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' || h.kind === 'cross-numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'formula' ? `shared formula ${h.ngram}` : h.kind === 'params' ? `${h.count} shared parameters (${h.ngram})` : h.kind === 'question-run' ? `stem shares ${h.run} words ("${h.ngram}"), share ${h.share}` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
   console.log(`${hard.length} hit(s) in ${targets.length} target file(s)${all.length > hard.length ? `, ${all.length - hard.length} advisory (shared numbers, formulas, parameters and stem runs: read them, they may be a shared table of constants or a stock phrase)` : ''}`);
 }
-process.exitCode = hard.length ? 1 : 0;   // not process.exit: piped output must flush
+process.exitCode = hard.length || sameErrors ? 1 : 0;   // not process.exit: piped output must flush

@@ -1,11 +1,12 @@
-"""Recompute every number in app/content/courses/analysis/problems-1.json to problems-3.json twice.
+"""Recompute every number in app/content/courses/analysis/problems-1.json to problems-5.json twice.
 
 Method 1 is exact (fractions or sympy: simplify, solve, limit, summation, apart). Method 2 is independent: a brute
 search over whole numbers, a float or mpmath simulation, or a large-n table. For each numeric part the script checks
 that the two methods agree, that the JSON key lies within its tol of the value, that the value at the rounding the
 question asks for is accepted, that every `wrong` value equals its named slip recomputed here, has a byKey line and lies
 outside the key's band. Expression parts: the key and every accepted form equal the sympy truth and every wrong form
-differs. Choice parts: the keyed option is the one expected. Stated figures in feedback and explain are checked as text.
+differs. Choice parts: the keyed option is the one expected. Levels 4 and 5 also check set shape (typed share, difficulty, skills,
+lessons drawn on) and numeric sets (`answers`) with their slips. Stated figures in feedback and explain are checked as text.
 numbers_lib.Level.check_wrongs runs over each set as a second check of the bands. Exit 0 when all pass.
 
 Run: <scratchpad>/venv/bin/python docs/reports/problems-analysis-numbers.py
@@ -358,8 +359,248 @@ ok(crossings > 1000, f'L3 P9 the totals cross T again and again ({crossings} tim
 num(3, I, 5, 0.2, round(sum(t for _, t in gl[-50000:]) / 50000, 1), {'original': 0.5718, 'last-total': 0.2697})
 ok(abs(true_sum - 0.2) > 0.3, 'L3 P9 the usual sum differs from T')
 
+# ---------------------------------------------------------------- Levels 4 and 5: helpers
+X, KK = sp.symbols('x k', positive=True)
+
+
+def tex45(t):
+    """TeX of the level 4 and 5 expression parts as sympy, with e as Euler's number."""
+    from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
+    t = t.replace('\\left', '').replace('\\right', '')
+    return parse_expr(_plain(t).replace('^', '**'), local_dict={'e': sp.E, 'x': X, 'k': KK, 'n': n},
+                      transformations=standard_transformations + (implicit_multiplication_application,))
+
+
+def expr45(lv, iid, p, truth, wrong_truths):
+    pt = part(lv, iid, p)
+    w, tag = pt['widget'], f'L{lv} {iid} p{p}'
+    ok(w['kind'] == 'expression', f'{tag} is an expression')
+    for form in [w['answer']] + w['accept']:
+        ok(sp.simplify(tex45(form) - truth) == 0, f'{tag} form {form} equals truth')
+        for xv, kv, nv in ((0.7, 1.3, 2.2), (2.9, 0.4, 5.0)):  # second route: numeric at two points
+            sub = {X: xv, KK: kv, n: nv}
+            ok(abs(float(tex45(form).subs(sub)) - float(truth.subs(sub))) < 1e-9, f'{tag} form {form} equals truth numerically')
+    ids = {x['id']: x['tex'] for x in w['wrong']}
+    ok(set(ids) == set(wrong_truths), f'{tag} wrong ids match')
+    for wid, wt in wrong_truths.items():
+        e = tex45(ids[wid])
+        ok(sp.simplify(e - wt) == 0, f'{tag} wrong {wid} is the named slip')
+        ok(sp.simplify(e - truth) != 0, f'{tag} wrong {wid} differs from the truth')
+        ok(wid in pt['feedback'].get('byKey', {}), f'{tag} wrong {wid} has a byKey line')
+
+
+def numset45(lv, iid, p, exact, alt, slips):
+    """A numeric part with `answers` (a set): exact and alt are the set two ways; slips {id: set}."""
+    pt = part(lv, iid, p)
+    w, tag = pt['widget'], f'L{lv} {iid} p{p}'
+    ok(w['kind'] == 'numeric' and w.get('unordered') is True, f'{tag} is an unordered numeric set')
+    ok(sorted(exact) == sorted(alt), f'{tag} methods agree {sorted(exact)} vs {sorted(alt)}')
+    ok(sorted(w['answers']) == sorted(exact), f'{tag} answers {w["answers"]} are {sorted(exact)}')
+    ids = {x['id']: x for x in w.get('wrong', [])}
+    ok(set(ids) == set(slips), f'{tag} wrong ids match slips')
+    by = pt['feedback'].get('byKey', {})
+    ok('count' in by, f'{tag} has a count line')
+    for wid, val in slips.items():
+        got = sorted(float(v) for v in ids[wid]['value'].split(','))
+        ok(got == sorted(val), f'{tag} wrong {wid} = {got} matches slip {sorted(val)}')
+        ok(got != sorted(exact) and len(got) == len(exact), f'{tag} wrong {wid} differs with the right count')
+        ok(wid in by, f'{tag} wrong {wid} has a byKey line')
+
+
+def says45(lv, iid, p, field, phrase):
+    pt = part(lv, iid, p)
+    txt = {'correct': pt['feedback']['correct'], 'explain': pt['explain']['text'], 'question': pt['question']}.get(field)
+    if txt is None:
+        txt = pt['feedback']['byKey'][field]
+    ok(phrase in txt, f'L{lv} {iid} p{p} {field} states {phrase!r}')
+
+
+def shape45(lv, lessons):
+    d = json.load(open(os.path.join(COURSE, f'problems-{lv}.json')))
+    course = json.load(open(os.path.join(COURSE, 'course.json')))
+    level = [L for L in course['levels'] if L.get('n', L.get('level')) == lv][0]
+    skills = set()
+    for lid in level['lessons']:
+        skills |= set(json.load(open(os.path.join(COURSE, lid + '.json')))['skills'])
+    parts = [p for it in d['items'] for p in it['parts']]
+    typed = sum(p['widget']['kind'] in ('numeric', 'expression') for p in parts)
+    ok(3 <= len(d['items']) <= 5 and all(3 <= len(it['parts']) <= 5 for it in d['items']), f'L{lv} set shape')
+    ok(typed * 3 >= 2 * len(parts), f'L{lv} typed parts {typed} of {len(parts)}')
+    ok(any(it['difficulty'] == 5 for it in d['items']) and all(3 <= it['difficulty'] <= 5 for it in d['items']), f'L{lv} difficulty')
+    ok(all(set(it['skills']) <= skills for it in d['items']), f'L{lv} skills from the level lessons')
+    drawn = set().union(*lessons.values())
+    ok(drawn == set(level['lessons']) and all(len(v) >= 2 for v in lessons.values()), f'L{lv} every lesson drawn on, two or more a problem')
+    for p in parts:
+        ok(len([s for s in p['explain']['text'].replace('$', '').split('. ') if s.strip()]) <= 3, f'L{lv} explain at most three sentences')
+
+
+SETS[4], SETS[5] = load(4), load(5)
+
+# ---------------------------------------------------------------- Level 4
+I = 'p-cubic-bracket'
+f4 = X ** 3 + 6 * X - 13
+ok(f4.subs(X, 0) == -13 and f4.subs(X, 2) == 7, 'L4 P1 f(0) = -13, f(2) = 7')
+chord = (f4.subs(X, 2) - f4.subs(X, 0)) / 2
+ok(chord == 10, 'L4 P1 chord slope 10')
+c_exact = [r for r in sp.solve(sp.diff(f4, X) - chord, X) if 0 < r < 2][0]
+c_alt = mp.findroot(lambda t: 3 * t ** 2 + 6 - 10, 1)
+num(4, I, 1, c_exact, c_alt, {'no-six': math.sqrt(10 / 3), 'no-root': F(4, 3)}, rounded=1.155)
+ok(c_exact == 2 / sp.sqrt(3), 'L4 P1 c = 2/sqrt3')
+d4 = sp.diff(f4, X)
+K_exact = sp.maximum(d4, X, sp.Interval(0, 2))
+K_alt = max(3 * (i / 10000) ** 2 + 6 for i in range(0, 20001))
+num(4, I, 2, K_exact, K_alt, {'chord': chord, 'left-end': d4.subs(X, 0), 'no-six': 3 * 2 ** 2})
+delta = F(9, 1000) / 18
+delta_alt = max(i / 10 ** 7 for i in range(1, 20000) if 18 * F(i, 10 ** 7) <= F(9, 1000))
+num(4, I, 3, delta, delta_alt, {'times': F(9, 1000) * 18, 'chord': F(9, 1000) / 10, 'no-six': F(9, 1000) / 12})
+halv = first(lambda m: F(2, 2 ** m) <= delta)
+halv_alt = math.ceil(math.log2(2 / 0.0005))
+num(4, I, 4, halv, halv_alt, {'one-short': halv - 1, 'eps': first(lambda m: F(2, 2 ** m) <= F(9, 1000))})
+ok(first(lambda m: F(1, 2 ** m) <= delta) == 11, 'L4 P1 width-1 slip also gives 11')
+ok(abs(2 / 2 ** 11 - 0.00098) < 5e-6 and abs(2 / 2 ** 12 - 0.00049) < 5e-6, 'L4 P1 widths 0.00098 and 0.00049')
+bound = 18 * F(2, 2 ** halv) / 2  # half the final width 2/2^12 = 1/2048
+ok(bound == F(9, 2048) and F(2, 2 ** halv) == F(1, 2048), 'L4 P1 bound 9/2048 from width 1/2048')
+lo, hi = mp.mpf(0), mp.mpf(2)  # second route: run the 12 halvings and measure
+for _ in range(halv):
+    m = (lo + hi) / 2
+    lo, hi = (m, hi) if (m ** 3 + 6 * m - 13) < 0 else (lo, m)
+mid = (lo + hi) / 2
+root = mp.findroot(lambda t: t ** 3 + 6 * t - 13, 1.5)
+ok(abs(mid - root) <= mp.mpf(1) / 4096 and abs(mid ** 3 + 6 * mid - 13) <= float(bound), 'L4 P1 the real midpoint obeys the bound')
+num(4, I, 5, bound, 18 / 4096, {'full-width': 18 * F(1, 2048), 'eps': F(9, 1000), 'chord': 10 * F(1, 4096)}, rounded=0.00439)
+says45(4, I, 5, 'correct', '0.00439')
+
+I = 'p-quartic-roots'
+h4 = X ** 4 - 8 * X ** 2 + 3
+Y = sp.Symbol('y', real=True)
+hy = Y ** 4 - 8 * Y ** 2 + 3
+crit = [r for r in sp.solve(sp.diff(hy, Y), Y) if -1 < r < 3]
+crit_alt = [round(-1 + i / 1000) for i in range(1, 4000) if (lambda a, b: a * b <= 0)(4 * (-1 + i / 1000) ** 3 - 16 * (-1 + i / 1000), 4 * (-1 + (i + 1) / 1000) ** 3 - 16 * (-1 + (i + 1) / 1000)) and abs(4 * (-1 + i / 1000) ** 3 - 16 * (-1 + i / 1000)) < 0.05]
+numset45(4, I, 1, [int(r) for r in crit], sorted(set(crit_alt)), {'lost-zero': [-2, 2]})
+cands = {t: hy.subs(Y, t) for t in (-1, 0, 2, 3)}
+ok(cands == {-1: -4, 0: 3, 2: -13, 3: 12}, 'L4 P2 candidate values -4, 3, -13, 12')
+grid = [(-1 + 4 * i / 200000) for i in range(200001)]
+hv = [t ** 4 - 8 * t ** 2 + 3 for t in grid]
+num(4, I, 2, max(cands.values()), round(max(hv), 6), {'critical': max(cands[0], cands[2]), 'no-three': 81 - 72})
+num(4, I, 3, min(cands.values()), round(min(hv), 6), {'sign': 13, 'left-end': cands[-1]})
+choice(4, I, 4, 'at-most-three')
+real_roots = [r for r in sp.real_roots(sp.Poly(hy, Y)) if -1 <= r <= 3]
+sign_changes = sum(1 for a, b in zip(hv, hv[1:]) if a * b < 0)
+ok(len(crit) == 2, 'L4 P2 two zeros of h-prime inside, so Rolle allows at most three roots')
+num(4, I, 5, len(real_roots), sign_changes, {'ends': 1, 'degree': 4, 'two': 2})
+ok([round(float(r), 2) for r in real_roots] == [-0.63, 0.63, 2.76], 'L4 P2 roots near -0.63, 0.63, 2.76')
+
+I = 'p-bump-series'
+fk = X * sp.exp(-KK ** 2 * X)
+peak = sp.solve(sp.diff(fk, X), X)
+ok(peak == [1 / KK ** 2], 'L4 P3 sympy peak 1/k^2')
+for kv in (1, 2, 3, 5):  # second route: grid argmax
+    xs = [i / 10 ** 5 for i in range(1, 200001)]
+    am = max(xs, key=lambda t: t * math.exp(-kv * kv * t))
+    ok(abs(am - 1 / kv ** 2) < 2e-5, f'L4 P3 grid peak at 1/k^2 for k = {kv}')
+expr45(4, I, 1, peak[0], {'one-k': 1 / KK, 'flip': KK ** 2})
+Mk = sp.simplify(fk.subs(X, peak[0]))
+ok(sp.simplify(Mk - 1 / (sp.E * KK ** 2)) == 0, 'L4 P3 M_k = 1/(e k^2)')
+for kv in (1, 2, 4):
+    ok(abs(max(t * math.exp(-kv * kv * t) for t in [i / 10 ** 5 for i in range(1, 200001)]) - 1 / (math.e * kv * kv)) < 1e-6, f'L4 P3 grid sup matches M_k for k = {kv}')
+expr45(4, I, 2, Mk, {'no-e': 1 / KK ** 2, 'one-k': sp.exp(-KK) / KK})
+Nst = first(lambda m: 1 / (mp.e * m) < mp.mpf('0.01'))
+num(4, I, 3, Nst, ceil_above(100 / math.e), {'round-down': Nst - 1, 'no-e': first(lambda m: F(1, m) < F(1, 100)), 'square': first(lambda m: 1 / (math.e * m * m) < 0.01)})
+ok(abs(100 / math.e - 36.79) < 0.005 and abs(1 / (36 * math.e) - 0.0102) < 0.00005, 'L4 P3 36.79 and 1/(36e) ~ 0.0102')
+ok(mp.nsum(lambda j: 1 / j ** 2, [38, mp.inf]) < mp.mpf(1) / 37, 'L4 P3 tail of 1/k^2 after 37 below 1/37')
+S_tail = lambda t: mp.nsum(lambda j: t * mp.exp(-j * j * t), [38, mp.inf])
+ok(max(S_tail(mp.mpf(i) / 10 ** 5) for i in range(1, 300, 7)) < 0.01, 'L4 P3 true tail after 37 terms below 0.01 near its peak')
+choice(4, I, 4, 'continuous')
+dl = F(1, 100) / 37
+num(4, I, 5, dl, 0.01 / 37, {'n36': F(1, 100) / 36, 'whole-eps': F(2, 100) / 37, 'one-term': F(1, 100)}, rounded=0.00027)
+ok(F(1, 3700) == dl, 'L4 P3 delta = 1/3700')
+Sfull = lambda t: mp.nsum(lambda j: t * mp.exp(-j * j * t), [1, mp.inf])
+ok(all(Sfull(mp.mpf(float(dl)) * q) < 0.02 for q in (0.1, 0.5, 0.99)), 'L4 P3 |S(x) - S(0)| < 0.02 inside the window')
+ok(all(sum(float(t) * math.exp(-j * j * float(t)) for j in range(1, 38)) <= 37 * float(t) for t in (0.0001, 0.00027, 0.01)), 'L4 P3 S_37(x) <= 37x')
+shape45(4, {'p-cubic-bracket': {'l15-epsilon-delta', 'l16-intermediate-value', 'l18-mean-value-proved'},
+            'p-quartic-roots': {'l16-intermediate-value', 'l17-extreme-value', 'l18-mean-value-proved'},
+            'p-bump-series': {'l19-uniform-convergence', 'l15-epsilon-delta'}})
+
+# ---------------------------------------------------------------- Level 5
+I = 'p-root-sums'
+U9 = sum(sp.sqrt(j) for j in range(1, 10))
+L9 = sum(sp.sqrt(j) for j in range(0, 9))
+num(5, I, 1, U9, sum(math.sqrt(j) for j in range(1, 10)), {'lower': L9, 'ninth': U9 / 9}, rounded=19.3060)
+ok(U9 - L9 == 3, 'L5 P4 lower sum is 3 less')
+says45(5, I, 1, 'correct', '2.82843 + 3 = 19.3060')
+ok(abs((1 + 1.41421 + 1.73205 + 2 + 2.23607 + 2.44949 + 2.64575 + 2.82843 + 3) - 19.3060) < 5e-5, 'L5 P4 printed five-place sum gives 19.3060')
+j = sp.Symbol('j', integer=True, positive=True)
+gap = 9 / n * (sp.sqrt(9 * n / n) - sp.sqrt(0 * n / n))  # the shifted sums cancel but for the last and first heights
+ok(sp.simplify(gap - 27 / n) == 0, 'L5 P4 telescoped gap 27/n by sympy')
+for nv in (3, 10, 37):
+    Uv = sum(9 / nv * math.sqrt(9 * i / nv) for i in range(1, nv + 1))
+    Lv_ = sum(9 / nv * math.sqrt(9 * i / nv) for i in range(0, nv))
+    ok(abs(Uv - Lv_ - 27 / nv) < 1e-12, f'L5 P4 numeric gap 27/n at n = {nv}')
+expr45(5, I, 2, 27 / n, {'unit-width': 3 / n, 'no-height': 9 / n})
+integral = sp.integrate(sp.sqrt(X), (X, 0, 9))
+ok(sp.diff(sp.Rational(2, 3) * X ** sp.Rational(3, 2), X) == sp.sqrt(X), 'L5 P4 G-prime = sqrt x')
+num(5, I, 3, integral, mp.quad(mp.sqrt, [0, 9]), {'no-coeff': 9 ** 1.5, 'flip': 1.5 * 9 ** 1.5}, rounded=18.0000, agree=1e-8)
+ok(L9 < integral < U9, 'L5 P4 L9 < 18 < U9')
+num(5, I, 4, U9 - integral, sum(math.sqrt(i) for i in range(1, 10)) - 18, {'gap': U9 - L9, 'lower': integral - L9}, rounded=1.3060)
+# the part says "Using U_9 ~ 19.3060 ... and 18": that rounded input gives the same 4-place answer
+ok(round(19.3060 - 18, 4) == 1.3060 and abs(1.3060 - 1.3060005) <= 5e-5, 'L5 P4 stated input 19.3060 - 18 = 1.3060 is accepted')
+says45(5, I, 4, 'explain', '19.30600 - 18 = 1.30600')
+nn = first(lambda m: F(27, m) < F(5, 100))
+num(5, I, 5, nn, ceil_above(27 / 0.05), {'equal': 540, 'unit-width': first(lambda m: F(3, m) < F(5, 100)), 'no-height': first(lambda m: F(9, m) < F(5, 100))})
+ok(nn == 541, 'L5 P4 smallest n is 541')
+
+I = 'p-diamond-ball'
+p5 = (F(15, 100), F(-40, 100))
+d1 = lambda a, b: abs(a[0] - b[0]) + abs(a[1] - b[1])
+d1p = d1((0, 0), p5)
+num(5, I, 1, d1p, abs(0.15) + abs(-0.4), {'signs': p5[0] + p5[1], 'signs-size': abs(p5[0] + p5[1]), 'straight': math.sqrt(0.1825), 'largest': 0.4})
+r5 = 1 - d1p
+def fits_d1(rr):
+    # corners of the diamond B_1(p, rr) are its extreme points; U is convex
+    return all(abs(a) + abs(b) <= 1 + 1e-12 for a, b in ((0.15 + rr, -0.4), (0.15 - rr, -0.4), (0.15, -0.4 + rr), (0.15, -0.4 - rr)))
+r_alt = max(i / 10000 for i in range(1, 10000) if fits_d1(i / 10000))
+num(5, I, 2, r5, r_alt, {'whole': d1p, 'straight': 1 - math.sqrt(0.1825)})
+ok(d1((F(375, 1000), F(-625, 1000)), p5) == F(45, 100) and abs(F(375, 1000)) + abs(F(-625, 1000)) == 1, 'L5 P5 (0.375, -0.625) is at d1 0.45 from p and on the edge')
+s5 = sp.Rational(45, 100) / sp.sqrt(2)
+s_line = (1 - (0.15 - (-0.4))) / math.sqrt(2)  # distance from p to the edge y1 - y2 = 1
+num(5, I, 3, s5, s_line, {'times': 0.45 * math.sqrt(2), 'same': 0.45, 'half': 0.225}, rounded=0.3182)
+ok(abs(round(0.45 / 1.414, 4) - 0.3182) < 1e-12 and abs(0.3182 - 0.3181981) <= 6e-5, 'L5 P5 part 3 takes 0.3182 (also from sqrt2 = 1.414)')
+t5 = F(45, 100) / 2
+t_alt = max(i / 10000 for i in range(1, 10000) if all(abs(0.15 + a * i / 10000) + abs(-0.4 + b * i / 10000) <= 1 + 1e-12 for a in (-1, 1) for b in (-1, 1)))
+num(5, I, 4, t5, t_alt, {'times': 0.9, 'root-two': 0.45 / math.sqrt(2), 'same': 0.45})
+choice(5, I, 5, 'all')
+ok(all(abs(1 - 1 / k_) + 0 < 1 for k_ in range(2, 50)), 'L5 P5 points (1 - 1/n, 0) lie in U')
+
+I = 'p-accumulated-cubic'
+t = sp.Symbol('t')
+fF = t ** 2 - 12 * t + 27
+Fx = sp.integrate(fF, (t, 0, X))
+for xv in (0.5, 2.0, 11.5):
+    ok(abs(float(Fx.subs(X, xv)) - float(mp.quad(lambda u: u ** 2 - 12 * u + 27, [0, xv]))) < 1e-9, f'L5 P6 F({xv}) by quadrature')
+expr45(5, I, 1, Fx, {'no-third': X ** 3 - 6 * X ** 2 + 27 * X, 'no-half': X ** 3 / 3 - 12 * X ** 2 + 27 * X, 'derivative': 2 * X - 12})
+ok(sp.factor(Fx) == X * (X - 9) ** 2 / 3, 'L5 P6 F = x(x-9)^2/3')
+zf = sorted(sp.solve(fF, t))
+zf_alt = sorted({round(i / 1000) for i in range(1, 15000) if abs((i / 1000) ** 2 - 12 * i / 1000 + 27) < 1e-9})
+numset45(5, I, 2, [int(z) for z in zf], zf_alt, {'zeros-of-big-f': [0, 9]})
+vals = {xv: Fx.subs(X, xv) for xv in (0, 3, 9, 15)}
+ok(vals == {0: 0, 3: 36, 9: 0, 15: 180}, 'L5 P6 F at 0, 3, 9, 15')
+Fgrid = max(float(Fx.subs(X, i / 1000)) for i in range(0, 15001, 5))
+num(5, I, 3, max(vals.values()), Fgrid, {'critical': 36, 'no-third': max(xv ** 3 - 6 * xv ** 2 + 27 * xv for xv in (0, 3, 9, 15))}, rounded=180.0, agree=1e-9)
+ok(15 ** 3 - 6 * 15 ** 2 + 27 * 15 == 2430 and sp.Rational(15 ** 3, 3) - 1350 + 405 == 180, 'L5 P6 F(15) arithmetic')
+choice(5, I, 4, 'not-closed')
+ok(round(float(Fx.subs(X, sp.Rational(29, 2))), 2) == 146.21, 'L5 P6 F(14.5) = 146.21')
+ok(all(Fx.subs(X, sp.Rational(i, 100)) < 180 for i in range(0, 1500)), 'L5 P6 no point of [0, 15) reaches 180')
+ok(max(abs(float(fF.subs(t, i / 1000))) for i in range(0, 15001)) == 72.0 and fF.subs(t, 0) == 27, 'L5 P6 |f| <= 72 on [0, 15], reached at 15; f(0) = 27')
+n6 = first(lambda m: F(72, m) < F(7, 100))
+num(5, I, 5, n6, ceil_above(72 / 0.07), {'round-down': n6 - 1, 'left-end': first(lambda m: F(27, m) < F(7, 100)), 'no-bound': first(lambda m: F(1, m) < F(7, 100))})
+ok(n6 == 1029 and abs(72 / 1028 - 0.07004) < 5e-6 and abs(72 / 0.07 - 1028.6) < 0.05, 'L5 P6 72/1028 ~ 0.07004 and 72/0.07 ~ 1028.6')
+ok(180 - Fx.subs(X, 15 - sp.Rational(1, n6)) < sp.Rational(7, 100), 'L5 P6 the true gap at n = 1029 is below 0.07')
+shape45(5, {'p-root-sums': {'l20-riemann-integral', 'l21-fundamental-theorem-proved'},
+            'p-diamond-ball': {'l22-metric-spaces', 'l23-open-and-closed'},
+            'p-accumulated-cubic': {'l21-fundamental-theorem-proved', 'l23-open-and-closed', 'l24-compactness'}})
+
 # ---------------------------------------------------------------- second check of the bands
-for lv in (1, 2, 3):
+for lv in (1, 2, 3, 4, 5):
     Lv = Level('analysis', lv)
     Lv.check_wrongs(f'problems-{lv}')
     bad = [r for r in Lv.results if not r[0]]

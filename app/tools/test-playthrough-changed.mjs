@@ -103,6 +103,19 @@ const inCache = new Set(Object.keys(readCache(cache)).map(k => k.split('|').slic
 ok(shardsOk && new Set(union).size === union.length && union.includes(`lesson/${L1}`), `shards 1/3 to 3/3 list each changed item once, each within its own unfiltered shard (${union.length} items, ${inCache.size} seeded)`);
 ok(!run(['--all', '--no-routes', '--shard', '1/3', '--changed', '--list', '--cache', cache]).stderr.includes('NaN'), '--shard with --changed prints its changed line');
 
+/* 7a. a new item moves no other item to another shard (ENGINE-BACKLOG 973). Each shard has its own green cache, so a partition by position would send most of a shard to
+   its sibling when a problem set is added near the front (CI run 10 replayed 39 of 54). Add one under the first course and compare every shard before and after. */
+const shardList = (i, n) => new Set(run(['--problems', 'all', '--shard', `${i}/${n}`, '--list']).stdout.split('\n').filter(Boolean));
+const before = [1, 2, 3].map(i => shardList(i, 3));
+const donor = fs.readdirSync(path.join(copy, 'content/courses')).sort().find(c => fs.readdirSync(path.join(copy, 'content/courses', c)).some(f => /^problems-\d+\.json$/.test(f))), seedSet = fs.readdirSync(path.join(copy, 'content/courses', donor)).find(f => /^problems-\d+\.json$/.test(f));
+const extraSets = ['problems-90', 'problems-91'];   // two, not three: three would shift a position by 3, which a three-way split by position would not notice
+if (seedSet) for (const x of extraSets) fs.copyFileSync(path.join(copy, 'content/courses', donor, seedSet), path.join(copy, 'content/courses', donor, x + '.json'));
+const after = [1, 2, 3].map(i => shardList(i, 3));
+const moved = before.flatMap((s, i) => [...s].filter(id => !after[i].has(id)));
+ok(!!seedSet && before.reduce((a, s) => a + s.size, 0) > 30 && moved.length === 0 && after.reduce((a, s) => a + s.size, 0) === before.reduce((a, s) => a + s.size, 0) + extraSets.length, `two problem sets added under the first course move none of the ${before.reduce((a, s) => a + s.size, 0)} others to another shard (${moved.length} moved)`);
+ok(Math.max(...before.map(s => s.size)) - Math.min(...before.map(s => s.size)) <= 0.5 * before.reduce((a, s) => a + s.size, 0) / 3, `the three shards stay about as big as each other (${before.map(s => s.size).join(', ')})`);
+for (const x of extraSets) fs.rmSync(path.join(copy, 'content/courses', donor, x + '.json'), { force: true });
+
 /* 7b. what the cache may be trusted for (engine pass AC part 5): the same viewport, and the same browser. Seeded at desktop, nothing is green for --mobile or --tablet;
    the installed Playwright version is in the engine hash, so a different version (a new Chromium) lists everything, and the same version lists nothing. */
 r = changed();

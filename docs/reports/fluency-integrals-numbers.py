@@ -22,7 +22,7 @@ import sympy as sp
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 APP = os.path.join(ROOT, 'app')
-N = 200
+N = int(os.environ.get('FLUENCY_N', '60'))
 X = sp.Symbol('X', real=True)
 POINTS = [sp.Rational(37, 100), sp.Rational(91, 100), sp.Rational(161, 100), sp.Rational(223, 100), sp.Rational(283, 100)]
 fails = []

@@ -230,6 +230,21 @@ allow('a-leak-steps', 120, 2015, 2024, 20)
 correct_ids('a-curves-meet', ['a'])
 allow('a-curves-meet', 1.02, 1.05, 0.80)
 
+# a-spline-columns (sl-flexible): route A is scikit-learn's own column count, route B the lesson's K + 4 per input
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import SplineTransformer
+_Xs = np.random.default_rng(5).normal(size=(180, 5)); _Xs[:, 3:] = (_Xs[:, 3:] > 0)
+_ct = ColumnTransformer([('s', SplineTransformer(n_knots=6, degree=3), [0, 1, 2])], remainder='passthrough').fit(_Xs)
+cols_a = _ct.transform(_Xs).shape[1]
+cols_b = 3 * (4 + (6 - 2)) + 2
+rec(cols_a == cols_b, f'a-spline-columns: two routes agree ({cols_a} and {cols_b})')
+key('a-spline-columns', cols_a)
+wrong('a-spline-columns', 'knots-only', 3 * 6 + 2)
+wrong('a-spline-columns', 'no-constant', 3 * (3 + 4) + 2)
+wrong('a-spline-columns', 'no-flags', cols_a - 2)
+rec(W('a-spline-columns')['answer'] not in (3 * 6 + 2, 3 * 7 + 2, 24), 'a-spline-columns: the key is none of its slips')
+allow('a-spline-columns', 3, 6, 3, 2, 4, 8)
+
 y6 = np.array([-14, -9, -2, 5, 7, 18], float)
 lad = lambda v_: min(float(np.abs(v_ - c_).sum()) for c_ in np.linspace(-20, 20, 4001))      # the best centre, by search: the median
 par6 = lad(y6)
@@ -399,7 +414,9 @@ key('b-yule-walker', round(yw[1], 6))
 wrong('b-yule-walker', 'gave-acf', 0.05)
 wrong('b-yule-walker', 'no-denominator', round(0.05 - 0.45 ** 2, 6))
 wrong('b-yule-walker', 'gave-phi1', round(yw[0], 6))
-allow('b-yule-walker', 0.45, 0.05, -0.1525, 0.7975, yw[1], yw[0])
+# sign: the sign-dropped key (rho_1^2 - rho_2 = 0.1525 over 0.7975); its byKey line writes 0.2025 = rho_1^2
+wrong('b-yule-walker', 'sign', round(abs(yw[1]), 6))
+allow('b-yule-walker', 0.45, 0.05, -0.1525, 0.7975, 0.2025, yw[1], yw[0])
 
 key('b-ma-forecast', float(F('0.0008') + F('0.35') * F('0.014')), part=0)
 wrong('b-ma-forecast', 'no-mean', float(F('0.35') * F('0.014')), part=0)
@@ -458,6 +475,7 @@ tdf = float(bhat[0] / math.sqrt(s2 * np.linalg.inv(Xd.T @ Xd)[0, 0]))
 key('b-df-hand', round(tdf, 4))
 wrong('b-df-hand', 'slope', round(float(bhat[0]), 4))
 wrong('b-df-hand', 'n-divisor', round(float(bhat[0] / math.sqrt(float(res[0]) / len(yd) * np.linalg.inv(Xd.T @ Xd)[0, 0])), 4))
+wrong('b-df-hand', 'sign', round(abs(tdf), 4))   # the t statistic with its minus sign dropped
 allow('b-df-hand', *e12, float(Xd[:, 0] @ yd), float(Xd[:, 0] @ Xd[:, 0]), s2, -3.34, -1.95, 7, 6)
 rec(abs(mackinnoncrit(N=1, regression='n', nobs=np.inf)[1] + 1.95) < 0.02, 'b-df-hand: the no-constant Dickey-Fuller 5% point is about -1.95')
 rec(tdf < -1.95 and tdf > -3.34, 'b-df-hand: t misses the Engle-Granger point and passes the plain one')

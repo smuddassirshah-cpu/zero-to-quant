@@ -2261,3 +2261,139 @@ Items raised and closed by the finishing pass of engine pass AB part 3 (`docs/re
 969 status: done. the printed figure counts only as the answer rounded to fewer places and not a `wrong[]` value (`49{,}988` read as 49,988); the half-unit check only within 0.1 unit of a rounding edge; a wide wrong band only when it reaches the answer band or another wrong value. Warnings 143 to 26 and 36 to 0; `r-t-bar` and `r-best-of-twenty` of `exams/stage-3.json` still warn. Triage rules 2, 4 and 7 (a separate advisory for text rounded more coarsely than asked, "whole number" only from the question, the band measured without float slack) are not done: open, [Could].
 970. Done [Should] `fresh-check.mjs` misses an item that reuses another item's numbers under new words (protocol 6, seen four times in review-delta-bank-2).
 970 status: done. `--cross-numbers [n]` and `--cross-numbers-all`, advisory; catches findings 1 and 2 as they stood before the fix, not 3 (rounded copies) or 4 (a sentence and one number). 5,618 advisories on current content at n = 3, 344 at n = 5; read the top of the list. Matching rounded copies of a number is open, [Could].
+
+## Engine pass AD part 1 (`docs/reports/engine-pass-ad-1.md`), items 971 to 1027
+
+Raised by session AC and the engine pass AD planning (`KNOWN_ISSUES.md` "(session AC)"):
+971. Done [Should] CI job running every number script (28 of 360 failed unseen at the session-start commit).
+971 status: done. `tools/run-number-scripts.mjs` and a job in `acceptance.yml`; allow-list `tools/number-scripts-known-failing.txt`. See `docs/CI.md`.
+972. [Should] `fresh-check` same-course mode (numbers, matrices up to scale and transpose, 8-word shingles), gated. [KNOWN_ISSUES session AC; protocol 6, third sighting]
+972 status: in flight (another agent; report `docs/reports/engine-pass-ad-2.md`).
+973. [Should] Changed-only `extras problems` jobs took 18 minutes for 12 new sets: a course-wide or manifest dependency in the problem-set hash is the suspect. [KNOWN_ISSUES session AC, CI run 10]
+973 status: in flight (same agent as 972).
+
+Numbered from the inbox headings after "Raised later (problems elimination)" (83 bullets; a count in brackets is the number of bullets merged into the item):
+974. [Should] A Python code test cannot have a limit under 5 s (`budget` only adds), so one call on the largest input does not separate $O(n)$ from $O(\log n)$. [inbox: bank 2 coding 3 and 4]
+975. [Could] `playthrough.mjs --bank --shots` saves only the result page: no shot of a code item's editor, examples or hidden-test rows at 440 px. [inbox: bank 2 coding 1 and 2, 3 and 4 (2)]
+976. [Should] A `compare: "fraction"` expect is evaluated in the learner's namespace: deleting `from fractions import Fraction` fails every case with a `NameError`. [inbox: bank 2 coding 1 and 2]
+977. [Could] No tool runs a named near-miss method in the real Pyodide worker; CPython timing can pass what the browser fails. [inbox: bank 2 coding 1 and 2]
+978. [Could] `[bank-code]` checks the count in `how` but not its wording ("the expected whole number" on an expect that is `None` or a dict). [inbox: bank 2 coding 1 and 2]
+979. [Should] No rule catches an explanation that reports the author's own seeded run ("In 2,000 seeded fits ..."), which a learner cannot check. [inbox: review bank 2 a]
+980. [Should] `fresh-check.mjs --bank` passes near copies of course items (a lesson screen under new words; the same numbers in another order); related 970, 972. [inbox: review bank 2 a, review bank 2 b (2)]
+981. [Could] The pace count treats a `longform` bank item like any other, though `pace` is the speaking time and typing 150 words follows. [inbox: review bank 2 a]
+982. [Could] A `unit` value (`"points"` or `"pp"`) under which a trailing % is dropped, not scaled, for "in percentage points". [inbox: review bank 2 a]
+983. [Should] `numText` unit forms still unread: "10 basis points", "10 per cent", "55p", "4h", "£1.732m", `°C` on a "degrees" field (`m^2` was done in 933). [inbox: review bank 2 b, problems eigen, delta AC-3 (3)]
+984. [Could] A currency code before a number (`CHF 27.50`) or a sign after it (`540 €`) is not read, with or without `unit`. [inbox: problems ratio, delta AC-3 (2)]
+985. [Could] `compare: "equal"` cannot tell `1999.0` from `1999` or a tuple from a list, and no field says the inputs must come back unchanged. [inbox: review bank 2 b]
+986. [Could] Validator advisory `[signed-answer]`: a question asking for a loss or a fall with no stated sign convention. [inbox: review bank 2 b]
+987. [Should] `playthrough.mjs --problems --mobile` stays green when a display equation in `prose` is wider than the 440 px column. [inbox: problems least-squares]
+988. [Could] `playthrough.mjs --why` does nothing for `--problems`; a dead slip line is found only by `grade-regression.mjs` (see 926, 958). [inbox: problems least-squares]
+989. [Could] `expression` vector answers with fraction entries: rounded decimals get the generic line (no band on entries). [inbox: problems least-squares]
+990. [Should] `expression`: a number in front of a vector (`5(0.8,0.6,0)`, `16(3,1)+(2,1)`) gets "That is a single value" unless an `accept` form has that shape. [inbox: review problems 1.4 b, 1.4 c (2)]
+991. [Could] `expression`: a unit after a vector (`(-3.6, 4.8) km`) or a £ inside one gets a false or generic line. [inbox: review problems 1.4 b]
+992. [Could] Validator candidate: a part asking for a unit vector $\mathbf{e}_k$ with no `wrong` entry equal to the key divided by its length. [inbox: review problems 1.4 b]
+993. [Should] Same-course reuse shapes `fresh-check` misses beyond the 972 mode: letter-entry matrices at a set value, a setup met again with other numbers in a later level, a set-up under new wording (an EWMA step), a claim chain (proof), the topic exam not compared, matrices up to scale or transpose, 0 hits where a read found seven. Re-check against 972 when it lands. [inbox: review problems 1.4 b, 1.4 c (2), problems proof, problems analysis, problems linear-maps, review problems proof 1-3, session AC protocol 6 (8); review delta bank 2 merged into 970]
+994. [Could] `fresh-check.mjs --cross-numbers` noise: subscripts read as numbers ($L_{22}$), rates of two figures count as distinctive, `wrong[]` slips count as shared, definition formulas ($\varphi_j(\mathbf{v}_k)=1$), Black-Scholes rate arithmetic, puzzle-sequence terms. Wanted: strip `_{...}`, weight short numbers low, skip `wrong[]`, a definition stoplist, skip items tagged `sequence`. [inbox: problems eigen, eigen level 4 (2), ratio, linear-maps, complex (6)]
+995. [Could] Numeric fields that are not read: `r>0.28` for "above what value", a two-word unit (`1.26 standard deviations`). [inbox: review problems 1.4 c]
+996. [Could] `numbers_lib`: check that a printed quotient in a feedback line rounds the way the part asks ($20/15.81 \approx 1.26$ is 1.27). [inbox: review problems 1.4 c]
+997. [Could] `test-validate-band-rules.mjs` fails one case when `ZQ_LOCAL_CDN` is set: the "without" run inherits it. [inbox: session AC main session]
+998. [Could] The over-100 warning for `unit: "%"` fires on `wrong[]` values; an upside-down slip forces `over100: true`. [inbox: problems ratio]
+999. [Could] Standard form typed as `3 \times 10^4`, `3 x 10^4` or `3*10^4` is not read by the numeric field (only `3e4`). [inbox: problems number-sense]
+1000. [Could] A numeric `form: "decimal"` option (refuse `17/6` where 4 decimal places are asked). [inbox: problems number-sense]
+1001. [Could] `[percent-form]` fires on "in %²" (24 widgets), and `unit: "%"` needs the key as a fraction, so its own advice means a re-key of 71 items. [inbox: session AC protocol 6; KNOWN_ISSUES session AC (2)]
+1002. [Could] `tools/worktree-base.sh`: reset a worktree not descended from the development branch, so the brief step is one line (seen again in the audits). [inbox: session AC protocol 6, audit micro; KNOWN_ISSUES session AC (3)]
+1003. [Could] A trailing % read as the bare number where the label or question asks for per cent (a whole-number key); related 951, 936, 955. [inbox: audit delta batch 2, review problems proof 1-3 (2)]
+1004. [Could] Validator: a numeric `accept` line quoting "± x" with x unlike `tol.abs`; a Fluency `placeholder` equal to a reachable key. [inbox: audit delta batch 2]
+1005. [Could] Validator: a slip's `abs` band wide against its own value (over a quarter), which takes another slip. [inbox: audit delta batch 2]
+1006. [Should] `numbers_lib` coverage mode (`lv.require_coverage()`): fail when a numeric key, table cell or `wrong[]` value was never passed to `expect`. [inbox: audit micro]
+1007. [Could] Validator: a choice option whose `why` and `feedback.byKey` text differ. [inbox: audit micro]
+1008. [Should] `grade-all.mjs --file` runs no `code` (nor `order`, `longform`) widget, so SESSION PROTOCOL 5's no-browser second read runs no solution or starter in a code course. A `--code` mode under `--local-cdn` (seed: the harness in `docs/reports/ds-L1-3-concepts.py`). [inbox: audit micro, py-found (2), algo-think, ds (5); KNOWN_ISSUES session AC]
+1009. [Could] No number script for micro L1 and L2, algo-think L1 to L3, ds L1 to L3; the concepts scripts could seed them. [inbox: audit micro, algo-think, ds (3)]
+1010. [Should] The `numbers_lib` code runner (and `py_found_read12.py check_code`) ignores `setup`, `prelude`, `compare: "raises"` and `isclose` on nested values, so correct content exits 1 (py-found L1 to L4). One shared runner. [inbox: audit py-found (3)]
+1011. [Could] A code-test mode that runs the learner's own test function against wrong versions of the function under test (`assert True` passes now). [inbox: audit py-found]
+1012. [Could] Validator rule for a lesson cited by number or id in learner strings; see 900. [inbox: audit py-found]
+1013. [Could] Validator: a `byKey.test-N` line quoting a call that `tests[N-1]` does not make. [inbox: audit py-found]
+1014. [Could] An optional `slip` expression on a predict-the-output option or a numeric `wrong[]`, evaluated to check the value its `why` or `byKey` names. [inbox: audit py-found, audit ds (2)]
+1015. [Could] Interpreter messages quoted in learner strings are not checked against the runtime (Python 3.12 adds "Did you forget to import ...?"). [inbox: audit py-found]
+1016. [Could] A `how` or `byKey` claim that a slow method "cannot finish in time" is not checked against the 5 s limit; an optional `slow` solution the playthrough must see fail. [inbox: audit ds]
+1017. [Could] Code quoted in `prose` and `explain` is never run: an optional `claims` list on a screen. [inbox: audit ds]
+1018. [Could] Validator candidate: a big-O key with a strictly larger wrong class that is a true loose bound, unless the smallest class is asked for. [inbox: audit algo-think]
+1019. [Could] No typed widget grades a logical formula or a set expression ($\land$, $\cup$, complements), which limits what a proof problem can test. [inbox: problems proof; KNOWN_ISSUES session AC (2)]
+1020. [Could] The number-script venv has sympy without `antlr4`: a shared `numbers_lib.tex_to_sympy` for the TeX subset content uses. [inbox: problems analysis]
+1021. [Could] `form: "rectangular"` refuses an imaginary term of three factors (`-6+6\sqrt{3}i`, `\frac{5\sqrt{3}}{2}i` only in its own shape) with the false line "not in the form a + bi". [inbox: problems complex, review problems complex 1-3 (2)]
+1022. [Could] `form: "exact-angle"` refuses plain-text `pi/6` and `2pi/3`. [inbox: problems complex]
+1023. [Could] `numbers_lib._numbers` joins tokens across a fraction whose numerator holds braces (`\tfrac{2 \pm \sqrt{-36}}{2}` gives $-362$). [inbox: problems complex]
+1024. [Should] `expression` "one fraction" parts: the retyped question grades correct and `form: "simplified"` does not refuse it. [inbox: review problems analysis 1 to 3]
+1025. [Could] `expression` tuple answers typed with letters (`a=2, b=5`) get the generic line. [inbox: review problems linear-maps 1-3]
+1026. [Could] The weekly full CI run will not fire until `acceptance.yml` is on the default branch (`main` holds no `.github/` or `app/`); an owner's decision, a dispatch meanwhile. [KNOWN_ISSUES session AC]
+1027. [Could] Commit the Actions helper (`ci.sh <run_id>`: jobs endpoint, count by status, failed job and step names) as `tools/ci-status.sh`. [KNOWN_ISSUES session AC]
+
+Last inbox heading numbered by engine pass AD part 1: "Raised later (audit ds)" (end of file). Every bullet after "problems elimination" is numbered: 82 bullets into 52 items (974 to 1025), 1 merged into 970, and 2 items (1026, 1027) from KNOWN_ISSUES; 971 to 973 are the reserved items. The inbox is cleared.
+
+## Engine pass AD part 1 (`docs/reports/engine-pass-ad-1.md`), items 971 to 1027
+
+Raised by session AC and the engine pass AD planning (`KNOWN_ISSUES.md` "(session AC)"):
+971. Done [Should] CI job running every number script (28 of 360 failed unseen at the session-start commit).
+971 status: done. `tools/run-number-scripts.mjs` and a job in `acceptance.yml`; allow-list `tools/number-scripts-known-failing.txt`. See `docs/CI.md`.
+972. [Should] `fresh-check` same-course mode (numbers, matrices up to scale and transpose, 8-word shingles), gated. [KNOWN_ISSUES session AC; protocol 6, third sighting]
+972 status: in flight (another agent; report `docs/reports/engine-pass-ad-2.md`).
+973. [Should] Changed-only `extras problems` jobs took 18 minutes for 12 new sets: a course-wide or manifest dependency in the problem-set hash is the suspect. [KNOWN_ISSUES session AC, CI run 10]
+973 status: in flight (same agent as 972).
+
+Numbered from the inbox headings after "Raised later (problems elimination)" (83 bullets; a count in brackets is the number of bullets merged into the item):
+974. [Should] A Python code test cannot have a limit under 5 s (`budget` only adds), so one call on the largest input does not separate $O(n)$ from $O(\log n)$. [inbox: bank 2 coding 3 and 4]
+975. [Could] `playthrough.mjs --bank --shots` saves only the result page: no shot of a code item's editor, examples or hidden-test rows at 440 px. [inbox: bank 2 coding 1 and 2, 3 and 4 (2)]
+976. [Should] A `compare: "fraction"` expect is evaluated in the learner's namespace: deleting `from fractions import Fraction` fails every case with a `NameError`. [inbox: bank 2 coding 1 and 2]
+977. [Could] No tool runs a named near-miss method in the real Pyodide worker; CPython timing can pass what the browser fails. [inbox: bank 2 coding 1 and 2]
+978. [Could] `[bank-code]` checks the count in `how` but not its wording ("the expected whole number" on an expect that is `None` or a dict). [inbox: bank 2 coding 1 and 2]
+979. [Should] No rule catches an explanation that reports the author's own seeded run ("In 2,000 seeded fits ..."), which a learner cannot check. [inbox: review bank 2 a]
+980. [Should] `fresh-check.mjs --bank` passes near copies of course items (a lesson screen under new words; the same numbers in another order); related 970, 972. [inbox: review bank 2 a, review bank 2 b (2)]
+981. [Could] The pace count treats a `longform` bank item like any other, though `pace` is the speaking time and typing 150 words follows. [inbox: review bank 2 a]
+982. [Could] A `unit` value (`"points"` or `"pp"`) under which a trailing % is dropped, not scaled, for "in percentage points". [inbox: review bank 2 a]
+983. [Should] `numText` unit forms still unread: "10 basis points", "10 per cent", "55p", "4h", "£1.732m", `°C` on a "degrees" field (`m^2` was done in 933). [inbox: review bank 2 b, problems eigen, delta AC-3 (3)]
+984. [Could] A currency code before a number (`CHF 27.50`) or a sign after it (`540 €`) is not read, with or without `unit`. [inbox: problems ratio, delta AC-3 (2)]
+985. [Could] `compare: "equal"` cannot tell `1999.0` from `1999` or a tuple from a list, and no field says the inputs must come back unchanged. [inbox: review bank 2 b]
+986. [Could] Validator advisory `[signed-answer]`: a question asking for a loss or a fall with no stated sign convention. [inbox: review bank 2 b]
+987. [Should] `playthrough.mjs --problems --mobile` stays green when a display equation in `prose` is wider than the 440 px column. [inbox: problems least-squares]
+988. [Could] `playthrough.mjs --why` does nothing for `--problems`; a dead slip line is found only by `grade-regression.mjs` (see 926, 958). [inbox: problems least-squares]
+989. [Could] `expression` vector answers with fraction entries: rounded decimals get the generic line (no band on entries). [inbox: problems least-squares]
+990. [Should] `expression`: a number in front of a vector (`5(0.8,0.6,0)`, `16(3,1)+(2,1)`) gets "That is a single value" unless an `accept` form has that shape. [inbox: review problems 1.4 b, 1.4 c (2)]
+991. [Could] `expression`: a unit after a vector (`(-3.6, 4.8) km`) or a £ inside one gets a false or generic line. [inbox: review problems 1.4 b]
+992. [Could] Validator candidate: a part asking for a unit vector $\mathbf{e}_k$ with no `wrong` entry equal to the key divided by its length. [inbox: review problems 1.4 b]
+993. [Should] Same-course reuse shapes `fresh-check` misses beyond the 972 mode: letter-entry matrices at a set value, a setup met again with other numbers in a later level, a set-up under new wording (an EWMA step), a claim chain (proof), the topic exam not compared, matrices up to scale or transpose, 0 hits where a read found seven. Re-check against 972 when it lands. [inbox: review problems 1.4 b, 1.4 c (2), problems proof, problems analysis, problems linear-maps, review problems proof 1-3, session AC protocol 6 (8); review delta bank 2 merged into 970]
+994. [Could] `fresh-check.mjs --cross-numbers` noise: subscripts read as numbers ($L_{22}$), rates of two figures count as distinctive, `wrong[]` slips count as shared, definition formulas ($\varphi_j(\mathbf{v}_k)=1$), Black-Scholes rate arithmetic, puzzle-sequence terms. Wanted: strip `_{...}`, weight short numbers low, skip `wrong[]`, a definition stoplist, skip items tagged `sequence`. [inbox: problems eigen, eigen level 4 (2), ratio, linear-maps, complex (6)]
+995. [Could] Numeric fields that are not read: `r>0.28` for "above what value", a two-word unit (`1.26 standard deviations`). [inbox: review problems 1.4 c]
+996. [Could] `numbers_lib`: check that a printed quotient in a feedback line rounds the way the part asks ($20/15.81 \approx 1.26$ is 1.27). [inbox: review problems 1.4 c]
+997. [Could] `test-validate-band-rules.mjs` fails one case when `ZQ_LOCAL_CDN` is set: the "without" run inherits it. [inbox: session AC main session]
+998. [Could] The over-100 warning for `unit: "%"` fires on `wrong[]` values; an upside-down slip forces `over100: true`. [inbox: problems ratio]
+999. [Could] Standard form typed as `3 \times 10^4`, `3 x 10^4` or `3*10^4` is not read by the numeric field (only `3e4`). [inbox: problems number-sense]
+1000. [Could] A numeric `form: "decimal"` option (refuse `17/6` where 4 decimal places are asked). [inbox: problems number-sense]
+1001. [Could] `[percent-form]` fires on "in %²" (24 widgets), and `unit: "%"` needs the key as a fraction, so its own advice means a re-key of 71 items. [inbox: session AC protocol 6; KNOWN_ISSUES session AC (2)]
+1002. [Could] `tools/worktree-base.sh`: reset a worktree not descended from the development branch, so the brief step is one line (seen again in the audits). [inbox: session AC protocol 6, audit micro; KNOWN_ISSUES session AC (3)]
+1003. [Could] A trailing % read as the bare number where the label or question asks for per cent (a whole-number key); related 951, 936, 955. [inbox: audit delta batch 2, review problems proof 1-3 (2)]
+1004. [Could] Validator: a numeric `accept` line quoting "± x" with x unlike `tol.abs`; a Fluency `placeholder` equal to a reachable key. [inbox: audit delta batch 2]
+1005. [Could] Validator: a slip's `abs` band wide against its own value (over a quarter), which takes another slip. [inbox: audit delta batch 2]
+1006. [Should] `numbers_lib` coverage mode (`lv.require_coverage()`): fail when a numeric key, table cell or `wrong[]` value was never passed to `expect`. [inbox: audit micro]
+1007. [Could] Validator: a choice option whose `why` and `feedback.byKey` text differ. [inbox: audit micro]
+1008. [Should] `grade-all.mjs --file` runs no `code` (nor `order`, `longform`) widget, so SESSION PROTOCOL 5's no-browser second read runs no solution or starter in a code course. A `--code` mode under `--local-cdn` (seed: the harness in `docs/reports/ds-L1-3-concepts.py`). [inbox: audit micro, py-found (2), algo-think, ds (5); KNOWN_ISSUES session AC]
+1009. [Could] No number script for micro L1 and L2, algo-think L1 to L3, ds L1 to L3; the concepts scripts could seed them. [inbox: audit micro, algo-think, ds (3)]
+1010. [Should] The `numbers_lib` code runner (and `py_found_read12.py check_code`) ignores `setup`, `prelude`, `compare: "raises"` and `isclose` on nested values, so correct content exits 1 (py-found L1 to L4). One shared runner. [inbox: audit py-found (3)]
+1011. [Could] A code-test mode that runs the learner's own test function against wrong versions of the function under test (`assert True` passes now). [inbox: audit py-found]
+1012. [Could] Validator rule for a lesson cited by number or id in learner strings; see 900. [inbox: audit py-found]
+1013. [Could] Validator: a `byKey.test-N` line quoting a call that `tests[N-1]` does not make. [inbox: audit py-found]
+1014. [Could] An optional `slip` expression on a predict-the-output option or a numeric `wrong[]`, evaluated to check the value its `why` or `byKey` names. [inbox: audit py-found, audit ds (2)]
+1015. [Could] Interpreter messages quoted in learner strings are not checked against the runtime (Python 3.12 adds "Did you forget to import ...?"). [inbox: audit py-found]
+1016. [Could] A `how` or `byKey` claim that a slow method "cannot finish in time" is not checked against the 5 s limit; an optional `slow` solution the playthrough must see fail. [inbox: audit ds]
+1017. [Could] Code quoted in `prose` and `explain` is never run: an optional `claims` list on a screen. [inbox: audit ds]
+1018. [Could] Validator candidate: a big-O key with a strictly larger wrong class that is a true loose bound, unless the smallest class is asked for. [inbox: audit algo-think]
+1019. [Could] No typed widget grades a logical formula or a set expression ($\land$, $\cup$, complements), which limits what a proof problem can test. [inbox: problems proof; KNOWN_ISSUES session AC (2)]
+1020. [Could] The number-script venv has sympy without `antlr4`: a shared `numbers_lib.tex_to_sympy` for the TeX subset content uses. [inbox: problems analysis]
+1021. [Could] `form: "rectangular"` refuses an imaginary term of three factors (`-6+6\sqrt{3}i`, `\frac{5\sqrt{3}}{2}i` only in its own shape) with the false line "not in the form a + bi". [inbox: problems complex, review problems complex 1-3 (2)]
+1022. [Could] `form: "exact-angle"` refuses plain-text `pi/6` and `2pi/3`. [inbox: problems complex]
+1023. [Could] `numbers_lib._numbers` joins tokens across a fraction whose numerator holds braces (`\tfrac{2 \pm \sqrt{-36}}{2}` gives $-362$). [inbox: problems complex]
+1024. [Should] `expression` "one fraction" parts: the retyped question grades correct and `form: "simplified"` does not refuse it. [inbox: review problems analysis 1 to 3]
+1025. [Could] `expression` tuple answers typed with letters (`a=2, b=5`) get the generic line. [inbox: review problems linear-maps 1-3]
+1026. [Could] The weekly full CI run will not fire until `acceptance.yml` is on the default branch (`main` holds no `.github/` or `app/`); an owner's decision, a dispatch meanwhile. [KNOWN_ISSUES session AC]
+1027. [Could] Commit the Actions helper (`ci.sh <run_id>`: jobs endpoint, count by status, failed job and step names) as `tools/ci-status.sh`. [KNOWN_ISSUES session AC]
+
+Last inbox heading numbered by engine pass AD part 1: "Raised later (audit ds)" (end of file). Every bullet after "problems elimination" is numbered: 82 bullets into 52 items (974 to 1025), 1 merged into 970, and 2 items (1026, 1027) from KNOWN_ISSUES; 971 to 973 are the reserved items. The inbox is cleared.

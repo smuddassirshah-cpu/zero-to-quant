@@ -7,8 +7,8 @@
    Usage (from the repository root or anywhere):
      node app/tools/playthrough.mjs                        every written lesson, then every route
      node app/tools/playthrough.mjs --all                  lessons, routes, every review and homework, every exam
-     node app/tools/playthrough.mjs --all --shard 2/4      only every 4th item of the full ordered item list (lessons, then sets, then exams), starting at the 2nd: shard i of n
-                                                           (1-based) runs the items whose zero-based index % n === i-1, so shards 1/4 to 4/4 cover each item once. The routes and
+     node app/tools/playthrough.mjs --all --shard 2/4      about every 4th item of the full item list (lessons, then sets, then exams): shard i of n
+                                                           (1-based) runs the items whose sha1 of "kind|id" mod n is i-1 (a hash, not the position: adding an item moves no other item to another shard, so a shard's green cache stays valid; engine item 973), so shards 1/4 to 4/4 cover each item once. The routes and
                                                            their checks run in shard 1 only; --routes-only with any other shard has no items and passes with a note. Prints "shard i/n: K of N items"
      node app/tools/playthrough.mjs --all --list           print the item ids (lesson/, set/, exam/) the run would play, one per line, and exit (works with --shard; no browser)
      node app/tools/playthrough.mjs --all --changed        green-hash cache (tools/green-cache.mjs): every item that passes is recorded in app/tools/.green-cache.json (git-ignored) under kind, id and
@@ -99,6 +99,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import crypto from 'node:crypto';
 import { createHasher, readCache, writeGreen, makeLookup, keyOf } from './green-cache.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -306,10 +307,11 @@ const main = async () => {
   for (const x of opt.fluencyIds) if (!allFluency.includes(x)) die(`--fluency ${x}: no such fluency set (content/courses/<course>/fluency-<lesson>.json, or fixture/<id> under tools/fixtures/fluency)`);
   for (const x of opt.problemsIds) if (!allProblems.includes(x)) die(`--problems ${x}: no such problem set (content/courses/<course>/problems-<n>.json, or fixture/<file> under tools/fixtures/problems)`);
   const problems0 = opt.problemsIds.length ? opt.problemsIds : (opt.all || opt.problemsAll) ? allProblems : [];
+  /* ENGINE-BACKLOG 550, 973: the full ordered item list is lessons, then sets, then exams. --shard i/n keeps the items whose shard is i: a hash of the kind and id mod n, not the position, so adding a lesson or a problem set moves no other item to another shard (a shard's green cache holds only its own items; by position, 12 new sets moved most of a 54-item shard in CI run 10) */
+  const shardOf = (k, id, n) => parseInt(crypto.createHash("sha1").update(k + "|" + id).digest("hex").slice(0, 8), 16) % n;
   const fluency0 = opt.fluencyIds.length ? opt.fluencyIds : (opt.all || opt.fluencyAll) ? allFluency : [];
-  /* ENGINE-BACKLOG 550: the full ordered item list is lessons, then sets, then exams; --shard i/n keeps the items whose index % n === i-1 */
   const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...fluency0.map(id => ({ k: 'fluency', id })), ...problems0.map(id => ({ k: 'problems', id })), ...exams0.map(id => ({ k: 'exam', id }))];
-  const mine0 = opt.shard ? full.filter((_, ix) => ix % opt.shard.n === opt.shard.i - 1) : full;
+  const mine0 = opt.shard ? full.filter(x => shardOf(x.k, x.id, opt.shard.n) === opt.shard.i - 1) : full;
   /* engine pass AC: the green-hash cache (tools/green-cache.mjs). Sharding is applied first, then --changed filters this shard's items, so shards partition the
      same way on every machine whatever each cache holds. Every item's hash is taken here, before anything is played, so an edit made during the run is never recorded as green. */
   const modesAll = ['desktop', ...new Set(EXTRA.map(v => v.mode))];

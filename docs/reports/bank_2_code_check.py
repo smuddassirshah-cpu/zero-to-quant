@@ -89,7 +89,9 @@ def check_code(ok, lab, it, brute, traps):
     ok(w['kind'] == 'code' and w.get('language', 'python') == 'python', f'{lab}: Python code item')
     ex, ts = w['examples'], w['tests']
     ok(len(ex) == 2, f'{lab}: two examples')
-    ok(6 <= len(ts) <= 10, f'{lab}: {len(ts)} hidden tests, six to ten')
+    # DECISIONS (session AC): coding-2 ds-pointers-merge-ticks keeps an eleventh test; tests are never removed to meet a count
+    top = 11 if lab == 'coding-2/ds-pointers-merge-ticks' else 10
+    ok(6 <= len(ts) <= top, f'{lab}: {len(ts)} hidden tests, six to {top}')
     cmp = {c.get('compare', 'equal') for c in ex + ts}
     what = 'fraction exactly' if cmp == {'fraction'} else 'value'
     exp_how = [f'Submit runs {len(ts)} hidden tests. Each result must equal the expected {what}.']
