@@ -1,4 +1,4 @@
-"""Recompute every number in app/content/courses/analysis/problems-1.json to problems-4.json twice.
+"""Recompute every number in app/content/courses/analysis/problems-1.json to problems-5.json twice.
 
 Method 1 is exact (fractions or sympy: simplify, solve, limit, summation, apart). Method 2 is independent: a brute
 search over whole numbers, a float or mpmath simulation, or a large-n table. For each numeric part the script checks
@@ -434,7 +434,7 @@ def shape45(lv, lessons):
         ok(len([s for s in p['explain']['text'].replace('$', '').split('. ') if s.strip()]) <= 3, f'L{lv} explain at most three sentences')
 
 
-SETS[4] = load(4)
+SETS[4], SETS[5] = load(4), load(5)
 
 # ---------------------------------------------------------------- Level 4
 I = 'p-cubic-bracket'
@@ -521,8 +521,80 @@ shape45(4, {'p-cubic-bracket': {'l15-epsilon-delta', 'l16-intermediate-value', '
             'p-quartic-roots': {'l16-intermediate-value', 'l17-extreme-value', 'l18-mean-value-proved'},
             'p-bump-series': {'l19-uniform-convergence', 'l15-epsilon-delta'}})
 
+# ---------------------------------------------------------------- Level 5
+I = 'p-root-sums'
+U4 = sum(sp.sqrt(j) for j in range(1, 5))
+L4 = sum(sp.sqrt(j) for j in range(0, 4))
+num(5, I, 1, U4, sum(math.sqrt(j) for j in range(1, 5)), {'lower': L4, 'quarter': U4 / 4}, rounded=6.1463)
+ok(U4 - L4 == 2, 'L5 P4 lower sum is 2 less')
+j = sp.Symbol('j', integer=True, positive=True)
+gap = 4 / n * (sp.sqrt(4 * n / n) - sp.sqrt(0 * n / n))  # the shifted sums cancel but for the last and first heights
+ok(sp.simplify(gap - 8 / n) == 0, 'L5 P4 telescoped gap 8/n by sympy')
+for nv in (3, 10, 37):
+    Uv = sum(4 / nv * math.sqrt(4 * i / nv) for i in range(1, nv + 1))
+    Lv_ = sum(4 / nv * math.sqrt(4 * i / nv) for i in range(0, nv))
+    ok(abs(Uv - Lv_ - 8 / nv) < 1e-12, f'L5 P4 numeric gap 8/n at n = {nv}')
+expr45(5, I, 2, 8 / n, {'unit-width': 2 / n, 'no-height': 4 / n})
+integral = sp.integrate(sp.sqrt(X), (X, 0, 4))
+ok(sp.diff(sp.Rational(2, 3) * X ** sp.Rational(3, 2), X) == sp.sqrt(X), 'L5 P4 G-prime = sqrt x')
+num(5, I, 3, integral, mp.quad(mp.sqrt, [0, 4]), {'no-coeff': 4 ** 1.5, 'flip': 1.5 * 4 ** 1.5}, rounded=5.3333, agree=1e-8)
+ok(L4 < integral < U4, 'L5 P4 L4 < 16/3 < U4')
+num(5, I, 4, U4 - integral, sum(math.sqrt(i) for i in range(1, 5)) - 16 / 3, {'gap': U4 - L4, 'lower': integral - L4}, rounded=0.8129)
+says45(5, I, 4, 'explain', '6.14626 - 5.33333 = 0.81293')
+ok(abs((6.14626 - 5.33333) - 0.81293) < 1e-9, 'L5 P4 printed subtraction holds')
+nn = first(lambda m: F(8, m) < F(2, 100))
+num(5, I, 5, nn, ceil_above(8 / 0.02), {'equal': 400, 'unit-width': first(lambda m: F(2, m) < F(2, 100)), 'no-height': first(lambda m: F(4, m) < F(2, 100))})
+
+I = 'p-diamond-ball'
+p5 = (F(2, 10), F(-5, 10))
+d1 = lambda a, b: abs(a[0] - b[0]) + abs(a[1] - b[1])
+d1p = d1((0, 0), p5)
+num(5, I, 1, d1p, abs(0.2) + abs(-0.5), {'signs': abs(p5[0] + p5[1]), 'straight': math.sqrt(0.29), 'largest': 0.5})
+r5 = 1 - d1p
+def fits_d1(rr):
+    # corners of the diamond B_1(p, rr) are its extreme points; U is convex
+    return all(abs(a) + abs(b) <= 1 + 1e-12 for a, b in ((0.2 + rr, -0.5), (0.2 - rr, -0.5), (0.2, -0.5 + rr), (0.2, -0.5 - rr)))
+r_alt = max(i / 10000 for i in range(1, 10000) if fits_d1(i / 10000))
+num(5, I, 2, r5, r_alt, {'whole': d1p, 'straight': 1 - math.sqrt(0.29)})
+ok(d1((F(35, 100), F(-65, 100)), p5) == F(3, 10) and abs(F(35, 100)) + abs(F(-65, 100)) == 1, 'L5 P5 (0.35, -0.65) is at d1 0.3 from p and on the edge')
+s5 = sp.Rational(3, 10) / sp.sqrt(2)
+s_line = (1 - (0.2 - (-0.5))) / math.sqrt(2)  # distance from p to the edge y1 - y2 = 1
+num(5, I, 3, s5, s_line, {'times': 0.3 * math.sqrt(2), 'same': 0.3, 'half': 0.15}, rounded=0.2121)
+t5 = F(3, 10) / 2
+t_alt = max(i / 10000 for i in range(1, 10000) if all(abs(0.2 + a * i / 10000) + abs(-0.5 + b * i / 10000) <= 1 + 1e-12 for a in (-1, 1) for b in (-1, 1)))
+num(5, I, 4, t5, t_alt, {'times': 0.6, 'root-two': 0.3 / math.sqrt(2), 'same': 0.3})
+choice(5, I, 5, 'all')
+ok(all(abs(1 - 1 / k_) + 0 < 1 for k_ in range(2, 50)), 'L5 P5 points (1 - 1/n, 0) lie in U')
+
+I = 'p-accumulated-cubic'
+t = sp.Symbol('t')
+fF = t ** 2 - 4 * t + 3
+Fx = sp.integrate(fF, (t, 0, X))
+for xv in (0.5, 2.0, 4.5):
+    ok(abs(float(Fx.subs(X, xv)) - float(mp.quad(lambda u: u ** 2 - 4 * u + 3, [0, xv]))) < 1e-12, f'L5 P6 F({xv}) by quadrature')
+expr45(5, I, 1, Fx, {'no-third': X ** 3 - 2 * X ** 2 + 3 * X, 'no-half': X ** 3 / 3 - 4 * X ** 2 + 3 * X, 'derivative': 2 * X - 4})
+ok(sp.factor(Fx) == X * (X - 3) ** 2 / 3, 'L5 P6 F = x(x-3)^2/3')
+zf = sorted(sp.solve(fF, t))
+zf_alt = sorted({round(i / 1000) for i in range(1, 5000) if abs((i / 1000) ** 2 - 4 * i / 1000 + 3) < 1e-9})
+numset45(5, I, 2, [int(z) for z in zf], zf_alt, {'zeros-of-big-f': [0, 3]})
+vals = {xv: Fx.subs(X, xv) for xv in (0, 1, 3, 5)}
+ok(vals == {0: 0, 1: sp.Rational(4, 3), 3: 0, 5: sp.Rational(20, 3)}, 'L5 P6 F at 0, 1, 3, 5')
+Fgrid = max(float(Fx.subs(X, i / 1000)) for i in range(0, 5001, 5))
+num(5, I, 3, max(vals.values()), Fgrid, {'critical': sp.Rational(4, 3), 'no-third': max(xv ** 3 - 2 * xv ** 2 + 3 * xv for xv in (0, 1, 3, 5))}, rounded=6.6667, agree=1e-9)
+choice(5, I, 4, 'not-closed')
+ok(Fx.subs(X, sp.Rational(9, 2)) == sp.Rational(27, 8), 'L5 P6 F(4.5) = 3.375')
+ok(all(Fx.subs(X, sp.Rational(i, 100)) < sp.Rational(20, 3) for i in range(0, 500)), 'L5 P6 no point of [0, 5) reaches 20/3')
+ok(max(abs(float(fF.subs(t, i / 1000))) for i in range(0, 5001)) == 8.0, 'L5 P6 |f| <= 8 on [0, 5], reached at 5')
+n6 = first(lambda m: F(8, m) < F(3, 1000))
+num(5, I, 5, n6, ceil_above(8 / 0.003), {'round-down': n6 - 1, 'left-end': first(lambda m: F(3, m) < F(3, 1000)), 'no-bound': first(lambda m: F(1, m) < F(3, 1000))})
+ok(abs(8 / 2666 - 0.0030008) < 5e-8 and abs(8 / 0.003 - 2666.7) < 0.05, 'L5 P6 8/2666 ~ 0.0030008 and 8/0.003 ~ 2666.7')
+ok(sp.Rational(20, 3) - Fx.subs(X, 5 - sp.Rational(1, n6)) < sp.Rational(3, 1000), 'L5 P6 the true gap at n = 2667 is below 0.003')
+shape45(5, {'p-root-sums': {'l20-riemann-integral', 'l21-fundamental-theorem-proved'},
+            'p-diamond-ball': {'l22-metric-spaces', 'l23-open-and-closed'},
+            'p-accumulated-cubic': {'l21-fundamental-theorem-proved', 'l23-open-and-closed', 'l24-compactness'}})
+
 # ---------------------------------------------------------------- second check of the bands
-for lv in (1, 2, 3, 4):
+for lv in (1, 2, 3, 4, 5):
     Lv = Level('analysis', lv)
     Lv.check_wrongs(f'problems-{lv}')
     bad = [r for r in Lv.results if not r[0]]
