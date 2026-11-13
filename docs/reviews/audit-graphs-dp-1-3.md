@@ -76,3 +76,19 @@ Empirical or framing remarks with no source. None is graded. Suggested wording r
 - `node tools/grade-all.mjs --file` on review-1, review-2, review-3, homework-1, homework-2, homework-3: 0 failures each (6, 8, 9, 3, 3 and 4 widgets). It checks numeric, choice and multi widgets only; the code, order and longform items were covered by the concepts script and by hand.
 - `python3 docs/reports/graphs-dp-L1-3-concepts.py`: exit 1, 207 pass, 16 fail, as described above.
 - No playthrough was run: no content was changed.
+
+## Overlap with the earlier read
+
+Read after the WIP commit: `docs/reviews/review-1.8.md` (second read of algo-think, ds and graphs-dp together, with its fix pass). For graphs-dp L1 to L3 it lists only style items: three explains over three sentences (`l1` screens[8], `l3` screens[2], `review-1` items[3]) and sentences over 20 words. Its grading, test-strength and explanation sections name no graphs-dp L1 to L3 item, so it has no conceptual finding in this scope.
+
+| | count |
+|---|---|
+| Conceptual findings by this audit only | 18 |
+| By the earlier review only | 0 |
+| By both | 0 |
+
+New `wrong` findings that no earlier read found: 7 (findings 1, 2, 3, 4, 7, 13 and 15), all minor. None changes a graded key.
+
+Two notes on the earlier read. It states that unpruned searches time out in graphs-dp l11; finding 18 measures that margin at about 1.4 times the limit. Its fix pass shortened the `l1` screens[8] and `l3` screens[2] explains; both shortened texts were read here as ledger rows and are correct.
+
+By the convergence rule (at most one new `wrong` per three levels) this course does not close on round 1: there are seven new `wrong` rows across three levels.
