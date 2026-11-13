@@ -92,3 +92,41 @@ New `wrong` findings that no earlier read found: 7 (findings 1, 2, 3, 4, 7, 13 a
 Two notes on the earlier read. It states that unpruned searches time out in graphs-dp l11; finding 18 measures that margin at about 1.4 times the limit. Its fix pass shortened the `l1` screens[8] and `l3` screens[2] explains; both shortened texts were read here as ledger rows and are correct.
 
 By the convergence rule (at most one new `wrong` per three levels) this course does not close on round 1: there are seven new `wrong` rows across three levels.
+
+## Fix pass
+
+Fixer: Opus, 13 Nov 2026. Every basis below is my own run (CPython 3.13, recursion limit 1000) or derivation; the auditor's text was used only where my run agreed. No graded key, tolerance, `wrong[]` value or slip value changed. No test, size or time limit changed: test design and the engine are out of scope, so the inbox bullet on the l11 test 13 margin stays open.
+
+1. fixed. Colleague's code with `if d > dist[u]` raises `KeyError: 'A'` on the first pop (`dist = {}`); with `if u in dist` it returns B 3, F 7; unfixed it gives B 4, F 9.
+2. fixed. BFS on the l6 graph: D is 1 from C, C is 2 from A, D is 3 from A.
+3. fixed. Tree R(S(U), T): pre R, S, U, T; post U, S, T, R; R, T, S, U is the reversed post-order.
+4. fixed. Simulated `hub_scans(300)` with the lesson's code: h pushed 300 times, 299 stale pops (no other stale pops).
+5. fixed differently. The lesson's code returns B = 1 and pops B twice on the canvas graph; prose now says "Textbook Dijkstra", the `pop` feedback says 2 is B's cost when first popped (still the slip the value 2 names), and the explain says our heap code pushes B again at 1 but nodes can be popped many times and the speed bound is lost. Homework 2 why: guarantee and speed bound lost.
+6. fixed differently (serious). My counter-example: pre-order from calendar (in-degree 0) gives calendar, returns, risk, backtest, report, signals, prices, so backtest precedes signals; from prices it also fails; the minimal case a→b, a→c, c→b from a gives a, b, c. Title "Recording too early"; the explain names the calendar case and the cure in the lesson's edge direction (`adj` maps a task to the tasks that need it): record a task when its call finishes, after every task that needs it, then reverse, or use Kahn. Summary trap: "Emitting a task when DFS first reaches it can put it before its prerequisites, wherever the search starts." Homework 1 (e) in its own direction (A → B when B needs A). Reversed post-order checked valid from every start order.
+7. fixed. 10⁶ × (1 − 0.99995 × 0.99994 × 0.99985) = £259.9805; 260 − 259.98 is 1.95p.
+8. fixed. Comment now `# largest amount first`; the loop still gives [0, 1, inf, 1, 1, inf, inf].
+9. fixed. The lesson's `adj_matrix(2, [(1, 1)])` sets one cell.
+10. fixed differently. (a) A self-calling search on the 3,000 path raises `RecursionError` at the limit of 1,000; `list.pop(0)` passes in 0.9 ms, so the new line names the recursion limit. (b) auditor's text. (c) chain 0 to 1,999 seeded at both ends: firms 999 and 1000 fall on day 999; new line says the waves meet in the middle. Test sizes and limits unchanged (out of scope).
+11. fixed. Reversed post-order on the cyclic pipeline returns all 7 tasks, risk before backtest, with no warning; screen 7 now points to lesson 3's three-state check. Same DAG condition added to summary idea 3.
+12. fixed differently. A two-piece forest meets no back edge from node 0 and is not a tree; text now: DFS "must meet no such edge and reach every node".
+13. fixed. In test 4 firm 2 has in-degree 0 and out-degree 0.
+14. fixed. From r1c1: r2c3 dies in row 3, r2c4 reaches r3c2 and dies in row 4.
+15. fixed differently. Slip value is 512 (half of 1,024); feedback now names 512 and states 252 of 1,024 return (C(10, 5)).
+16. fixed differently. Premise is a stated condition: "Each subset also goes through a 1 millisecond risk check, so the run would take over nine hours" (2²⁵ ms = 33,554 s = 9.32 h). Model and rubric unaffected.
+17. fixed. l7 screen 8 uses additive bp costs with Dijkstra; l9 handles rates through −ln.
+18. fixed differently. The unpruned walk makes 2²⁶ − 1 = 67,108,863 calls, 4.98 s in CPython here (audit: 6.8 s in Pyodide); text: "about 67 million calls, which takes several seconds". Test and limit unchanged.
+
+Unverified rows, each treated as a finding:
+- U1 fixed: stated as risk's rule ("Risk treats every firm at most `k` links away as first in line for losses").
+- U2 fixed: now a consequence of the definition ("Each region is a separate group of losing scenarios").
+- U3 fixed differently: "So the count depends on the limit as well as on the book" (tests: 2 regions at £50k, 1 at £10k).
+- U4 fixed: stated condition; 20,000 × 20 = 400,000 entries × 8 bytes = 3.2 MB.
+- U5 fixed: "Suppose each hop adds a day of delay ...".
+- U6 fixed differently: "If every conversion paid the same spread, fewer hops would always cost less" (1 − (1 − s)ʰ rises with h).
+- U7 fixed: "Suppose each group ... can be netted to a single settlement".
+- U8 fixed differently: "If many desks watch these liquid quotes, a gap this wide would not last."
+- U9 fixed differently: "If many arbitrageurs watch liquid quotes, mispricings stay small and short-lived." The worked example (loop 1.0000359, £36, about £300 of costs) recomputed and unchanged.
+
+Concepts script: 16 failing checks now pass. Checks for findings 5, 9, 10, 12, 14 and 16 tested code facts that a text fix cannot change, so each now also accepts the corrected sentence; four checks were added (recursion fails test 7, rev option is reversed post-order, l5 trap wording and counter-example, hw3 slip 512 and 252). 227 pass, 0 fail.
+
+Gates: validator 0 errors (4,534 warnings, manifest unchanged); concepts script and the three perf scripts exit 0; voice scan 35: 0 and 0; playthrough green desktop and `--mobile` for l1, l2, l3, l4, l5, l6, l7, l8, l11, l13 and homework 1 to 3; the five code widgets whose feedback or `how` changed: solution passes every hidden test, starter fails.
