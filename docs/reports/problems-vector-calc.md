@@ -24,3 +24,22 @@ Reuse grep (course folder, then `app/content/` for the stories), each hit judged
 - `fresh-check --file ... --cross-numbers`: 0 hits.
 
 Checks: validator 0 errors, no warning on the file; voice scan 0 and 0; `grade-all --file`: 19 widgets, 0 failures; playthrough desktop (`--why`, 39 slips routed) and `--mobile`: green; screenshots at 440 px read, no layout fault; number script exit 0.
+
+## Level 2: `problems-2.json` (Green's theorem, 50 minutes)
+
+| Item | Parts | Kinds | Lessons drawn on | Difficulty |
+|---|---|---|---|---|
+| `p-rectangle-edges` | 4 | expression, numeric, numeric, numeric | l5 (scalar curl), l6 (circulation by Green, then edge by edge) | 4 |
+| `p-cycloid-arch` | 5 | expression, numeric, expression, numeric, numeric | l7 (area as $-\oint y\,dx$), l6 (choosing $P$ with $-P_y = y$ for the moment) | 5 |
+| `p-triangle-flux` | 4 | expression, numeric, numeric, numeric | l5 (divergence), l8 (outward flux by the divergence form, then edge by edge) | 4 |
+| `p-quadrilateral-plot` | 4 | numeric x 4 | l7 (edge formula, shoelace area), l8 (flux), l6 and l5 (constant divergence and curl times area) | 3 |
+
+17 parts, all typed. Every lesson appears; each item draws on at least two. Skills `vk-fields`, `vk-theorems`, `vk-line`.
+
+Reuse grep, each hit judged:
+- `[0, 3]` in l11 and review-3: a box side in 3D, not this rectangle. `(1, 3)` in review-2 (a point for a Laplacian), homework-1, review-1: single points. `(4, 0)` and `(0, 2)`: l7 and homework-2 use the quadrilateral $(0,0), (4,0), (4,3), (1,4)$ and the triangle $(0,0), (2,0), (0,2)$ (homework-2 h9). Our triangle is $(0,0), (4,0), (0,2)$ and our quadrilateral $(0,0), (5,1), (4,5), (1,3)$: no shared shape or number set. I first drew the triangle $(0,0), (2,0), (0,2)$, found it in homework-2 h9, and moved it.
+- `5\pi` in homework-2, l8, review-3 and `3\pi` in l7, l8, l10, l11, review-2: other integrals (annuli, the cardioid $\tfrac{3\pi}{2}$, spheres). Our pair is the cycloid arch, $3\pi$ and $\tfrac{5\pi}{2}$; "cycloid", $t - \sin t$ and $1 - \cos t$ appear in no course file.
+- `4x` in l4: the term $4xy$ of a different expression. The fields $(y^3 - 4y, xy^2 + 2x)$, $(x^2 + y, 2xy)$ and $(2x - 4y, x + y)$ appear in no course file.
+- `fresh-check --cross-numbers`: 0 hits, 15 advisories, all on `p-quadrilateral-plot` sharing three small whole numbers (from 21, 23, 28, 29, 42, 70, 84) with items in brainteasers, equations, markov, mental, testing and functions files. Other courses, unrelated settings: coincidence, not reuse.
+
+Checks: validator 0 errors, no warning on the file (two `[wrong-band]` warnings on fractional slips in whole-number parts went when I replaced those slips, and two long questions were split); voice scan 0 and 0; `grade-all --file`: 17 widgets, 0 failures; playthrough desktop (`--why`) and `--mobile` green; screenshots at 440 px read, no layout fault; number script exit 0.

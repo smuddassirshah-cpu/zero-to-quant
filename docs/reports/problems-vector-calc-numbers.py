@@ -156,11 +156,11 @@ def d1(f, s, h=1e-6):
 
 def work(F, r, a0, b0):
     """quad of F(r(s)) . r'(s) with r' by central difference"""
-    return integrate.quad(lambda s: float(np.dot(F(*r(s)), d1(r, s))), a0, b0, limit=200, epsabs=1e-11, epsrel=1e-11)[0]
+    return integrate.quad(lambda s: float(np.dot(F(*r(s)), d1(r, s))), a0, b0, limit=200, epsabs=1e-10, epsrel=1e-10)[0]
 
 
 def scalar(f, r, a0, b0):
-    return integrate.quad(lambda s: f(*r(s)) * float(np.linalg.norm(d1(r, s))), a0, b0, limit=200, epsabs=1e-11, epsrel=1e-11)[0]
+    return integrate.quad(lambda s: f(*r(s)) * float(np.linalg.norm(d1(r, s))), a0, b0, limit=200, epsabs=1e-10, epsrel=1e-10)[0]
 
 
 PI = float(sp.pi)
@@ -256,6 +256,113 @@ if 1 in SETS:
     L.check_wrongs('problems')
     bad = [r for r in L.results if not r[0]]
     ok(not bad, f'L1 numbers_lib check_wrongs: {len(bad)} failures')
+
+# ---------------------------------------------------------------- level 2
+def loop_work(F, verts):
+    """work of F anticlockwise round a polygon, by quad along each straight edge"""
+    tot = 0.0
+    for A, B in zip(verts, verts[1:] + verts[:1]):
+        tot += work(F, lambda s, A=A, B=B: (A[0] + s * (B[0] - A[0]), A[1] + s * (B[1] - A[1])), 0, 1)
+    return tot
+
+
+def edge_flux(F, A, B):
+    """outward flux across a straight edge of an anticlockwise boundary: integral of P dy - Q dx"""
+    r = lambda s: (A[0] + s * (B[0] - A[0]), A[1] + s * (B[1] - A[1]))
+    def g(s):
+        X, Y = r(s); d = d1(r, s); P, Q = F(X, Y)
+        return P * d[1] - Q * d[0]
+    return integrate.quad(g, 0, 1, epsabs=1e-10, epsrel=1e-10)[0]
+
+
+if 2 in SETS:
+    # Q1 rectangle [0,3]x[0,1], F = (y^3 - 4y, xy^2 + 2x)
+    P, Q = y**3 - 4 * y, x * y**2 + 2 * x
+    Fn = lambda X, Y: (Y**3 - 4 * Y, X * Y**2 + 2 * X)
+    curl = sp.expand(sp.diff(Q, x) - sp.diff(P, y))
+    expr(2, 'p-rectangle-edges', 1, curl, {'reversed': -curl, 'div': sp.diff(P, x) + sp.diff(Q, y)})
+    circ = sp.integrate(curl, (y, 0, 1), (x, 0, 3))
+    circn = loop_work(Fn, [(0, 0), (3, 0), (3, 1), (0, 1)])
+    num(2, 'p-rectangle-edges', 2, circ, circn, {'reversed': -circ, 'axes': sp.integrate(curl, (y, 0, 3), (x, 0, 1)), 'const': 6 * 3})
+    right = sp.integrate(Q.subs(x, 3), (y, 0, 1))
+    rightn = work(Fn, lambda s: (3, s), 0, 1)
+    num(2, 'p-rectangle-edges', 3, right, rightn, {'drop-2x': sp.integrate((x * y**2).subs(x, 3), (y, 0, 1))})
+    bottom = work(Fn, lambda s: (3 * s, 0), 0, 1); left = work(Fn, lambda s: (0, 1 - s), 0, 1)
+    ok(abs(bottom) < 1e-12 and abs(left) < 1e-12, 'L2 Q1 bottom and left edges give 0')
+    top = circ - right
+    topn = work(Fn, lambda s: (3 - 3 * s, 1), 0, 1)
+    num(2, 'p-rectangle-edges', 4, top, topn, {'direction': -top, 'added': circ + right})
+    text(2, 'p-rectangle-edges', 2, '3\\left(6 - \\tfrac23\\right) = 16')
+    text(2, 'p-rectangle-edges', 4, '16 - 0 - 7 - 0 = 9', '\\int_3^0 (-3)\\,dx = 9')
+
+    # Q2 cycloid arch (t - sin t, 1 - cos t)
+    X_, Y_ = t - sp.sin(t), 1 - sp.cos(t)
+    g = sp.expand(Y_ * sp.diff(X_, t))
+    expr(2, 'p-cycloid-arch', 1, g, {'no-derivative': Y_ * X_, 'sign': -g})
+    A = -(0 + sp.integrate(g, (t, 2 * sp.pi, 0)))          # -oint y dx: axis gives 0, arch run backwards
+    rc = lambda s: (s - np.sin(s), 1 - np.cos(s))
+    # second method: area by a direct double integral, x as a function of y is awkward, so integrate y over the arch in x
+    An = integrate.quad(lambda s: (1 - np.cos(s)) * (1 - np.cos(s)), 0, 2 * PI)[0]   # integral of y dx with x' taken from the curve
+    An2 = integrate.quad(lambda s: rc(s)[1] * d1(rc, s)[0], 0, 2 * PI)[0]
+    ok(abs(An - An2) < 1e-6, 'L2 Q2 area two quads agree')
+    ok(sp.simplify(A - 3 * sp.pi) == 0, 'L2 Q2 area 3 pi')
+    num(2, 'p-cycloid-arch', 2, A, An2, {'sign': -A, 'cos-sq': 2 * sp.pi, 'square': sp.integrate(1 - sp.cos(t)**2, (t, 0, 2 * sp.pi))}, rounded=9.42)
+    Pm = -y**2 / 2
+    ok(sp.simplify(-sp.diff(Pm, y) - y) == 0, 'L2 Q2 -P_y = y')
+    expr(2, 'p-cycloid-arch', 3, Pm, {'sign': -Pm, 'no-half': -y**2})
+    My = sp.integrate(Pm.subs(y, Y_) * sp.diff(X_, t), (t, 2 * sp.pi, 0))
+    # second method: double integral of y under the arch, as integral over the arch of y^2/2 dx
+    Myn = integrate.quad(lambda s: 0.5 * rc(s)[1]**2 * d1(rc, s)[0], 0, 2 * PI)[0]
+    ok(sp.simplify(My - 5 * sp.pi / 2) == 0, 'L2 Q2 moment 5 pi / 2')
+    num(2, 'p-cycloid-arch', 4, My, Myn, {'no-half': 2 * My, 'sign': -My}, rounded=7.85)
+    ybar = My / A
+    num(2, 'p-cycloid-arch', 5, ybar, Myn / An2, {'inverse': A / My, 'no-half': 2 * My / A}, rounded=0.833)
+    text(2, 'p-cycloid-arch', 2, '3\\pi \\approx 9.42')
+    text(2, 'p-cycloid-arch', 4, '\\tfrac{5\\pi}{2} \\approx 7.85')
+
+    # Q3 triangle (0,0),(4,0),(0,2), F = (x^2 + y, 2xy)
+    P, Q = x**2 + y, 2 * x * y
+    Fn = lambda X, Y: (X**2 + Y, 2 * X * Y)
+    div = sp.diff(P, x) + sp.diff(Q, y)
+    expr(2, 'p-triangle-flux', 1, div, {'curl': sp.diff(Q, x) - sp.diff(P, y), 'only-p': sp.diff(P, x)})
+    flux = sp.integrate(div, (y, 0, 2 - x / 2), (x, 0, 4))
+    V = [(0, 0), (4, 0), (0, 2)]
+    fluxn = sum(edge_flux(Fn, A_, B_) for A_, B_ in zip(V, V[1:] + V[:1]))
+    curl = sp.diff(Q, x) - sp.diff(P, y)
+    num(2, 'p-triangle-flux', 2, flux, fluxn, {'curl': sp.integrate(curl, (y, 0, 2 - x / 2), (x, 0, 4)),
+                                               'rectangle': sp.integrate(div, (y, 0, 2), (x, 0, 4)),
+                                               'only-p': sp.integrate(2 * x, (y, 0, 2 - x / 2), (x, 0, 4))}, rounded=21.33)
+    leftf = sp.integrate(-P.subs(x, 0), (y, 0, 2))
+    num(2, 'p-triangle-flux', 3, leftf, edge_flux(Fn, (0, 2), (0, 0)), {'sign': -leftf, 'tangent': 0})
+    ok(abs(edge_flux(Fn, (0, 0), (4, 0))) < 1e-12, 'L2 Q3 bottom edge flux 0')
+    longf = flux - leftf
+    num(2, 'p-triangle-flux', 4, longf, edge_flux(Fn, (4, 0), (0, 2)), {'add-edge': flux + leftf, 'all-out': flux}, rounded=23.33)
+    text(2, 'p-triangle-flux', 2, '64 - \\tfrac{128}{3} = \\tfrac{64}{3}', '\\tfrac{64}{3} \\approx 21.33')
+    text(2, 'p-triangle-flux', 4, '\\tfrac{70}{3} \\approx 23.33')
+
+    # Q4 quadrilateral (0,0),(5,1),(4,5),(1,3), F = (2x - 4y, x + y)
+    V = [(0, 0), (5, 1), (4, 5), (1, 3)]
+    edges = [x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(V, V[1:] + V[:1])]
+    plus = [x1 * y2 + x2 * y1 for (x1, y1), (x2, y2) in zip(V, V[1:] + V[:1])]
+    xdy = lambda A_, B_: work(lambda X, Y: (-Y, X), lambda s: (A_[0] + s * (B_[0] - A_[0]), A_[1] + s * (B_[1] - A_[1])), 0, 1)
+    num(2, 'p-quadrilateral-plot', 1, edges[1], xdy(V[1], V[2]), {'swap': -edges[1], 'plus': plus[1]})
+    area = sp.Rational(sum(edges), 2)
+    arean = 0.5 * loop_work(lambda X, Y: (-Y, X), V)
+    ok(all(e > 0 for e in [5 * 4 - 1 * (-1), (-1) * (-2) - 4 * (-3), (-3) * (-3) - (-2) * (-1), (-1) * 1 - (-3) * 5]), 'L2 Q4 convex and anticlockwise')
+    num(2, 'p-quadrilateral-plot', 2, area, arean, {'no-half': 2 * area, 'plus': sp.Rational(sum(plus), 2)})
+    Fn = lambda X, Y: (2 * X - 4 * Y, X + Y)
+    P, Q = 2 * x - 4 * y, x + y
+    div, curl = sp.diff(P, x) + sp.diff(Q, y), sp.diff(Q, x) - sp.diff(P, y)
+    fluxn = sum(edge_flux(Fn, A_, B_) for A_, B_ in zip(V, V[1:] + V[:1]))
+    num(2, 'p-quadrilateral-plot', 3, div * area, fluxn, {'curl': curl * area, 'no-half': div * 2 * area})
+    num(2, 'p-quadrilateral-plot', 4, curl * area, loop_work(Fn, V), {'div': div * area, 'reversed': -curl * area,
+                                                                       'plus': (sp.diff(Q, x) + sp.diff(P, y)) * area})
+    text(2, 'p-quadrilateral-plot', 2, '0 + 21 + 7 + 0 = 28', '4 \\times 3 - 1 \\times 5 = 7')
+
+    L = Level('vector-calc', 2)
+    L.check_wrongs('problems')
+    bad = [r for r in L.results if not r[0]]
+    ok(not bad, f'L2 numbers_lib check_wrongs: {len(bad)} failures')
 
 print(f'{checks - len(fails)} of {checks} checks passed')
 sys.exit(1 if fails else 0)
