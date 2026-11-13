@@ -198,7 +198,21 @@ def three_read(xs, target):
 big = Looks(range(0, 2000000, 2)); three_read(big, 1999998); r11 = big.looks
 big = Looks(range(0, 2000000, 2)); three_read(big, 777777); r12 = big.looks
 THREE_READ = (r11, r12)
-check('l9 a correct three-comparison search stays within the 45-read cap of tests 11 and 12', r11 <= 45 and r12 <= 45, THREE_READ)
+# Fix pass: the cap stays at 45 (a test change, recorded in docs/BACKLOG-INBOX.md); the text now states it and the test-12 line names the
+# three-read search. These checks hold the new text: 39 and 50 reads, a miss of 777777 takes 20 passes, a million values need at most 20.
+INBOX_L9 = 'inbox (test design, not a check): a correct three-comparison search reads %d and %d against the 45-read cap' % THREE_READ
+def one_read(xs, target):
+    lo, hi, p = 0, len(xs) - 1, 0
+    while lo <= hi:
+        p += 1; mid = (lo + hi) // 2; v = xs[mid]
+        if v == target: return mid, p
+        if v < target: lo = mid + 1
+        else: hi = mid - 1
+    return -1, p
+check('l9 test-12 line: three reads a pass needs 50 on test 12, within 45 on test 11', r11 == 39 and r12 == 50, THREE_READ)
+check('l9 prose and test-12 line: a million values need at most 20 passes; the miss of test 12 takes all 20',
+      max(one_read(range(10**6), t)[1] for t in (-1, 0, 999999, 10**6, 500000, 777777)) == 20 and one_read(range(0, 2000000, 2), 777777)[1] == 20
+      and math.floor(math.log2(10**6)) + 1 == 20)
 # l10
 imp = lambda q: 0.15 * math.sqrt(q)
 check('l10 impacts', [round(imp(q), 4) for q in (32, 48, 40, 44, 46, 45)] == [0.8485, 1.0392, 0.9487, 0.995, 1.0173, 1.0062] and abs((1 / 0.15) ** 2 - 44.44) < 0.005)
@@ -489,7 +503,7 @@ m('l5#5', 'base len 1', 'test-2', 'def sum_list(xs):\n    if len(xs) == 1: retur
 m('l5#5', 'power base n==1', 'test-7', SL + 'def power(x, n):\n    if n == 1: return x\n    return x * power(x, n - 1)\n')
 m('l5#5', 'syntax error (load)', 'error', SL + 'def power(x, n)\n    return 1\n')
 m('l5#9', 'subfolders skipped', 'test-1', 'def total_pnl(folder):\n    return sum(v for v in folder.values() if not isinstance(v, dict))\n')
-m('l5#9', 'adds dict (TypeError)', 'error', 'def total_pnl(folder):\n    t = 0\n    for v in folder.values(): t += v\n    return t\n')
+m('l5#9', 'adds dict (TypeError)', 'test-1', 'def total_pnl(folder):\n    t = 0\n    for v in folder.values(): t += v\n    return t\n')
 # ---------- l6
 DP = 'def depth(n, d=1):\n    if n < 2: return d\n    return max(depth(n - 1, d + 1), depth(n - 2, d + 1))\n'
 m('l6#6', 'recursive sum_to', 'test-3', 'def sum_to(n):\n    if n == 0: return 0\n    return n + sum_to(n - 1)\n' + DP)
@@ -502,7 +516,7 @@ PF = 'def power_fast(x, n):\n    if n == 0: return 1, 0\n    if n == 1: return x
 MR = 'def max_rec(xs, lo, hi):\n    if lo == hi: return xs[lo]\n    mid = (lo + hi) // 2\n    return max(max_rec(xs, lo, mid), max_rec(xs, mid + 1, hi))\n'
 m('l7#5', 'one-at-a-time max_rec', 'test-5', 'def max_rec(xs, lo, hi):\n    if lo == hi: return xs[lo]\n    return max(xs[lo], max_rec(xs, lo + 1, hi))\n' + PF)
 m('l7#5', 'power_fast called twice', 'test-10', MR + 'def power_fast(x, n):\n    if n == 0: return 1, 0\n    if n == 1: return x, 0\n    a, m = power_fast(x, n // 2)\n    b, _ = power_fast(x, n // 2)\n    if n % 2 == 0: return a * b, m + 1\n    return a * b * x, m + 2\n')
-m('l7#5', 'mid not mid+1 (RecursionError)', 'error', 'def max_rec(xs, lo, hi):\n    if lo == hi: return xs[lo]\n    mid = (lo + hi) // 2\n    return max(max_rec(xs, lo, mid), max_rec(xs, mid, hi))\n' + PF)
+m('l7#5', 'mid not mid+1 (RecursionError)', 'test-1', 'def max_rec(xs, lo, hi):\n    if lo == hi: return xs[lo]\n    mid = (lo + hi) // 2\n    return max(max_rec(xs, lo, mid), max_rec(xs, mid, hi))\n' + PF)
 # ---------- l8
 FB = 'memo = {0: 0, 1: 1}\ndef fib(n):\n    if n not in memo: memo[n] = fib(n - 1) + fib(n - 2)\n    return memo[n]\n'
 FC = 'def fib_calls(n):\n    a, b = 1, 1\n    for _ in range(n - 1): a, b = b, 1 + a + b\n    return a if n == 0 else b\n'
@@ -512,7 +526,7 @@ m('l8#5', 'naive fib', 'test-10', FC + 'def fib(n):\n    if n < 2: return n\n   
 # ---------- l9
 m('l9#3', 'linear scan', 'test-11', 'def binary_search(xs, target):\n    for i in range(len(xs)):\n        if xs[i] == target: return i\n    return -1\n')
 m('l9#3', 'while lo < hi', 'test-1', 'def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        if xs[mid] < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1\n')
-m('l9#3', 'VALID: three reads a pass', 'none', 'def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        elif xs[mid] < target: lo = mid + 1\n        elif xs[mid] > target: hi = mid - 1\n    return -1\n')
+m('l9#3', 'three reads a pass (correct, over the read cap)', 'test-12', 'def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        elif xs[mid] < target: lo = mid + 1\n        elif xs[mid] > target: hi = mid - 1\n    return -1\n')
 m('l9#3', 'reads xs[0] first', 'test-4', 'def binary_search(xs, target):\n    if xs[0] > target: return -1\n    lo, hi = 0, len(xs) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        v = xs[mid]\n        if v == target: return mid\n        if v < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1\n')
 m('l9#5', 'returns first match', 'test-1', 'def first_at_least(xs, target):\n    lo, hi = 0, len(xs)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        if xs[mid] < target: lo = mid + 1\n        else: hi = mid\n    return lo\n')
 m('l9#5', 'hi = len - 1', 'test-4', 'def first_at_least(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if xs[mid] < target: lo = mid + 1\n        else: hi = mid\n    return lo\n')
@@ -540,7 +554,7 @@ m('l12#2', 'recursive merge', 'test-9', 'def merge(a, b):\n    if not a: return 
 m('l12#2', 'out = out + [x]', 'test-9', 'def merge(a, b):\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out = out + [a[i]]; i += 1\n        else: out = out + [b[j]]; j += 1\n    return out + a[i:] + b[j:]\n')
 MG = 'def merge(a, b):\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1\n    out.extend(a[i:]); out.extend(b[j:])\n    return out\n'
 m('l12#3', 'splits off one value', 'test-7', MG + 'def merge_sort(xs):\n    if len(xs) <= 1: return list(xs)\n    return merge(xs[:1], merge_sort(xs[1:]))\n')
-m('l12#3', 'base case len == 0 (RecursionError)', 'error', MG + 'def merge_sort(xs):\n    if len(xs) == 0: return xs\n    mid = len(xs) // 2\n    return merge(merge_sort(xs[:mid]), merge_sort(xs[mid:]))\n')
+m('l12#3', 'base case len == 0 (RecursionError)', 'test-1', MG + 'def merge_sort(xs):\n    if len(xs) == 0: return xs\n    mid = len(xs) // 2\n    return merge(merge_sort(xs[:mid]), merge_sort(xs[mid:]))\n')
 m('l12#7', '< on ties', 'test-8', 'def count_inversions(xs):\n    def sc(a):\n        if len(a) <= 1: return list(a), 0\n        mid = len(a) // 2\n        l, x = sc(a[:mid]); r, y = sc(a[mid:])\n        out, i, j, c = [], 0, 0, x + y\n        while i < len(l) and j < len(r):\n            if l[i] < r[j]: out.append(l[i]); i += 1\n            else: out.append(r[j]); j += 1; c += len(l) - i\n        return out + l[i:] + r[j:], c\n    return sc(xs)[1]\n')
 m('l12#7', 'every pair', 'test-9', 'def count_inversions(xs):\n    c = 0\n    for i in range(len(xs)):\n        for j in range(i + 1, len(xs)):\n            if xs[i] > xs[j]: c += 1\n    return c\n')
 m('l12#8', 'whole tuples', 'test-2?', 'def merge_logs(a, b):\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n')
@@ -598,6 +612,28 @@ m('homework-3#8', 'linear index', 'test-13', 'def find_trade(ring, seq):\n    fo
 m('l12#2', 'empty lists returned first, tail of a dropped', 'test-6', 'def merge(a, b):\n    if not a: return list(b)\n    if not b: return list(a)\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1\n    out.extend(b[j:])\n    return out\n')
 m('l10#3', 'pred(a) before the range check', 'test-9', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a if pred(a) and a <= hi else None\n')
 
+# Fix pass (round 3), l6 screens[3] and [7]: with the limit raised, plain recursion runs in Python 3.12 and later (and in Pyodide 0.27.7,
+# run under node: sum_to 20,000,000 deep; a generator inside max overflows the stack between 700 and 900 levels at any limit; audit fix pass)
+def _sum_to(n): return 0 if n == 0 else n + _sum_to(n - 1)
+def _walk(node):
+    d = 0
+    for c in node["children"]: d = max(d, _walk(c))
+    return 1 + d
+_old = sys.getrecursionlimit(); sys.setrecursionlimit(10**9)
+_chain = {"children": []}
+for _ in range(49999): _chain = {"children": [_chain]}
+check('l6 raised limit: sum_to(5000) and a plain 50,000-level walk run (Python 3.12+)', sys.version_info < (3, 12) or (_sum_to(5000) == 12502500 and _walk(_chain) == 50000))
+sys.setrecursionlimit(_old)
+# Fix pass (round 3): submissions for the new and reworded lines, each with the key it first reaches
+m('l5#5', 'power with no base case (RecursionError)', 'test-6', SL + 'def power(x, n):\n    return x * power(x, n - 1)\n')
+m('l5#5', 'power never reduces n (RecursionError)', 'test-6', SL + 'def power(x, n):\n    if n == 0: return 1\n    return x * power(x, n)\n')
+m('l7#5', 'syntax error (load)', 'error', 'def max_rec(xs, lo, hi)\n    return xs[lo]\n' + PF)
+m('l10#3', 'end marker hi, bare return (returns 100)', 'test-4', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a\n')
+m('l10#3', 'returns -1 for none', 'test-4', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a if a <= hi else -1\n')
+m('l10#4', 'syntax error (load)', 'error', ST + 'def isqrt(n)\n    return 0\n')
+m('l12#3', 'base case len == 1 misses the empty list (RecursionError)', 'test-2', MG + 'def merge_sort(xs):\n    if len(xs) == 1: return list(xs)\n    mid = len(xs) // 2\n    return merge(merge_sort(xs[:mid]), merge_sort(xs[mid:]))\n')
+m('l12#3', 'syntax error (load)', 'error', MG + 'def merge_sort(xs)\n    return xs\n')
+m('l9#3', 'two reads a pass (within the cap)', 'none', 'def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        elif xs[mid] < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1\n')
 # ------------------------------------------------------------------ Part B: code widgets and feedback.byKey submissions
 import glob
 def _same(x, y):
@@ -644,7 +680,6 @@ SLOW = {'power_fast called twice': 10, 'recursive count': 6, 'naive fib': 10, 'o
 EXPECT_OTHER = {'VALID: generator inside max': 'none', 'recursive one side, last pivot': 'none', 'whole tuples@l12#8': 'test-1', 'no sort at all': 'test-1'}
 REACH = []
 for key, name, expect, code in M:
-    if name.startswith('VALID: three reads'): continue   # checked in part A
     if expect == 'error' and 'load' not in name: name += ' [the error line explains this exception]'
     want = EXPECT_OTHER.get(name + '@' + key, EXPECT_OTHER.get(name, expect.split(' ')[0]))
     got = first_fail(W[key], code, SLOW.get(name.split(' [the error')[0]))
@@ -654,6 +689,6 @@ for key, name, expect, code in M:
 
 print('%d checks, %d failing' % (COUNT[0], len(FAILS)))
 for f_ in FAILS: print('FAIL', f_)
-print('three-comparison binary search reads on tests 11 and 12:', THREE_READ)
+print(INBOX_L9)
 print('nested three order statistics, comparisons per value (nested, one median):', tuple(round(x, 2) for x in NESTED))
 sys.exit(1 if FAILS else 0)
