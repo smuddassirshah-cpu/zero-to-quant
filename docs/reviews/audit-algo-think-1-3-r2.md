@@ -279,3 +279,28 @@ B. homework-1.json `items[5]`: the mistake that `test-7` points at (buy at the l
    ```
 
 C. Not judged here (outside the diff and the extra row): `l6-call-stack.json` `screens[3]` says `sys.getrecursionlimit()` returns 1000, which is standard Python's value, not the page's.
+
+## Fix-pass follow-up 2
+
+Scope: the `how` finding, observation C, a sweep of every L1 to L3 string for a recursion limit or a failing depth, and observations A and B. Engine fact used: `drill-worker.js` sets `RECURSION_LIMIT = 3000` for every code widget; a fresh CPython 3.13 returns 1000 from `sys.getrecursionlimit()`. Runs (CPython, limits 1,000 and 3,000, scratch script `depth.py`): recursive `sum_to(5000)`, `sum_to(100000)`, `total(list(range(5000)))` and the `n == 1` `fact(0)` fail at both; the 10,000-day `run` fails at day 998 and day 2,998; first-pivot quicksort on 2,000 sorted values fails at 1,000 and succeeds at 3,000; last-pivot quicksort on 3,000 sorted values fails at both; the memoised binomial pricer fails at both for $n = 5{,}000$, and at 3,000 runs for $n = 2{,}995$ and fails at $n = 3{,}000$. CPython's traceback for the `fact(0)` script says `[Previous line repeated 996 more times]`, as the `l5` console shows.
+
+`l6-call-stack.json` `screens[3]` is a `choice` screen; no code runs, but it names `sys.getrecursionlimit()`, which a learner may run in any code widget and see 3000. No graded key depends on the figure. No key, option id, tolerance or slip changed anywhere.
+
+| File | JSON path | Status | Basis |
+|---|---|---|---|
+| l6-call-stack.json | screens[6].widget.how | fixed (reader's text) | `sum_to(100000)` needs 100,001 frames; fails at 1,000 and 3,000. |
+| l6-call-stack.json | screens[3].prose | fixed | Now names 1000 as standard Python's default and 3000 for this page; `sum_to(5000)` fails at both. |
+| l6-call-stack.json | screens[3].canvas.state.caption | fixed | "default limit": the cells (5000 down to 4002) depict standard Python. |
+| l6-call-stack.json | screens[7].prose | fixed | "about 1,000 by default"; the 50,000-level walk fails at both. |
+| l6-call-stack.json | summary.ideas[1] | fixed | Names `sys.getrecursionlimit()`, so it now gives both figures. |
+| l6-call-stack.json | quiz[0] options crash, slow.why, memory.why; feedback.correct; explain.text | fixed | Fails at day 998 (default) and 2,998 (page); each figure now says "default", the explanation gives both. Option id `crash` still correct. |
+| l3-memory.json | screens[7].explain.text | fixed | 5,000 open calls fail at both limits; sentence now says so. |
+| l5-calls-itself.json | screens[6] options[1].text, explain.text | fixed | Infinite descent fails at any limit; 1,000 qualified as the default. |
+| l13-quicksort.json | screens[6].prose, hints[1].text | fixed | 2,000 sorted values fail only at the default limit, so the failure is now placed in standard Python and the hint gives both limits. |
+| homework-2.json | items[8].model (c), rubric[3].text | fixed | $n = 2{,}000$ fails only at the default limit, even memoised; the model adds that this page moves the failure to about $n = 3{,}000$. Rubric points unchanged. |
+| l12-merge-sort.json | screens[2].feedback.byKey.test-3 | added | Submission extending only `b[j:]` passes 1 to 2 and fails 3 first with `[]`; solution passes all 9. |
+| homework-1.json | items[5].feedback.byKey.test-2 | added | Two global-minimum submissions pass 1 and fail 2 first with 3; 8 - 3 = 5, 4 - 1 = 3. |
+
+Checked and left as they are (true at both limits): `homework-2` items[6] (5,000 chain), `homework-3` items[6] test-8 (5,000), `l7` screens[5] test-5 (5,000), `l12` screens[2] test-9 (100,000) and screens[3] test-7 (20,000), `l13` screens[4] test-7 and screens[8] test-7 (3,000, fails at 3,000), `l6` screens[4] (5,000) and screens[9] (10,000), and every infinite-recursion line in `l5`, `l7` and `l12`.
+
+Gates: validator 0 errors (manifest unchanged); both concepts scripts exit 0; voice scan 35: 0 and 0; playthrough desktop and `--mobile` green for l3, l5, l6, l12, l13, homework-1, homework-2.
