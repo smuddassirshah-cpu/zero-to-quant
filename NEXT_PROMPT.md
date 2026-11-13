@@ -1,17 +1,17 @@
-# NEXT_PROMPT: session AC
+# NEXT_PROMPT: session AD
 
-Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4mx7i`. Local CDN, venv (Python 3.12) and test flags: KNOWN_ISSUES, session AB, last lines. Commit an `engine-dev` worktree from the main session hourly. Brief tail and acceptance list: DECISIONS, session AB.
+Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4mx7i`. Setup (CDN with fonts, venv 3.12): KNOWN_ISSUES, session AB last lines. Brief tail: DECISIONS, "Test and run time". Shared prompts used in AC (chained author, reader, fixer) are not in the repo: rebuild them from `docs/briefs/chained.md`, both second-read briefs and DECISIONS session AC.
 
-Expected census: lessons 1,236; levels 283; reviews 283 (items 2,558); exams 29 topic, 4 stage, 16 mock; drills 270; Fluency sets 100 (families 318); problem sets 87 (items 332); bank 36 files, 400 items; hours 3,695 gap 0; edges 266; validator 0 errors.
+Every brief opens with: if HEAD is not a descendant of the local branch, `git reset --hard claude/amazing-wright-d4mx7i`. Bring agents' commits in with `git cherry-pick`, then run the validator, `readiness-sums.mjs --write`, commit `manifest.json` (KNOWN_ISSUES, session AC). Read CI with `gh api repos/<owner>/<repo>/actions/runs/<id>/jobs`.
+
+Expected census: lessons 1,236; levels 283; reviews 283 (items 2,558); exams 29 topic, 4 stage, 16 mock; drills 270; Fluency sets 100 (families 318); problem sets 106 (items 399); bank 36 files, 400 items; hours 3,695 gap 0; edges 266; validator 0 errors. Tags: `[negative-key]` 3, `[percent-form]` 3, `[tight-band]` 17, `[near-miss]` 0.
 
 Merge `origin/claude/fable-audit` at start and close.
 
-Tasks, in order. Tasks 1 to 4 are the user's priority (12 Nov): cut waiting on tests and runs without dropping a check.
-1. CI: `.github/workflows/acceptance.yml` on push: validator, readiness-sums, all `tools/test-*`, `--all` in 12 to 16 shards, `--problems all`, `--drills`, `--fluency-all`, routes, desktop and `--mobile`, on real jsDelivr. Confirm one green run and its wall clock.
-2. Engine: a green-hash cache (content file hash plus engine hash) so `playthrough.mjs --changed` replays only what changed; a fixtures-only content root for the `test-validate-*` files; a node check of keys, bands and slip routing for all content.
-3. CLAUDE.md and the brief tail: readers run no browser; fixers play only files they edit; engine agents run the tests they touched; the session's acceptance is `--changed` plus a green CI run.
-4. Delta reads owed (KNOWN_ISSUES, session AB), as script reruns where only a key changed.
-5. Content passes from the new rules: `[percent-form]` 74, `[negative-key]` 240, `[tight-band]` 26, `[near-miss]` 190 drills; `stage-3` `r-t-bar`, `r-best-of-twenty`.
-6. M chained problems, PLAN 2d: `eigen` 4, `number-sense` 1 to 3, `ratio`, then 0.6, 1.10, 1.11.
+Tasks, in order:
+1. Engine: number the AC items and all inbox bullets into `docs/ENGINE-BACKLOG.md` (from 971), clear the inbox. Then build: a CI job running every `*-numbers.py` (first triage the 28 that already fail, `docs/reports/number-scripts-ac.md`); `fresh-check` same-course mode (numbers, matrices up to scale and transpose, 8-word shingles), gated; why changed-only `extras problems` jobs took 18 minutes.
+2. Put `acceptance.yml` on `main` so the weekly full run fires (ask the user: it needs a pull request or a push to `main`).
+3. M chained problems, PLAN 2d: `analysis` 4 and 5, `linear-maps` 4, `odes` 1 to 4, `vector-calc` 1 to 3. Authors grep their own course first.
+4. Open items in KNOWN_ISSUES session AC: `complex/l13` screens[10], `limits-thm/l7` screens[9], the near-miss re-read of 106 marked plants, `unit: "%"`.
 
-Do not raise the pilot. Acceptance at the final HEAD; NEXT_PROMPT for session AD.
+Do not raise the pilot. Acceptance: validator 0 errors, a green CI run at the pushed HEAD. Files: engine and docs for 1; `app/content/courses/<course>/problems-<n>.json` for 3.
