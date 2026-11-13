@@ -98,6 +98,8 @@ def two(lv, label, exact, numeric, tol=1e-6):
 
 def numeric_part(lv, i, j, value, slips, shown):
     """value: the true value; slips: {id: true slip value}; shown: the key as printed in feedback.correct."""
+    value = float(value)
+    slips = {k: float(v) for k, v in slips.items()}
     p = widget(lv, i, j)
     w = p['widget']
     tag = f'problems-{lv.n} items[{i}].parts[{j}]'
@@ -351,8 +353,115 @@ def level2():
     lv.check_wrongs('problems')
     return lv
 
+# ====================================================================== level 3
+def pm(st):
+    """A pmatrix or [[a, b], [c, d]] text as a sympy Matrix."""
+    st = st.strip()
+    if st.startswith('[['):
+        rows = st[2:-2].split('],[')
+        return sp.Matrix([[ex(c) for c in row.split(',')] for row in rows])
+    body = st.replace('\\begin{pmatrix}', '').replace('\\end{pmatrix}', '')
+    return sp.Matrix([[ex(c) for c in row.split('&')] for row in body.split('\\\\')])
 
-LEVELS = [level1, level2]
+
+def mat_part(lv, i, j, M, slips):
+    p = widget(lv, i, j)
+    w = p['widget']
+    tag = f'problems-{lv.n} items[{i}].parts[{j}]'
+    for a in [w['answer']] + w.get('accept', []):
+        lv.claim(pm(a) == M, f'{tag} form {a} equals {M.tolist()}')
+    ws = {x['id']: pm(x['tex']) for x in w.get('wrong', [])}
+    lv.claim(set(ws) == set(slips), f'{tag} wrong ids are the slips')
+    for k, sv in slips.items():
+        lv.claim(ws[k] == sv and ws[k] != M, f'{tag} wrong "{k}" is its slip {sv.tolist()} and differs from the key')
+        lv.claim(k in p['feedback'].get('byKey', {}), f'{tag} wrong "{k}" has a byKey line')
+
+
+def level3():
+    lv = Level('odes', 3)
+
+    # ---- item 0: x' = Ax, A = [[-7, 2], [-6, 1]], x(0) = (4, 2)
+    A = sp.Matrix([[-7, 2], [-6, 1]])
+    numeric_part(lv, 0, 0, A.det(), {'bc-sign': -7*1 + 2*(-6)}, 5)
+    lv.claim(A.trace() == -6 and abs(np.linalg.det(np.array(A, dtype=float)) - 5) < 1e-9, 'trace -6, det 5 (sympy, numpy)')
+    ev = sorted(A.eigenvals().keys())
+    nev = sorted(np.linalg.eigvals(np.array(A, dtype=float)).real)
+    lv.claim(ev == [-5, -1] and np.allclose(nev, [-5, -1]), 'eigenvalues -1 and -5 (sympy, numpy)')
+    numset_part(lv, 0, 1, [-1, -5], {'trace-sign': sorted(np.roots([1, -6, 5]).real)})
+    lv.claim(max(ev) < 0 and A.trace()**2 - 4*A.det() == 16, 'two real negative eigenvalues, tau^2 - 4Delta = 16: stable node')
+    choice_part(lv, 0, 2, 'stable-node')
+    lv.claim(A * sp.Matrix([1, 3]) == -1 * sp.Matrix([1, 3]) and A * sp.Matrix([1, 1]) == -5 * sp.Matrix([1, 1]), 'eigenvectors (1, 3) for -1 and (1, 1) for -5')
+    c = sp.Matrix([[1, 1], [3, 1]]).solve(sp.Matrix([4, 2]))
+    cn = np.linalg.solve(np.array([[1, 1], [3, 1]], float), [4, 2])
+    lv.claim(list(c) == [-1, 5] and np.allclose(cn, [-1, 5]), 'c1 = -1, c2 = 5 (sympy, numpy)')
+    csw = sp.Matrix([[1, 1], [1, 3]]).solve(sp.Matrix([4, 2]))
+    numeric_part(lv, 0, 3, -1, {'identity': 4, 'swapped': int(csw[0]), 'drop-sign': 1}, -1)
+    xt = -sp.exp(-t)*sp.Matrix([1, 3]) + 5*sp.exp(-5*t)*sp.Matrix([1, 1])
+    lv.claim(sp.simplify(sp.diff(xt, t) - A*xt) == sp.zeros(2, 1) and xt.subs(t, 0) == sp.Matrix([4, 2]), "x(t) solves x' = Ax with x(0) = (4, 2)")
+    lim = sp.limit(xt[1] / xt[0], t, sp.oo)
+    An = np.array(A, dtype=float)
+    sn = ivp(lambda tt, yy: An @ yy, [4, 2], 12)
+    rv = two(lv, 'y/x as t grows', lim, sn.y[1][-1] / sn.y[0][-1], 1e-6)
+    numeric_part(lv, 0, 4, rv, {'fast': 1, 'inverted': round(1 / 3, 6), 'start': 2 / 4}, 3)
+
+    # ---- item 1: x' = x(6 - x - y), y' = y(x - 2)
+    x, y = sp.symbols('x y', real=True)
+    F = sp.Matrix([x*(6 - x - y), y*(x - 2)])
+    eqs = sp.solve(list(F), [x, y], dict=True)
+    pos = [e for e in eqs if e[x] > 0 and e[y] > 0]
+    lv.claim(pos == [{x: 2, y: 4}] and {x: 6, y: 0} in eqs, 'only positive equilibrium (2, 4); (6, 0) is one too')
+    w = widget(lv, 1, 0)['widget']
+    lv.claim(w['answer'] == '(2,4)' and {k['id']: k['tex'] for k in w['wrong']} == {'swapped': '(4,2)', 'boundary': '(6,0)'}, 'part 1 key (2,4), slips (4,2) and (6,0)')
+    J = F.jacobian([x, y]).subs({x: 2, y: 4})
+    fn = sp.lambdify((x, y), F)
+    h = 1e-6
+    col = lambda a, b: np.array(fn(a, b), float).ravel()
+    Jn = np.column_stack([(col(2 + h, 4) - col(2 - h, 4)) / (2*h), (col(2, 4 + h) - col(2, 4 - h)) / (2*h)])
+    lv.claim(J == sp.Matrix([[-2, -2], [4, 0]]) and np.allclose(Jn, [[-2, -2], [4, 0]], atol=1e-6), 'J(2,4) = [[-2,-2],[4,0]] (symbolic, finite differences)')
+    Jslip = sp.Matrix([[(6 - x - y), -x], [y, x - 2]]).subs({x: 2, y: 4})
+    mat_part(lv, 1, 1, J, {'no-product': Jslip, 'transpose': J.T})
+    tau, Dl = J.trace(), J.det()
+    disc = tau**2 - 4*Dl
+    lv.claim(tau == -2 and Dl == 8, 'tau = -2, Delta = 8')
+    numeric_part(lv, 1, 2, disc, {'delta-sign': tau**2 + 4*Dl, 'no-four': tau**2 - Dl, 'drop-sign': -disc}, -28)
+    evs = list(J.eigenvals().keys())
+    lv.claim(all(sp.re(e) == -1 for e in evs) and sorted(sp.im(e) for e in evs) == [-sp.sqrt(7), sp.sqrt(7)], 'eigenvalues -1 +- i sqrt7')
+    choice_part(lv, 1, 3, 'stable-spiral')
+    per = 2*sp.pi / sp.sqrt(7)
+    nev = np.linalg.eigvals(np.array(J, dtype=float))
+    pv = two(lv, 'period of one turn', per, 2*math.pi / abs(nev[0].imag), 1e-9)
+    # third route: the linearised flow returns to the same direction after one period (u(T) is a positive multiple of u(0))
+    Jn_ = np.array(J, dtype=float)
+    sl = ivp(lambda tt, u: Jn_ @ u, [1, 0], 3.5)
+    uT = sl.sol(float(per))
+    lv.claim(abs(uT[1]) < 1e-8 and uT[0] > 0 and abs(uT[0] - math.exp(-float(per))) < 1e-8, 'u(T) = e^{-T} u(0) after one period (solve_ivp)')
+    numeric_part(lv, 1, 4, pv, {'centre': round(2*math.pi/math.sqrt(8), 3), 'no-half': round(2*math.pi/math.sqrt(28), 3)}, '2.375')
+    lv.claim(abs(math.sqrt(7) - 2.6458) < 5e-5, 'sqrt7 = 2.6458')
+
+    # ---- item 2: s'' + 4s' - 5s = 0
+    A3 = sp.Matrix([[0, 1], [5, -4]])
+    mat_part(lv, 2, 0, A3, {'signs': sp.Matrix([[0, 1], [-5, 4]]), 'swapped': sp.Matrix([[0, 1], [-4, 5]])})
+    numeric_part(lv, 2, 1, A3.det(), {'sign': -A3.det(), 'trace': A3.trace()}, -5)
+    A3n = np.array(A3, dtype=float)
+    lv.claim(abs(np.linalg.det(A3n) + 5) < 1e-9, 'det -5 (numpy)')
+    ev = sorted(A3.eigenvals().keys())
+    lv.claim(ev == [-5, 1] and np.allclose(sorted(np.linalg.eigvals(A3n)), [-5, 1]), 'eigenvalues 1 and -5')
+    numset_part(lv, 2, 2, [1, -5], {'trace-sign': sorted(np.roots([1, -4, -5]).real)})
+    S = sp.Function('S')
+    v0 = sp.Symbol('v0')
+    st = sp.dsolve(S(t).diff(t, 2) + 4*S(t).diff(t) - 5*S(t), S(t), ics={S(0): 1, S(t).diff(t).subs(t, 0): v0}).rhs
+    vs = sp.solve(sp.expand(st).coeff(sp.exp(t)), v0)
+    lv.claim(vs == [-5], "s'(0) = -5 removes the e^t mode (dsolve)")
+    good = ivp(lambda tt, u: [u[1], 5*u[0] - 4*u[1]], [1, -5], 3)
+    bad = ivp(lambda tt, u: [u[1], 5*u[0] - 4*u[1]], [1, -4.9], 3)
+    lv.claim(abs(good.y[0][-1]) < 1e-5 and bad.y[0][-1] > 0.1, "numerically s'(0) = -5 decays and -4.9 does not")
+    lv.claim(A3 * sp.Matrix([1, -5]) == -5 * sp.Matrix([1, -5]), 'eigenvector (1, -5) for -5')
+    numeric_part(lv, 2, 3, float(vs[0]), {'unstable': 1, 'sign': 5}, -5)
+    lv.check_wrongs('problems')
+    return lv
+
+
+LEVELS = [level1, level2, level3]
 
 if __name__ == '__main__':
     bad = 0
