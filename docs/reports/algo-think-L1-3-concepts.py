@@ -29,6 +29,24 @@ def check(name, ok, detail="", finding=None):
     RESULTS.append((name, bool(ok), detail, finding))
 
 
+# Fix pass (12 Nov 2026): each FINDING check now tests the corrected sentence. It reads the
+# content string with T() and recomputes the claim the corrected sentence makes.
+import json
+import os
+CDIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "content", "courses", "algo-think")
+_CACHE = {}
+
+
+def T(fname, path):
+    if fname not in _CACHE:
+        with open(os.path.join(CDIR, fname), encoding="utf-8") as fh:
+            _CACHE[fname] = json.load(fh)
+    o = _CACHE[fname]
+    for k in path.split("."):
+        o = o[int(k)] if k.isdigit() else o[k]
+    return o
+
+
 # ---------------------------------------------------------------- Level 1
 # l1: scan, pair loop, grid
 def scan_comparisons(prices):
@@ -73,9 +91,14 @@ check("l2 2n log2 n passes 40n once log2 n > 20", all((2 * n * math.log2(n) > 40
 # FINDING 6: options that are true statements under the lesson's own definition are graded wrong
 g = lambda n: 2 * n * math.log2(n) + 40 * n + 9
 is_O_n2logn = all(g(n) <= 60 * n * n * math.log2(n) for n in range(2, 5000))
-check("l2 s6: '2n log n + 40n + 9 = O(n^2 log n)' is false, as the grading implies", not is_O_n2logn,
+check("l2 s6 (fixed): the O(n^2 log n) option is called true but not the smallest class; prose states the convention",
+      is_O_n2logn and "True as an upper bound, but not the smallest class" in T("l2-big-o.json", "screens.6.widget.options.3.why")
+      and "smallest class that holds" in T("l2-big-o.json", "screens.6.prose"),
       "the bound holds with c=60, n0=2, so the option is a true statement", finding=6)
-check("l2 quiz: 5n is not O(n^2), as the grading implies", not all(5 * n <= 5 * n * n for n in range(1, 5000)),
+check("l2 quiz (fixed): 5n is O(n^2) as a loose bound, and the why says so; summary names functions, not classes",
+      all(5 * n <= 5 * n * n for n in range(1, 5000))
+      and "True as a loose upper bound" in T("l2-big-o.json", "quiz.0.widget.options.1.why")
+      and "O(\\log n)" not in T("l2-big-o.json", "summary.ideas.2"),
       "5n <= 5n^2 for n >= 1, so 'O(n^2)' is a true statement", finding=6)
 
 
@@ -105,8 +128,14 @@ def peak(fn, *a):
 
 p4, p5 = [float(i) for i in range(10 ** 4)], [float(i) for i in range(10 ** 5)]
 a4, a5 = peak(prog_a, p4), peak(prog_a, p5)
-check("l3 s0: program A (for p in prices[1:]) holds O(1) extra values", a5 < 2 * a4 + 2000,
-      f"peak bytes {a4} at n=1e4, {a5} at n=1e5: the slice copies n-1 references", finding=1)
+check("l3 s0 (old program A, for p in prices[1:]) is O(n): the slice copies n-1 references", a5 > 9 * a4 > 70000,
+      f"peak bytes {a4} at n=1e4, {a5} at n=1e5")
+_src = T("l3-memory.json", "screens.0.prose").split("```python\n")[1].split("# B")[0]
+_ns = {}
+exec("def prog_a_content(prices):\n" + "".join("    " + ln + "\n" for ln in _src.splitlines()) + "    return best", _ns)
+check("l3 s0 (fixed): program A as now written holds O(1) extra values and finds the max",
+      "[1:]" not in _src and peak(_ns["prog_a_content"], p5) < 2000 and _ns["prog_a_content"](P8) == 108,
+      f"program A in the content: {_src!r}", finding=1)
 check("l3 s0 proposed fix (loop over prices) is O(1) and still correct",
       peak(prog_a_fixed, p5) < 2000 and prog_a_fixed(P8) == 108 == prog_a(P8))
 check("l3 reverse in place: floor(n/2) swaps, 500 for 1,001",
@@ -123,7 +152,8 @@ for v in [3, 1, 4, 1, 5]:
     pre.append(pre[-1] + v)
 check("l3 prefix sums [0,3,4,8,9,14]; days 1 to 3 total 6 = pre[4]-pre[1]", pre == [0, 3, 4, 8, 9, 14]
       and pre[4] - pre[1] == 6 == 1 + 4 + 1)
-check("l3 s5 hint: days 1 to 3 total '8 - 3'", 8 - 3 == pre[4] - pre[1],
+check("l3 s5 hint (fixed): days 1 to 3 total '9 - 3'", 9 - 3 == pre[4] - pre[1]
+      and "$9 - 3$: `pre[4] - pre[1]`" in T("l3-memory.json", "screens.5.hints.1.text"),
       "pre[4] is 9, so the subtraction is 9 - 3 = 6; 8 - 3 is 5 and uses pre[3]", finding=2)
 check("l3 range(1000)[10:20] sums to 145", sum(range(1000)[10:20]) == 145)
 
@@ -187,7 +217,10 @@ check("l4 tripling total < 1.5n for every n up to 5000", all(total_copies(n, 3)[
 check("hw1 any integer factor r: total < r/(r-1) n", all(total_copies(n, r)[0] < r / (r - 1) * n
                                                       for r in (2, 3, 4, 5, 10) for n in range(1, 3000)))
 worse = [n for n in range(1, 300) if total_copies(n, 3)[0] > total_copies(n, 2)[0]]
-check("l4 s5 option 'worse': tripling 'copies less in total' than doubling", not worse,
+check("l4 s5 option 'worse' (fixed): 'not in general', and the bounds 1.5n against 2n hold",
+      worse and all(total_copies(n, 3)[0] < 1.5 * n and total_copies(n)[0] < 2 * n for n in range(1, 3000))
+      and "copies less in total" not in T("l4-cheap-on-average.json", "screens.5.widget.options.3.why")
+      and "under $1.5n$, against $2n$" in T("l4-cheap-on-average.json", "screens.5.widget.options.3.why"),
       f"tripling copies more at n = {worse[:8]}... (4 against 3 at n=4, 40 against 31 at n=28)", finding=7)
 check("l4 worst append in 100 copies 64; in 1000 copies 512; average 1.023", total_copies(100)[1] == 64
       and total_copies(1000)[1] == 512 and total_copies(1000)[0] / 1000 == 1.023)
@@ -200,7 +233,8 @@ check("l4 order book: 2,097,151 copies for 2,000,000 ticks, 1.05 a tick",
 check("review-1: 65 appends 127 copies; hw1 start 4: 124 for 100", total_copies(65)[0] == 127
       and total_copies(100, 2, 4)[0] == 124)
 dbl_1e6 = total_copies(10 ** 6)[0]
-check("hw1 h-fixed-code: a million appends with doubling make 'about 2 x 10^6' copies", abs(dbl_1e6 / 2e6 - 1) < 0.25,
+check("hw1 h-fixed-code (fixed): a million appends with doubling make 'about 10^6' copies", abs(dbl_1e6 / 1e6 - 1) < 0.06
+      and "about $10^6$ with doubling" in T("homework-1.json", "items.6.explain.text"),
       f"the total is {dbl_1e6:,}, about 1 x 10^6; 2 x 10^6 is the bound 2n", finding=3)
 check("hw1 h-fixed-code: step 10 makes 49,999,500,000", 10 * (99999 * 100000 // 2) == 49999500000)
 # CPython list growth factor
@@ -212,9 +246,13 @@ for i in range(200000):
         sizes.append(s)
         last = s
 growth = sizes[-1] / sizes[-2]
-check("l4 s0: list.append grows by a factor 'slightly smaller' than 2", growth > 1.5,
+check("l4 s0 (fixed): list.append grows by a factor 'of about 1.125'", abs(growth - 1.125) < 0.01
+      and "about 1.125" in T("l4-cheap-on-average.json", "screens.0.explain.text"),
       f"measured capacity ratio {growth:.3f}; CPython over-allocates by about one eighth", finding=8)
-check("l4 quiz np.append: explain n(n-1)/2 equals feedback 1+2+...+n", all(n * (n - 1) // 2 == n * (n + 1) // 2 for n in (5, 50)),
+check("l4 quiz np.append (fixed): feedback and whys say 0+1+...+(n-1) = n(n-1)/2, as the explain does",
+      all(sum(range(n)) == n * (n - 1) // 2 for n in (5, 50))
+      and all("0 + 1 + \\dots + (n - 1)" in T("l4-cheap-on-average.json", p) for p in ("quiz.0.feedback.correct", "quiz.0.widget.options.3.why"))
+      and "$0, 1, 2, \\dots$" in T("l4-cheap-on-average.json", "quiz.0.widget.options.2.why"),
       "call k copies k-1 old elements: 0+1+...+(n-1) = n(n-1)/2; the feedback's sum is n larger", finding=9)
 check("hw1 longform: 8,997,000 calls, 2.25e9 day-steps, 4,498,500 after halving",
       3000 * 2999 == 8997000 and abs(8997000 * 250 / 2.25e9 - 1) < 0.01 and 3000 * 2999 // 2 == 4498500)
@@ -266,7 +304,9 @@ def fib_levels(n):
 
 
 lv5 = fib_levels(5)
-check("l8 s6 explain: fib's tree 'doubles on each' level", all(b == 2 * a for a, b in zip(lv5, lv5[1:])),
+check("l8 s6 explain (fixed): fib's calls double on each level of the top half of its n levels",
+      all(len(fib_levels(n)) == n and all(fib_levels(n)[k] == 2 ** k for k in range(n // 2 + 1)) for n in range(2, 18))
+      and "doubling on each level of the top half" in T("l8-cost-of-recursion.json", "screens.6.explain.text"),
       f"levels of fib(5) hold {lv5}; only the top half of the levels are full", finding=10)
 check("l8 fix text: fib(n) tree is n levels deep and levels 0..n//2 are full",
       all(len(fib_levels(n)) == n and all(fib_levels(n)[k] == 2 ** k for k in range(n // 2 + 1)) for n in range(2, 18)))
@@ -316,7 +356,10 @@ check("l8 T(n)=2T(n/2)+n, T(1)=1 is n(log2 n + 1): 4, 12, 32, 80",
 check("l8 T(n)=T(n/2)+1 is log2 n + 1: 21 at 2^20", all(T_half(n) == int(math.log2(n)) + 1 for n in pw) and T_half(2 ** 20) == 21)
 check("l8 T(n)=2T(n-1)+1 is 2^n - 1: 1023 at 10, 7 at 3", all(T_exp(n) == 2 ** n - 1 for n in range(1, 200)) and T_exp(10) == 1023)
 check("l8 T(n)=2T(n/2)+1 is 2n-1", all(T_max(n) == 2 * n - 1 for n in pw))
-check("l8 s8 / review-2 feedback: '1 + 2 + ... + n = 2n - 1' read as written", sum(range(1, 9)) == 2 * 8 - 1,
+check("l8 s8 / review-2 feedback (fixed): '1 + 2 + 4 + ... + n = 2n - 1'",
+      all(sum(2 ** k for k in range(int(math.log2(n)) + 1)) == 2 * n - 1 for n in (1, 2, 8, 1024))
+      and "1 + 2 + 4 + \\cdots + n = 2n - 1" in T("l8-cost-of-recursion.json", "screens.8.feedback.correct")
+      and "1 + 2 + 4 + \\cdots + n = 2n - 1" in T("review-2.json", "items.8.feedback.correct"),
       "1+2+...+8 is 36; the sum meant is 1+2+4+8 = 15", finding=11)
 check("hw2 T(n)=2T(n/2)+n^2 stays below 2n^2", all(T_sq(n) < 2 * n * n + 1 for n in pw))
 check("l8 lattice: 15 against 10 nodes at 3 steps; 5,151 at 100; 2^101 - 1 about 2.5e30",
@@ -352,7 +395,9 @@ def outer_closure():
     return inner(2)
 
 
-check("l6 quiz q-scope why: 'each frame sees only its own names and the module's'", outer_closure() != 3,
+check("l6 quiz q-scope why (fixed): a function sees its own names, then the enclosing code's, never its caller's",
+      outer_closure() == 3 and "never sees its caller's" in T("l6-call-stack.json", "quiz.3.widget.options.1.why")
+      and "only its own names" not in T("l6-call-stack.json", "quiz.3.widget.options.1.why"),
       "a nested function also reads the names of the function it is defined in (and built-ins)", finding=13)
 
 tree = {"v": "r", "c": [{"v": "a", "c": [{"v": "a1", "c": []}, {"v": "a2", "c": []}]}, {"v": "b", "c": []}]}
@@ -374,8 +419,9 @@ def stack_order(node):
     return out
 
 
-check("l6 s7 explain: the explicit-stack loop 'visits in the same order as the recursion'",
-      rec_order(tree, []) == stack_order(tree),
+check("l6 s7 explain (fixed): the loop goes depth first but takes children last to first",
+      stack_order(tree) == ["r", "b", "a", "a2", "a1"] and rec_order(tree, []) == ["r", "a", "a1", "a2", "b"]
+      and "children last to first" in T("l6-call-stack.json", "screens.7.explain.text"),
       f"recursion {rec_order(tree, [])}, loop {stack_order(tree)}: depth first both, children reversed", finding=12)
 
 
@@ -553,7 +599,9 @@ def le_variant(xs, target, cap=200):
 
 
 outcomes = {le_variant([10, 20, 30, 40], t) for t in (5, 25, 35, 45)}
-check("l9 s7 option 'le': with <= the loop 'never ends'", outcomes == {"spins"},
+check("l9 s7 option 'le' (fixed): with <= it spins when xs[mid] >= target, IndexError past the end",
+      outcomes == {"spins", "IndexError"} and le_variant([10, 20, 30, 40], 45) == "IndexError"
+      and "raises `IndexError`" in T("l9-halving.json", "screens.7.widget.options.1.why"),
       f"outcomes over four targets: {sorted(map(str, outcomes))}; it spins only when xs[mid] >= target", finding=14)
 
 
@@ -666,7 +714,8 @@ check("l10 Black-Scholes: c(0.20)=10.45, c(0.25)=12.34, c(0.30)=14.23; implied v
       and abs(bs_call(100, 100, 0.05, 1, 0.30) - 14.23) < 0.005 and abs((lo_ + hi_) / 2 - 0.2411) < 0.00005, f"{(lo_ + hi_) / 2:.5f}")
 check("l10 load test: next rate 3,250; 11 more tests pin it to one order a minute",
       (2500 + 4000) // 2 == 3250 and 1500 / 2 ** 10 > 1 >= 1500 / 2 ** 11)
-check("l10 s9 explain: testing every rate from 1,000 up 'would take hundreds'", (2500 - 1000 + 1) < 1000,
+check("l10 s9 explain (fixed): testing every rate from 1,000 up 'would take more than 1,500'", (2500 - 1000 + 1) > 1500
+      and "more than 1,500" in T("l10-search-the-answer.json", "screens.9.explain.text"),
       "the limit is at least 2,500, so a scan from 1,000 runs at least 1,501 tests", finding=15)
 
 
@@ -788,7 +837,9 @@ check("l12/hw2 inversions of the 20,000-value test list are 99,930,366; [2,2,1] 
 check("l12 Kendall tau for 3 discordant of 15 is 0.6", abs((12 - 3) / 15 - (1 - 2 * 3 / 15)) < 1e-12 and 1 - 2 * 3 / 15 == 0.6)
 rev = list(range(64, 0, -1))
 inv_rev, comps_rev = count_inversions_merge(rev)
-check("hw2 h-sort-count explain: 'the merge already compares each pair that matters'", comps_rev >= inv_rev,
+check("hw2 h-sort-count explain (fixed): one comparison settles a group of pairs, not pair by pair",
+      comps_rev < inv_rev and "compares each pair" not in T("homework-2.json", "items.5.explain.text")
+      and "every left item still waiting is bigger" in T("homework-2.json", "items.5.explain.text"),
       f"64 reversed values: {inv_rev} inversions counted with {comps_rev} comparisons; the pairs are counted in bulk", finding=16)
 
 
@@ -853,8 +904,12 @@ c_sorted, c_equal = [0], [0]
 quicksort(list(range(3000)), "random", rng, c_sorted)
 quicksort([5] * 3000, "random", rng, c_equal)
 check("l13 random pivot makes sorted input cheap", c_sorted[0] < 3 * 3000 * math.log2(3000))
-check("l13 s4 explain / s7 key: with a random pivot 'every input has expected cost O(n log n)'",
-      c_equal[0] < 3 * 3000 * math.log2(3000),
+check("l13 s4 explain / s7 key (fixed): expected O(n log n) is claimed only for distinct values",
+      c_equal[0] == 3000 * 2999 // 2 and c_sorted[0] < 3 * 3000 * math.log2(3000)
+      and "distinct values" in T("l13-quicksort.json", "screens.7.question")
+      and "distinct values" in T("l13-quicksort.json", "screens.4.explain.text")
+      and "every input" not in T("l13-quicksort.json", "screens.7.widget.options.0.text")
+      and T("l13-quicksort.json", "screens.7.widget.options.0.id") == "a",
       f"3,000 equal values cost {c_equal[0]:,} comparisons = n(n-1)/2 whatever the pivot draw (Lomuto sends ties left)",
       finding=4)
 outs = set()
@@ -865,7 +920,9 @@ for seed in range(60):
 t = [(5, "a"), (5, "b"), (1, "c")]
 quicksort(t, key=lambda v: v[0])
 check("l13 quiz q-stable: with the last value as pivot the output is c, b, a", [v[1] for v in t] == ["c", "b", "a"])
-check("l13 quiz q-stable: 'Quicksort with Lomuto' has one output (the item names no pivot rule)", len(outs) == 1,
+check("l13 quiz q-stable (fixed): the item names the last-value pivot, under which the output is unique",
+      len(outs) == 2 and [v[1] for v in t] == ["c", "b", "a"]
+      and "taking the last value as pivot" in T("l13-quicksort.json", "quiz.2.prose"),
       f"the lesson's own random-pivot quicksort gives {sorted(outs)}", finding=5)
 
 
@@ -921,8 +978,12 @@ check("l13 s9 table: quickselect costs 2n to 4n on average (exact recurrence at 
       "tending to 2(1 + ln 2)n = 3.39n; minimum about 2n; 20th percentile about 3n)",
       3.2 < ex_med < 3.4 and 1.9 < ex_min < 2.05 and 2.85 < ex_p20 < 3.05 and 2.9 < med_ratio < 3.9 and 1.7 < min_ratio < 2.3,
       f"exact {ex_med:.2f}n / {ex_min:.2f}n / {ex_p20:.2f}n; simulated at n={n_q}: {med_ratio:.2f}n / {min_ratio:.2f}n / {p20_ratio:.2f}n")
-check("l13 s8 feedback and explain: the median by quickselect costs 'about 2n' comparisons ('2 million steps')",
-      1.7 < ex_med < 2.3, f"exact expectation {ex_med:.2f}n at n=1501, simulated {med_ratio:.2f}n at n={n_q}; "
+check("l13 s8 feedback and explain (fixed): 2n to 4n on average, about 3.4n for a median; hw3 agrees",
+      3.2 < ex_med < 3.4 and abs(2 * (1 + math.log(2)) - 3.39) < 0.01 and 1.9 < ex_min < 2.05
+      and "$2n$ to $4n$" in T("l13-quicksort.json", "screens.8.feedback.correct")
+      and "$3.4n$ for a median" in T("l13-quicksort.json", "screens.8.explain.text")
+      and "2 million steps" not in T("l13-quicksort.json", "screens.8.explain.text")
+      and "about $2n$ to $4n$" in T("homework-3.json", "items.6.explain.text"), f"exact expectation {ex_med:.2f}n at n=1501, simulated {med_ratio:.2f}n at n={n_q}; "
       "theory 2(1 + ln 2)n = 3.39n", finding=17)
 sizes = [(i * 7919) % 10007 for i in range(100001)]
 check("l13/hw3 tests: median of the 100,001 sizes is 5003; 20,000th largest is 8005",
@@ -1002,7 +1063,9 @@ check("l14 sorting by start gives 1 on the diary; by start or by length fails on
       eft(diary, key=lambda iv: iv[0]) == 1 and start_fails > 0 and short_fails > 0
       and eft([(1, 5), (4, 7), (6, 10)], key=lambda iv: iv[1] - iv[0]) == 1 and eft([(1, 5), (4, 7), (6, 10)]) == 2)
 O_touch = [(9, 10), (10, 11)]
-check("l14 s7 derive line s3: every other meeting of O 'starts after o ends'", all(iv[0] > O_touch[0][1] for iv in O_touch[1:]),
+check("l14 s7 derive line s3 (fixed): every other meeting of O 'starts when o ends or later'",
+      all(iv[0] >= O_touch[0][1] for iv in O_touch[1:]) and not all(iv[0] > O_touch[0][1] for iv in O_touch[1:])
+      and "starts when $o$ ends or later" in T("l14-best-step-now.json", "screens.7.widget.lines.2.text"),
       "touching meetings are allowed, so the next one can start exactly when o ends: 'at or after'", finding=18)
 trades_k = [(6000, 300), (5000, 200), (5000, 200)]
 best01 = max(sum(p for k, (c, p) in enumerate(trades_k) if m >> k & 1) for m in range(8)
