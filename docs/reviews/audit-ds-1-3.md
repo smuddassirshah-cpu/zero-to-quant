@@ -1,0 +1,85 @@
+# Concept audit: ds levels 1 to 3 (round 1, blind)
+
+Course `ds` (Core Data Structures, topic 1.8, Stage 1). Scope: lessons l1 to l13, review-1 to review-3 and homework-1 to homework-3, as `course.json` maps them to levels 1 to 3. Level 4 is out of scope. Read blind: `docs/reviews/review-1.8.md`, the voice file and every ds report were opened only after the ledger and the findings below were committed.
+
+- Ledger: `docs/reports/audit-ds-1-3-ledger.md`, 250 rows: correct 229, wrong 9, imprecise 8, misleading 0, unverified 4.
+- Script: `docs/reports/ds-L1-3-concepts.py` (CPython 3.13). 147 checks pass and 11 fail; each failing check is a finding below, so the script exits 1 until the fix pass. It also runs every one of the 32 Python code widgets: each solution passes its hidden tests and each starter fails.
+- No C++ widgets occur in these levels.
+
+## Findings
+
+Severities: `wrong` 9 (serious 1, minor 8), `imprecise` 7 (serious 1, minor 6), `misleading` 0, `unverified` 2 (minor 2). Serious findings are 12 and 13.
+
+1. `l1-arrays-in-memory.json` | `screens[4].explain.text` | wrong, minor | "The copies are $1 + 2 + 4 + 8 = 15$, always fewer than the appends." The general claim is false. | With doubling from capacity 1, 17 appends make $1 + 2 + 4 + 8 + 16 = 31$ copies, and 3 appends make 3. The true bound is fewer than twice the appends (CLRS 3rd edition, section 17.4; script checks `l1.s4 explain` and `[fix] copies`). The screen's own case, 15 for 16, is right. | Replace the first sentence with: "The copies are $1 + 2 + 4 + 8 = 15$, and with doubling they are always fewer than twice the appends." Keep the other two sentences.
+
+2. `l1-arrays-in-memory.json` | `screens[10].widget.options[3].why` | wrong, minor | "`remove` searches for the value, then shifts the rest left: two linear steps instead of one." | `window.remove(window[0])` finds its value on the first comparison (script: one `__eq__` call), so only the shift is linear. In general a search of $k$ items plus a shift of $n - k - 1$ is one linear pass, never two. | "`remove` finds the value at index 0 on its first comparison, then shifts the rest left: the same linear cost as `pop(0)`."
+
+3. `l5-both-ends.json` | `screens[4].feedback.byKey.c3` | wrong, minor | "2 is nearest zero, so its square is the smallest. It goes in the first slot, not the last." | In `[-7, -3, -1, 2, 4, 6]` the value nearest zero is −1, as `byKey.c2` on the same screen says. The squares in order are 1, 4, 9, 16, 36, 49, so 4 goes second (script check `l5.s4 feedback c3`). | "2 is not at an end. Its square, 4, is the second smallest, so it goes in the second slot, not the last."
+
+4. `l5-both-ends.json` | `quiz[2].prose` | imprecise, minor | "A strangle's payoff at six strikes, from £90 to £115". | A strangle has two strikes. The six numbers are payoffs at six prices of the underlying at expiry; they match a put struck at £100 and a call struck at £105 (script check; Hull, *Options, Futures and Other Derivatives*, chapter on trading strategies, strangles). | "A strangle's payoff at six expiry prices, from £90 to £115, is `[10, 5, 0, 0, 5, 10]`. To check it is symmetric, we run the palindrome check on the list."
+
+5. `l6-sliding-window.json` | `screens[6].prose` | wrong, minor | "This version passes `'abcbdae'`." | It does not. At the second `a` the code sets `left = last['a'] + 1 = 1`, so the window runs back over both `b`s and the function returns 6; the right answer is 5 (script check `l6.s6 prose`). The trap's graded key (3 on `'abba'`) is right. | "This version passes `'abcbd'`. Run it on `'abba'` by hand." (Checked: the buggy and the correct version both return 3 on `'abcbd'`.)
+
+6. `l6-sliding-window.json` | `quiz[3].widget.options[3].why` | imprecise, minor | "It is just as fast, and every sum after the first is wrong." | Each step adds `xs[k - 1] - xs[k]` of error, which telescopes: after $k$ steps the sum is off by `xs[0] - xs[k]`. So a sum is right whenever `xs[k]` equals `xs[0]` (script: on `[3, 9, 3, 5, 3, 1]` with $w = 2$ two of the four later sums are right). | "It is just as fast, but after $k$ steps the sum is off by `xs[0] - xs[k]`."
+
+7. `review-2.json` | `items[1].widget.wrong[1].value` with `items[1].feedback.byKey.kept` | wrong, minor | The slip value 15 is paired with "You added the new numbers without dropping the old ones." | That mistake gives $6 + 4 + 6 = 16$. 15 is $5 + 4 + 6$: the 1 dropped and the 5 kept (script check). The feedback does not name the mistake that produces its value. | Change `wrong[1].value` from 15 to 16 and keep the feedback. (16 clashes with no other value on the item: the answer is 10 and the other slip is 5.)
+
+8. `review-2.json` | `items[2].widget.wrong[0].value` with `items[2].feedback.byKey.off` | wrong, minor | The slip value 9 is paired with "That is `pre[4] - pre[0]`, which adds day 0 back." | `pre[4] - pre[0] = 10 - 0 = 10`. 9 is `pre[4] - pre[2] = 10 - 1` (script check). | Change `wrong[0].value` from 9 to 10 and keep the feedback. (10 clashes with no other value: the answer is 6 and the other slip is 3.)
+
+9. `homework-2.json` | `items[0].feedback.byKey.test-6` | imprecise, minor | "Test 6 has a repeated 2. Keep `i` and `j` on different positions." | With `d > 0`, when `i == j` the gap is 0, which is below `d`, so `j` moves on anyway. The answer is the same with or without the guard on 4,000 random lists (script `[basis] hw2 h-difference`). The line names a slip that cannot fail this test. | "Test 6 is `[2, 2, 5]` with `d = 3`. The pair is 5 and either 2, so the answer is `True`."
+
+10. `homework-2.json` | `items[4].prose` (last sentence) | imprecise, minor | "So `P[r][c]` sums rows below `r` and columns below `c`." | It means rows and columns with a smaller index. In the table shown, "below" reads as a larger index, the opposite; l7 says "above and left". | "So `P[r][c]` sums the rows before row `r` and the columns before column `c`."
+
+11. `homework-2.json` | `items[5].feedback.byKey.four` | wrong, minor | "`[12, 3, 7, 9]` is the first window to reach 20". | The growing window reaches 20 at `[12, 3, 7]`, which sums to 22, as the item's own explain says (script check `hw2 h-min-volume`). | "`[12, 3, 7, 9]` reaches 20, but so does `[12, 3, 7]`, at 22, with one minute fewer."
+
+12. `l8-best-day.json` | `screens[5].prose` and `screens[5].question`; `homework-2.json` | `items[7].prompt` and `items[7].model` part (c) | imprecise, serious | The lesson says "That is the maximum drawdown, which you coded in Python Foundations and tested in the pytest course", then asks for it in pounds. The homework asks for "the maximum drawdown of 10 years of daily closing prices" and computes the largest fall in pounds. | Those earlier lessons define drawdown as a fraction of the peak (`py-found/l7-arguments.json`: "the largest $1 - \text{value}/\text{peak}$"; `pytest/l3-reading-failure.json`: "It is a fraction of the peak"). The fall in pounds is a different measure and can pick a different episode: for `[100, 60, 200, 130]` the largest fall in pounds is 200 to 130, and the largest fractional fall is 100 to 60 (script `[basis] absolute and fractional`). The model's identities in (c), "best trade on the negated prices" and "minus the minimum sum of consecutive changes", hold for the pound measure only. The graded keys (15 and, in review-2, 80) are right for the measure asked. A learner is told one name covers both without being told the measure changed. | `l8` `screens[5].prose`: "Reflect the loop: keep the **highest** price so far, and the worst fall from it. That is the maximum drawdown, here in pounds. Python Foundations and the pytest course measured the same fall as a fraction of the peak." `homework-2` `items[7].prompt`, first sentence: "A colleague's risk script computes the maximum drawdown, in pounds, of 10 years of daily closing prices like this:". `homework-2` `items[7].model`, end of part (c), add: "These identities hold for the fall in pounds. For the fall as a fraction of the peak, keep the same running high and divide each fall by it."
+
+13. `l8-best-day.json` | `screens[9].explain.text` (sentences 2 and 3) | wrong, serious | "A backtest beating it is reading future prices or mispricing fills. Common causes are a look-ahead bug or a wrong index alignment." | `best_trade` is already the perfect-foresight answer: the maximum of $p_j - p_i$ over every $i < j$ is 9 (script check). A strategy that reads future closes can reach £9 and can never exceed it, so look-ahead cannot explain £12. Only a trade that is not "buy at one of these closes, then sell at a later one" can. The sentence teaches a wrong idea of what the bound means. The graded key (the backtest has a bug) is right. | "`best_trade` gives an upper bound for any one-trade strategy on these closes, even one that could see the future: £9. A backtest that beats it did not buy and then sell at these closes. Check for a wrong index alignment, a sale booked before its purchase, or fills at prices outside the series."
+
+14. `l11-first-in-first-out.json` | `screens[0].prose` (sentence 2) | imprecise, minor | "An exchange fills orders at one price in arrival order." | True under price-time priority. Some markets share fills pro rata among orders at one price (CME Group, matching algorithm overview: FIFO and pro-rata algorithms). | "This exchange fills orders at one price in arrival order, a rule called price-time priority."
+
+15. Unverified remarks about markets and industry (three paths) | unverified, minor | (a) `l10-next-greater.json` `screens[9].prose`: "A long wait means a ceiling held. A short one means momentum." (b) `l12-nodes-and-pointers.json` `screens[10].prose`: "An exchange keeps each price level as a queue of resting orders. Cancels are frequent, so each node has both `prev` and `next`". (c) `l13-fast-and-slow.json` `quiz[2].explain.text`: "That is the reason interviewers ask for it." | None has a source, and none is needed for the teaching. | (a) "The desk reads a long wait as a ceiling that held, and a short one as momentum." (b) "This exchange keeps each price level as a queue of resting orders. It expects many cancels, so each node has both `prev` and `next`: a **doubly linked list**." (c) "That saving in memory is why Floyd's method is worth knowing."
+
+16. `l11-first-in-first-out.json` | `screens[6].widget.how` and `screens[6].feedback.byKey.test-11`, with `screens[6].widget.tests[10]` | unverified, minor | "Test 11 has 200,000 values with $w = 2000$; slicing each window cannot finish in time." | `[max(xs[i:i + w]) for i in ...]` on that input takes 3.2 s in native CPython 3.13, under the 5 s case limit (`docs/AUTHORING.md`, code widget limits). Pyodide is slower by a factor that depends on the machine, so the claim may or may not hold in the app. I could not run Pyodide timing here. | Change `tests[10].call` to `max_sliding_window(list(range(200000, 0, -1)), 20000)[:3]`; the expected value `[200000, 199999, 199998]` is unchanged (script `[fix] l11 test`). Change "$w = 2000$" to "$w = 20000$" in `how`. The slice version then does ten times the work.
+
+17. `l11-first-in-first-out.json` | `screens[7].explain.text` (last sentence) | wrong, minor | "Add `if dq[0] <= i - w: dq.popleft()` before the back pops." | Placed there in the loop shown, the line runs at `i = 0` with an empty deque and raises `IndexError: deque index out of range` (script check `l11.s7 explain fix`). The lesson's own solution guards it. | "Add `if dq and dq[0] <= i - w: dq.popleft()` before the back pops."
+
+18. `review-3.json` | `items[7].prose` (sentence 2) | imprecise, minor | "The deepest nesting tells you how many intermediate results a stack-based evaluator holds at once." | `(1 + (2 * (3 - 4)))` has depth 3, and a two-stack evaluator holds four operands before the first `)` (script check). Depth bounds the bracket stack, not the number of pending values. | "The deepest nesting is the tallest the bracket stack ever gets."
+
+## Checks that found nothing
+
+- Every graded key, every `wrong[]` value and every slip was recomputed; apart from findings 3, 7, 8 and 11 each feedback line names the mistake that produces its value.
+- Big-O statements carry their case: hash operations are "on average" where first stated and the worst case is taught (l2 screens[3], homework-1 item 8); append is "amortised" (l1); deque ends are $O(1)$ and the middle $O(n)$ (homework-3). Timing checks in the script separate linear from quadratic for `insert(0)`, `pop(0)` and `popleft()`.
+- Window and prefix invariants hold: the shrinking window is stated to need positive numbers and its failure on negatives is graded; `pre` uses $n + 1$ entries throughout; `count_subarrays_with_sum`, `best_trade`, the monotonic stack, the monotonic deque and Floyd's method each agree with brute force on random inputs.
+- Kadane appears in two forms, and both are labelled: the empty-run form in l8 (matches "no trade") and the non-empty form in homework-2.
+
+## Gates
+
+- Validator: `node tools/validate.mjs` gives 0 errors (4531 warnings); the manifest did not change.
+- Number scripts: none exists for ds levels 1 to 3 in `docs/reports/` (only `ds-4-perf-numbers.py`, out of scope).
+- `grade-all.mjs --file` on review-1, homework-1, review-2, homework-2, review-3 and homework-3: 0 failures each, exit 0. It checks numeric, choice and multi widgets only (31 widgets), so the concepts script runs the code widgets.
+- `ds-L1-3-concepts.py`: exit 1, with 11 failing checks that map to findings 1, 2, 3, 5, 6, 7, 8, 11, 13, 17 and 18.
+
+## Overlap with the earlier read
+
+Earlier read: `docs/reviews/review-1.8.md` (algo-think, ds and graphs-dp together), opened after the WIP commit `15ab4d08`. Only its ds level 1 to 3 lines are counted. Its fix pass had already been applied to the content this audit read, so its three conceptual findings could no longer be found.
+
+| Conceptual findings, ds L1 to L3 | Count |
+|---|---|
+| Found by this audit only | 18 (findings 1 to 18) |
+| Found by the earlier review only | 3 |
+| Found by both | 0 |
+
+The earlier review's three conceptual findings, all fixed before this read: homework-3 `items[2]` (the FIFO key equalled the plain-average slip, error), homework-1 `items[6]` (the key assumed an unstated constant list length, warning) and l7 `screens[8]` explain (prefix counts 10,001 and 10,000, note). This audit rechecked all three as they now stand and they hold (ledger rows for those paths are `correct`).
+
+Not counted as conceptual: the earlier review's five test-strength findings in scope (homework-3 `items[0]`, `[4]`, `[5]`; l13 `screens[7]`, `[9]`), three explanations over three sentences and its sentence-length lists.
+
+New `wrong` findings that no earlier read found: **9** (findings 1, 2, 3, 5, 7, 8, 11, 13 and 17), of which 1 is serious (13). That is above the convergence limit of one per three levels, so the course needs another blind audit after its fix pass.
+
+One disagreement to record. The earlier review states that window re-slicing times out on l11. Finding 16 measured 3.2 s for the same naive method on this machine, under the 5 s limit. The two runs do not settle it, which is why the verdict is `unverified` and the fix widens the test instead of arguing the timing.
+
+## Limits of this audit
+
+- Sources named in the ledger without a run (CLRS, Knuth, Bentley, Hull, the CPython and pandas sources, the CME overview) were cited from memory of the named section. They were not reopened in this session.
+- Code ran in CPython 3.13, not in Pyodide 0.27.7. No check depends on a behaviour that differs between CPython 3.12 and 3.13, but Pyodide timing was not measured.
+- Severity of finding 12 is a judgement. The graded keys are right for the measure asked; the finding is that one name is used for two measures without saying so. A fixer may reasonably rate it minor.
