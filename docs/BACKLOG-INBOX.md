@@ -77,3 +77,14 @@ Raised later (audit cpp):
 - [Could] Round 3. Positional `feedback.byKey` keys on a `console` canvas (`lN`) are never checked against the line they land on: cpp `l13-templates` `screens[4]` has had `l7` ("an `instantiation` note") on the caret line under the error since it was written, one line above the note it describes, and three reads passed it. A validator report (say under `--why`) that prints each `lN`, `rN` or `cN` key beside the first 40 characters of its line or row would let authors and auditors see a drift at a glance.
 - [Could] Round 3. The node driver `docs/reports/cpp-L1-3-r2-zq.mjs` can end with exit status 0 and no output file: when the first compile in a process carries extra flags (seen with `-ferror-limit=20` on the l13 `std::sort` program), `runClang` never settles and node exits quietly. A plain compile first avoids it (`cpp-L1-3-r3-concepts.py` does this). If the driver becomes a shared tool, it should exit non-zero when any job has no result.
 - [Could] Round 3. The mistaken submissions behind `test-N` and `compile` lines live only in audit scripts: `docs/reports/cpp-L1-3-r3-concepts.py` holds 74 (submission, widget, expected key) triples for cpp L1 to L3, all green. A `mutants` list on the code widget, graded by `grade-all.mjs`, would keep them with the content.
+
+Raised later (audit contests):
+- [Should] Session 12. `feedback.byKey.test-N` lines that name a mistake which cannot show them: contests 13 of 90 lines in L1 to L3, 8 of 52 in L4 round 1, 2 more in round 2, 1 more from a fix-pass read. Same class as algo-think, graphs-dp and cpp. Wanted: each `test-N` line carries a submission that must fail first at test N, run in node by `grade-all.mjs` (which skips code widgets today, though Pyodide runs under node).
+- [Could] `byKey` keys on the test number only, so a `test-1` line shows for any first-test failure, whatever the cause.
+- [Could] Code-widget tests share one loaded module, so "two calls in a row" tests add nothing; and a test cannot require one learner function to call another (contests l13 problem C test 10 passes with 0 `can_ship` calls though the prose says it must be called; round 2 finding 4, not applied, needs a new hidden test).
+- [Could] Validator: warn on `tol.abs >= 1` for a whole-number answer (contests l2 `screens[5]` took 29 for 30; now 0).
+- [Could] Drag-point region feedback is fixed text and cannot quote the value at the dropped point.
+
+Raised later (audit limits-thm L4 round 2):
+- [Could] Add "only if", "every ... because", "almost always" and "as ... promises" to the validator's universal-wording warning list.
+- [Could] Warn on a `feedback.byKey` line for a numeric or expression slip that holds neither the slip value nor a formula.

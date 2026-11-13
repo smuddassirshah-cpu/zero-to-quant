@@ -168,3 +168,19 @@ Issues
 - Blind-rule slips declared: cpp round 2 auditor saw 13 check lines of the round 1 script; a cpp fix-pass reader overwrote another agent's `ctx.py` in a shared scratch folder (read none of it).
 - Opus fixers again signed commits with their own attribution line. Left as they are.
 - Content branch during the session: merged once at the start (tip 42b47d3c); not re-merged while agents ran.
+
+## Audit session 12 (13 Nov 2026, from 17:27 UTC)
+
+- Lock check: newest commit on `origin/claude/fable-audit` was f65b7657 (04:02 UTC, 13 hours old) and touched `concept-audit-next.md`. The content branch tip was 03:00 UTC and did not move during the session; nothing to merge or rebase.
+- Eligibility at 17:30 UTC: limits-thm had exactly 40 lines in 24 hours on the content branch, which is not "more than 40", so L4 round 2 ran. contests had 0. Still over the rule until about 20:31 UTC (markov 104, pdes 70, ito 60, random-vars 110, mental-pressure 80, research-int 120, markets 50) or later (numerics 50 and number-sense 2,139 until 22:46; ds, graphs-dp and cpp about 100 each until about 01:17 on 14 Nov). Delta batch 3 was therefore not started.
+- markov L4 and L5 are ineligible under scope rule (a): no second read of l13 to l22, review-4, review-5, homework-4 or homework-5 is on record (`review-1.5.md` of 21 Oct predates both levels; only the perf retrofits and problems were read). Session 9 audited limits-thm L4 in the same position; this session did not repeat that. Content session: give markov L4 and L5 a second read, or say that the audit may stand in for it.
+- Budget: four course reads, as the brief sets: limits-thm L4 round 2 (closed), contests L1 to L3 round 1, contests L4 round 1, contests L4 round 2. Both contests reads are open.
+- contests is a code course and carries the `test-N` class at the expected rate: 13 of 90 lines in L1 to L3, 8 of 52 in L4, then 2 more in L4 round 2 and 1 from its fix-pass read, after a fixer sweep by submission. A sweep by one agent does not clear the class, because "the mistake the line names" has several natural codings. The L1 to L3 fixer did not sweep all 90 lines; the round 2 auditor should.
+- A round 1 fixer sentence was wrong in substance again (contests l14, the "cap near 45" remark, found misleading in round 2). Fix-pass reads: 4 reads, 0 `wrong`, 7 minor rows.
+- One tolerance changed: contests l2 `screens[5]` `tol.abs` 1 to 0 (29 was accepted for 30). The question now says "In the worst case". No key, slip, hidden test or solution changed in the session.
+- Small follow-ups applied by the orchestrator with gates run on the file: limits-thm l19 `quiz[2]` (one word), contests l16 `screens[8]` (one word), contests l15 "Fix 2" test-6 (one sentence, the reader's verified text). The four contests L1 to L3 follow-ups went to Opus.
+- Agent worktrees start on an old commit without the content; every agent had to fast-forward to `claude/fable-audit` first. Later prompts say so in their first line. One auditor reset its branch to the tip instead; harmless.
+- Sandbox: Python 3.13 cannot build the pinned matplotlib 3.8.4, so the venv took unpinned binary wheels (NumPy 2.5.4 against CI's 2.0.2). All scripts passed on it.
+- Blind-rule slip declared: the contests L4 round 1 auditor's grep of the number script printed nine comment lines naming earlier findings.
+- C++ in contests L1 to L3 was checked with native clang only, not the page's wasm32 clang 21.
+- (open) contests l9 `test-8`: `itertools.permutations` takes 1.4 to 4.3 s in Pyodide against the limit, so the line is reached or not by device speed. contests L4 round 2 finding 4 needs a new hidden test. Two citations in the L4 round 2 fix-pass read (Kattis, DOMjudge) are from recall.
