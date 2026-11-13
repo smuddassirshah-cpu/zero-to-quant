@@ -11,7 +11,8 @@ Each check states a claim the content makes. Three kinds:
   desk     local g++ 13 and clang 18 on x86-64 Linux (messages g++ prints, AddressSanitizer reports, warning flags)
 Exit 0 when every claim holds. A check that fails because the content is wrong stays failing: the ids are listed in
 docs/reviews/audit-cpp-1-3-r2.md and in EXPECTED_FAIL below. With --recorded the exit code is 0 when exactly those fail
-(the state at the audit: 369 checks, 352 hold, 17 fail; 94 of them run the solution and the starter of the 47 code widgets).
+(the state at the audit: 369 checks, 352 hold, 17 fail; after the fix pass every check holds, and a 'fix pass' section adds
+the feedback sweep: a graded submission for every feedback.byKey line of the 47 code widgets).
 """
 import json, os, re, subprocess, sys, tempfile, shutil, math
 
@@ -29,22 +30,9 @@ SHOW = '--show' in ARGV
 TMP = tempfile.mkdtemp(prefix='cppr2-')
 
 # Findings of the audit: these checks fail because the content is wrong (see the audit file, same ids)
-EXPECTED_FAIL = {
-    'h2.i5.at',                 # finding 1
-    'l13.s2.fb-test-2',         # finding 2
-    'l13.s7.slip-two',          # finding 3
-    'l9.s2.throw-runs-destructor',  # finding 4
-    'l5.s0.param-lifetime', 'l5.s0.vector-param', 'l5.s0.param-lifetime-desk',  # finding 5
-    'l13.s4.sort-error',        # finding 6
-    'l13.s9.deque',             # finding 7
-    'l3.s3.fb-error',           # finding 8
-    'l1.s3.comma',              # finding 9
-    'l1.s4.fb-test-3',          # finding 10
-    'l3.s4.fb-test-6', 'l3.s4.fb-test-4',  # finding 11
-    'l4.s5.fb-test-2',          # finding 12
-    'l7.s4.fb-test-5',          # finding 13
-    'l12.s9.fb-test-4',         # finding 14
-}
+# The audit's 17 failing checks (findings 1 to 14) were rewritten by the fix pass to state what the content now says;
+# see '## Fix pass' in docs/reviews/audit-cpp-1-3-r2.md. Nothing is expected to fail now.
+EXPECTED_FAIL = set()
 
 checks = []   # (id, kind, claim, fn) where fn() -> (ok, detail)
 jobs = []     # for the node driver
@@ -196,10 +184,10 @@ app('l1.q2.no-std', 'cout without std:: does not compile', M('cout << "hi" << \'
 app('l1.q2.print', 'print("hi") does not compile', M('print("hi");'), nobuild('error'))
 L1S3, L1S4 = 'screens.3.widget', 'screens.4.widget'
 submit('l1.s3.fb-test-2', 'test-2 (words match, not every character): no line end passes test 1 and fails test 2', 'l1-source-to-program', L1S3, rep(sol('l1-source-to-program', L1S3), " << '\\n'", ''), 'test-2')
-submit('l1.s3.comma', 'test-2 names the comma and the capital H: a missing comma passes test 1 and fails test 2', 'l1-source-to-program', L1S3, rep(sol('l1-source-to-program', L1S3), 'Hello, market', 'Hello market'), 'test-2')
+submit('l1.s3.comma', 'fix pass: a missing comma fails test 1 (so the test-2 line no longer names the comma)', 'l1-source-to-program', L1S3, rep(sol('l1-source-to-program', L1S3), 'Hello, market', 'Hello market'), 'test-1')
 submit('l1.s3.trailing-space', 'observation: a space before the line end passes test 1 and fails test 2', 'l1-source-to-program', L1S3, rep(sol('l1-source-to-program', L1S3), 'Hello, market"', 'Hello, market "'), 'test-2')
 submit('l1.s4.fb-test-2', 'test-2: reading a whole line for the ticker passes test 1 and fails test 2', 'l1-source-to-program', L1S4, rep(sol('l1-source-to-program', L1S4), 'std::cin >> ticker >> price;', 'std::getline(std::cin, ticker); std::cin >> price;'), 'test-2')
-submit('l1.s4.fb-test-3', 'test-3 (do not fix the decimal places): fixed with 2 decimals passes tests 1 and 2 and fails test 3', 'l1-source-to-program', L1S4, rep(rep(sol('l1-source-to-program', L1S4), '#include <string>', '#include <string>\n#include <iomanip>'), 'std::cout << "Ticker', 'std::cout << std::fixed << std::setprecision(2);\n    std::cout << "Ticker'), 'test-3')
+submit('l1.s4.fb-test-3', 'fix pass, test-1 (if your price shows as 72.50, leave the number as std::cout prints it): fixed with 2 decimals fails test 1 with Price: 72.50', 'l1-source-to-program', L1S4, rep(rep(sol('l1-source-to-program', L1S4), '#include <string>', '#include <string>\n#include <iomanip>'), 'std::cout << "Ticker', 'std::cout << std::fixed << std::setprecision(2);\n    std::cout << "Ticker'), 'test-1', lambda r: r['rows'][0]['stdout'] == 'Ticker: VOD\nPrice: 72.50\n')
 
 # ================================================================== L1: l2-fixed-types
 app('l2.types', 'this app: sizeof int 4, long long 8, double 8, bool 1, char 1; 7/2=3, -7/2=-3, 7.0/2=3.5, cast 3.5', M('std::cout << sizeof(int) << sizeof(long long) << sizeof(double) << sizeof(bool) << sizeof(char) << " " << 7 / 2 << " " << -7 / 2 << " " << 7.0 / 2 << " " << static_cast<double>(7) / 2 << " " << 3.0 / 4 << " " << 3 / 4 << " " << 3 / 4 * 1.0 << " " << static_cast<double>(3 / 4) << "\\n";'), out('48811 3 -3 3.5 3.5 0.75 0 0 0\n'))
@@ -223,12 +211,12 @@ number('l3.s1.drawdown', 'drawdowns: (110-88)/110 = 0.2, slip from the first clo
 S33 = 'screens.3.widget'
 submit('l3.s3.fb-test-2', 'test-2: i < prices.size() - 1 passes test 1 and stops on the empty vector', L3, S33, rep(sol(L3, S33), 'for (std::size_t i = 1; i < prices.size(); ++i) {\n        if (prices[i] > prices[i - 1]) {', 'for (std::size_t i = 0; i < prices.size() - 1; ++i) {\n        if (prices[i + 1] > prices[i]) {'), 'test-2')
 submit('l3.s3.fb-test-6', 'test-6: >= passes tests 1 to 5 and fails test 6', L3, S33, rep(sol(L3, S33), 'prices[i] > prices[i - 1]', 'prices[i] >= prices[i - 1]'), 'test-6')
-submit('l3.s3.fb-error', 'error (index out of bounds, <= in the loop test): the grader gives the key error for a program that stops', L3, S33, rep(sol(L3, S33), 'i < prices.size()', 'i <= prices.size()'), 'error')
+submit('l3.s3.fb-error', 'fix pass, test-1 (if the program stopped with index out of bounds, your loop read outside the vector): <= in the loop test stops on test 1, key test-1, not error', L3, S33, rep(sol(L3, S33), 'i < prices.size()', 'i <= prices.size()'), 'test-1', lambda r: 'index out of bounds' in (r['rows'][0]['error'] or ''))
 app('l3.s3.size-minus-1', 'on this build size() - 1 of an empty vector is 4,294,967,295 (about 4 billion)', M('std::vector<double> p; std::cout << p.size() - 1 << " " << sizeof(std::size_t) << "\\n";'), out('4294967295 4\n'))
 S34 = 'screens.4.widget'
 MDD_STUCK = '#include <vector>\n\ndouble max_drawdown(const std::vector<double>& prices) {\n    if (prices.empty()) return 0;\n    double peak = prices[0];\n    double worst = 0;\n    for (double p : prices) {\n        double fall = (peak - p) / peak;\n        if (fall > worst) worst = fall;\n    }\n    return worst;\n}\n'
-submit('l3.s4.fb-test-6', 'test-6 (if you got 0.4, your peak stayed at 100): a peak that never moves passes tests 1 to 5 and gives 0.4 on test 6', L3, S34, MDD_STUCK, 'test-6')
-submit('l3.s4.fb-test-4', 'test-4 (if you got -0.1, subtract the other way): (p - peak) / peak passes tests 1 to 3 and fails test 4', L3, S34, rep(rep(sol(L3, S34), '(peak - p) / peak', '(p - peak) / peak'), 'fall > worst', 'fall < worst'), 'test-4')
+submit('l3.s4.fb-test-6', 'fix pass, test-1 (if you got 0.12, you measured from the first close): a peak that never moves fails test 1 with 0.12 (so test-6 names no cause)', L3, S34, MDD_STUCK, 'test-1', lambda r: r['rows'][0]['actual'] == '0.12')
+submit('l3.s4.fb-test-4', 'fix pass, test-1 (if you got -0.2 or 0, check the sign): (p - peak) / peak, worst kept with <, fails test 1 with -0.2 (so test-4 names no cause)', L3, S34, rep(rep(sol(L3, S34), '(peak - p) / peak', '(p - peak) / peak'), 'fall > worst', 'fall < worst'), 'test-1', lambda r: r['rows'][0]['actual'] == '-0.2')
 submit('l3.s4.fb-test-1', 'test-1 (measure from the highest close so far, not the first): a peak fixed at the first close fails test 1', L3, S34, MDD_STUCK, 'test-1')
 S35 = 'screens.5.widget'
 submit('l3.s5.fb-test-1', 'test-1: starting the total at n prints 9.75', L3, S35, rep(sol(L3, S35), 'double total = 0;', 'double total = n;'), 'test-1', lambda r: r['rows'][0]['stdout'].strip() == '9.75')
@@ -263,7 +251,7 @@ app('l4.s1.declared', 'with the declaration above main it prints 0.158745', LATE
 number('l4.s4.annualise', '0.01 * sqrt(365) = 0.19105 (0.1910), default 0.1587, slip 0.01 * 365 = 3.65', lambda: abs(0.01 * math.sqrt(365) - 0.191) < 6e-5 and abs(0.01 * math.sqrt(252) - 0.1587) < 1e-4 and abs(0.01 * 365 - 3.65) < 1e-12 and round(math.sqrt(365), 3) == 19.105)
 number('l4.s6.tests', 'the four annualise test values', lambda: all(abs(a - b) < 1e-15 for a, b in [(0.01 * math.sqrt(252), 0.15874507866387544), (0.01 * math.sqrt(365), 0.191049731745428), (0.02 * math.sqrt(252), 0.3174901573277509), (0.01 * math.sqrt(12), 0.034641016151377546)]))
 S45, S46 = 'screens.5.widget', 'screens.6.widget'
-submit('l4.s5.fb-test-2', 'test-2 (your loop read prices[i - 1] with i at 0): a loop from index 0 passes test 1 and fails test 2', L4, S45, rep(sol(L4, S45), 'std::size_t i = 1', 'std::size_t i = 0'), 'test-2')
+submit('l4.s5.fb-test-2', 'fix pass, test-1 (if the program stopped, your loop read prices[i - 1] with i at 0): a loop from index 0 stops on test 1', L4, S45, rep(sol(L4, S45), 'std::size_t i = 1', 'std::size_t i = 0'), 'test-1', lambda r: 'index out of bounds' in (r['rows'][0]['error'] or ''))
 submit('l4.s5.fb-test-1', "test-1: dividing by today's close fails test 1", L4, S45, rep(sol(L4, S45), '/ prices[i - 1]);', '/ prices[i]);'), 'test-1')
 submit('l4.s5.minus-one-bound', 'a loop to size() - 1 (no feedback line names it) passes tests 1 and 2 and stops on the empty vector, test 3', L4, S45, rep(sol(L4, S45), 'for (std::size_t i = 1; i < prices.size(); ++i) {\n        out.push_back((prices[i] - prices[i - 1]) / prices[i - 1]);', 'for (std::size_t i = 0; i < prices.size() - 1; ++i) {\n        out.push_back((prices[i + 1] - prices[i]) / prices[i]);'), 'test-3')
 submit('l4.s6.fb-compile', 'compile: repeating = 252 in the definition is "redefinition of default argument"', L4, S46, rep(sol(L4, S46), 'int days)', 'int days = 252)'), 'compile', lambda r: 'redefinition of default argument' in r['diag'])
@@ -323,14 +311,15 @@ def _timing(r):
     return all(want[int(n)] / 6 <= float(a) <= want[int(n)] * 6 and float(b) < 0.03 for n, a, b in rows)
 app('l5.s4.timings', 'by-value calls take about 0.2, 3, 20 and 1000 microseconds for 1e3 to 1e6 doubles (within a factor of 6 under node), a const& call a few nanoseconds', TIMING, _timing)
 BYVAL = 'struct L { L() {} L(const L&) { std::cout << "copy "; } ~L() { std::cout << "destroyed "; } };\nvoid f(L l) { std::cout << "body "; }\n'
-app('l5.s0.param-lifetime', 'a by-value parameter (the copy) is destroyed at the function\'s closing brace, before the rest of the calling expression', M('L a; f(a), std::cout << "rest-of-expression "; std::cout << "next ";', BYVAL), lambda r: r['out'].startswith('copy body destroyed rest-of-expression'))
+app('l5.s0.param-lifetime', 'fix pass: when the call is a whole statement, as on the screens, the copy is destroyed when the call is over, before the next statement', M('L a; f(a); std::cout << "next ";', BYVAL), lambda r: r['out'].startswith('copy body destroyed next'))
+app('l5.s0.param-lifetime-expr', 'observation ([expr.call]/7, implementation-defined): inside a longer expression this build destroys the copy after the rest of the full-expression', M('L a; f(a), std::cout << "rest-of-expression "; std::cout << "next ";', BYVAL), lambda r: r['out'].startswith('copy body rest-of-expression destroyed'))
 def _l5s0():
-    code = HDR + BYVAL + 'int main() { L a; f(a), std::cout << "rest-of-expression "; std::cout << "next "; }\n'
+    code = HDR + BYVAL + 'int main() { L a; f(a); std::cout << "next "; }\n'
     a = desk_run(desk_build(code)[2])[1]; b = desk_run(desk_build(code, cc='clang++')[2])[1]
-    return (a.startswith('copy body destroyed rest-of-expression') and b.startswith('copy body destroyed rest-of-expression'), a + '| ' + b)
+    return (a.startswith('copy body destroyed next') and b.startswith('copy body destroyed next'), a + '| ' + b)
 VPAR = 'struct E { ~E() { std::cout << "element-destroyed "; } };\nvoid add_fee(std::vector<E> costs) { std::cout << "body "; }\n'
-app('l5.s0.vector-param', 'the screen\'s own case, a std::vector passed by value: the copy (its elements) is destroyed at the function\'s closing brace, before the rest of the calling expression', M('std::vector<E> mine(1); add_fee(mine), std::cout << "rest-of-expression "; std::cout << "next ";', VPAR), lambda r: r['out'].startswith('body element-destroyed rest-of-expression'))
-desk('l5.s0.param-lifetime-desk', 'the same on a desk build (g++ and clang)', _l5s0)
+app('l5.s0.vector-param', 'fix pass, the screen\'s own case, add_fee(mine); as a statement: the copied vector (its elements) is destroyed when the call is over, before the next statement', M('std::vector<E> mine(1); add_fee(mine); std::cout << "next ";', VPAR), lambda r: r['out'].startswith('body element-destroyed next'))
+desk('l5.s0.param-lifetime-desk', 'the same on a desk build (g++ and clang): a copied parameter is destroyed before the next statement', _l5s0)
 app('l9.s9.param-lifetime', 'in this app a unique_ptr parameter is destroyed at the callee\'s closing brace (close before the rest of the calling expression)', M('auto p = std::make_unique<Position>("VOD", 100); hold(std::move(p)), std::cout << "rest\\n";', 'struct Position {\n    std::string sym; int qty;\n    Position(std::string s, int q) : sym(s), qty(q) {}\n    ~Position() { std::cout << "close\\n"; }\n};\nvoid hold(std::unique_ptr<Position> p) { std::cout << "hold\\n"; }\n'), out('hold\nclose\nrest\n'))
 number('l5.s4.mb', '1,000,000 doubles are 8 MB; slips 8,000,000, 1 and 64', lambda: 1000000 * 8 / 1e6 == 8)
 number('l5.s5.book', '100 x 4.85 + 250 x 0.72 + 40 x 31.20 = 1913', lambda: abs(100 * 4.85 + 250 * 0.72 + 40 * 31.2 - 1913) < 1e-9)
@@ -369,7 +358,7 @@ S73, S74 = 'screens.3.widget', 'screens.4.widget'
 submit('l7.s3.fb-test-5', 'test-5: no nullptr guard passes tests 1 to 4 and fails test 5', L7, S73, rep(sol(L7, S73), '    if (p == nullptr) return;\n', ''), 'test-5')
 app('l7.s3.null-write', 'this browser build quietly writes to address 0 through a null pointer (no crash)', HDR + '__attribute__((noinline)) void bump(int* p) { *p += 1; }\nint null_word() { return *(volatile int*)0; }\nint main() { int before = null_word(); int* volatile q = nullptr; bump(q); std::cout << null_word() - before << "\\n"; }\n', out('1\n'))
 submit('l7.s4.fb-test-2', 'test-2: a best that starts at 0 passes test 1 and fails test 2', L7, S74, rep(rep(sol(L7, S74), 'double best = *begin;', 'double best = 0;'), 'begin + 1', 'begin'), 'test-2')
-submit('l7.s4.fb-test-5', 'test-5 (read from begin and stop before end): a loop with p <= end passes tests 1 to 4 and fails test 5', L7, S74, rep(sol(L7, S74), 'p != end', 'p <= end'), 'test-5')
+submit('l7.s4.fb-test-5', 'fix pass, test-2 (if you got some other number, your loop may have read *end): a loop with p <= end passes test 1 and fails test 2 with a value that is not 0', L7, S74, rep(sol(L7, S74), 'p != end', 'p <= end'), 'test-2', lambda r: r['rows'][1]['actual'] not in ('0', '-1.25'))
 DANGLE = M('    double* p = nullptr;\n    {\n        double bid = 101.25;\n        p = &bid;\n    }\n    std::cout << *p << "\\n";')
 app('l7.s5.dangling', 'in this browser the dangling read printed 101.25, and the program compiles cleanly', DANGLE, lambda r: out('101.25\n')(r) and 'warning' not in r['diag'])
 SCOPE = '#include <iostream>\nint main() {\n    double* p = nullptr;\n    {\n        double bid = 101.25;\n        p = &bid;\n    }\n    std::cout << *p << "\\n";\n}\n'
@@ -435,7 +424,12 @@ L9 = 'l9-owning-memory'
 POS = 'struct Position {\n    std::string sym;\n    Position(std::string s) : sym(s) { std::cout << "open " << sym << "\\n"; }\n    ~Position() { std::cout << "close " << sym << "\\n"; }\n};\nvoid trade() {\n    Position p("VOD");\n    std::cout << "trading\\n";\n}\n'
 app('l9.s0.order', 'open VOD, trading, close VOD, done', M('trade();\n    std::cout << "done\\n";', POS), out('open VOD\ntrading\nclose VOD\ndone\n'))
 THROWDTOR = HDR + 'struct Guard { ~Guard() { std::cout << "freed\\n"; } };\nvoid f() { Guard g; throw std::runtime_error("x"); }\nint main() { f(); }\n'
-app('l9.s2.throw-runs-destructor', "a local's destructor runs at every exit, a throw included (in this app)", THROWDTOR, lambda r: 'freed' in r.get('out', ''))
+app('l9.s2.throw-runs-destructor', "fix pass: the screen limits the claim to a throw that some caller catches; in this app an uncaught throw ends the run and the local's destructor does not run", THROWDTOR, lambda r: 'freed' not in r.get('out', '') and r.get('code') != 0 and 'a `throw` that some caller catches' in at(load(L9), 'screens.2.explain.text'))
+def _l9s2():
+    rc, m, exe = desk_build(HDR + 'struct Guard { ~Guard() { std::cout << "freed\\n"; } };\nvoid f() { Guard g; throw std::runtime_error("x"); }\nint main() { try { f(); } catch (const std::exception&) { std::cout << "caught\\n"; } }\n')
+    o = desk_run(exe)[1]
+    return (o == 'freed\ncaught\n', o)
+desk('l9.s2.caught-throw-desk', 'a throw that a caller catches runs the local destructor before the handler ([except.ctor]/1), g++ desk build', _l9s2)
 S93, S95 = 'screens.3.widget', 'screens.5.widget'
 submit('l9.s3.fb-test-3', 'test-3: the starter leaks a Book on the capped path and fails test 3 only', L9, S93, starter(L9, S93), 'test-3', lambda r: r['fails'] == [3])
 submit('l9.s3.delete-unique', 'hint: delete book on a unique_ptr does not compile', L9, S93, rep(sol(L9, S93), '    return book->total();', '    double t = book->total();\n    delete book;\n    return t;'), 'compile')
@@ -547,7 +541,7 @@ P7 = sol(L12, S127)
 submit('l12.s7.fb-test-5', 'test-5: <= in operator< passes tests 1 to 4 and fails test 5', L12, S127, rep(P7, 'a.pence < b.pence', 'a.pence <= b.pence'), 'test-5')
 submit('l12.s7.fb-test-7', 'test-7: an == that also compares the venue passes tests 1 to 6 and fails test 7', L12, S127, rep(P7, 'a.pence == b.pence', 'a.pence == b.pence && a.venue == b.venue'), 'test-7')
 P9 = sol(L12, S129)
-submit('l12.s9.fb-test-4', 'test-4 (compare prices before times): comparing time first passes tests 1 to 3 and fails test 4', L12, S129, rep(P9, 'std::tie(a.price, a.time) < std::tie(b.price, b.time)', 'std::tie(a.time, a.price) < std::tie(b.time, b.price)'), 'test-4')
+submit('l12.s9.fb-test-4', 'fix pass, test-1 (if you got C, A, B, you compared times first): comparing time first fails test 1 with C, A, B', L12, S129, rep(P9, 'std::tie(a.price, a.time) < std::tie(b.price, b.time)', 'std::tie(a.time, a.price) < std::tie(b.time, b.price)'), 'test-1', lambda r: r['rows'][0]['actual'] == '["C","A","B"]')
 submit('l12.s9.fb-test-1', 'test-1: the starter (always false) fails test 1', L12, S129, starter(L12, S129), 'test-1')
 app('l12.q0.lt-eq', 'the Px operators print 000', M('Px a{100, "LSE"}, b{100, "CBOE"};\n    std::cout << (a < b) << (b < a) << (a == b);', 'struct Px { long long pence; std::string venue; };\nbool operator<(const Px& a, const Px& b) { return a.pence < b.pence; }\nbool operator==(const Px& a, const Px& b) { return a.pence == b.pence && a.venue == b.venue; }\n'), out('000'))
 app('l12.q1.units', 'Pnl + Quantity does not compile', M('Pnl day{12500}; Quantity filled{300}; Pnl oops = day + filled;', 'struct Pnl { long long pence; };\nstruct Quantity { int shares; };\nPnl operator+(Pnl a, Pnl b) { return Pnl{a.pence + b.pence}; }\n'), nobuild('invalid operands'))
@@ -558,7 +552,7 @@ MAXOF = 'template <typename T>\nT max_of(const std::vector<T>& xs) {\n    T best
 app('l13.s1.max-of', 'max_of works for int, double and std::string; the string maximum of BARC, AZN, VOD, LLOY is VOD', M('std::cout << max_of(std::vector<int>{3, 9, 4}) << " " << max_of(std::vector<double>{101.5, 99.8}) << " " << max_of(std::vector<std::string>{"BARC", "AZN"}) << " " << max_of(std::vector<std::string>{"BARC", "AZN", "VOD", "LLOY"}) << "\\n";', MAXOF), out('9 101.5 BARC VOD\n'))
 S132, S139 = 'screens.2.widget', 'screens.9.widget'
 T2 = sol(L13, S132)
-submit('l13.s2.fb-test-2', 'test-2: an int total passes test 1 and gives 0 on test 2', L13, S132, rep(T2, 'T total{};', 'int total = 0;'), 'test-2', lambda r: r['rows'][1]['actual'] == '0')
+submit('l13.s2.fb-test-2', 'fix pass, compile (if it says invalid operands next to std::string, your total is not a T): an int total does not compile', L13, S132, rep(T2, 'T total{};', 'int total = 0;'), 'compile', lambda r: "invalid operands to binary expression ('int' and 'const std::string')" in r['diag'])
 submit('l13.s2.fb-test-7', 'test-7: T total = 0 passes tests 1 to 6 and fails test 7 (a std::string cannot start from a number)', L13, S132, rep(T2, 'T total{};', 'T total = 0;'), 'test-7')
 BIG = 'template <typename T>\nT bigger(T a, T b) {\n    return a < b ? b : a;\n}\n\nint main() {\n    double x = bigger%s(3, 2.5);\n}\n'
 app('l13.s3.conflict', "clang: 7:16 no matching function for call to 'bigger'; 2:3 note: deduced conflicting types for parameter 'T' ('int' vs. 'double')", BIG % '', nobuild("main.cpp:7:16: error: no matching function for call to 'bigger'", "main.cpp:2:3: note: candidate template ignored: deduced conflicting types for parameter 'T' ('int' vs. 'double')", '1 error generated.'))
@@ -574,7 +568,7 @@ def _sortq(r):
             "main.cpp:11:10: note: in instantiation of function template specialization 'std::sort<std::__wrap_iter<Quote *>>' requested here",
             'fatal error: too many errors emitted, stopping now [-ferror-limit=]', '20 errors generated.', 'In file included from /usr/include/c++/v1/algorithm:1842:']
     return not r.get('ok') and all(n in d for n in need) and len(d.splitlines()) > 200
-app('l13.s4.sort-error', 'std::sort on Quotes with no <, built as the screen says (clang++ -std=c++17 main.cpp, the library as shipped): the quoted lines, strict_weak_ordering_check.h and sort.h:939 included', SORTQ, lambda r: _sortq({**r, 'diag': (r.get('diag') or '').replace('21 errors generated.', '20 errors generated.')}), flags=['-ferror-limit=20', '-U_LIBCPP_HARDENING_MODE', '-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_NONE'])
+app('l13.s4.sort-error', 'fix pass: with the library checks off the quoted strict_weak_ordering_check.h and sort.h:939 lines do not appear, so the prose now says the lines come from a build with the debug checks on', SORTQ, lambda r: 'debug checks on' in at(load(L13), 'screens.4.prose') and not _sortq({**r, 'diag': (r.get('diag') or '').replace('21 errors generated.', '20 errors generated.')}), flags=['-ferror-limit=20', '-U_LIBCPP_HARDENING_MODE', '-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_NONE'])
 app('l13.s4.sort-error-debug', 'the same, with the library debug checks on (-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG): the quoted lines appear, in hundreds of lines (an explicit -ferror-limit=20 prints 21 errors; the default limit prints 20)', SORTQ, lambda r: _sortq({**r, 'diag': (r.get('diag') or '').replace('21 errors generated.', '20 errors generated.')}), flags=['-ferror-limit=20', '-U_LIBCPP_HARDENING_MODE', '-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG'])
 app('l13.s4.two-lines', 'in the app build the two lines to tap exist: the first error (comp.h:41:18, invalid operands) and the main.cpp:11:10 note', SORTQ, lambda r: "comp.h:41:18: error: invalid operands to binary expression ('const Quote' and 'const Quote')" in r['diag'] and "main.cpp:11:10: note: in instantiation of function template specialization 'std::sort<std::__wrap_iter<Quote *>>' requested here" in r['diag'])
 SER = '#include <iostream>\n#include <string>\n#include <vector>\ntemplate <typename T>\nclass Series {\npublic:\n    void push(T x) { xs_.push_back(x); }\n    T mean() const {\n        T total{};\n        for (const T& x : xs_) total += x;\n        return total / xs_.size();\n    }\nprivate:\n    std::vector<T> xs_;\n};\n'
@@ -582,12 +576,12 @@ app('l13.s5.lazy', 'Series<std::string> builds when nothing calls mean', SER + '
 app('l13.s5.mean-string', "with names.mean() clang reports invalid operands ... ('std::string' ... and 'size_type' ...) at the return line", SER + 'int main() {\n    Series<std::string> names;\n    names.push("AZN");\n    names.mean();\n}\n', lambda r: not r.get('ok') and re.search(r"main\.cpp:11:\d+: error: invalid operands to binary expression \('std::string'.*and 'size_type'", r['diag']) is not None)
 app('l13.s6.int-mean', 'Series<int> of 1500 and 2501 prints 2000; a negative total becomes a huge unsigned number before the division', SER + 'int main() {\n    Series<int> volumes;\n    volumes.push(1500);\n    volumes.push(2501);\n    std::vector<int> two(2); volatile int total = -6;\n    std::cout << volumes.mean() << " " << (total / two.size() > 2000000000u) << \'\\n\';\n}\n', out('2000 1\n'), flags=['-w'])
 number('l13.s7.units', '1.2345 x 10^4 = 12345', lambda: round(1.2345 * 10**4) == 12345)
-number('l13.s7.slip-two', 'the slip "two" (you used two places), value 123 with tolerance 0, also takes the product a learner who uses two places works out, 1.2345 x 10^2 = 123.45', lambda: abs(round(1.2345 * 100, 2) - at(load(L13), 'screens.7.widget.wrong.0.value')) <= at(load(L13), 'screens.7.widget.wrong.0.tol.abs'))
+number('l13.s7.slip-two', 'fix pass: the slip "two" (you used two places) takes 1.2345 x 10^2 = 123.45 and the truncated 123, and its band (0.5 either side) holds neither the key 12345 nor the slip 1.2345', lambda: all(abs(x - at(load(L13), 'screens.7.widget.wrong.0.value')) <= at(load(L13), 'screens.7.widget.wrong.0.tol.abs') + 1e-9 for x in (round(1.2345 * 100, 2), 123)) and all(abs(x - at(load(L13), 'screens.7.widget.wrong.0.value')) > at(load(L13), 'screens.7.widget.wrong.0.tol.abs') for x in (12345, 1.2345)))
 W = sol(L13, S139)
 submit('l13.s9.fb-test-2', 'test-2: never dropping the oldest value passes test 1 and fails test 2', L13, S139, rep(W, '        if (static_cast<int>(xs_.size()) > n_) xs_.erase(xs_.begin());\n', ''), 'test-2')
 submit('l13.s9.fb-test-7', 'test-7: no check for an empty window passes tests 1 to 6 and fails test 7', L13, S139, rep(W, '        if (xs_.empty()) throw std::logic_error("mean of an empty window");\n', ''), 'test-7')
 submit('l13.s9.fb-test-8', 'test-8: no check in the constructor passes tests 1 to 7 and fails test 8', L13, S139, rep(W, '        if (n_ <= 0) throw std::invalid_argument("window size must be positive");\n', ''), 'test-8')
-number('l13.s9.deque', 'l13 s9 explain says level 4 has a container that erases its front in constant time: level 4 (l14 to l18, review-4, homework-4) names std::deque, std::queue or pop_front', lambda: any(k in open(os.path.join(CPP, f + '.json')).read() for f in ['l14-vector', 'l15-maps', 'l16-algorithms', 'l17-cmake', 'l18-unit-tests', 'review-4', 'homework-4'] for k in ['std::deque', 'std::queue', 'pop_front']))
+number('l13.s9.deque', 'fix pass: level 4 (l14 to l18, review-4, homework-4) names no std::deque, std::queue or pop_front, so the l13 s9 explain names std::deque itself ([sequence.reqmts]: pop_front is constant)', lambda: 'std::deque' in at(load(L13), 'screens.9.explain.text') and 'level 4' not in at(load(L13), 'screens.9.explain.text') and not any(k in open(os.path.join(CPP, f + '.json')).read() for f in ['l14-vector', 'l15-maps', 'l16-algorithms', 'l17-cmake', 'l18-unit-tests', 'review-4', 'homework-4'] for k in ['std::deque', 'std::queue', 'pop_front']))
 app('l13.q3.empty-sum', 'sum_of on empty vectors gives 0.0 and ""', M('auto a = sum_of(std::vector<double>{}); auto b = sum_of(std::vector<std::string>{}); std::cout << a << "[" << b << "]" << b.size() << "\\n";', T2.replace('#include <vector>\n#include <string>\n', '')), out('0[]0\n'))
 def _l13q2():
     extra = {'stats.h': '#include <vector>\ntemplate <typename T> T sum_of(const std::vector<T>&);\n', 'stats.cpp': '#include "stats.h"\ntemplate <typename T> T sum_of(const std::vector<T>& xs) { T t{}; for (const T& x : xs) t += x; return t; }\n'}
@@ -676,10 +670,11 @@ app('h2.i2.payoff', 'homework-2: price_option(100, 95) prints 7.5', M('std::cout
 app('h2.i5.null', 'homework-2: the null read ran in this browser build without stopping', M('int* volatile p = nullptr; int x = *p; std::cout << "ran " << x << "\\n";'), lambda r: r.get('code') == 0 and not r.get('trap') and r['out'].startswith('ran'), flags=['-w'])
 app('h2.i5.mismatch', 'homework-2: delete on new double[4] ran without stopping', M('double* volatile q = new double[4]; double* a = q; delete a; std::cout << "ran\\n";'), out('ran\n'), flags=['-w'])
 app('h2.i5.twice', 'homework-2: the double delete ran without stopping', M('double* volatile r = new double(1.0); double* a = r; delete a; double* b = r; delete b; std::cout << "ran\\n";'), out('ran\n'), flags=['-w'])
-app('h2.i5.at', 'homework-2 prose: EACH snippet ran in this browser build without stopping, v.at(5) included', M('std::vector<double> v(3); double y = v.at(5); std::cout << "ran " << y << "\\n";'), lambda r: r.get('code') == 0 and r['out'].startswith('ran'), flags=['-w'])
+app('h2.i5.at', 'fix pass, homework-2 prose (four ran to the end, one stopped with an error message): v.at(5) stops the run with terminate ... std::out_of_range, exit status 134', M('std::vector<double> v(3); double y = v.at(5); std::cout << "ran " << y << "\\n";'), lambda r: r.get('code') == 134 and r['out'] == '' and "terminate called after throwing an instance of 'std::out_of_range'" in r['err'] and 'four of these snippets ran to the end, and one stopped' in at(load('homework-2'), 'items.5.prose'), flags=['-w'])
+app('h2.i5.null-literal', 'fix pass, homework-2 explain (the null read gave 0): the snippet as written, with x printed, prints 0 and exits 0', M('int* p = nullptr; int x = *p; std::cout << x << "\\n";'), out('0\n'), flags=['-w'])
 app('h2.i5.zero', 'homework-2: new double[0] and delete[] ran without stopping', M('double* s = new double[0]; delete[] s; std::cout << "ran\\n";'), out('ran\n'))
 REALLOC = '#include <iostream>\n#include <vector>\nint main() {\n    std::vector<double> px{100.0, 101.0, 102.0};\n    const double& first = px[0];\n    px.push_back(103.0);\n    std::cout << first << "\\n";\n}\n'
-app('h2.i6.realloc', "homework-2: with this app's compiler the dangling reference prints a stray tiny number, not 100 (the screen quotes one run, 2.8974e-306; this run gave 2.93542e-306)", REALLOC, lambda r: r.get('code') == 0 and 0 < abs(float(r['out'])) < 1e-300)
+app('h2.i6.realloc', "fix pass, homework-2: with this app's compiler the dangling reference prints a stray number, about 2.9e-306 (this harness 2.93542e-306, the round 1 build 2.8974e-306)", REALLOC, lambda r: r.get('code') == 0 and 2.85e-306 <= float(r['out']) < 2.95e-306)
 def _h2i6():
     rc, m, exe = desk_build(REALLOC, flags=('-g', '-fsanitize=address'))
     e = desk_run(exe)[2]
@@ -711,6 +706,94 @@ for _f in ALL_FILES:
         _tag = '%s.%s' % (_f.split('-')[0] if _f[0] == 'l' else _f, _p.replace('.widget', '').replace('screens.', 's').replace('items.', 'i'))
         submit('w.%s.solution' % _tag, 'the solution passes every hidden test under the app grader', _f, _p, sol(_f, _p), None)
         submit('w.%s.starter' % _tag, 'the starter fails (a test or the compile)', _f, _p, starter(_f, _p), lambda k: k is not None)
+
+# ================================================================== fix pass: feedback sweep
+# The grader's key (js/engine/widgets/cpp-grade.js grade()): 'compile' when the build fails (an untouched starter included);
+# 'error' only when the runner itself fails (it never answers, or the compiler is still loading); otherwise 'test-N' for the
+# first failing row, whether that row printed the wrong thing, stopped (trap, uncaught exception, non-zero exit) or ran past
+# the time limit. The player shows feedback.byKey[key] when it exists (js/engine/player.js). So no line keyed 'error' is shown
+# for a program that stops, and each test-N line is shown only to a submission that passes tests 1 to N-1.
+def fbkeys(f, p):
+    parts = p.split('.')
+    o = load(f)
+    for k in parts[:-1]:
+        o = o[int(k)] if isinstance(o, list) else o[k]
+    return set(((o.get('feedback') or {}).get('byKey') or {}).keys())
+def _all_fb_keys():
+    out = []
+    for f in ALL_FILES:
+        acc = []
+        _code_widgets(load(f), '', acc)
+        for p in acc:
+            out += [(f, p, k) for k in fbkeys(f, p) if k not in ('compile',) and not re.match(r'^test-\d+$', k)]
+    return out
+number('fx.no-error-key', "fix pass: no code widget in L1 to L3 keeps a byKey line under a key the grader cannot give for a learner's program (only compile and test-N)", lambda: _all_fb_keys() == [])
+def keys_are(f, p, want):
+    number('fx.keys.%s.%s' % (f.split('-')[0], p.replace('.widget', '').replace('screens.', 's').replace('items.', 'i')), 'fix pass: %s %s byKey keys are %s' % (f, p, ', '.join(sorted(want))), lambda: fbkeys(f, p) == set(want))
+L1S3, L1S4 = 'screens.3.widget', 'screens.4.widget'
+keys_are('l1-source-to-program', L1S3, ['compile', 'test-2'])
+keys_are('l1-source-to-program', L1S4, ['test-1', 'test-2'])
+keys_are(L3, 'screens.3.widget', ['test-1', 'test-2', 'test-6'])
+keys_are(L3, 'screens.4.widget', ['test-1', 'test-4', 'test-6'])
+keys_are(L4, 'screens.5.widget', ['compile', 'test-1', 'test-2', 'test-3'])
+keys_are('l12-operators', 'screens.9.widget', ['test-1'])
+keys_are(L13, 'screens.2.widget', ['compile', 'test-7'])
+keys_are('homework-1', 'items.1.widget', ['test-2', 'test-4', 'test-6'])
+def fsub(cid, claim, f, p, fn, key, also=None):
+    submit('fx.' + cid, 'fix pass: ' + claim, f, p, fn(sol(f, p), starter(f, p)), key, also)
+def row(n, field='actual'):
+    return lambda r: r['rows'][n - 1][field]
+def diag_has(*needles):
+    return lambda r: all(x in (r.get('diag') or '') for x in needles)
+L1 = 'l1-source-to-program'
+fsub('l1.s3.starter', 'l1 s3 the starter (prints nothing) fails test 1, which has no line', L1, L1S3, lambda s, t: t, 'test-1')
+fsub('l1.s3.capital', 'l1 s3 a lower-case h fails test 1, not test 2', L1, L1S3, lambda s, t: rep(s, 'Hello, market', 'hello, market'), 'test-1')
+fsub('l1.s3.blank-line', 'l1 s3 test-2 (no blank line after): a second line end passes test 1 and fails test 2', L1, L1S3, lambda s, t: rep(s, "<< '\\n';", "<< '\\n' << '\\n';"), 'test-2')
+fsub('l1.s3.endl', 'l1 s3 std::endl prints the same single line end and passes', L1, L1S3, lambda s, t: rep(s, "<< '\\n';", '<< std::endl;'), None)
+fsub('l1.s3.compile', 'l1 s3 compile (read the first error: line and column): a missing ; does not build, and the message gives main.cpp:4:41', L1, L1S3, lambda s, t: rep(s, "<< '\\n';", "<< '\\n'"), 'compile', diag_has("main.cpp:4:41: error: expected ';' after expression"))
+fsub('l1.s4.starter', 'l1 s4 the starter fails test 1 (the new test-1 line)', L1, L1S4, lambda s, t: t, 'test-1')
+fsub('l3.s3.starter', 'l3 s3 the starter returns 0 and fails test 1, which expects 2 (five closes, two up days)', L3, 'screens.3.widget', lambda s, t: t, 'test-1', lambda r: r['rows'][0]['actual'] == '0')
+fsub('l3.s3.from-zero', 'l3 s3 test-1 (read outside the vector): a loop from 0 reading prices[i - 1] stops on test 1 with index out of bounds', L3, 'screens.3.widget', lambda s, t: rep(s, 'std::size_t i = 1', 'std::size_t i = 0'), 'test-1', lambda r: 'index out of bounds' in (r['rows'][0]['error'] or ''))
+fsub('l3.s4.starter', 'l3 s4 the starter returns 0 and fails test 1', L3, 'screens.4.widget', lambda s, t: t, 'test-1', lambda r: r['rows'][0]['actual'] == '0')
+fsub('l3.s4.sign-gt', 'l3 s4 test-1 (if you got 0, check the sign): (p - peak) / peak with the worst kept by > fails test 1 with 0', L3, 'screens.4.widget', lambda s, t: rep(s, '(peak - p) / peak', '(p - peak) / peak'), 'test-1', lambda r: r['rows'][0]['actual'] == '0')
+fsub('l4.s5.starter', 'l4 s5 the starter returns an empty list and fails test 1', L4, 'screens.5.widget', lambda s, t: t, 'test-1')
+fsub('l4.s5.do-while', 'l4 s5 test-2 (your loop read prices[1], past the only close): a do-while from 1 passes test 1 and stops on test 2', L4, 'screens.5.widget',
+     lambda s, t: rep(s, '    for (std::size_t i = 1; i < prices.size(); ++i) {\n        out.push_back((prices[i] - prices[i - 1]) / prices[i - 1]);\n    }', '    if (prices.empty()) return out;\n    std::size_t i = 1;\n    do {\n        out.push_back((prices[i] - prices[i - 1]) / prices[i - 1]);\n        ++i;\n    } while (i < prices.size());'),
+     'test-2', lambda r: 'index out of bounds' in (r['rows'][1]['error'] or ''))
+fsub('l4.s5.by-value', 'l4 s5 compile (ambiguous): a definition taking the vector by value does not build: call to simple_returns is ambiguous', L4, 'screens.5.widget', lambda s, t: rep(s, 'simple_returns(const std::vector<double>& prices)', 'simple_returns(std::vector<double> prices)'), 'compile', diag_has("call to 'simple_returns' is ambiguous"))
+fsub('l4.s5.no-const', 'l4 s5 compile (undefined symbol): a definition taking std::vector<double>& does not link: undefined symbol simple_returns(... const&)', L4, 'screens.5.widget', lambda s, t: rep(s, 'simple_returns(const std::vector<double>& prices)', 'simple_returns(std::vector<double>& prices)'), 'compile', diag_has('undefined symbol: simple_returns('))
+fsub('l4.s5.ret-type', 'l4 s5 compile (previous declaration): another return type does not build, with a note "previous declaration is here"', L4, 'screens.5.widget', lambda s, t: rep(s, 'std::vector<double> simple_returns', 'std::vector<float> simple_returns'), 'compile', diag_has('previous declaration is here'))
+fsub('l4.s6.starter', 'l4 s6 the starter returns 0 and fails test 1', L4, 'screens.6.widget', lambda s, t: t, 'test-1')
+fsub('l4.s6.days', 'l4 s6 test-1 (multiply by the square root of days): multiplying by days fails test 1 with 2.52', L4, 'screens.6.widget', lambda s, t: rep(s, 'std::sqrt(days)', 'days'), 'test-1', lambda r: r['rows'][0]['actual'] == '2.52')
+number('fx.l4.s6.root', 'l4 s6 test-1 line: 0.01 x sqrt(252) = 0.1587 to 4 places', lambda: round(0.01 * math.sqrt(252), 4) == 0.1587)
+L6 = 'l6-const'
+fsub('l6.s4.starter', 'l6 s4 compile line (members through q.ask() and q.bid()): the starter q.ask does not build', L6, 'screens.4.widget', lambda s, t: t, 'compile', diag_has('reference to non-static member function must be called'))
+fsub('l6.s4.private', 'l6 s4 compile (private members): q.ask_ does not build: is a private member', L6, 'screens.4.widget', lambda s, t: rep(s, 'q.ask() - q.bid()', 'q.ask_ - q.bid_'), 'compile', diag_has("'ask_' is a private member of 'Quote'"))
+fsub('l6.s4.non-const', 'l6 s4 compile (the parameter should be const Quote&): Quote& does not build', L6, 'screens.4.widget', lambda s, t: rep(s, 'const Quote& q', 'Quote& q'), 'compile', diag_has('spread should take const Quote&'))
+fsub('l6.s7.starter', 'l6 s7 compile (the parameter must stay const; change a local copy): writing px[i] does not build', L6, 'screens.7.widget', lambda s, t: t, 'compile', diag_has('cannot assign to return value'))
+fsub('l7.s4.starter', 'l7 s4 the starter returns 0 and fails test 1', L7, 'screens.4.widget', lambda s, t: t, 'test-1')
+fsub('l7.s4.zero', 'l7 s4 test-2 (if you got 0, your best started at 0): passes test 1, fails test 2 with 0', L7, 'screens.4.widget', lambda s, t: rep(rep(s, 'double best = *begin;', 'double best = 0;'), 'begin + 1', 'begin'), 'test-2', lambda r: r['rows'][1]['actual'] == '0')
+number('fx.l7.s5.range', 'l7 s4 test-5 line: xs + 1 to xs + 3 holds xs[1] = 1 and xs[2] = 4, so the maximum is 4', lambda: max([9.0, 1.0, 4.0, 2.0, 8.0][1:3]) == 4)
+L10 = 'l10-invariants'
+fsub('l10.s3.starter', 'l10 s3 compile (if it names mid or spread, the function is missing): the starter does not build: no member named mid', L10, 'screens.3.widget', lambda s, t: t, 'compile', diag_has("no member named 'mid' in 'Quote'"))
+fsub('l10.s3.non-const', 'l10 s3 compile (not marked const): spread without const does not build on the const quote of test 3', L10, 'screens.3.widget', lambda s, t: rep(s, 'double spread() const', 'double spread()'), 'compile', diag_has('but function is not marked const'))
+fsub('l10.s3.no-spread', 'l10 s3 compile (the function is missing): no spread gives no member named spread', L10, 'screens.3.widget', lambda s, t: rep(s, '    double spread() const { return ask_ - bid_; }\n', ''), 'compile', diag_has("no member named 'spread' in 'Quote'"))
+L11 = 'l11-creation-destruction'
+fsub('l11.s3.starter', 'l11 s3 the starter prints nothing and fails test 1', L11, 'screens.3.widget', lambda s, t: t, 'test-1')
+fsub('l11.s3.no-braces', 'l11 s3 test-1 (an inner pair of braces must end before third is built): no inner braces fails test 1', L11, 'screens.3.widget', lambda s, t: rep(rep(s, '    {\n        Logger second(y);', '    Logger second(y);'), '        std::cout << "work\\n";\n    }\n', '    std::cout << "work\\n";\n'), 'test-1')
+fsub('l11.s3.void', 'l11 s3 compile (no return type): void ~Logger() does not build', L11, 'screens.3.widget', lambda s, t: rep(s, '    ~Logger()', '    void ~Logger()'), 'compile', diag_has('destructor cannot have a return type'))
+fsub('l11.s3.arg', 'l11 s3 compile (no arguments): ~Logger(int) does not build', L11, 'screens.3.widget', lambda s, t: rep(s, '    ~Logger()', '    ~Logger(int)'), 'compile', diag_has('destructor cannot have any parameters'))
+L12 = 'l12-operators'
+fsub('l12.s2.starter', 'l12 s2 compile (invalid operands: an operator is missing): the starter does not build', L12, 'screens.2.widget', lambda s, t: t, 'compile', diag_has("invalid operands to binary expression ('Money' and 'Money')"))
+fsub('l12.s2.bad-times', 'l12 s2 compile (invalid operands: parameters do not match the test): operator*(Money, Money) does not build on Money * 3', L12, 'screens.2.widget', lambda s, t: rep(s, 'Money operator*(Money m, int k) { return Money(m.pence() * k); }', 'Money operator*(Money m, Money k) { return Money(m.pence() * k.pence()); }'), 'compile', diag_has("invalid operands to binary expression ('Money' and 'int')"))
+fsub('l12.s9.price-only', 'l12 s9 test-1 (if B, A, C, you broke no tie on time): comparing price only fails test 1 with B, A, C', L12, 'screens.9.widget', lambda s, t: rep(s, 'std::tie(a.price, a.time) < std::tie(b.price, b.time)', 'a.price < b.price'), 'test-1', lambda r: r['rows'][0]['actual'] == '["B","A","C"]')
+fsub('l13.s2.starter', 'l13 s2 the starter does not build (key compile, so the compile line shows)', L13, 'screens.2.widget', lambda s, t: t, 'compile')
+fsub('l13.s2.double', 'l13 s2 compile (invalid operands next to std::string): a double total does not build', L13, 'screens.2.widget', lambda s, t: rep(s, 'T total{};', 'double total = 0;'), 'compile', diag_has("invalid operands to binary expression ('double' and 'const std::string')"))
+fsub('l13.s2.returns-int', 'l13 s2 compile (it returns T): returning int does not build on the string test', L13, 'screens.2.widget', lambda s, t: rep(s, 'T sum_of(', 'int sum_of('), 'compile', diag_has("to function return type 'int'"))
+fsub('l13.s2.no-template', 'l13 s2 compile (template <typename T> right before the function): without it T is unknown', L13, 'screens.2.widget', lambda s, t: rep(s, 'template <typename T>\n', ''), 'compile', diag_has("unknown type name 'T'"))
+fsub('h1.i1.starter', 'homework-1 i1 the starter prints nothing and fails test 1, which has no line', 'homework-1', 'items.1.widget', lambda s, t: t, 'test-1')
+fsub('h1.i2.starter', 'homework-1 i2 test-1 (95 is more than 2 below 100, so buy): the starter (always hold) fails test 1', 'homework-1', 'items.2.widget', lambda s, t: t, 'test-1')
+fsub('h1.i2.swapped', 'homework-1 i2 test-1: buy and sell swapped fails test 1', 'homework-1', 'items.2.widget', lambda s, t: rep(rep(rep(s, 'return "buy";', 'return "TMP";'), 'return "sell";', 'return "buy";'), 'return "TMP";', 'return "sell";'), 'test-1')
 
 # ================================================================== run
 def run_node():
