@@ -131,3 +131,58 @@ Fixer: Opus, 13 Nov 2026. Every fix was re-derived by my own run (`tracemalloc`,
 Scripts: `docs/reports/algo-think-L1-3-concepts.py` now has 124 checks and exits 0. Each of the 19 FINDING checks was rewritten to read the corrected string from the content (helper `T()`) and recompute the corrected claim; the finding 1 check executes program A as it now stands in the prose and measures it, and one new check keeps the old slice's O(n) peak as evidence. Checks for findings 10 and 13 match my wording, not the auditor's. `algo-think-2-perf-numbers.py` and `algo-think-3-perf-numbers.py` exit 0.
 
 Gates: validator 0 errors, 4,531 warnings (as before), manifest unchanged; voice scan 35: 0 and 0; playthrough desktop and `--mobile` green for l2, l3, l4, l6, l8, l9, l10, l11, l13, l14, homework-1, homework-2, homework-3, review-2.
+
+## Fix-pass read
+
+Fresh read of the fixer's diff `ae8bb185~1..ae8bb185` (14 files, 37 changed lines), without sight of the audit, ledger or fix-pass notes. Every changed string was read in its item, and every count was recomputed in a throwaway Python script (Lomuto partition as in l13, comparison counter in the loop, random pivot swapped to `hi`; 200 runs per quickselect cell at n = 20,000, 60 runs per quicksort cell at n = 4,000).
+
+Rows read: 37. Verdicts: 37 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified.
+
+| # | File | JSON path | New text (short) | Verdict | Basis |
+|---|------|-----------|------------------|---------|-------|
+| 1 | homework-1 | h-fixed-code explain | step 10: about 5e10 copies, against about 1e6 with doubling | correct | Run: `copies_fixed(1_000_000, 10)` = 49,999,500,000; doubling from capacity 1 = 2^20 - 1 = 1,048,575 (1,310,710 from capacity 10). |
+| 2 | homework-2 | sort-count explain | left half sorted, so one comparison shows every left item still waiting is bigger | correct | If a[i] > b[j] and a is sorted, a[i..] > b[j]. Run with that assertion in the merge: 3, 2 and 99,930,366 match the tests. |
+| 3 | homework-3 | kth_largest explain | expected work about 2n to 4n | correct | Knuth, TAOCP 3, 5.2.2 ex. 32: about 2n(1 + H(a)) nats; 2n for the minimum, (2 + 2 ln 2)n = 3.39n for the median. Run: 1.99n to 3.33n. |
+| 4 | homework-3 | kth_largest explain | random pivot keeps sorted input from being the worst case | correct | Run: sorted and shuffled input give the same counts (median 3.327n against 3.332n). |
+| 5 | homework-3 | h-var-report model (a) | quickselect about 2n to 4n, so 2 to 4e7 comparisons | correct | As row 3 with n = 1e7. |
+| 6 | homework-3 | h-var-report model (a) | It works in place. Its worst case is O(n^2): random pivot makes that very unlikely, median-of-medians rules it out | correct | Hoare FIND worst case n(n-1)/2; Blum, Floyd, Pratt, Rivest, Tarjan (1973) give worst-case O(n). Simulated P&L values are distinct, so the equal-values caveat of l13 does not bite. |
+| 7 | homework-3 | h-var-report model (a) | three quickselects cost about 6 to 12e7 | correct | 2.11n + 2.40n + 3.39n = 7.9n = 7.9e7, inside the range; run gives 2.11n, 2.32 to 2.41n, 3.33n. |
+| 8 | homework-3 | h-var-report rubric[1] | states the O(n^2) worst case and how a random pivot makes it unlikely | correct | Agrees with model (a) as changed. |
+| 9 | homework-3 | h-var-report rubric[0] (context) | quickselect about 2n to 4n | correct | Agrees with rows 3 and 5. |
+| 10 | l10 | bisect-vol option d why | stopped with the price 34p from £12.00; keep halving until close enough | correct | Black-Scholes, S = K = 100, r = 0.05, T = 1, sigma = 0.25: 12.336, so 34p. Agrees with option b's £12.34. |
+| 11 | l10 | orders-a-minute explain | 11 tests pin the limit to within one order a minute | correct | Width 1,500: 1500/2^10 = 1.46, 1500/2^11 = 0.73. |
+| 12 | l10 | orders-a-minute explain | testing every rate from 1,000 up would take more than 1,500 | correct | Limit is at least 2,500, so rates 1,001 to 2,501 at least: 1,501 tests. |
+| 13 | l11 | order-book explain | when new levels land near the end, as here, insertion fits an order book well | correct | 3 passes plus the stopping test = 4 comparisons, 3 shifts, matching the step hint; the claim is now conditional on the stated case. |
+| 14 | l13 | quicksort code explain | with distinct values the expected cost is O(n log n) whatever their order | correct | CLRS 7.4.2. Run: 1.14 to 1.15 n log2 n on sorted, reverse, shuffled and organ-pipe input. All-equal input gives n(n-1)/2 = 7,998,000 at n = 4,000, so the "distinct" condition is needed and is stated. |
+| 15 | l13 | sorted-input explain | data can arrive sorted or nearly sorted, so a fixed first or last pivot is risky | correct | Run: fixed last pivot on sorted n = 2,000 gives 1,999,000, the figure in the step hint. |
+| 16 | l13 | random-pivot question | with a random pivot and distinct values, which input order is the worst case? | correct | Conditions now match the key; the explain line on equal values no longer contradicts it. |
+| 17 | l13 | random-pivot option a (key) | none in particular: every order has expected cost O(n log n) | correct | As row 14. |
+| 18 | l13 | random-pivot option d | an order chosen to beat the pivot; why: input is fixed before the pivots are drawn | correct | Oblivious-adversary argument, CLRS 7.3. Does not overlap options b and c, whose `why` lines still hold. |
+| 19 | l13 | quickselect feedback.correct | about 2n to 4n comparisons on average: O(n) | correct | As row 3. |
+| 20 | l13 | quickselect explain | if every step halved the range the work would be about 2n; random pivots make it about 3.4n for a median | correct | Geometric sum 2n; (2 + 2 ln 2)n = 3.386n; run 3.33n at n = 20,000. |
+| 21 | l13 | quickselect explain | for a million trades, a few million steps, not 20 million | correct | 3.4e6 against 1e6 x log2(1e6) = 1.99e7. |
+| 22 | l13 | q-stable prose | Lomuto, taking the last value as pivot each time, comparing prices only | correct | Run with the lesson's partition (`<=`) and no random swap: `[(1,'c'), (5,'b'), (5,'a')]`, the key. The added clause is needed: a random pivot would make the output random. |
+| 23 | l14 | exchange-proof s3 | every other meeting of O starts when o ends or later, so no earlier than g ends | correct | Touching meetings do not clash in this lesson (`s >= last_end`); g ends no later than o (s2), so start >= end(o) >= end(g). |
+| 24 | l2 | big-O definition prose | Big O is an upper bound, so n is also O(n^2); by convention we quote the smallest class | correct | Definition with c = 1, n0 = 1. CLRS 3.1. |
+| 25 | l2 | definition option `product` why | O(n^2 log n): true as an upper bound, but not the smallest class | correct | 2n log n + 40n + 9 <= 51 n^2 log n for n >= 2. Agrees with the new prose and with option `const`. |
+| 26 | l2 | summary ideas[2] | doubling n adds a constant to log n, doubles n and quadruples n^2 | correct | log(2n) = log n + log 2; (2n)^2 = 4n^2. |
+| 27 | l2 | q-fixed-inner option n2 why | true as a loose upper bound, not the smallest class; inner loop always runs 5 times, total 5n | correct | 5n <= 5n^2 for n >= 1. |
+| 28 | l3 | screen 1 prose, program A | `for p in prices:` after `best = prices[0]` | correct | Run on the canvas prices: A gives 108, B gives 108. The loop now visits every cell, as the stepping canvas does. |
+| 29 | l3 | prefix-sums hint `point` | days 1 to 3 total 9 - 3: `pre[4] - pre[1]` | correct | Run: pre = [0, 3, 4, 8, 9, 14]; 9 - 3 = 6 = 1 + 4 + 1, the example's value. |
+| 30 | l3 | q-variance explain | Welford's update keeps the same three-number budget and is steadier in floating point | correct | Welford (1962); Knuth, TAOCP 2, 4.2.2: state is count, mean, M2. Run on 1e9 + U(0,1): naive 5120.0, Welford 0.083314, true 0.083314. |
+| 31 | l4 | first screen explain | Python's `list.append` works this way, with a much smaller growth factor of about 1.125 | correct | CPython `list_resize`: new size + (new size >> 3) + 6. Run with `sys.getsizeof`: successive capacity ratios 1.125. |
+| 32 | l4 | tripling option `worse` why | not in general: tripling's total stays under 1.5n, against 2n for doubling; price is more spare slots | correct | (3^m - 1)/2 with 3^(m-1) < n. Run to n = 5,000: max ratios 1.4991 and 1.9993. "Not in general" is right: tripling copies more at n = 4 and n = 28 to 32, and at n = 1,000 (1,093 against 1,023). |
+| 33 | l4 | q-np-append options and feedback | the calls copy 0, 1, 2, ... elements; 0 + 1 + ... + (n - 1) copies: quadratic | correct | Call k copies k - 1 elements; sum n(n-1)/2, as the explain line says. Three changed strings, one claim. |
+| 34 | l6 | explicit-stack explain | the loop goes depth first like the recursion; it takes each node's children last to first | correct | Run on a six-node tree: loop A C F B E D, recursion A B D E C F. |
+| 35 | l6 | q-scope option `three` why | a function sees its own names and those of the code around it, here the module; never its caller's | correct | Python reference 4.2.2 (lexical scoping). Run: `NameError: name 'n' is not defined`; with a module-level `n = 9` it prints 9. |
+| 36 | l8 | merge-tree explain; four-recurrences feedback; lattice explain; review-2 q feedback | fib: n levels deep, doubling on each level of the top half; 1 + 2 + 4 + ... + n = 2n - 1; pricers use a recombining tree whenever the model allows it; course Pricing with Trees | correct | Run: fib(16) call tree has 16 levels, full (2^d calls) to level 8. T(n) = 2T(n/2) + 1, T(1) = 1 gives 15 and 127 at n = 8 and 64. Lattice 101 x 102 / 2 = 5,151; 2^101 - 1 = 2.535e30. Non-recombining cases (path-dependent payoffs, discrete cash dividends) exist, Hull ch. 21, so the hedge is right. Course name matches `curriculum.json`. |
+| 37 | l9 | q-condition option `le` why | with `<=`: if `xs[mid] >= target`, `hi = mid` changes nothing and it never ends; if `lo` has reached `len(xs)`, IndexError | correct | Run of the lesson's loop (`lo, hi = 0, len(xs)`) with `<=` on 45 list and target pairs: 19 never end, 26 raise `IndexError`, none returns. |
+
+### Findings
+
+None. No changed string is wrong, imprecise or misleading.
+
+Notes, no action needed:
+
+- homework-3 model (a): the "very unlikely" worst case assumes distinct values. Simulated P&L values are, and l13 states the equal-values caveat, so the line stands.
+- l13 quickselect: measured means sit slightly under the asymptotic 3.39n at n = 20,000 (3.33n), as the lower-order terms predict.
