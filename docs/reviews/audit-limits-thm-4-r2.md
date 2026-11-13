@@ -56,8 +56,26 @@ CB below is Casella and Berger, *Statistical Inference*, 2nd edition.
 
 ## Overlap with earlier reads
 
-Pending: filled after the WIP commit, when the round 1 audit and the earlier reviews are opened.
+Read after the WIP commit `58b9b451`: `docs/reviews/audit-limits-thm-4.md` (round 1 audit, its fix pass, fix-pass read and follow-up), `docs/reports/audit-limits-thm-4-ledger.md`, `docs/reports/limits-thm-4.md`, `docs/reports/problems-limits-thm.md`, `docs/reviews/review-1.5.md`, `docs/reviews/review-problems-1.5-d.md` and the L4 rows of `docs/reports/concept-audit-log.md`.
+
+Earlier conceptual findings in this scope: round 1 audit 22 (10 wrong, 10 imprecise, 2 misleading), its fix-pass read 1 (imprecise), `review-problems-1.5-d` 2 (findings 5 and 7) and `review-precision-3.2` 1 (row 47). All 26 were fixed before this round. I read each fixed line blind and judged it correct in the ledger, including the three serious ones (`l19` `screens[6].explain.text`, `review-4` `items[4].explain.text`, `problems-4` `items[2].parts[4].explain.text`).
+
+| conceptual findings | count |
+|---|---|
+| found by this audit only | 13 (all imprecise, all minor) |
+| found by earlier reads only | 26 (all fixed before this round) |
+| found by both | 0 |
+
+`wrong` findings of this round: 0. New `wrong` that no earlier read found: 0.
+
+Notes on the 13:
+
+- Round 1 looked at three of these lines and passed them as a matter of judgement, so a fixer may fairly decline them. Finding 1: its ledger row for `l14` `screens[7].explain` reads "standard wording (Blitzstein and Hwang 7.1); a rectangle here means a product of intervals". Finding 9: its row for `l19` `screens[9].prose` is "correct, Markov on $e^{tS}$". Finding 12: its row for the homework model reads "one-sided reading used throughout; two-sided gives the same verdict".
+- Same class, different path. Finding 4 (`l16` `summary.trap` drops independence) is the class of round 1 findings 12 and 13, which fixed the screens and the `l17` summary and left this line. Finding 9 touches `l19` `summary.ideas[2]`, where round 1 finding 14 added $t > 0$ and left $M$ and $n$ undefined. Findings 5, 10 and 13 are the slip-feedback class of round 1 findings 5, 7, 8 and 10, at paths it did not flag.
+- Finding 2 sits in a sentence no earlier read questioned. Findings 3, 6, 7, 8 and 11 are wording points with no earlier counterpart.
+- The fix pass left no error that I can find. Its own corrections of three round 1 fix texts (findings 2, 4 and 20 there) hold: "$g' \ne 0$", the luck sentence, and the six-digit products all check in the script.
 
 ## Inbox
 
-Pending.
+- Extend the validator's universal-wording warning list (proposed in round 1) with "only if", "every ... because", "almost always" and "as ... promises". Findings 1, 2, 3 and 6 would each have been printed for the reader.
+- Validator warning: a `feedback.byKey` line for a numeric or expression slip that contains neither the slip value nor any formula. Finding 13 is such a line, and the round 1 slip-feedback findings were the same class.
