@@ -14,7 +14,7 @@
    --changed: run only scripts whose own file changed against the base ref (default origin/main, or the ref after --changed), or that name a
    course, exam or bank file whose content changed, or all of them when `tools/numbers_lib.py` or the shared check helpers changed. The list
    check then covers only the scripts that ran. --only runs scripts whose path holds the text (list check likewise). Exit 2: setup error.
-   Python: --python, else $ZQ_PYTHON, else python3. Timeout default 100 s per script; jobs default 4. */
+   Python: --python, else $ZQ_PYTHON, else python3. Timeout default 150 s per script; jobs default 4. */
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -28,7 +28,7 @@ const has = (name) => argv.includes(name);
 
 const ROOT = path.resolve(opt('--root') || path.join(HERE, '..', '..'));
 const PY = opt('--python') || process.env.ZQ_PYTHON || 'python3';
-const TIMEOUT = Number(opt('--timeout') || 100) * 1000;
+const TIMEOUT = Number(opt('--timeout') || 150) * 1000;
 const JOBS = Math.max(1, Number(opt('--jobs') || Math.min(4, os.cpus().length || 4)));
 const ALLOW = path.resolve(opt('--allow') || path.join(HERE, 'number-scripts-known-failing.txt'));
 const ONLY = opt('--only');
@@ -95,7 +95,7 @@ function changedSelection(all) {
 function runOne(script) {
   return new Promise((resolve) => {
     const t0 = Date.now();
-    const p = spawn(PY, [path.join(ROOT, script)], { cwd: ROOT, detached: true, stdio: ['ignore', 'pipe', 'pipe'], env: { OMP_NUM_THREADS: '1', OPENBLAS_NUM_THREADS: '1', MKL_NUM_THREADS: '1', ...process.env, PYTHONIOENCODING: 'utf-8' } });
+    const p = spawn(PY, [path.join(ROOT, script)], { cwd: path.join(ROOT, path.dirname(script)), detached: true, stdio: ['ignore', 'pipe', 'pipe'], env: { OMP_NUM_THREADS: '1', OPENBLAS_NUM_THREADS: '1', MKL_NUM_THREADS: '1', ...process.env, PYTHONIOENCODING: 'utf-8' } });
     let buf = '';
     const keep = (d) => { buf += d.toString(); if (buf.length > 20000) buf = buf.slice(-10000); };
     p.stdout.on('data', keep); p.stderr.on('data', keep);

@@ -633,7 +633,7 @@ ex.claim(_n_tests == 5 and 'closes' in _src.split('def test_no_prices')[0] and '
 for wid, v in (('per-function', 2), ('once', 1), ('every-test', 5)):
     wrong('e-fixture-calls', wid, v)
 code, out = run_pytest({'test_fx2.py': 'import pytest\nCALLS = []\n\ndef daily_returns(p):\n    return []\n\n'
-                        + _src.replace('def closes():\n', 'def closes():\n    CALLS.append(1)\n')
+                        + _src.replace('from risk import daily_returns\n', '').replace('def closes():\n', 'def closes():\n    CALLS.append(1)\n')
                         + '\ndef test_zz_count():\n    assert len(CALLS) == 4, len(CALLS)\n'})
 ex.claim(code == 0 and '6 passed' in out, 'e-fixture-calls: the shown file under real pytest 8.1.1 builds the fixture 4 times (5 tests plus the counter)')
 E('e-fixture-calls', 'explain.text', 4)

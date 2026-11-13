@@ -160,7 +160,7 @@ for i in range(5):
 E(L, 'screens[4].canvas.params.rows[5][2]', R(f5.sum(), 4)); E(L, 'screens[4].widget.answer', R(math.sqrt(f5.sum()) / 100, 6))
 E(L, 'screens[4].widget.wrong[0].value', R(sig1 * math.sqrt(5) / 100, 6)); E(L, 'screens[4].widget.wrong[1].value', R(np.sqrt(f5).sum() / 100, 6))
 E(L, 'screens[4].widget.wrong[2].value', R(math.sqrt(f5.mean()) / 100, 6)); two('mean vol near root of mean variance', np.sqrt(f5).mean(), math.sqrt(f5.mean()), 1e-4); E(L, 'screens[4].explain.text', R(sig1 * math.sqrt(5), 2))
-E(L, 'screens[5].widget.examples[0].expect', R(s1404, 9)); E(L, 'screens[5].prose', R(math.sqrt(f5.sum()), 4))
+two('l9 s5 example expect (fit sensitive, rel 1e-6)', lv._file(L)[1]['screens'][5]['widget']['examples'][0]['expect'], s1404, 1e-6); E(L, 'screens[5].prose', R(math.sqrt(f5.sum()), 4))
 f250 = forecast(params, rp3[1403], s2f[1403], 250); f250c = forecast(params, rp3[1999], s2f[1999], 250)
 E(L, 'screens[6].prose', R(sig1 * math.sqrt(250), 2)); E(L, 'screens[6].widget.options[0].text', R(math.sqrt(f250.sum()), 2))
 E(L, 'screens[6].hints[2].text', R(f250.sum(), 1)); E(L, 'screens[6].widget.options[2].text', R(math.sqrt(VL) * math.sqrt(250), 2))
@@ -223,13 +223,13 @@ claim('l10 s6 markers are the 250-day breaches in the shaded storm', mk == [t fo
 stated(L, 'screens[6].prose', "dots mark the 250-day line's breaches.", mk == b250)   # 1,317 and 1,377 are unmarked
 E(L, 'screens[6].prose', "breaches in the shaded storm.")   # fix pass 13
 es = sig * stats.norm.pdf(q01) / 0.01 * pos
-E(L, 'screens[7].prose', R(stats.norm.pdf(q01), 6)); E(L, 'screens[7].widget.answer', R(es, 2)); E(L, 'screens[7].widget.wrong[1].value', R(sig * stats.norm.pdf(q01) * pos, 1))
+E(L, 'screens[7].prose', R(stats.norm.pdf(q01), 6)); two('l10 s7 answer (fit sensitive, rel 1e-6)', lv._file(L)[1]['screens'][7]['widget']['answer'], es, 1e-6); E(L, 'screens[7].widget.wrong[1].value', R(sig * stats.norm.pdf(q01) * pos, 1))
 E(L, 'screens[7].feedback.correct', round(100 * (es / v99 - 1))); E(L, 'screens[7].explain.text', R(stats.norm.pdf(q01) / 0.01, 3))
 var_test = -q01 * np.sqrt(test) / 100 * pos; loss = -r3[2000:3000] * pos; brk = loss > var_test
 E(L, 'screens[7].explain.text', int(brk.sum())); E(L, 'screens[7].explain.text', money(loss[brk].mean()))
 f10 = forecast(params, rp3[1403], s2f[1403], 10)
 E(L, 'screens[8].prose', R(f10.sum(), 3)); E(L, 'screens[8].prose', R(math.sqrt(f10.sum()), 4))
-E(L, 'screens[8].widget.answer', R(-q01 * math.sqrt(f10.sum()) / 100 * pos, 2)); E(L, 'screens[8].widget.wrong[0].value', R(-q01 * sig1 / 100 * math.sqrt(10) * pos, 2))
+E(L, 'screens[8].widget.answer', R(-q01 * math.sqrt(f10.sum()) / 100 * pos, 2)); two('l10 s8 wrong[0] (fit sensitive, rel 1e-6)', lv._file(L)[1]['screens'][8]['widget']['wrong'][0]['value'], -q01 * sig1 / 100 * math.sqrt(10) * pos, 1e-6)
 E(L, 'screens[8].widget.wrong[1].value', R(-q01 * sig1 / 100 * pos, 2)); E(L, 'screens[8].explain.text', R(100 * (math.sqrt(10) * sig1 / math.sqrt(f10.sum()) - 1), 1))
 f10c = forecast(params, rp3[1999], s2f[1999], 10)
 gap1999 = abs(-q01 * math.sqrt(f10c.sum()) / 100 * pos - (-q01 * math.sqrt(10 * s2000) / 100 * pos))

@@ -399,7 +399,9 @@ key('b-yule-walker', round(yw[1], 6))
 wrong('b-yule-walker', 'gave-acf', 0.05)
 wrong('b-yule-walker', 'no-denominator', round(0.05 - 0.45 ** 2, 6))
 wrong('b-yule-walker', 'gave-phi1', round(yw[0], 6))
-allow('b-yule-walker', 0.45, 0.05, -0.1525, 0.7975, yw[1], yw[0])
+# sign: the sign-dropped key (rho_1^2 - rho_2 = 0.1525 over 0.7975); its byKey line writes 0.2025 = rho_1^2
+wrong('b-yule-walker', 'sign', round(abs(yw[1]), 6))
+allow('b-yule-walker', 0.45, 0.05, -0.1525, 0.7975, 0.2025, yw[1], yw[0])
 
 key('b-ma-forecast', float(F('0.0008') + F('0.35') * F('0.014')), part=0)
 wrong('b-ma-forecast', 'no-mean', float(F('0.35') * F('0.014')), part=0)
@@ -458,6 +460,7 @@ tdf = float(bhat[0] / math.sqrt(s2 * np.linalg.inv(Xd.T @ Xd)[0, 0]))
 key('b-df-hand', round(tdf, 4))
 wrong('b-df-hand', 'slope', round(float(bhat[0]), 4))
 wrong('b-df-hand', 'n-divisor', round(float(bhat[0] / math.sqrt(float(res[0]) / len(yd) * np.linalg.inv(Xd.T @ Xd)[0, 0])), 4))
+wrong('b-df-hand', 'sign', round(abs(tdf), 4))   # the t statistic with its minus sign dropped
 allow('b-df-hand', *e12, float(Xd[:, 0] @ yd), float(Xd[:, 0] @ Xd[:, 0]), s2, -3.34, -1.95, 7, 6)
 rec(abs(mackinnoncrit(N=1, regression='n', nobs=np.inf)[1] + 1.95) < 0.02, 'b-df-hand: the no-constant Dickey-Fuller 5% point is about -1.95')
 rec(tdf < -1.95 and tdf > -3.34, 'b-df-hand: t misses the Engle-Granger point and passes the plain one')

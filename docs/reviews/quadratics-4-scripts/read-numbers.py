@@ -2,11 +2,11 @@
 Each graded key and wrong value is read from the content and compared with a symbolic computation; tolerances are probed
 with the engine's own rule (grade.js `within`). A check that fails because the content is wrong stays failing and is a
 finding in docs/reviews/review-quadratics-4.md. Run from the repository root with the scratchpad venv python."""
-import json, sys
+import json, os, sys
 from sympy import (symbols, sqrt, simplify, expand, factor, Rational as R, solve, Eq, div, Poly, discriminant, cancel,
                    radsimp, real_roots)
 
-B = 'app/content/courses/quadratics/'
+B = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'app', 'content', 'courses', 'quadratics') + os.sep
 D = {n: json.load(open(B + n + '.json')) for n in ['l14-roots-that-stay', 'l15-fractions-with-letters', 'l16-adding-and-solving',
      'l17-dividing-polynomials', 'l18-circles-on-a-grid', 'l19-line-meets-curve', 'review-4', 'homework-4']}
 L14, L15, L16, L17, L18, L19, RV, HW = D.values()

@@ -32,6 +32,17 @@ def _walk_widgets(node, path, out):
             _walk_widgets(v, f'{path}[{i}]', out)
 
 
+def _close(a, b, rel, abs_):
+    """isclose on numbers, and element by element on lists and tuples (as the app's `isclose` compare does)."""
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        return len(a) == len(b) and all(_close(x, y, rel, abs_) for x, y in zip(a, b))
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(_close(a[k], b[k], rel, abs_) for k in a)
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not isinstance(a, bool) and not isinstance(b, bool):
+        return math.isclose(a, b, rel_tol=rel, abs_tol=abs_)
+    return a == b
+
+
 def _run_tests(src, w):
     """Return (results, load_error): results is a list of (label, ok, note) over examples then tests."""
     ns = {'__name__': '__main__', '__learner_source__': src}
@@ -64,8 +75,7 @@ def _run_tests(src, w):
                         exp = eval(str(t['expect']), ns) if isinstance(t['expect'], str) else t['expect']
                         if cmp == 'isclose':
                             tol = t.get('tol') or {}
-                            ok = math.isclose(got, exp, rel_tol=tol.get('rel', 1e-9 if 'abs' not in tol else 0),
-                                              abs_tol=tol.get('abs', 1e-12))
+                            ok = _close(got, exp, tol.get('rel', 1e-9 if 'abs' not in tol else 0), tol.get('abs', 1e-12))
                         else:
                             ok = got == exp
                         note = f'got {got!r}, expected {exp!r}'

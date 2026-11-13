@@ -58,7 +58,11 @@ check('0.6^3', 0.6 ** 3, 0.216, abs_=1e-14)
 def gl(f, a, b, n):
     x, w = np.polynomial.legendre.leggauss(n); return (b - a) / 2 * (w * f((b - a) / 2 * x + (a + b) / 2)).sum()
 for n, want in [(8, -1.32e-3), (16, -2.0e-9), (32, -2.6e-13)]:
-    check(f'gauss split {n}', gl(g, zs, 8, n) - BS, want, rel=0.03 if n < 32 else 0.05)
+    # at n = 32 the error is 2.5e-13, the size of the float rounding in the sum and in BS (a few 1e-14): an absolute band, not 5%
+    if n < 32:
+        check(f'gauss split {n}', gl(g, zs, 8, n) - BS, want, rel=0.03)
+    else:
+        check(f'gauss split {n}', gl(g, zs, 8, n) - BS, want, abs_=3e-14)
 tail = float(mquad(lambda z: mexp(-mpf('0.05')) * (100 * mexp(mpf('0.03') + mpf('0.2') * z) - 100) * mexp(-z * z / 2) / msqrt(2 * mpi), [8, minf]))
 check('tail beyond 8', tail, 2.5e-13, rel=0.02)
 for n, want in [(8, 3.90), (16, 0.927), (32, 0.120), (64, -0.036)]:

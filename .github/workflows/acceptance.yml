@@ -403,11 +403,36 @@ jobs:
           echo "extras ${{ matrix.part }} ${{ matrix.vp }}: wall clock $(( $(date +%s) - ZQ_T0 )) s" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------------------------------------------
+  # Every number script (docs/CI.md): the Python files that recompute each stated figure, key and slip. Runs in full on every push and dispatch.
+  # Red on a new failure, and on a script of tools/number-scripts-known-failing.txt that starts to pass.
+  number-scripts:
+    name: number-scripts
+    needs: plan
+    if: needs.plan.outputs.static == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      secs: ${{ steps.clock.outputs.secs }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/zq-setup
+        with: { python: "true" }
+      - name: Runner test
+        run: node tools/test-run-number-scripts.mjs 2>&1 | tail -20
+      - name: Every number script
+        run: node tools/run-number-scripts.mjs 2>&1 | tail -80
+      - id: clock
+        if: always()
+        run: |
+          s=$(( $(date +%s) - ZQ_T0 )); echo "secs=$s" >> "$GITHUB_OUTPUT"
+          echo "number-scripts: wall clock ${s} s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------------------------
   # One status to read: green only if every job that was asked for succeeded (a job left out by the `suite` input shows as skipped).
   acceptance:
     name: acceptance
     if: always()
-    needs: [plan, static, tests-browser, validate-tests, play, extras]
+    needs: [plan, static, tests-browser, validate-tests, play, extras, number-scripts]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     defaults:

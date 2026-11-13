@@ -476,7 +476,7 @@ taught('e-recurring-proof', r'\\dot\{3\}\\dot\{6\}', 'number-sense', r'\\dot\{[0
 items = doc['items']
 ramp = [sum(1 for it in items if it['difficulty'] == d) for d in (2, 3, 4, 5)]
 ex.claim(20 <= len(items) <= 30, f'{len(items)} items, within 20 to 30')
-ex.claim(ramp == [5, 12, 4, 2], f'ramp {ramp} (22%, 52%, 17%, 9% against 20, 50, 20, 10)')
+ex.claim(ramp == [6, 15, 5, 3], f'ramp {ramp} (21%, 52%, 17%, 10% of 29 against 20, 50, 20, 10; the exam grew from 23 items after this review)')
 used = {s for it in items for s in it['skills']}
 ex.claim(used == set(doc['skills']), 'every skill of the topic is tested and no other')
 maps = {}
@@ -489,8 +489,8 @@ PACE = {'e-mixed-subtract': 60, 'e-percent-build': 45, 'e-pnl-close': 45, 'e-dec
         'e-loss-share': 90, 'e-fill-rate': 90, 'e-depreciation': 150, 'e-inverse-square': 180, 'e-minus-eight': 150,
         'e-chain-ratio': 150, 'e-fund-fees': 300, 'e-recurring-proof': 300}
 ex.claim(all(IT[k].get('pace') == v for k, v in PACE.items()), 'every item stores the reader pace')
-ex.claim(doc['minutes'] == 50 and sum(PACE.values()) == 2730, 'minutes 50 against paces summing to 2,730 s (45.5 min) plus time to check')
-ex.claim(set(PACE) == set(IT), 'a reader pace for every item')
+ex.claim(doc['minutes'] == 65 and sum(it['pace'] for it in items) == 3645, 'minutes 65 against the 29 paces summing to 3,645 s (60.75 min) plus time to check')
+ex.claim(set(PACE) <= set(IT) and all('pace' in it for it in items), 'a pace for every item, including the six added after this review')
 total = sum(PACE.values())
 ex.claim(total <= doc['minutes'] * 60, f'reader paces sum to {total} s ({total / 60:.1f} min) within {doc["minutes"]} minutes')
 

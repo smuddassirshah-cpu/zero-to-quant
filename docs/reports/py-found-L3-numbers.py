@@ -274,6 +274,11 @@ def load():
     return ns, out.getvalue()
 def one(t, ns):
     if t.get('setup'): exec(t['setup'], ns)
+    if t.get('compare') == 'raises':
+        try:
+            with contextlib.redirect_stdout(io.StringIO()): eval(t['call'], ns)
+        except BaseException as ex: return type(ex).__name__ == t['expect']
+        return False
     with contextlib.redirect_stdout(io.StringIO()): a = eval(t['call'], ns)
     e = eval(t['expect'], ns)
     return close(a, e) if t.get('compare') == 'isclose' else a == e
@@ -319,8 +324,8 @@ def widgets(node, path):
 
 for fid, doc in lv.files.items():
     for path, w in widgets(doc, ''):
-        sol, sta = play(w['solution'], w['tests']), play(w['starter'], w['tests'])
-        exs = play(w['solution'], w.get('examples', [])) if w.get('examples') else []
+        sol, sta = play(w.get('prelude', '') + '\n' + w['solution'], w['tests']), play(w.get('prelude', '') + '\n' + w['starter'], w['tests'])
+        exs = play(w.get('prelude', '') + '\n' + w['solution'], w.get('examples', [])) if w.get('examples') else []
         lv.claim(all(sol) and all(exs), f"{fid} {path}: solution passes {sum(sol)}/{len(sol)} tests and every example")
         lv.claim(not all(sta), f"{fid} {path}: starter fails {len(sta) - sum(sta)} of {len(sta)}")
 
