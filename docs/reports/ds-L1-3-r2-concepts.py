@@ -139,8 +139,12 @@ check('B l1 s4 slips', slip(S(1, 4), 'every-time') == sum(range(16)) and slip(S(
 check('B l1 s5 insert(0) shifts', sum(range(1000)) == 499500 == W(S(1, 5))['answer']
       and slip(S(1, 5), 'one-to-n') == sum(range(1, 1001)) and slip(S(1, 5), 'n-squared') == 1000 ** 2)
 check('B l1 s6 memory, 64-bit', (8 + 24) * 10 ** 6 / 1e6 == W(S(1, 6))['answer'] and sys.getsizeof(1.0) == 24)
-check('B l1 s6 memory: the stated 8 and 24 bytes hold in the app runtime (Pyodide, wasm32)',
-      PYODIDE['pointer'] == 8 and PYODIDE['float'] == 24, finding=2)
+# fix pass: the 8 and 24 bytes are now framed as 64-bit desktop Python, and the app's own sizes are stated
+check('B l1 s6 memory: 64-bit premise stated, and the app runtime sizes (Pyodide, wasm32) given correctly',
+      PYODIDE['pointer'] == 4 and PYODIDE['float'] == 16
+      and S(1, 6)['prose'].startswith('On a 64-bit desktop Python') and 'a pointer is 4 bytes and a float object 16' in S(1, 6)['prose'] and '32-bit build' in S(1, 6)['prose']
+      and S(1, 6)['question'].startswith('On a 64-bit desktop Python') and 'On a 64-bit build it uses a quarter' in S(1, 6)['explain']['text']
+      and (PYODIDE['pointer'] + PYODIDE['float']) / 8 != 4, finding=2)
 check('B l1 s7 string copies', 10 * sum(range(1, 1001)) == 5005000 == W(S(1, 7))['answer']
       and slip(S(1, 7), 'join-count') == 10 * 1000 and slip(S(1, 7), 'n-squared') == 1000 * 10000)
 check('B l1 quiz', W(Q(1, 0))['answer'] == shifts(10, 3) == 7 and slip(Q(1, 0), 'upto') == 6
@@ -164,8 +168,8 @@ check('B l2 s9', W(S(2, 9))['answer'] == (1 + 500) / 2 * 10 ** 6 and slip(S(2, 9
 # l3
 p = [3, 8, 5, 12, 6]
 check('B l3 s0 one pair', [(i, j) for i in range(5) for j in range(i + 1, 5) if p[i] + p[j] == 17] == [(2, 3)])
-check('B l3 s0 explain: "Only 5 finds its partner" (12 finds 5 as well)',
-      [x for x in p if 17 - x in p] == [5], finding=4)
+check('B l3 s0 explain: "Only 5 and 12 find their partners in the list: each other"',
+      [x for x in p if 17 - x in p] == [5, 12] and 'Only 5 and 12 find their partners' in S(3, 0)['explain']['text'], finding=4)
 check('B l3 s1', W(S(3, 1))['answer'] == math.comb(5, 2) and slip(S(3, 1), 'ordered') == 20 and math.comb(1000, 2) == 499500 == W(Q(3, 0))['answer']
       and slip(Q(3, 0), 'ordered') == 999000)
 # l5
@@ -199,8 +203,9 @@ while i < j:
         i += 1
     else:
         j -= 1
-check('B l5 s5 prose: "We have reached i on 4 and j on 8" is a state the correct walk reaches',
-      (2, 4) in visited, finding=5)
+check('B l5 s5 prose: the state i on 4, j on 8 is offered as a supposition, since the correct walk never reaches it',
+      (2, 4) not in visited and 'Suppose a walk stands with `i` on 4 and `j` on 8' in S(5, 5)['prose']
+      and 'We have reached' not in S(5, 5)['prose'], finding=5)
 pal = lambda w: len(w) // 2
 check('B l5 s3 palindrome comparisons', pal('refer') == 2 == W(S(5, 3))['answer'] and pal('noon') == 2 and W(Q(5, 2))['answer'] == 3)
 check('B l5 s8', two_ptr_sums([-120, -75, -40, 15, 60, 90, 135], 50) == ([15, 60, 15, 50], (2, 5)) and abs(math.comb(10000, 2) / 5e7 - 1) < 0.01)
@@ -253,8 +258,9 @@ def brute_count(a, k):
 
 check('B l7 s5', [0] + list(itertools.accumulate([2, -1, 1, 3, -2, 2])) == [0, 2, 1, 2, 5, 3, 5] and brute_count([2, -1, 1, 3, -2, 2], 3) == 5)
 check('B l7 s6 key and slips', brute_count([0, 0, 0], 0) == 6 == W(S(7, 6))['answer'] and slip(S(7, 6), 'singles') == 3 and slip(S(7, 6), 'whole') == 1)
-# feedback for slip 4: "You forgot one of the runs of two days"
-check('B l7 s6 slip four: forgetting one run of two days gives the slip value 4', 6 - 1 == slip(S(7, 6), 'four'), finding=1)
+# fix pass: feedback for slip 4 now names singles plus the whole list, missing both pairs
+check('B l7 s6 slip four: three singles plus the whole list, both pairs missed, gives the slip value 4',
+      3 + 1 == 6 - 2 == slip(S(7, 6), 'four') and 'missed the two pairs' in S(7, 6)['feedback']['byKey']['four'], finding=1)
 cum = [120, 40, 240, 290, 140, 230, 190, 370, 310, 420]
 check('B l7 s9', cum[6] - cum[2] == -50 == W(S(7, 9))['answer'] and slip(S(7, 9), 'drop4') == cum[6] - cum[3]
       and [cum[k] - cum[k - 1] for k in (3, 4, 5, 6)] == [50, -150, 90, -40])
@@ -346,8 +352,9 @@ check('B l10 scans', next_greater([4, 2, 6, 3, 1, 5, 7])[0] == [6, 6, 7, 5, 5, 7
       and next_greater([5, 5, 6], strict=False)[0] == [5, 6, -1] and next_greater([5, 5, 6])[0] == [6, 6, -1]
       and next_greater([6, 4, 5, 2])[1] == [6, 5, 2] and next_greater([3, 1, 4, 1, 5, 9, 2, 6])[1] == [9, 6]
       and next_greater([3, 8, 4, 1, 9])[0] == [8, 9, 9, 9, -1])
-check('B l10 s2 "the waiting values always fall from bottom to top" (ties wait, so they can be level)',
-      all(a > b for a, b in zip(*(lambda s: (s, s[1:]))(next_greater([5, 5, 4])[1]))), finding=8)
+check('B l10 s2 / summary "the waiting values never rise from bottom to top" (ties wait, so they can be level)',
+      next_greater([5, 5, 4])[1] == [5, 5, 4]
+      and 'never rise from bottom to top' in S(10, 2)['explain']['text'] and 'never rise from bottom to top' in L(10)['summary']['ideas'][1], finding=8)
 h = [2, 1, 5, 6, 2, 3]
 check('B l10 s8 largest rectangle', max(min(h[i:j]) * (j - i) for i in range(6) for j in range(i + 1, 7)) == 10)
 check('B l11', sum(range(1000)) == 499500 == W(S(11, 3))['answer'] and slip(S(11, 3), 'off') == sum(range(1, 1001))
@@ -358,8 +365,9 @@ check('B hw3 FIFO', W(h3)['answer'] == 200 * 50 + 100 * 52 + 50 * 49 and slip(h3
       and abs(slip(h3, 'avg') - 350 * (200 * 50 + 100 * 52 + 300 * 49) / 600) < 0.01)
 # l12, l13
 check('B l12', W(S(12, 2))['answer'] == shifts(1000, 1) + 999000 == 999999 and W(Q(12, 0))['answer'] == 4999)
-check('B l12 s0 explain "the k-th value takes k steps" agrees with quiz 0 (5,000th close: 4,999 steps)',
-      W(Q(12, 0))['answer'] == 5000, finding=10)
+check('B l12 s0 explain "visiting k nodes" and summary "k - 1 steps" agree with quiz 0 (5,000th close: 4,999 steps)',
+      W(Q(12, 0))['answer'] == 5000 - 1 and 'means visiting $k$ nodes' in S(12, 0)['explain']['text']
+      and '$k - 1$ steps from the head' in L(12)['summary']['ideas'][0], finding=10)
 
 
 def floyd(a, Lc, fast_speed=2, limit=10 ** 6):
@@ -461,8 +469,8 @@ for _ in range(300):
 check('C next greater: pushes plus pops at most 2n, answers match the nested scan', okc)
 ops = [0]
 next_greater(list(range(200000, 0, -1)), ops=ops)
-check('C l10 s7 explain "200,000 values take about 400,000 stack operations" on its own falling test list',
-      abs(ops[0] / 400000 - 1) < 0.1, finding=9)
+check('C l10 s7 explain "200,000 values take at most 400,000 stack operations" (falling test list: 200,000)',
+      ops[0] == 200000 <= 400000 and 'at most 400,000 stack operations' in S(10, 7)['explain']['text'], finding=9)
 ops = [0]
 next_greater(list(range(1000)), ops=ops)
 check('C rising list: 2n - 1 stack operations', ops[0] == 1999)
@@ -497,7 +505,8 @@ check('C sliding maximum equals brute force; each index enters once and leaves a
 check('C l11 s5 s7', sliding_max([5, 3, 4, 1, 2, 6], 3) == [5, 4, 4, 6] and sliding_max([5, 3, 4, 1, 2, 6], 3, front=False) == [5, 5, 5, 6]
       and sliding_max([2, 7, 3, 1, 5, 4], 2) == [7, 7, 3, 5, 5])
 # l1 s10: window[1:] + [close] copies
-check('C l1 s10 option c "about 20 copies per tick" (slice copies 19, + copies 20 more)', abs((19 + 20) / 20 - 1) < 0.25, finding=3)
+check('C l1 s10 option c "about 40 copies per tick" (slice copies 19, + copies 20 more)',
+      abs((19 + 20) / 40 - 1) < 0.05 and 'about 40 copies per tick' in W(S(1, 10))['options'][2]['why'], finding=3)
 # rate limiter count
 
 # ---------------------------------------------------------------- D: quoted code
@@ -539,8 +548,9 @@ check('D l1 s10 deque(maxlen) and remove', list(dq) == list(range(10, 30)) and w
 check('D l2 keys', raises(lambda: {}['VOD'], KeyError, "'VOD'") and {}.get('VOD') is None and {}.get('VOD', 0) == 0 and Counter()['VOD'] == 0
       and raises(lambda: {}.__setitem__(['VOD', 'BP'], 1), TypeError, "unhashable type: 'list'")
       and raises(lambda: {{'VOD': 100}: 1}, TypeError) and {('VOD', '2024-03-01'): 1, 42: 2, 'VOD': 3} is not None)
-check('D l2 summary "Keys must be hashable: strings, numbers and tuples" (a tuple holding a list is not hashable)',
-      not raises(lambda: {(1, [2]): 0}, TypeError), finding=11)
+check('D l2 s6 / summary "strings, numbers and tuples of them" (a tuple holding a list is not hashable)',
+      raises(lambda: {(1, [2]): 0}, TypeError) and 'tuples of them' in S(2, 6)['feedback']['correct']
+      and 'tuples of them' in L(2)['summary']['ideas'][2], finding=11)
 check('D l2 quiz3', set([1, 2, 3]) & set([2, 3, 4]) == {2, 3})
 
 
@@ -596,7 +606,8 @@ check('D l4 misc', raises(plus_eq, KeyError, "'VOD'") and (dd['BP'], len(dd)) ==
       and ''.join(sorted('tea')) == 'aet' and ''.join(sorted('rate')) == 'aert' == ''.join(sorted('tear'))
       and Counter('') == Counter('') and Counter('Listen') != Counter('silent') and Counter('dirty room') != Counter('dormitory'))
 bad_check = lambda a, b: all(a.count(c) == b.count(c) for c in a)
-check('D l4 s6 option d is described only as slow: it is a correct anagram check', not bad_check('ab', 'abc'), finding=12)
+check('D l4 s6 option d is called wrong as well as slow: ab and abc pass it', bad_check('ab', 'abc') and Counter('ab') != Counter('abc')
+      and 'It is wrong too: `ab` and `abc` pass' in W(S(4, 6))['options'][3]['why'], finding=12)
 check('D hw1 most_common tie', Counter(['VOD', 'BP', 'VOD', 'AZN', 'BP']).most_common(1)[0][0] == 'VOD')
 x5 = [3, 8, 1, 9, 4]
 for i in range(len(x5)):
@@ -768,7 +779,8 @@ for _ in range(400):
     br = min((j - i for i in range(len(z)) for j in range(i + 1, len(z) + 1) if sum(z[i:j]) >= k), default=None)
     oknn &= shortest_at_least(z, k) == br
 check('E shrinking window is right on positive lists', okc)
-check('E l6 summary note "safe only when every number is positive" (it is also right with zeros)', not oknn, finding=6)
+check('E l6 summary note "safe only when no number is negative" (right with zeros too)',
+      oknn and 'only when no number is negative' in L(6)['summary']['formula']['note'], finding=6)
 okc = True
 for _ in range(300):
     a = [random.randint(-4, 4) for _ in range(random.randint(0, 14))]
@@ -808,8 +820,12 @@ check('E hw2 (e) drawdown merges from (max, min, drawdown) of two halves', okc)
 r = [0.5, -0.4, 0.5]
 best_sum = max((sum(r[i:j]), (i, j)) for i in range(3) for j in range(i + 1, 4))
 best_cmp = max((math.prod(1 + q for q in r[i:j]) - 1, (i, j)) for i in range(3) for j in range(i + 1, 4))
-check('E l8 s6 / hw2 item2 "on daily returns the same loop finds the best stretch" (simple returns compound; sums need log returns or P&L)',
-      best_sum[1] == best_cmp[1], finding=7)
+lr = [math.log(1 + q) for q in r]
+best_log = max((sum(lr[i:j]), (i, j)) for i in range(3) for j in range(i + 1, 4))
+check('E l8 s6 / hw2 item2 now say log returns or P&L (simple returns compound; log returns add)',
+      best_sum[1] != best_cmp[1] and best_log[1] == best_cmp[1]
+      and 'On daily log returns, or daily P&L' in S(8, 6)['explain']['text']
+      and "daily P&L is the maximum subarray" in DOC['homework-2']['items'][2]['prose'], finding=7)
 lr = [math.log(1 + q) for q in r]
 best_log = max((sum(lr[i:j]), (i, j)) for i in range(3) for j in range(i + 1, 4))
 check('E with log returns the maximum-sum stretch is the best compounded stretch', best_log[1] == best_cmp[1])
