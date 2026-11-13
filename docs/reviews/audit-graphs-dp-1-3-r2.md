@@ -1,6 +1,6 @@
 # Concept audit, round 2: graphs-dp levels 1 to 3 (topic 1.8, Stage 1)
 
-Blind auditor: Fable. Scope: `app/content/courses/graphs-dp/` lessons l1 to l13, review-1 to review-3, homework-1 to homework-3 (19 files). Level 4 was not read. The earlier reviews, the round 1 audit, its fix pass and the author reports were opened only after the ledger and the findings below were committed (WIP commit named in the overlap section).
+Blind auditor: Fable. Scope: `app/content/courses/graphs-dp/` lessons l1 to l13, review-1 to review-3, homework-1 to homework-3 (19 files). Level 4 was not read. The earlier reviews, the round 1 audit, its fix pass and the author reports were opened only after the ledger and the findings below were committed (WIP commit `a218df99`).
 
 - Ledger: `docs/reports/audit-graphs-dp-1-3-r2-ledger.md`, 276 rows: 254 correct, 5 wrong, 17 imprecise, 0 misleading, 0 unverified.
 - Script: `docs/reports/graphs-dp-L1-3-r2-concepts.py`, 320 checks. It exits 1 today: the 20 failing checks are the content findings below (the fix pass turns them green by changing content).
@@ -77,3 +77,28 @@ Conditions checked and found stated where they matter: BFS shortest paths only f
 - `l8-groups.json` `screens[5].byKey["test-5"]`: a union with no root check fails test 4 first; a union that lowers the count before the check reaches test 5, so the line holds.
 - `l9-arbitrage-cycle.json` `screens[6]`: the floating-point sum is −5.551115123125783e−17 in Pyodide 0.27.7 as well as in CPython, so `True` is right on the page.
 - "About 1,000 frames by default" (l3) is true of CPython; the page sets 3,000. Every depth the content relies on (3,000, 5,000, 5,001, 90,000) is past both.
+
+## Overlap with the earlier reads
+
+Read after the WIP commit `a218df99`: `docs/reviews/review-1.8.md` (graphs-dp L1 to L3 part and its fix pass), `docs/reviews/audit-graphs-dp-1-3.md` (round 1 audit, its fix pass, the fix-pass read and the follow-up).
+
+What the earlier reads hold for this scope: the 1.8 review has no conceptual finding (three over-long explains and sentence lengths only). The round 1 audit has 18 findings and 9 unverified rows, all fixed; the fix-pass read has 1 finding, fixed in the follow-up. This audit read the content after those fixes, so it could not meet them again; every fixed sentence was read here as a ledger row and each one stands (for example l6 `with-d`, l3 `q-post` option `rev`, l5 screens[4], l7 screens[4] to [6] and [8], l11 `how`, homework-3 `half`).
+
+| | count |
+|---|---|
+| Conceptual findings by this audit only | 11 (finding 6 covers 12 lines) |
+| By an earlier read only (1.8 review 0, round 1 audit 18 plus 9 unverified rows, fix-pass read 1), all fixed before this read | 28 |
+| By both | 0 |
+| Earlier findings still standing in the content | 0 |
+
+How the two rounds relate, finding by finding:
+
+- Findings 1, 2 and 3 (slip values whose line names another mistake) and finding 5 (the hint naming G): round 1 reported that no `wrong[]` value or slip was incorrect and recomputed lines from their mistakes; these four were missed.
+- Finding 4 (l4 test 6) and finding 6 (12 `test-N` lines): round 1 finding 10 is the neighbouring class, three lines that named a slow method their test cannot catch. It did not run a submission per line, so the lines that name a mistake caught by an earlier test went unseen. None of the 12 lines is one of round 1's three.
+- Finding 8 sits in a sentence round 1 rewrote: its finding 1 fixed the last sentence of `l7` screens[5].explain and carried "both wrong" through, and the fix-pass read passed the row.
+- Finding 9 is the summary-level echo of round 1 finding 5 (the taught lazy code against textbook Dijkstra); the fix pass corrected screens[6] and left the summary trap.
+- Findings 7, 10 and 11 have no counterpart.
+
+New `wrong` findings that no earlier read found: **5** (findings 1 to 5), all minor. None changes a graded key; finding 1 changes one slip value and finding 4 one hidden test.
+
+By the convergence rule (at most one new `wrong` per three levels) the course does not close on round 2.
