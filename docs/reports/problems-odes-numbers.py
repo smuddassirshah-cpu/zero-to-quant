@@ -104,6 +104,8 @@ def numeric_part(lv, i, j, value, slips, shown):
     band = w['tol']['abs'] + 1e-12
     lv.claim(abs(w['answer'] - value) <= band, f'{tag} key {w["answer"]} within its band of {value:.8g}')
     sv_ = float(str(shown).replace('{,}', '').replace(',', ''))
+    if w.get('unit') == '%':
+        sv_ /= 100
     lv.claim(abs(sv_ - value) <= band, f'{tag} printed key {shown} is taken by the band')
     lv.expect('problems', f'items[{i}].parts[{j}].feedback.correct', shown if isinstance(shown, str) else float(shown))
     if float(w['answer']) != round(w['answer']) or band > 1e-9:
@@ -263,8 +265,94 @@ def level1():
     lv.check_wrongs('problems')
     return lv
 
+# ====================================================================== level 2
+def second_order(b, c, rhs, x0, v0):
+    X = sp.Function('X')
+    return sp.dsolve(sp.Eq(X(t).diff(t, 2) + b*X(t).diff(t) + c*X(t), rhs), X(t), ics={X(0): x0, X(t).diff(t).subs(t, 0): v0}).rhs
 
-LEVELS = [level1]
+
+def level2():
+    lv = Level('odes', 2)
+    rr = sp.Symbol('rr')
+
+    # ---- item 0: x'' + 4x' + 29x = 58, x(0) = x'(0) = 0
+    roots = sp.solve(rr**2 + 4*rr + 29, rr)
+    nr = np.roots([1, 4, 29])
+    lv.claim(sorted(complex(z).imag for z in roots) == [-5, 5] and np.allclose(sorted(nr.imag), [-5, 5]) and np.allclose(nr.real, -2), 'roots -2 +- 5i (sympy, numpy)')
+    expr_part(lv, 0, 0, [-2 + 5*sp.I, -2 - 5*sp.I], {'sign': [2 + 5*sp.I, 2 - 5*sp.I], 'no-half': [-4 + 10*sp.I, -4 - 10*sp.I]})
+    numeric_part(lv, 0, 1, 58 / 29, {'no-divide': 58}, 2)
+    xt = second_order(4, 29, 58, 0, 0)
+    c1 = sp.Symbol('c1'); c2 = sp.Symbol('c2')
+    gen = 2 + sp.exp(-2*t) * (c1*sp.cos(5*t) + c2*sp.sin(5*t))
+    cs = sp.solve([gen.subs(t, 0), sp.diff(gen, t).subs(t, 0)], [c1, c2])
+    lv.claim(cs[c1] == -2 and cs[c2] == sp.Rational(-4, 5), 'c1 = -2, c2 = -0.8')
+    lv.claim(sp.simplify(xt - gen.subs(cs)) == 0, 'dsolve agrees with 2 - e^{-2t}(2cos5t + 0.8 sin5t)')
+    sn = ivp(lambda tt, y: [y[1], 58 - 4*y[1] - 29*y[0]], [0, 0], 3)
+    lv.claim(abs(sn.sol(1.0)[0] - float(xt.subs(t, 1))) < 1e-8, 'x(1) closed form against solve_ivp')
+    c2v = float(cs[c2])
+    numeric_part(lv, 0, 2, c2v, {'no-decay': 0, 'sign': -c2v}, -0.8)
+    lv.claim(sp.simplify(sp.diff(xt, t) - sp.Rational(58, 5)*sp.exp(-2*t)*sp.sin(5*t)) == 0, "x' = 11.6 e^{-2t} sin 5t")
+    tp = brentq(lambda x: sn.sol(x)[1], 0.3, 0.9)
+    tpe = two(lv, 'first peak', sp.pi / 5, tp, 1e-7)
+    numeric_part(lv, 0, 3, tpe, {'period': round(2*math.pi/5, 4), 'omega0': round(math.pi/math.sqrt(29), 4)}, '0.6283')
+    over = (xt.subs(t, sp.pi/5) - 2) / 2
+    ov = two(lv, 'overshoot fraction', over, (sn.sol(tp)[0] - 2) / 2, 1e-7)
+    lv.claim(sp.simplify(over - sp.exp(-2*sp.pi/5)) == 0, 'overshoot = e^{-2pi/5}')
+    zeta = 2 / sp.sqrt(29)
+    lv.claim(abs(float(sp.exp(-zeta*sp.pi/sp.sqrt(1 - zeta**2))) - ov) < 1e-12, 'damping rule with zeta = 2/sqrt29 agrees')
+    trough = float((xt.subs(t, 2*sp.pi/5) - 2) / 2)
+    numeric_part(lv, 0, 4, ov, {'sign': round(-ov, 6), 'period': round(trough, 6)}, '28.46')
+    lv.claim(abs(float(xt.subs(t, sp.pi/5)) - 2.5692) < 5e-5, 'peak x = 2.5692')
+
+    # ---- item 1: x'' + 4x' + 5x = 10 cos t, x(0) = x'(0) = 0
+    expr_part(lv, 1, 0, [-2 + sp.I, -2 - sp.I], {'sign': [2 + sp.I, 2 - sp.I], 'no-half': [-4 + 2*sp.I, -4 - 2*sp.I]})
+    nr = np.roots([1, 4, 5])
+    lv.claim(np.allclose(sorted(nr.imag), [-1, 1]) and np.allclose(nr.real, -2), 'roots -2 +- i (numpy)')
+    Aa, Bb = sp.symbols('Aa Bb')
+    xp = Aa*sp.cos(t) + Bb*sp.sin(t)
+    res = sp.expand(sp.diff(xp, t, 2) + 4*sp.diff(xp, t) + 5*xp - 10*sp.cos(t))
+    ab = sp.solve([res.coeff(sp.cos(t)), res.coeff(sp.sin(t))], [Aa, Bb])
+    lv.claim(ab[Aa] == sp.Rational(5, 4) and ab[Bb] == sp.Rational(5, 4), 'A = B = 1.25')
+    resn = sp.expand(sp.diff(xp, t, 2) + 5*xp - 10*sp.cos(t))
+    abn = sp.solve([resn.coeff(sp.cos(t)), resn.coeff(sp.sin(t))], [Aa, Bb])
+    xps = Aa*sp.cos(t) + Bb*sp.sin(t)
+    ress = sp.expand(sp.diff(xps, t, 2) + 4*(Aa*sp.sin(t) - Bb*sp.cos(t)) + 5*xps - 10*sp.cos(t))  # first derivative with both signs flipped
+    abs_ = sp.solve([ress.coeff(sp.cos(t)), ress.coeff(sp.sin(t))], [Aa, Bb])
+    numeric_part(lv, 1, 1, 1.25, {'no-damping': float(abn[Bb]), 'sign': float(abs_[Bb])}, 1.25)
+    xt = second_order(4, 5, 10*sp.cos(t), 0, 0)
+    gen = sp.exp(-2*t)*(c1*sp.cos(t) + c2*sp.sin(t)) + sp.Rational(5, 4)*(sp.cos(t) + sp.sin(t))
+    cs = sp.solve([gen.subs(t, 0), sp.diff(gen, t).subs(t, 0)], [c1, c2])
+    lv.claim(cs[c1] == sp.Rational(-5, 4) and cs[c2] == sp.Rational(-15, 4) and sp.simplify(xt - gen.subs(cs)) == 0, 'c1 = -1.25, c2 = -3.75, dsolve agrees')
+    numeric_part(lv, 1, 2, -3.75, {'no-decay': -1.25, 'sign': 1.25, 'drop-sign': 3.75}, -3.75)
+    sn = ivp(lambda tt, y: [y[1], 10*math.cos(tt) - 4*y[1] - 5*y[0]], [0, 0], 2)
+    xv = two(lv, 'x(pi/2)', xt.subs(t, sp.pi/2), sn.sol(math.pi/2)[0], 1e-8)
+    at = lambda cc2: 1.25 + cc2*math.exp(-math.pi)
+    numeric_part(lv, 1, 3, xv, {'no-decay': round(at(-1.25), 3), 'steady': 1.25, 'sign': round(at(1.25), 3)}, '1.088')
+    lv.claim(abs(3.75*math.exp(-math.pi) - 0.1621) < 5e-5 and abs(math.exp(-math.pi) - 0.04321) < 5e-6 and abs(1.25*math.sqrt(2) - 1.77) < 0.005, 'printed 0.1621, 0.04321 and amplitude 1.77')
+
+    # ---- item 2: x'' + bx' + 25x = 0, x(0) = 2, x'(0) = -4
+    bb = sp.Symbol('bb', positive=True)
+    bc = sp.solve(bb**2 - 100, bb)
+    lv.claim(bc == [10], 'critical b = 10')
+    numeric_part(lv, 2, 0, 10, {'omega0': 5, 'no-root': 100}, 10)
+    lv.claim(sp.roots(rr**2 + 10*rr + 25, rr) == {-5: 2} and np.allclose(np.roots([1, 10, 25]), -5, atol=1e-6), 'repeated root -5')
+    numeric_part(lv, 2, 1, -5, {'sign': 5, 'no-half': -10}, -5)
+    xt = second_order(10, 25, 0, 2, -4)
+    lv.claim(sp.simplify(xt - (2 + 6*t)*sp.exp(-5*t)) == 0, 'dsolve gives (2 + 6t)e^{-5t}')
+    numeric_part(lv, 2, 2, 6, {'no-r': -4, 'sign': -4 - 10}, 6)
+    sn = ivp(lambda tt, y: [y[1], -10*y[1] - 25*y[0]], [2, -4], 1)
+    xv = two(lv, 'x(0.5)', xt.subs(t, sp.Rational(1, 2)), sn.sol(0.5)[0], 1e-8)
+    numeric_part(lv, 2, 3, xv, {'no-r': 0, 'sign': (2 - 14*0.5)*math.exp(-2.5), 'no-t': round(2*math.exp(-2.5), 4)}, '0.4104')
+    lv.claim(abs(math.exp(-2.5) - 0.082085) < 5e-7, 'e^{-2.5} = 0.082085')
+    lv.claim(min(sn.sol(np.linspace(0, 1, 201))[0]) > 0, 'gap never crosses zero (sampled)')
+    # under b = 8 or b = 12 the decay is slower or oscillates: the claim "any more is slower"
+    slow = max(np.roots([1, 12, 25]).real)
+    lv.claim(slow > -5, f'b = 12 has slowest root {slow:.3f} > -5, so slower')
+    lv.check_wrongs('problems')
+    return lv
+
+
+LEVELS = [level1, level2]
 
 if __name__ == '__main__':
     bad = 0
