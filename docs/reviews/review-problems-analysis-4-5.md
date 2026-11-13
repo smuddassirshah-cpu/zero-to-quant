@@ -81,3 +81,14 @@ Result. All 26 typed keys and the 4 choice keys agree with mine, and so do all 6
 - Neither mode pairs a function with its interval across courses ($\sqrt{x}$ on $[0, 4]$ in `integrals/l2-thinner`, note A).
 
 Inbox bullets written under `Raised later (review problems analysis 4 to 5):`.
+
+## Fix pass
+
+1. Fixed (with note A). `p-root-sums` rewritten on $\sqrt{x}$ over $[0, 9]$, nine pieces: $U_9 = 19.3060005$, $L_9 = 16.3060005$, gap $\tfrac{27}{n}$, integral 18, $U_9 - 18 = 1.3060005$, smallest $n$ 541. Part 4 now takes the value its own stated input gives ($19.3060 - 18 = 1.3060$, key tol 5e-05 takes it), and the printed subtraction is true. Slips recomputed: `lower` 16.3060 and 1.6940, `ninth` 2.1451 (was `quarter`), `gap` 3, `no-coeff` 27, `flip` 40.5, `unit-width` $\tfrac3n$ and 61, `no-height` $\tfrac9n$ and 181, `equal` 540. Grep of `app/content`: no $\sqrt{x}$ on $[0, 9]$, no 541-piece or 19.306 context (other hits are data or unrelated numbers).
+2. Fixed with a changed number set. The reader's $t^2 - 8t + 12 = (t - 2)(t - 6)$ is `functions/l11-reading-a-graph` prose "$f(x) = (x - 2)(x - 6)$" and `quadratics/l11` "$3(x - 2)(x - 6)$", so it was not fresh (the reader's grep missed it). Disputed that number set; applied the same design with $f(t) = t^2 - 12t + 27 = (t - 3)(t - 9)$ on $[0, 15]$ (a root ratio of 3 keeps $F = \tfrac{x(x - 9)^2}{3}$ factorised). Checked: $F(0) = 0$, $F(3) = 36$, $F(9) = 0$, $F(15) = 180$ (maximum, at the end point only); $\sup |f| = 72$ at 15, $f(0) = 27$; smallest $n$ with $\tfrac{72}{n} < 0.07$ is 1029 (slips 1028, 386, 15); true gap at 1029 below 0.07; $F(14.5) \approx 146.21$; no-third 2430. 0 occurrences of the function, interval or $x(x - 9)^2$ in `app/content`.
+3. Fixed. $p = (0.15, -0.4)$: $d_1 = 0.55$, $r = 0.45$, $s = \tfrac{0.45}{\sqrt2} = 0.3181981$ (0.3182 and the $\sqrt2 = 1.414$ rounding are taken at tol 6e-05), $t = 0.225$, edge point $(0.375, -0.625)$. Slips: `straight` 0.4272 and 0.5728, `largest` 0.4, `whole` 0.55, `times` 0.6364 and 0.9, `same` 0.45, `half` 0.225, `root-two` 0.3182. Part 5 option text updated to 0.225. Grep: no $(0.15, -0.4)$ taxicab setting in `app/content` (the two string hits are data tables).
+4. Fixed. `signs` $-0.25$ and new `signs-size` 0.25, each with its own line; both in the author's script.
+5. Fixed. The root of `p-cubic-bracket` parts 4 and 5 is $r$ throughout (question, feedback, explain); $c$ stays part 1 and 2's mean value point.
+Note A: ruled reuse and applied as finding 1.
+
+Gates: author script 1014 of 1014, exit 0; reader script 372 content checks, 0 findings, 0 failures, exit 0 (FINDING checks now assert the new values; they also check that functions/l11 and quadratics/l11 do not hold the new integrand); validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 15 widgets, 0 failures for both sets; `playthrough.mjs --problems analysis/problems-4` and `-5`, with and without `--mobile`: all passed.

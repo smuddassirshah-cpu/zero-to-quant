@@ -523,72 +523,78 @@ shape45(4, {'p-cubic-bracket': {'l15-epsilon-delta', 'l16-intermediate-value', '
 
 # ---------------------------------------------------------------- Level 5
 I = 'p-root-sums'
-U4 = sum(sp.sqrt(j) for j in range(1, 5))
-L4 = sum(sp.sqrt(j) for j in range(0, 4))
-num(5, I, 1, U4, sum(math.sqrt(j) for j in range(1, 5)), {'lower': L4, 'quarter': U4 / 4}, rounded=6.1463)
-ok(U4 - L4 == 2, 'L5 P4 lower sum is 2 less')
+U9 = sum(sp.sqrt(j) for j in range(1, 10))
+L9 = sum(sp.sqrt(j) for j in range(0, 9))
+num(5, I, 1, U9, sum(math.sqrt(j) for j in range(1, 10)), {'lower': L9, 'ninth': U9 / 9}, rounded=19.3060)
+ok(U9 - L9 == 3, 'L5 P4 lower sum is 3 less')
+says45(5, I, 1, 'correct', '2.82843 + 3 = 19.3060')
+ok(abs((1 + 1.41421 + 1.73205 + 2 + 2.23607 + 2.44949 + 2.64575 + 2.82843 + 3) - 19.3060) < 5e-5, 'L5 P4 printed five-place sum gives 19.3060')
 j = sp.Symbol('j', integer=True, positive=True)
-gap = 4 / n * (sp.sqrt(4 * n / n) - sp.sqrt(0 * n / n))  # the shifted sums cancel but for the last and first heights
-ok(sp.simplify(gap - 8 / n) == 0, 'L5 P4 telescoped gap 8/n by sympy')
+gap = 9 / n * (sp.sqrt(9 * n / n) - sp.sqrt(0 * n / n))  # the shifted sums cancel but for the last and first heights
+ok(sp.simplify(gap - 27 / n) == 0, 'L5 P4 telescoped gap 27/n by sympy')
 for nv in (3, 10, 37):
-    Uv = sum(4 / nv * math.sqrt(4 * i / nv) for i in range(1, nv + 1))
-    Lv_ = sum(4 / nv * math.sqrt(4 * i / nv) for i in range(0, nv))
-    ok(abs(Uv - Lv_ - 8 / nv) < 1e-12, f'L5 P4 numeric gap 8/n at n = {nv}')
-expr45(5, I, 2, 8 / n, {'unit-width': 2 / n, 'no-height': 4 / n})
-integral = sp.integrate(sp.sqrt(X), (X, 0, 4))
+    Uv = sum(9 / nv * math.sqrt(9 * i / nv) for i in range(1, nv + 1))
+    Lv_ = sum(9 / nv * math.sqrt(9 * i / nv) for i in range(0, nv))
+    ok(abs(Uv - Lv_ - 27 / nv) < 1e-12, f'L5 P4 numeric gap 27/n at n = {nv}')
+expr45(5, I, 2, 27 / n, {'unit-width': 3 / n, 'no-height': 9 / n})
+integral = sp.integrate(sp.sqrt(X), (X, 0, 9))
 ok(sp.diff(sp.Rational(2, 3) * X ** sp.Rational(3, 2), X) == sp.sqrt(X), 'L5 P4 G-prime = sqrt x')
-num(5, I, 3, integral, mp.quad(mp.sqrt, [0, 4]), {'no-coeff': 4 ** 1.5, 'flip': 1.5 * 4 ** 1.5}, rounded=5.3333, agree=1e-8)
-ok(L4 < integral < U4, 'L5 P4 L4 < 16/3 < U4')
-num(5, I, 4, U4 - integral, sum(math.sqrt(i) for i in range(1, 5)) - 16 / 3, {'gap': U4 - L4, 'lower': integral - L4}, rounded=0.8129)
-says45(5, I, 4, 'explain', '6.14626 - 5.33333 = 0.81293')
-ok(abs((6.14626 - 5.33333) - 0.81293) < 1e-9, 'L5 P4 printed subtraction holds')
-nn = first(lambda m: F(8, m) < F(2, 100))
-num(5, I, 5, nn, ceil_above(8 / 0.02), {'equal': 400, 'unit-width': first(lambda m: F(2, m) < F(2, 100)), 'no-height': first(lambda m: F(4, m) < F(2, 100))})
+num(5, I, 3, integral, mp.quad(mp.sqrt, [0, 9]), {'no-coeff': 9 ** 1.5, 'flip': 1.5 * 9 ** 1.5}, rounded=18.0000, agree=1e-8)
+ok(L9 < integral < U9, 'L5 P4 L9 < 18 < U9')
+num(5, I, 4, U9 - integral, sum(math.sqrt(i) for i in range(1, 10)) - 18, {'gap': U9 - L9, 'lower': integral - L9}, rounded=1.3060)
+# the part says "Using U_9 ~ 19.3060 ... and 18": that rounded input gives the same 4-place answer
+ok(round(19.3060 - 18, 4) == 1.3060 and abs(1.3060 - 1.3060005) <= 5e-5, 'L5 P4 stated input 19.3060 - 18 = 1.3060 is accepted')
+says45(5, I, 4, 'explain', '19.30600 - 18 = 1.30600')
+nn = first(lambda m: F(27, m) < F(5, 100))
+num(5, I, 5, nn, ceil_above(27 / 0.05), {'equal': 540, 'unit-width': first(lambda m: F(3, m) < F(5, 100)), 'no-height': first(lambda m: F(9, m) < F(5, 100))})
+ok(nn == 541, 'L5 P4 smallest n is 541')
 
 I = 'p-diamond-ball'
-p5 = (F(2, 10), F(-5, 10))
+p5 = (F(15, 100), F(-40, 100))
 d1 = lambda a, b: abs(a[0] - b[0]) + abs(a[1] - b[1])
 d1p = d1((0, 0), p5)
-num(5, I, 1, d1p, abs(0.2) + abs(-0.5), {'signs': abs(p5[0] + p5[1]), 'straight': math.sqrt(0.29), 'largest': 0.5})
+num(5, I, 1, d1p, abs(0.15) + abs(-0.4), {'signs': p5[0] + p5[1], 'signs-size': abs(p5[0] + p5[1]), 'straight': math.sqrt(0.1825), 'largest': 0.4})
 r5 = 1 - d1p
 def fits_d1(rr):
     # corners of the diamond B_1(p, rr) are its extreme points; U is convex
-    return all(abs(a) + abs(b) <= 1 + 1e-12 for a, b in ((0.2 + rr, -0.5), (0.2 - rr, -0.5), (0.2, -0.5 + rr), (0.2, -0.5 - rr)))
+    return all(abs(a) + abs(b) <= 1 + 1e-12 for a, b in ((0.15 + rr, -0.4), (0.15 - rr, -0.4), (0.15, -0.4 + rr), (0.15, -0.4 - rr)))
 r_alt = max(i / 10000 for i in range(1, 10000) if fits_d1(i / 10000))
-num(5, I, 2, r5, r_alt, {'whole': d1p, 'straight': 1 - math.sqrt(0.29)})
-ok(d1((F(35, 100), F(-65, 100)), p5) == F(3, 10) and abs(F(35, 100)) + abs(F(-65, 100)) == 1, 'L5 P5 (0.35, -0.65) is at d1 0.3 from p and on the edge')
-s5 = sp.Rational(3, 10) / sp.sqrt(2)
-s_line = (1 - (0.2 - (-0.5))) / math.sqrt(2)  # distance from p to the edge y1 - y2 = 1
-num(5, I, 3, s5, s_line, {'times': 0.3 * math.sqrt(2), 'same': 0.3, 'half': 0.15}, rounded=0.2121)
-t5 = F(3, 10) / 2
-t_alt = max(i / 10000 for i in range(1, 10000) if all(abs(0.2 + a * i / 10000) + abs(-0.5 + b * i / 10000) <= 1 + 1e-12 for a in (-1, 1) for b in (-1, 1)))
-num(5, I, 4, t5, t_alt, {'times': 0.6, 'root-two': 0.3 / math.sqrt(2), 'same': 0.3})
+num(5, I, 2, r5, r_alt, {'whole': d1p, 'straight': 1 - math.sqrt(0.1825)})
+ok(d1((F(375, 1000), F(-625, 1000)), p5) == F(45, 100) and abs(F(375, 1000)) + abs(F(-625, 1000)) == 1, 'L5 P5 (0.375, -0.625) is at d1 0.45 from p and on the edge')
+s5 = sp.Rational(45, 100) / sp.sqrt(2)
+s_line = (1 - (0.15 - (-0.4))) / math.sqrt(2)  # distance from p to the edge y1 - y2 = 1
+num(5, I, 3, s5, s_line, {'times': 0.45 * math.sqrt(2), 'same': 0.45, 'half': 0.225}, rounded=0.3182)
+ok(abs(round(0.45 / 1.414, 4) - 0.3182) < 1e-12 and abs(0.3182 - 0.3181981) <= 6e-5, 'L5 P5 part 3 takes 0.3182 (also from sqrt2 = 1.414)')
+t5 = F(45, 100) / 2
+t_alt = max(i / 10000 for i in range(1, 10000) if all(abs(0.15 + a * i / 10000) + abs(-0.4 + b * i / 10000) <= 1 + 1e-12 for a in (-1, 1) for b in (-1, 1)))
+num(5, I, 4, t5, t_alt, {'times': 0.9, 'root-two': 0.45 / math.sqrt(2), 'same': 0.45})
 choice(5, I, 5, 'all')
 ok(all(abs(1 - 1 / k_) + 0 < 1 for k_ in range(2, 50)), 'L5 P5 points (1 - 1/n, 0) lie in U')
 
 I = 'p-accumulated-cubic'
 t = sp.Symbol('t')
-fF = t ** 2 - 4 * t + 3
+fF = t ** 2 - 12 * t + 27
 Fx = sp.integrate(fF, (t, 0, X))
-for xv in (0.5, 2.0, 4.5):
-    ok(abs(float(Fx.subs(X, xv)) - float(mp.quad(lambda u: u ** 2 - 4 * u + 3, [0, xv]))) < 1e-12, f'L5 P6 F({xv}) by quadrature')
-expr45(5, I, 1, Fx, {'no-third': X ** 3 - 2 * X ** 2 + 3 * X, 'no-half': X ** 3 / 3 - 4 * X ** 2 + 3 * X, 'derivative': 2 * X - 4})
-ok(sp.factor(Fx) == X * (X - 3) ** 2 / 3, 'L5 P6 F = x(x-3)^2/3')
+for xv in (0.5, 2.0, 11.5):
+    ok(abs(float(Fx.subs(X, xv)) - float(mp.quad(lambda u: u ** 2 - 12 * u + 27, [0, xv]))) < 1e-9, f'L5 P6 F({xv}) by quadrature')
+expr45(5, I, 1, Fx, {'no-third': X ** 3 - 6 * X ** 2 + 27 * X, 'no-half': X ** 3 / 3 - 12 * X ** 2 + 27 * X, 'derivative': 2 * X - 12})
+ok(sp.factor(Fx) == X * (X - 9) ** 2 / 3, 'L5 P6 F = x(x-9)^2/3')
 zf = sorted(sp.solve(fF, t))
-zf_alt = sorted({round(i / 1000) for i in range(1, 5000) if abs((i / 1000) ** 2 - 4 * i / 1000 + 3) < 1e-9})
-numset45(5, I, 2, [int(z) for z in zf], zf_alt, {'zeros-of-big-f': [0, 3]})
-vals = {xv: Fx.subs(X, xv) for xv in (0, 1, 3, 5)}
-ok(vals == {0: 0, 1: sp.Rational(4, 3), 3: 0, 5: sp.Rational(20, 3)}, 'L5 P6 F at 0, 1, 3, 5')
-Fgrid = max(float(Fx.subs(X, i / 1000)) for i in range(0, 5001, 5))
-num(5, I, 3, max(vals.values()), Fgrid, {'critical': sp.Rational(4, 3), 'no-third': max(xv ** 3 - 2 * xv ** 2 + 3 * xv for xv in (0, 1, 3, 5))}, rounded=6.6667, agree=1e-9)
+zf_alt = sorted({round(i / 1000) for i in range(1, 15000) if abs((i / 1000) ** 2 - 12 * i / 1000 + 27) < 1e-9})
+numset45(5, I, 2, [int(z) for z in zf], zf_alt, {'zeros-of-big-f': [0, 9]})
+vals = {xv: Fx.subs(X, xv) for xv in (0, 3, 9, 15)}
+ok(vals == {0: 0, 3: 36, 9: 0, 15: 180}, 'L5 P6 F at 0, 3, 9, 15')
+Fgrid = max(float(Fx.subs(X, i / 1000)) for i in range(0, 15001, 5))
+num(5, I, 3, max(vals.values()), Fgrid, {'critical': 36, 'no-third': max(xv ** 3 - 6 * xv ** 2 + 27 * xv for xv in (0, 3, 9, 15))}, rounded=180.0, agree=1e-9)
+ok(15 ** 3 - 6 * 15 ** 2 + 27 * 15 == 2430 and sp.Rational(15 ** 3, 3) - 1350 + 405 == 180, 'L5 P6 F(15) arithmetic')
 choice(5, I, 4, 'not-closed')
-ok(Fx.subs(X, sp.Rational(9, 2)) == sp.Rational(27, 8), 'L5 P6 F(4.5) = 3.375')
-ok(all(Fx.subs(X, sp.Rational(i, 100)) < sp.Rational(20, 3) for i in range(0, 500)), 'L5 P6 no point of [0, 5) reaches 20/3')
-ok(max(abs(float(fF.subs(t, i / 1000))) for i in range(0, 5001)) == 8.0, 'L5 P6 |f| <= 8 on [0, 5], reached at 5')
-n6 = first(lambda m: F(8, m) < F(3, 1000))
-num(5, I, 5, n6, ceil_above(8 / 0.003), {'round-down': n6 - 1, 'left-end': first(lambda m: F(3, m) < F(3, 1000)), 'no-bound': first(lambda m: F(1, m) < F(3, 1000))})
-ok(abs(8 / 2666 - 0.0030008) < 5e-8 and abs(8 / 0.003 - 2666.7) < 0.05, 'L5 P6 8/2666 ~ 0.0030008 and 8/0.003 ~ 2666.7')
-ok(sp.Rational(20, 3) - Fx.subs(X, 5 - sp.Rational(1, n6)) < sp.Rational(3, 1000), 'L5 P6 the true gap at n = 2667 is below 0.003')
+ok(round(float(Fx.subs(X, sp.Rational(29, 2))), 2) == 146.21, 'L5 P6 F(14.5) = 146.21')
+ok(all(Fx.subs(X, sp.Rational(i, 100)) < 180 for i in range(0, 1500)), 'L5 P6 no point of [0, 15) reaches 180')
+ok(max(abs(float(fF.subs(t, i / 1000))) for i in range(0, 15001)) == 72.0 and fF.subs(t, 0) == 27, 'L5 P6 |f| <= 72 on [0, 15], reached at 15; f(0) = 27')
+n6 = first(lambda m: F(72, m) < F(7, 100))
+num(5, I, 5, n6, ceil_above(72 / 0.07), {'round-down': n6 - 1, 'left-end': first(lambda m: F(27, m) < F(7, 100)), 'no-bound': first(lambda m: F(1, m) < F(7, 100))})
+ok(n6 == 1029 and abs(72 / 1028 - 0.07004) < 5e-6 and abs(72 / 0.07 - 1028.6) < 0.05, 'L5 P6 72/1028 ~ 0.07004 and 72/0.07 ~ 1028.6')
+ok(180 - Fx.subs(X, 15 - sp.Rational(1, n6)) < sp.Rational(7, 100), 'L5 P6 the true gap at n = 1029 is below 0.07')
 shape45(5, {'p-root-sums': {'l20-riemann-integral', 'l21-fundamental-theorem-proved'},
             'p-diamond-ball': {'l22-metric-spaces', 'l23-open-and-closed'},
             'p-accumulated-cubic': {'l21-fundamental-theorem-proved', 'l23-open-and-closed', 'l24-compactness'}})

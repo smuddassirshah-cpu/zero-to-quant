@@ -269,45 +269,44 @@ ok(S(1e-9) < 1e-4, f"{I} S continuous at 0 (S ~ sqrt(pi x)/2)")
 
 # ========================================================= 5a p-root-sums
 I = "p-root-sums"
-U4 = sum(math.sqrt(j) for j in range(1, 5))
-L4 = sum(math.sqrt(j) for j in range(0, 4))
-ok(abs(U4 - (3 + sp.sqrt(2) + sp.sqrt(3)).evalf()) < 1e-12 and abs(U4 - L4 - 2) < 1e-12, f"{I} U_4, L_4")
-check_key(P5, I, 1, U4, accepted=(6.1463,))
-check_wrong(P5, I, 1, {"lower": L4, "quarter": U4 / 4})
+# Fix pass: sqrt x on [0, 9] (note A ruled reuse, with finding 1 folded in).
+U9 = sum(math.sqrt(j) for j in range(1, 10))
+L9 = sum(math.sqrt(j) for j in range(0, 9))
+ok(abs(U9 - 19.3060005) < 5e-8 and abs(U9 - L9 - 3) < 1e-12, f"{I} U_9, L_9")
+check_key(P5, I, 1, U9, accepted=(19.3060,))
+check_wrong(P5, I, 1, {"lower": L9, "ninth": U9 / 9})
 nn = sp.symbols("n", positive=True, integer=True)
 j = sp.symbols("j", integer=True)
-gap = sp.simplify(sp.summation((4 / nn) * (sp.sqrt(4 * j / nn) - sp.sqrt(4 * (j - 1) / nn)), (j, 1, nn)))
-ok(sp.simplify(gap - 8 / nn) == 0, f"{I} telescoped gap {gap}")
-for N in (4, 10, 401):  # route 2: direct sums
-    Un = sum(4 / N * math.sqrt(4 * i / N) for i in range(1, N + 1))
-    Ln = sum(4 / N * math.sqrt(4 * i / N) for i in range(0, N))
-    ok(abs(Un - Ln - 8 / N) < 1e-9 and Ln < 16 / 3 < Un, f"{I} sums at n={N}")
-has(P5, I, 2, "\\frac{8}{n}")
-integral = sp.integrate(sp.sqrt(x), (x, 0, 4))
-ok(integral == sp.Rational(16, 3) and abs(float(integral) - 4 * sum(math.sqrt(4 * (i + 0.5) / 10**5) for i in range(10**5)) / 10**5) < 1e-5,
+gap = sp.simplify(sp.summation((9 / nn) * (sp.sqrt(9 * j / nn) - sp.sqrt(9 * (j - 1) / nn)), (j, 1, nn)))
+ok(sp.simplify(gap - 27 / nn) == 0, f"{I} telescoped gap {gap}")
+for N in (9, 10, 541):  # route 2: direct sums
+    Un = sum(9 / N * math.sqrt(9 * i / N) for i in range(1, N + 1))
+    Ln = sum(9 / N * math.sqrt(9 * i / N) for i in range(0, N))
+    ok(abs(Un - Ln - 27 / N) < 1e-9 and Ln < 18 < Un, f"{I} sums at n={N}")
+has(P5, I, 2, "\\frac{27}{n}")
+integral = sp.integrate(sp.sqrt(x), (x, 0, 9))
+ok(integral == 18 and abs(9 * sum(math.sqrt(9 * (i + 0.5) / 10**5) for i in range(10**5)) / 10**5 - 18) < 1e-5,
    f"{I} integral")
 ok(sp.limit((sp.Rational(2, 3) * xx ** sp.Rational(3, 2)) / xx, xx, 0, "+") == 0, f"{I} G'(0+) = 0 = sqrt 0")
-check_key(P5, I, 3, Fr(16, 3), accepted=(5.3333,))
-check_wrong(P5, I, 3, {"no-coeff": 8, "flip": 12})
-check_key(P5, I, 4, U4 - 16 / 3, accepted=(0.8129,))
-check_wrong(P5, I, 4, {"gap": 2, "lower": 16 / 3 - L4})
-# The part says "Using U_4 ~ 6.1463 ... and 16/3"; that rounded value gives 0.8130.
-from_rounded = round(6.1463 - 16 / 3, 4)
-ok(from_rounded == 0.8130, f"{I} part 4 rounded-input value {from_rounded}")
-ok(near(key(P5, I, 4), from_rounded, tol(P5, I, 4)),
-   f"{I} part 4 refuses 0.8130, the value its own stated input 6.1463 gives (key {key(P5, I, 4)}, tol {tol(P5, I, 4)})",
-   finding="1")
-ok("6.1463 - 5.3333 \\approx 0.8129" not in text(P5, I, 4),
-   f"{I} part 4 feedback prints 6.1463 - 5.3333 = 0.8129; the difference is 0.8130", finding="1")
-n0 = smallest(lambda n: Fr(8, n) < Fr(2, 100))
-ok(n0 == 401, f"{I} smallest n")
+check_key(P5, I, 3, Fr(18), accepted=(18.0,))
+check_wrong(P5, I, 3, {"no-coeff": 27, "flip": 40.5})
+check_key(P5, I, 4, U9 - 18, accepted=(1.3060,))
+check_wrong(P5, I, 4, {"gap": 3, "lower": 18 - L9})
+# The part says "Using U_9 ~ 19.3060 ... and 18"; that rounded value gives the same 4-place answer (finding 1 cured).
+from_rounded = round(19.3060 - 18, 4)
+ok(from_rounded == 1.3060 and near(key(P5, I, 4), from_rounded, tol(P5, I, 4)),
+   f"{I} part 4 takes the value its own stated input 19.3060 gives (key {key(P5, I, 4)}, tol {tol(P5, I, 4)})", finding="1")
+ok("19.3060 - 18 = 1.3060" in text(P5, I, 4), f"{I} part 4 feedback subtraction is true", finding="1")
+n0 = smallest(lambda n: Fr(27, n) < Fr(5, 100))
+ok(n0 == 541, f"{I} smallest n")
 check_key(P5, I, 5, n0)
-check_wrong(P5, I, 5, {"equal": 400, "unit-width": smallest(lambda n: Fr(2, n) < Fr(2, 100)),
-                       "no-height": smallest(lambda n: Fr(4, n) < Fr(2, 100))})
+check_wrong(P5, I, 5, {"equal": 540, "unit-width": smallest(lambda n: Fr(3, n) < Fr(5, 100)),
+                       "no-height": smallest(lambda n: Fr(9, n) < Fr(5, 100))})
+ok("[0, 4]" not in text(P5, I), f"{I} note A: no [0, 4] left", finding="A")
 
 # ======================================================= 5b p-diamond-ball
 I = "p-diamond-ball"
-p = (Fr(2, 10), Fr(-5, 10))
+p = (Fr(15, 100), Fr(-40, 100))
 
 
 def d1(u, v):
@@ -323,18 +322,19 @@ def dinf(u, v):
 
 
 O = (Fr(0), Fr(0))
-ok(d1(O, p) == Fr(7, 10), f"{I} d1(0, p)")
+ok(d1(O, p) == Fr(55, 100), f"{I} d1(0, p)")
 check_key(P5, I, 1, d1(O, p))
-check_wrong(P5, I, 1, {"signs": abs(p[0] + p[1]), "straight": d2(O, p), "largest": dinf(O, p)})
+check_wrong(P5, I, 1, {"signs": p[0] + p[1], "signs-size": abs(p[0] + p[1]), "straight": d2(O, p), "largest": dinf(O, p)})
 r = 1 - d1(O, p)
 check_key(P5, I, 2, r)
 check_wrong(P5, I, 2, {"whole": d1(O, p), "straight": 1 - d2(O, p)})
-edge = (Fr(35, 100), Fr(-65, 100))
+edge = (Fr(375, 1000), Fr(-625, 1000))
 ok(d1(O, edge) == 1 and d1(p, edge) == r and dinf(p, edge) == r / 2, f"{I} edge point")
 s = float(r) / math.sqrt(2)
-check_key(P5, I, 3, s, accepted=(0.2121,))
+check_key(P5, I, 3, s, accepted=(0.3182,))
 check_wrong(P5, I, 3, {"times": float(r) * math.sqrt(2), "same": r, "half": r / 2})
 ok(abs(s - abs(float(p[0] - p[1]) - 1) / math.sqrt(2)) < 1e-12, f"{I} s is the true distance to the edge y1 - y2 = 1")
+ok(near(key(P5, I, 3), round(0.45 / 1.414, 4), tol(P5, I, 3)), f"{I} part 3 takes the rounding from sqrt2 = 1.414")
 check_key(P5, I, 4, r / 2)
 check_wrong(P5, I, 4, {"times": 2 * r, "root-two": s, "same": r})
 # route 2: sample the three balls and the comparison inequalities
@@ -353,90 +353,59 @@ for _ in range(20000):
     if e1 < float(r) or e2 < s or ei < float(r) / 2:
         allin &= abs(q[0]) + abs(q[1]) < 1
 ok(allin and ineq, f"{I} sampled balls lie in U; d1 <= sqrt2 d2, d1 <= 2 dinf")
-ok(abs(0.3 * 1.01) + 0 > 0 and d1(O, (p[0] + Fr(3, 10), p[1] - Fr(3, 10))) > 1, f"{I} square of half-side 0.3 pokes out")
+ok(d1(O, (p[0] + Fr(45, 100), p[1] - Fr(45, 100))) > 1, f"{I} square of half-side 0.45 pokes out")
 opts = {o["id"]: o for o in part(P5, I, 5)["widget"]["options"]}
 ok([o for o in opts if opts[o].get("correct")] == ["all"], f"{I} part 5 key")
-# same pair as l23 "Room in a square": 1 - 0.7 = 0.3 (finding 3)
+# no longer l23's pair (finding 3), and the slip lines are true (finding 4)
 l23 = open(os.path.join(BASE, "l23-open-and-closed.json")).read()
 ok(not ("1 - 0.7 = 0.3" in l23 and key(P5, I, 1) == 0.7 and key(P5, I, 2) == 0.3),
-   f"{I} parts 1 and 2 key pair (0.7, 0.3) is l23's '$r = 1 - 0.7 = 0.3$'", finding="3")
-ok(any(abs(w["value"] + 0.3) < 1e-9 for w in wrongs(P5, I, 1).values()) or key(P5, I, 1) != 0.7,
-   f"{I} part 1 slip 0.2 + (-0.5) is -0.3; only 0.3 has a line", finding="4")
+   f"{I} parts 1 and 2 key pair is l23's '$r = 1 - 0.7 = 0.3$'", finding="3")
+ok(any(abs(w["value"] + 0.25) < 1e-9 for w in wrongs(P5, I, 1).values()) and
+   any(abs(w["value"] - 0.25) < 1e-9 for w in wrongs(P5, I, 1).values()),
+   f"{I} part 1 slip 0.15 + (-0.4) = -0.25 and its size 0.25 both have a line", finding="4")
 
 # =================================================== 5c p-accumulated-cubic
 I = "p-accumulated-cubic"
-fi = t_**2 - 4 * t_ + 3
+# Fix pass: f(t) = t^2 - 12t + 27 = (t - 3)(t - 9) on [0, 15]. The reader's t^2 - 8t + 12 is functions/l11's (x - 2)(x - 6).
+fi = t_**2 - 12 * t_ + 27
 F = sp.integrate(fi, (t_, 0, x))
-ok(sp.expand(F - (x**3 / 3 - 2 * x**2 + 3 * x)) == 0 and sp.expand(F - x * (x - 3) ** 2 / 3) == 0, f"{I} F")
-has(P5, I, 1, "\\frac{x^3}{3}-2x^2+3x")
-ok(sorted(sp.solve(fi, t_)) == [1, 3] == sorted(key(P5, I, 2)), f"{I} critical points")
-ok(sorted(sp.solve(F, x)) == [0, 3] and wrongs(P5, I, 2)["zeros-of-big-f"]["value"].replace(" ", "") == "0,3", f"{I} zeros of F")
-Fv = {c: F.subs(x, c) for c in (0, 1, 3, 5)}
-ok(Fv == {0: 0, 1: sp.Rational(4, 3), 3: 0, 5: sp.Rational(20, 3)}, f"{I} candidates {Fv}")
-gridF = [Fr(i, 1000) for i in range(0, 5001)]
-Fg = [g**3 / 3 - 2 * g**2 + 3 * g for g in gridF]
-ok(max(Fg) == Fr(20, 3) and Fg.index(max(Fg)) == 5000 and max(Fg[:-1]) < Fr(20, 3), f"{I} max at 5 only")
-check_key(P5, I, 3, Fr(20, 3), accepted=(6.6667,))
-check_wrong(P5, I, 3, {"critical": Fr(4, 3), "no-third": 125 - 50 + 15})
+ok(sp.expand(F - (x**3 / 3 - 6 * x**2 + 27 * x)) == 0 and sp.expand(F - x * (x - 9) ** 2 / 3) == 0, f"{I} F")
+has(P5, I, 1, "\\frac{x^3}{3}-6x^2+27x")
+ok(sorted(sp.solve(fi, t_)) == [3, 9] == sorted(key(P5, I, 2)), f"{I} critical points")
+ok(sorted(sp.solve(F, x)) == [0, 9] and wrongs(P5, I, 2)["zeros-of-big-f"]["value"].replace(" ", "") == "0,9", f"{I} zeros of F")
+Fv = {c: F.subs(x, c) for c in (0, 3, 9, 15)}
+ok(Fv == {0: 0, 3: 36, 9: 0, 15: 180}, f"{I} candidates {Fv}")
+gridF = [Fr(i, 1000) for i in range(0, 15001)]
+Fg = [g**3 / 3 - 6 * g**2 + 27 * g for g in gridF]
+ok(max(Fg) == 180 and Fg.index(max(Fg)) == 15000 and max(Fg[:-1]) < 180, f"{I} max at 15 only")
+check_key(P5, I, 3, Fr(180), accepted=(180.0,))
+check_wrong(P5, I, 3, {"critical": 36, "no-third": 3375 - 1350 + 405})
 opts = {o["id"]: o for o in part(P5, I, 4)["widget"]["options"]}
 ok([o for o in opts if opts[o].get("correct")] == ["not-closed"], f"{I} part 4 key")
-ok(F.subs(x, sp.Rational(9, 2)) == sp.Rational(27, 8) and float(sp.Rational(27, 8)) == 3.375, f"{I} F(4.5)")
-supf = max(abs(g * g - 4 * g + 3) for g in gridF)
-ok(supf == 8 and abs(fi.subs(t_, 0)) == 3 and fi.subs(t_, 2) == -1, f"{I} sup |f| = 8 at 5")
-n1 = smallest(lambda n: Fr(8, n) < Fr(3, 1000))
-ok(n1 == 2667 and round(8 / 2666, 7) == 0.0030008, f"{I} n")
+ok(F.subs(x, sp.Rational(29, 2)) == sp.Rational(29, 2) * sp.Rational(11, 2) ** 2 / 3
+   and round(float(F.subs(x, sp.Rational(29, 2))), 2) == 146.21, f"{I} F(14.5)")
+supf = max(abs(g * g - 12 * g + 27) for g in gridF)
+ok(supf == 72 and abs(fi.subs(t_, 0)) == 27 and fi.subs(t_, 6) == -9, f"{I} sup |f| = 72 at 15")
+n1 = smallest(lambda n: Fr(72, n) < Fr(7, 100))
+ok(n1 == 1029 and round(72 / 1028, 5) == 0.07004, f"{I} n")
 check_key(P5, I, 5, n1)
-check_wrong(P5, I, 5, {"round-down": 2666, "left-end": smallest(lambda n: Fr(3, n) < Fr(3, 1000)),
-                       "no-bound": smallest(lambda n: Fr(1, n) < Fr(3, 1000))})
-xn = 5 - Fr(1, n1)
-ok(0 < Fr(20, 3) - (xn**3 / 3 - 2 * xn**2 + 3 * xn) <= Fr(8, n1) < Fr(3, 1000), f"{I} true gap at n = 2667")
+check_wrong(P5, I, 5, {"round-down": 1028, "left-end": smallest(lambda n: Fr(27, n) < Fr(7, 100)),
+                       "no-bound": smallest(lambda n: Fr(1, n) < Fr(7, 100))})
+xn = 15 - Fr(1, n1)
+ok(0 < 180 - (xn**3 / 3 - 6 * xn**2 + 27 * xn) <= Fr(72, n1) < Fr(7, 100), f"{I} true gap at n = 1029")
 l18 = open(os.path.join(BASE, "l18-mean-value-proved.json")).read()
 ok(not ("x^2 - 4x + 3 = (x - 1)(x - 3)" in l18 and "t^2 - 4t + 3 = (t - 1)(t - 3)" in text(P5, I)),
-   f"{I} integrand t^2 - 4t + 3 = (t - 1)(t - 3) is l18's g(x) = x^2 - 4x + 3 = (x - 1)(x - 3)", finding="2")
+   f"{I} integrand is l18's g(x) = x^2 - 4x + 3", finding="2")
+for other in ("functions/l11-reading-a-graph.json", "quadratics/l11-meeting-the-axis.json"):
+    src = open(os.path.join(ROOT, "app", "content", "courses", other)).read()
+    ok("(x - 3)(x - 9)" not in src and "x^2 - 12x + 27" not in src, f"{I} (t - 3)(t - 9) is not in {other}", finding="2")
 
-# ============================================================== PROPOSED
+# ============================================================== finding 5
+I = "p-cubic-bracket"
+t45 = text(P4, I, 4) + text(P4, I, 5)
+ok("root $c$" not in t45 and "f(c)" not in t45 and "|m - c|" not in t45 and "root $r$" in t45 and "f(r)" in t45,
+   f"{I} parts 4 and 5 name the root r, not c (c is part 1's mean value point)", finding="5")
 prop_fail = []
-
-
-def pk(cond, label):
-    if not cond:
-        prop_fail.append(label)
-
-
-# finding 1: tol 1e-4 takes 0.8129 and 0.8130, refuses both wrong values
-kv = U4 - 16 / 3
-pk(abs(0.8129 - kv) <= 1e-4 and abs(0.8130 - kv) <= 1e-4 and abs(2 - kv) > 2e-4 and abs(16 / 3 - L4 - kv) > 2e-4, "f1 band")
-pk(round(6.14626 - 5.33333, 4) == 0.8129, "f1 feedback arithmetic")
-# finding 2: f(t) = t^2 - 8t + 12 on [0, 10]
-f2 = t_**2 - 8 * t_ + 12
-F2 = sp.integrate(f2, (t_, 0, x))
-pk(sp.expand(F2 - x * (x - 6) ** 2 / 3) == 0 and sp.expand(F2 - (x**3 / 3 - 4 * x**2 + 12 * x)) == 0, "f2 F")
-pk(sorted(sp.solve(f2, t_)) == [2, 6] and sorted(sp.solve(F2, x)) == [0, 6], "f2 zeros")
-pk([F2.subs(x, c) for c in (0, 2, 6, 10)] == [0, sp.Rational(32, 3), 0, sp.Rational(160, 3)], "f2 candidates")
-pk(1000 - 400 + 120 == 720, "f2 no-third")
-pk(F2.subs(x, sp.Rational(19, 2)) == sp.Rational(931, 24) and round(931 / 24, 2) == 38.79, "f2 F(9.5)")
-g10 = [Fr(i, 1000) for i in range(0, 10001)]
-pk(max(abs(g * g - 8 * g + 12) for g in g10) == 32 and f2.subs(t_, 0) == 12 and f2.subs(t_, 4) == -4, "f2 sup |f|")
-pk(smallest(lambda n: Fr(32, n) < Fr(6, 1000)) == 5334 and round(32 / 5333, 7) == 0.0060004, "f2 n")
-pk(smallest(lambda n: Fr(12, n) < Fr(6, 1000)) == 2001 and smallest(lambda n: Fr(1, n) < Fr(6, 1000)) == 167, "f2 wrong n")
-xn = 10 - Fr(1, 5334)
-pk(0 < Fr(160, 3) - (xn**3 / 3 - 4 * xn**2 + 12 * xn) <= Fr(32, 5334) < Fr(6, 1000), "f2 true gap")
-pk(round(160 / 3, 4) == 53.3333 and round(32 / 3, 4) == 10.6667 and round(32 / 0.006, 1) == 5333.3, "f2 decimals")
-# findings 3 and 4: p = (0.15, -0.4)
-q = (Fr(15, 100), Fr(-40, 100))
-pk(d1(O, q) == Fr(55, 100) and q[0] + q[1] == Fr(-25, 100) and dinf(O, q) == Fr(4, 10), "f3 part 1")
-pk(abs(d2(O, q) - 0.4272002) < 5e-8 and abs(1 - d2(O, q) - 0.5727998) < 5e-8, "f3 straight")
-rq = 1 - d1(O, q)
-e3 = (Fr(375, 1000), Fr(-625, 1000))
-pk(rq == Fr(45, 100) and d1(O, e3) == 1 and d1(q, e3) == rq and dinf(q, e3) == rq / 2 == Fr(225, 1000), "f3 edge point")
-pk(abs(float(rq) / math.sqrt(2) - 0.3181981) < 5e-8 and abs(float(rq) * math.sqrt(2) - 0.6363961) < 5e-8, "f3 part 3")
-pk(abs(float(rq) / math.sqrt(2) - abs(float(q[0] - q[1]) - 1) / math.sqrt(2)) < 1e-12, "f3 true distance")
-pk(abs(round(0.45 / 1.414, 4) - 0.3181981) <= 6e-5 and 2 * rq == Fr(9, 10), "f3 rounding with 1.414; corner distance 0.9")
-# note A (cross-course, only if ruled reuse): sqrt x on [0, 9], nine pieces
-U9 = sum(math.sqrt(i) for i in range(1, 10))
-pk(abs(U9 - 19.3060005) < 5e-8 and sp.integrate(sp.sqrt(x), (x, 0, 9)) == 18 and abs(U9 - 18 - 1.3060005) < 5e-8, "noteA sums")
-pk(smallest(lambda n: Fr(27, n) < Fr(5, 100)) == 541 and smallest(lambda n: Fr(3, n) < Fr(5, 100)) == 61
-   and smallest(lambda n: Fr(9, n) < Fr(5, 100)) == 181, "noteA n")
 
 print(f"content checks passed: {n_ok}")
 for line in findings:
