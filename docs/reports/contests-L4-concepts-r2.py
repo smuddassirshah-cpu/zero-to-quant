@@ -260,7 +260,42 @@ def can_ship(weights, k, cap):
         load += w
     return days <= k
 '''
-mistake("can_ship", 2, "the greedy drops the order that overflows; min_capacity calls can_ship as the prose requires", '''
+# fix pass: the drop-the-overflow can_ship, called by min_capacity as the prose requires, lands on the new test-1 line;
+# the test-2 line now names can_ship called alone, reached when min_capacity carries its own check
+_DROP = '''
+def can_ship(weights, k, cap):
+    days, load = 1, 0
+    for w in weights:
+        if w > cap:
+            return False
+        if load + w > cap:
+            days += 1
+            load = 0
+        else:
+            load += w
+    return days <= k
+'''
+mistake("can_ship", 2, "fix pass: a can_ship that says 11 ships in 3 days, with min_capacity running its own check", _DROP + '''
+
+def min_capacity(weights, k):
+    lo, hi = max(weights), sum(weights)
+    def ok(cap):
+        days, load = 1, 0
+        for x in weights:
+            if load + x > cap:
+                days += 1
+                load = 0
+            load += x
+        return days <= k
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if ok(mid):
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo
+''')
+mistake("can_ship", 1, "the greedy drops the order that overflows; min_capacity calls can_ship as the prose requires", '''
 def can_ship(weights, k, cap):
     days, load = 1, 0
     for w in weights:
@@ -283,7 +318,7 @@ def min_capacity(weights, k):
         else:
             lo = mid + 1
     return lo
-''', finding=1)
+''')
 mistake("can_ship", 4, "an order heavier than the van starts a day and is carried anyway", '''
 def can_ship(weights, k, cap):
     days, load = 1, 0
@@ -465,11 +500,12 @@ def last_occurrence(xs, x):
 
 # --- l15 count_inversions_small
 mistake("count_inversions_small", 3, "the starter (>=)", None)
-mistake("count_inversions_small", 6, "the line's named mistake: pairs where the first is not strictly larger are counted (>=)", '''
+mistake("count_inversions_small", 6, "fix pass: the line's named mistake, repeated values removed (each copy's pairs lost)", '''
 def count_inversions_small(xs):
+    xs = list(dict.fromkeys(xs))
     n = len(xs)
-    return sum(1 for i in range(n) for j in range(i + 1, n) if xs[i] >= xs[j])
-''', finding=2)
+    return sum(1 for i in range(n) for j in range(i + 1, n) if xs[i] > xs[j])
+''')
 
 # --- l15 solve_all
 mistake("solve_all", 2, "the starter (a global set, never emptied)", None)
@@ -524,9 +560,9 @@ _RIGHT = "if prefix == 2 * third:\n            ways += firsts\n        if prefix
 mistake("equal_thirds", 2, "counts the first cut before checking the second",
         _THIRDS % (_DIV, "if prefix == third:\n            firsts += 1\n        if prefix == 2 * third:\n            ways += firsts"))
 mistake("equal_thirds", 5, "no divisibility test", _THIRDS % ("pass", _RIGHT))
-mistake("equal_thirds", 6, "the line's named mistake: stops at the first match (first good second cut)",
-        _THIRDS % (_DIV, _RIGHT.replace("ways += firsts", "ways += firsts\n            if firsts:\n                break")),
-        finding=3)
+mistake("equal_thirds", 6, "fix pass: the line's named mistake, stops once the prefix passes 2S/3",
+        _THIRDS % (_DIV, _RIGHT.replace("if prefix == 2 * third:",
+                                        "if prefix > 2 * third:\n            break\n        if prefix == 2 * third:")))
 mistake("equal_thirds", 8, "the double loop over cuts", '''
 def equal_thirds(xs):
     n = len(xs)
@@ -704,8 +740,9 @@ check("l13 C: test 2 is the first failure only when min_capacity does not call c
 # and a missing 'w > cap' line alone does not fail test 4 with the standard greedy (the day count already exceeds k)
 first, _, note = run(w, _SHIP_OK.replace("        if w > cap:\n            return False\n", "") + "\n\ndef min_capacity(weights, k):\n    lo, hi = max(weights), sum(weights)\n"
                      "    while lo < hi:\n        mid = (lo + hi) // 2\n        if can_ship(weights, k, mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n")
-check("l13 C: a can_ship with no 'w > cap' test (the greedy otherwise standard) fails some hidden test", first != 0,
-      "it passes all 11: on test 4 the day count is already 2 > 1; can_ship([5, 5], 3, 4) would return True", finding=4)
+# finding 4 was not applied by the fix pass (it needs a new hidden test, outside a content fix): the gap is recorded as it stands
+check("l13 C (finding 4, not applied): a can_ship with no 'w > cap' test still passes all 11 hidden tests", first == 0,
+      "if this fails, a hidden test now needs the guard: restore the finding-4 check", None)
 # the audit's proposed test 12 separates them
 _g = {}
 exec(_SHIP_OK.replace("        if w > cap:\n            return False\n", ""), _g)
@@ -776,9 +813,12 @@ check("l14: under v/250 a minute the floor is reached by time alone only at minu
 check("l14 fix: in a two-hour round time alone leaves 52% of the value", 1 - 120 / 250 == 0.52)
 binds_by_lateness_alone = any(v - v / 250 * m < 0.3 * v for v in (500, 1000, 1500, 2000) for m in range(0, 121))
 binds_mid_round_with_rejections = 500 - 2 * 60 - 50 * 5 < 0.3 * 500      # A at minute 60 after five rejections: 130 < 150
-check("l14 [3] explain: 'the floor matters only for a problem solved very late' (in the two-hour round lateness alone never reaches it; rejections do, even at minute 60)",
-      binds_by_lateness_alone and not binds_mid_round_with_rejections,
-      "time alone: floor at minute 175 > 120; A at minute 60 with five rejections is 130 < 150; test 2 of the next screen is A at 120 with three", finding=5)
+# fix pass: the explain now says time alone takes at most 48% in a two-hour round, so only rejections reach the floor
+_t3 = DOC["l14-which-first.json"]["screens"][3]["explain"]["text"]
+check("l14 [3] explain (fix pass): states the 48% bound and ties the floor to rejections, and the model agrees",
+      "very late" not in _t3 and "at most 48%" in _t3 and "only when rejections" in _t3 and 120 / 250 == 0.48
+      and not binds_by_lateness_alone and binds_mid_round_with_rejections,
+      _t3, finding=5)
 check("l14 q-floor: 1000 - 720 - 50 = 230, floored to 300", max(300, 1000 - 4 * 180 - 50) == 300)
 check("l14 icpc: penalty 208; X 195, Y 185", 12 + 41 + 20 + 95 + 40 == 208 and 15 + 50 + 90 + 40 == 195 and 20 + 45 + 100 + 20 == 185)
 t60 = {"".join(o): total([byname[c] for c in o], 60)[0] for o in itertools.permutations("ABCD")}
@@ -813,9 +853,14 @@ cbest = max(cs, key=leave_when_solved)
 check("l14 D/E: leaving D when solved, the best cap is near 45 minutes", abs(cbest - 45) <= 1.5, f"cap {cbest}, value {leave_when_solved(cbest):.0f}")
 # E first, leaving E when solved, D with the rest: the lesson's own points-per-minute rule (800/15 > 1000/50)
 e_first = integrate(lambda t: math.exp(-t / 15) / 15 * (800 + 1000 * (1 - math.exp(-(60 - t) / 50))), 0, 60)
-check("l14 D/E [6]: D first is the better order under the screen's own model (E first, leaving E when solved, expects more)",
-      leave_when_solved(cbest) >= e_first, f"D first with the best cap {leave_when_solved(cbest):.0f}; E first {e_first:.0f}; best fixed split {E(xbest):.0f}",
-      finding=6)
+# fix pass: the explain now says E first once a solved problem may be left, about 1,363, above D first with its best cap
+_t6 = DOC["l14-which-first.json"]["screens"][6]["explain"]["text"]
+_e_first_capped = max(integrate(lambda t: math.exp(-t / 15) / 15 * (800 + 1000 * (1 - math.exp(-(60 - t) / 50))), 0, c)
+                      + math.exp(-c / 15) * 1000 * (1 - math.exp(-(60 - c) / 50)) for c in (10, 20, 30, 40, 50, 60))
+check("l14 D/E [6] explain (fix pass): says start with E for about 1,363, which beats D first with its best cap",
+      "near 45" not in _t6 and "start with E" in _t6 and "1,363" in _t6 and round(e_first) == 1363
+      and e_first > leave_when_solved(cbest) and abs(_e_first_capped - e_first) < 1e-6,
+      f"{_t6} | D first with the best cap {leave_when_solved(cbest):.0f}; E first {e_first:.0f}", finding=6)
 # Monte Carlo of the same three policies (200,000 rounds, fixed seed)
 import random as _r
 _rng = _r.Random(20261113)
@@ -835,7 +880,12 @@ check("l14 D/E: points per expected minute are 53 for E and 20 for D", round(800
 # l14 transfer
 check("l14 desk: rates 600, 480, 100 a minute", (3000 / 5, 12000 / 25, 2000 / 20) == (600, 480, 100))
 check("l14 desk: at 1% a minute quote first costs the hedge 600, hedge first costs the quote 750", (12000 * 0.01 * 5, 3000 * 0.01 * 25) == (600, 750))
-check("l14 desk [11]: all three tasks fit before the close, as 'quote, hedge, reconcile' implies", 5 + 25 + 20 <= 30, "5 + 25 + 20 = 50 minutes against 30", finding=7)
+# fix pass: feedback.correct and hints[2] now name only the two tasks that fit (5 + 25 = 30; 5 + 25 + 20 = 50)
+_s11 = DOC["l14-which-first.json"]["screens"][11]
+_texts11 = [_s11["feedback"]["correct"], _s11["hints"][2]["text"]]
+check("l14 desk [11] (fix pass): feedback and last hint name quote then hedge only, and only those two fit in 30 minutes",
+      all("then the hedge" in t and "quote, hedge, reconcile" not in t and "then reconcile" not in t for t in _texts11)
+      and 5 + 25 <= 30 < 5 + 25 + 20, str(_texts11), finding=7)
 check("l14 scoreboard: 702 / 96 is about seven", round(702 / 96) == 7)
 
 # l15
@@ -884,8 +934,11 @@ def formula_fixed(xs):          # the audit's fix: j <= n - 1 and 1 <= i < j
 
 sol = {}
 exec(W["equal_thirds"][3]["solution"], sol)
-check("l16 summary formula: as printed (no upper limit on j) it equals the count on five zeros", formula_as_printed([0] * 5) == sol["equal_thirds"]([0] * 5),
-      f"printed formula gives {formula_as_printed([0] * 5)}, the count is {sol['equal_thirds']([0] * 5)}", finding=8)
+# fix pass: the summary formula now ranges j <= n - 1 and 1 <= i < j (formula_fixed); the unranged reading overcounts
+_tex = DOC["l16-upsolving.json"]["summary"]["formula"]["tex"]
+check("l16 summary formula (fix pass): printed with j <= n-1 and 1 <= i < j, which gives 6 on five zeros (unranged: 10)",
+      "j \\le n-1" in _tex and "1 \\le i < j" in _tex and formula_fixed([0] * 5) == sol["equal_thirds"]([0] * 5) == 6
+      and formula_as_printed([0] * 5) == 10, _tex, finding=8)
 import random as _r2
 _rng2 = _r2.Random(7)
 check("l16 summary formula fix: with j <= n - 1 and 1 <= i < j it equals the count on 2,000 random lists",

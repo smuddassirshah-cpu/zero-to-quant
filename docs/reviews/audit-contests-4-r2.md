@@ -86,3 +86,39 @@ How the 11 sit against the earlier reads:
 - Code widget: a test cannot require that one learner function calls another. l13 problem C counts `can_ship` calls with an upper bound, so a `min_capacity` with its own check passes with 0 calls, against the prose.
 - `tools/grade-all.mjs` skips code widgets, and no node tool runs a named wrong submission against a widget's hidden tests. A `--submission <file> --expect-key test-N` mode would let authors commit one mistake per `byKey` line (three lines in this level miss their test).
 - Validator: nothing checks that a `byKey.test-N` line has a committed submission that reaches it.
+
+## Fix pass
+
+Fixer: Opus, round 2. Scripts changed where they pinned text: `docs/reports/contests-L4-concepts-r2.py` (findings 1 to 3 now sweep the new lines; findings 5 to 8 now read the content; finding 4 recorded as not applied), `docs/reports/contests-L4-concepts.py` (l13 C key list gains `test-1`, with its submission), `docs/reports/contests-L4-numbers.py` (l14 `screens[6]` figure 1,363 in closed form; l13 `test-1` figures). No graded key, slip, hidden test, solution or starter changed.
+
+| # | Status | Basis (the fixer's own) |
+| --- | --- | --- |
+| 1 | fixed | A `can_ship` that drops the overflowing order says 11 ships in 3 days; called by `min_capacity` it returns 8 on test 1, and with `min_capacity` running its own check it fails first at test 2 (both run). Greedy at 11 by hand: [4], [8, 2], [7], [5, 3], four days. New `test-1` line is conditional ("If you got less") so it stays true for other first-test failures. |
+| 2 | fixed | `>=` fails first at test 3 (`[2, 2]` gives 1); removing repeated values passes tests 1 to 5 and gives 1 on test 6 (run). Pairs of `[2, 1, 2, 1]` counted by hand: (0,1), (0,3), (2,3), three. Wording "larger than" in place of "above". |
+| 3 | fixed | Stopping at the first good second cut gives 1 on the example (expected 2), so it fails test 1; breaking once the prefix exceeds $2S/3$ passes tests 1 to 5 and gives 0 on test 6, `[1, -1, 1, -1, 1, -1]`, whose first prefix is 1 > 0 (run, traced by hand). |
+| 4 | not applied | True: the unguarded greedy passes all 11 tests and returns True for `can_ship([5, 5], 3, 4)`. The fix needs a new hidden test, which a concept fix may not add; the text that stands is true (test 4 does have an order heavier than the van). Raised in the inbox below. |
+| 5 | fixed differently | In a two-hour round time alone costs at most $120/250 = 48\%$ (also $4 \cdot 120 = 480$ of 1,000), so the 30% floor needs rejections; A at minute 120 with three rejections, 110 < 150, is the next screen's test 2. Wording: "time alone takes at most 48% of a problem's value", which reads more directly than "leaves 52%". |
+| 6 | fixed | Recomputed by scipy quadrature and by 400,000-round Monte Carlo (own seed): D first with the best cap (45.3) 1,228.8 and 1,227.8; E first, leaving it when solved, 1,362.9 and 1,361.8; a cap on E never helps (best cap is the whole hour). Closed form for E first, $1800(1 - e^{-4}) - 1000e^{-1.2}\frac{10}{7}(1 - e^{-2.8}) = 1{,}362.9$. Applied the auditor's sentence, which these figures support. |
+| 7 | fixed | Quote 5 and hedge 25 fill the 30 minutes; the break's 20 does not fit ($5 + 25 + 20 = 50$), as the screen's own explain says. |
+| 8 | fixed | Cuts are $1 \le i < j \le n - 1$ (`screens[3].prose`); on five zeros the ranged sum is 1 + 2 + 3 = 6 and the unranged one 10, by hand and by the script on 2,000 random lists. |
+| 9 | fixed | Standard error is not compared but is written during the timed run; the claim is kept as advice about heavy output, not a figure. Explain, `hints[2]` and the `screens[8]` comment now say "not compared". |
+| 10 | fixed differently | Adding `same` would change a graded key, so the key stays and the stated rule now fixes the order: the prose says the two steps just taken (reread on screen 0, hand cases on screen 1) come first, and the explain gives the cost reason only for first and last. `hints[2]`, `feedback.correct` and `generic` no longer say "cheapest first". |
+| 11 | fixed | The starter of `screens[5]` prints 2 and 3 on the two-case input; the console shows 2 and 1, the fixed program. Prose now says the bug is fixed and the file is the learner's own two-case file (renamed `two_cases.txt`); the explain no longer claims the judge compared that run. |
+
+Unverified rows:
+
+| Row | Status | Basis |
+| --- | --- | --- |
+| l13 `screens[3]` rating "about 800 ... by our estimate" | left | Labelled as an estimate, and l13's quiz says every code screen gives "our estimate"; an estimate stated as one is established as such. |
+| l16 `screens[3]` "about 1600" | fixed | Prose now "about 1600 by our estimate"; homework's three ratings likewise. |
+| l16 `screens[7]` "100 to 200 above" | fixed | `options[hard].why` and `hints[1]` now call it "this lesson's rule of thumb". |
+| homework `items[6]` rubric "100 to 200 above" | left | The rubric grades the plan against the rule l16 now states as its rule of thumb; it asserts nothing beyond that. |
+| l16 `screens[10]` hiring facts | left | Every sentence is attributed to the curriculum ("The curriculum sets ... It treats ... it counts"), and the attribution is exact; the screen does not assert the facts in its own voice. |
+| l16 `screens[11]` write-ups | fixed | Now "Write-ups show how you think, and an interviewer may ask about them": a possibility, not a claim about what interviewers read. |
+| l14 `screens[11]` interview sentence | fixed | Now a stated condition: "If an interview sets three questions in an hour, the same habit helps". |
+
+Sweep: 52 `byKey.test-N` lines in the six files (51 plus the new l13 `test-1`). 51 run as real submissions in `contests-L4-concepts-r2.py`, page semantics (one namespace, recursion limit 3,000, 5 s, first failing row); all 51 land on their test after the fix. Homework `max_profit_k` `test-6` names no mistake and its figure (2 + 3 + 4 = 9) is checked. Lines rewritten: 3 (l13 `test-2`, l15 `test-6`, l16 `test-6`), 1 added (l13 `test-1`).
+
+Gates: validator 0 errors (4,541 warnings, two new soft long-sentence ones in l14 `screens[6]` and l15 `screens[2]`; manifest unchanged); `contests-L4-concepts-r2.py` 257 of 257, exit 0; `contests-L4-concepts.py --pyodide` 277 checks, 0 failing; `contests-L4-fixread.py` 0 failures; `run-number-scripts --only contests-L4` 1 passed; `grade-all --file` 0 failures on each of the five changed files; voice scan 35: 0 and 0; playthrough of l13, l14, l15, l16 and homework-4, desktop and mobile, all passed.
+
+Inbox: l13 C needs a hidden test such as `can_ship([5, 5], 3, 4)` expecting False (finding 4), so the solution's `w > cap` guard is required; a content agent or engine pass that may add tests should take it.
