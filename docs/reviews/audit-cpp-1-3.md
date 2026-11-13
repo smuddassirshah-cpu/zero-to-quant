@@ -118,3 +118,47 @@ Two of the 17 sit on sentences the earlier fix pass wrote, and are counted as au
 New `wrong` findings that no earlier read found: **3** (findings 1, 2 and 3). One is serious (finding 1). A search of `docs/reviews/review-1.9.md` and of the author reports `docs/reports/cpp-2.md` and `cpp-3.md` for "Wconversion", "freed twice" and "test-10" finds none of them.
 
 Convergence rule: three new `wrong` in three levels is above the limit of one, so the course needs another blind audit after the fix pass.
+
+## Fix pass
+
+Fixer: Opus, 13 Nov 2026. Every replacement sentence was checked by a run of my own: g++ 13.3.0 and clang 18.1.3 on x86-64, and the app's YoWASP clang 21.1.4 (wasm32, libc++, `-O1`, `-fno-exceptions`, app flags) under `node:wasi`, driven as in `docs/reports/cpp-L1-3-concepts.py`. Content strings only; no key, `wrong[]` value, slip value, tolerance, starter, solution or hidden test changed.
+
+| # | file and path | status | basis |
+|---|---|---|---|
+| 1 | homework-1 items[6].model, rubric[5].text | fixed | Compiled the item's code (as a function with a caller) with `-Wall -Wconversion`, `-Wall -Wextra -Wconversion -Wpedantic`, `+ -Wsign-conversion -Wfloat-conversion -Wdouble-promotion`, and `-O2 ... -Wstrict-overflow=5`: 0 warnings on both compilers; clang `-Weverything` gives only `-Wmissing-prototypes`. `-fsanitize=undefined` printed "signed integer overflow: 1500000000 + 1500000000 cannot be represented in type 'int'" at line 6; clang-tidy 18 `bugprone-integer-division` flagged line 8 ("result of integer division used in a floating point context"). The model now says warning flags print nothing, then names the sanitiser and clang-tidy; the rubric point names test, sanitiser or clang-tidy. |
+| 2 | l9 screens[3].hints[2].text | fixed differently | App compiler on the starter with `make_unique` and the kept `delete book;`: "error: cannot delete expression of type 'unique_ptr<Book>'". New text: remove it too, because `delete` needs a raw pointer and the line does not compile ([expr.delete]/1). Same meaning as the audit's text, shorter wording. |
+| 3 | l11 screens[7].feedback.byKey.test-10 | fixed differently | App compiler with the widget's tests: copy ctor only, and copy+move ctor+copy assign, both give test 9 = 1 and test 10 = 1 (test 12 gets 33, not 30, so test-12's line is right); a move-ctor-only class fails to compile at test 1; `operator=(Buffer&&) = delete` gives test 9 = 1, test 10 = 0. So the only way test 10 is the first failure is a deleted move assignment, and the line now names that and the `= default` fix. |
+| 4 | l11 quiz[2].feedback.correct | fixed | Audit text. Run: `return up ? a : b;` made 1 copy; `return grid;` made 0 ([class.copy.elision]/3). |
+| 5 | l13 quiz[0] options[1], options[3] why, feedback, explain | fixed | Run: `"Zebra" < "apple"` and `"VOD" < "bp"` are both true. Audit text, except the explain's last sentence says "In ASCII", since the order of letters is the execution character set's. |
+| 6 | l2 summary.ideas[2] | fixed | [expr]/4; wrap value with `-fwrapv` in the script. Text says undefined, and "usually" wraps in practice. |
+| 7 | l1 screens[3].prose, quiz[2] options[2].why, explain | fixed differently | A compound statement has no `;` ([stmt.block]). Prose and explain use the audit text; the option's why now says the missing `;` gives a compiler error (both compilers: "expected ';'"), instead of "it never ends". |
+| 8 | l2 summary.ideas[0] | fixed differently | Run: `auto a = r;` with `int& r` is a separate `int`; `auto d = c;` with `const int c` is `int`. Shorter text: "makes a new, separate variable, never a reference". Prose screens[3] left: "the type of the value" is right, since a value has no reference type. |
+| 9 | l3 screens[3].feedback.byKey.test-2 | fixed | wasm: `v.size() - 1` is 4,294,967,295; native: 2^64 − 1, about 1.8 × 10¹⁹. |
+| 10 | l4 summary.ideas[2]; l13 quiz[2].explain | fixed | [basic.def.odr]/6. Runs: two `.cpp` files including an `inline` body link; a template body in a header included by two `.cpp` files links. |
+| 11 | l7 summary.ideas[2] | fixed | "usually" added; matches screens and the trap line. |
+| 12 | l7 screens[4].prose | fixed | Audit text; the lesson's own C SDK uses pointer and count. |
+| 13 | l7 screens[9] options[3].why | fixed | Hand trace: n = 32 visits `levels`, `levels + 16`, stops; n = 20 steps from `levels + 16` to `levels + 32`, past the end. `sizeof(Level)` is 16 on both targets (script). |
+| 14 | l9 screens[6].prose | fixed differently | Measured (g++ -O1, libstdc++, by-value call): 1.2 ns per `shared_ptr` copy single-threaded, 15 ns once a thread has run, 0.26 ns for a raw pointer. Text: the update is atomic in a threaded program, so a copy costs more than a raw pointer copy. The unsourced "why desks keep it out of hot paths" is gone (unverified row). |
+| 15 | l9 screens[9].widget.lines[3].text | fixed | Audit text: "dies when the call is over" holds on both targets ([expr.call]/4 leaves the exact point to the implementation). Script info line: app destroys at `}`, x86-64 at the end of the full expression. Key unchanged. |
+| 16 | l11 screens[7].explain.text | fixed differently | Moved-from vectors empty after construction and assignment, native and wasm (script). [lib.types.movedfrom] applies to move assignment, and the allocator-aware container table says nothing about `rv` after `a = rv`. Text: "empty in practice; after move assignment the standard promises only a valid, unspecified state" (one sentence, keeping the explain at three). |
+| 17 | l12 summary.ideas[2] | fixed | Run: `std::sort` on doubles orders them; only `==` after rounding is the trap (l12 screens[6]). |
+
+Unverified rows:
+
+| row | status | basis |
+|---|---|---|
+| l1 screens[10].prose, pricers in C++ | fixed differently | Rewritten without the claim about desks: "C++ suits pricers: a compiled loop, such as a binomial tree, runs many times faster than the same loop in plain Python." Measured: a 3,000-step CRR tree took 0.235 s in CPython, 0.005 to 0.010 s in g++ -O1, about 0.01 s in the app build: 24 to 50 times. |
+| l1 widget.how "about 26 MB", "10 to 15 s" | not applied | Size verified: gzip of bundle.js, llvm-resources.tar and llvm.core.wasm is 26.4 MB, as `docs/ENGINE-BACKLOG.md` states. The time is network-bound (a cold local compile took 2.9 s) and the same `how` sentence sits in about 70 widgets in all five levels: an engine-owned string for the orchestrator to raise, not a level 1 to 3 content fix. |
+| l2 screens[2].question, 3 billion UK volume | fixed | Now a stated hypothetical: "Suppose a day's traded volume across a market comes to 3 billion shares." |
+| l2 screens[9].prose, order books store ticks as integers | fixed | Tick part sourced: MiFID II tick size regime (Commission Delegated Regulation (EU) 2017/588, RTS 11, kept in UK law) makes share prices multiples of the tick. The book claim is now a possibility: "a program can store each price as an integer number of ticks". |
+| l8 screens[10].explain, desks preallocate | fixed | Replaced by advice that follows from the screen: "So allocate a lattice or buffer once, before the loop, and reuse it." |
+| l9 screens[6].prose, screens[10] why[shared] | fixed | See finding 14; why[shared] now says "every copy of a `shared_ptr` updates the count" (script: use_count 1, 3, 1). |
+| l10 screens[9].explain, late fill | fixed | Now stated as the model's rule: "In this model a cancel is final: a later fill is an error to catch, not a trade to book." No claim about real gateways. |
+| l12 screens[9].explain, matching engine container | fixed | Now: "Sorted by this `<`, the asks line up in the order price-time priority fills them." Script: B, C, A. |
+| l7 quiz[0].explain "a test run printed 1" | fixed | App compiler, my run: the null read printed 0 and exited 0. Text: the read returns whatever `int` sits there; a test run with this app's compiler printed 0. Script check updated to expect 0. |
+| homework-2 items[6].explain "2.93699e-306" | fixed | App compiler, my run and the audit's: 2.8974e-306. Text now quotes that value as one test run. New wasm check. |
+| l13 screens[4].prose "359 lines" | fixed | App compiler on the screen's code: 235 lines of diagnostics at the app's `-ferror-limit=10`, 376 at `-ferror-limit=20`. Prose now "runs to hundreds of lines"; the console's "... 335 more lines ..." is now "... hundreds more lines ...". New wasm check (at least 200 lines). |
+
+Script changes (`docs/reports/cpp-L1-3-concepts.py`): the six refuted-claim checks now report "[sentence no longer in the content]". New checks: `-Wall -Wextra -Wconversion` silent on the h-port-note code (both compilers), a deleted move assignment failing test 10 with test 9 passing, and under `--wasm` the null read printing 0, the h-realloc value 2.8974e-306, the template-error length, and the kept `delete book;` compile error. The l7 quiz0 wasm check now expects 0.
+
+Gates: validator 0 errors, 4531 warnings, the same set as before the fix pass; `content/manifest.json` unchanged. `cpp-L1-3-concepts.py`: 126 checks, 0 failed; with `--wasm`: 139 checks, 0 failed. `cpp-1-perf-numbers.py` and `cpp-3-perf-numbers.py` exit 0. Voice scan 35: 0 over three sentences, 0 over 35 words. Playthrough with `--local-cdn`, desktop and `--mobile`, all passed: lessons l1, l2, l3, l4, l7, l8, l9, l10, l11, l12, l13; sets homework-1, homework-2 (l3 and l10 replayed after their last edit). No code widget's starter, solution or tests changed, so no re-grade was needed.

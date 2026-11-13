@@ -371,7 +371,7 @@
     },
     {
      "rung": "step",
-     "text": "With `make_unique`, both `return` lines free the `Book`. Remove `delete book;`, or the object would be freed twice."
+     "text": "With `make_unique`, both `return` lines free the `Book`. Remove `delete book;` too: `delete` needs a raw pointer, so with a `unique_ptr` that line does not compile."
     }
    ],
    "feedback": {
@@ -564,7 +564,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Shared ownership",
-   "prose": "`std::shared_ptr` lets several owners share one object. It keeps a **count** of owners and deletes the object when the count reaches 0. Every copy changes the count with an atomic instruction, which is why desks keep it out of hot paths.\n\n```cpp\nauto a = std::make_shared<Order>();\n{\n    auto b = a;\n    auto c = b;\n    // here\n}\n```",
+   "prose": "`std::shared_ptr` lets several owners share one object. It keeps a **count** of owners and deletes the object when the count reaches 0. Every copy updates the count, atomically in a threaded program. So a copy costs more than copying a raw pointer.\n\n```cpp\nauto a = std::make_shared<Order>();\n{\n    auto b = a;\n    auto c = b;\n    // here\n}\n```",
    "canvas": {
     "kind": "graph",
     "params": {
@@ -877,7 +877,7 @@
      },
      {
       "id": "o4",
-      "text": "`close VOD`: `hold`'s parameter dies at its `}`, so the destructor runs"
+      "text": "`close VOD`: `hold`'s parameter was the only owner, and it dies when the call is over, so the destructor runs"
      },
      {
       "id": "o5",
@@ -937,7 +937,7 @@
      {
       "id": "shared",
       "text": "`std::vector<std::shared_ptr<Order>> orders;`",
-      "why": "Shared ownership blurs who cancels an order, and every copy updates the count in the hot path."
+      "why": "Shared ownership blurs who cancels an order, and every copy of a `shared_ptr` updates the count."
      },
      {
       "id": "raw",
