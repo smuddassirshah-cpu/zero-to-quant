@@ -3,7 +3,7 @@
 Scope: `l1-reading-statements` to `l12-difference-arrays`, `review-1` to `review-3` and `homework-1` to `homework-3` in `app/content/courses/contests/` (Stage 2, topic 2.4, full ledger depth). Level 4 files are out of scope. This read was blind: no earlier review, author report, audit log or audit notes for this course, and no git history of the course folder, was opened before the ledger and the findings below were committed (WIP commit named in the overlap section).
 
 Ledger: `docs/reports/audit-contests-1-3-ledger.md`, 465 rows: 442 correct, 14 wrong, 8 imprecise, 1 misleading, 0 unverified.
-Script: `docs/reports/contests-L1-3-concepts.py`, 283 checks. It exits 1 while the content stands as it is: 14 checks fail, all labelled FINDING, for the 13 findings a submission can test (finding 14 has two). Every other check passes.
+Script: `docs/reports/contests-L1-3-concepts.py`, 306 checks. It exits 1 while the content stands as it is: 14 checks fail, all labelled FINDING, for the 13 findings a submission can test (finding 14 has two). Every other check passes.
 
 Findings: 22. By severity: 13 wrong, 8 imprecise, 1 misleading. By tag: 1 serious (finding 12), 21 minor. No graded key, no worked number, no solution and no hidden test is wrong.
 
@@ -12,7 +12,7 @@ Findings: 22. By severity: 13 wrong, 8 imprecise, 1 misleading. By tag: 1 seriou
 - Page facts read from the engine. `app/js/engine/widgets/code.js`: Pyodide 0.27.7, `TEST_MS = 5000` per test plus a case's `budget`, tests of one widget share one namespace, the result key is `test-N` for the first failing test and `error` only when the code fails to load or the whole run fails. `app/js/screens/drill-worker.js`: `sys.setrecursionlimit(3000)`. `app/js/engine/widgets/cpp-grade.js` and `cpp-worker.js`: clang 21, `-std=c++17 -O1`, keys `compile`, `error`, `test-N`. No file in scope has a `byKey.error` or `byKey.compile` line, so there is no dead text of that kind.
 - All 39 code widgets (37 Python, 2 C++): the solution passes every hidden test and the starter fails. The script copies the page's harness (prelude, learner code, postlude, per-test setup, the `equal`, `raises` and `stdout` comparisons, real pytest for the pytest widget).
 - All 90 `feedback.byKey.test-N` lines: for each line that names a mistake, a submission with that mistake was written and run (108 mutant runs). It must pass tests 1 to N−1 and fail test N. 13 lines name a mistake that fails an earlier test (findings 3, 5, 6, 8, 9, 10, 14 twice, 15, 16, 17, 18, 19, 20): about one line in seven. Where a different mistake does reach the line's test, the script holds that mutant too, and the proposed fix names it.
-- Speed claims were timed in the page's own interpreter: Pyodide 0.27.7 from the local package, run under node. Every "in Pyodide" figure in scope was reproduced within about 20% (0.25 s sieve, 0.3 s and 3 s table builds, 7 s `math.comb`, 0.4 s queries, 0.1 s and 2.5 s mask loops, 2 s meet in the middle, 1 s for 10⁷ additions). The g++ stream timings in l3 were re-measured with g++ and give the same ratios.
+- Speed claims were timed in the page's own interpreter: Pyodide 0.27.7 from the local package, run under node. Every "in Pyodide" figure in scope was reproduced, most within 20% and all within a factor of two (0.25 s sieve, 0.3 s and 3 s table builds, 7 s `math.comb`, 0.4 s queries, 0.1 s and 2.5 s mask loops, 2 s meet in the middle, 0.7 s against "about 1 s" for 10⁷ additions, 0.17 s and 0.04 s against 0.19 s and 0.06 s for the two readers). The g++ stream timings in l3 were re-measured with g++ and give the same ratios.
 - General claims were brute-forced: earliest finish against all subsets (2,000 instances), the rooms sweep, due order against all job orders (3,000 instances), the alert greedy, the two-pointer count, `can_reach` against breadth-first search for all values up to 12, the token game's state graph, coin systems, meet in the middle, the bounded-sum condition, stars and bars.
 - Native against page. Python: the script runs CPython 3.13 with the recursion limit at 3,000; no check depends on integer size, float layout or pointer width. A mistake the page stops at 5 s is stopped here by a 2 s alarm, since native Python is two to three times faster. C++: the script compiles with native clang++ at `-O1` (x86-64, `long` 64 bits, libstdc++), the page with clang 21 for wasm32 (libc++, `long` 32 bits, no exceptions). The two C++ widgets use only `int` and `long long`, whose widths agree, and no exceptions, so the verdicts carry over. A `long` sum on the page would fail l3 test 3 like an `int`; natively it would pass, and no check uses it.
 
@@ -28,7 +28,7 @@ Pattern: `N. file | JSON path | severity | tag | problem | evidence and basis | 
 
 4. `l2-limits-to-complexity.json` | `screens[4].explain.text` | imprecise | minor | "In plain Python it takes a few seconds" is more than can be shown. | The bare double loop over 12,497,500 pairs took 0.6 s in CPython 3.13 and 1.4 s in Pyodide here. The advice stands, the figure does not. | "About $1.25 \cdot 10^7$ pairs is a tenth of a second in C++. In plain Python it takes about a second or more, so submit it as PyPy 3 or in C++. A limit of 5,000 says $O(n^2)$ is intended."
 
-5. `l2-limits-to-complexity.json` | `screens[9].feedback.byKey.test-7`, `byKey.test-6` | wrong | minor | The test-7 line blames the table's 500, but a submission that trusts 500 fails test 6 ($n = 465$) first and never sees it. | Script FINDING 5: thresholds 26, 500, 10⁴ first fail test 6 with `"n^3"`. | `byKey.test-6`: "Test 6 has $n = 465$: $465^3 \approx 1.005 \cdot 10^8$, just over the budget. Compute the step count; the table's 500 is a rule of thumb." `byKey.test-7`: "Test 7 has $n = 500$: $500^3 = 1.25 \cdot 10^8$ is over $10^8$, so the answer is `\"n^2\"`."
+5. `l2-limits-to-complexity.json` | `screens[9].feedback.byKey.test-7`, `byKey.test-6` | wrong | minor | The test-7 line blames the table's 500, but a submission that trusts 500 fails test 6 ($n = 465$) first and never sees it. | Script FINDING 5: thresholds 26, 500, 10⁴ first fail test 6 with `"n^3"`. | `byKey.test-6`: "Test 6 has $n = 465$: $465^3 \approx 1.005 \cdot 10^8$, just over the budget. Compute the step count; the table's 500 is a rule of thumb." `byKey.test-7`: "Test 7 has $n = 500$: $500^3 = 1.25 \cdot 10^8$ is over $10^8$, so the answer is `"n^2"`."
 
 6. `l2-limits-to-complexity.json` | `screens[10].feedback.byKey.test-3` | wrong | minor | "Equal values still make pairs: use `<=`" sends a learner who failed first at test 3 to the wrong place. `<` for `<=` fails test 1, which has sums equal to $k$. | Script FINDING 6: `<` returns 2 on test 1 (expected 4). The mistake that first fails test 3 is removing duplicates, `sorted(set(xs))`. | `byKey.test-3`: "Test 3 is four 2s with $k = 4$ and expects 6. Equal values on different days are different values: do not remove duplicates." Add `byKey.test-1`: "Test 1 expects 4: the pairs with sums 3, 4, 5 and 5. A sum equal to $k$ counts: use `<=`."
 
@@ -52,7 +52,7 @@ Pattern: `N. file | JSON path | severity | tag | problem | evidence and basis | 
 
 16. `l12-difference-arrays.json` | `screens[4].feedback.byKey.test-3` | wrong | minor | "make the list $n + 1$ long" never shows at test 3: test 1 already has the update (5, 7, +1) on 8 days, so a list of $n$ cells raises `IndexError` there. | Script FINDING 16. | `byKey.test-3`: "Test 3 has an update over every day and one ending on the last day: the values are 1, 1, 1, 3, 3." Add `byKey.test-1`: "Test 1's last update ends on day 7, the last day. Its −v goes in the spare cell $n$, so make the list $n + 1$ long."
 
-17. `review-3.json` | `items[1].feedback.byKey.test-9` | wrong | minor | "the last letter must differ from both its neighbours, including the first" never shows at test 9: any wrong last letter for odd $n$ fails test 3 ($n = 3$). Nothing tested fails first at $n = 99{,}999$. | Script FINDING 17: plain alternation first fails test 3. | "Test 9 has $n = 99{,}999$, an odd $n$: \"ab\" 49,999 times, then \"c\"."
+17. `review-3.json` | `items[1].feedback.byKey.test-9` | wrong | minor | "the last letter must differ from both its neighbours, including the first" never shows at test 9: any wrong last letter for odd $n$ fails test 3 ($n = 3$). Nothing tested fails first at $n = 99{,}999$. | Script FINDING 17: plain alternation first fails test 3. | "Test 9 has $n = 99{,}999$, an odd $n$: `ab` 49,999 times, then `c`."
 
 18. `homework-3.json` | `items[0].feedback.byKey.test-2` | wrong | minor | "An alert at a window's start is the wrong choice" never shows at test 2: alerting at starts fails test 1 (4 alerts, not 2). | Script FINDING 18. The mistake that first fails test 2 is sorting by start while alerting at the end: it alerts at 10, then at 3. | "Test 2 is (1, 10) and (2, 3): one alert at 3 covers both. Sort by end, so the first alert goes at the smallest end, 3, not at 10."
 
@@ -71,12 +71,27 @@ Every fix text above was checked: each mistake a new line names was run as a mut
 - `node tools/validate.mjs 2>&1 | tail -5`: 0 errors, 4,537 warnings (repository-wide). `app/content/manifest.json` unchanged.
 - `node tools/run-number-scripts.mjs --python <venv> --only contests`: 5 of 367 scripts, 5 passed, 0 new failures.
 - `node tools/grade-all.mjs --file <path> --local-cdn <pkgs>` on each of the 18 files: 0 failures on every file (168 widgets: l1 10, l2 14, l3 12, l4 10, l5 13, l6 10, l7 12, l8 10, l9 10, l10 11, l11 11, l12 11, review-1 9, review-2 10, review-3 6, homework-1 3, homework-2 3, homework-3 3).
-- `docs/reports/contests-L1-3-concepts.py` (venv Python, pytest and sympy present, clang++ present): 283 checks, 14 failing, all FINDING; exit 1 by design until the fix pass. About 70 s.
+- `docs/reports/contests-L1-3-concepts.py` (venv Python, pytest and sympy present, clang++ present): 306 checks, 14 failing, all FINDING; exit 1 by design until the fix pass. About 80 s.
 - No content was changed, so no playthrough was run.
 
 ## Overlap with earlier reads
 
-To be filled after the blind commit.
+Blind commit: `5ef5d1eb` ("WIP: contests L1-L3 ledger and findings"). After it, `docs/reviews/review-contests-1-2.md` and `docs/reviews/review-contests-3-4.md` were read (level 4 findings of the second file are out of scope). After the blind commit no verdict, finding or fix text changed: this section was written, 23 cross-checks that the ledger cites were added to the script (283 checks became 306), and one ledger basis was reworded to match the script.
+
+The earlier reads were second-reader reviews with their own fix passes, and this audit read the content after those fixes. So an earlier finding could only be found again here if its fix had failed or been partial; none had.
+
+| Conceptual findings (wrong, misleading, imprecise) | Count | Which |
+|---|---|---|
+| By this audit only | 22 | findings 1 to 22 above |
+| By the earlier reviews only | 21 | review-contests-1-2 findings 1 to 14 (4 wrong, 10 misleading); review-contests-3-4 findings 1, 2, 3, 4, 5, 7 and 10 (1 wrong, 6 misleading), all in levels 1 to 3 |
+| By both | 0 | |
+
+Notes on the comparison:
+
+- All 21 earlier findings were fixed before this read, and each fixed text was judged again here as a ledger row and found correct. Examples: the route in l8 `screens[0].feedback.generic`; "Every quotient but the last was 1" in l6; the reworded inverse sentence in l5 `screens[9]`; the running best profit in l11's meet in the middle; "almost every time" in l12 `screens[5]`; the cap bound in homework-3; the correctness paragraph of homework-1's model; `x > 0 and (x & (x - 1)) == 0` in l11 and review-3. No `wrong` was introduced by either fix pass.
+- The class behind 13 of this audit's 14 `wrong` rows, a `test-N` feedback line whose named mistake fails an earlier test, was met once by the earlier reads, in level 4 (review-contests-3-4 finding 14, l13), and not swept. Both earlier reviews ran learner variants against the hidden tests to see that they were caught, not to see which test caught them first.
+- The earlier reviews did not raise the monovariant sentence (finding 12), the legend sentences (findings 1 and 2) or the ±1 tolerance (finding 21). This audit did not raise their voice, layout, freshness and key-length findings, which are outside a concept audit.
+- New `wrong` findings by this audit that no earlier read found: 13 (findings 3, 5, 6, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20), all minor, over three levels. Under the convergence rule the course needs another blind audit after the fix pass.
 
 ## Inbox
 

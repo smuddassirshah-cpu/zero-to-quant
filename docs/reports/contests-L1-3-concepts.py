@@ -1127,6 +1127,157 @@ J3 = [(5, 1, 0), (1, 2, 0)]
 ck('hw3 counter-examples', (lateness([1, 0], J1, True), lateness([0, 1], J1, True)) == (4, 0) and (lateness([0, 1], J2, True), lateness([1, 0], J2, True)) == (3, 0)
    and (lateness([0, 1], J3, total=True), lateness([1, 0], J3, total=True), lateness([0, 1], J3), lateness([1, 0], J3)) == (8, 5, 4, 5))
 
+def best_time_early(f):
+    t0 = time.perf_counter()
+    f()
+    return time.perf_counter() - t0
+
+# ---- more cross-checks named in the ledger
+def sol(f, key, i):
+    ns = {}
+    exec(W(f, key, i).get('prelude', '') + '\n' + W(f, key, i)['solution'], ns)
+    return ns
+r = random.Random(99)
+# l4: a brute force that shares the buggy helper agrees with the fast code on every case
+fits = lambda x, y, k: x + y < k
+def shared_fast(xs, k):
+    a = sorted(xs)
+    i, j, c = 0, len(a) - 1, 0
+    while i < j:
+        if fits(a[i], a[j], k):
+            c += j - i
+            i += 1
+        else:
+            j -= 1
+    return c
+shared_brute = lambda xs, k: sum(fits(xs[i], xs[j], k) for i in range(len(xs)) for j in range(i + 1, len(xs)))
+ck('l4 shared helper: 2,000 trials, no difference', all(shared_fast(xs, k) == shared_brute(xs, k) for xs, k in
+                                                       (([r.randint(1, 10) for _ in range(r.randint(1, 6))], r.randint(2, 20)) for _ in range(2000))))
+# l5: multiplications of repeated squaring at e = 10^18
+e = 10**18
+ck('l5 at most 120 multiplications for e = 10^18', e.bit_length() == 60 and e.bit_length() + bin(e).count('1') <= 120)
+# l8: final_parity against random play
+fp = sol('l8-invariants', 'screens', 8)['final_parity']
+ok = True
+for _ in range(300):
+    xs = [r.randint(0, 30) for _ in range(r.randint(1, 7))]
+    ys = list(xs)
+    while len(ys) > 1:
+        a = ys.pop(r.randrange(len(ys)))
+        b = ys.pop(r.randrange(len(ys)))
+        ys.append(abs(a - b))
+    ok = ok and ys[0] % 2 == fp(xs)
+ck('l8 final_parity equals random play on 300 boards', ok)
+# l9: frames, checker, listed verdicts, the search order, the shape of fill_array's output
+l9 = DOC['l9-constructive']
+frames = l9['screens'][1]['canvas']['controls'][0]['frames']
+ck('l9 frames are evens then odds', all(fr['cells'] == list(range(2, m + 1, 2)) + list(range(1, m + 1, 2)) for m, fr in enumerate(frames, 1))
+   and [valid(fr['cells']) for fr in frames] == [True, False, False, True, True, True, True, True])
+chk = sol('l9-constructive', 'screens', 5)['check_no_adjacent']
+ck('l9 checker accepts exactly the valid orders (n up to 7)', all(
+    (chk(m, list(q)) == (valid(q) and m not in (2, 3))) for m in range(1, 8) for q in itertools.permutations(range(1, m + 1)))
+   and all(chk(m, -1) == (m in (2, 3)) for m in range(1, 8)) and not chk(5, [2, 4, 1, 3]) and not chk(5, [1, 3, 5, 2, 2]))
+first6 = next(i for i, q in enumerate(itertools.permutations(range(1, 7))) if valid(q))
+ck('l9 the search meets every order starting 1, 2 first', first6 >= math.factorial(4) and all(q[:2] == (1, 2) for q in itertools.islice(itertools.permutations(range(1, 7)), 24)))
+fa = sol('l9-constructive', 'screens', 8)['fill_array']
+out = fa(200000, 1500000007, 10000)
+ck('l9 fill_array shape: k, then at most one between, then 1', out == sorted(out, reverse=True) and sum(1 for x in out if 1 < x < 10000) <= 1 and sum(out) == 1500000007)
+na = sol('l9-constructive', 'screens', 5)['no_adjacent']
+ck('l9 construction at n = 10^5 takes well under half a second', best_time_early(lambda: na(100000)) < 0.5)
+# l10: the heap variant of the rooms problem
+import heapq
+def rooms_heap(iv):
+    h = []
+    for s, e2 in sorted(iv):
+        if h and h[0] <= s:
+            heapq.heapreplace(h, e2)
+        else:
+            heapq.heappush(h, e2)
+    return len(h)
+mr = sol('l10-greedy-proofs', 'screens', 6)['min_rooms']
+ck('l10 heap of end times equals the event sweep', all(rooms_heap(iv) == mr(iv) for iv in
+                                                     ([(s0, s0 + r.randint(1, 5)) for s0 in (r.randint(0, 12) for _ in range(r.randint(1, 8)))] for _ in range(500))))
+# l12: both solutions against direct loops
+ar = sol('l12-difference-arrays', 'screens', 4)['apply_ranges']
+mc = sol('l12-difference-arrays', 'screens', 7)['max_coverage']
+ok = ok2 = True
+for _ in range(300):
+    m = r.randint(1, 9)
+    ups = []
+    for _ in range(r.randint(0, 5)):
+        l = r.randint(0, m - 1)
+        ups.append((l, r.randint(l, m - 1), r.randint(-9, 9)))
+    direct = [sum(v for l, rr, v in ups if l <= i <= rr) for i in range(m)]
+    ok = ok and ar(m, ups) == direct
+    ok2 = ok2 and mc(m, [(l, rr) for l, rr, v in ups]) == max([sum(1 for l, rr, v in ups if l <= i <= rr) for i in range(m)])
+ck('l12 apply_ranges equals a direct loop on 300 cases', ok)
+ck('l12 max_coverage equals a direct count on 300 cases', ok2)
+# review and homework solutions against brute force
+ck('review-1 token walk', (lambda t: 1 + 1 + int(t[1]))('2\n3\n1 2\n3\n1\n9'.split()) == 5)
+depth = {(1, 1): 0}
+q = deque([(1, 1)])
+while q:
+    a, b = q.popleft()
+    for t in ((a + b, b), (a, a + b)):
+        if max(t) <= 12 and t not in depth:
+            depth[t] = depth[(a, b)] + 1
+            q.append(t)
+ck('review-2: (12, 7) is 5 moves from (1, 1)', depth[(12, 7)] == 5)
+cp = sol('homework-1', 'items', 0)['count_pairs']
+lw = sol('homework-1', 'items', 1)['longest_window']
+rs = sol('homework-1', 'items', 2)['range_sums']
+ok = ok2 = ok3 = True
+for _ in range(300):
+    xs = [r.randint(-4, 4) for _ in range(r.randint(1, 8))]
+    k = r.randint(-6, 6)
+    ok = ok and cp(xs, k) == sum(1 for i in range(len(xs)) for j in range(i + 1, len(xs)) if xs[i] + xs[j] == k)
+    ts = [r.choice('ABCD') for _ in range(r.randint(1, 9))]
+    kk = r.randint(1, 5)
+    ok2 = ok2 and lw(ts, kk) == max(j - i for i in range(len(ts)) for j in range(i + 1, len(ts) + 1) if len(set(ts[i:j])) <= kk)
+    qs = [tuple(sorted((r.randint(1, len(xs)), r.randint(1, len(xs))))) for _ in range(4)]
+    ok3 = ok3 and rs(xs, qs) == [sum(xs[l - 1:rr]) for l, rr in qs]
+ck('hw1 count_pairs equals brute force on 300 lists', ok)
+ck('hw1 longest_window equals brute force on 300 lists', ok2)
+ck('hw1 range_sums equals direct sums on 300 lists', ok3)
+rq = random.Random(41)
+[rq.randint(-10**9, 10**9) for _ in range(200000)]
+tot = 0
+for _ in range(200000):
+    a, b = rq.randint(1, 200000), rq.randint(1, 200000)
+    tot += abs(a - b) + 1
+ck('hw1 slice sums on test 6 are about 1.3e10 steps', 1.2e10 < tot < 1.5e10, tot)
+sp = sol('homework-3', 'items', 1)['spans']
+fo = sol('homework-3', 'items', 2)['first_over_cap']
+ok = ok2 = True
+for _ in range(300):
+    cl = [r.randint(1, 6) for _ in range(r.randint(1, 9))]
+    want = []
+    for i in range(len(cl)):
+        j = i
+        while j > 0 and cl[j - 1] <= cl[i]:
+            j -= 1
+        want.append(i - j + 1)
+    ok = ok and sp(cl) == want
+    m = r.randint(1, 6)
+    ups = []
+    for _ in range(r.randint(1, 6)):
+        l = r.randint(0, m - 1)
+        ups.append((l, r.randint(l, m - 1), r.randint(1, 4)))
+    cap = r.randint(0, 8)
+    a, ans = [0] * m, -1
+    for kq, (l, rr, v) in enumerate(ups, 1):
+        for i in range(l, rr + 1):
+            a[i] += v
+        if max(a) > cap:
+            ans = kq
+            break
+    ok2 = ok2 and fo(m, ups, cap) == ans
+ck('hw3 spans equals a walk back on 300 lists', ok)
+ck('hw3 first_over_cap equals direct simulation on 300 cases', ok2)
+ns = {}
+exec(ATSTART, ns)
+ck('hw3 the wrong greedy uses 2 alerts on [1, 10], [2, 3]', ns['fewest_alerts']([(1, 10), (2, 3)]) == 2)
+
 # ------------------------------------------------------------------ D. speed claims (ratios, wide margins)
 def best_time(f, reps=3):
     out = []
@@ -1200,13 +1351,45 @@ int main(int argc, char** argv) {
         return best_time(go)
     c0, c1, c2 = io_time(0), io_time(1), io_time(2)
     ck('l3_cpp_timing: both lines beat neither, and std::endl gives much of it back', 2 * c1 < c0 and 1.5 * c1 < c2, (c0, c1, c2))
+def sieve_time(nn):
+    flags = [True] * (nn + 1)
+    q2 = 2
+    while q2 * q2 <= nn:
+        if flags[q2]:
+            for m2 in range(q2 * q2, nn + 1, q2):
+                flags[m2] = False
+        q2 += 1
+def trial_time(nn):
+    for m2 in range(2, nn + 1):
+        d2 = 2
+        while d2 * d2 <= m2:
+            if m2 % d2 == 0:
+                break
+            d2 += 1
+ts_, tt_ = best_time(lambda: sieve_time(200000), 2), best_time(lambda: trial_time(200000), 2)
+ck('l6 trial division of every number is many times slower than the sieve', tt_ > 5 * ts_, (ts_, tt_))
+rr2 = random.Random(5)
+big = [rr2.randint(-10**9, 10**9) for _ in range(200000)]
+psm = sol('l2-limits-to-complexity', 'screens', 10)['pair_sums_at_most']
+ck('l2 sort and two pointers on 200,000 values takes under 3 s here', best_time(lambda: psm(big, 0), 1) < 3)
+def pairs_loop():
+    a = big[:5000]
+    c = 0
+    for i in range(5000):
+        ai = a[i]
+        for j in range(i + 1, 5000):
+            if abs(ai - a[j]) <= 10**6:
+                c += 1
+    return c
+t_pairs = best_time(pairs_loop, 1)
+ck('l2_pairs: 12,497,500 pair checks take between 0.1 s and 30 s here', 0.1 < t_pairs < 30, t_pairs)
 t0 = time.perf_counter()
 s = 0
 for i in range(10**7):
     s += i
 t_add = time.perf_counter() - t0
 ck('l2_additions: 10^7 additions take between 0.03 s and 5 s', 0.03 < t_add < 5, t_add)
-print('info: 10^7 additions %.2f s; reading 200,000 lines %.3f s against %.3f s; permutation search on all 9 tests %.1f s' % (t_add, ta, tb, t_perm))
+print('info: 10^7 additions %.2f s; 12.5 million pair checks %.2f s; reading 200,000 lines %.3f s against %.3f s; permutation search on all 9 tests %.1f s' % (t_add, t_pairs, ta, tb, t_perm))
 
 shutil.rmtree(CTMP, ignore_errors=True)
 for sk in SKIP:
