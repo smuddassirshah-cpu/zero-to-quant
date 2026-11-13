@@ -9,6 +9,9 @@ Three parts.
   C. Every `feedback.byKey["test-N"]` line that names a mistake: a submission with that mistake is run against
      the widget's own tests, and its first failing test must be N. Slip values whose feedback names a mistake
      are recomputed from that mistake.
+  D. Fix pass: the fixer's own submissions, one per cause named by a test-N line (each the solution with that one mistake
+     put in), first failing test N; every test-N line is listed, and lines that name no cause have their facts checked.
+  E. Fix pass: every numeric wrong[] value with a feedback line, recomputed from the mistake the line names.
 Part C runs in CPython with the page's recursion limit (3,000, js/screens/drill-worker.js) and a 5 second
 alarm per test (the page allows 5 seconds in Pyodide, which is slower than CPython).
 The same submissions were also run in Pyodide 0.27.7 through the page's own grader; the audit file gives those results.
@@ -185,8 +188,14 @@ try:
     hides = True
 except RecursionError:
     hides = False
-check('l3 screens[3].explain: a DFS with no seen set hides its bug "on a tree" (undirected tree A-B stored both ways)', hides,
-      'it recurses for ever on a two-node undirected tree: the claim needs a tree stored parent to child only')
+# fix pass: the sentence now says "a tree stored as parent-to-child arrows"; undirected it never returns, stored parent to child it does
+try:
+    no_seen({'A': ['B'], 'B': []}, 'A')
+    hides_directed = True
+except RecursionError:
+    hides_directed = False
+check('l3 screens[3].explain (fix pass): no seen set fails on an undirected tree but returns on parent-to-child arrows',
+      not hides and hides_directed and 'tree stored as parent-to-child arrows' in load('l3-going-deep')['screens'][3]['explain']['text'])
 rev = undirected([('P', 'Q'), ('P', 'S'), ('Q', 'R'), ('S', 'T'), ('R', 'U'), ('T', 'U')])
 check('review-1 BFS and DFS orders', bfs_order(rev, 'P') == list('PQSRTU') and dfs_pre_post(rev, 'P')[0] == list('PQRUTS'))
 
@@ -241,8 +250,10 @@ PNL = [[5, -15, -35, -55, -75], [50, 30, 10, -10, -30], [65, 45, 25, 5, -15], [5
 reg = lambda lim, strict=True: islands([[(v < -lim) if strict else (v <= -lim) for v in row] for row in PNL])
 check('l4 loss regions 2, 1, 0, 2', [reg(50), reg(10), reg(100), reg(30)] == [2, 1, 0, 2])
 t6 = lambda strict: islands([[(v < -50) if strict else (v <= -50) for v in [-50, -51]]])
-check('l4 screens[8] test 6 "checks the boundary": a <= submission must give a different answer on it', t6(True) != t6(False),
-      f'strict {t6(True)}, non-strict {t6(False)}: the test cannot tell them apart')
+# fix pass: test 6 cannot tell < from <= (strict 1, non-strict 1), so its line no longer says it checks the boundary;
+# it names the first non-square grid, which a square-grid submission fails (part D). The tests are unchanged.
+check('l4 screens[8] test 6 (fix pass): < and <= agree on it, and its line no longer claims the boundary', t6(True) == t6(False) == 1
+      and 'boundary' not in load('l4-islands')['screens'][8]['feedback']['byKey']['test-6'])
 p6 = lambda strict: islands([[(v < -50) if strict else (v <= -50) for v in [-50, 10, -51]]])
 check('l4 proposed replacement test [[-50, 10, -51]] separates < (1 region) from <= (2 regions)', (p6(True), p6(False)) == (1, 2))
 PIPE = {'prices': ['returns'], 'calendar': ['returns'], 'returns': ['signals', 'risk'], 'signals': ['backtest'], 'risk': ['backtest'], 'backtest': ['report'], 'report': []}
@@ -365,8 +376,8 @@ while heap:
     for v, w in W7[u]:
         heapq.heappush(heap, (d + w, v))
 check('l7 trap record-on-pop: B 4, F 9', dpop['B'] == 4 and dpop['F'] == 9)
-check('l7 screens[5].explain "B ends at 4 and F at 9, both wrong": exactly two nodes end wrong',
-      sorted(k for k in dpop if dpop[k] != dist7[k]) == ['B', 'F'], f'wrong nodes: {sorted((k, dpop[k], dist7[k]) for k in dpop if dpop[k] != dist7[k])}')
+check('l7 screens[5].explain (fix pass) "B ends at 4, D at 6 and F at 9, all wrong": exactly these three end wrong',
+      sorted((k, dpop[k]) for k in dpop if dpop[k] != dist7[k]) == [('B', 4), ('D', 6), ('F', 9)] and 'D at 6' in load('l7-dijkstra')['screens'][5]['explain']['text'], f'wrong nodes: {sorted((k, dpop[k], dist7[k]) for k in dpop if dpop[k] != dist7[k])}')
 seen7, d7s, heap = {'A'}, {'A': 0}, [(0, 'A')]
 while heap:
     d, u = heapq.heappop(heap)
@@ -549,7 +560,8 @@ check('l11 eight queens: 2,057 nodes, 92 answers, 19,173,961 unpruned', sum(quee
 check('l11 queen counts 1, 0, 0, 2, 10, 4', [queens_nodes(n)[n] for n in range(1, 7)] == [1, 0, 0, 2, 10, 4])
 cols_only3 = sum(1 for p in itertools.permutations(range(3)))
 slip3 = next(w['value'] for w in load('l11-dead-ends')['quiz'][0]['widget']['wrong'] if w['id'] == 'two')
-check('l11 quiz q-three slip "two": "checked only columns" must give the slip value', cols_only3 == slip3, f'columns only gives {cols_only3} (the "orders" slip), slip value = {slip3}')
+# fix pass: the "two" line now says two is the 4 by 4 count; part E recomputes it
+check('l11 quiz q-three slip "two" (fix pass): the line no longer names a mistake that gives another value', 'columns' not in load('l11-dead-ends')['quiz'][0]['feedback']['byKey']['two'] and slip3 == 2)
 
 
 def combos(cands, target):
@@ -675,7 +687,8 @@ a_before_d = sum(1 for p in perms4 if p.index('A') < p.index('D'))
 a_first_d_last = sum(1 for p in perms4 if p[0] == 'A' and p[-1] == 'D')
 slipL = next(w['value'] for w in load('homework-3')['items'][3]['widget']['wrong'] if w['id'] == 'fixed')
 check('hw3 h-legs: 12 orders', a_before_d == 12)
-check('hw3 h-legs slip "fixed": "You fixed A first and D last" must give the slip value', a_first_d_last == slipL, f'A first and D last gives {a_first_d_last}; A first alone gives {sum(1 for p in perms4 if p[0] == "A")}; slip value = {slipL}')
+check('hw3 h-legs slip "fixed" (fix pass): "You sent A first every time" gives the slip value', sum(1 for p in perms4 if p[0] == 'A') == slipL
+      and 'A first every time' in load('homework-3')['items'][3]['feedback']['byKey']['fixed'], f'A first and D last gives {a_first_d_last}; A first alone gives {sum(1 for p in perms4 if p[0] == "A")}; slip value = {slipL}')
 tw = [1] + [0] * 40
 for i in range(1, 41):
     tw[i] = sum(tw[i - s] for s in (1, 2, 3, 4) if i - s >= 0)
@@ -835,7 +848,7 @@ def find_ccp(n, posts):
         if into[f] > 0 and into[f] == n - 1 and out[f] == 0: return f
     return -1
 ''')
-m('l2-level-by-level#screens[4]', 3, 'mark-on-pop', '''
+m('l2-level-by-level#screens[4]', 1, 'mark-on-pop', '''
 from collections import deque
 def bfs(adj, start):
     queue = deque([start]); seen = set(); order = []
@@ -893,7 +906,7 @@ def within_hops(adj, start, k):
                 if dist[v] < k: queue.append(v)
     return sorted(f for f in dist if f != start)
 ''')
-m('l2-level-by-level#screens[8]', 7, 'mark-on-pop list result', '''
+m('l2-level-by-level#screens[8]', 5, 'mark-on-pop list result', '''
 from collections import deque
 def within_hops(adj, start, k):
     queue = deque([(start, 0)]); seen = set(); out = []
@@ -922,7 +935,7 @@ def within_hops(adj, start, k):
         out |= frontier
     return sorted(out - {start})
 ''')
-m('l3-going-deep#screens[2]', 4, 'no-seen-check', '''
+m('l3-going-deep#screens[2]', 1, 'no-seen-check', '''
 def dfs(adj, start):
     seen = set(); order = []
     def visit(u):
@@ -953,7 +966,7 @@ def dfs_stack(adj, start):
             if v not in seen: stack.append(v)
     return order
 ''')
-m('l3-going-deep#screens[5]', 3, 'no-skip-on-pop', '''
+m('l3-going-deep#screens[5]', 1, 'no-skip-on-pop', '''
 def dfs_stack(adj, start):
     seen = set(); stack = [start]; order = []
     while stack:
@@ -1056,7 +1069,7 @@ def count_islands(grid):
 N4 = '((a - 1, b), (a + 1, b), (a, b - 1), (a, b + 1))'
 N8 = '[(a + i, b + j) for i in (-1, 0, 1) for j in (-1, 0, 1) if (i, j) != (0, 0)]'
 m('l4-islands#screens[4]', 2, 'no-empty-guard', ISL % ('len(grid[0])', N4))
-m('l4-islands#screens[4]', 5, 'diagonals', ISL % ('len(grid[0]) if rows else 0', N8))
+m('l4-islands#screens[4]', 1, 'diagonals', ISL % ('len(grid[0]) if rows else 0', N8))
 m('l4-islands#screens[4]', 10, 'sinking', '''
 def count_islands(grid):
     rows = len(grid); cols = len(grid[0]) if rows else 0
@@ -1087,7 +1100,7 @@ def count_islands(grid):
                 count += 1; fill(r, c)
     return count
 ''')
-m('l4-islands#screens[8]', 6, 'non-strict <=', '''
+m('l4-islands#screens[8]', 6, 'non-strict <= (should pass)', '''
 def count_loss_regions(pnl, limit):
     rows = len(pnl); cols = len(pnl[0]) if rows else 0
     seen = set(); count = 0
@@ -1411,7 +1424,7 @@ def fewest_conversions(pairs, src, dst):
 '''
 BOTH = 'adj.setdefault(a, []).append(b); adj.setdefault(b, []).append(a)'
 m('l6-fewest-steps#screens[8]', 1, 'counts-currencies', FC % (BOTH, '1', 'adj.get(u, [])'))
-m('l6-fewest-steps#screens[8]', 3, 'one-direction a->b', FC % ('adj.setdefault(a, []).append(b)', '0', 'adj.get(u, [])'))
+m('l6-fewest-steps#screens[8]', 1, 'one-direction a->b', FC % ('adj.setdefault(a, []).append(b)', '0', 'adj.get(u, [])'))
 m('l6-fewest-steps#screens[8]', 3, 'one-direction b->a (variant)', FC % ('adj.setdefault(b, []).append(a)', '0', 'adj.get(u, [])'))
 m('l6-fewest-steps#screens[8]', 7, 'adj[u] KeyError', FC % (BOTH, '0', 'adj[u]'))
 DJ = '''
@@ -1433,7 +1446,7 @@ m('l7-dijkstra#screens[4]', 1, 'record-on-pop', DJ % '''    dist = {u: math.inf 
         for v, w in adj[u]:
             heapq.heappush(heap, (d + w, v))
     return dist''')
-m('l7-dijkstra#screens[4]', 2, 'reached-only dict', DJ % '''    dist = {s: 0}; heap = [(0, s)]
+m('l7-dijkstra#screens[4]', 1, 'reached-only dict', DJ % '''    dist = {s: 0}; heap = [(0, s)]
     while heap:
         d, u = heapq.heappop(heap)
         if d > dist[u]: continue
@@ -1573,7 +1586,7 @@ def cheapest_within(quotes, src, dst, k):
     return cost.get(dst, -1)
 '''
 m('homework-2#items[1]', 1, 'k-rounds', CW % ('k', 'dict(cost)'))
-m('homework-2#items[1]', 2, 'no-copy', CW % ('k + 1', 'cost'))
+m('homework-2#items[1]', 1, 'no-copy', CW % ('k + 1', 'cost'))
 m('homework-2#items[1]', 2, 'plain-dijkstra (variant)', '''
 import heapq, math
 def cheapest_within(quotes, src, dst, k):
@@ -1624,7 +1637,7 @@ def cc(und='pass', stale=STALE, nb='adj.get(u, [])', base='d', better='ways[v] =
     return CC % (und, stale, nb, base, better, early, tie)
 m('homework-2#items[8]', 2, 'tie-adds-1', cc(tie='ways[v] += 1'))
 m('homework-2#items[8]', 3, 'cheaper-keeps-count', cc(better='ways[v] = ways.get(v, 0) + ways[u]'))
-m('homework-2#items[8]', 4, 'return-on-first-reach', cc(early='\n                if v == dst: return nd, ways[v]'))
+m('homework-2#items[8]', 1, 'return-on-first-reach', cc(early='\n                if v == dst: return nd, ways[v]'))
 m('homework-2#items[8]', 5, 'no-stale-check, cost[u] base', cc(stale='pass', base='cost[u]'))
 m('homework-2#items[8]', 5, 'no-stale-check, d base (variant)', cc(stale='pass'))
 m('homework-2#items[8]', 7, 'undirected', cc(und='adj.setdefault(b, []).append((a, fee))'))
@@ -1661,7 +1674,7 @@ TAKE = 'path.append(xs[i]); walk(i + 1); path.pop(); walk(i + 1)'
 SKIP = 'walk(i + 1); path.append(xs[i]); walk(i + 1); path.pop()'
 m('l10-every-subset#screens[9]', 1, 'skip-first', SUB % ('pass', 'path[:]', SKIP) + PERM % 'pass')
 m('l10-every-subset#screens[9]', 2, 'empty-input-none', SUB % ('if not xs: return []', 'path[:]', TAKE) + PERM % 'pass')
-m('l10-every-subset#screens[9]', 5, 'stores-path-itself', SUB % ('pass', 'path', TAKE) + PERM % 'pass')
+m('l10-every-subset#screens[9]', 1, 'stores-path-itself', SUB % ('pass', 'path', TAKE) + PERM % 'pass')
 m('l10-every-subset#screens[9]', 7, 'perm-empty-none', SUB % ('pass', 'path[:]', TAKE) + PERM % 'if not xs: return []')
 
 NQ = '''
@@ -1743,12 +1756,12 @@ m('l12-remembering#screens[9]', 1, 'base-not-counted', FM % ('', 'cache = {}', '
         computed += 1
         cache[k] = f(k - 1) + f(k - 2)
         return cache[k]''') + GP % GP_OK)
-m('l12-remembering#screens[9]', 4, 'counts-lookups', FM % ('', 'cache = {}', '''        computed += 1
+m('l12-remembering#screens[9]', 3, 'counts-lookups', FM % ('', 'cache = {}', '''        computed += 1
         if k in cache: return cache[k]
         value = k if k < 2 else f(k - 1) + f(k - 2)
         cache[k] = value
         return value''') + GP % GP_OK)
-m('l12-remembering#screens[9]', 6, 'module-level cache', FM % ('cache = {}', 'pass', F_OK) + GP % GP_OK)
+m('l12-remembering#screens[9]', 3, 'module-level cache', FM % ('cache = {}', 'pass', F_OK) + GP % GP_OK)
 m('l12-remembering#screens[9]', 6, 'default-arg cache (variant)', '''
 def fib_memo(n, cache={}):
     computed = 0
@@ -1924,6 +1937,662 @@ for name, (ref, n, code) in M.items():
     else:
         check('C first failing test is the one the line names: ' + name, first == n,
               f'first failing test is {first}' if first else 'passes every test')
+
+
+# ---------------------------------------------------------------- part D: fix-pass sweep (docs/reviews/audit-graphs-dp-1-3-r2.md, ## Fix pass)
+# The fixer's own submissions, written separately from part C: each is the widget's solution with the named mistake
+# put in by a text replacement, so the mistake and nothing else differs. Every feedback.byKey["test-N"] line of the
+# L1 to L3 code widgets is listed in SWEEP below, either with a submission (the line names a cause) or as a
+# description (the line names no cause; its facts are checked against the test).
+D = {}
+
+
+def mut(ref, *pairs):
+    code = widget(ref)['solution']
+    for old, new in pairs:
+        assert code.count(old) == 1, (ref, old)
+        code = code.replace(old, new)
+    return code
+
+
+def dm(ref, n, tag, code):
+    D[f'{ref} test-{n}: {tag}'] = (ref, n, code)
+
+
+def fb_lines(ref):
+    f, p = ref.split('#')
+    key, i = p[:-1].split('[')
+    return load(f)[key][int(i)].get('feedback', {}).get('byKey', {})
+
+
+def expect(ref, n):
+    return widget(ref)['tests'][n - 1]['expect']
+
+
+R = 'l1-nodes-and-edges#screens[5]'
+dm(R, 1, 'stores each edge at one end', mut(R, ('        if u != v:\n            adj[v].append(u)\n', '')))
+dm(R, 2, 'keys from the edges only', mut(R, ('adj = {v: [] for v in nodes}', 'adj = {}'), ('adj[u].append(v)', 'adj.setdefault(u, []).append(v)'),
+                                       ('            adj[v].append(u)', '            adj.setdefault(v, []).append(u)')))
+dm(R, 3, 'self-loop added at both ends', mut(R, ('        if u != v:\n            adj[v].append(u)\n', '        adj[v].append(u)\n')))
+R = 'l1-nodes-and-edges#screens[8]'
+dm(R, 1, 'rows are one shared list', mut(R, ('[[0] * n for _ in range(n)]', '[[0] * n] * n')))
+R = 'l1-nodes-and-edges#screens[9]'
+dm(R, 3, 'checks only the arrows in', mut(R, ('into[f] == n - 1 and out[f] == 0', 'into[f] == n - 1')))
+dm(R, 4, 'checks only that it posts to nobody', mut(R, ('into[f] == n - 1 and out[f] == 0', 'out[f] == 0')))
+dm(R, 5, 'needs at least one poster', mut(R, ('into[f] == n - 1 and out[f] == 0', 'into[f] == n - 1 and out[f] == 0 and into[f] > 0')))
+R = 'l2-level-by-level#screens[4]'
+dm(R, 1, 'marks on pop', mut(R, ('seen = {start}', 'seen = set()'), ('        order.append(u)\n', '        seen.add(u)\n        order.append(u)\n'),
+                            ('                seen.add(v)\n', '')))
+dm(R, 7, 'recursive level search', '''
+def bfs(adj, start):
+    order, seen = [], {start}
+    def level(frontier):
+        if not frontier:
+            return
+        nxt = []
+        for u in frontier:
+            order.append(u)
+            for v in sorted(adj[u]):
+                if v not in seen:
+                    seen.add(v); nxt.append(v)
+        level(nxt)
+    level([start])
+    return order
+''')
+R = 'l2-level-by-level#screens[8]'
+dm(R, 1, 'expands a firm at distance k', mut(R, ('        if dist[u] == k:\n            continue\n', '        if dist[u] > k:\n            continue\n')))
+dm(R, 5, 'marks on pop, records a firm when queued', '''
+from collections import deque
+def within_hops(adj, start, k):
+    seen, found = set(), []
+    queue = deque([(start, 0)])
+    while queue:
+        u, d = queue.popleft()
+        seen.add(u)
+        if d == k:
+            continue
+        for v in adj[u]:
+            if v not in seen:
+                found.append(v)
+                queue.append((v, d + 1))
+    return sorted(found)
+''')
+R = 'l3-going-deep#screens[2]'
+dm(R, 1, 'no seen check', mut(R, ('            if v not in seen:\n                visit(v)', '            visit(v)')))
+R = 'l3-going-deep#screens[5]'
+dm(R, 1, 'pushes in sorted order', mut(R, ('sorted(adj[u], reverse=True)', 'sorted(adj[u])')))
+dm(R, 1, 'no skip on pop', mut(R, ('        if u in seen:\n            continue\n', '')))
+dm(R, 6, 'recursive helper', mut(R, ('    return order\n', '    return order\n\n\ndef dfs_stack(adj, start):\n    order, seen = [], set()\n    def go(u):\n        seen.add(u); order.append(u)\n        for v in sorted(adj[u]):\n            if v not in seen: go(v)\n    go(start)\n    return order\n')))
+R = 'l3-going-deep#screens[8]'
+dm(R, 2, 'counts only nodes with edges', mut(R, ('        if s in seen:\n            continue', '        if s in seen or not adj[s]:\n            continue')))
+dm(R, 7, 'recursive search', '''
+def count_components(adj):
+    seen = set()
+    def go(u):
+        seen.add(u)
+        for v in adj[u]:
+            if v not in seen: go(v)
+    count = 0
+    for s in adj:
+        if s not in seen:
+            count += 1; go(s)
+    return count
+''')
+R = 'l3-going-deep#screens[9]'
+dm(R, 2, 'plain seen set', '''
+def has_cycle(rules):
+    seen = set()
+    def visit(u):
+        seen.add(u)
+        for v in rules[u]:
+            if v in seen or visit(v):
+                return True
+        return False
+    return any(r not in seen and visit(r) for r in rules)
+''')
+dm(R, 5, 'searches from the first rule only', mut(R, ('    return any(state[r] == "new" and visit(r) for r in rules)', '    return bool(rules) and visit(next(iter(rules)))')))
+R = 'l4-islands#screens[2]'
+dm(R, 1, 'adds diagonals', mut(R, ('((-1, 0), (1, 0), (0, -1), (0, 1))', '((-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1))')))
+dm(R, 1, 'order left, right, up, down', mut(R, ('((-1, 0), (1, 0), (0, -1), (0, 1))', '((0, -1), (0, 1), (-1, 0), (1, 0))')))
+dm(R, 2, 'no bounds check', mut(R, ('        if 0 <= nr < rows and 0 <= nc < cols:\n', '        if nr < rows and nc < cols:\n')))
+R = 'l4-islands#screens[4]'
+dm(R, 1, 'eight neighbours', mut(R, ('((a - 1, b), (a + 1, b), (a, b - 1), (a, b + 1))', '((a - 1, b), (a + 1, b), (a, b - 1), (a, b + 1), (a - 1, b - 1), (a - 1, b + 1), (a + 1, b - 1), (a + 1, b + 1))')))
+dm(R, 2, 'no guard on the empty grid', mut(R, ('len(grid[0]) if rows else 0', 'len(grid[0])')))
+dm(R, 10, 'sinks the land', mut(R, ('                count += 1\n', '                count += 1\n                grid[r][c] = 0\n'), ('                            seen.add((x, y))\n', '                            seen.add((x, y))\n                            grid[x][y] = 0\n')))
+dm(R, 11, 'recursive flood fill (should pass)', '''
+def count_islands(grid):
+    rows = len(grid); cols = len(grid[0]) if rows else 0
+    seen = set()
+    def fill(r, c):
+        if not (0 <= r < rows and 0 <= c < cols) or grid[r][c] != 1 or (r, c) in seen:
+            return
+        seen.add((r, c))
+        fill(r - 1, c); fill(r + 1, c); fill(r, c - 1); fill(r, c + 1)
+    n = 0
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == 1 and (r, c) not in seen:
+                n += 1; fill(r, c)
+    return n
+''')
+R = 'l4-islands#screens[8]'
+dm(R, 6, 'assumes a square grid', mut(R, ('cols = len(pnl[0]) if rows else 0', 'cols = rows')))
+dm(R, 6, 'non-strict <= (should pass)', mut(R, ('            if pnl[r][c] < -limit and', '            if pnl[r][c] <= -limit and'),
+                                              ('and pnl[x][y] < -limit and', 'and pnl[x][y] <= -limit and')))
+R = 'l5-tasks-in-order#screens[3]'
+dm(R, 1, 'plain queue', mut(R, ('    heapq.heapify(ready)\n', ''), ('heapq.heappop(ready)', 'ready.pop(0)'), ('heapq.heappush(ready, v)', 'ready.append(v)')))
+dm(R, 3, 'no cycle check', mut(R, ('return order if len(order) == len(adj) else None', 'return order')))
+dm(R, 6, 'empty order read as a cycle', mut(R, ('return order if len(order) == len(adj) else None', 'return order if order and len(order) == len(adj) else None')))
+R = 'l5-tasks-in-order#screens[8]'
+dm(R, 1, 'raw inputs left out', mut(R, ('    for pre in deps.values():\n        jobs.update(pre)\n', ''), ('            after[p].append(job)', '            after.setdefault(p, []).append(job)'),
+                                     ('            indeg[job] += 1', '            indeg[job] += 1 if p in jobs else 0')))
+R = 'review-1#items[7]'
+dm(R, 2, 'treats the arrows as two-way', mut(R, ('    seen = {s}\n', '    back = {}\n    for a in adj:\n        for b in adj[a]:\n            back.setdefault(b, []).append(a)\n    seen = {s}\n'),
+                                               ('        for v in adj[u]:', '        for v in adj[u] + back.get(u, []):')))
+dm(R, 4, 'checks the target only on discovery', mut(R, ('        if u == t:\n            return True\n', ''), ('                seen.add(v)\n', '                if v == t:\n                    return True\n                seen.add(v)\n')))
+dm(R, 7, 'recursive search', '''
+def has_path(adj, s, t, seen=None):
+    seen = seen if seen is not None else set()
+    if s == t:
+        return True
+    seen.add(s)
+    return any(v not in seen and has_path(adj, v, t, seen) for v in adj[s])
+''')
+R = 'homework-1#items[1]'
+dm(R, 2, 'spreads from the first firm only', mut(R, ('day = {f: 0 for f in defaulted}', 'day = {f: 0 for f in defaulted[:1]}'), ('deque(defaulted)', 'deque(defaulted[:1])')))
+dm(R, 5, 'no check that every firm is reached', mut(R, ('    if len(day) < len(adj):\n        return -1\n', '')))
+dm(R, 8, 'one search per defaulted firm (should pass)', '''
+from collections import deque
+def days_to_spread(adj, defaulted):
+    best = {}
+    for s in defaulted:
+        d = {s: 0}; q = deque([s])
+        while q:
+            u = q.popleft()
+            for v in adj[u]:
+                if v not in d:
+                    d[v] = d[u] + 1; q.append(v)
+        for v, x in d.items():
+            best[v] = min(best.get(v, x), x)
+    if len(best) < len(adj):
+        return -1
+    return max(best.values()) if best else 0
+''')
+R = 'homework-1#items[2]'
+dm(R, 1, 'raw inputs not counted as a round', mut(R, ('    return rounds if done == len(jobs) else None', '    return rounds - 1 if done == len(jobs) else None')))
+dm(R, 3, 'empty input read as a cycle', mut(R, ('    return rounds if done == len(jobs) else None', '    return rounds if done == len(jobs) and jobs else None')))
+dm(R, 4, 'no cycle check', mut(R, ('    return rounds if done == len(jobs) else None', '    return rounds')))
+dm(R, 7, 'cycle check only when nothing starts free', mut(R, ('    done = rounds = 0\n', '    if jobs and not current:\n        return None\n    done = rounds = 0\n'), ('    return rounds if done == len(jobs) else None', '    return rounds')))
+R = 'homework-1#items[8]'
+dm(R, 2, 'stores each conflict one way', mut(R, ('        adj[b].append(a)\n', '')))
+dm(R, 3, 'no clash check', mut(R, ('                elif group[v] == group[u]:\n                    return None     # an odd loop: no split works\n', '')))
+dm(R, 4, 'searches from the first desk only', mut(R, ('    for start in sorted(desks):', '    for start in sorted(desks)[:1]:')))
+dm(R, 5, 'desks taken from the conflicts', mut(R, ('    adj = {d: [] for d in desks}\n    for a, b in conflicts:          # a conflict runs both ways\n        adj[a].append(b)\n        adj[b].append(a)\n',
+                                                  '    adj = {}\n    for a, b in conflicts:\n        adj.setdefault(a, []).append(b)\n        adj.setdefault(b, []).append(a)\n'),
+                                                 ('    for start in sorted(desks):', '    for start in sorted(adj):')))
+dm(R, 6, 'desks in the given order', mut(R, ('    for start in sorted(desks):', '    for start in desks:')))
+dm(R, 7, 'any placed neighbour but the parent is a clash', mut(R, ('        group[start] = 0\n', '        group[start] = 0\n        parent = {start: None}\n'),
+                                                                   ('                    group[v] = 1 - group[u]\n', '                    group[v] = 1 - group[u]\n                    parent[v] = u\n'),
+                                                                   ('                elif group[v] == group[u]:', '                elif v != parent.get(u):')))
+dm(R, 8, 'places one conflict at a time', '''
+def split_desks(desks, conflicts):
+    group = {}
+    for a, b in conflicts:
+        if a not in group and b not in group:
+            group[a], group[b] = 0, 1
+        elif a not in group:
+            group[a] = 1 - group[b]
+        elif b not in group:
+            group[b] = 1 - group[a]
+        elif group[a] == group[b]:
+            return None
+    for d in desks:
+        group.setdefault(d, 0)
+    return group
+''')
+dm(R, 9, 'checks clashes only in the first linked set', mut(R, ('                elif group[v] == group[u]:', '                elif group[v] == group[u] and start == min(desks):')))
+dm(R, 10, 'recursive search', mut(R, ('    return group\n', '    return group\n\n\ndef split_desks(desks, conflicts):\n    adj = {d: [] for d in desks}\n    for a, b in conflicts:\n        adj[a].append(b); adj[b].append(a)\n    group = {}\n    def go(u):\n        for v in adj[u]:\n            if v not in group:\n                group[v] = 1 - group[u]\n                if not go(v): return False\n            elif group[v] == group[u]:\n                return False\n        return True\n    for s in sorted(desks):\n        if s not in group:\n            group[s] = 0\n            if not go(s): return None\n    return group\n')))
+R = 'l6-fewest-steps#screens[4]'
+dm(R, 1, 'walk back not reversed', mut(R, ('    return path[::-1]', '    return path')))
+dm(R, 1, 'depth-first stack', mut(R, ('        u = queue.popleft()', '        u = queue.pop()')))
+dm(R, 4, 'start equal to target gives no route', mut(R, ('    parent = {s: None}', '    if s == t:\n        return []\n    parent = {s: None}')))
+dm(R, 5, 'no reach check', mut(R, ('    if t not in parent:\n        return None\n', '')))
+R = 'l6-fewest-steps#screens[8]'
+dm(R, 1, 'counts currencies', mut(R, ('dist = {src: 0}', 'dist = {src: 1}')))
+dm(R, 1, 'pairs stored a to b only', mut(R, ('        adj.setdefault(b, []).append(a)\n', '        adj.setdefault(b, [])\n')))
+dm(R, 1, 'pairs stored b to a only', mut(R, ('        adj.setdefault(a, []).append(b)\n', '        adj.setdefault(a, [])\n')))
+dm(R, 7, 'adj[u] without a default', mut(R, ('adj.get(u, [])', 'adj[u]')))
+R = 'l7-dijkstra#screens[4]'
+dm(R, 1, 'marks seen when first pushed', '''
+import heapq, math
+def dijkstra(adj, s):
+    dist = {u: math.inf for u in adj}; dist[s] = 0
+    seen = {s}; heap = [(0, s)]
+    while heap:
+        d, u = heapq.heappop(heap)
+        for v, w in adj[u]:
+            if v not in seen:
+                seen.add(v); dist[v] = d + w; heapq.heappush(heap, (d + w, v))
+    return dist
+''')
+dm(R, 1, 'dict of reached nodes only', mut(R, ('dist = {u: math.inf for u in adj}\n    dist[s] = 0', 'dist = {s: 0}'), ('            if nd < dist[v]:', '            if nd < dist.get(v, math.inf):')))
+dm(R, 9, 'no stale check', mut(R, ('        if d > dist[u]:\n            continue\n', '')))
+R = 'l7-dijkstra#screens[9]'
+dm(R, 1, 'sums every cost', mut(R, ('    worst = max(dist.values())', '    worst = sum(dist.values())')))
+dm(R, 4, 'max over the reached centres only', mut(R, ('    worst = max(dist.values())', '    worst = max(x for x in dist.values() if x < math.inf)')))
+dm(R, 8, 'centres taken from the links', mut(R, ('    adj = {c: [] for c in centres}', '    adj = {}\n    for a, b, ms in links:\n        adj.setdefault(a, []); adj.setdefault(b, [])\n    adj.setdefault(src, [])'),
+                                            ('    dist = {c: math.inf for c in centres}', '    dist = {c: math.inf for c in adj}')))
+R = 'l8-groups#screens[5]'
+dm(R, 5, 'count falls before the root check', mut(R, ('        if ra == rb:\n            return False\n', '        if ra == rb:\n            self.groups -= 1\n            return False\n')))
+dm(R, 7, 're-points the node, not its root', mut(R, ('        if self.size[ra] < self.size[rb]:   # union by size\n            ra, rb = rb, ra\n        self.parent[rb] = ra\n', '        self.parent[a] = rb\n')))
+dm(R, 9, 'recursive find, no union by size', '''
+class DSU:
+    def __init__(self, n):
+        self.parent = list(range(n)); self.groups = n
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    def union(self, a, b):
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb: return False
+        self.parent[ra] = rb; self.groups -= 1; return True
+    def count(self):
+        return self.groups
+''')
+R = 'l8-groups#screens[9]'
+dm(R, 1, 'compares rho, not abs(rho)', mut(R, ('if abs(rho) > threshold:', 'if rho > threshold:')))
+dm(R, 3, 'non-strict threshold', mut(R, ('if abs(rho) > threshold:', 'if abs(rho) >= threshold:')))
+dm(R, 7, 'groups by parent', mut(R, ('groups.setdefault(d.find(index[name]), [])', 'groups.setdefault(d.parent[index[name]], [])')))
+R = 'l9-arbitrage-cycle#screens[4]'
+dm(R, 1, 'one pass only', mut(R, ('    for _ in range(n - 1):', '    for _ in range(1):')))
+dm(R, 1, 'n - 2 passes', mut(R, ('    for _ in range(n - 1):', '    for _ in range(n - 2):')))
+dm(R, 3, 'no detection pass', mut(R, ('    for u, v, w in edges:\n        if dist[u] + w < dist[v]:\n            return None\n', '')))
+R = 'l9-arbitrage-cycle#screens[9]'
+dm(R, 2, 'weights ln(rate)', mut(R, ('-math.log(r))', 'math.log(r))')))
+dm(R, 2, 'weights -rate', mut(R, ('-math.log(r))', '-r)')))
+dm(R, 4, 'no eps', mut(R, ('n, eps=1e-9)', 'n)')))
+dm(R, 9, 'search from the first currency only', mut(R, ('    edges += [(n, i, 0.0) for i in range(n)]   # a start joined to every currency\n    return bellman_ford(edges, n + 1, n, eps=1e-9) is None',
+                                                    '    return bellman_ford(edges, n, index["GBP"] if "GBP" in index else 0, eps=1e-9) is None')))
+R = 'homework-2#items[0]'
+dm(R, 1, 'counts cells', mut(R, ('    dist = {(0, 0): 0}', '    dist = {(0, 0): 1}')))
+dm(R, 4, 'no check on the start cell', mut(R, ('    if grid[0][0] == "#" or grid[rows - 1][cols - 1] == "#":', '    if grid[rows - 1][cols - 1] == "#":')))
+R = 'homework-2#items[1]'
+dm(R, 1, 'k rounds', mut(R, ('range(k + 1)', 'range(k)')))
+dm(R, 1, 'relaxes in place, no copy', mut(R, ('        new = dict(cost)\n', '        new = cost\n')))
+dm(R, 2, 'Dijkstra keeping one cost per currency, with a hop limit', '''
+import heapq, math
+def cheapest_within(quotes, src, dst, k):
+    adj = {}
+    for a, b, bp in quotes:
+        adj.setdefault(a, []).append((b, bp))
+    best = {src: 0}
+    heap = [(0, 0, src)]
+    while heap:
+        d, h, u = heapq.heappop(heap)
+        if d > best[u]:
+            continue
+        if u == dst:
+            return d
+        if h == k + 1:
+            continue
+        for v, bp in adj.get(u, []):
+            if d + bp < best.get(v, math.inf):
+                best[v] = d + bp
+                heapq.heappush(heap, (d + bp, h + 1, v))
+    return -1
+''')
+R = 'homework-2#items[2]'
+dm(R, 1, 'merges only records that share directly with a group\'s first record', '''
+def count_clients(records):
+    leaders = []
+    for i, ids in enumerate(records):
+        if not any(set(ids) & set(records[j]) for j in leaders):
+            leaders.append(i)
+    return len(leaders)
+''')
+R = 'homework-2#items[8]'
+dm(R, 1, 'returns when dst is first reached', mut(R, ('                cost[v] = nd        # a cheaper route: the old count is void\n                ways[v] = ways[u]\n',
+                                                     '                cost[v] = nd        # a cheaper route: the old count is void\n                ways[v] = ways[u]\n                if v == dst:\n                    return nd, ways[v]\n')))
+dm(R, 2, 'a tie adds 1', mut(R, ('ways[v] += ways[u]', 'ways[v] += 1')))
+dm(R, 2, 'a tie pushes the venue again', mut(R, ('                ways[v] += ways[u]  # a tie: every cheapest route to u extends\n', '                ways[v] += ways[u]  # a tie: every cheapest route to u extends\n                heapq.heappush(heap, (nd, v))\n')))
+dm(R, 3, 'a cheaper route keeps the old count', mut(R, ('                ways[v] = ways[u]\n', '                ways[v] = ways.get(v, 0) + ways[u]\n')))
+dm(R, 5, 'no stale check, base cost[u]', mut(R, ('        if d > cost[u]:\n            continue                # a stale entry: u left the heap earlier\n', '        d = cost[u]\n')))
+dm(R, 7, 'links stored both ways', mut(R, ('        adj.setdefault(a, []).append((b, fee))\n', '        adj.setdefault(a, []).append((b, fee))\n        adj.setdefault(b, []).append((a, fee))\n')))
+dm(R, 8, 'looks dst up in a cost dict of the linked venues', '''
+import heapq, math
+def count_cheapest(links, src, dst):
+    adj = {}
+    for a, b, fee in links:
+        adj.setdefault(a, []).append((b, fee)); adj.setdefault(b, [])
+    cost = {v: math.inf for v in adj}; ways = {v: 0 for v in adj}
+    cost[src] = 0; ways[src] = 1; heap = [(0, src)]
+    while heap:
+        d, u = heapq.heappop(heap)
+        if d > cost[u]:
+            continue
+        for v, fee in adj[u]:
+            nd = d + fee
+            if nd < cost[v]:
+                cost[v] = nd; ways[v] = ways[u]; heapq.heappush(heap, (nd, v))
+            elif nd == cost[v]:
+                ways[v] += ways[u]
+    return (None, 0) if cost[dst] == math.inf else (cost[dst], ways[dst])
+''')
+dm(R, 11, 'counts the cheapest routes one by one', '''
+import heapq, math
+def count_cheapest(links, src, dst):
+    adj = {}
+    for a, b, fee in links:
+        adj.setdefault(a, []).append((b, fee))
+    cost = {src: 0}; heap = [(0, src)]
+    while heap:
+        d, u = heapq.heappop(heap)
+        if d > cost[u]:
+            continue
+        for v, fee in adj.get(u, []):
+            if d + fee < cost.get(v, math.inf):
+                cost[v] = d + fee; heapq.heappush(heap, (d + fee, v))
+    if dst not in cost:
+        return None, 0
+    def walk(u):                    # follow only links on a cheapest route, one route at a time
+        if u == dst:
+            return 1
+        return sum(walk(v) for v, fee in adj.get(u, []) if v in cost and cost[u] + fee == cost[v] and cost[v] <= cost[dst])
+    return cost[dst], walk(src)
+''')
+R = 'l10-every-subset#screens[9]'
+dm(R, 1, 'skip before take', mut(R, ('        path.append(xs[i])           # choose: take xs[i]\n        walk(i + 1)\n        path.pop()                   # un-choose\n        walk(i + 1)                  # skip xs[i]\n',
+                                     '        walk(i + 1)\n        path.append(xs[i])\n        walk(i + 1)\n        path.pop()\n')))
+dm(R, 1, 'stores path itself', mut(R, ('out.append(path[:])      # a copy: path keeps changing', 'out.append(path)')))
+dm(R, 2, 'empty input gives no subsets', mut(R, ('    out, path = [], []\n\n    def walk(i):', '    out, path = [], []\n    if not xs:\n        return []\n\n    def walk(i):')))
+dm(R, 7, 'empty input gives no orderings', mut(R, ('    used = [False] * len(xs)\n', '    used = [False] * len(xs)\n    if not xs:\n        return []\n')))
+R = 'l11-dead-ends#screens[8]'
+dm(R, 2, 'no undo after the call', mut(R, ('            cols.remove(c); diag.remove(row - c); anti.remove(row + c)\n', '')))
+dm(R, 9, 'end of list checked before the target', mut(R, ('        if total == target:\n            return True\n        if i == len(xs) or total + xs[i] > target:',
+                                                       '        if i == len(xs):\n            return False\n        if total == target:\n            return True\n        if total + xs[i] > target:')))
+dm(R, 10, 'empty list answered False', mut(R, ('    xs = sorted(xs)\n', '    if not xs:\n        return False\n    xs = sorted(xs)\n')))
+dm(R, 13, 'unpruned walk (Pyodide times it, part D note)', mut(R, ('        if i == len(xs) or total + xs[i] > target:', '        if i == len(xs):')))
+R = 'l12-remembering#screens[9]'
+dm(R, 1, 'base cases not counted', mut(R, ('        computed += 1\n        value = k if k < 2 else f(k - 1) + f(k - 2)', '        if k >= 2:\n            computed += 1\n        value = k if k < 2 else f(k - 1) + f(k - 2)')))
+dm(R, 2, 'counter outlives the call', mut(R, ('def fib_memo(n):\n    cache = {}\n    computed = 0\n', 'computed = 0\n\n\ndef fib_memo(n):\n    cache = {}\n'), ('        nonlocal computed', '        global computed')))
+dm(R, 3, 'counts cache lookups', mut(R, ('        if k in cache:\n            return cache[k]\n        computed += 1\n', '        computed += 1\n        if k in cache:\n            return cache[k]\n')))
+dm(R, 3, 'cache outlives the call', mut(R, ('def fib_memo(n):\n    cache = {}\n', 'cache = {}\n\n\ndef fib_memo(n):\n')))
+dm(R, 3, 'cache as a default argument', mut(R, ('def fib_memo(n):\n    cache = {}\n', 'def fib_memo(n, cache={}):\n')))
+dm(R, 12, 'grid not memoised', mut(R, ("        if (i, j) not in cache:\n            cache[(i, j)] = paths(i - 1, j) + paths(i, j - 1)\n        return cache[(i, j)]", '        return paths(i - 1, j) + paths(i, j - 1)')))
+R = 'l13-climbing-stairs#screens[9]'
+dm(R, 1, 'ways(0) taken as 0', mut(R, ('    prev, cur = 1, 1                 # ways(0), ways(1)\n    for _ in range(2, n + 1):', '    if n == 0:\n        return 0\n    prev, cur = 1, 1\n    for _ in range(2, n + 1):')))
+dm(R, 5, 'plain recursion runs out of time', mut(R, ('    return cur\n', '    return cur\n\n\ndef stairs(n):\n    return 1 if n < 2 else stairs(n - 1) + stairs(n - 2)\n')))
+dm(R, 6, 'memoised recursion', mut(R, ('    return cur\n', '    return cur\n\n\n_m = {}\ndef stairs(n):\n    if n < 2:\n        return 1\n    if n not in _m:\n        _m[n] = stairs(n - 1) + stairs(n - 2)\n    return _m[n]\n')))
+dm(R, 7, 'largest coin first', mut(R, ('def min_coins(coins, amount):\n', 'def min_coins(coins, amount):\n    n = 0\n    for c in sorted(coins, reverse=True):\n        n += amount // c; amount %= c\n    return n if amount == 0 else -1\n\n\ndef _unused(coins, amount):\n')))
+dm(R, 8, 'amount 0 answered -1', mut(R, ('    INF = float(\'inf\')\n', '    INF = float(\'inf\')\n    if amount == 0:\n        return -1\n')))
+dm(R, 9, 'infinite entry returned', mut(R, ('    return best[amount] if best[amount] < INF else -1', '    return best[amount]')))
+R = 'homework-3#items[0]'
+dm(R, 1, 'loop from 0', mut(R, ('for i in range(start, len(cands)):', 'for i in range(0, len(cands)):')))
+dm(R, 3, 'not sorted', mut(R, ('cands = sorted(candidates)', 'cands = list(candidates)')))
+dm(R, 5, 'target 0 gives no combination', mut(R, ('    out, path = [], []\n', '    out, path = [], []\n    if target == 0:\n        return []\n')))
+R = 'homework-3#items[1]'
+dm(R, 5, 'empty string answered False', mut(R, ('    words = set(words)\n', '    words = set(words)\n    if not s:\n        return False\n')))
+dm(R, 8, 'no memo', mut(R, ('    @lru_cache(maxsize=None)\n', '')))
+R = 'homework-3#items[8]'
+dm(R, 2, 'one round trip only', '''
+def trade_with_fee(prices, fee):
+    best, lo = 0, float('inf')
+    for p in prices:
+        lo = min(lo, p); best = max(best, p - lo - fee)
+    return best
+''')
+dm(R, 3, 'each rising run traded on its own', '''
+def trade_with_fee(prices, fee):
+    total, i = 0, 0
+    while i < len(prices):
+        j = i
+        while j + 1 < len(prices) and prices[j + 1] > prices[j]:
+            j += 1
+        total += max(0, prices[j] - prices[i] - fee)
+        i = j + 1
+    return total
+''')
+dm(R, 4, 'table starts on day 1', mut(R, ('    for p in prices:                # bottom up: day 0 first', '    for p in prices[1:]:')))
+dm(R, 5, 'table stops before the last day', mut(R, ('    for p in prices:                # bottom up: day 0 first', '    for p in prices[:-1]:')))
+dm(R, 7, 'reads prices[0] for the start', mut(R, ("    flat, long = 0, float('-inf')   # before day 0: no share, none to sell", '    flat, long = 0, -prices[0]')))
+
+# Lines that name no cause: the facts each states about its test, checked against the test and the solution.
+DESC = {
+    ('l1-nodes-and-edges#screens[8]', 5): lambda: expect('l1-nodes-and-edges#screens[8]', 5) == '[]',
+    ('l1-nodes-and-edges#screens[5]', 2): lambda: True,
+    ('l2-level-by-level#screens[4]', 3): lambda: expect('l2-level-by-level#screens[4]', 3) == "['A', 'B', 'C', 'D']",
+    ('l2-level-by-level#screens[4]', 4): lambda: expect('l2-level-by-level#screens[4]', 4) == "['X']",
+    ('l2-level-by-level#screens[8]', 3): lambda: expect('l2-level-by-level#screens[8]', 3) == '[]',
+    ('l2-level-by-level#screens[8]', 7): lambda: expect('l2-level-by-level#screens[8]', 7) == "['B', 'C']",
+    ('l3-going-deep#screens[2]', 3): lambda: expect('l3-going-deep#screens[2]', 3) == "['A']",
+    ('l3-going-deep#screens[2]', 4): lambda: expect('l3-going-deep#screens[2]', 4) == "['A', 'B', 'C']",
+    ('l3-going-deep#screens[5]', 3): lambda: expect('l3-going-deep#screens[5]', 3) == "['A', 'B', 'D', 'C']",
+    ('l3-going-deep#screens[8]', 3): lambda: expect('l3-going-deep#screens[8]', 3) == '0',
+    ('l3-going-deep#screens[9]', 3): lambda: expect('l3-going-deep#screens[9]', 3) == 'True',
+    ('l4-islands#screens[4]', 5): lambda: expect('l4-islands#screens[4]', 5) == '2',
+    ('l4-islands#screens[4]', 11): lambda: expect('l4-islands#screens[4]', 11) == '1',
+    ('l4-islands#screens[8]', 1): lambda: expect('l4-islands#screens[8]', 1) == '2',
+    ('l4-islands#screens[8]', 2): lambda: expect('l4-islands#screens[8]', 2) == '1',
+    ('l5-tasks-in-order#screens[8]', 2): lambda: expect('l5-tasks-in-order#screens[8]', 2) == "['report']",
+    ('l5-tasks-in-order#screens[8]', 4): lambda: expect('l5-tasks-in-order#screens[8]', 4) == 'None',
+    ('homework-1#items[0]', 3): lambda: expect('homework-1#items[0]', 3) == '0',
+    ('homework-1#items[0]', 4): lambda: expect('homework-1#items[0]', 4) == '-1',
+    ('homework-1#items[0]', 6): lambda: expect('homework-1#items[0]', 6) == '-1',
+    ('homework-1#items[1]', 8): lambda: expect('homework-1#items[1]', 8) == '999',
+    ('homework-1#items[2]', 3): lambda: expect('homework-1#items[2]', 3) == '0',
+    ('homework-1#items[2]', 4): lambda: expect('homework-1#items[2]', 4) == 'None',
+    ('l6-fewest-steps#screens[8]', 3): lambda: expect('l6-fewest-steps#screens[8]', 3) == '3',
+    ('l7-dijkstra#screens[4]', 2): lambda: True,
+    ('l9-arbitrage-cycle#screens[4]', 6): lambda: expect('l9-arbitrage-cycle#screens[4]', 6) == '[0, 1]',
+    ('homework-2#items[1]', 7): lambda: expect('homework-2#items[1]', 7) == '-1',
+    ('homework-2#items[2]', 4): lambda: expect('homework-2#items[2]', 4) == '1',
+    ('homework-2#items[8]', 4): lambda: expect('homework-2#items[8]', 4) == '(2, 1)',
+    ('l10-every-subset#screens[9]', 5): lambda: expect('l10-every-subset#screens[9]', 5) == '8',
+    ('l11-dead-ends#screens[8]', 5): lambda: expect('l11-dead-ends#screens[8]', 5) == '[0, 0]',
+    ('l12-remembering#screens[9]', 4): lambda: expect('l12-remembering#screens[9]', 4) == '(832040, 31)',
+    ('l12-remembering#screens[9]', 6): lambda: expect('l12-remembering#screens[9]', 6) == '(55, 11)',
+    ('homework-3#items[1]', 2): lambda: expect('homework-3#items[1]', 2) == 'False',
+    ('homework-3#items[8]', 6): lambda: expect('homework-3#items[8]', 6) == '0',
+}
+
+for name, (ref, n, code) in D.items():
+    w = widget(ref)
+    first, fails = run_tests(w, code, stop='(should pass)' not in name)
+    if '(Pyodide' in name:
+        print(f'info {name}: first failing test in CPython {first}; Pyodide timing in the fix pass')
+    elif '(should pass)' in name:
+        check('D control passes every test: ' + name, first is None, fails)
+    else:
+        check('D first failing test is N: ' + name, first == n, f'first failing test is {first}' if first else 'passes every test')
+
+# every test-N line is either swept by a submission or listed as a description
+swept = {(ref, n) for ref, n, _ in D.values()} | set(DESC)
+for ref, w in code_widgets():
+    for key in fb_lines(ref):
+        if key.startswith('test-'):
+            n = int(key[5:])
+            check(f'D line {ref} {key} is swept', (ref, n) in swept)
+            if (ref, n) in DESC:
+                check(f'D facts of descriptive line {ref} {key}', DESC[(ref, n)]())
+
+
+# ---------------------------------------------------------------- part E: fix-pass slip sweep
+# Every numeric wrong[] value with a feedback line in levels 1 to 3: the value the line's named mistake gives,
+# computed here from the item's data, must equal the slip value in the content.
+from itertools import permutations as _perms
+
+
+def slip_value(ref, sid):
+    f, p = ref.split('#')
+    key, i = p[:-1].split('[')
+    return next(w['value'] for w in load(f)[key][int(i)]['widget']['wrong'] if w['id'] == sid)
+
+
+def _islands(grid, diag=False):
+    cells = {(r, c) for r, row in enumerate(grid) for c, v in enumerate(row) if v}
+    steps = [(-1, 0), (1, 0), (0, -1), (0, 1)] + ([(-1, -1), (-1, 1), (1, -1), (1, 1)] if diag else [])
+    seen, n = set(), 0
+    for s in cells:
+        if s in seen:
+            continue
+        n += 1
+        stack = [s]; seen.add(s)
+        while stack:
+            r, c = stack.pop()
+            for dr, dc in steps:
+                q = (r + dr, c + dc)
+                if q in cells and q not in seen:
+                    seen.add(q); stack.append(q)
+    return n
+
+
+def _kahn_count(adj):
+    indeg = {u: 0 for u in adj}
+    for u in adj:
+        for v in adj[u]:
+            indeg[v] += 1
+    ready = [u for u in adj if indeg[u] == 0]; n = 0
+    while ready:
+        u = ready.pop(); n += 1
+        for v in adj[u]:
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                ready.append(v)
+    return n
+
+
+def _ordered(t, parts):
+    return 1 if t == 0 else sum(_ordered(t - x, parts) for x in parts if x <= t)
+
+
+def _fib_calls(n):
+    return 1 if n < 2 else 1 + _fib_calls(n - 1) + _fib_calls(n - 2)
+
+
+def _lazy_dijkstra_stale(adj, s):
+    dist = {u: math.inf for u in adj}; dist[s] = 0; heap = [(0, s)]; stale = 0
+    while heap:
+        d, u = heapq.heappop(heap)
+        if d > dist[u]:
+            stale += 1; continue
+        for v, w in adj[u]:
+            if d + w < dist[v]:
+                dist[v] = d + w; heapq.heappush(heap, (d + w, v))
+    return dist, stale
+
+
+R2 = {'S': [('A', 2), ('B', 6)], 'A': [('B', 3), ('C', 7)], 'B': [('C', 1), ('T', 8)], 'C': [('T', 2)], 'T': []}
+r2dist, r2stale = _lazy_dijkstra_stale(R2, 'S')
+loop9 = 1.0850 / (0.8543 * 1.2700)            # GBP to EUR to USD to GBP, l9 screens[8]
+loop_hw2 = 1.2650 * 0.9230 * 0.8580            # homework-2 items[5]
+X = [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
+RING = [[1, 1, 1, 1, 1], [1, 0, 0, 0, 1], [1, 0, 1, 0, 1], [1, 0, 0, 0, 1], [1, 1, 1, 1, 1]]
+legs = list(_perms('ABCD'))
+
+SLIPS = {
+    ('l1-nodes-and-edges#screens[3]', 'edges'): 6, ('l1-nodes-and-edges#screens[3]', 'cells'): 6 * 6,
+    ('l1-nodes-and-edges#quiz[0]', 'once'): 14 // 2, ('l1-nodes-and-edges#quiz[0]', 'sq'): 7 ** 2,
+    ('l1-nodes-and-edges#quiz[2]', 'list'): 1000 + 2 * 3000, ('l1-nodes-and-edges#quiz[2]', 'edges2'): 2 * 3000,
+    ('l2-level-by-level#quiz[1]', 'centre'): 6 + 1, ('l2-level-by-level#quiz[1]', 'one'): 1,
+    ('l3-going-deep#quiz[1]', 'edges'): 2, ('l3-going-deep#quiz[1]', 'nodes'): 6,      # {1, 2} and {4, 5}; six nodes
+    ('l3-going-deep#quiz[2]', 'edges'): 10 - 1,
+    ('l4-islands#screens[1]', 'diag'): islands(G4, True), ('l4-islands#screens[1]', 'cells'): sum(map(sum, G4)),
+    ('l4-islands#screens[3]', 'cells'): 1000 * 1000, ('l4-islands#screens[3]', 'pairs'): (1000 * 1000) ** 2,
+    ('l4-islands#quiz[1]', 'diag'): _islands(X, True),
+    ('l4-islands#quiz[3]', 'cells'): sum([1, 1, 0, 1, 0, 0, 1, 1, 1]),
+    ('l5-tasks-in-order#screens[6]', 'all'): 7, ('l5-tasks-in-order#screens[6]', 'none'): 0,
+    ('l5-tasks-in-order#screens[6]', 'five'): _kahn_count({'prices': ['returns'], 'calendar': ['returns'], 'returns': ['signals', 'risk'], 'signals': ['backtest'],
+                                                           'risk': ['backtest'], 'backtest': ['report', 'risk'], 'report': []}) + 1,   # the four, plus risk
+    ('l5-tasks-in-order#quiz[0]', 'one'): 1, ('l5-tasks-in-order#quiz[0]', 'four'): 4,
+    ('l5-tasks-in-order#quiz[3]', 'all'): 4, ('l5-tasks-in-order#quiz[3]', 'out'): 1,
+    ('review-1#items[0]', 'once'): 15, ('review-1#items[0]', 'plus'): 10 + 15, ('review-1#items[0]', 'sq'): 10 ** 2,
+    ('review-1#items[3]', 'diag'): islands(GR, True), ('review-1#items[3]', 'cells'): sum(map(sum, GR)),
+    ('review-1#items[6]', 'all'): 7,
+    ('review-1#items[6]', 'four'): _kahn_count({'a': ['b', 'c'], 'b': ['d'], 'c': ['d'], 'd': ['e'], 'e': ['f'], 'f': ['d', 'g'], 'g': []}) + 1,   # the three, plus d
+    ('homework-1#items[4]', 'nobytes'): 20_000 ** 2 / 1e9, ('homework-1#items[4]', 'linear'): 20_000 * 8 / 1e9,
+    ('homework-1#items[5]', 'inside'): _islands(RING) - 1, ('homework-1#items[5]', 'sides'): 4,
+    ('l6-fewest-steps#screens[7]', 'hops'): 3, ('l6-fewest-steps#screens[7]', 'nodes'): 4,
+    ('l6-fewest-steps#quiz[3]', 'cells'): 6 + 1,
+    ('l7-dijkstra#screens[5]', 'right'): 3,
+    ('l7-dijkstra#screens[6]', 'pop'): 2,
+    ('l7-dijkstra#screens[8]', 'direct'): round(1e6 * 4.0e-4), ('l7-dijkstra#screens[8]', 'usd'): round(1e6 * (1.2 + 1.5) * 1e-4),
+    ('l7-dijkstra#screens[8]', 'eurjpy'): round(1e6 * (0.5 + 2.4) * 1e-4),
+    ('l7-dijkstra#quiz[0]', 'right'): 1 + 2,
+    ('l7-dijkstra#quiz[3]', 'nodes'): 6,
+    ('l8-groups#screens[2]', 'one'): 6, ('l8-groups#screens[2]', 'self'): 7,
+    ('l8-groups#screens[7]', 'edges'): 2,                 # {0, 1, 2, 3} and {5, 6}
+    ('l8-groups#quiz[0]', 'pairs'): 2,                    # {1, 2, 5} and {3, 4}
+    ('l8-groups#quiz[2]', 'direct'): 3,
+    ('l9-arbitrage-cycle#screens[1]', 'now'): 0.86,
+    ('l9-arbitrage-cycle#screens[2]', 'sign'): round(math.log(1.27 * 0.92 * 0.86), 6), ('l9-arbitrage-cycle#screens[2]', 'sum'): round(1.27 + 0.92 + 0.86, 2),
+    ('l9-arbitrage-cycle#screens[2]', 'prod'): round(1.27 * 0.92 * 0.86, 6),
+    ('l9-arbitrage-cycle#screens[8]', 'gross'): round(1e6 * (loop9 - 1), 2), ('l9-arbitrage-cycle#screens[8]', 'sign'): round(-1e6 * (loop9 * (1 - 1e-4) ** 3 - 1), 2),
+    ('l9-arbitrage-cycle#quiz[0]', 'nodet'): 7 * 40, ('l9-arbitrage-cycle#quiz[0]', 'v'): 9 * 40,
+    ('l9-arbitrage-cycle#quiz[2]', 'inv'): round(1.25 / 1.05, 4),
+    ('review-2#items[1]', 'sb'): 6 + 8, ('review-2#items[1]', 'sat'): 2 + 7 + 2,
+    ('review-2#items[3]', 'sum'): round(191.20 + 0.006135 + 0.8530, 6),
+    ('review-2#items[4]', 'none'): 0,
+    ('review-2#items[5]', 'cycle'): 1 + 2 + 3 + 4, ('review-2#items[5]', 'all-small'): 1 + 2 + 3 + 4 + 5,
+    ('review-2#items[6]', 'one'): 1, ('review-2#items[6]', 'v'): 6,
+    ('homework-2#items[4]', 'sg'): round(4.2 + 77.0 + 34.0, 1), ('homework-2#items[4]', 'direct-sg'): round(84.0 + 34.0, 1),
+    ('homework-2#items[5]', 'gross'): round(1e6 * (loop_hw2 - 1), 2), ('homework-2#items[5]', 'onecost'): round(1e6 * (loop_hw2 * (1 - 2e-4) - 1), 2),
+    ('l10-every-subset#screens[0]', 'no-empty'): 2 ** 3 - 1, ('l10-every-subset#screens[0]', 'orders'): factorial(3), ('l10-every-subset#screens[0]', 'one-each'): 3,
+    ('l10-every-subset#screens[3]', 'square'): 10 ** 2, ('l10-every-subset#screens[3]', 'double'): 2 * 10, ('l10-every-subset#screens[3]', 'factorial'): factorial(10),
+    ('l10-every-subset#screens[10]', 'no-cash'): comb(6, 1) + comb(6, 2) + comb(6, 3), ('l10-every-subset#screens[10]', 'exactly-3'): comb(6, 3),
+    ('l10-every-subset#screens[10]', 'all'): 2 ** 6, ('l10-every-subset#screens[10]', 'ordered'): 6 * 5 * 4,
+    ('l10-every-subset#screens[11]', 'hours'): round(2 ** 30 / 1000 / 3600), ('l10-every-subset#screens[11]', 'seconds'): round(2 ** 30 / 1000),
+    ('l10-every-subset#quiz[1]', 'zero'): 0,
+    ('l10-every-subset#quiz[2]', 'pow'): 2 ** 4, ('l10-every-subset#quiz[2]', 'sum'): 4 + 3 + 2 + 1,
+    ('l10-every-subset#quiz[3]', 'leaves'): 2 ** 3, ('l10-every-subset#quiz[3]', 'inner'): 1 + 2 + 4,
+    ('l11-dead-ends#screens[2]', 'one'): 1, ('l11-dead-ends#screens[2]', 'rows'): 4, ('l11-dead-ends#screens[2]', 'orders'): factorial(4),
+    ('l11-dead-ends#screens[5]', 'orders'): _ordered(8, (2, 3, 5)),
+    ('l11-dead-ends#screens[5]', 'no-reuse'): sum(1 for k in range(1, 4) for c in itertools.combinations([2, 3, 5], k) if sum(c) == 8),
+    ('l11-dead-ends#quiz[0]', 'orders'): factorial(3), ('l11-dead-ends#quiz[0]', 'one'): 1,
+    ('l11-dead-ends#quiz[0]', 'two'): sum(all(abs(p[i] - p[j]) != j - i for i in range(4) for j in range(i + 1, 4)) for p in _perms(range(4))),   # the 4 by 4 count
+    ('l11-dead-ends#quiz[1]', 'perm'): factorial(8), ('l11-dead-ends#quiz[1]', 'total'): sum(8 ** k for k in range(9)),
+    ('l11-dead-ends#quiz[3]', 'orders'): 3 + 1, ('l11-dead-ends#quiz[3]', 'one'): 1,
+    ('l12-remembering#screens[1]', 'no-one'): _fib_calls(5) + _fib_calls(4), ('l12-remembering#screens[1]', 'double'): 2 * _fib_calls(5),
+    ('l12-remembering#screens[4]', 'no-zero'): 30, ('l12-remembering#screens[4]', 'lookups'): 2 * 30 - 1, ('l12-remembering#screens[4]', 'naive'): 2 * 1346269 - 1,   # 2 fib(31) - 1
+    ('l12-remembering#screens[5]', 'row'): 3 + 3, ('l12-remembering#screens[5]', 'both'): 6 + 6,
+    ('l12-remembering#screens[8]', 'fresh'): 7, ('l12-remembering#screens[8]', 'none'): 0,
+    ('l12-remembering#screens[10]', 'paths'): 2 ** 30, ('l12-remembering#screens[10]', 'square'): 31 * 31, ('l12-remembering#screens[10]', 'last'): 31,
+    ('l12-remembering#quiz[0]', 'all'): 200 * 25,
+    ('l12-remembering#quiz[2]', 'no-one'): _fib_calls(7) - 1,
+    ('l13-climbing-stairs#screens[0]', 'pow3'): 2 ** 3, ('l13-climbing-stairs#screens[0]', 'pow4'): 2 ** 4, ('l13-climbing-stairs#screens[0]', 'three'): 3,   # 1111, 112, 22
+    ('l13-climbing-stairs#screens[4]', 'right'): 5, ('l13-climbing-stairs#screens[4]', 'two'): 2,       # ways from 0, 1: 0, 1, 1, 2, 3; the entry one short of i = 4 is 2
+    ('l13-climbing-stairs#screens[6]', 'right'): 2, ('l13-climbing-stairs#screens[6]', 'one'): 1,
+    ('l13-climbing-stairs#screens[10]', 'one-side'): comb(5, 2), ('l13-climbing-stairs#screens[10]', 'all'): 2 ** 6,
+    ('l13-climbing-stairs#screens[11]', 'greedy'): 3,     # 900 + 100 + 100
+    ('l13-climbing-stairs#quiz[1]', 'greedy'): -1,
+    ('l13-climbing-stairs#quiz[2]', 'two-steps'): 8,
+    ('review-3#items[0]', 'no-empty'): 15, ('review-3#items[0]', 'orders'): factorial(4),
+    ('review-3#items[2]', 'col-only'): 3,
+    ('review-3#items[4]', 'no-one'): _fib_calls(8) - 1, ('review-3#items[4]', 'memo'): 9,
+    ('review-3#items[6]', 'two'): 13 + 7,
+    ('review-3#items[7]', 'greedy'): 3,                   # 9 + 1 + 1
+    ('homework-3#items[3]', 'all'): 24, ('homework-3#items[3]', 'fixed'): sum(1 for p in legs if p[0] == 'A'),
+    ('homework-3#items[4]', 'subsets'): 2 ** 20, ('homework-3#items[4]', 'no-ends'): 20 * 100, ('homework-3#items[4]', 'one-off'): 21 * 100,
+    ('homework-3#items[5]', 'all'): 2 ** 10, ('homework-3#items[5]', 'half'): 2 ** 10 // 2,
+}
+check('E review-2 items[4] stale count is the key', r2stale == 3 and r2dist['T'] == 8)
+check('E l12 fib calls 15, 9, 25, 41, 67', [_fib_calls(k) for k in (5, 4, 6, 7, 8)] == [15, 9, 25, 41, 67])
+check('E l13 stairs(4) with ways(0) = 0', (lambda w: [w.append(w[-1] + w[-2]) for _ in range(3)] and w)([0, 1]) == [0, 1, 1, 2, 3])
+for (ref, sid), v in SLIPS.items():
+    got = slip_value(ref, sid)
+    check(f'E slip {ref} {sid}: the named mistake gives the slip value', math.isclose(got, v, rel_tol=0, abs_tol=1e-9) or got == v, f'mistake gives {v}, slip value {got}')
+# every numeric wrong[] value that has a feedback line is in SLIPS
+for f in LEVELS:
+    d = load(f)
+    for key in ('screens', 'quiz', 'items'):
+        for i, s in enumerate(d.get(key, [])):
+            w = s.get('widget') or {}
+            fbk = (s.get('feedback') or {}).get('byKey', {})
+            if w.get('kind') == 'numeric':
+                for x in w.get('wrong', []):
+                    if x['id'] in fbk:
+                        check(f'E slip listed: {f}#{key}[{i}] {x["id"]}', (f'{f}#{key}[{i}]', x['id']) in SLIPS)
+
 
 print(f'{N[0]} checks, {len(FAILS)} failed')
 if FAILS:

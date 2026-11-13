@@ -250,7 +250,8 @@ for name, (code, first) in plants_code.items():
     firsts.add(first)
     check(bool(bad) and bad[0] == first and 1 not in bad, f'plant "{name}" first fails test {bad[:1]} (named {first}); fails {bad}')
 keyed = {int(k.split('-')[1]) for k in item['feedback']['byKey']}
-check(keyed - {4, 11} == firsts, f'byKey tests {sorted(keyed)}: the plants\' first failures {sorted(firsts)}, plus 4 (dst reached dear first) and 11 (the ladder)')
+# graphs-dp L1-3 r2 fix pass: a test-1 line now names the early return, whose plant above first fails test 1; test 4's line only describes test 4
+check(keyed - {1, 4, 11} == firsts and 1 in keyed, f'byKey tests {sorted(keyed)}: the plants\' first failures {sorted(firsts)}, plus 1 (early return), 4 (dst reached dear first) and 11 (the ladder)')
 
 # 5. Slow but correct: Dijkstra that scans a list for the cheapest venue, no heap.
 scan = '''def count_cheapest(links, src, dst):
