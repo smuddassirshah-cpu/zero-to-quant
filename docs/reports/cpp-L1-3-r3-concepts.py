@@ -7,7 +7,7 @@ or under local g++ / clang++ / clang-tidy where the content quotes those tools.
 
 usage: python3 cpp-L1-3-r3-concepts.py [--pkgs <pkgs folder>] [L1|L2|L3 ...]
 Exits 0 when every check agrees with the content. A check that fails because the content is wrong stays
-failing (round 3: finding 1, l13 screens[4] feedback.byKey.l7). Lines named NOTE are the measurements behind
+failing until the content is fixed (round 3: finding 1, l13 screens[4] feedback.byKey.l7, fixed in the fix pass). Lines named NOTE are the measurements behind
 imprecise findings; they pass because they state what was measured.
 """
 import json, os, subprocess, sys, tempfile, shutil, time

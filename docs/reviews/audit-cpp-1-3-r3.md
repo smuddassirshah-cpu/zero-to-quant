@@ -83,3 +83,26 @@ Convergence rule: one new `wrong` in three levels is at the limit of "at most on
 ## Inbox bullets
 
 Three bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit cpp):`: a validator report of positional `byKey` keys beside their lines; the node driver ending with status 0 and no output when its first compile carries extra flags; a `mutants` list on code widgets to keep the 74 graded submissions with the content.
+
+## Fix pass
+
+Opus fixer. Every new sentence was checked as a claim: app-compiler runs through `docs/reports/cpp-L1-3-r2-zq.mjs` (a plain compile first), Python for the arithmetic, and the engine source for line keys. No graded key, tolerance, `wrong[]` option or slip value changed; the `tap-regions` answer (`l5`, `l20`) is unchanged.
+
+1. `l13` `screens[4].feedback.byKey`: **fixed**. Console lines are `l${k + 1}` (`app/js/engine/canvas/console.js` line 31), so `l7` is the caret line and `l8` the first note. The note text moved to `l8`; `l7` now reads "That line only marks the `<` in the line above. Its message is the `error:` two lines up." (the caret on line 7 sits under the `<` of line 6; the `error:` is line 5). The other keys were checked the same way: `l11` and `l14` are notes, `l2` is an "In file included from" line, `l23` is the "hundreds more lines" line; all match their text.
+2. `l7` `screens[3].explain.text`: **fixed differently**. The proposed "a desk build usually crashes" adds an unsourced frequency word. Run: the unguarded `bump(nullptr)` trapped (`unreachable`, code 134), and in the grader test 5 ended "The program ended with exit status 3"; with `int* volatile q = nullptr` the write to address 0 went through, exit 0. New last two sentences: "Without the guard, `bump(nullptr)` is undefined behaviour: in this browser that call stopped the program. A null pointer the compiler could not see wrote to address 0 without complaint, which is worse." The same screen's `widget.how` said "This browser build does not crash on a null write", which the test-5 run contradicts; it now reads "A null write in this browser build may not crash, so the test also reads address 0 itself." (extra edit, same basis).
+3. `l3` `screens[7]` options: **fixed** as proposed. CPython leaves `i` at 4 after `for i in range(5)`; a C++ `int i` declared before the loop ends at 5 (round 3 check `NOTE finding 3`).
+4. `l4` `screens[4]`: **fixed** as proposed. √365 = 19.1049732 (`math.sqrt`) and 0.191049731745428 (`Decimal`, 30 digits), so 0.01 × √365 = 0.1910497, 4 dp 0.1910. Key 0.191, tolerance 0.00006 accepts 0.19094 to 0.19106: 0.1910 and 0.19105 pass, 0.1911 fails. Key and tolerance unchanged; hint and accept text now show 19.10497 and 0.1910497.
+5. `l3` `screens[6].explain.text`: **fixed differently**. Run: the loop stopped with "libc++ Hardening assertion __n < size() failed: vector[] index out of bounds". "a normal build" replaced with the stated condition: "in a build without that check the read is undefined, and it may return whatever memory is there."
+6. `homework-2` `items[7].model` (a): **fixed differently**, same basis (the hardening message was reproduced on the item's own `total_notional`): "A desk build without that check may silently read whatever follows the buffer and add it to the total."
+7. `l10` `summary.ideas[2]` and `screens[6].hints[2]`: **fixed** as proposed. [class.mem]: a default member initialiser gives a `const` member its value; round 3 check `l10 summary: a const member can also take a default member initialiser` passes.
+8. `l11` `screens[1].feedback.byKey.l5`: **fixed** as proposed. Line 5 is `std::cout << "work\n";`, the last line inside the block; line 6 closes it.
+9. `l12` `screens[4].prose` and `screens[8].prose`: **fixed** as proposed. Python data model 3.3.1: `print` calls `str()`, which uses `__str__` and falls back to `__repr__`. The distractor in `screens[4]` options ("Python's `__repr__` returns a string") is a true statement used as a wrong reason and was left.
+
+Unverified rows, each rewritten without a frequency word:
+- `l1` `screens[7].explain.text`: "Read warnings anyway: an unused variable can be a step you forgot to write."
+- `review-1` `items[0].explain.text`: "... which can mean a forgotten step in a P&L."
+- `l6` `screens[4].explain.text`: "A crossed quote, with the bid above the ask, gives a negative spread: `spread` reports it rather than hiding it." (hidden test 5 expects −0.1 for `Quote(100.1, 100.0)`).
+- `l9` `quiz[1].explain.text`: "For prices, a `std::vector<double>` also knows its size and can grow, so it is the simpler choice." (`unique_ptr<double[]>` stores no size and has no resize).
+- `l9` `quiz[3]` option `type` why: "A vector can hold `unique_ptr`s: the declaration of `book` compiles. Only the copy fails."
+
+Scripts: `cpp-L1-3-r3-concepts.py` 245 of 245, exit 0 (docstring updated: finding 1 fixed); `cpp-L1-3-r2-concepts.py --wasm` 423 hold, exit 0 (label of `l7.s3.null-write` reworded to the new sentence, check unchanged); `cpp-L1-3-concepts.py` 126 checks, 0 failed; `cpp-1-perf-numbers.py` and `cpp-3-perf-numbers.py` 0 failures. Validator 0 errors, manifest unchanged; voice scan 35 on cpp: 0 and 0; playthroughs of l1, l3, l4, l6, l7, l9, l10, l11, l12, l13, review-1 and homework-2 green desktop and `--mobile`.
