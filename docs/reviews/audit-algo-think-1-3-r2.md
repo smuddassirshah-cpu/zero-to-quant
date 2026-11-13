@@ -119,3 +119,98 @@ Rows 1 to 9: no findings.
 
 - `l12-merge-sort.json` `screens[2].feedback.byKey.test-6` (unchanged, not judged as a row): a merge that drops both tails first fails test 1 (run: the 15 is lost), and one that drops only the tail of `a` first fails test 3 by the same reasoning. The "You dropped the leftover tail" line may therefore never show for that mistake. Worth a look in a later pass.
 - Row 5, optional: the remedy names two indices but not `append`; "Walk two indices in one loop and `append`." would cover the second named cause. Not required.
+
+## Fix-pass follow-up
+
+Fixer: Opus, after the fix-pass read. Method: for every `feedback.byKey.test-N` line on a code widget in the L1 to L3 lesson, review and homework files (41 widgets, 127 lines), I wrote the submission each line names (or the natural mistakes near it), ran it against the item's own tests through a harness that copies the widget's (one namespace, prelude, learner code, postlude, each case's setup then call, the same `equal`/`isclose` judge), with `sys.setrecursionlimit(3000)` as in `app/js/screens/drill-worker.js`, and recorded the first failing test. Timing ran in CPython with an alarm at 5 s / 3, and the borderline cases again in Pyodide 0.27.7 (node, local copy). About 180 submissions in all, plus each item's solution (passes) and starter (fails). Check: the named mistake passes tests 1 to N-1 and fails test N; a line that names no cause must be a true description of test N. Tests are unchanged.
+
+### The two named lines
+
+1. `l13-quicksort.json` `screens[8].feedback.byKey.test-7`: fixed differently. Runs (CPython and Pyodide, limit 3,000): in-place Lomuto, fixed end pivot, recursing on both sides: RecursionError on test 7, tests 1 to 6 pass. The same on slices: RecursionError on test 7. The same recursing on the smaller side and looping on the larger: all 9 pass (test 7 0.40 s in Pyodide). Random pivot, both sides: all 9 pass. Quickselect with a fixed end pivot, recursive on one side: all 9 pass (1,500 deep, 0.31 s in Pyodide), so the slow complexity alone never fails test 7. The reader's text is true of the failing submissions, but "a recursion that sorts both sides" also covers the smaller-side version, which passes, and its remedy omits the screen's own cure. New: "Test 7 is 3,000 sorted values. A fixed end pivot peels off one value per call there, so recursing into both sides nests about 3,000 calls: past the recursion limit. Keep only the side that holds `k`, with a random pivot." Both cures were run: one side only passes, a random pivot passes.
+2. `l12-merge-sort.json` `screens[2].feedback.byKey.test-6`: fixed. Runs: dropping both tails fails test 1; dropping only `a`'s tail fails test 3; dropping only `b`'s tail fails test 1 (the reader is right about those). But guards `if not a: return list(b)` and `if not b: return list(a)` plus a loop that keeps only `b[j:]` pass tests 1 to 5 and first fail test 6 (`[1, 2, 3, 4]`, the 5 lost). That is a natural shape: the example leaves its tail in `b`, and the guards cover tests 2 to 4. New: "Test 6 leaves 5 in `a` after `b` runs out. You kept the tail of `b` but dropped the tail of `a`; extend with both `a[i:]` and `b[j:]`."
+
+### Sweep
+
+Result key: ok = named mistake first fails test N, or a true description; fixed = rewritten (new text in the hand-back).
+
+| File | Widget | Key | Result | Basis (runs) |
+|---|---|---|---|---|
+| homework-1 | items[5] best_trade | test-3 | fixed | Best started at the first pair or at -inf first fails 3 (returns -1). Selling before buying (max - min, abs pairs) first fails test 2, so that sentence went. |
+| homework-1 | items[5] | test-4 | ok | `low = prices[0]`: IndexError on test 4, 1 to 3 pass. |
+| homework-1 | items[5] | test-7 | fixed | Using the later low against the earlier high first fails test 2 (`[3, 8, 1, 4]` has the same shape); no natural mistake found that first fails 7 (falsy-low and min-before-max both pass all). Now a description: 9 - 1 = 8, 5 - 0 = 5. |
+| homework-1 | items[5] | test-8 | ok | Pair loop: tests 1 to 7 pass, test 8 times out (about 2 x 10^10 pairs). |
+| homework-1 | items[6] copies_fixed | test-4, 5, 6 | ok | Descriptions; values from the simulation (0; 10; 1 + 2 + 3 + 4 = 10). `k = n // step - 1` formula first fails test 5. |
+| homework-2 | items[0] flatten | test-1 | ok | Appending the sublist first fails 1. |
+| homework-2 | items[0] | test-3 | ok | Description; a version keeping a nested empty list first fails 3. |
+| homework-2 | items[5] sort_count | test-1 | fixed | Adding 1 instead of `len(a) - i` passes test 1 (3 either way) and first fails test 4. Forgetting the halves' counts first fails 1; the line now names both. |
+| homework-2 | items[5] | test-5 | ok | `<` in the merge, and pairs with `>=`, first fail 5. |
+| homework-2 | items[5] | test-7 | ok | Pair counting passes test 6 (4.5 million pairs) in Pyodide and times out on 7. |
+| homework-2 | items[6] total_value | test-1 | fixed | Old "including the sub-funds' own" names leaves-only, which passes test 1 (the sub-funds hold 0.0) and first fails 4. Top-level-only and not pushing grandchildren first fail 1 (miss 120.5 - 30.25 = 90.25). |
+| homework-2 | items[6] | test-4 | fixed | Recursion: RecursionError on 4. Leaves-only also first fails 4 (returns 1.0); the line now covers it. |
+| homework-2 | items[9] split_feed | test-1, 2, 12 | ok | Greedy longest and first-success first fail 1; base case `[]` for an empty feed first fails 2; `listed.sort()` first fails 12. |
+| homework-2 | items[9] | test-3 | ok | Description (no ticker ends in X). |
+| homework-2 | items[9] | test-4 | fixed | "Not just the longest": greedy longest first fails test 1. Now a description. |
+| homework-2 | items[9] | test-5 | fixed (wording) | List as given first fails 5. Old "finds each split that uses `BT` more than once" also reads as "splits using BT twice"; `B T BT` uses it once and is found twice. |
+| homework-2 | items[9] | test-6 | fixed | Stopping when the rest is a ticker first fails test 5 (loses `B T B T`). Now a description. |
+| homework-2 | items[9] | test-7 | fixed | A cut that cannot reach `len(feed)` first fails test 1 (or 2 with a whole-feed base). Now a description. |
+| homework-2 | items[9] | test-8 | fixed | De-duplicating splits as sets first fails test 5. Now a description. |
+| homework-2 | items[9] | test-9, 10, 11 | ok | Descriptions; 927 is the tribonacci count for 12; the solution returns 4,374. |
+| homework-3 | items[4] min_capacity | test-6 | fixed | `lo = 1`, `lo = min`, `lo = sum // days` all first fail test 3 (answer 3 = the largest order there too). Now a description. |
+| homework-3 | items[4] | test-8 | ok | Linear scan from `max(sizes)` times out on 8. |
+| homework-3 | items[5] merge_k | test-2, 7 | ok | `lists[0]` and `reduce` without a start fail 2; `sorted` fails 7. |
+| homework-3 | items[5] | test-6 | ok | Growing result: 4.46 s in CPython, 6.6 s in Pyodide, over 5 s. Margin is narrow on a fast machine. |
+| homework-3 | items[6] kth_largest | test-2, 7, 8, 10 | ok | Ignoring k and the off-by-one target fail 2; in place fails 7; first pivot, recursive, RecursionError on 8; `sorted` fails 10. |
+| homework-3 | items[8] find_trade | test-1, 2, 4, 5, 8, 13 | ok | Sorted position and plain search fail 1; reading `ring[0]` fails 2; returning `lo` unchecked fails 4; `<` in the order test fails 5; excluding `ring[hi]` fails 8; `index`/`in` and a linear scan fail 13. Solution reads at most 90 slots a search. |
+| homework-3 | items[8] | test-9 | ok | Comparing with `ring[0]` strictly first fails 9 (strict `ring[lo]` fails 1; the line names both ends). |
+| homework-3 | items[8] | test-3, 6, 10, 11, 12, 14 | ok | Descriptions, true of the data. |
+| homework-3 | items[8] | test-7 | fixed | "Keep looking while `lo <= hi`": `while lo < hi` first fails test 1; with a final check it passes all. Now a description. |
+| l1-counting-work | screens[8] count_pairs | test-3 | fixed | Inner loop from `i` first fails test 1 (5, not 3). Now a description. |
+| l1-counting-work | screens[8] | test-4 | fixed | Both orders first fails 1 (6). Comparing values `a < b` and de-duplicating with `set` first fail 4; the line now names them. |
+| l1-counting-work | screens[8] | test-5 | fixed | `>=` first fails test 1 (3 x 5 = 15 there too: 4, not 3). Now a description. |
+| l2-big-o | screens[8] | test-4, 6, 10 | ok | Always "A" fails 4; no tie branch fails 6; a ratio raises ZeroDivisionError on 10. |
+| l3-memory | screens[3] stream_mean | test-1, 3, 7 | ok | `len(ticks)` fails 1; dividing by 0 fails 3; `list(ticks)` fails 7. |
+| l3-memory | screens[5] prefix_sums | test-1, 4 | ok | Description; `pre[j - 1]` first fails 4. |
+| l3-memory | screens[5] | test-2 | fixed | No leading 0 first fails test 1. Now a description; `[0, prices[0]]` first fails 2. |
+| l4-cheap-on-average | screens[6] | test-2, 3, 10 | ok | Resizing when the array fills gives 1 and first fails 2; adding the new one fails 3; test 10 a description (1 + 2 + ... + 1,024 = 2,047). |
+| l5-calls-itself | screens[5] | test-1, 2, 7 | ok | Missing `return` fails 1; base case at one value fails 2; `power` base at `n == 1` recurses past 0 on 7. |
+| l5-calls-itself | screens[9] | test-1, 2 | ok | Skipping dicts and one level fail 1 (smaller totals); test 2 a description. |
+| l6-call-stack | screens[6] | test-3, 10 | ok | Recursive `sum_to` fails 3; ignoring `d` fails 10. |
+| l6-call-stack | screens[6] | test-9 | fixed | Sum of branches and call counts first fail test 7 (`depth(2)` is 4 or 3). Now a description. |
+| l6-call-stack | screens[9] | test-1 | ok | Sum fails 1; count first fails 4 but the line's max/sum/count advice is still right. |
+| l6-call-stack | screens[9] | test-2 | fixed | Returning 0 for a leaf first fails 1 (gives 3). Now a description. |
+| l7-split-in-half | screens[5] | test-5, 10 | ok | One at a time: RecursionError on 5. Two calls per level: tests 6 to 9 pass, 10 times out. |
+| l7-split-in-half | screens[5] | test-9 | fixed | The odd case without `* x` first fails test 6 (2^10 halves through 5). Now a description: 3^2 one, then two more, 3. |
+| l8-cost-of-recursion | screens[5] | test-1, 6, 10 | ok | `fib_calls(0) = 0` fails 1; making the calls times out on 6; no memo times out on 10. |
+| l9-halving | screens[3] | test-4, 11 | ok | `lo < hi` with a final check: IndexError on 4; linear scan fails 11. |
+| l9-halving | screens[3] | test-5 | fixed | `while lo < hi` first fails test 1 (64 is never read). Now a description. |
+| l9-halving | screens[5] | test-1, 4, 7 | ok | Returning on the first equal fails 1; `hi = len - 1` fails 4; 7 a description. |
+| l9-halving | screens[9] | test-2, 4, 6 | ok | `bisect_right` fails 2; no `None` fails 4; checking `days[-1]` fails 6. |
+| l10-search-the-answer | screens[3] | test-3, 4, 9 | ok | Range one short fails 3; unchecked `a` fails 4; `pred(a)` before the range check fails 9. |
+| l10-search-the-answer | screens[4] | test-2 | ok | Range ending at `n`: TypeError on 2. |
+| l10-search-the-answer | screens[5] | test-1, 8 | ok | Updates the wrong way fail 1; no range check fails 8 (4 x 5 + 100 = 120). |
+| l11-sorting-by-hand | screens[3] | test-4 | fixed | No early stop first fails test 1 (15, not 12). Now a description. |
+| l11-sorting-by-hand | screens[3] | test-6, 8 | ok | `>=` fails 6; in place fails 8. |
+| l11-sorting-by-hand | screens[8] | test-1, 4 | ok | `>=` on times fails 1; whole tuples pass 1 and fail 4. |
+| l12-merge-sort | screens[2] | test-2, 9 | ok | One leftover appended fails 2; recursive merge (RecursionError) and `out = out + [x]` (over 5 s) fail 9. |
+| l12-merge-sort | screens[3] | test-7 | fixed | One value at a time gives RecursionError at 20,000 deep, not a time-out. |
+| l12-merge-sort | screens[7] | test-8, 9 | ok | `<` fails 8; pairs time out on 9. |
+| l12-merge-sort | screens[8] | test-2, 3 | fixed | Whole tuples, `<` on times and dropping `b`'s tail all first fail test 1; dropping `a`'s tail first fails 4. Both now descriptions. |
+| l13-quicksort | screens[3] | test-1 | fixed | `j` to `hi` inclusive with `return i - 1` passes all; a missing final swap first fails 1, which the old line did not name. |
+| l13-quicksort | screens[3] | test-2 | ok | `i` from 0 fails 2. |
+| l13-quicksort | screens[3] | test-3 | fixed | A missing final swap first fails test 1. Now a description. |
+| l13-quicksort | screens[4] | test-2, 7 | ok | Returning the list fails 2; end pivot: RecursionError on 7. |
+| l13-quicksort | screens[8] | test-9 | ok | `sorted` fails 9. |
+| l14-best-step-now | screens[3] | test-3, 4, 5 | ok | `reversed(coins)` fails 3; `[]` treated as no answer fails 4; no `None` check fails 5. |
+| l14-best-step-now | screens[5] | test-1 | fixed | By start gives 1 on test 1. `s > end` also first fails test 1, with 3; a sentence now names it. |
+| l14-best-step-now | screens[5] | test-2 | ok | Description. |
+| l14-best-step-now | screens[5] | test-4 | fixed | `>` first fails test 1. Now a description. |
+| review-3 | items[4] | test-1 | ok | No de-duplication fails 1. |
+| review-3 | items[4] | test-2 | fixed | Dropping `b`'s tail or both tails first fails test 1. Now a description. |
+| review-3 | items[6] | test-1, 7 | ok | `bisect_left` for `high` fails 1; a negative count fails 7. |
+| review-3 | items[7] | test-3, 4 | ok | `None - 1` fails 3; returning -1 fails 4. |
+
+Totals: 127 lines on 41 widgets checked; 31 rewritten (the 2 named, 29 from the sweep); 96 unchanged. Where no natural mistake first fails test N, the new line describes test N and names no cause, as the brief asks.
+
+Outside the byKey lines (not edited): `l6-call-stack.json` `screens[6].widget.how` says `sum_to(100000)` is "far deeper than the limit of 1,000"; the page's limit is 3,000 (true either way for 100,000).
+
+Gates: validator 0 errors (manifest unchanged); `algo-think-L1-3-concepts.py` and `algo-think-L1-3-r2-concepts.py` exit 0; voice scan 35 on the course 0 over 35 words, 0 explanations over three sentences; playthroughs of the 13 edited files, desktop and `--mobile`: all 26 runs "All passed".
