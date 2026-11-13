@@ -121,3 +121,33 @@ Left as `sound`; listed so a later reader need not rediscover them.
 Nothing was left unjudged. Limits of the check: runs were native CPython, not the page runtime, so time-based verdicts rest on a 2 s per-test alarm (the three new plants were timed in full). No C++ drill is in the list.
 
 Scripts and results: scratch only (`read-near-miss/` in the session scratchpad: `list.py`, `run.py`, `runp.py`, `ex.py`, `dump.py`, `newplants.py`, `res.json`).
+
+## Fix pass
+
+Each target plant was rerun natively in CPython (2 to 5 s per test) before the edit: every one failed at least one hidden test and passed at least one, as the review says. No finding disputed.
+
+- `ci-broken-steps`: fixed, mark moved to planted[2] (native 3 fail of 12).
+- `ci-ends-to-target`: fixed, mark moved to planted[2] (2 of 15, both errors).
+- `ci-even-desks`: fixed, mark moved to planted[0] (4 of 12).
+- `ci-funded-projects`: fixed, mark moved to planted[2] (8 of 13).
+- `ci-log-compactor`: fixed, mark moved to planted[1] (6 of 14).
+- `ci-mirror-pieces`: fixed, mark moved to planted[4] (5 of 14, by time).
+- `ci-others-product`: fixed, mark moved to planted[2] (4 of 13, by time).
+- `ci-pillar-queens`: fixed, mark moved to planted[0] (5 of 14).
+- `ci-priced-edits`: fixed, mark moved to planted[1] (9 of 12).
+- `ci-relay-masts`: fixed, mark moved to planted[1] (5 of 13).
+- `ci-stone-hops`: fixed, mark moved to planted[5] (3 of 15, by time).
+- `ci-three-feed-common`: fixed, mark moved to planted[3] (3 of 15, by time).
+- `ci-tolerant-common`: fixed, mark moved to planted[2] (7 of 13).
+- `ci-trace-count`: fixed, mark moved to planted[3] (4 of 13, by time).
+- `ci-free-block`: fixed, plant A added as planted[2] with the review's slip, marked; planted[1] unmarked (native 6 fail of 13).
+- `ci-read-preorder`: fixed, plant B added as planted[3] with the review's slip, marked; planted[2] unmarked (native 2 fail of 12, by time). The page runtime accepts it: `planted-check` 0 failures.
+- `ci-rebuild-from-orders`: fixed, plant C added as planted[3] with the review's slip, marked; planted[1] unmarked (native 1 fail of 12, by time). The page runtime accepts it: `planted-check` 0 failures.
+- `ci-rebuild-from-orders` slicing solution passing all 12 hidden tests: deferred. Per the reviewer, the natural slicing version (`pre[1:i + 1]`, `ino[:i]`) passes every hidden test natively, each in under 0.2 s, though the constraints call it too costly for 100,000 ids; a test that rules it out would be a large generated one, which AUTHORING advises against. Hidden tests left unchanged.
+
+Gates:
+- `node tools/validate.mjs`: 0 errors. `[near-miss]` warnings 0 before, 0 after; `[negative-key]` 3 before, 2 after.
+- `planted-check --near-miss --local-cdn` on all 17 edited drills: 0 failures (the two time-only plants, B and C, are accepted in the page runtime).
+- Number scripts: `drills-ci-4-check.py` flagged the two new slow plants (planted[3] past 2.5 s); added `("ci-read-preorder", 3)` and `("ci-rebuild-from-orders", 3)` to its `SLOW_PLANTED` set, which requires them to time out on a hidden test, and it exits 0. The other scripts covering edited drills (`drills-ci-1`, `2`, `3`, `6`, `7`, `8-check`, `8-indep`, `8-wrong`) exit 0 on the edited ids.
+
+l13 edit (`app/content/courses/complex/l13-fourier-pricing.json`, `screens[10]`): recomputed $0.5(e^{-0.08875} - 1) = -0.042463$, so the key -0.0425 stands and +0.0425 is $-\lambda\kappa$. Added `wrong` entry `sign` (value 0.0425, abs 0.0005) and `feedback.byKey.sign`: "$+0.0425$ is $-\lambda\kappa$, the amount added to the drift. $\lambda\kappa$ itself is negative, because the mean jump is a fall." `docs/reports/complex-L3-numbers.py` gained three checks (value of `wrong[2]`, the feedback text, and the sign of $\lambda\kappa$) and exits 0 (183 of 183). `grade-all.mjs --file` on the lesson: 0 failures. Playthrough `--lesson complex/l13-fourier-pricing`: All passed, with and without `--mobile`. The graded answer is unchanged; one wrong-answer route was added.

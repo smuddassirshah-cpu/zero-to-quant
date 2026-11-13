@@ -144,12 +144,12 @@
   "planted": [
     {
       "code": "def queen_count(board, q):\n    n = len(board)\n\n    def walk(row, left, cols, ups, downs):\n        if left == 0:\n            return 1\n        if row == n:\n            return 0\n        total = 0\n        for c in range(n):\n            up, down = row + c, row - c + n\n            if board[row][c] == '.' and not (cols >> c & 1 or ups >> up & 1 or downs >> down & 1):\n                total += walk(row + 1, left - 1, cols | 1 << c, ups | 1 << up, downs | 1 << down)\n        return total\n\n    return walk(0, q, 0, 0, 0)\n",
-      "slip": "Placing a guard in every row from the top never leaves a row empty, so it only counts placements in the first `q` rows."
+      "slip": "Placing a guard in every row from the top never leaves a row empty, so it only counts placements in the first `q` rows.",
+      "nearMiss": true
     },
     {
       "code": "def queen_count(board, q):\n    n = len(board)\n\n    def walk(row, left, cols, ups):\n        if left == 0:\n            return 1\n        if n - row < left:\n            return 0\n        total = walk(row + 1, left, cols, ups)\n        for c in range(n):\n            if board[row][c] == '.' and not (cols >> c & 1 or ups >> (row + c) & 1):\n                total += walk(row + 1, left - 1, cols | 1 << c, ups | 1 << (row + c))\n        return total\n\n    return walk(0, q, 0, 0)\n",
-      "slip": "Checking only one kind of diagonal lets two guards on the other diagonal watch each other.",
-      "nearMiss": true
+      "slip": "Checking only one kind of diagonal lets two guards on the other diagonal watch each other."
     },
     {
       "code": "def queen_count(board, q):\n    n = len(board)\n    free = [(r, c) for r in range(n) for c in range(n) if board[r][c] == '.']\n    placed = []\n\n    def safe(r, c):\n        return all(r != a and c != b and abs(r - a) != abs(c - b) for a, b in placed)\n\n    def walk(left):\n        if left == 0:\n            return 1\n        total = 0\n        for r, c in free:\n            if (r, c) not in placed and safe(r, c):\n                placed.append((r, c))\n                total += walk(left - 1)\n                placed.pop()\n        return total\n\n    return walk(q)\n",
