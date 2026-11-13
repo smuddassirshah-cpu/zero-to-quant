@@ -23,6 +23,7 @@ Fix pass (13 Nov 2026): the refuted sentences are gone, so their claim() checks 
 kept `delete book;` compile error.
 """
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -453,7 +454,7 @@ if WASM:
     o = wasm('#include <algorithm>\n#include <vector>\n\nstruct Quote {\n    double bid;\n    double ask;\n};\n\nint main() {\n    std::vector<Quote> qs{{100.2, 100.4}, {99.9, 100.1}};\n    std::sort(qs.begin(), qs.end());   // line 11\n}\n')
     ok('wasm: l13 s4 sorting Quotes with no < gives a message of hundreds of lines, even with the app\'s -ferror-limit=10 (%d lines)' % len(o.splitlines()), 'COMPILE-FAIL' in o and len(o.splitlines()) >= 200, o[:300])
     o = wasm('#include <iostream>\n#include <vector>\nint main() {\n    std::vector<double> px{100.0, 101.0, 102.0};\n    const double& first = px[0];\n    px.push_back(103.0);\n    std::cout << first << "\\n";\n}\n')
-    ok('wasm: homework-2 h-realloc explain "a test run printed 2.8974e-306" with the app compiler', '2.8974e-306' in o, o)
+    ok('wasm: homework-2 h-realloc explain "a test run printed about 2.9e-306" with the app compiler (round 2 fix pass: this build 2.8974e-306, the round 2 harness 2.93542e-306)', any(2.85e-306 <= float(t) < 2.95e-306 for t in re.findall(r'[0-9.]+e-306', o)), o)
     o = wasm('#include <memory>\nstruct Book {};\nint main() { auto book = std::make_unique<Book>(); delete book; }\n')
     ok('wasm: l9 s3 hint 3 (fixed): a kept delete book; on a unique_ptr does not compile', "cannot delete expression of type 'unique_ptr<Book>'" in o, o)
     o = wasm('#include <iostream>\n#include <vector>\nint main() { std::vector<double> px{100.0, 101.0, 102.0}; const double& first = px[0]; px.push_back(103.0); std::cout << first << "\\n"; }\n')

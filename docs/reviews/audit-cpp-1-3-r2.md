@@ -103,3 +103,90 @@ Convergence rule: three new `wrong` in three levels is above the limit of one, s
 ## Inbox bullets
 
 Appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit cpp):` (three bullets): the unreachable `byKey.error` key on C++ code widgets; a no-browser grader for C++ widgets and a rule for `test-N` feedback routing (the finding class has now been seen eight times in two rounds); console transcripts that go stale when the engine's compiler flags change.
+
+## Fix pass
+
+Fixer: Opus, worktree branch `worktree-agent-adf099dd8f125a86c`. Every fix below rests on my own runs through the auditor's harness (`cpp-L1-3-r2-zq.mjs`: the app's `cpp-grade.js` helpers, `cpp-worker.js` runtime and flags, YoWASP clang 21.1.4, wasm32, libc++, `-O1`), a desk g++ build, or the standard. Content strings only; no test, starter or solution changed.
+
+### Which key the grader shows (`app/js/engine/widgets/cpp-grade.js`, `grade()` and `runCases()`; `player.js` line 111)
+
+- Compile or link error: key `compile`. An untouched starter that does not build gets `compile` too, so its byKey line shows.
+- A program that stops on test N (libc++ hardening trap, uncaught exception with status 134, non-zero exit such as the leak checker's status 1): that row fails; the key is `test-N` of the first failing row.
+- Wrong output or value on test N: key `test-N` of the first failing row.
+- Time-out on test N: that row gets the "Stopped after" error and later rows "Not run"; key `test-N`.
+- `error` only when the runner itself fails (it never answers, or the compiler is still loading). No learner's program reaches it.
+- The player shows `feedback.byKey[key]` if present, else the grader's own line.
+
+### Findings
+
+1. fixed differently. The five snippets as written: the null read printed 0 (exit 0); `delete` on `new[]` ran (exit 0, a compile warning); the double `delete` ran (exit 0); `new double[0]` ran (exit 0); `v.at(5)` stopped with "terminate called after throwing an instance of 'std::out_of_range'", status 134. Prose: "In this browser build four of these snippets ran to the end, and one stopped with an error message." The explain's "the null read gave a stray number" became "gave 0", as the run printed.
+2. fixed differently. `byKey.test-2` deleted. An `int` or `double` total gives key `compile` with "invalid operands to binary expression ('int' and 'const std::string')" (and `'double'`). The compile line keeps its two sentences and adds: "If it says `invalid operands` next to `std::string`, your total is not a `T`: declare it as `T`." The kept sentences checked: returning `int` and leaving out the `template` line both give `compile`.
+3. fixed. Slip `two` is now 123.45 with tolerance 0.5. Computed twice: 1.2345 × 100 = 123.45; the band 122.95 to 123.95 holds 123.45 and a truncated 123, and excludes the key 12345 and the `raw` band 1.2344 to 1.2346. Slip value and tolerance changed.
+4. fixed. [except.ctor]/1 destroys automatic objects on the way to a handler; [except.handle]/9 leaves unwinding implementation-defined when there is none. Desk g++: a caught throw prints the guard's `freed` before `caught`. The app: an uncaught throw ends the run and prints nothing.
+5. fixed. C++17 [expr.call]/4: a parameter's lifetime ends when the callee returns or at the end of the full-expression, implementation-defined. Every call on these screens is a whole statement (`add_fee(mine);`, `normalise(w);`, `hold(std::move(p));`), so both moments fall before the next statement. Runs: the copy is destroyed before `next` in the app and on g++ and clang. The six sentences as the auditor wrote them.
+6. fixed. With `_LIBCPP_HARDENING_MODE_DEBUG` every quoted line appears; with the checks off the `strict_weak_ordering_check.h` and `sort.h:939` lines do not. The prose now ends "from a build with the library's debug checks on."
+7. fixed. [sequence.reqmts], optional operations: `pop_front` is constant time for `deque`. A search of level 4's files finds no `std::deque`, `std::queue` or `pop_front`.
+8. fixed differently. l3 `error` renamed `test-1`: "Test 1 has five closes and two up days. If the program stopped with index out of bounds, your loop read outside the vector: start at 1 and test `i < prices.size()`, not `<=`." "Outside", not "past the last close": a loop from 0 reading `prices[i - 1]` also stops on test 1. homework-1 `error` deleted; its advice is in `test-6` (checked).
+9. fixed differently. Test 2 is the exact compare. A missing `'\n'`, a trailing space and an extra blank line each pass test 1 and fail test 2; a missing comma or a lower-case h fails test 1; `std::endl` passes. Line: "The words match but not every character. Test 2 compares exactly: one `'\n'` at the end, no space before it and no blank line after."
+10. fixed. Key renamed `test-1` with the auditor's text: fixed decimals fail test 1 with `Price: 72.50`, and the starter also lands on `test-1`. No natural mistake reaches test 3 (`setprecision(5)` passes all four).
+11. fixed differently. One `test-1` line covers all three slips, each graded: "Test 1 should give 0.2: from 110 to 88. If you got 0.12, you measured from the first close, not the highest so far. If you got −0.2 or 0, check the sign: the fall is `peak - p`." A fixed peak gives 0.12; `p - peak` gives −0.2 (worst kept by `<`) or 0 (kept by `>`). `test-4` and `test-6` now name no cause.
+12. fixed differently. `test-1` gets the "`i` at 0" sentence (stops on test 1, checked). `test-2`: "If the program stopped, your loop read `prices[1]`, past the only close: test `i < prices.size()` before each turn." A `do`-`while` from 1 passes test 1 and stops on test 2 with index out of bounds. `test-3` added as the auditor wrote it; `size() - 1` stops on test 3.
+13. fixed differently. `test-2`: "... If you got some other number, your loop may have read `*end`: stop at `p != end`." The read past the end is undefined, hence "may". `test-5` names no cause: "Test 5 passes the range `xs + 1` to `xs + 3`: the values 1 and 4, so the answer is 4."
+14. fixed differently. `test-1`: "Test 1 expects B, C, A: B is cheapest, and C arrived before A at the same price. If you got C, A, B, you compared times first; if B, A, C, you broke no tie on `time`." Time first gives C, A, B; price only gives B, A, C. `test-4` deleted: `queue` sorts with `operator<`, so a wrong `<` fails test 1 first.
+15. fixed differently. No source for "often" or for "some"; written as a hypothetical: "Say a market-data feed has a C interface: you hand over a buffer and the feed fills it."
+
+Ledger `unverified` rows: l8 `screens[7].prose` is finding 15. homework-2 `items[6].explain`: the round 1 build printed 2.8974e-306 and this harness 2.93542e-306, so the sentence now says "a test run printed about 2.9e-306", true of both.
+
+### Sweep: every `feedback.byKey` line on the 47 code widgets of L1 to L3
+
+79 lines checked: 13 rewritten, 3 deleted, 1 added, so 77 now. For each `test-N` line a submission with the named mistake was graded and its key compared with N; lines that name no mistake were checked against what the test holds; compile lines against the clang message for each mistake they name. Each is a check in `cpp-L1-3-r2-concepts.py` (ids `fx.*` and the audit's `*.fb-*`).
+
+| widget | lines | result |
+|---|---|---|
+| l1 s3 | compile; test-2 | compile: a missing `;` gives `main.cpp:4:41: error`. test-2 rewritten (finding 9) |
+| l1 s4 | test-2; test-3 | test-2: `getline` passes test 1, fails test 2. test-3 became test-1 (finding 10) |
+| l2 s4 | test-1; test-5 | the starter gives 3 on test 1; `(a + b) / 2.0` passes 1 to 4 and gives −1 on test 5 |
+| l2 s5 | test-2 | the starter gives −2,144,967,296 on test 2 |
+| l2 s9 | test-2; test-3 | `int` pence gives 12,949,672.96 on test 2 (−3,000,000,000 pence checked); `/ 100` gives 0 on test 3 |
+| l3 s3 | test-2; test-6; error | `size() - 1` stops on test 2 (4,294,967,295 here); `>=` fails test 6; error became test-1 (finding 8) |
+| l3 s4 | test-1; test-4; test-6 | rewritten (finding 11) |
+| l3 s5 | test-1; test-2 | starting at `n` prints 9.75 on test 1; test-2 describes the test |
+| l3 s8 | test-1; test-3 | the starter gives Cboe 3 on LLCT; no `default` fails test 3 |
+| l4 s5 | compile; test-1; test-2 | compile rewritten from runs: by value gives `ambiguous`, `&` without `const` gives `undefined symbol`, another return type gives `previous declaration`. test-1 and test-2 rewritten, test-3 added (finding 12) |
+| l4 s6 | compile; test-1 | `= 252` twice gives "redefinition of default argument"; `* days` gives 2.52 on test 1; 0.01 × √252 = 0.1587 |
+| l6 s4 | compile | the starter, `q.ask_` (private) and `Quote&` (static assertion) all give compile |
+| l6 s7 | compile | the starter's `px[i] +=` gives compile |
+| l7 s3 | test-5 | no null guard fails test 5 only |
+| l7 s4 | test-2; test-5 | rewritten (finding 13); a best at 0 gives 0 on test 2 |
+| l8 s6 | test-1 | `delete px` prints the right sum and fails test 1 with the leak check, status 1 |
+| l9 s3 | test-3 | the starter fails test 3 only |
+| l9 s5 | test-4 | no check for 0 fails test 4 |
+| l10 s3 | compile; test-4; test-5 | the starter gives "no member named 'mid'", no `const` gives "not marked const", no `spread` gives "no member named 'spread'"; no check fails 4; `>` fails 5 |
+| l10 s5 | test-2, 4, 6, 8, 9 | each named mistake fails exactly its test; (100 × 10 + 300 × 12) / 400 = 11.5 |
+| l10 s9 | test-4, 7, 8, 9 | each named mistake fails exactly its test |
+| l11 s3 | compile; test-1 | `void ~Logger()` and `~Logger(int)` give compile; no inner braces fails test 1 |
+| l11 s7 | test-2, 5, 9, 10, 12 | each named mistake fails exactly its test |
+| l11 s10 | test-1, 2, 8 | each named mistake fails exactly its test |
+| l12 s2 | compile; test-2; test-8 | the starter and `operator*(Money, Money)` give "invalid operands"; no padding fails 2; no absolute value fails 8 |
+| l12 s7 | test-5; test-7 | `<=` fails 5; the venue in `==` fails 7 |
+| l12 s9 | test-1; test-4 | test-1 rewritten, test-4 deleted (finding 14) |
+| l13 s2 | compile; test-2; test-7 | compile rewritten, test-2 deleted (finding 2); `T total = 0` stops on test 7 |
+| l13 s9 | test-2, 7, 8 | each named mistake fails exactly its test |
+| review-1 i5 | test-1; test-3 | `limit` for `-limit` gives 4 on test 1; `<=` fails test 3 |
+| homework-1 i1 | test-2, 4, 6; error | a first close read before the loop stops on 2; a worst reset at each peak fails 4; no comma skip stops on 6; error deleted (finding 8) |
+| homework-1 i2 | test-1, 4, 5 | the starter and swapped buy and sell fail 1; `<=` fails 4; `>=` fails 5 |
+| homework-1 i3 | test-3 | an `int` total gives −294,967,296 on test 3 |
+| homework-2 i0 | test-1 | `for (Position p : book)` fails test 1 |
+| homework-2 i1 | test-4 | an `int` total fails test 4 |
+
+The other 12 code widgets have no byKey lines. Numeric slips: all 61 `wrong[]` values in the 19 files recomputed from the mistake each line names; one changed (finding 3).
+
+### Scripts
+
+- `cpp-L1-3-r2-concepts.py --wasm <pkgs> --jobs 4`: 423 checks, 0 fail, exit 0. `EXPECTED_FAIL` is now empty. The 17 failing checks were rewritten to state what the content now says (key `test-1` or `compile`, the new slip band, statement-call lifetime, the qualified prose). Added: a desk check for a caught throw, an expression-lifetime observation, the literal null snippet, a rule that no code widget keeps a key other than `compile` or `test-N`, key lists for the 8 widgets whose keys changed, and 42 more `fx.*` sweep checks (54 checks added in all).
+- `cpp-L1-3-concepts.py`: 126 checks without `--wasm`, 139 with, 0 failed. One check changed: the h-realloc figure is accepted between 2.85e-306 and 2.95e-306.
+- `cpp-1-perf-numbers.py` and `cpp-3-perf-numbers.py`: exit 0.
+
+### Gates
+
+Validator 0 errors, `content/manifest.json` unchanged. Voice scan 35: 0 and 0. Playthrough green, desktop and `--mobile`: l1, l3, l4, l5, l7, l8, l9, l12, l13, homework-1, homework-2.
