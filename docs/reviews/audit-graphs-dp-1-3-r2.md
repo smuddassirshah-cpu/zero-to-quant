@@ -183,3 +183,58 @@ Line by line (cause: first failing test; "describes": facts hold):
 - `docs/reports/graphs-dp-1-perf-numbers.py`, `-2-`, `-3-`: exit 0. `-2-` checked the exact set of homework-2 items[8] `test-N` keys; it now allows the added `test-1`, which its own plant "returns on first reaching dst" first fails.
 - Validator 0 errors (4,538 warnings); voice scan at 35: 0 over 35 words, 0 explanations over three sentences.
 - Playthrough desktop and `--mobile` of the 13 edited files (11 lessons, homework-2, homework-3): 26 of 26 "All passed".
+
+## Fix-pass read
+
+Reader: fresh, blind to the audit, its ledger, earlier reviews and the `## Fix pass` notes. Diff read: `git diff 8548b2ca~1 8548b2ca -- app/content/courses/graphs-dp/` (13 files, 39 changed strings; the working tree equals the fixer's commit for all 13). Method: every item's solution was run against its hidden tests under CPython with `sys.setrecursionlimit(3000)`, tests in one namespace in order, as `js/engine/widgets/code.js` runs them on Check. For each line that names a mistake, a submission making that mistake was written and its first failing test and returned value recorded. One Pyodide 0.27.7 run under node covers the time-out and depth claims in l13.
+
+Result: 39 rows, 39 `correct`, 0 `wrong`, 0 `imprecise`, 0 `misleading`, 0 `unverified`.
+
+| # | file | JSON path | new text (short) | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-2 | items[1].feedback.byKey.test-1 | direct quote 4.0 bp; −1 means `k` rounds; 2.6 means one round chained conversions | correct | Run: `range(k)` first fails test 1 with −1; in-place relaxing (two variants) first fails test 1 with 2.6; solution (copy per round) passes 9 of 9. |
+| 2 | homework-2 | items[1].feedback.byKey.test-2 | GBP, EUR, USD, JPY at 2.6 bp too long; 2.7 through USD; 2.9 means USD's 1.1 replaced its 1.2 | correct | 0.5 + 0.6 + 1.5 = 2.6 (3 conversions, k = 1 allows 2); 1.2 + 1.5 = 2.7; 0.5 + 0.6 = 1.1. Run: one cost per node with a hop count (heap version and in-place version) passes test 1, first fails test 2 with 2.9 = 0.5 + 2.4. |
+| 3 | homework-2 | items[8].feedback.byKey.test-1 | two cheapest routes at 3; count 1 means returned when AMS first reached | correct | 1 + 2 = 2 + 1 = 3. Run: return-at-first-reach first fails test 1 with `(3, 1)`; the solution returns at the pop and passes 11 of 11. |
+| 4 | homework-2 | items[8].feedback.byKey.test-4 | AMS first for 9, then 2 through PAR; answer `(2, 1)` | correct | Links LDN-AMS 9, LDN-PAR 1, PAR-AMS 1; test expects `(2, 1)`; solution run. |
+| 5 | homework-3 | items[3].feedback.byKey.all | the rule removes orders that send D before A | correct | Prose: A must be sent before D; 24 is 4!. |
+| 6 | homework-3 | items[3].feedback.byKey.fixed | A first every time leaves 3! = 6 | correct | A fixed first, B, C, D free: 3! = 6, the slip value. (A first and D last would give 2.) |
+| 7 | l1 | screens[5].explain.text | empty lists and appends O(V + E); without self-loops lists hold 2E entries; sorting adds a little more | correct | V list creations, at most 2 appends per edge; a self-loop appends once, so 2E holds only without them; sorting is the sum of d log d, at most O(E log V). |
+| 8 | l10 | screens[9].feedback.byKey.test-1 | every list `[]` means `path` itself was stored | correct | Run: `out.append(path)` first fails test 1 with eight `[]`; skip-before-take first fails test 1 with `[]` first. |
+| 9 | l10 | screens[9].feedback.byKey.test-5 | checks the 8 subsets are 8 separate lists | correct | Test 5 is `len({id(s) for s in subsets([1, 2, 3])})` expecting 8. |
+| 10 | l11 | quiz[0].feedback.byKey.two | 2 is the count for 4 queens; on 3 by 3 every start runs out by row 3 | correct | `n_queens(4)` = 2 and `n_queens(3)` = 0 from the lesson's solution; agrees with the explain. Slip 2 differs from key 0 and slips 1, 6. |
+| 11 | l11 | screens[8].feedback.byKey.test-5 | expects 0 for 2 and 3 queens | correct | Test 5 is `[n_queens(2), n_queens(3)]` expecting `[0, 0]`; solution run. |
+| 12 | l11 | screens[8].feedback.byKey.test-9 | every subset making 13 uses 8, last after sorting; check `total == target` before the end of list | correct | Enumerated: only (5, 8) and (2, 3, 8). Run: end-of-list check first passes tests 1 to 8 and first fails test 9 with `False`; solution order passes 13 of 13. |
+| 13 | l12 | screens[9].feedback.byKey.test-2 | expects `(1, 1)`; count 2 means the counter outlived test 1 | correct | Run: module-level counter passes test 1, first fails test 2 with `(1, 2)`. |
+| 14 | l12 | screens[9].feedback.byKey.test-3 | `(8, 7)`; 11 means lookups counted; 5 means cache outlived earlier tests | correct | Run: counting every call passes tests 1 and 2, fails test 3 with `(8, 11)` (2n − 1 calls); a module-level or default-argument cache passes 1 and 2, fails test 3 with `(8, 5)` (0 and 1 already cached). |
+| 15 | l12 | screens[9].feedback.byKey.test-4 | `(832040, 31)`: one value for each n from 0 to 30 | correct | Solution run; 31 = 30 + 1. |
+| 16 | l12 | screens[9].feedback.byKey.test-6 | `fib_memo(10)` twice, 11 the second time too | correct | Test 6 has setup `_ = fib_memo(10)` then expects `(55, 11)`; prose says each call starts with an empty cache. |
+| 17 | l13 | screens[9].feedback.byKey.test-5 | `stairs(90)`; plain recursion runs out of time | correct | Plain recursion passes tests 1 to 4. Pyodide under node: `stairs(27)` takes 0.032 s, so `stairs(90)` needs about 4.7e11 s against the 5 s limit; margin far above 2 times. Two-variable loop passes. |
+| 18 | l13 | screens[9].feedback.byKey.test-6 | `stairs(5000)`; even a memoised recursion goes 5,000 deep, past the limit | correct | Run: memoised recursion (dict and `lru_cache`) passes tests 1 to 5, first fails test 6 with `RecursionError` at limit 3,000, in CPython and in Pyodide. |
+| 19 | l13 | screens[10].explain.text | the same split by the last move as climbing stairs | correct | Stairs splits on a last step of 1 or 2; the lattice on a last move up or down. 10 + 10 = 20 = C(6, 3). |
+| 20 | l2 | screens[4].feedback.byKey.test-1 | lesson's graph; G twice means mark when queued | correct | Run: mark-on-pop first fails test 1 with `[..., 'G', 'H', 'G']`; G is queued by E and by C. Solution passes 7 of 7. |
+| 21 | l2 | screens[4].feedback.byKey.test-3 | square; D next to B and C; `['A', 'B', 'C', 'D']` | correct | Test 3 input and expect read; solution run. |
+| 22 | l2 | screens[8].feedback.byKey.test-5 | k = 10; Alder and Larch both expanded, both find Oak; Oak twice means mark when first found | correct | Run: mark-on-pop passes tests 1 to 4 and first fails test 5 with Oak twice (Larch at depth 1 and Alder at depth 2 both reach it; at k = 2 Alder is not expanded). |
+| 23 | l2 | screens[8].feedback.byKey.test-7 | triangle with k = 1; `['B', 'C']` | correct | Test 7 input and expect read; solution run. |
+| 24 | l3 | screens[2].feedback.byKey.test-1 | lesson's graph has loops; `RecursionError` means calls went round one | correct | Cycle A, B, E, G, C, D, A in the canvas edges. Run: no `seen` check first fails test 1 with `RecursionError`; the check before each call is the solution. |
+| 25 | l3 | screens[2].feedback.byKey.test-4 | triangle, a loop of three; `['A', 'B', 'C']` | correct | Test 4 input and expect read; solution run. |
+| 26 | l3 | screens[3].explain.text | on a tree stored as parent-to-child arrows nothing leads back | correct | A rooted tree with only downward arcs is acyclic, so the unguarded recursion ends. An undirected tree would loop, hence the qualifier. |
+| 27 | l3 | screens[5].hints[1] (text, highlight) | a node can be on the stack twice, as D is here | correct | Trace of the solution from A on the lesson graph: after C is popped the stack is `['D', 'H', 'D']`. D is the only node with multiplicity 2; G is never on it twice. Highlight id `D` exists. |
+| 28 | l3 | screens[5].feedback.byKey.test-1 | order starting A, D, F takes the largest first; D twice means skip a popped seen node | correct | Run: ascending pushes give `['A', 'D', 'F', ...]`; no skip on pop gives `[..., 'H', 'D']`; both first fail test 1. |
+| 29 | l3 | screens[5].feedback.byKey.test-3 | square; C pushed by A and by D; `['A', 'B', 'D', 'C']` | correct | Hand trace: A pushes C, B; B pushes D; D pushes C. Expect read; solution run. |
+| 30 | l4 | screens[4].feedback.byKey.test-1 | 6 islands; a 4 means corner cells were joined | correct | Run: eight-neighbour search first fails test 1 with 4; solution gives 6. |
+| 31 | l4 | screens[4].feedback.byKey.test-5 | two cells meeting at a corner: two islands | correct | Test 5 is `[[1, 0], [0, 1]]` expecting 2. |
+| 32 | l4 | screens[8].feedback.byKey.test-6 | first non-square grid, one row of two cells; only −51 counts, answer 1 | correct | Tests 1 to 5 are 5 by 5 or 3 by 3; test 6 is `[[-50, -51]]`. Run: `cols = rows` passes 1 to 5 and first fails test 6 with 0. A `<=` test passes all 7, so the line is right not to name the boundary as the cause. |
+| 33 | l6 | screens[8].feedback.byKey.test-1 | 5 means currencies counted; −1 means pairs stored one way | correct | Run: one-way storage first fails test 1 with −1 (`PAIRS` holds `('ZAR', 'NGN')`); `dist = {src: 1}` gives 5. |
+| 34 | l6 | screens[8].feedback.byKey.test-3 | HUF to GBP, against the written order; still 3 | correct | Pairs are written `('GBP', 'EUR')`, `('EUR', 'PLN')`, `('PLN', 'HUF')`; expect 3. |
+| 35 | l7 | screens[4].feedback.byKey.test-1 | B 3, F 7, G `math.inf`; B at 4; missing G | correct | Expect read. Run: seen-at-first-push and record-on-every-pop both give B 4; a dict built only from reached nodes omits G; all first fail test 1. |
+| 36 | l7 | screens[4].feedback.byKey.test-2 | G reaches only F; every other node stays at `math.inf` | correct | Test 2 expect: F 1, G 0, A to E `inf`. |
+| 37 | l7 | screens[5].explain (text, highlight) | B ends at 4, D at 6 and F at 9, all wrong | correct | Ran the screen's code: `{'A': 0, 'C': 1, 'B': 4, 'E': 3, 'D': 6, 'F': 9}`; true costs 3, 4, 7. With `if u in dist: continue` it returns 3, 4, 7. Agrees with the canvas labels; highlight id `D` exists. |
+| 38 | l7 | summary.trap | recording at every pop, with no stale check, lets an old larger entry overwrite | correct | Same run as row 37; the stale `(4, B)` pops after `(3, B)`. |
+| 39 | l8 | screens[7].widget.wrong[0].value | slip `edges` 3 changed to 2 | correct | Edges 0–1, 2–3, 1–3, 5–6 give {0, 1, 2, 3} and {5, 6}: 2 groups with edges, as the slip's feedback says. Key is 4; no other slip. |
+
+Findings: none.
+
+Notes, no action needed:
+- Rows 4, 21, 23, 25, 29, 31, 34 state only the test's input and answer. No mistake is named, so there was nothing to reproduce beyond the solution run.
+- Row 35: the record-on-every-pop submission does not end on tests 6 and 7, which have cycles. It fails test 1 first, so the line shown is still the right one.
+- Scripts are in the reader's scratch folder and are not committed: this read changes no content.
