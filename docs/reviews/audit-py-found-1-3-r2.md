@@ -79,3 +79,41 @@ Notes on the overlap:
 ## Inbox
 
 Three bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit py-found):`: a slip expression for choice options, a check of quoted interpreter messages, and a pointer to the reusable code-widget harness.
+
+## Fix pass
+
+Opus fixer, audit session 11. Each claim was run on CPython 3.13.18 before it was written. No graded key, tolerance, `wrong[]` value or slip value changed. The concepts script's `FINDING` checks needed no change: each new string satisfies the check as written.
+
+1. l7 `quiz[0].widget.options[1].why`: **fixed**. `scale(5, 1)` returns 5 and `scale(5, offset=1)` returns 11; 6 is 5 + 1, the offset added with no factor.
+2. l6 `screens[7].feedback.correct`: **fixed**. `type({*()})` and `type(set([]))` are both `set` and `type({})` is `dict`, so "only" is too strong; the new line keeps the braces point.
+3. l3 `screens[1].prose`: **fixed**. `type((5))` is `int`, `type((5,))` and `t = 1, 2` give `tuple`; Python reference 6.2.3 says the comma makes the tuple.
+4. l8 `summary.ideas[2]`: **fixed**. Purity means the result depends only on the arguments and nothing outside changes; the new line states both parts. `sorted` and `dict(book)` build new objects and leave their argument alone.
+5. l12 `screens[1].explain.text`: **fixed**. `shel.value(27.00)` and `Position.value(shel, 27.00)` both give 4050.0, so the object is the first parameter when the call is made on it, not always the name before the dot.
+6. l1 `screens[2].prose`: **fixed**. `sys.float_info.mant_dig` is 53 and 53 × log10(2) = 15.95; `sys.float_info.dig` is 15. "About 16 significant decimal digits" matches; 17 is the round-trip print length.
+7. Unverified, l2 `screens[10].prose`: **fixed differently**. Rewritten as a stated condition, not "Some traders": "A 5-day average is the mean of the latest five closes. Suppose a close above it counts as a sign of strength." No market-practice claim is left to source; the code and 103.48 are unchanged.
+8. Unverified, l9 `screens[6].prose`: **fixed differently**. Now a hypothetical: "Suppose a trader draws a band two standard deviations either side of the mean price." The frequency claim is gone; the band figures (98.97, 104.03) are unchanged.
+9. Unverified, homework-3 `items[0].prose`: **fixed differently**. "Handy for risk work" is replaced by a checkable claim: "the daily ones sum to the log return over the whole period". Run: the rounded daily log returns of [100.0, 101.2, 99.8, 100.4, 103.1] sum to 0.030529, which is ln(103.1/100) to six places, as hidden test 4 checks.
+
+Gates: validator 0 errors, 4,531 warnings, manifest unchanged. `py-found-L1-3-r2-concepts.py` exit 0 (453 of 453). `py-found-L1-3-concepts.py` exit 0. Number scripts unchanged at the known harness limit: L1 408 of 409, L2 386 of 387, L3 178 of 179. Voice scan 35: 0 and 0. Playthrough desktop and `--mobile` green for l1, l2, l3, l6, l7, l8, l9, l12 and homework-3.
+
+## Fix-pass read
+
+Fresh reader, blind to the audit above, its ledger and the fix-pass notes. Diff read: `git diff 17bedfc7~1 17bedfc7 -- app/content/courses/py-found/` (nine files, one changed string each). Every code-behaviour sentence and every figure on the changed screens was executed in one script under CPython 3.12.3 (the Pyodide 0.27.7 line) and again under CPython 3.13.18; all assertions passed on both. Nothing here depends on the 3.12 to 3.13 differences: float repr, `round`, `math.log`, `statistics.stdev`, method binding and literal syntax are the same in both.
+
+| # | File | JSON path | New text (short) | Verdict | Basis |
+|---|------|-----------|------------------|---------|-------|
+| 1 | homework-3.json | items[0].prose | "Log returns add up over time: the daily ones sum to the log return over the whole period." | correct | Telescoping: sum of ln(p_t/p_{t-1}) = ln(p_n/p_0). Run: the four rounded returns are [0.011929, -0.013931, 0.005994, 0.026537], sum 0.030529; ln(103.1/100) = 0.030529. Agrees with the test-4 key, `feedback.correct` and `explain`. |
+| 2 | l1-why-not-0-3.json | screens[2].prose | "stored in binary, with room for about 16 significant decimal digits" | correct | IEEE 754 binary64 has a 53-bit significand; 53 log10(2) = 15.95. Run: `sys.float_info.mant_dig == 53`. The table rows match `Decimal(0.1)`, `Decimal(0.2)`, `Decimal(0.3)` to 20 places and `print(0.1 + 0.2)` gives `0.30000000000000004`, so the sentence agrees with the screen and the key. |
+| 3 | l12-data-with-behaviour.json | screens[1].explain.text | "When you call a method on an object, Python passes that object as the first parameter." | correct | Python language reference, 3.2 "Instance methods": `x.f(1)` is `C.f(x, 1)`. Run: `shel.value(27.00)` prints `4050.0`, equals `Position.value(shel, 27.00)`, and `shel.value.__self__ is shel`. True of the plain methods this lesson defines; agrees with option d's feedback. |
+| 4 | l2-slicing.json | screens[10].prose | "A 5-day average is the mean of the latest five closes. Suppose a close above it counts as a sign of strength." | correct | Definition of a simple moving average; the second sentence is now a stated supposition, not a claim about markets. Run: last five closes sum to 517.40, mean 103.48; all ten average 102.44. Agrees with the tests and `explain`. |
+| 5 | l3-unpacking.json | screens[1].prose | "a **tuple**: values in a fixed order, separated by commas and usually written inside round brackets" | correct | Language reference 6.2.3: the comma makes the tuple, not the brackets. Run: `"VOD", 72.50, 100` is a tuple equal to the bracketed form; `(1)` is an int, `(1,)` a tuple. "Usually" fits the previous screen, whose pair `100.50, 99.50` has no brackets. |
+| 6 | l6-membership.json | screens[7].feedback.correct | "An empty set is written `set()`: empty braces already mean an empty dictionary." | correct | Run: `type({}) is dict`, `type(set()) is set`, `type({"BP", "VOD"}) is set`. No longer claims `set()` is the only spelling. Agrees with the key, the `braces` option and `explain`. |
+| 7 | l7-arguments.json | quiz[0].widget.options[1].why | "You added the offset to 5 and left the factor out. `factor` keeps its default 2, so the result is 5 × 2 + 1." | correct | The slip value 6 is 5 + 1, which is the described slip. Run: `scale(5, offset=1) == 11`, and 5 × 2 + 1 = 11 matches the key and `explain`. |
+| 8 | l8-who-changes-the-list.json | summary.ideas[2] | "A pure function only reads its arguments, changes nothing else, and returns a new value (`sorted`, `dict(book)`)." | correct | Matches the lesson's own definition ("only reads its arguments and returns a new value"). Run: `sorted(xs)` leaves `xs` unchanged and returns a different object; `dict(b)` returns an equal, distinct dict. Reading note only: "changes nothing else" means "changes nothing". |
+| 9 | l9-splitting-files.json | screens[6].prose | "Suppose a trader draws a band two standard deviations either side of the mean price." | correct | Now a supposition. Run: for the six closes `(round(m - 2s, 2), round(m + 2s, 2)) == (98.97, 104.03)` with the sample `stdev`, every close inside; the two-close test gives (97.17, 102.83). Agrees with the canvas, tests and feedback. |
+
+Rows read: 9. Verdicts: 9 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified.
+
+### Findings
+
+None. No changed string needs a replacement.
