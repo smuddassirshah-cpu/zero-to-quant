@@ -101,3 +101,39 @@ Opus fixer. Each line re-derived before editing; numbers recomputed with scipy i
 Counts: fixed 10, fixed differently 3, not applied 0, disputed 0. No graded key, slip value, tolerance or test changed.
 
 Gates, from `app/`: validator 0 errors, 4,539 warnings (two more long-sentence warnings, all under 35 words), manifest unchanged; `limits-thm-L4-concepts-r2.py` 710 checks, `limits-thm-L4-concepts.py` 563, `limits-thm-L4-fixread.py` 662, each 0 failed; `run-number-scripts --only limits-thm` 5 of 5 passed; `voice-scan.py 35` on the course: 0 over 35 words, 0 explanations over three sentences; playthrough green desktop and mobile for `l14` to `l19`, `--set homework-4` and `--problems problems-4`.
+
+## Fix-pass read
+
+Blind read of `git diff d646294b~1 d646294b -- app/content/courses/limits-thm` (17 changed strings, 8 files). Numbers recomputed in `docs/reports/limits-thm-L4-fixread-r2.py` (exit 0). Each row was read with its whole screen or item.
+
+| file | JSON path | new text (short) | verdict | basis |
+|---|---|---|---|---|
+| homework-4.json | items[10] h-best-of-50 .model | "$1 - \Phi(2.6) = 0.0047$, a one-sided tail, as throughout" | correct | $1-\Phi(2.6)=0.00466$; every later figure in the model is one-sided too: 0.208, median 2.204, mean 2.248 (simulated, 400,000 runs), cut-off 3.539, $z_{0.0002}=3.540$, $t_{29}$: 0.00726, 0.305, 2.321, 3.998. |
+| l14-joint-densities.json | screens[7].explain.text | "Independence needs a density that factors on a support that is an $x$ range times a $y$ range, a rectangle when both are intervals." | correct | If $f=f_Xf_Y$ the support is $\{f_X>0\}\times\{f_Y>0\}$, a product set (Casella and Berger, Lemma 4.2.7 and the remark after it). Agrees with the unchanged `byKey.const` on the same screen. |
+| l14-joint-densities.json | screens[9].explain.text | "It fails as soon as the support is not an $x$ range times a $y$ range." | correct | Contrapositive of the row above. |
+| l14-joint-densities.json | summary.ideas[2] | "independent when $f = f_Xf_Y$ everywhere, which needs a support that is an $x$ range times a $y$ range" | correct | Same derivation; necessary condition stated as necessary. |
+| l15-new-variables.json | screens[5].explain.text | "standard error of the sample mean is about 0.3% of $1/\text{rate}$, so the mean lands within a percent of it" | correct | Exponential sd equals its mean, so relative SE is $1/\sqrt{10^5}=0.316\%$; 1% is 3.16 SE, chance 99.84% (simulated 99.8% over 2,000 runs). The hidden tests allow 2%. |
+| l15-new-variables.json | screens[11].explain.text | "Monte Carlo engines start from uniforms, and $F^{-1}(U)$ turns them into any distribution whose CDF can be inverted." | correct | Inverse transform (Devroye, *Non-Uniform Random Variate Generation*, II.2); $1-e^{-0.1}=0.09516$. |
+| l16-adding-densities.json | summary.trap | "Variances of independent normals add, not standard deviations." | correct | $\mathrm{Var}(X+Y)=\mathrm{Var}X+\mathrm{Var}Y+2\mathrm{Cov}$; the hypothesis is now stated. |
+| l17-smallest-and-largest.json | screens[2].feedback.byKey.five | "That counts a year with two or more defaults more than once." | correct | Union bound: $\sum P(A_i)$ counts an outcome in $k$ events $k$ times. $5(1-e^{-0.02})=0.09901$ against $1-e^{-0.1}=0.09516$. |
+| l17-smallest-and-largest.json | screens[4].explain.text | "The density is highest near 1: the largest of five draws exceeds 0.8 about two times in three." | correct | $5t^4$ increases on $[0,1]$; $1-0.8^5=0.672$; $5\times0.9^4=3.2805$. |
+| l18-gamma-beta.json | quiz[2] q-t-tails .options[same].why | "At 5 the $t$ puts over twice as much probability beyond $\pm 2$." | correct | $P(\lvert t_5\rvert>2)=0.1019$, $P(\lvert Z\rvert>2)=0.0455$, ratio 2.24. Matches the keyed option's wording. |
+| l19-generating-functions.json | screens[4].feedback.byKey.add | "A total of 3 needs both counts at once: 3 and 0, 2 and 1, 1 and 2, or 0 and 3." | correct | Poisson pmfs 0.18045 and 0.12551 sum to 0.3060 (the slip value); the four-term convolution gives 0.21579, the key. |
+| l19-generating-functions.json | screens[8].widget.lines[4] (id) | "so $Z_n \to N(0,1)$ in distribution, given that the MGF exists near 0: MGFs that converge near 0 to an MGF force the distributions to converge" | correct | Curtiss (1942) continuity theorem for MGFs; Billingsley, *Probability and Measure*, Section 30. 30 words. Agrees with the screen's explain. |
+| l19-generating-functions.json | screens[9].prose | "A year has $n = 100$ independent trades ... one trade has MGF $M(t)$ ... $P(S \ge a) \le e^{-ta}M(t)^n$" | correct | Markov on $e^{tS}$ with $E[e^{tS}]=M(t)^n$ for i.i.d. trades; $n$ and $M$ are now defined. Bound at $(100, 30)$ is 0.01036, above the exact 0.00176. |
+| l19-generating-functions.json | summary.ideas[2] | "For a sum of $n$ independent copies, each with MGF $M$, Chernoff bounds a tail by $\min_{t>0} e^{-ta}M(t)^n$." | correct | Same derivation; matches screens[9]. |
+| l19-generating-functions.json | quiz[2] q-no-mgf .explain.text | "Its tails decay like $\tfrac{1}{x^2}$, far too slowly to offset the growth of $e^{tx}$." | imprecise (minor) | The new clause is right: $\int e^{tx}/x^2\,dx$ diverges for $t \ne 0$. But it is the density that decays like $1/(\pi x^2)$; the tail probability $P(X>x)$ decays like $1/(\pi x)$ (script: both ratios equal 1 at $x=10^4$). The level elsewhere uses "tails" for tail probability (l18 q-t-tails, homework-4), so a learner could carry away a tail index of 2. The phrase predates this fix pass. |
+| problems-4.json | items[0] p-machine-faults .parts[0].feedback.byKey.constant | "That is $\int_0^\infty e^{-y}\,dy$, the slice taken from $y = 0$. The density is 0 below $y = x$, so start there" | correct | $\int_0^\infty e^{-y}dy=1$, the slip value; $\int_x^\infty e^{-y}dy=e^{-x}$, the key. |
+| problems-4.json | items[0] p-machine-faults .parts[2].explain.text | "A joint density can factor only on an $x$ range times a $y$ range, and $0 < x < y$ is a wedge." | correct | Same product-set argument as l14; $E[Y\mid X=x]=x+1$. |
+
+Tally: 17 rows; 16 correct, 0 wrong, 1 imprecise (minor), 0 misleading, 0 unverified. Voice: British spelling, no exclamation marks or em-dashes, longest new sentence 30 words, no explanation over three sentences. Consistency with l14 to l19, review-4, homework-4 and problems-4: no conflict found; "rectangle" survives only where the support in question is a region of intervals (l14 lines 897, 935, 1090, 1110), which the new wording covers.
+
+Replacement text
+
+`l19-generating-functions.json` quiz[2] q-no-mgf `.explain.text`:
+
+```
+A Cauchy has no mean either. Its density decays like $\tfrac{1}{x^2}$, far too slowly to offset the growth of $e^{tx}$.
+```
+
+Basis: Cauchy density $\tfrac{1}{\pi(1+x^2)} \sim \tfrac{1}{\pi x^2}$, so $E[e^{tX}] = \int e^{tx}f(x)\,dx = \infty$ for every $t \ne 0$ and $E\lvert X\rvert = \infty$ (Casella and Berger, Example 2.2.4). Two sentences, 6 and 15 words.
