@@ -223,10 +223,10 @@ H = L['hw']['items']
 ck(pf(126) == [2, 3, 3, 7] and pf(90) == [2, 3, 3, 5] and H[0]['parts'][1]['widget']['answer'] == hcf(90, 126) == 18 and H[0]['parts'][2]['widget']['answer'] == lcm(90, 126) == 630 and 90 * 126 == 11340, 'hw 90 and 126')
 ck(H[1]['parts'][0]['widget']['answer'] == round(60 + pi * 9 / 2, 2) and H[1]['parts'][1]['widget']['answer'] == round(26 + 3 * pi, 2), 'hw lawn 74.14 and 35.42')
 ck(wr(H[1]['parts'][0]['widget']) == {'full-circle': round(60 + 9 * pi, 2), 'diameter': round(60 + 18 * pi, 2), 'rect': 60} and wr(H[1]['parts'][1]['widget']) == {'shared': round(32 + 3 * pi, 2), 'full': round(26 + 6 * pi, 2), 'no-arc': 26}, 'hw lawn slips')
-ck(H[2]['widget']['answer'] == F(25 * 3600, 1000) == 90, 'hw 25 m/s = 90 km/h')
+ck(H[2]['widget']['answer'] == F(35 * 3600, 1000) == 126, 'hw 35 m/s = 126 km/h (content changed from 25 m/s)')
 hx = [v for v, n in {1: 3, 2: 6, 3: 7, 4: 4}.items() for _ in range(n)]
 ck(H[3]['parts'][0]['widget']['answer'] == sum(hx) / len(hx) == 2.6 and H[3]['parts'][1]['widget']['answer'] == median(hx) == 3 and len(hx) == 20, 'hw frequency mean 2.6, median 3')
-ck(H[4]['widget']['answer'] == F(8 * 45000 - 94000, 7) == 38000, 'hw leaver 38,000')
+ck(H[4]['widget']['answer'] == F(8 * 45000 - 87000, 7) == 39000, 'hw leaver 39,000 (content changed from 38,000)')
 a, b, rem = 1071, 462, []
 while b: rem.append(a % b); a, b = b, a % b
 ck(rem == [147, 21, 0] and hcf(1071, 462) == 21 and lcm(1071, 462) == 23562 and (1071 // 21, 462 // 21) == (51, 22), 'hw Euclid 147, 21, 0; LCM 23,562')

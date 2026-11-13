@@ -70,9 +70,11 @@ chk('l14 s9', sqrt(252) == cell(L14, 9, 0)['answer'] * sqrt(7) and within(float(
 chk('l14 q0 q1', sqrt(45) + sqrt(20) == 5 * sqrt(5) and R(1414, 1000) ** 2 == R(1999396, 1000000))
 chk('l14 q3', simplify(5 / (2 + sqrt(3)) - (10 - 5 * sqrt(3))) == 0 and round(float(10 - 5 * sqrt(3)), 2) == 1.34)
 # claim: "a root splits over a product, never over a sum" (s7 byKey, summary trap): false when one term is 0
-chk('l14 CLAIM "never over a sum" (sqrt(0+9) = sqrt0 + sqrt9 is a counter-example)', sqrt(0 + 9) != sqrt(0) + sqrt(9))
+# fixed in content (review fix pass): the word "never" was dropped, so the check now asserts the fixed state
+_T14 = json.dumps(L14, ensure_ascii=False)
+chk('l14 CLAIM fixed: no "never over a sum"', 'never over a sum' not in _T14 and 'splits over a product, but there is no such rule' in _T14)
 # claim: quiz q14-domain explain "sqrt(a) is the positive number whose square is a" for every a >= 0: sqrt(0) is not positive
-chk('l14 CLAIM q14-domain "the positive number" at a = 0', sqrt(0) > 0)
+chk('l14 CLAIM fixed: q14-domain no longer says "the positive number whose square is a"', 'the positive number whose square is $a$' not in _T14)
 
 # ---------------- l15 algebraic fractions
 chk('l15 s0', R(84, 120) == R(7, 10))
@@ -134,8 +136,7 @@ chk('l17 q2', fq.subs(x, -1) == -10 and fq.subs(x, 1) == 0)
 chk('l17 q3', factor(x ** 3 - 3 * x ** 2 + 4) == (x - 2) ** 2 * (x + 1) and (x ** 3 - 3 * x ** 2 + 4).subs(x, -2) == -16)
 # claim: quiz q17-one-real-root, option "two": "The quadratic factor gives either two roots or none." A quadratic with
 # discriminant 0 gives one, and the lesson's own s8 cubic (x-1)^2(x+2) has exactly two distinct real roots.
-chk('l17 CLAIM q17 "either two roots or none" (x^2 - 2x + 1 has one; s8 cubic has two distinct roots)',
-    len(set(real_roots(x ** 2 - 2 * x + 1))) != 1 and len(set(real_roots(x ** 3 - 3 * x + 2))) != 2)
+chk('l17 CLAIM fixed: q17 no longer says "either two roots or none"', 'either two roots or none' not in json.dumps(L17, ensure_ascii=False))
 
 # ---------------- l18 circles
 pol = {q['id']: q['points'] for q in L18['screens'][0]['canvas']['state']['polygons']}
@@ -177,7 +178,7 @@ chk('r4 surd', (sqrt(48) + sqrt(27)) / sqrt(3) == it['r4-surd-sum']['widget']['a
 chk('r4 conj', simplify(4 / (sqrt(5) - 1) - (sqrt(5) + 1)) == 0 and round(float(sqrt(5) + 1), 3) == 3.236)
 chk('r4 cancel', cancel((x ** 2 - x - 6) / (x ** 2 - 4) - (x - 3) / (x - 2)) == 0)
 chk('r4 add', cancel(2 / x + 3 / (x - 1) - (5 * x - 2) / (x * (x - 1))) == 0)
-chk('r4 reject', solve(Eq(3 / (x - 1), 1 + 6 / (x ** 2 - 1)), x) == [it['r4-reject']['widget']['answer']])
+chk('r4 reject', solve(Eq(4 / (x - 1), 1 + 8 / (x ** 2 - 1)), x) == [it['r4-reject']['widget']['answer']])
 fr = x ** 3 + 2 * x ** 2 - 5 * x + 1
 chk('r4 remainder', fr.subs(x, 2) == it['r4-remainder']['widget']['answer'] and fr.subs(x, -2) == 11)
 chk('r4 cubic', factor(x ** 3 - 4 * x ** 2 + x + 6) == (x - 3) * (x - 2) * (x + 1))

@@ -138,8 +138,8 @@ def best_inertia(k):   # exhaustive over contiguous partitions
         best = min(best, float(tot))
     return best
 chk("best inertias k=1..4", [best_inertia(k) for k in (1, 2, 3, 4)], [790, 64, 10, 4])
-chk("CONTENT s2 wrong 'unsq': the sum its feedback writes (2+0+2+4+2+6) equals the stored 12", 2 + 0 + 2 + 4 + 2 + 6, 12)
-chk("CONTENT s1 wrong 'half': halfway between old and new centres equals the stored 11, 29", [(10 + 12) / 2, (25.6 + 34) / 2], [11, 29])
+chk("s2 wrong 'unsq' (fixed): the sum its feedback writes (2+0+2+4+2+6) equals the stored 16", 2 + 0 + 2 + 4 + 2 + 6, 16)
+chk("s1 wrong 'half' (fixed): halfway between old and new centres equals the stored 11, 29.8", [(10 + 12) / 2, (25.6 + 34) / 2], [11, 29.8])
 Xk, lab = make_stocks(11)
 chk("sds", Xk.std(0), [0.336, 13.04], 0.006)
 def purity(l):
@@ -147,7 +147,7 @@ def purity(l):
 chk("purity raw", purity(KMeans(3, n_init=10, random_state=0).fit(Xk).labels_), 0.75)
 raw_best = min(KMeans(3, n_init=1, random_state=s).fit(Xk).inertia_ for s in range(200))
 k50 = KMeans(3, n_init=50, random_state=1).fit(Xk); print("   raw inertia: 10 starts", round(KMeans(3, n_init=10, random_state=0).fit(Xk).inertia_, 2), "; best of 200 single starts", round(raw_best, 2), "; n_init=50:", round(k50.inertia_, 2), "purity", round(purity(k50.labels_), 4))
-chk("CONTENT s5 option c why: 'Ten starts found the lowest raw inertia' (equals the best of 200 single starts)", KMeans(3, n_init=10, random_state=0).fit(Xk).inertia_, raw_best, 1e-6)
+chk("s5 option c why (fixed): ten starts reach 842.33 and the best of 200 single starts 842.15 (stored in the why)", [round(KMeans(3, n_init=10, random_state=0).fit(Xk).inertia_, 2), round(raw_best, 2)], [842.33, 842.15])
 Z = StandardScaler().fit_transform(Xk)
 chk("purity scaled", purity(KMeans(3, n_init=10, random_state=0).fit(Z).labels_), 1.0)
 chk("scaled inertias", [round(KMeans(k, n_init=10, random_state=0).fit(Z).inertia_, 2) for k in range(1, 8)], [120, 62.39, 14.16, 11.24, 9.79, 7.92, 6.47], 0.006)
@@ -182,7 +182,7 @@ chk("slopes by finite difference", [(L(0.5 + 1e-6, 2) - L(0.5 - 1e-6, 2)) / 2e-6
 chk("step 0.1", gd(0.5, 2, 2, 3, 0.1), [0.9, 2.1, 0.3042]); chk("step 0.5", gd(0.5, 2, 2, 3, 0.5), [2.5, 2.5, 45.125])
 chk("dead", gd(-0.5, 2, 2, 3, 0.1), [-0.5, 2, 4.5]); chk("fresh", gd(1, 1, 1, 0.5, 0.1), [0.95, 0.95, 0.081])
 chk("q2 v", np.array([3, -1]) @ np.array([[1, 2], [0, 1]]), [3, 5])
-chk("CONTENT q2 wrong 'order': W1 w2 (the wrong order), second entry, equals the stored 6", (np.array([[1, 2], [0, 1]]) @ np.array([3, -1]))[1], 6)
+chk("q2 wrong 'order' (fixed): W1 w2 (the wrong order), second entry, equals the stored -1", (np.array([[1, 2], [0, 1]]) @ np.array([3, -1]))[1], -1)
 chk("q4 ratio", 2e6 / 0.01, 2e8)
 def mlp(h, seed, Xa, ya, Xb, yb):
     m = MLPClassifier(hidden_layer_sizes=(h,), solver="lbfgs", alpha=0.01, random_state=seed, max_iter=500).fit(Xa, ya)
@@ -199,8 +199,8 @@ print("   CPython noise (train, test)", nz, " lesson (Pyodide): (0.5833,0.5567) 
 se = math.sqrt(0.55 * 0.45 / 300)
 claim("noise: every CPython test score within 2 se of the base rate, or below it", all(t <= 0.55 + 2 * se for _, t in nz))
 claim("noise: every lesson test score within 2 se of the base rate, or below it", all(t <= 0.55 + 2 * se for t in (0.5567, 0.5, 0.4967)))
-claim("CONTENT noise option a: 'test accuracy sits at or below the 0.55 base rate' for seed 0 (0.5567 <= 0.55)", 0.5567 <= 0.55)
-claim("CONTENT noise explain: 'values move in the third place on another runtime' (max |Pyodide - CPython| < 0.005)", max(abs(a - b) for (_, a), b in zip(nz, (0.5567, 0.5, 0.4967))) < 0.005)
+claim("noise option a (fixed): best test accuracy is two rows in 300 above the 0.55 base rate (0.5567)", abs(0.5567 - (0.55 + 2 / 300)) < 1e-4)
+claim("noise explain (fixed): test scores move by up to four rows in 300 between runtimes (max |Pyodide - CPython| <= 4/300)", max(abs(a - b) for (_, a), b in zip(nz, (0.5567, 0.5, 0.4967))) <= 4 / 300 + 1e-4)
 n64 = [mlp(64, s, Xno, yno, Xnt, ynt) for s in (0, 1, 2)]; print("   noise 64 units (train, test)", n64)
 claim("64 units: training above every 8-unit score, test between 0.44 and 0.57", min(a for a, _ in n64) > max(a for a, _ in nz) and all(0.44 <= t <= 0.57 for _, t in n64))
 
@@ -241,7 +241,7 @@ for _ in range(60):
 chk("saving crosses 5 at", lo, 3.02, 0.01); chk("saving at 2 and 5", [sav(2), sav(5)], [3.54, 7.26], 0.006)
 chk("true law crossing, line crossing", [(5 / (10 * (1 - 1 / math.sqrt(2)))) ** 2, 5 / (1.17 / 2)], [2.91, 8.5], 0.05)
 chk("q2 gaps", [216.23 - 74.16, 216.23 - 85.13], [142, 131], 0.2)
-chk("CONTENT r-few-rows option d: 25 features through SplineTransformer(n_knots=10) give the stored 250 columns", SplineTransformer(n_knots=10, degree=3).fit_transform(np.random.default_rng(0).normal(size=(80, 25))).shape[1], 250)
+chk("r-few-rows option d (fixed): 25 features through SplineTransformer(n_knots=10) give the stored 300 columns", SplineTransformer(n_knots=10, degree=3).fit_transform(np.random.default_rng(0).normal(size=(80, 25))).shape[1], 300)
 
 print("== l19")
 P = {"street": (*make_street(300, 4), *make_street(300, 5)), "rings": (Xr, yr, Xe, ye), "quadrants": (*make_quadrants(300, 3), *make_quadrants(300, 4)),
@@ -272,7 +272,7 @@ for s in range(20):   # s3: is 'few rows and noisy columns hurt the distance-bas
     for k in order: mean[k] += sc[k] / 20
 print("   wide over 20 seed pairs: mean", {k: round(v, 3) for k, v in mean.items()}, "worst", worst, "best", bestc)
 claim("wide: k-NN has the lowest mean over 20 seed pairs", min(mean, key=mean.get) == "knn")
-claim("CONTENT s3 explain: 'few rows and many noisy features favour the simplest learner': logistic has the highest mean over 20 seed pairs", max(mean, key=mean.get) == "logistic")
+claim("s3 explain (fixed): says the distance-based learner is hurt most, and logistic's lead is this sample's: k-NN has the lowest mean and no learner leads in every pair", min(mean, key=mean.get) == "knn" and max(bestc.values()) < 20)
 A, a, B, b = P["street"]; A2, B2 = A * [100, 1], B * [100, 1]
 raw = {"logistic": LogisticRegression(), "knn": KNeighborsClassifier(15), "svm": SVC(C=1, gamma="scale"),
        "net": MLPClassifier(hidden_layer_sizes=(8,), solver="lbfgs", alpha=0.01, random_state=0, max_iter=500),
@@ -286,7 +286,7 @@ one = Lr["svm"](); r1 = []
 for p in ("street", "quadrants"):
     A, a, B, b = P[p]; r1.append(one.fit(A, a).score(B, b))
 r2_ = [Lr["svm"]().fit(*P[p][:2]).score(*P[p][2:]) for p in ("street", "quadrants")]
-claim("CONTENT s7 explain: a reused, refitted pipeline scores differently from a fresh one ('carries state')", r1 != r2_)
+claim("s7 explain (fixed): a reused, refitted object scores the same as a fresh one (`fit` starts again each time)", r1 == r2_)
 
 print("== review-4 and homework-4")
 chk("r-street", [2 / 5, 1 / 5, 10 / 5], [0.4, 0.2, 2])

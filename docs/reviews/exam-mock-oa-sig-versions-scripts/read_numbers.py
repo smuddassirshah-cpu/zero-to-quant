@@ -224,6 +224,21 @@ def parse(txt):
     if m:
         return float(F(int(m.group(1) or m.group(2)), int(m.group(3) or m.group(4))))
     return float(tx)
+# ---- replaced items (review finding 2, 3, 4; fix_numbers.py): the fix pass replaced v2 q04, v2 q07 and v3 q13, so the original blind
+# answers (4, 5/16, 3/53) and third routes belong to questions no longer in the files. Each replacement is worked again here by
+# enumeration or exact conditioning, without reference to the key.
+_pairs = list(itertools.combinations(range(5), 2))
+_home = 0
+for _a, _b in itertools.product(_pairs, repeat=2):
+    _p = list(range(5))
+    for _i, _j in (_a, _b):
+        _p[_i], _p[_j] = _p[_j], _p[_i]
+    _home += sum(_p[_k] == _k for _k in range(5))
+BLIND[2][3] = F(2); third[2][3] = F(_home, len(_pairs) ** 2)            # v2 q04: two random swaps of five cards, expected fixed points
+_outs = list(itertools.product((0, 1), repeat=5))
+BLIND[2][6] = F(1, 2); third[2][6] = F(sum(sum(_o[:3]) > sum(_o[3:]) for _o in _outs), 32)   # v2 q07: 3 tosses against 2, strictly more heads
+_miss_a, _miss = F(6, 10) * F(2, 10), F(6, 10) * F(2, 10) + F(4, 10)
+BLIND[3][12] = F(12, 65); third[3][12] = (_miss_a / _miss) * F(8, 10)    # v3 q13: one failed search of A, then the next search finds it
 TOL3 = 0.01   # simulation tolerance on the third route (all simulated keys are below 10, n >= 20,000)
 agree = 0
 for ver in (2, 3):

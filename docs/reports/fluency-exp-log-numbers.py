@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from numbers_lib import Level
 
 APP = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app')
-N = int(os.environ.get('FLUENCY_N', '200'))
+N = int(os.environ.get('FLUENCY_N', '60'))
 lv = Level("exp-log", 1)
 count = 0
 

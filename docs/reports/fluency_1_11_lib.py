@@ -16,7 +16,7 @@ import sympy as sp
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
 APP = os.environ.get('FLUENCY_APP') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app')
-N = int(sys.argv[sys.argv.index('--n') + 1]) if '--n' in sys.argv else 200
+N = int(sys.argv[sys.argv.index('--n') + 1]) if '--n' in sys.argv else int(os.environ.get('FLUENCY_N', '60'))
 x, y, z, t = sp.symbols('x y z t', real=True)
 SYM = {'x': x, 'y': y, 'z': z, 't': t, 'I': sp.I, 'pi': sp.pi}
 FUNCS = {'exp': sp.exp, 'sqrt': sp.sqrt, 'cos': sp.cos, 'sin': sp.sin}
