@@ -98,4 +98,23 @@ Environment figures that could not be reproduced exactly:
 
 ## Overlap with the earlier read
 
-Filled after the WIP commit; see the section at the end.
+Read after the WIP commit `48e7870b`: `docs/reviews/review-1.9.md`, section "cpp", the lines for l1 to l13, review-1 to review-3 and homework-1 to homework-3. Its fix pass had already been applied to the text this audit read.
+
+Conceptual findings of the earlier review in this scope: 15. They are l1 screens[8] (Python habits that compile), l1 screens[1] (object file kept as a temporary), l3 screens[7] (braces in the pattern block), l3 screens[8] (fall-through warning), l4 screens[4] (slip value 3.66), l4 quiz (function name prints 1, not an address), l5 screens[8] and quiz (NRVO not guaranteed), l7 summary.ideas[2] (dangling read on a desk build), l11 screens[7] (declared special members suppress the assignments), l11 screens[7] explain (moved-from vector), l13 screens[6] (negative total), l13 screens[9] (constructor from a count), homework-1 items[4] (`double` index compiles), homework-2 items[2] (order of the two calls is unspecified), homework-3 items[1] (slip value 51.875). Not counted as conceptual: transcript wording, sentence counts, mutation gaps in hidden tests, and the test count in l10 screens[5] `how`.
+
+| | count |
+|---|---|
+| found by this audit only | 17 |
+| found by the earlier review only | 15 |
+| found by both | 0 |
+
+Reading of the table. All 15 earlier findings were fixed before this audit, and each fix was re-checked here as a ledger row and found correct, so a blind read of the fixed text could not find them again. The zero in "both" therefore does not measure this audit's miss rate; the 17 in "audit only" does measure what one second read left behind.
+
+Two of the 17 sit on sentences the earlier fix pass wrote, and are counted as audit only because the review did not raise them:
+
+- Finding 11 (`l7` summary.ideas[2]): the review replaced "A desk build crashes" for both reads with "A desk build crashes on a null read; ...". The certainty about the null read is what remains.
+- Finding 16 (`l11` screens[7] explain): the sentence "A moved-from vector is empty; ..." is the review's own replacement text. It holds for move construction; the screen and test 12 also move-assign.
+
+New `wrong` findings that no earlier read found: **3** (findings 1, 2 and 3). One is serious (finding 1). A search of `docs/reviews/review-1.9.md` and of the author reports `docs/reports/cpp-2.md` and `cpp-3.md` for "Wconversion", "freed twice" and "test-10" finds none of them.
+
+Convergence rule: three new `wrong` in three levels is above the limit of one, so the course needs another blind audit after the fix pass.
