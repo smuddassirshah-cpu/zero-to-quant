@@ -94,3 +94,48 @@ Miss rate of a single read, as this pair measures it: 19 distinct conceptual fin
 - Finding class "the mistake a `test-N` line names stops at an earlier test" appeared 8 times in 52 lines here, and at a similar rate in sister courses. Under SESSION PROTOCOL 6 it should become a tool: let a number script declare `mutants` (key, code) per code widget and have `run-number-scripts` or the validator assert the first failing key.
 - l13 screens[5], test 10: the test allows at most 13 `can_ship` calls but not fewer than one, so a `min_capacity` with its own inline check passes although the prose says it must call `can_ship`. A bound of `1 <= calls <= 13` would enforce the sentence.
 - drag-point `wrong[].region` feedback is fixed text for a whole region (finding 10). Allowing the `derive` template (`{{fixed(...)}}`) in `feedback.byKey` lines would let the line quote the value at the dropped point.
+
+## Fix pass
+
+Opus fixer, round 1. Every `test-N` line below was rerun as a real submission in Pyodide 0.27.7 under node (local CDN), with the page's harness: one module, tests in order, `sys.setrecursionlimit(3000)`, first failing test gives the key (scratch `contests4-fix/mutants.py`, 24 runs, all as stated). No key, slip value, hidden test, solution or starter changed. The concepts script's FINDING checks and `EXPECT_KEYS` now pin the moved lines. The number script's two checks on deleted lines (l14 `test-6` 100, `test-7` 400) were replaced by checks on the new lines and the new figures (45, 699, 785, 600, 750).
+
+| # | status | basis (fixer's own) |
+|---|---|---|
+| 1 | fixed | Both-sided `>=` returns 2 on `[2, 2, 2, 2]` and first fails at test-5; left-only `>=` passes test 5 and fails test-6, so both lines are reachable. Explain now says "flat and plateau tests". |
+| 2 | fixed | No floor, floor before the time cost and floor before the attempt cost each give 110 on test 2 and first fail there; nothing found reaches test 6. `test-6` deleted, "Apply the floor after both costs" moved to `test-2`. |
+| 3 | fixed | Charging unsolved rejections gives `(-3, 268)` on test 1; any wrong order or sign of the tuple fails test 1's exact compare; `if minute:` returns `(0, 0)` on `[(0, 5)]` and first fails at test-5. `test-2` and `test-7` deleted, `test-5` added. |
+| 4 | fixed | Tests 1 to 6 run in one module, so state that survives a call is caught by test 2 or 3 already; the set cleared between cases only first fails at test-3 (CCC left from test 2). `test-6` deleted, `test-3` added. |
+| 5 | fixed | Length 8 only returns a length-8 case on test 1 (fails test-1); lengths 1 and 2 only return `None` on test 3 (fails test-3). The line now names stopping at 2. |
+| 6 | fixed differently | A count-only stable sort and `most_common()` put *misread a constraint* first on test 1 and fail there. The new `test-1` line also says "Sort by count, most first", since any wrong sort shows it. |
+| 7 | fixed differently | Starting only from desks with a link gives 1 group on test 2 (cutting (1, 2) leaves desks 2 and 3 bare). The line names the cut link, so the learner sees why desk 2 is isolated. |
+| 8 | fixed | Without the sort, test 1's `1 2 8 4 9` gives 1, not 3 (first fails at test-1). |
+| 9 | fixed differently | Derived: with exponential solve times (means 50 and 15), leaving D when solved gives $V'(x) = e^{-x/50}(20 - \tfrac{160}{3}e^{-(60-x)/15})$, zero at $60 - 15\ln(8/3) = 45.29$; quadrature gives 45.29 and $V = 1{,}229$, Monte Carlo (400,000 rounds) 1,229 at 45 against 1,204 at 35. The fixed split peaks at 34.84, 1,152.3 (scipy and golden section). Prose now says "exactly $x$ minutes, solved or not"; the explain names the fixed split and the later cap near 45. Key 34.84 unchanged. |
+| 10 | fixed | $E(60) = 698.8$, $E(50) = 1{,}021.4$, $E(0) = 785.3$, $E(8) = 922.9$; the new lines give each figure as the edge value, not the dropped point's. |
+| 11 | fixed differently | With no loss while waiting, quote then hedge and hedge then quote both total £15,000 by the close, so two answers tied. The prose now says each task loses a fixed share $s$ of its value each minute it waits. Then quote first changes the loss by $s(3{,}000 \cdot 25 - 12{,}000 \cdot 5)$ in its favour, a saving of $15{,}000s$, so the quote is the one best answer (Smith's rule: £600, £480, £100 a minute). The explain works it at 1% a minute: quote first costs the hedge $12{,}000 \times 0.05 = £600$, hedge first costs the quote $3{,}000 \times 0.25 = £750$. Key unchanged. |
+| 12 | fixed differently | Test 6 of `smallest_failing` (wide values, tie bug, `None`) shows a stress test missing a bug. The third sentence now says it finds "wrong answers that small random cases can show", without a list of what it misses. |
+| 13 | fixed | `code.js` runs Python through `drill-worker.js`, which sets `RECURSION_LIMIT = 3000`; the recursive DFS first fails at test-7 in Pyodide. |
+| 14 | fixed differently | Only A and D carry a note, and the auditor's "Many statements" is itself an unsourced frequency claim. Now an instruction: "Look for a line like it in every statement: D's note is another." |
+
+Unverified rows (15):
+
+| row | status | basis |
+|---|---|---|
+| l13 screens[2]: scoreboard "as it stood" | fixed | Clause removed; the name "virtual participation" is Codeforces' own and stays. |
+| l13 screens[3]: "about 800 on Codeforces' scale" | fixed | Now "by our estimate"; screen 2's option now says each code screen gives "our estimate of its rating". The problems are the course's own, so a rating can only be an estimate. |
+| l14 screens[0]: "not Codeforces' current rule" | fixed | Replaced by an instruction: "check a real round's announcement for its rule". No claim about Codeforces' rule remains. |
+| l15 screens[0]: test hidden during the round | fixed | Now a fact of the scenario: "This round's judge shows the verdict, not test 4 itself" (the canvas shows only the verdict line). |
+| l15 screens[0] and summary.ideas[0]: "most wrong answers are misreadings" | fixed | Both now give the reason the lesson can stand behind: rereading is the cheapest check (screen 2's ordering). |
+| l15 screens[10]: interviewers mark the habit | fixed | Replaced by "It is the contest routine again: the smallest reproduction first." |
+| l16 screens[0].hints[2]: "teaches the most per hour" | fixed | Now "works on exactly what you could not do", true by the scenario (D and E are the problems that beat you). |
+| l16 screens[1]: Codeforces shows the failing test and editorial | fixed | Now a fact of this round: "the judge shows you the failing test and the editorial is out". |
+| l16 screens[6]: one new idea just above your level | fixed | Stated as the lesson's assumption, with the conclusion drawn on it; `byKey.l4` says the editorial "may" rest on unmet ideas. |
+| l16 screens[7], [8]: ratings stall without upsolving | fixed | Now "nothing closes the gaps each round shows, so the same mistakes can repeat" and "more rounds without upsolving leave the same gaps open": a possibility, not a causal law. |
+| l16 screens[10]: 1,400 target, Indian shortlisting, where a rating helps | fixed | Attributed to the curriculum (`docs/curriculum.md` 2.4, read), as are summary.ideas[2], homework-4 items[5].feedback.correct and the model answer's rating paragraph (items[6]). |
+| l16 screens[10]: LeetCode mediums in 30 minutes | fixed | "Most coding interviews use" removed; now the curriculum's aim (1.8 exit line). |
+| l16 screens[10]: what each track's interviews test | fixed | Prose says the table is the curriculum's (its Stage 2 track table); option whys, hint and explain now read "in the table". |
+| l16 quiz[3]: trader interviews test | fixed | The question asks "By this lesson's table"; the why and explain cite the table's trader row. |
+| homework-4 items[5]: the rating does least for a trader | fixed | Prose adds "Take lesson 16's table"; the whys and explain cite it. The key (the rating) is unchanged and follows from the table. |
+
+Counts: fixed 8, fixed differently 6, not applied 0, disputed 0; unverified rows rewritten 15 of 15. review-4.json had no finding and was not changed.
+
+Gates (fixer): validator 0 errors (manifest unchanged); `contests-L4-concepts.py --pyodide`: 276 checks, 0 failing; `run-number-scripts --only contests-L4`: 1 passed; `grade-all --file`: 0 failures on each of the five changed files; `voice-scan.py 35`: 0 explanations over three sentences, 0 sentences over 35 words; playthrough of l13, l14, l15, l16 (`--lesson`) and homework-4 (`--set`), desktop and `--mobile`: all passed.
