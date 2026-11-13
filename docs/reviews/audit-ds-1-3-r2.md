@@ -7,7 +7,7 @@ Auditor: Fable, 13 Nov 2026. Scope: `app/content/courses/ds/` lessons l1 to l13,
 
 ## Summary
 
-The course is in good order. Every graded key was recomputed and is right. All 32 code widgets pass their hidden tests with the solution and fail with the starter, in CPython and under Pyodide (`grade-all.mjs`). The complexity claims hold: hash lookups were counted on spread and on colliding keys, appends on CPython's real growth pattern, and `pop(0)`, `insert(0, x)`, `popleft()` and deque indexing were timed.
+The course is in good order. Every graded key was recomputed and is right. All 32 code widgets pass their hidden tests with the solution and fail with the starter, in CPython 3.13 and under the local Pyodide 0.27.7 build (`docs/reports/ds-L1-3-r2-pyodide-widgets.mjs`). The complexity claims hold: hash lookups were counted on spread and on colliding keys, appends on CPython's real growth pattern, and `pop(0)`, `insert(0, x)`, `popleft()` and deque indexing were timed.
 
 There is one `wrong`, in a slip feedback line, and it is minor. The other twelve findings are wording that is true only under a premise the screen does not state. None is serious.
 
@@ -29,7 +29,7 @@ Pattern: `N. file | JSON path | severity, tag | problem | evidence and basis | e
 
 7. `l8-best-day.json` | `screens[6].explain.text` (third sentence); `homework-2.json` | `items[2].prose` (first sentence) | **imprecise**, minor | "On daily returns, the same loop finds the best stretch of a strategy." Kadane adds. Simple returns compound, so their sum is not the return of the stretch. | Simple returns +50%, −40%, +50%: the largest sum is the whole run (0.6), which compounds to +35%. The best compounded stretch is one day, +50% (script E). Log returns and daily P&L do add (Tsay, *Analysis of Financial Time Series*, 1.1). Lesson 6 screen 9 already says "daily log returns". | l8: "On daily log returns, or daily P&L, the same loop finds the best stretch of a strategy." homework-2: "The best stretch of a strategy's daily P&L is the maximum subarray."
 
-8. `l10-next-greater.json` | `screens[2].explain.text` (third sentence); `summary.ideas[1]` (first sentence) | **imprecise**, minor | "The waiting values always fall from bottom to top." Under the lesson's own convention ties wait, so equal values sit together on the stack. | `[5, 5, 4]` leaves 5, 5, 4 waiting (script B). The standard statement is non-increasing (CLRS problem 17-style monotone stack; homework-3 item 7's model answer says "never rise"). | explain: "The waiting values never rise from bottom to top, so this is called a **monotonic stack**." summary: "The waiting values never rise from bottom to top: a monotonic stack."
+8. `l10-next-greater.json` | `screens[2].explain.text` (third sentence); `summary.ideas[1]` (first sentence) | **imprecise**, minor | "The waiting values always fall from bottom to top." Under the lesson's own convention ties wait, so equal values sit together on the stack. | `[5, 5, 4]` leaves 5, 5, 4 waiting (script B). The stack is non-increasing, not decreasing; homework-3 item 7's model answer already says "never rise". | explain: "The waiting values never rise from bottom to top, so this is called a **monotonic stack**." summary: "The waiting values never rise from bottom to top: a monotonic stack."
 
 9. `l10-next-greater.json` | `screens[7].explain.text` (third sentence) | **imprecise**, minor | "200,000 values take about 400,000 stack operations." 2n is the upper bound, not the usual count. | The widget's own 200,000-value test is a falling list: 200,000 pushes and no pops (script C). | Replace with: "200,000 values take at most 400,000 stack operations."
 
@@ -57,10 +57,35 @@ Pattern: `N. file | JSON path | severity, tag | problem | evidence and basis | e
 ## Gates
 
 - Validator (`node tools/validate.mjs`, from `app/`): 0 errors, 4531 warnings; `content/manifest.json` unchanged.
-- `node tools/grade-all.mjs --file <path> --local-cdn <pkgs>`: 0 failures on review-1 to review-3 and homework-1 to homework-3, and on all 13 lesson files (exit 0 each).
+- `node tools/grade-all.mjs --file <path> --local-cdn <pkgs>`: 0 failures, exit 0, on review-1 to review-3, homework-1 to homework-3 and all 13 lesson files. It grades numeric, choice and multi widgets only, so the code widgets were run separately.
+- `docs/reports/ds-L1-3-r2-pyodide-widgets.mjs` (node, Pyodide 0.27.7): 32 widgets, 0 problems, exit 0. Slowest hidden test 0.17 s.
 - `docs/reports/ds-L1-3-r2-concepts.py`: exit 1, 168 of 180 checks pass; the 12 failures are findings 1 to 12.
-- Number scripts: no `ds-L*-numbers.py` exists for levels 1 to 3. The earlier `docs/reports/ds-L1-3-concepts.py` was run only after the blind commit (result under Overlap).
+- Number scripts: none exists for ds levels 1 to 3. The round 1 script `docs/reports/ds-L1-3-concepts.py`, run after the blind commit: exit 0 (167 checks).
 
 ## Overlap with earlier reads
 
-To be filled after the blind commit.
+Opened only after the blind commit `1481fb73`: `docs/reviews/review-1.8.md` (ds L1 to L3 lines), `docs/reviews/audit-ds-1-3.md` (round 1 audit, its fix pass and its fix-pass read).
+
+| Conceptual findings, ds L1 to L3 | Count |
+|---|---|
+| Found by this audit only | 13 (findings 1 to 13) |
+| Found by earlier reads only | 21 (review 1.8: 3; round 1 audit: 18; fix-pass read: 0) |
+| Found by both | 0 |
+
+All 21 earlier findings were fixed before this read, so none could be found again. This audit read each fixed text as it now stands, and every one holds (the ledger rows for those paths are `correct`), with one reservation below.
+
+New `wrong` findings that no earlier read found: **1** (finding 1, minor, a slip feedback line). That is within the convergence limit of one per three levels, subject to the fix-pass read of this round.
+
+Notes on the comparison.
+
+- Round 1 found nine `wrong` and this round one. The one left is of a class round 1 met twice (its findings 7 and 8, slip value against feedback). It is now seen three times in this course, so by SESSION PROTOCOL 6 it should become a validator rule; an inbox bullet asks for it.
+- Finding 13 differs from a round 1 judgement. Round 1's "checks that found nothing" accepted that hash costs are "on average where first stated". This audit asks for one more reminder on the l3 pattern screen, because l3 to l6 state $O(1)$ bare on five screens. It is minor either way.
+- One reservation on the round 1 fix pass. Its text for l8 `screens[9].explain.text` says a backtest beats the bound "often via a misaligned index". The fix-pass read marked the sentence correct. The bound and the two routes past it are right; "often" is an unsourced frequency, so this audit lists it as unverified.
+- Findings 2, 3, 4, 5, 6, 8, 9, 10, 11 and 12 are on sentences that all three earlier reads passed. Finding 2 needed a run in the app's own interpreter, which no earlier read made.
+
+## Limits of this audit
+
+- Sources named in the ledger without a run (CLRS, Knuth, Harris, Hull, Tsay, Bacon, the CPython and pandas sources) were cited from memory of the named section and were not reopened here.
+- Timing checks ran in native CPython 3.13 only. Pyodide ran the code widgets for correctness, not against the 5 s limit.
+- The ledger groups hint and feedback lines that restate one computation into one row (285 rows for 19 files). Every line was read; a row's verdict covers each key it names.
+- Author, earlier readers and this auditor are the same model family, so a shared misconception can survive all four reads.
