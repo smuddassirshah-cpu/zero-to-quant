@@ -83,3 +83,73 @@ One disagreement to record. The earlier review states that window re-slicing tim
 - Sources named in the ledger without a run (CLRS, Knuth, Bentley, Hull, the CPython and pandas sources, the CME overview) were cited from memory of the named section. They were not reopened in this session.
 - Code ran in CPython 3.13, not in Pyodide 0.27.7. No check depends on a behaviour that differs between CPython 3.12 and 3.13, but Pyodide timing was not measured.
 - Severity of finding 12 is a judgement. The graded keys are right for the measure asked; the finding is that one name is used for two measures without saying so. A fixer may reasonably rate it minor.
+
+## Fix pass
+
+Opus fixer, audit session 11. Every new sentence and code line was checked by a run (CPython 3.13) or a derivation; the concepts script tests each corrected text under a tag ending "(fix pass)", and keeps the round 1 evidence as "[basis]" lines.
+
+1. fixed. Doubling from capacity 1 copies $2^k - 1 < 2n$ items for $n$ appends; run for $n < 5000$ (17 appends give 31).
+2. fixed. `list.remove` stops at the first match (identity first, then one `__eq__`); timed: 10 times the length gives about 10 times the cost, as for `pop(0)`.
+3. fixed differently. Pointers are at indices 1 and 5, so 2 is not at an end; squares sort to `[1, 4, 9, 16, 36, 49]`, so 4 goes second. The next slot here is the fifth, not the last, so the line ends "not the fifth".
+4. fixed. Put struck at £100 plus call at £105 gives `[10, 5, 0, 0, 5, 10]` at £90 to £115 (run); a strangle has two strikes, so the six numbers are expiry prices.
+5. fixed. Run: the trap returns 6 on `'abcbdae'` (right answer 5) and 3 on `'abcbd'` (right answer 3).
+6. fixed. The bug adds `xs[k-1] - xs[k]` per slide, which telescopes to `xs[0] - xs[k]`; checked on 2,000 random lists.
+7. fixed. Slip `kept` changed 15 to 16: adding without dropping gives $5 + 1 + 4 + 6 = 16$, and $6 + 4 + 6 = 16$. No clash with the key 10 or slip 5.
+8. fixed. Slip `off` changed 9 to 10: `pre[4] - pre[0] = 10 - 0 = 10`, and $4 - 3 + 6 + 3 = 10$. No clash with the key 6 or slip 3.
+9. fixed. With `d > 0`, `i == j` gives gap 0 < `d`, so `j` moves on with or without the guard; the new line states test 6 and its answer, `True` (run).
+10. fixed differently. "Rows before row `r`" still reads loosely; the line now says `P[r][c]` sums every cell in rows 0 to `r - 1` and columns 0 to `c - 1`, which gives $14 - 4 - 7 + 2 = 5$ (run).
+11. fixed (worded "already makes 22"). Run: the growing window reaches 20 at `[12, 3, 7]` = 22.
+12. fixed differently. l8 `screens[5].prose` now says the drawdown is measured here in pounds and is usually quoted as a fraction of the peak, as in py-found and pytest (both checked in their files). homework-2 `items[7].prompt` adds "in pounds", so the model's identities in (c) hold as stated; the brief asked for the convention once, so (c) is unchanged. Keys 15 and 80 unchanged.
+13. fixed differently. Run: the best buy-before-sell pair is 9, and both pairs that make 12 sell before they buy (days 1 and 5). New text: look-ahead can reach £9 but never beat it; beating it needs a sale before the purchase (a misaligned index) or fills at other prices.
+14. fixed differently. "This exchange uses price-time priority: at one price, orders fill in arrival order." Price-time priority means best price first, then arrival order at one price; pro-rata markets exist (CME matching algorithms), so the rule is stated as this exchange's.
+15. fixed. All three now state a desk's reading, this exchange's design, or the teaching reason, with no claim about markets or interviews.
+16. fixed. Test 11 now uses $w = 20000$; run: the deque solution gives `[200000, 199999, 199998]` in 0.03 s, while slicing 2,001 of the 180,001 windows already takes 0.32 s (about 29 s for all). `how` changed to match.
+17. fixed. Run: the unguarded line raises `IndexError` at `i = 0`; with `dq and` the loop gives `[5, 4, 4, 6]`, matching the lesson's solution.
+18. fixed differently. "The deepest nesting is the tallest a stack of open brackets ever grows." Checked on five strings, including `(1 + (2 * (3 - 4)))` at 3.
+
+Ledger `unverified` rows 202, 212, 225 and 239 are findings 15 and 16; none was left over.
+
+Script changes: `docs/reports/ds-L1-3-concepts.py` now tests the corrected texts (the 11 failing checks were rewritten as "(fix pass)" checks, with the old evidence kept as passing "[basis]" lines) and adds checks for findings 4, 9, 10, 12 and 16. 167 pass, 0 fail, exit 0; all 32 code widgets: solution passes, starter fails, l11 `screens[6]` with the new test.
+
+Gates: validator 0 errors (4531 warnings, as before; manifest unchanged); `ds-4-perf-numbers.py` exit 0; voice scan 35 on ds: 0 and 0; `grade-all --file` on review-2, review-3, homework-2: 0 failures; playthrough desktop and `--mobile` of l1, l5, l6, l8, l10, l11, l12, l13, review-2, review-3 and homework-2: all green.
+
+## Fix-pass read
+
+Reader: fresh Fable reader, blind to the audit, its ledger and the fixer's notes. Diff read: `git diff e9442db7~1 e9442db7 -- app/content/courses/ds/` (11 files, 22 changed strings). Every row hand-checked, then re-run in CPython 3.13 from the item's own JSON (solutions, tests, tables and series loaded from the files, not retyped).
+
+| # | File | JSON path | New text (short) | Verdict | Basis |
+|---|------|-----------|------------------|---------|-------|
+| 1 | homework-2.json | items[0].feedback.byKey.test-6 | "Test 6 is `[2, 2, 5]` with `d = 3`. The pair is 5 and either 2, so `True`" | correct | Sixth test is `has_pair_with_difference([2, 2, 5], 3)`, expect `True`; 5 − 2 = 3 for either 2. Solution run: passes all 10 tests. |
+| 2 | homework-2.json | items[4].prose | "`P[r][c]` sums every cell in rows 0 to `r - 1` and columns 0 to `c - 1`" | correct | Rebuilt `P` from the grid under that definition: equals the canvas table cell for cell (`P[3][3] = 14`). `14 - 4 - 7 + 2 = 5` equals the direct sum 4 + 1 − 2 + 2. Standard 2D prefix sum with a zero border. |
+| 3 | homework-2.json | items[5].feedback.byKey.four | "`[12, 3, 7, 9]` reaches 20, but `[12, 3, 7]` already makes 22, with one minute fewer" | correct | 12 + 3 + 7 + 9 = 31 ≥ 20; 12 + 3 + 7 = 22; brute force over all windows gives fewest 3, best pair 19. Agrees with key 3 and the explain. |
+| 4 | homework-2.json | items[7].prompt | "computes the maximum drawdown, in pounds, of 10 years of daily closing prices" | correct | The quoted code returns `prices[i] - prices[j]`, a price difference. Run on the l8 series it returns 15, not 15/110. Model answer and rubric use the same absolute measure. |
+| 5 | l1-arrays-in-memory.json | screens[4].explain.text | "with doubling they are always fewer than twice the appends" | correct | From capacity 1, copies after n appends are 2^k − 1 with 2^k the smallest power of two ≥ n, and 2^k < 2n. Simulated n = 1 to 199,999: copies < 2n throughout; copies(16) = 15. (Copies ≥ appends at n = 3, 5, 6, 7, so the bound of twice is the right one.) CLRS section 17.4. |
+| 6 | l1-arrays-in-memory.json | screens[10].widget.options[3].why | "`remove` finds the value at index 0 on its first comparison, then shifts the rest left: the same linear cost as `pop(0)`" | correct | `list.remove` scans from index 0 and `window[0]` matches itself at once (CPython `list_remove`, identity shortcut; run confirmed, 20 items left). The tail then shifts left by one, as for `pop(0)`: O(n). |
+| 7 | l10-next-greater.json | screens[9].prose | "The desk reads a long wait as a ceiling that held, and a short one as momentum" | correct | Now an attributed reading, not a claim about markets. Table recomputed: `[2, 1, 3, 2, 1, 0, 0]`. |
+| 8 | l11-first-in-first-out.json | screens[0].prose | "This exchange uses price-time priority: at one price, orders fill in arrival order" | correct | Definition of price-time (FIFO) priority; Harris, *Trading and Exchanges*, ch. 6. Scoped to "this exchange", so pro-rata venues are not denied. 400 shares fill A 300 then B 100, as keyed. |
+| 9 | l11-first-in-first-out.json | screens[6].widget.tests[10].call | `max_sliding_window(list(range(200000, 0, -1)), 20000)[:3]`, expect `[200000, 199999, 199998]` | correct | Runs below. Window i of a descending list has maximum `xs[i]` = 200000 − i, so the first three are as expected; the solution's full output (180,001 values) equals `xs[:180001]`. Solution passes 11 of 11; starter passes 2 of 11 (tests 6 and 7, both `[]`) and fails test 11. |
+| 10 | l11-first-in-first-out.json | screens[6].widget.how | "Test 11 has 200,000 values with $w = 20000$; slicing each window cannot finish in time" | correct | Matches the test call. Slicing does 180,001 × 20,000 = 3.6 × 10^9 element reads; measured 29.5 s native, against a 5 s limit (`TEST_MS = 5000` in `engine/widgets/code.js`). |
+| 11 | l11-first-in-first-out.json | screens[7].explain.text | "Add `if dq and dq[0] <= i - w: dq.popleft()` before the back pops" | correct | Ran the screen's loop with the line inserted: `[5, 4, 4, 6]`. Without `dq and` the same line raises `IndexError` at `i = 0` (empty deque). Now identical to the solution and step hint on screens[6]. Trap code alone returns `[5, 5, 5, 6]`, as keyed. |
+| 12 | l12-nodes-and-pointers.json | screens[10].prose | "This exchange keeps each price level as a queue of resting orders. It expects many cancels, so each node has both `prev` and `next`" | correct | A design choice attributed to one exchange. O(1) unlink from the middle needs `prev`; CLRS section 10.2. Agrees with the keyed option. |
+| 13 | l13-fast-and-slow.json | quiz[2].explain.text | "That saving in memory is why Floyd's method is worth knowing" | correct | Follows from the two sentences before it: O(n) set against two references, both O(n) time. Knuth, TAOCP vol. 2, section 3.1, exercise 6. |
+| 14 | l5-both-ends.json | screens[4].feedback.byKey.c3 | "2 is not at an end. Its square, 4, is the second smallest, so it goes in the second slot, not the fifth" | correct | Squares sorted: `[1, 4, 9, 16, 36, 49]`; 4 is at position 2. The slot being filled is the fifth (36), as the explain says. Pointers are at −3 and 6, so 2 is under neither. |
+| 15 | l5-both-ends.json | quiz[2].prose | "A strangle's payoff at six expiry prices, from £90 to £115" | correct | Put struck at £100 plus call struck at £105, at expiry prices 90, 95, ..., 115: `[10, 5, 0, 0, 5, 10]`, recomputed. The x-axis is the underlying at expiry, not strikes; Hull, ch. 12 (trading strategies). |
+| 16 | l6-sliding-window.json | screens[6].prose | "This version passes `'abcbd'`" | correct | Ran the screen's code: `'abcbd'` gives 3, brute force 3. (On `'abcbdae'` it gives 6 against a true 5, so the new string is the one that passes.) `'abba'` gives 3 against a true 2, as keyed; the explain's `max(left, ...)` fix gives 2. |
+| 17 | l6-sliding-window.json | quiz[3].widget.options[3].why | "after $k$ slides the sum is off by `xs[0] - xs[k]`" | correct | Slide m subtracts `xs[m]` where `xs[m - 1]` should go; the errors telescope to `xs[0] - xs[k]`. Checked on 2,000 random lists and widths: buggy total minus true window sum equals `xs[0] - xs[k]` at every slide. |
+| 18 | l8-best-day.json | screens[5].prose | "That is the maximum drawdown, measured here in pounds. It is usually quoted as a fraction of the peak, as in Python Foundations and the pytest course" | correct | Screen's key is £15 (110 to 95), recomputed over all pairs. Standard definition is (peak − trough) / peak; here 15 / 110 = 13.6%. Cross-references hold: py-found l13 uses `(peak - p) / peak`, pytest l3 says "a fraction of the peak". |
+| 19 | l8-best-day.json | screens[9].explain.text | "`best_trade` caps any one long trade on these closes at £9, even one chosen with sight of the future. So a look-ahead bug can reach £9 but never beat it. To beat it, a backtest must sell before buying, often via a misaligned index, or fill at other prices" | correct | Maximum of `px[j] - px[i]` over all i < j is 9 (98 to 107): this is the perfect-foresight bound, so foresight alone attains it at most. Dropping the order constraint gives 15, so beating 9 at these closes needs a sale dated before the purchase; the only other route is a fill that is not one of these closes. Agrees with the keyed option and the `range` distractor. Note, no change needed: a P&L arithmetic slip would also show more than £9; the sentence covers trades, not sums. |
+| 20 | review-2.json | items[1].widget.wrong[1].value | 16 (`kept`: "added the new numbers without dropping the old ones") | correct | 6 + 4 + 6 = 16 (equally 5 + 1 + 4 + 6). Distinct from the key 10 and the slip 5. |
+| 21 | review-2.json | items[2].widget.wrong[0].value | 10 (`off`: "That is `pre[4] - pre[0]`") | correct | `pre = [0, 4, 1, 7, 10, 6]` rebuilt; `pre[4] - pre[0]` = 10 − 0 = 10. Distinct from the key 6 and the slip 3 (`pre[3] - pre[1]` = 7 − 4). |
+| 22 | review-3.json | items[7].prose | "The deepest nesting is the tallest a stack of open brackets ever grows" | correct | Pushed `(` and popped on `)` for each test string: maximum stack height equals each expected value. Solution passes 6 of 6, starter 0 of 6. |
+
+### Runs
+
+- `l11` screens[6], CPython 3.13.18, native: solution 11 of 11, slowest test 0.03 s; test 11 best of five 0.027 s. Starter 2 of 11. Trap version (no front check) 6 of 11, failing 2, 3, 8, 10 and 11.
+- Slow methods on test 11, native: `max(xs[i:i + w])` per window 29.5 s measured in full; `deque(maxlen=w)` with `max(dq)` about 26 s; pure-Python double loop about 62 s. At the old $w = 2000$ the first two took about 3 s natively, inside the limit, so the old test could pass a slow method on a fast machine.
+- Margin against the 5 s limit: the slow method is about 6 times over natively and Pyodide only widens that. The solution has about 180 times headroom natively; at a tenfold Pyodide slowdown it is near 0.3 s, still about 17 times inside. The descending input is also the worst case for "rescan only when the maximum leaves", so that shortcut does not slip through.
+
+### Findings
+
+None. 22 rows read: 22 correct, 0 wrong, 0 imprecise, 0 misleading, 0 unverified. No slip value collides with a key or another slip.
+
+Observation only, not a finding: `screens[6].widget.how` writes "200,000" with a comma and "$w = 20000$" without one. The old text had the same pattern.

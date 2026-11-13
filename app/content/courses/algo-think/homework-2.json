@@ -331,7 +331,7 @@
         "byKey": {
           "test-5": "Test 5 expects 2 for `[2, 2, 1]`. Equal items are not inversions: take from the left half when `a[i] <= b[j]`.",
           "test-7": "Test 7 expects 99930366 on 20,000 items. Pair-by-pair counting runs out of time; count during the merge.",
-          "test-1": "Test 1 expects `([1, 2, 3, 4], 3)`. When you take `b[j]`, add `len(a) - i`, the left items still waiting."
+          "test-1": "Test 1 expects `([1, 2, 3, 4], 3)`. Add the counts from both halves, and when you take `b[j]`, add `len(a) - i`."
         }
       },
       "explain": {
@@ -389,8 +389,8 @@
         "correct": "A list stack has no depth limit beyond memory.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-4": "Test 4 expects £5,000 on a chain 5,000 deep. Recursion runs out of frames there: pop and push on a list instead.",
-          "test-1": "Test 1 expects £340.25. Add every node's value, including the sub-funds' own."
+          "test-4": "Test 4 is a chain of 5,000 funds worth £1 each, so it expects £5,000. Recursion runs out of frames there: pop and push on a list instead. Count every fund, not only the last.",
+          "test-1": "Test 1 expects £340.25, and £90.25 of it sits two levels down. Push each node's children onto the stack, not just the root's."
         }
       },
       "explain": {
@@ -452,7 +452,7 @@
       "title": "Reviewing a recursive pricer",
       "kind": "longform",
       "prompt": "A colleague prices a European call on a binomial tree with this function. Each step the stock moves by `u` or `d`, `p` is the up probability, and `disc` discounts one step.\n\n```python\ndef price(S, step, n, u, d, p, disc, K):\n    if step == n:\n        return max(S - K, 0)\n    up = price(S * u, step + 1, n, u, d, p, disc, K)\n    down = price(S * d, step + 1, n, u, d, p, disc, K)\n    return disc * (p * up + (1 - p) * down)\n```\n\n(a) Write the recurrence for the number of calls with $n$ steps and solve it. Give the count for $n = 20$ and the big O. (b) Explain why most of these calls repeat work, and how many distinct nodes there are. (c) How deep does the call stack go, and what happens for $n = 2{,}000$? (d) Write a version that is $O(n^2)$ in time and needs no recursion.",
-      "model": "**(a) Counting calls.** Let $C(m)$ be the calls made with $m$ steps still to go. A call at the last step is a base case, so $C(0) = 1$. Every other call makes two calls with one fewer step: $C(m) = 2C(m-1) + 1$. The tree has $2^k$ calls on level $k$, for $k = 0$ to $n$, so\n\n$$C(n) = 1 + 2 + \\cdots + 2^n = 2^{n+1} - 1.$$\n\nFor $n = 20$ that is $2^{21} - 1 = 2{,}097{,}151$ calls, and the cost is $O(2^n)$. At $n = 252$ it is about $1.4 \\times 10^{76}$: it would never finish.\n\n**(b) Repeated work.** The price after an up then a down move is $S u d$, the same as after a down then an up. So a node depends only on the step and the number of ups $j$, not on the order of moves. Step $k$ has only $k + 1$ distinct nodes, $j = 0, \\ldots, k$, and the whole tree has\n\n$$1 + 2 + \\cdots + (n + 1) = \\frac{(n+1)(n+2)}{2}$$\n\ndistinct nodes: 231 for $n = 20$, against 2,097,151 calls. The function prices the same node many times, just as naive `fib` recomputes `fib(2)`. Memoising on `(step, j)` would cut the work to $O(n^2)$.\n\n**(c) Stack depth.** The calls go one step deeper each time, so the stack holds $n + 1$ frames at its tallest. With Python's limit of about 1,000 frames, $n = 2{,}000$ raises `RecursionError` before any arithmetic matters. A memo does not fix this; the depth is still $n + 1$.\n\n**(d) A loop over the recombining tree.** Work backwards from the last step, keeping one list of $k + 1$ values:\n\n```python\ndef price(S, n, u, d, p, disc, K):\n    # values at the last step, j = number of ups\n    v = [max(S * u**j * d**(n - j) - K, 0) for j in range(n + 1)]\n    for step in range(n - 1, -1, -1):\n        v = [disc * (p * v[j + 1] + (1 - p) * v[j]) for j in range(step + 1)]\n    return v[0]\n```\n\nStep `step` does `step + 1` updates, so the total is $\\frac{n(n+1)}{2}$ updates: $O(n^2)$ time, $O(n)$ memory and one frame. For $n = 2{,}000$ that is about 2 million updates, well under a second.",
+      "model": "**(a) Counting calls.** Let $C(m)$ be the calls made with $m$ steps still to go. A call at the last step is a base case, so $C(0) = 1$. Every other call makes two calls with one fewer step: $C(m) = 2C(m-1) + 1$. The tree has $2^k$ calls on level $k$, for $k = 0$ to $n$, so\n\n$$C(n) = 1 + 2 + \\cdots + 2^n = 2^{n+1} - 1.$$\n\nFor $n = 20$ that is $2^{21} - 1 = 2{,}097{,}151$ calls, and the cost is $O(2^n)$. At $n = 252$ it is about $1.4 \\times 10^{76}$: it would never finish.\n\n**(b) Repeated work.** The price after an up then a down move is $S u d$, the same as after a down then an up. So a node depends only on the step and the number of ups $j$, not on the order of moves. Step $k$ has only $k + 1$ distinct nodes, $j = 0, \\ldots, k$, and the whole tree has\n\n$$1 + 2 + \\cdots + (n + 1) = \\frac{(n+1)(n+2)}{2}$$\n\ndistinct nodes: 231 for $n = 20$, against 2,097,151 calls. The function prices the same node many times, just as naive `fib` recomputes `fib(2)`. Memoising on `(step, j)` would cut the work to $O(n^2)$.\n\n**(c) Stack depth.** The calls go one step deeper each time, so the stack holds $n + 1$ frames at its tallest. With Python's default limit of about 1,000 frames, $n = 2{,}000$ raises `RecursionError` before any arithmetic matters. A memo does not fix this; the depth is still $n + 1$. The Python in this page allows about 3,000 frames, which only moves the failure to about $n = 3{,}000$.\n\n**(d) A loop over the recombining tree.** Work backwards from the last step, keeping one list of $k + 1$ values:\n\n```python\ndef price(S, n, u, d, p, disc, K):\n    # values at the last step, j = number of ups\n    v = [max(S * u**j * d**(n - j) - K, 0) for j in range(n + 1)]\n    for step in range(n - 1, -1, -1):\n        v = [disc * (p * v[j + 1] + (1 - p) * v[j]) for j in range(step + 1)]\n    return v[0]\n```\n\nStep `step` does `step + 1` updates, so the total is $\\frac{n(n+1)}{2}$ updates: $O(n^2)$ time, $O(n)$ memory and one frame. For $n = 2{,}000$ that is about 2 million updates, well under a second.",
       "rubric": [
         {
           "points": 2,
@@ -468,7 +468,7 @@
         },
         {
           "points": 2,
-          "text": "States the stack depth is $n + 1$ frames. Notes that $n = 2{,}000$ raises `RecursionError` under the limit of about 1,000, even with a memo."
+          "text": "States the stack depth is $n + 1$ frames. Notes that $n = 2{,}000$ raises `RecursionError` under Python's default limit of about 1,000, even with a memo."
         },
         {
           "points": 2,
@@ -575,11 +575,11 @@
           "test-1": "Test 1 has two splits, `BA RC BP` and `BARC BP`. Try every listed ticker that starts the feed, and keep every split of what is left after each.",
           "test-2": "Test 2 is an empty feed. It has one split holding no tickers, so return `[[]]`; `[]` would say it has no split at all.",
           "test-3": "Test 3 is `GLENX` with `GLEN`, `GL` and `EN` listed. No ticker ends with `X`, so there is no split: return `[]`.",
-          "test-4": "Test 4 is `IAGSSE`. The longest ticker at the start, `IAGS`, leaves `SE`, which has no split, so only `IAG SSE` works. Try every ticker that fits, not just the longest.",
-          "test-5": "Test 5 lists `BT` twice and has four different splits. Going through the list as given finds each split that uses `BT` more than once. Take the tickers as a set.",
-          "test-6": "Test 6 is `BABA` with `BA` and `BABA` listed, so `BABA` and `BA BA` are both splits. Stopping as soon as the rest of the feed is a ticker loses `BA BA`.",
-          "test-7": "Test 7 is one ticker, `RIO`. A cut must be able to take the whole of what is left, so let the cut reach `len(feed)`.",
-          "test-8": "Test 8 is `AAA` with `A` and `AA` listed. It has three splits, and `A AA` differs from `AA A`, so keep each split in feed order.",
+          "test-4": "Test 4 is `IAGSSE`. `IAGS` fits at the start but leaves `SE`, which has no split, so the only split is `IAG SSE`.",
+          "test-5": "Test 5 lists `BT` twice and has four different splits. Going through the list as given finds each split with `BT` in it more than once. Take the tickers as a set.",
+          "test-6": "Test 6 is `BABA` with `BA` and `BABA` listed, so `BABA` and `BA BA` are both splits.",
+          "test-7": "Test 7 is one ticker, `RIO`, so its one split is `RIO` alone.",
+          "test-8": "Test 8 is `AAA` with `A` and `AA` listed. It has three splits: `A A A`, `A AA` and `AA A`.",
           "test-9": "Test 9 is `SSEAZN`, with three splits: `SS E AZN`, `SS EAZN` and `SSE AZN`.",
           "test-10": "Test 10 is 12 `A`s with `A`, `AA` and `AAA` listed: 927 splits, all different. Too many means some splits repeat, and too few means some are lost.",
           "test-11": "Test 11 is `BA` eight times over, with five tickers listed: 4,374 splits, all different.",

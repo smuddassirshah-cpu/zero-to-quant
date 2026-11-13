@@ -855,7 +855,7 @@
     {
       "type": "trap",
       "difficulty": 2,
-      "title": "Starting in the wrong place",
+      "title": "Recording too early",
       "prose": "A colleague records each task when DFS first reaches it, trying tasks in alphabetical order.\n\n```python\ndef visit(u):\n    seen.add(u)\n    order.append(u)\n    for v in sorted(adj[u]):\n        if v not in seen:\n            visit(v)\n\nfor u in sorted(adj):\n    if u not in seen:\n        visit(u)\n```",
       "canvas": {
         "kind": "graph",
@@ -1021,7 +1021,7 @@
         }
       },
       "explain": {
-        "text": "The full result is backtest, report, calendar, returns, risk, signals, prices: backtest runs first, before its inputs. Recording on arrival is pre-order, which only follows arrows forward from wherever it starts. Either start from in-degree 0 (Kahn), or use post-order, next.",
+        "text": "The full result is backtest, report, calendar, returns, risk, signals, prices: backtest runs first, before its inputs. Starting at a free task does not cure it: from calendar, pre-order still reaches backtest through risk, before signals. Record a task only when its call finishes, after every task that needs it, then reverse the list (next), or use Kahn's in-degrees.",
         "canvas": {
           "highlight": [
             "backtest",
@@ -1217,7 +1217,7 @@
         }
       },
       "explain": {
-        "text": "In post-order each task comes after everything that depends on it. Reversed, every task comes before its dependents: prices, calendar, returns, signals, risk, backtest, report. That is a valid order, from any starting point.",
+        "text": "In post-order each task comes after everything that depends on it. Reversed, every task comes before its dependents: prices, calendar, returns, signals, risk, backtest, report. On a graph with no cycle that is a valid order, from any starting point.",
         "canvas": {
           "visited": [
             "prices",
@@ -1437,7 +1437,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "Ordering by dependencies",
-      "prose": "```python\nindeg = in-degree of every node\nready = nodes with in-degree 0\nwhile ready:\n    take u from ready, append it to order\n    for each v after u:\n        indeg[v] -= 1; if 0, add v to ready\ncycle if len(order) < V\n```\nThis is $O(V + E)$. Reversed DFS post-order gives an order too, at the same cost.",
+      "prose": "```python\nindeg = in-degree of every node\nready = nodes with in-degree 0\nwhile ready:\n    take u from ready, append it to order\n    for each v after u:\n        indeg[v] -= 1; if 0, add v to ready\ncycle if len(order) < V\n```\nThis is $O(V + E)$. On a DAG, reversed DFS post-order gives an order too, at the same cost; it needs lesson 3's three-state check to notice a cycle.",
       "question": "Kahn's algorithm emits 9 of a graph's 12 nodes and `ready` is empty. What do you conclude?",
       "widget": {
         "kind": "choice",
@@ -1659,14 +1659,14 @@
     "ideas": [
       "A topological order puts every task after all its prerequisites. It exists only when the graph has no cycle, and often there are several.",
       "Kahn's algorithm keeps the tasks with in-degree 0, emits one, and lowers its successors' counts. Fewer than $V$ emitted means a cycle.",
-      "Reversed DFS post-order is also a valid order. Pre-order is not: it can emit a task before its inputs."
+      "On a DAG, reversed DFS post-order is also a valid order. Pre-order is not: it can emit a task before its inputs."
     ],
     "formula": {
       "name": "Topological sort",
       "tex": "O(V + E)",
       "note": "Each task emitted once; each arrow lowers one count once."
     },
-    "trap": "Starting from a task that still has arrows in, or emitting on arrival, runs a task before its prerequisites."
+    "trap": "Emitting a task when DFS first reaches it can put it before its prerequisites, wherever the search starts."
   },
   "quiz": [
     {
