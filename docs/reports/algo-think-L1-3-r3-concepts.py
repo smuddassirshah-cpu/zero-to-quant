@@ -4,8 +4,9 @@
 Run from the repository root:  python3 docs/reports/algo-think-L1-3-r3-concepts.py
 CPython 3.12 or 3.13 (the page runs Pyodide 0.27.7, Python 3.12, wasm32). Exit 0 when every check holds.
 A check that fails because the content is wrong stays failing: it is a finding in docs/reviews/audit-algo-think-1-3-r3.md.
-Part A recomputes numbers. Part B runs each code widget's solution and starter and, for every feedback.byKey test-N line
-that names a mistake, a submission making that mistake, and reports the first failing test (recursion limit 3000, as on the page).
+Part A recomputes numbers. Part B runs each code widget's solution and starter and, for the feedback.byKey lines, a submission making the mistake the
+line names or describes, and checks which key the page would show first (recursion limit 3000, as on the page). Lines that only
+describe their test are paired with the natural mistake and the key that mistake really reaches.
 Submissions that fail by the page's 5 second limit are marked slow and were run in Pyodide under node (see the ledger); here
 they are skipped.
 """
@@ -428,12 +429,12 @@ check('hw3 capacities', [min_cap(list(range(1, 11)), 5), min_cap([3, 2, 2, 4, 1,
 R = [1000000 + 3 * ((j + 137017) % 200000) for j in range(200000)]
 check('hw3 ring facts', R.index(min(R)) == 62983 and [R.index(s_) if s_ in set(R) else -1 for s_ in (1411051, 1411048, 1000000, 1599997, 1300000)] == [0, 199999, 62983, 62982, 162983] and (int((-2 + math.sqrt(44)) / 0.002)) == 2316)
 
-# ------------------------------------------------------------------ submissions for Part B (key, mistake, expected first failing key, code)
+# ------------------------------------------------------------------ submissions for Part B (key, mistake, key of the line that should show, code)
 M = []
 def m(key, name, expect, code): M.append((key, name, expect, code))
 
 # ---------- l1 count_pairs
-m('l1#8', 'self-pair j from i', 'test-3', '''
+m('l1#8', 'self-pair j from i', 'test-1', '''
 def count_pairs(prices, threshold):
     c = 0
     for i in range(len(prices)):
@@ -449,7 +450,7 @@ def count_pairs(prices, threshold):
             if v[i] * v[j] > threshold: c += 1
     return c
 ''')
-m('l1#8', '>= threshold', 'test-5', '''
+m('l1#8', '>= threshold', 'test-1', '''
 def count_pairs(prices, threshold):
     c = 0
     for i in range(len(prices)):
@@ -494,7 +495,7 @@ DP = 'def depth(n, d=1):\n    if n < 2: return d\n    return max(depth(n - 1, d 
 m('l6#6', 'recursive sum_to', 'test-3', 'def sum_to(n):\n    if n == 0: return 0\n    return n + sum_to(n - 1)\n' + DP)
 m('l6#6', 'depth ignores d', 'test-10', 'def sum_to(n):\n    return n * (n + 1) // 2\ndef depth(n, d=1):\n    if n < 2: return 1\n    return 1 + max(depth(n - 1), depth(n - 2))\n')
 m('l6#9', 'sum not max', 'test-1', 'def levels(node):\n    return 1 + sum(levels(c) for c in node["children"])\n')
-m('l6#9', 'leaf counts 0', 'test-2', 'def levels(node):\n    if not node["children"]: return 0\n    return 1 + max(levels(c) for c in node["children"])\n')
+m('l6#9', 'leaf counts 0', 'test-1', 'def levels(node):\n    if not node["children"]: return 0\n    return 1 + max(levels(c) for c in node["children"])\n')
 m('l6#9', 'VALID: generator inside max', 'none', 'def levels(node):\n    return 1 + max((levels(c) for c in node["children"]), default=0)\n')
 # ---------- l7
 PF = 'def power_fast(x, n):\n    if n == 0: return 1, 0\n    if n == 1: return x, 0\n    h, m = power_fast(x, n // 2)\n    if n % 2 == 0: return h * h, m + 1\n    return h * h * x, m + 2\n'
@@ -510,7 +511,7 @@ m('l8#5', 'recursive count', 'test-6', 'def fib_calls(n):\n    if n < 2: return 
 m('l8#5', 'naive fib', 'test-10', FC + 'def fib(n):\n    if n < 2: return n\n    return fib(n - 1) + fib(n - 2)\n')
 # ---------- l9
 m('l9#3', 'linear scan', 'test-11', 'def binary_search(xs, target):\n    for i in range(len(xs)):\n        if xs[i] == target: return i\n    return -1\n')
-m('l9#3', 'while lo < hi', 'test-5', 'def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        if xs[mid] < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1\n')
+m('l9#3', 'while lo < hi', 'test-1', 'def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        if xs[mid] < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1\n')
 m('l9#3', 'VALID: three reads a pass', 'none', 'def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        elif xs[mid] < target: lo = mid + 1\n        elif xs[mid] > target: hi = mid - 1\n    return -1\n')
 m('l9#3', 'reads xs[0] first', 'test-4', 'def binary_search(xs, target):\n    if xs[0] > target: return -1\n    lo, hi = 0, len(xs) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        v = xs[mid]\n        if v == target: return mid\n        if v < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1\n')
 m('l9#5', 'returns first match', 'test-1', 'def first_at_least(xs, target):\n    lo, hi = 0, len(xs)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target: return mid\n        if xs[mid] < target: lo = mid + 1\n        else: hi = mid\n    return lo\n')
@@ -521,20 +522,20 @@ m('l9#9', 'days[-1] check', 'test-6', 'from bisect import bisect_left\ndef next_
 # ---------- l10
 m('l10#3', 'hi is the none marker', 'test-3', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a if a < hi else None\n')
 m('l10#3', 'bare return', 'test-4', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a\n')
-m('l10#3', 'pred(hi + 1) tried', 'test-9', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a if pred(a) else None\n')
+m('l10#3', 'pred(hi + 1) tried and returned', 'test-4', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a if pred(a) else None\n')
 ST = 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a if a <= hi else None\n'
 m('l10#4', 'range ends at n', 'test-2', ST + 'def isqrt(n):\n    return smallest_true(0, n, lambda x: x * x > n) - 1\n')
 BP = 'def bond_price(y, coupon, years, face):\n    pv = sum(coupon / (1 + y) ** t for t in range(1, years + 1))\n    return pv + face / (1 + y) ** years\n'
 m('l10#5', 'updates the wrong way', 'test-1', BP + 'def yield_for_price(price, coupon, years, face):\n    lo, hi = 0.0, 1.0\n    for _ in range(60):\n        mid = (lo + hi) / 2\n        if bond_price(mid, coupon, years, face) > price: hi = mid\n        else: lo = mid\n    return (lo + hi) / 2\n')
 m('l10#5', 'no end check', 'test-8', BP + 'def yield_for_price(price, coupon, years, face):\n    lo, hi = 0.0, 1.0\n    for _ in range(60):\n        mid = (lo + hi) / 2\n        if bond_price(mid, coupon, years, face) > price: lo = mid\n        else: hi = mid\n    return (lo + hi) / 2\n')
 # ---------- l11
-m('l11#3', 'no break', 'test-4', 'def insertion_sort(xs):\n    a = list(xs); comps = 0\n    for i in range(1, len(a)):\n        for j in range(i, 0, -1):\n            comps += 1\n            if a[j - 1] > a[j]: a[j - 1], a[j] = a[j], a[j - 1]\n    return a, comps\n')
+m('l11#3', 'no break', 'test-1', 'def insertion_sort(xs):\n    a = list(xs); comps = 0\n    for i in range(1, len(a)):\n        for j in range(i, 0, -1):\n            comps += 1\n            if a[j - 1] > a[j]: a[j - 1], a[j] = a[j], a[j - 1]\n    return a, comps\n')
 m('l11#3', '>=', 'test-6', 'def insertion_sort(xs):\n    a = list(xs); comps = 0\n    for i in range(1, len(a)):\n        key = a[i]; j = i - 1\n        while j >= 0:\n            comps += 1\n            if a[j] >= key:\n                a[j + 1] = a[j]; j -= 1\n            else: break\n        a[j + 1] = key\n    return a, comps\n')
 m('l11#3', 'in place', 'test-8', 'def insertion_sort(xs):\n    a = xs; comps = 0\n    for i in range(1, len(a)):\n        key = a[i]; j = i - 1\n        while j >= 0:\n            comps += 1\n            if a[j] > key:\n                a[j + 1] = a[j]; j -= 1\n            else: break\n        a[j + 1] = key\n    return a, comps\n')
 m('l11#8', 'whole tuples', 'test-4', 'def sort_trades(trades):\n    a = list(trades)\n    for i in range(1, len(a)):\n        key = a[i]; j = i - 1\n        while j >= 0 and a[j] > key:\n            a[j + 1] = a[j]; j -= 1\n        a[j + 1] = key\n    return a\n')
 m('l11#8', '>= on times', 'test-1', 'def sort_trades(trades):\n    a = list(trades)\n    for i in range(1, len(a)):\n        key = a[i]; j = i - 1\n        while j >= 0 and a[j][0] >= key[0]:\n            a[j + 1] = a[j]; j -= 1\n        a[j + 1] = key\n    return a\n')
 # ---------- l12
-m('l12#2', 'tail of a dropped', 'test-6', 'def merge(a, b):\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1\n    out.extend(b[j:])\n    return out\n')
+m('l12#2', 'tail of a dropped', 'test-3', 'def merge(a, b):\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1\n    out.extend(b[j:])\n    return out\n')
 m('l12#2', 'recursive merge', 'test-9', 'def merge(a, b):\n    if not a: return list(b)\n    if not b: return list(a)\n    if a[0] <= b[0]: return [a[0]] + merge(a[1:], b)\n    return [b[0]] + merge(a, b[1:])\n')
 m('l12#2', 'out = out + [x]', 'test-9', 'def merge(a, b):\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out = out + [a[i]]; i += 1\n        else: out = out + [b[j]]; j += 1\n    return out + a[i:] + b[j:]\n')
 MG = 'def merge(a, b):\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1\n    out.extend(a[i:]); out.extend(b[j:])\n    return out\n'
@@ -568,7 +569,7 @@ m('homework-1#5', 'global low then high', 'test-2', 'def best_trade(prices):\n  
 m('homework-1#5', 'best starts at -inf', 'test-3', 'def best_trade(prices):\n    if len(prices) < 2: return 0\n    best = float("-inf"); low = prices[0]\n    for p in prices[1:]:\n        best = max(best, p - low); low = min(low, p)\n    return best\n')
 m('homework-1#5', 'prices[0]', 'test-4', 'def best_trade(prices):\n    best = 0; low = prices[0]\n    for p in prices:\n        best = max(best, p - low); low = min(low, p)\n    return best\n')
 m('homework-1#5', 'pair loop', 'test-8', 'def best_trade(prices):\n    best = 0\n    for i in range(len(prices)):\n        for j in range(i + 1, len(prices)):\n            if prices[j] - prices[i] > best: best = prices[j] - prices[i]\n    return best\n')
-m('homework-1#6', 'resize after write', 'test-4', 'def copies_fixed(n, step):\n    cap, size, copies = step, 0, 0\n    for _ in range(n):\n        size += 1\n        if size == cap:\n            cap += step; copies += size\n    return copies\n')
+m('homework-1#6', 'resize after write', 'test-1', 'def copies_fixed(n, step):\n    cap, size, copies = step, 0, 0\n    for _ in range(n):\n        size += 1\n        if size == cap:\n            cap += step; copies += size\n    return copies\n')
 # ---------- homework-2
 m('homework-2#0', 'appends the sublist', 'test-1', 'def flatten(xs):\n    out = []\n    for x in xs:\n        if isinstance(x, list): out.append(flatten(x))\n        else: out.append(x)\n    return out\n')
 m('homework-2#5', '< on ties', 'test-5', 'def sort_count(xs):\n    if len(xs) <= 1: return list(xs), 0\n    mid = len(xs) // 2\n    a, x = sort_count(xs[:mid]); b, y = sort_count(xs[mid:])\n    out, i, j, c = [], 0, 0, x + y\n    while i < len(a) and j < len(b):\n        if a[i] < b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1; c += len(a) - i\n    return out + a[i:] + b[j:], c\n')
@@ -592,6 +593,10 @@ m('homework-3#6', 'recursive, fixed first pivot', 'test-8', KL % ('list(xs)', 'a
 m('homework-3#6', 'sorted()', 'test-10', 'import random\ndef kth_largest(xs, k):\n    return sorted(xs)[len(xs) - k]\n')
 m('homework-3#8', '< not <=', 'test-5', 'def find_trade(ring, seq):\n    lo, hi = 0, len(ring) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if ring[mid] == seq: return mid\n        if ring[lo] < ring[mid]:\n            if ring[lo] <= seq < ring[mid]: hi = mid - 1\n            else: lo = mid + 1\n        else:\n            if ring[mid] < seq <= ring[hi]: lo = mid + 1\n            else: hi = mid - 1\n    return -1\n')
 m('homework-3#8', 'linear index', 'test-13', 'def find_trade(ring, seq):\n    for i in range(len(ring)):\n        if ring[i] == seq: return i\n    return -1\n')
+
+# added after the earlier reads were opened: submissions that do reach the two lines
+m('l12#2', 'empty lists returned first, tail of a dropped', 'test-6', 'def merge(a, b):\n    if not a: return list(b)\n    if not b: return list(a)\n    out = []; i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]: out.append(a[i]); i += 1\n        else: out.append(b[j]); j += 1\n    out.extend(b[j:])\n    return out\n')
+m('l10#3', 'pred(a) before the range check', 'test-9', 'def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid): b = mid\n        else: a = mid + 1\n    return a if pred(a) and a <= hi else None\n')
 
 # ------------------------------------------------------------------ Part B: code widgets and feedback.byKey submissions
 import glob
@@ -640,11 +645,12 @@ EXPECT_OTHER = {'VALID: generator inside max': 'none', 'recursive one side, last
 REACH = []
 for key, name, expect, code in M:
     if name.startswith('VALID: three reads'): continue   # checked in part A
+    if expect == 'error' and 'load' not in name: name += ' [the error line explains this exception]'
     want = EXPECT_OTHER.get(name + '@' + key, EXPECT_OTHER.get(name, expect.split(' ')[0]))
-    got = first_fail(W[key], code, SLOW.get(name))
-    if name in SLOW: got = got.replace('slow-', '')       # reached the slow test with every earlier test passing
+    got = first_fail(W[key], code, SLOW.get(name.split(' [the error')[0]))
+    if name.split(' [the error')[0] in SLOW: got = got.replace('slow-', '')       # reached the slow test with every earlier test passing
     REACH.append((key, name, want, got))
-    check('%s byKey %s: the named mistake first fails %s' % (key, want, name), got == want, 'first failing key is ' + got)
+    check('%s: the submission "%s" is shown the %s line' % (key, name, want), got == want, 'the key shown is ' + got)
 
 print('%d checks, %d failing' % (COUNT[0], len(FAILS)))
 for f_ in FAILS: print('FAIL', f_)
