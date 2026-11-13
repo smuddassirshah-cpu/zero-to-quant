@@ -214,3 +214,68 @@ Totals: 127 lines on 41 widgets checked; 31 rewritten (the 2 named, 29 from the 
 Outside the byKey lines (not edited): `l6-call-stack.json` `screens[6].widget.how` says `sum_to(100000)` is "far deeper than the limit of 1,000"; the page's limit is 3,000 (true either way for 100,000).
 
 Gates: validator 0 errors (manifest unchanged); `algo-think-L1-3-concepts.py` and `algo-think-L1-3-r2-concepts.py` exit 0; voice scan 35 on the course 0 over 35 words, 0 explanations over three sentences; playthroughs of the 13 edited files, desktop and `--mobile`: all 26 runs "All passed".
+
+## Fix-pass read (follow-up sweep)
+
+Blind read of `git diff 11df1919~1 11df1919 -- app/content/courses/algo-think/` (13 files, 31 `feedback.byKey.test-N` lines) plus one row outside the diff (`l6-call-stack.json` `screens[6].widget.how`). Method: every item's solution and starter were run against the item's own tests under CPython with `sys.setrecursionlimit(3000)` (all 19 solutions pass, all starters fail test 1, slowest solution test 0.03 s). For each line, the stated facts were recomputed, each named mistake was written as a submission and its first failing test recorded, and each named remedy was run. An exception raised inside a test gets key `test-N`, not `error` (`app/js/engine/widgets/code.js` line 576: `error` is for load errors and crashes only), so the `RecursionError` lines are reachable.
+
+Rows: 32. Verdicts: 31 `correct`, 1 `imprecise` (minor), 0 `wrong`, 0 `misleading`, 0 `unverified`.
+
+| # | File | JSON path | New text (short) | Verdict | Basis (run or derivation) |
+|---|---|---|---|---|---|
+| 1 | homework-1.json | items[5].feedback.byKey.test-3 | expects 0 when prices only fall; start the best profit at 0 | correct | `[5, 4, 3, 2]` gives 0. Submission with best starting unset passes 1 to 2, fails 3 with -1; same code with best = 0 passes all 8. |
+| 2 | homework-1.json | items[5].feedback.byKey.test-7 | `[1, 9, 0, 5]` expects 8; buying at the later low of 0 makes only 5 | correct | 9 - 1 = 8, 5 - 0 = 5. See observation B. |
+| 3 | homework-2.json | items[5].feedback.byKey.test-1 | expects `([1, 2, 3, 4], 3)`; add both halves' counts, and `len(a) - i` on taking `b[j]` | correct | Omitting the halves' counts gives a count of 1 at test 1. Both remedies together pass all 8. (Adding 1 in place of `len(a) - i` still passes test 1 and fails test 4; the clause is a true remedy, not a false claim.) |
+| 4 | homework-2.json | items[6].feedback.byKey.test-4 | chain of 5,000 funds worth £1 each, expects £5,000; recursion runs out of frames; count every fund | correct | Setup builds 5,000 nodes of 1.0 (counted). Two recursive submissions pass 1 to 3 and raise `RecursionError` at 4 (5,000 is past 3,000 and past 1,000). A loop that skips single-child nodes' values passes 1 to 3 and returns 1.0 at 4, so "not only the last" is reachable. |
+| 5 | homework-2.json | items[6].feedback.byKey.test-1 | expects £340.25, £90.25 of it two levels down; push each node's children | correct | 120.5 - 30.25 = 90.25; 250 + 90.25 = 340.25. Root-children-only submission returns 250.0 at test 1. |
+| 6 | homework-2.json | items[9].feedback.byKey.test-4 | `IAGS` fits but leaves `SE`, no split; only `IAG SSE` | correct | `split_feed('SE', ...)` is `[]`; full answer `[['IAG', 'SSE']]`. |
+| 7 | homework-2.json | items[9].feedback.byKey.test-5 | `BT` listed twice, four different splits; list as given finds each split with `BT` more than once; use a set | correct | List-as-given submission passes 1 to 4, fails 5. Counts: `BT BT` 4 times, `BT B T` twice, `B T BT` twice, `B T B T` once. Set version is the solution. |
+| 8 | homework-2.json | items[9].feedback.byKey.test-6 | `BABA` and `BA BA` are both splits | correct | Solution returns `[['BA', 'BA'], ['BABA']]`. |
+| 9 | homework-2.json | items[9].feedback.byKey.test-7 | one ticker `RIO`, one split | correct | Solution returns `[['RIO']]`. |
+| 10 | homework-2.json | items[9].feedback.byKey.test-8 | three splits: `A A A`, `A AA`, `AA A` | correct | Solution returns exactly these three. |
+| 11 | homework-3.json | items[4].feedback.byKey.test-6 | one day per order, capacity is the largest order, 10 | correct | 5 orders, 5 days, max of `[7, 2, 5, 10, 8]` is 10; solution returns 10. |
+| 12 | homework-3.json | items[8].feedback.byKey.test-7 | `[7]` searched for 7 then 6, expects `[0, -1]` | correct | Matches the test and the solution. |
+| 13 | l1-counting-work.json | screens[8].feedback.byKey.test-3 | expects 0 for one price: a pair needs two different positions | correct | `count_pairs([7], 0)` is 0; no mistake named. |
+| 14 | l1-counting-work.json | screens[8].feedback.byKey.test-4 | `[2, 2, 2]` expects 3; pair positions, not values, keep repeats | correct | Two submissions (prices made a set; pairing values `a < b`) pass 1 to 3 and return 0 at 4. Position pairs `i < j` give 3. |
+| 15 | l1-counting-work.json | screens[8].feedback.byKey.test-5 | 5 × 3 equals 15, only a product above 15 counts | correct | 15 > 15 is false; expects 0. |
+| 16 | l11-sorting-by-hand.json | screens[3].feedback.byKey.test-4 | sorted input, 4 comparisons: one per new value | correct | Solution returns `([1, 2, 3, 4, 5], 4)`: 4 insertions, one comparison each. |
+| 17 | l12-merge-sort.json | screens[2].feedback.byKey.test-6 | leaves 5 in `a`; kept the tail of `b`, dropped the tail of `a`; extend with both | correct | True whenever test 6 is the first failure (tests 1, 2, 5 need `b`'s tail). A submission that drops `a`'s tail but returns `a` when `b` is empty passes 1 to 5 and gives `[1, 2, 3, 4]` at 6. Both `extend` calls pass all 9. See observation A. |
+| 18 | l12-merge-sort.json | screens[3].feedback.byKey.test-7 | 20,000 values; one-at-a-time split nests 20,000 calls, past the limit | correct | Two one-at-a-time submissions pass 1 to 6 and raise `RecursionError` at 7. Middle split is the solution (depth about 15). |
+| 19 | l12-merge-sort.json | screens[8].feedback.byKey.test-2 | logs swapped; at 09:00:03 the CXE trade, now in the first log, comes first | correct | Expected slice is CXE then LSE. Submissions that put LSE first on a tie pass 1 and fail 2. |
+| 20 | l12-merge-sort.json | screens[8].feedback.byKey.test-3 | empty first log, answer is the second log as it stands | correct | Expected value equals the second argument. |
+| 21 | l13-quicksort.json | screens[3].feedback.byKey.test-3 | expects `(0, [1, 2])`; no value is at most the pivot 1, `i` stays at `lo`, final swap moves 1 there | correct | `[2, 1]`: `xs[0]` is 2, above 1, so `i = 0`; the swap gives `[1, 2]`, return 0. |
+| 22 | l13-quicksort.json | screens[3].feedback.byKey.test-1 | expects `(3, [2, 4, 1, 5, 9, 8, 7])`; walk `j` to `hi - 1`, swap pivot into `i`, return `i` | correct | The remedy is the solution; passes all 8. Walking `j` to `hi` with the final swap gives index 4 at test 1. |
+| 23 | l13-quicksort.json | screens[8].feedback.byKey.test-7 | 3,000 sorted values; fixed end pivot with both sides recursed nests about 3,000 calls; keep one side, random pivot | correct | Full quicksort with fixed end pivot (two guard styles) passes 1 to 6 and raises `RecursionError` at 7 under limit 3,000. One side kept with a random pivot passes all 9. Also true under the standard limit of 1,000. |
+| 24 | l14-best-step-now.json | screens[5].feedback.byKey.test-1 | got 1: sorted by start; got 3: touching meeting refused, use `>=` | correct | Sort by start returns 1; sort by end with `>` returns 3 (keeps B, D, F); `>=` returns 4. |
+| 25 | l14-best-step-now.json | screens[5].feedback.byKey.test-4 | three touching meetings, expects 3 | correct | `(9, 10), (10, 11), (11, 12)` gives 3. |
+| 26 | l3-memory.json | screens[5].feedback.byKey.test-2 | `[0]` for no prices: the leading 0 is always there | correct | Submission returning `[]` for an empty list passes 1 and fails 2. |
+| 27 | l6-call-stack.json | screens[6].feedback.byKey.test-9 | `depth(15)` is 15: chain `fib(15)` down to `fib(1)` | correct | 15, 14, ..., 1 is 15 frames; solution returns 15. |
+| 28 | l6-call-stack.json | screens[9].feedback.byKey.test-2 | lone position is one level, counting both ends | correct | Solution returns 1; matches the question's wording. |
+| 29 | l7-split-in-half.json | screens[5].feedback.byKey.test-9 | `(243, 3)`: 3² takes one multiplication, 3⁵ = 3² × 3² × 3 takes two more | correct | `power_fast(3, 2)` is `(9, 1)`; 9 × 9 × 3 = 243 with 1 + 2 = 3. |
+| 30 | l9-halving.json | screens[3].feedback.byKey.test-5 | `[7]` searched for 7, expect index 0 | correct | Matches the test and the solution. |
+| 31 | review-3.json | items[4].feedback.byKey.test-2 | empty first list, every id from the second: `[3, 5]` | correct | Matches the test and the solution. |
+| 32 | l6-call-stack.json | screens[6].widget.how (outside the diff) | Test 3 is `sum_to(100000)`, far deeper than the limit of 1,000 | imprecise | 1,000 is standard Python's default and the lesson's figure (`screens[3]`), but the page sets 3,000 (`drill-worker.js`, `RECURSION_LIMIT`). The point holds under both: a recursive `sum_to` passes tests 1 to 2 and raises `RecursionError` at test 3 with the limit at 1,000 and at 3,000. Only the figure is untrue of the page. |
+
+### Findings
+
+1. l6-call-stack.json | `screens[6].widget.how` | imprecise, minor | "the limit of 1,000" names a figure that is not the limit in force on the page (3,000). | Run: recursive `sum_to(100000)` raises `RecursionError` at limit 1,000 and at limit 3,000; the loop returns 5000050000. | Replace the whole `how` with text true of both:
+
+   ```
+   Check runs 10 hidden tests. Test 3 is `sum_to(100000)`: as a recursion it would need about 100,000 frames, far past Python's recursion limit. Test 10 starts the count at `d = 10`.
+   ```
+
+### Observations (no verdict change, no fix required)
+
+A. l12-merge-sort.json `screens[2]`: the plain form of the mistake named in `test-6` (extend with `b[j:]` only) fails test 3 first, with `[]` for `merge([1, 2], [])`. Test 3 has no `byKey` line, so that learner sees the generic line. Optional addition, mirroring the existing `test-2` line, verified by that run:
+
+   ```
+   "test-3": "Test 3 has an empty `b`. The loop never runs, so everything comes from the tail of `a`."
+   ```
+
+B. homework-1.json `items[5]`: the mistake that `test-7` points at (buy at the lowest price of the day) fails test 2 first, returning 3 for `[3, 8, 1, 4]`; test 2 has no `byKey` line. The `test-7` line itself is true. Optional addition (8 - 3 = 5, 4 - 1 = 3):
+
+   ```
+   "test-2": "Test 2 expects 5 for `[3, 8, 1, 4]`: buy at 3 and sell at 8. Buying at the later low of 1 makes only 3."
+   ```
+
+C. Not judged here (outside the diff and the extra row): `l6-call-stack.json` `screens[3]` says `sys.getrecursionlimit()` returns 1000, which is standard Python's value, not the page's.
