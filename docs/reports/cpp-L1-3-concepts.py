@@ -15,6 +15,12 @@ Each check encodes a claim the content makes. A check that fails because the con
 stays failing and is a finding in docs/reviews/audit-cpp-1-3.md. The five refuted claims are tied to
 their sentence in the content JSON (claim()): once a fix pass removes the sentence, the check passes.
 Exit 0 only if every check passes.
+
+Fix pass (13 Nov 2026): the refuted sentences are gone, so their claim() checks report
+"[sentence no longer in the content]". New checks cover the replacement text: -Wall -Wextra
+-Wconversion silent on h-port-note, a deleted move assignment failing l11 test 10, and, under
+--wasm, the null read printing 0, the h-realloc stray value, the template-error length and the
+kept `delete book;` compile error.
 """
 import os
 import shutil
@@ -345,6 +351,8 @@ rc, msg, exe = build(M('std::cout << std::is_move_assignable_v<CopyCtorOnly> << 
 r = run(exe)
 claim('l11 s7 feedback test-10 names "a declared copy constructor" as the cause of failing is_move_assignable: with only a copy constructor declared the class IS move assignable (the copy assignment serves)',
       'l11-creation-destruction.json', 'Test 10 moves into an existing buffer. A declared copy constructor stops the compiler writing the move assignment', r[1].strip() == '0', 'is_move_assignable_v<CopyCtorOnly> = ' + r[1].strip() + ' (test 10 would pass, so this feedback never matches its cause)')
+out('l11 s7 fixed feedback test-10: a deleted move assignment fails is_move_assignable (test 10) while test 9 still passes',
+    M('std::cout << std::is_copy_assignable_v<DelMove> << std::is_move_assignable_v<DelMove> << "\\n";', BUF + 'struct DelMove { std::vector<double> d; DelMove(int n, double x) : d(n, x) {} DelMove(const DelMove&) = default; DelMove(DelMove&&) = default; DelMove& operator=(const DelMove&) = default; DelMove& operator=(DelMove&&) = delete; };\n'), '10')
 out('l11 s7 feedback test-12: copy, move, copy-assign declared but no move assignment: "move" into an existing object copies',
     M('NoMoveAssign a(3, 1.5), c(1, 0.0); c = std::move(a); std::cout << std::is_move_assignable_v<NoMoveAssign> << a.d.size() + 10 * c.d.size() << "\\n";', BUF), '133')
 out('l11 s7: moved-from vector is empty after move construction and move assignment (libstdc++; the standard guarantees it only for construction)',
@@ -405,6 +413,8 @@ PORT = '#include <vector>\ndouble f(const std::vector<int>& fills, int n_fills) 
 for cc in ('g++', 'clang++'):
     rc, msg, _ = build(PORT, cc, ('-Wall', '-Wconversion'))
     claim('homework-1 h-port-note model: "-Wall -Wconversion also flags the implicit conversions" (%s)' % cc, 'homework-1.json', 'also flags the implicit conversions', rc == 0 and 'warning' in msg, 'no warning at all on the snippet: ' + repr(msg))
+    rc, msg, _ = build(PORT, cc, ('-Wall', '-Wextra', '-Wconversion'))
+    ok('homework-1 h-port-note fixed model: "g++ and clang print nothing for this code, even with -Wall -Wextra -Wconversion" (%s)' % cc, rc == 0 and msg == '', msg)
 if shutil.which('clang-tidy'):
     d = tempfile.mkdtemp(dir=TMP)
     open(os.path.join(d, 'port.cpp'), 'w').write(PORT)
@@ -439,7 +449,13 @@ if WASM:
     o = wasm('#include <iostream>\nint main() { double* px = new double[1000]; px[0] = 1; std::cout << px[0] << "\\n"; delete px; double* r = new double(1.0); delete r; delete r; std::cout << "ran\\n"; }\n', ('-fno-exceptions', '-w'))
     ok('wasm: l8 s5 and summary: mismatched delete and double delete run silently in the app build', 'ran' in o and 'EXIT 0' in o, o)
     o = wasm('#include <iostream>\nint main() { int* p = nullptr; std::cout << *p << "\\n"; }\n')
-    ok('wasm: l7 quiz0 the null read does not trap in the app build (the screen says a run printed 1)', 'EXIT 0' in o, o)
+    ok('wasm: l7 quiz0 the null read does not trap in the app build and printed 0 (fix pass: the screen now says 0)', o.strip().startswith('0') and 'EXIT 0' in o, o)
+    o = wasm('#include <algorithm>\n#include <vector>\n\nstruct Quote {\n    double bid;\n    double ask;\n};\n\nint main() {\n    std::vector<Quote> qs{{100.2, 100.4}, {99.9, 100.1}};\n    std::sort(qs.begin(), qs.end());   // line 11\n}\n')
+    ok('wasm: l13 s4 sorting Quotes with no < gives a message of hundreds of lines, even with the app\'s -ferror-limit=10 (%d lines)' % len(o.splitlines()), 'COMPILE-FAIL' in o and len(o.splitlines()) >= 200, o[:300])
+    o = wasm('#include <iostream>\n#include <vector>\nint main() {\n    std::vector<double> px{100.0, 101.0, 102.0};\n    const double& first = px[0];\n    px.push_back(103.0);\n    std::cout << first << "\\n";\n}\n')
+    ok('wasm: homework-2 h-realloc explain "a test run printed 2.8974e-306" with the app compiler', '2.8974e-306' in o, o)
+    o = wasm('#include <memory>\nstruct Book {};\nint main() { auto book = std::make_unique<Book>(); delete book; }\n')
+    ok('wasm: l9 s3 hint 3 (fixed): a kept delete book; on a unique_ptr does not compile', "cannot delete expression of type 'unique_ptr<Book>'" in o, o)
     o = wasm('#include <iostream>\n#include <vector>\nint main() { std::vector<double> px{100.0, 101.0, 102.0}; const double& first = px[0]; px.push_back(103.0); std::cout << first << "\\n"; }\n')
     print('info wasm: homework-2 h-realloc output in the app build:', o.replace('\n', ' | '))
     o = wasm('#include <iostream>\n#include <memory>\nstruct Order { int q; };\nvoid book_order(std::unique_ptr<Order> o) {}\nint main() {\n    auto a = std::make_unique<Order>(Order{100});\n    book_order(a);\n}\n')
