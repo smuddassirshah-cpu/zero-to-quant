@@ -167,67 +167,80 @@ PI = float(sp.pi)
 
 # ---------------------------------------------------------------- level 1
 if 1 in SETS:
-    # P1 bead on a semicircle, F = (2x - y, x + 2y), r = (3cos t, 3sin t), 0..pi
+    # P1 bead on a semicircle, F = (2x - y, x + 2y), r = (6cos t, 6sin t), 0..pi (radius 6 since the fix pass: radius 3 was review-1 r4-clockwise)
     F1 = lambda X, Y: (2 * X - Y, X + 2 * Y)
-    r1 = lambda s: (3 * np.cos(s), 3 * np.sin(s))
+    r1 = lambda s: (6 * np.cos(s), 6 * np.sin(s))
     Fs = sp.Matrix([2 * x - y, x + 2 * y])
     mag = sp.sqrt(Fs.dot(Fs).subs({x: 1, y: 3}))
     num(1, 'p-bead-semicircle', 1, mag, np.hypot(*F1(1, 3)), {'sum': -1 + 7, 'no-root': 50, 'abs-sum': 8}, rounded=7.071)
     expr(1, 'p-bead-semicircle', 2, sp.expand(Fs.dot(Fs)), {'no-square': sp.expand(sum(Fs)), 'coef': 3 * x**2 + 3 * y**2})
-    rs = sp.Matrix([3 * sp.cos(t), 3 * sp.sin(t)])
+    rs = sp.Matrix([6 * sp.cos(t), 6 * sp.sin(t)])
     Fr = Fs.subs({x: rs[0], y: rs[1]})
     speed = sp.sqrt(sp.simplify(rs.diff(t).dot(rs.diff(t))))
     I3 = sp.integrate(sp.sqrt(sp.simplify(Fr.dot(Fr))) * speed, (t, 0, sp.pi))
     I3n = scalar(lambda X, Y: np.hypot(*F1(X, Y)), r1, 0, PI)
-    ok(sp.simplify(I3 - 9 * sp.sqrt(5) * sp.pi) == 0, 'L1 P1 p3 exact is 9 sqrt5 pi')
-    num(1, 'p-bead-semicircle', 3, I3, I3n, {'no-speed': 3 * sp.sqrt(5) * sp.pi, 'squared': 45 * 3 * sp.pi, 'full-circle': 18 * sp.sqrt(5) * sp.pi}, rounded=63.22)
+    ok(sp.simplify(I3 - 36 * sp.sqrt(5) * sp.pi) == 0, 'L1 P1 p3 exact is 36 sqrt5 pi')
+    num(1, 'p-bead-semicircle', 3, I3, I3n, {'no-speed': 6 * sp.sqrt(5) * sp.pi, 'squared': 180 * 6 * sp.pi, 'full-circle': 72 * sp.sqrt(5) * sp.pi}, rounded=252.89)
     dot = sp.simplify(Fr.dot(rs.diff(t)))
-    ok(dot == 9, f'L1 P1 p4 dot is constant 9 ({dot})')
+    ok(dot == 36, f'L1 P1 p4 dot is constant 36 ({dot})')
     num(1, 'p-bead-semicircle', 4, dot, np.dot(F1(*r1(0.7)), d1(r1, 0.7)), {'position': sp.simplify(Fr.dot(rs)), 'magnitude': sp.simplify(Fr.dot(Fr))}, agree=1e-6)
     W = sp.integrate(dot, (t, 0, sp.pi))
     Wn = work(F1, r1, 0, PI)
-    num(1, 'p-bead-semicircle', 5, W / I3, Wn / I3n, {'inverse': I3 / W, 'no-integral': 9 / I3, 'full-circle': 2 * W / I3}, rounded=0.447)
+    num(1, 'p-bead-semicircle', 5, W / I3, Wn / I3n, {'inverse': I3 / W, 'no-integral': 36 / I3, 'full-circle': 2 * W / I3}, rounded=0.447)
     text(1, 'p-bead-semicircle', 1, '(-1, 7)', '\\sqrt{50} \\approx 7.071')
-    text(1, 'p-bead-semicircle', 3, '9\\sqrt5\\,\\pi \\approx 63.22')
-    text(1, 'p-bead-semicircle', 5, '9\\pi \\approx 28.27', '\\tfrac{1}{\\sqrt5} \\approx 0.447')
-    ok(abs(float(W) - 28.27) < 0.005, 'L1 P1 9 pi rounds to 28.27')
+    text(1, 'p-bead-semicircle', 3, '36\\sqrt5\\,\\pi \\approx 252.89', '6\\sqrt5')
+    text(1, 'p-bead-semicircle', 5, '36\\pi \\approx 113.10', '\\tfrac{1}{\\sqrt5} \\approx 0.447')
+    ok(abs(float(W) - 113.10) < 0.005, 'L1 P1 36 pi rounds to 113.10')
+    # second route: Green on the closed half disc (curl 2, area 18 pi, the diameter does no work), and the full circle by the radial/rotational split
+    diam = work(F1, lambda s: (-6 + 12 * s, 0), 0, 1)
+    ok(abs(2 * 18 * PI - diam - Wn) < 1e-6, 'L1 P1 W by Green on the closed half disc')
+    ok(abs(work(F1, lambda s: (6 * np.cos(s), 6 * np.sin(s)), 0, 2 * PI) - 72 * PI) < 1e-6, 'L1 P1 whole circle 72 pi')
+    ok(abs(work(F1, lambda s: (3 * np.cos(s), 3 * np.sin(s)), 0, PI) - 9 * PI) < 1e-6, 'L1 P1 radius 3 would give the review-1 value 9 pi (guard: the set must not use it)')
+    ok('x^2 + y^2 = 36' in SETS[1]['p-bead-semicircle']['prose'] and 'x^2 + y^2 = 9' not in json.dumps(SETS[1]['p-bead-semicircle']), 'L1 P1 states radius 6, not 3')
 
-    # P2 two routes, F = (xy, x + y), A: (t, t^3), B: (t, t)
+    # P2 two routes, F = (xy, x + y), A: (t, t^3), B: (t, 4t), t in 0..2 (end point (2, 8))
     F2 = lambda X, Y: (X * Y, X + Y)
     Fs = sp.Matrix([x * y, x + y])
-    rA = sp.Matrix([t, t**3]); rB = sp.Matrix([t, t])
+    rA = sp.Matrix([t, t**3]); rB = sp.Matrix([t, 4 * t])
     gA = sp.expand(Fs.subs({x: rA[0], y: rA[1]}).dot(rA.diff(t)))
     expr(1, 'p-two-routes-cubic', 1, gA, {'no-dot': sp.expand(sum(Fs.subs({x: t, y: t**3}))),
                                          'no-chain': sp.expand(Fs.subs({x: t, y: t**3}).dot(sp.Matrix([1, t**2])))})
-    WA = sp.integrate(gA, (t, 0, 1)); WAn = work(F2, lambda s: (s, s**3), 0, 1)
-    ok(WA == sp.Rational(29, 20), 'L1 P2 WA = 29/20')
-    num(1, 'p-two-routes-cubic', 2, WA, WAn, {'no-dot': sp.integrate(t**4 + t**3 + t, (t, 0, 1)),
-                                             'no-chain': sp.integrate(t**4 + t**3 + t**5, (t, 0, 1))}, rounded=1.45)
-    gB = sp.expand(Fs.subs({x: t, y: t}).dot(rB.diff(t)))
-    WB = sp.integrate(gB, (t, 0, 1)); WBn = work(F2, lambda s: (s, s), 0, 1)
-    num(1, 'p-two-routes-cubic', 3, WB, WBn, {'ds': WB * sp.sqrt(2), 'p-only': sp.integrate(t**2, (t, 0, 1)), 'q-only': sp.integrate(2 * t, (t, 0, 1))}, rounded=1.333)
+    WA = sp.integrate(gA, (t, 0, 2)); WAn = work(F2, lambda s: (s, s**3), 0, 2)
+    ok(WA == sp.Rational(252, 5), 'L1 P2 WA = 252/5')
+    num(1, 'p-two-routes-cubic', 2, WA, WAn, {'no-dot': sp.integrate(t**4 + t**3 + t, (t, 0, 2)),
+                                             'no-chain': sp.integrate(t**4 + t**3 + t**5, (t, 0, 2))}, rounded=50.4)
+    gB = sp.expand(Fs.subs({x: t, y: 4 * t}).dot(rB.diff(t)))
+    WB = sp.integrate(gB, (t, 0, 2)); WBn = work(F2, lambda s: (s, 4 * s), 0, 2)
+    num(1, 'p-two-routes-cubic', 3, WB, WBn, {'ds': WB * sp.sqrt(17), 'p-only': sp.integrate(4 * t**2, (t, 0, 2)), 'q-only': sp.integrate(20 * t, (t, 0, 2)),
+                                             'no-four': sp.integrate(4 * t**2 + 5 * t, (t, 0, 2))}, rounded=50.667)
     loop = WA - WB
-    loopn = work(F2, lambda s: (s, s**3), 0, 1) + work(F2, lambda s: (1 - s, 1 - s), 0, 1)
-    ok(loop == sp.Rational(7, 60), 'L1 P2 loop = 7/60')
-    num(1, 'p-two-routes-cubic', 4, loop, loopn, {'added': WA + WB, 'sign': -loop}, rounded=0.1167)
+    loopn = work(F2, lambda s: (s, s**3), 0, 2) + work(F2, lambda s: (2 - s, 4 * (2 - s)), 0, 2)
+    ok(loop == sp.Rational(-4, 15), 'L1 P2 loop = -4/15')
+    # second route: Green, A below B on 0 < x < 2 so the loop (out along A, back along B) is anticlockwise: iint (Q_x - P_y) dA = iint (1 - x) dA
+    green = sp.integrate(sp.integrate(1 - x, (y, x**3, 4 * x)), (x, 0, 2))
+    ok(green == loop, f'L1 P2 loop by Green {green}')
+    ok(all(4 * s > s**3 for s in (0.5, 1, 1.9)), 'L1 P2 A lies below B')
+    num(1, 'p-two-routes-cubic', 4, loop, loopn, {'added': WA + WB, 'sign': -loop}, rounded=-0.2667)
     ok(sp.diff(Fs[0], y) != sp.diff(Fs[1], x), 'L1 P2 P_y = x differs from Q_x = 1')
     choice(1, 'p-two-routes-cubic', 5, 'a', 4)
-    text(1, 'p-two-routes-cubic', 2, '\\tfrac{29}{20} = 1.45')
-    text(1, 'p-two-routes-cubic', 4, '\\tfrac{87 - 80}{60} = \\tfrac{7}{60} \\approx 0.1167')
+    text(1, 'p-two-routes-cubic', 2, '\\tfrac{252}{5} = 50.4')
+    text(1, 'p-two-routes-cubic', 4, '\\tfrac{756 - 760}{15} = -\\tfrac{4}{15} \\approx -0.2667')
 
-    # P3 F = (3x^2 + y^2, 2xy), potential x^3 + xy^2
-    Fs = sp.Matrix([3 * x**2 + y**2, 2 * x * y])
-    expr(1, 'p-cubic-potential', 1, tuple(Fs.subs({x: 1, y: 2})), {'y-not-squared': (sp.Integer(5), sp.Integer(4)), 'swap': (sp.Integer(4), sp.Integer(7))})
+    # P3 F = (4x^3 + 3y^2, 6xy), potential x^4 + 3xy^2 (the multivar r1-partial-y function was x^3 + xy^2 + y)
+    Fs = sp.Matrix([4 * x**3 + 3 * y**2, 6 * x * y])
+    expr(1, 'p-cubic-potential', 1, tuple(Fs.subs({x: 1, y: 2})), {'y-not-squared': (sp.Integer(10), sp.Integer(12)), 'swap': (sp.Integer(12), sp.Integer(16))})
     expr(1, 'p-cubic-potential', 2, sp.diff(Fs[0], y), {'px': sp.diff(Fs[0], x), 'qy': sp.diff(Fs[1], y)})
     ok(sp.diff(Fs[0], y) == sp.diff(Fs[1], x), 'L1 P3 P_y = Q_x')
-    f = x**3 + x * y**2
+    f = x**4 + 3 * x * y**2
     ok(sp.simplify(sp.Matrix([f.diff(x), f.diff(y)]) - Fs) == sp.zeros(2, 1), 'L1 P3 grad f = F')
-    expr(1, 'p-cubic-potential', 3, f, {'double': x**3 + 2 * x * y**2, 'wrong-var': x**3 + x**2 * y})
+    ok(sp.diff(Fs[0], y) == 6 * y, 'L1 P3 P_y = 6y')
+    expr(1, 'p-cubic-potential', 3, f, {'double': x**4 + 6 * x * y**2, 'wrong-var': x**4 + 3 * x**2 * y})
     Wf = f.subs({x: 2, y: 3}) - f.subs({x: 1, y: 0})
-    Wn = work(lambda X, Y: (3 * X**2 + Y**2, 2 * X * Y), lambda s: (1 + s, 3 * s**2), 0, 1)   # a curved path from (1,0) to (2,3)
-    g2 = x**3 + 2 * x * y**2
+    Wn = work(lambda X, Y: (4 * X**3 + 3 * Y**2, 6 * X * Y), lambda s: (1 + s, 3 * s**2), 0, 1)   # a curved path from (1,0) to (2,3)
+    g2 = x**4 + 6 * x * y**2
     num(1, 'p-cubic-potential', 4, Wf, Wn, {'end-only': f.subs({x: 2, y: 3}), 'double': g2.subs({x: 2, y: 3}) - g2.subs({x: 1, y: 0})})
-    text(1, 'p-cubic-potential', 4, '(8 + 18) - 1 = 25')
+    text(1, 'p-cubic-potential', 4, '(16 + 54) - 1 = 69')
+    ok(Wf == 69, 'L1 P3 work is 69')
 
     # P4 family (y^2 + ky, 2xy + 3x), ellipse (2cos t, 5sin t)
     Fk = sp.Matrix([y**2 + k * y, 2 * x * y + 3 * x])
@@ -309,7 +322,12 @@ if 2 in SETS:
     num(2, 'p-cycloid-arch', 2, A, An2, {'sign': -A, 'cos-sq': 2 * sp.pi, 'square': sp.integrate(1 - sp.cos(t)**2, (t, 0, 2 * sp.pi))}, rounded=9.42)
     Pm = -y**2 / 2
     ok(sp.simplify(-sp.diff(Pm, y) - y) == 0, 'L2 Q2 -P_y = y')
-    expr(2, 'p-cycloid-arch', 3, Pm, {'sign': -Pm, 'no-half': -y**2})
+    ok(Pm.free_symbols == {y} and Pm.subs(y, 0) == 0, 'L2 Q2 P is a function of y alone and 0 on the axis (the part states both, so the key is unique)')
+    expr(2, 'p-cycloid-arch', 3, Pm, {'sign': -Pm, 'no-half': -y**2, 'x-term': Pm + x, 'constant': Pm + 1})
+    ok(sp.simplify(-sp.diff(Pm + x, y) - y) == 0 and sp.simplify(-sp.diff(Pm + 1, y) - y) == 0, 'L2 Q2 the x-term and constant slips do satisfy -P_y = y, so only the wording refuses them')
+    text(2, 'p-cycloid-arch', 3, 'a function of $y$ alone with $P = 0$ on the axis $y = 0$')
+    ok('centroid' not in json.dumps(SETS[2]['p-cycloid-arch']), 'L2 Q2 no undefined term centroid')
+    text(2, 'p-cycloid-arch', 5, 'mean height')
     My = sp.integrate(Pm.subs(y, Y_) * sp.diff(X_, t), (t, 2 * sp.pi, 0))
     # second method: double integral of y under the arch, as integral over the arch of y^2/2 dx
     Myn = integrate.quad(lambda s: 0.5 * rc(s)[1]**2 * d1(rc, s)[0], 0, 2 * PI)[0]
@@ -320,25 +338,27 @@ if 2 in SETS:
     text(2, 'p-cycloid-arch', 2, '3\\pi \\approx 9.42')
     text(2, 'p-cycloid-arch', 4, '\\tfrac{5\\pi}{2} \\approx 7.85')
 
-    # Q3 triangle (0,0),(4,0),(0,2), F = (x^2 + y, 2xy)
+    # Q3 triangle (0,0),(3,0),(0,6), F = (x^2 + y, 2xy)
     P, Q = x**2 + y, 2 * x * y
     Fn = lambda X, Y: (X**2 + Y, 2 * X * Y)
     div = sp.diff(P, x) + sp.diff(Q, y)
     expr(2, 'p-triangle-flux', 1, div, {'curl': sp.diff(Q, x) - sp.diff(P, y), 'only-p': sp.diff(P, x)})
-    flux = sp.integrate(div, (y, 0, 2 - x / 2), (x, 0, 4))
-    V = [(0, 0), (4, 0), (0, 2)]
+    flux = sp.integrate(div, (y, 0, 6 - 2 * x), (x, 0, 3))
+    V = [(0, 0), (3, 0), (0, 6)]
     fluxn = sum(edge_flux(Fn, A_, B_) for A_, B_ in zip(V, V[1:] + V[:1]))
     curl = sp.diff(Q, x) - sp.diff(P, y)
-    num(2, 'p-triangle-flux', 2, flux, fluxn, {'curl': sp.integrate(curl, (y, 0, 2 - x / 2), (x, 0, 4)),
-                                               'rectangle': sp.integrate(div, (y, 0, 2), (x, 0, 4)),
-                                               'only-p': sp.integrate(2 * x, (y, 0, 2 - x / 2), (x, 0, 4))}, rounded=21.33)
-    leftf = sp.integrate(-P.subs(x, 0), (y, 0, 2))
-    num(2, 'p-triangle-flux', 3, leftf, edge_flux(Fn, (0, 2), (0, 0)), {'sign': -leftf, 'tangent': 0})
-    ok(abs(edge_flux(Fn, (0, 0), (4, 0))) < 1e-12, 'L2 Q3 bottom edge flux 0')
+    ok(flux == 36, 'L2 Q3 flux is 36')
+    num(2, 'p-triangle-flux', 2, flux, fluxn, {'curl': sp.integrate(curl, (y, 0, 6 - 2 * x), (x, 0, 3)),
+                                               'rectangle': sp.integrate(div, (y, 0, 6), (x, 0, 3)),
+                                               'only-p': sp.integrate(2 * x, (y, 0, 6 - 2 * x), (x, 0, 3))}, rounded=36)
+    leftf = sp.integrate(-P.subs(x, 0), (y, 0, 6))
+    num(2, 'p-triangle-flux', 3, leftf, edge_flux(Fn, (0, 6), (0, 0)), {'sign': -leftf, 'tangent': 0})
+    ok(abs(edge_flux(Fn, (0, 0), (3, 0))) < 1e-12, 'L2 Q3 bottom edge flux 0')
     longf = flux - leftf
-    num(2, 'p-triangle-flux', 4, longf, edge_flux(Fn, (4, 0), (0, 2)), {'add-edge': flux + leftf, 'all-out': flux}, rounded=23.33)
-    text(2, 'p-triangle-flux', 2, '64 - \\tfrac{128}{3} = \\tfrac{64}{3}', '\\tfrac{64}{3} \\approx 21.33')
-    text(2, 'p-triangle-flux', 4, '\\tfrac{70}{3} \\approx 23.33')
+    num(2, 'p-triangle-flux', 4, longf, edge_flux(Fn, (3, 0), (0, 6)), {'add-edge': flux + leftf, 'all-out': flux}, rounded=54)
+    ok(longf == 54 and leftf == -18, 'L2 Q3 long edge 54, left edge -18')
+    text(2, 'p-triangle-flux', 2, '108 - 72 = 36', 'normal form of Green')
+    text(2, 'p-triangle-flux', 4, '36 + 18 = 54')
 
     # Q4 quadrilateral (0,0),(5,1),(4,5),(1,3), F = (2x - 4y, x + y)
     V = [(0, 0), (5, 1), (4, 5), (1, 3)]
@@ -418,6 +438,7 @@ if 3 in SETS:
     zonly = 5 * 3 * sp.pi
     signn = sp.integrate(sp.integrate(sp.expand(Fv.dot(sp.Matrix([y, x, 1]))).subs(pol) * rr, (rr, 0, sp.sqrt(3))), (th, 0, 2 * sp.pi))
     num(3, 'p-saddle-roof', 4, fl, fln, {'down': -fl, 'z-only': zonly, 'sign-normal': signn}, rounded=32.99, agree=1e-6)
+    ok('roof' not in json.dumps(SETS[3]['p-saddle-roof']).replace('p-saddle-roof', ''), 'L3 R1 a canopy, not a roof (l10 rain on a roof)')
     text(3, 'p-saddle-roof', 3, '\\tfrac{14\\pi}{3} \\approx 14.66', '\\tfrac73')
     text(3, 'p-saddle-roof', 4, '\\tfrac{21\\pi}{2} \\approx 32.99', '\\tfrac{9\\pi}{2}')
 
@@ -441,7 +462,8 @@ if 3 in SETS:
     num(3, 'p-open-tank', 4, walls, sum(v for kf, v in faces.items() if kf != 'z2'), {'added': tot + lid, 'from-16': box(z + 2 * y) - lid})
     ok(abs(faces['x4'] - 8) < 1e-9 and abs(faces['y1'] - 8) < 1e-9, 'L3 R2 walls x = 4 and y = 1 give 8 each')
     text(3, 'p-open-tank', 2, '8 + 8 + 24 = 40')
-    text(3, 'p-open-tank', 4, '40 - 24 = 16')
+    text(3, 'p-open-tank', 4, '40 - 24 = 16', 'floor')
+    ok('five walls' not in json.dumps(SETS[3]['p-open-tank']), 'L3 R2 no five walls')
 
     # R3 plane z = 2 - x inside x^2 + y^2 = 4, F = (-yz, xz, xy + 3y)
     F = sp.Matrix([-y * z, x * z, x * y + 3 * y])

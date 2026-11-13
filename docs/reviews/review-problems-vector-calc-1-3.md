@@ -120,3 +120,27 @@ Result. All 53 typed keys and the choice key agree with mine, by both routes. So
 3. `fresh-check.mjs --file` gives no line for findings 1, 2, 4 or 7: a shared curve with a shared integrand under a different field, a shared pair of end points with a shared second route, a shared polygon given by its corners (across courses and against a plane's intercepts), a shared story noun in a lesson title.
 
 Inbox bullets: `docs/BACKLOG-INBOX.md`, `Raised later (review problems vector-calc):`.
+
+## Fix pass
+
+Each corrected number was recomputed here twice (sympy exact, scipy quad on the field itself) in `docs/reports/problems-vector-calc-numbers.py`, and again by the reader's script. Before pasting, `app/content/` was grepped for the new region, integrand, curve, field, potential and key numbers: no hit outside the problem itself (the `(0, 6)`, `6 - 2x` and `36\pi` hits are other settings: a normal distribution, a slope line, a Jacobian, lone multiples of pi in l7, l11, homework-3 and `eigen`).
+
+1. fixed: `p-bead-semicircle` on the circle of radius 6, `r(t) = (6 cos t, 6 sin t)`. Keys: part 3 252.8933 (`36 sqrt5 pi`), part 4 36, part 5 unchanged 0.4472. Slips: no-speed 42.1489, squared 3392.92, full-circle 505.7867, position 72, magnitude 180. Also checked by Green on the closed half disc (curl 2, area 18 pi, diameter 0) and the whole circle 72 pi.
+2. fixed: `p-two-routes-cubic` from (0, 0) to (2, 8), A `(t, t^3)`, B `(t, 4t)`, `0 <= t <= 2`. Keys: 252/5 = 50.4 (asked to 1 place), 152/3 = 50.66667, loop -4/15 = -0.266667 (also by Green, A below B). Slips: no-dot 12.4, no-chain 21.0667, ds 208.904, p-only 10.6667, q-only 40, new no-four 20.6667, added 101.0667, sign 0.266667. The choice keeps option a; option b now reads "the loop work is small beside the work on each route".
+3. fixed (ruling: reuse is app-wide): `p-cubic-potential` with `F = (4x^3 + 3y^2, 6xy)`, potential `x^4 + 3xy^2`. Keys: (16, 12), 6y, the potential, work 69 (f(2, 3) = 70, f(1, 0) = 1; also on a straight and a bent path). Slips: (10, 12), (12, 16), 12x^2, 6x, x^4 + 6xy^2, x^4 + 3x^2 y, 70, 123.
+4. fixed: `p-triangle-flux` on the triangle (0, 0), (3, 0), (0, 6). Keys: 36 (whole number), -18, 54. Slips: curl 27, rectangle 108, only-p 18, sign 18, tangent 0, add-edge 18, all-out 36. Edges 0, 54, -18 add to 36; the long edge was also checked by parametrising `(3 - 3t, 6t)`.
+5. fixed (ruling: wording the course teaches): "centroid" is gone; the prose defines the mean height as `(1/A) iint_D y dA` and parts 3 and 5 say "mean height". Explanation: "sits below half way" (62% of the area lies below y = 1, as the reader checked).
+6. fixed (ruling: make P unique): part 3 asks for "P, a function of y alone with P = 0 on the axis y = 0". Key and forms unchanged. `-y^2/2 + x` and `-y^2/2 + 1` satisfy `-P_y = y` but break the stated conditions, so they are two new `wrong` entries (`x-term`, `constant`) with their own lines. Real grader (`review-problems-vector-calc-1-3-scripts/grade-probe.mjs`, rows updated): both refused on their own line, `-y^2/2`, `-y^2/2` in the accepted spellings still graded correct, 703 checks and 0 failures.
+7. fixed: `p-saddle-roof` is a canopy in the wind (prose, parts 3 and 4, the "tilted" line in `flat`). No "canopy" elsewhere in `app/content`.
+8. fixed: `p-open-tank` says "the four walls and the floor" in prose, part 4 question, its three feedback lines and the explanation (now two sentences, so the `O2` warning does not appear).
+9. deferred: main session ruling. The sets keep "anticlockwise" (British; 40 files of the app use it); the vector-calc lessons get their own pass.
+10. fixed: "The normal form of Green's theorem" in `p-triangle-flux` part 2 and `p-quadrilateral-plot` part 3.
+
+Changed keys: `problems-1` p-bead-semicircle parts 3 and 4; p-two-routes-cubic parts 2, 3 and 4; p-cubic-potential parts 1 to 4. `problems-2` p-triangle-flux parts 2 to 4. Fixed counts: 9 fixed, 0 disputed, 1 deferred. Graded answers changed: 12 (and 2 `wrong` entries added in p-cycloid-arch part 3, 1 in p-two-routes-cubic part 3).
+
+Gates (worktree):
+- `problems-vector-calc-numbers.py`: 782 of 782, exit 0. `problems-vector-calc-numbers-read.py`: 826 checks, 0 failed. Both fail on the old values (keys, slips, wording checks).
+- `grade-probe.mjs`: 703 checks, 0 failures, 1 row held (Engine note 1).
+- validator: 0 errors; voice scan 35: 0 and 0; `manifest.json` restored.
+- `grade-all.mjs --file`: 19, 17 and 18 widgets, 0 failures.
+- `playthrough.mjs --problems vector-calc/problems-1`, `-2`, `-3`, with and without `--mobile`: All passed.

@@ -98,7 +98,7 @@ def num_key(n, item, kp, truth, wrongs=None, places=None):
         coarse = round(tv, places - 1)
         if abs(coarse - tv) > 1e-9:
             chk('%d %s %d the value to %d places (%s) is outside the band' % (n, item, kp, places - 1, coarse), abs(coarse - w['answer']) > tol)
-        chk('%d %s %d the question names the form' % (n, item, kp), ('%d decimal places' % places in p['question']) or ('to %d places' % places in p['question']))
+        chk('%d %s %d the question names the form' % (n, item, kp), ('%d decimal places' % places in p['question']) or ('to %d place' % places in p['question']))
     else:
         chk('%d %s %d whole-number key with zero tolerance' % (n, item, kp), tol == 0 and float(w['answer']).is_integer() and 'whole number' in p['question'])
     got = {e['id']: e for e in w.get('wrong', [])}
@@ -171,7 +171,7 @@ def polar(f, R):
 # =====================================================================================================================
 I = 'p-bead-semicircle'
 F = [2 * x - y, x + 2 * y]
-circ = [3 * cos(t), 3 * sin(t)]
+circ = [6 * cos(t), 6 * sin(t)]
 F13 = [Fi.subs({x: 1, y: 3}) for Fi in F]
 chk('bead: F(1, 3) = (-1, 7)', F13 == [-1, 7])
 num_key(1, I, 1, sqrt(F13[0] ** 2 + F13[1] ** 2), {'sum': F13[0] + F13[1], 'no-root': F13[0] ** 2 + F13[1] ** 2, 'abs-sum': abs(F13[0]) + abs(F13[1])}, places=3)
@@ -180,55 +180,57 @@ expr_key(1, I, 2, F2, {'no-square': F[0] + F[1], 'coef': 3 * x ** 2 + 3 * y ** 2
 onc = {x: circ[0], y: circ[1]}
 size = sqrt(sp.simplify(F2.subs(onc)))
 speed = sp.simplify(sqrt(sp.diff(circ[0], t) ** 2 + sp.diff(circ[1], t) ** 2))
-chk('bead: |F| = 3 sqrt5 on the circle, speed 3', same(size, 3 * sqrt(5)) and speed == 3)
+chk('bead: |F| = 6 sqrt5 on the circle, speed 6', same(size, 6 * sqrt(5)) and speed == 6)
 S = integrate(size * speed, (t, 0, pi))
-chk('bead: scalar integral 9 sqrt5 pi, also |F| times the arc length 3 pi', same(S, 9 * sqrt(5) * pi) and same(S, size * 3 * pi))
+chk('bead: scalar integral 36 sqrt5 pi, also |F| times the arc length 6 pi', same(S, 36 * sqrt(5) * pi) and same(S, size * 6 * pi))
 num_key(1, I, 3, S, {'no-speed': integrate(size, (t, 0, pi)), 'squared': integrate(size ** 2 * speed, (t, 0, pi)), 'full-circle': integrate(size * speed, (t, 0, 2 * pi))}, places=2)
 dot = sp.simplify(sum(Fi.subs(onc) * sp.diff(ci, t) for Fi, ci in zip(F, circ)))
 num_key(1, I, 4, dot, {'position': sp.simplify(sum(Fi.subs(onc) * ci for Fi, ci in zip(F, circ))), 'magnitude': size ** 2})
 W = line(F, circ, 0, pi)
 # route 2: close the path with the diameter and use Green. Curl 2 over the half disc of area 9 pi / 2; the diameter gives 0.
 curlF = sp.diff(F[1], x) - sp.diff(F[0], y)
-diam = line(F, seg((-3, 0), (3, 0)), 0, 1)
-chk('bead: work 9 pi directly and by Green on the closed half disc', same(W, 9 * pi) and same(curlF * Rat(9, 2) * pi - diam, W) and diam == 0)
+diam = line(F, seg((-6, 0), (6, 0)), 0, 1)
+chk('bead: work 36 pi directly and by Green on the closed half disc (area 18 pi)', same(W, 36 * pi) and same(curlF * 18 * pi - diam, W) and diam == 0)
 num_key(1, I, 5, W / S, {'inverse': S / W, 'no-integral': dot / S, 'full-circle': line(F, circ, 0, 2 * pi) / S}, places=3)
-says(1, I, 5, 'explain', '28.27')
-chk('bead: 9 pi = 28.27', round(float(9 * pi), 2) == 28.27)
+says(1, I, 5, 'explain', '113.10')
+chk('bead: 36 pi = 113.10', round(float(36 * pi), 2) == 113.10)
+chk('bead: not review-1 r4-clockwise (radius 3): the prose has radius 6', 'x^2 + y^2 = 36' in SETS[1]['items'][0]['prose'] and 'x^2 + y^2 = 9' not in json.dumps(SETS[1]['items'][0]))
 # the claim in the last explanation: the tangential share is the same at every point
 chk('bead: tangential part / |F| = 1/sqrt5 at every t', same(dot / speed / size, 1 / sqrt(5)))
 
 I = 'p-two-routes-cubic'
 F = [x * y, x + y]
-A, B = [t, t ** 3], [t, t]
+A, B = [t, t ** 3], [t, 4 * t]
 intA = sp.expand(sum(Fi.subs({x: A[0], y: A[1]}) * sp.diff(ci, t) for Fi, ci in zip(F, A)))
 expr_key(1, I, 1, intA, {'no-dot': t ** 4 + t + t ** 3, 'no-chain': t ** 4 + (t + t ** 3) * t ** 2})
-WA, WB = line(F, A, 0, 1), line(F, B, 0, 1)
-num_key(1, I, 2, WA, {'no-dot': integrate(t ** 4 + t + t ** 3, (t, 0, 1)), 'no-chain': integrate(t ** 4 + (t + t ** 3) * t ** 2, (t, 0, 1))}, places=2)
-chk('routes: W_A = 29/20', WA == Rat(29, 20))
-num_key(1, I, 3, WB, {'ds': WB * sqrt(2), 'p-only': integrate(t ** 2, (t, 0, 1)), 'q-only': integrate(2 * t, (t, 0, 1))}, places=3)
-chk('routes: W_B = 4/3', WB == Rat(4, 3))
+WA, WB = line(F, A, 0, 2), line(F, B, 0, 2)
+num_key(1, I, 2, WA, {'no-dot': integrate(t ** 4 + t + t ** 3, (t, 0, 2)), 'no-chain': integrate(t ** 4 + (t + t ** 3) * t ** 2, (t, 0, 2))}, places=1)
+chk('routes: W_A = 252/5', WA == Rat(252, 5))
+num_key(1, I, 3, WB, {'ds': WB * sqrt(17), 'p-only': integrate(4 * t ** 2, (t, 0, 2)), 'q-only': integrate(20 * t, (t, 0, 2)), 'no-four': integrate(4 * t ** 2 + 5 * t, (t, 0, 2))}, places=3)
+chk('routes: W_B = 152/3', WB == Rat(152, 3))
 loop = WA - WB
-# route 2: Green. Out along the lower curve y = x^3 and back along y = x is anticlockwise.
-green = integrate(integrate(sp.diff(F[1], x) - sp.diff(F[0], y), (y, x ** 3, x)), (x, 0, 1))
-chk('routes: loop work 7/60 directly and by Green', loop == Rat(7, 60) and green == loop)
+# route 2: Green. Out along the lower curve y = x^3 and back along y = 4x is anticlockwise (x^3 < 4x on 0 < x < 2).
+green = integrate(integrate(sp.diff(F[1], x) - sp.diff(F[0], y), (y, x ** 3, 4 * x)), (x, 0, 2))
+chk('routes: loop work -4/15 directly and by Green', loop == Rat(-4, 15) and green == loop)
 num_key(1, I, 4, loop, {'added': WA + WB, 'sign': WB - WA}, places=4)
 ch = part(1, I, 5)['widget']
 chk('routes: the choice key is the "not conservative" option', [o['id'] for o in ch['options'] if o.get('correct')] == ['a'])
 chk('routes: P_y = x and Q_x = 1 differ', sp.diff(F[0], y) == x and sp.diff(F[1], x) == 1)
+chk('routes: not the frame of homework-1 h1-two-paths (end point (1, 1), second route (t, t))', '(2, 8)' in SETS[1]['items'][1]['prose'] and '(t, 4t)' in SETS[1]['items'][1]['prose'])
 
 I = 'p-cubic-potential'
-F = [3 * x ** 2 + y ** 2, 2 * x * y]
-expr_key(1, I, 1, [Fi.subs({x: 1, y: 2}) for Fi in F], {'y-not-squared': [3 + 2, 4], 'swap': [4, 7]}, vector=True)
+F = [4 * x ** 3 + 3 * y ** 2, 6 * x * y]
+expr_key(1, I, 1, [Fi.subs({x: 1, y: 2}) for Fi in F], {'y-not-squared': [4 + 3 * 2, 12], 'swap': [12, 16]}, vector=True)
 expr_key(1, I, 2, sp.diff(F[0], y), {'px': sp.diff(F[0], x), 'qy': sp.diff(F[1], y)})
 chk('cubic: curl 0 on the whole plane (polynomial field, no hole)', sp.diff(F[1], x) - sp.diff(F[0], y) == 0)
-f = x ** 3 + x * y ** 2
+f = x ** 4 + 3 * x * y ** 2
 chk('cubic: grad f = F and f(0, 0) = 0', same(sp.diff(f, x), F[0]) and same(sp.diff(f, y), F[1]) and f.subs({x: 0, y: 0}) == 0)
 fd = integrate(F[0], x) + integrate(F[1], y)
-expr_key(1, I, 3, f, {'double': fd, 'wrong-var': x ** 3 + integrate(F[1], x)})
+expr_key(1, I, 3, f, {'double': fd, 'wrong-var': x ** 4 + integrate(F[1], x)})
 Wp = f.subs({x: 2, y: 3}) - f.subs({x: 1, y: 0})
 straight = line(F, seg((1, 0), (2, 3)), 0, 1)
 bent = line(F, seg((1, 0), (1, 3)), 0, 1) + line(F, seg((1, 3), (2, 3)), 0, 1)
-chk('cubic: work 25 by the potential, on the straight path and on a bent path', Wp == 25 and straight == 25 and bent == 25)
+chk('cubic: work 69 by the potential, on the straight path and on a bent path', Wp == 69 and straight == 69 and bent == 69)
 num_key(1, I, 4, Wp, {'end-only': f.subs({x: 2, y: 3}), 'double': fd.subs({x: 2, y: 3}) - fd.subs({x: 1, y: 0})})
 
 I = 'p-ellipse-family'
@@ -281,7 +283,12 @@ chk('cycloid: area 3 pi by -oint y dx and by oint x dy', same(A1, 3 * pi) and sa
 num_key(2, I, 2, A1, {'sign': -A1, 'cos-sq': integrate(1 - 2 * cos(t), (t, 0, 2 * pi)), 'square': integrate(1 - cos(t) ** 2, (t, 0, 2 * pi))}, places=2)
 Pm = -y ** 2 / 2
 chk('cycloid: Q_x - P_y = y for P = -y^2/2, Q = 0', sp.diff(0, x) - sp.diff(Pm, y) == y)
-expr_key(2, I, 3, Pm, {'sign': -Pm, 'no-half': -y ** 2})
+expr_key(2, I, 3, Pm, {'sign': -Pm, 'no-half': -y ** 2, 'x-term': Pm + x, 'constant': Pm + 1})
+# the part now fixes P: a function of y alone, 0 on the axis. Every P with -P_y = y is -y^2/2 + g(x); the wording leaves only g = 0.
+chk('cycloid: P = -y^2/2 depends on y alone and is 0 at y = 0', Pm.free_symbols == {y} and Pm.subs(y, 0) == 0)
+chk('cycloid: the x-term and constant slips satisfy -P_y = y but not the stated conditions', all(sp.diff(0, x) - sp.diff(g, y) == y for g in (Pm + x, Pm + 1)) and (Pm + x).free_symbols != {y} and (Pm + 1).subs(y, 0) != 0)
+says(2, I, 3, 'question', 'a function of $y$ alone with $P = 0$ on the axis $y = 0$')
+chk('cycloid: "centroid" is gone, "mean height" is used', 'centroid' not in json.dumps(SETS[2]['items'][1]) and 'mean height' in json.dumps(SETS[2]['items'][1]))
 M1 = integrate(Pm.subs(y, cyc[1]) * sp.diff(cyc[0], t), (t, 2 * pi, 0))          # oint P dx
 M2 = integrate((cyc[0] * cyc[1]) * sp.diff(cyc[1], t), (t, 2 * pi, 0))           # oint xy dy: Q = xy has Q_x = y
 chk('cycloid: moment 5 pi / 2 by oint P dx and by oint xy dy', same(M1, 5 * pi / 2) and same(M2, 5 * pi / 2))
@@ -297,14 +304,14 @@ F = [x ** 2 + y, 2 * x * y]
 dv = sp.diff(F[0], x) + sp.diff(F[1], y)
 cu = sp.diff(F[1], x) - sp.diff(F[0], y)
 expr_key(2, I, 1, dv, {'curl': cu, 'only-p': sp.diff(F[0], x)})
-tri = lambda g: integrate(integrate(g, (y, 0, 2 - x / 2)), (x, 0, 4))
+tri = lambda g: integrate(integrate(g, (y, 0, 6 - 2 * x)), (x, 0, 3))
 tot = tri(dv)
-cs = [(0, 0), (4, 0), (0, 2)]
+cs = [(0, 0), (3, 0), (0, 6)]
 fl = [flux2(F, seg(cs[i], cs[(i + 1) % 3]), 0, 1) for i in range(3)]             # bottom, long, left; anticlockwise so normal is outward
-chk('triangle: flux 64/3 by the divergence and 0, 70/3, -2 edge by edge', tot == Rat(64, 3) and fl == [0, Rat(70, 3), -2] and sum(fl) == tot)
-num_key(2, I, 2, tot, {'curl': tri(cu), 'rectangle': integrate(integrate(dv, (y, 0, 2)), (x, 0, 4)), 'only-p': tri(sp.diff(F[0], x))}, places=2)
-num_key(2, I, 3, fl[2], {'sign': -fl[2], 'tangent': integrate(F[1].subs(x, 0), (y, 0, 2))})
-num_key(2, I, 4, tot - fl[0] - fl[2], {'add-edge': tot + fl[2], 'all-out': tot}, places=2)
+chk('triangle: flux 36 by the divergence and 0, 54, -18 edge by edge', tot == 36 and fl == [0, 54, -18] and sum(fl) == tot)
+num_key(2, I, 2, tot, {'curl': tri(cu), 'rectangle': integrate(integrate(dv, (y, 0, 6)), (x, 0, 3)), 'only-p': tri(sp.diff(F[0], x))})
+num_key(2, I, 3, fl[2], {'sign': -fl[2], 'tangent': integrate(F[1].subs(x, 0), (y, 0, 6))})
+num_key(2, I, 4, tot - fl[0] - fl[2], {'add-edge': tot + fl[2], 'all-out': tot})
 
 I = 'p-quadrilateral-plot'
 F = [2 * x - 4 * y, x + y]
