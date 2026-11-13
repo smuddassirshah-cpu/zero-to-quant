@@ -79,3 +79,19 @@ Notes on the overlap:
 ## Inbox
 
 Three bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit py-found):`: a slip expression for choice options, a check of quoted interpreter messages, and a pointer to the reusable code-widget harness.
+
+## Fix pass
+
+Opus fixer, audit session 11. Each claim was run on CPython 3.13.18 before it was written. No graded key, tolerance, `wrong[]` value or slip value changed. The concepts script's `FINDING` checks needed no change: each new string satisfies the check as written.
+
+1. l7 `quiz[0].widget.options[1].why`: **fixed**. `scale(5, 1)` returns 5 and `scale(5, offset=1)` returns 11; 6 is 5 + 1, the offset added with no factor.
+2. l6 `screens[7].feedback.correct`: **fixed**. `type({*()})` and `type(set([]))` are both `set` and `type({})` is `dict`, so "only" is too strong; the new line keeps the braces point.
+3. l3 `screens[1].prose`: **fixed**. `type((5))` is `int`, `type((5,))` and `t = 1, 2` give `tuple`; Python reference 6.2.3 says the comma makes the tuple.
+4. l8 `summary.ideas[2]`: **fixed**. Purity means the result depends only on the arguments and nothing outside changes; the new line states both parts. `sorted` and `dict(book)` build new objects and leave their argument alone.
+5. l12 `screens[1].explain.text`: **fixed**. `shel.value(27.00)` and `Position.value(shel, 27.00)` both give 4050.0, so the object is the first parameter when the call is made on it, not always the name before the dot.
+6. l1 `screens[2].prose`: **fixed**. `sys.float_info.mant_dig` is 53 and 53 × log10(2) = 15.95; `sys.float_info.dig` is 15. "About 16 significant decimal digits" matches; 17 is the round-trip print length.
+7. Unverified, l2 `screens[10].prose`: **fixed differently**. Rewritten as a stated condition, not "Some traders": "A 5-day average is the mean of the latest five closes. Suppose a close above it counts as a sign of strength." No market-practice claim is left to source; the code and 103.48 are unchanged.
+8. Unverified, l9 `screens[6].prose`: **fixed differently**. Now a hypothetical: "Suppose a trader draws a band two standard deviations either side of the mean price." The frequency claim is gone; the band figures (98.97, 104.03) are unchanged.
+9. Unverified, homework-3 `items[0].prose`: **fixed differently**. "Handy for risk work" is replaced by a checkable claim: "the daily ones sum to the log return over the whole period". Run: the rounded daily log returns of [100.0, 101.2, 99.8, 100.4, 103.1] sum to 0.030529, which is ln(103.1/100) to six places, as hidden test 4 checks.
+
+Gates: validator 0 errors, 4,531 warnings, manifest unchanged. `py-found-L1-3-r2-concepts.py` exit 0 (453 of 453). `py-found-L1-3-concepts.py` exit 0. Number scripts unchanged at the known harness limit: L1 408 of 409, L2 386 of 387, L3 178 of 179. Voice scan 35: 0 and 0. Playthrough desktop and `--mobile` green for l1, l2, l3, l6, l7, l8, l9, l12 and homework-3.
