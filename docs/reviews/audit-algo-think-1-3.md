@@ -98,3 +98,36 @@ The earlier read made 11 algo-think findings. Two are conceptual: `homework-3` `
 New `wrong` findings that no earlier read found: **3** (findings 1, 2 and 3), over three levels. That is above the convergence limit of one per three levels, so the course needs another blind round after the fix pass.
 
 Note for the fixer: the earlier fix pass (its item 13) already quotes "about $3.4n$" for quickselect, which agrees with finding 17; the lesson text still says "about $2n$".
+
+## Fix pass
+
+Fixer: Opus, 13 Nov 2026. Every fix was re-derived by my own run (`tracemalloc`, counters, brute force) or source before it was written. Content strings only; no key id, tolerance, slip value or code widget (solution, starter, tests) changed, so no code widget needed re-running. One wrong option text changed (finding 4, option `d`).
+
+1. **fixed** (code changed, claim kept). Program A now loops over `prices` itself: `tracemalloc` peak 48 bytes at n = 10^4 and 10^5, against 80,040 and 800,040 for the slice; max still 108 on the screen's prices. Caption, options, hints and explain hold as written; no other screen, review or homework item reuses the program (`l1` uses the slice with no memory claim).
+2. **fixed**. `pre = [0, 3, 4, 8, 9, 14]`, so `pre[4] - pre[1] = 9 - 3 = 6`.
+3. **fixed**. My counter: 1,048,575 copies for 10^6 appends with doubling from capacity 1.
+4. **fixed differently**. Counted with the lesson's Lomuto and random pivot: 3,000 equal values cost 4,498,500 = n(n-1)/2 on every seed; 3,000 sorted distinct values cost 38,914. Question now says "With a random pivot and distinct values, which input order is the worst case?"; key `a` (id unchanged) reads "every order has expected cost $O(n \log n)$"; screen 4 explain as the auditor proposed. Differently: wrong option `d` "Input with no duplicates" no longer fits a question about order of distinct values, so it is now "An order chosen to beat the pivot", why "The input is fixed before the pivots are drawn, so no order can aim at them." The screen's explain on equal values now agrees with the question.
+5. **fixed**. Last-value pivot gives c, b, a; 200 seeds of the random pivot give both c, b, a and c, a, b.
+6. **fixed**. $2n\log n + 40n + 9 \le 60 n^2 \log n$ for $n \ge 2$ and $5n \le 5n^2$ (CLRS 3.1); convention sentence added to the prose, the two whys and the summary as proposed.
+7. **fixed differently**. Tripling copies 4 against 3 at n = 4 and 40 against 31 at n = 28, under $1.5n$ and $2n$ for every n to 3,000. Why now opens "Not in general:" so it rebuts the option rather than implying tripling always copies less.
+8. **fixed**. `sys.getsizeof` capacity ratio 1.125 (CPython `list_resize`, `newsize + (newsize >> 3) + 6`).
+9. **fixed**. Call k copies k - 1: sum 45 = 10·9/2 at n = 10, against 55 for $1 + \dots + n$.
+10. **fixed differently**. Levels of `fib(5)` are 1, 2, 4, 6, 2; for n = 2 to 17 the tree has n levels and levels 0 to ⌊n/2⌋ are full. Worded "`fib`'s calls shrink by 1 or 2: $n$ levels deep, doubling on each level of the top half." to stay under 20 words.
+11. **fixed**. $1 + 2 + 4 + 8 = 15 = 2 \cdot 8 - 1$; both feedback lines now show the doubling sum.
+12. **fixed differently**. Recursion r, a, a1, a2, b; loop r, b, a, a2, a1. Same content as proposed, split into two sentences.
+13. **fixed differently**. A nested function reads its enclosing `n` (run; language reference 4.2.2). Now "A function sees its own names and those of the code around it, here the module. It never sees its caller's."
+14. **fixed**. My run on `[10, 20, 30, 40]`: targets 5, 25, 35, 40 spin, 45 raises `IndexError`; the invariant makes `lo == hi < len(xs)` imply `xs[hi] >= target`, so these are the only two cases.
+15. **fixed**. 2,500 passes, so a scan from 1,000 runs at least 1,502 tests, more than 1,500.
+16. **fixed**. 64 reversed values: 2,016 inversions with 192 merge comparisons; when a right item is taken, every left item still waiting is bigger.
+17. **fixed**. Simulated random-pivot quickselect at n = 20,001: 3.34n for the median, 1.88n for the minimum; theory $2(1 + \ln 2) = 3.386$. Feedback, explain and `homework-3` as proposed.
+18. **fixed**. `[(9, 10), (10, 11)]` is a valid schedule under `s >= last_end`; line now "starts when $o$ ends or later".
+19. **fixed**. Hull 21.3 (known cash dividend: the tree does not recombine) and HJM non-recombining trees; `trees/course.json` name is "Pricing with Trees".
+20. **fixed**. CLRS 9.2 and 9.3: randomised select is quadratic in the worst case; median-of-medians is worst-case linear.
+21. **fixed**. NumPy `_var` takes the mean, then the mean squared deviation; Welford keeps count, mean and $M_2$, three numbers.
+22. **fixed**. £12.34 - £12.00 = 34p; the screen states no tolerance.
+- U1. **fixed** (stated as a condition). "When new levels land near the end, as here, insertion into a sorted list fits an order book well." 4 comparisons and 3 shifts rechecked for a level three places from the end.
+- U2. **fixed** (hedged). "Data can arrive sorted or nearly sorted, so a fixed first or last pivot is risky."
+
+Scripts: `docs/reports/algo-think-L1-3-concepts.py` now has 124 checks and exits 0. Each of the 19 FINDING checks was rewritten to read the corrected string from the content (helper `T()`) and recompute the corrected claim; the finding 1 check executes program A as it now stands in the prose and measures it, and one new check keeps the old slice's O(n) peak as evidence. Checks for findings 10 and 13 match my wording, not the auditor's. `algo-think-2-perf-numbers.py` and `algo-think-3-perf-numbers.py` exit 0.
+
+Gates: validator 0 errors, 4,531 warnings (as before), manifest unchanged; voice scan 35: 0 and 0; playthrough desktop and `--mobile` green for l2, l3, l4, l6, l8, l9, l10, l11, l13, l14, homework-1, homework-2, homework-3, review-2.
