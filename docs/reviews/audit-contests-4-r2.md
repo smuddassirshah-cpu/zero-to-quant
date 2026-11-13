@@ -2,16 +2,16 @@
 
 Auditor: Fable, round 2, blind to round 1, its fix pass, the author reports and the course's git history until the ledger and findings below were committed.
 Scope: `app/content/courses/contests/` files `l13-virtual-contest.json`, `l14-which-first.json`, `l15-debugging-under-time.json`, `l16-upsolving.json`, `review-4.json`, `homework-4.json`. Stage 2, full ledger. Paths count `screens[i]` and `items[i]` from 0.
-Ledger: `docs/reports/audit-contests-4-r2-ledger.md` (251 rows: correct 232, wrong 3, imprecise 8, misleading 1, unverified 7).
+Ledger: `docs/reports/audit-contests-4-r2-ledger.md` (251 rows: correct 232, wrong 2, imprecise 9, misleading 1, unverified 7).
 Script: `docs/reports/contests-L4-concepts-r2.py` (255 checks; exits 1 while findings 1 to 8 stand; no other check fails).
 
-Summary: 11 findings. Wrong 3 (all minor), imprecise 7 (all minor), misleading 1 (minor). No serious finding: every graded key, every worked figure and every code solution is right. All 16 code solutions pass their hidden tests natively and in Pyodide 0.27.7; all 16 starters fail. Of 51 `byKey.test-N` lines, 50 name or imply a mistake and were swept with a real submission (homework `max_profit_k` test-6 names none); 47 land on their own test, 3 do not (findings 1 to 3). There are no `byKey.error`, `compile` or C++ widgets in scope.
+Summary: 11 findings. Wrong 2 (both minor), imprecise 8 (all minor), misleading 1 (minor). No serious finding: every graded key, every worked figure and every code solution is right. All 16 code solutions pass their hidden tests natively and in Pyodide 0.27.7; all 16 starters fail. Of 51 `byKey.test-N` lines, 50 name or imply a mistake and were swept with a real submission (homework `max_profit_k` test-6 names none); 47 land on their own test, 3 do not (findings 1 to 3; finding 1's line is a true description of its test, so it is graded imprecise, not wrong). There are no `byKey.error`, `compile` or C++ widgets in scope.
 
 ## Findings
 
 Pattern: `N. file | JSON path | severity | serious or minor | problem | evidence and basis | exact fix`.
 
-1. l13-virtual-contest.json | `screens[5].feedback.byKey.test-2` | wrong | minor | The line explains a `can_ship` that wrongly says 11 ships in 3 days. The prose makes `min_capacity` call `can_ship`, so that mistake makes test 1 return less than 12 and fail first. The line then never shows for the mistake it explains. | Script, FINDING 1: a greedy that drops the overflowing order returns 8 on test 1 (key `test-1`, no line). Test 2 is the first failure only when `min_capacity` does not call `can_ship` (script: `can_ship` left unwritten, own check inside `min_capacity`). Basis: `app/js/engine/widgets/code.js` keys on the first failing row. | Add `"test-1": "Test 1 expects 12. If you got less, check `can_ship` at 11: it needs 4 days (4, then 8 and 2, then 7, then 5 and 3)."` and change `test-2` to `"Test 2 calls `can_ship` alone and asks whether 11 ships in 3 days. Greedily it needs 4 days: 4, then 8 and 2, then 7, then 5 and 3."`
+1. l13-virtual-contest.json | `screens[5].feedback.byKey.test-2` | imprecise | minor | The line explains a `can_ship` that wrongly says 11 ships in 3 days. The prose makes `min_capacity` call `can_ship`, so that mistake makes test 1 return less than 12 and fail first. The line then never shows for the mistake it explains. | Script, FINDING 1: a greedy that drops the overflowing order returns 8 on test 1 (key `test-1`, no line). Test 2 is the first failure only when `min_capacity` does not call `can_ship` (script: `can_ship` left unwritten, own check inside `min_capacity`). Basis: `app/js/engine/widgets/code.js` keys on the first failing row. | Add `"test-1": "Test 1 expects 12. If you got less, check `can_ship` at 11: it needs 4 days (4, then 8 and 2, then 7, then 5 and 3)."` and change `test-2` to `"Test 2 calls `can_ship` alone and asks whether 11 ships in 3 days. Greedily it needs 4 days: 4, then 8 and 2, then 7, then 5 and 3."`
 
 2. l15-debugging-under-time.json | `screens[4].feedback.byKey.test-6` | wrong | minor | The line's advice ("Count only pairs where the first is strictly larger") names the non-strict comparison. Every non-strict comparison fails test 3 first (`[2, 2]`), so this line never shows for it. It shows for other bugs, which the advice does not fit. | Script, FINDING 2: `>=` fails first at test 3. A submission that removes repeated values first passes tests 1 to 5 and fails first at test 6 (returns 1). | `"test-6": "Test 6, `[2, 1, 2, 1]`, has 3 inversions: the first 2 is above both 1s, and the second 2 is above the last 1. Keep repeated values in the list, because each copy makes its own pairs."`
 
@@ -61,7 +61,24 @@ Pattern: `N. file | JSON path | severity | serious or minor | problem | evidence
 
 ## Overlap with earlier reads
 
-(filled after the blind commit)
+Filled after the blind commit 63ce5a72 ("WIP: contests L4 r2 ledger and findings"), from `docs/reviews/audit-contests-4.md` (round 1: 14 findings, its fix pass and its fix-pass read) and `docs/reviews/review-contests-3-4.md` (level 4 conceptual findings 13, 14, 20, 21 and 22). All of those were fixed before this read, so this audit read the corrected text.
+
+| Count | Conceptual findings |
+| --- | --- |
+| This audit only | 11 (findings 1 to 11) |
+| Earlier reads only | 19 (round 1 findings 1 to 14; review findings 13, 14, 20, 21, 22) |
+| Both | 0 |
+
+New `wrong` findings, found by no earlier read: 2 (findings 2 and 3, both minor, both a `byKey` line that cannot show for the mistake it names). Round 1 swept the same two lines and passed them as "the line only describes the test and is true"; each also gives advice, and that advice fits only a mistake that fails an earlier test.
+
+How the 11 sit against the earlier reads:
+
+- Finding 6 is in text the round 1 fix pass wrote. Round 1's finding 9 proposed the sentence "the same model puts the best cap later, near 45 minutes", and the fix-pass read passed it. The figure is right; neither read asked whether D should come first once a solved problem can be left.
+- Finding 7 is on the desk screen that round 1's finding 11 repaired (it added the decay). The repair's explain says only two tasks fit; the feedback and hint were left saying three.
+- Finding 4 is next to round 1's inbox bullet on problem C (the test allows 0 `can_ship` calls), which this audit also met; the missing guard test is new.
+- Findings 1, 5, 8, 9, 10 and 11 touch text no earlier read flagged.
+- Nothing an earlier read fixed was found wrong again. The lines round 1 moved (l13 `test-5`, l14 `test-2` and `test-5`, l15 `test-3`, l16 `test-1`, homework `test-2` and `test-1`) all land on their tests in this sweep.
+- Unverified rows: round 1 listed 15 and rewrote all of them. Of this audit's 7, the rating estimates and the hiring facts behind the curriculum repeat round 1's classes; "100 to 200 above", the write-ups line and the interview sentence in l14 are new.
 
 ## Inbox
 

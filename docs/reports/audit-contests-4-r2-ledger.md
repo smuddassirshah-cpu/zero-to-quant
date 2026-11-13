@@ -2,7 +2,7 @@
 
 Files in `app/content/courses/contests/`. Every row was judged by hand. `script` is `docs/reports/contests-L4-concepts-r2.py`; Pyodide figures come from a run of the solutions in Pyodide 0.27.7 under node. Paths use `screens[i]` and `items[i]` from 0.
 
-Rows: 251. Verdicts: correct 232, wrong 3, imprecise 8, misleading 1, unverified 7.
+Rows: 251. Verdicts: correct 232, wrong 2, imprecise 9, misleading 1, unverified 7.
 
 | file | JSON path | claim | verdict | basis |
 | --- | --- | --- | --- | --- |
@@ -50,7 +50,7 @@ Rows: 251. Verdicts: correct 232, wrong 3, imprecise 8, misleading 1, unverified
 | l13-virtual-contest.json | screens[5].widget.how | 40 orders with a total of 1,807; 13 calls allowed | correct | script: total 1,807, heaviest 99, 11 calls used |
 | l13-virtual-contest.json | screens[5].hints | If c works so does every larger; greedy fills each day until the next order would overflow | correct | Monotone predicate; greedy stays-ahead |
 | l13-virtual-contest.json | screens[5].feedback.correct | About log2(total) checks | correct | ceil(log2(sum - max)) <= log2(total) |
-| l13-virtual-contest.json | screens[5].feedback.byKey.test-2 | Shown when can_ship miscounts 11 as shipping in 3 days | wrong | script FINDING 1: with min_capacity calling can_ship, any such miscount fails test 1 first; the line shows only when min_capacity bypasses can_ship |
+| l13-virtual-contest.json | screens[5].feedback.byKey.test-2 | Shown when can_ship miscounts 11 as shipping in 3 days | imprecise | script FINDING 1: with min_capacity calling can_ship, any such miscount fails test 1 first; the line shows only when min_capacity bypasses can_ship |
 | l13-virtual-contest.json | screens[5].feedback.byKey.test-2 | 11 needs 4 days: 4 / 8 2 / 7 / 5 3 | correct | Hand trace; script |
 | l13-virtual-contest.json | screens[5].feedback.byKey.test-4 | Order of 5, van of 4: return False | correct | script: a greedy that carries an overweight order alone fails first at test 4 |
 | l13-virtual-contest.json | screens[5].feedback.byKey.test-10 | More than 13 calls: search between heaviest and total, halving | correct | script: bounds 1..1e9 (30 calls) and a scan (811 calls) both fail first at test 10 |
