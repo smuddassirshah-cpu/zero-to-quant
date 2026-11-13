@@ -2387,3 +2387,5 @@ Raised later (audit ds):
 - [Could] Round 1. ds L1 to L3 have no number script. The first half of `docs/reports/ds-L1-3-concepts.py` recomputes most graded keys and slips of the 19 files; it could seed `ds-L1-3-numbers.py`.
 Raised later (problems analysis):
 - [Could] Levels 4 and 5. A numeric set part (`answers` with `unordered`) routes every entry of another size to `count`, so a slip set of the wrong size cannot carry its own line. In `analysis/problems-4` `p-quartic-roots` part 1 the commonest slip is all three zeros of $h'$, "-2, 0, 2", and it can only get the generic `count` line. Wanted: `wrong[]` sets of any size matched before `count`, so `{ "id": "all-zeros", "value": "-2, 0, 2" }` reaches its `byKey` line.
+Raised later (problems linear-maps level 4):
+- [Could] A numeric set with a repeated value (`"answers": [2, 2]`, Jordan block sizes in `linear-maps/problems-4` `p-curvature-operator` part 3) shows "Accepted: 2, 2, in either order" after grading, which reads oddly when the values are equal. Wanted: drop "in either order" when every value of `answers` is the same.
