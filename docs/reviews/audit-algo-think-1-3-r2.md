@@ -51,4 +51,18 @@ Two claims deserve a note although they pass:
 
 ## Overlap table
 
-Filled after the WIP commit; see the end of this file.
+Read after WIP commit `e38802fc`: `docs/reviews/audit-algo-think-1-3.md` (round 1 audit, its fix pass and its fix-pass read), `docs/reviews/review-1.8.md` (algo-think part only) and `docs/reviews/voice-1.8-algo-think.txt` (sentence lengths, nothing conceptual).
+
+Earlier conceptual findings on algo-think: 2 in the 1.8 review (the "each coin at least double" rule in `homework-3` `items[1]`; the 32-bit sizes in `l3` `screens[4]`), 22 in the round 1 audit (wrong 3, imprecise 18, misleading 1; 2 serious) plus its 2 unverified rows, and 0 in the fix-pass read (37 rows, all correct). All 26 were fixed before this round. This audit read the fixed text of each as ordinary ledger rows and found every one correct. None of them is among the 8 findings above, and none of the 8 was raised by any earlier read. The 1.8 review's note on `homework-3` `items[6]` concerns test 9 and an O(nk) method, not the test 8 feedback of finding 5.
+
+| Conceptual findings | Count |
+|---|---|
+| Found by this round only | 8 (wrong 2, imprecise 6; all minor) |
+| Found by an earlier read only (1.8 review, round 1 audit, fix-pass read) | 26 (2 + 24 + 0), all fixed and now correct |
+| Found by both | 0 |
+
+New `wrong` findings that no earlier read found: **2** (findings 1 and 2). Both are minor, both are feedback lines, and neither is text written by the round 1 fix pass. That is one above the convergence limit of one new `wrong` per three levels. The six `imprecise` findings are new as well. No serious finding in this round, against 2 in round 1.
+
+## Inbox
+
+Four bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit algo-think):` (round 2): slip feedback is not checked against its value; `merge` can be passed by `sorted(a + b)`; `kth_largest` test 8 does not catch a fixed pivot; a Pyodide `--code` mode for `grade-all.mjs`.
