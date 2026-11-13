@@ -89,3 +89,29 @@ Notes on the comparison.
 - Timing checks ran in native CPython 3.13 only. Pyodide ran the code widgets for correctness, not against the 5 s limit.
 - The ledger groups hint and feedback lines that restate one computation into one row (285 rows for 19 files). Every line was read; a row's verdict covers each key it names.
 - Author, earlier readers and this auditor are the same model family, so a shared misconception can survive all four reads.
+
+## Fix pass
+
+Fixer: Opus, 13 Nov 2026. Content strings only; no lesson id, key, tolerance or `wrong[]` value changed.
+
+1. `l7` `screens[6].feedback.byKey.four` | **fixed differently** | Slip 4 is kept; the line now names the mistake that gives it: "You counted the three single days and the whole list, but missed the two pairs, `xs[0:2]` and `xs[1:3]`." Basis: 3 singles + 1 whole = 4, and 6 − 2 pairs = 4 (brute force on `[0, 0, 0]`, `k = 0`, gives 6). No collision with key 6 or slips 3 and 1. The other two lines hold: singles alone give 3, the whole list alone gives 1.
+2. `l1` `screens[6]` | **fixed** (extended) | Measured under node in the local Pyodide 0.27.7: `struct.calcsize('P')` 4, `sys.getsizeof(1.0)` 16, NumPy float64 `itemsize` 8, `sys.maxsize` 2³¹ − 1; CPython 3.13 here: 8 and 24. Prose, question, point hint, explain and caption now say "64-bit"; the prose adds "This app's Python is a 32-bit build: there a pointer is 4 bytes and a float object 16." Key 32 is right for the question as now posed (64-bit), which asks for a computation, not a run, so it is unchanged. The byKey lines (8 MB pointers alone, 24 MB objects alone) hold under that premise. Check updated to test the stated premise and the app sizes.
+3. `l1` `screens[10].widget.options[2].why` | **fixed** | `window[1:]` builds a 19-item list, then `+` builds a new 20-item list (concatenation never works in place): 39, about 40 copies.
+4. `l3` `screens[0].explain.text` | **fixed** | Complements for 17 of 3, 8, 5, 12, 6 are 14, 9, 12, 5, 11; only 12 and 5 are in the list.
+5. `l5` `screens[5].prose` | **fixed** | Walked `[1, 3, 4, 6, 8, 11, 15]` for 10: (1, 15), (1, 11), (1, 8), (3, 8), (3, 6), (4, 6). (4, 8) is never reached, so it is now a supposition. The hints and explain hold from that state.
+6. `l6` `summary.formula.note` | **fixed** | With no negative item, dropping the left item cannot raise the sum, so shrinking never skips a shorter qualifying window; the script's brute-force run on lists with zeros agrees.
+7. `l8` `screens[6].explain.text`; `homework-2` `items[2].prose` | **fixed** | Kadane maximises a sum. Log returns and £ P&L add; simple returns compound. +50%, −40%, +50%: best sum is the whole run (0.6, compounding to +35%), best compounded stretch is one day (+50%), which log returns also pick. Homework tests and feedback are unaffected.
+8. `l10` `screens[2].explain.text`; `summary.ideas[1]` | **fixed** | With `<`, ties wait: `[5, 5, 4]` leaves 5, 5, 4 on the stack, non-increasing.
+9. `l10` `screens[7].explain.text` | **fixed** | Each index is pushed once and popped at most once: at most 2n. The 200,000 falling test makes 200,000 pushes and no pops. While here: `test-6` (`<=` passes tests 1 to 5, which have no ties, and fails `[5, 5, 6]`) and `test-10` (nested scan passes 1 to 9, times out on 10) both hold.
+10. `l12` `screens[0].explain.text`; `summary.ideas[0]` | **fixed** | From `head`, the k-th node is k − 1 `next` moves away and k nodes are visited (screen 0: 9 is the third node, three nodes tapped; quiz 0: 4,999 steps).
+11. `l2` `screens[6].feedback.correct`; `summary.ideas[2]` | **fixed** | `{(1, [2]): 0}` raises `TypeError: unhashable type: 'list'`; a tuple is hashable only if its items are.
+12. `l4` `screens[6].widget.options[3].why` | **fixed** | `all(a.count(c) == b.count(c) for c in 'ab')` is `True` for `b = 'abc'`; each of n `.count` calls scans n characters, O(n²). Explanation is two sentences.
+13. `l3` `screens[6].prose` | **fixed** | Dict lookup is O(1) expected under uniform hashing, Θ(n) worst case (CLRS ch. 11); lesson 2 states "on average".
+
+Unverified remarks:
+- `l8` `screens[9].explain.text` | **fixed** | "often via" replaced by "for example through": a stated possibility, not a frequency.
+- `l13` `screens[1].explain.text` | **fixed differently** | The interview judgement is dropped: "It is correct and simple to write." Both halves are visible in the code shown.
+
+Scripts: `docs/reports/ds-L1-3-r2-concepts.py` checks for findings 1 to 12 rewritten to test the corrected facts and the new wording (each still tagged with its finding); 180 of 180 pass, exit 0. `docs/reports/ds-L1-3-concepts.py` exit 0. `docs/reports/ds-L1-3-r2-pyodide-widgets.mjs`: 32 widgets, 0 problems, exit 0.
+
+Gates: validator 0 errors (manifest unchanged); voice scan 35: 0 and 0; playthrough desktop and `--mobile` of the 12 edited files (11 lessons, homework-2): all passed.
