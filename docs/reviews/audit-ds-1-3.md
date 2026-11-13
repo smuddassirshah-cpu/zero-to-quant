@@ -62,4 +62,24 @@ Severities: `wrong` 9 (serious 1, minor 8), `imprecise` 7 (serious 1, minor 6), 
 
 ## Overlap with the earlier read
 
-To be filled after the WIP commit.
+Earlier read: `docs/reviews/review-1.8.md` (algo-think, ds and graphs-dp together), opened after the WIP commit `15ab4d08`. Only its ds level 1 to 3 lines are counted. Its fix pass had already been applied to the content this audit read, so its three conceptual findings could no longer be found.
+
+| Conceptual findings, ds L1 to L3 | Count |
+|---|---|
+| Found by this audit only | 18 (findings 1 to 18) |
+| Found by the earlier review only | 3 |
+| Found by both | 0 |
+
+The earlier review's three conceptual findings, all fixed before this read: homework-3 `items[2]` (the FIFO key equalled the plain-average slip, error), homework-1 `items[6]` (the key assumed an unstated constant list length, warning) and l7 `screens[8]` explain (prefix counts 10,001 and 10,000, note). This audit rechecked all three as they now stand and they hold (ledger rows for those paths are `correct`).
+
+Not counted as conceptual: the earlier review's five test-strength findings in scope (homework-3 `items[0]`, `[4]`, `[5]`; l13 `screens[7]`, `[9]`), three explanations over three sentences and its sentence-length lists.
+
+New `wrong` findings that no earlier read found: **9** (findings 1, 2, 3, 5, 7, 8, 11, 13 and 17), of which 1 is serious (13). That is above the convergence limit of one per three levels, so the course needs another blind audit after its fix pass.
+
+One disagreement to record. The earlier review states that window re-slicing times out on l11. Finding 16 measured 3.2 s for the same naive method on this machine, under the 5 s limit. The two runs do not settle it, which is why the verdict is `unverified` and the fix widens the test instead of arguing the timing.
+
+## Limits of this audit
+
+- Sources named in the ledger without a run (CLRS, Knuth, Bentley, Hull, the CPython and pandas sources, the CME overview) were cited from memory of the named section. They were not reopened in this session.
+- Code ran in CPython 3.13, not in Pyodide 0.27.7. No check depends on a behaviour that differs between CPython 3.12 and 3.13, but Pyodide timing was not measured.
+- Severity of finding 12 is a judgement. The graded keys are right for the measure asked; the finding is that one name is used for two measures without saying so. A fixer may reasonably rate it minor.
