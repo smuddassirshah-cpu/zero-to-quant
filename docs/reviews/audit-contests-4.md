@@ -68,7 +68,25 @@ None is a pass. They are listed so that an owner can source or soften them; no f
 
 ## Overlap with earlier reads
 
-To be filled after the WIP commit.
+Filled after commit 79c722bc ("WIP: contests L4 ledger and findings"), from `docs/reviews/review-contests-3-4.md`, level 4 section (findings 13 to 27, with the level 4 parts of the advisory classes 11 and 12) and its fix pass. Every one of its findings was applied before this audit read the files, so the audit read the corrected text.
+
+| Count | Conceptual findings |
+|---|---|
+| Audit only | 14 (findings 1 to 14 above) |
+| Earlier review only | 5 (13, 14, 20, 21, 22; all fixed before this audit) |
+| Both | 0 |
+
+The earlier review's conceptual findings at level 4, and what this audit found in their place:
+
+- 13, l13 screens[10] "a tenth of a problem": fixed to "a sixth"; the ledger records the new line as correct ($4 / 25 = 0.16$).
+- 14, l13 screens[3] no `test-3` line for the ends slip: fixed; the script's "counts the last day" mutant lands on the new line. This is the same class as findings 2 to 8 here, which the earlier review found once and this audit found in seven more widgets by sweeping every line.
+- 20, l14 screens[9] swap formula without the floor condition: fixed; the ledger records the conditioned sentence as correct, and finding 11 here is the same missing-hypothesis class one screen later (the desk has no decay at all).
+- 21, l15 screens[0] "the commonest wrong answer" against "Most wrong answers are misreadings": fixed to "a very common"; the surviving "Most" is in the unverified list.
+- 22, l15 screens[9] "no longer than it has to be" and "never tie": fixed; the ledger records both new sentences as correct. Finding 12 here is a neighbouring overclaim about the stress test that the earlier review did not raise.
+
+Its other level 4 findings are voice, layout, continuity or freshness (15 to 19, 23 to 27, and classes 11 and 12) and are not counted. Its engine item 3 (a `list(xs)` copy defeats the read counter on l13 problem B) was met again here as the mutant that reaches `test-9`; no content change follows.
+
+Miss rate of a single read, as this pair measures it: 19 distinct conceptual findings, 0 found by both. All 7 `wrong` findings here are feedback lines that cannot show for the mistake they name; none changes a definition, method or graded answer.
 
 ## Inbox
 
