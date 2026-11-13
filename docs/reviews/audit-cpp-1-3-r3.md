@@ -106,3 +106,43 @@ Unverified rows, each rewritten without a frequency word:
 - `l9` `quiz[3]` option `type` why: "A vector can hold `unique_ptr`s: the declaration of `book` compiles. Only the copy fails."
 
 Scripts: `cpp-L1-3-r3-concepts.py` 245 of 245, exit 0 (docstring updated: finding 1 fixed); `cpp-L1-3-r2-concepts.py --wasm` 423 hold, exit 0 (label of `l7.s3.null-write` reworded to the new sentence, check unchanged); `cpp-L1-3-concepts.py` 126 checks, 0 failed; `cpp-1-perf-numbers.py` and `cpp-3-perf-numbers.py` 0 failures. Validator 0 errors, manifest unchanged; voice scan 35 on cpp: 0 and 0; playthroughs of l1, l3, l4, l6, l7, l9, l10, l11, l12, l13, review-1 and homework-2 green desktop and `--mobile`.
+
+
+## Fix-pass read
+
+Fresh reader, blind to the audit, its ledger and the fix notes. Diff read: `git diff 76675357~1 76675357 -- app/content/courses/cpp/` (12 files, 20 changed strings). Runs used the app's own compiler and grader through `docs/reports/cpp-L1-3-r2-zq.mjs` (YoWASP clang 21, app flags, one batch of 23 jobs, first job a plain compile) and `python3` for the Python claims and the arithmetic. Line keys: `app/js/engine/canvas/console.js` gives line `k` the id `l${k + 1}`, so `lN` counts from 1.
+
+| # | file | JSON path | new text (short) | verdict | basis |
+|---|---|---|---|---|---|
+| 1 | homework-2 | `items[7].model` (a) | hardening stops the program with "vector[] index out of bounds"; a desk build without that check may silently read what follows | correct | Run of the prompt's `total_notional` on the app build: stderr `libc++ Hardening assertion __n < size() failed: vector[] index out of bounds`, trap, exit 134. `operator[]` out of range is undefined (C++17 [sequence.reqmts] table, `a[n]` precondition), so "may" is the right mood. Agrees with rubric line 2 and the prompt. |
+| 2 | l1-source-to-program | `screens[7].explain.text` | an unused variable can be a step you forgot to write | correct | Hedged claim about `-Wunused-variable`; agrees with the console lines and the key. |
+| 3 | l10-invariants | `screens[6].hints[2].text` | a `const` member cannot be assigned in the body, so give it its value in the list | correct | Compiles: list form builds and runs; body, `this->` and local forms all fail with the errors the screen shows. |
+| 4 | l10-invariants | `summary.ideas[2]` | a `const` member must get its value in the list or from a default at its declaration; the body is too late | correct | Compile of `const double max_ = 5e6;` with `Limit() {}` and `Limit(double m) : max_(m) {}` printed `5e+06 1`. With a default and a body assignment the build still fails: "cannot assign to non-static data member". |
+| 5 | l11-creation-destruction | `screens[1].feedback.byKey.l5` | that is the last line inside the block; `b` lives until the closing brace | correct | Line 5 is `std::cout << "work\n";`, the last statement before the `}` on line 6 (the key). Automatic storage ends at block exit ([basic.stc.auto]). |
+| 6 | l12-operators | `screens[4].prose` | Python's `print` shows an object through `__str__`, or `__repr__` when the class has no `__str__` | correct | Python run: a class with only `__repr__` prints through it; a subclass adding `__str__` prints through that. The `operator<<` in the prose compiled and printed `1250 + 399`. |
+| 7 | l12-operators | `screens[8].prose` | `__str__` becomes `operator<<` | correct | Same run; `__str__` is the hook `print` uses, as `operator<<` is for a stream. |
+| 8 | l13-templates | `screens[4].feedback.byKey.l7` | that line only marks the `<` in the line above; its message is the `error:` two lines up | correct | `l7` is `lines[6]`, the `~~~~~ ^ ~~~~~` line; the caret sits in column 18 after the bar, under the `<` of `lines[5]`; `lines[4]` (`l5`, the key) is the `error:`. |
+| 9 | l13-templates | `screens[4].feedback.byKey.l8` | a library file's path, an `instantiation` note | correct | `l8` is `lines[7]`: `.../strict_weak_ordering_check.h:43:31: note: in instantiation of ...`. |
+| 10 | l3-branches-and-loops | `screens[6].explain.text` | this app's library checks `[]` and stops the program; without that check the read is undefined and may return whatever memory is there | correct | Run of the screen's loop on three closes: printed indices 0 to 2, then the hardening assertion and a trap. Undefined without the check, as row 1. |
+| 11 | l3-branches-and-loops | `screens[7].widget.options[1].why` (`five`) | what an `int i` declared before the loop would hold: the test fails at 5 | correct | Run: `int i; for (i = 0; i < 5; ++i) {}` then print gave `5`. The screen's own form fails with "use of undeclared identifier 'i'". |
+| 12 | l3-branches-and-loops | `screens[7].widget.options[2].why` (`four`) | Python's loop variable outlives the loop and keeps its last value, 4 | correct | Python run: `for i in range(5): pass` leaves `i == 4`. |
+| 13 | l4-functions-and-headers | `screens[4].widget.accept` | 0.1910 (0.01 × √365 = 0.1910497) | correct | Recomputed: √365 = 19.1049731745, × 0.01 = 0.191049732, which is 0.1910497 to 7 dp and 0.1910 to 4 dp. Key 0.191 with abs tolerance 6e-05 accepts 0.1910 and 0.19105. |
+| 14 | l4-functions-and-headers | `screens[4].hints[2].text` | 0.01 × √365 = 0.01 × 19.10497 | correct | Same recomputation; 19.1049731 rounds to 19.10497. |
+| 15 | l6-const | `screens[4].explain.text` | a crossed quote, with the bid above the ask, gives a negative spread: `spread` reports it | correct | Grader run: the solution passes all 5 tests, the fifth returning -0.0999999 against the expected -0.1; a `std::fabs` version fails test 5 only. |
+| 16 | l7-addresses | `screens[3].widget.how` | a null write in this browser build may not crash, so the test also reads address 0 itself | correct | Run: a null pointer hidden behind a `volatile` (and a `noinline` call) wrote to address 0 and the program went on (`before 0`, `after 1`, exit 0). Test 5 compares `null_word()` before and after. |
+| 17 | l7-addresses | `screens[3].explain.text` | without the guard `bump(nullptr)` is undefined behaviour: in this browser that call stopped the program; a null pointer the compiler could not see wrote to address 0 without complaint | correct | Run: direct `bump(nullptr)` with no guard printed `before` then trapped (`unreachable`, exit 134). Grader run of the unguarded body: tests 1 to 4 pass, test 5 fails with the program ended. Hidden-null run as row 16. Undefined behaviour is named, and both outcomes are in the past tense of this build. Solution passes 5 of 5; starter fails tests 1 to 4. |
+| 18 | l9-owning-memory | `quiz[1].explain.text` | a `std::vector<double>` also knows its size and can grow, so it is the simpler choice | correct | `unique_ptr<double[]>` has no `size()` or growth ([unique.ptr.runtime]). Run: `make_unique<double[]>(3)`, `px[2] = 101.5` printed `0 101.5`, as the sentence before says. |
+| 19 | l9-owning-memory | `quiz[3].widget.options[1].why` | a vector can hold `unique_ptr`s: the declaration of `book` compiles; only the copy fails | correct | Compiles: declaration plus `push_back(std::move(o))` builds and prints size 1 with `o` null; `push_back(o)` fails with "call to implicitly-deleted copy constructor of 'std::unique_ptr<Order>'", the text option 3 quotes. |
+| 20 | review-1 | `items[0].explain.text` | an unused `fees` can mean a forgotten step in a P&L | correct | Hedged; agrees with the key "`fees` is worth a look". |
+
+Rows 20: correct 20, wrong 0, imprecise 0, misleading 0, unverified 0.
+
+### Findings
+
+None. No changed string needs a replacement.
+
+### Notes outside the diff (not rows, no action required)
+
+- `l3-branches-and-loops.json` `screens[6].widget.options[0].text` still says "a normal build may read garbage" while the new explain says "a build without that check". The two agree in substance.
+- `l12-operators.json` `screens[4].widget.options[3]` still names `__repr__`. Its statement (that `__repr__` returns a string) is true and it stays a wrong option, so the screen is consistent.
+- Voice: each changed explain keeps to three sentences; no changed sentence passes 35 words.
