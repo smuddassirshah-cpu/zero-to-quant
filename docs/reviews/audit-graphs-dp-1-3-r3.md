@@ -74,3 +74,20 @@ How this round relates to the earlier ones:
 - The two unverified rows here ("most real graphs are sparse", "triangular arbitrage rarely survives costs") are not among round 1's nine; they are the same kind of unsourced remark.
 
 By the convergence rule (at most one new `wrong` per three levels that no earlier read found) this round meets the condition for graphs-dp L1 to L3: 0 new `wrong`. The seven minor rows and two unverified rows still want a fix pass and its read.
+
+## Fix pass
+
+Opus fixer, round 3. Each fix was traced independently (scratch script running the lessons' graphs and code; CPython). No graded key, tolerance, `wrong[]` value or slip changed.
+
+1. `l3` `screens[1].explain.text`: fixed. Recursive DFS on the screen's edge order visits A, B, E, G, C, D, F, H; returning from F, D, C and G have no unvisited neighbour, E still has H.
+2. `l4` `quiz[0].widget.options[2].why`: fixed. corr(X, X) = 1 > 0.8, so every diagonal cell is 1 and all 50 rows contain a 1.
+3. `l4` `quiz[2].widget.options[2].why`: fixed. The lesson's stack search with no marks on a two-cell island still runs after 10,000 pops; one-cell islands end at once and are each counted once.
+4. `l5` `screens[5].feedback.byKey.prices`: fixed. Outer loop order is backtest, calendar, prices, report, returns, risk, signals; new calls start at backtest, calendar, prices, so prices is the last call, appended at once as returns is done.
+5. `l6` `screens[1].prose`: fixed. The labels A·0, B·1, E·1 and the caption give hops from A.
+6. `l11` `quiz[0].widget.accept`: fixed differently. The proposed "a corner queen leaves row 3 with nothing safe" is false alone: a queen at r1c1 attacks r3c1 and r3c3 only, so r3c2 is safe until the forced queen r2c3 is placed. New text: "0: a middle queen in row 1 leaves no safe cell in row 2. A corner queen leaves one, and with both queens placed row 3 has no safe cell." `accept` is a display line only (numeric widget grades `answer` and `tol`); the leading figure stays 0, and n = 3 gives 0 by brute force over 27 placements and by backtracking.
+7. `l1` `quiz[1].explain.text`: fixed. Set membership is average O(1) (CPython hash table); `sys.getsizeof` gives a 500 x 500 list matrix about 2.0 MB, 500 sets of 20 about 1.1 MB, 500 sets of 499 about 16.5 MB, so the saving needs sparsity.
+8. Unverified `l1` `screens[7].prose`: fixed differently, as a definition with an arithmetic example (E = Vd/2 with small d is far below V^2 for large V): "A graph is **sparse** when $E$ is far below $V^2$, for example when each node has only a few neighbours." The auditor's "as in the trading networks of this course" was not used: the course's small drawn graphs do not illustrate "far below".
+9. Unverified `l1` `summary.formula.note`: fixed. "On a sparse graph the list wins."
+10. Unverified `l9` `screens[8].explain.text`: fixed differently, as a stated condition on the screen's numbers: "At 1 bp a conversion, a three-leg loop needs a gross gain above about 3 bp to make money." Break-even 1 / 0.9999^3 - 1 = 3.0006 bp; the screen's loop earns 0.36 bp gross.
+
+Gates: validator 0 errors; concepts scripts round 1 (231 checks), round 2 (897), round 3 (340) and the three perf-numbers scripts all exit 0, none edited (no check quotes a changed sentence); voice scan 35: 0 and 0; playthrough of the seven edited lessons desktop and `--mobile`: all passed.
