@@ -79,3 +79,25 @@ Notes on the 13:
 
 - Extend the validator's universal-wording warning list (proposed in round 1) with "only if", "every ... because", "almost always" and "as ... promises". Findings 1, 2, 3 and 6 would each have been printed for the reader.
 - Validator warning: a `feedback.byKey` line for a numeric or expression slip that contains neither the slip value nor any formula. Finding 13 is such a line, and the round 1 slip-feedback findings were the same class.
+
+## Fix pass
+
+Opus fixer. Each line re-derived before editing; numbers recomputed with scipy in the venv, and each figure checked a second way by hand.
+
+1. fixed differently. Basis: the support of an independent pair is (the closure of) $\mathrm{supp}\,X \times \mathrm{supp}\,Y$, so the condition is a product set, which is a rectangle only when both supports are intervals (CB Lemma 4.2.7). Auditor's text applied to `screens[7].explain.text` and `summary.ideas[2]`; I also changed `screens[9].explain.text` and `problems-4.json` `items[0].parts[2].explain.text` to "an $x$ range times a $y$ range", because the problem set is read without the lesson. Round 1 passed the line, but "only if ... a rectangle" is false for $[0, 1] \cup [2, 3]$ times $[0, 1]$, so I applied it.
+2. fixed. Basis: an Exp(rate) mean has sd $\tfrac{1}{\text{rate}}$, so the standard error at $n = 100{,}000$ is $\tfrac{1}{\sqrt{100000}} = 0.316\%$ of the mean; 1% is 3.16 standard errors, $P = 0.998$ (CB Thm 5.5.14). The law of large numbers (CB Thm 5.5.2) gives no rate.
+3. fixed. Basis: the lesson's own Box and Muller screen maps uniforms to normals without $F^{-1}$, so inversion is one route, not the reason (CB 5.6.1 to 5.6.2).
+4. fixed. Basis: $\mathrm{Var}(X + Y) = \mathrm{Var}\,X + \mathrm{Var}\,Y + 2\,\mathrm{Cov}(X, Y)$ (CB Thm 4.5.6); without independence the trap line is false.
+5. fixed differently. Basis: $5 \times 0.0198 = \sum_i P(A_i)$ counts an outcome with $k$ defaults $k$ times (Bonferroni, the first inclusion and exclusion term), so a three-default year is counted three times, not twice. Text: "That counts a year with two or more defaults more than once."
+6. fixed. Basis: $P(\max > 0.8) = 1 - 0.8^5 = 1 - 0.32768 = 0.6723$, and $P(\max > 0.9) = 0.4095$, so "almost always" is false; $5t^4$ is increasing, so the density is highest at 1. I wrote "about two times in three", since 0.672 is not exactly two thirds.
+7. fixed. Basis: two-tail ratio $t_5$ to normal is 2.240 beyond 2 and 1.145 beyond 1 (scipy), so "over twice" holds only at the quiz's own $\pm 2$.
+8. fixed differently. Basis: CB Thm 2.3.12, MGFs converging on a neighbourhood of 0 to an MGF give convergence in distribution; it is a theorem, not a hypothesis. My text keeps "to an MGF", which the theorem needs and the auditor's text dropped.
+9. fixed. Basis: Markov on $e^{tS}$ gives $e^{-ta}M_S(t)$, and $M_S = M^n$ only for $n$ independent copies with common MGF $M$ (CB Thm 4.2.12). Round 1 passed the derivation; defining $M$ and $n$ costs nothing and removes the misreading. The pinned phrase in `limits-thm-L4-fixread.py` is kept verbatim, so no check changed.
+10. fixed. Basis: $P(A = 3) = e^{-2}\tfrac{8}{6} = 0.1804$ and $P(B = 3) = e^{-1.5}\tfrac{3.375}{6} = 0.1255$ are marginal; $P(A + B = 3) = \sum_k P(A = k)P(B = 3 - k) = 0.2158$, equal to Poisson(3.5).
+11. fixed. Basis: $E[e^{tX}] = \int e^{tx}\tfrac{1}{\pi(1 + x^2)}\,dx$ diverges for $t \ne 0$ because $e^{t x}$ grows while the density falls only like $x^{-2}$; nothing is "offset by $e^{-tx}$".
+12. fixed. Basis: $1 - \Phi(2.6) = 0.00466$ and $P(t_{29} \ge 2.6) = 0.00726$, two-sided 0.0145 (scipy); the model's $P(\max \ge 2.6)$ is one-sided, so naming it removes the clash with `l18` `screens[6]`. Round 1 judged the line correct; the edit adds a clause and changes no number.
+13. fixed. Basis: the slip "1" is $\int_0^\infty e^{-y}\,dy = 1$; the support is $0 < x < y$, so the slice for fixed $x$ is $(x, \infty)$ and gives $e^{-x}$. The old text's "length" is infinite either way.
+
+Counts: fixed 10, fixed differently 3, not applied 0, disputed 0. No graded key, slip value, tolerance or test changed.
+
+Gates, from `app/`: validator 0 errors, 4,539 warnings (two more long-sentence warnings, all under 35 words), manifest unchanged; `limits-thm-L4-concepts-r2.py` 710 checks, `limits-thm-L4-concepts.py` 563, `limits-thm-L4-fixread.py` 662, each 0 failed; `run-number-scripts --only limits-thm` 5 of 5 passed; `voice-scan.py 35` on the course: 0 over 35 words, 0 explanations over three sentences; playthrough green desktop and mobile for `l14` to `l19`, `--set homework-4` and `--problems problems-4`.
