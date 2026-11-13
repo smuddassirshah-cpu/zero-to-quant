@@ -90,3 +90,18 @@ Stories across `app/content`: "pension" (series review-3, ratio problems-1, mark
 2. Finding 1 is a letter left behind when an item's story changed ($q$ for depth, now $m$). A validator advisory could list a differential `d<letter>` in an integral whose letter occurs nowhere else in the item.
 
 Both are inbox bullets under `Raised later (review problems odes):`.
+
+## Fix pass
+
+1. Fixed: `problems-1.json` part 3 explain, `dq` changed to `dm` in both integrals.
+2. Fixed: `problems-1.json` part 2 explain, "nearly obeys" (checked: $u = m - 6$ gives $u' = -4u - u^2$ exactly).
+3. Fixed: `problems-2.json` `p-tracking-gap` part 4 explain; reason now $2 + 6t > 0$, and a start steeper than $x'(0) = -10$ crosses once ($c_2 = x'(0) + 10$). Number unchanged: $0.4104$.
+4. Fixed: "under-damped".
+5. Fixed: "lesson 9's overshoot ... $\zeta = \tfrac{b}{2\omega_0} = \tfrac{2}{\sqrt{29}}$" ($4/(2\sqrt{29}) = 2/\sqrt{29}$).
+6. Fixed: `p-cash-buffer` part 4 question restates the solution; key 1.087948 unchanged.
+7. Fixed: `p-yield-gaps` part 2 question ($\Delta = 5$ from part 1, $\tau = -7 + 1 = -6$).
+8. Fixed: `p-trend-signal` part 3 question ($\Delta = -5$ from part 2, $\tau = 0 + (-4) = -4$).
+
+Counts: 8 fixed, 0 disputed, 0 deferred. Keys and `wrong` values changed: none, so `problems-odes-numbers.py` needed no edit.
+
+Gates: author script 547 of 547 (exit 0); reader script 518 of 518 (exit 0); validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 0 failures on all three sets; playthrough "All passed" for problems-1, problems-2 and problems-3 (plain), with `--mobile` for problems-1 and problems-2; problems-3 `--mobile` run recorded in the hand-back.
