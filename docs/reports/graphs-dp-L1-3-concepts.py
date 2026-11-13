@@ -62,7 +62,8 @@ def check_l1():
     claim("l1 s3 symmetric", all(m[i][j] == m[j][i] for i in range(6) for j in range(6)))
     # s3.ex says an undirected matrix has 2E ones: only without self-loops (the lesson's own test 6)
     loop = sol(l1, l1["screens"][8])["adj_matrix"](2, [(1, 1)])
-    claim("l1 s3.ex '2E ones' needs 'no self-loops' (imprecise, finding 9)", sum(map(sum, loop)) == 2 * 1,
+    claim("l1 s3.ex '2E ones' needs 'no self-loops' (imprecise, finding 9)",
+          sum(map(sum, loop)) == 2 * 1 or "when no node is joined to itself" in l1["screens"][3]["explain"]["text"],
           "one self-loop edge gives %d one(s), not 2E = 2" % sum(map(sum, loop)))
     # shared-row trap
     bad = [[0] * 3] * 3
@@ -121,8 +122,25 @@ def check_l2():
                 q.append(v)
     dt = time.perf_counter() - t0
     claim("l2 s4 test 7 cannot tell pop(0) from popleft (misleading, finding 10)",
-          not (out == list(range(3000)) and longest == 1),
+          not (out == list(range(3000)) and longest == 1) or "pop(0)" not in l2["screens"][4]["feedback"]["byKey"]["test-7"],
           "list.pop(0) BFS passes test 7 in %.4f s; the queue never exceeds %d item" % (dt, longest))
+    # fix pass: test-7 feedback now names a self-calling search; check that one fails test 7
+    path3k = {i: [i - 1, i + 1] for i in range(1, 2999)}
+    path3k[0], path3k[2999] = [1], [2998]
+    rseen = set()
+
+    def rgo(u):
+        rseen.add(u)
+        for v in sorted(path3k[u]):
+            if v not in rseen:
+                rgo(v)
+    try:
+        rgo(0)
+        rec_fails = False
+    except RecursionError:
+        rec_fails = True
+    claim("l2 s4 fb test-7 (fix pass): a self-calling search fails the 3,000 path at the 1,000 limit",
+          rec_fails and sys.getrecursionlimit() == 1000 and "1,000 nested calls" in l2["screens"][4]["feedback"]["byKey"]["test-7"])
     # pop(0) worst case: star of V nodes
     V = 2000
     q, moves = list(range(V)), 0
@@ -195,6 +213,8 @@ def check_l3():
     claim("l3 q-post option 'rev' why says it reverses the pre-order (wrong, finding 3)",
           is_rev_pre or "reverses the pre-order" not in opt["why"],
           "%s is the reversed post-order %s; the reversed pre-order is %s" % (opt["text"], post[::-1], pre[::-1]))
+    claim("l3 q-post option 'rev' (fix pass): it is the reversed post-order and the why says so",
+          opt["text"].split(", ") == post[::-1] and "reverses the post-order" in opt["why"])
     # quiz q-tree: 'no edge to a visited non-parent node' also holds on a forest, which is not a tree
     forest = {0: [1], 1: [0], 2: [3], 3: [2]}
     seen, back = set(), [0]
@@ -210,7 +230,7 @@ def check_l3():
                 t(v, u)
     t(0, None)
     claim("l3 q-tree 'how DFS tests for a tree' also needs every node reached (imprecise, finding 12)",
-          not (back[0] == 0 and len(seen) < len(forest)),
+          not (back[0] == 0 and len(seen) < len(forest)) or "reach every node" in l3["quiz"][2]["explain"]["text"],
           "a two-piece forest has 0 back edges from node 0 and is not a tree")
 
 
@@ -313,6 +333,13 @@ def check_l5():
     claim("l5 s4 trap: pre-order started at a free task is still wrong, and the screen does not say so (misleading, finding 6)",
           valid(pre2, PIPE) or "still" in l5["screens"][4]["explain"]["text"],
           "pre-order from calendar gives %s" % pre2)
+    # fix pass: the named counter-example and the cure agree with the code and its edge direction
+    claim("l5 s4 (fix pass): from calendar pre-order reaches backtest via risk before signals; trap no longer blames the start",
+          pre2.index("risk") < pre2.index("backtest") < pre2.index("signals")
+          and "calendar" in PIPE and not any("calendar" in PIPE[u] for u in PIPE)
+          and l5["screens"][4]["title"] == "Recording too early"
+          and "wherever the search starts" in l5["summary"]["trap"]
+          and "still has arrows in" not in l5["summary"]["trap"])
     # reversed post-order on a cyclic graph returns an order silently
     cyc = dict(PIPE, backtest=["report", "risk"])
     _, post_c = pre_post(cyc, sorted(cyc))
@@ -495,7 +522,10 @@ def check_l7():
     s6 = l7["screens"][6]
     claim("l7 s6 true cost 1", s6["widget"]["answer"] == 1)
     claim("l7 s6 fb.pop 'the cost Dijkstra fixed': the taught code returns 1, not 2 (imprecise, finding 5)",
-          got == 2, "dijkstra(neg, 'A')['B'] == %d with the lesson's solution: it re-pushes B at 1" % got)
+          got == 2 or (got == 1 and s6["prose"].count("Textbook Dijkstra") == 1
+                       and "pushes B again at 1" in s6["explain"]["text"]
+                       and "fixed" not in s6["feedback"]["byKey"]["pop"]),
+          "dijkstra(neg, 'A')['B'] == %d with the lesson's solution: it re-pushes B at 1" % got)
     # the taught code is right on negative edges with no negative cycle (label-correcting), on random DAG-free cases
     import random
     rnd = random.Random(3)
@@ -765,7 +795,8 @@ def check_l10_l11():
         for c in opts:
             place(row + 1, cols + [c])
     place(1, [0])
-    claim("l11 s2 hint 'dead end by row 3' (imprecise, finding 14)", dead_rows <= {3},
+    claim("l11 s2 hint 'dead end by row 3' (imprecise, finding 14)",
+          dead_rows <= {3} or (dead_rows == {3, 4} and "row 3 or row 4" in l11["screens"][2]["hints"][1]["text"]),
           "from r1c1 the branches die at rows %s: r2c4 reaches r3c2 and fails in row 4" % sorted(dead_rows))
 
     def combos(cands, target):
@@ -943,6 +974,8 @@ def check_hw3():
     claim("hw3 h-lattice fb.half 'Half of all paths do not return' (wrong, finding 15)",
           stay == 512 or not fb.startswith("Half of all paths do not return"),
           "%d of 1,024 paths do not return, about %.0f%%" % (stay, 100 * stay / 1024))
+    claim("hw3 h-lattice fb.half (fix pass): names the slip 512 and the true 252 of 1,024",
+          2 ** 10 // 2 == 512 and math.comb(10, 5) == 252 and "512" in fb and "252 of the 1,024" in fb)
     # longform premise: 2^25 subsets 'never finishes'
     t0 = time.perf_counter()
     xs = [(-1) ** i * (i % 11) for i in range(20)]
@@ -953,7 +986,10 @@ def check_hw3():
             hits += len(basket) <= 6 and sum(basket) == 0
     rate = n / (time.perf_counter() - t0)
     est = 2 ** 25 / rate
-    claim("hw3 longform premise 'It never finishes' for 2^25 subsets (misleading, finding 16)", est > 3600,
+    lf_prompt = it["h-netting-search"]["prompt"]
+    claim("hw3 longform premise 'It never finishes' for 2^25 subsets (misleading, finding 16)",
+          est > 3600 or ("It never finishes" not in lf_prompt and "1 millisecond" in lf_prompt
+                         and "over nine hours" in lf_prompt and 9 < 2 ** 25 / 1000 / 3600 < 10),
           "itertools builds and filters %.1f million subsets a second here: 2^25 takes about %.0f s" % (rate / 1e6, est))
     tf = sol(h, it["h-fee-trades"])["trade_with_fee"]
 
