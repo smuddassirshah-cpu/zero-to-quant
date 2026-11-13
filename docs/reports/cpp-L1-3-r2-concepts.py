@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Round 2 blind concept audit of cpp L1 to L3: every code-behaviour claim, compiled and run.
 
-    python3 docs/reports/cpp-L1-3-r2-concepts.py --wasm <pkgs folder> [--jobs 4] [--only <substring>] [--show]
+    python3 docs/reports/cpp-L1-3-r2-concepts.py --wasm <pkgs folder> [--jobs 4] [--only <substring>] [--show] [--recorded]
 
 Each check states a claim the content makes. Three kinds:
   number   plain arithmetic, in Python (CPython; the figures are IEEE doubles, the same as C++ and Pyodide)
@@ -11,7 +11,7 @@ Each check states a claim the content makes. Three kinds:
   desk     local g++ 13 and clang 18 on x86-64 Linux (messages g++ prints, AddressSanitizer reports, warning flags)
 Exit 0 when every claim holds. A check that fails because the content is wrong stays failing: the ids are listed in
 docs/reviews/audit-cpp-1-3-r2.md and in EXPECTED_FAIL below. With --recorded the exit code is 0 when exactly those fail
-(the state at the audit: 366 checks, 350 hold, 16 fail; 94 of them run the solution and the starter of the 47 code widgets).
+(the state at the audit: 369 checks, 352 hold, 17 fail; 94 of them run the solution and the starter of the 47 code widgets).
 """
 import json, os, re, subprocess, sys, tempfile, shutil, math
 
@@ -34,7 +34,7 @@ EXPECTED_FAIL = {
     'l13.s2.fb-test-2',         # finding 2
     'l13.s7.slip-two',          # finding 3
     'l9.s2.throw-runs-destructor',  # finding 4
-    'l5.s0.param-lifetime', 'l5.s0.param-lifetime-desk',  # finding 5
+    'l5.s0.param-lifetime', 'l5.s0.vector-param', 'l5.s0.param-lifetime-desk',  # finding 5
     'l13.s4.sort-error',        # finding 6
     'l13.s9.deque',             # finding 7
     'l3.s3.fb-error',           # finding 8
@@ -328,6 +328,8 @@ def _l5s0():
     code = HDR + BYVAL + 'int main() { L a; f(a), std::cout << "rest-of-expression "; std::cout << "next "; }\n'
     a = desk_run(desk_build(code)[2])[1]; b = desk_run(desk_build(code, cc='clang++')[2])[1]
     return (a.startswith('copy body destroyed rest-of-expression') and b.startswith('copy body destroyed rest-of-expression'), a + '| ' + b)
+VPAR = 'struct E { ~E() { std::cout << "element-destroyed "; } };\nvoid add_fee(std::vector<E> costs) { std::cout << "body "; }\n'
+app('l5.s0.vector-param', 'the screen\'s own case, a std::vector passed by value: the copy (its elements) is destroyed at the function\'s closing brace, before the rest of the calling expression', M('std::vector<E> mine(1); add_fee(mine), std::cout << "rest-of-expression "; std::cout << "next ";', VPAR), lambda r: r['out'].startswith('body element-destroyed rest-of-expression'))
 desk('l5.s0.param-lifetime-desk', 'the same on a desk build (g++ and clang)', _l5s0)
 app('l9.s9.param-lifetime', 'in this app a unique_ptr parameter is destroyed at the callee\'s closing brace (close before the rest of the calling expression)', M('auto p = std::make_unique<Position>("VOD", 100); hold(std::move(p)), std::cout << "rest\\n";', 'struct Position {\n    std::string sym; int qty;\n    Position(std::string s, int q) : sym(s), qty(q) {}\n    ~Position() { std::cout << "close\\n"; }\n};\nvoid hold(std::unique_ptr<Position> p) { std::cout << "hold\\n"; }\n'), out('hold\nclose\nrest\n'))
 number('l5.s4.mb', '1,000,000 doubles are 8 MB; slips 8,000,000, 1 and 64', lambda: 1000000 * 8 / 1e6 == 8)
@@ -507,6 +509,8 @@ submit('l11.s7.fb-test-5', 'test-5: a copy constructor and nothing else (so a mo
 submit('l11.s7.fb-test-9', 'test-9: a declared move constructor deletes the copy assignment: copy and move constructors only pass tests 1 to 8 and fail test 9', L11, S117, rep(B, FOUR, '    Buffer(const Buffer&) = default;\n    Buffer(Buffer&&) = default;\n'), 'test-9')
 submit('l11.s7.fb-test-10', 'test-10: a deleted move assignment passes tests 1 to 9 and fails test 10', L11, S117, rep(B, 'Buffer& operator=(Buffer&&) = default;', 'Buffer& operator=(Buffer&&) = delete;'), 'test-10')
 submit('l11.s7.fb-test-12', 'test-12: without a move assignment (the other three declared) a is copied: passes tests 1 to 11 and fails test 12', L11, S117, rep(B, '    Buffer& operator=(Buffer&&) = default;\n', ''), 'test-12')
+SHARED = '#include <memory>\n#include <vector>\n\nclass Buffer {\npublic:\n    Buffer(int n, double x) : data_(std::make_shared<std::vector<double>>(n, x)) {}\n    int size() const { return static_cast<int>(data_->size()); }\n    double get(int i) const { return (*data_)[i]; }\n    void set(int i, double x) { (*data_)[i] = x; }\nprivate:\n    std::shared_ptr<std::vector<double>> data_;\n};\n'
+submit('l11.s7.fb-test-2', 'test-2 (a copy must not share doubles with its source): a Buffer whose copies share one vector passes test 1 and fails test 2', L11, S117, SHARED, 'test-2')
 app('l11.s7.moved-from', 'a moved-from vector is empty in practice (construction and assignment, this build)', M('std::vector<double> a(3, 1.5), c(1, 0.0); std::vector<double> b = std::move(a); std::vector<double> d(3, 2.0); c = std::move(d); std::cout << a.size() << d.size() << b.size() << c.size() << "\\n";'), out('0033\n'), flags=['-w'])
 C = sol(L11, S1110)
 MOVE = '    Connection(Connection&& other) noexcept\n        : venue_(std::move(other.venue_)), open_(other.open_) {\n        other.open_ = false;\n    }\n'
@@ -578,7 +582,7 @@ app('l13.s5.lazy', 'Series<std::string> builds when nothing calls mean', SER + '
 app('l13.s5.mean-string', "with names.mean() clang reports invalid operands ... ('std::string' ... and 'size_type' ...) at the return line", SER + 'int main() {\n    Series<std::string> names;\n    names.push("AZN");\n    names.mean();\n}\n', lambda r: not r.get('ok') and re.search(r"main\.cpp:11:\d+: error: invalid operands to binary expression \('std::string'.*and 'size_type'", r['diag']) is not None)
 app('l13.s6.int-mean', 'Series<int> of 1500 and 2501 prints 2000; a negative total becomes a huge unsigned number before the division', SER + 'int main() {\n    Series<int> volumes;\n    volumes.push(1500);\n    volumes.push(2501);\n    std::vector<int> two(2); volatile int total = -6;\n    std::cout << volumes.mean() << " " << (total / two.size() > 2000000000u) << \'\\n\';\n}\n', out('2000 1\n'), flags=['-w'])
 number('l13.s7.units', '1.2345 x 10^4 = 12345', lambda: round(1.2345 * 10**4) == 12345)
-number('l13.s7.slip-two', 'the slip "two" (you used two places) has the value 123: 1.2345 x 10^2', lambda: round(1.2345 * 100, 2) == 123)
+number('l13.s7.slip-two', 'the slip "two" (you used two places), value 123 with tolerance 0, also takes the product a learner who uses two places works out, 1.2345 x 10^2 = 123.45', lambda: abs(round(1.2345 * 100, 2) - at(load(L13), 'screens.7.widget.wrong.0.value')) <= at(load(L13), 'screens.7.widget.wrong.0.tol.abs'))
 W = sol(L13, S139)
 submit('l13.s9.fb-test-2', 'test-2: never dropping the oldest value passes test 1 and fails test 2', L13, S139, rep(W, '        if (static_cast<int>(xs_.size()) > n_) xs_.erase(xs_.begin());\n', ''), 'test-2')
 submit('l13.s9.fb-test-7', 'test-7: no check for an empty window passes tests 1 to 6 and fails test 7', L13, S139, rep(W, '        if (xs_.empty()) throw std::logic_error("mean of an empty window");\n', ''), 'test-7')
@@ -630,6 +634,7 @@ H1 = 'homework-1'
 CSV = sol(H1, 'items.1.widget')
 submit('h1.i1.fb-test-2', 'homework-1 test-2: reading a first close before the loop passes test 1 and stops on the header-only file', H1, 'items.1.widget', rep(CSV, '    double peak = 0;\n', '    std::getline(std::cin, line);\n    double peak = std::stod(line.substr(line.find(\',\') + 1));\n'), 'test-2')
 submit('h1.i1.fb-test-6', 'homework-1 test-6: no skip of comma-less lines passes tests 1 to 5 and stops on test 6', H1, 'items.1.widget', rep(CSV, '        if (comma == std::string::npos) {\n            continue;\n        }\n', ''), 'test-6')
+submit('h1.i1.fb-test-4', 'homework-1 test-4 (keep the worst): a worst fall that is reset at each new peak passes tests 1 to 3 and fails test 4', H1, 'items.1.widget', rep(CSV, '            peak = p;\n', '            peak = p;\n            worst = 0;\n'), 'test-4')
 number('h1.i1.falls', 'homework-1: (262.5 - 199.5) / 262.5 = 24%, (275 - 247.5) / 275 = 10%, (80 - 60) / 80 = 25%', lambda: abs((262.5 - 199.5) / 262.5 - 0.24) < 1e-12 and abs((275 - 247.5) / 275 - 0.1) < 1e-12 and (80 - 60) / 80 == 0.25)
 BAND = sol(H1, 'items.2.widget')
 submit('h1.i2.fb-test-4', 'homework-1 test-4: <= on the buy side passes tests 1 to 3 and fails test 4', H1, 'items.2.widget', rep(BAND, 'price < average - band', 'price <= average - band'), 'test-4')
