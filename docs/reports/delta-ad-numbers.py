@@ -4,6 +4,7 @@ that three fix passes re-authored or re-keyed (analysis/problems-4, -5; odes/pro
 Run from the repo root with the scratchpad venv Python (sympy, scipy, numpy).
 Exit 0 on correct content. A check that fails on wrong content stays failing and is a finding of
 docs/reviews/review-delta-ad-1.md (rows marked FINDING name the finding number)."""
+import os as _os; _os.chdir(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', '..'))  # paths below are from the repository root
 import json, re, sys, glob, math
 import sympy as sp
 from scipy import integrate, optimize

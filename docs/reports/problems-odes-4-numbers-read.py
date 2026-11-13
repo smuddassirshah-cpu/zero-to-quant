@@ -12,6 +12,7 @@ Exit 0 when every check holds.
 
 Run from the repo root: <scratchpad>/venv/bin/python docs/reports/problems-odes-4-numbers-read.py
 """
+import os as _os; _os.chdir(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', '..'))  # paths below are from the repository root
 import json
 import math
 import sys
