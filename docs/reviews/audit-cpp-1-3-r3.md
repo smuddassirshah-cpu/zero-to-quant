@@ -58,4 +58,28 @@ Five unsourced frequency or usage remarks are `unverified`: `l1` screens[7] expl
 
 ## Overlap table
 
-Filled after the WIP commit; see the end of this file.
+Read after the WIP commit `68f44fa5`: `docs/reviews/review-1.9.md` (section "cpp", the lines for l1 to l13, review-1 to review-3 and homework-1 to homework-3, and its fix pass), `docs/reviews/audit-cpp-1-3.md` (round 1 audit, fix pass and fix-pass read) and `docs/reviews/audit-cpp-1-3-r2.md` (round 2 audit, fix pass and fix-pass read).
+
+Conceptual findings of the earlier reads in this scope: 49. That is 15 from review-1.9, 17 from the round 1 audit, 1 from its fix-pass read, 14 new in the round 2 audit (its fifteenth was already counted as found by both) and 2 from the round 2 fix-pass read.
+
+| | count |
+|---|---|
+| found by this audit only | 9 |
+| found by the earlier reads only | 49 |
+| found by both | 0 |
+
+What the earlier reads said about the 9:
+
+- A search of the three files for the paths and wording of findings 1 to 9 ("byKey.l7", "quietly", "That is Python", "19.105", "whatever memory", "whatever follows", "only get its value", "last line that uses", "`__repr__`") finds none of them as a finding.
+- Finding 1 is not a fixer's slip. `git show ab4375ed:app/content/courses/cpp/l13-templates.json` has the same 25 console lines and the same key `l7` on the caret line: the key has been one line off since the lesson was written. review-1.9, round 1 and round 2 each checked this transcript against a compiler (line counts, the debug-mode notes) and none checked the keys against the lines.
+- Finding 2 sits beside a row the round 1 fix-pass read passed: `l7` quiz[0] ("a test run with this app's compiler printed 0"), which is worded as one run and is right. The sentence in `screens[3]` makes the general claim and was not tested with the literal `bump(nullptr)` call.
+- Finding 4 sits on a slip that review-1.9 corrected (3.66 to 3.65, its finding on `l4` screens[4]); its fix-pass note quotes "0.01√365 = 0.19105" without noticing that the value rounds to 0.1910 only at more digits.
+- Earlier fixes re-read here as ledger rows and found correct include: `l13` screens[4] prose ("from a build with the library's debug checks on", reproduced), `l9` screens[2] ("a `throw` that some caller catches"), `l4` screens[5] `test-1`, `test-2` and `test-3` lines (each graded), `l12` screens[9] `test-1` (both named outputs reproduced), `l11` screens[7] tests 5, 9, 10 and 12 (each graded), `homework-2` items[5] prose (four ran, one stopped).
+
+New `wrong` findings that no earlier read found: **1** (finding 1, minor). It is a feedback line attached to the wrong console line. The count of `wrong` about C++ itself in 2,532 ledger rows is zero.
+
+Convergence rule: one new `wrong` in three levels is at the limit of "at most one", so this round meets the rule, subject to the fix-pass read of the nine fixes.
+
+## Inbox bullets
+
+Three bullets appended to `docs/BACKLOG-INBOX.md` under `Raised later (audit cpp):`: a validator report of positional `byKey` keys beside their lines; the node driver ending with status 0 and no output when its first compile carries extra flags; a `mutants` list on code widgets to keep the 74 graded submissions with the content.
