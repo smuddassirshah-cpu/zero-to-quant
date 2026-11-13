@@ -165,22 +165,22 @@ def keys_of(name):
 
 # the lines this script covers are exactly the lines the content has
 EXPECT_KEYS = {
-    'l13 A peaks': ['test-2', 'test-3', 'test-4', 'test-6'],
+    'l13 A peaks': ['test-2', 'test-3', 'test-4', 'test-5', 'test-6'],
     'l13 B shortest_cover': ['test-3', 'test-5', 'test-8', 'test-9'],
     'l13 C min_capacity': ['test-10', 'test-11', 'test-2', 'test-4'],
     'l13 D grid_moves': ['test-1', 'test-2', 'test-3', 'test-9'],
-    'l14 decayed_score': ['test-2', 'test-6', 'test-7'],
-    'l14 icpc_rank_key': ['test-1', 'test-2', 'test-7'],
+    'l14 decayed_score': ['test-2', 'test-7'],
+    'l14 icpc_rank_key': ['test-1', 'test-5'],
     'l14 best_order': ['test-2', 'test-3', 'test-4'],
     'l15 last_occurrence': ['test-3', 'test-4'],
     'l15 count_inversions_small': ['test-3', 'test-6'],
-    'l15 solve_all': ['test-2', 'test-6'],
+    'l15 solve_all': ['test-2', 'test-3'],
     'l15 smallest_failing': ['test-3', 'test-6', 'test-7'],
     'l16 equal_thirds': ['test-2', 'test-5', 'test-6', 'test-8'],
-    'l16 mistakes_summary': ['test-2', 'test-4', 'test-6', 'test-7'],
-    'hw4 desks_after_cut': ['test-4', 'test-5', 'test-7'],
+    'l16 mistakes_summary': ['test-1', 'test-2', 'test-6', 'test-7'],
+    'hw4 desks_after_cut': ['test-2', 'test-4', 'test-7'],
     'hw4 max_profit_k': ['test-3', 'test-4', 'test-6', 'test-8'],
-    'hw4 widest_gap': ['test-4', 'test-5', 'test-8'],
+    'hw4 widest_gap': ['test-1', 'test-4', 'test-8'],
 }
 for name, want in EXPECT_KEYS.items():
     ck('B %s: byKey lines are %s' % (name, want), keys_of(name) == sorted(want), keys_of(name))
@@ -207,10 +207,10 @@ def peaks(closes):
     return sum(1 for i in range(1, len(closes) - 1) if closes[i] > closes[i - 1] and closes[i] >= closes[i + 1])
 ''', 'test-6')
 # the explain's "`>=` slip", written on both sides, stops one test earlier, on the flat closes, where there is no line
-mutant('l13 A peaks', '>= on both sides lands on the plateau line test-6', '''
+mutant('l13 A peaks', '>= on both sides lands on the flat-closes line test-5 (fix pass)', '''
 def peaks(closes):
     return sum(1 for i in range(1, len(closes) - 1) if closes[i] >= closes[i - 1] and closes[i] >= closes[i + 1])
-''', 'test-6', finding=1)
+''', 'test-5', finding=1)
 
 # ---- l13 B shortest_cover
 mutant('l13 B shortest_cover', 'returns infinity when nothing covers', '''
@@ -405,14 +405,14 @@ def decayed_score(value, minute, wrong, per_minute, per_wrong, floor):
     return max(floor * value, s) if floor else s
 ''', 'test-7')
 # test-6 says "Apply the floor after both costs": the two ways of flooring too early both stop at test 2
-mutant('l14 decayed_score', 'floor applied before the attempt cost lands on test-6', '''
+mutant('l14 decayed_score', 'floor applied before the attempt cost lands on test-2 (fix pass: line moved there)', '''
 def decayed_score(value, minute, wrong, per_minute, per_wrong, floor):
     return max(floor * value, value - per_minute * minute) - per_wrong * wrong
-''', 'test-6', finding=2)
-mutant('l14 decayed_score', 'floor applied before the time cost lands on test-6', '''
+''', 'test-2', finding=2)
+mutant('l14 decayed_score', 'floor applied before the time cost lands on test-2 (fix pass: line moved there)', '''
 def decayed_score(value, minute, wrong, per_minute, per_wrong, floor):
     return max(floor * value, value - per_wrong * wrong) - per_minute * minute
-''', 'test-6', finding=2)
+''', 'test-2', finding=2)
 
 # ---- l14 icpc_rank_key
 mutant('l14 icpc_rank_key', 'charges rejections on unsolved problems', '''
@@ -425,7 +425,7 @@ def icpc_rank_key(results, per_wrong=20):
     return (-solved, penalty)
 ''', 'test-1')
 # test-2 ("whatever the rejections") names the same slip, which has already stopped at test 1
-mutant('l14 icpc_rank_key', 'charges rejections on unsolved problems lands on test-2', '''
+mutant('l14 icpc_rank_key', 'charges rejections on unsolved problems lands on test-1 (fix pass: test-2 line deleted)', '''
 def icpc_rank_key(results, per_wrong=20):
     solved, penalty = 0, 0
     for minute, wrong in results:
@@ -433,19 +433,19 @@ def icpc_rank_key(results, per_wrong=20):
         if minute is not None:
             solved += 1; penalty += minute
     return (-solved, penalty)
-''', 'test-2', finding=3)
+''', 'test-1', finding=3)
 # test-7: every wrong key order or sign already fails test 1
 for label, ret in [('solved count not negated', '(solved, penalty)'), ('penalty first', '(penalty, -solved)'), ('penalty negated', '(-solved, -penalty)')]:
-    mutant('l14 icpc_rank_key', label + ' lands on test-7', '''
+    mutant('l14 icpc_rank_key', label + ' lands on test-1 (fix pass: test-7 line deleted)', '''
 def icpc_rank_key(results, per_wrong=20):
     solved, penalty = 0, 0
     for minute, wrong in results:
         if minute is not None:
             solved += 1; penalty += minute + per_wrong * wrong
     return %s
-''' % ret, 'test-7', finding=3)
+''' % ret, 'test-1', finding=3)
 # the slip the tests do catch without a line: `if minute:` drops a solve at minute 0 (test 5)
-mutant('l14 icpc_rank_key', '`if minute:` drops a solve at minute 0 (no line: generic)', '''
+mutant('l14 icpc_rank_key', '`if minute:` drops a solve at minute 0 (fix pass: test-5 line added)', '''
 def icpc_rank_key(results, per_wrong=20):
     solved, penalty = 0, 0
     for minute, wrong in results:
@@ -532,7 +532,7 @@ def solve_all(text):
     return out
 '''
 k1 = mutant('l15 solve_all', 'module-level set, never emptied (the starter)', LEAK % 'pass', 'test-2')
-mutant('l15 solve_all', 'module-level set emptied between cases but not between calls lands on test-6', LEAK % 'if case: seen.clear()', 'test-6', finding=4)
+mutant('l15 solve_all', 'module-level set emptied between cases but not between calls lands on test-3 (fix pass: line added)', LEAK % 'if case: seen.clear()', 'test-3', finding=4)
 
 # ---- l15 smallest_failing
 mutant('l15 smallest_failing', 'tries lengths 1 and 2 only', '''
@@ -544,10 +544,10 @@ def smallest_failing(fast, brute, gen, seed):
     return None
 ''', 'test-3')
 # the line's own words, "not only the longest": that submission stops at test 1
-mutant('l15 smallest_failing', 'tries only the longest length, 8, lands on test-3', '''
+mutant('l15 smallest_failing', 'tries only the longest length, 8, stops at test-1 (fix pass: test-3 line now names stopping at length 2)', '''
 def smallest_failing(fast, brute, gen, seed):
     return stress(fast, brute, lambda rng: gen(rng, 8), 200, seed)
-''', 'test-3', finding=5)
+''', 'test-1', finding=5)
 mutant('l15 smallest_failing', 'ignores gen and always draws values 1 to 3', '''
 def smallest_failing(fast, brute, gen, seed):
     for n in range(1, 9):
@@ -640,13 +640,13 @@ def mistakes_summary(log):
 for label, body in [('sorts by count only (ties in order of first appearance)', 'sorted(counts.items(), key=lambda kv: -kv[1])'),
                     ('Counter.most_common', '__import__("collections").Counter(c for _, c in log).most_common()'),
                     ('sorts (count, name) downwards', 'sorted(counts.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)')]:
-    mutant('l16 mistakes_summary', label + ' lands on test-4', '''
+    mutant('l16 mistakes_summary', label + ' lands on test-1 (fix pass: line moved there)', '''
 def mistakes_summary(log):
     counts = {}
     for problem, category in log:
         counts[category] = counts.get(category, 0) + 1
     return %s
-''' % body, 'test-4', finding=6)
+''' % body, 'test-1', finding=6)
 
 # ---- hw4 desks_after_cut
 BFS = '''
@@ -669,8 +669,8 @@ def desks_after_cut(n, links, cut):
 '''
 mutant('hw4 desks_after_cut', 'removes every copy of the cut link', BFS % ('(a, b) != links[cut]', 'range(n)'), 'test-4')
 # test-5 names isolated desks; example 2 (test 2) already has one, desk 3
-mutant('hw4 desks_after_cut', 'starts only from desks that still have a link, lands on test-5', BFS % ('i != cut', '[s for s in range(n) if adj[s]]'), 'test-5', finding=7)
-mutant('hw4 desks_after_cut', 'starts only from desks named in some link, lands on test-5', BFS % ('i != cut', 'sorted({x for ab in links for x in ab})'), 'test-5', finding=7)
+mutant('hw4 desks_after_cut', 'starts only from desks that still have a link, lands on test-2 (fix pass: line moved there)', BFS % ('i != cut', '[s for s in range(n) if adj[s]]'), 'test-2', finding=7)
+mutant('hw4 desks_after_cut', 'starts only from desks named in some link, lands on test-2 (fix pass: line moved there)', BFS % ('i != cut', 'sorted({x for ab in links for x in ab})'), 'test-2', finding=7)
 mutant('hw4 desks_after_cut', 'recursive DFS (3,000 frames on the page)', '''
 def desks_after_cut(n, links, cut):
     adj = [[] for _ in range(n)]
@@ -747,7 +747,7 @@ BS = '''lo, hi = %d, xs[-1] - xs[0]
     return lo'''
 mutant('hw4 widest_gap', 'search starts at distance 1', GAP % ('sorted(levels)', BS % 1), 'test-4')
 # test-5 says "Test 5 is unsorted. Sort the levels": the example itself (test 1) is unsorted
-mutant('hw4 widest_gap', 'no sort, lands on test-5', GAP % ('list(levels)', BS % 0), 'test-5', finding=8)
+mutant('hw4 widest_gap', 'no sort, lands on test-1 (fix pass: line moved there)', GAP % ('list(levels)', BS % 0), 'test-1', finding=8)
 mutant('hw4 widest_gap', 'tries every distance upwards', GAP % ('sorted(levels)', '''d = 0
     while fits(d + 1): d += 1
     return d'''), 'test-8')

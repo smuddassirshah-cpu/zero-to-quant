@@ -166,14 +166,14 @@ for t, args in enumerate([(1000, 35, 1, 4, 50, .3), (500, 120, 3, 2, 50, .3), (1
     v, m, w, pm, pw, fl = args
     E('l14', f'screens[4].widget.tests[{t}].expect', max(fl * v, v - pm * m - pw * w))
 K('l14', 'screens[4].feedback.byKey', 'test-2', 500 - 2 * 120 - 50 * 3)                 # 110
-K('l14', 'screens[4].feedback.byKey', 'test-6', 1500 - 6 * 200 - 50 * 4)                # 100
+K('l14', 'screens[4].feedback.byKey', 'test-2', 0.3 * 500)                              # floor 150 (concept fix: test-6 line deleted)
 def icpc(res, pw=20):
     s = [(m, w) for m, w in res if m is not None]
     return len(s), sum(m + pw * w for m, w in s)
 E('l14', 'screens[5].widget.tests[0].expect', icpc([(12, 0), (41, 1), (95, 2), (None, 3)])[1])   # 208
 X, Y, Z = icpc([(15, 0), (50, 2), (90, 0)]), icpc([(20, 0), (45, 0), (100, 1)]), icpc([(60, 0), (70, 0), (80, 0), (190, 0)])
 E('l14', 'quiz[1].widget.options[0].text', X[1]); E('l14', 'quiz[1].widget.options[0].text', Y[1])
-K('l14', 'screens[5].feedback.byKey', 'test-7', Z[1])                                     # 400
+K('l14', 'screens[5].feedback.byKey', 'test-5', 5)                                       # five rejections (concept fix: test-7 line deleted)
 assert sorted([('X', X), ('Y', Y), ('Z', Z)], key=lambda t: (-t[1][0], t[1][1]))[0][0] == 'Z'
 f = lambda x: 1000 * (1 - math.exp(-x / 50)) + 800 * (1 - math.exp(-(60 - x) / 15))
 a, b = 0.0, 60.0
@@ -186,6 +186,10 @@ E('l14', 'screens[6].explain.canvas.points.p.y', round(f(xs), 1))               
 E('l14', 'screens[6].hints[2].text', round(f(xs)))
 E('l14', 'screens[6].explain.text', round(f(60))); E('l14', 'screens[6].explain.text', round(f(0)))
 E('l14', 'screens[6].canvas.state.points[0].y', f(10))
+# concept fix: leaving D the moment it is solved moves the best cap to 60 - 15 ln(8/3), about 45
+E('l14', 'screens[6].explain.text', round(60 - 15 * math.log(8 / 3)))
+E('l14', 'screens[6].feedback.byKey.all', round(f(60))); E('l14', 'screens[6].feedback.byKey.none', round(f(0)))
+E('l14', 'screens[11].explain.text', 12000 * 0.01 * 5); E('l14', 'screens[11].explain.text', 3000 * 0.01 * 25)   # 600, 750
 E('l14', 'screens[8].feedback.correct', 'seven'); assert int(702 / 96) == 7
 E('l14', 'screens[9].widget.answer', -(2000 * 35 - 1500 * 50) / 250)
 E('l14', 'screens[9].hints[2].text', 2000 * 35 - 1500 * 50)
@@ -382,6 +386,7 @@ E('l13', 'screens[10].widget.options[3].text', 'a sixth of a problem')
 def peaks_ends(c): return sum(1 for i in range(len(c)) if (i == 0 or c[i] > c[i - 1]) and (i == len(c) - 1 or c[i] > c[i + 1]))
 assert peaks_ends([4, 9]) == 1 and peaks_ends([5, 1, 5]) == 2
 K('l13', 'screens[3].feedback.byKey', 'test-3', 9)
+K('l13', 'screens[3].feedback.byKey', 'test-5', 2)                                       # 2 2 2 2 (concept fix: line added)
 E('l13', 'screens[2].widget.options[2].why', 'previous screen')
 # finding 18: the problem A statement is one sentence per line; the note is line 6 and the description line 2
 import json as _j
