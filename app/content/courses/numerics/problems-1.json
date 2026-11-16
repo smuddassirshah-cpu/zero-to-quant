@@ -1,0 +1,526 @@
+{
+  "id": "problems-1",
+  "course": "numerics",
+  "level": 1,
+  "title": "Problems: errors",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-float32-overnight",
+      "difficulty": 4,
+      "skills": [
+        "nm-float",
+        "nm-stability"
+      ],
+      "prose": "A GPU curve engine keeps discount factors in float32, which has 23 mantissa bits after the hidden 1. It reads the overnight forward as $f = \\tfrac{P_0 - P_1}{\\delta P_1}$, with $\\delta = \\tfrac{1}{365}$. Today the two factors, one day apart, are $P_0 = 0.9425$ and $P_1 = 0.9424$.",
+      "parts": [
+        {
+          "question": "Both factors lie in $[0.5, 1)$. The gap between neighbouring float32 numbers there is $2^k$. What is $k$? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -24,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "a whole number",
+            "wrong": [
+              {
+                "id": "eps",
+                "value": -23,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sign",
+                "value": 24,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "half",
+                "value": -25,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "In $[1, 2)$ the gap is $2^{-23}$. One power of two lower it halves, so $k = -24$.",
+            "generic": "Not quite. Start from the gap in $[1, 2)$ and step down one power of two.",
+            "byKey": {
+              "eps": "$2^{-23}$ is float32's epsilon, the gap in $[1, 2)$. Our factors sit one binade lower, where the gap halves.",
+              "sign": "The gap is a small number, $2^{-24}$, so $k$ is negative.",
+              "half": "$2^{-25}$ is half the gap, the most rounding can move a number. The gap itself is twice that."
+            }
+          },
+          "explain": {
+            "text": "A float32 number in $[2^p, 2^{p+1})$ has 23 bits after the point, so its gap is $2^{p-23}$. Here $p = -1$, which gives $2^{-24} \\approx 5.96 \\times 10^{-8}$."
+          }
+        },
+        {
+          "question": "Using the gap $2^{-24}$ from part 1, each stored factor is off by at most half a gap. Their difference is then computed exactly. As a share of $P_0 - P_1 = 10^{-4}$, what is the largest error in the computed difference? Give a percentage to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0596,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "per cent",
+            "wrong": [
+              {
+                "id": "one-factor",
+                "value": 0.0298,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "eps",
+                "value": 0.1192,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The two half-gaps can point opposite ways, so the difference can be off by $2^{-24} \\approx 5.96 \\times 10^{-8}$. Over $10^{-4}$ that is about 0.060%.",
+            "generic": "Not quite. Add the worst errors of the two factors, then divide by $10^{-4}$.",
+            "byKey": {
+              "one-factor": "That counts one factor's half-gap. Both factors are rounded, and their errors can add.",
+              "eps": "You used $2^{-23}$ as the combined error. The gap here is $2^{-24}$, and two half-gaps make one gap."
+            }
+          },
+          "explain": {
+            "text": "Each factor moves by at most $2^{-25}$, so their difference moves by at most $2^{-24} \\approx 5.96 \\times 10^{-8}$. The subtraction adds no error of its own, because $P_1$ and $P_0$ lie within a factor of 2. So the difference of $10^{-4}$ carries up to $5.96 \\times 10^{-4}$, about 0.060%."
+          }
+        },
+        {
+          "question": "Using the error of 0.0596% from part 2, compare it with a stored factor's own relative error, at most $2^{-25}/0.9425 \\approx 3.16 \\times 10^{-8}$. By what factor has the subtraction enlarged the relative error? Give the nearest whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 18850,
+            "tol": {
+              "abs": 2
+            },
+            "placeholder": "a whole number",
+            "wrong": [
+              {
+                "id": "one-input",
+                "value": 9425,
+                "tol": {
+                  "abs": 2
+                }
+              },
+              {
+                "id": "per-cent",
+                "value": 188.5,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$5.96 \\times 10^{-4} \\div 3.16 \\times 10^{-8} \\approx 18{,}850$. That is $\\tfrac{P_0 + P_1}{P_0 - P_1} = 18{,}849$, the condition number of the subtraction.",
+            "generic": "Not quite. Turn 0.0596% into a decimal before you divide by $3.16 \\times 10^{-8}$.",
+            "byKey": {
+              "one-input": "That allows for an error in one factor only. Both carry one, so the ratio doubles.",
+              "per-cent": "You divided the percentage itself. As a decimal 0.0596% is $5.96 \\times 10^{-4}$."
+            }
+          },
+          "explain": {
+            "text": "The ratio is $\\tfrac{2^{-24}/10^{-4}}{2^{-25}/0.9425} = \\tfrac{2 \\times 0.9425}{10^{-4}} = 18{,}850$. It matches $\\kappa = \\tfrac{|P_0| + |P_1|}{|P_0 - P_1|} = 18{,}849$: cancellation is an ill-conditioned subtraction. About $\\log_{10} 18{,}850 \\approx 4.3$ of float32's 7 digits are gone."
+          }
+        },
+        {
+          "question": "Using the relative error of 0.0596% from part 2, how far can the computed $f$ be from the true forward? Give basis points to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2309,
+            "tol": {
+              "abs": 0.006
+            },
+            "placeholder": "basis points",
+            "wrong": [
+              {
+                "id": "eps",
+                "value": 0.4617,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "one-factor",
+                "value": 0.1154,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$f = \\tfrac{10^{-4} \\times 365}{0.9424} \\approx 3.873\\%$, and 0.0596% of that is about $2.31 \\times 10^{-5}$, or 0.23 bp.",
+            "generic": "Not quite. Find $f$ first, then take 0.0596% of it and turn the result into basis points.",
+            "byKey": {
+              "eps": "That uses a combined error of $2^{-23}$, the slip of part 2. The difference is off by at most $2^{-24}$.",
+              "one-factor": "That carries one factor's half-gap from part 2. Two rounded factors give twice that, 0.23 bp."
+            }
+          },
+          "explain": {
+            "text": "Dividing by $\\delta P_1$ adds only a rounding of its own, so $f$ keeps the relative error of the difference. Here $f \\approx 0.03873$, and $0.03873 \\times 5.96 \\times 10^{-4} \\approx 2.31 \\times 10^{-5}$. One basis point is $10^{-4}$, so the forward is uncertain by about 0.23 bp."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-moment-recurrence",
+      "difficulty": 5,
+      "skills": [
+        "nm-float",
+        "nm-stability"
+      ],
+      "prose": "Take $I_n = \\int_0^1 x^n e^{x - 1}\\,dx$. Integration by parts gives $I_n = 1 - nI_{n-1}$, starting from $I_0 = 1 - e^{-1}$. Every $I_n$ is positive and they fall as $n$ grows, yet the recurrence run forward in doubles can return a negative $I_{18}$.",
+      "parts": [
+        {
+          "question": "An error in the stored $I_0$ is carried forward by the recurrence. By what factor has its size grown by $I_{18}$? Give $\\log_{10}$ of the factor to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 15.806,
+            "tol": {
+              "abs": 0.06
+            },
+            "placeholder": "log base 10",
+            "wrong": [
+              {
+                "id": "one-step",
+                "value": 1.255,
+                "tol": {
+                  "abs": 0.06
+                }
+              },
+              {
+                "id": "sum",
+                "value": 2.233,
+                "tol": {
+                  "abs": 0.06
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Step $n$ multiplies the error by $-n$, so by $I_{18}$ it has grown by $18! \\approx 6.40 \\times 10^{15}$, and $\\log_{10}$ of that is 15.8.",
+            "generic": "Not quite. Write what one step does to an error $e$ in $I_{n-1}$, then repeat it.",
+            "byKey": {
+              "one-step": "That is $\\log_{10} 18$, the last step alone. Every step from 1 to 18 multiplies the error again.",
+              "sum": "You added the multipliers, $1 + 2 + \\cdots + 18 = 171$. They multiply, so the factor is $18!$."
+            }
+          },
+          "explain": {
+            "text": "If $I_{n-1}$ carries an error $e$, then $1 - n(I_{n-1} + e)$ carries $-ne$. After 18 steps the error is $18!$ times its size in $I_0$. $\\log_{10} 18! = \\log_{10}(6.40 \\times 10^{15}) \\approx 15.8$."
+          }
+        },
+        {
+          "question": "The stored $I_0$ is off by at most $uI_0$, with $u = 2^{-53} \\approx 1.11 \\times 10^{-16}$. Using the factor $18! \\approx 6.40 \\times 10^{15}$ from part 1, how large can the error in the computed $I_{18}$ be? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.4493,
+            "tol": {
+              "abs": 0.006
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "eps",
+                "value": 0.8986,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-i0",
+                "value": 0.7108,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$uI_0 \\approx 1.11 \\times 10^{-16} \\times 0.632 = 7.02 \\times 10^{-17}$, and times $6.40 \\times 10^{15}$ that is about 0.45.",
+            "generic": "Not quite. Find the error in $I_0$ in absolute terms, then multiply by $18!$.",
+            "byKey": {
+              "eps": "You used $\\epsilon = 2.22 \\times 10^{-16}$. Rounding to nearest moves a number by at most $u$, half of that.",
+              "no-i0": "You multiplied $u$ by $18!$. The error in $I_0$ is $u$ times $I_0 \\approx 0.632$."
+            }
+          },
+          "explain": {
+            "text": "$I_0 = 1 - e^{-1} \\approx 0.632$, so its stored error is at most $7.02 \\times 10^{-17}$. Multiplying by $18!$ gives up to 0.45. The later roundings only add to this, so the bound is a floor on what can go wrong."
+          }
+        },
+        {
+          "question": "Using the error of up to 0.45 from part 2, and a true $I_{18}$ between $\\tfrac{1}{19e} \\approx 0.019$ and $\\tfrac{1}{19} \\approx 0.053$, what has gone wrong?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "cond",
+                "text": "The problem is ill-conditioned: $I_{18}$ is small, so any method loses its digits",
+                "why": "A small answer is not a sensitive one. Running the identity the other way, as part 4 does, gets every digit."
+              },
+              {
+                "id": "ok",
+                "text": "The recurrence is unstable: each step multiplies the error by $n$, though $I_{18}$ is not sensitive",
+                "correct": true
+              },
+              {
+                "id": "exact",
+                "text": "Integration by parts is only approximate, so the recurrence drifts",
+                "why": "The identity is exact. Only the rounding of $I_0$ and of each step enters, and the steps blow it up."
+              },
+              {
+                "id": "exp",
+                "text": "The library's $e^{-1}$ is inaccurate; a correctly rounded value fixes it",
+                "why": "Even a correctly rounded $I_0$ is off by up to $uI_0$, and $18!$ turns that into 0.45."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Yes. The number is harmless; the algorithm magnifies its own rounding by $18!$.",
+            "generic": "Not quite. Ask whether the fault lies with $I_{18}$ itself or with the way we compute it."
+          },
+          "explain": {
+            "text": "A possible error of 0.45 dwarfs an answer near 0.05, so the forward value is noise. The integral barely moves when the integrand changes a little, so the problem is well conditioned. The fault is the method, which multiplies each error by $n$: it is unstable."
+          }
+        },
+        {
+          "question": "Run the identity backwards, $I_{n-1} = (1 - I_n)/n$, from a guess $I_N = 0$. Since $0 < I_N < \\tfrac{1}{N + 1}$, the guess is off by under $\\tfrac{1}{N+1}$, and each backward step divides the error by $n$. What is the smallest $N$ that makes the error in $I_{18}$ below $10^{-10}$? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 25,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "a whole number",
+            "wrong": [
+              {
+                "id": "no-start",
+                "value": 26,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one-short",
+                "value": 24,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The bound is $\\tfrac{1}{N+1} \\cdot \\tfrac{18!}{N!}$. At $N = 24$ it is $4.1 \\times 10^{-10}$ and at $N = 25$ it is $1.6 \\times 10^{-11}$, so $N = 25$.",
+            "generic": "Not quite. From $I_N$ down to $I_{18}$ the error is divided by $N(N - 1)\\cdots 19 = \\tfrac{N!}{18!}$.",
+            "byKey": {
+              "no-start": "You took the starting error as 1. It is under $\\tfrac{1}{N+1}$, which saves one step.",
+              "one-short": "At $N = 24$ the bound is $\\tfrac{1}{25} \\cdot \\tfrac{18!}{24!} \\approx 4.1 \\times 10^{-10}$, still above $10^{-10}$."
+            }
+          },
+          "explain": {
+            "text": "Backwards, an error $e$ in $I_n$ becomes $-e/n$ in $I_{n-1}$. From $N$ to 18 it shrinks by $\\tfrac{N!}{18!}$, so the bound is $\\tfrac{18!}{(N+1)!}$. That is $4.1 \\times 10^{-10}$ at $N = 24$ and $1.6 \\times 10^{-11}$ at $N = 25$."
+          }
+        },
+        {
+          "question": "Using $N = 25$ from part 4, run the backward recurrence from $I_{25} = 0$ down to $I_{18}$. What is $I_{18}$? Give 5 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0501199,
+            "tol": {
+              "abs": 6e-06
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "upper",
+                "value": 0.0526316,
+                "tol": {
+                  "abs": 6e-06
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The steps give $I_{24} = 0.04$, $I_{23} = 0.04$, and on down to $I_{18} \\approx 0.05012$, inside the range of part 3.",
+            "generic": "Not quite. Start at $I_{25} = 0$, so $I_{24} = \\tfrac{1}{25}$, and divide by each $n$ in turn.",
+            "byKey": {
+              "upper": "$\\tfrac{1}{19}$ is the upper bound, not the value. Carry the recurrence all the way down from $I_{25}$."
+            }
+          },
+          "explain": {
+            "text": "$I_{24} = \\tfrac{1}{25} = 0.04$, $I_{23} = \\tfrac{0.96}{24} = 0.04$, $I_{22} = \\tfrac{0.96}{23} \\approx 0.041739$, and so on. Seven steps reach $I_{18} \\approx 0.050120$, good to about $10^{-11}$. The same identity is stable one way and unstable the other."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-netting-sum",
+      "difficulty": 4,
+      "skills": [
+        "nm-float",
+        "nm-stability"
+      ],
+      "prose": "A risk run adds $n = 2^{22}$ cash-flow values in double precision, with $u = 2^{-53} \\approx 1.11 \\times 10^{-16}$. The inflows total £2,400m and the outflows $-$£2,394m, so the net value is £6m. A loop that adds one value at a time returns the exact sum of the values, each moved by a relative amount up to about $nu$.",
+      "parts": [
+        {
+          "question": "Moving each value by a relative amount up to $r$ moves the sum by up to $r\\sum|x_i|$. Relative to the net value, the condition number is $\\kappa = \\tfrac{\\sum|x_i|}{|\\sum x_i|}$. What is $\\kappa$ here? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 799,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "a whole number",
+            "wrong": [
+              {
+                "id": "inflow",
+                "value": 400,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one",
+                "value": 1,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sum|x_i| = 2{,}400 + 2{,}394 = 4{,}794$ million against a net of 6 million, so $\\kappa = 799$.",
+            "generic": "Not quite. On top goes the total size of every value, signs ignored; below goes the net.",
+            "byKey": {
+              "inflow": "You put only the inflows on top. The outflows move too, and their sizes add.",
+              "one": "A sum of positive numbers has $\\kappa = 1$. Here the signs are mixed and nearly cancel."
+            }
+          },
+          "explain": {
+            "text": "Signs ignored, the values total £4,794m, but the net is only £6m. So a small relative change in each value is up to 799 times larger relative to the net. The near-cancellation, not the count of values, makes this sum sensitive."
+          }
+        },
+        {
+          "question": "A loop's forward error, relative to the net, is at most about $\\kappa$ times its backward error $nu$. Using $\\kappa = 799$ from part 1, what is that bound for $n = 2^{22}$? Give it times $10^{7}$ to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.7206,
+            "tol": {
+              "abs": 0.006
+            },
+            "placeholder": "times 10^7",
+            "wrong": [
+              {
+                "id": "eps",
+                "value": 7.4412,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-kappa",
+                "value": 0.004657,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$nu = 2^{22} \\times 2^{-53} = 2^{-31} \\approx 4.66 \\times 10^{-10}$, and $799 \\times 4.66 \\times 10^{-10} \\approx 3.72 \\times 10^{-7}$.",
+            "generic": "Not quite. Multiply the powers of two for $nu$, then multiply by $\\kappa$.",
+            "byKey": {
+              "eps": "You used $\\epsilon = 2^{-52}$. Rounding to nearest gives the unit roundoff $u = 2^{-53}$, half that.",
+              "no-kappa": "That is $nu$ alone, the backward error. The near-cancellation multiplies it by $\\kappa = 799$."
+            }
+          },
+          "explain": {
+            "text": "Each addition rounds by a factor $1 + \\delta$ with $|\\delta| \\le u$, and an early value passes through almost every addition. So each value moves by about $nu = 2^{-31} \\approx 4.66 \\times 10^{-10}$, and the net by up to 799 times that, $3.72 \\times 10^{-7}$."
+          }
+        },
+        {
+          "question": "Using the relative bound $3.72 \\times 10^{-7}$ from part 2, how far can the computed net be from £6m? Give pounds to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.2324,
+            "tol": {
+              "abs": 0.006
+            },
+            "placeholder": "pounds",
+            "wrong": [
+              {
+                "id": "gross",
+                "value": 1783.6,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "eps",
+                "value": 4.4648,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$3.72 \\times 10^{-7} \\times £6\\text{m} \\approx £2.23$.",
+            "generic": "Not quite. The bound is relative to the net, so multiply it by £6m.",
+            "byKey": {
+              "gross": "You applied the bound to the £4,794m gross. Part 2's bound is relative to the net of £6m.",
+              "eps": "That carries $\\epsilon = 2^{-52}$ from part 2's slip. With $u = 2^{-53}$ the bound is half that."
+            }
+          },
+          "explain": {
+            "text": "$3.72 \\times 10^{-7} \\times 6 \\times 10^6 \\approx 2.23$, so the net may be off by about £2.23. The same figure is $nu$ times the £4,794m gross: the error scales with the gross, not the net."
+          }
+        },
+        {
+          "question": "Pairwise summation adds neighbours, then pairs of pairs, so a value passes through only $\\log_2 n$ additions. Its backward error is about $u\\log_2 n$. Using $\\kappa = 799$ from part 1, how far can its net be from £6m? Give the error in units of £$10^{-5}$, to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.1708,
+            "tol": {
+              "abs": 0.006
+            },
+            "placeholder": "units of £0.00001",
+            "wrong": [
+              {
+                "id": "log10",
+                "value": 0.3524,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\log_2 2^{22} = 22$, so $799 \\times 22 \\times 1.11 \\times 10^{-16} \\times £6\\text{m} \\approx £1.17 \\times 10^{-5}$.",
+            "generic": "Not quite. Replace $n$ by $\\log_2 n = 22$ in part 3's working.",
+            "byKey": {
+              "log10": "You used $\\log_{10} n \\approx 6.62$. Each level of pairing halves the count, so the depth is $\\log_2 n = 22$."
+            }
+          },
+          "explain": {
+            "text": "The depth of the pairing tree is $\\log_2 2^{22} = 22$, so the backward error falls from $2^{22}u$ to $22u$. The bound is $799 \\times 22 \\times 1.11 \\times 10^{-16} \\times 6 \\times 10^6 \\approx 1.17 \\times 10^{-5}$ pounds. Both loops face the same $\\kappa$; the more stable algorithm keeps about five more digits."
+          }
+        }
+      ]
+    }
+  ]
+}
