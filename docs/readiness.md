@@ -661,8 +661,8 @@ Same learner as Strats, plus the pricing mathematics.
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours in the app | Hours of outside study |
 | --- | --- | --- | --- | --- | --- |
 | Required | 657 | 0 | 657 | 401 | 1459 |
-| Recommended | 239 | 0 | 239 | 136 | 433 |
-| Learn header (required plus recommended) | 896 | 0 | 896 | 537 | 1892 |
+| Recommended | 239 | 0 | 239 | 139 | 431 |
+| Learn header (required plus recommended) | 896 | 0 | 896 | 540 | 1890 |
 <!-- /generated -->
 
 **Dependency conflicts**
