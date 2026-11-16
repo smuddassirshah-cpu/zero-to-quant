@@ -351,6 +351,144 @@ def level2():
     return lv
 
 
+# ---------------------------------------------------------------- level 3
+def level3():
+    lv = Level('convex', 3)
+    # p-capital-price: exact with sympy, then scipy on the primal and a grid on the dual
+    x1s, x2s, L = sp.symbols('x1 x2 L', real=True)
+    lm = sp.Symbol('lambda')
+    P1 = 10 * x1s - x1s ** 2
+    P2 = 8 * x2s - x2s ** 2 / 2
+    r1 = sp.solve(sp.diff(P1 - lm * x1s, x1s), x1s)[0]
+    r2 = sp.solve(sp.diff(P2 - lm * x2s, x2s), x2s)[0]
+    expr(3, 'p-capital-price', 1, r1, {'no-half': 10 - lm, 'sign': 5 + lm / 2})
+    ok(sp.simplify(r2 - (8 - lm)) == 0, 'credit desk picks 8 - lambda')
+    g = sp.simplify((P1 + P2).subs({x1s: r1, x2s: r2}) - lm * (r1 + r2 - 6))
+    g3 = g.subs(lm, 3)
+    brute3 = max(10 * a - a * a + 8 * c - c * c / 2 - 3 * (a + c - 6) for a in np.linspace(0, 10, 2001) for c in np.linspace(0, 10, 2001)[::4])
+    ask3 = (P1 + P2).subs({x1s: r1.subs(lm, 3), x2s: r2.subs(lm, 3)})
+    num(3, 'p-capital-price', 2, g3, brute3, {'no-rent': g3 - 18, 'ask-profit': ask3}, rounded=42.75, agree=1e-4)
+    ok(r1.subs(lm, 3) == F(7, 2) and r2.subs(lm, 3) == 5 and P1.subs(x1s, F(7, 2)) == F(91, 4) and P2.subs(x2s, 5) == F(55, 2), 'asks 3.5 and 5 earn 22.75 and 27.5')
+    ok(ask3 == F(201, 4) and 3 * (F(17, 2) - 6) == F(15, 2), 'ask profit 50.25 and excess charge 7.5')
+    lstar = sp.solve(sp.diff(g, lm), lm)[0]
+    dual_num = minimize_scalar(lambda q: float(g.subs(lm, q)), bounds=(0, 10), method='bounded', options={'xatol': 1e-10})
+    ok(sp.simplify(sp.diff(g, lm) - (6 - r1 - r2)) == 0, "g'(lambda) = 6 - x1 - x2")
+    slip = sp.solve((10 - lm) + (8 - lm) - 6, lm)[0]
+    num(3, 'p-capital-price', 3, lstar, dual_num.x, {'no-half': slip, 'trial': 3}, rounded=4.67, agree=1e-6)
+    xa, xb = r1.subs(lm, lstar), r2.subs(lm, lstar)
+    ok((xa, xb) == (F(8, 3), F(10, 3)), 'split (8/3, 10/3)')
+    pstar = (P1 + P2).subs({x1s: xa, x2s: xb})
+    prim = minimize(lambda z: -(10 * z[0] - z[0] ** 2 + 8 * z[1] - z[1] ** 2 / 2), [1, 1], method='SLSQP',
+                    constraints=[{'type': 'ineq', 'fun': lambda z: 6 - z[0] - z[1]}], bounds=[(0, None)] * 2, options={'ftol': 1e-14})
+    num(3, 'p-capital-price', 4, pstar, -prim.fun, {'trial-cap': g3, 'no-limit': 57}, rounded=40.67, agree=1e-7)
+    ok(pstar == g.subs(lm, lstar) == F(122, 3), 'zero gap at 122/3')
+    ok(P1.subs(x1s, 5) + P2.subs(x2s, 8) == 57, 'price 0 asks earn 57')
+    ok(10 * F(8, 3) == F(80, 3) and F(8, 3) ** 2 == F(64, 9) and 8 * F(10, 3) == F(80, 3) and F(10, 3) ** 2 / 2 == F(50, 9), 'terms 80/3, 64/9, 80/3, 50/9')
+    est = pstar + F(3, 10) * lstar
+    l63 = sp.solve(sp.Eq(r1 + r2, F(63, 10)), lm)[0]
+    p63 = (P1 + P2).subs({x1s: r1.subs(lm, l63), x2s: r2.subs(lm, l63)})
+    prim63 = minimize(lambda z: -(10 * z[0] - z[0] ** 2 + 8 * z[1] - z[1] ** 2 / 2), [1, 1], method='SLSQP',
+                      constraints=[{'type': 'ineq', 'fun': lambda z: 6.3 - z[0] - z[1]}], bounds=[(0, None)] * 2, options={'ftol': 1e-14})
+    ok(abs(float(p63) + prim63.fun) < 1e-7, f'exact profit at 6.3 {float(p63)}')
+    num(3, 'p-capital-price', 5, est, float(pstar) + 0.3 * float(lstar), {'trial-price': pstar + F(3, 10) * 3, 'per-desk': pstar + 2 * F(3, 10) * lstar}, rounded=42.07)
+    ok(abs(float(p63) - 42.04) < 0.005 and abs(float(l63) - 4.47) < 0.005, f'exact 42.04 at price 4.47: {float(p63)}, {float(l63)}')
+    ok(abs(42.04 - 42.0666667) <= 0.035, 'the band also takes the exact re-solve 42.04')
+    ok(F(3, 10) * lstar == F(7, 5), '0.3 x 14/3 = 1.4')
+    # p-no-borrowing
+    S = sp.Matrix([[F(3, 100), F(1, 100)], [F(1, 100), F(7, 100)]])
+    m = sp.Matrix([F(55, 1000), F(105, 1000)])
+    rf = F(3, 100)
+    wfree = S.solve(m - rf * sp.ones(2, 1))
+    wnp = np.linalg.solve(np.array(S, dtype=float), np.array(m - rf * sp.ones(2, 1), dtype=float).ravel())
+    num(3, 'p-no-borrowing', 1, wfree[1], wnp[1], {'gave-a': wfree[0], 'no-cash-rate': S.solve(m)[1], 'no-cov': (m[1] - rf) / S[1, 1]}, rounded=1.00)
+    ok(list(wfree) == [F(1, 2), 1] and 1 - sum(wfree) == F(-1, 2), 'free plan (0.5, 1) with cash -0.5')
+    wa, wb, lam_ = sp.symbols('wa wb lam_')
+    sol = sp.solve([m[0] - (S[0, 0] * wa + S[0, 1] * wb) - lam_, m[1] - (S[1, 0] * wa + S[1, 1] * wb) - lam_, wa + wb - 1], [wa, wb, lam_])
+    Snp, mnp = np.array(S, dtype=float), np.array(m, dtype=float).ravel()
+    qp = minimize(lambda z: -(mnp @ z[:2] + 0.03 * z[2] - 0.5 * z[:2] @ Snp @ z[:2]), [1 / 3] * 3, method='SLSQP', bounds=[(0, 1)] * 3,
+                  constraints=[{'type': 'eq', 'fun': lambda z: z.sum() - 1}], options={'ftol': 1e-15, 'maxiter': 500})
+    resc = F(1, 1) / (F(3, 2))
+    num(3, 'p-no-borrowing', 2, sol[wb], qp.x[1], {'rescale': resc, 'gave-a': sol[wa]}, rounded=0.875, agree=1e-6)
+    ok(abs(qp.x[2]) < 1e-7, 'solver puts cash at 0')
+    third = sp.Matrix([F(1, 3), F(2, 3)])
+    lam_third = m - S * third
+    ok(lam_third[0] != lam_third[1], f'rescaled weights give two lambdas {list(lam_third)}')
+    SwA = (S * sp.Matrix([sol[wa], sol[wb]]))[0]
+    SwB = (S * sp.Matrix([sol[wa], sol[wb]]))[1]
+    num(3, 'p-no-borrowing', 3, sol[lam_], float(m[1] - SwB), {'cash-rate': rf, 'sigma-w': SwA}, rounded=0.0425)
+    ok(SwA == F(1, 80) and SwB == F(1, 16), '(Sigma w) = (0.0125, 0.0625)')
+    ok((S[0, 0] - S[1, 0], S[0, 1] - S[1, 1], m[0] - m[1]) == (F(1, 50), F(-3, 50), F(-1, 20)), 'row difference 0.02 wA - 0.06 wB = -0.05')
+    nu = sol[lam_] - rf
+    # method 2 for nu: the objective gain per unit of allowed borrowing, by a finite difference of the QP value
+    def qp_val(lo):
+        r = minimize(lambda z: -(mnp @ z[:2] + 0.03 * z[2] - 0.5 * z[:2] @ Snp @ z[:2]), [0.1, 0.8, 0.1], method='SLSQP',
+                     bounds=[(0, 2), (0, 2), (lo, 1)], constraints=[{'type': 'eq', 'fun': lambda z: z.sum() - 1}], options={'ftol': 1e-15, 'maxiter': 500})
+        return -r.fun
+    fd = (qp_val(-1e-4) - qp_val(0)) / 1e-4
+    num(3, 'p-no-borrowing', 4, nu, fd, {'sign': -nu, 'lambda': sol[lam_]}, rounded=0.0125, agree=1e-3)
+    ret = (m.T * sp.Matrix([sol[wa], sol[wb]]))[0] * 100
+    num(3, 'p-no-borrowing', 5, ret, 100 * mnp @ qp.x[:2], {'levered': 100 * ((m.T * wfree)[0] + rf * (1 - sum(wfree))), 'equal': 100 * sum(m) / 2}, rounded=9.875, agree=1e-6)
+    var = (sp.Matrix([sol[wa], sol[wb]]).T * S * sp.Matrix([sol[wa], sol[wb]]))[0]
+    ok(var == F(9, 160) and abs(np.sqrt(float(var)) - 0.2372) < 5e-5, f'variance 0.05625, vol 23.72%: {float(var)}')
+    ok(F(1, 8) * F(55, 10) == F(11, 16) and F(7, 8) * F(105, 10) == F(147, 16), '0.6875% and 9.1875%')
+    lv.expect('problems', 'items[1].parts[4].explain.text', 0.05625)
+    # p-variance-limit
+    w = sp.Symbol('w')
+    Vw = sp.expand(F(1, 100) * (1 - w) ** 2 + 2 * F(5, 1000) * w * (1 - w) + F(625, 10000) * w ** 2)
+    Cv = np.array([[0.01, 0.005], [0.005, 0.0625]])
+    ok(all(abs(float(Vw.subs(w, t)) - np.array([1 - t, t]) @ Cv @ np.array([1 - t, t])) < 1e-12 for t in (0.1, 0.4, 0.9)), 'V(w) matches the matrix form')
+    pw = sp.Poly(Vw, w)
+    ok(pw.all_coeffs() == [F(1, 16), F(-1, 100), F(1, 100)], 'V = 0.0625 w^2 - 0.01 w + 0.01')
+    xw = sp.Symbol('x')
+    def parse_w(t):
+        return parse(t.replace('w', 'x')).subs(xw, w)
+    pt = part(3, 'p-variance-limit', 1)
+    wd = pt['widget']
+    ok(sp.simplify(parse_w(wd['answer']) - Vw) == 0, 'L3 p-variance-limit p1 key equals truth')
+    for a in wd['accept']:
+        ok(sp.simplify(parse_w(a) - Vw) == 0, f'accept {a}')
+    slips = {'no-cov': sp.expand(F(1, 100) * (1 - w) ** 2 + F(625, 10000) * w ** 2),
+             'single-cov': sp.expand(F(1, 100) * (1 - w) ** 2 + F(5, 1000) * w * (1 - w) + F(625, 10000) * w ** 2)}
+    for q in wd['wrong']:
+        e = parse_w(q['tex'])
+        ok(sp.simplify(e - slips[q['id']]) == 0 and sp.simplify(e - Vw) != 0, f'wrong {q["id"]} equals its slip')
+        ok(q['id'] in pt['feedback']['byKey'], f'wrong {q["id"]} has byKey')
+    ok(set(q['id'] for q in wd['wrong']) == set(slips), 'p1 wrong ids')
+    roots = sorted(sp.solve(Vw - F(16, 1000), w))
+    ok(roots == [F(-6, 25), F(2, 5)], f'roots {roots}')
+    ok(sp.expand(F(1, 16) * (w - F(2, 5)) * (w + F(6, 25)) - (Vw - F(16, 1000))) == 0, 'factorised form')
+    grid = np.linspace(0, 1, 1000001)
+    feas = grid[(0.0625 * grid ** 2 - 0.01 * grid + 0.01) <= 0.016 + 1e-15]
+    wmin = sp.solve(sp.diff(Vw, w), w)[0]
+    num(3, 'p-variance-limit', 2, roots[1], feas.max(), {'other-root': roots[0], 'min-var': wmin, 'no-limit': 1}, agree=1e-5)
+    ok(wmin == F(2, 25), 'minimum-variance share 0.08')
+    ok(Vw.subs(w, 1) == F(1, 16), 'all equity variance 0.0625')
+    dV = sp.diff(Vw, w).subs(w, F(2, 5))
+    mu = F(6, 100) / dV
+    # method 2: mu as the slope of the best return against the limit, by a central difference
+    def best_R(cap):
+        top = (0.01 + np.sqrt(0.0001 + 4 * 0.0625 * (cap - 0.01))) / (2 * 0.0625)
+        return 0.04 + 0.06 * top
+    slope = (best_R(0.016 + 1e-7) - best_R(0.016 - 1e-7)) / 2e-7
+    num(3, 'p-variance-limit', 3, mu, slope, {'inverted': 1 / mu, 'half-derivative': F(6, 100) / (F(-1, 100) + F(625, 10000) * F(2, 5))}, rounded=1.5, agree=1e-5)
+    ok(dV == F(1, 25) and 2 * F(625, 10000) * F(2, 5) == F(1, 20), "V'(0.4) = 0.05 - 0.01 = 0.04")
+    ok(0.04 + 0.06 * 0.4 == 0.064, 'return 6.4% at the optimum')
+    choice(3, 'p-variance-limit', 4, 'convex')
+    ok(Vw.subs(w, 0) == F(1, 100) < F(16, 1000), 'Slater point w = 0')
+    bp = float(mu * F(2, 10000) * 10000)
+    exact_bp = (best_R(0.0162) - best_R(0.016)) * 10000
+    num(3, 'p-variance-limit', 5, bp, round(exact_bp), {'inverted': round(float(F(2, 10000) / mu * 10000)), 'variance-step': 2}, agree=1e-9)
+    ok(abs(exact_bp - 2.98) < 0.005, f'exact rise 2.98 bp: {exact_bp}')
+    top = (0.01 + np.sqrt(0.0001 + 4 * 0.0625 * 0.0062)) / 0.125
+    ok(abs(top - 0.405) < 0.0005, f'new share about 0.405: {top}')
+    shape(3, {'p-capital-price': {'l9-lagrangian-dual', 'l10-kkt', 'l13-shadow-prices'},
+              'p-no-borrowing': {'l10-kkt', 'l11-mean-variance-kkt', 'l12-long-only', 'l13-shadow-prices'},
+              'p-variance-limit': {'l10-kkt', 'l11-mean-variance-kkt', 'l13-shadow-prices'}},
+          ['cv-duality', 'cv-qp'])
+    lv.check_wrongs('problems')
+    return lv
+
+
 levels = []
 if SETS[1]:
     levels.append(level1())
