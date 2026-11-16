@@ -87,3 +87,29 @@ Result. All 39 numeric keys and the choice key agree with mine, and so do all 87
 ## Counts
 
 17 findings: wrong 0, misleading 3 (2, 14, 15), reuse 7 (1, 3, 4, 5, 7, 9, 16), re-author 4 (8, 11, 12, 13), continuity 2 (6, 10), voice 0, other 1 (17). Replacement lines: 34, all checked in a copy. Problems marked re-author: `p-venue-markouts`, `p-rerun-the-test`, `p-ten-trading-days`, `p-block-markout-tail`. `p-auction-tails` is line-level here but is three quiz items in a row; the main session may rule it a fifth.
+
+## Fix pass
+
+Session AF, one author for re-authoring and fixing (the three files cannot be split). Every corrected number was recomputed before writing; `problems-stat-models-numbers.py` checks each.
+
+1. fixed: `p-ipo-underwriter` p4 `feedback.correct` and `byKey.lower-tail` as written.
+2. fixed: `p-settlement-fails` p4 `question` and `explain.text` as written (1.087 with 1.96; $t_8 = 2.306$ gives 0.950). Key and slips stay.
+3. fixed: `p-settlement-fails` p2 `feedback.correct`, `byKey.variance`, `byKey.no-inverse`, `explain.text` as written ($1/30 + 1/28 = 58/840$).
+4. fixed: `p-settlement-fails` p3 `byKey.ten-df` as written; `byKey.phi-not-root` as written with one number corrected: $0.2628 \times 2.2 = 0.57816$, so 0.5782, not 0.5781 (the validator's shown-arithmetic rule flagged it).
+5. fixed: `p-recon-breaks` p2 `byKey.no-eta`, p4 `byKey.six-df` and p4 `explain.text` as written.
+6. fixed: `p-recon-breaks` p3 `question` as written.
+7. re-authored as `p-rfq-busy-minutes` (main-session ruling: three quiz items in a row). Quasi-Poisson and NB2 matched to quiet minutes, carried to a busy mean, judged against the data; l1 and l5. Walks none of l2 Q0, S4, l1 Q2, h-fill-tick, e-pd-at-leverage.
+8. re-authored as `p-signal-variants`: MSW, Bonferroni level, SE of a pairwise gap, least significant gap at a stated $t_{48}$ critical value, count of pairs that differ; six variants of 9 months. No SSB, no $F$ from sums or summaries, no coefficients to means, no brokers, algorithms or venues.
+9. fixed: `p-twin-books` seven lines as written.
+10. fixed: `p-twin-books` p3 `question` as written.
+11. re-authored as `p-two-looks`: exact false-alarm rate of a sign test with an early look (1,024 patterns), with Bonferroni's bound; a rates desk's curve models. No $F = t^2$, no orders per arm, no execution-algorithm story.
+12. re-authored as `p-hedge-ranks`: Wilcoxon signed-rank $W^+$ with a tie, its null SD from the sign-flip view, $z$, one-sided $p$. No $U$, no splits, no doubling, no plus-one, no strategy X against Y.
+13. re-authored as `p-spread-day-tail`: the chain of parts 2 to 4 kept on new data (eight spread changes, even-count median, two unusual days, cut at $-4$), new prose and part 1.
+14. fell with 13. The new p3 `byKey.plain-sd` says the wide bumps push the six ordinary days' mass below $-4$; checked: 0.0472 of the estimate against 0.0032 at the key bandwidth.
+15. fixed: `p-five-weeks-flip` p4 `options[0].text`, `feedback.correct`, `feedback.generic`, `explain.text` as written.
+16. fixed: `p-five-weeks-flip` p4 `options[1].why` as written.
+17. fixed: `p-twin-books` p4 now states $P(t_{119} > 2.2530) = 0.0130$; doubling 0.0130 gives 0.0260, inside the key band. The two $F$ parts left with their problems; the new `p-signal-variants` p4 states its critical value. The $\chi^2_1$ part of `p-ipo-underwriter` is kept as the review allows (precedent r5-lr, l5 Q1).
+
+Reader's script `problems-stat-models-numbers-read.py`: checks of the five re-authored problems removed (so the claim of finding 14 with them); the claim of finding 2 now checks that the part names 1.96 and gives the $t_8$ end; the five-weeks claim checks the new keyed text; tightened to 0.5782, the stated $t_{119}$ tail and the four means in the text. The delta reader checks the new problems.
+
+Gates: validator 0 errors (one warning on these files, a long sentence in the replacement of finding 15, under 35 words); voice scan 35, 0 and 0; `fresh-check --file` 0 hits on each set; `grade-all --file` 17, 13 and 12 widgets, 0 failures; playthrough `--problems` green on all three sets with and without `--mobile`; author's script 676 of 676, exit 0; reader's script 339 checks, 0 FINDING lines, exit 0. Counts: fixed 11, re-authored 5, fell with a re-author 1, disputed 0 (one number corrected in finding 4), deferred 0.
