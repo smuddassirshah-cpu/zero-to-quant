@@ -204,6 +204,129 @@ if 1 in LEVELS:
     says(1, 'p-netting-sum', 3, '£2.23', '£4,794m')
     ok(abs(math.log10(2**22 / 22) - 5.3) < 0.05, 'L1 pairwise keeps about five more digits')
 
+# ---------------------------------------------------------------- level 2
+if 2 in LEVELS:
+    from scipy.interpolate import CubicSpline
+    from scipy.optimize import brentq
+    shape(2, {'p-project-irr': ['l5-bisection-and-newton', 'l6-safe-root-finder'],
+              'p-spread-spline': ['l8-splines', 'l5-bisection-and-newton'],
+              'p-survival-crossing': ['l7-interpolation', 'l5-bisection-and-newton']})
+
+    # p-project-irr: exact in fractions and sympy, then numpy roots and scipy brentq
+    V = sp.symbols('v')
+    fs = 50 * V**3 + 40 * V**2 + 30 * V - 100
+    f = sp.lambdify(V, fs)
+    fp = sp.lambdify(V, sp.diff(fs, V))
+    fq = lambda x: 50 * x**3 + 40 * x**2 + 30 * x - 100            # plain float form
+    fqp = lambda x: 150 * x**2 + 80 * x + 30
+    ok(f(0.5) < 0 < f(1), 'L2 bracket [0.5, 1] has a sign change')
+    v1 = F(1, 2) - F(fs.subs(V, sp.Rational(1, 2))) / F(sp.diff(fs, V).subs(V, sp.Rational(1, 2)))
+    num(2, 'p-project-irr', 1, v1, 0.5 - fq(0.5) / fqp(0.5), {'sign': 1 - v1})
+    says(2, 'p-project-irr', 1, '-68.75', '107.5', '1.1395')
+    f75 = F(fs.subs(V, sp.Rational(3, 4)))
+    num(2, 'p-project-irr', 2, f75, fq(0.75), {'accepted': f(float(v1)), 'endpoint': fq(1), 'sign': -f75}, rounded=-33.91)
+    says(2, 'p-project-irr', 2, '21.09375', '-33.91')
+    ok(f75 == F(-1085, 32), 'L2 f(0.75) = -33.90625')
+    v2 = F(3, 4) - f75 / F(sp.diff(fs, V).subs(V, sp.Rational(3, 4)))
+    ok(v2 == F(17, 18) and F(3, 4) + F(7, 36) == v2, 'L2 Newton from 0.75 is 17/18 = 0.75 + 7/36')
+    num(2, 'p-project-irr', 3, v2, 0.75 - fq(0.75) / fqp(0.75), {'sign': F(3, 4) + f75 / F(sp.diff(fs, V).subs(V, sp.Rational(3, 4)))})
+    says(2, 'p-project-irr', 3, '174.375', '\\tfrac{7}{36}', '0.9444')
+    ok(fq(17 / 18) > 0, 'L2 f(0.9444) > 0, bracket [0.75, 0.9444]')
+    vs = float([r for r in sp.Poly(fs).nroots(n=30) if abs(sp.im(r)) < 1e-20][0])
+    vs2 = brentq(fq, 0.5, 1, xtol=1e-15)
+    ok(abs(vs - vs2) < 1e-12, 'L2 root two ways')
+    C = (300 * vs + 80) / (2 * fqp(vs))
+    ok(abs(C - 0.77) < 0.005, f'L2 C = {C:.4f} about 0.77')
+    e0 = 17 / 18 - vs
+    ok(abs(e0 - 0.026) < 0.0005, 'L2 first error about 0.026')
+    x, real = 17 / 18, []
+    for _ in range(3):
+        x = x - fq(x) / fqp(x); real.append(abs(x - vs))
+    pred, e = [], e0
+    for _ in range(3):
+        e = C * e * e; pred.append(e)
+    steps_pred = next(i + 1 for i, e in enumerate(pred) if e < 1e-12)
+    steps_real = next(i + 1 for i, e in enumerate(real) if e < 1e-12)
+    halv = next(k for k in range(100) if (17 / 18 - 0.75) / 2**k < 1e-12)
+    num(2, 'p-project-irr', 4, steps_pred, steps_real, {'one-short': steps_pred - 1, 'bisect': halv})
+    shown, e = [], 0.026                                         # the feedback works from the rounded 0.77 and 0.026
+    for _ in range(3):
+        e = 0.77 * e * e; shown.append(e)
+    ok(all(abs(a / b - 1) < 0.03 for a, b in zip(shown, [5.2e-4, 2.1e-7, 3.4e-14])), f'L2 stated predicted errors {shown}')
+    ok(all(abs(a / b - 1) < 0.08 for a, b in zip(pred, shown)), f'L2 unrounded prediction {pred} close to the stated one')
+    ok(all(abs(a / b - 1) < 0.03 for a, b in zip(real, [5.1e-4, 2.0e-7, 3.2e-14])), f'L2 real errors {real}')
+    says(2, 'p-project-irr', 4, '5.2 \\times 10^{-4}', '2.1 \\times 10^{-7}', '3.4 \\times 10^{-14}', '38 halvings')
+    irr = 1 / vs - 1                                              # unit %: the key is the fraction
+    num(2, 'p-project-irr', 5, irr, 1 / vs2 - 1, {'one-minus': 1 - vs}, rounded=0.0890, agree=1e-9)
+    ok(abs(17 / 18 - fq(17 / 18) / fqp(17 / 18) - 0.918819) < 5e-7 and abs(vs - 0.918305) < 5e-7, 'L2 iterates 0.918819, 0.918305')
+    says(2, 'p-project-irr', 5, '0.918305', '8.90\\%')
+
+    # p-spread-spline: hand rows in fractions, then scipy CubicSpline
+    t, y = [1, 2, 3, 4], [120, 150, 165, 170]
+    sl = [F(y[i + 1] - y[i], t[i + 1] - t[i]) for i in range(3)]
+    c1, c2 = 6 * (sl[1] - sl[0]), 6 * (sl[2] - sl[1])
+    cs = CubicSpline(t, y, bc_type='natural')
+    num(2, 'p-spread-spline', 1, c1, 4 * cs(2, 2) + cs(3, 2), {'no-six': sl[1] - sl[0], 'sign': -c1})
+    ok(c2 == -60, 'L2 c2 = 6(5 - 15) = -60')
+    Ms = sp.Matrix([[4, 1], [1, 4]]).LUsolve(sp.Matrix([c1, c2]))
+    M1, M2 = F(str(Ms[0])), F(str(Ms[1]))
+    num(2, 'p-spread-spline', 2, M1, cs(2, 2), {'diag': c1 / 4, 'swap': M2, 'sign': -M1})
+    ok(M2 == -10 and abs(cs(3, 2) + 10) < 1e-9, 'L2 M2 = -10')
+
+    def s_piece(x, m1=M1, m2=M2):
+        return m1 * (3 - x)**3 / 6 + m2 * (x - 2)**3 / 6 + (150 - m1 / 6) * (3 - x) + (165 - m2 / 6) * (x - 2)
+    s25 = s_piece(F(5, 2))
+    num(2, 'p-spread-spline', 3, s25, cs(2.5), {'linear': F(315, 2), 'sign-m': s_piece(F(5, 2), -M1, -M2)})
+    ok(s25 - F(315, 2) == F(15, 8), 'L2 spline 1.875 bp above the line')
+    says(2, 'p-spread-spline', 3, '-0.625', '159.375', '1.9 bp')
+    X = sp.symbols('X')
+    m1, m2 = sp.Rational(M1.numerator, M1.denominator), sp.Rational(M2.numerator, M2.denominator)
+    sexpr = m1 * (3 - X)**3 / 6 + m2 * (X - 2)**3 / 6 + (150 - m1 / 6) * (3 - X) + (165 - m2 / 6) * (X - 2)
+    ds = sp.diff(sexpr, X).subs(X, sp.Rational(5, 2))
+    num(2, 'p-spread-spline', 4, ds, cs(2.5, 1), {'chord': 15}, rounded=14.583)
+    says(2, 'p-spread-spline', 4, '2.5 - 1.25 = 1.25', '166\\tfrac23 - 153\\tfrac13 = 13\\tfrac13', '14.583')
+    ok(abs(F(-20) * F(1, 4) / -2 - F(10, 8) - F(5, 4)) == 0 and abs(float(ds) - (1.25 + 40 / 3)) < 1e-12, 'L2 slope split 1.25 + 13.333')
+    t1 = F(5, 2) + (160 - s25) / F(str(ds))
+    num(2, 'p-spread-spline', 5, t1, 2.5 - (cs(2.5) - 160) / cs(2.5, 1), {'chord': F(5, 2) + (160 - s25) / 15, 'sign': F(5, 2) - (160 - s25) / F(str(ds))},
+        rounded=2.5429)
+    root = brentq(lambda x: cs(x) - 160, 2, 3, xtol=1e-14)
+    ok(abs(root - 2.5438) < 5e-5 and abs(root - float(t1)) < 0.001, f'L2 true crossing {root:.5f}, within 0.001 of the step')
+    says(2, 'p-spread-spline', 5, '0.04286', '2.5438')
+
+    # p-survival-crossing: sympy interpolation, then numpy polyfit
+    T = sp.symbols('T')
+    pq = sp.interpolate([(1, sp.Rational(98, 100)), (3, sp.Rational(92, 100)), (5, sp.Rational(84, 100))], T)
+    newton_form = sp.Rational(98, 100) - sp.Rational(3, 100) * (T - 1) - sp.Rational(25, 10000) * (T - 1) * (T - 3)
+    ok(sp.expand(pq - newton_form) == 0, 'L2 Newton form equals the interpolant')
+    co = np.polyfit([1, 3, 5], [0.98, 0.92, 0.84], 2)
+    p4 = pq.subs(T, 4)
+    num(2, 'p-survival-crossing', 1, p4, np.polyval(co, 4), {'linear': F(88, 100)})
+    p = sp.lambdify(T, pq)
+    pp = sp.lambdify(T, sp.diff(pq, T))
+    s1 = 3 + F(92 - 90, 100) / (F(92, 100) - F(str(p4)))
+    num(2, 'p-survival-crossing', 2, s1, 3 + (p(3) - 0.9) / (p(3) - np.polyval(co, 4)), {'linear': 3 + F(2, 100) / F(4, 100)})
+    n1 = float(s1) - (p(float(s1)) - 0.9) / pp(float(s1))
+    alt = float(s1) - (np.polyval(co, float(s1)) - 0.9) / np.polyval(np.polyder(co), float(s1))
+    num(2, 'p-survival-crossing', 3, n1, alt, {'sign': float(s1) + (p(float(s1)) - 0.9) / pp(float(s1))}, rounded=3.5499)
+    ok(abs(n1 - 3.5498) <= 0.00006, 'L2 exact-root rounding 3.5498 accepted too')
+    exact_root = float(sp.nsolve(pq - sp.Rational(9, 10), T, 3.5))
+    ok(abs(exact_root - (-4 + math.sqrt(57))) < 1e-12 and abs(exact_root - 3.54983) < 5e-6, 'L2 exact crossing -4 + sqrt 57')
+    ok(abs(n1 - exact_root) < 2e-5, 'L2 Newton within 2e-5 of the root')
+    ok(abs(p(float(s1)) - 0.900622) < 5e-7 and abs(pp(float(s1)) + 0.037667) < 5e-7, 'L2 p and slope at 3.5333')
+    ok(abs((p(float(s1)) - 0.9) / -pp(float(s1)) - 0.016519) < 5e-7, 'L2 Newton increment 0.016519')
+    says(2, 'p-survival-crossing', 3, '0.900622', '-0.037667', '0.016519', '3.54983')
+    w = lambda x: abs((x - 1) * (x - 3) * (x - 5))
+    bnd = 0.0006 / 6 * w(n1) * 1e4
+    alt = 0.0006 / math.factorial(3) * float(abs(sp.prod([sp.Float(n1) - k for k in (1, 3, 5)]))) * 1e4
+    num(2, 'p-survival-crossing', 4, bnd, alt, {'no-factorial': 6 * bnd, 'fourth': bnd / 4}, rounded=2.03)
+    ok(abs(w(3.55) - 2.033) < 0.001 and abs(2.55 * 0.55 * 1.45 - 2.033) < 0.001, 'L2 product 2.033')
+    days = bnd * 1e-4 / abs(pp(n1)) * 365
+    alt = 2.0331e-4 / 0.03775 * 365
+    num(2, 'p-survival-crossing', 5, days, alt, {'p-at-3': bnd * 1e-4 / 0.035 * 365, 'no-slope': bnd * 1e-4 * 365}, rounded=1.97, agree=2e-4)
+    ok(abs(pp(exact_root) + 0.03775) < 5e-6, 'L2 slope at the crossing -0.03775')
+    ok(abs(bnd * 1e-4 / abs(pp(n1)) - 0.00539) < 5e-6, 'L2 0.00539 years')
+    says(2, 'p-survival-crossing', 5, '0.00539', '1.97 days')
+
 # ---------------------------------------------------------------- report
 for lv in LEVELS:
     L = Level('numerics', lv)

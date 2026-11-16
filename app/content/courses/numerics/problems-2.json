@@ -1,0 +1,384 @@
+{
+  "id": "problems-2",
+  "course": "numerics",
+  "level": 2,
+  "title": "Problems: equations and curves",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-project-irr",
+      "difficulty": 4,
+      "skills": ["nm-roots"],
+      "prose": "A project costs £100 today and pays £30, £40 and £50 at the ends of years 1, 2 and 3. With $v = \\tfrac{1}{1 + r}$, its internal rate of return $r$ solves $f(v) = 50v^3 + 40v^2 + 30v - 100 = 0$. Since $f(0.5) < 0 < f(1)$, a safeguarded Newton solver keeps a bracket, starting from $[0.5, 1]$ at $v_0 = 0.5$.",
+      "parts": [
+        {
+          "question": "Where would a plain Newton step from $v_0 = 0.5$ land? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.139535,
+            "tol": { "abs": 0.00006 },
+            "placeholder": "a decimal",
+            "wrong": [
+              { "id": "sign", "value": -0.139535, "tol": { "abs": 0.00006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$f(0.5) = -68.75$ and $f'(0.5) = 107.5$, so the step lands at $0.5 + \\tfrac{68.75}{107.5} \\approx 1.1395$.",
+            "generic": "Not quite. Find $f(0.5)$ and $f'(v) = 150v^2 + 80v + 30$ at 0.5, then take $v_0 - f/f'$.",
+            "byKey": {
+              "sign": "You added $f/f'$ instead of taking it away. With $f(0.5)$ negative, the step moves right."
+            }
+          },
+          "explain": {
+            "text": "$f(0.5) = 6.25 + 10 + 15 - 100 = -68.75$ and $f'(0.5) = 37.5 + 40 + 30 = 107.5$. Newton moves to $0.5 + 68.75/107.5 \\approx 1.1395$. The curve is much flatter at 0.5 than near the root, so the tangent overshoots the whole bracket."
+          }
+        },
+        {
+          "question": "The landing point 1.1395 from part 1 lies outside $[0.5, 1]$, so the solver takes the bracket's midpoint instead. What is $f$ at the point it tries? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -33.90625,
+            "tol": { "abs": 0.006 },
+            "placeholder": "a decimal",
+            "wrong": [
+              { "id": "accepted", "value": 60.1142, "tol": { "abs": 0.006 } },
+              { "id": "endpoint", "value": 20, "tol": { "abs": 0.006 } },
+              { "id": "sign", "value": 33.90625, "tol": { "abs": 0.006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "The midpoint is 0.75, and $f(0.75) = 21.09375 + 22.5 + 22.5 - 100 \\approx -33.91$.",
+            "generic": "Not quite. The midpoint of $[0.5, 1]$ is 0.75; put it into $f$.",
+            "byKey": {
+              "accepted": "That is $f(1.1395)$. A safeguarded solver never evaluates outside its bracket; it falls back to the midpoint.",
+              "endpoint": "That is $f(1)$, as if the step were cut back to the end. The fallback is the midpoint, 0.75.",
+              "sign": "Check the sign: $f(0.75)$ sits below zero, like $f(0.5)$, because 0.75 is still left of the root."
+            }
+          },
+          "explain": {
+            "text": "The fallback is a bisection step, to $v = 0.75$. There $f(0.75) \\approx -33.91 < 0$, the same sign as at 0.5, so the bracket shrinks to $[0.75, 1]$. Each step either halves the bracket or lands inside it, which is why the method cannot run away."
+          }
+        },
+        {
+          "question": "Using $f(0.75) = -33.90625$ from part 2, the bracket is now $[0.75, 1]$. Take a Newton step from 0.75. Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.944444,
+            "tol": { "abs": 0.00006 },
+            "placeholder": "a decimal",
+            "wrong": [
+              { "id": "sign", "value": 0.555556, "tol": { "abs": 0.00006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$f'(0.75) = 174.375$, so the step goes to $0.75 + \\tfrac{33.90625}{174.375} = 0.75 + \\tfrac{7}{36} \\approx 0.9444$, inside the bracket.",
+            "generic": "Not quite. Find $f'(0.75)$, then take $0.75 - f(0.75)/f'(0.75)$.",
+            "byKey": {
+              "sign": "You moved left. $f(0.75)$ is negative and $f$ rises, so the root lies to the right."
+            }
+          },
+          "explain": {
+            "text": "$f'(0.75) = 84.375 + 60 + 30 = 174.375$. The step is $33.90625/174.375 = \\tfrac{7}{36}$, so $v = \\tfrac{17}{18} \\approx 0.9444$. This lands inside $[0.75, 1]$, so the solver keeps it, and $f(0.9444) > 0$ shrinks the bracket to $[0.75, 0.9444]$."
+          }
+        },
+        {
+          "question": "From $v = 0.9444$ (part 3) the error is about 0.026, and Newton's errors now obey $e_{k+1} \\approx Ce_k^2$ with $C = \\tfrac{f''}{2f'} \\approx 0.77$ near the root. How many more Newton steps bring the error below $10^{-12}$? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3,
+            "tol": { "abs": 0 },
+            "placeholder": "a whole number",
+            "wrong": [
+              { "id": "one-short", "value": 2, "tol": { "abs": 0 } },
+              { "id": "bisect", "value": 38, "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.77 \\times 0.026^2 \\approx 5.2 \\times 10^{-4}$, then $2.1 \\times 10^{-7}$, then about $3.4 \\times 10^{-14}$: three steps.",
+            "generic": "Not quite. Apply $e \\to 0.77e^2$ again and again, starting from 0.026.",
+            "byKey": {
+              "one-short": "After two steps the error is about $2 \\times 10^{-7}$, still above $10^{-12}$. One more takes it to about $10^{-14}$.",
+              "bisect": "That is how many halvings shrink $[0.75, 0.9444]$ below $10^{-12}$. Newton squares the error each step instead."
+            }
+          },
+          "explain": {
+            "text": "Each step roughly squares the error and scales it by 0.77: $0.026 \\to 5.2 \\times 10^{-4} \\to 2.1 \\times 10^{-7} \\to 3.4 \\times 10^{-14}$. Real Newton steps give $5.1 \\times 10^{-4}$, $2.0 \\times 10^{-7}$ and $3.2 \\times 10^{-14}$. So 3 steps suffice, where bisection would need 38 halvings."
+          }
+        },
+        {
+          "question": "After the three steps of part 4, $v$ has settled. What is the project's internal rate of return $r$? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.088963,
+            "tol": { "abs": 0.00006 },
+            "unit": "%",
+            "placeholder": "per cent",
+            "wrong": [
+              { "id": "one-minus", "value": 0.081695, "tol": { "abs": 0.00006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "The steps settle at $v^* \\approx 0.918305$, so $r = \\tfrac{1}{v^*} - 1 \\approx 8.90\\%$.",
+            "generic": "Not quite. Iterate Newton from 0.9444 to find $v^*$, then undo $v = \\tfrac{1}{1 + r}$.",
+            "byKey": {
+              "one-minus": "You took $r = 1 - v^*$. From $v = \\tfrac{1}{1 + r}$, the rate is $\\tfrac{1}{v^*} - 1$."
+            }
+          },
+          "explain": {
+            "text": "Newton from 0.9444 gives 0.918819, then 0.918305, and stays there. So $r = 1/0.918305 - 1 \\approx 0.0890$, an IRR of 8.90%. The bracket guarded the start; the quadratic rate finished the job."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-spread-spline",
+      "difficulty": 4,
+      "skills": ["nm-roots"],
+      "prose": "An issuer's credit spreads are quoted at four tenors: 120 bp at 1 year, 150 bp at 2, 165 bp at 3 and 170 bp at 4. A natural cubic spline $s(t)$ joins them, with spreads in basis points. A hedger needs the tenor where the spread is 160 bp.",
+      "parts": [
+        {
+          "question": "With equal spacing $h = 1$, the spline's inner rows read $4M_1 + M_2 = c_1$ at 2 years and $M_1 + 4M_2 = c_2$ at 3 years. What is $c_1$? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -90,
+            "tol": { "abs": 0 },
+            "placeholder": "a whole number",
+            "wrong": [
+              { "id": "no-six", "value": -15, "tol": { "abs": 0 } },
+              { "id": "sign", "value": 90, "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "The slopes either side of 2 years are 30 and 15 bp a year, so $c_1 = 6(15 - 30) = -90$.",
+            "generic": "Not quite. Take the change in slope across the 2-year knot and multiply by 6.",
+            "byKey": {
+              "no-six": "That is the change in slope, $15 - 30$. The row's right side carries a factor of 6.",
+              "sign": "The slope falls from 30 to 15, so the change is negative: $6(15 - 30) = -90$."
+            }
+          },
+          "explain": {
+            "text": "With spacing $h$, each inner row reads $hM_{k-1} + 4hM_k + hM_{k+1} = 6\\Delta$, for a change in slope $\\Delta$. At 2 years the slopes are $150 - 120 = 30$ and $165 - 150 = 15$, and $M_0 = 0$ for a natural spline. So $c_1 = 6(15 - 30) = -90$."
+          }
+        },
+        {
+          "question": "Using $c_1 = -90$ from part 1, and $c_2 = 6(5 - 15) = -60$, solve the two rows. What is $M_1$, in bp per year squared? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -20,
+            "tol": { "abs": 0 },
+            "placeholder": "a whole number",
+            "wrong": [
+              { "id": "diag", "value": -22.5, "tol": { "abs": 0.5 } },
+              { "id": "sign", "value": 20, "tol": { "abs": 0 } },
+              { "id": "swap", "value": -10, "tol": { "abs": 0 } }
+            ]
+          },
+          "feedback": {
+            "correct": "Four times the first row less the second gives $15M_1 = -300$, so $M_1 = -20$ and then $M_2 = -10$.",
+            "generic": "Not quite. Eliminate $M_2$: take four times the first row and subtract the second.",
+            "byKey": {
+              "diag": "You dropped $M_2$ from the first row. It couples the two knots, so solve both rows together.",
+              "swap": "That is $M_2$, at 3 years. $M_1$ belongs to the 2-year knot.",
+              "sign": "Both right sides are negative, so $M_1$ is negative: the curve bends down."
+            }
+          },
+          "explain": {
+            "text": "$4(4M_1 + M_2) - (M_1 + 4M_2) = 15M_1 = -360 + 60$, so $M_1 = -20$. Then $M_2 = -90 - 4M_1 = -10$. Both are negative: the curve bends down as the spreads level off."
+          }
+        },
+        {
+          "question": "Using $M_1 = -20$ and $M_2 = -10$ from part 2, what is the spline's spread at 2.5 years? On $[2, 3]$ the spline is a cubic part, $\\tfrac{M_1}{6}(3 - t)^3 + \\tfrac{M_2}{6}(t - 2)^3$, plus the line $(150 - \\tfrac{M_1}{6})(3 - t) + (165 - \\tfrac{M_2}{6})(t - 2)$. Give basis points to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 159.375,
+            "tol": { "abs": 0.0006 },
+            "placeholder": "basis points",
+            "wrong": [
+              { "id": "linear", "value": 157.5, "tol": { "abs": 0.0006 } },
+              { "id": "sign-m", "value": 155.625, "tol": { "abs": 0.0006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "The cubic terms give $\\tfrac{-20 - 10}{6} \\times 0.125 = -0.625$ and the linear terms $0.5(153.333 + 166.667) = 160$, so $s(2.5) = 159.375$.",
+            "generic": "Not quite. At $t = 2.5$ both $3 - t$ and $t - 2$ are 0.5; put them in term by term.",
+            "byKey": {
+              "linear": "157.5 is the straight line between 150 and 165. The spline's curvature terms lift it above that.",
+              "sign-m": "You took $M_1$ and $M_2$ as positive. With $-20$ and $-10$, each $-\\tfrac{M}{6}$ adds to the linear terms."
+            }
+          },
+          "explain": {
+            "text": "With $3 - t = t - 2 = 0.5$, the cubes are 0.125 and the cubic terms sum to $-0.625$. The linear terms are $0.5 \\times 153.333 + 0.5 \\times 166.667 = 160$. So $s(2.5) = 159.375$ bp, about 1.9 bp above the straight line."
+          }
+        },
+        {
+          "question": "Using the formula for $s(t)$ on $[2, 3]$ from part 3, what is its slope $s'(2.5)$, in bp per year? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 14.583333,
+            "tol": { "abs": 0.0006 },
+            "placeholder": "bp per year",
+            "wrong": [
+              { "id": "chord", "value": 15, "tol": { "abs": 0.0006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "The cubic part gives $2.5 - 1.25 = 1.25$ and the line's slope is $166\\tfrac23 - 153\\tfrac13 = 13\\tfrac13$, so $s'(2.5) \\approx 14.583$.",
+            "generic": "Not quite. Differentiate each term: $(3 - t)^3$ gives $-3(3 - t)^2$ and $(3 - t)$ gives $-1$.",
+            "byKey": {
+              "chord": "15 is the chord's slope, $165 - 150$. The spline's slope at 2.5 includes its curvature terms."
+            }
+          },
+          "explain": {
+            "text": "The cubic part has slope $-\\tfrac{M_1}{2}(3 - t)^2 + \\tfrac{M_2}{2}(t - 2)^2$, which is $2.5 - 1.25$ at 2.5. The line adds $166\\tfrac23 - 153\\tfrac13 = 13\\tfrac13$, so $s'(2.5) \\approx 14.583$ bp a year. It is a little under the chord's 15 because the curve bends down."
+          }
+        },
+        {
+          "question": "Using $s(2.5) = 159.375$ from part 3 and $s'(2.5) = 14.583$ from part 4, take one Newton step from 2.5 towards $s(t) = 160$. Give the tenor in years to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.542857,
+            "tol": { "abs": 0.00006 },
+            "placeholder": "years",
+            "wrong": [
+              { "id": "chord", "value": 2.541667, "tol": { "abs": 0.00006 } },
+              { "id": "sign", "value": 2.457143, "tol": { "abs": 0.00006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$2.5 + \\tfrac{160 - 159.375}{14.583} = 2.5 + 0.04286 \\approx 2.5429$ years.",
+            "generic": "Not quite. Solve $s(t) - 160 = 0$: step by $-\\tfrac{s(2.5) - 160}{s'(2.5)}$.",
+            "byKey": {
+              "chord": "You divided by the chord's slope, 15, as a secant step would. Newton uses the tangent, $s'(2.5) \\approx 14.583$.",
+              "sign": "The spread at 2.5 is below 160 and rising, so the tenor lies to the right of 2.5."
+            }
+          },
+          "explain": {
+            "text": "The step is $0.625/14.583 \\approx 0.0429$, so $t_1 \\approx 2.5429$ years. The true crossing is at 2.5438, so one step from a close start is within 0.001. A second step would square that error."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-survival-crossing",
+      "difficulty": 5,
+      "skills": ["nm-roots"],
+      "prose": "A credit desk has a borrower's survival probabilities at three dates: $Q(1) = 0.98$, $Q(3) = 0.92$ and $Q(5) = 0.84$. It joins them with the quadratic $p(t)$ through the three points and wants the time when $p(t) = 0.90$. Its model bounds $|Q'''(t)|$ by 0.0006 on $[1, 5]$.",
+      "parts": [
+        {
+          "question": "What is $p(4)$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.8825,
+            "tol": { "abs": 0.00006 },
+            "placeholder": "a decimal",
+            "wrong": [
+              { "id": "linear", "value": 0.88, "tol": { "abs": 0.00006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "In Newton form $p(t) = 0.98 - 0.03(t - 1) - 0.0025(t - 1)(t - 3)$, so $p(4) = 0.98 - 0.09 - 0.0075 = 0.8825$.",
+            "generic": "Not quite. Build $p$ from divided differences, or from the three Lagrange terms, then put in $t = 4$.",
+            "byKey": {
+              "linear": "0.88 is the straight line between 3 and 5. The quadratic bends, so it sits above the chord there."
+            }
+          },
+          "explain": {
+            "text": "The first divided differences are $-0.03$ and $-0.04$, and the second is $\\tfrac{-0.04 + 0.03}{4} = -0.0025$. So $p(t) = 0.98 - 0.03(t - 1) - 0.0025(t - 1)(t - 3)$. At $t = 4$ that is $0.98 - 0.09 - 0.0075 = 0.8825$."
+          }
+        },
+        {
+          "question": "Using $p(4) = 0.8825$ from part 1, take a secant step through $(3, p(3))$ and $(4, p(4))$ towards $p(t) = 0.90$. Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.533333,
+            "tol": { "abs": 0.00006 },
+            "placeholder": "years",
+            "wrong": [
+              { "id": "linear", "value": 3.5, "tol": { "abs": 0.00006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "The chord falls 0.0375 over the year, and we need a fall of 0.02, so $t = 3 + \\tfrac{0.02}{0.0375} \\approx 3.5333$.",
+            "generic": "Not quite. Find where the line through $(3, 0.92)$ and $(4, 0.8825)$ reaches 0.90.",
+            "byKey": {
+              "linear": "That uses $p(4) = 0.88$, the straight-line slip of part 1. With 0.8825 the chord is flatter."
+            }
+          },
+          "explain": {
+            "text": "The secant replaces $p$ by its chord between 3 and 4, of slope $-0.0375$. Falling from 0.92 to 0.90 takes $\\tfrac{0.02}{0.0375} \\approx 0.5333$ years. So $t \\approx 3.5333$."
+          }
+        },
+        {
+          "question": "Using $t = 3.5333$ from part 2, take one Newton step on $p(t) - 0.90$. Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.549853,
+            "tol": { "abs": 0.00006 },
+            "placeholder": "years",
+            "wrong": [
+              { "id": "sign", "value": 3.516814, "tol": { "abs": 0.00006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$p(3.5333) \\approx 0.900622$ and $p'(3.5333) \\approx -0.037667$, so the step adds about 0.016519 and $t \\approx 3.5499$.",
+            "generic": "Not quite. Use $p'(t) = -0.03 - 0.0025(2t - 4)$ and step by $-\\tfrac{p(t) - 0.90}{p'(t)}$.",
+            "byKey": {
+              "sign": "You stepped back. $p(3.5333)$ is still above 0.90 and $p$ is falling, so $t$ must grow."
+            }
+          },
+          "explain": {
+            "text": "At 3.5333 the quadratic is 0.000622 above the target and falls at 0.037667 a year. Newton adds $0.000622/0.037667 \\approx 0.0165$, giving 3.5499. The exact crossing, $-4 + \\sqrt{57} \\approx 3.54983$, is within $2 \\times 10^{-5}$ of it."
+          }
+        },
+        {
+          "question": "Using $t^* = 3.5499$ from part 3, bound $|Q(t^*) - p(t^*)|$ by the interpolation error formula with $|Q'''| \\le 0.0006$. Give the bound times $10^4$ to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.0331,
+            "tol": { "abs": 0.006 },
+            "placeholder": "times 10^-4",
+            "wrong": [
+              { "id": "no-factorial", "value": 12.1987, "tol": { "abs": 0.006 } },
+              { "id": "fourth", "value": 0.5083, "tol": { "abs": 0.006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$|(t - 1)(t - 3)(t - 5)| \\approx 2.55 \\times 0.55 \\times 1.45 \\approx 2.033$, times $\\tfrac{0.0006}{3!} = 10^{-4}$, is about $2.03 \\times 10^{-4}$.",
+            "generic": "Not quite. Three points give $\\tfrac{Q'''(\\xi)}{3!}$ times the product of $t^* - t_k$ over the three dates.",
+            "byKey": {
+              "no-factorial": "You left out the $3!$. The error carries $\\tfrac{Q'''}{3!}$, so divide by 6.",
+              "fourth": "You divided by $4!$. Three points leave a third-derivative term, over $3! = 6$."
+            }
+          },
+          "explain": {
+            "text": "With three points the error is $\\tfrac{Q'''(\\xi)}{6}(t - 1)(t - 3)(t - 5)$. At $t^* \\approx 3.5499$ the product has size about 2.033, and $\\tfrac{0.0006}{6} = 10^{-4}$. So $p$ may be off by up to about $2.03 \\times 10^{-4}$ there."
+          }
+        },
+        {
+          "question": "Using the bound $2.03 \\times 10^{-4}$ from part 4 and the slope $p'(t^*) \\approx -0.03775$, how far can the true crossing date lie from $t^*$? Give days to 2 decimal places, with 365 days a year.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.9658,
+            "tol": { "abs": 0.006 },
+            "placeholder": "days",
+            "wrong": [
+              { "id": "p-at-3", "value": 2.1202, "tol": { "abs": 0.006 } },
+              { "id": "no-slope", "value": 0.0742, "tol": { "abs": 0.006 } }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{2.03 \\times 10^{-4}}{0.03775} \\approx 0.00539$ years, about 1.97 days.",
+            "generic": "Not quite. A level error $\\Delta Q$ moves a crossing by about $\\tfrac{\\Delta Q}{|p'(t^*)|}$ in time.",
+            "byKey": {
+              "p-at-3": "You used the slope at 3 years, 0.035. The crossing is at 3.5499, where the curve is steeper.",
+              "no-slope": "You turned the probability error straight into days. Divide by the slope to convert it to time first."
+            }
+          },
+          "explain": {
+            "text": "Near the crossing $p$ falls 0.03775 a year, so an error of $2.03 \\times 10^{-4}$ in level shifts the date by about $0.00539$ years. That is $0.00539 \\times 365 \\approx 1.97$ days. The root finder's own error, under $10^{-4}$ years, is far smaller than the interpolation's."
+          }
+        }
+      ]
+    }
+  ]
+}
