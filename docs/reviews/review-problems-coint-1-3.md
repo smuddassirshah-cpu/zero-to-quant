@@ -94,3 +94,28 @@ wrong 1 (finding 4), misleading 1 (3), reuse 8 (1, 2, 7, 8, 9, 10, 11, 14, on si
 - `retold` missed skeletons that differ only in numbers: "You divided £1.10 by £0.40 without subtracting the mean." (l6 screens[10], review-2 items[1]) against two lines of `problems-2`; "is the rough guide. The half-life is $\ln 0.5/\ln 0.98$." (l7 quiz[0]) against two lines of `problems-2`; "whose root is 25.77. Times 0.5 gives 12.88." (l1 quiz[0], review-1 items[0]) against `problems-1`.
 
 Both are in `docs/BACKLOG-INBOX.md` under `Raised later (review problems coint):`.
+
+## Fix pass
+
+Author agent, re-author and fix pass (`docs/briefs/reauthor-fix-af.md`). Every replacement number was recomputed before it was written; none is disputed.
+
+1. Fixed: paper-mill prose, part 1 (0.0036; slips 0.009, 0.024, 0.06) and part 2's question, as written.
+2. Fixed: cocoa part 1 `feedback.correct` and `explain` ($13.78/1.96 = 7.03$, "seven times over").
+3. Fixed: cocoa part 4 option `spurious`, `feedback.correct`, `explain`, as written.
+4. Re-authored with its problem (finding 5); the new stem has no step-one figures. The reader's stem check is removed with the problem.
+5. Re-authored as `p-screen-real-share` (l2, l4): a screen of 1,200 pairs, the share of passes that are real at two years, four years and the 1% level. No $t_\gamma$, sums, table verdict or power line.
+6. Re-authored as `p-smelter-tls` (l5, l6): a covariance matrix with correlation 0.92, the larger eigenvalue, the TLS ratio, the spread sd at that ratio and today's z. No two sds and a correlation, no inverted slope.
+7. Fixed: lessor part 1 `one-over-b` and `explain` ($0.92^8 = 0.513$, $0.92^9 = 0.472$).
+8. Fixed: lessor part 3 `sign`, `no-mean`, `explain`.
+9. Fixed: three-distributors part 1 `correct` (11.9, 5.69), `generic`, `explain`.
+10. Fixed: three-distributors part 4 `no-mean`.
+11. Fixed: tyre part 1 `sign`, `x-speed`, `explain`; part 3 `one-over-b`.
+12. Re-authored as `p-glassmaker-borrow` (l9, l10): borrowing fees on the sold leg, the long's extra cost and the long entry that nets the same as a short at +2. No z path, leg P&L or bp costs on fills.
+13. Fixed: cocoa part 3 question restates 13.78 ($13.78\sqrt{1{,}498/748} = 19.50$).
+14. Fixed: housebuilder part 3 question, every feedback line and `explain`; part 4 question. Keys and `wrong` values unchanged.
+15. Notes, no fix asked: nothing changed.
+16. Fixed: housebuilder part 4 `tol` 0.01; the band takes 3.4225.
+
+Scripts. `problems-coint-numbers.py`: paper-mill part 1, the three new problems and the changed lines are checked (826 checks, 0 failures). `problems-coint-numbers-read.py`: the checks of the three removed problems are deleted, so the finding-4 FINDING goes with its problem; paper-mill part 1 is retargeted to 0.0036; the lessor printed check moves from 0.6931 to 0.513 and 0.472; the housebuilder band check reads the file's `tol` (641 checks, 0 FINDING lines).
+
+Gates: validator 0 errors (two long-sentence warnings, both on the reader's exact text of findings 1 and 9); voice scan 35, 0 and 0; `fresh-check --file` 0 hits on each set; `grade-all --file` 0 failures (17, 17, 20 widgets); playthrough `--problems coint/problems-1` to `-3` green with and without `--mobile`. For the delta reader: the three new problems and the closest items to each are listed in `docs/reports/problems-coint.md`.
