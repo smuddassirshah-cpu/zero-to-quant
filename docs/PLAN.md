@@ -142,6 +142,7 @@ One object, saved to `localStorage['zq.state']`, versioned (`v: 1`). `ZQ.state` 
 Rules the mutators enforce (from `design-research.md` 6.2, 8.2, 5.7):
 
 - XP: 15 first-try screen, 5 after retry, 0 after Show solution, 20 lesson finish, 15 perfect, 15 per quiz item correct, 50 + 5 per correct homework item, 200 topic exam pass, 1,000 stage exam pass, 0 for repeating completed content.
+- Prerequisites met by an exam: a passed topic or stage exam attempt meets a level of that topic or stage unless the attempt scored under half on one of the level's essential skills over its auto rows (rule 4, `EXAM_SKILL_FLOOR = 0.5`); a pass that misses a level is a badge for it, and the locked screen names the skills under half with their scores. Reviews and test-outs keep the 0.7 per-skill floor.
 - MP: first-try correct in quizzes, reviews, homework and exams, and successful 7-day and 30-day redos. Each adds MP to the item's skills and updates the Elo-style skill score (K = 32, item difficulty maps 1 to 5 onto 1000 to 1600).
 - Mastered: lesson quiz at 80% or more. Below 80%, each wrong quiz item joins the redo queue.
 - Redo: a wrong screen or item is queued for 7 days; a correct redo re-queues at 30 days; a correct 30-day redo leaves the queue. A wrong redo resets to 7 days.

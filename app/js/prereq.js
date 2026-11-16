@@ -27,6 +27,7 @@
   const DAY = 86400000;
   const PASS = 0.8;            // review pass share when a review file carries no pass (matches the quiz MASTERY bar; rule 1)
   const SKILL_FLOOR = 0.7;     // share every essential skill of a level needs in a review, test-out or exam pass to meet it (rules 2 and 4); state.js holds the same figure for the finish-time check
+  const EXAM_SKILL_FLOOR = 0.5;   // share every essential skill of a level needs over the auto rows of one passing topic or stage exam attempt to meet it (rule 4; ENGINE-BACKLOG 1052): one slip on a two-item skill still meets; state.js holds the same figure
   const TESTOUT_N = 5;         // items in a test-out (ENGINE-BACKLOG 747: five, pass at four, so a review of 10 gives two papers with no shared item)
   const RETAKE_H = 24;         // hours before a failed test-out can be retaken
   const REFRESH_D = 30;        // days after which a met prerequisite shows a Refresh chip
@@ -112,12 +113,28 @@
   const lessonDone = (cid, id) => { const r = lessonRec(cid, id); return !!(r && S().lessonCounts(r)); };   // finished and not over the reveal cap (rule 3): counts for prerequisites and progress
   /* every lesson on the map is written and finished (a half-written level never counts as complete) */
   const fullyFinished = (cid, lv) => { const all = lv.lessons || [], ws = writtenLessons(cid, lv); return all.length > 0 && ws.length === all.length && ws.every(id => lessonDone(cid, id)); };
-  /* Rule 4: a topic or stage exam pass meets a level only when one passing attempt covers every essential skill of the level at SKILL_FLOOR over its auto rows;
-     otherwise the pass is a badge for that level. A level whose essentials are not known yet (its review not loaded) is not met by an exam until they are. */
+  /* Rule 4: a topic or stage exam pass meets a level unless the attempt scored under EXAM_SKILL_FLOOR (half) on one of the level's essential skills over its auto rows
+     (a skill with no auto rows is under it); otherwise the pass is a badge for that level. The attempt's own rows are the evidence, so no lesson need have been done
+     (no seen check: the rows that count here are the rows that raised each skill's seen count). A level whose essentials are not known yet (its review not loaded) is not met by an exam until they are. */
+  const attemptBy = (a) => a.bySkillAuto || a.bySkill || {};
   const examMeets = (examId, cid, lv) => {
     const ess = essentialsOf(cid, lv);
-    if (!ess || !ess.length || !seenAll(ess)) return false;
-    return C().examAutoAttempts(examId).some(a => S().floorGaps(a.bySkillAuto || a.bySkill || {}, ess, SKILL_FLOOR).length === 0);
+    if (!ess || !ess.length) return false;
+    return C().examAutoAttempts(examId).some(a => S().floorGaps(attemptBy(a), ess, EXAM_SKILL_FLOOR).length === 0);
+  };
+  /* Why a passed exam does not meet a level: { exam, gaps: [{ skill, correct, total }] } from the closest passing attempt, or null (no exam passed, essentials unknown, or met) */
+  const examShort = (cid, lv) => {
+    const co = doc(cid), ess = essentialsOf(cid, lv);
+    if (!co || !ess || !ess.length) return null;
+    let best = null;
+    [co.topic ? 'topic-' + co.topic : null, co.stage != null ? 'stage-' + co.stage : null].forEach(id => {
+      if (!id || !examPassedAuto(id)) return;
+      C().examAutoAttempts(id).forEach(a => {
+        const by = attemptBy(a), gaps = S().floorGaps(by, ess, EXAM_SKILL_FLOOR);
+        if (!best || gaps.length < best.gaps.length) best = { exam: id, gaps: gaps.map(skill => { const v = by[skill], [c, t] = Array.isArray(v) ? v : v == null ? [0, 0] : [v, v]; return { skill, correct: c, total: t }; }) };
+      });
+    });
+    return best && best.gaps.length ? best : null;
   };
   /* Performance task (ENGINE-BACKLOG 529): a level whose manifest row names a task needs it passed as well. The record is state.perf["course/L<n>"],
      written when a homework or review row for the task comes back ok (how: auto, self or external). An extra AND on every route except a grandfathered record. */
@@ -223,6 +240,7 @@
       refs: p.kind === 'level' ? levelRefs(p.course, p.n) : lessonRefs(p.course, p.id),
       entries: p.kind === 'level' ? levelEntries(p.course, p.n) : lessonEntries(p.course, p.id),
       testOut: testOutFacts(p.course, lv),
+      examShort: examShort(p.course, lv),   // ENGINE-BACKLOG 1052: a passed topic or stage exam that does not cover this level, with the skills under half
       perf: perfNeeded(p.course, lv) ? { ...perfNeeded(p.course, lv), passed: perfPassed(p.course, lv) } : null,   // ENGINE-BACKLOG 529: the level's performance task and whether it is passed
     };
     if (p.kind === 'lesson') {
@@ -384,9 +402,9 @@
   const api = {
     strict, parse, entryOf, entriesOf, refsOf, whyOf, levelEntries, lessonEntries, levelRefs, lessonRefs, examRefs,
     diagnosticsFor, diagnosticsForLevel, routeLimits, routeLimitsForLevel, routeLimitsForCourse, routeLimitsForLesson, routeText, examLocked, perfNeeded, perfPassed, perfRec, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
-    advisory, advisoryFor, advisoryForLevel, missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
+    advisory, advisoryFor, advisoryForLevel, missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, examShort, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
     openedCount: () => Object.keys(rec().opened).length,
-    PASS, SKILL_FLOOR, TESTOUT_N, RETAKE_H, REFRESH_D,
+    PASS, SKILL_FLOOR, EXAM_SKILL_FLOOR, TESTOUT_N, RETAKE_H, REFRESH_D,
   };
   window.ZQ = window.ZQ || {};
   window.ZQ.prereq = api;

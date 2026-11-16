@@ -173,6 +173,62 @@ await test('rule 4: a topic exam pass meets a level only when its essential skil
   ok(!P.levelMet(A.cid, A.lv.n), 'a pass with one essential skill under the floor does not meet');
 });
 
+/* ENGINE-BACKLOG 1052: a passing exam attempt meets a level unless one essential skill scored under half over its auto rows */
+const examCase = async (counts) => {   // counts: [correct, total] for the first essential skill; every other essential skill gets 2 of 2
+  const { A, topic, ea } = needsExam();
+  await C.loadEssentials(A.cid);
+  const ess = C.essentialSkills(A.cid, A.lv.review), s0 = ess[0];
+  const rows = [];
+  ess.forEach((s, k) => { const [c, t] = k === 0 ? counts : [2, 2]; for (let i = 0; i < t; i++) rows.push({ id: `${s}-${i}`, ok: i < c, difficulty: 3, skills: [s] }); });
+  return { A, topic, ess, s0, rows };
+};
+const sitExam = (topic, rows) => S.examFinished({ id: 'topic-' + topic, score: rows.filter(r => r.ok).length, items: rows.length, passed: true, results: rows, bySkill: {} });
+await test('exam rule: 1 of 2 on an essential skill meets the level, with no lesson done (a fresh learner with only the exam)', async () => {
+  const { A, topic, rows } = await examCase([1, 2]);
+  eq(Object.keys(saved().lessons).length, 0, 'no lesson done');
+  sitExam(topic, rows);
+  eq(P.EXAM_SKILL_FLOOR, 0.5, 'EXAM_SKILL_FLOOR'); eq(S.rules.EXAM_SKILL_FLOOR, 0.5, 'state mirrors it');
+  ok(P.levelMet(A.cid, A.lv.n), 'met at read time, before any sync');
+  P.sync();
+  ok(saved().prereq.met[`${A.cid}/L${A.lv.n}`], 'sync records it');
+  eq(P.examShort(A.cid, A.lv), null, 'no shortfall to report');
+});
+await test('exam rule: 0 of 2 does not meet and examShort names the skill with its score', async () => {
+  const { A, topic, rows, s0 } = await examCase([0, 2]);
+  sitExam(topic, rows); P.sync();
+  ok(!P.levelMet(A.cid, A.lv.n), 'not met');
+  const x = P.examShort(A.cid, A.lv);
+  ok(x && x.exam === 'topic-' + topic && x.gaps.length === 1 && x.gaps[0].skill === s0 && x.gaps[0].correct === 0 && x.gaps[0].total === 2, JSON.stringify(x));
+  eq(P.nodeOf(`${A.cid}/L${A.lv.n}`).examShort.gaps[0].skill, s0, 'the missing node carries it for the locked row');
+});
+await test('exam rule: 1 of 3 does not meet', async () => {
+  const { A, topic, rows } = await examCase([1, 3]);
+  sitExam(topic, rows); P.sync();
+  ok(!P.levelMet(A.cid, A.lv.n), 'not met');
+});
+await test('exam rule: a skill with no auto rows in the attempt does not meet and reads as no questions', async () => {
+  const { A, topic, rows, s0 } = await examCase([2, 2]);
+  sitExam(topic, rows.filter(r => r.skills[0] !== s0)); P.sync();
+  ok(!P.levelMet(A.cid, A.lv.n), 'not met');
+  const g = P.examShort(A.cid, A.lv).gaps.find(x => x.skill === s0);
+  ok(g && g.total === 0, 'zero rows');
+});
+await test('exam rule: a stored old attempt (no skill records, no met record) unlocks on load with no migration', async () => {
+  const { A, topic, ess } = await examCase([1, 2]);
+  const d = saved();
+  d.skills = {}; d.lessons = {}; d.prereq = { met: {}, testouts: {}, opened: {}, started: {}, grandfathered: true };
+  const by = Object.fromEntries(ess.map((s, k) => [s, k === 0 ? [1, 2] : [2, 2]]));
+  d.exams = { ['topic-' + topic]: { attempts: [{ at: 1, score: 5, items: 8, passed: true, passedAuto: true, bySkill: by, bySkillAuto: by }] } };
+  ok(S.import(d).ok, 'import');
+  ok(P.levelMet(A.cid, A.lv.n), 'met from the stored attempt alone');
+  P.sync();
+  ok(saved().prereq.met[`${A.cid}/L${A.lv.n}`], 'recorded by sync');
+});
+await test('exam rule: reviews and test-outs keep the 0.7 floor', async () => {
+  eq(P.SKILL_FLOOR, 0.7, 'SKILL_FLOOR'); eq(S.floorGaps({ a: [1, 2] }, ['a']).join(','), 'a', '1 of 2 is a gap at the review floor');
+  eq(S.floorGaps({ a: [1, 2] }, ['a'], P.EXAM_SKILL_FLOOR).length, 0, '1 of 2 passes the exam floor');
+});
+
 await test('rule 5: a missed quiz item queues for redo even when the quiz reached mastery', async () => {
   const { cid, id } = firstLessonOf(fullLevels[0]);
   const rows = [0, 1, 2, 3, 4].map(j => ({ id: 'q' + j, ok: j !== 4, difficulty: 2, skills: ['s'] }));

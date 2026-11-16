@@ -14,6 +14,7 @@
   const ELO_START = 1200;               // PLAN section 6 schema
   const MASTERY = 0.8;                  // lesson quiz share that marks a lesson mastered
   const REVIEW_PASS = 0.8;              // review pass share when a review file carries no pass (matches MASTERY); met rule 1
+  const EXAM_SKILL_FLOOR = 0.5;         // the lower per-skill share a topic or stage exam pass needs to meet a level (rule 4; prereq.js holds the rule)
   const SKILL_FLOOR = 0.7;              // per-skill share every essential skill of a level needs for a review, test-out or exam pass to meet it (rules 2, 4)
   const REVEAL_CAP = 0.25;              // share of a lesson's gradable screens that may be revealed (Solve) before it stops counting as done (rule 3)
   const REDO_FIRST = 7, REDO_SECOND = 30;
@@ -755,7 +756,7 @@
     screenGraded, lessonFinished, lessonCounts, revealShare, floorGaps, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult, provenance, howOf,
     summary, weeklySplit,
     export: exportDoc, import: importDoc, reset, flush,
-    dates, rules: { XP, MASTERY, REVIEW_PASS, SKILL_FLOOR, REVEAL_CAP, REDO_FIRST, REDO_SECOND, REST_EVERY, REST_MAX, QUALIFY_PROBLEMS, K, ELO_START, BLOCKS, TRACKS, GOALS, itemRating, mpFor },
+    dates, rules: { XP, MASTERY, REVIEW_PASS, SKILL_FLOOR, EXAM_SKILL_FLOOR, REVEAL_CAP, REDO_FIRST, REDO_SECOND, REST_EVERY, REST_MAX, QUALIFY_PROBLEMS, K, ELO_START, BLOCKS, TRACKS, GOALS, itemRating, mpFor },
     /* Test hook: replace the clock (a function returning ms) and reload from storage. Not for screens. */
     _setClock(fn) { clock = typeof fn === 'function' ? fn : () => Date.now(); },
     _reload() { doc = read(); return doc; },

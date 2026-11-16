@@ -11,6 +11,14 @@
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   const hoursLeft = (t) => { const h = Math.max(1, Math.ceil((t - Date.now()) / 3600e3)); return h === 1 ? 'about an hour' : `${h} hours`; };
 
+  /* ENGINE-BACKLOG 1052: one plain line when the level's topic or stage exam is passed but does not cover it, naming each skill under half with its score */
+  const skillLabel = (s) => { const out = {}; try { Z.content.courses().forEach(c => Object.assign(out, c.skills || {})); } catch { /* content not ready */ } const l = out[s] || s; return /^[A-Z][a-z]/.test(l) ? l[0].toLowerCase() + l.slice(1) : l; };
+  const examLine = (nd) => {
+    const x = nd.examShort;
+    if (!x || !x.gaps.length) return '';
+    const what = x.exam.startsWith('stage-') ? 'stage exam' : 'topic exam';
+    return `Your ${what} pass does not cover this level: ${x.gaps.map(g => g.total > 0 ? `${g.correct} of ${g.total} on ${skillLabel(g.skill)}` : `no questions on ${skillLabel(g.skill)}`).join(', ')}.`;
+  };
   /* One missing level or lesson */
   const row = (nd, esc) => {
     let st;
@@ -28,7 +36,9 @@
       : `<span class="t-caption muted lk-wait">Finish its lessons to unlock it</span>`;
     const title = nd.kind === 'lesson' ? `Lesson: ${nd.name}` : `Level ${nd.n}${nd.levelName ? ': ' + nd.levelName : ''}`;
     const why = nd.why ? `<p class="t-caption secondary lk-why">${esc(nd.why)}</p>` : '';   // one line from course.json (ENGINE-BACKLOG 551)
-    return `<li class="lk-row" data-ref="${esc(nd.ref)}"><div class="lk-row-t"><a class="lk-row-n" href="#course/${esc(nd.course)}">${esc(title)}</a><span class="t-caption secondary">${esc(st)}</span></div>${why}${to}</li>`;
+    const ex = nd.kind === 'lesson' ? '' : examLine(nd);
+    const exam = ex ? `<p class="t-caption secondary lk-exam">${esc(ex)}</p>` : '';
+    return `<li class="lk-row" data-ref="${esc(nd.ref)}"><div class="lk-row-t"><a class="lk-row-n" href="#course/${esc(nd.course)}">${esc(title)}</a><span class="t-caption secondary">${esc(st)}</span></div>${why}${exam}${to}</li>`;
   };
   /* Stage > Topic > Course groups, open, each with a count */
   const tree = (nodes, esc) => {
