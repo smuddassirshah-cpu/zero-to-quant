@@ -460,3 +460,39 @@ Commonest false-positive patterns (the same bullets are in `docs/BACKLOG-INBOX.m
 - A match made by the masking alone, 7 hits. With numbers, maths and rare nouns masked, the skeleton left is "That is ..., the ... ending at ..." or "the standard error is". Ask for three informative words in common.
 
 Also raised: the error line shows one pair of a hit where a fixer needs all of them; a waiver has no source field, so it hides later hits on its item; the `rate` kind found one real shared number set (`exp-log`) that the `numbers` kind missed, and two chance matches; the hits file holds one hit that does not fire at HEAD.
+
+## Fix pass
+
+Fixer: Sonnet, from the triage above. Replacements applied exactly as written, mechanically (`apply.mjs` from the reader's scratch, read first): all 47 old strings were found, each once (the three held in two fields matched in both), and every file re-parsed as JSON. No key, number or `wrong` value changed, so no graded answer changed. Nothing deferred.
+
+Reword hits (33 lines, 32 hits; the `p-italic-letters` line appears twice):
+- analysis/problems-1 `p-diagonal-fraction`: fixed (2 strings)
+- complex/problems-1 `p-four-lamps`: fixed (6 strings)
+- conditional/problems-2 `p-bad-ticks`: fixed
+- conditional/problems-5 `p-warning-screen`: fixed (cleared by the `p-bad-ticks` replacement, no edit of its own)
+- conditional/problems-5 `p-doubling-desk`: fixed (2 strings)
+- ensembles/problems-1 `p-spoof-alerts` and `p-opening-gaps`: fixed (6 strings across both)
+- ensembles/problems-2 `p-ipo-forest`: fixed
+- ensembles/problems-3 `p-callable-bonds` parts 1, 2, 5: fixed (3 strings)
+- functions/problems-4 `p-photo-mount`: fixed
+- integrals/problems-1 `p-subscriptions`: fixed (waived afterwards for its `stands` line)
+- limits-thm/problems-2 `p-digital-share`: fixed
+- markov/problems-1 `p-carry-pause`: fixed
+- quadratics/problems-3 `p-bike-hire`: fixed
+- ratio/problems-3 `p-print-run`: fixed
+- stat-learning/problems-1 `p-loaves-k`, `p-broker-clients`: fixed (4 strings)
+- taylor/problems-1 `p-loss-limit`: fixed (3 strings)
+- testing/problems-1 `p-cereal-boxes`, `p-phone-battery`: fixed (6 strings; the first waived afterwards)
+- testing/problems-4 `p-bakery-loaves`: fixed
+- trig/problems-2 `p-two-buoys`, `p-observation-wheel`: fixed (3 strings)
+- trig/problems-3 `p-daylight-model`: fixed (cleared by the `p-observation-wheel` replacement, no edit of its own)
+- validation/problems-2 `p-forward-label`: fixed (3 strings)
+- vectors/problems-2 `p-italic-letters` (both lines): fixed (one `entrywise` string)
+- vectors/problems-3 `p-goat-feed`: fixed (`no-divide`); `p-colour-sensor`, `p-engraver-dial`: cleared by the `vectors/problems-2` `entrywise` replacement, no edit of their own
+
+Waivers: 35 entries added to `app/tools/same-course-waivers.json` (status "stands", the reader's reason), one per item and kind. The 36th `stands` item, `ensembles/problems-3` `p-futures-study`, no longer fires and has none. The 11 `re-author` hits are untouched and unwaived.
+
+Errors left in `node tools/same-course-reuse.mjs --all`: 11, exactly the `re-author` hits: `conditional/problems-3` `p-losing-week`; `conditional/problems-4` `p-dated-coins`; `exp-log/problems-1` `p-rare-coin` and `exp-log/problems-2` `p-drawdown-recovery` (shared numbers); `markov/problems-5` `p-capped-close`; `stat-learning/problems-2` `p-futures-lasso` (parts 1, 2, 4) and `p-built-ridge`; `stat-learning/problems-4` `p-renewals`; `validation/problems-1` `p-arrears-grid`.
+
+Gates: validator 0 errors; voice scan 35 on the 16 edited courses 0 over-long explanations and 0 long sentences in every edited file (one over-35 line, `testing/homework-3.json`, is not an edited file and predates this pass); `grade-all.mjs --file` 0 failures on all 21 sets; `test-fresh-check.mjs`, `test-fresh-check-same-course-ae.mjs`, `test-fresh-check-retold-af.mjs` pass.
+`playthrough.mjs --problems` with and without `--mobile` on all 21 edited sets: All passed (the first mobile run of `ensembles/problems-3` and the first runs of `vectors/problems-3` hit my own shell timeout, not a content failure; rerun with a longer limit, all passed). Number scripts of the 16 edited courses (`docs/reports/problems-<course>-numbers*.py`, through `run-number-scripts.mjs --only`): all pass, 0 new failures.
