@@ -90,49 +90,49 @@ def nums_in(s):
 # ---------------------------------------------------------------- eigen/problems-2 p-oval-pond
 it = item("eigen/problems-2.json", "p-oval-pond")
 P = it["parts"]
-check("pond prose", "9x^2 + 6xy + 17y^2 = 288" in it["prose"])
+check("pond prose", "41x^2 + 14xy + 89y^2 = 360" in it["prose"])
 x, y = sp.symbols("x y", real=True)
-form = 9 * x**2 + 6 * x * y + 17 * y**2
-A = np.array([[9.0, 3.0], [3.0, 17.0]])
-check("pond A gives the form", sp.expand(sp.Matrix([[x, y]]) * sp.Matrix([[9, 3], [3, 17]]) * sp.Matrix([x, y]))[0] == sp.expand(form))
-num_part("pond p1", P[0], 3, {"whole-cross": 6})
+form = 41 * x**2 + 14 * x * y + 89 * y**2
+A = np.array([[41.0, 7.0], [7.0, 89.0]])
+check("pond A gives the form", sp.expand(sp.Matrix([[x, y]]) * sp.Matrix([[41, 7], [7, 89]]) * sp.Matrix([x, y]))[0] == sp.expand(form))
+num_part("pond p1", P[0], 7, {"whole-cross": 14})
 ev, evec = np.linalg.eigh(A)
-check("pond eigenvalues 8, 18 (eigh)", close(ev[0], 8, 1e-9) and close(ev[1], 18, 1e-9))
+check("pond eigenvalues 40, 90 (eigh)", close(ev[0], 40, 1e-9) and close(ev[1], 90, 1e-9))
 w = P[1]["widget"]
-check("pond p2 key", sorted(w["answers"]) == [8, 18] and w.get("unordered") is True and tol(w) == 0)
+check("pond p2 key", sorted(w["answers"]) == [40, 90] and w.get("unordered") is True and tol(w) == 0)
 g = {q["id"]: q["value"] for q in w["wrong"]}
-check("pond p2 wrongs", g == {"diagonal": "9, 17", "sign": "-8, -18"})
-check("pond p2 trace det", close(np.trace(A), 26) and close(np.linalg.det(A), 144, 1e-9))
-has("pond p2", P[1], "153 - 9 = 144", "\\lambda^2 - 26\\lambda + 144", "(\\lambda - 8)(\\lambda - 18)")
-v8 = evec[:, 0] * 3 / evec[0, 0]
-check("pond p3 eigenvector (3, -1) (eigh)", close(v8[0], 3) and close(v8[1], -1, 1e-9))
-check("pond p3 key", P[2]["widget"]["answer"] == "(3, -1)")
+check("pond p2 wrongs", g == {"diagonal": "41, 89", "sign": "-40, -90"})
+check("pond p2 trace det", close(np.trace(A), 130) and close(np.linalg.det(A), 3600, 1e-6))
+has("pond p2", P[1], "3649 - 49 = 3600", "\\lambda^2 - 130\\lambda + 3600", "(\\lambda - 40)(\\lambda - 90)")
+v40 = evec[:, 0] * 7 / evec[0, 0]
+check("pond p3 eigenvector (7, -1) (eigh)", close(v40[0], 7) and close(v40[1], -1, 1e-9))
+check("pond p3 key", P[2]["widget"]["answer"] == "(7, -1)")
 g = {q["id"]: q["tex"] for q in P[2]["widget"]["wrong"]}
-v18 = evec[:, 1] * 3 / evec[0, 1]
-check("pond p3 big is the 18 eigenvector", g["big"] == "(3, 9)" and close(v18[1], 9, 1e-9))
-check("pond p3 sign", g["sign"] == "(3, 1)" and not np.allclose(A @ np.array([3, 1]), 8 * np.array([3, 1])))
-check("pond p3 A - 8I", np.allclose(A - 8 * np.eye(2), [[1, 3], [3, 9]]))
-has("pond p3", P[2], "\\begin{pmatrix} 1 & 3 \\\\ 3 & 9 \\end{pmatrix}", "3 + 3b = 0")
+v90 = evec[:, 1] * 7 / evec[0, 1]
+check("pond p3 big is the 90 eigenvector", g["big"] == "(7, 49)" and close(v90[1], 49, 1e-9))
+check("pond p3 sign", g["sign"] == "(7, 1)" and not np.allclose(A @ np.array([7, 1]), 40 * np.array([7, 1])))
+check("pond p3 A - 40I", np.allclose(A - 40 * np.eye(2), [[1, 7], [7, 49]]))
+has("pond p3", P[2], "\\begin{pmatrix} 1 & 7 \\\\ 7 & 49 \\end{pmatrix}", "7 + 7b = 0")
 
 
 def radius(theta):
     c, s = math.cos(theta), math.sin(theta)
-    return math.sqrt(288 / (9 * c * c + 6 * c * s + 17 * s * s))
+    return math.sqrt(360 / (41 * c * c + 14 * c * s + 89 * s * s))
 
 
-th_long = math.atan2(-1, 3)
-check("pond p4 edge along (3, -1) is 6 m (direct)", close(radius(th_long), 6, 1e-12))
+th_long = math.atan2(-1, 7)
+check("pond p4 edge along (7, -1) is 3 m (direct)", close(radius(th_long), 3, 1e-12))
 res = optimize.minimize_scalar(lambda t: -radius(t), bounds=(-math.pi / 2, math.pi / 2), method="bounded")
-check("pond long half-axis is the farthest edge point", close(-res.fun, 6, 1e-6) and close(math.tan(res.x), -1 / 3, 1e-4))
+check("pond long half-axis is the farthest edge point", close(-res.fun, 3, 1e-6) and close(math.tan(res.x), -1 / 7, 1e-4))
 res2 = optimize.minimize_scalar(radius, bounds=(0, math.pi), method="bounded")
-check("pond short half-axis 4 along (1, 3)", close(res2.fun, 4, 1e-6) and close(math.tan(res2.x), 3, 1e-3))
-num_part("pond p4", P[3], 6, {"short": 4, "no-root": 288 / 8, "full-axis": 12})
+check("pond short half-axis 2 along (1, 7)", close(res2.fun, 2, 1e-6) and close(math.tan(res2.x), 7, 1e-3))
+num_part("pond p4", P[3], 3, {"short": 2, "no-root": 360 / 40, "full-axis": 6})
 area = integrate.quad(lambda t: 0.5 * radius(t) ** 2, 0, 2 * math.pi)[0]
-check("pond area 24 pi (polar integral)", close(area, 24 * math.pi, 1e-8))
-num_part("pond p5", P[4], area, {"no-root": math.pi * 36 * 16, "full-axes": math.pi * 12 * 8, "one-axis": math.pi * 36},
-         typed=(round(area, 2), 75.40, 75.4))
-has("pond p5", P[4], "\\sqrt{288/18} = 4", "24\\pi = 75.40", "288\\pi/12")
-check("pond p5 det route", close(288 * math.pi / math.sqrt(np.linalg.det(A)), area, 1e-8))
+check("pond area 6 pi (polar integral)", close(area, 6 * math.pi, 1e-8))
+num_part("pond p5", P[4], area, {"no-root": math.pi * 9 * 4, "full-axes": math.pi * 6 * 4, "one-axis": math.pi * 9},
+         typed=(round(area, 2), 18.85))
+has("pond p5", P[4], "\\sqrt{360/90} = 2", "6\\pi = 18.85", "360\\pi/60")
+check("pond p5 det route", close(360 * math.pi / math.sqrt(np.linalg.det(A)), area, 1e-8))
 check("pond chain restated", "from part 1" in P[1]["question"] and "from part 2" in P[2]["question"]
       and "from part 3" in P[3]["question"] and "from part 4" in P[4]["question"])
 
@@ -223,7 +223,7 @@ for d in range(1, 12):
     tot.append(tot[-1] + gain[d])
 num_part("app p1", P[0], gain[6], {"power-n": gain[7], "day-five": gain[5]})
 has("app p1", P[0], "4 \\times 3125 = 12500")
-num_part("app p2", P[1], tot[6], {"no-halve": 5 * tot[6] - tot[6], "no-first": F(5 * gain[6], 4)})
+num_part("app p2", P[1], tot[6], {"no-divide-4": 5 * tot[6] - tot[6], "no-first": F(5 * gain[6], 4)})
 check("app p2 shifted copy", 5 * tot[6] - tot[6] == 5 * gain[6] - 4 == 62496)
 has("app p2", P[1], "4 + 20 + 100 + \\dots + 12500", "4 + 20 + 100 + 500 + 2500 + 12500 = 15624", "62500 - 4 = 62496")
 n = sp.symbols("n", positive=True, integer=True)
@@ -237,7 +237,7 @@ for m in range(1, 8):
     check(f"app p3 wrongs differ at n={m}", len({5**m - 1, 4 * 5**m - 4, 5 ** (m - 1) - 1, 1 - 5**m}) == 4)
 first = next(d for d in range(1, 12) if tot[d] > 350000)
 first_gain = next(d for d in range(1, 12) if gain[d] > 350000)
-num_part("app p4", P[3], first, {"one-day": first_gain, "nine": first - 1})
+num_part("app p4", P[3], first, {"one-day": first_gain, "day-before": first - 1})
 check("app p4 totals", tot[7] == 78124 and tot[8] == 390624)
 has("app p4", P[3], "78124", "390624", "350,000", "390,624", "5^n > 350001")
 check("app chain restated", "12500" in P[1]["question"] and "S_n = 5^n - 1" in P[3]["question"])
@@ -352,6 +352,10 @@ check("crate proposal quotient", sp.div(Vnew, x + 2, x) == (x**2 + 4 * x - 5, 0)
 check("crate proposal factors", sp.factor(Vnew) == (x - 1) * (x + 2) * (x + 5))
 check("crate proposal base", sp.expand((x + 2) * (x + 5)) == x**2 + 7 * x + 10 and sp.cancel(Vnew / (x**2 + 7 * x + 10)) == x - 1)
 check("crate proposal volume", Vnew.subs(x, sp.Rational(7, 2)) == sp.Rational(116875, 1000) and 5.5 * 8.5 * 2.5 == 116.875)
+crate = item("quadratics/problems-4.json", "p-storage-crate")
+check("crate content now holds the renumbered cubic", "x^3 + 6x^2 + 3x - 10" in crate["prose"]
+      and crate["parts"][1]["widget"]["answer"] == "x^2+4x-5" and crate["parts"][2]["widget"]["answer"] == "(x+2)(x+5)(x-1)"
+      and crate["parts"][4]["widget"]["answer"] == 116.875 and "x^2 + 7x + 10" in crate["parts"][3]["question"])
 # Part B, pair rule: the true positive sentence keeps no decimal but the two keys.
 check("pair rule keeps 1 - 0.7 = 0.3", [v for v in nums_in("r = 1 - 0.7 = 0.3") if v != int(v)] == [0.7, 0.3])
 
