@@ -310,37 +310,31 @@ ok(all(var_avg(fs, fr, B) < var_avg(bs, br, B) for B in range(firstB, 2000)), 'f
 key(2, 'p-ipo-forest', 4, firstB, {'round-down': firstB - 1, 'one': 1, 'ratio': round(0.141 / 0.009)}, says=['4.33', '0.04425', '0.0435'])
 ok(var_avg(fs, fr, 4) == F('0.04425') and var_avg(bs, br, 4) == F('0.0435') and F(39, 9) > 4, 'B = 4 values')
 
-# p-dividend-importance
-ok((100 + 10, 30 + 60) == (110, 90) and (100 + 30, 10 + 60) == (130, 70) and (6 + 24, 54 + 6) == (30, 60), 'dividend counts')
-gr, gl, gR = gini(130, 70), gini(100, 10), gini(30, 60)
-wch = F(110, 200) * gl + F(90, 200) * gR
-c_pay = gr - wch
-key(2, 'p-dividend-importance', 1, c_pay, {'child': wch, 'unweighted': gr - (gl + gR) / 2, 'parent': gr}, says=['0.455', '0.1653', '0.2909'])
-wc2 = F(60, 90) * gini(6, 54) + F(30, 90) * gini(24, 6)
-c_cov = F(90, 200) * (gR - wc2)
-key(2, 'p-dividend-importance', 2, c_cov, {'node-only': gR - wc2, 'child': wc2, 'share-left': F(110, 200) * (gR - wc2)}, says=['0.18', '0.32', '0.2267', '0.2178'])
-# company_id: 8 companies split off the left node; which mix earns 0.0144?
-c_id = F(110, 200) * (gl - F(8, 110) * gini(4, 4) - F(102, 110) * gini(96, 6))
-ok(fmt(c_id, 4) == '0.0144', f'8 companies (4 kept, 4 cut) earn {float(c_id):.4f}')
-tot = F('0.1641') + F('0.0980') + F('0.0144')
-share = F('0.1641') / tot
-key(2, 'p-dividend-importance', 3, share, {'raw': F('0.1641'), 'third': F(1, 3), 'carried': F('0.1641') / (F('0.1641') + F('0.2178') + F('0.0144'))},
-    says=['0.2765', fmt(F('0.0980') / tot, 3), fmt(F('0.0144') / tot, 3)])
-ok(fmt(c_pay / (c_pay + c_cov + c_id), 3) == '0.593', 'unrounded credits give the same share')
-# route 2: scikit-learn's own importances on a built book of 200 companies
-rows = []
-for kept_, cut_, pay, cov, cid in [(96, 6, 0, None, 0), (4, 4, 0, None, 1), (6, 54, 1, 0, 0), (24, 6, 1, 1, 0)]:
-    for j in range(kept_ + cut_):
-        lab = 0 if j < kept_ else 1
-        rows.append((pay, (j % 2) if cov is None else cov, cid, lab))
-A = np.array(rows, float)
-tr = DecisionTreeClassifier(max_depth=2, random_state=0).fit(A[:, :3], A[:, 3])
-ok(tr.tree_.feature[0] == 0 and sorted(tr.tree_.feature[tr.tree_.feature >= 0]) == [0, 1, 2], 'sklearn tree: payout at the root, cover and id below')
-ok(np.allclose(tr.feature_importances_, [float(c_pay / (c_pay + c_cov + c_id)), float(c_cov / (c_pay + c_cov + c_id)), float(c_id / (c_pay + c_cov + c_id))]), f'sklearn importances {tr.feature_importances_}')
-others = [F('0.48'), F('0.66'), F('0.55')]
-key(2, 'p-dividend-importance', 4, (F('0.593') + sum(others)) / 4, {'three': sum(others) / 3, 'this-tree': F('0.593'), 'sum': F('0.593') + sum(others)}, says=['2.283'])
+# p-dividend-importance (partial dependence of a 4-tree forest)
+tr4 = [F(60, 100), F(80, 100), F(70, 100), F(78, 100)]
+key(2, 'p-dividend-importance', 1, sum(tr4) / 4, {'sum': sum(tr4), 'max': max(tr4), 'vote': sum(1 for t in tr4 if t > F(1, 2)) / 4}, says=['0.72', '2.88'])
+# route 2: a bagged regressor's prediction is the mean of its trees' outputs (scikit-learn, constant stumps)
+from sklearn.ensemble import BaggingRegressor
+from sklearn.tree import DecisionTreeRegressor as _DTR
+ens = BaggingRegressor(estimator=_DTR(max_depth=1), n_estimators=4, bootstrap=False, random_state=0)
+ens.fit(np.zeros((4, 1)), np.zeros(4))
+for est, v in zip(ens.estimators_, tr4):
+    est.tree_.value[:, 0, 0] = float(v)
+ok(abs(ens.predict(np.zeros((1, 1)))[0] - 0.72) < 1e-9, 'bagged ensemble of four constant trees predicts 0.72')
+a20 = [F(x, 100) for x in (72, 84, 66, 14, 22, 12)]
+a05 = [F(x, 100) for x in (28, 36, 20, 10, 14, 12)]
+ok(a20[0] == sum(tr4) / 4, 'order 1 at 20% is part 1')
+pd20 = sum(a20) / 6
+pd05 = sum(a05) / 6
+key(2, 'p-dividend-importance', 2, pd20, {'sum': sum(a20), 'first': a20[0], 'five': sum(a20[1:]) / 5}, says=['2.70', '0.45'])
+key(2, 'p-dividend-importance', 3, pd20 - pd05, {'start': pd05, 'ratio': pd20 / pd05, 'sum': pd20 + pd05}, says=['1.20', '0.20'])
+urg = [b - a for a, b in zip(a05[:3], a20[:3])]
+cal = [b - a for a, b in zip(a05[3:], a20[3:])]
+ok(sum(cal) / 3 == F(4, 100) and sum(urg) / 3 == F(46, 100) and sum(urg) == F(138, 100), 'group rises 0.46 and 0.04')
+key(2, 'p-dividend-importance', 4, sum(urg) / 3, {'pd': pd20 - pd05, 'double': 2 * (pd20 - pd05), 'added': pd20 - pd05 + sum(cal) / 3}, says=['0.84', '2.22', '1.38'])
+ok((sum(urg) / 3 + sum(cal) / 3) / 2 == pd20 - pd05, 'the two group rises average to the partial dependence rise')
 p5 = item(2, 'p-dividend-importance')['parts'][4]
-ok([o['id'] for o in p5['widget']['options'] if o.get('correct')] == ['memorised'], 'dividend part 5 key')
+ok([o['id'] for o in p5['widget']['options'] if o.get('correct')] == ['urgent'], 'dividend part 5 key')
 
 # p-imbalance-stumps
 imb = [-0.6, -0.4, -0.3, 0.2, 0.6, 0.8]
@@ -455,17 +449,18 @@ key(3, 'p-futures-study', 2, float(h - bse) / se, {'fifty': float(h - F(1, 2)) /
 ok(fmt(0.05 / round(se, 4), 2) == '1.55', 'rounded standard error also gives 1.55')
 from statsmodels.stats.proportion import proportions_ztest
 ok(abs(proportions_ztest(138, 240, value=float(bse), prop_var=float(bse))[0] - float(h - bse) / se) < 1e-9, 'statsmodels z with the null variance')
-pv = np.array([0.58, 0.61, 0.44, 0.47])
-ret = np.array([0.008, -0.003, -0.006, 0.002])
-pos = np.where(pv > 0.5, 1, -1)
-gross = 2e6 * (pos * ret)
-units = np.abs(np.diff(np.concatenate([[0], pos])))
-unit_cost = 2e6 * 5e-4
-net = gross.sum() - units.sum() * unit_cost
-ok([round(g) for g in gross] == [16000, -6000, 12000, -4000] and units.sum() == 3 and unit_cost == 1000, 'P&L pieces')
-key(3, 'p-futures-study', 3, round(net), {'gross': round(gross.sum()), 'flip-one': round(gross.sum() - 2 * unit_cost), 'closed': round(net - unit_cost)})
-p4 = item(3, 'p-futures-study')['parts'][3]
-ok([o['id'] for o in p4['widget']['options'] if o.get('correct')] == ['later-block'], 'futures part 4 key')
+# gross P&L per day on a 0.575 hit rate and a daily move of 0.8% of 2m, then flip costs
+hit = F(138, 240)
+move = F(2_000_000) * F(8, 1000)
+gross_d = float(hit * move - (1 - hit) * move)
+rng_sim = np.array([move * 1 if i < 575 else -move for i in range(1000)], dtype=float)
+ok(abs(rng_sim.mean() - gross_d) < 1e-9 and gross_d == 2400, 'gross per day 2400 by enumeration')
+key(3, 'p-futures-study', 3, gross_d, {'edge-only': 0.05 * float(move), 'half': 0.075 * float(move), 'hit-only': 0.575 * float(move)}, says=['16,000', '2{,}400', '800'])
+cost_d = 0.25 * 2 * 2e6 * 5e-4
+key(3, 'p-futures-study', 4, gross_d - cost_d, {'gross': gross_d, 'flip-one': gross_d - 0.25 * 1000, 'every-day': gross_d - 2000}, says=['2,000', '500', '1,900'])
+ok(abs(cost_d / gross_d - 0.2083) < 1e-3, 'about a fifth goes in costs')
+p4 = item(3, 'p-futures-study')['parts'][4]
+ok([o['id'] for o in p4['widget']['options'] if o.get('correct')] == ['later-block'], 'futures part 5 key')
 
 # p-surprise-drift: cells (small, positive) -> average return
 cells = {(1, 1): 14, (1, 0): -10, (0, 1): 2, (0, 0): 2}

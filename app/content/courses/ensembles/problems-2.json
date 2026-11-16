@@ -143,8 +143,8 @@
             "generic": "Not quite right. Find the chance all 8 resamples draw a bond, then multiply by the 25 bonds.",
             "byKey": {
               "one-bond": "0.03 is the chance for one bond. Multiply by the 25 bonds.",
-              "all-missed": "You used $0.3604^8$, the chance every tree missed a bond, giving about 0.01. We need every tree to have drawn it, $0.6396^8$.",
-              "one-tree": "That counts bonds drawn by one resample. All 8 must draw the bond."
+              "all-missed": "$0.3604^8$ is the chance a bond sits out of all 8 resamples; 25 times it is about 0.01. A bond with no out-of-bag tree is in all 8, with chance $0.6396^8$.",
+              "one-tree": "15.99 is $25 \\times 0.6396$, the bonds one resample holds. Raise 0.6396 to the power 8 before multiplying by 25."
             }
           },
           "explain": {
@@ -342,7 +342,7 @@
             }
           },
           "explain": {
-            "text": "Each forest tree is noisier, 0.15 against 0.12, but the correlation falls from 0.15 to 0.06. The floor drops from 0.018 to 0.009. At 50 trees the forest's variance is 0.0118 against bagging's 0.0200."
+            "text": "A forest tree has the larger variance, 0.15 against 0.12, and the smaller correlation, 0.06 against 0.15. Its floor is 0.009, half of bagging's 0.018. At 50 trees the forest's variance is 0.0118 against bagging's 0.0200."
           }
         },
         {
@@ -388,7 +388,7 @@
             }
           },
           "explain": {
-            "text": "Subtract: the forest wins when $0.141/B - 0.102/B < 0.018 - 0.009$, that is $0.039/B < 0.009$. So $B > 4.33$, and from 5 trees on the decorrelated forest has the lower variance. Worse trees, better average, once there are a few of them."
+            "text": "Subtract: the forest wins when $0.141/B - 0.102/B < 0.018 - 0.009$, that is $0.039/B < 0.009$. So $B > 4.33$, and from 5 trees on the decorrelated forest has the lower variance. Below 5 trees the forest's larger single-tree variance still outweighs its lower floor."
           }
         }
       ]
@@ -400,225 +400,225 @@
         "en-interpret",
         "en-bagging"
       ],
-      "prose": "A forest predicts which of 200 companies cut their dividend: 130 kept it and 70 cut. One of its trees splits on payout ratio at the root: 110 companies left (100 kept, 10 cut) and 90 right (30 kept, 60 cut). The right node splits on interest cover and the left on company_id, a number unique to each company.",
+      "prose": "A desk's forest of 4 trees predicts whether a block order will slip more than 2 bp from its arrival price. It scored six held-out orders; the first three are urgent and the last three calm. The desk asks how the forecast moves when an order's size goes from 5% to 20% of a minute's volume, with each order's other features unchanged.",
       "parts": [
         {
-          "question": "Impurity importance credits each split with its drop in Gini, times its node's share of the 200 companies. What credit does payout ratio earn at the root? Give your answer to 4 decimal places.",
+          "question": "For order 1 at size 20%, the four trees give $P(\\text{slip})$ of 0.60, 0.80, 0.70 and 0.78. What does the forest predict? Give your answer to 2 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.1641,
+            "answer": 0.72,
             "tol": {
-              "abs": 5e-05
+              "abs": 0.005
             },
-            "placeholder": "4 decimal places",
+            "placeholder": "2 decimal places",
             "wrong": [
               {
-                "id": "child",
-                "value": 0.2909,
+                "id": "sum",
+                "value": 2.88,
                 "tol": {
-                  "abs": 5e-05
+                  "abs": 0.005
                 }
               },
               {
-                "id": "unweighted",
-                "value": 0.1501,
+                "id": "max",
+                "value": 0.8,
                 "tol": {
-                  "abs": 5e-05
+                  "abs": 0.005
                 }
               },
               {
-                "id": "parent",
-                "value": 0.455,
+                "id": "vote",
+                "value": 1.0,
                 "tol": {
-                  "abs": 5e-05
+                  "abs": 0.005
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "Root $G = 0.455$. Left $G = 0.1653$ on 110, right $G = \\tfrac{4}{9}$ on 90: weighted 0.2909. The root holds all 200, so the credit is $0.455 - 0.2909 = 0.1641$.",
-            "generic": "Not quite right. Find the root's Gini and the weighted Gini of its sides, and subtract.",
+            "correct": "A forest averages its trees' probabilities: $(0.60 + 0.80 + 0.70 + 0.78)/4 = 0.72$.",
+            "generic": "Not quite right. Average the four trees' probabilities.",
             "byKey": {
-              "child": "0.2909 is the weighted Gini left after the split. The credit is the drop from 0.455.",
-              "unweighted": "You averaged the two sides equally. Weight them by 110 and 90 of the 200 companies.",
-              "parent": "0.455 is the root's Gini before the split. Subtract what the split leaves."
+              "sum": "2.88 is the four probabilities added. The forest averages them.",
+              "max": "0.80 is the most pessimistic tree. The forest takes the mean of all four.",
+              "vote": "All four trees are above 0.5, but the forest reports the average probability, not the share voting yes."
             }
           },
           "explain": {
-            "text": "Root: $1 - 0.65^2 - 0.35^2 = 0.455$. Left: $1 - (\\tfrac{10}{11})^2 - (\\tfrac{1}{11})^2 = \\tfrac{20}{121}$; right: $\\tfrac{4}{9}$. Weighted $0.55 \\times \\tfrac{20}{121} + 0.45 \\times \\tfrac{4}{9} = 0.2909$, so the drop is 0.1641."
+            "text": "The four probabilities add to 2.88. Dividing by the 4 trees gives 0.72. This average is what makes a forest steadier than one tree."
           }
         },
         {
-          "question": "The right node of 90, with Gini $\\tfrac{4}{9}$, splits on interest cover. One side has 60 companies (6 kept, 54 cut), the other 30 (24 kept, 6 cut). What credit does interest cover earn? Give your answer to 4 decimal places.",
+          "question": "Partial dependence at size 20% sets size to 20% on all six orders and averages the forest's $P(\\text{slip})$. Using 0.72 from part 1 for order 1, the other five orders give 0.84, 0.66, 0.14, 0.22 and 0.12. What is the partial dependence at 20%? Give your answer to 2 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.098,
+            "answer": 0.45,
             "tol": {
-              "abs": 5e-05
+              "abs": 0.005
             },
-            "placeholder": "4 decimal places",
+            "placeholder": "2 decimal places",
             "wrong": [
               {
-                "id": "node-only",
-                "value": 0.2178,
+                "id": "sum",
+                "value": 2.7,
                 "tol": {
-                  "abs": 5e-05
+                  "abs": 0.005
                 }
               },
               {
-                "id": "child",
-                "value": 0.2267,
+                "id": "first",
+                "value": 0.72,
                 "tol": {
-                  "abs": 5e-05
+                  "abs": 0.005
                 }
               },
               {
-                "id": "share-left",
-                "value": 0.1198,
+                "id": "five",
+                "value": 0.4,
                 "tol": {
-                  "abs": 5e-05
+                  "abs": 0.005
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "Children: $G = 0.18$ on 60 and $0.32$ on 30, weighted 0.2267. The node's drop is $\\tfrac{4}{9} - 0.22667 = 0.2178$, times $\\tfrac{90}{200}$: 0.0980.",
-            "generic": "Not quite right. Find the node's drop in Gini, then weight it by the node's 90 of the 200 companies.",
+            "correct": "The six predictions add to $0.72 + 0.84 + 0.66 + 0.14 + 0.22 + 0.12 = 2.70$. Their mean is $2.70/6 = 0.45$.",
+            "generic": "Not quite right. Add all six predictions, including order 1, and divide by 6.",
             "byKey": {
-              "node-only": "0.2178 is the drop inside the node. Weight it by the node's share of all 200 companies, 0.45.",
-              "child": "0.2267 is the weighted Gini the split leaves. Subtract it from $\\tfrac{4}{9}$, then weight by 0.45.",
-              "share-left": "You weighted by 0.55, the left node's share. The right node holds 90 of 200, 0.45."
+              "sum": "2.70 is the total. Divide it by the six orders.",
+              "first": "0.72 is order 1 alone. Average all six orders.",
+              "five": "You left out order 1. Include 0.72 and divide by 6."
             }
           },
           "explain": {
-            "text": "$2 \\times 0.1 \\times 0.9 = 0.18$ and $2 \\times 0.8 \\times 0.2 = 0.32$, weighted by 60 and 30 of 90 to 0.2267. The drop, 0.2178, counts for 90 of the 200 companies. So cover earns $0.45 \\times 0.2178 = 0.0980$."
+            "text": "Set size to 20% on every order, predict, and average. The six predictions add to 2.70, so the mean is 0.45. Each order keeps its own urgency and other features."
           }
         },
         {
-          "question": "company_id's split on the left earns 0.0144. Using 0.1641 and 0.0980 from parts 1 and 2, what share of this tree's importance goes to payout ratio? Give your answer to 3 decimal places.",
+          "question": "At size 5% the six predictions are 0.28, 0.36, 0.20, 0.10, 0.14 and 0.12. Using 0.45 from part 2, by how much does partial dependence rise from 5% to 20%? Give your answer to 2 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.593,
+            "answer": 0.25,
             "tol": {
-              "abs": 0.0005
+              "abs": 0.005
             },
-            "placeholder": "3 decimal places",
+            "placeholder": "2 decimal places",
             "wrong": [
               {
-                "id": "raw",
-                "value": 0.164,
+                "id": "start",
+                "value": 0.2,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.005
                 }
               },
               {
-                "id": "third",
-                "value": 0.333,
+                "id": "ratio",
+                "value": 2.25,
                 "tol": {
-                  "abs": 0.0005
-                }
-              },
-              {
-                "id": "carried",
-                "value": 0.414,
-                "tol": {
-                  "abs": 0.0005
-                }
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "The total is $0.1641 + 0.0980 + 0.0144 = 0.2765$, so payout ratio's share is $0.1641 / 0.2765 = 0.593$.",
-            "generic": "Not quite right. Divide payout ratio's credit by the sum of all three credits.",
-            "byKey": {
-              "raw": "0.164 is payout ratio's credit. Divide it by the total of all three to get its share.",
-              "third": "That gives each split equal credit. Weight them by their credits.",
-              "carried": "You used the node's drop for cover, 0.2178, without its weight of 0.45. With 0.0980 the share is 0.593."
-            }
-          },
-          "explain": {
-            "text": "The three credits add to 0.2765. Payout ratio takes 0.593, cover 0.354 and company_id 0.052. These shares sum to 1 for each tree."
-          }
-        },
-        {
-          "question": "The forest has 4 trees. In the other three, payout ratio's shares are 0.48, 0.66 and 0.55. Using 0.593 from part 3, what is payout ratio's `feature_importances_` value for the forest? Give your answer to 3 decimal places.",
-          "widget": {
-            "kind": "numeric",
-            "answer": 0.571,
-            "tol": {
-              "abs": 0.0005
-            },
-            "placeholder": "3 decimal places",
-            "wrong": [
-              {
-                "id": "three",
-                "value": 0.563,
-                "tol": {
-                  "abs": 0.0005
-                }
-              },
-              {
-                "id": "this-tree",
-                "value": 0.593,
-                "tol": {
-                  "abs": 0.0005
+                  "abs": 0.01
                 }
               },
               {
                 "id": "sum",
-                "value": 2.283,
+                "value": 0.65,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.005
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "The forest averages its trees' shares: $(0.593 + 0.48 + 0.66 + 0.55)/4 = 0.571$.",
-            "generic": "Not quite right. Average payout ratio's share over all 4 trees.",
+            "correct": "At 5% the six predictions add to 1.20, a mean of 0.20. The rise is $0.45 - 0.20 = 0.25$.",
+            "generic": "Not quite right. Average the six values at 5%, then subtract that from 0.45.",
             "byKey": {
-              "three": "You averaged only the other three trees. Include this tree's 0.593.",
-              "this-tree": "0.593 is one tree. The forest averages over all 4 trees.",
-              "sum": "You added the four shares. The forest's importance is their average."
+              "start": "0.20 is the partial dependence at 5%. The rise is its difference from 0.45.",
+              "ratio": "2.25 divides 0.45 by 0.20. The rise is the difference.",
+              "sum": "You added the two averages. Subtract the one at 5% from the one at 20%."
             }
           },
           "explain": {
-            "text": "`feature_importances_` averages the trees' normalised importances: $2.283 / 4 = 0.571$. Each tree grew on its own resample, so the shares differ from tree to tree."
+            "text": "$1.20/6 = 0.20$ at 5%. So the curve rises by $0.45 - 0.20 = 0.25$ between the two sizes. That is 25 points of probability."
           }
         },
         {
-          "question": "On 500 later companies, shuffling company_id changes accuracy by $-0.003$, while its impurity share is about 0.05. What is the best reading?",
+          "question": "The three calm orders rise by 0.04 on average. Using 0.25 from part 3 for all six orders, what is the urgent orders' average rise? Give your answer to 2 decimal places.",
           "widget": {
-            "kind": "choice",
-            "options": [
+            "kind": "numeric",
+            "answer": 0.46,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "2 decimal places",
+            "wrong": [
               {
-                "id": "memorised",
-                "text": "The trees used it to memorise training companies",
-                "correct": true
+                "id": "pd",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.005
+                }
               },
               {
-                "id": "hidden",
-                "text": "It carries a weak signal that shuffling misses",
-                "why": "Shuffling held-out rows is the direct test of use. A change of $-0.003$ is noise around 0."
+                "id": "double",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.005
+                }
               },
               {
-                "id": "trust-impurity",
-                "text": "Trust the impurity share: it used more rows",
-                "why": "Impurity importance is computed on the training rows, where every split on noise earns credit."
-              },
-              {
-                "id": "cause",
-                "text": "Company identity drives dividend cuts",
-                "why": "An id offers a threshold between every pair of companies. That chases noise; it does not show a cause."
+                "id": "added",
+                "value": 0.29,
+                "tol": {
+                  "abs": 0.005
+                }
               }
             ]
           },
           "feedback": {
-            "correct": "A unique id gives the trees endless thresholds near their leaves. Held-out shuffling shows it adds nothing.",
-            "generic": "Not quite right. Ask which measure looked at companies the forest never saw."
+            "correct": "Urgent and calm orders are three each, so $0.25 = \\tfrac12(u + 0.04)$. That gives $u = 0.50 - 0.04 = 0.46$.",
+            "generic": "Not quite right. The six-order average is the mean of the urgent rise and the calm rise.",
+            "byKey": {
+              "pd": "0.25 is the average over all six. The urgent orders alone rise by more.",
+              "double": "0.50 is twice 0.25. The calm orders' 0.04 is part of that total, so take it away.",
+              "added": "You added 0.04. The urgent rise is above the average, so solve $0.25 = \\tfrac12(u + 0.04)$."
+            }
           },
           "explain": {
-            "text": "company_id earned 0.0144 by splitting off 8 training companies. On new companies its permutation importance is $-0.003$, noise around 0. Rank features by permutation importance on held-out data."
+            "text": "The urgent and calm orders carry equal weight, so 0.25 is the mean of the urgent rise and 0.04. The urgent rise is $2 \\times 0.25 - 0.04 = 0.46$. Check: urgent orders total 0.84 at 5% and 2.22 at 20%, a rise of 1.38 over three orders."
+          }
+        },
+        {
+          "question": "A trader asks whether size matters for slippage. What should the desk say?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "urgent",
+                "text": "On average 0.25, but 0.46 for urgent orders and 0.04 for calm ones",
+                "correct": true
+              },
+              {
+                "id": "all",
+                "text": "Size raises every order's chance of slipping by 0.25",
+                "why": "0.25 is an average over all six orders. Calm orders rise by only 0.04."
+              },
+              {
+                "id": "none",
+                "text": "Size hardly matters, because calm orders barely move",
+                "why": "Urgent orders rise by 0.46, so size matters a great deal for half of these orders."
+              },
+              {
+                "id": "cause",
+                "text": "Size causes slippage, so the desk should cap it",
+                "why": "The forest shows how its predictions move with size, not what causes slippage. A cap needs a test of its own."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A single curve of averages hid a split by urgency. Quote it by group.",
+            "generic": "Not quite right. Compare the average rise with the rise inside each group."
+          },
+          "explain": {
+            "text": "The average rise of 0.25 describes neither group: it is 0.46 for urgent orders and 0.04 for calm ones. When one feature changes the effect of another, split the curve by it."
           }
         }
       ]

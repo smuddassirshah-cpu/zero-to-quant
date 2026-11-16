@@ -57,3 +57,23 @@ No finding. Checked beyond the keys: the 12-week split is the best of five and t
 
 1. `fresh-check.mjs` reported 0 hits on `problems-2.json` although `p-dividend-importance` is `l8` screen 0 and `review-2` item 4 with nouns renamed (`client_id` to `company_id`, borrower to company, leverage to payout ratio). The sentence comparison is defeated by a noun swap. Suggest comparing sentences with nouns and numbers masked, same course only, as an advisory.
 2. Neither the validator nor `fresh-check` tests the chain rule. `p-futures-study` has four parts and no question that cites an earlier part. Suggest an advisory `[no-chain]` on a problem where no part after the first contains "from part", "of part" or an earlier part's key.
+
+## Fix pass
+
+1. fixed (reuse, ruling: retold story). `p-dividend-importance` is re-authored with a new setting, data and chain: partial dependence of a 4-tree forest on six held-out block orders (3 urgent, 3 calm), size 5% to 20% of a minute's volume. No lesson, review or homework item walks through it; `fresh-check` 0 hits (advisories only: `l8` screen 5 shares 0.66 and 0.04 as bare numbers; `mock-oa-trader` shares three decimals in another story). Feedback, `explain` and option texts are new and were read by hand against `l8` screens 0, 1 and 7 and `review-2` items 3 and 4. Skills unchanged (`en-interpret`, `en-bagging`); lessons drawn on: `l5`/`l6` (forest as the average of its trees) and `l8` (partial dependence). Parts, each 2 decimal places, tol 0.005 unless noted:
+   - Part 1, trees 0.60, 0.80, 0.70, 0.78, forest = mean. Key 0.72. `sum` 2.88, `max` 0.80, `vote` 1.00.
+   - Part 2, partial dependence at 20% from 0.72, 0.84, 0.66, 0.14, 0.22, 0.12 (sum 2.70). Key 0.45. `sum` 2.70, `first` 0.72, `five` 0.40 (1.98/5 = 0.396).
+   - Part 3, values at 5% 0.28, 0.36, 0.20, 0.10, 0.14, 0.12 (sum 1.20, mean 0.20); rise = 0.45 - 0.20. Key 0.25. `start` 0.20, `ratio` 2.25 (tol 0.01; 0.45/0.20), `sum` 0.65.
+   - Part 4, calm rise 0.04 (0.48 - 0.36 = 0.12, over 3), urgent rise $u = 2 \times 0.25 - 0.04$. Key 0.46 (urgent: 0.84 to 2.22, 1.38 over 3). `pd` 0.25, `double` 0.50, `added` 0.29.
+   - Part 5, choice, key `urgent` ("On average 0.25, but 0.46 for urgent orders and 0.04 for calm ones"); distractors `all`, `none`, `cause`, each with a `why`.
+2. fixed (misleading). The part and its $-0.003$ claim went with the re-authored problem; no sign or averaging claim remains.
+3. fixed. `p-bond-downgrades` part 3 `byKey` lines `all-missed` and `one-tree` rewritten as proposed ($25 \times 0.3604^8 = 0.0071$, about 0.01; $25 \times 0.6396 = 15.99$). Keys and `wrong` values unchanged.
+4. fixed. `p-ipo-forest` parts 3 and 4 `explain` rewritten as proposed; rechecked 0.009 and 0.018 floors, 0.0118 and 0.0200 at 50 trees, and B = 1 to 4 (0.15, 0.0795, 0.056, 0.04425 against 0.12, 0.069, 0.052, 0.0435).
+5. fixed. `p-futures-study` choice (now part 5): question and `explain` as proposed; the claim that labels overlap is removed (one-day label, `l12` screen 3).
+6. fixed. `p-futures-study` now has 5 parts (4 typed, 1 choice). New part 3, key £2,400 (0.15 x £16,000), `wrong` `edge-only` 800, `half` 1200, `hit-only` 9200, tol 0. New part 4, key £1,900 (£2,400 - 0.25 x 2 x £1,000), `wrong` `gross` 2400, `flip-one` 2150, `every-day` 400, tol 0. Old key £15,000 and its `wrong` 18000, 16000, 14000 are gone. Each cites the value of the part before.
+7. fixed. `p-surprise-drift` part 5 `explain` last sentence as proposed.
+8. fixed. `p-surprise-drift` `prose` ends "Treat every week in a cell as earning its cell's average."
+
+Counts: 8 fixed, 0 disputed, 0 deferred. Graded answers changed: `p-dividend-importance` all 5 parts, `p-futures-study` part 3 (15000 to 2400) and new part 4 (1900).
+
+Gates: `problems-ensembles-numbers.py` 1154 checks, exit 0; `problems-ensembles-numbers-read.py` 1166 checks, exit 0 (rows for changed problems rewritten to recomputed values, route 2 by NumPy and a scikit-learn bagging ensemble). Validator 0 errors, 4546 warnings, none on the edited sets. Voice scan 0 and 0. `grade-all.mjs --file` 0 failures on both sets. `fresh-check.mjs` 0 hits on both.

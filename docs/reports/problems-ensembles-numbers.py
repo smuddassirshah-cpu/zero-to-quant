@@ -289,38 +289,27 @@ if L2:
     ok(abs(float(var_avg(sf, rf, 4)) - 0.04425) < 1e-12 and abs(float(var_avg(sb, rb, 4)) - 0.0435) < 1e-12,
        f'{it}: 4-tree values in feedback')
 
-    # p-dividend-importance. Method 2: scikit-learn's own impurity importances on a built book of 200 companies.
+    # p-dividend-importance (partial dependence of a 4-tree forest). Method 2: NumPy arrays, means over axes and groups.
     it = 'p-dividend-importance'
-    groups = [((0, 0, 0), (96, 6)), ((0, 0, 1), (4, 4)), ((1, 0, 0), (6, 54)), ((1, 1, 0), (24, 6))]
-    Xd, yd = [], []
-    for feat, (kept, cut) in groups:
-        Xd += [feat] * (kept + cut)
-        yd += [0] * kept + [1] * cut
-    Xd, yd = np.array(Xd, float), np.array(yd)
-    td = DecisionTreeClassifier(max_depth=2, random_state=0).fit(Xd, yd)
-    ok(td.tree_.feature[0] == 0, f'{it}: root feature {td.tree_.feature[0]}')
-    raw = td.tree_.compute_feature_importances(normalize=False)
-    shares = td.feature_importances_
-    g_root = gini((130, 70)) - F(110, 200) * gini((100, 10)) - F(90, 200) * gini((30, 60))
-    g_cov = F(90, 200) * (gini((30, 60)) - F(60, 90) * gini((6, 54)) - F(30, 90) * gini((24, 6)))
-    g_id = F(110, 200) * (gini((100, 10)) - F(102, 110) * gini((96, 6)) - F(8, 110) * gini((4, 4)))
-    child_root = F(110, 200) * gini((100, 10)) + F(90, 200) * gini((30, 60))
-    num(L2, it, 1, g_root, raw[0], {'child': child_root, 'unweighted': gini((130, 70)) - (gini((100, 10)) + gini((30, 60))) / 2,
-                                    'parent': gini((130, 70))}, round_tol=0.00005)
-    node_drop = gini((30, 60)) - F(60, 90) * gini((6, 54)) - F(30, 90) * gini((24, 6))
-    num(L2, it, 2, g_cov, raw[1], {'node-only': node_drop, 'child': gini((30, 60)) - node_drop,
-                                   'share-left': F(110, 200) * node_drop}, round_tol=0.00005)
-    ok(abs(float(g_id) - 0.0144) < 0.00005, f'{it}: company_id credit {float(g_id)}')
-    share = g_root / (g_root + g_cov + g_id)
-    num(L2, it, 3, share, shares[0], {'raw': g_root, 'third': F(1, 3),
-                                      'carried': 0.1641 / (0.1641 + float(node_drop) + 0.0144)})
-    ok(abs(0.1641 / (0.1641 + 0.098 + 0.0144) - 0.593) < 0.0005, f'{it}: share from the rounded credits')
-    others = [0.48, 0.66, 0.55]
-    num(L2, it, 4, (float(share) + sum(others)) / 4, np.mean([0.593] + others),
-        {'three': np.mean(others), 'this-tree': share, 'sum': 0.593 + sum(others)}, agree=0.0002)
-    ok(abs(float(g_cov / (g_root + g_cov + g_id)) - 0.354) < 0.0005 and abs(float(g_id / (g_root + g_cov + g_id)) - 0.052) < 0.0005,
-       f'{it}: shares in explain')
-    pick(L2, it, 5, 'memorised')
+    trees = [F('0.60'), F('0.80'), F('0.70'), F('0.78')]
+    at20 = [F('0.72'), F('0.84'), F('0.66'), F('0.14'), F('0.22'), F('0.12')]
+    at05 = [F('0.28'), F('0.36'), F('0.20'), F('0.10'), F('0.14'), F('0.12')]
+    ok(sum(trees) / 4 == at20[0], f'{it}: order 1 is the mean of its trees')
+    num(L2, it, 1, sum(trees) / 4, np.mean(np.array([0.60, 0.80, 0.70, 0.78])),
+        {'sum': sum(trees), 'max': max(trees), 'vote': F(1)})
+    pd20 = sum(at20) / 6
+    num(L2, it, 2, pd20, np.mean(np.array(at20, float)), {'sum': sum(at20), 'first': at20[0], 'five': sum(at20[1:]) / 5})
+    pd05 = sum(at05) / 6
+    num(L2, it, 3, pd20 - pd05, np.mean(np.array(at20, float) - np.array(at05, float)),
+        {'start': pd05, 'ratio': pd20 / pd05, 'sum': pd20 + pd05})
+    rise = np.array(at20, float) - np.array(at05, float)
+    calm = sum(F(b) - F(a) for a, b in zip(at05[3:], at20[3:])) / 3
+    urgent = sum(F(b) - F(a) for a, b in zip(at05[:3], at20[:3])) / 3
+    ok(calm == F('0.04') and abs(rise[:3].mean() - 0.46) < 1e-12 and abs(rise[3:].mean() - 0.04) < 1e-12, f'{it}: group rises')
+    num(L2, it, 4, 2 * (pd20 - pd05) - calm, rise[:3].mean(), {'pd': pd20 - pd05, 'double': 2 * (pd20 - pd05), 'added': pd20 - pd05 + calm})
+    ok(sum(at05[:3]) == F('0.84') and sum(at20[:3]) == F('2.22') and sum(at20[:3]) - sum(at05[:3]) == F('1.38'), f'{it}: explain totals')
+    ok(sum(at05) == F('1.20') and sum(at20) == F('2.70'), f'{it}: totals')
+    pick(L2, it, 5, 'urgent')
 
     # p-imbalance-stumps. Method 2: scikit-learn stumps fitted to each resample, repeats as repeated rows.
     it = 'p-imbalance-stumps'
@@ -444,16 +433,19 @@ if L3:
     z, _ = proportions_ztest(138, 240, value=float(b), prop_var=float(b))
     num(L3, it, 2, t_exact, z, {'fifty': float(h - F(1, 2)) / math.sqrt(0.25 / n), 'one-day': float(h - b) / math.sqrt(float(b * (1 - b))),
                                 'hit-se': float(h - b) / math.sqrt(float(h * (1 - h)) / n)}, round_tol=0.005)
-    pvals = np.array([0.58, 0.61, 0.44, 0.47])
-    rets = np.array([0.008, -0.003, -0.006, 0.002])
-    pos = np.where(pvals > 0.5, 1.0, -1.0)
-    prev = np.concatenate([[0.0], pos[:-1]])
-    pnl = float(np.sum(2e6 * pos * rets - 2e6 * 5 / 10000 * np.abs(pos - prev)))
-    gross = sum(F(2_000_000) * F(int(round(r * 10000)), 10000) * (1 if p > 0.5 else -1) for p, r in zip(pvals, rets))
-    cost = F(2_000_000) * F(5, 10000) * (1 + 2)
-    num(L3, it, 3, gross - cost, pnl, {'gross': gross, 'flip-one': gross - F(2_000_000) * F(5, 10000) * 2,
-                                       'closed': gross - cost - F(2_000_000) * F(5, 10000)}, agree=1e-6)
-    pick(L3, it, 4, 'later-block')
+    unit = F(2_000_000) * F(5, 10000)
+    move = F(2_000_000) * F(8, 1000)
+    gross_day = (F(138, 240) - (1 - F(138, 240))) * move
+    sim = np.array([1.0] * 575 + [-1.0] * 425).mean() * 16000
+    ok(abs(float(gross_day) - sim) < 1e-6, f'{it}: gross per day by enumeration')
+    num(L3, it, 3, gross_day, sim, {'edge-only': F(5, 100) * move, 'half': F(75, 1000) * move, 'hit-only': F(575, 1000) * move})
+    ok(F(138, 240) == F(575, 1000), f'{it}: hit rate 0.575')
+    cost_day = F(1, 4) * 2 * unit
+    flips = np.array([1] * 250 + [0] * 750)
+    sim_cost = (flips * 2 * 1000.0).mean()
+    ok(abs(float(cost_day) - sim_cost) < 1e-9 and cost_day == 500, f'{it}: cost per day')
+    num(L3, it, 4, gross_day - cost_day, sim - sim_cost, {'gross': gross_day, 'flip-one': gross_day - F(1, 4) * unit, 'every-day': gross_day - 2 * unit})
+    pick(L3, it, 5, 'later-block')
 
     # p-surprise-drift. Method 2: scikit-learn boosting on 40 weeks (10 per cell, no noise).
     it = 'p-surprise-drift'
