@@ -30,3 +30,6 @@ Raised later (review problems stat-models):
 - `retold` missed slip lines that keep a lesson's skeleton with new numbers: "You divided by N. Two coefficients were fitted, so" (l5 screen 2), "That is the raw MAD" and "That is the ordinary SD" (l13 screen 3), "the slope entry of the inverse is" (l4 screen 3). A five-word masked run shared between two `byKey` lines of the same slip kind would catch them.
 - A chain held in one explain line is not read as a chain: `homework-2` `h-anova-summary` explains grand mean, SSB, MSB, MSW, $F$ and $p$ in order, and `problems-2` `p-venue-markouts` asks them as parts 1 to 4. Split explain lines at sentence ends and semicolons before the three-step match.
 - Problem-set parts that ask an $F$ or $t$ tail area to 4 decimal places have no canvas to read it from, as the lessons have. Say in `docs/AUTHORING.md` whether such a part must state a tail or critical value, or give problem parts a small distribution tool.
+Raised later (problems convex):
+
+- `tools/fresh-check.mjs` kind `rate`: a derivative coefficient (0.125 in $V'(w) = -0.01 + 0.125w$) was matched to 12.5% in l7 screen 5 because 0.04 appeared in both. The check could skip a decimal that multiplies a variable. Workaround: wrote the coefficient as $2(0.0625)w$.
