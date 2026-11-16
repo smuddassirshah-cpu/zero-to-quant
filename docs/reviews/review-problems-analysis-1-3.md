@@ -115,3 +115,7 @@ Graded values changed, old to new: set 1 p-cube-root-twenty p1 2.625 to 2.6875, 
 Scripts: `docs/reports/problems-analysis-numbers.py` updated (new keys, slips and stated numbers; 532 of 532, exit 0). Reader's `mine.py` updated likewise (435 of 435, exit 0, the finding 5 CLAIM line now a check); `proposed.py` unchanged (15 of 15).
 
 Gates: validator 0 errors, 4522 warnings (unchanged), `manifest.json` restored. `grade-all.mjs --file` on the three sets: 0 failures each. Voice scan 35: 0 and 0. Playthrough `--problems analysis/problems-1`, `-2`, `-3`, desktop and `--mobile`: all passed.
+
+## Fix pass (session AE, waived reuse)
+
+- `analysis/problems-3` `p-cube-root-greedy` part 2 (text reuse): the question shared 12 words ("if the total is at most T, take the next unused positive term") with `review-3` `r-greedy-second`. Changed: the part 2 question wording only (new phrasing of the same rule: "steer the series towards T = 0.2 ... at or below T ... above T"). No number, key, wrong value, tolerance, feedback or explain changed; no part re-keyed. `same-course-reuse.mjs --file ... --no-waivers` now reports 0 flags.
