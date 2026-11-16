@@ -87,3 +87,13 @@ Method. Each part in scope was solved from its text before its key was read, the
 2. No rule checks a table of nested-regression coefficients for consistency, nor any printed normal tail against the rounding of its own key (finding 3: key 0.139485, feedback 0.140). A validator candidate: a `feedback.correct` that prints the answer to the stated places should print `round(key)`.
 
 Inbox bullets: `docs/BACKLOG-INBOX.md`, `Raised later (delta read AF arma):`.
+
+## Fix pass
+
+1. Fixed: `p-trust-discount` rows rebuilt as written (three lags 0.62, 0.28, −0.06; four lags 0.63, 0.26, −0.10, 0.07), options and explain updated. Recomputed by Durbin-Levinson: 0.6244, 0.2766, −0.06; 0.6286, 0.2572, −0.1037, 0.07. No key, band or `wrong` value moves (keys of parts 2 to 4 use only the one-lag and two-lag fits; part 1 key stays `two`).
+2. Fixed: `p-satellite-stocks` `no-error` line now "The error lifts the variance to 48.25 and leaves the covariance at 30.6, so the estimates' value is lower."
+3. Fixed: `p-swap-spread-hold` parts 3 and 4 print 1.084 and 0.139 (6.17/5.69 = 1.08436, tail 0.13910). Band and `wrong` values unchanged.
+
+Scripts: `problems-arma-numbers.py` updated (newest PACF run, −0.10 clears the band, z 1.084 to 0.0005); it, the reader's script, the delta script (0 FINDING lines) and the five other arma scripts exit 0.
+
+Gates: validator 0 errors; voice scan 35 0 and 0; `fresh-check` sets 2 and 3 0 hits (0 and 7 advisories, none new); `grade-all` sets 2 and 3 0 failures; playthrough sets 2 and 3 with and without `--mobile` all passed.

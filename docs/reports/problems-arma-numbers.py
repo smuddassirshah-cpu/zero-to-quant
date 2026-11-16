@@ -202,8 +202,8 @@ ok(abs(1.96 / sqrt(200) - 0.139) < 5e-4 and abs(1 - s / 30 - 0.10) < 0.005 and a
 
 # p-trust-discount (re-authored): PACF from the regression rows, AR(2) mean, one-step forecasts
 band = 1.96 / sqrt(520)
-newest = [0.80, 0.24, 0.05, -0.08]
-ok(abs(band - 0.086) < 5e-4 and [k + 1 for k, v in enumerate(newest) if abs(v) > band] == [1, 2] and 0.10 > band, 'trust band 0.086; PACF clears at 1 and 2; the row-4 b3 0.10 would clear')
+newest = [0.80, 0.24, -0.06, 0.07]
+ok(abs(band - 0.086) < 5e-4 and [k + 1 for k, v in enumerate(newest) if abs(v) > band] == [1, 2] and 0.10 > band, 'trust band 0.086; PACF clears at 1 and 2; the row-4 b3 -0.10 would clear')
 pick(I, 'p-trust-discount', 1, 'two')
 mu_t = F('1.38') / (1 - F('0.61') - F('0.24'))
 # method 2: iterate the fitted equation with no shocks until it settles
@@ -313,7 +313,7 @@ num(I, 'p-swap-spread-hold', 4, pinf, 1 - Phi(1.5), {'two-sided': 2 * pinf, 'var
 loss = [stats.norm.sf((GAP0 - GAP0 * 0.5 ** (h / HL)) / (LR * sqrt(1 - 0.25 ** (h / HL)))) for h in range(1, 400)]
 ok(all(a > b for a, b in zip(loss, loss[1:])) and loss[-1] > pinf and loss[-1] - pinf < 1e-6, 'loss chance falls with the hold, towards 0.067 from above')
 ok(abs(share - 0.315) < 5e-4 and abs(H / HL - 1.667) < 5e-4 and abs(36 * (1 - 0.315 ** 2) - 32.43) < 0.005 and abs(1 - 0.315 ** 2 - 0.9008) < 5e-5
-   and abs(9 - 2.83 - 6.17) < 1e-9 and abs((9 - 2.83) / 5.69 - 1.08) < 0.005 and abs(pinf - 0.067) < 5e-4 and abs(1 / pl - 7) < 0.5, 'swap 0.315, 1.667, 32.43, 0.9008, 6.17, 1.08, 0.067, one in seven')
+   and abs(9 - 2.83 - 6.17) < 1e-9 and abs((9 - 2.83) / 5.69 - 1.084) < 0.0005 and abs(pinf - 0.067) < 5e-4 and abs(1 / pl - 7) < 0.5, 'swap 0.315, 1.667, 32.43, 0.9008, 6.17, 1.084, 0.067, one in seven')
 
 bicd = (3 * log(750) + 2920.4) - (4 * log(750) + 2899.4)
 num(I, 'p-dual-listing', 1, bicd, 21 - log(750), {'aic': (6 + 2920.4) - (8 + 2899.4), 'sign': -bicd})
