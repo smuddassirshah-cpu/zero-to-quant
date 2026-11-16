@@ -93,3 +93,27 @@ Inbox: three bullets under `Raised later (review problems convex 4):` in `docs/B
 ## Counts
 
 15 findings: wrong 0, misleading 3 (2, 10, 15), reuse 9 (1, 3, 4, 6, 7, 8, 11, 12, 13), re-author 0, continuity 2 (5, 9), voice 1 (14), other 0. Replacement lines: 28, with 2 slip tolerances and no key changed, all checked in a copy. No problem is marked re-author. `p-curve-fit-log` is line-level here, but its parts 3 to 5 follow l14 S4 and the two parts of `e-rate-from-kappa` in order; the main session may rule it one.
+
+## Fix pass
+
+Re-author and fix pass (one agent, brief `docs/briefs/reauthor-fix-af.md`). The main session ruled `p-curve-fit-log` a re-author; it is now `p-curve-fit-backtrack`, keeping parts 1 and 2 and adding three parts on backtracking (l14 screen 8) and a count against the fixed step (l15).
+
+1. Fixed (kept part 2 of `p-curve-fit-backtrack`), text as written.
+2. Fixed: `times-s` tol 0.0005; band asserted in both scripts.
+3. Re-authored as `p-curve-fit-backtrack` (part 3 replaced: Armijo step at step 40, key 0.5).
+4. Re-authored as `p-curve-fit-backtrack` (parts 3 to 5 replaced; no balanced step, no $\rho$, no count to $10^k$).
+5. Re-authored as `p-curve-fit-backtrack` (part 5 replaced: fixed steps that match two backtracking steps, key 14).
+6. Fixed, text as written (checked: $f''(1)/f''(2) = 8$).
+7. Fixed, text as written (checked: $f(0.625) = 14.05$, $f(1) = 10$, step adds 0.375).
+8. Fixed, text as written (checked: $2.2314/16 = 0.1395$, 1.0125, 1.5145).
+9. Fixed, text as written (checked: $8/1.7375 = 4.6043$, $3.4750$, sum 8.0793).
+10. Fixed: `thousands` tol 0.005; band asserted (refuses 0.311 and 0.568, takes 0.08, 0.079, 0.0793).
+11. Fixed, text as written (checked: $1 - 0.765625 = 0.234375$).
+12. Fixed, text as written (checked: $1.04 \times 10^{-4}$ after 29 steps, $7.96 \times 10^{-5}$ after 30).
+13. Fixed, all lines as written (checked: 0.2901, 0.0735, 30 more steps).
+14. (a) fell away with the replaced part 5; (b) stands as the reader judged; (c), (d) fixed through finding 13.
+15. Fixed, text as written.
+
+New lines of the re-authored problem: three sentences the validator flagged as long were split before the gates. `p-curve-fit-backtrack` printed numbers 0.10006, 0.04776, 0.05916, 0.693, 0.7632, 21.2141, 0.036, 0.02385, 2.32, 9.8, 0.0343, 0.0346, 13.1 and keys 0.5, 0.03125, 14 are recomputed twice in `problems-convex-numbers.py`.
+
+Gates: validator 0 errors (on the file: `O2-long-sentence` once, finding 14(b); `[wrong-band]` twice on the bands of findings 2 and 10, kept, inbox bullet); voice scan 35, 0 and 0; `fresh-check --file` 0 hits (2 advisories judged in the report); `grade-all --file` 13 widgets, 0 failures; `problems-convex-numbers.py` 799 of 799, exit 0; `problems-convex-4-numbers-read.py` 118 checks, 0 failed, exit 0 (A3 to A5 and the reuse rows of findings 3 and 4 removed with their parts); playthrough `--problems convex/problems-4` desktop and `--mobile` green, 440 px shots read.

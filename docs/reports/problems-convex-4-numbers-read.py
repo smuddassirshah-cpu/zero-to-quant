@@ -112,7 +112,7 @@ for it in SET['items']:
                   set(ids) == set(p['feedback'].get('byKey', {}).keys()))
 
 # ------------------------------------------------------------ A. curve fit
-A = 'p-curve-fit-log'
+A = 'p-curve-fit-backtrack'   # parts 1 and 2 kept from p-curve-fit-log
 s0 = F(1, 20)
 lam = sp.symbols('lam')
 lam_d = sp.solve(sp.Eq(1 - sp.Rational(1, 20) * lam, sp.Rational(96, 100)), lam)[0]
@@ -134,58 +134,10 @@ lo, hi = band(wrong(A, 1, 'times-s'))
 if lo <= 0.5 <= hi or lo <= 0.04 <= hi:
     finding(2, 'p-curve-fit-log part 2: slip band times-s is %.3f to %.3f, so 0.5 and 0.04 are told "You multiplied 1.5 by the step"' % (lo, hi))
 
-s_best = F(2) / (F(4, 5) + 30)
-check('A3 key', takes(A, 2, float(s_best)) and round(float(s_best), 4) == key(A, 2))
-# second route: scan the worst factor over a grid of steps
-grid = np.linspace(0.001, 0.0666, 656001)
-worst = np.maximum(np.abs(1 - 0.8 * grid), np.abs(1 - 30 * grid))
-check('A3 grid minimum', abs(grid[worst.argmin()] - float(s_best)) < 2e-7)
-check('A3 wrong limit', round(2 / 30, 4) == wrong(A, 2, 'limit')['value'])
-check('A3 wrong inverse-max', round(1 / 30, 4) == wrong(A, 2, 'inverse-max')['value'])
-check('A3 wrong sign-slip', round(2 / 10.8, 4) == wrong(A, 2, 'sign-slip')['value'])
-check('A3 printed 0.9733', round(1 - 0.8 / 30, 4) == 0.9733 and has(A, 2, '0.9733'))
-check('A3 claim: 1/30 is worse than the logged 0.96', 1 - 0.8 / 30 > 0.96)
-
-rho = 1 - F(4, 5) * s_best
-check('A4 key', rho == F(292, 308) and round(float(rho), 4) == key(A, 3) and takes(A, 3, float(rho)))
-check('A4 level factor is the negative', 1 - 30 * s_best == -rho)
-kappa = F(30) / F(4, 5)
-check('A4 kappa route', kappa == F(75, 2) and (kappa - 1) / (kappa + 1) == rho and has(A, 3, '37.5'))
-check('A4 wrong current', wrong(A, 3, 'current')['value'] == 0.96)
-check('A4 wrong sign-slip', round((12.5 - 1) / (12.5 + 1), 4) == wrong(A, 3, 'sign-slip')['value'])
-check('A4 rounded step, decay factor still taken', takes(A, 3, 1 - 0.8 * 0.0649))
-lvl_rounded = 30 * 0.0649 - 1
-if not takes(A, 3, lvl_rounded) and 'worst error' in part(A, 3)['question']:
-    finding(4, 'p-curve-fit-log part 4: "the worst error" may be read off the level factor; with the 4-place step of part 3 that is %.4f, refused with no line' % lvl_rounded)
-
-
-def count_steps(r, target):
-    k, e = 0, 1.0
-    while e > target:
-        e *= r
-        k += 1
-    return k
-
-
-n_now = count_steps(0.96, 1e-4)
-n_best_exact = count_steps(float(rho), 1e-4)
-n_best_told = count_steps(0.9481, 1e-4)
-check('A5 counts by loop', (n_now, n_best_exact, n_best_told) == (226, 173, 173))
-check('A5 counts by logs', math.ceil(math.log(1e4) / math.log(1 / 0.96)) == 226
-      and math.ceil(math.log(1e4) / math.log(1 / 0.9481)) == 173)
-check('A5 key', key(A, 4) == n_now - n_best_told == 53)
-check('A5 wrong now-count, best-count', wrong(A, 4, 'now-count')['value'] == 226 and wrong(A, 4, 'best-count')['value'] == 173)
-n_slip = count_steps(0.8519, 1e-4)
-check('A5 wrong sign-slip', n_slip == 58 and wrong(A, 4, 'sign-slip')['value'] == 226 - 58 and has(A, 4, '58 steps'))
-check('A5 printed logs', round(math.log(1e4), 4) == 9.2103 and round(-math.log(0.96), 4) == 0.0408
-      and round(-math.log(0.9481), 4) == 0.0533)
-check('A5 a quarter of the run', abs(53 / 226 - 0.25) < 0.02)
-q_now = math.log(1e4) / -math.log(0.96)
-q_told = math.log(1e4) / -math.log(0.9481)
-q_exact = math.log(1e4) / -math.log(float(rho))
-check('A5 quotient at 0.96 is 225.6', round(q_now, 1) == 225.6)
-if has(A, 4, '172.7') and round(q_told, 1) != 172.7:
-    finding(5, 'p-curve-fit-log part 5: explain prints 172.7, but the factor 0.9481 the part tells the learner to use gives %.2f (172.7 needs the unrounded 29.2/30.8: %.2f); the feedback\'s 9.2103/0.0533 is %.1f and 9.2103/0.0408 is %.1f' % (q_told, q_exact, 9.2103 / 0.0533, 9.2103 / 0.0408))
+# Parts 3 to 5 of p-curve-fit-log (best step, its factor, the steps saved) were removed when the main session
+# ruled the problem a re-author; their checks (A3 to A5, findings 3 to 5) are removed with them. The new parts 3 to 5
+# of p-curve-fit-backtrack are checked in problems-convex-numbers.py; a delta reader adds its own route here.
+check('A2 times-s band tightened to 0.0005 (finding 2)', wrong(A, 1, 'times-s')['tol']['abs'] == 0.0005)
 
 # --------------------------------------------------------- B. sale horizon
 B = 'p-sale-horizon'
@@ -257,7 +209,7 @@ check('B4 printed 8.0793', round(fv(1.7375), 4) == 8.0793 and round(fv(float(t2)
 check('B4 wrong descent', abs((fv(1.5145) - 8) * 1000 - wrong(B, 3, 'descent')['value']) < 0.5)
 check('B4 wrong total', round(fv(1.7375) * 1000) == wrong(B, 3, 'total')['value'])
 check('B4 wrong start', round((fv(1.375) - 8) * 1000) == wrong(B, 3, 'start')['value'])
-check('B4 wrong thousands', round(fv(1.7375) - 8, 4) == wrong(B, 3, 'thousands')['value'])
+check('B4 wrong thousands', round(fv(1.7375) - 8, 4) == wrong(B, 3, 'thousands')['value'] and wrong(B, 3, 'thousands')['tol']['abs'] == 0.005)
 check('B4 excess at T=1 is 2000', (fv(1.0) - 8) * 1000 == 2000)
 if has(B, 3, '4.6042 + 3.4751') and (round(8 / 1.7375, 4), round(2 * 1.7375, 4)) != (4.6042, 3.4751):
     finding(9, 'p-sale-horizon part 4: feedback prints 4.6042 + 3.4751, the terms at the unrounded T2; at the 1.7375 the part restates they are %.4f + %.4f (the explain line has 3.475)' % (8 / 1.7375, 2 * 1.7375))
@@ -336,10 +288,6 @@ if 'exactly' in ITEMS[C]['prose'] and 'holding exactly' in why_extra:
 # ------------------------------------------------- reuse lines (by reading)
 REUSE = [
     (1, A, 1, 'the step overshoots the floor'),
-    (3, A, 2, 'Past a point, a longer step'),
-    (3, A, 2, 'Balance the two factors instead'),
-    (4, A, 3, 'by what factor does the worst error shrink each step'),
-    (4, A, 3, 'both errors shrink by'),
     (6, B, 0, 'is a safe choice of step, not the limit'),
     (6, B, 0, 'must hold over the whole region'),
     (7, B, 1, 'You moved with the gradient'),

@@ -68,32 +68,37 @@ Numbers: `problems-convex-numbers.py` replaces the two old blocks (method 2 for 
 Gates (session AF): validator 0 errors; on these sets only the three `O2-long-sentence` warnings the reader judged keeps. Voice scan 35: 0 and 0. `fresh-check --file`: 0 hits on each set; set 3 the same two advisories as before (p-variance-limit). `grade-all --file`: 15, 14 and 15 widgets, 0 failures. Playthrough `--problems` sets 1 to 3, desktop and `--mobile`: green; 440 px shots of the new problems read, no layout faults.
 
 # Level 4 (`problems-4.json`, added by the level 4 author)
+# Level 4 (`problems-4.json`, added by the level 4 author; re-author and fix pass after `review-problems-convex-4.md`)
 
 | Set | Item | Parts | Lessons drawn on | Difficulty |
 |---|---|---|---|---|
-| 4 | p-curve-fit-log | 5 | l14, l15 | 4 |
+| 4 | p-curve-fit-backtrack | 5 | l14, l15 | 5 |
 | 4 | p-sale-horizon | 4 | l14, l16 | 4 |
 | 4 | p-variance-log | 4 | l14, l15, l17 | 5 |
 
 13 parts, 12 typed (numeric), 1 choice. Skills `cv-descent`, `cv-duality`.
 
+## Re-author and fix pass (level 4)
+
+`p-curve-fit-log` was ruled `re-author` (its parts 3 to 5 ran l14 screen 4 and both parts of `e-rate-from-kappa`). It is replaced by `p-curve-fit-backtrack`: parts 1 and 2 (two logged factors turned back into curvatures 0.8 and 30) are kept with findings 1 and 2 applied; parts 3 to 5 are new. A logged gradient $(0.4, 0.06)$ at step 40 gives errors 0.5 and 0.002; the Armijo test then accepts $s = 0.5$, 7.5 times the fixed-step limit $2/30$, because the gradient lies along the gentle direction (part 3). The level error is multiplied by $-14$, the gradient turns to the steep direction, and the next accepted step is $0.03125$ (part 4). The two steps take the excess from 0.10006 to 0.0343, which the fixed step 0.05 needs 14 steps to match (part 5, the excess shrinking by $0.96^2 = 0.9216$ a step). Findings 6 to 13 and 15 were applied as the reader wrote them, after recomputing; findings 3, 4, 5 and 14(a) fell away with the replaced parts. Keys unchanged outside the new parts.
+
 ## Gates (level 4)
 
-- Validator: 0 errors; on `problems-4.json` only advisory `O2-long-sentence` (4).
+- Validator: 0 errors. On `problems-4.json`: `O2-long-sentence` once (`p-sale-horizon` part 4, judged by the reader to stand) and `[wrong-band]` twice, on the slip bands the review narrowed (0.075 at 0.0005, 0.0793 at 0.005). Both slips are values in other units from a key asked as a whole number; the band the rule asks for (0.5) is the one finding 2 and 10 showed takes unrelated answers. Kept; inbox bullet.
 - Voice scan 35 on the course folder: 0 and 0.
-- Number script: level 4 section appended (`level4()`, 178 checks; SETS now loads 1 to 4). Whole script 773 of 773, numbers_lib failures 0, exit 0. Method 2 per key: a simulated descent or Newton run in floats, a bounded scalar search, numpy eigenvalues, a counting loop, Aitken's delta-squared formula.
-- `fresh-check.mjs --file`: 0 hits. Hand greps of 30.8, 0.9481, 0.0649, 1.7375, 1.5145, 8.0793, 200.4096, 0.2401, 0.765625, 199.95, 0.2901, "yield-curve" and "block of shares" over the course and `exams/topic-2.5.json`: none outside the set.
+- Number script: `level4()` rewritten for the new problem and the fixed lines; whole script 799 of 799, numbers_lib failures 0, exit 0. Method 1 for parts 3 and 4: the Armijo test on a quadratic holds exactly for $s \le \lVert g\rVert^2/g^T\mathbf{H}g$ (0.693, then 0.036), in fractions; method 2: the trial steps run on $f$ in floats. Part 5: first $k$ in fractions and a float loop of the fixed run. The two narrowed bands are asserted.
+- Reader's script `problems-convex-4-numbers-read.py`: checks A3 to A5 and the reuse rows of findings 3 and 4 removed with the parts they read (said so in the script); A2 band and B4 thousands band tightened to the new values; 118 checks, 0 failed, no FINDING line, exit 0.
+- `fresh-check.mjs --file`: 0 hits, 2 advisories judged: 0.05 and 0.06 shared with l11 screen 5 (returns there, a step and a gradient here); the Armijo test of l14 screen 8, which the stem must state.
 - `grade-all.mjs --file`: 13 widgets, 0 failures.
-- Playthrough `--problems convex/problems-4`, desktop and `--mobile`: green; 440 px shots read, no layout faults.
+- Playthrough `--problems convex/problems-4`, desktop and `--mobile`: green; 440 px shots of the new parts read, no layout faults.
+- Hand greps of 0.10006, 0.0343, 0.9216, 0.7632, 0.1636, 0.04776 and 0.03125 over the course and every exam with convex items: only 0.03125, in `topic-1.6` and `topic-1.7` in unrelated roles. "Backtrack" and "Armijo" occur in the course only in l14 screen 8 and quiz 2.
 
-## Closest course material per problem (level 4, verdict clean)
+## Closest course material per problem (level 4)
 
-- p-curve-fit-log. Lesson: l14 screens 0 and 4 (factors $1 - s$, $1 - 10s$ of a given bowl; best step $\tfrac{2}{11}$), l15 screen 1. Quiz: l14 q1 (factor at $s = 1/\lambda_{\max}$). Review: r4-factor ($y$ factor $-0.2$ from a given curvature). Homework: h4-rho (eigenvalues 8 and 2 to $\rho = 0.6$). Exam: e-rate-from-kappa (eigenvalues to $\rho$ to a count), e-step-limit. Not a walk: the course goes curvature to factor; here two logged factors are inverted to curvatures (0.8, 30), then the retuned step, its factor and the steps saved over the current run, with a $10^4$ target the course never uses.
-- p-sale-horizon. Lesson: l14 screen 7 ($s < 2/L$ for the logistic loss), l16 screens 0, 3 and 9 ($x - \ln x$, 44 descent steps against 5, far start). Quiz: l16 q0 ($e^x - 2x$). Review: r4-newton ($x^2 - 2\ln x$). Homework: h4-newton-iter (simplify a Newton map). Exam: e-newton-minimise ($e^x - 3x$, error ratio $f'''/2f''$). Not a walk: a cost $8/T + 2T$ on $T \ge 1$, $L$ read on a region, descent at $1/L$ and Newton landing on the same first point, then the extra cost in pounds of stopping early; no step count, no error-ratio or far-start step.
-- p-variance-log. Lesson: l15 screens 1 and 5 ($\rho$ and the log slope of a run), l17 screens 0 to 4 (feasibility, lstsq residual, dual bound, excess) and 11 (tolerances fixed in advance). Quiz: l15 q2 ($\rho = 0.9$ to $\kappa$), l17 q2 (bracket 470 to 490). Review: r4-backout (errors 1, 0.6, 0.36 to $\kappa$). Homework: h4-bound (0.0650 against 0.0641). Exam: e-solver-certificate ($g(5.9)$, gap, what it certifies), e-richardson-three (an extrapolation that cancels a power of $h$, not a geometric tail). Not a walk: logged objective values give $\rho^2$ through the drops, an extrapolated $V^*$, the steps left to a tolerance, and a sign-off line that separates the estimate from the certified bracket; no residual fit, no dual function evaluated.
-
-No `feedback`, `explain` or `why` line was copied or paraphrased from these items; each was compared by hand. Three draft lines that echoed l14 screens 4 and 7 and l15 screen 3 ("makes the two factors equal in size", "below which step does descent always settle", "no fixed step does better") were reworded before the first check.
+- p-curve-fit-backtrack. Lesson: l14 screens 0 and 2 (factor $1 - s\lambda$, limit $2/\lambda_{\max}$), l14 screen 8 (backtracking steps in order), l15 screen 2 (counts from a rate). Quiz: l14 q2 (backtracking on $2x^2$ at $x = 1$ accepts 0.25). Review: r4-factor, r4-count ($\rho = 0.8$ to $10^6$). Homework: h4-rho. Exam: `e-rate-from-kappa`, `e-step-limit` (topic 2.5). Verdict clean: the course runs backtracking once in one variable and teaches that the test holds once $s \le 1/L$. Here the test runs twice in two variables, accepts a step far past the fixed-step limit and then a sixteenth of it, and the result is how many fixed steps two such steps are worth. No balanced step, no $\rho$ from $\kappa$, no count to a power of ten. Slip lines were written against l14 screen 8's `d1`, `d2` and line 6 `why`, and l14 screen 2's `one` line, and share no sentence.
+- p-sale-horizon. Lesson: l14 screen 7, l16 screens 0, 3, 6, 9 and 11. Quiz: l16 q0. Review: r4-newton. Homework: h4-newton-iter, h4-kelly-even. Exam: e-newton-minimise. Slip lines now the reader's (findings 6 to 8).
+- p-variance-log. Lesson: l15 screens 1 and 5, l17 screens 3, 4 and 11. Quiz: l15 q1 and q2, l17 q2. Review: r4-backout. Homework: h4-bound, h4-stuck. Exam: e-rate-from-kappa, e-solver-certificate. Part 4 rewritten line by line (findings 13 and 15); slip lines of parts 1 and 3 the reader's (11, 12).
 
 ## Engine (level 4)
 
-No new limits; no inbox bullets.
+One inbox bullet under `Raised later (re-author and fix pass problems convex 4):` (`[wrong-band]` on a slip in other units).

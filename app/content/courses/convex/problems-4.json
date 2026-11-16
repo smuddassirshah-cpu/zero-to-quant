@@ -6,12 +6,12 @@
   "minutes": 40,
   "items": [
     {
-      "id": "p-curve-fit-log",
-      "difficulty": 4,
+      "id": "p-curve-fit-backtrack",
+      "difficulty": 5,
       "skills": [
         "cv-descent"
       ],
-      "prose": "A quant fits a yield-curve model's level and decay rate by least squares, using gradient descent with a fixed step $s = 0.05$. Near the fit the loss is a quadratic whose Hessian is diagonal in the two parameters, so each error has its own factor $1 - s\\lambda$ per step, for that direction's curvature $\\lambda$. The log shows the decay-rate error shrinking by 0.96 a step, while the level error flips sign and halves, a factor of $-0.5$.",
+      "prose": "A quant fits a yield-curve model's level and decay rate by least squares, using gradient descent with a fixed step $s = 0.05$. Near the fit the loss is a quadratic whose Hessian is diagonal in the two parameters, so each error has its own factor $1 - s\\lambda$ per step, for that direction's curvature $\\lambda$. With errors $e_1$ in the decay rate and $e_2$ in the level, the loss sits $\\tfrac12(\\lambda_1e_1^2 + \\lambda_2e_2^2)$ above its minimum: the excess. The log shows the decay-rate error shrinking by 0.96 a step, while the level error flips sign and halves, a factor of $-0.5$. At step 40 the gradient is $(0.4, 0.06)$, decay rate first. There the quant switches to backtracking: trial step 1, halved until $f(\\mathbf{x} - s\\nabla f) \\le f(\\mathbf{x}) - \\tfrac12 s\\lVert\\nabla f\\rVert^2$.",
       "parts": [
         {
           "question": "From the factor 0.96, what is the curvature $\\lambda$ of the decay-rate direction? Give a decimal.",
@@ -70,7 +70,7 @@
                 "id": "times-s",
                 "value": 0.075,
                 "tol": {
-                  "abs": 0.5
+                  "abs": 0.0005
                 }
               }
             ]
@@ -84,117 +84,141 @@
             }
           },
           "explain": {
-            "text": "A factor of $-0.5$ means the step overshoots the floor in this direction. So $1 - 0.05\\lambda = -0.5$, and $\\lambda = 1.5/0.05 = 30$. The level direction is the steep one."
+            "text": "A negative factor means each step carries the level error past zero to the other side. So $1 - 0.05\\lambda = -0.5$, and $\\lambda = 1.5/0.05 = 30$. The level direction is the steep one."
           }
         },
         {
-          "question": "Using curvatures 0.8 and 30 from parts 1 and 2, which fixed step gives the smallest worst factor? Give 4 decimal places.",
+          "question": "Using curvatures 0.8 and 30 from parts 1 and 2, which step does the test accept at step 40? Give a decimal.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.0649,
+            "answer": 0.5,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "any-fall",
+                "value": 1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "below-limit",
+                "value": 0.0625,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "below-inverse",
+                "value": 0.03125,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-over-l",
+                "value": 0.0333,
+                "tol": {
+                  "abs": 0.0002
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The errors are $0.4/0.8 = 0.5$ and $0.06/30 = 0.002$, so the excess is 0.10006. At $s = 0.5$ they become 0.3 and $-0.028$, and the excess 0.04776 clears the bar $0.10006 - 0.0409 = 0.05916$.",
+            "generic": "Not quite. Turn the gradient into errors, $e_i = g_i/\\lambda_i$, then try $s = 1, 0.5, \\dots$ in turn on the excess $\\tfrac12(0.8e_1^2 + 30e_2^2)$.",
+            "byKey": {
+              "any-fall": "At $s = 1$ the excess does drop, from 0.10006 to 0.05446. The test wants a drop of at least $\\tfrac12 \\times 1 \\times 0.1636 = 0.0818$, so the trial is halved once.",
+              "below-limit": "0.0625 is the first halving under the fixed-step limit $2/30$. The test never consults that limit, and it already holds at 0.5.",
+              "below-inverse": "0.03125 is the first halving under $1/30$, where the test is sure to hold. Here it holds much sooner: the gradient lies mostly along the gentle direction.",
+              "one-over-l": "$1/30 \\approx 0.0333$ is never tried. The trials are 1, 0.5, 0.25 and so on, and here the second one passes."
+            }
+          },
+          "explain": {
+            "text": "On this loss a step $s$ lowers $f$ by $s\\lVert\\nabla f\\rVert^2 - \\tfrac12 s^2\\,\\nabla f^T\\mathbf{H}\\nabla f$, with $\\lVert\\nabla f\\rVert^2 = 0.1636$ and $\\nabla f^T\\mathbf{H}\\nabla f = 0.236$. The test then holds for $s \\le 0.1636/0.236 \\approx 0.693$, so 1 fails and 0.5 passes. That is ten times the fixed step, and 7.5 times its limit $2/30$."
+          }
+        },
+        {
+          "question": "Using $s = 0.5$ from part 3, the level error is multiplied by $1 - 0.5 \\times 30 = -14$. Which step does the test accept at the next point? Give the exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.03125,
             "tol": {
               "abs": 0.0001
             },
             "wrong": [
               {
-                "id": "limit",
-                "value": 0.0667,
+                "id": "keep",
+                "value": 0.5,
                 "tol": {
-                  "abs": 0.0001
+                  "abs": 0.0005
                 }
               },
               {
-                "id": "inverse-max",
+                "id": "any-fall",
+                "value": 0.0625,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "untested",
+                "value": 1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-over-l",
                 "value": 0.0333,
                 "tol": {
                   "abs": 0.0001
                 }
-              },
-              {
-                "id": "sign-slip",
-                "value": 0.1852,
-                "tol": {
-                  "abs": 0.0001
-                }
               }
             ]
           },
           "feedback": {
-            "correct": "$s = 2/(0.8 + 30) = 2/30.8 \\approx 0.0649$.",
-            "generic": "Not quite. Set $1 - 0.8s = 30s - 1$ and solve for $s$.",
+            "correct": "The errors are now 0.3 and $-0.028$, so the gradient is $(0.24, -0.84)$. The test holds for $s \\le 0.7632/21.2141 \\approx 0.036$, and the first halving under that is $\\tfrac{1}{32} = 0.03125$.",
+            "generic": "Not quite. Find the errors after the step of 0.5, form the new gradient $(0.8e_1, 30e_2)$, and try $s = 1, 0.5, \\dots$ again.",
             "byKey": {
-              "limit": "0.0667 is $2/30$, the edge where the level factor reaches $-1$. The balanced step $2/(0.8 + 30)$ is a little smaller.",
-              "inverse-max": "$1/30$ sends the level error to 0 in one step but leaves the decay factor at 0.9733. Balance the two factors instead.",
-              "sign-slip": "0.1852 is $2/(0.8 + 10)$, from the level curvature 10 of the sign slip. Part 2 gives 30, so the step is $2/30.8$."
+              "keep": "0.5 suited step 40, not this point. From errors 0.3 and $-0.028$ it multiplies the level error by $-14$ again, and the excess rises to about 2.32.",
+              "any-fall": "At 0.0625 the excess does drop, by about 0.0063. The test wants $\\tfrac12 \\times 0.0625 \\times 0.7632 = 0.02385$, so one more halving is needed.",
+              "untested": "At $s = 1$ the level error is multiplied by $-29$ and the excess grows by about 9.8. The trials fail at every halving down to 0.0625.",
+              "one-over-l": "0.0333 is $1/30$, which backtracking never tries. Its trials halve from 1, and 0.03125 is the first that passes."
             }
           },
           "explain": {
-            "text": "Past a point, a longer step helps the decay error and hurts the level error. The worse of the two is smallest where they cross, $1 - 0.8s = 30s - 1$. That gives $s = 2/30.8 \\approx 0.0649$."
+            "text": "After the step of 0.5 the decay-rate error is $0.6 \\times 0.5 = 0.3$ and the level error $-14 \\times 0.002 = -0.028$. The gradient $(0.24, -0.84)$ now points mostly along the steep direction, so the test needs $s \\le 0.036$. As the gradient turned, backtracking cut its own step sixteenfold, from 0.5 to 0.03125."
           }
         },
         {
-          "question": "Using the step $s = 2/30.8$ from part 3, by what factor does the worst error shrink each step? Give 4 decimal places.",
+          "question": "The two backtracking steps of parts 3 and 4 take the excess from 0.10006 to about 0.0343. From step 40, how many steps of the fixed $s = 0.05$ would bring it as low? Give a whole number.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.9481,
-            "tol": {
-              "abs": 0.0001
-            },
-            "wrong": [
-              {
-                "id": "current",
-                "value": 0.96,
-                "tol": {
-                  "abs": 0.0001
-                }
-              },
-              {
-                "id": "sign-slip",
-                "value": 0.8519,
-                "tol": {
-                  "abs": 0.0001
-                }
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "$1 - 0.8 \\times \\tfrac{2}{30.8} = \\tfrac{29.2}{30.8} \\approx 0.9481$, and the level factor is $-0.9481$.",
-            "generic": "Not quite. Put the step into $1 - 0.8s$, the decay-rate factor.",
-            "byKey": {
-              "current": "0.96 is the factor at the old step 0.05. The balanced step is larger, so the decay factor falls to 0.9481.",
-              "sign-slip": "0.8519 is $(12.5 - 1)/(12.5 + 1)$, from the level curvature 10 of the sign slip. With 30 the ratio is $37.5$ and the factor 0.9481."
-            }
-          },
-          "explain": {
-            "text": "At the balanced step both errors shrink by the same size of factor: $1 - 0.8s = \\tfrac{29.2}{30.8} \\approx 0.9481$. The ratio of curvatures is $30/0.8 = 37.5$, and $(37.5 - 1)/(37.5 + 1)$ gives the same 0.9481. The gain on 0.96 is small, since the two curvatures are far apart."
-          }
-        },
-        {
-          "question": "Using the factors 0.96 at $s = 0.05$ and 0.9481 from part 4, how many fewer steps does the balanced step need to cut every error by a factor of $10^4$? Give a whole number.",
-          "widget": {
-            "kind": "numeric",
-            "answer": 53,
+            "answer": 14,
             "tol": {
               "abs": 0
             },
             "wrong": [
               {
-                "id": "now-count",
-                "value": 226,
+                "id": "floor",
+                "value": 13,
                 "tol": {
                   "abs": 0
                 }
               },
               {
-                "id": "best-count",
-                "value": 173,
+                "id": "unsquared",
+                "value": 27,
                 "tol": {
                   "abs": 0
                 }
               },
               {
-                "id": "sign-slip",
-                "value": 168,
+                "id": "saved",
+                "value": 12,
                 "tol": {
                   "abs": 0
                 }
@@ -202,16 +226,16 @@
             ]
           },
           "feedback": {
-            "correct": "$\\lceil 9.2103/0.0408 \\rceil = 226$ steps now and $\\lceil 9.2103/0.0533 \\rceil = 173$ at the balanced step: 53 fewer.",
-            "generic": "Not quite. Count each run as $\\lceil \\ln 10^4 / \\ln(1/\\text{factor}) \\rceil$ and subtract.",
+            "correct": "Each fixed step keeps $0.96^2 = 0.9216$ of the decay term, and $\\ln(0.10006/0.0343)/\\ln(1/0.9216) \\approx 13.1$. So 14 fixed steps match the two backtracking steps.",
+            "generic": "Not quite. At $s = 0.05$ the excess is nearly all $0.4e_1^2$, and $e_1$ shrinks by 0.96 a step. Find the first $k$ with $0.10006 \\times 0.9216^k \\le 0.0343$.",
             "byKey": {
-              "now-count": "226 is the count at $s = 0.05$ alone. Subtract the 173 steps the balanced step needs.",
-              "best-count": "173 is the count at the balanced step alone. The question asks how many fewer than the 226 needed now.",
-              "sign-slip": "168 uses the factor 0.8519 of the sign slip, which would need only 58 steps. With 0.9481 the balanced step needs 173."
+              "floor": "Thirteen fixed steps leave 0.0346, still more than the backtracking run's 0.0343, so one more is needed.",
+              "unsquared": "27 lets the excess shrink by 0.96 a step, the error's own factor. The excess goes with the error squared, so its factor is 0.9216.",
+              "saved": "12 is how many more steps the fixed run takes than the two backtracking steps. The question asks for the fixed steps themselves: 14."
             }
           },
           "explain": {
-            "text": "With factor $r$ per step, $r^k \\le 10^{-4}$ needs $k \\ge \\ln 10^4/\\ln(1/r)$. That is 225.6, so 226, at 0.96 and 172.7, so 173, at 0.9481. Retuning the step saves 53 steps, about a quarter of the run."
+            "text": "At $s = 0.05$ the level term of the excess shrinks by $0.5^2 = 0.25$ a step and soon vanishes. So the excess falls by about 0.9216 a step, and $0.10006 \\times 0.9216^{k} \\le 0.0343$ first holds at $k = 14$. Two backtracking steps, one far past the fixed-step limit, did the work of 14 fixed ones."
           }
         }
       ]
@@ -253,8 +277,8 @@
             "correct": "$L = f''(1) = 16$, so any step below $2/16 = 0.125$ settles.",
             "generic": "Not quite. Find $L = f''(1)$ and use the limit $2/L$.",
             "byKey": {
-              "one-over-l": "$1/L = 0.0625$ is a safe choice of step, not the limit. The limit is $2/L = 0.125$.",
-              "curvature-at-min": "1 is $2/f''(2)$, from the curvature at the best horizon only. The bound must hold over the whole region, where $f''$ reaches 16."
+              "one-over-l": "0.0625 is $1/16$, the step part 2 goes on to use. The bound has a 2 on top: $2/16 = 0.125$.",
+              "curvature-at-min": "1 is $2/f''(2)$, which uses the curvature at the best horizon only. The run starts at $T = 1$, where $f''$ is 16, eight times larger."
             }
           },
           "explain": {
@@ -290,7 +314,7 @@
             "correct": "$f'(1) = 2 - 8 = -6$, so $T_1 = 1 - \\tfrac{1}{16}(-6) = 1.375$.",
             "generic": "Not quite. Compute $f'(1)$ and step against it: $T_1 = 1 - \\tfrac{1}{16}f'(1)$.",
             "byKey": {
-              "sign": "You moved with the gradient. $f'(1) = -6$ is negative, so the step against it lengthens the horizon to 1.375.",
+              "sign": "0.625 shortens the sale, and $f(0.625) = 14.05$ is dearer than $f(1) = 10$. Descent subtracts $\\tfrac{1}{16} \\times (-6)$, which adds 0.375.",
               "limit-step": "1.75 uses $s = 2/16$, the limit from part 1. The step here is $\\tfrac{1}{16}$, half of that."
             }
           },
@@ -327,8 +351,8 @@
             "correct": "$f'(1.375) \\approx -2.2314$ and $f''(1.375) \\approx 6.1548$, so $T_2 = 1.375 + 0.3625 \\approx 1.7375$.",
             "generic": "Not quite. Compute $f'$ and $f''$ at 1.375 and take $T_2 = 1.375 - f'/f''$.",
             "byKey": {
-              "descent": "1.5145 is descent's second step, $1.375 - \\tfrac{1}{16}f'(1.375)$. Newton divides by the curvature at 1.375, about 6.15, not by 16.",
-              "sign": "You added $f'/f''$. With $f'(1.375) < 0$ the step $-f'/f''$ is positive, so $T$ rises to 1.7375."
+              "descent": "1.5145 is $1.375 + 2.2314/16$, a second step of fixed length $\\tfrac{1}{16}$. Newton's divisor is $f''(1.375) \\approx 6.15$, so it moves 0.3625, not 0.1395.",
+              "sign": "1.0125 is $1.375 - 0.3625$, a shorter horizon. The slope at 1.375 is still negative, so the cost falls as $T$ grows: $T_2 = 1.375 + 0.3625$."
             }
           },
           "explain": {
@@ -369,14 +393,14 @@
                 "id": "thousands",
                 "value": 0.0793,
                 "tol": {
-                  "abs": 0.5
+                  "abs": 0.005
                 }
               }
             ],
             "unit": "£"
           },
           "feedback": {
-            "correct": "$f(1.7375) \\approx 4.6042 + 3.4751 = 8.0793$ against $f(2) = 8$, so about £79 more.",
+            "correct": "$f(1.7375) \\approx 4.6043 + 3.4750 = 8.0793$ against $f(2) = 8$, so about £79 more.",
             "generic": "Not quite. Subtract $f(2) = 8$ from $f(1.7375)$ and turn £k into pounds.",
             "byKey": {
               "descent": "£311 is the extra cost at descent's $T_2 = 1.5145$. Newton's 1.7375 is closer to 2 and costs only about £79 more.",
@@ -430,7 +454,7 @@
             "generic": "Not quite. Divide the second drop by the first to get $\\rho^2$, then take the square root.",
             "byKey": {
               "ratio": "0.7656 is $\\rho^2$, the ratio of the drops. The errors themselves shrink by its square root, 0.875.",
-              "one-minus": "0.2344 is $1 - \\rho^2$, the share of the excess removed each step. Take the square root of $\\rho^2 = 0.765625$ instead."
+              "one-minus": "0.2344 is $1 - 0.765625$. The ratio of the two drops is 0.765625 itself, and $\\rho$ is its square root."
             }
           },
           "explain": {
@@ -509,9 +533,9 @@
           },
           "feedback": {
             "correct": "$0.2401 \\times 0.765625^n \\le 10^{-4}$ needs $n \\ge \\ln 2401/\\ln(1/0.765625) \\approx 29.15$, so 30 more steps.",
-            "generic": "Not quite. Solve $0.2401 \\times 0.765625^n \\le 10^{-4}$ for the smallest whole $n$.",
+            "generic": "Not quite. The excess must fall from 0.2401 to $10^{-4}$, and each step keeps 0.765625 of it. Count the steps.",
             "byKey": {
-              "floor": "29 steps leave the excess at about $1.04 \\times 10^{-4}$, still above the tolerance. Round 29.15 up to 30.",
+              "floor": "With 29 steps the excess is $0.2401 \\times 0.765625^{29} \\approx 1.04 \\times 10^{-4}$, a shade too large. The 30th step takes it to $7.96 \\times 10^{-5}$.",
               "used-rho": "59 uses the factor 0.875, but the variance falls by $\\rho^2 = 0.765625$ a step. That gives 30."
             }
           },
@@ -520,39 +544,39 @@
           }
         },
         {
-          "question": "The run also logs a dual value of 199.95 at step 22, from a budget multiplier, and by weak duality it is a floor under $V^*$. Using parts 2 and 3, which line may the sign-off note at step 22 state?",
+          "question": "The run also logs a dual value of 199.95 at step 22, from a budget multiplier. Weak duality says $V^*$ cannot be less than it. Using parts 2 and 3, which line may the sign-off note at step 22 state?",
           "widget": {
             "kind": "choice",
             "layout": "stack",
             "options": [
               {
                 "id": "bracket",
-                "text": "$V^*$ lies between 199.95 and 200.2401. The certified gap 0.2901 is above $10^{-4}$, so the book is not yet signed off.",
+                "text": "$199.95 \\le V^* \\le 200.2401$. That pins the excess only to within 0.2901, so the $10^{-4}$ test is not yet met.",
                 "correct": true
               },
               {
                 "id": "extrapolated",
-                "text": "$V^* = 200.00$ exactly, so the book is within 0.2401 of optimal and certified.",
-                "why": "The value 200.00 rests on the ratio holding exactly. Only the dual value 199.95 is a proven floor."
+                "text": "$V^* = 200.00$ is now known, so the note may certify the excess as exactly 0.2401.",
+                "why": "200.00 is an estimate from three logged values, not a proven bound. The note may state only what the two bounds prove."
               },
               {
                 "id": "small-drop",
                 "text": "The run has converged, since the drop per step is below 0.1.",
-                "why": "A small drop is not a small gap. The certified gap at step 22 is 0.2901."
+                "why": "A small drop is not a small excess: 0.0735 a step with 0.2401 still to go. The proven width at step 22 is 0.2901."
               },
               {
                 "id": "restart",
-                "text": "The run has failed, since the gap is above the tolerance. Restart it from another point.",
-                "why": "The run is slow, not wrong. Part 3 shows that 30 more steps meet the tolerance."
+                "text": "The run has failed, since 0.2901 is far more than $10^{-4}$. Restart it from another point.",
+                "why": "Nothing has failed. Part 3 shows the excess reaches $10^{-4}$ after 30 more steps of the same run."
               }
             ]
           },
           "feedback": {
-            "correct": "The bracket is certified: the plan's 200.2401 above and the dual 199.95 below, a gap of 0.2901.",
+            "correct": "Both ends are proven: the step-22 mix has variance 200.2401, and no mix can go below 199.95. They are 0.2901 apart.",
             "generic": "Not quite. Ask which numbers are proven bounds on $V^*$ and which are estimates."
           },
           "explain": {
-            "text": "The variance of a feasible mix is a ceiling on $V^*$, and the dual value is a floor by weak duality. Their gap, 0.2901, is what can be certified, and it is far above $10^{-4}$. The extrapolated 200.00 guides the stopping plan but proves nothing."
+            "text": "The step-22 mix is one the desk could hold, so $V^*$ is at most 200.2401. The dual value says it is at least 199.95, so the proven width is 0.2901, far more than $10^{-4}$. The estimate 200.00 tells the desk how long to run, but a sign-off needs a proven bound."
           }
         }
       ]

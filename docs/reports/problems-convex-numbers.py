@@ -572,47 +572,96 @@ def count_loop(factor, cut):
 def level4():
     lv = Level('convex', 4)
     import math
-    # p-curve-fit-log
+    # p-curve-fit-backtrack (re-authored after review-problems-convex-4; parts 1 and 2 kept from p-curve-fit-log)
+    IID = 'p-curve-fit-backtrack'
     s = F(1, 20)
     lmin = (1 - F(96, 100)) / s
     lmax = (1 - F(-1, 2)) / s
     H = np.diag([0.8, 30.0])
     e = np.array([1.0, 1.0])
     e1 = e - 0.05 * H @ e   # one simulated step of the error
-    num(4, 'p-curve-fit-log', 1, lmin, (1 - e1[0]) / 0.05, {'factor-over-s': F(96, 100) / s, 'no-divide': 1 - F(96, 100)})
+    num(4, IID, 1, lmin, (1 - e1[0]) / 0.05, {'factor-over-s': F(96, 100) / s, 'no-divide': 1 - F(96, 100)})
     ok(abs(e1[0] - 0.96) < 1e-12 and abs(e1[1] + 0.5) < 1e-12, 'simulated factors 0.96 and -0.5')
-    num(4, 'p-curve-fit-log', 2, lmax, (1 - e1[1]) / 0.05, {'sign': (1 - F(1, 2)) / s, 'times-s': F(3, 2) * s})
-    sb = 2 / (lmin + lmax)
-    worst = lambda t: max(abs(1 - 0.8 * t), abs(1 - 30 * t))
-    sb_alt = minimize_scalar(worst, bounds=(0, 0.0666), method='bounded', options={'xatol': 1e-12}).x
-    num(4, 'p-curve-fit-log', 3, sb, sb_alt, {'limit': F(2, 30), 'inverse-max': F(1, 30), 'sign-slip': 2 / (F(4, 5) + 10)},
-        rounded=0.0649, agree=1e-6)
-    ok(abs(float(1 - F(4, 5) / 30) - 0.9733) < 5e-5, 'decay factor 0.9733 at s = 1/30')
-    rho = 1 - F(4, 5) * sb
-    ev = np.linalg.eigvalsh(H)
-    kap = ev[-1] / ev[0]
-    rho_slip = (F(25, 2) - 1) / (F(25, 2) + 1)
-    num(4, 'p-curve-fit-log', 4, rho, (kap - 1) / (kap + 1), {'current': F(96, 100), 'sign-slip': rho_slip}, rounded=0.9481)
-    ok(rho == F(73, 77) and 1 - 30 * sb == -rho, 'both factors 73/77 in size')
-    ok(abs(kap - 37.5) < 1e-12, 'kappa 37.5')
-    c_now = math.ceil(math.log(1e4) / math.log(1 / 0.96))
-    c_best = math.ceil(math.log(1e4) / math.log(1 / float(rho)))
-    c_slip = math.ceil(math.log(1e4) / math.log(1 / float(rho_slip)))
-    ok((c_now, c_best, c_slip) == (count_loop(0.96, 1e4), count_loop(float(rho), 1e4), count_loop(float(rho_slip), 1e4)),
-       'counts agree with a loop')
-    ok((c_now, c_best, c_slip) == (226, 173, 58), f'counts 226, 173, 58: {(c_now, c_best, c_slip)}')
-    ok(math.ceil(math.log(1e4) / math.log(1 / 0.9481)) == 173, 'rounded factor 0.9481 gives 173 as well')
-    num(4, 'p-curve-fit-log', 5, c_now - c_best, count_loop(0.96, 1e4) - count_loop(float(rho), 1e4),
-        {'now-count': c_now, 'best-count': c_best, 'sign-slip': c_now - c_slip})
-    for path, val in [('items[0].parts[4].feedback.correct', 9.2103), ('items[0].parts[4].feedback.correct', 0.0408),
-                      ('items[0].parts[4].feedback.correct', 0.0533), ('items[0].parts[4].explain.text', 225.6),
-                      ('items[0].parts[4].explain.text', 172.7), ('items[0].parts[3].feedback.correct', 0.9481),
-                      ('items[0].parts[2].byKey' if False else 'items[0].parts[2].feedback.byKey', 0.9733)]:
+    num(4, IID, 2, lmax, (1 - e1[1]) / 0.05, {'sign': (1 - F(1, 2)) / s, 'times-s': F(3, 2) * s})
+    ok(part(4, IID, 2)['widget']['wrong'][1]['tol']['abs'] == 0.0005, 'times-s band is 0.0005 (finding 2)')
+    Hq = [lmin, lmax]
+    exq = lambda er: sum(Hq[i] * er[i] ** 2 for i in range(2)) / 2
+
+    def bt_exact(er):
+        # method 1: the Armijo test on a quadratic holds exactly for s <= |g|^2 / g'Hg; first halving from 1 under it
+        g = [Hq[i] * er[i] for i in range(2)]
+        thr = sum(x * x for x in g) / sum(Hq[i] * g[i] ** 2 for i in range(2))
+        t = F(1)
+        while t > thr:
+            t /= 2
+        return t, thr, g
+
+    def bt_float(er, rule='armijo'):
+        # method 2: run the trials in floats on f itself, with numpy
+        er = np.array([float(v) for v in er])
+        f = lambda z: 0.5 * z @ H @ z
+        g = H @ er
+        t = 1.0
+        while True:
+            fn = f(er - t * g)
+            if (rule == 'armijo' and fn <= f(er) - 0.5 * t * g @ g) or (rule == 'any' and fn < f(er)):
+                return t
+            t /= 2
+
+    e40 = [F(2, 5) / lmin, F(3, 50) / lmax]
+    ok(e40 == [F(1, 2), F(1, 500)], 'errors at step 40 are 0.5 and 0.002')
+    s1, thr1, g1 = bt_exact(e40)
+    num(4, IID, 3, s1, bt_float(e40),
+        {'any-fall': bt_float(e40, 'any'), 'below-limit': F(1, 16), 'below-inverse': F(1, 32), 'one-over-l': 1 / lmax})
+    ok(F(1, 16) < F(2, 30) < F(1, 8) and F(1, 32) < F(1, 30) < F(1, 16), '0.0625 and 0.03125 are the first halvings under 2/30 and 1/30')
+    ok(exq(e40) == F('0.10006') and sum(x * x for x in g1) == F('0.1636') and sum(Hq[i] * g1[i] ** 2 for i in range(2)) == F('0.236'),
+       'excess 0.10006, |g|^2 0.1636, gHg 0.236')
+    ok(round(float(thr1), 3) == 0.693, 'threshold 0.693')
+    e41 = [e40[i] - s1 * Hq[i] * e40[i] for i in range(2)]
+    ok(e41 == [F('0.3'), F('-0.028')] and exq(e41) == F('0.04776'), 'after s = 0.5: errors 0.3, -0.028, excess 0.04776')
+    ok(exq(e40) - s1 * F('0.1636') / 2 == F('0.05916') and exq(e41) <= F('0.05916'), 'bar 0.05916 cleared')
+    eT = [e40[i] - Hq[i] * e40[i] for i in range(2)]
+    ok(exq(eT) == F('0.05446') and F('0.1636') / 2 == F('0.0818') and exq(eT) > exq(e40) - F('0.0818'), 's = 1: excess 0.05446, demand 0.0818, fails')
+    ok(1 - s1 * lmax == -14 and s1 / s == 10 and s1 / F(2, 30) == F(15, 2), 'factor -14; ten times the step, 7.5 times its limit')
+    s2, thr2, g2 = bt_exact(e41)
+    num(4, IID, 4, s2, bt_float(e41),
+        {'keep': s1, 'any-fall': bt_float(e41, 'any'), 'untested': bt_exact([e40[i] - F(1, 32) * Hq[i] * e40[i] for i in range(2)])[0],
+         'one-over-l': 1 / lmax})
+    ok(g2 == [F('0.24'), F('-0.84')] and sum(x * x for x in g2) == F('0.7632'), 'gradient (0.24, -0.84), |g|^2 0.7632')
+    gHg2 = sum(Hq[i] * g2[i] ** 2 for i in range(2))
+    ok(abs(float(gHg2) - 21.2141) < 5e-5 and round(float(thr2), 3) == 0.036, "g'Hg 21.2141 and threshold 0.036")
+    ek = [e41[i] - s1 * Hq[i] * e41[i] for i in range(2)]
+    ok(round(float(exq(ek)), 2) == 2.32, 'keeping 0.5 raises the excess to 2.32')
+    eo = [e41[i] - F(1, 16) * Hq[i] * e41[i] for i in range(2)]
+    ok(round(float(exq(e41) - exq(eo)), 4) == 0.0063 and F(1, 32) * F('0.7632') == F('0.02385'), 'at 0.0625: drop 0.0063, demand 0.02385')
+    eu = [e41[i] - Hq[i] * e41[i] for i in range(2)]
+    ok(1 - lmax == -29 and round(float(exq(eu) - exq(e41)), 1) == 9.8, 'at s = 1: factor -29, excess up 9.8')
+    ok(s1 / s2 == 16, 'sixteenfold')
+    e42 = [e41[i] - s2 * Hq[i] * e41[i] for i in range(2)]
+    ex2 = exq(e42)
+    ok(e42 == [F('0.2925'), F('-0.00175')] and round(float(ex2), 4) == 0.0343, 'after two backtracking steps: excess 0.0343')
+
+    def fixed_count(target):
+        k, z = 0, [float(v) for v in e40]
+        while 0.5 * (0.8 * z[0] ** 2 + 30 * z[1] ** 2) > target:
+            z = [z[0] * 0.96, z[1] * -0.5]
+            k += 1
+        return k
+    kx = next(k for k in range(1, 100) if exq([e40[i] * (1 - s * Hq[i]) ** k for i in range(2)]) <= ex2)
+    num(4, IID, 5, kx, fixed_count(float(ex2)),
+        {'floor': kx - 1, 'unsquared': math.ceil(math.log(0.10006 / 0.0343) / math.log(1 / 0.96)), 'saved': kx - 2})
+    ok(fixed_count(0.0343) == kx == 14, 'the restated 0.0343 gives 14 as well')
+    ok(round(math.log(0.10006 / 0.0343) / math.log(1 / 0.9216), 1) == 13.1 and round(math.log(float(exq(e40) / ex2)) / math.log(1 / 0.9216), 1) == 13.1,
+       'quotient 13.1 on either value')
+    e13 = [e40[i] * (1 - s * Hq[i]) ** 13 for i in range(2)]
+    ok(round(float(exq(e13)), 4) == 0.0346, 'thirteen fixed steps leave 0.0346')
+    ok((1 - s * lmax) ** 2 == F(1, 4) and (1 - s * lmin) ** 2 == F('0.9216'), 'excess factors 0.25 and 0.9216')
+    for path, val in [('items[0].parts[2].feedback.correct', 0.10006), ('items[0].parts[2].feedback.correct', 0.04776),
+                      ('items[0].parts[2].feedback.correct', 0.05916), ('items[0].parts[2].explain.text', 0.693),
+                      ('items[0].parts[3].feedback.correct', 21.2141), ('items[0].parts[3].feedback.correct', 0.03125),
+                      ('items[0].parts[4].feedback.correct', 13.1), ('items[0].parts[4].feedback.byKey.floor', 0.0346),
+                      ('items[0].parts[3].feedback.byKey.keep', 2.32), ('items[0].parts[3].feedback.byKey.untested', 9.8)]:
         lv.expect('problems', path, val)
-    ok(round(math.log(1e4), 4) == 9.2103 and round(math.log(1 / 0.96), 4) == 0.0408 and round(math.log(1 / float(rho)), 4) == 0.0533,
-       'logs 9.2103, 0.0408, 0.0533')
-    ok(round(math.log(1e4) / math.log(1 / 0.96), 1) == 225.6 and round(math.log(1e4) / math.log(1 / float(rho)), 1) == 172.7,
-       'quotients 225.6 and 172.7')
     # p-sale-horizon
     T = sp.Symbol('T', positive=True)
     fT = 8 / T + 2 * T
@@ -644,11 +693,22 @@ def level4():
         {'descent': fl(float(T2d)), 'total': fl(float(T2)) + 8000, 'start': fl(1.375), 'thousands': fl(float(T2)) / 1000},
         rounded=79, agree=1e-6)
     ok(abs(fl(1.7375) - 79.32) < 0.005, 'rounded T2 gives 79.32, also accepted')
-    ok(abs(8 / float(T2) - 4.6042) < 5e-5 and abs(2 * float(T2) - 3.4751) < 5e-5 and round(4.6042 + 3.4751, 4) == 8.0793,
-       'f(T2) = 4.6042 + 3.4751 = 8.0793')
+    # the printed working uses the restated T2 = 1.7375 (finding 9)
+    ok(round(8 / 1.7375, 4) == 4.6043 and round(2 * 1.7375, 4) == 3.4750 and round(4.6043 + 3.4750, 4) == 8.0793,
+       'f(1.7375) = 4.6043 + 3.4750 = 8.0793')
+    thou = next(x for x in part(4, 'p-sale-horizon', 4)['widget']['wrong'] if x['id'] == 'thousands')
+    ok(thou['tol']['abs'] == 0.005 and all(abs(v - 0.0793) > 0.005 for v in (fl(float(T2d)) / 1000, fl(1.375) / 1000)),
+       'thousands band 0.005 refuses the descent and start slips in pounds k (finding 10)')
+    ok(all(abs(v - 0.0793) <= 0.005 for v in (0.08, 0.079, 0.0793)), 'thousands band takes 0.08, 0.079, 0.0793')
     ok(fl(1.0) == 2000, 'excess at T = 1 is 2000 pounds')
+    ok(abs(8 / 0.625 + 2 * 0.625 - 14.05) < 1e-12 and 8 / 1 + 2 == 10, 'f(0.625) = 14.05, f(1) = 10 (finding 7)')
+    ok(-F(1, 16) * d1.subs(T, 1) == F(3, 8) and d2.subs(T, 1) / d2.subs(T, 2) == 8, 'step adds 0.375; curvature 16 is eight times 2')
+    ok(round(2.2314 / 16, 4) == 0.1395 and round(1.375 + 0.1395, 4) == 1.5145 and round(1.375 - 0.3625, 4) == 1.0125,
+       '2.2314/16 = 0.1395 and the two slip values (finding 8)')
     for path, val in [('items[1].parts[2].explain.text', 1.5145), ('items[1].parts[3].feedback.correct', 8.0793),
-                      ('items[1].parts[2].feedback.correct', 6.1548), ('items[1].parts[2].feedback.correct', 0.3625)]:
+                      ('items[1].parts[3].feedback.correct', 4.6043), ('items[1].parts[3].feedback.correct', 3.4750),
+                      ('items[1].parts[2].feedback.correct', 6.1548), ('items[1].parts[2].feedback.correct', 0.3625),
+                      ('items[1].parts[1].feedback.byKey.sign', 14.05), ('items[1].parts[2].feedback.byKey.descent', 0.1395)]:
         lv.expect('problems', path, val)
     # p-variance-log
     V = [F('200.4096'), F('200.3136'), F('200.2401')]
@@ -671,6 +731,8 @@ def level4():
     n_slip = math.ceil(math.log(2401) / math.log(8 / 7))
     num(4, 'p-variance-log', 3, n_more, k, {'floor': n_more - 1, 'used-rho': n_slip})
     ok(abs(float(F('0.2401') * r2**29) - 1.04e-4) < 5e-7, 'after 29 steps the excess is about 1.04e-4')
+    ok(round(float(F('0.2401') * r2**30) * 1e5, 2) == 7.96, 'after 30 steps the excess is 7.96e-5 (finding 12)')
+    ok(1 - r2 == F('0.234375') and dB == F('0.0735'), '0.2344 is 1 - 0.765625; last drop 0.0735 (findings 11, 13)')
     ok(round(math.log(2401) / math.log(64 / 49), 2) == 29.15 and round(64 / 49, 3) == 1.306, '29.15 and 1.306')
     choice(4, 'p-variance-log', 4, 'bracket')
     ok(V[2] - F('199.95') == F('0.2901'), 'certified gap 0.2901')
@@ -678,7 +740,7 @@ def level4():
                       ('items[2].parts[1].feedback.correct', 0.2401), ('items[2].parts[2].feedback.correct', 29.15),
                       ('items[2].parts[3].feedback.correct', 0.2901), ('items[2].parts[0].explain.text', 15)]:
         lv.expect('problems', path, val)
-    shape(4, {'p-curve-fit-log': {'l14-gradient-descent', 'l15-convergence-rates'},
+    shape(4, {'p-curve-fit-backtrack': {'l14-gradient-descent', 'l15-convergence-rates'},
               'p-sale-horizon': {'l14-gradient-descent', 'l16-newton-for-minimising'},
               'p-variance-log': {'l14-gradient-descent', 'l15-convergence-rates', 'l17-checking-a-solver'}},
           ['cv-descent', 'cv-duality'])
