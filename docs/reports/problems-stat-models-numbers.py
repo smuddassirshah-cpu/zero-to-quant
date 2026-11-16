@@ -307,7 +307,139 @@ def level3():
     ok(c_mean == 2, 'mean statistic counts 2 patterns'); shown('week total', 13.1, wk.sum(), 1)
 
 
-for n, f in ((1, level1), (2, level2), (3, level3)):
+def level4():
+    """Level 4 (second author). Method 1: exact fractions and the conjugate formulas. Method 2: a grid posterior built
+    from 36 planted daily figures and 8 planted weekly counts, scipy's distributions, Nelder-Mead on the marginal
+    likelihood, a hand Metropolis step, quadrature, the finite-n AR(1) variance of a mean, and a simulation."""
+    I = load(4)
+    rng = np.random.default_rng(4)
+
+    # --- p-etf-tracking: prior N(-0.3, 0.2^2), daily N(theta, 1.5^2), 36 days with mean -0.82, next 20-day average
+    pr0, pr1 = Fr(1) / Fr(2, 10) ** 2, Fr(36) / Fr(15, 10) ** 2            # 25 and 16
+    v1 = 1 / (pr0 + pr1)
+    m1 = v1 * (pr0 * Fr(-3, 10) + pr1 * Fr(-82, 100))
+    days = rng.normal(0, 1.5, 36); days = days - days.mean() - 0.82          # planted data with mean -0.82
+    th = np.linspace(-2.5, 1.5, 400001); dth = th[1] - th[0]
+    logp = stats.norm.logpdf(th, -0.3, 0.2) + stats.norm.logpdf(days[:, None], th, 1.5).sum(0)
+    w = np.exp(logp - logp.max()); w /= w.sum()
+    g_mean = float((w * th).sum()); g_var = float((w * (th - g_mean) ** 2).sum())
+    num(I, 'p-etf-tracking', 1, sqrt(v1), sqrt(g_var),
+        {'add-var': sqrt(0.2 ** 2 + 0.25 ** 2), 'daily-error': 1 / sqrt(25 + 1 / 1.5 ** 2)}, agree=1e-6)
+    num(I, 'p-etf-tracking', 2, m1, g_mean,
+        {'data-only': -0.82, 'plain-average': (-0.3 - 0.82) / 2, 'swapped': (16 * -0.3 + 25 * -0.82) / 41, 'sign': -float(m1)}, agree=1e-6)
+    pv = Fr(225, 100) / 20 + v1
+    g_pv = 2.25 / 20 + g_var                                                  # law of total variance on the grid
+    num(I, 'p-etf-tracking', 3, sqrt(pv), sqrt(g_pv),
+        {'plug-in': 1.5 / sqrt(20), 'one-day': sqrt(2.25 + 1 / 41), 'variance': float(pv), 'theta-only': sqrt(v1)}, agree=1e-6)
+    tail = Phi((-1 + 0.5029) / 0.3700)
+    g_tail = float((w * Phi((-1 - th) / (1.5 / sqrt(20)))).sum())
+    num(I, 'p-etf-tracking', 4, tail, g_tail,
+        {'plug-in': Phi((-1 + 0.5029) / (1.5 / sqrt(20))), 'upper': 1 - tail, 'theta-sd': Phi((-1 + 0.5029) / sqrt(1 / 41))}, agree=2e-5)
+    ok(abs(tail - Phi((-1 - float(m1)) / sqrt(float(pv)))) < 1e-5, 'etf: rounded inputs move the tail')
+    shown('etf prec 25', 25, float(pr0), 9); shown('etf prec 16', 16, float(pr1), 9); shown('etf sd', 0.1562, sqrt(v1), 4)
+    shown('etf -20.62', -20.62, float(m1 * 41), 9); shown('etf mean', -0.5029, float(m1), 4)
+    shown('etf w prior', 0.61, 25 / 41, 2); shown('etf w data', 0.39, 16 / 41, 2)
+    shown('etf 0.1125', 0.1125, 2.25 / 20, 9); shown('etf 0.0244', 0.0244, 1 / 41, 4); shown('etf 0.1369', 0.1369, float(pv), 4)
+    shown('etf pred sd', 0.3700, sqrt(pv), 4); shown('etf plug sd', 0.3354, 1.5 / sqrt(20), 4)
+    shown('etf z', -1.3435, (-1 + 0.5029) / 0.37, 4); shown('etf tail', 0.0896, tail, 4)
+    shown('etf plug tail', 0.0692, Phi((-1 - float(m1)) / (1.5 / sqrt(20))), 4)
+
+    # --- p-circuit-breaker: Gamma(3, rate 0.5) prior, 8 weeks with 41 trips
+    a, b = Fr(3 + 41), Fr(1, 2) + 8
+    weeks = np.array([6, 4, 5, 7, 3, 5, 6, 5]); ok(weeks.sum() == 41, 'breaker weeks sum')
+    post = stats.gamma(44, scale=1 / 8.5)
+    num(I, 'p-circuit-breaker', 1, a / b, post.mean(), {'mle': Fr(41, 8), 'prior': 6, 'no-rate': Fr(44) / Fr(1, 2)})
+
+    def logpost(lam):                                                         # likelihood times prior, no constants
+        return stats.poisson.logpmf(weeks, lam).sum() + stats.gamma(3, scale=2).logpdf(lam)
+    d = 43 * ln(6.1 / 5.2) - 8.5 * 0.9
+    num(I, 'p-circuit-breaker', 2, d, logpost(6.1) - logpost(5.2),
+        {'power-44': 44 * ln(6.1 / 5.2) - 8.5 * 0.9, 'as-scale': 43 * ln(6.1 / 5.2) - 0.9 / 8.5, 'reversed': -d}, agree=1e-9)
+    thr = exp(-0.7859)
+    us = rng.uniform(size=2_000_000)
+    num(I, 'p-circuit-breaker', 3, thr, float(np.mean(np.log(us) < -0.7859)),
+        {'reject-chance': 1 - thr, 'inverted': exp(0.7859)}, agree=2e-3)
+
+    def step(x, prop, u):
+        return prop if ln(u) < logpost(prop) - logpost(x) else x
+    num(I, 'p-circuit-breaker', 4, 6.1 if 0.40 < thr else 5.2, step(5.2, 6.1, 0.40), {'stayed': 5.2})
+    ok(step(5.2, 6.1, 0.50) == 5.2, 'breaker: u = 0.50 rejects')
+    shown('breaker mean', 5.1765, float(a / b), 4); shown('breaker mle', 5.125, 41 / 8, 9)
+    shown('breaker power', 6.8641, 43 * ln(6.1 / 5.2), 4); shown('breaker exp', 7.65, 8.5 * 0.9, 9)
+    shown('breaker d', -0.7859, d, 4); shown('breaker thr', 0.4557, thr, 4)
+
+    # --- p-quality-six-markets: six estimates, shared SE 0.5, empirical Bayes in closed form
+    e = [Fr(19, 10), Fr(4, 10), Fr(11, 10), Fr(-2, 10), Fr(8, 10), Fr(14, 10)]
+    mu = sum(e) / 6
+    tot = sum((x - mu) ** 2 for x in e) / 6
+    t2 = tot - Fr(1, 4)
+    ef = np.array([float(x) for x in e])
+    from scipy.optimize import minimize
+    r = minimize(lambda p: -stats.norm(p[0], sqrt(0.25 + exp(p[1]))).logpdf(ef).sum(), [0, 0], method='Nelder-Mead',
+                 options={'xatol': 1e-12, 'fatol': 1e-14, 'maxiter': 20000})
+    ok(abs(r.x[0] - float(mu)) < 1e-6 and float(mu) == 0.9, 'quality: mu-hat is the plain mean 0.9')
+    num(I, 'p-quality-six-markets', 1, tot, 0.25 + exp(r.x[1]),
+        {'divisor-5': Fr(276, 500), 'root': sqrt(tot)}, agree=1e-6)
+    num(I, 'p-quality-six-markets', 2, t2, exp(r.x[1]), {'from-divisor-5': Fr(276, 500) - Fr(1, 4), 'minus-se': tot - Fr(1, 2)}, agree=1e-6)
+    B = Fr(1, 4) / (Fr(1, 4) + t2)
+    num(I, 'p-quality-six-markets', 3, B, float((1 / t2) / (1 / t2 + 4)),                # prior precision over total
+        {'kept-share': 1 - B, 'sd-ratio': 0.5 / (0.5 + sqrt(t2))})
+    sh = mu + (1 - B) * (Fr(-2, 10) - mu)
+    sh_alt = (4 * -0.2 + float(1 / t2) * 0.9) / (4 + float(1 / t2))           # precision-weighted average
+    num(I, 'p-quality-six-markets', 4, sh, sh_alt,
+        {'kept-b': mu + B * (Fr(-2, 10) - mu), 'towards-zero': (1 - B) * Fr(-2, 10), 'raw': Fr(-2, 10)})
+    ok(abs(float(mu + (1 - Fr(5435, 10000)) * (Fr(-2, 10) - mu)) - float(sh)) < 1e-4, 'quality: B rounded moves the shrunk mean')
+    psd = sqrt(1 / (4 + 1 / t2))
+    p_up = Phi(0.3978 / psd)
+    thg = np.linspace(-3, 4, 700001)
+    lw = stats.norm.logpdf(-0.2, thg, 0.5) + stats.norm.logpdf(thg, 0.9, sqrt(float(t2)))
+    ww = np.exp(lw - lw.max()); ww /= ww.sum()
+    num(I, 'p-quality-six-markets', 5, p_up, float(ww[thg > 0].sum()),
+        {'se-as-sd': Phi(0.3978 / 0.5), 'raw': Phi(-0.2 / 0.5), 'lower': 1 - p_up, 'tau-as-sd': Phi(0.3978 / sqrt(t2))}, agree=2e-5)
+    ok(abs(p_up - Phi(float(sh) / psd)) < 2e-5, 'quality: rounded shrunk mean moves the tail')
+    for printed, x in ((1, Fr(1)), (0.25, Fr(1, 4)), (0.04, Fr(4, 100)), (1.21, Fr(121, 100)), (0.01, Fr(1, 100))):
+        ok(any((y - mu) ** 2 == x for y in e), f'quality squared gap {printed}')
+    shown('q 2.76', 2.76, float(tot * 6), 9); shown('q 0.46', 0.46, float(tot), 9); shown('q 0.552', 0.552, 2.76 / 5, 9)
+    shown('q 0.21', 0.21, float(t2), 9); shown('q B', 0.5435, float(B), 4); shown('q 1-B', 0.4565, float(1 - B), 4)
+    shown('q tau', 0.4583, sqrt(t2), 4); shown('q sd ratio', 0.5 / (0.5 + 0.4583), 0.5 / (0.5 + sqrt(t2)), 4)
+    shown('q 0.5022', 0.5022, float((1 - B) * Fr(11, 10)), 4); shown('q shrunk', 0.3978, float(sh), 4)
+    shown('q prec', 8.762, float(4 + 1 / t2), 3); shown('q psd', 0.3378, psd, 4); shown('q p', 0.8805, p_up, 4)
+    shown('q raw 34%', 34, 100 * Phi(-0.2 / 0.5), 0); shown('q 88%', 88, 100 * p_up, 0)
+
+    # --- p-dealer-enquiries: Beta(7, 13) population, 17 of 40, four AR(1) chains of 2,000 at phi 0.6
+    A, Bb = 7 + 17, 13 + 23
+    pm = Fr(A, A + Bb)
+    num(I, 'p-dealer-enquiries', 1, pm, stats.beta(A, Bb).mean(), {'raw': Fr(17, 40), 'population': Fr(7, 20), 'a-only': Fr(24, 47)})
+    ok(Fr(40, 60) * Fr(17, 40) + Fr(20, 60) * Fr(7, 20) == pm, 'dealer blend')
+    var = Fr(A * Bb, (A + Bb) ** 2 * (A + Bb + 1)); sd = sqrt(var)
+    num(I, 'p-dealer-enquiries', 2, sd, stats.beta(A, Bb).std(),
+        {'binomial': sqrt(0.4 * 0.6 / 40), 'variance': float(var), 'no-plus-one': sqrt(0.4 * 0.6 / 60)}, agree=1e-9)
+    phi, n_ch, n = 0.6, 4, 2000
+    mcse = 0.0627 * sqrt((1 + phi) / (n_ch * n * (1 - phi)))
+    k = np.arange(1, n)
+    finite = sd ** 2 / n * (1 + 2 * ((1 - k / n) * phi ** k).sum()) / n_ch    # exact variance of the mean of finite AR(1) chains
+    num(I, 'p-dealer-enquiries', 3, mcse, sqrt(finite),
+        {'independent': 0.0627 / sqrt(8000), 'one-chain': 0.0627 / sqrt(500), 'no-plus-phi': 0.0627 / sqrt(3200)}, agree=5e-6)
+    z = rng.standard_normal((400 * n_ch, n)); x = z[:, 0].copy(); tot_x = x.copy()   # 400 runs of four unit AR(1) chains
+    for t in range(1, n):
+        x = phi * x + sqrt(1 - phi ** 2) * z[:, t]; tot_x += x
+    sims = (tot_x / n).reshape(400, n_ch).mean(1)
+    ok(abs(np.std(sims) * sd - sqrt(finite)) / sqrt(finite) < 0.1, 'dealer: simulated MCSE within 10%')
+    zgap = (0.4045 - 0.4) / 0.00140
+    num(I, 'p-dealer-enquiries', 4, zgap, (0.4045 - float(pm)) / sqrt(finite),
+        {'independent': 0.0045 / (sd / sqrt(8000)), 'posterior-sd': 0.0045 / sd, 'one-chain': 0.0045 / (sd / sqrt(500))}, agree=1e-2)
+    pick(I, 'p-dealer-enquiries', 5, 'fault')
+    shown('dealer 0.425', 0.425, 17 / 40, 9); shown('dealer 0.35', 0.35, 7 / 20, 9)
+    shown('dealer var', 0.003934, float(var), 6); ok(A * Bb == 864 and (A + Bb) ** 2 * (A + Bb + 1) == 219600, 'dealer 864/219600')
+    shown('dealer sd', 0.0627, sd, 4); shown('dealer binomial', 0.07746, sqrt(0.24 / 40), 5)
+    shown('dealer ess per chain', 500, n * (1 - phi) / (1 + phi), 9); shown('dealer ess', 2000, n_ch * n * (1 - phi) / (1 + phi), 9)
+    shown('dealer mcse', 0.00140, mcse, 5); shown('dealer iid', 0.00070, 0.0627 / sqrt(8000), 5)
+    shown('dealer one chain', 0.0028, 0.0627 / sqrt(500), 4); shown('dealer 3200', 3200, 8000 * 0.4, 9)
+    shown('dealer z', 3.21, zgap, 2); shown('dealer gap', 0.0045, 0.4045 - 0.4, 9)
+    ok(700 < 1 / (2 * stats.norm.sf(3.21)) < 800, 'dealer: about once in 750 runs')
+
+
+for n, f in ((1, level1), (2, level2), (3, level3), (4, level4)):
     if present(n):
         f()
 

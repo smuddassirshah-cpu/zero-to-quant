@@ -1,0 +1,826 @@
+{
+  "id": "problems-4",
+  "course": "stat-models",
+  "level": 4,
+  "title": "Problems: Bayesian models",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-etf-tracking",
+      "difficulty": 4,
+      "skills": [
+        "sm-bayes"
+      ],
+      "prose": "An ETF's daily tracking difference, its return minus its index's return, is $N(\\theta, 1.5^2)$ in basis points. Similar ETFs give the prior $\\theta \\sim N(-0.3, 0.2^2)$. Over 36 days the mean tracking difference is $-0.82$.",
+      "parts": [
+        {
+          "question": "The 36-day mean has standard error $1.5/\\sqrt{36} = 0.25$. What is the posterior standard deviation of $\\theta$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.15617,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "add-var",
+                "value": 0.32016,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "daily-error",
+                "value": 0.19825,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The prior's precision is $1/0.2^2 = 25$ and the mean's is $1/0.25^2 = 16$. Their sum, 41, is the posterior precision, so the sd is $1/\\sqrt{41} = 0.1562$.",
+            "generic": "Not quite. Turn the prior sd and the standard error into precisions, add them, then invert and take the root.",
+            "byKey": {
+              "add-var": "You added the two variances, which makes the posterior wider than the prior. Add the precisions, $25 + 16 = 41$, instead.",
+              "daily-error": "You used the daily sd of 1.5 as the error. The 36-day mean's error is 0.25."
+            }
+          },
+          "explain": {
+            "text": "The prior carries precision 25 and the 36-day mean carries 16. Together they make 41, a variance of $1/41$ and an sd of 0.1562."
+          }
+        },
+        {
+          "question": "Using the posterior variance $1/41$ from part 1, what is the posterior mean of $\\theta$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.50293,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "data-only",
+                "value": -0.82,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "plain-average",
+                "value": -0.56,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "swapped",
+                "value": -0.61707,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "sign",
+                "value": 0.50293,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(25 \\times (-0.3) + 16 \\times (-0.82))/41 = -20.62/41 = -0.5029$ bp.",
+            "generic": "Not quite. Weight the prior mean and the 36-day mean by their precisions, 25 and 16.",
+            "byKey": {
+              "data-only": "That is the 36-day mean alone. The prior has more precision than the data here, so it pulls the mean towards $-0.3$.",
+              "plain-average": "That is a plain average of $-0.3$ and $-0.82$. The prior's precision of 25 outweighs the data's 16.",
+              "swapped": "You gave the prior weight 16 and the data 25. Each mean takes its own precision: 25 for the prior, 16 for the data.",
+              "sign": "You dropped the minus sign. Both means are negative, so their weighted average is $-0.5029$."
+            }
+          },
+          "explain": {
+            "text": "The weights are $25/41 = 0.61$ on the prior mean and $16/41 = 0.39$ on the data. So $\\theta$ is centred at $-0.5029$, between $-0.3$ and $-0.82$."
+          }
+        },
+        {
+          "question": "The issuer reports the average over the next 20 trading days. Using $\\theta \\mid \\text{data} \\sim N(-0.5029, 1/41)$, what is the predictive standard deviation of that 20-day average? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.36999,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "plug-in",
+                "value": 0.33541,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "one-day",
+                "value": 1.50811,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.13689,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "theta-only",
+                "value": 0.15617,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Given $\\theta$, the 20-day average has variance $2.25/20 = 0.1125$. The doubt about $\\theta$ adds $1/41 = 0.0244$, so the sd is $\\sqrt{0.1369} = 0.3700$.",
+            "generic": "Not quite. Add the 20-day average's own variance to the posterior variance of $\\theta$, then take the root.",
+            "byKey": {
+              "plug-in": "That is $1.5/\\sqrt{20}$, with $\\theta$ treated as known. The posterior variance $1/41$ adds to it.",
+              "one-day": "That is the predictive sd of a single day. The average of 20 days has variance $2.25/20$.",
+              "variance": "That is the predictive variance. Take its square root.",
+              "theta-only": "That is the doubt about $\\theta$ alone, from part 1. The 20 new days bring their own noise."
+            }
+          },
+          "explain": {
+            "text": "A new 20-day average is $\\theta$ plus fresh noise of variance 0.1125. The two variances sum to $0.1125 + 0.0244 = 0.1369$, whose root is 0.3700."
+          }
+        },
+        {
+          "question": "Using the predictive $N(-0.5029, 0.3700^2)$ from part 3, what is the chance the 20-day average falls below $-1$ bp? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.08955,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "plug-in",
+                "value": 0.06917,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "upper",
+                "value": 0.91045,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "theta-sd",
+                "value": 0.00073,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$z = (-1 + 0.5029)/0.3700 = -1.3435$, and $\\Phi(-1.3435) = 0.0896$.",
+            "generic": "Not quite. Standardise $-1$ with the predictive mean and sd, then take the lower tail.",
+            "byKey": {
+              "plug-in": "That uses the plug-in sd 0.3354, as if $\\theta$ were known. The thinner spread understates the tail.",
+              "upper": "That is the chance above $-1$. The question asks for the chance below it.",
+              "theta-sd": "You used the posterior sd of $\\theta$, 0.1562. An average of 20 new days also carries their own noise."
+            }
+          },
+          "explain": {
+            "text": "Standardising gives $z = -1.3435$ and a lower tail of 0.0896. With $\\theta$ fixed at its mean the sd is 0.3354 and the tail only 0.0692."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-circuit-breaker",
+      "difficulty": 3,
+      "skills": [
+        "sm-bayes",
+        "sm-mcmc"
+      ],
+      "prose": "A volatility circuit breaker on a small-cap segment trips a Poisson number of times a week, at rate $\\lambda$. The exchange's prior is $\\mathrm{Gamma}(3, \\text{rate } 0.5)$. Eight weeks bring 41 trips in all.",
+      "parts": [
+        {
+          "question": "What is the posterior mean of $\\lambda$, in trips a week? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5.17647,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "mle",
+                "value": 5.125,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "prior",
+                "value": 6,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "no-rate",
+                "value": 88,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The posterior is $\\mathrm{Gamma}(3 + 41, 0.5 + 8) = \\mathrm{Gamma}(44, \\text{rate } 8.5)$, with mean $44/8.5 = 5.1765$.",
+            "generic": "Not quite. Add the trips to the shape and the weeks to the rate.",
+            "byKey": {
+              "mle": "That is $41/8$, the data alone. The prior's half week of imagined data pulls it towards 6.",
+              "prior": "That is the prior mean, $3/0.5$. The eight weeks of data move it.",
+              "no-rate": "You left the rate at 0.5. Each of the 8 weeks adds 1 to it."
+            }
+          },
+          "explain": {
+            "text": "Shape $3 + 41 = 44$ and rate $0.5 + 8 = 8.5$. The data's 8 weeks outweigh the prior's half week, so 5.1765 sits much nearer 5.125 than 6."
+          }
+        },
+        {
+          "question": "A random-walk Metropolis chain on $\\lambda$ sits at 5.2 and proposes 6.1. Using the posterior $\\mathrm{Gamma}(44, \\text{rate } 8.5)$ from part 1, what is $\\ln\\pi(6.1) - \\ln\\pi(5.2)$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.7859,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "power-44",
+                "value": -0.62627,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "as-scale",
+                "value": 6.75821,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "reversed",
+                "value": 0.7859,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The log kernel is $43\\ln\\lambda - 8.5\\lambda$, so the difference is $43\\ln(6.1/5.2) - 8.5 \\times 0.9 = 6.8641 - 7.65 = -0.7859$.",
+            "generic": "Not quite. Write the Gamma kernel as a power of $\\lambda$ times an exponential, take logs, and subtract.",
+            "byKey": {
+              "power-44": "You used the power 44. The Gamma density carries $\\lambda^{\\text{shape} - 1} = \\lambda^{43}$.",
+              "as-scale": "You divided the step by 8.5, treating the rate as a scale. The kernel is $e^{-8.5\\lambda}$.",
+              "reversed": "That is $\\ln\\pi(5.2) - \\ln\\pi(6.1)$, the reverse move. Subtract the current point from the proposal."
+            }
+          },
+          "explain": {
+            "text": "The power term gains $43\\ln(6.1/5.2) = 6.8641$ and the exponential loses $8.5 \\times 0.9 = 7.65$. The net is $-0.7859$, so 6.1 has the lower posterior density."
+          }
+        },
+        {
+          "question": "Using the log ratio $-0.7859$ from part 2, what is the largest uniform draw $u$ that would accept the move? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.45571,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "reject-chance",
+                "value": 0.54429,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 2.19442,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The move is accepted when $u < e^{-0.7859} = 0.4557$.",
+            "generic": "Not quite. The move is accepted when $\\ln u$ is below the log ratio, so undo the log.",
+            "byKey": {
+              "reject-chance": "That is the chance of rejection, $1 - 0.4557$.",
+              "inverted": "That is $e^{0.7859}$, the ratio upside down. The proposal has the lower density, so its ratio is below 1."
+            }
+          },
+          "explain": {
+            "text": "Comparing $\\ln u$ with $-0.7859$ is the same as comparing $u$ with $e^{-0.7859} = 0.4557$. So the chain moves to 6.1 with chance 0.4557."
+          }
+        },
+        {
+          "question": "The sampler draws $u = 0.40$. Using the threshold 0.4557 from part 3, where is the chain after this step? Give 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 6.1,
+            "tol": {
+              "abs": 0.05
+            },
+            "wrong": [
+              {
+                "id": "stayed",
+                "value": 5.2,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.40 < 0.4557$, so the move is accepted and the chain stores 6.1.",
+            "generic": "Not quite. Compare $u$ with the threshold: below it the chain moves, otherwise it stays.",
+            "byKey": {
+              "stayed": "You rejected the move. $u = 0.40$ is below 0.4557, so the chain moves to 6.1."
+            }
+          },
+          "explain": {
+            "text": "The draw 0.40 falls under 0.4557, so the chain moves to 6.1. Had $u$ been 0.50, it would have stored 5.2 a second time, and that copy would count as a draw."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-quality-six-markets",
+      "difficulty": 5,
+      "skills": [
+        "sm-hier",
+        "sm-bayes"
+      ],
+      "prose": "A quality signal is backtested in six equity markets. Its mean monthly returns, in %, are 1.9, 0.4, 1.1, $-0.2$, 0.8 and 1.4, each with standard error 0.5. A hierarchical model takes each market's true mean $\\theta_j \\sim N(\\mu, \\tau^2)$, so each estimate is $N(\\mu, 0.5^2 + \\tau^2)$ before $\\theta_j$ is known. With one shared error, $\\hat\\mu$ is the plain mean, 0.9.",
+      "parts": [
+        {
+          "question": "What is the maximum likelihood estimate of the total variance $0.5^2 + \\tau^2$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.46,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "divisor-5",
+                "value": 0.552,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "root",
+                "value": 0.67823,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The squared gaps from 0.9 are 1, 0.25, 0.04, 1.21, 0.01 and 0.25, summing to 2.76. The MLE divides by 6: 0.46.",
+            "generic": "Not quite. Average the squared gaps of the six estimates from $\\hat\\mu = 0.9$.",
+            "byKey": {
+              "divisor-5": "That divides by 5, as the unbiased sample variance does. The maximum likelihood estimate divides by the 6 markets.",
+              "root": "That is the square root of the total variance. The question asks for the variance."
+            }
+          },
+          "explain": {
+            "text": "Before pooling, the six estimates share one normal distribution. The MLE of its variance is their mean squared gap, $2.76/6 = 0.46$."
+          }
+        },
+        {
+          "question": "Using the total variance 0.46 from part 1, what is $\\hat\\tau^2$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.21,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "from-divisor-5",
+                "value": 0.302,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "minus-se",
+                "value": -0.04,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\hat\\tau^2 = 0.46 - 0.25 = 0.21$: the spread left once the sampling noise is taken out.",
+            "generic": "Not quite. Take the noise variance $0.5^2$ off the total.",
+            "byKey": {
+              "from-divisor-5": "That starts from 0.552, the divisor-5 variance. Start from the MLE, 0.46.",
+              "minus-se": "You took off 0.5, the standard error, not its square 0.25."
+            }
+          },
+          "explain": {
+            "text": "Of the total 0.46, the backtest noise accounts for $0.5^2 = 0.25$. The remaining 0.21 is real spread between the markets' true means."
+          }
+        },
+        {
+          "question": "Using $\\hat\\tau^2 = 0.21$ from part 2, what share $B$ of each estimate's gap from $\\hat\\mu$ does shrinkage remove? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.54348,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "kept-share",
+                "value": 0.45652,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "sd-ratio",
+                "value": 0.52178,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$B = 0.25/(0.25 + 0.21) = 0.5435$: a little over half of each gap goes.",
+            "generic": "Not quite. Compare the noise variance with the total variance.",
+            "byKey": {
+              "kept-share": "That is $1 - B$, the share each estimate keeps.",
+              "sd-ratio": "You used standard deviations, $0.5/(0.5 + 0.4583)$. Use the variances 0.25 and 0.21."
+            }
+          },
+          "explain": {
+            "text": "Noise is 0.25 of the total 0.46, so $B = 0.5435$. All six markets shrink by this same share, because all six have the same error."
+          }
+        },
+        {
+          "question": "Using $B = 0.5435$ from part 3, what is the shrunk mean return of the market whose backtest lost 0.2% a month? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.39783,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "kept-b",
+                "value": 0.30217,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "towards-zero",
+                "value": -0.0913,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "raw",
+                "value": -0.2,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.9 + (1 - 0.5435)(-0.2 - 0.9) = 0.9 - 0.5022 = 0.3978$.",
+            "generic": "Not quite. Keep $1 - B$ of the gap between the estimate and 0.9.",
+            "byKey": {
+              "kept-b": "You kept $B$ of the gap, not $1 - B$.",
+              "towards-zero": "You shrank towards 0. The model pulls each market towards $\\hat\\mu = 0.9$.",
+              "raw": "That is the backtest's own estimate, before pooling."
+            }
+          },
+          "explain": {
+            "text": "The gap from 0.9 is $-1.1$, and the market keeps 0.4565 of it, $-0.5022$. So the loss-making backtest becomes a mean of about 0.40% a month."
+          }
+        },
+        {
+          "question": "Using the shrunk mean 0.3978 from part 4, what is $P(\\theta_j > 0)$ for this market? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.88052,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "se-as-sd",
+                "value": 0.78688,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "raw",
+                "value": 0.34458,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "lower",
+                "value": 0.11948,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "tau-as-sd",
+                "value": 0.80734,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The posterior precision is $1/0.25 + 1/0.21 = 8.762$, so the sd is 0.3378. Then $P(\\theta_j > 0) = \\Phi(0.3978/0.3378) = 0.8805$.",
+            "generic": "Not quite. Find the posterior sd from the two precisions, then the chance above 0.",
+            "byKey": {
+              "se-as-sd": "You used the standard error 0.5 as the posterior sd. Pooling adds the population's precision, so the sd falls to 0.3378.",
+              "raw": "That uses the raw $-0.2$ with its error 0.5. Shrinkage moves the centre to 0.3978.",
+              "lower": "That is the chance below 0.",
+              "tau-as-sd": "You used $\\hat\\tau = 0.4583$ as the sd. The posterior combines both precisions."
+            }
+          },
+          "explain": {
+            "text": "Alone, the backtest gives only a 34% chance of a positive mean. Pooled with the other five markets, the chance is 88%."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-dealer-enquiries",
+      "difficulty": 4,
+      "skills": [
+        "sm-hier",
+        "sm-bayes",
+        "sm-mcmc"
+      ],
+      "prose": "A bond dealer models the share of each client's price enquiries that end in a trade. Across clients the shares follow a $\\mathrm{Beta}(7, 13)$ population, fitted by empirical Bayes. One client traded on 17 of 40 enquiries. The dealer checks its MCMC code on this client against the closed form.",
+      "parts": [
+        {
+          "question": "What is the client's shrunk trade share, its posterior mean? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.4,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "raw",
+                "value": 0.425,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "population",
+                "value": 0.35,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "a-only",
+                "value": 0.51064,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The posterior is $\\mathrm{Beta}(7 + 17, 13 + 23) = \\mathrm{Beta}(24, 36)$, with mean $24/60 = 0.4$.",
+            "generic": "Not quite. Add the trades to the first parameter and the enquiries without a trade to the second.",
+            "byKey": {
+              "raw": "That is $17/40$, the client's record alone. The population's 20 imagined enquiries pull it down.",
+              "population": "That is the population mean, $7/20$. The client's 40 enquiries move it up.",
+              "a-only": "You added only the 7 to the 40 enquiries. The population's strength is $7 + 13 = 20$."
+            }
+          },
+          "explain": {
+            "text": "The client keeps weight $40/60$ on its own 0.425 and gives $20/60$ to the population's 0.35. That blend is 0.4."
+          }
+        },
+        {
+          "question": "Using the posterior $\\mathrm{Beta}(24, 36)$ from part 1, what is the posterior standard deviation of the client's share? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.06273,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "binomial",
+                "value": 0.07746,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.00393,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "no-plus-one",
+                "value": 0.06325,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$24 \\times 36/(60^2 \\times 61) = 0.003934$, whose root is 0.0627.",
+            "generic": "Not quite. Use the Beta variance $ab/((a + b)^2(a + b + 1))$ with $a = 24$ and $b = 36$.",
+            "byKey": {
+              "binomial": "That is $\\sqrt{0.4 \\times 0.6/40}$, from the client's 40 enquiries alone. The posterior also counts the population's 20, and divides by 61.",
+              "variance": "That is the variance. Take its root.",
+              "no-plus-one": "You divided by 60, not $a + b + 1 = 61$."
+            }
+          },
+          "explain": {
+            "text": "The variance is $864/219{,}600 = 0.003934$, so the sd is 0.0627. With 60 enquiries' worth of evidence, real and pooled, the share is known to about $\\pm 0.06$."
+          }
+        },
+        {
+          "question": "Four chains each keep 2,000 draws of the share after burn-in. Each behaves like an AR(1) series with $\\phi = 0.6$. The posterior sd from part 2 is 0.0627. What is the Monte Carlo standard error of the mean of all 8,000 draws? Give 5 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0014,
+            "tol": {
+              "abs": 1e-05
+            },
+            "wrong": [
+              {
+                "id": "independent",
+                "value": 0.0007,
+                "tol": {
+                  "abs": 1e-05
+                }
+              },
+              {
+                "id": "one-chain",
+                "value": 0.0028,
+                "tol": {
+                  "abs": 1e-05
+                }
+              },
+              {
+                "id": "no-plus-phi",
+                "value": 0.00111,
+                "tol": {
+                  "abs": 1e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each chain is worth $2000 \\times 0.4/1.6 = 500$ draws, 2,000 in all. So the error is $0.0627/\\sqrt{2000} = 0.00140$.",
+            "generic": "Not quite. Find the effective sample size of the 8,000 draws, then divide the posterior sd by its root.",
+            "byKey": {
+              "independent": "That treats the 8,000 draws as independent. Correlation at $\\phi = 0.6$ leaves them worth 2,000.",
+              "one-chain": "That uses one chain's 500 effective draws. The pooled mean uses all four chains: 2,000.",
+              "no-plus-phi": "You stopped at $8000 \\times 0.4 = 3{,}200$ effective draws. The AR(1) factor also divides by 1.6, leaving 2,000."
+            }
+          },
+          "explain": {
+            "text": "Autocorrelation of 0.6 shrinks 8,000 draws to an effective 2,000. The chains' mean of the share is then good to about $\\pm 0.0014$."
+          }
+        },
+        {
+          "question": "The pooled chain mean is 0.4045. The closed form from part 1 is 0.4, and the error from part 3 is 0.00140. How many Monte Carlo standard errors apart are the two? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.21,
+            "tol": {
+              "abs": 0.01
+            },
+            "wrong": [
+              {
+                "id": "independent",
+                "value": 6.42,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "posterior-sd",
+                "value": 0.07,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "one-chain",
+                "value": 1.6,
+                "tol": {
+                  "abs": 0.01
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(0.4045 - 0.4)/0.00140 = 3.21$ standard errors.",
+            "generic": "Not quite. Divide the gap between the two means by the Monte Carlo standard error.",
+            "byKey": {
+              "independent": "That divides by 0.00070, the error of 8,000 independent draws. The draws are worth only 2,000.",
+              "posterior-sd": "That divides by the posterior sd 0.0627. The yardstick for a chain mean is its Monte Carlo error.",
+              "one-chain": "That divides by 0.0028, one chain's error. The pooled mean uses all four chains."
+            }
+          },
+          "explain": {
+            "text": "A gap of 0.0045 is small beside the posterior's spread of 0.0627. Measured against the chains' own error of 0.0014, it is 3.21 standard errors."
+          }
+        },
+        {
+          "question": "Using the gap of 3.21 standard errors from part 4, what should the dealer conclude?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "fault",
+                "text": "The sampler is off: the gap is over three Monte Carlo errors, so find the fault before using it",
+                "correct": true
+              },
+              {
+                "id": "two-places",
+                "text": "Nothing is wrong: 0.4045 and 0.4 agree to two decimal places",
+                "why": "You judged the gap by eye. The yardstick is the Monte Carlo error, 0.0014, and the gap is 3.21 of them."
+              },
+              {
+                "id": "spread",
+                "text": "Nothing is wrong: the gap is tiny beside the posterior sd of 0.0627",
+                "why": "You compared the gap with the spread of the share itself. A chain mean's error is the Monte Carlo error, which is far smaller."
+              },
+              {
+                "id": "longer",
+                "text": "Run the chains longer until the two means agree",
+                "why": "You expected more draws to close the gap. They shrink the Monte Carlo error, so a real bias stands out more."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A correct sampler rarely misses by more than 3 standard errors, so the code has a fault to find.",
+            "generic": "Not quite. Judge the gap against the Monte Carlo error, not against the posterior's spread.",
+            "byKey": {
+              "two-places": "You trusted agreement to two decimal places. Against an error of 0.0014, a gap of 0.0045 is large.",
+              "spread": "You measured the gap against the posterior sd. That sd is the doubt about the share, not the chains' error."
+            }
+          },
+          "explain": {
+            "text": "If the sampler were right, a gap of 3.21 standard errors would occur about once in 750 runs. So the code has a fault, which matters most for clients with no closed form to check against."
+          }
+        }
+      ]
+    }
+  ]
+}
