@@ -236,7 +236,131 @@ def level1():
     lv.report()
 
 
+# ---------------------------------------------------------------- level 2
+def level2():
+    import pandas as pd
+    from scipy.optimize import brentq
+    lv = Level('garch', 2)
+    shape(2, None)
+    L2PI = math.log(2 * math.pi)
+
+    # P1 EWMA against GARCH, two days, then day 3's score
+    I = 'p-two-filters-one-score'
+    lam, s0 = F(92, 100), F(144, 100)
+    r = [F(-25, 10), F(5, 10), F(-32, 10)]
+    e2 = lam * s0 + (1 - lam) * r[0] ** 2
+    e3 = lam * e2 + (1 - lam) * r[1] ** 2
+    # method 2: pandas ewm with the start fed in front (lesson 5's alignment)
+    ew = pd.Series([1.44, 6.25, 0.25]).ewm(alpha=0.08, adjust=False).mean().to_numpy()
+    num(2, I, 1, e2, ew[1], {'swapped': (1 - lam) * s0 + lam * r[0] ** 2, 'no-square': lam * s0 + (1 - lam) * r[0],
+                             'decimal': e2 / 10000}, 1.8248, slip_tol=1e-8)
+    num(2, I, 2, e3, ew[2], {'old-return': lam * e2 + (1 - lam) * r[0] ** 2, 'from-start': lam * s0 + (1 - lam) * r[1] ** 2}, 1.6988, agree=1e-9, slip_tol=1e-4)
+    w, a, b = F(4, 100), F(7, 100), F(90, 100)
+    g2 = w + a * r[0] ** 2 + b * s0
+    g3 = w + a * r[1] ** 2 + b * g2
+    # method 2: the unrolled two-step formula
+    g3b = w * (1 + b) + a * (r[1] ** 2 + b * r[0] ** 2) + b * b * s0
+    num(2, I, 3, g3, g3b, {'one-step': w + a * r[1] ** 2 + b * s0, 'stopped': g2, 'no-omega': a * r[1] ** 2 + b * g2,
+                           'decimal': g3 / 10000}, 1.6537, slip_tol=1e-4)
+    ll = lambda v, x: -0.5 * (L2PI + math.log(v) + x * x / v)
+    d = ll(float(e3), -3.2) - ll(float(g3), -3.2)
+    d2 = -0.5 * (math.log(float(e3) / float(g3))) - 0.5 * float(F(1024, 100) / e3 - F(1024, 100) / g3)
+    num(2, I, 4, d, d2, {'sign': -d, 'no-half': 2 * d, 'log-only': -0.5 * math.log(float(e3) / float(g3))}, 0.069, slip_tol=1e-4)
+    said(lv, 0, 1, 'feedback.correct', [1.3248, 0.5, 1.8248])
+    said(lv, 0, 2, 'feedback.correct', [1.6788, 0.02, 1.6988])
+    said(lv, 0, 3, 'feedback.correct', [1.7735, 1.6537])
+    said(lv, 0, 3, 'explain.text', [1.7735, 0.4375, 0.0175, 1.6537, 1.6988])
+    said(lv, 0, 4, 'feedback.correct', [-4.198, -4.267, 0.069])
+    lv.claim(abs(ll(float(e3), -3.2) + 4.198) < 5e-4 and abs(ll(float(g3), -3.2) + 4.267) < 5e-4, 'L2 P1 scores -4.198 and -4.267')
+    lv.claim(abs(0.5 * math.log(float(e3 / g3)) - 0.013) < 5e-4 and abs(0.5 * float(F(1024, 100) / g3 - F(1024, 100) / e3) - 0.082) < 5e-4,
+             'L2 P1 ln term 0.013, surprise term 0.082')
+    lv.claim(r[0] ** 2 > 4 * s0, 'L2 P1 6.25 is more than four times 1.44')
+    lv.claim(abs(0.04 + 0.9 * 1.44 + 0.4375 - 1.7735) < 1e-12, 'L2 P1 jump 0.4375 on 0.04 + 0.90 x 1.44')
+
+    # P2 weekly ARCH(1) and a GARCH with the same level
+    I = 'p-weekly-gas-arch'
+    om, al = F(6), F(35, 100)
+    V = om / (1 - al)
+    it = 0.0
+    for _ in range(500):                               # method 2: iterate the expected-variance map to its fixed point
+        it = 6.0 + 0.35 * it
+    num(2, I, 1, V, it, {'omega': om, 'over-alpha': om / al, 'times': om * al, 'decimal': V / 10000}, 9.23, agree=1e-9, slip_tol=1e-4)
+    ann = math.sqrt(52 * V) / 100
+    num(2, I, 2, ann, float(np.sqrt(np.sum(np.full(52, it)))) / 100,
+        {'days': math.sqrt(252 * V) / 100, 'omega': math.sqrt(52 * om) / 100}, 0.2191, slip_tol=6e-6)
+    ok(52 * V == 480, 'L2 P2 52V = 480 exactly')
+    nw = om + al * 144
+    nn = om + al * nw
+    num(2, I, 3, nn, V + al * (nw - V), {'next-week': nw, 'alpha-sq': V + al ** 2 * (nw - V), 'level': V, 'decimal': nn / 10000}, 25.74, slip_tol=1e-3)
+    wg = V * (1 - F(12, 100) - F(80, 100))
+    wg2 = brentq(lambda x: x / (1 - 0.92) - float(V), 1e-6, 10)
+    num(2, I, 4, wg, wg2, {'alpha-only': V * F(12, 100), 'arch-omega': om * F(8, 100), 'decimal': wg / 10000}, 0.7385, agree=1e-9, slip_tol=1e-4)
+    gn = wg + F(12, 100) * 144 + F(80, 100) * V
+    gn2 = float(V) * 0.08 + 0.12 * 144 + 0.8 * float(V)
+    num(2, I, 5, gn, gn2, {'no-beta': wg + F(12, 100) * 144, 'swapped': wg + F(80, 100) * 144 + F(12, 100) * V, 'arch': nw,
+                           'decimal': gn / 10000}, 25.40, agree=1e-9, slip_tol=1e-4)
+    said(lv, 1, 1, 'feedback.correct', [9.23])
+    said(lv, 1, 1, 'explain.text', [9.23, 3.04])
+    said(lv, 1, 2, 'feedback.correct', [480, 21.91])
+    said(lv, 1, 3, 'feedback.correct', [56.4, 25.74])
+    said(lv, 1, 3, 'explain.text', [56.4, 25.74, 16.51])
+    said(lv, 1, 5, 'feedback.correct', [0.7385, 17.28, 7.3846, 25.40])
+    lv.claim(abs(math.sqrt(float(V)) - 3.04) < 5e-3 and abs(float(al * (nw - V)) - 16.51) < 5e-3, 'L2 P2 weekly sd 3.04, gap 16.51')
+    lv.claim(abs(float(F(80, 100) * V) - 7.38) < 5e-3, 'L2 P2 beta x V = 7.38')
+
+    # P3 GARCH by moments
+    I = 'p-silver-moment-fit'
+    p = F(24, 100) / F(25, 100)
+    acf = [0.25 * float(p) ** (k - 3) for k in (3, 4)]
+    num(2, I, 1, p, acf[1] / acf[0], {'upside-down': 1 / p, 'difference': F(25, 100) - F(24, 100)}, 0.96, slip_tol=1e-4)
+    hl = math.log(0.5) / math.log(float(p))
+    hl2 = brentq(lambda h: 0.96 ** h - 0.5, 1, 100)
+    num(2, I, 2, hl, hl2, {'mean-age': 1 / (1 - p), 'half-mean': F(1, 2) / (1 - p)}, 16.98, agree=1e-9, slip_tol=1e-4)
+    vbar = F(289, 100)
+    om3 = vbar * (1 - p)
+    num(2, I, 3, om3, brentq(lambda x: x / 0.04 - 2.89, 1e-6, 5), {'times-p': vbar * p, 'sample': vbar, 'decimal': om3 / 10000},
+        0.1156, agree=1e-9, slip_tol=1e-4)
+    t = om3 + F(9, 100) * F(2025, 100) + F(87, 100) * vbar
+    num(2, I, 4, math.sqrt(t) / 100, float(np.sqrt(0.1156 + 0.09 * 4.5 ** 2 + 0.87 * 2.89)) / 100,
+        {'variance': t / 100, 'no-square': math.sqrt(om3 + F(9, 100) * F(45, 10) + F(87, 100) * vbar) / 100,
+         'annual': math.sqrt(252 * t) / 100}, 0.0211, slip_tol=6e-6)
+    said(lv, 2, 4, 'feedback.correct', [1.8225, 2.5143, 4.4524, 2.11])
+    lv.claim(abs(math.sqrt(t) / math.sqrt(2.89) - 1.24) < 5e-3, 'L2 P3 tomorrow 24% above the long-run 1.70%')
+    lv.claim(abs(hl - 17) < 0.5, 'L2 P3 half-life about 17 days')
+
+    # P4 EWMA and ARCH after one fall, then quiet days
+    I = 'p-crash-then-quiet'
+    lam4, s4 = F(95, 100), F(121, 100)
+    e1 = lam4 * s4 + (1 - lam4) * 36
+    num(2, I, 1, e1, pd.Series([1.21, 36.0]).ewm(alpha=0.05, adjust=False).mean().iloc[-1],
+        {'swapped': (1 - lam4) * s4 + lam4 * 36, 'no-square': lam4 * s4 + (1 - lam4) * (-6), 'decimal': e1 / 10000}, 2.9495, slip_tol=1e-4)
+    arch = F(8, 10) + F(45, 100) * 36
+    ok(arch == 17, 'L2 P4 ARCH gives 17.0')
+    num(2, I, 2, math.sqrt(arch / e1), float(np.exp(0.5 * (np.log(17.0) - np.log(float(e1))))),
+        {'variance': arch / e1, 'upside-down': math.sqrt(e1 / arch)}, 2.40, slip_tol=1e-4)
+    q = F(1, 4)
+    e2 = lam4 * e1 + (1 - lam4) * q
+    num(2, I, 3, e2, q + lam4 * (e1 - q), {'no-news': lam4 * e1, 'abs': lam4 * e1 + (1 - lam4) * F(1, 2), 'decimal': e2 / 10000}, 2.8145, slip_tol=1e-4)
+    floor = F(8, 10) + F(45, 100) * q
+    ev, kk = float(e1), 0
+    while ev >= float(floor):
+        ev, kk = 0.95 * ev + 0.05 * 0.25, kk + 1
+    kf = math.log(float((floor - q) / (e1 - q))) / math.log(0.95)
+    num(2, I, 4, math.ceil(kf), kk, {'round-down': kk - 1, 'no-floor': math.ceil(math.log(float(floor / e1)) / math.log(0.95))}, 28)
+    said(lv, 3, 1, 'feedback.correct', [1.1495, 1.8, 2.9495])
+    said(lv, 3, 2, 'feedback.correct', ['5.764', 2.40])
+    said(lv, 3, 3, 'feedback.correct', [2.8020, 0.0125, 2.8145])
+    said(lv, 3, 3, 'explain.text', [0.0125, 2.8145, 0.9125])
+    said(lv, 3, 4, 'feedback.correct', [0.2454, 27.4, 28])
+    lv.claim(abs(0.25 + 0.95 ** 27 * 2.6995 - 0.93) < 5e-3, 'L2 P4 after 27 days about 0.93')
+    lv.claim(36 / 1.21 > 29.5 and abs(0.45 / 0.05 - 9) < 1e-12, 'L2 P4 36 is about 30 times 1.21; 0.45 is nine times 0.05')
+    lv.check_wrongs('problems')
+    lv.report()
+
+
 if SETS[1]:
     level1()
+if SETS[2]:
+    level2()
 print(f'{checks - len(fails)} of {checks} direct checks passed')
 sys.exit(1 if fails else 0)

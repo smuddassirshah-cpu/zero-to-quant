@@ -1,0 +1,821 @@
+{
+  "id": "problems-2",
+  "course": "garch",
+  "level": 2,
+  "title": "Problems: models",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-two-filters-one-score",
+      "difficulty": 4,
+      "skills": [
+        "gv-models"
+      ],
+      "prose": "A shipping company's share, in %. Two variance filters both stand at 1.44 %² for day 1: an EWMA with $\\lambda = 0.92$, and a GARCH(1,1) with $\\omega = 0.04$, $\\alpha = 0.07$, $\\beta = 0.90$. The returns on days 1, 2 and 3 are $-2.5$, $+0.5$ and $-3.2$.",
+      "parts": [
+        {
+          "question": "What is the EWMA variance for day 2, in %²? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.8248,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "EWMA variance for day 2",
+            "wrong": [
+              {
+                "id": "swapped",
+                "value": 5.8652,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 1.1248,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 0.00018248,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.92 \\times 1.44 + 0.08 \\times 6.25 = 1.3248 + 0.5 = 1.8248$ %².",
+            "generic": "Not quite. Keep $\\lambda$ of the old variance and add $1 - \\lambda$ of day 1's squared return.",
+            "byKey": {
+              "swapped": "You put 0.92 on the squared return and 0.08 on the old variance. $\\lambda$ belongs to the old variance.",
+              "no-square": "You added $0.08 \\times (-2.5)$, a negative amount. The filter uses the square, 6.25, whatever the sign.",
+              "decimal": "You worked in decimals. The returns and the start are in %, so the answer is in %²: 1.8248."
+            }
+          },
+          "explain": {
+            "text": "Day 2's figure is set on the evening of day 1, from day 1's variance and day 1's return. The squared return, 6.25, is more than four times the old 1.44, so the estimate rises, to 1.8248."
+          }
+        },
+        {
+          "question": "Using 1.8248 %² from part 1 and day 2's return, what is the EWMA variance for day 3? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.6988,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "EWMA variance for day 3",
+            "wrong": [
+              {
+                "id": "old-return",
+                "value": 2.1788,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "from-start",
+                "value": 1.3448,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.92 \\times 1.8248 + 0.08 \\times 0.25 = 1.6788 + 0.02 = 1.6988$ %².",
+            "generic": "Not quite. Update 1.8248 with day 2's squared return, $0.5^2 = 0.25$.",
+            "byKey": {
+              "old-return": "You fed in day 1's $-2.5$ again. Day 3's figure uses day 2's return, $+0.5$.",
+              "from-start": "You updated 1.44, the day 1 value. Day 3 builds on day 2's 1.8248."
+            }
+          },
+          "explain": {
+            "text": "Day 2 was calm, so its square, 0.25, sits below the estimate. The estimate keeps 92% of 1.8248 and adds $0.08 \\times 0.25$. It falls to 1.6988 %²."
+          }
+        },
+        {
+          "question": "Run the GARCH(1,1) from the same 1.44 %² through days 1 and 2. What is its variance for day 3, in %²? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.6537,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "GARCH variance for day 3",
+            "wrong": [
+              {
+                "id": "one-step",
+                "value": 1.3535,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "stopped",
+                "value": 1.7735,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "no-omega",
+                "value": 1.6137,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 0.00016537,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Day 2: $0.04 + 0.07 \\times 6.25 + 0.90 \\times 1.44 = 1.7735$. Day 3: $0.04 + 0.07 \\times 0.25 + 0.90 \\times 1.7735 = 1.6537$ %².",
+            "generic": "Not quite. Two steps: day 1's return gives day 2's variance, then day 2's return gives day 3's.",
+            "byKey": {
+              "one-step": "You used day 2's return on the day 1 variance and skipped a step. Day 1's $-2.5$ enters first.",
+              "stopped": "That is day 2's variance, 1.7735. One more step with day 2's return gives day 3's.",
+              "no-omega": "You left out $\\omega = 0.04$ at the second step. Each day adds it.",
+              "decimal": "You converted to decimals. The parameters here are for returns in %, so stay in %²: 1.6537."
+            }
+          },
+          "explain": {
+            "text": "Day 1's fall lifts the variance to 1.7735, a jump of $0.07 \\times 6.25 = 0.4375$ on top of $0.04 + 0.90 \\times 1.44$. The calm day 2 then adds only 0.0175 of news. So day 3 stands at 1.6537 %², a little below the EWMA's 1.6988."
+          }
+        },
+        {
+          "question": "Day 3's return is $-3.2$. With $\\ell = -\\tfrac12(\\ln 2\\pi + \\ln\\sigma^2 + r^2/\\sigma^2)$, use 1.6988 from part 2 and 1.6537 from part 3. What is $\\ell_{\\text{EWMA}} - \\ell_{\\text{GARCH}}$ for day 3? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0688,
+            "tol": {
+              "abs": 0.0006
+            },
+            "label": "Difference in log-likelihood",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": -0.0688,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "no-half",
+                "value": 0.1377,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "log-only",
+                "value": -0.0135,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\ell_{\\text{EWMA}} = -4.198$ and $\\ell_{\\text{GARCH}} = -4.267$, so the difference is $0.069$: the EWMA's larger variance takes the $-3.2$ better.",
+            "generic": "Not quite. Score day 3 under each variance; $\\ln 2\\pi$ cancels in the difference.",
+            "byKey": {
+              "sign": "You subtracted the other way. EWMA scores $-4.198$, above GARCH's $-4.267$, so the difference is positive.",
+              "no-half": "You dropped the $\\tfrac12$ in front. The difference is half of 0.1377.",
+              "log-only": "You compared the $\\ln\\sigma^2$ terms alone. The surprise term $10.24/\\sigma^2$ matters more here."
+            }
+          },
+          "explain": {
+            "text": "The $\\ln 2\\pi$ terms cancel, leaving $-\\tfrac12(\\ln 1.6988 - \\ln 1.6537) - \\tfrac12(10.24/1.6988 - 10.24/1.6537)$. The first term costs EWMA $0.013$; the second gives it back $0.082$. Net 0.069 to EWMA on this one day: a big move favours the filter that stayed higher."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-weekly-gas-arch",
+      "difficulty": 4,
+      "skills": [
+        "gv-models",
+        "gv-forecast"
+      ],
+      "prose": "An analyst fits ARCH(1) to weekly natural gas futures returns, in %: $\\sigma_t^2 = 6.0 + 0.35\\,r_{t-1}^2$, where $t$ counts weeks. This week the contract fell 12%.",
+      "parts": [
+        {
+          "question": "What is the unconditional weekly variance, in %²? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 9.2308,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Unconditional weekly variance",
+            "wrong": [
+              {
+                "id": "omega",
+                "value": 6.0,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "over-alpha",
+                "value": 17.1429,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "times",
+                "value": 2.1,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 0.00092308,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$V = 6.0/(1 - 0.35) = 6.0/0.65 = 9.23$ %² a week.",
+            "generic": "Not quite. Solve $V = 6.0 + 0.35V$.",
+            "byKey": {
+              "omega": "You took the floor 6.0 as the level. Each week also carries 0.35 of the last squared return, which tops it up.",
+              "over-alpha": "You divided by $\\alpha$ rather than $1 - \\alpha$: $6.0/0.35$.",
+              "times": "You multiplied $\\omega$ by $\\alpha$. The level is $\\omega/(1 - \\alpha)$.",
+              "decimal": "You gave the variance in decimals. The model is in %, so the level is 9.23 %²."
+            }
+          },
+          "explain": {
+            "text": "Stationary means the expected variance is one number $V$ every week. Taking expectations of the rule gives $V = 6.0 + 0.35V$, so $V = 6.0/0.65 = 9.23$ %² a week. That is a weekly sd of about 3.04%."
+          }
+        },
+        {
+          "question": "Using $V = 9.23$ %² a week from part 1, what is the annualised volatility? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.219089,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "label": "Annual volatility in per cent",
+            "accept": "21.91%: $\\sqrt{52 \\times 9.2308}$.",
+            "wrong": [
+              {
+                "id": "days",
+                "value": 0.4823,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "omega",
+                "value": 0.176635,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$52 \\times 9.2308 = 480$, and $\\sqrt{480} = 21.91\\%$ a year.",
+            "generic": "Not quite. A year has 52 weeks: scale the variance by 52, then take the root.",
+            "byKey": {
+              "days": "You used 252, the count of trading days. These are weekly returns, 52 a year.",
+              "omega": "You annualised $\\omega = 6.0$. The long-run level is $V = 9.23$."
+            }
+          },
+          "explain": {
+            "text": "Weekly variances add over 52 weeks: $52 \\times 9.2308 = 480$ %². The root is $21.91\\%$ a year. The rule needs uncorrelated weeks, which ARCH returns are."
+          }
+        },
+        {
+          "question": "After this week's 12% fall, what variance does the model expect for the week after next, in %²? Next week's variance is $6.0 + 0.35 \\times 144$, and $E[r^2] = \\sigma^2$. Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 25.74,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Expected variance in two weeks",
+            "wrong": [
+              {
+                "id": "next-week",
+                "value": 56.4,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "alpha-sq",
+                "value": 15.009,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "level",
+                "value": 9.2308,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 0.002574,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Next week: $6.0 + 0.35 \\times 144 = 56.4$. The week after: $6.0 + 0.35 \\times 56.4 = 25.74$ %².",
+            "generic": "Not quite. Find next week's variance, then use it as the expected squared return in the rule once more.",
+            "byKey": {
+              "next-week": "That is next week's variance, 56.4. The question asks one week further on.",
+              "alpha-sq": "You shrank the gap to $V$ by $0.35^2$, two weeks' worth. From next week to the week after is one step: one factor of 0.35.",
+              "level": "You jumped straight to the long-run level. The gap to it shrinks by 0.35 a week, not all at once.",
+              "decimal": "You switched to decimals. Keep the model's units, %²: 25.74."
+            }
+          },
+          "explain": {
+            "text": "Next week's return is not known, but its expected square is next week's variance, 56.4. So the week after expects $6.0 + 0.35 \\times 56.4 = 25.74$. Equivalently, the gap $56.4 - 9.23$ shrinks by 0.35 to $16.51$ above $V$."
+          }
+        },
+        {
+          "question": "A GARCH(1,1) refit with $\\alpha = 0.12$ and $\\beta = 0.80$ keeps the same level $V = 9.2308$ from part 1. What is its $\\omega$, in %²? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.7385,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "GARCH omega",
+            "wrong": [
+              {
+                "id": "alpha-only",
+                "value": 1.1077,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "arch-omega",
+                "value": 0.48,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 7.385e-05,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\omega = V(1 - \\alpha - \\beta) = 9.2308 \\times 0.08 = 0.7385$ %².",
+            "generic": "Not quite. Rearrange $V = \\omega/(1 - \\alpha - \\beta)$ for $\\omega$.",
+            "byKey": {
+              "alpha-only": "You multiplied by $\\alpha = 0.12$. $V$ times the leak gives $\\omega$, and the leak is $1 - 0.12 - 0.80 = 0.08$.",
+              "arch-omega": "You scaled the ARCH floor, $6.0 \\times 0.08$. The level to keep is $V = 9.2308$, not 6.0.",
+              "decimal": "That is $\\omega$ for returns in decimals. The fit is in %, so $\\omega = 0.7385$ %²."
+            }
+          },
+          "explain": {
+            "text": "The level is $\\omega$ over the leak, so $\\omega$ is the level times the leak. The leak is $1 - 0.12 - 0.80 = 0.08$. So $\\omega = 9.2308 \\times 0.08 = 0.7385$ %²."
+          }
+        },
+        {
+          "question": "Take this week's GARCH variance at $V = 9.2308$. Using $\\omega = 0.7385$ from part 4, what is next week's GARCH variance after the 12% fall, in %²? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 25.4031,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "GARCH variance next week",
+            "wrong": [
+              {
+                "id": "no-beta",
+                "value": 18.0185,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "swapped",
+                "value": 117.0462,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "arch",
+                "value": 56.4,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 0.00254031,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.7385 + 0.12 \\times 144 + 0.80 \\times 9.2308 = 0.7385 + 17.28 + 7.3846 = 25.40$ %².",
+            "generic": "Not quite. Add $\\omega$, $\\alpha$ times the squared fall and $\\beta$ times this week's variance.",
+            "byKey": {
+              "no-beta": "You left out $\\beta \\times 9.2308 = 7.38$. GARCH carries this week's variance forward.",
+              "swapped": "You gave 0.80 to the squared return. That weight belongs to the variance; news gets $\\alpha = 0.12$.",
+              "arch": "That is the ARCH figure, 56.4. The GARCH fit reacts to news with 0.12, not 0.35.",
+              "decimal": "You gave it in decimals. In the model's %² it is 25.40."
+            }
+          },
+          "explain": {
+            "text": "GARCH reacts with $\\alpha = 0.12$, so the fall adds 17.28; the rest is $\\omega$ plus $0.80 \\times 9.23$. Next week stands at 25.40 %², less than half ARCH's 56.4. GARCH jumps less and then fades slowly, by 0.92 a week."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-silver-moment-fit",
+      "difficulty": 5,
+      "skills": [
+        "gv-models",
+        "gv-forecast"
+      ],
+      "prose": "A quant fits GARCH(1,1) to a silver fund's daily returns, in %, without an optimiser. The sample variance is 2.89 %². The ACF of $r_t^2$ is 0.25 at lag 3 and 0.24 at lag 4. For GARCH(1,1), from lag 2 on, each lag of that ACF is $\\alpha + \\beta$ times the one before.",
+      "parts": [
+        {
+          "question": "What persistence $\\alpha + \\beta$ do the two ACF values imply? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.96,
+            "tol": {
+              "abs": 0.001
+            },
+            "label": "Persistence",
+            "wrong": [
+              {
+                "id": "upside-down",
+                "value": 1.0417,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "difference",
+                "value": 0.01,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.24/0.25 = 0.96$.",
+            "generic": "Not quite. Divide the lag-4 value by the lag-3 value.",
+            "byKey": {
+              "upside-down": "You divided 0.25 by 0.24. Each lag is the previous one times $\\alpha + \\beta$, so lag 4 over lag 3.",
+              "difference": "You subtracted. The ACF falls by a factor, not by a fixed step."
+            }
+          },
+          "explain": {
+            "text": "From lag 2 on the squared-return ACF decays geometrically, like an AR(1) with coefficient $\\alpha + \\beta$. So the ratio of neighbours is the persistence: $0.24/0.25 = 0.96$. Two noisy ACF values make this a rough estimate."
+          }
+        },
+        {
+          "question": "Using the persistence 0.96 from part 1, what is the half-life of a variance shock, in days? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 16.9797,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Half-life in days",
+            "wrong": [
+              {
+                "id": "mean-age",
+                "value": 25.0,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "half-mean",
+                "value": 12.5,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\ln 0.5/\\ln 0.96 = 16.98$ days.",
+            "generic": "Not quite. Solve $0.96^h = 0.5$ for $h$.",
+            "byKey": {
+              "mean-age": "You took $1/(1 - 0.96) = 25$. That is an average age; the half-life solves $0.96^h = 0.5$.",
+              "half-mean": "You halved $1/(1 - 0.96)$. Solve $0.96^h = 0.5$ with logs instead."
+            }
+          },
+          "explain": {
+            "text": "A variance shock keeps the fraction $0.96^h$ of itself after $h$ days. Setting that to one half gives $h = \\ln 0.5/\\ln 0.96 = 16.98$ days. At this persistence a storm halves in under a month."
+          }
+        },
+        {
+          "question": "The quant targets the variance: the long run is set to the sample variance. Using the persistence 0.96, what is $\\omega$, in %²? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1156,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "Omega",
+            "wrong": [
+              {
+                "id": "times-p",
+                "value": 2.7744,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "sample",
+                "value": 2.89,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 1.156e-05,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\omega = 2.89 \\times (1 - 0.96) = 2.89 \\times 0.04 = 0.1156$ %².",
+            "generic": "Not quite. With $V_L = 2.89$, $\\omega$ is the long run times the leak $1 - \\alpha - \\beta$.",
+            "byKey": {
+              "times-p": "You multiplied by the persistence, 0.96. $\\omega$ refills only the leak, $1 - 0.96 = 0.04$.",
+              "sample": "That is the target level itself. $\\omega$ is that level times $1 - 0.96$.",
+              "decimal": "That is $\\omega$ for returns in decimals. For returns in % it is 0.1156 %²."
+            }
+          },
+          "explain": {
+            "text": "Targeting pins $V_L = \\omega/(1 - \\alpha - \\beta)$ at 2.89 and solves for $\\omega$. Part 1 sets $1 - \\alpha - \\beta = 0.04$. So $\\omega = 0.04 \\times 2.89 = 0.1156$ %²."
+          }
+        },
+        {
+          "question": "The lag-1 ACF then points to $\\alpha = 0.09$, so $\\beta = 0.87$. Today's variance is 2.89 %² and today's return is $+4.5\\%$. Using $\\omega = 0.1156$ from part 3, what is tomorrow's daily volatility? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.021101,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "label": "Tomorrow's volatility in per cent",
+            "accept": "2.11%: $\\sqrt{4.4524}$.",
+            "wrong": [
+              {
+                "id": "variance",
+                "value": 0.044524,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 0.017421,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "annual",
+                "value": 0.334963,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.1156 + 0.09 \\times 20.25 + 0.87 \\times 2.89 = 0.1156 + 1.8225 + 2.5143 = 4.4524$ %², so $\\sigma = 2.11\\%$.",
+            "generic": "Not quite. Build tomorrow's variance from $\\omega$, the squared return and today's variance, then take the root.",
+            "byKey": {
+              "variance": "That is the variance, 4.4524 %². A volatility is its root.",
+              "no-square": "You used $0.09 \\times 4.5$ rather than $0.09 \\times 4.5^2$. The model reacts to the squared move.",
+              "annual": "You annualised. The question asks for tomorrow's daily figure."
+            }
+          },
+          "explain": {
+            "text": "The $+4.5\\%$ day adds $0.09 \\times 20.25 = 1.8225$ of news to the carried $0.87 \\times 2.89$. With $\\omega$ the total is 4.4524 %², a daily volatility of $2.11\\%$. That is 24% above the long-run $1.70\\%$; the excess variance halves in about 17 days."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-crash-then-quiet",
+      "difficulty": 4,
+      "skills": [
+        "gv-models"
+      ],
+      "prose": "A broker runs two variance models on a bank share, in %: an EWMA with $\\lambda = 0.95$ standing at 1.21 %², and an ARCH(1), $\\sigma_t^2 = 0.8 + 0.45\\,r_{t-1}^2$. The share falls 6% in a day. Every day after that moves exactly 0.5%.",
+      "parts": [
+        {
+          "question": "What is the EWMA variance for the day after the fall, in %²? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.9495,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "EWMA variance after the fall",
+            "wrong": [
+              {
+                "id": "swapped",
+                "value": 34.2605,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 0.8495,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 0.00029495,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.95 \\times 1.21 + 0.05 \\times 36 = 1.1495 + 1.8 = 2.9495$ %².",
+            "generic": "Not quite. Keep 95% of 1.21 and add 5% of the squared fall.",
+            "byKey": {
+              "swapped": "You gave 0.95 to the squared fall. $\\lambda$ is the weight on the old variance.",
+              "no-square": "You used $0.05 \\times (-6)$. The filter squares the move: $36$.",
+              "decimal": "You gave it in decimals. Everything here is in %, so the variance is 2.9495 %²."
+            }
+          },
+          "explain": {
+            "text": "The squared fall, 36, is 30 times the estimate, but it gets only 5% weight. That adds 1.8 to the 1.1495 carried over. The EWMA more than doubles, to 2.9495 %²."
+          }
+        },
+        {
+          "question": "ARCH(1) gives $0.8 + 0.45 \\times 36 = 17.0$ %² for the same day. Using 2.9495 from part 1, how many times the EWMA volatility is the ARCH volatility? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.4008,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Ratio of volatilities",
+            "wrong": [
+              {
+                "id": "variance",
+                "value": 5.7637,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "upside-down",
+                "value": 0.4165,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sqrt{17.0/2.9495} = \\sqrt{5.764} = 2.40$.",
+            "generic": "Not quite. Take the ratio of the variances, then its root.",
+            "byKey": {
+              "variance": "That is the ratio of the variances, 5.76. Volatilities are roots: $\\sqrt{5.76} = 2.40$.",
+              "upside-down": "You divided EWMA by ARCH. The question asks for ARCH over EWMA."
+            }
+          },
+          "explain": {
+            "text": "ARCH puts 0.45 on yesterday's squared return, nine times EWMA's 0.05, and nothing on its own past. So it leaps to 17.0 %² against 2.9495. In volatility the ratio is $\\sqrt{5.764} = 2.40$."
+          }
+        },
+        {
+          "question": "The next day moves 0.5%. Using 2.9495 from part 1, what is the EWMA variance for the day after that, in %²? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.8145,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "EWMA variance two days on",
+            "wrong": [
+              {
+                "id": "no-news",
+                "value": 2.802,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "abs",
+                "value": 2.827,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 0.00028145,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.95 \\times 2.9495 + 0.05 \\times 0.25 = 2.8020 + 0.0125 = 2.8145$ %².",
+            "generic": "Not quite. Update 2.9495 with the squared quiet move, $0.5^2 = 0.25$.",
+            "byKey": {
+              "no-news": "You decayed 2.9495 by 0.95 and stopped. The quiet day still adds $0.05 \\times 0.25$.",
+              "abs": "You added $0.05 \\times 0.5$. The filter takes the square, 0.25.",
+              "decimal": "You gave it in decimals. In %² it is 2.8145."
+            }
+          },
+          "explain": {
+            "text": "A 0.5% day squares to 0.25, well below the estimate, so the EWMA falls. It keeps 95% of 2.9495 and adds 0.0125, giving 2.8145. ARCH, meanwhile, drops at once to $0.8 + 0.45 \\times 0.25 = 0.9125$."
+          }
+        },
+        {
+          "question": "On quiet days the EWMA after $k$ of them is $0.25 + 0.95^k(2.9495 - 0.25)$, using part 1's 2.9495. ARCH stays at 0.9125. After how many quiet days is the EWMA first below 0.9125? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 28,
+            "tol": {
+              "abs": 0
+            },
+            "label": "Quiet days",
+            "wrong": [
+              {
+                "id": "round-down",
+                "value": 27,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-floor",
+                "value": 23,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.95^k < (0.9125 - 0.25)/(2.9495 - 0.25) = 0.2454$ needs $k > \\ln 0.2454/\\ln 0.95 = 27.4$, so 28 days.",
+            "generic": "Not quite. Solve $0.25 + 0.95^k \\times 2.6995 < 0.9125$ for the smallest whole $k$.",
+            "byKey": {
+              "round-down": "After 27 days the EWMA is still about 0.93, above 0.9125. Round $27.4$ up.",
+              "no-floor": "You let the EWMA decay towards 0. On 0.5% days it settles at 0.25, so the gap to cross is $0.9125 - 0.25$."
+            }
+          },
+          "explain": {
+            "text": "The EWMA is pulled towards the quiet days' 0.25, and its excess shrinks by 0.95 a day. It needs $0.95^k$ below 0.2454, which first happens at $k = 28$. ARCH forgets the fall in one day; the EWMA still remembers it after five weeks of calm."
+          }
+        }
+      ]
+    }
+  ]
+}
