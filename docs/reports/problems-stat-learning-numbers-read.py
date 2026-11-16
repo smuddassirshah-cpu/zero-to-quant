@@ -388,113 +388,122 @@ I.wrong(5, "carried", rd / 2)
 I.all_wrongs_named(5, ["times-sd", "not-converted", "carried"])
 I.reg(120, 90 / 120, 100 / 120, 0.01, 20.01, 0.9, 45, 25, 50, 2000, 10000, 100, 2, z / 2 * 100)
 
-# ---- p-futures-lasso
+# ---- p-futures-lasso (re-authored in session AF: the forecast along the lasso path; checks retargeted to the new item)
 I = Item(2, "p-futures-lasso")
-bo = [F("0.42"), F("-0.27"), F("0.11"), F("-0.06"), F("0.18")]
-a, b0 = F("0.15"), F("0.30")
+bo = [F(2), F("-1.2"), F("0.5")]          # gas, wind, demand
+zz = [F("-0.5"), F(-1), F(2)]
+b0 = F("0.2")
 soft = lambda b, a: (1 if b > 0 else -1) * max(abs(b) - a, 0)
-bl = [soft(b, a) for b in bo]
+fa = lambda a: b0 + sum(soft(b, a) * z for b, z in zip(bo, zz))
 # route 2: scikit-learn Lasso on an orthogonal design with X'X = nI and these OLS coefficients
 rng = np.random.default_rng(5)
 nn = 400
-Q, _ = np.linalg.qr(rng.normal(size=(nn, 6)))
-Xo = math.sqrt(nn) * Q[:, :5]
-yo = Xo @ np.array(bo, float) + 3.0 * Q[:, 5]
+Q, _ = np.linalg.qr(rng.normal(size=(nn, 4)))
+Xo = math.sqrt(nn) * Q[:, :3]
+yo = Xo @ np.array(bo, float) + 3.0 * Q[:, 3]
 ok(np.allclose(LinearRegression(fit_intercept=False).fit(Xo, yo).coef_, np.array(bo, float)), "lasso: built OLS coefficients")
 las = lambda al: Lasso(alpha=al, fit_intercept=False, tol=1e-12, max_iter=100000).fit(Xo, yo).coef_
-ok(np.allclose(las(0.15), np.array(bl, float), atol=1e-8), "lasso: Lasso(alpha=0.15) is soft thresholding")
-I.key(1, sum(1 for b in bl if b != 0))
-I.wrong(1, "ridge", 5)
-I.wrong(1, "positive", sum(1 for b in bo if b > a))
-I.all_wrongs_named(1, ["ridge", "positive"])
-I.key(2, bl[1])
-I.wrong(2, "sign", -bl[1])
-I.wrong(2, "away", bo[1] - a)
-I.all_wrongs_named(2, ["sign", "away"])
-amax = max(abs(b) for b in bo)
-ok(np.count_nonzero(las(0.42)) == 0 and np.count_nonzero(las(0.4199)) == 1, "lasso: empty at 0.42, not at 0.4199")
-I.key(3, amax)
-I.wrong(3, "sum", sum(abs(b) for b in bo))
-I.wrong(3, "first", min(abs(b) for b in bo))
-I.all_wrongs_named(3, ["sum", "first"])
-zc = F(7 - 1, 4)
-I.key(4, zc)
-I.wrong(4, "no-centre", F(7, 4))
-I.wrong(4, "variance", F(7 - 1, 16))
-I.all_wrongs_named(4, ["no-centre", "variance"])
-zs = [zc, 1, -2, F("1.5"), 1]
-dot = lambda bb, zz: b0 + sum(x * y for x, y in zip(bb, zz))
-fc = dot(bl, zs)
-ok(close(b0 + las(0.15) @ np.array(zs, float), fc, 1e-7), "lasso: forecast by scikit-learn coefficients")
-I.key(5, fc, dp=3)
-I.wrong(5, "ols", dot(bo, zs))
-I.wrong(5, "no-shrink", dot([b if soft(b, a) != 0 else 0 for b in bo], zs))
-I.wrong(5, "sign", dot([bl[0], -bl[1]] + bl[2:], zs))
-carried = dot(bl, [F(7, 4)] + zs[1:])
-I.wrong(5, "carried", carried)
-I.all_wrongs_named(5, ["ols", "no-shrink", "sign", "carried"])
-# finding 7: the carried slip is exactly 0.6825; its band is 0.683 +- 0.001, so the exact slip, 0.682 and 0.684 sit inside it
-_cw = next(x for x in I.it["parts"][4]["widget"]["wrong"] if x["id"] == "carried")
-ok(float(_cw["tol"]["abs"]) == 0.001 and all(abs(float(_cw["value"]) - v) <= float(_cw["tol"]["abs"]) + 1e-12 for v in (float(carried), 0.682, 0.684)),
-   "futures-lasso part 5: carried band 0.683 +- 0.001 takes 0.6825, 0.682 and 0.684 [review finding 7]")
-I.reg(*[float(b) for b in bl], 0.405, 16, 4, 6, 7, 1, 0.27 * 1.5)
+zrow = np.array(zz, float)
+for al in (0.2, 0.5, 0.8, 1.0):
+    ok(close(float(b0) + las(al) @ zrow, fa(F(al)), 1e-7), f"lasso: forecast at alpha {al} by scikit-learn coefficients")
+I.key(1, fa(0))
+I.wrong(1, "no-intercept", fa(0) - b0)
+I.wrong(1, "sign", b0 + bo[0] * zz[0] - abs(bo[1] * zz[1]) + bo[2] * zz[2])
+I.all_wrongs_named(1, ["no-intercept", "sign"])
+I.key(2, fa(F("0.2")))
+I.wrong(2, "down", b0 + sum((b - F("0.2")) * z for b, z in zip(bo, zz)))
+I.wrong(2, "count", fa(0) - 3 * F("0.2"))
+I.wrong(2, "intercept", fa(F("0.2")) - F("0.2"))
+I.all_wrongs_named(2, ["down", "count", "intercept"])
+# part 3: first zero, by a fine scan and by bisection on scikit-learn's forecast
+grid = [F(k, 1000) for k in range(0, 2001)]
+first = next(a for a in grid if fa(a) <= 0)
+lo, hi = 0.5, 1.2
+for _ in range(60):
+    mid = (lo + hi) / 2
+    lo, hi = (mid, hi) if float(b0) + las(mid) @ zrow > 0 else (lo, mid)
+ok(close(first, 0.8, 1e-12) and close(lo, 0.8, 1e-6), "lasso: first zero at 0.8 by scan and by bisection")
+I.key(3, first)
+slope1 = (fa(0) - fa(F("0.2"))) / F("0.2")
+I.wrong(3, "straight", fa(0) / slope1)
+I.wrong(3, "no-intercept", (fa(0) - b0) / slope1)
+I.wrong(3, "demand", abs(bo[2]))
+I.all_wrongs_named(3, ["straight", "no-intercept", "demand"])
+slope2 = (fa(F("0.6")) - fa(F("0.7"))) / F("0.1")
+I.key(4, fa(1))
+I.wrong(4, "straight", fa(0) - slope1 * 1)
+I.wrong(4, "slope", 0 - slope1 * F("0.2"))
+I.wrong(4, "ols", fa(0))
+I.wrong(4, "sign", -fa(1))
+I.all_wrongs_named(4, ["straight", "slope", "ols", "sign"])
+ok(slope1 == F(5, 2) and slope2 == F(1, 2) and fa(F("0.5")) == F(15, 100), "lasso: falls 2.5 then 0.5 per unit; 0.15 at 0.5")
+gas_t = [soft(bo[0], F("0.2")) * zz[0] - bo[0] * zz[0], soft(bo[1], F("0.2")) * zz[1] - bo[1] * zz[1], soft(bo[2], F("0.2")) * zz[2] - bo[2] * zz[2]]
+ok(gas_t == [F(1, 10), F(-1, 5), F(-2, 5)], "lasso part 2 explain: +0.1, -0.2, -0.4")
+# gas and wind per unit after 0.5: +0.5 and -1.0
+ok((soft(bo[0], F("0.7")) - soft(bo[0], F("0.6"))) * zz[0] / F("0.1") == F(1, 2) and (soft(bo[1], F("0.7")) - soft(bo[1], F("0.6"))) * zz[1] / F("0.1") == -1,
+   "lasso part 3 explain: gas +0.5, wind -1.0 per unit")
+ok(b0 + bo[0] * zz[0] == F("-0.8") and bo[1] * zz[1] + bo[2] * zz[2] == F("2.2"), "lasso part 1 explain: gas pulls 1.0 down, wind and demand push 2.2 up")
+I.reg(*[soft(b, F("0.2")) for b in bo], *[soft(b, 1) for b in bo], 0.9, 1.0, 1.2, 0.6, 0.15, 0.4, 0.5, 2.2, 1.4, 0.2, 0.1, 50, 30, 80, 48, 18, -0.8)
 
-# ---- p-built-ridge
+# ---- p-built-ridge (re-authored in session AF: two correlated signals; checks retargeted to the new item)
 I = Item(2, "p-built-ridge")
-true, est, nz, n = [F("0.5"), F("0.2"), F(0)], [F("0.6"), F("0.1"), F("0.14")], F(2), 500
-emse = lambda bb: nz + sum((b - t) ** 2 for b, t in zip(bb, true))
-shr = lambda lam: [b * F(n, n + lam) for b in est]
-# route 2: scikit-learn Ridge on X'X = nI, and a simulated test set for the expected MSE
-Q, _ = np.linalg.qr(rng.normal(size=(n, 4)))
-Xb = math.sqrt(n) * Q[:, :3]
-yb = Xb @ np.array(est, float) + 5.0 * Q[:, 3]
-for lam in (125, 500):
-    cf = Ridge(alpha=lam, fit_intercept=False).fit(Xb, yb).coef_
-    ok(np.allclose(cf, np.array(shr(lam), float)), f"built: Ridge(alpha={lam}) multiplies by n/(n + lambda)")
-Zt = rng.normal(size=(2_000_000, 3))
-yt = Zt @ np.array(true, float) + rng.normal(0, math.sqrt(2), 2_000_000)
-for bb in (est, shr(125), shr(500), [0, 0, 0]):
-    ok(abs(np.mean((yt - Zt @ np.array(bb, float)) ** 2) - float(emse(bb))) < 0.01, "built: simulated test MSE")
-I.key(1, emse(est), dp=4)
-I.wrong(1, "no-noise", emse(est) - nz)
-I.wrong(1, "unsquared", nz + sum(abs(b - t) for b, t in zip(est, true)))
-I.all_wrongs_named(1, ["no-noise", "unsquared"])
-I.key(2, emse(shr(125)), dp=4)
-lin125 = emse([b * (1 - F(125, n)) for b in est])
-I.wrong(2, "lambda-over-n", lin125, loose=0.0001)
-print(f"NOTE built-ridge part 2 lambda-over-n slip is exactly {float(lin125)}; listed 2.0292")
-I.wrong(2, "no-noise", emse(shr(125)) - nz, loose=0.0001)
-I.all_wrongs_named(2, ["lambda-over-n", "no-noise"])
-I.key(3, emse(shr(500)), dp=4)
-I.wrong(3, "lambda-over-n", emse([b * (1 - F(500, n)) for b in est]))
-I.wrong(3, "no-noise", emse(shr(500)) - nz)
-I.all_wrongs_named(3, ["lambda-over-n", "no-noise"])
-I.key(4, emse([0, 0, 0]))
-I.wrong(4, "noise-only", nz)
-I.wrong(4, "ols-coefs", nz + sum(b * b for b in est))
-I.all_wrongs_named(4, ["noise-only", "ols-coefs"])
-r2 = lambda bb: 1 - emse(bb) / emse([0, 0, 0])
-I.key(5, r2(shr(125)), dp=3, printed=1 - 2.0273 / 2.29)
-I.wrong(5, "ols", r2(est))
-I.wrong(5, "ratio", emse(shr(125)) / emse([0, 0, 0]))
-I.wrong(5, "too-much", r2(shr(500)))
-I.all_wrongs_named(5, ["ols", "ratio", "too-much"])
-ok(emse(shr(125)) < emse(est) < emse(shr(500)) < emse([0, 0, 0]), "built: 125 beats OLS beats 500 beats the mean")
-# finding 1: part 2's explain now says shrinking pulls the overshoot 0.6 back to 0.48 and the stray 0.14 to 0.112,
-# costs a little on the 0.2, and totals 2.0273 against OLS's 2.0396
-e0 = [(b - t) ** 2 for b, t in zip(est, true)]
-e1 = [(b - t) ** 2 for b, t in zip(shr(125), true)]
-claim = e1[0] < e0[0] and e1[2] < e0[2] and e1[1] > e0[1]
-sh = [float(v) for v in shr(125)]
-print("CLAIM built-ridge part 2 explain (0.6 and 0.14 gain, 0.2 loses):", claim,
-      "| squared errors OLS", [float(v) for v in e0], "ridge", [float(v) for v in e1])
-ok(claim and abs(sh[0] - 0.48) < 1e-9 and abs(sh[2] - 0.112) < 1e-9 and abs(float(est[0]) - 0.6) < 1e-9 and abs(float(est[2]) - 0.14) < 1e-9,
-   "built part 2 explain: 0.6 -> 0.48 and 0.14 -> 0.112 gain, 0.1 -> 0.08 against 0.2 loses [review finding 1]")
-_tx = I.it["parts"][1]["explain"]["text"]
-ok("0.48" in _tx and "0.112" in _tx and "2.0273" in _tx and "2.0396" in _tx and "cuts the noise in the other two" not in _tx,
-   "built part 2 explain: prints 0.48, 0.112, 2.0273 and 2.0396 and drops the false claim")
-I.reg(*[float(v) for v in e0 + e1], *[float(b) for b in shr(125) + shr(500)], 0.0396, 0.027344, 0.0674,
-      0.04, 0.0225, 0.0049, 625, 1000, 0.8, 0.75, 0.25, 0.8853, 11.5, 10.9, 9.7, 500 / 625, 500 / 1000)
+S11, S12, S22, S1y, S2y = F(50), F(40), F(50), F(60), F(30)
+
+
+def solve2(a, b, c, d, e, f):
+    """a x + b y = e, c x + d y = f by Cramer's rule."""
+    det = a * d - b * c
+    return (e * d - b * f) / det, (a * f - e * c) / det
+
+
+bo2 = solve2(S11, S12, S12, S22, S1y, S2y)
+br2 = solve2(S11 + 10, S12, S12, S22 + 10, S1y, S2y)
+# route 2: NumPy on data built with these sums
+rng = np.random.default_rng(13)
+A = np.array([[50.0, 40.0], [40.0, 50.0]])
+Lc = np.linalg.cholesky(A)
+C = rng.normal(size=(50, 3))
+C -= C.mean(0)
+Q, _ = np.linalg.qr(C)
+Xm = Q[:, :2] @ Lc.T
+ym = np.linalg.solve(A, [60.0, 30.0]) @ Xm.T + 2.0 * Q[:, 2]
+ok(np.allclose(Xm.T @ Xm, A) and np.allclose(Xm.T @ ym, [60, 30]), "ridge: built data hold the sums")
+ok(np.allclose(np.linalg.solve(Xm.T @ Xm, Xm.T @ ym), [float(v) for v in bo2]), "ridge: OLS by NumPy")
+ok(np.allclose(Ridge(alpha=10, fit_intercept=False).fit(Xm, ym).coef_, [float(v) for v in br2]), "ridge: Ridge(alpha=10) by scikit-learn")
+I.key(1, bo2[1])
+I.wrong(1, "alone", S2y / S22)
+I.wrong(1, "swap", bo2[0])
+I.wrong(1, "sign", -bo2[1])
+I.all_wrongs_named(1, ["alone", "swap", "sign"])
+I.key(2, br2[1])
+I.wrong(2, "factor", bo2[1] * F(50, 60), loose=0.0005)
+I.wrong(2, "all-entries", solve2(S11 + 10, S12 + 10, S12 + 10, S22 + 10, S1y, S2y)[1], loose=0.0005)
+I.wrong(2, "ols", bo2[1])
+I.wrong(2, "sign", -br2[1])
+I.all_wrongs_named(2, ["factor", "all-entries", "ols", "sign"])
+hx = [(2, 1), (1, 2), (-2, -1), (1, -1)]
+hy = [F(2), F(1), F("-1.6"), F("2.5")]
+pr = lambda b: [b[0] * x1 + b[1] * x2 for x1, x2 in hx]
+fac = (bo2[0] * F(50, 60), bo2[1] * F(50, 60))
+I.key(3, mse(pr(br2), hy), dp=3)
+ok(close(np.mean((np.array(hy, float) - np.array(hx, float) @ Ridge(alpha=10, fit_intercept=False).fit(Xm, ym).coef_) ** 2), mse(pr(br2), hy), 1e-9), "ridge: test MSE by NumPy")
+I.wrong(3, "ols", mse(pr(bo2), hy))
+I.wrong(3, "sse", 4 * mse(pr(br2), hy))
+I.wrong(3, "carried", mse(pr(fac), hy))
+I.all_wrongs_named(3, ["ols", "sse", "carried"])
+base = mse([0] * 4, hy)
+tm = sum(hy) / 4
+I.key(4, 1 - mse(pr(br2), hy) / base, dp=3, printed=1 - 0.355 / 3.4525)
+I.wrong(4, "ratio", mse(pr(br2), hy) / base)
+I.wrong(4, "test-mean", 1 - mse(pr(br2), hy) / mse([tm] * 4, hy))
+I.wrong(4, "carried", 1 - mse(pr(fac), hy) / base)
+I.wrong(4, "ols", 1 - mse(pr(bo2), hy) / base)
+I.all_wrongs_named(4, ["ratio", "test-mean", "carried", "ols"])
+ok(pr(br2) == [F("2.1"), F("0.6"), F("-2.1"), F("1.5")] and [y - p for y, p in zip(hy, pr(br2))] == [F("-0.1"), F("0.4"), F("0.5"), F(1)], "ridge part 3: forecasts and misses")
+ok(sum(abs(y - p) < abs(y - q) for y, p, q in zip(hy, pr(br2), pr(bo2))) == 3, "ridge part 3 explain: closer on three of four hours")
+# part 2 explain: in the (1, 1) and (1, -1) directions the eigenvalues are 90 and 10; ridge multiplies by 90/100 and 10/20
+ok((bo2[0] - bo2[1]) / 2 * F(10, 20) == (br2[0] - br2[1]) / 2 and (bo2[0] + bo2[1]) / 2 * F(90, 100) == (br2[0] + br2[1]) / 2, "ridge part 2 explain: difference part halved")
+I.reg(*bo2, *br2, *fac, 50 / 60, 0.01, 0.16, 0.25, 1.42, 1.0525, 3.4525, 0.975, 89.7, 69.5, 4, 2.56, 6.25, 50, 30, 80, 48, 18, 10, 2.1, 0.6, 1.5, 0.4, 0.5, 0.1, 1.667, 0.833)
 
 # =============================================================== problems-3
 # ---- p-order-fill

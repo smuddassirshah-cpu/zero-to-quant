@@ -465,68 +465,31 @@
    "id": "p-futures-lasso",
    "difficulty": 4,
    "skills": [
-    "sl-regularise"
+    "sl-regularise",
+    "sl-linear"
    ],
-   "prose": "A futures model has five uncorrelated z-scored signals: carry, momentum, value, basis and liquidity. Their OLS coefficients are 0.42, −0.27, 0.11, −0.06 and 0.18. Returns are in % a month, the intercept is 0.30, and the desk fits `Lasso(alpha=0.15)`.",
+   "prose": "A desk trading next-month UK baseload power futures forecasts the month's price change, in £/MWh, from three signals: gas, wind and demand. Each is z-scored on the training months, where the three are uncorrelated. OLS gives an intercept of 0.2 and coefficients 2.0 for gas, $-1.2$ for wind and 0.5 for demand. The coming month's z-scores are gas $-0.5$, wind $-1.0$ and demand 2.0. The desk buys when its forecast is above 0 and sells when it is below.",
    "parts": [
     {
-     "question": "How many of the five lasso coefficients are not zero?",
+     "question": "What is the OLS forecast for the coming month, in £/MWh? Give a decimal.",
      "widget": {
       "kind": "numeric",
-      "answer": 3,
-      "tol": {
-       "abs": 0
-      },
-      "placeholder": "whole number",
-      "wrong": [
-       {
-        "id": "ridge",
-        "value": 5,
-        "tol": {
-         "abs": 0
-        }
-       },
-       {
-        "id": "positive",
-        "value": 2,
-        "tol": {
-         "abs": 0
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "Three sizes exceed 0.15: 0.42, 0.27 and 0.18.",
-      "generic": "Not quite. A coefficient survives when its size is above $\\alpha = 0.15$.",
-      "byKey": {
-       "ridge": "You expected ridge's behaviour. The lasso sets a coefficient to exactly 0 when its size is at most $\\alpha$.",
-       "positive": "You counted only positive coefficients above 0.15. Sizes count, so $-0.27$ survives too."
-      }
-     },
-     "explain": {
-      "text": "Value at 0.11 and basis at 0.06 fall inside the threshold and become exactly 0. Carry, momentum and liquidity survive: 3 coefficients."
-     }
-    },
-    {
-     "question": "What is momentum's lasso coefficient? Give a decimal.",
-     "widget": {
-      "kind": "numeric",
-      "answer": -0.12,
+      "answer": 1.4,
       "tol": {
        "abs": 0.005
       },
       "placeholder": "decimal",
       "wrong": [
+       {
+        "id": "no-intercept",
+        "value": 1.2,
+        "tol": {
+         "abs": 0.005
+        }
+       },
        {
         "id": "sign",
-        "value": 0.12,
-        "tol": {
-         "abs": 0.005
-        }
-       },
-       {
-        "id": "away",
-        "value": -0.42,
+        "value": -1.0,
         "tol": {
          "abs": 0.005
         }
@@ -534,37 +497,44 @@
       ]
      },
      "feedback": {
-      "correct": "$\\operatorname{sign}(-0.27)\\max(0.27 - 0.15, 0) = -0.12$.",
-      "generic": "Not quite. Move $-0.27$ a distance of 0.15 towards 0.",
+      "correct": "$0.2 + 2.0(-0.5) - 1.2(-1.0) + 0.5(2.0) = 0.2 - 1.0 + 1.2 + 1.0 = 1.4$.",
+      "generic": "Not quite. The forecast is the intercept plus each coefficient times the coming month's z-score.",
       "byKey": {
-       "sign": "You moved it past 0 and flipped the sign. The lasso stops at 0 and keeps the sign.",
-       "away": "You moved it away from 0. The penalty always pulls towards 0."
+       "no-intercept": "You left out the intercept, 0.2. The forecast starts from it.",
+       "sign": "You took wind's term as $-1.2$. A negative coefficient times a negative z-score adds: $(-1.2)(-1.0) = +1.2$."
       }
      },
      "explain": {
-      "text": "Soft thresholding takes 0.15 off each size and keeps the sign, so momentum goes from $-0.27$ to $-0.12$. Carry becomes 0.27 and liquidity 0.03."
+      "text": "Cheap gas pulls the forecast down by 1.0, but calm wind and high demand push it up by 2.2. OLS expects the price to rise by £1.4/MWh, so the desk would buy."
      }
     },
     {
-     "question": "What is the smallest $\\alpha$ at which every coefficient is zero? Give a decimal.",
+     "question": "Using 1.4 from part 1, what does `Lasso(alpha=0.2)` forecast for the coming month? Give a decimal.",
      "widget": {
       "kind": "numeric",
-      "answer": 0.42,
+      "answer": 0.9,
       "tol": {
        "abs": 0.005
       },
       "placeholder": "decimal",
       "wrong": [
        {
-        "id": "sum",
-        "value": 1.04,
+        "id": "down",
+        "value": 1.3,
         "tol": {
          "abs": 0.005
         }
        },
        {
-        "id": "first",
-        "value": 0.06,
+        "id": "count",
+        "value": 0.8,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "intercept",
+        "value": 0.7,
         "tol": {
          "abs": 0.005
         }
@@ -572,107 +542,116 @@
       ]
      },
      "feedback": {
-      "correct": "Every coefficient is 0 once $\\alpha \\ge \\max_j |b_j| = 0.42$, carry's size.",
-      "generic": "Not quite. Find the coefficient that reaches 0 last.",
+      "correct": "Gas 1.8, wind $-1.0$ and demand 0.3 give $0.2 - 0.9 + 1.0 + 0.6 = 0.9$.",
+      "generic": "Not quite. Bring each coefficient 0.2 nearer to 0, then redo part 1's sum.",
       "byKey": {
-       "sum": "You added the sizes. The model is empty once $\\alpha$ reaches the largest one.",
-       "first": "That is where the first coefficient leaves, basis. The last to leave is carry."
+       "down": "You subtracted 0.2 from every coefficient, so wind grew to $-1.4$. Nearer 0 for wind means up, to $-1.0$.",
+       "count": "You took 0.2 off each product. Each coefficient loses 0.2, and its z-score scales that: gas's term moves by 0.1 and demand's by 0.4.",
+       "intercept": "You shrank the intercept as well. The lasso leaves it unpenalised, at 0.2."
       }
      },
      "explain": {
-      "text": "Carry's size, 0.42, is the largest, so it is the last to reach 0. From $\\alpha = 0.42$ the model forecasts the intercept alone."
+      "text": "The terms change by $+0.1$ for gas, $-0.2$ for wind and $-0.4$ for demand. Together they take 0.5 off, so the forecast falls from 1.4 to 0.9, at 2.5 per unit of $\\alpha$."
      }
     },
     {
-     "question": "A new contract's raw carry is 7% a year. On the training rows carry had mean 1% and standard deviation 4%. What is its standardised carry? Give a decimal.",
+     "question": "Raise $\\alpha$ from 0.2, where part 2 found a fall of 2.5 per unit. At what $\\alpha$ does the lasso forecast first reach 0? Give a decimal.",
      "widget": {
       "kind": "numeric",
-      "answer": 1.5,
+      "answer": 0.8,
       "tol": {
        "abs": 0.005
       },
       "placeholder": "decimal",
       "wrong": [
        {
-        "id": "no-centre",
-        "value": 1.75,
+        "id": "straight",
+        "value": 0.56,
         "tol": {
          "abs": 0.005
         }
        },
        {
-        "id": "variance",
-        "value": 0.375,
+        "id": "no-intercept",
+        "value": 0.48,
         "tol": {
-         "abs": 0.0005
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "demand",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.005
         }
        }
       ]
      },
      "feedback": {
-      "correct": "$(7 - 1)/4 = 1.5$.",
-      "generic": "Not quite. Subtract the training mean, then divide by the training standard deviation.",
+      "correct": "Demand reaches 0 at $\\alpha = 0.5$, with the forecast at $1.4 - 2.5 \\times 0.5 = 0.15$. After that the forecast is $0.4 - 0.5\\alpha$, which is 0 at $\\alpha = 0.8$.",
+      "generic": "Not quite. The slope changes when a coefficient reaches 0. Find where demand drops out, then follow the new slope.",
       "byKey": {
-       "no-centre": "You divided without subtracting the training mean first.",
-       "variance": "You divided by the variance, 16. Divide by the standard deviation, 4."
+       "straight": "You kept the fall of 2.5 per unit past $\\alpha = 0.5$. Demand is 0 from there, so the forecast falls by only 0.5 per unit.",
+       "no-intercept": "You left out the intercept, 0.2. The forecast starts at 1.4, not 1.2.",
+       "demand": "At $\\alpha = 0.5$ demand leaves the model, but the forecast is still 0.15. It reaches 0 later."
       }
      },
      "explain": {
-      "text": "The contract's carry is 1.5 training standard deviations above the training mean. The model's coefficients are per standard deviation, so they need this scale."
+      "text": "From $\\alpha = 0.5$ only gas and wind are left, and their terms move in opposite directions: $+0.5$ and $-1.0$ per unit. The forecast creeps down to 0 at $\\alpha = 0.8$, where the desk's buy turns flat."
      }
     },
     {
-     "question": "The contract's z-scores are carry 1.5 (from part 4), momentum 1.0, value $-2.0$, basis 1.5 and liquidity 1.0. Using momentum's $-0.12$ from part 2, what is the lasso's forecast? Give 3 decimal places.",
+     "question": "The desk picked $\\alpha = 1.0$ on a validation block. Using the zero at $\\alpha = 0.8$ from part 3, what is the lasso forecast for the coming month? Give a decimal.",
      "widget": {
       "kind": "numeric",
-      "answer": 0.615,
+      "answer": -0.1,
       "tol": {
-       "abs": 0.0005
+       "abs": 0.005
       },
       "placeholder": "decimal",
       "wrong": [
+       {
+        "id": "straight",
+        "value": -1.1,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "slope",
+        "value": -0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       },
        {
         "id": "ols",
-        "value": 0.53,
+        "value": 1.4,
         "tol": {
-         "abs": 0.0005
-        }
-       },
-       {
-        "id": "no-shrink",
-        "value": 0.84,
-        "tol": {
-         "abs": 0.0005
+         "abs": 0.005
         }
        },
        {
         "id": "sign",
-        "value": 0.855,
+        "value": 0.1,
         "tol": {
-         "abs": 0.0005
-        }
-       },
-       {
-        "id": "carried",
-        "value": 0.683,
-        "tol": {
-         "abs": 0.001
+         "abs": 0.005
         }
        }
       ]
      },
      "feedback": {
-      "correct": "$0.30 + 0.27 \\times 1.5 - 0.12 \\times 1.0 + 0.03 \\times 1.0 = 0.30 + 0.405 - 0.12 + 0.03 = 0.615$.",
-      "generic": "Not quite. Multiply each lasso coefficient by its z-score, add them, then add the intercept.",
+      "correct": "$0 - 0.5 \\times (1.0 - 0.8) = -0.1$. Check: gas 1.0 and wind $-0.2$ give $0.2 - 0.5 + 0.2 = -0.1$.",
+      "generic": "Not quite. Start from 0 at $\\alpha = 0.8$ and follow the slope of $-0.5$ per unit.",
       "byKey": {
-       "ols": "You used the OLS coefficients. The lasso's are 0.27, $-0.12$, 0, 0 and 0.03.",
-       "no-shrink": "You dropped value and basis but kept the survivors at their OLS sizes. Each survivor also loses 0.15.",
-       "sign": "You used $+0.12$ for momentum, part 2's slip. It is $-0.12$.",
-       "carried": "You used carry 1.75, part 4's slip. Its z-score is 1.5."
+       "straight": "You let demand's coefficient pass 0 and turn negative. It stays at 0 once $\\alpha \\ge 0.5$.",
+       "slope": "You used the first stretch's fall of 2.5 per unit. With demand gone the fall is 0.5 per unit.",
+       "ols": "That is the OLS forecast from part 1. At $\\alpha = 1.0$ the coefficients are 1.0, $-0.2$ and 0.",
+       "sign": "You have the size but not the sign. Past $\\alpha = 0.8$ the forecast is below 0, so the desk sells."
       }
      },
      "explain": {
-      "text": "Value and basis are 0, so the contract's weak value score costs nothing. The lasso forecasts 0.615 against OLS's 0.53."
+      "text": "OLS says buy and the chosen lasso says sell, by £0.1/MWh. The sign of the trade turns on $\\alpha$, so the desk should keep this position small."
      }
     }
    ]
@@ -685,165 +664,113 @@
     "sl-linear",
     "sl-tradeoff"
    ],
-   "prose": "We built a market with three uncorrelated z-scored features, true coefficients 0.5, 0.2 and 0, and noise variance 2.0. On $n = 500$ training rows OLS estimated 0.6, 0.1 and 0.14. Expected test MSE is the noise plus the sum of squared coefficient errors. Ridge multiplies each OLS coefficient by $n/(n + \\lambda)$.",
+   "prose": "A market maker forecasts a share's volume in the next hour, in thousands of shares above its training mean. It uses two signals from the last hour, trade count $x_1$ and quote updates $x_2$, each z-scored on 50 training hours. The two move together: $\\sum x_1^2 = \\sum x_2^2 = 50$, $\\sum x_1x_2 = 40$, $\\sum x_1y = 60$ and $\\sum x_2y = 30$. Everything is centred, so the fit has no intercept. Four held-out hours, as $(x_1, x_2)$ with volume $y$: $(2, 1)$ with 2.0, $(1, 2)$ with 1.0, $(-2, -1)$ with $-1.6$ and $(1, -1)$ with 2.5.",
    "parts": [
     {
-     "question": "What is the expected test MSE of the OLS fit? Give 4 decimal places.",
+     "question": "Solve the normal equations $\\mathbf{X}^T\\mathbf{X}\\hat{\\boldsymbol\\beta} = \\mathbf{X}^T\\mathbf{y}$. What is the OLS coefficient on quote updates? Give a decimal.",
      "widget": {
       "kind": "numeric",
-      "answer": 2.0396,
-      "tol": {
-       "abs": 5e-05
-      },
-      "placeholder": "decimal",
-      "wrong": [
-       {
-        "id": "no-noise",
-        "value": 0.0396,
-        "tol": {
-         "abs": 5e-05
-        }
-       },
-       {
-        "id": "unsquared",
-        "value": 2.34,
-        "tol": {
-         "abs": 5e-05
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "The errors are $0.1, -0.1, 0.14$, with squares $0.01 + 0.01 + 0.0196 = 0.0396$; adding the noise gives 2.0396.",
-      "generic": "Not quite. Square each OLS coefficient's error, add them, then add the noise variance.",
-      "byKey": {
-       "no-noise": "You left out the noise, 2.0. Every forecast pays it.",
-       "unsquared": "You added the coefficient errors without squaring them."
-      }
-     },
-     "explain": {
-      "text": "OLS is unbiased on average, but this sample's estimates miss by 0.1, $-0.1$ and 0.14. Those misses add 0.0396 to the noise, for 2.0396."
-     }
-    },
-    {
-     "question": "What is the expected test MSE of ridge at $\\lambda = 125$? Give 4 decimal places.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 2.0273,
-      "tol": {
-       "abs": 5e-05
-      },
-      "placeholder": "decimal",
-      "wrong": [
-       {
-        "id": "lambda-over-n",
-        "value": 2.0292,
-        "tol": {
-         "abs": 0.0001
-        }
-       },
-       {
-        "id": "no-noise",
-        "value": 0.0273,
-        "tol": {
-         "abs": 5e-05
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "The factor is $500/625 = 0.8$, giving 0.48, 0.08 and 0.112. The errors square to $0.0004 + 0.0144 + 0.012544 = 0.027344$, so the MSE is 2.0273.",
-      "generic": "Not quite. Multiply each OLS coefficient by $500/625$, then square each error against the truth.",
-      "byKey": {
-       "lambda-over-n": "You took $\\lambda/n$ off each coefficient, a factor of 0.75. Ridge multiplies by $n/(n + \\lambda) = 500/625$.",
-       "no-noise": "You left out the noise, 2.0."
-      }
-     },
-     "explain": {
-      "text": "Shrinking pulls the overshoot 0.6 back to 0.48 and the stray 0.14 to 0.112, and costs a little on the 0.2. The total is 2.0273, below OLS's 2.0396 from part 1."
-     }
-    },
-    {
-     "question": "What is the expected test MSE of ridge at $\\lambda = 500$? Give 4 decimal places.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 2.0674,
-      "tol": {
-       "abs": 5e-05
-      },
-      "placeholder": "decimal",
-      "wrong": [
-       {
-        "id": "lambda-over-n",
-        "value": 2.29,
-        "tol": {
-         "abs": 5e-05
-        }
-       },
-       {
-        "id": "no-noise",
-        "value": 0.0674,
-        "tol": {
-         "abs": 5e-05
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "The factor is $500/1000 = 0.5$, giving 0.3, 0.05 and 0.07. The errors square to $0.04 + 0.0225 + 0.0049 = 0.0674$, so the MSE is 2.0674.",
-      "generic": "Not quite. Multiply each OLS coefficient by $500/1000$, then square each error against the truth.",
-      "byKey": {
-       "lambda-over-n": "You took $\\lambda/n = 1$ off each coefficient, leaving none. Ridge multiplies by $500/1000 = 0.5$.",
-       "no-noise": "You left out the noise, 2.0."
-      }
-     },
-     "explain": {
-      "text": "Now the real coefficient 0.5 is shrunk to 0.3, and that bias outweighs the noise saved: 2.0674, worse than OLS. Test error against $\\lambda$ is a U."
-     }
-    },
-    {
-     "question": "As $\\lambda$ grows without limit, ridge forecasts the training mean. What is that baseline's expected test MSE? Give a decimal.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 2.29,
+      "answer": -1.0,
       "tol": {
        "abs": 0.005
       },
       "placeholder": "decimal",
       "wrong": [
        {
-        "id": "noise-only",
+        "id": "alone",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "swap",
         "value": 2.0,
         "tol": {
          "abs": 0.005
         }
        },
        {
-        "id": "ols-coefs",
-        "value": 2.3896,
+        "id": "sign",
+        "value": 1.0,
         "tol": {
-         "abs": 5e-05
+         "abs": 0.005
         }
        }
       ]
      },
      "feedback": {
-      "correct": "All three coefficients are 0, so the errors are the true 0.5, 0.2 and 0: $2.0 + 0.25 + 0.04 = 2.29$.",
-      "generic": "Not quite. Set every coefficient to 0 and square its gap from the truth.",
+      "correct": "$50b_1 + 40b_2 = 60$ and $40b_1 + 50b_2 = 30$ give $b_1 = 2.0$ and $b_2 = -1.0$.",
+      "generic": "Not quite. Write the two equations from the sums and solve them together.",
       "byKey": {
-       "noise-only": "Setting every coefficient to 0 misses the true 0.5 and 0.2. Add their squares to the noise.",
-       "ols-coefs": "You squared the OLS estimates. The baseline's errors are against the true coefficients, 0.5, 0.2 and 0."
+       "alone": "You divided $\\sum x_2y$ by $\\sum x_2^2$, a fit on quote updates alone. With trade count in the model the two share the credit.",
+       "swap": "That is the coefficient on trade count. Quote updates get $-1.0$.",
+       "sign": "The size is right but the sign is not. With $b_1 = 2.0$, the second equation needs $50b_2 = 30 - 80 = -50$."
       }
      },
      "explain": {
-      "text": "At the far end ridge leaves only the intercept, so it misses both real effects in full: 2.29. That is the rival every model in this market must beat."
+      "text": "Quote updates move with trade count, so OLS can play one against the other. It gives trade count 2.0 and quote updates a large negative weight, $-1.0$, that few traders would believe."
      }
     },
     {
-     "question": "Using 2.0273 from part 2 and 2.29 from part 4, what is the test $R^2$ of ridge at $\\lambda = 125$? Give 3 decimal places.",
+     "question": "Ridge solves $(\\mathbf{X}^T\\mathbf{X} + \\lambda\\mathbf{I})\\hat{\\boldsymbol\\beta} = \\mathbf{X}^T\\mathbf{y}$. At $\\lambda = 10$, what is its coefficient on quote updates? Give a decimal.",
      "widget": {
       "kind": "numeric",
-      "answer": 0.115,
+      "answer": -0.3,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "factor",
+        "value": -0.833,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "all-entries",
+        "value": -1.091,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "ols",
+        "value": -1.0,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.3,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$60b_1 + 40b_2 = 60$ and $40b_1 + 60b_2 = 30$ give $b_1 = 1.2$ and $b_2 = -0.3$.",
+      "generic": "Not quite. Add 10 to the two diagonal sums, 50 and 50, and solve again.",
+      "byKey": {
+       "factor": "You multiplied $-1.0$ by $50/60$. That shortcut needs uncorrelated features, and these two have $\\sum x_1x_2 = 40$.",
+       "all-entries": "You added 10 to all four entries. $\\lambda\\mathbf{I}$ adds it to the diagonal only.",
+       "ols": "That is part 1's OLS coefficient. The penalty changes the equations.",
+       "sign": "The size is right but the sign is not. With $b_1 = 1.2$, the second equation needs $60b_2 = 30 - 48 = -18$."
+      }
+     },
+     "explain": {
+      "text": "With two signals this alike, the data fix their sum well and their difference badly. Ridge halves the difference part, so the opposing weights 2.0 and $-1.0$ become 1.2 and $-0.3$."
+     }
+    },
+    {
+     "question": "Using ridge's 1.2 and $-0.3$ from part 2, what is its test MSE on the four held-out hours? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.355,
       "tol": {
        "abs": 0.0005
       },
@@ -851,21 +778,21 @@
       "wrong": [
        {
         "id": "ols",
-        "value": 0.109,
+        "value": 1.0525,
+        "tol": {
+         "abs": 0.001
+        }
+       },
+       {
+        "id": "sse",
+        "value": 1.42,
         "tol": {
          "abs": 0.0005
         }
        },
        {
-        "id": "ratio",
-        "value": 0.885,
-        "tol": {
-         "abs": 0.0005
-        }
-       },
-       {
-        "id": "too-much",
-        "value": 0.097,
+        "id": "carried",
+        "value": 0.515,
         "tol": {
          "abs": 0.0005
         }
@@ -873,16 +800,70 @@
       ]
      },
      "feedback": {
-      "correct": "$1 - 2.0273/2.29 = 1 - 0.8853 \\approx 0.115$.",
-      "generic": "Not quite. Compute 1 minus ridge's expected test MSE over the baseline's.",
+      "correct": "Forecasts 2.1, 0.6, $-2.1$ and 1.5 miss by $-0.1$, 0.4, 0.5 and 1.0. The squares sum to $0.01 + 0.16 + 0.25 + 1.0 = 1.42$, and $1.42/4 = 0.355$.",
+      "generic": "Not quite. Forecast each hour as $1.2x_1 - 0.3x_2$, square each miss, and average the four.",
       "byKey": {
-       "ols": "That is OLS's test $R^2$, from 2.0396. Use ridge's 2.0273.",
-       "ratio": "That is the error left, $2.0273/2.29$. Subtract it from 1.",
-       "too-much": "That uses $\\lambda = 500$, which over-shrinks. Use $\\lambda = 125$."
+       "ols": "You used OLS's 2.0 and $-1.0$. Ridge's coefficients are 1.2 and $-0.3$.",
+       "sse": "You summed the squared misses. Divide 1.42 by the 4 hours.",
+       "carried": "You used 1.667 and $-0.833$, part 2's shortcut slip. Ridge's coefficients are 1.2 and $-0.3$."
       }
      },
      "explain": {
-      "text": "Ridge at $\\lambda = 125$ removes 11.5% of the baseline's error, against 10.9% for OLS and 9.7% at $\\lambda = 500$. A moderate penalty sits near the bottom of the U."
+      "text": "Ridge's 0.355 is about a third of OLS's 1.0525 on the same hours. The opposing OLS weights swing the forecasts, and ridge misses by less on three of the four hours."
+     }
+    },
+    {
+     "question": "Using 0.355 from part 3, what is ridge's test $R^2$ on the four hours? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.897,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "ratio",
+        "value": 0.103,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "test-mean",
+        "value": 0.858,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "carried",
+        "value": 0.851,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "ols",
+        "value": 0.695,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The training-mean forecast is 0 every hour, so its test MSE is $(4 + 2.56 + 1 + 6.25)/4 = 3.4525$. Then $1 - 0.355/3.4525 \\approx 0.897$.",
+      "generic": "Not quite. The baseline forecasts the training mean, 0, for every hour. Take ridge's test MSE over the baseline's away from 1.",
+      "byKey": {
+       "ratio": "That is the error left, $0.355/3.4525$. Subtract it from 1.",
+       "test-mean": "You centred on the held-out hours' mean, 0.975. No one knows it in advance, so the baseline forecasts the training mean, 0.",
+       "carried": "You used 0.515, part 3's slip. Ridge's test MSE is 0.355.",
+       "ols": "That is OLS's test $R^2$, from 1.0525. Use ridge's 0.355."
+      }
+     },
+     "explain": {
+      "text": "Ridge removes 89.7% of the baseline's error, against 69.5% for OLS. It gives up a little training fit for steadier forecasts, bias traded for variance. Four hours are a small test, so the desk should confirm the gap on more."
      }
     }
    ]

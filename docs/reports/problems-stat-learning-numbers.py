@@ -233,6 +233,15 @@ if L4 is not None:
     num(L4, 'p-renewals', 1, count, shapes, {'no-biases': 6 * 16 + 16, 'units': sum(sizes)})
     ok(6 + 1 == 7, 'p-renewals: logistic regression has 7 parameters')
     pick(L4, 'p-renewals', 2, 'logistic')
+    # part 2 (re-authored, session AF): choose by validation score; scores (fitting rows, validation) as printed
+    sc = {'logistic': (R(80, 100), R(78, 100)), 'network': (R(96, 100), R(75, 100)), 'svm': (R(84, 100), R(77, 100))}
+    best_val = max(sc, key=lambda k: sc[k][1])
+    best_fit = max(sc, key=lambda k: sc[k][0])
+    ok(best_val == 'logistic' and best_fit == 'network', 'p-renewals p2: validation picks logistic, fitting rows would pick the network')
+    ok(sc['network'][1] == min(v[1] for v in sc.values()), 'p-renewals p2: network lowest on validation, 0.75')
+    ok(sc['network'][0] - sc['network'][1] == R(21, 100) and sc['logistic'][0] - sc['logistic'][1] == R(2, 100), 'p-renewals p2: drops 0.21 and 0.02')
+    ok(abs(320 / count - 2.5) < 0.05 and round(400 / count) == 3 and 320 + 80 == 400, 'p-renewals p2: 2.5 rows a parameter on 320 rows, about 3 on 400')
+    ok(sc['svm'][1] < sc['logistic'][1] and sc['logistic'][0] < sc['svm'][0] < sc['network'][0] and sc['network'][1] < sc['svm'][1], 'p-renewals p2: svm sits between on both, below on validation')
     t = t_null(R(74, 100), R(7, 10), 500)
     num(L4, 'p-renewals', 3, t, t_sm(0.74, 0.7, 500),
         {'own-rate': (R(74, 100) - R(7, 10)) / sp.sqrt(R(74, 100) * R(26, 100) / 500),
@@ -427,67 +436,98 @@ if L2 is not None:
     num(L2, 'p-rent-ridge', 5, b_z / sdx, Ridge(alpha=20).fit(z_[:, None], yr_).coef_[0] / np.std(xr),
         {'times-sd': b_z * sdx, 'not-converted': b_z, 'carried': Sxy / (Sxx + 20) / sdx})
 
-    # ---------- p-futures-lasso ----------
-    b_ols = [R(42, 100), R(-27, 100), R(11, 100), R(-6, 100), R(18, 100)]
-    a_ = R(15, 100)
+    # ---------- p-futures-lasso (re-authored, session AF: power futures, the lasso forecast along alpha) ----------
+    b_ols = [R(2), R(-12, 10), R(1, 2)]                       # gas, wind, demand
+    c0 = R(1, 5)
+    zn = [R(-1, 2), R(-1), R(2)]
 
     def soft(b, a):
         return sp.sign(b) * sp.Max(abs(b) - a, 0)
-    lasso_c = [soft(b, a_) for b in b_ols]
-    Xf, res = orth_design(2000, 5, 3)
-    yf = 0.30 + Xf @ np.array([float(b) for b in b_ols]) + 0.5 * res * math.sqrt(2000)
-    lf = Lasso(alpha=0.15, tol=1e-12, max_iter=100000).fit(Xf, yf)
-    ok(np.allclose(lf.coef_, [float(c) for c in lasso_c], atol=1e-6) and abs(lf.intercept_ - 0.30) < 1e-6, 'p-futures: sklearn Lasso matches soft thresholding')
-    num(L2, 'p-futures-lasso', 1, sum(1 for c in lasso_c if c != 0), int(np.sum(lf.coef_ != 0)),
-        {'ridge': 5, 'positive': sum(1 for b in b_ols if b > a_)})
-    num(L2, 'p-futures-lasso', 2, lasso_c[1], lf.coef_[1], {'sign': -lasso_c[1], 'away': b_ols[1] - a_})
-    a_max = max(abs(b) for b in b_ols)
-    lf_max = Lasso(alpha=0.42, tol=1e-12, max_iter=100000).fit(Xf, yf)
-    lf_less = Lasso(alpha=0.419, tol=1e-12, max_iter=100000).fit(Xf, yf)
-    ok(np.all(lf_max.coef_ == 0) and np.sum(lf_less.coef_ != 0) == 1, 'p-futures: empty at 0.42, one survivor at 0.419')
-    num(L2, 'p-futures-lasso', 3, a_max, 0.42, {'sum': sum(abs(b) for b in b_ols), 'first': min(abs(b) for b in b_ols)})
-    zc = (R(7) - 1) / 4
-    num(L2, 'p-futures-lasso', 4, zc, (7 - 1) / math.sqrt(16), {'no-centre': R(7, 4), 'variance': R(6, 16)})
-    zv = [zc, 1, -2, R(3, 2), 1]
-    fcast = R(30, 100) + sum(c * z for c, z in zip(lasso_c, zv))
-    num(L2, 'p-futures-lasso', 5, fcast, lf.predict(np.array([[float(z) for z in zv]]))[0],
-        {'ols': R(30, 100) + sum(b * z for b, z in zip(b_ols, zv)),
-         'no-shrink': R(30, 100) + sum(b * z for b, c, z in zip(b_ols, lasso_c, zv) if c != 0),
-         'sign': fcast - 2 * lasso_c[1] * zv[1],
-         'carried': R(30, 100) + sum(c * z for c, z in zip(lasso_c, [R(7, 4)] + zv[1:]))}, agree=1e-6)
-    _cw = next(x for x in L2['p-futures-lasso']['parts'][4]['widget']['wrong'] if x['id'] == 'carried')
-    _cs = float(R(30, 100) + sum(c * z for c, z in zip(lasso_c, [R(7, 4)] + zv[1:])))
-    ok(_cw['tol']['abs'] == 0.001 and all(abs(_cw['value'] - v) <= 0.001 + 1e-12 for v in (_cs, 0.682, 0.684)), 'p-futures-lasso p5: carried slip 0.6825 sits inside its band 0.683 +- 0.001')
 
-    # ---------- p-built-ridge ----------
-    beta_t = [R(1, 2), R(1, 5), 0]
-    b_hat = [R(3, 5), R(1, 10), R(14, 100)]
-    noise2, n_b = 2, 500
-    Xb, resb = orth_design(n_b, 3, 7)
-    yb = Xb @ np.array([float(b) for b in b_hat]) + resb * 5
+    def fl(a):                                                # method 1: exact soft thresholding
+        return c0 + sum(soft(b, a) * z for b, z in zip(b_ols, zn))
+    Xf, res = orth_design(2000, 3, 3)
+    yf = 0.2 + Xf @ np.array([float(b) for b in b_ols]) + 0.5 * res * math.sqrt(2000)
+    zrow = np.array([[float(z) for z in zn]])
 
-    def emse(coefs):
-        return noise2 + sum((c - t) ** 2 for c, t in zip(coefs, beta_t))
+    def fsk(a):                                               # method 2: scikit-learn on a design with X'X = nI
+        if a == 0:
+            return LinearRegression().fit(Xf, yf).predict(zrow)[0]
+        return Lasso(alpha=a, tol=1e-12, max_iter=100000).fit(Xf, yf).predict(zrow)[0]
+    num(L2, 'p-futures-lasso', 1, fl(0), fsk(0),
+        {'no-intercept': fl(0) - c0, 'sign': c0 + b_ols[0] * zn[0] + b_ols[1] * 1 + b_ols[2] * zn[2]})
+    a2 = R(1, 5)
+    num(L2, 'p-futures-lasso', 2, fl(a2), fsk(0.2),
+        {'down': c0 + sum((b - a2) * z for b, z in zip(b_ols, zn)),
+         'count': fl(0) - 3 * a2,
+         'intercept': fl(a2) - a2})
+    terms = [soft(b, a2) * z - b * z for b, z in zip(b_ols, zn)]
+    ok(terms == [R(1, 10), R(-1, 5), R(-2, 5)] and sum(terms) == R(-1, 2) and (fl(0) - fl(a2)) / a2 == R(5, 2), 'p-futures-lasso p2: terms +0.1, -0.2, -0.4; fall 0.5, 2.5 per unit')
+    ok([soft(b, a2) for b in b_ols] == [R(9, 5), -1, R(3, 10)], 'p-futures-lasso p2: coefficients 1.8, -1.0, 0.3')
+    aa = sp.Symbol('a')
+    root = [r for r in sp.solve(sp.Eq(c0 + (b_ols[0] - aa) * zn[0] + (b_ols[1] + aa) * zn[1], 0), aa)]
+    from scipy.optimize import brentq as _bq
+    root2 = _bq(lambda a: fsk(a), 0.5, 1.0, xtol=1e-10)
+    ok(len(root) == 1 and R(1, 2) <= root[0] <= R(6, 5), 'p-futures-lasso p3: root inside the stretch where demand is 0')
+    ok(all(fl(R(k, 100)) > 0 for k in range(0, 80)) and fl(R(8, 10)) == 0, 'p-futures-lasso p3: first zero at 0.8 on a grid of 0.01')
+    num(L2, 'p-futures-lasso', 3, root[0], root2,
+        {'straight': fl(0) / R(5, 2), 'no-intercept': (fl(0) - c0) / R(5, 2), 'demand': abs(b_ols[2])}, agree=1e-6)
+    ok(fl(R(1, 2)) == R(3, 20) and sp.expand(c0 + (b_ols[0] - aa) * zn[0] + (b_ols[1] + aa) * zn[1]) == R(2, 5) - aa / 2, 'p-futures-lasso p3: 0.15 at 0.5, then 0.4 - 0.5 alpha')
+    num(L2, 'p-futures-lasso', 4, fl(1), fsk(1.0),
+        {'straight': fl(0) - R(5, 2) * 1, 'slope': 0 - R(5, 2) * R(1, 5), 'ols': fl(0), 'sign': -fl(1)})
+    ok(fl(0) - R(5, 2) == c0 + sum((b - sp.sign(b) * 1) * z for b, z in zip(b_ols, zn)), 'p-futures-lasso p4: straight slip is also demand gone negative, -1.1')
+    ok([soft(b, 1) for b in b_ols] == [1, R(-1, 5), 0] and c0 + 1 * zn[0] + R(-1, 5) * zn[1] == R(-1, 10), 'p-futures-lasso p4: coefficients 1.0, -0.2, 0 give 0.2 - 0.5 + 0.2')
+    ok(fl(R(12, 10)) == R(-1, 5) and fl(2) == c0, 'p-futures-lasso: wind leaves at 1.2, the intercept alone at 2.0')
 
-    def emse_np(coefs):
-        return 2.0 + float(np.sum((np.array(coefs, float) - np.array([0.5, 0.2, 0.0])) ** 2))
-    ols_np = LinearRegression().fit(Xb, yb).coef_
-    num(L2, 'p-built-ridge', 1, emse(b_hat), emse_np(ols_np),
-        {'no-noise': emse(b_hat) - noise2, 'unsquared': noise2 + sum(abs(c - t) for c, t in zip(b_hat, beta_t))}, agree=1e-9)
-    for k, lam, slip in ((2, 125, R(3, 4)), (3, 500, 0)):
-        fac = R(n_b, n_b + lam)
-        rid = Ridge(alpha=lam).fit(Xb, yb).coef_
-        num(L2, 'p-built-ridge', k, emse([fac * b for b in b_hat]), emse_np(rid),
-            {'lambda-over-n': emse([slip * b for b in b_hat]), 'no-noise': emse([fac * b for b in b_hat]) - noise2},
-            round_tol=0.0001, agree=1e-9)
-    ok(emse([R(4, 5) * b for b in b_hat]) < emse(b_hat) < emse([R(1, 2) * b for b in b_hat]), 'p-built-ridge: 2.0273 < 2.0396 < 2.0674, the U')
-    base_b = emse([0, 0, 0])
-    num(L2, 'p-built-ridge', 4, base_b, emse_np(Ridge(alpha=1e12).fit(Xb, yb).coef_),
-        {'noise-only': noise2, 'ols-coefs': noise2 + sum(b ** 2 for b in b_hat)}, agree=1e-6)
-    r2 = 1 - R(20273, 10000) / base_b                                   # the question says use the printed 2.0273
-    num(L2, 'p-built-ridge', 5, r2, 1 - emse_np(Ridge(alpha=125).fit(Xb, yb).coef_) / emse_np(np.zeros(3)),
-        {'ols': 1 - emse(b_hat) / base_b, 'ratio': R(20273, 10000) / base_b, 'too-much': 1 - emse([R(1, 2) * b for b in b_hat]) / base_b}, agree=1e-4)
-    ok(abs(float(R(20273, 10000) / base_b) - 0.8853) < 0.00005, 'p-built-ridge: printed 0.8853')
+    # ---------- p-built-ridge (re-authored, session AF: two correlated signals, ridge by the 2 x 2 normal equations) ----------
+    G = sp.Matrix([[50, 40], [40, 50]])
+    g = sp.Matrix([60, 30])
+    hold = [((2, 1), R(2)), ((1, 2), R(1)), ((-2, -1), R(-8, 5)), ((1, -1), R(5, 2))]
+    b_o = G.LUsolve(g)
+    b_r = (G + 10 * sp.eye(2)).LUsolve(g)
+    # method 2: data built to hold the sums exactly, fitted by scikit-learn (Ridge's alpha adds to X'X's diagonal)
+    rng = np.random.default_rng(21)
+    Z = rng.normal(size=(50, 3))
+    Z -= Z.mean(0)
+    Q, _ = np.linalg.qr(Z)
+    Lc = np.linalg.cholesky(np.array([[50, 40], [40, 50]], float))
+    Xr = Q[:, :2] @ Lc.T                                      # X'X = [[50, 40], [40, 50]], centred
+    yr = Xr @ np.array([2.0, -1.0]) + 3.0 * Q[:, 2]
+    ok(np.allclose(Xr.T @ Xr, [[50, 40], [40, 50]]) and np.allclose(Xr.T @ yr, [60, 30]) and abs(Xr[:, 0].std() - 1) < 1e-12, 'p-built-ridge: built data hold the sums, z-scored on 50 rows')
+    ols_sk = LinearRegression(fit_intercept=False).fit(Xr, yr).coef_
+    rid_sk = Ridge(alpha=10, fit_intercept=False).fit(Xr, yr).coef_
+    num(L2, 'p-built-ridge', 1, b_o[1], ols_sk[1], {'alone': R(30, 50), 'swap': b_o[0], 'sign': -b_o[1]})
+    num(L2, 'p-built-ridge', 2, b_r[1], rid_sk[1],
+        {'factor': b_o[1] * R(50, 60), 'all-entries': (G + 10 * sp.ones(2, 2)).LUsolve(g)[1], 'ols': b_o[1], 'sign': -b_r[1]})
+    ok(list(b_o) == [2, -1] and list(b_r) == [R(6, 5), R(-3, 10)], 'p-built-ridge: OLS (2.0, -1.0), ridge (1.2, -0.3)')
+    ok(50 * 2 + 40 * b_o[1] == 60 and 40 * 2 + 50 * b_o[1] == 30 and 30 - 80 == -50 and 30 - 48 == -18 and 60 * b_r[1] == -18, 'p-built-ridge: the equations and the sign lines')
+    u = sp.Matrix([1, 1]) / 2
+    v = sp.Matrix([1, -1]) / 2
+    ok((b_o.T * (2 * u))[0] / 2 == R(1, 2) and (b_o.T * (2 * v))[0] / 2 == R(3, 2) and (b_r.T * (2 * u))[0] / 2 == R(9, 20) and (b_r.T * (2 * v))[0] / 2 == R(3, 4),
+       'p-built-ridge p2 explain: ridge halves the difference part (1.5 to 0.75) and keeps 90% of the sum part')
+    Xh = np.array([h[0] for h in hold], float)
+    yh = np.array([float(h[1]) for h in hold])
+
+    def mse(b):
+        return sum((y - (b[0] * x[0] + b[1] * x[1])) ** 2 for x, y in hold) / 4
+    fac = [b * R(50, 60) for b in b_o]
+    num(L2, 'p-built-ridge', 3, mse(b_r), mean_squared_error(yh, Xh @ rid_sk),
+        {'ols': mse(b_o), 'sse': 4 * mse(b_r), 'carried': mse(fac)}, agree=1e-9)
+    ok([b_r[0] * x[0] + b_r[1] * x[1] for x, _ in hold] == [R(21, 10), R(3, 5), R(-21, 10), R(3, 2)]
+       and [y - (b_r[0] * x[0] + b_r[1] * x[1]) for x, y in hold] == [R(-1, 10), R(2, 5), R(1, 2), 1], 'p-built-ridge p3: forecasts 2.1, 0.6, -2.1, 1.5; misses -0.1, 0.4, 0.5, 1.0')
+    e_o = [abs(y - (b_o[0] * x[0] + b_o[1] * x[1])) for x, y in hold]
+    e_r = [abs(y - (b_r[0] * x[0] + b_r[1] * x[1])) for x, y in hold]
+    ok(sum(1 for a, b in zip(e_r, e_o) if a < b) == 3 and abs(float(mse(b_r) / mse(b_o)) - 1 / 3) < 0.01, 'p-built-ridge p3 explain: ridge closer on 3 of 4 hours; 0.355 about a third of 1.0525')
+    ok(abs(float(fac[0]) - 1.667) < 0.0005 and abs(float(fac[1]) + 0.833) < 0.0005, 'p-built-ridge p3: carried coefficients 1.667, -0.833')
+    base = sum(y ** 2 for _, y in hold) / 4
+    tmean = sum(y for _, y in hold) / 4
+    base_t = sum((y - tmean) ** 2 for _, y in hold) / 4
+    ok(base == R(34525, 10000) and tmean == R(39, 40) and abs(mean_squared_error(yh, np.zeros(4)) - 3.4525) < 1e-12, 'p-built-ridge p4: baseline 3.4525, test mean 0.975')
+    num(L2, 'p-built-ridge', 4, 1 - mse(b_r) / base, 1 - mean_squared_error(yh, Xh @ rid_sk) / mean_squared_error(yh, np.zeros(4)),
+        {'ratio': mse(b_r) / base, 'test-mean': 1 - mse(b_r) / base_t, 'carried': 1 - mse(fac) / base, 'ols': 1 - mse(b_o) / base}, agree=1e-9)
+    ok(abs(float(100 * (1 - mse(b_r) / base)) - 89.7) < 0.05 and abs(float(100 * (1 - mse(b_o) / base)) - 69.5) < 0.05, 'p-built-ridge p4 explain: 89.7% against 69.5%')
+    tr = lambda b: float(np.sum((yr - Xr @ np.asarray(b, float)) ** 2))
+    ok(tr(rid_sk) > tr(ols_sk), 'p-built-ridge p4 explain: ridge gives up training fit')
 
 L3 = load(3)
 if L3 is not None:
