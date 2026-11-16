@@ -1,0 +1,777 @@
+{
+  "id": "problems-1",
+  "course": "coint",
+  "level": 1,
+  "title": "Problems: false fits, designed ties and the residual test",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-paper-mill-multiple",
+      "difficulty": 4,
+      "skills": [
+        "co-spurious",
+        "co-test"
+      ],
+      "prose": "Two paper mills' share prices are simulated. $x_t$ is a random walk with daily shocks of sd £0.40, and $y_t = 3 + 0.75x_t + u_t$. Here $u_t = 0.8u_{t-1} + \\eta_t$ is an AR(1), independent of $x$, whose shocks $\\eta_t$ have sd £0.30.",
+      "parts": [
+        {
+          "question": "What is the long-run sd of the true gap $y_t - 0.75x_t - 3$, in pounds? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "shock-sd",
+                "value": 0.3,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 0.83,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The gap is $u_t$, with $\\text{Var}(u) = 0.09/(1 - 0.64) = 0.25$, so its sd is £0.50.",
+            "generic": "Not quite. The gap is $u_t$ itself: use the AR(1) variance $\\sigma^2/(1 - \\phi^2)$, then take the root.",
+            "byKey": {
+              "shock-sd": "That is the sd of one day's shock. The AR(1) carries past shocks forward, so divide the variance by $1 - \\phi^2$.",
+              "variance": "That is the variance. The sd is its root, £0.50.",
+              "no-root": "You divided the shock sd, 0.30, by $1 - \\phi^2$. Divide the variance, 0.09, and then take the root."
+            }
+          },
+          "explain": {
+            "text": "Subtracting $0.75x_t + 3$ leaves exactly $u_t$. Its variance is $0.30^2/(1 - 0.8^2) = 0.25$, so its sd is £0.50 on day 10 or on day 10,000."
+          }
+        },
+        {
+          "question": "A trader uses the multiple 0.6 instead, so his gap is $y_t - 0.6x_t - 3 = 0.15x_t + u_t$. Counting from day 0, when $x$ is known, what is its sd on day 500, in pounds? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.43,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "no-u",
+                "value": 1.34,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "variance",
+                "value": 2.05,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sd-not-squared",
+                "value": 2.18,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "multiple-not-squared",
+                "value": 3.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The walk part has variance $0.15^2 \\times 0.40^2 \\times 500 = 1.8$ and $u$ adds 0.25, so the sd is $\\sqrt{2.05} = £1.43$.",
+            "generic": "Not quite. Add the variance $0.15x_t$ has gathered since day 0 to the variance of $u_t$, then take the root.",
+            "byKey": {
+              "no-u": "That is the walk part alone, $\\sqrt{1.8}$. The gap still holds $u_t$, which adds its variance of 0.25.",
+              "variance": "That is the variance, 2.05. The sd is its root.",
+              "sd-not-squared": "You used the shock sd, 0.40, where its square belongs. Each day adds $0.15^2 \\times 0.40^2 = 0.0036$.",
+              "multiple-not-squared": "You multiplied by 0.15 instead of $0.15^2$. Scaling a series by $c$ scales its variance by $c^2$."
+            }
+          },
+          "explain": {
+            "text": "From day 0, $0.15x_t$ gathers 500 shocks of variance $0.15^2 \\times 0.16 = 0.0036$ each, 1.8 in all. As $u$ is independent of $x$, the variances add to 2.05, whose root is £1.43."
+          }
+        },
+        {
+          "question": "The walk part's variance is $0.0036t$ and $u$'s is 0.25. On what day does the trader's gap first have an sd above twice £0.50? Give a whole number of days.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 209,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "no-subtract",
+                "value": 278,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "doubled-variance",
+                "value": 70,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "round-down",
+                "value": 208,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Twice £0.50 is £1.00, a variance of 1. So $0.0036t + 0.25 > 1$ needs $t > 208.3$: day 209.",
+            "generic": "Not quite. Twice the sd is four times the variance, so solve $0.0036t + 0.25 > 4 \\times 0.25$.",
+            "byKey": {
+              "no-subtract": "You set the walk part alone equal to 1. The gap already has 0.25 from $u$, so the walk must add only 0.75.",
+              "doubled-variance": "You doubled the variance, which needs only $0.0036t + 0.25 > 0.5$. Twice the sd is four times the variance: 1.",
+              "round-down": "On day 208 the variance is $0.7488 + 0.25 = 0.9988$, still below 1. Day 209 is the first above it."
+            }
+          },
+          "explain": {
+            "text": "Doubling the sd means four times the variance: $4 \\times 0.25 = 1$. The walk part must supply 0.75, which takes $0.75/0.0036 = 208.3$ days, so day 209 is the first."
+          }
+        },
+        {
+          "question": "On 1,600 days, Engle-Granger's step one regresses $y$ on $x$. Which statement is right?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "near-true",
+                "text": "Least squares lands near 0.75, because any other multiple leaves a growing walk in the gap; $y - 0.6x - 3$ is I(1)",
+                "correct": true
+              },
+              {
+                "id": "near-trader",
+                "text": "Least squares lands near 0.6, because $y - 0.6x - 3$ still contains the stationary $u$",
+                "why": "Holding $u$ is not enough. The leftover $0.15x$ is a walk, so its variance grows and least squares moves away from 0.6."
+              },
+              {
+                "id": "wide-band",
+                "text": "$y - 0.6x - 3$ is stationary, only with a wider band than the true gap's",
+                "why": "No fixed band holds that gap. Its variance grows by 0.0036 a day without limit."
+              },
+              {
+                "id": "none",
+                "text": "No multiple can work, because $x$ and $y$ are each I(1)",
+                "why": "Two I(1) series can still have a stationary combination. Here $y - 0.75x - 3$ is exactly $u$."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. A wrong multiple leaves a walk whose variance grows without limit, so least squares settles near the true 0.75.",
+            "generic": "Not quite. Ask what happens to the variance of $0.15x_t$ as $t$ grows.",
+            "byKey": {
+              "near-trader": "Holding $u$ is not enough. The leftover $0.15x$ is a walk, so its variance grows and least squares moves away from 0.6.",
+              "wide-band": "No fixed band holds that gap. Its variance grows by 0.0036 a day without limit.",
+              "none": "Two I(1) series can still have a stationary combination. Here $y - 0.75x - 3$ is exactly $u$."
+            }
+          },
+          "explain": {
+            "text": "On day 1,600 the trader's gap has variance $0.0036 \\times 1{,}600 + 0.25 = 6.01$, against 0.25 for the true gap. Least squares picks the multiple with the smallest sum of squared gaps, so it is pulled to 0.75. Its residual is then close to $u$, and step two rejects a unit root."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-cocoa-chip-levels",
+      "difficulty": 3,
+      "skills": [
+        "co-spurious",
+        "co-test"
+      ],
+      "prose": "A strategist regresses the daily level of cocoa futures on the level of a semiconductor index. She has 750 days, and the two levels have correlation $r = -0.45$. For the slope, use $|t| = |r|\\sqrt{(n - 2)/(1 - r^2)}$.",
+      "parts": [
+        {
+          "question": "What is $|t|$ for her levels regression? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 13.78,
+            "tol": {
+              "abs": 0.01
+            },
+            "wrong": [
+              {
+                "id": "no-root",
+                "value": 422.07,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "r-squared",
+                "value": 6.2,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-minus-r",
+                "value": 16.6,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$748/0.7975 = 937.9$, whose root is 30.63. Times 0.45 that is 13.78.",
+            "generic": "Not quite. Put $n - 2 = 748$ over $1 - r^2$, take the root, then multiply by $|r|$.",
+            "byKey": {
+              "no-root": "You left out the square root. $\\sqrt{937.9} = 30.63$, and $0.45 \\times 30.63 = 13.78$.",
+              "r-squared": "You multiplied by $r^2 = 0.2025$. The formula multiplies by $|r| = 0.45$.",
+              "one-minus-r": "You divided by $1 - |r| = 0.55$. The formula has $1 - r^2 = 0.7975$."
+            }
+          },
+          "explain": {
+            "text": "$n - 2 = 748$ and $1 - r^2 = 0.7975$, so the root is 30.63. Times $|r| = 0.45$ that is 13.78, far past 1.96 by the textbook's rule."
+          }
+        },
+        {
+          "question": "At 750 days, what is the smallest $|r|$ that already gives $|t| > 1.96$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0715,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "r-squared",
+                "value": 0.0051,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "drop-one-minus",
+                "value": 0.0717,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Squaring, $748r^2 = 3.8416(1 - r^2)$, so $r^2 = 3.8416/751.84 = 0.00511$ and $|r| = 0.0715$.",
+            "generic": "Not quite. Set $|t| = 1.96$, square both sides and solve for $r^2$.",
+            "byKey": {
+              "r-squared": "That is $r^2$. Take its root: $\\sqrt{0.00511} = 0.0715$.",
+              "drop-one-minus": "You dropped the $1 - r^2$, giving $1.96/\\sqrt{748}$. Keep it: $r^2 = 3.8416/(748 + 3.8416)$."
+            }
+          },
+          "explain": {
+            "text": "Set $|t| = 1.96$ and solve: $r^2 = 1.96^2/(748 + 1.96^2) = 0.00511$, so $|r| = 0.0715$. Any correlation past that passes the 5% rule on 750 days. Two wandering levels clear it with ease."
+          }
+        },
+        {
+          "question": "She extends the sample to 1,500 days and the correlation stays at −0.45. What is $|t|$ now? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 19.5,
+            "tol": {
+              "abs": 0.01
+            },
+            "wrong": [
+              {
+                "id": "doubled",
+                "value": 27.56,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "unchanged",
+                "value": 13.78,
+                "tol": {
+                  "abs": 0.01
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.45\\sqrt{1{,}498/0.7975} = 0.45 \\times 43.34 = 19.50$, about $\\sqrt 2$ times the 13.78 of part 1.",
+            "generic": "Not quite. Keep $r = -0.45$ and use $n - 2 = 1{,}498$ in the formula.",
+            "byKey": {
+              "doubled": "$|t|$ does not double with the days. It grows like $\\sqrt{n - 2}$, so it rises by about 1.41 times.",
+              "unchanged": "The correlation is the same, but $n$ is not. $|t|$ rises with $\\sqrt{n - 2}$."
+            }
+          },
+          "explain": {
+            "text": "With $r$ fixed, $|t|$ grows like $\\sqrt{n - 2}$. Doubling the days multiplies it by about 1.41, from 13.78 to 19.50. Nothing about the two markets has changed."
+          }
+        },
+        {
+          "question": "Her Engle-Granger test on the 1,500 days gives a residual statistic of −2.41. Which conclusion is right?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "spurious",
+                "text": "No tie: −2.41 is above even the 10% value, about −3.04, so the levels fit is spurious",
+                "correct": true
+              },
+              {
+                "id": "t-proves",
+                "text": "A tie: a $t$ of 19.50 is far beyond 1.96",
+                "why": "Between two I(1) levels that $t$ grows with the sample whatever the link, so it carries no evidence."
+              },
+              {
+                "id": "near-adf",
+                "text": "A tie at 10%: −2.41 is negative and close to the ADF value −2.86",
+                "why": "A residual is judged against MacKinnon's values, about −3.04 at 10%, and −2.41 is not below even −2.86."
+              },
+              {
+                "id": "daily-link",
+                "text": "No tie in levels, but the $t$ of 19.50 proves a link between daily moves",
+                "why": "A levels $t$ says nothing about daily moves. To ask about those, regress the changes."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. With no stationary residual the levels fit is spurious, and its $t$ mostly measures the sample length.",
+            "generic": "Not quite. Compare −2.41 with MacKinnon's residual values, then ask what that means for the levels $t$.",
+            "byKey": {
+              "t-proves": "Between two I(1) levels that $t$ grows with the sample whatever the link, so it carries no evidence.",
+              "near-adf": "A residual is judged against MacKinnon's values, about −3.04 at 10%, and −2.41 is not below even −2.86.",
+              "daily-link": "A levels $t$ says nothing about daily moves. To ask about those, regress the changes."
+            }
+          },
+          "explain": {
+            "text": "−2.41 lies above −3.04, −3.34 and −3.90, so Engle-Granger finds no tie at any usual level. Without a stationary residual the levels regression is spurious, as in lesson 1. Its $t$ grew from 13.78 to 19.50 only because the sample doubled."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-cable-sample-length",
+      "difficulty": 5,
+      "skills": [
+        "co-test"
+      ],
+      "prose": "A desk plans how many days of history it needs to test two cable makers' shares as a pair. It expects their gap to behave like an AR(1), $u_t = 0.96u_{t-1} + \\eta_t$. Engle-Granger's step two fits $\\Delta\\hat u_t = \\gamma\\hat u_{t-1} + \\varepsilon_t$. As a rough guide, $t_\\gamma$ is about $\\gamma$ divided by $\\sqrt{(1 - \\phi^2)/n}$, the slope's standard error on $n$ days.",
+      "parts": [
+        {
+          "question": "What value of $\\gamma$ does this gap imply? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.04,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "phi",
+                "value": 0.96,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sign",
+                "value": 0.04,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Taking $u_{t-1}$ from both sides gives $\\Delta u_t = (0.96 - 1)u_{t-1} + \\eta_t$, so $\\gamma = -0.04$.",
+            "generic": "Not quite. Take $u_{t-1}$ from both sides of the AR(1).",
+            "byKey": {
+              "phi": "That is $\\phi$, the slope of $u_t$ on $u_{t-1}$. Step two regresses the change, so its slope is $\\phi - 1$.",
+              "sign": "A gap that reverts tends to fall when it is high, so $\\gamma = \\phi - 1$ is negative."
+            }
+          },
+          "explain": {
+            "text": "Step two regresses the day's change on yesterday's level. Writing $\\Delta u_t = u_t - u_{t-1}$ turns the AR(1) into $\\Delta u_t = (\\phi - 1)u_{t-1} + \\eta_t$. So $\\gamma = 0.96 - 1 = -0.04$."
+          }
+        },
+        {
+          "question": "Using $\\gamma = -0.04$, what $t_\\gamma$ does the rough guide give on 250 days? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -2.26,
+            "tol": {
+              "abs": 0.01
+            },
+            "wrong": [
+              {
+                "id": "one-minus-phi",
+                "value": -3.16,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "no-root",
+                "value": -127.55,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "sign",
+                "value": 2.26,
+                "tol": {
+                  "abs": 0.01
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The standard error is $\\sqrt{0.0784/250} = 0.0177$, so $t_\\gamma = -0.04/0.0177 = -2.26$.",
+            "generic": "Not quite. Put $1 - 0.96^2 = 0.0784$ and $n = 250$ into the standard error, then divide $\\gamma$ by it.",
+            "byKey": {
+              "one-minus-phi": "You used $1 - \\phi = 0.04$. The standard error has $1 - \\phi^2 = 0.0784$.",
+              "no-root": "You left out the square root. The standard error is $\\sqrt{0.0784/250} = 0.0177$.",
+              "sign": "$t_\\gamma$ keeps the sign of $\\gamma = -0.04$, so it is negative."
+            }
+          },
+          "explain": {
+            "text": "$1 - 0.96^2 = 0.0784$, so the standard error is $\\sqrt{0.0784/250} = 0.0177$. The guide gives $t_\\gamma = -0.04/0.0177 = -2.26$. That is above even MacKinnon's 10% value, about −3.04, so a year of data would usually miss this tie."
+          }
+        },
+        {
+          "question": "Using $t_\\gamma = -0.04\\sqrt{n/0.0784}$, on how many days does the guide's statistic first reach MacKinnon's 5% value, −3.34? Give a whole number of days.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 547,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "linear",
+                "value": 370,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "adf",
+                "value": 401,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "round-down",
+                "value": 546,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.04/0.28 = 0.1429$, so the statistic is $-0.1429\\sqrt n$. It reaches −3.34 when $\\sqrt n = 23.38$, so $n = 546.6$: 547 days.",
+            "generic": "Not quite. Set $0.04\\sqrt{n/0.0784} = 3.34$, square both sides and round up.",
+            "byKey": {
+              "linear": "You scaled the 250 days by $3.34/2.26$. The statistic grows like $\\sqrt n$, so the days grow like its square.",
+              "adf": "−2.86 is the ADF value for a raw series. A fitted residual is judged against MacKinnon's −3.34.",
+              "round-down": "On 546 days the guide gives $-3.338$, just short of −3.34. Round up to 547."
+            }
+          },
+          "explain": {
+            "text": "As $\\sqrt{0.0784} = 0.28$, the guide's statistic is $-(0.04/0.28)\\sqrt n = -0.1429\\sqrt n$. It reaches −3.34 at $n = (3.34 \\times 0.28/0.04)^2 = 546.6$. So the guide asks for 547 days, more than twice the 250."
+          }
+        },
+        {
+          "question": "A second candidate's gap has $\\phi = 0.98$. By the same guide, on how many days does its statistic first reach −3.34? Give a whole number of days.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1105,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "doubled",
+                "value": 1094,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "phi-unchanged",
+                "value": 2187,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one-minus-phi",
+                "value": 558,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Now $\\gamma = -0.02$ and $\\sqrt{1 - 0.98^2} = 0.1990$, so $n = (3.34 \\times 0.1990/0.02)^2 = 1{,}104.4$: 1,105 days.",
+            "generic": "Not quite. Redo part 3 with $\\gamma = 0.98 - 1$ and $1 - 0.98^2 = 0.0396$.",
+            "byKey": {
+              "doubled": "Halving $\\gamma$ does not simply double the days: $1 - \\phi^2$ also shrinks, from 0.0784 to 0.0396.",
+              "phi-unchanged": "You kept $1 - \\phi^2 = 0.0784$ from the first gap. With $\\phi = 0.98$ it is 0.0396.",
+              "one-minus-phi": "You used $1 - \\phi = 0.02$ in the standard error. It has $1 - \\phi^2 = 0.0396$."
+            }
+          },
+          "explain": {
+            "text": "The slower gap has $\\gamma = -0.02$ and $\\sqrt{0.0396} = 0.1990$, so the guide's statistic is $-0.1005\\sqrt n$. That reaches −3.34 at $n = 1{,}104.4$, over four years of daily closes. A slow tie tested on one year will usually fail, though it is real."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-utility-step-two",
+      "difficulty": 4,
+      "skills": [
+        "co-spurious",
+        "co-test"
+      ],
+      "prose": "An analyst runs Engle-Granger on 500 days of two water utilities' closes. Step one, $y$ on $x$, gives $R^2 = 0.91$ and a slope t statistic of 38. For step two she regresses $\\Delta\\hat u_t$ on $\\hat u_{t-1}$ with no constant, over 499 days. Her sums are $\\sum \\hat u_{t-1}\\Delta\\hat u_t = -62.4$ and $\\sum \\hat u_{t-1}^2 = 780$, and the fit's residual sd is $s = 0.55$.",
+      "parts": [
+        {
+          "question": "What is the estimate $\\hat\\gamma$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.08,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 0.08,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "inverted",
+                "value": -12.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\hat\\gamma = -62.4/780 = -0.08$.",
+            "generic": "Not quite. With no constant, the slope is $\\sum \\hat u_{t-1}\\Delta\\hat u_t / \\sum \\hat u_{t-1}^2$.",
+            "byKey": {
+              "sign": "The cross sum is negative, so $\\hat\\gamma$ is too: a high residual tends to fall the next day.",
+              "inverted": "You divided the sum of squares by the cross sum. The slope is the cross sum over the sum of squares."
+            }
+          },
+          "explain": {
+            "text": "A regression through the origin has slope $\\sum xy/\\sum x^2$. Here that is $-62.4/780 = -0.08$: each day the residual gives back about 8% of its distance from 0."
+          }
+        },
+        {
+          "question": "Using $\\hat\\gamma = -0.08$, its standard error is $s/\\sqrt{\\sum \\hat u_{t-1}^2}$. What is the statistic $t_\\gamma$? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -4.06,
+            "tol": {
+              "abs": 0.01
+            },
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 4.06,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "no-root",
+                "value": -113.45,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "variance",
+                "value": -7.39,
+                "tol": {
+                  "abs": 0.01
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\text{se} = 0.55/\\sqrt{780} = 0.0197$, so $t_\\gamma = -0.08/0.0197 = -4.06$.",
+            "generic": "Not quite. Divide $s$ by $\\sqrt{780}$, then divide $\\hat\\gamma$ by that standard error.",
+            "byKey": {
+              "sign": "$t_\\gamma$ keeps the sign of $\\hat\\gamma$, which is negative. Unit-root tests read the negative tail.",
+              "no-root": "You divided $s$ by 780. The standard error divides by $\\sqrt{780} = 27.93$.",
+              "variance": "You used $s^2 = 0.3025$ on top. The standard error uses $s = 0.55$."
+            }
+          },
+          "explain": {
+            "text": "$\\sqrt{780} = 27.93$, so the standard error is $0.55/27.93 = 0.0197$. The statistic is $-0.08/0.0197 = -4.06$, the number Engle-Granger compares with MacKinnon's residual values."
+          }
+        },
+        {
+          "question": "Using $t_\\gamma = -4.06$ on 500 days, what is the Engle-Granger verdict?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "all",
+                "text": "Cointegrated at 1%, 5% and 10%: −4.06 is below even −3.90",
+                "correct": true
+              },
+              {
+                "id": "step-one",
+                "text": "Cointegrated, but it is the step-one $t$ of 38 that proves it",
+                "why": "Step one's $t$ between two I(1) levels is spurious until the residual test rejects. The evidence is $t_\\gamma$."
+              },
+              {
+                "id": "five-ten",
+                "text": "Cointegrated at 5% and 10% only, since −4.06 is close to −3.90",
+                "why": "−4.06 is below −3.90, so the 1% test rejects as well."
+              },
+              {
+                "id": "margin",
+                "text": "Not cointegrated: a residual statistic must beat −2.86 by a wide margin",
+                "why": "−2.86 is the ADF value for a raw series. Residuals use MacKinnon's values, and −4.06 is below all of them."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. −4.06 is beyond MacKinnon's 1% value, so the pair is tied at every usual level.",
+            "generic": "Not quite. Compare −4.06 with about −3.90, −3.34 and −3.04.",
+            "byKey": {
+              "step-one": "Step one's $t$ between two I(1) levels is spurious until the residual test rejects. The evidence is $t_\\gamma$.",
+              "five-ten": "−4.06 is below −3.90, so the 1% test rejects as well.",
+              "margin": "−2.86 is the ADF value for a raw series. Residuals use MacKinnon's values, and −4.06 is below all of them."
+            }
+          },
+          "explain": {
+            "text": "MacKinnon's residual values for two series are about −3.90, −3.34 and −3.04 at 1%, 5% and 10%. −4.06 is below all three, so the pair is cointegrated at every usual level. The step-one $R^2$ and $t$ carry no weight in that verdict."
+          }
+        },
+        {
+          "question": "Suppose she had only the last 250 days, with the same $\\hat\\gamma = -0.08$ and $s = 0.55$ but half the sum: $\\sum \\hat u_{t-1}^2 = 390$. What is $t_\\gamma$ now? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -2.87,
+            "tol": {
+              "abs": 0.01
+            },
+            "wrong": [
+              {
+                "id": "halved",
+                "value": -2.03,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "unchanged",
+                "value": -4.06,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "sign",
+                "value": 2.87,
+                "tol": {
+                  "abs": 0.01
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\text{se} = 0.55/\\sqrt{390} = 0.0279$, so $t_\\gamma = -0.08/0.0279 = -2.87$.",
+            "generic": "Not quite. Recompute the standard error with $\\sqrt{390}$.",
+            "byKey": {
+              "halved": "Halving the sum divides its root by $\\sqrt 2$, not by 2. The statistic falls to $-4.06/1.414$.",
+              "unchanged": "The sum of squares halved, so the standard error grew. Recompute it with $\\sqrt{390}$.",
+              "sign": "$t_\\gamma$ keeps the sign of $\\hat\\gamma = -0.08$, so it is negative."
+            }
+          },
+          "explain": {
+            "text": "Halving the sum divides $\\sqrt{\\sum \\hat u_{t-1}^2}$ by $\\sqrt 2$, so the statistic shrinks from −4.06 to $-4.06/\\sqrt 2 = -2.87$. The same speed of reversion is now measured less precisely."
+          }
+        },
+        {
+          "question": "Using $t_\\gamma = -2.87$ on 250 days, what should she conclude?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "no-power",
+                "text": "No evidence at 10%, but a short window lacks power, so the tie may still be real",
+                "correct": true
+              },
+              {
+                "id": "adf",
+                "text": "Cointegrated at 5%: −2.87 is below the ADF value −2.86",
+                "why": "−2.86 is for a raw series. A fitted residual needs MacKinnon's values, and −2.87 is above about −3.04."
+              },
+              {
+                "id": "broken",
+                "text": "The tie broke during the last 250 days",
+                "why": "The reversion estimate is the same −0.08. Only the precision fell, because the window is shorter."
+              },
+              {
+                "id": "overturn",
+                "text": "The 500-day verdict was wrong, since the newer window disagrees",
+                "why": "Both windows give $\\hat\\gamma = -0.08$. The longer one measures it more precisely, so its verdict stands."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Failing to reject on a short window is weak evidence, not proof that the tie is absent.",
+            "generic": "Not quite. Compare −2.87 with MacKinnon's 10% value, then ask what changed between the two windows.",
+            "byKey": {
+              "adf": "−2.86 is for a raw series. A fitted residual needs MacKinnon's values, and −2.87 is above about −3.04.",
+              "broken": "The reversion estimate is the same −0.08. Only the precision fell, because the window is shorter.",
+              "overturn": "Both windows give $\\hat\\gamma = -0.08$. The longer one measures it more precisely, so its verdict stands."
+            }
+          },
+          "explain": {
+            "text": "−2.87 lies above the 10% value, about −3.04, so the test does not reject. A short window misses real ties, as lesson 4's power count showed. It also sits just below the ADF −2.86, so the wrong table would call it a tie."
+          }
+        }
+      ]
+    }
+  ]
+}
