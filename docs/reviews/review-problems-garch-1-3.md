@@ -124,3 +124,41 @@ Format: `N. file | JSON path | severity | problem | evidence | exact fix`.
 5. The course gate should run `fresh-check --file` on every set of the course after any set changes (finding 9: an error on problems-2 raised by problems-3).
 
 Inbox bullets: `docs/BACKLOG-INBOX.md`, `Raised later (review problems garch):`.
+
+## Fix pass
+
+Author agent, session AF (`docs/briefs/reauthor-fix-af.md`). Replacement texts applied with `review-problems-garch-1-3-scripts/apply-fixes.py`; a second run of it on the edited files changes nothing but finding 22's split sentence, so every string landed. Every changed number is checked in `docs/reports/problems-garch-numbers.py`.
+
+1. Re-authored as `p-stale-alarm` (l1, l3): a calm screen sd held into a storm; alarm level, chance a storm day crosses it, that chance over the normal 0.27%, and the raw kurtosis of storm days in screen sds (3). Walks none of l1 screen 5, l1 quiz 0, review-1 items 0 and 7, `e-mixed-window`, l3 screen 7, l1 screen 4 or p-big-day-indicator: no regimes, spells, shares or mixtures.
+2. Fixed as written.
+3. Fixed as written.
+4. Fixed as written.
+5. Fixed: key 0.28336, tol 0.00011, accept 28.34%; $\sqrt{252} \times 1.785 = 28.3360$ recomputed, and the unrounded s (28.3337) is taken too.
+6. Fixed as written; 34.10 recomputed ($\sqrt{365} \times 1.78486$).
+7. Fixed as written; recomputed LM at a count of 0 is 4.15 > 3.841, counts 1 to 7 do not reject, 8 is the smallest above 3.75.
+8. Fixed: key 1.65365; the exact value is 165365/100000, so 1.6536 and 1.6537 are both taken.
+9. Cleared by finding 22: `fresh-check --file` on problems-2 now gives 0 hits.
+10. Fixed as written.
+11. Fixed as written.
+12. Fixed as written.
+13. Fixed as written.
+14. Fixed as written: $\alpha = 0.13$, $\beta = 0.83$. Recomputed: the lag-1 ACF formula with lag-3 value 0.25 and $\phi = 0.96$ gives $\alpha = 0.1278$; a 400,000-day simulation of the fitted model gives a lag-3 ACF near 0.25; key 0.022687 ($\sqrt{5.1468}$), slips 0.051468, 0.017605, 0.360138; 33% above 1.70%.
+15. Fixed as written (quiet days of 0.4%): 2.810025, 2.802025, 2.822025, 0.872, 0.2552, 26.6, 27 by iteration, 24 with no floor, 0.895 after 26 days, all recomputed.
+16. Fixed as written.
+17. Fixed as written; 0.0244 recomputed ($0.93^{29} \times 0.2$).
+18. Fixed as written.
+19. Fixed as written; £94,378 and £170,951 recomputed.
+20. Fixed as written.
+21. Fixed as written; 6.28, 441% and 27.80% recomputed.
+22. Fixed as written, with the question's first sentence split in two ("... refitted its GARCH. In a quiet market the new fit ...") to clear an `[O2-long-sentence]` warning the 21-word sentence raised. Key £218,090.63, cap-1 £174,472.50, cap threshold 0.5543% recomputed; the first fit's floor $\sqrt{0.06/0.09} = 0.8165\%$ is checked to lie above it.
+23. Fixed as written.
+24. Fixed as written; 2.084 recomputed.
+25. Fixed as written.
+26. Fixed as written: tol 5 in both parts; unrounded c gives £76,948 and £91,774, both taken; £2,294 recomputed.
+27. Re-authored as `p-monthly-sleeve` (l9, l12): the month's variance as a closed-form geometric sum of 21 daily forecasts, a weight set once a month against a monthly target, the second month by the monthly factor $0.965^{21}$, then the index bought over three resets (the telescoping step the review kept). No single h-step vol, no 4.0 %² start, no horizon of 20, no cap, no turnover or its cost, no half-life or crossing day, and neither `items[0]` part 3 nor `items[1]` part 2 of the set.
+
+Fixed 25, re-authored 2, disputed 0, deferred 0.
+
+Reader's script `problems-garch-numbers-read.py`: checks of p-two-regime-tails and p-index-fund-back-in removed (the problems no longer exist); either-value and FINDING checks retargeted to the new values (findings 5, 7, 14, 15, 22). It exits 0 with 556 checks and 0 FINDING lines.
+
+Gates: validator 0 errors, no warning on the three files; voice scan 35 on the course folder 0 and 0; `problems-garch-numbers.py` exit 0 (835 direct, 419 numbers_lib); `fresh-check --file` 0 hits on problems-1, -2 and -3 (4 advisories on -3: the 99% quantile twice, the h-step formula, and exam `e-breach-days` sharing 21, 1.75 and 42 by coincidence); `grade-all --file` 0 failures (16, 17, 16 widgets); playthrough `--problems garch/problems-<n> --local-cdn` green on all three, with and without `--mobile`; 440 px part shots of the new problems read, no overflow.

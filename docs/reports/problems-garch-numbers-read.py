@@ -73,43 +73,8 @@ Z99 = stats.norm.ppf(0.99)
 Z95 = stats.norm.ppf(0.95)
 
 # ---------------------------------------------------------------- problems-1
-# P1 two regimes: route 2 is the transition matrix and its stationary vector
-P = np.array([[0.99, 0.01], [0.04, 0.96]])
-evals, evecs = np.linalg.eig(P.T)
-pi = np.real(evecs[:, np.argmax(np.real(evals))])
-pi = pi / pi.sum()
-spell_q = sum(k * 0.99 ** (k - 1) * 0.01 for k in range(1, 20000))
-spell_t = sum(k * 0.96 ** (k - 1) * 0.04 for k in range(1, 20000))
-expect(1, 0, 1, spell_q, {"stay": 99, "turbulent": spell_t})
-expect(1, 0, 2, pi[1], {"ratio": 25 / 100, "quiet": pi[0], "leave": 0.04})
-check("P1 share by spells", close(pi[1], spell_t / (spell_q + spell_t)))
-
-
-def mixvol(wq, wt, sq=0.6, st=1.8):
-    return math.sqrt(252 * (wq * sq ** 2 + wt * st ** 2)) / 100
-
-
-expect(1, 0, 3, mixvol(0.8, 0.2), {"mix-sd": R252 * (0.8 * 0.6 + 0.2 * 1.8) / 100, "share-25": mixvol(0.75, 0.25),
-                                    "swapped": mixvol(0.2, 0.8)})
-
-
-def mixkurt(wq, wt, three=3.0):
-    # fourth moment by numeric integration of the mixture density when three == 3
-    var = wq * 0.36 + wt * 3.24
-    if three == 3.0:
-        f = lambda x: x ** 4 * (wq * stats.norm.pdf(x, 0, 0.6) + wt * stats.norm.pdf(x, 0, 1.8))
-        m4 = integrate.quad(f, -40, 40, points=[-2, 0, 2])[0]
-    else:
-        m4 = wq * 0.6 ** 4 + wt * 1.8 ** 4
-    return m4 / var ** 2
-
-
-expect(1, 0, 4, mixkurt(0.8, 0.2) - 3, {"raw": mixkurt(0.8, 0.2), "share-25": mixkurt(0.75, 0.25) - 3,
-                                         "no-three": mixkurt(0.8, 0.2, 1.0) - 3, "normal": 0})
-check("P1 stated 0.936, 0.9675, 6.6096", close(0.8 * 0.36 + 0.2 * 3.24, 0.936) and close(math.sqrt(0.936), 0.9675)
-      and close(3 * (0.8 * 0.1296 + 0.2 * 10.4976), 6.6096))
-takes(1, 0, 3, 15.36, "printed")
-takes(1, 0, 4, 4.54, "printed")
+# P1 p-two-regime-tails was re-authored as p-stale-alarm in the fix pass (finding 1); its checks are removed.
+# The new problem is checked in problems-garch-numbers.py and read by the delta reader.
 
 # P2 stale prices: route 2 is the quadratic form 1' C 1 with a banded covariance matrix
 def sum_sd(n, rho=0.12, sd=1.2, band=1, both=True):
@@ -148,7 +113,9 @@ k = stats.kurtosis(r, fisher=True, bias=True)
 expect(1, 2, 4, k, {"raw": k + 3, "sample-var": ((r - r.mean()) ** 4).mean() / r.var(ddof=1) ** 2 - 3})
 # the part tells the learner to use s = 1.785%; that value must be accepted at the stated 2 places
 takes(1, 2, 3, round(R252 * 1.785, 2), "sqrt(252) x the restated 1.785, to 2 places")
-check("P3 part 3 accept line: sqrt(252) x 1.785 prints 28.33", round(R252 * 1.785, 2) == 28.33, f"it is {R252 * 1.785:.4f}")
+takes(1, 2, 3, round(R252 * s, 2), "unrounded s, to 2 places")
+check("P3 part 3 accept line: sqrt(252) x 1.785 prints 28.34", round(R252 * 1.785, 2) == 28.34
+      and "28.34%" in part(1, 2, 3)["widget"]["accept"], f"it is {R252 * 1.785:.4f}")
 
 # P4 big-day indicator: route 2 is the correlation of a long two-state chain built from p and q
 p, q, n = 75 / 1500, 18 / 75, 1500
@@ -170,8 +137,10 @@ crit = stats.chi2.ppf(0.95, 1)
 check("chi2 critical 3.841", close(crit, 3.841, 5e-4))
 above = min(c for c in range(4, 76) if lm(c) > crit)
 expect(1, 3, 4, above, {"round-down": above - 1, "rho-as-q": round(math.sqrt(crit / (n - 1)) * 75)})
-check("P4 part 4: the smallest count that rejects is the key", min(c for c in range(0, 76) if lm(c) > crit) == part(1, 3, 4)["widget"]["answer"],
-      f"a count of 0 gives LM = {lm(0):.3f} > 3.841 (autocorrelation {-p / (1 - p):.4f}), so 0 is the smallest count that rejects")
+# fix pass (finding 7): the question now asks for the smallest count above the 3.75 chance gives; 0 rejects too, as the question allows
+check("P4 part 4: the smallest count above 3.75 that rejects is the key", min(c for c in range(0, 76) if c > 3.75 and lm(c) > crit)
+      == part(1, 3, 4)["widget"]["answer"] and "above that" in part(1, 3, 4)["question"] and lm(0) > crit
+      and all(lm(c) <= crit for c in range(1, 8)), f"lm(0) = {lm(0):.3f}")
 check("P4 stated 3.12 at 7", close(lm(7), 3.12, 0.005))
 
 # ---------------------------------------------------------------- problems-2
@@ -224,8 +193,8 @@ hl = optimize.brentq(lambda h: phi ** h - 0.5, 1, 100)
 expect(2, 2, 2, hl, {"mean-age": 1 / (1 - phi), "half-mean": 0.5 / (1 - phi)})
 om3 = 2.89 * (1 - phi)
 expect(2, 2, 3, om3, {"times-p": 2.89 * phi, "sample": 2.89, "decimal": om3 / 1e4})
-v4 = garch(2.89, 4.5, om3, 0.09, 0.87)
-expect(2, 2, 4, math.sqrt(v4) / 100, {"variance": v4 / 100, "no-square": math.sqrt(om3 + 0.09 * 4.5 + 0.87 * 2.89) / 100,
+v4 = garch(2.89, 4.5, om3, 0.13, 0.83)       # fix pass (finding 14): alpha 0.13, beta 0.83
+expect(2, 2, 4, math.sqrt(v4) / 100, {"variance": v4 / 100, "no-square": math.sqrt(om3 + 0.13 * 4.5 + 0.83 * 2.89) / 100,
                                       "annual": R252 * math.sqrt(v4) / 100})
 
 
@@ -237,8 +206,9 @@ def garch_acf1(al, be):
 # claim: "The lag-1 ACF then points to alpha = 0.09". The prose's lag-3 value 0.25 fixes the lag-1 value.
 rho1_data = 0.25 / phi ** 2
 alpha_data = optimize.brentq(lambda a: garch_acf1(a, phi - a) - rho1_data, 0.01, 0.19)
-check("P3 part 4: alpha = 0.09 agrees with the ACF in the prose", abs(alpha_data - 0.09) < 0.005,
-      f"lag-3 ACF 0.25 and persistence 0.96 give lag-1 ACF {rho1_data:.4f} and alpha {alpha_data:.4f}; alpha 0.09 gives lag-3 ACF {garch_acf1(0.09, 0.87) * phi ** 2:.4f}")
+al_file = float(re.search(r"alpha = ([0-9.]+)", part(2, 2, 4)["question"]).group(1))
+check("P3 part 4: the stated alpha agrees with the ACF in the prose", abs(alpha_data - al_file) < 0.005,
+      f"lag-3 ACF 0.25 and persistence 0.96 give lag-1 ACF {rho1_data:.4f} and alpha {alpha_data:.4f}; alpha {al_file} gives lag-3 ACF {garch_acf1(al_file, phi - al_file) * phi ** 2:.4f}")
 # the proposed fix: alpha 0.13, beta 0.83
 v4f = garch(2.89, 4.5, om3, 0.13, 0.83)
 check("fix P3 part 4 numbers", close(v4f, 5.1468) and close(math.sqrt(v4f), 2.2687) and round(alpha_data, 2) == 0.13
@@ -252,7 +222,9 @@ expect(2, 3, 1, e1, {"swapped": 0.05 * 1.21 + 0.95 * 36, "no-square": 0.95 * 1.2
 arch_fall, arch_quiet = 0.8 + 0.45 * 36, 0.8 + 0.45 * 0.25
 rt = math.sqrt(arch_fall / e1)
 expect(2, 3, 2, rt, {"variance": rt ** 2, "upside-down": 1 / rt})
-expect(2, 3, 3, ewma(e1, 0.5, 0.95), {"no-news": 0.95 * e1, "abs": 0.95 * e1 + 0.05 * 0.5, "decimal": ewma(e1, 0.5, 0.95) / 1e4})
+# fix pass (finding 15): quiet days of 0.4%
+arch_quiet = 0.8 + 0.45 * 0.16
+expect(2, 3, 3, ewma(e1, 0.4, 0.95), {"no-news": 0.95 * e1, "abs": 0.95 * e1 + 0.05 * 0.4, "decimal": ewma(e1, 0.4, 0.95) / 1e4})
 
 
 def days_below(start, quiet, level, lam=0.95, floor=True):
@@ -263,10 +235,10 @@ def days_below(start, quiet, level, lam=0.95, floor=True):
     return kk
 
 
-kq = days_below(e1, 0.5, arch_quiet)
-expect(2, 3, 4, kq, {"round-down": kq - 1, "no-floor": days_below(e1, 0.5, arch_quiet, floor=False)})
-check("P4 stated 0.9125, 0.2454, 27.4", close(arch_quiet, 0.9125) and close((arch_quiet - 0.25) / (e1 - 0.25), 0.2454, 5e-5)
-      and close(math.log((arch_quiet - 0.25) / (e1 - 0.25)) / math.log(0.95), 27.4, 0.05))
+kq = days_below(e1, 0.4, arch_quiet)
+expect(2, 3, 4, kq, {"round-down": kq - 1, "no-floor": days_below(e1, 0.4, arch_quiet, floor=False)})
+check("P4 stated 0.872, 0.2552, 26.6", close(arch_quiet, 0.872) and close((arch_quiet - 0.16) / (e1 - 0.16), 0.2552, 5e-5)
+      and close(math.log((arch_quiet - 0.16) / (e1 - 0.16)) / math.log(0.95), 26.6, 0.05))
 # the proposed fix: quiet days of 0.4%
 e3f = ewma(e1, 0.4, 0.95)
 aqf = 0.8 + 0.45 * 0.16
@@ -313,14 +285,14 @@ takes(3, 1, 2, round(11 / (1.7514 * R252), 4), "from the restated 1.7514")
 flat = Z99 * 0.11 / R252 * 15e6
 expect(3, 1, 3, flat, {"no-weight": 2.3263 * 0.017514 * 15e6, "z95": 1.6449 * 0.3956 * 0.017514 * 15e6}, tol=60)
 takes(3, 1, 3, round(2.3263 * 0.3956 * 0.017514 * 15e6, -2), "restated values, nearest 100")
-calm = 2.3263 * wgt(0.48) * 0.0048 * 15e6
-expect(3, 1, 4, calm, {"no-cap": flat, "cap-1": 2.3263 * 1.0 * 0.0048 * 15e6}, tol=60)
+calm = 2.3263 * wgt(0.50) * 0.0050 * 15e6     # fix pass (finding 22): a refitted model forecasting 0.50%
+expect(3, 1, 4, calm, {"no-cap": flat, "cap-1": 2.3263 * 1.0 * 0.0050 * 15e6}, tol=60)
 # claim: a forecast of 0.48% a day from this GARCH. Its variance can never fall below omega/(1 - beta).
 floor_var = 0.06 / (1 - 0.91)
-check("P2 part 4: the stated GARCH can forecast 0.48% a day", 0.48 ** 2 >= floor_var,
-      f"with every return 0 the variance settles at omega/(1 - beta) = {floor_var:.4f} %2, a vol of {math.sqrt(floor_var):.4f}%; 0.48% is a variance of {0.48 ** 2:.4f}")
-check("P2 stated 0.5543, 0.6929, 7.62, 1.44", close(11 / (1.25 * R252), 0.5543, 5e-5) and close(11 / R252, 0.6929, 5e-5)
-      and close(0.48 * R252, 7.62, 0.005) and close(11 / (0.48 * R252), 1.44, 0.005))
+check("P2 part 4: the forecast comes from a refitted model, not the stated GARCH with its floor",
+      "refitted" in part(3, 1, 4)["question"] and "0.48" not in json.dumps(SETS[3]["items"][1]),
+      f"the stated GARCH has floor omega/(1 - beta) = {floor_var:.4f} %2, a vol of {math.sqrt(floor_var):.4f}%")
+check("P2 stated 0.5543, 0.6929", close(11 / (1.25 * R252), 0.5543, 5e-5) and close(11 / R252, 0.6929, 5e-5))
 # the proposed fix: a refitted model forecasting 0.50%
 check("fix P2 part 4 numbers (0.50%)", close(2.3263 * 1.25 * 0.005 * 15e6, 218090.63, 0.01) and close(0.5 * R252, 7.94, 0.005)
       and close(11 / (0.5 * R252), 1.39, 0.005) and close(2.3263 * 1.0 * 0.005 * 15e6, 174472.5, 0.01), "")
@@ -344,26 +316,8 @@ expect(3, 2, 4, 1.1379 * 0.0115 * 0.058441 / 0.025 * 3e6, {"uncorrected": 0.0115
 takes(3, 2, 3, round(1.96 * c * 0.0115 * 3e6), "c carried unrounded")
 takes(3, 2, 4, round(c * 0.0115 * 0.058441 / 0.025 * 3e6), "c carried unrounded")
 
-# P4 index fund back in
-VL4, ph4, t4 = 0.64, 0.977, 4.0
-tgt = 14 / R252
-w1 = min(tgt / math.sqrt(t4), 1)
-expect(3, 3, 1, w1, {"daily": min(14 / 2, 1), "variance": 14 / (4.0 * R252)}, tol=1e-5)
-v20 = step_fc(t4, VL4, ph4, 20)
-expect(3, 3, 2, math.sqrt(v20) / 100, {"power-20": math.sqrt(step_fc(t4, VL4, ph4, 21)) / 100, "variance": v20 / 100,
-                                       "no-long-run": math.sqrt(v20 - VL4) / 100}, tol=2e-7)
-ws = [min(tgt / math.sqrt(step_fc(t4, VL4, ph4, h)), 1) for h in range(1, 21)]
-bought = sum(abs(b - a) for a, b in zip(ws, ws[1:]))
-expect(3, 3, 3, bought, {"day-20-weight": ws[-1], "sum": ws[-1] + ws[0],
-                         "part2-slip": tgt / math.sqrt(step_fc(t4, VL4, ph4, 21)) - ws[0]}, tol=5e-5)
-takes(3, 3, 3, round(0.88192 / 1.6731 - 0.4410, 3), "from the restated values")
-first = next(h for h in range(1, 2000) if tgt / math.sqrt(step_fc(t4, VL4, ph4, h)) >= 1)
-h0 = next(h for h in range(1, 2000) if ph4 ** (h - 1) * t4 <= 7 / 9)
-hv = next(h for h in range(1, 2000) if 0.8 + ph4 ** (h - 1) * 1.2 <= tgt)
-expect(3, 3, 4, first, {"h-minus-1": first - 1, "no-long-run": h0, "vol-gap": hv})
-check("P4 stated 7/9, 0.04101, 137.27, 12.70, 0.0043", close(tgt ** 2, 7 / 9) and close((7 / 9 - 0.64) / 3.36, 0.04101, 5e-6)
-      and close(math.log((7 / 9 - 0.64) / 3.36) / math.log(0.977), 137.27, 0.005) and close(0.8 * R252, 12.70, 0.005)
-      and close(bought * 0.05, 0.0043, 5e-5))
+# P4 p-index-fund-back-in was re-authored as p-monthly-sleeve in the fix pass (finding 27); its checks are removed.
+# The new problem is checked in problems-garch-numbers.py and read by the delta reader.
 
 # ---------------------------------------------------------------- numbers printed in the review's replacement texts
 v26 = 0.16 + 0.95 ** 26 * (e1 - 0.16)

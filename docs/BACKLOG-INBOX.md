@@ -65,3 +65,7 @@ Raised later (review problems convex):
 Raised later (review problems numerics 4):
 - `fresh-check.mjs` `retold` missed `numerics/problems-4` `p-digital-pairs` part 4 against l16 `screens[6].question` ("How many times as efficient are the pairs, at equal cost?" with one phrase added) and its `inverted` line against l16 `screens[3]` `fraction` (two sentences, one verb and one noun changed): `docs/reviews/review-problems-numerics-4.md` finding 3.
 - Validator candidates (same review, findings 1 and 2): a numeric part whose question prints its own key at the stated places; a whole-number key with tolerance 0 that differs between 1.96 and the exact normal point when the question states neither.
+
+Raised later (re-author and fix pass problems garch):
+- `[percent-form]` asks a "%²" question to carry a `decimal` slip at the key over $10^4$; at "Give 2 decimal places" that slip prints as 0.00, so `[wrong-band]` then wants its band widened to ±0.005 to be reachable at all (`garch/problems-3` `p-monthly-sleeve` parts 1 and 3). The pair could accept a `decimal` slip with a band covering the asked rounding of zero without a warning, or skip `[percent-form]` when the asked rounding cannot express the decimal.
+- `fresh-check.mjs --file` takes about two minutes on `garch/problems-3` alone, past the two-minute per-command budget of the chained briefs; a `--quiet` or cached-corpus mode would help.
