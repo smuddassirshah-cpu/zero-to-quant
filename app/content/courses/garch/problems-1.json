@@ -1,0 +1,735 @@
+{
+  "id": "problems-1",
+  "course": "garch",
+  "level": 1,
+  "title": "Problems: clustering",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-two-regime-tails",
+      "difficulty": 5,
+      "skills": [
+        "gv-clustering"
+      ],
+      "prose": "A crude oil futures desk models its market as two regimes, Quiet and Turbulent. A Quiet day is followed by another Quiet day with chance 0.99; a Turbulent day by another Turbulent day with chance 0.96. Daily returns are normal with mean 0 inside each regime: sd 0.6% when Quiet and 1.8% when Turbulent.",
+      "parts": [
+        {
+          "question": "What is the mean length of a Quiet spell, in days? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 100,
+            "tol": {
+              "abs": 0
+            },
+            "label": "Average Quiet spell in days",
+            "wrong": [
+              {
+                "id": "stay",
+                "value": 99,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "turbulent",
+                "value": 25,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A Quiet spell ends with chance $1 - 0.99 = 0.01$ a day, so it lasts $1/0.01 = 100$ days on average.",
+            "generic": "Not quite. Work from the chance that a Quiet spell ends on a given day.",
+            "byKey": {
+              "stay": "You turned the 0.99 into 99 days. The length comes from the chance of leaving, $0.01$: $1/0.01 = 100$.",
+              "turbulent": "That is the Turbulent spell, $1/(1 - 0.96)$. A Quiet spell uses its own exit chance, 0.01."
+            }
+          },
+          "explain": {
+            "text": "The count of Quiet days up to and including the exit is geometric, with exit chance 0.01 each day. A geometric count has mean one over that chance. So the mean Quiet spell is $1/0.01 = 100$ days."
+          }
+        },
+        {
+          "question": "Turbulent spells last $1/(1 - 0.96) = 25$ days on average, and Quiet spells 100 days from part 1. Over many years, what share of days are Turbulent? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2,
+            "tol": {
+              "abs": 0.001
+            },
+            "label": "Share of Turbulent days",
+            "wrong": [
+              {
+                "id": "ratio",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "quiet",
+                "value": 0.8,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "leave",
+                "value": 0.04,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Spells alternate, so a Quiet spell and a Turbulent one fill $100 + 25 = 125$ days together. Turbulent days take $25/125 = 0.2$ of them.",
+            "generic": "Not quite. Spells take turns: find the days one pair of spells covers.",
+            "byKey": {
+              "ratio": "You divided 25 by 100. The share needs the whole cycle, $100 + 25 = 125$ days, below the line.",
+              "quiet": "That is the Quiet share, $100/125$. The Turbulent share is the other $0.2$.",
+              "leave": "That is the daily chance a storm ends. The long-run share counts days: $25/(100 + 25)$."
+            }
+          },
+          "explain": {
+            "text": "One Quiet spell and one Turbulent spell together last 125 days on average. The Turbulent part of that cycle is 25 days. So $25/125 = 0.2$ of all days are Turbulent."
+          }
+        },
+        {
+          "question": "With 0.2 of days Turbulent from part 2, what is the long-run annualised volatility? Mix the two daily variances, then use 252 trading days. Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.153581,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "label": "Annual volatility in per cent",
+            "accept": "15.36%: $\\sqrt{252 \\times 0.936}\\,\\%$.",
+            "wrong": [
+              {
+                "id": "mix-sd",
+                "value": 0.133346,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "share-25",
+                "value": 0.164973,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "swapped",
+                "value": 0.2591,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The daily variance is $0.8 \\times 0.6^2 + 0.2 \\times 1.8^2 = 0.288 + 0.648 = 0.936$, in $\\%^2$. Its root is $0.9675\\%$, and $\\sqrt{252} \\times 0.9675\\% = 15.36\\%$.",
+            "generic": "Not quite. Weight each regime's variance by its share of days, add, take the root, then scale.",
+            "byKey": {
+              "mix-sd": "You averaged the two sds: $0.8 \\times 0.6 + 0.2 \\times 1.8 = 0.84\\%$. Variances mix by weight, sds do not, so this understates the risk.",
+              "share-25": "You used a Turbulent share of 0.25, the slip from part 2. With 0.2 the daily variance is $0.936$, not $1.08$.",
+              "swapped": "You gave the 0.8 weight to the Turbulent variance. Turbulent days are the rarer 0.2."
+            }
+          },
+          "explain": {
+            "text": "A random day is Quiet with chance 0.8 and Turbulent with chance 0.2. Both regimes have mean 0, so its variance is $0.8 \\times 0.36 + 0.2 \\times 3.24 = 0.936$. The daily sd is $0.9675\\%$, and $\\sqrt{252} \\times 0.9675\\% = 15.36\\%$ a year."
+          }
+        },
+        {
+          "question": "Normal returns with sd $\\sigma$ have $E[r^4] = 3\\sigma^4$. Take the shares 0.8 and 0.2 and the daily variance 0.936 from part 3. What is the excess kurtosis of a random day's return? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4.5444,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Excess kurtosis",
+            "wrong": [
+              {
+                "id": "raw",
+                "value": 7.5444,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "share-25",
+                "value": 4.0,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-three",
+                "value": -0.4852,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "normal",
+                "value": 0,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$E[r^4] = 3(0.8 \\times 0.6^4 + 0.2 \\times 1.8^4) = 3 \\times 2.2032 = 6.6096$. Dividing by $0.936^2 = 0.8761$ gives $7.544$, so the excess is $4.54$.",
+            "generic": "Not quite. Mix the fourth moments by weight, divide by the squared variance, then take off 3.",
+            "byKey": {
+              "raw": "You stopped at 7.54, the raw figure. The question asks for the gap above a normal, so take 3 away.",
+              "share-25": "You used the 0.25 share again. With 0.2 the fourth moment is $6.6096$ and the excess is 4.54.",
+              "no-three": "You left out the 3 in $E[r^4] = 3\\sigma^4$. Each regime is normal, so its fourth moment is three times $\\sigma^4$.",
+              "normal": "Each regime is normal, but a day drawn from a mix of two sds is not. The mixture's tails are fat."
+            }
+          },
+          "explain": {
+            "text": "Within each regime the fourth moment is $3\\sigma^4$, so the mix has $E[r^4] = 3(0.8 \\times 0.1296 + 0.2 \\times 10.4976) = 6.6096$. Dividing by $0.936^2$ gives a raw kurtosis of 7.54. The excess, 4.54, comes from mixing two normals alone, with no fat-tailed shock anywhere."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-stale-prices-scaling",
+      "difficulty": 4,
+      "skills": [
+        "gv-clustering",
+        "gv-forecast"
+      ],
+      "prose": "A small-cap index is priced from shares that trade rarely, so its daily returns carry over: over 1,200 days the lag-1 ACF of the returns is 0.12, and every other lag is close to 0. The daily sd is 1.2%.",
+      "parts": [
+        {
+          "question": "What is the half-width of the 95% band for this correlogram? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0566,
+            "tol": {
+              "abs": 0.0001
+            },
+            "label": "Half-width of the band",
+            "wrong": [
+              {
+                "id": "no-root",
+                "value": 0.00163,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "no-196",
+                "value": 0.0289,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.96/\\sqrt{1200} = 1.96/34.64 = 0.0566$. The lag-1 value 0.12 is more than twice that.",
+            "generic": "Not quite. Divide 1.96 by the square root of the number of days.",
+            "byKey": {
+              "no-root": "You divided 1.96 by 1,200 itself. The band shrinks with $\\sqrt{n}$, not $n$.",
+              "no-196": "That is $1/\\sqrt{1200}$, one standard error. A 95% band is 1.96 of them."
+            }
+          },
+          "explain": {
+            "text": "Under no correlation each sample ACF value has a standard error of about $1/\\sqrt{n}$. With $n = 1200$ the band is $\\pm 1.96/34.64 = \\pm 0.0566$. At 0.12 the lag-1 bar is well outside it, so the correlation is real."
+          }
+        },
+        {
+          "question": "Since 0.12 lies outside the band 0.0566, keep it. A week's return is the sum of 5 daily returns. Using the variance of a sum with lag-1 correlation 0.12, what is the weekly sd? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.029296,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "label": "Weekly sd in per cent",
+            "accept": "2.93%: $1.2\\% \\times \\sqrt{5 + 8 \\times 0.12}$.",
+            "wrong": [
+              {
+                "id": "ten-pairs",
+                "value": 0.032644,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "one-way",
+                "value": 0.028091,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "root-five",
+                "value": 0.026833,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Five days have 4 neighbouring pairs, each counted twice: $\\text{Var} = 1.44(5 + 8 \\times 0.12) = 8.5824$, in $\\%^2$. The weekly sd is $\\sqrt{8.5824} = 2.93\\%$.",
+            "generic": "Not quite. Add 5 daily variances and twice the covariance of each neighbouring pair.",
+            "byKey": {
+              "ten-pairs": "You gave all 10 pairs the correlation 0.12. Only neighbours are correlated; the other lags are close to 0.",
+              "one-way": "You counted each neighbouring pair once. The variance of a sum takes $\\text{Cov}(r_i, r_j)$ and $\\text{Cov}(r_j, r_i)$, so twice.",
+              "root-five": "That is $\\sqrt{5} \\times 1.2\\%$, which assumes no correlation. Here the band says the 0.12 is real."
+            }
+          },
+          "explain": {
+            "text": "Each neighbouring pair adds $2 \\times 0.12 \\times 1.44 = 0.3456$ to the variance, and a week has 4 such pairs. So the variance is $5 \\times 1.44 + 4 \\times 0.3456 = 8.5824$. Its root is $2.93\\%$, against $2.68\\%$ from $\\sqrt{5}$."
+          }
+        },
+        {
+          "question": "A year of 252 days has 251 neighbouring pairs. Using the same method as part 2, what is the annual volatility? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.212044,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "label": "Annual volatility in per cent",
+            "accept": "21.20%: $1.2\\% \\times \\sqrt{252 + 502 \\times 0.12}$.",
+            "wrong": [
+              {
+                "id": "one-way",
+                "value": 0.201557,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "root-rule",
+                "value": 0.190494,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\text{Var} = 1.44(252 + 2 \\times 251 \\times 0.12) = 1.44 \\times 312.24 = 449.63$, in $\\%^2$. The annual volatility is $\\sqrt{449.63} = 21.20\\%$.",
+            "generic": "Not quite. Repeat part 2 with 252 days and 251 neighbouring pairs.",
+            "byKey": {
+              "one-way": "You counted each of the 251 pairs once. With both orders the bracket is $252 + 502 \\times 0.12 = 312.24$.",
+              "root-rule": "That is $\\sqrt{252} \\times 1.2\\% = 19.05\\%$, which drops the correlation."
+            }
+          },
+          "explain": {
+            "text": "The 252 variances give $252 \\times 1.44$. The 251 pairs add $2 \\times 251 \\times 0.12 \\times 1.44$. The total, $449.63$, has root $21.20\\%$."
+          }
+        },
+        {
+          "question": "Using 21.20% from part 3, a report quotes $\\sqrt{252} \\times 1.2\\% = 19.05\\%$ instead. By what factor is the true annual volatility larger than the reported one? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.1131,
+            "tol": {
+              "abs": 0.0006
+            },
+            "label": "Factor",
+            "wrong": [
+              {
+                "id": "variance",
+                "value": 1.239,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "upside-down",
+                "value": 0.8984,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "one-way",
+                "value": 1.0581,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$21.20/19.05 = \\sqrt{312.24/252} = 1.113$: the report understates the risk by about 11%.",
+            "generic": "Not quite. Divide the corrected volatility by the reported one.",
+            "byKey": {
+              "variance": "That is the ratio of the variances, $312.24/252$. Volatilities are their roots: $\\sqrt{1.239} = 1.113$.",
+              "upside-down": "You divided the reported figure by the true one. The question asks how much larger the true figure is.",
+              "one-way": "That ratio uses the one-way count from part 3, $20.16\\%$. With both orders it is $21.20/19.05$."
+            }
+          },
+          "explain": {
+            "text": "Both volatilities share the factor $1.2\\%$, so the ratio is $\\sqrt{312.24/252} = 1.113$. The $\\sqrt{252}$ rule needs uncorrelated days, and these are not. Positive correlation makes the year riskier than the rule says."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-eight-day-window",
+      "difficulty": 3,
+      "skills": [
+        "gv-clustering",
+        "gv-forecast"
+      ],
+      "prose": "A risk analyst checks a gold miner's last 8 daily returns, in %: $0.9, -0.4, 1.6, -0.7, 0.3, -4.1, 1.1, 0.5$. They sum to $-0.8$, so their mean is $-0.1$, and their squares sum to $22.38$.",
+      "parts": [
+        {
+          "question": "What is the zero-mean realised volatility $\\sqrt{\\tfrac{1}{8}\\sum r_t^2}$, daily? Give a percentage to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.016726,
+            "tol": {
+              "abs": 6e-06
+            },
+            "unit": "%",
+            "label": "Daily zero-mean volatility in per cent",
+            "accept": "1.673%: $\\sqrt{22.38/8}$.",
+            "wrong": [
+              {
+                "id": "seven",
+                "value": 0.017881,
+                "tol": {
+                  "abs": 6e-06
+                }
+              },
+              {
+                "id": "no-root",
+                "value": 0.027975,
+                "tol": {
+                  "abs": 1e-05
+                }
+              },
+              {
+                "id": "abs",
+                "value": 0.012,
+                "tol": {
+                  "abs": 6e-06
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The mean square is $22.38/8 = 2.7975$, in $\\%^2$, and $\\sqrt{2.7975} = 1.673\\%$.",
+            "generic": "Not quite. Average the 8 squares, then take the root.",
+            "byKey": {
+              "seven": "You divided by 7. The zero-mean figure subtracts no mean, so it divides by all 8 days.",
+              "no-root": "That is the mean square, 2.7975. A volatility is its root.",
+              "abs": "You averaged the sizes $|r_t|$, which gives 1.2. The measure squares first and roots last."
+            }
+          },
+          "explain": {
+            "text": "The squares add to 22.38, so their mean is 2.7975. The root, $1.673\\%$, is the daily zero-mean figure. The $-4.1$ day alone supplies 16.81 of the 22.38."
+          }
+        },
+        {
+          "question": "The sample variance is $s^2 = \\tfrac{8}{7}\\left(\\overline{r^2} - \\bar r^2\\right)$. Using the mean square 2.7975 from part 1 and $\\bar r = -0.1$, what is the sample sd? Give a percentage to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.017849,
+            "tol": {
+              "abs": 6e-06
+            },
+            "unit": "%",
+            "label": "Daily sample sd in per cent",
+            "accept": "1.785%: $\\sqrt{\\tfrac87 \\times 2.7875}$.",
+            "wrong": [
+              {
+                "id": "population",
+                "value": 0.016696,
+                "tol": {
+                  "abs": 6e-06
+                }
+              },
+              {
+                "id": "no-mean",
+                "value": 0.017881,
+                "tol": {
+                  "abs": 6e-06
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.031857,
+                "tol": {
+                  "abs": 1e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$2.7975 - 0.01 = 2.7875$, and $\\tfrac{8}{7} \\times 2.7875 = 3.1857$. Its root is $s = 1.785\\%$.",
+            "generic": "Not quite. Take $\\bar r^2$ off the mean square, scale by $8/7$, then take the root.",
+            "byKey": {
+              "population": "You stopped at $\\sqrt{2.7875}$, which divides by 8. The sample sd uses ddof 1, so scale by $8/7$ first.",
+              "no-mean": "You skipped $\\bar r^2 = 0.01$. Small here, but the sample sd measures spread about the mean.",
+              "variance": "That is $s^2 = 3.1857$. The sd is its root."
+            }
+          },
+          "explain": {
+            "text": "Spread about the mean is the mean square minus the squared mean: $2.7975 - 0.01 = 2.7875$. Dividing by 7 rather than 8 multiplies that by $8/7$, giving $3.1857$. So $s = 1.785\\%$, above the zero-mean $1.673\\%$ mainly because of the $8/7$."
+          }
+        },
+        {
+          "question": "Using $s = 1.785\\%$ from part 2, what is the annualised realised volatility? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.283337,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "label": "Annual volatility in per cent",
+            "accept": "28.33%: $\\sqrt{252} \\times 1.785\\%$.",
+            "wrong": [
+              {
+                "id": "zero-mean",
+                "value": 0.265513,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "calendar",
+                "value": 0.341001,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sqrt{252} \\times 1.785\\% = 15.87 \\times 1.785\\% = 28.33\\%$ a year.",
+            "generic": "Not quite. Multiply the daily sd by the root of the trading days in a year.",
+            "byKey": {
+              "zero-mean": "You annualised the zero-mean figure from part 1. The question asks for the sample sd, $1.785\\%$.",
+              "calendar": "You used $\\sqrt{365}$. Returns come on trading days only, 252 a year."
+            }
+          },
+          "explain": {
+            "text": "Daily variances add over 252 uncorrelated trading days, so the sd grows by $\\sqrt{252} = 15.87$. That turns $1.785\\%$ into $28.33\\%$. Eight days make this a very rough figure."
+          }
+        },
+        {
+          "question": "The deviations from the mean have fourth powers summing to $267.7186$. Using the population variance $2.7875$ (the $\\tfrac{7}{8}$ of $s^2$ from part 2), what is the excess kurtosis? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.3068,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Excess kurtosis",
+            "wrong": [
+              {
+                "id": "raw",
+                "value": 4.3068,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "sample-var",
+                "value": 0.2974,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The fourth moment is $267.7186/8 = 33.4648$. Over $2.7875^2 = 7.7702$ that is $4.307$, an excess of $1.31$.",
+            "generic": "Not quite. Divide the mean fourth power by the squared population variance, then take off 3.",
+            "byKey": {
+              "raw": "You stopped at 4.31, the raw figure. The gap above a normal is what is asked, so take 3 away.",
+              "sample-var": "You divided by $s^4 = 3.1857^2$. Kurtosis here uses population moments, both divided by 8."
+            }
+          },
+          "explain": {
+            "text": "Both moments divide by $n = 8$: the fourth moment is $33.4648$ and the variance $2.7875$. Their ratio $33.4648/7.7702 = 4.307$ is above a normal's 3 by $1.31$. The single $-4.1$ day drives it, which is why 8 days cannot settle the shape of the tails."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-big-day-indicator",
+      "difficulty": 5,
+      "skills": [
+        "gv-clustering"
+      ],
+      "prose": "A copper miner's share has 1,500 days of returns, and 75 of them lie beyond 2 sample sds. On 18 of the 75 days that follow such a day, the move is beyond 2 sds again. Mark each day with $I_t = 1$ when it is beyond 2 sds and $I_t = 0$ otherwise.",
+      "parts": [
+        {
+          "question": "What is the chance that the day after a big day is big too? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.24,
+            "tol": {
+              "abs": 0.001
+            },
+            "label": "Conditional chance",
+            "wrong": [
+              {
+                "id": "all-days",
+                "value": 0.012,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "base",
+                "value": 0.05,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "18 of the 75 follow-on days are big: $18/75 = 0.24$.",
+            "generic": "Not quite. Count only the days that follow a big day.",
+            "byKey": {
+              "all-days": "You divided by all 1,500 days. The condition is that yesterday was big, so the base is 75.",
+              "base": "That is the share of big days overall, $75/1500$. The question conditions on yesterday."
+            }
+          },
+          "explain": {
+            "text": "The condition leaves 75 days, and 18 of them are big. So $P(I_t = 1 \\mid I_{t-1} = 1) = 0.24$, against $75/1500 = 0.05$ for any day."
+          }
+        },
+        {
+          "question": "For a 0 or 1 series with $P(I_t = 1) = p$ and $P(I_t = 1 \\mid I_{t-1} = 1) = q$, the lag-1 autocorrelation is $(q - p)/(1 - p)$. Using $q = 0.24$ from part 1 and $p = 0.05$, what is it? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2,
+            "tol": {
+              "abs": 0.001
+            },
+            "label": "Lag-1 autocorrelation",
+            "wrong": [
+              {
+                "id": "no-divide",
+                "value": 0.19,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "ratio",
+                "value": 4.8,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(0.24 - 0.05)/(1 - 0.05) = 0.19/0.95 = 0.20$.",
+            "generic": "Not quite. Subtract $p$ from $q$, then divide by $1 - p$.",
+            "byKey": {
+              "no-divide": "You stopped at $q - p = 0.19$. Divide by $1 - p = 0.95$ to put it on the correlation scale.",
+              "ratio": "That is $q/p$, how many times as likely a big day is after a big day. A correlation lies between $-1$ and 1."
+            }
+          },
+          "explain": {
+            "text": "The covariance of $I_t$ and $I_{t-1}$ is $pq - p^2$, and each has variance $p(1 - p)$. Their ratio is $(q - p)/(1 - p) = 0.19/0.95 = 0.20$. Size has memory even though no sign was used."
+          }
+        },
+        {
+          "question": "Regress $I_t$ on $I_{t-1}$: with one lag the $R^2$ is the square of the lag-1 autocorrelation, 0.2 from part 2. What is the LM statistic $(n - 1)R^2$ on the 1,500 days? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 59.96,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "LM statistic",
+            "wrong": [
+              {
+                "id": "no-square",
+                "value": 299.8,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "from-019",
+                "value": 54.1139,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$R^2 = 0.2^2 = 0.04$ and $LM = 1499 \\times 0.04 = 59.96$, far above the 5% critical value 3.84 of $\\chi^2_1$.",
+            "generic": "Not quite. Square the autocorrelation, then multiply by the 1,499 rows of the regression.",
+            "byKey": {
+              "no-square": "You used the autocorrelation itself. $R^2$ is its square, $0.04$.",
+              "from-019": "You squared 0.19, the slip from part 2. The autocorrelation is $0.19/0.95 = 0.2$."
+            }
+          },
+          "explain": {
+            "text": "With one lag the regression loses one day, so it has 1,499 rows. $R^2 = 0.04$ gives $LM = 59.96$. Against $\\chi^2_1$ the test rejects: big days cluster."
+          }
+        },
+        {
+          "question": "Keep $LM = (n - 1)R^2$ from part 3, $p = 0.05$ and the 75 follow-on days. What is the smallest count of big follow-on days that rejects at 5% ($\\chi^2_1$ critical value 3.841)? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 8,
+            "tol": {
+              "abs": 0
+            },
+            "label": "Follow-on big days",
+            "wrong": [
+              {
+                "id": "round-down",
+                "value": 7,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "rho-as-q",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Rejection needs $R^2 > 3.841/1499$, so an autocorrelation above $0.0506$ and $q > 0.05 + 0.0506 \\times 0.95 = 0.0981$. That is $0.0981 \\times 75 = 7.36$ days, so 8.",
+            "generic": "Not quite. Find the autocorrelation that makes $LM = 3.841$, turn it into $q$, then into days out of 75.",
+            "byKey": {
+              "round-down": "With 7 days, $q = 0.0933$, the autocorrelation is $0.0456$ and $LM = 3.12$: no rejection. Round up.",
+              "rho-as-q": "You set $q$ to the autocorrelation threshold 0.0506, giving about 4 days. Here $q = p + 0.95 \\times 0.0506$."
+            }
+          },
+          "explain": {
+            "text": "The threshold autocorrelation is $\\sqrt{3.841/1499} = 0.0506$, close to the band $1.96/\\sqrt{1500}$. Undoing part 2, $q = 0.05 + 0.95 \\times 0.0506 = 0.0981$, or 7.36 of 75 days. So 8 follow-on big days already reject, and the share saw 18."
+          }
+        }
+      ]
+    }
+  ]
+}
