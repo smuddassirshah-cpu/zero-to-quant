@@ -131,8 +131,9 @@ if 1 in LEVELS:
     num(1, 'p-float32-overnight', 2, rel / 100, alt / 100, {'one-factor': rel / 200, 'eps': F(1, 2**23) / D}, rounded=0.00060)  # unit %: key as a fraction
     amp = (F(1, 2**24) / D) / (F(1, 2**25) / P0)
     kap = (P0 + P1) / D
-    num(1, 'p-float32-overnight', 3, amp, 2 * 0.9425 / 1e-4, {'one-input': P0 / D, 'per-cent': float(amp) / 100},
+    num(1, 'p-float32-overnight', 3, amp, 2 * 0.9425 / 1e-4, {'one-input': P0 / D, 'per-cent': float(amp) * 100},
         rounded=round(float(amp)))
+    ok(abs(5.96e-4 / 3.16e-8 - 18861) < 1 and abs(18861 - float(amp)) <= 12 and abs(18837 - float(amp)) > 12, 'L1 part 3 printed figures give 18861, inside the 12 band')
     ok(abs(float(amp) - float(kap)) <= 2, 'L1 amplification matches kappa 18849 within the band')
     ok(kap == 18849, 'L1 kappa of the subtraction is 18849')
     f = D * 365 / P1
@@ -434,7 +435,7 @@ if 3 in LEVELS:
     says(3, 'p-implicit-newton-step', 1, '0.125', '3 + 20v', '-0.075')
     v2S = v1S - G(v1S) / Gp(v1S)
     num(3, 'p-implicit-newton-step', 2, v2S, 0.01875 - gf(0.01875) / gpf(0.01875),
-        {'frozen': v1S - G(v1S) / Gp(x0S), 'sign': v1S + G(v1S) / Gp(v1S)}, rounded=0.015856)
+        {'frozen': v1S - G(v1S) / Gp(x0S), 'sign': v1S + G(v1S) / Gp(v1S)}, rounded=0.0158565)
     ok(abs(G(v1S) - F('0.0097656')) < F(5, 10**8) and Gp(v1S) == F(27, 8), 'L3 G(0.01875) = 0.0097656, G\' = 3.375')
     ok(abs(G(v1S) / Gp(v1S) - F('0.0028935')) < F(5, 10**8) and abs(float(v2S) - 0.0158565) < 5e-8, 'L3 step 0.0028935, v2 = 0.0158565')
     ok(abs(float(10 * v1S**2) - 0.0035156) < 5e-8 and abs(float(G(v1S) / Gp(v1S) / (G(x0S) / Gp(x0S))) - 0.0926) < 0.001, 'L3 0.0035156; second step about a tenth of the first')

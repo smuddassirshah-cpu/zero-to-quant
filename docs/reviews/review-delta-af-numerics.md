@@ -95,3 +95,16 @@ All seven fixes of the level 4 read and findings 1, 4 to 6, 8, 10, 11 and notes 
 - No rule holds a part's printed sum against its band: `feedback.correct` prints a quotient of two restated values whose result (18,861) lies outside $18{,}850 \pm 2$ (finding 1).
 - The same-course checker reads no exam, so a slip line of `exams/stage-2.json` `c-newton-yield` passed (finding 6); the same gap as the convex bullets.
 - Bullets added to `docs/BACKLOG-INBOX.md` under `Raised later (delta read AF numerics):`.
+
+## Fix pass
+
+1. Fixed (`p-float32-overnight` part 3 band): $5.96 \times 10^{-4}/3.16 \times 10^{-8} = 18{,}860.76$; `tol` 12, `one-input` tol 8 (9,430.4 within 5 of 9,425), `feedback.correct` as given.
+2. Fixed (`per-cent`): value 1885000, tol 1500 ($0.0596/3.16 \times 10^{-8} = 1{,}886{,}076$, 1,076 away).
+3. Fixed (`p-survival-crossing` part 1 explain): replacement text as given; $p(4) = 0.98 - 0.09 - 0.0075 = 0.8825$.
+4. Fixed (`p-implicit-newton-step` part 2): 7 places, key 0.0158565 tol 6e-08, `frozen` 0.0163086 ($0.01875 - 0.0024414$), `sign` 0.0216435 ($0.01875 + 0.0028935$).
+5. Fixed (`frozen` line): replacement as given.
+6. Fixed (part 1 `sign` line): replacement as given.
+
+Graded answers changed: part 3 band, part 3 `per-cent` slip, part 2 key (6 to 7 places) and its two slips. Scripts updated: `problems-numerics-numbers.py` (per-cent slip, rounded, printed-figure check), `problems-numerics-numbers-read.py` (printed-figure gap, per-cent slip); author's, both readers' and the delta script exit 0, delta FINDING rows all `resolved`.
+
+Gates: validator 0 errors; voice scan 35, 0 and 0; fresh-check 0 hits on sets 1 to 3; grade-all 0 failures (13, 15, 14 widgets); playthrough sets 1 to 3 with and without `--mobile` all passed. Set 4 not edited.
