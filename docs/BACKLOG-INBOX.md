@@ -83,3 +83,7 @@ Raised later (delta read AF garch):
 - Validator candidate (`docs/reviews/review-delta-af-garch.md` finding 2): in a part whose question says "Using x from part k", a `wrong` band narrower than the key band refuses the slip made with the unrounded carry (`garch/problems-3` `p-recalibrate-short-var` part 3, `inverted` at 1.5 against a key band of 5).
 - `fresh-check.mjs --file` does not read the stage exams: `exams/stage-2.json` `b-es-normal` (97.5% ES on £3m) against `garch/problems-3` `p-recalibrate-short-var` part 4 drew nothing.
 - `retold` misses a slip line that differs by one word and a tail clause: l3 quiz 0 "That is the excess kurtosis. The question asks for the raw value." against `garch/problems-1` `p-stale-alarm` part 4 (same review, finding 1).
+
+Raised later (delta read AF arma):
+- `fresh-check.mjs` reads no canvas table or run of numbers in order: `arma/problems-2` `p-trust-discount` prints the newest regression coefficients 0.24, 0.05, −0.08 beside l8 `screens[1]` series B (`canvas.params.params.C2`: 0.252, 0.041, −0.074) and `screens[4]`'s "0.609, 0.25, then 0.043, −0.075", same task and key, 0 hits (`review-delta-af-arma.md` finding 1). An advisory for a run of three numbers within 0.01 of a lesson's run, in order and sign, would catch it.
+- Validator candidate (same review, finding 3): a `feedback.correct` that prints the answer at the stated places should print the key rounded to those places (`p-swap-spread-hold` part 3: key 0.139485, feedback 0.140 from a table at the rounded $z$).
