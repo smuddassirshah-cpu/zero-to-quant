@@ -360,17 +360,18 @@ C(L, I + '[1]', 'yes')
 ok('problems-3 gap independent of up', F(78, 120) == F(260, 400) and F(120, 400) * F(260, 400) == F(78, 400))
 A(L, I + '[2]', binom_pmf(4, 3, 0.65), **{'one-path': 0.65 ** 3 * 0.35, 'all-four': 0.65 ** 4, 'joint-slip': binom_pmf(4, 3, 0.195)})
 A(L, I + '[3]', 1 - 0.65 ** 4, sum=4 * 0.35, **{'exactly-one': binom_pmf(4, 3, 0.65), 'all-down': 0.35 ** 4})
-wk = [((s, z), (F(3, 10) if s else F(7, 10)) * (F(25, 100) if z else F(75, 100))) for s in (1, 0) for z in (1, 0)]
-loss = lambda o: o[0] == 1 or o[1] == 1
-pl = wprob(wk, loss)
+# items[1] re-authored in session AF (p-losing-week replaced by p-rotation-days); checks retargeted.
+# Natural frequencies on 10,000 days: 2,500 risk-on, 7,500 rotation.
+on_both = 2500 * F(6, 10) * F(8, 10)                     # 1,200 days
+rot_both = 10000 * F(6, 10) * F(5, 10) - on_both          # 3,000 - 1,200 = 1,800 days
 I = 'items[1].parts'
-A(L, I + '[0]', pl, sum=0.55, both=0.075)
-fl = wprob(wk, lambda o: o[0] == 1, loss)
-A(L, I + '[1]', fl, times=0.3 * 0.475, **{'no-news': 0.3, 'sum-slip': 0.3 / 0.55})
-fls = wprob(wk, lambda o: o[0] == 1, lambda o: loss(o) and o[1] == 1)
-A(L, I + '[2]', fls, still=fl, cancelled=0, **{'over-loss': 0.075 / 0.475})
-C(L, I + '[3]', 'no')
-ok('problems-3 explaining away', fls == F(3, 10) and fl == F(12, 19))
+A(L, I + '[0]', on_both / 2500, indep=0.3, cond=0.8, **{'over-y': 0.4})
+A(L, I + '[1]', rot_both / 7500, unweighted=rot_both / 10000, equal=2 * 0.3 - 0.48, indep=0.3)
+A(L, I + '[2]', rot_both / (7500 * F(6, 10)), joint=0.24, unweighted=0.18 / 0.6, **{'over-y': 0.24 / 0.5})
+C(L, I + '[3]', 'both-dep')
+ok('problems-3 rotation days: linked on each kind of day, independent pooled',
+   on_both / (2500 * F(6, 10)) == F(4, 5) and rot_both / (7500 * F(6, 10)) == F(2, 5)
+   and (on_both + rot_both) / 10000 == F(6, 10) * F(5, 10))
 I = 'items[2].parts'
 one = 0.25 * 0.28 + 0.75 * 0.04
 A(L, I + '[0]', one, average=(0.28 + 0.04) / 2, **{'recession-only': 0.07})

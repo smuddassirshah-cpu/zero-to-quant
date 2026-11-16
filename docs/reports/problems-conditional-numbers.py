@@ -263,19 +263,38 @@ num(L3, 'p-gap-days', 3, comb(4, 3) * q ** 3 * (1 - q), sum(pseq(s, q) for s in 
 num(L3, 'p-gap-days', 4, 1 - q ** 4, sum(pseq(s, q) for s in seqs if sum(s) < 4),
     {'sum': 4 * (1 - q), 'exactly-one': 4 * q ** 3 * (1 - q), 'all-down': (1 - q) ** 4})
 
-# p-losing-week: loss = fail or squeeze, independent causes
-pfl, psq = F(3, 10), F(1, 4)
-states = {(a, b): (pfl if a else 1 - pfl) * (psq if b else 1 - psq) for a in (0, 1) for b in (0, 1)}
-ploss = sum(p for (a, b), p in states.items() if a or b)
-num(L3, 'p-losing-week', 1, 1 - (1 - pfl) * (1 - psq), ploss,
-    {'sum': pfl + psq, 'both': pfl * psq})
-num(L3, 'p-losing-week', 2, pfl / ploss, sum(p for (a, b), p in states.items() if a) / ploss,
-    {'no-news': pfl, 'sum-slip': pfl / (pfl + psq), 'times': pfl * ploss})
-given = {k: p for k, p in states.items() if (k[0] or k[1]) and k[1]}
-num(L3, 'p-losing-week', 3, pfl, sum(p for k, p in given.items() if k[0]) / sum(given.values()),
-    {'still': pfl / ploss, 'cancelled': 0, 'over-loss': pfl * psq / ploss})
-pick(L3, 'p-losing-week', 4, 'no')
-ok(round(float(pfl / ploss), 2) == 0.63, 'choice text 0.63 does not match')
+# p-rotation-days: X, Y independent over all days; risk-on quarter linked, rotation days the rest
+c_on, px, py, py_x_on = F(1, 4), F(6, 10), F(5, 10), F(8, 10)
+j_all = px * py                                     # independence over all days
+j_on = px * py_x_on
+j_rot = (j_all - c_on * j_on) / (1 - c_on)
+# method 2: natural frequencies on 10,000 days
+D = 10000
+on_days = D * c_on; rot_days = D - on_days
+both_on = on_days * px * py_x_on                    # 2,500 days, 1,500 X up, 1,200 both
+both_all = D * px * py                              # 3,000
+both_rot = both_all - both_on                       # 1,800
+ok(on_days == 2500 and both_on == 1200 and both_all == 3000 and both_rot == 1800, 'p-rotation-days: day counts not whole')
+num(L3, 'p-rotation-days', 1, j_on, both_on / on_days,
+    {'indep': px * py, 'cond': py_x_on, 'over-y': py_x_on * py})
+num(L3, 'p-rotation-days', 2, j_rot, both_rot / rot_days,
+    {'unweighted': j_all - c_on * j_on, 'equal': 2 * j_all - j_on,
+     'indep': (j_all - c_on * px * py) / (1 - c_on)})
+ok((j_all - c_on * px * py) / (1 - c_on) == px * py, 'p-rotation-days p2: the part 1 slip does not give 0.3')
+num(L3, 'p-rotation-days', 3, j_rot / px, both_rot / (rot_days * px),
+    {'joint': j_rot, 'over-y': j_rot / py, 'unweighted': (j_all - c_on * j_on) / px})
+pick(L3, 'p-rotation-days', 4, 'both-dep')
+# the two day tables are valid distributions with the stated margins, and mix to independence
+tabs = {}
+for name, j in (('on', j_on), ('rot', j_rot)):
+    t = {'uu': j, 'ud': px - j, 'du': py - j, 'dd': 1 - px - py + j}
+    ok(all(v >= 0 for v in t.values()) and sum(t.values()) == 1, f'p-rotation-days: {name} table invalid')
+    tabs[name] = t
+mix = {k: c_on * tabs['on'][k] + (1 - c_on) * tabs['rot'][k] for k in tabs['on']}
+ok(mix['uu'] == (mix['uu'] + mix['ud']) * (mix['uu'] + mix['du']), 'p-rotation-days: mix is not independent')
+ok(mix['uu'] + mix['ud'] == px and mix['uu'] + mix['du'] == py, 'p-rotation-days: overall margins wrong')
+ok(tabs['on']['uu'] / px == F(8, 10) != py and tabs['rot']['uu'] / px == F(4, 10) != py, 'p-rotation-days p4: 0.8 and 0.4 not both unlike 0.5')
+ok(j_all == F(3, 10) and c_on * j_on == F(12, 100) and j_all - c_on * j_on == F(18, 100), 'p-rotation-days: 0.3, 0.12, 0.18 in prose wrong')
 
 # p-three-loans: regimes, independent inside each
 r, pb, pg = F(1, 4), F(28, 100), F(4, 100)

@@ -343,12 +343,20 @@ ok(F(78, 120) == F(260, 400) and F(120, 400) * F(260, 400) == F(78, 400), 'probl
 cid(L, 'items[0].parts[1]', ['yes'])
 eq(L, 'items[0].parts[2]', tail(3, 4, '0.65') - tail(4, 4, '0.65'))
 eq(L, 'items[0].parts[3]', 1 - D('0.65') ** 4)
-week = {(x, y): (D('0.3') if x else D('0.7')) * (D('0.25') if y else D('0.75')) for x in (1, 0) for y in (1, 0)}
-loss = lambda s: s[0] or s[1]
-eq(L, 'items[1].parts[0]', wpr(week, loss))
-eq(L, 'items[1].parts[1]', wcond(week, lambda s: s[0], loss))
-eq(L, 'items[1].parts[2]', wcond(week, lambda s: s[0], lambda s: loss(s) and s[1]))
-cid(L, 'items[1].parts[3]', ['no'])
+# items[1] re-authored in session AF (p-losing-week replaced by p-rotation-days); checks retargeted.
+# Day type, X up, Y up; rotation-day joint found from independence over all days.
+j_rot = (D('0.6') * D('0.5') - D('0.25') * D('0.6') * D('0.8')) / D('0.75')
+rd = {}
+for day, w, j in (('on', D('0.25'), D('0.6') * D('0.8')), ('rot', D('0.75'), j_rot)):
+    cell = {(1, 1): j, (1, 0): D('0.6') - j, (0, 1): D('0.5') - j, (0, 0): 1 - D('1.1') + j}
+    for (x, y), p in cell.items():
+        rd[(day, x, y)] = w * p
+ok(abs(wpr(rd, lambda s: s[1] and s[2]) - wpr(rd, lambda s: s[1]) * wpr(rd, lambda s: s[2])) < 1e-12,
+   'problems-3 rotation days: X and Y independent over all days')
+eq(L, 'items[1].parts[0]', wcond(rd, lambda s: s[1] and s[2], lambda s: s[0] == 'on'))
+eq(L, 'items[1].parts[1]', wcond(rd, lambda s: s[1] and s[2], lambda s: s[0] == 'rot'))
+eq(L, 'items[1].parts[2]', wcond(rd, lambda s: s[2], lambda s: s[0] == 'rot' and s[1]))
+cid(L, 'items[1].parts[3]', ['both-dep'])
 eq(L, 'items[2].parts[0]', D('0.25') * D('0.28') + D('0.75') * D('0.04'))
 eq(L, 'items[2].parts[1]', book(3, 3, '0.25', '0.28', '0.04'), atol=1e-6)
 eq(L, 'items[2].parts[2]', D('0.1') ** 3, atol=1e-7)

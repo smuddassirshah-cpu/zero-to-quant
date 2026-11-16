@@ -411,7 +411,9 @@ dA, dB, dC = (lambda o: o[0] == o[1]), (lambda o: o[0] == o[2]), (lambda o: o[1]
 check('problems-3 desks: pairwise independent, triple 1/4, P(C|A,B)=1',
       ind(dA, dB, feeds) and ind(dA, dC, feeds) and ind(dB, dC, feeds)
       and P(lambda o: dA(o) and dB(o) and dC(o), space=feeds) == Fr(1, 4))
-check('problems-3 losing week: 0.475, 12/19, back to 0.3', 1 - S(0.7) * S(0.75) == S(0.475) and S(0.3) / S(0.475) == Fr(12, 19))
+check('problems-3 rotation days (re-authored AF, was losing week): 0.48, 0.24, 0.4 against 0.8, mix independent',
+      Fr(6, 10) * Fr(8, 10) == Fr(48, 100) and (Fr(3, 10) - Fr(1, 4) * Fr(48, 100)) / Fr(3, 4) == Fr(24, 100)
+      and Fr(24, 100) / Fr(6, 10) == Fr(2, 5) and Fr(1, 4) * Fr(48, 100) + Fr(3, 4) * Fr(24, 100) == Fr(6, 10) * Fr(5, 10))
 check('review-3 margin call: 0.3/0.65 then 0.3; two loans 0.00936 about 4x 0.048^2',
       close(0.3 / (1 - 0.7 * 0.5), 0.4615, 5e-4) and close(0.1 * 0.09 + 0.9 * 0.0004, 0.00936) and close(0.00936 / 0.048 ** 2, 4.06, 0.01))
 
