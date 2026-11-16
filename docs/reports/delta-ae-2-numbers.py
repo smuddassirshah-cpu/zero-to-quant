@@ -258,7 +258,7 @@ for n in ["1076", "549", "168", "1125", "562500", "1625", "672", "33.541", "1557
     ok(f"eigen: {n} only in problems-3 (found {where})", not where)
 
 # ---------------------------------------------------------------------------
-# 2. stat-learning/problems-2 p-ice-cream-van (deckchair stall) and p-futures-lasso part 5
+# 2. stat-learning/problems-2 p-ice-cream-van (deckchair stall)
 # ---------------------------------------------------------------------------
 van = item("stat-learning/problems-2.json", "p-ice-cream-van")
 van_text = " ".join([van["prose"]] + [all_text(x) for x in van["parts"]]).lower()
@@ -292,17 +292,9 @@ has("stall p4", all_text(q[3]), "15, -7, 5, -2", "225 + 49 + 25 + 4 = 303", "303
 has("stall p5", all_text(q[4]), "4.5 from part 3 and 75.75 from part 4", "0.0594", "94.1%")
 ok("bike-hire: a 6 degree Sunday is forecast 40 tens of bikes, plausible for bikes (review finding 7, fixed)", yhat(6, 1) == 40 and "bikes" in van["prose"])
 
-lasso = item("stat-learning/problems-2.json", "p-futures-lasso")
-ols = [0.42, -0.27, 0.11, -0.06, 0.18]
-soft = [math.copysign(max(abs(b) - 0.15, 0), b) for b in ols]
-ok("lasso coefficients 0.27, -0.12, 0, 0, 0.03", np.allclose(soft, [0.27, -0.12, 0, 0, 0.03]))
-z = [1.5, 1.0, -2.0, 1.5, 1.0]
-f_lasso = 0.30 + float(np.dot(soft, z))
-zc = [1.75] + z[1:]
-check_numeric("lasso p5", lasso["parts"][4], 0.615, [f_lasso],
-              {"ols": [0.30 + float(np.dot(ols, z))], "no-shrink": [0.30 + 0.42 * 1.5 - 0.27 + 0.18],
-               "sign": [0.30 + 0.27 * 1.5 + 0.12 + 0.03], "carried": [0.30 + float(np.dot(soft, zc)), 0.682, 0.683]})
-ok("lasso carried unrounded 0.6825", close(0.30 + float(np.dot(soft, zc)), 0.6825))
+# Session AF re-authored stat-learning p-futures-lasso and p-built-ridge (same ids, new problems) and
+# p-renewals part 2; their old checks are removed here. The new items are checked in
+# docs/reports/problems-stat-learning-numbers.py and docs/reports/delta-review-delta-af-1-numbers.py.
 
 # ---------------------------------------------------------------------------
 # 3. ensembles/problems-2 p-dividend-importance (re-authored: partial dependence)
