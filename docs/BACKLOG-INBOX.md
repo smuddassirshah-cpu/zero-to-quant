@@ -24,3 +24,9 @@ Raised later (problems numerics):
 Raised later (problems garch):
 
 - `fresh-check.mjs` lists "2 shared parameters (2.3263 99)" as an advisory on every VaR item of `garch/problems-3.json` (l10 screen 2). The normal 99% quantile with its level is a stock constant, like 1.96 with 95; add standard quantiles (1.6449, 1.9600, 2.3263, 2.5758 with their levels) to the stock list so the advisory is kept for real shared parameters.
+
+Raised later (review problems stat-models):
+- `fresh-check.mjs --file` gave 0 hits on `stat-models/problems-1` to `-3`, yet two problems are near-copies of items in the course's topic exam: `problems-3` `p-ten-trading-days` part 1 against `exams/topic-2.6` `e-u-from-days` (same question sentence, "Strategy X" and "Strategy Y", same slip ids, "$m(m + 1)/2 = 10$"), and `p-block-markout-tail` against `e-takeover-week` (seven values, three shared, a spike in last place, the scaled-MAD question). Hold a set against its topic exam with the same-course thresholds, not the cross-course ones.
+- `retold` missed slip lines that keep a lesson's skeleton with new numbers: "You divided by N. Two coefficients were fitted, so" (l5 screen 2), "That is the raw MAD" and "That is the ordinary SD" (l13 screen 3), "the slope entry of the inverse is" (l4 screen 3). A five-word masked run shared between two `byKey` lines of the same slip kind would catch them.
+- A chain held in one explain line is not read as a chain: `homework-2` `h-anova-summary` explains grand mean, SSB, MSB, MSW, $F$ and $p$ in order, and `problems-2` `p-venue-markouts` asks them as parts 1 to 4. Split explain lines at sentence ends and semicolons before the three-step match.
+- Problem-set parts that ask an $F$ or $t$ tail area to 4 decimal places have no canvas to read it from, as the lessons have. Say in `docs/AUTHORING.md` whether such a part must state a tail or critical value, or give problem parts a small distribution tool.
