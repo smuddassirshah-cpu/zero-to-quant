@@ -98,9 +98,15 @@
       "call": "rebuild((lambda f: f(f, 0, 65535))(lambda f, lo, hi: [] if lo >= hi else [(lo + hi) // 2 * 7919 % 65536] + f(f, lo, (lo + hi) // 2) + f(f, (lo + hi) // 2 + 1, hi)), [k * 7919 % 65536 for k in range(65535)]) == (lambda f: f(f, 0, 65535))(lambda f, lo, hi: None if lo >= hi else ((lo + hi) // 2 * 7919 % 65536, f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi)))",
       "expect": "True",
       "compare": "equal"
+    },
+    {
+      "setup": "_c = [0]; exec(\"class _L(list):\\n def __getitem__(s, k):\\n  r = list.__getitem__(s, k)\\n  if isinstance(k, slice):\\n   _c[0] += len(r)\\n   if _c[0] > 3000000:\\n    raise RuntimeError('copied more than 30 ids per id')\\n   r = _L(r)\\n  return r\\n def index(s, v, *a):\\n  r = list.index(s, v, *a)\\n  _c[0] += r - (a[0] if a else 0) + 1\\n  if _c[0] > 3000000:\\n   raise RuntimeError('scanned more than 30 ids per id')\\n  return r\\n\")",
+      "call": "(lambda M, D, B, T: rebuild(_L(list(range(M, M + D)) + B(B, 0, M)), _L(list(range(M)) + list(range(M + D - 1, M - 1, -1)))) == __import__('functools').reduce(lambda t, v: (v, t, None), range(M + D - 1, M - 1, -1), T(T, 0, M)))(99600, 380, lambda f, lo, hi: [] if lo >= hi else [(lo + hi) // 2] + f(f, lo, (lo + hi) // 2) + f(f, (lo + hi) // 2 + 1, hi), lambda f, lo, hi: None if lo >= hi else ((lo + hi) // 2, f(f, lo, (lo + hi) // 2), f(f, (lo + hi) // 2 + 1, hi)))",
+      "expect": "True",
+      "compare": "equal"
     }
   ],
-  "how": "Submit runs 12 hidden tests. Each answer must equal the expected value.",
+  "how": "Submit runs 13 hidden tests. Each answer must equal the expected value.",
   "solution": "def rebuild(pre, ino):\n    where = {v: i for i, v in enumerate(ino)}\n    pos = 0\n\n    def build(lo, hi):\n        nonlocal pos\n        if lo >= hi:\n            return None\n        root = pre[pos]\n        pos += 1\n        mid = where[root]\n        left = build(lo, mid)\n        right = build(mid + 1, hi)\n        return (root, left, right)\n\n    return build(0, len(ino))\n",
   "notes": [
     "The next unused id of `pre` is the root, and its place in `ino` splits the ids into the two parts.",

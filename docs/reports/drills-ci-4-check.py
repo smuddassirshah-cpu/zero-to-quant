@@ -474,6 +474,8 @@ first = None
 t0 = time.time()
 for i, c in enumerate(spec["cases"]):
     try:
+        if c.get("setup"):
+            exec(c["setup"], ns)
         ok = eval(c["call"], ns) == eval(c["expect"])
     except Exception as e:
         ok = False
@@ -507,6 +509,8 @@ for did in IDS:
     exec(d["solution"], ns)
     t0 = time.time()
     for c in cases:
+        if c.get("setup"):
+            exec(c["setup"], ns)
         if eval(c["call"], ns) != eval(c["expect"]):
             err(f"{did}: model fails {c['call'][:60]}")
     dt = time.time() - t0
@@ -514,6 +518,8 @@ for did in IDS:
         err(f"{did}: model took {dt:.2f} s")
     ins = {fn: INDEP[did]}
     for c in cases:
+        if c.get("setup"):
+            exec(c["setup"], ins)
         if eval(c["call"], ins) != eval(c["expect"]):
             err(f"{did}: independent method disagrees on {c['call'][:60]}")
     sres = run_isolated(d["starter"], d["tests"])
