@@ -90,3 +90,51 @@ Result. All 50 numeric keys and 5 choice keys agree with mine, and so do 108 of 
 1. `fresh-check.mjs` skips `feedback`, `explain`, `why` and option text (`SKIP_KEYS`), so a set that replays a lesson screen with new numbers and the lesson's own feedback lines shows 0 hits. Here 56 of 79 shared runs of 7 or more words sit in those fields, among them a 13-word sentence shared with l11. Same-course reuse was the commonest finding of session AC, and this is the part of it the tool cannot see. Suggest an advisory over those fields with numbers masked, and a count per item.
 2. A story replayed with new numbers (the l8, l10, l11 and l12 cases) leaves no number or long stem run in common. Suggest comparing stems with numbers masked at a shorter run (6 words) for same-course lessons, as an advisory.
 3. In a `%` field a learner who types the fraction (0.086 for 8.6%) is compared as 0.00086 and gets the generic line. Suggest a hint when 100 times the typed value is in the key band.
+
+## Fix pass
+
+Counts: 16 findings; 11 fixed as written (1 to 6, 8 to 12), 5 re-authored under the main session's rulings (7, 13, 14, 15, 16), 0 disputed, 0 deferred. Every number was recomputed before it was written, in `docs/reports/problems-validation-numbers.py` (Fractions, SciPy, `TimeSeriesSplit`, integration, Monte Carlo) and by a second route in `docs/reports/problems-validation-numbers-read.py` (pandas, `chi2`, `linregress`, brute enumeration). Rulings: all eight reuse findings stand as reuse; a retold lesson screen and a taught formula restated to clear the checker are both reuse. The review's own replacement text for findings 7, 13, 14, 15 and 16 was therefore not applied; the four problems below are new, and `p-fund-encoding` has a different task.
+
+1. Fixed. `p-rent-seeds` part 2 prints 0.0826 ($1.766 \times 0.0468 = 0.08265$; the key 0.72735 is unchanged).
+2. Fixed. Question now says "treat the 16 test scores as independent normal draws"; the explain says the true spread is nearer 0.042 and the best nearer 0.74 ($0.0468\sqrt{0.8} = 0.0419$; $0.81 - 1.766 \times 0.0419 = 0.736$). Key unchanged.
+3. Fixed. The explain says to pass the flood flag as `y` to `StratifiedKFold(4).split`; each fold then holds 3 of the 12.
+4. Fixed. The `independent` slip line is reworded (factors fall from $864/1152 = 0.75$ to $853/1141 = 0.7476$); the l2 sentence is gone with finding 3.
+5. Fixed. The two `why` and `byKey` lines of `p-arrears-grid` part 5 are reworded ($0.451 - 0.412 = 0.039$; the average is 0.4315).
+6. Fixed. The four `p-gas-demand` lines are replaced with the review's text ($5.30/2.12 = 2.50$; $200 \times 30.8 + 75 \times 8.0 = 6{,}760$, $75 \times 8.0 = 600$, over 1,275).
+7. Re-authored: `p-signal-break`. Setting: a power desk walks a next-day price model forward over 1,120 days with `TimeSeriesSplit(n_splits=7)` (blocks of 140, fold 1 tests from day 140); while the model works $\sigma^2 = 1.00$ and an MSE over $n$ days has sd $\sigma^2\sqrt{2/n}$; fold MSEs 1.02, 0.97, 1.08, 1.05, 1.31, 1.38, 1.44. No hit rate, base rate or day 1,000. Parts (key, tol; wrong id value, tol):
+   - 1: sd of one fold's MSE, 4 dp: 0.11952, 5e-5; `no-two` 0.0845, `all-days` 0.0423 (each 5e-5).
+   - 2: sds above 1.00 for fold 5 (1.31), 1 dp: 2.6, 0.05; `all-days` 7.3, `fold-4` 2.2, `no-two` 3.7 (each 0.05).
+   - 3: days trained on by the first fold over $1 + 2(0.1195) = 1.239$ (fold 5): 700, 0; `previous-fold` 560, `test-end` 840, `fold-number` 5 (each 0).
+   - 4: sds above 1.00 of folds 5 to 7 joined (420 days, MSE 1.377), 1 dp: 5.46, 0.05 ($0.377/0.0690$); `per-fold` 3.2, `all-days` 8.9 (each 0.05).
+   - 5: choice, key `recent` (refit on the 420 days since the flag, score only later days); `all`, `noise`, `mean` (the seven-fold mean 1.18) wrong.
+8. Fixed. `p-forward-label` part 1 and 2 lines take the review's text.
+9. Fixed. The part 2 and part 3 explains now say the purge takes the first 14 touched rows and that 14 embargoed rows were clean; key 1,063 unchanged.
+10. Fixed. `p-spread-blocks` part 3 `before-only` value 15 to 13 ($18 - 3 - 2$), tol 0 as before; line reworded; author's script updated.
+11. Fixed. Placeholder "whole number".
+12. Fixed. Explain now says the error rose 20.0% and the unpurged score flattered by 16.7% ($0.77/4.62$).
+13. Re-authored: `p-fund-flows`. Setting: 16 daily inflows in £m (12, 15, 11, 14, 13, 16, 12, 15, 14, 13, 17, 16 | 20, 22, 18, 24); days 1 to 12 train a rule that flags unusual days. It asks for spreads, not means. Parts:
+   - 1: sd a `StandardScaler` fitted on all 16 days divides by, 3 dp: 3.5795, 6e-4; `train` 1.7795, `ddof-one` 3.697, `variance` 12.8125 (each 6e-4).
+   - 2: sd of the 12 training days (mean 14), 3 dp: 1.7795, 6e-4; `all` 3.5795, `ddof-one` 1.859, `variance` 3.1667 (each 6e-4).
+   - 3: day 13 (20) in training sds, 2 dp: 3.37, 0.005; `leaky` 1.19, `mixed` 1.68, `mean-only` 2.39 (each 0.005).
+   - 4: test days flagged beyond 3 sds with the part 2 scaler: 3, 0; `leaky` 0, `all` 4.
+   - 5: choice, key `train-fit`; `robust`, `test-fit`, `drop` wrong.
+14. Re-authored: `p-closed-funds`. Setting: a high-yield bond file of 200 issues, 18% defaulted (36) after returning 14.0 points a year less than the 9.2% of those that stayed; the survivors' backtest earns 8.4% over cash at volatility 9%; 12 screens tried, 5 in the committee note, 7 years. Parts:
+   - 1: average issue return, % to 2 dp: 6.68 (answer 0.0668), 5e-5; `survivors` 0.092, `added` 0.1172, `whole-gap` $-0.048$ (each 5e-5).
+   - 2: honest Sharpe, 3 dp: 0.65333, 5e-4 ($5.88/9$); `survivors` 0.9333, `added` 1.2133, `whole-gap` $-0.6222$ (each 5e-4).
+   - 3: noise best of the log's 12 screens over 7 years ($1.63/\sqrt 7$), 3 dp: 0.6161, 5e-4; `note` 0.4384, `by-years` 0.2329 (each 5e-4).
+   - 4: haircut, 2 dp: 0.0372, 0.005 ($0.653 - 0.616$); `note` 0.215, `survivors` 0.317 (each 0.006, so both roundings are taken).
+   - 5 (new): choice, key `tiny`; `file` (0.93), `note` (0.21), `half` (0.47) wrong.
+15. Re-authored: `p-carry-lookbacks`. Setting: 24 position-sizing variants in 4 families of 6 (identical positions, so one Sharpe per family, families independent) over 6 years; table shows 3 families, the log all 4; best Sharpe 0.95. Parts:
+   - 1: sd of a 6-year noise Sharpe, 4 dp: 0.408248, 5e-5; `by-years` 0.1667, `inverted` 2.4495 (each 5e-5).
+   - 2: noise best of the 4 families ($1.03 \times 0.4082$), 3 dp: 0.4205, 6e-4; `twenty-four` 0.796, `by-years` 0.1717 (each 6e-4), `table` 0.346 (2e-3; $0.85 \times 0.4082 = 0.347$).
+   - 3: haircut of 0.95, 2 dp: 0.5295, 0.005; `twenty-four` 0.15, `by-years` 0.78, `table` 0.60 (each 0.005).
+   - 4: Sharpe bar for 4 tries ($2.24/\sqrt 6$), 2 dp: 0.915, 0.0055 (takes 0.91 and 0.92); `bar` 2.24, `by-years` 0.37 (each 0.005).
+   - 5: choice, key `families`; `all24` (bar 1.17), `best-only` (bar 0.67), `real` wrong.
+16. Re-authored: `p-fund-encoding`. Task changed: $x_i = (2y_i + y_{a_1} + \dots + y_{a_{11}})/13$, own label counted twice among 13, labels independent noise; no sign-agreement formula. Parts:
+   - 1: correlation of $x_i$ with $y_i$, 4 dp: 0.516398, 5e-5 ($2/\sqrt{15}$); `unweighted` 0.2774, `no-square` 0.5547 (each 5e-5).
+   - 2: $R^2$, 4 dp: 0.266667, 5e-5 ($4/15$); `rho` 0.5164, `no-square` 0.3077 (each 5e-5).
+   - 3: $t = \rho\sqrt{n-2}/\sqrt{1-\rho^2}$ at $n = 100$, 2 dp: 5.9696, 0.005; `category` 2.0, `no-adjust` 5.11, `n-not-n-minus-2` 6.03 (each 0.005).
+   - 4: choice, key `leak` (bar 3.02 for 40 tries cleared by $t = 5.97$, still a leak); `real`, `more-rows`, `one-try` wrong.
+   Reuse greps over `app/content/` for the new settings and key numbers: no shared story or number set (the figures 1.03, 1.95, 2.24 and 3.02 are standard normal quantiles and means; 0.04 and 0.21 coincide with one l2 screen's parameters, a different quantity).
+
+Gates. Number scripts: author 697 of 697, reader 927 of 927, both exit 0 (the reader's NOTE line on the stacked embargo is finding 9, now stated in the text). `fresh-check.mjs --file` on all three sets: 0 hits (advisories: $\sigma^2\sqrt{2/n}$ shared between problems-1 and problems-2, the level 1 rule used on a new quantity; two coincidental parameters against an l2 screen). Validator 0 errors. Voice scan 35: 0 and 0. `grade-all.mjs --file`: 19, 18 and 19 widgets, 0 failures. Playthrough `--problems validation/problems-1`, `-2`, `-3`, with and without `--mobile`: all passed. Graded answers changed: the keys of all five re-authored problems (24 parts) and one `wrong` value (finding 10); no engine, `course.json` or lesson file touched.
