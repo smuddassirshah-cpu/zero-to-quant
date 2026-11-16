@@ -264,21 +264,21 @@ check_numeric('2 tins p4', it[3], stand, F(7, 2) * (23 + 53), [266],
 ok(sum(rows[:3]) == 39 and sum(rows[:4]) == 62 and 305 - 39 == stand and rows[3] == 23, 'tins check 305 - 39')
 
 it = P['p-app-users']['parts']
-day = terms_geom(4, 3, 15)
-check_numeric('2 app p1', it[0], day[5], 4 * 3 ** 5, [972], {'power-n': 4 * 3 ** 6, 'day-five': day[4]})
+day = terms_geom(4, 5, 15)
+check_numeric('2 app p1', it[0], day[5], 4 * 5 ** 5, [12500], {'power-n': 4 * 5 ** 6, 'day-five': day[4]})
 S6 = sum(day[:6])
-check_numeric('2 app p2', it[1], S6, (3 * 972 - 4) / 2, [1456], {'no-halve': 3 * 972 - 4, 'no-first': F(3 * 972, 2)})
-check_expr('2 app p3', it[2], 2 * 3 ** n_sym - 2,
-           {'no-divide': 4 * 3 ** n_sym - 4, 'power-n-1': 2 * 3 ** (n_sym - 1) - 2, 'sign': 2 - 2 * 3 ** n_sym})
-ok(all(2 * (3 ** k - 1) == sum(day[:k]) for k in range(1, 15)), 'app closed form matches running totals')
-first = next(k for k in range(1, 15) if sum(day[:k]) > 100000)
+check_numeric('2 app p2', it[1], S6, (5 * 12500 - 4) / 4, [15624], {'no-halve': 5 * 12500 - 4, 'no-first': F(5 * 12500, 4)})
+check_expr('2 app p3', it[2], 5 ** n_sym - 1,
+           {'no-divide': 4 * 5 ** n_sym - 4, 'power-n-1': 5 ** (n_sym - 1) - 1, 'sign': 1 - 5 ** n_sym})
+ok(all(5 ** k - 1 == sum(day[:k]) for k in range(1, 15)), 'app closed form matches running totals')
+first = next(k for k in range(1, 15) if sum(day[:k]) > 350000)
 tot, k2 = 0, 0
-while tot <= 100000:
+while tot <= 350000:
     k2 += 1
-    tot += 4 * 3 ** (k2 - 1)
-check_numeric('2 app p4', it[3], first, k2, [10],
-              {'one-day': next(k for k in range(1, 15) if day[k - 1] > 100000), 'nine': first - 1})
-ok(sum(day[:9]) == 39364 and sum(day[:10]) == 118096, 'app S9 and S10')
+    tot += 4 * 5 ** (k2 - 1)
+check_numeric('2 app p4', it[3], first, k2, [8],
+              {'one-day': next(k for k in range(1, 15) if day[k - 1] > 350000), 'nine': first - 1})
+ok(sum(day[:7]) == 78124 and sum(day[:8]) == 390624, 'app S7 and S8')
 
 it = P['p-bouncing-ball']['parts']
 rises = terms_geom(3, F(3, 5), 40)
