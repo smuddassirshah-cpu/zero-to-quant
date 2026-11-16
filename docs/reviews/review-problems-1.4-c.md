@@ -158,3 +158,18 @@ Graded answers, bands, `accept` forms and items that changed:
 - `problems-3` `p-branch-sales`: part 4 `accept` +1. `p-crab-sizes`: part 3 question; part 5 question, key 1.26 to 1.265, tol 0.005 to 0.0005, `variance` 0.08, `total` 1.13 to 1.131, `pc2-sd` 2.53, tols 0.0005, `correct`, `byKey.variance`, `explain`. `p-site-anomalies`: part 3 and part 4 questions, part 4 `wrong` +1 (`variance`).
 
 Gates (from `app/`): validator 0 errors, 4,853 warnings, none on the three files (the same total as before the pass); `manifest.json` not committed. Voice scan 35: 0 and 0 on the repo and on the eigen folder. `playthrough --problems eigen/problems-1`, `-2`, `-3`, each with and without `--mobile` and `--local-cdn`: all six passed.
+
+## Fix pass (session AE, waived reuse)
+
+`eigen/problems-2` `p-oval-pond` part 3 printed $\mathbf{A} - 4\mathbf{I} = \begin{pmatrix}1&2\\2&4\end{pmatrix}$, equal up to a scalar to matrices of `homework-4`, `l6-bowls`, `l7-covariance-psd` and `problems-4`. Renumbered; task, story, skills and chain kept. Searched the eigen course for $\mathbf{A}$, $\mathbf{A} - 8\mathbf{I}$ and $\mathbf{A} - 18\mathbf{I}$ (scaled, transposed, permuted): no hit. `same-course-reuse --no-waivers`: 0 errors, 0 warnings.
+
+Old: $5x^2 + 4xy + 8y^2 = 36$, $\mathbf{A} = \begin{pmatrix}5&2\\2&8\end{pmatrix}$, eigenvalues 4 and 9, long axis $(2, -1)$, half-axes 3 and 2.
+New: $9x^2 + 6xy + 17y^2 = 288$, $\mathbf{A} = \begin{pmatrix}9&3\\3&17\end{pmatrix}$, trace 26, $\det = 153 - 9 = 144$, eigenvalues 8 and 18, long axis $(3, -1)$, half-axes 6 and 4.
+
+- Part 1: key old 2, new 3 (half of 6); `whole-cross` old 4, new 6.
+- Part 2: key old {4, 9}, new {8, 18} ($\lambda^2 - 26\lambda + 144 = (\lambda - 8)(\lambda - 18)$); `diagonal` old "5, 8", new "9, 17"; `sign` old "-4, -9", new "-8, -18".
+- Part 3: key old (2, -1), new (3, -1) ($\mathbf{A} - 8\mathbf{I}$ first row (1, 3), 3 + 3b = 0); placeholder (3, b); `big` old (2, 4), new (3, 9) (eigenvector (1, 3) for 18); `sign` old (2, 1), new (3, 1).
+- Part 4: key old 3, new 6 ($\sqrt{288/8} = \sqrt{36}$); `short` old 2, new 4 ($\sqrt{288/18}$); `no-root` old 9, new 36; `full-axis` old 6, new 12.
+- Part 5: key old 18.85, new 75.40 ($24\pi = 75.398$; also $288\pi/\sqrt{144} = 288\pi/12$); `no-root` old 113.1, new 1809.56 ($36 \times 16\pi$); `full-axes` old 75.4, new 301.59 ($12 \times 8\pi$); `one-axis` old 28.27, new 113.1 ($36\pi$).
+
+Script: `docs/reports/problems-eigen-numbers.py` re-keyed, 2247 checks, 0 failures. Gates: validator 0 errors; `grade-all --file` 15 widgets, 0 failures; voice scan 0 and 0; playthrough `--problems eigen/problems-2` desktop and `--mobile`: All passed.

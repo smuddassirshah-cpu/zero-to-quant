@@ -108,3 +108,17 @@ Judged not a true near-miss: 1 of 12 (`ci-spiral-cells`; move the mark to plant 
 - Near-miss sample: `nearMiss` moved from plant 2 to plant 4 in `app/content/drills/ci-spiral-cells.json`; `planted-check --near-miss`: 1 drill, 6 planted solutions, 0 failures.
 - Scripts: `docs/reports/problems-eigen-numbers.py` updated (new matrices, keys, slips, vocab 8.8) and exits 0 (2,189 checks, 0 failures); `mine.py` and `proposed.py` updated to the new values and exit 0 (the latter excludes problems-4 itself from its freshness grep).
 - Gates: validator 0 errors, no warning on the eigen file; `grade-all --file` 18 widgets, 0 failures; voice scan 0 and 0; playthrough `--problems eigen/problems-4` desktop and `--mobile` both All passed; `manifest.json` restored.
+
+## Fix pass (session AE, waived reuse)
+
+`eigen/problems-4` `p-track-laps` part 1 printed $\mathbf{X}^T\mathbf{X} = \begin{pmatrix}9&18\\18&36\end{pmatrix}$, equal up to a scalar to the matrix $\begin{pmatrix}1&2\\2&4\end{pmatrix}$ of `homework-4`, `l6-bowls`, `l7-covariance-psd` and `problems-2`. Renumbered with column 2 four times column 1 (a rank-1 matrix with ratio 3 would have matched the new `p-oval-pond` matrix $\mathbf{A} - 8\mathbf{I}$). Task, story, skills and chain kept. Grep of the eigen course: no hit for the new matrix or its scalar, transpose or permuted forms. `same-course-reuse --no-waivers`: 0 errors, 0 warnings.
+
+Old: $\mathbf{X} = \begin{pmatrix}2&4\\1&2\\2&4\end{pmatrix}$, $\mathbf{y} = (11, 5, 9)$, 2 laps per km.
+New: $\mathbf{X} = \begin{pmatrix}2&8\\1&4\\2&8\end{pmatrix}$, $\mathbf{y} = (35, 17, 33)$, 4 laps per km, $\mathbf{X}^T\mathbf{X} = \begin{pmatrix}9&36\\36&144\end{pmatrix}$.
+
+- Part 1: key 0 unchanged ($L_{11} = 3$, $L_{21} = 12$, $L_{22} = \sqrt{144 - 144}$); `root-36` renamed `root-144`, old 6, new 12; `subtract-entry` old 4.243 (band 0.5), new 10.392 ($\sqrt{144 - 36}$, band 0.5).
+- Part 2: key old 45, new 153 (trace 9 + 144); `diagonal` old 36, new 144; `first-entry` 9 unchanged. Eigenvector old (1, 2), new (1, 4): $\mathbf{X}^T\mathbf{X}(1, 4) = (153, 612)$.
+- Part 3: key old (1, 2), new (1, 4) ($\mathbf{u}_1 \cdot \mathbf{y} = (70 + 17 + 66)/3 = 51$; $\sqrt{17}\sqrt{153} = 51$); accept forms alike. `all-km` old (5, 0), new (17, 0); `all-laps` old (0, 2.5), new (0, 4.25) (all on the line $\beta_1 + 4\beta_2 = 17$).
+- Part 4: new run 3 km, 12 laps. Key old 15, new 51 ($3 + 4 \times 12$; also $17 \times 3$); `laps-as-km` old 9, new 15 ($3 + 4 \times 3$); `km-only` 3 unchanged.
+
+Script: `docs/reports/problems-eigen-numbers.py` re-keyed, 2247 checks, 0 failures (shared with `p-oval-pond`). Gates: validator 0 errors; `grade-all --file` 18 widgets, 0 failures; voice scan 0 and 0; playthrough `--problems eigen/problems-4` desktop and `--mobile`: All passed.

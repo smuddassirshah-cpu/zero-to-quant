@@ -487,31 +487,33 @@ def poly(items, iid, k, exact, values, slips):
 
 I = load(2)
 if I:
-    # ---- p-oval-pond
+    # ---- p-oval-pond (renumbered in session AE: 9x^2 + 6xy + 17y^2 = 288, A = [[9, 3], [3, 17]], eigenvalues 8 and 18)
     iid = 'p-oval-pond'
     x, y = sp.symbols('x y')
-    A = M([[5, 2], [2, 8]])
+    A = M([[9, 3], [3, 17]])
     X2 = M([x, y])
-    ok(sp.expand((X2.T * A * X2)[0] - (5 * x ** 2 + 4 * x * y + 8 * y ** 2)) == 0, 'pond: A gives the stated form')
-    f = lambda a, b: 5 * a * a + 4 * a * b + 8 * b * b
+    ok(sp.expand((X2.T * A * X2)[0] - (9 * x ** 2 + 6 * x * y + 17 * y ** 2)) == 0, 'pond: A gives the stated form')
+    f = lambda a, b: 9 * a * a + 6 * a * b + 17 * b * b
     hxy = (f(1, 1) - f(1, -1) - f(-1, 1) + f(-1, -1)) / 4.0 / 2.0   # route 2: half the mixed second difference
     num(I, iid, 1, A[0, 1], hxy, {'whole-cross': 2 * A[0, 1]})
     numset(I, iid, 2, sp.solve(A.charpoly(sp.Symbol('l')).as_expr(), sp.Symbol('l')), np.linalg.eigvalsh(npf(A)),
-           {'diagonal': [5, 8], 'sign': [-4, -9]})
-    ql = null1(A - 4 * sp.eye(2), 0) * 2
-    qn = eigvec_np(A, 4, 0) * 2
-    obj(I, iid, 3, ql, qn, {'big': null1(A - 9 * sp.eye(2), 0) * 2, 'sign': M([2, -ql[1]])})
-    ok(ql.dot(null1(A - 9 * sp.eye(2))) == 0, 'pond: the axes are perpendicular')
+           {'diagonal': [9, 17], 'sign': [-8, -18]})
+    ql = null1(A - 8 * sp.eye(2), 0) * 3
+    qn = eigvec_np(A, 8, 0) * 3
+    obj(I, iid, 3, ql, qn, {'big': null1(A - 18 * sp.eye(2), 0) * 3, 'sign': M([3, -ql[1]])})
+    ok(ql == M([3, -1]) and null1(A - 18 * sp.eye(2), 0) * 3 == M([3, 9]), 'pond: long axis (3, -1), short axis along (1, 3)')
+    ok(ql.dot(null1(A - 18 * sp.eye(2))) == 0, 'pond: the axes are perpendicular')
     u = ql / ql.norm()
-    half = sp.sqrt(R(36, 4))
-    un = np.array([2.0, -1.0]) / np.sqrt(5)
-    tn = np.sqrt(36 / (un @ npf(A) @ un))                           # route 2: walk out along the unit vector
-    num(I, iid, 4, half, tn, {'short': sp.sqrt(R(36, 9)), 'no-root': R(36, 4), 'full-axis': 2 * half})
-    ok(sp.simplify((u.T * A * u)[0] * half ** 2 - 36) == 0, 'pond: (3 u) is on the edge')
-    area = sp.pi * half * sp.sqrt(R(36, 9))
-    num(I, iid, 5, area, np.pi * 36 / np.sqrt(np.linalg.det(npf(A))),
-        {'no-root': sp.pi * 9 * 4, 'full-axes': sp.pi * 6 * 4, 'one-axis': sp.pi * 9})
-    vocab(I, iid, [A, 13, A.det(), 40, 36, 6, 9, area, sp.pi * 36, 2 * half])
+    half = sp.sqrt(R(288, 8))
+    un = np.array([3.0, -1.0]) / np.sqrt(10)
+    tn = np.sqrt(288 / (un @ npf(A) @ un))                          # route 2: walk out along the unit vector
+    num(I, iid, 4, half, tn, {'short': sp.sqrt(R(288, 18)), 'no-root': R(288, 8), 'full-axis': 2 * half})
+    ok(sp.simplify((u.T * A * u)[0] * half ** 2 - 288) == 0, 'pond: (6 u) is on the edge')
+    area = sp.pi * half * sp.sqrt(R(288, 18))
+    ok(area == 24 * sp.pi and A.det() == 144, 'pond: area 6 x 4 x pi = 24 pi, det 144')
+    num(I, iid, 5, area, np.pi * 288 / np.sqrt(np.linalg.det(npf(A))),
+        {'no-root': sp.pi * 36 * 16, 'full-axes': sp.pi * 12 * 8, 'one-axis': sp.pi * 36})
+    vocab(I, iid, [A, 26, A.det(), 153, 288, 12, 8, 4, 6, 18, 36, 16, 24, area, sp.pi * 288, 2 * half])
     arith(I, iid)
 
     # ---- p-river-gauges (re-authored twice in fix passes; now K = [[8, 4, 4], [4, 7, 3], [4, 3, c]] with planned c = 2.5)
@@ -802,12 +804,12 @@ if I:
     vocab(I, iid, [S, L, xv, w, d2, sp.sqrt(d2), naive2, sp.sqrt(naive2), E(-4), 55, 34, 25, 9, 16, 20, 10, 12, -12, 2.828, 2.114, 0.0183, cm])
     arith(I, iid)
 
-    # ---- p-track-laps
+    # ---- p-track-laps (renumbered in session AE: X = [[2, 8], [1, 4], [2, 8]], y = (35, 17, 33), X^T X = [[9, 36], [36, 144]])
     iid = 'p-track-laps'
-    Xr = M([[2, 4], [1, 2], [2, 4]])
-    yv = M([11, 5, 9])
+    Xr = M([[2, 8], [1, 4], [2, 8]])
+    yv = M([35, 17, 33])
     G = Xr.T * Xr
-    ok(G == M([[9, 18], [18, 36]]), 'laps: X^T X as printed')
+    ok(G == M([[9, 36], [36, 144]]), 'laps: X^T X as printed')
     l11 = sp.sqrt(G[0, 0]); l21 = G[1, 0] / l11; l22sq = G[1, 1] - l21 ** 2
     # route 2: the last pivot of elimination on G (Cholesky's L22^2) and NumPy's refusal
     piv = npf(G)[1, 1] - npf(G)[1, 0] ** 2 / npf(G)[0, 0]
@@ -817,27 +819,27 @@ if I:
     except np.linalg.LinAlgError:
         refused = True
     ok(refused, 'laps: NumPy refuses the Cholesky factor of X^T X just below singular')
-    num(I, iid, 1, sp.sqrt(l22sq), math.sqrt(max(piv, 0)), {'root-36': 6, 'subtract-entry': sp.sqrt(36 - 18)})
+    num(I, iid, 1, sp.sqrt(l22sq), math.sqrt(max(piv, 0)), {'root-144': 12, 'subtract-entry': sp.sqrt(144 - 36)})
     ev = [e for e in G.eigenvals() if e != 0]
     num(I, iid, 2, ev[0], max(np.linalg.eigvalsh(npf(G))), {'diagonal': G[1, 1], 'first-entry': G[0, 0]})
-    ok(G * M([1, 2]) == M([45, 90]), 'laps: X^T X (1, 2) = (45, 90)')
-    s1 = sp.sqrt(ev[0]); v1 = M([1, 2]) / sp.sqrt(5); u1 = Xr * v1 / s1
+    ok(G * M([1, 4]) == M([153, 612]), 'laps: X^T X (1, 4) = (153, 612)')
+    s1 = sp.sqrt(ev[0]); v1 = M([1, 4]) / sp.sqrt(17); u1 = Xr * v1 / s1
     ok(sp.simplify(u1 - M([2, 1, 2]) / 3) == M([0, 0, 0]), 'laps: u1 = (2, 1, 2)/3')
-    ok(sp.simplify(u1.dot(yv)) == 15 and sp.sqrt(5) * sp.sqrt(45) == 15, 'laps: u1 . y = 15 and sqrt5 sqrt45 = 15')
+    ok(sp.simplify(u1.dot(yv)) == 51 and sp.sqrt(17) * sp.sqrt(153) == 51, 'laps: u1 . y = 51 and sqrt17 sqrt153 = 51')
     bp = (v1 * u1.T / s1) * yv
     ok(sp.simplify(bp - Xr.pinv() * yv) == M([0, 0]), 'laps: X^+ y by sympy pinv')
     obj(I, iid, 3, bp.applyfunc(sp.simplify), np.linalg.pinv(npf(Xr)) @ npf(yv).ravel(),
-        {'all-km': M([5, 0]), 'all-laps': M([0, R(5, 2)])})
-    for alt in (M([5, 0]), M([0, R(5, 2)])):
+        {'all-km': M([17, 0]), 'all-laps': M([0, R(17, 4)])})
+    for alt in (M([17, 0]), M([0, R(17, 4)])):
         ok(sp.simplify(Xr * alt - Xr * bp) == M([0, 0, 0]) and alt.norm() > bp.norm(), 'laps: other fits are equally good and longer')
-    ok(M([5, 0]).norm() == 5 and bp.norm() == sp.sqrt(5), 'laps: lengths 5 and sqrt 5')
-    ok(G[0, 0] * 5 == (Xr.T * yv)[0] and (Xr.T * yv) == M([45, 90]), 'laps: beta1 + 2 beta2 = 5 from the normal equations')
-    new = M([3, 6])
+    ok(M([17, 0]).norm() == 17 and bp.norm() == sp.sqrt(17), 'laps: lengths 17 and sqrt 17')
+    ok(G[0, 0] * 17 == (Xr.T * yv)[0] and (Xr.T * yv) == M([153, 612]), 'laps: beta1 + 4 beta2 = 17 from the normal equations')
+    new = M([3, 12])
     pred = new.dot(bp)
-    num(I, iid, 4, pred, float(np.array([3, 6]) @ np.linalg.lstsq(npf(Xr), npf(yv).ravel(), rcond=None)[0]),
+    num(I, iid, 4, pred, float(np.array([3, 12]) @ np.linalg.lstsq(npf(Xr), npf(yv).ravel(), rcond=None)[0]),
         {'laps-as-km': M([3, 3]).dot(bp), 'km-only': 3 * bp[0]})
-    ok(new.dot(M([5, 0])) == pred, 'laps: (5, 0) predicts 15 too')
-    vocab(I, iid, [Xr, yv, G, l11, l21, 45, 90, 15, 22, 18, R(5, 2), 2.5, pred, 36, 9])
+    ok(new.dot(M([17, 0])) == pred, 'laps: (17, 0) predicts 51 too')
+    vocab(I, iid, [Xr, yv, G, l11, l21, 153, 612, 51, 70, 66, 17, R(17, 4), 4.25, pred, 144, 36, 9])
     arith(I, iid)
 
     # ---- p-machine-stops
