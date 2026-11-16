@@ -120,8 +120,8 @@
             "correct": "The total squared error is $200 \\times 30.8 + 75 \\times 8.0 = 6760$, and $6760/1275 \\approx 5.30$.",
             "generic": "Not quite. Turn each block's MSE back into a total, add the totals, and divide by all 1,275 days.",
             "byKey": {
-              "seven-mean": "You averaged the seven block scores, giving 75 days the weight of 200. Weight each block by its days.",
-              "six-only": "You left out the 75 new days. They count, with their own weight."
+              "seven-mean": "A plain mean of seven scores lets the 75-day block count as much as a 200-day one. Use totals: 6,760 over 1,275 days.",
+              "six-only": "Your total stops at the six blocks. Add the newest days' $75 \\times 8.0 = 600$ and divide by 1,275."
             }
           },
           "explain": {
@@ -162,12 +162,12 @@
             ]
           },
           "feedback": {
-            "correct": "$5.30/2.12 = 2.50$: the shuffled score was two and a half times too kind.",
+            "correct": "$5.30/2.12 = 2.50$: walking forward shows two and a half times the shuffled error.",
             "generic": "Not quite. Divide the walk-forward error by the shuffled one.",
             "byKey": {
               "inverted": "You divided the shuffled error by the honest one. Put the walk-forward 5.30 on top.",
               "carried": "You carried the plain mean of seven blocks, 5.54. The joined 5.30 gives 2.50.",
-              "difference": "That is the difference. The question asks how many times larger."
+              "difference": "You subtracted the two errors. A ratio is asked for: divide 5.30 by 2.12."
             }
           },
           "explain": {
@@ -216,16 +216,16 @@
             "correct": "$h - 1 = 14$: rows $s - 14$ to $s - 1$ reach into the test labels, while row $s - 15$ stops at day $s$.",
             "generic": "Not quite. A label over the next $h$ days overlaps the test labels for $h - 1$ rows before the block.",
             "byKey": {
-              "horizon": "Row $s - 15$ uses days $s - 14$ to $s$, and the first test label starts on day $s + 1$. It is clean, so 14 rows overlap, not 15.",
+              "horizon": "The 15th row back, $s - 15$, has a label that ends on day $s$. The test labels begin on day $s + 1$, so that row is safe: 14.",
               "both-sides": "28 counts both sides of the block. The question asks about the rows before it."
             }
           },
           "explain": {
-            "text": "The row just before the block shares 14 days with the first test label. Each earlier row shares one day fewer, and purging removes all 14, plus 14 after the block."
+            "text": "Row $s - 1$ has 14 of its 15 label days inside the test labels, row $s - 2$ has 13, and so on down to 1. Purging drops those 14 rows, and 14 more after the block."
           }
         },
         {
-          "question": "The block ends on row $e - 1$. How many rows just after it have a 30-day feature window that includes a test day?",
+          "question": "The block ends on row $e - 1$. For how many rows after it does the 30-day average still contain a day from the block?",
           "widget": {
             "kind": "numeric",
             "answer": 29,
@@ -254,12 +254,12 @@
             "correct": "Row $e + 28$ looks back to day $e - 1$, the last test day, while row $e + 29$ starts at day $e$: 29 rows.",
             "generic": "Not quite. Find the last row after the block whose window still reaches back into it.",
             "byKey": {
-              "window": "Row $e + 29$ looks back to day $e$, which is after the block. The last affected row is $e + 28$: 29 rows.",
+              "window": "The 30th row after the block, $e + 29$, averages days $e$ to $e + 29$, none of them in the block. So 29 rows are touched.",
               "none": "Rows after the block are later, but their moving averages reach back into the test days."
             }
           },
           "explain": {
-            "text": "Rows $e$ to $e + 28$ average at least one test day, so their features were built from the test period. An embargo of 29 rows removes them."
+            "text": "Rows $e$ to $e + 28$ average at least one test day, so their features were built from the test period. The purge already takes the first 14; the desk's embargo, sized to the lookback, clears the rest with rows to spare."
           }
         },
         {
@@ -305,7 +305,7 @@
             }
           },
           "explain": {
-            "text": "Purge and embargo cost 57 rows beyond the block, so 1,063 rows train each middle fold. Nearly 16% of the data is out of every such fold."
+            "text": "Purge and embargo cost 57 rows beyond the block, so 1,063 rows train each middle fold. The last 14 embargoed rows, $e + 29$ to $e + 42$, were clean: 15 rows after the purge would have been enough. Nearly 16% of the data is out of every such fold."
           }
         },
         {
@@ -410,28 +410,28 @@
         "vl-cv",
         "vl-overfit"
       ],
-      "prose": "A rates desk walks a daily direction signal forward over 1,600 days with `TimeSeriesSplit(n_splits=7)`. In order, its seven folds hit 0.585, 0.565, 0.605, 0.575, 0.490, 0.470 and 0.455, against a base rate of 0.52.",
+      "prose": "A power desk forecasts next-day prices and walks the model forward over 1,120 days with `TimeSeriesSplit(n_splits=7)`. While the model works its errors have variance about $\\sigma^2 = 1.00$, so a test MSE over $n$ days has sd about $\\sigma^2\\sqrt{2/n}$. The seven fold MSEs, in order, are 1.02, 0.97, 1.08, 1.05, 1.31, 1.38 and 1.44.",
       "parts": [
         {
-          "question": "Each test block holds $\\lfloor 1600/8 \\rfloor = 200$ days. What is the standard error of one fold's hit rate, using $p = 0.5$? Give 4 decimal places.",
+          "question": "Each test block holds $\\lfloor 1120/8 \\rfloor = 140$ days. What is the sd of one fold's MSE, $\\sigma^2\\sqrt{2/n}$ with $\\sigma^2 = 1.00$? Give 4 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.035355,
+            "answer": 0.11952,
             "tol": {
               "abs": 5e-05
             },
             "placeholder": "decimal",
             "wrong": [
               {
-                "id": "variance",
-                "value": 0.00125,
+                "id": "no-two",
+                "value": 0.0845,
                 "tol": {
                   "abs": 5e-05
                 }
               },
               {
                 "id": "all-days",
-                "value": 0.0125,
+                "value": 0.0423,
                 "tol": {
                   "abs": 5e-05
                 }
@@ -439,44 +439,44 @@
             ]
           },
           "feedback": {
-            "correct": "$\\sqrt{0.25/200} = \\sqrt{0.00125} \\approx 0.0354$.",
-            "generic": "Not quite. Put $p = 0.5$ and $n = 200$ into $\\sqrt{p(1 - p)/n}$.",
+            "correct": "$\\sqrt{2/140} = \\sqrt{0.014286} \\approx 0.1195$.",
+            "generic": "Not quite. Put $\\sigma^2 = 1.00$ and $n = 140$ into $\\sigma^2\\sqrt{2/n}$.",
             "byKey": {
-              "variance": "0.00125 is the variance. Take its square root.",
-              "all-days": "You used all 1,600 days. One fold's hit rate rests on its own 200."
+              "no-two": "You left out the 2. The sd of an MSE is $\\sigma^2\\sqrt{2/n}$, which is 0.1195 here.",
+              "all-days": "You used all 1,120 days. One fold's MSE rests on its own 140."
             }
           },
           "explain": {
-            "text": "$\\sqrt{0.00125} = 0.0354$, so one 200-day fold has a standard error of about 3.5 points of hit rate. A single fold that far from the base rate is common luck."
+            "text": "One 140-day fold has an MSE with sd about 0.12, so a fold above 1.00 by a few hundredths is ordinary noise. The rule below asks for more than that."
           }
         },
         {
-          "question": "Using 0.0354, how many standard errors from the base rate is fold 6? Give 1 decimal place, with its sign.",
+          "question": "Using 0.1195, how many sds above 1.00 is fold 5's MSE of 1.31? Give 1 decimal place.",
           "widget": {
             "kind": "numeric",
-            "answer": -1.4,
+            "answer": 2.6,
             "tol": {
               "abs": 0.05
             },
             "placeholder": "decimal",
             "wrong": [
               {
-                "id": "sign",
-                "value": 1.4,
+                "id": "all-days",
+                "value": 7.3,
                 "tol": {
                   "abs": 0.05
                 }
               },
               {
-                "id": "earlier-level",
-                "value": -3.2,
+                "id": "fold-4",
+                "value": 2.2,
                 "tol": {
                   "abs": 0.05
                 }
               },
               {
-                "id": "carried",
-                "value": -4.0,
+                "id": "no-two",
+                "value": 3.7,
                 "tol": {
                   "abs": 0.05
                 }
@@ -484,133 +484,141 @@
             ]
           },
           "feedback": {
-            "correct": "$(0.470 - 0.52)/0.0354 \\approx -1.4$.",
-            "generic": "Not quite. Divide $0.470 - 0.52$ by the standard error 0.0354.",
+            "correct": "$(1.31 - 1.00)/0.1195 \\approx 2.6$.",
+            "generic": "Not quite. Divide $1.31 - 1.00$ by the sd 0.1195.",
             "byKey": {
-              "sign": "Fold 6 sits below the base rate, so the distance is negative.",
-              "earlier-level": "You measured from the first four folds' level, 0.5825. The question asks about the base rate, 0.52.",
-              "carried": "You used the standard error of all 1,600 days, 0.0125. One fold has 200 days."
+              "all-days": "You used the sd for all 1,120 days, 0.0423. One fold has 140 days.",
+              "fold-4": "You measured from fold 4's 1.05. The reference is the working level of 1.00.",
+              "no-two": "You used 0.0845, the sd without the 2 under the root. Use 0.1195."
             }
           },
           "explain": {
-            "text": "Fold 6 is 1.4 standard errors below the base rate, which one fold could reach by chance. What makes it evidence is fold 5 just before it, also below."
+            "text": "Fold 5 sits 2.6 sds above 1.00, which one fold reaches by chance about once in 200 tries. A rule that flags it will also flag luck now and then."
           }
         },
         {
-          "question": "The desk's alarm fires when 2 folds in a row score below the base rate. At which fold does it fire?",
+          "question": "The desk flags the first fold whose MSE is more than 2 sds above 1.00, that is above 1.239. How many days had the flagged fold trained on?",
           "widget": {
             "kind": "numeric",
-            "answer": 6,
+            "answer": 700,
             "tol": {
               "abs": 0
             },
-            "placeholder": "fold number",
+            "placeholder": "days",
             "wrong": [
               {
-                "id": "run-start",
+                "id": "previous-fold",
+                "value": 560,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "test-end",
+                "value": 840,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "fold-number",
                 "value": 5,
                 "tol": {
                   "abs": 0
                 }
-              },
-              {
-                "id": "seventh",
-                "value": 7,
-                "tol": {
-                  "abs": 0
-                }
               }
             ]
           },
           "feedback": {
-            "correct": "Folds 5 and 6 are the first two in a row below 0.52. The alarm fires at fold 6.",
-            "generic": "Not quite. Walk through the folds in order and count consecutive scores under 0.52.",
+            "correct": "Fold 5 is the first above 1.239. Fold 1 tests from day 140, so fold 5 tests from $140 + 4 \\times 140 = 700$ and trained on days 0 to 699: 700 days.",
+            "generic": "Not quite. Find the first fold above 1.239, then count the days before its test block.",
             "byKey": {
-              "run-start": "Fold 5 starts the run. The alarm needs a second low fold, which fold 6 supplies.",
-              "seventh": "Fold 7 is the third low fold in a row. The alarm fired one fold earlier."
+              "previous-fold": "560 is what fold 4 trained on. The flagged fold is fold 5.",
+              "test-end": "840 is where fold 5's test block ends. The flagged fold trained on the days before its block starts.",
+              "fold-number": "5 is the fold's number. The question asks for the days it trained on."
             }
           },
           "explain": {
-            "text": "The alarm fires at fold 6: one low fold is a question, two in a row are evidence. Fold 5 tests days 1,000 to 1,199, so the break came near day 1,000."
+            "text": "Fold 4 at 1.05 is under 1.239 and fold 5 at 1.31 is over it. Walk-forward trains each fold on every day before its block, so the flag falls at day 700, near where the break came."
           }
         },
         {
-          "question": "The research note quotes the mean of the seven fold hit rates. What is it? Give 3 decimal places.",
+          "question": "From the flagged fold on, folds 5 to 7 cover 420 days and join to an MSE of 1.377. Using $\\sigma^2\\sqrt{2/n}$ with $n = 420$, how many sds above 1.00 is that? Give 1 decimal place.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.535,
+            "answer": 5.46,
             "tol": {
-              "abs": 0.0005
+              "abs": 0.05
             },
             "placeholder": "decimal",
             "wrong": [
               {
-                "id": "first-four",
-                "value": 0.5825,
+                "id": "per-fold",
+                "value": 3.2,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.05
                 }
               },
               {
-                "id": "last-three",
-                "value": 0.4717,
+                "id": "all-days",
+                "value": 8.9,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.05
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "The seven add to 3.745, and $3.745/7 = 0.535$, above the base rate of 0.52.",
-            "generic": "Not quite. Add the seven hit rates and divide by 7.",
+            "correct": "$\\sqrt{2/420} = 0.0690$, and $(1.377 - 1.00)/0.0690 \\approx 5.5$.",
+            "generic": "Not quite. Find the sd of an MSE over 420 days, then divide $1.377 - 1.00$ by it.",
             "byKey": {
-              "first-four": "That is the mean of the first four folds. The note averages all seven.",
-              "last-three": "That is the mean of the last three folds. The note averages all seven."
+              "per-fold": "You used one fold's sd, 0.1195. The three folds together rest on 420 days, so the sd is smaller.",
+              "all-days": "You used all 1,120 days. The three folds hold 420."
             }
           },
           "explain": {
-            "text": "The mean of 0.535 beats 0.52, so the note says the signal works. The last three folds, the newest 600 days, all lose, and the average hides when that happened."
+            "text": "Joining three folds shrinks the sd from 0.1195 to 0.0690, so the same excess is now 5.5 sds. Luck does not explain a gap that size."
           }
         },
         {
-          "question": "The desk refits on all 1,600 days so that the model includes the new regime. Using the break near day 1,000 from part 3, what does the refit do?",
+          "question": "Using the 5.5 from part 4, what should the desk do with the model?",
           "widget": {
             "kind": "choice",
             "layout": "stack",
             "options": [
               {
-                "id": "old-sign",
-                "text": "It still trades the old direction: 1,000 days of the old regime outvote 600 of the new",
+                "id": "recent",
+                "text": "Refit on the 420 days since the flag, and score that fit only on days that come after them",
                 "correct": true
               },
               {
-                "id": "learns",
-                "text": "It follows the new regime, since it has now seen all of it",
-                "why": "A fit on all days leans to the majority, and 1,000 of the 1,600 days are the old regime."
+                "id": "all",
+                "text": "Refit on all 1,120 days, because more data always steadies a model",
+                "why": "The 700 days before the flag come from the regime that broke. Equal weight on them keeps that pattern in the fit."
               },
               {
-                "id": "cancel",
-                "text": "It has no view, because the two regimes cancel",
-                "why": "They cancel only with equal numbers of days. The old regime has 1,000 against 600."
+                "id": "noise",
+                "text": "Treat it as luck: a gap of 5.5 sds can happen",
+                "why": "A gap of 5.5 sds has a chance far under one in a million. Pooling three folds is what made it clear."
               },
               {
                 "id": "mean",
-                "text": "It hits about 0.535 from now on, the mean of the folds",
-                "why": "The fold mean describes no period. The newest folds lose, and a refit on everything keeps their cause."
+                "text": "Quote the seven-fold mean MSE of 1.18 as the model's error",
+                "why": "1.18 blends a working period with a broken one and describes neither. The newest folds are the ones that matter."
               }
             ]
           },
           "feedback": {
-            "correct": "Right. The full-history fit keeps the old sign, so use data since the break, add a regime feature, or stop.",
-            "generic": "Not quite. Count the days on each side of the break in the refit's data.",
+            "correct": "Right. The break is real, so fit on the days since the flag and score that fit only on later days.",
+            "generic": "Not quite. Ask what 5.5 says about the older days, and which days a new fit may be scored on.",
             "byKey": {
-              "learns": "A fit on all days leans to the majority, and 1,000 of the 1,600 days are the old regime.",
-              "cancel": "They cancel only with equal numbers of days. The old regime has 1,000 against 600.",
-              "mean": "The fold mean describes no period. The newest folds lose, and a refit on everything keeps their cause."
+              "all": "The 700 days before the flag come from the regime that broke. Equal weight on them keeps that pattern in the fit.",
+              "noise": "A gap of 5.5 sds has a chance far under one in a million. Pooling three folds is what made it clear.",
+              "mean": "1.18 blends a working period with a broken one and describes neither. The newest folds are the ones that matter."
             }
           },
           "explain": {
-            "text": "A refit on all 1,600 days is mostly the old regime, so it keeps the old relationship. Fit on the 600 days since the break and validate that walk-forward, or switch the signal off."
+            "text": "The seven-fold mean of 1.18 hides the change, and a fit on all 1,120 days still weighs the 700 older ones. Fit on the 420 newer days and validate on later days only, or switch the model off."
           }
         }
       ]
@@ -701,7 +709,7 @@
             "tol": {
               "abs": 0
             },
-            "placeholder": "decimal",
+            "placeholder": "whole number",
             "wrong": [
               {
                 "id": "horizon",
@@ -719,7 +727,7 @@
               },
               {
                 "id": "before-only",
-                "value": 15,
+                "value": 13,
                 "tol": {
                   "abs": 0
                 }
@@ -732,7 +740,7 @@
             "byKey": {
               "horizon": "You dropped 4 days a side. A 4-day label overlaps on $h - 1 = 3$.",
               "no-embargo": "You left out the 2-day embargo after the block.",
-              "before-only": "You purged only before the block. In $k$-fold, training days after it overlap too."
+              "before-only": "You purged only before the block, then took the embargo. In $k$-fold, days 13 to 15 after it overlap the test labels too."
             }
           },
           "explain": {
@@ -767,7 +775,7 @@
             }
           },
           "explain": {
-            "text": "The unpurged score was 20.0% too kind, because the overlapping labels nearly hand the model the answer. A flexible model reads that leak straight off its neighbours."
+            "text": "Purging raised the error by 20.0%, because the overlapping labels had nearly handed the model the answer. Against the purged 4.62, the unpurged score flattered by 16.7%."
           }
         }
       ]
