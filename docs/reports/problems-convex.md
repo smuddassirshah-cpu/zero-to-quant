@@ -48,3 +48,34 @@ No `feedback`, `explain` or `why` line was copied or paraphrased from these item
 ## Engine
 
 One bullet in `docs/BACKLOG-INBOX.md` (fresh-check `rate` false positive).
+
+# Level 4 (`problems-4.json`, added by the level 4 author)
+
+| Set | Item | Parts | Lessons drawn on | Difficulty |
+|---|---|---|---|---|
+| 4 | p-curve-fit-log | 5 | l14, l15 | 4 |
+| 4 | p-sale-horizon | 4 | l14, l16 | 4 |
+| 4 | p-variance-log | 4 | l14, l15, l17 | 5 |
+
+13 parts, 12 typed (numeric), 1 choice. Skills `cv-descent`, `cv-duality`.
+
+## Gates (level 4)
+
+- Validator: 0 errors; on `problems-4.json` only advisory `O2-long-sentence` (4).
+- Voice scan 35 on the course folder: 0 and 0.
+- Number script: level 4 section appended (`level4()`, 178 checks; SETS now loads 1 to 4). Whole script 773 of 773, numbers_lib failures 0, exit 0. Method 2 per key: a simulated descent or Newton run in floats, a bounded scalar search, numpy eigenvalues, a counting loop, Aitken's delta-squared formula.
+- `fresh-check.mjs --file`: 0 hits. Hand greps of 30.8, 0.9481, 0.0649, 1.7375, 1.5145, 8.0793, 200.4096, 0.2401, 0.765625, 199.95, 0.2901, "yield-curve" and "block of shares" over the course and `exams/topic-2.5.json`: none outside the set.
+- `grade-all.mjs --file`: 13 widgets, 0 failures.
+- Playthrough `--problems convex/problems-4`, desktop and `--mobile`: green; 440 px shots read, no layout faults.
+
+## Closest course material per problem (level 4, verdict clean)
+
+- p-curve-fit-log. Lesson: l14 screens 0 and 4 (factors $1 - s$, $1 - 10s$ of a given bowl; best step $\tfrac{2}{11}$), l15 screen 1. Quiz: l14 q1 (factor at $s = 1/\lambda_{\max}$). Review: r4-factor ($y$ factor $-0.2$ from a given curvature). Homework: h4-rho (eigenvalues 8 and 2 to $\rho = 0.6$). Exam: e-rate-from-kappa (eigenvalues to $\rho$ to a count), e-step-limit. Not a walk: the course goes curvature to factor; here two logged factors are inverted to curvatures (0.8, 30), then the retuned step, its factor and the steps saved over the current run, with a $10^4$ target the course never uses.
+- p-sale-horizon. Lesson: l14 screen 7 ($s < 2/L$ for the logistic loss), l16 screens 0, 3 and 9 ($x - \ln x$, 44 descent steps against 5, far start). Quiz: l16 q0 ($e^x - 2x$). Review: r4-newton ($x^2 - 2\ln x$). Homework: h4-newton-iter (simplify a Newton map). Exam: e-newton-minimise ($e^x - 3x$, error ratio $f'''/2f''$). Not a walk: a cost $8/T + 2T$ on $T \ge 1$, $L$ read on a region, descent at $1/L$ and Newton landing on the same first point, then the extra cost in pounds of stopping early; no step count, no error-ratio or far-start step.
+- p-variance-log. Lesson: l15 screens 1 and 5 ($\rho$ and the log slope of a run), l17 screens 0 to 4 (feasibility, lstsq residual, dual bound, excess) and 11 (tolerances fixed in advance). Quiz: l15 q2 ($\rho = 0.9$ to $\kappa$), l17 q2 (bracket 470 to 490). Review: r4-backout (errors 1, 0.6, 0.36 to $\kappa$). Homework: h4-bound (0.0650 against 0.0641). Exam: e-solver-certificate ($g(5.9)$, gap, what it certifies), e-richardson-three (an extrapolation that cancels a power of $h$, not a geometric tail). Not a walk: logged objective values give $\rho^2$ through the drops, an extrapolated $V^*$, the steps left to a tolerance, and a sign-off line that separates the estimate from the certified bracket; no residual fit, no dual function evaluated.
+
+No `feedback`, `explain` or `why` line was copied or paraphrased from these items; each was compared by hand. Three draft lines that echoed l14 screens 4 and 7 and l15 screen 3 ("makes the two factors equal in size", "below which step does descent always settle", "no fixed step does better") were reworded before the first check.
+
+## Engine (level 4)
+
+No new limits; no inbox bullets.

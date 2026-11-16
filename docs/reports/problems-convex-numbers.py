@@ -41,7 +41,7 @@ def load(lv):
     return {it['id']: it for it in d['items']}
 
 
-SETS = {lv: load(lv) for lv in (1, 2, 3)}
+SETS = {lv: load(lv) for lv in (1, 2, 3, 4)}
 
 
 def part(lv, iid, p):
@@ -489,6 +489,134 @@ def level3():
     return lv
 
 
+# ---------------------------------------------------------------- level 4 (added by the level 4 author)
+# Method 1 exact (Fraction or sympy); method 2 independent: a simulated descent or Newton run in floats,
+# a bounded scalar search, numpy eigenvalues, a step-by-step count loop or Aitken's delta-squared formula.
+def count_loop(factor, cut):
+    k, e = 0, 1.0
+    while e > 1.0 / cut + 1e-15:
+        e *= factor
+        k += 1
+    return k
+
+
+def level4():
+    lv = Level('convex', 4)
+    import math
+    # p-curve-fit-log
+    s = F(1, 20)
+    lmin = (1 - F(96, 100)) / s
+    lmax = (1 - F(-1, 2)) / s
+    H = np.diag([0.8, 30.0])
+    e = np.array([1.0, 1.0])
+    e1 = e - 0.05 * H @ e   # one simulated step of the error
+    num(4, 'p-curve-fit-log', 1, lmin, (1 - e1[0]) / 0.05, {'factor-over-s': F(96, 100) / s, 'no-divide': 1 - F(96, 100)})
+    ok(abs(e1[0] - 0.96) < 1e-12 and abs(e1[1] + 0.5) < 1e-12, 'simulated factors 0.96 and -0.5')
+    num(4, 'p-curve-fit-log', 2, lmax, (1 - e1[1]) / 0.05, {'sign': (1 - F(1, 2)) / s, 'times-s': F(3, 2) * s})
+    sb = 2 / (lmin + lmax)
+    worst = lambda t: max(abs(1 - 0.8 * t), abs(1 - 30 * t))
+    sb_alt = minimize_scalar(worst, bounds=(0, 0.0666), method='bounded', options={'xatol': 1e-12}).x
+    num(4, 'p-curve-fit-log', 3, sb, sb_alt, {'limit': F(2, 30), 'inverse-max': F(1, 30), 'sign-slip': 2 / (F(4, 5) + 10)},
+        rounded=0.0649, agree=1e-6)
+    ok(abs(float(1 - F(4, 5) / 30) - 0.9733) < 5e-5, 'decay factor 0.9733 at s = 1/30')
+    rho = 1 - F(4, 5) * sb
+    ev = np.linalg.eigvalsh(H)
+    kap = ev[-1] / ev[0]
+    rho_slip = (F(25, 2) - 1) / (F(25, 2) + 1)
+    num(4, 'p-curve-fit-log', 4, rho, (kap - 1) / (kap + 1), {'current': F(96, 100), 'sign-slip': rho_slip}, rounded=0.9481)
+    ok(rho == F(73, 77) and 1 - 30 * sb == -rho, 'both factors 73/77 in size')
+    ok(abs(kap - 37.5) < 1e-12, 'kappa 37.5')
+    c_now = math.ceil(math.log(1e4) / math.log(1 / 0.96))
+    c_best = math.ceil(math.log(1e4) / math.log(1 / float(rho)))
+    c_slip = math.ceil(math.log(1e4) / math.log(1 / float(rho_slip)))
+    ok((c_now, c_best, c_slip) == (count_loop(0.96, 1e4), count_loop(float(rho), 1e4), count_loop(float(rho_slip), 1e4)),
+       'counts agree with a loop')
+    ok((c_now, c_best, c_slip) == (226, 173, 58), f'counts 226, 173, 58: {(c_now, c_best, c_slip)}')
+    ok(math.ceil(math.log(1e4) / math.log(1 / 0.9481)) == 173, 'rounded factor 0.9481 gives 173 as well')
+    num(4, 'p-curve-fit-log', 5, c_now - c_best, count_loop(0.96, 1e4) - count_loop(float(rho), 1e4),
+        {'now-count': c_now, 'best-count': c_best, 'sign-slip': c_now - c_slip})
+    for path, val in [('items[0].parts[4].feedback.correct', 9.2103), ('items[0].parts[4].feedback.correct', 0.0408),
+                      ('items[0].parts[4].feedback.correct', 0.0533), ('items[0].parts[4].explain.text', 225.6),
+                      ('items[0].parts[4].explain.text', 172.7), ('items[0].parts[3].feedback.correct', 0.9481),
+                      ('items[0].parts[2].byKey' if False else 'items[0].parts[2].feedback.byKey', 0.9733)]:
+        lv.expect('problems', path, val)
+    ok(round(math.log(1e4), 4) == 9.2103 and round(math.log(1 / 0.96), 4) == 0.0408 and round(math.log(1 / float(rho)), 4) == 0.0533,
+       'logs 9.2103, 0.0408, 0.0533')
+    ok(round(math.log(1e4) / math.log(1 / 0.96), 1) == 225.6 and round(math.log(1e4) / math.log(1 / float(rho)), 1) == 172.7,
+       'quotients 225.6 and 172.7')
+    # p-sale-horizon
+    T = sp.Symbol('T', positive=True)
+    fT = 8 / T + 2 * T
+    d1, d2 = sp.diff(fT, T), sp.diff(fT, T, 2)
+    ok(sp.simplify(d1 - (2 - 8 / T**2)) == 0 and sp.simplify(d2 - 16 / T**3) == 0, "stated f' and f''")
+    L = d2.subs(T, 1)
+    grid = np.linspace(1, 20, 190001)
+    num(4, 'p-sale-horizon', 1, 2 / L, 2 / (16 / grid**3).max(), {'one-over-l': 1 / L, 'curvature-at-min': 2 / d2.subs(T, 2)})
+    T1 = 1 - F(1, 16) * d1.subs(T, 1)
+    T1n = 1 - d1.subs(T, 1) / d2.subs(T, 1)
+    ok(T1 == T1n == F(11, 8), 'descent and Newton both land on 11/8')
+    num(4, 'p-sale-horizon', 2, T1, 1 - (1 / 16) * (2 - 8 / 1.0), {'sign': 1 + F(1, 16) * d1.subs(T, 1), 'limit-step': 1 - F(2, 16) * d1.subs(T, 1)})
+    T2 = sp.nsimplify(T1n - d1.subs(T, T1n) / d2.subs(T, T1n))
+    newton_f = lambda t: t - (2 - 8 / t**2) / (16 / t**3)
+    T2_alt = newton_f(newton_f(1.0))
+    T2d = T1 - F(1, 16) * d1.subs(T, T1)
+    T2s = T1n + d1.subs(T, T1n) / d2.subs(T, T1n)
+    num(4, 'p-sale-horizon', 3, T2, T2_alt, {'descent': T2d, 'sign': T2s}, rounded=1.7375)
+    ok(T2 == F(3, 2) * F(11, 8) - F(11, 8)**3 / 8, 'Newton map 1.5T - T^3/8')
+    ok(abs(float(d1.subs(T, T1)) + 2.2314) < 5e-5 and abs(float(d2.subs(T, T1)) - 6.1548) < 5e-5 and
+       abs(float(-d1.subs(T, T1) / d2.subs(T, T1)) - 0.3625) < 5e-5, "f'(1.375) = -2.2314, f''(1.375) = 6.1548, step 0.3625")
+    Ts = sp.solve(sp.Eq(d1, 0), T)
+    ok(Ts == [2] and abs(minimize_scalar(lambda t: 8 / t + 2 * t, bounds=(1, 10), method='bounded').x - 2) < 1e-5, 'T* = 2')
+    ok(d2.subs(T, 2) == 2, 'curvature 2 at T*')
+    extra = (fT.subs(T, T2) - 8) * 1000
+    extra_alt = (8 / T2_alt + 2 * T2_alt - 8) * 1000
+    fl = lambda t: (8 / t + 2 * t - 8) * 1000
+    num(4, 'p-sale-horizon', 4, extra, extra_alt,
+        {'descent': fl(float(T2d)), 'total': fl(float(T2)) + 8000, 'start': fl(1.375), 'thousands': fl(float(T2)) / 1000},
+        rounded=79, agree=1e-6)
+    ok(abs(fl(1.7375) - 79.32) < 0.005, 'rounded T2 gives 79.32, also accepted')
+    ok(abs(8 / float(T2) - 4.6042) < 5e-5 and abs(2 * float(T2) - 3.4751) < 5e-5 and round(4.6042 + 3.4751, 4) == 8.0793,
+       'f(T2) = 4.6042 + 3.4751 = 8.0793')
+    ok(fl(1.0) == 2000, 'excess at T = 1 is 2000 pounds')
+    for path, val in [('items[1].parts[2].explain.text', 1.5145), ('items[1].parts[3].feedback.correct', 8.0793),
+                      ('items[1].parts[2].feedback.correct', 6.1548), ('items[1].parts[2].feedback.correct', 0.3625)]:
+        lv.expect('problems', path, val)
+    # p-variance-log
+    V = [F('200.4096'), F('200.3136'), F('200.2401')]
+    dA, dB = V[0] - V[1], V[1] - V[2]
+    r2 = dB / dA
+    ok(r2 == F(49, 64), 'drop ratio 49/64')
+    num(4, 'p-variance-log', 1, F(7, 8), np.sqrt(float(dB) / float(dA)), {'ratio': r2, 'one-minus': 1 - r2})
+    ok((1 + F(7, 8)) / (1 - F(7, 8)) == 15, 'kappa 15 from rho 7/8')
+    e22 = dB * r2 / (1 - r2)
+    vstar = V[2] - e22
+    aitken = float(V[2]) - float(dB) ** 2 / (float(dA) - float(dB))   # Aitken delta-squared, second method
+    num(4, 'p-variance-log', 2, vstar, aitken,
+        {'no-extrapolation': V[2], 'used-rho': V[2] - dB * F(7, 8) / (1 - F(7, 8)), 'one-step-back': V[2] - dB / (1 - r2)}, agree=1e-9)
+    ok(e22 == F('0.2401') and [v - vstar for v in V] == [F('0.64')**2, F('0.56')**2, F('0.49')**2], 'excesses 0.64^2, 0.56^2, 0.49^2')
+    n_more = math.ceil(math.log(2401) / math.log(64 / 49))
+    k, ex = 0, F('0.2401')
+    while ex > F(1, 10000):
+        ex *= r2
+        k += 1
+    n_slip = math.ceil(math.log(2401) / math.log(8 / 7))
+    num(4, 'p-variance-log', 3, n_more, k, {'floor': n_more - 1, 'used-rho': n_slip})
+    ok(abs(float(F('0.2401') * r2**29) - 1.04e-4) < 5e-7, 'after 29 steps the excess is about 1.04e-4')
+    ok(round(math.log(2401) / math.log(64 / 49), 2) == 29.15 and round(64 / 49, 3) == 1.306, '29.15 and 1.306')
+    choice(4, 'p-variance-log', 4, 'bracket')
+    ok(V[2] - F('199.95') == F('0.2901'), 'certified gap 0.2901')
+    for path, val in [('items[2].parts[0].feedback.correct', 0.096), ('items[2].parts[0].feedback.correct', 0.0735),
+                      ('items[2].parts[1].feedback.correct', 0.2401), ('items[2].parts[2].feedback.correct', 29.15),
+                      ('items[2].parts[3].feedback.correct', 0.2901), ('items[2].parts[0].explain.text', 15)]:
+        lv.expect('problems', path, val)
+    shape(4, {'p-curve-fit-log': {'l14-gradient-descent', 'l15-convergence-rates'},
+              'p-sale-horizon': {'l14-gradient-descent', 'l16-newton-for-minimising'},
+              'p-variance-log': {'l14-gradient-descent', 'l15-convergence-rates', 'l17-checking-a-solver'}},
+          ['cv-descent', 'cv-duality'])
+    lv.check_wrongs('problems')
+    return lv
+
+
 levels = []
 if SETS[1]:
     levels.append(level1())
@@ -496,6 +624,8 @@ if SETS.get(2) and 'level2' in globals():
     levels.append(level2())
 if SETS.get(3) and 'level3' in globals():
     levels.append(level3())
+if SETS.get(4) and 'level4' in globals():
+    levels.append(level4())
 
 bad_lib = sum(1 for lv in levels for r in lv.results if not r[0])
 print(f'problems-convex-numbers: {checks - len(fails)} of {checks} own checks passed; numbers_lib failures {bad_lib}')
