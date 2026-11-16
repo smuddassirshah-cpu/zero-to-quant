@@ -290,27 +290,27 @@ def level2():
     num(2, 'p-parking-cash', 5, nmax, last_ok, {'overnight-only': 14, 'whole-pot': 20, 'current': 5})
     lv.expect('problems', 'items[0].parts[4].explain.text', 880)
     # p-whole-blocks
-    Ab = [[3, 2], [1, 2], [-1, 0], [0, -1]]
-    bb_ = [12, 7, 0, 0]
+    Ab = [[4, 3], [1, 3], [-1, 0], [0, -1]]
+    bb_ = [19, 8, 0, 0]
     VB = vertices(Ab, bb_)
-    ok(VB == sorted([(0, 0), (4, 0), (F(5, 2), F(9, 4)), (0, F(7, 2))]), f'block corners {VB}')
-    carry = {vt: 7 * vt[0] + 5 * vt[1] for vt in VB}
-    lpb = linprog([-7, -5], A_ub=[[3, 2], [1, 2]], b_ub=[12, 7], method='highs')
-    num(2, 'p-whole-blocks', 1, max(carry.values()), -lpb.fun, {'capital-corner': carry[(4, 0)], 'risk-corner': carry[(0, sp.Rational(7, 2))]}, rounded=28.75)
-    ok(np.allclose(lpb.x, [2.5, 2.25]), 'fractional corner (2.5, 2.25)')
-    lv.expect('problems', 'items[1].parts[0].explain.text', 11.25)
-    whole = [(i, j) for i in range(10) for j in range(10) if 3 * i + 2 * j <= 12 and i + 2 * j <= 7]
-    num(2, 'p-whole-blocks', 2, 7 * 2 + 5 * 2, 7 * int(2.5) + 5 * int(2.25), {'nearest': 7 * 3 + 5 * 2, 'capital-plan': carry[(4, 0)]})
-    ok(3 * 3 + 2 * 2 == 13 and (3, 2) not in whole and (2, 2) in whole, 'nearest rounding breaks capital, rounding down is feasible')
-    ok(3 * 2 + 2 * 2 == 10 and 2 + 4 == 6, 'rounded plan uses 10 and 6')
-    best_w = max(7 * i + 5 * j for i, j in whole)
-    num(2, 'p-whole-blocks', 3, int(np.floor(-lpb.fun + 1e-12)), best_w, {'no-floor': 28.75, 'rounded-plan': 24})
-    ok(abs(29 - 28.75) <= 0.5, 'no-floor band also routes a rounded-up 29')
-    arg = [p for p in whole if 7 * p[0] + 5 * p[1] == best_w]
-    ok(arg == [(4, 0)], f'best whole plan {arg}')
-    num(2, 'p-whole-blocks', 4, arg[0][0], 4, {'rounded': 2, 'near-corner': 3})
-    ok(7 * 3 + 5 == 26 and (2, 3) not in whole and 2 + 6 > 7, '(3, 1) earns 26 and (2, 3) breaks risk')
-    ok(best_w - 24 == 4, 'rounding gave away 4')
+    ok(VB == sorted([(0, 0), (F(19, 4), 0), (F(11, 3), F(13, 9)), (0, F(8, 3))]), f'block corners {VB}')
+    carry = {vt: 6 * vt[0] + 5 * vt[1] for vt in VB}
+    lpb = linprog([-6, -5], A_ub=[[4, 3], [1, 3]], b_ub=[19, 8], method='highs')
+    num(2, 'p-whole-blocks', 1, max(carry.values()), -lpb.fun,
+        {'capital-corner': carry[(sp.Rational(19, 4), 0)], 'risk-corner': carry[(0, sp.Rational(8, 3))]}, rounded=29.22)
+    ok(np.allclose(lpb.x, [11 / 3, 13 / 9]) and max(carry.values()) == F(263, 9), 'fractional corner (11/3, 13/9), carry 263/9')
+    ok(6 * F(11, 3) == 22 and 5 * F(13, 9) == F(65, 9), '22 + 65/9')
+    whole = [(i, j) for i in range(10) for j in range(10) if 4 * i + 3 * j <= 19 and i + 3 * j <= 8]
+    rd = (int(11 / 3), int(13 / 9))
+    num(2, 'p-whole-blocks', 2, 6 * rd[0] + 5 * rd[1], 6 * 3 + 5 * 1, {'capital-plan': 6 * 4})
+    ok(rd == (3, 1) and rd in whole and 4 * 3 + 3 == 15 and 3 + 3 == 6, 'rounded plan (3, 1) uses 15 and 6')
+    best_w = max(6 * i + 5 * j for i, j in whole)
+    num(2, 'p-whole-blocks', 3, int(np.floor(-lpb.fun + 1e-12)), best_w, {'round-up': 30, 'rounded-plan': 23})
+    arg = [q for q in whole if 6 * q[0] + 5 * q[1] == best_w]
+    ok(arg == [(4, 1)], f'best whole plan {arg}')
+    num(2, 'p-whole-blocks', 4, arg[0][0], 4, {'rounded': 3, 'two-each': 2})
+    ok(4 * 4 + 3 == 19 and 4 + 3 == 7 and 6 * 4 == 24 and 6 * 2 + 5 * 2 == 22 and (2, 2) in whole, 'plans (4,1), (4,0), (2,2)')
+    ok(best_w - 23 == 6, 'rounding gave away 6')
     # p-three-strategies
     Am = [[3, 1, 2], [2, 3, 1]]
     cm = [6, 7, 4]
