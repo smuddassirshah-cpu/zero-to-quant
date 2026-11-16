@@ -484,7 +484,7 @@
             "correct": "Each of the 4 outer training sets gets its own 109-fit search: $4 \\times 109 = 436$.",
             "generic": "Not quite. Use $K(K_{\\text{in}}G + 1)$ with $K = 4$, $K_{\\text{in}} = 6$ and $G = 18$.",
             "byKey": {
-              "no-refits": "You left out the 4 refits, one per outer fold. Each outer fold runs the whole 109-fit search.",
+              "no-refits": "432 counts only the inner fits. Each outer fold then refits its own winner, so add 4.",
               "added": "You added the outer folds to the search. The whole search runs again inside every outer fold, so multiply."
             }
           },
@@ -531,83 +531,103 @@
           }
         },
         {
-          "question": "The search on all 640 accounts reports a best CV MSE of 0.412; nested CV gives 0.451. By what share of the nested score does the best flatter the model? Give a percentage to 1 decimal place.",
+          "question": "On older accounts, ridge's MSE after fitting on $n$ accounts runs close to $0.33 + 40/n$. Nested CV scores models refitted on outer training sets of 480 accounts, as in part 3; the deployed model is refitted on all 640. On this curve, by how much does the nested score overstate the deployed model's MSE? Give 4 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.08647,
+            "answer": 0.02083,
             "tol": {
-              "abs": 0.0005
+              "abs": 0.0001
             },
-            "unit": "%",
             "placeholder": "decimal",
             "wrong": [
               {
-                "id": "by-inner",
-                "value": 0.09466,
+                "id": "inner",
+                "value": 0.0375,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.0001
                 }
               },
               {
-                "id": "gap",
-                "value": 0.039,
+                "id": "inner-outer",
+                "value": 0.01667,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.0125,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "level",
+                "value": 0.41333,
+                "tol": {
+                  "abs": 0.0001
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "$(0.451 - 0.412)/0.451 = 0.039/0.451 \\approx 8.6\\%$.",
-            "generic": "Not quite. Divide the gap by the nested score, the honest one.",
+            "correct": "$40/480 - 40/640 = 0.0833 - 0.0625 = 0.0208$; the 0.33 cancels.",
+            "generic": "Not quite. Put 480 and 640 into $40/n$ and subtract.",
             "byKey": {
-              "by-inner": "You divided by 0.412. The flattery is measured against the honest 0.451.",
-              "gap": "0.039 is the gap in MSE units. Express it as a share of 0.451."
+              "inner": "400 is an inner fit. Each outer fold is scored by the refit on its 480 accounts.",
+              "inner-outer": "You compared the inner fit with the outer refit. The deployed model sees all 640 accounts.",
+              "carried": "533 is $\\tfrac56$ of 640, part 3's slip. An outer training set holds $\\tfrac34 \\times 640 = 480$.",
+              "level": "0.4133 is the curve's MSE at 480 accounts. The question asks for its gap to the MSE at 640."
             }
           },
           "explain": {
-            "text": "The best of 18 noisy scores is low partly by luck. Nested CV scores the choice on folds it never saw, and the gap is 8.6%."
+            "text": "Nested CV scores models that saw 480 accounts, while the model card describes one fitted on 640. On this curve the smaller fit costs $1/48 \\approx 0.0208$, so the nested score errs slightly high."
           }
         },
         {
-          "question": "Given the 8.6% gap from part 4, what goes in the model card, and which model is deployed?",
+          "question": "With $K$ outer folds each outer training set holds $\\tfrac{K-1}{K} \\times 640$ accounts, and part 4's overstatement becomes $0.0625/(K-1)$, which is 0.0208 at $K = 4$. The desk wants it at most 0.007, with part 1's 109-fit search inside every outer fold. How many fits does the cheapest such nested run make?",
           "widget": {
-            "kind": "choice",
-            "layout": "stack",
-            "options": [
+            "kind": "numeric",
+            "answer": 1090,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
               {
-                "id": "nested",
-                "text": "Report 0.451; deploy the search refitted on all 640 accounts",
-                "correct": true
+                "id": "nine-folds",
+                "value": 981,
+                "tol": {
+                  "abs": 0
+                }
               },
               {
-                "id": "best",
-                "text": "Report 0.412; deploy the search refitted on all 640 accounts",
-                "why": "0.412 is the lowest of 18 scores, read on the folds that picked it. That makes it biased low; the nested 0.451 is not."
+                "id": "no-refits",
+                "value": 1080,
+                "tol": {
+                  "abs": 0
+                }
               },
               {
-                "id": "average",
-                "text": "Report 0.4315, the mean of the two numbers",
-                "why": "0.4315 still holds half of the 0.039 gap. Only the nested score is free of it."
-              },
-              {
-                "id": "vote",
-                "text": "Report 0.451; deploy the setting that most outer folds picked",
-                "why": "No outer fold scored a vote. The 0.451 belongs to the recipe, so deploy the recipe run on all rows."
+                "id": "added",
+                "value": 119,
+                "tol": {
+                  "abs": 0
+                }
               }
             ]
           },
           "feedback": {
-            "correct": "Right. 0.451 scores the recipe, tuning included, and the recipe run on all 640 accounts is the model.",
-            "generic": "Not quite. Report the number that measured the choosing, and deploy the recipe that number scored.",
+            "correct": "$0.0625/8 \\approx 0.0078$ misses at $K = 9$; $0.0625/9 \\approx 0.0069$ meets it at $K = 10$. Then $10 \\times 109 = 1090$ fits.",
+            "generic": "Not quite. Find the smallest $K$ with $0.0625/(K-1) \\le 0.007$, then run the 109-fit search once per outer fold.",
             "byKey": {
-              "best": "0.412 is the lowest of 18 scores, read on the folds that picked it. That makes it biased low; the nested 0.451 is not.",
-              "average": "0.4315 still holds half of the 0.039 gap. Only the nested score is free of it.",
-              "vote": "No outer fold scored a vote. The 0.451 belongs to the recipe, so deploy the recipe run on all rows."
+              "nine-folds": "Nine outer folds leave $0.0625/8 \\approx 0.0078$, above 0.007. Ten are the fewest that meet it.",
+              "no-refits": "That drops the winner's refit from each of the 10 searches: $10 \\times 109$, not $10 \\times 108$.",
+              "added": "119 is 10 plus 109. The whole search runs inside each of the 10 outer folds: $10 \\times 109$."
             }
           },
           "explain": {
-            "text": "Nested CV scores the procedure: tune over 18 settings, then refit. The deployed model is that procedure run on every account, and 0.451 is its estimate."
+            "text": "Ten outer folds give each scored model 576 of the 640 accounts. Its score then sits nearer the deployed model's, for $10 \\times 109 = 1090$ fits against 436."
           }
         }
       ]

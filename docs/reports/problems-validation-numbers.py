@@ -186,12 +186,29 @@ if L1 is not None:
     o_tr = idx[160:]
     i_tr = o_tr[80:]
     num(L1, 'p-arrears-grid', 3, inner_tr, len(i_tr), {'outer': outer_tr, 'all-inner': Fr(5, 6) * 640})
-    gap = Fr('0.451') - Fr('0.412')
-    num(L1, 'p-arrears-grid', 4, gap / Fr('0.451'), (0.451 - 0.412) / 0.451, {'by-inner': gap / Fr('0.412'), 'gap': gap})
-    printed(L1, 'p-arrears-grid', 4, gap / Fr('0.451'), 1, pct=True)
-    choice(L1, 'p-arrears-grid', 5, 'nested')
-    says(L1, 'p-arrears-grid', '0.4315')
-    ok((0.412 + 0.451) / 2 == 0.4315, 'p-arrears-grid p5: the average option is 0.4315')
+    # parts 4 and 5 re-authored (session AF): the curve 0.33 + 40/n, the size bias of nested CV, the outer folds it needs
+    curve = lambda n: Fr(33, 100) + Fr(40) / n
+    over = curve(outer_tr) - curve(640)
+    over_np = float(np.diff([0.33 + 40 / 640, 0.33 + 40 / 480])[0])
+    num(L1, 'p-arrears-grid', 4, over, over_np,
+        {'inner': curve(inner_tr) - curve(640), 'inner-outer': curve(inner_tr) - curve(outer_tr),
+         'carried': curve(Fr(5, 6) * 640) - curve(640), 'level': curve(outer_tr)})
+    ok(over == Fr(1, 48), 'p-arrears-grid p4: overstatement is 1/48')
+    printed(L1, 'p-arrears-grid', 4, over, 4)
+    bias = lambda k: curve(Fr(k - 1, k) * 640) - curve(640)
+    ok(all(bias(k) == Fr(1, 16) / (k - 1) for k in range(2, 30)), 'p-arrears-grid p5: bias(K) = 0.0625/(K-1)')
+    ok(abs(float(bias(4)) - 0.0208) < 5e-5, 'p-arrears-grid p5: 0.0208 at K = 4')
+    k_min = next(k for k in itertools.count(2) if bias(k) <= Fr(7, 1000))
+    k_scan = int(np.argmax(np.array([0.0625 / (k - 1) for k in range(2, 40)]) <= 0.007)) + 2
+    ok(k_min == k_scan == 10, f'p-arrears-grid p5: smallest K {k_min} {k_scan}')
+    ok(640 % k_min == 0 and (640 - 640 // k_min) % 6 == 0, 'p-arrears-grid p5: 10 outer folds of 64, inner folds of 96')
+    enum_10 = sum(1 for _o in range(k_min) for _i in range(Kin) for _s in range(G)) + k_min
+    num(L1, 'p-arrears-grid', 5, k_min * fits_plain, enum_10,
+        {'nine-folds': (k_min - 1) * fits_plain, 'no-refits': k_min * Kin * G, 'added': k_min + fits_plain})
+    says(L1, 'p-arrears-grid', '0.0625/8 \\\\approx 0.0078')
+    ok(round(0.0625 / 8, 4) == 0.0078 and round(0.0625 / 9, 4) == 0.0069, 'p-arrears-grid p5: printed 0.0078 and 0.0069')
+    ok(round(float(curve(outer_tr)), 4) == 0.4133 and round(float(curve(outer_tr) - Fr(33, 100)), 4) == 0.0833,
+       'p-arrears-grid p4: printed 0.4133 and 0.0833')
 
     # ---------- p-rent-seeds ----------
     sd1 = 0.81 * math.sqrt(2 / 600)

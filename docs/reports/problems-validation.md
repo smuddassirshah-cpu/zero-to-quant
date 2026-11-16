@@ -1,6 +1,6 @@
 # Problem sets: validation (brief `docs/briefs/chained.md`, prompts `docs/briefs/chained-prompts.md`)
 
-Files: `app/content/courses/validation/problems-1.json`, `problems-2.json`, `problems-3.json`. Numbers: `docs/reports/problems-validation-numbers.py` (resolves every path from `__file__`; 697 checks after the fix pass, exits 0; also green under `node tools/run-number-scripts.mjs --only docs/reports/problems-validation-numbers.py`).
+Files: `app/content/courses/validation/problems-1.json`, `problems-2.json`, `problems-3.json`. Numbers: `docs/reports/problems-validation-numbers.py` (resolves every path from `__file__`; 737 checks after the session AF re-author, exits 0; also green under `node tools/run-number-scripts.mjs --only docs/reports/problems-validation-numbers.py`).
 
 ## Level 1: `problems-1.json` (splits, folds and tuning)
 
@@ -10,12 +10,12 @@ Read first: l1 to l4, review-1 and homework-1 (prose, questions, numbers and cod
 |---|---|---|---|---|
 | problems-1 | p-flood-claims | 5 (5 / 0) | l1, l2 | 5 |
 | problems-1 | p-van-prices | 5 (5 / 0) | l2, l3, l1 | 4 |
-| problems-1 | p-arrears-grid | 5 (4 / 1) | l3, l4 | 4 |
+| problems-1 | p-arrears-grid | 5 (5 / 0) | l3, l4, l2 | 4 |
 | problems-1 | p-rent-seeds | 4 (4 / 0) | l1, l4 | 3 |
 
-Typed parts 18 of 19; the one choice is a judgement (what to report and deploy after nested CV). Every lesson appears; every problem draws on at least two.
+Typed parts 19 of 19 since the session AF re-author (the one choice, what to report and deploy after nested CV, is gone). Every lesson appears; every problem draws on at least two.
 
-Chains. Flood claims: the test size 288 that gives an sd of 0.03, the 648 training claims left by a 3 to 1 split, 4-fold CV fitting on 864, the hypergeometric 0.0311 that a fold of 288 holds none of 12 flood claims, then inclusion and exclusion to 0.123 that some fold does. Vans: the CV mean 2.02, the fold sd 0.149 (`np.std`), the one-standard-error limit 2.169, the pick $\alpha = 10$, and the locked test MSE 2.25 read as a £1,500 typical miss. Arrears: 109 fits for a 6-fold search of 18 settings, 436 nested, 400 accounts per inner fit, the 8.6% flattery of 0.412 against 0.451, and what to report and deploy. Rents: one split's sd 0.0468, the typical best of 16 seeds 0.727, a 10.2% flattery, and 3,899 test flats (more than exist) to bring it under 4%. Each later part restates the value it uses; `carried` slips hold the value that follows from the commonest slip in the part before.
+Chains. Flood claims: the test size 288 that gives an sd of 0.03, the 648 training claims left by a 3 to 1 split, 4-fold CV fitting on 864, the hypergeometric 0.0311 that a fold of 288 holds none of 12 flood claims, then inclusion and exclusion to 0.123 that some fold does. Vans: the CV mean 2.02, the fold sd 0.149 (`np.std`), the one-standard-error limit 2.169, the pick $\alpha = 10$, and the locked test MSE 2.25 read as a £1,500 typical miss. Arrears: 109 fits for a 6-fold search of 18 settings, 436 nested, 400 accounts per inner fit, then (session AF) the 0.0208 by which a learning curve $0.33 + 40/n$ says the nested score overstates the model refitted on all 640, and the 1,090 fits of the cheapest run (10 outer folds) that brings it to 0.007. Rents: one split's sd 0.0468, the typical best of 16 seeds 0.727, a 10.2% flattery, and 3,899 test flats (more than exist) to bring it under 4%. Each later part restates the value it uses; `carried` slips hold the value that follows from the commonest slip in the part before.
 
 Form. Every non-whole numeric part names its form (decimal places or a percentage to 1 place), and each tolerance takes the value its feedback prints (`printed` checks in the script).
 
@@ -62,6 +62,12 @@ Claims checked beside the numbers: $\rho = 2/\sqrt{15}$ between a weighted avera
 Reuse. `fresh-check.mjs --file content/courses/validation/problems-3.json`: 0 hits, 0 errors, 0 warnings. Fix pass: fresh-check 0 hits on problems-1, -2 and -3 (advisories: the level-1 formula $\sigma^2\sqrt{2/n}$ in problems-2, and two coincidental parameters, 0.04 and 0.21, against an l2 screen). The earlier version restated the taught sign-agreement formula as an arccos to clear the checker; that was reuse in another form and is gone. Because the checker does not read `feedback`, `explain` or `why`, the re-authored problems were also compared with l8 and l10 to l12 by hand for sentences and for the order of steps. Grep of `app/content/` for each key number and noun: no shared story (a power desk's logistic spike model and a day-ahead regression exist elsewhere, on other tasks; high-yield bonds, position-sizing variants and a weighted target encoding occur nowhere else).
 
 Checks. Validator 0 errors, no warnings on the file. `grade-all.mjs --file`: 19 widgets, 0 failures. Playthrough: green with and without `--mobile` (rerun after the fix pass). Screens read at 440 px: no layout faults. Voice scan 35: 0 and 0. Number script: exits 0.
+
+## Re-author, session AF (`p-arrears-grid` parts 4 and 5)
+
+Ruled `re-author` in `docs/reviews/review-reuse-af-hits.md`: old parts 4 and 5 walked `l4-nested` `screens[11]` (flattery of the best CV MSE as a share of the nested score, then what the card reports). New part 4: on the curve $0.33 + 40/n$ the nested score (models refitted on 480 accounts) overstates the 640-account model by $40/480 - 40/640 = 1/48 \approx 0.0208$. New part 5: the overstatement is $0.0625/(K-1)$, so 10 outer folds are the fewest at or under 0.007, and they cost $10 \times 109 = 1090$ fits. Item id kept. Part 2's `no-refits` line, which was `l4` `quiz[3]`'s sentence, is reworded ("432 counts only the inner fits. Each outer fold then refits its own winner, so add 4.").
+
+Closest material and why it is not a walk: `l2` `screens[5]` (leave-one-out: more folds, bigger training sets, less bias, more fits) is a choice over a table and puts no number on the bias; the new parts price it on a stated curve and solve for the fold count. `l4` `screens[3]`, `screens[10]` and `quiz[3]`, `review-1` `items[6]`, `homework-1` `items[8]` count the fits of a given nested run; part 5 first finds $K$ from a bias bound, then counts. `l4` `screens[6]`, `screens[8]`, `screens[11]` and `homework-1` `items[7]` (report and deploy, the selection gap) are no longer touched: no part compares a best score with a nested one. Topic exam `topic-2.1`: no item on training-size bias or on choosing $K$. Other sets: no learning curve and no fold-count search. Numbers 0.33, 40/n, 0.0208, 0.007, 1,090, 981, 576 shared with nothing in the course (grep; 0.007 occurs only as a code constant in `l11`).
 
 ## Engine limits
 

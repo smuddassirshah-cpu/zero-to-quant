@@ -243,13 +243,34 @@ key(1, 2, 2, inner[0])
 wrong(1, 2, 2, 'outer', inner[1])
 wrong(1, 2, 2, 'all-inner', 640 * 5 / 6, dp=2)
 ok((480 // 6, 640 // 4) == (80, 160), 'arrears: inner folds of 80, outer fold of 160')
-key(1, 2, 3, (0.451 - 0.412) / 0.451, dp=None, also=[8.6, 8.65])
-w, where = W(1, 2, 3)
-ok(within(0.086, w['answer'], w['tol']), f'{where}: 8.6 accepted')
-wrong(1, 2, 3, 'by-inner', 100 * 0.039 / 0.412, dp=1)
-wrong(1, 2, 3, 'gap', 3.9)
-choice(1, 2, 4, 'nested')
-ok(abs((0.412 + 0.451) / 2 - 0.4315) < 1e-12, 'arrears: mean of the two is 0.4315')
+# parts 4 and 5 re-authored in session AF; retargeted here: the fit sizes come from the counted nested run above
+def curve(n):
+    return 0.33 + 40 / n
+
+
+sizes10 = []
+Counter.log = []
+cross_val_score(GridSearchCV(Counter(), grid, cv=KFold(6, shuffle=True, random_state=0), scoring='neg_mean_squared_error'), X, y,
+                cv=KFold(10, shuffle=True, random_state=1), scoring='neg_mean_squared_error')
+sizes10 = sorted(set(Counter.log))
+ok(sizes10 == [480, 576], f'arrears: fit sizes with 10 outer folds {sizes10}')
+key(1, 2, 3, curve(inner[1]) - curve(640), dp=4, also=[0.0208])
+wrong(1, 2, 3, 'inner', curve(inner[0]) - curve(640), dp=4)
+wrong(1, 2, 3, 'inner-outer', curve(inner[0]) - curve(inner[1]), dp=4)
+wrong(1, 2, 3, 'carried', curve(640 * 5 / 6) - curve(640), dp=4)
+wrong(1, 2, 3, 'level', curve(inner[1]), dp=4)
+# smallest K by brute force over real outer training sizes from KFold (uneven folds included)
+def worst_bias(k):
+    tr = [len(t) for t, _ in KFold(k, shuffle=True, random_state=0).split(np.zeros(640))]
+    return max(curve(n) - curve(640) for n in tr)
+kmin = next(k for k in range(2, 50) if worst_bias(k) <= 0.007 + 1e-12)
+ok(kmin == 10, f'arrears: smallest K {kmin}')
+ok(abs(worst_bias(4) - 0.0208) < 5e-5, 'arrears: 0.0208 at K = 4')
+key(1, 2, 4, len(Counter.log))
+ok(len(Counter.log) == 10 * plain == 1090, 'arrears: ten outer folds make 1090 fits')
+wrong(1, 2, 4, 'nine-folds', 9 * plain)
+wrong(1, 2, 4, 'no-refits', 10 * 6 * 18)
+wrong(1, 2, 4, 'added', 10 + plain)
 
 # ---- p-rent-seeds
 sd1 = 0.81 * sqrt(2 / 600)
