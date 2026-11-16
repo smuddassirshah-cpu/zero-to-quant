@@ -1,7 +1,8 @@
 """Recompute every number in app/content/courses/stat-learning/problems-<n>.json twice (docs/briefs/chained.md check 1).
 
-Level 4 only so far. Method 1 is exact (sympy or fractions, the formula the lesson teaches). Method 2 takes another
-route: a point's distance by NumPy projection onto the line, k-means by scikit-learn's KMeans from the stated
+Levels 1 to 4, one block per set. Method 1 is exact (sympy or fractions, the formula the lesson teaches). Method 2
+takes another route. Level 1: calculus and a scan for the best constant, np.var, np.polyfit for the interpolant, a
+simulated average of five noises, scikit-learn's KNeighborsRegressor. Level 4: a point's distance by NumPy projection onto the line, k-means by scikit-learn's KMeans from the stated
 centres, inertia from KMeans, a spline from hinge columns in NumPy, the network's slope by a central finite
 difference on the loss, a t statistic by statsmodels' proportions_ztest with the null variance, and a sample size
 by brute search. For each numeric part the script checks: the two methods agree; the key is within its tol; every
@@ -241,6 +242,120 @@ if L4 is not None:
          'carried': sp.ceiling(9 * R(74, 100) * R(26, 100) / R(4, 100) ** 2)}, round_tol=0.01)
     ok(abs((3 / 1.95) ** 2 - 2.4) < 0.05 and abs(34.37 ** 2 - 1181.3) < 0.05, 'p-renewals: printed 2.4 and 1181.3')
     ok((R(74, 100) - R(7, 10)) * 500 == 20, 'p-renewals: 20 customers')
+
+L1 = load(1)
+if L1 is not None:
+    from sklearn.neighbors import KNeighborsRegressor
+    # ---------- p-ferry-passengers ----------
+    tr = [4, 7, 5, 9, 6, 11]
+    te = [8, 6, 10, 12]
+    c = sp.Rational(sum(tr), len(tr))
+    cc = sp.Symbol('c')
+    c_min = sp.solve(sp.diff(sum((v - cc) ** 2 for v in tr), cc), cc)[0]       # method 2: calculus on the loss
+    grid = np.linspace(0, 15, 150001)
+    c_scan = grid[np.argmin([np.mean((np.array(tr) - g) ** 2) for g in grid[::100]]) * 100]
+    ok(c_min == c and abs(c_scan - 7) < 0.02, 'p-ferry: best constant 7 by calculus and by scan')
+    num(L1, 'p-ferry-passengers', 1, c, c_min, {'median': sp.Rational(13, 2), 'midrange': sp.Rational(4 + 11, 2)})
+    ok(float(np.median(tr)) == 6.5, 'p-ferry: median 6.5')
+    mse_tr = sum((v - c) ** 2 for v in tr) / 6
+    num(L1, 'p-ferry-passengers', 2, mse_tr, np.var(tr),
+        {'n-minus-1': sum((v - c) ** 2 for v in tr) / 5, 'absolute': sum(abs(v - c) for v in tr) / 6, 'sum': sum((v - c) ** 2 for v in tr)})
+    mse_te = sum((v - c) ** 2 for v in te) / 4
+    num(L1, 'p-ferry-passengers', 3, mse_te, np.mean((np.array(te) - 7.0) ** 2),
+        {'test-mean': sum((v - sp.Rational(sum(te), 4)) ** 2 for v in te) / 4,
+         'carried': sum((v - sp.Rational(13, 2)) ** 2 for v in te) / 4, 'absolute': sum(abs(v - c) for v in te) / 4})
+    ok(sp.Rational(sum(te), 4) == 9 and sum((v - c) ** 2 for v in tr) == 34 and sum((v - c) ** 2 for v in te) == 36, 'p-ferry: test mean 9, sums 34 and 36')
+    temps = np.array([3.0, 6.0, 8.0, 11.0, 14.0, 17.0])            # any six distinct temperatures
+    fit5 = np.polyfit(temps, tr, 5)
+    fit4 = np.polyfit(temps, tr, 4)
+    ok(np.allclose(np.polyval(fit5, temps), tr) and not np.allclose(np.polyval(fit4, temps), tr, atol=1e-6), 'p-ferry: degree 5 interpolates six days, degree 4 cannot')
+    num(L1, 'p-ferry-passengers', 4, len(tr) - 1, len(fit5) - 1, {'six': 6, 'coefficients-short': 4})
+    pick(L1, 'p-ferry-passengers', 5, 'constant')
+    ok(31.4 > float(mse_te) and abs((9 + 31.4) / 2 - 20.2) < 1e-12 and float(31.4 / mse_te) > 3, 'p-ferry p5: 9 against 31.4, the average 20.2, a factor above 3')
+
+    # ---------- p-loaves-k ----------
+    f0, s2 = 20, 4
+    k20 = [17, 18, 16, 17, 17]
+    k1 = [23, 18, 19, 17, 23]
+    m20 = sp.Rational(sum(k20), 5)
+    b2 = (m20 - f0) ** 2
+    num(L1, 'p-loaves-k', 1, b2, (np.mean(k20) - f0) ** 2, {'bias': m20 - f0, 'size': abs(m20 - f0), 'variance': sp.Rational(2, 5)})
+    v20 = sum((x - m20) ** 2 for x in k20) / 5
+    num(L1, 'p-loaves-k', 2, b2 + v20 + s2, (np.mean(k20) - f0) ** 2 + np.var(k20) + s2,
+        {'no-noise': b2 + v20, 'ddof1': b2 + sum((x - m20) ** 2 for x in k20) / 4 + s2, 'carried': abs(m20 - f0) + v20 + s2})
+    m1 = sp.Rational(sum(k1), 5)
+    v1 = sum((x - m1) ** 2 for x in k1) / 5
+    num(L1, 'p-loaves-k', 3, (m1 - f0) ** 2 + v1 + s2, (np.mean(k1) - f0) ** 2 + np.var(k1) + s2,
+        {'no-noise': (m1 - f0) ** 2 + v1, 'ddof1': sum((x - m1) ** 2 for x in k1) / 4 + s2, 'carried': b2 + v20 + s2})
+    ok(m1 == 20 and v1 == sp.Rational(32, 5) and m20 == 17 and v20 == sp.Rational(2, 5), 'p-loaves: means 17 and 20, variances 0.4 and 6.4')
+    rng = np.random.default_rng(5)
+    sim = rng.normal(0, 2, (400000, 5)).mean(axis=1)                 # route 2: simulate the average of five noises
+    num(L1, 'p-loaves-k', 4, 1 + sp.Rational(4, 5) + s2, 1 + sim.var() + s2,
+        {'no-average': 1 + 4 + s2, 'no-noise': 1 + sp.Rational(4, 5)}, agree=0.01)
+    pick(L1, 'p-loaves-k', 5, 'k5')
+
+    # ---------- p-broker-clients ----------
+    q = sp.Matrix([14, 310])
+    cl = {'A': ((13, 340), 7), 'B': ((22, 315), 3), 'C': ((15, 290), 8), 'D': ((9, 312), 4)}
+    sd = sp.Matrix([5, 40])
+
+    def dist(a, scale=None):
+        g = sp.Matrix(a) - q
+        if scale is not None:
+            g = sp.Matrix([g[i] / scale[i] for i in range(2)])
+        return sp.sqrt((g.T * g)[0])
+    Xr = np.array([cl[k][0] for k in 'ABCD'], float)
+    yr = np.array([cl[k][1] for k in 'ABCD'], float)
+    qn = np.array([[14.0, 310.0]])
+    num(L1, 'p-broker-clients', 1, dist(cl['D'][0]), np.linalg.norm(Xr[3] - qn[0]),
+        {'squared': dist(cl['D'][0]) ** 2, 'city-block': 5 + 2}, round_tol=0.005, agree=1e-9)
+    num(L1, 'p-broker-clients', 2, dist(cl['C'][0], sd), np.linalg.norm((Xr[2] - qn[0]) / [5, 40]),
+        {'raw': dist(cl['C'][0]), 'variance': dist(cl['C'][0], [25, 1600])}, round_tol=0.005, agree=1e-9)
+    sc = {k: float(dist(cl[k][0], sd)) for k in 'ABCD'}
+    rw = {k: float(dist(cl[k][0])) for k in 'ABCD'}
+    ok(sorted(sc, key=sc.get) == ['C', 'A', 'D', 'B'] and sorted(rw, key=rw.get) == ['D', 'B', 'C', 'A'], 'p-broker: scaled order C A D B, raw order D B C A')
+    ok(abs(sc['A'] - 0.78) < 0.005 and abs(sc['D'] - 1.00) < 0.005 and abs(sc['B'] - 1.60) < 0.005 and abs(rw['B'] - 9.43) < 0.005, 'p-broker: printed 0.78, 1.00, 1.60, 9.43')
+    knn = KNeighborsRegressor(n_neighbors=2).fit(Xr / [5, 40], yr)
+    knn_raw = KNeighborsRegressor(n_neighbors=2).fit(Xr, yr)
+    f_sc = sp.Rational(cl['C'][1] + cl['A'][1], 2)
+    num(L1, 'p-broker-clients', 3, f_sc, knn.predict(qn / [5, 40])[0],
+        {'raw': knn_raw.predict(qn)[0], 'all-four': yr.mean(), 'one': cl['C'][1]})
+    fc = [f_sc, 6, 5]
+    act = [7, sp.Rational(13, 2), 4]
+    mse_k = sum((a - f) ** 2 for a, f in zip(act, fc)) / 3
+    num(L1, 'p-broker-clients', 4, mse_k, np.mean((np.array([7, 6.5, 4.0]) - [7.5, 6, 5]) ** 2),
+        {'carried': sum((a - f) ** 2 for a, f in zip(act, [sp.Rational(7, 2), 6, 5])) / 3,
+         'absolute': sum(abs(a - f) for a, f in zip(act, fc)) / 3, 'sum': sum((a - f) ** 2 for a, f in zip(act, fc))})
+    base = sp.Rational(sum(cl[k][1] for k in 'ABCD'), 4)
+    ok(base == sp.Rational(11, 2), 'p-broker: training mean 5.5')
+    num(L1, 'p-broker-clients', 5, sum((a - base) ** 2 for a in act) / 3, np.mean((np.array([7, 6.5, 4.0]) - yr.mean()) ** 2),
+        {'test-mean': sum((a - sum(act) / 3) ** 2 for a in act) / 3, 'absolute': sum(abs(a - base) for a in act) / 3,
+         'sum': sum((a - base) ** 2 for a in act)})
+
+    # ---------- p-heat-demand ----------
+    table = {0: (9.20, 9.85), 1: (3.10, 3.42), 2: (1.44, 1.80), 3: (1.38, 1.95), 6: (1.02, 2.60)}
+    noise = R(6, 5)
+    best = min(table, key=lambda d: table[d][1])
+    num(L1, 'p-heat-demand', 1, best, sorted(table.items(), key=lambda kv: kv[1][1])[0][0],
+        {'training': min(table, key=lambda d: table[d][0]), 'next': 3})
+    ok(all(table[a][0] > table[b][0] for a, b in [(0, 1), (1, 2), (2, 3), (3, 6)]), 'p-heat: training MSE falls with degree')
+    rest2 = R(180, 100) - noise
+    num(L1, 'p-heat-demand', 2, rest2, 1.80 - 1.20,
+        {'training': R(144, 100) - noise, 'carried': R(260, 100) - noise, 'added': R(180, 100) + noise})
+    var2 = R(36, 100)
+    bias2 = rest2 - var2
+    num(L1, 'p-heat-demand', 3, bias2, (1.80 - 1.20) - 0.36,
+        {'sd': rest2 - var2 ** 2, 'carried': R(260, 100) - noise - var2, 'added': rest2 + var2})
+    e2 = noise + bias2 + var2 / 10
+    e2_alt = 1.2 + 0.24 + 0.36 * 40 / 400                           # route 2: the 1/n rule written with n
+    num(L1, 'p-heat-demand', 4, e2, e2_alt,
+        {'all-shrink': noise + rest2 / 10, 'no-noise': bias2 + var2 / 10, 'carried': noise + (R(260, 100) - noise - var2) + var2 / 10})
+    b6 = R(2, 100)
+    v6 = R(260, 100) - noise - b6
+    e6 = noise + b6 + v6 / 10
+    num(L1, 'p-heat-demand', 5, e6, 1.2 + 0.02 + (2.60 - 1.20 - 0.02) * 40 / 400,
+        {'no-shrink': R(260, 100), 'all-shrink': noise + (b6 + v6) / 10, 'no-noise': b6 + v6 / 10})
+    ok(v6 == R(138, 100) and e6 < e2 and noise + bias2 == R(144, 100), 'p-heat: degree-6 variance 1.38, 1.358 < 1.476, floor 1.44')
 
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
