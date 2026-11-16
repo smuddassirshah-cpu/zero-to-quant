@@ -228,12 +228,15 @@ export function shapesOf(strings, node) {
       sh.ls.set(ka < kb ? ka : kb, m[0].replace(/\s+/g, ' ').slice(0, 60));
     }
     // numbers that sit together in one sentence (for a key pair)
-    for (const sen of sentencesOf(str)) {
+    for (const sen0 of sentencesOf(str)) {
+      // a per cent is read as the fraction it stands for (ENGINE-BACKLOG 1080): "41.7%" holds 0.417, so a key 0.4167 written as a decimal elsewhere meets it
+      const pcts = [...sen0.matchAll(/(\d+(?:\.\d+)?)\s*(?:\\%|%)/g)].map((x) => +(Number(x[1]) / 100).toPrecision(10));
+      const sen = sen0.replace(/(\d+(?:\.\d+)?)\s*(?:\\%|%)/g, ' ');
       const all = [...new Set([...sen.replace(/(?<=\d)(?:,|\{,\})(?=\d{3}(?!\d))/g, '').matchAll(/(?<![\w.])\d+(?:\.\d+)?(?![\w])/g)].map((x) => +x[0]))];
-      const nums = all.filter(eligibleKey).map(String);
+      const nums = [...new Set([...all, ...pcts])].filter(eligibleKey).map(String);
       const decs = [...sen.matchAll(/(?<![\w.])\d+\.\d+/g)].map((x) => x[0]);   // every decimal, including a coefficient (0.5h)
       // R3 (ENGINE-BACKLOG 1055): no decimal in the sentence but the two keys, stock decimals (0.5, 0.1) counted, else it is a row of chances or a ratio, not the pair
-      if (nums.length === 2 && all.every((v) => Number.isInteger(v) || eligibleKey(v)) && decs.every((v) => nums.includes(String(+v)))) sh.lines.push({ nums, text: sen.replace(/\s+/g, ' ').slice(0, 90) });
+      if (nums.length === 2 && all.every((v) => Number.isInteger(v) || eligibleKey(v)) && decs.every((v) => nums.includes(String(+v)))) sh.lines.push({ nums, text: sen0.replace(/\s+/g, ' ').slice(0, 90) });
     }
     // regions: corners, circles, end points and routes
     for (const sen of sentencesOf(str)) {

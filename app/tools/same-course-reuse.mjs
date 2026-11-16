@@ -8,15 +8,19 @@
 //   --file <json>    one file of any kind (a review, homework or lesson too); fresh-check.mjs --file runs this by default for problems-<n>.json (--no-same-course to skip)
 //   --numbers n      shared distinctive numbers needed for a numbers hit (default 3)       --df n   a number or matrix held by more than n units of the app is not distinctive (default 40)
 //   --warn-run n     shared words in one run for a text warning (default 10)                 --error-run n   for a text error (default 12)
-//   --boiler n       a shingle held by more than n units of the app is boilerplate (default 20)
+//   --boiler n       a shingle held by more than n units of the app is boilerplate (default 20)      --no-retold   leave out the retold and rate kinds      --learn   rewrite tools/retold-model.json from the content
 // Kinds: numbers (warning), matrix (error; also a symmetric 2 by 2 equal after aM + bI, ENGINE-BACKLOG 1058), text (warning from --warn-run words, error from --error-run), and four shapes from reuse-shapes.mjs (ENGINE-BACKLOG 993, errors since 1059,
 // --no-shapes off, --shape-df n: a shape held by more than n files is stock): function (a function with its interval or factorisation), pair (two consecutive part keys in one sentence),
-// transform (a polynomial or number set shifted and scaled), region (corners, circle with integrand, end points with route). The sources are every other file of the course (lessons with their quizzes,
+// transform (a polynomial or number set shifted and scaled), region (corners, circle with integrand, end points with route). Two kinds of engine pass AF part 1 (retold-reuse.mjs, ENGINE-BACKLOG 1075 to 1080, errors,
+// --no-retold off): retold (a part tells again a screen, review item, homework item or other set of its course: the feedback, explain and why lines are read as well as the stem; sentences compared with numbers, maths and
+// rare names masked, or a chain of three steps in order) and rate (0.4167 or 5/12 against 41.7%, with a second number shared; a per cent is also read as a fraction by the numbers and pair kinds).
+// The word frequencies and stock sentences come from the content itself when it is the app's own, else from the snapshot tools/retold-model.json (`--learn` rewrites it). The sources are every other file of the course (lessons with their quizzes,
 // reviews, homework, problem sets; the generated fluency-* files are left out). Waivers: tools/same-course-waivers.json, or "reuseWaiver": "reason" on the item.
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { shapesOf, buildIndex, matchShapes } from './reuse-shapes.mjs';
+import { learn, buildModel, prep, markStock, buildSentenceIndex, containersOf, scanRetold, matchRates, rateEvidence } from './retold-reuse.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const APP = join(HERE, '..');
@@ -52,6 +56,13 @@ function shapeStrings(node, out = []) {
   if (node && typeof node === 'object') { if (node.correct === false) return out; for (const [k, v] of Object.entries(node)) { if (!NOT_DATA.has(k) && !SLIP_KEYS.has(k)) shapeStrings(v, out); } }
   return out;
 }
+// The lines the learner reads after answering (ENGINE-BACKLOG 1075): every `feedback` line (correct, generic, byKey), `explain` and `why`, wherever they sit (a choice option's why too).
+function fbOf(node, out = [], on = false) {
+  if (typeof node === 'string') { if (on) out.push(node); return out; }
+  if (Array.isArray(node)) { for (const v of node) fbOf(v, out, on); return out; }
+  if (node && typeof node === 'object') for (const [k, v] of Object.entries(node)) { if (!NOT_DATA.has(k)) fbOf(v, out, on || k === 'feedback' || k === 'explain' || k === 'why'); }
+  return out;
+}
 // Boilerplate sentences of AUTHORING are cut out and break a run (the same list as fresh-check.mjs STOPLIST, plus the common answer-format lines)
 const STOPLIST = [
   /put the (?:lines|steps|proof|derivation|argument|lines of the \w+) in order(?:, a reason in each line)?\.?/g,
@@ -80,6 +91,7 @@ export function sentences(strings) {
 }
 const BOILER_SENT = 5;
 const SHAPE_KINDS = ['function', 'pair', 'transform', 'region'];
+const RETOLD_KINDS = ['retold', 'rate'];   // errors since ENGINE-BACKLOG 1075 to 1080 (engine pass AF part 1)
 const MAT_STOCK = 40;   // a matrix (up to a scalar and a transpose) held by more than this many files of other courses and the exams is a textbook staple
 const tokensOf = (sens, sdf) => sens.filter((x) => (sdf.get(x) ?? 0) < BOILER_SENT).flatMap((x, i) => (i ? ['|', ...x.split(' ')] : x.split(' ')));
 const STOP = new Set('what is the of and a an to in on for with that this which be are by it its at as from has have then give find how many much do does you your one two'.split(' '));
@@ -109,6 +121,7 @@ function numberSet(strs, nums) {
   for (const s of strs) {
     const t = s.replace(/(?<=\d)(?:,|\{,\}|\\,|\\;| )(?=\d{3}(?!\d))/g, '').replace(/\\frac\{(\d+)\}\{(\d+)\}|\\[td]frac\{(\d+)\}\{(\d+)\}/g, ' ');   // thousands separators; a typed fraction is not a number here
     for (const m of t.matchAll(/(?<![\w.])\d+(?:\.\d+)?(?![\w])/g)) add(Number(m[0]));
+    for (const m of t.matchAll(/(\d+(?:\.\d+)?)\s*(?:\\%|%)/g)) add(Number(m[1]) / 100);   // a per cent is the fraction it stands for (ENGINE-BACKLOG 1080): 41.7% meets 0.417
   }
   for (const v of nums) add(v);
   return out;
@@ -189,28 +202,30 @@ function keyNums(node, out = []) {
 const isFluency = (f) => /^fluency-/.test(f);
 function unitsOfFile(doc, rel) {
   const u = [];
-  const add = (path, node, stem) => {
-    const sec = [], mats = [];
+  const add = (path, node, stem, meta = {}) => {
+    const sec = [], mats = [], osec = [];
     for (const n of stem ? [stem, node] : [node]) { collect(n, sec, false); }
+    collect(node, osec, false);
     const { out, numOut } = allStrings(stem ? [stem, node] : node);
     for (const s of out) for (const m of parseLatexMatrices(s)) mats.push(m);
     jsonMatrices(stem ? [stem, node] : node, mats);
     if (!sec.length && !out.length) return;
-    u.push({ file: rel, path, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.flatMap(matrixKeys)), shapes: shapesOf(shapeStrings(stem ? [stem, node] : node), stem ? null : node) });
+    const fbs = fbOf(node);
+    u.push({ file: rel, path, ...meta, sec, osec: stem ? osec : sec, fbs, ofbs: fbs, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.flatMap(matrixKeys)), shapes: shapesOf(shapeStrings(stem ? [stem, node] : node), stem ? null : node) });
   };
-  const withParts = (path, q) => {
-    add(path, q);
-    if (Array.isArray(q.parts)) { const { parts, ...stem } = q; q.parts.forEach((p, j) => add(`${path}.parts[${j}]`, p, stem)); }
+  const withParts = (path, q, i) => {
+    add(path, q, undefined, { cont: 'items', idx: i, hasParts: Array.isArray(q.parts) });
+    if (Array.isArray(q.parts)) { const { parts, ...stem } = q; q.parts.forEach((p, j) => add(`${path}.parts[${j}]`, p, stem, { cont: path, idx: j, part: true })); }
   };
-  (doc.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s));
-  (Array.isArray(doc.quiz) ? doc.quiz : doc.quiz?.items ?? []).forEach((q, i) => add(`quiz[${i}]`, q));
-  (doc.items ?? []).forEach((q, i) => withParts(`items[${i}]`, q));
+  (doc.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s, undefined, { cont: 'screens', idx: i }));
+  (Array.isArray(doc.quiz) ? doc.quiz : doc.quiz?.items ?? []).forEach((q, i) => add(`quiz[${i}]`, q, undefined, { cont: 'quiz', idx: i }));
+  (doc.items ?? []).forEach((q, i) => withParts(`items[${i}]`, q, i));
   return u;
 }
 const courseFiles = (C, c) => jsonFiles(join(C, 'courses', c)).filter((f) => f !== 'course.json' && !isFluency(f));
 
 // Frequencies count distinct files (a part repeats its item's stem, so units would count one item several times).
-export function loadCorpus(C) {
+export function loadCorpus(C, { model: modelMode } = {}) {
   const df = { num: new Map(), mat: new Map(), sh: new Map(), sen: new Map() };
   const bump = (m, k, f) => { let a = m.get(k); if (!a) m.set(k, (a = new Set())); a.add(f); };
   const byFile = new Map(), all = [], courses = existsSync(join(C, 'courses')) ? readdirSync(join(C, 'courses')).sort() : [];
@@ -227,16 +242,20 @@ export function loadCorpus(C) {
   }
   for (const m of [df.sh]) for (const [k, v] of m) m.set(k, v.size);
   const sidx = buildIndex(all);   // reuse shapes (function, pair, transform, region): reuse-shapes.mjs
-  return { df, byFile, courses, sdf, sidx };
+  const live = modelMode ? modelMode === 'live' : resolve(C) === resolve(join(APP, 'content'));
+  const snapPath = join(HERE, 'retold-model.json');
+  const model = buildModel(all, live || !existsSync(snapPath) ? null : rd(snapPath));   // retold sentences and chains, rate forms: retold-reuse.mjs (word frequencies and stock sentences of the whole content)
+  return { df, byFile, courses, sdf, sidx, model, rIdx: new Map(), conts: new Map(), units: all };
 }
 
 // ---- scan ----
 const O = (argv, k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : d; };
 export function scanSet(corpus, rel, doc, opts = {}) {
-  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5, shapes = true, shapeDf = 4 } = opts;
+  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5, shapes = true, shapeDf = 4, retold = true } = opts;
   const course = rel.split('/')[1], hits = [];
   const mine = corpus.byFile.get(rel) ?? unitsOfFile(doc, rel);
   if (!corpus.byFile.has(rel)) for (const x of mine) { x.tk = tokensOf(x.sens, corpus.sdf); x.sh = new Set(shingles(x.tk)); }
+  if (!corpus.byFile.has(rel)) for (const x of mine) { prep(x, corpus.model); markStock(x, corpus.model); }
   const sources = [...corpus.byFile.entries()].filter(([f]) => f !== rel && f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);
   const outside = (m, k) => [...(m.get(k) ?? [])].filter((f) => !f.startsWith(`courses/${course}/`)).length;   // files of other courses and exams: a figure the course alone repeats is the reuse, not a stock number
   const dfn = (k) => outside(corpus.df.num, k);
@@ -244,10 +263,10 @@ export function scanSet(corpus, rel, doc, opts = {}) {
   const idx = new Map();
   sources.forEach((s, i) => { for (const g of s.sh) if ((corpus.df.sh.get(g) ?? 0) <= boiler) { let a = idx.get(g); if (!a) idx.set(g, (a = [])); a.push(i); } });
   const best = new Map();   // item|source file|kind -> hit
-  const keep = (t, s, kind, score, evidence) => {
+  const keep = (t, s, kind, score, evidence, texts) => {
     const item = t.path.replace(/\.parts\[\d+\]$/, ''), part = t.path.includes('.parts[') ? Number(t.path.match(/parts\[(\d+)\]$/)[1]) + 1 : null;
     const k = `${item}|${s.file}|${kind}`, o = best.get(k);
-    if (!o || score > o.score || (score === o.score && part && !o.part)) best.set(k, { file: rel, item, itemPath: item, part, kind, source: `${s.file}:${s.path}`, score, evidence });
+    if (!o || score > o.score || (score === o.score && part && !o.part)) best.set(k, { file: rel, item, itemPath: item, part, kind, source: `${s.file}:${s.path}`, score, evidence, texts });
   };
   for (const t of mine) {
     // numbers
@@ -283,9 +302,17 @@ export function scanSet(corpus, rel, doc, opts = {}) {
       if (r.len >= warnRun) keep(t, s, 'text', r.len, `${r.len} shared words: "${r.text.slice(0, 90)}"`);
     }
   }
+  // retold sentences and chains (ENGINE-BACKLOG 1075, 1076, 1078) and rate forms (1080): retold-reuse.mjs
+  if (retold) {
+    if (!corpus.rIdx.has(course)) corpus.rIdx.set(course, buildSentenceIndex(sources.filter((x) => !x.part)));
+    const srcContainers = [];
+    for (const [f, us] of corpus.byFile) if (f !== rel && f.startsWith(`courses/${course}/`)) { if (!corpus.conts.has(f)) corpus.conts.set(f, containersOf(us)); srcContainers.push([f, corpus.conts.get(f)]); }
+    scanRetold({ rel, mine, idx: corpus.rIdx.get(course), srcContainers, keep });
+    for (const t of mine) { if (t.hasParts) continue; for (const s of sources) { if (s.part) continue; const r = matchRates(t, s); if (r) keep(t, s, 'rate', 1, rateEvidence(r), [r.x.sentence, r.y.sentence]); } }
+  }
   const waive = waivers(rel, doc);
   for (const h of best.values()) {
-    h.level = h.kind === 'matrix' || SHAPE_KINDS.includes(h.kind) || (h.kind === 'text' && h.score >= errorRun) ? 'error' : 'warn';   // the four shapes became errors in ENGINE-BACKLOG 1059 (rules tightened in 1053 to 1058)
+    h.level = h.kind === 'matrix' || SHAPE_KINDS.includes(h.kind) || RETOLD_KINDS.includes(h.kind) || (h.kind === 'text' && h.score >= errorRun) ? 'error' : 'warn';   // the four shapes became errors in ENGINE-BACKLOG 1059 (rules tightened in 1053 to 1058)
     const w = waive(h);
     if (w) { h.waived = w; }
     hits.push(h);
@@ -311,9 +338,10 @@ export const fmtHit = (h, doc) => `[same-course-reuse] ${h.waived ? 'waived' : h
 const main = () => {
   const argv = process.argv.slice(2), has = (k) => argv.includes(k);
   const C = O(argv, '--content', join(APP, 'content'));
-  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)), shapes: !has('--no-shapes'), shapeDf: Number(O(argv, '--shape-df', 4)) };
+  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)), shapes: !has('--no-shapes'), shapeDf: Number(O(argv, '--shape-df', 4)), retold: !has('--no-retold') };
   if (has('--no-waivers')) process.env.ZQ_NO_WAIVERS = '1';
-  const corpus = loadCorpus(C);
+  const corpus = loadCorpus(C, { model: has('--learn') ? 'live' : undefined });
+  if (has('--learn')) { const snap = learn(corpus.units); writeFileSync(join(HERE, 'retold-model.json'), JSON.stringify(snap) + '\n'); console.log(`[same-course-reuse] learned ${Object.keys(snap.wdf).length} words over ${snap.N} files and ${snap.stock.length} stock sentences into tools/retold-model.json`); return; }
   let rels = [];
   if (O(argv, '--file', null)) { const abs = resolve(O(argv, '--file')), r = relative(resolve(C), abs); rels = [r.split(sep).join('/')]; }
   else if (has('--all')) rels = [...corpus.byFile.keys()].filter((f) => /\/problems-\d+\.json$/.test(f));
@@ -323,7 +351,7 @@ const main = () => {
   if (has('--json')) console.log(JSON.stringify(all.map(({ line, ...h }) => h), null, 1));
   else for (const h of all) console.log(h.line);
   const errs = all.filter((h) => h.level === 'error' && !h.waived), warns = all.filter((h) => h.level === 'warn' && !h.waived), waived = all.filter((h) => h.waived);
-  const by = (l) => ['numbers', 'matrix', 'text', 'function', 'pair', 'transform', 'region'].map((k) => `${k} ${l.filter((h) => h.kind === k).length}`).join(', ');
+  const by = (l) => ['numbers', 'matrix', 'text', 'function', 'pair', 'transform', 'region', 'retold', 'rate'].map((k) => `${k} ${l.filter((h) => h.kind === k).length}`).join(', ');
   if (!has('--json')) console.log(`[same-course-reuse] ${rels.length} file(s): ${errs.length} error(s) (${by(errs)}), ${warns.length} warning(s) (${by(warns)}), ${waived.length} waived`);
   process.exitCode = errs.length ? 1 : 0;
 };

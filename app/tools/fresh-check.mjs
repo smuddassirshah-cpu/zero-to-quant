@@ -3,7 +3,7 @@
 // copies a lesson screen, quiz, review, homework or other exam item, even with changed numbers.
 // Problem sets (893): --file courses/<c>/problems-<n>.json also lists, as advisory, a shared displayed formula or two shared parameters with its course (--shared-params n, --no-set-reuse).
 // Same-course reuse (972): for problems-<n>.json (any course file with --same-course, off with --no-same-course) each item is also held against every other file of its course: numbers, matrices up to a scalar and a transpose, shared sentences
-//   plus (993) the advisory shapes function, pair, transform and region ([same-course-reuse] lines; an error fails the run, a warning does not; waivers in tools/same-course-waivers.json). Thresholds are those of tools/same-course-reuse.mjs, which also runs on its own (--all).
+//   plus (993) the shapes function, pair, transform and region and (1075 to 1080) retold screens and rate forms, which read feedback, explain and why too ([same-course-reuse] lines; an error fails the run, a warning does not; waivers in tools/same-course-waivers.json). Thresholds are those of tools/same-course-reuse.mjs, which also runs on its own (--all).
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
 //                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
 //   --file content/courses/<c>/review-1.json (or homework-2.json) checks a course set against everything else, code items included, and
