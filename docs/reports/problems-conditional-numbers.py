@@ -432,36 +432,37 @@ num(L4, 'p-two-flags', 5, kmin, -(-F(51, 100) // F(4, 100)),   # 0.04k >= 0.51
 ok(kmin == 13 and F(51, 4) == F(1275, 100), 'p-two-flags p5: k is not 13')
 ok(fk(12) < F(49, 100) <= fk(13), 'p-two-flags p5: 12 and 13 do not bracket 0.49')
 
-# p-dated-coins: boxes GG, GG, GS, SS; each coin one of k years
-boxes = ['GG', 'GG', 'GS', 'SS']
-cd = [(i, j) for i in range(4) for j in range(2)]
-gold = [(i, j) for i, j in cd if boxes[i][j] == 'G']
-num(L4, 'p-dated-coins', 1, F(4, 5), F(sum(1 for i, j in gold if boxes[i][1 - j] == 'G'), len(gold)),
-    {'boxes': F(2, 3), 'even': F(1, 2), 'draw': F(len(gold), len(cd))})
-def report(k):   # enumerate boxes and years: at least one gold coin of year 0
-    tot = F(0); gg = F(0)
-    for b in boxes:
-        for y in itertools.product(range(k), repeat=2):
-            if any(b[j] == 'G' and y[j] == 0 for j in (0, 1)):
-                tot += F(1, 4) * F(1, k * k)
-                if b == 'GG': gg += F(1, 4) * F(1, k * k)
-    return gg / tot
-pg1 = F(sum(1 for y in itertools.product(range(10), repeat=2) if 0 in y), 100)
-num(L4, 'p-dated-coins', 2, 1 - F(9, 10) ** 2, pg1, {'sum': F(2, 10), 'both': F(1, 100), 'one': F(1, 10)})
-num(L4, 'p-dated-coins', 3, F(1, 2) * pg1 / (F(1, 2) * pg1 + F(1, 4) * F(1, 10)), report(10),
-    {'no-detail': F(2, 3), 'box-weights': pg1 / (pg1 + F(1, 10)), 'drawn': F(1, 2) * F(2, 10) / (F(1, 2) * F(2, 10) + F(1, 40))})
-ok(report(10) == F(19, 24), 'p-dated-coins p3: not 19/24')
-def ratio_enum(k):
-    k = int(k)
-    a = F(sum(1 for y in itertools.product(range(k), repeat=2) if 0 in y), k * k)
-    return a / F(1, k)
-expr_part(L4, 'p-dated-coins', 4, 'k', '2-\\frac{1}{k}', lambda k: 2 - 1 / k, ratio_enum,
-          {'double': ('2', lambda k: 2 + 0 * k), 'top-only': ('\\frac{2k-1}{k^2}', lambda k: (2 * k - 1) / k ** 2)},
-          [2, 5, 10])
-post = lambda k: 2 * (2 - F(1, k)) / (2 * (2 - F(1, k)) + 1)
-ok(post(10) == report(10) and post(4) == report(4), 'p-dated-coins: odds form disagrees with the enumeration')
-num(L4, 'p-dated-coins', 5, F(4, 5), F(round(float(post(10 ** 9)) * 10 ** 6), 10 ** 6),
-    {'ratio-one': F(2, 3), 'even': F(1, 2), 'certain': 1})
+# p-dark-fills: 60% small orders (1 fill), 40% large (3 fills); each fill dark with chance 0.2
+ps, pl, d = F(6, 10), F(4, 10), F(2, 10)
+sizes = {'small': (ps, 1), 'large': (pl, 3)}
+fill_l = pl * 3 / (ps * 1 + pl * 3)
+# method 2: 100 orders listed one by one, then their fills
+orders = ['small'] * 60 + ['large'] * 40
+fills = [o for o in orders for _ in range(sizes[o][1])]
+num(L4, 'p-dark-fills', 1, fill_l, F(fills.count('large'), len(fills)),
+    {'orders': pl, 'even': F(1, 2), 'small': 1 - fill_l})
+# part 2: weight each fill by its chance of going dark
+dark_w = {'small': F(0), 'large': F(0)}
+for o in fills:
+    dark_w[o] += d
+num(L4, 'p-dark-fills', 2, fill_l * d / (fill_l * d + (1 - fill_l) * d), dark_w['large'] / sum(dark_w.values()),
+    {'orders-slip': pl, 'joint': fill_l * d,
+     'double': fill_l * (1 - (1 - d) ** 3) / (fill_l * (1 - (1 - d) ** 3) + (1 - fill_l) * d)})
+def pat_prob(n, pred):   # enumerate the dark / lit pattern of n fills
+    return sum(F(1) * d ** sum(p) * (1 - d) ** (n - sum(p)) for p in itertools.product((0, 1), repeat=n) if pred(p))
+yes_l = 1 - (1 - d) ** 3
+num(L4, 'p-dark-fills', 3, yes_l, pat_prob(3, lambda p: sum(p) >= 1),
+    {'sum': 3 * d, 'all': d ** 3, 'exactly-one': pat_prob(3, lambda p: sum(p) == 1), 'one': d})
+post_l = pl * yes_l / (pl * yes_l + ps * d)
+joint_yes = {o: sizes[o][0] * pat_prob(sizes[o][1], lambda p: sum(p) >= 1) for o in sizes}
+num(L4, 'p-dark-fills', 4, post_l, joint_yes['large'] / sum(joint_yes.values()),
+    {'no-news': pl, 'sum-slip': pl * 3 * d / (pl * 3 * d + ps * d), 'no-prior': yes_l / (yes_l + d), 'path': pl * yes_l})
+ok(post_l == F(122, 197) and pl * yes_l == F(1952, 10000) and pl * yes_l + ps * d == F(3152, 10000), 'p-dark-fills p4: 0.1952, 0.3152 or 122/197 wrong')
+ok(pl * 3 * d / (pl * 3 * d + ps * d) == fill_l, 'p-dark-fills p4: the 0.6 slip does not give the drawn-fill answer')
+pick(L4, 'p-dark-fills', 5, 'ratio')
+odds = lambda r: (pl / ps) * r / (1 + (pl / ps) * r)          # odds form, a second route
+ok(yes_l / d == F(244, 100) and odds(3) == fill_l and odds(yes_l / d) == post_l, 'p-dark-fills p5: the ratios 3 and 2.44 do not give 0.6667 and 0.6193')
+ok(round(float(fill_l), 4) == 0.6667 and round(float(post_l), 4) == 0.6193, 'p-dark-fills p5: choice text decimals wrong')
 
 # ------------------------------------------------------------------ level 5
 L5 = load(5)

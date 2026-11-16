@@ -127,10 +127,10 @@ check('problems-4 marble bags: 0.5, 0.4, 1/(1+3h) at h=1/2 is 0.4, h=1 is 1/4',
 check('problems-4 two strategies: 0.91, 0.455, 7/13, 7/22',
       1 - Fr(9, 100) == Fr(91, 100) and Fr(21, 100) + Fr(49, 200) == Fr(455, 1000)
       and Fr(245, 455) == Fr(7, 13) == Fr(49, 91) and Fr(98, 98 + 210) == Fr(7, 22))
-check('problems-4 dated coins: 0.8, 0.19, 19/24, limit 0.8',
-      Fr(4, 5) == Fr(8, 10) and 1 - Fr(9, 10) ** 2 == Fr(19, 100)
-      and Fr(1, 2) * Fr(19, 100) / (Fr(1, 2) * Fr(19, 100) + Fr(1, 4) * Fr(1, 10)) == Fr(19, 24)
-      and Fr(4, 5) == Fr(2 * 2, 2 * 2 + 1))
+check('problems-4 dark fills (re-authored AF, was dated coins): 2/3 twice, 0.488, 122/197, ratio 2.44',
+      Fr(12, 10) / Fr(18, 10) == Fr(2, 3) and 1 - Fr(8, 10) ** 3 == Fr(488, 1000)
+      and Fr(4, 10) * Fr(488, 1000) / (Fr(4, 10) * Fr(488, 1000) + Fr(6, 10) * Fr(2, 10)) == Fr(122, 197)
+      and Fr(488, 1000) / Fr(2, 10) == Fr(244, 100))
 
 # ---------------------------------------------------------------- Two children
 print('--- two children and the Tuesday boy')
