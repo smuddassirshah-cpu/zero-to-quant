@@ -1,0 +1,912 @@
+{
+ "id": "problems-3",
+ "course": "stat-learning",
+ "level": 3,
+ "title": "Problems: probabilities, thresholds and honest scores",
+ "minutes": 45,
+ "items": [
+  {
+   "id": "p-order-fill",
+   "difficulty": 4,
+   "skills": [
+    "sl-classify",
+    "sl-setup"
+   ],
+   "prose": "A trading desk models the chance that a resting limit order fills within a minute. Its logistic model gives log-odds $z = 1.4 - 0.9d + 0.5v$. Here $d$ is the order's distance from the mid price in basis points, and $v$ is the standardised order-book imbalance on its side.",
+   "parts": [
+    {
+     "question": "What fill probability does the model give an order at $d = 2$ with $v = 1$? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.525,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "log-odds",
+        "value": 0.1,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.475,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "odds",
+        "value": 1.105,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$z = 1.4 - 1.8 + 0.5 = 0.1$, and $p = 1/(1 + e^{-0.1}) \\approx 0.525$.",
+      "generic": "Not quite. Compute $z$ first, then $p = 1/(1 + e^{-z})$.",
+      "byKey": {
+       "log-odds": "That is the log-odds $z$. Put it through the sigmoid to get a probability.",
+       "sign": "You computed $1/(1 + e^{0.1})$. The log-odds are positive, so $p$ is above 0.5.",
+       "odds": "That is the odds, $e^{0.1}$. The probability is $1.105/2.105$."
+      }
+     },
+     "explain": {
+      "text": "Two basis points out with a little help from the book, the log-odds are 0.1. The sigmoid turns that into a fill chance of 0.525, just better than even."
+     }
+    },
+    {
+     "question": "By what factor do the odds of a fill change for each extra basis point of distance? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.407,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "beta",
+        "value": -0.9,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "reciprocal",
+        "value": 2.46,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "prob",
+        "value": 0.289,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$e^{-0.9} \\approx 0.407$.",
+      "generic": "Not quite. A coefficient $\\beta$ multiplies the odds by $e^{\\beta}$ per unit.",
+      "byKey": {
+       "beta": "That is the change in log-odds. The odds change by $e^{-0.9}$.",
+       "reciprocal": "That is $e^{0.9}$. The coefficient on $d$ is negative, so the factor is below 1.",
+       "prob": "You put $-0.9$ through the sigmoid. The odds ratio is $e^{\\beta}$, not $\\sigma(\\beta)$."
+      }
+     },
+     "explain": {
+      "text": "Each basis point further from the mid multiplies the odds of a fill by 0.407, cutting them by 59%. What that does to the probability depends on where the order starts."
+     }
+    },
+    {
+     "question": "Using $p = 0.525$ from part 1 and the factor 0.407 from part 2, what is the fill probability at $d = 3$ with $v = 1$? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.31,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "prob-times",
+        "value": 0.214,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "odds",
+        "value": 0.45,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "carried",
+        "value": 0.269,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The odds go from $0.525/0.475 = 1.105$ to $1.105 \\times 0.407 = 0.450$, so $p = 0.450/1.450 \\approx 0.310$.",
+      "generic": "Not quite. Turn 0.525 into odds, multiply by 0.407, then turn the odds back into a probability.",
+      "byKey": {
+       "prob-times": "You multiplied the probability by 0.407. The factor applies to the odds, $p/(1 - p)$.",
+       "odds": "That is the new odds. Convert back: $p = 0.45/1.45$.",
+       "carried": "You started from 0.475, part 1's slip. From 0.525 the odds are 1.105."
+      }
+     },
+     "explain": {
+      "text": "One more basis point drops the fill chance from 0.525 to 0.310, a fall of 0.215. Directly, $z = 1.4 - 2.7 + 0.5 = -0.8$ and $\\sigma(-0.8) \\approx 0.310$ too."
+     }
+    },
+    {
+     "question": "The desk leaves an order resting when it predicts a fill. A resting order that fails to fill costs £120 in a worse price later. Crossing the spread at once costs £30 when the order would have filled. Above what fill probability should it rest the order? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "swapped",
+        "value": 0.2,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "ratio",
+        "value": 4,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "half",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Rest when $(1 - p) \\times 120 < p \\times 30$, that is $p > 120/(120 + 30) = 0.8$.",
+      "generic": "Not quite. Compare the expected cost of resting with that of crossing, then solve for $p$.",
+      "byKey": {
+       "swapped": "You put the cheaper error on top. Resting wrongly costs £120, so the threshold is $120/150$.",
+       "ratio": "You divided one cost by the other. The threshold divides by their sum.",
+       "half": "0.5 is right only when both errors cost the same."
+      }
+     },
+     "explain": {
+      "text": "A failed rest costs four times an unneeded cross. So the desk rests only when a fill is likely: $p > 0.8$. With equal costs the threshold would be 0.5."
+     }
+    },
+    {
+     "question": "Use the threshold 0.8 from part 4 and $v = 1$. What is the largest distance $d$ at which an order still rests? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.571,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "t-as-z",
+        "value": 1.222,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "carried",
+        "value": 3.651,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-log",
+        "value": -2.333,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "On the boundary $z = \\ln(0.8/0.2) = 1.386$, so $1.9 - 0.9d = 1.386$ and $d = 0.514/0.9 \\approx 0.571$.",
+      "generic": "Not quite. Turn 0.8 into log-odds, set $z$ equal to it with $v = 1$, and solve for $d$.",
+      "byKey": {
+       "t-as-z": "You set $z = 0.8$. The boundary is where $p = 0.8$, which is $z = \\ln(0.8/0.2) = \\ln 4$.",
+       "carried": "You used the threshold 0.2, part 4's slip. At 0.8 the boundary sits at $z = \\ln 4$.",
+       "no-log": "You set $z = 4$, the odds. The log-odds on the boundary are $\\ln 4 = 1.386$."
+      }
+     },
+     "explain": {
+      "text": "With $v = 1$ the desk rests orders up to 0.571 basis points from the mid and crosses further out. Changing the costs moves only the right-hand side, so the boundary slides without turning."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-payment-misses",
+   "difficulty": 3,
+   "skills": [
+    "sl-classify"
+   ],
+   "prose": "A lender's early-warning model scores 800 small firms, and 40 of them later miss a payment. At its threshold the model flags 100 firms, of which 24 miss a payment.",
+   "parts": [
+    {
+     "question": "Of the flagged firms, what share missed a payment? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.24,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "recall",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "all",
+        "value": 0.03,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$24/100 = 0.24$.",
+      "generic": "Not quite. Divide the flagged firms that missed by all the flagged firms.",
+      "byKey": {
+       "recall": "That divides by the 40 firms that missed. This share divides by the 100 flagged.",
+       "all": "You divided by all 800 firms. Divide by the 100 flagged."
+      }
+     },
+     "explain": {
+      "text": "This is precision: 0.24 of flagged firms miss, about 5 times the base rate of $40/800 = 0.05$."
+     }
+    },
+    {
+     "question": "Of the 40 firms that missed a payment, what share did the model flag? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.6,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "precision",
+        "value": 0.24,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "flag-rate",
+        "value": 0.125,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$24/40 = 0.6$.",
+      "generic": "Not quite. Divide the 24 caught by the 40 firms that missed.",
+      "byKey": {
+       "precision": "That is the share of flagged firms that missed, from part 1. Divide the 24 by the 40 that missed.",
+       "flag-rate": "That is the share of all firms flagged, $100/800$."
+      }
+     },
+     "explain": {
+      "text": "This is recall, 0.6: the model catches 24 of 40 misses and lets 16 through."
+     }
+    },
+    {
+     "question": "Parts 1 and 2 found 24 misses caught and 16 let through. What is the model's accuracy over all 800 firms? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.885,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "always-no",
+        "value": 0.95,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-fp",
+        "value": 0.98,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "hits-only",
+        "value": 0.03,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right calls are the 24 caught and the $760 - 76 = 684$ paying firms left alone: $708/800 = 0.885$.",
+      "generic": "Not quite. Add the flagged firms that missed and the unflagged firms that paid, then divide by 800.",
+      "byKey": {
+       "always-no": "That is the accuracy of flagging nobody. The model flags 76 firms that paid.",
+       "no-fp": "You counted every firm that paid as right. 76 of them were flagged.",
+       "hits-only": "You counted only the 24 caught. The firms correctly left unflagged are right too."
+      }
+     },
+     "explain": {
+      "text": "The model scores 0.885, below the 0.95 of flagging nobody, which catches no miss at all. With rare positives accuracy mostly measures the base rate."
+     }
+    },
+    {
+     "question": "The 100 flagged firms' predicted probabilities average 0.40. Using 0.24 from part 1, by how much does the model overstate their miss rate? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.16,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "recall",
+        "value": -0.2,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "base",
+        "value": 0.35,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.40 - 0.24 = 0.16$.",
+      "generic": "Not quite. Subtract the share that missed from the bin's mean prediction.",
+      "byKey": {
+       "recall": "You compared with recall, 0.6. The observed rate among flagged firms is 0.24.",
+       "base": "You compared with the base rate, 0.05. The bin's own observed rate is 0.24."
+      }
+     },
+     "explain": {
+      "text": "In the flagged bin the model says 0.40 and 0.24 happens: overconfident by 0.16. On a reliability diagram that dot sits below the diagonal."
+     }
+    },
+    {
+     "question": "The other 700 firms' predictions average 0.04. Treat flagged and unflagged firms as two bins. Using the gap 0.16 from part 4, what is the expected calibration error? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.035,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "unweighted",
+        "value": 0.089,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "flagged-only",
+        "value": 0.02,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "carried",
+        "value": 0.059,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The unflagged bin sees $16/700 = 0.0229$ against 0.04, a gap of 0.0171. So ECE $= 0.125 \\times 0.16 + 0.875 \\times 0.0171 = 0.020 + 0.015 = 0.035$.",
+      "generic": "Not quite. Find the unflagged bin's gap, then weight each gap by its bin's share of the 800 firms.",
+      "byKey": {
+       "unweighted": "You averaged the two gaps equally. Weight each by its share of firms: $100/800$ and $700/800$.",
+       "flagged-only": "You left out the unflagged bin. Its 16 misses in 700 give a gap of 0.017.",
+       "carried": "You used the gap 0.35, part 4's slip. The flagged bin's gap is 0.16."
+      }
+     },
+     "explain": {
+      "text": "The two bins together give an expected calibration error of 0.035. Most of it comes from the flagged firms, where the model is far too sure."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-sterling-calls",
+   "difficulty": 4,
+   "skills": [
+    "sl-classify",
+    "sl-setup"
+   ],
+   "prose": "A currency desk's classifier calls each day's move in the euro against sterling, up or down. Over 260 test days the rate rose on 143. The model called up on 150 days, and the rate rose on 99 of them.",
+   "parts": [
+    {
+     "question": "What share of the model's up calls were right? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.66,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "recall",
+        "value": 0.692,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "base",
+        "value": 0.55,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$99/150 = 0.66$.",
+      "generic": "Not quite. Divide the right up calls by all the up calls.",
+      "byKey": {
+       "recall": "That divides by the 143 up days. This share divides by the 150 up calls.",
+       "base": "That is the share of up days, $143/260$. Divide the 99 by the 150 calls."
+      }
+     },
+     "explain": {
+      "text": "The precision of the up calls is 0.66, against a base rate of $143/260 = 0.55$ up days."
+     }
+    },
+    {
+     "question": "What is the model's hit rate over all 260 days, up and down calls together? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.635,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "up-only",
+        "value": 0.381,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "precision",
+        "value": 0.66,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "down-calls",
+        "value": 0.6,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The 110 down calls met $143 - 99 = 44$ rises, so 66 were right. The hit rate is $(99 + 66)/260 = 165/260 \\approx 0.635$.",
+      "generic": "Not quite. Count the right down calls, add the 99 right up calls, then divide by 260.",
+      "byKey": {
+       "up-only": "You counted only the 99 right up calls. The right down calls count too.",
+       "precision": "That is the up calls alone, from part 1. Add the right down calls over all 260 days.",
+       "down-calls": "That is the down calls alone, 66 of 110. Use all 260 days."
+      }
+     },
+     "explain": {
+      "text": "The model is right on 165 of 260 days, a hit rate of 0.635. Always calling up would score the base rate, 0.55."
+     }
+    },
+    {
+     "question": "Using the hit rate 0.635 from part 2, what is the $t$ statistic of its edge over the base rate? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.75,
+      "tol": {
+       "abs": 0.011
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "coin",
+        "value": 4.35,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "own-rate",
+        "value": 2.85,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "no-root",
+        "value": 0.17,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$t = (0.635 - 0.55)/\\sqrt{0.55 \\times 0.45/260} = 0.085/0.0309 \\approx 2.75$.",
+      "generic": "Not quite. Divide the edge over 0.55 by $\\sqrt{0.55 \\times 0.45/260}$.",
+      "byKey": {
+       "coin": "You compared with a coin's 0.5. Always calling up already scores 0.55.",
+       "own-rate": "You used the model's own 0.635 in the standard error. Under the base rate it is $\\sqrt{0.55 \\times 0.45/260}$.",
+       "no-root": "You divided by $\\sqrt{0.2475}$ and left out the 260 days."
+      }
+     },
+     "explain": {
+      "text": "The edge is 0.085 and its standard error 0.0309, so $t \\approx 2.75$. That clears the two standard errors a desk asks for; the next test is whether it pays for its trading."
+     }
+    },
+    {
+     "question": "The desk goes long £2,000,000 on an up call and short on a down call. Each unit of position traded costs 1.5 bp, so a flip from long to short costs 3 bp. The position flipped 70 times. What did the flips cost in all, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 42000,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "whole number",
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "one-unit",
+        "value": 21000,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "per-flip",
+        "value": 600,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "One flip costs $0.0003 \\times 2{,}000{,}000 = £600$, so 70 flips cost £42,000.",
+      "generic": "Not quite. Find the cost of one flip on £2,000,000, then multiply by 70.",
+      "byKey": {
+       "one-unit": "You charged 1.5 bp per flip. A flip trades two units, long to short: 3 bp.",
+       "per-flip": "That is one flip. Multiply by the 70 flips."
+      }
+     },
+     "explain": {
+      "text": "Each flip costs £600 and the model flipped 70 times in 260 days: £42,000."
+     }
+    },
+    {
+     "question": "Before costs the model made £50,000. Using £42,000 from part 4, what did it make after costs, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8000,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "whole number",
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "carried",
+        "value": 29000,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "gross",
+        "value": 50000,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$50{,}000 - 42{,}000 = £8{,}000$.",
+      "generic": "Not quite. Take the cost of the flips off the profit before costs.",
+      "byKey": {
+       "carried": "You took off £21,000, part 4's slip. The flips cost £42,000.",
+       "gross": "That is before costs. Take off the £42,000 the flips cost."
+      }
+     },
+     "explain": {
+      "text": "A $t$ of 2.75 bought only £8,000 once the 70 flips were paid for. An edge has to clear the base rate and the cost of trading it."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-price-spikes",
+   "difficulty": 5,
+   "skills": [
+    "sl-classify",
+    "sl-setup"
+   ],
+   "prose": "A power desk's logistic model gives the log-odds that tomorrow's price spikes as $z = -3.0 + 0.8h$, where $h$ is forecast demand above normal, in GW. Hedging a day costs £6,000 when no spike comes. An unhedged spike costs £18,000.",
+   "parts": [
+    {
+     "question": "What spike probability does the model give a day with $h = 2.5$? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.269,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "log-odds",
+        "value": -1.0,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "odds",
+        "value": 0.368,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.731,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$z = -3.0 + 0.8 \\times 2.5 = -1.0$, and $p = 1/(1 + e^{1}) \\approx 0.269$.",
+      "generic": "Not quite. Compute $z$ first, then $p = 1/(1 + e^{-z})$.",
+      "byKey": {
+       "log-odds": "That is the log-odds $z$. Put it through the sigmoid.",
+       "odds": "That is the odds, $e^{-1}$. The probability is $0.368/1.368$.",
+       "sign": "You computed $1/(1 + e^{-1})$. The log-odds are negative, so $p$ is below 0.5."
+      }
+     },
+     "explain": {
+      "text": "At 2.5 GW above normal the log-odds are $-1.0$, so the model gives a spike chance of 0.269."
+     }
+    },
+    {
+     "question": "Above what spike probability should the desk hedge? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.25,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "swapped",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "miss-only",
+        "value": 0.333,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Hedge when $(1 - p) \\times 6{,}000 < p \\times 18{,}000$, that is $p > 6{,}000/24{,}000 = 0.25$.",
+      "generic": "Not quite. Use $c_{FP}/(c_{FP} + c_{FN})$.",
+      "byKey": {
+       "swapped": "You put the miss cost on top. The threshold is the false-alarm cost over the total.",
+       "miss-only": "You divided by the miss cost alone. The denominator is the sum of both costs."
+      }
+     },
+     "explain": {
+      "text": "A missed spike costs three times a wasted hedge, so the desk hedges above 0.25. By the model, a day at 0.269 is hedged."
+     }
+    },
+    {
+     "question": "On 100 past days the model said between 0.25 and 0.35, averaging 0.29. Prices spiked on 18 of them. What share spiked? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.18,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "did-not",
+        "value": 0.82,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "gap",
+        "value": 0.11,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$18/100 = 0.18$.",
+      "generic": "Not quite. Divide the spike days by the 100 days.",
+      "byKey": {
+       "did-not": "That is the share with no spike. The question asks how often prices spiked.",
+       "gap": "That is the gap between what the model said and what happened. The question asks for the share that spiked."
+      }
+     },
+     "explain": {
+      "text": "The model said 0.29 on these days and 0.18 happened, so its dot sits below the diagonal: it is overconfident about spikes."
+     }
+    },
+    {
+     "question": "Take the observed 0.18 from part 3 as the true chance on such days. What is the expected cost of hedging one of them, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4920,
+      "tol": {
+       "abs": 0.5
+      },
+      "placeholder": "whole number",
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "model-p",
+        "value": 4386,
+        "tol": {
+         "abs": 1
+        }
+       },
+       {
+        "id": "spike",
+        "value": 1080,
+        "tol": {
+         "abs": 0.5
+        }
+       },
+       {
+        "id": "not-hedge",
+        "value": 3240,
+        "tol": {
+         "abs": 0.5
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "A hedge is wasted 82% of the time: $0.82 \\times 6{,}000 = £4{,}920$.",
+      "generic": "Not quite. Multiply the chance of no spike by the £6,000 a wasted hedge costs.",
+      "byKey": {
+       "model-p": "You used the model's 0.269. On these days spikes come 18% of the time.",
+       "spike": "You charged the hedge cost when a spike comes. A hedge is wasted when no spike comes, 82% of the time.",
+       "not-hedge": "That is the expected cost of not hedging, $0.18 \\times 18{,}000$."
+      }
+     },
+     "explain": {
+      "text": "Hedging costs £4,920 a day in expectation. Not hedging costs $0.18 \\times 18{,}000 = £3{,}240$, so at the true rate the hedge does not pay."
+     }
+    },
+    {
+     "question": "Using £4,920 from part 4, how much does skipping the hedge save over the 100 days, in pounds?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 168000,
+      "tol": {
+       "abs": 0.5
+      },
+      "placeholder": "whole number",
+      "unit": "£",
+      "wrong": [
+       {
+        "id": "per-day",
+        "value": 1680,
+        "tol": {
+         "abs": 0.5
+        }
+       },
+       {
+        "id": "model-p",
+        "value": -45459,
+        "tol": {
+         "abs": 200
+        }
+       },
+       {
+        "id": "carried",
+        "value": -216000,
+        "tol": {
+         "abs": 0.5
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Each day skipping saves $4{,}920 - 3{,}240 = £1{,}680$, so 100 days save £168,000.",
+      "generic": "Not quite. Subtract the expected cost of not hedging from £4,920, then multiply by 100.",
+      "byKey": {
+       "per-day": "That is the saving on one day. Multiply by the 100 days.",
+       "model-p": "You used the model's 0.269, which says hedging is cheaper. At the true 0.18 skipping saves money.",
+       "carried": "You used £1,080, part 4's slip. A hedge is wasted 82% of the time, costing £4,920."
+      }
+     },
+     "explain": {
+      "text": "The model's 0.29 sits above the threshold, but the true 0.18 sits below it. Following the overconfident model would cost £168,000 over these days; a cost threshold needs calibrated probabilities."
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -2,7 +2,10 @@
 
 Levels 1 to 4, one block per set. Method 1 is exact (sympy or fractions, the formula the lesson teaches). Method 2
 takes another route. Level 1: calculus and a scan for the best constant, np.var, np.polyfit for the interpolant, a
-simulated average of five noises, scikit-learn's KNeighborsRegressor. Level 4: a point's distance by NumPy projection onto the line, k-means by scikit-learn's KMeans from the stated
+simulated average of five noises, scikit-learn's KNeighborsRegressor. Level 2: built data holding the stated sums,
+fitted by scikit-learn's LinearRegression, Ridge and Lasso on an orthogonal design. Level 3: SciPy's expit and
+brentq, a scan of expected costs, label arrays scored by scikit-learn, binned ECE, proportions_ztest, a position path
+and a simulation. Level 4: a point's distance by NumPy projection onto the line, k-means by scikit-learn's KMeans from the stated
 centres, inertia from KMeans, a spline from hinge columns in NumPy, the network's slope by a central finite
 difference on the loss, a t statistic by statsmodels' proportions_ztest with the null variance, and a sample size
 by brute search. For each numeric part the script checks: the two methods agree; the key is within its tol; every
@@ -482,6 +485,108 @@ if L2 is not None:
     num(L2, 'p-built-ridge', 5, r2, 1 - emse_np(Ridge(alpha=125).fit(Xb, yb).coef_) / emse_np(np.zeros(3)),
         {'ols': 1 - emse(b_hat) / base_b, 'ratio': R(20273, 10000) / base_b, 'too-much': 1 - emse([R(1, 2) * b for b in b_hat]) / base_b}, agree=1e-4)
     ok(abs(float(R(20273, 10000) / base_b) - 0.8853) < 0.00005, 'p-built-ridge: printed 0.8853')
+
+L3 = load(3)
+if L3 is not None:
+    from scipy.optimize import brentq
+    from scipy.special import expit
+    from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+    def sig(z):
+        return 1 / (1 + sp.exp(-z))
+
+    def tcost(c_fp, c_fn):                                     # route 2: scan the expected cost of each decision
+        grid = np.linspace(0, 1, 100001)
+        act = (1 - grid) * c_fp < grid * c_fn
+        return grid[np.argmax(act)]
+    # ---------- p-order-fill ----------
+    d_, v_ = sp.symbols('d v')
+    zf = R(14, 10) - R(9, 10) * d_ + R(1, 2) * v_
+    z1 = zf.subs({d_: 2, v_: 1})
+    num(L3, 'p-order-fill', 1, sig(z1), expit(1.4 - 1.8 + 0.5),
+        {'log-odds': z1, 'sign': sig(-z1), 'odds': sp.exp(z1)})
+    orf = sp.exp(R(-9, 10))
+    num(L3, 'p-order-fill', 2, orf, (expit(-0.8) / (1 - expit(-0.8))) / (expit(0.1) / (1 - expit(0.1))),
+        {'beta': R(-9, 10), 'reciprocal': 1 / orf, 'prob': sig(R(-9, 10))})
+    od = R(525, 1000) / R(475, 1000) * R(407, 1000)            # the question says use the printed 0.525 and 0.407
+    num(L3, 'p-order-fill', 3, od / (1 + od), expit(1.4 - 2.7 + 0.5),
+        {'prob-times': R(525, 1000) * R(407, 1000), 'odds': od,
+         'carried': (R(475, 1000) / R(525, 1000) * R(407, 1000)) / (1 + R(475, 1000) / R(525, 1000) * R(407, 1000))}, agree=0.0005)
+    ok(abs(float(sig(zf.subs({d_: 3, v_: 1}))) - 0.310) < 0.0005 and abs(float(R(525, 475)) - 1.105) < 0.0005 and abs(float(od) - 0.450) < 0.0005, 'p-order-fill: direct sigma(-0.8) 0.310; printed 1.105 and 0.450')
+    t_fill = R(120, 150)
+    num(L3, 'p-order-fill', 4, t_fill, tcost(120, 30), {'swapped': R(30, 150), 'ratio': R(120, 30), 'half': R(1, 2)}, agree=1e-4)
+    dmax = sp.solve(sp.Eq(zf.subs(v_, 1), sp.log(t_fill / (1 - t_fill))), d_)[0]
+    num(L3, 'p-order-fill', 5, dmax, brentq(lambda d: expit(1.4 - 0.9 * d + 0.5) - 0.8, -5, 5),
+        {'t-as-z': (R(19, 10) - R(8, 10)) / R(9, 10), 'carried': sp.solve(sp.Eq(zf.subs(v_, 1), sp.log(R(1, 4))), d_)[0],
+         'no-log': (R(19, 10) - 4) / R(9, 10)}, agree=1e-9)
+    ok(abs(float(sp.log(4)) - 1.386) < 0.0005 and abs(float(R(19, 10) - sp.log(4)) - 0.514) < 0.0005, 'p-order-fill: printed 1.386 and 0.514')
+
+    # ---------- p-payment-misses ----------
+    nF, pos, flag, tp = 800, 40, 100, 24
+    y_true = np.array([1] * tp + [0] * (flag - tp) + [1] * (pos - tp) + [0] * (nF - flag - (pos - tp)))
+    y_flag = np.array([1] * flag + [0] * (nF - flag))
+    num(L3, 'p-payment-misses', 1, R(tp, flag), precision_score(y_true, y_flag), {'recall': R(tp, pos), 'all': R(tp, nF)})
+    ok(R(pos, nF) == R(1, 20) and abs(float(R(tp, flag) / R(pos, nF)) - 4.8) < 1e-12, 'p-payment: base rate 0.05, precision about 5 times it')
+    num(L3, 'p-payment-misses', 2, R(tp, pos), recall_score(y_true, y_flag), {'precision': R(tp, flag), 'flag-rate': R(flag, nF)})
+    tn = (nF - pos) - (flag - tp)
+    ok(tn == 684 and flag - tp == 76 and nF - pos == 760, 'p-payment: 76 false alarms, 684 true negatives')
+    num(L3, 'p-payment-misses', 3, R(tp + tn, nF), accuracy_score(y_true, y_flag),
+        {'always-no': R(nF - pos, nF), 'no-fp': R(tp + nF - pos, nF), 'hits-only': R(tp, nF)})
+    p_hat = np.array([0.40] * flag + [0.04] * (nF - flag))
+    gap1 = R(40, 100) - R(tp, flag)
+    num(L3, 'p-payment-misses', 4, gap1, p_hat[:flag].mean() - y_true[:flag].mean(),
+        {'recall': R(40, 100) - R(tp, pos), 'base': R(40, 100) - R(pos, nF)})
+    gap0 = abs(R(4, 100) - R(pos - tp, nF - flag))
+    ece = R(flag, nF) * gap1 + R(nF - flag, nF) * gap0
+    ece_np = sum(np.mean(m) * abs(p_hat[m].mean() - y_true[m].mean()) for m in (y_flag == 1, y_flag == 0))
+    num(L3, 'p-payment-misses', 5, ece, ece_np,
+        {'unweighted': (gap1 + gap0) / 2, 'flagged-only': R(flag, nF) * gap1, 'carried': R(flag, nF) * R(35, 100) + R(nF - flag, nF) * gap0})
+    ok(abs(float(R(16, 700)) - 0.0229) < 0.00005 and abs(float(gap0) - 0.0171) < 0.00005 and R(nF - flag, nF) * gap0 == R(3, 200), 'p-payment: printed 0.0229, 0.0171 and 0.015')
+
+    # ---------- p-sterling-calls ----------
+    nD, ups, calls_up, right_up = 260, 143, 150, 99
+    right_down = (nD - calls_up) - (ups - right_up)
+    y_d = np.array([1] * right_up + [0] * (calls_up - right_up) + [1] * (ups - right_up) + [0] * right_down)
+    c_d = np.array([1] * calls_up + [0] * (nD - calls_up))
+    num(L3, 'p-sterling-calls', 1, R(right_up, calls_up), precision_score(y_d, c_d), {'recall': R(right_up, ups), 'base': R(ups, nD)})
+    hr = R(right_up + right_down, nD)
+    num(L3, 'p-sterling-calls', 2, hr, accuracy_score(y_d, c_d),
+        {'up-only': R(right_up, nD), 'precision': R(right_up, calls_up), 'down-calls': R(right_down, nD - calls_up)})
+    ok(right_down == 66 and R(ups, nD) == R(11, 20), 'p-sterling: 66 right down calls, base rate 0.55')
+    b_ = R(55, 100)
+    t_s = t_null(R(635, 1000), b_, nD)                           # the question says use the printed 0.635
+    z_sm, _ = proportions_ztest(165, nD, value=0.55, prop_var=0.55)
+    num(L3, 'p-sterling-calls', 3, t_s, z_sm,
+        {'coin': t_null(R(635, 1000), R(1, 2), nD), 'own-rate': (R(635, 1000) - b_) / sp.sqrt(R(635, 1000) * R(365, 1000) / nD),
+         'no-root': (R(635, 1000) - b_) / sp.sqrt(b_ * (1 - b_))}, round_tol=0.005, agree=0.015)
+    ok(abs(float(t_null(hr, b_, nD)) - 2.75) <= 0.011 and abs(float(sp.sqrt(b_ * (1 - b_) / nD)) - 0.0309) < 0.00005, 'p-sterling: unrounded route 2.742 also inside the band; printed 0.0309')
+    pos_path = np.array([1, -1] * 35 + [1])                     # 70 flips between long and short
+    flips_cost = float(np.sum(np.abs(np.diff(pos_path))) * 1.5e-4 * 2_000_000)
+    cost = 70 * 2 * R(15, 100000) * 2_000_000
+    num(L3, 'p-sterling-calls', 4, cost, flips_cost, {'one-unit': cost / 2, 'per-flip': cost / 70}, agree=1e-6)
+    num(L3, 'p-sterling-calls', 5, 50000 - cost, 50000 - flips_cost, {'carried': 50000 - cost / 2, 'gross': 50000}, agree=1e-6)
+
+    # ---------- p-price-spikes ----------
+    hh_ = sp.Symbol('h')
+    zs = -3 + R(4, 5) * hh_
+    p25 = sig(zs.subs(hh_, R(5, 2)))
+    num(L3, 'p-price-spikes', 1, p25, expit(-3.0 + 0.8 * 2.5), {'log-odds': zs.subs(hh_, R(5, 2)), 'odds': sp.exp(-1), 'sign': sig(1)})
+    c_fp, c_fn = 6000, 18000
+    t_sp = R(c_fp, c_fp + c_fn)
+    num(L3, 'p-price-spikes', 2, t_sp, tcost(c_fp, c_fn), {'swapped': R(c_fn, c_fp + c_fn), 'miss-only': R(c_fp, c_fn)}, agree=1e-4)
+    ok(float(p25) > t_sp, 'p-price-spikes: the model hedges a day at 0.269')
+    obs = R(18, 100)
+    num(L3, 'p-price-spikes', 3, obs, np.mean([1] * 18 + [0] * 82), {'did-not': 1 - obs, 'gap': R(29, 100) - obs})
+    ok(obs < t_sp < R(29, 100), 'p-price-spikes: observed 0.18 below the threshold, mean prediction 0.29 above it')
+    rng = np.random.default_rng(9)
+    spike = rng.random(2_000_000) < 0.18
+    hedge = (1 - obs) * c_fp
+    num(L3, 'p-price-spikes', 4, hedge, np.mean(np.where(spike, 0, c_fp)),
+        {'model-p': (1 - p25) * c_fp, 'spike': obs * c_fp, 'not-hedge': obs * c_fn}, round_tol=1, agree=0.005)
+    save = 100 * (hedge - obs * c_fn)
+    num(L3, 'p-price-spikes', 5, save, 100 * (c_fp - 0.18 * (c_fp + c_fn)),
+        {'per-day': save / 100, 'model-p': 100 * ((1 - p25) * c_fp - p25 * c_fn), 'carried': 100 * (obs * c_fp - obs * c_fn)}, round_tol=1, agree=1e-6)
+    ok(abs(100 * ((1 - 0.269) * c_fp - 0.269 * c_fn) - (-45459)) < 200, 'p-price-spikes: the model-p slip with the printed 0.269 also lands in its band')
 
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')

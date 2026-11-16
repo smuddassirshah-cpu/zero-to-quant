@@ -28,6 +28,21 @@ Lessons read first: l5 to l9, review-2 and homework-2 (the 40-feature share pane
 
 Typed parts 20 of 20 (no step here is a judgement between named options). Chains: the weekend slope 2.0, the Saturday forecast 52, the test MSE 4.5, the training-mean baseline 75.75, test $R^2$ 0.941. OLS 0.9, ridge 0.75, the same $\lambda$ in percentage points keeping 0.045 of an OLS 90, the standardised slope 1.0 per standard deviation, and 0.5 per basis point in either unit. Three lasso survivors, momentum $-0.12$, $\alpha_{\max} = 0.42$, a carry z-score of 1.5, and the forecast 0.615. Expected test MSE 2.0396 for OLS, 2.0273 at $\lambda = 125$, 2.0674 at $\lambda = 500$, the baseline 2.29, and test $R^2$ 0.115.
 
+## Level 3: `problems-3.json` (probabilities, thresholds and honest scores)
+
+Lessons read first: l10 to l14, review-3 and homework-3 (the 400 business loans with leverage and cover, the £50,000 and £2,000 costs, the 1,000 firms with 50 defaults, the reliability table, the cubed model, the Kelly bets, the 1,000 simulated days with 135 up of 250). Settings new to the course: a limit order's fill, a lender's missed payments, euro against sterling calls, a power desk's price spikes.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-3 | p-order-fill | 5 (5 / 0) | l10, l11 | 4 |
+| problems-3 | p-payment-misses | 5 (5 / 0) | l12, l13 | 3 |
+| problems-3 | p-sterling-calls | 5 (5 / 0) | l12, l14 | 4 |
+| problems-3 | p-price-spikes | 5 (5 / 0) | l10, l11, l13 | 5 |
+
+Typed parts 20 of 20. Chains: a fill chance of 0.525, the odds ratio 0.407 a basis point, 0.310 one point further out by the odds, the cost threshold 0.8, and the boundary at $d = 0.571$. Precision 0.24, recall 0.6, accuracy 0.885 under the 0.95 of flagging nobody, the flagged bin overconfident by 0.16, and an ECE of 0.035. Up-call precision 0.66, a hit rate of 0.635, $t = 2.75$ against the 0.55 base rate, £42,000 of flips, and £8,000 after costs. A spike chance of 0.269, the hedge threshold 0.25, 0.18 observed where the model said 0.29, £4,920 expected for a hedge, and £168,000 saved over 100 days by not following the overconfident model.
+
+Bands. Part 3 of `p-sterling-calls` asks for $t$ from the printed 0.635 (2.7549, so 2.75) and takes 2.739 to 2.761, so the unrounded route from $165/260$ (2.742, printed 2.74) is accepted too; the script checks both.
+
 ## Level 4: `problems-4.json` (margins, clusters, networks and splines)
 
 Lessons read first: l15 support vector machines, l16 k-means and linkage, l17 a one-layer network and a gradient step, l18 splines, l19 choosing a learner. The three reviews of the level were read too, so that no wrong finding is repeated: the set uses scikit-learn's sense of the margin only through $w$ and $b$ (no $C$), counts spline coefficients by knots (not `SplineTransformer` columns), splits no accuracy into bias and variance, and says nothing about a best inertia. Settings new to the course: a spam filter, a desk's order sizes, a delivery-time network, a subscription firm's renewals.
@@ -47,14 +62,14 @@ Form. Every non-whole numeric part says "Give a decimal." or "Give n decimal pla
 
 ## Checks
 
-| check | problems-1 | problems-2 | problems-4 |
-|---|---|---|---|
-| numbers script | 0 failures (two routes a part: sympy or fractions against NumPy, calculus against a scan for the best constant, `np.polyfit` for the interpolant, a simulated average of five noises, scikit-learn `KNeighborsRegressor`, the $1/n$ rule written with $n$) | 0 failures (built data with the stated sums fitted by scikit-learn `LinearRegression`, `Ridge` and `Lasso`, an orthogonal design for soft thresholding and the ridge factor, `mean_squared_error`) | 0 failures (286 checks; two routes a part: sympy against NumPy projection, scikit-learn `KMeans` from the stated centres, hinge columns in NumPy, a finite-difference slope, a scan for the knot, statsmodels' `proportions_ztest` with the null variance, brute search over $n$) |
-| validator | 0 errors, 0 warnings on the file (eight `O2-long-sentence` and five `O2-explain-answer` on first draft, rewritten) | 0 errors, 0 warnings (two `[percent-form]`, one `O2-explain-answer` on first draft, rewritten) | 0 errors, 0 warnings on the file (eight `O2-long-sentence`, two `[tight-band]` and one `[shown-arithmetic]` on first draft, all rewritten) |
-| playthrough `--local-cdn` | green (20 parts) | green (20 parts) | green (19 parts) |
-| playthrough `--mobile` | green; 440 px shots read, no fault | green; 440 px shots read, no fault | green; 440 px shots read, no fault |
-| `grade-all --file` | 0 failures (20 widgets) | 0 failures (20 widgets) | not run |
-| voice scan 35 (course folder) | 0 and 0 | 0 and 0 | 0 and 0 |
+| check | problems-1 | problems-2 | problems-3 | problems-4 |
+|---|---|---|---|---|
+| numbers script | 0 failures (two routes a part: sympy or fractions against NumPy, calculus against a scan for the best constant, `np.polyfit` for the interpolant, a simulated average of five noises, scikit-learn `KNeighborsRegressor`, the $1/n$ rule written with $n$) | 0 failures (built data with the stated sums fitted by scikit-learn `LinearRegression`, `Ridge` and `Lasso`, an orthogonal design for soft thresholding and the ridge factor, `mean_squared_error`) | 0 failures (sympy against SciPy `expit` and `brentq`, a scan of expected costs for each threshold, label arrays scored by scikit-learn's precision, recall and accuracy, binned ECE in NumPy, statsmodels' `proportions_ztest`, a position path for the flips, a simulation of spikes) | 0 failures (286 checks; two routes a part: sympy against NumPy projection, scikit-learn `KMeans` from the stated centres, hinge columns in NumPy, a finite-difference slope, a scan for the knot, statsmodels' `proportions_ztest` with the null variance, brute search over $n$) |
+| validator | 0 errors, 0 warnings on the file (eight `O2-long-sentence` and five `O2-explain-answer` on first draft, rewritten) | 0 errors, 0 warnings (two `[percent-form]`, one `O2-explain-answer` on first draft, rewritten) | 0 errors, 0 warnings (six `O2-long-sentence` on first draft, rewritten) | 0 errors, 0 warnings on the file (eight `O2-long-sentence`, two `[tight-band]` and one `[shown-arithmetic]` on first draft, all rewritten) |
+| playthrough `--local-cdn` | green (20 parts) | green (20 parts) | green (20 parts) | green (19 parts) |
+| playthrough `--mobile` | green; 440 px shots read, no fault | green; 440 px shots read, no fault | green; 440 px shots read, no fault | green; 440 px shots read, no fault |
+| `grade-all --file` | 0 failures (20 widgets) | 0 failures (20 widgets) | 0 failures (20 widgets) | not run |
+| voice scan 35 (course folder) | 0 and 0 | 0 and 0 | 0 and 0 | 0 and 0 |
 
 ## Fresh-check
 
@@ -62,8 +77,10 @@ Form. Every non-whole numeric part says "Give a decimal." or "Give n decimal pla
 
 `problems-2.json`: first run gave one advisory, `items[3]` sharing 300 and 0.15 with `l11-the-boundary.json` screens[5]; the built market moved to $n = 500$, $\lambda = 125$ and 500, and a third OLS estimate of 0.14 (also clear of review-2's $n = 400$, $\lambda = 100$). The grep of `app/content/` found the first draft's freight rate against diesel close to `regression/problems-2.json` (a freight index on ship fuel), so that problem became rents against mortgage rates. Rerun: 0 hits, 0 warnings, 0 advisories.
 
+`problems-3.json`: first run gave one `[same-course-reuse]` pair warning (the spike item's consecutive keys 0.2 and 0.15 sat together in a review-2 line) and one advisory (0.27 and 0.15 shared with `problems-2.json` items[2]). The spike item moved to costs of £6,000 and £18,000 (threshold 0.25), 100 past days averaging 0.29 with 18 spikes; the rerun gives 0 hits, 0 warnings, 0 advisories. The grep of `app/content/` found an order filling in `conditional/problems-1.json` (a router sending orders to three venues, a different story and model) and a price spike in `fin-ml/l2-triple-barrier.json` (a barrier walk-through); neither is reused. After the third set was written, `problems-1.json` and `problems-2.json` were rerun against it: 0 hits each.
+
 `node tools/fresh-check.mjs --file content/courses/stat-learning/problems-4.json`: 0 hits and no advisory lines. The lesson stories (six loans, six shares' volatilities, the corner network, the impact curve, the five-learner table) are not reused.
 
 ## Engine limits
 
-None found; nothing raised for this set.
+None found for any of the four sets; nothing raised to `docs/BACKLOG-INBOX.md`.
