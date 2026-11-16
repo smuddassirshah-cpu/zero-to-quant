@@ -2404,3 +2404,14 @@ Numbered from the 22 inbox bullets under "Raised later (problems validation)", "
 Last inbox heading numbered by engine pass AF part 1: "Raised later (review problems fin-ml)" (end of file). The inbox is cleared. Last number: 1081.
 
 Status lines of engine pass AF part 1 (`docs/reports/engine-pass-af-1.md`):
+1060 status: open (repeated as 1073). 1061 status: open (repeated as 1074). 1062, 1063 status: open.
+1064 to 1069 status: done, the same items as 1053 to 1058 (engine pass AE part 2).
+1070 to 1072 status: open. 1073, 1074 status: open (repeats of 1060 and 1061).
+1075 status: done in engine pass AF part 1 (`tools/same-course-reuse.mjs` `fbOf`, `tools/retold-reuse.mjs`): every `feedback` line, `explain` and `why` of a set and of the course's lessons, reviews and homework is read, as sentences for the `retold` kind and as text for the `rate` kind; the old `text` kind still reads the setting only.
+1076 status: done as the `retold` kind (error): sentences with numbers, maths and rare nouns masked, stock sentences learned over the whole content (`tools/retold-model.json`), two matched sentences or one long one; shorter runs than the 6 words asked for, since a short sentence of common words is judged by weight, not length.
+1077 status: open.
+1078 status: partly done: the `retold` kind matches a sentence equal to a source sentence once nouns are masked or with one word changed, and a chain of three steps in order; a retelling with several words changed in each sentence is not seen (`docs/reports/engine-pass-af-1.md`, findings not reached).
+1079 status: open.
+1080 status: done: the `rate` kind (error) and per cents read as fractions by the `numbers` kind and the `pair` shape.
+1081 status: open.
+Engine pass AF part 1 tools: `tools/retold-reuse.mjs`, `tools/retold-model.json` (`--learn`), `tools/reuse-hits-report.mjs`, `tools/test-fresh-check-retold-af.mjs` with `tools/fixtures/retold-af`; the 94 hits of the 128 sets are in `docs/reports/same-course-reuse-af-hits.md`.
