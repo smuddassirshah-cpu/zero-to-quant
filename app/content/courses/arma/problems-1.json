@@ -1,0 +1,706 @@
+{
+  "id": "problems-1",
+  "course": "arma",
+  "level": 1,
+  "title": "Problem set: stationarity",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-airport-anomaly",
+      "difficulty": 4,
+      "skills": [
+        "ts-stationary"
+      ],
+      "prose": "A weather desk prices contracts on the daily temperature anomaly at one airport: the day's mean temperature minus its seasonal normal, in °C. Over 365 days it runs the Dickey-Fuller regression $\\Delta x_t = \\alpha + \\gamma x_{t-1} + \\varepsilon_t$ on the 364 pairs. The regressor's sum of squares is $S_{xx} = 1{,}250$, its cross products with $\\Delta x_t$ sum to $S_{xy} = -287.5$, and the residual variance is $s^2 = 3.2$.",
+      "parts": [
+        {
+          "question": "What is the least-squares estimate $\\hat\\gamma$? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.23,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "flip",
+                "value": -4.3478,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "sign",
+                "value": 0.23,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\hat\\gamma = -287.5/1{,}250 = -0.23$, so $\\hat\\phi = 1 + \\hat\\gamma = 0.77$.",
+            "generic": "Not quite. A least-squares slope is the cross products over the regressor's sum of squares.",
+            "byKey": {
+              "flip": "That is $S_{xx}/S_{xy}$, upside down. A slope puts the cross products in the numerator and $S_{xx}$ below them.",
+              "sign": "You dropped the minus sign. The cross products sum to a negative number, so $\\hat\\gamma$ is negative."
+            }
+          },
+          "explain": {
+            "text": "With $x_{t-1}$ as the regressor, the slope is $S_{xy}/S_{xx} = -287.5/1{,}250 = -0.23$. Since $\\gamma = \\phi - 1$, the anomaly keeps $\\hat\\phi = 0.77$ of yesterday's value."
+          }
+        },
+        {
+          "question": "Using $\\hat\\gamma = -0.23$ from part 1, its standard error is $\\sqrt{s^2/S_{xx}}$. What is the Dickey-Fuller $t$ statistic? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -4.5458,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "no-sqrt",
+                "value": -89.84,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "s-not-s2",
+                "value": -6.0799,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "sign",
+                "value": 4.5458,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The standard error is $\\sqrt{3.2/1{,}250} = 0.0506$, so $t = -0.23/0.0506 = -4.55$.",
+            "generic": "Not quite. Divide $\\hat\\gamma$ by the square root of $s^2/S_{xx}$.",
+            "byKey": {
+              "no-sqrt": "You divided by $s^2/S_{xx} = 0.00256$ itself. The standard error is its square root, 0.0506.",
+              "s-not-s2": "You put $s = 1.789$ on top instead of $s^2 = 3.2$.",
+              "sign": "The minus sign went missing. A negative $\\hat\\gamma$ over a positive standard error gives a negative $t$."
+            }
+          },
+          "explain": {
+            "text": "The standard error of the slope is $\\sqrt{0.00256} = 0.0506$. Dividing, $t = -0.23/0.0506 = -4.55$. Part 3 decides which critical value this has to beat."
+          }
+        },
+        {
+          "question": "Using $t = -4.55$ from part 2, what does the test say?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "reject-df",
+                "text": "It rejects a unit root even at 1%: $-4.55$ is below the Dickey-Fuller point of about $-3.45$",
+                "correct": true
+              },
+              {
+                "id": "too-far",
+                "text": "It cannot reject: $-4.55$ is a typical value of the statistic for a random walk",
+                "why": "Walks do give negative statistics, but the 1% point is near −3.45. A value of −4.55 is rare for a walk."
+              },
+              {
+                "id": "backwards",
+                "text": "It rejects, so the anomaly has a unit root",
+                "why": "You read the result backwards. The null is $\\gamma = 0$, a unit root, so rejecting it says the anomaly reverts."
+              },
+              {
+                "id": "normal",
+                "text": "It rejects because $-4.55$ is below $-1.645$, the normal 5% point",
+                "why": "The verdict is right but the table is wrong. For a walk the statistic is centred well below 0, so −1.645 is far too easy a bar."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The anomaly reverts: a stationary AR(1) with $\\hat\\phi = 0.77$.",
+            "generic": "Not quite. Use the Dickey-Fuller points for a regression with a constant, not the normal table."
+          },
+          "explain": {
+            "text": "With a constant and about 365 days the Dickey-Fuller points are near −3.45 at 1% and −2.87 at 5%. The statistic −4.55 is beyond both, so a unit root is rejected. The anomaly is stationary, which is what lets the desk model its level."
+          }
+        },
+        {
+          "question": "Treat the anomaly as a stationary AR(1) with $\\hat\\phi = 0.77$ from part 1 and shock variance $s^2 = 3.2$. What is the variance of the anomaly itself, in °C²? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7.8605,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "shock",
+                "value": 3.2,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 13.913,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $3.2/(1 - 0.77^2) = 3.2/0.4071 = 7.86$ °C².",
+            "generic": "Not quite. A stationary AR(1) has variance $\\sigma^2/(1 - \\phi^2)$.",
+            "byKey": {
+              "shock": "You stopped at $s^2$. The anomaly also holds part of every earlier day's shock.",
+              "no-square": "You divided by $1 - \\phi = 0.23$. The variance formula needs $1 - \\phi^2$."
+            }
+          },
+          "explain": {
+            "text": "Here $\\gamma_0 = 3.2/(1 - 0.5929) = 3.2/0.4071 = 7.86$ °C². The anomaly's sd is $\\sqrt{7.86} = 2.80$ °C, against 1.79 °C for one day's shock."
+          }
+        },
+        {
+          "question": "Using the variance 7.86 °C² from part 4, take the anomaly as normal with mean 0. What is the chance that a given day is more than 5 °C above its normal? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.03726,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "shock-sd",
+                "value": 0.00259,
+                "tol": {
+                  "abs": 0.0003
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 0.09,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. 5 °C is $5/2.804 = 1.78$ sds, and $P(Z > 1.78) = 0.037$.",
+            "generic": "Not quite. Turn 5 °C into sds of the anomaly, then take the normal upper tail.",
+            "byKey": {
+              "shock-sd": "You used the shock's sd, 1.79 °C. A day's anomaly carries the earlier shocks too, so use 2.80 °C.",
+              "no-square": "You used the variance from $1 - \\phi$, 13.91 °C². With $1 - \\phi^2$ it is 7.86 °C²."
+            }
+          },
+          "explain": {
+            "text": "At an sd of 2.80 °C, 5 °C is 1.78 sds above the mean. The normal tail beyond is 0.037, about 14 days a year. With the shock's sd alone the desk would expect about one."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-ppp-screen",
+      "difficulty": 5,
+      "skills": [
+        "ts-stationary"
+      ],
+      "prose": "A macro desk screens 48 real exchange rates, each 360 months long, for a level they return to. It runs the Dickey-Fuller test with a constant on each. Suppose 36 are random walks and 12 are stationary AR(1)s with $\\phi = 0.98$ a month. Seeded simulation gives the share of each kind that a cut-off calls stationary. The Dickey-Fuller 5% point, −2.87, takes 5% of walks and 20% of the AR(1)s. The normal point, −1.645, takes 45% of walks and 89% of the AR(1)s.",
+      "parts": [
+        {
+          "question": "With the Dickey-Fuller cut-off, how many of the 36 walks do you expect the test to call stationary? Give a decimal to 1 place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.8,
+            "tol": {
+              "abs": 0.05
+            },
+            "wrong": [
+              {
+                "id": "power",
+                "value": 7.2,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "normal",
+                "value": 16.2,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $36 \\times 0.05 = 1.8$ false alarms.",
+            "generic": "Not quite. A walk is a true null, so it is rejected at the test's size.",
+            "byKey": {
+              "power": "You used 20%, the chance for an AR(1). A walk is rejected only at the size, 5%.",
+              "normal": "That is $36 \\times 0.45$, the count for the normal cut-off. The Dickey-Fuller point takes 5% of walks."
+            }
+          },
+          "explain": {
+            "text": "Each walk satisfies the null, so the test rejects it with chance 5%. Over 36 walks that is $36 \\times 0.05 = 1.8$ expected false alarms."
+          }
+        },
+        {
+          "question": "Using the 1.8 false alarms from part 1, what share of all the Dickey-Fuller rejections are truly stationary? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.571429,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "power-only",
+                "value": 0.2,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "false-share",
+                "value": 0.428571,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $12 \\times 0.20 = 2.4$ true rejections against 1.8 false: $2.4/4.2 = 0.571$.",
+            "generic": "Not quite. Count the expected true rejections among the 12, then divide by all rejections.",
+            "byKey": {
+              "power-only": "That is the power, the chance an AR(1) is rejected. The question asks what share of the rejections are AR(1)s.",
+              "false-share": "That is the share of rejections that are walks, $1.8/4.2$."
+            }
+          },
+          "explain": {
+            "text": "The 12 AR(1)s give $12 \\times 0.20 = 2.4$ expected rejections. With 1.8 false alarms the test rejects 4.2 series in all, and $2.4/4.2 = 0.571$ of them revert."
+          }
+        },
+        {
+          "question": "Now use the normal cut-off instead. What share of its rejections are truly stationary? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.397321,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "power-only",
+                "value": 0.89,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "false-share",
+                "value": 0.602679,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $12 \\times 0.89 = 10.68$ true against $36 \\times 0.45 = 16.2$ false: $10.68/26.88 = 0.397$.",
+            "generic": "Not quite. Redo part 2 with 45% of walks and 89% of AR(1)s.",
+            "byKey": {
+              "power-only": "That is the chance an AR(1) is rejected, not the share of rejections that are AR(1)s.",
+              "false-share": "That is the share of the normal test's rejections that are walks, $16.2/26.88$."
+            }
+          },
+          "explain": {
+            "text": "The normal point finds most AR(1)s, 10.68 of 12, but it also passes 16.2 walks. So only 0.397 of its rejections are real, fewer than two in five. Against 0.571 in part 2, the wrong table makes each rejection less trustworthy."
+          }
+        },
+        {
+          "question": "Back to the Dickey-Fuller cut-off, with the counts from part 2. Of the series it does not reject, what share are in fact stationary? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.219178,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "miss-rate",
+                "value": 0.8,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "prior",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $12 \\times 0.80 = 9.6$ missed AR(1)s among $9.6 + 34.2 = 43.8$ non-rejections: 0.219.",
+            "generic": "Not quite. Count the AR(1)s the test misses and the walks it keeps, then take the share.",
+            "byKey": {
+              "miss-rate": "That is the chance an AR(1) is missed. The question asks what share of the misses are AR(1)s.",
+              "prior": "That is $12/48$, the share before any test. Not rejecting moves it down a little, to 0.219."
+            }
+          },
+          "explain": {
+            "text": "The test misses 80% of the AR(1)s, 9.6 of them, and keeps 95% of the walks, 34.2. So $9.6/43.8 = 0.219$ of the series it does not reject revert. More than one in five of the 'walks' are not walks."
+          }
+        },
+        {
+          "question": "The desk differences every series the test did not reject. About 22% of those revert, from part 4. What does differencing do to them?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "over",
+                "text": "It over-differences them: the level they return to, which the desk wanted to trade, is thrown away",
+                "correct": true
+              },
+              {
+                "id": "no-harm",
+                "text": "Nothing harmful: differencing a stationary series leaves a stationary series",
+                "why": "The result is stationary, but the level the series returns to is lost. A reversion trade bets on that level."
+              },
+              {
+                "id": "walks",
+                "text": "It turns them into random walks",
+                "why": "A random walk needs a shock that never fades. Differencing an AR(1) creates no such shock, so the result still reverts."
+              },
+              {
+                "id": "noise",
+                "text": "It turns them into white noise, the ideal input for a model",
+                "why": "That holds for a walk alone. The changes of an AR(1) with $\\phi = 0.98$ are pulled by the level, so they are autocorrelated."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. A blanket difference fixes the walks and spoils the reverting series.",
+            "generic": "Not quite. Think about what a reversion trade needs and what differencing removes."
+          },
+          "explain": {
+            "text": "These 9.6 series needed no difference, so the desk has over-differenced them. Their changes carry no level to trade back to. With power of only 20%, the honest step is more history or a second test."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-gdp-trend",
+      "difficulty": 4,
+      "skills": [
+        "ts-stationary"
+      ],
+      "prose": "A macro researcher has 120 quarters of a country's log real GDP and weighs two models. Model A is a straight line in time plus independent noise $u_t$. Model B is a random walk with drift, so each quarter's growth is the drift plus an independent shock. A fitted line leaves residuals with sd 3.5%, while quarterly growth has sd 0.9%.",
+      "parts": [
+        {
+          "question": "If model A were true, with noise of sd 3.5%, what sd should quarterly growth have? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0494975,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "same",
+                "value": 0.035,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "double",
+                "value": 0.07,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Growth would be the slope plus $u_t - u_{t-1}$, with sd $\\sqrt 2 \\times 3.5\\% = 4.95\\%$.",
+            "generic": "Not quite. Write a quarter's growth under model A, then add the variances of its two noise terms.",
+            "byKey": {
+              "same": "You assumed differencing keeps the noise's sd. Growth holds two noise terms, so its variance doubles.",
+              "double": "You doubled the sd. Differencing doubles the variance, so the sd grows by $\\sqrt 2$."
+            }
+          },
+          "explain": {
+            "text": "Under model A, a quarter's growth is the line's slope plus $u_t - u_{t-1}$. Two independent noises of sd 3.5% add their variances. The sd is $3.5\\% \\times \\sqrt 2 = 4.95\\%$."
+          }
+        },
+        {
+          "question": "Model A predicts growth with sd 4.95% from part 1, and the data show 0.9%. What does that say?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "a-fails",
+                "text": "Model A fails: growth is far smoother than A predicts, so the gaps from the line persist",
+                "correct": true
+              },
+              {
+                "id": "a-fits",
+                "text": "Model A fits: a growth sd below 4.95% shows the noise is small",
+                "why": "Under A the noise sd is fixed by the residuals at 3.5%. A smaller growth sd contradicts A; it does not support it."
+              },
+              {
+                "id": "b-fails",
+                "text": "Model B fails, because a random walk should stay close to a fitted straight line",
+                "why": "A walk wanders far from any straight line. A large residual sd beside a small growth sd is what B predicts."
+              },
+              {
+                "id": "apart",
+                "text": "The two sds cannot be compared, since one is a level and one a change",
+                "why": "Model A ties them together: differencing its noise gives growth with $\\sqrt 2$ times the noise's sd."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Small steps and a wide spread around the line are the picture of a stochastic trend, model B.",
+            "generic": "Not quite. Compare what model A predicts for growth with what the data show."
+          },
+          "explain": {
+            "text": "Model A promises growth with sd 4.95%, more than five times the 0.9% observed. Small steps with a wide spread around the line mean the gaps last for years. Model B, whose shocks build up, fits that picture."
+          }
+        },
+        {
+          "question": "Take model B, with growth shocks of sd 0.9% a quarter. Given today's value, what is the sd of log GDP 12 quarters from now? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0311769,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "linear",
+                "value": 0.108,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $0.9\\% \\times \\sqrt{12} = 3.12\\%$.",
+            "generic": "Not quite. Each of the 12 quarters brings its own unrelated shock, so the variance is 12 times one quarter's.",
+            "byKey": {
+              "linear": "You added 12 sds. The variance is 12 times one quarter's, so the sd is $\\sqrt{12}$ times, not 12 times."
+            }
+          },
+          "explain": {
+            "text": "Twelve unrelated shocks of variance $0.9^2$ give a variance of $12 \\times 0.9^2 = 9.72$. The sd is $\\sqrt{9.72} = 3.12\\%$, which is $0.9\\% \\times \\sqrt{12}$."
+          }
+        },
+        {
+          "question": "Model A would quote one sd, 3.5%, at every horizon. Using model B's $0.9\\% \\times \\sqrt h$ from part 3, after how many quarters is model B's sd larger than 3.5%? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 16,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "round-down",
+                "value": 15,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\sqrt h > 3.5/0.9 = 3.89$ needs $h > 15.1$, so 16 quarters.",
+            "generic": "Not quite. Solve $0.9\\sqrt h > 3.5$ for $h$.",
+            "byKey": {
+              "round-down": "At 15 quarters the sd is $0.9\\% \\times \\sqrt{15} = 3.49\\%$, just below 3.5%.",
+              "no-square": "You stopped at $3.5/0.9 = 3.89$. That is $\\sqrt h$, so square it."
+            }
+          },
+          "explain": {
+            "text": "Squaring $\\sqrt h > 3.5/0.9$ gives $h > 15.1$. At 15 quarters model B's sd is 3.49%, at 16 it is 3.60%. Beyond four years, the choice of model decides how wide the forecast band is."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-gold-drift",
+      "difficulty": 3,
+      "skills": [
+        "ts-stationary"
+      ],
+      "prose": "A commodities desk holds 501 daily closes of an ounce of gold, in £. The first close is £1,450 and the last £1,820. It models the log price as a random walk with drift, $\\ln p_t = \\ln p_{t-1} + \\mu + \\varepsilon_t$, and the daily log returns have sd 1.1%.",
+      "parts": [
+        {
+          "question": "Differencing the log price gives the log returns, whose mean estimates $\\mu$. What is that mean, in basis points? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4.5455,
+            "tol": {
+              "abs": 0.006
+            },
+            "unit": "bp",
+            "wrong": [
+              {
+                "id": "simple",
+                "value": 5.1034,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\ln(1{,}820/1{,}450) = 0.2273$ over 500 returns is 0.000455, or 4.55 bp a day.",
+            "generic": "Not quite. Add the log returns without listing them, then count how many there are.",
+            "byKey": {
+              "simple": "You used the simple gain, 25.5%, which does not add up day by day. The log gain is $\\ln(1{,}820/1{,}450) = 0.2273$."
+            }
+          },
+          "explain": {
+            "text": "Adding $\\ln p_t - \\ln p_{t-1}$ over every day cancels all the middle closes and leaves $\\ln(1{,}820/1{,}450) = 0.2273$. 501 closes give 500 returns, so the mean is $0.2273/500 = 4.55$ bp."
+          }
+        },
+        {
+          "question": "Take the mean of 4.55 bp from part 1. A mean of 500 returns with sd 1.1% has standard error $110/\\sqrt{500}$ bp. What is the $t$ statistic against a drift of 0? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.92,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "no-sqrt",
+                "value": 20.661,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "sd",
+                "value": 0.0413,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The standard error is $110/\\sqrt{500} = 4.92$ bp, so $t = 4.55/4.92 = 0.92$.",
+            "generic": "Not quite. Divide 4.55 bp by $110/\\sqrt{500}$ bp.",
+            "byKey": {
+              "no-sqrt": "You divided 110 by 500. The standard error divides by $\\sqrt{500} = 22.4$.",
+              "sd": "You divided by the daily sd, 110 bp. A mean of 500 returns has a much smaller standard error."
+            }
+          },
+          "explain": {
+            "text": "A drift is the mean of the differences, so its standard error is the return sd over $\\sqrt{500}$: 4.92 bp. Then $t = 4.55/4.92 = 0.92$, less than one standard error from 0."
+          }
+        },
+        {
+          "question": "With $t = 0.92$ from part 2, what can the desk say about the drift?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "unclear",
+                "text": "Nothing firm: a drift of 0 fits the data as well, since $t$ is well inside ±1.96",
+                "correct": true
+              },
+              {
+                "id": "proved",
+                "text": "Gold drifts up 4.55 bp a day, as the 25% gain proves",
+                "why": "The gain is one path of a walk. Over 500 days its log price has sd $1.1\\% \\times \\sqrt{500} = 24.6\\%$, so a 22.7% log gain needs no drift at all."
+              },
+              {
+                "id": "stationary",
+                "text": "The log price is stationary, so the drift must be 0",
+                "why": "The log price is a walk, which is not stationary with or without a drift. The question is only the size of $\\mu$."
+              },
+              {
+                "id": "df-table",
+                "text": "Test it against the Dickey-Fuller point, −2.87, instead",
+                "why": "That table is for $\\gamma$ in a unit-root regression. A drift is the mean of stationary returns, read with the ordinary $t$."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The drift is too small to see in 500 days.",
+            "generic": "Not quite. A $t$ of 0.92 is less than one standard error."
+          },
+          "explain": {
+            "text": "A $t$ of 0.92 is well inside ±1.96, so a drift of 0 is not rejected. The returns are stationary, so the ordinary $t$ applies here. The special table is for $\\gamma$ in the level regression, not for a mean of returns."
+          }
+        },
+        {
+          "question": "Suppose the true drift really is 4.55 bp a day, with sd 110 bp. Using $t = \\bar r\\sqrt n/\\sigma$, how many daily returns would push $t$ to 2? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2338,
+            "tol": {
+              "abs": 5
+            },
+            "wrong": [
+              {
+                "id": "no-square",
+                "value": 48,
+                "tol": {
+                  "abs": 1
+                }
+              },
+              {
+                "id": "t-one",
+                "value": 585,
+                "tol": {
+                  "abs": 2
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $n = (2 \\times 110/4.55)^2 = 2337.9$, so 2,338 returns.",
+            "generic": "Not quite. Set $4.55\\sqrt n/110 = 2$ and solve for $n$.",
+            "byKey": {
+              "no-square": "You stopped at $\\sqrt n = 48.4$. Square it to get $n$.",
+              "t-one": "That is the count for $t = 1$. Doubling $t$ needs four times the data."
+            }
+          },
+          "explain": {
+            "text": "$t$ grows like $\\sqrt n$, so $t = 2$ needs $\\sqrt n = 2 \\times 110/4.55 = 48.4$. That is 2,338 returns, about nine years at 252 trading days a year. A small drift is hard to see in a walk."
+          }
+        }
+      ]
+    }
+  ]
+}
