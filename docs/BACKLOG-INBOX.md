@@ -21,3 +21,6 @@ Raised later (problems coint):
 - `playthrough.mjs --problems` fails with "the level review's card on the course page has no Problem set row" and "opened in state empty" when `content/manifest.json` predates the set (for example after `git checkout app/content/manifest.json` before a commit, as the briefs ask). Rerunning the validator fixes it; the playthrough could say "set missing from manifest.json: run tools/validate.mjs" instead.
 Raised later (problems numerics):
 - `playthrough.mjs --problems <course>/problems-<n>` on a set missing from `content/manifest.json` (after `git checkout app/content/manifest.json`, before the validator rewrites it) fails with a bare `page.waitForFunction: Timeout 20000ms exceeded`. It should check the manifest first and say "set not in manifest: run tools/validate.mjs".
+Raised later (problems garch):
+
+- `fresh-check.mjs` lists "2 shared parameters (2.3263 99)" as an advisory on every VaR item of `garch/problems-3.json` (l10 screen 2). The normal 99% quantile with its level is a stock constant, like 1.96 with 95; add standard quantiles (1.6449, 1.9600, 2.3263, 2.5758 with their levels) to the stock list so the advisory is kept for real shared parameters.

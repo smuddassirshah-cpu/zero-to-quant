@@ -358,9 +358,174 @@ def level2():
     lv.report()
 
 
+# ---------------------------------------------------------------- level 3
+def level3():
+    from scipy.optimize import brentq
+    lv = Level('garch', 3)
+    shape(3, None)
+    S = math.sqrt(252)
+    z99 = 2.3263
+    ok(abs(-stats.norm.ppf(0.01) - z99) < 5e-5, 'L3 z99 2.3263')
+
+    # P1 back out phi and V_L from three forecasts, then day 30's vol and VaR
+    I = 'p-forecasts-to-parameters'
+    f = [F(69, 100), F(676, 1000), F(66298, 100000)]
+    phi = (f[2] - f[1]) / (f[1] - f[0])
+    # method 2: f_{h+1} = (1 - phi) V_L + phi f_h is linear; solve it with numpy
+    A = np.array([[1.0, float(f[0])], [1.0, float(f[1])]])
+    c0, phi2 = np.linalg.solve(A, np.array([float(f[1]), float(f[2])]))
+    num(3, I, 1, phi, phi2, {'inverted': 1 / phi, 'levels': f[1] / f[0]}, 0.93, agree=1e-9, slip_tol=1e-4)
+    VL = f[0] - (f[0] - f[1]) / (1 - phi)
+    num(3, I, 2, VL, c0 / (1 - phi2), {'average': sum(f) / 3, 'gap': (f[0] - f[1]) / (1 - phi), 'decimal': VL / 10000}, 0.49,
+        agree=1e-8, slip_tol=1e-4)
+    ok(phi == F(93, 100) and VL == F(49, 100), 'L3 P1 exact phi 0.93 and V_L 0.49')
+    gap = f[0] - VL
+    v30 = VL + phi ** 29 * gap
+    e = float(f[0])
+    for _ in range(29):                     # step E[s2] = omega + phi E[s2] forward from tomorrow
+        e = float((1 - phi) * VL) + float(phi) * e
+    s30 = math.sqrt(v30)
+    num(3, I, 3, s30 / 100, math.sqrt(e) / 100,
+        {'power-30': math.sqrt(VL + phi ** 30 * gap) / 100, 'variance': v30 / 100, 'no-long-run': math.sqrt(phi ** 29 * gap) / 100},
+        0.007172, agree=1e-9, slip_tol=1e-8)
+    s30r = F(7172, 10000)
+    v1 = F(23263, 10000) * s30r / 100 * 8000000
+    num(3, I, 4, v1, z99 * 0.7172 * 80000, {'part3-slip': F(23263, 10000) * F(7160, 10000) * 80000,
+                                           'variance': F(23263, 10000) * F(5144, 10000) * 80000,
+                                           'z95': F(16449, 10000) * s30r * 80000,
+                                           'tomorrow': z99 * math.sqrt(0.69) * 80000}, 133474, slip_tol=0.01)
+    ok(round(math.sqrt(VL + phi ** 30 * gap), 4) == 0.7160 and round(float(v30), 4) == 0.5144, 'L3 P1 slip inputs 0.7160 and 0.5144')
+    tom = z99 * math.sqrt(0.69) * 80000
+    said(lv, 0, 1, 'feedback.correct', [-0.014, -0.01302, 0.93])
+    said(lv, 0, 2, 'feedback.correct', [0.2, 0.49])
+    said(lv, 0, 2, 'explain.text', [0.7, round(math.sqrt(252 * 0.49), 2)])
+    said(lv, 0, 3, 'feedback.correct', [round(float(phi ** 29 * gap), 4), round(float(v30), 4), round(s30, 4)])
+    said(lv, 0, 3, 'explain.text', [0.7172])
+    lv.claim(round(float(phi ** 29) * 100) == 12 and abs(s30 - 0.7) < 0.02, 'L3 P1 12% of the gap left; within 0.02 of 0.7%')
+    said(lv, 0, 4, 'feedback.correct', ['133{,}474'])
+    said(lv, 0, 4, 'explain.text', ['154,590', '133,474'])
+    ok(round(tom) == 154590 and round(100 * (1 - float(v1) / tom)) == 14, 'L3 P1 tomorrow £154,590, a 14% fall')
+    said(lv, 0, 4, 'feedback.byKey.tomorrow', [round(math.sqrt(0.69), 4)])
+
+    # P2 a volatility-targeted fund's VaR is flat until the cap binds
+    I = 'p-bank-index-flat-var'
+    w_, a, b, s2, r = F(6, 100), F(6, 100), F(91, 100), F(225, 100), F(-4)
+    nv = w_ + a * r * r + b * s2
+    nv2 = float(np.dot([0.06, 0.06, 0.91], [1.0, 16.0, 2.25]))
+    num(3, I, 1, math.sqrt(nv) / 100, math.sqrt(nv2) / 100,
+        {'no-square': math.sqrt(w_ + a * r + b * s2) / 100, 'no-omega': math.sqrt(a * r * r + b * s2) / 100, 'variance': nv / 100},
+        0.017514, slip_tol=1e-8)
+    T, L, P = 11, 1.25, 15e6
+    snr = 1.7514
+    wt = T / (snr * S)
+    num(3, I, 2, wt, T / math.sqrt(252 * snr ** 2), {'daily': min(T / snr, L), 'times-252': T / (snr * 252),
+                                                     'from-today': T / (1.5 * S)}, 0.3956, slip_tol=1e-6)
+    flat = z99 * T / S / 100 * P
+    exact_w = T / (math.sqrt(nv) * S)
+    num(3, I, 3, flat, z99 * exact_w * math.sqrt(nv) / 100 * P, {'no-weight': z99 * snr / 100 * P, 'z95': 1.6449 * 0.3956 * snr / 100 * P},
+        241800, agree=1e-9, slip_tol=60)
+    ok(abs(z99 * 0.3956 * snr / 100 * P - flat) < 120, 'L3 P2 the rounded w gives a figure inside the band')
+    calm = 0.48
+    wc = float(np.minimum(T / (calm * S), L))
+    vc = z99 * wc * calm / 100 * P
+    num(3, I, 4, vc, z99 * L * calm * P / 100, {'no-cap': z99 * (T / (calm * S)) * calm / 100 * P, 'cap-1': z99 * calm / 100 * P}, 209400,
+        slip_tol=1.0)
+    said(lv, 1, 1, 'feedback.correct', [0.96, 2.0475, 3.0675, 1.7514])
+    said(lv, 1, 1, 'explain.text', [0.96, round(float(w_ + b * s2), 4), 1.7514])
+    lv.claim(round(100 * (math.sqrt(nv) / 1.5 - 1)) == 17, 'L3 P2 tomorrow 17% above 1.5%')
+    said(lv, 1, 2, 'feedback.correct', [round(snr * S, 3), 0.3956])
+    said(lv, 1, 2, 'explain.text', [39.56])
+    said(lv, 1, 3, 'feedback.correct', ['241,800'])
+    said(lv, 1, 3, 'explain.text', [round(T / S, 4), '241,800'])
+    said(lv, 1, 4, 'feedback.correct', [round(calm * S, 2), round(T / (calm * S), 2), '209,367'])
+    ok(round(vc) == 209367, 'L3 P2 calm VaR £209,367')
+    said(lv, 1, 4, 'explain.text', [round(T / (L * S), 4), '209,367'])
+
+    # P3 Kupiec at 97.5%, then recalibrate the VaR and the ES
+    I = 'p-recalibrate-short-var'
+    ok(round(-stats.norm.ppf(0.025), 4) == 1.96 and round(stats.norm.ppf(0.9575), 4) == 1.7224
+       and round(stats.norm.pdf(1.96), 6) == 0.058441, 'L3 P3 the three normal values in the prose')
+    x, n = 17, 400
+
+    def kup(xx, nn, p):
+        ph = xx / nn
+        return -2 * ((nn - xx) * math.log(1 - p) + xx * math.log(p) - (nn - xx) * math.log(1 - ph) - xx * math.log(ph))
+    LR = kup(x, n, 0.025)
+    LR2 = 2 * (stats.binom.logpmf(x, n, x / n) - stats.binom.logpmf(x, n, 0.025))   # binomial coefficient cancels
+    num(3, I, 1, LR, LR2, {'at-0.01': kup(x, n, 0.01), 'half': LR / 2}, 4.168, agree=1e-9, slip_tol=1e-4)
+    l0, l1 = 383 * math.log(0.975) + 17 * math.log(0.025), 383 * math.log(1 - 0.0425) + 17 * math.log(0.0425)
+    said(lv, 2, 1, 'feedback.correct', [round(l0, 3), round(l1, 3), 0.0425, 4.168])
+    said(lv, 2, 1, 'explain.text', [10, 17, 4.168, round(1 - stats.chi2.cdf(LR, 1), 3)])
+    ok(n * 0.025 == 10 and LR > 3.841, 'L3 P3 expected 10, rejected')
+    c = F(19600, 10000) / F(17224, 10000)
+    c2 = brentq(lambda cc: 1.96 / cc - 1.7224, 0.5, 2)
+    num(3, I, 2, c, c2, {'inverted': 1 / c, 'rates': F(425, 10000) / F(25, 1000)}, 1.1379, agree=1e-9, slip_tol=1e-4)
+    lv.claim(round(float(c - 1) * 100) == 14, 'L3 P3 c about 14% above 1')
+    said(lv, 2, 2, 'feedback.correct', [1.7224, 1.1379])
+    cr = 1.1379
+    vn = 1.96 * cr * 1.15 / 100 * 3e6
+    num(3, I, 3, vn, float(F(196, 100) * F(11379, 10000) * F(115, 100) * 30000),
+        {'uncorrected': 1.96 * 1.15 * 30000, 'inverted': 1.96 * 1.15 / cr * 30000}, 76945, slip_tol=0.01)
+    said(lv, 2, 3, 'feedback.correct', ['76,945', '67,620'])
+    said(lv, 2, 3, 'explain.text', ['9,325', 14, '76,945'])
+    ok(round(vn) - 67620 == 9325 and round(100 * (vn / 67620 - 1)) == 14, 'L3 P3 the fix adds £9,325, 14%')
+    tail = integrate.quad(lambda zz: zz * stats.norm.pdf(zz), 1.96, 40)[0] / 0.025    # E[Z | Z > 1.96] by integration
+    es = cr * 1.15 / 100 * 0.058441 / 0.025 * 3e6
+    num(3, I, 4, es, cr * 1.15 / 100 * tail * 3e6, {'uncorrected': 1.15 / 100 * 0.058441 / 0.025 * 3e6,
+                                                    'no-divide': cr * 1.15 / 100 * 0.058441 * 3e6}, 91770, agree=2e-5, slip_tol=0.01)
+    said(lv, 2, 4, 'feedback.correct', ['91,770'])
+    said(lv, 2, 4, 'explain.text', ['91,770', round(0.058441 / 0.025, 4), 19])
+    ok(round(100 * (0.058441 / 0.025 / 1.96 - 1)) == 19 and abs(0.058441 / 0.025 - z99) < 0.02, 'L3 P3 ES 19% beyond VaR, close to 2.3263')
+
+    # P4 an unlevered fund buys back in as a storm fades
+    I = 'p-index-fund-back-in'
+    VL4, ph4, s1, T4 = 0.64, 0.977, 4.0, 14
+    Td = T4 / S
+    w1 = min(Td / math.sqrt(s1), 1)
+    num(3, I, 1, w1, T4 / (2 * S), {'daily': min(T4 / 2, 1), 'variance': T4 / (s1 * S)}, 0.4410, slip_tol=1e-6)
+    v20 = VL4 + ph4 ** 19 * (s1 - VL4)
+    e = s1
+    for _ in range(19):
+        e = (1 - ph4) * VL4 + ph4 * e
+    num(3, I, 2, math.sqrt(v20) / 100, math.sqrt(e) / 100,
+        {'power-20': math.sqrt(VL4 + ph4 ** 20 * (s1 - VL4)) / 100, 'variance': v20 / 100, 'no-long-run': math.sqrt(ph4 ** 19 * (s1 - VL4)) / 100},
+        0.016731, slip_tol=1e-8)
+    w20 = 0.88192 / 1.6731
+    path = [min(Td / math.sqrt(VL4 + ph4 ** (h - 1) * (s1 - VL4)), 1) for h in range(1, 21)]
+    turn = sum(abs(p2 - p1) for p1, p2 in zip(path, path[1:]))     # daily changes summed
+    num(3, I, 3, w20 - w1, turn, {'day-20-weight': w20, 'sum': w20 + w1, 'part2-slip': 0.88192 / 1.6582 - 0.4410}, 0.086,
+        agree=2e-4, slip_tol=1e-4)
+    ok(abs(Td ** 2 - 7 / 9) < 1e-12, 'L3 P4 the daily target variance is 7/9')
+    hm1 = math.log((Td ** 2 - VL4) / (s1 - VL4)) / math.log(ph4)
+    h = 1
+    while VL4 + ph4 ** (h - 1) * (s1 - VL4) > Td ** 2:
+        h += 1
+    hn = 1
+    while ph4 ** (hn - 1) * s1 > Td ** 2:
+        hn += 1
+    hv = 1
+    while 0.8 + ph4 ** (hv - 1) * (2 - 0.8) > Td:
+        hv += 1
+    num(3, I, 4, math.ceil(hm1) + 1, h, {'h-minus-1': h - 1, 'no-long-run': hn, 'vol-gap': hv}, 139)
+    said(lv, 3, 1, 'feedback.correct', [2, round(2 * S, 2), 31.749, 0.4410])
+    said(lv, 3, 1, 'explain.text', [round(Td, 4), 0.88192, 0.4410])
+    ok(round(Td, 5) == 0.88192 and round(T4 / 31.749, 4) == 0.4410, 'L3 P4 0.88192 and 14/31.749')
+    said(lv, 3, 2, 'feedback.correct', [round(ph4 ** 19 * 3.36, 4), round(v20, 4), round(math.sqrt(v20), 4)])
+    said(lv, 3, 2, 'explain.text', [round(100 * ph4 ** 19), 1.6731, 0.8])
+    said(lv, 3, 3, 'feedback.correct', [round(w20, 4), 0.0861])
+    said(lv, 3, 3, 'explain.text', [0.086, round((w20 - w1) * 0.0005 * 100, 4)])
+    said(lv, 3, 4, 'feedback.correct', [round(7 / 9 - 0.64, 4), round((7 / 9 - 0.64) / 3.36, 5), round(hm1, 2), 139])
+    said(lv, 3, 4, 'explain.text', [139, round(0.8 * S, 2)])
+    lv.claim(6.3 < 139 / 21 < 6.9, 'L3 P4 139 trading days is about six and a half months')
+    lv.check_wrongs('problems')
+    lv.report()
+
+
 if SETS[1]:
     level1()
 if SETS[2]:
     level2()
+if SETS[3]:
+    level3()
 print(f'{checks - len(fails)} of {checks} direct checks passed')
 sys.exit(1 if fails else 0)

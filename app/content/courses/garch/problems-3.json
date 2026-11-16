@@ -1,0 +1,742 @@
+{
+  "id": "problems-3",
+  "course": "garch",
+  "level": 3,
+  "title": "Problems: using forecasts",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-forecasts-to-parameters",
+      "difficulty": 5,
+      "skills": [
+        "gv-forecast",
+        "gv-risk"
+      ],
+      "prose": "A dollar-yen trading desk works with returns in %. Its risk screen shows a GARCH(1,1) model's daily variance forecasts but hides the fitted parameters. For the next three days they read 0.69, 0.676 and 0.66298 %². Each is $V_L + \\phi^{\\,h-1}(\\sigma^2_{t+1} - V_L)$ for $h = 1, 2, 3$.",
+      "parts": [
+        {
+          "question": "What persistence $\\phi = \\alpha + \\beta$ do the three forecasts imply? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.93,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Persistence",
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 1.0753,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "levels",
+                "value": 0.9797,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The changes are $0.676 - 0.69 = -0.014$ and $0.66298 - 0.676 = -0.01302$, so $\\phi = 0.01302/0.014 = 0.93$.",
+            "generic": "Not quite. Each day's change is $\\phi$ times the change before it, since $V_L$ cancels in a difference.",
+            "byKey": {
+              "inverted": "You divided the first change by the second. The later change is the smaller one, so $\\phi = 0.01302/0.014$.",
+              "levels": "You divided one forecast by the one before. $V_L$ does not shrink, so only the changes fall by $\\phi$."
+            }
+          },
+          "explain": {
+            "text": "Subtracting neighbouring forecasts removes $V_L$ and leaves $\\phi^{\\,h-1}(\\phi - 1)$ times tomorrow's gap. So the ratio of two changes is $\\phi$ itself, 0.93."
+          }
+        },
+        {
+          "question": "Using $\\phi = 0.93$ from part 1, what long-run variance $V_L$ does the screen imply, in %²? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.49,
+            "tol": {
+              "abs": 0.006
+            },
+            "label": "Long-run variance",
+            "wrong": [
+              {
+                "id": "average",
+                "value": 0.6763,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "gap",
+                "value": 0.2,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "decimal",
+                "value": 4.9e-05,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The first change, $-0.014$, is $(\\phi - 1)$ times tomorrow's gap, so the gap is $0.014/0.07 = 0.2$. Then $V_L = 0.69 - 0.2 = 0.49$ %².",
+            "generic": "Not quite. Find tomorrow's gap from the first change and $1 - \\phi$, then take it from 0.69.",
+            "byKey": {
+              "average": "You averaged the three forecasts. They all sit above the long run, so their mean is too high.",
+              "gap": "0.2 is tomorrow's gap above the long run. Take it from 0.69 to reach $V_L$.",
+              "decimal": "You worked in decimals. The forecasts are in %², so $V_L$ is 0.49 %²."
+            }
+          },
+          "explain": {
+            "text": "The long run is a daily vol of 0.7%, or 11.11% a year over 252 days. Tomorrow's 0.69 %² sits 0.2 above $V_L = 0.49$, and that gap is what decays."
+          }
+        },
+        {
+          "question": "With $V_L = 0.49$, $\\phi = 0.93$ and tomorrow's gap of 0.2 %², what daily volatility does the model forecast for 30 days ahead? Give a percentage to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.00717203,
+            "tol": {
+              "abs": 6e-07
+            },
+            "unit": "%",
+            "label": "Daily volatility 30 days ahead",
+            "accept": "0.7172%: $\\sqrt{0.5144}$.",
+            "wrong": [
+              {
+                "id": "power-30",
+                "value": 0.00716012,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.0051438,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "no-long-run",
+                "value": 0.00156141,
+                "tol": {
+                  "abs": 6e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.49 + 0.93^{29} \\times 0.2 = 0.49 + 0.0244 = 0.5144$ %², so the vol is $\\sqrt{0.5144} = 0.7172\\%$.",
+            "generic": "Not quite. Shrink the gap by $0.93^{29}$, add $V_L$, then take the square root.",
+            "byKey": {
+              "power-30": "You used the power 30. Tomorrow is $h = 1$ with power 0, so day 30 takes $0.93^{29}$.",
+              "variance": "That is the variance, 0.5144 %². The question asks for the volatility, its square root.",
+              "no-long-run": "You shrank the gap but left out $V_L$. Add $V_L = 0.49$ back before the root."
+            }
+          },
+          "explain": {
+            "text": "After 29 steps at 0.93 the gap is down to 12% of its size. So a month out the forecast, 0.7172%, is within 0.02 points of the long-run 0.7%."
+          }
+        },
+        {
+          "question": "The desk holds an £8m dollar-yen position. Using 0.7172% from part 3 and $z = 2.3263$, what 99% normal VaR does the model expect to report for that day? Give your answer to the nearest £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 133473.79,
+            "tol": {
+              "abs": 6
+            },
+            "unit": "£",
+            "label": "VaR for day 30",
+            "wrong": [
+              {
+                "id": "part3-slip",
+                "value": 133250.46,
+                "tol": {
+                  "abs": 6
+                }
+              },
+              {
+                "id": "variance",
+                "value": 95731.9,
+                "tol": {
+                  "abs": 6
+                }
+              },
+              {
+                "id": "z95",
+                "value": 94377.78,
+                "tol": {
+                  "abs": 6
+                }
+              },
+              {
+                "id": "tomorrow",
+                "value": 154589.59,
+                "tol": {
+                  "abs": 6
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$2.3263 \\times 0.7172\\% \\times £8{,}000{,}000 = £133{,}474$.",
+            "generic": "Not quite. The VaR is the quantile times that day's forecast vol times the position.",
+            "byKey": {
+              "part3-slip": "That follows from 0.7160%, the power-30 slip of part 3. With 0.7172% the VaR is £133,474.",
+              "variance": "You used the variance, 0.5144, in place of the vol. The quantile multiplies the sd.",
+              "z95": "You used 1.6449, the 95% point. A 99% VaR takes 2.3263.",
+              "tomorrow": "That is tomorrow's VaR, from $\\sqrt{0.69} = 0.8307\\%$. The question asks about day 30."
+            }
+          },
+          "explain": {
+            "text": "Tomorrow's VaR is £154,590, so the model expects the figure to fall by 14% to £133,474 over the month. Most of tonight's extra risk has gone by then."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-bank-index-flat-var",
+      "difficulty": 4,
+      "skills": [
+        "gv-forecast",
+        "gv-risk"
+      ],
+      "prose": "A £15m fund holds a European bank index and cash. It targets 11% annual volatility, with a leverage cap of 1.25. Its GARCH(1,1) in % has $\\omega = 0.06$, $\\alpha = 0.06$ and $\\beta = 0.91$. Today's variance was 2.25 %² and the index fell 4.0%. The fund sizes tonight for tomorrow, with 252 days a year.",
+      "parts": [
+        {
+          "question": "What daily volatility does the GARCH forecast for tomorrow? Give a percentage to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.01751428,
+            "tol": {
+              "abs": 6e-07
+            },
+            "unit": "%",
+            "label": "Tomorrow's daily volatility",
+            "accept": "1.7514%: $\\sqrt{3.0675}$.",
+            "wrong": [
+              {
+                "id": "no-square",
+                "value": 0.01366565,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "no-omega",
+                "value": 0.01734215,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.030675,
+                "tol": {
+                  "abs": 6e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.06 + 0.06 \\times 16 + 0.91 \\times 2.25 = 0.06 + 0.96 + 2.0475 = 3.0675$ %², and $\\sqrt{3.0675} = 1.7514\\%$.",
+            "generic": "Not quite. Add $\\omega$, $\\alpha$ times today's squared return and $\\beta$ times today's variance, then take the root.",
+            "byKey": {
+              "no-square": "You used $-4.0$ itself, not its square. The news term is $0.06 \\times 16 = 0.96$.",
+              "no-omega": "You left out $\\omega = 0.06$. Every day adds it.",
+              "variance": "That is the variance, 3.0675 %². The fund needs the volatility, its square root."
+            }
+          },
+          "explain": {
+            "text": "The fall adds 0.96 %² of news on top of $0.06 + 0.91 \\times 2.25 = 2.1075$. Tomorrow's forecast, 1.7514%, is 17% above today's 1.5%."
+          }
+        },
+        {
+          "question": "Using 1.7514% from part 1, what weight in the index does the fund hold tonight? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.395646,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "Weight in the index",
+            "wrong": [
+              {
+                "id": "daily",
+                "value": 1.25,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "times-252",
+                "value": 0.024923,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "from-today",
+                "value": 0.461957,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.7514\\% \\times \\sqrt{252} = 27.803\\%$ a year, so $w = 11/27.803 = 0.3956$, under the cap.",
+            "generic": "Not quite. Annualise the daily forecast with $\\sqrt{252}$, divide the target by it, then apply the cap.",
+            "byKey": {
+              "daily": "You divided 11 by the daily 1.7514 and the cap cut it to 1.25. The target is annual, so annualise the forecast first.",
+              "times-252": "You multiplied by 252, not $\\sqrt{252}$. Volatility grows with the root of time.",
+              "from-today": "You sized from today's 1.5%. Tonight's weight uses tomorrow's forecast, 1.7514%."
+            }
+          },
+          "explain": {
+            "text": "The fund keeps 39.56% of its capital in the index and the rest in cash. On a storm night like this the cap of 1.25 is far away."
+          }
+        },
+        {
+          "question": "The money in the index is $w$ times £15m. Using $w = 0.3956$ and 1.7514% from parts 1 and 2, with $z = 2.3263$, what is the fund's 99% normal VaR for tomorrow? Give your answer to the nearest £100.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 241796.16,
+            "tol": {
+              "abs": 120
+            },
+            "unit": "£",
+            "label": "Fund VaR tonight",
+            "wrong": [
+              {
+                "id": "no-weight",
+                "value": 611142.27,
+                "tol": {
+                  "abs": 120
+                }
+              },
+              {
+                "id": "z95",
+                "value": 170951.29,
+                "tol": {
+                  "abs": 120
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$2.3263 \\times 0.3956 \\times 1.7514\\%$ of £15m is about £241,800.",
+            "generic": "Not quite. The VaR is the quantile times tomorrow's vol times the money held in the index, $w \\times$ £15m.",
+            "byKey": {
+              "no-weight": "You put the whole £15m at risk. Only $w = 0.3956$ of it sits in the index.",
+              "z95": "1.6449 is the 95% point. This VaR is at 99%, so use 2.3263."
+            }
+          },
+          "explain": {
+            "text": "Since $w\\hat\\sigma$ equals the daily target $11\\%/\\sqrt{252} = 0.6929\\%$, this VaR does not depend on the forecast at all. Any night the cap leaves alone gives about £241,800."
+          }
+        },
+        {
+          "question": "Months later, after a long calm, tonight's forecast is 0.48% a day. With the same target and cap, what is the fund's 99% VaR for tomorrow? Give your answer to the nearest £100.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 209367.0,
+            "tol": {
+              "abs": 120
+            },
+            "unit": "£",
+            "label": "Fund VaR on the calm night",
+            "wrong": [
+              {
+                "id": "no-cap",
+                "value": 241796.16,
+                "tol": {
+                  "abs": 120
+                }
+              },
+              {
+                "id": "cap-1",
+                "value": 167493.6,
+                "tol": {
+                  "abs": 120
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.48\\% \\times \\sqrt{252} = 7.62\\%$, so $11/7.62 = 1.44$ and the cap holds $w = 1.25$. The VaR is $2.3263 \\times 1.25 \\times 0.48\\%$ of £15m, £209,367.",
+            "generic": "Not quite. Work out the weight first: the cap of 1.25 binds tonight.",
+            "byKey": {
+              "no-cap": "You used the uncapped weight 1.44, which gives the flat £241,800 again. The cap holds the weight at 1.25.",
+              "cap-1": "You capped the weight at 1. This fund may hold up to 1.25 times its capital."
+            }
+          },
+          "explain": {
+            "text": "Below a forecast of $11/(1.25\\sqrt{252}) = 0.5543$% a day the cap binds, and the VaR falls with the forecast, here to £209,367. So the flat VaR holds only on nights the cap leaves alone."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-recalibrate-short-var",
+      "difficulty": 5,
+      "skills": [
+        "gv-risk"
+      ],
+      "prose": "A desk is short £3m of a water utility share and reports a 97.5% one-day normal VaR each evening. A short loses when the share rises, so its losing tail is the right one. Over 400 test days the VaR was beaten 17 times. Take $\\Phi^{-1}(0.975) = 1.9600$, $\\Phi^{-1}(0.9575) = 1.7224$ and $\\varphi(1.96) = 0.058441$.",
+      "parts": [
+        {
+          "question": "What is Kupiec's LR for 17 breaches in 400 days at $p = 0.025$? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 4.1678,
+            "tol": {
+              "abs": 0.0006
+            },
+            "label": "Kupiec LR",
+            "wrong": [
+              {
+                "id": "at-0.01",
+                "value": 23.6268,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "half",
+                "value": 2.0839,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "At $p = 0.025$ the hits score $-72.408$; at $\\hat p = 17/400 = 0.0425$ they score $-70.324$. Twice the gap is $LR = 4.168$.",
+            "generic": "Not quite. Compare the hits' log-likelihood at $p = 0.025$ with that at $\\hat p = 17/400$, and double the gap.",
+            "byKey": {
+              "at-0.01": "You used $p = 0.01$, the 99% rate. This desk's VaR is at 97.5%, so $p = 0.025$.",
+              "half": "You left out the factor 2. LR is twice the log-likelihood gap."
+            }
+          },
+          "explain": {
+            "text": "A correct model expects 10 breaches here, not 17. LR is 4.168, above 3.841, so Kupiec rejects at 5% ($p = 0.041$). Too many breaches mean the forecasts run low."
+          }
+        },
+        {
+          "question": "Suppose every forecast was too low by one constant factor $c$, with normal shocks. A breach then needs a shock above $1.96/c$, and that happened at the rate $\\hat p = 0.0425$ from part 1. What is $c$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.1379,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "Scale factor",
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 0.8788,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "rates",
+                "value": 1.7,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.96/c = \\Phi^{-1}(0.9575) = 1.7224$, so $c = 1.9600/1.7224 = 1.1379$.",
+            "generic": "Not quite. Set $1.96/c$ equal to the shock beaten 4.25% of the time, 1.7224, and solve for $c$.",
+            "byKey": {
+              "inverted": "You divided 1.7224 by 1.96. The forecasts were too low, so the factor is above 1.",
+              "rates": "You divided the two breach rates. The factor acts on the quantile, not on the chance."
+            }
+          },
+          "explain": {
+            "text": "The desk's true vol ran $c = 1.1379$ times its forecasts, about 14% above them. Its VaR line sat only 1.7224 true sds out, not the 1.96 it meant."
+          }
+        },
+        {
+          "question": "Tonight's forecast is 1.15% a day. Using $c = 1.1379$ from part 2, what recalibrated 97.5% VaR should the desk report on its £3m short? Give your answer to the nearest £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 76944.8,
+            "tol": {
+              "abs": 1.5
+            },
+            "unit": "£",
+            "label": "Recalibrated VaR",
+            "wrong": [
+              {
+                "id": "uncorrected",
+                "value": 67620.0,
+                "tol": {
+                  "abs": 1.5
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 59425.26,
+                "tol": {
+                  "abs": 1.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.96 \\times 1.1379 \\times 1.15\\%$ of £3m is £76,945, against £67,620 before.",
+            "generic": "Not quite. Scale tonight's forecast up by $c$, then multiply by 1.96 and the position.",
+            "byKey": {
+              "uncorrected": "That is tonight's VaR before the fix. Scale the forecast up by $c = 1.1379$ first.",
+              "inverted": "You divided by $c$. The forecasts were too low, so the VaR must rise."
+            }
+          },
+          "explain": {
+            "text": "The fix adds £9,325, or 14%, taking the VaR to £76,945. A breach again needs a rise of 1.96 true sds, so the expected rate is back to 2.5%."
+          }
+        },
+        {
+          "question": "The desk also reports a 97.5% expected shortfall, $\\text{ES} = \\hat\\sigma\\,\\varphi(1.96)/0.025 \\times$ position. Using the recalibrated vol $1.1379 \\times 1.15\\%$ from part 3, what is the ES? Give your answer to the nearest £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 91770.02,
+            "tol": {
+              "abs": 1.5
+            },
+            "unit": "£",
+            "label": "Recalibrated ES",
+            "wrong": [
+              {
+                "id": "uncorrected",
+                "value": 80648.58,
+                "tol": {
+                  "abs": 1.5
+                }
+              },
+              {
+                "id": "no-divide",
+                "value": 2294.25,
+                "tol": {
+                  "abs": 1.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.1379 \\times 1.15\\% \\times 0.058441/0.025$ of £3m is £91,770.",
+            "generic": "Not quite. Use the recalibrated vol and the density at 1.96, and divide by the tail size 0.025.",
+            "byKey": {
+              "uncorrected": "You used the raw 1.15%. The ES needs the recalibrated vol, as the VaR did.",
+              "no-divide": "You left out the division by 0.025. ES averages the losses over the worst 2.5% of days."
+            }
+          },
+          "explain": {
+            "text": "The ES of £91,770 sits 2.3376 true sds out, about 19% beyond the VaR's 1.96. Basel's newer rules use a 97.5% ES in place of a 99% VaR. For a normal the two are close."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-index-fund-back-in",
+      "difficulty": 4,
+      "skills": [
+        "gv-forecast"
+      ],
+      "prose": "A mid-cap index fund targets 14% annual volatility and may not borrow, so its weight is capped at 1. Its GARCH(1,1) in % has long-run variance $V_L = 0.64$ %² and persistence $\\phi = 0.977$. After a sell-off, tomorrow's variance forecast is 4.0 %². The fund uses 252 days a year.",
+      "parts": [
+        {
+          "question": "What weight in the index does the fund hold tonight? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.440959,
+            "tol": {
+              "abs": 6e-05
+            },
+            "label": "Weight tonight",
+            "wrong": [
+              {
+                "id": "daily",
+                "value": 1,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.220479,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Tomorrow's vol is $\\sqrt{4.0} = 2\\%$, or $2\\% \\times \\sqrt{252} = 31.75\\%$ a year. So $w = 14/31.749 = 0.4410$.",
+            "generic": "Not quite. Annualise tomorrow's vol with $\\sqrt{252}$, divide 14% by it, and apply the cap.",
+            "byKey": {
+              "daily": "You divided 14 by the daily 2%, and the cap cut it to 1. Annualise the forecast first.",
+              "variance": "You divided by 4.0 %², the variance. The weight uses the vol, 2%."
+            }
+          },
+          "explain": {
+            "text": "The fund holds 44% in the index and 56% in cash. The daily target is $14\\%/\\sqrt{252} = 0.8819\\%$, so $w = 0.88192/2 = 0.4410$."
+          }
+        },
+        {
+          "question": "Using $V_L = 0.64$ and $\\phi = 0.977$, what daily volatility does the GARCH forecast for 20 days ahead? Give a percentage to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.01673145,
+            "tol": {
+              "abs": 6e-07
+            },
+            "unit": "%",
+            "label": "Daily volatility 20 days ahead",
+            "accept": "1.6731%: $\\sqrt{2.7994}$.",
+            "wrong": [
+              {
+                "id": "power-20",
+                "value": 0.01658236,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.02799414,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "no-long-run",
+                "value": 0.01469495,
+                "tol": {
+                  "abs": 6e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.64 + 0.977^{19} \\times 3.36 = 0.64 + 2.1594 = 2.7994$ %², and $\\sqrt{2.7994} = 1.6731\\%$.",
+            "generic": "Not quite. Shrink tomorrow's gap $4.0 - 0.64 = 3.36$ by $0.977^{19}$, add $V_L$, then take the root.",
+            "byKey": {
+              "power-20": "You used the power 20. Day 20 is 19 steps after tomorrow, so the power is 19.",
+              "variance": "That is the variance, 2.7994 %². The weight needs the vol, its square root.",
+              "no-long-run": "You kept the shrunk gap but dropped $V_L = 0.64$. Add it back before the root."
+            }
+          },
+          "explain": {
+            "text": "Over 19 steps at 0.977 the gap keeps 64% of its size. The forecast vol has fallen from 2% to 1.6731%, still far above the long-run 0.8%."
+          }
+        },
+        {
+          "question": "If the forecasts come true, the weight rises a little each day as the vol falls. One unit is a whole fund's worth of the index. With 1.6731% from part 2 and 0.4410 from part 1, how many units are bought by day 20? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.08616,
+            "tol": {
+              "abs": 0.0006
+            },
+            "label": "Units bought",
+            "wrong": [
+              {
+                "id": "day-20-weight",
+                "value": 0.52712,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "sum",
+                "value": 0.96808,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "part2-slip",
+                "value": 0.09085,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "On day 20, $w = 0.88192/1.6731 = 0.5271$. The weights only rise, so the units bought are $0.5271 - 0.4410 = 0.0861$.",
+            "generic": "Not quite. Size day 20 from its forecast, $w = 0.88192/1.6731$, then take tonight's weight from it.",
+            "byKey": {
+              "day-20-weight": "That is day 20's weight. The question asks how much the weight grows from tonight.",
+              "sum": "You added the two weights. The fund buys only the rise, $0.5271 - 0.4410$.",
+              "part2-slip": "That uses 1.6582%, the power-20 slip of part 2. With 1.6731% the rise is 0.086."
+            }
+          },
+          "explain": {
+            "text": "The weights rise every day, so the daily changes add up to the total rise, 0.086. At 5 bp a unit those purchases cost the fund about 0.0043% over the 20 days."
+          }
+        },
+        {
+          "question": "The fund is fully invested once the forecast falls to the daily target $14\\%/\\sqrt{252}$, a variance of $7/9$ %². Using $V_L = 0.64$, $\\phi = 0.977$ and tomorrow's gap of 3.36, on which day ahead does the weight first reach 1? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 139,
+            "tol": {
+              "abs": 0
+            },
+            "label": "Day the fund is fully invested",
+            "wrong": [
+              {
+                "id": "h-minus-1",
+                "value": 138,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-long-run",
+                "value": 72,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "vol-gap",
+                "value": 117,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The gap must shrink from 3.36 to $7/9 - 0.64 = 0.1378$, so $0.977^{h-1} \\le 0.04101$. That needs $h - 1 \\ge 137.27$, so day 139.",
+            "generic": "Not quite. Solve $0.64 + 0.977^{h-1} \\times 3.36 \\le 7/9$ for the first whole $h$.",
+            "byKey": {
+              "h-minus-1": "You gave $h - 1$. Tomorrow is $h = 1$ with power 0, so the day is one more: 139.",
+              "no-long-run": "You let the whole variance decay towards zero. Only the gap above $V_L = 0.64$ shrinks.",
+              "vol-gap": "You decayed the vol gap, from 2% to 0.8%. The forecast formula decays the variance gap, 3.36 %²."
+            }
+          },
+          "explain": {
+            "text": "Day 139 is about six and a half months of trading days, because 0.977 a day decays slowly. The 14% target sits only a little above the long-run 12.70%, so the last stretch takes longest."
+          }
+        }
+      ]
+    }
+  ]
+}
