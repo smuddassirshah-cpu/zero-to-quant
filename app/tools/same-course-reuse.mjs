@@ -9,11 +9,14 @@
 //   --numbers n      shared distinctive numbers needed for a numbers hit (default 3)       --df n   a number or matrix held by more than n units of the app is not distinctive (default 40)
 //   --warn-run n     shared words in one run for a text warning (default 10)                 --error-run n   for a text error (default 12)
 //   --boiler n       a shingle held by more than n units of the app is boilerplate (default 20)
-// Kinds: numbers (warning), matrix (error), text (warning from --warn-run words, error from --error-run). The sources are every other file of the course (lessons with their quizzes,
+// Kinds: numbers (warning), matrix (error), text (warning from --warn-run words, error from --error-run), and four advisory shapes from reuse-shapes.mjs (ENGINE-BACKLOG 993, warning only,
+// --no-shapes off, --shape-df n: a shape held by more than n files is stock): function (a function with its interval or factorisation), pair (two consecutive part keys in one sentence),
+// transform (a polynomial or number set shifted and scaled), region (corners, circle with integrand, end points with route). The sources are every other file of the course (lessons with their quizzes,
 // reviews, homework, problem sets; the generated fluency-* files are left out). Waivers: tools/same-course-waivers.json, or "reuseWaiver": "reason" on the item.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { shapesOf, buildIndex, matchShapes } from './reuse-shapes.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const APP = join(HERE, '..');
@@ -175,7 +178,7 @@ function unitsOfFile(doc, rel) {
     for (const s of out) for (const m of parseLatexMatrices(s)) mats.push(m);
     jsonMatrices(stem ? [stem, node] : node, mats);
     if (!sec.length && !out.length) return;
-    u.push({ file: rel, path, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.map(matrixKey).filter(Boolean)) });
+    u.push({ file: rel, path, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.map(matrixKey).filter(Boolean)), shapes: shapesOf(out, stem ? null : node) });
   };
   const withParts = (path, q) => {
     add(path, q);
@@ -205,13 +208,14 @@ export function loadCorpus(C) {
     for (const k of x.sh) bump(df.sh, k, x.file);
   }
   for (const m of [df.sh]) for (const [k, v] of m) m.set(k, v.size);
-  return { df, byFile, courses, sdf };
+  const sidx = buildIndex(all);   // reuse shapes (function, pair, transform, region): reuse-shapes.mjs
+  return { df, byFile, courses, sdf, sidx };
 }
 
 // ---- scan ----
 const O = (argv, k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : d; };
 export function scanSet(corpus, rel, doc, opts = {}) {
-  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5 } = opts;
+  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5, shapes = true, shapeDf = 4 } = opts;
   const course = rel.split('/')[1], hits = [];
   const mine = corpus.byFile.get(rel) ?? unitsOfFile(doc, rel);
   if (!corpus.byFile.has(rel)) for (const x of mine) { x.tk = tokensOf(x.sens, corpus.sdf); x.sh = new Set(shingles(x.tk)); }
@@ -251,6 +255,8 @@ export function scanSet(corpus, rel, doc, opts = {}) {
     }
     // matrices
     for (const mk of t.mats) { if (outside(corpus.df.mat, mk) > MAT_STOCK) continue; for (const s of sources) if (s.mats.has(mk)) keep(t, s, 'matrix', 1, `matrix ${mk.replace(/^\d+x\d+:/, '[').replace(/,/g, ' ')}] equal up to a scalar and a transpose`); }
+    // reuse shapes: a function with its interval or factorisation, a key pair, a shifted or scaled set, a region with its integrand (advisory, ENGINE-BACKLOG 993)
+    if (shapes) for (const h of matchShapes(t, corpus.sidx, rel, (f) => f.startsWith(`courses/${course}/`), { df: shapeDf })) keep(t, h.src, h.kind, h.score, h.evidence);
     // text
     const cand = new Set();
     for (const g of t.sh) for (const i of idx.get(g) ?? []) cand.add(i);
@@ -287,7 +293,7 @@ export const fmtHit = (h, doc) => `[same-course-reuse] ${h.waived ? 'waived' : h
 const main = () => {
   const argv = process.argv.slice(2), has = (k) => argv.includes(k);
   const C = O(argv, '--content', join(APP, 'content'));
-  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)) };
+  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)), shapes: !has('--no-shapes'), shapeDf: Number(O(argv, '--shape-df', 4)) };
   if (has('--no-waivers')) process.env.ZQ_NO_WAIVERS = '1';
   const corpus = loadCorpus(C);
   let rels = [];
@@ -299,7 +305,7 @@ const main = () => {
   if (has('--json')) console.log(JSON.stringify(all.map(({ line, ...h }) => h), null, 1));
   else for (const h of all) console.log(h.line);
   const errs = all.filter((h) => h.level === 'error' && !h.waived), warns = all.filter((h) => h.level === 'warn' && !h.waived), waived = all.filter((h) => h.waived);
-  const by = (l) => ['numbers', 'matrix', 'text'].map((k) => `${k} ${l.filter((h) => h.kind === k).length}`).join(', ');
+  const by = (l) => ['numbers', 'matrix', 'text', 'function', 'pair', 'transform', 'region'].map((k) => `${k} ${l.filter((h) => h.kind === k).length}`).join(', ');
   if (!has('--json')) console.log(`[same-course-reuse] ${rels.length} file(s): ${errs.length} error(s) (${by(errs)}), ${warns.length} warning(s) (${by(warns)}), ${waived.length} waived`);
   process.exitCode = errs.length ? 1 : 0;
 };

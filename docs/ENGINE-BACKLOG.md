@@ -2268,9 +2268,9 @@ Raised by session AC and the engine pass AD planning (`KNOWN_ISSUES.md` "(sessio
 971. Done [Should] CI job running every number script (28 of 360 failed unseen at the session-start commit).
 971 status: done. `tools/run-number-scripts.mjs` and a job in `acceptance.yml`; allow-list `tools/number-scripts-known-failing.txt`. See `docs/CI.md`.
 972. [Should] `fresh-check` same-course mode (numbers, matrices up to scale and transpose, 8-word shingles), gated. [KNOWN_ISSUES session AC; protocol 6, third sighting]
-972 status: in flight (another agent; report `docs/reports/engine-pass-ad-2.md`).
+972 status: done (engine pass AD part 2, `docs/reports/engine-pass-ad-2.md`); extended by 993 in engine pass AE part 1.
 973. [Should] Changed-only `extras problems` jobs took 18 minutes for 12 new sets: a course-wide or manifest dependency in the problem-set hash is the suspect. [KNOWN_ISSUES session AC, CI run 10]
-973 status: in flight (same agent as 972).
+973 status: done (engine pass AD part 2: `--shard` partitions by a hash of `kind|id`).
 
 Numbered from the inbox headings after "Raised later (problems elimination)" (83 bullets; a count in brackets is the number of bullets merged into the item):
 974. [Should] A Python code test cannot have a limit under 5 s (`budget` only adds), so one call on the largest input does not separate $O(n)$ from $O(\log n)$. [inbox: bank 2 coding 3 and 4]
@@ -2358,3 +2358,7 @@ Numbered from the inbox headings "Raised later (audit ds)" (round 2), "(audit gr
 1051. [Could] Add "only if", "every ... because", "almost always" and "as ... promises" to the validator's universal-wording warning list. [inbox: audit limits-thm L4 round 2]
 
 Last inbox heading numbered by engine pass AE part 1: "Raised later (audit limits-thm L4 round 2)" (end of file). The 17 bullets from "problems analysis" to "review problems vector-calc" were already numbered (974 to 1025) and were dropped; the 37 after them are 1028 to 1051. The inbox is cleared. Last number: 1051.
+
+Status lines of engine pass AE part 1 (`docs/reports/engine-pass-ae-1.md`):
+993 status: partly done. `tools/same-course-reuse.mjs` (so `fresh-check.mjs --file`) now also reads, as advisories, a function with its interval or factorisation (variable renamed; app-wide for a function with its interval, for a cubic or higher and for the heavy terms of a polynomial in two letters), two consecutive part keys held by one sentence of the course, a polynomial or number set shifted and scaled, and a region with its integrand (corners, circle with integrand, end points with route; app-wide). New file `tools/reuse-shapes.mjs`; test `tools/test-fresh-check-same-course-ae.mjs` (the eight session AD findings and four rulings as fixtures under `tools/fixtures/same-course-ae/`); 28 advisory hits on the 116 existing sets, all "to read". Not done: letter-entry matrices at a set value, a claim chain, a set-up under new wording, the topic exam as a source, a story noun in a screen title.
+1028 to 1051 status: open (numbered in engine pass AE part 1).
