@@ -267,7 +267,7 @@ it = P['p-app-users']['parts']
 day = terms_geom(4, 5, 15)
 check_numeric('2 app p1', it[0], day[5], 4 * 5 ** 5, [12500], {'power-n': 4 * 5 ** 6, 'day-five': day[4]})
 S6 = sum(day[:6])
-check_numeric('2 app p2', it[1], S6, (5 * 12500 - 4) / 4, [15624], {'no-halve': 5 * 12500 - 4, 'no-first': F(5 * 12500, 4)})
+check_numeric('2 app p2', it[1], S6, (5 * 12500 - 4) / 4, [15624], {'no-divide-4': 5 * 12500 - 4, 'no-first': F(5 * 12500, 4)})
 check_expr('2 app p3', it[2], 5 ** n_sym - 1,
            {'no-divide': 4 * 5 ** n_sym - 4, 'power-n-1': 5 ** (n_sym - 1) - 1, 'sign': 1 - 5 ** n_sym})
 ok(all(5 ** k - 1 == sum(day[:k]) for k in range(1, 15)), 'app closed form matches running totals')
@@ -277,7 +277,7 @@ while tot <= 350000:
     k2 += 1
     tot += 4 * 5 ** (k2 - 1)
 check_numeric('2 app p4', it[3], first, k2, [8],
-              {'one-day': next(k for k in range(1, 15) if day[k - 1] > 350000), 'nine': first - 1})
+              {'one-day': next(k for k in range(1, 15) if day[k - 1] > 350000), 'day-before': first - 1})
 ok(sum(day[:7]) == 78124 and sum(day[:8]) == 390624, 'app S7 and S8')
 
 it = P['p-bouncing-ball']['parts']
