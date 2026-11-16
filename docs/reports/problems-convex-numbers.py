@@ -233,6 +233,124 @@ def level1():
     return lv
 
 
+# ---------------------------------------------------------------- level 2
+def vertices(A, bvec):
+    """Every vertex of {z : A z <= b} in two variables, by enumerating pairs of rows (method 2 for small LPs)."""
+    out = []
+    for i, j in itertools.combinations(range(len(A)), 2):
+        M = sp.Matrix([A[i], A[j]])
+        if M.det() == 0:
+            continue
+        z = M.solve(sp.Matrix([bvec[i], bvec[j]]))
+        if all(sum(A[k][q] * z[q] for q in range(2)) <= bvec[k] for k in range(len(A))):
+            out.append((z[0], z[1]))
+    return sorted(set(out))
+
+
+def level2():
+    lv = Level('convex', 2)
+    # p-parking-cash
+    d_, b_, n_ = sp.symbols('d b n')
+    income = sp.expand((40 * d_ + 46 * b_ + 50 * n_).subs(d_, 20 - b_ - n_))
+    expr(2, 'p-parking-cash', 1, income.subs({b_: b, n_: n}), {'no-800': 6 * b + 10 * n, 'no-subtract': 800 + 46 * b + 50 * n})
+    ok(sp.expand(20 - b_ - n_ - 6) == 14 - b_ - n_, 'd >= 6 is b + n <= 14')
+    A = [[1, 1], [F(1, 2), 1], [-1, 0], [0, -1]]
+    bv = [14, 8, 0, 0]
+    V = vertices(A, bv)
+    ok(V == sorted([(0, 0), (14, 0), (12, 2), (0, 8)]), f'cash corners {V}')
+    vals = {vt: 6 * vt[0] + 10 * vt[1] for vt in V}
+    best = max(vals, key=vals.get)
+    ok(sorted(vals.values()) == [0, 80, 84, 92], f'corner gains {sorted(vals.values())}')
+    full = linprog([-40, -46, -50], A_ub=[[-1, 0, 0], [0, 0.5, 1]], b_ub=[-6, 8], A_eq=[[1, 1, 1]], b_eq=[20], method='highs')
+    num(2, 'p-parking-cash', 2, best[0], full.x[1], {'notes': best[1], 'all-bills': 14})
+    r2 = linprog([-6, -10], A_ub=[[1, 1], [0.5, 1]], b_ub=[14, 8], method='highs')
+    num(2, 'p-parking-cash', 3, -vals[best], r2.fun, {'sign': vals[best], 'with-800': -(800 + vals[best]), 'income': 800 + vals[best]})
+    ok(abs(-full.fun - 892) < 1e-9, 'income 892 from the three-variable LP')
+    # part 4: floor n >= 5
+    A5 = A + [[0, -1]]
+    b5 = bv + [-5]
+    V5 = vertices(A5, b5)
+    ok(V5 == sorted([(0, 5), (6, 5), (0, 8)]), f'floor-5 corners {V5}')
+    g5 = {vt: 6 * vt[0] + 10 * vt[1] for vt in V5}
+    ok(sorted(g5.values()) == [50, 80, 86], f'floor-5 gains {sorted(g5.values())}')
+    r4 = linprog([-40, -46, -50], A_ub=[[-1, 0, 0], [0, 0.5, 1], [0, 0, -1]], b_ub=[-6, 8, -5], A_eq=[[1, 1, 1]], b_eq=[20], method='highs')
+    num(2, 'p-parking-cash', 4, 800 + max(g5.values()), -r4.fun,
+        {'old-plan': 892, 'notes-corner': 800 + g5[(0, 8)], 'no-800': max(g5.values())})
+    ok(np.allclose(r4.x[1:], [6, 5]), 'floor-5 plan (6, 5)')
+    lv.expect('problems', 'items[0].parts[3].explain.text', 6)
+    # part 5: largest feasible notes floor, exact by the maturity row, then a linprog scan of statuses
+    nmax = max(vt[1] for vt in V)
+    last_ok = None
+    for fl in np.arange(0, 20.001, 0.25):
+        r = linprog([-6, -10], A_ub=[[1, 1], [0.5, 1], [0, -1]], b_ub=[14, 8, -fl], method='highs')
+        if r.status == 0:
+            last_ok = fl
+        else:
+            ok(r.status == 2, f'floor {fl} infeasible gives status 2')
+    num(2, 'p-parking-cash', 5, nmax, last_ok, {'overnight-only': 14, 'whole-pot': 20, 'current': 5})
+    lv.expect('problems', 'items[0].parts[4].explain.text', 880)
+    # p-whole-blocks
+    Ab = [[3, 2], [1, 2], [-1, 0], [0, -1]]
+    bb_ = [12, 7, 0, 0]
+    VB = vertices(Ab, bb_)
+    ok(VB == sorted([(0, 0), (4, 0), (F(5, 2), F(9, 4)), (0, F(7, 2))]), f'block corners {VB}')
+    carry = {vt: 7 * vt[0] + 5 * vt[1] for vt in VB}
+    lpb = linprog([-7, -5], A_ub=[[3, 2], [1, 2]], b_ub=[12, 7], method='highs')
+    num(2, 'p-whole-blocks', 1, max(carry.values()), -lpb.fun, {'capital-corner': carry[(4, 0)], 'risk-corner': carry[(0, sp.Rational(7, 2))]}, rounded=28.75)
+    ok(np.allclose(lpb.x, [2.5, 2.25]), 'fractional corner (2.5, 2.25)')
+    lv.expect('problems', 'items[1].parts[0].explain.text', 11.25)
+    whole = [(i, j) for i in range(10) for j in range(10) if 3 * i + 2 * j <= 12 and i + 2 * j <= 7]
+    num(2, 'p-whole-blocks', 2, 7 * 2 + 5 * 2, 7 * int(2.5) + 5 * int(2.25), {'nearest': 7 * 3 + 5 * 2, 'capital-plan': carry[(4, 0)]})
+    ok(3 * 3 + 2 * 2 == 13 and (3, 2) not in whole and (2, 2) in whole, 'nearest rounding breaks capital, rounding down is feasible')
+    ok(3 * 2 + 2 * 2 == 10 and 2 + 4 == 6, 'rounded plan uses 10 and 6')
+    best_w = max(7 * i + 5 * j for i, j in whole)
+    num(2, 'p-whole-blocks', 3, int(np.floor(-lpb.fun + 1e-12)), best_w, {'no-floor': 28.75, 'rounded-plan': 24})
+    ok(abs(29 - 28.75) <= 0.5, 'no-floor band also routes a rounded-up 29')
+    arg = [p for p in whole if 7 * p[0] + 5 * p[1] == best_w]
+    ok(arg == [(4, 0)], f'best whole plan {arg}')
+    num(2, 'p-whole-blocks', 4, arg[0][0], 4, {'rounded': 2, 'near-corner': 3})
+    ok(7 * 3 + 5 == 26 and (2, 3) not in whole and 2 + 6 > 7, '(3, 1) earns 26 and (2, 3) breaks risk')
+    ok(best_w - 24 == 4, 'rounding gave away 4')
+    # p-three-strategies
+    Am = [[3, 1, 2], [2, 3, 1]]
+    cm = [6, 7, 4]
+    uu, vv = sp.symbols('u v')
+    cols = [Am[0][j] * uu + Am[1][j] * vv for j in range(3)]
+    expr(2, 'p-three-strategies', 1, cols[1].subs({uu: u, vv: v}), {'momentum': cols[0].subs({uu: u, vv: v}), 'swapped': 3 * u + v})
+    Ad = [[-Am[0][j], -Am[1][j]] for j in range(3)] + [[-1, 0], [0, -1]]
+    bd = [-cm[j] for j in range(3)] + [0, 0]
+    DV = vertices(Ad, bd)
+    ok(DV == sorted([(0, 4), (1, 2), (7, 0)]), f'dual corners {DV}')
+    dual = linprog([10, 10], A_ub=np.array(Ad[:3], dtype=float), b_ub=np.array(bd[:3], dtype=float), method='highs')
+    unchecked = sp.solve([cols[0] - 6, cols[1] - 7], [uu, vv])
+    num(2, 'p-three-strategies', 2, min(10 * p + 10 * q for p, q in DV), dual.fun,
+        {'corner-04': 40, 'corner-70': 70, 'unchecked': 10 * unchecked[uu] + 10 * unchecked[vv]})
+    ok(unchecked == {uu: F(4, 7), vv: F(15, 7)} and 2 * unchecked[uu] + unchecked[vv] == F(23, 7), 'unchecked corner breaks value row')
+    ok([c.subs({uu: 1, vv: 2}) for c in cols] == [7, 7, 4], 'priced columns at (1, 2)')
+    choice(2, 'p-three-strategies', 3, 'momentum')
+    primal = linprog([-6, -7, -4], A_ub=Am, b_ub=[10, 10], method='highs')
+    x2, x3 = sp.symbols('x2 x3')
+    ps = sp.solve([x2 + 2 * x3 - 10, 3 * x2 + x3 - 10], [x2, x3])
+    num(2, 'p-three-strategies', 4, ps[x2], primal.x[1], {'value': ps[x3], 'var-only': F(10, 3)})
+    ok(7 * ps[x2] + 4 * ps[x3] == 30 and abs(-primal.fun - 30) < 1e-9 and abs(primal.x[0]) < 1e-9, 'primal 30 with x1 = 0')
+    enter = None
+    for c1 in np.arange(6, 9.001, 0.01):
+        r = linprog([-c1, -7, -4], A_ub=Am, b_ub=[10, 10], method='highs')
+        if r.x[0] > 1e-7 and -r.fun > 30 + 1e-9:
+            enter = c1
+            break
+    num(2, 'p-three-strategies', 5, cols[0].subs({uu: 1, vv: 2}), enter, {'current': 6, 'margin-only': 3, 'gap': 1}, agree=0.011)
+    lv.expect('problems', 'items[0].parts[1].feedback.correct', 84)
+    lv.expect('problems', 'items[0].parts[1].feedback.correct', 80)
+    lv.expect('problems', 'items[2].parts[1].explain.text', -2)
+    shape(2, {'p-parking-cash': {'l5-linear-programmes', 'l6-corners', 'l7-lp-in-code'},
+              'p-whole-blocks': {'l5-linear-programmes', 'l6-corners'},
+              'p-three-strategies': {'l5-linear-programmes', 'l6-corners', 'l8-lp-duality'}},
+          ['cv-lp', 'cv-duality'])
+    lv.check_wrongs('problems')
+    return lv
+
+
 levels = []
 if SETS[1]:
     levels.append(level1())

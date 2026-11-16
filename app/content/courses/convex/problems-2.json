@@ -1,0 +1,589 @@
+{
+ "id": "problems-2",
+ "course": "convex",
+ "level": 2,
+ "title": "Problems: linear programmes",
+ "minutes": 45,
+ "items": [
+  {
+   "id": "p-parking-cash",
+   "difficulty": 4,
+   "skills": [
+    "cv-lp"
+   ],
+   "prose": "A treasurer places £20m for a year across overnight deposits $d$, six-month bills $b$ and one-year notes $n$, in £m. They yield 4.0%, 4.6% and 5.0%: £40k, £46k and £50k a year per £m. At least £6m must stay overnight, and a maturity budget $0.5b + n \\le 8$ caps the £m-years lent.",
+   "parts": [
+    {
+     "question": "Substitute $d = 20 - b - n$. Write the yearly income, in £k, as an expression in $b$ and $n$.",
+     "widget": {
+      "kind": "expression",
+      "answer": "800+6b+10n",
+      "accept": [
+       "800 + 6b + 10n",
+       "6b+10n+800"
+      ],
+      "wrong": [
+       {
+        "id": "no-800",
+        "tex": "6b+10n"
+       },
+       {
+        "id": "no-subtract",
+        "tex": "800+46b+50n"
+       }
+      ],
+      "keyboard": "algebra"
+     },
+     "feedback": {
+      "correct": "$40(20 - b - n) + 46b + 50n = 800 + 6b + 10n$.",
+      "generic": "Not quite. Replace $d$ in $40d + 46b + 50n$ and collect the terms.",
+      "byKey": {
+       "no-800": "The £20m earns £40k per £m before any switch, so the income has a constant 800.",
+       "no-subtract": "Each £m put into bills leaves deposits, so it adds $46 - 40 = 6$, not 46."
+      }
+     },
+     "explain": {
+      "text": "Every £m in bills or notes is a £m taken out of deposits. So bills add $46 - 40 = 6$ and notes add $50 - 40 = 10$. Deposits alone would earn 800."
+     }
+    },
+    {
+     "question": "Using the income $800 + 6b + 10n$ from part 1, the overnight rule becomes $b + n \\le 14$. The best plan sits where that edge meets the maturity edge $0.5b + n = 8$. How many £m go into bills? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 12,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "notes",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "all-bills",
+        "value": 14,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Taking $0.5b + n = 8$ from $b + n = 14$ leaves $0.5b = 6$, so $b = 12$ and $n = 2$. That corner adds $72 + 20 = 92$ to the 800, more than $(14, 0)$ with 84 or $(0, 8)$ with 80.",
+      "generic": "Not quite. Solve the two edge equations together.",
+      "byKey": {
+       "notes": "2 is the notes, $n$. Bills take $b = 14 - 2 = 12$.",
+       "all-bills": "$(14, 0)$ is a corner, but it adds only 84. Moving along the overnight edge towards notes adds income until the maturity budget binds."
+      }
+     },
+     "explain": {
+      "text": "The four corners are $(0, 0)$, $(14, 0)$, $(12, 2)$ and $(0, 8)$, adding 0, 84, 92 and 80. The income only grows as $b$ or $n$ grows, so we price the corners and keep the best: $(12, 2)$."
+     }
+    },
+    {
+     "question": "The treasurer checks with `linprog(c=[-6, -10], A_ub=[[1, 1], [0.5, 1]], b_ub=[14, 8])`. Using the corner from part 2, what does `res.fun` show? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -92,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 92,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "with-800",
+        "value": -892,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "income",
+        "value": 892,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "`linprog` minimises $-6b - 10n$, which is $-92$ at $(12, 2)$. The 800 is not in `c`, so the income is $800 + 92 = 892$: £892k.",
+      "generic": "Not quite. Ask what `linprog` minimised and which numbers went into `c`.",
+      "byKey": {
+       "sign": "The run minimised the negated gain, so `res.fun` keeps the minus sign.",
+       "with-800": "The 800 is a constant and is not in `c`, so `res.fun` is $-92$.",
+       "income": "892 is the income in £k. `res.fun` is the minimised $-6b - 10n = -92$, with no 800."
+      }
+     },
+     "explain": {
+      "text": "The run was handed the gains with their signs flipped, so it reports $-(6 \\times 12 + 10 \\times 2) = -92$. A constant never enters `c`, so we add it back ourselves: £892k a year."
+     }
+    },
+    {
+     "question": "The risk committee now asks for at least £5m in notes, $n \\ge 5$. Using the income $800 + 6b + 10n$ from part 1, what is the new best yearly income, in £k? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 886,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "old-plan",
+        "value": 892,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "notes-corner",
+        "value": 880,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "no-800",
+        "value": 86,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The plan $(12, 2)$ now breaks the floor. The new corners are $(0, 5)$, $(6, 5)$ and $(0, 8)$, adding 50, 86 and 80, so the best is $(6, 5)$ and the income is £886k.",
+      "generic": "Not quite. Draw the line $n = 5$, list the corners left, and price each one.",
+      "byKey": {
+       "old-plan": "$(12, 2)$ holds only £2m of notes, so it breaks the new floor of £5m.",
+       "notes-corner": "$(0, 8)$ is feasible but adds only 80. On the floor $n = 5$ the maturity budget leaves room for $b = 6$, which adds more.",
+       "no-800": "86 is the gain over deposits. Add the 800 that the £20m earns overnight."
+      }
+     },
+     "explain": {
+      "text": "With $n = 5$ the maturity budget allows $0.5b \\le 3$, so $b = 6$, and $6 + 5 = 11$ keeps the overnight rule. The corner $(6, 5)$ adds $36 + 50 = 86$. The floor costs $892 - 886 = 6$ a year."
+     }
+    },
+    {
+     "question": "Using part 4, the committee considers raising the notes floor further. What is the largest floor, in £m, for which `linprog` still finds a plan rather than status 2? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "overnight-only",
+        "value": 14,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "whole-pot",
+        "value": 20,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "current",
+        "value": 5,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The maturity budget gives $n \\le 8 - 0.5b \\le 8$, with equality only at $b = 0$. So a floor of £8m is the most that can be met, by the plan $(0, 8)$.",
+      "generic": "Not quite. Ask which limit caps the notes most tightly, and set $b$ to help it.",
+      "byKey": {
+       "overnight-only": "The overnight rule allows £14m outside deposits, but the maturity budget counts each £m of notes in full and stops at 8.",
+       "whole-pot": "Only £14m may leave deposits, and the maturity budget caps notes at £8m.",
+       "current": "A floor of £5m is met, as part 4 showed, and so is any floor up to 8."
+      }
+     },
+     "explain": {
+      "text": "Each £m of notes uses a full £m-year of the budget of 8, and bills only add to it. So $n \\le 8$ on every plan, and above 8 the rows have no common point: status 2. At a floor of exactly 8 the only plan is $(0, 8)$, earning £880k."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-whole-blocks",
+   "difficulty": 4,
+   "skills": [
+    "cv-lp"
+   ],
+   "prose": "A credit desk buys whole blocks of two illiquid bonds: $x$ blocks of A and $y$ of B. Each block of A earns £7k of carry a month and uses £3m of capital and 1 unit of inventory risk. Each block of B earns £5k and uses £2m and 2 units. The desk has £12m and 7 units.",
+   "parts": [
+    {
+     "question": "First allow fractions of a block. What is the best monthly carry, in £k? Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 28.75,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "capital-corner",
+        "value": 28,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "risk-corner",
+        "value": 17.5,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The corners are $(0, 0)$, $(4, 0)$, $(2.5, 2.25)$ and $(0, 3.5)$, with carry 0, 28, 28.75 and 17.5. The best is $(2.5, 2.25)$, where both limits bind: £28.75k.",
+      "generic": "Not quite. Write the rows $3x + 2y \\le 12$ and $x + 2y \\le 7$, find every corner and price each one.",
+      "byKey": {
+       "capital-corner": "$(4, 0)$ spends all the capital on A, but moving along the capital edge into B raises carry until the risk limit binds.",
+       "risk-corner": "$(0, 3.5)$ fills the risk limit with B alone and earns the least of the three outer corners."
+      }
+     },
+     "explain": {
+      "text": "Subtracting $x + 2y = 7$ from $3x + 2y = 12$ gives $2x = 5$, so $x = 2.5$ and $y = 2.25$. Its carry $17.5 + 11.25 = 28.75$ beats the other corners, so it is the optimum."
+     }
+    },
+    {
+     "question": "Using the corner $(2.5, 2.25)$ from part 1, a junior trader rounds each amount down to a whole block. What carry does the rounded plan earn, in £k? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 24,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "nearest",
+        "value": 31,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "capital-plan",
+        "value": 28,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Rounding down gives $(2, 2)$, which earns $14 + 10 = 24$. It uses £10m and 6 units, so it is feasible.",
+      "generic": "Not quite. Round each amount down, then price the plan.",
+      "byKey": {
+       "nearest": "Rounding to the nearest gives $(3, 2)$, which needs $9 + 4 = 13$ of capital, over the £12m. Round down to stay feasible.",
+       "capital-plan": "28 is the carry of $(4, 0)$. This part rounds the fractional corner $(2.5, 2.25)$, which gives $(2, 2)$."
+      }
+     },
+     "explain": {
+      "text": "Rounding down keeps every row satisfied, because both rows have positive coefficients. The plan $(2, 2)$ earns £24k, well short of the fractional 28.75."
+     }
+    },
+    {
+     "question": "Every whole-block plan is also a fractional plan, and its carry is a whole number of £k. Using part 1, what is the most any whole-block plan can earn, in £k? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 28,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "no-floor",
+        "value": 28.75,
+        "tol": {
+         "abs": 0.5
+        }
+       },
+       {
+        "id": "rounded-plan",
+        "value": 24,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "No fractional plan beats 28.75, so no whole-block plan can either. A whole number of £k at most 28.75 is at most 28.",
+      "generic": "Not quite. Combine the bound from part 1 with the fact that the carry is whole.",
+      "byKey": {
+       "no-floor": "No whole-block plan earns 28.75 or 29. The carry is a whole number of £k at most 28.75, so at most 28.",
+       "rounded-plan": "24 is one plan's carry, not a bound. A bound must hold for every plan."
+      }
+     },
+     "explain": {
+      "text": "The whole-block plans sit inside the fractional region, so the fractional optimum caps them. Carry per block is a whole number of £k, so the cap tightens from 28.75 to 28."
+     }
+    },
+    {
+     "question": "Using the cap of £28k from part 3, find a whole-block plan that reaches it. How many blocks of A does it hold? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "rounded",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "near-corner",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(4, 0)$ uses £12m and 4 units and earns $4 \\times 7 = 28$. It meets the cap, so it is the best whole-block plan.",
+      "generic": "Not quite. Try the whole-block plans along the capital row $3x + 2y \\le 12$.",
+      "byKey": {
+       "rounded": "$(2, 2)$ earns only 24. The best whole plan sits far from the fractional corner.",
+       "near-corner": "$(3, 1)$ earns $21 + 5 = 26$, below the cap of 28. Move one more block into A."
+      }
+     },
+     "explain": {
+      "text": "Near the capital row the whole plans $(4, 0)$, $(3, 1)$ and $(2, 2)$ earn 28, 26 and 24, while $(2, 3)$ breaks the risk limit. The plan $(4, 0)$ reaches the cap from part 3, which proves it optimal without trying every plan. Rounding down gave away £4k a month."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-three-strategies",
+   "difficulty": 5,
+   "skills": [
+    "cv-lp",
+    "cv-duality"
+   ],
+   "prose": "A prop desk splits capital between momentum $x_1$, carry $x_2$ and value $x_3$, in £m, earning £6k, £7k and £4k a month per £m. A margin limit $3x_1 + x_2 + 2x_3 \\le 10$ and a VaR limit $2x_1 + 3x_2 + x_3 \\le 10$ apply, with $\\mathbf{x} \\ge \\mathbf{0}$. Three variables are hard to draw, but the dual has two: a price $u$ on margin and $v$ on VaR.",
+   "parts": [
+    {
+     "question": "Price the margin and VaR that £1m of carry uses at $u$ and $v$. Carry's dual row says this cost is at least its £7k. Give the cost as an expression in $u$ and $v$.",
+     "widget": {
+      "kind": "expression",
+      "answer": "u+3v",
+      "accept": [
+       "u + 3v",
+       "3v+u"
+      ],
+      "wrong": [
+       {
+        "id": "momentum",
+        "tex": "3u+2v"
+       },
+       {
+        "id": "swapped",
+        "tex": "3u+v"
+       }
+      ],
+      "keyboard": "algebra"
+     },
+     "feedback": {
+      "correct": "£1m of carry uses 1 unit of margin and 3 of VaR, so its row is $u + 3v \\ge 7$.",
+      "generic": "Not quite. Read carry's coefficient in each of the two limits.",
+      "byKey": {
+       "momentum": "$3u + 2v$ is momentum's column. Carry's column is $(1, 3)$.",
+       "swapped": "You swapped the two limits. Carry uses 1 unit of margin and 3 of VaR."
+      }
+     },
+     "explain": {
+      "text": "Carry's coefficients are 1 in the margin limit and 3 in the VaR limit, so its resources cost $u + 3v$, and that must cover £7k. Momentum gives $3u + 2v \\ge 6$ and value $2u + v \\ge 4$ in the same way."
+     }
+    },
+    {
+     "question": "The dual minimises $10u + 10v$ over $u, v \\ge 0$ with the three rows from part 1. What is its smallest value? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 30,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "corner-04",
+        "value": 40,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "corner-70",
+        "value": 70,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "unchecked",
+        "value": 27.142857,
+        "tol": {
+         "abs": 0.5
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The region's corners are $(0, 4)$, $(1, 2)$ and $(7, 0)$, costing 40, 30 and 70. The cheapest is $(1, 2)$, at 30.",
+      "generic": "Not quite. Find the corners of the dual region and check each against all three rows.",
+      "byKey": {
+       "corner-04": "$(0, 4)$ is a corner, but moving along value's edge to $(1, 2)$ costs less.",
+       "corner-70": "$(7, 0)$ is a corner, but it is the dearest of the three.",
+       "unchecked": "$(\\tfrac47, \\tfrac{15}{7})$ meets the momentum and carry rows but breaks value's: $2u + v = \\tfrac{23}{7} < 4$."
+      }
+     },
+     "explain": {
+      "text": "The value and carry rows cross at $(1, 2)$, where momentum's row has room: $3 + 4 = 7 \\ge 6$. The cost lines have slope $-1$, between the two edges' slopes $-2$ and $-\\tfrac13$. So $(1, 2)$ is the optimal corner, with value 30."
+     }
+    },
+    {
+     "question": "Using the dual optimum $(u, v) = (1, 2)$ from part 2, which strategy does complementary slackness leave out of the best plan?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "momentum",
+        "text": "Momentum: its dual row has room at these prices.",
+        "correct": true
+       },
+       {
+        "id": "carry",
+        "text": "Carry: it uses the most VaR per £m.",
+        "why": "Carry's row is tight, $1 + 6 = 7$, so carry may be held. Using a lot of one limit is priced in already."
+       },
+       {
+        "id": "value",
+        "text": "Value: it earns the least per £m.",
+        "why": "Value's row is tight, $2 + 2 = 4$, so value may be held. A low profit is fine if its resources are cheap."
+       },
+       {
+        "id": "none",
+        "text": "None: each strategy earns a profit, so all three are held.",
+        "why": "A positive profit is not enough. A strategy whose resources cost more than it earns stays at 0."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Momentum's resources cost £7k at the dual prices and it earns only £6k, so $x_1 = 0$.",
+      "generic": "Not quite. Check which dual row has room at $(1, 2)$."
+     },
+     "explain": {
+      "text": "Momentum's priced cost beats its profit by 1, so complementary slackness sets $x_1 = 0$. Carry's and value's rows are tight, so both may be held."
+     }
+    },
+    {
+     "question": "Using $x_1 = 0$ from part 3, and $u, v > 0$ so that both limits bind, how many £m go into carry? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "value",
+        "value": 4,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "var-only",
+        "value": 3.3333333,
+        "tol": {
+         "abs": 0.5
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$x_2 + 2x_3 = 10$ and $3x_2 + x_3 = 10$ give $x_2 = 2$ and $x_3 = 4$. The profit is $14 + 16 = 30$, the dual value.",
+      "generic": "Not quite. With $x_1 = 0$, write both limits as equations and solve them together.",
+      "byKey": {
+       "value": "4 is the value book, $x_3$. Carry takes $x_2 = 2$.",
+       "var-only": "$\\tfrac{10}{3}$ fills the VaR limit with carry alone and leaves margin spare. Both prices are positive, so both limits bind."
+      }
+     },
+     "explain": {
+      "text": "Positive prices make both limits tight, and $x_1 = 0$ leaves two equations in two unknowns. The plan $(0, 2, 4)$ earns £30k, equal to the dual value, so by weak duality nothing earns more."
+     }
+    },
+    {
+     "question": "Using the prices $(u, v) = (1, 2)$, what profit per £m, in £k, must momentum pass to enter the best plan? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 7,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "current",
+        "value": 6,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "margin-only",
+        "value": 3,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "gap",
+        "value": 1,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "At these prices momentum's margin and VaR cost $3 \\times 1 + 2 \\times 2 = 7$. Above £7k a month it earns more than its resources are worth.",
+      "generic": "Not quite. Price the margin and VaR that £1m of momentum uses.",
+      "byKey": {
+       "current": "6 is its profit now, below what its resources cost.",
+       "margin-only": "3 prices the margin only. Add the VaR, $2 \\times 2 = 4$.",
+       "gap": "1 is the shortfall. The profit level it must pass is $6 + 1 = 7$."
+      }
+     },
+     "explain": {
+      "text": "A strategy left out has a dual row with room, here $7 - 6 = 1$. Once momentum earns more than 7, its row breaks, $(1, 2)$ stops being feasible and the best corner moves."
+     }
+    }
+   ]
+  }
+ ]
+}
