@@ -370,6 +370,119 @@ if L2:
     num(L2, it, 5, (sa[3] + sb_[2]) / 2, (ta.predict([[0.3]])[0] + tb.predict([[0.3]])[0]) / 2,
         {'tree-a': sa[3], 'tree-b': sb_[2], 'sum': sa[3] + sb_[2]})
 
+# ---------------------------------------------------------------- level 3
+L3 = load(3)
+if L3:
+    from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+    from sklearn.model_selection import TimeSeriesSplit
+    from statsmodels.stats.proportion import proportions_ztest
+
+    # p-fill-times. Method 2: scikit-learn's GradientBoostingRegressor, read stage by stage.
+    it = 'p-fill-times'
+    tk = np.arange(1, 6, dtype=float).reshape(-1, 1)
+    ft = [4, 5, 9, 16, 21]
+    nu = F(1, 10)
+    F0 = F(sum(ft), 5)
+    r0 = [F(v) - F0 for v in ft]
+    splits0 = {k: sse(r0[:k]) + sse(r0[k:]) for k in range(1, 5)}
+    ok(min(splits0, key=splits0.get) == 3 and splits0[3] == F(53, 2), f'{it}: first split {splits0}')
+    leftleaf = F(sum(r0[:3]), 3)
+    rightleaf = F(sum(r0[3:]), 2)
+    F1 = [F0 + nu * (leftleaf if i < 3 else rightleaf) for i in range(5)]
+    r1 = [F(v) - f for v, f in zip(ft, F1)]
+    splits1 = {k: sse(r1[:k]) + sse(r1[k:]) for k in range(1, 5)}
+    ok(min(splits1, key=splits1.get) == 3, f'{it}: second split {splits1}')
+    F2_left = F1[0] + nu * F(sum(r1[:3]), 3)
+    gbr = GradientBoostingRegressor(n_estimators=2, max_depth=1, learning_rate=0.1, random_state=0).fit(tk, ft)
+    stages = list(gbr.staged_predict(tk))
+    ok(abs(gbr.init_.constant_.ravel()[0] - float(F0)) < 1e-12, f'{it}: init')
+    stump1 = gbr.estimators_[0, 0].tree_
+    ok(abs(stump1.threshold[0] - 3.5) < 1e-6, f'{it}: sklearn split {stump1.threshold[0]}')
+    sk_leaf = gbr.estimators_[0, 0].predict([[1.0]])[0]
+    sse0 = sum((F(v) - F0) ** 2 for v in ft)
+    sse1 = sum(r * r for r in r1)
+    num(L3, it, 1, F0, gbr.init_.constant_.ravel()[0], {'median': 9, 'zero': 0, 'midrange': F(4 + 21, 2)})
+    num(L3, it, 2, leftleaf, sk_leaf, {'times': F(4 + 5 + 9, 3), 'sign': -leftleaf, 'shrunk': nu * leftleaf})
+    num(L3, it, 3, F1[0], stages[0][0], {'full-step': F0 + leftleaf, 'sign': F0 - nu * leftleaf, 'from-zero': nu * leftleaf})
+    num(L3, it, 4, sse1, float(np.sum((np.array(ft) - stages[0]) ** 2)), {'full-step': splits0[3], 'before': sse0,
+                                                                          'mean': sse1 / 5})
+    num(L3, it, 5, F2_left, stages[1][0], {'same-step': F1[0] + nu * leftleaf, 'full-step': F1[0] + F(sum(r1[:3]), 3),
+                                           'unchanged': F1[0]})
+    ok(F1[3] == F(47, 4) and [float(r) for r in r1] == [-6.5, -5.5, -1.5, 4.25, 9.25], f'{it}: residuals in feedback')
+    ok(splits0[1] > splits0[3] and splits0[2] > splits0[3] and splits0[4] > splits0[3], f'{it}: least of four')
+
+    # p-callable-bonds. Method 2: scikit-learn's GradientBoostingClassifier with one stump.
+    it = 'p-callable-bonds'
+    xb = np.array([1, 2, 3, 4, 5, 10, 10, 10], float).reshape(-1, 1)
+    yb2 = np.array([0, 0, 0, 0, 0, 1, 1, 0])
+    gbc = GradientBoostingClassifier(n_estimators=1, max_depth=1, learning_rate=0.1, random_state=0).fit(xb, yb2)
+    base = gbc.decision_function(xb[:1])[0] - gbc.estimators_[0, 0].predict(xb[:1])[0] * 0.1
+    lf0 = math.log(0.25 / 0.75)
+    newton = F(F(3, 4) + F(3, 4) - F(1, 4)) / (3 * F(1, 4) * F(3, 4))
+    sk_leaf = gbc.estimators_[0, 0].predict([[10.0]])[0]
+    F1b = lf0 + 0.1 * float(newton)
+    num(L3, it, 1, lf0, base, {'rate': 0.25, 'sign': -lf0, 'odds': F(1, 3)}, round_tol=0.00005)
+    num(L3, it, 2, F(3, 4), 1 - 1 / (1 + math.exp(-base)), {'slope': F(-3, 4), 'p': F(1, 4), 'log-odds': 1 - lf0})
+    num(L3, it, 3, newton, sk_leaf, {'mean-residual': F(5, 12), 'sum': F(5, 4), 'one-weight': F(5, 4) / F(3, 16)},
+        round_tol=0.00005)
+    num(L3, it, 4, F1b, gbc.decision_function([[10.0]])[0], {'full-step': lf0 + float(newton), 'carried': lf0 + 0.1 * 5 / 12,
+                                                             'sign': lf0 - 0.1 * float(newton), 'abs': -F1b},
+        round_tol=0.00005)
+    num(L3, it, 5, 1 / (1 + math.exp(-F1b)), gbc.predict_proba([[10.0]])[0, 1],
+        {'sign': 1 / (1 + math.exp(F1b)), 'added-p': 0.25 + 0.2222, 'carried': 1 / (1 + math.exp(-(lf0 + float(newton))))},
+        round_tol=0.00005)
+    ok(abs(math.exp(0.8764) - 2.4022) < 0.00005 and abs(1 + math.exp(0.8764) - 3.4022) < 0.00005, f'{it}: e^0.8764 in feedback')
+
+    # p-futures-study. Method 2: scikit-learn's TimeSeriesSplit, statsmodels' z test with the null variance, a P&L in NumPy.
+    it = 'p-futures-study'
+    folds = list(TimeSeriesSplit(n_splits=4, test_size=60, gap=2).split(np.zeros(700)))
+    tr0, te0 = folds[0]
+    ok(te0[0] == 460 and te0[-1] == 519 and sum(len(te) for _, te in folds) == 240, f'{it}: test blocks')
+    num(L3, it, 1, 460 - 2 - 1, tr0[-1], {'no-gap': 459, 'gap-one': 458, 'test-row': 460})
+    h, b, n = F(138, 240), F(126, 240), 240
+    t_exact = float(h - b) / math.sqrt(float(b * (1 - b)) / n)
+    z, _ = proportions_ztest(138, 240, value=float(b), prop_var=float(b))
+    num(L3, it, 2, t_exact, z, {'fifty': float(h - F(1, 2)) / math.sqrt(0.25 / n), 'one-day': float(h - b) / math.sqrt(float(b * (1 - b))),
+                                'hit-se': float(h - b) / math.sqrt(float(h * (1 - h)) / n)}, round_tol=0.005)
+    pvals = np.array([0.58, 0.61, 0.44, 0.47])
+    rets = np.array([0.008, -0.003, -0.006, 0.002])
+    pos = np.where(pvals > 0.5, 1.0, -1.0)
+    prev = np.concatenate([[0.0], pos[:-1]])
+    pnl = float(np.sum(2e6 * pos * rets - 2e6 * 5 / 10000 * np.abs(pos - prev)))
+    gross = sum(F(2_000_000) * F(int(round(r * 10000)), 10000) * (1 if p > 0.5 else -1) for p, r in zip(pvals, rets))
+    cost = F(2_000_000) * F(5, 10000) * (1 + 2)
+    num(L3, it, 3, gross - cost, pnl, {'gross': gross, 'flip-one': gross - F(2_000_000) * F(5, 10000) * 2,
+                                       'closed': gross - cost - F(2_000_000) * F(5, 10000)}, agree=1e-6)
+    pick(L3, it, 4, 'later-block')
+
+    # p-surprise-drift. Method 2: scikit-learn boosting on 40 weeks (10 per cell, no noise).
+    it = 'p-surprise-drift'
+    cells = {(1, 1): 14, (0, 1): -10, (1, 0): 2, (0, 0): 2}   # (positive surprise, small company): mean return
+    Xs = np.array([k for k in cells for _ in range(10)], float)
+    ysd = np.array([cells[k] for k in cells for _ in range(10)], float)
+    g1 = GradientBoostingRegressor(n_estimators=1, max_depth=1, learning_rate=1.0, random_state=0).fit(Xs, ysd)
+    ok(g1.estimators_[0, 0].tree_.feature[0] == 0, f'{it}: first stump splits on the surprise')
+    pred1 = g1.predict(Xs)
+    g50 = GradientBoostingRegressor(n_estimators=50, max_depth=1, learning_rate=0.1, random_state=0).fit(Xs, ysd)
+    gd2 = GradientBoostingRegressor(n_estimators=50, max_depth=2, learning_rate=0.5, random_state=0).fit(Xs, ysd)
+    mse50 = float(np.mean((ysd - g50.predict(Xs)) ** 2))
+    msed2 = float(np.mean((ysd - gd2.predict(Xs)) ** 2))
+    ok(mse50 > 35.9 and msed2 < 1e-6, f'{it}: stumps stall at {mse50}, depth 2 reaches {msed2}')
+    mean0 = F(sum(cells.values()), 4)
+    pos_leaf = F(cells[(1, 1)] + cells[(1, 0)], 2) - mean0
+    size_leaf = F(cells[(1, 1)] + cells[(0, 1)], 2) - mean0
+    ok(size_leaf == 0 and F(cells[(1, 0)] + cells[(0, 0)], 2) - mean0 == 0, f'{it}: size split gains nothing')
+    f_sp = mean0 + pos_leaf
+    mse_after = sum((F(v) - (mean0 + (pos_leaf if k[0] else -pos_leaf))) ** 2 for k, v in cells.items()) / 4
+    mse_before = sum((F(v) - mean0) ** 2 for v in cells.values()) / 4
+    num(L3, it, 1, mean0, g1.init_.constant_.ravel()[0], {'zero': 0, 'positive-only': F(14 + 2, 2), 'no-sign': F(14 + 10 + 2 + 2, 4)})
+    num(L3, it, 2, pos_leaf, g1.estimators_[0, 0].predict([[1.0, 1.0]])[0], {'mean-not-residual': F(14 + 2, 2),
+                                                                             'small-only': 14 - mean0, 'sign': -pos_leaf})
+    num(L3, it, 3, f_sp, g1.predict([[1.0, 1.0]])[0], {'truth': 14, 'leaf-only': pos_leaf, 'carried': mean0 + F(14 + 2, 2)})
+    num(L3, it, 4, mse_after, float(np.mean((ysd - pred1) ** 2)), {'unsquared': 6, 'sum': mse_after * 4, 'before': mse_before})
+    ok(mean0 - pos_leaf == -4, f'{it}: negative-surprise forecast')
+    pick(L3, it, 5, 'depth')
+
 print(f'{checks} checks, {len(fails)} failures')
 for f_ in fails:
     print('FAIL', f_)

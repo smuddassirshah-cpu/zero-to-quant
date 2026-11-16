@@ -1,0 +1,912 @@
+{
+  "id": "problems-3",
+  "course": "ensembles",
+  "level": 3,
+  "title": "Problems: boosting, step by step",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-fill-times",
+      "difficulty": 3,
+      "skills": [
+        "en-boosting"
+      ],
+      "prose": "A desk forecasts how many minutes a limit order takes to fill from its distance from the mid. Five orders, at 1, 2, 3, 4 and 5 ticks, filled in 4, 5, 9, 16 and 21 minutes. It boosts stumps on squared error, starting from a constant, with learning rate $\\nu = 0.1$.",
+      "parts": [
+        {
+          "question": "Before any tree, the model forecasts one constant for every order: the one with the least squared error. What is it, in minutes?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 11,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "median",
+                "value": 9,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "zero",
+                "value": 0,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "midrange",
+                "value": 12.5,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The mean minimises squared error: $(4 + 5 + 9 + 16 + 21)/5 = 11$.",
+            "generic": "Not quite right. The best constant under squared error is the mean of the five fill times.",
+            "byKey": {
+              "median": "9 is the median. Squared error is smallest at the mean.",
+              "zero": "Lesson 9's loop started from 0. Gradient boosting starts from the constant that fits best, the mean.",
+              "midrange": "12.5 is halfway between 4 and 21. Use all five times."
+            }
+          },
+          "explain": {
+            "text": "The five times add to 55, so the mean is 11 minutes. Starting there, the first tree only has to fit what the mean leaves."
+          }
+        },
+        {
+          "question": "The first stump is fitted to the residuals left by 11. Its best split is between 3 and 4 ticks. What does it output for orders of 1 to 3 ticks, in minutes?",
+          "widget": {
+            "kind": "numeric",
+            "answer": -5,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "times",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sign",
+                "value": 5,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "shrunk",
+                "value": -0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The residuals are $-7, -6, -2, 5, 10$. The left leaf holds $-7$, $-6$ and $-2$, so it outputs $-5$.",
+            "generic": "Not quite right. Subtract 11 from each fill time, then average the residuals on the left of the split.",
+            "byKey": {
+              "times": "6 is the mean of the fill times 4, 5 and 9. The stump is fitted to residuals, each time minus 11.",
+              "sign": "You took $\\hat y - y$. The residual is the time minus the forecast, so quick fills are negative.",
+              "shrunk": "That is the stump's output already times $\\nu$. The stump itself outputs the leaf mean, $-5$."
+            }
+          },
+          "explain": {
+            "text": "Residuals $y - 11$ are $-7, -6, -2, 5, 10$. Splitting between 3 and 4 ticks leaves $-7, -6, -2$ (mean $-5$) and $5, 10$ (mean 7.5). Its squared error, $14 + 12.5 = 26.5$, is the least of the four splits."
+          }
+        },
+        {
+          "question": "Use the leaf value $-5$ from part 2. What does the model forecast for a 1-tick order after the first stump? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "full-step",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sign",
+                "value": 11.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "from-zero",
+                "value": -0.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$11 + 0.1 \\times (-5) = 10.5$ minutes.",
+            "generic": "Not quite right. Add $\\nu$ times the stump's output to the starting constant.",
+            "byKey": {
+              "full-step": "You added the whole stump. With $\\nu = 0.1$ only a tenth of $-5$ is added.",
+              "sign": "You subtracted the stump. The update adds $\\nu$ times its output, and the output is $-5$.",
+              "from-zero": "You left out the starting constant. The forecast is $11 + 0.1 \\times (-5)$."
+            }
+          },
+          "explain": {
+            "text": "The update is $F_1 = F_0 + \\nu \\hat f_1$. For 1 to 3 ticks that is $11 - 0.5 = 10.5$; for 4 or 5 ticks it is $11 + 0.75 = 11.75$."
+          }
+        },
+        {
+          "question": "After the first stump, 1 to 3 ticks get 10.5 and 4 or 5 ticks get 11.75. What is the sum of squared residuals on the five orders? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 178.375,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "full-step",
+                "value": 26.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "before",
+                "value": 214,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "mean",
+                "value": 35.675,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Residuals $-6.5, -5.5, -1.5, 4.25, 9.25$ square to $42.25 + 30.25 + 2.25 + 18.0625 + 85.5625 = 178.375$.",
+            "generic": "Not quite right. Subtract each order's forecast from its time, square, and add the five.",
+            "byKey": {
+              "full-step": "26.5 is what a full step, $\\nu = 1$, would leave. A tenth of a step leaves far more.",
+              "before": "214 is the sum before the stump, around the mean 11. The stump has removed some of it.",
+              "mean": "You divided by 5. The question asks for the sum."
+            }
+          },
+          "explain": {
+            "text": "The sum fell from 214 to 178.375, not to the 26.5 a full step would give. A small step leaves most of the work to later trees, which is what lets them correct each other."
+          }
+        },
+        {
+          "question": "The second stump splits the new residuals in the same place. Start from the forecasts 10.5 and 11.75 of part 4. What does the model forecast for a 1-tick order after two stumps? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10.05,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "same-step",
+                "value": 10,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "full-step",
+                "value": 6,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "unchanged",
+                "value": 10.5,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The left residuals $-6.5$, $-5.5$ and $-1.5$ average $-4.5$, so the forecast becomes $10.5 + 0.1 \\times (-4.5) = 10.05$.",
+            "generic": "Not quite right. Average the new left residuals, take a tenth of it, and add it to 10.5.",
+            "byKey": {
+              "same-step": "You reused the first stump's $-5$. The second stump is fitted to the new residuals, whose left mean is $-4.5$.",
+              "full-step": "You added the whole stump, $10.5 - 4.5$. With $\\nu = 0.1$ add a tenth of it.",
+              "unchanged": "The second stump moves the forecast again: each round fits what is still left."
+            }
+          },
+          "explain": {
+            "text": "The new left leaf is $-4.5$, smaller than the first $-5$ because a tenth of the gap was closed. So $F_2 = 10.5 - 0.45 = 10.05$. Each round closes a tenth of what is left, so small steps need many trees."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-callable-bonds",
+      "difficulty": 5,
+      "skills": [
+        "en-boosting"
+      ],
+      "prose": "A boosted classifier predicts which of 8 callable bonds the issuer calls within a year; 2 of the 8 were called. It uses log loss, starts every bond at the log-odds of the base rate, and adds trees with $\\nu = 0.1$. A log-odds $F$ becomes a probability through the logistic curve.",
+      "parts": [
+        {
+          "question": "What is the starting log-odds $F_0$? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -1.0986,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "rate",
+                "value": 0.25,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sign",
+                "value": 1.0986,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "odds",
+                "value": 0.3333,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The base rate is $\\tfrac{2}{8} = 0.25$, so $F_0 = \\ln\\tfrac{0.25}{0.75} = \\ln\\tfrac{1}{3} = -1.0986$.",
+            "generic": "Not quite right. Take the base rate, turn it into odds, then take the natural log.",
+            "byKey": {
+              "rate": "0.25 is the base rate itself. Boosting works on the log-odds scale.",
+              "sign": "$\\ln 3$ is the log of the odds turned upside down. Odds of $\\tfrac{1}{3}$ give a negative log.",
+              "odds": "$\\tfrac{1}{3}$ is the odds. Take its natural log."
+            }
+          },
+          "explain": {
+            "text": "The constant with the least log loss has $p$ equal to the base rate, 0.25. Its odds are $\\tfrac{0.25}{0.75} = \\tfrac{1}{3}$, so $F_0 = \\ln\\tfrac{1}{3} = -1.0986$."
+          }
+        },
+        {
+          "question": "At $F_0$ every bond has $p = 0.25$. What is the next tree's target, the negative gradient, for a bond that was called? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.75,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "slope",
+                "value": -0.75,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "p",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "log-odds",
+                "value": 2.0986,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Minus the slope of the log loss is $y - p = 1 - 0.25 = 0.75$.",
+            "generic": "Not quite right. Under log loss the target is $y - p$.",
+            "byKey": {
+              "slope": "$-0.75$ is the slope $p - y$. The tree fits minus the slope.",
+              "p": "0.25 is the bond's current probability, not how far it is from the outcome.",
+              "log-odds": "You subtracted on the log-odds scale, $1 - F_0$. The gradient is $y - p$, in probability units."
+            }
+          },
+          "explain": {
+            "text": "The slope of $\\ln(1 + e^{-F})$ in $F$ is $p - 1$ for a called bond. The tree is fitted to minus that, $1 - 0.25 = 0.75$. A bond that was not called gets $0 - 0.25 = -0.25$."
+          }
+        },
+        {
+          "question": "The first tree is a stump. One leaf holds 3 bonds, 2 called and 1 not, all at $p = 0.25$. Its value is the Newton step: the leaf's targets added up, divided by the sum of $p(1 - p)$ over its bonds. What is it? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.2222,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "mean-residual",
+                "value": 0.4167,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sum",
+                "value": 1.25,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "one-weight",
+                "value": 6.6667,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Top: $0.75 + 0.75 - 0.25 = 1.25$. Bottom: $3 \\times 0.25 \\times 0.75 = 0.5625$. The step is $1.25 / 0.5625 = 2.2222$.",
+            "generic": "Not quite right. Add the three targets $y - p$, then divide by the sum of $p(1 - p)$ over the three bonds.",
+            "byKey": {
+              "mean-residual": "0.4167 is the mean target, the leaf value for squared error. For log loss divide by $\\sum p(1 - p)$ instead of the count.",
+              "sum": "1.25 is the top alone. Divide by $\\sum p(1 - p) = 0.5625$.",
+              "one-weight": "You divided by one bond's $p(1 - p)$, 0.1875. The bottom sums over all three bonds."
+            }
+          },
+          "explain": {
+            "text": "The leaf's targets are 0.75, 0.75 and $-0.25$, adding to 1.25. Each bond has $p(1 - p) = 0.1875$, so the bottom is 0.5625. The Newton step on log-odds is $\\tfrac{1.25}{0.5625} = \\tfrac{20}{9} = 2.2222$."
+          }
+        },
+        {
+          "question": "Using $F_0 = -1.0986$ and the leaf value 2.2222, what is the log-odds of those 3 bonds after the first tree? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.8764,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "full-step",
+                "value": 1.1236,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "carried",
+                "value": -1.0569,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sign",
+                "value": -1.3208,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "abs",
+                "value": 0.8764,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$F_1 = -1.0986 + 0.1 \\times 2.2222 = -0.8764$.",
+            "generic": "Not quite right. Add $\\nu$ times the leaf value to $F_0$.",
+            "byKey": {
+              "full-step": "You added the whole leaf value. With $\\nu = 0.1$ add a tenth of it.",
+              "carried": "You used the mean target 0.4167 as the leaf value. The Newton step is 2.2222.",
+              "sign": "You subtracted the step. The leaf holds mostly called bonds, so their log-odds rise.",
+              "abs": "The log-odds is still negative: after one small step these bonds are still more likely not called."
+            }
+          },
+          "explain": {
+            "text": "$F_1 = F_0 + \\nu \\times 2.2222 = -1.0986 + 0.2222 = -0.8764$. The shrunken step keeps the bonds' log-odds close to the start, as later trees will refine it."
+          }
+        },
+        {
+          "question": "Using $F_1 = -0.8764$ from part 4, what probability of a call does the model now give those 3 bonds? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2939,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 0.7061,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "added-p",
+                "value": 0.4722,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.7547,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$p = 1/(1 + e^{0.8764}) = 1/3.4022 = 0.2939$.",
+            "generic": "Not quite right. Apply $p = 1/(1 + e^{-F})$ with $F = -0.8764$.",
+            "byKey": {
+              "sign": "You used $e^{-0.8764}$. With $F = -0.8764$, $e^{-F} = e^{0.8764}$.",
+              "added-p": "You added the leaf value to the probability, $0.25 + 0.2222$. Trees add on the log-odds scale.",
+              "carried": "You used the full-step log-odds 1.1236. With $\\nu = 0.1$ the log-odds is $-0.8764$."
+            }
+          },
+          "explain": {
+            "text": "$e^{0.8764} = 2.4022$, so $p = 1/3.4022 = 0.2939$. The leaf of 2 called and 1 not moved from 0.25 towards 0.67, by a small step. Summing on the log-odds scale keeps $p$ between 0 and 1 however many trees follow."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-futures-study",
+      "difficulty": 4,
+      "skills": [
+        "en-boosting",
+        "en-interpret"
+      ],
+      "prose": "A desk studies 700 days of a commodity future, forecasting tomorrow's direction from today's features. It uses `TimeSeriesSplit(n_splits=4, test_size=60, gap=2)`, so the last 240 days form four test blocks. On those 240 days, 126 were up.",
+      "parts": [
+        {
+          "question": "The first test block is rows 460 to 519. What is the last training row in fold 1?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 457,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "row number",
+            "wrong": [
+              {
+                "id": "no-gap",
+                "value": 459,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "gap-one",
+                "value": 458,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "test-row",
+                "value": 460,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "`gap=2` drops rows 458 and 459, so training ends at $460 - 2 - 1 = 457$.",
+            "generic": "Not quite right. Start from the first test row and step back past the gap of 2.",
+            "byKey": {
+              "no-gap": "459 ignores the gap. `gap=2` drops the two rows just before the test block.",
+              "gap-one": "You dropped one row. `gap=2` drops two: 458 and 459.",
+              "test-row": "Row 460 is the first test row; it cannot also train."
+            }
+          },
+          "explain": {
+            "text": "The gap sits between the last training row and the first test row. Two rows, 458 and 459, fall in it, so training ends at 457."
+          }
+        },
+        {
+          "question": "The boosted model is right on 138 of the 240 test days. The base rate is always calling up. Using the base rate's standard error over the 240 days, what is the model's $t$ statistic? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.55,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "2 decimal places",
+            "wrong": [
+              {
+                "id": "fifty",
+                "value": 2.32,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-day",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "hit-se",
+                "value": 1.57,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Hit rate $0.575$, base rate $0.525$. The standard error is $\\sqrt{0.525 \\times 0.475/240} = 0.0322$, so $t = 0.05/0.0322 = 1.55$.",
+            "generic": "Not quite right. Subtract the base rate from the hit rate, then divide by $\\sqrt{b(1 - b)/n}$.",
+            "byKey": {
+              "fifty": "You measured the edge against 50%. Always-up scores 0.525 on these days.",
+              "one-day": "You divided by one day's standard deviation, about 0.5. Use the standard error over 240 days.",
+              "hit-se": "You built the standard error from the hit rate, 0.575. Use the base rate, 0.525."
+            }
+          },
+          "explain": {
+            "text": "$\\tfrac{138}{240} = 0.575$ and $\\tfrac{126}{240} = 0.525$. The edge, 0.05, is $0.05/0.0322 = 1.55$ standard errors: below 2, and before counting any other models tried."
+          }
+        },
+        {
+          "question": "Over four test days the model goes long £2m when $p > 0.5$ and short £2m otherwise. It starts flat and is left open at the end. Its $p$ values are 0.58, 0.61, 0.44 and 0.47. The future returns $+0.8\\%$, $-0.3\\%$, $-0.6\\%$ and $+0.2\\%$. Each unit of position traded costs 5 bp of £2m. What is the P&L after costs, in £?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 15000,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "£",
+            "placeholder": "pounds",
+            "wrong": [
+              {
+                "id": "gross",
+                "value": 18000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "flip-one",
+                "value": 16000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "closed",
+                "value": 14000,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Gross: £16,000 − £6,000 + £12,000 − £4,000 = £18,000. Costs: £1,000 to open and £2,000 to flip on day 3. Net £15,000.",
+            "generic": "Not quite right. Find each day's gain from the position, then subtract 5 bp of £2m for every unit traded.",
+            "byKey": {
+              "gross": "£18,000 is before costs. Opening trades 1 unit and the flip on day 3 trades 2.",
+              "flip-one": "You charged the flip as one unit. Long to short is 2 units of £2m.",
+              "closed": "You also paid to close after day 4. The position is left open, so that trade never happens."
+            }
+          },
+          "explain": {
+            "text": "Long on days 1 and 2 earns £16,000 and loses £6,000; short on days 3 and 4 earns £12,000 and loses £4,000. Three units are traded, 1 to open and 2 to flip, at £1,000 each. So £18,000 gross is £15,000 net."
+          }
+        },
+        {
+          "question": "Inside each fold the boosted model stopped early on a random 10% of the training days. Their labels and features overlap their neighbours'. What should the desk change?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "later-block",
+                "text": "Stop on the last block of each training window, after a gap",
+                "correct": true
+              },
+              {
+                "id": "more-trees",
+                "text": "Raise the number of trees so stopping never triggers",
+                "why": "Without stopping the trees fit noise. The flaw is which days judge the stopping, not that it stops."
+              },
+              {
+                "id": "fine",
+                "text": "Nothing: the test blocks are still later in time",
+                "why": "The test blocks are honest. But the stopping chose its number of trees on leaky days, so the model is overfitted."
+              },
+              {
+                "id": "shuffle",
+                "text": "Use shuffled 5-fold CV to pick the number of trees",
+                "why": "Shuffled folds leak through neighbouring days in the same way as the random 10%."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A later block, with a gap, is the only validation the trees cannot have seen through a neighbour.",
+            "generic": "Not quite right. Ask which validation days have near copies in training."
+          },
+          "explain": {
+            "text": "A random 10% of days sits between training days that share most of their features and labels. Stopping on it comes late, so the trees fit noise. Stopping on the last block of each window, after a gap, removes the leak."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-surprise-drift",
+      "difficulty": 4,
+      "skills": [
+        "en-boosting",
+        "en-interpret"
+      ],
+      "prose": "A desk forecasts a stock's return over the week after earnings, in bp, from two flags: the surprise was positive or negative, and the company is small or large. Each of the four cells holds the same number of weeks. Average returns: small positive 14, small negative $-10$, large positive 2, large negative 2.",
+      "parts": [
+        {
+          "question": "Gradient boosting on squared error starts every week at one constant. What is it, in bp?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "zero",
+                "value": 0,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "positive-only",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-sign",
+                "value": 7,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The cells hold equal weeks, so the mean is $(14 - 10 + 2 + 2)/4 = 2$ bp.",
+            "generic": "Not quite right. Average the four cells, which hold the same number of weeks.",
+            "byKey": {
+              "zero": "Gradient boosting starts at the mean, not at 0.",
+              "positive-only": "8 is the mean of the positive cells. Average all four.",
+              "no-sign": "You read $-10$ as 10. The small negative cell loses: $(14 - 10 + 2 + 2)/4 = 2$."
+            }
+          },
+          "explain": {
+            "text": "With equal weeks per cell the mean is the plain average of the four cell means: $\\tfrac{8}{4} = 2$ bp."
+          }
+        },
+        {
+          "question": "The first stump is fitted to the residuals left by 2. A split on size gains nothing, so it splits on the surprise. What does it output for positive surprises, in bp?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 6,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "mean-not-residual",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "small-only",
+                "value": 12,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sign",
+                "value": -6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The positive cells' residuals are $14 - 2 = 12$ and $2 - 2 = 0$, so the leaf outputs 6.",
+            "generic": "Not quite right. Subtract 2 from each positive cell, then average the two residuals.",
+            "byKey": {
+              "mean-not-residual": "8 is the positive cells' mean return. The stump fits residuals, so subtract the 2 first.",
+              "small-only": "12 is the small companies' residual only. The leaf averages small and large.",
+              "sign": "$-6$ is the negative-surprise leaf. Positive surprises get $+6$."
+            }
+          },
+          "explain": {
+            "text": "Small and large companies both average 2, so a size split leaves every residual where it was. The surprise split leaves $+6$ for positive surprises and $-6$ for negative. Size looks useless to a stump."
+          }
+        },
+        {
+          "question": "Take the start 2 and the leaf values $+6$ and $-6$, with a full step. What does the model forecast for a small company with a positive surprise, in bp?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 8,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "truth",
+                "value": 14,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "leaf-only",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "carried",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$2 + 6 = 8$ bp, the same for small and large companies.",
+            "generic": "Not quite right. Add the leaf's output to the starting constant.",
+            "byKey": {
+              "truth": "14 is the cell's real average. A stump on the surprise gives small and large companies the same forecast.",
+              "leaf-only": "6 is the stump alone. The model is the start plus the stump.",
+              "carried": "You added the 8 from the positive cells' mean. The stump's leaf is $+6$, fitted to residuals."
+            }
+          },
+          "explain": {
+            "text": "After one stump the model is $2 + 6 = 8$ for every positive surprise and $2 - 6 = -4$ for every negative one. Small positive surprises really earn 14, large ones 2."
+          }
+        },
+        {
+          "question": "Take the forecasts 8 and $-4$. What mean squared error per week is left over the four equal cells, in bp²?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 36,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "unsquared",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sum",
+                "value": 144,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "before",
+                "value": 72,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The residuals are $14 - 8 = 6$, $-10 + 4 = -6$, $2 - 8 = -6$ and $2 + 4 = 6$, so each squares to 36.",
+            "generic": "Not quite right. Subtract each cell's forecast from its return, square, and average over the four cells.",
+            "byKey": {
+              "unsquared": "6 is the size of each residual. Square it.",
+              "sum": "144 is the sum over the four cells. With equal weeks per cell, the mean per week is a quarter of it.",
+              "before": "72 is the mean before the first stump, around 2. The stump halved it."
+            }
+          },
+          "explain": {
+            "text": "Every cell is off by 6 bp: the small companies by $+6$ and $-6$, the large by $-6$ and $+6$. So the mean squared error is 36, half of the 72 the constant left."
+          }
+        },
+        {
+          "question": "The residuals are $+6$ small positive, $-6$ small negative, $-6$ large positive and $+6$ large negative. What can lower them?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "depth",
+                "text": "Depth-2 trees: size, then surprise",
+                "correct": true
+              },
+              {
+                "id": "size-stump",
+                "text": "A next stump, splitting on size",
+                "why": "Each size has residuals $+6$ and $-6$, which average to 0. Both leaves would be 0."
+              },
+              {
+                "id": "more-stumps",
+                "text": "Many more stumps with a small $\\nu$",
+                "why": "Every stump on either flag averages these residuals to 0. More of them add nothing."
+              },
+              {
+                "id": "lower-nu",
+                "text": "A smaller learning rate from the start",
+                "why": "$\\nu$ sets the speed. A sum of stumps still adds a surprise effect and a size effect, never their product."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The drift is an interaction: surprise matters only for small companies. Depth 2 is the least that can draw it.",
+            "generic": "Not quite right. Average the residuals on each side of every possible stump."
+          },
+          "explain": {
+            "text": "A stump on size gives each side $+6$ and $-6$, mean 0, and so does a stump on the surprise. Stumps can only add one effect per flag. A depth-2 tree splits on size, then on the surprise inside small companies, and fits all four cells."
+          }
+        }
+      ]
+    }
+  ]
+}
