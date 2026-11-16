@@ -547,7 +547,7 @@ if 4 in LEVELS:
     num(4, 'p-pilot-control', 3, gain, float(64 / 4.71 / 1.3), {'no-cost': F(npl, ncv), 'times': F(npl) * F('1.3') / ncv}, rounded=10.45, agree=1e-4)
     says(4, 'p-pilot-control', 3, '58{,}805.5', '13.59', '10.45')
     be = brentq(lambda c: c * 4.71 - 64, 1, 100)
-    num(4, 'p-pilot-control', 4, F(64) / F('4.71'), be, {'se': math.sqrt(13.59), 'gain': gain}, rounded=13.59)
+    num(4, 'p-pilot-control', 4, F(64) / F('4.71'), be, {'se': math.sqrt(64 / 4.71), 'gain': gain}, rounded=13.59)
 
     # p-grid-node-budget: gcd and divisor search, bound by fractions and loops, a real explicit and CN grid
     Mn = 276 // math.gcd(math.gcd(76, 92), 276)

@@ -59,3 +59,17 @@ Findings by class: wrong 0, misleading 2, reuse 4, re-author 0, continuity 1, vo
 - `retold` did not fire on finding 3: a question that keeps a lesson question's words with one phrase added (l16 `screens[6].question`), and a two-sentence slip line with one verb and one noun changed (l16 `screens[3]` `fraction`).
 - Validator candidates: a numeric part whose question prints its own key at the stated places (finding 2); a whole-number key that changes between 1.96 and the exact normal point where the question states neither (finding 1).
 - Bullets added to `docs/BACKLOG-INBOX.md` under `Raised later (review problems numerics 4):`.
+
+## Fix pass
+
+1. Fixed (misleading): question now states 1.96; key 45,235 unchanged (3.8416 x 4.71/0.0004 = 45,234.84).
+2. Fixed (continuity): question no longer prints 13.59; key 13.58811 (64/4.71), tol 0.005; `se` slip 3.686205 (sqrt of 13.58811); `feedback.correct` prints the ratio. Author's script (level 4 part) updated.
+3. Fixed (reuse): `p-digital-pairs` part 4 question, generic, `inverted`, explain replaced with the reader's text.
+4. Fixed (misleading): explain third sentence now gives the reason rho = -p/(1 - p); check 3 pair means 0.75 s^2/6 = s^2/8.
+5. Fixed (reuse): `no-r` and explain of `p-hand-implicit-put` part 1 replaced; 0.5/0.4367 = 1.145 recomputed.
+6. Fixed (reuse): `p-grid-node-budget` part 3 question and explain replaced.
+7. Fixed (reuse): `se` line of `p-pilot-control` part 4 replaced.
+
+Counts: 7 fixed, 0 disputed, 0 deferred. Keys changed: part 4 of `p-pilot-control` 13.59 to 13.58811 (tol 0.005), `se` slip value 3.686462 to 3.686205; no other graded answer.
+
+Gates: validator 0 errors; voice scan 35: 0 and 0; fresh-check 0 hits (1 advisory, constants 95 and 1.96); grade-all 18 widgets, 0 failures; author's script 1010 of 1010, exit 0; reader's script 507 of 507, 0 FINDING lines; playthrough with and without `--mobile` green.
