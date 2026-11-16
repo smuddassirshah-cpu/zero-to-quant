@@ -981,8 +981,13 @@ ok(abs(float(ELWL) - 19.2063) < 0.00005 and pL * (1 - pL) * pL == F(63, 1000), '
 num(L5, 'p-two-loss-cut', 5, mu * ELWL, 60 * pattern_wait_np('LWL', 0.3),
     {'no-overlap': mu / (pL * (1 - pL) * pL), 'two-losses': mu * ELL}, routes=(1153, 60 * 19.21))
 
-# p-flat-floor (re-authored session AF, replaces p-capped-close): a fair inventory walk on 0..7
+# p-flat-floor (re-authored session AF, replaces p-capped-close): a fair walk on 0..7
 # that is pushed up from 0 and stopped at 7, from 2. Route 1: martingales I^2 - n and I - F.
+# Delta AF-1 round 2: retold as a print shop's pile of jobs (J_n, idle hours Z); every key and
+# wrong value is unchanged, so the checks below stand. The old setting's nouns must be gone:
+_ff = json.dumps(L5['p-flat-floor'], ensure_ascii=False).lower().replace('"hedge-first"', '')  # a kept key id, never shown
+ok(not any(w in _ff for w in ('inventory', 'market maker', 'hedge', ' lot', 'trade')),
+   'p-flat-floor: an old noun of l10 screens[8] is still in the item')
 # Route 2: first-step equations solved exactly and with numpy, plus a seeded simulation.
 NF, IF = 7, 2
 ok(all(F(1, 2) * ((k + 1) ** 2 + (k - 1) ** 2) == k * k + 1 for k in range(1, NF)) and 1 ** 2 - 0 ** 2 == 1,
