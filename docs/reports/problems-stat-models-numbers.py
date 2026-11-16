@@ -3,10 +3,13 @@
 Levels 1 to 3, one block per set. Method 1 is exact or closed form (fractions, sympy, the formula the lesson teaches).
 Method 2 takes another route. Level 1: statsmodels GLM fits on data built to hold the stated table (the IPOs, the
 settlement months with their offsets, the six break days), its deviance, standard errors and Pearson statistic, and a
-hand-written IRLS loop; SciPy's chi2 and norm for tails; a simulation of the auction count. Level 2: data built to hold
-the stated means and spreads, fitted by statsmodels OLS and scipy.stats.f_oneway, a simulated paired test and a brute
-search for the sample size. Level 3: scipy.stats.mannwhitneyu (exact) against an enumeration of all labellings, the
-MAD by statsmodels.robust, a numerical integral of the kernel estimate, and an enumeration of all 32 sign patterns.
+hand-written IRLS loop; SciPy's chi2 and norm for tails; statsmodels' variance functions and simulated negative
+binomial minutes for the RFQ counts. Level 2: data built to hold the stated means and spreads, fitted by statsmodels
+OLS and scipy.stats.f_oneway, a simulated paired test, Bonferroni bars by root finding and pairwise tests, and all
+1,024 win patterns plus a simulation for the two-look plan. Level 3: all 4,096 sign patterns of the ranks and scipy's
+wilcoxon for the signed-rank test, the MAD by statsmodels.robust, a numerical integral of the kernel estimate, and
+an enumeration of all 32 sign patterns. Fix pass (session AF): re-authored p-rfq-busy-minutes, p-signal-variants,
+p-two-looks, p-hedge-ranks and p-spread-day-tail, and `shown` checks for every number in the review's replacements.
 
 For each numeric part: both methods agree; the key lies within its tol of them; every `wrong` value matches its named
 slip, lies outside the key band, is no wider than half its value, and does not overlap another; byKey covers the
@@ -169,47 +172,117 @@ def level1():
     num(I, 'p-recon-breaks', 4, Fr(28, 15), pb.pearson_chi2 / pb.df_resid, {'six-df': chi / 6, 'chi-only': chi})
     shown('breaks e2', 7.3891, exp(2), 4); shown('breaks chi', 9.3333, chi, 4)
 
-    # --- p-auction-tails: mu = 1/(1 + exp(-(2.6 - 1.3c)))
-    num(I, 'p-auction-tails', 1, Fr(26, 13), stats.logistic.ppf(0.5) * 0 + 2.6 / 1.3, {'intercept': 2.6, 'inverted': 1.3 / 2.6})
-    mu_t = 1 / (1 + exp(0.65))
-    num(I, 'p-auction-tails', 2, mu_t, stats.logistic.cdf(2.6 - 1.3 * 2.5), {'sign': 1 / (1 + exp(-0.65)), 'linear': -0.65})
-    num(I, 'p-auction-tails', 3, mu_t * (1 - mu_t), stats.bernoulli(mu_t).var(), {'poisson-var': mu_t, 'gamma-var': mu_t ** 2})
-    rng = np.random.default_rng(7)
-    sim = rng.binomial(12, mu_t, 2_000_000).std()
-    num(I, 'p-auction-tails', 4, sqrt(12 * mu_t * (1 - mu_t)), stats.binom(12, mu_t).std(),
-        {'variance': 12 * mu_t * (1 - mu_t), 'one-auction': sqrt(mu_t * (1 - mu_t)), 'poisson': sqrt(12 * mu_t)})
-    ok(abs(sim - sqrt(12 * mu_t * (1 - mu_t))) < 0.005, 'auction sd by simulation')
-    shown('auction var', 2.7042, 12 * mu_t * (1 - mu_t), 4); shown('auction mean', 4.12, 12 * mu_t, 2)
-    shown('auction 12x', 2.7042, 12 * 0.22535, 4); shown('auction 1-mu', 0.6570, 1 - mu_t, 4)
+    # fix pass lines (review findings 2 to 5)
+    shown('fails 2.2 x se', 0.5782, 0.2628 * 2.2, 4); shown('fails root 2.2', 1.4832, sqrt(2.2), 4)
+    ok(Fr(1, 30) + Fr(1, 28) == Fr(58, 840), 'fails 1/30 + 1/28 = 58/840')
+    t8 = stats.t.ppf(0.975, 8)
+    shown('fails t8', 2.306, t8, 3); shown('fails t8 end', 0.950, exp(b1f - t8 * seq), 3)
+    shown('fails t8 end printed', 0.950, exp(0.84730 - 2.306 * 0.38975), 3); shown('fails 1.087', 1.087, lo, 3)
+    shown('breaks phi 1.87', 1.87, 28 / 15, 2)
+
+    # --- p-rfq-busy-minutes: quiet mean 2.5, variance 4.0; busy mean 7.5
+    mq, vq, mb = Fr(5, 2), Fr(4), Fr(15, 2)
+    phi_q = vq / mq
+    # method 2: simulate negative binomial counts with the matched alpha and fit both variance functions by moments
+    alpha = (vq - mq) / mq ** 2
+    rng = np.random.default_rng(11)
+    def nb_draw(m, a, size):
+        r_ = 1 / a
+        return rng.negative_binomial(r_, r_ / (r_ + m), size)
+    quiet = nb_draw(2.5, float(alpha), 4_000_000)
+    phi_sim = quiet.var() / quiet.mean()
+    # method 2: Pearson dispersion of an intercept-only Poisson GLM on minutes built with mean 2.5 and variance 4.0
+    c_ = sqrt(4.0 * 9 / 10)
+    yq = np.array([2.5 + c_, 2.5 - c_] * 5)
+    gq = sm.GLM(yq, np.ones((10, 1)), family=sm.families.Poisson()).fit()
+    num(I, 'p-rfq-busy-minutes', 1, phi_q, gq.pearson_chi2 / gq.df_resid,
+        {'inverted': mq / vq, 'excess': vq - mq})
+    ok(abs(phi_sim - 1.6) < 0.01, f'rfq phi by simulation {phi_sim}')
+    num(I, 'p-rfq-busy-minutes', 2, phi_q * mb, sm.families.Poisson().variance(np.array([7.5]))[0] * float(phi_q),
+        {'poisson': mb, 'mu-squared': phi_q * mb ** 2})
+    # method 2 for alpha: statsmodels' NB2 variance function solved for alpha at the quiet mean
+    from scipy.optimize import brentq
+    a2 = brentq(lambda a: sm.families.NegativeBinomial(alpha=a).variance(np.array([2.5]))[0] - 4.0, 1e-6, 5)
+    num(I, 'p-rfq-busy-minutes', 3, alpha, a2, {'no-poisson-part': vq / mq ** 2, 'mu-not-squared': (vq - mq) / mq})
+    vb = mb + alpha * mb ** 2
+    busy = nb_draw(7.5, float(alpha), 4_000_000)
+    num(I, 'p-rfq-busy-minutes', 4, vb, sm.families.NegativeBinomial(alpha=float(alpha)).variance(np.array([7.5]))[0],
+        {'extra-only': alpha * mb ** 2, 'alpha-mu': mb + alpha * mb})
+    ok(abs(busy.var() - 21.0) < 0.15, f'rfq busy variance by simulation {busy.var()}')
+    pick(I, 'p-rfq-busy-minutes', 5, 'nb')
+    ok(abs(20.6 - 21.0) < abs(20.6 - 12.0) and 7.5 < 20.6 / 2,'rfq: 20.6 nearer 21.0; Poisson 7.5 well under half of 20.6')
+    shown('rfq 6.25', 6.25, mq ** 2, 2); shown('rfq 1.5', 1.5, vq - mq, 1); shown('rfq 56.25', 56.25, mb ** 2, 2)
+    shown('rfq 13.5', 13.5, alpha * mb ** 2, 1)
 
 
 def level2():
     I = load(2)
 
-    # --- p-venue-markouts: n = 10, 6, 8; means 1.5, 3.5, 1.0; residual SE 2.4
-    n_ = np.array([10, 6, 8]); m_ = np.array([1.5, 3.5, 1.0])
-    grand = Fr(15 + 21 + 8, 24)
-    rows = []
-    for venue, n0, m0 in zip('ABC', n_, m_):
-        base = np.array([-1, 1] * (n0 // 2), float)
-        rows += [(venue, m0 + e) for e in base]
-    df = pd.DataFrame(rows, columns=['venue', 'markout'])
-    num(I, 'p-venue-markouts', 1, grand, df.markout.mean(), {'unweighted': m_.mean(), 'coef-mean': (1.5 + 2.0 - 0.5) / 3})
-    ssb = float((n_ * (m_ - float(grand)) ** 2).sum())
-    ols = smf.ols('markout ~ C(venue)', data=df).fit()
-    ok(np.allclose(ols.params.values, [1.5, 2.0, -0.5]), 'markout regression coefficients')
-    num(I, 'p-venue-markouts', 2, ssb, ols.ess, {'unweighted-mean': float((n_ * (m_ - 2.0) ** 2).sum()), 'no-counts': float(((m_ - float(grand)) ** 2).sum())})
-    F = ssb / 2 / 2.4 ** 2
-    # method 2: rescale the within noise so the residual SE is exactly 2.4 and let f_oneway compute F
-    grp = [df.markout[df.venue == v].values for v in 'ABC']
-    s_now = sqrt(sum(((g - g.mean()) ** 2).sum() for g in grp) / 21)
-    grp2 = [g.mean() + (g - g.mean()) * 2.4 / s_now for g in grp]
-    F2 = stats.f_oneway(*grp2).statistic
-    num(I, 'p-venue-markouts', 3, F, F2, {'not-squared': ssb / 2 / 2.4, 'no-df': ssb / 2.4 ** 2})
-    pF = stats.f.sf(F, 2, 21)
-    num(I, 'p-venue-markouts', 4, pF, stats.f_oneway(*grp2).pvalue, {'lower-tail': 1 - pF, 'total-df': stats.f.sf(F, 2, 23)})
-    shown('markout pieces', 16.667, 6 * (3.5 - float(grand)) ** 2, 3); shown('markout msb', 11.667, ssb / 2, 3)
-    shown('markout gap B', 1.6667, 3.5 - float(grand), 4)
+    # --- p-signal-variants: six variants of 9 months, SSW 172.8, means below
+    from scipy.optimize import brentq
+    means = dict(A=0.3, B=1.4, C=2.2, D=3.8, E=0.9, F=1.2)
+    k_, n_g = 6, 9
+    N_ = k_ * n_g
+    # data built to hold the six means and SSW = 172.8 exactly
+    base = np.array([1, -1, 1, -1, 1, -1, 1, -1, 0], float)
+    sc = sqrt(172.8 / (k_ * (base ** 2).sum()))
+    rows = [(v, m0 + sc * e) for v, m0 in means.items() for e in base]
+    df = pd.DataFrame(rows, columns=['variant', 'ret'])
+    ols = smf.ols('ret ~ C(variant)', data=df).fit()
+    ok(abs(ols.ssr - 172.8) < 1e-9, 'variants: built SSW')
+    msw = Fr(1728, 10) / (N_ - k_)
+    num(I, 'p-signal-variants', 1, msw, ols.mse_resid, {'n-minus-one': 172.8 / 53, 'all-months': 172.8 / 54})
+    Fv = ols.fvalue
+    ok(stats.f.sf(Fv, 5, 48) < 0.05 and abs(Fv - stats.f_oneway(*[df.ret[df.variant == v] for v in means]).statistic) < 1e-9,
+       f'variants: the ANOVA rejects at 5% (F {Fv:.3f})')
+    pairs = list(itertools.combinations(means, 2))
+    lev = Fr(5, 100) / len(pairs)
+    num(I, 'p-signal-variants', 2, lev, 0.05 / math.comb(6, 2), {'per-variant': 0.05 / 6, 'halved': 0.05 / 30})
+    se_v = sqrt(float(msw) * 2 / n_g)
+    # method 2: the standard error statsmodels gives the difference of two dummy coefficients
+    ols_b = smf.ols('ret ~ C(variant)', data=df).fit()
+    se2 = ols_b.bse['C(variant)[T.B]']
+    num(I, 'p-signal-variants', 3, se_v, se2, {'variance': 2 * float(msw) / n_g, 'one-mean': sqrt(float(msw) / n_g)})
+    tc = stats.t.ppf(1 - float(lev) / 2, 48)
+    tc2 = brentq(lambda q: 2 * stats.t.sf(q, 48) - float(lev), 1, 6)
+    shown('variants t crit', 3.0892, tc, 4)
+    bar = tc * se_v
+    num(I, 'p-signal-variants', 4, bar, tc2 * se2,
+        {'variance': tc * 0.8, 'one-mean': tc * sqrt(0.4), 'normal-five': 1.96 * se_v})
+    ok(abs(3.0892 * 0.8944 - bar) <= 0.001, 'variants p4: restated inputs land in the key band')
+    gaps = {a + b: abs(means[a] - means[b]) for a, b in pairs}
+    cnt = lambda c: sum(g >= c for g in gaps.values())
+    # method 2: pairwise t-tests on the built rows with the pooled MSW, at the Bonferroni level
+    sig = sum(2 * stats.t.sf(abs(means[a] - means[b]) / se_v, 48) < float(lev) for a, b in pairs)
+    num(I, 'p-signal-variants', 5, cnt(bar), sig, {'normal-five': cnt(1.96 * se_v), 'one-mean': cnt(tc * sqrt(0.4)), 'variance': cnt(tc * 0.8)})
+    ok(min(abs(g - c) for g in gaps.values() for c in (bar, 1.96 * se_v, tc * sqrt(0.4), tc * 0.8)) > 0.05, 'variants: no gap near a bar')
+    ok(sorted(k for k, g in gaps.items() if g >= bar) == ['AD', 'DE'] and abs(gaps['DF'] - 2.6) < 1e-9, 'variants: AD and DE clear, DF 2.6')
+    ok(max(g for k, g in gaps.items() if k not in ('AD', 'DE')) <= 2.6 + 1e-9 and gaps['AD'] == 3.5 and abs(gaps['DE'] - 2.9) < 1e-9,
+       'variants: every other gap 2.6 or less')
+    shown('variants 0.4', 0.4, float(msw) / n_g, 1); shown('variants se', 0.8944, se_v, 4)
+    shown('variants 1.753', 1.753, 1.96 * 0.8944, 3); shown('variants 1.954', 1.954, 3.0892 * 0.6325, 3)
+    shown('variants 2.471', 2.471, 3.0892 * 0.8, 3); shown('variants 2.763', 2.763, 3.0892 * 0.8944, 3)
+
+    # --- p-two-looks: sign test over 10 days, early look at day 5
+    P9 = Fr(math.comb(10, 9) + 1, 1024); P5 = Fr(1, 32)
+    pats = list(itertools.product((0, 1), repeat=10))
+    num(I, 'p-two-looks', 1, P9, sum(sum(s) >= 9 for s in pats) / 1024, {'exactly-nine': 10 / 1024, 'eight-or-more': 56 / 1024})
+    ok(stats.binom.sf(7, 10, .5) > 0.05 > stats.binom.sf(8, 10, .5), 'two-looks: 9 is the smallest 5% cut')
+    num(I, 'p-two-looks', 2, P5, stats.binom.pmf(5, 5, .5), {'two-sided': 2 / 32})
+    num(I, 'p-two-looks', 3, P9 + P5, float(P9) + float(P5), {'independent': 1 - (1 - float(P9)) * (1 - float(P5)), 'product': float(P9 * P5)})
+    ok(abs(0.0107 + 0.0313 - float(P9 + P5)) <= 0.0001, 'two-looks p3 restated inputs')
+    ok(abs(1 - (1 - 0.0107) * (1 - 0.0313) - 0.0417) < 0.00005, 'two-looks independent printed')
+    exact = Fr(32 + 5, 1024)
+    alarms = sum(1 for s in pats if sum(s[:5]) == 5 or sum(s) >= 9)
+    # method 2: simulate the two-look plan
+    rng2 = np.random.default_rng(5)
+    sim = rng2.integers(0, 2, (2_000_000, 10))
+    rate = float(((sim[:, :5].sum(1) == 5) | (sim.sum(1) >= 9)).mean())
+    num(I, 'p-two-looks', 4, exact, alarms / 1024, {'bound': float(P9 + P5), 'independent': 1 - (1 - float(P9)) * (1 - float(P5)), 'day-ten': float(P9)})
+    ok(abs(rate - float(exact)) < 0.0005, f'two-looks simulated rate {rate}')
+    both = sum(1 for s in pats if sum(s[:5]) == 5 and sum(s) >= 9)
+    ok(both == 6 and P9 + P5 == Fr(43, 1024), 'two-looks overlap 6 of 1024, bound 43/1024')
+    ok(3 < float(exact / P9) < 4 and 3.5 < float((P9 + P5) / P9) < 4, 'two-looks: over three times; nearly four times')
 
     # --- p-twin-books: sigma 15, rho 0.6, 120 days
     z975, z80 = 1.95996, 0.84162
@@ -232,68 +305,73 @@ def level2():
     shown('twin var', 180, 225 + 225 - 2 * 0.6 * 225, 9); shown('twin var 2', 180, 2 * 15 ** 2 * (1 - 0.6), 9)
     shown('twin z sum', 2.80158, z975 + z80, 5); shown('twin se', 1.22474, se_d, 5); shown('twin se obs', 1.28715, 14.1 / sqrt(120), 5)
 
-    # --- p-rerun-the-test: two arms of 40, means 6.2 and 4.4, pooled SD 4.5
-    t2 = 1.8 / (4.5 * sqrt(2 / 40))
-    a = np.array([1, -1] * 20, float); a = a / a.std(ddof=1) * 4.5
-    old, new = 6.2 + a, 4.4 + a
-    num(I, 'p-rerun-the-test', 1, t2, stats.ttest_ind(old, new).statistic, {'one-sample-se': 1.8 / (4.5 / sqrt(40)), 'no-root': 1.8 / 4.5})
-    num(I, 'p-rerun-the-test', 2, t2 ** 2, stats.f_oneway(old, new).statistic, {'same': t2, 'doubled': 2 * t2})
-    pf2 = stats.f.sf(3.2, 1, 78)
-    num(I, 'p-rerun-the-test', 3, pf2, stats.ttest_ind(old, new).pvalue, {'one-tail-t': pf2 / 2, 'lower-tail': 1 - pf2})
-    z90 = 1.28155
-
-
-    def need(z2):
-        return math.ceil(2 * (1.95996 + z2) ** 2 * 4.5 ** 2 / 1.8 ** 2)
-
-
-    n_brute = next(n for n in range(2, 1000) if 2 * (1.95996 + z90) ** 2 * 20.25 / 3.24 <= n)
-    num(I, 'p-rerun-the-test', 4, need(z90), n_brute,
-        {'eighty': need(0.84162), 'no-two': math.ceil((1.95996 + z90) ** 2 * 20.25 / 3.24), 'one-sided': math.ceil(2 * (1.64485 + z90) ** 2 * 20.25 / 3.24)})
-    shown('rerun se', 1.00623, 4.5 * sqrt(2 / 40), 5); shown('rerun zsq', 10.5074, (1.95996 + z90) ** 2, 4)
-    shown('rerun n', 131.34, 2 * (1.95996 + z90) ** 2 * 20.25 / 3.24, 2)
-    shown('rerun z sum', 3.24151, 1.95996 + z90, 5); shown('rerun sq', 20.25 / 3.24, 4.5 ** 2 / 1.8 ** 2, 6)
+    # fix pass lines in p-twin-books (review findings 9, 10, 17)
+    shown('twin 720', 720, 2 * 225 * 1.6, 9); shown('twin 135', 135, 0.6 * 225, 9); shown('twin 180', 180, 2 * 225 * 0.4, 9)
+    shown('twin 2.4005', 2.4005, z975 * se_d, 4); shown('twin one tail', 0.0130, stats.t.sf(tt, 119), 4)
+    ok(abs(2 * 0.0130 - pt) <= 0.0001, 'twin p4: doubling the stated tail lands in the key band')
+    ok(abs(stats.norm.sf(z975 - 2.4005 / se_d) - 0.5) < 1e-3, 'twin: the no-power gain has power one half')
 
 
 def level3():
     I = load(3)
 
-    # --- p-ten-trading-days
-    X = [1.8, 2.6, 0.9, 3.1]; Y = [0.4, 1.1, -0.6, 0.2, 0.7, -0.2]
-    r = stats.rankdata(X + Y)
-    U = r[:4].sum() - 10
-    num(I, 'p-ten-trading-days', 1, U, sum(xx > yy for xx in X for yy in Y), {'rank-sum': r[:4].sum(), 'u-y': 24 - U})
-    num(I, 'p-ten-trading-days', 2, math.comb(10, 4), sum(1 for _ in itertools.combinations(range(10), 4)), {'ordered': 10 * 9 * 8 * 7, 'sign-flips': 2 ** 10})
-    cnt = sum(1 for c in itertools.combinations(range(1, 11), 4) if sum(c) - 10 >= U)
-    p1s = Fr(cnt, 210)
-    num(I, 'p-ten-trading-days', 3, p1s, stats.mannwhitneyu(X, Y, alternative='greater', method='exact').pvalue,
-        {'one-split': 1 / 210, 'plus-one': 3 / 211})
-    num(I, 'p-ten-trading-days', 4, 2 * p1s, stats.mannwhitneyu(X, Y, alternative='two-sided', method='exact').pvalue,
-        {'one-sided': float(p1s), 'halved': float(p1s) / 2})
-    ok(cnt == 2, 'two labellings reach U >= 23')
+    # --- p-hedge-ranks: 12 monthly differences, new minus old
+    dd = np.array([-3.1, -0.4, -2.2, 0.9, -1.5, -4.0, -0.9, -2.6, 1.2, -0.7, -3.5, -1.8])
+    rk = stats.rankdata(abs(dd))
+    Wp = Fr(int(2 * rk[dd > 0].sum()), 2)
+    # method 2: W+ from the Walsh-average count (number of i <= j with d_i + d_j > 0, ties counted half)
+    walsh = sum((1 if dd[i] + dd[j] > 1e-12 else 0.5 if abs(dd[i] + dd[j]) <= 1e-12 else 0)
+                for i in range(12) for j in range(i, 12))
+    num(I, 'p-hedge-ranks', 1, Wp, walsh, {'tie-low': 3 + 5, 'tie-high': 4 + 5, 'w-minus': rk[dd < 0].sum()})
+    ok(sorted(rk[dd > 0]) == [3.5, 5.0] and rk.sum() == 78, 'ranks: the positive months take 3.5 and 5 of 78')
+    nn = 12
+    var_w = Fr(nn * (nn + 1) * (2 * nn + 1), 24)
+    # method 2: the variance of W+ over all 4096 sign patterns of the ranks 1..12
+    allW = np.array([sum(r_ for r_, s in zip(range(1, 13), sg) if s) for sg in itertools.product((0, 1), repeat=12)])
+    num(I, 'p-hedge-ranks', 2, sqrt(var_w), allW.std(), {'variance': var_w, 'six-divisor': sqrt(4 * var_w)})
+    ok(sum(r_ ** 2 for r_ in range(1, 13)) == 650 and allW.mean() == 39, 'ranks: 650 and mean 39')
+    z = (float(Wp) - 39) / sqrt(var_w)
+    num(I, 'p-hedge-ranks', 3, z, (8.5 - allW.mean()) / allW.std(),
+        {'w-minus': (69.5 - 39) / sqrt(var_w), 'variance': (8.5 - 39) / float(var_w), 'no-centre': 8.5 / sqrt(var_w)})
+    pz = Phi(z)
+    wil = stats.wilcoxon(dd, alternative='less', method='approx', correction=False)
+    num(I, 'p-hedge-ranks', 4, pz, stats.norm.sf(-z), {'two-sided': 2 * pz, 'upper': 1 - pz})
+    ok(abs(Phi(-2.393) - pz) <= 0.0001 and abs(wil.pvalue - pz) < 0.0001 and wil.statistic == 8.5,
+       f'ranks p4: restated z and scipy wilcoxon ({wil.pvalue:.6f}) in the band')
+    exact_w = float((allW <= 8).mean())   # W+ with untied ranks: 8.5 lies between 8 and 9
+    ok(exact_w < 0.01, f'ranks: exact lower tail of W+ also under 1% ({exact_w:.4f})')
+    shown('ranks gap', -30.5, 8.5 - 39, 1); shown('ranks var', 162.5, float(var_w), 1)
 
-    # --- p-block-markout-tail
-    d = np.array([-1.4, -0.2, 0.3, 0.5, 0.9, 1.6, 7.5])
+    # --- p-spread-day-tail: eight daily spread changes, cut at -4
+    d = np.array([-5.6, -1.3, -0.2, 0.6, 1.1, 1.7, 2.4, 8.8]); n8 = 8; cut = -4
     med = float(np.median(d)); raw = float(np.median(abs(d - med)))
     s_m = 1.4826 * raw
-    num(I, 'p-block-markout-tail', 1, s_m, sm_mad(d, center=med) * 1.4826 * stats.norm.ppf(0.75), {'raw': raw, 'plain-sd': d.std(ddof=1)}, agree=1e-5)
-    h = 1.06 * s_m * 7 ** -0.2
-    num(I, 'p-block-markout-tail', 2, h, 1.06 * s_m / 7 ** 0.2,
-        {'plain-sd': 1.06 * d.std(ddof=1) * 7 ** -0.2, 'raw-mad': 1.06 * raw * 7 ** -0.2, 'no-n': 1.06 * s_m})
-    pk = float(Phi((-1 - d) / h).mean())
-    pk2 = integrate.quad(lambda u: stats.norm.pdf((u - d) / h).sum() / (7 * h), -40, -1)[0]
-    num(I, 'p-block-markout-tail', 3, pk, pk2,
-        {'plain-sd': float(Phi((-1 - d) / (1.06 * d.std(ddof=1) * 7 ** -0.2)).mean()),
-         'raw-mad': float(Phi((-1 - d) / (1.06 * raw * 7 ** -0.2)).mean()), 'empirical': 1 / 7}, agree=1e-7)
-    pn = float(Phi((-1 - med) / s_m))
+    num(I, 'p-spread-day-tail', 1, s_m, sm_mad(d, center=med) * 1.4826 * stats.norm.ppf(0.75), {'raw': raw, 'plain-sd': d.std(ddof=1)}, agree=1e-5)
+    ok(np.allclose(np.sort(abs(d - med)), [0.25, 0.25, 0.85, 1.05, 1.55, 2.15, 6.45, 7.95]) and abs(med - 0.85) < 1e-12, 'spread: distances')
+    h = 1.06 * s_m * n8 ** -0.2
+    num(I, 'p-spread-day-tail', 2, h, 1.06 * s_m / n8 ** 0.2,
+        {'plain-sd': 1.06 * d.std(ddof=1) * n8 ** -0.2, 'raw-mad': 1.06 * raw * n8 ** -0.2, 'no-n': 1.06 * s_m})
+    ok(abs(1.06 * 1.9274 * 0.65975 - h) <= 0.0001 and abs(1.06 * 1.9274 * n8 ** -0.2 - h) <= 0.0001, 'spread p2 restated inputs')
+    kshare = lambda hh: float(Phi((cut - d) / hh).mean())
+    pk = kshare(h)
+    pk2 = integrate.quad(lambda u: stats.norm.pdf((u - d) / h).sum() / (n8 * h), -60, cut)[0]
+    hs = 1.06 * d.std(ddof=1) * n8 ** -0.2
+    num(I, 'p-spread-day-tail', 3, pk, pk2, {'plain-sd': kshare(hs), 'raw-mad': kshare(1.06 * raw * n8 ** -0.2), 'empirical': 1 / 8}, agree=1e-7)
+    ok(abs(kshare(1.3479) - pk) <= 0.0001, 'spread p3 restated h')
+    ordinary = lambda hh: float(Phi((cut - d[1:7]) / hh).sum()) / 8
+    ok(ordinary(hs) > 10 * ordinary(h), 'spread: wide bumps push far more of the ordinary days below -4')
+    ok(Phi((cut + 5.6) / h) / 8 > 0.9 * pk, 'spread: nearly all of the share from the -5.6 day')
+    pn = float(Phi((cut - med) / s_m))
     ratio = pk / pn
-    num(I, 'p-block-markout-tail', 4, ratio, pk2 / stats.norm(med, s_m).cdf(-1),
-        {'inverted': pn / pk, 'classic-normal': pk / float(Phi((-1 - d.mean()) / d.std(ddof=1)))}, agree=1e-6)
-    shown('markout normal share', 0.0742, pn, 4); shown('markout z', -1.4453, (-1 - med) / s_m, 4)
-    shown('bump -1.4', 0.7042, float(Phi(0.4 / h)), 4); shown('bump -0.2', 0.1416, float(Phi(-0.8 / h)), 4)
-    shown('n factor', 0.6776, 7 ** -0.2, 4); shown('n factor 1.06', 0.7183, 1.06 * 7 ** -0.2, 4)
-    shown('mean', 1.3143, d.mean(), 4); shown('sd', 2.883, d.std(ddof=1), 3)
-    shown('ratio printed', 1.76, 0.1306 / 0.0742, 2)
+    num(I, 'p-spread-day-tail', 4, ratio, pk2 / stats.norm(med, s_m).cdf(cut),
+        {'empirical-share': (1 / 8) / pn, 'classic-normal': pk / float(Phi((cut - d.mean()) / d.std(ddof=1)))}, agree=1e-6)
+    ok(abs(0.1135 / 0.00593 - ratio) <= 0.1 and abs(0.1135 / pn - ratio) <= 0.1, 'spread p4 restated inputs')
+    shown('spread pn', 0.00593, pn, 5); shown('spread z', -2.5164, (cut - med) / s_m, 4)
+    shown('bump -5.6', 0.8824, float(Phi(1.6 / h)), 4); shown('bump -1.3', 0.0226, float(Phi(-2.7 / h)), 4)
+    shown('n factor', 0.65975, n8 ** -0.2, 5); shown('n factor short', 0.6598, n8 ** -0.2, 4)
+    shown('n factor 1.06', 0.6993, 1.06 * n8 ** -0.2, 4)
+    shown('mean', 0.9375, d.mean(), 4); shown('sd', 4.0306, d.std(ddof=1), 4); shown('ratio printed', 19.1, ratio, 1)
+    shown('empirical ratio', 21.08, 0.125 / pn, 2)
 
     # --- p-five-weeks-flip
     wk = np.array([1.2, 0.8, 2.5, -0.4, 9.0]); ab = abs(wk)
@@ -305,6 +383,14 @@ def level3():
     num(I, 'p-five-weeks-flip', 3, Fr(4, 32), c_med / 32, {'plus-one': 5 / 33, 'two-sided': 8 / 32})
     pick(I, 'p-five-weeks-flip', 4, 'robust')
     ok(c_mean == 2, 'mean statistic counts 2 patterns'); shown('week total', 13.1, wk.sum(), 1)
+    # fix pass (review finding 15): the four patterns that keep 1.2, 2.5 and 9.0 positive
+    m4 = sorted(((12.7 + a * 0.8 + b * 0.4) / 5 for a in (1, -1) for b in (1, -1)), reverse=True)
+    for pr, v in zip((2.78, 2.62, 2.46, 2.30), m4):
+        shown('five-weeks mean', pr, v, 2)
+    ok(sum(v >= wk.mean() - 1e-12 for v in m4) == 2, 'five-weeks: two of the four reach 2.62')
+    wk2 = np.array([1.2, 0.8, 2.5, -0.4, 2.6]); ab2 = abs(wk2)
+    ok(sum(1 for s in pats if np.median(ab2 * np.array(s)) >= 1.2 - 1e-12) == 4
+       and sum(1 for s in pats if (ab2 * np.array(s)).sum() >= wk2.sum() - 1e-12) == 2, 'five-weeks: 2.6 for 9.0 keeps 2 and 4')
 
 
 def level4():
