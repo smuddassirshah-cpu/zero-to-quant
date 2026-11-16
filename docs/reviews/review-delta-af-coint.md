@@ -103,3 +103,17 @@ Enough: yes. The stem gives all a learner needs: a sold share is borrowed, the f
 - `fresh-check --file` now reads the topic exam (advisory against `topic-2.2` `items[9]`), but nothing links a quantity to the name an earlier course teaches it under (finding 7: "borrowing fee" against "stock loan fee" in l10 and Markets l12). A glossary of taught terms would let a checker ask for the taught name.
 
 Both are in `docs/BACKLOG-INBOX.md` under `Raised later (review-delta-af-coint):`.
+
+## Fix pass
+
+1. fixed: `p-glassmaker-borrow` prose, sentence replaced exactly as given.
+2. fixed: `p-glassmaker-borrow` part 5 explain, last sentence replaced; $1.00 - 0.207 = 0.793$ recomputed.
+3. fixed: `p-screen-real-share` part 5 question replaced exactly.
+4. fixed: `p-screen-real-share` part 3 explain, sentence replaced exactly.
+5. fixed: `p-paper-mill-multiple` part 1 explain, "one day's move has an sd of" (the rest of the reader's line was already in place).
+6. fixed: `p-smelter-tls` y = £24.50; key 2.16 (1.715/0.793 = 2.1627); wrong 0.21 (0.165/0.793 = 0.208), 2.725 (1.715/0.629 = 2.727, unrounded 2.725, band takes 2.72 and 2.73), 3.15 (2.50/0.793 = 3.153); feedback and explain as given. 24.50 and 2.16 appear nowhere else in set 2.
+7. fixed: `p-glassmaker-borrow` prose, "the stock loan fee of the Markets course" added.
+
+Numbers script: four smelter values plus the spread, distance and variance-slip checks updated.
+
+Gates: `problems-coint-numbers.py` 826 checks 0 failures; `problems-coint-numbers-read.py` 0 FINDING lines; `delta-review-delta-af-coint-numbers.py` 399 checks, 0 FINDING rows, exit 0; validator 0 errors; voice scan 35 0 and 0; fresh-check 0 hits on each set; grade-all 0 failures on each set; playthrough problems-1 to 3 green with and without `--mobile`.

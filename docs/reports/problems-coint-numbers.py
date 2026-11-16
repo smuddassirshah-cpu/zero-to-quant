@@ -284,13 +284,13 @@ v_ols = 4.0 - 4.6 ** 2 / 6.25
 ok(r(math.sqrt(v_ols), 3) == 0.784 and math.sqrt(v_sp) - math.sqrt(v_ols) < 0.01, 'q1 least squares sd 0.784, under a penny less')
 ok(abs(np.std(y_ - 0.736 * x_, ddof=1) - math.sqrt(v_ols)) < 1e-9, 'q1 least squares sd from the data')
 said(Q, it, 3, '0.784')
-s_today = 24.60 - b * 31.00
+s_today = 24.50 - b * 31.00
 s_mean = 22.00 - b * 30.00
-ok(r(s_today, 3) == 0.265 and r(s_mean, 2) == -1.55 and r(s_today - s_mean, 3) == 1.815, 'q1 spread 0.265, mean -1.55, distance 1.815')
+ok(r(s_today, 3) == 0.165 and r(s_mean, 2) == -1.55 and r(s_today - s_mean, 3) == 1.715, 'q1 spread 0.165, mean -1.55, distance 1.715')
 spr = y_ - b * x_
-num(Q, it, 4, (s_today - s_mean) / 0.793, (s_today - spr.mean()) / np.std(spr, ddof=1), {'no-mean': 0.265 / 0.793, 'variance': 1.815 / 0.629, 'no-hedge': (24.60 - 22.00) / 0.793}, agree=0.002)
-ok(abs(1.815 / 0.62940625 - 2.885) <= 0.005, 'q1 variance slip with the unrounded variance also lands in its band')
-said(Q, it, 4, '1.815')
+num(Q, it, 4, (s_today - s_mean) / 0.793, (s_today - spr.mean()) / np.std(spr, ddof=1), {'no-mean': 0.165 / 0.793, 'variance': 1.715 / 0.629, 'no-hedge': (24.50 - 22.00) / 0.793}, agree=0.002)
+ok(abs(1.715 / 0.62940625 - 2.725) <= 0.005, 'q1 variance slip with the unrounded variance also lands in its band')
+said(Q, it, 4, '1.715')
 
 it = 'p-lessor-window'
 a, b = 0.04, -0.08
