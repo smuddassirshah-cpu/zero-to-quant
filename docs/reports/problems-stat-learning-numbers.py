@@ -240,7 +240,9 @@ if L4 is not None:
     ok(best_val == 'logistic' and best_fit == 'network', 'p-renewals p2: validation picks logistic, fitting rows would pick the network')
     ok(sc['network'][1] == min(v[1] for v in sc.values()), 'p-renewals p2: network lowest on validation, 0.75')
     ok(sc['network'][0] - sc['network'][1] == R(21, 100) and sc['logistic'][0] - sc['logistic'][1] == R(2, 100), 'p-renewals p2: drops 0.21 and 0.02')
-    ok(abs(320 / count - 2.5) < 0.05 and round(400 / count) == 3 and 320 + 80 == 400, 'p-renewals p2: 2.5 rows a parameter on 320 rows, about 3 on 400')
+    ok(abs(300 / count - 2.3) < 0.05 and round(400 / count) == 3 and 300 + 100 == 400, 'p-renewals p2: 2.3 rows a parameter on 300 rows, about 3 on 400')
+    # delta AF-1 round 2: a 300 / 100 split, so every score is a whole count of rows
+    ok(all((R(s) * n).denominator == 1 for s, n in ((R(96, 100), 300), (R(80, 100), 300), (R(84, 100), 300), (R(75, 100), 100), (R(78, 100), 100), (R(77, 100), 100))), 'p-renewals p2: a score is no whole count of rows')
     ok(sc['svm'][1] < sc['logistic'][1] and sc['logistic'][0] < sc['svm'][0] < sc['network'][0] and sc['network'][1] < sc['svm'][1], 'p-renewals p2: svm sits between on both, below on validation')
     t = t_null(R(74, 100), R(7, 10), 500)
     num(L4, 'p-renewals', 3, t, t_sm(0.74, 0.7, 500),
