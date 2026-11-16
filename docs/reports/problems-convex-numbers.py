@@ -609,7 +609,7 @@ def level4():
             t /= 2
 
     e40 = [F(2, 5) / lmin, F(3, 50) / lmax]
-    ok(e40 == [F(1, 2), F(1, 500)], 'errors at step 40 are 0.5 and 0.002')
+    ok(e40 == [F(1, 2), F(1, 500)], 'errors at step 4 are 0.5 and 0.002')
     s1, thr1, g1 = bt_exact(e40)
     num(4, IID, 3, s1, bt_float(e40),
         {'any-fall': bt_float(e40, 'any'), 'below-limit': F(1, 16), 'below-inverse': F(1, 32), 'one-over-l': 1 / lmax})

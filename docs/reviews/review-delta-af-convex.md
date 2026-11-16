@@ -93,3 +93,13 @@ Inbox: two bullets under `Raised later (delta read AF convex):` in `docs/BACKLOG
 ## Counts
 
 3 findings: wrong 0, misleading 0, reuse 2 (2, 3), re-author 0, continuity 1 (1), voice 0, other 0. Six replacement strings, no key, no `wrong` value and no band changed. No problem is ruled `reuse` or `re-author`. Rulings: (a) keep the two narrowed bands, the rule is at fault; (b) the two shadow-price parts of set 3 stay, with one explain line reworded.
+
+## Fix pass
+
+1. Finding 1: fixed. "step 40" became "step 4" in the four strings of `problems-4` `items[0]` (prose, part 3 question, part 4 `keep`, part 5 question); recomputed 0.5/0.96^4 = 0.589 and 0.002 x 16 = 0.032. The author's script label updated to step 4.
+2. Finding 2: fixed. `problems-3` `items[1].parts[1].feedback.correct` replaced with the reader's text (S = 100b^2 - 140b + 60, derivative 200b - 140 zero at 0.70).
+3. Finding 3: fixed. `problems-3` `items[2].parts[4].explain.text` replaced with the reader's text; recomputed w = 0.40496, rise 2.977 basis points, mu = 0.06/V'(0.40496) = 1.477.
+
+Ruling (a): the two `[wrong-band]` warnings on set 4 left as ruled.
+
+Gates: validator 0 errors; voice scan 35: 0 and 0; fresh-check on sets 3 and 4: 0 hits (same advisories); grade-all 0 failures on both; all four convex scripts exit 0, delta script 331 checks, 0 FINDING (three `resolved`); playthrough sets 3 and 4, with and without `--mobile`: all passed. No keys, `wrong` values or bands changed.
