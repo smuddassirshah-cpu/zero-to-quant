@@ -449,6 +449,25 @@ A.append(item("a-psr", 4, ["fm-eval"], ["probabilistic-sharpe"], 300, "How sure 
     f"The denominator is $\\sqrt{{1 + 0.096 + 0.0162}} \\approx {den14:.4f}$. The numerator is $0.12\\sqrt{{155}} \\approx {SR14 * math.sqrt(155):.4f}$. "
     f"So $z \\approx {z14:.4f}$ and the ratio is $\\Phi(z) \\approx {psr14:.4f}$."))
 
+# A14b columns in a spline design (added by hand after the first build; checked in check_numbers.py against SplineTransformer)
+nk14b, dg14b, nin14b, nflag14b = 6, 3, 3, 2
+bas14b = nk14b - 2 + dg14b + 1                 # K interior knots + degree + 1 = K + 4 for a cubic
+cols14b = nin14b * bas14b + nflag14b
+A.append(item("a-spline-columns", 3, ["sl-flexible"], ["spline-columns"], 150, "Columns in a spline design",
+    "A bond-spread model takes three continuous inputs: duration, issue size and years since issue. "
+    "Each goes through `SplineTransformer(n_knots=6, degree=3)`. Two 0/1 flags, secured and callable, pass through unchanged. "
+    "All the columns then go to `LinearRegression`.",
+    "How many columns does `LinearRegression` receive?",
+    num(cols14b, 0, [("knots-only", nin14b * nk14b + nflag14b, 0), ("no-constant", nin14b * (bas14b - 1) + nflag14b, 0),
+                     ("no-flags", nin14b * bas14b, 0)]),
+    fb("Each splined input gives $n_{\\text{knots}} + \\text{degree} - 1 = 8$ columns, and the flags add 2.",
+       "Count the basis functions one input gets, multiply by three inputs, then add the flags.",
+       {"knots-only": "You gave each input 6 columns, one per knot. A cubic spline has more basis functions than knots: 6 knots mean 4 interior knots and 8 basis functions.",
+        "no-constant": "You gave each input 7 columns, $K + 3$. The constant counts too, so a cubic needs $K + 4$ with $K = 4$ interior knots.",
+        "no-flags": "You counted only the splined inputs: 24. The two flags pass through unchanged and are columns too."}),
+    "Six knots include the two boundary knots, so there are $K = 4$ interior knots and $K + 4 = 8$ cubic basis functions per input. "
+    "Three inputs give 24 columns, and the two flags make 26."))
+
 # A15 choosing lambda without peeking (parts)
 lams15 = [0.1, 1, 10, 100]
 val15 = np.array([[4.10, 3.95, 3.90, 4.20], [3.70, 3.62, 3.66, 3.95], [4.40, 4.30, 4.18, 4.25]])
@@ -579,11 +598,12 @@ B.append(item("b-yule-walker", 4, ["ts-acf", "ts-models"], ["yule-walker"], 240,
     "A daily volume series has sample autocorrelations $\\hat\\rho_1 = 0.45$ and $\\hat\\rho_2 = 0.05$. "
     "An AR(2) fitted by Yule-Walker solves $\\rho_1 = \\phi_1 + \\phi_2\\rho_1$ and $\\rho_2 = \\phi_1\\rho_1 + \\phi_2$.",
     "What is $\\hat\\phi_2$, which is also the lag-2 partial autocorrelation? Give 4 decimal places.",
-    num(r(ph2_5), 0.0005, [("gave-acf", r2_5, 0.0005), ("no-denominator", r(r2_5 - r1_5 ** 2), 0.0005), ("gave-phi1", r(ph1_5), 0.0005)]),
+    num(r(ph2_5), 0.0005, [("gave-acf", r2_5, 0.0005), ("no-denominator", r(r2_5 - r1_5 ** 2), 0.0005), ("gave-phi1", r(ph1_5), 0.0005), ("sign", r(-ph2_5), 0.0005)]),
     fb("$\\hat\\phi_2 = (\\rho_2 - \\rho_1^2)/(1 - \\rho_1^2)$.", "Eliminate $\\phi_1$: take $\\rho_1$ times the first equation from the second.",
        {"gave-acf": "You gave $\\hat\\rho_2$. The partial autocorrelation removes what lag 1 already explains.",
         "no-denominator": "You stopped at $\\rho_2 - \\rho_1^2$. Divide by $1 - \\rho_1^2$.",
-        "gave-phi1": "You gave $\\hat\\phi_1$. The question asks for the lag-2 coefficient."}),
+        "gave-phi1": "You gave $\\hat\\phi_1$. The question asks for the lag-2 coefficient.",
+        "sign": "ρ₂ − ρ₁² is 0.05 − 0.2025, which is below zero, because ρ₁² is the bigger. A positive 0.1912 takes 0.2025 − 0.05, the wrong way round."}),
     f"Eliminating $\\phi_1$ gives $\\phi_2(1 - \\rho_1^2) = \\rho_2 - \\rho_1^2$. So $\\hat\\phi_2 = -0.1525/0.7975 \\approx {ph2_5:.4f}$. "
     f"Then $\\hat\\phi_1 \\approx {ph1_5:.4f}$."))
 
@@ -691,10 +711,11 @@ B.append(item("b-df-hand", 4, ["co-test"], ["dickey-fuller-hand"], 300, "A unit-
     "A pair regression leaves residuals $e_t$: $0.40, 0.25, 0.05, 0.12, -0.06, 0.02, -0.10, 0.03$. "
     "We regress $\\Delta e_t$ on $e_{t-1}$ with no constant. The residual variance divides by the 7 changes less one.",
     "What is the $t$ statistic of the slope? Give 2 decimal places.",
-    num(r(t12, 4), 0.01, [("slope", r(rho12, 4), 0.005), ("n-divisor", r(t12 * math.sqrt(7 / 6), 4), 0.005)]),
+    num(r(t12, 4), 0.01, [("slope", r(rho12, 4), 0.005), ("n-divisor", r(t12 * math.sqrt(7 / 6), 4), 0.005), ("sign", r(-t12, 4), 0.005)]),
     fb("The slope over its standard error.", "Find $\\hat\\rho = \\sum e_{t-1}\\Delta e_t/\\sum e_{t-1}^2$, then its standard error from the fitted residuals.",
        {"slope": "You gave the slope $\\hat\\rho$. Divide it by its standard error.",
-        "n-divisor": "You divided the residual sum of squares by 7. With one slope fitted, divide by 6."}),
+        "n-divisor": "You divided the residual sum of squares by 7. With one slope fitted, divide by 6.",
+        "sign": "The slope ρ̂ is −0.5852, so the t statistic is negative: the residual is pulled back towards zero. A positive 3.20 drops the minus sign of the slope."}),
     f"$\\sum e_{{t-1}}\\Delta e_t = {float(el12 @ de12):.4f}$ and $\\sum e_{{t-1}}^2 = {float(el12 @ el12):.4f}$, so $\\hat\\rho \\approx {rho12:.4f}$. "
     f"The residual variance is {s2_12:.5f}, giving $t \\approx {t12:.2f}$. "
     "That misses the Engle-Granger 5% point, about $-3.34$, though it passes $-1.95$, the plain Dickey-Fuller point."))
@@ -1381,6 +1402,13 @@ CHECKS = [
 def minutes(items, extra=0):
     return int(math.ceil(1.25 * (sum(it["pace"] for it in items) + extra) / 60 / 5) * 5)
 
+
+# items the exam requires (set by hand after the first build); "required" sits straight after "id"
+REQUIRED = {"a-walk-forward-ridge", "b-eg-pair", "c-three-pricers", "c-kkt-code", "d-signal-report"}
+for _paper in (A, B, C, D):
+    for _k, _it in enumerate(_paper):
+        if _it["id"] in REQUIRED:
+            _paper[_k] = {"id": _it["id"], "required": True, **{kk: vv for kk, vv in _it.items() if kk != "id"}}
 
 DRAW_D = [{"from": "drills/oa", "difficulty": [3, 4], "n": 1}]
 DRAW_D_PACE = 1800
