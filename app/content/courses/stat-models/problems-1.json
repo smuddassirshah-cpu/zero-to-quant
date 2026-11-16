@@ -1,0 +1,681 @@
+{
+  "id": "problems-1",
+  "course": "stat-models",
+  "level": 1,
+  "title": "Problems: generalised linear models",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-ipo-underwriter",
+      "difficulty": 4,
+      "skills": [
+        "sm-glm"
+      ],
+      "prose": "Sixty IPOs listed last year, and each closed its first day either above its offer price or not. Of the 24 led by a top-tier bank, 18 closed above. Of the other 36, 12 did. A logistic GLM uses one flag, $x = 1$ for a top-tier lead: $\\ln\\frac{\\mu}{1 - \\mu} = \\beta_0 + \\beta_1 x$.",
+      "parts": [
+        {
+          "question": "With a single 0/1 flag, the fitted chance in each group equals that group's share. What is $\\hat\\beta_1$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.791759,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "odds-ratio",
+                "value": 6,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "share-ratio",
+                "value": 0.8109,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "top-only",
+                "value": 1.0986,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The top-tier odds are $18/6 = 3$ and the other odds $12/24 = 0.5$, so $\\hat\\beta_1 = \\ln(3/0.5) = \\ln 6 \\approx 1.7918$.",
+            "generic": "Not quite. Work out each group's odds, then compare them on the log scale.",
+            "byKey": {
+              "odds-ratio": "That is the odds ratio, 6. The coefficient lives on the log odds scale, so take $\\ln 6$.",
+              "share-ratio": "You took the log of the ratio of the shares, $0.75/0.3333$. The logit link compares odds, not shares.",
+              "top-only": "That is $\\ln 3$, the top-tier group's log odds. The slope is its gap from the other group's log odds, $\\ln 0.5$."
+            }
+          },
+          "explain": {
+            "text": "The groups' shares are 0.75 and $\\tfrac13$, so their log odds are $\\ln 3$ and $\\ln 0.5$. The flag's coefficient is the gap between them: $\\hat\\beta_1 = \\ln 6 \\approx 1.7918$."
+          }
+        },
+        {
+          "question": "Using $\\hat\\beta_1 = \\ln 6$ from part 1, the fitted chances are 0.75 for a top-tier IPO and $\\tfrac13$ for the rest. What is the model's residual deviance? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 72.821107,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "no-two",
+                "value": 36.411,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "risers-only",
+                "value": 36.723,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\hat\\ell = 18\\ln 0.75 + 6\\ln 0.25 + 12\\ln\\tfrac13 + 24\\ln\\tfrac23 = -36.4106$, so $D = -2\\hat\\ell \\approx 72.821$.",
+            "generic": "Not quite. Add a log chance for every IPO, those that fell included, then scale the total.",
+            "byKey": {
+              "no-two": "That is $-\\hat\\ell$. The deviance is twice the gap to the saturated model: $D = -2\\hat\\ell = 72.821$.",
+              "risers-only": "You summed only the 30 IPOs that closed above. The 30 that did not add $6\\ln 0.25 + 24\\ln\\tfrac23$ as well."
+            }
+          },
+          "explain": {
+            "text": "The 18, 6, 12 and 24 IPOs give $\\hat\\ell = -36.4106$. Each outcome here is a 0 or a 1, so the deviance is $-2\\hat\\ell \\approx 72.821$."
+          }
+        },
+        {
+          "question": "With no flag, every IPO gets the pooled chance $30/60 = 0.5$. Using $D = 72.821$ from part 2, what is the likelihood-ratio statistic for the flag? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10.356555,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "null-only",
+                "value": 83.178,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "halved",
+                "value": 5.1783,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The null deviance is $-2 \\times 60\\ln 0.5 = 83.178$, and $83.178 - 72.821 = 10.357$.",
+            "generic": "Not quite. Find the deviance of the model with no flag, then take the drop to part 2's model.",
+            "byKey": {
+              "null-only": "That is the null deviance, $120\\ln 2$. The statistic is its drop to the flag model: $83.178 - 72.821$.",
+              "halved": "You took the gap in log-likelihoods. The statistic is twice that gap, the drop in deviance, 10.357."
+            }
+          },
+          "explain": {
+            "text": "The intercept-only model gives each IPO the chance 0.5, so its deviance is $120\\ln 2 = 83.178$. Adding the flag cuts it to 72.821. The drop, 10.357, is the likelihood-ratio statistic."
+          }
+        },
+        {
+          "question": "Using the statistic 10.357 from part 3, what is the likelihood-ratio $p$-value? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.00129,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "two-df",
+                "value": 0.0056,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "lower-tail",
+                "value": 0.9987,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "One coefficient was added, so compare with $\\chi^2_1$: $P(\\chi^2_1 > 10.357) \\approx 0.0013$. The lead bank's flag matters.",
+            "generic": "Not quite. Count the coefficients the flag adds, then take the upper tail of that $\\chi^2$.",
+            "byKey": {
+              "two-df": "That uses 2 degrees of freedom. The flag adds one coefficient, so the reference is $\\chi^2_1$.",
+              "lower-tail": "That is the area below 10.357. The $p$-value is the upper tail, $1 - 0.9987 = 0.0013$."
+            }
+          },
+          "explain": {
+            "text": "The flag is the only coefficient the larger model adds, so 10.357 is read against $\\chi^2_1$. Its upper tail there is about 0.0013. A top-tier lead goes with a first-day rise."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-settlement-fails",
+      "difficulty": 5,
+      "skills": [
+        "sm-glm"
+      ],
+      "prose": "An operations team logs failed settlements for ten months. Six domestic months settled 50 thousand trades in all, with 30 fails. Four cross-border months settled 20 thousand trades, with 28 fails. The Poisson GLM is $\\ln E[Y_j] = \\ln t_j + \\beta_0 + \\beta_1 x_j$, with $t_j$ the month's trades in thousands and $x_j = 1$ for cross-border.",
+      "parts": [
+        {
+          "question": "With one 0/1 flag and this offset, each group's fitted fails add up to its observed fails. What is the fitted rate ratio $e^{\\hat\\beta_1}$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.333333,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "counts-only",
+                "value": 0.9333,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "log-scale",
+                "value": 0.8473,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 0.4286,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Cross-border fails run at $28/20 = 1.4$ per thousand trades, domestic at $30/50 = 0.6$. The ratio is $1.4/0.6 \\approx 2.3333$.",
+            "generic": "Not quite. Turn each group's fails into a rate per thousand trades first.",
+            "byKey": {
+              "counts-only": "You compared the fail counts, $28/30$, and left out the exposure. Cross-border months settled far fewer trades.",
+              "log-scale": "That is $\\hat\\beta_1 = \\ln(7/3)$. The question asks for $e^{\\hat\\beta_1}$.",
+              "inverted": "That is the domestic rate over the cross-border rate. Put cross-border on top."
+            }
+          },
+          "explain": {
+            "text": "The offset makes the model a model of fails per thousand trades. Each group's fitted rate is its total fails over its total trades, 1.4 and 0.6. So $e^{\\hat\\beta_1} = 7/3 \\approx 2.3333$."
+          }
+        },
+        {
+          "question": "Using $\\hat\\beta_1 = \\ln(7/3)$ from part 1, the weights at the fit are $W_j = \\hat\\mu_j$. They sum to 58 over all months and to 28 over the cross-border months. What is the standard error of $\\hat\\beta_1$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.262769,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "variance",
+                "value": 0.069,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "wrong-entry",
+                "value": 0.1826,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "no-inverse",
+                "value": 0.189,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ has rows $(58, 28)$ and $(28, 28)$, determinant 840. The slope entry of the inverse is $58/840$, and $\\sqrt{58/840} \\approx 0.2628$.",
+            "generic": "Not quite. Build $\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ from the two sums, invert it, and read the slope's entry.",
+            "byKey": {
+              "variance": "That is the variance, $58/840$. Take its square root for the standard error.",
+              "wrong-entry": "You read the intercept's entry, $28/840$. The slope's entry of the inverse is $58/840$.",
+              "no-inverse": "You took $1/\\sqrt{28}$ from the matrix itself. The standard error needs the inverse, whose slope entry is $58/840$."
+            }
+          },
+          "explain": {
+            "text": "With columns $(1, x)$ and $W = \\hat\\mu$, $\\mathbf{X}^T\\mathbf{W}\\mathbf{X} = \\begin{pmatrix} 58 & 28 \\\\ 28 & 28 \\end{pmatrix}$. Its inverse has slope entry $58/(58 \\times 28 - 28^2) = 58/840$. The standard error is $\\sqrt{58/840} \\approx 0.2628$."
+          }
+        },
+        {
+          "question": "The model's Pearson statistic is 17.6, from ten months and two coefficients. Using the standard error 0.2628 from part 2, what is the quasi-Poisson $z$ for $\\hat\\beta_1 = 0.8473$? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.173954,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "poisson-z",
+                "value": 3.224,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "phi-not-root",
+                "value": 1.466,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "ten-df",
+                "value": 2.431,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\hat\\phi = 17.6/8 = 2.2$, so the standard error grows to $\\sqrt{2.2 \\times 58/840} = 0.38975$ and $z = 0.84730/0.38975 \\approx 2.174$.",
+            "generic": "Not quite. Estimate the dispersion from the Pearson statistic, then scale the standard error by it.",
+            "byKey": {
+              "poisson-z": "That is the plain Poisson $z$, $0.8473/0.2628$. The fails spread more than a Poisson allows, so scale the standard error first.",
+              "phi-not-root": "You multiplied the standard error by $\\hat\\phi = 2.2$. The variance scales by $\\hat\\phi$, so the standard error scales by $\\sqrt{2.2}$.",
+              "ten-df": "You divided 17.6 by 10. Two coefficients were fitted, so the residual degrees of freedom are $10 - 2 = 8$."
+            }
+          },
+          "explain": {
+            "text": "Ten months less two coefficients leave 8 degrees of freedom, so $\\hat\\phi = 17.6/8 = 2.2$. The estimate 0.8473 stands, but its standard error grows by a factor of $\\sqrt{2.2}$, to 0.38975. So $z = 0.84730/0.38975 \\approx 2.174$."
+          }
+        },
+        {
+          "question": "Take the quasi-Poisson standard error 0.38975 from part 3. What is the lower end of a 95% interval for the rate ratio? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.086964,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "poisson-se",
+                "value": 1.394,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "log-scale",
+                "value": 0.083,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "On the log scale the interval starts at $0.84730 - 1.96 \\times 0.38975 = 0.0834$, and $e^{0.0834} \\approx 1.087$.",
+            "generic": "Not quite. Build the interval for $\\beta_1$ first, then map its end back to a ratio.",
+            "byKey": {
+              "poisson-se": "That uses the Poisson standard error 0.2628. With the dispersion of 2.2 the interval is wider, from $e^{0.0834}$.",
+              "log-scale": "That is the end on the log scale, 0.0834. Exponentiate it to read a rate ratio."
+            }
+          },
+          "explain": {
+            "text": "The interval for $\\beta_1$ is $0.84730 \\pm 1.96 \\times 0.38975$, so it starts at 0.0834. Exponentiating gives a rate ratio of at least about 1.087. Cross-border fails run above the domestic rate even after the extra spread."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-recon-breaks",
+      "difficulty": 4,
+      "skills": [
+        "sm-glm"
+      ],
+      "prose": "A back office counts its reconciliation breaks on six days: 0, 6, 2, 5, 1 and 4. It fits a Poisson GLM with a log link and an intercept only, $\\ln\\mu = \\beta$, by IRLS from $\\beta = 0$.",
+      "parts": [
+        {
+          "question": "All six fitted means are equal, so each update sets $\\beta$ to the plain average of the working responses. What is $\\beta$ after the first update? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "mean-count",
+                "value": 3,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "jump-to-fit",
+                "value": 1.0986,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "At $\\beta = 0$, $\\mu = 1$, so each $z = 0 + (y - 1)/1$. Their average is $3 - 1 = 2$.",
+            "generic": "Not quite. Write the working response for a Poisson count with a log link at $\\mu = 1$, then average it.",
+            "byKey": {
+              "mean-count": "That is the average count, $\\bar y = 3$. The update averages $z = \\eta + (y - \\mu)/\\mu$, which at $\\mu = 1$ is $y - 1$.",
+              "jump-to-fit": "That is $\\ln 3$, where the loop ends. One step from 0 lands at the average of $y - 1$, which is 2."
+            }
+          },
+          "explain": {
+            "text": "At $\\beta = 0$ every day has $\\mu = 1$, so its working response $\\eta + (y - \\mu)/\\mu$ is just $y - 1$. The six days share one weight, so the update is the average of $y - 1$: $3 - 1 = 2$."
+          }
+        },
+        {
+          "question": "Using $\\beta^{(1)} = 2$ from part 1, what is $\\beta^{(2)}$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.406006,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "no-eta",
+                "value": -0.594,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "sign",
+                "value": 2.594,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Now $\\mu = e^2 = 7.3891$, so the average $z$ is $2 + (3 - 7.3891)/7.3891 = 1 + 3e^{-2} \\approx 1.4060$.",
+            "generic": "Not quite. Recompute $\\mu$ at $\\beta = 2$, then average the working responses again.",
+            "byKey": {
+              "no-eta": "You averaged $(y - \\mu)/\\mu$ alone. The working response starts from the current $\\eta = 2$.",
+              "sign": "You added the correction with the wrong sign. The fit at $\\beta = 2$ overshoots the data, so $\\beta$ falls."
+            }
+          },
+          "explain": {
+            "text": "Averaging $z = \\beta + (y - \\mu)/\\mu$ gives $\\beta_{\\text{new}} = \\beta + (\\bar y - \\mu)/\\mu$. At $\\beta = 2$ that is $2 + (3 - e^2)/e^2 = 1.4060$."
+          }
+        },
+        {
+          "question": "Using $\\beta^{(2)} = 1.4060$ from part 2, the updates keep falling and settle. What value does $\\beta$ converge to? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.098612,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "mean-scale",
+                "value": 3,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "one-more",
+                "value": 1.1414,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The loop stops where $(\\bar y - \\mu)/\\mu = 0$, that is $\\mu = 3$. So $\\hat\\beta = \\ln 3 \\approx 1.0986$.",
+            "generic": "Not quite. Ask where the update stops changing $\\beta$.",
+            "byKey": {
+              "mean-scale": "That is the fitted mean $\\hat\\mu = 3$. The log link puts $\\hat\\beta = \\ln 3$ on the linear scale.",
+              "one-more": "That is $\\beta^{(3)}$, one step on from 1.4060. Two more steps settle at $\\ln 3 = 1.0986$."
+            }
+          },
+          "explain": {
+            "text": "The update is $\\beta + (\\bar y - e^\\beta)/e^\\beta$, which stops changing when $e^\\beta = \\bar y = 3$. So the loop settles at $\\ln 3 \\approx 1.0986$, the Poisson maximum likelihood fit."
+          }
+        },
+        {
+          "question": "Using $\\hat\\mu = e^{1.0986} = 3$ from part 3 for every day, what is the Pearson dispersion estimate, $\\chi^2$ over its residual degrees of freedom? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.866667,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "six-df",
+                "value": 1.5556,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "chi-only",
+                "value": 9.3333,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\chi^2 = (9 + 9 + 1 + 4 + 4 + 1)/3 = 9.3333$ on $6 - 1 = 5$ degrees of freedom, so $\\hat\\phi \\approx 1.8667$.",
+            "generic": "Not quite. Sum $(y - \\hat\\mu)^2/\\hat\\mu$, then divide by the days less the one coefficient.",
+            "byKey": {
+              "six-df": "You divided by 6. One coefficient was fitted, so there are 5 residual degrees of freedom.",
+              "chi-only": "That is the Pearson statistic itself. Divide it by its 5 degrees of freedom."
+            }
+          },
+          "explain": {
+            "text": "Each day adds $(y - 3)^2/3$, and the six terms total 9.3333. One coefficient leaves 5 degrees of freedom, so $\\hat\\phi = 1.8667$. The breaks spread almost twice as much as a Poisson count would."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-auction-tails",
+      "difficulty": 3,
+      "skills": [
+        "sm-glm"
+      ],
+      "prose": "A gilt desk records whether each auction tails, clearing below the price the market expected. A logistic GLM on the bid-to-cover ratio $c$ gives $\\hat\\mu = 1/(1 + e^{-(2.6 - 1.3c)})$.",
+      "parts": [
+        {
+          "question": "At what bid-to-cover ratio is a tail as likely as not? Give a decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.0,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "intercept",
+                "value": 2.6,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A chance of one half needs $\\eta = 0$, so $2.6 - 1.3c = 0$ and $c = 2.6/1.3 = 2.0$.",
+            "generic": "Not quite. Ask which value of $\\eta$ gives a chance of one half.",
+            "byKey": {
+              "intercept": "That is the intercept, 2.6. The chance is one half where the whole $\\eta = 2.6 - 1.3c$ is 0.",
+              "inverted": "You divided 1.3 by 2.6. Setting $2.6 - 1.3c = 0$ gives $c = 2.6/1.3$."
+            }
+          },
+          "explain": {
+            "text": "The inverse logit gives one half exactly when its argument is 0. Here $\\eta = 2.6 - 1.3c$, which is 0 at $c = 2.0$. A thinner cover than that makes a tail the likelier outcome."
+          }
+        },
+        {
+          "question": "Using the even-odds cover $c = 2.0$ from part 1, a cover of 2.5 sits 0.5 above it. What is the chance of a tail at 2.5? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.34299,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 0.657,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "linear",
+                "value": -0.65,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\eta = -1.3 \\times (2.5 - 2.0) = -0.65$, and $1/(1 + e^{0.65}) \\approx 0.3430$.",
+            "generic": "Not quite. Find $\\eta$ at $c = 2.5$, then put it through the inverse logit.",
+            "byKey": {
+              "sign": "You used $1/(1 + e^{-0.65})$, which flips the sign of $\\eta$. The minus in the exponent meets $\\eta = -0.65$.",
+              "linear": "That is the linear predictor $\\eta$. Put it through the inverse logit to get a chance."
+            }
+          },
+          "explain": {
+            "text": "The linear predictor is $\\eta = 2.6 - 3.25 = -0.65$. The inverse logit maps it to $1/(1 + e^{0.65}) \\approx 0.3430$."
+          }
+        },
+        {
+          "question": "Using $\\hat\\mu = 0.3430$ from part 2, what variance does the Bernoulli family give one auction's outcome? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.225348,
+            "tol": {
+              "abs": 0.0001
+            },
+            "wrong": [
+              {
+                "id": "poisson-var",
+                "value": 0.343,
+                "tol": {
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "gamma-var",
+                "value": 0.1176,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.3430 \\times (1 - 0.3430) = 0.3430 \\times 0.6570 \\approx 0.2253$.",
+            "generic": "Not quite. Use the Bernoulli variance function.",
+            "byKey": {
+              "poisson-var": "That is the Poisson variance function, $V(\\mu) = \\mu$. A 0/1 outcome has $\\mu(1 - \\mu)$.",
+              "gamma-var": "That is $\\mu^2$, the Gamma variance function. A 0/1 outcome has $\\mu(1 - \\mu)$."
+            }
+          },
+          "explain": {
+            "text": "An auction either tails or it does not, with chance 0.3430 of a tail. A 0/1 outcome with that chance has variance $0.3430 \\times 0.6570 \\approx 0.2253$."
+          }
+        },
+        {
+          "question": "Next quarter brings 12 auctions, each expected near a cover of 2.5, with independent outcomes. Using the variance 0.2253 from part 3, what is the standard deviation of the number of tails? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.644437,
+            "tol": {
+              "abs": 0.001
+            },
+            "wrong": [
+              {
+                "id": "variance",
+                "value": 2.704,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "one-auction",
+                "value": 0.475,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "poisson",
+                "value": 2.029,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Independent variances add: $12 \\times 0.22535 = 2.7042$, and $\\sqrt{2.7042} \\approx 1.644$.",
+            "generic": "Not quite. Add the 12 variances, then take a square root.",
+            "byKey": {
+              "variance": "That is the variance of the count, $12 \\times 0.2253$. Take its square root.",
+              "one-auction": "That is one auction's standard deviation. The count adds 12 independent outcomes, so add 12 variances.",
+              "poisson": "You gave each auction the variance 0.3430, as a Poisson would. A 0/1 outcome has $\\mu(1 - \\mu) = 0.2253$."
+            }
+          },
+          "explain": {
+            "text": "The count of tails is a sum of 12 independent 0/1 outcomes, each with variance 0.2253. The variances add to 2.7042. Its square root, 1.644, is the standard deviation, against a mean of 4.12."
+          }
+        }
+      ]
+    }
+  ]
+}
