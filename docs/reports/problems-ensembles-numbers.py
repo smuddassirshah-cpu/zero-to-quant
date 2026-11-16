@@ -433,7 +433,7 @@ if L3:
     z, _ = proportions_ztest(138, 240, value=float(b), prop_var=float(b))
     num(L3, it, 2, t_exact, z, {'fifty': float(h - F(1, 2)) / math.sqrt(0.25 / n), 'one-day': float(h - b) / math.sqrt(float(b * (1 - b))),
                                 'hit-se': float(h - b) / math.sqrt(float(h * (1 - h)) / n)}, round_tol=0.005)
-    unit = F(2_000_000) * F(5, 10000)
+    unit = F(2_000_000) * F(7, 10000)
     move = F(2_000_000) * F(8, 1000)
     gross_day = (F(138, 240) - (1 - F(138, 240))) * move
     sim = np.array([1.0] * 575 + [-1.0] * 425).mean() * 16000
@@ -442,10 +442,13 @@ if L3:
     ok(F(138, 240) == F(575, 1000), f'{it}: hit rate 0.575')
     cost_day = F(1, 4) * 2 * unit
     flips = np.array([1] * 250 + [0] * 750)
-    sim_cost = (flips * 2 * 1000.0).mean()
-    ok(abs(float(cost_day) - sim_cost) < 1e-9 and cost_day == 500, f'{it}: cost per day')
+    sim_cost = (flips * 2 * 1400.0).mean()
+    ok(abs(float(cost_day) - sim_cost) < 1e-9 and cost_day == 700, f'{it}: cost per day')
     num(L3, it, 4, gross_day - cost_day, sim - sim_cost, {'gross': gross_day, 'flip-one': gross_day - F(1, 4) * unit, 'every-day': gross_day - 2 * unit})
-    pick(L3, it, 5, 'later-block')
+    pick(L3, it, 5, 'not-shown')
+    base_gross = (F(126, 240) - (1 - F(126, 240))) * move
+    ok(base_gross == 800 and base_gross - cost_day == 100 and 240 * (gross_day - cost_day) == 408000, f'{it}: p5 at the base rate nets 100; 240 days at 1700 is 408000')
+    ok(round(float(cost_day / gross_day), 2) == 0.29, f'{it}: costs take 29 per cent of gross')
 
     # p-surprise-drift. Method 2: scikit-learn boosting on 40 weeks (10 per cell, no noise).
     it = 'p-surprise-drift'

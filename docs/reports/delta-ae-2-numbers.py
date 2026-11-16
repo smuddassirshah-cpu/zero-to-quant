@@ -150,7 +150,7 @@ ok("crab p3 first-column is vecs[:, 0], no-flip is vecs[:, -1]", np.allclose(V[:
 ok("crab p3 accept forms equal the key", F(24, 25) == F("0.96") and F(7, 25) == F("0.28") and F("0.04") * 24 == F("0.96"))
 scores = (X - X.mean(0)) @ np.array([0.96, 0.28])
 ok("crab scores 45, 15, 0, -15, -45", np.allclose(scores, [45, 15, 0, -15, -45]))
-check_numeric("crab p4", p[3], 45, [45], {"no-flip": [-45], "raw": [0.96 * 191 + 0.28 * 88], "pc2": [0.28 * 46 - 0.96 * 3]})
+check_numeric("crab p4", p[3], 45, [45], {"no-flip": [-45], "raw": [0.96 * 191 + 0.28 * 88], "pc2": [0.28 * 46 - 0.96 * 3], "first-column": [-0.28 * 46 + 0.96 * 3]})
 has("crab p4", all_text(p[3]), "44.16 + 0.84 = 45", "(0.96, 0.28)$ from part 3")
 ok("crab p4 parts 44.16 and 0.84", close(0.96 * 46, 44.16) and close(0.28 * 3, 0.84))
 sd = scores.std(ddof=1)
@@ -160,9 +160,12 @@ check_numeric("crab p5", p[4], 1.342, [45 / sd, round(45 / 33.541, 3)],
                "pc2-sd": [45 / math.sqrt(500), round(45 / 22.361, 3)]})
 has("crab p5", all_text(p[4]), "33.541", "1125, the eigenvalue from part 2", "score 45 from part 4")
 ok("crab sqrt(1125) = 33.541", round(math.sqrt(1125), 3) == 33.541)
-# the slip of part 3 carried into part 4 (first column as PC1) gives -10; only +10 is listed
-ok("crab NOTE first-column carried gives -10, pc2 entry is +10", close(float((X - X.mean(0))[0] @ V[:, 0]), -10))
-ok("PROPOSAL crab p4 first-column -10 is distinct from 45, -45, 208 and 10", -10 not in (45, -45, 208, 10))
+# the slip of part 3 carried into part 4 (first column as PC1) gives -10, now listed as first-column (review finding 5, fixed)
+ok("crab first-column carried gives -10", close(float((X - X.mean(0))[0] @ V[:, 0]), -10))
+_fc = {w["id"]: w for w in p[3]["widget"]["wrong"]}
+ok("FINDING 5 crab p4 first-column -10, tol 0, own byKey line, distinct from 45, -45, 208 and 10",
+   _fc["first-column"]["value"] == -10 and _fc["first-column"]["tol"]["abs"] == 0 and "first-column" in p[3]["feedback"]["byKey"]
+   and -10 not in (45, -45, 208, 10) and _fc["pc2"]["value"] == 10)
 
 # every 2 by 2 matrix of the eigen course: none has (24, 7) or (7, -24) as an eigenvector
 NUM = r"-?(?:\d+(?:\.\d+)?|\.\d+)"
@@ -259,7 +262,7 @@ for n in ["1076", "549", "168", "1125", "562500", "1625", "672", "33.541", "1557
 # ---------------------------------------------------------------------------
 van = item("stat-learning/problems-2.json", "p-ice-cream-van")
 van_text = " ".join([van["prose"]] + [all_text(x) for x in van["parts"]]).lower()
-ok("stall: story words", "deckchair stall" in van["prose"] and "ice-cream" not in van_text and "ice cream" not in van_text and "cone" not in van_text)
+ok("stall: story words", "bike-hire stand" in van["prose"] and "deckchair" not in van_text and "ice-cream" not in van_text and "ice cream" not in van_text and "cone" not in van_text)
 ok("stall: model in prose", "20 + 1.5x + 8w + 0.5xw" in van["prose"])
 
 
@@ -287,7 +290,7 @@ check_numeric("stall p5", q[4], 0.941, [1 - mse / base, round(1 - 0.0594, 3)],
 has("stall p3", all_text(q[2]), "52, 35, 44 and 40", "3, -2, 1, -2", "18/4 = 4.5", "forecast 52 from part 2")
 has("stall p4", all_text(q[3]), "15, -7, 5, -2", "225 + 49 + 25 + 4 = 303", "303/4 = 75.75", "42.75")
 has("stall p5", all_text(q[4]), "4.5 from part 3 and 75.75 from part 4", "0.0594", "94.1%")
-ok("stall: a 6 degree Sunday is forecast 40 tens of chairs (story fit, see review)", yhat(6, 1) == 40)
+ok("bike-hire: a 6 degree Sunday is forecast 40 tens of bikes, plausible for bikes (review finding 7, fixed)", yhat(6, 1) == 40 and "bikes" in van["prose"])
 
 lasso = item("stat-learning/problems-2.json", "p-futures-lasso")
 ols = [0.42, -0.27, 0.11, -0.06, 0.18]
@@ -356,44 +359,45 @@ check_numeric("study p2", s[1], 1.55, [tstat, round(0.05 / 0.0322, 2)],
                "hit-se": [float(hit - b0) / math.sqrt(float(hit * (1 - hit)) / n)]})
 has("study p2", all_text(s[1]), "0.575", "0.525", "0.0322", "0.05/0.0322 = 1.55")
 ok("study se 0.0322", round(se, 4) == 0.0322)
-# NOTE: the edge over 50% on the base-rate standard error is 2.33, outside the `fifty` band
-ok("study NOTE fifty on the base-rate se is 2.33 (unrouted)", round(0.075 / se, 2) == 2.33 and not inband(0.075 / se, 2.32, 0.005))
-ok("PROPOSAL study p2 fifty at 2.325 +/- 0.006 takes 2.32, 2.3238, 2.3267 and 2.33 and stays off the key",
-   all(inband(v, 2.325, 0.006) for v in (2.32, 0.075 / math.sqrt(0.25 / 240), 0.075 / se, 2.33)) and not inband(1.5549, 2.325, 0.006))
+# review finding 6, fixed: the edge over 50% on the base-rate standard error is 2.33; fifty is now 2.325 +/- 0.006
+_f = {e["id"]: e for e in s[1]["widget"]["wrong"]}["fifty"]
+ok("FINDING 6 study p2 fifty at 2.325 +/- 0.006 takes 2.32, 2.3238, 2.3267 and 2.33 and stays off the key",
+   _f["value"] == 2.325 and _f["tol"]["abs"] == 0.006
+   and all(inband(v, 2.325, 0.006) for v in (2.32, 0.075 / math.sqrt(0.25 / 240), 0.075 / se, 2.33)) and not inband(1.5549, 2.325, 0.006))
 move = F("0.008") * 2_000_000
 gross = (138 * move - 102 * move) / 240  # route 2: the 240 days counted
 ok("study gross by counting days = by (0.575 - 0.425) x 16000", gross == (hit - (1 - hit)) * move == 2400 and move == 16000)
 check_numeric("study p3", s[2], 2400, [2400], {"edge-only": [float((hit - b0) * move)], "half": [float((hit - F(1, 2)) * move)], "hit-only": [float(hit * move)]})
 has("study p3", all_text(s[2]), "hit rate 0.575 from part 2", "£16,000", "£800")
 ok("study always-up expects 800", (b0 - (1 - b0)) * move == 800)
-unit = F(5, 10000) * 2_000_000
+unit = F(7, 10000) * 2_000_000
 net = gross - F(1, 4) * 2 * unit
-ok("study cost by counting: 60 flips in 240 days at 2000", gross - F(60 * 2 * unit, 240) == net == 1900 and unit == 1000)
-check_numeric("study p4", s[3], 1900, [1900], {"gross": [2400], "flip-one": [float(gross - F(1, 4) * unit)], "every-day": [float(gross - 2 * unit)]})
-has("study p4", all_text(s[3]), "£2,400 a day from part 3", "£1{,}000", "£500", "about a fifth")
-ok("study costs are about a fifth of gross", abs(float(F(500) / gross) - 0.2) < 0.01)
+ok("study cost by counting: 60 flips in 240 days at 2 x 1400", gross - F(60 * 2 * unit, 240) == net == 1700 and unit == 1400)
+check_numeric("study p4", s[3], 1700, [1700], {"gross": [2400], "flip-one": [float(gross - F(1, 4) * unit)], "every-day": [float(gross - 2 * unit)]})
+has("study p4", all_text(s[3]), "£2,400 a day from part 3", "7 bp", "£1{,}400", "£2{,}800", "£700", "£1,700", "costs take over a quarter")
+ok("study p4 wrong values 2400, 2050, -400", (gross - unit / 4, gross - 2 * unit) == (2050, -400))
+ok("study costs are 29% of gross", round(float(F(700) / gross), 2) == 0.29)
+ok("study p5 at the base rate: gross 800, net 100; 240 days at 1700 is 408000",
+   (b0 - (1 - b0)) * move == 800 and (b0 - (1 - b0)) * move - 700 == 100 and 240 * 1700 == 408000)
 so = {o["id"]: o for o in s[4]["widget"]["options"]}
-ok("study p5 key later-block", so["later-block"].get("correct") is True and len(so) == 4)
+ok("study p5 key not-shown, four options", so["not-shown"].get("correct") is True and len(so) == 4 and sum(bool(o.get("correct")) for o in so.values()) == 1)
+has("study p5", all_text(s[4]), "t = 1.55", "£1,700", "£100 a day", "£408,000", "£800", "£700")
+ok("study p5 uses t from part 2 and the net from part 4 (the chain does not end at part 4)", "1.55" in s[4]["question"] and "1,700" in s[4]["question"])
 ok("study p5 makes no label-overlap claim", "overlap" not in all_text(s[4]).lower())
 
-# FINDING rows (review findings 1 and 2): reuse inside ensembles level 3
+# review findings 1 and 2, fixed: reuse inside ensembles level 3
 rv3 = load("ensembles/review-3.json")
 rv_pnl = next(it for it in rv3["items"] if it["id"] == "rv-pnl")
 rv_txt = json.dumps(rv_pnl, ensure_ascii=False)
-copied = "Long to short is 2 units of £" in s[3]["feedback"]["byKey"].get("flip-one", "") and "Long to short is 2 units of £" in rv_txt
-same_costs = "£1,000" in rv_txt and "£2,000" in rv_txt and "£1{,}000" in all_text(s[3]) and "£2{,}000" in all_text(s[3])
-ok("FINDING 1 study p4: flip-one line copied from review-3 rv-pnl onecost, with its £1,000 a unit and £2,000 a flip", not (copied and same_costs))
+ok("FINDING 1 study p4: no £1,000 a unit or £2,000 a flip and no flip-one line of review-3 onecost",
+   "£1{,}000" not in all_text(s[3]) and "£2{,}000" not in all_text(s[3]) and "Long to short is 2 units of £" not in all_text(s[3])
+   and "£1,000" in rv_txt and "£2,000" in rv_txt)
 l11 = json.dumps(load("ensembles/l11-gradient-boosting.json")["screens"][6], ensure_ascii=False)
 rv_rand = json.dumps(next(it for it in rv3["items"] if it["id"] == "rv-random-val"), ensure_ascii=False)
-same_scene = ("random 10%" in s[4]["question"] and "random 20%" in l11 and "comes late" in s[4]["explain"]["text"]
-              and "stopping comes late" in l11 and "stopping came late" in rv_rand and "later block" in l11.lower() and "later block" in rv_rand.lower())
-ok("FINDING 2 study p5: the scene and explain of l11 screen 6 and review-3 rv-random-val", not same_scene)
-# PROPOSAL rows for finding 1: 7 bp a unit
-u7 = F(7, 10000) * 2_000_000
-ok("PROPOSAL study p4 at 7 bp: unit 1400, flip 2800, 700 a day, net 1700", (u7, 2 * u7, 2 * u7 / 4, gross - 2 * u7 / 4) == (1400, 2800, 700, 1700))
-ok("PROPOSAL study p4 wrong: gross 2400, flip-one 2050, every-day -400", (gross - u7 / 4, gross - 2 * u7) == (2050, -400))
-ok("PROPOSAL study p4: costs are 29% of gross", round(float(F(700) / gross), 2) == 0.29)
-ok("PROPOSAL study p5: 240 days at 1700 is 408000; at the base rate 800 - 700 = 100", 240 * 1700 == 408000 and (b0 - (1 - b0)) * move - 700 == 100)
+t5 = all_text(s[4]).lower()
+ok("FINDING 2 study p5: no random-validation scene and no 'stopping comes late' or 'later block' line of l11 and review-3",
+   "random" not in t5 and "stopping" not in t5 and "later block" not in t5 and "comes late" not in t5
+   and "stopping comes late" in l11 and "stopping came late" in rv_rand)
 ens_l3 = " ".join((COURSES / "ensembles" / f).read_text(encoding="utf-8") for f in
                   ["l9-fixing-mistakes.json", "l10-small-steps.json", "l11-gradient-boosting.json", "l12-trees-on-returns.json", "review-3.json", "homework-3.json"])
 ok("PROPOSAL study: £1,400, £2,800, £2,050 and £408,000 nowhere in ensembles level 3", not any(x in ens_l3 for x in ["£1,400", "£2,800", "£2,050", "£408,000", "£1{,}400", "£2{,}800"]))
@@ -426,26 +430,22 @@ gc = g(cap)
 check_numeric("power p3", k[2], 0.037, [gc, round(0.1039 - 0.0669, 4), 0.0370], {"uncapped": [gk, 0.0439], "even-payout": [g(cap, win=1.0), 0.0607]})
 has("power p3", all_text(k[2]), "0.1039 - 0.0669 = 0.0370", "1.16", "0.0439")
 ok("power p3 terms 0.1039 and 0.0669", round(0.7 * math.log(1.16), 4) == 0.1039 and round(0.3 * math.log(0.8), 4) == -0.0669)
-check_numeric("power p4", k[3], 0.843, [gc / gk, 0.0370 / 0.0439, round(0.03695 / 0.04387, 3)],
-              {"inverse": [gk / gc, 0.0439 / 0.0370], "stake-ratio": [cap / kelly]})
-has("power p4", all_text(k[3]), "0.0439 at the Kelly stake and 0.0370 at the cap", "0.0370/0.0439 = 0.843", "0.03695/0.04387 = 0.842", "more than a third")
-ok("power p4 unrounded 0.842 and stake cut 38%", round(gc / gk, 3) == 0.842 and (kelly - cap) / kelly > 1 / 3)
+ln2 = math.log(2)
+check_numeric("power p4", k[3], 19, [math.ceil(ln2 / gc), math.ceil(ln2 / 0.0370)],
+              {"kelly": [math.ceil(ln2 / gk), math.ceil(ln2 / 0.0439)], "round-down": [math.floor(ln2 / 0.0370)], "no-log": [math.ceil(1 / 0.0370)]})
+has("power p4", all_text(k[3]), "0.0370 a bet from part 3", "0.693/0.0370 = 18.7", "e^{18", "1.95", "15.8")
+ok("power p4: 19 bets at the cap double, 18 do not; Kelly 16", math.exp(19 * gc) > 2 > math.exp(18 * gc) and math.ceil(ln2 / gk) == 16 and round(ln2 / gc, 2) == 18.76)
 ko = {o["id"]: o for o in k[4]["widget"]["options"]}
 ok("power p5 key sizing", ko["sizing"].get("correct") is True and len(ko) == 4)
 l12 = json.dumps(load("fin-ml/l12-end-to-end.json")["screens"][0], ensure_ascii=False)
 ok("power p5 order agrees with l12 screen 0", "calibration, sizing, costs, walk-forward with DSR, write-up" in l12)
-# FINDING row (review finding 3): the chain of parts 2 to 4 is l9 screen 4 and homework-3 h-three-quarter
+# review finding 3, fixed: part 4 asks bets to double, no longer the share of growth kept (l9 screen 4, h-three-quarter)
 l9 = load("fin-ml/l9-probability-to-position.json")["screens"]
 h3 = next(it for it in load("fin-ml/homework-3.json")["items"] if it["id"] == "h-three-quarter")
 share = re.compile(r"[Ww]hat share of .{0,30}growth.{0,40}keep")
-same_chain = bool(share.search(k[3]["question"]) and share.search(l9[4]["question"]) and share.search(h3["question"]))
-flat = "flat" in k[3]["explain"]["text"] and "flat near its peak" in l9[4]["explain"]["text"]
-ok("FINDING 3 power p4: 'what share of the growth does it keep' asked a third time (l9 screen 4, h-three-quarter), explain paraphrased", not (same_chain and flat))
-# PROPOSAL rows for finding 3: bets to double
-ok("PROPOSAL power p4: ln 2 / 0.0370 = 18.73, so 19 bets; unrounded 18.76", round(math.log(2) / 0.0370, 2) == 18.73 and math.ceil(math.log(2) / gc) == 19 and round(math.log(2) / gc, 2) == 18.76)
-ok("PROPOSAL power p4 wrong: kelly 16, round-down 18, no-log 28", math.ceil(math.log(2) / 0.0439) == 16 and math.ceil(math.log(2) / gk) == 16 and math.floor(math.log(2) / 0.0370) == 18 and math.ceil(1 / 0.0370) == 28)
-ok("PROPOSAL power p4: 19 bets at the cap do double, 18 do not", math.exp(19 * gc) > 2 > math.exp(18 * gc))
-ok("PROPOSAL power p4 lines: e^(18 x 0.0370) = 1.95, 0.693/0.0370 = 18.7, 0.693/0.0439 = 15.8", round(math.exp(18 * 0.0370), 2) == 1.95 and round(0.693 / 0.0370, 1) == 18.7 and round(0.693 / 0.0439, 1) == 15.8)
+ok("FINDING 3 power p4: no longer the share-kept question of l9 screen 4 and h-three-quarter", not share.search(k[3]["question"]) and share.search(l9[4]["question"]) and share.search(h3["question"]))
+ok("FINDING 3 power p4: explain does not paraphrase 'flat near its peak'", "flat" not in k[3]["explain"]["text"] and "flat" not in k[4]["explain"]["text"])
+ok("FINDING 3 power p5: explain no longer opens with l12 screen 0's 'each uses the one before'", "uses the one before" not in k[4]["explain"]["text"])
 fin3 = " ".join((COURSES / "fin-ml" / f).read_text(encoding="utf-8") for f in
                 ["l9-probability-to-position.json", "l10-costs-eat-edges.json", "l11-deflated-sharpe.json", "l12-end-to-end.json", "review-3.json", "homework-3.json"])
 ok("PROPOSAL power p4: no doubling-time question in fin-ml level 3", "to double" not in fin3 and "doubling" not in fin3)

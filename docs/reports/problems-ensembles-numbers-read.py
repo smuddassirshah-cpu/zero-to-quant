@@ -456,11 +456,12 @@ gross_d = float(hit * move - (1 - hit) * move)
 rng_sim = np.array([move * 1 if i < 575 else -move for i in range(1000)], dtype=float)
 ok(abs(rng_sim.mean() - gross_d) < 1e-9 and gross_d == 2400, 'gross per day 2400 by enumeration')
 key(3, 'p-futures-study', 3, gross_d, {'edge-only': 0.05 * float(move), 'half': 0.075 * float(move), 'hit-only': 0.575 * float(move)}, says=['16,000', '2{,}400', '800'])
-cost_d = 0.25 * 2 * 2e6 * 5e-4
-key(3, 'p-futures-study', 4, gross_d - cost_d, {'gross': gross_d, 'flip-one': gross_d - 0.25 * 1000, 'every-day': gross_d - 2000}, says=['2,000', '500', '1,900'])
-ok(abs(cost_d / gross_d - 0.2083) < 1e-3, 'about a fifth goes in costs')
+cost_d = 0.25 * 2 * 2e6 * 7e-4
+key(3, 'p-futures-study', 4, gross_d - cost_d, {'gross': gross_d, 'flip-one': gross_d - 0.25 * 1400, 'every-day': gross_d - 2800}, says=['2{,}800', '700', '1,700', '1{,}400'])
+ok(abs(cost_d / gross_d - 0.2917) < 1e-3, 'costs take over a quarter of gross')
 p4 = item(3, 'p-futures-study')['parts'][4]
-ok([o['id'] for o in p4['widget']['options'] if o.get('correct')] == ['later-block'], 'futures part 5 key')
+ok([o['id'] for o in p4['widget']['options'] if o.get('correct')] == ['not-shown'], 'futures part 5 key')
+ok(abs((float(bse) - (1 - float(bse))) * float(move) - 800) < 1e-9 and abs(800 - cost_d - 100) < 1e-9 and 240 * (gross_d - cost_d) == 408000, 'futures part 5: at the base rate 800 - 700 = 100; 240 days at 1700 is 408000')
 
 # p-surprise-drift: cells (small, positive) -> average return
 cells = {(1, 1): 14, (1, 0): -10, (0, 1): 2, (0, 0): 2}
