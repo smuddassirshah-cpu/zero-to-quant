@@ -39,9 +39,9 @@ Freshness: `fresh-check --file`: 0 hits, 0 advisories in the end. First run: the
 | problems-3 | p-five-day-sizing | 4 (4 / 0) | l9, l10 | 4 |
 | problems-3 | p-trial-log-dsr | 4 (4 / 0) | l11, l12 | 5 |
 | problems-3 | p-futures-net-psr | 4 (4 / 0) | l10, l11 | 4 |
-| problems-3 | p-calibrated-kelly | 5 (4 / 1) | l9, l12 | 3 |
+| problems-3 | p-power-spread-cap | 5 (4 / 1) | l9, l12 | 3 |
 
-Typed parts 16 of 17; the choice is the plan's order (calibrate before sizing). Chains: AFML size, rounded units traded, cost, break-even; trial count from a log with reruns, $E[\max]$, the error with skew and kurtosis, DSR; daily cost, net Sharpe, error, PSR; Kelly at odds 1.8 on the raw and calibrated chances, growth at the raw stake, share of the best growth.
+Typed parts 16 of 17; the choice is the plan's order (the stake cap sits at sizing). Chains: AFML size, rounded units traded, cost, break-even; trial count from a log with reruns, $E[\max]$, the error with skew and kurtosis, DSR; daily cost, net Sharpe, error, PSR; Kelly at odds 1.8 on the raw and calibrated chances, growth at the raw stake, share of the best growth.
 
 Checks: number script exit 0 (598 of 598 over the three sets); validator 0 errors, no warning on the file (`wrong-band`, `shown-arithmetic` and four long sentences fixed while drafting); `grade-all --file` 0 failures (17 widgets); playthrough green with `--why` (36 slips routed) and `--mobile`. The first 440 px shots showed the inline $E[\max]$ formula running past the column and shifting the page; both long formulas are now display maths and the shots read clean. Voice scan 0 and 0.
 

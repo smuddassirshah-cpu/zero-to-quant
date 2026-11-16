@@ -160,7 +160,7 @@ num(L1, 'p-copper-breakout', 1, sum(z), sum(z_alt),
     {'price-up': sum(v == 1 for v in y), 'time-wins': sum(a * b >= 0 for a, b in zip(s, y))})
 num(L1, 'p-copper-breakout', 2, F(sum(z), 12), precision_score(z, [1] * 12),
     {'price-up': F(sum(v == 1 for v in y), 12), 'time-wins': F(sum(a * b >= 0 for a, b in zip(s, y)), 12)})
-take = [int(q >= 0.6) for q in pp]
+take = [int(q >= 0.55) for q in pp]
 tp = sum(t * zz for t, zz in zip(take, z))
 P_, R_ = F(tp, sum(take)), F(tp, sum(z))
 num(L1, 'p-copper-breakout', 3, P_, precision_score(z, take), {'recall': R_, 'share-taken': F(sum(take), 12)})
@@ -169,8 +169,8 @@ num(L1, 'p-copper-breakout', 4, R_, recall_score(z, take),
     {'precision': P_, 'price-up': F(sum(t * u for t, u in zip(take, up_z)), sum(up_z))})
 ok([i + 1 for i in range(12) if z[i] and not take[i]] == [7] and pp[6] == 0.52, 'p-copper p4: trade 7 is missed')
 num(L1, 'p-copper-breakout', 5, 2 * P_ * R_ / (P_ + R_), f1_score(z, take),
-    {'mean': (F(2, 3) + F(4, 5)) / 2, 'product': F(2, 3) * F(4, 5)})
-ok(2 * P_ * R_ / (P_ + R_) == F(8, 11), 'p-copper p5: 8/11')
+    {'mean': (P_ + R_) / 2, 'product': P_ * R_})
+ok(P_ == F(4, 7) and 2 * P_ * R_ / (P_ + R_) == F(2, 3), 'p-copper p5: 2/3')
 
 # p-silver-windows
 tbl = {'A': (0, 2, 1), 'B': (1, 4, 0), 'C': (2, 2, 1), 'D': (4, 3, 1), 'E': (6, 2, 0)}
@@ -312,7 +312,7 @@ srt = sorted(known.values())
 q_h = F(srt.index(known['Coral']), 5)
 num(L2, 'p-q3-earnings-join', 2, q_h, (pd.Series(asof).rank()['Coral'] - 1) / 5,
     {'over-n': F(srt.index(known['Coral']) + 1, 6),
-     'dee-early': F(sorted({**known, 'Jasper': co['Jasper'][1]}.values()).index(known['Coral']), 5)})
+     'jasper-early': F(sorted({**known, 'Jasper': co['Jasper'][1]}.values()).index(known['Coral']), 5)})
 leak = {n_: v[1] for n_, v in co.items()}
 q_l = F(sorted(leak.values()).index(leak['Coral']), 5)
 num(L2, 'p-q3-earnings-join', 3, q_l, (pd.Series(leak).rank()['Coral'] - 1) / 5, {'over-n': F(5, 6)})
@@ -461,37 +461,39 @@ num(L3, 'p-futures-net-psr', 4, psr, Phi(0.038 / 0.0370),
     {'gross': Phi(sr_g / se_g), 'normal': Phi(sr / math.sqrt((1 + 0.5 * sr ** 2) / 749))}, agree=1e-3)
 ok(r(0.038 / 0.0370, 2) == 1.03 and r(Phi(1.03), 3) == 0.848, 'p-futures p4: stated z and Phi')
 
-# p-calibrated-kelly
-b = F(9, 5)
+# p-power-spread-cap
+b = F(4, 5)
+pw = F(7, 10)
 
 
 def kelly(p):
     return p - (1 - p) / b
 
 
-def growth(f, p):
-    return p * np.log(1 + 1.8 * f) + (1 - p) * np.log(1 - f)
+def growth(f, p=0.7):
+    return p * np.log(1 + 0.8 * f) + (1 - p) * np.log(1 - f)
 
 
 fgrid = np.linspace(0, 0.6, 600001)
-num(L3, 'p-calibrated-kelly', 1, kelly(F(47, 100)), fgrid[np.argmax(growth(fgrid, 0.47))],
-    {'even-odds': 2 * F(47, 100) - 1, 'times-b': F(47, 100) - F(53, 100) * b}, agree=2e-6)
-num(L3, 'p-calibrated-kelly', 2, kelly(F(44, 100)), fgrid[np.argmax(growth(fgrid, 0.44))],
-    {'even-odds': 2 * F(44, 100) - 1, 'raw': kelly(F(47, 100))}, agree=2e-6)
-fr, ftr = float(kelly(F(47, 100))), float(kelly(F(44, 100)))
-wins = rng.random(4_000_000) < 0.44
-g_mc = np.where(wins, math.log(1 + 1.8 * fr), math.log(1 - fr)).mean()
-num(L3, 'p-calibrated-kelly', 3, growth(fr, 0.44), g_mc,
-    {'raw-p': growth(fr, 0.47), 'even-payout': 0.44 * math.log(1 + fr) + 0.56 * math.log(1 - fr)}, agree=3e-4)
-ok(abs(growth(0.176, 0.44) - 0.0127) <= 0.00006, 'p-calibrated p3: rounded stake in band')
-share = growth(fr, 0.44) / growth(ftr, 0.44)
-num(L3, 'p-calibrated-kelly', 4, share, growth(0.176, 0.44) / growth(0.129, 0.44),
-    {'inverse': 1 / share, 'stake-ratio': ftr / fr}, agree=3e-3)
-ok(r(growth(ftr, 0.44), 4) == 0.0145 and r(growth(fr, 0.44), 6) == 0.012717 and r(growth(ftr, 0.44), 6) == 0.014529
-   and r(fr / ftr - 1, 2) == 0.36, 'p-calibrated p4: stated growths and oversize')
-ok([r(1 + 1.8 * fr, 3), r(1 - fr, 3), r(1 + 1.8 * ftr, 3), r(1 - ftr, 3)] == [1.316, 0.824, 1.232, 0.871],
-   'p-calibrated: stated multipliers')
-pick(L3, 'p-calibrated-kelly', 5, 'calibrate')
+fk = float(kelly(pw))
+num(L3, 'p-power-spread-cap', 1, kelly(pw), fgrid[np.argmax(growth(fgrid))],
+    {'even-odds': 2 * pw - 1, 'times-b': pw - (1 - pw) * b}, agree=2e-6)
+wins = rng.random(4_000_000) < 0.7
+g_mc = np.where(wins, math.log(1 + 0.8 * fk), math.log(1 - fk)).mean()
+num(L3, 'p-power-spread-cap', 2, growth(fk), g_mc,
+    {'even-payout': 0.7 * math.log(1 + fk) + 0.3 * math.log(1 - fk), 'swapped': 0.3 * math.log(1 + 0.8 * fk) + 0.7 * math.log(1 - fk)},
+    agree=3e-4)
+wins2 = rng.random(4_000_000) < 0.7
+g_mc2 = np.where(wins2, math.log(1.16), math.log(0.8)).mean()
+num(L3, 'p-power-spread-cap', 3, growth(0.2), g_mc2,
+    {'uncapped': growth(fk), 'even-payout': 0.7 * math.log(1.2) + 0.3 * math.log(0.8)}, agree=3e-4)
+share = growth(0.2) / growth(fk)
+num(L3, 'p-power-spread-cap', 4, share, 0.0370 / 0.0439,
+    {'inverse': 1 / share, 'stake-ratio': 0.2 / fk}, agree=3e-3)
+ok([r(1 + 0.8 * fk, 3), r(1 - fk, 3), r(1.16, 2), r(0.8, 1)] == [1.26, 0.675, 1.16, 0.8]
+   and r(growth(fk), 4) == 0.0439 and r(growth(0.2), 4) == 0.037 and r(1 - 0.2 / fk, 2) > 1 / 3,
+   'p-power-spread: stated multipliers and growths')
+pick(L3, 'p-power-spread-cap', 5, 'sizing')
 
 print(f'{checks - len(fails)} of {checks} checks pass')
 for f_ in fails:

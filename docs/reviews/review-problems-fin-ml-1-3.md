@@ -92,3 +92,24 @@ Each later part restates the value it uses. Three parts open a second strand and
 
 - `fresh-check.mjs` does not match a rate written as a decimal or fraction in one file and as a per cent in another ($5/12 = 0.4167$ here, $50/120 = 41.7\%$ in `review-1`), with the threshold 0.6 beside both (finding 1).
 - No tool checks that a `wrong` value is reached from the rounded values the part's own lines print; findings 6 to 9 are all this class, and finding 7 lets the slip into the key band. The reader's `slip()` check is a pattern: each slip worked from stated and from unrounded inputs must land in its band.
+
+## Fix pass
+
+1. fixed (reuse). Copper threshold moved to 0.55; every number recomputed ($4/7 = 0.5714$, share taken $7/12 = 0.5833$, recall 0.8 unchanged, F1 $= 2/3 = 0.6667$, mean 0.6857, product 0.4571). Keys: part 3 0.5714, part 4 0.8, part 5 0.6667, all tol as before. `wrong`: part 3 `recall` 0.8, `share-taken` 0.5833; part 4 `precision` 0.5714, `price-up` 0.75; part 5 `mean` 0.6857, `product` 0.4571.
+2. fixed. Gold part 2 `explain` now says the factor $(k - 1 - d)/k$ climbs towards 1.
+3. fixed. Retail option text and `explain` reworded (all six others score below 0; ranks spread from 0 to 0.75).
+4. fixed. Earnings part 3 `explain` now says four trading days before the first honest row.
+5. fixed. Slip id `dee-early` renamed `jasper-early` in `wrong[]`, `byKey` and both scripts.
+6. fixed. Shipping part 2 `no-mean` value 12.015, tol 0.006 (key 12.02, tol 0.005 unchanged; 12.0096 to 12.0192 and 12.02 taken).
+7. fixed. Futures part 4 key 0.848, tol 0.0015 (band 0.8465 to 0.8495); `normal` 0.8505, tol 0.0006 (band 0.8499 to 0.8511, so a typed 0.850 is refused by the key and routed to `normal`); line now says "which gives about 0.850".
+8. fixed. Futures part 3 `annual` value 0.04795, tol 0.00007 (takes 0.04792, 0.0479, 0.0480, 0.04800).
+9. fixed by re-authoring (ruled reuse by the main session, a retold story). `p-calibrated-kelly` replaced by `p-power-spread-cap` (power-forward spread, win pays £0.80 per £1, $p = 0.70$, stake cap 0.20, no calibration story). Folds in the old slip `even-payout` and the 1.316 working, as stakes are now stated exactly. Parts, keys and `wrong` values (all recomputed in both scripts):
+   - part 1 Kelly $0.70 - 0.30/0.8 = 0.325$, tol 0.0005; `even-odds` 0.4 ($2p - 1$), `times-b` 0.46 ($0.70 - 0.30 \times 0.8$), tol 0.0005.
+   - part 2 growth at 0.325: $0.70\ln 1.26 + 0.30\ln 0.675 = 0.1618 - 0.1179 = 0.0439$ (unrounded 0.04387), tol 0.00006; `even-payout` 0.0791 (win as $\ln 1.325$), `swapped` $-0.2058$ (weights 0.30 and 0.70), tol 0.00006.
+   - part 3 growth at 0.20: $0.70\ln 1.16 + 0.30\ln 0.8 = 0.1039 - 0.0669 = 0.0370$ (unrounded 0.03695), tol 0.00006; `uncapped` 0.0439, `even-payout` 0.0607 ($\ln 1.2$ for a win), tol 0.00006.
+   - part 4 share kept, key 0.843, tol 0.003 (takes 0.8424 unrounded, 0.8428 from 0.0370/0.0439, 0.8434, 0.8405); `inverse` 1.187, `stake-ratio` 0.615 ($0.20/0.325$), tol 0.003.
+   - part 5 choice, key `sizing` (the cap sits at sizing, after calibration and before costs, l12's order); three other options each routed.
+   Numbers appear nowhere else in `app/content` as a Kelly setting; `fresh-check` 0 hits.
+Judged, no finding: the other four reuse likenesses stand (main session ruling).
+
+Gates. Author's `problems-fin-ml-numbers.py` 596 of 596, exit 0; reader's `problems-fin-ml-numbers-read.py` 823 of 823, exit 0 (copper typed at 0.55; Kelly section rewritten). `fresh-check` 0 hits on each of the three sets. Validator 0 errors (manifest restored). Voice scan 35: 0 and 0. `grade-all.mjs --file` 0 failures on each set. `playthrough.mjs --problems fin-ml/problems-1|2|3` with and without `--mobile`: All passed.

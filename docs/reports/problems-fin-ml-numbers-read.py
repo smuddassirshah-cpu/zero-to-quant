@@ -158,22 +158,22 @@ slip(1, 'p-copper-breakout', 1, 'time-wins', sum(meta) + labl.count(0))
 key(1, 'p-copper-breakout', 2, F(sum(meta), 12), alts=[0.4167])
 slip(1, 'p-copper-breakout', 2, 'price-up', 4 / 12)
 slip(1, 'p-copper-breakout', 2, 'time-wins', 8 / 12)
-take = [i for i in range(12) if pp[i] >= 0.6]
-ok([i + 1 for i in take] == [1, 2, 6, 8, 10, 12], 'copper: taken trades')
+take = [i for i in range(12) if pp[i] >= 0.55]
+ok([i + 1 for i in take] == [1, 2, 3, 6, 8, 10, 12], 'copper: taken trades')
 prec = F(sum(meta[i] for i in take), len(take))
 rec = F(sum(meta[i] for i in take), sum(meta))
-key(1, 'p-copper-breakout', 3, prec, alts=[0.6667])
+key(1, 'p-copper-breakout', 3, prec, alts=[0.5714])
 slip(1, 'p-copper-breakout', 3, 'recall', float(rec))
 slip(1, 'p-copper-breakout', 3, 'share-taken', len(take) / 12)
 key(1, 'p-copper-breakout', 4, rec, says=['Trade 7'])
-slip(1, 'p-copper-breakout', 4, 'precision', float(prec), 0.6667)
+slip(1, 'p-copper-breakout', 4, 'precision', float(prec), 0.5714)
 up_tr = [i for i in range(12) if labl[i] == 1]
 slip(1, 'p-copper-breakout', 4, 'price-up', sum(1 for i in up_tr if i in take) / len(up_tr))
 f1 = 2 * prec * rec / (prec + rec)
-ok(f1 == F(8, 11), 'copper: F1 = 8/11')
-key(1, 'p-copper-breakout', 5, f1, alts=[2 * 0.6667 * 0.8 / (0.6667 + 0.8)], says=['\\tfrac{8}{11}'])
-slip(1, 'p-copper-breakout', 5, 'mean', float((prec + rec) / 2), (0.6667 + 0.8) / 2)
-slip(1, 'p-copper-breakout', 5, 'product', float(prec * rec), 0.6667 * 0.8)
+ok(f1 == F(2, 3), 'copper: F1 = 2/3')
+key(1, 'p-copper-breakout', 5, f1, alts=[2 * 0.5714 * 0.8 / (0.5714 + 0.8)], says=['\\tfrac{2}{3}'])
+slip(1, 'p-copper-breakout', 5, 'mean', float((prec + rec) / 2), (0.5714 + 0.8) / 2)
+slip(1, 'p-copper-breakout', 5, 'product', float(prec * rec), 0.5714 * 0.8)
 
 # --- p-silver-windows
 ent = {'A': (0, 2, 1), 'B': (1, 4, 0), 'C': (2, 2, 1), 'D': (4, 3, 1), 'E': (6, 2, 0)}
@@ -348,7 +348,7 @@ def prank(dct, who):
 
 key(2, 'p-q3-earnings-join', 2, prank(known, 'Coral'), says=['Onyx −1%, Beryl 2%, Topaz 5%, Coral 6%, Jasper 7%, Agate 9%'])
 slip(2, 'p-q3-earnings-join', 2, 'over-n', 4 / 6)
-slip(2, 'p-q3-earnings-join', 2, 'dee-early', float(prank({**known, 'Jasper': 4}, 'Coral')))
+slip(2, 'p-q3-earnings-join', 2, 'jasper-early', float(prank({**known, 'Jasper': 4}, 'Coral')))
 leaky = {k: v[1] for k, v in co.items()}
 key(2, 'p-q3-earnings-join', 3, prank(leaky, 'Coral'))
 slip(2, 'p-q3-earnings-join', 3, 'over-n', 5 / 6)
@@ -499,46 +499,37 @@ slip(3, 'p-futures-net-psr', 4, 'normal', Phi(netd / sr_se(netd, nd, 0, 3)), Phi
 _w = part(3, 'p-futures-net-psr', 4)['widget']
 ok(abs(round(Phi(0.038 / 0.0366), 3) - _w["answer"]) > _w["tol"]["abs"] + 1e-9, f'futures part 4: the key band {_w["answer"]} +- {_w["tol"]["abs"]} takes 0.850, the normal-error slip worked from the printed 0.0366')
 
-# --- p-calibrated-kelly
-b, praw, ptrue = 1.8, 0.47, 0.44
+# --- p-power-spread-cap
+b, p = 0.8, 0.7
 
 
 def kelly(p):
     return p - (1 - p) / b
 
 
-def g(f, p):
+def g(f, p=p):
     return p * math.log(1 + b * f) + (1 - p) * math.log(1 - f)
 
 
-# Kelly by brute maximisation of g
 fgrid = [i / 100000 for i in range(0, 60000)]
-ok(abs(max(fgrid, key=lambda f: g(f, praw)) - kelly(praw)) < 2e-5 and abs(max(fgrid, key=lambda f: g(f, ptrue)) - kelly(ptrue)) < 2e-5, 'kelly: formula is the argmax of log growth')
-key(3, 'p-calibrated-kelly', 1, kelly(praw), says=['0.294'])
-slip(3, 'p-calibrated-kelly', 1, 'even-odds', 2 * praw - 1)
-slip(3, 'p-calibrated-kelly', 1, 'times-b', praw - (1 - praw) * b)
-key(3, 'p-calibrated-kelly', 2, kelly(ptrue), says=['0.311', '36%'])
-ok(round(kelly(praw) / kelly(ptrue) - 1, 2) == 0.36 and round(0.176 / 0.129 - 1, 2) == 0.36, 'kelly: oversizes by 36%')
-slip(3, 'p-calibrated-kelly', 2, 'even-odds', 2 * ptrue - 1)
-slip(3, 'p-calibrated-kelly', 2, 'raw', kelly(praw))
-# the question fixes the stake at the stated 0.176; the unrounded Kelly is the other honest route
-key(3, 'p-calibrated-kelly', 3, g(0.176, ptrue), alts=[g(kelly(praw), ptrue)])
-p3 = part(3, 'p-calibrated-kelly', 3)
-win_mult = 1 + b * 0.176
-ok(f'{win_mult:.3f}' in texts(p3), f'kelly part 3: text prints a win multiple of 1.316; 1 + 1.8 x 0.176 = {win_mult:.4f} (1.317), and 1.316 belongs to the unrounded stake {kelly(praw):.5f}')
-t1, t2 = ptrue * math.log(win_mult), (1 - ptrue) * math.log(1 - 0.176)
-ok(f'{t1:.4f}' in texts(p3) and f'{-t2:.4f}' in texts(p3), f'kelly part 3: with f = 0.176 the two terms are {t1:.4f} and {t2:.4f}; the text prints 0.1208 and 0.1081')
-slip(3, 'p-calibrated-kelly', 3, 'raw-p', g(0.176, praw), g(kelly(praw), praw))
-slip(3, 'p-calibrated-kelly', 3, 'even-payout', ptrue * math.log(1 + 0.176) + (1 - ptrue) * math.log(1 - 0.176),
-     ptrue * math.log(1 + kelly(praw)) + (1 - ptrue) * math.log(1 - kelly(praw)))
-best = g(0.129, ptrue)
-ok(round(best, 4) == 0.0145 and round(g(kelly(ptrue), ptrue), 6) == 0.014529, 'kelly: best growth 0.0145')
-share_routes = [0.0127 / best, 0.0127 / 0.0145, g(0.176, ptrue) / best, round(g(0.176, ptrue), 5) / round(best, 5)]
-key(3, 'p-calibrated-kelly', 4, g(kelly(praw), ptrue) / g(kelly(ptrue), ptrue), alts=share_routes, says=['0.012717', '0.014529'])
-slip(3, 'p-calibrated-kelly', 4, 'inverse', best / 0.0127, 1 / 0.875)
-slip(3, 'p-calibrated-kelly', 4, 'stake-ratio', 0.129 / 0.176)
-ok(g(2 * 0.176, ptrue) < 0, 'kelly: doubling the raw Kelly gives negative growth (option why)')
-ok(ptrue * b - (1 - ptrue) > 0, 'kelly: the true bet has an edge')
+ok(abs(max(fgrid, key=g) - kelly(p)) < 2e-5, 'spread: formula is the argmax of log growth')
+key(3, 'p-power-spread-cap', 1, kelly(p), says=['0.375'])
+slip(3, 'p-power-spread-cap', 1, 'even-odds', 2 * p - 1)
+slip(3, 'p-power-spread-cap', 1, 'times-b', p - (1 - p) * b)
+key(3, 'p-power-spread-cap', 2, g(0.325), says=['1.26', '0.675', '0.1618', '0.1179'])
+ok(round(p * math.log(1.26), 4) == 0.1618 and round(0.3 * math.log(0.675), 4) == -0.1179, 'spread: terms at 0.325')
+slip(3, 'p-power-spread-cap', 2, 'even-payout', p * math.log(1.325) + (1 - p) * math.log(0.675))
+slip(3, 'p-power-spread-cap', 2, 'swapped', (1 - p) * math.log(1.26) + p * math.log(0.675))
+key(3, 'p-power-spread-cap', 3, g(0.2), says=['1.16', '0.1039', '0.0669'])
+ok(round(p * math.log(1.16), 4) == 0.1039 and round(0.3 * math.log(0.8), 4) == -0.0669, 'spread: terms at the cap')
+slip(3, 'p-power-spread-cap', 3, 'uncapped', g(0.325), round(g(0.325), 4))
+slip(3, 'p-power-spread-cap', 3, 'even-payout', p * math.log(1.2) + (1 - p) * math.log(0.8))
+shares = [g(0.2) / g(0.325), 0.0370 / 0.0439, 0.0369 / 0.0439, 0.03695 / 0.04387, 0.037 / 0.0439]
+key(3, 'p-power-spread-cap', 4, g(0.2) / g(0.325), alts=shares, says=['0.03695', '0.04387'])
+slip(3, 'p-power-spread-cap', 4, 'inverse', g(0.325) / g(0.2), 0.0439 / 0.0370)
+slip(3, 'p-power-spread-cap', 4, 'stake-ratio', 0.2 / 0.325)
+ok(1 - 0.2 / 0.325 > 1 / 3, 'spread: the cap cuts the stake by more than a third')
+ok(p * b - (1 - p) > 0, 'spread: the bet has an edge')
 
 all_slips_seen(SEEN)
 print(f'{npass} of {npass + nfail} reader checks pass')
