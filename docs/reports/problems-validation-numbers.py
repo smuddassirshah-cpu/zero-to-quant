@@ -220,6 +220,122 @@ if L1 is not None:
     ok(not bad, f'level 1 check_wrongs: {bad}')
 
 
+# ===================================================================== level 2
+L2 = load(2)
+if L2 is not None:
+    from sklearn.model_selection import TimeSeriesSplit
+
+    def purged_train(n, s, e, h, b, first=0):
+        """Rows first..first+n-1; test block s..e-1; drop h-1 before, h-1 after, then b more (l7's rule), clipped."""
+        lo, hi = max(first, s - (h - 1)), min(first + n, e + (h - 1) + b)
+        return [i for i in range(first, first + n) if i < lo or i >= hi]
+
+    def overlaps(r, s, e, h):
+        """Does training row r's label (days r+1..r+h) share a day with any test label (days s+1..e-1+h)?"""
+        return max(r + 1, s + 1) <= min(r + h, e - 1 + h)
+
+    # ---------- p-gas-demand ----------
+    x = [Fr(v) for v in (2, 4, 8, 9, 10, 9)]
+    xm = sum(x) / 6
+    d = [v - xm for v in x]
+    rho = sum(d[i] * d[i + 1] for i in range(5)) / sum(v * v for v in d)
+    xa = np.array([2, 4, 8, 9, 10, 9.0])
+    da = xa - xa.mean()
+    num(L2, 'p-gas-demand', 1, rho, np.correlate(da, da, 'full')[6] / (da @ da),
+        {'pearson': np.corrcoef(xa[:-1], xa[1:])[0, 1], 'averaged': (sum(d[i] * d[i + 1] for i in range(5)) / 5) / (sum(v * v for v in d) / 6)})
+    ok(sum(d[i] * d[i + 1] for i in range(5)) == 26 and sum(v * v for v in d) == 52 and xm == 7, 'p-gas-demand p1: 26, 52 and mean 7')
+    ok(abs(np.corrcoef(xa[:-1], xa[1:])[0, 1] - 0.869) < 0.0005, 'p-gas-demand p1: Pearson slip 0.869')
+    folds = list(TimeSeriesSplit(n_splits=6).split(np.arange(1400)))
+    num(L2, 'p-gas-demand', 2, 1400 - 1400 // 7, len(folds[-1][0]), {'block': len(folds[-1][1]), 'six-pieces': 1400 - 1400 // 6})
+    ok(folds[0][1][0] == 200 and folds[-1][1][0] == 1200 and len(folds[0][0]) == 200, 'p-gas-demand p2: blocks start at 200 and 1,200; fold 1 trains on 200')
+    mses = [Fr(v) for v in ('5.2', '4.6', '4.4', '4.9', '6.1', '5.6')]
+    total = 200 * sum(mses) + 75 * Fr(8)
+    ok(sum(mses) == Fr('30.8') and total == 6760, 'p-gas-demand p3: 30.8 and 6,760')
+    errs = np.concatenate([np.full(200, float(v)) for v in mses] + [np.full(75, 8.0)])
+    joined = total / 1275
+    num(L2, 'p-gas-demand', 3, joined, errs.mean(), {'seven-mean': (sum(mses) + 8) / 7, 'six-only': sum(mses) / 6})
+    printed(L2, 'p-gas-demand', 3, joined, 2)
+    num(L2, 'p-gas-demand', 4, joined / Fr('2.12'), errs.mean() / 2.12,
+        {'inverted': Fr('2.12') / Fr('5.30'), 'carried': (sum(mses) + 8) / 7 / Fr('2.12'), 'difference': Fr('5.30') - Fr('2.12')})
+    printed(L2, 'p-gas-demand', 4, joined / Fr('2.12'), 2)
+
+    # ---------- p-forward-label ----------
+    h, look, n = 15, 30, 1260
+    s, e = 560, 700                      # a middle block of 140 rows
+    before = [r for r in range(0, s) if overlaps(r, s, e, h)]
+    num(L2, 'p-forward-label', 1, h - 1, len(before), {'horizon': h, 'both-sides': 2 * (h - 1)})
+    ok(before == list(range(s - 14, s)), 'p-forward-label p1: rows s-14 to s-1')
+    after_feat = [r for r in range(e, n) if r - (look - 1) <= e - 1]
+    num(L2, 'p-forward-label', 2, look - 1, len(after_feat), {'window': look, 'none': 0})
+    keep = purged_train(n, s, e, h, look - 1)
+    keep_alt = [r for r in range(n) if not (s <= r < e) and not overlaps(r, s, e, h)
+                and not (e + (h - 1) <= r < e + (h - 1) + (look - 1))]
+    num(L2, 'p-forward-label', 3, n - 140 - 2 * (h - 1) - (look - 1), len(keep),
+        {'no-embargo': len(purged_train(n, s, e, h, 0)), 'horizon': len(purged_train(n, s, e, h + 1, look - 1)), 'block-only': n - 140})
+    ok(keep == keep_alt, 'p-forward-label p3: purge by overlap test equals the l7 formula')
+    ok(abs((140 + 57) / 1260 - 0.156) < 0.001, 'p-forward-label p3: nearly 16% out of each fold')
+    tss = list(TimeSeriesSplit(n_splits=8, test_size=140, gap=14).split(np.arange(n)))
+    num(L2, 'p-forward-label', 4, n - 8 * 140 - 14 - 1, tss[0][0][-1],
+        {'no-gap': list(TimeSeriesSplit(n_splits=8, test_size=140).split(np.arange(n)))[0][0][-1],
+         'horizon-gap': list(TimeSeriesSplit(n_splits=8, test_size=140, gap=15).split(np.arange(n)))[0][0][-1],
+         'embargo': 125 - 29})
+    num(L2, 'p-forward-label', 5, 140 + 7 * 140 - 14, len(tss[-1][0]),
+        {'no-gap': 1120, 'embargo': len(tss[-1][0]) - 29, 'last-day': tss[-1][0][-1]})
+    ok(tss[-1][1][0] == 1120 and len(tss[-1][0]) - len(keep) == 43, 'p-forward-label p5: fold 8 tests from 1,120; 43 more rows than part 3')
+
+    # ---------- p-signal-break ----------
+    hits = [Fr(v) for v in ('0.585', '0.565', '0.605', '0.575', '0.490', '0.470', '0.455')]
+    tb = list(TimeSeriesSplit(n_splits=7).split(np.arange(1600)))
+    ok(all(len(t) == 200 for _, t in tb) and tb[4][1][0] == 1000 and tb[5][1][0] == 1200, 'p-signal-break: blocks of 200; fold 5 from day 1,000, fold 6 from 1,200')
+    se = math.sqrt(0.25 / 200)
+    se_mc = rng.binomial(200, 0.5, 400_000).std() / 200
+    num(L2, 'p-signal-break', 1, se, float(sp.sqrt(sp.Rational(1, 800))), {'variance': 0.00125, 'all-days': math.sqrt(0.25 / 1600)})
+    ok(abs(se_mc - se) < 0.0005, f'p-signal-break p1: simulated {se_mc}')
+    printed(L2, 'p-signal-break', 1, se, 4)
+    z = (0.47 - 0.52) / 0.0354
+    lvl = float(sum(hits[:4]) / 4)
+    num(L2, 'p-signal-break', 2, round(z, 1), round((0.47 - 0.52) / se, 1),
+        {'sign': -round(z, 1), 'earlier-level': round((0.47 - lvl) / se, 1), 'carried': round((0.47 - 0.52) / math.sqrt(0.25 / 1600), 1)})
+    ok(lvl == 0.5825, 'p-signal-break p2: first four folds average 0.5825')
+
+    def alarm(scores, base, k):
+        run = 0
+        for i, v in enumerate(scores, 1):
+            run = run + 1 if v < base else 0
+            if run == k:
+                return i
+        return None
+
+    below = [i for i, v in enumerate(hits, 1) if v < Fr('0.52')]
+    num(L2, 'p-signal-break', 3, alarm(hits, Fr('0.52'), 2), next(b for b in below if b - 1 in below), {'run-start': alarm(hits, Fr('0.52'), 1), 'seventh': 7})
+    num(L2, 'p-signal-break', 4, sum(hits) / 7, np.mean([float(v) for v in hits]), {'first-four': sum(hits[:4]) / 4, 'last-three': sum(hits[4:]) / 3})
+    ok(sum(hits) == Fr('3.745'), 'p-signal-break p4: the seven add to 3.745')
+    printed(L2, 'p-signal-break', 4, sum(hits) / 7, 3)
+    choice(L2, 'p-signal-break', 5, 'old-sign')
+    ok(1600 - 1000 == 600, 'p-signal-break p5: 1,000 old days against 600 new')
+
+    # ---------- p-spread-blocks ----------
+    test = [3, 8, 11, 15, 19, 24]
+    sand = [t for t in test if t - 1 >= 1 and t + 1 <= 24 and t - 1 not in test and t + 1 not in test]
+    sand_alt = sum(1 for t in test if {t - 1, t + 1} <= (set(range(1, 25)) - set(test)))
+    num(L2, 'p-spread-blocks', 1, len(sand), sand_alt, {'all': len(test)})
+    blocks = [list(range(1 + 6 * j, 7 + 6 * j)) for j in range(4)]
+    later = [dday for j in (0, 2, 3) for dday in blocks[j] if dday > 12]
+    num(L2, 'p-spread-blocks', 2, 12, len(later), {'all-train': 18, 'one-fold': 6})
+    tr = purged_train(24, 7, 13, 4, 2, first=1)
+    tr_alt = [r for r in range(1, 25) if not (7 <= r <= 12) and not overlaps(r, 7, 13, 4) and r not in (16, 17)]
+    num(L2, 'p-spread-blocks', 3, 24 - 6 - 3 - 3 - 2, len(tr),
+        {'horizon': len(purged_train(24, 7, 13, 5, 2, first=1)), 'no-embargo': len(purged_train(24, 7, 13, 4, 0, first=1)), 'before-only': 24 - 6 - 3})
+    ok(tr == tr_alt == [1, 2, 3] + list(range(18, 25)), 'p-spread-blocks p3: days 1 to 3 and 18 to 24')
+    num(L2, 'p-spread-blocks', 4, Fr('4.62') / Fr('3.85') - 1, 4.62 / 3.85 - 1, {'by-purged': (4.62 - 3.85) / 4.62})
+    printed(L2, 'p-spread-blocks', 4, Fr('4.62') / Fr('3.85') - 1, 1, pct=True)
+
+    lv = Level('validation', 2)
+    lv.check_wrongs('problems')
+    bad = [r for r in lv.results if not r[0]]
+    ok(not bad, f'level 2 check_wrongs: {bad}')
+
+
 print(f'{checks - len(fails)} of {checks} checks passed')
 if fails:
     sys.exit(1)

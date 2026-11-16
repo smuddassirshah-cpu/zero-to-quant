@@ -1,0 +1,776 @@
+{
+  "id": "problems-2",
+  "course": "validation",
+  "level": 2,
+  "title": "Problems: time order, purging and breaks",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-gas-demand",
+      "difficulty": 4,
+      "skills": [
+        "vl-time",
+        "vl-cv"
+      ],
+      "prose": "A gas utility forecasts each day's demand above the seasonal norm, in GWh, for one region. It has 1,400 days of data and a model built on 7-day and 28-day moving averages.",
+      "parts": [
+        {
+          "question": "Six days of a cold snap read 2, 4, 8, 9, 10 and 9 GWh. What is their lag-1 autocorrelation $\\hat\\rho(1)$? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "pearson",
+                "value": 0.869,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "averaged",
+                "value": 0.6,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The mean is 7, the deviations are $-5, -3, 1, 2, 3, 2$, and $\\hat\\rho(1) = 26/52 = 0.5$.",
+            "generic": "Not quite. Multiply each deviation from the mean by the next day's, add, and divide by the sum of squared deviations.",
+            "byKey": {
+              "pearson": "You took the correlation of the five pairs, each with its own mean. $\\hat\\rho(1)$ uses one mean for all six days and the squares of all six.",
+              "averaged": "You divided the five products by 5 and the six squares by 6. The formula divides one sum by the other: $26/52$."
+            }
+          },
+          "explain": {
+            "text": "Neighbouring deviations multiply to $15 - 3 + 2 + 6 + 6 = 26$, and the squares add to 52, so $\\hat\\rho(1) = 0.5$. A series this sticky makes a shuffled test day's neighbours near copies of it."
+          }
+        },
+        {
+          "question": "With $\\hat\\rho(1) = 0.5$, the utility keeps time order and walks forward with `TimeSeriesSplit(n_splits=6)` on the 1,400 days. How many days does the last fold train on?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1200,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "block",
+                "value": 200,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "six-pieces",
+                "value": 1167,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Test blocks are $\\lfloor 1400/7 \\rfloor = 200$ days, so the last starts on day 1,200 and trains on days 0 to 1,199: 1,200 days.",
+            "generic": "Not quite. `TimeSeriesSplit` cuts blocks of $\\lfloor n/(k + 1) \\rfloor$ days and trains each fold on everything before its block.",
+            "byKey": {
+              "block": "200 is the length of each test block. The last fold trains on all the days before its block.",
+              "six-pieces": "You cut 1,400 into 6 blocks of 233. `TimeSeriesSplit` uses $k + 1 = 7$ pieces of 200."
+            }
+          },
+          "explain": {
+            "text": "The first test block starts at $1400 - 6 \\times 200 = 200$ and the last at 1,200. The expanding window grows from 200 days in fold 1 to 1,200 in fold 6."
+          }
+        },
+        {
+          "question": "The six 200-day blocks score MSEs of 5.2, 4.6, 4.4, 4.9, 6.1 and 5.6. Since then 75 new days have scored 8.0. What is the MSE of all 1,275 out-of-sample days joined? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5.30196,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "seven-mean",
+                "value": 5.5429,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "six-only",
+                "value": 5.1333,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The total squared error is $200 \\times 30.8 + 75 \\times 8.0 = 6760$, and $6760/1275 \\approx 5.30$.",
+            "generic": "Not quite. Turn each block's MSE back into a total, add the totals, and divide by all 1,275 days.",
+            "byKey": {
+              "seven-mean": "You averaged the seven block scores, giving 75 days the weight of 200. Weight each block by its days.",
+              "six-only": "You left out the 75 new days. They count, with their own weight."
+            }
+          },
+          "explain": {
+            "text": "Each block adds its days times its MSE, 6,760 in all, and over 1,275 days that is 5.30. It sits between the six-block mean of 5.13 and the plain seven-block mean of 5.54."
+          }
+        },
+        {
+          "question": "Shuffled 5-fold CV on the same days gave an MSE of 2.12. Using the joined 5.30, how many times larger is the honest error? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.5,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "inverted",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 2.6146,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "difference",
+                "value": 3.18,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$5.30/2.12 = 2.50$: the shuffled score was two and a half times too kind.",
+            "generic": "Not quite. Divide the walk-forward error by the shuffled one.",
+            "byKey": {
+              "inverted": "You divided the shuffled error by the honest one. Put the walk-forward 5.30 on top.",
+              "carried": "You carried the plain mean of seven blocks, 5.54. The joined 5.30 gives 2.50.",
+              "difference": "That is the difference. The question asks how many times larger."
+            }
+          },
+          "explain": {
+            "text": "Shuffled folds let the moving averages find each test day's neighbours, whose demand is nearly the same. The walk-forward never trains on a later day, so 2.50 is the size of that leak."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-forward-label",
+      "difficulty": 5,
+      "skills": [
+        "vl-time",
+        "vl-leakage",
+        "vl-cv"
+      ],
+      "prose": "A desk predicts each share's 15-day forward return from features that average the last 30 days, days $t - 29$ to $t$. It has 1,260 days and first tries blocked 9-fold CV, with blocks of 140 days.",
+      "parts": [
+        {
+          "question": "Take a block in the middle of the data, starting on row $s$. How many training rows just before it have labels that overlap the block's labels?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 14,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "horizon",
+                "value": 15,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "both-sides",
+                "value": 28,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$h - 1 = 14$: rows $s - 14$ to $s - 1$ reach into the test labels, while row $s - 15$ stops at day $s$.",
+            "generic": "Not quite. A label over the next $h$ days overlaps the test labels for $h - 1$ rows before the block.",
+            "byKey": {
+              "horizon": "Row $s - 15$ uses days $s - 14$ to $s$, and the first test label starts on day $s + 1$. It is clean, so 14 rows overlap, not 15.",
+              "both-sides": "28 counts both sides of the block. The question asks about the rows before it."
+            }
+          },
+          "explain": {
+            "text": "The row just before the block shares 14 days with the first test label. Each earlier row shares one day fewer, and purging removes all 14, plus 14 after the block."
+          }
+        },
+        {
+          "question": "The block ends on row $e - 1$. How many rows just after it have a 30-day feature window that includes a test day?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 29,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "window",
+                "value": 30,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "none",
+                "value": 0,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Row $e + 28$ looks back to day $e - 1$, the last test day, while row $e + 29$ starts at day $e$: 29 rows.",
+            "generic": "Not quite. Find the last row after the block whose window still reaches back into it.",
+            "byKey": {
+              "window": "Row $e + 29$ looks back to day $e$, which is after the block. The last affected row is $e + 28$: 29 rows.",
+              "none": "Rows after the block are later, but their moving averages reach back into the test days."
+            }
+          },
+          "explain": {
+            "text": "Rows $e$ to $e + 28$ average at least one test day, so their features were built from the test period. An embargo of 29 rows removes them."
+          }
+        },
+        {
+          "question": "Purge 14 rows on each side, then embargo 29 more after the block. How many rows train the model for that middle block?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1063,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-embargo",
+                "value": 1092,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "horizon",
+                "value": 1061,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "block-only",
+                "value": 1120,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1260 - 140 - 14 - 14 - 29 = 1063$.",
+            "generic": "Not quite. Remove the block, 14 rows on each side, then the 29-row embargo.",
+            "byKey": {
+              "no-embargo": "You left out the embargo of 29 rows after the block.",
+              "horizon": "You purged 15 rows a side. A 15-day label overlaps on 14.",
+              "block-only": "1,120 removes only the test block. The overlapping labels and the embargo go too."
+            }
+          },
+          "explain": {
+            "text": "Purge and embargo cost 57 rows beyond the block, so 1,063 rows train each middle fold. Nearly 16% of the data is out of every such fold."
+          }
+        },
+        {
+          "question": "Instead the desk walks forward with `TimeSeriesSplit(n_splits=8, test_size=140, gap=14)`. Counting days from 0, what is the last training day of fold 1?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 125,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-gap",
+                "value": 139,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "horizon-gap",
+                "value": 124,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "embargo",
+                "value": 96,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Fold 1 tests from day $1260 - 8 \\times 140 = 140$. The gap drops days 126 to 139, so training ends on day 125.",
+            "generic": "Not quite. Find the first test day, then step back past the gap of 14.",
+            "byKey": {
+              "no-gap": "139 ignores the gap. Days 126 to 139 are dropped.",
+              "horizon-gap": "You stepped back 15 days. `gap=14` is $h - 1$, the purge.",
+              "embargo": "You also took off the 29-row embargo. In walk-forward no training row comes after the block, so no embargo is needed."
+            }
+          },
+          "explain": {
+            "text": "`gap=14` is the purge, $h - 1$ rows before each block. Every training row comes before its block, so part 2's embargo is not needed. Training ends on day 125."
+          }
+        },
+        {
+          "question": "Using the same splitter, how many days does fold 8, the last, train on?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1106,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-gap",
+                "value": 1120,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "embargo",
+                "value": 1077,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "last-day",
+                "value": 1105,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Fold 8 tests from day $140 + 7 \\times 140 = 1120$ and trains on days 0 to 1,105: 1,106 days.",
+            "generic": "Not quite. Find fold 8's first test day, step back past the gap, and count from day 0.",
+            "byKey": {
+              "no-gap": "1,120 forgets the gap. The 14 rows before the block are purged.",
+              "embargo": "You took off the 29-row embargo too. Walk-forward needs only the purge.",
+              "last-day": "1,105 is the last training day. Counting from day 0 gives 1,106 days."
+            }
+          },
+          "explain": {
+            "text": "Walk-forward's last fold trains on 1,106 days, 43 more than part 3's purged middle block, with no embargo. Its folds are also the ones trading would really meet."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-signal-break",
+      "difficulty": 4,
+      "skills": [
+        "vl-time",
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "A rates desk walks a daily direction signal forward over 1,600 days with `TimeSeriesSplit(n_splits=7)`. In order, its seven folds hit 0.585, 0.565, 0.605, 0.575, 0.490, 0.470 and 0.455, against a base rate of 0.52.",
+      "parts": [
+        {
+          "question": "Each test block holds $\\lfloor 1600/8 \\rfloor = 200$ days. What is the standard error of one fold's hit rate, using $p = 0.5$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.035355,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "variance",
+                "value": 0.00125,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "all-days",
+                "value": 0.0125,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sqrt{0.25/200} = \\sqrt{0.00125} \\approx 0.0354$.",
+            "generic": "Not quite. Put $p = 0.5$ and $n = 200$ into $\\sqrt{p(1 - p)/n}$.",
+            "byKey": {
+              "variance": "0.00125 is the variance. Take its square root.",
+              "all-days": "You used all 1,600 days. One fold's hit rate rests on its own 200."
+            }
+          },
+          "explain": {
+            "text": "$\\sqrt{0.00125} = 0.0354$, so one 200-day fold has a standard error of about 3.5 points of hit rate. A single fold that far from the base rate is common luck."
+          }
+        },
+        {
+          "question": "Using 0.0354, how many standard errors from the base rate is fold 6? Give 1 decimal place, with its sign.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -1.4,
+            "tol": {
+              "abs": 0.05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 1.4,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "earlier-level",
+                "value": -3.2,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "carried",
+                "value": -4.0,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(0.470 - 0.52)/0.0354 \\approx -1.4$.",
+            "generic": "Not quite. Divide $0.470 - 0.52$ by the standard error 0.0354.",
+            "byKey": {
+              "sign": "Fold 6 sits below the base rate, so the distance is negative.",
+              "earlier-level": "You measured from the first four folds' level, 0.5825. The question asks about the base rate, 0.52.",
+              "carried": "You used the standard error of all 1,600 days, 0.0125. One fold has 200 days."
+            }
+          },
+          "explain": {
+            "text": "Fold 6 is 1.4 standard errors below the base rate, which one fold could reach by chance. What makes it evidence is fold 5 just before it, also below."
+          }
+        },
+        {
+          "question": "The desk's alarm fires when 2 folds in a row score below the base rate. At which fold does it fire?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 6,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "fold number",
+            "wrong": [
+              {
+                "id": "run-start",
+                "value": 5,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "seventh",
+                "value": 7,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Folds 5 and 6 are the first two in a row below 0.52. The alarm fires at fold 6.",
+            "generic": "Not quite. Walk through the folds in order and count consecutive scores under 0.52.",
+            "byKey": {
+              "run-start": "Fold 5 starts the run. The alarm needs a second low fold, which fold 6 supplies.",
+              "seventh": "Fold 7 is the third low fold in a row. The alarm fired one fold earlier."
+            }
+          },
+          "explain": {
+            "text": "The alarm fires at fold 6: one low fold is a question, two in a row are evidence. Fold 5 tests days 1,000 to 1,199, so the break came near day 1,000."
+          }
+        },
+        {
+          "question": "The research note quotes the mean of the seven fold hit rates. What is it? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.535,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "first-four",
+                "value": 0.5825,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "last-three",
+                "value": 0.4717,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The seven add to 3.745, and $3.745/7 = 0.535$, above the base rate of 0.52.",
+            "generic": "Not quite. Add the seven hit rates and divide by 7.",
+            "byKey": {
+              "first-four": "That is the mean of the first four folds. The note averages all seven.",
+              "last-three": "That is the mean of the last three folds. The note averages all seven."
+            }
+          },
+          "explain": {
+            "text": "The mean of 0.535 beats 0.52, so the note says the signal works. The last three folds, the newest 600 days, all lose, and the average hides when that happened."
+          }
+        },
+        {
+          "question": "The desk refits on all 1,600 days so that the model includes the new regime. Using the break near day 1,000 from part 3, what does the refit do?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "old-sign",
+                "text": "It still trades the old direction: 1,000 days of the old regime outvote 600 of the new",
+                "correct": true
+              },
+              {
+                "id": "learns",
+                "text": "It follows the new regime, since it has now seen all of it",
+                "why": "A fit on all days leans to the majority, and 1,000 of the 1,600 days are the old regime."
+              },
+              {
+                "id": "cancel",
+                "text": "It has no view, because the two regimes cancel",
+                "why": "They cancel only with equal numbers of days. The old regime has 1,000 against 600."
+              },
+              {
+                "id": "mean",
+                "text": "It hits about 0.535 from now on, the mean of the folds",
+                "why": "The fold mean describes no period. The newest folds lose, and a refit on everything keeps their cause."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Right. The full-history fit keeps the old sign, so use data since the break, add a regime feature, or stop.",
+            "generic": "Not quite. Count the days on each side of the break in the refit's data.",
+            "byKey": {
+              "learns": "A fit on all days leans to the majority, and 1,000 of the 1,600 days are the old regime.",
+              "cancel": "They cancel only with equal numbers of days. The old regime has 1,000 against 600.",
+              "mean": "The fold mean describes no period. The newest folds lose, and a refit on everything keeps their cause."
+            }
+          },
+          "explain": {
+            "text": "A refit on all 1,600 days is mostly the old regime, so it keeps the old relationship. Fit on the 600 days since the break and validate that walk-forward, or switch the signal off."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-spread-blocks",
+      "difficulty": 3,
+      "skills": [
+        "vl-time",
+        "vl-leakage",
+        "vl-cv"
+      ],
+      "prose": "A market maker models a bond's bid-ask spread over 24 trading days, numbered 1 to 24. It compares 4-fold splits, so each fold holds 6 days.",
+      "parts": [
+        {
+          "question": "A shuffled fold tests days 3, 8, 11, 15, 19 and 24. How many of them have a training day on both sides?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "all",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Days 3, 8, 11, 15 and 19 each sit between two training days; day 24 has no day after it.",
+            "generic": "Not quite. For each test day, check the day before and the day after.",
+            "byKey": {
+              "all": "Day 24 is the last day, so it has no training day after it."
+            }
+          },
+          "explain": {
+            "text": "Here 5 of the 6 test days have their yesterday and tomorrow in training. A spread that barely moves from day to day lets the model copy them."
+          }
+        },
+        {
+          "question": "Without the shuffle, `KFold(4)` makes blocks, and fold 2 tests days 7 to 12. How many training days come after that block?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "all-train",
+                "value": 18,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one-fold",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Days 13 to 24 are folds 3 and 4, both in training: 12 days.",
+            "generic": "Not quite. Count the training days later than day 12.",
+            "byKey": {
+              "all-train": "18 counts every training day. Only those after day 12 are in the block's future.",
+              "one-fold": "Folds 3 and 4 both come after the block: 12 days, not 6."
+            }
+          },
+          "explain": {
+            "text": "Blocks leak less than the shuffle of part 1, as only their edges touch training days. But fold 2 still learns from 12 later days, and only a fold with none after it is honest."
+          }
+        },
+        {
+          "question": "The label is the average spread over the next 4 days. The desk adds an embargo of 2 days. With fold 2 as in part 2, how many days train the model?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "horizon",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-embargo",
+                "value": 12,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "before-only",
+                "value": 15,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Purging drops days 4 to 6 and 13 to 15, and the embargo days 16 and 17. Days 1 to 3 and 18 to 24 are left: 10 days.",
+            "generic": "Not quite. Drop $h - 1$ days on each side of the block, then the embargo after it.",
+            "byKey": {
+              "horizon": "You dropped 4 days a side. A 4-day label overlaps on $h - 1 = 3$.",
+              "no-embargo": "You left out the 2-day embargo after the block.",
+              "before-only": "You purged only before the block. In $k$-fold, training days after it overlap too."
+            }
+          },
+          "explain": {
+            "text": "The test labels cover days 8 to 16. The labels of days 4 to 6 and 13 to 15 reach into them. The embargo then drops days 16 and 17, leaving 10 training days."
+          }
+        },
+        {
+          "question": "Purged this way, a 5-neighbour model's error rises from 3.85 to 4.62. By what percentage does purging raise it? Give a percentage to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2,
+            "tol": {
+              "abs": 0.0005
+            },
+            "unit": "%",
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "by-purged",
+                "value": 0.1667,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$4.62/3.85 = 1.2$, a rise of 20.0%.",
+            "generic": "Not quite. Divide the purged error by the unpurged one and subtract 1.",
+            "byKey": {
+              "by-purged": "You divided the gap by the purged 4.62. The rise is measured from the unpurged 3.85."
+            }
+          },
+          "explain": {
+            "text": "The unpurged score was 20.0% too kind, because the overlapping labels nearly hand the model the answer. A flexible model reads that leak straight off its neighbours."
+          }
+        }
+      ]
+    }
+  ]
+}
