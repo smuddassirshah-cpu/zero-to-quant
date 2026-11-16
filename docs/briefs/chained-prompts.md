@@ -52,3 +52,11 @@ Read first: CLAUDE.md; the review in full; `docs/briefs/chained.md`; this file's
 3. Update `docs/reports/problems-COURSE-numbers.py` for every changed key and `wrong` value; it and the reader's script exit 0 (tighten either-value checks to the new value).
 4. Gates: validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` on each edited set; `node tools/playthrough.mjs --problems COURSE/problems-<n> --local-cdn SCRATCH/pkgs` with and without `--mobile` for edited sets only.
 5. Append `## Fix pass` to the review: one line per finding (fixed, disputed with numbers, deferred with reason), then gate results. Commit. Scratch in `SCRATCH/fix-COURSE/`. Hand back: counts fixed, disputed, deferred; keys changed; scripts; voice; validator; playthrough.
+
+## Session AE additions, every brief
+
+- Never check out BRANCH itself inside a worktree: reset to it, or cut your own branch. Stage files by explicit path, never `git add -A`. A blank line sits between the commit subject and its trailers. The agent commits itself.
+- Number scripts resolve paths from `__file__`. A reader's script committed to `docs/reports` exits 0 and prints a `FINDING` line per failing check (CI runs every script there).
+- Reuse greps use every variable letter. Retold-story reuse is the commonest fault of session AE: a problem may not walk through the setting or the chain of steps of any lesson screen, review or homework item of the course, at any level, with other nouns or numbers; no `feedback`, `explain` or `why` line is paraphrased from one; a taught formula is not restated in an equivalent form to clear the checker. The checker does not read those three fields: compare them by hand.
+- Fixer: apply the reader's checked replacement exactly, recomputed; do not write your own. If the replacement itself retells course material, defer it with the evidence.
+- Reader and delta reader: for each problem, name the lesson screens, review and homework items closest to it and give a verdict, `clean` or `reuse`, with both texts.
