@@ -180,27 +180,71 @@ def level1():
                       ('items[0].parts[4].explain.text', 0.605), ('items[0].parts[3].feedback.correct', 3.125)]:
         lv.expect('problems', path, val)
     ok(float(c12 - cmin) == 0.605, 'limit costs 0.605')
-    # p-worst-scenario
-    L = [lambda w: 4 + 8 * w, lambda w: 10 - 8 * w, lambda w: -1 - 5 * w]
-    # losses from the stated fund returns
-    for k, (ra, rb) in enumerate([(-12, -4), (-2, -10), (6, 1)]):
-        for w in (F(0), F(1, 3), F(1)):
-            ok(-(ra * w + rb * (1 - w)) == L[k](w), f'scenario {k + 1} line from fund returns at w={w}')
-    W = lambda w: max(f(w) for f in L)
-    num(1, 'p-worst-scenario', 1, W(F(1, 2)), max(f(0.5) for f in L),
-        {'average': sum(f(F(1, 2)) for f in L) / 3, 'rate': L[1](F(1, 2)), 'decimal': W(F(1, 2)) / 100})
-    grid = np.linspace(0, 1, 400001)
-    inside = grid[np.array([W(w) for w in grid]) <= 8 + 1e-12]
-    num(1, 'p-worst-scenario', 2, F(1, 2) - F(1, 4), inside.max() - inside.min(),
-        {'crash-only': F(1, 2), 'shock-only': 1 - F(1, 4)}, agree=1e-5)
-    choice(1, 'p-worst-scenario', 3, 'epi')
-    res = linprog([0, 1], A_ub=[[8, -1], [-8, -1], [-5, -1]], b_ub=[-4, -10, 1], bounds=[(0, 1), (None, None)], method='highs')
-    wstar = sp.solve(sp.Eq(4 + 8 * X, 10 - 8 * X), X)[0]
-    num(1, 'p-worst-scenario', 4, wstar, res.x[0], {'half': F(1, 2), 'edge': F(1, 4)})
-    num(1, 'p-worst-scenario', 5, L[0](wstar), res.fun, {'half': 8, 'all-bond': W(0), 'decimal': F(7, 100)})
-    ok(L[2](F(3, 8)) == F(-23, 8), 'rally loss at 0.375 is -2.875')
-    lv.expect('problems', 'items[1].parts[3].explain.text', -2.875)
-    lv.expect('problems', 'items[1].parts[0].feedback.correct', -3.5)
+    # p-account-target (re-authored in session AF; replaces p-worst-scenario)
+    xp = sp.Symbol('x', positive=True)
+    d2 = sp.diff(6 * sp.sqrt(xp), xp, 2)
+    expr(1, 'p-account-target', 1, d2.subs(xp, x), {'sign': -d2.subs(xp, x), 'first': sp.diff(6 * sp.sqrt(xp), xp).subs(xp, x),
+                                                    'power': -F(3, 2) * x ** F(-1, 2)})
+    # method 2 for part 1: a central second difference of 6 sqrt(x) at three points
+    for t in (0.5, 4.0, 9.0):
+        h = 1e-4
+        fd2 = (6 * np.sqrt(t + h) - 12 * np.sqrt(t) + 6 * np.sqrt(t - h)) / h ** 2
+        ok(abs(fd2 + 1.5 * t ** -1.5) < 1e-4, f'second difference of 6 sqrt(x) at {t}: {fd2}')
+    choice(1, 'p-account-target', 2, 'rewrite')
+    # part 2 claims: the constraint function is convex (midpoint test on a grid), max(x, y) >= 1 fails at the midpoint of (1, 0), (0, 1)
+    fcon = lambda p: 30 - 6 * np.sqrt(p[0]) - 3 * np.sqrt(p[1])
+    pts = [np.array([a_, c_]) for a_ in np.linspace(0, 40, 21) for c_ in np.linspace(0, 120, 21)]
+    worst_mid = min(0.5 * fcon(p) + 0.5 * fcon(q) - fcon(0.5 * (p + q)) for p in pts[::3] for q in pts[1::3])
+    ok(worst_mid >= -1e-9, 'f = 30 - 6 sqrt x - 3 sqrt y passes the midpoint test on a grid')
+    ok(max(1, 0) >= 1 and max(0, 1) >= 1 and max(0.5, 0.5) < 1, 'max(x, y) >= 1: endpoints pass, midpoint fails')
+    us = sp.Symbol('u')
+    spend_line = us ** 2 + (10 - 2 * us) ** 2
+    ustar = sp.solve(sp.diff(spend_line, us), us)[0]
+    xstar = ustar ** 2
+    # method 2: SLSQP on the problem in the original variables
+    res_ad = minimize(lambda z: z[0] + z[1], [9, 9], method='SLSQP', bounds=[(0, None)] * 2,
+                      constraints=[{'type': 'ineq', 'fun': lambda z: 6 * np.sqrt(max(z[0], 0)) + 3 * np.sqrt(max(z[1], 0)) - 30}],
+                      options={'ftol': 1e-14, 'maxiter': 500})
+    slip_chain = sp.solve(2 * us + 2 * (10 - 2 * us), us)[0] ** 2
+    num(1, 'p-account-target', 3, xstar, res_ad.x[0], {'gave-u': ustar, 'corner': F(30, 6) ** 2, 'no-chain': slip_chain}, agree=1e-5)
+    ok(ustar == 4 and sp.expand(sp.diff(spend_line, us)) == 10 * us - 40, "slope 10u - 40, u = 4")
+    vstar = 10 - 2 * ustar
+    spend = xstar + vstar ** 2
+    num(1, 'p-account-target', 4, spend, res_ad.fun, {'search-only': xstar, 'roots': ustar + vstar, 'corner': F(30, 6) ** 2}, agree=1e-5)
+    ok(6 * ustar + 3 * vstar == 30 and vstar == 2, 'N = 24 + 6 = 30 at (16, 4)')
+    ok(F(30, 6) ** 2 - spend == 5, 'split saves 5 against search only')
+    # part 5: the least spend for target T, exactly, then by SLSQP at three targets
+    Ts = sp.Symbol('T', positive=True)
+    line_T = us ** 2 + (Ts / 3 - 2 * us) ** 2
+    uT = sp.solve(sp.diff(line_T, us), us)[0]
+    ST = sp.simplify(line_T.subs(us, uT))
+    ok(sp.simplify(ST - Ts ** 2 / 45) == 0 and sp.simplify(uT - 2 * Ts / 15) == 0, 'S(T) = T^2/45 at u = 2T/15')
+    ok(sp.simplify((Ts / 3 - 2 * uT) - Ts / 15) == 0, 'v = T/15')
+    for Tv in (12.0, 30.0, 60.0):
+        r = minimize(lambda z: z[0] + z[1], [Tv, Tv], method='SLSQP', bounds=[(0, None)] * 2,
+                     constraints=[{'type': 'ineq', 'fun': lambda z: 6 * np.sqrt(max(z[0], 0)) + 3 * np.sqrt(max(z[1], 0)) - Tv}],
+                     options={'ftol': 1e-14, 'maxiter': 500})
+        ok(abs(r.fun - Tv ** 2 / 45) < 1e-5 * max(1, Tv ** 2 / 45), f'SLSQP spend at T={Tv}: {r.fun}')
+    pt5 = part(1, 'p-account-target', 5)
+    w5 = pt5['widget']
+    def parse_T(tex):
+        return parse(tex.replace('T', 'x')).subs(x, Ts)
+    ok(sp.simplify(parse_T(w5['answer']) - Ts ** 2 / 45) == 0, 'L1 p-account-target p5 key equals truth')
+    for a_ in w5['accept']:
+        ok(sp.simplify(parse_T(a_) - Ts ** 2 / 45) == 0, f'L1 p-account-target p5 accept {a_}')
+    slips5 = {'linear': 2 * Ts / 3, 'search-only': (Ts / 6) ** 2, 'podcast-only': (Ts / 3) ** 2}
+    ok(set(q['id'] for q in w5['wrong']) == set(slips5), 'L1 p-account-target p5 wrong ids')
+    for q in w5['wrong']:
+        e = parse_T(q['tex'])
+        ok(sp.simplify(e - slips5[q['id']]) == 0 and sp.simplify(e - Ts ** 2 / 45) != 0, f'L1 p-account-target p5 wrong {q["id"]}')
+        ok(q['id'] in pt5['feedback']['byKey'], f'L1 p-account-target p5 wrong {q["id"]} has byKey')
+    ok(all(float((slips5['search-only'] - ST).subs(Ts, t)) > 0 for t in (0.5, 3, 30)), 'search only dearer than the split for T > 0')
+    ok(ST.subs(Ts, 30) == 20 and ST.subs(Ts, 60) == 80, 'spend 20 at T = 30 and 80 at T = 60')
+    ok(sp.expand(4 * Ts ** 2 / 225 + Ts ** 2 / 225) == Ts ** 2 / 45, '(4T^2 + T^2)/225 = T^2/45')
+    for path, val in [('items[1].parts[2].feedback.correct', 16), ('items[1].parts[3].feedback.correct', 30),
+                      ('items[1].parts[3].feedback.byKey.corner', 5), ('items[1].parts[4].explain.text', 80),
+                      ('items[1].parts[2].question', 10)]:
+        lv.expect('problems', path, val)
     # p-two-futures-hedge
     a, bb = sp.symbols('a b', real=True)
     V = a ** 2 + 6 * a * bb + 10 * bb ** 2 - 2 * a - 2 * bb + 6
@@ -226,7 +270,7 @@ def level1():
     lv.expect('problems', 'items[2].parts[1].explain.text', 0.18)
     lv.expect('problems', 'items[2].parts[1].explain.text', 21.82)
     shape(1, {'p-shortfall-and-fee': {'l1-convex-sets', 'l2-convex-functions', 'l3-local-is-global'},
-              'p-worst-scenario': {'l1-convex-sets', 'l2-convex-functions', 'l3-local-is-global', 'l4-recognising-convex-problems'},
+              'p-account-target': {'l1-convex-sets', 'l2-convex-functions', 'l3-local-is-global', 'l4-recognising-convex-problems'},
               'p-two-futures-hedge': {'l1-convex-sets', 'l2-convex-functions', 'l3-local-is-global', 'l4-recognising-convex-problems'}},
           ['cv-convex'])
     lv.check_wrongs('problems')
@@ -394,44 +438,69 @@ def level3():
     ok(abs(float(p63) - 42.04) < 0.005 and abs(float(l63) - 4.47) < 0.005, f'exact 42.04 at price 4.47: {float(p63)}, {float(l63)}')
     ok(abs(42.04 - 42.0666667) <= 0.035, 'the band also takes the exact re-solve 42.04')
     ok(F(3, 10) * lstar == F(7, 5), '0.3 x 14/3 = 1.4')
-    # p-no-borrowing
-    S = sp.Matrix([[F(3, 100), F(1, 100)], [F(1, 100), F(7, 100)]])
-    m = sp.Matrix([F(55, 1000), F(105, 1000)])
-    rf = F(3, 100)
-    wfree = S.solve(m - rf * sp.ones(2, 1))
-    wnp = np.linalg.solve(np.array(S, dtype=float), np.array(m - rf * sp.ones(2, 1), dtype=float).ravel())
-    num(3, 'p-no-borrowing', 1, wfree[1], wnp[1], {'gave-a': wfree[0], 'no-cash-rate': S.solve(m)[1], 'no-cov': (m[1] - rf) / S[1, 1]}, rounded=1.00)
-    ok(list(wfree) == [F(1, 2), 1] and 1 - sum(wfree) == F(-1, 2), 'free plan (0.5, 1) with cash -0.5')
-    wa, wb, lam_ = sp.symbols('wa wb lam_')
-    sol = sp.solve([m[0] - (S[0, 0] * wa + S[0, 1] * wb) - lam_, m[1] - (S[1, 0] * wa + S[1, 1] * wb) - lam_, wa + wb - 1], [wa, wb, lam_])
-    Snp, mnp = np.array(S, dtype=float), np.array(m, dtype=float).ravel()
-    qp = minimize(lambda z: -(mnp @ z[:2] + 0.03 * z[2] - 0.5 * z[:2] @ Snp @ z[:2]), [1 / 3] * 3, method='SLSQP', bounds=[(0, 1)] * 3,
-                  constraints=[{'type': 'eq', 'fun': lambda z: z.sum() - 1}], options={'ftol': 1e-15, 'maxiter': 500})
-    resc = F(1, 1) / (F(3, 2))
-    num(3, 'p-no-borrowing', 2, sol[wb], qp.x[1], {'rescale': resc, 'gave-a': sol[wa]}, rounded=0.875, agree=1e-6)
-    ok(abs(qp.x[2]) < 1e-7, 'solver puts cash at 0')
-    third = sp.Matrix([F(1, 3), F(2, 3)])
-    lam_third = m - S * third
-    ok(lam_third[0] != lam_third[1], f'rescaled weights give two lambdas {list(lam_third)}')
-    SwA = (S * sp.Matrix([sol[wa], sol[wb]]))[0]
-    SwB = (S * sp.Matrix([sol[wa], sol[wb]]))[1]
-    num(3, 'p-no-borrowing', 3, sol[lam_], float(m[1] - SwB), {'cash-rate': rf, 'sigma-w': SwA}, rounded=0.0425)
-    ok(SwA == F(1, 80) and SwB == F(1, 16), '(Sigma w) = (0.0125, 0.0625)')
-    ok((S[0, 0] - S[1, 0], S[0, 1] - S[1, 1], m[0] - m[1]) == (F(1, 50), F(-3, 50), F(-1, 20)), 'row difference 0.02 wA - 0.06 wB = -0.05')
-    nu = sol[lam_] - rf
-    # method 2 for nu: the objective gain per unit of allowed borrowing, by a finite difference of the QP value
-    def qp_val(lo):
-        r = minimize(lambda z: -(mnp @ z[:2] + 0.03 * z[2] - 0.5 * z[:2] @ Snp @ z[:2]), [0.1, 0.8, 0.1], method='SLSQP',
-                     bounds=[(0, 2), (0, 2), (lo, 1)], constraints=[{'type': 'eq', 'fun': lambda z: z.sum() - 1}], options={'ftol': 1e-15, 'maxiter': 500})
-        return -r.fun
-    fd = (qp_val(-1e-4) - qp_val(0)) / 1e-4
-    num(3, 'p-no-borrowing', 4, nu, fd, {'sign': -nu, 'lambda': sol[lam_]}, rounded=0.0125, agree=1e-3)
-    ret = (m.T * sp.Matrix([sol[wa], sol[wb]]))[0] * 100
-    num(3, 'p-no-borrowing', 5, ret, 100 * mnp @ qp.x[:2], {'levered': 100 * ((m.T * wfree)[0] + rf * (1 - sum(wfree))), 'equal': 100 * sum(m) / 2}, rounded=9.875, agree=1e-6)
-    var = (sp.Matrix([sol[wa], sol[wb]]).T * S * sp.Matrix([sol[wa], sol[wb]]))[0]
-    ok(var == F(9, 160) and abs(np.sqrt(float(var)) - 0.2372) < 5e-5, f'variance 0.05625, vol 23.72%: {float(var)}')
-    ok(F(1, 8) * F(55, 10) == F(11, 16) and F(7, 8) * F(105, 10) == F(147, 16), '0.6875% and 9.1875%')
-    lv.expect('problems', 'items[1].parts[4].explain.text', 0.05625)
+    # p-style-fit (re-authored in session AF; replaces p-no-borrowing)
+    G = sp.Matrix([[60, 20], [20, 80]])          # sums v^2, vg, g^2
+    c = sp.Matrix([30, 60])                       # sums rv, rg
+    srr = 60                                      # sum r^2
+    bV, bG = sp.symbols('bV bG', real=True)
+    beta = sp.Matrix([bV, bG])
+    Sx = sp.expand(srr - 2 * (c.T * beta)[0] + (beta.T * G * beta)[0])
+    Qm = sp.hessian(Sx, (bV, bG))
+    qv = sp.Matrix([sp.diff(Sx, bV), sp.diff(Sx, bG)]).subs({bV: 0, bG: 0})
+    ok(sp.expand(Sx - (sp.Rational(1, 2) * (beta.T * Qm * beta)[0] + (qv.T * beta)[0] + 60)) == 0, 'S = 1/2 b^T Q b + q^T b + 60')
+    ok(Qm == sp.Matrix([[120, 40], [40, 160]]) and list(qv) == [-60, -120], 'Q = [[120, 40], [40, 160]], q = (-60, -120)')
+    # the stated sums can come from data: the 3 by 3 Gram matrix of (v, g, r) is positive definite
+    Gram = np.array([[60, 20, 30], [20, 80, 60], [30, 60, 60]], dtype=float)
+    ok(np.linalg.eigvalsh(Gram).min() > 0, f'Gram matrix of the sums is positive definite: {np.linalg.eigvalsh(Gram)}')
+    # method 2 for Q: build 12 months of data with exactly these sums (Cholesky of the Gram matrix) and form 2 X^T X
+    Lc = np.linalg.cholesky(Gram)
+    Z, _ = np.linalg.qr(np.random.default_rng(7).normal(size=(12, 3)))
+    data = Z @ Lc.T                               # columns v, g, r with Z^T Z = I
+    ok(np.allclose(data.T @ data, Gram), 'synthetic 12-month data reproduce the sums')
+    Xd, rd = data[:, :2], data[:, 2]
+    Qd = 2 * Xd.T @ Xd
+    num(3, 'p-style-fit', 1, Qm[0, 1], Qd[0, 1], {'no-two': G[0, 1], 'double': 2 * Qm[0, 1]}, agree=1e-9)
+    ok(Qm.det() > 0 and Qm[0, 0] > 0, 'Q positive definite')
+    t = sp.Symbol('t')
+    St = sp.expand(Sx.subs({bV: 1 - t, bG: t}))
+    ok(sp.Poly(St, t).all_coeffs() == [100, -140, 60], 'S along the budget = 100t^2 - 140t + 60')
+    tstar = sp.solve(sp.diff(St, t), t)[0]
+    # method 2: least squares on the synthetic data with the budget, by SLSQP with bounds
+    fit = minimize(lambda z: float(np.sum((rd - Xd @ z) ** 2)), [0.5, 0.5], method='SLSQP', bounds=[(0, 1)] * 2,
+                   constraints=[{'type': 'eq', 'fun': lambda z: z.sum() - 1}], options={'ftol': 1e-15, 'maxiter': 500})
+    bfree = G.solve(c)
+    Snc = sp.expand(srr - 2 * (c.T * beta)[0] + 60 * bV ** 2 + 80 * bG ** 2).subs({bV: 1 - t, bG: t})
+    t_nc = sp.solve(sp.diff(Snc, t), t)[0]
+    num(3, 'p-style-fit', 2, tstar, fit.x[1], {'no-budget': bfree[1], 'no-cross': t_nc, 'gave-v': 1 - tstar}, rounded=0.70, agree=1e-6)
+    ok(bfree == sp.Matrix([F(3, 11), F(15, 22)]) and abs(float(sum(bfree)) - 0.9545) < 5e-5, f'no-budget weights {list(bfree)} sum 0.95')
+    ok(t_nc == F(9, 14) and 60 - 40 + 80 == 100, 'no-cross slip 9/14; coefficient 100')
+    ok(sp.diff(St, t) == 200 * t - 140, 'slope 200t - 140')
+    choice(3, 'p-style-fit', 3, 'slack')
+    # part 3 claims: SLSQP with bounds returns the same weights to 6 places, KKT with bound multipliers 0 holds
+    ok(abs(fit.x[0] - 0.3) < 5e-7 and abs(fit.x[1] - 0.7) < 5e-7, f'SLSQP with bounds returns {fit.x}')
+    grad = (Qm * sp.Matrix([F(3, 10), F(7, 10)]) + qv)
+    ok(grad[0] == grad[1] == 4, f'stationarity on the budget: gradient {list(grad)} = lambda 1 with lambda 4')
+    ok(min(F(3, 10), F(7, 10), 1 - F(3, 10), 1 - F(7, 10)) == F(3, 10), 'every slack at least 0.3')
+    Sopt = Sx.subs({bV: F(3, 10), bG: F(7, 10)})
+    num(3, 'p-style-fit', 4, Sopt, fit.fun, {'no-budget': srr - (c.T * bfree)[0], 'half-cross': Sopt - 20 * F(21, 100),
+                                               'linear-half': Sopt + (c.T * sp.Matrix([F(3, 10), F(7, 10)]))[0]}, rounded=11.00, agree=1e-7)
+    ok(St.subs(t, F(7, 10)) == 11, 'S(0.7) along the budget is 11')
+    ok(2 * (30 * F(3, 10) + 60 * F(7, 10)) == 102 and 60 * F(9, 100) + 40 * F(21, 100) + 80 * F(49, 100) == 53, '102 and 53')
+    ok(60 * F(9, 100) == F(27, 5) and 40 * F(21, 100) == F(42, 5) and 80 * F(49, 100) == F(196, 5), '5.4, 8.4, 39.2')
+    ok(abs(float(srr - (c.T * bfree)[0]) - 10.9091) < 5e-5, 'no-budget S 10.91')
+    ok(srr - Sopt == 49, 'indices account for 49 of 60')
+    rms = sp.sqrt(Sopt / 12)
+    rms_alt = float(np.sqrt(np.mean((rd - Xd @ fit.x) ** 2)))
+    num(3, 'p-style-fit', 5, rms / 100, rms_alt / 100, {'no-twelve': sp.sqrt(Sopt) / 100, 'no-root': Sopt / 12 / 100,
+                                                        'no-fit': sp.sqrt(F(srr, 12)) / 100}, rounded=0.00957, agree=1e-7)
+    ok(part(3, 'p-style-fit', 5)['widget'].get('unit') == '%', 'p-style-fit p5 has unit %')
+    ok(round(float(rms), 3) == 0.957 and round(float(sp.sqrt(11)), 3) == 3.317 and round(11 / 12, 3) == 0.917 and round(float(sp.sqrt(5)), 3) == 2.236,
+       '0.957, 3.317, 0.917, 2.236')
+    for path, val in [('items[1].parts[0].explain.text', 120), ('items[1].parts[0].explain.text', 160),
+                      ('items[1].parts[1].feedback.byKey.no-budget', 0.95), ('items[1].parts[3].feedback.byKey.half-cross', 8.4),
+                      ('items[1].parts[3].feedback.byKey.linear-half', 102), ('items[1].parts[4].explain.text', 0.9167),
+                      ('items[1].parts[4].feedback.correct', 0.957)]:
+        lv.expect('problems', path, val)
     # p-variance-limit
     w = sp.Symbol('w')
     Vw = sp.expand(F(1, 100) * (1 - w) ** 2 + 2 * F(5, 1000) * w * (1 - w) + F(625, 10000) * w ** 2)
@@ -482,7 +551,7 @@ def level3():
     top = (0.01 + np.sqrt(0.0001 + 4 * 0.0625 * 0.0062)) / 0.125
     ok(abs(top - 0.405) < 0.0005, f'new share about 0.405: {top}')
     shape(3, {'p-capital-price': {'l9-lagrangian-dual', 'l10-kkt', 'l13-shadow-prices'},
-              'p-no-borrowing': {'l10-kkt', 'l11-mean-variance-kkt', 'l12-long-only', 'l13-shadow-prices'},
+              'p-style-fit': {'l10-kkt', 'l11-mean-variance-kkt', 'l12-long-only'},
               'p-variance-limit': {'l10-kkt', 'l11-mean-variance-kkt', 'l13-shadow-prices'}},
           ['cv-duality', 'cv-qp'])
     lv.check_wrongs('problems')

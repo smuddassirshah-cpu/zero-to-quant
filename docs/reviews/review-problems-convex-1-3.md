@@ -116,3 +116,34 @@ All six are `O2-long-sentence` (20 words or more; the gate is 35 and none is nea
 ## Counts
 
 20 findings: wrong 0, misleading 2 (6, 14), reuse 11 (1, 2, 7, 8, 9, 10, 11, 12, 16, 18, 19), re-author 1 (4), continuity 2 (3, 20), voice 1 (13), other 3 (5, 15, 17). Replacement lines: 50 and one new `wrong` entry, all checked in a copy. Problem marked re-author: `p-worst-scenario`. `p-no-borrowing` (the chain of l11 S4 to S6) and `p-three-strategies` (the desk frame of level 2) are line-level here; the main session may rule either a re-author.
+
+## Fix pass
+
+Author agent, session AF (`docs/briefs/reauthor-fix-af.md`). Re-authored: `p-worst-scenario` (finding 4) as `p-account-target`, and `p-no-borrowing` (main-session ruling) as `p-style-fit`. Every replacement number was recomputed before it was written (`problems-convex-numbers.py` and this review's script); none is disputed.
+
+1. Fixed: prose and ten lines as written (aluminium hedge, £k).
+2. Fixed: part 2 `correct` and `explain` (triangle inequality).
+3. Fixed: parts 2 and 3 questions point back to parts 1 and 2.
+4. Re-authored as `p-account-target`: concave account count, at-least limit shown convex, square-root change of variables, substitution along the active limit, cost curve $T^2/45$. Walks none of the screens and items listed.
+5. Falls with finding 4 (the parts no longer exist).
+6. Fixed with finding 7's lines: the position is $P - aF_1 - bF_2$, $a$ and $b$ are amounts sold, the ban is on buying.
+7. Fixed: prose and nine lines as written (power plant, gas and carbon forwards).
+8. Fixed: four lines as written.
+9. Fixed: three lines as written.
+10. Fixed: three lines as written.
+11. Fixed: three lines as written.
+12. Fixed: two lines as written.
+13. Fixed: both lines split as written.
+14. Fixed: the dual function named apart from the Lagrangian.
+15. Fixed: "in £k" added.
+16. Falls with the re-author of `p-no-borrowing` (the lines no longer exist).
+17. Falls with the re-author of `p-no-borrowing` (no `decimal` entry added; `p-style-fit` part 5 has `unit: "%"`).
+18. Fixed: endowment and corporate bonds.
+19. Fixed: the hint as written.
+20. Fixed through the re-author: `p-style-fit` grades two l12 ideas ($\mathbf{Q}$ from the objective in part 1, the long-only solver's answer in part 3) and ends on the fit's root-mean-square miss, not on a shadow-price step. `p-capital-price` part 5 and `p-variance-limit` part 5 still both end on a multiplier times a change, as the reader noted; they are line-level here and left as they are.
+
+Keys changed: none of the kept problems. New keys: `p-account-target` $-\tfrac32x^{-3/2}$, choice `rewrite`, 16, 20, $\tfrac{T^2}{45}$; `p-style-fit` 40, 0.7, choice `slack`, 11, 0.957% (key 0.0095743 with `unit: "%"`). Wrong values: those of the two new problems only, each checked in the author's script.
+
+Scripts: `problems-convex-numbers.py` 792 of 792, numbers_lib failures 0, exit 0. `problems-convex-numbers-read.py`: the checks of the two removed problems are removed with a comment (its FINDING lines 1, 2, 4 and 7 went with them; line 3 cleared by findings 6 and 7, lines 5 and 6 by finding 3); its back-reference test now also takes "Part 2" with a capital, which the reader's own replacement questions use; 683 checks, 0 FINDING lines, exit 0.
+
+Gates: validator 0 errors (on these sets only the three `O2-long-sentence` keeps of the table above). Voice scan 35: 0 and 0. `fresh-check --file`: 0 hits on each set, the same two advisories on set 3. `grade-all --file --local-cdn`: 15, 14 and 15 widgets, 0 failures. Playthrough `--problems convex/problems-1`, `-2`, `-3`, desktop and `--mobile`: green; 440 px shots of both new problems read, no layout faults.

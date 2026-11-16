@@ -173,38 +173,8 @@ ok(abs(C(1.2) - C(1.75) - 0.605) < 1e-12, 'p-shortfall p5: the limit does not co
 ok(all(4 * (v - 3) + 5 < 0 for v in np.linspace(1e-9, 1.2, 100)) and all(4 * (v - 3) - 5 < 0 for v in np.linspace(-5, -1e-9, 100)),
    "p-shortfall p5: C' is not negative below 1.2")
 
-# p-worst-scenario: fund returns to book losses
-eq = np.array([-12, -2, 6.0])
-bd = np.array([-4, -10, 1.0])
-
-
-def L(w):
-    return -(w * eq + (1 - w) * bd)
-
-
-def W(w):
-    return L(w).max()
-
-
-for w0 in (0.0, 0.3, 1.0):
-    ok(np.allclose(L(w0), [4 + 8 * w0, 10 - 8 * w0, -1 - 5 * w0]), 'p-worst prose: the three loss lines do not follow from the fund returns')
-num(1, 'p-worst-scenario', 1, max(4 + 8 * 0.5, 10 - 8 * 0.5, -1 - 5 * 0.5), W(0.5),
-    {'average': L(0.5).mean(), 'rate': L(0.5)[1], 'decimal': W(0.5) / 100})
-grid = np.linspace(0, 1, 400001)
-Wg = np.array([W(v) for v in grid[::40]])
-length = (np.array([W(v) for v in grid]) <= 8 + 1e-12).mean()
-num(1, 'p-worst-scenario', 2, 0.5 - 0.25, round(length, 4), {'crash-only': 0.5 - 0.0, 'shock-only': 1.0 - 0.25}, printed=(0.25,))
-choice(1, 'p-worst-scenario', 3, 'epi')
-# epigraph LP over (w, t): rows L_k(w) - t <= 0
-A = [[8, -1], [-8, -1], [-5, -1]]
-b = [-4, -10, 1]
-r = linprog([0, 1], A_ub=A, b_ub=b, bounds=[(0, 1), (None, None)], method='highs')
-num(1, 'p-worst-scenario', 4, float(F(6, 16)), r.x[0], {'half': 0.5, 'edge': 0.25}, dp=3)
-num(1, 'p-worst-scenario', 5, float(4 + 8 * F(3, 8)), r.fun, {'half': W(0.5), 'all-bond': W(0.0), 'decimal': r.fun / 100})
-ok(abs(L(0.375)[2] + 2.875) < 1e-12, 'p-worst p4: rally loss at 0.375')
-ok(linprog([0, 1], A_ub=[[-8, 1], [8, 1], [5, 1]], b_ub=[4, 10, -1], bounds=[(0, 1), (None, None)], method='highs').status == 3,
-   'p-worst p3: option "below" is not unbounded')
-ok(linprog([0, -1], A_ub=A, b_ub=b, bounds=[(0, 1), (None, None)], method='highs').status == 3, 'p-worst p3: option "max-t" is not unbounded')
+# p-worst-scenario: removed in the session AF fix pass. The problem was re-authored as p-account-target
+# (review finding 4); its checks here, and FINDING lines 1, 2 and 7, went with it. The delta reader checks the new problem.
 
 # p-two-futures-hedge: covariance of (P, F1, F2)
 S3 = np.array([[6, 1, 1], [1, 1, 3], [1, 3, 10.0]])
@@ -376,50 +346,8 @@ num(3, 'p-capital-price', 5, float(est), p6 + 0.3 * (best_profit(6.0 + 1e-4)[0] 
     {'trial-price': float(F(122, 3) + F(3, 10) * 3), 'per-desk': float(F(122, 3) + 2 * F(3, 10) * F(14, 3))}, dp=2, printed=(42.07,))
 ok(abs(p63 - 42.04) < 0.005 and abs((13 - 6.3) / 1.5 - 4.47) < 0.005 and p63 < float(est), 'p-capital p5: re-solve 42.04 at price 4.47, below the estimate')
 
-# p-no-borrowing
-m = np.array([0.055, 0.105])
-Sg = np.array([[0.03, 0.01], [0.01, 0.07]])
-rf = 0.03
-w_free = np.linalg.solve(Sg, m - rf)
-
-
-def util(z):  # z = (wA, wB, wc)
-    w_ = np.array(z[:2])
-    return m @ w_ + rf * z[2] - 0.5 * w_ @ Sg @ w_
-
-
-def solve(lo_cash):
-    r_ = minimize(lambda z: -util(z), [0.3, 0.3, 0.4], method='SLSQP', bounds=[(0, None), (0, None), (lo_cash, None)],
-                  constraints=[{'type': 'eq', 'fun': lambda z: sum(z) - 1}], options={'ftol': 1e-15, 'maxiter': 500})
-    return r_.x, -r_.fun
-
-
-xb, ub = solve(None)
-num(3, 'p-no-borrowing', 1, float(sp.Matrix(sp.Matrix([[F(3, 100), F(1, 100)], [F(1, 100), F(7, 100)]]).solve(sp.Matrix([F(25, 1000), F(75, 1000)])))[1]),
-    round(xb[1], 5), {'gave-a': w_free[0], 'no-cash-rate': np.linalg.solve(Sg, m)[1], 'no-cov': 0.075 / 0.07}, dp=2)
-ok(abs(xb[2] + 0.5) < 1e-4, 'p-no-borrowing p1: cash is not -0.5')
-x0, u0 = solve(0.0)
-wB = F(7, 8)
-num(3, 'p-no-borrowing', 2, float(wB), round(x0[1], 5), {'rescale': w_free[1] / w_free.sum(), 'gave-a': 1 - float(wB)}, dp=4)
-wr_ = w_free / w_free.sum()
-ok(abs((m - Sg @ wr_)[0] - (m - Sg @ wr_)[1]) > 1e-4, 'p-no-borrowing p2: the rescaled plan does give one lambda')
-w2 = np.array([1 / 8, 7 / 8])
-lam_rows = m - Sg @ w2
-num(3, 'p-no-borrowing', 3, lam_rows[0], lam_rows[1], {'cash-rate': rf, 'sigma-w': (Sg @ w2)[0]}, dp=4)
-eps = 1e-3
-nu_fd = (solve(-eps)[1] - solve(eps)[1]) / (2 * eps)  # the floor on cash moved either way
-num(3, 'p-no-borrowing', 4, lam_rows[0] - rf, round(nu_fd, 4), {'sign': rf - lam_rows[0], 'lambda': lam_rows[0]}, dp=4)
-ok(abs(nu_fd - 0.0125) < 2e-4, f'p-no-borrowing p4: a unit of borrowing adds {nu_fd}, not about 0.0125')
-num(3, 'p-no-borrowing', 5, float(F(1, 8) * F(55, 10) + F(7, 8) * F(105, 10)), 100 * m @ x0[:2],
-    {'levered': 100 * (m @ w_free - rf * 0.5), 'equal': 100 * m.mean()}, dp=3)
-var = w2 @ Sg @ w2
-ok(abs(var - 0.05625) < 1e-12 and abs(100 * math.sqrt(var) - 23.72) < 0.005, 'p-no-borrowing p5: variance 0.05625, volatility 23.72%')
-xbox = minimize(lambda z: -util(z), [0.3, 0.3, 0.4], method='SLSQP', bounds=[(0, 1)] * 3,
-                constraints=[{'type': 'eq', 'fun': lambda z: sum(z) - 1}], options={'ftol': 1e-15}).x
-ok(np.allclose(xbox, [1 / 8, 7 / 8, 0], atol=1e-5), 'p-no-borrowing p5: bounds [0, 1] do not return (1/8, 7/8, 0)')
-p5 = item(3, 'p-no-borrowing')['parts'][4]['widget']
-if not any(abs(x_['value'] - 0.09875) < 1e-9 for x_ in p5.get('wrong', [])):
-    claim('problems-3 p-no-borrowing p5: "Give a percentage" has no slip entry for the decimal 0.09875, which falls to the generic line.')
+# p-no-borrowing: removed in the session AF fix pass. The problem was re-authored as p-style-fit
+# (main-session ruling, review findings 16, 17, 20); its checks here, and FINDING line 4, went with it.
 
 # p-variance-limit
 w = sp.symbols('w')
@@ -454,7 +382,7 @@ for n in (1, 2, 3):
     for it in SETS[n]['items']:
         ok(3 <= len(it['parts']) <= 5 and 3 <= it['difficulty'] <= 5, f'problems-{n} {it["id"]}: parts or difficulty out of range')
         for k, p in enumerate(it['parts'][1:], start=2):
-            ok(bool(re.search(r'part \d|parts \d|[Uu]sing', p['question'])), f'problems-{n} {it["id"]} p{k}: the question does not point back to an earlier part')
+            ok(bool(re.search(r'[Pp]art \d|[Pp]arts \d|[Uu]sing', p['question'])), f'problems-{n} {it["id"]} p{k}: the question does not point back to an earlier part')
     ok(any(it['difficulty'] == 5 for it in SETS[n]['items']), f'problems-{n}: no difficulty 5')
     parts = [p for it in SETS[n]['items'] for p in it['parts']]
     typed = sum(p['widget']['kind'] in ('numeric', 'expression') for p in parts)
