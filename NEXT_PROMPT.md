@@ -2,7 +2,7 @@
 
 Read CLAUDE.md and follow its SESSION PROTOCOL. Push to the branch the harness assigns and, once per batch, to `claude/amazing-wright-d4mx7i` (CI). A push there cancels the run in progress: wait for the run first. Setup: KNOWN_ISSUES, session AB last lines. Prompts: `docs/briefs/chained-prompts.md`, with its "Session AE additions" in every brief.
 
-Cherry-pick agents' commits, then validator, `readiness-sums.mjs --write`, commit `manifest.json`. CI status: GitHub MCP `actions_list`, `actions_get`, `get_job_logs`. Last green run: see PROGRESS, last line.
+Cherry-pick agents' commits, then validator, `readiness-sums.mjs --write`, commit `manifest.json`. CI status: GitHub MCP `actions_list`, `actions_get`, `get_job_logs`. Last green run: 24 at `3c39d0c` (30 jobs); later commits are docs only.
 
 Expected census: lessons 1,236; levels 283; reviews 283 (items 2,558); exams 29 topic, 4 stage, 16 mock; drills 270; Fluency sets 100 (families 318); problem sets 128 (items 480); bank 36 files, 400 items; hours 3,695 gap 0; edges 266; validator 0 errors. Tags: `[negative-key]` 2, `[percent-form]` 3, `[tight-band]` 17, `[near-miss]` 0, `[same-course-reuse]` 0. Waivers 5, all "stands".
 
