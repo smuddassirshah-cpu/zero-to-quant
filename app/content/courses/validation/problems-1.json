@@ -1,0 +1,788 @@
+{
+  "id": "problems-1",
+  "course": "validation",
+  "level": 1,
+  "title": "Problems: splits, folds and tuning",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-flood-claims",
+      "difficulty": 5,
+      "skills": [
+        "vl-cv"
+      ],
+      "prose": "An insurer predicts the log cost of household claims from 1,152 settled claims, one row per claim and in no time order. Its errors are roughly normal with $\\sigma^2 = 0.36$, so a test MSE over $n$ claims has sd about $\\sigma^2\\sqrt{2/n}$.",
+      "parts": [
+        {
+          "question": "How many test claims bring the sd of the test MSE down to 0.03?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 288,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "unsquared",
+                "value": 800,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-two",
+                "value": 144,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.36\\sqrt{2/n} = 0.03$ gives $0.1296 \\times 2/n = 0.0009$, so $n = 288$.",
+            "generic": "Not quite. Solve $0.36\\sqrt{2/n} = 0.03$ for $n$, squaring both sides first.",
+            "byKey": {
+              "unsquared": "You squared the root but not the 0.36 in front. Squaring $0.36\\sqrt{2/n}$ gives $0.1296 \\times 2/n$.",
+              "no-two": "You dropped the 2 under the root. The variance of a squared normal error is $2\\sigma^4$."
+            }
+          },
+          "explain": {
+            "text": "Squaring gives $0.1296 \\times 2/n = 0.0009$, so $n = 0.2592/0.0009 = 288$. Halving the sd again would take four times as many claims."
+          }
+        },
+        {
+          "question": "Part 1 holds back 288 test claims. The other 864 are split 3 to 1 into training and validation. How many claims fit the coefficients?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 648,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "validation",
+                "value": 216,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "all-rest",
+                "value": 864,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The training rows fit the coefficients: $\\tfrac34 \\times 864 = 648$, leaving 216 to choose between models.",
+            "generic": "Not quite. Take the 288 test claims off 1,152, then three quarters of the rest.",
+            "byKey": {
+              "validation": "216 is the validation slice. Validation rows choose between models; the training rows fit them.",
+              "all-rest": "864 is training and validation together. A quarter of it is kept back to choose between models."
+            }
+          },
+          "explain": {
+            "text": "$1152 - 288 = 864$ claims remain, and three quarters of them, 648, are training rows. The 216 validation rows choose, and the 288 test claims report once."
+          }
+        },
+        {
+          "question": "A colleague would rather test every claim once. She runs shuffled 4-fold cross-validation on all 1,152 claims. How many claims does each fold's model fit on?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 864,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "test-fold",
+                "value": 288,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "all",
+                "value": 1152,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each fold holds out $1152/4 = 288$ claims, as many as part 1's test set, and fits on the other 864.",
+            "generic": "Not quite. Each round holds one fold of four out and fits on the rest.",
+            "byKey": {
+              "test-fold": "288 is the size of each test fold. The model fits on the other three folds.",
+              "all": "A fold's model never sees its own test claims, so it fits on three folds, not all four."
+            }
+          },
+          "explain": {
+            "text": "Four folds of 288 cover the 1,152 claims. Each claim is tested once, by a model fitted on 864. Each test fold is as large as part 1's single test set."
+          }
+        },
+        {
+          "question": "Twelve of the 1,152 claims are flood claims. With plain shuffled folds of 288, what is the chance that a given fold holds none of them? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.031073,
+            "tol": {
+              "abs": 6e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "independent",
+                "value": 0.0317,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "All 12 must land among the other 864 claims: $\\binom{864}{12}/\\binom{1152}{12} \\approx 0.0311$.",
+            "generic": "Not quite. Count the ways all 12 flood claims fall outside the fold, over all the ways they can fall.",
+            "byKey": {
+              "independent": "You used $0.75^{12} = 0.0317$, as if each flood claim were placed on its own. A fold holds exactly 288 claims, so the draws are without replacement and the chance is a little smaller."
+            }
+          },
+          "explain": {
+            "text": "The product $\\tfrac{864}{1152} \\times \\tfrac{863}{1151} \\times \\dots \\times \\tfrac{853}{1141}$ is about 0.0311. A fold with no flood claim scores the model on ordinary claims only."
+          }
+        },
+        {
+          "question": "Two given folds both hold none with chance about 0.00023. Using 0.0311 from part 4, what is the chance that some fold holds no flood claim? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1229,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "union",
+                "value": 0.1243,
+                "tol": {
+                  "abs": 0.0004
+                }
+              },
+              {
+                "id": "independent-folds",
+                "value": 0.1187,
+                "tol": {
+                  "abs": 0.0004
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.1254,
+                "tol": {
+                  "abs": 0.0004
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$4 \\times 0.0311 - 6 \\times 0.00023 \\approx 0.123$: about one run in eight has a fold with no flood claim.",
+            "generic": "Not quite. Add the four single-fold chances, then take off the six pairs of folds counted twice.",
+            "byKey": {
+              "union": "You added the four chances and stopped. A run where two folds both miss is counted twice, so take off the 6 pairs.",
+              "independent-folds": "You treated the four folds as independent. They share the same 12 flood claims, so use inclusion and exclusion with the pair chance given.",
+              "carried": "You carried $0.75^{12} = 0.0317$ from the shortcut in part 4. With the exact 0.0311 the answer is about 0.123."
+            }
+          },
+          "explain": {
+            "text": "Inclusion and exclusion gives $4(0.0311) - 6(0.00023) = 0.123$, and the three-fold term is negligible. `StratifiedKFold` deals the 12 flood claims out 3 a fold and removes the risk."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-van-prices",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "A dealer predicts the resale price of used vans, in £ thousands, from 1,430 past sales, one row per van. It locks 290 sales as a test set, then tunes a ridge penalty $\\alpha$ over 0.3, 1, 3, 10, 30 and 100 by 5-fold CV on the other 1,140. Every $\\alpha$ is scored on the same shuffled folds.",
+      "parts": [
+        {
+          "question": "At $\\alpha = 3$ the five fold MSEs are 1.84, 2.11, 1.97, 2.26 and 1.92. What is the CV estimate? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.02,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "median",
+                "value": 1.97,
+                "tol": {
+                  "abs": 0.004
+                }
+              },
+              {
+                "id": "by-four",
+                "value": 2.525,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(1.84 + 2.11 + 1.97 + 2.26 + 1.92)/5 = 10.10/5 = 2.02$.",
+            "generic": "Not quite. The CV estimate is the plain mean of the five fold MSEs.",
+            "byKey": {
+              "median": "1.97 is the middle fold. The CV estimate averages all five.",
+              "by-four": "You divided 10.10 by 4. There are five folds, so divide by 5."
+            }
+          },
+          "explain": {
+            "text": "Each fold's MSE comes from a model that never saw that fold. Their mean, 2.02, estimates the recipe's error, and fold 4, at 2.26, is the odd one out."
+          }
+        },
+        {
+          "question": "Using the mean 2.02 from part 1, what is the sd of the five fold MSEs? Divide by 5, as `np.std` does, and give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.14873,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "ddof-one",
+                "value": 0.1663,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.0221,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The squared deviations add to 0.1106, so the sd is $\\sqrt{0.1106/5} = \\sqrt{0.02212} \\approx 0.149$.",
+            "generic": "Not quite. Square each fold's distance from 2.02, average the squares over 5, then take the root.",
+            "byKey": {
+              "ddof-one": "You divided by 4, as a sample sd does. `np.std` divides by $k = 5$, which gives 0.149.",
+              "variance": "0.0221 is the variance. Take its square root."
+            }
+          },
+          "explain": {
+            "text": "The deviations are $-0.18, 0.09, -0.05, 0.24$ and $-0.10$, whose squares add to 0.1106. Over 5 that is 0.02212, and its root is 0.149."
+          }
+        },
+        {
+          "question": "The one-standard-error rule adds the best setting's sd to its mean, and $\\alpha = 3$ has the lowest mean. Using 2.02 and 0.149, what is the limit? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.169,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "ddof-limit",
+                "value": 2.186,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "se",
+                "value": 2.087,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$2.02 + 0.149 = 2.169$.",
+            "generic": "Not quite. Add the best setting's own fold sd to its mean.",
+            "byKey": {
+              "ddof-limit": "You added the sd that divides by 4, 0.166. With the 0.149 of part 2 the limit is 2.169.",
+              "se": "You divided the sd by $\\sqrt 5$. Folds share training rows, so the plain fold sd is the yardstick."
+            }
+          },
+          "explain": {
+            "text": "Every setting whose mean is at or below 2.169 is within fold noise of the best. The rule then takes the simplest of them."
+          }
+        },
+        {
+          "question": "At $\\alpha = 0.3$, 1, 10, 30 and 100 the means are 2.05, 2.03, 2.12, 2.18 and 2.31. Using the limit 2.169, which $\\alpha$ does the rule pick?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "number",
+            "wrong": [
+              {
+                "id": "best",
+                "value": 3,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "carried",
+                "value": 30,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The means 2.05, 2.03, 2.02 and 2.12 sit under 2.169, and the largest $\\alpha$ among them is 10.",
+            "generic": "Not quite. Keep the settings whose mean is at or below 2.169, then take the largest $\\alpha$.",
+            "byKey": {
+              "best": "$\\alpha = 3$ has the best mean. The rule moves to the most shrunk setting still within one sd of it.",
+              "carried": "$\\alpha = 30$ scores 2.18, above 2.169, so it fails. Only the sd that divides by 4 would let it in, with a limit of 2.186."
+            }
+          },
+          "explain": {
+            "text": "$\\alpha = 10$ at 2.12 is inside the limit, and $\\alpha = 30$ at 2.18 is just outside it. For ridge a larger penalty is a simpler model, so the rule takes 10."
+          }
+        },
+        {
+          "question": "The search refits $\\alpha = 10$ on the 1,140 training sales and scores it once on the 290 locked sales: MSE 2.25. What typical miss does that imply, in pounds, to the nearest £10?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1500,
+            "tol": {
+              "abs": 5
+            },
+            "unit": "£",
+            "placeholder": "pounds",
+            "wrong": [
+              {
+                "id": "mse-as-price",
+                "value": 2250,
+                "tol": {
+                  "abs": 5
+                }
+              },
+              {
+                "id": "cv-mean",
+                "value": 1460,
+                "tol": {
+                  "abs": 5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sqrt{2.25} = 1.5$ thousand pounds: a typical miss of about £1,500 a van.",
+            "generic": "Not quite. The MSE is in squared £ thousands: take its root, then turn thousands into pounds.",
+            "byKey": {
+              "mse-as-price": "You read the MSE itself as £ thousands. It is in squared units, so take the root: 1.5, or £1,500.",
+              "cv-mean": "That is the root of $\\alpha = 10$'s CV mean, 2.12, from the folds that chose it. The locked test score, 2.25, is the one to report."
+            }
+          },
+          "explain": {
+            "text": "The test sales took no part in fitting or choosing, so 2.25 is the honest number. Its root, 1.5, is £1,500 of typical miss per van."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-arrears-grid",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "A lender predicts the arrears of 640 small-business accounts, one row per account. A pipeline adds polynomial terms of degree 1, 2 or 3 and fits ridge at 6 penalties, so the grid holds 18 settings. Every search uses shuffled folds and refits its winner once.",
+      "parts": [
+        {
+          "question": "How many model fits does a plain 6-fold grid search of the 18 settings make, the refit included?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 109,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-refit",
+                "value": 108,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one-knob",
+                "value": 37,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$6 \\times 18 = 108$ fits in the folds, plus one refit of the winner: 109.",
+            "generic": "Not quite. Every setting is fitted once in every fold, then the winner is refitted.",
+            "byKey": {
+              "no-refit": "You left out the refit of the winner on all the training rows.",
+              "one-knob": "You counted the 6 penalties only. Each penalty is tried at 3 degrees: 18 settings."
+            }
+          },
+          "explain": {
+            "text": "Each of the 18 settings is fitted in each of the 6 folds: 108 fits. The winner's refit makes 109, and that refit is the model the search hands back."
+          }
+        },
+        {
+          "question": "Nested CV runs part 1's search inside each of 4 outer folds. Using 109 fits per search, how many fits does the nested run make?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 436,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-refits",
+                "value": 432,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "added",
+                "value": 113,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each of the 4 outer training sets gets its own 109-fit search: $4 \\times 109 = 436$.",
+            "generic": "Not quite. Use $K(K_{\\text{in}}G + 1)$ with $K = 4$, $K_{\\text{in}} = 6$ and $G = 18$.",
+            "byKey": {
+              "no-refits": "You left out the 4 refits, one per outer fold. Each outer fold runs the whole 109-fit search.",
+              "added": "You added the outer folds to the search. The whole search runs again inside every outer fold, so multiply."
+            }
+          },
+          "explain": {
+            "text": "$K(K_{\\text{in}}G + 1) = 4 \\times (6 \\times 18 + 1) = 436$, four times the plain search. For ridge on 640 accounts that is cheap."
+          }
+        },
+        {
+          "question": "How many accounts does each inner-loop fit of the nested run train on?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 400,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "outer",
+                "value": 480,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "all-inner",
+                "value": 533.33,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "An outer training set holds $\\tfrac34 \\times 640 = 480$ accounts, and an inner fit uses $\\tfrac56$ of them: 400.",
+            "generic": "Not quite. Take 3 of the 4 outer folds, then 5 of 6 inner folds of what is left.",
+            "byKey": {
+              "outer": "480 is an outer training set. The inner loop holds back one of its six folds.",
+              "all-inner": "You took $\\tfrac56$ of all 640. The inner loop only ever sees an outer training set of 480."
+            }
+          },
+          "explain": {
+            "text": "The inner loop cuts each outer training set of 480 into six folds of 80 and fits on 400. The outer fold of 160 accounts is never seen by the choice."
+          }
+        },
+        {
+          "question": "The search on all 640 accounts reports a best CV MSE of 0.412; nested CV gives 0.451. By what share of the nested score does the best flatter the model? Give a percentage to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.08647,
+            "tol": {
+              "abs": 0.0005
+            },
+            "unit": "%",
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "by-inner",
+                "value": 0.09466,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "gap",
+                "value": 0.039,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(0.451 - 0.412)/0.451 = 0.039/0.451 \\approx 8.6\\%$.",
+            "generic": "Not quite. Divide the gap by the nested score, the honest one.",
+            "byKey": {
+              "by-inner": "You divided by 0.412. The flattery is measured against the honest 0.451.",
+              "gap": "0.039 is the gap in MSE units. Express it as a share of 0.451."
+            }
+          },
+          "explain": {
+            "text": "The best of 18 noisy scores is low partly by luck. Nested CV scores the choice on folds it never saw, and the gap is 8.6%."
+          }
+        },
+        {
+          "question": "Given the 8.6% gap from part 4, what goes in the model card, and which model is deployed?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "nested",
+                "text": "Report 0.451; deploy the search refitted on all 640 accounts",
+                "correct": true
+              },
+              {
+                "id": "best",
+                "text": "Report 0.412; deploy the search refitted on all 640 accounts",
+                "why": "0.412 chose the setting, so it carries the luck of the choice. Report the score that measured the choosing."
+              },
+              {
+                "id": "average",
+                "text": "Report 0.4315, the mean of the two numbers",
+                "why": "Averaging an optimistic number with an honest one keeps half the optimism."
+              },
+              {
+                "id": "vote",
+                "text": "Report 0.451; deploy the setting that most outer folds picked",
+                "why": "No outer fold scored a vote. The 0.451 belongs to the recipe, so deploy the recipe run on all rows."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Right. 0.451 scores the recipe, tuning included, and the recipe run on all 640 accounts is the model.",
+            "generic": "Not quite. Report the number that measured the choosing, and deploy the recipe that number scored.",
+            "byKey": {
+              "best": "0.412 chose the setting, so it carries the luck of the choice. Report the score that measured the choosing.",
+              "average": "Averaging an optimistic number with an honest one keeps half the optimism.",
+              "vote": "No outer fold scored a vote. The 0.451 belongs to the recipe, so deploy the recipe run on all rows."
+            }
+          },
+          "explain": {
+            "text": "Nested CV scores the procedure: tune over 18 settings, then refit. The deployed model is that procedure run on every account, and 0.451 is its estimate."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-rent-seeds",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "A letting agency tests a model of monthly rents, in £100s, on 3,000 flats, one row per flat. A consultant resplits 80/20 with 16 seeds and reports the lowest test MSE. The errors are roughly normal with $\\sigma^2 = 0.81$, so the splits average about 0.81.",
+      "parts": [
+        {
+          "question": "Each split tests 600 flats. Using $\\text{sd} \\approx \\sigma^2\\sqrt{2/n}$, what is the sd of one split's test MSE? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.046765,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "all-flats",
+                "value": 0.0209,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sigma",
+                "value": 0.052,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-two",
+                "value": 0.0331,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.81\\sqrt{2/600} = 0.81 \\times 0.0577 \\approx 0.0468$.",
+            "generic": "Not quite. Put $\\sigma^2 = 0.81$ and $n = 600$ into $\\sigma^2\\sqrt{2/n}$.",
+            "byKey": {
+              "all-flats": "You used all 3,000 flats. Only the 600 test flats are averaged in a test MSE.",
+              "sigma": "You put $\\sigma = 0.9$ in front. The formula multiplies by $\\sigma^2 = 0.81$.",
+              "no-two": "You left out the 2 under the root: $\\text{Var}(e^2) = 2\\sigma^4$."
+            }
+          },
+          "explain": {
+            "text": "$\\sqrt{2/600} = 0.0577$, so one split's test MSE has sd about 0.0468 around 0.81. That spread is what the 16 seeds sample."
+          }
+        },
+        {
+          "question": "The smallest of 16 normal draws sits on average 1.766 sds below their mean. Using the sd 0.0468 from part 1, where does the best of the 16 splits typically sit? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.72735,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "worst",
+                "value": 0.8926,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.7731,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.81 - 1.766 \\times 0.0468 = 0.81 - 0.0827 \\approx 0.727$.",
+            "generic": "Not quite. Start at 0.81 and step 1.766 sds down.",
+            "byKey": {
+              "worst": "You stepped up. The lowest MSE of 16 sits below the mean, not above it.",
+              "carried": "You carried the sd for 3,000 flats, 0.0209. With 600 test flats it is 0.0468."
+            }
+          },
+          "explain": {
+            "text": "It is the minimum of 16 draws, so it sits near 0.727, about 0.083 below a typical split. Nothing about the model changed between seeds."
+          }
+        },
+        {
+          "question": "Using 0.727 from part 2, by what share of the honest 0.81 does the reported score flatter the model? Give a percentage to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1022,
+            "tol": {
+              "abs": 0.0005
+            },
+            "unit": "%",
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "by-best",
+                "value": 0.1142,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "gap",
+                "value": 0.083,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(0.81 - 0.727)/0.81 = 0.083/0.81 \\approx 10.2\\%$.",
+            "generic": "Not quite. Divide the gap by the honest 0.81.",
+            "byKey": {
+              "by-best": "You divided by 0.727. Measure the flattery against the honest score, 0.81.",
+              "gap": "0.083 is the gap in MSE units. As a share of 0.81 it is 10.2%."
+            }
+          },
+          "explain": {
+            "text": "Picking the luckiest of 16 seeds makes the model look 10.2% better than it is. The same arithmetic measures what a grid search's best score hides."
+          }
+        },
+        {
+          "question": "That share is $1.766\\,\\sigma^2\\sqrt{2/n}/\\sigma^2 = 1.766\\sqrt{2/n}$. How many test flats would bring it under 4%?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3899,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-two",
+                "value": 1950,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "unsquared",
+                "value": 89,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$n > 2(1.766/0.04)^2 = 2 \\times 1949.2 = 3898.4$, so 3,899 flats, more than the agency has.",
+            "generic": "Not quite. Solve $1.766\\sqrt{2/n} = 0.04$ for $n$ and round up.",
+            "byKey": {
+              "no-two": "You dropped the 2 under the root. $n = 2 \\times (1.766/0.04)^2$.",
+              "unsquared": "You did not square. $\\sqrt{2/n} = 0.04/1.766$, so square both sides before solving for $n$."
+            }
+          },
+          "explain": {
+            "text": "Even 3,899 test flats, more than the agency has, would leave the bias near 4%. The bias comes from choosing the seed after the scores. Report all 16 splits with their spread, or fix one seed before looking."
+          }
+        }
+      ]
+    }
+  ]
+}
