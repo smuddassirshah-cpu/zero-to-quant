@@ -246,3 +246,7 @@ The reader's 9 passing wrong solutions: 5 now fail (l16 Manhattan, l17 seed, l17
 - Voice scan (`voice-scan.py 35`): 0 explanations over three sentences, 0 sentences over 35 words.
 - Playthrough with `--local-cdn`, one at a time: l15, l16, l17, l18, l19, `review-4` and `homework-4`, with and without `--mobile`: 14 runs, all "All passed."
 - `fresh-check --file` on `homework-4`: 0 hits. `perf-reports.mjs`: 0 missing parts.
+
+## Fix pass (session AE, waived reuse)
+
+- `stat-learning/problems-4` `p-order-sizes` part 1 (text reuse): the question shared 13 words ("to its nearest centre then move each centre to the mean of its") with `l16-groups-nobody-labelled` screens[0]. Changed: the part 1 question wording only ("Do one round of the loop. Each order joins the centre it sits closest to, and each centre then jumps to the average of the orders that joined it. Where does the second centre land?"). Numbers, keys, wrong values, tolerances, feedback and explain unchanged; no part re-keyed. `same-course-reuse.mjs --no-waivers` reports 0 flags.
