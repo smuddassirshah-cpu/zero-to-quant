@@ -228,8 +228,127 @@ num(L1, 'p-bond-sign-model', 5, t4, (0.605 - 0.57) / 0.0764, {'coin': 0.105 / 0.
 ok(r(t4, 2) == 0.46 and r(0.035 / 0.0764, 2) == 0.46, 'p-bond p5: t 0.46 from exact and rounded se')
 ok(r(0.105 / math.sqrt(0.605 * 0.395 / NR), 1) == 4.3, 'p-bond p5: 4.3 naive coin errors')
 
-if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == '--level1':
-    pass
+# ---------------------------------------------------------------- level 2
+L2 = load(2)
+
+# p-gold-frac-weights
+d = sp.Rational(35, 100)
+w_ex = [sp.binomial(d, k_) * (-1) ** k_ for k_ in range(6)]          # (1 - B)^d expanded
+w_rec = [1.0]
+for k_ in range(1, 6):
+    w_rec.append(w_rec[-1] * (k_ - 1 - 0.35) / k_)                    # the recursion as the prose writes it
+num(L2, 'p-gold-frac-weights', 1, w_ex[2], w_rec[2],
+    {'no-sign': -w_ex[2], 'd-minus-k': w_ex[1] * (2 - d) / 2}, agree=1e-12)
+num(L2, 'p-gold-frac-weights', 2, w_ex[3], w_rec[3],
+    {'no-sign': -w_ex[3], 'd-minus-k': sp.Rational(-11375, 100000) * (3 - d) / 3}, agree=1e-12)
+W = next(k_ for k_ in range(10) if abs(w_ex[k_]) < sp.Rational(5, 100))
+num(L2, 'p-gold-frac-weights', 3, W, sum(abs(v) >= 0.05 for v in w_rec[:6]), {'kept-w4': W + 1, 'dropped-w3': W - 1})
+ok(r(float(w_ex[4]), 4) == -0.0414 and r(float(-0.0625625 * 2.65 / 4), 4) == -0.0414, 'p-gold p3: w4 = -0.0414')
+xs = [sp.Rational(v) for v in ('5.005', '5.020', '4.997', '5.012')]   # oldest first
+val = sum(w_ex[k_] * xs[3 - k_] for k_ in range(W))
+val_np = float(np.convolve(np.array(xs, float), np.array(w_rec[:W]), 'valid')[0])
+w_round = [1, -0.35, -0.11375, -0.0626]
+num(L2, 'p-gold-frac-weights', 4, val, val_np,
+    {'reversed': sum(w_ex[k_] * xs[k_] for k_ in range(W)), 'return': xs[3] - xs[2]}, agree=1e-12)
+ok(abs(sum(a * b for a, b in zip(w_round, xs[::-1])) - 2.379) <= 0.0015, 'p-gold p4: rounded w3 still in band')
+ok([r(float(w_ex[k_] * xs[3 - k_]), 3) for k_ in range(4)] == [5.012, -1.749, -0.571, -0.313], 'p-gold p4: terms')
+ok(r(float(sum(w_ex[:4])), 3) == 0.474, 'p-gold p4: weights sum 0.474')
+spike = np.zeros(12)
+spike[7] = 1.0
+same = np.convolve(spike, np.array(w_rec[:W]), 'same')
+ahead = 7 - int(np.flatnonzero(np.abs(same) > 1e-12).min())
+num(L2, 'p-gold-frac-weights', 5, (W - 1) // 2, ahead, {'half': W // 2, 'whole': W - 1})
+
+# p-retail-relative-volume
+kes = F('1.38') / F('1.20')
+num(L2, 'p-retail-relative-volume', 1, kes, 1.38 / 1.20, {'inverted': F('1.20') / F('1.38'), 'minus-one': kes - 1})
+names = ['Avocet', 'Kestrel', 'Merlin', 'Osprey', 'Plover', 'Raven', 'Swift']
+vals = [F('0.82'), kes, F('1.15'), F('0.97'), F('2.40'), F('0.64'), F('1.06')]
+srt = sorted(vals)
+rank_k = F(sum(i + 1 for i, v in enumerate(srt) if v == kes), sum(v == kes for v in srt))
+ser = pd.Series([float(v) for v in vals], index=names)
+num(L2, 'p-retail-relative-volume', 2, (rank_k - 1) / 6, (ser.rank()['Kestrel'] - 1) / 6,
+    {'low-rank': F(4, 6), 'high-rank': F(5, 6), 'over-n': rank_k / 7})
+mean7 = sum(vals) / 7
+ss = sum((v - mean7) ** 2 for v in vals)
+z_ex = (kes - mean7) / sp.sqrt(sp.Rational(ss.numerator, ss.denominator) / 6)
+num(L2, 'p-retail-relative-volume', 3, z_ex, (ser['Kestrel'] - ser.mean()) / ser.std(ddof=1),
+    {'population': (ser['Kestrel'] - ser.mean()) / ser.std(ddof=0), 'no-sign': -z_ex}, agree=1e-12)
+ok(sum(vals) == F('8.19') and mean7 == F('1.17') and ss == F('1.9692') and r(float(ss / 6), 4) == 0.3282
+   and r(ser.std(), 4) == 0.5729, 'p-retail p3: stated mean, sum of squares and sd')
+pick(L2, 'p-retail-relative-volume', 4, 'outlier')
+six = [v for v, n_ in zip(vals, names) if n_ != 'Plover']
+ok(sum(six) / 6 == F('0.965') and kes > sum(six) / 6, 'p-retail p4: mean of the six is 0.965')
+ok(r((2.40 - ser.mean()) / ser.std(), 2) == 2.15 and sum(v < kes for v in vals) == 4, 'p-retail p4: Plover z, four below')
+
+# p-q3-earnings-join
+import datetime as dt
+co = {'Agate': (4, 9, '2025-10-16'), 'Beryl': (1, 2, '2025-10-22'), 'Coral': (6, 11, '2025-10-29'),
+      'Jasper': (7, 4, '2025-11-05'), 'Onyx': (8, -1, '2025-10-21'), 'Topaz': (3, 5, '2025-10-20')}
+prose = L2['p-q3-earnings-join']['prose']
+for n_, (q2, q3, pub) in co.items():
+    day = dt.date.fromisoformat(pub)
+    fmt = f'| {n_} | {q2}% | {q3}% | {day.strftime("%a")} {day.day} {day.strftime("%b")} |'.replace('-1%', '−1%')
+    ok(fmt in prose, f'p-q3: table row {n_}')
+ok(dt.date(2025, 9, 30).strftime('%A') == 'Tuesday' and dt.date(2025, 10, 24).strftime('%A') == 'Friday', 'p-q3: weekdays')
+
+
+def usable(pub):
+    d_ = dt.date.fromisoformat(pub) + dt.timedelta(1)
+    while d_.weekday() >= 5:
+        d_ += dt.timedelta(1)
+    return d_
+
+
+on = dt.date(2025, 10, 24)
+known = {n_: (q3 if usable(pub) <= on else q2) for n_, (q2, q3, pub) in co.items()}
+left = pd.DataFrame({'date': [pd.Timestamp(on)]})
+right = pd.DataFrame([{'date': pd.Timestamp(usable(pub)), 'co': n_, 'g': q3} for n_, (q2, q3, pub) in co.items()]
+                     + [{'date': pd.Timestamp('2025-08-15'), 'co': n_, 'g': q2} for n_, (q2, q3, pub) in co.items()])
+asof = {n_: pd.merge_asof(left, right[right.co == n_].sort_values('date'), on='date', direction='backward')['g'][0]
+        for n_ in co}
+num(L2, 'p-q3-earnings-join', 1, F(known['Coral'], 100), asof['Coral'] / 100, {'quarter-end': F(co['Coral'][1], 100)})
+srt = sorted(known.values())
+q_h = F(srt.index(known['Coral']), 5)
+num(L2, 'p-q3-earnings-join', 2, q_h, (pd.Series(asof).rank()['Coral'] - 1) / 5,
+    {'over-n': F(srt.index(known['Coral']) + 1, 6),
+     'dee-early': F(sorted({**known, 'Jasper': co['Jasper'][1]}.values()).index(known['Coral']), 5)})
+leak = {n_: v[1] for n_, v in co.items()}
+q_l = F(sorted(leak.values()).index(leak['Coral']), 5)
+num(L2, 'p-q3-earnings-join', 3, q_l, (pd.Series(leak).rank()['Coral'] - 1) / 5, {'over-n': F(5, 6)})
+bd = pd.bdate_range('2025-09-30', '2025-10-29')
+early = sum(1 for d_ in range(30) if (dt.date(2025, 9, 30) + dt.timedelta(d_)) < usable(co['Coral'][2])
+            and (dt.date(2025, 9, 30) + dt.timedelta(d_)).weekday() < 5)
+num(L2, 'p-q3-earnings-join', 4, early, len(bd), {'from-october': early - 1, 'one-too-many': early + 1})
+ok(dt.date(2025, 10, 1).strftime('%A') == 'Wednesday' and len(pd.bdate_range('2025-10-01', '2025-10-29')) == 21,
+   'p-q3 p4: 21 October weekdays')
+ok(usable(co['Coral'][2]) == dt.date(2025, 10, 30), 'p-q3 p1: Coral usable on 30 October')
+
+# p-shipping-z
+wk = [F(20), F(22), F(21), F(25), F(30)]
+tr = wk[1:4]
+m_tr = sum(tr) / 3
+ss_tr = sum((v - m_tr) ** 2 for v in tr)
+sd_tr = sp.sqrt(sp.Rational(ss_tr.numerator, ss_tr.denominator) / 2)
+num(L2, 'p-shipping-z', 1, sd_tr, np.std([22, 21, 25], ddof=1),
+    {'population': np.std([22, 21, 25]), 'variance': ss_tr / 2}, agree=1e-12)
+num(L2, 'p-shipping-z', 2, (wk[3] - m_tr) / sd_tr, pd.Series([20, 22, 21, 25, 30.]).pipe(
+    lambda x: (x - x.rolling(3).mean()) / x.rolling(3).std())[3],
+    {'population': (25 - 22 - F(2, 3)) / np.std([22, 21, 25]), 'no-mean': 25 / 2.08}, agree=1e-12)
+ok(abs((25 - float(m_tr)) / 2.08 - 1.12) <= 0.005, 'p-shipping p2: from the rounded sd')
+ce = wk[2:5]
+m_ce = sum(ce) / 3
+num(L2, 'p-shipping-z', 3, m_ce, pd.Series([20, 22, 21, 25, 30.]).rolling(3, center=True).mean()[3], {'trailing': m_tr},
+    agree=1e-12)
+ss_ce = sum((v - m_ce) ** 2 for v in ce)
+z_ce = (wk[3] - m_ce) / sp.sqrt(sp.Rational(ss_ce.numerator, ss_ce.denominator) / 2)
+xs5 = pd.Series([20, 22, 21, 25, 30.])
+z_ce_pd = ((xs5 - xs5.rolling(3, center=True).mean()) / xs5.rolling(3, center=True).std())[3]
+num(L2, 'p-shipping-z', 4, z_ce, z_ce_pd,
+    {'population': (25 - 76 / 3) / np.std([21, 25, 30]), 'no-sign': -z_ce, 'trailing': (wk[3] - m_tr) / sd_tr}, agree=1e-12)
+ok(abs((25 - 25.33) / 4.51 + 0.07) <= 0.005 and r(float(ss_ce), 2) == 40.67 and r(float(ss_ce / 2), 2) == 20.33
+   and r(float(ss_tr), 2) == 8.67 and r(np.std([21, 25, 30], ddof=1), 2) == 4.51, 'p-shipping: stated sums and sds')
+pick(L2, 'p-shipping-z', 5, 'future')
 
 print(f'{checks - len(fails)} of {checks} checks pass')
 for f_ in fails:

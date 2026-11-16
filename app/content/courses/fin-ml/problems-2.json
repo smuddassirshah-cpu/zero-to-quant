@@ -1,0 +1,293 @@
+{
+  "id": "problems-2",
+  "course": "fin-ml",
+  "level": 2,
+  "title": "Problems: fractional weights, ranks, joins and windows",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-gold-frac-weights",
+      "difficulty": 5,
+      "skills": ["fm-features", "fm-eval"],
+      "prose": "A gold fund's log closes are fractionally differenced at $d = 0.35$, with $w_0 = 1$ and $w_k = w_{k-1}\\dfrac{k - 1 - d}{k}$. For a hand calculation the weights stop at the first one with $|w_k| < 0.05$. The last four log closes, oldest first, are 5.005, 5.020, 4.997 and 5.012.",
+      "parts": [
+        {
+          "question": "Given $w_1 = -0.35$, what is $w_2$? Give the exact decimal.",
+          "widget": { "kind": "numeric", "answer": -0.11375, "tol": { "abs": 0.000005 },
+            "wrong": [
+              { "id": "no-sign", "value": 0.11375, "tol": { "abs": 0.000005 } },
+              { "id": "d-minus-k", "value": -0.28875, "tol": { "abs": 0.000005 } } ] },
+          "feedback": {
+            "correct": "$w_2 = w_1\\dfrac{2 - 1 - 0.35}{2} = -0.35 \\times 0.325 = -0.11375$.",
+            "generic": "Not quite. Put $k = 2$ into $w_k = w_{k-1}\\frac{k - 1 - d}{k}$.",
+            "byKey": {
+              "no-sign": "You lost the sign. $w_1 = -0.35$ times the positive factor 0.325 is negative.",
+              "d-minus-k": "You used $(k - d)/k = 0.825$. The factor is $(k - 1 - d)/k = 0.325$." } },
+          "explain": { "text": "The factor at $k = 2$ is $(2 - 1 - 0.35)/2 = 0.325$. Then $w_2 = -0.35 \\times 0.325 = -0.11375$." }
+        },
+        {
+          "question": "Using $w_2 = -0.11375$, what is $w_3$? Give 4 decimal places.",
+          "widget": { "kind": "numeric", "answer": -0.0626, "tol": { "abs": 0.00005 },
+            "wrong": [
+              { "id": "no-sign", "value": 0.0626, "tol": { "abs": 0.00005 } },
+              { "id": "d-minus-k", "value": -0.1005, "tol": { "abs": 0.00005 } } ] },
+          "feedback": {
+            "correct": "$w_3 = -0.11375 \\times \\dfrac{2 - 0.35}{3} = -0.0625625$, so $-0.0626$.",
+            "generic": "Not quite. The factor at $k = 3$ is $(2 - d)/3$.",
+            "byKey": {
+              "no-sign": "The weights after $w_0$ stay negative for $0 < d < 1$. Keep the minus.",
+              "d-minus-k": "You used $(3 - d)/3$. The factor is $(k - 1 - d)/k = (2 - 0.35)/3$." } },
+          "explain": { "text": "The factor is $1.65/3 = 0.55$, and $-0.11375 \\times 0.55 = -0.0626$. Each weight is a little over half the one before, so they fade slowly." }
+        },
+        {
+          "question": "Using $w_3 = -0.0626$, work out $w_4$. How many weights, from $w_0$ on, does the cut keep?",
+          "widget": { "kind": "numeric", "answer": 4, "tol": { "abs": 0 },
+            "wrong": [
+              { "id": "kept-w4", "value": 5, "tol": { "abs": 0 } },
+              { "id": "dropped-w3", "value": 3, "tol": { "abs": 0 } } ] },
+          "feedback": {
+            "correct": "$w_4 = -0.0625625 \\times \\dfrac{3 - 0.35}{4} = -0.0414$, the first below 0.05 in size. The window keeps $w_0$ to $w_3$: 4 weights.",
+            "generic": "Not quite. Compute $w_4$ and keep every weight before the first with $|w_k| < 0.05$.",
+            "byKey": {
+              "kept-w4": "$|w_4| = 0.0414$ is below 0.05, so $w_4$ is the first weight dropped.",
+              "dropped-w3": "$|w_3| = 0.0626$ is above 0.05, so $w_3$ stays." } },
+          "explain": { "text": "$w_4 = -0.0625625 \\times 2.65/4 = -0.0414$. That is the first weight under the cut, so the window holds 4 weights." }
+        },
+        {
+          "question": "Using the 4 weights, what is the fractionally differenced value on the last day, $\\sum_k w_k x_{t-k}$? Give 3 decimal places.",
+          "widget": { "kind": "numeric", "answer": 2.379, "tol": { "abs": 0.0015 },
+            "wrong": [
+              { "id": "reversed", "value": 2.366, "tol": { "abs": 0.0015 } },
+              { "id": "return", "value": 0.015, "tol": { "abs": 0.0015 } } ] },
+          "feedback": {
+            "correct": "$5.012 - 0.35 \\times 4.997 - 0.11375 \\times 5.020 - 0.0626 \\times 5.005 = 2.379$.",
+            "generic": "Not quite. Put $w_0$ on today's 5.012 and $w_3$ on the oldest, 5.005.",
+            "byKey": {
+              "reversed": "You put $w_0$ on the oldest close. $w_0$ goes on today, $x_t = 5.012$.",
+              "return": "That is the plain return, $d = 1$. At $d = 0.35$ the weights add to 0.474, not 0, so part of the level stays." } },
+          "explain": { "text": "The four terms are $5.012$, $-1.749$, $-0.571$ and $-0.313$, summing to 2.379. The weights sum to 0.474, so the value keeps about half the level: that is the memory $d = 0.35$ keeps." }
+        },
+        {
+          "question": "A colleague applies the 4 weights with `np.convolve(x, w, mode='same')`, which centres the window as `rolling(w, center=True)` does. Using the window of 4 from part 3, how many days after $t$ does the value at $t$ reach?",
+          "widget": { "kind": "numeric", "answer": 1, "tol": { "abs": 0 },
+            "wrong": [
+              { "id": "half", "value": 2, "tol": { "abs": 0 } },
+              { "id": "whole", "value": 3, "tol": { "abs": 0 } } ] },
+          "feedback": {
+            "correct": "A centred window of 4 reaches $(4 - 1)/2$ days ahead, rounded down: 1 day.",
+            "generic": "Not quite. A centred window of $W$ points reaches $(W - 1)/2$ days ahead, rounded down.",
+            "byKey": {
+              "half": "You took $W/2$. Centring a window of 4 puts 2 days behind $t$ and 1 ahead.",
+              "whole": "That is how far back the trailing window reaches. Centring moves it forward by $(W - 1)//2 = 1$." } },
+          "explain": { "text": "`mode='same'` shifts the full convolution so the value at $t$ uses $x_{t+1}$ to $x_{t-2}$. One day of the future sits in every value: look-ahead. Use `mode='valid'` and align each value to its last day." }
+        }
+      ]
+    },
+    {
+      "id": "p-retail-relative-volume",
+      "difficulty": 3,
+      "skills": ["fm-features"],
+      "prose": "Seven retailers trade today. Each one's relative volume is today's volume over its own 20-day average. Kestrel traded 1.38m shares against an average of 1.20m. The others read: Avocet 0.82, Merlin 1.15, Osprey 0.97, Plover 2.40, Raven 0.64 and Swift 1.06.",
+      "parts": [
+        {
+          "question": "What is Kestrel's relative volume? Give a decimal to 2 places.",
+          "widget": { "kind": "numeric", "answer": 1.15, "tol": { "abs": 0.005 },
+            "wrong": [
+              { "id": "inverted", "value": 0.87, "tol": { "abs": 0.005 } },
+              { "id": "minus-one", "value": 0.15, "tol": { "abs": 0.005 } } ] },
+          "feedback": {
+            "correct": "$1.38 / 1.20 = 1.15$: 15% busier than Kestrel's own recent average.",
+            "generic": "Not quite. Divide today's volume by the 20-day average.",
+            "byKey": {
+              "inverted": "You divided the average by today. Today's volume goes on top: $1.38/1.20$.",
+              "minus-one": "That subtracts 1, as the ratio-to-mean price feature does. Relative volume here is the plain ratio." } },
+          "explain": { "text": "A ratio to its own average has no unit, so 1.15 means the same at any size of company. Kestrel is 15% busier than usual." }
+        },
+        {
+          "question": "Using Kestrel's 1.15, what is its percentile rank $(\\text{rank} - 1)/(n - 1)$ across the seven, with tied values sharing the average rank? Give a decimal.",
+          "widget": { "kind": "numeric", "answer": 0.75, "tol": { "abs": 0.0005 },
+            "wrong": [
+              { "id": "low-rank", "value": 0.6667, "tol": { "abs": 0.0005 } },
+              { "id": "high-rank", "value": 0.8333, "tol": { "abs": 0.0005 } },
+              { "id": "over-n", "value": 0.7857, "tol": { "abs": 0.0005 } } ] },
+          "feedback": {
+            "correct": "Sorted: 0.64, 0.82, 0.97, 1.06, 1.15, 1.15, 2.40. The two 1.15s share ranks 5 and 6, so 5.5, and $4.5/6 = 0.75$.",
+            "generic": "Not quite. Sort the seven, give the tie the average of its ranks, then use $(\\text{rank} - 1)/6$.",
+            "byKey": {
+              "low-rank": "You gave Kestrel rank 5. It ties with Merlin, so both take 5.5.",
+              "high-rank": "You gave Kestrel rank 6. It ties with Merlin, so both take 5.5.",
+              "over-n": "That is $5.5/7$, rank over $n$. This scale is $(\\text{rank} - 1)/(n - 1)$." } },
+          "explain": { "text": "Kestrel and Merlin cover ranks 5 and 6, so each takes 5.5. Then $q = (5.5 - 1)/(7 - 1) = 0.75$." }
+        },
+        {
+          "question": "Using 1.15 again, what is Kestrel's z-score across the seven, with the sample sd? Give 3 decimal places.",
+          "widget": { "kind": "numeric", "answer": -0.035, "tol": { "abs": 0.0005 },
+            "wrong": [
+              { "id": "population", "value": -0.038, "tol": { "abs": 0.0005 } },
+              { "id": "no-sign", "value": 0.035, "tol": { "abs": 0.0005 } } ] },
+          "feedback": {
+            "correct": "The mean is $8.19/7 = 1.17$ and the sample sd 0.5729, so $z = (1.15 - 1.17)/0.5729 = -0.035$.",
+            "generic": "Not quite. Subtract the mean of the seven and divide by their sample sd.",
+            "byKey": {
+              "population": "You divided the squared deviations by 7. The sample sd divides by $n - 1 = 6$: 0.5729.",
+              "no-sign": "Kestrel's 1.15 is below the mean, 1.17, so its z is negative." } },
+          "explain": { "text": "The squared deviations sum to 1.9692; over 6 that is 0.3282, and its root 0.5729. Kestrel sits 0.02 below the mean: $z = -0.035$." }
+        },
+        {
+          "question": "Using the rank 0.75 and the z of $-0.035$, which reading is right?",
+          "widget": { "kind": "choice", "options": [
+            { "id": "outlier", "text": "Plover's 2.40 lifts the mean and sd, squashing the rest near 0", "correct": true },
+            { "id": "quiet", "text": "Kestrel is quieter than usual today, as its negative z shows", "why": "Its relative volume is 1.15, above its own average. The z compares it with the other retailers." },
+            { "id": "tie", "text": "The tie with Merlin pulls Kestrel's z below 0", "why": "Ties change ranks only. The z uses the values, and 1.15 sits 0.02 below the mean of 1.17." },
+            { "id": "agree", "text": "Both say Kestrel is about average", "why": "The rank puts Kestrel above four of the six others, at 0.75." } ] },
+          "feedback": {
+            "correct": "One busy outlier moves the cross-sectional mean and sd for everyone; the rank keeps the order.",
+            "generic": "Not quite. Ask what Plover's 2.40 does to the mean and sd of the seven.",
+            "byKey": {
+              "quiet": "Its relative volume is 1.15, above its own average. The z compares it with the other retailers.",
+              "tie": "Ties change ranks only. The z uses the values, and 1.15 sits 0.02 below the mean of 1.17.",
+              "agree": "The rank puts Kestrel above four of the six others, at 0.75." } },
+          "explain": { "text": "Without Plover the mean of the six would be 0.965, and Kestrel's z would be clearly positive. Plover alone has $z = 2.15$; the rank gives it 1 and leaves the others evenly spaced." }
+        }
+      ]
+    },
+    {
+      "id": "p-q3-earnings-join",
+      "difficulty": 4,
+      "skills": ["fm-features", "fm-eval"],
+      "prose": "Six companies report earnings growth for the quarter ending Tuesday 30 September 2025 (Q3). Each reports after the close, so a figure is first usable the next weekday. Until then the latest known figure is Q2's.\n\n| company | Q2 growth | Q3 growth | Q3 published |\n|---|---:|---:|---|\n| Agate | 4% | 9% | Thu 16 Oct |\n| Beryl | 1% | 2% | Wed 22 Oct |\n| Coral | 6% | 11% | Wed 29 Oct |\n| Jasper | 7% | 4% | Wed 5 Nov |\n| Onyx | 8% | −1% | Tue 21 Oct |\n| Topaz | 3% | 5% | Mon 20 Oct |",
+      "parts": [
+        {
+          "question": "On Friday 24 October, joined backward on publication date, what growth figure does Coral carry? Give a percentage.",
+          "widget": { "kind": "numeric", "answer": 0.06, "tol": { "abs": 0.0005 }, "unit": "%",
+            "accept": "6%: Coral's Q3 figure is published on 29 October, so 24 October still carries Q2.",
+            "wrong": [ { "id": "quarter-end", "value": 0.11, "tol": { "abs": 0.0005 } } ] },
+          "feedback": {
+            "correct": "Coral publishes Q3 on 29 October, so on 24 October the latest known figure is Q2's 6%.",
+            "generic": "Not quite. Check whether Coral's Q3 figure was public by 24 October.",
+            "byKey": {
+              "quarter-end": "11% is Coral's Q3 figure, published after the close on 29 October. On 24 October nobody knew it." } },
+          "explain": { "text": "A backward join on publication date hands each day the last figure already public. Coral's Q3 arrives on 30 October, so 24 October carries 6%." }
+        },
+        {
+          "question": "Using Coral's 6% from part 1, what is its percentile rank $(\\text{rank} - 1)/(n - 1)$ across the six on 24 October? Give a decimal.",
+          "widget": { "kind": "numeric", "answer": 0.6, "tol": { "abs": 0.0005 },
+            "wrong": [
+              { "id": "over-n", "value": 0.6667, "tol": { "abs": 0.0005 } },
+              { "id": "dee-early", "value": 0.8, "tol": { "abs": 0.0005 } } ] },
+          "feedback": {
+            "correct": "Known on 24 October: Onyx −1%, Beryl 2%, Topaz 5%, Coral 6%, Jasper 7%, Agate 9%. Coral ranks 4, so $3/5 = 0.6$.",
+            "generic": "Not quite. Use each company's latest public figure on 24 October, then rank the six.",
+            "byKey": {
+              "over-n": "That is $4/6$, rank over $n$. This scale is $(\\text{rank} - 1)/(n - 1) = 3/5$.",
+              "dee-early": "You used Jasper's Q3 4%, published on 5 November. On 24 October Jasper still carries 7%." } },
+          "explain": { "text": "Agate, Topaz, Onyx and Beryl have published Q3; Coral and Jasper still carry Q2. Coral's 6% is fourth of six: $q = 0.6$." }
+        },
+        {
+          "question": "A colleague joins on the quarter end instead, so every company carries its Q3 figure on 24 October. What is Coral's percentile rank now? Give a decimal.",
+          "widget": { "kind": "numeric", "answer": 1, "tol": { "abs": 0 },
+            "wrong": [ { "id": "over-n", "value": 0.8333, "tol": { "abs": 0.0005 } } ] },
+          "feedback": {
+            "correct": "With Q3 for all, Coral's 11% tops the six: $(6 - 1)/5 = 1$, up from 0.6.",
+            "generic": "Not quite. Rank the six Q3 figures and place Coral's 11%.",
+            "byKey": {
+              "over-n": "That is $5/6$. The scale divides by $n - 1 = 5$, so the top share scores 1." } },
+          "explain": { "text": "The leak gives Coral its 11% five days early, which moves its rank from 0.6 to 1, the top. A model trained on this table learns a signal it could never have traded." }
+        },
+        {
+          "question": "In the colleague's table, Coral's Q3 figure appears from 30 September. On how many weekday rows does it appear before it was usable? There are no holidays in this stretch.",
+          "widget": { "kind": "numeric", "answer": 22, "tol": { "abs": 0 },
+            "wrong": [
+              { "id": "from-october", "value": 21, "tol": { "abs": 0 } },
+              { "id": "one-too-many", "value": 23, "tol": { "abs": 0 } } ] },
+          "feedback": {
+            "correct": "The rows from Tuesday 30 September to Wednesday 29 October carry it early: 1 in September and 21 in October, 22 rows.",
+            "generic": "Not quite. Count the weekdays from 30 September up to the publication day, 29 October.",
+            "byKey": {
+              "from-october": "You started on 1 October. The quarter-end row, 30 September, already carries the figure.",
+              "one-too-many": "You counted 30 October. The report came after the close on 29 October, so 30 October is the first honest row." } },
+          "explain": { "text": "October 2025 starts on a Wednesday, so 1 to 29 October hold 21 weekdays. With 30 September that is 22 rows of knowledge the model did not have." }
+        }
+      ]
+    },
+    {
+      "id": "p-shipping-z",
+      "difficulty": 4,
+      "skills": ["fm-features", "fm-eval"],
+      "prose": "A shipping firm's weekly closes for weeks 1 to 5 are £20, £22, £21, £25 and £30. A 3-week rolling z-score of the close uses the sample sd. The trailing version on week $t$ uses weeks $t - 2$ to $t$. A centred version uses weeks $t - 1$ to $t + 1$.",
+      "parts": [
+        {
+          "question": "What is the sample sd of weeks 2 to 4? Give 2 decimal places.",
+          "widget": { "kind": "numeric", "answer": 2.08, "tol": { "abs": 0.005 },
+            "wrong": [
+              { "id": "population", "value": 1.7, "tol": { "abs": 0.005 } },
+              { "id": "variance", "value": 4.33, "tol": { "abs": 0.005 } } ] },
+          "feedback": {
+            "correct": "The mean of £22, £21, £25 is 22.67; squared deviations sum to 8.67, and $\\sqrt{8.67/2} = 2.08$.",
+            "generic": "Not quite. Average the three closes, sum the squared deviations, divide by 2 and take the root.",
+            "byKey": {
+              "population": "You divided by 3. The sample sd divides by $n - 1 = 2$.",
+              "variance": "That is the sample variance. Take its square root." } },
+          "explain": { "text": "The deviations are $-0.67$, $-1.67$ and $2.33$, whose squares sum to 8.67. Divided by 2 that is 4.33, and its root is 2.08." }
+        },
+        {
+          "question": "Using the sd 2.08 from part 1, what is the trailing z-score on week 4? Give 2 decimal places.",
+          "widget": { "kind": "numeric", "answer": 1.12, "tol": { "abs": 0.005 },
+            "wrong": [
+              { "id": "population", "value": 1.37, "tol": { "abs": 0.005 } },
+              { "id": "no-mean", "value": 12.02, "tol": { "abs": 0.005 } } ] },
+          "feedback": {
+            "correct": "$(25 - 22.67)/2.08 = 1.12$: week 4 sits just over one sd above its trailing mean.",
+            "generic": "Not quite. Subtract the 3-week mean, 22.67, then divide by 2.08.",
+            "byKey": {
+              "population": "You divided by the population sd, 1.70. Use 2.08 from part 1.",
+              "no-mean": "You divided the close itself by the sd. Subtract the mean, 22.67, first." } },
+          "explain": { "text": "The trailing window holds weeks 2 to 4, all known in week 4. $z = 2.33/2.08 = 1.12$: a jump, measured against the recent past." }
+        },
+        {
+          "question": "What is the centred 3-week mean on week 4, in pounds to the nearest penny?",
+          "widget": { "kind": "numeric", "answer": 25.33, "tol": { "abs": 0.005 }, "unit": "£",
+            "wrong": [ { "id": "trailing", "value": 22.67, "tol": { "abs": 0.005 } } ] },
+          "feedback": {
+            "correct": "Weeks 3 to 5: $(21 + 25 + 30)/3 = £25.33$.",
+            "generic": "Not quite. The centred window on week 4 holds weeks 3, 4 and 5.",
+            "byKey": {
+              "trailing": "That is the trailing mean of weeks 2 to 4. The centred window holds weeks 3 to 5." } },
+          "explain": { "text": "Centring a 3-week window on week 4 takes weeks 3, 4 and 5. Their mean is £25.33, which already holds week 5's £30." }
+        },
+        {
+          "question": "Using the centred mean £25.33 from part 3, what is the centred z-score on week 4? Use the sample sd of weeks 3 to 5, and give 2 decimal places.",
+          "widget": { "kind": "numeric", "answer": -0.07, "tol": { "abs": 0.005 },
+            "wrong": [
+              { "id": "population", "value": -0.09, "tol": { "abs": 0.005 } },
+              { "id": "no-sign", "value": 0.07, "tol": { "abs": 0.005 } },
+              { "id": "trailing", "value": 1.12, "tol": { "abs": 0.005 } } ] },
+          "feedback": {
+            "correct": "The sample sd of £21, £25, £30 is 4.51, so $z = (25 - 25.33)/4.51 = -0.07$.",
+            "generic": "Not quite. Use the sd of weeks 3 to 5, then $(25 - 25.33)/\\text{sd}$.",
+            "byKey": {
+              "population": "You divided by 3 inside the sd. The sample sd divides by 2: 4.51.",
+              "no-sign": "Week 4's £25 is below the centred mean, £25.33, so the z is negative.",
+              "trailing": "That is the trailing z from part 2. The centred window holds weeks 3 to 5." } },
+          "explain": { "text": "The squared deviations from 25.33 sum to 40.67, so the sd is $\\sqrt{20.33} = 4.51$. Week 4 now looks ordinary, $z = -0.07$, because week 5's jump sits inside its window." }
+        },
+        {
+          "question": "The trailing z on week 4 is 1.12 and the centred one $-0.07$. Why do they disagree?",
+          "widget": { "kind": "choice", "options": [
+            { "id": "future", "text": "The centred window holds week 5's £30, which no one knew in week 4", "correct": true },
+            { "id": "sd-kind", "text": "The centred one uses a population sd", "why": "Both use the sample sd, as the setting says." },
+            { "id": "short", "text": "Three weeks is too short for a trailing window", "why": "Both windows are 3 weeks. The difference is which weeks, not how many." },
+            { "id": "smooth", "text": "Nothing leaks: centring only smooths the feature", "why": "Centring moves the window one week forward, so week 4's value uses week 5." } ] },
+          "feedback": {
+            "correct": "The centred z on week 4 uses the next week's close: look-ahead.",
+            "generic": "Not quite. List the weeks each window holds on week 4.",
+            "byKey": {
+              "sd-kind": "Both use the sample sd, as the setting says.",
+              "short": "Both windows are 3 weeks. The difference is which weeks, not how many.",
+              "smooth": "Centring moves the window one week forward, so week 4's value uses week 5." } },
+          "explain": { "text": "A value dated week 4 must be known in week 4. The centred window reaches $(3 - 1)/2 = 1$ week ahead, so it fails. Keep the trailing z." }
+        }
+      ]
+    }
+  ]
+}
