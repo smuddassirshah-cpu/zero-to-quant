@@ -1,6 +1,6 @@
 # Problem sets: validation (brief `docs/briefs/chained.md`, prompts `docs/briefs/chained-prompts.md`)
 
-Files: `app/content/courses/validation/problems-1.json`, `problems-2.json`. Numbers: `docs/reports/problems-validation-numbers.py` (resolves every path from `__file__`; exits 0).
+Files: `app/content/courses/validation/problems-1.json`, `problems-2.json`, `problems-3.json`. Numbers: `docs/reports/problems-validation-numbers.py` (resolves every path from `__file__`; 649 checks, exits 0; also green under `node tools/run-number-scripts.mjs --only docs/reports/problems-validation-numbers.py`).
 
 ## Level 1: `problems-1.json` (splits, folds and tuning)
 
@@ -41,3 +41,28 @@ Chains. Gas: $\hat\rho(1) = 26/52 = 0.5$ on six cold-snap days, so time order; `
 Reuse. `fresh-check.mjs --file content/courses/validation/problems-2.json`: 0 hits, 0 errors, 0 warnings. A first draft drew the advisory "2 shared parameters (0.57 0.58)" against l8's quiz; the fold hit rates were changed (0.565, 0.605, 0.575), and the rerun is clean. Grep: 1,260 days also appears in l12's code as five trading years (252 x 5), a calendar constant, not a shared setting; 125 and 29 occur in other contexts (a fit count, row counts); 3.85 occurs in l11's chart data only. No story is shared: gas demand appears elsewhere in `app/content/` only in a trigonometry cycle lesson, and the bid-ask spread only in backtesting and pairs lessons, none about validation.
 
 Checks. Validator 0 errors, no warnings on the file. `grade-all.mjs --file`: 18 widgets, 0 failures. Playthrough `--why`: green, 38 typed slips routed; `--mobile`: green. Screens read at 440 px: no layout faults. Voice scan 35: 0 and 0. Number script: exits 0.
+
+## Level 3: `problems-3.json` (leaks, survivors and selection)
+
+Read first: l9 to l12, review-3 and homework-3. Settings new to the course: a fund's daily net inflows, a fund analyst's target-encoded excess return, a fund-of-funds rule backtested on a database of open funds, and a currency carry rule's 60 lookbacks. The course's own data (the ten days of share volume, the 60-firm panel, the trend rule's 40 lookbacks, the earnings table) are not used.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-3 | p-fund-flows | 5 (4 / 1) | l10, l9 | 3 |
+| problems-3 | p-fund-encoding | 4 (3 / 1) | l9, l10, l12 | 4 |
+| problems-3 | p-closed-funds | 4 (4 / 0) | l11, l12 | 4 |
+| problems-3 | p-carry-lookbacks | 5 (4 / 1) | l12, l11 | 5 |
+
+Typed parts 15 of 18; the three choices are judgements (which step may run before the split, what a leak that clears Bonferroni means, how to read a correlated search). Every lesson appears; every problem draws on at least two.
+
+Chains. Flows: the full-sample mean 21 a leaky scaler subtracts, the training mean 18, a 1.5 move from revising one test day, the 2 test days inside a centred 5-day window read on the last training day, and the log as the only step safe outside the folds. Encoding: $\rho = 1/\sqrt{49} = 0.1429$, the noise hit rate $1 - \arccos(\rho)/\pi = 0.5456$, $t = 3.16$ on 1,200 fund-months, and a leak that clears the Bonferroni bar of 3.02. Closed funds: the survivorship gap $0.26 \times 6.5 = 1.69$ points, an honest Sharpe of 0.476 against 0.617, the noise best of the log's 18 variants (0.607, not the wiki's 4), and a haircut to $-0.13$. Carry: the ceiling 1.43 from $N = 60$ (not the wiki's 9), the independent haircut to 0.32, the correlated mean best 0.52 (about 0.96 left), the Bonferroni Sharpe bar 1.57, and the reading that a correlated search is few real tries and needs one locked test.
+
+Claims checked beside the numbers: $\rho$ between an average of 49 and one of its terms is $1/7$ (simulated); $1 - \arccos(\rho)/\pi$ equals the sign-agreement chance (simulated, and equal to homework-3's $\tfrac12 + \arcsin(\rho)/\pi$); the mean best of 4, 18, 22 and 60 normals (1.03, 1.82, 1.91, 2.319) by integration and Monte Carlo; the correlated best equals $\sqrt{1 - \rho}$ times the independent one (Monte Carlo); Bonferroni bars 3.02 and 3.14 from the normal quantile.
+
+Reuse. `fresh-check.mjs --file content/courses/validation/problems-3.json`: 0 hits, 0 errors, 0 warnings. A first draft drew a same-course error (13 shared words with review-3's "by the survivorship gap formula, how far does the database overstate the average" stem) and an advisory (the formula $\tfrac12 + \arcsin(\rho)/\pi$ shared with homework-3). The stem was rewritten, the formula is now stated as the equal $1 - \arccos(\rho)/\pi$, and the rerun is clean; the slips of that part changed with it. The reported carry Sharpe was moved from 1.45 to 1.48, since 1.45 is l12's mean best of 100. Grep: 252 and 49 occur as trading days and month counts in other contexts; 1.03, 1.82, 1.91 and 1.69 occur only as chart or canvas values in l11 and l12; 1.57 is l12's rule of thumb for 40 over 3 years, here the Bonferroni Sharpe bar for 60 over 4, a coincidence of one value with a different meaning. The sets were rerun together after level 3: fresh-check 0 hits on problems-1, -2 and -3.
+
+Checks. Validator 0 errors, no warnings on the file. `grade-all.mjs --file`: 18 widgets, 0 failures. Playthrough `--why`: green, 34 typed slips routed; `--mobile`: green (both rerun after the 1.48 change). Screens read at 440 px: no layout faults. Voice scan 35: 0 and 0. Number script: exits 0.
+
+## Engine limits
+
+Two bullets in `docs/BACKLOG-INBOX.md` under `Raised later (problems validation):` (the over-100 warning on a `wrong` entry of a `%` widget; the shared-formula advisory compares text, not value).

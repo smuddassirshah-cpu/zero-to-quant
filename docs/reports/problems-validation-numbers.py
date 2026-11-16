@@ -336,6 +336,104 @@ if L2 is not None:
     ok(not bad, f'level 2 check_wrongs: {bad}')
 
 
+# ===================================================================== level 3
+L3 = load(3)
+if L3 is not None:
+    import pandas as pd
+    from sklearn.preprocessing import StandardScaler
+
+    # ---------- p-fund-flows ----------
+    fl = [14, 18, 16, 21, 19, 17, 22, 20, 15, 31, 27, 32]
+    Xf = np.array(fl, float).reshape(-1, 1)
+    num(L3, 'p-fund-flows', 1, Fr(sum(fl), 12), StandardScaler().fit(Xf).mean_[0], {'train': Fr(sum(fl[:9]), 9), 'test-mean': Fr(sum(fl[9:]), 3)})
+    ok(sum(fl[:9]) == 162 and sum(fl[9:]) == 90 and sum(fl) == 252, 'p-fund-flows: 162, 90 and 252')
+    num(L3, 'p-fund-flows', 2, Fr(sum(fl[:9]), 9), StandardScaler().fit(Xf[:9]).mean_[0], {'with-day-10': Fr(sum(fl[:10]), 10), 'twelve': Fr(sum(fl[:9]), 12)})
+    fl2 = fl[:11] + [50]
+    num(L3, 'p-fund-flows', 3, Fr(sum(fl2) - sum(fl), 12), StandardScaler().fit(np.array(fl2, float).reshape(-1, 1)).mean_[0] - 21,
+        {'moved-value': 18, 'test-mean': Fr(18, 3), 'train': StandardScaler().fit(np.array(fl2[:9], float).reshape(-1, 1)).mean_[0] - 18})
+    ok(Fr(sum(fl2), 12) == Fr(45, 2), 'p-fund-flows p3: the mean moves to 22.5')
+    s_ = pd.Series(np.arange(1, 13, dtype=float), index=range(1, 13))
+    win = s_.rolling(5, center=True).apply(lambda w: w.max(), raw=True)        # the last day each centred window reads
+    used = [dd for dd in range(int(win[9]) - 4, int(win[9]) + 1) if dd >= 10]
+    num(L3, 'p-fund-flows', 4, 2, len(used), {'all-test': 3, 'trailing': len([dd for dd in range(5, 10) if dd >= 10])})
+    ok(int(win[9]) == 11, 'p-fund-flows p4: day 9 window ends on day 11')
+    choice(L3, 'p-fund-flows', 5, 'log')
+    ok(min(fl) > 0, 'p-fund-flows p5: every flow is positive, so the log exists')
+
+    # ---------- p-fund-encoding ----------
+    rho = 1 / sp.sqrt(49)
+    sims = rng.standard_normal((200_000, 49))
+    rho_mc = np.corrcoef(sims.mean(axis=1), sims[:, 0])[0, 1]
+    num(L3, 'p-fund-encoding', 1, rho, rho_mc, {'one-over-n': sp.Rational(1, 49)}, agree=0.005)
+    printed(L3, 'p-fund-encoding', 1, rho, 4)
+    hit = 1 - sp.acos(rho) / sp.pi
+    hit_alt = 0.5 + math.asin(1 / 7) / math.pi
+    hit_mc = np.mean(np.sign(sims.mean(axis=1)) == np.sign(sims[:, 0]))
+    ok(abs(hit_mc - float(hit)) < 0.004, f'p-fund-encoding p2: simulated sign agreement {hit_mc}')
+    num(L3, 'p-fund-encoding', 2, hit, hit_alt, {'no-one': sp.acos(rho) / sp.pi, 'carried': 1 - math.acos(1 / 49) / math.pi})
+    printed(L3, 'p-fund-encoding', 2, hit, 4)
+    ok(abs(math.acos(1 / 7) - 1.4274) < 0.00005, 'p-fund-encoding p2: arccos(1/7) = 1.4274')
+    se = math.sqrt(0.25 / 1200)
+    t = (0.5456 - 0.5) / se
+    num(L3, 'p-fund-encoding', 3, round(t, 2), round((float(hit) - 0.5) / se, 2),
+        {'carried': round((0.4544 - 0.5) / se, 2), 'months': round((0.5456 - 0.5) / math.sqrt(0.25 / 49), 2)})
+    ok(abs(se - 0.01443) < 0.000005, 'p-fund-encoding p3: se 0.01443')
+    bar40 = stats.norm.ppf(1 - 0.05 / 40)
+    ok(round(bar40, 2) == 3.02 and t > bar40, f'p-fund-encoding p4: Bonferroni bar {bar40} and t clears it')
+    ok(round(stats.norm.ppf(0.95), 2) == 1.64, 'p-fund-encoding p4: one try gives about 1.64')
+    choice(L3, 'p-fund-encoding', 4, 'leak')
+
+    # ---------- p-closed-funds ----------
+    over = Fr(26, 100) * Fr(65, 1000)
+    # method 2: a panel of 100 funds, 26 closed, survivors at r, closed at r - 6.5 points: mean of all vs survivors
+    r_s = 0.08
+    panel = np.r_[np.full(74, r_s), np.full(26, r_s - 0.065)]
+    num(L3, 'p-closed-funds', 1, over, r_s - panel.mean(), {'gap': Fr(65, 1000), 'survivor-share': Fr(74, 100) * Fr(65, 1000)})
+    printed(L3, 'p-closed-funds', 1, over, 2, pct=True)
+    honest = (Fr('7.4') - Fr('1.69')) / 12
+    num(L3, 'p-closed-funds', 2, honest, (0.074 - float(over)) / 0.12,
+        {'survivors': Fr('7.4') / 12, 'added': (Fr('7.4') + Fr('1.69')) / 12, 'carried': (Fr('7.4') - Fr('4.81')) / 12})
+    printed(L3, 'p-closed-funds', 2, honest, 3)
+    for nn, v in ((4, 1.03), (18, 1.82), (22, 1.91)):
+        ex = emax_exact(nn)
+        ok(round(ex, 2) == v and abs(emax_mc(nn, 200_000) - ex) < 0.01, f'p-closed-funds p3: mean best of {nn} is {ex}')
+    noise = 1.82 / 3
+    num(L3, 'p-closed-funds', 3, noise, emax_exact(18) / math.sqrt(9), {'wiki': 1.03 / 3, 'double-count': 1.91 / 3, 'by-years': 1.82 / 9}, agree=5e-4)
+    printed(L3, 'p-closed-funds', 3, noise, 3)
+    hc = round(0.476 - 0.607, 2)
+    num(L3, 'p-closed-funds', 4, hc, round(float(honest) - emax_exact(18) / 3, 2),
+        {'wiki': round(0.476 - 0.343, 2), 'clipped': 0, 'survivors': round(0.617 - 0.607, 2)})
+
+    # ---------- p-carry-lookbacks ----------
+    ceil_ = math.sqrt(2 * math.log(60)) / 2
+    num(L3, 'p-carry-lookbacks', 1, ceil_, float(sp.sqrt(2 * sp.log(60)) / 2),
+        {'no-root-t': round(math.sqrt(2 * math.log(60)), 2), 'by-years': round(math.sqrt(2 * math.log(60)) / 4, 2), 'wiki': round(math.sqrt(2 * math.log(9)) / 2, 2)})
+    printed(L3, 'p-carry-lookbacks', 1, ceil_, 2)
+    e60 = emax_exact(60)
+    ok(round(e60, 3) == 2.319 and abs(emax_mc(60, 100_000) - e60) < 0.01, f'p-carry-lookbacks p2: mean best of 60 is {e60}')
+    keep = 1.48 - 2.319 / 2
+    num(L3, 'p-carry-lookbacks', 2, keep, 1.48 - e60 / 2, {'ceiling': round(1.48 - 1.43, 2), 'no-root': round(1.48 - 2.319, 2)}, agree=5e-4)
+    printed(L3, 'p-carry-lookbacks', 2, keep, 2)
+    corr = math.sqrt(0.2) * 1.16
+    z0 = rng.standard_normal((100_000, 1))
+    zi = rng.standard_normal((100_000, 60))
+    corr_mc = ((math.sqrt(0.8) * z0 + math.sqrt(0.2) * zi) / 2).max(axis=1).mean()
+    ok(abs(corr_mc - math.sqrt(0.2) * e60 / 2) < 0.01, f'p-carry-lookbacks p3: simulated correlated best {corr_mc}')
+    num(L3, 'p-carry-lookbacks', 3, corr, math.sqrt(0.2) * e60 / 2, {'rho': round(math.sqrt(0.8) * 1.16, 2), 'no-root': round(0.2 * 1.16, 2)}, agree=5e-4)
+    printed(L3, 'p-carry-lookbacks', 3, corr, 2)
+    ok(round(1.48 - 0.52, 2) == 0.96, 'p-carry-lookbacks p3 and p5: 1.48 - 0.52 = 0.96')
+    bar60 = stats.norm.ppf(1 - 0.05 / 60)
+    ok(round(bar60, 2) == 3.14, f'p-carry-lookbacks p4: Bonferroni bar for 60 is {bar60}')
+    num(L3, 'p-carry-lookbacks', 4, 3.14 / 2, round(bar60, 2) / math.sqrt(4), {'bar': 3.14, 'by-years': round(3.14 / 4, 2)})
+    ok(1.48 * 2 < 3.14 and abs(1.48 * 2 - 2.96) < 1e-12, 'p-carry-lookbacks p4: t = 2.96 falls short of 3.14')
+    choice(L3, 'p-carry-lookbacks', 5, 'locked')
+
+    lv = Level('validation', 3)
+    lv.check_wrongs('problems')
+    bad = [r for r in lv.results if not r[0]]
+    ok(not bad, f'level 3 check_wrongs: {bad}')
+
+
 print(f'{checks - len(fails)} of {checks} checks passed')
 if fails:
     sys.exit(1)
