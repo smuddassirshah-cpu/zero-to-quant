@@ -357,6 +357,132 @@ if L1 is not None:
         {'no-shrink': R(260, 100), 'all-shrink': noise + (b6 + v6) / 10, 'no-noise': b6 + v6 / 10})
     ok(v6 == R(138, 100) and e6 < e2 and noise + bias2 == R(144, 100), 'p-heat: degree-6 variance 1.38, 1.358 < 1.476, floor 1.44')
 
+def orth_design(n, p, seed):
+    """Centred columns, orthogonal to each other, each with sum of squares n (z-scores dividing by n)."""
+    rng = np.random.default_rng(seed)
+    Q, _ = np.linalg.qr(np.column_stack([np.ones(n), rng.normal(size=(n, p + 1))]))
+    return Q[:, 1:p + 1] * math.sqrt(n), Q[:, p + 1]          # the last column: a residual orthogonal to all
+
+
+L2 = load(2)
+if L2 is not None:
+    from sklearn.linear_model import Lasso, LinearRegression, Ridge
+    from sklearn.metrics import mean_squared_error
+    # ---------- p-ice-cream-van ----------
+    xs_, ws_ = sp.symbols('x w')
+    yhat = 20 + R(3, 2) * xs_ + 8 * ws_ + R(1, 2) * xs_ * ws_
+    beta_v = np.array([20, 1.5, 8, 0.5])
+    days = [(12, 1, 55), (10, 0, 33), (16, 0, 45), (6, 1, 38)]
+    Xd = np.array([[1, x, w, x * w] for x, w, _ in days], float)
+    yd = np.array([a for _, _, a in days], float)
+    slope_we = sp.diff(yhat, xs_).subs(ws_, 1)
+    num(L2, 'p-ice-cream-van', 1, slope_we, (Xd[0] @ beta_v - np.array([1, 11, 1, 11]) @ beta_v), {'weekday': R(3, 2), 'interaction': R(1, 2)})
+    f_sat = yhat.subs({xs_: 12, ws_: 1})
+    num(L2, 'p-ice-cream-van', 2, f_sat, Xd[0] @ beta_v,
+        {'no-interaction': f_sat - 6, 'no-dummy': f_sat - 8, 'weekday': yhat.subs({xs_: 12, ws_: 0})})
+    fc_ = [yhat.subs({xs_: x, ws_: w}) for x, w, _ in days]
+    ok(fc_ == [52, 35, 44, 40], 'p-ice-cream: forecasts 52, 35, 44, 40')
+    mse_v = sum((a - f) ** 2 for (_, _, a), f in zip(days, fc_)) / 4
+    fc_noint = [f - R(1, 2) * x * w for (x, w, _), f in zip(days, fc_)]
+    num(L2, 'p-ice-cream-van', 3, mse_v, mean_squared_error(yd, Xd @ beta_v),
+        {'carried': sum((a - f) ** 2 for (_, _, a), f in zip(days, fc_noint)) / 4,
+         'absolute': sum(abs(a - f) for (_, _, a), f in zip(days, fc_)) / 4, 'sum': sum((a - f) ** 2 for (_, _, a), f in zip(days, fc_))})
+    base_v = sum((a - 40) ** 2 for _, _, a in days) / 4
+    tmean = R(sum(a for _, _, a in days), 4)
+    num(L2, 'p-ice-cream-van', 4, base_v, mean_squared_error(yd, np.full(4, 40.0)),
+        {'test-mean': sum((a - tmean) ** 2 for _, _, a in days) / 4, 'absolute': sum(abs(a - 40) for _, _, a in days) / 4}, round_tol=0.005)
+    ok(tmean == R(171, 4) and abs(float(sum((a - tmean) ** 2 for _, _, a in days) / 4) - 68.19) < 0.005, 'p-ice-cream: test mean 42.75, its MSE 68.19')
+    num(L2, 'p-ice-cream-van', 5, 1 - mse_v / base_v, 1 - mean_squared_error(yd, Xd @ beta_v) / mean_squared_error(yd, np.full(4, 40.0)),
+        {'ratio': mse_v / base_v, 'test-mean': 1 - mse_v / (sum((a - tmean) ** 2 for _, _, a in days) / 4),
+         'carried': 1 - (sum((a - f) ** 2 for (_, _, a), f in zip(days, fc_noint)) / 4) / base_v})
+    ok(abs(float(mse_v / base_v) - 0.0594) < 0.00005, 'p-ice-cream: printed 0.0594')
+
+    # ---------- p-rent-ridge ----------
+    Sxy, Sxx, nn = R(90), R(100), 25
+    rng = np.random.default_rng(11)
+    xr = rng.normal(size=nn)
+    xr -= xr.mean()
+    xr *= math.sqrt(100 / (xr @ xr))
+    e = rng.normal(size=nn)
+    e -= e.mean()
+    e -= (e @ xr) / (xr @ xr) * xr
+    yr_ = 0.9 * xr + e                                        # sum xy = 90, sum x^2 = 100, both centred
+    ok(abs(xr @ yr_ - 90) < 1e-9 and abs(xr @ xr - 100) < 1e-9, 'p-rent: built data hold the sums')
+    num(L2, 'p-rent-ridge', 1, Sxy / Sxx, LinearRegression().fit(xr[:, None], yr_).coef_[0], {'inverse': Sxx / Sxy, 'per-month': Sxy / nn})
+    num(L2, 'p-rent-ridge', 2, Sxy / (Sxx + 20), Ridge(alpha=20).fit(xr[:, None], yr_).coef_[0],
+        {'ols': Sxy / Sxx, 'subtracted': Sxy / (Sxx - 20), 'on-top': (Sxy + 20) / Sxx})
+    num(L2, 'p-rent-ridge', 3, (Sxy / 100) / (Sxx / 10000 + 20), Ridge(alpha=20).fit(xr[:, None] / 100, yr_).coef_[0],
+        {'ols': Sxy / Sxx * 100, 'unchanged': Sxy / (Sxx + 20), 'shrunk-units': Sxy / (Sxx + 20) / 100})
+    ok(abs(float((Sxy / Sxx * 100) / ((Sxy / 100) / (Sxx / 10000 + 20))) - 2001) < 1 and abs(float((Sxy / 100) / (Sxx / 10000 + 20)) - 0.045) < 0.0005, 'p-rent: 0.045, about a 2,000th of 90')
+    sdx = sp.sqrt(Sxx / nn)
+    ok(sdx == 2 and abs(np.std(xr) - 2) < 1e-12, 'p-rent: training sd 2 basis points, dividing by n')
+    z_ = xr / np.std(xr)
+    b_z = (Sxy / sdx) / (Sxx / sdx ** 2 + 20)
+    num(L2, 'p-rent-ridge', 4, b_z, Ridge(alpha=20).fit(z_[:, None], yr_).coef_[0],
+        {'unscaled': Sxy / (Sxx + 20), 'variance': (Sxy / 4) / (Sxx / 16 + 20), 'ols': (Sxy / sdx) / (Sxx / sdx ** 2)})
+    ok(abs(Ridge(alpha=20).fit((xr / 100 / np.std(xr / 100))[:, None], yr_).coef_[0] - 1.0) < 1e-9, 'p-rent: standardising percentage points gives the same 1.0 per sd')
+    num(L2, 'p-rent-ridge', 5, b_z / sdx, Ridge(alpha=20).fit(z_[:, None], yr_).coef_[0] / np.std(xr),
+        {'times-sd': b_z * sdx, 'not-converted': b_z, 'carried': Sxy / (Sxx + 20) / sdx})
+
+    # ---------- p-futures-lasso ----------
+    b_ols = [R(42, 100), R(-27, 100), R(11, 100), R(-6, 100), R(18, 100)]
+    a_ = R(15, 100)
+
+    def soft(b, a):
+        return sp.sign(b) * sp.Max(abs(b) - a, 0)
+    lasso_c = [soft(b, a_) for b in b_ols]
+    Xf, res = orth_design(2000, 5, 3)
+    yf = 0.30 + Xf @ np.array([float(b) for b in b_ols]) + 0.5 * res * math.sqrt(2000)
+    lf = Lasso(alpha=0.15, tol=1e-12, max_iter=100000).fit(Xf, yf)
+    ok(np.allclose(lf.coef_, [float(c) for c in lasso_c], atol=1e-6) and abs(lf.intercept_ - 0.30) < 1e-6, 'p-futures: sklearn Lasso matches soft thresholding')
+    num(L2, 'p-futures-lasso', 1, sum(1 for c in lasso_c if c != 0), int(np.sum(lf.coef_ != 0)),
+        {'ridge': 5, 'positive': sum(1 for b in b_ols if b > a_)})
+    num(L2, 'p-futures-lasso', 2, lasso_c[1], lf.coef_[1], {'sign': -lasso_c[1], 'away': b_ols[1] - a_})
+    a_max = max(abs(b) for b in b_ols)
+    lf_max = Lasso(alpha=0.42, tol=1e-12, max_iter=100000).fit(Xf, yf)
+    lf_less = Lasso(alpha=0.419, tol=1e-12, max_iter=100000).fit(Xf, yf)
+    ok(np.all(lf_max.coef_ == 0) and np.sum(lf_less.coef_ != 0) == 1, 'p-futures: empty at 0.42, one survivor at 0.419')
+    num(L2, 'p-futures-lasso', 3, a_max, 0.42, {'sum': sum(abs(b) for b in b_ols), 'first': min(abs(b) for b in b_ols)})
+    zc = (R(7) - 1) / 4
+    num(L2, 'p-futures-lasso', 4, zc, (7 - 1) / math.sqrt(16), {'no-centre': R(7, 4), 'variance': R(6, 16)})
+    zv = [zc, 1, -2, R(3, 2), 1]
+    fcast = R(30, 100) + sum(c * z for c, z in zip(lasso_c, zv))
+    num(L2, 'p-futures-lasso', 5, fcast, lf.predict(np.array([[float(z) for z in zv]]))[0],
+        {'ols': R(30, 100) + sum(b * z for b, z in zip(b_ols, zv)),
+         'no-shrink': R(30, 100) + sum(b * z for b, c, z in zip(b_ols, lasso_c, zv) if c != 0),
+         'sign': fcast - 2 * lasso_c[1] * zv[1],
+         'carried': R(30, 100) + sum(c * z for c, z in zip(lasso_c, [R(7, 4)] + zv[1:]))}, agree=1e-6)
+
+    # ---------- p-built-ridge ----------
+    beta_t = [R(1, 2), R(1, 5), 0]
+    b_hat = [R(3, 5), R(1, 10), R(14, 100)]
+    noise2, n_b = 2, 500
+    Xb, resb = orth_design(n_b, 3, 7)
+    yb = Xb @ np.array([float(b) for b in b_hat]) + resb * 5
+
+    def emse(coefs):
+        return noise2 + sum((c - t) ** 2 for c, t in zip(coefs, beta_t))
+
+    def emse_np(coefs):
+        return 2.0 + float(np.sum((np.array(coefs, float) - np.array([0.5, 0.2, 0.0])) ** 2))
+    ols_np = LinearRegression().fit(Xb, yb).coef_
+    num(L2, 'p-built-ridge', 1, emse(b_hat), emse_np(ols_np),
+        {'no-noise': emse(b_hat) - noise2, 'unsquared': noise2 + sum(abs(c - t) for c, t in zip(b_hat, beta_t))}, agree=1e-9)
+    for k, lam, slip in ((2, 125, R(3, 4)), (3, 500, 0)):
+        fac = R(n_b, n_b + lam)
+        rid = Ridge(alpha=lam).fit(Xb, yb).coef_
+        num(L2, 'p-built-ridge', k, emse([fac * b for b in b_hat]), emse_np(rid),
+            {'lambda-over-n': emse([slip * b for b in b_hat]), 'no-noise': emse([fac * b for b in b_hat]) - noise2},
+            round_tol=0.0001, agree=1e-9)
+    ok(emse([R(4, 5) * b for b in b_hat]) < emse(b_hat) < emse([R(1, 2) * b for b in b_hat]), 'p-built-ridge: 2.0273 < 2.0396 < 2.0674, the U')
+    base_b = emse([0, 0, 0])
+    num(L2, 'p-built-ridge', 4, base_b, emse_np(Ridge(alpha=1e12).fit(Xb, yb).coef_),
+        {'noise-only': noise2, 'ols-coefs': noise2 + sum(b ** 2 for b in b_hat)}, agree=1e-6)
+    r2 = 1 - R(20273, 10000) / base_b                                   # the question says use the printed 2.0273
+    num(L2, 'p-built-ridge', 5, r2, 1 - emse_np(Ridge(alpha=125).fit(Xb, yb).coef_) / emse_np(np.zeros(3)),
+        {'ols': 1 - emse(b_hat) / base_b, 'ratio': R(20273, 10000) / base_b, 'too-much': 1 - emse([R(1, 2) * b for b in b_hat]) / base_b}, agree=1e-4)
+    ok(abs(float(R(20273, 10000) / base_b) - 0.8853) < 0.00005, 'p-built-ridge: printed 0.8853')
+
 present = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 print(f'problem sets checked: {present}; checks: {checks}; failures: {len(fails)}')
 for m in fails:

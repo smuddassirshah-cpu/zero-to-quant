@@ -15,6 +15,19 @@ Lessons read first: l1 to l4, review-1 and homework-1, with their numbers and st
 
 Typed parts 18 of 20; the two choice parts are judgements (which forecast to keep, which $k$ to use). Chains: the best constant 7, its training MSE 5.667, its test MSE 9, the degree-5 interpolant, and the constant kept against the interpolant's 31.4. Bias squared 9 for $k = 20$, its error 13.4, $k = 1$ at 10.4, $k = 5$ at 5.8, and $k = 5$ chosen. A raw distance 5.39, a scaled one 0.54, the scaled 2-NN forecast 7.5, its test MSE 0.5, and the training mean's 1.833. Degree 2 kept by test MSE, 0.60 above the noise, squared bias 0.24, 1.476 at 400 days, and degree 6 at 1.358, so more data moves the best degree up. Each later part restates the value it uses; `carried` wrongs hold the commonest slip of the part before.
 
+## Level 2: `problems-2.json` (linear models, features and penalties)
+
+Lessons read first: l5 to l9, review-2 and homework-2 (the 40-feature share panel, mom times vol, $\sum xy = 23.0276$, the six uncorrelated coefficients, size in £ millions, the built two-feature market with $\lambda = 25$). Settings new to the course: an ice-cream van's cones, a letting agent's rents against mortgage rates, a futures model's five signals, a built three-feature market.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-2 | p-ice-cream-van | 5 (5 / 0) | l5, l6 | 3 |
+| problems-2 | p-rent-ridge | 5 (5 / 0) | l7, l9 | 4 |
+| problems-2 | p-futures-lasso | 5 (5 / 0) | l8, l9 | 4 |
+| problems-2 | p-built-ridge | 5 (5 / 0) | l5, l7 | 5 |
+
+Typed parts 20 of 20 (no step here is a judgement between named options). Chains: the weekend slope 2.0, the Saturday forecast 52, the test MSE 4.5, the training-mean baseline 75.75, test $R^2$ 0.941. OLS 0.9, ridge 0.75, the same $\lambda$ in percentage points keeping 0.045 of an OLS 90, the standardised slope 1.0 per standard deviation, and 0.5 per basis point in either unit. Three lasso survivors, momentum $-0.12$, $\alpha_{\max} = 0.42$, a carry z-score of 1.5, and the forecast 0.615. Expected test MSE 2.0396 for OLS, 2.0273 at $\lambda = 125$, 2.0674 at $\lambda = 500$, the baseline 2.29, and test $R^2$ 0.115.
+
 ## Level 4: `problems-4.json` (margins, clusters, networks and splines)
 
 Lessons read first: l15 support vector machines, l16 k-means and linkage, l17 a one-layer network and a gradient step, l18 splines, l19 choosing a learner. The three reviews of the level were read too, so that no wrong finding is repeated: the set uses scikit-learn's sense of the margin only through $w$ and $b$ (no $C$), counts spline coefficients by knots (not `SplineTransformer` columns), splits no accuracy into bias and variance, and says nothing about a best inertia. Settings new to the course: a spam filter, a desk's order sizes, a delivery-time network, a subscription firm's renewals.
@@ -34,18 +47,20 @@ Form. Every non-whole numeric part says "Give a decimal." or "Give n decimal pla
 
 ## Checks
 
-| check | problems-1 | problems-4 |
-|---|---|---|
-| numbers script | 0 failures (two routes a part: sympy or fractions against NumPy, calculus against a scan for the best constant, `np.polyfit` for the interpolant, a simulated average of five noises, scikit-learn `KNeighborsRegressor`, the $1/n$ rule written with $n$) | 0 failures (286 checks; two routes a part: sympy against NumPy projection, scikit-learn `KMeans` from the stated centres, hinge columns in NumPy, a finite-difference slope, a scan for the knot, statsmodels' `proportions_ztest` with the null variance, brute search over $n$) |
-| validator | 0 errors, 0 warnings on the file (eight `O2-long-sentence` and five `O2-explain-answer` on first draft, rewritten) | 0 errors, 0 warnings on the file (eight `O2-long-sentence`, two `[tight-band]` and one `[shown-arithmetic]` on first draft, all rewritten) |
-| playthrough `--local-cdn` | green (20 parts) | green (19 parts) |
-| playthrough `--mobile` | green; 440 px shots read, no fault | green; 440 px shots read, no fault |
-| `grade-all --file` | 0 failures (20 widgets) | not run |
-| voice scan 35 (course folder) | 0 and 0 | 0 and 0 |
+| check | problems-1 | problems-2 | problems-4 |
+|---|---|---|---|
+| numbers script | 0 failures (two routes a part: sympy or fractions against NumPy, calculus against a scan for the best constant, `np.polyfit` for the interpolant, a simulated average of five noises, scikit-learn `KNeighborsRegressor`, the $1/n$ rule written with $n$) | 0 failures (built data with the stated sums fitted by scikit-learn `LinearRegression`, `Ridge` and `Lasso`, an orthogonal design for soft thresholding and the ridge factor, `mean_squared_error`) | 0 failures (286 checks; two routes a part: sympy against NumPy projection, scikit-learn `KMeans` from the stated centres, hinge columns in NumPy, a finite-difference slope, a scan for the knot, statsmodels' `proportions_ztest` with the null variance, brute search over $n$) |
+| validator | 0 errors, 0 warnings on the file (eight `O2-long-sentence` and five `O2-explain-answer` on first draft, rewritten) | 0 errors, 0 warnings (two `[percent-form]`, one `O2-explain-answer` on first draft, rewritten) | 0 errors, 0 warnings on the file (eight `O2-long-sentence`, two `[tight-band]` and one `[shown-arithmetic]` on first draft, all rewritten) |
+| playthrough `--local-cdn` | green (20 parts) | green (20 parts) | green (19 parts) |
+| playthrough `--mobile` | green; 440 px shots read, no fault | green; 440 px shots read, no fault | green; 440 px shots read, no fault |
+| `grade-all --file` | 0 failures (20 widgets) | 0 failures (20 widgets) | not run |
+| voice scan 35 (course folder) | 0 and 0 | 0 and 0 | 0 and 0 |
 
 ## Fresh-check
 
 `problems-1.json`: first run gave one advisory, `items[1]` sharing the parameters 22 and 21 with `l18-bending-the-line.json` screens[0] (the $k = 1$ forecasts held 22 and 21). The forecasts were changed to 23, 18, 19, 17, 23 (variance 6.4, error 10.4); the rerun gives 0 hits, 0 warnings, 0 advisories. Second check by grep: the key numbers, each variable letter and each noun (ferry, passengers, loaves, bakery, broker, commission, heat demand) across `app/content/courses/stat-learning/`, and each story across `app/content/`. The first draft's gas demand from the temperature matched `regression/problems-1.json`, so that problem became a district heating firm's heat demand (no match). Bakeries and ferries appear in other courses with unrelated stories (break-even trays, a berth map).
+
+`problems-2.json`: first run gave one advisory, `items[3]` sharing 300 and 0.15 with `l11-the-boundary.json` screens[5]; the built market moved to $n = 500$, $\lambda = 125$ and 500, and a third OLS estimate of 0.14 (also clear of review-2's $n = 400$, $\lambda = 100$). The grep of `app/content/` found the first draft's freight rate against diesel close to `regression/problems-2.json` (a freight index on ship fuel), so that problem became rents against mortgage rates. Rerun: 0 hits, 0 warnings, 0 advisories.
 
 `node tools/fresh-check.mjs --file content/courses/stat-learning/problems-4.json`: 0 hits and no advisory lines. The lesson stories (six loans, six shares' volatilities, the corner network, the impact curve, the five-learner table) are not reused.
 

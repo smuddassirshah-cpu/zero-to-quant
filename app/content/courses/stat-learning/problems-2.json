@@ -1,0 +1,891 @@
+{
+ "id": "problems-2",
+ "course": "stat-learning",
+ "level": 2,
+ "title": "Problems: linear models, features and penalties",
+ "minutes": 45,
+ "items": [
+  {
+   "id": "p-ice-cream-van",
+   "difficulty": 3,
+   "skills": [
+    "sl-linear"
+   ],
+   "prose": "An ice-cream van forecasts its daily sales, in tens of cones, from the temperature $x$ in °C and a weekend dummy $w$. Its fitted model is $\\hat y = 20 + 1.5x + 8w + 0.5xw$, and its training days averaged 40. Four held-out days: a Saturday at 12 °C sold 55, weekdays at 10 °C and 16 °C sold 33 and 45, and a Sunday at 6 °C sold 38.",
+   "parts": [
+    {
+     "question": "By how much do forecast sales rise for each extra degree on a weekend day? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.0,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "weekday",
+        "value": 1.5,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "interaction",
+        "value": 0.5,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "With $w = 1$ the slope on $x$ is $1.5 + 0.5 \\times 1 = 2.0$.",
+      "generic": "Not quite. Collect every term with $x$ in it, then set $w = 1$.",
+      "byKey": {
+       "weekday": "That is the weekday slope, with $w = 0$. On a weekend the interaction adds $0.5 \\times 1$.",
+       "interaction": "That is only the interaction's coefficient. It adds to the 1.5 that every day has."
+      }
+     },
+     "explain": {
+      "text": "The slope on temperature is $1.5 + 0.5w$: 1.5 on weekdays and 2.0 at weekends. The column $xw$ lets the weekend change the effect of a warm day."
+     }
+    },
+    {
+     "question": "What does the model forecast for the Saturday at 12 °C?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 52,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "number",
+      "wrong": [
+       {
+        "id": "no-interaction",
+        "value": 46,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "no-dummy",
+        "value": 44,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "weekday",
+        "value": 38,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$20 + 1.5 \\times 12 + 8 + 0.5 \\times 12 = 20 + 18 + 8 + 6 = 52$.",
+      "generic": "Not quite. Put $x = 12$ and $w = 1$ into every term.",
+      "byKey": {
+       "no-interaction": "You left out $0.5xw = 6$. On a Saturday the interaction is on.",
+       "no-dummy": "You left out the weekend dummy's 8.",
+       "weekday": "You set $w = 0$. Saturday is a weekend day, so $w = 1$."
+      }
+     },
+     "explain": {
+      "text": "Using the weekend slope 2.0 from part 1, the forecast is $28 + 2.0 \\times 12 = 52$. The 28 is the intercept plus the weekend's 8."
+     }
+    },
+    {
+     "question": "Using the forecast 52 from part 2, what is the model's test MSE on the four held-out days? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "carried",
+        "value": 21.75,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "absolute",
+        "value": 2.0,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "sum",
+        "value": 18,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The forecasts are 52, 35, 44 and 40, so the misses are $3, -2, 1, -2$. Their squares add to 18, and $18/4 = 4.5$.",
+      "generic": "Not quite. Forecast each held-out day, square each miss, then average over the 4 days.",
+      "byKey": {
+       "carried": "You left out the interaction on both weekend days, part 2's slip. With it the forecasts are 52, 35, 44 and 40.",
+       "absolute": "That averages the sizes of the misses. Square them first.",
+       "sum": "That is the sum of the squared misses. Divide by the 4 days."
+      }
+     },
+     "explain": {
+      "text": "The held-out days took no part in the fit, so 4.5 is an honest score. On its own it means little until it is set against a forecast with no features."
+     }
+    },
+    {
+     "question": "The baseline forecasts the training mean, 40, for every held-out day. What is its test MSE? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 75.75,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "test-mean",
+        "value": 68.19,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "absolute",
+        "value": 7.25,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The misses are $15, -7, 5, -2$, with squares $225 + 49 + 25 + 4 = 303$, and $303/4 = 75.75$.",
+      "generic": "Not quite. Forecast 40 for each held-out day, square the misses, then average.",
+      "byKey": {
+       "test-mean": "You used the held-out days' own mean, 42.75. Nobody could have known it in advance; the baseline is the training mean.",
+       "absolute": "That averages the sizes of the misses. Square them first."
+      }
+     },
+     "explain": {
+      "text": "The training mean is the forecast a vendor with no features could have made. Its test MSE, 75.75, is what the model has to beat."
+     }
+    },
+    {
+     "question": "Using 4.5 from part 3 and 75.75 from part 4, what is the model's test $R^2$? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.941,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "ratio",
+        "value": 0.059,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "test-mean",
+        "value": 0.934,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "carried",
+        "value": 0.713,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1 - 4.5/75.75 = 1 - 0.0594 \\approx 0.941$.",
+      "generic": "Not quite. Compute 1 minus the model's test MSE over the baseline's.",
+      "byKey": {
+       "ratio": "That is the error left, $4.5/75.75$. The test $R^2$ is 1 minus it.",
+       "test-mean": "You used the test mean's 68.19 as the baseline. Use the training mean's 75.75.",
+       "carried": "You used the test MSE 21.75, part 3's slip. With 4.5 the model removes far more."
+      }
+     },
+     "explain": {
+      "text": "The model removes 94.1% of the baseline's error on days it never saw. Weather and weekends drive cone sales strongly, so a test $R^2$ this high is plausible here, unlike for returns."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-rent-ridge",
+   "difficulty": 4,
+   "skills": [
+    "sl-regularise"
+   ],
+   "prose": "A letting agent regresses the monthly change in a district's average rent, in £, on the change in mortgage rates, in basis points. Both are centred, and over $n = 25$ months $\\sum xy = 90$ and $\\sum x^2 = 100$.",
+   "parts": [
+    {
+     "question": "What is the OLS slope, in £ per basis point? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.9,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "inverse",
+        "value": 1.111,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "per-month",
+        "value": 3.6,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$90/100 = 0.9$.",
+      "generic": "Not quite. For centred data the slope is $\\sum xy / \\sum x^2$.",
+      "byKey": {
+       "inverse": "You divided $\\sum x^2$ by $\\sum xy$. The slope is $\\sum xy / \\sum x^2$.",
+       "per-month": "You divided by the 25 months. The slope divides by $\\sum x^2$."
+      }
+     },
+     "explain": {
+      "text": "Each extra basis point on mortgage rates goes with £0.9 a month on rents. This is the slope ridge will shrink."
+     }
+    },
+    {
+     "question": "Using the same sums, what is the ridge slope at $\\lambda = 20$? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.75,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "ols",
+        "value": 0.9,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "subtracted",
+        "value": 1.125,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "on-top",
+        "value": 1.1,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$90/(100 + 20) = 90/120 = 0.75$.",
+      "generic": "Not quite. Compute $\\sum xy / (\\sum x^2 + \\lambda)$.",
+      "byKey": {
+       "ols": "That is the OLS slope from part 1, $\\lambda = 0$. Add the 20 to the denominator.",
+       "subtracted": "You subtracted the penalty. It adds to $\\sum x^2$.",
+       "on-top": "You added the penalty on top. It belongs underneath, beside $\\sum x^2$."
+      }
+     },
+     "explain": {
+      "text": "The penalty sits beside $\\sum x^2 = 100$, so $\\lambda = 20$ keeps $100/120$ of the OLS slope 0.9: 0.75."
+     }
+    },
+    {
+     "question": "An analyst switches the rate change to percentage points, so every $x$ is divided by 100. With $\\lambda = 20$ unchanged, what is the new ridge slope? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.045,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "ols",
+        "value": 90,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "unchanged",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "shrunk-units",
+        "value": 0.0075,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Now $\\sum xy = 0.9$ and $\\sum x^2 = 0.01$, so the slope is $0.9/20.01 \\approx 0.045$.",
+      "generic": "Not quite. Divide $\\sum xy$ by 100 and $\\sum x^2$ by 10,000, then use the ridge formula.",
+      "byKey": {
+       "ols": "That is the OLS slope in the new units. Ridge adds 20 to a $\\sum x^2$ of only 0.01.",
+       "unchanged": "You kept the old answer. The sums change with the units: $\\sum xy = 0.9$ and $\\sum x^2 = 0.01$.",
+       "shrunk-units": "You divided part 2's slope by 100. Larger units of $x$ need a larger slope, and the penalty must be recomputed."
+      }
+     },
+     "explain": {
+      "text": "OLS in the new units would be 90, the same effect as 0.9 per basis point. Ridge keeps 0.045, a 2,000th of it, because the same $\\lambda$ now swamps a tiny $\\sum x^2$."
+     }
+    },
+    {
+     "question": "Instead the analyst standardises the rate change with its training standard deviation, dividing by $n$: $\\sqrt{100/25} = 2$ basis points. What is the ridge slope at $\\lambda = 20$, in £ per standard deviation? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.0,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "unscaled",
+        "value": 0.75,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "variance",
+        "value": 0.857,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "ols",
+        "value": 1.8,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "With $z = x/2$, $\\sum zy = 45$ and $\\sum z^2 = 25$, so the slope is $45/(25 + 20) = 1.0$.",
+      "generic": "Not quite. Divide each $x$ by 2, recompute the two sums, then use the ridge formula.",
+      "byKey": {
+       "unscaled": "That is the slope on raw basis points from part 2. With $z = x/2$ the sums become 45 and 25.",
+       "variance": "You divided $x$ by the variance, 4. Standardising divides by the standard deviation, 2.",
+       "ols": "That is the OLS slope per standard deviation. Add $\\lambda = 20$ to the denominator."
+      }
+     },
+     "explain": {
+      "text": "Standardised, $\\sum z^2$ equals $n = 25$ whatever units the rate came in. So basis points or percentage points give the same 1.0 per standard deviation."
+     }
+    },
+    {
+     "question": "Using 1.0 from part 4, what is the standardised ridge's slope per basis point? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "times-sd",
+        "value": 2,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "not-converted",
+        "value": 1,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "carried",
+        "value": 0.375,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "One standard deviation is 2 basis points, so $1.0/2 = 0.5$ per basis point.",
+      "generic": "Not quite. Divide the slope per standard deviation by the standard deviation in basis points.",
+      "byKey": {
+       "times-sd": "You multiplied by the standard deviation. One basis point is half a standard deviation, so divide by 2.",
+       "not-converted": "That is per standard deviation. One standard deviation is 2 basis points.",
+       "carried": "You converted the raw slope 0.75, part 4's slip. Start from 1.0 per standard deviation."
+      }
+     },
+     "explain": {
+      "text": "The standardised ridge gives 0.5 per basis point, or 50 per percentage point, whichever unit came in. Without scaling, the units decided how hard the penalty bit: 0.75 against 0.045."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-futures-lasso",
+   "difficulty": 4,
+   "skills": [
+    "sl-regularise"
+   ],
+   "prose": "A futures model has five uncorrelated z-scored signals: carry, momentum, value, basis and liquidity. Their OLS coefficients are 0.42, −0.27, 0.11, −0.06 and 0.18. Returns are in % a month, the intercept is 0.30, and the desk fits `Lasso(alpha=0.15)`.",
+   "parts": [
+    {
+     "question": "How many of the five lasso coefficients are not zero?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "placeholder": "whole number",
+      "wrong": [
+       {
+        "id": "ridge",
+        "value": 5,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "positive",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Three sizes exceed 0.15: 0.42, 0.27 and 0.18.",
+      "generic": "Not quite. A coefficient survives when its size is above $\\alpha = 0.15$.",
+      "byKey": {
+       "ridge": "You expected ridge's behaviour. The lasso sets a coefficient to exactly 0 when its size is at most $\\alpha$.",
+       "positive": "You counted only positive coefficients above 0.15. Sizes count, so $-0.27$ survives too."
+      }
+     },
+     "explain": {
+      "text": "Value at 0.11 and basis at 0.06 fall inside the threshold and become exactly 0. Carry, momentum and liquidity survive: 3 coefficients."
+     }
+    },
+    {
+     "question": "What is momentum's lasso coefficient? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": -0.12,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 0.12,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "away",
+        "value": -0.42,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\operatorname{sign}(-0.27)\\max(0.27 - 0.15, 0) = -0.12$.",
+      "generic": "Not quite. Move $-0.27$ a distance of 0.15 towards 0.",
+      "byKey": {
+       "sign": "You moved it past 0 and flipped the sign. The lasso stops at 0 and keeps the sign.",
+       "away": "You moved it away from 0. The penalty always pulls towards 0."
+      }
+     },
+     "explain": {
+      "text": "Soft thresholding takes 0.15 off each size and keeps the sign, so momentum goes from $-0.27$ to $-0.12$. Carry becomes 0.27 and liquidity 0.03."
+     }
+    },
+    {
+     "question": "What is the smallest $\\alpha$ at which every coefficient is zero? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.42,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "sum",
+        "value": 1.04,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "first",
+        "value": 0.06,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Every coefficient is 0 once $\\alpha \\ge \\max_j |b_j| = 0.42$, carry's size.",
+      "generic": "Not quite. Find the coefficient that reaches 0 last.",
+      "byKey": {
+       "sum": "You added the sizes. The model is empty once $\\alpha$ reaches the largest one.",
+       "first": "That is where the first coefficient leaves, basis. The last to leave is carry."
+      }
+     },
+     "explain": {
+      "text": "Carry's size, 0.42, is the largest, so it is the last to reach 0. From $\\alpha = 0.42$ the model forecasts the intercept alone."
+     }
+    },
+    {
+     "question": "A new contract's raw carry is 7% a year. On the training rows carry had mean 1% and standard deviation 4%. What is its standardised carry? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 1.5,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "no-centre",
+        "value": 1.75,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "variance",
+        "value": 0.375,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$(7 - 1)/4 = 1.5$.",
+      "generic": "Not quite. Subtract the training mean, then divide by the training standard deviation.",
+      "byKey": {
+       "no-centre": "You divided without subtracting the training mean first.",
+       "variance": "You divided by the variance, 16. Divide by the standard deviation, 4."
+      }
+     },
+     "explain": {
+      "text": "The contract's carry is 1.5 training standard deviations above the training mean. The model's coefficients are per standard deviation, so they need this scale."
+     }
+    },
+    {
+     "question": "The contract's z-scores are carry 1.5 (from part 4), momentum 1.0, value $-2.0$, basis 1.5 and liquidity 1.0. Using momentum's $-0.12$ from part 2, what is the lasso's forecast? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.615,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "ols",
+        "value": 0.53,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-shrink",
+        "value": 0.84,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "sign",
+        "value": 0.855,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "carried",
+        "value": 0.683,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$0.30 + 0.27 \\times 1.5 - 0.12 \\times 1.0 + 0.03 \\times 1.0 = 0.30 + 0.405 - 0.12 + 0.03 = 0.615$.",
+      "generic": "Not quite. Multiply each lasso coefficient by its z-score, add them, then add the intercept.",
+      "byKey": {
+       "ols": "You used the OLS coefficients. The lasso's are 0.27, $-0.12$, 0, 0 and 0.03.",
+       "no-shrink": "You dropped value and basis but kept the survivors at their OLS sizes. Each survivor also loses 0.15.",
+       "sign": "You used $+0.12$ for momentum, part 2's slip. It is $-0.12$.",
+       "carried": "You used carry 1.75, part 4's slip. Its z-score is 1.5."
+      }
+     },
+     "explain": {
+      "text": "Value and basis are 0, so the contract's weak value score costs nothing. The lasso forecasts 0.615 against OLS's 0.53."
+     }
+    }
+   ]
+  },
+  {
+   "id": "p-built-ridge",
+   "difficulty": 5,
+   "skills": [
+    "sl-regularise",
+    "sl-linear",
+    "sl-tradeoff"
+   ],
+   "prose": "We built a market with three uncorrelated z-scored features, true coefficients 0.5, 0.2 and 0, and noise variance 2.0. On $n = 500$ training rows OLS estimated 0.6, 0.1 and 0.14. Expected test MSE is the noise plus the sum of squared coefficient errors. Ridge multiplies each OLS coefficient by $n/(n + \\lambda)$.",
+   "parts": [
+    {
+     "question": "What is the expected test MSE of the OLS fit? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.0396,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "no-noise",
+        "value": 0.0396,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "unsquared",
+        "value": 2.34,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The errors are $0.1, -0.1, 0.14$, with squares $0.01 + 0.01 + 0.0196 = 0.0396$; adding the noise gives 2.0396.",
+      "generic": "Not quite. Square each OLS coefficient's error, add them, then add the noise variance.",
+      "byKey": {
+       "no-noise": "You left out the noise, 2.0. Every forecast pays it.",
+       "unsquared": "You added the coefficient errors without squaring them."
+      }
+     },
+     "explain": {
+      "text": "OLS is unbiased on average, but this sample's estimates miss by 0.1, $-0.1$ and 0.14. Those misses add 0.0396 to the noise, for 2.0396."
+     }
+    },
+    {
+     "question": "What is the expected test MSE of ridge at $\\lambda = 125$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.0273,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "lambda-over-n",
+        "value": 2.0292,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "no-noise",
+        "value": 0.0273,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The factor is $500/625 = 0.8$, giving 0.48, 0.08 and 0.112. The errors square to $0.0004 + 0.0144 + 0.012544 = 0.027344$, so the MSE is 2.0273.",
+      "generic": "Not quite. Multiply each OLS coefficient by $500/625$, then square each error against the truth.",
+      "byKey": {
+       "lambda-over-n": "You took $\\lambda/n$ off each coefficient, a factor of 0.75. Ridge multiplies by $n/(n + \\lambda) = 500/625$.",
+       "no-noise": "You left out the noise, 2.0."
+      }
+     },
+     "explain": {
+      "text": "Shrinking adds a little bias to the real 0.5 and cuts the noise in the other two, for 2.0273. That beats OLS's 2.0396 from part 1."
+     }
+    },
+    {
+     "question": "What is the expected test MSE of ridge at $\\lambda = 500$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.0674,
+      "tol": {
+       "abs": 5e-05
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "lambda-over-n",
+        "value": 2.29,
+        "tol": {
+         "abs": 5e-05
+        }
+       },
+       {
+        "id": "no-noise",
+        "value": 0.0674,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "The factor is $500/1000 = 0.5$, giving 0.3, 0.05 and 0.07. The errors square to $0.04 + 0.0225 + 0.0049 = 0.0674$, so the MSE is 2.0674.",
+      "generic": "Not quite. Multiply each OLS coefficient by $500/1000$, then square each error against the truth.",
+      "byKey": {
+       "lambda-over-n": "You took $\\lambda/n = 1$ off each coefficient, leaving none. Ridge multiplies by $500/1000 = 0.5$.",
+       "no-noise": "You left out the noise, 2.0."
+      }
+     },
+     "explain": {
+      "text": "Now the real coefficient 0.5 is shrunk to 0.3, and that bias outweighs the noise saved: 2.0674, worse than OLS. Test error against $\\lambda$ is a U."
+     }
+    },
+    {
+     "question": "As $\\lambda$ grows without limit, ridge forecasts the training mean. What is that baseline's expected test MSE? Give a decimal.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 2.29,
+      "tol": {
+       "abs": 0.005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "noise-only",
+        "value": 2.0,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "ols-coefs",
+        "value": 2.3896,
+        "tol": {
+         "abs": 5e-05
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "All three coefficients are 0, so the errors are the true 0.5, 0.2 and 0: $2.0 + 0.25 + 0.04 = 2.29$.",
+      "generic": "Not quite. Set every coefficient to 0 and square its gap from the truth.",
+      "byKey": {
+       "noise-only": "Setting every coefficient to 0 misses the true 0.5 and 0.2. Add their squares to the noise.",
+       "ols-coefs": "You squared the OLS estimates. The baseline's errors are against the true coefficients, 0.5, 0.2 and 0."
+      }
+     },
+     "explain": {
+      "text": "At the far end ridge leaves only the intercept, so it misses both real effects in full: 2.29. That is the rival every model in this market must beat."
+     }
+    },
+    {
+     "question": "Using 2.0273 from part 2 and 2.29 from part 4, what is the test $R^2$ of ridge at $\\lambda = 125$? Give 3 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.115,
+      "tol": {
+       "abs": 0.0005
+      },
+      "placeholder": "decimal",
+      "wrong": [
+       {
+        "id": "ols",
+        "value": 0.109,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "ratio",
+        "value": 0.885,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "too-much",
+        "value": 0.097,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$1 - 2.0273/2.29 = 1 - 0.8853 \\approx 0.115$.",
+      "generic": "Not quite. Compute 1 minus ridge's expected test MSE over the baseline's.",
+      "byKey": {
+       "ols": "That is OLS's test $R^2$, from 2.0396. Use ridge's 2.0273.",
+       "ratio": "That is the error left, $2.0273/2.29$. Subtract it from 1.",
+       "too-much": "That uses $\\lambda = 500$, which over-shrinks. Use $\\lambda = 125$."
+      }
+     },
+     "explain": {
+      "text": "Ridge at $\\lambda = 125$ removes 11.5% of the baseline's error, against 10.9% for OLS and 9.7% at $\\lambda = 500$. A moderate penalty sits near the bottom of the U."
+     }
+    }
+   ]
+  }
+ ]
+}
