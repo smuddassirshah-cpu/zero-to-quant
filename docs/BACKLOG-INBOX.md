@@ -45,3 +45,10 @@ Raised later (review problems coint):
 
 - `fresh-check.mjs --file` on a problem set does not read the exams that carry the course's skills (`exams/topic-2.2.json`, `exams/stage-2.json` for coint). Two of three re-author findings in `docs/reviews/review-problems-coint-1-3.md` (findings 6 and 12; finding 5 from the stage exam) share a story, a number or a chain with an exam item and gave 0 hits.
 - `retold` missed three skeletons that differ only in their numbers (same review, findings 2, 7, 8, 10, 11): "You divided £1.10 by £0.40 without subtracting the mean." (l6 screens[10], review-2 items[1]) against `problems-2` items[1] and [2]; "is the rough guide. The half-life is $\ln 0.5/\ln 0.98$." (l7 quiz[0]) against `problems-2` items[1] and [3]; "whose root is 25.77. Times 0.5 gives 12.88." (l1 quiz[0], review-1 items[0]) against `problems-1` items[1].
+Raised later (review problems garch):
+
+- `fresh-check.mjs --file` on a course's problem set does not read the topic exam covering the course: `garch/problems-1` P1 part 3 is exam `topic-2.2` `e-mixed-window` with sds, share and slip scaled by 0.75, and drew no hit (`docs/reviews/review-problems-garch-1-3.md`, finding 1).
+- `retold` misses a feedback line that repeats a lesson's generic line with one clause added or one number changed ("Annualise the daily forecast with $\sqrt{252}$, then divide the target by it."; "Solve $0.96^h = 0.5$ for $h$."): 14 reuse findings in the garch sets, none reported (same review, Engine 2).
+- No check compares the problems of one set, or the sets of one course, for a repeated step with the same slip ids and a shared sentence (same review, findings 15, 16, 27).
+- Validator candidates: a numeric key whose exact value is a tie at the last stated place with a tolerance that takes one rounding only; a part saying "Using x from part k" whose key differs, at the stated places, from what the printed x gives (same review, findings 8 and 5).
+- Gate: after any set of a course changes, run `fresh-check --file` on every set of that course; `garch/problems-2` fails at HEAD on a `rate` error raised by `problems-3` (same review, finding 9).
