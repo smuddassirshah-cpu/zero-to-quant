@@ -106,9 +106,10 @@ e = rng.normal(0, 0.30, u.size)
 for t in range(1, u.size):
     u[t] = 0.8 * u[t - 1] + e[t]
 chk("paper mill sd(u) by simulation", abs(u[1000:].std() - 0.5) < 0.01, f"{u[1000:].std():.4f}")
-num(1, "p-paper-mill-multiple", 0, 0.5, {"shock-sd": 0.30, "variance": 0.25, "no-root": 0.30 / 0.36}, ["0.25", "0.50"])
 per_day = F(15, 100) ** 2 * F(4, 10) ** 2
 chk("paper mill per-day variance", per_day == F(36, 10000))
+# fix pass: part 1 is now the walk part's daily variance (review finding 1); the prose states sd(u) = 0.50
+num(1, "p-paper-mill-multiple", 0, float(per_day), {"sd-not-squared": 0.15 ** 2 * 0.40, "multiple-not-squared": 0.15 * 0.16, "neither-squared": 0.15 * 0.40}, ["0.0036", "0.16"])
 v500 = per_day * 500 + var_u
 num(1, "p-paper-mill-multiple", 1, math.sqrt(v500),
     {"no-u": math.sqrt(per_day * 500), "variance": float(v500),
@@ -180,48 +181,18 @@ print(f"cable simulation: phi 0.96 on 250 days misses 5% {miss250:.2f}, misses 1
 chk("cable claim: a year usually misses (phi 0.96)", miss250 > 0.5 and miss250_10 > 0.5, f"{miss250:.2f} {miss250_10:.2f}")
 chk("cable claim: a slow tie on one year usually fails (phi 0.98)", miss98 > 0.5, f"{miss98:.2f}")
 
-# p-utility-step-two
-gam = F(-624, 10) / 780
-num(1, "p-utility-step-two", 0, float(gam), {"sign": 0.08, "inverted": 780 / -62.4})
-se = 0.55 / math.sqrt(780)
-num(1, "p-utility-step-two", 1, -0.08 / se,
-    {"sign": 0.08 / se, "no-root": -0.08 / (0.55 / 780), "variance": -0.08 / (0.3025 / math.sqrt(780))}, ["0.0197", "27.93"])
-choice(1, "p-utility-step-two", 2, "all")
-se2 = 0.55 / math.sqrt(390)
-num(1, "p-utility-step-two", 3, -0.08 / se2, {"halved": -4.06 / 2, "unchanged": -4.06, "sign": 0.08 / se2}, ["0.0279"])
-chk("utility -4.06/sqrt 2", abs(-4.06 / math.sqrt(2) - (-2.87)) < 0.005)
-choice(1, "p-utility-step-two", 4, "no-power")
-chk("utility -2.87 between -2.86 and -3.04", -3.04 < -2.87 < -2.86)
-# the stem's step-one figures: R^2 and the slope t on 500 days are tied by t^2 = R^2 (n-2)/(1-R^2)
-t_from_r2 = math.sqrt(0.91 * 498 / 0.09)
-prose = item(1, "p-utility-step-two")["prose"]
-m = re.search(r"slope t statistic of (\d+)", prose)
-chk("utility stem: slope t agrees with R^2 = 0.91 on 500 days", m and abs(int(m.group(1)) - t_from_r2) < 1,
-    f"stem t {m.group(1) if m else '?'}, R^2 0.91 gives {t_from_r2:.1f}; t = 38 gives R^2 {38 ** 2 / (38 ** 2 + 498):.3f}")
+# p-utility-step-two: re-authored in the fix pass as p-screen-real-share; its checks, and the stem FINDING of
+# review finding 4, are removed with it. The new problem is checked in the author's script for the delta reader.
 
 # ---------------------------------------------------------------- set 2
-# p-cement-three-ratios
-sx, sy, rho = 2.0, 3.0, 0.85
-cov = rho * sx * sy
-num(2, "p-cement-three-ratios", 0, cov / sx ** 2, {"sds-flipped": rho * sx / sy, "no-rho": sy / sx, "rho-squared": rho ** 2 * sy / sx})
-num(2, "p-cement-three-ratios", 1, sy ** 2 / cov, {"not-inverted": cov / sy ** 2, "no-rho": sy / sx, "times-r2": 1.275 * rho ** 2}, ["0.5667", "0.7225"])
-S = np.array([[4.0, cov], [cov, 9.0]])
-val, vec = np.linalg.eigh(S)
-lead, other = vec[:, 1], vec[:, 0]
-lam = (13 + math.sqrt(169 - 4 * (36 - cov ** 2))) / 2
-chk("cement eigenvalue two routes", abs(lam - val[1]) < 1e-9 and abs(val[0] - 0.820) < 0.0005)
-num(2, "p-cement-three-ratios", 2, lead[1] / lead[0], {"other-vector": other[1] / other[0], "midpoint": (1.275 + 1.765) / 2, "eigenvalue": lam}, ["12.180", "129.04", "9.99", "0.820"])
-chk("cement TLS between the two", 1.275 < lead[1] / lead[0] < 1.765)
-var_s = 9 + 1.275 ** 2 * 4 - 2 * 1.275 * cov
-chk("cement spread variance is sy^2(1-rho^2)", abs(var_s - 9 * (1 - rho ** 2)) < 1e-12)
-num(2, "p-cement-three-ratios", 3, math.sqrt(var_s), {"variance": var_s, "no-cross": math.sqrt(9 + 1.275 ** 2 * 4), "plus-cross": math.sqrt(9 + 1.275 ** 2 * 4 + 2 * 1.275 * cov)}, ["2.4975", "13.005", "6.5025"])
-dist = 4.80 - 1.275 * 1.50
-num(2, "p-cement-three-ratios", 4, dist / 1.58, {"no-hedge": 4.80 / 1.58, "variance": dist / 2.4975, "hedge-added": (4.80 + 1.275 * 1.50) / 1.58}, ["2.8875", "1.9125"])
+# p-cement-three-ratios: re-authored in the fix pass as p-smelter-tls; its checks are removed with it.
 
 # p-lessor-window
 a, b = 0.04, -0.08
 h = math.log(0.5) / math.log(1 + b)
-num(2, "p-lessor-window", 0, h, {"one-over-b": 1 / 0.08, "rough": math.log(2) / 0.08, "b-as-phi": math.log(0.5) / math.log(0.08)}, ["0.0834", "0.6931"])
+num(2, "p-lessor-window", 0, h, {"one-over-b": 1 / 0.08, "rough": math.log(2) / 0.08, "b-as-phi": math.log(0.5) / math.log(0.08)}, ["0.0834", "0.513", "0.472"])
+# fix pass (finding 7): the explain now brackets the halving between days 8 and 9
+chk("lessor 0.92^8 and 0.92^9", r2(0.92 ** 8, 3) == 0.513 and r2(0.92 ** 9, 3) == 0.472)
 chk("lessor proposed line: 0.92^8 and 0.92^9", r2(0.92 ** 8, 3) == 0.513 and r2(0.92 ** 9, 3) == 0.472)
 num(2, "p-lessor-window", 1, math.ceil(5 * 8.31), {"round-down": math.floor(5 * 8.31)}, ["41.6"])
 chk("lessor five half-lives leave about 3%", abs(0.5 ** 5 - 0.03) < 0.005)
@@ -265,31 +236,7 @@ choice(2, "p-tyre-vecm", 3, "slower")
 chk("tyre x does a third", abs(beta * ax / 0.09 - 1 / 3) < 1e-12 and r2(math.log(0.5) / math.log(0.94)) == 11.2)
 
 # ---------------------------------------------------------------- set 3
-# p-packaging-stop-reopen: run the rule on the z list
-z = [0.8, 1.2, 1.6, 2.4, 3.1, 3.7, 2.9, 1.1, 0.3, -0.2]
-pos, trades, openday = 0, [], None
-for d, zz in enumerate(z):
-    if pos == 0 and 1.5 <= zz < 3.5:
-        pos, openday = -1, d
-    elif pos == -1 and (zz <= 0.5 or zz >= 3.5):
-        pos = 0
-        trades.append((openday, d))
-chk("packaging rule gives trades (2,5) and (6,8)", trades == [(2, 5), (6, 8)], str(trades))
-num(3, "p-packaging-stop-reopen", 0, trades[0][1], {"exit-only": 8, "early": 4})
-fills = {2: (42.00, 55.00), 5: (43.30, 55.50), 6: (43.00, 55.40), 8: (41.90, 55.30)}
-spr = {d: y - 0.6 * x for d, (y, x) in fills.items()}
-pnl1 = -(spr[5] - spr[2])
-pnl2 = -(spr[8] - spr[6])
-num(3, "p-packaging-stop-reopen", 1, pnl1, {"sign": -pnl1, "unhedged": -(43.30 - 42.00), "hedge-flipped": -(43.30 - 42.00) - 0.6 * 0.50}, ["9.00", "10.00"])
-num(3, "p-packaging-stop-reopen", 2, pnl2, {"sign": -pnl2, "unhedged": 43.00 - 41.90, "hedge-flipped": 1.10 + 0.6 * 0.10}, ["9.76", "8.72"])
-traded = {d: y + 0.6 * x for d, (y, x) in fills.items()}
-chk("packaging fills", [r2(traded[d]) for d in (2, 5, 6, 8)] == [75.00, 76.60, 76.24, 75.08] and r2(sum(traded.values())) == 302.92)
-cost = sum(traded.values()) * 5e-4
-num(3, "p-packaging-stop-reopen", 3, cost, {"y-only": sum(y for y, _ in fills.values()) * 5e-4, "one-way": (traded[2] + traded[6]) * 5e-4, "ten-bp": 2 * cost}, ["302.92"])
-num(3, "p-packaging-stop-reopen", 4, -1.00 + 1.04 - 0.151, {"gross": 0.04, "costs-added": 0.04 + 0.151, "second-only": 1.04 - 0.151, "sign": 0.111})
-# NOTE: no single mean and sd of the spread fits the four fills to their z values
-slopes = [(spr[5] - spr[2]) / (3.7 - 1.6), (spr[6] - spr[5]) / (2.9 - 3.7), (spr[8] - spr[6]) / (0.3 - 2.9)]
-print("NOTE packaging: pounds per unit of z between fills", [round(x, 3) for x in slopes], "(a rolling window may move; not counted as a finding)")
+# p-packaging-stop-reopen: re-authored in the fix pass as p-glassmaker-borrow; its checks are removed with it.
 
 # p-stop-edge
 unit, rt = 0.60, 0.10
@@ -339,8 +286,9 @@ T = F(504, 252)
 num(3, "p-housebuilder-trading-years", 2, 1.08 * math.sqrt(T), {"times-t": 1.08 * 2, "divided": 1.08 / math.sqrt(2), "all-years": 1.08 * math.sqrt(6)}, ["0.707"])
 years = (2 / 1.08) ** 2
 num(3, "p-housebuilder-trading-years", 3, years, {"no-square": 2 / 1.08, "inverted": (1.08 / 2) ** 2, "four-over": 4 / 1.08}, ["1.852", "1.1664"])
-chk("housebuilder NOTE: sqrt T rounded to 1.85 falls outside the key band", abs(1.85 ** 2 - 3.43) <= 0.005,
-    f"1.85^2 = {1.85 ** 2:.4f}; a band of 0.01 would take it")
+tol_hb = item(3, "p-housebuilder-trading-years")["parts"][3]["widget"]["tol"]["abs"]
+chk("housebuilder: the key band takes sqrt T rounded to 1.85, squared (finding 16)", abs(1.85 ** 2 - 3.43) <= tol_hb,
+    f"1.85^2 = {1.85 ** 2:.4f}, band {tol_hb}")
 total = 3.43 * 252
 num(3, "p-housebuilder-trading-years", 4, math.ceil(total - 504), {"total": math.ceil(total), "round-down": math.floor(total - 504)}, ["864.4", "360.4"])
 chk("housebuilder unrounded years give the same day count", math.ceil(years * 252 - 504) == 361)

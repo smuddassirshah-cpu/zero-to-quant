@@ -123,19 +123,18 @@ def hl(b):
 # ------------------------------------------------------------------ level 1
 P = load(1)
 
-# p-paper-mill-multiple
+# p-paper-mill-multiple (fix pass, review finding 1: part 1 is now the walk part's daily variance)
 it = 'p-paper-mill-multiple'
-var_u = F(9, 100) / (1 - F(16, 25))
-sim_u = np.zeros(400000)
-eta = rng.normal(0, 0.30, 400000)
-for t in range(1, 400000):
-    sim_u[t] = 0.8 * sim_u[t - 1] + eta[t]
-num(P, it, 1, math.sqrt(var_u), sim_u[1000:].std(), {'shock-sd': 0.30, 'variance': var_u, 'no-root': 0.30 / 0.36}, agree=0.01)
+var_u = F(1, 4)                                        # the prose states a long-run sd of 0.50
 slope = F(15, 100) ** 2 * F(16, 100)                   # 0.0036 a day
+day_moves = 0.15 * rng.normal(0, 0.40, 2_000_000)
+num(P, it, 1, slope, day_moves.var(), {'sd-not-squared': 0.15 ** 2 * 0.40, 'multiple-not-squared': 0.15 * 0.16, 'neither-squared': 0.15 * 0.40}, agree=3e-5)
+said(P, it, 1, '0.0225'); said(P, it, 1, '0.16'); said(P, it, 1, '£0.06')
 v500 = slope * 500 + var_u
 mc = 0.15 * rng.normal(0, 0.40, (20000, 500)).sum(axis=1) + rng.normal(0, 0.5, 20000)
 num(P, it, 2, math.sqrt(v500), mc.std(), {'no-u': math.sqrt(1.8), 'variance': v500, 'sd-not-squared': math.sqrt(0.0225 * 0.4 * 500 + 0.25),
                                           'multiple-not-squared': math.sqrt(0.15 * 0.16 * 500 + 0.25)}, agree=0.03)
+said(P, it, 2, '0.0036'); said(P, it, 2, '0.25')
 ok(slope == F(36, 10000), 'p1 walk slope 0.0036')
 day = next(t for t in itertools.count(1) if slope * t + var_u > 4 * var_u)
 t_exact = math.floor((4 * var_u - var_u) / slope) + 1
@@ -158,6 +157,10 @@ num(P, it, 2, r_star, brentq(lambda q: tx(q, 750) - 1.96, 1e-6, 0.5), {'r-square
 said(P, it, 2, '0.00511')
 num(P, it, 3, tx(0.45, 1500), ols_t_with_r(1500, -0.45), {'doubled': 2 * r(tx(0.45, 750), 2), 'unchanged': tx(0.45, 750)}, agree=1e-6)
 said(P, it, 3, '43.34')
+said(P, it, 1, '30.63')
+ok(r(13.78 / 1.96, 2) == 7.03, 'p2 13.78 clears 1.96 seven times over')
+ok(r(13.78 * math.sqrt(1498 / 748), 2) == 19.50, 'p2 part 3 from the restated 13.78 gives 19.50')
+said(P, it, 3, '13.78')
 cho(P, it, 4, 'spurious')
 crit500 = mackinnoncrit(N=2, regression='c', nobs=499)
 ok(abs(crit500[0] + 3.90) < 0.03 and abs(crit500[1] + 3.34) < 0.02 and abs(crit500[2] + 3.04) < 0.02, f'MacKinnon 500 {crit500}')
@@ -213,78 +216,81 @@ num(P, it, 4, sp.ceiling(n2), n2_loop, {'doubled': 2 * n_loop, 'phi-unchanged': 
 said(P, it, 4, '0.1990'); said(P, it, 4, '1,104.4'); said(P, it, 4, '0.1005')
 ok(n2_loop / 252 > 4, 'p3 over four years')
 
-# p-utility-step-two
-it = 'p-utility-step-two'
-g = F(-624, 10) / 780
-se = 0.55 / math.sqrt(780)
-
-
-def built_t(ssq, gamma, s, n):
-    """Build u_{t-1} and du with the stated sums and residual sd, then fit through the origin with statsmodels."""
-    a = rng.standard_normal(n)
-    a = a * math.sqrt(ssq / (a @ a))
-    e = rng.standard_normal(n)
-    e = e - (e @ a) / (a @ a) * a
-    e = e * math.sqrt(s ** 2 * (n - 1) / (e @ e))
-    d = gamma * a + e
-    fit = sm.OLS(d, a).fit()
-    return fit.params[0], fit.tvalues[0], (a * d).sum()
-
-
-g2, t2, cross = built_t(780, float(g), 0.55, 499)
-ok(abs(cross + 62.4) < 1e-9, 'p4 built cross sum -62.4')
-num(P, it, 1, g, g2, {'sign': -g, 'inverted': 780 / -62.4}, agree=1e-9)
-num(P, it, 2, float(g) / se, t2, {'sign': -float(g) / se, 'no-root': -0.08 / (0.55 / 780), 'variance': -0.08 / (0.3025 / math.sqrt(780))}, agree=1e-9)
-said(P, it, 2, '0.0197'); said(P, it, 2, '27.93')
-cho(P, it, 3, 'all')
-ok(float(g) / se < crit500[0], 'p4 -4.06 below the 1% value')
-_, t250, _ = built_t(390, float(g), 0.55, 249)
-num(P, it, 4, float(g) / (0.55 / math.sqrt(390)), t250, {'halved': r(float(g) / se, 2) / 2, 'unchanged': float(g) / se, 'sign': 0.08 / (0.55 / math.sqrt(390))}, agree=1e-9)
-said(P, it, 4, '0.0279')
-crit250 = mackinnoncrit(N=2, regression='c', nobs=249)
-ok(crit250[2] < -2.87 < -2.86 and abs(crit250[2] + 3.04) < 0.03, f'p4 -2.87 between 10% {crit250[2]} and ADF -2.86')
-cho(P, it, 5, 'no-power')
+# p-screen-real-share (re-authored for p-utility-step-two, review findings 4 and 5)
+it = 'p-screen-real-share'
+n_pairs, n_tied = 1200, 36
+n_free = n_pairs - n_tied
+ok(n_free == 1164 and F(n_tied, n_pairs) == F(3, 100), 'p4 36 tied pairs are 3% of 1,200; 1,164 untied')
+pw2, pw4, pw4_1 = F(40, 100), F(85, 100), F(65, 100)
+# method 2: 20,000 simulated screens, pooled counts
+S = 20000
+tied2 = rng.binomial(n_tied, 0.40, S); free5 = rng.binomial(n_free, 0.05, S)
+tied4 = rng.binomial(n_tied, 0.85, S); tied41 = rng.binomial(n_tied, 0.65, S); free1 = rng.binomial(n_free, 0.01, S)
+num(P, it, 1, n_tied * pw2, tied2.mean(), {'no-power': 36, 'miss-rate': 36 * 0.6, 'all-pairs': 1200 * 0.4}, agree=0.05)
+tot2 = n_tied * pw2 + n_free * F(5, 100)
+num(P, it, 2, tot2, (tied2 + free5).mean(), {'all-untied': 1200 * 0.05 + 14.4, 'false-only': 1164 * 0.05, 'no-power': 36 + 58.2}, agree=0.1)
+said(P, it, 2, '58.2')
+share = lambda pw, lev: (F(3, 100) * pw) / (F(3, 100) * pw + F(97, 100) * lev)   # Bayes on one pair
+s2 = n_tied * pw2 / tot2
+ok(s2 == share(pw2, F(5, 100)), 'p4 count route and Bayes route agree, two years')
+num(P, it, 3, s2, tied2.sum() / (tied2 + free5).sum(), {'all-untied': 14.4 / 74.4, 'power': 0.40, 'false-share': 58.2 / 72.6, 'over-false': 14.4 / 58.2}, agree=0.003)
+ok(abs(1164 / 36 - 32) < 0.5, 'p4 untied outnumber tied about 32 to 1')
+s4 = n_tied * pw4 / (n_tied * pw4 + n_free * F(5, 100))
+ok(s4 == share(pw4, F(5, 100)), 'p4 Bayes route, four years')
+num(P, it, 4, s4, tied4.sum() / (tied4 + free5).sum(), {'power': 0.85, 'all-untied': 30.6 / 90.6, 'old-total': 30.6 / 72.6, 'false-share': 58.2 / 88.8}, agree=0.003)
+ok(30.6 / 14.4 > 2, 'p4 more than doubles')
+s41 = n_tied * pw4_1 / (n_tied * pw4_1 + n_free * F(1, 100))
+ok(s41 == share(pw4_1, F(1, 100)), 'p4 Bayes route, 1% level')
+num(P, it, 5, s41, tied41.sum() / (tied41 + free1).sum(), {'old-power': 30.6 / (30.6 + 11.64), 'five-percent': 23.4 / (23.4 + 58.2), 'false-share': 11.64 / 35.04}, agree=0.004)
+ok(r(30.6 - 23.4, 2) == 7.2 and r(58.2 - 11.64, 2) == 46.56, 'p4 gives up 7.2, removes 46.56')
+for k, tok in ((3, '19.8'), (4, '34.5'), (5, '66.8'), (5, '35.04'), (4, '88.8')):
+    said(P, it, k, tok)
+for k in (3, 4, 5):
+    ok(part(P, it, k)['widget'].get('unit') == '%', f'p4 part {k} unit %')
 
 # ------------------------------------------------------------------ level 2
 Q = load(2)
 
-it = 'p-cement-three-ratios'
-sx, sy, rho = 2.0, 3.0, 0.85
-cov = rho * sx * sy
-ok(abs(cov - 5.1) < 1e-12, 'q1 covariance 5.1')
-# method 2: data with exactly these moments, fitted by np.polyfit
-n = 250
-Z = rng.standard_normal((n, 2))
-Z = Z - Z.mean(axis=0)
-L = np.linalg.cholesky(np.cov(Z.T, bias=True))
-Z = Z @ np.linalg.inv(L).T
-C = np.array([[4, cov], [cov, 9]])
-XY = Z @ np.linalg.cholesky(C).T
+# p-smelter-tls (re-authored for p-cement-three-ratios, review finding 6)
+it = 'p-smelter-tls'
+sxx, syy, sxy = F(625, 100), F(4), F(46, 10)
+Cm = np.array([[6.25, 4.6], [4.6, 4.0]])
+ok(abs(float(sxy) / math.sqrt(float(sxx * syy)) - 0.92) < 1e-12, 'q1 correlation 0.92, not the exam e-hedge-flip 0.85')
+# method 2: 200 days built with exactly these sample moments (ddof 1)
+n = 200
+Z = rng.standard_normal((n, 2)); Z = Z - Z.mean(axis=0)
+Lz = np.linalg.cholesky(np.cov(Z.T)); Z = Z @ np.linalg.inv(Lz).T
+XY = Z @ np.linalg.cholesky(Cm).T + np.array([30.0, 22.0])
 x_, y_ = XY[:, 0], XY[:, 1]
-b_yx = np.polyfit(x_, y_, 1)[0]
-b_xy = np.polyfit(y_, x_, 1)[0]
-bh = F(51, 40)                                         # 5.1 / 4 = 1.275
-num(Q, it, 1, bh, b_yx, {'sds-flipped': rho * sx / sy, 'no-rho': sy / sx, 'rho-squared': rho ** 2 * sy / sx}, agree=1e-9)
-inv = F(9) / F(51, 10)
-num(Q, it, 2, inv, 1 / b_xy, {'not-inverted': 5.1 / 9, 'no-rho': 1.5, 'times-r2': 1.275 * 0.7225}, agree=1e-9)
-ok(abs(float(bh / F(7225, 10000)) - float(inv)) < 1e-12, 'q1 inverted = 1.275 / rho^2')
+ok(np.allclose(np.cov(XY.T), Cm) and np.allclose(XY.mean(axis=0), [30, 22]), 'q1 built data have the stated moments')
 lam = sp.symbols('lam')
-lmax = max(sp.solve(lam ** 2 - 13 * lam + sp.Rational(999, 100), lam), key=lambda z: float(z))
-tls = (lmax - 4) / sp.Rational(51, 10)
-wv, vv = np.linalg.eigh(C)
+lmax = max(sp.solve(lam ** 2 - (sxx + syy) * lam + (sxx * syy - sxy ** 2), lam), key=lambda z: float(z))
+wv, vv = np.linalg.eigh(np.cov(XY.T))
+lmin_ = min(wv)
+num(Q, it, 1, lmax, max(wv), {'smaller': lmin_, 'trace': 10.25, 'no-square': 5.125 + math.sqrt(2.25 ** 2 / 4 + 4.6)}, agree=1e-9)
+ok(sxx * syy - sxy ** 2 == F(384, 100) and (sxx + syy) ** 2 - 4 * (sxx * syy - sxy ** 2) == F(897025, 10000), 'q1 det 3.84, discriminant 89.7025')
+ok(f'{float(lmin_):.2f}' == '0.39', 'q1 smaller eigenvalue 0.39')
 vmax = vv[:, np.argmax(wv)]
-lmin = min(wv)
-num(Q, it, 3, tls, vmax[1] / vmax[0], {'other-vector': (lmin - 4) / 5.1, 'midpoint': (1.275 + 9 / 5.1) / 2, 'eigenvalue': lmax}, agree=1e-9)
-ok(abs(36 - 5.1 ** 2 - 9.99) < 1e-12 and abs(169 - 4 * 9.99 - 129.04) < 1e-9, 'q1 det 9.99 and discriminant 129.04')
-said(Q, it, 3, '12.180'); said(Q, it, 3, '8.180'); said(Q, it, 3, '0.820')
-ok(f'{float(lmin):.3f}' == '0.820', 'q1 smaller eigenvalue 0.820')
-v_sp = 9 + 1.275 ** 2 * 4 - 2 * 1.275 * 5.1
-num(Q, it, 4, math.sqrt(v_sp), np.std(y_ - 1.275 * x_), {'variance': v_sp, 'no-cross': math.sqrt(9 + 1.275 ** 2 * 4), 'plus-cross': math.sqrt(9 + 1.275 ** 2 * 4 + 2 * 1.275 * 5.1)}, agree=1e-9)
-ok(abs(v_sp - 9 * (1 - 0.7225)) < 1e-12 and abs(v_sp - 2.4975) < 1e-12, 'q1 2.4975 = sigma_y^2 (1 - rho^2)')
-said(Q, it, 4, '13.005'); said(Q, it, 4, '6.5025')
-dev = 4.80 - 1.275 * 1.50
-ok(abs(dev - 2.8875) < 1e-12, 'q1 spread distance 2.8875')
-num(Q, it, 5, F(28875, 10000) / F(158, 100), dev / np.std(y_ - 1.275 * x_), {'no-hedge': 4.8 / 1.58, 'variance': dev / 2.4975, 'hedge-added': (4.8 + 1.9125) / 1.58}, agree=0.002)
+tls_r = (F(986, 100) - sxx) / sxy                      # from the rounded 9.86 the part gives
+ok(abs(float((lmax - sxx) / sxy) - 0.7849) < 0.0001 and r(float(tls_r), 3) == 0.785, 'q1 exact and rounded eigenvalues both give 0.785')
+num(Q, it, 2, tls_r, vmax[1] / vmax[0], {'ols': 4.6 / 6.25, 'other-ratio': (9.86 - 4.0) / 4.6, 'smaller': (lmin_ - 6.25) / 4.6}, agree=2e-4)
+ok(r(1 / 0.785, 3) == 1.274, 'q1 other way up is 1/0.785')
+said(Q, it, 2, '3.61'); said(Q, it, 2, '0.736')
+b = 0.785
+v_sp = 4.0 - 2 * b * 4.6 + b ** 2 * 6.25
+num(Q, it, 3, math.sqrt(v_sp), np.std(y_ - b * x_, ddof=1), {'variance': v_sp, 'no-cross': math.sqrt(4 + b ** 2 * 6.25), 'plus-cross': math.sqrt(4 + 2 * b * 4.6 + b ** 2 * 6.25)}, agree=1e-9)
+ok(r(2 * b * 4.6, 3) == 7.222 and r(b ** 2 * 6.25, 3) == 3.851 and r(v_sp, 3) == 0.629, 'q1 printed 7.222, 3.851, 0.629')
+v_ols = 4.0 - 4.6 ** 2 / 6.25
+ok(r(math.sqrt(v_ols), 3) == 0.784 and math.sqrt(v_sp) - math.sqrt(v_ols) < 0.01, 'q1 least squares sd 0.784, under a penny less')
+ok(abs(np.std(y_ - 0.736 * x_, ddof=1) - math.sqrt(v_ols)) < 1e-9, 'q1 least squares sd from the data')
+said(Q, it, 3, '0.784')
+s_today = 24.60 - b * 31.00
+s_mean = 22.00 - b * 30.00
+ok(r(s_today, 3) == 0.265 and r(s_mean, 2) == -1.55 and r(s_today - s_mean, 3) == 1.815, 'q1 spread 0.265, mean -1.55, distance 1.815')
+spr = y_ - b * x_
+num(Q, it, 4, (s_today - s_mean) / 0.793, (s_today - spr.mean()) / np.std(spr, ddof=1), {'no-mean': 0.265 / 0.793, 'variance': 1.815 / 0.629, 'no-hedge': (24.60 - 22.00) / 0.793}, agree=0.002)
+ok(abs(1.815 / 0.62940625 - 2.885) <= 0.005, 'q1 variance slip with the unrounded variance also lands in its band')
+said(Q, it, 4, '1.815')
 
 it = 'p-lessor-window'
 a, b = 0.04, -0.08
@@ -341,29 +347,32 @@ ok(r(hl(-0.06), 2) == 11.20, 'q4 alpha_x = 0 half-life 11.20')
 # ------------------------------------------------------------------ level 3
 R = load(3)
 
-it = 'p-packaging-stop-reopen'
-z = [0.8, 1.2, 1.6, 2.4, 3.1, 3.7, 2.9, 1.1, 0.3, -0.2]
-pos, trades, cur = 0, [], None
-for d, zt in enumerate(z):                            # the rule applied close by close
-    if pos == 0 and 1.5 <= zt < 3.5:
-        pos, cur = -1, d
-    elif pos == -1 and (zt <= 0.5 or zt >= 3.5):
-        trades.append((cur, d))
-        pos = 0
-ok(trades == [(2, 5), (6, 8)], f'r1 trades {trades}')
-num(R, it, 1, 5, trades[0][1], {'exit-only': next(d for d in range(3, 10) if z[d] <= 0.5), 'early': 4})
-yv = {2: 42.00, 5: 43.30, 6: 43.00, 8: 41.90}
-xv = {2: 55.00, 5: 55.50, 6: 55.40, 8: 55.30}
-pnl = lambda i, j: -((yv[j] - yv[i]) - 0.6 * (xv[j] - xv[i]))
-sp_ = lambda d: F(str(yv[d])) - F(3, 5) * F(str(xv[d]))
-num(R, it, 2, -(sp_(5) - sp_(2)), pnl(2, 5), {'sign': 1.0, 'unhedged': -(43.30 - 42.00), 'hedge-flipped': -((43.30 - 42.00) + 0.6 * 0.50)})
-num(R, it, 3, -(sp_(8) - sp_(6)), pnl(6, 8), {'sign': -1.04, 'unhedged': 43.00 - 41.90, 'hedge-flipped': 1.10 + 0.06})
-fills = [yv[d] + 0.6 * xv[d] for d in (2, 5, 6, 8)]
-cost_exact = sum(F(str(yv[d])) + F(3, 5) * F(str(xv[d])) for d in (2, 5, 6, 8)) * F(5, 10000)
-num(R, it, 4, cost_exact, sum(fills) * 0.0005, {'y-only': sum(yv.values()) * 0.0005, 'one-way': sum(fills) * 0.0005 / 2, 'ten-bp': sum(fills) * 0.001}, agree=1e-9)
-said(R, it, 4, '302.92'); said(R, it, 4, '76.24')
-net = -(sp_(5) - sp_(2)) - (sp_(8) - sp_(6)) - cost_exact
-num(R, it, 5, net, pnl(2, 5) + pnl(6, 8) - sum(fills) * 0.0005, {'gross': 0.04, 'costs-added': 0.04 + 0.151, 'second-only': 1.04 - 0.151, 'sign': -float(net)})
+# p-glassmaker-borrow (re-authored for p-packaging-stop-reopen, review finding 12)
+it = 'p-glassmaker-borrow'
+h, py, px_, unit_z = F(115, 100), F(48), F(36), F(1, 2)
+fee_y, fee_x, days, year = F(5, 1000), F(6, 100), 21, 252
+borrow_long = h * px_
+# method 2: the pounds in the sold leg of a long, share by share
+num(R, it, 1, borrow_long, sum([36.0] * 115) / 100, {'y-leg': 48, 'no-hedge': 36, 'hedge-on-y': 1.15 * 48}, agree=1e-9)
+fee_long = borrow_long * fee_x * days / year
+acc = 0.0
+for _ in range(days):                                  # method 2: accrue the fee day by day
+    acc += 41.40 * 0.06 / 252
+num(R, it, 2, fee_long, acc, {'calendar-days': 41.40 * 0.06 * 21 / 365, 'one-day': 41.40 * 0.06 / 252, 'annual': 41.40 * 0.06, 'y-rate': 41.40 * 0.005 * 21 / 252}, agree=1e-9)
+ok(F(days, year) == F(1, 12) and fee_long == F(207, 1000), 'r1 21/252 = 1/12, long fee 0.207')
+fee_short = py * fee_y * days / year
+ok(fee_short == F(2, 100), 'r1 short fee 0.020')
+acc_s = sum(48.0 * 0.005 / 252 for _ in range(days))
+num(R, it, 3, fee_long - fee_short, acc - acc_s, {'short-only': 0.02, 'sum': 0.227, 'x-rate-both': 0.207 - 48 * 0.06 / 12}, agree=1e-9)
+cho(R, it, 4, 'flatters-long')
+ok(fee_long / fee_short > 10, 'r1 the long fee is over ten times the short fee')
+net_short = 2 * unit_z - fee_short
+ok(net_short == F(98, 100), 'r1 short nets 0.98')
+entry = -(net_short + fee_long) / unit_z               # long nets |e| * unit - fee_long
+num(R, it, 5, entry, -brentq(lambda e: e * 0.5 - 0.207 - 0.98, 0, 10), {'sign': 2.374, 'shift-only': -0.374, 'pounds': -2.187, 'wrong-way': -1.626}, agree=1e-9)
+ok(entry == -2 - (fee_long - fee_short) / unit_z, 'r1 entry from the fee gap: -2 - 0.187/0.50')
+ok(r(float(-entry * unit_z), 3) == 1.187, 'r1 long earns 1.187 from -2.374')
+said(R, it, 5, '0.374'); said(R, it, 5, '1.187')
 
 it = 'p-stop-edge'
 unit, cost, STOP = F(6, 10), F(1, 10), F(34, 10)
@@ -437,6 +446,16 @@ more = math.ceil(3.43 * 252 - 504)
 num(R, it, 5, more, next(k for k in itertools.count(1) if 504 + k >= 3.43 * 252), {'total': math.ceil(3.43 * 252), 'round-down': more - 1})
 ok(math.ceil(float(Tn) * 252 - 504) == 361, 'r4 unrounded T also gives 361 days')
 said(R, it, 5, '864.4'); said(R, it, 5, '360.4')
+tol4 = part(R, it, 4)['widget']['tol']['abs']
+ok(abs(1.85 ** 2 - 3.43) <= tol4, 'r4 the band takes 1.85 squared, 3.4225 (review finding 16)')
+
+# ------------------------------------------------------------------ fix-pass lines (review findings 7, 9, 14)
+ok(r(0.92 ** 8, 3) == 0.513 and r(0.92 ** 9, 3) == 0.472, 'q2 0.92^8 = 0.513, 0.92^9 = 0.472')
+said(Q, 'p-lessor-window', 1, '0.513'); said(Q, 'p-lessor-window', 1, '0.472')
+ok(r(41.7 - 29.80, 2) == 11.9 and r(15.49 - 9.8, 2) == 5.69, 'q3 margins 11.9 and 5.69')
+said(Q, 'p-three-distributors', 1, '11.9'); said(Q, 'p-three-distributors', 1, '5.69')
+ok(r(1.08 * 0.707, 2) == 0.76 and r(1.08 * math.sqrt(6), 2) == 2.65, 'r4 lines 0.76 and 2.65')
+said(R, 'p-housebuilder-trading-years', 3, '2.65')
 
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')
