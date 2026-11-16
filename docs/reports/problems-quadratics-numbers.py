@@ -460,21 +460,21 @@ def level4(L):
     stated('ride: 2 hours out', 2, 16 / 8); stated('ride: 1.5 hours home', 1.5, 9 / 6)
 
     # ---- storage crate
-    V = x ** 3 + 4 * x ** 2 + x - 6
-    num(L, 'p-storage-crate', 1, V.subs(x, -2), sp.rem(V, x + 2, x), {'sign': V.subs(x, 2), 'cube-sign': 8 + 16 - 2 - 6})
+    V = x ** 3 + 6 * x ** 2 + 3 * x - 10
+    num(L, 'p-storage-crate', 1, V.subs(x, -2), sp.rem(V, x + 2, x), {'sign': V.subs(x, 2), 'cube-sign': 8 + 24 - 6 - 10})
     qt, rr = sp.div(V, x + 2, x)
     ok(rr == 0, 'crate: (x + 2) divides V')
     co = sp.Poly(V, x).all_coeffs()
     s1 = co[1] + 2 * co[0]
     s0 = co[2] + 2 * s1
     ok('multiplied out' in L['p-storage-crate']['parts'][1]['question'] and L['p-storage-crate']['parts'][1]['widget']['form'] == 'expanded', 'crate p2: the question names the form')
-    expr_part(L, 'p-storage-crate', 2, str(qt).replace('**', '^').replace('*', ''), {'sign': f'x^2+{s1}x+{s0}', 'constant-sign': 'x^2+2x+3'})
-    expr_part(L, 'p-storage-crate', 3, '(x+2)(x+3)(x-1)', {'signs': '(x+2)(x-3)(x+1)', 'one-root-sign': '(x+2)(x+3)(x+1)'})
-    ok(sp.factor(V) == (x - 1) * (x + 2) * (x + 3), 'crate: sympy factor')
-    h = sp.cancel(V / (x ** 2 + 5 * x + 6))
+    expr_part(L, 'p-storage-crate', 2, str(qt).replace('**', '^').replace('*', ''), {'sign': f'x^2+{s1}x+{s0}', 'constant-sign': 'x^2+4x+5'})
+    expr_part(L, 'p-storage-crate', 3, '(x+2)(x+5)(x-1)', {'signs': '(x+2)(x-5)(x+1)', 'one-root-sign': '(x+2)(x+5)(x+1)'})
+    ok(sp.factor(V) == (x - 1) * (x + 2) * (x + 5), 'crate: sympy factor')
+    h = sp.cancel(V / (x ** 2 + 7 * x + 10))
     expr_part(L, 'p-storage-crate', 4, str(h), {'wrong-pair': 'x+2', 'sign': 'x+1'})
     xs = sp.Rational(7, 2)
-    num(L, 'p-storage-crate', 5, V.subs(x, xs), 5.5 * 6.5 * 2.5, {'x-is-height': V.subs(x, sp.Rational(5, 2)), 'base-only': sp.Rational(11, 2) * sp.Rational(13, 2)})
+    num(L, 'p-storage-crate', 5, V.subs(x, xs), 5.5 * 8.5 * 2.5, {'x-is-height': V.subs(x, sp.Rational(5, 2)), 'base-only': sp.Rational(11, 2) * sp.Rational(17, 2)})
     stated('crate: (-2)^3', -8, (-2) ** 3)
 
 
