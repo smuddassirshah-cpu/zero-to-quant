@@ -981,31 +981,78 @@ ok(abs(float(ELWL) - 19.2063) < 0.00005 and pL * (1 - pL) * pL == F(63, 1000), '
 num(L5, 'p-two-loss-cut', 5, mu * ELWL, 60 * pattern_wait_np('LWL', 0.3),
     {'no-overlap': mu / (pL * (1 - pL) * pL), 'two-losses': mu * ELL}, routes=(1153, 60 * 19.21))
 
-# p-capped-close: fair walk, stop at +1 or after 4 steps; enumerate the 16 paths
-rows = []
-for path in iproduct([1, -1], repeat=4):
-    s, T_ = 0, 4
-    for d_, st in enumerate(path, 1):
-        s += st
-        if s == 1:
-            T_ = d_
-            break
-    rows.append((s, T_))
-win = F(sum(1 for s, _ in rows if s == 1), 16)
-ok(sum(1 for s, _ in rows if s != 1) == comb(4, 2), 'p-capped-close: 6 failing paths')
-num(L5, 'p-capped-close', 1, 1 - F(comb(4, 2), 16), win, {'fail': F(6, 16), 'half': F(1, 2)})
-fail_avg = F(sum(s for s, _ in rows if s != 1), 6)
-ok(F(sum(s for s, _ in rows), 16) == 0, 'p-capped-close: E[S_T] = 0 by enumeration')
-num(L5, 'p-capped-close', 2, 1000 * fail_avg, -1000 * 0.625 / 0.375,
-    {'zero': 0, 'swapped': -1000 * F(3, 8) / F(5, 8), 'worst': -4000})
-ET4 = F(sum(T_ for _, T_ in rows), 16)
-num(L5, 'p-capped-close', 3, ET4, 1 * 0.5 + 3 * 0.125 + 4 * 0.375,
-    {'cap': 4, 'no-day-3': F(1, 2) * 1 + F(1, 2) * 4, 'half': 2})
-ES2 = F(sum(s * s for s, _ in rows), 16)
-ok(ES2 == ET4 and F(sum(s * s for s, _ in rows if s != 1), 16) == F(28, 16), 'p-capped-close: E[S_T^2] = E[T] and the 28/16 term')
-num(L5, 'p-capped-close', 4, 1000 * sqrt(ES2), 1000 * float(np.std([s for s, _ in rows])),
-    {'no-root': 1000 * ES2, 'cap': 1000 * sqrt(4), 'variance': 1000 ** 2 * ES2})
-pick(L5, 'p-capped-close', 5, 'conditions')
+# p-flat-floor (re-authored session AF, replaces p-capped-close): a fair inventory walk on 0..7
+# that is pushed up from 0 and stopped at 7, from 2. Route 1: martingales I^2 - n and I - F.
+# Route 2: first-step equations solved exactly and with numpy, plus a seeded simulation.
+NF, IF = 7, 2
+ok(all(F(1, 2) * ((k + 1) ** 2 + (k - 1) ** 2) == k * k + 1 for k in range(1, NF)) and 1 ** 2 - 0 ** 2 == 1,
+   'p-flat-floor: the square gains exactly 1 a trade, flat or not')
+ok(all(F(1, 2) * ((k + 1) + (k - 1)) == k for k in range(1, NF)) and 0 + 1 != 0,
+   'p-flat-floor: I_n is fair holding stock and rises at the floor')
+pick(L5, 'p-flat-floor', 1, 'square')
+# first-step: t_7 = 0, t_0 = 1 + t_1, t_k = 1 + (t_{k-1} + t_{k+1}) / 2
+A = [[F(0)] * NF for _ in range(NF)]
+b = [F(1)] * NF
+for k in range(NF):
+    A[k][k] = F(1)
+    if k == 0:
+        A[0][1] -= 1
+    else:
+        A[k][k - 1] -= F(1, 2)
+        if k + 1 < NF:
+            A[k][k + 1] -= F(1, 2)
+tF = solve_exact(A, b)
+ok(all(tF[k] == NF ** 2 - k ** 2 for k in range(NF)), 'p-flat-floor: t_k = 49 - k^2 by first step')
+tnp = np.linalg.solve(np.array([[float(x) for x in r] for r in A]), np.ones(NF))
+ETF = F(NF ** 2 - IF ** 2)
+num(L5, 'p-flat-floor', 2, ETF, tnp[IF],
+    {'ruin': IF * (NF - IF), 'no-start': NF ** 2, 'gap-squared': (NF - IF) ** 2, 'gap': NF - IF})
+Pflat = 1 - F(IF, NF)
+num(L5, 'p-flat-floor', 3, Pflat, 1 - ruin_np(IF, NF, 0.5),
+    {'hedge-first': F(IF, NF), 'ratio': F(IF, NF - IF), 'half': F(1, 2)})
+# flat visits: f = 1 + (6/7) f from flat; second route the martingale I - F: E[F] = 7 - 2
+ret = 1 - F(1, NF)
+f0 = 1 / (1 - ret)
+ok(f0 == NF, 'p-flat-floor: 7 flat trades once flat')
+# exact expected flat trades by first step on all levels: g_0 = 1 + g_1, g_k = (g_{k-1} + g_{k+1}) / 2, g_7 = 0
+Ag = [[F(0)] * NF for _ in range(NF)]
+bg = [F(0)] * NF
+for k in range(NF):
+    Ag[k][k] = F(1)
+    if k == 0:
+        Ag[0][1] -= 1
+        bg[0] = F(1)
+    else:
+        Ag[k][k - 1] -= F(1, 2)
+        if k + 1 < NF:
+            Ag[k][k + 1] -= F(1, 2)
+gF = solve_exact(Ag, bg)
+EFF = Pflat * f0
+ok(gF[IF] == EFF == NF - IF, 'p-flat-floor: E[F] = 5 by first step and by I_n - F_n')
+num(L5, 'p-flat-floor', 4, EFF, NF - IF,
+    {'given-flat': f0, 'returns': ret / (1 - ret), 'no-first': Pflat * (f0 - 1), 'one-visit': Pflat})
+PLF = 20 * (ETF - EFF) - 60 * EFF
+num(L5, 'p-flat-floor', 5, PLF, 20 * float(ETF) - 80 * float(EFF),
+    {'spread-on-flat': 20 * ETF - 60 * EFF, 'no-flat': 20 * ETF, 'income-only': 20 * (ETF - EFF),
+     'given-flat': 20 * (ETF - f0) - 60 * f0, 'ruin': 20 * (IF * (NF - IF) - EFF) - 60 * EFF})
+ok(5 * 60 + 5 * 20 == 400 and 20 * 45 - 400 == 500, 'p-flat-floor: the £400 cost of the flat trades')
+rng = np.random.default_rng(20261116)
+Ts, Fs, Ps = [], [], []
+for _ in range(20000):
+    inv, t_, f_ = IF, 0, 0
+    while inv < NF:
+        t_ += 1
+        if inv == 0:
+            f_ += 1
+            inv = 1
+        else:
+            inv += 1 if rng.random() < 0.5 else -1
+    Ts.append(t_)
+    Fs.append(f_)
+    Ps.append(20 * (t_ - f_) - 60 * f_)
+ok(abs(np.mean(Ts) - 45) < 1.5 and abs(np.mean(Fs) - 5) < 0.2 and abs(np.mean(Ps) - 500) < 25,
+   f'p-flat-floor: simulated {np.mean(Ts)}, {np.mean(Fs)}, {np.mean(Ps)}')
+ok(abs(np.mean([f > 0 for f in Fs]) - 5 / 7) < 0.015, 'p-flat-floor: simulated chance of going flat')
 
 # ------------------------------------------------------------------ report
 print(f'{checks} checks, {len(fails)} failures')

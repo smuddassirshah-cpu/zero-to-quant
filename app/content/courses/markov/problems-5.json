@@ -671,86 +671,245 @@
       ]
     },
     {
-      "id": "p-capped-close",
+      "id": "p-flat-floor",
       "difficulty": 5,
       "skills": [
         "mc-walks",
         "mc-firststep"
       ],
-      "prose": "A desk runs a fair strategy that makes or loses £1,000 a day with equal chance. It closes the strategy on the first day the P&L is £1,000 up, or at the end of day 4, whichever comes first. Count the P&L $S_n$ in units of £1,000 and let $T$ be the closing day.",
+      "prose": "A market maker trades one lot at a time and never sells short. While she holds stock, each trade adds a lot to her inventory or takes one away, with equal chance. When she is flat, holding nothing, she quotes only a bid, so her next trade adds a lot for certain. The risk desk hedges her book the first time she holds 7 lots. She starts with 2. Let $I_n$ be her inventory after $n$ trades and $T$ the number of trades until the hedge.",
       "parts": [
         {
-          "question": "A fair walk from 0 fails to reach +1 within 4 steps with chance $\\tbinom{4}{2} / 2^4$. What is the chance the desk closes at +£1,000? Give the exact decimal.",
+          "question": "Up to the hedge, which of these processes is a martingale?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "square",
+                "text": "$I_n^2 - n$",
+                "correct": true
+              },
+              {
+                "id": "plain",
+                "text": "$I_n$",
+                "why": "When she is flat her inventory rises by 1 for certain, so $I_n$ is not fair at the floor."
+              },
+              {
+                "id": "raw-square",
+                "text": "$I_n^2$",
+                "why": "The square gains 1 a trade on average, flat or not. Subtract the trade count to make it fair."
+              },
+              {
+                "id": "minus-n",
+                "text": "$I_n - n$",
+                "why": "While she holds stock $I_n$ is fair, so $I_n - n$ falls by 1 a trade there."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Flat, the square moves from 0 to 1 for certain. Holding stock, it gains 1 on average. So subtracting $n$ makes it fair at every level.",
+            "generic": "Not quite. Check each process at two kinds of level: flat, and holding some lots."
+          },
+          "explain": {
+            "text": "The floor is the only new case: flat, the square goes from 0 to 1, a gain of exactly 1. Holding stock it gains 1 on average, as for any fair walk. So $I_n^2 - n$ is fair everywhere, though $I_n$ itself rises at the floor."
+          }
+        },
+        {
+          "question": "Using $I_n^2 - n$ from part 1: its steps are bounded while she holds 0 to 7 lots, and $E[T]$ is finite, so optional stopping applies. How many trades, on average, until the hedge? Give a whole number.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.625,
+            "answer": 45,
             "tol": {
-              "abs": 0.0005
+              "abs": 0.01
+            },
+            "placeholder": "number",
+            "wrong": [
+              {
+                "id": "ruin",
+                "value": 10,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "no-start",
+                "value": 49,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "gap-squared",
+                "value": 25,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "gap",
+                "value": 5,
+                "tol": {
+                  "abs": 0.01
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Every path ends at $I_T = 7$, so $E[T] = 7^2 - 2^2 = 49 - 4 = 45$.",
+            "generic": "Not quite. Stop $I_n^2 - n$ at $T$: its mean at the hedge equals its value at the start.",
+            "byKey": {
+              "ruin": "That is $2 \\times 5$, the fair-ruin length with 0 absorbing. Here she bounces off flat and carries on, so the wait is longer.",
+              "no-start": "That is $E[I_T^2]$ alone. The martingale starts at $2^2 = 4$, so take that away.",
+              "gap-squared": "That squares the distance $7 - 2$. Stopping gives $E[I_T^2] - E[T] = I_0^2$; put in $I_T = 7$ and $I_0 = 2$.",
+              "gap": "That is the distance to the hedge, as if every trade added a lot. Away from the floor, half the trades take one away."
+            }
+          },
+          "explain": {
+            "text": "Optional stopping gives $E[I_T^2 - T] = I_0^2 = 4$, and $I_T = 7$ on every path, so $E[T] = 49 - 4 = 45$ trades. First-step analysis agrees: $t_k = 49 - k^2$ solves $t_0 = 1 + t_1$ and $t_k = 1 + \\tfrac12 t_{k-1} + \\tfrac12 t_{k+1}$, with $t_7 = 0$."
+          }
+        },
+        {
+          "question": "Some of those 45 trades are made while she is flat. Until her first visit to flat, her inventory is a fair walk from 2 with ends 0 and 7. What is the chance she goes flat before the hedge? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.7143,
+            "tol": {
+              "abs": 0.0001
             },
             "placeholder": "decimal",
             "wrong": [
               {
-                "id": "fail",
-                "value": 0.375,
+                "id": "hedge-first",
+                "value": 0.2857,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.0001
+                }
+              },
+              {
+                "id": "ratio",
+                "value": 0.4,
+                "tol": {
+                  "abs": 0.0001
                 }
               },
               {
                 "id": "half",
                 "value": 0.5,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.0001
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "$1 - \\tfrac{6}{16} = \\tfrac{10}{16} = 0.625$.",
-            "generic": "Not quite. Take the chance of failing from 1.",
+            "correct": "Gambler's ruin gives the hedge first with chance $\\tfrac27$, so flat comes first with chance $\\tfrac57 \\approx 0.7143$.",
+            "generic": "Not quite. Treat 0 and 7 as the ends of a fair walk from 2. Find the chance it hits 0 first.",
             "byKey": {
-              "fail": "That is $\\tfrac{6}{16}$, the chance it does not get there. Take it from 1.",
-              "half": "That is the chance the first day is a win. The desk can also reach +£1,000 on day 3."
+              "hedge-first": "That is $\\tfrac27$, the chance the hedge comes before she is ever flat. Take it from 1.",
+              "ratio": "That divides the two distances, 2 and 5. The chance of reaching 7 first is 2 over the whole width, $\\tfrac27$.",
+              "half": "The two ends are not equally far away. Flat is 2 lots below and the hedge 5 above, so flat is likelier."
             }
           },
           "explain": {
-            "text": "Six of the 16 equally likely four-day paths never reach +1, so the chance of closing at +£1,000 is $\\tfrac{10}{16} = 0.625$. The cap stops the rest at day 4, wherever they are."
+            "text": "Before the first visit to flat, the floor has not yet acted, so $I_n$ is an ordinary fair walk. It reaches 7 before 0 with chance $\\tfrac27$, so she goes flat first with chance $\\tfrac57 \\approx 0.7143$. The paths that skip flat altogether make no flat trades."
           }
         },
         {
-          "question": "$T$ is at most 4, so optional stopping gives $E[S_T] = 0$. Using the chance 0.625, find the average P&L, in pounds, when the desk fails to reach +£1,000. Give your answer to the nearest pound.",
+          "question": "Let $F$ be the number of trades she makes while flat before the hedge. Using $\\tfrac57$ from part 3: each flat trade takes her to 1 lot. From there she returns to flat before 7 lots with chance $\\tfrac67$. What is $E[F]$? Give a whole number.",
           "widget": {
             "kind": "numeric",
-            "answer": -1666.67,
+            "answer": 5,
+            "tol": {
+              "abs": 0.01
+            },
+            "placeholder": "number",
+            "wrong": [
+              {
+                "id": "given-flat",
+                "value": 7,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "returns",
+                "value": 6,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "no-first",
+                "value": 4.2857,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "one-visit",
+                "value": 0.7143,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Given one visit, she is flat 7 times on average, since each return has chance $\\tfrac67$. So $E[F] = \\tfrac57 \\times 7 = 5$.",
+            "generic": "Not quite. Find the average count of flat trades once she is flat. Then weight it by the chance she gets there.",
+            "byKey": {
+              "given-flat": "That is the count given she goes flat at all. She skips flat altogether with chance $\\tfrac27$, so weight 7 by $\\tfrac57$.",
+              "returns": "That counts only the returns after the first visit, $\\tfrac{6/7}{1/7} = 6$, and every path as reaching flat. Add the first visit, then weight by $\\tfrac57$.",
+              "no-first": "That is $\\tfrac57 \\times 6$, which leaves out the first flat trade. Every visit to flat is one trade, the first included.",
+              "one-visit": "That counts at most one flat trade per path. After each flat trade she can drift back down to flat."
+            }
+          },
+          "explain": {
+            "text": "First-step analysis from flat gives $f = 1 + \\tfrac67 f$, so $f = 7$ flat trades once she is flat, and $E[F] = \\tfrac57 \\times 7 = 5$. A martingale check: $I_n - F_n$, with $F_n$ the flat trades so far, is fair at every level. Stopping it gives $7 - E[F] = 2$, the same 5."
+          }
+        },
+        {
+          "question": "Each trade earns her a half-spread of £20, except a flat trade: she sets that bid high to restock, and it loses her £60. Using $E[T] = 45$ and $E[F] = 5$, what is her expected P&L from trading by the hedge? Give your answer in pounds.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 500,
             "tol": {
               "abs": 0.5
             },
-            "placeholder": "decimal",
+            "placeholder": "number",
             "wrong": [
               {
-                "id": "zero",
-                "value": 0,
+                "id": "spread-on-flat",
+                "value": 600,
                 "tol": {
                   "abs": 0.5
                 }
               },
               {
-                "id": "swapped",
-                "value": -600,
+                "id": "no-flat",
+                "value": 900,
                 "tol": {
                   "abs": 0.5
                 }
               },
               {
-                "id": "worst",
-                "value": -4000,
+                "id": "income-only",
+                "value": 800,
                 "tol": {
                   "abs": 0.5
                 }
               },
               {
-                "id": "sign",
-                "value": 1666.67,
+                "id": "given-flat",
+                "value": 340,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "ruin",
+                "value": -200,
                 "tol": {
                   "abs": 0.5
                 }
@@ -758,145 +917,18 @@
             ]
           },
           "feedback": {
-            "correct": "$0.625 \\times 1000 + 0.375\\,m = 0$ gives $m = -\\tfrac{625}{0.375} \\approx -1666.67$.",
-            "generic": "Not quite. Write $E[S_T] = 0$ as the two cases weighted by their chances, and solve.",
+            "correct": "She earns £20 on $45 - 5 = 40$ trades on average and loses £60 on 5, so $800 - 300 = £500$.",
+            "generic": "Not quite. Split the trades into the 5 flat ones and the rest, and weight each kind by its P&L.",
             "byKey": {
-              "zero": "Zero is the mean over every case. The cases that miss must make up for the wins.",
-              "swapped": "That divides 0.375 by 0.625, the chances the wrong way round. Solve $0.625 \\times 1000 + 0.375\\,m = 0$.",
-              "worst": "That is the worst path, four losses. Most paths that miss end higher.",
-              "sign": "0.625 × 1,000 + 0.375m = 0 gives m = −625/0.375, which is negative. A positive 1,666.67 drops the minus sign: the failures are losses."
+              "spread-on-flat": "That pays the £20 on the flat trades too. Those 5 trades only lose £60 each, so 40 trades earn the spread.",
+              "no-flat": "That is £20 on all 45 trades. The 5 flat trades earn no spread and lose £60 each.",
+              "income-only": "That is the spread income alone. Take away the 5 flat trades at £60 each.",
+              "given-flat": "That uses 7 flat trades, the count given she goes flat. The average over all paths is 5.",
+              "ruin": "That uses 10 trades, the length if flat ended her trading. With the floor she carries on, for 45 trades on average."
             }
           },
           "explain": {
-            "text": "A bounded stopping time keeps a fair game fair, so $0.625 \\times £1{,}000 + 0.375\\,m = 0$. That gives $m \\approx -£1{,}666.67$. The frequent small gain is paid for by a rarer, larger loss."
-          }
-        },
-        {
-          "question": "The desk closes on day 1 after a win, or on day 3 after loss, win, win. Otherwise it closes at the cap on day 4. What is $E[T]$, the expected closing day? Give the exact decimal.",
-          "widget": {
-            "kind": "numeric",
-            "answer": 2.375,
-            "tol": {
-              "abs": 0.0005
-            },
-            "placeholder": "decimal",
-            "wrong": [
-              {
-                "id": "cap",
-                "value": 4,
-                "tol": {
-                  "abs": 0.0005
-                }
-              },
-              {
-                "id": "no-day-3",
-                "value": 2.5,
-                "tol": {
-                  "abs": 0.0005
-                }
-              },
-              {
-                "id": "half",
-                "value": 2,
-                "tol": {
-                  "abs": 0.0005
-                }
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "$1 \\times \\tfrac12 + 3 \\times \\tfrac18 + 4 \\times \\tfrac38 = 0.5 + 0.375 + 1.5 = 2.375$.",
-            "generic": "Not quite. Find the chance of each closing day, then weight the days by their chances.",
-            "byKey": {
-              "cap": "That is the cap. Half the time the desk closes on day 1.",
-              "no-day-3": "That leaves out the close on day 3, chance $\\tfrac18$. Paths that reach +1 on day 3 stop there.",
-              "half": "That is the mean wait for a first win, with no cap. After a first loss the desk needs two wins in a row."
-            }
-          },
-          "explain": {
-            "text": "It closes on day 1 with chance $\\tfrac12$, on day 3 with chance $\\tfrac18$, and at the cap otherwise. So $E[T] = 0.5 + 0.375 + 1.5 = 2.375$ days. It cannot close on day 2, because the P&L is then even."
-          }
-        },
-        {
-          "question": "$S_n^2 - n$ is a martingale and $T \\le 4$, so $E[S_T^2] = E[T]$. Using $E[T] = 2.375$ and $E[S_T] = 0$, what is the standard deviation of the P&L at the close, in pounds? Give your answer to the nearest pound.",
-          "widget": {
-            "kind": "numeric",
-            "answer": 1541.1,
-            "tol": {
-              "abs": 0.5
-            },
-            "placeholder": "decimal",
-            "wrong": [
-              {
-                "id": "no-root",
-                "value": 2375,
-                "tol": {
-                  "abs": 0.5
-                }
-              },
-              {
-                "id": "cap",
-                "value": 2000,
-                "tol": {
-                  "abs": 0.5
-                }
-              },
-              {
-                "id": "variance",
-                "value": 2375000,
-                "tol": {
-                  "abs": 0.5
-                }
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "$\\operatorname{Var}(S_T) = E[S_T^2] = 2.375$, so the standard deviation is $1000\\sqrt{2.375} \\approx 1541.10$.",
-            "generic": "Not quite. Optional stopping on $S_n^2 - n$ gives $E[S_T^2]$; with mean 0 that is the variance.",
-            "byKey": {
-              "no-root": "That is $1000 \\times E[S_T^2]$. Take the square root of 2.375 first, then scale by £1,000.",
-              "cap": "That uses $E[T] = 4$, the cap. The desk often closes sooner.",
-              "variance": "That is the variance in pounds squared. Take its square root."
-            }
-          },
-          "explain": {
-            "text": "Stopping $S_n^2 - n$ at the bounded $T$ gives $E[S_T^2] = E[T] = 2.375$. With mean 0 this is the variance, so the standard deviation is $1000\\sqrt{2.375} \\approx £1{,}541.10$. Listing the 16 paths gives the same: $\\tfrac{10}{16} \\times 1 + \\tfrac{28}{16} = 2.375$."
-          }
-        },
-        {
-          "question": "A colleague wants to drop the 4-day cap: a fair walk reaches +1 in the end with chance 1, so the desk would always make £1,000. What is wrong with the plan?",
-          "widget": {
-            "kind": "choice",
-            "layout": "stack",
-            "options": [
-              {
-                "id": "conditions",
-                "text": "It closes at +£1,000 for sure, but $E[T]$ is infinite and the losses have no floor",
-                "correct": true
-              },
-              {
-                "id": "never",
-                "text": "The walk may never reach +1, so the desk could lose money for ever",
-                "why": "A fair walk reaches +1 with chance 1. The trouble is how long it takes and how deep it falls first."
-              },
-              {
-                "id": "martingale",
-                "text": "Without the cap the daily P&L $S_n$ is no longer a martingale",
-                "why": "Each day is still fair, so $S_n$ is a martingale. What fails is the theorem's conditions on $T$ and on the stopped walk."
-              },
-              {
-                "id": "stopping",
-                "text": "Closing on the first day at +£1,000 is not a stopping time",
-                "why": "It is: the desk knows the day its P&L first reaches +£1,000. The rule is fine; its time and its losses are unbounded."
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "Correct. With no cap, $T$ is unbounded, $E[T]$ is infinite and the stopped walk has no floor, so optional stopping says nothing.",
-            "generic": "Not quite. Go through the three conditions of optional stopping for the rule with no cap."
-          },
-          "explain": {
-            "text": "With the cap, $T \\le 4$ and the mean stays 0, as part 2 used. Without it, all three conditions fail, so $E[S_T] = 1$ is possible. The sure £1,000 needs unlimited time and unlimited capital to ride out the losses."
+            "text": "Her P&L is $20(T - F) - 60F$, so by linearity its mean is $20 \\times 45 - 80 \\times 5 = £500$. No stopping argument is needed for this step. The 5 flat trades cost her £400 in all: £300 lost and £100 of spread not earned."
           }
         }
       ]
