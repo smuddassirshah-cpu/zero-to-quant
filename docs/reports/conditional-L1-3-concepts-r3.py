@@ -411,9 +411,9 @@ dA, dB, dC = (lambda o: o[0] == o[1]), (lambda o: o[0] == o[2]), (lambda o: o[1]
 check('problems-3 desks: pairwise independent, triple 1/4, P(C|A,B)=1',
       ind(dA, dB, feeds) and ind(dA, dC, feeds) and ind(dB, dC, feeds)
       and P(lambda o: dA(o) and dB(o) and dC(o), space=feeds) == Fr(1, 4))
-check('problems-3 rotation days (re-authored AF, was losing week): 0.48, 0.24, 0.4 against 0.8, mix independent',
-      Fr(6, 10) * Fr(8, 10) == Fr(48, 100) and (Fr(3, 10) - Fr(1, 4) * Fr(48, 100)) / Fr(3, 4) == Fr(24, 100)
-      and Fr(24, 100) / Fr(6, 10) == Fr(2, 5) and Fr(1, 4) * Fr(48, 100) + Fr(3, 4) * Fr(24, 100) == Fr(6, 10) * Fr(5, 10))
+check('problems-3 two papers (delta AF-1 round 2, was rotation days): 0.17, 0.07, 0.35 against 0.85, mix independent',
+      Fr(2, 10) * Fr(85, 100) == Fr(17, 100) and (Fr(11, 100) - Fr(2, 5) * Fr(17, 100)) / Fr(3, 5) == Fr(7, 100)
+      and Fr(7, 100) / Fr(2, 10) == Fr(35, 100) and Fr(2, 5) * Fr(17, 100) + Fr(3, 5) * Fr(7, 100) == Fr(2, 10) * Fr(55, 100))
 check('review-3 margin call: 0.3/0.65 then 0.3; two loans 0.00936 about 4x 0.048^2',
       close(0.3 / (1 - 0.7 * 0.5), 0.4615, 5e-4) and close(0.1 * 0.09 + 0.9 * 0.0004, 0.00936) and close(0.00936 / 0.048 ** 2, 4.06, 0.01))
 

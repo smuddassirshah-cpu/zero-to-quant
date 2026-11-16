@@ -360,18 +360,19 @@ C(L, I + '[1]', 'yes')
 ok('problems-3 gap independent of up', F(78, 120) == F(260, 400) and F(120, 400) * F(260, 400) == F(78, 400))
 A(L, I + '[2]', binom_pmf(4, 3, 0.65), **{'one-path': 0.65 ** 3 * 0.35, 'all-four': 0.65 ** 4, 'joint-slip': binom_pmf(4, 3, 0.195)})
 A(L, I + '[3]', 1 - 0.65 ** 4, sum=4 * 0.35, **{'exactly-one': binom_pmf(4, 3, 0.65), 'all-down': 0.35 ** 4})
-# items[1] re-authored in session AF (p-losing-week replaced by p-rotation-days); checks retargeted.
-# Natural frequencies on 10,000 days: 2,500 risk-on, 7,500 rotation.
-on_both = 2500 * F(6, 10) * F(8, 10)                     # 1,200 days
-rot_both = 10000 * F(6, 10) * F(5, 10) - on_both          # 3,000 - 1,200 = 1,800 days
+# items[1] re-authored in session AF (p-losing-week replaced by p-rotation-days), and again in
+# delta AF-1 round 2 (p-rotation-days replaced by p-two-papers); checks retargeted.
+# Natural frequencies on 10,000 applicants: 4,000 graduates, 6,000 career-changers.
+on_both = 4000 * F(2, 10) * F(85, 100)                   # 680 applicants
+rot_both = 10000 * F(2, 10) * F(55, 100) - on_both        # 1,100 - 680 = 420 applicants
 I = 'items[1].parts'
-A(L, I + '[0]', on_both / 2500, indep=0.3, cond=0.8, **{'over-y': 0.4})
-A(L, I + '[1]', rot_both / 7500, unweighted=rot_both / 10000, equal=2 * 0.3 - 0.48, indep=0.3)
-A(L, I + '[2]', rot_both / (7500 * F(6, 10)), joint=0.24, unweighted=0.18 / 0.6, **{'over-y': 0.24 / 0.5})
+A(L, I + '[0]', on_both / 4000, indep=0.11, cond=0.85, **{'over-y': 0.85 * 0.55})
+A(L, I + '[1]', rot_both / 6000, unweighted=rot_both / 10000, equal=2 * 0.11 - 0.17, indep=0.11)
+A(L, I + '[2]', rot_both / (6000 * F(2, 10)), joint=0.07, unweighted=0.042 / 0.2, **{'over-y': 0.07 / 0.55})
 C(L, I + '[3]', 'both-dep')
-ok('problems-3 rotation days: linked on each kind of day, independent pooled',
-   on_both / (2500 * F(6, 10)) == F(4, 5) and rot_both / (7500 * F(6, 10)) == F(2, 5)
-   and (on_both + rot_both) / 10000 == F(6, 10) * F(5, 10))
+ok('problems-3 two papers: linked in each group, opposite ways, independent pooled',
+   on_both / (4000 * F(2, 10)) == F(85, 100) and rot_both / (6000 * F(2, 10)) == F(35, 100)
+   and (on_both + rot_both) / 10000 == F(2, 10) * F(55, 100))
 I = 'items[2].parts'
 one = 0.25 * 0.28 + 0.75 * 0.04
 A(L, I + '[0]', one, average=(0.28 + 0.04) / 2, **{'recession-only': 0.07})

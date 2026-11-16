@@ -263,38 +263,41 @@ num(L3, 'p-gap-days', 3, comb(4, 3) * q ** 3 * (1 - q), sum(pseq(s, q) for s in 
 num(L3, 'p-gap-days', 4, 1 - q ** 4, sum(pseq(s, q) for s in seqs if sum(s) < 4),
     {'sum': 4 * (1 - q), 'exactly-one': 4 * q ** 3 * (1 - q), 'all-down': (1 - q) ** 4})
 
-# p-rotation-days: X, Y independent over all days; risk-on quarter linked, rotation days the rest
-c_on, px, py, py_x_on = F(1, 4), F(6, 10), F(5, 10), F(8, 10)
-j_all = px * py                                     # independence over all days
+# p-two-papers (delta AF-1 round 2, replaces p-rotation-days, same item slot): maths and coding
+# passes independent pooled; graduates (two fifths) linked up, career-changers (the rest) linked down
+c_on, px, py, py_x_on = F(2, 5), F(2, 10), F(55, 100), F(85, 100)
+j_all = px * py                                     # independence pooled
 j_on = px * py_x_on
 j_rot = (j_all - c_on * j_on) / (1 - c_on)
-# method 2: natural frequencies on 10,000 days
+# method 2: natural frequencies on 10,000 applicants
 D = 10000
-on_days = D * c_on; rot_days = D - on_days
-both_on = on_days * px * py_x_on                    # 2,500 days, 1,500 X up, 1,200 both
-both_all = D * px * py                              # 3,000
-both_rot = both_all - both_on                       # 1,800
-ok(on_days == 2500 and both_on == 1200 and both_all == 3000 and both_rot == 1800, 'p-rotation-days: day counts not whole')
-num(L3, 'p-rotation-days', 1, j_on, both_on / on_days,
+on_days = D * c_on; rot_days = D - on_days          # 4,000 graduates, 6,000 career-changers
+both_on = on_days * px * py_x_on                    # 4,000, 800 pass maths, 680 both
+both_all = D * px * py                              # 1,100
+both_rot = both_all - both_on                       # 420
+ok(on_days == 4000 and both_on == 680 and both_all == 1100 and both_rot == 420, 'p-two-papers: applicant counts not whole')
+num(L3, 'p-two-papers', 1, j_on, both_on / on_days,
     {'indep': px * py, 'cond': py_x_on, 'over-y': py_x_on * py})
-num(L3, 'p-rotation-days', 2, j_rot, both_rot / rot_days,
+num(L3, 'p-two-papers', 2, j_rot, both_rot / rot_days,
     {'unweighted': j_all - c_on * j_on, 'equal': 2 * j_all - j_on,
      'indep': (j_all - c_on * px * py) / (1 - c_on)})
-ok((j_all - c_on * px * py) / (1 - c_on) == px * py, 'p-rotation-days p2: the part 1 slip does not give 0.3')
-num(L3, 'p-rotation-days', 3, j_rot / px, both_rot / (rot_days * px),
+ok((j_all - c_on * px * py) / (1 - c_on) == px * py, 'p-two-papers p2: the independence slip does not give 0.11')
+num(L3, 'p-two-papers', 3, j_rot / px, both_rot / (rot_days * px),
     {'joint': j_rot, 'over-y': j_rot / py, 'unweighted': (j_all - c_on * j_on) / px})
-pick(L3, 'p-rotation-days', 4, 'both-dep')
-# the two day tables are valid distributions with the stated margins, and mix to independence
+pick(L3, 'p-two-papers', 4, 'both-dep')
+# the two group tables are valid distributions with the stated margins, and mix to independence
 tabs = {}
-for name, j in (('on', j_on), ('rot', j_rot)):
+for name, j in (('grad', j_on), ('changer', j_rot)):
     t = {'uu': j, 'ud': px - j, 'du': py - j, 'dd': 1 - px - py + j}
-    ok(all(v >= 0 for v in t.values()) and sum(t.values()) == 1, f'p-rotation-days: {name} table invalid')
+    ok(all(v >= 0 for v in t.values()) and sum(t.values()) == 1, f'p-two-papers: {name} table invalid')
     tabs[name] = t
-mix = {k: c_on * tabs['on'][k] + (1 - c_on) * tabs['rot'][k] for k in tabs['on']}
-ok(mix['uu'] == (mix['uu'] + mix['ud']) * (mix['uu'] + mix['du']), 'p-rotation-days: mix is not independent')
-ok(mix['uu'] + mix['ud'] == px and mix['uu'] + mix['du'] == py, 'p-rotation-days: overall margins wrong')
-ok(tabs['on']['uu'] / px == F(8, 10) != py and tabs['rot']['uu'] / px == F(4, 10) != py, 'p-rotation-days p4: 0.8 and 0.4 not both unlike 0.5')
-ok(j_all == F(3, 10) and c_on * j_on == F(12, 100) and j_all - c_on * j_on == F(18, 100), 'p-rotation-days: 0.3, 0.12, 0.18 in prose wrong')
+mix = {k: c_on * tabs['grad'][k] + (1 - c_on) * tabs['changer'][k] for k in tabs['grad']}
+ok(mix['uu'] == (mix['uu'] + mix['ud']) * (mix['uu'] + mix['du']), 'p-two-papers: mix is not independent')
+ok(mix['uu'] + mix['ud'] == px and mix['uu'] + mix['du'] == py, 'p-two-papers: pooled margins wrong')
+ok(tabs['grad']['uu'] / px == F(85, 100) > py and tabs['changer']['uu'] / px == F(35, 100) < py, 'p-two-papers p4: 0.85 above and 0.35 below 0.55')
+ok(j_all == F(11, 100) and c_on * j_on == F(68, 1000) and j_all - c_on * j_on == F(42, 1000), 'p-two-papers: 0.11, 0.068, 0.042 in prose wrong')
+ok(c_on * (F(85, 100) - py) * px + (1 - c_on) * (F(35, 100) - py) * px == 0, 'p-two-papers p4: the shifts do not offset')
+ok('p-rotation-days' not in L3, 'p-two-papers: the old id is still in the set')
 
 # p-three-loans: regimes, independent inside each
 r, pb, pg = F(1, 4), F(28, 100), F(4, 100)

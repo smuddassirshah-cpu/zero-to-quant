@@ -343,16 +343,17 @@ ok(F(78, 120) == F(260, 400) and F(120, 400) * F(260, 400) == F(78, 400), 'probl
 cid(L, 'items[0].parts[1]', ['yes'])
 eq(L, 'items[0].parts[2]', tail(3, 4, '0.65') - tail(4, 4, '0.65'))
 eq(L, 'items[0].parts[3]', 1 - D('0.65') ** 4)
-# items[1] re-authored in session AF (p-losing-week replaced by p-rotation-days); checks retargeted.
-# Day type, X up, Y up; rotation-day joint found from independence over all days.
-j_rot = (D('0.6') * D('0.5') - D('0.25') * D('0.6') * D('0.8')) / D('0.75')
+# items[1] re-authored in session AF (p-losing-week replaced by p-rotation-days), and again in
+# delta AF-1 round 2 (p-rotation-days replaced by p-two-papers); checks retargeted.
+# Group, maths pass, coding pass; career-changers' joint found from independence pooled.
+j_rot = (D('0.2') * D('0.55') - D('0.4') * D('0.2') * D('0.85')) / D('0.6')
 rd = {}
-for day, w, j in (('on', D('0.25'), D('0.6') * D('0.8')), ('rot', D('0.75'), j_rot)):
-    cell = {(1, 1): j, (1, 0): D('0.6') - j, (0, 1): D('0.5') - j, (0, 0): 1 - D('1.1') + j}
+for day, w, j in (('on', D('0.4'), D('0.2') * D('0.85')), ('rot', D('0.6'), j_rot)):
+    cell = {(1, 1): j, (1, 0): D('0.2') - j, (0, 1): D('0.55') - j, (0, 0): 1 - D('0.75') + j}
     for (x, y), p in cell.items():
         rd[(day, x, y)] = w * p
 ok(abs(wpr(rd, lambda s: s[1] and s[2]) - wpr(rd, lambda s: s[1]) * wpr(rd, lambda s: s[2])) < 1e-12,
-   'problems-3 rotation days: X and Y independent over all days')
+   'problems-3 two papers: maths and coding passes independent pooled')
 eq(L, 'items[1].parts[0]', wcond(rd, lambda s: s[1] and s[2], lambda s: s[0] == 'on'))
 eq(L, 'items[1].parts[1]', wcond(rd, lambda s: s[1] and s[2], lambda s: s[0] == 'rot'))
 eq(L, 'items[1].parts[2]', wcond(rd, lambda s: s[2], lambda s: s[0] == 'rot' and s[1]))

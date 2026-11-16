@@ -2,7 +2,7 @@
 """Delta read review-delta-af-1: independent recompute of the re-authored items.
 
 Scope (session AF re-author of the reuse hits):
-  conditional/problems-3 p-rotation-days, conditional/problems-4 p-dark-fills,
+  conditional/problems-3 p-rotation-days (now p-two-papers), conditional/problems-4 p-dark-fills,
   exp-log/problems-1 p-rare-coin, markov/problems-5 p-flat-floor,
   stat-learning/problems-2 p-futures-lasso and p-built-ridge,
   stat-learning/problems-4 p-renewals part 2,
@@ -13,6 +13,13 @@ linear systems, the fundamental matrix of the chain, seeded simulation, and
 scikit-learn fits on data built to the stated sums.
 
 Exits 0. A check that fails prints a FINDING line.
+
+Round 2 (author, after this review): items[1] of conditional/problems-3 is now
+p-two-papers (graduates and career-changers, maths and coding papers); its
+checks are retargeted to the new numbers with the same routes. p-flat-floor is
+retold as a print shop's pile of jobs with every key unchanged; the `has` checks
+still hold. The renewals split is 300 and 100; the dark-fills stem says
+"thousands of" orders.
 """
 import json
 import math
@@ -116,37 +123,41 @@ def choice(name, part, key):
 
 
 # --------------------------------------------------------------------------
-# conditional/problems-3 p-rotation-days
+# conditional/problems-3 p-two-papers (round 2; was p-rotation-days, same slot)
 # --------------------------------------------------------------------------
-it = load('conditional', 'problems-3.json', 'p-rotation-days')
+it = load('conditional', 'problems-3.json', 'p-two-papers')
 P = it['parts']
-px, py, share_on, y_given_x_on = F(6, 10), F(5, 10), F(1, 4), F(8, 10)
+px, py, share_on, y_given_x_on = F(2, 10), F(55, 100), F(2, 5), F(85, 100)
 both_on = px * y_given_x_on
 both_all = px * py
 both_rot = (both_all - share_on * both_on) / (1 - share_on)
 y_given_x_rot = both_rot / px
-numeric('rot p1', P[0], both_on,
+numeric('papers p1', P[0], both_on,
         {'indep': px * py, 'cond': y_given_x_on, 'over-y': y_given_x_on * py})
-numeric('rot p2', P[1], both_rot,
+numeric('papers p2', P[1], both_rot,
         {'unweighted': both_all - share_on * both_on,
          'equal': (both_all - F(1, 2) * both_on) / F(1, 2),
          'indep': (both_all - share_on * px * py) / (1 - share_on)})
-numeric('rot p3', P[2], y_given_x_rot,
+numeric('papers p3', P[2], y_given_x_rot,
         {'joint': both_rot, 'over-y': both_rot / py,
          'unweighted': (both_all - share_on * both_on) / px})
-choice('rot p4', P[3], 'both-dep')
-# each kind of day is a valid joint table with the stated marginals
-for nm, b in (('risk-on', both_on), ('rotation', both_rot)):
+choice('papers p4', P[3], 'both-dep')
+# each group is a valid joint table with the stated marginals
+for nm, b in (('graduates', both_on), ('career-changers', both_rot)):
     cells = [b, px - b, py - b, 1 - px - py + b]
-    check('rot table %s valid' % nm, all(0 <= c <= 1 for c in cells) and sum(cells) == 1)
-    check('rot %s dependent' % nm, b != px * py)
-# pooled: independent, and Y's chance given X is exactly 0.5
-check('rot pooled product', share_on * both_on + (1 - share_on) * both_rot == px * py)
-check('rot pooled cond', (share_on * both_on + (1 - share_on) * both_rot) / px == py)
-check('rot p3 below 0.5', y_given_x_rot < py)
-has('rot p2', P[1], '0.18', '0.75', '0.3 - 0.12')
-has('rot p4', P[3], 'from 0.5 to 0.8', 'cuts Y to 0.4', '0.6 \\times 0.5 = 0.3')
-# simulation: draw the kind of day, then the cell of its joint table
+    check('papers table %s valid' % nm, all(0 <= c <= 1 for c in cells) and sum(cells) == 1)
+    check('papers %s dependent' % nm, b != px * py)
+# pooled: independent, and coding's chance given maths is exactly 0.55
+check('papers pooled product', share_on * both_on + (1 - share_on) * both_rot == px * py)
+check('papers pooled cond', (share_on * both_on + (1 - share_on) * both_rot) / px == py)
+check('papers p3 below 0.55', y_given_x_rot < py < y_given_x_on)
+has('papers p2', P[1], '0.042', '0.6', '0.11 - 0.068')
+has('papers p4', P[3], 'from 0.55 to 0.85', 'lowers it to 0.35', '0.2 \\times 0.55 = 0.11')
+# no triple, sentence or noun of l16 screens[1] to [4] or quiz[1]
+old = it['prose'] + ' | ' + ' | '.join(text_of(q) for q in P)
+for gone in ('0.48', '0.24', '0.6 \\times 0.5', 'stock', 'day', 'rises', 'Divide the chance both rise'):
+    check('papers old %r gone' % gone, gone not in old)
+# simulation: draw the group, then the cell of its joint table
 rng = np.random.default_rng(20261116)
 n = 2_000_000
 on = rng.random(n) < float(share_on)
@@ -155,11 +166,11 @@ x = rng.random(n) < float(px)
 py_given_x = np.where(on, float(y_given_x_on), float(y_given_x_rot))
 py_given_notx = np.where(on, float((py - both_on) / (1 - px)), float((py - both_rot) / (1 - px)))
 y = u < np.where(x, py_given_x, py_given_notx)
-check('rot sim both|on', abs((x & y)[on].mean() - 0.48) < 0.004)
-check('rot sim both|rot', abs((x & y)[~on].mean() - 0.24) < 0.003)
-check('rot sim y|x rot', abs(y[~on & x].mean() - 0.4) < 0.004)
-check('rot sim y|x all', abs(y[x].mean() - 0.5) < 0.003)
-check('rot sim y all', abs(y.mean() - 0.5) < 0.003)
+check('papers sim both|grad', abs((x & y)[on].mean() - 0.17) < 0.003)
+check('papers sim both|changer', abs((x & y)[~on].mean() - 0.07) < 0.002)
+check('papers sim y|x changer', abs(y[~on & x].mean() - 0.35) < 0.005)
+check('papers sim y|x all', abs(y[x].mean() - 0.55) < 0.003)
+check('papers sim y all', abs(y.mean() - 0.55) < 0.003)
 
 # --------------------------------------------------------------------------
 # conditional/problems-4 p-dark-fills
