@@ -90,3 +90,8 @@ Raised later (delta read AF arma):
 Raised later (review-delta-af-coint):
 - No tool reports one key number, up to sign, in two problems of a set: `coint/problems-2` `p-smelter-tls` part 4 (2.29) and `p-lessor-window` part 3 (−2.29), consecutive problems (`review-delta-af-coint.md` finding 6). `fresh-check --file` could list equal keys within the target file as an advisory.
 - Nothing links a quantity to the name an earlier course teaches it under: `coint/problems-3` `p-glassmaker-borrow` says "borrowing fee" where l10 `screens[11]` and Markets l12 say "stock loan fee" (finding 7). A glossary of taught terms would let a checker ask for the taught name.
+
+Raised later (delta read AF numerics):
+- No rule warns when a numeric key lies next to a rounding tie at the places its question asks for: `numerics/problems-3` `p-implicit-newton-step` part 2 has the value 0.0158564815 at "6 decimal places", and the feedback's own 7-place sum rounds half up to a refused 0.015857 (`review-delta-af-numerics.md` finding 4). Warn when the key is within 5% of a unit of the tie.
+- No rule holds a printed quotient of restated values against the part's band: `numerics/problems-1` `p-float32-overnight` part 3 prints $5.96 \times 10^{-4} \div 3.16 \times 10^{-8}$, which is 18,861, with a band of $18{,}850 \pm 2$ (finding 1). A check that evaluates a single `a \div b` or `\tfrac{a}{b}` of two literals in `feedback.correct` and grades the result would have caught it.
+- The same-course checker reads no exam: a slip line of `exams/stage-2.json` `c-newton-yield` is retold in `numerics/problems-3` (finding 6). Same gap as the convex 4 bullet.
