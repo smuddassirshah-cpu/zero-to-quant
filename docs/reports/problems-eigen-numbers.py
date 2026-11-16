@@ -650,49 +650,47 @@ if I:
 
     # ---- p-crab-sizes
     iid = 'p-crab-sizes'
-    wd = [68, 74, 60, 46, 52]
-    cl = [59, 42, 40, 38, 21]
+    wd = [191, 151, 145, 139, 99]
+    cl = [88, 118, 85, 52, 82]
     mw, mc = R(sum(wd), 5), R(sum(cl), 5)
-    ok(mw == 60 and mc == 40, 'crabs: means 60 and 40')
+    ok(mw == 145 and mc == 85, 'crabs: means 145 and 85')
     Xd = M([[a - mw, b - mc] for a, b in zip(wd, cl)])
     Sg = Xd.T * Xd / 4
     Cn = np.cov(np.array(wd, float), np.array(cl, float))           # route 2: NumPy's covariance (ddof 1)
     num(I, iid, 1, Sg[0, 1], Cn[0, 1], {'over-n': (Xd.T * Xd)[0, 1] / 5, 'no-divide': (Xd.T * Xd)[0, 1],
                                         'raw': R(sum(a * b for a, b in zip(wd, cl)), 4)})
-    ok(Sg == M([[130, 90], [90, R(365, 2)]]), 'crabs: the stated covariance matrix')
+    ok(Sg == M([[1076, 168], [168, 549]]), 'crabs: the stated covariance matrix')
     numset(I, iid, 2, list(Sg.eigenvals().keys()), np.linalg.eigvalsh(Cn),
-           {'diagonal': [130, R(365, 2)], 'over-n': list((Sg * 4 / 5).eigenvals().keys())})
-    vecs_printed = np.array([[0.8, -0.6], [-0.6, -0.8]])
-    ok(np.allclose(Cn @ vecs_printed, vecs_printed @ np.diag([62.5, 250])), 'crabs: the printed eigh output is valid')
+           {'diagonal': [1076, 549], 'over-n': list((Sg * 4 / 5).eigenvals().keys())})
+    ok(Sg.trace() == 1625 and Sg.det() == 590724 - 28224 == 562500 == 1125 * 500, 'crabs: trace 1625, det 562500')
+    vecs_printed = np.array([[-0.28, -0.96], [0.96, -0.28]])
+    ok(np.allclose(Cn @ vecs_printed, vecs_printed @ np.diag([500, 1125])), 'crabs: the printed eigh output is valid')
     _vals_np, _vecs_np = np.linalg.eigh(Cn)
-    ok(np.allclose(_vals_np, [62.5, 250]) and all(np.allclose(abs(_vecs_np[:, j]), abs(vecs_printed[:, j])) for j in (0, 1)), 'crabs: eigh gives the printed columns up to a sign')
-    ok(any(np.allclose(_vecs_np[:, j], -vecs_printed[:, j]) for j in (0, 1)), 'crabs: this NumPy returns a sign different from the colleague run, so part 3 must say it was a colleague run')
+    ok(np.allclose(_vals_np, [500, 1125]) and all(np.allclose(abs(_vecs_np[:, j]), abs(vecs_printed[:, j])) for j in (0, 1)), 'crabs: eigh gives the printed columns up to a sign')
     ok('colleague' in part(I, iid, 3)['question'] and 'either sign' in part(I, iid, 3)['question'], 'crabs: part 3 words the output as a colleague run and says a sign may differ')
-    pc = null1(Sg - 250 * sp.eye(2))
+    pc = null1(Sg - 1125 * sp.eye(2))
     pc = pc / pc.norm()
     pc = pc * (1 if abs(pc[1]) >= abs(pc[0]) and pc[1] > 0 or abs(pc[0]) > abs(pc[1]) and pc[0] > 0 else -1)
     _, vn = np.linalg.eigh(Cn)
     v_np = vn[:, -1] * np.sign(vn[np.argmax(abs(vn[:, -1])), -1])
-    obj(I, iid, 3, pc, v_np, {'first-column': M([0.8, -0.6]).applyfunc(sp.nsimplify), 'no-flip': -pc})
+    obj(I, iid, 3, pc, v_np, {'first-column': M([R(-28, 100), R(96, 100)]), 'no-flip': -pc})
+    ok(pc == M([R(24, 25), R(7, 25)]), 'crabs: PC1 is (0.96, 0.28)')
     x1 = Xd[0, :].T
     z1 = x1.dot(pc)
-    scores = (np.array([wd, cl], float).T - [60, 40]) @ v_np
-    num(I, iid, 4, z1, scores[0], {'no-flip': -z1, 'raw': M([68, 59]).dot(pc), 'pc2': x1.dot(M([R(4, 5), R(-3, 5)]))})
-    zs = z1 / sp.sqrt(250)
+    scores = (np.array([wd, cl], float).T - [145, 85]) @ v_np
+    num(I, iid, 4, z1, scores[0], {'no-flip': -z1, 'raw': M([191, 88]).dot(pc), 'pc2': x1.dot(M([R(7, 25), R(-24, 25)]))})
+    zs = z1 / sp.sqrt(1125)
     num(I, iid, 5, zs, scores[0] / np.std(scores, ddof=1),
-        {'variance': z1 / 250, 'total': z1 / sp.sqrt(Sg.trace()), 'pc2-sd': z1 / sp.sqrt(R(125, 2))})
-    # the value the feedback itself prints: 20 / 15.811 and 20 / 15.81 both give 1.265 to 3 places, and so does the exact value
-    ok(round(20 / 15.811, 3) == 1.265 and round(20 / 15.81, 3) == 1.265 and round(float(zs), 3) == 1.265 and round(20 / math.sqrt(250), 6) == 1.264911,
-       'crabs: 1.265 by 15.811, by 15.81 and exactly')
-    ok(round(math.sqrt(250), 3) == 15.811, 'crabs: sqrt 250 = 15.811')
-    ok(part(I, iid, 5)['widget']['answer'] == 1.265 and part(I, iid, 5)['widget']['tol']['abs'] == 0.0005 and 'places' in part(I, iid, 5)['question'], 'crabs: part 5 asks for 3 places with answer 1.265')
-    stale = [r'15\.81(?!\d)', r'1\.26(?!\d)', r'1\.13(?!\d)']
-    blob = ' '.join(t for _, t in strings(I[iid]))
-    for tok in stale:
-        ok(not re.search(tok, blob), f'{iid}: stale 2-place token {tok}')
-    vocab(I, iid, [Xd, [a * b for a, b in Xd.tolist()], (Xd.T * Xd)[0, 1], 72, R(sum(a * b for a, b in zip(wd, cl)), 4), Sg,
-                   Sg.trace(), 130 * R(365, 2), 8100, Sg.det(), 250, R(125, 2), pc, 4.8, 15.2, z1, 88, -5, sp.sqrt(250), zs,
-                   z1 / 250, z1 / sp.sqrt(Sg.trace()), z1 / sp.sqrt(R(125, 2)), 200, 50, 0.8, 0.6, 68 - 60, 59 - 40, 15.811, 1.265])
+        {'variance': z1 / 1125, 'total': z1 / sp.sqrt(Sg.trace()), 'pc2-sd': z1 / sp.sqrt(500)})
+    # the value the feedback itself prints: 45 / 33.541 gives 1.342 to 3 places, and so does the exact value
+    ok(round(45 / 33.541, 3) == 1.342 and round(float(zs), 3) == 1.342 and round(45 / math.sqrt(1125), 6) == 1.341641,
+       'crabs: 1.342 by 33.541 and exactly')
+    ok(round(math.sqrt(1125), 3) == 33.541 and round(math.sqrt(1625), 3) == 40.311 and round(math.sqrt(500), 3) == 22.361, 'crabs: root values')
+    ok(part(I, iid, 5)['widget']['answer'] == 1.342 and part(I, iid, 5)['widget']['tol']['abs'] == 0.0005 and 'places' in part(I, iid, 5)['question'], 'crabs: part 5 asks for 3 places with answer 1.342')
+    vocab(I, iid, [Xd, [a * b for a, b in Xd.tolist()], (Xd.T * Xd)[0, 1], R(sum(a * b for a, b in zip(wd, cl)), 4), Sg,
+                   Sg.trace(), 590724, 28224, Sg.det(), 1125, 500, pc, 44.16, 0.84, z1, 208, 10, sp.sqrt(1125), zs,
+                   z1 / 1125, z1 / sp.sqrt(Sg.trace()), z1 / sp.sqrt(500), 900, 400, 0.96, 0.28, 191 - 145, 88 - 85, 33.541, 1.342,
+                   1076, 549, 134.4, 672, 15574.25, 1625, 562500, 24, 7, 25, 45, 46, 3, 6, 33, 22.361, 40.311, 1.116, 2.012, 0.04])
     arith(I, iid)
 
     # ---- p-site-anomalies

@@ -271,8 +271,14 @@ for f in files:
                     clash.append((os.path.basename(f), M.tolist()))
 ok(not clash, f"proposal: no course matrix has (8, -1) or (1, 8) as an eigenvector: {clash[:2]}")
 w_new = worst_overlap({53.0, 116.0, 16.0, 52.0, 117.0, 169.0, 6084.0, 6148.0, 64.0, 468.0})
-print("proposal: most numbers shared with one unit of the course:", w_new)
-ok(w_new[0] <= 2, "proposal: shares at most 2 of its numbers with any unit")
+print("proposal (not applied; the pond stays as keyed): most numbers shared with one unit of the course:", w_new)
+# finding 8 resolved by re-keying p-crab-sizes instead (fix pass): the pond shares no key number with the new crab problem
+_crab = load_item("eigen/problems-3.json", "p-crab-sizes")
+ok(sp.Matrix([[1076, 168], [168, 549]]).eigenvals() == {1125: 1, 500: 1} and "1076 & 168" in _crab["parts"][1]["question"], "crab: new covariance matrix, eigenvalues 1125 and 500")
+_cn = numset(_crab)
+_pn = {41.0, 89.0, 14.0, 40.0, 90.0, 130.0, 3600.0, 3649.0, 49.0, 360.0}
+ok(not (_cn & _pn), f"pond and new crab share no key number: {sorted(_cn & _pn)}")
+ok(not any(abs(x - y) < 1e-9 for x in (1076.0, 168.0, 549.0, 1125.0, 500.0) for y in _pn), "pond: no crab matrix entry or eigenvalue among the pond's numbers")
 
 # ===================================================================== crate
 crate = load_item("quadratics/problems-4.json", "p-storage-crate")

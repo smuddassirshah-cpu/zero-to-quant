@@ -433,8 +433,10 @@ I.wrong(5, "sign", dot([bl[0], -bl[1]] + bl[2:], zs))
 carried = dot(bl, [F(7, 4)] + zs[1:])
 I.wrong(5, "carried", carried)
 I.all_wrongs_named(5, ["ols", "no-shrink", "sign", "carried"])
-# NOTE (finding): the carried slip is exactly 0.6825, on the edge of its own band
-print(f"NOTE futures-lasso part 5 carried slip is exactly {float(carried)}; listed 0.683 ± 0.0005")
+# finding 7: the carried slip is exactly 0.6825; its band is 0.683 +- 0.001, so the exact slip, 0.682 and 0.684 sit inside it
+_cw = next(x for x in I.it["parts"][4]["widget"]["wrong"] if x["id"] == "carried")
+ok(float(_cw["tol"]["abs"]) == 0.001 and all(abs(float(_cw["value"]) - v) <= float(_cw["tol"]["abs"]) + 1e-12 for v in (float(carried), 0.682, 0.684)),
+   "futures-lasso part 5: carried band 0.683 +- 0.001 takes 0.6825, 0.682 and 0.684 [review finding 7]")
 I.reg(*[float(b) for b in bl], 0.405, 16, 4, 6, 7, 1, 0.27 * 1.5)
 
 # ---- p-built-ridge
@@ -478,15 +480,19 @@ I.wrong(5, "ratio", emse(shr(125)) / emse([0, 0, 0]))
 I.wrong(5, "too-much", r2(shr(500)))
 I.all_wrongs_named(5, ["ols", "ratio", "too-much"])
 ok(emse(shr(125)) < emse(est) < emse(shr(500)) < emse([0, 0, 0]), "built: 125 beats OLS beats 500 beats the mean")
-# CLAIM (review finding 1; fails until the text is fixed): part 2's explain says shrinking "adds a little bias to the real 0.5 and cuts the noise in the other two"
+# finding 1: part 2's explain now says shrinking pulls the overshoot 0.6 back to 0.48 and the stray 0.14 to 0.112,
+# costs a little on the 0.2, and totals 2.0273 against OLS's 2.0396
 e0 = [(b - t) ** 2 for b, t in zip(est, true)]
 e1 = [(b - t) ** 2 for b, t in zip(shr(125), true)]
-claim = e1[0] > e0[0] and e1[1] < e0[1] and e1[2] < e0[2]
-print("CLAIM built-ridge part 2 explain (0.5 loses, the other two gain):", claim,
+claim = e1[0] < e0[0] and e1[2] < e0[2] and e1[1] > e0[1]
+sh = [float(v) for v in shr(125)]
+print("CLAIM built-ridge part 2 explain (0.6 and 0.14 gain, 0.2 loses):", claim,
       "| squared errors OLS", [float(v) for v in e0], "ridge", [float(v) for v in e1])
-ok(claim or "cuts the noise in the other two" not in I.it["parts"][1]["explain"]["text"],
-   "built part 2 explain: 'adds a little bias to the real 0.5 and cuts the noise in the other two' is false: "
-   "0.6 -> 0.48 gains (0.01 to 0.0004), 0.1 -> 0.08 loses (0.01 to 0.0144)  [review finding 1]")
+ok(claim and abs(sh[0] - 0.48) < 1e-9 and abs(sh[2] - 0.112) < 1e-9 and abs(float(est[0]) - 0.6) < 1e-9 and abs(float(est[2]) - 0.14) < 1e-9,
+   "built part 2 explain: 0.6 -> 0.48 and 0.14 -> 0.112 gain, 0.1 -> 0.08 against 0.2 loses [review finding 1]")
+_tx = I.it["parts"][1]["explain"]["text"]
+ok("0.48" in _tx and "0.112" in _tx and "2.0273" in _tx and "2.0396" in _tx and "cuts the noise in the other two" not in _tx,
+   "built part 2 explain: prints 0.48, 0.112, 2.0273 and 2.0396 and drops the false claim")
 I.reg(*[float(v) for v in e0 + e1], *[float(b) for b in shr(125) + shr(500)], 0.0396, 0.027344, 0.0674,
       0.04, 0.0225, 0.0049, 625, 1000, 0.8, 0.75, 0.25, 0.8853, 11.5, 10.9, 9.7, 500 / 625, 500 / 1000)
 
@@ -738,6 +744,20 @@ for n in (1, 2, 3):
                 whole = float(w["answer"]).is_integer()  # a whole key needs no form sentence
                 ok(whole or re.search(r"decimal|whole number|pounds", p_["question"]), f"{i['id']}: numeric part states its form: {p_['question'][:60]}")
     ok(typed * 3 >= total * 2, f"set {n}: typed share {typed}/{total}")
+
+# ---- fix pass: findings 2 to 6 (text rewrites of the fix pass)
+_get = item
+_rent = _get(2, "p-rent-ridge")["parts"][4]["explain"]["text"]
+ok(F(90, 100) * F(100, 120) / F(90, 100) == F(100, 120) and F(1, 100) / F(2001, 100) == F(1, 2001) and abs(0.9 / 20.01 / 90 - 0.01 / 20.01) < 1e-15
+   and "100/120" in _rent and "0.01/20.01" in _rent and "0.75 against 0.045" not in _rent, "rent part 5 explain: both slope fractions in one unit [finding 2]")
+_fp = _get(1, "p-ferry-passengers")["parts"][3]["question"]
+ok("six different temperatures" in _fp and "sure to pass" in _fp, "ferry part 4: degree 5 is sure to work for six distinct temperatures [finding 3]")
+_ice = json.dumps(_get(2, "p-ice-cream-van"), ensure_ascii=False).lower()
+ok("deckchair" in _ice and not re.search(r"ice-cream|ice cream|cone|\bvan\b|\bsold\b|vendor", _ice.replace("p-ice-cream-van", "")), "deckchair story replaces the kiosk story, id kept [finding 4]")
+_sc = _get(3, "p-sterling-calls")["parts"][3]["question"]
+ok("2.75" in _sc and "part 3" in _sc and "70" in _sc and "3 bp" in _sc, "sterling part 4 restates t = 2.75 from part 3 [finding 5]")
+_hd = _get(1, "p-heat-demand")["parts"][4]["question"]
+ok("1.476" in _hd and "part 4" in _hd and abs(1.20 + 0.24 + 0.36 / 10 - 1.476) < 1e-12, "heat part 5 restates part 4's 1.476 [finding 6]")
 
 print(f"reader checks: {checks}; failures: {fails}; printed numbers not rebuilt: {unknown}")
 sys.exit(1 if fails else 0)

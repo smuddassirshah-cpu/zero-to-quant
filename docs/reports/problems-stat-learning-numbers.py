@@ -455,6 +455,9 @@ if L2 is not None:
          'no-shrink': R(30, 100) + sum(b * z for b, c, z in zip(b_ols, lasso_c, zv) if c != 0),
          'sign': fcast - 2 * lasso_c[1] * zv[1],
          'carried': R(30, 100) + sum(c * z for c, z in zip(lasso_c, [R(7, 4)] + zv[1:]))}, agree=1e-6)
+    _cw = next(x for x in L2['p-futures-lasso']['parts'][4]['widget']['wrong'] if x['id'] == 'carried')
+    _cs = float(R(30, 100) + sum(c * z for c, z in zip(lasso_c, [R(7, 4)] + zv[1:])))
+    ok(_cw['tol']['abs'] == 0.001 and all(abs(_cw['value'] - v) <= 0.001 + 1e-12 for v in (_cs, 0.682, 0.684)), 'p-futures-lasso p5: carried slip 0.6825 sits inside its band 0.683 +- 0.001')
 
     # ---------- p-built-ridge ----------
     beta_t = [R(1, 2), R(1, 5), 0]

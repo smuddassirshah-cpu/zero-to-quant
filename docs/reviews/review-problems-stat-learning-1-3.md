@@ -73,3 +73,28 @@ Eigenvectors of the course. The script reads every square numeric matrix of `app
 9. `quadratics/problems-4.json` | `items` `p-storage-crate` `parts[3].question` | reuse | The base $x^2 + 7x + 10 = (x + 2)(x + 5)$ is the mirror ($x \to -x$) of the opening example of `l5-product-of-zero.json` `screens[0]`, $(x - 2)(x - 5)$. Level 2 against level 4, a factor pair and not a number set; nothing else of the item meets the course. | `grep -E '\([a-z] ?- ?2\)\([a-z] ?- ?5\)' quadratics/*.json`: l5 only. | No content change advised: a waiver line in `tools/same-course-waivers.json` if the engine's mirror rule (inbox) later flags it. Re-keying the base means re-keying the cubic again.
 
 Delta result: every key, slip, band and printed number of both items is correct and both chains hold. The pond's eigenvector pair is unique in the course. One reuse finding stands against the pond's numbers (8); the crate has one advisory (9).
+
+## Fix pass
+
+Fixer: targeted edits only; no id, `course.json` or engine file touched. Every corrected number recomputed before writing (scripts below). Findings 1 to 7 and the delta read's 8 and 9.
+
+1. fixed. `problems-2` `p-built-ridge` part 2 `explain` now reads "Shrinking pulls the overshoot 0.6 back to 0.48 and the stray 0.14 to 0.112, and costs a little on the 0.2. The total is 2.0273, below OLS's 2.0396 from part 1." Squared errors recomputed: 0.01 to 0.0004, 0.01 to 0.0144, 0.0196 to 0.012544; no key changed.
+2. fixed. `problems-2` `p-rent-ridge` part 5 `explain` now gives $100/120$ in basis points and $0.01/20.01$ in percentage points. Recomputed: $0.9/20.01/90 = 0.01/20.01 = 1/2001$. No key changed.
+3. fixed. `problems-1` `p-ferry-passengers` part 4 question: "The six training days had six different temperatures. What is the lowest degree sure to pass exactly through all six?" Key 5 unchanged.
+4. fixed (ruled reuse, fresh story). `problems-2` `p-ice-cream-van` is now a deckchair stall (hires, tens of chairs); id and every number kept, no key changed. `grep -ril deckchair app/content` gives only this file.
+5. fixed. `problems-3` `p-sterling-calls` part 4 now restates $t = 2.75$ from part 3 before the flips. Key £42,000 unchanged.
+6. fixed. `problems-1` `p-heat-demand` part 5 now restates part 4's 1.476. Key 1.358 unchanged.
+7. fixed. `problems-2` `p-futures-lasso` part 5 `wrong[carried]` tolerance 0.0005 to 0.001 (band 0.682 to 0.684, takes 0.6825). The author's script checks it in the same commit.
+8. fixed by re-keying `eigen/problems-3` `p-crab-sizes` (graded answers changed); the pond is left alone. New data: widths 191, 151, 145, 139, 99 mm, claws 88, 118, 85, 52, 82 mm, means 145 and 85 (old: widths 68, 74, 60, 46, 52; claws 59, 42, 40, 38, 21; means 60 and 40). The old matrix $\begin{pmatrix} 130 & 90 \\ 90 & 182.5 \end{pmatrix}$ was $a\mathbf{M} + b\mathbf{I}$ of a matrix in `review-2` and `l5`. New $\boldsymbol{\Sigma} = \begin{pmatrix} 1076 & 168 \\ 168 & 549 \end{pmatrix}$, eigenvalues 1125 and 500, eigenvectors $(24, 7)$ and $(7, -24)$ (PC1 $(0.96, 0.28)$, a 7, 24, 25 triple). A scan of all 31 eigen files (439 two-by-two matrices) finds no matrix with either as an eigenvector. The colleague's `eigh` output is printed as $\begin{pmatrix} -0.28 & -0.96 \\ 0.96 & -0.28 \end{pmatrix}$, not symmetric: the symmetric sign pattern is a reflection with the old pair of eigenvectors, which `fresh-check` flagged on a first draft. The pond now shares no key number with the crab (crab 1076, 168, 549, 1125, 500, 1625, 562500, 45, 46, 33 against pond 41, 89, 14, 40, 90, 130, 3600, 3649, 49, 360), so the pond is not re-keyed and the reader's pond proposal is not applied. Keys, old to new:
+   - p1 covariance 90 to 168; `over-n` 72 to 134.4, `no-divide` 360 to 672, `raw` 3090 to 15574.25 (raw products 62297 over 4).
+   - p2 eigenvalues {250, 62.5} to {1125, 500} ($\lambda^2 - 1625\lambda + 562500$, trace 1625, determinant $590724 - 28224 = 562500$); `diagonal` "130, 182.5" to "1076, 549"; `over-n` "200, 50" to "900, 400".
+   - p3 PC1 $(0.6, 0.8)$ to $(0.96, 0.28)$, `accept` re-keyed ($\tfrac{24}{25}, \tfrac{7}{25}$ and the other forms); `first-column` $(0.8, -0.6)$ to $(-0.28, 0.96)$; `no-flip` $(-0.6, -0.8)$ to $(-0.96, -0.28)$; colleague output `vals = [500., 1125.]`.
+   - p4 score 20 to 45 ($44.16 + 0.84$); `no-flip` $-20$ to $-45$; `raw` 88 to 208; `pc2` $-5$ to 10.
+   - p5 1.265 to 1.342 ($45/\sqrt{1125} = 45/33.541$); `variance` 0.08 to 0.04; `total` 1.131 to 1.116; `pc2-sd` 2.53 to 2.012. Band $\pm 0.0005$, three places.
+
+   `fresh-check --file`: 0 hits, no advisory, and the `p-crab-sizes` waiver in `tools/same-course-waivers.json` is no longer needed (left in place and uncommitted; the main session deletes the line).
+9. no change, as ruled.
+
+Scripts, each exit 0: `problems-stat-learning-numbers.py` (1238 checks), `problems-stat-learning-numbers-read.py` (rows for findings 1 to 7 assert the fixed text; the CLAIM row and the edge NOTE row rewritten, nothing loosened), `problems-eigen-numbers.py` (crab block re-keyed, 2250 checks), `delta-read-eigen-quadratics.py` (the pond's own row passes; the proposal row is informational; two rows check the pond against the new crab), `delta-ae-1-numbers.py` (386).
+
+Gates. Validator 0 errors (`manifest.json` restored). Voice scan 35, stat-learning and eigen: 0 and 0. `fresh-check --file` 0 hits on stat-learning 1 to 3 and `eigen/problems-3`. `grade-all.mjs --file` 0 failures on all four edited sets. `playthrough.mjs --problems` with and without `--mobile`: All passed on all four. `eigen/problems-2` not edited.
