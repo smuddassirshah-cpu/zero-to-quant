@@ -678,7 +678,8 @@ if I:
     x1 = Xd[0, :].T
     z1 = x1.dot(pc)
     scores = (np.array([wd, cl], float).T - [145, 85]) @ v_np
-    num(I, iid, 4, z1, scores[0], {'no-flip': -z1, 'raw': M([191, 88]).dot(pc), 'pc2': x1.dot(M([R(7, 25), R(-24, 25)]))})
+    num(I, iid, 4, z1, scores[0], {'no-flip': -z1, 'raw': M([191, 88]).dot(pc), 'pc2': x1.dot(M([R(7, 25), R(-24, 25)])),
+                  'first-column': x1.dot(M([R(-28, 100), R(96, 100)]))})
     zs = z1 / sp.sqrt(1125)
     num(I, iid, 5, zs, scores[0] / np.std(scores, ddof=1),
         {'variance': z1 / 1125, 'total': z1 / sp.sqrt(Sg.trace()), 'pc2-sd': z1 / sp.sqrt(500)})
