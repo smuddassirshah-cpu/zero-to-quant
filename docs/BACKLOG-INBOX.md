@@ -52,3 +52,5 @@ Raised later (review problems garch):
 - No check compares the problems of one set, or the sets of one course, for a repeated step with the same slip ids and a shared sentence (same review, findings 15, 16, 27).
 - Validator candidates: a numeric key whose exact value is a tie at the last stated place with a tolerance that takes one rounding only; a part saying "Using x from part k" whose key differs, at the stated places, from what the printed x gives (same review, findings 8 and 5).
 - Gate: after any set of a course changes, run `fresh-check --file` on every set of that course; `garch/problems-2` fails at HEAD on a `rate` error raised by `problems-3` (same review, finding 9).
+Raised later (problems numerics level 4):
+- `fresh-check.mjs --file` same-course mode loads only the course folder, so the course's topic exam (`exams/topic-2.5.json` for numerics, found by the course's `topic`) and stage or mock items carrying its skills (`stage-2.json` c-three-pricers, c-error-rates) are not checked for retold chains, number sets or rates. Session AF found re-authors caused by exactly that gap; the same-course corpus should add those exam items.

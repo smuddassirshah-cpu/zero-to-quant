@@ -51,3 +51,44 @@ No reuse was found; the reader should rule on p-stiff-credit-trapezoid against t
 ## Open
 
 - `problems-1` p-float32-overnight part 2 asks for a percentage with the key in per cent and no `unit`, so "0.060%" is read as 0.0006 and refused. Fix: `unit: "%"`, key 0.000596, tol 0.000005, `wrong` 0.000298 and 0.001192 (and the number script's `num` call for it). Not changed here, as level 1 was outside this pass's levels.
+
+# Level 4 (second author, appended): `problems-4.json`, "One option, three ways"
+
+Written by a second author; sets 1 to 3 and the sections above are untouched. Numbers: the level 4 block appended to `docs/reports/problems-numerics-numbers.py` (the only change above it is `LEVELS` now listing 4); the script runs 1,010 of 1,010 checks and exits 0.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-hand-implicit-put | 4 (4 / 0) | l13, l14 | 4 |
+| problems-4 | p-pilot-control | 4 (4 / 0) | l15, l16 | 4 |
+| problems-4 | p-grid-node-budget | 5 (5 / 0) | l13, l14, l17 | 5 |
+| problems-4 | p-digital-pairs | 5 (5 / 0) | l15, l16 | 5 |
+
+Every lesson of level 4 appears; each problem draws on two or more. Each numeric part names its form; each later part restates the value it uses. No part asks for a percentage, so no `unit: "%"` is needed.
+
+## Methods in the script
+
+Each key two ways: fractions (the matrix rebuilt from $\sigma$, $r$, $\Delta\tau$; Thomas by hand in exact arithmetic; bounds as fractions with an exact ceiling; the pair's 2 by 2 joint table) against floats (numpy `solve`, scipy `lu`, `brentq`, brute searches over $n$, $N$ and $M$, a real explicit and Crank-Nicolson put grid run against Black-Scholes). Every `wrong` value is recomputed from its named slip and checked clear of the key band; stated figures in feedback and `explain` are checked as text. The grid run confirms the prose: $-0.0219$ at $M = 69$, $-0.00243$ at $M = 207$ (over target), $-0.00137$ at $M = 276$, Crank-Nicolson at 100 steps $-0.0015$, and the hand step's put at £9.96 against the formula's £10.00.
+
+## Checks (all green at the level 4 commit)
+
+1. Number script: 1,010 of 1,010, exit 0.
+2. Validator: 0 errors; no warning on `problems-4.json` (the `negative-key` warning was fixed with a `sign` slip; three long questions split).
+3. Playthrough `--problems numerics/problems-4 --local-cdn <pkgs>`: green on desktop (`--why`, 51 typed slips routed) and `--mobile`. Part screenshots at 440 px read: the 3 by 3 system fits, no overflow.
+4. Voice scan 35: 0 and 0.
+5. `fresh-check --file`: 0 hits (no `retold`, no `rate`).
+6. `grade-all --file`: 0 failures (18 numeric widgets).
+
+## Closest course material per problem (hand check against every lesson screen, quiz, review and homework item of levels 1 to 4, sets 1 to 3, and the numerics items of `exams/topic-2.5.json`, `stage-2.json` and `mock-superday-strats.json`)
+
+| problem | closest lesson screen | closest review / homework | closest exam item | why it is not a walk through it |
+|---|---|---|---|---|
+| p-hand-implicit-put | l13 ladder "One step by hand" (explicit coefficients at $j = 50$, one step of the call); l14 problem "Solving a tridiagonal system" (4 by 4, all-ones answer) | r4-thomas (cost, choice); h4-weight (centre weight at $j = 80$) | topic-2.5 e-explicit-step (the bound, $\Delta\tau$ and $M$) | No course item takes an implicit step by hand. Here a put on a five-node grid first fails the explicit weight test (one part), then the learner runs the Thomas sweep on its own matrix (pivot, last row, back substitution) to a price checked against the formula. The l14 system is a bare matrix with no option behind it. |
+| p-pilot-control | l16 problem "A control with a known mean" ($b^* = 274.91/408.11$) and ladder "For our call" (factor 6.88, 315,000 paths); l16 transfer "Machine time" (10 hours to 36 s) | r4-vrf; h4-control-paths (1,000,000 times $1 - \rho^2$) | topic-2.5 e-control-variate ($b^*$ then the factor); r5-mc-error in the mock (half-width two SE, 810,000 paths) | $b$ is given, not asked. The chain is new: the residual variance at a pilot-fixed $b$, the paths for a 95% half-width of £0.02, the machine-time gain once a controlled path costs 1.3 plain ones, and the break-even cost 13.59. No course item prices a control's extra cost per path. |
+| p-grid-node-budget | l17 trap "The strike between nodes"; l13 ladder "Too long a step" (smallest $N$ at $M = 100$, $T = 1$); l17 ladder "The grid's error" (quarter per refinement) | r4-limit-150; r4-predict-ds ($-0.0078/16$) | topic-2.5 e-explicit-step ($\Delta\tau$ from $S_{\max}/\Delta S$, largest $M$ for $N = 2{,}500$); stage-2 c-error-rates | The course reads node placement from a table and applies the bound with $T = 1$. Here the learner chooses $M$ so both $S_0$ and $K$ sit on nodes, scales the bound by $T$, picks the first whole refinement $k$ that meets £0.002 with nodes kept, recomputes $N$, and prices explicit against Crank-Nicolson work. The design chain is in no item. |
+| p-digital-pairs | l16 ladder "Antithetic pairs" (call, $\rho = -0.501$ given, efficiency 2.0); l16 trap "When pairs hurt" (straddle); l15 problem "The rate" | r4-anti (digital named as helped, choice); r4-paths | topic-2.5 e-mc-error (SE from 40,000 paths) | The course gives the pair correlation from simulation. Here it is derived exactly from a 0 or 1 payoff ($\rho = -p/(1 - p)$, a pair never pays twice), then turned into efficiency 4/3 and a pair count, with plain and payoff counts checked against it. 25,600 paths, not the exam's 40,000. |
+
+Second hand pass on feedback lines: five `byKey` lines that echoed lesson or exam slips ("You rounded ... down. ... just over the bound", "You divided by $n$. The error falls like ...", "A 95% interval reaches 1.96 ...", "You used $M$ for $M^2$ ...") were rewritten in other words before the commit. No sentence, number set, matrix or story is shared with sets 1 to 3.
+
+## Open (level 4)
+
+- None in content. One inbox bullet: the same-course check does not load the topic exam.

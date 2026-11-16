@@ -23,7 +23,7 @@ from numbers_lib import Level  # noqa: E402
 
 mp.mp.dps = 50
 fails, checks = [], 0
-LEVELS = [n for n in (1, 2, 3) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
+LEVELS = [n for n in (1, 2, 3, 4) if os.path.exists(os.path.join(COURSE, f'problems-{n}.json'))]
 
 
 def ok(cond, msg):
@@ -450,6 +450,161 @@ if 3 in LEVELS:
         {'no-exp': 1 - trap1, 'no-minus': math.exp(0.16), 'left-end': math.exp(-0.08)})
     ok(trap1 == F(16, 100) and abs(float(ex) - float(Pex) + 9e-5) < 5e-6, 'L3 one strip exact; Richardson off by 9e-5')
     says(3, 'p-rate-path-euler', 5, '0.852144', '9 \\times 10^{-5}')
+
+# ---------------------------------------------------------------- level 4 (second author, appended)
+if 4 in LEVELS:
+    from scipy.linalg import lu, solve_banded
+    from scipy.optimize import brentq
+    from scipy.stats import norm as _norm
+    shape(4, {'p-hand-implicit-put': ['l13-finite-differences', 'l14-implicit-and-crank-nicolson'],
+              'p-pilot-control': ['l15-monte-carlo-error', 'l16-control-variates'],
+              'p-grid-node-budget': ['l13-finite-differences', 'l14-implicit-and-crank-nicolson', 'l17-three-ways'],
+              'p-digital-pairs': ['l15-monte-carlo-error', 'l16-control-variates']})
+
+    # p-hand-implicit-put: the matrix rebuilt from sigma, r, dtau, then Thomas in fractions, numpy LU and solve
+    sg2, rr, dt = F(1, 4), F(4, 100), F(1, 2)
+    al = lambda j: dt * (sg2 * j * j - rr * j) / 2
+    ga = lambda j: dt * (sg2 * j * j + rr * j) / 2
+    dg = lambda j: 1 + dt * (sg2 * j * j + rr)
+    Amat = [[dg(1), -ga(1), 0], [-al(2), dg(2), -ga(2)], [0, -al(3), dg(3)]]
+    ok(Amat == [[F('1.145'), F('-0.0725'), 0], [F('-0.23'), F('1.52'), F('-0.27')], [0, F('-0.5325'), F('2.145')]], 'L4 A matrix from the coefficients')
+    rhs1 = 20 + al(1) * 30 * mp.e**(-mp.mpf('0.02'))
+    ok(abs(float(rhs1) - 21.5438) < 5e-5, 'L4 A first right side 21.5438 holds the bottom edge 30e^-0.02')
+    cw = 1 - dt * (sg2 * 9 + rr)
+    num(4, 'p-hand-implicit-put', 1, cw, 2 - float(dg(3)),
+        {'no-r': 1 - dt * sg2 * 9, 'no-dt': 1 - (sg2 * 9 + rr), 'diag': dg(3), 'no-square': 1 - dt * (sg2 * 3 + rr), 'sign': -cw})
+    says(4, 'p-hand-implicit-put', 1, '-0.145', '2.29', '2.145')
+    An = np.array([[float(x) for x in row] for row in Amat])
+    P_, L_, U_ = lu(An)
+    ok(np.allclose(P_, np.eye(3)), 'L4 A no pivoting in LU')
+    m2 = F('-0.23') / F('1.145')
+    b2 = F('1.52') - m2 * F('-0.0725')
+    num(4, 'p-hand-implicit-put', 2, b2, U_[1, 1],
+        {'plus': F('1.52') + m2 * F('-0.0725'), 'wrong-c': F('1.52') - m2 * F('-0.27')}, rounded=1.5054)
+    d1 = F('21.5438')
+    d2 = 10 - m2 * d1
+    ok(abs(float(d2) - 14.3276) < 5e-5, 'L4 A d2 prints 14.3276')
+    says(4, 'p-hand-implicit-put', 2, '-0.20087', '1.5054', '14.3276', '0.0146')
+    m3 = F('-0.5325') / F('1.5054')
+    b3 = F('2.145') - m3 * F('-0.27')
+    d3 = -m3 * F('14.3276')
+    V3 = d3 / b3
+    Vn = np.linalg.solve(An, np.array([21.5438, 10.0, 0.0]))
+    num(4, 'p-hand-implicit-put', 3, V3, Vn[2], {'no-pivot': d3 / F('2.145'), 'zero': 0}, rounded=2.473, agree=1e-4)
+    ok(abs(float(m3) + 0.35373) < 5e-6 and abs(float(b3) - 2.0495) < 5e-5 and abs(float(d3) - 5.0681) < 5e-5, 'L4 A m3, b3, d3 printed')
+    V2 = (F('14.3276') + F('0.27') * F('2.4728')) / F('1.5054')
+    num(4, 'p-hand-implicit-put', 4, V2, Vn[1],
+        {'sign': (F('14.3276') - F('0.27') * F('2.4728')) / F('1.5054'), 'skip': F('14.3276') / F('1.5054'),
+         'no-div': F('14.3276') + F('0.27') * F('2.4728')}, rounded=9.96, agree=1e-4)
+    ok(abs(Vn[0] - 19.45) < 0.005 and abs(float(F('14.3276') + F('0.27') * F('2.4728')) - 14.9953) < 5e-5, 'L4 A V1 19.45 and 14.9953')
+
+    def bs_put(S, K, r, s, T):
+        d1_ = (math.log(S / K) + (r + s * s / 2) * T) / (s * math.sqrt(T))
+        return K * math.exp(-r * T) * _norm.cdf(-(d1_ - s * math.sqrt(T))) - S * _norm.cdf(-d1_)
+
+    def grid_put(S0, K, r, s, T, Smax, M, Nst, theta, start):
+        dS, dtt = Smax / M, T / Nst
+        j = np.arange(M + 1)
+        V = np.maximum(K - j * dS, 0.0)
+        a_, b_, c_ = 0.5 * (s * s * j * j - r * j), -(s * s * j * j + r), 0.5 * (s * s * j * j + r * j)
+        for n in range(Nst):
+            th = 1.0 if n < start else theta
+            v0 = K * math.exp(-r * (n + 1) * dtt)
+            LV = a_[1:-1] * V[:-2] + b_[1:-1] * V[1:-1] + c_[1:-1] * V[2:]
+            rhs = V[1:-1] + (1 - th) * dtt * LV
+            rhs[0] += th * dtt * a_[1] * v0
+            if th == 0:
+                V[1:-1] = rhs
+            else:
+                ab = np.zeros((3, M - 1))
+                ab[0, 1:], ab[1, :], ab[2, :-1] = -th * dtt * c_[1:-2], 1 - th * dtt * b_[1:-1], -th * dtt * a_[2:-1]
+                V[1:-1] = solve_banded((1, 1), ab, rhs)
+            V[0], V[-1] = v0, 0.0
+        return float(np.interp(S0, j * dS, V))
+
+    ok(abs(bs_put(20, 30, 0.04, 0.5, 0.5) - 10.00) < 0.005 and abs(grid_put(20, 30, 0.04, 0.5, 0.5, 40, 4, 1, 1.0, 1) - float(V2)) < 1e-3,
+       'L4 A formula 10.00 and one implicit step 9.96, error about 4p')
+    says(4, 'p-hand-implicit-put', 4, '9.96', '19.45', '£10.00', '4p')
+
+    # p-pilot-control: fractions, then the rho form, brute searches and a root find
+    vy, vx, cv, bh = F(64), F(100), F(77), F('0.77')
+    res = vy - 2 * bh * cv + bh * bh * vx
+    rho = F(77, 80)                                          # 77 / sqrt(64 x 100)
+    num(4, 'p-pilot-control', 1, res, float(vy * (1 - rho**2)),
+        {'b-one': vy - 2 * cv + vx, 'plus': vy + 2 * bh * cv + bh * bh * vx, 'one-minus-rho': vy * (1 - rho)})
+    ok(res == F('4.71') and bh == cv / vx and abs(math.sqrt(64 * 100) - 80) < 1e-12, 'L4 B 4.71, b = Cov/Var(X), rho 77/80')
+    says(4, 'p-pilot-control', 1, '118.58', '59.29', '0.9625', '0.0736')
+    z2 = F('1.96') ** 2
+    ceil = lambda q: -((-q.numerator) // q.denominator)
+    ncv = ceil(z2 * F('4.71') / F('0.02') ** 2)
+    ncv2 = next(n for n in range(40000, 50000) if 1.96 * math.sqrt(4.71 / n) <= 0.02 + 1e-15)
+    npl = ceil(z2 * 64 / F('0.02') ** 2)
+    num(4, 'p-pilot-control', 2, ncv, ncv2,
+        {'no-196': ceil(F('4.71') / F('0.0004')), 'two': ceil(4 * F('4.71') / F('0.0004')), 'plain': npl,
+         'no-square': ceil(F('1.96') * F('4.71') / F('0.0004'))})
+    ok(npl == 614656 and abs(float(z2 * F('4.71') / F('0.0004')) - 45234.84) < 1e-9, 'L4 B 614,656 and 45,234.8')
+    gain = F(npl) / (F('1.3') * ncv)
+    num(4, 'p-pilot-control', 3, gain, float(64 / 4.71 / 1.3), {'no-cost': F(npl, ncv), 'times': F(npl) * F('1.3') / ncv}, rounded=10.45, agree=1e-4)
+    says(4, 'p-pilot-control', 3, '58{,}805.5', '13.59', '10.45')
+    be = brentq(lambda c: c * 4.71 - 64, 1, 100)
+    num(4, 'p-pilot-control', 4, F(64) / F('4.71'), be, {'se': math.sqrt(13.59), 'gain': gain}, rounded=13.59)
+
+    # p-grid-node-budget: gcd and divisor search, bound by fractions and loops, a real explicit and CN grid
+    Mn = 276 // math.gcd(math.gcd(76, 92), 276)
+    Mn2 = min(M for M in range(1, 300) if all((x * M) % 276 == 0 for x in (76, 92)))
+    num(4, 'p-grid-node-budget', 1, Mn, Mn2, {'half': 138, 'pound': 276})
+    Tq, s2q, rq = F(3, 4), F(9, 100), F(3, 100)
+    nbound = lambda M: Tq * (s2q * M * M + rq)
+    nmin = lambda M: next(n for n in range(1, 10000) if Tq / n <= 1 / (s2q * M * M + rq))
+    num(4, 'p-grid-node-budget', 2, ceil(nbound(69)), nmin(69),
+        {'no-T': ceil(s2q * 69 * 69 + rq), 'down': nbound(69).numerator // nbound(69).denominator, 'no-square': ceil(Tq * (s2q * 69 + rq))})
+    ok(abs(float(nbound(69)) - 321.39) < 5e-3 and float(s2q * 69 * 69 + rq) == 428.52, 'L4 C 428.52 and 321.39')
+    ex = bs_put(76, 92, 0.03, 0.3, 0.75)
+    e69 = grid_put(76, 92, 0.03, 0.3, 0.75, 276, 69, 322, 0.0, 0) - ex
+    ok(abs(e69 + 0.0219) < 5e-5, f'L4 C explicit error at M = 69 is -0.0219 ({e69})')
+    kk = next(k for k in range(1, 20) if 0.0219 / k**2 < 0.002)
+    e207 = grid_put(76, 92, 0.03, 0.3, 0.75, 276, 207, ceil(nbound(207)), 0.0, 0) - ex
+    e276 = grid_put(76, 92, 0.03, 0.3, 0.75, 276, 276, ceil(nbound(276)), 0.0, 0) - ex
+    real_M = min(M for M in (69, 138, 207, 276, 345) if abs(grid_put(76, 92, 0.03, 0.3, 0.75, 276, M, ceil(nbound(M)), 0.0, 0) - ex) < 0.002)
+    num(4, 'p-grid-node-budget', 3, 69 * kk, real_M,
+        {'linear': 69 * next(k for k in range(1, 30) if 0.0219 / k < 0.002), 'off-node': math.ceil(69 * math.sqrt(0.0219 / 0.002)), 'k3': 207})
+    ok(abs(e207) > 0.002 and abs(e276 + 0.00137) < 5e-6 and abs(0.0219 / 9 - 0.00243) < 5e-6 and abs(0.0219 / 16 - 0.00137) < 5e-6,
+       'L4 C k = 3 fails, k = 4 meets; grid at 276 is -0.00137')
+    num(4, 'p-grid-node-budget', 4, ceil(nbound(276)), nmin(276),
+        {'scaled': 16 * 322, 'no-T': ceil(s2q * 276 * 276 + rq), 'down': nbound(276).numerator // nbound(276).denominator})
+    ok(float(s2q * 276 * 276 + rq) == 6855.87 and abs(float(nbound(276)) - 5141.9) < 5e-2, 'L4 C 6,855.87 and 5,141.9')
+    ecn = grid_put(76, 92, 0.03, 0.3, 0.75, 276, 276, 100, 0.5, 2) - ex
+    ok(abs(ecn) < 0.002 and abs(ecn + 0.0015) < 5e-5, f'L4 C Crank-Nicolson 100 steps errs -0.0015 ({ecn})')
+    num(4, 'p-grid-node-budget', 5, F(276 * 5142, 3 * 276 * 100), 5142 / 300,
+        {'no-cost': F(5142, 100), 'scaled': F(5152, 300)}, rounded=17.14)
+    ok(276 * 5142 == 1419192 and 3 * 276 * 100 == 82800, 'L4 C work 1,419,192 and 82,800')
+    says(4, 'p-grid-node-budget', 5, '1{,}419{,}192', '82{,}800', '-0.0015')
+
+    # p-digital-pairs: fractions, then the 2 by 2 joint table of a pair and a normal-quantile check
+    p, D = F(1, 5), F(48)
+    sd = D * F(2, 5)
+    ok(sd * sd == D * D * p * (1 - p), 'L4 D s squared is 48^2 x 0.16')
+    ok(F('0.96') * 50 == D, 'L4 D 0.96 x 50 = 48')
+    num(4, 'p-digital-pairs', 1, sd, math.sqrt(48**2 * 0.2 * 0.8),
+        {'no-disc': 50 * F(2, 5), 'p-only': 48 * math.sqrt(0.2), 'var': sd * sd})
+    num(4, 'p-digital-pairs', 2, sd / 160, 19.2 / math.sqrt(25600),
+        {'no-disc': F(20) / 160, 'by-n': sd / 25600, 'var': sd * sd / 160})
+    c_ = _norm.ppf(1 - 0.2)
+    ok(c_ > 0, 'L4 D strike above the median, so a pair cannot pay twice')
+    joint = {(1, 1): F(0), (1, 0): p, (0, 1): p, (0, 0): 1 - 2 * p}
+    eb1b2 = sum(pr * a * b for (a, b), pr in joint.items())
+    rho_pair = (eb1b2 - p * p) / (p * (1 - p))
+    num(4, 'p-digital-pairs', 3, rho_pair, -0.2 / 0.8, {'minus-p': -p, 'sign': -rho_pair, 'cov': -p * p})
+    eff = 1 / (1 + rho_pair)
+    num(4, 'p-digital-pairs', 4, eff, (0.5 * 368.64) / (0.5 * 368.64 * 0.75),
+        {'vrf': 1 / (1 - rho_pair**2), 'inverted': 1 + rho_pair, 'one-minus': 1 / (1 - rho_pair)})
+    pv = F(1, 2) * sd * sd * (1 + rho_pair)
+    pairs = pv / F(1, 400)
+    pairs2 = next(m for m in range(50000, 60000) if math.sqrt(138.24 / m) <= 0.05 + 1e-15)
+    num(4, 'p-digital-pairs', 5, pairs, pairs2,
+        {'payoffs': 2 * pairs, 'plain': sd * sd / F(1, 400), 'one-minus': F(1, 2) * sd * sd * (1 - rho_pair) / F(1, 400)})
+    ok(pv == F('138.24') and F(147456, 110592) == eff, 'L4 D pair variance 138.24; 147,456 / 110,592 is the efficiency')
+    says(4, 'p-digital-pairs', 5, '138.24', '55{,}296', '110,592', '147,456')
 
 # ---------------------------------------------------------------- report
 for lv in LEVELS:
