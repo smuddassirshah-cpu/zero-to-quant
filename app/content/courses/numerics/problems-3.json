@@ -1,0 +1,550 @@
+{
+  "id": "problems-3",
+  "course": "numerics",
+  "level": 3,
+  "title": "Problems: integrals and time steps",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-normal-cdf-quadrature",
+      "difficulty": 3,
+      "skills": [
+        "nm-quadrature"
+      ],
+      "prose": "A pricing script has no statistics library, yet it needs $\\Phi(1)$, the standard normal probability below 1. It uses $\\Phi(1) = \\tfrac12 + \\tfrac{1}{\\sqrt{2\\pi}}I$, where $I = \\int_0^1 e^{-x^2/2}\\,dx = 0.8556244$ to 7 places. Write $f(x) = e^{-x^2/2}$, with $f(0.5) = 0.882497$ and $f(1) = 0.606531$.",
+      "parts": [
+        {
+          "question": "Apply the trapezium rule with 2 strips, so $h = 0.5$. What is $T_2$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.842881,
+            "tol": {
+              "abs": 6e-05
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "one-strip",
+                "value": 0.803265,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "no-half",
+                "value": 1.244514,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$T_2 = 0.25(1 + 2 \\times 0.882497 + 0.606531) \\approx 0.8429$.",
+            "generic": "Not quite. The two end points get weight $\\tfrac h2$ and the midpoint gets weight $h$.",
+            "byKey": {
+              "one-strip": "That is $T_1 = 0.5(f(0) + f(1))$, a single strip. Two strips bring in the midpoint $f(0.5)$.",
+              "no-half": "You gave every point weight $h$. The two end points carry only $\\tfrac h2$."
+            }
+          },
+          "explain": {
+            "text": "With $h = 0.5$ the rule is $\\tfrac h2(f_0 + 2f_1 + f_2) = 0.25 \\times 3.371524 \\approx 0.8429$. That is 0.0127 below $I$. The curve bends down on $[0, 1]$, so each chord runs under it."
+          }
+        },
+        {
+          "question": "Using $T_2 = 0.8429$ from part 1 and the one-strip $T_1 = 0.8033$, Richardson's $\\tfrac{4T_2 - T_1}{3}$ cancels the $h^2$ term of the error. What does it give? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.856086,
+            "tol": {
+              "abs": 6e-05
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "swap",
+                "value": 0.79006,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "order-one",
+                "value": 0.882497,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{4 \\times 0.842881 - 0.803265}{3} \\approx 0.8561$, only about 0.0005 above $I$.",
+            "generic": "Not quite. Take four times the finer sum, less the coarser one, all over 3.",
+            "byKey": {
+              "swap": "You weighted the coarse sum by 4. The finer sum $T_2$ is the one that takes the 4.",
+              "order-one": "That is $2T_2 - T_1$, which cancels an error of order $h$. The trapezium's error is of order $h^2$, so the weights are 4 and 1, over 3."
+            }
+          },
+          "explain": {
+            "text": "Halving $h$ cuts the $h^2$ term by 4, so $4T_2 - T_1$ keeps $3I$ and loses that term. Dividing by 3 gives 0.856086, which is Simpson's rule on the same three points. The error falls from 0.0127 to 0.00046 with no new value of $f$."
+          }
+        },
+        {
+          "question": "Simpson's 0.8561 from part 2 used three values of $f$. The two-node Gauss-Legendre rule on $[-1, 1]$ has nodes $\\pm\\tfrac{1}{\\sqrt3}$ and weights 1. Map it to $[0, 1]$ and apply it to $I$. Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.855315,
+            "tol": {
+              "abs": 6e-05
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "no-factor",
+                "value": 1.710629,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "unmapped",
+                "value": 1.692963,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The nodes map to 0.211325 and 0.788675, where $f$ is 0.977918 and 0.732711. Half their sum is 0.8553.",
+            "generic": "Not quite. Use $x = \\tfrac12 + \\tfrac12 t$, which moves the nodes and halves each weight.",
+            "byKey": {
+              "no-factor": "You moved the nodes but kept weights 1. The interval now has length 1, not 2, so each weight halves.",
+              "unmapped": "You used $\\pm 0.57735$ as they are, which integrates over $[-1, 1]$. Map them into $[0, 1]$ first."
+            }
+          },
+          "explain": {
+            "text": "The map $x = \\tfrac12 + \\tfrac12 t$ sends $\\pm\\tfrac{1}{\\sqrt3}$ to 0.211325 and 0.788675, and halves each weight. The rule gives 0.855315, off by 0.00031. Two nodes are exact up to degree 3, as Simpson's three points are, and here they err less."
+          }
+        },
+        {
+          "question": "Using $I \\approx 0.8553$ from part 3, what is $\\Phi(1)$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.841221,
+            "tol": {
+              "abs": 6e-05
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "no-half",
+                "value": 0.341221,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "two-pi",
+                "value": 0.636128,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac12 + \\tfrac{0.855315}{2.506628} \\approx 0.8412$.",
+            "generic": "Not quite. Divide $I$ by $\\sqrt{2\\pi} \\approx 2.5066$, then add the half that lies below zero.",
+            "byKey": {
+              "no-half": "That is the probability between 0 and 1 only. Add the $\\tfrac12$ below zero.",
+              "two-pi": "You divided by $2\\pi$. The normal density carries $\\tfrac{1}{\\sqrt{2\\pi}}$."
+            }
+          },
+          "explain": {
+            "text": "$\\Phi(1) = 0.5 + 0.855315/2.506628 \\approx 0.841221$. The library value is 0.841345, so the error is about $1.2 \\times 10^{-4}$: the quadrature error divided by 2.5066. A three-node rule would cut it below $10^{-6}$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-stiff-credit-trapezoid",
+      "difficulty": 5,
+      "skills": [
+        "nm-quadrature",
+        "nm-stability"
+      ],
+      "prose": "A credit model couples a default intensity, which reverts at 0.3 a year, with a liquidity spread, which reverts at 2,500 a year. Its two modes decay at $\\lambda = -0.3$ and $\\lambda = -2500$, and both start at size 1. The desk needs the state at $T = 5$ years to within $10^{-5}$. RK4 would need $h \\le 2.7853/2500$ to stay stable, so the desk tries the trapezoidal rule, which has no step limit.",
+      "parts": [
+        {
+          "question": "On the slow mode alone, the trapezoidal rule errs by $-6.288 \\times 10^{-4}$ with $h = 0.5$ and by $-1.570 \\times 10^{-4}$ with $h = 0.25$. What order $p$ do the two errors show? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.001837,
+            "tol": {
+              "abs": 0.006
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "ratio",
+                "value": 4.005096,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "log10",
+                "value": 0.602613,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The ratio is $\\tfrac{6.288}{1.570} \\approx 4.005$, and $\\log_2 4.005 \\approx 2.00$.",
+            "generic": "Not quite. Halving $h$ divides an error $Ch^p$ by $2^p$, so take $\\log_2$ of the ratio.",
+            "byKey": {
+              "ratio": "4.005 is the ratio itself. The order is the power of 2 that it equals, $\\log_2 4.005$.",
+              "log10": "You took $\\log_{10}$ of the ratio. The step was halved, so the base is 2."
+            }
+          },
+          "explain": {
+            "text": "If the error is $Ch^p$, halving $h$ divides it by $2^p$. Here it shrinks by a factor of 4.005, so $p = \\log_2 4.005 \\approx 2.00$. The trapezoidal rule is second order, as expected."
+          }
+        },
+        {
+          "question": "Using $p = 2$ and the error at $h = 0.25$ from part 1, the slow-mode error is about $Ch^2$. What is the smallest number of steps over the 5 years that brings it below $10^{-5}$? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 80,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "a whole number",
+            "wrong": [
+              {
+                "id": "order-one",
+                "value": 314,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "floor",
+                "value": 79,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$C = 1.570 \\times 10^{-4}/0.0625 = 2.512 \\times 10^{-3}$, so $h \\le \\sqrt{10^{-5}/C} \\approx 0.0631$. That needs $5/0.0631 \\approx 79.2$ steps, so 80.",
+            "generic": "Not quite. Find $C$ from the error at $h = 0.25$ and solve $Ch^2 = 10^{-5}$ for $h$. Then divide 5 years by $h$ and round up.",
+            "byKey": {
+              "order-one": "You took the error as $Ch$. Part 1 showed it falls like $h^2$, so far fewer steps will do.",
+              "floor": "79 steps give a predicted error of $1.006 \\times 10^{-5}$, just above the tolerance. Round the step count up."
+            }
+          },
+          "explain": {
+            "text": "From $C(0.25)^2 = 1.570 \\times 10^{-4}$ we get $C = 2.512 \\times 10^{-3}$. Then $Ch^2 \\le 10^{-5}$ needs $h \\le 0.0631$, so $n \\ge 79.2$ and $n = 80$. RK4 would need $5 \\times 2500/2.7853 \\approx 4{,}488$ steps for stability alone."
+          }
+        },
+        {
+          "question": "Using $n = 80$ from part 2, the step is $h = 0.0625$. What factor does the trapezoidal rule apply to the fast mode each step? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -0.974724,
+            "tol": {
+              "abs": 6e-05
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 0.974724,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "implicit",
+                "value": 0.006359,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "euler",
+                "value": -155.25,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$z = h\\lambda = -156.25$, so the factor is $\\tfrac{1 - 78.125}{1 + 78.125} \\approx -0.9747$.",
+            "generic": "Not quite. Put $z = h\\lambda$ into $\\tfrac{1 + z/2}{1 - z/2}$.",
+            "byKey": {
+              "sign": "The top, $1 + z/2$, is negative here, so the factor is negative: the mode flips sign each step.",
+              "implicit": "That is implicit Euler's factor, $\\tfrac{1}{1 - z}$. The trapezoidal rule averages the slopes at both ends of the step.",
+              "euler": "That is explicit Euler's factor, $1 + z$. The trapezoidal rule's factor is $\\tfrac{1 + z/2}{1 - z/2}$."
+            }
+          },
+          "explain": {
+            "text": "With $z = 0.0625 \\times (-2500) = -156.25$, the factor is $\\tfrac{-77.125}{79.125} \\approx -0.9747$. Its size is below 1, so the run is stable. But it sits close to $-1$, so the fast mode flips sign every step and fades only slowly."
+          }
+        },
+        {
+          "question": "Using the factor $-0.9747$ from part 3, what share of the fast mode is left after 80 steps? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.128978,
+            "tol": {
+              "abs": 0.0006
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": -0.128978,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "true",
+                "value": 0,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.974724^{80} \\approx 0.129$: about 13% of the fast mode is still there at $T$.",
+            "generic": "Not quite. Raise the factor to the 80th power; an even power of a negative number is positive.",
+            "byKey": {
+              "sign": "80 is even, so the sign flips cancel and what is left is positive.",
+              "true": "The true fast mode is $e^{-12500}$ at $T$, zero to any precision. The trapezoidal rule leaves $0.9747^{80}$ instead, which is far from small."
+            }
+          },
+          "explain": {
+            "text": "$|R|^{80} = e^{80\\ln 0.974724} \\approx 0.129$, while the true fast mode has fallen to $e^{-12500}$. So the state at $T$ is off by about 0.13, some 13,000 times the tolerance. A stable step is not an accurate one: start with implicit Euler steps, whose factor here is $\\tfrac{1}{157.25}$, or with much smaller steps."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-rate-path-euler",
+      "difficulty": 4,
+      "skills": [
+        "nm-quadrature"
+      ],
+      "prose": "A scenario lets the short rate climb in a straight line, $r(t) = 0.02 + 0.01t$. The 4-year discount factor solves $P' = -r(t)P$ with $P(0) = 1$. Euler's method gives $P(4) \\approx 0.866947$ with 4 steps, 0.859366 with 8 and 0.855710 with 16.",
+      "parts": [
+        {
+          "question": "With no exact value to hand, the gaps between successive runs shrink as the errors do. What order $p$ do the three runs show? Give 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.052122,
+            "tol": {
+              "abs": 0.006
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "ratio",
+                "value": 2.073578,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "flip",
+                "value": -1.052122,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The gaps are 0.007581 and 0.003656, a ratio of 2.074, so $p = \\log_2 2.074 \\approx 1.05$.",
+            "generic": "Not quite. Find the two gaps between neighbouring runs, then take $\\log_2$ of their ratio.",
+            "byKey": {
+              "ratio": "2.074 is the ratio of the gaps. The order is $\\log_2$ of it.",
+              "flip": "You divided the smaller gap by the larger. Halving $h$ shrinks the gap, so take the larger over the smaller."
+            }
+          },
+          "explain": {
+            "text": "If the error is $Ch^p$, the gap between runs at $h$ and $\\tfrac h2$ is $Ch^p(1 - 2^{-p})$, which also falls by $2^p$ per halving. The gaps 0.007581 and 0.003656 give $p = \\log_2 2.074 \\approx 1.05$. Euler's method is first order, and the runs bear that out."
+          }
+        },
+        {
+          "question": "Using $p = 1$ from part 1, estimate the 16-step value's error, computed minus true. Give 6 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.003656,
+            "tol": {
+              "abs": 6e-07
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "p-two",
+                "value": 0.001219,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "sign",
+                "value": -0.003656,
+                "tol": {
+                  "abs": 6e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "With $p = 1$ the divisor $2^p - 1$ is 1, so the error is $0.859366 - 0.855710 = 0.003656$.",
+            "generic": "Not quite. Divide the gap between the 8-step and 16-step values by $2^p - 1$.",
+            "byKey": {
+              "p-two": "You divided by 3, as for a second-order method. Euler is first order, so divide by 1.",
+              "sign": "The runs fall towards the answer, so the 16-step value still sits above it: its error is positive."
+            }
+          },
+          "explain": {
+            "text": "With $y_h = P + Ch$ and $y_{h/2} = P + C\\tfrac h2$, the gap $y_h - y_{h/2}$ equals $C\\tfrac h2$, the error of $y_{h/2}$. So the 16-step value is about 0.003656 too high. Its true error is about 0.00357, close enough to plan with."
+          }
+        },
+        {
+          "question": "Using the error 0.003656 from part 2, remove it from the 16-step value. What estimate of $P(4)$ results? Give 5 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.852054,
+            "tol": {
+              "abs": 6e-06
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "added",
+                "value": 0.859366,
+                "tol": {
+                  "abs": 6e-06
+                }
+              },
+              {
+                "id": "p-two",
+                "value": 0.854491,
+                "tol": {
+                  "abs": 6e-06
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.855710 - 0.003656 = 0.852054$, which is $2y_{h/2} - y_h$.",
+            "generic": "Not quite. Take the estimated error away from the 16-step value.",
+            "byKey": {
+              "added": "You added the error. The 16-step value is too high, so subtract it.",
+              "p-two": "That subtracts the second-order estimate 0.001219. With $p = 1$ the correction is the whole gap."
+            }
+          },
+          "explain": {
+            "text": "Subtracting the estimate gives $2(0.855710) - 0.859366 = 0.852054$. This is Richardson's rule for a first-order method, with weights 2 and 1. It lands within $10^{-4}$ of the exact value, from runs whose own errors exceed $3 \\times 10^{-3}$."
+          }
+        },
+        {
+          "question": "Take the error as $Ch$, with 0.003656 at $h = 0.25$ from part 2. How many Euler steps bring it below $10^{-5}$? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5850,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "a whole number",
+            "wrong": [
+              {
+                "id": "p-two",
+                "value": 306,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "floor",
+                "value": 5849,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$C = 0.003656/0.25 = 0.014624$, so $h \\le 10^{-5}/0.014624 \\approx 6.84 \\times 10^{-4}$. That is $4/h \\approx 5{,}849.6$, so 5,850 steps.",
+            "generic": "Not quite. Find $C$ from the error at $h = 0.25$ and solve $Ch = 10^{-5}$. Then divide 4 years by $h$ and round up.",
+            "byKey": {
+              "p-two": "You used $Ch^2$. Euler's error is of order $h$, so the step must shrink in proportion to the tolerance.",
+              "floor": "5,849 steps predict an error of $1.0001 \\times 10^{-5}$, just above the target. Round up."
+            }
+          },
+          "explain": {
+            "text": "First order means the error is proportional to $h$. Cutting it from 0.003656 to $10^{-5}$ needs a step 365.6 times smaller, so $16 \\times 365.6 \\approx 5{,}850$ steps. Each step costs one value of $r$."
+          }
+        },
+        {
+          "question": "Euler needs 5,850 steps (part 4), yet $P(4) = e^{-\\int_0^4 r(t)\\,dt}$ exactly. Use the trapezium rule with a single strip for the integral. What is $P(4)$? Give 6 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.852144,
+            "tol": {
+              "abs": 6e-07
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "no-exp",
+                "value": 0.84,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "no-minus",
+                "value": 1.173511,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "left-end",
+                "value": 0.923116,
+                "tol": {
+                  "abs": 6e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "One strip gives $\\tfrac42(0.02 + 0.06) = 0.16$, so $P(4) = e^{-0.16} \\approx 0.852144$.",
+            "generic": "Not quite. Average $r(0)$ and $r(4)$, multiply by 4 years, then take $e$ to minus that.",
+            "byKey": {
+              "no-exp": "$1 - 0.16$ is only a first-order guess. The discount factor is $e^{-0.16}$.",
+              "no-minus": "A discount factor is below 1, so the exponent is $-0.16$.",
+              "left-end": "You used only $r(0) = 0.02$ across the 4 years. The trapezium averages the two ends."
+            }
+          },
+          "explain": {
+            "text": "The trapezium's error is $-\\tfrac{(b - a)h^2}{12}r''(\\xi)$, and $r'' = 0$ for a straight line, so one strip is exact. Two values of $r$ give 0.852144, where Euler needed 5,850 steps. Richardson's 0.852054 from part 3 was off by $9 \\times 10^{-5}$."
+          }
+        }
+      ]
+    }
+  ]
+}
