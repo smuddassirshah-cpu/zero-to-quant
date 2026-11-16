@@ -31,3 +31,28 @@ Typed parts 16 of 18. Choices are judgements: why a rank and a z disagree (one o
 Checks: number script exit 0; validator 0 errors, no warning on the file (two `shown-arithmetic`, one `key-length`, one `O2-explain-answer` and one long question fixed while drafting); `grade-all --file` 0 failures (18 widgets); playthrough green with `--why` (31 slips routed) and `--mobile`; 440 px shots read. Voice scan 0 and 0.
 
 Freshness: `fresh-check --file`: 0 hits, 0 advisories in the end. First run: the l6 recursion $w_k = -w_{k-1}\frac{d - k + 1}{k}$ was a shared-formula advisory with l6 and `exams/stage-2.json`; the set now states the same rule as $w_k = w_{k-1}\frac{k - 1 - d}{k}$, which the learner must still apply (all feedback rewritten in that form). Grep: d = 0.35, −0.11375, −0.0626, 2.379, the closes 5.005 to 5.012, 1.38m over 1.20m, the values 0.82 to 2.40, 25.33 and the closes £20 to £30 share no setting in fin-ml (l6 has $d$ = 0.3, 0.4, 0.5; review-2 has 0.3 and the ranks 4, 7, 7, 1, 9). The company names were first rivers (Avon, Brent, Clyde, Dee, Exe, Wye); `alpha` l5 and l7 use river names for a cross-sectional rank, so they were changed to Agate, Beryl, Coral, Jasper, Onyx and Topaz, which appear nowhere in `app/content/`.
+
+## Level 3 (from prediction to profit)
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-3 | p-five-day-sizing | 4 (4 / 0) | l9, l10 | 4 |
+| problems-3 | p-trial-log-dsr | 4 (4 / 0) | l11, l12 | 5 |
+| problems-3 | p-futures-net-psr | 4 (4 / 0) | l10, l11 | 4 |
+| problems-3 | p-calibrated-kelly | 5 (4 / 1) | l9, l12 | 3 |
+
+Typed parts 16 of 17; the choice is the plan's order (calibrate before sizing). Chains: AFML size, rounded units traded, cost, break-even; trial count from a log with reruns, $E[\max]$, the error with skew and kurtosis, DSR; daily cost, net Sharpe, error, PSR; Kelly at odds 1.8 on the raw and calibrated chances, growth at the raw stake, share of the best growth.
+
+Checks: number script exit 0 (598 of 598 over the three sets); validator 0 errors, no warning on the file (`wrong-band`, `shown-arithmetic` and four long sentences fixed while drafting); `grade-all --file` 0 failures (17 widgets); playthrough green with `--why` (36 slips routed) and `--mobile`. The first 440 px shots showed the inline $E[\max]$ formula running past the column and shifting the page; both long formulas are now display maths and the shots read clean. Voice scan 0 and 0.
+
+Notes on numbers: the $E[\max]$ closed form runs 2.6% above the exact mean of the best of 5 normals (1.1927 against 1.1630, checked by integration and simulation), so the question says "about" and the key is the closed form, as l11 teaches it. The DSR key 0.954 accepts 0.952 to 0.956, which covers $\Phi$-table rounding of the stated intermediates (0.955 from 0.53 a year rounded).
+
+Freshness: `fresh-check --file`: 0 hits, 0 advisories in the end. First run: a numbers warning and a parameters advisory against this course's own `problems-1` (0.63, 0.66, 0.74: the first draft's probabilities met the copper table's $p$ values); the five probabilities were changed to 0.67, 0.77, 0.72, 0.37, 0.42 and every downstream key recomputed. Grep of the course folder, `exams/topic-2.1.json` and `exams/stage-2.json`: only 0.28 appears in stage-2, as an unrelated single number. Stories (five-day sizing on a £5m book, a ridge and forest trial log, a futures signal at 9 bp, a 1.80 payout) are new to fin-ml; review-3 uses a 1.50 payout and the homework a 25-trial pitch.
+
+## Reuse advisories
+
+None left on any set: every advisory met while drafting was removed by a rewrite (listed per level above), none was waived. No `reuseWaiver` is used.
+
+## Engine limits
+
+One bullet in `docs/BACKLOG-INBOX.md` under "Raised later (problems fin-ml)".

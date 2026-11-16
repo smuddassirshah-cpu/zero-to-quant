@@ -350,6 +350,149 @@ ok(abs((25 - 25.33) / 4.51 + 0.07) <= 0.005 and r(float(ss_ce), 2) == 40.67 and 
    and r(float(ss_tr), 2) == 8.67 and r(np.std([21, 25, 30], ddof=1), 2) == 4.51, 'p-shipping: stated sums and sds')
 pick(L2, 'p-shipping-z', 5, 'future')
 
+# ---------------------------------------------------------------- level 3
+L3 = load(3)
+
+
+def afml(p):
+    z_ = (p - 0.5) / math.sqrt(p * (1 - p))
+    return 2 * Phi(z_) - 1
+
+
+def afml_erf(p):  # 2*Phi(z) - 1 = erf(z / sqrt 2), the lesson's one-call form
+    return math.erf((p - 0.5) / math.sqrt(p * (1 - p)) / math.sqrt(2))
+
+
+# p-five-day-sizing
+ps = [0.67, 0.77, 0.72, 0.37, 0.42]
+ok('0.67, 0.77, 0.72, 0.37 and 0.42' in L3['p-five-day-sizing']['prose'], 'p-five: probabilities stated')
+z1 = (0.67 - 0.5) / math.sqrt(0.67 * 0.33)
+num(L3, 'p-five-day-sizing', 1, afml(0.67), afml_erf(0.67), {'phi-only': Phi(z1), 'kelly': 2 * 0.67 - 1, 'z-only': z1})
+sizes = [afml(q) for q in ps]
+said(L3, 'p-five-day-sizing', 2, '0.48, 0.38, −0.21 and −0.13')
+ok([r(v, 2) for v in sizes[1:]] == [0.48, 0.38, -0.21, -0.13], 'p-five p2: stated sizes')
+stated = [F('0.28'), F('0.48'), F('0.38'), F('-0.21'), F('-0.13')]
+pos = [F(round(v * 10), 10) for v in stated]
+units = sum(abs(b - a) for a, b in zip([F(0)] + pos, pos))
+pos_np = np.round(np.array(sizes) * 10) / 10
+units_np = np.abs(np.diff(np.concatenate([[0], pos_np]))).sum()
+num(L3, 'p-five-day-sizing', 2, units, units_np,
+    {'raw-sizes': sum(abs(b - a) for a, b in zip([F(0)] + stated, stated)), 'no-entry': units - pos[0],
+     'positions': sum(abs(v) for v in pos)}, agree=1e-12)
+ok(r(float(np.abs(np.diff(np.concatenate([[0], sizes]))).sum()), 2) == 1.25, 'p-five p2: raw sizes trade 1.25 unrounded too')
+BOOK, CBP = 5_000_000, F(6, 10000)
+cost = units * BOOK * CBP
+num(L3, 'p-five-day-sizing', 3, cost, float(units_np) * 5e6 * 0.0006,
+    {'raw-sizes': F('1.25') * BOOK * CBP, 'both-ways': 2 * cost, 'bp-slip': units * BOOK * F(6, 1000)}, agree=1e-6)
+GROSS = F(5850)
+be = GROSS / (units * BOOK) * 10000
+lo, hi = 0.0, 100.0
+for _ in range(60):  # bisect net(c) = gross - units * book * c / 1e4
+    mid = (lo + hi) / 2
+    lo, hi = (mid, hi) if 5850 - float(units) * 5e6 * mid / 1e4 > 0 else (lo, mid)
+num(L3, 'p-five-day-sizing', 4, be, lo, {'per-book': GROSS / BOOK * 10000, 'net': (GROSS - cost) / (units * BOOK) * 10000},
+    agree=1e-9)
+ok(GROSS - cost == 1950 and units * BOOK == 6_500_000, 'p-five p4: £1,950 kept, £6.5m traded')
+
+# p-trial-log-dsr
+log = [('ridge', 1), ('ridge', 10), ('ridge', 1), ('ridge', 100), ('forest', 4), ('forest', 4), ('forest', 8)]
+ok(L3['p-trial-log-dsr']['prose'].count('\n- ') == len(log), 'p-trial: log length')
+N5 = len(set(log))
+num(L3, 'p-trial-log-dsr', 1, N5, len(dict.fromkeys(log)), {'runs': len(log), 'one': 1})
+n_, V_ = 1260, 1 / 1259
+
+
+def emax(N_, V):
+    return math.sqrt(V) * ((1 - EG) * iPhi(1 - 1 / N_) + EG * iPhi(1 - 1 / (N_ * math.e)))
+
+
+E5 = emax(N5, V_)
+sims = rng.standard_normal((40000, N5)).max(axis=1) * math.sqrt(V_)   # best of 5 noise Sharpes
+# the closed form runs high for small N: exact mean of the best of 5 normals by integration, then a simulation
+xg = np.linspace(-9, 9, 200001)
+e_exact = float(np.sum(xg * 5 * ND.pdf(0) * np.exp(-xg ** 2 / 2) * np.vectorize(Phi)(xg) ** 4) * (xg[1] - xg[0]))
+ok(abs(e_exact - 1.16296) < 1e-4 and abs(sims.mean() / math.sqrt(V_) / e_exact - 1) < 0.01, 'p-trial p2: exact best of 5')
+ok(0 < E5 / math.sqrt(V_) / e_exact - 1 < 0.03, 'p-trial p2: the formula is within 3% above the exact mean')
+num(L3, 'p-trial-log-dsr', 2, E5 * math.sqrt(252),
+    math.sqrt(V_) * (0.4228 * iPhi(0.8) + 0.5772 * iPhi(1 - 1 / (5 * math.e))) * math.sqrt(252),
+    {'runs': emax(7, V_) * math.sqrt(252), 'daily': E5}, agree=2e-4)
+ok([r(iPhi(0.8), 3), r(iPhi(1 - 1 / (5 * math.e)), 3), r(1 - 1 / (5 * math.e), 3)] == [0.842, 1.45, 0.926]
+   and r(0.4228 * 0.842 + 0.5772 * 1.450, 3) == 1.193, 'p-trial p2: stated quantiles and bracket')
+SRd = 1.3 / math.sqrt(252)
+g3, g4 = -0.3, 4.0
+se_t = math.sqrt((1 - g3 * SRd + (g4 - 1) / 4 * SRd ** 2) / (n_ - 1))
+SRs = sp.Rational(13, 10) / sp.sqrt(252)
+se_s = sp.sqrt((1 - sp.Rational(-3, 10) * SRs + sp.Rational(3, 4) * SRs ** 2) / 1259)
+num(L3, 'p-trial-log-dsr', 3, se_s, se_t,
+    {'annual': math.sqrt((1 + 0.3 * 1.3 + 0.75 * 1.69) / 1259), 'normal': math.sqrt((1 + 0.5 * SRd ** 2) / 1259),
+     'skew-sign': math.sqrt((1 + g3 * SRd + 0.75 * SRd ** 2) / 1259)}, agree=1e-12)
+ok(r(SRd, 4) == 0.0819 and r(0.3 * SRd, 4) == 0.0246 and r(0.75 * SRd ** 2, 4) == 0.005
+   and r(1 - g3 * SRd + 0.75 * SRd ** 2, 4) == 1.0296, 'p-trial p3: stated terms')
+dsr = Phi((SRd - E5) / se_t)
+dsr_rounded = Phi((0.0819 - 0.53 / math.sqrt(252)) / 0.0286)
+num(L3, 'p-trial-log-dsr', 4, dsr, dsr_rounded,
+    {'runs': Phi((SRd - emax(7, V_)) / se_t), 'psr-zero': Phi(SRd / se_t)}, agree=2e-3)
+ok(r((0.0819 - 0.0336) / 0.0286, 2) == 1.69 and r(Phi(1.69), 3) == 0.954, 'p-trial p4: stated z and Phi')
+# simulated DSR check: share of noise searches whose best beats the reported Sharpe is small
+ok(np.mean(sims >= SRd) < 0.05, 'p-trial p4: noise rarely reaches 0.0819 with 5 trials')
+
+# p-futures-net-psr
+G, SD, TO, C9, n3 = F(6), F(75), F('0.35'), F(9), 750
+cday = TO * C9
+num(L3, 'p-futures-net-psr', 1, cday, 0.35 * 9, {'divided': C9 / TO, 'both-ways': 2 * cday}, agree=1e-12)
+pnl = rng.normal(6e-4, 75e-4, 2_000_000)  # simulate gross P&L, subtract the cost line, re-measure the Sharpe
+net_sim = pnl - 0.35 * 9e-4
+SR_net = (G - cday) / SD
+num(L3, 'p-futures-net-psr', 2, SR_net * sp.sqrt(252), net_sim.mean() / net_sim.std() * math.sqrt(252),
+    {'gross': G / SD * math.sqrt(252), 'daily': SR_net}, agree=0.02)
+ok(SR_net == F(38, 1000) and r(math.sqrt(252), 2) == 15.87 and r(float(G / SD) * math.sqrt(252), 2) == 1.27,
+   'p-futures p2: stated figures')
+sr = 0.038
+se_f = math.sqrt((1 + 0.6 * sr + 1 * sr ** 2) / (n3 - 1))
+se_f_s = sp.sqrt((1 + sp.Rational(6, 10) * sp.Rational(38, 1000) + sp.Rational(38, 1000) ** 2) / 749)
+num(L3, 'p-futures-net-psr', 3, se_f_s, se_f,
+    {'normal': math.sqrt((1 + 0.5 * sr ** 2) / 749), 'annual': math.sqrt((1 + 0.6 * 0.6032 + 0.6032 ** 2) / 749)},
+    agree=1e-12)
+ok(r(1 + 0.6 * sr + sr ** 2, 4) == 1.0242 and r(0.6 * sr, 4) == 0.0228 and r(sr ** 2, 4) == 0.0014, 'p-futures p3: terms')
+psr = Phi(sr / se_f)
+sr_g = 0.08
+se_g = math.sqrt((1 + 0.6 * sr_g + sr_g ** 2) / 749)
+num(L3, 'p-futures-net-psr', 4, psr, Phi(0.038 / 0.0370),
+    {'gross': Phi(sr_g / se_g), 'normal': Phi(sr / math.sqrt((1 + 0.5 * sr ** 2) / 749))}, agree=1e-3)
+ok(r(0.038 / 0.0370, 2) == 1.03 and r(Phi(1.03), 3) == 0.848, 'p-futures p4: stated z and Phi')
+
+# p-calibrated-kelly
+b = F(9, 5)
+
+
+def kelly(p):
+    return p - (1 - p) / b
+
+
+def growth(f, p):
+    return p * np.log(1 + 1.8 * f) + (1 - p) * np.log(1 - f)
+
+
+fgrid = np.linspace(0, 0.6, 600001)
+num(L3, 'p-calibrated-kelly', 1, kelly(F(47, 100)), fgrid[np.argmax(growth(fgrid, 0.47))],
+    {'even-odds': 2 * F(47, 100) - 1, 'times-b': F(47, 100) - F(53, 100) * b}, agree=2e-6)
+num(L3, 'p-calibrated-kelly', 2, kelly(F(44, 100)), fgrid[np.argmax(growth(fgrid, 0.44))],
+    {'even-odds': 2 * F(44, 100) - 1, 'raw': kelly(F(47, 100))}, agree=2e-6)
+fr, ftr = float(kelly(F(47, 100))), float(kelly(F(44, 100)))
+wins = rng.random(4_000_000) < 0.44
+g_mc = np.where(wins, math.log(1 + 1.8 * fr), math.log(1 - fr)).mean()
+num(L3, 'p-calibrated-kelly', 3, growth(fr, 0.44), g_mc,
+    {'raw-p': growth(fr, 0.47), 'even-payout': 0.44 * math.log(1 + fr) + 0.56 * math.log(1 - fr)}, agree=3e-4)
+ok(abs(growth(0.176, 0.44) - 0.0127) <= 0.00006, 'p-calibrated p3: rounded stake in band')
+share = growth(fr, 0.44) / growth(ftr, 0.44)
+num(L3, 'p-calibrated-kelly', 4, share, growth(0.176, 0.44) / growth(0.129, 0.44),
+    {'inverse': 1 / share, 'stake-ratio': ftr / fr}, agree=3e-3)
+ok(r(growth(ftr, 0.44), 4) == 0.0145 and r(growth(fr, 0.44), 6) == 0.012717 and r(growth(ftr, 0.44), 6) == 0.014529
+   and r(fr / ftr - 1, 2) == 0.36, 'p-calibrated p4: stated growths and oversize')
+ok([r(1 + 1.8 * fr, 3), r(1 - fr, 3), r(1 + 1.8 * ftr, 3), r(1 - ftr, 3)] == [1.316, 0.824, 1.232, 0.871],
+   'p-calibrated: stated multipliers')
+pick(L3, 'p-calibrated-kelly', 5, 'calibrate')
+
 print(f'{checks - len(fails)} of {checks} checks pass')
 for f_ in fails:
     print('FAIL', f_)
