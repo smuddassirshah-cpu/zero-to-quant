@@ -120,3 +120,17 @@ Changed graded answers, bands and items (complete):
 - New `accept` forms: `p-drone-crosswind` 1 (2), `p-goat-feed` 3 (2), `p-engraver-dial` 1 (2), new `p-colour-sensor` part 3 (2).
 - `p-site-plan` part 4: wording and `clockwise` line only (key 126.9, band 0.05, 53.1 slip unchanged). `p-engraver-dial` part 3: `added` line only.
 - Items re-authored, every key new: `p-charging-robot` ($(2, 3)$ unchanged in value; 42; 58; 2.18), `p-factor-risk` ($(1.105, 0.2)$; 0.605; $(0.5, 0.04875)$; 0.00376; 80.3%; its choice part is gone), `p-colour-sensor` ($\mathbf{C}$; 0.8; $\mathbf{C}^{-1}$; $(120, 80)$; choice `gain-first`).
+
+## Fix pass (session AE, waived reuse)
+
+`vectors/problems-3` `p-goat-feed` carried a matrix equal, up to a scalar, to the matrices of `l9-one-matrix-equation` and `l10-undoing` (and its inverse to `l5-acting-on-a-vector`). Renumbered with a fresh matrix; task, story, skills and the four-part chain are kept. Grep of the vectors course for the new matrix and its inverse (scaled, transposed, row and column permuted): no hit. `same-course-reuse --no-waivers`: 0 errors, 0 warnings.
+
+Old: $\mathbf{A} = \begin{pmatrix}0.4&0.1\\0.2&0.3\end{pmatrix}$, $\mathbf{b} = (13, 14)$, $\det = 0.1$, $\mathbf{A}^{-1} = \begin{pmatrix}3&-1\\-2&4\end{pmatrix}$, blend $(25, 30)$.
+New: $\mathbf{A} = \begin{pmatrix}0.2&0.1\\0.4&0.7\end{pmatrix}$ (M: 0.2 protein, 0.4 fibre; H: 0.1 protein, 0.7 fibre), $\mathbf{b} = (10, 40)$.
+
+- Part 1: key old `[[0.4, 0.1], [0.2, 0.3]]`, new `[[0.2, 0.1], [0.4, 0.7]]`; `transposed` old `[[0.4, 0.2], [0.1, 0.3]]`, new `[[0.2, 0.4], [0.1, 0.7]]`.
+- Part 2: key 0.1 unchanged in value (0.2 x 0.7 - 0.1 x 0.4 = 0.14 - 0.04; by `np.linalg.det` 0.1); `added` old 0.14, new 0.18 (0.14 + 0.04); `flipped` -0.1 unchanged.
+- Part 3: key old `[[3, -1], [-2, 4]]`, new `[[7, -1], [-4, 2]]` (10 x [[0.7, -0.1], [-0.4, 0.2]]; check 7 x 0.2 - 1 x 0.4 = 1); accept forms re-keyed alike. `no-divide` old (0.3, -0.1; -0.2, 0.4), new (0.7, -0.1; -0.4, 0.2). `no-negate` old (3, 1; 2, 4), new (7, 1; 4, 2). `transposed` old (3, -2; -1, 4), new (7, -4; -1, 2). `times-det` old (0.03, -0.01; -0.02, 0.04), new (0.07, -0.01; -0.04, 0.02).
+- Part 4: key old (25, 30), new (30, 40) (7 x 10 - 40 = 30; -4 x 10 + 2 x 40 = 40; check 6 + 4 = 10, 12 + 28 = 40). `transposed` old (11, 43), new (-90, 70) (the inverse of A transposed, (7, -4; -1, 2), times (10, 40): 70 - 160, -10 + 80). `no-divide` old (2.5, 3), new (3, 4). `swapped` old (30, 25), new (40, 30).
+
+Scripts: `docs/reports/problems-vectors-numbers.py` re-keyed (exact and NumPy routes), 1013 checks, exit 0. Gates: validator 0 errors; `grade-all --file` 19 widgets, 0 failures; voice scan 0 and 0; playthrough `--problems vectors/problems-3` desktop and `--mobile`: All passed.

@@ -448,21 +448,24 @@ if I:
     def adj(Mx):
         return M([[Mx[1, 1], -Mx[0, 1]], [-Mx[1, 0], Mx[0, 0]]])
 
-    # p-goat-feed
-    A = M([[R(4, 10), R(1, 10)], [R(2, 10), R(3, 10)]])
-    An = np.array([[0.4, 0.1], [0.2, 0.3]])
-    bb = M([13, 14])
-    obj(I, 'p-goat-feed', 1, A, np.column_stack([[0.4, 0.2], [0.1, 0.3]]), {'transposed': A.T})
+    # p-goat-feed (renumbered in session AE: A = [[0.2, 0.1], [0.4, 0.7]], b = (10, 40), blend (30, 40))
+    A = M([[R(2, 10), R(1, 10)], [R(4, 10), R(7, 10)]])
+    An = np.array([[0.2, 0.1], [0.4, 0.7]])
+    bb = M([10, 40])
+    obj(I, 'p-goat-feed', 1, A, np.column_stack([[0.2, 0.4], [0.1, 0.7]]), {'transposed': A.T})
     dA = A.det()
     num(I, 'p-goat-feed', 2, dA, np.linalg.det(An), {'added': A[0, 0] * A[1, 1] + A[0, 1] * A[1, 0], 'flipped': -dA})
     Ai = A.inv()
     ok(Ai == adj(A) / dA, 'feed: inverse is the 2 x 2 recipe')
     obj(I, 'p-goat-feed', 3, Ai, np.linalg.inv(An),
-        {'no-divide': adj(A), 'no-negate': M([[3, 1], [2, 4]]), 'transposed': A.T.inv(), 'times-det': adj(A) * dA})
+        {'no-divide': adj(A), 'no-negate': M([[7, 1], [4, 2]]), 'transposed': A.T.inv(), 'times-det': adj(A) * dA})
+    ok(Ai == M([[7, -1], [-4, 2]]) and dA == R(1, 10), 'feed: inverse [[7, -1], [-4, 2]], det 0.1')
     xx = Ai * bb
-    obj(I, 'p-goat-feed', 4, xx.T, np.linalg.solve(An, [13, 14.]),
+    obj(I, 'p-goat-feed', 4, xx.T, np.linalg.solve(An, [10, 40.]),
         {'transposed': (A.T.inv() * bb).T, 'no-divide': (adj(A) * bb).T, 'swapped': M([[xx[1], xx[0]]])})
-    ok(A * xx == bb and A[0, :] * xx == M([13]) and A[0, 0] * xx[0] == 10 and A[1, 0] * xx[0] == 5, 'feed: check 10 + 3 = 13, 5 + 9 = 14')
+    ok(list(xx) == [30, 40] and (A.T.inv() * bb).T == M([[-90, 70]]), 'feed: blend (30, 40); transposed slip (-90, 70)')
+    ok(A * xx == bb and A[0, :] * xx == M([10]) and A[0, 0] * xx[0] == 6 and A[1, 0] * xx[0] == 12 and A[0, 1] * xx[1] == 4 and A[1, 1] * xx[1] == 28,
+       'feed: check 6 + 4 = 10, 12 + 28 = 40')
 
     # p-paint-tints
     Ak = M([[12, 8], [3, k_]])
