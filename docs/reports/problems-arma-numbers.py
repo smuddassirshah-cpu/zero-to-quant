@@ -107,18 +107,21 @@ Phi = stats.norm.cdf
 
 # ------------------------------------------------------------------ level 1
 I = load(1)
-g = F('-287.5') / 1250
+SXX, SXY = 2880, F('-662.4')   # fix pass: sums of one sample (2,880/364 = 7.91, near the part-4 variance 7.86)
+g = SXY / SXX
 ols = np.polyfit(np.array([0., 1.]), np.array([0., float(g)]), 1)[0]          # slope of a line with that rise
-num(I, 'p-airport-anomaly', 1, g, ols, {'flip': F(1250) / F('-287.5'), 'sign': -g})
-t = float(g) / sqrt(3.2 / 1250)
-# method 2: simulate data with S_xx = 1250 and S_xy = -287.5 exactly, fit by least squares, read t
-xx = rng.standard_normal(364); xx = (xx - xx.mean()) / sqrt(((xx - xx.mean()) ** 2).sum()) * sqrt(1250)
+num(I, 'p-airport-anomaly', 1, g, ols, {'flip': F(SXX) / SXY, 'sign': -g})
+t = float(g) / sqrt(3.2 / SXX)
+ok(F(32, 10) / SXX == F(1, 900) and abs(t + 6.90) < 0.005, 'airport se 1/30 and t = -6.90')
+ok(abs(SXX / 364 - 7.91) < 0.005 and abs(-0.23 * sqrt(364) / sqrt(1 - 0.77 ** 2) + 6.88) < 0.005, 'airport 7.91 and t by the AR(1) se, -6.88')
+# method 2: simulate data with S_xx = 2880 and S_xy = -662.4 exactly, fit by least squares, read t
+xx = rng.standard_normal(364); xx = (xx - xx.mean()) / sqrt(((xx - xx.mean()) ** 2).sum()) * sqrt(SXX)
 res = rng.standard_normal(364); res -= res.mean(); res -= xx * (res @ xx) / (xx @ xx)
 res *= sqrt(3.2 * 362 / (res @ res))
 y = float(g) * xx + res
 X = np.column_stack([np.ones(364), xx]); b, ssr = np.linalg.lstsq(X, y, rcond=None)[:2]
 t2 = b[1] / sqrt(ssr[0] / 362 / (xx @ xx))
-num(I, 'p-airport-anomaly', 2, t, t2, {'no-sqrt': float(g) / (3.2 / 1250), 's-not-s2': float(g) / sqrt(sqrt(3.2) / 1250), 'sign': -t})
+num(I, 'p-airport-anomaly', 2, t, t2, {'no-sqrt': float(g) / (3.2 / SXX), 's-not-s2': float(g) / sqrt(sqrt(3.2) / SXX), 'sign': -t})
 pick(I, 'p-airport-anomaly', 3, 'reject-df')
 ok(t < -3.45, 'anomaly t below the 1% Dickey-Fuller point')
 phi = 1 + float(g)
@@ -131,7 +134,11 @@ num(I, 'p-airport-anomaly', 5, tail, stats.norm.sf(5, scale=sqrt(var)),
     {'shock-sd': stats.norm.sf(5, scale=sqrt(3.2)), 'no-square': stats.norm.sf(5, scale=sqrt(3.2 / 0.23))})
 ok(abs((xs > 5).mean() - tail) < 0.004, f'tail by simulation {(xs > 5).mean():.4f}')
 ok(round(tail * 365) == 14 and round(stats.norm.sf(5, scale=sqrt(3.2)) * 365) == 1, 'days a year 14 and 1')
-ok(abs(sqrt(var) - 2.80) < 0.005 and abs(sqrt(3.2) - 1.79) < 0.005 and abs(5 / 2.804 - 1.78) < 0.005, 'sds 2.80, 1.79, 1.78')
+ok(abs(sqrt(var) - 2.80) < 0.005 and abs(sqrt(3.2) - 1.79) < 0.005 and abs(5 / 2.804 - 1.783) < 0.0005, 'sds 2.80, 1.79, 1.783')
+w5 = I['p-airport-anomaly']['parts'][4]['widget']
+ok(all(within(v, w5['answer'], w5['tol']['abs']) for v in (0.037, 0.038, round(stats.norm.sf(1.78), 3))), 'airport tail band takes 0.037 and 0.038')
+sk = next(x for x in w5['wrong'] if x['id'] == 'shock-sd')
+ok(within(round(sk['value'], 3), sk['value'], sk['tol']['abs']), 'shock-sd slip typed to 3 places reaches its line')
 
 # p-ppp-screen: Bayes counts with stated rates (method 2: Monte Carlo of the 48-series screen)
 fa = F(36) * F('0.05')
@@ -181,36 +188,37 @@ ok(abs(1.1 * sqrt(500) - 24.6) < 0.05 and abs(log(1820 / 1450) - 0.2273) < 5e-5 
 
 # ------------------------------------------------------------------ level 2
 I = load(2)
-num(I, 'p-etf-flows', 1, F(81000, 180000), 0.45, {'flip': F(180000, 81000)})
-q2 = lb(200, ['0.45', '0.24'])
-from statsmodels.stats.diagnostic import acorr_ljungbox  # noqa: E402
-num(I, 'p-etf-flows', 2, q2, 200 * 202 * (0.45 ** 2 / 199 + 0.24 ** 2 / 198),
-    {'box-pierce': 200 * (0.45 ** 2 + 0.24 ** 2), 'no-n-k': 40400 * (0.45 ** 2 + 0.24 ** 2)})
+num(I, 'p-etf-flows', 1, F(79200, 180000), 0.44, {'flip': F(180000, 79200)})
+q2 = lb(200, ['0.44', '0.24'])
+num(I, 'p-etf-flows', 2, q2, 200 * 202 * (0.44 ** 2 / 199 + 0.24 ** 2 / 198),
+    {'box-pierce': 200 * (0.44 ** 2 + 0.24 ** 2), 'no-n-k': 40400 * (0.44 ** 2 + 0.24 ** 2)})
 ok(float(q2) > stats.chi2.ppf(0.95, 2), 'Q(2) beats 5.99')
-num(I, 'p-etf-flows', 3, F('0.45') ** 2, ArmaProcess([1, -0.45], [1]).acf(3)[2], {'double': 0.9, 'sample': 0.24})
-s = sqrt(900 * (1 - 0.45 ** 2))
-xs = sim_ar1(0.45, s, 4000, 50)
-num(I, 'p-etf-flows', 4, s, s, {'no-square': sqrt(900 * 0.55), 'series-sd': 30, 'variance': 717.75})
+num(I, 'p-etf-flows', 3, F('0.44') ** 2, ArmaProcess([1, -0.44], [1]).acf(3)[2], {'double': 0.88, 'sample': 0.24})
+s = sqrt(900 * (1 - 0.44 ** 2))
+xs = sim_ar1(0.44, s, 4000, 50)
+num(I, 'p-etf-flows', 4, s, sqrt(900 / sum(0.44 ** (2 * j) for j in range(400))), {'no-square': sqrt(900 * 0.56), 'series-sd': 30, 'variance': 725.76})
 ok(abs(xs.var() / 900 - 1) < 0.02, 'flow variance 900 by simulation')
-ok(abs(1.96 / sqrt(200) - 0.139) < 5e-4 and abs(1 - s / 30 - 0.11) < 0.005, 'etf band 0.139, 11%')
+ok(abs(1.96 / sqrt(200) - 0.139) < 5e-4 and abs(1 - s / 30 - 0.10) < 0.005 and abs(0.24 - 0.1936 - 0.05) < 0.005, 'etf band 0.139, 10%, 0.05 away')
 
-NV = 680
-num(I, 'p-vol-index-order', 1, 1.96 / sqrt(NV), stats.norm.ppf(0.975) / sqrt(NV), {'sd': 1 / sqrt(NV), 'over-n': 1.96 / NV}, rel=1e-4)
-pick(I, 'p-vol-index-order', 2, 'two')
-pac = [-0.21, -0.13, 0.05, -0.03, 0.04, -0.092]
-ok([k + 1 for k, v in enumerate(pac) if abs(v) > 1.96 / sqrt(NV)] == [1, 2, 6], 'PACF lags outside: 1, 2, 6')
-ok(0.06 < 1.96 / sqrt(NV), 'lags 7 to 20 within 0.06 lie inside the band')
-from math import comb  # noqa: E402
-ex1 = comb(18, 1) * F(5, 100) * F(95, 100) ** 17
-mc1 = ((rng.random((400000, 18)) < 0.05).sum(1) == 1).mean()
-num(I, 'p-vol-index-order', 3, ex1, stats.binom.pmf(1, 18, 0.05),
-    {'at-least': 1 - 0.95 ** 18, 'none': 0.95 ** 18, 'no-count': 0.05 * 0.95 ** 17})
-ok(abs(mc1 - float(ex1)) < 0.004, f'exactly one stray by Monte Carlo {mc1:.4f}')
-ok(abs(0.05 * 0.95 ** 17 - 0.0209) < 5e-5 and abs(0.95 ** 18 - 0.397) < 5e-4 and abs(1 / sqrt(NV) - 0.038) < 5e-4, 'vol 0.0209, 0.397, 0.038')
-bic = lambda k, l: k * log(NV) - 2 * l
-num(I, 'p-vol-index-order', 4, bic(8, -807.9) - bic(4, -812.4), 4 * log(NV) - 9,
-    {'aic': (16 + 2 * 807.9) - (8 + 2 * 812.4), 'no-fit': 4 * log(NV), 'sign': bic(4, -812.4) - bic(8, -807.9)})
-ok(abs(4 * log(NV) - 26.09) < 0.005 and abs(log(NV) - 6.52) < 0.005, 'vol 26.09, 6.52')
+# p-trust-discount (re-authored): PACF from the regression rows, AR(2) mean, one-step forecasts
+band = 1.96 / sqrt(520)
+newest = [0.80, 0.24, 0.05, -0.08]
+ok(abs(band - 0.086) < 5e-4 and [k + 1 for k, v in enumerate(newest) if abs(v) > band] == [1, 2] and 0.10 > band, 'trust band 0.086; PACF clears at 1 and 2; the row-4 b3 0.10 would clear')
+pick(I, 'p-trust-discount', 1, 'two')
+mu_t = F('1.38') / (1 - F('0.61') - F('0.24'))
+# method 2: iterate the fitted equation with no shocks until it settles
+xm = 0.0
+for _ in range(400):
+    xm = 1.38 + 0.61 * xm + 0.24 * xm
+num(I, 'p-trust-discount', 2, mu_t, xm, {'one-lag': 1.38 / 0.39, 'constant': 1.38})
+ok(within(1.84 / (1 - 0.80), 9.2, 1e-9), 'one-lag fit has the same mean 9.2')
+ok(abs(0.61 / (1 - 0.24) - 0.80) < 0.005, 'two-lag fit implies rho_1 0.80, the one-lag slope')
+f_two = F('1.38') + F('0.61') * 12 + F('0.24') * F('13.5')
+num(I, 'p-trust-discount', 3, f_two, 9.2 + 0.61 * 2.8 + 0.24 * 4.3, {'swap': 1.38 + 0.61 * 13.5 + 0.24 * 12, 'no-constant': 0.61 * 12 + 0.24 * 13.5})
+f_one = F('1.84') + F('0.80') * 12
+num(I, 'p-trust-discount', 4, f_two - f_one, (9.2 + 0.61 * 2.8 + 0.24 * 4.3) - (9.2 + 0.8 * 2.8), {'sign': f_one - f_two, 'narrowing': 12 - f_one})
+ok(abs(0.61 * 2.8 - 1.708) < 1e-9 and abs(0.24 * 4.3 - 1.032) < 1e-9 and abs(0.61 * 12 - 7.32) < 1e-9 and abs(0.24 * 13.5 - 3.24) < 1e-9
+   and abs(12 - float(f_two) - 0.06) < 1e-9 and 0.85 < 0.50 / 0.56 < 0.95, 'trust 1.708, 1.032, 7.32, 3.24, 0.06, nine tenths')
 
 g0 = 4 / (1 - 0.88 ** 2)
 xs = sim_ar1(0.88, 2, 6000, 60)
@@ -228,20 +236,28 @@ num(I, 'p-peg-fridays', 4, kmax, int(log(band) / log(pw)), {'sd-band': max(k for
 ok(abs(sqrt(g0) - 4.21) < 0.005 and abs(band - 0.192) < 5e-4 and abs(0.5277 ** 2 - 0.278) < 5e-4 and abs(pw ** 3 - 0.147) < 5e-4
    and abs(1 - pw ** 2 - 0.7215) < 5e-5, 'peg 4.21, 0.192, 0.278, 0.147, 0.7215')
 
-rr = ['0.02', '0.145', '-0.04', '0.05', '0.03']
-q5 = lb(400, rr)
-num(I, 'p-freight-ar2', 1, q5, 400 * 402 * sum(float(v) ** 2 / (400 - k) for k, v in enumerate(rr, 1)),
-    {'box-pierce': 400 * sum(float(v) ** 2 for v in rr), 'no-n-k': 160800 * sum(float(v) ** 2 for v in rr)})
-ok(stats.chi2.ppf(0.95, 4) < float(q5) < stats.chi2.ppf(0.95, 5), 'Q(5) between the chi2_4 and chi2_5 points')
-ok(abs(stats.chi2.ppf(0.95, 4) - 9.49) < 0.005 and abs(stats.chi2.ppf(0.95, 5) - 11.07) < 0.005, '9.49 and 11.07')
-pick(I, 'p-freight-ar2', 2, 'reject')
-b2 = (F('0.33') - F('0.42') ** 2) / (1 - F('0.42') ** 2)
-sol = np.linalg.solve([[1, 0.42], [0.42, 1]], [0.42, 0.33])
-num(I, 'p-freight-ar2', 3, b2, sol[1], {'acf': 0.33, 'no-divide': 0.1536})
-num(I, 'p-freight-ar2', 4, 0.42 * (1 - 0.186), 0.42 - 0.42 * 0.186, {'ar1': 0.42, 'plus': 0.42 * 1.186})
-ok(within(sol[0], 0.42 * (1 - 0.186), 0.0006), 'exact b1 also in the band')
-ok(abs(0.145 ** 2 / 398 - 0.0000528) < 5e-8 and abs(sum(float(v) ** 2 / (400 - k) for k, v in enumerate(rr, 1)) - 0.0000665) < 5e-8
-   and float(b2) > 1.96 / sqrt(400), 'freight 0.0000528, 0.0000665, b2 outside the band')
+# p-satellite-stocks (re-authored): AR(1) plus white measurement error
+v_e = F(36) + F('3.5') ** 2
+num(I, 'p-satellite-stocks', 1, v_e, np.var(sim_ar1(0.85, 6 * sqrt(1 - 0.85 ** 2), 4000, 50) + rng.standard_normal((50, 4000)) * 3.5),
+    {'add-sds': 9.5 ** 2, 'true-only': 36, 'sd': sqrt(48.25)}, rel=0.02)
+r1e = F('0.85') * 36 / v_e
+ys = sim_ar1(0.85, 6 * sqrt(1 - 0.85 ** 2), 6000, 60) + rng.standard_normal((60, 6000)) * 3.5
+yc = ys - ys.mean(1, keepdims=True)
+acf_e = lambda k: (yc[:, k:] * yc[:, :-k]).mean() / (yc * yc).mean()
+num(I, 'p-satellite-stocks', 2, r1e, acf_e(1), {'no-error': 0.85, 'error-lag': (30.6 + 12.25) / 48.25, 'sds': 0.85 * 6 / sqrt(48.25)}, rel=0.02)
+r4e = F('0.85') ** 4 * 36 / v_e
+num(I, 'p-satellite-stocks', 3, r4e, acf_e(4), {'ar1': float(r1e) ** 4, 'true': 0.85 ** 4, 'extra': float(r1e) * 0.85 ** 4}, rel=0.03)
+ok(within(0.634 * 0.85 ** 3, float(r4e), 0.0006), 'lag 4 from the rounded 0.634 is in the band')
+ph_hat = (0.40 / 0.61) ** (1 / 3)
+# method 2: bisection on phi^3 * 0.61 = 0.40
+lo, hi = 0.0, 1.0
+for _ in range(80):
+    md = (lo + hi) / 2
+    lo, hi = (md, hi) if 0.61 * md ** 3 < 0.40 else (lo, md)
+num(I, 'p-satellite-stocks', 4, ph_hat, lo, {'lag1': 0.61, 'fourth-root': (0.40 / 0.61) ** 0.25, 'ar1': 0.40 ** 0.25})
+ok(abs(12.25 / 48.25 - 0.25) < 0.01 and abs(0.85 * 36 - 30.6) < 1e-9 and abs(0.85 ** 4 * 36 - 18.79) < 0.005 and abs(float(r1e) ** 4 - 0.162) < 5e-4
+   and abs(0.40 / 0.61 - 0.6557) < 5e-5 and abs(0.40 / 0.61 - 0.656) < 5e-4, 'satellite a quarter, 30.6, 18.79, 0.162, 0.6557, 0.656')
+ok(abs(0.61 - float(r1e)) < 2 / sqrt(520) and abs(0.40 - float(r4e)) < 2.5 / sqrt(520), 'sample bars 0.61 and 0.40 plausible on 520 weeks')
 
 # ------------------------------------------------------------------ level 3
 I = load(3)
@@ -258,44 +274,52 @@ num(I, 'p-smoothed-fund', 4, s12, sums.std(), {'root-12': 0.04 * sqrt(0.52) * sq
 ok(abs(1 - 0.04 * sqrt(0.52) / 0.04 - 0.28) < 0.005 and abs(1 - 0.04 * sqrt(6.24) / s12 - 0.26) < 0.005
    and abs(1.96 * 0.04 * sqrt(0.52) - 0.0565) < 5e-5, 'fund 28%, 26%, 5.65%')
 
-mu, ph, th = 0.25, 0.82, -0.35
+mu, ph, th = 0.25, 0.82, -0.20
 eps = 0.55 - 0.43
 num(I, 'p-inflation-arma', 1, F('0.55') - F('0.43'), eps, {'gap': 0.30, 'sign': -0.12})
 f1 = mu + ph * (0.55 - mu) + th * eps
 # method 2: recursion of the ARMA on a path whose last value and shock are fixed, future shocks 0
 x = [0.55]; e_last = eps
 f1b = mu + ph * (x[-1] - mu) + th * e_last
-num(I, 'p-inflation-arma', 2, F('0.25') + F('0.82') * F('0.30') + F('-0.35') * F('0.12'), f1b, {'no-ma': mu + ph * 0.3, 'theta-sign': mu + ph * 0.3 + 0.35 * 0.12})
+num(I, 'p-inflation-arma', 2, F('0.25') + F('0.82') * F('0.30') + F('-0.20') * F('0.12'), f1b, {'no-ma': mu + ph * 0.3, 'theta-sign': mu + ph * 0.3 + 0.20 * 0.12})
 f2 = mu + ph * (f1 - mu)
-num(I, 'p-inflation-arma', 3, f2, mu + ph * (f1b - mu) + th * 0, {'ma-again': f2 - 0.042, 'from-xn': mu + ph ** 2 * 0.3})
-hh = first_h(lambda h: abs(0.204 * ph ** (h - 1)) < 0.05)
-num(I, 'p-inflation-arma', 4, hh, 1 + ceil(log(0.05 / 0.204) / log(ph)), {'no-ma': first_h(lambda h: 0.3 * ph ** h < 0.05), 'off-by-one': hh - 1})
-ok(abs(0.204 * ph ** 7 - 0.0509) < 5e-5 and abs(0.204 * ph ** 8 - 0.0417) < 5e-5 and abs(log(0.05 / 0.204) / log(ph) - 7.09) < 0.005
-   and abs(ph * 0.204 - 0.1673) < 5e-5, 'inflation 0.0509, 0.0417, 7.09, 0.1673')
+num(I, 'p-inflation-arma', 3, f2, mu + ph * (f1b - mu) + th * 0, {'ma-again': f2 - 0.024, 'from-xn': mu + ph ** 2 * 0.3})
+hh = first_h(lambda h: abs(0.222 * ph ** (h - 1)) < 0.05)
+num(I, 'p-inflation-arma', 4, hh, 1 + ceil(log(0.05 / 0.222) / log(ph)), {'no-ma': first_h(lambda h: 0.3 * ph ** h < 0.05), 'off-by-one': hh - 1})
+ok(abs(f1 - mu - 0.222) < 1e-9 and abs(0.222 * ph ** 7 - 0.0553) < 5e-5 and abs(0.222 * ph ** 8 - 0.0454) < 5e-5 and abs(log(0.05 / 0.222) / log(ph) - 7.51) < 0.005
+   and abs(ph * 0.222 - 0.1820) < 5e-5 and abs(0.05 / 0.222 - 0.225) < 5e-4, 'inflation 0.222, 0.0553, 0.0454, 7.51, 0.1820, 0.225')
 
-phi = 0.915
-hl = log(0.5) / log(phi)
-num(I, 'p-inventory-half-life', 1, hl, -log(2) / log(phi), {'linear': 0.5 / 0.085, 'approx': log(2) / 0.085, 'flip': log(phi) / log(0.5)})
-e15 = 30 * phi ** 15
-num(I, 'p-inventory-half-life', 2, e15, 30 * 0.5 ** (15 / 7.80), {'half': 15, 'linear': 30 * (1 - 15 * 0.085)}, rel=0.002)
-sm = sim_ar1(phi, 2.4, 1, 1)  # unused seed advance
-paths = np.zeros((200000,)); paths[:] = 30
-for _ in range(15):
-    paths = phi * paths + rng.standard_normal(200000) * 2.4
-hw = 1.96 * 2.4 * sqrt((1 - phi ** 30) / (1 - phi ** 2))
-num(I, 'p-inventory-half-life', 3, hw, 1.96 * 2.4 * sqrt(sum(phi ** (2 * j) for j in range(15))),
-    {'walk': 1.96 * 2.4 * sqrt(15), 'one-step': 1.96 * 2.4, 'limit': 1.96 * 2.4 / sqrt(1 - phi ** 2)})
-ok(abs(paths.mean() - e15) < 0.05 and abs(1.96 * paths.std() - hw) < 0.05, 'inventory mean and half-width by simulation')
-hb = first_h(lambda h: 30 * phi ** h < 5)
-num(I, 'p-inventory-half-life', 4, hb, ceil(log(5 / 30) / log(phi)), {'round-down': hb - 1, 'linear': ceil(25 / (30 * 0.085))})
-ok(abs(30 * phi ** 20 - 5.08) < 0.005 and abs(30 * phi ** 21 - 4.64) < 0.005 and abs(2.585 * 7.80 - 20.16) < 0.005
-   and abs(log(phi) + 0.08883) < 5e-6 and abs(15 / 7.80 - 1.92) < 0.005, 'inventory 5.08, 4.64, 20.16, 0.08883, 1.92')
+# p-swap-spread-hold (re-authored): half-life and long-run sd quoted, phi never needed
+HL, LR, GAP0, H = 12, 6.0, 9.0, 20
+share = 0.5 ** (H / HL)
+phi_s = 0.5 ** (1 / HL)
+num(I, 'p-swap-spread-hold', 1, GAP0 * share, GAP0 * phi_s ** H, {'linear': GAP0 * (1 - H / (2 * HL)), 'half': GAP0 / 2, 'flip': GAP0 * 0.5 ** (HL / H)})
+sig_s = LR * sqrt(1 - phi_s ** 2)
+sd20 = LR * sqrt(1 - share ** 2)
+sd20b = sig_s * sqrt(sum(phi_s ** (2 * j) for j in range(H)))
+num(I, 'p-swap-spread-hold', 2, sd20, sd20b, {'not-squared': LR * sqrt(1 - share), 'no-root': LR * (1 - share ** 2), 'variance': LR ** 2 * (1 - share ** 2)})
+ok(within(LR * sqrt(1 - 0.315 ** 2), sd20, 0.006), 'sd from the rounded 0.315 is in the band')
+# simulation of the 20-day path from 9 bp
+pth = np.full(400000, GAP0)
+for _ in range(H):
+    pth = phi_s * pth + rng.standard_normal(400000) * sig_s
+ok(abs(pth.mean() - GAP0 * share) < 0.03 and abs(pth.std() - sd20) < 0.03, 'swap mean and sd at day 20 by simulation')
+pl = stats.norm.sf((GAP0 - GAP0 * share) / sd20)
+num(I, 'p-swap-spread-hold', 3, pl, (pth > GAP0).mean(), {'from-mean': stats.norm.sf(GAP0 / sd20), 'long-run': stats.norm.sf((GAP0 - GAP0 * share) / LR), 'win': 1 - pl}, rel=0.02)
+w3 = I['p-swap-spread-hold']['parts'][2]['widget']
+ok(all(within(v, w3['answer'], w3['tol']['abs']) for v in (0.139, 0.140, round(stats.norm.sf(1.08), 3), round(stats.norm.sf((9 - 2.83) / 5.69), 3))), 'loss band takes 0.139 and 0.140')
+pinf = stats.norm.sf(GAP0 / LR)
+num(I, 'p-swap-spread-hold', 4, pinf, 1 - Phi(1.5), {'two-sided': 2 * pinf, 'variance': stats.norm.sf(GAP0 / LR ** 2)})
+loss = [stats.norm.sf((GAP0 - GAP0 * 0.5 ** (h / HL)) / (LR * sqrt(1 - 0.25 ** (h / HL)))) for h in range(1, 400)]
+ok(all(a > b for a, b in zip(loss, loss[1:])) and loss[-1] > pinf and loss[-1] - pinf < 1e-6, 'loss chance falls with the hold, towards 0.067 from above')
+ok(abs(share - 0.315) < 5e-4 and abs(H / HL - 1.667) < 5e-4 and abs(36 * (1 - 0.315 ** 2) - 32.43) < 0.005 and abs(1 - 0.315 ** 2 - 0.9008) < 5e-5
+   and abs(9 - 2.83 - 6.17) < 1e-9 and abs((9 - 2.83) / 5.69 - 1.08) < 0.005 and abs(pinf - 0.067) < 5e-4 and abs(1 / pl - 7) < 0.5, 'swap 0.315, 1.667, 32.43, 0.9008, 6.17, 1.08, 0.067, one in seven')
 
 bicd = (3 * log(750) + 2920.4) - (4 * log(750) + 2899.4)
 num(I, 'p-dual-listing', 1, bicd, 21 - log(750), {'aic': (6 + 2920.4) - (8 + 2899.4), 'sign': -bicd})
 ir = ArmaProcess([1, -0.88], [1, 0.25]).arma2ma(8)
 num(I, 'p-dual-listing', 2, F('0.88') + F('0.25'), ir[1], {'ar': 0.88, 'ma': 0.25, 'product': 0.22})
-num(I, 'p-dual-listing', 3, 1.13 * 0.88 ** 4, ir[5], {'ar': 0.88 ** 5, 'off-by-one': 1.13 * 0.88 ** 5})
+num(I, 'p-dual-listing', 3, 1.13 * 0.88 ** 6, ir[7], {'ar': 0.88 ** 7, 'off-by-one': 1.13 * 0.88 ** 7})
 h4 = 1 + log(0.5 / 1.13) / log(0.88)
 # method 2: bisection on the continuous path
 lo, hi = 1.0, 30.0
@@ -304,7 +328,9 @@ for _ in range(80):
     lo, hi = (md, hi) if 1.13 * 0.88 ** (md - 1) > 0.5 else (lo, md)
 num(I, 'p-dual-listing', 4, h4, lo, {'ar': log(0.5) / log(0.88), 'half-peak': 1 + log(0.5) / log(0.88)})
 pick(I, 'p-dual-listing', 5, 'start')
-ok(abs(log(750) - 6.62) < 0.005 and abs(0.88 ** 4 - 0.5997) < 5e-5 and abs(0.5 / 1.13 - 0.4425) < 5e-5
+ok(abs(0.88 ** 6 - 0.4644) < 5e-5 and 1.13 * 0.88 ** 6 > 0.5 and abs(log(1.13) / log(1 / 0.88) - 0.96) < 0.005 and abs(h4 - 1 - 6.38) < 0.005
+   and abs(log(0.5) / log(0.88) + 1 + 0.96 - h4) < 0.01, 'dual 0.4644, day 7 above half, 0.96, 6.38, 5.42 + 1 + 0.96')
+ok(abs(log(750) - 6.62) < 0.005 and abs(2920.4 - 2899.4 - 21.0) < 1e-9 and abs(21.0 - log(750) - 14.38) < 0.005 and abs(0.5 / 1.13 - 0.4425) < 5e-5
    and abs(log(0.5) / log(0.88) - 5.42) < 0.005 and 1.5 < h4 - log(0.5) / log(0.88) < 2.5, 'dual 6.62, 0.5997, 0.4425, 5.42, two days')
 
 # ------------------------------------------------------------------ numbers_lib: stated numbers and wrong bands
@@ -317,10 +343,12 @@ for n in (1, 2, 3):
     if n == 2:
         lv.expect('problems', 'items[0].parts[1].feedback.correct', round(float(q2), 2))
         lv.expect('problems', 'items[2].parts[2].feedback.correct', round(s2w, 2))
-        lv.expect('problems', 'items[3].parts[0].feedback.correct', round(float(q5), 2))
+        lv.expect('problems', 'items[1].parts[2].feedback.correct', round(float(f_two), 2))
+        lv.expect('problems', 'items[3].parts[1].feedback.correct', round(float(r1e), 3))
     if n == 3:
         lv.expect('problems', 'items[1].parts[2].feedback.correct', round(f2, 4))
-        lv.expect('problems', 'items[2].parts[2].feedback.correct', round(hw, 2))
+        lv.expect('problems', 'items[2].parts[1].feedback.correct', round(sd20, 2))
+        lv.expect('problems', 'items[2].parts[0].feedback.correct', round(GAP0 * share, 2))
         lv.expect('problems', 'items[3].parts[3].feedback.correct', round(h4, 2))
     try:
         lv.report()

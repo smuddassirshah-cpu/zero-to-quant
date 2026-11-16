@@ -121,7 +121,7 @@ for n, s in SETS.items():
 # ================================================================ problems-1
 # ---- p-airport-anomaly: slope and t from the sums, then AR(1) variance and a normal tail
 with block("p-airport-anomaly"):
-    Sxx, Sxy, s2 = F(1250), F(-2875, 10), F(32, 10)
+    Sxx, Sxy, s2 = F(2880), F(-6624, 10), F(32, 10)   # fix pass: finding 1 applied
     g = Sxy / Sxx
     key(1, "p-airport-anomaly", 1, float(g))
     wrong(1, "p-airport-anomaly", 1, "flip", float(Sxx / Sxy))
@@ -130,11 +130,11 @@ with block("p-airport-anomaly"):
     t = float(g) / se
     key(1, "p-airport-anomaly", 2, t)
     wrong(1, "p-airport-anomaly", 2, "no-sqrt", float(g / (s2 / Sxx)))
-    wrong(1, "p-airport-anomaly", 2, "s-not-s2", float(g) / math.sqrt(math.sqrt(3.2) / 1250))
+    wrong(1, "p-airport-anomaly", 2, "s-not-s2", float(g) / math.sqrt(math.sqrt(3.2) / 2880))
     wrong(1, "p-airport-anomaly", 2, "sign", -t)
-    says(1, "p-airport-anomaly", 2, "0.0506")
-    chk("airport se 0.0506", round(se, 4) == 0.0506)
-    typed_ok(1, "p-airport-anomaly", 2, round(-0.23 / 0.0506, 2), "t from the printed se")
+    says(1, "p-airport-anomaly", 2, "tfrac{1}{30}")
+    chk("airport se 1/30", close(se, 1 / 30, 1e-12))
+    typed_ok(1, "p-airport-anomaly", 2, round(-0.23 * 30, 2), "t from the printed se")
     # Dickey-Fuller points with a constant, 364 pairs: simulate walks (second route to the quoted table)
     W = np.cumsum(rng.standard_normal((40000, 365)), axis=1)
 
@@ -268,7 +268,7 @@ with block("p-gold-drift"):
 # ================================================================ problems-2
 # ---- p-etf-flows
 with block("p-etf-flows"):
-    r1 = F(81000, 180000)
+    r1 = F(79200, 180000)   # fix pass: finding 7 applied
     key(2, "p-etf-flows", 1, float(r1))
     wrong(2, "p-etf-flows", 1, "flip", float(1 / r1))
     Q = 200 * 202 * (r1 ** 2 / 199 + F(24, 100) ** 2 / 198)
@@ -277,7 +277,7 @@ with block("p-etf-flows"):
     wrong(2, "p-etf-flows", 2, "no-n-k", float(200 * 202 * (r1 ** 2 + F(24, 100) ** 2)))
     chk("etf chi2_2 5% point 5.99", round(stats.chi2.ppf(0.95, 2), 2) == 5.99 and float(Q) > 5.99)
     key(2, "p-etf-flows", 3, float(r1 ** 2))
-    wrong(2, "p-etf-flows", 3, "double", 0.9)
+    wrong(2, "p-etf-flows", 3, "double", 0.88)
     wrong(2, "p-etf-flows", 3, "sample", 0.24)
     chk("etf band 0.139", round(1.96 / math.sqrt(200), 3) == 0.139)
     sig2 = 900 * (1 - r1 ** 2)
@@ -289,30 +289,11 @@ with block("p-etf-flows"):
     ee = math.sqrt(float(sig2)) * rng.standard_normal(400000)
     x[0] = 0
     for j in range(1, 400000):
-        x[j] = 0.45 * x[j - 1] + ee[j]
-    chk("etf: an AR(1) with this shock sd has variance 900 and rho_2 0.2025", abs(x[1000:].var() - 900) < 12 and abs(np.corrcoef(x[2:], x[:-2])[0, 1] - 0.2025) < 0.006)
-    chk("etf 'about 11%'", round((1 - math.sqrt(float(sig2)) / 30) * 100) == 11)
-# ---- p-vol-index-order
-with block("p-vol-index-order"):
-    band = 1.96 / math.sqrt(680)
-    key(2, "p-vol-index-order", 1, band)
-    wrong(2, "p-vol-index-order", 1, "sd", 1 / math.sqrt(680))
-    wrong(2, "p-vol-index-order", 1, "over-n", 1.96 / 680)
-    pacf = [-0.21, -0.13, 0.05, -0.03, 0.04, -0.092]
-    chk("vol PACF: lags 1, 2 and 6 outside, 3 to 5 inside, 7 to 20 inside", [abs(v) > band for v in pacf] == [True, True, False, False, False, True] and 0.06 < band)
-    p1 = stats.binom.pmf(1, 18, 0.05)
-    key(2, "p-vol-index-order", 3, p1)
-    wrong(2, "p-vol-index-order", 3, "at-least", 1 - 0.95 ** 18)
-    wrong(2, "p-vol-index-order", 3, "none", 0.95 ** 18)
-    wrong(2, "p-vol-index-order", 3, "no-count", 0.05 * 0.95 ** 17)
-    chk("vol exactly-one by simulation", abs(((rng.random((400000, 18)) < 0.05).sum(1) == 1).mean() - p1) < 0.003)
-    bic = lambda k, l: k * math.log(680) - 2 * l
-    gap = bic(8, -807.9) - bic(4, -812.4)
-    key(2, "p-vol-index-order", 4, gap)
-    wrong(2, "p-vol-index-order", 4, "aic", (2 * 8 + 2 * 807.9) - (2 * 4 + 2 * 812.4))
-    wrong(2, "p-vol-index-order", 4, "no-fit", 4 * math.log(680))
-    wrong(2, "p-vol-index-order", 4, "sign", -gap)
-    chk("vol ln 680 = 6.52", round(math.log(680), 2) == 6.52)
+        x[j] = 0.44 * x[j - 1] + ee[j]
+    chk("etf: an AR(1) with this shock sd has variance 900 and rho_2 0.1936", abs(x[1000:].var() - 900) < 12 and abs(np.corrcoef(x[2:], x[:-2])[0, 1] - 0.1936) < 0.006)
+    chk("etf 'about 10%'", round((1 - math.sqrt(float(sig2)) / 30) * 100) == 10)
+# ---- p-vol-index-order: re-authored in the fix pass as p-trust-discount (review finding 8). The block is removed;
+#      the author's script checks the new problem and the delta reader adds its own.
 # ---- p-peg-fridays
 with block("p-peg-fridays"):
     g0 = sum(4 * 0.88 ** (2 * j) for j in range(2000))          # damped sum, not the closed form
@@ -345,30 +326,7 @@ with block("p-peg-fridays"):
     wrong(2, "p-peg-fridays", 4, "one", 1)
     chk("peg 0.192, 0.278, 0.147, 0.098", [round(v, 3) for v in (b104, 0.5277 ** 2, 0.5277 ** 3, 1 / math.sqrt(104))] == [0.192, 0.278, 0.147, 0.098])
     chk("peg part 3 restates the variance it needs", "17.73" in part(2, "p-peg-fridays", 3)["question"], "question says 'the variance from part 1' with no value")
-# ---- p-freight-ar2
-with block("p-freight-ar2"):
-    rr = [F(2, 100), F(145, 1000), F(-4, 100), F(5, 100), F(3, 100)]
-    Q5 = 400 * 402 * sum(v * v / (400 - k) for k, v in enumerate(rr, 1))
-    key(2, "p-freight-ar2", 1, float(Q5))
-    wrong(2, "p-freight-ar2", 1, "box-pierce", float(400 * sum(v * v for v in rr)))
-    wrong(2, "p-freight-ar2", 1, "no-n-k", float(400 * 402 * sum(v * v for v in rr)))
-    chk("freight chi2 points 9.49 and 11.07 with Q between", round(stats.chi2.ppf(0.95, 4), 2) == 9.49 and round(stats.chi2.ppf(0.95, 5), 2) == 11.07 and 9.49 < float(Q5) < 11.07)
-    chk("freight 0.0000528 of 0.0000665", round(float(rr[1] ** 2 / 398), 7) == 0.0000528 and round(float(sum(v * v / (400 - k) for k, v in enumerate(rr, 1))), 7) == 0.0000665)
-    chk("freight: only the lag-2 residual bar is outside 0.098", [abs(float(v)) > 1.96 / 20 for v in rr] == [False, True, False, False, False])
-    b1, b2 = np.linalg.solve(np.array([[1, 0.42], [0.42, 1]]), np.array([0.42, 0.33]))   # the 2 by 2 system itself
-    key(2, "p-freight-ar2", 3, b2)
-    wrong(2, "p-freight-ar2", 3, "acf", 0.33)
-    wrong(2, "p-freight-ar2", 3, "no-divide", 0.33 - 0.42 ** 2)
-    key(2, "p-freight-ar2", 4, 0.42 * (1 - 0.186))
-    typed_ok(2, "p-freight-ar2", 4, round(b1, 3), "b_1 from the unrounded b_2")
-    wrong(2, "p-freight-ar2", 4, "ar1", 0.42)
-    wrong(2, "p-freight-ar2", 4, "plus", 0.42 * (1 + 0.186))
-    try:
-        from statsmodels.tsa.arima_process import ArmaProcess
-        ac = ArmaProcess([1, -b1, -b2], [1]).acf(3)
-        chk("freight: the AR(2) with these b has rho_1 0.42 and rho_2 0.33", close(ac[1], 0.42, 1e-9) and close(ac[2], 0.33, 1e-9))
-    except ImportError:
-        print("NOTE statsmodels missing: AR(2) acf check skipped")
+# ---- p-freight-ar2: re-authored in the fix pass as p-satellite-stocks (review finding 11). The block is removed.
 # ================================================================ problems-3
 # ---- p-smoothed-fund: by simulation of the reported series as well as by weights
 with block("p-smoothed-fund"):
@@ -400,7 +358,7 @@ with block("p-smoothed-fund"):
     typed_ok(3, "p-smoothed-fund", 4, 0.136, "13.6%")
 # ---- p-inflation-arma: forecasts by running the recursion with future shocks at 0
 with block("p-inflation-arma"):
-    mu, ph, thm = 0.25, 0.82, -0.35
+    mu, ph, thm = 0.25, 0.82, -0.20   # fix pass: finding 13 applied
     eps = 0.55 - 0.43
     key(3, "p-inflation-arma", 1, eps)
     wrong(3, "p-inflation-arma", 1, "gap", 0.55 - 0.25)
@@ -419,7 +377,7 @@ with block("p-inflation-arma"):
     f = fc(12)
     key(3, "p-inflation-arma", 2, f[0])
     wrong(3, "p-inflation-arma", 2, "no-ma", fc(1, theta=0)[0])
-    wrong(3, "p-inflation-arma", 2, "theta-sign", fc(1, theta=0.35)[0])
+    wrong(3, "p-inflation-arma", 2, "theta-sign", fc(1, theta=0.20)[0])
     key(3, "p-inflation-arma", 3, f[1])
     wrong(3, "p-inflation-arma", 3, "ma-again", f[1] + thm * eps)
     wrong(3, "p-inflation-arma", 3, "from-xn", mu + ph ** 2 * 0.30)
@@ -427,43 +385,9 @@ with block("p-inflation-arma"):
     key(3, "p-inflation-arma", 4, h9)
     wrong(3, "p-inflation-arma", 4, "no-ma", next(i + 1 for i, v in enumerate(fc(30, theta=0)) if abs(v - mu) < 0.05))
     wrong(3, "p-inflation-arma", 4, "off-by-one", h9 - 1)
-    chk("inflation gaps 0.0509 and 0.0417, 7.09", round(f[7] - mu, 4) == 0.0509 and round(f[8] - mu, 4) == 0.0417 and round(math.log(0.05 / 0.204) / math.log(0.82), 2) == 7.09)
-# ---- p-inventory-half-life: brute search and direct sums
-with block("p-inventory-half-life"):
-    hl = math.log(0.5) / math.log(0.915)
-    key(3, "p-inventory-half-life", 1, hl)
-    chk("inventory half-life by bisection on 0.915^h", abs(0.915 ** 7.803 - 0.5) < 1e-4)
-    wrong(3, "p-inventory-half-life", 1, "linear", 0.5 / 0.085)
-    wrong(3, "p-inventory-half-life", 1, "approx", math.log(2) / 0.085)
-    wrong(3, "p-inventory-half-life", 1, "flip", 1 / hl)
-    q15 = 30.0
-    for _ in range(15):
-        q15 *= 0.915
-    key(3, "p-inventory-half-life", 2, q15)
-    typed_ok(3, "p-inventory-half-life", 2, round(30 * 0.5 ** (15 / 7.80), 2), "the value by half-lives of 7.80")
-    wrong(3, "p-inventory-half-life", 2, "half", 15)
-    wrong(3, "p-inventory-half-life", 2, "linear", 30 - 15 * 0.085 * 30)
-    hw = 1.96 * math.sqrt(sum(2.4 ** 2 * 0.915 ** (2 * j) for j in range(15)))
-    key(3, "p-inventory-half-life", 3, hw)
-    wrong(3, "p-inventory-half-life", 3, "walk", 1.96 * 2.4 * math.sqrt(15))
-    wrong(3, "p-inventory-half-life", 3, "one-step", 1.96 * 2.4)
-    wrong(3, "p-inventory-half-life", 3, "limit", 1.96 * math.sqrt(sum(2.4 ** 2 * 0.915 ** (2 * j) for j in range(3000))))
-    qs = np.full(400000, 30.0)
-    for _ in range(15):
-        qs = 0.915 * qs + 2.4 * rng.standard_normal(400000)
-    chk("inventory by simulation: mean 7.91 and half-width 11.25", abs(qs.mean() - q15) < 0.04 and abs(1.96 * qs.std() - hw) < 0.05)
-    m5 = next(k for k in range(1, 500) if 30 * 0.915 ** k < 5)
-    key(3, "p-inventory-half-life", 4, m5)
-    wrong(3, "p-inventory-half-life", 4, "round-down", m5 - 1)
-    wrong(3, "p-inventory-half-life", 4, "linear", next(k for k in range(1, 500) if 30 - 2.55 * k < 5))
-    chk("inventory 5.08, 4.64, 2.585, 20.16", [round(v, 2) for v in (30 * 0.915 ** 20, 30 * 0.915 ** 21)] == [5.08, 4.64] and round(math.log2(6), 3) == 2.585 and round(2.585 * 7.80, 2) == 20.16)
-    chk("inventory part 4 restates the half-life it uses", "7.80" in part(3, "p-inventory-half-life", 4)["question"], "question says 'the half-life from part 1' with no value")
-    # FINDING candidates: numbers shared with the course and with the set
-    l7 = open(os.path.join(COURSE, "l7-today-depends-on-yesterday.json"), encoding="utf-8").read()
-    chk("inventory: phi 0.915 is not the fitted phi of l7 screens[11]", "0.915" not in l7, "l7 screens[11]: phi-hat 0.915, gap after 5 days 2 x 0.915^5")
-    a = part(3, "p-smoothed-fund", 3)["widget"]["answer"] * 100
-    b = next(x["value"] for x in part(3, "p-inventory-half-life", 3)["widget"]["wrong"] if x["id"] == "one-step")
-    chk("set 3: two problems do not share the half-width 1.96 x 2.4 = 4.704", not close(a, b, 1e-6), "p-smoothed-fund part 3 key and p-inventory-half-life part 3 one-step")
+    chk("inflation gaps 0.0553 and 0.0454, 7.51", round(f[7] - mu, 4) == 0.0553 and round(f[8] - mu, 4) == 0.0454 and round(math.log(0.05 / 0.222) / math.log(0.82), 2) == 7.51)
+# ---- p-inventory-half-life: re-authored in the fix pass as p-swap-spread-hold (review finding 14). The block is removed,
+#      with its two reuse checks (phi 0.915 against l7 screens[11]; the 4.704 half-width shared with p-smoothed-fund).
 # ---- p-dual-listing
 with block("p-dual-listing"):
     bic3 = lambda k, l: k * math.log(750) - 2 * l
@@ -481,13 +405,13 @@ with block("p-dual-listing"):
     wrong(3, "p-dual-listing", 2, "ar", 0.88)
     wrong(3, "p-dual-listing", 2, "ma", 0.25)
     wrong(3, "p-dual-listing", 2, "product", 0.88 * 0.25)
-    key(3, "p-dual-listing", 3, xs[4])
-    wrong(3, "p-dual-listing", 3, "ar", 0.88 ** 5)
-    wrong(3, "p-dual-listing", 3, "off-by-one", xs[5])
+    key(3, "p-dual-listing", 3, xs[6])   # fix pass: finding 16 applied
+    wrong(3, "p-dual-listing", 3, "ar", 0.88 ** 7)
+    wrong(3, "p-dual-listing", 3, "off-by-one", xs[7])
     try:
         from statsmodels.tsa.arima_process import arma2ma
-        psi = arma2ma([1, -0.88], [1, 0.25], lags=7)
-        chk("dual: statsmodels psi weights give 1.13 and 0.6777", close(psi[1], 1.13, 1e-9) and close(psi[5], xs[4], 1e-9))
+        psi = arma2ma([1, -0.88], [1, 0.25], lags=9)
+        chk("dual: statsmodels psi weights give 1.13 and 0.5248", close(psi[1], 1.13, 1e-9) and close(psi[7], xs[6], 1e-9))
     except ImportError:
         print("NOTE statsmodels missing: psi-weight check skipped")
     lo, hi = 1.0, 30.0
@@ -508,9 +432,7 @@ with block("exam pairings"):
         "exam: rho_1-hat 0.45, 0.05 - 0.2025")
     chk("inflation: theta is not the 0.35 of stage-2 parts[1].items[5]", not ("Forecasts from an MA(1)" in st and "+ 0.35" in st and "-0.35" in item(3, "p-inflation-arma")["prose"]),
         "exam: MA(1) with 0.35, one-step uses the shock, two-step does not")
-    fr = json.dumps(item(2, "p-freight-ar2"))
-    chk("freight: parts 3 and 4 are not the Yule-Walker item stage-2 parts[1].items[4]", not ("An AR(2) from two autocorrelations" in st and "b_1 + b_2" in fr and "PACF at lag 2" in fr),
-        "same two equations, same ask, same two slip lines; parts 1 and 2 follow stage-2 parts[1].items[2]")
+    # freight check removed: p-freight-ar2 was re-authored in the fix pass (finding 11).
 
 # ---------------------------------------------------------------- numbers of the proposed fixes (review)
 with block("proposed fixes"):

@@ -150,3 +150,26 @@ Result. All 44 typed keys and 7 choice keys agree with mine, as do all 105 `wron
 3. A single fitted parameter shared with the same task ($\hat\phi = 0.915$, start times $\phi^h$) and a power shared between two sets of one course ($0.88^5 = 0.5277$ in `problems-2` and `problems-3`) raise nothing: the first is one number, and the second sits in a `wrong` value and an `explain`.
 
 Inbox bullets: `docs/BACKLOG-INBOX.md`, `Raised later (review problems arma):`.
+
+## Fix pass
+
+Author agent, session AF (re-author and fix pass, `docs/briefs/reauthor-fix-af.md`). Every number below was recomputed before it was written (`docs/reports/problems-arma-numbers.py`).
+
+1. fixed: $S_{xx} = 2{,}880$, $S_{xy} = -662.4$; part 2 key $-6.9$ with `no-sqrt` $-207.0$, `s-not-s2` $-9.2286$, `sign` 6.9; $-6.90$ in all six places of part 3.
+2. fixed: key tol 0.0008 (takes 0.037 and 0.038), `shock-sd` tol 0.0005 (takes 0.003); 1.783 printed.
+3. fixed as written.
+4. fixed as written; the new `over` text trips the validator's `[key-length]` warning (115 against 76 characters), left as the reader wrote it.
+5. fixed as written.
+6. fixed as written.
+7. fixed: $\hat\rho_1 = 0.44$ throughout (keys 0.44, 51.0564, 0.1936, 26.9399; `wrong` 2.2727, 50.24, 10148.48, 0.88, 22.4499, 725.76). The `box-pierce` line also takes finding 11's rewording, "That is $200 \times (0.1936 + 0.0576)$, ...".
+8. re-authored as `p-trust-discount` (l8, l7): the PACF read off four regression rows, the AR(2) mean from its constant, the two-lag forecast and its gap to the one-lag forecast.
+9. fixed as written (both lines).
+10. fixed as written (17.73 bp² restated; 12.79 stays in the band).
+11. re-authored as `p-satellite-stocks` (l5, l6, l7): an AR(1) seen through white measurement error, its attenuated ACF, and $\phi$ back from $\hat\rho_4/\hat\rho_1$. No second $Q$, no Yule-Walker step.
+12. fixed as written.
+13. fixed: $\theta = -0.20$; keys 0.472 and 0.43204 (part 4 key 9 unchanged); `wrong` 0.496, 0.52, 0.40804, 0.45172; gaps 0.222, 0.0553, 0.0454, 7.51.
+14. re-authored as `p-swap-spread-hold` (l12, l11): a quoted half-life and long-run sd, the 20-day gap and sd without $\phi$, the chance the trade loses at exit, and its floor 0.067.
+15. fixed as written.
+16. fixed: part 3 at 7 days, key 0.524777, `ar` 0.408676, `off-by-one` 0.461803; part 4 explain and part 5 `why` as written. Two of the new lines trip `[O2-long-sentence]` (under 35 words), left as written.
+
+Disputed 0, deferred 0. Gates on all three sets: validator 0 errors; voice scan 35, 0 and 0; `fresh-check --file` 0 hits; `grade-all --file` 0 failures (18, 16, 17 widgets); playthrough green with and without `--mobile`; `problems-arma-numbers.py` 605 checks, 0 failures; this reader's `problems-arma-numbers-read.py` 473 checks, 0 failing, exit 0. In the reader's script the blocks of `p-vol-index-order`, `p-freight-ar2` and `p-inventory-half-life` (with their reuse checks and the freight exam pairing) are removed, since those problems no longer exist; the airport, etf, inflation and dual-listing checks now target the fixed values. A delta reader reads the three new problems and the changed parts next; closest items per new problem are in `docs/reports/problems-arma.md`, section "Session AF".
