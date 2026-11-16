@@ -430,29 +430,49 @@ def level4():
     shown('etf z', -1.3435, (-1 + 0.5029) / 0.37, 4); shown('etf tail', 0.0896, tail, 4)
     shown('etf plug tail', 0.0692, Phi((-1 - float(m1)) / (1.5 / sqrt(20))), 4)
 
-    # --- p-circuit-breaker: Gamma(3, rate 0.5) prior, 8 weeks with 41 trips
-    a, b = Fr(3 + 41), Fr(1, 2) + 8
-    weeks = np.array([6, 4, 5, 7, 3, 5, 6, 5]); ok(weeks.sum() == 41, 'breaker weeks sum')
-    post = stats.gamma(44, scale=1 / 8.5)
-    num(I, 'p-circuit-breaker', 1, a / b, post.mean(), {'mle': Fr(41, 8), 'prior': 6, 'no-rate': Fr(44) / Fr(1, 2)})
+    # --- p-iceberg-refills: exponential gaps, 36 totalling 14 minutes, Gamma(5, rate 2) prior; Metropolis from the peak
+    a, b = Fr(5 + 36), Fr(2 + 14)                                             # posterior Gamma(41, rate 16)
+    gaps = rng.exponential(0.4, 36); gaps = gaps * 14 / gaps.sum()             # planted gaps totalling 14
+    ok(abs(gaps.sum() - 14) < 1e-9 and len(gaps) == 36, 'iceberg: planted gaps')
 
-    def logpost(lam):                                                         # likelihood times prior, no constants
-        return stats.poisson.logpmf(weeks, lam).sum() + stats.gamma(3, scale=2).logpdf(lam)
-    d = 43 * ln(6.1 / 5.2) - 8.5 * 0.9
-    num(I, 'p-circuit-breaker', 2, d, logpost(6.1) - logpost(5.2),
-        {'power-44': 44 * ln(6.1 / 5.2) - 8.5 * 0.9, 'as-scale': 43 * ln(6.1 / 5.2) - 0.9 / 8.5, 'reversed': -d}, agree=1e-9)
-    thr = exp(-0.7859)
-    us = rng.uniform(size=2_000_000)
-    num(I, 'p-circuit-breaker', 3, thr, float(np.mean(np.log(us) < -0.7859)),
-        {'reject-chance': 1 - thr, 'inverted': exp(0.7859)}, agree=2e-3)
-
-    def step(x, prop, u):
-        return prop if ln(u) < logpost(prop) - logpost(x) else x
-    num(I, 'p-circuit-breaker', 4, 6.1 if 0.40 < thr else 5.2, step(5.2, 6.1, 0.40), {'stayed': 5.2})
-    ok(step(5.2, 6.1, 0.50) == 5.2, 'breaker: u = 0.50 rejects')
-    shown('breaker mean', 5.1765, float(a / b), 4); shown('breaker mle', 5.125, 41 / 8, 9)
-    shown('breaker power', 6.8641, 43 * ln(6.1 / 5.2), 4); shown('breaker exp', 7.65, 8.5 * 0.9, 9)
-    shown('breaker d', -0.7859, d, 4); shown('breaker thr', 0.4557, thr, 4)
+    def logpost(lam):                                                         # likelihood times prior, from scipy
+        return stats.expon.logpdf(gaps, scale=1 / lam).sum() + stats.gamma(5, scale=1 / 2).logpdf(lam)
+    lg = np.linspace(1.5, 3.5, 2_000_001)                                     # grid of the log posterior
+    lp = stats.expon.logpdf(gaps[:, None], scale=1 / lg[::1000]).sum(0)        # coarse check of the likelihood form
+    ok(np.allclose(lp, 36 * np.log(lg[::1000]) - 14 * lg[::1000]), 'iceberg: likelihood is lambda^36 e^(-14 lambda)')
+    lpg = 36 * np.log(lg) - 14 * lg + stats.gamma(5, scale=0.5).logpdf(lg)
+    mode = (a - 1) / b
+    num(I, 'p-iceberg-refills', 1, mode, float(lg[np.argmax(lpg)]),
+        {'mean': a / b, 'mle': Fr(36, 14), 'prior-mode': Fr(4, 2), 'swapped': Fr(5 + 14 - 1, 2 + 36)}, agree=2e-6)
+    m, h = float(mode), 0.4
+    up = 40 * ln((m + h) / m) - 16 * h
+    dn = 40 * ln((m - h) / m) + 16 * h
+    num(I, 'p-iceberg-refills', 2, up, logpost(m + h) - logpost(m),
+        {'power-41': 41 * ln((m + h) / m) - 16 * h, 'as-scale': 40 * ln((m + h) / m) - h / 16, 'reversed': -up}, agree=1e-9)
+    au, ad = min(1, exp(up)), min(1, exp(dn))
+    leave = (au + ad) / 2
+    # method 2: simulate the first step of the sampler two million times, with the scipy log posterior
+    N = 2_000_000
+    sgn = np.where(rng.uniform(size=N) < 0.5, 1.0, -1.0)
+    lu = np.log(rng.uniform(size=N))
+    d_up, d_dn = logpost(m + h) - logpost(m), logpost(m - h) - logpost(m)
+    moved = lu < np.where(sgn > 0, d_up, d_dn)
+    num(I, 'p-iceberg-refills', 3, leave, float(moved.mean()),
+        {'up-only': au, 'down-only': ad, 'sum': au + ad, 'stay': 1 - leave}, agree=2e-3)
+    ok(abs((exp(-0.4632) + exp(-0.5741)) / 2 - leave) < 1e-4, 'iceberg: rounded log ratios keep the key')
+    drift = 0.5 * h * (au - ad)
+    num(I, 'p-iceberg-refills', 4, drift, float((sgn * h * moved).mean()),
+        {'no-half': h * (au - ad), 'no-step': 0.5 * (au - ad), 'sign': -drift}, agree=1e-3)
+    ok(abs(0.2 * (0.6293 - 0.5632) - drift) < 1e-4, 'iceberg: rounded chances keep the key')
+    ok(d_dn < d_up < 0, 'iceberg: both moves downhill, the upward one less so')
+    shown('iceberg 40/16', 2.5, 40 / 16, 9); shown('iceberg mean', 2.5625, 41 / 16, 9); shown('iceberg mle', 2.5714, 36 / 14, 4)
+    shown('iceberg swapped', 0.4737, 18 / 38, 4)
+    shown('iceberg power', 5.9368, 40 * ln(2.9 / 2.5), 4); shown('iceberg exp', 6.4, 16 * 0.4, 9); shown('iceberg up', -0.4632, up, 4)
+    shown('iceberg power-41', -0.3148, 41 * ln(1.16) - 6.4, 4); shown('iceberg scale', 5.9118, 40 * ln(1.16) - 0.025, 4)
+    shown('iceberg dn', -0.5741, dn, 4); shown('iceberg au', 0.6293, au, 4); shown('iceberg ad', 0.5632, ad, 4)
+    shown('iceberg leave', 0.5962, leave, 4); shown('iceberg sum', 1.1925, au + ad, 4); shown('iceberg stay', 0.4038, 1 - leave, 4)
+    shown('iceberg drift', 0.0132, drift, 4); shown('iceberg no-half', 0.0264, 0.4 * (0.6293 - 0.5632), 4)
+    shown('iceberg no-step', 0.0330, 0.5 * (0.6293 - 0.5632), 4)
 
     # --- p-quality-six-markets: six estimates, shared SE 0.5, empirical Bayes in closed form
     e = [Fr(19, 10), Fr(4, 10), Fr(11, 10), Fr(-2, 10), Fr(8, 10), Fr(14, 10)]
@@ -492,37 +512,81 @@ def level4():
     shown('q prec', 8.762, float(4 + 1 / t2), 3); shown('q psd', 0.3378, psd, 4); shown('q p', 0.8805, p_up, 4)
     shown('q raw 34%', 34, 100 * Phi(-0.2 / 0.5), 0); shown('q 88%', 88, 100 * p_up, 0)
 
-    # --- p-dealer-enquiries: Beta(7, 13) population, 17 of 40, four AR(1) chains of 2,000 at phi 0.6
-    A, Bb = 7 + 17, 13 + 23
-    pm = Fr(A, A + Bb)
-    num(I, 'p-dealer-enquiries', 1, pm, stats.beta(A, Bb).mean(), {'raw': Fr(17, 40), 'population': Fr(7, 20), 'a-only': Fr(24, 47)})
-    ok(Fr(40, 60) * Fr(17, 40) + Fr(20, 60) * Fr(7, 20) == pm, 'dealer blend')
-    var = Fr(A * Bb, (A + Bb) ** 2 * (A + Bb + 1)); sd = sqrt(var)
-    num(I, 'p-dealer-enquiries', 2, sd, stats.beta(A, Bb).std(),
-        {'binomial': sqrt(0.4 * 0.6 / 40), 'variance': float(var), 'no-plus-one': sqrt(0.4 * 0.6 / 60)}, agree=1e-9)
-    phi, n_ch, n = 0.6, 4, 2000
-    mcse = 0.0627 * sqrt((1 + phi) / (n_ch * n * (1 - phi)))
-    k = np.arange(1, n)
-    finite = sd ** 2 / n * (1 + 2 * ((1 - k / n) * phi ** k).sum()) / n_ch    # exact variance of the mean of finite AR(1) chains
-    num(I, 'p-dealer-enquiries', 3, mcse, sqrt(finite),
-        {'independent': 0.0627 / sqrt(8000), 'one-chain': 0.0627 / sqrt(500), 'no-plus-phi': 0.0627 / sqrt(3200)}, agree=5e-6)
-    z = rng.standard_normal((400 * n_ch, n)); x = z[:, 0].copy(); tot_x = x.copy()   # 400 runs of four unit AR(1) chains
-    for t in range(1, n):
-        x = phi * x + sqrt(1 - phi ** 2) * z[:, t]; tot_x += x
-    sims = (tot_x / n).reshape(400, n_ch).mean(1)
-    ok(abs(np.std(sims) * sd - sqrt(finite)) / sqrt(finite) < 0.1, 'dealer: simulated MCSE within 10%')
-    zgap = (0.4045 - 0.4) / 0.00140
-    num(I, 'p-dealer-enquiries', 4, zgap, (0.4045 - float(pm)) / sqrt(finite),
-        {'independent': 0.0045 / (sd / sqrt(8000)), 'posterior-sd': 0.0045 / sd, 'one-chain': 0.0045 / (sd / sqrt(500))}, agree=1e-2)
-    pick(I, 'p-dealer-enquiries', 5, 'fault')
-    shown('dealer 0.425', 0.425, 17 / 40, 9); shown('dealer 0.35', 0.35, 7 / 20, 9)
-    shown('dealer var', 0.003934, float(var), 6); ok(A * Bb == 864 and (A + Bb) ** 2 * (A + Bb + 1) == 219600, 'dealer 864/219600')
-    shown('dealer sd', 0.0627, sd, 4); shown('dealer binomial', 0.07746, sqrt(0.24 / 40), 5)
-    shown('dealer ess per chain', 500, n * (1 - phi) / (1 + phi), 9); shown('dealer ess', 2000, n_ch * n * (1 - phi) / (1 + phi), 9)
-    shown('dealer mcse', 0.00140, mcse, 5); shown('dealer iid', 0.00070, 0.0627 / sqrt(8000), 5)
-    shown('dealer one chain', 0.0028, 0.0627 / sqrt(500), 4); shown('dealer 3200', 3200, 8000 * 0.4, 9)
-    shown('dealer z', 3.21, zgap, 2); shown('dealer gap', 0.0045, 0.4045 - 0.4, 9)
-    ok(700 < 1 / (2 * stats.norm.sf(3.21)) < 800, 'dealer: about once in 750 runs')
+    # --- p-four-books: four books, SE 2, theta_j ~ N(mu, 1), mu ~ N(0, 1.5^2); Gibbs on (theta, mu)
+    s2, t2b, J, v0 = Fr(4), Fr(1), 4, Fr(9, 4)
+    Bk = (1 / t2b) / (1 / t2b + 1 / s2)                                       # weight on mu in theta_j | mu
+    c = (J / t2b) / (1 / v0 + J / t2b)                                        # weight on the mean of theta in mu | theta
+    phi = Bk * c
+    yb = np.array([1.3, -0.6, 2.4, 0.5])                                      # planted estimates; they do not enter phi
+    # method 2: run the Gibbs sampler, then read the lag-1 autocorrelation of mu
+    T = 200_000
+    vth = float(1 / (1 / t2b + 1 / s2)); vmu_c = float(1 / (1 / v0 + J / t2b))
+    zt = rng.standard_normal((T, J)); zm = rng.standard_normal(T)
+    mus = np.empty(T); cur = 0.0
+    for t in range(T):
+        th = float(Bk) * cur + float(1 - Bk) * yb + sqrt(vth) * zt[t]
+        cur = float(c) * th.mean() + sqrt(vmu_c) * zm[t]
+        mus[t] = cur
+    phi_sim = float(np.corrcoef(mus[1000:-1], mus[1001:])[0, 1])
+    num(I, 'p-four-books', 1, Bk, 1 / (1 + float(t2b) / float(s2)),
+        {'estimate-weight': 1 - Bk, 'sd-weights': Fr(1) / (1 + Fr(1, 2))})
+    ok(Bk == s2 / (s2 + t2b), 'books: the slope is lesson 18 B = s^2/(s^2 + tau^2)')
+    num(I, 'p-four-books', 2, phi, phi_sim,
+        {'square': Bk ** 2, 'mu-slope': c, 'no-quarter': Bk * v0 / (v0 + t2b), 'first-slope': Bk}, agree=1e-2)
+    n = 4 * 2500
+    ess = n * (1 - phi) / (1 + phi)
+    k = np.arange(1, 2500)
+    infl = float(1 + 2 * ((1 - k / 2500) * float(phi) ** k).sum())             # exact finite-n inflation of a chain mean
+    num(I, 'p-four-books', 3, ess, n / infl,
+        {'no-plus-phi': n * (1 - phi), 'one-chain': ess / 4, 'independent': n, 'square': n * (1 - Bk ** 2) / (1 + Bk ** 2)}, agree=2e-3)
+    # the posterior sd of mu, twice: the marginal of the mean estimate, and the inverse of the joint precision matrix
+    vmu = 1 / (1 / v0 + J / (s2 + t2b))
+    P = np.zeros((J + 1, J + 1))
+    for j in range(J):
+        P[j, j] = 1 / float(s2) + 1 / float(t2b); P[j, J] = P[J, j] = -1 / float(t2b)
+    P[J, J] = 1 / float(v0) + J / float(t2b)
+    ok(abs(sqrt(np.linalg.inv(P)[J, J]) - sqrt(vmu)) < 1e-12, 'books: posterior sd of mu by the joint precision')
+    ok(abs(float(np.std(mus[1000:])) - sqrt(vmu)) < 0.02, 'books: the Gibbs draws have the posterior sd')
+    shown('books sd mu', 0.8964, sqrt(vmu), 4)
+    err = 0.8964 / sqrt(1627.9)
+    num(I, 'p-four-books', 4, err, sqrt(vmu) * sqrt(infl / n),
+        {'independent': 0.8964 / sqrt(n), 'one-chain': 0.8964 / sqrt(ess / 4), 'no-plus-phi': 0.8964 / sqrt(2800),
+         'square': 0.8964 / sqrt(2195.1)}, agree=2e-5)
+    need = n * (0.0222 / 0.01) ** 2 / 4
+    exact_need = float((vmu / Fr(1, 10000)) * (1 + phi) / (1 - phi)) / 4
+    brute = next(m_ for m_ in range(1000, 20000) if sqrt(vmu) * sqrt((1 + float(phi)) / (1 - float(phi)) / (4 * m_)) <= 0.01)
+    ok(abs(brute - exact_need) <= 1, f'books: brute search {brute} against {exact_need:.1f}')
+    num(I, 'p-four-books', 5, exact_need, brute, {'total': 4 * need, 'linear': n * 2.22 / 4, 'no-ar': 0.8964 ** 2 / 0.01 ** 2 / 4}, agree=1)
+    ok(abs(round(need, -2) - 12300) < 1e-9 and abs(round(exact_need, -2) - 12300) < 1e-9, 'books: both routes round to 12,300')
+    shown('books prec mu', 1, 1 / float(t2b), 9); shown('books prec est', 0.25, 1 / float(s2), 9); shown('books 1/1.25', 0.8, 1 / 1.25, 9)
+    shown('books 0.6667', 0.6667, 1 / 1.5, 4); shown('books B', 0.8, 4 / (4 + 1), 9)
+    shown('books 1/2.25', 0.4444, 1 / 2.25, 4); shown('books c', 0.9, 4 / (4 + 1 / 2.25), 9); shown('books 0.72', 0.72, float(phi), 9)
+    shown('books 0.5538', 0.5538, float(Bk * v0 / (v0 + 1)), 4); shown('books 72%', 72, 100 * float(phi), 9)
+    shown('books ess', 1627.9, float(ess), 1); shown('books 0.28', 0.28, 1 - float(phi), 9); shown('books 1.72', 1.72, 1 + float(phi), 9)
+    shown('books one', 407.0, float(ess) / 4, 1); shown('books 2195.1', 2195.1, 10000 * 0.36 / 1.64, 1)
+    ok(abs(float(ess) / n - 1 / 6) < 0.005, 'books: about a sixth of an independent draw')
+    shown('books root', 40.35, sqrt(1627.9), 2); shown('books err', 0.0222, err, 4); shown('books iid', 0.0090, 0.8964 / 100, 4)
+    shown('books one err', 0.0444, 0.8964 / sqrt(407.0), 4); shown('books 2800 err', 0.0169, 0.8964 / sqrt(2800), 4)
+    shown('books sq err', 0.0191, 0.8964 / sqrt(2195.1), 4)
+    ok(abs(err / 0.8964 - 1 / 40) < 0.001 and abs(2 * err - 0.04) < 0.005, 'books: a fortieth of the sd; +/- 0.04 at two errors')
+    shown('books ratio', 4.93, (0.0222 / 0.01) ** 2, 2); shown('books total', 49300, 4 * need, -2); shown('books per chain', 12300, need, -2)
+    shown('books 2.22', 2.22, 0.0222 / 0.01, 9); shown('books linear', 5550, n * 2.22 / 4, 9)
+    shown('books no-ar', 2000, 0.8964 ** 2 / 1e-4 / 4, -2); ok(abs(need / (0.8964 ** 2 / 1e-4 / 4) - 6) < 0.5, 'books: about six times as many')
+
+    # --- fix pass: normal-table values printed in two questions (review finding 10)
+    for zv, pv in ((1.3435, 0.9104), (1.4821, 0.9308), (3.1825, 0.9993), (0.7956, 0.7869), (0.8680, 0.8073), (1.1776, 0.8805)):
+        shown(f'Phi({zv})', pv, Phi(zv), 4)
+    shown('etf z plug', 1.4821, 0.4971 / 0.3354, 4); shown('etf z theta', 3.1825, 0.4971 / 0.1562, 4)
+    shown('q z se', 0.7956, 0.3978 / 0.5, 4); shown('q z tau', 0.8680, 0.3978 / 0.4583, 4); shown('q z key', 1.1776, 0.3978 / 0.3378, 4)
+    for given, iid, k, wid in ((1 - 0.9104, 'p-etf-tracking', 4, None), (1 - 0.9308, 'p-etf-tracking', 4, 'plug-in'),
+                               (1 - 0.9993, 'p-etf-tracking', 4, 'theta-sd'), (0.8805, 'p-quality-six-markets', 5, None),
+                               (0.7869, 'p-quality-six-markets', 5, 'se-as-sd'), (0.8073, 'p-quality-six-markets', 5, 'tau-as-sd'),
+                               (1 - 0.8805, 'p-quality-six-markets', 5, 'lower')):
+        wd = I[iid]['parts'][k - 1]['widget']
+        x = wd if wid is None else next(y for y in wd['wrong'] if y['id'] == wid)
+        ok(abs(given - x.get('answer', x.get('value'))) <= x['tol']['abs'] + 1e-12, f'{iid} p{k}: table value {given:.4f} lands in {wid or "key"}')
+    shown('etf add-var', 0.3202, sqrt(0.04 + 0.0625), 4); shown('q sd-ratio', 0.5218, 0.5 / (0.5 + 0.4583), 4)
+    shown('q 0.5978', 0.5978, 0.5435 * 1.1, 4); shown('q 0.3022', 0.3022, 0.9 - 0.5978, 4); shown('q 0.1195', 0.1195, 1 - 0.8805, 4)
 
 
 for n, f in ((1, level1), (2, level2), (3, level3), (4, level4)):

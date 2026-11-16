@@ -79,3 +79,23 @@ Screens are numbered from 0, as in the author's report.
 ## Counts
 
 10 findings: wrong 0, misleading 1 (9), reuse 7 (1, 2, 3, 5, 6, 7, 8), re-author 1 (4), continuity 0, voice 0, other 1 (10). Replacement lines: 41, with 2 keys and 6 `wrong` values re-keyed (finding 8), all checked in a copy. Problem marked re-author: `p-circuit-breaker`. `p-dealer-enquiries` is line-level here but its parts 1 to 3 are three quiz items in a row; the main session may rule it a second.
+
+
+## Fix pass
+
+Author agent, re-author and fix pass (brief `docs/briefs/reauthor-fix-af.md`). Main-session ruling: `p-dealer-enquiries` is a re-author as well, as `p-auction-tails` of set 1 was.
+
+1. Fixed: `p-etf-tracking` part 1 `add-var` line as written; $\sqrt{0.1025} = 0.3202$, $1/0.04 = 25$, $1/0.0625 = 16$ recomputed.
+2. Fixed: part 2 `generic`, `data-only` and `plain-average` as written; $-0.56$, $25/41$, $16/41$ and $-0.5029$ recomputed.
+3. Fixed: part 3 `plug-in` and `variance`, part 4 `plug-in` and `upper` as written; 0.3354, 0.1369, 0.0692, 0.3700, 0.0896 and 0.9104 recomputed.
+4. Re-authored as `p-iceberg-refills`: exponential refill gaps of an iceberg order with a $\mathrm{Gamma}(5, \text{rate } 2)$ prior; the posterior's peak (2.5), the kept step of a log ratio from the learner's own kernel ($-0.4632$), the chance of leaving the peak over a $\pm 0.4$ proposal (0.5962) and the expected drift of the first step (0.0132). It walks none of l14 S3 and Q2, `r4-gamma`, `e-default-rate`, l16 S0, S1 and Q0, `r4-step` or `e-metropolis-log`; no draw $u$ is given, and it does not end on where the chain is.
+5. Fixed: `p-quality-six-markets` part 3 `sd-ratio`, part 4 `generic` and `kept-b`, part 5 `lower` as written; 0.5218, 0.5978, 0.3022, 0.4565 and 0.1195 recomputed.
+6. Falls away: re-authored as `p-four-books` (no $n = 40$, no posterior summing to 60, no Beta update).
+7. Falls away: re-authored as `p-four-books` (no Beta sd).
+8. Falls away: re-authored as `p-four-books` ($\phi = 0.72$ from two Gibbs slopes, four chains of 2,500).
+9. Falls away: re-authored as `p-four-books`, which makes no claim about a sampler's fault; the reader's script now checks the claim does not return.
+10. Fixed: both questions name the three $\Phi$ values as written; each value recomputed and shown to land in its own band (key 0.0896, slips 0.0692 and 0.0007; key 0.8805, slips 0.7869, 0.8073 and 0.1195). Neither new problem needs a tail.
+
+Counts: fixed 5 (1, 2, 3, 5, 10); re-authored 1 (4), plus `p-dealer-enquiries` by ruling; falls away 4 (6 to 9); disputed 0; deferred 0. Keys changed: all of the two new problems (9 parts); none elsewhere.
+
+Gates on `problems-4.json`: validator 0 errors, no warning on the file; voice scan 35, 0 and 0; `fresh-check --file` 0 hits; `grade-all --file` 18 widgets, 0 failures; playthrough `--problems stat-models/problems-4 --local-cdn` green desktop and `--mobile` (part shots at 440 px read, no overflow). `problems-stat-models-numbers.py` 1074 of 1074, exit 0; `problems-stat-models-4-numbers-read.py` 153 checks, 0 findings, exit 0 (its two re-authored blocks and their replacement-text checks removed, as the problems no longer exist).
