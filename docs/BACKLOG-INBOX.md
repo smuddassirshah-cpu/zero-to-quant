@@ -71,3 +71,8 @@ Raised later (review problems numerics 4):
 Raised later (re-author and fix pass problems garch):
 - `[percent-form]` asks a "%²" question to carry a `decimal` slip at the key over $10^4$; at "Give 2 decimal places" that slip prints as 0.00, so `[wrong-band]` then wants its band widened to ±0.005 to be reachable at all (`garch/problems-3` `p-monthly-sleeve` parts 1 and 3). The pair could accept a `decimal` slip with a band covering the asked rounding of zero without a warning, or skip `[percent-form]` when the asked rounding cannot express the decimal.
 - `fresh-check.mjs --file` takes about two minutes on `garch/problems-3` alone, past the two-minute per-command budget of the chained briefs; a `--quiet` or cached-corpus mode would help.
+
+Raised later (review problems convex 4):
+- `fresh-check.mjs --file` gave 0 hits on `convex/problems-4`, yet the slip sentence "You added $f'/f''$." is word for word in l16's quiz and `review-4` `r4-newton` (`p-sale-horizon` part 3; `review-problems-convex-4.md` finding 8). Same miss as the stat-models bullet above: test short, mostly-maths lines for an exact match.
+- The same-course checker reads no exam: `convex/problems-4` carries the question "by what factor does the worst error shrink each step" and the frame "Solve ... for the smallest whole $n$" of `exams/topic-2.5.json` `e-rate-from-kappa` (findings 4 and 12).
+- No rule holds a slip band against its value: two `wrong` entries of `convex/problems-4` have `tol.abs` 0.5 on values 0.075 and 0.0793, so answers such as 0.5 or 0.311 get the wrong slip line (findings 2 and 10). Warn when a slip's `tol.abs` exceeds its own magnitude.
