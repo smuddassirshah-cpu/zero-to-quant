@@ -1,0 +1,962 @@
+{
+  "id": "problems-1",
+  "course": "ensembles",
+  "level": 1,
+  "title": "Problems: growing and judging one tree",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-spoof-alerts",
+      "difficulty": 3,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "An exchange's surveillance team reviewed 60 alerts on large orders: 18 were spoofing and 42 were genuine. A tree's first question is *was more than 90% of the order cancelled?* Yes: 22 alerts, 14 spoofing and 8 genuine. No: 38 alerts, 4 spoofing and 34 genuine.",
+      "parts": [
+        {
+          "question": "Each side predicts its majority. How many of the 60 alerts does this one question get wrong?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "parent",
+                "value": 18,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "majority",
+                "value": 48,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one-side",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The yes side predicts spoofing and misses its 8 genuine alerts; the no side predicts genuine and misses 4 spoofs. That is 12.",
+            "generic": "Not quite right. On each side, count the alerts outside the majority, then add.",
+            "byKey": {
+              "parent": "18 is what the root alone gets wrong, calling every alert genuine. Count the minority on each side of the question.",
+              "majority": "You counted the majorities, the alerts each side gets right. The mistakes are the minorities: 8 and 4.",
+              "one-side": "8 is the yes side's mistakes only. The no side also misses its 4 spoofs."
+            }
+          },
+          "explain": {
+            "text": "Yes side: 14 spoofing against 8 genuine, so it says spoofing and gets 8 wrong. No side: 34 genuine against 4 spoofing, so it gets 4 wrong. The question cuts the root's 18 mistakes to 12."
+          }
+        },
+        {
+          "question": "What is the Gini impurity of the root, all 60 alerts? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.42,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "error-rate",
+                "value": 0.3,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "sum-squares",
+                "value": 0.58,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-two",
+                "value": 0.21,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The shares are 0.3 and 0.7, so $G = 1 - 0.09 - 0.49 = 0.42$.",
+            "generic": "Not quite right. Find the two shares, square each, and subtract both squares from 1.",
+            "byKey": {
+              "error-rate": "0.3 is the spoofing share, the root's error rate. Gini squares the shares: $1 - 0.3^2 - 0.7^2$.",
+              "sum-squares": "0.58 is $0.3^2 + 0.7^2$. Gini is 1 minus that sum.",
+              "no-two": "0.21 is $0.3 \\times 0.7$. With two classes Gini is twice that, $2 \\times 0.3 \\times 0.7$."
+            }
+          },
+          "explain": {
+            "text": "18 of 60 is 0.3 and 42 of 60 is 0.7. $G = 1 - 0.3^2 - 0.7^2 = 0.42$."
+          }
+        },
+        {
+          "question": "What is the weighted Gini of the two sides? Weight each side's Gini by its share of the 60 alerts. Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.289,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "unweighted",
+                "value": 0.326,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "yes-only",
+                "value": 0.463,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "gain",
+                "value": 0.131,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Yes side $G = 0.463$ on 22 alerts, no side $G = 0.188$ on 38: $\\tfrac{22}{60} \\times 0.463 + \\tfrac{38}{60} \\times 0.188 = 0.289$.",
+            "generic": "Not quite right. Find each side's Gini, weight it by its share of the 60 alerts, and add.",
+            "byKey": {
+              "unweighted": "You averaged the two sides equally. The no side holds 38 of the 60 alerts, so it weighs more.",
+              "yes-only": "0.463 is the yes side's Gini alone. Add the no side, and weight each by its share of the alerts.",
+              "gain": "That is the gain, the drop from 0.42. The question asks for the impurity left after the split."
+            }
+          },
+          "explain": {
+            "text": "Yes: $1 - (\\tfrac{14}{22})^2 - (\\tfrac{8}{22})^2 = 0.463$. No: $1 - (\\tfrac{4}{38})^2 - (\\tfrac{34}{38})^2 = 0.188$. Weighted by 22 and 38 alerts out of 60, they leave 0.289."
+          }
+        },
+        {
+          "question": "Use the root's 0.42 and the sides' 0.289 from parts 2 and 3. What is the Gini gain of the question? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.131,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "child",
+                "value": 0.289,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.094,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "mistakes",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.42 - 0.289 = 0.131$.",
+            "generic": "Not quite right. The gain is the root's impurity minus the weighted impurity of the sides.",
+            "byKey": {
+              "child": "0.289 is what the split leaves. The gain is how far it fell from 0.42.",
+              "carried": "You subtracted the unweighted average, 0.326. Weight the sides by 22 and 38 alerts first: 0.289.",
+              "mistakes": "That is the fall in the error rate, from 18 to 12 mistakes in 60. The question asks for the Gini gain."
+            }
+          },
+          "explain": {
+            "text": "Gain $= 0.42 - 0.289 = 0.131$. The mistakes fell by 6 of 60, a drop of 0.1 in the error rate. Gini measures the purer mix too, not only the changed majorities."
+          }
+        },
+        {
+          "question": "The yes side is split again by asking whether the order rested for under 2 seconds. One side gets 12 spoofing and 1 genuine. The other gets 2 spoofing and 7 genuine. The no side stays a leaf. How many of the 60 alerts does this depth-2 tree get wrong?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-leaf",
+                "value": 3,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "carried",
+                "value": 12,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "spoof-only",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The new leaves miss 1 and 2 alerts, and the no leaf still misses 4: $1 + 2 + 4 = 7$.",
+            "generic": "Not quite right. Count the minority in each of the three leaves, then add.",
+            "byKey": {
+              "no-leaf": "3 counts only the two new leaves. The no side is still a leaf, and it still misses 4 spoofs.",
+              "carried": "12 is the one-question tree from part 1. The second question fixes some of the yes side's 8 mistakes.",
+              "spoof-only": "You counted only the spoofs that slip through, 2 and 4. The leaf of 12 spoofs also flags 1 genuine alert."
+            }
+          },
+          "explain": {
+            "text": "Leaf 12 and 1 says spoofing and misses 1; leaf 2 and 7 says genuine and misses 2; the no leaf misses 4. The second question cut the mistakes from 12 to 7. Growing greedily, one best question at a time, is how the tree was built."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-repo-terms",
+      "difficulty": 4,
+      "skills": [
+        "en-trees",
+        "en-interpret"
+      ],
+      "prose": "A funding desk forecasts a repo's cost above the base rate, in bp, from its term. Six past trades: terms of 1, 2, 4, 6, 9 and 15 weeks, costs of 5, 7, 6, 13, 9 and 20 bp. A regression tree tries every midpoint between neighbouring terms.",
+      "parts": [
+        {
+          "question": "With no split, the tree forecasts one number for all six trades. What is the squared error of that forecast, summed over the six, in bp²?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 160,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "unsquared",
+                "value": 26,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "mean-error",
+                "value": 26.67,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "median",
+                "value": 184,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The mean is 10 bp, and $25 + 9 + 16 + 9 + 1 + 100 = 160$.",
+            "generic": "Not quite right. Forecast the mean of the six costs, then add the squared gaps.",
+            "byKey": {
+              "unsquared": "You added the gaps without squaring them: $5 + 3 + 4 + 3 + 1 + 10$. Square each gap first.",
+              "mean-error": "You divided by 6, which is the mean squared error. The question asks for the sum.",
+              "median": "You forecast the median, 8. A regression leaf forecasts the mean, 10, which leaves less squared error."
+            }
+          },
+          "explain": {
+            "text": "The best single forecast is the mean, $60/6 = 10$ bp. The squared gaps are 25, 9, 16, 9, 1 and 100. They add to 160."
+          }
+        },
+        {
+          "question": "Using the root's 160 from part 1, which split removes the most squared error? Give that drop, in bp².",
+          "widget": {
+            "kind": "numeric",
+            "answer": 120,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "left-over",
+                "value": 40,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "even",
+                "value": 96,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "first",
+                "value": 30,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The split at 12 weeks puts the 15-week trade alone. The left five have mean 8 and leave 40, so the drop is $160 - 40 = 120$.",
+            "generic": "Not quite right. For each midpoint, add the two sides' squared errors around their own means, and subtract from 160.",
+            "byKey": {
+              "left-over": "40 is what the best split leaves. The drop is $160 - 40$.",
+              "even": "96 is the drop at 5 weeks, three trades each side. Splitting off the 20 bp trade at 12 weeks removes more.",
+              "first": "30 is the drop at 1.5 weeks, the first midpoint. Try them all: the one at 12 weeks removes 120."
+            }
+          },
+          "explain": {
+            "text": "The drops at 1.5, 3, 5, 7.5 and 12 weeks are 30, 48, 96, 60.75 and 120. At 12 weeks the right leaf holds 20 alone and the left leaves $9 + 1 + 4 + 25 + 1 = 40$. So the tree splits at 12 weeks."
+          }
+        },
+        {
+          "question": "Take the split at 12 weeks as a one-split tree. What does it forecast for a new 26-week repo, in bp?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 20,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "root",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "left",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "carried",
+                "value": 14,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "26 weeks is above 12, so the repo lands in the right leaf. That leaf holds one trade, at 20 bp.",
+            "generic": "Not quite right. Answer the one question for 26 weeks, then read that leaf's mean.",
+            "byKey": {
+              "root": "10 is the forecast with no split. The tree first asks whether the term is above 12 weeks.",
+              "left": "8 is the left leaf, for terms up to 12 weeks. 26 weeks goes right.",
+              "carried": "14 is the right leaf of the split at 5 weeks. The best split is at 12 weeks, whose right leaf holds only the 20 bp trade."
+            }
+          },
+          "explain": {
+            "text": "Every term above 12 weeks lands in the right leaf, whose mean is 20 bp. The forecast is the same at 26 weeks as at 15. A tree cannot extend a trend past its last leaf."
+          }
+        },
+        {
+          "question": "The desk refits with `min_samples_leaf=2`. Which split does the tree now choose? Give its drop in squared error, in bp².",
+          "widget": {
+            "kind": "numeric",
+            "answer": 96,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-floor",
+                "value": 120,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "left-over",
+                "value": 64,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "next-door",
+                "value": 60.75,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each side needs 2 trades, so only 3, 5 and 7.5 weeks remain. At 5 weeks the sides leave 2 and 62, so the drop is $160 - 64 = 96$.",
+            "generic": "Not quite right. Keep only the splits with at least 2 trades on each side, and take the largest drop.",
+            "byKey": {
+              "no-floor": "120 needs a leaf of one trade. With `min_samples_leaf=2` the split at 12 weeks is not allowed.",
+              "left-over": "64 is what the split at 5 weeks leaves. The drop is $160 - 64$.",
+              "next-door": "60.75 is the drop at 7.5 weeks. The split at 5 weeks removes more, 96."
+            }
+          },
+          "explain": {
+            "text": "The allowed drops are 48 at 3 weeks, 96 at 5 and 60.75 at 7.5. At 5 weeks the left leaf, 5, 7 and 6, has mean 6 and leaves 2; the right, 13, 9 and 20, has mean 14 and leaves 62. So the drop is 96."
+          }
+        },
+        {
+          "question": "Use the split at 5 weeks from part 4. What does the floored tree forecast for the 26-week repo, in bp?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 14,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "carried",
+                "value": 20,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "left",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "root",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "26 weeks is above 5, so it lands in the leaf of 13, 9 and 20 bp. Their mean is 14.",
+            "generic": "Not quite right. Answer the 5-week question for 26 weeks and read that leaf's mean.",
+            "byKey": {
+              "carried": "20 is the unfloored tree, whose right leaf was one trade. With the floor the right leaf holds three.",
+              "left": "6 is the left leaf, for terms up to 5 weeks. 26 weeks goes right.",
+              "root": "10 is the mean of all six. The floored tree still asks one question first."
+            }
+          },
+          "explain": {
+            "text": "The right leaf averages 13, 9 and 20 to 14 bp. The floor stops a forecast resting on one trade, so the long-term forecast falls from 20 to 14. Either way it is flat past the data."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-broker-pruning",
+      "difficulty": 4,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "A broker's tree predicts which of 400 clients close their account within a year. One internal node holds 27 clients: 18 stayed and 9 left. It first splits off 7 clients who all left. The other 20, 18 stayed and 2 left, split again: 15 who stayed, and 5 of whom 3 stayed and 2 left.",
+      "parts": [
+        {
+          "question": "What is the Gini impurity of the node of 27 clients? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.4444,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "error-rate",
+                "value": 0.3333,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sum-squares",
+                "value": 0.5556,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-two",
+                "value": 0.2222,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The shares are $\\tfrac{2}{3}$ and $\\tfrac{1}{3}$, so $G = 1 - \\tfrac{4}{9} - \\tfrac{1}{9} = \\tfrac{4}{9} = 0.4444$.",
+            "generic": "Not quite right. Square the two shares, add them, and subtract from 1.",
+            "byKey": {
+              "error-rate": "$\\tfrac{1}{3}$ is the share who left, the node's error rate. Gini squares the shares.",
+              "sum-squares": "0.5556 is the sum of the squared shares. Gini is 1 minus it.",
+              "no-two": "0.2222 is $\\tfrac{2}{3} \\times \\tfrac{1}{3}$. With two classes Gini is twice that."
+            }
+          },
+          "explain": {
+            "text": "18 of 27 stayed and 9 of 27 left. $G = 1 - (\\tfrac{2}{3})^2 - (\\tfrac{1}{3})^2 = \\tfrac{4}{9} = 0.4444$."
+          }
+        },
+        {
+          "question": "Pruning scores a node by its Gini times its share of all 400 clients, $R(t)$. Using $G = \\tfrac{4}{9}$ from part 1, what is $R(t)$ for this node? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.03,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "unweighted",
+                "value": 0.4444,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.0225,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "carried-squares",
+                "value": 0.0375,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\tfrac{27}{400} \\times \\tfrac{4}{9} = \\tfrac{108}{3600} = 0.0300$.",
+            "generic": "Not quite right. Multiply the node's Gini by 27 out of 400.",
+            "byKey": {
+              "unweighted": "0.4444 is the Gini itself. $R(t)$ weights it by the node's share of the 400 clients.",
+              "carried": "You weighted the error rate, $\\tfrac{1}{3}$. Use the Gini, $\\tfrac{4}{9}$.",
+              "carried-squares": "You weighted the sum of the squared shares, $\\tfrac{5}{9}$. Use the Gini, $1 - \\tfrac{5}{9} = \\tfrac{4}{9}$."
+            }
+          },
+          "explain": {
+            "text": "The node holds $\\tfrac{27}{400} = 0.0675$ of the clients. $R(t) = 0.0675 \\times \\tfrac{4}{9} = 0.0300$, the impurity it carries as one leaf."
+          }
+        },
+        {
+          "question": "Look at the inner node of 20 clients, 18 stayed and 2 left. At what `ccp_alpha` does cutting it back to one leaf break even? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.003,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "no-subtract",
+                "value": 0.009,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "halved",
+                "value": 0.0015,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "leaf-only",
+                "value": 0.006,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "As one leaf: $\\tfrac{20}{400} \\times 0.18 = 0.009$. Its two leaves: $\\tfrac{5}{400} \\times 0.48 = 0.006$ and 0. The cut removes 1 leaf, so $\\alpha = 0.009 - 0.006 = 0.0030$.",
+            "generic": "Not quite right. Find $R$ for the node as one leaf and for its two leaves. Divide the difference by the leaves the cut removes.",
+            "byKey": {
+              "no-subtract": "0.009 is $R$ for the node as one leaf. Subtract what its two leaves carry, 0.006.",
+              "halved": "You divided by 2. Two leaves become one, so the cut removes 1 leaf.",
+              "leaf-only": "0.006 is what the two leaves carry. The break-even is the extra impurity of the cut, $0.009 - 0.006$."
+            }
+          },
+          "explain": {
+            "text": "The node of 18 and 2 has $G = 0.18$, so $R = 0.05 \\times 0.18 = 0.009$. Its leaves carry $0.0125 \\times 0.48 = 0.006$, since the 15 who stayed form a pure leaf. Cutting costs 0.003 for 1 leaf, so $\\alpha = 0.003$."
+          }
+        },
+        {
+          "question": "Once that cut is made, the node of 27 has two leaves: the 7 who left, and the 20 with $R = 0.009$. Using $R(t) = 0.03$ from part 2, at what `ccp_alpha` does cutting the node of 27 to one leaf break even? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.021,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "three-leaves",
+                "value": 0.012,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "no-subtract",
+                "value": 0.03,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "halved",
+                "value": 0.0105,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The leaves carry $0.009 + 0 = 0.009$ and the cut removes 1 leaf: $\\alpha = 0.03 - 0.009 = 0.0210$.",
+            "generic": "Not quite right. Subtract what the two leaves carry from 0.03, and divide by the one leaf the cut removes.",
+            "byKey": {
+              "three-leaves": "You scored the branch with all three of its first leaves, $(0.03 - 0.006)/2$. The inner node was cut first, so the node now has two leaves.",
+              "no-subtract": "0.03 is $R(t)$ itself. Subtract what the two leaves carry, 0.009.",
+              "halved": "You divided by 2. The node now has two leaves, so the cut removes 1."
+            }
+          },
+          "explain": {
+            "text": "The 7 who left form a pure leaf, so the leaves carry 0.009 in all. Cutting the node adds $0.03 - 0.009 = 0.021$ and removes 1 leaf. This is how pruning runs: cut the weakest link, then score the branches again."
+          }
+        },
+        {
+          "question": "The full tree has 11 leaves, and every other cut on its pruning path is above 0.024. Using 0.003 and 0.021 from parts 3 and 4, how many leaves does `DecisionTreeClassifier(ccp_alpha=0.016)` keep?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "carried",
+                "value": 9,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "not-cut",
+                "value": 11,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "three",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "0.003 is at most 0.016, so the inner node is cut and 1 leaf goes. 0.021 is above 0.016, so the node of 27 keeps its two leaves: 10.",
+            "generic": "Not quite right. Make every cut whose break-even is at most 0.016, then count the leaves left.",
+            "byKey": {
+              "carried": "You made both cuts, as a break-even of 0.012 would. The node of 27 breaks even at 0.021, above 0.016, so it stays split.",
+              "not-cut": "The inner node breaks even at 0.003, below 0.016, so it is pruned.",
+              "three": "You took away all three of the branch's leaves. Only the inner node is cut, and it loses 1 leaf."
+            }
+          },
+          "explain": {
+            "text": "Pruning at 0.016 makes every cut on the path at or below 0.016: only the inner node's, at 0.003. So 11 leaves become 10. Choose `ccp_alpha` by cross-validation on the training clients, not on the test set."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-opening-gaps",
+      "difficulty": 5,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "A desk labels ten mornings by whether the index rose after the open, using the opening gap in %. Down mornings had gaps of $-1.4$, $-0.9$, $-0.6$, $-0.2$, $0.5$ and $2.4$. Up mornings had gaps of $0.3$, $0.9$, $1.2$ and $1.7$. A tree scans every midpoint.",
+      "parts": [
+        {
+          "question": "How many candidate thresholds does the scan try on the gap?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 9,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "per-day",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "boundaries",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Ten distinct values have 9 spaces between neighbours, so 9 midpoints.",
+            "generic": "Not quite right. Sort the ten gaps and count the spaces between neighbours.",
+            "byKey": {
+              "per-day": "A threshold sits between two neighbouring values. Ten values in a row have 9 spaces between them.",
+              "boundaries": "4 counts only the places where the label changes. The scan tries every midpoint, 9 of them."
+            }
+          },
+          "explain": {
+            "text": "Sorted, the gaps run $-1.4, -0.9, -0.6, -0.2, 0.3, 0.5, 0.9, 1.2, 1.7, 2.4$. A threshold goes halfway between each neighbouring pair, so there are 9."
+          }
+        },
+        {
+          "question": "The splits at 0.05 and at 0.7 both leave 2 mistakes. What is the Gini gain of the split at 0.05? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.213,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "child",
+                "value": 0.267,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "unweighted",
+                "value": 0.258,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "other",
+                "value": 0.163,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The root has $G = 0.48$. Left of 0.05: 4 down, pure. Right: 2 down and 4 up, $G = \\tfrac{4}{9}$. Gain $= 0.48 - 0.6 \\times \\tfrac{4}{9} = 0.213$.",
+            "generic": "Not quite right. Find the root's Gini and each side's, weight the sides by 4 and 6 mornings, and subtract.",
+            "byKey": {
+              "child": "0.267 is the weighted impurity left after the split. The gain is its drop from 0.48.",
+              "unweighted": "You averaged the two sides equally. The right side holds 6 of the 10 mornings.",
+              "other": "0.163 is the gain of the split at 0.7. This part asks for the split at 0.05."
+            }
+          },
+          "explain": {
+            "text": "Root: 4 up of 10, $G = 1 - 0.16 - 0.36 = 0.48$. The left 4 mornings are pure; the right 6 have $G = 1 - \\tfrac{1}{9} - \\tfrac{4}{9} = 0.444$. Gain $= 0.48 - 0.6 \\times \\tfrac{4}{9} = 0.213$."
+          }
+        },
+        {
+          "question": "What is the Gini gain of the split at 0.7? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.163,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "child",
+                "value": 0.317,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "unweighted",
+                "value": 0.154,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.213,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Left of 0.7: 5 down and 1 up, $G = 0.278$. Right: 1 down and 3 up, $G = 0.375$. Gain $= 0.48 - (0.6 \\times 0.278 + 0.4 \\times 0.375) = 0.163$.",
+            "generic": "Not quite right. Weight the left side by 6 mornings and the right by 4, and subtract from 0.48.",
+            "byKey": {
+              "child": "0.317 is the weighted impurity left after the split. Subtract it from 0.48.",
+              "unweighted": "You averaged the two sides equally. Weight them by 6 and 4 mornings.",
+              "carried": "0.213 is the split at 0.05 from part 2. Score the split at 0.7 on its own sides."
+            }
+          },
+          "explain": {
+            "text": "Left: $1 - (\\tfrac{5}{6})^2 - (\\tfrac{1}{6})^2 = 0.278$ on 6 mornings. Right: $1 - 0.0625 - 0.5625 = 0.375$ on 4. Weighted 0.317, so the gain is $0.48 - 0.317 = 0.163$."
+          }
+        },
+        {
+          "question": "Using the gains 0.213 and 0.163 from parts 2 and 3, the tree keeps one of the two splits. What is its information gain with entropy, in bits? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.42,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "other",
+                "value": 0.256,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "gini",
+                "value": 0.213,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "child",
+                "value": 0.551,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The tree keeps 0.05, the larger Gini gain. The root's entropy is 0.971 bits and the right side's 0.918, so $0.971 - 0.6 \\times 0.918 = 0.420$.",
+            "generic": "Not quite right. Keep the split with the larger Gini gain, then subtract its weighted child entropy from the root's.",
+            "byKey": {
+              "other": "0.256 is the information gain of the split at 0.7. The tree keeps the split with the larger Gini gain, 0.05.",
+              "gini": "0.213 is the Gini gain. This part asks for the entropy version.",
+              "child": "0.551 is the weighted entropy left after the split. The gain is its drop from 0.971."
+            }
+          },
+          "explain": {
+            "text": "Root: $H(0.4) = -0.4\\log_2 0.4 - 0.6\\log_2 0.6 = 0.971$. The right 6 mornings have $H(\\tfrac{1}{3}) = 0.918$ and the left 4 are pure. So the gain is $0.971 - 0.6 \\times 0.918 = 0.420$ bits, and entropy prefers the same split."
+          }
+        },
+        {
+          "question": "The desk grows the tree on the gap with no limit, until every leaf is pure. How many leaves does it end with?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "per-day",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "boundaries",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "depth",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "In order of gap the labels run in 5 unbroken runs: 4 down, 1 up, 1 down, 3 up, 1 down. Each run becomes one pure leaf.",
+            "generic": "Not quite right. Sort the mornings by gap and count the runs of one label.",
+            "byKey": {
+              "per-day": "A leaf holds every neighbouring morning with the same label, so a run of 4 downs is one leaf.",
+              "boundaries": "4 is the number of places where the label changes. The leaves sit between them, one more.",
+              "depth": "8 is $2^3$, a full tree of depth 3. This tree stops on each branch once it is pure."
+            }
+          },
+          "explain": {
+            "text": "Every split falls where the label changes, so each pure leaf is one run of a label. There are 5 runs, so 5 leaves, and the tree is right on all ten mornings. The leaf at 0.5 holds a single morning: the tree has memorised it."
+          }
+        }
+      ]
+    }
+  ]
+}
