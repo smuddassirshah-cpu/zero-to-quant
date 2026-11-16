@@ -1,0 +1,667 @@
+{
+  "id": "problems-2",
+  "course": "arma",
+  "level": 2,
+  "title": "Problem set: memory",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-etf-flows",
+      "difficulty": 3,
+      "skills": [
+        "ts-acf",
+        "ts-models"
+      ],
+      "prose": "A desk forecasts weekly net inflows into an equity ETF, in £m. Over 200 weeks the deviations from the mean flow give $\\sum (x_t - \\bar x)^2 = 180{,}000$ and $\\sum (x_t - \\bar x)(x_{t-1} - \\bar x) = 81{,}000$. The lag-2 autocorrelation is $\\hat\\rho_2 = 0.24$.",
+      "parts": [
+        {
+          "question": "What is the lag-1 autocorrelation $\\hat\\rho_1$? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.45,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "flip",
+                "value": 2.2222,
+                "tol": {
+                  "abs": 0.01
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $81{,}000/180{,}000 = 0.45$.",
+            "generic": "Not quite. The ACF puts the lag-1 cross products over the full sum of squares.",
+            "byKey": {
+              "flip": "That is 180,000/81,000, upside down. An autocorrelation is at most 1, so the cross products sit in the numerator."
+            }
+          },
+          "explain": {
+            "text": "The sample ACF divides the lag-1 cross products by the sum of squares of all 200 weeks: $81{,}000/180{,}000 = 0.45$. A week of strong inflows tends to follow another."
+          }
+        },
+        {
+          "question": "Using $\\hat\\rho_1 = 0.45$ and $\\hat\\rho_2 = 0.24$, what is the Ljung-Box $Q(2)$? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 52.8633,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "box-pierce",
+                "value": 52.02,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-n-k",
+                "value": 10508.04,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $200 \\times 202 \\times (0.2025/199 + 0.0576/198) = 52.86$, far above 5.99, the 5% point of $\\chi^2_2$.",
+            "generic": "Not quite. Weight $0.45^2$ by $1/199$ and $0.24^2$ by $1/198$, add, then scale by $200 \\times 202$.",
+            "byKey": {
+              "box-pierce": "That is Box and Pierce's $n\\sum\\hat\\rho_k^2$. Ljung-Box weights each term by $(n + 2)/(n - k)$.",
+              "no-n-k": "You left out the division by $n - k$."
+            }
+          },
+          "explain": {
+            "text": "The squares are 0.2025 and 0.0576, divided by 199 and 198 and scaled by $200 \\times 202 = 40{,}400$. $Q = 52.86$ rejects white noise with room to spare. The flows have memory worth modelling."
+          }
+        },
+        {
+          "question": "An AR(1) with $\\phi = 0.45$, from part 1, implies a lag-2 autocorrelation. What is it? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2025,
+            "tol": {
+              "abs": 5e-05
+            },
+            "wrong": [
+              {
+                "id": "double",
+                "value": 0.9,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sample",
+                "value": 0.24,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\rho_2 = \\phi^2 = 0.45^2 = 0.2025$, close to the sample's 0.24.",
+            "generic": "Not quite. In an AR(1) the autocorrelation $k$ lags apart is $\\phi^k$.",
+            "byKey": {
+              "double": "You doubled $\\phi$. Two lags apart the AR(1) multiplies by $\\phi$ twice: $0.45^2$.",
+              "sample": "That is the sample value. The question asks what the AR(1) implies."
+            }
+          },
+          "explain": {
+            "text": "An AR(1) multiplies by $\\phi$ for each week of separation, so two weeks apart it gives $0.45^2 = 0.2025$. The sample's 0.24 is 0.04 away, small next to the band of ±0.139 for 200 weeks."
+          }
+        },
+        {
+          "question": "Fit the AR(1) with $\\phi = 0.45$. The flows' variance is $180{,}000/200 = 900$ (£m)². What is the sd of the weekly shock, the one-week forecast error, in £m? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 26.7909,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "no-square",
+                "value": 22.2486,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "series-sd",
+                "value": 30,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "variance",
+                "value": 717.75,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\sigma^2 = 900 \\times (1 - 0.2025) = 717.75$, so $\\sigma = 26.79$ £m.",
+            "generic": "Not quite. Rearrange $\\gamma_0 = \\sigma^2/(1 - \\phi^2)$ for $\\sigma^2$, then take the root.",
+            "byKey": {
+              "no-square": "You used $1 - \\phi = 0.55$. The AR(1) variance has $1 - \\phi^2$.",
+              "series-sd": "That is the sd of the flows themselves. The shock sd is smaller, because last week's flow is known.",
+              "variance": "That is the shock variance. Take its square root for the sd."
+            }
+          },
+          "explain": {
+            "text": "From $\\gamma_0 = \\sigma^2/(1 - \\phi^2)$, $\\sigma^2 = 900 \\times 0.7975 = 717.75$ and $\\sigma = 26.79$ £m. Knowing last week's flow cuts the sd of the uncertainty from 30 to 26.79, about 11%."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-vol-index-order",
+      "difficulty": 4,
+      "skills": [
+        "ts-acf",
+        "ts-models"
+      ],
+      "prose": "A volatility desk models the daily change in an implied-volatility index, in vol points, over 680 days. The PACF at lags 1 to 6 is −0.21, −0.13, 0.05, −0.03, 0.04 and −0.092; lags 7 to 20 all lie within ±0.06. Fitted with a constant, AR(2) reaches $\\ell = -812.4$ and AR(6) reaches $\\ell = -807.9$. Here $k$ counts the constant, the AR terms and $\\sigma^2$.",
+      "parts": [
+        {
+          "question": "What is the half-width of the 95% band for 680 days? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.075163,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "sd",
+                "value": 0.038348,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "over-n",
+                "value": 0.002882,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $1.96/\\sqrt{680} = 0.075$.",
+            "generic": "Not quite. The band is $\\pm 1.96/\\sqrt n$.",
+            "byKey": {
+              "sd": "That is one sd, $1/\\sqrt{680}$. The band is 1.96 sds.",
+              "over-n": "You divided by 680. The band shrinks like $1/\\sqrt n$."
+            }
+          },
+          "explain": {
+            "text": "With no memory each bar has sd $1/\\sqrt{680} = 0.038$. The band holds 95% of them: $\\pm 1.96 \\times 0.038 = \\pm 0.075$."
+          }
+        },
+        {
+          "question": "Against the ±0.075 band from part 1, which AR order does the PACF propose?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "two",
+                "text": "AR(2): lags 1 and 2 clear the band, then the PACF drops inside it",
+                "correct": true
+              },
+              {
+                "id": "six",
+                "text": "AR(6): the last bar outside the band is at lag 6",
+                "why": "Lag 6 at −0.092 barely clears the band after three empty lags. That is how a stray bar looks."
+              },
+              {
+                "id": "one",
+                "text": "AR(1): only lag 1 is large",
+                "why": "Lag 2 at −0.13 clears the band as well: it is further from 0 than −0.075."
+              },
+              {
+                "id": "three",
+                "text": "AR(3): the PACF changes sign at lag 3",
+                "why": "Lag 3 at 0.05 is inside the band. A sign change inside the band is noise."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Two bars, three empty lags, then one stray at lag 6.",
+            "generic": "Not quite. Look for the last of the large bars before a run of small ones."
+          },
+          "explain": {
+            "text": "Lags 1 and 2 clear the band and lags 3, 4 and 5 do not. Lag 6 only just clears it after the gap. The PACF proposes 2 and leaves lag 6 to the criteria."
+          }
+        },
+        {
+          "question": "Suppose the series is an AR(2). Then the 18 PACF bars at lags 3 to 20 carry no new memory. Each falls outside the band with chance 5%, independently of the others. What is the chance that exactly one of them falls outside, as lag 6 does? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.376318,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "at-least",
+                "value": 0.602786,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "none",
+                "value": 0.397214,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "no-count",
+                "value": 0.020906,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $18 \\times 0.05 \\times 0.95^{17} = 0.376$, almost the 0.397 chance that none falls outside.",
+            "generic": "Not quite. Give one named lag chance 0.05 and the other 17 chance 0.95. Then count the lags that could be the stray.",
+            "byKey": {
+              "at-least": "That is the chance of one or more strays. The question asks for exactly one.",
+              "none": "That is $0.95^{18}$, the chance that no bar falls outside.",
+              "no-count": "That is the chance for one named lag. Any of the 18 lags could be the stray, so multiply by 18."
+            }
+          },
+          "explain": {
+            "text": "One named lag outside and 17 inside has chance $0.05 \\times 0.95^{17} = 0.0209$. There are 18 lags it could be, so the chance is 0.376. A single stray bar is about as likely as a clean run, so lag 6 alone is weak evidence."
+          }
+        },
+        {
+          "question": "Compare the AR(2) from part 2 with AR(6) by BIC, $k\\ln n - 2\\ell$. By how many points is AR(6)'s BIC above AR(2)'s? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 17.0884,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "aic",
+                "value": -1.0,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-fit",
+                "value": 26.0884,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "sign",
+                "value": -17.0884,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $4\\ln 680 - 9.0 = 26.09 - 9.0 = 17.09$: BIC prefers AR(2) clearly.",
+            "generic": "Not quite. Work out $k\\ln n - 2\\ell$ for both, with $k = 4$ and $k = 8$.",
+            "byKey": {
+              "aic": "That is the AIC gap, $8 - 9.0$. BIC charges $\\ln 680 = 6.52$ a parameter, not 2.",
+              "no-fit": "That is the penalty alone. Take off the 9.0 points of $-2\\ell$ that AR(6) gains.",
+              "sign": "You subtracted the wrong way round. AR(6)'s BIC is the higher one."
+            }
+          },
+          "explain": {
+            "text": "AR(6) adds four parameters, which cost $4\\ln 680 = 26.09$, and gains $2 \\times 4.5 = 9.0$ of fit. Its BIC is 17.09 higher. AIC puts AR(6) ahead by only 1 point, too little to matter, so the PACF's AR(2) stands."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-peg-fridays",
+      "difficulty": 4,
+      "skills": [
+        "ts-acf",
+        "ts-models"
+      ],
+      "prose": "A stablecoin's daily deviation from its £1 peg, in basis points, is an AR(1) with $\\phi = 0.88$ and shocks of sd 2 bp. A research team stores only one value a week, every fifth trading day.",
+      "parts": [
+        {
+          "question": "What is the variance of the daily deviation, in bp²? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 17.7305,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "no-square",
+                "value": 33.3333,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "sd-top",
+                "value": 8.8652,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $2^2/(1 - 0.88^2) = 4/0.2256 = 17.73$ bp².",
+            "generic": "Not quite. Use $\\gamma_0 = \\sigma^2/(1 - \\phi^2)$.",
+            "byKey": {
+              "no-square": "You divided by $1 - \\phi = 0.12$. The variance needs $1 - \\phi^2$.",
+              "sd-top": "You put the shock sd, 2, on top. The formula takes the variance, 4."
+            }
+          },
+          "explain": {
+            "text": "With $\\sigma^2 = 4$ and $\\phi^2 = 0.7744$, $\\gamma_0 = 4/0.2256 = 17.73$ bp². The deviation's sd is 4.21 bp, about twice a day's shock."
+          }
+        },
+        {
+          "question": "What is the autocorrelation between two consecutive stored values, five trading days apart? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.527732,
+            "tol": {
+              "abs": 6e-05
+            },
+            "wrong": [
+              {
+                "id": "linear",
+                "value": 0.4,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "daily",
+                "value": 0.88,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\rho_5 = 0.88^5 = 0.5277$.",
+            "generic": "Not quite. An AR(1) has autocorrelation $\\phi^k$ at lag $k$.",
+            "byKey": {
+              "linear": "You took 0.12 off five times. The memory shrinks by a factor of 0.88 each day.",
+              "daily": "That is the lag-1 value for neighbouring days. Stored values are five days apart."
+            }
+          },
+          "explain": {
+            "text": "Five trading days apart the AR(1) multiplies by 0.88 five times: $0.88^5 = 0.5277$. The weekly values still remember each other, but far less than neighbouring days."
+          }
+        },
+        {
+          "question": "The weekly series is itself an AR(1) with $\\phi_w = 0.5277$ from part 2 and the variance from part 1. What is the variance of its weekly shock, in bp²? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12.7925,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "daily",
+                "value": 4.0,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "five",
+                "value": 20.0,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-square",
+                "value": 8.3735,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $17.73 \\times (1 - 0.5277^2) = 17.73 \\times 0.7215 = 12.79$ bp².",
+            "generic": "Not quite. Rearrange the variance formula with $\\phi_w$ in place of $\\phi$.",
+            "byKey": {
+              "daily": "You kept one day's $\\sigma^2 = 4$. Between two Fridays five days of shocks arrive.",
+              "five": "You added five daily shocks at full weight. The earlier ones have faded by Friday.",
+              "no-square": "You used $1 - \\phi_w$. The variance formula needs $1 - \\phi_w^2$."
+            }
+          },
+          "explain": {
+            "text": "Solving $\\gamma_0 = \\sigma_w^2/(1 - \\phi_w^2)$ gives $\\sigma_w^2 = 17.73 \\times 0.7215 = 12.79$ bp². Five full daily shocks would give 20 bp². The early shocks of the week have partly faded by Friday."
+          }
+        },
+        {
+          "question": "The team has 104 weekly values. Using $\\phi_w = 0.5277$, what is the largest weekly lag $k$ whose true autocorrelation lies outside the 95% band? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "sd-band",
+                "value": 3,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one",
+                "value": 1,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The band is $1.96/\\sqrt{104} = 0.192$; $0.5277^2 = 0.278$ clears it and $0.5277^3 = 0.147$ does not.",
+            "generic": "Not quite. Find the band for 104 values, then compare $0.5277^k$ with it.",
+            "byKey": {
+              "sd-band": "You used one sd, $1/\\sqrt{104} = 0.098$, as the band. With 1.96 sds the band is 0.192, and lag 3 at 0.147 is inside.",
+              "one": "Lag 2 is still above the band: $0.5277^2 = 0.278$ against 0.192."
+            }
+          },
+          "explain": {
+            "text": "Each week multiplies the autocorrelation by 0.5277, while the band stays at ±0.192. Lag 2, at 0.278, is the last one above it. The stored series will show two clear bars, then noise."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-freight-ar2",
+      "difficulty": 5,
+      "skills": [
+        "ts-acf",
+        "ts-models"
+      ],
+      "prose": "A shipping desk models 400 daily log changes of a dry-bulk freight index. The sample ACF starts $\\hat\\rho_1 = 0.42$ and $\\hat\\rho_2 = 0.33$, and an AR(1) fit gives $\\hat\\phi = 0.42$. The AR(1)'s residual autocorrelations at lags 1 to 5 are 0.02, 0.145, −0.04, 0.05 and 0.03.",
+      "parts": [
+        {
+          "question": "What is the Ljung-Box $Q(5)$ of the residuals? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 10.6853,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "box-pierce",
+                "value": 10.57,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "no-n-k",
+                "value": 4249.14,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $400 \\times 402 \\times \\sum_k \\hat\\rho_k^2/(400 - k) = 10.69$.",
+            "generic": "Not quite. Weight each squared residual autocorrelation by $1/(400 - k)$, add the five, then scale by $400 \\times 402$.",
+            "byKey": {
+              "box-pierce": "That is Box and Pierce's $n\\sum\\hat\\rho_k^2$. Ljung-Box weights each term by $(n + 2)/(n - k)$.",
+              "no-n-k": "You left out the division by $400 - k$."
+            }
+          },
+          "explain": {
+            "text": "Lag 2 supplies most of it: $0.145^2/398 = 0.0000528$ of the 0.0000665 total. Scaled by $400 \\times 402 = 160{,}800$, $Q = 10.69$."
+          }
+        },
+        {
+          "question": "The 5% points are 9.49 for $\\chi^2_4$ and 11.07 for $\\chi^2_5$. Using $Q = 10.69$ from part 1, what is the verdict on the AR(1)?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "reject",
+                "text": "Reject white residuals: one parameter was fitted, so $Q$ goes against $\\chi^2_4$, and it beats 9.49",
+                "correct": true
+              },
+              {
+                "id": "df5",
+                "text": "Keep the AR(1): $Q$ is below 11.07, the 5% point of $\\chi^2_5$",
+                "why": "You used 5 degrees of freedom. Fitting $\\phi$ uses one up, so the reference is $\\chi^2_4$ (`model_df=1`)."
+              },
+              {
+                "id": "one-bar",
+                "text": "Keep the AR(1): only one residual bar, at lag 2, is outside the band",
+                "why": "Reading bar by bar is what the pooled test replaces. $Q$ beats its 5% point."
+              },
+              {
+                "id": "ar5",
+                "text": "Reject, and fit an AR(5), one lag for each residual bar",
+                "why": "The leftover memory sits at lag 2, so the next model to try is AR(2), not AR(5)."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The AR(1) leaves memory at lag 2.",
+            "generic": "Not quite. Residuals of a model with $p$ AR terms are judged against $\\chi^2_{m - p}$."
+          },
+          "explain": {
+            "text": "With one fitted AR term, $Q(5)$ is read against $\\chi^2_4$. 10.69 lies between 9.49 and 11.07, so here the degrees of freedom decide the verdict. The residuals are not white noise."
+          }
+        },
+        {
+          "question": "So try an AR(2). Its coefficients solve $\\rho_1 = b_1 + b_2\\rho_1$ and $\\rho_2 = b_1\\rho_1 + b_2$. With $\\hat\\rho_1 = 0.42$ and $\\hat\\rho_2 = 0.33$, what is $b_2$, the PACF at lag 2? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.186498,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "acf",
+                "value": 0.33,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "no-divide",
+                "value": 0.1536,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $b_2 = (0.33 - 0.42^2)/(1 - 0.42^2) = 0.1536/0.8236 = 0.186$, outside the band of ±0.098.",
+            "generic": "Not quite. Use the first equation to write $b_1$ in terms of $b_2$, then substitute.",
+            "byKey": {
+              "acf": "That is $\\hat\\rho_2$ itself. Part of it comes through lag 1, and $b_2$ leaves that part out.",
+              "no-divide": "You stopped at $\\rho_2 - \\rho_1^2$. Divide by $1 - \\rho_1^2 = 0.8236$."
+            }
+          },
+          "explain": {
+            "text": "The first equation gives $b_1 = \\rho_1(1 - b_2)$. Putting that into the second gives $b_2(1 - \\rho_1^2) = \\rho_2 - \\rho_1^2$, so $b_2 = 0.1536/0.8236 = 0.186$. It is the memory at lag 2 that lag 1 does not relay."
+          }
+        },
+        {
+          "question": "Using $b_2 = 0.186$ from part 3, what is $b_1$? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.34188,
+            "tol": {
+              "abs": 0.0006
+            },
+            "wrong": [
+              {
+                "id": "ar1",
+                "value": 0.42,
+                "tol": {
+                  "abs": 0.0006
+                }
+              },
+              {
+                "id": "plus",
+                "value": 0.49812,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $b_1 = 0.42 \\times (1 - 0.186) = 0.342$, so the AR(2) is $x_t = 0.342\\,x_{t-1} + 0.186\\,x_{t-2} + \\varepsilon_t$ around the mean.",
+            "generic": "Not quite. Use $b_1 = \\rho_1(1 - b_2)$.",
+            "byKey": {
+              "ar1": "That is the AR(1) slope. With lag 2 in the model, lag 1's coefficient shrinks.",
+              "plus": "You added $b_2$. The equation is $b_1 = \\rho_1(1 - b_2)$."
+            }
+          },
+          "explain": {
+            "text": "$b_1 = \\rho_1(1 - b_2) = 0.42 \\times 0.814 = 0.342$. Lag 1 now carries less than the AR(1)'s 0.42, because lag 2 takes its share. Refit and rerun Ljung-Box with `model_df=2` before trusting it."
+          }
+        }
+      ]
+    }
+  ]
+}
