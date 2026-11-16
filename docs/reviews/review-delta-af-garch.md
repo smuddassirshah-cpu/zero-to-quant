@@ -119,3 +119,11 @@ Format: `N. file | JSON path | class | problem | evidence | exact fix`.
 3. `retold` still misses a line that differs by one word and a tail clause: "That is the excess kurtosis. The question asks for the raw value." against "0 is the excess kurtosis. The question asks for the raw figure, which adds 3." (finding 1).
 
 Inbox bullets: `docs/BACKLOG-INBOX.md`, `Raised later (delta read AF garch):`.
+
+## Fix pass
+
+1. fixed: `p-stale-alarm` part 4 `excess` and `generic` lines replaced with the review's text.
+2. fixed: `p-recalibrate-short-var` part 3 slip `inverted` tol.abs 1.5 to 5 (59,425.26 and 59,423 both taken; key £17,500 away).
+3. fixed: `p-monthly-sleeve` part 4 explain now prints 0.0840 (the three buys sum to 0.1893). Author script lines 579 and 587 updated to 0.0840, with the 0.08395 unrounded buy given tolerance 6e-5.
+
+Gates: validator 0 errors; voice scan 35 0 and 0; fresh-check 0 hits on problems-1 and problems-3 (problems-3 keeps its 4 advisories); grade-all 0 failures on both; playthrough with and without `--mobile` passed on both; scripts exit 0 (author 835 and 163, reader 556, delta 216 with 0 FINDING rows). Graded answers changed: none.

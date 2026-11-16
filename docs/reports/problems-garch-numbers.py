@@ -576,7 +576,7 @@ def level3():
     said(lv, 3, 3, 'feedback.correct', [26.34, 0.4732, 29.47])
     said(lv, 3, 3, 'explain.text', [17.01, 47, 43.35, 29.47])
     said(lv, 3, 4, 'feedback.correct', [0.2239, 12.46, 19.80, 0.5839, 0.189])
-    said(lv, 3, 4, 'explain.text', [0.0839, 0.0643, 0.0410, 0.189, 0.630])
+    said(lv, 3, 4, 'explain.text', [0.0840, 0.0643, 0.0410, 0.189, 0.630])
     said(lv, 3, 4, 'feedback.byKey.long-run', [0.630])
     lv.claim(abs(float(Am) - 15.0505) < 5e-5 and abs(float(gm * Am) - 26.34) < 5e-3 and abs(float(fm) - 0.4732) < 5e-5
              and abs(float(fm) ** 2 - 0.2239) < 5e-5, 'L3 P4 15.0505, 26.34, 0.4732, 0.2239')
@@ -584,7 +584,7 @@ def level3():
              and abs(float(month(3)) - 19.80) < 5e-3 and abs(29.47 - 17.01 - 12.46) < 1e-9, 'L3 P4 2.598, 6.584, 61% cash, 19.80, 12.46')
     lv.claim(round(float(fm) * 100) == 47 and abs((wk[3] - wk[0]) / (mt / math.sqrt(17.01) - wk[0]) - 0.8) < 0.02,
              'L3 P4 47% kept a month; four fifths of the way to 0.630')
-    lv.claim(all(abs(x - y) < 5e-5 for x, y in zip([b - a for a, b in zip(wk, wk[1:])], [0.0839, 0.0643, 0.0410])), 'L3 P4 buys 0.0839, 0.0643, 0.0410')
+    lv.claim(all(abs(x - y) < 6e-5 for x, y in zip([b - a for a, b in zip(wk, wk[1:])], [0.0840, 0.0643, 0.0410])), 'L3 P4 buys 0.0840, 0.0643, 0.0410')
     lv.check_wrongs('problems')
     lv.report()
 
