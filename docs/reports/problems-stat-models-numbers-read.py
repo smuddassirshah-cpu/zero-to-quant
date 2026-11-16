@@ -208,8 +208,8 @@ ok(abs(p_int - pt) < 1e-8, 'twin-books p4: quad of the t density')
 num(2, 'p-twin-books', 4, float(pt), p_int, {'one-sided': pt / 2, 'lower-tail': 1 - pt / 2}, dp=4, fed=2 * stats.t.sf(2.2530, 119))
 shown('twin se', 1.22474, sd_d / math.sqrt(120), 5); shown('twin se obs', 1.28715, 14.1 / math.sqrt(120), 5)
 shown('twin z sum', 2.80158, za + zb, 5)
-shown('twin one tail', 0.0130, float(pt) / 2, 4); has(2, 'p-twin-books', 'P(t_{119} > 2.2530) = 0.0130')
-ok(abs(2 * 0.0130 - float(pt)) <= 1e-4, 'twin p4: doubling the stated tail is accepted')
+shown('twin one tail', 0.01305, stats.t.sf(2.2530, 119), 5); has(2, 'p-twin-books', 'P(t_{119} > 2.2530) = 0.01305')
+ok(abs(2 * 0.01305 - float(pt)) <= 1e-4, 'twin p4: doubling the stated tail is accepted')
 ok(abs(stats.norm.sf(za - 2.4005 / 1.22474) - 0.5) < 1e-3, 'twin-books: the no-power gain has power one half')
 
 

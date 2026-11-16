@@ -97,3 +97,25 @@ Screens are numbered from 0.
 ## Counts
 
 13 findings: wrong 0, misleading 2 (1, 2), reuse 4 (3, 4, 5, 6), re-author 0, continuity 1 (10), voice 0, other 6 (7, 8, 9, 11, 12, 13). Keys changed by the fixes: none. `wrong` values changed: none; one slip band widened (13). Data changed: two values of `p-hedge-ranks` (5). Open for KNOWN_ISSUES if not taken further: `p-hedge-ranks` keeps twelve values and a rank sum of 8.5 beside l10 screen 5.
+
+## Fix pass
+
+1. fixed. `p-two-looks` part 3 `product` line replaced as written.
+2. fixed. `p-two-looks` part 3 explain: last sentence now "So the two-look plan could run at nearly four times the planned 0.0107." (the two earlier sentences stood as written).
+3. fixed. `independent` lines of parts 3 and 4 replaced as written. Check: given five early wins, 9 or more has chance 6/32 = 0.1875, against 0.0107.
+4. fixed. `p-signal-variants` part 2 question replaced; key 0.0033 (0.05/15), slips and lines unchanged.
+5. fixed. `p-hedge-ranks` data now 0.7, $-1.2$, 1.5 in place of 0.9, $-1.5$, 1.2; prose, part 1 correct, generic, `tie-low`, `tie-high`, `w-minus` and explain replaced. Recomputed: ranks by `rankdata` give the two 0.7 sizes 2.5 each and the 1.5 rank 6, $W^+ = 8.5$, $W^- = 69.5$, total 78; slips 2 + 6 = 8 and 3 + 6 = 9. Every key, every `wrong` value and parts 2 to 4 unchanged (verified by the number script). The two new values are in `docs/reports/problems-stat-models-numbers.py` (`dd`, the tie slips and the rank check). Left open as the delta reader says, not mine: twelve values and a rank sum of 8.5 beside lesson 10 screen 5's twelve and 8.
+6. fixed. `byKey.upper` of part 4 replaced as written.
+7. fixed. Part 4 question now tells $\Phi(2.393) = 0.99164$; $1 - 0.99164 = 0.00836$ in the key band, 0.0167 and 0.9916 in their slip bands.
+8. fixed. Part 3 and part 4 questions of `p-spread-day-tail` replaced as written. Recomputed: $\Phi(1.187) = 0.88239$, $\Phi(-2.003) = 0.02258$, $\Phi(-2.819) = 0.00241$, $\Phi(-3.413) = 0.00032$, $\Phi(-3.784) = 0.00008$, the other three below 0.00002; told values sum to 0.9078, $/8 = 0.1135$, in the key band 0.113474 +/- 0.0001. Part 4 told $\Phi(-2.5164) = 0.00593$.
+9. fixed. `p-ipo-underwriter` part 4 question replaced as written. $\Phi(3.2182) = 0.99936$, $2 \times 0.00064 = 0.0013$, in the band (exact 0.00129).
+10. fixed. `p-twin-books` part 4 question now "$= 0.01305$". Recomputed: $P(t_{119} > 2.2530) = 0.0130456$, doubles to 0.0261. Note: from the unrounded $t$ the tail is 0.013044 (0.01304); the question states the tail at 2.2530, so 0.01305 is right as stated.
+11. fixed. `no-power` now $1.95996 \times 1.224745$ (= 2.40044... printed 2.4005 from unrounded inputs, as the reader says); `p-spread-day-tail` part 4 now $(-4 - 0.85)/1.92738$ (= $-2.51636$, printed $-2.5164$).
+12. fixed. `p-two-looks` part 2: "Give 5 decimal places" and `correct` "$1/32 = 0.03125$". Key 0.03125 untouched, tolerance 0.0001 and the slip stand.
+13. fixed. `p-four-books` part 5 `linear` tolerance abs 60 (band 5,490 to 5,610); no other band overlaps.
+
+Keys changed: none. `wrong` values changed: none (one slip tolerance widened, finding 13). Data changed: two values and one sign of `p-hedge-ranks` (finding 5, as the review specifies). Disputed 0, deferred 0.
+
+Scripts (venv Python): `problems-stat-models-numbers.py` 1155 checks, exit 0 (added shown checks for the told tail values and the 0.9078 sum; hedge data, tie slips and the twin tail updated); `problems-stat-models-numbers-read.py` 339 checks, 0 FINDING lines, exit 0 (twin tail string and value updated to 0.01305); `problems-stat-models-4-numbers-read.py` 153 checks, 0 FINDING, exit 0; `delta-review-delta-af-stat-models-numbers.py` 557 checks, 0 FINDING lines, exit 0.
+
+Gates: validator 0 errors; voice scan 35 0 and 0; `fresh-check.mjs --file` 0 hits on all four sets (advisories as before); `grade-all.mjs --file` 0 failures on all four sets (17, 13, 12 and 18 widgets); `playthrough.mjs --problems stat-models/problems-1` to `-4` All passed, with and without `--mobile`.

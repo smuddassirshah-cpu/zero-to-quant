@@ -307,8 +307,8 @@ def level2():
 
     # fix pass lines in p-twin-books (review findings 9, 10, 17)
     shown('twin 720', 720, 2 * 225 * 1.6, 9); shown('twin 135', 135, 0.6 * 225, 9); shown('twin 180', 180, 2 * 225 * 0.4, 9)
-    shown('twin 2.4005', 2.4005, z975 * se_d, 4); shown('twin one tail', 0.0130, stats.t.sf(tt, 119), 4)
-    ok(abs(2 * 0.0130 - pt) <= 0.0001, 'twin p4: doubling the stated tail lands in the key band')
+    shown('twin 2.4005', 2.4005, z975 * se_d, 4); shown('twin one tail', 0.01305, stats.t.sf(2.2530, 119), 5)
+    ok(abs(2 * 0.01305 - pt) <= 0.0001, 'twin p4: doubling the stated tail lands in the key band')
     ok(abs(stats.norm.sf(z975 - 2.4005 / se_d) - 0.5) < 1e-3, 'twin: the no-power gain has power one half')
 
 
@@ -316,14 +316,14 @@ def level3():
     I = load(3)
 
     # --- p-hedge-ranks: 12 monthly differences, new minus old
-    dd = np.array([-3.1, -0.4, -2.2, 0.9, -1.5, -4.0, -0.9, -2.6, 1.2, -0.7, -3.5, -1.8])
+    dd = np.array([-3.1, -0.4, -2.2, 0.7, -1.2, -4.0, -0.9, -2.6, 1.5, -0.7, -3.5, -1.8])
     rk = stats.rankdata(abs(dd))
     Wp = Fr(int(2 * rk[dd > 0].sum()), 2)
     # method 2: W+ from the Walsh-average count (number of i <= j with d_i + d_j > 0, ties counted half)
     walsh = sum((1 if dd[i] + dd[j] > 1e-12 else 0.5 if abs(dd[i] + dd[j]) <= 1e-12 else 0)
                 for i in range(12) for j in range(i, 12))
-    num(I, 'p-hedge-ranks', 1, Wp, walsh, {'tie-low': 3 + 5, 'tie-high': 4 + 5, 'w-minus': rk[dd < 0].sum()})
-    ok(sorted(rk[dd > 0]) == [3.5, 5.0] and rk.sum() == 78, 'ranks: the positive months take 3.5 and 5 of 78')
+    num(I, 'p-hedge-ranks', 1, Wp, walsh, {'tie-low': 2 + 6, 'tie-high': 3 + 6, 'w-minus': rk[dd < 0].sum()})
+    ok(sorted(rk[dd > 0]) == [2.5, 6.0] and rk.sum() == 78, 'ranks: the positive months take 2.5 and 6 of 78')
     nn = 12
     var_w = Fr(nn * (nn + 1) * (2 * nn + 1), 24)
     # method 2: the variance of W+ over all 4096 sign patterns of the ranks 1..12
@@ -372,6 +372,12 @@ def level3():
     shown('n factor 1.06', 0.6993, 1.06 * n8 ** -0.2, 4)
     shown('mean', 0.9375, d.mean(), 4); shown('sd', 4.0306, d.std(ddof=1), 4); shown('ratio printed', 19.1, ratio, 1)
     shown('empirical ratio', 21.08, 0.125 / pn, 2)
+    # delta fix pass: tail values told in the questions of parts 3 and 4, and the sum they give
+    for zz, vv, dpl in [(1.187, 0.8824, 4), (-2.003, 0.0226, 4), (-2.819, 0.0024, 4), (-3.413, 0.0003, 4), (-3.784, 0.0001, 4)]:
+        shown(f'spread told Phi({zz})', vv, float(Phi(zz)), dpl)
+    shown('spread told Phi(2.393)', 0.99164, float(Phi(2.393)), 5)
+    shown('ranks told Phi(3.2182)', 0.99936, float(Phi(3.2182)), 5)
+    ok(abs(round(0.8824 + 0.0226 + 0.0024 + 0.0003 + 0.0001, 4) / 8 - 0.1135) < 5e-5 and abs(0.9078 / 8 - pk) < 5e-5, 'spread told values sum to 0.9078, share 0.1135')
 
     # --- p-five-weeks-flip
     wk = np.array([1.2, 0.8, 2.5, -0.4, 9.0]); ab = abs(wk)
