@@ -753,7 +753,7 @@ ok(F(90, 100) * F(100, 120) / F(90, 100) == F(100, 120) and F(1, 100) / F(2001, 
 _fp = _get(1, "p-ferry-passengers")["parts"][3]["question"]
 ok("six different temperatures" in _fp and "sure to pass" in _fp, "ferry part 4: degree 5 is sure to work for six distinct temperatures [finding 3]")
 _ice = json.dumps(_get(2, "p-ice-cream-van"), ensure_ascii=False).lower()
-ok("deckchair" in _ice and not re.search(r"ice-cream|ice cream|cone|\bvan\b|\bsold\b|vendor", _ice.replace("p-ice-cream-van", "")), "deckchair story replaces the kiosk story, id kept [finding 4]")
+ok("bike-hire" in _ice and "deckchair" not in _ice and not re.search(r"ice-cream|ice cream|cone|\bvan\b|\bsold\b|vendor", _ice.replace("p-ice-cream-van", "")), "bike-hire story (was deckchair, delta AE-2 finding 7) replaces the kiosk story, id kept [finding 4]")
 _sc = _get(3, "p-sterling-calls")["parts"][3]["question"]
 ok("2.75" in _sc and "part 3" in _sc and "70" in _sc and "3 bp" in _sc, "sterling part 4 restates t = 2.75 from part 3 [finding 5]")
 _hd = _get(1, "p-heat-demand")["parts"][4]["question"]
