@@ -233,6 +233,143 @@ if L1:
     num(L1, it, 5, runs, full_g.get_n_leaves(), {'per-day': 10, 'boundaries': runs - 1, 'depth': 8})
     ok(abs(ent(par) - 0.971) < 0.0005 and abs(ent((2, 4)) - 0.918) < 0.0005, f'{it}: entropies in feedback')
 
+# ---------------------------------------------------------------- level 2
+L2 = load(2)
+if L2:
+    from math import comb
+    from scipy.stats import binom
+
+    # p-bond-downgrades. Method 2: scipy's binomial law of the number of draws that hit the bond.
+    it = 'p-bond-downgrades'
+    p_out = F(24, 25) ** 25
+    sp_out = binom.pmf(0, 25, 1 / 25)
+    rng = np.random.default_rng(0)
+    sim = np.mean([0 not in rng.integers(0, 25, 25) for _ in range(40000)])
+    ok(abs(sim - float(p_out)) < 0.01, f'{it}: simulation {sim}')
+    pr = 0.3604  # the value later parts tell the learner to use
+    num(L2, it, 1, p_out, sp_out, {'one-draw': F(1, 25), 'limit': math.exp(-1), 'drawn': 1 - p_out}, round_tol=0.00005)
+    num(L2, it, 2, 8 * pr, binom(8, pr).mean(), {'in-bag': 8 * (1 - pr), 'limit': 8 * 0.368, 'per-draw': 8 / 25},
+        round_tol=0.005, agree=1e-9)
+    ok(abs(8 * float(p_out) - 2.88) < 0.005, f'{it}: exact p gives the same 2.88')
+    num(L2, it, 3, 25 * (1 - pr) ** 8, 25 * binom.pmf(8, 8, 1 - pr),
+        {'one-bond': (1 - pr) ** 8, 'all-missed': 25 * pr ** 8, 'one-tree': 25 * (1 - pr)}, round_tol=0.005)
+    ok(abs(25 * float(1 - p_out) ** 8 - 0.70) < 0.005, f'{it}: exact p gives the same 0.70')
+    # sklearn's rule: an uncovered row gets a zero row in oob_decision_function_, so argmax calls it class 0
+    dec = np.zeros((25, 2))
+    truth = np.zeros(25, int)
+    truth[:6] = 1                      # bond 0 uncovered and downgraded; bonds 1 to 5 misjudged below
+    dec[1:6] = [0.8, 0.2]              # downgraded, voted not
+    dec[6:] = [0.7, 0.3]               # not downgraded, voted not
+    sk_err = np.mean(dec.argmax(1) != truth)
+    num(L2, it, 4, F(6, 25), sk_err, {'skipped': F(5, 24), 'counted-right': F(5, 25), 'accuracy': F(19, 25)})
+
+    # p-ipo-forest. Method 2: the variance of an average from the full covariance matrix, 1'S1 / B^2.
+    it = 'p-ipo-forest'
+
+    def var_avg(s2, rho, B):
+        return rho * s2 + (1 - rho) * s2 / B
+
+    def var_cov(s2, rho, B):
+        S = np.full((B, B), rho * s2)
+        np.fill_diagonal(S, s2)
+        return S.sum() / B ** 2
+
+    m = math.isqrt(10)
+    num(L2, it, 1, F(m, 10), 1 - comb(9, m) / comb(10, m), {'one': F(1, 10), 'unrounded': math.sqrt(10) / 10,
+                                                            'miss': F(10 - m, 10)}, round_tol=0.0015)
+    sb, rb, sf, rf = F(12, 100), F(15, 100), F(15, 100), F(6, 100)
+    num(L2, it, 2, var_avg(sb, rb, 50), var_cov(0.12, 0.15, 50), {'independent': sb / 50, 'floor': rb * sb, 'one-tree': sb})
+    num(L2, it, 3, var_avg(sf, rf, 50), var_cov(0.15, 0.06, 50), {'floor': rf * sf, 'independent': sf / 50,
+                                                                 'swapped': var_avg(sf, rb, 50)}, round_tol=0.00005)
+    ok(rf * sf == F(9, 1000) and (1 - rf) * sf == F(141, 1000) and rb * sb == F(18, 1000) and (1 - rb) * sb == F(102, 1000),
+       f'{it}: terms quoted in part 4')
+    first = next(B for B in range(1, 100) if var_cov(0.15, 0.06, B) < var_cov(0.12, 0.15, B))
+    exact_first = math.floor((F(141, 1000) - F(102, 1000)) / (F(18, 1000) - F(9, 1000))) + 1
+    num(L2, it, 4, exact_first, first, {'round-down': exact_first - 1, 'one': 1, 'ratio': math.ceil(0.141 / 0.009)})
+    ok(abs(float(var_avg(sf, rf, 4)) - 0.04425) < 1e-12 and abs(float(var_avg(sb, rb, 4)) - 0.0435) < 1e-12,
+       f'{it}: 4-tree values in feedback')
+
+    # p-dividend-importance. Method 2: scikit-learn's own impurity importances on a built book of 200 companies.
+    it = 'p-dividend-importance'
+    groups = [((0, 0, 0), (96, 6)), ((0, 0, 1), (4, 4)), ((1, 0, 0), (6, 54)), ((1, 1, 0), (24, 6))]
+    Xd, yd = [], []
+    for feat, (kept, cut) in groups:
+        Xd += [feat] * (kept + cut)
+        yd += [0] * kept + [1] * cut
+    Xd, yd = np.array(Xd, float), np.array(yd)
+    td = DecisionTreeClassifier(max_depth=2, random_state=0).fit(Xd, yd)
+    ok(td.tree_.feature[0] == 0, f'{it}: root feature {td.tree_.feature[0]}')
+    raw = td.tree_.compute_feature_importances(normalize=False)
+    shares = td.feature_importances_
+    g_root = gini((130, 70)) - F(110, 200) * gini((100, 10)) - F(90, 200) * gini((30, 60))
+    g_cov = F(90, 200) * (gini((30, 60)) - F(60, 90) * gini((6, 54)) - F(30, 90) * gini((24, 6)))
+    g_id = F(110, 200) * (gini((100, 10)) - F(102, 110) * gini((96, 6)) - F(8, 110) * gini((4, 4)))
+    child_root = F(110, 200) * gini((100, 10)) + F(90, 200) * gini((30, 60))
+    num(L2, it, 1, g_root, raw[0], {'child': child_root, 'unweighted': gini((130, 70)) - (gini((100, 10)) + gini((30, 60))) / 2,
+                                    'parent': gini((130, 70))}, round_tol=0.00005)
+    node_drop = gini((30, 60)) - F(60, 90) * gini((6, 54)) - F(30, 90) * gini((24, 6))
+    num(L2, it, 2, g_cov, raw[1], {'node-only': node_drop, 'child': gini((30, 60)) - node_drop,
+                                   'share-left': F(110, 200) * node_drop}, round_tol=0.00005)
+    ok(abs(float(g_id) - 0.0144) < 0.00005, f'{it}: company_id credit {float(g_id)}')
+    share = g_root / (g_root + g_cov + g_id)
+    num(L2, it, 3, share, shares[0], {'raw': g_root, 'third': F(1, 3),
+                                      'carried': 0.1641 / (0.1641 + float(node_drop) + 0.0144)})
+    ok(abs(0.1641 / (0.1641 + 0.098 + 0.0144) - 0.593) < 0.0005, f'{it}: share from the rounded credits')
+    others = [0.48, 0.66, 0.55]
+    num(L2, it, 4, (float(share) + sum(others)) / 4, np.mean([0.593] + others),
+        {'three': np.mean(others), 'this-tree': share, 'sum': 0.593 + sum(others)}, agree=0.0002)
+    ok(abs(float(g_cov / (g_root + g_cov + g_id)) - 0.354) < 0.0005 and abs(float(g_id / (g_root + g_cov + g_id)) - 0.052) < 0.0005,
+       f'{it}: shares in explain')
+    pick(L2, it, 5, 'memorised')
+
+    # p-imbalance-stumps. Method 2: scikit-learn stumps fitted to each resample, repeats as repeated rows.
+    it = 'p-imbalance-stumps'
+    xs = np.array([-0.6, -0.4, -0.3, 0.2, 0.6, 0.8])
+    ys = np.array([-4, -1, -2, 1, 4, 4], float)
+    A = [0, 0, 1, 3, 4, 4]
+    Bd = [1, 2, 2, 3, 5, 5]
+
+    def stump_by_hand(idx):
+        vals = sorted(set(idx), key=lambda i: xs[i])
+        best = None
+        for k in range(1, len(vals)):
+            t = (xs[vals[k - 1]] + xs[vals[k]]) / 2
+            L = [F(int(ys[i])) for i in idx if xs[i] <= t]
+            R = [F(int(ys[i])) for i in idx if xs[i] > t]
+            s = sse(L) + sse(R)
+            if best is None or s < best[0]:
+                best = (s, t, F(sum(L), len(L)), F(sum(R), len(R)))
+        return best
+
+    sa, sb_ = stump_by_hand(A), stump_by_hand(Bd)
+    ta = DecisionTreeRegressor(max_depth=1, random_state=0).fit(xs[A].reshape(-1, 1), ys[A])
+    tb = DecisionTreeRegressor(max_depth=1, random_state=0).fit(xs[Bd].reshape(-1, 1), ys[Bd])
+    ok(abs(ta.tree_.threshold[0] - sa[1]) < 1e-6 and abs(tb.tree_.threshold[0] - sb_[1]) < 1e-6, f'{it}: thresholds')
+    ok(abs(sa[1] + 0.1) < 1e-9 and abs(sb_[1] - 0.5) < 1e-9, f'{it}: thresholds -0.1 and 0.5')
+    # part 1: a set answer, checked here by hand
+    w1 = L2[it]['parts'][0]['widget']
+    oobA = sorted(set(range(6)) - set(A))
+    ok(sorted(w1['answers']) == oobA == [2, 5], f'{it} p1: answers {w1["answers"]} vs {oobA}')
+    ok({x['id']: x['value'] for x in w1['wrong']} == {'repeats': '0, 4', 'drawn-once': '1, 3'}, f'{it} p1: wrongs')
+    ok(sorted(set(range(6)) - set(Bd)) == [0, 4] and [i for i in A if A.count(i) == 2][::2] == [0, 4], f'{it} p1: repeats')
+    ok(set(L2[it]['parts'][0]['feedback']['byKey']) == {'repeats', 'drawn-once', 'count'}, f'{it} p1: byKey')
+    other_a = sorted(float(s) for s in [sse([F(-4)] * 2) + sse([F(-1), F(1), F(4), F(4)]),
+                                        sse([F(-4), F(-4), F(-1), F(1)]) + sse([F(4)] * 2)])
+    ok(sa[0] == 12 and other_a == [18, 18], f'{it}: tree A errors {sa[0]} {other_a}')
+    other_b = [float(sse([F(-1)]) + sse([F(-2), F(-2), F(1), F(4), F(4)])), float(sse([F(-1), F(-2), F(-2)]) + sse([F(1), F(4), F(4)]))]
+    ok(sb_[0] == 6 and abs(other_b[0] - 36) < 1e-9 and abs(other_b[1] - 20 / 3) < 1e-9, f'{it}: tree B errors {sb_[0]} {other_b}')
+    num(L2, it, 2, sa[3], ta.predict([[0.8]])[0], {'no-repeats': F(1 + 4, 2), 'own-value': 4, 'no-split': F(int(ys[A].sum()), 6)},
+        round_tol=0.05)
+    num(L2, it, 3, sb_[2], tb.predict([[-0.6]])[0], {'no-repeats': F(-1 - 2 + 1, 3), 'own-value': -4,
+                                                     'wrong-split': F(-1 - 2 - 2, 3), 'sign': 1}, round_tol=0.005)
+    oob_pred = {2: ta.predict([[xs[2]]])[0], 5: ta.predict([[xs[5]]])[0], 0: tb.predict([[xs[0]]])[0], 4: tb.predict([[xs[4]]])[0]}
+    errs = {i: (ys[i] - v) ** 2 for i, v in oob_pred.items()}
+    exact_mse = (F(-2 - (-3)) ** 2 + F(4 - 3) ** 2 + F(-4 - (-1)) ** 2 + F(4 - 4) ** 2) / 4
+    num(L2, it, 4, exact_mse, np.mean(list(errs.values())), {'all-six': exact_mse * 4 / 6, 'sum': exact_mse * 4,
+                                                             'unsquared': F(1 + 1 + 3 + 0, 4)}, round_tol=0.005)
+    num(L2, it, 5, (sa[3] + sb_[2]) / 2, (ta.predict([[0.3]])[0] + tb.predict([[0.3]])[0]) / 2,
+        {'tree-a': sa[3], 'tree-b': sb_[2], 'sum': sa[3] + sb_[2]})
+
 print(f'{checks} checks, {len(fails)} failures')
 for f_ in fails:
     print('FAIL', f_)

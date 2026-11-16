@@ -17,6 +17,19 @@ Typed parts 20 of 20. Chains: mistakes 12, root Gini 0.42, sides 0.289, gain 0.1
 
 Design note. The pruning problem was first drafted as a three-leaf branch cut in one step at 0.0095. A scan of every three-leaf branch shows that greedy Gini growth always gives the inner node the smaller break-even, so weakest-link pruning cuts it first. The problem now follows the two cuts in order; the script grows the node with scikit-learn and reads both cuts off `cost_complexity_pruning_path`, scaled from 27 to 400 rows.
 
+## Level 2: `problems-2.json` (averaging trees)
+
+Settings new to the course: a desk's 25 bonds and downgrades, new listings below their issue price, dividend cuts, a market maker's order-book imbalance.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-2 | p-bond-downgrades | 4 (4 / 0) | l5, l7 | 3 |
+| problems-2 | p-ipo-forest | 4 (4 / 0) | l5, l6 | 4 |
+| problems-2 | p-dividend-importance | 5 (4 / 1) | l8, l5 (a forest averages its trees' importances) | 4 |
+| problems-2 | p-imbalance-stumps | 5 (5 / 0) | l5, l7 (stumps from level 1) | 5 |
+
+Typed parts 17 of 18; the one choice is the judgement on company_id. Chains: $0.96^{25} = 0.3604$, 2.88 out-of-bag trees per bond, 0.70 bonds with none, and the reported error $\tfrac{6}{25} = 0.240$ because scikit-learn calls an uncovered row class 0. $m = 3$ of 10, bagged variance 0.0200 and forest 0.0118 at 50 trees, the forest ahead from 5 trees. Credits 0.1641 and 0.0980, share 0.593, forest importance 0.571, then company_id read as memorised. Out-of-bag rows 2 and 5, stump forecasts 3 and $-1$ (repeats counted), out-of-bag MSE 2.75, bagged forecast 1.
+
 ## Checks
 
 | check | problems-1 |
@@ -28,10 +41,23 @@ Design note. The pruning problem was first drafted as a three-leaf branch cut in
 | playthrough `--mobile` | green; 440 px shots read, no fault |
 | voice scan 35 (course folder) | 0 and 0 |
 
+| check | problems-2 |
+|---|---|
+| numbers script | 0 failures (scipy's binomial law and a bootstrap simulation; the sklearn rule for uncovered rows; the variance of an average from the full covariance matrix and a scan over $B$; sklearn's own impurity importances on a built book; sklearn stumps on each resample) |
+| validator | 0 errors, 0 warnings on the file (first draft: five `O2-long-sentence`, two `[shown-arithmetic]`, one `[key-length]`, one `[negative-key]`, all fixed) |
+| grade-all `--file` | 0 failures (18 widgets, the row set included) |
+| playthrough `--local-cdn` | green (18 parts) |
+| playthrough `--mobile` | green; 440 px shots read, no fault |
+| voice scan 35 (course folder) | 0 and 0 |
+
+The script caught four slip values of the first draft that did not follow from their named slip (a forecast slip equal to the key, two misworked shares, a variance with the wrong $\rho$); each was recomputed before the set was played.
+
 ## Fresh-check
 
 `node tools/fresh-check.mjs --file content/courses/ensembles/problems-1.json`: 0 hits, 0 advisories. Two advisories on drafts were removed by changing numbers, not waived: two shared parameters (0.006, 0.01) with `review-2.json` item 7, and three (0.025, 0.021, 0.015) with `exams/stage-2.json`. Second check by grep of the course folder: no key value, data set or noun (spoof, repo, broker, opening gap) appears in a lesson, review or homework text; single numbers such as 160 and 96 appear only in unrelated captions.
 
+`node tools/fresh-check.mjs --file content/courses/ensembles/problems-2.json`: 0 hits, 0 advisories. One draft advisory was removed by changing numbers: the dividend tree first had a node of 120 companies with 105 kept, the same three parameters (120, 105, 80) as the regime split in `l2-good-split.json` screen 12. Grep: no key value or story repeats a lesson, review or homework (2.75 and 12.75 occur only in unrelated working).
+
 ## Engine limits
 
-None found for level 1.
+None found for levels 1 and 2.

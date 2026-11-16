@@ -1,0 +1,867 @@
+{
+  "id": "problems-2",
+  "course": "ensembles",
+  "level": 2,
+  "title": "Problems: bagging, forests and their scores",
+  "minutes": 50,
+  "items": [
+    {
+      "id": "p-bond-downgrades",
+      "difficulty": 3,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "A credit desk bags 8 deep trees on 25 bonds to flag which will be downgraded. Each tree grows on its own resample: 25 draws from the 25 bonds, with replacement.",
+      "parts": [
+        {
+          "question": "What is the chance that a given bond is left out of one tree's resample? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3604,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "one-draw",
+                "value": 0.04,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "limit",
+                "value": 0.3679,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "drawn",
+                "value": 0.6396,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each draw misses the bond with chance $\\tfrac{24}{25}$, and all 25 draws must miss: $0.96^{25} = 0.3604$.",
+            "generic": "Not quite right. Find the chance one draw misses the bond, then raise it to the number of draws.",
+            "byKey": {
+              "one-draw": "$\\tfrac{1}{25}$ is the chance one draw picks the bond. All 25 draws must miss it.",
+              "limit": "0.3679 is $e^{-1}$, the limit for a very large book. With 25 bonds the exact value is $0.96^{25}$.",
+              "drawn": "That is the chance the bond is drawn at least once. The question asks for left out."
+            }
+          },
+          "explain": {
+            "text": "The 25 draws are independent and each misses the bond with chance 0.96. So the bond sits out with chance $0.96^{25} = 0.3604$, a little below $e^{-1}$."
+          }
+        },
+        {
+          "question": "Use 0.3604 from part 1. On average, how many of the 8 trees leave a given bond out of bag? Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.88,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "2 decimal places",
+            "wrong": [
+              {
+                "id": "in-bag",
+                "value": 5.12,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "limit",
+                "value": 2.94,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "per-draw",
+                "value": 0.32,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each tree misses the bond with chance 0.3604, so on average $8 \\times 0.3604 = 2.88$ trees do.",
+            "generic": "Not quite right. Multiply the number of trees by the chance one tree misses the bond.",
+            "byKey": {
+              "in-bag": "5.12 counts the trees that drew the bond. The out-of-bag trees are the ones that missed it.",
+              "limit": "You used $e^{-1} = 0.368$. With 25 bonds the chance is 0.3604.",
+              "per-draw": "You used $\\tfrac{1}{25}$ per tree. The chance a whole resample misses the bond is 0.3604."
+            }
+          },
+          "explain": {
+            "text": "The expected count is the number of trees times the chance for one: $8 \\times 0.3604 = 2.88$. So a bond's out-of-bag vote comes from about 3 trees, a small forest."
+          }
+        },
+        {
+          "question": "Use 0.3604 from part 1. On average, how many of the 25 bonds are drawn by all 8 resamples? Those bonds have no out-of-bag tree. Give your answer to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.7,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "2 decimal places",
+            "wrong": [
+              {
+                "id": "one-bond",
+                "value": 0.03,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "all-missed",
+                "value": 0.01,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "one-tree",
+                "value": 15.99,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A bond is in all 8 resamples with chance $0.6396^8 = 0.0280$, so on average $25 \\times 0.0280 = 0.70$ bonds have no out-of-bag tree.",
+            "generic": "Not quite right. Find the chance all 8 resamples draw a bond, then multiply by the 25 bonds.",
+            "byKey": {
+              "one-bond": "0.03 is the chance for one bond. Multiply by the 25 bonds.",
+              "all-missed": "You used $0.3604^8$, the chance every tree missed a bond, giving about 0.01. We need every tree to have drawn it, $0.6396^8$.",
+              "one-tree": "That counts bonds drawn by one resample. All 8 must draw the bond."
+            }
+          },
+          "explain": {
+            "text": "One resample draws the bond with chance $1 - 0.3604 = 0.6396$. All 8 draw it with chance $0.6396^8 = 0.0280$, so we expect $25 \\times 0.0280 = 0.70$ bonds with no honest vote."
+          }
+        },
+        {
+          "question": "In this forest exactly one bond has no out-of-bag tree, and it was downgraded. Of the other 24, the out-of-bag votes misjudge 5. scikit-learn scores the uncovered bond as class 0, not downgraded. What out-of-bag error does it report? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.24,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "skipped",
+                "value": 0.208,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "counted-right",
+                "value": 0.2,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "accuracy",
+                "value": 0.76,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The uncovered bond is called 0 but was downgraded, so it counts as wrong: $\\tfrac{5 + 1}{25} = 0.240$.",
+            "generic": "Not quite right. Add the uncovered bond's mistake to the 5, and divide by all 25 bonds.",
+            "byKey": {
+              "skipped": "$\\tfrac{5}{24}$ skips the uncovered bond. scikit-learn keeps it and calls it class 0, which is wrong here.",
+              "counted-right": "You counted the uncovered bond as right. It is called class 0, not downgraded, but it was downgraded.",
+              "accuracy": "0.76 is the out-of-bag accuracy, $\\tfrac{19}{25}$. The error is the share wrong."
+            }
+          },
+          "explain": {
+            "text": "scikit-learn gives the uncovered bond a row of zeros and so calls it class 0. It was downgraded, so that is a sixth mistake: $\\tfrac{6}{25} = 0.24$. Skipping it would give $\\tfrac{5}{24} = 0.208$; with more trees the problem disappears."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-ipo-forest",
+      "difficulty": 4,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "A desk predicts which new listings trade below their issue price after a month, from 10 features. For one listing, a bagged deep tree's predicted probability has variance 0.12 across resamples, and two bagged trees have correlation 0.15. A random forest with `max_features=\"sqrt\"` gives trees with variance 0.15 and correlation 0.06.",
+      "parts": [
+        {
+          "question": "With `max_features=\"sqrt\"` on 10 features, what is the chance that a given feature is on offer at a split? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "one",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "unrounded",
+                "value": 0.316,
+                "tol": {
+                  "abs": 0.0015
+                }
+              },
+              {
+                "id": "miss",
+                "value": 0.7,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "scikit-learn uses $\\lfloor\\sqrt{10}\\rfloor = 3$ features, so any one of the 10 is on offer with chance $\\tfrac{3}{10} = 0.3$.",
+            "generic": "Not quite right. Find how many features a split sees, then the share of the 10 that is.",
+            "byKey": {
+              "one": "$\\tfrac{1}{10}$ is the chance with one feature on offer. Three are on offer.",
+              "unrounded": "You used $\\sqrt{10} = 3.16$ before rounding down. scikit-learn offers 3 features.",
+              "miss": "0.7 is the chance the feature is left out."
+            }
+          },
+          "explain": {
+            "text": "$\\sqrt{10} = 3.16$, rounded down to $m = 3$. A random 3 of 10 includes any given feature with chance $\\tfrac{3}{10}$. So 7 splits in 10 must use something other than the strongest feature."
+          }
+        },
+        {
+          "question": "What is the variance of the average of 50 bagged trees' predictions for this listing? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.02,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "independent",
+                "value": 0.0024,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "floor",
+                "value": 0.018,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "one-tree",
+                "value": 0.12,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.15 \\times 0.12 + 0.85 \\times 0.12/50 = 0.018 + 0.00204 = 0.0200$.",
+            "generic": "Not quite right. Use $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$ with the bagged trees' numbers.",
+            "byKey": {
+              "independent": "$\\sigma^2/B$ assumes independent trees. Add the floor $\\rho\\sigma^2 = 0.018$ and use $(1 - \\rho)\\sigma^2/B$.",
+              "floor": "0.018 is the floor alone. Add $(1 - \\rho)\\sigma^2/B = 0.00204$.",
+              "one-tree": "0.12 is one tree's variance. Averaging 50 correlated trees brings it down towards the floor."
+            }
+          },
+          "explain": {
+            "text": "The floor is $\\rho\\sigma^2 = 0.15 \\times 0.12 = 0.018$. The shrinking part is $0.85 \\times 0.12 / 50 = 0.00204$. Together they give 0.0200, already close to the floor."
+          }
+        },
+        {
+          "question": "What is the variance of the average of 50 forest trees' predictions? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0118,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "floor",
+                "value": 0.009,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "independent",
+                "value": 0.003,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "swapped",
+                "value": 0.02505,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.06 \\times 0.15 + 0.94 \\times 0.15/50 = 0.009 + 0.00282 = 0.0118$.",
+            "generic": "Not quite right. Use $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$ with $\\sigma^2 = 0.15$ and $\\rho = 0.06$.",
+            "byKey": {
+              "floor": "0.009 is the forest's floor alone. Add $(1 - \\rho)\\sigma^2/B = 0.00282$.",
+              "independent": "$\\sigma^2/B$ assumes independent trees. The forest's trees still share the rows, so add the floor.",
+              "swapped": "You used $\\rho = 0.15$ with $\\sigma^2 = 0.15$. That gives about 0.025; the forest's trees have correlation 0.06."
+            }
+          },
+          "explain": {
+            "text": "Each forest tree is noisier, 0.15 against 0.12, but the correlation falls from 0.15 to 0.06. The floor drops from 0.018 to 0.009. At 50 trees the forest's variance is 0.0118 against bagging's 0.0200."
+          }
+        },
+        {
+          "question": "The forest's variance is $0.009 + 0.141/B$ and bagging's is $0.018 + 0.102/B$. What is the smallest number of trees $B$ at which the forest's variance is the lower?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "round-down",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "one",
+                "value": 1,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "ratio",
+                "value": 16,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0.009 + 0.141/B < 0.018 + 0.102/B$ when $0.039/B < 0.009$, so $B > 4.33$: from 5 trees on.",
+            "generic": "Not quite right. Set the two variances equal, solve for $B$, and take the next whole number.",
+            "byKey": {
+              "round-down": "$B > 4.33$, and 4 trees is below that: the forest is still 0.04425 against 0.0435. Round up to 5.",
+              "one": "With one tree the variance is one tree's, and the forest's trees are noisier: 0.15 against 0.12.",
+              "ratio": "You divided 0.141 by 0.009. Collect both $1/B$ terms first: $0.039/B < 0.009$."
+            }
+          },
+          "explain": {
+            "text": "Subtract: the forest wins when $0.141/B - 0.102/B < 0.018 - 0.009$, that is $0.039/B < 0.009$. So $B > 4.33$, and from 5 trees on the decorrelated forest has the lower variance. Worse trees, better average, once there are a few of them."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-dividend-importance",
+      "difficulty": 4,
+      "skills": [
+        "en-interpret",
+        "en-bagging"
+      ],
+      "prose": "A forest predicts which of 200 companies cut their dividend: 130 kept it and 70 cut. One of its trees splits on payout ratio at the root: 110 companies left (100 kept, 10 cut) and 90 right (30 kept, 60 cut). The right node splits on interest cover and the left on company_id, a number unique to each company.",
+      "parts": [
+        {
+          "question": "Impurity importance credits each split with its drop in Gini, times its node's share of the 200 companies. What credit does payout ratio earn at the root? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1641,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "child",
+                "value": 0.2909,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "unweighted",
+                "value": 0.1501,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "parent",
+                "value": 0.455,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Root $G = 0.455$. Left $G = 0.1653$ on 110, right $G = \\tfrac{4}{9}$ on 90: weighted 0.2909. The root holds all 200, so the credit is $0.455 - 0.2909 = 0.1641$.",
+            "generic": "Not quite right. Find the root's Gini and the weighted Gini of its sides, and subtract.",
+            "byKey": {
+              "child": "0.2909 is the weighted Gini left after the split. The credit is the drop from 0.455.",
+              "unweighted": "You averaged the two sides equally. Weight them by 110 and 90 of the 200 companies.",
+              "parent": "0.455 is the root's Gini before the split. Subtract what the split leaves."
+            }
+          },
+          "explain": {
+            "text": "Root: $1 - 0.65^2 - 0.35^2 = 0.455$. Left: $1 - (\\tfrac{10}{11})^2 - (\\tfrac{1}{11})^2 = \\tfrac{20}{121}$; right: $\\tfrac{4}{9}$. Weighted $0.55 \\times \\tfrac{20}{121} + 0.45 \\times \\tfrac{4}{9} = 0.2909$, so the drop is 0.1641."
+          }
+        },
+        {
+          "question": "The right node of 90, with Gini $\\tfrac{4}{9}$, splits on interest cover. One side has 60 companies (6 kept, 54 cut), the other 30 (24 kept, 6 cut). What credit does interest cover earn? Give your answer to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.098,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "4 decimal places",
+            "wrong": [
+              {
+                "id": "node-only",
+                "value": 0.2178,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "child",
+                "value": 0.2267,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "share-left",
+                "value": 0.1198,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Children: $G = 0.18$ on 60 and $0.32$ on 30, weighted 0.2267. The node's drop is $\\tfrac{4}{9} - 0.22667 = 0.2178$, times $\\tfrac{90}{200}$: 0.0980.",
+            "generic": "Not quite right. Find the node's drop in Gini, then weight it by the node's 90 of the 200 companies.",
+            "byKey": {
+              "node-only": "0.2178 is the drop inside the node. Weight it by the node's share of all 200 companies, 0.45.",
+              "child": "0.2267 is the weighted Gini the split leaves. Subtract it from $\\tfrac{4}{9}$, then weight by 0.45.",
+              "share-left": "You weighted by 0.55, the left node's share. The right node holds 90 of 200, 0.45."
+            }
+          },
+          "explain": {
+            "text": "$2 \\times 0.1 \\times 0.9 = 0.18$ and $2 \\times 0.8 \\times 0.2 = 0.32$, weighted by 60 and 30 of 90 to 0.2267. The drop, 0.2178, counts for 90 of the 200 companies. So cover earns $0.45 \\times 0.2178 = 0.0980$."
+          }
+        },
+        {
+          "question": "company_id's split on the left earns 0.0144. Using 0.1641 and 0.0980 from parts 1 and 2, what share of this tree's importance goes to payout ratio? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.593,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "raw",
+                "value": 0.164,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "third",
+                "value": 0.333,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "carried",
+                "value": 0.414,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The total is $0.1641 + 0.0980 + 0.0144 = 0.2765$, so payout ratio's share is $0.1641 / 0.2765 = 0.593$.",
+            "generic": "Not quite right. Divide payout ratio's credit by the sum of all three credits.",
+            "byKey": {
+              "raw": "0.164 is payout ratio's credit. Divide it by the total of all three to get its share.",
+              "third": "That gives each split equal credit. Weight them by their credits.",
+              "carried": "You used the node's drop for cover, 0.2178, without its weight of 0.45. With 0.0980 the share is 0.593."
+            }
+          },
+          "explain": {
+            "text": "The three credits add to 0.2765. Payout ratio takes 0.593, cover 0.354 and company_id 0.052. These shares sum to 1 for each tree."
+          }
+        },
+        {
+          "question": "The forest has 4 trees. In the other three, payout ratio's shares are 0.48, 0.66 and 0.55. Using 0.593 from part 3, what is payout ratio's `feature_importances_` value for the forest? Give your answer to 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.571,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "3 decimal places",
+            "wrong": [
+              {
+                "id": "three",
+                "value": 0.563,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "this-tree",
+                "value": 0.593,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "sum",
+                "value": 2.283,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The forest averages its trees' shares: $(0.593 + 0.48 + 0.66 + 0.55)/4 = 0.571$.",
+            "generic": "Not quite right. Average payout ratio's share over all 4 trees.",
+            "byKey": {
+              "three": "You averaged only the other three trees. Include this tree's 0.593.",
+              "this-tree": "0.593 is one tree. The forest averages over all 4 trees.",
+              "sum": "You added the four shares. The forest's importance is their average."
+            }
+          },
+          "explain": {
+            "text": "`feature_importances_` averages the trees' normalised importances: $2.283 / 4 = 0.571$. Each tree grew on its own resample, so the shares differ from tree to tree."
+          }
+        },
+        {
+          "question": "On 500 later companies, shuffling company_id changes accuracy by $-0.003$, while its impurity share is about 0.05. What is the best reading?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "memorised",
+                "text": "The trees used it to memorise training companies",
+                "correct": true
+              },
+              {
+                "id": "hidden",
+                "text": "It carries a weak signal that shuffling misses",
+                "why": "Shuffling held-out rows is the direct test of use. A change of $-0.003$ is noise around 0."
+              },
+              {
+                "id": "trust-impurity",
+                "text": "Trust the impurity share: it used more rows",
+                "why": "Impurity importance is computed on the training rows, where every split on noise earns credit."
+              },
+              {
+                "id": "cause",
+                "text": "Company identity drives dividend cuts",
+                "why": "An id offers a threshold between every pair of companies. That chases noise; it does not show a cause."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A unique id gives the trees endless thresholds near their leaves. Held-out shuffling shows it adds nothing.",
+            "generic": "Not quite right. Ask which measure looked at companies the forest never saw."
+          },
+          "explain": {
+            "text": "company_id earned 0.0144 by splitting off 8 training companies. On new companies its permutation importance is $-0.003$, noise around 0. Rank features by permutation importance on held-out data."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-imbalance-stumps",
+      "difficulty": 5,
+      "skills": [
+        "en-bagging",
+        "en-trees"
+      ],
+      "prose": "A market maker forecasts the next minute's price move, in ticks, from order-book imbalance. Six rows, numbered 0 to 5: imbalances $-0.6$, $-0.4$, $-0.3$, $0.2$, $0.6$ and $0.8$; moves $-4$, $-1$, $-2$, $1$, $4$ and $4$. Two bagged stumps grow on resamples: tree A drew rows 0, 0, 1, 3, 4, 4 and tree B drew rows 1, 2, 2, 3, 5, 5.",
+      "parts": [
+        {
+          "question": "Which rows are out of bag for tree A? Type the row numbers separated by a comma.",
+          "widget": {
+            "kind": "numeric",
+            "answers": [
+              2,
+              5
+            ],
+            "unordered": true,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "row numbers",
+            "wrong": [
+              {
+                "id": "repeats",
+                "value": "0, 4"
+              },
+              {
+                "id": "drawn-once",
+                "value": "1, 3"
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Tree A drew rows 0, 1, 3 and 4, some twice. Rows 2 and 5 never appear.",
+            "generic": "Not quite right. List the rows whose numbers never appear in tree A's resample.",
+            "byKey": {
+              "repeats": "Rows 0 and 4 were drawn twice by tree A; they are also tree B's out-of-bag rows. Out of bag for A means A drew them zero times.",
+              "drawn-once": "Rows 1 and 3 were drawn once each, so tree A saw them. Look for rows it never drew.",
+              "count": "This question needs the rows tree A never drew. There are two of them."
+            }
+          },
+          "explain": {
+            "text": "Tree A's six draws hold only four distinct rows, because rows 0 and 4 came twice. Rows 2 and 5 sit out, so tree A can forecast them honestly."
+          }
+        },
+        {
+          "question": "Tree A is a stump fitted by least squares on its own resample, repeats counted. What does it forecast for its out-of-bag row 5, in ticks?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-repeats",
+                "value": 2.5,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "own-value",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "no-split",
+                "value": 0,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Tree A's best split is between imbalances $-0.4$ and $0.2$, at $-0.1$. Row 5 goes right, to rows 3, 4 and 4: $(1 + 4 + 4)/3 = 3$.",
+            "generic": "Not quite right. Try each midpoint on tree A's six draws and keep the one with the least squared error. Then read row 5's leaf mean.",
+            "byKey": {
+              "no-repeats": "You averaged rows 3 and 4 once each. Row 4 was drawn twice, so it counts twice: $(1 + 4 + 4)/3$.",
+              "own-value": "4 is row 5's own move. Tree A never saw row 5; it forecasts the mean of the leaf row 5 falls in.",
+              "no-split": "0 is the mean of all six of tree A's draws. The stump first splits them, and row 5 lands in one leaf."
+            }
+          },
+          "explain": {
+            "text": "On tree A's draws, $-4, -4, -1$ against $1, 4, 4$ leaves squared error $6 + 6 = 12$; the other two midpoints leave 18 each. So the stump splits at $-0.1$ with leaves $-3$ and 3. Row 5, at 0.8, gets 3."
+          }
+        },
+        {
+          "question": "Tree B is fitted the same way. What does it forecast for its out-of-bag row 0, in ticks?",
+          "widget": {
+            "kind": "numeric",
+            "answer": -1,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "no-repeats",
+                "value": -0.67,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "own-value",
+                "value": -4,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "wrong-split",
+                "value": -1.67,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sign",
+                "value": 1,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Tree B's best split is between $0.2$ and $0.8$, at 0.5. Row 0 goes left, to rows 1, 2, 2 and 3: $(-1 - 2 - 2 + 1)/4 = -1$.",
+            "generic": "Not quite right. Find tree B's best midpoint on its own draws, then read the mean of row 0's leaf.",
+            "byKey": {
+              "no-repeats": "You counted row 2 once. It was drawn twice: $(-1 - 2 - 2 + 1)/4 = -1$.",
+              "own-value": "$-4$ is row 0's own move. Tree B never drew row 0; it forecasts its leaf's mean.",
+              "wrong-split": "You split tree B at $-0.05$, between $-0.3$ and $0.2$. Splitting at 0.5 leaves less squared error, 6 against 6.67.",
+              "sign": "You dropped the sign. The left leaf's moves average to a fall: $-1$."
+            }
+          },
+          "explain": {
+            "text": "On tree B's draws the split at 0.5 leaves $-1, -2, -2, 1$ with error 6 and $4, 4$ with 0. The other midpoints leave 36 and 6.67. Row 0, at $-0.6$, lands left and gets $-1$."
+          }
+        },
+        {
+          "question": "Rows 1 and 3 were drawn by both trees and get no out-of-bag forecast; skip them. Tree A splits at $-0.1$ with leaves $-3$ and 3; tree B splits at 0.5 with leaves $-1$ and 4. What is the out-of-bag mean squared error? Give an exact decimal.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.75,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "decimal",
+            "wrong": [
+              {
+                "id": "all-six",
+                "value": 1.83,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sum",
+                "value": 11,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "unsquared",
+                "value": 1.25,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Row 2: $-3$ against $-2$, error 1. Row 5: 3 against 4, error 1. Row 0: $-1$ against $-4$, error 9. Row 4: 4 against 4, error 0. Mean $\\tfrac{11}{4} = 2.75$.",
+            "generic": "Not quite right. Forecast each out-of-bag row with the tree that missed it, square the errors, and average over those four rows.",
+            "byKey": {
+              "all-six": "You divided by all six rows. Rows 1 and 3 have no out-of-bag forecast, so average over four.",
+              "sum": "11 is the sum of the squared errors. Divide by the four rows that have a forecast.",
+              "unsquared": "You averaged the sizes of the errors, $1 + 1 + 3 + 0$. Square them first."
+            }
+          },
+          "explain": {
+            "text": "Row 2 at $-0.3$ is left of $-0.1$, so tree A says $-3$; row 4 at 0.6 is right of 0.5, so tree B says 4. The four squared errors are 1, 1, 9 and 0. Their mean, 2.75, is an honest error estimate with no test set."
+          }
+        },
+        {
+          "question": "Using the same two stumps, what does the bagged model forecast for a new imbalance of 0.3, in ticks?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "whole number",
+            "wrong": [
+              {
+                "id": "tree-a",
+                "value": 3,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "tree-b",
+                "value": -1,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "sum",
+                "value": 2,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Tree A: 0.3 is above $-0.1$, so 3. Tree B: 0.3 is below 0.5, so $-1$. The bagged forecast is $(3 - 1)/2 = 1$.",
+            "generic": "Not quite right. Ask each stump for its forecast at 0.3, then average the two.",
+            "byKey": {
+              "tree-a": "3 is tree A alone. Bagging averages both trees.",
+              "tree-b": "$-1$ is tree B alone. Bagging averages both trees.",
+              "sum": "You added the two forecasts. Bagging averages them."
+            }
+          },
+          "explain": {
+            "text": "The two stumps disagree at 0.3, because each split where its own resample put the jump. Their average, 1 tick, is smoother than either. With many trees those splits spread out and the steps blur into a ramp."
+          }
+        }
+      ]
+    }
+  ]
+}
