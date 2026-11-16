@@ -1,0 +1,718 @@
+{
+  "id": "problems-3",
+  "course": "arma",
+  "level": 3,
+  "title": "Problem set: ARMA",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-smoothed-fund",
+      "difficulty": 4,
+      "skills": [
+        "ts-models",
+        "ts-forecast"
+      ],
+      "prose": "A property fund values its buildings by appraisal, so its reported monthly return mixes two months: $r^{\\circ}_t = 0.6\\,r_t + 0.4\\,r_{t-1}$. The true monthly returns $r_t$ are independent with sd 4%.",
+      "parts": [
+        {
+          "question": "What is the sd of the reported monthly return? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0288444,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "add-sds",
+                "value": 0.04,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "no-sqrt",
+                "value": 0.0208,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\sqrt{0.6^2 + 0.4^2} \\times 4\\% = \\sqrt{0.52} \\times 4\\% = 2.88\\%$.",
+            "generic": "Not quite. $r_t$ and $r_{t-1}$ are unrelated, so the variance is $0.6^2$ and $0.4^2$ of $\\sigma^2$ added.",
+            "byKey": {
+              "add-sds": "You added the weighted sds, $0.6 + 0.4 = 1$. For unrelated terms it is the squared weights that add.",
+              "no-sqrt": "That is $0.52 \\times 4\\%$. Take the square root of 0.52."
+            }
+          },
+          "explain": {
+            "text": "The variances add: $(0.36 + 0.16) \\times (4\\%)^2$. The sd is $\\sqrt{0.52} \\times 4\\% = 2.88\\%$. Month by month the fund looks 28% less risky than its buildings are."
+          }
+        },
+        {
+          "question": "Using the variance $0.52\\sigma^2$ from part 1, what is the lag-1 autocorrelation of the reported returns? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.461538,
+            "tol": {
+              "abs": 6e-05
+            },
+            "wrong": [
+              {
+                "id": "ratio",
+                "value": 0.666667,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "cov",
+                "value": 0.24,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The covariance is $0.4 \\times 0.6\\,\\sigma^2 = 0.24\\sigma^2$, and $0.24/0.52 = 0.4615$.",
+            "generic": "Not quite. Find what neighbouring reported returns share, then divide by the variance.",
+            "byKey": {
+              "ratio": "You took $0.4/0.6$, the MA coefficient. The autocorrelation is $\\theta/(1 + \\theta^2)$, here 0.4615.",
+              "cov": "That is the covariance in units of $\\sigma^2$. Divide by the variance, $0.52\\sigma^2$."
+            }
+          },
+          "explain": {
+            "text": "$r^\\circ_t$ and $r^\\circ_{t-1}$ share $r_{t-1}$, weighted 0.4 in one and 0.6 in the other, so the covariance is $0.24\\sigma^2$. Over $0.52\\sigma^2$ that is 0.4615. Months two apart have disjoint windows, so the ACF stops after lag 1: an MA(1)."
+          }
+        },
+        {
+          "question": "The appraisers publish this month's true return $r_n$. What is the 95% half-width for next month's reported return? Give a percentage to 2 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.04704,
+            "tol": {
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "uncond",
+                "value": 0.056535,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "full",
+                "value": 0.0784,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Only $0.6\\,r_{n+1}$ is unknown: $1.96 \\times 0.6 \\times 4\\% = 4.70\\%$.",
+            "generic": "Not quite. Split next month's reported return into what is known today and what is not.",
+            "byKey": {
+              "uncond": "That is $1.96 \\times 2.88\\%$, the width with nothing known. Knowing $r_n$ removes its share.",
+              "full": "You used the full 4% sd. Next month's true return enters with weight 0.6."
+            }
+          },
+          "explain": {
+            "text": "The term $0.4\\,r_n$ is known, so it moves the forecast, not the width. The unknown $0.6\\,r_{n+1}$ has sd 2.4%, so the half-width is $1.96 \\times 2.4\\% = 4.70\\%$. From two months out the interval is the unconditional ±5.65%."
+          }
+        },
+        {
+          "question": "An analyst annualises the reported sd by $\\sqrt{12}$. Take the variance $0.52\\sigma^2$ and the lag-1 covariance $0.24\\sigma^2$ from parts 1 and 2. What is the sd of a 12-month sum of reported returns? Give a percentage to 1 decimal place.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1357645,
+            "tol": {
+              "abs": 0.0005
+            },
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "root-12",
+                "value": 0.09992,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "true",
+                "value": 0.1385641,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "once",
+                "value": 0.1191973,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\sqrt{12 \\times 0.52 + 2 \\times 11 \\times 0.24} \\times 4\\% = \\sqrt{11.52} \\times 4\\% = 13.6\\%$, against 10.0% by the $\\sqrt{12}$ rule.",
+            "generic": "Not quite. Add 12 variances and twice each of the 11 neighbouring covariances.",
+            "byKey": {
+              "root-12": "That is the $\\sqrt{12}$ rule, which treats the months as independent. The positive autocorrelation adds $2 \\times 11 \\times 0.24\\sigma^2$.",
+              "true": "That is the sd of 12 true monthly returns. The reported sum shares most of them but not the end months.",
+              "once": "You counted each covariance once. Each neighbouring pair appears twice in the variance of a sum."
+            }
+          },
+          "explain": {
+            "text": "A 12-month sum has 12 variances and 11 neighbouring pairs, each counted twice: $11.52\\sigma^2$, an sd of 13.6%. The $\\sqrt{12}$ rule ignores the autocorrelation and reports 10.0%. The fund's yearly risk looks 26% smaller than it is."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-inflation-arma",
+      "difficulty": 4,
+      "skills": [
+        "ts-models",
+        "ts-forecast"
+      ],
+      "prose": "An economist forecasts monthly inflation, in % a month, with a fitted ARMA(1, 1): $x_t - \\mu = \\phi(x_{t-1} - \\mu) + \\varepsilon_t + \\theta\\varepsilon_{t-1}$, with $\\mu = 0.25$, $\\phi = 0.82$ and $\\theta = -0.35$. Last month the model forecast 0.43 for this month, and this month's figure came in at 0.55.",
+      "parts": [
+        {
+          "question": "What is this month's shock $\\hat\\varepsilon_n$? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.12,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "gap",
+                "value": 0.3,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "sign",
+                "value": -0.12,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\hat\\varepsilon_n = 0.55 - 0.43 = 0.12$.",
+            "generic": "Not quite. A shock is the outcome minus the forecast made for it.",
+            "byKey": {
+              "gap": "That is the gap from the mean, $0.55 - 0.25$. The shock is the miss against last month's forecast.",
+              "sign": "You subtracted the wrong way round. The figure came in above the forecast."
+            }
+          },
+          "explain": {
+            "text": "A shock is what the model did not see coming: the outcome minus its one-step forecast, $0.55 - 0.43 = 0.12$. The MA term needs it for next month."
+          }
+        },
+        {
+          "question": "Using $\\hat\\varepsilon_n = 0.12$ from part 1, what is the forecast for next month? Give a decimal to 3 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.454,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "no-ma",
+                "value": 0.496,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "theta-sign",
+                "value": 0.538,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $0.25 + 0.82 \\times 0.30 - 0.35 \\times 0.12 = 0.25 + 0.246 - 0.042 = 0.454$.",
+            "generic": "Not quite. Next month's value is the mean, plus $\\phi$ times today's gap, plus $\\theta$ times today's shock.",
+            "byKey": {
+              "no-ma": "You left out the MA term, $\\theta\\hat\\varepsilon_n = -0.042$.",
+              "theta-sign": "You added $0.35 \\times 0.12$. With $\\theta = -0.35$ the MA term is negative."
+            }
+          },
+          "explain": {
+            "text": "The AR part shrinks today's gap of 0.30 to 0.246. The MA part adds $\\theta\\hat\\varepsilon_n = -0.042$, taking back some of this month's surprise. The forecast is 0.454."
+          }
+        },
+        {
+          "question": "Using the forecast 0.454 from part 2, what is the forecast two months ahead? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.41728,
+            "tol": {
+              "abs": 6e-05
+            },
+            "wrong": [
+              {
+                "id": "ma-again",
+                "value": 0.37528,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "from-xn",
+                "value": 0.45172,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $0.25 + 0.82 \\times (0.454 - 0.25) = 0.25 + 0.1673 = 0.4173$.",
+            "generic": "Not quite. Two months ahead the MA term would need next month's shock, whose forecast is 0.",
+            "byKey": {
+              "ma-again": "You used $\\theta\\hat\\varepsilon_n$ twice. This month's shock enters next month only, then it is gone.",
+              "from-xn": "You shrank today's gap 0.30 by $0.82^2$, as for an AR(1). The MA term changed the first step, so start from 0.454."
+            }
+          },
+          "explain": {
+            "text": "Next month's shock is unknown and forecast as 0, so the MA term drops out. Only the AR part acts: the gap 0.204 shrinks to 0.1673, giving 0.4173. Every later month repeats that step."
+          }
+        },
+        {
+          "question": "From part 3 on, each extra month keeps 0.82 of the forecast's distance from $\\mu$. That distance is 0.204 one month ahead. At what first horizon $h$, in months, is the forecast within 0.05 of the mean? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 9,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "no-ma",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "off-by-one",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. The gap is $0.204 \\times 0.82^{h-1}$: 0.0509 at $h = 8$ and 0.0417 at $h = 9$.",
+            "generic": "Not quite. Solve $0.204 \\times 0.82^{h-1} < 0.05$ for $h$.",
+            "byKey": {
+              "no-ma": "You started from today's gap of 0.30 with the AR(1) rule. The MA term already cut the first step to 0.204.",
+              "off-by-one": "At $h = 8$ the gap is $0.204 \\times 0.82^7 = 0.0509$, just above 0.05."
+            }
+          },
+          "explain": {
+            "text": "Solve $0.204 \\times 0.82^{h-1} < 0.05$: $h - 1 > \\ln 0.245/\\ln 0.82 = 7.09$, so $h = 9$ months. An AR(1) from today's gap of 0.30 would say 10, because it ignores the MA term's pull."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-inventory-half-life",
+      "difficulty": 4,
+      "skills": [
+        "ts-forecast",
+        "ts-models"
+      ],
+      "prose": "A market maker's inventory in one share, in thousands of shares, is an AR(1) around 0 from minute to minute: $q_t = 0.915\\,q_{t-1} + \\varepsilon_t$, with shocks of sd 2.4. A large client trade has just left the book long 30.",
+      "parts": [
+        {
+          "question": "What is the half-life of the inventory, in minutes? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7.803,
+            "tol": {
+              "abs": 0.006
+            },
+            "unit": "minutes",
+            "wrong": [
+              {
+                "id": "linear",
+                "value": 5.8824,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "approx",
+                "value": 8.1547,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "flip",
+                "value": 0.1282,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\ln 0.5/\\ln 0.915 = -0.69315/-0.08883 = 7.80$ minutes.",
+            "generic": "Not quite. Solve $0.915^h = 0.5$ by taking logs.",
+            "byKey": {
+              "linear": "You took 8.5% of the first position off each minute. The decay is geometric: 8.5% of what is left.",
+              "approx": "That is $\\ln 2/(1 - \\phi)$, an approximation for $\\phi$ very near 1. Use $\\ln 0.915$ itself.",
+              "flip": "That is $\\ln 0.915/\\ln 0.5$, upside down. The $\\ln 0.5$ goes on top."
+            }
+          },
+          "explain": {
+            "text": "The expected inventory is $30 \\times 0.915^h$, half gone when $0.915^h = 0.5$. Taking logs, $h = \\ln 0.5/\\ln 0.915 = 7.80$ minutes."
+          }
+        },
+        {
+          "question": "Take the half-life of 7.80 minutes from part 1. What inventory, in thousands of shares, does the market maker expect in 15 minutes? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7.9148,
+            "tol": {
+              "abs": 0.02
+            },
+            "wrong": [
+              {
+                "id": "half",
+                "value": 15.0,
+                "tol": {
+                  "abs": 0.02
+                }
+              },
+              {
+                "id": "linear",
+                "value": -8.25,
+                "tol": {
+                  "abs": 0.02
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $30 \\times 0.915^{15} = 7.91$: nearly two half-lives.",
+            "generic": "Not quite. Shrink 30 by 0.915 for each of the 15 minutes.",
+            "byKey": {
+              "half": "That is one half-life's worth. Fifteen minutes is nearly two half-lives.",
+              "linear": "You took 8.5% of 30 off each minute. Each minute keeps 0.915 of what is left."
+            }
+          },
+          "explain": {
+            "text": "Fifteen minutes is $15/7.80 = 1.92$ half-lives, so about a quarter is left: $30 \\times 0.915^{15} = 7.91$. The expected path ignores the new shocks, which average 0."
+          }
+        },
+        {
+          "question": "What is the 95% half-width of that 15-minute forecast, in thousands of shares? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 11.2462,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "walk",
+                "value": 18.2185,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "one-step",
+                "value": 4.704,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "limit",
+                "value": 11.6593,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $1.96 \\times 2.4 \\times \\sqrt{(1 - 0.915^{30})/(1 - 0.915^2)} = 11.25$.",
+            "generic": "Not quite. Each of the 15 future shocks adds $2.4^2$ times $0.915^{2j}$, where $j$ counts the minutes it has to decay.",
+            "byKey": {
+              "walk": "That is a random walk's $1.96\\sigma\\sqrt{15}$. In the inventory an early shock has decayed by the 15th minute.",
+              "one-step": "That is the one-minute half-width. Fifteen shocks are unknown.",
+              "limit": "That is the limit far ahead. At 15 minutes a little of the sum is still missing."
+            }
+          },
+          "explain": {
+            "text": "The error variance is $2.4^2 (1 - 0.915^{30})/(1 - 0.915^2)$; the 15 shocks still to come are damped by powers of 0.915. The half-width is 11.25, close to the long-run ±11.66. The book could still be anywhere from short to well long."
+          }
+        },
+        {
+          "question": "Using the half-life from part 1, after how many whole minutes does the expected inventory first fall below 5? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 21,
+            "tol": {
+              "abs": 0
+            },
+            "wrong": [
+              {
+                "id": "round-down",
+                "value": 20,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "linear",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $30 \\times 0.915^{20} = 5.08$ and $30 \\times 0.915^{21} = 4.64$.",
+            "generic": "Not quite. Solve $30 \\times 0.915^h < 5$ for $h$, or count half-lives.",
+            "byKey": {
+              "round-down": "At 20 minutes the expected inventory is 5.08, still above 5.",
+              "linear": "You took 8.5% of 30 off each minute. The decay is geometric and slows as the book shrinks."
+            }
+          },
+          "explain": {
+            "text": "Falling from 30 to 5 is a factor of 6, which is $\\log_2 6 = 2.585$ half-lives: $2.585 \\times 7.80 = 20.16$ minutes. So the first whole minute below 5 is the 21st."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-dual-listing",
+      "difficulty": 5,
+      "skills": [
+        "ts-models",
+        "ts-forecast"
+      ],
+      "prose": "A desk models the daily premium of a dual-listed share's New York price over its London price, in bp, on 750 days. The log-likelihoods are $-1460.2$ for AR(1) and $-1449.7$ for ARMA(1, 1), each fitted with a constant. The ARMA(1, 1) is $x_t - \\mu = \\phi(x_{t-1} - \\mu) + \\varepsilon_t + \\theta\\varepsilon_{t-1}$ with $\\phi = 0.88$ and $\\theta = 0.25$.",
+      "parts": [
+        {
+          "question": "Counting the constant and $\\sigma^2$ in $k$, by how many points is the AR(1)'s BIC above the ARMA(1, 1)'s? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 14.3799,
+            "tol": {
+              "abs": 0.006
+            },
+            "wrong": [
+              {
+                "id": "aic",
+                "value": 19.0,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "sign",
+                "value": -14.3799,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $(3\\ln 750 + 2920.4) - (4\\ln 750 + 2899.4) = 21.0 - 6.62 = 14.38$.",
+            "generic": "Not quite. Work out $k\\ln n - 2\\ell$ for both, with $k = 3$ and $k = 4$.",
+            "byKey": {
+              "aic": "That is the AIC gap, $21.0 - 2$. On BIC the extra parameter costs $\\ln 750 = 6.62$.",
+              "sign": "You subtracted the wrong way round. The AR(1)'s BIC is the higher one."
+            }
+          },
+          "explain": {
+            "text": "The MA term costs $\\ln 750 = 6.62$ on BIC and buys 21.0 points of $-2\\ell$. So the ARMA(1, 1)'s BIC is 14.38 lower, and the MA term earns its place."
+          }
+        },
+        {
+          "question": "A single shock of 1 bp arrives today and no others follow. Using the ARMA(1, 1), by how much does it raise the premium tomorrow, in bp? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.13,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "ar",
+                "value": 0.88,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "ma",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "product",
+                "value": 0.22,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $\\phi \\times 1 + \\theta \\times 1 = 0.88 + 0.25 = 1.13$ bp.",
+            "generic": "Not quite. Tomorrow both the AR part and the MA part carry today's shock.",
+            "byKey": {
+              "ar": "You kept only the AR part. The MA term adds $\\theta\\varepsilon_t = 0.25$ tomorrow.",
+              "ma": "You kept only the MA part. The AR part also carries 0.88 of today's value.",
+              "product": "You multiplied $\\phi$ and $\\theta$. The two parts add."
+            }
+          },
+          "explain": {
+            "text": "Tomorrow the AR part keeps 0.88 of today's 1 bp, and the MA part adds $\\theta$ times today's shock, 0.25. The effect is 1.13 bp, more than the shock itself."
+          }
+        },
+        {
+          "question": "From tomorrow on the MA part is spent, so each day keeps 0.88 of the day before. Using 1.13 from part 2, what is the effect after 5 days, in bp? Give a decimal to 4 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.677656,
+            "tol": {
+              "abs": 6e-05
+            },
+            "wrong": [
+              {
+                "id": "ar",
+                "value": 0.527732,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "off-by-one",
+                "value": 0.596337,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $1.13 \\times 0.88^4 = 1.13 \\times 0.5997 = 0.6777$ bp.",
+            "generic": "Not quite. Day 1 carries 1.13; days 2 to 5 each multiply by 0.88.",
+            "byKey": {
+              "ar": "That is $0.88^5$, the AR(1) path. The MA term lifts day 1 to 1.13.",
+              "off-by-one": "You applied 0.88 five times after day 1. Day 1 already holds 1.13, so four more steps reach day 5."
+            }
+          },
+          "explain": {
+            "text": "Day 1 carries 1.13 and days 2 to 5 multiply by 0.88, four steps in all: $1.13 \\times 0.88^4 = 0.6777$ bp. An AR(1) with the same $\\phi$ would leave $0.88^5 = 0.5277$."
+          }
+        },
+        {
+          "question": "Using the path $1.13 \\times 0.88^{h-1}$, after how many days has the effect fallen to half of the original 1 bp shock? Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 7.3783,
+            "tol": {
+              "abs": 0.006
+            },
+            "unit": "days",
+            "wrong": [
+              {
+                "id": "ar",
+                "value": 5.4223,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "half-peak",
+                "value": 6.4223,
+                "tol": {
+                  "abs": 0.006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. $1.13 \\times 0.88^{h-1} = 0.5$ gives $h - 1 = \\ln 0.4425/\\ln 0.88 = 6.38$, so $h = 7.38$ days.",
+            "generic": "Not quite. Set $1.13 \\times 0.88^{h-1} = 0.5$ and take logs.",
+            "byKey": {
+              "ar": "That is the AR(1) half-life, $\\ln 0.5/\\ln 0.88$. The MA term starts the decay from 1.13.",
+              "half-peak": "You halved the peak of 1.13. The question asks when the effect is half the original 1 bp."
+            }
+          },
+          "explain": {
+            "text": "$0.88^{h-1} = 0.5/1.13 = 0.4425$, so $h - 1 = 6.38$ and $h = 7.38$ days. The decay runs at the AR rate, but from 1.13 instead of 1."
+          }
+        },
+        {
+          "question": "A colleague quotes $\\ln 0.5/\\ln 0.88 = 5.42$ days as the premium's half-life. Using 7.38 days from part 4, what is wrong?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "start",
+                "text": "It is the AR(1) half-life: $\\theta$ lifts day 1 to 1.13, so halving takes about two days longer",
+                "correct": true
+              },
+              {
+                "id": "phi-only",
+                "text": "Nothing: a half-life depends only on $\\phi$",
+                "why": "Only the rate of decay depends on $\\phi$ alone. Where the decay starts depends on $\\theta$ too, and here it starts from 1.13."
+              },
+              {
+                "id": "explodes",
+                "text": "The decay rate is $\\phi + \\theta = 1.13$, above 1, so the premium never reverts",
+                "why": "1.13 is day 1's effect, not the rate. From day 2 each day keeps 0.88, so the premium reverts."
+              },
+              {
+                "id": "ma-rate",
+                "text": "It should be $\\ln 0.5/\\ln 0.25$, from the MA part",
+                "why": "The MA part lasts one day. The slow decay belongs to the AR part."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Correct. Same decay rate, higher start, a longer wait.",
+            "generic": "Not quite. Compare the ARMA path with the AR(1) path on day 1."
+          },
+          "explain": {
+            "text": "The ARMA(1, 1) decays at 0.88 a day from day 2, but from 1.13, not 1. Halving the original shock takes 7.38 days, not 5.42. A desk that timed its exit on 5.42 days would leave too early."
+          }
+        }
+      ]
+    }
+  ]
+}
