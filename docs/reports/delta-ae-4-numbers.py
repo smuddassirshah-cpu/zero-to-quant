@@ -243,7 +243,7 @@ ok(round(math.log(2) / 0.0370, 1) == 18.7 and round(math.log(2) / 0.0439, 1) == 
 ok(round(math.exp(18 * 0.0370), 2) == 1.95 and round(math.log(2), 3) == 0.693, f'{PID} p4: 1.95 after 18 bets; ln 2 = 0.693')
 ok(math.ceil(1 / 0.0370) == 28 and 19 - 16 == 3, f'{PID} p4: no-log 28; the cap costs three bets')
 ok(P[3]['widget']['answer'] == 19 and P[3]['widget']['tol']['abs'] == 0, f'{PID} p4: key 19, tol 0')
-bands(f'{PID} p4', P[3], [19], {'kelly': [16], 'round-down': [math.floor(math.log(2) / 0.0370)], 'no-log': [28]})
+bands(f'{PID} p4', P[3], [19], {'kelly': [16], 'round-down': [math.floor(math.log(2) / 0.0370)], 'no-log': [28], 'even-payout': [math.ceil(math.log(2) / 0.0607)]})
 tx = alltext(P[3])
 ok(has(tx, '18.7', '0.693', '1.95', '15.8', '16', 'three bets'), f'{PID} p4: printed numbers')
 carried = math.ceil(math.log(2) / round(g(cap, 1.0), 4))

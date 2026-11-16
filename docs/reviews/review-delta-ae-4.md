@@ -88,3 +88,22 @@ Plain answers to the questions asked.
 
 - `fresh-check` reads no `feedback`, `explain` or `why`, so it passes finding 1, where the question sentence and two feedback lines of a lesson screen are reused whole. The six-word run with numbers masked used for this read found findings 1, 2, 8, 9 and 10 in under a second per course. As a checker rule it needs a stop list of stock lines ("Give your answer to # decimal places", "Not quite right. ...", "# is the variance. Take its square root.").
 - No tool tests a `wrong` band against the form the part asks for (finding 6): a part that says "1 decimal place" with `wrong` bands that only a 2 decimal answer can reach. `grade-all` could round each `wrong` value to the stated form and check it routes to its own id.
+
+## Fix pass
+
+Fixed 8, disputed 0, deferred 0, ruled no edit 2 (finding 7 option (a), recorded in `docs/reports/problems-validation.md`; the part 5 likeness of `p-futures-study` against `l12`, ruled clean).
+
+1. Fixed: part 1 question, `correct`, `generic`, `no-gap`, `test-row` replaced exactly; key 457 and the three `wrong` values unchanged.
+2. Fixed: `one-day`, `fifty` and `explain` replaced exactly; recomputed 0.0322 and 1.5511; no key or band changed.
+3. Fixed: prose now "an equity trade" and "of the share's daily volume" (main-session ruling).
+4. Fixed: `even-payout` added (value 12, abs 0; $\ln 2/0.0607 = 11.42$, so 12) with the reader's `byKey` line; 12 meets none of 19, 16, 18, 28.
+5. Fixed: `why` and `byKey` of `test-fit` replaced exactly (weeks 13 to 16: mean 21, sd 2.236, so within 1.35 sds).
+6. Fixed: bands now `gap` 2.52 +/- 0.025, `times` 0.45 +/- 0.055, `stayers` 3.07 +/- 0.035; 2.5, 0.5 and 3.1 each reach their id; key band 13.95 to 14.05 stays apart.
+7. Ruled option (a): no content edit; exception recorded in `docs/reports/problems-validation.md`.
+8. Fixed: part 1 question, `explain` last sentence and `gap` line replaced exactly; $(200 \times 6.68 - 164 \times 9.2)/36 = -4.8$, so 14.0.
+9. Fixed: part 4 question opening replaced exactly; $z_{1 - 0.05/4} = 2.2414$.
+10. Fixed: `real` `text`, `why` and `byKey` replaced exactly.
+
+Scripts: `problems-fin-ml-numbers.py` (even-payout slip), `problems-validation-numbers.py` (rounded-form checks for the three bands), `problems-fin-ml-numbers-read.py`, `delta-ae-2-numbers.py` (even-payout), `delta-ae-3-numbers.py` (new `real` wording), `delta-ae-4-numbers.py` (even-payout in the p4 bands); every script of the three courses and the delta scripts exits 0 (`delta-ae-4-numbers.py` still prints FINDING 7, the accepted exception).
+
+Gates: validator 0 errors; voice scan 35: 0 and 0; `fresh-check` 0 hits on all four sets (advisories as before); `grade-all` 0 failures on all four; playthrough `--problems` green with and without `--mobile` on `ensembles/problems-2`, `ensembles/problems-3`, `fin-ml/problems-3`, `validation/problems-3`.

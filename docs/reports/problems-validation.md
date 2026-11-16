@@ -66,3 +66,7 @@ Checks. Validator 0 errors, no warnings on the file. `grade-all.mjs --file`: 19 
 ## Engine limits
 
 Two bullets in `docs/BACKLOG-INBOX.md` under `Raised later (problems validation):` (the over-100 warning on a `wrong` entry of a `%` widget; the shared-formula advisory compares text, not value).
+
+## Exceptions recorded (delta AE-4)
+
+`problems-3` `p-closed-funds` part 2 takes 2.52 from the prose and does not use part 1's 14.0 (it feeds only the `whole-gap` slip); accepted, as the flows' contrast step was in AE-3, because the alternative brings `l11` `screens[8]`'s product back into the part.

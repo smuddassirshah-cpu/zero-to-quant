@@ -432,7 +432,7 @@ has("power p3", all_text(k[2]), "0.1039 - 0.0669 = 0.0370", "1.16", "0.0439")
 ok("power p3 terms 0.1039 and 0.0669", round(0.7 * math.log(1.16), 4) == 0.1039 and round(0.3 * math.log(0.8), 4) == -0.0669)
 ln2 = math.log(2)
 check_numeric("power p4", k[3], 19, [math.ceil(ln2 / gc), math.ceil(ln2 / 0.0370)],
-              {"kelly": [math.ceil(ln2 / gk), math.ceil(ln2 / 0.0439)], "round-down": [math.floor(ln2 / 0.0370)], "no-log": [math.ceil(1 / 0.0370)]})
+              {"kelly": [math.ceil(ln2 / gk), math.ceil(ln2 / 0.0439)], "round-down": [math.floor(ln2 / 0.0370)], "no-log": [math.ceil(1 / 0.0370)], "even-payout": [math.ceil(ln2 / 0.0607)]})
 has("power p4", all_text(k[3]), "0.0370 a bet from part 3", "0.693/0.0370 = 18.7", "e^{18", "1.95", "15.8")
 ok("power p4: 19 bets at the cap double, 18 do not; Kelly 16", math.exp(19 * gc) > 2 > math.exp(18 * gc) and math.ceil(ln2 / gk) == 16 and round(ln2 / gc, 2) == 18.76)
 ko = {o["id"]: o for o in k[4]["widget"]["options"]}

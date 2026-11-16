@@ -416,6 +416,10 @@ if L3 is not None:
     num(L3, 'p-closed-funds', 1, (Fr('9.2') - avg) / Fr(18, 100), Fr('9.2') - d_def,
         {'gap': Fr('2.52'), 'times': Fr('2.52') * Fr(18, 100), 'stayers': Fr('2.52') / Fr(82, 100)})
     printed(L3, 'p-closed-funds', 1, 14.0, 1)
+    # a learner who obeys 'Give 1 decimal place' and makes a slip must still meet the named line
+    wb = {x['id']: x for x in part(L3, 'p-closed-funds', 1)['widget']['wrong']}
+    for wid, typed in (('gap', 2.5), ('times', 0.5), ('stayers', 3.1)):
+        ok(abs(wb[wid]['value'] - typed) <= wb[wid]['tol']['abs'], f'p-closed-funds p1: {wid} typed to 1 place ({typed}) reaches its band')
     honest = (Fr('8.4') - (Fr('9.2') - avg)) / 9
     num(L3, 'p-closed-funds', 2, honest, (8.4 - (9.2 - panel.mean())) / 9,
         {'survivors': Fr('8.4') / 9, 'added': (Fr('8.4') + Fr('2.52')) / 9, 'whole-gap': (Fr('8.4') - 14) / 9})

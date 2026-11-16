@@ -529,6 +529,7 @@ key(3, 'p-power-spread-cap', 4, math.ceil(ln2 / 0.0370), alts=[math.ceil(ln2 / g
 slip(3, 'p-power-spread-cap', 4, 'kelly', math.ceil(ln2 / g(0.325)))
 slip(3, 'p-power-spread-cap', 4, 'round-down', math.floor(ln2 / 0.0370))
 slip(3, 'p-power-spread-cap', 4, 'no-log', math.ceil(1 / 0.0370))
+slip(3, 'p-power-spread-cap', 4, 'even-payout', math.ceil(ln2 / g(0.2)) and math.ceil(ln2 / (p * math.log(1.2) + (1 - p) * math.log(0.8))))
 ok(math.exp(19 * g(0.2)) > 2 > math.exp(18 * g(0.2)) and round(math.exp(18 * 0.0370), 2) == 1.95, 'spread: 19 bets double at the cap, 18 do not')
 ok(p * b - (1 - p) > 0, 'spread: the bet has an edge')
 
