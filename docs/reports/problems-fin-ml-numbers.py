@@ -487,9 +487,13 @@ wins2 = rng.random(4_000_000) < 0.7
 g_mc2 = np.where(wins2, math.log(1.16), math.log(0.8)).mean()
 num(L3, 'p-power-spread-cap', 3, growth(0.2), g_mc2,
     {'uncapped': growth(fk), 'even-payout': 0.7 * math.log(1.2) + 0.3 * math.log(0.8)}, agree=3e-4)
-share = growth(0.2) / growth(fk)
-num(L3, 'p-power-spread-cap', 4, share, 0.0370 / 0.0439,
-    {'inverse': 1 / share, 'stake-ratio': 0.2 / fk}, agree=3e-3)
+gcap = growth(0.2)
+n_double = next(n for n in range(1, 100) if math.exp(n * 0.0370) >= 2)
+n_double_kelly = next(n for n in range(1, 100) if math.exp(n * 0.0439) >= 2)
+num(L3, 'p-power-spread-cap', 4, math.ceil(math.log(2) / 0.0370), n_double,
+    {'kelly': n_double_kelly, 'round-down': math.floor(math.log(2) / 0.0370), 'no-log': math.ceil(1 / 0.0370)}, agree=0)
+ok(math.ceil(math.log(2) / gcap) == 19 and r(math.log(2) / 0.0370, 1) == 18.7 and r(math.exp(18 * 0.0370), 2) == 1.95
+   and n_double_kelly == 16 and r(math.log(2) / 0.0439, 1) == 15.8, 'p-power-spread p4: bets to double, stated 18.7, 1.95, 15.8')
 ok([r(1 + 0.8 * fk, 3), r(1 - fk, 3), r(1.16, 2), r(0.8, 1)] == [1.26, 0.675, 1.16, 0.8]
    and r(growth(fk), 4) == 0.0439 and r(growth(0.2), 4) == 0.037 and r(1 - 0.2 / fk, 2) > 1 / 3,
    'p-power-spread: stated multipliers and growths')
