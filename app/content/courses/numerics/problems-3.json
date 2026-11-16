@@ -86,7 +86,7 @@
             }
           },
           "explain": {
-            "text": "Halving $h$ cuts the $h^2$ term by 4, so $4T_2 - T_1$ keeps $3I$ and loses that term. Dividing by 3 gives 0.856086, which is Simpson's rule on the same three points. The error falls from 0.0127 to 0.00046 with no new value of $f$."
+            "text": "Dividing $4T_2 - T_1$ by 3 gives 0.856086. The weights on $f(0)$, $f(0.5)$ and $f(1)$ come out as $\\tfrac16$, $\\tfrac46$ and $\\tfrac16$, so no new value of $f$ is needed. The error falls from 0.0127 to 0.00046."
           }
         },
         {
@@ -168,172 +168,218 @@
       ]
     },
     {
-      "id": "p-stiff-credit-trapezoid",
+      "id": "p-implicit-newton-step",
       "difficulty": 5,
       "skills": [
         "nm-quadrature",
         "nm-stability"
       ],
-      "prose": "A credit model couples a default intensity, which reverts at 0.3 a year, with a liquidity spread, which reverts at 2,500 a year. Its two modes decay at $\\lambda = -0.3$ and $\\lambda = -2500$, and both start at size 1. The desk needs the state at $T = 5$ years to within $10^{-5}$. RK4 would need $h \\le 2.7853/2500$ to stay stable, so the desk tries the trapezoidal rule, which has no step limit.",
+      "prose": "A calibration model has a fast factor that decays as $x' = f(x) = -40x - 200x^2$, with $x(0) = 0.05$ and $t$ in years. Its slow factors want steps of $h = 0.05$. At the start the fast rate is $\\lambda = f'(0.05) = -60$, so $h\\lambda = -3$. The desk takes implicit Euler steps: each solves $G(v) = v - x_n - hf(v) = 0$ for $v = x_{n+1}$ by Newton, starting from $v = x_n$. The exact path is $x(t) = \\tfrac{2e^{-40t}}{50 - 10e^{-40t}}$.",
       "parts": [
         {
-          "question": "On the slow mode alone, the trapezoidal rule errs by $-6.288 \\times 10^{-4}$ with $h = 0.5$ and by $-1.570 \\times 10^{-4}$ with $h = 0.25$. What order $p$ do the two errors show? Give 2 decimal places.",
+          "question": "For the first step, what is Newton's first iterate from $v = 0.05$? Give 5 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 2.001837,
+            "answer": 0.01875,
             "tol": {
-              "abs": 0.006
+              "abs": 6e-06
             },
             "placeholder": "a decimal",
             "wrong": [
               {
-                "id": "ratio",
-                "value": 4.005096,
+                "id": "explicit",
+                "value": -0.075,
                 "tol": {
-                  "abs": 0.006
+                  "abs": 6e-06
                 }
               },
               {
-                "id": "log10",
-                "value": 0.602613,
+                "id": "no-one",
+                "value": 0.008333,
                 "tol": {
-                  "abs": 0.006
+                  "abs": 6e-06
+                }
+              },
+              {
+                "id": "sign",
+                "value": 0.08125,
+                "tol": {
+                  "abs": 6e-06
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "The ratio is $\\tfrac{6.288}{1.570} \\approx 4.005$, and $\\log_2 4.005 \\approx 2.00$.",
-            "generic": "Not quite. Halving $h$ divides an error $Ch^p$ by $2^p$, so take $\\log_2$ of the ratio.",
+            "correct": "$G(0.05) = 0.125$ and $G'(v) = 1 - hf'(v) = 3 + 20v$ is 4, so $v = 0.05 - \\tfrac{0.125}{4} = 0.01875$.",
+            "generic": "Not quite. With $h = 0.05$, $G(v) = 10v^2 + 3v - 0.05$; step by $-\\tfrac{G(v)}{G'(v)}$.",
             "byKey": {
-              "ratio": "4.005 is the ratio itself. The order is the power of 2 that it equals, $\\log_2 4.005$.",
-              "log10": "You took $\\log_{10}$ of the ratio. The step was halved, so the base is 2."
+              "explicit": "That is an explicit Euler step, $0.05 + 0.05f(0.05)$. It overshoots below zero, which the implicit step avoids.",
+              "no-one": "You left the 1 out of $G'(v) = 1 - hf'(v)$, so you divided by 3, not 4.",
+              "sign": "You added the correction. Newton subtracts $\\tfrac{G}{G'}$, and $G(0.05) > 0$."
             }
           },
           "explain": {
-            "text": "If the error is $Ch^p$, halving $h$ divides it by $2^p$. Here it shrinks by a factor of 4.005, so $p = \\log_2 4.005 \\approx 2.00$. The trapezoidal rule is second order, as expected."
+            "text": "With $h = 0.05$, $G(v) = 10v^2 + 3v - 0.05$, so $G(0.05) = 0.125$ and $G'(0.05) = 4$. One Newton step gives 0.01875. An explicit step would land at $-0.075$, on the wrong side of zero."
           }
         },
         {
-          "question": "Using $p = 2$ and the error at $h = 0.25$ from part 1, the slow-mode error is about $Ch^2$. What is the smallest number of steps over the 5 years that brings it below $10^{-5}$? Give a whole number.",
+          "question": "Using $v = 0.01875$ from part 1, take a second Newton iterate. Give 6 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 80,
+            "answer": 0.015856,
             "tol": {
-              "abs": 0
+              "abs": 6e-07
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "frozen",
+                "value": 0.016309,
+                "tol": {
+                  "abs": 6e-07
+                }
+              },
+              {
+                "id": "sign",
+                "value": 0.021644,
+                "tol": {
+                  "abs": 6e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$G(0.01875) \\approx 0.0097656$ and $G'(0.01875) = 3.375$, so $v \\approx 0.01875 - 0.0028935 = 0.0158565$.",
+            "generic": "Not quite. Recompute both $G$ and $G'$ at 0.01875, then step.",
+            "byKey": {
+              "frozen": "You kept $G' = 4$ from the start. That simplified Newton converges only linearly; recompute $G'(0.01875) = 3.375$.",
+              "sign": "You added the correction. $G(0.01875) > 0$ and $G' > 0$, so $v$ falls."
+            }
+          },
+          "explain": {
+            "text": "At 0.01875, $G = 0.0035156 + 0.05625 - 0.05 = 0.0097656$ and $G' = 3.375$. The step is 0.0028935, a tenth of the first, so $v = 0.0158565$. Newton's corrections shrink fast near the root."
+          }
+        },
+        {
+          "question": "Parts 1 and 2 close in on the positive root of $G(v) = 10v^2 + 3v - 0.05$. Using the second iterate 0.0158565 from part 2 as a check, find the root exactly by the quadratic formula. Give 7 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0158312,
+            "tol": {
+              "abs": 6e-08
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "stopped",
+                "value": 0.0158565,
+                "tol": {
+                  "abs": 6e-08
+                }
+              },
+              {
+                "id": "other-root",
+                "value": -0.3158312,
+                "tol": {
+                  "abs": 6e-08
+                }
+              },
+              {
+                "id": "disc",
+                "value": -0.0177124,
+                "tol": {
+                  "abs": 6e-08
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$v = \\tfrac{-3 + \\sqrt{9 + 2}}{20} = \\tfrac{-3 + \\sqrt{11}}{20} \\approx 0.0158312$.",
+            "generic": "Not quite. Use $v = \\tfrac{-b + \\sqrt{b^2 - 4ac}}{2a}$ with $a = 10$, $b = 3$ and $c = -0.05$.",
+            "byKey": {
+              "stopped": "That is the second iterate from part 2. The exact root is a little lower.",
+              "other-root": "That is the negative root, far from where the step starts. Take the root near 0.0159.",
+              "disc": "You took $-4ac$ as $-2$. With $c = -0.05$, $-4ac = +2$, so the root uses $\\sqrt{11}$."
+            }
+          },
+          "explain": {
+            "text": "$b^2 - 4ac = 9 + 2 = 11$, so $x_1 = \\tfrac{-3 + \\sqrt{11}}{20} = 0.0158312$. Part 2's iterate is $2.5 \\times 10^{-5}$ above it, and part 1's was $2.9 \\times 10^{-3}$ above. The error fell to about $3 \\times (2.9 \\times 10^{-3})^2$, as Newton's order 2 predicts."
+          }
+        },
+        {
+          "question": "Using $x_1 = 0.0158312$ from part 3 and the exact path, what is the step's local error $x_1 - x(0.05)$? Give 5 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0102672,
+            "tol": {
+              "abs": 6e-06
+            },
+            "placeholder": "a decimal",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": -0.0102672,
+                "tol": {
+                  "abs": 6e-06
+                }
+              },
+              {
+                "id": "explicit",
+                "value": -0.080564,
+                "tol": {
+                  "abs": 6e-06
+                }
+              },
+              {
+                "id": "start",
+                "value": 0.044436,
+                "tol": {
+                  "abs": 6e-06
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$x(0.05) = \\tfrac{2e^{-2}}{50 - 10e^{-2}} \\approx 0.005564$, so the error is $0.0158312 - 0.005564 \\approx 0.01027$.",
+            "generic": "Not quite. Evaluate the exact path at $t = 0.05$, then subtract it from $x_1$.",
+            "byKey": {
+              "sign": "That is the exact value minus the step. The local error here is the step minus the exact value.",
+              "explicit": "That uses the explicit step $-0.075$. The implicit step lands at 0.0158312.",
+              "start": "You subtracted the exact value from $x(0) = 0.05$. Use the step's result, 0.0158312."
+            }
+          },
+          "explain": {
+            "text": "The exact factor falls to 0.005564 over the step, so implicit Euler's 0.0158312 is 0.0102672 too high. The step is stable and positive, but first order, so in the fast transient its local error is large. That error comes from the step, not from Newton."
+          }
+        },
+        {
+          "question": "Newton's error after the iterate of part 2 is $0.0158565 - 0.0158312 = 2.53 \\times 10^{-5}$. Using the local error 0.01027 from part 4, how many times larger is the local error? Give a whole number.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 406,
+            "tol": {
+              "abs": 1.5
             },
             "placeholder": "a whole number",
             "wrong": [
               {
-                "id": "order-one",
-                "value": 314,
+                "id": "first",
+                "value": 3.52,
                 "tol": {
-                  "abs": 0
-                }
-              },
-              {
-                "id": "floor",
-                "value": 79,
-                "tol": {
-                  "abs": 0
+                  "abs": 0.6
                 }
               }
             ]
           },
           "feedback": {
-            "correct": "$C = 1.570 \\times 10^{-4}/0.0625 = 2.512 \\times 10^{-3}$, so $h \\le \\sqrt{10^{-5}/C} \\approx 0.0631$. That needs $5/0.0631 \\approx 79.2$ steps, so 80.",
-            "generic": "Not quite. Find $C$ from the error at $h = 0.25$ and solve $Ch^2 = 10^{-5}$ for $h$. Then divide 5 years by $h$ and round up.",
+            "correct": "$\\tfrac{0.01027}{2.53 \\times 10^{-5}} \\approx 406$.",
+            "generic": "Not quite. Divide the local error by Newton's error after two iterates.",
             "byKey": {
-              "order-one": "You took the error as $Ch$. Part 1 showed it falls like $h^2$, so far fewer steps will do.",
-              "floor": "79 steps give a predicted error of $1.006 \\times 10^{-5}$, just above the tolerance. Round the step count up."
+              "first": "That uses the first iterate's error, $2.9 \\times 10^{-3}$. After the second, Newton's error is $2.53 \\times 10^{-5}$."
             }
           },
           "explain": {
-            "text": "From $C(0.25)^2 = 1.570 \\times 10^{-4}$ we get $C = 2.512 \\times 10^{-3}$. Then $Ch^2 \\le 10^{-5}$ needs $h \\le 0.0631$, so $n \\ge 79.2$ and $n = 80$. RK4 would need $5 \\times 2500/2.7853 \\approx 4{,}488$ steps for stability alone."
-          }
-        },
-        {
-          "question": "Using $n = 80$ from part 2, the step is $h = 0.0625$. What factor does the trapezoidal rule apply to the fast mode each step? Give 4 decimal places.",
-          "widget": {
-            "kind": "numeric",
-            "answer": -0.974724,
-            "tol": {
-              "abs": 6e-05
-            },
-            "placeholder": "a decimal",
-            "wrong": [
-              {
-                "id": "sign",
-                "value": 0.974724,
-                "tol": {
-                  "abs": 6e-05
-                }
-              },
-              {
-                "id": "implicit",
-                "value": 0.006359,
-                "tol": {
-                  "abs": 6e-05
-                }
-              },
-              {
-                "id": "euler",
-                "value": -155.25,
-                "tol": {
-                  "abs": 0.006
-                }
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "$z = h\\lambda = -156.25$, so the factor is $\\tfrac{1 - 78.125}{1 + 78.125} \\approx -0.9747$.",
-            "generic": "Not quite. Put $z = h\\lambda$ into $\\tfrac{1 + z/2}{1 - z/2}$.",
-            "byKey": {
-              "sign": "The top, $1 + z/2$, is negative here, so the factor is negative: the mode flips sign each step.",
-              "implicit": "That is implicit Euler's factor, $\\tfrac{1}{1 - z}$. The trapezoidal rule averages the slopes at both ends of the step.",
-              "euler": "That is explicit Euler's factor, $1 + z$. The trapezoidal rule's factor is $\\tfrac{1 + z/2}{1 - z/2}$."
-            }
-          },
-          "explain": {
-            "text": "With $z = 0.0625 \\times (-2500) = -156.25$, the factor is $\\tfrac{-77.125}{79.125} \\approx -0.9747$. Its size is below 1, so the run is stable. But it sits close to $-1$, so the fast mode flips sign every step and fades only slowly."
-          }
-        },
-        {
-          "question": "Using the factor $-0.9747$ from part 3, what share of the fast mode is left after 80 steps? Give 3 decimal places.",
-          "widget": {
-            "kind": "numeric",
-            "answer": 0.128978,
-            "tol": {
-              "abs": 0.0006
-            },
-            "placeholder": "a decimal",
-            "wrong": [
-              {
-                "id": "sign",
-                "value": -0.128978,
-                "tol": {
-                  "abs": 0.0006
-                }
-              },
-              {
-                "id": "true",
-                "value": 0,
-                "tol": {
-                  "abs": 0.0006
-                }
-              }
-            ]
-          },
-          "feedback": {
-            "correct": "$0.974724^{80} \\approx 0.129$: about 13% of the fast mode is still there at $T$.",
-            "generic": "Not quite. Raise the factor to the 80th power; an even power of a negative number is positive.",
-            "byKey": {
-              "sign": "80 is even, so the sign flips cancel and what is left is positive.",
-              "true": "The true fast mode is $e^{-12500}$ at $T$, zero to any precision. The trapezoidal rule leaves $0.9747^{80}$ instead, which is far from small."
-            }
-          },
-          "explain": {
-            "text": "$|R|^{80} = e^{80\\ln 0.974724} \\approx 0.129$, while the true fast mode has fallen to $e^{-12500}$. So the state at $T$ is off by about 0.13, some 13,000 times the tolerance. A stable step is not an accurate one: start with implicit Euler steps, whose factor here is $\\tfrac{1}{157.25}$, or with much smaller steps."
+            "text": "After two iterates Newton is about 406 times more accurate than the step itself. A third iterate would remove $2.5 \\times 10^{-5}$ from an answer that is $10^{-2}$ wrong. So a solver stops Newton well below the local error, then cuts $h$ if that error is too large."
           }
         }
       ]

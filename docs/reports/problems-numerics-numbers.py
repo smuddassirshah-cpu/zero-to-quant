@@ -128,7 +128,7 @@ if 1 in LEVELS:
     d32 = a32 - b32
     ok(float(d32) == float(a32) - float(b32), 'L1 float32 difference exact (Sterbenz)')
     alt = float((np.float64(np.spacing(np.float32(0.9))) / 1e-4) * 100)
-    num(1, 'p-float32-overnight', 2, rel, alt, {'one-factor': rel / 2, 'eps': F(1, 2**23) / D * 100}, rounded=0.060)
+    num(1, 'p-float32-overnight', 2, rel / 100, alt / 100, {'one-factor': rel / 200, 'eps': F(1, 2**23) / D}, rounded=0.00060)  # unit %: key as a fraction
     amp = (F(1, 2**24) / D) / (F(1, 2**25) / P0)
     kap = (P0 + P1) / D
     num(1, 'p-float32-overnight', 3, amp, 2 * 0.9425 / 1e-4, {'one-input': P0 / D, 'per-cent': float(amp) / 100},
@@ -209,7 +209,7 @@ if 2 in LEVELS:
     from scipy.interpolate import CubicSpline
     from scipy.optimize import brentq
     shape(2, {'p-project-irr': ['l5-bisection-and-newton', 'l6-safe-root-finder'],
-              'p-spread-spline': ['l8-splines', 'l5-bisection-and-newton'],
+              'p-vol-curve-extension': ['l8-splines', 'l5-bisection-and-newton'],
               'p-survival-crossing': ['l7-interpolation', 'l5-bisection-and-newton']})
 
     # p-project-irr: exact in fractions and sympy, then numpy roots and scipy brentq
@@ -255,43 +255,70 @@ if 2 in LEVELS:
     ok(all(abs(a / b - 1) < 0.03 for a, b in zip(shown, [5.2e-4, 2.1e-7, 3.4e-14])), f'L2 stated predicted errors {shown}')
     ok(all(abs(a / b - 1) < 0.08 for a, b in zip(pred, shown)), f'L2 unrounded prediction {pred} close to the stated one')
     ok(all(abs(a / b - 1) < 0.03 for a, b in zip(real, [5.1e-4, 2.0e-7, 3.2e-14])), f'L2 real errors {real}')
-    says(2, 'p-project-irr', 4, '5.2 \\times 10^{-4}', '2.1 \\times 10^{-7}', '3.4 \\times 10^{-14}', '38 halvings')
+    says(2, 'p-project-irr', 4, '5.2 \\times 10^{-4}', '2.1 \\times 10^{-7}', '3.4 \\times 10^{-14}', 'factor of about 30')
+    ok(abs(1e-12 / 3.4e-14 - 30) < 1 and abs(1e-12 / real[2] - 31) < 1.5, 'L2 third step beats 1e-12 by about 30 (real step 31)')
     irr = 1 / vs - 1                                              # unit %: the key is the fraction
     num(2, 'p-project-irr', 5, irr, 1 / vs2 - 1, {'one-minus': 1 - vs}, rounded=0.0890, agree=1e-9)
     ok(abs(17 / 18 - fq(17 / 18) / fqp(17 / 18) - 0.918819) < 5e-7 and abs(vs - 0.918305) < 5e-7, 'L2 iterates 0.918819, 0.918305')
     says(2, 'p-project-irr', 5, '0.918305', '8.90\\%')
 
-    # p-spread-spline: hand rows in fractions, then scipy CubicSpline
-    t, y = [1, 2, 3, 4], [120, 150, 165, 170]
-    sl = [F(y[i + 1] - y[i], t[i + 1] - t[i]) for i in range(3)]
-    c1, c2 = 6 * (sl[1] - sl[0]), 6 * (sl[2] - sl[1])
-    cs = CubicSpline(t, y, bc_type='natural')
-    num(2, 'p-spread-spline', 1, c1, 4 * cs(2, 2) + cs(3, 2), {'no-six': sl[1] - sl[0], 'sign': -c1})
-    ok(c2 == -60, 'L2 c2 = 6(5 - 15) = -60')
-    Ms = sp.Matrix([[4, 1], [1, 4]]).LUsolve(sp.Matrix([c1, c2]))
-    M1, M2 = F(str(Ms[0])), F(str(Ms[1]))
-    num(2, 'p-spread-spline', 2, M1, cs(2, 2), {'diag': c1 / 4, 'swap': M2, 'sign': -M1})
-    ok(M2 == -10 and abs(cs(3, 2) + 10) < 1e-9, 'L2 M2 = -10')
-
-    def s_piece(x, m1=M1, m2=M2):
-        return m1 * (3 - x)**3 / 6 + m2 * (x - 2)**3 / 6 + (150 - m1 / 6) * (3 - x) + (165 - m2 / 6) * (x - 2)
-    s25 = s_piece(F(5, 2))
-    num(2, 'p-spread-spline', 3, s25, cs(2.5), {'linear': F(315, 2), 'sign-m': s_piece(F(5, 2), -M1, -M2)})
-    ok(s25 - F(315, 2) == F(15, 8), 'L2 spline 1.875 bp above the line')
-    says(2, 'p-spread-spline', 3, '-0.625', '159.375', '1.9 bp')
-    X = sp.symbols('X')
-    m1, m2 = sp.Rational(M1.numerator, M1.denominator), sp.Rational(M2.numerator, M2.denominator)
-    sexpr = m1 * (3 - X)**3 / 6 + m2 * (X - 2)**3 / 6 + (150 - m1 / 6) * (3 - X) + (165 - m2 / 6) * (X - 2)
-    ds = sp.diff(sexpr, X).subs(X, sp.Rational(5, 2))
-    num(2, 'p-spread-spline', 4, ds, cs(2.5, 1), {'chord': 15}, rounded=14.583)
-    says(2, 'p-spread-spline', 4, '2.5 - 1.25 = 1.25', '166\\tfrac23 - 153\\tfrac13 = 13\\tfrac13', '14.583')
-    ok(abs(F(-20) * F(1, 4) / -2 - F(10, 8) - F(5, 4)) == 0 and abs(float(ds) - (1.25 + 40 / 3)) < 1e-12, 'L2 slope split 1.25 + 13.333')
-    t1 = F(5, 2) + (160 - s25) / F(str(ds))
-    num(2, 'p-spread-spline', 5, t1, 2.5 - (cs(2.5) - 160) / cs(2.5, 1), {'chord': F(5, 2) + (160 - s25) / 15, 'sign': F(5, 2) - (160 - s25) / F(str(ds))},
-        rounded=2.5429)
-    root = brentq(lambda x: cs(x) - 160, 2, 3, xtol=1e-14)
-    ok(abs(root - 2.5438) < 5e-5 and abs(root - float(t1)) < 0.001, f'L2 true crossing {root:.5f}, within 0.001 of the step')
-    says(2, 'p-spread-spline', 5, '0.04286', '2.5438')
+    # p-vol-curve-extension (re-authored in the fix pass): exact fractions and sympy, then numpy polynomials and scipy
+    from numpy.polynomial import polynomial as NP
+    U = sp.symbols('u')
+    pS = 16 + sp.Rational(42, 10) * U - sp.Rational(6, 10) * U**3          # u = t - 1 on [1, 2]
+    ok(sp.diff(pS, U, 2).subs(U, 0) == 0, 'L2 p is natural at 1 year')
+    p_np = np.array([16, 4.2, 0, -0.6])                                     # the same piece, numpy coefficients
+    pv, p1v, p2v = (sp.diff(pS, U, k).subs(U, 1) for k in (0, 1, 2))
+    ok(pv == sp.Rational(98, 5) and p1v == sp.Rational(12, 5), 'L2 p(2) = 19.6, p\'(2) = 2.4')
+    num(2, 'p-vol-curve-extension', 1, p2v, NP.polyval(1, NP.polyder(p_np, 2)),
+        {'sign': -p2v, 'slope': p1v, 'once': -sp.Rational(6, 10) * 3})
+    says(2, 'p-vol-curve-extension', 1, '4.2 - 1.8(t - 1)^2', '-3.6(t - 1)')
+    cS = sp.Rational(204, 10) - pv - p1v - p2v / 2
+    # second method: solve for the cubic coefficient with numpy from the four conditions q(0), q'(0), q''(0), q(1)
+    Amat = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 2, 0], [1, 1, 1, 1]], float)
+    qco = np.linalg.solve(Amat, np.array([19.6, 2.4, -3.6, 20.4]))
+    num(2, 'p-vol-curve-extension', 2, cS, qco[3],
+        {'no-half': sp.Rational(204, 10) - pv - p1v - p2v, 'sign': sp.Rational(204, 10) - pv - p1v + p2v / 2,
+         'once': sp.Rational(204, 10) - pv - p1v - sp.Rational(-18, 10) / 2})
+    ok(cS == sp.Rational(1, 5), 'L2 c = 0.2 exactly')
+    says(2, 'p-vol-curve-extension', 2, '19.6 + 2.4 - 1.8 + c = 20.4', '20.4 - 19.6 - 2.4 + 1.8 = 0.2', '19.6 + 2.4u - 1.8u^2 + 0.2u^3')
+    qS = pv + p1v * U + p2v / 2 * U**2 + cS * U**3                          # u = t - 2 on [2, 3]
+    ok(qS.subs(U, 1) == sp.Rational(102, 5), 'L2 q(3) = 20.4')
+    ok(all(sp.diff(qS, U, k).subs(U, 0) == sp.diff(pS, U, k).subs(U, 1) for k in (0, 1, 2)), 'L2 q matches p in value, slope and curvature at 2')
+    q2end = sp.diff(qS, U, 2).subs(U, 1)
+    num(2, 'p-vol-curve-extension', 3, q2end, NP.polyval(1, NP.polyder(qco, 2)),
+        {'sign': -q2end, 'natural': 0, 'once': p2v + 3 * cS, 'no-half': p2v + 6 * 2})
+    says(2, 'p-vol-curve-extension', 3, '-3.6 + 1.2 = -2.4')
+    # claim: the natural spline through the three quotes changes p and rises all the way on [2, 3]
+    csn = CubicSpline([1, 2, 3], [16, 19.6, 20.4], bc_type='natural')
+    ok(abs(csn(2, 2) + 4.2) < 1e-12 and abs(csn(1.5) - float(pS.subs(U, 0.5))) > 1e-3, 'L2 natural refit has M = -4.2 and moves p')
+    ok(min(csn(np.linspace(2, 3, 2001), 1)) > 0, 'L2 natural refit rises all the way on [2, 3]')
+    qd, qdd = sp.diff(qS, U), sp.diff(qS, U, 2)
+    ok(qd.subs(U, 0) > 0 > qd.subs(U, 1), "L2 q' changes sign on [2, 3], so q has a peak")
+    u1 = sp.Rational(3, 4) - qd.subs(U, sp.Rational(3, 4)) / qdd.subs(U, sp.Rational(3, 4))
+    ok(u1 == sp.Rational(55, 72), 'L2 Newton from 0.75 gives 55/72')
+    qd_np, qdd_np = NP.polyder(qco), NP.polyder(qco, 2)
+    alt = 0.75 - NP.polyval(0.75, qd_np) / NP.polyval(0.75, qdd_np)
+    num(2, 'p-vol-curve-extension', 4, 2 + u1, 2 + alt,
+        {'sign': 2 + sp.Rational(3, 4) + qd.subs(U, sp.Rational(3, 4)) / qdd.subs(U, sp.Rational(3, 4)),
+         'end-curv': 2 + sp.Rational(3, 4) + qd.subs(U, sp.Rational(3, 4)) / sp.Rational(36, 10)}, rounded=2.7639)
+    ok(qd.subs(U, sp.Rational(3, 4)) == sp.Rational(3, 80) and qdd.subs(U, sp.Rational(3, 4)) == sp.Rational(-27, 10), "L2 q'(0.75) = 0.0375, q''(0.75) = -2.7")
+    ustar = 3 - sp.sqrt(5)
+    ok(sp.simplify(qd.subs(U, ustar)) == 0 and abs(float(ustar) - brentq(lambda x: NP.polyval(x, qd_np), 0.5, 1)) < 1e-12, 'L2 exact peak u = 3 - sqrt 5, two ways')
+    ok(abs(float(u1 - ustar)) < 5e-5 and abs(float(ustar) - 0.763932) < 5e-7, 'L2 one step within 5e-5 of the peak')
+    says(2, 'p-vol-curve-extension', 4, '0.0375', '-2.7', '0.013889', '3 - \\sqrt5', '0.763932', '2.763889')
+    over = qS.subs(U, sp.Rational(7639, 10000)) - sp.Rational(204, 10)    # from the restated 2.7639
+    num(2, 'p-vol-curve-extension', 5, over, float(qS.subs(U, ustar)) - 20.4,
+        {'peak': qS.subs(U, sp.Rational(7639, 10000)), 'start': qS.subs(U, sp.Rational(3, 4)) - sp.Rational(204, 10),
+         'sign': qS.subs(U, sp.Rational(7361, 10000)) - sp.Rational(204, 10)},
+        rounded=0.0721, agree=1e-8)
+    ok(abs(float(over - (qS.subs(U, u1) - sp.Rational(204, 10)))) < 1e-8, 'L2 rise from 2.7639 and from 2.763889 agree to 1e-8')
+    terms = [float(p1v * sp.Rational(7639, 10000)), float(-p2v / 2 * sp.Rational(7639, 10000)**2), float(cS * sp.Rational(7639, 10000)**3)]
+    ok(abs(terms[0] - 1.83336) < 5e-6 and abs(terms[1] - 1.05038) < 5e-6 and abs(terms[2] - 0.08915) < 5e-6, f'L2 printed terms {terms}')
+    ok(round(19.6 + 1.83336 - 1.05038 + 0.08915, 4) == 20.4721, 'L2 printed sum 20.4721')
+    hgap = abs(float(qS.subs(U, u1) - qS.subs(U, ustar)))
+    ok(hgap < 1e-8, f'L2 height error from the step {hgap:.1e}, the square of the place error')
+    says(2, 'p-vol-curve-extension', 5, '1.83336', '1.05038', '0.08915', '20.4721', '0.0721')
 
     # p-survival-crossing: sympy interpolation, then numpy polyfit
     T = sp.symbols('T')
@@ -312,9 +339,19 @@ if 2 in LEVELS:
     exact_root = float(sp.nsolve(pq - sp.Rational(9, 10), T, 3.5))
     ok(abs(exact_root - (-4 + math.sqrt(57))) < 1e-12 and abs(exact_root - 3.54983) < 5e-6, 'L2 exact crossing -4 + sqrt 57')
     ok(abs(n1 - exact_root) < 2e-5, 'L2 Newton within 2e-5 of the root')
-    ok(abs(p(float(s1)) - 0.900622) < 5e-7 and abs(pp(float(s1)) + 0.037667) < 5e-7, 'L2 p and slope at 3.5333')
-    ok(abs((p(float(s1)) - 0.9) / -pp(float(s1)) - 0.016519) < 5e-7, 'L2 Newton increment 0.016519')
-    says(2, 'p-survival-crossing', 3, '0.900622', '-0.037667', '0.016519', '3.54983')
+    r1 = F('3.5333')                                              # the value the part restates (fix pass, findings 7, 8)
+    pr = F(98, 100) - F(3, 100) * (r1 - 1) - F(25, 10000) * (r1 - 1) * (r1 - 3)
+    ppr = -F(3, 100) - F(25, 10000) * (2 * r1 - 4)
+    ok(abs(pr - F('0.9006235')) < F(5, 10**8) and abs(ppr + F('0.037667')) <= F(5, 10**7), 'L2 p and slope at the restated 3.5333')
+    ok(abs(float(pr) - p(3.5333)) < 1e-12, 'L2 p(3.5333) two ways')
+    stp = (pr - F(9, 10)) / -ppr
+    ok(abs(stp - F('0.016553')) < F(5, 10**7) and round(float(r1 + F('0.016553')), 4) == 3.5499, 'L2 step 0.016553 from 3.5333 gives 3.5499')
+    ok(abs(float(F('0.0006235') / F('0.037667')) - 0.016553) < 5e-7, 'L2 printed 0.0006235 / 0.037667 = 0.016553')
+    ok(abs(float(r1 + stp) - n1) <= 0.00006, 'L2 key band takes the step from the restated value')
+    slip = float(r1 - stp)                                        # the sign slip from the restated 3.5333: 3.516747
+    wsg = [x for x in part(2, 'p-survival-crossing', 3)['widget']['wrong'] if x['id'] == 'sign'][0]
+    ok(all(abs(v - wsg['value']) <= wsg['tol']['abs'] for v in (round(slip, 4), slip, 3.5168, float(s1) + (p(float(s1)) - 0.9) / pp(float(s1)))), f'L2 sign band takes 3.5167 and 3.5168 ({slip:.6f})')
+    says(2, 'p-survival-crossing', 3, '0.9006235', '-0.037667', '0.016553', '3.54983')
     w = lambda x: abs((x - 1) * (x - 3) * (x - 5))
     bnd = 0.0006 / 6 * w(n1) * 1e4
     alt = 0.0006 / math.factorial(3) * float(abs(sp.prod([sp.Float(n1) - k for k in (1, 3, 5)]))) * 1e4
@@ -325,6 +362,9 @@ if 2 in LEVELS:
     num(2, 'p-survival-crossing', 5, days, alt, {'p-at-3': bnd * 1e-4 / 0.035 * 365, 'no-slope': bnd * 1e-4 * 365}, rounded=1.97, agree=2e-4)
     ok(abs(pp(exact_root) + 0.03775) < 5e-6, 'L2 slope at the crossing -0.03775')
     ok(abs(bnd * 1e-4 / abs(pp(n1)) - 0.00539) < 5e-6, 'L2 0.00539 years')
+    ok(round(2.033e-4 / 0.03775, 5) == 0.00539 and round(2.033e-4 / 0.03775 * 365, 2) == 1.97, 'L2 restated 2.033e-4 gives 0.00539 years, 1.97 days')
+    ok(abs(2.033e-4 / 0.03775 * 365 - part(2, 'p-survival-crossing', 5)['widget']['answer']) <= 0.006, 'L2 key band takes the restated value')
+    says(2, 'p-survival-crossing', 5, '2.033 \\times 10^{-4}')
     says(2, 'p-survival-crossing', 5, '0.00539', '1.97 days')
 
 # ---------------------------------------------------------------- level 3
@@ -332,7 +372,7 @@ if 3 in LEVELS:
     from scipy.integrate import quad
     from scipy.special import ndtr
     shape(3, {'p-normal-cdf-quadrature': ['l9-quadrature', 'l10-gaussian-quadrature'],
-              'p-stiff-credit-trapezoid': ['l9-quadrature', 'l11-step-size', 'l12-stiff-equations'],
+              'p-implicit-newton-step': ['l11-step-size', 'l12-stiff-equations'],
               'p-rate-path-euler': ['l9-quadrature', 'l11-step-size']})
 
     # p-normal-cdf-quadrature: mpmath at 50 digits, then plain floats and numpy leggauss
@@ -354,6 +394,8 @@ if 3 in LEVELS:
     ok(abs((4 * 0.8429 - 0.8033) / 3 - float(S2m)) < 0.00006, 'L3 rounded inputs still accepted in part 2')
     ok(abs(float(S2m - Im) - 0.00046) < 5e-6 and abs(float(S2m - Im) - 0.0005) < 5e-5, 'L3 Simpson 0.00046 above I')
     says(3, 'p-normal-cdf-quadrature', 2, '0.856086', '0.00046')
+    ok(F(4, 4) * 0 + (4 * F(1, 4) - F(1, 2)) / 3 == F(1, 6) and 4 * F(1, 2) / 3 == F(4, 6), 'L3 weights 1/6, 4/6, 1/6 of (4T2 - T1)/3')
+    says(3, 'p-normal-cdf-quadrature', 2, '\\tfrac16', '\\tfrac46')
     g = mp.mpf(1) / (2 * mp.sqrt(3))
     Gm = (fm(mp.mpf(0.5) - g) + fm(mp.mpf(0.5) + g)) / 2
     xg, wg = np.polynomial.legendre.leggauss(2)
@@ -372,43 +414,57 @@ if 3 in LEVELS:
     ok(abs(float(Im) - G3) / math.sqrt(2 * math.pi) < 1e-6, 'L3 three-node rule below 1e-6 in Phi(1)')
     says(3, 'p-normal-cdf-quadrature', 4, '2.506628', '0.841345', '1.2 \\times 10^{-4}')
 
-    # p-stiff-credit-trapezoid: exact amplification factors in fractions and closed forms, then a 2 by 2 trapezoidal run
-    l1, l2, TT = -0.3, -2500, 5
-    trR = lambda z: (1 + z / 2) / (1 - z / 2)
-    errs = {h: trR(l1 * h)**round(TT / h) - math.exp(l1 * TT) for h in (0.5, 0.25)}
-    A2 = np.diag([l1, l2]); I2 = np.eye(2)
-    def trap_run(h, n):
-        y = np.array([1.0, 1.0]); Mx = np.linalg.solve(I2 - h / 2 * A2, I2 + h / 2 * A2)
-        for _ in range(n): y = Mx @ y
-        return y
-    for h in (0.5, 0.25):
-        ok(abs(trap_run(h, round(TT / h))[0] - math.exp(l1 * TT) - errs[h]) < 1e-12, f'L3 slow error at h={h} two ways')
-    ok(abs(errs[0.5] + 6.288e-4) < 5e-8 and abs(errs[0.25] + 1.570e-4) < 5e-8, f'L3 stated errors {errs}')
-    pB = math.log2(6.288 / 1.570)
-    num(3, 'p-stiff-credit-trapezoid', 1, pB, math.log(6.288e-4 / 1.570e-4) / math.log(2), {'ratio': 6.288 / 1.570, 'log10': math.log10(6.288 / 1.570)}, rounded=2.00)
-    ok(abs(math.log2(errs[0.5] / errs[0.25]) - 2) < 0.01, 'L3 unrounded errors also show order 2')
-    says(3, 'p-stiff-credit-trapezoid', 1, '4.005')
-    CB = F('1.570e-4') / F(1, 16)
-    nB = math.ceil(TT / math.sqrt(1e-5 / float(CB)))
-    nB2 = next(n for n in range(1, 10**5) if float(CB) * (TT / n)**2 < 1e-5)
-    num(3, 'p-stiff-credit-trapezoid', 2, nB, nB2, {'order-one': math.ceil(TT / (1e-5 / (1.570e-4 / 0.25))), 'floor': nB - 1})
-    ok(CB == F('2.512e-3') and abs(float(CB) * (TT / 79)**2 - 1.006e-5) < 5e-9, 'L3 C = 2.512e-3, 79 steps predict 1.006e-5')
-    ok(abs(trap_run(TT / 80, 80)[0] - math.exp(l1 * TT)) < 1e-5 and abs(TT / math.sqrt(1e-5 / float(CB)) - 79.2) < 0.05, 'L3 80 real steps meet 1e-5; n >= 79.2')
-    rk4R = lambda z: 1 + z + z * z / 2 + z**3 / 6 + z**4 / 24
-    zb = brentq(lambda z: rk4R(z) - 1, -3, -2.5)
-    ok(abs(zb + 2.7853) < 5e-5 and math.ceil(TT * 2500 / -zb) == 4488 and abs(TT * 2500 / 2.7853 - 4488) < 0.5, f'L3 RK4 limit {zb}, 4,488 steps')
-    says(3, 'p-stiff-credit-trapezoid', 2, '2.512 \\times 10^{-3}', '0.0631', '79.2', '4{,}488', '1.006 \\times 10^{-5}')
-    zB = F(TT, 80) * l2
-    RB = (1 + zB / 2) / (1 - zB / 2)
-    Mx = np.linalg.solve(I2 - TT / 160 * A2, I2 + TT / 160 * A2)
-    num(3, 'p-stiff-credit-trapezoid', 3, RB, Mx[1, 1], {'sign': -RB, 'implicit': 1 / (1 - zB), 'euler': 1 + zB}, rounded=-0.9747)
-    ok(zB == F(-625, 4) and RB == F(-617, 633), 'L3 z = -156.25, factor -77.125/79.125')
-    says(3, 'p-stiff-credit-trapezoid', 3, '-156.25', '78.125', '-77.125', '79.125')
-    left = float(RB)**80
-    num(3, 'p-stiff-credit-trapezoid', 4, left, trap_run(TT / 80, 80)[1], {'sign': -left, 'true': math.exp(-12500)}, rounded=0.129)
-    ok(abs(0.9747**80 - left) < 0.0006, 'L3 rounded factor 0.9747 still accepted')
-    ok(abs(left / 1e-5 - 13000) < 200 and 1 - zB == F(629, 4), 'L3 13,000 times the tolerance; implicit factor 1/157.25')
-    says(3, 'p-stiff-credit-trapezoid', 4, '0.129', '13%', '13,000', '157.25')
+    # p-implicit-newton-step (re-authored in the fix pass): exact fractions and sympy, then floats, scipy brentq and solve_ivp
+    from scipy.integrate import solve_ivp
+    kS, bS, x0S, hS = 40, 200, F(1, 20), F(1, 20)
+    fS = lambda x: -kS * x - bS * x * x
+    fpS = lambda x: -kS - 2 * bS * x
+    ok(fpS(x0S) == -60 and hS * fpS(x0S) == -3, 'L3 f\'(0.05) = -60, h lambda = -3')
+    G = lambda v: v - x0S - hS * fS(v)
+    Gp = lambda v: 1 - hS * fpS(v)
+    Vs = sp.symbols('v')
+    ok(sp.expand(Vs - sp.Rational(1, 20) - sp.Rational(1, 20) * (-40 * Vs - 200 * Vs**2) - (10 * Vs**2 + 3 * Vs - sp.Rational(1, 20))) == 0, 'L3 G(v) = 10v^2 + 3v - 0.05')
+    ok(G(x0S) == F(1, 8) and Gp(x0S) == 4, 'L3 G(0.05) = 0.125, G\'(0.05) = 4')
+    v1S = x0S - G(x0S) / Gp(x0S)
+    gf = lambda v: 10 * v * v + 3 * v - 0.05
+    gpf = lambda v: 20 * v + 3
+    num(3, 'p-implicit-newton-step', 1, v1S, 0.05 - gf(0.05) / gpf(0.05),
+        {'explicit': x0S + hS * fS(x0S), 'no-one': x0S - G(x0S) / (Gp(x0S) - 1), 'sign': x0S + G(x0S) / Gp(x0S)})
+    ok(v1S == F(3, 160), 'L3 first iterate 0.01875 exactly')
+    says(3, 'p-implicit-newton-step', 1, '0.125', '3 + 20v', '-0.075')
+    v2S = v1S - G(v1S) / Gp(v1S)
+    num(3, 'p-implicit-newton-step', 2, v2S, 0.01875 - gf(0.01875) / gpf(0.01875),
+        {'frozen': v1S - G(v1S) / Gp(x0S), 'sign': v1S + G(v1S) / Gp(v1S)}, rounded=0.015856)
+    ok(abs(G(v1S) - F('0.0097656')) < F(5, 10**8) and Gp(v1S) == F(27, 8), 'L3 G(0.01875) = 0.0097656, G\' = 3.375')
+    ok(abs(G(v1S) / Gp(v1S) - F('0.0028935')) < F(5, 10**8) and abs(float(v2S) - 0.0158565) < 5e-8, 'L3 step 0.0028935, v2 = 0.0158565')
+    ok(abs(float(10 * v1S**2) - 0.0035156) < 5e-8 and abs(float(G(v1S) / Gp(v1S) / (G(x0S) / Gp(x0S))) - 0.0926) < 0.001, 'L3 0.0035156; second step about a tenth of the first')
+    says(3, 'p-implicit-newton-step', 2, '0.0097656', '3.375', '0.0028935', '0.0158565')
+    xs = (-3 + sp.sqrt(11)) / 20
+    xb = brentq(gf, 0, 0.05, xtol=1e-16)
+    num(3, 'p-implicit-newton-step', 3, xs, xb,
+        {'stopped': v2S, 'other-root': (-3 - sp.sqrt(11)) / 20, 'disc': (-3 + sp.sqrt(7)) / 20}, rounded=0.0158312)
+    ok(abs(float(v2S - F(sp.Rational(xs.evalf(30)).p, sp.Rational(xs.evalf(30)).q)) - 2.5e-5) < 5e-7 and abs(float(v1S) - float(xs) - 2.9e-3) < 5e-5, 'L3 iterates 2.5e-5 and 2.9e-3 above the root')
+    ok(abs(3 * (float(v1S) - float(xs))**2 / (float(v2S) - float(xs)) - 1) < 0.05 and abs(20 / (2 * gpf(float(xs))) - 3) < 0.02, 'L3 e2 about 3 e1^2, C = G\'\'/(2G\') about 3')
+    says(3, 'p-implicit-newton-step', 3, '\\sqrt{11}', '0.0158312', '2.5 \\times 10^{-5}', '2.9 \\times 10^{-3}')
+    xex = lambda t: 2 * mp.e**(-40 * t) / (50 - 10 * mp.e**(-40 * t))
+    ode = solve_ivp(lambda t, y: [-40 * y[0] - 200 * y[0]**2], [0, 0.05], [0.05], method='Radau', rtol=1e-12, atol=1e-15)
+    ok(abs(float(xex(0)) - 0.05) < 1e-15 and abs(ode.y[0, -1] - float(xex(0.05))) < 1e-11, 'L3 the exact path solves the ODE (Radau check)')
+    dx = mp.diff(xex, mp.mpf('0.02'))
+    ok(abs(dx - (-40 * xex(mp.mpf('0.02')) - 200 * xex(mp.mpf('0.02'))**2)) < 1e-30, 'L3 the exact path satisfies x\' = f(x) at t = 0.02')
+    ok(abs(float(xex(0.05)) - 0.005564) < 5e-7, 'L3 x(0.05) = 0.005564')
+    loc = float(xs) - float(xex(mp.mpf('0.05')))
+    num(3, 'p-implicit-newton-step', 4, loc, xb - ode.y[0, -1],
+        {'sign': -loc, 'explicit': -0.075 - float(xex(0.05)), 'start': 0.05 - float(xex(0.05))}, rounded=0.01027, agree=1e-9)
+    ok(abs(0.0158312 / float(xex(0.05)) - 2.85) < 0.01, 'L3 implicit value almost three times the exact')
+    says(3, 'p-implicit-newton-step', 4, '0.005564', '0.01027', '0.0102672')
+    ratio_restated = 0.01027 / (0.0158565 - 0.0158312)
+    ratio_full = loc / (float(v2S) - float(xs))
+    ok(abs((0.0158565 - 0.0158312) - 2.53e-5) < 1e-12, 'L3 restated Newton error 2.53e-5')
+    num(3, 'p-implicit-newton-step', 5, ratio_restated, 0.01027 / 2.53e-5, {'first': 0.01027 / (float(v1S) - float(xs))}, rounded=406, agree=1e-9)
+    w5 = part(3, 'p-implicit-newton-step', 5)['widget']
+    ok(abs(ratio_full - w5['answer']) <= w5['tol']['abs'] and abs(round(ratio_full) - w5['answer']) <= w5['tol']['abs'], f'L3 unrounded ratio {ratio_full:.2f} also accepted')
+    ok(abs(4 - 3.52) <= 0.6 and abs(3 - 3.52) <= 0.6, 'L3 first slip typed 3 or 4 is routed')
+    says(3, 'p-implicit-newton-step', 5, '406', '2.5 \\times 10^{-5}', '10^{-2}')
 
     # p-rate-path-euler: Euler products in exact fractions, then a float loop
     def euler_exact(n):

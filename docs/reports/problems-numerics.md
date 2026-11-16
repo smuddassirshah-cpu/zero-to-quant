@@ -10,10 +10,10 @@ Files: `app/content/courses/numerics/problems-1.json` to `problems-3.json`. Leve
 | problems-1 | p-moment-recurrence | 5 (4 / 1) | l1, l4 | 5 |
 | problems-1 | p-netting-sum | 4 (4 / 0) | l3, l4 | 4 |
 | problems-2 | p-project-irr | 5 (5 / 0) | l5, l6 | 4 |
-| problems-2 | p-spread-spline | 5 (5 / 0) | l8, l5 | 4 |
+| problems-2 | p-vol-curve-extension | 5 (5 / 0) | l8, l5 | 4 |
 | problems-2 | p-survival-crossing | 5 (5 / 0) | l7, l5 | 5 |
 | problems-3 | p-normal-cdf-quadrature | 4 (4 / 0) | l9, l10 | 3 |
-| problems-3 | p-stiff-credit-trapezoid | 4 (4 / 0) | l9, l11, l12 | 5 |
+| problems-3 | p-implicit-newton-step | 5 (5 / 0) | l11, l12 | 5 |
 | problems-3 | p-rate-path-euler | 5 (5 / 0) | l9, l11 | 4 |
 
 Every lesson of each level appears; every problem draws on two or more. Each numeric part names its form. Each later part restates the value it uses.
@@ -40,13 +40,13 @@ Every lesson of each level appears; every problem draws on two or more. Each num
 | p-moment-recurrence | l4 opening ($e^{-20}$ by series) and the backward-stable screen | r1-discount | h1-forward-backward | The course shows growth through series terms; this is a recurrence whose error grows as $n!$, then fixed by running it backwards from a guess. Neither the integral nor the backward run is in the course. |
 | p-netting-sum | l4 "forward error ≲ κ × backward error" | r1-kappa-shift | h1-stats-code (Kahan) | The course states the bound; here $\kappa$ of a sum is computed from gross and net flows, then loop and pairwise bounds are priced in pounds. |
 | p-project-irr | l6 problem (Newton step outside the bracket: take the midpoint); l5 bond-yield ladder | r2-safeguard | h2-ytm-book (code) | l6 and r2 ask what the solver does; here the step is computed, the fallback point evaluated, Newton resumed, steps counted from $Ce_k^2$ and the IRR read. Markets' hw1-irr-quadratic solves a 2-year IRR by the quadratic formula: other numbers and method. |
-| p-spread-spline | l8 problem (right side of the 5-year row) and ladder (check $4M_2 + M_3$) | r2-spline-global | h2-spline-m (one unknown, 3 points) | The lesson gives the $M_k$ and reads forwards; here a 2 by 2 system is solved by hand, the piece evaluated and differentiated, and Newton inverts the spline for a target spread. |
+| p-vol-curve-extension | l8 screen 2 (value, slope and curvature match at every quote; natural ends) and screen 9 (monotone schemes); l5 Newton | r2-spline-global, r2-forward | h2-spline-row (slope continuity derived) | No spline system is built or solved. A booked natural piece is extended by matching value, slope and curvature, the far end curvature shows it is not natural, and Newton on $q'$ finds the overshoot above the last quote. Exam `e-natural-spline` (2 by 2 system, then a value) is not walked. |
 | p-survival-crossing | l7 error-formula screen (node product at 0.95); l5 secant explore | r2-lebesgue | h2-tick-vol (ΔV / vega) | The course bounds data error by a Lebesgue constant; here a quadratic is built from divided differences, its root found by secant then Newton, and the interpolation bound turned into days through the slope. |
 | p-normal-cdf-quadrature | l9 quiz q-richardson-num ($(4T_4 - T_2)/3$ for $e^x$); l10 two-node problem on $x^4$ and quiz q-interval | r3-richardson | h3-gauss-n | Course items apply one rule each to $e^x$ or monomials. Here one integrand runs through trapezium, Richardson and a mapped two-node rule, and the result is $\Phi(1)$ with its error. |
-| p-stiff-credit-trapezoid | l12 trap (trapezoidal factor $-0.7241$ at $h = 0.25$, ringing path); l11 explore ($C$ from one run, $n$ for a tolerance) | r3-ring ($h\lambda = -40$, choice) | h3-rk4-limit | l12 asks whether an unconditionally stable rule is safe at any step; here the step is chosen for accuracy from a measured order, and the leftover fast mode after the run, $0.9747^{80} \approx 0.129$, is computed against the tolerance. Level 4's l14 Crank-Nicolson factor near $-1$ (ν = 80) is the PDE form; this is an ODE with two modes. |
+| p-implicit-newton-step | l12 screen 3 (implicit Euler as a step that solves for $y_{n+1}$) and screen 7 (one linear solve a step); l11 screen 2 (local error) | r3-euler-limit (named only through $h\lambda = -3$ in the prose) | h3-implicit-factor (factor derived, linear) | No factor, no step limit, no power of a factor. The equation is nonlinear, so the implicit step is solved by Newton; the step's local error against the exact path is then set against Newton's error. Exam `e-stiff-implicit` and l12 screens 1 to 6 are not walked. |
 | p-rate-path-euler | l11 ladder (error of the $n = 20$ RK4 value from two runs); l9 derive (Richardson) | r3-richardson | none close (h3-trap-n is a doubling count) | The order is read from three runs with no exact value (gaps, not errors), the estimate feeds an extrapolation and a step budget, and the closing part shows one trapezium strip is exact for a linear rate. No course item uses an ODE whose answer is a quadrature. |
 
-No reuse was found; the reader should rule on p-stiff-credit-trapezoid against the l12 trap screen, the closest pairing.
+The second read (`docs/reviews/review-problems-numerics-1-3.md`) ruled p-spread-spline and p-stiff-credit-trapezoid retellings; both were re-authored in the fix pass below.
 
 ## Open
 
@@ -92,3 +92,55 @@ Second hand pass on feedback lines: five `byKey` lines that echoed lesson or exa
 ## Open (level 4)
 
 - None in content. One inbox bullet: the same-course check does not load the topic exam.
+- The percentage part of `problems-1` p-float32-overnight now has `unit: "%"` with the key as a fraction (review finding 1, fixed in the fix pass).
+
+## Fix pass after the second read, sets 1 to 3 (brief `docs/briefs/reauthor-fix-af.md`)
+
+Review: `docs/reviews/review-problems-numerics-1-3.md`. Two problems re-authored, nine findings applied, one continuity exception recorded. Numbers: `problems-numerics-numbers.py` 752 of 752 checks, exit 0; the reader's `problems-numerics-numbers-read.py` 436 checks, 0 FINDING lines, exit 0 (its checks of the two removed problems are removed, with a line saying so; its either-value checks of findings 1, 6, 7 and 8 now test the fixed text).
+
+### New problems
+
+`problems-2` **p-vol-curve-extension** (replaces p-spread-spline; l8 and l5; difficulty 4). A booked natural piece $p(t) = 16 + 4.2(t - 1) - 0.6(t - 1)^3$ of an implied-vol curve is extended to a new 3-year quote of 20.4 by a cubic that matches value, slope and curvature at 2 years. Parts: $p''(2) = -3.6$; the free coefficient $c = 0.2$; the far-end curvature $q''(3) = -2.4$ (not natural); one Newton step on $q' = 0$ from 2.75, giving 2.763889 (exact peak at $u = 3 - \sqrt5$); the overshoot above 20.4, 0.072136 vol points. The script also checks that a natural spline refitted through the three quotes has $M = -4.2$, moves $p$, and rises all the way on $[2, 3]$.
+
+| closest | item | why it is not walked |
+|---|---|---|
+| lesson screen | l8 screen 2 (value, slope, curvature match; natural ends), screen 9 (monotone schemes) | No system is built or solved; the spline conditions are applied one piece at a time. |
+| lesson screen | l8 screens 3, 4, 7 | No row right side, no row check, no piece formula read off. |
+| quiz | l8 screen 7 choice (data on a line) | Not used. |
+| review | `r2-spline-global`, `r2-forward` | No bump and no forward rate. |
+| homework | `h2-spline-row` (slope continuity derived), `h2-spline-m` | No row derived; no unknown $M$ solved. |
+| exam | `topic-2.5` `e-natural-spline` | No four-point system, no value from the piece formula. |
+| other sets | `p-survival-crossing` (secant then Newton to a level) | Newton here finds a peak through $q'$ and $q''$, not a level crossing. |
+
+`problems-3` **p-implicit-newton-step** (replaces p-stiff-credit-trapezoid; l12 and l11, with level 2's Newton; difficulty 5). A fast nonlinear factor $x' = -40x - 200x^2$, $x(0) = 0.05$, stepped by implicit Euler at $h = 0.05$ ($h\lambda = -3$); each step solves $G(v) = 10v^2 + 3v - 0.05 = 0$ by Newton. Parts: first iterate 0.01875 (slip: the explicit step $-0.075$); second iterate 0.015856 (slip: frozen Jacobian); the exact root $(-3 + \sqrt{11})/20 = 0.0158312$; the step's local error against the exact path $x(t) = \tfrac{2e^{-40t}}{50 - 10e^{-40t}}$, 0.0102672; the local error over Newton's error after two iterates, 406. The script checks the exact path against a Radau solve and by differentiation.
+
+| closest | item | why it is not walked |
+|---|---|---|
+| lesson screen | l12 screen 3 (implicit Euler), screen 7 (one linear solve a step) | The model is nonlinear, so the step is a Newton solve; no factor $\tfrac{1}{1 - h\lambda}$ is formed. |
+| lesson screen | l12 screens 1, 2, 4, 5, 6; l11 screens 3, 4 | No Euler limit, no stability region, no trapezoidal ringing, no step chosen for a tolerance, no two-run estimate. |
+| quiz | `q-stiff-def`, `q-euler-budget` | Not used. |
+| review | `r3-euler-limit`, `r3-ring`, `r3-step-choice` | No step limit, ringing or step count. |
+| homework | `h3-implicit-factor`, `h3-rk4-limit`, `h3-stiff-longform`, `h3-step-update` | No factor, limit or controller. |
+| exam | `topic-2.5` `e-stiff-implicit` | No factor of each method and no power of a factor. |
+| other sets | `p-project-irr` ($e_{k+1} \approx Ce_k^2$, step count) | The order-2 shrink is named in one explain; no part counts steps from it. |
+
+### Fixes and exceptions
+
+- Findings 1, 4 to 11 applied as the reader wrote them, numbers recomputed. One correction: in finding 7 the reader's 0.900624 and 0.000624 round $p(3.5333) = 0.90062348$ the wrong way, and $0.000624/0.037667$ then gives 0.01657. The text states 0.9006235 and the step 0.016553 instead, so $3.5333 + 0.016553 = 3.549853$ prints 3.5499.
+- Notes N2 and N3 applied (plainer wording; "Compare" for "That is"). N1 dies with the old problem. N4 left.
+- Finding 12, main-session ruling: no single sentence links `p-rate-path-euler` part 5 to an earlier value without changing the key (part 5's quantity, the exact $P(4)$, uses none of parts 1 to 4). Left, recorded here as the exception; the explain still closes the chain against part 3.
+- Validator: one warning on the three sets, a 20-word sentence in finding 9's replacement text (`problems-2` items[2].parts[0].explain); splitting it would make four sentences, so it stays as the reader wrote it.
+- The two number scripts, this report and the review's Fix pass are committed with the level 3 commit; the level 1 and 2 commits carry only their set.
+
+### Gates (each edited set)
+
+| gate | problems-1 | problems-2 | problems-3 |
+|---|---|---|---|
+| validator | 0 errors | 0 errors | 0 errors |
+| voice scan 35, course folder | 0 and 0 | 0 and 0 | 0 and 0 |
+| `fresh-check --file` | 0 hits (4 advisories, $u = 2^{-53}$) | 0 hits (1 advisory, $Ce_k^2$) | 0 hits |
+| `grade-all --file` | 13 widgets, 0 failures | 15 widgets, 0 failures | 14 widgets, 0 failures |
+| playthrough, desktop | green | green (`--why`, 30 slips routed) | green (`--why`) |
+| playthrough, `--mobile` | green | green | green |
+
+Screenshots of the new problems at 440 px read: no overflow.

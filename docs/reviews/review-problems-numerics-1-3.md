@@ -78,3 +78,26 @@ Notes, no edit asked.
 ## Engine
 
 - The retold check did not fire on finding 2 (three parts in order against the parts of one exam item, other numbers) nor on finding 3 (a chain spread over l11, l12, `review-3` and the exam item). Bullets added to `docs/BACKLOG-INBOX.md` under `Raised later (review problems numerics):`.
+
+## Fix pass
+
+Author agent, re-author and fix pass (`docs/briefs/reauthor-fix-af.md`). Every number below recomputed in `docs/reports/problems-numerics-numbers.py` before it was written.
+
+1. fixed: `unit: "%"`, key 0.000596 tol 0.000005, `one-factor` 0.000298 and `eps` 0.001192 at tol 0.000005, placeholder "a percentage". Author's `num` call now takes the fraction.
+2. re-authored as `problems-2` `p-vol-curve-extension`: a booked natural piece of an implied-vol curve extended to a new quote by matching value, slope and curvature; the far-end curvature ($-2.4$, not natural); Newton on $q' = 0$ for the peak; the overshoot above the last quote (0.072136). No spline system is built or solved. Closest items per the report's fix-pass table.
+3. re-authored as `problems-3` `p-implicit-newton-step`: implicit Euler on a nonlinear fast factor ($x' = -40x - 200x^2$, $h\lambda = -3$), the step solved by Newton (two iterates, then the exact root), the step's local error against the exact path, and that error over Newton's (406). No factor, no step limit, no power of a factor, no step budget.
+4. fixed as written.
+5. fixed as written.
+6. fixed as written (question, feedback and explain restate $2.033 \times 10^{-4}$); key, tolerance and `wrong` values unchanged.
+7. fixed with a correction, disputed with numbers on two figures: $p(3.5333) = 0.90062348$, so the reader's "0.900624" and "0.000624" round the wrong way, and $0.000624/0.037667 = 0.01657$. Printed instead: "$p(3.5333) \approx 0.9006235$ ... the step adds about 0.016553" and "0.0006235 above the target ... $0.0006235/0.037667 \approx 0.016553$, giving 3.5499" ($3.5333 + 0.016553 = 3.549853$). Third sentence unchanged.
+8. fixed: `sign` 3.51678 tol 0.0001 (takes 3.5167 and 3.5168; 0.033 from the key).
+9. fixed as written. Its explain keeps one 20-word sentence (validator warning only); splitting it would give four sentences.
+10. fixed as written ($10^{-12}/3.4 \times 10^{-14} = 29.4$; real third error $3.2 \times 10^{-14}$ gives 31).
+11. fixed as written (weights $\tfrac16$, $\tfrac46$, $\tfrac16$ checked in the script).
+12. left, by the main session's ruling: no single sentence ties part 5 (the exact $P(4)$ by one trapezium strip) to an earlier value without changing its key. Recorded as an exception in `docs/reports/problems-numerics.md`.
+
+Notes: N1 dies with the old problem; N2 applied ("Later roundings add errors of their own, so the true worst case is larger still."); N3 applied ("Compare" for "That is"); N4 left.
+
+Keys changed: `problems-1` p-float32-overnight part 2 (0.0596 to 0.000596, unit %); every key of the two new problems. No other key changed.
+
+Gates on each edited set (problems-1, -2, -3): validator 0 errors (one warning, finding 9 above); voice scan 35, 0 and 0; `fresh-check --file` 0 hits each; `grade-all --file` 13, 15, 14 widgets, 0 failures; playthrough `--problems` green with and without `--mobile` on all three. Author's script 752 of 752, exit 0; this review's script 436 checks, 0 FINDING lines, exit 0 (checks of the two removed problems removed, saying so).

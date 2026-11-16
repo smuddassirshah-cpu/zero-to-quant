@@ -92,17 +92,19 @@ chk(F(float(s0 - s1)) == F(float(s0)) - F(float(s1)), 'stored difference compute
 # part 2: share of 1e-4, in per cent
 rel = F(1, 2 ** 24) / (P0 - P1)
 pct = float(rel * 100)
-a2, t2 = key(it, 2, pct, [0.060, 0.0596])
-wrong(it, 2, 'one-factor', pct / 2)
-wrong(it, 2, 'eps', pct * 2)
+# fix pass: key is now the fraction with unit '%' (review finding 1 applied); typed per cent / 100
+a2, t2 = key(it, 2, float(rel), [0.060 / 100, 0.0596 / 100, 0.06 / 100])
+wrong(it, 2, 'one-factor', float(rel) / 2)
+wrong(it, 2, 'eps', float(rel) * 2)
 w2 = W(it, 2)
-chk(w2.get('unit') == '%', "p-float32-overnight part 2: asks for a percentage, key in per cent, no unit '%': "
-    "'0.060%' is read as 0.0006 and refused (review finding 1)")
-# the fix: key as a fraction with unit %
+chk(w2.get('unit') == '%', "p-float32-overnight part 2: unit '%' with the key as a fraction (review finding 1)")
 fk, ft = 0.000596, 0.000005
+chk(w2['answer'] == fk and w2['tol']['abs'] == ft, 'part 2 key 0.000596 tol 0.000005 as the fix gave')
 chk(abs(fk - float(rel)) < 5e-8, 'fix key 0.000596 against 2^-24 / 1e-4')
 for typed in (0.060, 0.0596, 0.05960):
     chk(abs(typed / 100 - fk) <= ft, f'fix: {typed}% accepted')
+for typed in (0.059, 0.061):
+    chk(abs(typed / 100 - fk) > ft, f'fix: {typed}% refused')
 for wv, mine in ((0.000298, float(rel) / 2), (0.001192, float(rel) * 2)):
     chk(abs(wv - mine) < 1e-7 and abs(wv - fk) > 2 * ft, f'fix wrong {wv}')
 # part 3
@@ -234,30 +236,9 @@ wrong(it, 5, 'one-minus', 1 - float(root))
 npv = -100 + 30 / (1 + r) + 40 / (1 + r) ** 2 + 50 / (1 + r) ** 3
 chk(abs(npv) < 1e-9, 'NPV at the IRR is zero')
 
-it = L2['p-spread-spline']
-t = [1, 2, 3, 4]; y = [120, 150, 165, 170]
-c1 = 6 * ((y[2] - y[1]) - (y[1] - y[0])); c2 = 6 * ((y[3] - y[2]) - (y[2] - y[1]))
-key(it, 1, c1, c1)
-chk(c2 == -60, 'c_2 = -60')
-wrong(it, 1, 'no-six', c1 / 6); wrong(it, 1, 'sign', -c1)
-M = np.linalg.solve(np.array([[4.0, 1], [1, 4]]), np.array([c1, c2], float))
-key(it, 2, M[0], -20)
-wrong(it, 2, 'diag', c1 / 4); wrong(it, 2, 'sign', -M[0]); wrong(it, 2, 'swap', M[1])
-from scipy.interpolate import CubicSpline
-cs = CubicSpline(t, y, bc_type='natural')
-chk(abs(cs(2, 2) - M[0]) < 1e-9 and abs(cs(3, 2) - M[1]) < 1e-9, 'second derivatives against scipy')
-key(it, 3, float(cs(2.5)), 159.375)
-wrong(it, 3, 'linear', 157.5)
-sgn = lambda x, m1, m2: m1 / 6 * (3 - x) ** 3 + m2 / 6 * (x - 2) ** 3 + (150 - m1 / 6) * (3 - x) + (165 - m2 / 6) * (x - 2)
-chk(abs(sgn(2.5, -20, -10) - float(cs(2.5))) < 1e-9, 'printed formula for the piece')
-wrong(it, 3, 'sign-m', sgn(2.5, 20, 10))
-key(it, 4, float(cs(2.5, 1)), 14.583)
-wrong(it, 4, 'chord', 15)
-key(it, 5, 2.5 + (160 - 159.375) / float(cs(2.5, 1)), [2.5429, round(2.5 + 0.625 / 14.583, 4)])
-wrong(it, 5, 'chord', 2.5 + 0.625 / 15); wrong(it, 5, 'sign', 2.5 - 0.625 / float(cs(2.5, 1)))
-from scipy.optimize import brentq
-cross = brentq(lambda x: cs(x) - 160, 2, 3)
-chk(abs(cross - 2.5438) < 5e-5 and abs(cross - 2.542857) < 1e-3, 'true crossing 2.5438, one step within 0.001')
+# fix pass: p-spread-spline was re-authored as p-vol-curve-extension (review finding 2); the reader's checks of the
+# old problem are removed. The author's script recomputes the new problem; the delta reader checks it next.
+chk('p-spread-spline' not in L2 and 'p-vol-curve-extension' in L2, 'set 2: p-spread-spline replaced by p-vol-curve-extension')
 
 it = L2['p-survival-crossing']
 co = np.polyfit([1, 3, 5], [0.98, 0.92, 0.84], 2)
@@ -272,10 +253,11 @@ n3 = 3.5333 - (p(3.5333) - 0.9) / dp(3.5333)
 key(it, 3, n3, 3.5499)
 t3 = 3 + 0.02 / 0.0375  # unrounded secant point, the author's route
 chk(abs(p(t3) - 0.900622) < 5e-7 and abs(dp(t3) + 0.037667) < 5e-7 and abs((p(t3) - 0.9) / -dp(t3) - 0.016519) < 5e-7, 'p, slope and step at 3.53333')
-chk(round(3.5333 + 0.016519, 4) == 3.5499,
-    f'p-survival-crossing part 3 feedback: from the restated 3.5333 the step is {(p(3.5333) - 0.9) / -dp(3.5333):.6f} (p = {p(3.5333):.7f}); '
-    f'the printed 3.5333 + 0.016519 is {3.5333 + 0.016519:.4f}, not 3.5499 (review finding 7)')
-chk(round(3.5333 + 0.0166, 4) == 3.5499 and abs(p(3.5333) - 0.900624) < 6e-7 and abs((p(3.5333) - 0.9) / -dp(3.5333) - 0.01655) < 5e-6, 'fix of finding 7: 0.900624, 0.01655, 0.0166')
+# fix pass: the feedback now works from the restated 3.5333 (finding 7; 0.900624 of the review's text corrected to 0.9006235)
+fb3 = json.dumps(it['parts'][2], ensure_ascii=False)
+chk('0.9006235' in fb3 and '0.016553' in fb3 and '0.016519' not in fb3 and '0.000622 ' not in fb3, 'p-survival-crossing part 3: feedback and explain state 0.9006235 and 0.016553 (finding 7)')
+chk(round(3.5333 + 0.016553, 4) == 3.5499 and abs(p(3.5333) - 0.9006235) < 5e-8 and abs((p(3.5333) - 0.9) / -dp(3.5333) - 0.016553) < 5e-7
+    and abs(0.0006235 / 0.037667 - 0.016553) < 5e-7, 'fix of finding 7: 0.9006235, 0.016553, sum 3.5499')
 wrong(it, 3, 'sign', t3 + (p(t3) - 0.9) / dp(t3))
 slip = 3.5333 + (p(3.5333) - 0.9) / dp(3.5333)
 ws = [x for x in W(it, 3)['wrong'] if x['id'] == 'sign'][0]
@@ -290,11 +272,10 @@ wrong(it, 4, 'no-factorial', 0.0006 * prod(n3) * 1e4, slack=0.006)
 wrong(it, 4, 'fourth', 0.0006 / 24 * prod(n3) * 1e4, slack=0.006)
 chk(abs(dp(n3) + 0.03775) < 5e-6, 'slope at t* is -0.03775')
 days_full = 0.0006 / 6 * prod(n3) / abs(dp(n3)) * 365
-days_restated = 2.03e-4 / 0.03775 * 365
-key(it, 5, days_full, [round(days_restated, 2)])
-chk(round(2.03e-4 / 0.03775, 5) == 0.00539 and round(days_restated, 2) == 1.97,
-    f'p-survival-crossing part 5: the figures the part restates give 2.03e-4 / 0.03775 = {2.03e-4 / 0.03775:.5f} years, '
-    f'{days_restated:.2f} days; feedback prints 0.00539 and 1.97 (review finding 6)')
+chk('2.033 \\times 10^{-4}' in it['parts'][4]['question'] and '2.03 \\times' not in (it['parts'][4]['question'] + it['parts'][4]['feedback']['correct'] + it['parts'][4]['explain']['text']),
+    'p-survival-crossing part 5: question, feedback and explain restate 2.033e-4 (finding 6)')
+days_restated = 2.033e-4 / 0.03775 * 365
+key(it, 5, days_full, [round(days_restated, 2), days_restated])
 chk(round(2.033e-4 / 0.03775, 5) == 0.00539 and round(2.033e-4 / 0.03775 * 365, 2) == 1.97, 'fix: restating 2.033e-4 gives 0.00539 and 1.97')
 wrong(it, 5, 'p-at-3', 0.0006 / 6 * prod(n3) / 0.035 * 365)
 wrong(it, 5, 'no-slope', 0.0006 / 6 * prod(n3) * 365)
@@ -328,31 +309,9 @@ chk(abs(0.5 + G3 / math.sqrt(2 * math.pi) - float(mp.ncdf(1))) < 1e-6,
     f'p-normal-cdf-quadrature part 4 explain: three-node error in Phi(1) is {abs(0.5 + G3 / math.sqrt(2 * math.pi) - float(mp.ncdf(1))):.2e}, '
     'claimed below 1e-6')
 
-it = L3['p-stiff-credit-trapezoid']
-ls, lf, T, tol = -0.3, -2500.0, 5.0, 1e-5
-R = lambda z: (1 + z / 2) / (1 - z / 2)
-terr = lambda nst, lam=ls: R(T / nst * lam) ** nst - math.exp(lam * T)
-chk(abs(terr(10) + 6.288e-4) < 5e-8 and abs(terr(20) + 1.570e-4) < 5e-8, 'slow-mode errors at h = 0.5 and 0.25')
-key(it, 1, math.log2(6.288 / 1.570), 2.00)
-wrong(it, 1, 'ratio', 6.288 / 1.570); wrong(it, 1, 'log10', math.log10(6.288 / 1.570))
-Cc = 1.570e-4 / 0.25 ** 2
-nmin = next(k for k in range(1, 10 ** 5) if Cc * (T / k) ** 2 <= tol)
-key(it, 2, nmin, nmin)
-chk(abs(terr(nmin)) < tol and abs(Cc * (T / 79) ** 2 - 1.006e-5) < 5e-9, 'true error at 80 steps below 1e-5; predicted at 79')
-wrong(it, 2, 'floor', nmin - 1)
-C1 = 1.570e-4 / 0.25
-n_o1 = T * C1 / tol
-wrong(it, 2, 'order-one', math.ceil(n_o1 - 1e-9))
-chk(abs(n_o1 - round(n_o1)) > 1e-6,
-    f'p-stiff-credit-trapezoid part 2 wrong order-one: the slip gives 5C/tol = {n_o1:.4f}, a whole number, so "below" reads 314 or 315 (review finding 9)')
-chk(math.ceil(T * abs(lf) / 2.7853) == 4488, 'RK4 needs 4,488 steps')
-h = T / nmin
-key(it, 3, R(h * lf), -0.9747)
-wrong(it, 3, 'sign', -R(h * lf)); wrong(it, 3, 'implicit', 1 / (1 - h * lf)); wrong(it, 3, 'euler', 1 + h * lf)
-left = R(h * lf) ** nmin
-key(it, 4, left, [0.129, round(0.9747 ** 80, 3)])
-wrong(it, 4, 'sign', -left); wrong(it, 4, 'true', math.exp(lf * T))
-chk(12000 < left / tol < 13500, 'some 13,000 times the tolerance')
+# fix pass: p-stiff-credit-trapezoid was re-authored as p-implicit-newton-step (review finding 3); the reader's checks
+# of the old problem are removed, and with them the order-one check of note N1. The delta reader checks the new problem.
+chk('p-stiff-credit-trapezoid' not in L3 and 'p-implicit-newton-step' in L3, 'set 3: p-stiff-credit-trapezoid replaced by p-implicit-newton-step')
 
 it = L3['p-rate-path-euler']
 def euler(nst):
