@@ -143,8 +143,8 @@ has(p2['question'], '0.1195', f'{PID} p2 restates 0.1195')
 odds_chi = 1 / stats.chi2.sf(140 * 1.31, 140)
 odds_norm = 1 / stats.norm.sf(0.31 / 0.1195)
 ok(120 < odds_chi < 130 and 200 < odds_norm < 220, f'{PID} p2: one fold at 1.31 is 1 in {odds_chi:.0f} (chi-square), 1 in {odds_norm:.0f} (normal)')
-ok('once in 200' not in p2['explain']['text'] or 150 < odds_chi < 250,
-   f'{PID} p2 explain: "about once in 200 tries" is the normal tail; an MSE of 140 normal errors passes 1.31 once in {odds_chi:.0f}', finding=True)
+ok('once in 200' not in p2['explain']['text'] and 'less than once in 100 tries' in p2['explain']['text'] and odds_chi > 100,
+   f'{PID} p2 explain: must say "less than once in 100 tries" (an MSE of 140 normal errors passes 1.31 once in {odds_chi:.0f})', finding=True)
 thr = r(1 + 2 * 0.1195, 3)
 ok(thr == 1.239, f'{PID} p3: threshold 1.239')
 first = next(i for i, m in enumerate(mses) if m > thr)
@@ -159,11 +159,12 @@ ok(r(se3, 4) == 0.0690, f'{PID} p4: sd over 420 days {se3}')
 p4 = numeric(2, PID, 4, (joined - 1) / se3, 1, [5.5, r(0.377 / 0.0690, 2)], {'per-fold': r(0.377 / 0.1195, 1), 'all-days': r(0.377 / 0.0423, 1)})
 tail_chi = stats.chi2.sf(420 * 1.377, 420)
 ok(tail_chi < 1e-6, f'{PID} p5: chi-square tail {tail_chi} is under one in a million')
-p5 = choice(2, PID, 5, 'recent', ['all', 'noise', 'mean'])
-ok('far under one in a million' not in alltext(p5) or tail_chi < 1e-7,
-   f'{PID} p5: "far under one in a million", but the chi-square tail is {tail_chi:.2e}, one in {1 / tail_chi:,.0f}', finding=True)
-has(p5['question'], '5.5', f'{PID} p5 restates 5.5')
-ok(r(sum(mses) / 7, 2) == 1.18, f'{PID} p5: seven-fold mean 1.18')
+# finding 1: p5 is now a typed part, the 2-sd level over 420 days
+p5 = numeric(2, PID, 5, 1 + 2 * se3, 3, [1.138, r(1 + 2 * 0.0690, 3)],
+             {'per-fold': r(1 + 2 * 0.1195, 3), 'one-sd': r(1 + 0.0690, 3), 'all-days': r(1 + 2 * 0.0423, 3)})
+has(p5['question'], '0.0690', f'{PID} p5 restates 0.0690')
+ok(joined > 1 + 2 * se3, f'{PID} p5: 1.377 is above the 2-sd level')
+ok('one in a million' not in alltext(item(2, PID)), f'{PID}: no claim about one in a million remains (tail {tail_chi:.1e})')
 ok(1120 - 700 == 420, f'{PID} p5: 420 days since the flag')
 
 # ---------------------------------------------------------------- p-fund-flows
@@ -190,29 +191,32 @@ p4 = numeric(3, PID, 4, int((np.abs(z_clean) > 3).sum()), 0, [3], {'leaky': int(
 ok(int((np.abs((tr - 14) / 1.780) > 3).sum()) == 0, f'{PID} p4: no training day is flagged')
 for d, z in zip((13, 15, 16), (z_clean[0], z_clean[2], z_clean[3])):
     has(p4, f'{z:.2f}', f'{PID} p4: day {d} printed as {z:.2f}')
-ok(f'{z_clean[1]:.2f}' == '4.49' and f'{8 / s_tr.scale_[0]:.2f}' == '4.50', f'{PID} p4: day 14 is 4.49 from 1.780 and 4.50 unrounded')
-ok('4.49' in p4['feedback']['correct'],
-   f'{PID} p4 feedback: day 14 printed 4.50, but the generic line says to use 1.780, which gives 8/1.780 = {8 / 1.780:.4f} = 4.49', finding=True)
+ok(f'{z_clean[1]:.2f}' == '4.49' and f'{8 / s_tr.scale_[0]:.2f}' == '4.50', f'{PID} p4: week 14 is 4.49 from 1.780 and 4.50 unrounded')
+ok('4.49' in p4['feedback']['correct'] and '4.50' not in p4['feedback']['correct'],
+   f'{PID} p4 feedback: week 14 must print 4.49, since the generic line says to use 1.780 and 8/1.780 = {8 / 1.780:.4f}', finding=True)
 ok(z_leaky.max() > 2.30 and f'{z_leaky.max():.2f}' in ('2.31', '2.30'), f'{PID} p4: leaky maximum {z_leaky.max():.4f}')
-ok('beyond 2.30' not in alltext(p4),
-   f'{PID} p4 leaky line: "no test day is beyond 2.30 sds", but day 16 is at {z_leaky.max():.3f} ({8.25 / s_all.scale_[0]:.4f} unrounded)', finding=True)
+ok('beyond 2.30' not in alltext(p4) and 'beyond 2.31 sds' in p4['feedback']['byKey']['leaky'],
+   f'{PID} p4 leaky line: must say "beyond 2.31 sds", since week 16 is at {z_leaky.max():.3f} ({8.25 / s_all.scale_[0]:.4f} unrounded)', finding=True)
 choice(3, PID, 5, 'train-fit', ['robust', 'test-fit', 'drop'])
 
 # ---------------------------------------------------------------- p-closed-funds
 PID = 'p-closed-funds'
 it = item(3, PID)
-for s in ('18%', '200', '14.0', '9.2%', '7 years'):
+for s in ('164', '9.2%', '200', '36 defaults', '6.68%', '7 years'):
     has(it['prose'], s, f'{PID}: prose has {s}')
 dead = F(18, 100) * 200
 ok(dead == 36, f'{PID}: 36 defaulted')
 allret = (F(164) * F(92, 10) + F(36) * (F(92, 10) - 14)) / 200          # head count, not the gap formula
 ok(allret == F(668, 100), f'{PID} p1: all 200 average {allret}')
-numeric(3, PID, 1, float(allret), 2, [6.68], {'survivors': 9.2, 'added': 9.2 + 2.52, 'whole-gap': 9.2 - 14.0})
+ok(allret == F(668, 100), f'{PID}: the prose 6.68% is the head-count average')
+dmean = (200 * F(668, 100) - 164 * F(92, 10)) / 36                # defaulted issues' mean from the two files
+ok(dmean == F(-48, 10), f'{PID} p1: defaulted issues average -4.8')
+numeric(3, PID, 1, float(F(92, 10) - dmean), 1, [14.0], {'gap': 2.52, 'times': r(2.52 * 0.18, 2), 'stayers': r(2.52 / 0.82, 2)})
 over = F(92, 10) - allret
 ok(over == F(252, 100), f'{PID}: overstatement 2.52')
 p2 = numeric(3, PID, 2, float((F(84, 10) - over) / 9), 3, [0.653], {'survivors': r(8.4 / 9, 4), 'added': r((8.4 + 2.52) / 9, 4), 'whole-gap': r((8.4 - 14) / 9, 4)})
-ok('6.68' in p2['question'] or '2.52' in p2['question'],
-   f'{PID} p2: the question says "9.2 minus your answer to part 1" and restates neither 6.68 nor 2.52', finding=True)
+ok('6.68' in p2['question'] and '2.52' in p2['question'] and 'part 1' not in p2['question'],
+   f'{PID} p2: the question must restate 9.2 - 6.68 = 2.52 and not point at part 1', finding=True)
 ok(r(emax(5), 2) == 1.16 and r(emax(12), 2) == 1.63, f'{PID} p3: mean best 1.16 and 1.63 ({emax(5)}, {emax(12)})')
 p3 = numeric(3, PID, 3, 1.63 / math.sqrt(7), 3, [0.616], {'note': r(1.16 / math.sqrt(7), 4), 'by-years': r(1.63 / 7, 4)})
 has(p3['feedback']['correct'], '2.646', f'{PID} p3: root 7 printed 2.646')
@@ -223,16 +227,16 @@ for e in p4['widget']['wrong']:
         ok(abs(t - e['value']) <= e['tol']['abs'] + 1e-9, f'{PID} p4: wrong {e["id"]} takes the 2 dp value {t}')
 has(p4['question'], '0.653', f'{PID} p4 restates 0.653')
 has(p4['question'], '0.616', f'{PID} p4 restates 0.616')
+ok('0.04' in p4['feedback']['correct'] and 'nearly nothing' not in p4['feedback']['correct'], f'{PID} p4: correct line without the l12 wording')
 p5 = choice(3, PID, 5, 'tiny', ['file', 'note', 'half'])
 ok(r(8.4 / 9, 2) == 0.93 and r(0.6533 - 0.4384, 2) == 0.21 and r(0.9333 / 2, 2) == 0.47, f'{PID} p5: 0.93, 0.21, 0.47')
 ok(1 / math.sqrt(7) > 0.04, f'{PID} p5 explain: the estimate noise 0.378 exceeds 0.04')
-# checked option for finding 3: part 1 inverted
-ok(over / F(18, 100) == 14 and r(2.52 * 0.18, 2) == 0.45 and r(2.52 / 0.82, 2) == 3.07, 'proposal: 2.52/0.18 = 14.0; slips 0.45 and 3.07')
+ok(over / F(18, 100) == 14 and r(2.52 * 0.18, 2) == 0.45 and r(2.52 / 0.82, 2) == 3.07, 'finding 3: 2.52/0.18 = 14.0; slips 0.45 and 3.07')
 
 # ---------------------------------------------------------------- p-carry-lookbacks
 PID = 'p-carry-lookbacks'
 it = item(3, PID)
-for s in ('24', '6 years', '4 families of 6', '0.95'):
+for s in ('24', '6 years', '4 families of 6', '0.95', 'She ran all 4 families', 'scaled up or down'):
     has(it['prose'], s, f'{PID}: prose has {s}')
 sd6 = 1 / math.sqrt(6)
 rng = np.random.default_rng(7)
@@ -242,24 +246,28 @@ sr = d.mean(axis=1) / d.std(axis=1, ddof=1) * math.sqrt(252)
 ok(abs(sr.std() - sd6) < 0.01, f'{PID} p1: simulated Sharpe sd {sr.std()}')
 numeric(3, PID, 1, sd6, 4, [0.4082], {'by-years': r(1 / 6, 4), 'inverted': r(math.sqrt(6), 4)})
 ok(r(0.95 / sd6, 1) == 2.3, f'{PID} p1 explain: 2.3 sds')
-ok(r(emax(3), 2) == 0.85 and r(emax(4), 2) == 1.03 and r(emax(24), 2) == 1.95, f'{PID} p2: 0.85, 1.03, 1.95')
+ok(r(emax(4), 2) == 1.03 and r(emax(24), 2) == 1.95, f'{PID} p2: 1.03 and 1.95')
 # 24 variants in 4 families that share one Sharpe: best of 24 is the best of 4
 z = rng.standard_normal((200000, 4))
 best24 = np.repeat(z, 6, axis=1).max(axis=1).mean()
 ok(abs(best24 - emax(4)) < 0.01, f'{PID} p2: simulated best of 4 families of 6 {best24}')
-p2 = numeric(3, PID, 2, 1.03 * 0.4082, 3, [0.420, 0.421], {'twenty-four': r(1.95 * 0.4082, 3), 'by-years': r(1.03 / 6, 4), 'table': r(0.85 * 0.4082, 3)})
+p2 = numeric(3, PID, 2, 1.03 * 0.4082, 3, [0.420, 0.421], {'twenty-four': r(1.95 * 0.4082, 3), 'by-years': r(1.03 / 6, 4)})
 has(p2['question'], '0.4082', f'{PID} p2 restates 0.4082')
-p3 = numeric(3, PID, 3, 0.95 - 0.420, 2, [0.53], {'twenty-four': r(0.95 - 0.796, 2), 'by-years': r(0.95 - 0.172, 2), 'table': r(0.95 - 0.347, 2)})
+p3 = numeric(3, PID, 3, 0.95 - 0.420, 2, [0.53], {'twenty-four': r(0.95 - 0.796, 2), 'by-years': r(0.95 - 0.172, 2)})
 has(p3['question'], '0.420', f'{PID} p3 restates 0.420')
 bar4 = stats.norm.isf(0.05 / 4)
 ok(r(bar4, 2) == 2.24, f'{PID} p4: Bonferroni z for 4 tries {bar4}')
-p4 = numeric(3, PID, 4, 2.24 / math.sqrt(6), 2, [0.91, r(2.24 / 2.449, 2)], {'bar': 2.24, 'by-years': r(2.24 / 6, 2)})
+# finding 4: p4 is the forward step, t of the 0.95
+p4 = numeric(3, PID, 4, 0.95 * math.sqrt(6), 2, [2.33, r(0.95 / 0.4082, 2)], {'times-sd': r(0.95 * 0.4082, 2), 'haircut': r(0.53 / 0.4082, 2), 'by-years': r(0.95 * 6, 2)})
+has(p4['question'], '0.4082', f'{PID} p4 restates 0.4082')
 ok(r(0.95 * 2.449, 2) == 2.33, f'{PID} p4 explain: t = 2.33')
 p5 = choice(3, PID, 5, 'families', ['all24', 'best-only', 'real'])
-ok(r(stats.norm.isf(0.05 / 24) / math.sqrt(6), 2) == 1.17 and r(stats.norm.isf(0.05) / math.sqrt(6), 2) == 0.67, f'{PID} p5: bars 1.17 and 0.67')
-ok(r(0.95 - 0.91, 2) == 0.04, f'{PID} p5: clears by 0.04')
+ok(r(stats.norm.isf(0.05 / 24), 2) == 2.87 and r(stats.norm.isf(0.05), 2) == 1.64, f'{PID} p5: t bars 2.87 and 1.64')
+ok(r(0.95 / 0.4082 - 2.24, 2) == 0.09 and 'clears it by only 0.09' in alltext(p5), f'{PID} p5: clears by 0.09')
 has(p5['question'], '0.53', f'{PID} p5 restates 0.53')
-has(p5['question'], '0.91', f'{PID} p5 restates 0.91')
+has(p5['question'], '2.33', f'{PID} p5 restates 2.33')
+has(p5['question'], '2.24', f'{PID} p5 restates 2.24')
+ok('data the search never saw' not in alltext(it), f'{PID}: no l12 wording left')
 
 # ---------------------------------------------------------------- p-fund-encoding
 PID = 'p-fund-encoding'
@@ -274,9 +282,11 @@ p1 = numeric(3, PID, 1, rho, 4, [0.5164], {'unweighted': r(1 / math.sqrt(13), 4)
 w1 = (y[:, 0] + y[:, 1:].sum(axis=1)) / 13                    # own label weight 1, the 11 others as stated
 rho_w1 = np.corrcoef(w1, y[:, 0])[0, 1]
 ok(abs(rho_w1 - 1 / math.sqrt(12)) < 0.004, f'{PID} p1: own weight 1 with 11 others gives {rho_w1}, which is 1/sqrt(12) = 0.2887')
-ok('weight 1, which gives $1/\\sqrt{13}$' not in p1['feedback']['byKey']['unweighted'],
-   f'{PID} p1 unweighted line: "weight 1, which gives 1/sqrt(13)"; weight 1 with the 11 others gives 1/sqrt(12) = 0.2887. 0.2774 is a plain mean of 13 labels',
+ok('plain mean of 13 labels' in p1['feedback']['byKey']['unweighted'] and 'weight 1,' not in p1['feedback']['byKey']['unweighted'],
+   f'{PID} p1 unweighted line: 1/sqrt(13) = 0.2774 is a plain mean of 13 labels; weight 1 with the 11 others gives 1/sqrt(12) = 0.2887',
    finding=True)
+ok('second time' in it['prose'] and '12 months' in it['prose'], f'{PID}: prose states the cause of the double count', finding=True)
+ok('divisor of one encoding' in item(3, PID)['parts'][2]['feedback']['byKey']['category'], f'{PID} p3 category line says n = 13 is the divisor', finding=True)
 slope_r2 = np.corrcoef(xenc, y[:, 0])[0, 1] ** 2
 ok(abs(slope_r2 - 4 / 15) < 0.004, f'{PID} p2: simulated R squared {slope_r2}')
 p2 = numeric(3, PID, 2, F(4, 15), 4, [r(0.5164 ** 2, 4)], {'rho': 0.5164, 'no-square': r(4 / 13, 4)})
@@ -314,7 +324,7 @@ numeric(2, PID, 3, key, 0, [10], {'horizon': four, 'no-embargo': len(train - pur
 ok(len(before_only) == 13, f'{PID} p3: before-only is 13')
 
 # ---------------------------------------------------------------- proposals quoted in the review
-# finding 1: a 420-day bar as the last part of p-signal-break
+# finding 1: a 420-day bar as the last part of p-signal-break (now in the content)
 ok(r(1 + 2 * 0.0690, 3) == 1.138 and r(1 + 2 * 0.1195, 3) == 1.239 and r(1 + 0.0690, 3) == 1.069 and r(1 + 2 * 0.0423, 3) == 1.085,
    'proposal: bars 1.138, 1.239, 1.069, 1.085')
 ok(1.377 - 1.138 > 3 * 0.0690, 'proposal: 1.377 is more than 3 sds over the 420-day bar')

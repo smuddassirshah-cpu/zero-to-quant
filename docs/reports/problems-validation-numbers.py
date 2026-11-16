@@ -297,7 +297,7 @@ if L2 is not None:
     num(L2, 'p-signal-break', 2, z5, (1.31 - 1.0) / se,
         {'all-days': 0.31 / math.sqrt(2 / 1120), 'fold-4': (1.31 - 1.05) / 0.1195, 'no-two': 0.31 / (1 / math.sqrt(140))}, agree=1e-3)
     printed(L2, 'p-signal-break', 2, z5, 1)
-    ok(150 < 1 / stats.norm.sf(z5) < 250, f'p-signal-break p2: one fold that far out about once in 200 ({1 / stats.norm.sf(z5)})')
+    ok(stats.chi2.sf(140 * 1.31, 140) < 0.01, f'p-signal-break p2: an MSE of 140 normal errors reaches 1.31 less than once in 100 tries ({1 / stats.chi2.sf(140 * 1.31, 140)})')
     thr = 1 + 2 * se
     ok(round(thr, 3) == 1.239, 'p-signal-break p3: threshold 1.239')
     first = next(i for i, v in enumerate(mse, 1) if v > Fr(str(round(thr, 3))))
@@ -314,11 +314,12 @@ if L2 is not None:
     num(L2, 'p-signal-break', 4, z3, (float(joined) - 1.0) / se3,
         {'per-fold': 0.377 / 0.1195, 'all-days': 0.377 / math.sqrt(2 / 1120)}, agree=1e-2)
     printed(L2, 'p-signal-break', 4, z3, 1)
-    ok(stats.norm.sf(z3) < 1e-6, 'p-signal-break p5: a gap of 5.5 sds has a chance far under one in a million')
-    ok(round(float(sum(mse) / 7), 2) == 1.18, 'p-signal-break p5: the seven-fold mean is 1.18')
-    says(L2, 'p-signal-break', '1.18')
+    ok(round(1 + 2 * se3, 3) == 1.138 and 1.377 > 1.138, 'p-signal-break p5: 2 sds over 420 days is 1.138 and the joined MSE 1.377 is above it')
+    ok(abs(se3_mc * 2 + 1 - 1.138) < 0.005, f'p-signal-break p5: simulated 2-sd level over 420 days {1 + 2 * se3_mc}')
+    num(L2, 'p-signal-break', 5, 1 + 2 * float(sp.sqrt(sp.Rational(1, 210))), 1 + 2 * se3,
+        {'per-fold': 1 + 2 * se, 'one-sd': 1 + se3, 'all-days': 1 + 2 * math.sqrt(2 / 1120)}, agree=1e-6)
+    printed(L2, 'p-signal-break', 5, 1 + 2 * se3, 3)
     ok(1120 - 700 == 420, 'p-signal-break: 700 older days, 420 newer')
-    choice(L2, 'p-signal-break', 5, 'recent')
 
     # ---------- p-spread-blocks ----------
     test = [3, 8, 11, 15, 19, 24]
@@ -372,7 +373,9 @@ if L3 is not None:
         {'leaky': zl[0], 'mixed': 6 / sd_all, 'mean-only': (20 - 15.75) / sd_tr})
     printed(L3, 'p-fund-flows', 3, 6 / sd_tr, 2)
     ok(round(6 / 1.780, 2) == 3.37, 'p-fund-flows p3: the rounded sd 1.780 gives 3.37 too')
-    ok([round(v, 2) for v in zc] == [3.37, 4.50, 2.25, 5.62] and round(max(zl), 2) == 2.30, f'p-fund-flows p4: z values {zc} {zl}')
+    ok([round(v, 2) for v in zc] == [3.37, 4.50, 2.25, 5.62] and round(max(zl), 2) == 2.30, f'p-fund-flows p4: unrounded z values {zc} {zl}')
+    ok([round(d / 1.780, 2) for d in (6, 8, 4, 10)] == [3.37, 4.49, 2.25, 5.62] and round(8.25 / 3.579, 2) == 2.31 and max(zl) < 2.31,
+       'p-fund-flows p4: with the printed 1.780 the z values are 3.37, 4.49, 2.25, 5.62 and the leaky scaler tops out below 2.31')
     num(L3, 'p-fund-flows', 4, sum(1 for v in fl[12:] if abs(v - 14) / sd_tr > 3), sum(abs(v) > 3 for v in zc),
         {'leaky': sum(abs(v) > 3 for v in zl), 'all': 4})
     choice(L3, 'p-fund-flows', 5, 'train-fit')
@@ -406,10 +409,13 @@ if L3 is not None:
     # ---------- p-closed-funds ----------
     panel = np.r_[np.full(164, 9.2), np.full(36, 9.2 - 14.0)]
     ok(len(panel) == 200 and 36 == 200 * 18 // 100, 'p-closed-funds p1: 36 of 200 defaulted')
-    avg = Fr('9.2') - Fr(18, 100) * Fr('14.0')
-    num(L3, 'p-closed-funds', 1, avg / 100, panel.mean() / 100, {'survivors': Fr('0.092'), 'added': Fr('0.092') + Fr('0.0252'), 'whole-gap': Fr('0.092') - Fr('0.14')})
-    printed(L3, 'p-closed-funds', 1, avg / 100, 2, pct=True)
-    ok(avg == Fr('6.68') and Fr('9.2') - avg == Fr('2.52'), 'p-closed-funds p1: 6.68 and 2.52')
+    avg = (164 * Fr('9.2') + 36 * Fr('-4.8')) / 200
+    ok(avg == Fr('6.68') and Fr('9.2') - avg == Fr('2.52') and abs(panel.mean() - 6.68) < 1e-9, 'p-closed-funds p1: 6.68 and 2.52')
+    # the file gives 6.68 and 9.2; the defaulted issues' mean is the unknown: 200 * 6.68 = 164 * 9.2 + 36 * d
+    d_def = (200 * Fr('6.68') - 164 * Fr('9.2')) / 36
+    num(L3, 'p-closed-funds', 1, (Fr('9.2') - avg) / Fr(18, 100), Fr('9.2') - d_def,
+        {'gap': Fr('2.52'), 'times': Fr('2.52') * Fr(18, 100), 'stayers': Fr('2.52') / Fr(82, 100)})
+    printed(L3, 'p-closed-funds', 1, 14.0, 1)
     honest = (Fr('8.4') - (Fr('9.2') - avg)) / 9
     num(L3, 'p-closed-funds', 2, honest, (8.4 - (9.2 - panel.mean())) / 9,
         {'survivors': Fr('8.4') / 9, 'added': (Fr('8.4') + Fr('2.52')) / 9, 'whole-gap': (Fr('8.4') - 14) / 9})
@@ -433,24 +439,25 @@ if L3 is not None:
     ok(abs(sd_mc - 1 / math.sqrt(6)) < 0.01, f'p-carry-lookbacks p1: simulated sd of a 6-year Sharpe {sd_mc}')
     num(L3, 'p-carry-lookbacks', 1, 1 / sp.sqrt(6), 1 / np.sqrt(6), {'by-years': Fr(1, 6), 'inverted': math.sqrt(6)})
     printed(L3, 'p-carry-lookbacks', 1, 1 / sp.sqrt(6), 4)
-    for nn, v in ((3, 0.85), (4, 1.03), (24, 1.95)):
+    for nn, v in ((4, 1.03), (24, 1.95)):
         ex = emax_exact(nn)
         ok(round(ex, 2) == v and abs(emax_mc(nn, 200_000) - ex) < 0.01, f'p-carry-lookbacks p2: mean best of {nn} is {ex}')
     fam = np.repeat(rng.standard_normal((200_000, 4)), 6, axis=1)          # 24 variants, 4 families of identical Sharpe ratios
     ok(abs(fam.max(axis=1).mean() - emax_exact(4)) < 0.01, 'p-carry-lookbacks p2: the best of 24 variants in 4 families is the best of 4')
     nb = 1.03 / math.sqrt(6)
-    num(L3, 'p-carry-lookbacks', 2, nb, emax_exact(4) / math.sqrt(6), {'twenty-four': 1.95 / math.sqrt(6), 'by-years': 1.03 / 6, 'table': 0.85 / math.sqrt(6)}, agree=5e-4)
+    num(L3, 'p-carry-lookbacks', 2, nb, emax_exact(4) / math.sqrt(6), {'twenty-four': 1.95 / math.sqrt(6), 'by-years': 1.03 / 6}, agree=5e-4)
     printed(L3, 'p-carry-lookbacks', 2, nb, 3)
-    num(L3, 'p-carry-lookbacks', 3, 0.95 - nb, round(0.95 - 0.420, 2), {'twenty-four': 0.95 - 1.95 / math.sqrt(6), 'by-years': 0.95 - 1.03 / 6, 'table': 0.95 - 0.85 / math.sqrt(6)}, agree=1e-3)
+    num(L3, 'p-carry-lookbacks', 3, 0.95 - nb, round(0.95 - 0.420, 2), {'twenty-four': 0.95 - 1.95 / math.sqrt(6), 'by-years': 0.95 - 1.03 / 6}, agree=1e-3)
     printed(L3, 'p-carry-lookbacks', 3, 0.95 - nb, 2)
     bar4 = stats.norm.ppf(1 - 0.05 / 4)
     ok(round(bar4, 2) == 2.24, f'p-carry-lookbacks p4: Bonferroni bar for 4 is {bar4}')
-    num(L3, 'p-carry-lookbacks', 4, 2.24 / math.sqrt(6), bar4 / math.sqrt(6), {'bar': 2.24, 'by-years': 2.24 / 6}, agree=1e-3)
-    printed(L3, 'p-carry-lookbacks', 4, 2.24 / math.sqrt(6), 2)
+    num(L3, 'p-carry-lookbacks', 4, 0.95 * math.sqrt(6), 0.95 / 0.4082, {'times-sd': 0.95 * 0.4082, 'haircut': 0.53 * math.sqrt(6), 'by-years': 0.95 * 6}, agree=1e-3)
+    printed(L3, 'p-carry-lookbacks', 4, 0.95 / 0.4082, 2)
+    ok(round(2.33 - 2.24, 2) == 0.09 and 0.95 / 0.4082 > 2.24, 'p-carry-lookbacks p5: t = 2.33 clears 2.24 by 0.09')
     ok(abs(0.95 * math.sqrt(6) - 2.33) < 0.005 and 0.95 * math.sqrt(6) > bar4 and abs(0.95 / (1 / math.sqrt(6)) - 2.3) < 0.03,
        'p-carry-lookbacks: t = 2.33 clears 2.24, and 0.95 is 2.3 sds out')
-    ok(round(stats.norm.ppf(1 - 0.05 / 24) / math.sqrt(6), 2) == 1.17 and round(stats.norm.ppf(0.95) / math.sqrt(6), 2) == 0.67,
-       'p-carry-lookbacks p5: bars 1.17 for 24 tries and 0.67 for one')
+    ok(round(stats.norm.ppf(1 - 0.05 / 24), 2) == 2.87 and round(stats.norm.ppf(0.95), 2) == 1.64,
+       'p-carry-lookbacks p5: t bars 2.87 for 24 tries and 1.64 for one')
     choice(L3, 'p-carry-lookbacks', 5, 'families')
 
     lv = Level('validation', 3)

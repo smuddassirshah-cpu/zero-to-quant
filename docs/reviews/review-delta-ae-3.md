@@ -42,3 +42,26 @@ Reuse first, since it caused the rewrite. In each case the numbers are new; what
 ## Engine
 
 - The checker reads no `feedback`, `explain` or `why`, and compares no task shape. Findings 1 to 5 are all of that kind: a share times a shortfall with two close parameters (20%, 15 against 18%, 14.0) and a question stem shared up to its numbers (`h-bonf`). A stem compared after numbers are masked would have caught finding 4.
+
+## Fix pass
+
+Each replacement was recomputed (scipy, exact Fractions, `docs/reports/delta-ae-3-numbers.py`), and the story nouns, key numbers and stems were grepped across `app/content/` and read against the lessons, reviews and homework each finding names. No replacement walks a lesson: 1.138, 6.68, 2.327 and 164 issues occur nowhere else in validation; "dispute" occurs in no validation file; `r-gap` (20%, 15) and l11 `screens[8]` (30%, 4) ask for the average, the replacement asks for the shortfall from the average; `h-bonf` (30 tries, SR to pass) is replaced by t of a given SR from part 1.
+
+1. fixed. `p-signal-break` part 5: `choice` (key `recent`; options all, noise, mean) replaced by a typed part. Old: key option `recent`. New: key 1.138, tol 0.0005 ($1.00 + 2 \times 0.0690 = 1.13802$); `wrong` per-fold 1.239 ($1 + 2 \times 0.1195$), one-sd 1.069, all-days 1.085 ($1 + 2 \times 0.0423 = 1.0845$), each tol 0.0005.
+2. fixed. `p-fund-flows` re-storied to weekly card disputes (16 weeks, 12 training, 4 test); "colleague" to "nightly job", "in £m" dropped, placeholder `disputes`, "busy" to "heavy"; part 1 question and explain as the reader wrote. Keys unchanged: 3.5795, 1.7795, 3.37, 3, `train-fit`; `wrong` values unchanged.
+3. fixed. `p-closed-funds` prose and part 1 inverted. Old key 0.0668 (unit %), `wrong` survivors 0.092, added 0.1172, whole-gap -0.048. New key 14.0 tol 0.05 ($2.52/0.18$; cross-check $(200 \times 6.68 - 164 \times 9.2)/36 = -4.8$, so $9.2 + 4.8 = 14.0$), `wrong` gap 2.52, times 0.45 ($2.52 \times 0.18 = 0.4536$), stayers 3.07 ($2.52/0.82 = 3.0732$), tol 0.005 each; no unit. Parts 2 to 5 keep their keys.
+4. fixed. `p-carry-lookbacks` part 4. Old key 0.915 tol 0.0055 (SR bar $2.24/\sqrt 6$), `wrong` bar 2.24, by-years 0.37. New key 2.327 tol 0.005 ($0.95/0.4082 = 2.3273$; $0.95\sqrt 6 = 2.3270$), `wrong` times-sd 0.39, haircut 1.30 ($0.53\sqrt 6 = 1.298$), by-years 5.70. Part 5 restated with $t = 2.33$ against 2.24; `all24` bar 2.87 ($z_{1-0.05/24} = 2.865$), `best-only` bar 1.64, `real` clears by 0.09.
+5. fixed. `p-carry-lookbacks`: prose "She ran all 4 families."; "0.85 for $N = 3$" and the `table` entries of parts 2 and 3 dropped (old `wrong` table 0.346 and 0.6, and their feedback lines); no key changes. `p-closed-funds`: the `note` lines, part 4 and 5 `correct` lines, the explains, and "data the search never saw" (carry part 5 key option, correct line, explain; closed part 5) reworded as written ("years held back from the search", "issues from after the search").
+6. fixed. Old: "no test day is beyond 2.30 sds"; new "no test week is beyond 2.31 sds" (week 16: $8.25/3.5795 = 2.3048$; with the printed 3.579, 2.305 rounds to 2.31 and 2.3048 is below it).
+7. fixed. Old 4.50; new 4.49 ($8/1.780 = 4.494$).
+8. fixed. Old "about once in 200 tries": new "less than once in 100 tries" (`chi2.sf(140*1.31, 140)` gives 1 in 124). The "far under one in a million" lines vanish with the finding 1 replacement (the new part makes no such claim; the chi-square tail is 1 in 2.3 million).
+9. fixed. Part 2 question as the reader wrote; the `whole-gap` line now reads "$9.2 - 6.68 = 2.52$".
+10. fixed. `unweighted` line: "plain mean of 13 labels, which gives $1/\sqrt{13}$" ($0.2774$); weight 1 with the 11 others gives $1/\sqrt{12} = 0.2887$ (simulated 0.289).
+11. fixed. Prose states the cause (a slip adds the row's own label a second time); `category` line says 13 is the divisor of one encoding and $n - 2 = 98$.
+12. fixed. "hold the same positions scaled up or down, and so share one Sharpe ratio".
+13. fixed in `docs/reports/problems-validation.md`: `p-carry-lookbacks` row now l12 only, with the exception recorded; the stale chain text of the five problems brought in line.
+14. accepted as it stands. The carry link closes with finding 4. The flows contrast step is kept as the main session did not rule against it; part 1's value feeds the `leaky` slips of parts 3 and 4.
+
+Graded answers changed: three keys (`p-signal-break` part 5, `p-closed-funds` part 1, `p-carry-lookbacks` part 4) and their `wrong` bands. Scripts retyped, not loosened: `problems-validation-numbers.py` 707 of 707, `problems-validation-numbers-read.py` 955 of 955, `delta-ae-3-numbers.py` 535 checks, 0 failed (exit 0).
+
+Gates. Validator 0 errors (warnings as before). Voice scan 35: 0 and 0. `grade-all.mjs --file` problems-2 and problems-3: 0 failures. `fresh-check.mjs --file`: 0 hits on both; the two advisories are the ones noted above (formula $\sigma^2\sqrt{2/n}$ of level 1; 0.04 and 0.21 against l2). Playthrough `--problems validation/problems-2` and `-3`, with and without `--mobile`: All passed.
