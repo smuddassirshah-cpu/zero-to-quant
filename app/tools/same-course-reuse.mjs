@@ -9,7 +9,7 @@
 //   --numbers n      shared distinctive numbers needed for a numbers hit (default 3)       --df n   a number or matrix held by more than n units of the app is not distinctive (default 40)
 //   --warn-run n     shared words in one run for a text warning (default 10)                 --error-run n   for a text error (default 12)
 //   --boiler n       a shingle held by more than n units of the app is boilerplate (default 20)
-// Kinds: numbers (warning), matrix (error), text (warning from --warn-run words, error from --error-run), and four advisory shapes from reuse-shapes.mjs (ENGINE-BACKLOG 993, warning only,
+// Kinds: numbers (warning), matrix (error; also a symmetric 2 by 2 equal after aM + bI, ENGINE-BACKLOG 1058), text (warning from --warn-run words, error from --error-run), and four shapes from reuse-shapes.mjs (ENGINE-BACKLOG 993, errors since 1059,
 // --no-shapes off, --shape-df n: a shape held by more than n files is stock): function (a function with its interval or factorisation), pair (two consecutive part keys in one sentence),
 // transform (a polynomial or number set shifted and scaled), region (corners, circle with integrand, end points with route). The sources are every other file of the course (lessons with their quizzes,
 // reviews, homework, problem sets; the generated fluency-* files are left out). Waivers: tools/same-course-waivers.json, or "reuseWaiver": "reason" on the item.
@@ -44,6 +44,14 @@ function allStrings(node, out = [], numOut = []) {
   if (node && typeof node === 'object') for (const [k, v] of Object.entries(node)) { if (!NOT_DATA.has(k)) allStrings(v, out, numOut); }
   return { out, numOut };
 }
+// The strings the reuse shapes read (ENGINE-BACKLOG 1054, R2): no shape comes from a wrong entry, the feedback written for a wrong entry (byKey) or an incorrect option, since a slip's formula is not the problem's.
+const SLIP_KEYS = new Set(['wrong', 'byKey']);
+function shapeStrings(node, out = []) {
+  if (typeof node === 'string') { out.push(node); return out; }
+  if (Array.isArray(node)) { for (const v of node) shapeStrings(v, out); return out; }
+  if (node && typeof node === 'object') { if (node.correct === false) return out; for (const [k, v] of Object.entries(node)) { if (!NOT_DATA.has(k) && !SLIP_KEYS.has(k)) shapeStrings(v, out); } }
+  return out;
+}
 // Boilerplate sentences of AUTHORING are cut out and break a run (the same list as fresh-check.mjs STOPLIST, plus the common answer-format lines)
 const STOPLIST = [
   /put the (?:lines|steps|proof|derivation|argument|lines of the \w+) in order(?:, a reason in each line)?\.?/g,
@@ -71,6 +79,7 @@ export function sentences(strings) {
   return out;
 }
 const BOILER_SENT = 5;
+const SHAPE_KINDS = ['function', 'pair', 'transform', 'region'];
 const MAT_STOCK = 40;   // a matrix (up to a scalar and a transpose) held by more than this many files of other courses and the exams is a textbook staple
 const tokensOf = (sens, sdf) => sens.filter((x) => (sdf.get(x) ?? 0) < BOILER_SENT).flatMap((x, i) => (i ? ['|', ...x.split(' ')] : x.split(' ')));
 const STOP = new Set('what is the of and a an to in on for with that this which be are by it its at as from has have then give find how many much do does you your one two'.split(' '));
@@ -156,6 +165,15 @@ export function matrixKey(rows) {   // null when it is not a numeric matrix of t
   return a < b ? a : b;
 }
 
+// A second key for a symmetric 2 by 2 matrix with a nonzero off-diagonal and unequal diagonal (ENGINE-BACKLOG 1058): aM + bI has the eigenvectors of M, so (p - r) / q is the one number that survives it.
+// The textbook case p = r (eigenvectors (1, 1) and (1, -1)) is stock and left out.
+export function eigenKey(rows) {
+  if (rows.length !== 2 || rows.some((r) => r.length !== 2) || rows.flat().some((x) => !Number.isFinite(x))) return null;
+  const [[p, q], [q2, r]] = rows;
+  if (Math.abs(q - q2) > 1e-12 || Math.abs(q) < 1e-12 || Math.abs(p - r) < 1e-12) return null;
+  return `eig2:${fmt((p - r) / q + 0)}`;
+}
+const matrixKeys = (rows) => [matrixKey(rows), eigenKey(rows)].filter(Boolean);
 // Numeric keys (answer, answers, wrong[].value): a whole number or one of three significant figures or fewer (a computed tail such as 0.0406 is a consequence of the setting, not part of it).
 function keyNums(node, out = []) {
   if (Array.isArray(node)) { for (const v of node) keyNums(v, out); return out; }
@@ -178,7 +196,7 @@ function unitsOfFile(doc, rel) {
     for (const s of out) for (const m of parseLatexMatrices(s)) mats.push(m);
     jsonMatrices(stem ? [stem, node] : node, mats);
     if (!sec.length && !out.length) return;
-    u.push({ file: rel, path, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.map(matrixKey).filter(Boolean)), shapes: shapesOf(out, stem ? null : node) });
+    u.push({ file: rel, path, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.flatMap(matrixKeys)), shapes: shapesOf(shapeStrings(stem ? [stem, node] : node), stem ? null : node) });
   };
   const withParts = (path, q) => {
     add(path, q);
@@ -254,8 +272,8 @@ export function scanSet(corpus, rel, doc, opts = {}) {
       }
     }
     // matrices
-    for (const mk of t.mats) { if (outside(corpus.df.mat, mk) > MAT_STOCK) continue; for (const s of sources) if (s.mats.has(mk)) keep(t, s, 'matrix', 1, `matrix ${mk.replace(/^\d+x\d+:/, '[').replace(/,/g, ' ')}] equal up to a scalar and a transpose`); }
-    // reuse shapes: a function with its interval or factorisation, a key pair, a shifted or scaled set, a region with its integrand (advisory, ENGINE-BACKLOG 993)
+    for (const mk of t.mats) { if (outside(corpus.df.mat, mk) > MAT_STOCK) continue; for (const s of sources) if (s.mats.has(mk)) keep(t, s, 'matrix', 1, mk.startsWith('eig2:') ? `symmetric 2 by 2 matrix with the eigenvectors of this one (equal after aM + bI; (p - r) / q = ${mk.slice(5)})` : `matrix ${mk.replace(/^\d+x\d+:/, '[').replace(/,/g, ' ')}] equal up to a scalar and a transpose`); }
+    // reuse shapes: a function with its interval or factorisation, a key pair, a shifted or scaled set, a region with its integrand (ENGINE-BACKLOG 993; errors since 1059)
     if (shapes) for (const h of matchShapes(t, corpus.sidx, rel, (f) => f.startsWith(`courses/${course}/`), { df: shapeDf })) keep(t, h.src, h.kind, h.score, h.evidence);
     // text
     const cand = new Set();
@@ -267,7 +285,7 @@ export function scanSet(corpus, rel, doc, opts = {}) {
   }
   const waive = waivers(rel, doc);
   for (const h of best.values()) {
-    h.level = h.kind === 'matrix' || (h.kind === 'text' && h.score >= errorRun) ? 'error' : 'warn';
+    h.level = h.kind === 'matrix' || SHAPE_KINDS.includes(h.kind) || (h.kind === 'text' && h.score >= errorRun) ? 'error' : 'warn';   // the four shapes became errors in ENGINE-BACKLOG 1059 (rules tightened in 1053 to 1058)
     const w = waive(h);
     if (w) { h.waived = w; }
     hits.push(h);

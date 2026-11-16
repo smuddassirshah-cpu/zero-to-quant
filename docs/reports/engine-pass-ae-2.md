@@ -129,3 +129,26 @@ One slip on these locks the level. Count: 109 triples (none with no auto item at
 | topic-1.4 | vectors/L2 | la-vectors |
 | topic-1.4 | vectors/L3 | la-inverse |
 | topic-1.4 | vectors/L3 | la-product |
+
+## 2. Reuse shapes tightened (R1 to R5), aM + bI, shapes are errors (ENGINE-BACKLOG 1053 to 1059)
+
+Source: `docs/reviews/review-delta-ae-1.md` Part B (28 hits of `same-course-reuse.mjs --all`: 1 reuse, 14 stands, 13 rule too loose in five classes) and its six inbox bullets, numbered here as 1053 to 1058 (the main session drops them from the inbox).
+
+| item | rule | change | hits |
+|---|---|---|---|
+| 1053 | R1 | `function` with an interval is keyed on the whole quotient: no fraction groups when reading a function in a sentence | row 1 gone |
+| 1054 | R2 | `same-course-reuse.mjs` `shapeStrings`: no shape from `wrong`, `byKey` or an incorrect option | rows 4, 14 gone |
+| 1055 | R3 | pair sentence: no decimal but the two keys (stock decimals and coefficients such as `0.5h` count) and one of the values a key of the source unit | rows 6 to 10, 19, 20 gone; counting rows 2, 3 also silent (they stood) |
+| 1056 | R4 | a projected plane-intercept corner set matches in the same course only | row 12 gone |
+| 1057 | R5 | a named interval variable must occur in the function; a level set keeps its right-hand side | rows 27, 28 gone |
+| 1058 | aM + bI | symmetric 2 by 2, nonzero off-diagonal, unequal diagonal: second matrix key (p - r) / q | 5 new matrix errors, all in `eigen` |
+| 1059 | errors | function, pair, transform, region are errors in `--file` and `--all` | 15 waived |
+
+Side effects to know
+- R2 alone would have dropped row 13 (the reviewer's `reuse`: the crate cubic x^3 + 4x^2 + x - 6 against `review-4` x^3 - 4x^2 + x + 6, which the tool had matched only through the slip (x - 1)(x + 2)(x + 3)). The `transform` key now folds x to -x, so the reflected cubic is found properly as a `transform` hit and is waived "owed a content fix".
+- Rows 5 (ito) and 25, 26 (cycloid) also went silent (R2 and R5 effects); all were rulings that stand, so nothing is lost.
+- aM + bI finds `p-oval-pond` against l5 `screens[9]` (the review's miss) and against `problems-3` `p-crab-sizes`, and `p-crab-sizes` against `review-2` `r-build` ([[6.8, 2.4], [2.4, 8.2]] and [[130, 90], [90, 182.5]] share (p - r) / q = -0.5833) and l5. These are new finds, waived "owed a content fix, review-delta-ae-1" with a note: a content item for the fixer.
+
+Waivers (`tools/same-course-waivers.json`, 8 entries covering 15 hits): `multivar/problems-5` `p-triangle-field` function; `quadratics/problems-4` `p-storage-crate` function (4) and transform (reuse); `taylor/problems-3` `p-tail-bound` and `p-big-gain` function; `trig/problems-2` `p-two-buoys` pair; `eigen/problems-2` `p-oval-pond` and `eigen/problems-3` `p-crab-sizes` matrix (reuse). `same-course-reuse.mjs --all`: 0 errors, 0 warnings, 15 waived, exit 0.
+
+Tests: `tools/test-fresh-check-same-course-ae.mjs` 32 checks (13 new: a silent and a firing fixture for each of R1 to R5, the reflected cubic, aM + bI with two silent controls; the advisory checks became error checks); `tools/test-fresh-check.mjs` all passed. Docs: `docs/AUTHORING.md` (matrix and shapes bullets), `docs/briefs/chained-prompts.md`, `docs/CI.md`.

@@ -5,7 +5,7 @@
 //   pair two consecutive part keys held in one sentence of another unit (`pkeys` of an item against the `lines` of a source: 0.7 then 0.3 against "r = 1 - 0.7 = 0.3")
 //   tr   a polynomial or a denominator shifted and scaled (`dp`: monic, with the x^(d-1) term shifted away, so s(s+1)(s+2) and (s+2)(s+3)(s+4) meet), and a number set under x -> a x + b (`ls`)
 //   rg   a region with its integrand: a corner set (`T`, also a plane's intercepts projected on z = 0), a circle with a number the integrand takes (`CI`), end points with a route (`EP`)
-// The keys are matched by same-course-reuse.mjs. Everything here is advisory: a shape is a prompt to look, never a gate.
+// The keys are matched by same-course-reuse.mjs. A hit is an error there (ENGINE-BACKLOG 1059) after the rules R1 to R5 (1053 to 1057) were tightened against review-delta-ae-1; a ruling that stands is waived in tools/same-course-waivers.json.
 
 // ---------- a small polynomial algebra over single letters ----------
 const norm = (s) => s.replace(/\\left|\\right/g, '').replace(/\\[,;:! ]|~/g, '').replace(/\\[dt]frac/g, '\\frac').replace(/\\cdot|\\times/g, '*').replace(/\s+/g, '').replace(/\^\{(-?\d+)\}/g, '^$1');
@@ -84,7 +84,9 @@ function depressed(p) {
   for (let i = 0; i < c.deg; i++) for (let j = c.deg - 1; j >= i; j--) b[j] += sh * b[j + 1];
   const out = b.map((x) => (Math.abs(x) < 1e-9 ? 0 : x));
   if (out.filter((x, i) => i < c.deg && x !== 0).length < 1) return null;
-  return out.map(fmtN).join(',');
+  const mirror = out.map((x, i) => x * (-1) ** (c.deg - i) + 0);   // x -> -x (and back to monic): the same cubic reflected, whose roots change sign, is the same key (ENGINE-BACKLOG 1059)
+  const a1 = out.map(fmtN).join(','), a2 = mirror.map(fmtN).join(',');
+  return a1 < a2 ? a1 : a2;
 }
 const VARS = 'xyztsuvw';
 const perfectSquare = (c) => { const co = [0, 0, 0]; for (const t of c.terms) co[t.d] = t.c; return Math.abs(co[1] * co[1] - 4 * co[2] * co[0]) < 1e-9; };
@@ -111,7 +113,7 @@ function splitTop(s, seps) {
 const RELS = ['=', '\\approx', '\\leq', '\\geq', '\\le', '\\ge', '<', '>', '\\to', '\\Rightarrow'];
 const wrapped = (p) => { if (p[0] !== '(' || p[p.length - 1] !== ')') return false; let d = 0; for (let i = 0; i < p.length; i++) { if (p[i] === '(') d++; else if (p[i] === ')') { d--; if (d === 0 && i < p.length - 1) return false; } } return true; };
 // expressions of a maths string: each side of a relation, each component of a bracketed tuple, the groups of each \frac
-function pieces(m, depth = 0) {
+function pieces(m, depth = 0, frac = true) {
   const out = [];
   for (let p of splitTop(m, RELS)) {
     p = p.trim(); if (!p) continue;
@@ -119,7 +121,7 @@ function pieces(m, depth = 0) {
     for (const q of parts) {
       const t = q.trim(); if (!t) continue;
       out.push(t);
-      if (depth < 2) for (const g of fracGroups(t)) out.push(...pieces(g, depth + 1));
+      if (frac && depth < 2) for (const g of fracGroups(t)) out.push(...pieces(g, depth + 1));
     }
   }
   return out;
@@ -153,11 +155,11 @@ function nonPolyKey(p) {
 }
 // ---------- intervals ----------
 const endp = (x) => { const t = x.replace(/\s+/g, '').replace(/\\pi/g, 'pi').replace(/^\{|\}$/g, ''); return /^-?(?:\d*\.?\d*)?(?:pi)?$/.test(t) && /\d|pi/.test(t) ? t.replace(/^(-?)pi$/, '$11pi') : null; };
-function intervalsIn(text) {
-  const out = new Set();
-  for (const m of text.matchAll(/[[(]\s*(-?[\d.]*(?:\\pi)?)\s*,\s*(-?[\d.]*(?:\\pi)?)\s*\]/g)) { const a = endp(m[1]), b = endp(m[2]); if (a && b && a !== b) out.add(`${a}:${b}`); }
-  for (const m of text.matchAll(/\\int_\{?(-?[\d.]*(?:\\pi)?)\}?\^\{?(-?[\d.]*(?:\\pi)?)\}?/g)) { const a = endp(m[1]), b = endp(m[2]); if (a && b && a !== b) out.add(`${a}:${b}`); }
-  for (const m of text.matchAll(/(-?[\d.]+(?:\\pi)?)\s*\\le(?:q)?\s*[a-z]\s*\\le(?:q)?\s*(-?[\d.]+(?:\\pi)?)/g)) { const a = endp(m[1]), b = endp(m[2]); if (a && b && a !== b) out.add(`${a}:${b}`); }
+function intervalsIn(text) {   // Map "a:b" -> the interval's variable when it is named (0 <= z <= 2), else null
+  const out = new Map();
+  for (const m of text.matchAll(/[[(]\s*(-?[\d.]*(?:\\pi)?)\s*,\s*(-?[\d.]*(?:\\pi)?)\s*\]/g)) { const a = endp(m[1]), b = endp(m[2]); if (a && b && a !== b) out.set(`${a}:${b}`, null); }
+  for (const m of text.matchAll(/\\int_\{?(-?[\d.]*(?:\\pi)?)\}?\^\{?(-?[\d.]*(?:\\pi)?)\}?/g)) { const a = endp(m[1]), b = endp(m[2]); if (a && b && a !== b) out.set(`${a}:${b}`, null); }
+  for (const m of text.matchAll(/(-?[\d.]+(?:\\pi)?)\s*\\le(?:q)?\s*([a-z])\s*\\le(?:q)?\s*(-?[\d.]+(?:\\pi)?)/g)) { const a = endp(m[1]), b = endp(m[3]); if (a && b && a !== b) out.set(`${a}:${b}`, m[2]); }
   return out;
 }
 // ---------- the unit ----------
@@ -197,14 +199,20 @@ export function shapesOf(strings, node) {
     // function with its interval: in one sentence, or an integral's own bounds
     for (const sen of sentencesOf(str)) {
       const fns = new Map();
-      for (const m of mathOf(sen)) for (const pc of pieces(m)) {
-        const f = fnKeyOf(pc);
-        if (!f) continue;
-        if (f.c && !((f.c.nterms >= 2 && f.c.deg >= 2) || (f.c.nterms >= 2 && f.c.deg >= 1 && f.c.vars.size === 1 && f.c.nterms >= 3))) continue;
-        fns.set(f.key, f.disp);
+      for (const m of mathOf(sen)) {
+        const lvl = /^([^=]+?)\s*=\s*([^=]+)$/.exec(m.trim());   // a level set (x^2 + y^2 = 4) keeps its right-hand side: it is not a function of its left side (R5)
+        for (const pc of pieces(m, 0, false)) {   // R1 (ENGINE-BACKLOG 1053): a function under a fraction bar is keyed on the whole quotient (1/sqrt(x) is not sqrt(x))
+          const f = fnKeyOf(pc);
+          if (!f) continue;
+          if (f.c && !((f.c.nterms >= 2 && f.c.deg >= 2) || (f.c.nterms >= 2 && f.c.deg >= 1 && f.c.vars.size === 1 && f.c.nterms >= 3))) continue;
+          const level = lvl && f.c && f.c.vars.size >= 2 && lvl[1].trim() === pc.trim() ? `=${norm(lvl[2])}` : '';
+          fns.set(f.key + level, { disp: f.disp + (level ? ` ${level.replace('=', '= ')}` : ''), pc });
+        }
       }
       const ivs = intervalsIn(sen);
-      for (const [fk, disp] of fns) for (const iv of ivs) if (!/^(?:0:1|-1:1)$/.test(iv)) sh.fi.set(`${fk}@${iv}`, `${disp} on [${iv.replace(':', ', ')}]`);
+      // R5 (ENGINE-BACKLOG 1057): a named interval variable (0 <= z <= 2) must occur in the function, or the range bounds something else
+      const has = (pc, v) => new RegExp(`(?<![a-zA-Z\\\\])${v}(?![a-zA-Z])`).test(pc.replace(/\\[a-zA-Z]+/g, ' '));
+      for (const [fk, { disp, pc }] of fns) for (const [iv, v] of ivs) if (!/^(?:0:1|-1:1)$/.test(iv) && (!v || has(pc, v))) sh.fi.set(`${fk}@${iv}`, `${disp} on [${iv.replace(':', ', ')}]`);
     }
     for (const m of str.matchAll(/\\int_\{?(-?[\d.]*(?:\\pi)?)\}?\^\{?(-?[\d.]*(?:\\pi)?)\}?\s*(.+?)\s*\\?,?\s*\\?(?:mathrm\{)?d[a-z]\b/g)) {
       const a = endp(m[1]), b = endp(m[2]); if (!a || !b || a === b || /^(?:0:1|-1:1)$/.test(`${a}:${b}`)) continue;
@@ -221,21 +229,25 @@ export function shapesOf(strings, node) {
     }
     // numbers that sit together in one sentence (for a key pair)
     for (const sen of sentencesOf(str)) {
-      const nums = [...new Set([...sen.replace(/(?<=\d)(?:,|\{,\})(?=\d{3}(?!\d))/g, '').matchAll(/(?<![\w.])\d+(?:\.\d+)?(?![\w])/g)].map((x) => +x[0]).filter(eligibleKey).map(String))];
-      if (nums.length === 2) sh.lines.push({ nums, text: sen.replace(/\s+/g, ' ').slice(0, 90) });
+      const all = [...new Set([...sen.replace(/(?<=\d)(?:,|\{,\})(?=\d{3}(?!\d))/g, '').matchAll(/(?<![\w.])\d+(?:\.\d+)?(?![\w])/g)].map((x) => +x[0]))];
+      const nums = all.filter(eligibleKey).map(String);
+      const decs = [...sen.matchAll(/(?<![\w.])\d+\.\d+/g)].map((x) => x[0]);   // every decimal, including a coefficient (0.5h)
+      // R3 (ENGINE-BACKLOG 1055): no decimal in the sentence but the two keys, stock decimals (0.5, 0.1) counted, else it is a row of chances or a ratio, not the pair
+      if (nums.length === 2 && all.every((v) => Number.isInteger(v) || eligibleKey(v)) && decs.every((v) => nums.includes(String(+v)))) sh.lines.push({ nums, text: sen.replace(/\s+/g, ' ').slice(0, 90) });
     }
     // regions: corners, circles, end points and routes
     for (const sen of sentencesOf(str)) {
       const pts = []; const seen = new Set();
       for (const m of sen.matchAll(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)(?:\s*,\s*(-?\d+(?:\.\d+)?))?\s*\)/g)) { const k = ptKey(m[1], m[2], m[3]); if (!seen.has(k)) { seen.add(k); pts.push([Number(m[1]), Number(m[2]), m[3] === undefined ? undefined : Number(m[3])]); } }
       if (pts.length >= 3 && /corner|vertex|vertices|triang|polygon|rectangle|quadrilateral|region|axes|intercept|plot|bounded|parallelogram/i.test(sen)) {
-        let ps = pts;
-        if (pts.every((q) => q[2] !== undefined)) {   // a plane's intercepts: the shadow on z = 0, with the origin when two of them lie on the axes
+        let ps = pts, proj = false;
+        if (pts.every((q) => q[2] !== undefined)) {
+          proj = true;   // a plane's intercepts: the shadow on z = 0, with the origin when two of them lie on the axes
           ps = pts.filter((q) => q[2] === 0).map((q) => [q[0], q[1]]);
           if (ps.length >= 2 && ps.every((q) => q[0] === 0 || q[1] === 0)) ps.push([0, 0]);
           const u = new Map(ps.map((q) => [ptKey(q[0], q[1]), q])); ps = [...u.values()];
         } else if (pts.some((q) => q[2] !== undefined)) ps = [];
-        if (ps.length >= 3 && !ps.every((q) => Math.abs(q[0]) <= 1 && Math.abs(q[1]) <= 1)) sh.T.set(ps.map((q) => ptKey(q[0], q[1])).sort().join(';'), ps.map((q) => `(${q[0]}, ${q[1]})`).join(', '));
+        if (ps.length >= 3 && !ps.every((q) => Math.abs(q[0]) <= 1 && Math.abs(q[1]) <= 1)) sh.T.set(ps.map((q) => ptKey(q[0], q[1])).sort().join(';'), { d: ps.map((q) => `(${q[0]}, ${q[1]})`).join(', '), proj });   // proj: the shadow of a plane's intercepts (R4, ENGINE-BACKLOG 1056)
       }
     }
   }
@@ -265,6 +277,9 @@ export function shapesOf(strings, node) {
   for (const [ek, ed] of eps) for (const [rk, rd] of routes) { if (/^t\|t$/.test(rk) && false) continue; sh.EP.set(`${ek}#${rk}`, `end points ${ed} with route ${rd}`); }
   // key numbers of an item, in part order (for a pair)
   if (node && Array.isArray(node.parts)) sh.pkeys = node.parts.map((p) => { const w = p && p.widget; return w && typeof w.answer === 'number' ? Math.abs(w.answer) : null; });
+  // the keys of this unit (a screen, quiz item or part): R3 needs one of a pair's two values to be a key of the source unit
+  const keysOf = (n) => { const w = n && n.widget, o = []; if (w && typeof w.answer === 'number') o.push(Math.abs(w.answer)); if (w && Array.isArray(w.answers)) w.answers.forEach((x) => typeof x === 'number' && o.push(Math.abs(x))); if (n && Array.isArray(n.parts)) n.parts.forEach((p) => o.push(...keysOf(p))); return o; };
+  sh.keys = new Set(keysOf(node).map((x) => String(+x.toPrecision(10))));
   sh.empty = !(sh.fi.size || sh.fn.size || sh.terms.length || sh.dp.size || sh.ls.size || sh.T.size || sh.CI.size || sh.EP.size || sh.lines.length || sh.pkeys.length);
   return sh;
 }
@@ -317,7 +332,8 @@ export function matchShapes(t, idx, rel, sameCourse, { df = 4 } = {}) {
     }
   }
   // (d) regions: app-wide
-  for (const [k, d] of s.T) for (const u of srcs(`T|${k}`, null)) push(u, 'region', `corners ${d}`);
+  // a projected plane's intercepts run in the same course only (R4); plain corner sets stay app-wide
+  for (const [k, v] of s.T) for (const u of srcs(`T|${k}`, v.proj ? true : null)) if (!u.shapes.T.get(k).proj || sameCourse(u.file)) push(u, 'region', `corners ${v.d}${v.proj ? ' (the shadow of a plane\'s intercepts on z = 0)' : ''}`);
   for (const [k, d] of s.CI) for (const u of srcs(`CI|${k}`, null)) push(u, 'region', d);
   for (const [k, d] of s.EP) for (const u of srcs(`EP|${k}`, null)) push(u, 'region', d);
   // (c) shifted and scaled, same course
@@ -326,7 +342,7 @@ export function matchShapes(t, idx, rel, sameCourse, { df = 4 } = {}) {
   // (b) two consecutive part keys in one sentence of the course
   if (s.pkeys.length) for (const [a, b] of keyPairs(s.pkeys)) {
     const ma = idx.get(`ln|${a}`), mb = idx.get(`ln|${b}`); if (!ma || !mb) continue;
-    for (const [f, us] of ma) { if (f === rel || !sameCourse(f)) continue; for (const u of us) for (const l of u.shapes.lines) if (l.nums.includes(a) && l.nums.includes(b)) { push(u, 'pair', `consecutive part keys ${a} and ${b} sit together in "${l.text}"`); break; } }
+    for (const [f, us] of ma) { if (f === rel || !sameCourse(f)) continue; for (const u of us) for (const l of u.shapes.lines) if (l.nums.includes(a) && l.nums.includes(b) && (u.shapes.keys.has(a) || u.shapes.keys.has(b))) { push(u, 'pair', `consecutive part keys ${a} and ${b} sit together in "${l.text}"`); break; } }
   }
   return out;
 }
