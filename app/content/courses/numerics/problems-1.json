@@ -12,7 +12,7 @@
         "nm-float",
         "nm-stability"
       ],
-      "prose": "A GPU curve engine keeps discount factors in float32, which has 23 mantissa bits after the hidden 1. It reads the overnight forward as $f = \\tfrac{P_0 - P_1}{\\delta P_1}$, with $\\delta = \\tfrac{1}{365}$. Today the two factors, one day apart, are $P_0 = 0.9425$ and $P_1 = 0.9424$.",
+      "prose": "A curve library built for single precision holds each discount factor as a float32: a hidden 1, then 23 mantissa bits. It reads the overnight forward as $f = \\tfrac{P_0 - P_1}{\\delta P_1}$, with $\\delta = \\tfrac{1}{365}$. Today the two factors, one day apart, are $P_0 = 0.9425$ and $P_1 = 0.9424$.",
       "parts": [
         {
           "question": "Both factors lie in $[0.5, 1)$. The gap between neighbouring float32 numbers there is $2^k$. What is $k$? Give a whole number.",
@@ -64,24 +64,25 @@
           "question": "Using the gap $2^{-24}$ from part 1, each stored factor is off by at most half a gap. Their difference is then computed exactly. As a share of $P_0 - P_1 = 10^{-4}$, what is the largest error in the computed difference? Give a percentage to 3 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.0596,
+            "answer": 0.000596,
             "tol": {
-              "abs": 0.0005
+              "abs": 0.000005
             },
-            "placeholder": "per cent",
+            "unit": "%",
+            "placeholder": "a percentage",
             "wrong": [
               {
                 "id": "one-factor",
-                "value": 0.0298,
+                "value": 0.000298,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.000005
                 }
               },
               {
                 "id": "eps",
-                "value": 0.1192,
+                "value": 0.001192,
                 "tol": {
-                  "abs": 0.0005
+                  "abs": 0.000005
                 }
               }
             ]
@@ -125,7 +126,7 @@
             ]
           },
           "feedback": {
-            "correct": "$5.96 \\times 10^{-4} \\div 3.16 \\times 10^{-8} \\approx 18{,}850$. That is $\\tfrac{P_0 + P_1}{P_0 - P_1} = 18{,}849$, the condition number of the subtraction.",
+            "correct": "$5.96 \\times 10^{-4} \\div 3.16 \\times 10^{-8} \\approx 18{,}850$. Compare $\\tfrac{P_0 + P_1}{P_0 - P_1} = 18{,}849$, the condition number of the subtraction.",
             "generic": "Not quite. Turn 0.0596% into a decimal before you divide by $3.16 \\times 10^{-8}$.",
             "byKey": {
               "one-input": "That allows for an error in one factor only. Both carry one, so the ratio doubles.",
@@ -133,7 +134,7 @@
             }
           },
           "explain": {
-            "text": "The ratio is $\\tfrac{2^{-24}/10^{-4}}{2^{-25}/0.9425}$, which is $\\tfrac{2 \\times 0.9425}{10^{-4}} = 18{,}850$. It matches $\\kappa = \\tfrac{|P_0| + |P_1|}{|P_0 - P_1|} = 18{,}849$: cancellation is an ill-conditioned subtraction. About $\\log_{10} 18{,}850 \\approx 4.3$ of float32's 7 digits are gone."
+            "text": "The ratio is $\\tfrac{2^{-24}/10^{-4}}{2^{-25}/0.9425}$, which is $\\tfrac{2 \\times 0.9425}{10^{-4}} = 18{,}850$. It matches $\\kappa = \\tfrac{|P_0| + |P_1|}{|P_0 - P_1|} = 18{,}849$, the sensitivity of a difference to its two inputs. About $\\log_{10} 18{,}850 \\approx 4.3$ of float32's 7 digits are gone."
           }
         },
         {
@@ -258,7 +259,7 @@
             }
           },
           "explain": {
-            "text": "$I_0 = 1 - e^{-1} \\approx 0.632$, so its stored error is at most $7.02 \\times 10^{-17}$. Multiplying by $18!$ gives up to 0.45. The later roundings only add to this, so the bound is a floor on what can go wrong."
+            "text": "$I_0 = 1 - e^{-1} \\approx 0.632$, so its stored error is at most $7.02 \\times 10^{-17}$. Multiplying by $18!$ gives up to 0.45. Later roundings add errors of their own, so the true worst case is larger still."
           }
         },
         {
