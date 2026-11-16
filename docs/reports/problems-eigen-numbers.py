@@ -487,33 +487,33 @@ def poly(items, iid, k, exact, values, slips):
 
 I = load(2)
 if I:
-    # ---- p-oval-pond (renumbered in session AE: 9x^2 + 6xy + 17y^2 = 288, A = [[9, 3], [3, 17]], eigenvalues 8 and 18)
+    # ---- p-oval-pond (renumbered in session AE fix pass: 41x^2 + 14xy + 89y^2 = 360, A = [[41, 7], [7, 89]], eigenvalues 40 and 90)
     iid = 'p-oval-pond'
     x, y = sp.symbols('x y')
-    A = M([[9, 3], [3, 17]])
+    A = M([[41, 7], [7, 89]])
     X2 = M([x, y])
-    ok(sp.expand((X2.T * A * X2)[0] - (9 * x ** 2 + 6 * x * y + 17 * y ** 2)) == 0, 'pond: A gives the stated form')
-    f = lambda a, b: 9 * a * a + 6 * a * b + 17 * b * b
+    ok(sp.expand((X2.T * A * X2)[0] - (41 * x ** 2 + 14 * x * y + 89 * y ** 2)) == 0, 'pond: A gives the stated form')
+    f = lambda a, b: 41 * a * a + 14 * a * b + 89 * b * b
     hxy = (f(1, 1) - f(1, -1) - f(-1, 1) + f(-1, -1)) / 4.0 / 2.0   # route 2: half the mixed second difference
     num(I, iid, 1, A[0, 1], hxy, {'whole-cross': 2 * A[0, 1]})
     numset(I, iid, 2, sp.solve(A.charpoly(sp.Symbol('l')).as_expr(), sp.Symbol('l')), np.linalg.eigvalsh(npf(A)),
-           {'diagonal': [9, 17], 'sign': [-8, -18]})
-    ql = null1(A - 8 * sp.eye(2), 0) * 3
-    qn = eigvec_np(A, 8, 0) * 3
-    obj(I, iid, 3, ql, qn, {'big': null1(A - 18 * sp.eye(2), 0) * 3, 'sign': M([3, -ql[1]])})
-    ok(ql == M([3, -1]) and null1(A - 18 * sp.eye(2), 0) * 3 == M([3, 9]), 'pond: long axis (3, -1), short axis along (1, 3)')
-    ok(ql.dot(null1(A - 18 * sp.eye(2))) == 0, 'pond: the axes are perpendicular')
+           {'diagonal': [41, 89], 'sign': [-40, -90]})
+    ql = null1(A - 40 * sp.eye(2), 0) * 7
+    qn = eigvec_np(A, 40, 0) * 7
+    obj(I, iid, 3, ql, qn, {'big': null1(A - 90 * sp.eye(2), 0) * 7, 'sign': M([7, -ql[1]])})
+    ok(ql == M([7, -1]) and null1(A - 90 * sp.eye(2), 0) * 7 == M([7, 49]), 'pond: long axis (7, -1), short axis along (1, 7)')
+    ok(ql.dot(null1(A - 90 * sp.eye(2))) == 0, 'pond: the axes are perpendicular')
     u = ql / ql.norm()
-    half = sp.sqrt(R(288, 8))
-    un = np.array([3.0, -1.0]) / np.sqrt(10)
-    tn = np.sqrt(288 / (un @ npf(A) @ un))                          # route 2: walk out along the unit vector
-    num(I, iid, 4, half, tn, {'short': sp.sqrt(R(288, 18)), 'no-root': R(288, 8), 'full-axis': 2 * half})
-    ok(sp.simplify((u.T * A * u)[0] * half ** 2 - 288) == 0, 'pond: (6 u) is on the edge')
-    area = sp.pi * half * sp.sqrt(R(288, 18))
-    ok(area == 24 * sp.pi and A.det() == 144, 'pond: area 6 x 4 x pi = 24 pi, det 144')
-    num(I, iid, 5, area, np.pi * 288 / np.sqrt(np.linalg.det(npf(A))),
-        {'no-root': sp.pi * 36 * 16, 'full-axes': sp.pi * 12 * 8, 'one-axis': sp.pi * 36})
-    vocab(I, iid, [A, 26, A.det(), 153, 288, 12, 8, 4, 6, 18, 36, 16, 24, area, sp.pi * 288, 2 * half])
+    half = sp.sqrt(R(360, 40))
+    un = np.array([7.0, -1.0]) / np.sqrt(50)
+    tn = np.sqrt(360 / (un @ npf(A) @ un))                          # route 2: walk out along the unit vector
+    num(I, iid, 4, half, tn, {'short': sp.sqrt(R(360, 90)), 'no-root': R(360, 40), 'full-axis': 2 * half})
+    ok(sp.simplify((u.T * A * u)[0] * half ** 2 - 360) == 0, 'pond: (3 u) is on the edge')
+    area = sp.pi * half * sp.sqrt(R(360, 90))
+    ok(area == 6 * sp.pi and A.det() == 3600 and A.charpoly(sp.Symbol('l')).as_expr().expand() == sp.Symbol('l') ** 2 - 130 * sp.Symbol('l') + 3600, 'pond: area 3 x 2 x pi = 6 pi, det 3600')
+    num(I, iid, 5, area, np.pi * 360 / np.sqrt(np.linalg.det(npf(A))),
+        {'no-root': sp.pi * 9 * 4, 'full-axes': sp.pi * 6 * 4, 'one-axis': sp.pi * 9})
+    vocab(I, iid, [A, 130, A.det(), 60, 3649, 360, 49, 40, 90, 7, 41, 89, 9, 4, 6, 3, 2, area, sp.pi * 360, 2 * half])
     arith(I, iid)
 
     # ---- p-river-gauges (re-authored twice in fix passes; now K = [[8, 4, 4], [4, 7, 3], [4, 3, c]] with planned c = 2.5)
