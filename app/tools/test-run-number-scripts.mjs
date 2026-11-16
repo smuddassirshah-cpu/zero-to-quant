@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -80,6 +80,15 @@ check(r.code === 0 && /1 of 5 scripts, 1 passed/.test(r.out) && !/FAILED/.test(r
 
 r = run('--changed', 'no-such-ref');
 check(/running every script/.test(r.out) && /^run-number-scripts: 5 scripts, 5 passed/m.test(r.out), 'changed: an unknown base ref runs everything', r.out);
+
+/* the sha of a last green run (CI passes `--changed <sha>`): a SHA base works like a ref, and a change to the CI Python pins or to this runner runs everything */
+const sha = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD~1'], { encoding: 'utf8' }).trim();
+r = run('--changed', sha);
+check(r.code === 0 && /1 of 5 scripts, 1 passed/.test(r.out), 'changed: a commit sha as the base runs the script that names the changed course', r.out);
+w('.github/actions/zq-setup/requirements.txt', 'scipy==1.18.1\n');
+git('add', '-A'); git('commit', '-q', '-m', 'four');
+r = run('--changed', 'HEAD~1');
+check(r.code === 0 && /^run-number-scripts: 5 scripts, 5 passed/m.test(r.out), 'changed: a change to the CI Python requirements runs every script', r.out);
 
 fs.rmSync(root, { recursive: true, force: true });
 console.log(`test-run-number-scripts: ${n - bad} of ${n} checks pass`);

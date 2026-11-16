@@ -12,7 +12,7 @@
      - a script on the list passes (remove its line), or a listed path no longer exists (remove it).
    Exit 0 otherwise, so the job is green while the listed scripts keep failing and red the moment that changes.
    --changed: run only scripts whose own file changed against the base ref (default origin/main, or the ref after --changed), or that name a
-   course, exam or bank file whose content changed, or all of them when `tools/numbers_lib.py` or the shared check helpers changed. The list
+   course, exam or bank file whose content changed, or all of them when `tools/numbers_lib.py`, the shared check helpers, this runner or the CI Python requirements changed. The list
    check then covers only the scripts that ran. --only runs scripts whose path holds the text (list check likewise). Exit 2: setup error.
    Python: --python, else $ZQ_PYTHON, else python3. Timeout default 150 s per script; jobs default 4. */
 import fs from 'node:fs';
@@ -73,7 +73,7 @@ function changedSelection(all) {
     return all;
   }
   const set = new Set(names);
-  if (names.some((n) => /^app\/tools\/numbers_lib\.py$|^docs\/reports\/(bank_2_code_check|py_found_read12)\.py$/.test(n))) return all;
+  if (names.some((n) => /^app\/tools\/numbers_lib\.py$|^docs\/reports\/(bank_2_code_check|py_found_read12)\.py$|^app\/tools\/run-number-scripts\.mjs$|^\.github\/actions\/zq-setup\/requirements\.txt$/.test(n))) return all;
   const tokens = new Set();
   for (const n of names) {
     let m;

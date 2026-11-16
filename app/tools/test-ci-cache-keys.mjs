@@ -102,10 +102,11 @@ ok(r.restoredFrom === null && r.k === 4, 'a mobile job never reads a desktop job
 /* ---- the workflow text ---- */
 const wf = fs.readFileSync(path.resolve(HERE, '..', '..', '.github', 'workflows', 'acceptance.yml'), 'utf8');
 const keys = [...wf.matchAll(/^\s+(restore-keys|key): (green-[^\n]+)$/gm)].map(m => [m[1], m[2]]);
-ok(keys.length === 6, `the workflow has 2 restore, 2 restore-key and 2 save keys under green- (${keys.length} found)`);
+ok(keys.length === 9, `the workflow has 3 restore, 3 restore-key and 3 save keys under green- (the play and extras files and the number-scripts sha; ${keys.length} found)`);
 ok(keys.filter(([t]) => t === 'restore-keys').every(([, v]) => /-$/.test(v.trim())), 'every restore-keys prefix ends in "-"');
 ok(keys.filter(([t]) => t === 'key').every(([, v]) => v.includes('github.run_id') && v.includes('github.run_attempt')), 'every key carries the run id and the attempt');
-ok([...wf.matchAll(/actions\/cache\/save@v4/g)].length === 2 && [...wf.matchAll(/Save the green cache\n\s+if: \$\{\{ !cancelled\(\)/g)].length === 2, 'both saves are guarded by !cancelled()');
+ok([...wf.matchAll(/actions\/cache\/save@v4/g)].length === 3 && [...wf.matchAll(/Save the green cache\n\s+if: \$\{\{ !cancelled\(\)/g)].length === 2, 'both green-hash saves are guarded by !cancelled()');
+ok([...wf.matchAll(/Save the green sha\n\s+if: \$\{\{ success\(\) \}\}/g)].length === 1 && /Record the green sha\n\s+if: \$\{\{ success\(\) \}\}/.test(wf), 'the number-scripts sha is recorded and saved only by a green job');
 ok(!/actions\/cache@v4\s+with:\s+path: app\/tools\/\.green-cache/.test(wf), 'the green cache is never saved by the post step of actions/cache (which would save on a failed job too, and be restored without a guard)');
 
 fs.rmSync(tmp, { recursive: true, force: true });

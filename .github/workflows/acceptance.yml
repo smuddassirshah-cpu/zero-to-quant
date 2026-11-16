@@ -404,8 +404,9 @@ jobs:
           echo "extras ${{ matrix.part }} ${{ matrix.vp }}: wall clock $(( $(date +%s) - ZQ_T0 )) s" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------------------------------------------
-  # Every number script (docs/CI.md): the Python files that recompute each stated figure, key and slip. Runs in full on every push and dispatch.
-  # Red on a new failure, and on a script of tools/number-scripts-known-failing.txt that starts to pass.
+  # Every number script (docs/CI.md): the Python files that recompute each stated figure, key and slip. A push runs only the scripts whose own file or whose course
+  # content changed since the last green run (the runner's --changed against the sha that run left in the cache); a dispatch with mode full and the weekly schedule run
+  # every script and reseed the sha. Red on a new failure, and on a script of tools/number-scripts-known-failing.txt that starts to pass.
   number-scripts:
     name: number-scripts
     needs: plan
@@ -415,13 +416,42 @@ jobs:
     outputs:
       secs: ${{ steps.clock.outputs.secs }}
     steps:
+      # the whole history: --changed diffs against the sha of the last green run (an unreachable sha, after a force-push, runs every script)
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
       - uses: ./.github/actions/zq-setup
         with: { python: "true" }
       - name: Runner test
         run: node tools/test-run-number-scripts.mjs 2>&1 | tail -20
+      # The green sha (docs/CI.md): one file holding the commit of the last green run of this job, restored from the newest cache under the prefix. A full run restores nothing.
+      - name: Restore the green sha
+        if: needs.plan.outputs.mode == 'changed'
+        uses: actions/cache/restore@v4
+        with:
+          path: app/tools/.green-numbers-sha
+          key: green-number-scripts-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: green-number-scripts-
       - name: Every number script
-        run: node tools/run-number-scripts.mjs --timeout 300 2>&1 | tail -80
+        id: run
+        env:
+          MODE: ${{ needs.plan.outputs.mode }}
+        run: |
+          set -o pipefail
+          chg=""
+          if [ "$MODE" = changed ] && [ -s tools/.green-numbers-sha ]; then chg="--changed $(tr -d '[:space:]' < tools/.green-numbers-sha)"; fi
+          echo "number-scripts: mode $MODE, ${chg:-every script}" | tee -a "$GITHUB_STEP_SUMMARY"
+          node tools/run-number-scripts.mjs --timeout 300 $chg 2>&1 | tee "$RUNNER_TEMP/numbers.log" | tail -80
+          tail -1 "$RUNNER_TEMP/numbers.log" | tee -a "$GITHUB_STEP_SUMMARY"
+      # Only a green run moves the sha: a failed or cancelled run leaves the last green one, so the next push replays what failed.
+      - name: Record the green sha
+        if: ${{ success() }}
+        run: git rev-parse HEAD > tools/.green-numbers-sha
+      - name: Save the green sha
+        if: ${{ success() }}
+        uses: actions/cache/save@v4
+        with:
+          path: app/tools/.green-numbers-sha
+          key: green-number-scripts-${{ github.run_id }}-${{ github.run_attempt }}
       - id: clock
         if: always()
         run: |
