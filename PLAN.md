@@ -10,6 +10,14 @@ Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not 
 - Exams: 29 topic, 4 stage, 16 mocks with versions; 7 samples. Drills 270 non-sample (oa 8, dsa 60, ci 130, py 30, cpp 25, rq 6, sy 3, untagged 8); Fluency sets 100 (318 families); problem sets 128 (480 items); bank 36 files, 400 items; prep paths 23, no mock without a file. Hours 3,695, gap 0. Cross-course requires edges 266, all with why.
 - Second reads under the current standard: 283 of 283 levels read and fixed; every topic exam has a second-read file; bank part 2 read, fixed and delta-read (session AB).
 
+## Route to DONE (user, 16 Nov: finish in three or four sessions; NEXT_PROMPT carries the detail)
+
+- AF: open findings of `review-delta-ae-4.md`; retold-story rule in `fresh-check`; chained sets for 2.2, 2.5, 2.6 (21 sets, 149 in all).
+- AG: chained sets for 3.2 and 3.4 (18 sets, 167 in all), 2d ticked; a second auto item for the 109 one-item exam skills; engine pass 8.
+- AH: engine pass 7 remainder ([Must] and [Should] only; every [Could], E13, E15 to E19 to a post-completion list); full acceptance (`mode: full`); gallery in both themes.
+- AI: section 7 (Getting started, definition of done, final report, `DONE`); spare if AH overruns.
+- Not required for DONE: section 5b (concept audit, continues on `claude/fable-audit` after release) and task 12 (pilot).
+
 ## Tasks (one per session; tick when committed)
 
 ### 0. Triage
@@ -280,7 +288,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 
 - [x] Performance-task retrofit (session-v-plan Phase 3, session X): all 108 grandfathered levels carry a task (132 of 132 rule-matched levels), `tools/perf-pending.json` is empty; all 108 second-read and fixed in 14 batches (`docs/reviews/review-perf-retrofit-1.md` to `-14.md`, each with `## Fix pass`); reports `docs/reports/<course>-<n>-perf.md`, brief `docs/briefs/perf-retrofit.md`. Batch 14 found and fixed a lesson fault: cpp l23 taught a move assignment that frees the old object before reading the source.
 
-### 5b. Concept audit by Fable, after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
+### 5b. Concept audit by Fable (post-completion since 16 Nov: not a criterion for DONE), after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
 - [ ] Parallel Fable audit session (branch `claude/fable-audit`, started 6 Nov) on earlier-read courses; merge its branch at each content-session close
 - [x] Resumed 9 Nov (user; session Y re-enabled `trig_01FJuNVhosR68kSj3RhYkXrp`, order now by route use: mm-games, recruiting, topic 1.5, trader and developer closures, optional Stage 2 and 3 last). Was: paused 6 Nov (user, usage) (12 audits done, puzzles L4 to L5 and systems L4 open in round 2)
 - [ ] Phase 2 courses (unread list): audit after all content is finished
