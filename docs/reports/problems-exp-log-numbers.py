@@ -214,22 +214,43 @@ def level1():
     stated('laptop: 0.75^4 as %', round(float(f ** 4) * 100, 2), 31.64)
 
     # p-rare-coin
-    r2 = F(1000, 640)
-    num(L, 'p-rare-coin', 1, r2, 1000 / 640, {'inverted': F(640, 1000), 'rise': r2 - 1})
-    gy = sp.sqrt(sp.Rational(25, 16))
-    num(L, 'p-rare-coin', 2, ev(gy), bisect(lambda x: x * x - 1.5625, 1, 2), {'halved-factor': r2 / 2, 'halved-rise': 1 + (r2 - 1) / 2, 'squared': r2 ** 2})
-    stated('coin: 640 * 1.25', 640 * F(5, 4), 800)
-    stated('coin: 800 * 1.25', 800 * F(5, 4), 1000)
-    num(L, 'p-rare-coin', 3, ev(gy) - 1, F(1000 - 800, 800), {'factor': 1.25, 'halved-rise': (r2 - 1) / 2, 'decimal': 0.25 / 100}, pct=True, asked=0.25)
-    v18 = ev(1000 * sp.Rational(5, 4) ** sp.Rational(3, 2))
-    num(L, 'p-rare-coin', 4, v18, 1000 * bisect(lambda x: x * x - 1.25, 1, 2) ** 3,
-        {'halfway': (1250 + 1562.5) / 2, 'simple': 1000 * (1 + 1.5 * 0.25), 'one-year': 1250, 'two-years': 1562.5, 'carried': 1000 * 1.28125 ** 1.5},
-        asked=round(v18), extra_ok=(1000 * 1.118 ** 3, 1397, 1398, 1000 * 1.1180 ** 3), printed=True)
-    stated('coin: 1.25^1.5 to 5 dp', round(1.25 ** 1.5, 5), 1.39754)
+    # Re-authored in session AF (renumbered off p-drawdown-recovery's 1.5625 = 1.25^2): 3 years, cube root,
+    # then a value 18 months back. Method 2 walks the years one by one in pounds and pence.
+    r3 = F(393660, 100) / 1600
+    walk = 1600.0
+    for _ in range(3):
+        walk *= 1.35
+    num(L, 'p-rare-coin', 1, r3, walk / 1600, {'inverted': 1 / r3, 'rise': r3 - 1})
+    stated('coin: 1.35^3 exact', F(135, 100) ** 3, r3)
+    gy = sp.cbrt(sp.Rational(r3.numerator, r3.denominator))
+    stated('coin: cube root is 27/20', sp.nsimplify(gy), sp.Rational(27, 20))
+    num(L, 'p-rare-coin', 2, ev(gy), bisect(lambda x: x ** 3 - 2.460375, 1, 2),
+        {'thirded-factor': r3 / 3, 'thirded-rise': 1 + (r3 - 1) / 3, 'square-root': math.sqrt(float(r3))})
+    stated('coin: 1600 * 1.35', 1600 * F(27, 20), 2160)
+    stated('coin: 2160 * 1.35', 2160 * F(27, 20), 2916)
+    stated('coin: 2916 * 1.35', 2916 * F(27, 20), F(393660, 100))
+    num(L, 'p-rare-coin', 3, ev(gy) - 1, F(2916 - 2160, 2160), {'factor': 1.35, 'thirded-rise': (r3 - 1) / 3, 'decimal': 0.35 / 100}, pct=True, asked=0.35)
+    stated('coin: third of the gain as % (2 dp)', round(float((r3 - 1) / 3) * 100, 2), 48.68)
+    stated('coin: 3-year gain as %', float((r3 - 1) * 100), 146.0375)
+    g = sp.Rational(27, 20)
+    v_back = ev(1600 * g ** sp.Rational(3, 2))
+    geo = math.sqrt(1600 * 3936.60)  # halfway in time is the geometric mean of the two prices
+    stated('coin: back from today equals forward from 1600', ev(sp.Rational(393660, 100) * g ** sp.Rational(-3, 2)), v_back, 1e-9)
+    num(L, 'p-rare-coin', 4, v_back, geo,
+        {'mid-value': (1600 + 3936.60) / 2, 'simple': 1600 * (1 + 1.5 * 0.35), 'two-years-ago': 2160, 'one-year-ago': 2916,
+         'forward': 3936.60 * 1.35 ** 1.5, 'carried': 1600 * float(1 + (r3 - 1) / 3) ** 1.5},
+        asked=round(v_back), extra_ok=(1600 * 1.35 * 1.162, 1600 * 1.35 * 1.1619, 2509, 2510), printed=True)
+    stated('coin: 1600 * 1.35 * 1.162', round(1600 * 1.35 * 1.162, 2), 2509.92)
+    stated('coin: sqrt(1.35) to 3 dp', round(math.sqrt(1.35), 3), 1.162)
+    stated('coin: 18 months ahead of today', round(3936.60 * 1.35 ** 1.5, 2), 6174.79)
+    stated('coin: inverted factor 6 dp', round(1600 / 3936.60, 6), 0.406442)
     cw = L['p-rare-coin']['parts'][3]['widget']
     ok(cw['tol']['abs'] == 1, 'coin 4: band is +-1')
-    ok(not within(1399, cw['answer'], cw['tol']['abs']) and not within(1396, cw['answer'], cw['tol']['abs']), 'coin 4: 1399 or 1396 accepted')
-    ok(all(within(v, cw['answer'], cw['tol']['abs']) for v in (1397, 1398, 1397.5, 1397.54)), 'coin 4: a sensible entry refused')
+    ok(not within(2511, cw['answer'], cw['tol']['abs']) and not within(2508, cw['answer'], cw['tol']['abs']), 'coin 4: 2511 or 2508 accepted')
+    ok(all(within(v, cw['answer'], cw['tol']['abs']) for v in (2509, 2510, 2509.7, 2509.69, 2509.92)), 'coin 4: a sensible entry refused')
+    # no number of p-drawdown-recovery's factor set
+    coin_txt = json.dumps(L['p-rare-coin'])
+    ok(not any(s in coin_txt for s in ('1.5625', '0.64', '1.25', '0.5625', '56.25')), 'coin: shares the drawdown factor set')
 
     # p-curve-point
     a = sp.Integer(64) ** sp.Rational(1, 3)
