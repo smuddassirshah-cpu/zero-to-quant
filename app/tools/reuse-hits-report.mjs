@@ -42,7 +42,7 @@ out.push('## Hits by course', '');
 for (const c of courses) {
   out.push(`### ${c}`, '');
   for (const r of rows.filter((x) => x.course === c)) {
-    out.push(`- \`${r.file.replace('courses/', '')}\` ${r.id} (${r.item}${r.part ? `, part ${r.part}` : ''}) | ${r.kind} | ${r.exam ? `**exam** \`${r.source}\`${r.sourceId ? ` (${r.sourceId})` : ''}` : `\`${r.source.replace(/^courses\//, '')}\``}${r.tag ? ` | [${r.tag}]` : ''}${r.exam && !r.tag ? ' | [exam-reuse]' : ''}`);
+    out.push(`- \`${r.file.replace('courses/', '')}\` ${r.id} (${r.item}${r.part ? `, part ${r.part}` : ''}) | ${r.kind} | ${r.exam ? `**exam** \`${r.source}\`${r.sourceId ? ` (${r.sourceId})` : ''}` : `\`${r.source.replace(/^courses\//, '')}\``}${r.exam ? ' | [exam-reuse]' : ''}${r.tag ? ` | [${r.tag}]` : ''}`);
     const pairs = r.pairs ?? (r.texts ? [r.texts] : []);
     if (pairs.length) for (const p of pairs) out.push(`  - "${cut(p[0])}" <- "${cut(p[1])}"${p.length > 3 ? ` [${p[2]}, ${p[3]}]` : ''}`);
     else out.push(`  - ${cut(r.evidence, 330)}`);

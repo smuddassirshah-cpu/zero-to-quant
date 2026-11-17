@@ -11,7 +11,7 @@
 //   rate    a rate written as a decimal or a fraction in one file and as a per cent in another (0.4167 and 5/12 against 41.7%), with a second number shared by the two units (the 0.6 of "threshold 0.6").
 import { readFileSync } from 'node:fs';
 
-export const PAR = { funcFrac: 0.3, rareDf: 3, funcWeight: 0.25, stockDf: 4, minSig: 4, minInfo: 2, minW: 2.5, fuzzyW: 6, minCover: 0.7, totalW: 4.5, longW: 10, spreadMin: 4, spreadW: 11, stepJaccard: 0.4, stepMin: 6, chainMin: 3, chainGap: 2, rateTol: 3.5e-3, minInfoCommon: 1, courseStockFiles: 3, slipMinWords: 4, slipStockDf: 8, ...JSON.parse(process.env.ZQ_PAR ?? "{}") };
+export const PAR = { funcFrac: 0.3, rareDf: 3, funcWeight: 0.25, stockDf: 4, minSig: 4, minInfo: 2, minW: 2.5, fuzzyW: 6, minCover: 0.7, totalW: 4.5, longW: 10, spreadMin: 4, spreadW: 11, stepJaccard: 0.4, stepMin: 6, chainMin: 3, chainGap: 2, rateTol: 3.5e-3, minInfoCommon: 1, courseStockFiles: 3, slipMinWords: 4, slipStockDf: 8 };
 
 const MATH = /\$\$[\s\S]*?\$\$|\$[^$]*\$/g;
 const stem = (w) => (w.length > 4 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w);
