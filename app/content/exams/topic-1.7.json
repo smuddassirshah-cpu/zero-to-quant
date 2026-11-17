@@ -250,34 +250,34 @@
       }
     },
     {
-      "id": "e-one-step-q",
+      "id": "e-capped-copy",
       "difficulty": 2,
       "skills": [
-        "tp-riskneutral"
+        "tp-replicate"
       ],
-      "title": "The risk-neutral weight",
-      "prose": "A one-step tree. A share at £80.00 moves in a year to £100.00 or £72.00. Cash grows by $1 + r$ over the step, with $r = 4\\%$.",
+      "title": "Copying a capped note",
+      "prose": "A one-step tree: a share at £40.00 moves in a year to £50.00 or £35.00. Cash grows by $1 + r$ over the step, with $r = 2.5\\%$. A note pays the share's price in a year, capped at £44.00.",
       "canvas": {
         "kind": "graph",
         "params": {
           "nodes": [
             {
               "id": "n0",
-              "label": "£80.00",
+              "label": "£40.00",
               "x": 0.15,
               "y": 0.5,
               "shape": "rect"
             },
             {
               "id": "u",
-              "label": "£100.00",
+              "label": "£50.00\nnote £44",
               "x": 0.8,
               "y": 0.12,
               "shape": "rect"
             },
             {
               "id": "d",
-              "label": "£72.00",
+              "label": "£35.00\nnote £35",
               "x": 0.8,
               "y": 0.88,
               "shape": "rect"
@@ -297,46 +297,42 @@
           "label": "One-step tree"
         },
         "state": {
-          "caption": "One year; cash grows by $1 + r$ with $r = 4\\%$"
+          "caption": "One year; cash grows by $1 + r$ with $r = 2.5\\%$"
         }
       },
-      "question": "What is the risk-neutral probability $q$ of the up move?",
+      "question": "Which holding copies the note in both states?",
       "widget": {
-        "kind": "numeric",
-        "answer": 0.4,
-        "tol": {
-          "abs": 0.0005
-        },
-        "placeholder": "a decimal",
-        "label": "q",
-        "accept": "$q = \\dfrac{1.04 - 0.9}{1.25 - 0.9} = 0.4$",
-        "wrong": [
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
           {
-            "id": "no-interest",
-            "value": 0.2857,
-            "tol": {
-              "abs": 0.001
-            }
+            "id": "a",
+            "text": "Hold 0.6 shares and lend £13.66",
+            "correct": true
           },
           {
-            "id": "down",
-            "value": 0.6,
-            "tol": {
-              "abs": 0.0005
-            }
+            "id": "b",
+            "text": "Hold 0.6 shares and lend £14.00",
+            "why": "You did not discount the cash. The copy needs £14.00 in a year, so it lends $14/1.025 = 13.66$ pounds today."
+          },
+          {
+            "id": "c",
+            "text": "Hold 1 share and lend nothing",
+            "why": "A whole share pays £50.00 in the up state, but the note pays only £44.00. The cap cuts the up payoff, so hold fewer shares."
+          },
+          {
+            "id": "d",
+            "text": "Hold 0.6 shares and borrow £13.66",
+            "why": "You borrowed instead of lending. In the down state the shares are worth £21.00 and the note pays £35.00. So the copy needs £14.00 more."
           }
         ]
       },
       "feedback": {
-        "correct": "Under $q = 0.4$ the share is expected to reach £83.20, which is $80 \\times 1.04$.",
-        "generic": "Write $u$ and $d$ as factors, then use $q = \\dfrac{(1 + r) - d}{u - d}$.",
-        "byKey": {
-          "no-interest": "You grew cash by 1, not 1.04. Under $q$ the share must grow like cash.",
-          "down": "You found the weight on the down move, $1 - q$."
-        }
+        "correct": "0.6 shares are worth £30.00 or £21.00, and the £14.00 from the loan tops them up to £44.00 or £35.00.",
+        "generic": "Choose the shares so the copy's spread matches the note's: £9.00 over £15.00. Then add the cash that fixes the down state."
       },
       "explain": {
-        "text": "$u = 100/80 = 1.25$ and $d = 72/80 = 0.9$. Then $q = (1.04 - 0.9)/(1.25 - 0.9) = 0.4$. Check: $0.4 \\times 100 + 0.6 \\times 72 = 83.20 = 80 \\times 1.04$."
+        "text": "$\\Delta = (44 - 35)/(50 - 35) = 0.6$ shares. They are worth £21.00 in the down state, so the copy needs £14.00 more and lends $14/1.025 = 13.66$ pounds today. The note is worth $0.6 \\times 40 + 13.66 = 37.66$ pounds."
       }
     },
     {
@@ -444,59 +440,102 @@
       }
     },
     {
-      "id": "e-parity-put",
+      "id": "e-zero-yield",
       "difficulty": 3,
       "skills": [
-        "op-parity"
+        "fi-bonds"
       ],
-      "title": "A put from its call",
-      "prose": "A six-month European call struck at £50.00 costs £6.50. The share is at £48.00 and pays no dividend. The rate is 4% a year, compounded yearly.",
-      "question": "What must the European put with the same strike and expiry cost? Give two decimal places.",
-      "widget": {
-        "kind": "numeric",
-        "answer": 7.53,
-        "tol": {
-          "abs": 0.006
-        },
-        "unit": "£",
-        "placeholder": "a number of pounds",
-        "label": "Put price",
-        "accept": "£7.53: $6.50 + 50/1.04^{0.5} - 48$",
-        "wrong": [
-          {
-            "id": "undisc",
-            "value": 8.5,
+      "title": "A bond with no coupons",
+      "prose": "A zero-coupon bond pays £100.00 in exactly 8 years and nothing before. It trades at £70.00 today.",
+      "question": "Two questions on its yield.",
+      "parts": [
+        {
+          "question": "What is its yield, compounded yearly? Give a percentage to two decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.045593,
             "tol": {
-              "abs": 0.005
-            }
+              "abs": 6e-05
+            },
+            "unit": "%",
+            "placeholder": "For example 5.25",
+            "label": "Yield",
+            "accept": "4.56%: $(100/70)^{1/8} - 1$",
+            "wrong": [
+              {
+                "id": "simple",
+                "value": 0.053571,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "on-face",
+                "value": 0.0375,
+                "tol": {
+                  "abs": 6e-05
+                }
+              },
+              {
+                "id": "inverted",
+                "value": 0.043605,
+                "tol": {
+                  "abs": 6e-05
+                }
+              }
+            ]
           },
-          {
-            "id": "full-year",
-            "value": 6.58,
-            "tol": {
-              "abs": 0.006
-            }
-          },
-          {
-            "id": "flipped",
-            "value": 5.47,
-            "tol": {
-              "abs": 0.006
+          "feedback": {
+            "correct": "$70(1 + y)^8 = 100$ gives $y = (100/70)^{1/8} - 1 = 4.56\\%$.",
+            "generic": "Find the yearly rate that grows £70.00 into £100.00 over 8 years.",
+            "byKey": {
+              "simple": "You spread the £30.00 gain evenly, $30/70/8 = 5.36\\%$. The yield compounds, so take the eighth root of $100/70$.",
+              "on-face": "You divided the £30.00 gain by the face and by 8. The yield compounds on the £70.00 paid: $(100/70)^{1/8} - 1$.",
+              "inverted": "You took the eighth root of $70/100$, a rate of fall. Grow the price into the face: $(100/70)^{1/8} - 1$."
             }
           }
-        ]
-      },
-      "feedback": {
-        "correct": "Parity gives $p = c + K/(1+r)^T - S_0 = 7.53$ pounds.",
-        "generic": "Use $c + \\dfrac{K}{(1+r)^T} = p + S_0$ with $T = 0.5$.",
-        "byKey": {
-          "undisc": "You subtracted the £50.00 strike as if paid today. It is paid in six months, so discount it.",
-          "full-year": "You discounted the strike for a whole year. Six months is $T = 0.5$.",
-          "flipped": "You swapped the sides of parity. The put sits with the share: $p + S_0 = c + K/(1+r)^T$."
+        },
+        {
+          "question": "A year passes and the yield is unchanged. What is the bond's price then? Give two decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 73.19,
+            "tol": {
+              "abs": 0.006
+            },
+            "unit": "£",
+            "placeholder": "a number of pounds",
+            "label": "Price in a year",
+            "accept": "£73.19: $100/1.0456^7$",
+            "wrong": [
+              {
+                "id": "still-eight",
+                "value": 70.0,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "straight-line",
+                "value": 73.75,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "With 7 years left, $100/1.0456^7 = 73.19$ pounds.",
+            "generic": "Discount the £100.00 at the same yield over the 7 years now left.",
+            "byKey": {
+              "still-eight": "You kept 8 years of discounting. One year has passed, so discount over 7.",
+              "straight-line": "You added an eighth of the £30.00 gain. The price grows by the yield each year, not by equal steps."
+            }
+          }
         }
-      },
+      ],
       "explain": {
-        "text": "$50/1.04^{0.5} = 49.03$, so the call side is $6.50 + 49.03 = 55.53$. The put side is $p + 48$, so $p = 7.53$. The put is dearer than the call because the share sits below the strike."
+        "text": "The yield solves $70(1 + y)^8 = 100$, so $y = (100/70)^{1/8} - 1 = 4.56\\%$. With 7 years left the price is $100/1.0456^7 = 73.19$ pounds. That is $70 \\times 1.0456$: at an unchanged yield the bond earns its yield each year."
       }
     },
     {
@@ -1122,58 +1161,147 @@
       }
     },
     {
-      "id": "e-book-delta",
+      "id": "e-ratio-spread",
       "difficulty": 3,
       "skills": [
-        "op-greeks"
+        "op-strategies",
+        "op-payoff"
       ],
-      "title": "Delta of a short call book",
-      "prose": "A trader is short 800 calls and long 500 puts on one share, each option on one share. Each call has delta 0.45 and each put delta −0.30.",
-      "question": "How many shares must she buy to make the book delta neutral? Use a negative number to sell.",
-      "widget": {
-        "kind": "numeric",
-        "answer": 510,
-        "tol": {
-          "abs": 0.5
+      "title": "One call bought, two sold",
+      "prose": "On one share you buy a call struck at £80.00 for £5.40. You also sell two calls struck at £90.00 for £1.90 each. All three expire on the same day. The bold line is the position's profit at expiry.",
+      "canvas": {
+        "kind": "payoff",
+        "params": {
+          "legs": [
+            {
+              "id": "c1",
+              "type": "call",
+              "side": "long",
+              "strike": 80,
+              "premium": 5.4,
+              "label": "long 80 call"
+            },
+            {
+              "id": "c2",
+              "type": "call",
+              "side": "short",
+              "strike": 90,
+              "premium": 1.9,
+              "qty": 2,
+              "label": "two short 90 calls"
+            }
+          ],
+          "range": [
+            60,
+            120
+          ],
+          "pl": true,
+          "label": "position",
+          "xLabel": "Share price at expiry (£)",
+          "yLabel": "Profit (£)"
         },
-        "placeholder": "a number of shares",
-        "label": "Shares to buy",
-        "accept": "510: the book's delta is −510",
-        "wrong": [
-          {
-            "id": "put-sign",
-            "value": 210,
+        "state": {
+          "breakeven": false
+        },
+        "maxHeight": 240
+      },
+      "question": "Two questions on the position.",
+      "parts": [
+        {
+          "question": "What is its profit if the share ends at £95.00? Give two decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3.4,
             "tol": {
-              "abs": 0.5
-            }
+              "abs": 0.005
+            },
+            "unit": "£",
+            "placeholder": "a number of pounds",
+            "label": "Profit at £95.00",
+            "accept": "£3.40: payoff $15 - 2 \\times 5 = 5$, less the £1.60 net cost",
+            "wrong": [
+              {
+                "id": "one-short",
+                "value": 8.4,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "no-premium",
+                "value": 5.0,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "added-premiums",
+                "value": -4.2,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
           },
-          {
-            "id": "calls-only",
-            "value": 360,
-            "tol": {
-              "abs": 0.5
-            }
-          },
-          {
-            "id": "sell",
-            "value": -510,
-            "tol": {
-              "abs": 0.5
+          "feedback": {
+            "correct": "The long call pays £15.00 and the two short calls cost £10.00. Less the £1.60 net cost, that is £3.40.",
+            "generic": "Find each leg's payoff at £95.00, then take off the net cost, $5.40 - 2 \\times 1.90$.",
+            "byKey": {
+              "one-short": "You counted one short call. Two are sold, so they cost $2 \\times 5 = 10$ pounds at £95.00.",
+              "no-premium": "That is the payoff, £5.00. Take off the £1.60 net cost for the profit.",
+              "added-premiums": "You treated the £3.80 received as a cost. Selling the calls brings premium in, so the net cost is £1.60."
             }
           }
-        ]
-      },
-      "feedback": {
-        "correct": "The book's delta is −510 shares, so buy 510.",
-        "generic": "Add quantity times delta for each line, with short positions negative. Then trade the opposite.",
-        "byKey": {
-          "put-sign": "You gave the long puts a positive delta. A put's delta is negative, so they add to the short calls' exposure.",
-          "calls-only": "You hedged the calls and ignored the puts. 500 long puts at −0.30 add −150.",
-          "sell": "You flipped the sign. The book's delta is −510, so buying 510 shares brings it to zero."
+        },
+        {
+          "question": "Above £90.00 the profit falls as the share rises. At what share price does it reach zero? Give two decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 98.4,
+            "tol": {
+              "abs": 0.005
+            },
+            "unit": "£",
+            "placeholder": "a share price",
+            "label": "Upper break-even",
+            "accept": "£98.40: profit $98.40 - S$ above £90.00",
+            "wrong": [
+              {
+                "id": "payoff-zero",
+                "value": 100.0,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "lower",
+                "value": 81.6,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "plus-cost",
+                "value": 101.6,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Above £90.00 the payoff is $100 - S$, so the profit $98.40 - S$ is zero at £98.40.",
+            "generic": "Above £90.00 write the payoff as $(S - 80) - 2(S - 90)$, then subtract the net cost.",
+            "byKey": {
+              "payoff-zero": "£100.00 is where the payoff reaches zero. The £1.60 paid is lost a little earlier, at £98.40.",
+              "lower": "That is the lower break-even, where the bought call has paid back the net cost. The question asks above £90.00.",
+              "plus-cost": "You added the net cost. Profit is payoff minus cost, $98.40 - S$, so it hits zero below £100.00."
+            }
+          }
         }
-      },
+      ],
       "explain": {
-        "text": "The short calls give $-800 \\times 0.45 = -360$ and the long puts $500 \\times (-0.30) = -150$. The book loses like 510 shares short when the share rises. Buying 510 shares makes it delta neutral."
+        "text": "The net cost is $5.40 - 2 \\times 1.90 = 1.60$ pounds. Above £90.00 the payoff is $(S - 80) - 2(S - 90) = 100 - S$, so the profit is $98.40 - S$. It is £3.40 at £95.00, zero at £98.40, and the loss grows without limit above that."
       }
     },
     {
@@ -1320,67 +1448,59 @@
       }
     },
     {
-      "id": "e-short-sale",
+      "id": "e-just-paid",
       "difficulty": 3,
       "skills": [
-        "fi-forwards"
+        "fi-equity"
       ],
-      "title": "A short sale that goes wrong",
-      "prose": "You short 2,000 shares at £24.00 and cover two months later at £26.50. The stock loan fee is 4% a year on the £48,000.00 sale value, charged for 2/12 of a year. While you are short, the company pays a dividend of £0.30 a share.",
-      "question": "What is your profit, in pounds? Use a negative number for a loss.",
+      "title": "A dividend just paid",
+      "prose": "A company has just paid a dividend of £1.50 a share. Dividends grow 4% a year for ever, and investors require 10% a year.",
+      "question": "What is one share worth today? Give two decimal places.",
       "widget": {
         "kind": "numeric",
-        "answer": -5920,
+        "answer": 26.0,
         "tol": {
-          "abs": 0.5
+          "abs": 0.005
         },
         "unit": "£",
         "placeholder": "a number of pounds",
-        "label": "Profit",
-        "accept": "−£5,920.00",
+        "label": "Share value",
+        "accept": "£26.00: $1.56/(0.10 - 0.04)$",
         "wrong": [
           {
-            "id": "no-cost",
-            "value": -5000,
+            "id": "last-div",
+            "value": 25.0,
             "tol": {
-              "abs": 0.5
+              "abs": 0.005
             }
           },
           {
-            "id": "div-received",
-            "value": -4720,
+            "id": "no-growth",
+            "value": 15.6,
             "tol": {
-              "abs": 0.5
+              "abs": 0.005
             }
           },
           {
-            "id": "full-year",
-            "value": -7520,
+            "id": "plus-g",
+            "value": 11.14,
             "tol": {
-              "abs": 0.5
-            }
-          },
-          {
-            "id": "sign",
-            "value": 5920,
-            "tol": {
-              "abs": 0.5
+              "abs": 0.005
             }
           }
         ]
       },
       "feedback": {
-        "correct": "−£5,000.00 on the share, −£320.00 of fee and −£600.00 of dividend: −£5,920.00.",
-        "generic": "Profit is $P_0 - P_1$ a share, less the fee and the dividends you pay the lender.",
+        "correct": "Next year's dividend is $1.50 \\times 1.04 = 1.56$ pounds, and $1.56/0.06 = 26.00$.",
+        "generic": "Use $P = D/(r - g)$, where $D$ is next year's dividend.",
         "byKey": {
-          "no-cost": "You left out the fee and the dividend. A short pays both.",
-          "div-received": "You received the dividend. The lender is owed it, so the short pays £600.00.",
-          "full-year": "You charged a full year's fee. Two months is 2/12 of 4% on £48,000.00, which is £320.00.",
-          "sign": "You lose £5,000 on the price rise, then pay £320 of fee and £600 of dividend: all three are costs. A positive £5,920 books the loss as a gain."
+          "last-div": "You used the £1.50 already paid. The formula needs next year's dividend, £1.56.",
+          "no-growth": "You divided by $r$ alone. Growing dividends are worth more: divide by $r - g = 0.06$.",
+          "plus-g": "You added the growth to the required return. Growth raises the value, so divide by $r - g$."
         }
       },
       "explain": {
-        "text": "On the shares you lose $2{,}000 \\times (26.50 - 24.00) = 5{,}000$ pounds. The fee is $48{,}000 \\times 0.04 \\times 2/12 = 320$ pounds and the dividend $2{,}000 \\times 0.30 = 600$ pounds. In all you lose £5,920.00."
+        "text": "A share is worth next year's dividend over $r - g$. The £1.50 has been paid, so the first dividend still to come is $1.50 \\times 1.04 = 1.56$ pounds. $1.56/(0.10 - 0.04) = 26.00$ pounds."
       }
     },
     {
