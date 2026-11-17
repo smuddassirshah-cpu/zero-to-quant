@@ -4,32 +4,36 @@ A single-user, Brilliant-style interactive teaching app for the curriculum in `d
 
 ## Run it
 
-You need Python 3 (for `run.sh`), Chrome or Chromium, and Node only for the tools below. From a clone of `https://github.com/smuddassirshah-cpu/zero-to-quant.git`:
+You need Python 3 (for `run.sh`) and Chrome or Chromium. Node is needed only for the checking tools below and for `tools/fetch-vendor.sh`, never to run the app. From a clone of `https://github.com/smuddassirshah-cpu/zero-to-quant.git`:
 
 ```sh
 app/run.sh            # python3 -m http.server on port 8080 (pass another port as the first argument)
 ```
 
-Then open `http://localhost:8080`. A fresh browser starts on `#setup` (name, track, weekly hours, starting stage) and then opens `#today`. The app must be served over `http`, not opened as a file: content is fetched, and the Python and C++ workers are module workers that a `file://` page cannot start.
+Then open `http://localhost:8080`. A fresh browser starts on `#setup` (name and initial, track, weekly hours and starting stage) and then opens `#today`. The app must be served over `http`, not opened as a file: content is fetched, and the Python and C++ workers are module workers that a `file://` page cannot start.
+
+`run.sh` listens on all network interfaces, not only localhost. A tablet on the same network can open it at your computer's address; so can anyone else on that network.
+
+To check that Python and C++ work, open `http://localhost:8080/#lesson/first-python/l1-calculator` and run its code check, then `#lesson/cpp/l1-source-to-program`. The C++ course is locked until its prerequisites are met: turn off Strict prerequisites under You, Settings, Study plan, then open the locked card and choose "Open anyway".
 
 The grid tab on the left edge lists every screen and switches theme, motion and sound.
 
 ## What loads from the CDN
 
-Only KaTeX is in the repository (`vendor/katex/`). Everything else loads from `cdn.jsdelivr.net` the first time a lesson needs it, and the browser caches it after that. The page also asks Google Fonts for its typefaces. Each library has an optional self-hosted fallback in `vendor/`, tried only when the CDN fails (see Self-hosting).
+Only KaTeX is in the repository (`vendor/katex/`). Everything else loads from `cdn.jsdelivr.net` the first time a lesson needs it, and the browser caches it after that. The page also asks Google Fonts for its typefaces. Each library has an optional self-hosted fallback in `vendor/`, tried only when the CDN fails (see Self-hosting). With `vendor/` empty, the browser console shows 404 errors for those probes when the CDN fails. They are expected.
 
 | Library | Version | Loaded by | When | Size |
 |---|---|---|---|---|
 | Pyodide (Python, with NumPy, pandas, SciPy, scikit-learn, statsmodels, matplotlib) | 0.27.7 | `js/screens/drill-worker.js` (`CDN`; `code.js` and `drill.js` pass `vendor/pyodide/` as the fallback) | First Python code widget or drill | The core is several MB; each package wheel downloads on the first import that needs it (up to 2 minutes of its own, up to 1 minute for the core) |
-| MathLive | 0.105.0 | `js/engine/grade.js` (`LIBS`) | First expression answer | About 5 MB unpacked |
-| Compute Engine | 0.30.2 | `js/engine/grade.js` (`LIBS`) | First expression answer | About 4 MB unpacked |
+| MathLive | 0.105.0 | `js/engine/grade.js` (`LIBS`) | First expression answer | 0.8 MB on disk for `mathlive.min.js` (the file the page loads; the package with fonts and sounds is 5.4 MB) |
+| Compute Engine | 0.30.2 | `js/engine/grade.js` (`LIBS`) | First expression answer | 0.6 MB on disk for `compute-engine.min.umd.js` (the file the page loads; the package is 4.4 MB) |
 | YoWASP clang | 21.1.4-3 | `js/engine/widgets/cpp-grade.js` (`CLANG`) | First C++ code widget | About 26 MB gzip (see the table below); up to 5 minutes allowed |
 
 MathLive and Compute Engine share a budget: 6 seconds for each CDN script, then up to 4 more for its local copy in `vendor/` (10 seconds in all). If either has not loaded by then, the expression widget still works, with less help:
 
 - No MathLive: a plain text box replaces the maths field, with the note "Type the expression as text: use / for fractions, ^ for powers and * for products."
 - No Compute Engine: answers are matched as normalised text against the lesson's `answer` and `accept` list, not checked algebraically.
-- No Pyodide: the code widget shows "Python is not available here" and the check reports "Python could not load in this browser, so the tests cannot run." The drill page reports the load error.
+- No Pyodide: the page gives up on Python 60 seconds after the worker starts. The code widget then shows "Python is not available here" and the check reports "Python could not load in this browser, so the tests cannot run." Until then the check says "Python is still loading." The lesson player puts these under its usual "Not quite right." heading, although the fault is the connection, not the answer. A blocked or hanging connection took one tester about 5 minutes to reach that message, so allow for it. The drill page reports the load error. Package wheels have their own 2-minute limit.
 - No clang: the same, with "C++ is not available here".
 
 ## Self-hosting (offline use)
@@ -38,8 +42,11 @@ MathLive and Compute Engine share a budget: 6 seconds for each CDN script, then 
 
 ```sh
 app/tools/fetch-vendor.sh            # into app/vendor (or give another folder as the last argument)
-app/tools/fetch-vendor.sh --core     # Pyodide core only
+app/tools/fetch-vendor.sh --core     # Pyodide core only: --core comes first, then the optional folder
+app/tools/fetch-vendor.sh --core /path/to/vendor
 ```
+
+The script needs bash, curl, openssl, tar, bzip2, GNU base64 and Node.
 
 | Folder | Read by | Holds |
 |---|---|---|
@@ -48,7 +55,7 @@ app/tools/fetch-vendor.sh --core     # Pyodide core only
 | `vendor/compute-engine/` | `grade.js` (`LOCAL`) | `compute-engine.min.umd.js` |
 | `vendor/yowasp-clang/` | `cpp-worker.js` | The package's `gen/` folder, directly in it (see the C++ section) |
 
-The script uses the same sources as `tools/fetch-local-cdn.sh` (the Pyodide release tarball from `github.com`, the npm tarballs from `registry.npmjs.org`) and checks what it downloads: npm tarballs against the registry's sha512 integrity, and every Pyodide file against the sha256 in `pyodide-lock.json`. It skips folders that are already complete. The four folders are git-ignored; KaTeX stays tracked. The full Pyodide release is 389 MB to download and 762 MB on disk (351 packages). `--core` takes only the npm `pyodide` package (about 14 MB, no wheels): offline Python then runs the standard library, and a lesson that imports NumPy, pandas, SciPy, scikit-learn, statsmodels or matplotlib fails with an import error.
+The script uses the same sources as `tools/fetch-local-cdn.sh` (the Pyodide release tarball from `github.com`, the npm tarballs from `registry.npmjs.org`) and checks what it downloads: npm tarballs against the registry's sha512 integrity, and every Pyodide file against the sha256 in `pyodide-lock.json`. It skips folders that are already complete. The four folders are git-ignored; KaTeX stays tracked. The full Pyodide release is 389 MB to download and 762 MB on disk (351 packages). `--core` takes only the npm `pyodide` package (about 14 MB, no wheels): offline Python then runs the standard library only, with no NumPy, and a lesson that imports NumPy, pandas, SciPy, scikit-learn, statsmodels or matplotlib fails with an import error.
 
 `node tools/test-vendor-fallback.mjs --vendor <dir>` checks all of it with `cdn.jsdelivr.net` blocked: a Python lesson, a C++ lesson and an expression lesson play to the end, MathLive registers its field and the Compute Engine grades an identity. `--absent` checks the opposite, that without the folders Python and C++ report that there is no local copy and the maths editor falls back to a text box. CI runs both in the `python` leg of `tests-browser`.
 

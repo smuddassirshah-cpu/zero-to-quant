@@ -9,7 +9,7 @@ You need:
 - Git, to clone.
 - Python 3, only for `app/run.sh`, which is `python3 -m http.server`.
 - Chrome or Chromium. The app uses WebAssembly in background workers.
-- A network connection on first use (see below). Node is needed only for the checking tools, not to run the app.
+- A network connection on first use (see below). Node is needed for the checking tools, and for `app/tools/fetch-vendor.sh` (offline copies). It is not needed to run the app.
 
 ```sh
 git clone https://github.com/smuddassirshah-cpu/zero-to-quant.git
@@ -17,9 +17,11 @@ cd zero-to-quant
 app/run.sh            # port 8080; pass another port as the first argument
 ```
 
-Open `http://localhost:8080` in Chrome. A fresh browser opens `#setup` (name, track, weekly hours, starting stage) and then `#today`. The app must be served over `http`: opened as a `file://` page it cannot fetch its content or start its workers. There are no accounts, no server code and no build step. Your progress stays in this browser and can be exported from the You screen.
+Open `http://localhost:8080` in Chrome. A fresh browser opens `#setup` (name and initial, track, weekly hours and starting stage) and then `#today`. The app must be served over `http`: opened as a `file://` page it cannot fetch its content or start its workers. There are no accounts, no server code and no build step. Your progress stays in this browser and can be exported from the You screen.
 
 Maths and code tools load from the jsDelivr CDN the first time a lesson needs them, so the first such lesson is slow. `app/README.md` lists what loads, what you see if it fails, and how to self-host.
+
+For offline use, run `app/tools/fetch-vendor.sh` once while online. It needs bash, curl, openssl, tar, bzip2, GNU base64 and Node, and downloads about 389 MB (`--core` gives a much smaller, Python-standard-library-only copy).
 
 ## What is here
 
