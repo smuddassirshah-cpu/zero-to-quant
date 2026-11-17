@@ -30,7 +30,8 @@
     "orderbook": {"params": {"bids": [[99.98, 300], [99.97, 500], [99.96, 200]], "asks": [[100.0, 200], [100.01, 400], [100.02, 300]]}, "state": {"order": {"side": "buy", "size": 750}}},
     "complex-map": {"params": {"f": "z^2", "x": [-2, 2], "y": [-2, 2], "wx": [-4, 4], "wy": [-4, 4], "grid": "cartesian", "unitCircle": true, "zLabel": "z-plane", "wLabel": "$w = z^2$"}, "state": {"points": [{"id": "p1", "x": 1, "y": 0.5, "label": "$z$", "drag": true}]}},
     "space": {"params":{"x":[-4,4],"y":[-4,4],"z":[-4,4],"equal":true,"camera":{"az":-55,"el":24},"vectors":[{"id":"u","v":[3,0,1],"label":"$\\mathbf{u}$"},{"id":"v","v":[0,3,2],"label":"$\\mathbf{v}$"},{"id":"n","v":[-1,-2,3],"label":"$\\mathbf{n}$","colour":4}],"planes":[{"id":"cs","span":["u","v"],"label":"column space"}],"points":[{"id":"b","p":[-2,3,3],"label":"$\\mathbf{b}$","drop":true}]},"state":{}},
-    "interleave": {"params": {"vars": {"x": 0}, "lanes": [{"id": "a", "label": "Thread A", "steps": [{"op": "load", "reg": "r", "var": "x"}, {"op": "add", "reg": "r", "by": 1}, {"op": "store", "var": "x", "reg": "r"}]}, {"id": "b", "label": "Thread B", "steps": [{"op": "load", "reg": "r", "var": "x"}, {"op": "add", "reg": "r", "by": 1}, {"op": "store", "var": "x", "reg": "r"}]}]}, "state": {"schedule": ["a", "b"], "outcomes": true}}
+    "interleave": {"params": {"vars": {"x": 0}, "lanes": [{"id": "a", "label": "Thread A", "steps": [{"op": "load", "reg": "r", "var": "x"}, {"op": "add", "reg": "r", "by": 1}, {"op": "store", "var": "x", "reg": "r"}]}, {"id": "b", "label": "Thread B", "steps": [{"op": "load", "reg": "r", "var": "x"}, {"op": "add", "reg": "r", "by": 1}, {"op": "store", "var": "x", "reg": "r"}]}]}, "state": {"schedule": ["a", "b"], "outcomes": true}},
+    "console": {"params": {"title": "Terminal", "lines": ["$ python run.py", "mean daily return 0.0012", "sharpe 1.41", "done in 0.4s"]}, "state": {"shade": {"key": ["l3"]}, "tone": {"l4": "muted"}}}
   };
   const CANVAS_ABOUT = {
     grid: 'Cell grid: sample spaces, two-dice tables, area models', tree: 'Probability and decision trees', venn: 'Two or three set Venn diagrams',
@@ -69,11 +70,17 @@
       s1: { tex: '2x = 8', ops: [{ label: 'Divide both sides by 2', to: 's3' }] }, s3: { tex: 'x = 4' } } } },
     balance: { question: 'Leave $x$ alone on one pan.', canvas: { kind: 'balance', params: { left: [{ id: 'x1', kind: 'unknown', label: 'x' }, { id: 'w3', kind: 'weight', value: 3 }], right: [{ id: 'w7', kind: 'weight', value: 7 }] } },
       widget: { kind: 'balance', left: [{ id: 'x1', kind: 'unknown', label: 'x' }, { id: 'w3', kind: 'weight', value: 3 }], right: [{ id: 'w7', kind: 'weight', value: 7 }], moves: ['remove-both', 'halve-both'], target: { left: ['unknown'], right: [4] } } },
-    sketch: { question: 'Sketch the payoff of a call struck at 100.', canvas: { kind: 'plane', params: { x: [80, 120], y: [-4, 24] }, state: {} },
+    sketch: { question: 'Sketch the payoff of a call struck at 100.', canvas: { kind: 'plane', params: { x: [80, 120], y: [-4, 24], xAxis: 'bottom' }, state: {} },
       widget: { kind: 'sketch', control: 5, target: 'max(x - 100, 0)', xRange: [80, 120], band: 2, wrong: [{ id: 'linear', expr: '0.5*(x - 80)', band: 2 }] } },
     code: { question: 'Return the sum of the squares.', widget: { kind: 'code', language: 'python', starter: 'def sum_squares(xs):\n    return 0\n', solution: 'def sum_squares(xs):\n    return sum(x * x for x in xs)\n',
       examples: [{ call: 'sum_squares([1, 2])', expect: '5' }], tests: [{ call: 'sum_squares([])', expect: '0', compare: 'equal' }, { call: 'sum_squares([3])', expect: '9', compare: 'equal' }, { call: 'sum_squares([1, 2, 3])', expect: '14', compare: 'equal' }],
       how: 'Check runs 3 hidden tests.' } },
+    sliders: { question: 'Find $y(0)$ and $y\'(0)$ so the curve reaches the target.', canvas: { kind: 'plane', params: { x: [0, 6.3], y: [-3, 3], xLabel: '$t$', yLabel: '$y$', height: 280, functions: [{ id: 'f', expr: 'a*cos(x) + b*sin(x)', label: '$y(t)$', colour: 1, labelAt: 5 }], params: { a: 0, b: 0 } }, state: { points: [{ id: 'start', x: 0, y: 1, label: 'start 1' }, { id: 'target', x: 1.5708, y: 2, label: 'target' }] } },
+      widget: { kind: 'sliders', sliders: [{ id: 'a', bind: 'a', min: -3, max: 3, step: 0.1, label: '$y(0)$' }, { id: 'b', bind: 'b', min: -3, max: 3, step: 0.1, label: '$y^{\\prime}(0)$' }], answer: { a: 1, b: 2 }, tol: 0.05 } },
+    trade: { question: 'Make a market on the sum of three dice. Fair is £10.50.', canvas: { kind: 'orderbook', params: { bids: [[8.5, 4], [8, 6], [7.5, 8]], asks: [[12.5, 4], [13, 6], [13.5, 8]], depth: 3, currency: '£', dp: 1, showMid: true }, state: {} },
+      widget: { kind: 'trade', seed: 38, turns: 8, fair: 10.5, value: 10, tick: 0.5, range: [6, 15], currency: '£', size: { min: 1, max: 2, start: 1 }, limit: 4, spread: { min: 1, max: 3 }, quote: { bid: 9.5, ask: 11.5, size: 1 },
+        counterparty: { type: 'noise', rate: 0.8, reach: 1, maxSize: 2 }, schedule: [{ turn: 1, text: 'Fair is £10.50. Your limit is 4 lots either way.' }], benchmark: 2, maxBreaks: 0,
+        strategy: Array.from({ length: 8 }, () => ({ bid: 9.5, ask: 11.5, size: 1 })), label: 'Your quote' } },
     longform: { kind: 'longform', prompt: 'Explain why $P(A \\mid B)$ and $P(B \\mid A)$ can differ.', model: 'They share the numerator $P(A \\cap B)$ but divide by different events, $P(B)$ and $P(A)$.',
       rubric: [{ points: 4, text: 'Writes both as a joint probability over a marginal' }, { points: 3, text: 'Names the different denominators' }, { points: 3, text: 'Gives an example where they differ' }] },
   };
@@ -81,7 +88,7 @@
   /* Variants worth seeing on their own: drawn after the one-per-kind samples. Canvas variants render through
      ZQ.player.renderItem so their explore controls (canvas.controls) work as in a lesson. */
   const CANVAS_EXTRAS = [
-    { name: 'pair (circle and sine)', about: 'Two canvases side by side; derive reads the circle and moves the point on the sine curve', spec: { kind: 'pair', active: 'right',
+    { name: 'pair (circle and sine)', about: 'Two canvases side by side; derive reads the circle and moves the point on the sine curve', spec: { kind: 'pair', active: 'right', minScale: 0.6,
       left: { kind: 'circle', params: { values: false }, state: { angle: 30 } },
       right: { kind: 'plane', params: { x: [0, 6.3], y: [-1.2, 1.2], functions: [{ id: 's', expr: 'sin(x)' }] }, state: { points: [{ id: 'P', x: 0, y: 0, label: 'P' }] } },
       derive: { 'right:P.x': 'angle * pi / 180', 'right:P.y': 'sin(angle * pi / 180)', caption: 'sin {{angle}}° = {{fixed(sin(angle * pi / 180), 3)}}' },
@@ -150,7 +157,7 @@
     { name: 'number-line (log-odds)', about: 'scale: "log-odds" places probabilities by their log odds; a Bayes update is one jump', spec: { kind: 'number-line',
       params: { scale: 'log-odds', min: 0.01, max: 0.99, format: 'percent' }, state: { points: [{ id: 'a', x: 0.2, label: 'prior' }, { id: 'b', x: 0.8, label: 'posterior' }], arrows: [{ id: 'j', from: 0.2, to: 0.8, label: 'odds ×16' }] } } },
     { name: 'payoff (spot drag)', about: 'drag: "spot" moves the expiry price; showTotal: false shows each leg; a leg without its floor', spec: { kind: 'payoff',
-      params: { range: [60, 140], drag: 'spot', showTotal: false, legs: [{ id: 'c', type: 'call', strike: 100, premium: 5, label: 'long call', labelAt: 0.9 }, { id: 'f', type: 'call', strike: 100, premium: 5, floor: false, colour: 5, label: 'no floor', labelAt: 0.1 }] }, state: { spot: 110 } } },
+      params: { range: [60, 140], drag: 'spot', showTotal: false, legs: [{ id: 'c', type: 'call', strike: 100, premium: 5, label: 'long call', labelAt: 0.9 }, { id: 'f', type: 'call', strike: 100, premium: 5, floor: false, colour: 5, label: 'no floor', labelAt: 0.1 }] }, state: { spot: 105 } } },
     { name: 'bars (below zero)', about: 'Negative values hang below the zero baseline; value labels in pounds', spec: { kind: 'bars',
       params: { categories: [{ id: 'jan', label: 'Jan', value: 120 }, { id: 'feb', label: 'Feb', value: -80 }, { id: 'mar', label: 'Mar', value: 45 }, { id: 'apr', label: 'Apr', value: -150 }, { id: 'may', label: 'May', value: 200 }], yLabel: 'P&L (£)', showValues: true, money: '£', decimals: 0 }, state: {} } },
     { name: 'matrix (wide)', about: 'Three wide matrices scale down to the column instead of running off it', spec: { kind: 'matrix',
@@ -192,7 +199,7 @@
       params: { x: [0, 10], y: [0, 6], xAxis: 'bottom', params: { d: 1 }, functions: [{ id: 'reg', cells: { x: [0, 10], y: [0, 6], values: [[0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 0]] } }, { id: 'st', steps: { at: [2, 5, 8], levels: [1, 3, 2, 4] }, colour: 4, label: 'tree' }, { id: 'roc', points: [[0, 0], [2, 3], [5, 4], [10, 5]], colour: 5 }, { id: 'f', exprs: ['1', '0.5*x', '0.05*x^2'], index: 'd', label: 'fit' }] },
       state: { points: [{ id: 'R', x: 6, y: 4.5, on: 'roc', drag: true, label: 'R' }] }, controls: [{ bind: 'd', options: ['constant', 'line', 'quadratic'], label: 'Fit', start: 1 }] } },
     { name: 'plane (repeated intervals)', about: 'state.ci draws 40 confidence intervals from seeded samples; misses in the negative colour; a control on ci.n adds samples', spec: { kind: 'plane',
-      params: { x: [94, 106], y: [0, 41], height: 300, xLabel: '$\\mu$', yLabel: 'sample', yTicks: 'integer' }, state: { ci: { n: 40, size: 25, mu: 100, sigma: 10, seed: 4 } }, controls: [{ bind: 'ci.n', stops: [10, 20, 40], label: 'Samples', start: 40 }] } },
+      params: { x: [92, 108], y: [0, 41], height: 300, xLabel: '$\\mu$', yLabel: 'sample', yTicks: 'integer' }, state: { ci: { n: 40, size: 25, mu: 100, sigma: 5, seed: 4 } }, controls: [{ bind: 'ci.n', stops: [10, 20, 40], label: 'Samples', start: 40 }] } },
     { name: 'series (real x, band, step)', about: 'xValues on a log axis; a running mean with a ±2 SE band; a step line; vlines', spec: { kind: 'pair', stack: true,
       left: { kind: 'series', params: { height: 180, y: [2, 5], series: [{ id: 'mc', label: 'running mean', sim: { outcome: 'u(0, 7)', seed: 3, n: 300, band: 2 } }], vlines: [{ id: 'v', i: 100, label: 'n = 100' }] } },
       right: { kind: 'series', params: { height: 160, xValues: [0.01, 0.1, 1, 10, 100], xScale: 'log', xLabel: '$\\lambda$', series: [{ id: 'mse', label: 'test MSE', values: [4, 3.2, 2.1, 2.6, 3.9] }, { id: 'b', label: 'balance', values: [3, 3, 2, 4, 4], step: true, colour: 3 }] } } } },
