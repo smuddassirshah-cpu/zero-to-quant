@@ -194,6 +194,32 @@ const wrongCannotFire = (file, where, answer, tolA, wrong) => {
     seen.push([i, x, hw]);
   });
 };
+/* ENGINE-BACKLOG 1029, 1014: [slip-expr] an optional "slip" expression on a numeric wrong[] entry (or an editable table cell's wrong[] entry) is the arithmetic of the mistake that the entry's why or
+   byKey line names ("slip": "0.25 * 1.2^3"). It is evaluated here and in tools/numbers_lib.py (check_slips) with one grammar: numbers, + - * / ^ ** ( ), the constants pi and e, and the functions
+   sqrt, exp, ln, log (natural), log10, abs, pow, min, max, round. The result must equal the entry's value (within its band, or once rounded to the value's own decimals); an expression that does
+   not read, or that gives another number, is a warning. The field is ignored by the app. */
+const SLIP_FNS = { sqrt: Math.sqrt, exp: Math.exp, ln: Math.log, log: Math.log, log10: Math.log10, abs: Math.abs, pow: Math.pow, min: Math.min, max: Math.max, round: Math.round };
+const slipEval = (src) => {
+  const t = String(src).replace(/\^/g, '**');
+  if (!/^[\d\s.+\-*/(),A-Za-z_]*$/.test(t)) return null;
+  const ids = t.match(/[A-Za-z_][A-Za-z_0-9]*/g) || [];
+  if (ids.some(id => !(id in SLIP_FNS) && id !== 'pi' && id !== 'e')) return null;
+  try { const v = Function('sqrt', 'exp', 'ln', 'log', 'log10', 'abs', 'pow', 'min', 'max', 'round', 'pi', 'e', `"use strict";return (${t})`)(...Object.keys(SLIP_FNS).map(k => SLIP_FNS[k]), Math.PI, Math.E); return Number.isFinite(v) ? v : null; } catch (e) { return null; }
+};
+const slipExprCheck = (file, where, wrong) => {
+  if (!Array.isArray(wrong)) return;
+  wrong.forEach((x, i) => {
+    if (!isObj(x) || x.slip === undefined) return;
+    const at = `${where}.wrong[${i}].slip`;
+    if (typeof x.slip !== 'string' || !x.slip.trim()) { warn(file, at, '[slip-expr] slip is an arithmetic expression as a string ("0.25 * 1.2^3")'); return; }
+    if (typeof x.value !== 'number' || !Number.isFinite(x.value)) { warn(file, at, '[slip-expr] slip needs a numeric value on the same entry to be checked against'); return; }
+    const v = slipEval(x.slip);
+    if (v == null) { warn(file, at, `[slip-expr] "${x.slip}" does not read as arithmetic (numbers, + - * / ^ ( ), pi, e, sqrt, exp, ln, log, log10, abs, pow, min, max, round)`); return; }
+    const hw = halfWidth(x.value, x.tol ?? { abs: 1e-9 }), dp = decimalsOf(x.value), rounded = Math.round(v * Math.pow(10, dp)) / Math.pow(10, dp);
+    if (Math.abs(v - x.value) <= hw + 1e-12 * Math.max(1, Math.abs(x.value)) || Math.abs(rounded - x.value) <= 1e-9 * Math.max(1, Math.abs(x.value))) return;
+    warn(file, at, `[slip-expr] "${x.slip}" works out to ${+v.toPrecision(8)}, not the entry's value ${x.value}: the slip the line names does not give the figure the entry holds`);
+  });
+};
 /* Session V: [wrong-band] a numeric wrong value with more decimals than the rounding the question asks for, whose band is narrower than half a rounding step:
    a learner who follows the slip and rounds as asked misses it, so its byKey line never fires (12 lines in stage-3). */
 const WORD_NUM = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
@@ -868,6 +894,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       tol(w.tol, `${where}.tol`);
       if (w.scale != null && !(typeof w.scale === 'number' && Number.isFinite(w.scale) && w.scale > 0 && w.scale !== 1)) err(file, `${where}.scale`, 'scale is a positive number other than 1, for a part asked in units of 10^-k (1e-5): the true value is accepted as well as the scaled one');
       wrongCannotFire(file, where, w.answer, w.tol, w.wrong);
+      slipExprCheck(file, where, w.wrong);   // ENGINE-BACKLOG 1029
       wrongBandNarrow(file, where, w, ctx);
       bandRules(file, where, w, ctx);   // ENGINE-BACKLOG 894, 909
       acceptFormCheck(file, where, w);   // ENGINE-BACKLOG 911
@@ -1130,7 +1157,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
     case 'table': {
       if (!Array.isArray(w.columns) || !Array.isArray(w.rows)) { err(file, where, 'table needs columns and rows'); break; }
       let editable = 0;
-      w.rows.forEach((r, i) => (r || []).forEach((c, j) => { if (isObj(c) && c.edit) { editable++; keys.add(`r${i}c${j}`); keys.add(`r${i + 1}c${j + 1}`); if (Array.isArray(c.wrong)) c.wrong.forEach(x => { if (isObj(x) && typeof x.id === 'string') keys.add(x.id); }); /* item 576: a cell's own wrong id is the key table.js returns */ if (Array.isArray(c.wrong)) { const ids = c.wrong.filter(x => isObj(x) && typeof x.id === 'string').map(x => x.id); if (ids.length) (keys.slip = keys.slip || new Map()).set(`r${i}c${j}`, ids); } /* item 584: cell id with wrong[] ids, for the dead-key warning */ if (typeof c.answer === 'string' && c.answer.trim() && !Number.isFinite(+c.answer)) { if (c.accept != null && !(Array.isArray(c.accept) && c.accept.every(x => typeof x === 'string'))) err(file, `${where}.rows[${i}][${j}].accept`, 'accept is a list of other spellings'); return; } /* item 118: a text answer, graded ignoring case */ if (typeof c.answer !== 'number') err(file, `${where}.rows[${i}][${j}].answer`, 'editable cell needs a numeric answer, or a text one such as "True"'); wrongCannotFire(file, `${where}.rows[${i}][${j}]`, c.answer, c.tol, c.wrong); if (c.tol) tol(c.tol, `${where}.rows[${i}][${j}].tol`); else err(file, `${where}.rows[${i}][${j}].tol`, 'editable cell needs a tol'); } }));
+      w.rows.forEach((r, i) => (r || []).forEach((c, j) => { if (isObj(c) && c.edit) { editable++; keys.add(`r${i}c${j}`); keys.add(`r${i + 1}c${j + 1}`); if (Array.isArray(c.wrong)) c.wrong.forEach(x => { if (isObj(x) && typeof x.id === 'string') keys.add(x.id); }); /* item 576: a cell's own wrong id is the key table.js returns */ if (Array.isArray(c.wrong)) { const ids = c.wrong.filter(x => isObj(x) && typeof x.id === 'string').map(x => x.id); if (ids.length) (keys.slip = keys.slip || new Map()).set(`r${i}c${j}`, ids); } /* item 584: cell id with wrong[] ids, for the dead-key warning */ if (typeof c.answer === 'string' && c.answer.trim() && !Number.isFinite(+c.answer)) { if (c.accept != null && !(Array.isArray(c.accept) && c.accept.every(x => typeof x === 'string'))) err(file, `${where}.rows[${i}][${j}].accept`, 'accept is a list of other spellings'); return; } /* item 118: a text answer, graded ignoring case */ if (typeof c.answer !== 'number') err(file, `${where}.rows[${i}][${j}].answer`, 'editable cell needs a numeric answer, or a text one such as "True"'); wrongCannotFire(file, `${where}.rows[${i}][${j}]`, c.answer, c.tol, c.wrong); slipExprCheck(file, `${where}.rows[${i}][${j}]`, c.wrong); if (c.tol) tol(c.tol, `${where}.rows[${i}][${j}].tol`); else err(file, `${where}.rows[${i}][${j}].tol`, 'editable cell needs a tol'); } }));
       if (!editable) err(file, `${where}.rows`, 'no editable cell');
       break;
     }

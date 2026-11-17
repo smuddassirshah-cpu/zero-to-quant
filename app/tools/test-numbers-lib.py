@@ -64,6 +64,20 @@ ok_c = h1 and c1 and not c2 and s_missing and not s_false and s_true
 print(f"{'PASS' if ok_c else 'FAIL'} hyphenated key reads, claim records, stated fails only while the false wording is present")
 if not ok_c:
     sys.exit(1)
+# ENGINE-BACKLOG 1029: check_slips, a slip expression that gives its value, one that gives another, one that does not read, a rounded value
+from numbers_lib import slip_eval
+sl = Level('odes', 3)
+sl.files = {'lx': {'screens': [{'widget': {'kind': 'numeric', 'answer': 1.73, 'tol': {'abs': 0.005}, 'wrong': [
+    {'id': 'good', 'value': 0.43, 'tol': {'abs': 0.005}, 'slip': '0.25 * 1.2^3'}, {'id': 'rounded', 'value': 1.4142, 'slip': 'sqrt(2)'},
+    {'id': 'bad', 'value': 0.5, 'tol': {'abs': 0.005}, 'slip': '0.25 * 1.2^3'}, {'id': 'prose', 'value': 0.4, 'slip': 'a quarter of it'},
+    {'id': 'none', 'value': 9}]}}]}}
+with contextlib.redirect_stdout(io.StringIO()):
+    n_sl = sl.check_slips()
+rs = {r[1].split('"')[1]: r[0] for r in sl.results}
+ok_s = n_sl == 4 and rs == {'good': True, 'rounded': True, 'bad': False, 'prose': False} and slip_eval('2^3 + max(1, 2)') == 10 and slip_eval('__import__("os")') is None and slip_eval('1/0') is None
+print(f"{'PASS' if ok_s else 'FAIL'} check_slips: matching and rounded expressions pass, a wrong value and unreadable text fail, nothing else is read")
+if not ok_s:
+    sys.exit(1)
 # B2-E4: Bank("<file id>") reads items[<item id>] paths; expect with and without the file argument, a wrong id and a missing item fail, check_wrongs runs
 from numbers_lib import Bank
 with contextlib.redirect_stdout(io.StringIO()):

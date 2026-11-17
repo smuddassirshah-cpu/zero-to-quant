@@ -16,7 +16,8 @@ Use from docs/reports/<course>-L<n>-numbers.py:
     lv.expect("l12", "screens[2]", 7)                             # a path that ends on an object or list searches every string below it
     lv.expect("l12", "screens[*].prose", 7)                       # [*] joins every element
     lv.check_wrongs()                                             # every numeric wrong[].value: outside the answer tolerance (ENGINE-BACKLOG 582)
-    lv.claim(abs(a - b) < 0.01, "a and b agree")                  # a claim that is not one number: an inequality, a coverage statement (ENGINE-BACKLOG 606)
+    lv.check_slips()                                              # a wrong[] entry's optional "slip" expression must give its value (ENGINE-BACKLOG 1029)
+    lv.claim(abs(a - b) < 0.01, "a and b agree")                # a claim that is not one number: an inequality, a coverage statement (ENGINE-BACKLOG 606)
     lv.stated("l7", "screens[2].prose", "is always positive", x > 0)    # tied to its wording: fails while the sentence is in the text and false, passes once reworded
     lv.claim_text("l7", "screens[2].prose", "phrase", ok, "label")      # the same with your own label
     lv.report()                                                   # prints the count, exits 1 on any failure
@@ -32,6 +33,7 @@ reads the feedback.byKey text for that wrong id on the same screen or item and p
 text states numbers and none equals the wrong value: a count by default, the lines with verbose=True or --verbose. Call it in every number script, before report().
 """
 import json
+import math
 import os
 import re
 import sys
@@ -39,6 +41,30 @@ import sys
 COURSES = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'content', 'courses')
 BANK = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'content', 'bank')
 _PART = re.compile(r'([A-Za-z_][\w-]*)|\[([^\]]+)\]')   # a key may hold a hyphen: feedback.byKey.test-3 (ENGINE-BACKLOG 606)
+
+
+_SLIP_NAMES = {'sqrt': math.sqrt, 'exp': math.exp, 'ln': math.log, 'log': math.log, 'log10': math.log10, 'abs': abs, 'pow': math.pow,
+               'min': min, 'max': max, 'round': round, 'pi': math.pi, 'e': math.e}
+
+
+def slip_eval(expr):
+    """Evaluate the "slip" expression of a wrong[] entry (ENGINE-BACKLOG 1029): numbers, + - * / ^ ** ( ), the constants pi and e, and the functions
+    sqrt, exp, ln, log (natural), log10, abs, pow, min, max, round: the same grammar as tools/validate.mjs. Returns a float, or None when it does not read."""
+    t = str(expr).replace('^', '**')
+    if not re.fullmatch(r'[\d\s.+\-*/(),A-Za-z_]*', t):
+        return None
+    if any(i not in _SLIP_NAMES for i in re.findall(r'[A-Za-z_][A-Za-z_0-9]*', t)):
+        return None
+    try:
+        v = float(eval(t, {'__builtins__': {}}, dict(_SLIP_NAMES)))   # noqa: S307 (characters and names are whitelisted above)
+    except Exception:
+        return None
+    return v if math.isfinite(v) else None
+
+
+def _half(a, t):
+    t = {'abs': t} if isinstance(t, (int, float)) else (t or {})
+    return abs(a) * t['rel'] + 1e-12 if t.get('rel') is not None else (t.get('abs') or 0) + 1e-9
 
 
 def _strings(x):
@@ -231,6 +257,40 @@ class Level:
         elif hand:
             print(f'check by hand: {len(hand)} byKey line(s) state numbers other than the wrong value (not failures; rerun with --verbose to list them)')
         return hand
+
+    def check_slips(self, file=None):
+        """ENGINE-BACKLOG 1029: every wrong[] entry that carries a "slip" expression must evaluate to its value (within its band, or once rounded to the value's own
+        decimals). Same grammar as the validator's [slip-expr]; call it in a number script beside check_wrongs. Returns the number of entries checked."""
+        n = [0]
+
+        def visit(node, path, fid):
+            if isinstance(node, list):
+                for i, x in enumerate(node):
+                    visit(x, f'{path}[{i}]', fid)
+                return
+            if not isinstance(node, dict):
+                return
+            wr = node.get('wrong')
+            if isinstance(wr, list):
+                for i, w in enumerate(wr):
+                    if not isinstance(w, dict) or 'slip' not in w:
+                        continue
+                    n[0] += 1
+                    label = f'{fid} {path}.wrong[{i}] "{w.get("id")}" slip {w["slip"]!r}'
+                    v, val = (slip_eval(w['slip']) if isinstance(w['slip'], str) else None), w.get('value')
+                    if v is None or not isinstance(val, (int, float)) or isinstance(val, bool):
+                        self._rec(False, label, 'does not read as arithmetic, or the entry has no numeric value')
+                        continue
+                    r = repr(val)
+                    dp = len(r.split('.')[1]) if '.' in r and 'e' not in r else 0
+                    ok = abs(v - val) <= _half(val, w.get('tol') or {'abs': 1e-9}) or abs(round(v, dp) - val) <= 1e-9 * max(1.0, abs(val))
+                    self._rec(ok, label, '' if ok else f'works out to {v:.8g}, not the value {val!r}')
+            for k, x in node.items():
+                visit(x, f'{path}.{k}' if path else k, fid)
+        for fid, doc in self.files.items():
+            if file is None or fid == self._file(file)[0]:
+                visit(doc, '', fid)
+        return n[0]
 
     def _rec(self, ok, label, note):
         self.results.append((ok, label, note))
