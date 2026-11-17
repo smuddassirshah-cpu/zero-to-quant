@@ -138,7 +138,7 @@ const prob = (explain, extra = {}, fbx = {}) => set([{ id: 'p-x', prose: 'A brok
     check('26 the unwaived hit still fails the run (exit 1)', scan(root, ['--all'], w({ source: 'courses/c/l1.json' })).status === 1);
   });
   const real = JSON.parse(readFileSync(join(HERE, 'same-course-waivers.json'), 'utf8'));
-  check('27 tools/same-course-waivers.json: the 53 waivers all stand and 52 name a source', real.length === 53 && real.filter((x) => x.source).length === 52 && real.every((x) => /^stands/.test(x.reason)), `${real.length} ${real.filter((x) => x.source).length}`);
+  check('27 tools/same-course-waivers.json: the 60 waivers all stand and 59 name a source', real.length === 60 && real.filter((x) => x.source).length === 59 && real.every((x) => /^stands/.test(x.reason)), `${real.length} ${real.filter((x) => x.source).length}`);
 }
 
 // ---- 5. rate exemptions ----
