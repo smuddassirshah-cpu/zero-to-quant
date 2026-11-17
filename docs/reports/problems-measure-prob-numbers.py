@@ -351,7 +351,7 @@ def level2():
     wrong_is(it, 'p-settlement-fails', 4, 'variance', EN2 - EN ** 2, 3)
     wrong_is(it, 'p-settlement-fails', 4, 'mean-sq', EN ** 2, 3)
     choice_key(it, 'p-settlement-fails', 5, 'inf')
-    ok(all(pk(k) * 5 ** k == F(16, 25) * (k + 1) for k in range(30)) and float(sum(pk(k) * 5 ** k for k in range(1000))) > 3e5, 'fails: E[5^N] terms are 0.64(k+1), partial sums grow without bound')
+    ok(all(pk(k) * 6 ** k == F(16, 25) * (k + 1) * F(6, 5) ** k for k in range(30)) and float(sum(pk(k) * 6 ** k for k in range(300))) > 1e15 and Gs.subs(sS, 6) == 16 and abs(6 ** 0.5 - 2.449) < 1e-3, 'fails: E[6^N] terms are 0.64(k+1)1.2^k, partial sums grow without bound; G(6) = 16 only formally; 6^0.5 = 2.45')
 
     # p-compounding
     R = sp.Symbol('R')
@@ -413,7 +413,8 @@ def level2():
     t1 = 10 * 0.9 ** 100 / (1 - math.sqrt(0.9))
     t2 = sum(0.9 ** (n / 2) / 0.1 for n in range(200, 6000))
     num_part(it, 'p-boom-bust', 4, t1, t2, 5, eps=1e-9)
-    ok(round(0.9 ** 100, 7) == 0.0000266 and round(1 - math.sqrt(0.9), 4) == 0.0513 and round(math.sqrt(0.9), 4) == 0.9487, 'boom: printed 0.0000266, 0.0513, 0.9487')
+    ok(round(0.9 ** 100, 8) == 0.00002656 and round(1 - math.sqrt(0.9), 4) == 0.0513 and round(math.sqrt(0.9), 4) == 0.9487, 'boom: printed 0.00002656, 0.0513, 0.9487')
+    ok(all(abs(round(10 * a / b, 5) - 0.005176) <= 5e-6 for a in (0.9 ** 100, 0.00002656) for b in (1 - math.sqrt(0.9), 0.0513, 1 - 0.9487)), 'boom: part 4 carried forward with each printed figure stays in the band')
     wrong_is(it, 'p-boom-bust', 4, 'one-day', 10 * 0.9 ** 100, 6)
     wrong_is(it, 'p-boom-bust', 4, 'no-root', t1 / 10, 6)
     wrong_is(it, 'p-boom-bust', 4, 'epsilon', t1 * 10, 5)

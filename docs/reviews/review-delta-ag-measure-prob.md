@@ -123,3 +123,19 @@ Three things, all from the first read. (a) Finding 3: the block is 44, not 77, b
 2. A slip line that prints a later part's key is found only by reading (first read findings 7 and 11, finding 2 here: three times, so a rule is due). Rule: no `byKey` line, `generic` line or option `why` of part $k$ holds the `answer` of a later numeric part of the same item, as a number or as a power with that exponent, unless the question of part $k$ prints it.
 3. An `explain` or `feedback` line of part $k$ that cites "part $k$" itself, or a later part, is cheap to flag (finding 3).
 4. `fresh-check` reads `why` lines but did not match "A non-negative variable always has a mean in $[0, \infty]$" against l5's "Every $X \ge 0$ has a mean in $[0, \infty]$", nor the option set of a choice part against the option set of a lesson choice screen (finding 4).
+
+## Fix pass
+
+1. fixed: `p-boom-bust` part 4 correct line prints 0.00002656. Recomputed: $0.9^{100} = 0.0000265614$, $1 - \sqrt{0.9} = 0.051317$; 0.00002656 / 0.0513 x 10 = 0.0051774, and with 0.051317 or 0.9487 it is 0.0051756 or 0.0051774; each typed at 5 places is 0.00518, inside the band $0.005176 \pm 0.000005$ (checked in the author's script).
+2. fixed: `p-settlement-fails` part 1 `jensen` line now "a power of the mean", no 0.5.
+3. fixed: `p-trial-stake` part 4 `explain` now cites part 3.
+4. fixed, ruled `reuse` by the main session: part 5 replaced by the tested $6^N$ part, key id `inf`. Recomputed: $0.2 \times 6 = 1.2$; $16/(5 - 6)^2 = 16$; $6^{0.5} = 2.449 \approx 2.45$. Exactly one option is correct (`inf`); `formula` (16), `finite` and `power` (2.45) are each false as stated. Part 1 (the $1.25^N$ step, $G(1.25)$) reads correctly beside it. Author's script line 354 moved to $6^N$.
+5. fixed: `p-boom-bust` part 5 question no longer infers almost sure convergence from one $\varepsilon$; key 21.64657 unchanged.
+6. fixed: `p-settlement-fails` part 2 `explain` as written ($N \ge 1$, $N = 0$ term is 0).
+7. fixed: `p-quote-ladder` `countable` `why` as written.
+8. fixed: `p-trial-stake` part 2 `generic` and part 3 option `law` as written.
+9. fixed: `p-settlement-fails` part 2 option `dct` now claims "needs no further check"; it is false as stated (the bound needs a finite mean, which is the number sought), so exactly one option (`mct`) is correct.
+
+Keys changed: none numeric. Graded answers changed: none (part 5 key id `inf` is unchanged; option ids `undefined`, `shrink` became `formula`, `power`).
+
+Gates: author's script 801 checks, 0 failures; reader's script exit 0; delta script 0 FINDING lines, exit 0; validator 0 errors, no pass 8 warning on the sets; voice scan 0 and 0; `fresh-check` 0 hits on each set; `grade-all` 0 failures on each set; playthrough sets 1, 2 and 3 pass with and without `--mobile`.
