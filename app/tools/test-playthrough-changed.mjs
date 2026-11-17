@@ -110,10 +110,14 @@ const before = [1, 2, 3].map(i => shardList(i, 3));
 const donor = fs.readdirSync(path.join(copy, 'content/courses')).sort().find(c => fs.readdirSync(path.join(copy, 'content/courses', c)).some(f => /^problems-\d+\.json$/.test(f))), seedSet = fs.readdirSync(path.join(copy, 'content/courses', donor)).find(f => /^problems-\d+\.json$/.test(f));
 const extraSets = ['problems-90', 'problems-91'];   // two, not three: three would shift a position by 3, which a three-way split by position would not notice
 if (seedSet) for (const x of extraSets) fs.copyFileSync(path.join(copy, 'content/courses', donor, seedSet), path.join(copy, 'content/courses', donor, x + '.json'));
+/* engine pass 9 item f: a set the manifest does not list is refused, so list the added sets the way the validator would */
+const manFile = path.join(copy, 'content/manifest.json'), manOld = fs.readFileSync(manFile, 'utf8');
+if (seedSet) { const m = JSON.parse(manOld); for (const x of extraSets) m.problems[`${donor}/${x}`] = { ...m.problems[`${donor}/${seedSet.replace(/\.json$/, '')}`] }; fs.writeFileSync(manFile, JSON.stringify(m)); }
 const after = [1, 2, 3].map(i => shardList(i, 3));
 const moved = before.flatMap((s, i) => [...s].filter(id => !after[i].has(id)));
 ok(!!seedSet && before.reduce((a, s) => a + s.size, 0) > 30 && moved.length === 0 && after.reduce((a, s) => a + s.size, 0) === before.reduce((a, s) => a + s.size, 0) + extraSets.length, `two problem sets added under the first course move none of the ${before.reduce((a, s) => a + s.size, 0)} others to another shard (${moved.length} moved)`);
 ok(Math.max(...before.map(s => s.size)) - Math.min(...before.map(s => s.size)) <= 0.5 * before.reduce((a, s) => a + s.size, 0) / 3, `the three shards stay about as big as each other (${before.map(s => s.size).join(', ')})`);
+fs.writeFileSync(manFile, manOld);
 for (const x of extraSets) fs.rmSync(path.join(copy, 'content/courses', donor, x + '.json'), { force: true });
 
 /* 7b. what the cache may be trusted for (engine pass AC part 5): the same viewport, and the same browser. Seeded at desktop, nothing is green for --mobile or --tablet;
