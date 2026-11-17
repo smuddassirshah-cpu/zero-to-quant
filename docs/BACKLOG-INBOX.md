@@ -89,3 +89,6 @@ Raised later (problems pdes, session AF):
 Raised later (problems measure-prob re-author AF):
 - `[tight-band]` and `[wrong-band]` take the rounding from the item `prose` before the question's own "a decimal to 3 places": `roundingAsked(question) ?? roundingAsked(prose) ?? toPlaces(question)` read "the whole number with" in a draft prose of problems-1 `p-quote-ladder` as 0 places and raised six false warnings. Try `toPlaces(question)` before the prose.
 - `fresh-check` does not match a function whose letter is renamed and whose law differs: a draft of problems-2 `p-settlement-fails` charged $1.5^N$ against review-2 `r-heavy`'s $X = 1.5^K$ with no hit; found by hand and moved to $1.25^N$.
+
+Raised later (problems topology fix pass):
+- `fresh-check.mjs --file content/courses/topology/problems-3.json` runs for more than two minutes on its own (sets 1 and 2 finish well inside), so it cannot meet the brief's two-minute command rule; it was run in the background. A progress line or a cache of the course corpus between runs would help.

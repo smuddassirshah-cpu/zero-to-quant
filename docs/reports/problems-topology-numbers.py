@@ -48,7 +48,7 @@ def printed(text, v, places):
     return any(abs(x - want) < 1e-9 for x in nums_in(text))
 
 
-def num(items, iid, k, m1, m2, slips, places=4, agree=1e-9):
+def num(items, iid, k, m1, m2, slips, places=4, agree=1e-9, shown=None):
     """m1, m2: the answer by two routes. slips: {wrong id: value rebuilt from the named slip (unrounded)}."""
     part = items[iid]['parts'][k - 1]
     w, tag = part['widget'], f'{iid} p{k}'
@@ -71,6 +71,10 @@ def num(items, iid, k, m1, m2, slips, places=4, agree=1e-9):
         ok(abs(v - w['answer']) > tol + x['tol']['abs'], f'{tag}: wrong {x["id"]} inside the key band')
         ok(x['id'] in by, f'{tag}: wrong {x["id"]} has no byKey line')
     ok(len(set(ids)) == len(ids), f'{tag}: repeated wrong id')
+    if shown is not None:   # an exact fraction: the TeX form is printed in both texts
+        ok(shown in part['feedback']['correct'], f'{tag}: {shown} not printed in feedback.correct')
+        ok(shown in part['explain']['text'], f'{tag}: {shown} not printed in explain')
+        return
     ok(printed(part['feedback']['correct'], m1, places), f'{tag}: key not printed in feedback.correct')
     ok(printed(part['explain']['text'], m1, places), f'{tag}: key not printed in explain')
 
@@ -289,27 +293,39 @@ def level2():
     ok({frozenset(rev[x] for x in u) for u in tau} != tau, 'reversal is not a homeomorphism')
     num(it, 'p-four-point-line', 4, len(homeos), len(homeos2), {'reversal': 2, 'every-bijection': math.factorial(4)}, places=None)
 
-    # p-bond-yield-map
-    P, yy = sp.symbols('P y', positive=True)
-    inv = sp.solve(sp.Eq(P, 100 / (1 + yy)), yy)[0]
-    expr(it, 'p-bond-yield-map', 1, inv, ['P'], lambda pt: 100 / pt['P'] - 1)
-    Pf = lambda y: 100 / (1 + y)
-    lo1 = float(sp.Rational(100, 105))
-    lo2 = min(Pf(0.02 + k * 0.03 / 100000) for k in range(100001))
-    num(it, 'p-bond-yield-map', 2, lo1 * 100, lo2, {'upper-end': Pf(0.02), 'linear': 100 * (1 - 0.05)}, agree=1e-9)
-    y1 = float(sp.Rational(3, 97))
-    lo, hi = 0.02, 0.05
-    for _ in range(80):
-        mid = (lo + hi) / 2
-        lo, hi = (mid, hi) if Pf(mid) > 97 else (lo, mid)
-    num(it, 'p-bond-yield-map', 3, y1, lo, {'linear': 0.03, 'flipped': 97 / 100 - 1}, agree=1e-12)
-    ok(round(Pf(0.05), 4) < 97 < round(Pf(0.02), 4), '97 lies in the price interval')
-    lv.expect('problems', 'items[1].parts[2].question', round(Pf(0.02), 4))
-    grid = [0.02 + k * 0.03 / 30000 for k in range(30001)]
-    A = [g for g in grid if abs(g - y1) > 1e-7]
-    prices = sorted(Pf(g) for g in A)
-    gaps = sum(1 for a, b in zip(prices, prices[1:]) if a < 97 < b)
-    num(it, 'p-bond-yield-map', 4, 2, 1 + gaps, {'one-piece': 1, 'three': 3}, places=None)
+    # p-signal-bands. f: R -> S = {sell, hold, buy}: sell below 98, hold on [98, 102], buy above 102.
+    S3 = frozenset('shb')
+    subs = [frozenset(c) for r in range(4) for c in itertools.combinations('shb', r)]
+    # route 1: a preimage holding hold contains [98, 102]; it is open only when it is all of R
+    tau_s = [W for W in subs if 'h' not in W or W == S3]
+    # route 2: the preimage as a union of bands, tested for openness at its end points on a fine grid
+    band = lambda xv: 's' if xv < 98 else ('h' if xv <= 102 else 'b')
+    def pre_open(W):
+        pts = [90 + k / 100 for k in range(0, 2001)]
+        inside = [p for p in pts if band(p) in W]
+        return all(band(p - 0.001) in W and band(p + 0.001) in W for p in inside)
+    tau_s2 = [W for W in subs if pre_open(W)]
+    num(it, 'p-signal-bands', 1, len(tau_s), len(tau_s2), {'all-subsets': 8, 'no-ends': len(tau_s) - 2}, places=None)
+    ok(set(tau_s) == set(tau_s2), 'signal: both routes give the same open-preimage sets')
+    mids = [W for W in tau_s if W not in (frozenset(), S3)]
+    def is_top(fam):
+        return frozenset() in fam and S3 in fam and all(a | b in fam and a & b in fam for a in fam for b in fam)
+    subtops = [c for r in range(len(mids) + 1) for c in itertools.combinations(mids, r) if is_top(set(c) | {frozenset(), S3})]
+    # route 2: every topology on three points (brute force over all families), kept when inside tau
+    all_tops = [fam for r in range(len(subs) + 1) for fam in itertools.combinations(subs, r) if is_top(set(fam))]
+    inside_tau = [fam for fam in all_tops if set(fam) <= set(tau_s)]
+    num(it, 'p-signal-bands', 2, len(subtops), len(inside_tau), {'all-choices': 2 ** len(mids), 'tau-only': 1, 'all-topologies': len(all_tops)}, places=None)
+    ok(len(all_tops) == 29, 'signal: 29 topologies on three points')
+    conn = [A for A in subs if A and connected(set(tau_s), A)]
+    # route 2: a subset is connected when no two disjoint non-empty relatively open sets cover it
+    def conn2(A):
+        rel = {U & A for U in tau_s}
+        return not any(U and V and not (U & V) and (U | V) == A for U in rel for V in rel)
+    conn_b = [A for A in subs if A and conn2(A)]
+    num(it, 'p-signal-bands', 3, len(conn), len(conn_b), {'all': 7, 'singletons': 3, 'no-pairs': 4}, places=None)
+    ok(frozenset('sb') not in conn and all(A in conn for A in subs if A and 'h' in A), 'signal: only {sell, buy} splits')
+    one_correct(it, 'p-signal-bands', 4, 'connected-image')
+    ok(band(97) == 's' and band(104) == 'b', 'signal: the path starts at sell and ends at buy')
 
     # p-gapped-domain. Y = [0,1) u (1,2] u {4}
     def inY(t):
@@ -362,7 +378,8 @@ def level2():
     num(it, 'p-right-rays', 3, len(good), 3, {'with-flip': len(usual)}, places=None)
     one_correct(it, 'p-right-rays', 4, 'conn-not-haus')
 
-    lv.expect('problems', 'items[1].prose', 100)
+    lv.expect('problems', 'items[1].prose', 98)
+    lv.expect('problems', 'items[1].prose', 102)
     lv.expect('problems', 'items[2].prose', 0.9)
     lv.check_wrongs()
     return lv
@@ -381,89 +398,105 @@ def level3():
     lv = Level('topology', 3)
     x = sp.Symbol('x', real=True)
 
-    # p-quadratic-iteration. g = (x^2 + 5)/6 on [0, 2].
-    g = (x ** 2 + 5) / 6
-    gf = lambda t: (t * t + 5) / 6
-    grid = [k / 10000 for k in range(20001)]
-    M1 = sp.maximum(g, x, sp.Interval(0, 2))
-    num(it, 'p-quadratic-iteration', 1, float(M1), max(gf(t) for t in grid), {'min-value': gf(0), 'at-one': gf(1)})
-    ok(abs(min(gf(t) for t in grid) - 5 / 6) < 1e-12, 'image starts at 5/6')
-    q1 = sp.maximum(sp.Abs(sp.diff(g, x)), x, sp.Interval(0, 2))
-    q2 = max(abs(gf(a) - gf(b)) / (b - a) for a, b in zip(grid, grid[1:]))
-    num(it, 'p-quadratic-iteration', 2, float(q1), q2, {'at-fixed': 1 / 3, 'image-end': 1.5 / 3, 'no-six': 4 / 3}, agree=1e-4)
-    d01 = gf(0) - 0
-    n1 = math.ceil(math.log(1e-6 * (1 - 2 / 3) / d01) / math.log(2 / 3))
-    n2 = first_n(lambda n: (2 / 3) ** n / (1 / 3) * d01, 1e-6)
-    num(it, 'p-quadratic-iteration', 3, n1, n2, {'no-denominator': first_n(lambda n: (2 / 3) ** n * d01, 1e-6),
-                                                 'q-third': first_n(lambda n: (1 / 3) ** n / (2 / 3) * d01, 1e-6),
-                                                 'q-half': first_n(lambda n: 0.5 ** n / 0.5 * d01, 1e-6)}, places=None)
-    ok(abs(2.5 * (2 / 3) ** 36 - 1.14e-6) < 0.005e-6 and abs(2.5 * (2 / 3) ** 37 - 7.6e-7) < 0.05e-7, 'printed bounds at 36 and 37')
-    roots = sp.solve(sp.Eq(x, g), x)
-    inside = [r for r in roots if 0 <= r <= 2]
-    xi = 0.0
-    for _ in range(200):
-        xi = gf(xi)
-    num(it, 'p-quadratic-iteration', 4, int(inside[0]), round(xi, 9), {'other-root': int(max(roots))}, places=None)
-    rate1 = sp.diff(g, x).subs(x, 1)
-    xs = [0.0]
-    for _ in range(60):
-        xs.append(gf(xs[-1]))
-    rate2 = (xs[16] - 1) / (xs[15] - 1)
-    num(it, 'p-quadratic-iteration', 5, float(rate1), rate2, {'used-q': 2 / 3, 'value': 1.0}, agree=1e-6)
+    # p-kernel-equation. T(f)(x) = 1 + (x/2) int_0^1 t f(t) dt on (C[0, 1], d_inf).
+    t_, c_ = sp.symbols('t c')
+    q1 = sp.Rational(1, 2) * sp.integrate(t_, (t_, 0, 1))
+    # route 2: the constant gap f - g = 1 attains the bound; midpoint rule for the integral, x = 1
+    nmid = 4000
+    integ = lambda fn: sum(fn((k + 0.5) / nmid) for k in range(nmid)) / nmid
+    q2 = 0.5 * integ(lambda s: s * 1.0)
+    num(it, 'p-kernel-equation', 1, float(q1), q2, {'no-t': 0.5 * integ(lambda s: 1.0), 'x-averaged': float(q1) / 2}, places=4, agree=1e-8, shown=r'\tfrac14')
+    c1 = sp.solve(sp.Eq(c_, sp.Rational(1, 2) * sp.integrate(t_ * (1 + c_ * t_), (t_, 0, 1))), c_)[0]
+    cc = 0.0
+    for _ in range(80):                         # route 2: iterate T on the coefficient of x
+        cc = 0.5 * integ(lambda s: s * (1 + cc * s))
+    num(it, 'p-kernel-equation', 2, float(c1), cc, {'one-step': 0.25,
+                                                   'no-t': float(sp.solve(sp.Eq(c_, sp.Rational(1, 2) * sp.integrate(1 + c_ * t_, (t_, 0, 1))), c_)[0]),
+                                                   'no-square': float(sp.solve(sp.Eq(c_, sp.Rational(1, 2) * (sp.Rational(1, 2) + c_ / 2)), c_)[0])},
+        places=4, agree=1e-8, shown=r'\tfrac{3}{10}')
+    xg = [k / 1000 for k in range(1001)]
+    e1 = sp.Abs(c1 - sp.Rational(1, 4))
+    e2 = max(abs((1 + cc * xv) - (1 + xv / 4)) for xv in xg)
+    num(it, 'p-kernel-equation', 3, float(e1), e2, {'at-half': float(e1) / 2, 'added': 0.25 + float(c1)}, places=4, agree=1e-8, shown=r'\tfrac{1}{20}')
+    ok(abs(1 + 0.5 * integ(lambda s: s * 1.0) - 1.25) < 1e-9, 'kernel: f_1 = 1 + x/4')
+    bound = q1 / (1 - q1) * sp.Rational(1, 4)
+    r1 = bound / e1
+    r2 = (q2 / (1 - q2) * max(abs(xv / 4) for xv in xg)) / e2
+    num(it, 'p-kernel-equation', 4, float(r1), r2, {'no-denominator': float(q1 * sp.Rational(1, 4) / e1), 'inverted': float(1 / r1),
+                                                   'over-one-minus': float(sp.Rational(1, 4) / (1 - q1) / e1)}, places=4, agree=1e-6, shown=r'\tfrac53')
+    ok(bound == sp.Rational(1, 12) and e1 < bound, 'kernel: the bound 1/12 holds over the true error 1/20')
+    lv.expect('problems', 'items[0].parts[2].explain.text', 0.05)
+    lv.expect('problems', 'items[0].parts[1].explain.text', 0.3)
 
-    # p-input-output
-    A = sp.Matrix([[F(1, 2), F(3, 5)], [F(1, 5), F(3, 10)]])
-    b = sp.Matrix([1, 2])
-    Tm = lambda v: A * v + b
-    u, v = sp.Matrix([3, 3]), sp.Matrix([2, 2])
-    du = Tm(u) - Tm(v)
-    ok(list(Tm(u)) == [F(43, 10), F(7, 2)] and list(Tm(v)) == [F(16, 5), 3], 'T(u), T(v) as printed')
-    Af = [[0.5, 0.6], [0.2, 0.3]]
-    Tf = lambda p: (Af[0][0] * p[0] + Af[0][1] * p[1] + 1, Af[1][0] * p[0] + Af[1][1] * p[1] + 2)
-    tu, tv = Tf((3, 3)), Tf((2, 2))
-    num(it, 'p-input-output', 1, float(max(abs(c) for c in du)), max(abs(tu[0] - tv[0]), abs(tu[1] - tv[1])),
-        {'transpose': max(0.5 + 0.2, 0.6 + 0.3), 'taxicab': float(sum(abs(c) for c in du))}, agree=1e-12)
-    r1 = sum(abs(c) for c in du) / 2
-    num(it, 'p-input-output', 2, float(r1), (abs(tu[0] - tv[0]) + abs(tu[1] - tv[1])) / 2, {'no-divide': 1.6, 'sup-ratio': 1.1}, agree=1e-12)
-    # route 2 for q in d_1: largest ratio over many random pairs
-    rnd = random.Random(3)
-    qd1 = max((abs(0.5 * a + 0.6 * c) + abs(0.2 * a + 0.3 * c)) / (abs(a) + abs(c)) for a, c in ((rnd.uniform(-1, 1), rnd.uniform(-1, 1)) for _ in range(200000)))
-    ok(abs(qd1 - 0.9) < 1e-3 and qd1 <= 0.9 + 1e-12 and float(max(A[0, 1] + A[1, 1], A[0, 0] + A[1, 0])) == 0.9, 'd_1 constant 0.9')
-    ok(Tf((10, 6))[0] <= 10 and Tf((10, 6))[1] <= 6 and Tf((0, 0)) == (1, 2), 'T maps X into X (monotone corners)')
-    d01 = 1 + 2
-    n1 = math.ceil(math.log(1e-3 * 0.1 / d01) / math.log(0.9))
-    n2 = first_n(lambda n: 0.9 ** n / 0.1 * d01, 1e-3)
-    num(it, 'p-input-output', 3, n1, n2, {'no-denominator': first_n(lambda n: 0.9 ** n * d01, 1e-3),
-                                         'dinf-move': first_n(lambda n: 0.9 ** n / 0.1 * 2, 1e-3),
-                                         'pair-ratio': first_n(lambda n: 0.8 ** n / 0.2 * d01, 1e-3)}, places=None)
-    ok(abs(30 * 0.9 ** 97 - 0.00109) < 0.000005 and abs(30 * 0.9 ** 98 - 0.00098) < 0.000005, 'printed bounds at 97 and 98')
-    xstar = (sp.eye(2) - A).solve(b)
-    p = (0.0, 0.0)
-    for _ in range(400):
-        p = Tf(p)
-    num(it, 'p-input-output', 4, float(xstar[0]), p[0], {'second': float(xstar[1]), 'transpose': float((sp.eye(2) - A.T).solve(b)[0])}, agree=1e-9)
-    ok(0 <= p[0] <= 10 and 0 <= p[1] <= 6 and (sp.eye(2) - A).det() == F(23, 100), 'fixed point in X, det 0.23')
+    # p-trapping-interval. T(x) = 0.2 e^x on B_r = [-r, r].
+    r_ = sp.Symbol('r', positive=True)
+    qexpr = 0.2 * sp.exp(r_)
+    qsym = sp.maximum(sp.diff(sp.Rational(1, 5) * sp.exp(x), x), x, sp.Interval(-1, 1))   # the max of T' on [-1, 1] sits at 1
+    ok(sp.simplify(qsym - sp.Rational(1, 5) * sp.E) == 0, 'trap: |T\'| largest at the right end')
+    part = it['p-trapping-interval']['parts'][0]
+    wq = part['widget']
+    forms = {'0.2e^{r}': lambda rv: 0.2 * math.exp(rv), '\\frac{e^{r}}{5}': lambda rv: math.exp(rv) / 5,
+             '\\frac{1}{5}e^{r}': lambda rv: math.exp(rv) / 5, '0.2e^r': lambda rv: 0.2 * math.exp(rv), 'e^r/5': lambda rv: math.exp(rv) / 5,
+             '0.2e^{-r}': lambda rv: 0.2 * math.exp(-rv), '0.2': lambda rv: 0.2, 'e^{r}': lambda rv: math.exp(rv)}
+    def ratio_sup(rv):                          # route 2: largest |T(x) - T(y)| / |x - y| over a grid of B_r
+        pts = [-rv + 2 * rv * k / 400 for k in range(401)]
+        return max(abs(0.2 * math.exp(a) - 0.2 * math.exp(b)) / (b - a) for a, b in zip(pts, pts[1:]))
+    for rv in (0.3, 0.8, 1.4):
+        ok(0 < float(qexpr.subs(r_, rv)) - ratio_sup(rv) < 5e-3 * ratio_sup(rv), f'trap: q at r = {rv} is the sup of the grid ratios, never reached')
+        for tex in [wq['answer']] + wq['accept']:
+            ok(abs(forms[tex](rv) - float(qexpr.subs(r_, rv))) < 1e-12, f'trap p1: form {tex}')
+        for wr in wq['wrong']:
+            ok(abs(forms[wr['tex']](rv) - float(qexpr.subs(r_, rv))) > 1e-3, f'trap p1: wrong {wr["id"]} equals the key')
+    ok(all(wr['id'] in part['feedback']['byKey'] for wr in wq['wrong']), 'trap p1: byKey lines')
+    one_correct(it, 'p-trapping-interval', 2, 'triangle')
+    ok(abs(0.5 * 1 + 5 - 5.5) < 1e-12 and abs(0.5 * -1 + 5 - 4.5) < 1e-12, 'trap p2: x/2 + 5 sends [-1, 1] to [4.5, 5.5]')
+    hfun = lambda rv: rv - 0.2 * rv * math.exp(rv) - 0.2
+    rs1 = float(sp.nsolve(r_ - 0.2 * r_ * sp.exp(r_) - 0.2, r_, 0.27))
+    lo, hi = 0.2, 0.5                           # route 2: bisection, and a scan for the first sign change
+    for _ in range(100):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if hfun(mid) < 0 else (lo, mid)
+    first = next(k / 100000 for k in range(1, 200000) if hfun(k / 100000) >= 0)
+    ok(abs(first - lo) < 2e-5, 'trap p3: the first sign change is the bisection root')
+    num(it, 'p-trapping-interval', 3, rs1, lo, {'no-q': 0.2, 'q-at-zero': 0.2 / 0.8}, agree=1e-9)
+    ok(hfun(0.27) < 0 and abs(hfun(0.27) + 0.0007) < 0.00005 and hfun(0.272) > 0, 'trap p3: printed trial values')
+    ok(abs(0.2 * math.exp(0.2711) - 0.2623) < 5e-5 and abs((1 - 0.2 * math.exp(rs1)) * rs1 - 0.2) < 1e-9, 'trap p3: printed q and room')
+    ok(abs(0.2 * math.exp(rs1) - 0.26) < 0.005, 'trap p3: q about 0.26')
+    xs_ = [0.0]
+    for _ in range(80):
+        xs_.append(0.2 * math.exp(xs_[-1]))
+    xstar = -float(sp.LambertW(-sp.Rational(1, 5)))
+    num(it, 'p-trapping-interval', 4, xstar, xs_[-1], {'one-step': 0.2, 'radius': round(rs1, 4)}, agree=1e-12)
+    ok([round(v, 4) for v in xs_[1:5]] == [0.2, 0.2443, 0.2553, 0.2582], 'trap p4: printed iterates')
+    ok(xstar <= rs1 and abs(xs_[12] - xstar) < 5e-5, 'trap p4: x* in B_r; a dozen steps fix 4 places')
 
-    # p-dyadic-points
-    out1 = sum(1 for n in range(0, 60) if 2.0 ** -n >= 0.01)
-    out2 = sum(1 for n in range(0, 60) if not (-0.01 < F(1, 2 ** n) < 0.01))
-    num(it, 'p-dyadic-points', 1, out1, out2, {'from-one': out1 - 1, 'one-more': out1 + 1}, places=None)
-    for n in range(0, 12):
-        lo_, hi_ = 0.75 * 2.0 ** -n, 1.25 * 2.0 ** -n
-        ok(sum(1 for m in range(0, 60) if lo_ < 2.0 ** -m < hi_) == 1 and not (lo_ < 0 < hi_), f'V_{n} holds one point')
-    # route 2: greedy smallest subcover of K by brute force over the members needed
-    Kpts = [0.0] + [2.0 ** -n for n in range(60)]
-    need = set()
-    for t in Kpts:
-        if -0.01 < t < 0.01:
-            need.add('U')
-        else:
-            need.add(f'V{round(-math.log2(t))}')
-    num(it, 'p-dyadic-points', 2, out1 + 1, len(need), {'no-u': out1}, places=None)
-    N1 = next(N for N in range(60) if 2.0 ** -N < 0.01)
-    N2 = next(N for N in range(60) if max(abs(2.0 ** -m - 2.0 ** -k) for m in range(N, 80) for k in range(N, 80)) < 0.01)
-    num(it, 'p-dyadic-points', 3, N1, N2, {'adjacent-gap': next(N for N in range(60) if 2.0 ** -N - 2.0 ** -(N + 1) < 0.01), 'eight': N1 + 1}, places=None)
-    one_correct(it, 'p-dyadic-points', 4, 'k-both')
+    # p-coin-paths. Paths in {u, d}^N, d = 2^-k at the first difference, V = sum x_k 2^-k.
+    kmin = next(k for k in range(1, 30) if F(1, 2 ** k) < F(1, 10))
+    # route 2: brute force over 6-day prefixes: classes of the relation d < 0.1
+    pre6 = [''.join(p_) for p_ in itertools.product('ud', repeat=6)]
+    dist = lambda a, b: next((F(1, 2 ** (i + 1)) for i in range(6) if a[i] != b[i]), F(0))
+    classes = {frozenset(b for b in pre6 if dist(a, b) < F(1, 10)) for a in pre6}
+    num(it, 'p-coin-paths', 1, 2 ** (kmin - 1), len(classes), {'four-days': 2 ** kmin, 'two-days': 2 ** (kmin - 2)}, places=None)
+    Vf = lambda s: sum(F(1, 2 ** (i + 1)) for i, ch in enumerate(s) if ch == 'u')
+    gap1 = F(1, 16) + sum(F(1, 2 ** k) for k in range(5, 200))           # finite sum, tail 2^-199
+    gap_exact = F(1, 16) + F(1, 16)
+    best = max(abs(Vf(a + 'u' + t1) - Vf(a + 'd' + t2)) for a in (''.join(p_) for p_ in itertools.product('ud', repeat=3)) for t1 in ('u' * 40, 'd' * 40) for t2 in ('u' * 40, 'd' * 40))
+    num(it, 'p-coin-paths', 2, float(gap_exact), float(gap1), {'day-only': 1 / 16, 'day-three': 2 * F(1, 8)}, places=4, agree=1e-12, shown=r'\tfrac18')
+    ok(abs(float(best) - 1 / 8) < 1e-9, 'coin p2: brute force over prefixes and long tails')
+    ok(all(abs(Vf(a) - Vf(b)) <= 2 * dist(a, b) + F(1, 2 ** 6) for a in pre6 for b in pre6), 'coin p2: |V - V\'| <= 2d on 6-day prefixes')
+    # p3: paths with V = 5/8, by the two binary forms; route 2: long prefixes within 2^-30 of 5/8
+    two = [s for s in ('udu' + 'd' * 40, 'udd' + 'u' * 40) if abs(Vf(s) - F(5, 8)) < F(1, 2 ** 40)]
+    near = {s[:6] for s in (''.join(p_) for p_ in itertools.product('ud', repeat=12)) if abs(Vf(s) - F(5, 8)) <= F(1, 2 ** 12)}
+    num(it, 'p-coin-paths', 3, len(two), len(near), {'one-path': 1}, places=None)
+    vn = [sum(F(1, 2 ** (2 * j - 1)) for j in range(1, n + 1)) for n in range(1, 40)]
+    lim1 = sp.Rational(1, 2) / (1 - sp.Rational(1, 4))
+    num(it, 'p-coin-paths', 4, float(lim1), float(vn[-1]), {'down-first': float(sp.Rational(1, 4) / (1 - sp.Rational(1, 4))), 'first-day': 0.5, 'all-days': 1.0},
+        places=4, agree=1e-9, shown=r'\tfrac23')
+    om = lambda n: 'ud' * n + 'd' * 10
+    ok(all(dist(om(m)[:6], om(n)[:6]) == (F(1, 2 ** (2 * min(m, n) + 1)) if 2 * min(m, n) < 6 else 0) for m in range(1, 4) for n in range(1, 4) if m != n),
+       'coin p4: omega_m, omega_n agree on 2 min(m, n) days')
+    lv.expect('problems', 'items[2].parts[0].question', 0.1)
+    lv.expect('problems', 'items[1].parts[3].question', 0.2711)
 
     # p-cube-delta
     sets = {'[-1,2]': (True, True), '[-1,2)': (False, True), '[-1,inf)': (True, False), '[-1,0]u{2}': (True, True)}
@@ -478,15 +511,16 @@ def level3():
     c12 = max(a * a + a * c + c * c for a in gridK[::100] for c in gridK[::100])
     expr(it, 'p-cube-delta', 3, e / 12, ['e'], lambda pt: pt['e'] / c12)
     xx = sp.Symbol('xx', positive=True)
-    root = [r for r in sp.solve(sp.expand((xx + sp.Rational(1, 100)) ** 3 - xx ** 3 - 1), xx) if r.is_real and r > 0][0]
+    dl = sp.Rational(1, 12)
+    cub = sp.expand((xx + dl) ** 3 - xx ** 3)
+    ok(cub == xx ** 2 / 4 + xx / 48 + sp.Rational(1, 1728), 'cube p4: the printed expansion')
+    root = [r for r in sp.solve(cub - 1, xx) if r.is_real and r > 0][0]
     lo, hi = 0.0, 10.0
     for _ in range(80):
         mid = (lo + hi) / 2
-        lo, hi = (lo, mid) if (mid + 0.01) ** 3 - mid ** 3 >= 1 else (mid, hi)
-    num(it, 'p-cube-delta', 4, float(root), hi, {'slope-only': math.sqrt(1 / 0.03)}, agree=1e-9)
-
-    lv.expect('problems', 'items[1].prose', 0.9)
-    lv.expect('problems', 'items[2].prose', 0.01)
+        lo, hi = (lo, mid) if (mid + 1 / 12) ** 3 - mid ** 3 >= 1 else (mid, hi)
+    num(it, 'p-cube-delta', 4, float(root), hi, {'slope-only': math.sqrt(1 / (3 / 12))}, agree=1e-9)
+    ok(abs(float(root) + 1 / 12 - 2.0415) < 5e-5 and float(root) + 1 / 12 > 2, 'cube p4: the pair reaches past the end of K')
     lv.check_wrongs()
     return lv
 

@@ -264,22 +264,7 @@ check(homeos == [tuple('abcd')], 'four-point: the one homeomorphism is the ident
 listed = re.findall(r'\\\{[a-d, ]*\\\}|\\varnothing|\$X\$', part(2, 'p-four-point-line', 2)['question'].split('how many')[0])
 check(len(listed) >= 8, 'four-point part 2 lists the 8 open sets')
 
-# ---- p-bond-yield-map
-P = lambda y: 100 / (1 + y)
-ps = [3.0, 80.0, 97.0, 250.0]
-inv = lambda p: bisect(lambda y: P(y) - p, -0.999999, 1e4)
-texcheck(2, 'p-bond-yield-map', 1, {
-    '\\frac{100}{P}-1': lambda p: 100 / p - 1, '100/P-1': lambda p: 100 / p - 1, '\\frac{100-P}{P}': lambda p: (100 - p) / p,
-    '\\frac{P}{100}-1': lambda p: p / 100 - 1, '1-\\frac{100}{P}': lambda p: 1 - 100 / p, '\\frac{100}{P}': lambda p: 100 / p},
-    lambda p: inv(p), ps)
-grid = [0.02 + i * 0.03 / 30000 for i in range(30001)]
-num(2, 'p-bond-yield-map', 2, min(P(y) for y in grid), {'upper-end': max(P(y) for y in grid), 'linear': 100 * (1 - 0.05)}, 4)
-ystar = inv(97)
-num(2, 'p-bond-yield-map', 3, ystar, {'linear': 0.03, 'flipped': -0.03}, 4)
-check(abs(ystar - 3 / 97) < 1e-9 and 0.02 < ystar < 0.05, 'bond: y* = 3/97 inside the yields')
-num(2, 'p-bond-yield-map', 4, 2, {'one-piece': 1, 'three': 3})
-printed(2, 'p-bond-yield-map', 3, ['98.0392', '95.2381'])
-check(abs(100 / 80 - 1 - 0.25) < 1e-12, 'bond: P = 80 needs y = 0.25')
+# ---- p-bond-yield-map: re-authored as p-signal-bands in the fix pass; its checks are removed (the delta reader checks the new problem)
 
 # ---- p-gapped-domain: Y = [0, 1) u (1, 2] u {4}
 g_ = 1000
@@ -339,113 +324,8 @@ check([o['id'] for o in opts if o.get('correct')] == ['conn-not-haus'], 'right r
 check(all('why' in o for o in opts if not o.get('correct')), 'right rays part 4: each wrong option has a why line')
 
 # ================================================================ problems-3
-# ---- p-quadratic-iteration: g = (x^2 + 5)/6 on [0, 2]
-g = lambda x: (x * x + 5) / 6
-gx = [i * 2 / 200000 for i in range(200001)]
-M = max(g(x) for x in gx)
-m = min(g(x) for x in gx)
-check(0 <= m and M <= 2, 'quadratic: g maps [0, 2] into itself')
-num(3, 'p-quadratic-iteration', 1, M, {'min-value': m, 'at-one': g(1)})
-slope = lambda x: (g(x + 1e-6) - g(x - 1e-6)) / 2e-6
-q = max(abs(slope(x)) for x in gx[1:-1:20])
-q = round(q, 5)
-random.seed(7)
-worst = max(abs(g(a) - g(b)) / abs(a - b) for a, b in ((random.uniform(0, 2), random.uniform(0, 2)) for _ in range(20000)))
-check(worst <= 2 / 3 + 1e-12, 'quadratic: no pair beats the constant 2/3')
-num(3, 'p-quadratic-iteration', 2, 2 / 3, {'at-fixed': abs(slope(1)), 'image-end': abs(slope(1.5)), 'no-six': 4 / 3}, 4)
-check(abs(q - 2 / 3) < 1e-4, 'quadratic: the largest slope on the grid is %r' % q)
-
-
-def first_n(bound, tol):
-    n = 0
-    while not bound(n) < tol:
-        n += 1
-    return n
-
-
-d01 = abs(g(0) - 0)
-check(abs(d01 - 5 / 6) < 1e-15, 'quadratic: x1 = 5/6')
-n37 = first_n(lambda n: (2 / 3) ** n / (1 - 2 / 3) * d01, 1e-6)
-num(3, 'p-quadratic-iteration', 3, n37, {
-    'no-denominator': first_n(lambda n: (2 / 3) ** n * d01, 1e-6),
-    'q-third': first_n(lambda n: (1 / 3) ** n / (2 / 3) * d01, 1e-6),
-    'q-half': first_n(lambda n: 0.5 ** n / 0.5 * d01, 1e-6)})
-b36, b37 = 2.5 * (2 / 3) ** 36, 2.5 * (2 / 3) ** 37
-check('%.2f' % (b36 * 1e6) == '1.14' and '%.1f' % (b37 * 1e7) == '7.6', 'quadratic: the bounds printed at n = 36 and 37 (%r, %r)' % (b36, b37))
-check('%.2f' % (math.log(4e-7) / math.log(2 / 3)) == '36.33', 'quadratic: 36.33 in the explanation')
-x = 0.0
-errs = []
-for _ in range(60):
-    x = g(x)
-    errs.append(abs(x - 1))
-check(abs(x - 1) < 1e-12, 'quadratic: the iterates from 0 reach %r' % x)
-num(3, 'p-quadratic-iteration', 4, round(x, 9), {'other-root': 5})
-check(abs(g(5) - 5) < 1e-12 and abs(g(1) - 1) < 1e-12, 'quadratic: 1 and 5 are the fixed points')
-rate = errs[25] / errs[24]
-check(abs(rate - 1 / 3) < 1e-4, 'quadratic: measured rate %r' % rate)
-num(3, 'p-quadratic-iteration', 5, 1 / 3, {'used-q': 2 / 3, 'value': g(1)}, 4)
-
-# ---- p-input-output: A = [[0.5, 0.6], [0.2, 0.3]], b = (1, 2)
-A = ((0.5, 0.6), (0.2, 0.3))
-bvec = (1.0, 2.0)
-T = lambda v, M_=A: (M_[0][0] * v[0] + M_[0][1] * v[1] + bvec[0], M_[1][0] * v[0] + M_[1][1] * v[1] + bvec[1])
-d1 = lambda u, v: abs(u[0] - v[0]) + abs(u[1] - v[1])
-dinf = lambda u, v: max(abs(u[0] - v[0]), abs(u[1] - v[1]))
-prose = SETS[3]['items'][1]['prose']
-check(all(sx in prose for sx in ('0.5 & 0.6', '0.2 & 0.3', '£0.9', '£0.7', 'q = 0.9')), 'input-output: the prose numbers')
-u, v = (3.0, 3.0), (2.0, 2.0)
-Tu, Tv = T(u), T(v)
-check(abs(Tu[0] - 4.3) < 1e-12 and abs(Tu[1] - 3.5) < 1e-12 and abs(Tv[0] - 3.2) < 1e-12 and abs(Tv[1] - 3) < 1e-12, 'input-output: T(u), T(v)')
-At = ((0.5, 0.2), (0.6, 0.3))
-num(3, 'p-input-output', 1, dinf(Tu, Tv), {'transpose': dinf(T(u, At), T(v, At)), 'taxicab': d1(Tu, Tv)})
-num(3, 'p-input-output', 2, d1(Tu, Tv) / d1(u, v), {'no-divide': d1(Tu, Tv), 'sup-ratio': dinf(Tu, Tv) / dinf(u, v)})
-random.seed(11)
-ratios = []
-for _ in range(40000):
-    a_ = (random.uniform(-9, 9), random.uniform(-9, 9))
-    b_ = (random.uniform(-9, 9), random.uniform(-9, 9))
-    ratios.append(d1(T(a_), T(b_)) / d1(a_, b_))
-check(max(ratios) <= 0.9 + 1e-9, 'input-output: no pair beats 0.9 in d_1')
-check(abs(d1(T((0, 1)), T((0, 0))) - 0.9) < 1e-12, 'input-output: the pair (0, 1), (0, 0) reaches 0.9')
-corners = [T((a_, b_)) for a_ in (0, 10) for b_ in (0, 6)]
-check(all(0 <= c[0] <= 10 and 0 <= c[1] <= 6 for c in corners), 'input-output: T maps [0, 10] x [0, 6] into itself')
-x1 = T((0.0, 0.0))
-check(d1(x1, (0, 0)) == 3 and dinf(x1, (0, 0)) == 2, 'input-output: first move 3 in d_1 and 2 in d_inf')
-n98 = first_n(lambda n: 0.9 ** n / 0.1 * 3, 0.001)
-num(3, 'p-input-output', 3, n98, {
-    'no-denominator': first_n(lambda n: 0.9 ** n * 3, 0.001),
-    'dinf-move': first_n(lambda n: 0.9 ** n / 0.1 * 2, 0.001),
-    'pair-ratio': first_n(lambda n: 0.8 ** n / 0.2 * 3, 0.001)})
-check('%.5f' % (30 * 0.9 ** 97) == '0.00109' and '%.5f' % (30 * 0.9 ** 98) == '0.00098', 'input-output: the bounds printed at 97 and 98')
-check('%.2f' % (math.log(1 / 30000) / math.log(0.9)) == '97.84', 'input-output: 97.84 in the explanation')
-for wid, margin in (('no-denominator', 3 * 0.9 ** 76 / 0.001), ('dinf-move', 20 * 0.9 ** 94 / 0.001)):
-    if margin > 0.999:
-        note('problems-3 p-input-output part 3: the slip count %s clears its tolerance by a factor %.5f only' % (wid, margin))
-xs_ = (0.0, 0.0)
-xt = (0.0, 0.0)
-for _ in range(4000):
-    xs_ = T(xs_)
-    xt = T(xt, At)
-num(3, 'p-input-output', 4, xs_[0], {'second': xs_[1], 'transpose': xt[0]}, 4)
-check(0 <= xs_[0] <= 10 and 0 <= xs_[1] <= 6, 'input-output: the fixed point lies in X')
-check(abs(0.5 * 0.7 - 0.6 * 0.2 - 0.23) < 1e-12 and abs(xs_[0] - 1.9 / 0.23) < 1e-9 and abs(xs_[1] - 1.2 / 0.23) < 1e-9, 'input-output: Cramer')
-
-# ---- p-dyadic-points: K = {0} u {2^-n}, U = (-0.01, 0.01), V_n = (0.75 2^-n, 1.25 2^-n)
-Kp = [2.0 ** -n for n in range(0, 60)]
-for n in range(0, 40):
-    held = [x for x in Kp + [0.0] if 0.75 * 2.0 ** -n < x < 1.25 * 2.0 ** -n]
-    check(held == [2.0 ** -n], 'dyadic: V_%d holds its own point only' % n)
-outside = [x for x in Kp if not -0.01 < x < 0.01]
-num(3, 'p-dyadic-points', 1, len(outside), {'from-one': len(outside) - 1, 'one-more': len(outside) + 1})
-num(3, 'p-dyadic-points', 2, 1 + len(outside), {'no-u': len(outside)})
-tail = lambda N: max(abs(a_ - b_) for a_ in Kp[N:] for b_ in Kp[N:])       # the sup is 2^-N, never reached
-N7 = first_n(lambda N: 2.0 ** -N if tail(N) <= 2.0 ** -N else 9, 0.01)
-num(3, 'p-dyadic-points', 3, N7, {'adjacent-gap': first_n(lambda N: 2.0 ** -N - 2.0 ** -(N + 1), 0.01), 'eight': N7 + 1})
-q3 = part(3, 'p-dyadic-points', 3)['question']
-check(re.search(r'all but %d\b' % N7, q3) is None,
-      'problems-3 p-dyadic-points part 3: the key %d is printed in its own stem ("all but %d points"), so the part is passed by copying it' % (N7, N7))
-opts = part(3, 'p-dyadic-points', 4)['widget']['options']
-check([o['id'] for o in opts if o.get('correct')] == ['k-both'], 'dyadic part 4: the correct option')
+# ---- p-quadratic-iteration, p-input-output, p-dyadic-points: re-authored in the fix pass as p-kernel-equation,
+# p-trapping-interval and p-coin-paths; their checks are removed (the delta reader checks the new problems)
 
 # ---- p-cube-delta: f = x^3 on K = [-1, 2]
 sets_ = {'[-1,2]': (True, True), '[-1,2)': (False, True), '[-1,inf)': (True, False), '[-1,0]u{2}': (True, True)}   # (closed, bounded)
@@ -459,11 +339,10 @@ check(abs(big - 12) < 1e-9, 'cube: the factor peaks at %r' % big)
 texcheck(3, 'p-cube-delta', 3, {
     '\\frac{\\varepsilon}{12}': lambda e: e / 12, '\\varepsilon/12': lambda e: e / 12, '\\frac{\\varepsilon}{9}': lambda e: e / 9,
     '\\frac{\\varepsilon}{8}': lambda e: e / 8, '\\frac{\\varepsilon}{3}': lambda e: e / 3}, lambda e: e / big, eps)
-root = bisect(lambda x: (x + 0.01) ** 3 - x ** 3 - 1, 0, 50)
-num(3, 'p-cube-delta', 4, root, {'slope-only': math.sqrt(1 / 0.03)}, 4)
-# the fix the review proposes for part 4: part 3's own delta at epsilon = 1
+# part 4 as fixed (finding 12): part 3's own delta at epsilon = 1
 dl = 1 / 12
 root2 = bisect(lambda x: (x + dl) ** 3 - x ** 3 - 1, 0, 50)
+num(3, 'p-cube-delta', 4, root2, {'slope-only': math.sqrt(1 / (3 * dl))}, 4)
 check(abs(root2 - 1.9582) < 5e-5 and root2 + dl > 2 and abs(math.sqrt(1 / (3 * dl)) - 2) < 1e-12, 'proposed cube part 4: root %r' % root2)
 check(abs(3 * dl - 0.25) < 1e-12 and abs(3 * dl * dl - 1 / 48) < 1e-12 and abs(dl ** 3 - 1 / 1728) < 1e-15, 'proposed cube part 4: coefficients')
 check(abs((root2 + dl) - 2.0415) < 5e-5, 'proposed cube part 4: x + 1/12 = %r' % (root2 + dl))

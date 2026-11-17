@@ -133,3 +133,26 @@ No finding beyond 1. Two notes, no change asked:
 - No rule finds a lesson id in a code span (`` `l4` ``) in set text.
 
 Inbox: four bullets under `Raised later (review problems topology):` in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Author agent (re-author and fix, brief `docs/briefs/reauthor-fix-af.md`). Every corrected number recomputed first, in `docs/reports/problems-topology-numbers.py`.
+
+1. Lesson references as code spans: fixed in the 8 places left after re-authoring (5 in set 1, 1 in set 2, 2 in set 3; the other 5 sat in re-authored problems). Written in words ("the connectedness lesson", "the closure lesson"), as the session asked, rather than bare `lN`.
+2. `p-four-point-line` part 4 "cut point": fixed, the reader's question exactly.
+3. `p-four-point-line` part 1 question: fixed, the reader's text exactly.
+4. `p-gapped-domain` part 2: fixed, the reader's question exactly; feedback and explanation stand.
+5. `p-gapped-domain` part 4: fixed, the reader's question exactly.
+6. `p-bond-yield-map`: re-authored as `p-signal-bands` (a price signal into $\{\text{sell}, \text{hold}, \text{buy}\}$: 5 sets with open preimage, 7 topologies making it continuous, 6 connected subsets, the hold argument as a choice). Walks none of l8 screens[11], l7 screens[2], [3], [5], `q-image-connected`, `q-circle-line`, `r2-tell-apart`.
+7. `p-right-rays` parts 1 and 2: fixed, the reader's questions, with "As in l3" written "As in the closure lesson".
+8. `p-quadratic-iteration`: re-authored as `p-kernel-equation` ($T(f)(x) = 1 + \tfrac{x}{2}\int_0^1 t f(t)\,dt$ on $C[0, 1]$: $q = \tfrac14$, $f^* = 1 + \tfrac{3}{10}x$, one step's error $\tfrac{1}{20}$, a posteriori bound over error $\tfrac53$). No a priori count, no into-itself image, no root outside the set, no true rate.
+9. `p-input-output`: re-authored as `p-trapping-interval` ($T(x) = 0.2e^x$ on $[-r, r]$: $q = 0.2e^r$, the invariance line, smallest $r = 0.2711$, $x^* = 0.2592$). No matrix, no $q = 0.9$, no a priori count. The witness pair was not kept.
+10. `p-dyadic-points`: re-authored as `p-coin-paths` (paths with $d = 2^{-k}$: 8 balls of radius 0.1, gap $\tfrac18$, 2 paths scoring $\tfrac58$, limit score $\tfrac23$). No set $\{0\} \cup \{x_n\}$, no tail count, no part prints its key.
+11. `p-cube-delta` part 3: fixed, the reader's question exactly.
+12. `p-cube-delta` part 4: fixed, the reader's replacement exactly (key 1.958188652174248, slip `slope-only` 2); added to the author's script, and the reader's check of the old key retargeted to the new one.
+
+Notes under B: the optional rewording of `p-plotter-zone` part 4's explanation was not applied, since it would end the text on 1.1926, not the key, which `[working-band]` reads. Disputed: none. Deferred: none.
+
+Reader's script: the checks of the four re-authored problems are removed (they no longer exist; a delta reader checks the new ones), cube part 4 now checks the fixed key; 541 checks, 0 FINDING lines, exit 0.
+
+Gates: validator 0 errors, no warning on the three files; voice scan 35, 0 and 0; `fresh-check --file` 0 hits on each set (set 1 keeps its $d_p$ advisory); author's script 748 checks, 0 failures, numbers_lib 77, 66, 94 passing; `grade-all --file` 0 failures (16, 16, 16 widgets); playthrough `--problems` with `--why` and with `--mobile` green for all three sets, 440 px shots read.
