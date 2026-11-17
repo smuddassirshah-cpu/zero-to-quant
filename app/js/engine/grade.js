@@ -1083,6 +1083,14 @@
     const ok = vs.some(x => within(x, +spec.answer, spec.tol));
     let w = null;
     if (!ok) for (const x of vs) { w = matchWrong(x, spec.wrong, { abs: 1e-9 }); if (w) break; }
+    /* Items 951, 955, 1077: a wrong answer that is right once the % sign, or the factor of 100, is put the other way gets its own key and line
+       (an author's byKey line of the same key wins). The verdict is unchanged. */
+    if (!ok && !w && spec.answer != null) {
+      const t = numText(text, spec).trim(), ends = t.endsWith('%'), plain = parseNum(ends ? t.slice(0, -1) : t);
+      const hit = (x) => Number.isFinite(x) && (s ? [x, x / s] : [x]).some(y => within(y, +spec.answer, spec.tol));
+      if (spec.unit !== '%' && ends && hit(plain)) return { ok, key: 'percent-sign', line: 'That is the right number, but this field takes it without the % sign. Type just the number.', detail: { value: v } };
+      if (spec.unit === '%' && !ends && hit(plain)) return { ok, key: 'decimal', line: 'That is the right size as a decimal, but this field wants a percentage: multiply by 100 and type it as a per cent.', detail: { value: v } };
+    }
     return { ok, key: w ? w.id : null, detail: { value: v } };
   };
 

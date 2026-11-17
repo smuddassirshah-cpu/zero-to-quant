@@ -108,5 +108,14 @@ for (const t of ['\\frac{x-1}{x+2}', '\\frac{x - 1}{x + 2}']) check(`945 simplif
 check('945 9v over 16(v-2) retyped is refused when it is cancellable', sf({ answer: '9v' }, '\\frac{9v(v-2)}{(v-2)}').ok === false);
 check('945 a fraction with a letter in the top only passes', sf({ answer: '\\frac{x}{2}' }, '\\frac{x}{2}').ok === true);
 
-console.log(`test-grade-ab3:${n - fails.length}/${n} passed${fails.length ? ', ' + fails.length + ' FAILED' : ''}`);
+/* ---------- Part 7 (951, 955, 1077): the % sign and the factor of 100 get their own key ---------- */
+const pk = { answer: 18, tol: { abs: 0.01 } }, pd = { answer: 0.0035, unit: '%', tol: { abs: 0.00001 } };
+check('951 18% in a field with no % unit: key percent-sign, still wrong', nv(pk, '18%').ok === false && nv(pk, '18%').key === 'percent-sign');
+check('951 18 in that field is right', nv(pk, '18').ok === true);
+check('951 19% there is the generic miss', nv(pk, '19%').key === null);
+check('951 an authored wrong[] still wins', nv({ ...pk, wrong: [{ id: 'mine', value: 0.18, tol: { abs: 0.001 } }] }, '18%').key === 'mine');
+check('955 0.0035 for 0.35% (unit %): key decimal, still wrong', nv(pd, '0.0035').ok === false && nv(pd, '0.0035').key === 'decimal');
+check('955 0.35 and 0.35% are right', nv(pd, '0.35').ok === true && nv(pd, '0.35%').ok === true);
+
+console.log(`test-grade-ab3: ${n - fails.length}/${n} passed${fails.length ? ', ' + fails.length + ' FAILED' : ''}`);
 process.exit(fails.length ? 1 : 0);
