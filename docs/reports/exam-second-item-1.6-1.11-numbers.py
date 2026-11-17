@@ -52,21 +52,21 @@ def bands(w, label):
 
 # ---------------------------------------------------------------- topic 1.6 s-three-traders
 it = item('topic-1.6', 's-three-traders')
-a, b = 22, 18
-check(F(a, a + b) == F(55, 100), 'prior mean 55%')
-recs = {'ash': (9, 10), 'bea': (46, 60), 'cal': (101, 150)}
+a, b = 27, 3   # fix pass: re-storied (sellers, on-time orders)
+check(F(a, a + b) == F(90, 100), 'prior mean 90%')
+recs = {'kiln': (20, 20), 'loom': (68, 70), 'moss': (252, 270)}
 post = {k: (a + w, b + t - w) for k, (w, t) in recs.items()}
 mean = {k: F(p, p + q) for k, (p, q) in post.items()}
-check(post['ash'] == (31, 19) and post['bea'] == (68, 32) and post['cal'] == (123, 67), 'posteriors')
-check(mean['ash'] == F(62, 100) and mean['bea'] == F(68, 100), 'means 0.62, 0.68')
-check(f'{float(mean["cal"]):.3f}' == '0.647', 'Cal mean 0.647')
+check(post['kiln'] == (47, 3) and post['loom'] == (95, 5) and post['moss'] == (279, 21), 'posteriors')
+check(mean['kiln'] == F(94, 100) and mean['loom'] == F(95, 100) and mean['moss'] == F(93, 100), 'means 0.94, 0.95, 0.93')
 top = max(mean, key=mean.get)
-check([o['id'] for o in it['widget']['options'] if o.get('correct')] == [top], 'key is Bea')
+check([o['id'] for o in it['widget']['options'] if o.get('correct')] == [top], 'key is Loom')
 mle = {k: F(w, t) for k, (w, t) in recs.items()}
-check(max(mle, key=mle.get) == 'ash', 'raw rate picks Ash')
-check(max(recs, key=lambda k: recs[k][1]) == 'cal', 'longest record is Cal')
-check(round(float(mle['bea']) * 100) == 77, "Bea's 77%")
-for s in ['31/50 = 0.62', '123/190 = 0.647', '0.62, 0.68 and 0.647', 'Beta}(68, 32)', 'Beta}(31, 19)', 'Beta}(123, 67)', '77%', '90%']:
+check(max(mle, key=mle.get) == 'kiln', 'raw rate picks Kiln')
+check(max(recs, key=lambda k: recs[k][1]) == 'moss', 'longest record is Moss')
+check(round(float(mle['loom']) * 100) == 97, "Loom's 97%")
+check(len(set(mean.values())) == 3, 'no tie')
+for s in ['47/50 = 0.94', '279/300 = 0.93', '0.94, 0.95 and 0.93', 'Beta}(95, 5)', 'Beta}(47, 3)', 'Beta}(279, 21)', '97%', '100%']:
     printed(it, s, 's-three-traders')
 
 # ---------------------------------------------------------------- topic 1.7 e-ratio-spread
@@ -140,19 +140,19 @@ for s in ['4.56%', '73.19', '5.36\\%', '70 \\times 1.0456']:
 
 # ---------------------------------------------------------------- topic 1.7 e-just-paid
 it = item('topic-1.7', 'e-just-paid')
-D0, g, rr = 1.50, 0.04, 0.10
+D0, g, rr = 3.20, 0.05, 0.09   # fix pass: new numbers
 D1 = D0 * (1 + g)
 P = D1 / (rr - g)
 P2 = sum(D0 * (1 + g) ** t / (1 + rr) ** t for t in range(1, 4000))   # second route: the series summed
-near(P, 26, 1e-9, 'value 26'); near(P2, 26, 1e-6, 'series agrees')
+near(P, 84, 1e-9, 'value 84'); near(P2, 84, 1e-6, 'series agrees')
 w = it['widget']
 near(w['answer'], P, 1e-9, 'key')
 near(wrong(w, 'last-div'), D0 / (rr - g), 1e-9, 'last-div')
-near(wrong(w, 'no-growth'), D1 / rr, 1e-9, 'no-growth')
+near(wrong(w, 'no-growth'), round(D1 / rr, 2), 1e-9, 'no-growth')
 near(wrong(w, 'plus-g'), round(D1 / (rr + g), 2), 1e-9, 'plus-g')
 check(abs(D1 / (rr + g) * 100 % 1 - 0.5) > 0.05, 'plus-g no rounding tie')
 bands(w, 'just-paid')
-for s in ['1.50 \\times 1.04 = 1.56', '1.56/0.06 = 26.00', '1.56/(0.10 - 0.04) = 26.00', '£1.56', 'r - g = 0.06']:
+for s in ['3.20 \\times 1.05 = 3.36', '3.36/0.04 = 84.00', '3.36/(0.09 - 0.05) = 84.00', '£3.36', 'r - g = 0.04']:
     printed(it, s, 'e-just-paid')
 
 # ---------------------------------------------------------------- topic 1.8 e-venue-split
@@ -218,7 +218,10 @@ near(good, call(100, 100, .05, .2, 1, cdf=Nb), 1e-12, 'call two cdfs')
 check(f'{good:.4f}' == '10.4506', 'correct call 10.4506')
 check(f'{bad:.2f}' == '-4.62', f'swapped call -4.62 ({bad})')
 near(100 * N(0.15) - 100 * math.exp(-0.05) * N(0.35), bad, 1e-9, 'printed formula')
-check(f'{100 * math.exp(-0.05):.2f}' == '95.12', '95.12')
+check(f'{100 * math.exp(-0.05):.3f}' == '95.123', '95.123')
+prose_ = it['prose']
+check(f'{N(0.35):.6f}' == '0.636831' and f'{N(0.15):.6f}' == '0.559618' and f'{math.exp(-0.05):.6f}' == '0.951229' and all(s in prose_ for s in ('0.636831', '0.559618', '0.951229')), 'printed N values and discount factor')
+near(100 * 0.559618 - 95.123 * 0.636831, bad, 1e-3, 'explanation route 95.123')
 fwd = 100 - 100 * math.exp(-0.05)
 res = {
     'known': abs(bad - 10.4506) > 1e-4,
@@ -233,7 +236,7 @@ ok_good = {
 check(all(ok_good.values()), 'every test passes on the correct call')
 keys = {o['id'] for o in it['widget']['options'] if o.get('correct')}
 check(keys == {k for k, v in res.items() if v}, f'correct set {keys}')
-for s in ['d_1 = 0.35', 'd_2 = 0.15', '95.12N(0.35) = -4.62', '£10.4506', '-4.62']:
+for s in ['d_1 = 0.35', 'd_2 = 0.15', '95.123N(0.35) = -4.62', '£10.4506', '-4.62']:
     printed(it, s, 'e-swapped-d')
 
 # ---------------------------------------------------------------- topic 1.10 e-integral-weights

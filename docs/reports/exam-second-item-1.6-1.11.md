@@ -1,7 +1,7 @@
 # Second auto item for one-item exam skills: topics 1.6 to 1.11
 
 Brief: `docs/briefs/exam-second-item.md`. Scratch: `scratchpad/exam2-1.6-1.11/` (`pairs.py` recomputes the pairs, `gen.py` writes the items).
-Numbers: `docs/reports/exam-second-item-1.6-1.11-numbers.py`, 172 of 172 checks, exit 0.
+Numbers: `docs/reports/exam-second-item-1.6-1.11-numbers.py`, 174 of 174 checks after the fix pass (s-three-traders and e-just-paid retargeted, e-swapped-d printed values), exit 0.
 
 ## Pairs, recomputed
 
@@ -20,17 +20,17 @@ Rule: for each `course.json` of the topic, each level with a review, the review'
 
 | exam | id | skills | d | widget | rule | removed (skills) |
 |---|---|---|---|---|---|---|
-| topic-1.6 | s-three-traders | es-bayes | 3 | choice | (c) | s-alpha-beta-table (rg-inference; 4 auto before, 3 after) |
+| topic-1.6 | s-three-traders (re-storied after the second read: sellers, Beta(27, 3), on-time orders) | es-bayes | 3 | choice | (a) after the fix pass | none (s-alpha-beta-table restored at its old position; exam holds 31 items, minutes 70) |
 | topic-1.7 | e-ratio-spread | op-strategies, op-payoff | 3 | parts: numeric, numeric, payoff canvas | (b)+(c) | e-book-delta (op-greeks; 5 to 4) |
 | topic-1.7 | e-capped-copy | tp-replicate | 2 | choice, tree graph | (c) | e-one-step-q (tp-riskneutral; 6 to 5) |
 | topic-1.7 | e-zero-yield | fi-bonds | 3 | parts: numeric %, numeric | (c) | e-parity-put (op-parity; 5 to 4) |
-| topic-1.7 | e-just-paid | fi-equity | 3 | numeric | (c) | e-short-sale (fi-forwards; 4 to 3) |
+| topic-1.7 | e-just-paid (numbers changed in the fix pass: £3.20, 5%, 9%, key £84.00) | fi-equity | 3 | numeric | (c) | e-short-sale (fi-forwards; 4 to 3) |
 | topic-1.8 | e-venue-split | gd-backtrack | 4 | parts: choice, numeric, graph | (a) | none |
 | topic-1.9 | e-swapped-d | cx-testing | 4 | multi (C++ tests) | (c) | e-virtual-dtor (cp-classes; 6 to 5) |
 | topic-1.10 | e-integral-weights | lx-dual | 3 | table | (c) | e-cube-delta (an-continuity; 4 to 3) |
 | topic-1.11 | e-square-root-parts | cz-arith | 3 | expression, form rectangular | (c) | e-integrating-factor (de-first; 3 to 2) |
 
-Each swap takes the place and difficulty of the removed item, so every difficulty mix is unchanged; topic 1.8 gains a 4 (now 6, 14, 6, 3 of 29). Removed items were the most duplicated: e-book-delta beside e-copy-short-calls (both short-call hedges), e-one-step-q beside the one-step trees, e-parity-put among four parity items, s-alpha-beta-table beside two other alpha t items, e-virtual-dtor beside the polymorphic e-code-clone-basket. In e-ratio-spread each leg's payoff (op-payoff) and the sum of legs with the net premium (op-strategies) are both needed. Pairs left: none. After the change every skill of all six exams has at least two auto items (`pairs.py`).
+Each swap takes the place and difficulty of the removed item, so every difficulty mix is unchanged; topic 1.8 gains a 4 (now 6, 14, 6, 3 of 29). Removed items were the most duplicated: e-book-delta beside e-copy-short-calls (both short-call hedges), e-one-step-q beside the one-step trees, e-parity-put among four parity items, e-virtual-dtor beside the polymorphic e-code-clone-basket. In e-ratio-spread each leg's payoff (op-payoff) and the sum of legs with the net premium (op-strategies) are both needed. Pairs left: none. After the change every skill of all six exams has at least two auto items (`pairs.py`).
 
 Reuse: each item is a new task on its skill (ranking by posterior, ratio spread, a capped-note copy, yield from a zero's price and its pull to par, the just-paid dividend trap, graph colouring by backtracking, which tests see a d1/d2 swap, quadrature weights as dual-basis coordinates, a square root by matching parts). `fresh-check --file` on each exam: no hit on a new item. A first draft of the tp-replicate item, a one-step digital at 2%, matched trees `homework-1` items[4] and was replaced by the capped note.
 

@@ -110,3 +110,22 @@ Triage `fresh-check` lines on new items were read: shared-number advisories only
 
 - Fix pass (Sonnet): findings 2, 3, 4 and 5 are exact edits. Finding 1 needs the main session's choice of item to remove. Findings 6 to 10 need no edit.
 - After the fix pass the author's script needs new values for `s-three-traders` and `e-just-paid`; the reader script's blocks for those two items must be updated with them (its "fix 2" and "fix 3" blocks already hold the new numbers).
+
+## Fix pass
+
+Files edited: `app/content/exams/topic-1.6.json`, `topic-1.7.json`, `topic-1.9.json` only. Scripts: author's `exam-second-item-1.6-1.11-numbers.py` 174 of 174, exit 0; reader's `-numbers-read.py` 164 ok, 0 FINDING, exit 0 (blocks of the rewritten items retargeted to the new numbers; the cx-testing difficulty check is now a printed note; the fix 1 block is switched off because the main session overruled it).
+
+1. Fixed as ruled by the main session (DECISIONS, session AG), not as the reader wrote it: `s-alpha-beta-table` restored to `topic-1.6` exactly as at `dfa666b0^`, at its old position (before `s-three-traders`); nothing else removed. The exam holds 31 items (validator range 20 to 36), `minutes` stays 70. `rg-inference` is back to 3, 4, 4, 5. `s-p-backtest` stays.
+2. Fixed: `s-three-traders` re-storied exactly as written (sellers, Beta(27, 3), Kiln 20 of 20, Loom 68 of 70, Moss 252 of 270). Recomputed 47/50, 95/100, 279/300 = 0.94, 0.95, 0.93; no "seller" story in `estimation` or the exams on this skill; `fresh-check --file` gives no hit.
+3. Fixed: `e-just-paid` numbers changed exactly as written (£3.20, 5%, 9%; key 84.00; slips 80.00, 37.33, 24.00). Recomputed 3.36/0.04 = 84, 3.20/0.04 = 80, 3.36/0.09 = 37.33, 3.36/0.14 = 24; no hit in `markets` or the exams.
+4. Fixed: `e-swapped-d` prose now prints d1, d2, N(0.35), N(0.15) and e^{-0.05}; 100 x 0.559618 - 95.123 x 0.636831 = -4.6155.
+5. Fixed: `e-swapped-d` explanation reads "At these inputs" and 95.123N(0.35); gives -4.62.
+6. No edit (ruled): `cx-testing` coverage note.
+7. No edit (optional wording; verdict clean).
+8. No edit (ruled): `an-continuity` coverage note.
+9. No edit (ruled): `de-first`, `tp-riskneutral`, `op-parity` coverage note.
+10. Deferred: `e-annualised` reuse is outside this pass; raise with the next pass on topic-1.7.
+
+Disputed: none. Deferred replacements: none (no replacement retold course material).
+
+Gates: validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 0 failures on topic-1.6 (27 widgets), topic-1.7 (33) and topic-1.9 (22); `playthrough.mjs --exam` with and without `--mobile` all passed on the three. Graded answers changed: `s-three-traders` key (Bea to Loom, new options), `e-just-paid` key (26.00 to 84.00); `e-swapped-d` key unchanged; `s-alpha-beta-table` returns as it was.
