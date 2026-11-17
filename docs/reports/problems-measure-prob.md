@@ -63,3 +63,47 @@ Exam scope: `topic-3.2.json` holds the course's skills (e-atoms-three-sets, e-ta
 - Attribution: the brief names "Claude Fable 5.2"; the session's system attribution (Opus 5.5) was used, as the harness instructs.
 - After `git checkout app/content/manifest.json` the playthrough of a set opens "in state empty" until the validator is run again (the manifest lists the sets). Recorded as an inbox bullet.
 - No `course.json` change proposed.
+
+## Level 4 (brief `docs/briefs/wave-c-author-ag.md`, second author)
+
+File: `app/content/courses/measure-prob/problems-4.json`. Numbers: `docs/reports/problems-measure-prob-4-numbers.py` (exit 0, 267 checks, 0 failures; helpers copied from the level 1 to 3 script, which is not edited). Builder kept in the scratch folder `author-measure-prob/l4.py`. Sets 1 to 3 were read as reuse sources and not edited.
+
+| set | item | parts (typed / choice) | lessons drawn on | difficulty |
+|---|---|---|---|---|
+| problems-4 | p-recovery-reweight | 4 (3 / 1) | l14, l15 | 3 |
+| problems-4 | p-share-numeraire | 5 (3 / 2) | l14, l16, l17 | 5 |
+| problems-4 | p-ten-trades | 4 (4 / 0) | l15, l16 | 4 |
+| problems-4 | p-premium-weight | 5 (4 / 1) | l14, l16, l17 | 4 |
+
+4 problems, 18 parts, typed 14 (one expression, 13 numeric). Skills `mt-change` and `mt-martingale`, from the level's lessons. Choice parts are judgements: which way round importance sampling has infinite variance, what makes $Q^S$ a probability, which line rewrites a price under $Q^S$, which step makes the risk-premium identity hold for every asset. Rule 6: no part prints its own target; each proof idea is tested by a number (a variance, a chance under the new measure, a covariance) or the choice of the valid step. Each later part restates the value it uses.
+
+Chains. Recovery: $\tfrac{dQ}{dP} = 2x^2$, $Q(X > 0.8) = 0.5904$ through the weight, $\mathrm{Var}_P(Z) = \tfrac13$, then the reverse sampler's weight has infinite mean square ($\int_0^1 dx/x$) though $P \ll Q$. Numeraire: $Z_3 = S_3/(48 \times 1.02^3) = 0.8510$ on up, down, down; $E_Q[Z_3] = 1$ by the martingale property; $q^S = qu/1.02 = \tfrac{25}{48}$; price $= 48\,Q^S(S_3 > 50)$; $25.50$, equal to the $Q$ price. Trades: weight $0.625^8 \times 2.5^2 = 0.1455$; $E_Q[Y^2] = 0.00676$; relative error per draw 1.12; one $Q$ draw is worth about 14 plain draws. Premium: $q = \tfrac{16}{35}$; $Z_1 = \tfrac{19}{14}$ after a down; $\mathrm{Cov}_P(Z_1, S_1) = -2.00$; the step $E_P[Z_1X_1] = E_Q[X_1]$; over two steps $-4.14$, not twice $-2.00$.
+
+### Checks (level 4)
+
+| check | result |
+|---|---|
+| validator | 0 errors; no warning on problems-4 (pass-8 rules, `[key-length]`, `[shown-arithmetic]` and O2 all clear) |
+| voice scan 35 (course folder) | 0 and 0 |
+| `fresh-check --file` | 0 hits; `--files` on problems-1 to 4 together: 0 |
+| numbers script | exit 0, 267 checks |
+| `grade-all --file --local-cdn` | 0 failures (18 widgets: expression 1, numeric 13, choice 4) |
+| playthrough `--local-cdn` | green (18 parts) |
+| playthrough `--mobile` | green; the 440 px shots of every part were read, no layout fault |
+
+The script computes each key twice: exact sympy integrals or fractions first, then scipy quadrature, enumeration of all 8 three-step paths, 4 two-step paths and 1,024 trade sequences, or a seeded simulation (inverse sampling of $P$, a million tree paths, two million binomial draws). It rebuilds each `wrong` value from its slip, checks every printed working figure (0.7225, 50.938, 0.531232, 0.14552, 0.0029907, 17.29 and the rest), and checks the rounded inputs a part tells the learner to use (0.1455, 0.00676, 1.12) give the same key. The 25 "check by hand" byKey lines were read: each states working numbers that are right. The script caught one false distractor claim early ("$Z_3 \le 1.5$" was false, the top path gives 1.84); it now reads $Z_3 < 2$ and the script checks it.
+
+### Reuse: closest course material per problem (level 4)
+
+Exam scope: of `topic-3.2.json`, e-die-reweight, e-is-weight and e-tree-price carry `mt-change`, and e-ruin-by-martingale and e-adapted-predictable `mt-martingale`; all were read. No stage or mock exam carries an `mt-` skill.
+
+| problem | lesson screen | quiz | review | homework | exam |
+|---|---|---|---|---|---|
+| p-recovery-reweight | l14 "Two normals" (weight of $N(\theta, 1)$): ours is a polynomial density on $[0, 1]$ and goes on to the weight's variance | l14 q-reverse ($\tfrac{dP}{dQ}$ on uniforms): ours asks the reverse weight's mean square | r-weights ($E_Q[X]$ on three outcomes): no chance or variance asked | h-expect ($Z$ and $E_Q$ on four outcomes): ours is continuous, ends on infinite variance | e-is-weight (one normal weight): ours has no normal |
+| p-share-numeraire | l17 "Discounted prices on the tree" (martingale test): ours uses the martingale to build a new measure | l16 q-down (down weight from density): ours turns a weight into a new up chance | r-twostep ($Z_2$ and call by $E_P$): ours changes from $Q$, not from $P$, and prices an asset-or-nothing payoff | h-tree (put via $E_P[Z_2 \cdot]$): no real-world chance here | e-tree-price ($q$ and a call): ours prices under the share measure |
+| p-ten-trades | l15 "How many draws for the risk report" (draws from a given error table): ours computes the second moment from the weights and compares two samplers | l15 q-weight (a normal weight): ours weights a sequence of trades | r-n (plain draws for 5%): ours is the ratio of two samplers | h-is (normal tail, three steps): ours is discrete, exact | e-is-weight: one weight only |
+| p-premium-weight | l17 "Pricing by the martingale" (put price): ours finds the covariance of the density with the price, the risk premium | l14 q-state ($Z$ after a down): one step of ours, other numbers | r-q ($q$ only): one step of ours | h-long (q, density, price, written): ours never prices; it proves the premium identity by choice and number | e-tree-price: ours has no option |
+
+`fresh-check` reported 0 hits from the first run. Key numbers (0.5904, $2x^2$, $4x^3$, 0.8510, 25/48, 25.50, 0.1455, 0.00676, 16/35, 19/14, 4.14, 40.4, 42.4, 43.35, 7/128) were grepped in the course folder by hand: none occurs. 0.625 occurs as the tree's $q$ in l14 to l17; here it is the ratio $0.5/0.8$, an unrelated setting. 1.06 occurs in l1, problems-2 and review-4 in other roles. The stories (recovery-rate models, a share measure on a three-step tree, ten trades, the premium as a covariance) appear nowhere in the course; "recovery rate" occurs in `exams/topic-1.6.json` (a likelihood fit, another course). Slip lines are written per part; none repeats a course line.
+
+Notes: attribution as for levels 1 to 3 (the session's Opus 5.5 lines). One inbox bullet under `Raised later (problems measure-prob level 4):`. No `course.json` change proposed.

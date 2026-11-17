@@ -49,3 +49,6 @@ Raised later (review problems measure-prob):
 - No validator rule checks that a slip typed at the places the part asks falls in its own band: problems-1 `p-reciprocal-grid` part 3 asks 2 places and its slip 0.3333 +-0.001 refuses 0.33. `[working-band]` covers keys only. Evidence: `docs/reviews/review-problems-measure-prob-1-3.md` finding 2.
 - `fresh-check --file` reads exam stems but not exam option text or `explain`, nor a longform `prompt`: it misses `U^{1/n}` with mean `n/(n+1)` (exam e-swap-limits option a against problems-2 `p-root-of-uniform`) and the law `1/(k(k+1))` with tails `1/n` (homework-1 h-build-space against problems-1 `p-reciprocal-grid`). Findings 1 and 6.
 - The `retold` rule did not fire on l6 "Summing the tail" against problems-2 `p-billed-hours` part 2 (same story of an order that fills, same indicator sum, the explain line changed by a few words). Finding 5.
+
+Raised later (problems measure-prob level 4):
+- A second author on a course with a per-course number script (`problems-<course>-numbers.py`) cannot import its helpers (`num_part`, `wrong_is`, `expr_part`, `structural`): the script runs its levels and calls `sys.exit` at import. Level 4 of measure-prob copied them into `problems-measure-prob-4-numbers.py`. Moving these problem-set helpers into `app/tools/numbers_lib.py` would let split scripts share one copy.
