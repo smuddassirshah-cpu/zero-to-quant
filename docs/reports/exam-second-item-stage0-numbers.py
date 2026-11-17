@@ -165,5 +165,48 @@ check(cnt['seq-sums'] == 2, f'seq-sums keeps 2 auto items ({cnt["seq-sums"]})')
 N = ramp('topic-0.3')
 check(N == 30 and doc['minutes'] == 5 * round(60 * 30 / 26 / 5) == 70, f'topic-0.3 30 items, minutes 60 x 30/26 = {60 * 30 / 26:.1f} -> 70')
 
+# ================= topic-0.2 =================
+doc, it = load('topic-0.2')
+
+# e-read-the-change: f(x) = x^2 - 1, g(x) = 2 f(x - 2)
+f = lambda x: x * x - 1
+g = lambda x: 2 * (x - 2) ** 2 - 2                # the dashed curve as drawn
+opts = {'a': lambda x: 2 * f(x - 2), 'b': lambda x: 2 * f(x + 2), 'c': lambda x: f(x - 2) - 1, 'd': lambda x: f(2 * (x - 2))}
+xs = [k / 10 for k in range(-40, 61)]
+match = [k for k, h in opts.items() if all(abs(h(x) - g(x)) < 1e-9 for x in xs)]
+check(match == ['a'], f'e-read-the-change only option a matches the dashed curve ({match})')
+w = it['e-read-the-change']['widget']
+check([o['id'] for o in w['options'] if o.get('correct')] == ['a'], 'e-read-the-change key is option a')
+canvas_g = next(fn for fn in it['e-read-the-change']['canvas']['params']['functions'] if fn['id'] == 'g')['expr']
+check(canvas_g.replace(' ', '') == '2*(x-2)^2-2', 'canvas draws g(x) = 2(x - 2)^2 - 2')
+gmin = min(xs, key=g)
+check((gmin, g(gmin)) == (2, -2) and g(1) == 0 and g(3) == 0, 'g lowest point (2, -2), roots 1 and 3 (printed in the prose)')
+check(f(-1) == 0 and f(1) == 0 and min(f(x) for x in xs) == -1, 'f roots -1 and 1, lowest -1')
+c_roots = sorted((2 - math.sqrt(2), 2 + math.sqrt(2)))
+check(all(abs(opts['c'](x)) < 1e-12 for x in c_roots) and min(opts['c'](x) for x in xs) == -2, 'option c: lowest -2, roots 2 +- sqrt 2')
+check(min(opts['d'](x) for x in xs) == -1, 'option d: lowest point at -1')
+check(min(xs, key=opts['b']) == -2, 'option b: lowest point at x = -2 (left)')
+
+# e-two-rates: 10000 (1 + r)(1 + 2r) = 11872
+disc = 9 + 8 * 0.1872
+check(abs(disc - 10.4976) < 1e-12 and abs(math.sqrt(disc) - 3.24) < 1e-12, 'discriminant 10.4976, root 3.24')
+rr = sorted(((-3 + 3.24) / 4, (-3 - 3.24) / 4))
+check(abs(rr[1] - 0.06) < 1e-12 and abs(rr[0] + 1.56) < 1e-12, 'roots 0.06 and -1.56')
+# route 2: exact fractions and a direct product
+check(F(10000) * (1 + F(6, 100)) * (1 + F(12, 100)) == 11872, '10000 x 1.06 x 1.12 = 11872 exactly')
+check(abs(10000 * (1 - 1.56) * (1 - 3.12) - 11872) < 1e-6, 'r = -1.56 also solves the product (the rejected root)')
+one_rate = math.sqrt(1.1872) - 1
+numeric('e-two-rates', it['e-two-rates'], 0.06,
+        {'simple': 0.1872 / 3, 'one-rate': one_rate, 'other-root': -1.56},
+        printed=[((-3 + 3.24) / 4, 0.06), (2 * 0.06, 0.12)])
+check(it['e-two-rates']['widget']['unit'] == '%', 'e-two-rates unit % with the key as a fraction')
+
+# swaps: e-two-roots and e-formula removed
+check('e-two-roots' not in it and 'e-formula' not in it, 'e-two-roots and e-formula removed')
+cnt = auto_floor('topic-0.2')
+check(cnt['quad-factor'] >= 2 and cnt['quad-solve'] >= 2, f'quad-factor {cnt["quad-factor"]}, quad-solve {cnt["quad-solve"]} keep two or more')
+N = ramp('topic-0.2')
+check(N == 30 and doc['minutes'] == 75, 'topic-0.2 still 30 items and 75 minutes')
+
 print(f'{n[0] - len(fails)} of {n[0]} checks passed')
 sys.exit(1 if fails else 0)
