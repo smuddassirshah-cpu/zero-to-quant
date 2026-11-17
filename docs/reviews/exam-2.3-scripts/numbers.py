@@ -135,8 +135,8 @@ ex.claim(doc['skills'] == union, 'skills map equals the union of the three cours
 cnt = {s: sum(1 for it in doc['items'] if s in it['skills']) for s in union}
 ex.claim(min(cnt.values()) >= 2, f'every skill tested by at least two items {cnt}')
 pace = {it['id']: it.get('pace') for it in doc['items']}
-ex.claim(all(isinstance(v, (int, float)) and v > 0 for v in pace.values()) and sum(pace.values()) == 5460,
-         f'every item carries a positive pace and they sum to {sum(pace.values())} s = 91 minutes (finding 34: 5,400 s before the session AG second-item pass swapped e-impact-double, pace 90, for e-honest-bar, pace 150; the clock stays 90, see the fix-pass report)')
+ex.claim(all(isinstance(v, (int, float)) and v > 0 for v in pace.values()) and sum(pace.values()) <= doc['minutes'] * 60,
+         f'every item carries a positive pace and they sum to {sum(pace.values())} s = {sum(pace.values()) / 60:g} minutes, within the 90-minute clock (e-honest-bar pace set to 90 in the session AH small fixes)')
 rub = sum(r['points'] for r in IT['e-results-note']['rubric'])
 ex.claim(rub == 10, f'longform rubric sums to {rub}')
 
