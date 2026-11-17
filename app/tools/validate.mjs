@@ -51,7 +51,7 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform', 'trade']);
-const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'complex-map', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console', 'space', 'interleave']);
+const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'dice-sim', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'complex-map', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console', 'space', 'interleave']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
 const CANVAS_BOUND = new Set(['tap-regions', 'drag-point', 'sketch', 'balance', 'slider', 'sliders']);
@@ -841,7 +841,7 @@ const authorMovable = (c) => {
   if (isObj(c) && c.kind === 'circle' && ((isObj(c.state) && c.state.drag === true) || (isObj(c.params) && c.params.drag === true))) return true;
   if (isObj(c) && c.kind === 'interleave') return true; // the lanes' Step buttons are its own input (item 471)
   const st = isObj(c && c.state) ? c.state : {}, p = isObj(c && c.params) ? c.params : {};
-  return (Array.isArray(st.points) && st.points.some(q => isObj(q) && q.drag === true)) || (Array.isArray(st.drag) && st.drag.length > 0) || isObj(p.sim);
+  return (Array.isArray(st.points) && st.points.some(q => isObj(q) && q.drag === true)) || (Array.isArray(st.drag) && st.drag.length > 0) || isObj(p.sim) || (isObj(c) && c.kind === 'dice-sim');
 };
 
 /* ---------- Canvas ids ---------- */
@@ -1662,6 +1662,31 @@ const checkCanvas = (file, where, c) => {
   if (c.controlsAfter != null && c.controlsAfter !== 'correct' && c.controlsAfter !== 'check') err(file, `${where}.controlsAfter`, 'controlsAfter is "correct" or "check" (ENGINE-BACKLOG 1211)');
   /* item 326: a bars sim reads params and state.params by name; series sims read params */
   if (c.kind === 'bars' && isObj(P.sim)) checkSim(file, `${where}.params.sim`, P.sim, Object.keys({ ...(P.params || {}), ...(S.params || {}) }));
+  /* item 1217: dice-sim, a seeded dice experiment: dice, sides, keep (reads d1..dn, dice, total), trials, seed, exact, max, labels */
+  if (c.kind === 'dice-sim') {
+    const w = `${where}.params`;
+    if (P.dice != null && !(Number.isInteger(P.dice) && P.dice >= 1 && P.dice <= 6)) err(file, `${w}.dice`, 'dice is a whole number from 1 to 6');
+    if (P.sides != null && !(Number.isInteger(P.sides) && P.sides >= 2 && P.sides <= 20)) err(file, `${w}.sides`, 'sides is a whole number from 2 to 20');
+    if (typeof P.keep !== 'string' || !P.keep.trim()) err(file, `${w}.keep`, 'keep is a rule string such as "d1 == 5 || d2 == 5" (names d1..dn, dice, total)');
+    else if (SIM) { try { SIM.compile(P.keep, [...Array.from({ length: Number.isInteger(P.dice) ? P.dice : 2 }, (_, i) => 'd' + (i + 1)), 'dice', 'total']); } catch (e) { err(file, `${w}.keep`, `keep does not compile: ${e.message}`); } }
+    if (P.trials != null && !(Array.isArray(P.trials) && P.trials.length >= 1 && P.trials.length <= 5 && P.trials.every(v => Number.isInteger(v) && v >= 1 && v <= 100000))) err(file, `${w}.trials`, 'trials is a list of one to five whole numbers from 1 to 100000');
+    if (P.seed != null && typeof P.seed !== 'number' && typeof P.seed !== 'string') err(file, `${w}.seed`, 'seed is a number or a string');
+    if (P.exact != null) { const m = typeof P.exact === 'string' ? P.exact.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/) : null, v = m ? (+m[2] ? +m[1] / +m[2] : NaN) : P.exact; if (!(typeof v === 'number' && v >= 0 && v <= 1)) err(file, `${w}.exact`, 'exact is a share from 0 to 1, as a number or a fraction string such as "11/36"'); }
+    if (P.max != null && !(typeof P.max === 'number' && P.max > 0 && P.max <= 1)) err(file, `${w}.max`, 'max is the top of the share axis, above 0 and at most 1');
+    if (P.labels != null && !(isObj(P.labels) && Object.entries(P.labels).every(([k2, v]) => ['rolled', 'kept', 'out', 'share', 'last', 'run', 'reset', 'none'].includes(k2) && typeof v === 'string'))) err(file, `${w}.labels`, 'labels is an object of strings; keys rolled, kept, out, share, last, run, reset, none');
+    if (P.exactLabel != null && typeof P.exactLabel !== 'string') err(file, `${w}.exactLabel`, 'exactLabel is a string');
+    if (P.event != null) {
+      if (!isObj(P.event)) err(file, `${w}.event`, 'event is { rule, label, exact, exactLabel }');
+      else {
+        const E = P.event;
+        if (typeof E.rule !== 'string' || !E.rule.trim()) err(file, `${w}.event.rule`, 'event.rule is a rule string such as "total == 10" (names d1..dn, dice, total), counted among the kept rolls');
+        else if (SIM) { try { SIM.compile(E.rule, [...Array.from({ length: Number.isInteger(P.dice) ? P.dice : 2 }, (_, i) => 'd' + (i + 1)), 'dice', 'total']); } catch (e) { err(file, `${w}.event.rule`, `event.rule does not compile: ${e.message}`); } }
+        if (E.label != null && typeof E.label !== 'string') err(file, `${w}.event.label`, 'event.label is a string');
+        if (E.exactLabel != null && typeof E.exactLabel !== 'string') err(file, `${w}.event.exactLabel`, 'event.exactLabel is a string');
+        if (E.exact != null) { const m = typeof E.exact === 'string' ? E.exact.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/) : null, v = m ? (+m[2] ? +m[1] / +m[2] : NaN) : E.exact; if (!(typeof v === 'number' && v >= 0 && v <= 1)) err(file, `${w}.event.exact`, 'event.exact is the share of kept rolls with the event, 0 to 1, a number or a fraction string such as "1/11"'); }
+      }
+    }
+  }
   if (c.kind === 'series') listOf(P.series).forEach((q, i) => { if (isObj(q) && isObj(q.sim)) checkSim(file, `${where}.params.series[${i}].sim`, q.sim, Object.keys(P.params || {})); });
   if (c.kind === 'distribution' && P.family != null && !['binomial', 'geometric', 'poisson', 'uniform', 'exponential', 't', 'normal', 'hypergeometric', 'discrete', 'custom', 'lognormal', 'beta'].includes(P.family)) err(file, `${where}.params.family`, 'family is binomial, geometric, poisson, hypergeometric, discrete, uniform, normal, lognormal, beta, exponential or t');
   if (c.kind === 'distribution' && ['discrete', 'custom'].includes(P.family)) { const v = P.values ?? (P.params || {}).values, pr = P.probs ?? (P.params || {}).probs; if (!Array.isArray(v) || !v.length) err(file, `${where}.params.values`, 'a discrete family lists its values'); else if (Array.isArray(pr) && Math.abs(pr.reduce((t, x) => t + +x, 0) - 1) > 1e-6) warn(file, `${where}.params.probs`, 'the probabilities do not add to 1'); }
