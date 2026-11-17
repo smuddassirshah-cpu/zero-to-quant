@@ -399,7 +399,8 @@ const normalCdf = (z) => { let t = z, sum = z; for (let n = 1; n < 80; n++) { t 
                         figures that lands on a tie while the key's band takes only one rounding. (The slip-stored-one-place-past-the-places branch was withdrawn in pass 9b: such a value is always
                         within half a step of its own rounding, so it cannot find a fault; a slip exactly on a tie at the asked places is still reported.)
      [working-band]     widened: every printed span is re-evaluated from its own printed (rounded) figures, not only the final one, and a result that leaves the key's band is reported
-     [key-in-question]  a numeric key (rounded as asked) printed in its own part's question after "=", "\approx" or "is", or, for a key of three or more digits, anywhere in it */
+     [key-in-question]  a numeric key (rounded as asked) printed in its own part's question after "=", "\approx" or "is", or, for a key of three or more digits, anywhere in it
+                        (pass 9b: now only for keys of three or more significant digits, compared with sign, silent when the question prints two or more \Phi(...) = values) */
 const evalLatexArith = (src) => {
   let t = String(src).replace(/\\left|\\right|\\,|\\;|\\!|\\ |~/g, '').replace(/\{,\}/g, '').replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/−/g, '-').replace(/\\(?:text|mathrm)\{[^{}]*\}/g, '');
   for (let i = 0; i < 6; i++) t = t.replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, '(($1)/($2))').replace(/\\sqrt\{([^{}]*)\}/g, 'Math.sqrt($1)');
@@ -422,13 +423,17 @@ const printedProducts = (text) => {
   return out;
 };
 const keyInQuestion = (q, ans, hw, step, unit) => {
-  const k = Math.abs(unit === '%' ? ans * 100 : ans), tol = Math.min(unit === '%' ? hw * 100 : hw, step != null ? (unit === '%' ? step * 100 : step) / 2 : 0) + 1e-9 * Math.max(1, k);
-  const t = String(q || '').replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/\\(?:text|mathrm)\{[^{}]*\}/g, ' ').replace(/[\^_]\{?-?\d+\}?/g, ' ').replace(/\\[A-Za-z]+/g, ' ');
+  /* pass 9b: keys of three or more significant digits only (a one- or two-digit key printed in its own question is nearly always a given in another role); the sign is compared (a printed 10 is not
+     a key of -10); silent when the question prints two or more table values after \Phi(...) = (the part is a choice between them) */
+  const ks = unit === '%' ? ans * 100 : ans, k = Math.abs(ks), tol = Math.min(unit === '%' ? hw * 100 : hw, step != null ? (unit === '%' ? step * 100 : step) / 2 : 0) + 1e-9 * Math.max(1, k);
   const sig = String(+k.toPrecision(12)).replace(/^0\.0*|\./g, '').replace(/^0+/, '').replace(/0+$/, '').length;
+  if (sig < 3) return null;
+  if ((String(q || '').match(/\\Phi\s*\([^)]*\)\s*=\s*[-\u2212]?\d*\.\d+/g) || []).length >= 2) return null;
+  const t = String(q || '').replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/\\(?:text|mathrm)\{[^{}]*\}/g, ' ').replace(/[\^_]\{?-?\d+\}?/g, ' ').replace(/\\[A-Za-z]+/g, ' ');
   for (const m of t.matchAll(/(?<![\w.])(\d+(?:\.\d+)?)(?![\w.]*\d)/g)) {
-    if (Math.abs(+m[1] - k) > tol) continue;
-    const before = t.slice(Math.max(0, m.index - 14), m.index);
-    if (/(?:=|\\approx|≈|\bis|\bequals)\s*[-−£$]?\s*$/.test(before) || sig >= 3) return m[1];
+    const pc = t[m.index - 1], neg = (pc === '-' || pc === '\u2212') && !/[\w)}]/.test(t[m.index - 2] || ' ');
+    if (Math.abs((neg ? -1 : 1) * +m[1] - ks) > tol) continue;
+    return m[1];
   }
   return null;
 };

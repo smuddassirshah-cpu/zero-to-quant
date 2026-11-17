@@ -46,7 +46,7 @@ const CASES = [
   [3, 3, 'exponential-of-a-printed-exponent-in-the-band', Q4, num(0.4942, { abs: 5e-5 }), 'The ratio is $e^{-0.7048} \\approx 0.4942$.', OK_EX, [['nowarn', 'from the printed figures']]],
   [3, 4, 'span-with-letters-is-not-evaluated', Q4, num(0.4942, { abs: 5e-5 }), 'The ratio is $x^2 \\times 3 \\approx 0.4942$.', OK_EX, [['nowarn', 'from the printed figures']]],
   /* key-in-question */
-  [4, 0, 'key-restated-after-an-equals-sign', 'Using $\\operatorname{ord}(fT) = 4$ from part 2, what is the order of $f$ itself?', num(4, { abs: 0 }), OK_FB, OK_EX, [['warn', '[key-in-question]']]],
+  [4, 0, 'one-digit-key-after-an-equals-sign-is-silent-since-9b', 'Using $\\operatorname{ord}(fT) = 4$ from part 2, what is the order of $f$ itself?', num(4, { abs: 0 }), OK_FB, OK_EX, [['nowarn', '[key-in-question]']]],
   [4, 1, 'key-as-an-exponent-in-the-question', 'What is the value of $x^4$ at $x = 2$?', num(4, { abs: 0 }), OK_FB, OK_EX, [['nowarn', '[key-in-question]']]],
   [4, 2, 'key-equals-the-places-asked', 'What is the order? Give 4 decimal places.', num(4, { abs: 0 }), OK_FB, OK_EX, [['nowarn', '[key-in-question]']]],
   [4, 3, 'long-key-printed-anywhere', 'The ratio 0.4942 is wanted again. What is it? Give 4 decimal places.', num(0.494188, { abs: 5e-5 }), OK_FB, OK_EX, [['warn', '[key-in-question]']]],
@@ -54,6 +54,12 @@ const CASES = [
   /* working-band (9b): a whole-number key that is the printed result rounded up and printed after the span is a ceiling, not a fault */
   [5, 0, 'ceiling-key-printed-after-the-span', 'How many are needed? Give a whole number.', num(3899, { abs: 0 }), 'Take $2 \\times 1949.2 = 3898.4$, so 3899 are needed.', OK_EX, [['nowarn', '[working-band]']]],
   [5, 1, 'ceiling-key-not-printed-after-the-span', 'How many are needed? Give a whole number.', num(3899, { abs: 0 }), 'Take $2 \\times 1949.2 = 3898.4$ and stop.', OK_EX, [['warn', '[working-band]']]],
+  /* key-in-question (9b): three or more significant digits, sign compared, a choice of table values is silent */
+  [6, 0, 'three-digit-key-after-an-equals-sign', 'Using $f(3) = 495$ from part 1, what is the count? Give a whole number.', num(495, { abs: 0 }), OK_FB, OK_EX, [['warn', '[key-in-question]']]],
+  [6, 1, 'printed-figure-has-the-opposite-sign', 'The loss is 125 on the first leg. What is the net result? Give a whole number.', num(-125, { abs: 0 }), OK_FB, OK_EX, [['nowarn', '[key-in-question]']]],
+  [6, 2, 'printed-figure-has-the-same-sign', 'The loss is $-125$ on the first leg. What is the net result? Give a whole number.', num(-125, { abs: 0 }), OK_FB, OK_EX, [['warn', '[key-in-question]']]],
+  [6, 3, 'two-table-values-are-a-choice', 'You are told $\\Phi(0.15) = 0.5596$ and $\\Phi(0.2) = 0.5793$. Give a decimal to 4 places.', num(0.5596, { abs: 5e-5 }), OK_FB, OK_EX, [['nowarn', '[key-in-question]']]],
+  [6, 4, 'one-table-value-is-the-key', 'Use $\\Phi(0.15) = 0.5596$. Give a decimal to 4 places.', num(0.5596, { abs: 5e-5 }), OK_FB, OK_EX, [['warn', '[key-in-question]']]],
 ];
 const items = [...new Set(CASES.map((c) => c[0]))];
 while (d.items.length < items.length) d.items.push(JSON.parse(JSON.stringify(d.items[0])));
