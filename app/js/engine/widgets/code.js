@@ -417,10 +417,24 @@ def __zq_case(_i):
     return out.join('\n');
   };
 
+  /* Item 1037: helpers a widget may use in its hidden prelude, postlude or test cases without defining them (added to the prelude only when the
+     text names them). zq_no_sort(extra=()) is True when the learner's code uses none of sorted, .sort, heapq (names and operators only: comments,
+     strings and docstrings are skipped) nor any name in `extra`: a test { "call": "zq_no_sort()", "expect": "True" } holds a merge to a real merge. */
+  const LIB = `def zq_no_sort(extra=()):
+    try:
+        _tk = __import__('tokenize')
+        _io = __import__('io')
+        _t = [x.string for x in _tk.generate_tokens(_io.StringIO(__learner_source__).readline) if x.type in (_tk.NAME, _tk.OP)]
+        return not ({'sorted', 'heapq'} | set(extra)) & set(_t) and ('.', 'sort') not in set(zip(_t, _t[1:]))
+    except Exception:
+        return not any(w in __learner_source__ for w in ('sorted(', '.sort(', 'heapq', *extra))
+`;
+  const needsLib = (spec, cases) => /\bzq_no_sort\b/.test([spec.prelude, spec.postlude, ...cases.map(c => String(c.call) + '\n' + String(c.setup))].join('\n'));
   /* The Python source, empty result rows and time limits of one run of `cases` (item 1031: shared with tools/code-runner.mjs, which runs
      it in node, so the tool grades exactly what the page runs). script: any case is a stdout, stdin, argv or raises-with-no-call case. */
   const casePlan = (spec, cases, src, script, dataTexts) => {
-    const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
+    const post = String(spec.postlude || '');
+    const pre = (needsLib(spec, cases) ? LIB : '') + String(spec.prelude || '');   // item 1037: the shared helpers are added only when something names them
     const own = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? spec.files : null;
     const files = dataTexts && Object.keys(dataTexts).length ? { ...(own || {}), ...dataTexts } : own; // data files are written like files, before the prelude
     const code = script ? scriptHarness(src, cases, pre, post, files) : (pre || post || files ? loadHarness(src, pre, post, files) : src) + harness(cases, src);

@@ -51,5 +51,13 @@ say(!/mutants\[0\]/.test(o) && /mutants\[1\] fails test 4 by running out of time
 o = run('slowsol', { ...base, tests: [...base.tests, { call: 'f(10)', expect: '20' }], solution: 'import time\ndef f(x):\n    if x == 10:\n        time.sleep(3)\n    return 2 * x', mutants: [{ source: 'def f(x):\n    while x == 10:\n        pass\n    return 2 * x', test: 4, timeout: true, factor: 2 }] });
 say(/the solution takes \d+ ms on test 4, more than 1\/2 of its 5 s limit/.test(o), 'a solution close to the limit fails the margin', o);
 
+/* 1037: zq_no_sort is there without a definition in the widget, and holds a merge to a real merge */
+const merge = 'def merge(a, b):\n    out = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n';
+const nosort = { tests: [{ call: 'merge([1, 3], [2])', expect: '[1, 2, 3]' }, { call: 'zq_no_sort()', expect: 'True' }], solution: merge, starter: 'def merge(a, b):\n    return []\n', mutants: [{ source: 'def merge(a, b):\n    return sorted(a + b)', test: 2 }, { source: 'def merge(a, b):\n    return (a + b).sort() or sorted(a)  # not sorted(\n', test: 1 }] };
+o = run('nosort', nosort);
+say(/grade-all: 0 failures/.test(o), 'zq_no_sort passes a real merge and fails sorted()', o);
+o = run('nosort-script', { ...nosort, tests: [{ call: 'merge([1, 3], [2])', expect: '[1, 2, 3]' }, { call: 'zq_no_sort()', expect: 'True' }, { compare: 'stdout', expect: '' }], mutants: [{ source: 'def merge(a, b):\n    return sorted(a + b)', test: 2 }] });
+say(/grade-all: 0 failures/.test(o), 'zq_no_sort in script mode', o);
+
 console.log(`test-grade-code: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
