@@ -22,3 +22,7 @@ Raised later (problems ito):
 
 Raised later (problems algebra):
 - `playthrough.mjs --problems <course>/problems-<n>` on a new set fails as "the level review's card ... has no Problem set row" and "the set opened in state empty" when `content/manifest.json` was restored with `git checkout` (as the commit rule asks) after the last validator run. The fix is to rerun `validate.mjs` first; the playthrough could say "set not in manifest.json: run tools/validate.mjs" instead.
+
+Raised later (problems measure-prob):
+- `fresh-check` same-course reuse warns when a choice option names the four modes of convergence in the usual order ("almost surely, in probability, in mean square and in distribution"), which any modes item must say. Workaround: problems-2 `p-root-of-uniform` part 5 reworded its options. A list of fixed course vocabulary that does not count towards a shared run would stop these warnings.
+- After `git checkout app/content/manifest.json` (the commit rule), `playthrough.mjs --problems <set>` fails with "the set opened in state empty, not its start card" and a 20 s timeout until the validator rewrites the manifest. The playthrough could rebuild the manifest itself, or say that the set is missing from it.
