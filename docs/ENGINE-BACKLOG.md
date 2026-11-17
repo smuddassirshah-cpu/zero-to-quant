@@ -2655,6 +2655,8 @@ Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part 
 1207. [Could] `fresh-check` did not match the option set and `why` lines of a choice part against a lesson choice screen: `p-settlement-fails` part 5 ("A non-negative variable always has a mean in $[0, \infty]$"; finite because the chances shrink; undefined) against l5 screen 8 ("Every $X \ge 0$ has a mean in $[0, \infty]$"; the same three answers). [inbox: review-delta-ag-measure-prob]
 1208. [Could] `fresh-check` reads no finite topology up to a renaming of its points: `topology/problems-2` `p-signal-bands` carries the space $\{\varnothing, \{a\}, \{b\}, \{a, b\}, X\}$ of l5 screens[0] and l8 screens[1] with sell, buy, hold for $a$, $b$, $c$, and part 3's reason retells l8 screens[1] ("the only open set holding $c$ is $X$") with no hit. [inbox: review-delta-ag-topology]
 1209. [Should] No rule finds a doubled word in learner text ("the the open balls lesson proof", `topology/problems-1` `p-plotter-zone` part 3 `explain`). A voice-scan or validator warning on `\b(\w+) \1\b` outside maths would. [inbox: review-delta-ag-topology]
+1211. [Should] Predict first: `canvas.controlsAfter` (`"correct"` or `"check"`) holds the canvas controls disabled, with a note, until the widget is checked (report row 2 of `docs/reports/prototype-compare-ai.md`).
+1212. [Should] Quiz chip: a wrong end-of-lesson quiz answer shows "Added to your Redo queue." (report row 12).
 1210. [Should] No rule finds a restated key that, at its rounded value, fails the inequality it was the smallest solution of (`topology/problems-3` `p-trapping-interval` part 4 takes $r = 0.2711$; the root is 0.27110667, so part 2's condition fails there by $4.4 \times 10^{-6}$). [inbox: review-delta-ag-topology]
 
 Engine pass 9 status (`docs/reports/engine-pass-9.md`):
@@ -2716,6 +2718,8 @@ Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 1208 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1209 status: done in engine pass 9b: `voice-scan.py` lists "# doubled word" (prose only; maths, code and templates masked; "had had" and "that that" left alone). `docs/reports/engine-pass-9b.md`.
 1210 status: post-completion (not required for DONE; session AH, 17 Nov), listed in the last section.
+1211 status: done (predict-first pass, `docs/reports/predict-first-ai.md`): `canvas.controlsAfter` in player.js, validator rule, `tools/test-predict-first.mjs`.
+1212 status: done (same pass): `quizFinished` does queue every wrong quiz item, so the wrong chip now says so.
 
 
 ## Engine pass 7 triage (session AH, `docs/reports/engine-pass-7-triage.md`): status lines for items that had none
