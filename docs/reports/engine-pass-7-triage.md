@@ -283,3 +283,89 @@ Gallery: no package touches a canvas, a canvas README or CSS. Package 1 changes 
 | 17 (Route to DONE, AH) | "engine pass 7 remainder ([Must] and [Should] only ...)" | with line 305; its acceptance and gallery clauses belong to line 309 |
 
 Not closed by this: line 309 (full acceptance, gallery in both themes).
+
+## 10. The 46 extras, 412 and number-line labels (second triage)
+
+Read at 9827e437. Marks: DONE-ALREADY, BUILD-CORRECTNESS (a learner is marked wrong when right, right when wrong, shown a wrong number, or blocked), POST-COMPLETION, DROP. Unlike the first triage, the grader items were run: `grade.js` was loaded with the local Compute Engine (as `tools/test-answer-forms.mjs` does) and the typings below were graded; two Python scans read all 2,529 content files. "Probe" names such a run. Nothing was built and no engine or content file was edited.
+
+| Set | Items | DONE-ALREADY | BUILD-CORRECTNESS | POST-COMPLETION | DROP |
+|---|---|---|---|---|---|
+| The 46 of section 7 | 46 | 8 | 3 | 32 | 3 |
+| 412 | 1 | 0 | 0 | 1 | 0 |
+| Number-line labels (section 5) | 1 | 0 | 0 | 1 | 0 |
+| Total | 48 | 8 | 3 | 34 | 3 |
+
+### BUILD-CORRECTNESS (3)
+
+| No | What goes wrong for a learner | Evidence | Files | Size |
+|---|---|---|---|---|
+| 888 | Wrong when right. Under `form: "rectangular"` a correct $a + bi$ whose imaginary part is a number times a surd is refused with the key `form`. | Probe on the real key of `complex/problems-1` `items[2].parts[3]` ($\frac{3}{2}-\frac{3\sqrt{3}}{2}i$): `\frac{3}{2}-\frac{3}{2}\sqrt{3}i`, `\frac{3}{2}-\frac{3\sqrt{3}i}{2}`, `\frac{3}{2}-\frac{3i\sqrt{3}}{2}` and `1.5-1.5\sqrt{3}i` all return `ok: false, key: "form"`. `9\sqrt{3}i` is refused even as its own key. Cause: `imagTerm` (`js/engine/grade.js` line 735) accepts a product of exactly two factors. 21 items carry the form, 5 with a surd key; no stored key is refused today, so only the learner's other spellings fail. | `js/engine/grade.js` (`imagTerm`), `tools/test-grade-ab3.mjs` | S |
+| 976 | Wrong when right. A `compare: "fraction"` expect is evaluated in the learner's namespace, so a learner who writes `import fractions` (or `from fractions import Fraction as F`) and returns a correct `Fraction` fails every case with a `NameError`. | `js/engine/widgets/code.js` line 206: `eval(_exp, _ns)`; `_F` is imported only inside `__zq_judge` (line 211). Read, not run in Pyodide. Scan: 42 code widgets use the compare, 17 have no `Fraction` in a prelude or setup (markov l17, l18, l20, l21 and homework-5, measure-prob l1 and l3, bank `coding-1` `items[5]` and others). The drill worker is safe (`drill-worker.js` line 30). | `js/engine/widgets/code.js` (`__zq_cmp`, both harnesses), `tools/test-engine-runtime.mjs` | S |
+| 1024 | Right when wrong. A part that asks for "one fraction" grades the retyped question correct. | Probe: `\frac{2}{x+1}+\frac{3}{x+2}` against the key `\frac{5x+7}{(x+1)(x+2)}` returns `ok: true` with no form and with `form: "simplified"`. Live in `analysis/problems-1` `items[1].parts[1]` (the question shows $5 - \tfrac{5n-4}{n+1}$, the key is $\frac{9}{n+1}$, no `form`). Scan: 11 expression parts ask for one or a single fraction and 8 carry no `form`; in most the retyped question is not available (a derivative, an unnamed $a_n$). | Same function as 945 (BUILD M, package 1): `js/engine/grade.js` (`simplestVerdict` refuses a sum of fractions), `tools/test-grade-ab3.mjs`; then `"form": "simplified"` on `analysis/problems-1.json` and `problems-2.json` (content, two lines) | S on top of 945 |
+
+All three sit in package 1 of section 8 (`grade.js`, `widgets/code.js` and their tests), so they add no new file owner.
+
+### DONE-ALREADY (8)
+
+| No | Gist | Evidence |
+|---|---|---|
+| 630 | Scratchpad folder per agent | `docs/LEVEL-BRIEF.md` line 40: "your own subfolder of the scratchpad named `<course>-<level>` ... never touch another folder" |
+| 635 | `research-int/review-1` timed checks time out | `docs/reports/engine-pass-ac-4.md` section 4: a harness fault, fixed (`timedChecks` calls `unlockRoute` first); "passes all three lines". `KNOWN_ISSUES.md` line 244 is stale |
+| 687 | fresh-check setup signature | Built as 970 (`--cross-numbers`), 972 and 993 (numbers, matrices, shapes; `tools/same-course-reuse.mjs`, `tools/fresh-check.mjs` header lines 4 to 7), 1075 to 1080 (retold screens). Leftover (test `call` strings, ids): post-completion |
+| 692 | `formOk` judges the right-hand side after a label | Item 904: `dropLabel` (`grade.js` line 748) runs before the shape check (line 845); `tools/test-answer-forms.mjs` line 112 (`y=2.5t-2` passes `simplified`) |
+| 693 | Label strip counts a composite | Item 904: `CALLLABEL` (`grade.js` line 511) reads `m(e(x))`, `gf(x)`, `f^{-1}(x)` |
+| 883 | Whole matrix as a typed answer | Item 931 (Done, [Must]): `[[a, b], [c, d]]`, `((a, b), (c, d))` and MathLive spellings; `tools/test-grade-ab3.mjs` part 1; `docs/AUTHORING.md` line 194 |
+| 983 | `numText` unit forms | Probe: "10 basis points", "10 per cent", "10 percent", "55p", "4h" and "20 degrees" all grade right (`unitCanon`, `grade.js` line 959). Unread still: "£1.732m" and "20°C" on a "degrees" field; the field then stays unready (`numeric.js` line 55), so no mark is lost. Leftover: post-completion |
+| 990 | A number in front of a vector | Item 932: probe `5(0.8,0.6,0)` against `(4,3,0)` is right. `16(3,1)+(2,1)` still returns the key `length`: an unfinished sum, refused. Leftover: post-completion |
+
+### DROP (3)
+
+| No | Gist | Reason |
+|---|---|---|
+| 668 | Error on `=` in an expression answer | Overtaken by 618: an equation is graded as a relation. Probe: the key `y=2x+1` refuses `x=1` and `3=3`; `tools/test-expr-equations.mjs` |
+| 681 | `byKey.error` | Same ask as 1036 (BUILD S, package 1); build once under 1036 |
+| 1008 | `grade-all --file` runs no code widget | Same ask as 1031 (BUILD M, package 1) |
+
+### POST-COMPLETION (34)
+
+| No | Gist | Checked | Why not correctness |
+|---|---|---|---|
+| 412 | `tree` minimum font or stacked rows | `canvas/tree.js` line 209: labels scale to 0.82 at least | cosmetic |
+| Number line | Six labelled points collide at 440 px | Original bullet (da756dd9, removed at fc24bf10) was tagged [Could]; `number-line.js` line 92 already stacks overlapping labels in tiers. The six-label screen was not rendered | cosmetic, [Could] |
+| 623 | Warn on protocol-dependent puzzles | not in `validate.mjs` | validator advisory |
+| 624 | List levels with no number script | `validate.mjs` line 2387 checks only a script that exists | process check |
+| 628 | Cross-course lesson references in prose | not built | validator advisory; the 15 known were checked by hand |
+| 643 | `[shuffled-position]` refinements | `validate.mjs` lines 1488 to 1525 | lint precision |
+| 645 | `[float-artefact]` opt-out | line 126, no opt-out | false alarms only |
+| 646 | Playthrough `"verify": "stdout"` | not built | audit tool. One run would check every "What does it print?" key, so it is the nearest of these to correctness |
+| 651 | `unit "%"` above-1 rule on `answer` only | line 807 exempts a `wrong` value at or below 1 only | false alarms; same ask as 1060 [Could] |
+| 652 | `[float-example]` skips a rounding `call` | line 1112, no skip | false alarms |
+| 659 | Rerun SQL solutions with reversed rows | not built | audit tool; second nearest to correctness |
+| 660 | `numeric` `"places": n` | probe: `4` is right for 4.0 | marking style, the value is right |
+| 667 | `drag-point` `wrong[]` regions and on-target points | `drag-point.js` line 86: all regions tested against all points | the mark is unaffected (a fully right answer returns before the loop); only the slip line can be the wrong one. S if wanted |
+| 676 | Built-in key for a decimal of an exact answer | probe: `1.414` for $\sqrt{2}$ is wrong with no key | the mark is right; feedback wording |
+| 677 | Copy button strips shell prompts | `grade.js` line 1164 copies the whole block | convenience |
+| 696 | Exam item needs only taught constructs | not built | audit tool |
+| 697 | Longform "prose or prompt" rule | `validate.mjs` line 1639 warns on both | rule wording; with 718 |
+| 705 | Homework wording on an `aloud` item | `longform.js` line 47 with `review.js` line 1030 (homework runs in mode `exam`): "The paper clock ends the sitting" | wording |
+| 707 | `aloud` `reveal` list | not built | new feature |
+| 709 | Width check on inline `.katex` | `playthrough.mjs` line 445 measures `.katex-display` only | tooling; decide with 1063 |
+| 710 | Rubric row cut at 440 px | `css/widgets.css` lines 222 and 223: the text column has no `min-width: 0` | cosmetic; the row still ticks |
+| 716 | `data` path inside the course folder | `validate.mjs` line 480 | authoring rule |
+| 717 | Headings in `grade.prose` | scan: two models show a `# ` line literally (`backtest/homework-4` and `alpha/homework-4`, `items[7]`) | cosmetic; a two-line content edit also closes it |
+| 737 | Render a returned Figure | not in `widgets/code.js` | convenience; the tests grade the chart |
+| 879 | `form: "standard"` | not built; scan finds no item that asks for it | new form |
+| 880 | `form: "ratio"` | not built | new form |
+| 890 | `--problems --shots` shoots the Problem set row | not built | tooling |
+| 899 | `trade` one-sided quote | not in `widgets/trade.js` | new feature |
+| 974 | Python test limit under 5 s | `code.js` line 493: `budget` only adds | authoring aid |
+| 979 | Rule for "In 2,000 seeded fits" | not built | validator advisory |
+| 980 | `fresh-check --bank` near copies | 970 covers shared numbers in another order | tooling |
+| 987 | `--problems --mobile` and a wide display in prose | line 1164 checks page width only | tooling; decide with 1063 |
+| 1006 | `numbers_lib` `require_coverage()` | not built | tooling |
+| 1010 | `numbers_lib` code runner ignores `setup`, `prelude` | not built | tooling; 1031 would replace it |
+
+Notes for the coordinator:
+1. The section 5 bullets are not lost: `git show fc24bf10^:docs/BACKLOG-INBOX.md` holds their text and tags. The number-line bullet reads "[Could] `number-line` with six labelled points ... (coint l4 `screens[5]`)".
+2. 709 and 987 stand or fall with 1063 (UNSURE in section 2). An over-wide formula shifts the page; it blocks nobody, so by the strict test all three are post-completion.
+3. `KNOWN_ISSUES.md` line 244 (635) can be struck.
