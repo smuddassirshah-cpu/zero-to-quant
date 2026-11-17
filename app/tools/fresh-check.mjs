@@ -4,6 +4,7 @@
 // Problem sets (893): --file courses/<c>/problems-<n>.json also lists, as advisory, a shared displayed formula or two shared parameters with its course (--shared-params n, --no-set-reuse).
 // Same-course reuse (972): for problems-<n>.json (any course file with --same-course, off with --no-same-course) each item is also held against every other file of its course: numbers, matrices up to a scalar and a transpose, shared sentences
 //   plus (993) the shapes function, pair, transform and region and (1075 to 1080) retold screens and rate forms, which read feedback, explain and why too ([same-course-reuse] lines; an error fails the run, a warning does not; waivers in tools/same-course-waivers.json). Thresholds are those of tools/same-course-reuse.mjs, which also runs on its own (--all).
+// Same-course reuse reads the exams that hold the course's items too (a hit names the exam file and item id; --pairs prints every matched pair; --files a,b,c checks several files with one corpus load; --exam-errors, tools/reuse-baseline.json).
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
 //                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
 //   --file content/courses/<c>/review-1.json (or homework-2.json) checks a course set against everything else, code items included, and
@@ -16,7 +17,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadCorpus as loadSameCourse, scanSet as scanSameCourse, fmtHit as fmtSameCourse } from './same-course-reuse.mjs';
+import { loadCorpus as loadSameCourse, scanSet as scanSameCourse, fmtHit as fmtSameCourse, fmtPairs } from './same-course-reuse.mjs';
 
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : d; };
@@ -93,7 +94,7 @@ function numbersOf(strings) {
 }
 const SHARED_NUMS = Number(opt('--shared-numbers', 3));
 // Cross-content numbers: the stated numbers plus the numeric answers, slip values and option figures of a unit, minus standard constants.
-const CONSTS = new Set(['0.5', '0.25', '0.75', '0.1', '0.05', '0.01', '0.001', '0.025', '0.975', '0.95', '0.99', '0.9', '1.5', '1.96', '1.645', '2.576', '2.33', '3.14', '3.1416', '2.718', '1.414', '0.693', '0.6931', '0.0001', '0.005', '0.0005']);
+const CONSTS = new Set(['0.5', '0.25', '0.75', '0.1', '0.05', '0.01', '0.001', '0.025', '0.975', '0.95', '0.99', '0.9', '1.5', '1.96', '1.645', '2.576', '2.33', '3.14', '3.1416', '2.718', '1.414', '0.693', '0.6931', '0.0001', '0.005', '0.0005', '1.6449', '2.3263', '2.5758']);
 function keyNumbers(node, out = []) {
   if (Array.isArray(node)) { for (const v of node) keyNumbers(v, out); return out; }
   if (node && typeof node === 'object') {
@@ -257,6 +258,8 @@ function scanNumbers(rel, targetUnits) {
 // Set reuse (893): a problem-set item against the lessons, quizzes, reviews, homework and other sets of its course, and every exam.
 const dfForm = new Map();
 for (const x of corpus) for (const f of x.forms ?? []) dfForm.set(f, (dfForm.get(f) ?? 0) + 1);
+// the standard normal quantiles with their levels are textbook constants (ENGINE-BACKLOG, engine pass 8 B): 1.6449 with 90, 1.96 with 95, 2.3263 with 99, 2.5758 with 99.5 are not shared parameters
+const STOCK_QUANTILE = new Set(['1.6449', '1.645', '1.96', '2.3263', '2.326', '2.33', '2.5758', '2.576', '1.2816', '1.282', '0.6745', '90', '95', '97.5', '99', '99.5', '99.9']);
 function scanSetReuse(rel, targetUnits) {
   const m = rel.match(/^courses\/([^/]+)\/problems-\d+\.json$/);
   if (!m || has('--no-set-reuse')) return [];
@@ -270,7 +273,7 @@ function scanSetReuse(rel, targetUnits) {
       const fs = mine.filter((f) => (!exam || sigLen(f) >= 8) && (c.forms.has(f) || [...c.forms].some((g) => g.length > f.length && g.includes(f))));
       if (fs.length) { hits.push({ target: `${rel}:${t.path}`, source: `${c.file}:${c.path}`, kind: 'formula', ngram: fs.slice(0, 3).join('  '), count: fs.length, score: 0 }); continue; }
       // a stated parameter is a specific number: a whole number over 20, a decimal with two places or more, or three or more significant digits (0.3 and 1.5 are everywhere)
-      const shared = [...t.nums].filter((n) => c.nums.has(n) && (n.replace('.', '').replace(/^0+/, '').length >= 3 || /\.\d\d/.test(n) || (!n.includes('.') && +n > 20)));
+      const shared = [...t.nums].filter((n) => !STOCK_QUANTILE.has(String(+n)) && c.nums.has(n) && (n.replace('.', '').replace(/^0+/, '').length >= 3 || /\.\d\d/.test(n) || (!n.includes('.') && +n > 20)));
       if (SHARED_PARAMS >= 1 && shared.length >= SHARED_PARAMS + (exam ? 1 : 0)) hits.push({ target: `${rel}:${t.path}`, source: `${c.file}:${c.path}`, kind: 'params', ngram: shared.slice(0, 6).join(' '), count: shared.length, score: 0 });
     }
   }
@@ -347,8 +350,13 @@ function scanCross(rel, targetUnits, selfId) {
 
 // Targets.
 const targets = [];
-const direct = opt('--file', null);
-if (direct) {
+const direct = opt('--file', null), several = opt('--files', null);   // --files a.json,b.json,c.json: the corpora are loaded once for all of them (engine pass 8 B)
+if (several) {
+  for (const f of several.split(',').filter(Boolean)) {
+    const abs = resolve(f), inC = relative(resolve(C), abs), rel = !inC.startsWith('..') && !isAbsolute(inC) ? inC.split(sep).join('/') : `${opt('--as', 'exams')}/${f.split('/').pop()}`, r = unitsOf(abs, rel);
+    targets.push({ rel, units: r.units, id: r.id, abs });
+  }
+} else if (direct) {
   // A file inside the content folder keeps its own path (courses/<c>/review-1.json), so the scan skips it
   // as a source and reads its code from where it lives. Outside it, --as names the kind (exams, drills, bank).
   const abs = resolve(direct), inC = relative(resolve(C), abs);
@@ -387,7 +395,7 @@ if (!has('--no-same-course') && !CROSS) {
   const sc = targets.filter((t) => (has('--same-course') ? /^courses\/[^/]+\/[^/]+\.json$/ : /^courses\/[^/]+\/problems-\d+\.json$/).test(t.rel));
   if (sc.length) {
     const corpus = loadSameCourse(C);
-    for (const t of sc) { const doc = rd(join(C, t.rel)); for (const h of scanSameCourse(corpus, t.rel, doc)) { sameLines.push(fmtSameCourse(h, doc)); if (h.level === 'error' && !h.waived) sameErrors++; } }
+    for (const t of sc) { const doc = rd(join(C, t.rel)); for (const h of scanSameCourse(corpus, t.rel, doc)) { sameLines.push(fmtSameCourse(h, doc)); if (has('--pairs')) sameLines.push(...fmtPairs(h)); if (h.level === 'error' && !h.waived) sameErrors++; } }
   }
 }
 const hard = all.filter((h) => !ADVISORY.has(h.kind));

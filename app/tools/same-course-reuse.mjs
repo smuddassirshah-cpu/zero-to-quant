@@ -113,7 +113,7 @@ function longestRun(a, b) {   // longest common run, scored in words ("#" joins 
 
 // ---- numbers ----
 // Distinctive: not a whole number up to 20, not a year, not a standard constant, not a number held by more than DF units of the app.
-const CONSTS = new Set(['0.5', '0.25', '0.75', '0.1', '0.05', '0.01', '0.001', '0.025', '0.975', '0.95', '0.99', '0.9', '1.5', '1.96', '1.645', '2.576', '2.33', '3.14', '3.1416', '2.718', '1.414', '0.693', '0.6931', '0.0001', '0.005', '0.0005', '0.2', '0.3', '0.4', '0.6', '0.7', '0.8', '0.15', '0.35', '0.45', '0.55', '0.65', '0.85', '0.02', '0.03', '0.04', '0.06', '0.07', '0.08', '0.09', '2.5', '3.5', '4.5', '0.125', '0.375', '0.625', '0.875', '0.2', '1.2', '1.25']);
+const CONSTS = new Set(['0.5', '0.25', '0.75', '0.1', '0.05', '0.01', '0.001', '0.025', '0.975', '0.95', '0.99', '0.9', '1.5', '1.96', '1.645', '2.576', '2.33', '3.14', '3.1416', '2.718', '1.414', '0.693', '0.6931', '0.0001', '0.005', '0.0005', '0.2', '0.3', '0.4', '0.6', '0.7', '0.8', '0.15', '0.35', '0.45', '0.55', '0.65', '0.85', '0.02', '0.03', '0.04', '0.06', '0.07', '0.08', '0.09', '2.5', '3.5', '4.5', '0.125', '0.375', '0.625', '0.875', '0.2', '1.2', '1.25', '1.6449', '2.3263', '2.5758']);   // the normal quantiles at 90, 95, 97.5, 99 and 99.5 per cent are textbook constants, with their levels
 const stockInt = (v) => Number.isInteger(v) && (Math.abs(v) <= 20 || (v >= 1900 && v <= 2100) || [25, 30, 40, 50, 60, 75, 100, 200, 250, 500, 1000, 10000, 365, 252, 12, 24, 120, 150, 300, 400, 600, 1200].includes(Math.abs(v)));
 function numberSet(strs, nums) {
   const out = new Map();   // key -> value
@@ -214,8 +214,9 @@ function unitsOfFile(doc, rel) {
     u.push({ file: rel, path, ...meta, sec, osec: stem ? osec : sec, fbs, ofbs: fbs, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.flatMap(matrixKeys)), shapes: shapesOf(shapeStrings(stem ? [stem, node] : node), stem ? null : node) });
   };
   const withParts = (path, q, i) => {
-    add(path, q, undefined, { cont: 'items', idx: i, hasParts: Array.isArray(q.parts) });
-    if (Array.isArray(q.parts)) { const { parts, ...stem } = q; q.parts.forEach((p, j) => add(`${path}.parts[${j}]`, p, stem, { cont: path, idx: j, part: true })); }
+    const id = { id: q.id, skills: q.skills };   // the item's id and skills: an exam item belongs to the courses whose skills it carries
+    add(path, q, undefined, { cont: 'items', idx: i, hasParts: Array.isArray(q.parts), ...id });
+    if (Array.isArray(q.parts)) { const { parts, ...stem } = q; q.parts.forEach((p, j) => add(`${path}.parts[${j}]`, p, stem, { cont: path, idx: j, part: true, ...id })); }
   };
   (doc.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s, undefined, { cont: 'screens', idx: i }));
   (Array.isArray(doc.quiz) ? doc.quiz : doc.quiz?.items ?? []).forEach((q, i) => add(`quiz[${i}]`, q, undefined, { cont: 'quiz', idx: i }));
@@ -231,7 +232,19 @@ export function loadCorpus(C, { model: modelMode } = {}) {
   const byFile = new Map(), all = [], courses = existsSync(join(C, 'courses')) ? readdirSync(join(C, 'courses')).sort() : [];
   const add = (rel, units) => { all.push(...units); return units; };
   for (const c of courses) for (const f of courseFiles(C, c)) { const rel = `courses/${c}/${f}`; byFile.set(rel, add(rel, unitsOfFile(rd(join(C, rel)), rel))); }
-  for (const sub of ['exams', 'bank']) for (const f of jsonFiles(join(C, sub))) add(`${sub}/${f}`, unitsOfFile(rd(join(C, sub, f)), `${sub}/${f}`));
+  // the exams hold the course's items too (engine pass 8 B): an item of a topic, stage or mock exam belongs to each course whose course.json lists one of its skills
+  const skillCourse = new Map(), topicCourse = new Map();
+  for (const c of courses) { const p = join(C, 'courses', c, 'course.json'); if (!existsSync(p)) continue; const cj = rd(p); for (const k of Object.keys(cj.skills ?? {})) skillCourse.set(k, c); if (cj.topic) topicCourse.set(String(cj.topic), c); }
+  const examByCourse = new Map();
+  for (const sub of ['exams', 'bank']) for (const f of jsonFiles(join(C, sub))) {
+    const doc = rd(join(C, sub, f)), us = add(`${sub}/${f}`, unitsOfFile(doc, `${sub}/${f}`));
+    if (sub !== 'exams') continue;
+    for (const x of us) {
+      const cs = new Set((x.skills ?? []).map((k) => skillCourse.get(k)).filter(Boolean));
+      if (!cs.size && !x.skills?.length && topicCourse.has(String(doc.topic))) cs.add(topicCourse.get(String(doc.topic)));   // an item with no skills follows its exam's topic
+      for (const c of cs) { let a = examByCourse.get(c); if (!a) examByCourse.set(c, (a = [])); a.push(x); }
+    }
+  }
   for (const x of all) for (const sn of x.sens) bump(df.sen, sn, x.file);
   const sdf = new Map([...df.sen].map(([k, v]) => [k, v.size]));
   for (const x of all) {
@@ -245,28 +258,31 @@ export function loadCorpus(C, { model: modelMode } = {}) {
   const live = modelMode ? modelMode === 'live' : resolve(C) === resolve(join(APP, 'content'));
   const snapPath = join(HERE, 'retold-model.json');
   const model = buildModel(all, live || !existsSync(snapPath) ? null : rd(snapPath));   // retold sentences and chains, rate forms: retold-reuse.mjs (word frequencies and stock sentences of the whole content)
-  return { df, byFile, courses, sdf, sidx, model, rIdx: new Map(), conts: new Map(), units: all };
+  return { df, byFile, courses, sdf, sidx, model, rIdx: new Map(), conts: new Map(), units: all, examByCourse };
 }
 
 // ---- scan ----
 const O = (argv, k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : d; };
 export function scanSet(corpus, rel, doc, opts = {}) {
-  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5, shapes = true, shapeDf = 4, retold = true } = opts;
+  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5, shapes = true, shapeDf = 4, retold = true, exams = true, examBaseline = null } = opts;
   const course = rel.split('/')[1], hits = [];
   const mine = corpus.byFile.get(rel) ?? unitsOfFile(doc, rel);
   if (!corpus.byFile.has(rel)) for (const x of mine) { x.tk = tokensOf(x.sens, corpus.sdf); x.sh = new Set(shingles(x.tk)); }
   if (!corpus.byFile.has(rel)) for (const x of mine) { prep(x, corpus.model); markStock(x, corpus.model); }
-  const sources = [...corpus.byFile.entries()].filter(([f]) => f !== rel && f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);
+  const ownUnits = [...corpus.byFile.entries()].filter(([f]) => f !== rel && f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);
+  const examUnits = exams ? corpus.examByCourse?.get(course) ?? [] : [];   // the items of the topic, stage and mock exams that carry this course's skills
+  const examSet = new Set(examUnits);
+  const sources = [...ownUnits, ...examUnits];
   const outside = (m, k) => [...(m.get(k) ?? [])].filter((f) => !f.startsWith(`courses/${course}/`)).length;   // files of other courses and exams: a figure the course alone repeats is the reuse, not a stock number
   const dfn = (k) => outside(corpus.df.num, k);
   // an index of shingles over the sources, for the text kind
   const idx = new Map();
   sources.forEach((s, i) => { for (const g of s.sh) if ((corpus.df.sh.get(g) ?? 0) <= boiler) { let a = idx.get(g); if (!a) idx.set(g, (a = [])); a.push(i); } });
   const best = new Map();   // item|source file|kind -> hit
-  const keep = (t, s, kind, score, evidence, texts) => {
+  const keep = (t, s, kind, score, evidence, texts, pairs, tag) => {
     const item = t.path.replace(/\.parts\[\d+\]$/, ''), part = t.path.includes('.parts[') ? Number(t.path.match(/parts\[(\d+)\]$/)[1]) + 1 : null;
-    const k = `${item}|${s.file}|${kind}`, o = best.get(k);
-    if (!o || score > o.score || (score === o.score && part && !o.part)) best.set(k, { file: rel, item, itemPath: item, part, kind, source: `${s.file}:${s.path}`, score, evidence, texts });
+    const k = `${item}|${s.file}|${kind}`, o = best.get(k), exam = s.file.startsWith('exams/');
+    if (!o || score > o.score || (score === o.score && part && !o.part)) best.set(k, { file: rel, item, itemPath: item, part, kind, source: `${s.file}:${s.path}`, sourceId: s.id, exam, tag, score, evidence, texts, pairs });
   };
   for (const t of mine) {
     // numbers
@@ -293,7 +309,10 @@ export function scanSet(corpus, rel, doc, opts = {}) {
     // matrices
     for (const mk of t.mats) { if (outside(corpus.df.mat, mk) > MAT_STOCK) continue; for (const s of sources) if (s.mats.has(mk)) keep(t, s, 'matrix', 1, mk.startsWith('eig2:') ? `symmetric 2 by 2 matrix with the eigenvectors of this one (equal after aM + bI; (p - r) / q = ${mk.slice(5)})` : `matrix ${mk.replace(/^\d+x\d+:/, '[').replace(/,/g, ' ')}] equal up to a scalar and a transpose`); }
     // reuse shapes: a function with its interval or factorisation, a key pair, a shifted or scaled set, a region with its integrand (ENGINE-BACKLOG 993; errors since 1059)
-    if (shapes) for (const h of matchShapes(t, corpus.sidx, rel, (f) => f.startsWith(`courses/${course}/`), { df: shapeDf })) keep(t, h.src, h.kind, h.score, h.evidence);
+    if (shapes) {
+      for (const h of matchShapes(t, corpus.sidx, rel, (f) => f.startsWith(`courses/${course}/`), { df: shapeDf })) keep(t, h.src, h.kind, h.score, h.evidence);
+      if (examSet.size) for (const h of matchShapes(t, corpus.sidx, rel, (f) => f.startsWith('exams/'), { df: shapeDf })) if (examSet.has(h.src)) keep(t, h.src, h.kind, h.score, h.evidence);   // the course's own exam items, by the same-course shapes
+    }
     // text
     const cand = new Set();
     for (const g of t.sh) for (const i of idx.get(g) ?? []) cand.add(i);
@@ -304,15 +323,21 @@ export function scanSet(corpus, rel, doc, opts = {}) {
   }
   // retold sentences and chains (ENGINE-BACKLOG 1075, 1076, 1078) and rate forms (1080): retold-reuse.mjs
   if (retold) {
-    if (!corpus.rIdx.has(course)) corpus.rIdx.set(course, buildSentenceIndex(sources.filter((x) => !x.part)));
+    const courseAll = [...corpus.byFile.entries()].filter(([f]) => f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);   // the index holds every file of the course, the target's own too (a hit never meets it: sentenceMatches skips the target's file)
+    if (!corpus.rIdx.has(course + (exams ? '+x' : ''))) corpus.rIdx.set(course + (exams ? '+x' : ''), buildSentenceIndex(courseAll.concat(examUnits).filter((x) => !x.part), courseAll));
     const srcContainers = [];
     for (const [f, us] of corpus.byFile) if (f !== rel && f.startsWith(`courses/${course}/`)) { if (!corpus.conts.has(f)) corpus.conts.set(f, containersOf(us)); srcContainers.push([f, corpus.conts.get(f)]); }
-    scanRetold({ rel, mine, idx: corpus.rIdx.get(course), srcContainers, keep });
+    const exFiles = new Map(); for (const u of examUnits) { let a = exFiles.get(u.file); if (!a) exFiles.set(u.file, (a = [])); a.push(u); }
+    for (const [f, us] of exFiles) { const ck = `${f}|${course}`; if (!corpus.conts.has(ck)) corpus.conts.set(ck, containersOf(us)); srcContainers.push([f, corpus.conts.get(ck)]); }
+    scanRetold({ rel, mine, idx: corpus.rIdx.get(course + (exams ? '+x' : '')), srcContainers, keep, model: corpus.model });
     for (const t of mine) { if (t.hasParts) continue; for (const s of sources) { if (s.part) continue; const r = matchRates(t, s); if (r) keep(t, s, 'rate', 1, rateEvidence(r), [r.x.sentence, r.y.sentence]); } }
   }
   const waive = waivers(rel, doc);
   for (const h of best.values()) {
     h.level = h.kind === 'matrix' || SHAPE_KINDS.includes(h.kind) || RETOLD_KINDS.includes(h.kind) || (h.kind === 'text' && h.score >= errorRun) ? 'error' : 'warn';   // the four shapes became errors in ENGINE-BACKLOG 1059 (rules tightened in 1053 to 1058)
+    // [exam-reuse] and [slip-line]: the two checks of engine pass 8 B. A set that existed before them (tools/reuse-baseline.json) is told, not failed, until its hits are triaged; a new set fails.
+    const tag = h.exam ? 'exam-reuse' : h.tag;
+    if (tag && examBase(rel, examBaseline)) { h.level = 'warn'; h.baseline = tag; }
     const w = waive(h);
     if (w) { h.waived = w; }
     hits.push(h);
@@ -320,26 +345,45 @@ export function scanSet(corpus, rel, doc, opts = {}) {
   return hits.sort((a, b) => a.item.localeCompare(b.item, undefined, { numeric: true }) || a.kind.localeCompare(b.kind));
 }
 
+// A waiver may name the source it clears: "source": "courses/c/l1.json", a list of such files, or { "file": ..., "item": "items[2]" or the item id, "text": "a phrase of either text of a pair" }. With no source it clears every hit of its item and kind.
+function sourceOk(src, h) {
+  if (!src) return true;
+  if (Array.isArray(src)) return src.some((x) => sourceOk(x, h));
+  const o = typeof src === 'string' ? { file: src } : src, [sf, sp] = [h.source.split(':')[0], h.source.slice(h.source.indexOf(':') + 1)];
+  if (o.file && !(sf === o.file || sf === `courses/${o.file}` || sf.endsWith(`/${o.file}`))) return false;
+  if (o.item && !(o.item === h.sourceId || sp === o.item || sp.startsWith(`${o.item}.`) || sp.startsWith(`${o.item}[`))) return false;
+  if (o.text && !(h.pairs ?? [h.texts ?? []]).some((p) => p.slice(0, 2).some((t) => String(t).toLowerCase().includes(String(o.text).toLowerCase())))) return false;
+  return true;
+}
+let baselineSet = null;
+function examBase(rel, opt) {
+  if (opt === false || process.env.ZQ_EXAM_ERRORS) return false;
+  if (!baselineSet) { const p = join(HERE, 'reuse-baseline.json'); baselineSet = new Set(existsSync(p) ? rd(p) : []); }
+  return baselineSet.has(rel);
+}
 // Waivers: tools/same-course-waivers.json ([{ file, item, kind (or "*"), reason }]) and "reuseWaiver": "reason" on an item.
 let waiverList = null;
 function waivers(rel, doc) {
-  if (!waiverList) { const p = join(HERE, 'same-course-waivers.json'); waiverList = existsSync(p) && !process.env.ZQ_NO_WAIVERS ? rd(p) : []; }
+  if (!waiverList) { const p = process.env.ZQ_WAIVERS ?? join(HERE, 'same-course-waivers.json'); waiverList = existsSync(p) && !process.env.ZQ_NO_WAIVERS ? rd(p) : []; }
   const byItem = new Map((doc.items ?? []).filter((q) => typeof q.reuseWaiver === 'string' && q.reuseWaiver.trim()).map((q) => [q.id, q.reuseWaiver]));
   return (h) => {
     const id = (doc.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id;
     if (byItem.has(id)) return byItem.get(id);
-    const w = waiverList.find((x) => x.file === rel && x.item === id && (x.kind === '*' || x.kind === h.kind));
+    const w = waiverList.find((x) => x.file === rel && x.item === id && (x.kind === '*' || x.kind === h.kind) && sourceOk(x.source, h));
     return w ? w.reason : null;
   };
 }
 
-export const fmtHit = (h, doc) => `[same-course-reuse] ${h.waived ? 'waived' : h.level}  ${h.file}  ${(doc?.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id ?? h.item}  ${h.item}${h.part ? ` part ${h.part}` : ''}  ${h.kind}  <-  ${h.source}  ${h.evidence}`;
+export const fmtHit = (h, doc) => `[same-course-reuse]${h.baseline ? ` [${h.baseline}]` : ''} ${h.waived ? 'waived' : h.level}  ${h.file}  ${(doc?.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id ?? h.item}  ${h.item}${h.part ? ` part ${h.part}` : ''}  ${h.kind}  <-  ${h.source}${h.exam && h.sourceId ? ` (exam item ${h.sourceId})` : ''}  ${h.evidence}`;
+// Every matched pair of a hit, one per line: the target's text, then the source's (engine pass 8 B: --pairs).
+export const fmtPairs = (h) => (h.pairs ?? (h.texts ? [h.texts] : [])).map((p) => `      pair: "${String(p[0]).replace(/\s+/g, ' ')}"  <-  "${String(p[1]).replace(/\s+/g, ' ')}"`);
 
 const main = () => {
   const argv = process.argv.slice(2), has = (k) => argv.includes(k);
   const C = O(argv, '--content', join(APP, 'content'));
-  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)), shapes: !has('--no-shapes'), shapeDf: Number(O(argv, '--shape-df', 4)), retold: !has('--no-retold') };
+  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)), shapes: !has('--no-shapes'), shapeDf: Number(O(argv, '--shape-df', 4)), retold: !has('--no-retold'), exams: !has('--no-exams') };
   if (has('--no-waivers')) process.env.ZQ_NO_WAIVERS = '1';
+  if (has('--exam-errors')) process.env.ZQ_EXAM_ERRORS = '1';
   const corpus = loadCorpus(C, { model: has('--learn') ? 'live' : undefined });
   if (has('--learn')) { const snap = learn(corpus.units); writeFileSync(join(HERE, 'retold-model.json'), JSON.stringify(snap) + '\n'); console.log(`[same-course-reuse] learned ${Object.keys(snap.wdf).length} words over ${snap.N} files and ${snap.stock.length} stock sentences into tools/retold-model.json`); return; }
   let rels = [];
@@ -349,7 +393,7 @@ const main = () => {
   const all = [];
   for (const rel of rels) { const doc = rd(join(C, rel)); for (const h of scanSet(corpus, rel, doc, opts)) all.push({ ...h, line: fmtHit(h, doc), itemId: (doc.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id }); }
   if (has('--json')) console.log(JSON.stringify(all.map(({ line, ...h }) => h), null, 1));
-  else for (const h of all) console.log(h.line);
+  else for (const h of all) { console.log(h.line); if (has('--pairs')) for (const l of fmtPairs(h)) console.log(l); }
   const errs = all.filter((h) => h.level === 'error' && !h.waived), warns = all.filter((h) => h.level === 'warn' && !h.waived), waived = all.filter((h) => h.waived);
   const by = (l) => ['numbers', 'matrix', 'text', 'function', 'pair', 'transform', 'region', 'retold', 'rate'].map((k) => `${k} ${l.filter((h) => h.kind === k).length}`).join(', ');
   if (!has('--json')) console.log(`[same-course-reuse] ${rels.length} file(s): ${errs.length} error(s) (${by(errs)}), ${warns.length} warning(s) (${by(warns)}), ${waived.length} waived`);
