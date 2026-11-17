@@ -1494,51 +1494,55 @@
    }
   },
   {
-   "id": "e-virtual-dtor",
+   "id": "e-swapped-d",
    "difficulty": 4,
    "skills": [
-    "cp-classes"
+    "cx-testing"
    ],
-   "tags": [
-    "virtual-destructor"
-   ],
-   "pace": 90,
-   "title": "A shared pointer to a base",
-   "prose": "```cpp\nint gone = 0;\nstruct Base { ~Base() {} };\nstruct Derived : Base {\n    std::vector<double> v;\n    ~Derived() { ++gone; }\n};\n\nstd::shared_ptr<Base> p =\n    std::make_shared<Derived>();\np.reset();\n```",
-   "question": "`Base`'s destructor is not virtual. What happens at `p.reset()`?",
+   "title": "Which tests see a swap",
+   "prose": "Someone swapped $d_1$ and $d_2$ in `bs_call`, which now returns $S\\,N(d_2) - Ke^{-rT}N(d_1)$. The correct call at $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ is £10.4506. `bs_put` is correct and untouched.",
+   "question": "Select all that apply: which tests fail on the swapped version?",
    "widget": {
-    "kind": "choice",
+    "kind": "multi",
     "layout": "stack",
-    "shuffle": true,
     "options": [
      {
-      "id": "derived",
-      "text": "`~Derived` runs, `gone` is 1, and the vector is freed.",
+      "id": "known",
+      "text": "```cpp\ndouble c = bs_call(100, 100,\n    0.05, 0.2, 1);\nCHECK_CLOSE(c, 10.4506, 1e-4);\n```",
       "correct": true
      },
      {
-      "id": "base-only",
-      "text": "Only `~Base` runs, so `gone` stays 0.",
-      "why": "You applied the raw `delete` rule. A `shared_ptr` made by `make_shared<Derived>` stores the deleter for `Derived`."
+      "id": "parity",
+      "text": "```cpp\ndouble c = bs_call(100, 100,\n    0.05, 0.2, 1);\ndouble p = bs_put(100, 100,\n    0.05, 0.2, 1);\ndouble f = 100\n    - 100 * std::exp(-0.05);\nCHECK_CLOSE(c - p, f, 1e-9);\n```",
+      "correct": true
      },
      {
-      "id": "ub",
-      "text": "Undefined behaviour.",
-      "why": "Undefined behaviour is for `delete` through a `Base*`. Here the deleter was chosen when the pointer was made."
+      "id": "bounds",
+      "text": "```cpp\ndouble c = bs_call(100, 100,\n    0.05, 0.2, 1);\nCHECK(c >= 0 && c <= 100);\n```",
+      "correct": true
      },
      {
-      "id": "leak",
-      "text": "The vector leaks.",
-      "why": "The vector is freed, because `~Derived` runs."
+      "id": "limit",
+      "text": "```cpp\ndouble c = bs_call(100, 100,\n    0.05, 1e-8, 1);\ndouble f = 100\n    - 100 * std::exp(-0.05);\nCHECK_CLOSE(c, f, 1e-6);\n```",
+      "why": "As $\\sigma \\to 0$, $d_1$ and $d_2$ meet, so the swap changes nothing there. This limit test passes on both versions."
+     },
+     {
+      "id": "finite",
+      "text": "```cpp\ndouble c = bs_call(100, 100,\n    0.05, 0.2, 1);\nCHECK(std::isfinite(c));\n```",
+      "why": "The swapped formula still returns a finite number, about $-4.62$. A finite check cannot see a wrong value."
      }
     ]
    },
    "feedback": {
-    "correct": "The control block remembers the real type, so `~Derived` runs.",
-    "generic": "Ask where a `shared_ptr` learns which destructor to call, and when."
+    "correct": "The swapped call is about $-4.62$, so the known value, parity and bounds all fail. Only the small-$\\sigma$ limit hides it.",
+    "generic": "Work out what the swapped call returns at each test's inputs. With $d_1 = 0.35$ and $d_2 = 0.15$ it is negative.",
+    "byKey": {
+     "limit": "As $\\sigma \\to 0$, $d_1$ and $d_2$ meet, so the swap changes nothing there.",
+     "finite": "The swapped formula still returns a finite number, about $-4.62$."
+    }
    },
    "explain": {
-    "text": "The control block (the counter block of l23) remembers the deleter for `Derived`, set when `make_shared<Derived>` built it. So the call is defined, though the safe habit is still a virtual destructor. A `unique_ptr<Base>` or a raw `delete` has no such memory."
+    "text": "At the standard inputs $d_1 = 0.35$ and $d_2 = 0.15$, so the swapped call is $100N(0.15) - 95.12N(0.35) = -4.62$. That breaks the known value, parity with the correct put and even $0 \\le c \\le S$. As $\\sigma \\to 0$ both $d$ values grow together, so the limit test cannot tell the versions apart."
    }
   },
   {
