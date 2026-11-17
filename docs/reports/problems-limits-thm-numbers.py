@@ -277,7 +277,7 @@ ok(abs(sum(sim) / len(sim) - S0 * exp(m)) < 0.2, 'p-digital-share: simulated mea
 z3 = (log(S0 * exp(m) / S0) - drift) / s
 stated('z for the mean', 0.15, z3, 1e-12)
 num(L2, 'p-digital-share', 3, Phi(0.15), lnS.cdf(S0 * exp(m)),
-    {'half': 0.5, 'above': 1 - Phi(0.15)}, dp=4)
+    {'half': 0.5, 'above': 1 - Phi(0.15), 'no-centre': Phi(0.06 / 0.3)}, dp=4)
 z4 = (log(100 / S0) - drift) / s
 stated('z for 100', 0.69, z4, 0.005)
 stated('Phi(0.69) as printed', 0.7549, Phi(0.69), 0.00005)
