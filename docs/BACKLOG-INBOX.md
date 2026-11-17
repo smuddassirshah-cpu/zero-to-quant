@@ -95,3 +95,8 @@ Raised later (problems topology fix pass):
 
 Raised later (review-delta-ag-algebra):
 - A problem-set numeric part whose key is printed in its own `question` as a stated value (`algebra/problems-3` `p-affine-five` part 3: "Using $\operatorname{ord}(fT) = 4$ from part 2 ... What is the order of $f$ itself", key 4) passes by retyping. A validator warning could read the key, at the asked form, after "=" in the same part's `question`.
+
+Raised later (review-delta-ag-pdes):
+- `fresh-check` reads one course: `pdes/problems-3` `p-grid-budget` parts 1 and 2 open as `numerics/problems-3` `p-rate-path-euler` does (three runs, the order from the gaps, the finest run's error; the explain line retold). Both were re-authored in one session; only a grep for `\log_2` found it. A cross-course pass over sets written in the same session would.
+- `fresh-check` passes one step retold on the same grids (`p-grid-budget` part 3 against `homework-3` `h-sequence`: 400 intervals, two halvings, divide by 16, 1,600) and a `byKey` line shared under the same slip id (`p-straddle-vol` part 1 `no-root` against l10 `q-arg` `no-root`). Compare `byKey` lines of equal id across the course.
+- No validator rule flags a key stored at more places than asked whose band edge reaches the next rounding by a float margin (`pdes/problems-3` `p-log-contract` part 4: 0.46654 with 0.00006 takes 0.4666).
