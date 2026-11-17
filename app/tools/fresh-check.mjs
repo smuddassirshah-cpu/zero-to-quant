@@ -130,12 +130,15 @@ function formulasOf(strings) {
 const sigLen = (f) => (f.match(/\\[a-zA-Z]+|[A-Za-z]|\d+(?:\.\d+)?|[^\s]/g) ?? []).filter((t) => !/^[(){}[\],.]$/.test(t)).length;
 const SHARED_PARAMS = Number(opt('--shared-params', 2)), BOILER_F = Number(opt('--boiler-formula', 3));
 // Units: one lesson screen / quiz item / review item / homework item / exam item / drill / bank item.
+const taught = new Set();   // `course|formula` of every formula.tex of a lesson screen (ENGINE-BACKLOG 1062)
 function unitsOf(file, rel) {
   const d = rd(file), u = [];
   const qOf = (node) => (node && typeof node === 'object' ? [node.prose, node.question, ...(Array.isArray(node.parts) ? node.parts.flatMap((p) => [p && p.prose, p && p.question]) : [])].filter((x) => typeof x === 'string') : []);
   const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, qtk: tokens(qOf(node)), nums: numbersOf(out), xn: [...numbersOf([...out, ...keyNumbers(node)])].filter((n) => !CONSTS.has(n)), forms: formulasOf(out) }); };
   if (rel.startsWith('courses/')) {
     (d.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s));
+    // ENGINE-BACKLOG 1062: a formula a lesson screen shows in its `formula.tex` is taught by the course; a problem set that uses it is not copying a setup
+    for (const s of d.screens ?? []) if (typeof s?.formula?.tex === 'string') for (const f of formulasOf([`$${s.formula.tex}$`])) taught.add(`${rel.split('/')[1]}|${f}`);
     const qz = Array.isArray(d.quiz) ? d.quiz : d.quiz?.items ?? [];
     qz.forEach((q, i) => add(`quiz[${i}]`, q));
     (d.items ?? []).forEach((q, i) => add(`items[${i}]`, q));
@@ -265,7 +268,7 @@ function scanSetReuse(rel, targetUnits) {
   if (!m || has('--no-set-reuse')) return [];
   const hits = [];
   for (const t of targetUnits) {
-    const mine = [...t.forms].filter((f) => (dfForm.get(f) ?? 0) <= BOILER_F);
+    const mine = [...t.forms].filter((f) => (dfForm.get(f) ?? 0) <= BOILER_F && !taught.has(`${m[1]}|${f}`));   // a formula the course's own lesson screen teaches (1062) is not a copied setup
     for (const c of corpus) {
       const exam = c.file.startsWith('exams/');
       if (c.file === rel || !(c.file.startsWith(`courses/${m[1]}/`) || exam)) continue;
