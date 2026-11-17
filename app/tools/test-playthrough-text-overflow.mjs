@@ -14,12 +14,18 @@ fs.copyFileSync(path.join(HERE, 'fixtures/overflow/problems-overflow.json'), pat
 const extra = process.argv.slice(2);
 let bad = 0;
 const play = (ref, mobile) => { const r = spawnSync('node', [path.join(HERE, 'playthrough.mjs'), '--problems', ref, ...(mobile ? ['--mobile'] : []), ...extra], { env: { ...process.env, ZQ_APP_DIR: copy }, encoding: 'utf8', timeout: 240000 }); return (r.stdout || '') + (r.stderr || ''); };
+/* engine pass AH: the engine now sets a long inline span (over 14 characters) in a box that scrolls sideways (.lsn-wide), so the fixture's comma list passes; the probe still has to catch the
+   span when that box is switched off, which the css patch below does for the cases after it. A span that scrolls inside its own box is reachable and not a fault. */
+const lessonCss = path.join(copy, 'css/screens/lesson.css');
+const BREAK = '\n.lsn-nw.lsn-wide { display: inline !important; overflow: visible !important; }\n';
 const cases = [
-  ['fixture/problems-overflow', true, true, 'the wide span fails at 440 px'],
-  ['fixture/problems-overflow', false, false, 'the wide span is not checked without --mobile'],
+  ['fixture/problems-overflow', true, false, 'a long span that scrolls inside its own box passes at 440 px (not clipped, not past the window)'],
   ['fixture/problems-fixture-3', true, false, 'the clean set stays green at 440 px'],
+  ['fixture/problems-overflow', false, false, 'the wide span is not checked without --mobile'],
+  ['fixture/problems-overflow', true, true, 'the wide span fails at 440 px when its scrolling box is switched off', BREAK],
 ];
-for (const [ref, mobile, expectFail, name] of cases) {
+for (const [ref, mobile, expectFail, name, css] of cases) {
+  if (css) fs.appendFileSync(lessonCss, css);
   const out = play(ref, mobile), failed = /at 440 px (?:text runs past the window|text clipped by its box|the page is wider)/.test(out);
   const named = !expectFail || /text runs past the window: the maths span \$[^$]+\$ \(\d+ px wide\)/.test(out);   // pass 9b: the message names the wide span
   if (failed !== expectFail || !named) { bad++; console.log(`FAIL ${name}\n${out.split('\n').slice(-10).join('\n')}`); } else console.log(`ok ${name}`);

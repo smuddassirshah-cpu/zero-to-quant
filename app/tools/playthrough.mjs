@@ -174,10 +174,11 @@ const WIDE_PROBE = () => {
     const own = [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (pass === 0 && (own || e.classList.contains('katex')) && (r.right > vw + 1 || r.left < -1) && !scrolls(e)) {
       /* name the span that runs past, not only the paragraph (or column) it stretches (pass 9b): the widest outermost KaTeX span on the page that ends past the window, with its source */
-      const ks = [...root.querySelectorAll('.katex')].filter((x) => !x.parentElement.closest('.katex') && !x.closest('svg, canvas, [hidden], [aria-hidden="true"], .sr-only') && x.getBoundingClientRect().right > vw + 1 && x.getBoundingClientRect().width > 2);
+      const ks = [...root.querySelectorAll('.katex')].filter((x) => !x.parentElement.closest('.katex') && !scrolls(x) && !x.closest('svg, canvas, [hidden], [aria-hidden="true"], .sr-only') && x.getBoundingClientRect().right > vw + 1 && x.getBoundingClientRect().width > 2);
       const k = ks.sort((x, y) => y.getBoundingClientRect().width - x.getBoundingClientRect().width)[0];
       if (k) { const tex = (k.querySelector('annotation') || {}).textContent || k.textContent || '', kr = k.getBoundingClientRect(); return `text runs past the window: the maths span $${tex.replace(/\s+/g, ' ').trim().slice(0, 60)}$ (${Math.round(kr.width)} px wide) ends at ${Math.round(kr.right)} px${k === e ? '' : `, so ${describe(e)} is stretched to ${Math.round(r.right)} px`}: split the span`; }
-      return `text runs past the window: ${describe(e)} ends at ${Math.round(r.right)} px`;
+      const wides = []; for (let a = e.parentElement; a && a !== document.body && wides.length < 6; a = a.parentElement) if (a.getBoundingClientRect().right > vw + 1) wides.push(a.tagName.toLowerCase() + (typeof a.className === 'string' && a.className.trim() ? '.' + a.className.trim().split(/\s+/)[0] : ''));
+      return `text runs past the window: ${describe(e)} ends at ${Math.round(r.right)} px${wides.length ? ` (inside ${wides.join(' < ')})` : ''}`;
     }
     if (pass === 1 && (cs.overflowX === 'hidden' || cs.overflowX === 'clip') && e.scrollWidth > e.clientWidth + 1 && (e.textContent || '').trim() && !scrolls(e.parentElement || e) && e.clientWidth > 0) return `text clipped by its box: ${describe(e)} is ${e.scrollWidth} px in ${e.clientWidth} px`;
   }
@@ -595,6 +596,7 @@ const main = async () => {
         await go(`lesson/${id}`);
         await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
         let guard = 0, last = '', same = 0, checks = 0;
+        const lessonWide = new Set();
         while (true) {
           const c = await page.evaluate(() => ZQ.test.current());
           if (c.kind === 'done') break;
@@ -611,9 +613,13 @@ const main = async () => {
               const rw = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok } : null; });
               if (rw && !rw.ok) { await shot(nm + '-wrong'); await whyShot(nm + '-wrong-why'); await page.evaluate(() => ZQ.test.tryAgain()); await page.waitForTimeout(200); }
             }
+            /* engine pass AH: the phone-width text probe covers lesson screens too: the screen as the learner meets it (prose, options, widgets), then again with the feedback and explanation open */
+            const wideSeen = (where) => ANY_EXTRA ? page.evaluate(WIDE_PROBE).then((why) => { if (why && !lessonWide.has(why)) { lessonWide.add(why); fails.push(`${c.phase} ${c.screenIndex} (${c.kind}) ${where}: at ${curVp.w} px ${why}`); } }) : null;
+            await wideSeen('before answering');
             const applied = await page.evaluate(() => ZQ.test.answerCorrect());
             const r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null; });
             if (r && r.ok && !r.pending) await whyShot(nm + '-why');
+            await wideSeen('with the feedback open');
             if (r && r.pending) { // long-form: the first check opens the self-marking, the second grades it
               await page.evaluate(() => ZQ.test.answerCorrect());
               const r2 = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null } : null; });
