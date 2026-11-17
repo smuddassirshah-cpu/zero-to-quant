@@ -419,32 +419,61 @@ for _ in range(400):
 ok(np.mean(slopes) > 0 and abs(np.mean(slopes) - 0.3 * (700 - 420) / 1120) < 0.01, 'break: on average a full-history fit keeps the old sign')
 
 # ---- p-spread-blocks
-days = list(range(1, 25))
-shuf = [3, 8, 11, 15, 19, 24]
-both = [t for t in shuf if (t - 1 in days and t - 1 not in shuf) and (t + 1 in days and t + 1 not in shuf)]
-key(2, 3, 0, len(both))
-ok(both == [3, 8, 11, 15, 19], 'spread: the five sandwiched days')
-wrong(2, 3, 0, 'all', 6)
-kf = list(KFold(4).split(np.zeros(24)))
-tr2, te2 = kf[1]
-ok(list(te2 + 1) == list(range(7, 13)), 'spread: fold 2 tests days 7 to 12')
-later = [t for t in tr2 + 1 if t > 12]
-key(2, 3, 1, len(later))
-wrong(2, 3, 1, 'all-train', len(tr2))
-wrong(2, 3, 1, 'one-fold', 6)
-lab4 = lambda t: set(range(t + 1, t + 5))
-tl = set().union(*(lab4(t) for t in range(7, 13)))
-ok((min(tl), max(tl)) == (8, 16), 'spread: test labels cover days 8 to 16')
-purged = [t for t in tr2 + 1 if lab4(t) & tl]
-ok(purged == [4, 5, 6, 13, 14, 15], 'spread: purge drops days 4 to 6 and 13 to 15')
-kept = [t for t in tr2 + 1 if t not in purged and t not in (16, 17)]
-ok(kept == [1, 2, 3] + list(range(18, 25)), 'spread: days 1 to 3 and 18 to 24 are left')
-key(2, 3, 2, len(kept))
-wrong(2, 3, 2, 'horizon', 18 - 8 - 2)
-wrong(2, 3, 2, 'no-embargo', 18 - 6)
-wrong(2, 3, 2, 'before-only', 18 - 3 - 2)  # purge before only, embargo kept: 13
-key(2, 3, 3, 4.62 / 3.85 - 1, also=[20.0, 20])
-wrong(2, 3, 3, 'by-purged', 100 * (4.62 - 3.85) / 4.62, dp=1)
+# The 24-day version was re-authored (review-pkg3-reuse-hits fault 2). The old block runs only on the old text;
+# the new item is rebuilt below by its own route (label day sets, brute force), independent of the author script.
+if '24 trading days' in SETS[2]['items'][3]['prose']:
+    days = list(range(1, 25))
+    shuf = [3, 8, 11, 15, 19, 24]
+    both = [t for t in shuf if (t - 1 in days and t - 1 not in shuf) and (t + 1 in days and t + 1 not in shuf)]
+    key(2, 3, 0, len(both))
+    ok(both == [3, 8, 11, 15, 19], 'spread: the five sandwiched days')
+    wrong(2, 3, 0, 'all', 6)
+    kf = list(KFold(4).split(np.zeros(24)))
+    tr2, te2 = kf[1]
+    ok(list(te2 + 1) == list(range(7, 13)), 'spread: fold 2 tests days 7 to 12')
+    later = [t for t in tr2 + 1 if t > 12]
+    key(2, 3, 1, len(later))
+    wrong(2, 3, 1, 'all-train', len(tr2))
+    wrong(2, 3, 1, 'one-fold', 6)
+    lab4 = lambda t: set(range(t + 1, t + 5))
+    tl = set().union(*(lab4(t) for t in range(7, 13)))
+    ok((min(tl), max(tl)) == (8, 16), 'spread: test labels cover days 8 to 16')
+    purged = [t for t in tr2 + 1 if lab4(t) & tl]
+    ok(purged == [4, 5, 6, 13, 14, 15], 'spread: purge drops days 4 to 6 and 13 to 15')
+    kept = [t for t in tr2 + 1 if t not in purged and t not in (16, 17)]
+    ok(kept == [1, 2, 3] + list(range(18, 25)), 'spread: days 1 to 3 and 18 to 24 are left')
+    key(2, 3, 2, len(kept))
+    wrong(2, 3, 2, 'horizon', 18 - 8 - 2)
+    wrong(2, 3, 2, 'no-embargo', 18 - 6)
+    wrong(2, 3, 2, 'before-only', 18 - 3 - 2)  # purge before only, embargo kept: 13
+    key(2, 3, 3, 4.62 / 3.85 - 1, also=[20.0, 20])
+    wrong(2, 3, 3, 'by-purged', 100 * (4.62 - 3.85) / 4.62, dp=1)
+else:
+    ok(SETS[2]['items'][3]['id'] == 'p-spread-blocks', 'spread: item 3 is p-spread-blocks')
+    labd = lambda t: set(range(t + 1, t + 9))                  # the 8-day label of row t
+    share = lambda d: len(labd(0) & labd(d)) / 8
+    key(2, 3, 0, share(3), dp=3)
+    wrong(2, 3, 0, 'offset', 1 - share(3), dp=3)
+    wrong(2, 3, 0, 'one-more', (len(labd(0) & labd(3)) + 1) / 8, dp=3)
+    near = [d for d in range(-30, 31) if d and labd(0) & labd(d)]
+    ok(len(near) == 14, 'spread: 14 rows share a label day')
+    key(2, 3, 1, len(near) * 4 / 5, dp=1, also=[round(14 * 1440 / 1799, 1)])
+    wrong(2, 3, 1, 'horizon', 16 * 4 / 5, dp=1)
+    wrong(2, 3, 1, 'one-side', len([d for d in near if d > 0]) * 4 / 5, dp=1)
+    wrong(2, 3, 1, 'all-in', len(near), dp=1)
+    gaps = [g for g in range(30) if share(g + 1) < 0.4]
+    key(2, 3, 2, gaps[0])
+    wrong(2, 3, 2, 'gap-as-distance', [g for g in range(30) if share(g) < 0.4][0])
+    wrong(2, 3, 2, 'full-purge', [g for g in range(30) if share(g + 1) == 0][0])
+    def pack(m, sep):
+        out = []
+        for r in range(m):
+            if not out or r - out[-1] >= sep:
+                out.append(r)
+        return len(out)
+    key(2, 3, 3, pack(200, 8))
+    wrong(2, 3, 3, 'fencepost', pack(201, 8) + (0 if pack(201, 8) > pack(200, 8) else 1))
+    wrong(2, 3, 3, 'seven-apart', pack(200, 7))
 
 # ================================================================ problems-3
 # ---- p-fund-flows (re-authored: the spread, not the mean)

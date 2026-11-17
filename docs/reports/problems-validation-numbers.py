@@ -338,26 +338,97 @@ if L2 is not None:
     printed(L2, 'p-signal-break', 5, 1 + 2 * se3, 3)
     ok(1120 - 700 == 420, 'p-signal-break: 700 older days, 420 newer')
 
-    # ---------- p-spread-blocks ----------
-    test = [3, 8, 11, 15, 19, 24]
-    sand = [t for t in test if t - 1 >= 1 and t + 1 <= 24 and t - 1 not in test and t + 1 not in test]
-    sand_alt = sum(1 for t in test if {t - 1, t + 1} <= (set(range(1, 25)) - set(test)))
-    num(L2, 'p-spread-blocks', 1, len(sand), sand_alt, {'all': len(test)})
-    blocks = [list(range(1 + 6 * j, 7 + 6 * j)) for j in range(4)]
-    later = [dday for j in (0, 2, 3) for dday in blocks[j] if dday > 12]
-    num(L2, 'p-spread-blocks', 2, 12, len(later), {'all-train': 18, 'one-fold': 6})
-    tr = purged_train(24, 7, 13, 4, 2, first=1)
-    tr_alt = [r for r in range(1, 25) if not (7 <= r <= 12) and not overlaps(r, 7, 13, 4) and r not in (16, 17)]
-    num(L2, 'p-spread-blocks', 3, 24 - 6 - 3 - 3 - 2, len(tr),
-        {'horizon': len(purged_train(24, 7, 13, 5, 2, first=1)), 'no-embargo': len(purged_train(24, 7, 13, 4, 0, first=1)), 'before-only': 24 - 6 - 3 - 2})
-    ok(tr == tr_alt == [1, 2, 3] + list(range(18, 25)), 'p-spread-blocks p3: days 1 to 3 and 18 to 24')
-    num(L2, 'p-spread-blocks', 4, Fr('4.62') / Fr('3.85') - 1, 4.62 / 3.85 - 1, {'by-purged': (4.62 - 3.85) / 4.62})
-    printed(L2, 'p-spread-blocks', 4, Fr('4.62') / Fr('3.85') - 1, 1, pct=True)
+    # ---------- p-spread-blocks (re-authored for review-pkg3-reuse-hits fault 2) ----------
+    # Row t's label is the sum of the daily changes on days t+1..t+H, H = 8; daily changes iid with equal variance.
+    H, N_ROWS, K = 8, 1800, 5
+    SB = 'items[3]'
+    with open(os.path.join(COURSE, 'problems-2.json'), encoding='utf8') as f_:
+        ok(json.load(f_)['items'][3]['id'] == 'p-spread-blocks', 'p-spread-blocks: sits at items[3]')
+
+    def label_days(r):
+        return set(range(r + 1, r + H + 1))
+
+    def corr_exact(dist):
+        return Fr(len(label_days(0) & label_days(dist)), H)
+
+    def corr_cov(dist):
+        """Second route: correlation of two sums of iid unit-variance changes, from their coefficient vectors."""
+        days = np.arange(0, abs(dist) + H + 2)
+        a_ = ((days >= 1) & (days <= H)).astype(float)
+        b_ = ((days >= abs(dist) + 1) & (days <= abs(dist) + H)).astype(float)
+        return (a_ @ b_) / math.sqrt((a_ @ a_) * (b_ @ b_))
+
+    walk = rng.standard_normal((200_000, 3 + H + 1)).cumsum(axis=1)
+    lab0, lab3 = walk[:, H] - walk[:, 0], walk[:, 3 + H] - walk[:, 3]
+    ok(abs(np.corrcoef(lab0, lab3)[0, 1] - 0.625) < 0.01, 'p-spread-blocks p1: simulated label correlation near 0.625')
+    num(L2, 'p-spread-blocks', 1, corr_exact(3), corr_cov(3), {'offset': Fr(3, 8), 'one-more': Fr(6, 8)})
+    printed(L2, 'p-spread-blocks', 1, corr_exact(3), 3)
+    ok(corr_exact(H) == 0 and corr_cov(H) == 0 and corr_exact(H - 1) == Fr(1, 8), 'p-spread-blocks p1 explain: rows 8 or more apart share no day')
+    ok(len(label_days(0) & label_days(3)) == 5 and min(label_days(3)) == 4 and max(label_days(3)) == 11, 'p-spread-blocks p1: days t+4 to t+11, 5 shared')
+
+    near = [r for r in range(-20, 21) if r != 0 and label_days(0) & label_days(r)]
+    ok(near == [r for r in range(-7, 8) if r != 0] and len(near) == 14, 'p-spread-blocks p2: rows t-7 to t+7, 14 rows, overlap')
+    ok(max(label_days(-3)) == 5, 'p-spread-blocks p2 byKey: row t-3 runs to day t+5')
+    ok(min(label_days(8)) == 9, 'p-spread-blocks p2 byKey: row t+8 starts on day t+9')
+    exp2 = len(near) * Fr(K - 1, K)
+    # second route: real shuffled KFold on 1,800 rows, mean count of overlapping training rows over interior test rows
+    from sklearn.model_selection import KFold
+    cnts = []
+    for seed in range(4):
+        for tr_i, te_i in KFold(K, shuffle=True, random_state=seed).split(np.arange(N_ROWS)):
+            intr = np.zeros(N_ROWS, bool)
+            intr[tr_i] = True
+            cnts += [int(intr[t - 7:t + 8].sum()) for t in te_i if 20 <= t < N_ROWS - 20]
+    kf_mean = float(np.mean(cnts))
+    exact_partition = 14 * Fr(N_ROWS - N_ROWS // K, N_ROWS - 1)
+    ok(abs(kf_mean - float(exact_partition)) < 0.03, f'p-spread-blocks p2: KFold mean {kf_mean} vs exact partition {float(exact_partition)}')
+    num(L2, 'p-spread-blocks', 2, exp2, kf_mean, {'horizon': 16 * Fr(4, 5), 'one-side': 7 * Fr(4, 5), 'all-in': 14}, agree=0.03)
+    printed(L2, 'p-spread-blocks', 2, exp2, 1)
+    ok(round(float(exact_partition), 1) == 11.2 and abs(float(exact_partition) - 11.2) < 0.05, 'p-spread-blocks p2: the exact KFold count 11.206 lies in the key band')
+
+    def last_train_dist(g):
+        tr_i, te_i = list(TimeSeriesSplit(n_splits=3, gap=g).split(np.arange(1000)))[-1]
+        return int(te_i[0] - tr_i[-1])
+
+    ok(all(last_train_dist(g) == g + 1 for g in range(0, 9)), 'p-spread-blocks p3: TimeSeriesSplit puts the last training row g+1 back')
+    g_key = min(g for g in range(0, 20) if corr_exact(g + 1) < Fr(2, 5))
+    g_alt = min(g for g in range(0, 20) if corr_cov(last_train_dist(g)) < 0.4)
+    num(L2, 'p-spread-blocks', 3, g_key, g_alt,
+        {'gap-as-distance': min(g for g in range(0, 20) if corr_exact(g) < Fr(2, 5)),
+         'full-purge': min(g for g in range(0, 20) if corr_exact(g + 1) == 0)})
+    ok(corr_exact(4) == Fr(1, 2) and corr_exact(5) == Fr(3, 8), 'p-spread-blocks p3: 0.5 at g = 3, 0.375 at g = 4')
+    ok(all(corr_exact(dd) != Fr(2, 5) for dd in range(0, 20)), 'p-spread-blocks p3: no distance gives exactly 0.4 (no tie at the bar)')
+    ok(corr_exact(1) - corr_exact(2) == Fr(1, 8), 'p-spread-blocks p3 explain: a step of 1/8')
+
+    def max_pack(m):
+        """Second route: greedy picks 8 apart from every start offset (greedy is optimal on a line)."""
+        best = 0
+        for first in range(H):
+            pick, last = 0, None
+            for r in range(first, m):
+                if last is None or r - last >= H:
+                    pick, last = pick + 1, r
+            best = max(best, pick)
+        return best
+
+    num(L2, 'p-spread-blocks', 4, -(-200 // H), max_pack(200), {'fencepost': 200 // H + 1, 'seven-apart': -(-200 // (H - 1))})
+    ok(list(range(0, 200, H))[-1] == 192 and len(range(0, 200, 7)) == 29 and list(range(0, 200, 7))[-1] == 196, 'p-spread-blocks p4: picks to s+192 (25); 7 apart to s+196 (29)')
+    coef = np.zeros(200 + H + 1)
+    for r in range(200):
+        coef[r + 1:r + H + 1] += 1
+    n_eff = H / ((coef @ coef) / 200 ** 2)
+    ok(round(n_eff) == 25, f'p-spread-blocks p4 explain: 200 overlapping labels average like {n_eff:.2f} independent ones')
 
     lv = Level('validation', 2)
     lv.check_wrongs('problems')
+    lv.check_slips('problems')
+    for k_, wid, routes in ((0, 'offset', [3 / 8]), (0, 'one-more', [6 / 8]),
+                            (1, 'horizon', [16 * 0.8, 16 * 1440 / 1799]), (1, 'one-side', [7 * 0.8, 7 * 1440 / 1799]), (1, 'all-in', [14]),
+                            (2, 'gap-as-distance', [5]), (2, 'full-purge', [7]),
+                            (3, 'fencepost', [26]), (3, 'seven-apart', [29])):
+        lv.slip('problems', f'{SB}.parts[{k_}]', wid, *routes)
     bad = [r for r in lv.results if not r[0]]
-    ok(not bad, f'level 2 check_wrongs: {bad}')
+    ok(not bad, f'level 2 check_wrongs, check_slips and slips: {bad}')
 
 
 # ===================================================================== level 3

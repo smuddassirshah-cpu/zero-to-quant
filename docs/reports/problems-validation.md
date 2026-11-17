@@ -76,3 +76,18 @@ Two bullets in `docs/BACKLOG-INBOX.md` under `Raised later (problems validation)
 ## Exceptions recorded (delta AE-4)
 
 `problems-3` `p-closed-funds` part 2 takes 2.52 from the prose and does not use part 1's 14.0 (it feeds only the `whole-gap` slip); accepted, as the flows' contrast step was in AE-3, because the alternative brings `l11` `screens[8]`'s product back into the part.
+
+## Re-author: `problems-2` `p-spread-blocks` (review-pkg3-reuse-hits fault 2)
+
+The 24-day bid-ask version walked l5 screens[1] and [7], `h-count` (with `r-purge`, l7 screens[1] and [2], `p-forward-label`, `a-purged-fold`) and l7 screens[5]. Re-authored with the same id, skills (`vl-time`, `vl-leakage`, `vl-cv`), difficulty 3 and four chained parts. New setting: a credit desk's CDS index spread over 1,800 rows, label the 8-day move (a sum of 8 near-independent daily changes), so two labels correlate by the share of days they have in common.
+
+| Part | Old deciding step | New deciding step | Key | Band | Slips |
+|---|---|---|---|---|---|
+| 1 | sandwiched test days of a listed shuffled fold | shared label days of rows 3 apart over 8 | 0.625 | ±0.0005 | 0.375 offset, 0.75 one-more |
+| 2 | training days after a test block | expected training rows within 7 a side under shuffled 5-fold, $14 \times \tfrac45$ | 11.2 | ±0.05 | 12.8 horizon, 5.6 one-side, 14 all-in |
+| 3 | rows left after purge and embargo | smallest `gap` $g$ with correlation $(8 - (g + 1))/8$ below 0.4 | 4 | exact | 5 gap-as-distance, 7 full-purge |
+| 4 | percentage rise of the error under purging | most rows of a 200-row test block with no two labels sharing a day, $200 \div 8$ | 25 | exact | 26 fencepost, 29 seven-apart |
+
+Each later part restates part 1's rule. Numbers: `problems-validation-numbers.py` recomputes each key twice (label-day sets against coefficient-vector correlations; $14 \times 0.8$ against real shuffled `KFold` on 1,800 rows, 11.206 for the exact partition, inside the band; the gap rule against `TimeSeriesSplit` distances; $\lceil 200/8 \rceil$ against a brute-force packing), runs `check_slips` and `lv.slip` on every slip, and checks the explain claims (no day shared at 8 apart, effective sample 25.3). No key or slip sits on a rounding tie; 0.4 is not reached by any distance. The reader script `problems-validation-numbers-read.py` and `delta-ae-3-numbers.py` keyed on the old text: their old blocks now run only on the old prose, and the reader script rebuilds the new item by its own route.
+
+Checks: validator 0 errors, no warning on the item; voice scan 35: 0 and 0; `fresh-check --file` and `--all-exams`: no hit on the item (an early prose drew a stock-phrase text hit against l7 screens[0], reworded); `grade-all --file` 18 widgets, 0 failures; playthrough `--problems validation/problems-2` green with and without `--mobile`, 440 px shots read.

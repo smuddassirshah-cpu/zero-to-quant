@@ -320,8 +320,11 @@ key = len(train - purged - set(after))
 before_only = train - {t for t in purged if t < 7}
 before_only -= set(sorted(t for t in before_only if t > 12)[:2])
 four = len(train) - 4 - 4 - 2
-numeric(2, PID, 3, key, 0, [10], {'horizon': four, 'no-embargo': len(train - purged), 'before-only': len(before_only)})
 ok(len(before_only) == 13, f'{PID} p3: before-only is 13')
+# The 24-day problem was re-authored (review-pkg3-reuse-hits fault 2); its keys are now checked in
+# problems-validation-numbers.py and -read.py. The content check below runs only on the old text.
+if '24 trading days' in item(2, PID)['prose']:
+    numeric(2, PID, 3, key, 0, [10], {'horizon': four, 'no-embargo': len(train - purged), 'before-only': len(before_only)})
 
 # ---------------------------------------------------------------- proposals quoted in the review
 # finding 1: a 420-day bar as the last part of p-signal-break (now in the content)
