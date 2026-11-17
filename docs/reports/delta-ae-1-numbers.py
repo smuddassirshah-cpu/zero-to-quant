@@ -327,7 +327,7 @@ num_part("orders p5", P[4], f(20, c) - f(10, c), {"summed-halves": f(20, c) - 2 
                                                   "negative-hinge": f(20, c) - (26 - 1.8 * (10 - 13)),
                                                   "carried": 51 - f(10, c)}, typed=(12.4,))
 has("orders p1", P[0], "\\tfrac{72}{4} = 18")
-has("orders p3", P[2], "(4 + 0 + 4) + (16 + 0 + 16) = 40", "2 + 0 + 2 + 4 + 0 + 4")
+has("orders p3", P[2], "(4 + 0 + 4) + (16 + 0 + 16) = 40")  # the slip line with 2 + 0 + 2 + 4 + 0 + 4 was reworded in session AG (review-pass8-hits, reuse)
 has("orders p4", P[3], "1.8 \\times 7 = 12.6", "10.5")
 has("orders p5", P[4], "f(10) = 1 + 25 = 26", "38.4 - 26 = 12.4")
 check("orders chain restated", "from part 2" in P[2]["question"] and "settled centres 4 and 22" in P[3]["question"]
