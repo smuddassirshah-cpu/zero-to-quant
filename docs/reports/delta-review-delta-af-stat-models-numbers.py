@@ -268,49 +268,51 @@ finding(
 # ---------------------------------------------------------------- set 3
 P = "p-hedge-ranks"
 d = np.array([float(x.replace("$", "")) for x in re.findall(r"\$?-?\d+\.\d\$?", ITEMS[P]["prose"])])
-ok(len(d) == 12, f"{P} twelve months read from the prose")
+# session AG: p-hedge-ranks re-authored on 14 new months; checks retargeted from the 12-month data
+ok(len(d) == 14, f"{P} fourteen months read from the prose")
 r = stats.rankdata(np.abs(d))
 wp, wm = r[d > 0].sum(), r[d < 0].sum()
 low = stats.rankdata(np.abs(d), method="min")
 high = stats.rankdata(np.abs(d), method="max")
-# the positive 0.9 at the lower or the upper of its two places
-numeric(P, 1, wp, {"tie-low": low[d > 0].sum(), "tie-high": high[d > 0].sum(), "w-minus": wm}, printed=8.5)
-ok(len(d[d > 0]) == 2 and wp == 8.5 and wp + wm == 78, f"{P} p1 ranks {sorted(r[d > 0])}")
+# the positive 1.1 at the lower or the upper of its two places
+numeric(P, 1, wp, {"tie-low": low[d > 0].sum(), "tie-high": high[d > 0].sum(), "w-minus": wm}, printed=12.5)
+ok(len(d[d > 0]) == 2 and wp == 12.5 and wp + wm == 105, f"{P} p1 ranks {sorted(r[d > 0])}")
 for v, rk in zip(d[d > 0], r[d > 0]):
     ok(f"{v:g}" in part(P, 1)["feedback"]["correct"] and f"{rk:g}" in part(P, 1)["feedback"]["correct"], f"{P} p1 feedback names {v:g} and its rank {rk:g}")
-n = 12
+n = 14
 var = n * (n + 1) * (2 * n + 1) / 24
-ok(var == sum(k * k for k in range(1, 13)) / 4 == 162.5, f"{P} p2 variance as sum of r^2/4")
-numeric(P, 2, math.sqrt(var), {"variance": var, "six-divisor": math.sqrt(650)}, printed=12.7475)
+ok(var == sum(k * k for k in range(1, 15)) / 4 == 253.75, f"{P} p2 variance as sum of r^2/4")
+numeric(P, 2, math.sqrt(var), {"variance": var, "six-divisor": math.sqrt(1015)}, printed=15.9295)
 mean = n * (n + 1) / 4
 z = (wp - mean) / math.sqrt(var)
 numeric(
     P, 3, z,
     {"w-minus": (wm - mean) / math.sqrt(var), "variance": (wp - mean) / var, "no-centre": wp / math.sqrt(var)},
-    printed=-2.393, feed=[(8.5 - 39) / 12.7475],
+    printed=-2.511, feed=[(12.5 - 52.5) / 15.9295],
 )
 pz = stats.norm.cdf(z)
-numeric(P, 4, pz, {"two-sided": 2 * pz, "upper": 1 - pz}, printed=0.0084, feed=[stats.norm.cdf(-2.393)])
-# exact null: all 4,096 sign patterns, with the tied ranks as they are
+numeric(P, 4, pz, {"two-sided": 2 * pz, "upper": 1 - pz}, printed=0.0060, feed=[stats.norm.cdf(-2.511), 1 - 0.99398])
+# exact null: all 16,384 sign patterns, with the tied ranks as they are
 sums = np.array([sum(c) for c in itertools.product(*[(0.0, x) for x in r])])
 p_exact = (sums <= wp + 1e-9).mean()
-sums_untied = np.array([sum(c) for c in itertools.product(*[(0, x) for x in range(1, 13)])])
-ok(abs(sums.var() - (r**2).sum() / 4) < 1e-9 and abs(sums.mean() - 39) < 1e-12, f"{P} null mean and variance by listing")
-ok(abs(sums_untied.var() - 162.5) < 1e-9, f"{P} untied null variance by listing")
+sums_untied = np.array([sum(c) for c in itertools.product(*[(0, x) for x in range(1, 15)])])
+ok(abs(sums.var() - (r**2).sum() / 4) < 1e-9 and abs(sums.mean() - 52.5) < 1e-12, f"{P} null mean and variance by listing")
+ok(abs(sums_untied.var() - 253.75) < 1e-9, f"{P} untied null variance by listing")
 ok(p_exact < 0.01 and pz < 0.01, f"{P} p4 'at the 1% level': exact {p_exact:.5f}, normal {pz:.5f}")
 w_sc = stats.wilcoxon(d, alternative="less", correction=False, method="approx") if hasattr(stats, "wilcoxon") else None
 ok(w_sc is not None and abs(w_sc.statistic - wp) < 1e-9, f"{P} scipy W+ {w_sc.statistic}")
 z_tie = (wp - mean) / math.sqrt((r**2).sum() / 4)
 ok(abs(w_sc.pvalue - stats.norm.cdf(z_tie)) < 1e-9, f"{P} scipy's normal p uses the tie-corrected variance")
 ok(abs(stats.norm.cdf(z_tie) - pz) < 1e-4, f"{P} the tie moves p by under 0.0001 ({stats.norm.cdf(z_tie):.5f})")
-print(f"  note {P}: exact one-sided p with the tie {p_exact:.5f} ({int(round(p_exact*4096))} of 4096), normal {pz:.5f}")
+print(f"  note {P}: exact one-sided p with the tie {p_exact:.5f} ({int(round(p_exact*16384))} of 16384), normal {pz:.5f}")
 finding(
     "\\Phi(" in part(P, 4)["question"],
-    f"{P} p4: a normal tail to 4 places with no source named (Phi(2.393) = {stats.norm.cdf(2.393):.5f})",
+    f"{P} p4: a normal tail to 4 places with no source named (Phi(2.511) = {stats.norm.cdf(2.511):.5f})",
 )
 # reuse: l10 screen 5 has 12 days, W- = 8, W+ = 70; l10 quiz 0 has a tie for ranks 3 and 4
+# (session AG: now 14 months, a tie for ranks 4 and 5, W+ = 12.5; the check stays and must stay quiet)
 finding(
-    not (len(d) == 12 and sorted(r[d > 0])[0] == 3.5),
+    not (len(d) == 12 or sorted(r[d > 0])[0] == 3.5 or wp in (8, 8.5, 70)),
     f"{P} p1: twelve values, a tie for ranks 3 and 4 and a small rank sum of 8.5 against 69.5 "
     f"(l10 screen 5: twelve days, 8 against 70; l10 quiz q-ties: ranks 3 and 4 give 3.5)",
 )

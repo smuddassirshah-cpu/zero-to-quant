@@ -315,32 +315,55 @@ def level2():
 def level3():
     I = load(3)
 
-    # --- p-hedge-ranks: 12 monthly differences, new minus old
-    dd = np.array([-3.1, -0.4, -2.2, 0.7, -1.2, -4.0, -0.9, -2.6, 1.5, -0.7, -3.5, -1.8])
+    # --- p-hedge-ranks: 14 monthly differences, new minus old (session AG: re-authored on new data, n = 14)
+    dd = np.array([-2.3, -0.6, 1.1, -3.6, -1.4, -0.3, -2.8, 1.9, -1.1, -4.4, -0.8, -2.5, -1.7, -3.2])
+    nn = len(dd)
+    ok(nn == 14, 'ranks: 14 months')
     rk = stats.rankdata(abs(dd))
     Wp = Fr(int(2 * rk[dd > 0].sum()), 2)
     # method 2: W+ from the Walsh-average count (number of i <= j with d_i + d_j > 0, ties counted half)
     walsh = sum((1 if dd[i] + dd[j] > 1e-12 else 0.5 if abs(dd[i] + dd[j]) <= 1e-12 else 0)
-                for i in range(12) for j in range(i, 12))
-    num(I, 'p-hedge-ranks', 1, Wp, walsh, {'tie-low': 2 + 6, 'tie-high': 3 + 6, 'w-minus': rk[dd < 0].sum()})
-    ok(sorted(rk[dd > 0]) == [2.5, 6.0] and rk.sum() == 78, 'ranks: the positive months take 2.5 and 6 of 78')
-    nn = 12
+                for i in range(nn) for j in range(i, nn))
+    num(I, 'p-hedge-ranks', 1, Wp, walsh, {'tie-low': 4 + 8, 'tie-high': 5 + 8, 'w-minus': rk[dd < 0].sum()})
+    ok(sorted(rk[dd > 0]) == [4.5, 8.0] and rk.sum() == 105, 'ranks: the positive months take 4.5 and 8 of 105')
+    ok(list(np.sort(abs(dd))[:8]) == [0.3, 0.6, 0.8, 1.1, 1.1, 1.4, 1.7, 1.9] and abs(dd).max() == 4.4, 'ranks: sizes as the explain lists')
+    ok(rk[dd < 0].sum() == 92.5 and Wp == Fr(25, 2), 'ranks: W+ 12.5 and W- 92.5')
     var_w = Fr(nn * (nn + 1) * (2 * nn + 1), 24)
-    # method 2: the variance of W+ over all 4096 sign patterns of the ranks 1..12
-    allW = np.array([sum(r_ for r_, s in zip(range(1, 13), sg) if s) for sg in itertools.product((0, 1), repeat=12)])
+    # method 2: the variance of W+ over all 16384 sign patterns of the ranks 1..14
+    allW = np.array([sum(r_ for r_, s in zip(range(1, nn + 1), sg) if s) for sg in itertools.product((0, 1), repeat=nn)])
     num(I, 'p-hedge-ranks', 2, sqrt(var_w), allW.std(), {'variance': var_w, 'six-divisor': sqrt(4 * var_w)})
-    ok(sum(r_ ** 2 for r_ in range(1, 13)) == 650 and allW.mean() == 39, 'ranks: 650 and mean 39')
-    z = (float(Wp) - 39) / sqrt(var_w)
-    num(I, 'p-hedge-ranks', 3, z, (8.5 - allW.mean()) / allW.std(),
-        {'w-minus': (69.5 - 39) / sqrt(var_w), 'variance': (8.5 - 39) / float(var_w), 'no-centre': 8.5 / sqrt(var_w)})
+    ok(sum(r_ ** 2 for r_ in range(1, nn + 1)) == 1015 and allW.mean() == 52.5 and var_w == Fr(1015, 4), 'ranks: 1015, 1015/4 and mean 52.5')
+    mu = Fr(nn * (nn + 1), 4)
+    z = (float(Wp) - float(mu)) / sqrt(var_w)
+    num(I, 'p-hedge-ranks', 3, z, (12.5 - allW.mean()) / allW.std(),
+        {'w-minus': (92.5 - 52.5) / sqrt(var_w), 'variance': (12.5 - 52.5) / float(var_w), 'no-centre': 12.5 / sqrt(var_w)})
+    ok(abs((12.5 - 52.5) / 15.9295 - z) <= 0.0005, 'ranks p3: the printed SD 15.9295 gives the key to 3 places')
     pz = Phi(z)
     wil = stats.wilcoxon(dd, alternative='less', method='approx', correction=False)
     num(I, 'p-hedge-ranks', 4, pz, stats.norm.sf(-z), {'two-sided': 2 * pz, 'upper': 1 - pz})
-    ok(abs(Phi(-2.393) - pz) <= 0.0001 and abs(wil.pvalue - pz) < 0.0001 and wil.statistic == 8.5,
+    ok(abs(Phi(-2.511) - pz) <= 0.0001 and abs(wil.pvalue - pz) < 0.0001 and wil.statistic == 12.5,
        f'ranks p4: restated z and scipy wilcoxon ({wil.pvalue:.6f}) in the band')
-    exact_w = float((allW <= 8).mean())   # W+ with untied ranks: 8.5 lies between 8 and 9
+    # the printed working: 1 - 0.99398 = 0.00602, doubled 0.01204, upper 0.99398, each in its own band only
+    w4 = {x['id']: x for x in I['p-hedge-ranks']['parts'][3]['widget']['wrong']}
+    key4 = I['p-hedge-ranks']['parts'][3]['widget']
+    told = 1 - 0.99398
+    ok(abs(told - key4['answer']) <= key4['tol']['abs'], 'ranks p4: 1 - told Phi in the key band')
+    ok(abs(2 * told - w4['two-sided']['value']) <= w4['two-sided']['tol']['abs'], 'ranks p4: doubled told tail in the two-sided band')
+    ok(abs(0.99398 - w4['upper']['value']) <= w4['upper']['tol']['abs'], 'ranks p4: told Phi in the upper band')
+    # rounding ties: no key or slip within 1e-6 of a half-unit at the asked places
+    for v, dp in [(z, 3), ((92.5 - 52.5) / sqrt(var_w), 3), ((12.5 - 52.5) / float(var_w), 3), (12.5 / sqrt(var_w), 3),
+                  (sqrt(var_w), 4), (sqrt(4 * var_w), 4), (pz, 4), (2 * pz, 4), (1 - pz, 4), (told, 4), (2 * told, 4)]:
+        frac = abs(v) * 10 ** dp % 1
+        ok(abs(frac - 0.5) > 0.01, f'ranks: {v} on a rounding tie at {dp} places')
+    exact_w = float((allW <= 12).mean())   # W+ with untied ranks: 12.5 lies between 12 and 13
     ok(exact_w < 0.01, f'ranks: exact lower tail of W+ also under 1% ({exact_w:.4f})')
-    shown('ranks gap', -30.5, 8.5 - 39, 1); shown('ranks var', 162.5, float(var_w), 1)
+    exact_tied = sum(1 for sg in itertools.product((0, 1), repeat=nn) if sum(r_ for r_, s in zip(rk, sg) if s) <= 12.5) / 2 ** nn
+    ok(exact_tied < 0.01 and abs(exact_tied - 73 / 16384) < 1e-12, f'ranks: exact tail with the tied ranks 73/16384 ({exact_tied:.4f})')
+    shown('ranks gap', -40, 12.5 - 52.5, 1); shown('ranks var', 253.75, float(var_w), 2)
+    shown('ranks sd', 15.9295, sqrt(var_w), 4); shown('ranks six', 31.8591, sqrt(1015), 4)
+    shown('ranks z', -2.511, z, 3); shown('ranks var slip', -0.158, -40 / 253.75, 3); shown('ranks no-centre', 0.785, 12.5 / 15.9295, 3)
+    shown('ranks told Phi(2.511)', 0.99398, float(Phi(2.511)), 5)
+    shown('ranks p', 0.0060, pz, 4); shown('ranks two', 0.0120, 2 * pz, 4); shown('ranks upper', 0.9940, 1 - pz, 4)
 
     # --- p-spread-day-tail: eight daily spread changes, cut at -4
     d = np.array([-5.6, -1.3, -0.2, 0.6, 1.1, 1.7, 2.4, 8.8]); n8 = 8; cut = -4
@@ -375,7 +398,6 @@ def level3():
     # delta fix pass: tail values told in the questions of parts 3 and 4, and the sum they give
     for zz, vv, dpl in [(1.187, 0.8824, 4), (-2.003, 0.0226, 4), (-2.819, 0.0024, 4), (-3.413, 0.0003, 4), (-3.784, 0.0001, 4)]:
         shown(f'spread told Phi({zz})', vv, float(Phi(zz)), dpl)
-    shown('spread told Phi(2.393)', 0.99164, float(Phi(2.393)), 5)
     shown('ranks told Phi(3.2182)', 0.99936, float(Phi(3.2182)), 5)
     ok(abs(round(0.8824 + 0.0226 + 0.0024 + 0.0003 + 0.0001, 4) / 8 - 0.1135) < 5e-5 and abs(0.9078 / 8 - pk) < 5e-5, 'spread told values sum to 0.9078, share 0.1135')
 

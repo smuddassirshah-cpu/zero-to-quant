@@ -73,3 +73,20 @@ Hand reuse check of the new problems. Grepped the course folder for every key an
 Problems of sets 1 to 3 as they stood at the reset (`p-venue-markouts`, `p-rerun-the-test`, `p-ten-trading-days`, `p-block-markout-tail`, `p-auction-tails` were being re-authored by another agent) share no story or number with this set.
 
 Waived or open: nothing. No engine limit met; no backlog bullet.
+
+## Session AG: `p-hedge-ranks` re-authored on new data (KNOWN_ISSUES "session AF close", first bullet)
+
+Delta review AF finding 5 left part 1 with twelve values and a rank sum of 8.5 beside l10 screen 5's twelve days and $W^- = 8$. The problem now has 14 months: $-2.3$, $-0.6$, 1.1, $-3.6$, $-1.4$, $-0.3$, $-2.8$, 1.9, $-1.1$, $-4.4$, $-0.8$, $-2.5$, $-1.7$, $-3.2$. Id, skill `sm-nonpar`, story and chain kept; the tie moves to ranks 4 and 5 (l10 quiz `q-ties` has 3 and 4).
+
+| part | old key | new key | new `wrong` values |
+|---|---|---|---|
+| 1 $W^+$ | 8.5 | 12.5 | tie-low 12, tie-high 13, w-minus 92.5 |
+| 2 SD | 12.7475 | 15.9295 ($\sqrt{253.75}$) | variance 253.75, six-divisor 31.8591 ($\sqrt{1015}$) |
+| 3 $z$ | $-2.393$ | $-2.511$ | w-minus 2.511, variance $-0.158$, no-centre 0.785 |
+| 4 $p$ | 0.0084 | 0.0060 (told $\Phi(2.511) = 0.99398$) | two-sided 0.0120, upper 0.9940 |
+
+Checks. Each band takes the part's printed working ($(12.5 - 52.5)/15.9295$; $1 - 0.99398 = 0.00602$, doubled 0.01204) and refuses every `wrong` value; no key or slip is within 0.01 of a rounding tie at its places; the tail is told in part 4. Exact one-sided $p$ with the tied ranks is 73 of 16,384 (0.0045), so "at the 1% level" holds. Reuse: 12.5, 92.5, 52.5, 253.75, 15.9295, 31.8591, 1015, 2.511 and 0.99398 appear nowhere else in the course or `exams/topic-2.6.json`; 105 (the rank total, printed in part 3's explain) is also l10's rank sum for B and a topic exam SSW, the arithmetic of 14 and no shared set. `fresh-check --file` 0 hits (one advisory, the bandwidth rule, as before).
+
+Scripts: `problems-stat-models-numbers.py` hedge block rewritten for $n = 14$ (Walsh count, all 16,384 sign patterns, told-tail bands, rounding-tie checks), 1182 checks, exit 0. `delta-review-delta-af-stat-models-numbers.py` retargeted from the 12-month data to the 14 months (counts, printed values, listing of 16,384 patterns; its reuse check now also stays quiet on $n \ne 12$), 558 checks, 0 FINDING lines, exit 0. `problems-stat-models-numbers-read.py` (339) and `problems-stat-models-4-numbers-read.py` (153) need no change, exit 0; `stat-models-L1` to `L4-numbers.py` exit 0.
+
+Gates: validator 0 errors (one known warning, `p-five-weeks-flip` part 4); voice 35 0 and 0; `grade-all --file` 12 widgets, 0 failures; playthrough `--problems stat-models/problems-3` green with and without `--mobile`.
