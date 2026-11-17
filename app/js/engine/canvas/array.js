@@ -126,7 +126,7 @@
           const t = text(cells[k]), cl = cells[k] && typeof cells[k] === 'object' && !Array.isArray(cells[k]) && cells[k].label != null ? String(cells[k].label) : null;
           const fs = t.length > 4 ? Math.max(10, Math.min(13, Math.floor(13 * (cw - 6) / Math.max(1, K.tw(t, 13))))) : 16;
           const vy = cl ? y + ch / 2 + 6 : y + ch / 2;
-          if (cl) o.append(K.txt(x + cw / 2, y + 10, cl, { size: 10, weight: 600, cls: 'cvb-muted' }));
+          if (cl) o.append(K.txt(x + cw / 2, y + 11, cl, { size: 12, weight: 600, cls: 'cvb-muted' }));
           o.append(t.includes('$') ? K.lab(x + cw / 2, vy, t, { w: cw }) : K.txt(x + cw / 2, vy, t, { size: cl ? Math.min(fs, 14) : fs, weight: done.has(idx) ? 700 : 500 }));
           if (view._ins && view._ins.kind === 'in' && k === view._ins.at) o.setAttribute('opacity', Math.max(0, view._ins.t).toFixed(2));
           if (params.showIndex !== false && !linked) { const [gx, gy] = G.pos(k); idxG.append(stack ? K.txt(gx - 10, gy + ch / 2, String(idx), { anchor: 'end', size: 12, cls: 'cvb-tick' }) : K.txt(gx + cw / 2, gy + ch + 14, String(idx), { size: 12, cls: 'cvb-tick' })); }

@@ -212,7 +212,7 @@
       /* text on a piece: params.labels and state.labels keyed by cell id ({ "c11": "3n" }); the state wins */
       const movedFrom = new Set(mv.map(m => m.from));
       const pieceText = Object.assign({}, ...[L, st.labels || {}].map(m => Object.fromEntries(Object.entries(m || {}).filter(([k]) => (cells.has(k) || spanOf(k)) && !movedFrom.has(k)))));
-      const ptKey = JSON.stringify(pieceText) + gridKey + sizeKey + [...movedFrom].join();
+      const ptKey = JSON.stringify(pieceText) + gridKey + sizeKey + [...movedFrom].join() + JSON.stringify(st.diagonal || {});
       if (cellLabG.dataset.key !== ptKey) {
         cellLabG.dataset.key = ptKey;
         cellLabG.replaceChildren(...Object.entries(pieceText).filter(([, t]) => t != null && t !== '').map(([cid, t]) => {
@@ -220,7 +220,7 @@
           let x, y;
           if (sp) { x = sp.x + sp.w / 2; y = sp.y + sp.h / 2; }
           else if (shape === 'circle') { const a = (ang(c.j - 1) + ang(c.j)) / 2; x = ccx + R * 0.62 * Math.cos(a); y = ccy + R * 0.62 * Math.sin(a); }
-          else { const b = cellBox(c.i, c.j); x = b.x + b.w / 2; y = b.y + b.h / 2; }
+          else { const b = cellBox(c.i, c.j); x = b.x + b.w / 2; y = b.y + b.h / 2; const d = (st.diagonal || {})[cid]; if (d && shape !== 'circle') { x -= b.w * 0.2; y += (d === '/' ? -1 : 1) * b.h * 0.2; } } // a piece cut by a diagonal keeps its label off the line
           return C.label(x, y, t, { tex: 'auto', cls: 'cv-halo cv-alabel', w: 90, h: 30 });
         }));
       }
