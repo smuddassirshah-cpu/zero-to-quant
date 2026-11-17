@@ -92,3 +92,14 @@ Format: `N. severity | file | problem, part, field | text at fault | exact repla
 ## Nothing a fixer cannot settle
 
 No open question. Every fix is a fixed string.
+
+## Fix pass
+
+1. fixed | `p-spread-blocks` prose: correlation is the share of the 8 days in common.
+2. fixed | `p-spread-blocks` prose: "CDS index spread" replaced by "spread of a credit index".
+3. fixed | `p-spread-blocks` part 2 question reworded, no dependence on part 1's phrase.
+4. fixed | `p-spread-blocks` part 3 explanation: adds that only $g = 7$ leaves no shared day.
+5. fixed | `p-spread-blocks` part 3 `full-purge` feedback: "The question asks only for a correlation below 0.4."
+6. fixed | `p-daylight-model` part 4 question: "in months to 1 decimal place"; validator raised no new warning, kept.
+
+No key, band, slip or number changed. Validator 0 errors, warnings on both files unchanged (4 each); voice scan 0 and 0; number scripts validation 4/4 and trig 5/5; grade-all 0 failures on both; fresh-check 0 hits on both; playthrough of both problem files green with and without `--mobile`.
