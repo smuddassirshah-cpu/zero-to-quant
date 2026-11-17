@@ -81,3 +81,8 @@ Format: `N. severity | file | problem, part | text at fault | exact replacement`
 ## For the fixer
 
 Both findings are one-sentence replacements in question text, in one file. After applying: validator, voice scan 35 on `pdes`, `grade-all --file` on `pdes/problems-3`, and the pdes number scripts (the author's script may match on the old sentences). Nothing here needs a ruling.
+
+## Fix pass
+
+1. fixed | `pdes/problems-3` `p-grid-budget` part 3: question sentence replaced with the given text; 557.28 = 22.2912 x 25 recomputed, no key, band or slip changed.
+2. fixed | `pdes/problems-3` `p-log-contract` part 4: question sentence replaced with the given text; mean (k - 1)tau = -0.0288 and variance 0.1176 recomputed, key 0.466535 unchanged. Validator 0 errors, voice 0 and 0, pdes number scripts 4 of 4, grade-all 0 failures, playthrough green with and without --mobile.
