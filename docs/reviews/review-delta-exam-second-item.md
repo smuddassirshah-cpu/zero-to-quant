@@ -63,3 +63,10 @@ Recomputed in the script from the 17 exam files, every `course.json` whose `topi
 ## Earlier scripts
 
 `python docs/reports/exam-second-item-delta-numbers.py --scripts` runs the six author scripts and the six reader scripts: all twelve exit 0 with no FINDING line (their summary lines read "0 FINDING").
+
+## Fix pass
+
+1. fixed: `topic-3.2` `e-heat-grid-steps` both questions reworded as written ("today", "from $\tau = 0$ at expiry back to $\tau = 0.03675$ today"); 0.03675 and 46 recomputed, no number changed.
+2. fixed: `topic-3.3` `e-second-price-win` `byKey.seller-share` as written; 15 = $100 \int_0^1 v^3 \cdot \tfrac34 v\,dv$ and $\tfrac14 \times 60$ both recomputed.
+3. fixed: `topic-2.6` `e-two-fund-shrink` part 2 `tol.abs` 0.01; band [5.4383, 5.4583] takes 5.44 and 5.45 and is clear of the wrong values 6, 2.5517 and 4.8571 (their bands stay 0.005).
+4. fixed: `topic-2.3` `e-honest-bar` part 2 re-tasked as written (draft line, reviewer reply, three stack options, feedback); $0.39 \times 1.629 = 0.6353$, $0.39 \times 2.319 = 0.9044$, $0.64 < 0.84 < 0.90$. The reader script `-2.x-3.2-numbers-read.py` check on the word "dropped" now names "dropped settings", since option b's `why` says "dropped the scaling". Author scripts `-2.x-3.2-numbers.py` and `-3.3-numbers.py` gained checks on the changed values. All `exam-second-item-*` scripts exit 0, delta script 0 FINDING. Gates: validator 0 errors, voice 0 and 0, grade-all 0 failures and playthrough green with and without `--mobile` on all four exams. Graded answers changed: none (part 2 of `e-honest-bar` keeps option a; band of `e-two-fund-shrink` part 2 widened).

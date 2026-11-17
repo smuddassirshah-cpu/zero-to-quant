@@ -122,6 +122,10 @@ pa, pb = it['parts'][0]['widget'], it['parts'][1]['widget']
 check(pa['unit'] == 'bp' and pb['unit'] == 'bp', 'unit bp on both parts')
 key_and_wrongs(pa, A, {'raw': 11, 'inverted': mu + BA * (11 - mu), 'se-not-squared': mu + (1 - 7.5 / (7.5 + 2.5)) * 9}, 'forecaster-A')
 key_and_wrongs(pb, Bv, {'raw': 6, 'inverted': mu + BB * 4, 'se-not-squared': mu + (1 - 1 / (1 + 2.5)) * 4}, 'forecaster-B')
+check(pb['tol']['abs'] == 0.01 and close(2 + 0.86 * 4, pb['answer'], pb['tol']['abs']), 'forecaster-B: band one unit, a working with B_B = 0.14 (5.44) is accepted')
+hp = item('topic-3.2', 'e-heat-grid-steps')['parts']
+check('today' in hp[0]['question'] and 'at expiry' not in hp[0]['question'] and 'at expiry back to' in hp[1]['question'] and 'today' in hp[1]['question'], 'heat-grid: wording says today (tau = 0 at expiry)')
+check(close(0.39 * 1.629, 0.64, 0.005) and close(0.39 * 2.319, 0.90, 0.005), 'honest-bar: 0.39 x 1.629 = 0.64 and 0.39 x 2.319 = 0.90 for the reviewer reply')
 
 # topic-2.1 e-pd-two-trees: the feature is gap_z, the story a share borrow fee
 txt = json.dumps(item('topic-2.1', 'e-pd-two-trees'))

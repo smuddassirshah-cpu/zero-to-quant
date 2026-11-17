@@ -213,7 +213,7 @@ check([o['id'] for o in it['parts'][1]['widget']['options'] if o.get('correct')]
 txt = text_of(it)
 check('0.90' in txt and '0.64' in txt and '0.88' not in txt and '0.74' not in txt, 'bar: printed bars 0.90 and 0.64 only')
 l15 = load('courses', 'backtest', 'l15-how-many-settings.json')['screens'][6]['prose']
-check('dropped' not in txt and 'futures' not in l15, 'bar: no dropped-settings story, a search across contracts')
+check('dropped settings' not in txt and 'dropped setting' not in txt and 'futures' not in l15, 'bar: no dropped-settings story, a search across contracts')
 
 # ---------- topic-2.6 e-two-fund-shrink (forecasters, mu 2, tau 2.5, in bp) ----------
 it = item('topic-2.6', 'e-two-fund-shrink'); pa, pb = it['parts'][0]['widget'], it['parts'][1]['widget']

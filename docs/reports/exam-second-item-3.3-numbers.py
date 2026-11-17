@@ -207,6 +207,7 @@ for _ in range(M):
 check(close(tot / M, 9.72, 0.05), f'{iid} simulation near 9.72 ({tot / M:.3f})')
 check(wrong(iid, 'given-win') == 45 and close(wrong(iid, 'own-bid'), float(pwin * 60)) == (wrong(iid, 'own-bid') == 12.96) and wrong(iid, 'own-bid') == 12.96, f'{iid} wrongs 45 and 12.96 = 0.216 x 60')
 check(wrong(iid, 'seller-share') == 60 / 4 == 15, f'{iid} wrong 15 = 60 / 4')
+check('quarter of the seller' in items[iid]['feedback']['byKey']['seller-share'] and 'expected revenue of \u00a360' in items[iid]['feedback']['byKey']['seller-share'], f'{iid} seller-share line names the seller expected revenue')
 check(key(iid) == 9.72 and items[iid]['widget'].get('unit') == '\u00a3', f'{iid} unit')
 wrongs_outside(iid)
 
