@@ -80,3 +80,14 @@ Format: `N. file | JSON path | severity | problem | evidence | exact fix`.
 - c-trapezium: 21 in exact fractions and by `np.trapezoid`; slips 19.5, 22.5, 27.5.
 - c-terms-needed: bounds $2.7 \times 10^{-5}$ and $1.4 \times 10^{-6}$ in exact fractions; slips 6 and 9; $e^{0.3} = 1.34986 < 1.35$.
 - Voice: British English, no exclamation mark, no em-dash, every sentence under 35 words, explanations of at most three sentences.
+
+## Fix pass
+
+1. Fixed (topic-1.4 a-reachable-k): b = (3, k, 1), wrong values -1 and 7, feedback and explain as written. Disputed one clause: the reader's "5 times column 1 minus column 2" gives (3, 5, 2), not (3, 5, 1); recomputed (3, 5, 1) = 3 c1 + c2 - 2 c3 (lstsq gives 3, 1, -2), and the explain says so. Key 5 unchanged.
+2. Fixed (a-qr-solve): b = (1, 5, 6), R = [[2, -2], [0, 4]], wrong 1.75, 1.5, 6, feedback and explain as written; Q^T b = (3, 2), x = (2, 1/2). fresh-check: 0 hits.
+3. Fixed with finding 2 (prose now "A QR factorisation of A has").
+4. Fixed (topic-1.3 c-terms-needed): microcontroller prose as written; numbers unchanged.
+5. Fixed (c-quotient-partial): question asks "a decimal to 4 places", placeholder "fraction or 4 dp".
+6. Fixed (a-desk-lengths): cross-once tol abs 0.005.
+
+Graded answers changed: a-reachable-k and a-qr-solve wrong values; keys unchanged (5, 2). Scripts: author 162 of 162, exit 0; reader 118 checks, 0 FINDING lines, exit 0 (updated to the new numbers). Gates: validator 0 errors; voice 0 and 0; grade-all 0 failures on both; playthrough passed on both, desktop and mobile.

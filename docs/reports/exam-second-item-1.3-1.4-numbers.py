@@ -78,10 +78,10 @@ wt = {x['id']: x['tex'].replace(' ', '') for x in w['wrong']}
 check(wt == {'reversed': '\\begin{pmatrix}2&0\\\\2&2\\end{pmatrix}', 'entrywise': '\\begin{pmatrix}3&-1\\\\0&2\\end{pmatrix}'}, 'a-undo-two-steps wrong tex')
 check(close(3 * (-1) + 1 * 2, -1), 'explain: 3(-1) + 1(2) = -1')
 
-# a-reachable-k: elimination on [A | b], b = (2, k, 4)
+# a-reachable-k: elimination on [A | b], b = (3, k, 1)
 Am = [[F(1), F(2), F(1)], [F(2), F(5), F(3)], [F(1), F(4), F(3)]]
 def last_rhs(k, stale=False, add=False):
-    r1, r2, r3 = [row[:] + [rhs] for row, rhs in zip(Am, [F(2), F(k), F(4)])]
+    r1, r2, r3 = [row[:] + [rhs] for row, rhs in zip(Am, [F(3), F(k), F(1)])]
     r2o = r2[:]
     r2 = [x - 2 * y for x, y in zip(r2, r1)]
     r3 = [x - y for x, y in zip(r3, r1)]
@@ -97,26 +97,27 @@ r2, r3 = last_rhs(0)
 check(r3[:3] == [0, 0, 0] and r2[:3] == [0, 1, 1], 'a-reachable-k: row 3 of U is zero, row 2 is (0, 1, 1)')
 ks = [k for k in range(-20, 21) if last_rhs(k)[1][3] == 0]
 An = np.array(Am, float)
-ks2 = [k for k in range(-20, 21) if np.linalg.matrix_rank(np.column_stack([An, [2, k, 4]])) == np.linalg.matrix_rank(An)]
+ks2 = [k for k in range(-20, 21) if np.linalg.matrix_rank(np.column_stack([An, [3, k, 1]])) == np.linalg.matrix_rank(An)]
 check(ks == [5] and ks2 == [5] and np.linalg.matrix_rank(An) == 2, 'a-reachable-k key 5 by elimination and by rank')
 stale = [k for k in range(-20, 21) if last_rhs(k, stale=True)[1][3] == 0]
 added = [k for k in range(-20, 21) if last_rhs(k, add=True)[1][3] == 0]
-check(stale == [1] and added == [3], f'slips: stale right side {stale}, added row {added}')
-numeric('a-reachable-k', 5, {'stale-right': 1, 'added-row': 3})
-check(np.allclose(An[:, 1], [2, 5, 4]), 'b at k = 5 is column 2 of A')
-check(last_rhs(0)[0][3] == -4 and last_rhs(0)[1][3] == 10, 'explain: rows (0,1,1 | k-4), (0,0,0 | 10-2k)')
+check(stale == [-1] and added == [7], f'slips: stale right side {stale}, added row {added}')
+numeric('a-reachable-k', 5, {'stale-right': -1, 'added-row': 7})
+check(np.allclose(3 * An[:, 0] + An[:, 1] - 2 * An[:, 2], [3, 5, 1]), 'b at k = 5 is 3 c1 + c2 - 2 c3')
+check(not any(np.allclose(An[:, j], [3, 5, 1]) for j in range(3)), 'b is not a column of A')
+check(last_rhs(0)[0][3] == -6 and last_rhs(0)[1][3] == 10, 'explain: rows (0,1,1 | k-6), (0,0,0 | 10-2k)')
 
 # a-qr-solve
-Q = np.array([[2, 2], [-1, 2], [2, -1]]) / 3; R = np.array([[3, 3], [0, 3]], float); bq = np.array([4, 1, 7], float)
+Q = np.array([[2, 2], [-1, 2], [2, -1]]) / 3; R = np.array([[2, -2], [0, 4]], float); bq = np.array([1, 5, 6], float)
 check(np.allclose(Q.T @ Q, np.eye(2)), 'a-qr-solve Q has orthonormal columns')
 qtb = Q.T @ bq
 x = np.linalg.solve(R, qtb)
 x2, *_ = np.linalg.lstsq(Q @ R, bq, rcond=None)           # route 2: lstsq on A = QR
-check(np.allclose(qtb, [7, 1]) and np.allclose(x, [2, 1 / 3]) and np.allclose(x2, x), 'a-qr-solve Q^T b = (7, 1), x = (2, 1/3) both routes')
+check(np.allclose(qtb, [3, 2]) and np.allclose(x, [2, 1 / 2]) and np.allclose(x2, x), 'a-qr-solve Q^T b = (3, 2), x = (2, 1/2) both routes')
 check(not np.allclose(Q @ R @ x, bq), 'a-qr-solve b is not in C(A), so this is a real least squares fit')
 rawb = np.linalg.solve(R, bq[:2]); unsc = np.linalg.solve(R, 3 * qtb)
-numeric('a-qr-solve', x[0], {'raw-b': rawb[0], 'no-back': 7 / 3, 'unscaled': unsc[0]})
-printed('a-qr-solve', 4, 1, 7, 3)
+numeric('a-qr-solve', x[0], {'raw-b': rawb[0], 'no-back': qtb[0] / R[0, 0], 'unscaled': unsc[0]})
+printed('a-qr-solve', 1, 5, 6, 3, 2)
 
 # a-rank-one
 Ar = np.array([[4, 9.5], [-1, 7], [10, 5]])

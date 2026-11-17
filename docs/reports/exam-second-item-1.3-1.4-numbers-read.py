@@ -116,47 +116,46 @@ k = sp.symbols('k')
 A = sp.Matrix([[1, 2, 1], [2, 5, 3], [1, 4, 3]])
 check('reach: rank A = 2', A.rank() == 2)
 n = A.T.nullspace()[0]  # left null vector: b is reachable iff n . b = 0
-cond = sp.expand((n.T * sp.Matrix([2, k, 4]))[0])
+cond = sp.expand((n.T * sp.Matrix([3, k, 1]))[0])
 sol = sp.solve(cond, k)
 check('reach: key k = 5 (left-null-vector test)', sol == [5] and it['widget']['answer'] == 5)
 check('reach: k = 5 solvable, k = 4, 6 not',
-      A.row_join(sp.Matrix([2, 5, 4])).rank() == 2 and all(A.row_join(sp.Matrix([2, v, 4])).rank() == 3 for v in (4, 6)))
+      A.row_join(sp.Matrix([3, 5, 1])).rank() == 2 and all(A.row_join(sp.Matrix([3, v, 1])).rank() == 3 for v in (4, 6)))
 w = wrong(it)
-check('reach: stale-right 2 - 2k = 0 gives 1', sp.solve(2 - 2 * k, k) == [w['stale-right']['value']])
-check('reach: added-row 2 + 2(k - 4) = 0 gives 3', sp.solve(2 + 2 * (k - 4), k) == [w['added-row']['value']])
-check('reach: printed rows (0,1,1|k-4), (0,2,2|2), (0,0,0|10-2k)',
+check('reach: stale-right -2 - 2k = 0 gives -1', sp.solve(-2 - 2 * k, k) == [w['stale-right']['value']])
+check('reach: added-row -2 + 2(k - 6) = 0 gives 7', sp.solve(-2 + 2 * (k - 6), k) == [w['added-row']['value']])
+check('reach: printed rows (0,1,1|k-6), (0,2,2|-2), (0,0,0|10-2k)',
       list(A.row(1) - 2 * A.row(0)) == [0, 1, 1] and list(A.row(2) - A.row(0)) == [0, 2, 2]
-      and sp.expand(2 - 2 * (k - 4)) == 10 - 2 * k)
+      and sp.expand(-2 - 2 * (k - 6)) == 10 - 2 * k and list(3 * A.col(0) + A.col(1) - 2 * A.col(2)) == [3, 5, 1])
 bands('reach', it)
-col_hit = [j + 1 for j in range(3) if list(A.col(j))[0] == 2 and list(A.col(j))[2] == 4]
+col_hit = [j + 1 for j in range(3) if list(A.col(j))[0] == 3 and list(A.col(j))[2] == 1]
 check('reach: b cannot be read off a column of A without eliminating', not col_hit,
-      f'b = (2, k, 4) matches column {col_hit} = (2, 5, 4) in its two known entries; k = 5 is read by eye (gx-elim not needed)')
+      f'b = (3, k, 1) matches column {col_hit} in its two known entries; k = 5 is read by eye (gx-elim not needed)')
 
 # a-qr-solve: least squares on A = QR by numpy, not by back substitution.
 it = item('topic-1.4', 'a-qr-solve')
 Q = np.array([[2.0, 2], [-1, 2], [2, -1]]) / 3
-R = np.array([[3.0, 3], [0, 3]])
-bq = np.array([4.0, 1, 7])
+R = np.array([[2.0, -2], [0, 4]])
+bq = np.array([1.0, 5, 6])
 A = Q @ R
 check('qr: Q has orthonormal columns', np.allclose(Q.T @ Q, np.eye(2)))
 xh = np.linalg.lstsq(A, bq, rcond=None)[0]
-check('qr: key x1 = 2 (lstsq on A = QR)', near(xh[0], it['widget']['answer'], 1e-9) and near(xh[1], 1 / 3, 1e-9))
-check('qr: printed Q^T b = (7, 1)', np.allclose(Q.T @ bq, [7, 1]))
+check('qr: key x1 = 2 (lstsq on A = QR)', near(xh[0], it['widget']['answer'], 1e-9) and near(xh[1], 1 / 2, 1e-9))
+check('qr: printed Q^T b = (3, 2)', np.allclose(Q.T @ bq, [3, 2]))
 w = wrong(it)
-check('qr: raw-b 1', near(np.linalg.solve(R, bq[:2])[0], w['raw-b']['value']))
-check('qr: no-back 7/3 = 2.3333', round(7 / 3, 4) == w['no-back']['value'])
+check('qr: raw-b 1.75', near(np.linalg.solve(R, bq[:2])[0], w['raw-b']['value']))
+check('qr: no-back 3/2 = 1.5', near(3 / 2, w['no-back']['value']))
 check('qr: unscaled 6', near(np.linalg.solve(R, 3 * Q.T @ bq)[0], w['unscaled']['value']))
 bands('qr', it)
 Qn, Rn = np.linalg.qr(A)
-check('qr: np.linalg.qr(A) returns the printed Q and R', np.allclose(Qn, Q) and np.allclose(Rn, R),
+check('qr: prose claims no numpy output', 'np.linalg.qr' not in it['prose'] and 'A QR factorisation of' in it['prose'] and np.allclose(abs(Rn), abs(R)),
       f'numpy returns R = {np.round(Rn, 4).tolist()}, first column of Q = {np.round(Qn[:, 0], 4).tolist()}')
 l8 = load('courses/least-squares/l8-qr.json')
 l8_text = json.dumps(l8['screens'][2], ensure_ascii=False) + json.dumps(l8['screens'][4], ensure_ascii=False)
 lesson_R = '3\\\\mathbf{q}_1 + 3\\\\mathbf{q}_2' in l8_text and '= 3\\\\mathbf{q}_1$' in l8_text
-check('qr: R differs from the R of least-squares/l8-qr', not (lesson_R and np.allclose(R, [[3, 3], [0, 3]])),
+check('qr: R differs from the R of least-squares/l8-qr', not (lesson_R and np.allclose(R, [[3, 3], [0, 3]])) and not np.allclose(bq, [2, 1, 7]),
       'l8-qr screens[2] builds R = [[3, 3], [0, 3]] (a1 = 3q1, a2 = 3q1 + 3q2) and screens[4] fits b = (2, 1, 7); the item prints the same R with b = (4, 1, 7)')
-check('qr: no-back slip typed to 2 places (2.33) meets its band', abs(2.33 - w['no-back']['value']) <= w['no-back']['tol']['abs'],
-      'band 0.001 around 2.3333')
+check('qr: no-back slip is exact', w['no-back']['value'] == 1.5)
 
 # a-rank-one: numpy SVD.
 it = item('topic-1.4', 'a-rank-one')
@@ -247,7 +246,7 @@ bands('terms', it)
 hw2 = load('courses/taylor/homework-2.json')
 src = next(u for u in hw2['items'] if u['id'] == 'h2-terms-for-e')
 check('terms: story differs from taylor/homework-2 h2-terms-for-e',
-      not ('library computes' in src['prose'] and 'library computes' in it['prose']),
+      'library' not in it['prose'] and 'microcontroller' in it['prose'],
       f'homework: "{src["prose"]} {src["question"]}"')
 
 # ---------------------------------------------------------------- skill counts
@@ -280,7 +279,7 @@ check('fix reach: b = (3, k, 1) gives k = 5', sp.solve(cond, k) == [5])
 check('fix reach: rows (0,1,1|k-6), (0,2,2|-2), (0,0,0|10-2k)', sp.expand((1 - 3) - 2 * (k - 6)) == 10 - 2 * k)
 check('fix reach: stale-right -2 - 2k = 0 gives -1; added-row -2 + 2(k - 6) = 0 gives 7',
       sp.solve(-2 - 2 * k, k) == [-1] and sp.solve(-2 + 2 * (k - 6), k) == [7])
-check('fix reach: (3, 5, 1) = 5 col 1 - col 2 and matches no column', list(5 * A.col(0) - A.col(1)) == [3, 5, 1]
+check('fix reach: (3, 5, 1) = 3 c1 + c2 - 2 c3 and matches no column', list(3 * A.col(0) + A.col(1) - 2 * A.col(2)) == [3, 5, 1]
       and all(list(A.col(j)) != [3, 5, 1] for j in range(3)) and all((A.col(j)[0], A.col(j)[2]) != (3, 1) for j in range(3)))
 # Finding 2: a-qr-solve with R = [[2, -2], [0, 4]] and b = (1, 5, 6).
 R2 = np.array([[2.0, -2], [0, 4]])
