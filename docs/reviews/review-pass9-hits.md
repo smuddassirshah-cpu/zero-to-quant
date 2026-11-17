@@ -171,3 +171,21 @@ Three notes, none a fault. `functions/problems-1` `no-c`: a learner who divides 
 
 - Fix 11 is unplayed. The fixer must run the mobile playthrough of `measure-prob/problems-2` and fall back to the second wording if the first fails.
 - Fix 6 adds a `wrong` value and a feedback line; the set's number script may list the part's figures and need the new 0.5793.
+
+## Fix pass
+
+Fixer on Sonnet. Every figure was already recomputed in `check.py`; no dispute. No key changed. Validator 0 errors; voice scan 0 and 0 on the nine courses; number scripts pass (`docs/reports/problems-limits-thm-numbers.py` updated for fix 6); `grade-all.mjs --file` 0 failures on every edited file.
+
+1. `convex/problems-3` `p-style-fit` part 5: applied as written (`tol.abs` 6e-06).
+2. `exp-log/problems-3` `p-log-chart-line` part 1: applied as written (`tol.abs` 6e-05).
+3. `ito/problems-2` `p-cable-inverse` part 3: applied as written (`tol.abs` 6e-05).
+4. `validation/problems-3` `p-carry-lookbacks` part 1: applied as written (`tol.abs` 6e-05).
+5. `validation/problems-1` `p-rent-seeds` part 1: applied as written (band 7e-05, 0.05774 in the `correct` line and the explanation).
+6. `limits-thm/problems-2` `p-digital-share` part 3: applied as written (question, `no-centre` wrong value 0.5793, `byKey` line). The number script's slip list gained `no-centre`; it did not need a new printed value.
+7. `markov/problems-3` `p-barrier-note` part 2: applied as written (question wording, placeholder "a whole number").
+8. `coding-int/homework-2` `items[3].widget.prompt`: applied as written.
+9. `coding-int/homework-2` `items[6].prose`: applied as written.
+10. `coding-int/review-2` `items[6].prose`: applied as written.
+11. `measure-prob/problems-2` `p-boom-bust` part 4: applied with the first wording (span split at the inequality); the mobile playthrough passes, so the fallback was not needed.
+
+Engine item 1024: `"form": "simplified"` added to `analysis/problems-1` `items[1].parts[1]` and `analysis/problems-2` `items[0].parts[0]`. grade-all: stored answers and accepts still pass (0 failures). A temporary `wrong` entry holding the question's own text, `5 - \frac{5n - 4}{n + 1}`, is refused with key `form` (the file was restored afterwards).
