@@ -12,6 +12,7 @@ Run: <scratchpad>/venv/bin/python docs/reports/problems-measure-prob-numbers.py 
 import json, os, re, sys, math, itertools, random
 from fractions import Fraction as F
 import sympy as sp
+import numpy as np
 from scipy import integrate
 from scipy.stats import norm
 
@@ -294,6 +295,130 @@ def level1():
     ok(all(r[0] for r in lv.results), 'level 1: numbers_lib check_wrongs')
 
 
+# ---------------------------------------------------------------- level 2
+def level2():
+    it = load(2)
+    if it is None:
+        return
+    structural(it, 2)
+    e = math.e
+    # p-billed-hours
+    v1 = math.exp(-2) - math.exp(-3)
+    v2 = integrate.quad(lambda t: math.exp(-t), 2, 3)[0]
+    num_part(it, 'p-billed-hours', 1, v1, v2, 4)
+    wrong_is(it, 'p-billed-hours', 1, 'tail', math.exp(-2), 4)
+    wrong_is(it, 'p-billed-hours', 1, 'cdf', 1 - math.exp(-2), 4)
+    ok(round(math.exp(-2), 4) == 0.1353 and round(math.exp(-3), 4) == 0.0498, 'hours: printed tails')
+    f1 = 1 / (e - 1)
+    f2 = sum(k * (math.exp(-k) - math.exp(-k - 1)) for k in range(0, 200))
+    num_part(it, 'p-billed-hours', 2, f1, f2, 4)
+    wrong_is(it, 'p-billed-hours', 2, 'from-zero', e / (e - 1), 4)
+    wrong_is(it, 'p-billed-hours', 2, 'mean', 1)
+    wrong_is(it, 'p-billed-hours', 2, 'half-lost', 0.5)
+    h1 = 0.5 / (math.exp(0.5) - 1)
+    h2 = sum(0.5 * k * (math.exp(-k / 2) - math.exp(-(k + 1) / 2)) for k in range(0, 400))
+    num_part(it, 'p-billed-hours', 3, h1, h2, 4)
+    wrong_is(it, 'p-billed-hours', 3, 'no-half', 1 / (math.exp(0.5) - 1), 4)
+    wrong_is(it, 'p-billed-hours', 3, 'from-zero', 0.5 * math.exp(0.5) / (math.exp(0.5) - 1), 4)
+    m = lambda h: h / (math.exp(h) - 1)
+    mbrute = lambda h: sum(h * k * (math.exp(-k * h) - math.exp(-(k + 1) * h)) for k in range(0, int(60 / h)))
+    nstar = min(n for n in range(1, 30) if m(2 ** -n) > 0.99)
+    nstar2 = min(n for n in range(1, 12) if mbrute(2 ** -n) > 0.99)
+    num_part(it, 'p-billed-hours', 4, nstar, nstar2)
+    ok(round(m(1 / 32), 4) == 0.9845 and round(m(1 / 64), 4) == 0.9922, 'hours: printed means at h = 1/32, 1/64')
+    wrong_is(it, 'p-billed-hours', 4, 'one-minus-h', min(n for n in range(1, 30) if 1 - 2 ** -n > 0.99))
+    ok(all(m(2 ** -(n + 1)) > m(2 ** -n) for n in range(1, 12)), 'hours: the means rise with n')
+
+    # p-compounding
+    R = sp.Symbol('R')
+    mom = {0: 1, 1: 0, 2: sp.Rational(1, 4), 3: 0, 4: 3 * sp.Rational(1, 16)}
+    def Emean(poly):
+        P = sp.Poly(sp.expand(poly), R)
+        return sum(c * mom[d[0]] for d, c in zip(P.monoms(), P.coeffs()))
+    g2, g4 = Emean((1 + R / 2) ** 2), Emean((1 + R / 4) ** 4)
+    xs = np.linspace(-12, 12, 240001)
+    dens = np.exp(-xs ** 2 / 2) / math.sqrt(2 * math.pi)
+    quadE = lambda f: float(np.trapezoid(f(0.5 * xs) * dens, xs))
+    num_part(it, 'p-compounding', 1, float(g2), quadE(lambda r: (1 + r / 2) ** 2), 4, eps=1e-8)
+    wrong_is(it, 'p-compounding', 1, 'no-square', 1)
+    wrong_is(it, 'p-compounding', 1, 'half-square', 1 + 0.25 / 2)
+    num_part(it, 'p-compounding', 2, float(g4), quadE(lambda r: (1 + r / 4) ** 4), 4, eps=1e-8)
+    wrong_is(it, 'p-compounding', 2, 'no-fourth', 1 + 6 * 0.25 / 16)
+    wrong_is(it, 'p-compounding', 2, 'fourth-one', 1 + 6 * 0.25 / 16 + 0.0625 / 256)
+    ok(abs(float(g4) - 1.094482421875) < 1e-12 and round(3 * 0.0625 / 256, 6) == 0.000732, 'compounding: printed terms')
+    d1 = 2 * math.exp(0.125) * 0.6915
+    d2 = quadE(lambda r: np.exp(np.abs(r)))
+    ok(abs(2 * math.exp(0.125) * norm.cdf(0.5) - d2) < 1e-8, 'compounding: E e^|R| formula matches quadrature')
+    num_part(it, 'p-compounding', 3, round(d1, 3), round(d2, 3), 3)
+    wrong_is(it, 'p-compounding', 3, 'no-abs', math.exp(0.125), 4)
+    wrong_is(it, 'p-compounding', 3, 'no-phi', 2 * math.exp(0.125), 4)
+    for n in range(1, 40):
+        ok(np.all(np.abs((1 + 0.5 * xs / n) ** n) <= np.exp(np.abs(0.5 * xs)) + 1e-9), f'compounding: |G_{n}| <= e^|R| on the grid') if n in (1, 2, 3, 7, 39) else None
+    ok((1 - 3) == -2 and (1 - 1.5) ** 2 == 0.25 and (1 - 1) ** 3 == 0, 'compounding: G_1, G_2, G_3 at R = -3')
+    choice_key(it, 'p-compounding', 4, 'dct')
+    lim1 = math.exp(0.125)
+    num_part(it, 'p-compounding', 5, lim1, quadE(lambda r: np.exp(r)), 4, eps=1e-8)
+    ok(all(quadE(lambda r, n=n: (1 + r / n) ** n) < lim1 for n in (1, 2, 4, 8)), 'compounding: the means lie below the limit')
+    wrong_is(it, 'p-compounding', 5, 'jensen', 1)
+    wrong_is(it, 'p-compounding', 5, 'no-half', math.exp(0.25), 4)
+    wrong_is(it, 'p-compounding', 5, 'bound', d2, 3)
+
+    # p-root-of-uniform
+    n_ = SYM['n']
+    t = sp.Symbol('t')
+    E4 = sp.integrate(1 - t ** 4, (t, 0, 1))
+    num_part(it, 'p-root-of-uniform', 1, float(E4), integrate.quad(lambda u: u ** 0.25, 0, 1)[0], 3, eps=1e-8)
+    wrong_is(it, 'p-root-of-uniform', 1, 'tail-only', 0.2)
+    wrong_is(it, 'p-root-of-uniform', 1, 'jensen', 0.5 ** 0.25, 4)
+    En = sp.integrate(1 - t ** n_, (t, 0, 1), conds='none')
+    E2 = sp.integrate(1 - t ** (n_ / 2), (t, 0, 1), conds='none')   # P(X^2 > t) = P(U > t^(n/2))
+    msd = sp.simplify(E2 - 2 * En + 1)
+    expr_part(it, 'p-root-of-uniform', 2, msd)
+    ok(same(msd, 2 / ((n_ + 1) * (n_ + 2))), 'root: mean-square distance is 2/((n+1)(n+2))')
+    for n in (3, 10):
+        ok(abs(integrate.quad(lambda u: (u ** (1 / n) - 1) ** 2, 0, 1)[0] - 2 / ((n + 1) * (n + 2))) < 1e-10, f'root: quadrature at n = {n}')
+    c1 = 2 / (11 * 12) / 0.01
+    c2 = integrate.quad(lambda u: (u ** 0.1 - 1) ** 2, 0, 1)[0] / 0.01
+    num_part(it, 'p-root-of-uniform', 3, c1, c2, 4, eps=1e-8)
+    wrong_is(it, 'p-root-of-uniform', 3, 'no-eps', 2 / 132, 4)
+    wrong_is(it, 'p-root-of-uniform', 3, 'eps', 2 / 132 / 0.1, 4)
+    pex = 0.9 ** 10
+    us = np.random.default_rng(3).random(1_000_000)
+    num_part(it, 'p-root-of-uniform', 4, pex, float(np.mean(np.abs(us ** 0.1 - 1) > 0.1)), 4, eps=0.004)
+    wrong_is(it, 'p-root-of-uniform', 4, 'complement', 1 - pex, 4)
+    wrong_is(it, 'p-root-of-uniform', 4, 'root', 0.9 ** 0.1, 4)
+    choice_key(it, 'p-root-of-uniform', 5, 'all')
+
+    # p-random-maturity
+    r = 0.05
+    V1 = (1 - math.exp(-4 * r)) / (4 * r)
+    V2 = integrate.quad(lambda x: math.exp(-r * x) / 4, 0, 4)[0]
+    num_part(it, 'p-random-maturity', 1, V1, V2, 4)
+    wrong_is(it, 'p-random-maturity', 1, 'mean-time', math.exp(-0.1), 4)
+    wrong_is(it, 'p-random-maturity', 1, 'end', math.exp(-0.2), 4)
+    choice_key(it, 'p-random-maturity', 2, 'four')
+    D1 = (1 - 1.2 * math.exp(-0.2)) / 0.01
+    D2 = integrate.quad(lambda x: x * math.exp(-r * x) / 4, 0, 4)[0]
+    rr = sp.Symbol('r', positive=True)
+    Vs = (1 - sp.exp(-4 * rr)) / (4 * rr)
+    D3 = float(-sp.diff(Vs, rr).subs(rr, sp.Rational(1, 20)))
+    num_part(it, 'p-random-maturity', 3, D1, D2, 4)
+    ok(abs(D1 - D3) < 1e-10, 'maturity: -V\'(0.05) from differentiating V matches')
+    wrong_is(it, 'p-random-maturity', 3, 'jensen', 2 * math.exp(-0.1), 4)
+    wrong_is(it, 'p-random-maturity', 3, 'no-discount', 2)
+    dur = D1 / V1
+    num_part(it, 'p-random-maturity', 4, dur, D3 / V2, 2, eps=1e-9)
+    ok(abs(round(1.7523 / 0.9063, 2) - 1.93) < 1e-12 and abs(round(dur, 2) - 1.93) < 1e-12, 'maturity: printed duration 1.93')
+    wrong_is(it, 'p-random-maturity', 4, 'mean', 2)
+    wrong_is(it, 'p-random-maturity', 4, 'no-divide', D1, 4)
+    wrong_is(it, 'p-random-maturity', 4, 'inverse', V1 / D1, 4)
+
+    lv = Level('measure-prob', 2)
+    lv.check_wrongs('problems')
+    ok(all(r_[0] for r_ in lv.results), 'level 2: numbers_lib check_wrongs')
+
+
 level1()
+level2()
 print(f'{checks} checks, {len(fails)} failures')
 sys.exit(1 if fails else 0)
