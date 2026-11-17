@@ -15,3 +15,7 @@ Raised later (exam second item stage0):
 Raised later (exam second item 1.6-1.11):
 - An `expression` set (`answers` with `unordered`) cannot take `form`, so a set of complex roots accepts the prompt typed back (`\sqrt{15-8i}, -\sqrt{15-8i}` grades right by value). Allow `form: "rectangular"` per value in a set; topic-1.11 `e-square-root-parts` asks for one root with `form` instead.
 - A fenced code block inside a `multi` or `choice` option neither wraps nor scrolls at 440 px: lines past about 36 characters are clipped (seen on topic-1.9 `e-swapped-d` before rewrapping). Give option code blocks `overflow-x: auto`, or have the validator warn on option code lines over 34 characters.
+
+Raised later (problems ito):
+- Playthrough at 440 px passes a part whose inline maths overflows the page: one KaTeX span holding a comma list (`$W = 0, 0.3, -0.2, 0.4, 0.6$`) does not wrap, widened the whole card and clipped the question text, yet `--problems ito/problems-2 --shots` was green. Fail a part when `document.documentElement.scrollWidth` exceeds the viewport, as the homework `-marked` shot already does for `.katex-display`.
+- `retold` learns stock sentences from committed content, so an instruction line repeated across new sets ("Read $\Phi$ from software or a normal table, and give 4 decimal places.", the wording `[table-source]` asks for) fires as a retelling between the new sets themselves. Treat a sentence that only meets `[table-source]` or `[answer-form]` as stock, or list such lines in the stoplist.
