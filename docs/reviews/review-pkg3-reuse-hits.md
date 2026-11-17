@@ -376,3 +376,9 @@ The other 37 lines are chance matches of two numbers (a table size against a per
 ## Scripts
 
 `docs/reviews/review-pkg3-reuse-hits-scripts/`: `dump.mjs` (both items of each hit side by side; `WAIVED=1` for the waived ones), `waivers.mjs` (verdict table to waiver entries, with a merged trial file), `trig_daylight_fix.py` (fault 1: computes, checks and applies).
+
+## Fix pass
+
+- Fault 1 (`trig/problems-3` `p-daylight-model`): FIXED with `trig_daylight_fix.py --apply` (27 fields, 17.6 and 6.4 hours); `docs/reports/problems-trig-numbers.py` lines 482 to 512 re-keyed as listed (tolerance 2e-3, roots 2.3025 and 9.6975, 5/14). Whole problem re-read: sentences, explanations and slip lines agree; 6.4 to 17.6 hours of daylight is plausible for a northern town. Validator 0 errors, no warning tag on the file; voice scan 0 and 0; number script passes; `grade-all --file` 18 widgets, 0 failures; playthrough green with and without `--mobile`. Graded answers changed: part 1 (5.6), part 4 (2.3, 9.7), part 5 (7.4).
+- Fault 2 (`validation/problems-2` `p-spread-blocks`): DEFERRED to an author, not touched.
+- Waivers: the 7 gate-clearing entries added to `app/tools/same-course-waivers.json`; the 28 all-exams-only entries left out. Reuse gate `--all`: 0 errors, 1 warning (`p-spread-blocks`, chain-union).
