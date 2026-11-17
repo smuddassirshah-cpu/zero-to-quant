@@ -1,7 +1,7 @@
 """List learner-visible sentences over MAX words in one course (or an exam file).
 Usage: VOICE_BASE=/home/user/zero-to-quant/app/content/courses/<course>/ python3 docs/reviews/voice-scan.py [MAX=20] [--summary]
 A lesson id written as a code span in learner text (`l4`, `l12`) is listed as "# lesson id in a code span": lessons write l4 bare and keep code spans for another course's name (engine pass 9, ENGINE-BACKLOG 1187).
-A doubled word in prose ("the the open balls"), outside maths, code and templates, is listed as "# doubled word" (engine pass 9b, ENGINE-BACKLOG 1209); "had had" and "that that" are left alone.
+A doubled word in prose ("the the open balls"), outside maths, code and templates, is listed as "# doubled word" (engine pass 9b, ENGINE-BACKLOG 1209); "had had", "that that", "long long", an all-capitals word (a ticker, AND and) and canvas code lines are left alone.
 Canvas derive/let/formula strings are skipped (a derive caption is scanned). A $...$ formula, $$...$$ block `code` span or {{template}} value counts as one word; fenced code is dropped.
 """
 import json, glob, re, sys, os
@@ -99,7 +99,10 @@ for f in sorted(glob.glob(BASE + '*.json')):
         if is_code_path(path): continue
         for m in re.finditer(r'(?<![\w-])([A-Za-z]{2,})\s+\1(?![\w-])', mask(t), flags=re.I):
             w = m.group(1)
-            if w in ('CODE', 'MATH', 'VALUE') or w.lower() in DOUBLE_OK: continue
+            tok = m.group(0).split()
+            if w in ('CODE', 'MATH', 'VALUE') or w.lower() in DOUBLE_OK or w.lower() == 'long': continue   # "long long" is a C++ type
+            if any(x.isupper() or re.search(r'CODE|MATH|VALUE', x) for x in tok): continue   # tickers, keywords (AND and), masked spans
+            if '.params.lines.' in path: continue   # canvas code lines
             doubled.append((name, path, ' '.join(m.group(0).split())))
 if '--summary' not in sys.argv:
     for name, path, n, s in rows:
