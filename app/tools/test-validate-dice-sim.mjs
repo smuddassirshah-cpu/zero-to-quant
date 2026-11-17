@@ -22,6 +22,8 @@ const run = (canvasExtra, params) => {
 
 let r = run({}, GOOD);
 say(!r.errors.some((l) => /params\.(dice|sides|keep|trials|seed|exact|max|labels)/.test(l)), 'a well formed dice-sim has no dice-sim error', r.errors.slice(0, 3).join(' | '));
+r = run({}, { ...GOOD, event: { rule: 'total == 10', label: 'Total 10', exact: '1/11', exactLabel: '1/11' } });
+say(!r.errors.some((l) => /params\./.test(l)), 'a well formed event: no error', r.errors.slice(0, 3).join(' | '));
 r = run({ controlsAfter: 'check' }, { ...GOOD, dice: 3, keep: 'total >= 14', sides: 6, exact: 0.162 });
 say(!r.errors.some((l) => /params\./.test(l)), 'three dice, a total rule, a numeric exact: no error', r.errors.slice(0, 3).join(' | '));
 
@@ -32,6 +34,8 @@ const BAD = [
   ['seed-object', { seed: {} }, 'params.seed'], ['exact-above-one', { exact: 1.5 }, 'params.exact'], ['exact-bad-fraction', { exact: 'a/b' }, 'params.exact'],
   ['max-zero', { max: 0 }, 'params.max'], ['labels-unknown-key', { labels: { won: 'Won' } }, 'params.labels'], ['labels-number', { labels: { kept: 3 } }, 'params.labels'],
   ['exactLabel-number', { exactLabel: 3 }, 'params.exactLabel'],
+  ['event-text', { event: 'total' }, 'params.event'], ['event-no-rule', { event: { label: 'x' } }, 'params.event.rule'], ['event-bad-rule', { event: { rule: 'total ==== 3' } }, 'params.event.rule'],
+  ['event-unknown-name', { event: { rule: 'd9 == 3' } }, 'params.event.rule'], ['event-exact-high', { event: { rule: 'total == 10', exact: 2 } }, 'params.event.exact'], ['event-label-number', { event: { rule: 'total == 10', label: 5 } }, 'params.event.label'],
 ];
 for (const [name, patch, sub] of BAD) {
   const p = { ...GOOD, ...patch }; for (const k of Object.keys(p)) if (p[k] === undefined) delete p[k];

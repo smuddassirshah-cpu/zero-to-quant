@@ -24,26 +24,33 @@
     const nDice = Math.max(1, Math.min(6, Math.round(+params.dice || 2)));
     const sides = Math.max(2, Math.min(20, Math.round(+params.sides || 6)));
     const names = Array.from({ length: nDice }, (_, i) => 'd' + (i + 1)).concat(['dice', 'total']);
-    const L = Object.assign({ rolled: 'Rolled', kept: 'Kept', out: 'Filtered out', share: 'Share of rolls kept', last: 'Last roll', run: 'Run', reset: 'Reset', none: 'No rolls yet' }, params.labels || {});
+    /* event: an optional second rule counted among the kept rolls; the share bar and the trace then show the event's share of kept rolls */
+    const ev = params.event && typeof params.event === 'object' ? params.event : null;
+    const exSrc = ev ? ev.exact : params.exact, exLab = ev ? ev.exactLabel : params.exactLabel;
+    const exact = frac(exSrc);
+    const exactText = exLab != null ? String(exLab) : typeof exSrc === 'string' && /\//.test(exSrc) ? exSrc.replace(/\s+/g, '') : exact != null ? K.fmt(exact, 3) : '';
+    const evLabel = ev ? String(ev.label || 'Event') : '';
+    const L = Object.assign({ rolled: 'Rolled', kept: 'Kept', out: 'Filtered out', share: ev ? 'Kept rolls with ' + String(ev.label || 'the event').replace(/^[A-Z](?![A-Z])/, (c) => c.toLowerCase()) : 'Share of rolls kept', last: 'Last roll', run: 'Run', reset: 'Reset', none: 'No rolls yet' }, params.labels || {});
     const trials = (Array.isArray(params.trials) && params.trials.length ? params.trials : [10, 100, 1000]).map((n) => Math.max(1, Math.round(+n)));
-    const exact = frac(params.exact);
-    const exactText = params.exactLabel != null ? String(params.exactLabel) : typeof params.exact === 'string' && /\//.test(params.exact) ? params.exact.replace(/\s+/g, '') : exact != null ? K.fmt(exact, 3) : '';
     const axMax = Math.min(1, Math.max(0.05, +params.max > 0 ? +params.max : exact != null ? Math.ceil(exact * 15) / 10 : 1));
     const fmtShare = (v) => v.toFixed(3);
     const nf = (n) => Math.round(n).toLocaleString('en-GB');
 
     /* seeded stream: roll i is the same every time, so 10 then 100 shows the first 110 rolls */
-    let rule = null, err = null;
+    let rule = null, evRule = null, err = null;
     try { rule = Z.sim.compile(params.keep == null ? 'true' : String(params.keep), names); } catch (e) { err = e; console.warn('dice-sim:', e.message); }
+    try { if (ev) evRule = Z.sim.compile(String(ev.rule), names); } catch (e) { err = e; console.warn('dice-sim:', e.message); }
     const rng = Z.sim.rng(params.seed ?? 1);
-    const rolls = [], keptTo = [0]; // keptTo[i] = kept among the first i rolls
+    const rolls = [], keptTo = [0], evTo = [0], keptEv = [0]; // keptTo[i], evTo[i]: kept rolls and kept rolls with the event among the first i rolls; keptEv[k]: events among the first k kept rolls
     const upTo = (n) => {
       if (err) return;
       while (rolls.length < n) {
         const dice = Array.from({ length: nDice }, () => 1 + Math.floor(rng() * sides));
         const env = { dice, total: dice.reduce((a, b) => a + b, 0) }; dice.forEach((v, i) => { env['d' + (i + 1)] = v; });
         let keep = false; try { keep = !!rule(rng, env); } catch (e) { err = e; console.warn('dice-sim:', e.message); return; }
-        rolls.push({ dice, keep }); keptTo.push(keptTo[keptTo.length - 1] + (keep ? 1 : 0));
+        let hit = false; if (keep && evRule) { try { hit = !!evRule(rng, env); } catch (e) { err = e; console.warn('dice-sim:', e.message); return; } }
+        rolls.push({ dice, keep }); keptTo.push(keptTo[keptTo.length - 1] + (keep ? 1 : 0)); evTo.push(evTo[evTo.length - 1] + (hit ? 1 : 0));
+        if (keep) keptEv.push(keptEv[keptEv.length - 1] + (hit ? 1 : 0));
       }
     };
 
@@ -85,7 +92,8 @@
         if (!chips.length && !R.static && !liveEl) buildControls(R);
         const g = R.F.g, n = Math.max(0, Math.round(view.ran || 0));
         upTo(n);
-        const rolled = err ? 0 : n, kept = keptTo[rolled] || 0, last = rolled ? rolls[rolled - 1] : null, share = rolled ? kept / rolled : null;
+        const rolled = err ? 0 : n, kept = keptTo[rolled] || 0, hits = evTo[rolled] || 0, last = rolled ? rolls[rolled - 1] : null;
+        const den = ev ? kept : rolled, share = den ? (ev ? hits : kept) / den : null; // the share drawn: kept of rolled, or (with an event) the event among kept
 
         /* dice and counters */
         const ds = nDice <= 3 ? 46 : nDice <= 4 ? 40 : 34, dgap = 8, dy = 6;
@@ -95,7 +103,7 @@
         dg.append(K.txt(8, dy + ds + 17, last ? L.last + ': ' + tag : tag, { anchor: 'start', size: 13, weight: last && last.keep ? 700 : 500, cls: 'cvds-tag' + (last && last.keep ? ' is-kept' : '') }));
         g.append(dg);
         const cg = K.obj('counters', 'cvds-counters', 'ink');
-        [[L.rolled, rolled, ''], [L.kept, kept, 'is-kept'], [L.out, rolled - kept, '']].reverse().forEach(([lab, v, cls], i) => {
+        [[L.rolled, rolled, ''], [L.kept, kept, 'is-kept'], [ev ? evLabel : L.out, ev ? hits : rolled - kept, '']].reverse().forEach(([lab, v, cls], i) => {
           const cx = W - 8 - i * 84;
           cg.append(K.txt(cx, 16, lab, { anchor: 'end', size: 13, cls: 'cvb-tick' }), K.txt(cx, 40, nf(v), { anchor: 'end', size: 22, weight: 700, cls: 'cvds-val tnum ' + cls }));
         });
@@ -103,7 +111,7 @@
 
         /* share bar */
         const sg = K.obj('share', 'cvds-share', 'ink'), bx0 = 8, bx1 = W - 8, by = 132, bh = 20, bx = (v) => bx0 + (bx1 - bx0) * Math.min(v, axMax) / axMax;
-        sg.append(K.txt(bx0, 102, L.share, { anchor: 'start', size: 13, weight: 600, cls: 'cvds-lab' }), K.txt(bx1, 102, share == null ? (rolled ? '' : L.none) : fmtShare(share), { anchor: 'end', size: 16, weight: 700, cls: 'cvds-val' }));
+        sg.append(K.txt(bx0, 102, L.share, { anchor: 'start', size: 13, weight: 600, cls: 'cvds-lab' }), K.txt(bx1, 102, share == null ? (rolled ? 'None kept yet' : L.none) : fmtShare(share), { anchor: 'end', size: 16, weight: 700, cls: 'cvds-val' }));
         sg.append(svg('rect', { x: bx0, y: by, width: bx1 - bx0, height: bh, rx: 6, class: 'cvds-track' }));
         if (share) sg.append(svg('rect', { x: bx0, y: by, width: Math.max(0, bx(share) - bx0), height: bh, rx: 6, class: 'cvds-fill' }));
         if (exact != null) {
@@ -116,33 +124,33 @@
 
         /* running-share trace */
         const tg = K.obj('trace', 'cvds-trace', 'ink'), px0 = 44, px1 = W - 12, py0 = 208, py1 = H - 34;
-        const ty = (v) => py1 - (py1 - py0) * Math.min(v, axMax) / axMax, tx = (i) => px0 + (px1 - px0) * (rolled ? i / rolled : 0);
+        const ty = (v) => py1 - (py1 - py0) * Math.min(v, axMax) / axMax, tx = (i) => px0 + (px1 - px0) * (den ? i / den : 0);
         [0, axMax / 2, axMax].forEach((v) => tg.append(svg('line', { x1: px0, x2: px1, y1: ty(v), y2: ty(v), class: 'cvds-grid' }), K.txt(px0 - 6, ty(v), K.fmt(v, 3), { anchor: 'end', size: 13, cls: 'cvb-tick' })));
         tg.append(svg('line', { x1: px0, x2: px0, y1: py0, y2: py1, class: 'cvds-axis' }));
         if (exact != null) {
           tg.append(svg('line', { x1: px0, x2: px1, y1: ty(exact), y2: ty(exact), class: 'cvds-exact' }));
           tg.append(K.txt(px1, ty(exact) - 10, exactText, { anchor: 'end', size: 13, weight: 600, cls: 'cvds-lab', halo: true }));
         }
-        if (rolled) {
-          const step = Math.max(1, Math.ceil(rolled / 300)); let d = '';
-          for (let i = 1; i <= rolled; i += step) d += (d ? 'L' : 'M') + tx(i).toFixed(1) + ' ' + ty(keptTo[i] / i).toFixed(1);
-          if ((rolled - 1) % step) d += 'L' + tx(rolled).toFixed(1) + ' ' + ty(share).toFixed(1);
-          tg.append(svg('path', { d, class: 'cvds-line' }), svg('circle', { cx: tx(rolled), cy: ty(share), r: 3.5, class: 'cvds-dot' }));
+        if (den) {
+          const step = Math.max(1, Math.ceil(den / 300)), at = (i) => (ev ? keptEv[i] : keptTo[i]) / i; let d = '';
+          for (let i = 1; i <= den; i += step) d += (d ? 'L' : 'M') + tx(i).toFixed(1) + ' ' + ty(at(i)).toFixed(1);
+          if ((den - 1) % step) d += 'L' + tx(den).toFixed(1) + ' ' + ty(share).toFixed(1);
+          tg.append(svg('path', { d, class: 'cvds-line' }), svg('circle', { cx: tx(den), cy: ty(share), r: 3.5, class: 'cvds-dot' }));
         }
-        tg.append(K.txt(px0, py1 + 16, '0', { anchor: 'middle', size: 13, cls: 'cvb-tick' }), K.txt(px1, py1 + 16, rolled ? nf(rolled) + ' rolls' : 'Rolls', { anchor: 'end', size: 13, cls: 'cvb-tick' }));
-        tg.append(K.txt(px0, py0 - 12, 'Running share kept', { anchor: 'start', size: 13, cls: 'cvb-tick' }));
+        tg.append(K.txt(px0, py1 + 16, '0', { anchor: 'middle', size: 13, cls: 'cvb-tick' }), K.txt(px1, py1 + 16, den ? nf(den) + (ev ? ' kept' : ' rolls') : (ev ? 'Kept rolls' : 'Rolls'), { anchor: 'end', size: 13, cls: 'cvb-tick' }));
+        tg.append(K.txt(px0, py0 - 12, ev ? 'Running share as kept rolls pile up' : 'Running share kept', { anchor: 'start', size: 13, cls: 'cvb-tick' }));
         g.append(tg);
 
-        R.F.svg.setAttribute('aria-label', (params.aria || 'Dice experiment') + (rolled ? `: ${nf(rolled)} rolled, ${nf(kept)} kept, share ${fmtShare(share)}` : ': no rolls yet'));
-        if (liveEl && !view._anim) liveEl.textContent = err ? 'Simulation unavailable' : rolled ? `${nf(rolled)} rolled, ${nf(kept)} kept, share ${fmtShare(share)}. Last roll ${last.dice.join(' and ')}, ${last.keep ? 'kept' : 'filtered out'}.` : 'No rolls yet.';
+        R.F.svg.setAttribute('aria-label', (params.aria || 'Dice experiment') + (rolled ? `: ${nf(rolled)} rolled, ${nf(kept)} kept${ev ? ', ' + nf(hits) + ' ' + evLabel : ''}${share == null ? '' : ', share ' + fmtShare(share)}` : ': no rolls yet'));
+        if (liveEl && !view._anim) liveEl.textContent = err ? 'Simulation unavailable' : rolled ? `${nf(rolled)} rolled, ${nf(kept)} kept${ev ? ', ' + nf(hits) + ' ' + evLabel : ''}${share == null ? '' : ', share ' + fmtShare(share)}. Last roll ${last.dice.join(' and ')}, ${last.keep ? 'kept' : 'filtered out'}.` : 'No rolls yet.';
         chips.forEach((b) => { if (R.locked) b.disabled = true; else if (!b.dataset.gated) b.disabled = false; });
       },
       methods: (R) => ({
         /* Run n more rolls (as the chips do). Returns the animation promise. */
         run: (n) => R.inst.set({ ran: Math.round(R.state.ran || 0) + n }),
         reset: () => R.inst.set({ ran: 0 }, { instant: true }),
-        counts: () => { const n = Math.round(R.state.ran || 0); upTo(n); return { rolled: err ? 0 : n, kept: err ? 0 : keptTo[n] || 0 }; },
-        values: () => { const n = Math.round(R.state.ran || 0); upTo(n); return { share: n && !err ? (keptTo[n] || 0) / n : null }; },
+        counts: () => { const n = Math.round(R.state.ran || 0); upTo(n); return { rolled: err ? 0 : n, kept: err ? 0 : keptTo[n] || 0, event: err ? 0 : evTo[n] || 0 }; },
+        values: () => { const n = Math.round(R.state.ran || 0); upTo(n); const k = keptTo[n] || 0, den = ev ? k : n; return { share: den && !err ? (ev ? evTo[n] || 0 : k) / den : null }; },
         last: () => { const n = Math.round(R.state.ran || 0); upTo(n); return n && !err ? rolls[n - 1] : null; },
       }),
     };

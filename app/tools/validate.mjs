@@ -1675,6 +1675,17 @@ const checkCanvas = (file, where, c) => {
     if (P.max != null && !(typeof P.max === 'number' && P.max > 0 && P.max <= 1)) err(file, `${w}.max`, 'max is the top of the share axis, above 0 and at most 1');
     if (P.labels != null && !(isObj(P.labels) && Object.entries(P.labels).every(([k2, v]) => ['rolled', 'kept', 'out', 'share', 'last', 'run', 'reset', 'none'].includes(k2) && typeof v === 'string'))) err(file, `${w}.labels`, 'labels is an object of strings; keys rolled, kept, out, share, last, run, reset, none');
     if (P.exactLabel != null && typeof P.exactLabel !== 'string') err(file, `${w}.exactLabel`, 'exactLabel is a string');
+    if (P.event != null) {
+      if (!isObj(P.event)) err(file, `${w}.event`, 'event is { rule, label, exact, exactLabel }');
+      else {
+        const E = P.event;
+        if (typeof E.rule !== 'string' || !E.rule.trim()) err(file, `${w}.event.rule`, 'event.rule is a rule string such as "total == 10" (names d1..dn, dice, total), counted among the kept rolls');
+        else if (SIM) { try { SIM.compile(E.rule, [...Array.from({ length: Number.isInteger(P.dice) ? P.dice : 2 }, (_, i) => 'd' + (i + 1)), 'dice', 'total']); } catch (e) { err(file, `${w}.event.rule`, `event.rule does not compile: ${e.message}`); } }
+        if (E.label != null && typeof E.label !== 'string') err(file, `${w}.event.label`, 'event.label is a string');
+        if (E.exactLabel != null && typeof E.exactLabel !== 'string') err(file, `${w}.event.exactLabel`, 'event.exactLabel is a string');
+        if (E.exact != null) { const m = typeof E.exact === 'string' ? E.exact.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/) : null, v = m ? (+m[2] ? +m[1] / +m[2] : NaN) : E.exact; if (!(typeof v === 'number' && v >= 0 && v <= 1)) err(file, `${w}.event.exact`, 'event.exact is the share of kept rolls with the event, 0 to 1, a number or a fraction string such as "1/11"'); }
+      }
+    }
   }
   if (c.kind === 'series') listOf(P.series).forEach((q, i) => { if (isObj(q) && isObj(q.sim)) checkSim(file, `${where}.params.series[${i}].sim`, q.sim, Object.keys(P.params || {})); });
   if (c.kind === 'distribution' && P.family != null && !['binomial', 'geometric', 'poisson', 'uniform', 'exponential', 't', 'normal', 'hypergeometric', 'discrete', 'custom', 'lognormal', 'beta'].includes(P.family)) err(file, `${where}.params.family`, 'family is binomial, geometric, poisson, hypergeometric, discrete, uniform, normal, lognormal, beta, exponential or t');

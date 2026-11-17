@@ -132,6 +132,30 @@ const main = async () => {
     await page.waitForTimeout(700);
     s = await page.evaluate(() => { const cv = [...document.querySelectorAll('.cv-dice-sim')].pop(), bs = [...cv.querySelectorAll('.cvb-extra button')]; return { screens: document.querySelectorAll('.cv-dice-sim').length, buttons: bs.length, disabled: bs.filter(b => b.disabled).length, dice: cv.querySelectorAll('.cvds-die').length, high: /High/.test(cv.textContent) }; });
     check('explore screen: three dice, the High label, Run 10 and 100 and Reset open (no controlsAfter)', s.buttons === 3 && s.disabled === 0 && s.dice === 3 && s.high, JSON.stringify(s));
+
+    /* event screen: the third counter counts kept rolls with the event; the share and the trace are the event's share of kept rolls */
+    await t(page, 'await h.continue();');
+    await page.waitForTimeout(700);
+    const ev = () => page.evaluate(() => {
+      const cv = [...document.querySelectorAll('.cv-dice-sim')].pop();
+      const vals = [...cv.querySelectorAll('[data-id="counters"] .cvds-val')].map((n) => +n.textContent.replace(/,/g, '')); // right to left: event, Kept, Rolled
+      const grid = [...cv.querySelectorAll('[data-id="trace"] .cvds-grid')].map((n) => +n.getAttribute('y1')), dot = cv.querySelector('.cvds-dot');
+      const labs = [...cv.querySelectorAll('text')].map((n) => n.textContent);
+      return { rolled: vals[2], kept: vals[1], hits: vals[0], dotY: dot ? +dot.getAttribute('cy') : null, y0: grid[0], yTop: grid[2], labs, live: (cv.parentElement.querySelector('[aria-live]') || {}).textContent || '', shareText: (cv.querySelector('[data-id="share"] .cvds-val') || {}).textContent };
+    });
+    let e = await ev();
+    check('event: counters are named Rolled, Kept, Total 10', ['Rolled', 'Kept', 'Total 10', 'Kept rolls with total 10'].every((l) => e.labs.includes(l)), JSON.stringify(e.labs));
+    await page.click('.cv-dice-sim:last-of-type .cvb-extra button:nth-child(3), .lsn-step:last-of-type .cvb-extra button:nth-child(3)');
+    await page.waitForTimeout(1600);
+    e = await ev();
+    const eshare = e.hits / e.kept;
+    check('event: Rolled 1,000 and the Total 10 count is within the kept rolls', e.rolled === 1000 && e.hits > 0 && e.hits < e.kept, JSON.stringify(e));
+    check('event: the last-roll tag still says Filtered out or Kept', e.labs.some((l) => /^Last roll: (Filtered out|Kept)$/.test(l)), JSON.stringify(e.labs));
+    check('event: the share is event / kept', e.shareText === eshare.toFixed(3), `${e.shareText} vs ${eshare}`);
+    check('event: the trace ends at event / kept (axis 0 to 0.2)', Math.abs(e.dotY - (e.y0 - (e.y0 - e.yTop) * eshare / 0.2)) < 0.1, `${e.dotY}`);
+    check('event: the trace axis counts kept rolls', e.labs.includes(`${e.kept} kept`), JSON.stringify(e.labs));
+    check('event: the live region names the event', new RegExp(`^1,000 rolled, ${e.kept} kept, ${e.hits} Total 10, share ${eshare.toFixed(3)}\\.`).test(e.live), e.live);
+    console.log(`info event, seed 4226, 1000 rolls: kept ${e.kept}, total 10: ${e.hits}, share ${eshare.toFixed(3)}`);
     await page.close();
 
     /* 5: reduced motion */

@@ -325,7 +325,8 @@ A seeded dice experiment (ENGINE-BACKLOG 1217): roll `dice` dice, keep a roll wh
 | `exact` | none | the exact share, a number or a fraction string (`"11/36"`), drawn as the dashed line on the bar and the trace |
 | `exactLabel` | the fraction string, else the number to 3 places | text beside the line |
 | `max` | `ceil(1.5 * exact)` to one place, else 1 | top of the share axis (0 to 1) |
-| `labels` | | rename the text: `rolled`, `kept`, `out`, `share`, `last`, `run`, `reset`, `none` |
+| `event` | none | `{ rule, label, exact, exactLabel }`. `rule` is a second rule (same names as `keep`) counted among the kept rolls only. With it the third counter is `label` (default "Event") instead of Filtered out, the share bar and the trace show the event's share of kept rolls (the prototype's "Kept rolls with total 10", 28 of 308 at 1,000 rolls), the trace axis counts kept rolls, and the dashed line sits at `event.exact` (a number or fraction string) with `event.exactLabel`. Top-level `exact` and `exactLabel` are ignored then |
+| `labels` | | rename the text: `rolled`, `kept`, `out` (the Filtered out counter and tag), `share`, `last`, `run`, `reset`, `none` |
 
 **state**: `ran` (rolls shown; `explain.canvas: { "ran": 1000 }` shows 1,000 at once), `reset: true` (back to 0), `caption`, `highlight` with the ids `dice`, `counters`, `share`, `trace`.
 
