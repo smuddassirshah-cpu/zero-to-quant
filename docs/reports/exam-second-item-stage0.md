@@ -18,9 +18,9 @@ Four new items (rule a, two of them carrying two listed skills where the item ne
 
 | id | skills | d | widget | task |
 |---|---|---|---|---|
-| e-desk-meetings | ct-comb | 2 | numeric | 9 desks, each pair meets once: $\binom92 = 36$ (slips 72 ordered, 81, 8) |
-| e-double-angle-roots | tr-identities, tr-equations | 3 | numeric set | $\sin 2x = \sin x$ on $[0^\circ, 360^\circ)$: 0, 60, 180, 300; the identity is needed to factorise, and dividing by $\sin x$ loses two roots (`count`), slips "0, 60, 120, 180" and "0, 30, 150, 180" |
-| e-parallelogram-midpoint | vc-arrows, vc-geometry | 3 | numeric | OABC with $\overrightarrow{OA} = (4, 1)$, $\overrightarrow{OC} = (1, 3)$, M midpoint of BC: $|\overrightarrow{AM}| = \sqrt{7.25} \approx 2.69$ (B from the parallelogram, then a length; slips 2.06, 4.61, 7.25) |
+| e-desk-meetings | ct-comb | 2 | numeric | 10 points on a circle, triangles from three of them: $\binom{10}{3} = 120$ (slips 720 ordered, 240 divided by 3, 45 pairs); id kept, title "Corners on a circle" |
+| e-double-angle-roots | tr-identities, tr-equations | 3 | numeric set | $\sin 2x = \sqrt{3}\cos x$ on $[0^\circ, 360^\circ)$: 60, 90, 120, 270; the identity is needed to factorise, and dividing by $\cos x$ loses two roots (`count`), slips "60, 90, 270, 300" and "30, 90, 270, 330" |
+| e-parallelogram-midpoint | vc-arrows, vc-geometry | 3 | numeric | OABC with $\overrightarrow{OA} = (-4, 2)$, $\overrightarrow{OC} = (3, 5)$, M midpoint of BC: $|\overrightarrow{AM}| = \sqrt{41} \approx 6.40$ (B from the parallelogram, then a length; slips 2.24, 6.08, 41) |
 | e-rebate-third | seq-converge, seq-geom | 3 | numeric | first rebate £18, sum to infinity £30: $r = 0.4$, third month £2.88 (slips 6.48, 7.20, 4.80) |
 | e-coefficients-in-step | seq-arith, seq-binomial | 5 | numeric | coefficients of $x, x^2, x^3$ in $(1 + x)^n$ arithmetic, $n > 2$: $n^2 - 9n + 14 = 0$, $n = 7$ (slip 2) |
 
@@ -38,7 +38,7 @@ Two swaps (rule c).
 | e-two-rates | quad-model, quad-solve | 4 | numeric, unit % | `e-formula` (quad-solve; d4) |
 
 - `e-read-the-change`: read $g = 2f(x - 2)$ from the graph; distractors $2f(x + 2)$ (direction), $f(x - 2) - 1$ (same lowest point, roots $2 \pm \sqrt2$), $f(2(x - 2))$ (sideways squeeze). The existing `e-shifted-peak` applies a move to a point; this one reads a move and a stretch from two curves.
-- `e-two-rates`: £10,000 at $r$ then $2r$ becomes £11,872; the learner forms $(1 + r)(1 + 2r) = 1.1872$, solves $2r^2 + 3r - 0.1872 = 0$ (discriminant 10.4976, root 3.24) and rejects $-1.56$: 6%. Slips 6.24% (rates added), 8.96% (one rate), −156% (other root).
+- `e-two-rates`: £25,000 at $r$ then $2r$ becomes £31,320; the learner forms $(1 + r)(1 + 2r) = 1.2528$, solves $2r^2 + 3r - 0.2528 = 0$ (discriminant 11.0224, root 3.32) and rejects $-1.58$: 8%. Slips 8.43% (rates added), 11.93% (one rate), −158% (other root).
 - After the swaps: quad-solve 4 auto items, quad-factor 2 (`e-factorise`, `e-odd-squares`), quad-model 2, fn-transform 2. Ramp unchanged (6/15/6/3).
 
 ## topic-0.4 (20 to 21 items, 60 to 65 minutes)

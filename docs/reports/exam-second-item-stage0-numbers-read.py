@@ -129,16 +129,15 @@ for e, sp in SPEC.items():
 
 # ---------------------------------------------------------------- topic-0.3 e-desk-meetings (ct-comb)
 it = IT['e-desk-meetings']
-desks = range(9)
-meet = {frozenset(p) for p in itertools.permutations(desks, 2)}
-numeric('desk-meetings', it, len(meet), {'ordered': len(list(itertools.permutations(desks, 2))),
-                                         'self': len(list(itertools.product(desks, repeat=2))), 'one-desk': len(desks) - 1})
-check('9' in it['prose'] and '36' in it['explain']['text'] and '72' in it['explain']['text'], 'desk-meetings prints 9, 36 and 72')
+pts = range(10)
+tri = {frozenset(c) for c in itertools.permutations(pts, 3)}
+numeric('desk-meetings', it, len(tri), {'ordered': len(list(itertools.permutations(pts, 3))),
+                                        'third': len(list(itertools.permutations(pts, 3))) // 3, 'pairs': len(list(itertools.combinations(pts, 2)))})
+check('Ten points' in it['prose'] and '120' in it['explain']['text'] and '720' in it['explain']['text'], 'desk-meetings prints ten points, 120 and 720')
 p5 = load('courses/counting/problems-1.json')['items'][2]
-check(not ('every team plays every other team' in p5['prose'] and 'every desk meets every other desk' in it['prose']),
-      'desk-meetings REUSE: counting/problems-1 p-five-a-side part 1 is the same count of pairs in a round robin (8 teams, 28), new numbers only')
-tri = {frozenset(c) for c in itertools.permutations(range(10), 3)}
-check(len(tri) == 120 and len(list(itertools.permutations(range(10), 3))) == 720 and 720 // 3 == 240 and len(list(itertools.combinations(range(10), 2))) == 45,
+check('triangle' not in p5['prose'] and 'triangle' not in json.dumps(load('courses/counting/l4-choosing-without-order.json')),
+      'desk-meetings REUSE: fixed, the triangle count of 10 points shares no story with p-five-a-side (8 teams, 28) or the counting lessons')
+check(len(tri) == 120 and len(list(itertools.permutations(pts, 3))) == 720 and 720 // 3 == 240 and len(list(itertools.combinations(pts, 2))) == 45,
       'fix desk-meetings: 10 points on a circle give 120 triangles; slips 720 ordered, 240 divided by 3, 45 pairs')
 
 # ---------------------------------------------------------------- topic-0.3 e-rebate-third (seq-converge, seq-geom)
@@ -152,7 +151,7 @@ check(near(r, 0.4, 1e-9) and near(1 - r, 0.6, 1e-9), 'rebate-third prints r = 0.
 
 # ---------------------------------------------------------------- topic-0.3 e-double-angle-roots (tr-identities, tr-equations)
 it = IT['e-double-angle-roots']
-f = lambda x: math.sin(rad(2 * x)) - math.sin(rad(x))
+f = lambda x: math.sin(rad(2 * x)) - math.sqrt(3) * math.cos(rad(x))
 roots = roots_deg(f)
 check(sorted(it['widget']['answers']) == [round(x) for x in roots] and all(near(x, round(x), 1e-5) for x in roots),
       f'double-angle-roots answers {it["widget"]["answers"]} = grid roots {roots}')
@@ -161,17 +160,13 @@ for wv in it['widget']['wrong']:
     vals = [float(v) for v in wv['value'].split(',')]
     check(sorted(vals) != sorted(it['widget']['answers']) and any(abs(f(v)) > 1e-6 for v in vals) and wv['id'] in it['feedback']['byKey'],
           f'double-angle-roots wrong {wv["id"]} {vals} is not the solution set and has a line')
-check(sorted([0, 180] + [60, 180 - 60]) == [0, 60, 120, 180] and sorted([0, 180, 30, 150]) == [0, 30, 150, 180], 'double-angle-roots slips are the two printed sets')
-check(len([x for x in roots if abs(math.sin(rad(x))) > 1e-9]) == 2 and 'count' in it['feedback']['byKey'], 'double-angle-roots dividing by sin x leaves 2 roots (count line)')
-# strict two-skill test: can tr-equations alone answer it? Equal sines: 2x = x + 360k or 2x = 180 - x + 360k (trig/homework-3 h3-phase-crossing teaches this).
-pair_route = sorted({x for k in range(-3, 4) for x in ((360 * k), (180 + 360 * k) / 3) if 0 <= x < 360})
-check(pair_route != [float(a) for a in sorted(it['widget']['answers'])],
-      f'double-angle-roots TWO-SKILL: the equal-sines route gives {pair_route} with no identity, so tr-identities is not needed')
-g = lambda x: math.sin(rad(2 * x)) - math.sqrt(3) * math.cos(rad(x))
-groots = roots_deg(g)
-check([round(x) for x in groots] == [60, 90, 120, 270] and all(near(x, round(x), 1e-5) for x in groots), f'fix double-angle-roots: sin 2x = sqrt(3) cos x has roots {groots}')
-check(all(abs(g(v)) > 1e-3 for v in (300, 30, 330)) and len([x for x in groots if abs(math.cos(rad(x))) > 1e-9]) == 2,
-      'fix double-angle-roots: 300, 30 and 330 are not roots; dividing by cos x leaves 2 roots')
+check(sorted([90, 270] + [60, 360 - 60]) == [60, 90, 270, 300] and sorted([90, 270, 30, 330]) == [30, 90, 270, 330], 'double-angle-roots slips are the two printed sets')
+check(len([x for x in roots if abs(math.cos(rad(x))) > 1e-9]) == 2 and 'count' in it['feedback']['byKey'], 'double-angle-roots dividing by cos x leaves 2 roots (count line)')
+# strict two-skill test: sqrt(3) cos x against sin 2x has no equal-angle pairing, so the identity is needed.
+check(not any(abs(math.sin(rad(2 * x)) - math.sin(rad(x))) < 1e-9 for x in (90, 120, 270)),
+      'double-angle-roots TWO-SKILL: fixed, the roots 60, 90, 120, 270 do not come from equal sines, so the double-angle identity is needed')
+check([round(x) for x in roots] == [60, 90, 120, 270] and all(abs(f(v)) > 1e-3 for v in (300, 30, 330)),
+      'fix double-angle-roots: sin 2x = sqrt(3) cos x has roots 60, 90, 120, 270; 300, 30 and 330 are not roots')
 
 # ---------------------------------------------------------------- topic-0.3 e-parallelogram-midpoint (vc-arrows, vc-geometry)
 it = IT['e-parallelogram-midpoint']
@@ -185,17 +180,15 @@ def par(a, c):
     return dict(key=abs(M - A), bminus=abs((Bm + C) / 2 - A), om=abs(M), sq=abs(M - A) ** 2, B=B, M=M, AM=M - A)
 
 
-p = par((4, 1), (1, 3))
+p = par((-4, 2), (3, 5))
 numeric('parallelogram-midpoint', it, p['key'], {'b-minus': p['bminus'], 'om': p['om'], 'no-root': p['sq']})
-check(p['B'] == complex(5, 4) and p['M'] == complex(3, 3.5) and p['AM'] == complex(-1, 2.5) and near(p['sq'], 7.25), 'parallelogram-midpoint prints B (5, 4), M (3, 3.5), AM (-1, 2.5), 7.25')
-check(near(math.dist((4, 1), (3, 3.5)), 2.692582, 1e-6) and abs(2.69 - p['key']) <= 0.005, 'parallelogram-midpoint band takes the printed 2.69')
-l10 = load('courses/counting/l10-adding-arrows.json')['screens'][5]['prose']
-check(not re.search(r'4 \\\\ 1 \\end\{pmatrix\}.*1 \\\\ 3 \\end\{pmatrix\}', l10),
-      'parallelogram-midpoint REUSE: counting/l10-adding-arrows screens[5] and [6] use the same pair (4, 1) and (1, 3), and its answer is the b-minus slip (3, -2)')
-q = par((-4, 2), (3, 5))
-check(q['B'] == complex(-1, 7) and q['M'] == complex(1, 6) and q['AM'] == complex(5, 4) and near(q['sq'], 41) and round(q['key'], 6) == 6.403124
-      and round(q['bminus'], 2) == 2.24 and round(q['om'], 2) == 6.08 and near(q['om'] ** 2, 37) and near(q['bminus'] ** 2, 5),
-      f'fix parallelogram-midpoint: (-4, 2), (3, 5) give B (-1, 7), M (1, 6), AM (5, 4), length {q["key"]:.6f}; slips 2.24, 6.08, 41')
+check(p['B'] == complex(-1, 7) and p['M'] == complex(1, 6) and p['AM'] == complex(5, 4) and near(p['sq'], 41), 'parallelogram-midpoint prints B (-1, 7), M (1, 6), AM (5, 4), 41')
+check(near(math.dist((-4, 2), (1, 6)), 6.403124, 1e-6) and abs(6.40 - p['key']) <= 0.005, 'parallelogram-midpoint band takes the printed 6.40')
+l10 = json.dumps(load('courses/counting/l10-adding-arrows.json')['screens'][5:7])
+check('(-4, 2)' not in l10 and 'pmatrix}-4' not in l10.replace(' ', '') and '[-4, 6]' in l10,
+      'parallelogram-midpoint REUSE: fixed, (-4, 2) and (3, 5) are not the pair of counting/l10-adding-arrows')
+check(round(p['key'], 6) == 6.403124 and round(p['bminus'], 2) == 2.24 and round(p['om'], 2) == 6.08 and near(p['om'] ** 2, 37) and near(p['bminus'] ** 2, 5),
+      f'fix parallelogram-midpoint: (-4, 2), (3, 5) give length {p["key"]:.6f}; slips 2.24, 6.08, 41')
 
 # ---------------------------------------------------------------- topic-0.3 e-coefficients-in-step (seq-arith, seq-binomial)
 it = IT['e-coefficients-in-step']
@@ -239,15 +232,15 @@ for k in ('f', 'g'):
 
 # ---------------------------------------------------------------- topic-0.2 e-two-rates (quad-model, quad-solve)
 it = IT['e-two-rates']
-grow = lambda r: 10000 * (1 + r) * (1 + 2 * r) - 11872
+grow = lambda r: 25000 * (1 + r) * (1 + 2 * r) - 31320
 r1, r2 = bisect(grow, 0, 1), bisect(grow, -3, -1)
-numeric('two-rates', it, r1, {'simple': (11872 / 10000 - 1) / 3, 'one-rate': bisect(lambda r: 10000 * (1 + r) ** 2 - 11872, 0, 1), 'other-root': r2})
+numeric('two-rates', it, r1, {'simple': (31320 / 25000 - 1) / 3, 'one-rate': bisect(lambda r: 25000 * (1 + r) ** 2 - 31320, 0, 1), 'other-root': r2})
 check(it['widget'].get('unit') == '%' and it['widget'].get('over100') is True, 'two-rates carries unit % and over100')
-check(near(10000 * 1.06 * 1.12, 11872, 1e-6) and near(3 * 3 + 4 * 2 * 0.1872, 10.4976) and near(3.24 ** 2, 10.4976), 'two-rates prints 6% then 12%, discriminant 10.4976, root 3.24')
-check(near(r2, -1.56, 1e-9) and near(2 * r1 * r1 + 3 * r1 - 0.1872, 0), 'two-rates other root -1.56; 2r^2 + 3r - 0.1872 = 0 at r = 0.06')
+check(near(25000 * 1.08 * 1.16, 31320, 1e-6) and near(3 * 3 + 4 * 2 * 0.2528, 11.0224) and near(3.32 ** 2, 11.0224), 'two-rates prints 8% then 16%, discriminant 11.0224, root 3.32')
+check(near(r2, -1.58, 1e-9) and near(2 * r1 * r1 + 3 * r1 - 0.2528, 0), 'two-rates other root -1.58; 2r^2 + 3r - 0.2528 = 0 at r = 0.08')
 hw = load('courses/quadratics/homework-2.json')['items'][3]
-check(not ('two years' in hw['prose'] and '1.06' in hw['explain']['text']),
-      'two-rates REUSE: quadratics/homework-2 hw2-return is also a two-year growth with the rate 6% and a rejected negative root')
+check('5,618' not in it['prose'] and '1.06' not in it['explain']['text'] and '25,000' in it['prose'],
+      'two-rates REUSE: fixed, 25,000 to 31,320 at 8% is not the 6% of quadratics/homework-2 hw2-return')
 grow8 = lambda r: 25000 * (1 + r) * (1 + 2 * r) - 31320
 check(near(bisect(grow8, 0, 1), 0.08) and near(bisect(grow8, -3, -1), -1.58) and near(9 + 8 * 0.2528, 11.0224) and near(3.32 ** 2, 11.0224)
       and round((31320 / 25000 - 1) / 3, 4) == 0.0843 and round(math.sqrt(31320 / 25000) - 1, 4) == 0.1193 and near(25000 * 1.08 * 1.16, 31320, 1e-6),

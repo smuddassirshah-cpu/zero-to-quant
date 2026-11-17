@@ -112,3 +112,12 @@ All three removals hold. Note: quad-factor and seq-sums now sit on exactly two a
 - Voice: British spelling, no exclamation marks, no em-dashes, explanations of two or three sentences, £ for money.
 
 Totals: 4 findings (1 high, 2 medium, 1 low), all with exact, recomputed fixes. After the fixes the author's script needs the new values for items 1 to 4.
+
+## Fix pass
+
+1. Fixed: `e-double-angle-roots` now $\sin 2x = \sqrt{3}\cos x$ (roots 60, 90, 120, 270; slips "60, 90, 270, 300" and "30, 90, 270, 330"), as written; recomputed by grid scan and by factorising. Id kept (the review gives none). Grep of `trig`, `counting`, `quadratics`, exams: no hit for the equation.
+2. Fixed: `e-parallelogram-midpoint` now $(-4, 2)$ and $(3, 5)$, key $\sqrt{41} = 6.403124$, slips 2.24, 6.08, 41, as written; recomputed with complex numbers and exact fractions. No hit for the pair in the four folders.
+3. Fixed: `e-desk-meetings` now ten points on a circle, triangles, key 120, slips 720, 240, 45, as written; id kept, title "Corners on a circle". The grep finds only `counting/l4` using $\binom{10}{3}$ as a leave-out illustration (a number coincidence, no shared story or task), so not deferred.
+4. Fixed: `e-two-rates` now £25,000 to £31,320, key 8%, slips 8.43%, 11.93%, -158%, as written; roots 0.08 and -1.58 by bisection, $9 + 8 \times 0.2528 = 11.0224 = 3.32^2$. No hit for 31,320 or 1.2528.
+
+Deferred 0, disputed 0. `topic-0.4` has no finding, untouched. Both scripts exit 0 (152 and 147 checks, no FINDING); item table in `docs/reports/exam-second-item-stage0.md` updated. Validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 0 failures on topic-0.3 (30 widgets) and topic-0.2 (25); playthrough green with and without `--mobile` on both. Graded answers changed: 4 (the keys of the four items).

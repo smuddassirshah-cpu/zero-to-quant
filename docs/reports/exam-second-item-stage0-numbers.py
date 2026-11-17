@@ -88,48 +88,50 @@ def ramp(e):
 # ================= topic-0.3 =================
 doc, it = load('topic-0.3')
 
-# e-desk-meetings: pairs of 9 desks
-r1 = math.comb(9, 2)
-r2 = sum(1 for a, b in itertools.combinations(range(9), 2))
-check(r1 == r2 == 36, 'e-desk-meetings C(9,2) = 36 by formula and by listing pairs')
-ordered = sum(1 for a, b in itertools.permutations(range(9), 2))
+# e-desk-meetings: triangles from 10 points on a circle
+r1 = math.comb(10, 3)
+r2 = sum(1 for t3 in itertools.combinations(range(10), 3))
+check(r1 == r2 == 120, 'e-desk-meetings C(10,3) = 120 by formula and by listing triples')
+ordered = sum(1 for t3 in itertools.permutations(range(10), 3))
+check(ordered == 720 == 10 * 9 * 8 and ordered // 6 == 120, 'e-desk-meetings 720 ordered picks, 720 / 3! = 120')
 numeric('e-desk-meetings', it['e-desk-meetings'], r1,
-        {'ordered': ordered, 'self': 9 * 9, 'one-desk': 8}, printed=[(9 * 8 / 2, 36), (9 * 8, 72)])
+        {'ordered': ordered, 'third': ordered // 3, 'pairs': math.comb(10, 2)}, printed=[(ordered // 6, 120), (ordered // 3, 240), (math.comb(10, 2), 45)])
 
-# e-double-angle-roots: sin 2x = sin x on [0, 360)
-sol1 = sorted({0, 180} | {60, 300})   # sin x = 0 or cos x = 1/2
+# e-double-angle-roots: sin 2x = sqrt(3) cos x on [0, 360)
+sol1 = sorted({90, 270} | {60, 120})   # cos x = 0 or sin x = sqrt(3)/2
 grid = [x / 100 for x in range(0, 36000)]
-sol2 = sorted({round(x) for x in grid if abs(math.sin(math.radians(2 * x)) - math.sin(math.radians(x))) < 1e-9})
-check(sol1 == sol2 == [0, 60, 180, 300], f'e-double-angle-roots solutions {sol2} by factor and by scan')
+sol2 = sorted({round(x) for x in grid if abs(math.sin(math.radians(2 * x)) - math.sqrt(3) * math.cos(math.radians(x))) < 1e-9})
+check(sol1 == sol2 == [60, 90, 120, 270], f'e-double-angle-roots solutions {sol2} by factor and by scan')
 w = it['e-double-angle-roots']['widget']
 check(sorted(w['answers']) == sol1, 'e-double-angle-roots answers match')
-sine_pair = sorted({0, 180, 60, 180 - 60})        # cos x = 1/2 solved as sine: 60, 120
-sin_half = sorted({0, 180, 30, 150})              # sin x = 1/2 instead of cos x = 1/2
-for wid, slip in (('sine-pair', sine_pair), ('sin-half', sin_half)):
+cos_pair = sorted({90, 270, 60, 360 - 60})        # sin x = sqrt(3)/2 solved as cosine: 60, 300
+cos_root = sorted({90, 270, 30, 330})             # cos x = sqrt(3)/2 instead of sin x
+for wid, slip in (('cos-pair', cos_pair), ('cos-root', cos_root)):
     vals = sorted(float(v) for v in next(x for x in w['wrong'] if x['id'] == wid)['value'].split(','))
     check(vals == slip and vals != sol1 and len(vals) == 4, f'e-double-angle-roots wrong {wid} {vals}')
-check(abs(math.cos(math.radians(120)) + 0.5) < 1e-12, 'cos 120 = -1/2 (why the sine pair fails)')
-check(abs(math.cos(math.radians(300)) - 0.5) < 1e-12, 'cos 300 = 1/2')
-check(all(abs(math.sin(math.radians(2 * x)) - math.sin(math.radians(x))) > 1e-3 for x in (120, 30, 150)), 'slip angles do not solve it')
+check(abs(math.sin(math.radians(300)) + math.sqrt(3) / 2) < 1e-12, 'sin 300 = -sqrt(3)/2 (why the cosine pair fails)')
+check(abs(math.sin(math.radians(120)) - math.sqrt(3) / 2) < 1e-12, 'sin 120 = sqrt(3)/2')
+check(all(abs(math.sin(math.radians(2 * x)) - math.sqrt(3) * math.cos(math.radians(x))) > 1e-3 for x in (300, 30, 330)), 'slip angles do not solve it')
 check(360 - 60 == 300 and 180 - 60 == 120, 'printed 360 - 60 = 300 and 180 - 60 = 120')
 
-# e-parallelogram-midpoint: O, A(4,1), C(1,3), B = A + C, M midpoint BC
-A_, C_ = (F(4), F(1)), (F(1), F(3))
+# e-parallelogram-midpoint: O, A(-4,2), C(3,5), B = A + C, M midpoint BC
+A_, C_ = (F(-4), F(2)), (F(3), F(5))
 B_ = (A_[0] + C_[0], A_[1] + C_[1])
 M_ = ((B_[0] + C_[0]) / 2, (B_[1] + C_[1]) / 2)
 AM = (M_[0] - A_[0], M_[1] - A_[1])
 L2 = AM[0] ** 2 + AM[1] ** 2
-check(B_ == (5, 4) and M_ == (3, F(7, 2)) and AM == (-1, F(5, 2)) and L2 == F(29, 4), 'e-parallelogram-midpoint B, M, AM, |AM|^2 = 7.25 exact')
-L_route2 = math.hypot(3 - 4, 3.5 - 1)            # route 2: M = C + (B - C)/2 by floats
-L_route2b = math.dist((4, 1), (1 + (5 - 1) / 2, 3 + (4 - 3) / 2))
-check(abs(L_route2 - math.sqrt(7.25)) < 1e-12 and abs(L_route2b - L_route2) < 1e-12, 'e-parallelogram-midpoint length twice')
+check(B_ == (-1, 7) and M_ == (1, 6) and AM == (5, 4) and L2 == 41, 'e-parallelogram-midpoint B, M, AM, |AM|^2 = 41 exact')
+L_route2 = math.hypot(1 + 4, 6 - 2)              # route 2: M = C + (B - C)/2 by floats
+L_route2b = math.dist((-4, 2), (3 + (-1 - 3) / 2, 5 + (7 - 5) / 2))
+check(abs(L_route2 - math.sqrt(41)) < 1e-12 and abs(L_route2b - L_route2) < 1e-12, 'e-parallelogram-midpoint length twice')
 Bm = (A_[0] - C_[0], A_[1] - C_[1]); Mm = ((Bm[0] + C_[0]) / 2, (Bm[1] + C_[1]) / 2)
-b_minus = math.dist((4, 1), (float(Mm[0]), float(Mm[1])))
+b_minus = math.dist((-4, 2), (float(Mm[0]), float(Mm[1])))
 om = math.hypot(float(M_[0]), float(M_[1]))
-numeric('e-parallelogram-midpoint', it['e-parallelogram-midpoint'], math.sqrt(7.25),
-        {'b-minus': b_minus, 'om': om, 'no-root': 7.25},
-        printed=[(1 + 6.25, 7.25), (round(math.sqrt(7.25), 2), 2.69), (round(b_minus, 2), 2.06), (round(om, 2), 4.61)])
-check(abs(it['e-parallelogram-midpoint']['widget']['answer'] - math.sqrt(7.25)) < 1e-6, 'stored key is sqrt 7.25 to 6 places')
+check(Bm == (-7, -3) and Mm == (-2, 1), 'e-parallelogram-midpoint b-minus slip: B (-7, -3), M (-2, 1)')
+numeric('e-parallelogram-midpoint', it['e-parallelogram-midpoint'], math.sqrt(41),
+        {'b-minus': b_minus, 'om': om, 'no-root': 41},
+        printed=[(25 + 16, 41), (round(math.sqrt(41), 2), 6.40), (round(b_minus, 2), 2.24), (round(om, 2), 6.08)])
+check(abs(it['e-parallelogram-midpoint']['widget']['answer'] - math.sqrt(41)) < 1e-6, 'stored key is sqrt 41 to 6 places')
 
 # e-rebate-third: a = 18, S = 30
 r = 1 - F(18, 30)
@@ -187,18 +189,18 @@ check(all(abs(opts['c'](x)) < 1e-12 for x in c_roots) and min(opts['c'](x) for x
 check(min(opts['d'](x) for x in xs) == -1, 'option d: lowest point at -1')
 check(min(xs, key=opts['b']) == -2, 'option b: lowest point at x = -2 (left)')
 
-# e-two-rates: 10000 (1 + r)(1 + 2r) = 11872
-disc = 9 + 8 * 0.1872
-check(abs(disc - 10.4976) < 1e-12 and abs(math.sqrt(disc) - 3.24) < 1e-12, 'discriminant 10.4976, root 3.24')
-rr = sorted(((-3 + 3.24) / 4, (-3 - 3.24) / 4))
-check(abs(rr[1] - 0.06) < 1e-12 and abs(rr[0] + 1.56) < 1e-12, 'roots 0.06 and -1.56')
+# e-two-rates: 25000 (1 + r)(1 + 2r) = 31320
+disc = 9 + 8 * 0.2528
+check(abs(disc - 11.0224) < 1e-12 and abs(math.sqrt(disc) - 3.32) < 1e-12, 'discriminant 11.0224, root 3.32')
+rr = sorted(((-3 + 3.32) / 4, (-3 - 3.32) / 4))
+check(abs(rr[1] - 0.08) < 1e-12 and abs(rr[0] + 1.58) < 1e-12, 'roots 0.08 and -1.58')
 # route 2: exact fractions and a direct product
-check(F(10000) * (1 + F(6, 100)) * (1 + F(12, 100)) == 11872, '10000 x 1.06 x 1.12 = 11872 exactly')
-check(abs(10000 * (1 - 1.56) * (1 - 3.12) - 11872) < 1e-6, 'r = -1.56 also solves the product (the rejected root)')
-one_rate = math.sqrt(1.1872) - 1
-numeric('e-two-rates', it['e-two-rates'], 0.06,
-        {'simple': 0.1872 / 3, 'one-rate': one_rate, 'other-root': -1.56},
-        printed=[((-3 + 3.24) / 4, 0.06), (2 * 0.06, 0.12)])
+check(F(25000) * (1 + F(8, 100)) * (1 + F(16, 100)) == 31320, '25000 x 1.08 x 1.16 = 31320 exactly')
+check(abs(25000 * (1 - 1.58) * (1 - 3.16) - 31320) < 1e-6, 'r = -1.58 also solves the product (the rejected root)')
+one_rate = math.sqrt(1.2528) - 1
+numeric('e-two-rates', it['e-two-rates'], 0.08,
+        {'simple': 0.2528 / 3, 'one-rate': one_rate, 'other-root': -1.58},
+        printed=[((-3 + 3.32) / 4, 0.08), (2 * 0.08, 0.16)])
 check(it['e-two-rates']['widget']['unit'] == '%', 'e-two-rates unit % with the key as a fraction')
 
 # swaps: e-two-roots and e-formula removed
