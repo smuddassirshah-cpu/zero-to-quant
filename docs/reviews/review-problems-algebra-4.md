@@ -68,3 +68,14 @@ Read and left alone: `items[1].parts[3]` `kept` (16) is also what the `plus-one`
 - An `expression` part with no `form` whose key is a polynomial and whose stem holds a `\div` or a fraction of polynomials could raise a validator warning (finding 1; the class of `review-problems-analysis-1-3` finding on a retyped question).
 
 Inbox bullets, `Raised later (review problems algebra):` the two lines above. Not written to `docs/BACKLOG-INBOX.md` by this reader (review and script only are committed).
+
+## Fix pass
+
+1. Fixed: `items[2].parts[2]` now has `"form": "expanded"` and a `byKey.form` line. Recomputed: the key `2x^2+x+1` is the expanded quotient of $8x^3 - 6x^2 - x - 5$ by $4x - 5$.
+2. Fixed: `items[1].parts[1]` `explain.text` and `options[1].why` replaced as given. Squares mod 17 recomputed: 0, 1, 2, 4, 8, 9, 13, 15, 16, so 3 is not one.
+3. Fixed: `items[0].parts[0].widget.options[2].why` uses $\begin{pmatrix}0&1\\0&0\end{pmatrix}^2 = \mathbf{0}$.
+4. Fixed: `items[2].parts[0]` `question`, `byKey.added` and `correct` ("distinct candidates"). $8 - 2 = 6$ rechecked.
+5. Fixed: `items[0].parts[2].feedback.byKey.sign`. $14 \cdot 2 = 28 \equiv -1$ and $15 \cdot 2 = 30 \equiv 1$ rechecked.
+6. Fixed: sentence appended to `items[0].prose`.
+
+Gates: author script 177 of 177 (four checks added), reader script 172 checks, 0 FINDING lines, both exit 0. Validator 0 errors, nothing on this file. Voice scan 0 and 0. `fresh-check` 0 hits (the one advisory is the known `mock-oa-trader` one). `grade-all` 14 widgets, 0 failures. Playthrough green with and without `--mobile`. No graded answer or `wrong` value changed.

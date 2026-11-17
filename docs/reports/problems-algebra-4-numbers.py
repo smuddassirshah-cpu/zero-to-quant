@@ -185,5 +185,11 @@ lv.check_wrongs('problems')
 bad = [r for r in lv.results if not r[0]]
 ok(not bad, f'numbers_lib: {len(lv.results) - len(bad)} of {len(lv.results)}')
 
+# fix pass: finding 1, 2, 4, 5
+ok(DOC['items'][2]['parts'][2]['widget'].get('form') == 'expanded', 'p3 part 3 has form expanded')
+ok(sorted({x * x % 17 for x in range(17)}) == [0, 1, 2, 4, 8, 9, 13, 15, 16] and 3 not in {x * x % 17 for x in range(17)}, 'x^2 - 3 has no root mod 17')
+ok(8 - 2 == 6 and 2 + 4 == 6, 'added slip 6 equals leaving out whole numbers 1 and 5')
+ok(14 * 2 % 29 == 28 and 15 * 2 % 29 == 1, 'sign slip 2 is -14^-1 and 15^-1')
+
 print(f'{checks - len(fails)} of {checks} checks passed')
 sys.exit(1 if fails else 0)

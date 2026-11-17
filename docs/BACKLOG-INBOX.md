@@ -64,3 +64,7 @@ Raised later (review problems topology):
 - No validator rule finds a whole-number key printed in the part's own question as a restated value (`topology` `problems-3` `p-dyadic-points` part 3: "all but 7 points", key 7). A rule `[key-in-stem]` could warn when a `numeric` key with `tol` 0 is restated as a number in the same part's question.
 - No validator rule finds a lesson id written as a code span in set text (`` `l4` `` 13 times in `topology` `problems-1` to `-3`; lessons write l4 bare and keep code spans for another course's name).
 - `fresh-check` passes a part that is a course item with one constant folded in: `ito/problems-4` `p-tracking-review` parts 1 to 3 against l13 S1, l14 `q-ratio` and l14 S7 (same explain skeleton, same slips by formula: lesson `whole` 6 and set `no-half` $6\sigma^2$; `unsquared` $ab/\sigma$ in both). Compare slip sets as formulas of the key (ratio of each `wrong` value to its key), and report three such parts in a row as a walk.
+
+Raised later (review problems algebra 4):
+- `fresh-check` reads no `canvas.params` matrices of a lesson, so a matrix pair shown on a canvas and retold in a set's `why` is not reported (`algebra` `problems-4` finding 3).
+- An `expression` part with no `form` whose key is a polynomial and whose stem holds a `\div` or a fraction of polynomials could raise a validator warning (`algebra` `problems-4` finding 1; the class of the `review-problems-analysis-1-3` finding on a retyped question).
