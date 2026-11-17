@@ -153,44 +153,54 @@ def ruin_chain(N, k, step_time):
 def level4():
     items = load(4)
 
-    # ---------------------------------------------------------------- p-tracking-review (l13, l14)
-    it = items['p-tracking-review']
+    # ---------------------------------------------------------------- p-band-wait (l13, l14)
+    # Re-authored in session AF (review-problems-ito-4 finding 1): X = 30 + 2W in pips, exit at 0 or 50.
+    it = items['p-band-wait']
     t, x, c = sp.symbols('t x c')
-    s2, a, b = Fr(4, 25), 2, 4
-    # part 1: c with drift of x^3 - c t x zero; method 1 by hand 1/2 * s2 * 6, method 2 sympy solve
-    c1 = float(Fr(1, 2) * s2 * 6)
-    c2 = float(sp.solve(sp.Poly(drift(x ** 3 - c * t * x, t, x, sp.Rational(4, 25)), x).coeffs()[0], c)[0])
-    numeric(it, 1, c1, c2, {'unit-vol': 3, 'sigma-unsquared': 0.5 * 0.4 * 6, 'no-half': 0.16 * 6},
-            shown={'0.16': 0.16, '0.48': c1, '0.4': 0.4})
-    ok(drift(x ** 2 - s2 * t, t, x, sp.Rational(4, 25)) == 0, 'p-tracking-review: X^2 - 0.16t driftless')
-    # discrete chain: grid step 1 on levels -4..2 (N = 6, start k = 4), each step lasts 1/sigma^2 = 6.25 days
-    Pc, Tc, Jc = ruin_chain(a + b, b, 1 / float(s2))
-    P = Fr(b, a + b)
-    numeric(it, 2, float(P), Pc, {'swapped': float(1 - P), 'even': 0.5}, agree=1e-9, shown={'0.6667': float(P), '0.4': 0.4})
-    Et = Fr(a * b) / s2
-    numeric(it, 3, float(Et), Tc, {'no-sigma': a * b, 'sigma-unsquared': a * b / 0.4}, agree=1e-9,
-            shown={'0.16': 0.16})
-    ok(close(4 * float(P) + 16 * float(1 - P), 8, 1e-12), 'p-tracking-review part 3: E[X^2] = 8')
-    EX3 = a ** 3 * P - b ** 3 * (1 - P)
-    EtX = EX3 / (Fr(1, 2) * s2 * 6)
-    # method 2 for E[tau X_tau]: from the chain, 2 J - 4 (T - J)
-    EtX_c = a * Jc - b * (Tc - Jc)
-    numeric(it, 4, float(EtX), EtX_c,
-            {'no-divide': float(EX3), 'sign-cube': float((a ** 3 * P + b ** 3 * (1 - P)) / Fr(12, 25)),
-             'unit-c': float(EX3 / 3), 'dropped-sign': float(-EtX)}, agree=1e-8,
-            shown={'0.48': 0.48, '33.33': float(-EtX), '-33.33': float(EtX)})
-    ok(EX3 == -16, 'p-tracking-review part 4: E[X^3] = -16')
-    A = (EtX + b * Et) / (a + b)
-    cond = A / P
-    cond_c = Jc / Pc
-    ok(cond == Fr(a * (a + 2 * b)) / (3 * s2), 'p-tracking-review part 5: general formula a(a+2b)/(3 sigma^2)')
-    ok(A == Fr(250, 9) and cond == Fr(125, 3), 'p-tracking-review part 5: fractions 250/9 and 125/3')
-    far = (Et - A) / (1 - P)
-    ok(far == Fr(b * (b + 2 * a)) / (3 * s2), 'p-tracking-review part 5: far-level formula')
-    numeric(it, 5, float(cond), cond_c, {'joint': float(A), 'unconditional': float(Et), 'far-level': float(far)},
-            agree=1e-8, shown={'27.78': float(A), '41.67': float(cond), '0.48': 0.48})
-    ok(close(27.78 / (2 / 3), it['parts'][4]['widget']['answer'], it['parts'][4]['widget']['tol']['abs']),
-       'p-tracking-review part 5: rounded route 27.78 / (2/3)')
+    s2, x0, L = Fr(4), Fr(30), Fr(50)
+    # the chain on a 1-pip grid, levels 0..50 from 30, each step lasting 1/sigma^2 = 0.25 min (exact for these moments)
+    Pc, Tc, Jc = ruin_chain(int(L), int(x0), 1 / float(s2))
+    P = x0 / L
+    ok(close(Pc, float(P), 1e-12), 'p-band-wait: P = 3/5 by the chain')
+    ok(Fr(3, 5) == P, 'p-band-wait: stated P = 3/5')
+    # part 1: E[X^3] = 50^3 P (method 1) and 2500 E[X] = 2500 x0 (method 2)
+    EX3 = L ** 3 * P
+    numeric(it, 1, float(EX3), float(L ** 2 * x0),
+            {'start-cube': float(x0 ** 3), 'swapped': float(L ** 3 * (1 - P)), 'sure-top': float(L ** 3)},
+            shown={'0.6': 0.6, '0.4': 0.4})
+    ok(EX3 == 75000, 'p-band-wait part 1: 75,000')
+    ok(sp.expand(drift(x ** 3, t, x, sp.Integer(4))) == 12 * x, 'p-band-wait part 1: drift of X^3 is 12X')
+    # part 2: c from the drift (by hand 3 sigma^2, by sympy solve), then E[tau X] = (E[X^3] - x0^3)/c
+    c1 = 3 * s2
+    c2 = sp.solve(sp.Poly(drift(x ** 3 - c * t * x, t, x, sp.Integer(4)), x).coeffs()[0], c)[0]
+    ok(c1 == 12 and c2 == 12, 'p-band-wait part 2: c = 12')
+    EtX = (EX3 - x0 ** 3) / c1
+    EtX_c = L * Jc                                       # tau X_tau = 50 tau on the top edge only
+    numeric(it, 2, float(EtX), EtX_c,
+            {'no-half': float((EX3 - x0 ** 3) / 24), 'sigma-unsquared': float((EX3 - x0 ** 3) / 6),
+             'no-start': float(EX3 / 12), 'unit-c': float((EX3 - x0 ** 3) / 3)}, agree=1e-7)
+    ok(EtX == 4000, 'p-band-wait part 2: 4,000')
+    # part 3: A = E[tau X]/50
+    A = EtX / L
+    numeric(it, 3, float(A), Jc, {'squared-level': float(EtX / L ** 2), 'no-divide': float(EtX)}, agree=1e-7)
+    # part 4: A / P; closed form (L^2 - x0^2)/(3 sigma^2) as method 2
+    up = A / P
+    ok(up == (L ** 2 - x0 ** 2) / (3 * s2), 'p-band-wait part 4: closed form (50^2 - 30^2)/12')
+    numeric(it, 4, float(up), Jc / Pc, {'times-p': float(A * P), 'joint': float(A), 'swapped': float(A / (1 - P))},
+            agree=1e-7, shown={'133.33': float(up), '0.6': 0.6, '0.4': 0.4})
+    # part 5: E[tau] = x0 (L - x0)/sigma^2 = 150 as stated; floor wait (E[tau] - A)/(1 - P); closed form by reflection
+    Et = x0 * (L - x0) / s2
+    ok(Et == 150 and close(Tc, 150, 1e-7), 'p-band-wait part 5: stated E[tau] = 150 (formula and chain)')
+    ok(drift(x ** 2 - 4 * t, t, x, sp.Integer(4)) == 0, 'p-band-wait part 5: X^2 - 4t driftless')
+    down = (Et - A) / (1 - P)
+    down2 = (L ** 2 - (L - x0) ** 2) / (3 * s2)
+    numeric(it, 5, float(down), float(down2),
+            {'wrong-weight': float((Et - up) / (1 - P)), 'no-condition': float(Et - A), 'top-chance': float((Et - A) / P)},
+            agree=1e-9, shown={'0.4': 0.4, '133.33': float(up), '0.6': 0.6})
+    ok(close((Tc - Jc) / (1 - Pc), float(down), 1e-6), 'p-band-wait part 5: chain agrees')
+    ok(up < Et < down, 'p-band-wait: near edge quicker, far edge slower')
+    ok(close(80 / 0.6, it['parts'][3]['widget']['answer'], it['parts'][3]['widget']['tol']['abs']),
+       'p-band-wait part 4: printed working 80/0.6 in the band')
 
     # ---------------------------------------------------------------- p-two-date-product (l15, l16)
     it = items['p-two-date-product']
@@ -206,7 +216,7 @@ def level4():
     var = s * s * (1 + 2) + 2 * cov
     var_mc = float(np.var(s * W1 + s * W2))
     numeric(it, 2, var, var_mc, {'no-cov': s * s * 3, 'cov-once': s * s * 3 + cov, 'later-time': s * s * 3 + 2 * 0.18},
-            agree=3e-3, shown={'0.09': cov, '0.18': 0.18, '0.45': var})
+            agree=3e-3, shown={'0.09': cov, '0.18': 0.18, '0.45': var, '0.27': s * s * 3})
     ok(close(s * s * 5, var, 1e-12), 'p-two-date-product part 2: 5 sigma^2')
     m = 2 * math.log(S0) + 3 * (r - s * s / 2)
     ok(close(m - 2 * math.log(S0), -0.045, 1e-12), 'p-two-date-product part 3: log mean offset')

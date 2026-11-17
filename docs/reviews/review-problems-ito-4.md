@@ -75,3 +75,17 @@ Method. Every key, `wrong` value and printed number was recomputed by routes the
 ## Engine
 
 - `fresh-check` passes `p-tracking-review` parts 1 to 3. Each is a course item with $\sigma^2$ folded in: same explain skeleton, same slip set by formula (`whole` and `no-half`; `swapped`, `half` and `even`; `none`, `unsquared` and `no-sigma`, `sigma-unsquared`). Raised in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Session AF, re-author and fix pass (brief `docs/briefs/reauthor-fix-af.md`).
+
+1. Re-authored as `p-band-wait`. A currency held in a 50-pip band, $X = 30 + 2W$ in pips, exit at 0 or 50. Chain: $E[X_\tau^3] = 75{,}000$ (via $X_\tau^3 = 2{,}500X_\tau$); $c = 12$ and the stopped cubic martingale give $E[\tau X_\tau] = 4{,}000$; $A = 80$; $E[\tau \mid X_\tau = 50] = 133.33$; $E[\tau \mid X_\tau = 0] = 175$ minutes. $P = \tfrac35$ and $E[\tau] = 150$ are given; no part asks for $c$, $P$ or $E[\tau]$ alone. Every part states its form. The trade-exit story was avoided (l14, review-4).
+2. Fixed: `generic` and `byKey.no-cov` as given ($0.09 \times 5 = 0.45$; $0.27 + 0.18 = 0.45$).
+3. Fixed (a) to (d) as given; numbers unchanged ($V = 118.2134$, $V_t = 2.3643$, $K = 122.27$).
+4. Carried into the re-author: every numeric part of `p-band-wait` states its form ("Give a whole number" or "Give 2 decimal places").
+5. Carried into the re-author: part 2 states the condition as given ("Up to $\tau$ the rate stays between 0 and 50 and $E[\tau]$ is finite, so optional stopping holds").
+
+Keys changed: `items[0]` only (75000, 4000, 80, 133.333333, 175 with 15 new `wrong` values). Scripts: author's `problems-ito-4-numbers.py` 325 of 325, exit 0 (new block for `p-band-wait`, `0.27` added to the printed checks of `p-two-date-product` part 2); reader's `problems-ito-4-numbers-read.py` retargeted from `p-tracking-review` to `p-band-wait` on the reader's own routes (Gaussian conditional moments, boundary-value problems, closed forms), 299 of 299, 0 FINDING lines, exit 0.
+
+Gates: validator 0 errors, no warnings on `ito/problems-4`; voice scan 35 0 and 0 (8,767 sentences); `fresh-check --file --pairs` 0 hits; `grade-all --file` 13 widgets, 0 failures; playthrough `--problems ito/problems-4` green desktop and `--mobile`, part shots at 440 px read, no layout faults.

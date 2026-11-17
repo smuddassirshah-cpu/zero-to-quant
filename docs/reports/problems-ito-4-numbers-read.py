@@ -4,9 +4,10 @@
 Every key, every `wrong` value and every printed number is recomputed by a
 route the author's script (problems-ito-4-numbers.py) does not use:
 
-- p-tracking-review: Gaussian conditional moments for the cubic martingale;
+- p-band-wait (re-authored from p-tracking-review in the session AF fix pass):
+  Gaussian conditional moments for the cubic martingale;
   the boundary-value problems (1/2) s^2 u'' = -1 and (1/2) s^2 w'' = -h for
-  E[tau] and E[tau; exit at +2], integrated exactly with sympy; the closed
+  E[tau] and E[tau; exit at the top], integrated exactly with sympy; the closed
   form (L^2 - x^2) / (3 s^2) for the conditioned exit time.
 - p-two-date-product: Gauss-Hermite quadrature over the two independent
   yearly moves, and the tower rule done as a second quadrature.
@@ -105,75 +106,67 @@ def numeric_part(pid, k, key, places, wrongs, printed=()):
     return p
 
 
-# ---------------------------------------------------------------- p-tracking-review
-sig = F(2, 5)
-a, b = 2, 4
+# ---------------------------------------------------------------- p-band-wait
+# Retargeted in the session AF fix pass: p-tracking-review was re-authored as p-band-wait
+# (X = 30 + 2W in pips, exit at 0 or 50). The reader's routes are kept: Gaussian conditional
+# moments for the cubic martingale, the boundary-value problems for E[tau] and E[tau; top],
+# and the closed form (L^2 - x0^2) / (3 s^2). The old checks of p-tracking-review are removed.
+sig, x0, L = 2, 30, 50
 s2 = sig * sig
-check("tracking sigma^2 = 0.16", s2 == F(4, 25))
+xs = sp.symbols("xs")
 
-# Part 1. E[(x + s sqrt(h) Z)^3 | x] = x^3 + 3 x s^2 h, and E[t' X_t' | x] = (t + h) x.
-# The mean of X^3 - c t X is kept for every x and h iff 3 s^2 = c.
-c = 3 * s2
+# Part 1. Harmonic function h(x) = x / 50 gives P; E[X^3] = 50^3 P.
+hfun = xs / sp.Integer(L)
+P = F(x0, L)
+check("band P = 3/5 from the harmonic function", sp.Rational(3, 5) == hfun.subs(xs, x0) and P == F(3, 5))
+EX3 = L**3 * P
+numeric_part("p-band-wait", 1, EX3, None,
+             {"start-cube": x0**3, "swapped": L**3 * (1 - P), "sure-top": L**3},
+             printed=["75{,}000", "30/50 = 0.6"])
+
+# Part 2. E[(x + s sqrt(h) Z)^3 | x] = x^3 + 3 x s^2 h: c = 3 s^2 = 12 keeps the mean.
 x_, h_, t_ = sp.symbols("x h t", positive=True)
 z = sp.symbols("z")
 dens = sp.exp(-z**2 / 2) / sp.sqrt(2 * sp.pi)
-cube_mean = sp.integrate((x_ + sp.Rational(2, 5) * sp.sqrt(h_) * z) ** 3 * dens, (z, -sp.oo, sp.oo))
-gain = sp.simplify(cube_mean - sp.Rational(12, 25) * (t_ + h_) * x_ - (x_**3 - sp.Rational(12, 25) * t_ * x_))
-check("tracking cubic martingale keeps its conditional mean at c = 0.48", gain == 0, str(gain))
-numeric_part("p-tracking-review", 1, c, None,
-             {"unit-vol": 3, "sigma-unsquared": 3 * sig, "no-half": 6 * s2},
-             printed=["0.48x", "0.16"])
-check("tracking part 1 states a form", "decimal" in part("p-tracking-review", 1)["question"])
-
-# Part 2. Harmonic function on (-4, 2): h(x) = (x + b) / (a + b).
-xs = sp.symbols("xs")
-hfun = (xs + b) / sp.Integer(a + b)
-P = F(b, a + b)
-check("tracking P from the harmonic function", sp.Rational(P.numerator, P.denominator) == hfun.subs(xs, 0))
-numeric_part("p-tracking-review", 2, P, 4, {"swapped": 1 - P, "even": F(1, 2)}, printed=["0.6667", "4/6"])
-
-# Part 3. (1/2) s^2 u'' = -1, u(-4) = u(2) = 0.
-S2 = sp.Rational(4, 25)
-u = sp.Function("u")
-sol = sp.dsolve(sp.Eq(S2 / 2 * u(xs).diff(xs, 2), -1), u(xs), ics={u(-b): 0, u(a): 0}).rhs
-Etau = sp.nsimplify(sol.subs(xs, 0))
-check("tracking E[tau] from the boundary-value problem", Etau == 50, str(Etau))
-EX2 = 4 * P + 16 * (1 - P)
-check("tracking E[X_tau^2] = ab = 8", EX2 == 8)
-numeric_part("p-tracking-review", 3, 50, None, {"no-sigma": a * b, "sigma-unsquared": F(a * b) / sig},
-             printed=["8/0.16 = 50"])
-
-# Part 4. E[tau X_tau] = 2A - 4B with A, B from the weighted problem below.
+cube_mean = sp.integrate((x_ + sig * sp.sqrt(h_) * z) ** 3 * dens, (z, -sp.oo, sp.oo))
+gain = sp.simplify(cube_mean - 12 * (t_ + h_) * x_ - (x_**3 - 12 * t_ * x_))
+check("band cubic martingale keeps its conditional mean at c = 12", gain == 0, str(gain))
+# E[tau; top] from (1/2) s^2 w'' = -h, w(0) = w(50) = 0; then E[tau X_tau] = 50 A
 w = sp.Function("w")
-solA = sp.dsolve(sp.Eq(S2 / 2 * w(xs).diff(xs, 2), -hfun), w(xs), ics={w(-b): 0, w(a): 0}).rhs
-A = sp.nsimplify(solA.subs(xs, 0))
-B = Etau - A
-check("tracking A = 250/9", A == sp.Rational(250, 9), str(A))
-EtX = a * A - b * B
-check("tracking E[tau X_tau] = -100/3 by the weighted problem", EtX == sp.Rational(-100, 3), str(EtX))
-EX3 = 8 * P - 64 * (1 - P)
-check("tracking E[X_tau^3] = -16", EX3 == -16)
-check("tracking cubic route agrees", F(EX3) / c == F(-100, 3))
-numeric_part("p-tracking-review", 4, F(-100, 3), 2,
-             {"no-divide": EX3, "sign-cube": (8 * P + 64 * (1 - P)) / c,
-              "unit-c": F(EX3, 3), "dropped-sign": F(100, 3)},
-             printed=["-33.33", "-16/0.48"])
+solA = sp.dsolve(sp.Eq(sp.Integer(s2) / 2 * w(xs).diff(xs, 2), -hfun), w(xs), ics={w(0): 0, w(L): 0}).rhs
+A = sp.nsimplify(solA.subs(xs, x0))
+check("band A = 80 by the weighted problem", A == 80, str(A))
+EtX = L * A
+check("band cubic route agrees", F(EX3 - x0**3, 12) == EtX)
+numeric_part("p-band-wait", 2, EtX, None,
+             {"no-half": F(EX3 - x0**3, 24), "sigma-unsquared": F(EX3 - x0**3, 6),
+              "no-start": F(EX3, 12), "unit-c": F(EX3 - x0**3, 3)},
+             printed=["48{,}000/12 = 4{,}000", "27{,}000"])
+check("band part 2 states the optional-stopping condition",
+      "stays between 0 and 50" in part("p-band-wait", 2)["question"] and "is finite" in part("p-band-wait", 2)["question"])
 
-# Part 5. Closed form for the conditioned time: (L^2 - x0^2) / (3 s^2), L = a + b, x0 = b.
-cond_up = F((a + b) ** 2 - b**2, 3) / s2
-check("tracking conditioned time, closed form 125/3", cond_up == F(125, 3))
-check("tracking conditioned time, A / P", sp.Rational(125, 3) == A / sp.Rational(2, 3))
-check("tracking a(a + 2b)/(3 sigma^2) as printed", F(a * (a + 2 * b), 3) / s2 == F(125, 3))
-check("tracking 20/0.48 as printed", close(20 / 0.48, 125 / 3))
-cond_down = F((a + b) ** 2 - a**2, 3) / s2
-check("tracking far level 200/3", cond_down == F(200, 3) and sp.Rational(200, 3) == B / sp.Rational(1, 3))
-check("tracking printed working 27.78 / (2/3) rounds to 41.67", round(27.78 / (2 / 3), 2) == 41.67)
-numeric_part("p-tracking-review", 5, F(125, 3), 2,
-             {"joint": F(250, 9), "unconditional": 50, "far-level": cond_down},
-             printed=["41.67", "27.78", "250}{9}", "125}{3}"])
-# claims in the lines
-check("tracking nearer level is the likelier", P > F(1, 2))
-check("tracking conditioning on the nearer level shortens the wait", cond_up < 50 < cond_down)
+# Part 3. A = E[tau X_tau] / 50.
+numeric_part("p-band-wait", 3, A, None, {"squared-level": F(int(EtX), L**2), "no-divide": EtX},
+             printed=["A = 80"])
+
+# Part 4. Closed form (L^2 - x0^2)/(3 s^2) and A / P.
+up = F(L**2 - x0**2, 3 * s2)
+check("band top wait, closed form 400/3", up == F(400, 3) and sp.Rational(400, 3) == A / sp.Rational(3, 5))
+check("band printed working 80/0.6 rounds to 133.33", round(80 / 0.6, 2) == 133.33)
+numeric_part("p-band-wait", 4, up, 2, {"times-p": A * sp.Rational(3, 5), "joint": A, "swapped": A / sp.Rational(2, 5)},
+             printed=["133.33", "1{,}600/12"])
+
+# Part 5. E[tau] from (1/2) s^2 u'' = -1; floor wait by the reflected closed form.
+u = sp.Function("u")
+Etau = sp.nsimplify(sp.dsolve(sp.Eq(sp.Integer(s2) / 2 * u(xs).diff(xs, 2), -1), u(xs), ics={u(0): 0, u(L): 0}).rhs.subs(xs, x0))
+check("band E[tau] = 150 from the boundary-value problem", Etau == 150, str(Etau))
+down = F(L**2 - (L - x0) ** 2, 3 * s2)
+check("band floor wait, closed form 175", down == 175 and sp.Rational(175) == (Etau - A) / sp.Rational(2, 5))
+numeric_part("p-band-wait", 5, down, None,
+             {"wrong-weight": (150 - F(400, 3)) / F(2, 5), "no-condition": 150 - 80, "top-chance": F(70) / F(3, 5)},
+             printed=["70/0.4 = 175", "133.33"])
+check("band drift of X^3 is 12X, positive inside the band", sp.expand(cube_mean.diff(h_)) == 12 * x_)
+check("band far edge slower than the near one", up < Etau < down)
 
 # ---------------------------------------------------------------- p-two-date-product
 S0, r, sg = 50.0, 0.03, 0.30
