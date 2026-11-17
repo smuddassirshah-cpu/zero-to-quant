@@ -368,7 +368,130 @@ def level2():
     return lv
 
 
-LEVELS = {1: level1, 2: level2}
+# ---------------------------------------------------------------- level 3
+def first_n(bound, tol):
+    n = 0
+    while bound(n) >= tol:
+        n += 1
+    return n
+
+
+def level3():
+    it = load(3)
+    lv = Level('topology', 3)
+    x = sp.Symbol('x', real=True)
+
+    # p-quadratic-iteration. g = (x^2 + 5)/6 on [0, 2].
+    g = (x ** 2 + 5) / 6
+    gf = lambda t: (t * t + 5) / 6
+    grid = [k / 10000 for k in range(20001)]
+    M1 = sp.maximum(g, x, sp.Interval(0, 2))
+    num(it, 'p-quadratic-iteration', 1, float(M1), max(gf(t) for t in grid), {'min-value': gf(0), 'at-one': gf(1)})
+    ok(abs(min(gf(t) for t in grid) - 5 / 6) < 1e-12, 'image starts at 5/6')
+    q1 = sp.maximum(sp.Abs(sp.diff(g, x)), x, sp.Interval(0, 2))
+    q2 = max(abs(gf(a) - gf(b)) / (b - a) for a, b in zip(grid, grid[1:]))
+    num(it, 'p-quadratic-iteration', 2, float(q1), q2, {'at-fixed': 1 / 3, 'image-end': 1.5 / 3, 'no-six': 4 / 3}, agree=1e-4)
+    d01 = gf(0) - 0
+    n1 = math.ceil(math.log(1e-6 * (1 - 2 / 3) / d01) / math.log(2 / 3))
+    n2 = first_n(lambda n: (2 / 3) ** n / (1 / 3) * d01, 1e-6)
+    num(it, 'p-quadratic-iteration', 3, n1, n2, {'no-denominator': first_n(lambda n: (2 / 3) ** n * d01, 1e-6),
+                                                 'q-third': first_n(lambda n: (1 / 3) ** n / (2 / 3) * d01, 1e-6),
+                                                 'q-half': first_n(lambda n: 0.5 ** n / 0.5 * d01, 1e-6)}, places=None)
+    ok(abs(2.5 * (2 / 3) ** 36 - 1.14e-6) < 0.005e-6 and abs(2.5 * (2 / 3) ** 37 - 7.6e-7) < 0.05e-7, 'printed bounds at 36 and 37')
+    roots = sp.solve(sp.Eq(x, g), x)
+    inside = [r for r in roots if 0 <= r <= 2]
+    xi = 0.0
+    for _ in range(200):
+        xi = gf(xi)
+    num(it, 'p-quadratic-iteration', 4, int(inside[0]), round(xi, 9), {'other-root': int(max(roots))}, places=None)
+    rate1 = sp.diff(g, x).subs(x, 1)
+    xs = [0.0]
+    for _ in range(60):
+        xs.append(gf(xs[-1]))
+    rate2 = (xs[16] - 1) / (xs[15] - 1)
+    num(it, 'p-quadratic-iteration', 5, float(rate1), rate2, {'used-q': 2 / 3, 'value': 1.0}, agree=1e-6)
+
+    # p-input-output
+    A = sp.Matrix([[F(1, 2), F(3, 5)], [F(1, 5), F(3, 10)]])
+    b = sp.Matrix([1, 2])
+    Tm = lambda v: A * v + b
+    u, v = sp.Matrix([3, 3]), sp.Matrix([2, 2])
+    du = Tm(u) - Tm(v)
+    ok(list(Tm(u)) == [F(43, 10), F(7, 2)] and list(Tm(v)) == [F(16, 5), 3], 'T(u), T(v) as printed')
+    Af = [[0.5, 0.6], [0.2, 0.3]]
+    Tf = lambda p: (Af[0][0] * p[0] + Af[0][1] * p[1] + 1, Af[1][0] * p[0] + Af[1][1] * p[1] + 2)
+    tu, tv = Tf((3, 3)), Tf((2, 2))
+    num(it, 'p-input-output', 1, float(max(abs(c) for c in du)), max(abs(tu[0] - tv[0]), abs(tu[1] - tv[1])),
+        {'transpose': max(0.5 + 0.2, 0.6 + 0.3), 'taxicab': float(sum(abs(c) for c in du))}, agree=1e-12)
+    r1 = sum(abs(c) for c in du) / 2
+    num(it, 'p-input-output', 2, float(r1), (abs(tu[0] - tv[0]) + abs(tu[1] - tv[1])) / 2, {'no-divide': 1.6, 'sup-ratio': 1.1}, agree=1e-12)
+    # route 2 for q in d_1: largest ratio over many random pairs
+    rnd = random.Random(3)
+    qd1 = max((abs(0.5 * a + 0.6 * c) + abs(0.2 * a + 0.3 * c)) / (abs(a) + abs(c)) for a, c in ((rnd.uniform(-1, 1), rnd.uniform(-1, 1)) for _ in range(200000)))
+    ok(abs(qd1 - 0.9) < 1e-3 and qd1 <= 0.9 + 1e-12 and float(max(A[0, 1] + A[1, 1], A[0, 0] + A[1, 0])) == 0.9, 'd_1 constant 0.9')
+    ok(Tf((10, 6))[0] <= 10 and Tf((10, 6))[1] <= 6 and Tf((0, 0)) == (1, 2), 'T maps X into X (monotone corners)')
+    d01 = 1 + 2
+    n1 = math.ceil(math.log(1e-3 * 0.1 / d01) / math.log(0.9))
+    n2 = first_n(lambda n: 0.9 ** n / 0.1 * d01, 1e-3)
+    num(it, 'p-input-output', 3, n1, n2, {'no-denominator': first_n(lambda n: 0.9 ** n * d01, 1e-3),
+                                         'dinf-move': first_n(lambda n: 0.9 ** n / 0.1 * 2, 1e-3),
+                                         'pair-ratio': first_n(lambda n: 0.8 ** n / 0.2 * d01, 1e-3)}, places=None)
+    ok(abs(30 * 0.9 ** 97 - 0.00109) < 0.000005 and abs(30 * 0.9 ** 98 - 0.00098) < 0.000005, 'printed bounds at 97 and 98')
+    xstar = (sp.eye(2) - A).solve(b)
+    p = (0.0, 0.0)
+    for _ in range(400):
+        p = Tf(p)
+    num(it, 'p-input-output', 4, float(xstar[0]), p[0], {'second': float(xstar[1]), 'transpose': float((sp.eye(2) - A.T).solve(b)[0])}, agree=1e-9)
+    ok(0 <= p[0] <= 10 and 0 <= p[1] <= 6 and (sp.eye(2) - A).det() == F(23, 100), 'fixed point in X, det 0.23')
+
+    # p-dyadic-points
+    out1 = sum(1 for n in range(0, 60) if 2.0 ** -n >= 0.01)
+    out2 = sum(1 for n in range(0, 60) if not (-0.01 < F(1, 2 ** n) < 0.01))
+    num(it, 'p-dyadic-points', 1, out1, out2, {'from-one': out1 - 1, 'one-more': out1 + 1}, places=None)
+    for n in range(0, 12):
+        lo_, hi_ = 0.75 * 2.0 ** -n, 1.25 * 2.0 ** -n
+        ok(sum(1 for m in range(0, 60) if lo_ < 2.0 ** -m < hi_) == 1 and not (lo_ < 0 < hi_), f'V_{n} holds one point')
+    # route 2: greedy smallest subcover of K by brute force over the members needed
+    Kpts = [0.0] + [2.0 ** -n for n in range(60)]
+    need = set()
+    for t in Kpts:
+        if -0.01 < t < 0.01:
+            need.add('U')
+        else:
+            need.add(f'V{round(-math.log2(t))}')
+    num(it, 'p-dyadic-points', 2, out1 + 1, len(need), {'no-u': out1}, places=None)
+    N1 = next(N for N in range(60) if 2.0 ** -N < 0.01)
+    N2 = next(N for N in range(60) if max(abs(2.0 ** -m - 2.0 ** -k) for m in range(N, 80) for k in range(N, 80)) < 0.01)
+    num(it, 'p-dyadic-points', 3, N1, N2, {'adjacent-gap': next(N for N in range(60) if 2.0 ** -N - 2.0 ** -(N + 1) < 0.01), 'eight': N1 + 1}, places=None)
+    one_correct(it, 'p-dyadic-points', 4, 'k-both')
+
+    # p-cube-delta
+    sets = {'[-1,2]': (True, True), '[-1,2)': (False, True), '[-1,inf)': (True, False), '[-1,0]u{2}': (True, True)}
+    comp = sum(1 for c, bdd in sets.values() if c and bdd)
+    # route 2: a sequence test: the set holds the limit of 2 - 1/k and stays below a bound
+    seq_ok = {'[-1,2]': True, '[-1,2)': False, '[-1,inf)': False, '[-1,0]u{2}': True}
+    num(it, 'p-cube-delta', 1, comp, sum(seq_ok.values()), {'bounded': comp + 1, 'intervals-only': comp - 1}, places=None)
+    fK = (sp.minimum(x ** 3, x, sp.Interval(-1, 2)), sp.maximum(x ** 3, x, sp.Interval(-1, 2)))
+    gridK = [-1 + k * 3 / 30000 for k in range(30001)]
+    num(it, 'p-cube-delta', 2, float(fK[1] - fK[0]), max(t ** 3 for t in gridK) - min(t ** 3 for t in gridK), {'positive-only': 8, 'cube-gap': 7}, places=None, agree=1e-9)
+    e = sp.Symbol('e', positive=True)
+    c12 = max(a * a + a * c + c * c for a in gridK[::100] for c in gridK[::100])
+    expr(it, 'p-cube-delta', 3, e / 12, ['e'], lambda pt: pt['e'] / c12)
+    xx = sp.Symbol('xx', positive=True)
+    root = [r for r in sp.solve(sp.expand((xx + sp.Rational(1, 100)) ** 3 - xx ** 3 - 1), xx) if r.is_real and r > 0][0]
+    lo, hi = 0.0, 10.0
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        lo, hi = (lo, mid) if (mid + 0.01) ** 3 - mid ** 3 >= 1 else (mid, hi)
+    num(it, 'p-cube-delta', 4, float(root), hi, {'slope-only': math.sqrt(1 / 0.03)}, agree=1e-9)
+
+    lv.expect('problems', 'items[1].prose', 0.9)
+    lv.expect('problems', 'items[2].prose', 0.01)
+    lv.check_wrongs()
+    return lv
+
+
+LEVELS = {1: level1, 2: level2, 3: level3}
 reports = [fn() for fn in LEVELS.values()]
 print(f'{checks} checks, {len(fails)} failures')
 for f in fails:
