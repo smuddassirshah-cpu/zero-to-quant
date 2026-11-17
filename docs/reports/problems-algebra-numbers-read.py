@@ -406,6 +406,30 @@ def held_findings():
         and lc == {p for p in S5 if p[4] == 2} and rc == {p for p in S5 if p[0] == 4})
 
 
+def block_p_units_affine_fixed():
+    # p-units-133 parts 2 and 3 and p-affine-five part 3 after the delta fix pass (review-delta-ag-algebra.md ## Fix pass)
+    it = P3['p-units-133']
+    G = [x for x in range(1, 133) if all(x % q for q in (7, 19))]
+    order3 = {y for y in range(2, 19) if y ** 3 % 19 == 1}
+    n12 = sum(1 for x in G if x % 19 in order3)
+    expect(it, 1, n12, {'roots-only': len(order3), 'with-kernel': 108 // 6, 'one-coset': 6, 'seven-each': len(order3) * 7})
+    chk('units part 2: order-3 residues 7 and 11, count 12', order3 == {7, 11} and n12 == 12 == 108 // 6 - 6)
+    n9 = sum(1 for x in G if x ** 3 % 133 == 1)
+    expect(it, 2, n9, {'mod-19-only': sum(1 for x in G if x ** 3 % 19 == 1), 'one-only': 3})
+    chk('units part 3: 45 is a unit, one of the 18, and 45^3 mod 7 = 6', 45 in G and 45 ** 3 % 19 == 1 and 45 ** 3 % 7 == 6)
+    ia = P3['p-affine-five']
+    f = lambda x: (2 * x + 3) % 5  # noqa: E731
+    consts, g = [], (lambda x: x)
+    for _ in range(4):
+        g0 = g
+        g = (lambda g0: lambda x: f(g0(x)))(g0)
+        consts.append(g(0))
+    chk('affine: constants of f, f^2, f^3, f^4 are 3, 4, 1, 0 mod 5 (3, 9, 21, 45)', consts == [3, 4, 1, 0])
+    expect(ia, 2, consts[3], {'added-four': 12 % 5, 'kept': consts[0]})
+
+
+run(block_p_units_affine_fixed, 'p-units-133 / p-affine-five')
+
 run(held_findings, None)
 
 print(f'{n_ok} checks passed, {n_find} FINDING line(s), {n_skip} block(s) skipped')

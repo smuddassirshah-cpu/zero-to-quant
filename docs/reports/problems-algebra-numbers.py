@@ -320,7 +320,10 @@ ok({x % 19 for x in U133} == set(range(1, 19)) and 108 // 6 == 18, 'L3 rho onto,
 roots19 = [y for y in range(1, 19) if pow(y, 3, 19) == 1]
 ok(roots19 == [1, 7, 11] and 7 ** 3 == 343 == 18 * 19 + 1 and 49 % 19 == 11, 'L3 cube roots of 1 mod 19')
 L = [x for x in U133 if pow(x, 3, 19) == 1]
-num(3, 'p-units-133', 2, len(roots19) * len(K19), len(L), {'roots-only': len(roots19), 'only-one': 6, 'seven-each': len(roots19) * 7})
+ord3 = [y for y in range(1, 19) if y != 1 and pow(y, 3, 19) == 1]
+M3 = [x for x in U133 if x % 19 != 1 and pow(x, 3, 19) == 1]
+num(3, 'p-units-133', 2, len(ord3) * len(K19), len(M3), {'roots-only': len(ord3), 'with-kernel': len(L), 'one-coset': 6, 'seven-each': len(ord3) * 7})
+ok(ord3 == [7, 11] and len(M3) + len(K19) == len(L) == 18, 'L3 order-3 residues 7, 11; 12 + 6 = 18')
 ok(all(sum(1 for x in U133 if x % 19 == y) == 6 for y in range(1, 19)), 'L3 each value taken by 6 units')
 ok(all(sum(1 for c in range(1, 133) if c % 19 == y) == 7 for y in range(1, 19)), 'L3 seven numbers below 133 per residue')
 roots7 = [x for x in range(1, 7) if pow(x, 3, 7) == 1]
@@ -331,6 +334,8 @@ ok(all(len({x % 7 for x in U133 if x % 19 == y}) == 6 for y in roots19), 'L3 eac
 all3 = [x for x in U133 if pow(x, 3, 133) == 1]
 num(3, 'p-units-133', 3, len(roots19) * len(roots7), len(all3), {'mod-19-only': len(L), 'one-only': len(roots19)})
 ok(27 % 7 == 6 and 8 % 7 == 1 and 64 % 7 == 1, 'L3 slip lines: 3^3 = 6, 2^3 = 1, 4^3 = 1 mod 7')
+ok(45 in U133 and 45 in L and 45 % 7 == 3 and pow(45, 3, 19) == 1 and pow(3, 3, 7) == 6 and 45 == 2 * 19 + 7, 'L3 45 is one of the 18 and fails mod 7')
+ok(sum(1 for x in L if x not in all3) == 9 and pow(11, 3, 19) == pow(7, 6, 19) == 1, 'L3 nine of the 18 fail; 11^3 = 7^6 = 1')
 
 # p-powers-of-seven
 num(3, 'p-powers-of-seven', 1, int(totient(45)), len(units(45)), {'no-fives': 30, 'no-threes': 36, 'all': 44})
@@ -387,7 +392,12 @@ def aorder(f):
 
 f4 = af(af(f, f), af(f, f))
 ok(f4 == eA and 16 + 0 == 16 and 3 * (8 + 4 + 2 + 1) == 45 and 45 % 5 == 0, 'L3 f^4 = 16x + 45 = x')
-num(3, 'p-affine-five', 3, 4, aorder(f), {'times-five': 20, 'translation': 5})
+fk = [f]
+for _ in range(3):
+    fk.append(af(f, fk[-1]))
+ok([g[1] for g in fk] == [3, 9 % 5, 21 % 5, 45 % 5] and [3, 9, 21, 45] == [3 * (2 ** k - 1) for k in range(1, 5)], 'L3 constants of f^k are 3, 9, 21, 45')
+num(3, 'p-affine-five', 3, 0, fk[3][1] if fk[3][0] == 1 else -1, {'added-four': (4 * 3) % 5, 'kept': 3})
+ok(aorder(f) == 4 and all(aorder(g) % 4 == 0 for g in [f]), 'L3 ord(f) = 4')
 ok(aorder((1, 3)) == 5, 'L3 a translation has order 5')
 ok(all(aorder(g) == mord(g[0], 5) for g in AFF if g[0] != 1), 'L3 order of ax + b is ord(a) for a != 1')
 o4 = [g for g in AFF if aorder(g) == 4]

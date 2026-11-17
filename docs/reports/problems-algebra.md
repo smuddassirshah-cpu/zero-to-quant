@@ -55,6 +55,7 @@ No problem walks through several course items in a row; each is a chain on the l
 - Commit trailers use the attribution the session's system reminder gives (`Claude Opus 5.5`); the brief named another model.
 - `course.json`: no change proposed.
 - Inbox: 1 bullet under `Raised later (problems algebra):`.
+- Delta fix pass AG: `p-units-133` part 2 key is now 12 (units whose reduction has order 3) and `p-affine-five` part 3 key is now 0 (the constant of $f^4$); see `review-delta-ag-algebra.md` "Fix pass".
 
 ## Level 4
 

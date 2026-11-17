@@ -112,3 +112,13 @@ Pass 8 rules by hand: every numeric part in scope is a whole number or a residue
 ## Engine
 
 1. A numeric key printed in the same part's question (finding 2: "Using $\operatorname{ord}(fT) = 4$ ... What is the order of $f$") could be a validator warning for problem sets: the key, at the asked form, appears as a stated value after "=" in that part's `question`. Raised in `docs/BACKLOG-INBOX.md` under `Raised later (review-delta-ag-algebra):`.
+
+## Fix pass
+
+1. fixed. `p-units-133` part 2 now asks for units with $\rho(x)$ of order 3, key 12 (enumerated: residues 7, 11; 2 * 6 = 12; 12 + 6 = 18). Slips 2, 18, 6, 14 (7 * 2) each recomputed and refused by the key band; part 3 question and `correct` as written, key 9 unchanged.
+2. fixed. `p-affine-five` part 3 now asks for $c$ in $f^4(x) = x + c$, key 0 (constants of $f, f^2, f^3, f^4$ by table: 3, 4, 1, 0 mod 5, i.e. 3, 9, 21, 45). Slips 2 ($12 \bmod 5$) and 3 each refused by the key band. Part 4's question as written, key 10 unchanged.
+3. fixed. `p-affine-five` part 2 question as written.
+4. fixed. `p-server-moves` part 3 question as written; key 6 and slips unchanged.
+5. fixed. `p-units-133` part 3 `byKey.mod-19-only` as written (45 is a unit, $45^3 \equiv 1 \pmod{19}$, $45 \equiv 3 \pmod 7$, $3^3 \equiv 6$).
+Disputed 0, deferred 0. Graded answers changed: 2 (12 and 0). Scripts: author's 549 of 549, exit 0; reader's 299 checks, 0 FINDING, exit 0 (new block for the three fixed parts); delta script prints `resolved` for all five.
+Gates: validator 0 errors, no warning on the algebra sets; voice scan 35: 0 and 0; `fresh-check` 0 hits on sets 2 and 3; `grade-all` 0 failures on both; playthrough sets 2 and 3 pass with and without `--mobile`.
