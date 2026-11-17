@@ -75,3 +75,32 @@ The other 96 entries are clean in both themes at both widths:
 1 to 5, 7, 9 to 14, 16, 18 to 25, 27, 29 to 35, 37, 38, 40 to 48, 50, 51, 54, 56 to 62, 65, 68 to 87, 90 to 92, 94 to 101, 103, 105, 106, 108 to 115, 121 to 123.
 
 By name, the fully clean kinds are: area, array, balance, bars, boxes, complex-map, distribution, graph, grid, interleave (base sample), matrix, number-line, payoff (base sample), scatter, series, table, tree (base sample), vectors, venn, walk, and the widgets balance, choice, drag-point, expression, longform, manipulate, multi, numeric, order, place, slider, table and tap-regions.
+
+## Fix pass
+
+Rerun in all four combinations with `tools/gallery-shots.mjs`: 123 entries each, console errors 0, failed requests 0, page overflow none at 440 and 1376 in light and dark (the console card no longer widens the page). The screenshot of every changed entry was read in the combinations it affects. Contrast figures from the tool still list halo text (it ignores halos); on the changed tick labels the glyph is the ink colour on a page-colour halo.
+
+| # | Entry | Result |
+|---|---|---|
+| 1 | 52 `console (pytest run)` | Fixed. `.lsn-canvas { min-width: 0 }` (`css/screens/lesson.css`); the terminal scrolls inside its own box at 440, lessons get the same fix. |
+| 2 | 8 `console` | Fixed. Sample added to `CANVAS_SAMPLES` (`js/screens/system.js`). |
+| 3 | 104 `sliders` | Fixed. Sample copied in shape from `odes/l6-second-order`; the label uses `y^{\prime}` because a bare `'` in a slider label is HTML-escaped before KaTeX and prints `&#39;` (slider label escaping is in `widgets/slider.js`, not touched, worth an engine item). |
+| 4 | 107 `trade` | Fixed. Sample copied from `mm-games/l10-position-limits` over an `orderbook`. |
+| 5 | 17 `plane` | Fixed. `placeLabels` in `plane.js` takes an opt-in `slide` flag (plane only): with no clear spot above or below, the label slides along the line before it would overlap. "Sum" and "f(x)" now sit apart. |
+| 6 | 36 `plane (contours and heat)` | Fixed. `.cvb-tick.cvb-halo` and `.cvb-muted.cvb-halo` take `--ink` with a 3px page-colour halo (`css/canvases.css`). |
+| 7 | 88, 89 `space` | Fixed with the same rule; the minus signs read in both themes. |
+| 8 | 26 `pair (circle and sine)` | Fixed in the sample: `minScale: 0.6`, so the pair stacks at 1376 and the labels reach about 11 px. Content pairs that want the same set `minScale` themselves. |
+| 9 | 39 `tree (27 leaves, branching)` | Left. 27 leaves in 364 px leave no room for larger branch labels without them colliding; a plain `1/3` renders as the same stacked fraction. Legible at 1376. |
+| 10 | 55 `interleave (conditional steps)` | Fixed. Step right padding 28 px (26 px at 440) clears the order badge (`css/interleave.css`). |
+| 11 | 15, 66 `orderbook` | Fixed. Light-only text tokens `--cvb-bid-t` #0B7D55 (5.2:1) and `--cvb-ask-t` #C73231 (5.3:1); bars and candles keep the old hues. |
+| 12 | 63 `plane (steps ...)` | Fixed. The dark theme's selected chip takes `--ink-fixed` (6.5:1) in `lesson.css`. |
+| 13 | 93, 116 to 120 `code` | Fixed. `--code-keyword` light is #3055EC (5.2:1 on the editor). |
+| 14 | 6, 26 circle | Fixed. Sine readout is `--s2` mixed 66% with ink; darker in light, lighter in dark. |
+| 15 | 53 `interleave (deadlock)` | Fixed. Steps, ids and results in a blocked lane use `--text-2`. |
+| 16 | 102 `sketch` | Fixed in the sample (`xAxis: 'bottom'`): tick labels sit under the plot. The first handle still covers the `0` y tick at the left edge. |
+| 17 | 49 `payoff (spot drag)` | Fixed in the sample: spot 105, off a tick. |
+| 18 | 67 `array (labels, ranges)` | Fixed. Cell label size 12 (was 10) in `array.js`; about 8 px at 440. |
+| 19 | 28 `area (signed pieces)` | Fixed in `area.js`: a piece cut by a diagonal moves its label a fifth of the cell off the line. Applies to any content using `diagonal`. |
+| 20 | 64 `plane (repeated intervals)` | Fixed in the sample: `sigma: 5`, x range 92 to 108. |
+
+Other checks: `node tools/validate.mjs` 0 errors; `node tools/test-engine-runtime.mjs` all passed; playthrough green with and without `--mobile` for `backtest/l1-one-bar-at-a-time`, `algo-think/l1-counting-work`, `alpha/l1-choosing-a-universe` (console canvas) and `algebra/l17-roots-and-factors`, `algebra/l4-cyclic-groups`, `analysis/l1-gaps-in-the-rationals` (plane). `docs/AUTHORING.md` was outside the edit list; the README notes (plane label slide, console scrolling, area diagonal labels) are in `js/engine/canvas/README.md` and `README-B.md`.

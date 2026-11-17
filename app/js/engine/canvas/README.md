@@ -198,7 +198,7 @@ Fraction and multiplication area models, geometric probability.
   "controls": [{ "bind": "grid.cols", "min": 2, "max": 12, "step": 2, "label": "Pieces" }, { "bind": "shade", "min": 0, "max": 1, "step": 0.125, "label": "Shaded", "format": "fraction" }] }
 ```
 
-**signed pieces**: a negative entry in `colSizes` or `rowSizes` lays the strip out by its size and marks its pieces subtracted (hatched over any shading, dashed edge), so $(x + 5)(x - 2)$ is `colSizes: [3, 1.5]`, `rowSizes: [3, -1]`. **edge labels**: `state.colLabels`, `state.rowLabels` and `state.labels` (`top`, `bottom`, `left`, `right`) patch them; give a starting value in params so the drawing keeps room. **diagonals**: `state.diagonal: { "c11": "/" }` (bottom left to top right) or `"\\"`, dashed; shade ids `"c11/ul"`, `"c11/lr"`, `"c11/ur"`, `"c11/ll"` fill the triangle on that side. **moving a piece**: `state.move: { "id": "m1", "from": "c12", "to": "c31" }` (or a list) slides a copy of the piece (its first shading's colour and its text) to the `to` cell over about 700 ms, leaving its own place empty, for rearrangements such as the difference of two squares.
+**signed pieces**: a negative entry in `colSizes` or `rowSizes` lays the strip out by its size and marks its pieces subtracted (hatched over any shading, dashed edge), so $(x + 5)(x - 2)$ is `colSizes: [3, 1.5]`, `rowSizes: [3, -1]`. **edge labels**: `state.colLabels`, `state.rowLabels` and `state.labels` (`top`, `bottom`, `left`, `right`) patch them; give a starting value in params so the drawing keeps room. **diagonals**: `state.diagonal: { "c11": "/" }` (bottom left to top right) or `"\\"`, dashed; shade ids `"c11/ul"`, `"c11/lr"`, `"c11/ur"`, `"c11/ll"` fill the triangle on that side. **moving a piece**: `state.move: { "id": "m1", "from": "c12", "to": "c31" }` (or a list) slides a copy of the piece (its first shading's colour and its text) to the `to` cell over about 700 ms, leaving its own place empty, for rearrangements such as the difference of two squares. A piece cut by a diagonal moves its label a fifth of the cell off the line, into the half away from the right-hand corner, so the line never strikes it.
 
 **text on a piece**: `labels` (params) and `state.labels` also take cell ids, `{ "c11": "$3n$", "c12": "4" }`, drawn centred on the cell (on a circle, along the sector's middle); the state wins. A key naming two cells, `"c11-c16"`, centres one label on the rectangle they span (a total over a row).
 
@@ -269,6 +269,8 @@ Terminal sessions, pytest output, tracebacks: a monospace block where every line
 **params**: `lines: ["$ pytest -q", "..F.", "E   assert 0.01 == 0.0"]` (or `text` with newlines), `title` (a small heading above the block, such as "Terminal"), `numbers: true` (line numbers in a gutter), `label` (accessible name). Lines starting with `$ `, `>>> ` or `... ` show the prompt muted and the command in bold.
 
 **state**: `shade: { "<set>": [ids] }` (series slots, a 3px bar on the left), `tone: { "l3": "err" | "ok" | "muted" }` (text colour per line), `lines` (replaces the text, for output that grows during an explanation), `highlight`, `caption` (rendered like prose).
+
+The block scrolls sideways inside its own box: a long line never widens the lesson column or the page (the lesson canvas slot has `min-width: 0`).
 
 **ids**: `l1`, `l2`, ... one-based (l1 is the first line). **events**: tap (lines): `tap-regions` with `answer: ["l3"]` asks "tap the line that failed".
 
