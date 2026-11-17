@@ -34,3 +34,9 @@ Raised later (problems pdes):
 Raised later (problems topology):
 - `playthrough.mjs --problems ... --mobile` stays green when one long inline KaTeX span (a list of eight finite open sets in a problem's `prose` and a part's `question`) runs past the right edge at 440 px; the 440 px shots showed the text clipped. Have the mobile check measure KaTeX spans against their column, or have the validator warn on one maths span over about 45 characters in set text.
 - `fresh-check.mjs --file` reports a hit in another course (`analysis` l17, `limits` l17: $x^3 - 3x$ with its interval) under the label `[same-course-reuse] error`. The label should say cross-course, or the rule should say whether other courses count.
+
+Raised later (review problems algebra):
+- `fresh-check --files` gave 0 hits on `algebra/problems-3` `p-fifteen-times`, whose map `15x \bmod 36` reuses the pair of exam item "The order of 15 modulo 36" and its line "$12 \mid 5x$, so $12 \mid x$". Read a multiplier and modulus held in one formula as a key pair, against exam titles and explanations too (`docs/reviews/review-problems-algebra-1-3.md` finding 8).
+- `retold` missed "has bottom row $7, 9, 10, \dots$. So $\sigma(1) = 7$, $\sigma(2) = 9$, and so on." against the exam's "has bottom row $3, 5, 1, 2, 6, 4$. So $\sigma(1) = 3$, $\sigma(2) = 5$, and so on." Mask a comma list of numbers as one token before comparing skeletons (finding 5).
+- A permutation in cycle form is not compared with its inverse or with the same cycles started elsewhere: `(1\,5\,3)(2\,4)` against the exam's `(1\,3\,5)(2\,4)`, both in $S_5$ (finding 6).
+- A set problem whose parts each match a different item of one review, lesson or exam file by question skeleton (findings 5, 8, 9) passes every check. Flag a problem when three of its part questions each meet a different course item after numbers and maths are masked.
