@@ -1,6 +1,6 @@
 // Test for the playthrough's phone-width text check (engine pass 9, item d; ENGINE-BACKLOG 1159, 1167). Run from app/: node tools/test-playthrough-text-overflow.mjs [--local-cdn <pkgs>]
 // Plays a temporary copy of app/ with tools/fixtures/overflow/problems-overflow.json added as a problem-set fixture: one inline maths span holding a long comma list that does not wrap.
-// With --mobile it must fail with "at 440 px text runs past the window"; on the clean fixture (tools/fixtures/problems/problems-fixture-3.json) --mobile must stay green.
+// With --mobile it must fail with "at 440 px text runs past the window: the maths span $...$ (N px wide)"; on the clean fixture (tools/fixtures/problems/problems-fixture-3.json) --mobile must stay green.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,7 +21,8 @@ const cases = [
 ];
 for (const [ref, mobile, expectFail, name] of cases) {
   const out = play(ref, mobile), failed = /at 440 px (?:text runs past the window|text clipped by its box|the page is wider)/.test(out);
-  if (failed !== expectFail) { bad++; console.log(`FAIL ${name}\n${out.split('\n').slice(-10).join('\n')}`); } else console.log(`ok ${name}`);
+  const named = !expectFail || /text runs past the window: the maths span \$[^$]+\$ \(\d+ px wide\)/.test(out);   // pass 9b: the message names the wide span
+  if (failed !== expectFail || !named) { bad++; console.log(`FAIL ${name}\n${out.split('\n').slice(-10).join('\n')}`); } else console.log(`ok ${name}`);
 }
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(bad ? `${bad} failed` : 'all passed');

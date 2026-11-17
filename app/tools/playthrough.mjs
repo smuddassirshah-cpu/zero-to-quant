@@ -172,7 +172,13 @@ const WIDE_PROBE = () => {
     const r = e.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
     const own = [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    if (pass === 0 && (own || e.classList.contains('katex')) && (r.right > vw + 1 || r.left < -1) && !scrolls(e)) return `text runs past the window: ${describe(e)} ends at ${Math.round(r.right)} px`;
+    if (pass === 0 && (own || e.classList.contains('katex')) && (r.right > vw + 1 || r.left < -1) && !scrolls(e)) {
+      /* name the span that runs past, not only the paragraph (or column) it stretches (pass 9b): the widest outermost KaTeX span on the page that ends past the window, with its source */
+      const ks = [...root.querySelectorAll('.katex')].filter((x) => !x.parentElement.closest('.katex') && !x.closest('svg, canvas, [hidden], [aria-hidden="true"], .sr-only') && x.getBoundingClientRect().right > vw + 1 && x.getBoundingClientRect().width > 2);
+      const k = ks.sort((x, y) => y.getBoundingClientRect().width - x.getBoundingClientRect().width)[0];
+      if (k) { const tex = (k.querySelector('annotation') || {}).textContent || k.textContent || '', kr = k.getBoundingClientRect(); return `text runs past the window: the maths span $${tex.replace(/\s+/g, ' ').trim().slice(0, 60)}$ (${Math.round(kr.width)} px wide) ends at ${Math.round(kr.right)} px${k === e ? '' : `, so ${describe(e)} is stretched to ${Math.round(r.right)} px`}: split the span`; }
+      return `text runs past the window: ${describe(e)} ends at ${Math.round(r.right)} px`;
+    }
     if (pass === 1 && (cs.overflowX === 'hidden' || cs.overflowX === 'clip') && e.scrollWidth > e.clientWidth + 1 && (e.textContent || '').trim() && !scrolls(e.parentElement || e) && e.clientWidth > 0) return `text clipped by its box: ${describe(e)} is ${e.scrollWidth} px in ${e.clientWidth} px`;
   }
   return false;
