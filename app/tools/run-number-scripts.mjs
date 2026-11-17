@@ -139,7 +139,7 @@ for (const r of results) {
     fresh++;
     const why = r.timedOut ? `timed out after ${TIMEOUT / 1000} s` : `exit ${r.code}`;
     console.log(`FAILED      ${r.script} (${why})`);
-    if (!QUIET) { const ls = r.out.trim().split('\n'), bad = ls.filter((l) => /\bFAIL|\bFINDING|Error/.test(l)).slice(0, 12);   // the failing checks first: a tail alone hid them (CI run 23)
+    if (!QUIET) { const ls = r.out.trim().split('\n'), bad = ls.filter((l) => /\bFAIL|\bBAD\b|\bFINDING|Error/.test(l)).slice(0, 12);   // the failing checks first: a tail alone hid them (CI run 23)
       console.log([...bad, ...ls.slice(-6).filter((l) => !bad.includes(l))].map((l) => '    ' + l.slice(0, 300)).join('\n')); }
   }
 }
