@@ -14,7 +14,7 @@
    "prose": "A hash table has 56 slots, numbered 0 to 55. A probe starts at slot 0 and jumps by a fixed stride $s$ each time, so it visits $0, s, 2s, \\dots$ modulo 56. The slots form $\\mathbb{Z}_{56}$ under addition.",
    "parts": [
     {
-     "question": "With stride $s = 21$, how many different slots does the probe visit, counting slot 0? Give a whole number.",
+     "question": "With stride $s = 21$, after how many jumps is the probe first back at slot 0? Give a whole number.",
      "widget": {
       "kind": "numeric",
       "answer": 8,
@@ -39,11 +39,11 @@
       ]
      },
      "feedback": {
-      "correct": "The visits are the multiples of $\\gcd(21, 56) = 7$, so the count is $\\operatorname{ord}(21) = 56/7 = 8$.",
+      "correct": "The probe is back when $56 \\mid 21k$. Since $\\gcd(21, 56) = 7$, that first happens at $k = 56/7 = 8$.",
       "generic": "Not quite. Find the least $k \\ge 1$ with $21k \\equiv 0 \\pmod{56}$.",
       "byKey": {
-       "gcd": "7 is $\\gcd(21, 56)$, the gap between the slots visited. The count is 56 divided by that gap.",
-       "full": "A stride reaches every slot only when it is coprime to 56. Here 21 and 56 share the factor 7."
+       "gcd": "7 is $\\gcd(21, 56)$, the gap between the slots visited. The number of jumps is 56 divided by that gap.",
+       "full": "A probe needs all 56 jumps only when its stride is coprime to 56. Here 21 and 56 share the factor 7."
       }
      },
      "explain": {
@@ -51,7 +51,7 @@
      }
     },
     {
-     "question": "A stride reaches all 56 slots exactly when it generates $\\mathbb{Z}_{56}$. How many strides $s$ from 1 to 55 do that? Give a whole number.",
+     "question": "By part 1, stride 21 is back at slot 0 after only 8 jumps, so it misses slots. A stride reaches all 56 slots exactly when it generates $\\mathbb{Z}_{56}$. How many strides $s$ from 1 to 55 do that? Give a whole number.",
      "widget": {
       "kind": "numeric",
       "answer": 24,
@@ -88,7 +88,7 @@
       "byKey": {
        "no-overlap": "You took away the 28 even residues and the 8 multiples of 7. The 4 multiples of 14 were taken away twice, so add them back.",
        "odd-only": "You removed the even strides but kept 7, 21, 35 and 49. They share the factor 7 with 56.",
-       "all": "Not every stride works: stride 21 visited only 8 slots in part 1."
+       "all": "Not every stride works: by part 1, stride 21 is back at slot 0 after 8 jumps, so it visits only 8 slots."
       }
      },
      "explain": {
@@ -96,7 +96,7 @@
      }
     },
     {
-     "question": "Double hashing gives one key the stride $s = 9$, a generator. After how many jumps does its probe first land on slot 1? Give a whole number from 1 to 55.",
+     "question": "Double hashing gives one key the stride $s = 9$, one of the 24 generators from part 2. After how many jumps does its probe first land on slot 1? Give a whole number from 1 to 55.",
      "widget": {
       "kind": "numeric",
       "answer": 25,
@@ -346,134 +346,15 @@
    ]
   },
   {
-   "id": "p-shifted-product",
+   "id": "p-pixel-scrambler",
    "difficulty": 5,
    "skills": [
     "ag-groups"
    ],
-   "prose": "A new operation on residues modulo 19: $a \\ast b = (a + b + ab) \\bmod 19$. It is associative, and $a \\ast 0 = a$, so 0 is an identity. We look for the set on which $\\ast$ gives a group.",
+   "prose": "A scrambler mixes a 7 by 7 grid of pixels. The pixel at $(x, y)$ moves to $(x + 2y, x + 3y)$, both taken modulo 7. As a matrix acting on columns it is $\\mathbf{M} = \\begin{pmatrix}1&2\\\\1&3\\end{pmatrix}$, and $\\det\\mathbf{M} = 1$, so every step can be undone.",
    "parts": [
     {
-     "question": "Work out $18 \\ast 5$, as a residue from 0 to 18.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 18,
-      "tol": {
-       "abs": 0
-      },
-      "wrong": [
-       {
-        "id": "product",
-        "value": 14,
-        "tol": {
-         "abs": 0
-        }
-       },
-       {
-        "id": "sum",
-        "value": 4,
-        "tol": {
-         "abs": 0
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "$18 \\ast 5 = 18 + 5 + 90 = 113 = 5 \\cdot 19 + 18$, so $18 \\ast 5 = 18$.",
-      "generic": "Not quite. Add $a$, $b$ and $ab$, then reduce modulo 19.",
-      "byKey": {
-       "product": "14 is $18 \\cdot 5 \\bmod 19$ alone. The rule adds $a$ and $b$ to the product.",
-       "sum": "4 is $18 + 5 \\bmod 19$ alone. The rule also adds the product $ab = 90$."
-      }
-     },
-     "explain": {
-      "text": "In general $18 \\ast b = 18 + 19b \\equiv 18$, so nothing combines with 18 to give 0. Hence 18 has no inverse and is left out: $G = \\{0, 1, \\dots, 17\\}$. For $b = 5$, $18 + 5 + 90 = 113 \\equiv 18$."
-     }
-    },
-    {
-     "question": "On $G = \\{0, 1, \\dots, 17\\}$, which $b$ is the inverse of 4, so that $4 \\ast b = 0$? Give a residue from 0 to 17.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 3,
-      "tol": {
-       "abs": 0
-      },
-      "wrong": [
-       {
-        "id": "plain-inverse",
-        "value": 5,
-        "tol": {
-         "abs": 0
-        }
-       },
-       {
-        "id": "negative",
-        "value": 15,
-        "tol": {
-         "abs": 0
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "$4 \\ast b = 4 + 5b \\equiv 0$ needs $5b \\equiv 15$, so $b = 3$. Check: $4 + 3 + 12 = 19 \\equiv 0$.",
-      "generic": "Not quite. The identity of $\\ast$ is 0, not 1. Solve $4 + b + 4b \\equiv 0 \\pmod{19}$.",
-      "byKey": {
-       "plain-inverse": "5 is the inverse of 4 under ordinary multiplication, $4 \\cdot 5 = 20 \\equiv 1$. Under $\\ast$ the target is the identity 0.",
-       "negative": "15 is $-4$, the inverse under addition. Then $4 \\ast 15 = 79 \\equiv 3$, not 0."
-      }
-     },
-     "explain": {
-      "text": "The inverse must give the identity 0, so solve $4 + b + 4b = 4 + 5b \\equiv 0 \\pmod{19}$. Then $5b \\equiv 15$, and dividing by the unit 5 gives $b = 3$."
-     }
-    },
-    {
-     "question": "The shift $a \\mapsto 1 + a$ turns $\\ast$ into multiplication: $1 + (a \\ast b) \\equiv (1 + a)(1 + b)$. So $1 \\ast 1 \\ast \\cdots \\ast 1$, with $k$ copies, is $2^k - 1 \\bmod 19$. What is the order of 1 in $(G, \\ast)$? Give a whole number.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 18,
-      "tol": {
-       "abs": 0
-      },
-      "wrong": [
-       {
-        "id": "half",
-        "value": 9,
-        "tol": {
-         "abs": 0
-        }
-       },
-       {
-        "id": "sixth",
-        "value": 6,
-        "tol": {
-         "abs": 0
-        }
-       },
-       {
-        "id": "modulus",
-        "value": 19,
-        "tol": {
-         "abs": 0
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "The order of 1 is $\\operatorname{ord}(2)$ in $\\mathbb{Z}_{19}^{\\times}$. It divides 18, and $2^6 \\equiv 7$, $2^9 \\equiv 18$, so the order is 18.",
-      "generic": "Not quite. Find the least $k \\ge 1$ with $2^k \\equiv 1 \\pmod{19}$.",
-      "byKey": {
-       "half": "$2^9 \\equiv 18$, which is $-1$, not 1. In $(G, \\ast)$ that power of 1 is the element 17, not the identity.",
-       "sixth": "$2^6 = 64 \\equiv 7$, not 1. Keep going: the powers first return to 1 at $k = 18$.",
-       "modulus": "$G$ has only 18 elements, so no element can have order 19. The powers of 2 modulo 19 return to 1 at $k = 18$."
-      }
-     },
-     "explain": {
-      "text": "The $k$-fold product of 1 is the identity 0 exactly when $2^k \\equiv 1 \\pmod{19}$. The order of 2 divides 18, and $2^6 \\equiv 7$ and $2^9 \\equiv 18$ rule out every proper divisor. So the order of 1 is 18."
-     }
-    },
-    {
-     "question": "Using that 1 has order 18 from part 3, $(G, \\ast)$ is cyclic of order 18. How many elements of $G$ generate it? Give a whole number.",
+     "question": "Square $\\mathbf{M}$, then square the result, reducing modulo 7. What is the top-left entry of $\\mathbf{M}^4$? Give a residue from 0 to 6.",
      "widget": {
       "kind": "numeric",
       "answer": 6,
@@ -482,22 +363,15 @@
       },
       "wrong": [
        {
-        "id": "non-identity",
-        "value": 17,
+        "id": "entrywise",
+        "value": 1,
         "tol": {
          "abs": 0
         }
        },
        {
-        "id": "phi-modulus",
-        "value": 18,
-        "tol": {
-         "abs": 0
-        }
-       },
-       {
-        "id": "odd",
-        "value": 9,
+        "id": "dropped-term",
+        "value": 2,
         "tol": {
          "abs": 0
         }
@@ -505,16 +379,126 @@
       ]
      },
      "feedback": {
-      "correct": "In a cyclic group of order 18, the $k$-th power of a generator generates exactly when $\\gcd(k, 18) = 1$. So there are $\\varphi(18) = 6$.",
-      "generic": "Not quite. Write each element as a power of the generator 1 and ask which powers have order 18.",
+      "correct": "$\\mathbf{M}^2 = \\begin{pmatrix}3&8\\\\4&11\\end{pmatrix}$, so the top-left entry of $\\mathbf{M}^4$ is $3 \\cdot 3 + 8 \\cdot 4 = 41 \\equiv 6 \\pmod 7$.",
+      "generic": "Not quite. Multiply rows by columns to get $\\mathbf{M}^2$, then square that matrix and reduce each entry modulo 7.",
       "byKey": {
-       "non-identity": "Not every element other than 0 generates. For example $1 \\ast 1 = 3$ has order 9.",
-       "phi-modulus": "18 is $\\varphi(19)$, the size of the whole group. Only the powers coprime to 18 generate it.",
-       "odd": "You kept the odd exponents. Those that are multiples of 3, such as 3 and 9, give orders 6 and 2."
+       "entrywise": "You raised each entry to the fourth power on its own. A matrix power multiplies rows by columns: the top-left entry of $\\mathbf{M}^2$ is $1 \\cdot 1 + 2 \\cdot 1 = 3$.",
+       "dropped-term": "You kept $3 \\cdot 3 = 9$ and lost the $8 \\cdot 4$ term. The entry is $9 + 32 = 41$, which is 6 modulo 7."
       }
      },
      "explain": {
-      "text": "Every element is a $k$-fold product of 1, and that element has order $18/\\gcd(k, 18)$. It generates when $\\gcd(k, 18) = 1$: $k = 1, 5, 7, 11, 13, 17$. That is $\\varphi(18) = 6$ generators."
+      "text": "Rows times columns give $\\mathbf{M}^2 = \\begin{pmatrix}3&8\\\\4&11\\end{pmatrix}$. Squaring again gives the entries 41, 112, 56 and 153. Modulo 7 that is $\\mathbf{M}^4 \\equiv \\begin{pmatrix}6&0\\\\0&6\\end{pmatrix}$, so the entry is 6."
+     }
+    },
+    {
+     "question": "Part 1 gives $\\mathbf{M}^4 \\equiv 6\\mathbf{I} \\equiv -\\mathbf{I} \\pmod 7$. What is the order of $\\mathbf{M}$, the least $k \\ge 1$ with $\\mathbf{M}^k \\equiv \\mathbf{I}$? Give a whole number.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 8,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "minus-one",
+        "value": 4,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "modulus",
+        "value": 7,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\mathbf{M}^8 = (\\mathbf{M}^4)^2 \\equiv (-\\mathbf{I})^2 = \\mathbf{I}$, so the order divides 8. It is not 1, 2 or 4, since then $\\mathbf{M}^4$ would be $\\mathbf{I}$. So it is 8.",
+      "generic": "Not quite. Square $\\mathbf{M}^4$. Then recall that $\\mathbf{M}^k \\equiv \\mathbf{I}$ forces the order to divide $k$.",
+      "byKey": {
+       "minus-one": "$-\\mathbf{I}$ sends each pixel $(x, y)$ to $(-x, -y)$, so after 4 steps the picture is upside down, not restored. Square it once more.",
+       "modulus": "The grid is 7 pixels wide, but the order counts steps. In fact $\\mathbf{M}^7 = \\mathbf{M}^4\\mathbf{M}^3 \\equiv -\\mathbf{M}^3$, which is not $\\mathbf{I}$."
+      }
+     },
+     "explain": {
+      "text": "Squaring $-\\mathbf{I}$ gives $\\mathbf{I}$, so $\\mathbf{M}^8 \\equiv \\mathbf{I}$ and the order is a divisor of 8. Any divisor other than 8 also divides 4, and that would make $\\mathbf{M}^4 \\equiv \\mathbf{I}$. As $\\mathbf{M}^4 \\equiv -\\mathbf{I}$ instead, the order is 8."
+     }
+    },
+    {
+     "question": "Using $\\operatorname{ord}(\\mathbf{M}) = 8$ from part 2, the undo step is $\\mathbf{M}^{-1} = \\mathbf{M}^7 = \\mathbf{M}^4\\mathbf{M}^3$. What is the top-left entry of $\\mathbf{M}^{-1}$ modulo 7? Give a residue from 0 to 6.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 3,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "no-minus",
+        "value": 4,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "forward",
+        "value": 1,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\mathbf{M}^3 = \\mathbf{M}\\mathbf{M}^2 = \\begin{pmatrix}11&30\\\\15&41\\end{pmatrix} \\equiv \\begin{pmatrix}4&2\\\\1&6\\end{pmatrix}$. With $\\mathbf{M}^4 \\equiv -\\mathbf{I}$, $\\mathbf{M}^{-1} \\equiv -\\mathbf{M}^3 \\equiv \\begin{pmatrix}3&5\\\\6&1\\end{pmatrix}$, so the entry is 3.",
+      "generic": "Not quite. Work out $\\mathbf{M}^3$, then multiply it by $\\mathbf{M}^4 \\equiv -\\mathbf{I}$, which flips every sign.",
+      "byKey": {
+       "no-minus": "4 is the entry of $\\mathbf{M}^3$. That would undo $\\mathbf{M}$ only if $\\mathbf{M}^4$ were $\\mathbf{I}$, but it is $-\\mathbf{I}$. So change the sign: $-4 \\equiv 3$.",
+       "forward": "1 is the top-left entry of $\\mathbf{M}$ itself. The scrambler does not undo itself, since $\\mathbf{M}^2 \\not\\equiv \\mathbf{I}$."
+      }
+     },
+     "explain": {
+      "text": "$\\mathbf{M}^{-1} = \\mathbf{M}^7$ because $\\mathbf{M}^7\\mathbf{M} = \\mathbf{M}^8 \\equiv \\mathbf{I}$. Then $\\mathbf{M}^7 = \\mathbf{M}^4\\mathbf{M}^3 \\equiv -\\mathbf{M}^3$, and the top-left entry of $\\mathbf{M}^3$ is $11 \\equiv 4$. So the entry is $-4 \\equiv 3$, and $\\mathbf{M}^{-1} \\equiv \\begin{pmatrix}3&5\\\\6&1\\end{pmatrix}$."
+     }
+    },
+    {
+     "question": "Using $\\mathbf{M}^{-1} \\equiv \\begin{pmatrix}3&5\\\\6&1\\end{pmatrix}$ from part 3, which pixel does one step of the scrambler send to $(3, 1)$? Give its second coordinate $y$, a residue from 0 to 6.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 5,
+      "tol": {
+       "abs": 0
+      },
+      "wrong": [
+       {
+        "id": "forward",
+        "value": 6,
+        "tol": {
+         "abs": 0
+        }
+       },
+       {
+        "id": "no-minus",
+        "value": 2,
+        "tol": {
+         "abs": 0
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\mathbf{M}^{-1}(3, 1) = (9 + 5, 18 + 1) = (14, 19) \\equiv (0, 5)$. Check: $(0 + 2 \\cdot 5, 0 + 3 \\cdot 5) = (10, 15) \\equiv (3, 1)$. So $y = 5$.",
+      "generic": "Not quite. Apply $\\mathbf{M}^{-1}$ to the column $(3, 1)$, then reduce modulo 7.",
+      "byKey": {
+       "forward": "That is where $(3, 1)$ goes next: $\\mathbf{M}(3, 1) = (5, 6)$. The question asks where it came from, so use $\\mathbf{M}^{-1}$.",
+       "no-minus": "That follows from using $\\mathbf{M}^3$ as the inverse, which gives $(0, 2)$. Then $\\mathbf{M}(0, 2) = (4, 6)$, not $(3, 1)$."
+      }
+     },
+     "explain": {
+      "text": "The pixel sent to $(3, 1)$ is $\\mathbf{M}^{-1}$ applied to it. Rows of $\\mathbf{M}^{-1}$ give $3 \\cdot 3 + 5 \\cdot 1 = 14$ and $6 \\cdot 3 + 1 \\cdot 1 = 19$. Modulo 7 that is $(0, 5)$, and one step sends $(0, 5)$ to $(10, 15) \\equiv (3, 1)$."
      }
     }
    ]
