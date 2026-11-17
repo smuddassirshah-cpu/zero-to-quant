@@ -2465,6 +2465,13 @@ Numbered from the 22 inbox bullets under "Raised later (problems validation)", "
 1144. [Should] `fresh-check.mjs --file` gave 0 hits on the four stat-models sets, yet `p-hedge-ranks` part 1 follows l10 screen 5 and quiz `q-ties` (twelve values, a tie for ranks 3 and 4, a rank sum of 8.5 beside 8), two slip lines of `p-two-looks` follow l9 screen 7 `ten` and quiz `q-peek` ("treats the looks as independent ... they share"), and `p-signal-variants` part 2 asks `review-2` `r2-bonf`'s question (findings 3 to 5). The checker compares numbers, not the ranks or the statistic a data set gives. [inbox: delta read AF stat-models]
 1145. [Should] `[wrong-band]`, ruling of `review-delta-af-convex.md`: the two warnings on `convex/problems-4` (`times-s`, `thousands`) are false. Skip a `wrong[]` value that rounds to 0 at the asked places while the value itself is not 0: such a slip is in another unit and is typed as it stands, and the band the rule asks for takes unrelated answers. Same case as item 949 and the bullet above. [inbox: delta read AF convex]
 1146. [Could] `fresh-check` `retold` misses a sentence frame shared by two sets of one course when most of it is maths: `convex/problems-1` `p-account-target` part 3 and `convex/problems-3` `p-style-fit` part 2 both read "Along the ... with slope ... It is 0 at ..., so ...", and `p-variance-limit` part 5 shares "adds about N. Re-solving gives M" with l13 screen 3's explain. A run of six tokens with maths and numbers masked would report both. [inbox: delta read AF convex]
+1147. [Should] `same-course-reuse.mjs` and `retold-reuse.mjs`, `[slip-line]`: a slip line with no number, maths or story word ("You doubled the tail.", "You multiplied matching entries.") is stock: 79 of the 189 warnings rested on one such pair, every one waived by hand. Do not warn when such a line is the only pair of a hit; the same for an exam source. [inbox: triage pass 8 hits]
+1148. [Should] `[slip-line]` with numbers: 69 warnings paired a line with the same line in other numbers, plus 10 of the carry form. Warn only when the two lines share a run of two numbers or a number of two or more figures, or when the whole feedback is equal word for word. Those tests find the five course-source `reuse` verdicts. [inbox: triage pass 8 hits]
+1149. [Should] `[working-band]`: do not fire when `explain.text` prints the key at the asked places before its last figure (`stat-learning/problems-1` `p-heat-demand`); keep it when the key is nowhere in the text (`coint/problems-1`). [inbox: triage pass 8 hits]
+1150. [Should] `[rounding-tie]` on a `wrong` value: skip when the band it asks for would meet another band of the part, or when one rounding is already a `wrong` value (`trig/problems-1` `p-hexagon-tile`). [inbox: triage pass 8 hits]
+1151. [Should] `[table-source]` reads only the words: add a check that the key's band takes the table reading of the printed $\Phi(x)$ at $x$ to 2 places (`garch/problems-1` `p-stale-alarm` refuses 19.0% and 19.4%). [inbox: triage pass 8 hits]
+1152. [Could] A waiver keyed by line: a top-level `text` on a waiver (any source) makes each entry one line and one reason. [inbox: triage pass 8 hits]
+1153. [Should] The same-course checker does not see a shared parameter across a problem and an exam item when the story is told in other words: `p-fund-managers` (0.9 over 9 years) against `s-sharpe-p` (0.6 over 9 years) fired on the stock line alone. A `numbers` test on "x over n years" givens of one skill would have caught it. [inbox: triage pass 8 hits]
 
 Last inbox heading numbered by engine pass AF part 1: "Raised later (review problems fin-ml)" (end of file). The inbox is cleared. Last number: 1081.
 
@@ -2550,3 +2557,12 @@ Last inbox heading numbered by engine pass 8: "Raised later (delta read AF conve
 1145 status: done in engine pass 8 part A: `[wrong-band]` skips a slip that rounds to 0.
 1146 status: open: engine pass 8 part B.
 Engine pass 8 part A also built `[percent-unit]` (error, 0 hits), the third finding class of KNOWN_ISSUES "session AF close" (a percentage part with no unit "%"), and `[working-band]` (warning, 2 hits), the first (a band that refuses the value the part's own working prints). Hits: `docs/reports/engine-pass-8-hits.md`.
+
+Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part C`):
+1147 status: done in engine pass 8 part C: `retold-reuse.mjs` `slipFires` (a line with no number is stock unless it is a whole feedback of several sentences equal word for word).
+1148 status: done in engine pass 8 part C: a numbered slip line warns when the whole line is equal or the two share a run of two numbers or a number of two figures or more.
+1149 status: done in engine pass 8 part C: `[working-band]` skips a text that prints the key (1 hit left of 2).
+1150 status: done in engine pass 8 part C: `[rounding-tie]` on a `wrong` skips when its widened band meets another band (1 hit left of 2).
+1151 status: partly done in engine pass 8 part C: `[table-source]` tests the 2-place table reading of a printed $\Phi(x)$, only where the stem or question names a table; a part that names no source still gets the word warning.
+1152 status: done in engine pass 8 part C: a waiver takes a top-level `text`.
+1153 status: open (the `p-fund-managers` exam hit no longer fires: it stood on the stock line alone).
