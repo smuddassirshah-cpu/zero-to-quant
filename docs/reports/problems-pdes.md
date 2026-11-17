@@ -13,10 +13,15 @@ Author report for `app/content/courses/pdes/problems-1.json` to `problems-3.json
 | 2 | p-tent-rod | 4 numeric | l5, l6, l8 | 3 |
 | 2 | p-exp-series | 5 numeric | l6, l7 | 5 |
 | 2 | p-grid-modes | 4 numeric | l8, l5 | 4 |
+| 3 | p-call-heat | 4 numeric | l9, l10 | 4 |
+| 3 | p-fk-claim | 5 numeric | l9, l11, l10 | 5 |
+| 3 | p-grid-no-formula | 4 numeric | l12, l10 | 4 |
 
 Level 1: 4 problems, 17 parts, all typed. Every lesson of the level appears (l1 in p-drift-walk; l2 in three; l3 in three; l4 in two). Skill `pe-heat` throughout (the only skill of the level's lessons).
 
 Level 2: 3 problems, 13 parts, all typed (one percentage part with unit "%"). l5 in two problems, l6 in two, l7 in one, l8 in two. Skills `pe-fourier` and `pe-heat`.
+
+Level 3: 3 problems, 13 parts, all typed. l9 in two problems, l10 in three, l11 in one, l12 in one. Skills `pe-bs`, `pe-heat`, `pe-fk`, `pe-fd`. The Crank-Nicolson prices of p-grid-no-formula come from the lesson 12 scheme (heat variables on $[-1, 1]$, $n_t = n_x/5$, zero left edge, exact right edge); the number script's own solver reproduces the lesson's £10.4427214 and £10.4486123 and the three stated prices to $5 \times 10^{-8}$.
 
 ## Closest course items, per problem
 
@@ -70,10 +75,33 @@ Reuse scope: the level's lessons, quizzes, review and homework, every other set 
   - Homework: homework-2 item 5 (step count of `rod_explicit`). Different question.
   - Exam: e-explicit-code (code). Different task.
 
+### Level 3
+
+- **p-call-heat** (heat time today, $k$, the lemma argument $d_1$ from $x$, $a$ and $\tau$, the price with given $\Phi$ values; $S = 80$, $K = 75$, $r = 4\%$, $\sigma = 25\%$, $T = 0.8$).
+  - Lesson: l10 screen 4 (the $S = 110$ price with $d_1$, $d_2$ and $\Phi$ given). Ours builds $d_1$ from the heat variables first, for an off-the-money strike.
+  - Quiz: l9 quiz 0 ($\tau$ for a two-year 30% option) and l10 quiz 0 (lemma argument for $x = 0.1$, $\tau = 0.02$, $a = 1.75$). One step each; ours chains them to the price.
+  - Review: review-3 items 0 to 2 ($k$, $\beta$, kernel sd for $r = 4\%$, $\sigma = 30\%$, $T = 0.5$). Ours shares the $k$ step only, then goes to $d_1$ and the price.
+  - Homework: homework-3 item 1 (order the change of variables). No numbers.
+  - Exam: e-heat-change ($\alpha$, $\beta$ for $r = 6\%$, $\sigma = 25\%$). Ours asks neither.
+- **p-fk-claim** (heat time of a Feynman-Kac equation, the variance of $X_T$ as $2\tau$, $E[e^{X_T}]$, the discounted value, and a simulation run in standard errors).
+  - Lesson: l11 screen 1 ($E[(x + W_t)^2]$), screen 3 (read $\mu$ and $\sigma$ off the equation), screen 4 (standard error of a batch of 2,000). Ours has a drifted process, an exponential payoff and the link to heat time.
+  - Quiz: l11 quiz 0 ($E[(x + W_t)^3]$). One step, no discount.
+  - Review: review-3 item 5 (standard error from sd £14.70 and 20,000 paths). Ours asks how far a run sits from the value, in standard errors.
+  - Homework: homework-3 item 4 (Vasicek bond). Different model.
+  - Exam: e-fk-square ($dX = 0.5\,dt + 1.2\,dW$, payoff $x^2$, $r = 10\%$) and e-fk-reverting (mean-reverting drift, payoff $x$). Same standard task, Feynman-Kac for a Gaussian process; ours has its own drift, volatility, rate and an exponential payoff, and adds the heat-time and simulation steps.
+- **p-grid-no-formula** (observed order from three grids without the formula, the shortfall of the finest grid, the extrapolated price, the put by parity).
+  - Lesson: l12 screen 3 (errors against the formula, times $10^6$) and screen 4 (Richardson on 100 and 200 intervals). Ours never uses the formula: the order comes from differences, and the shortfall is estimated, not measured.
+  - Quiz: l12 quiz 0 (order from two errors). Ours uses two differences of prices instead.
+  - Review: review-3 item 7 (Richardson on 200 and 400 for $S = K = 100$, $r = 3\%$, $\sigma = 25\%$) and item 3 (put by parity). Separate items in the review; ours chains them through the order and the shortfall, on its own option.
+  - Homework: homework-3 item 6 (smallest grid with error below $5 \times 10^{-5}$). Not asked here.
+  - Exam: e-explicit-code and e-heat-grid-steps (explicit scheme). Different scheme and task.
+
 ## Fresh-check
 
 - problems-1: 0 hits, 4 advisory: the explicit-step formula (shared with l4 screen 8 and homework-1 item 4), the drift formula $c = (2q - 1)\Delta x/\Delta t$ (l2 screen 7, restated as the model, not a retold chain), and the parameter pair 0.25 and 0.02 also in l2 screen 10 (a different story: $D = 0.02$ there, $\Delta t = 0.02$ here). Judged clean.
 - problems-2: 0 hits, 2 advisory: $\cos k\pi = (-1)^k$ (l6 screen 3, a stock identity) and the grid factor $1 - 4\lambda\sin^2(k\Delta x/2)$ (l8 screen 4, the model the problem uses). A first draft drew one `rate` error: the Gibbs fraction 8.95% against 0.0895 in l7 screen 1, with 1.179 in both (a slip line quoted 1.179). That part was replaced by the series sum, so the constant no longer appears.
+- problems-3: 0 hits, 6 advisory: $k = 2r/\sigma^2$ (homework-3 item 1, review-3 item 0, exam e-heat-change), the Black-Scholes formula (l10 quiz 3), and $n_t = n_x/5$ (l12 screen 3, homework-3 item 6). All are the course's notation for the model, restated so each problem stands alone. Judged clean.
+- Second check by grep: the stories (tick walk, two-level bar, tent rod, $e^x$ series, exponential claim, convergence without a formula), the option parameters (80, 75, 4%, 25%, 0.8; 50, 50, 3%, 24%, 0.5) and each key number were grepped in `app/content/courses/pdes/` and `exams/topic-3.2.json`: no match beyond the advisories above.
 
 ## Gates
 
@@ -81,5 +109,16 @@ Reuse scope: the level's lessons, quizzes, review and homework, every other set 
 |---|---|---|---|---|---|---|---|
 | 1 | 0 errors, no pass-8 warnings (one advisory O2) | 0 and 0 | 0 errors | exit 0 | 0 failures (17 widgets) | green | green, 34 slips routed |
 | 2 | 0 errors, no pass-8 warnings (two advisory O2) | 0 and 0 | 0 errors | exit 0 | 0 failures (13 widgets) | green | green |
+| 3 | 0 errors, no pass-8 warnings | 0 and 0 | 0 errors | exit 0 | 0 failures (13 widgets) | green | green |
+
+Number script: 571 checks, 0 failures (two methods per value, every slip recomputed, stated figures matched as text, `check_wrongs` per set, set shape).
+
+## Inbox
+
+Two bullets under `Raised later (problems pdes):` in `docs/BACKLOG-INBOX.md`: the `rate` check on a universal constant, and the playthrough's message when the manifest lacks a new set.
+
+## Course map
+
+No `course.json` change proposed.
 
 Screenshots at 440 px read: no overflow, maths wraps inside the column.
