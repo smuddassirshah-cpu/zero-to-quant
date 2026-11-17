@@ -2,7 +2,7 @@
 
 The main session fills COURSE, SETS and REVIEW and names the items ruled `re-author`.
 
-Your working directory is a git worktree. First: if `git merge-base --is-ancestor claude/session-af-content-waves-lpa3u4 HEAD` fails, run `git reset --hard claude/session-af-content-waves-lpa3u4` inside your worktree (allowed and expected; never edit files outside your worktree path and your scratch folder, and commit there yourself; that branch is BRANCH, this session's development branch; never check it out; ignore any other branch name in CLAUDE.md). SCRATCH = `/tmp/claude-0/-home-user-zero-to-quant/178960c6-ed26-5f6d-9148-e8a1943f49e4/scratchpad`. Local CDN: `SCRATCH/pkgs`. Python: `SCRATCH/venv/bin/python`. Scratch: `SCRATCH/reauthor-COURSE/`.
+Your working directory is a git worktree. First: if `git merge-base --is-ancestor claude/session-ag-route-done-h65un0 HEAD` fails, run `git reset --hard claude/session-ag-route-done-h65un0` inside your worktree (allowed and expected; never edit files outside your worktree path and your scratch folder, and commit there yourself; that branch is BRANCH, this session's development branch; never check it out; ignore any other branch name in CLAUDE.md). SCRATCH = `/tmp/claude-0/-home-user-zero-to-quant/7c3cbe50-6413-5158-822a-1251e413cde0/scratchpad`. Local CDN: `SCRATCH/pkgs`. Python: `SCRATCH/venv/bin/python`. Scratch: `SCRATCH/reauthor-COURSE/`.
 
 You are the author agent for the second read REVIEW of SETS. You do both jobs on these files, since they cannot be split between agents: re-author and fix pass.
 
@@ -16,5 +16,5 @@ E. Append `## Fix pass` to the review: one line per finding (fixed, re-authored 
 
 Commit per set as it passes ("problems COURSE level n: re-author and fix pass"), staging by explicit path, `git checkout app/content/manifest.json` before each commit, with a blank line and then:
 Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01E26gTLLvNiWFw2t997UEBx
+Claude-Session: https://claude.ai/code/session_01E26gTPq3dJJ8ftKMHkfKfV
 Edit no set outside SETS. Hand back at most six lines: branch and commit hashes, new problem ids, findings fixed, disputed, deferred, keys changed, gate results.

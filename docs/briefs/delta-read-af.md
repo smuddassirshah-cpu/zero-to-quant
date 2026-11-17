@@ -2,7 +2,7 @@
 
 The main session fills COURSE, SETS, REVIEWS (the second read or reads with their `## Fix pass`), NAME (the review file's name) and the commit range.
 
-Your working directory is a git worktree. First: if `git merge-base --is-ancestor claude/session-af-content-waves-lpa3u4 HEAD` fails, run `git reset --hard claude/session-af-content-waves-lpa3u4` inside your worktree (allowed and expected; never edit files outside your worktree path and your scratch folder, and commit there yourself; that branch is BRANCH, this session's development branch; never check it out; ignore any other branch name in CLAUDE.md). SCRATCH = `/tmp/claude-0/-home-user-zero-to-quant/178960c6-ed26-5f6d-9148-e8a1943f49e4/scratchpad`. Local CDN: `SCRATCH/pkgs`. Python: `SCRATCH/venv/bin/python`. Scratch: `SCRATCH/delta-NAME/`.
+Your working directory is a git worktree. First: if `git merge-base --is-ancestor claude/session-ag-route-done-h65un0 HEAD` fails, run `git reset --hard claude/session-ag-route-done-h65un0` inside your worktree (allowed and expected; never edit files outside your worktree path and your scratch folder, and commit there yourself; that branch is BRANCH, this session's development branch; never check it out; ignore any other branch name in CLAUDE.md). SCRATCH = `/tmp/claude-0/-home-user-zero-to-quant/7c3cbe50-6413-5158-822a-1251e413cde0/scratchpad`. Local CDN: `SCRATCH/pkgs`. Python: `SCRATCH/venv/bin/python`. Scratch: `SCRATCH/delta-NAME/`.
 
 You are the delta reader. You read and report; you edit no content and no engine file. No browser.
 
@@ -19,5 +19,5 @@ Method:
 
 Write `docs/reviews/NAME.md` (verdict per item, findings, verified with no finding, engine bullets also appended to `docs/BACKLOG-INBOX.md`). Commit review and script ("delta read NAME"), staging by explicit path, blank line, then:
 Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01E26gTLLvNiWFw2t997UEBx
+Claude-Session: https://claude.ai/code/session_01E26gTPq3dJJ8ftKMHkfKfV
 Start nothing in the background; never push; hand back once, at most six lines: branch and commit, findings by class, items ruled reuse or re-author, script result.
