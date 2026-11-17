@@ -6,32 +6,32 @@
  "minutes": 45,
  "items": [
   {
-   "id": "p-billed-hours",
-   "difficulty": 3,
+   "id": "p-settlement-fails",
+   "difficulty": 4,
    "skills": [
     "mt-integral"
    ],
-   "prose": "A venue bills a resting limit order by the time $X$, in hours, until it fills. $X$ is exponential with mean 1, so $P(X > t) = e^{-t}$. The bill is in whole hours rounded down, $\\lfloor X \\rfloor$; a rival venue bills half hours, $\\tfrac12\\lfloor 2X \\rfloor$.",
+   "prose": "A clearing house models the number $N$ of settlement fails in a day by $P(N = k) = 0.64(k + 1)\\,0.2^k$ for $k = 0, 1, 2, \\dots$. You may use $\\sum_{k \\ge 0} (k + 1)x^k = (1 - x)^{-2}$ for $0 \\le x < 1$.",
    "parts": [
     {
-     "question": "What is $P(\\lfloor X \\rfloor = 2)$? Give 4 decimal places.",
+     "question": "A penalty of $1.25^N$, in £000, is charged. Write $1.25^N = \\sum_{k \\ge 0} 1.25^k \\mathbf{1}_{\\{N = k\\}}$ and pass the mean through the sum. Find $E[1.25^N]$. Give 4 decimal places.",
      "widget": {
       "kind": "numeric",
-      "answer": 0.0855,
+      "answer": 1.137778,
       "tol": {
        "abs": 0.0001
       },
       "wrong": [
        {
-        "id": "tail",
-        "value": 0.1353,
+        "id": "jensen",
+        "value": 1.118034,
         "tol": {
          "abs": 0.0001
         }
        },
        {
-        "id": "cdf",
-        "value": 0.8647,
+        "id": "no-k",
+        "value": 0.853333,
         "tol": {
          "abs": 0.0001
         }
@@ -39,126 +39,177 @@
       ]
      },
      "feedback": {
-      "correct": "$\\lfloor X \\rfloor = 2$ means $2 \\le X < 3$, so the chance is $e^{-2} - e^{-3} \\approx 0.1353 - 0.0498 = 0.0855$.",
-      "generic": "Not quite. Write $\\lfloor X \\rfloor = 2$ as an interval for $X$.",
+      "correct": "Every term is non-negative, so monotone convergence gives $E[1.25^N] = \\sum_k 0.64(k + 1)\\,0.25^k = \\tfrac{0.64}{0.75^2} = \\tfrac{256}{225} \\approx 1.1378$.",
+      "generic": "Not quite. Multiply each chance by $1.25^k$, so $0.2^k$ becomes $0.25^k$, and use the sum in the setting.",
       "byKey": {
-       "tail": "That is $P(X > 2)$, which also counts bills of 3 hours and more. Take away $P(X \\ge 3) = e^{-3}$.",
-       "cdf": "That is $P(X \\le 2)$. A bill of 2 hours needs $X$ between 2 and 3."
+       "jensen": "That is $1.25^{E[N]} = 1.25^{0.5}$. A mean does not pass inside a power. Weight each value $1.25^k$ by its own chance.",
+       "no-k": "That drops the factor $k + 1$ from the chances, giving $\\tfrac{0.64}{0.75}$. Keep it and use $\\sum (k + 1)x^k = (1 - x)^{-2}$."
       }
      },
      "explain": {
-      "text": "The bill is 2 hours when $2 \\le X < 3$. That interval has chance $P(X \\ge 2) - P(X \\ge 3) = e^{-2} - e^{-3} \\approx 0.0855$."
+      "text": "The partial sums over $k \\le m$ are simple, non-negative and rise to $1.25^N$, so monotone convergence lets the mean pass through. Each term is $0.64(k + 1)(0.2 \\times 1.25)^k$. With $x = 0.25$ the sum is $\\tfrac{0.64}{0.5625} \\approx 1.1378$."
      }
     },
     {
-     "question": "Write $\\lfloor X \\rfloor = \\sum_{k \\ge 1} \\mathbf{1}_{\\{X \\ge k\\}}$, a sum of non-negative terms. Using monotone convergence to swap the sum and the mean, find $E[\\lfloor X \\rfloor]$. Give 4 decimal places.",
+     "question": "The same step gives $G(s) = E[s^N] = \\dfrac{16}{(5 - s)^2}$ for $0 \\le s < 5$, so $G(1.25) = \\tfrac{256}{225}$ as in part 1. For $0 \\le s < 1$ it also gives $G'(s) = E[Ns^{N-1}] = \\dfrac{32}{(5 - s)^3}$. Which theorem gives $E[N] = \\lim_{s \\uparrow 1} G'(s)$, and why?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "mct",
+        "text": "Monotone convergence: $Ns^{N-1} \\ge 0$ rises with $s$ to $N$, so the means rise to $E[N]$, finite or not",
+        "correct": true
+       },
+       {
+        "id": "dct",
+        "text": "Dominated convergence with $Y = N$, since $Ns^{N-1} \\le N$",
+        "why": "That needs $E[N] < \\infty$ before you start, and $E[N]$ is the number being found. Monotone convergence needs no bound."
+       },
+       {
+        "id": "fatou",
+        "text": "Fatou's lemma, which turns the limit of the means into an equality",
+        "why": "Fatou gives only $E[N] \\le \\liminf_s G'(s)$, an inequality. The equality needs the rise in $s$."
+       },
+       {
+        "id": "none",
+        "text": "No theorem applies, since $N$ is unbounded",
+        "why": "Monotone convergence allows unbounded variables. It asks only that they be non-negative and rise to their limit."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "As $s \\uparrow 1$, each $Ns^{N-1}$ rises to $N$, and all are non-negative. Monotone convergence gives $G'(s) = E[Ns^{N-1}] \\uparrow E[N]$.",
+      "generic": "Not quite. Ask how $Ns^{N-1}$ moves as $s$ rises to 1."
+     },
+     "explain": {
+      "text": "For fixed $N$, $s^{N-1}$ rises with $s$ on $[0, 1]$, so $Ns^{N-1}$ rises to $N$. These are non-negative, so their means rise to $E[N]$ by monotone convergence. No bound on $N$ is needed."
+     }
+    },
+    {
+     "question": "Using part 2, find $E[N]$. Give a decimal.",
      "widget": {
       "kind": "numeric",
-      "answer": 0.582,
+      "answer": 0.5,
       "tol": {
-       "abs": 0.0001
+       "abs": 0.0005
       },
       "wrong": [
        {
-        "id": "from-zero",
-        "value": 1.582,
-        "tol": {
-         "abs": 0.0001
-        }
-       },
-       {
-        "id": "mean",
+        "id": "one",
         "value": 1,
         "tol": {
-         "abs": 0.0001
+         "abs": 0.0005
         }
        },
        {
-        "id": "half-lost",
-        "value": 0.5,
+        "id": "at-zero",
+        "value": 0.256,
         "tol": {
-         "abs": 0.0001
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "$E[\\lfloor X \\rfloor] = \\sum_{k \\ge 1} P(X \\ge k) = \\sum_{k \\ge 1} e^{-k} = \\tfrac{1}{e - 1} \\approx 0.5820$.",
-      "generic": "Not quite. Take the mean of each indicator, then add the series.",
-      "byKey": {
-       "from-zero": "You started the sum at $k = 0$. The term $\\mathbf{1}_{\\{X \\ge 0\\}}$ is not in $\\lfloor X \\rfloor$: an order filled in 20 minutes bills 0 hours.",
-       "mean": "That is $E[X]$. Rounding down loses part of every hour, so $E[\\lfloor X \\rfloor] < 1$.",
-       "half-lost": "Rounding down loses less than half an hour on average here, as the density falls across each hour. Add the tail chances."
-      }
-     },
-     "explain": {
-      "text": "Each indicator is non-negative, so monotone convergence lets the mean pass through the infinite sum. The means $P(X \\ge k) = e^{-k}$ form a geometric series. It sums to $\\tfrac{e^{-1}}{1 - e^{-1}} = \\tfrac{1}{e - 1} \\approx 0.5820$."
-     }
-    },
-    {
-     "question": "In the same way, $\\tfrac12\\lfloor 2X \\rfloor = \\tfrac12 \\sum_{k \\ge 1} \\mathbf{1}_{\\{X \\ge k/2\\}}$. Using part 2's method, find the mean half-hour bill. Give 4 decimal places.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 0.7707,
-      "tol": {
-       "abs": 0.0001
-      },
-      "wrong": [
-       {
-        "id": "no-half",
-        "value": 1.5415,
-        "tol": {
-         "abs": 0.0001
+         "abs": 0.0005
         }
        },
        {
-        "id": "from-zero",
-        "value": 1.2707,
+        "id": "square",
+        "value": 2,
         "tol": {
-         "abs": 0.0001
+         "abs": 0.0005
         }
        }
       ]
      },
      "feedback": {
-      "correct": "The mean is $\\tfrac12 \\sum_{k \\ge 1} e^{-k/2} = \\tfrac{1/2}{e^{1/2} - 1} \\approx 0.7707$.",
-      "generic": "Not quite. Each step adds $\\tfrac12$ when $X \\ge \\tfrac k2$; add the means.",
+      "correct": "Monotone convergence gives $E[N] = \\lim_{s \\uparrow 1} \\tfrac{32}{(5 - s)^3} = \\tfrac{32}{4^3} = 0.5$.",
+      "generic": "Not quite. Let $s \\uparrow 1$ in $G'(s) = \\tfrac{32}{(5 - s)^3}$.",
       "byKey": {
-       "no-half": "You counted the half-hour steps but not their size. Each step is worth $\\tfrac12$ an hour, so halve the sum.",
-       "from-zero": "You started at $k = 0$, which adds $\\tfrac12$ for every order. The bill starts at 0."
+       "one": "That is $G(1) = E[1^N] = 1$, the total chance. The mean is the limit of $G'(s)$, not of $G(s)$.",
+       "at-zero": "That is $G'(0) = \\tfrac{32}{125}$, which is $P(N = 1)$. Let $s$ rise to 1 instead.",
+       "square": "That divides by $4^2$. In $G'(s)$ the power of $5 - s$ is 3, so the limit is $\\tfrac{32}{64}$."
       }
      },
      "explain": {
-      "text": "Each half-hour step adds $\\tfrac12$ when $X \\ge \\tfrac k2$, which has chance $e^{-k/2}$. Monotone convergence again swaps the sum and the mean. The geometric sum gives $\\tfrac{0.5}{e^{0.5} - 1} \\approx 0.7707$."
+      "text": "By part 2 the mean is the limit of $G'(s)$ as $s \\uparrow 1$. The limit is $\\tfrac{32}{(5 - 1)^3} = 0.5$."
      }
     },
     {
-     "question": "On a grid of step $h$ the bill is $h\\lfloor X/h \\rfloor$, with mean $\\dfrac{h}{e^{h} - 1}$ by the same sum. For $h = 2^{-n}$ these simple functions rise to $X$. What is the smallest $n$ whose bill has a mean above 0.99? Give a whole number.",
+     "question": "In the same way $N(N - 1)s^{N-2}$ rises to $N(N - 1)$, and $G''(s) = \\dfrac{96}{(5 - s)^4}$. Using $E[N] = 0.5$ from part 3, find $E[N^2]$. Give a decimal to 3 places.",
      "widget": {
       "kind": "numeric",
-      "answer": 6,
+      "answer": 0.875,
       "tol": {
-       "abs": 0
+       "abs": 0.0005
       },
       "wrong": [
        {
-        "id": "one-minus-h",
-        "value": 7,
+        "id": "falling",
+        "value": 0.375,
         "tol": {
-         "abs": 0
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "variance",
+        "value": 0.625,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "mean-sq",
+        "value": 0.25,
+        "tol": {
+         "abs": 0.0005
         }
        }
       ]
      },
      "feedback": {
-      "correct": "At $n = 5$, $h = \\tfrac{1}{32}$ gives about 0.9845, and at $n = 6$, $h = \\tfrac{1}{64}$ gives about 0.9922. So $n = 6$.",
-      "generic": "Not quite. Work out $\\tfrac{h}{e^h - 1}$ for $h = \\tfrac{1}{32}$ and $h = \\tfrac{1}{64}$.",
+      "correct": "Monotone convergence gives $E[N(N - 1)] = \\tfrac{96}{4^4} = 0.375$. Then $E[N^2] = E[N(N - 1)] + E[N] = 0.375 + 0.5 = 0.875$.",
+      "generic": "Not quite. Find $E[N(N - 1)]$ as the limit of $G''(s)$, then add $E[N]$.",
       "byKey": {
-       "one-minus-h": "You used $1 - h$ for the mean. It is closer to $1 - \\tfrac h2$, so $h = \\tfrac{1}{64}$ already clears 0.99."
+       "falling": "That is $E[N(N - 1)]$. Since $N^2 = N(N - 1) + N$, add $E[N] = 0.5$.",
+       "variance": "That is $0.875 - 0.25$, the variance of $N$. The question asks for $E[N^2]$ itself.",
+       "mean-sq": "That is $E[N]^2$. The mean of a square is not the square of the mean: use $G''$."
       }
      },
      "explain": {
-      "text": "The bills increase to $X$, so their means rise to $E[X] = 1$ by monotone convergence. For small $h$, $\\tfrac{h}{e^h - 1} \\approx 1 - \\tfrac h2$. At $h = \\tfrac{1}{32}$ the mean is about 0.9845 and at $h = \\tfrac{1}{64}$ about 0.9922, so $n = 6$."
+      "text": "The non-negative $N(N - 1)s^{N-2}$ rise to $N(N - 1)$ as $s \\uparrow 1$, so $E[N(N - 1)] = G''(1^-) = \\tfrac{96}{256} = 0.375$. Adding $E[N] = 0.5$ gives $E[N^2] = 0.875$."
+     }
+    },
+    {
+     "question": "A harsher schedule charges $5^N$, in £000. By the step of part 1, what is $E[5^N]$?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "inf",
+        "text": "It is infinite: the step of part 1 gives $\\sum_k 0.64(k + 1)$, which diverges",
+        "correct": true
+       },
+       {
+        "id": "undefined",
+        "text": "It does not exist, since $\\tfrac{16}{(5 - s)^2}$ is undefined at $s = 5$",
+        "why": "A non-negative variable always has a mean in $[0, \\infty]$. The formula for $G$ holds only for $s < 5$; the series itself decides."
+       },
+       {
+        "id": "finite",
+        "text": "It is finite, since $5^N$ is finite at every outcome",
+        "why": "A variable that is finite everywhere can still have an infinite mean. Here the terms $0.64(k + 1)$ do not shrink."
+       },
+       {
+        "id": "shrink",
+        "text": "It is large but finite, since the chances $0.2^k$ shrink fast",
+        "why": "They shrink at exactly the rate $5^k$ grows: $5^k \\times 0.2^k = 1$. What is left, $0.64(k + 1)$, grows."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Monotone convergence gives $E[5^N] = \\sum_k 5^k \\times 0.64(k + 1)\\,0.2^k = \\sum_k 0.64(k + 1) = \\infty$.",
+      "generic": "Not quite. Write out the series of part 1 with $5^k$ in place of $1.25^k$."
+     },
+     "explain": {
+      "text": "Each term is $0.64(k + 1)(0.2 \\times 5)^k = 0.64(k + 1)$. The terms grow, so the sum and the mean are infinite. $5^N$ is finite at every outcome, yet its mean is not."
      }
     }
    ]
@@ -209,7 +260,7 @@
      }
     },
     {
-     "question": "Using the moments of $R$ from part 1, find $E[G_4]$. Give 4 decimal places.",
+     "question": "As in part 1, expand and use the moments of $R$ from the setting. Find $E[G_4]$. Give 4 decimal places.",
      "widget": {
       "kind": "numeric",
       "answer": 1.0945,
@@ -274,7 +325,7 @@
       "correct": "$E[e^{|R|}] = 2e^{0.125} \\times 0.6915 \\approx 2 \\times 1.1331 \\times 0.6915 \\approx 1.567$.",
       "generic": "Not quite. Multiply $2$, $e^{0.125}$ and $\\Phi(0.5) = 0.6915$.",
       "byKey": {
-       "no-abs": "That is $E[e^R] = e^{0.125}$. The bound needs $e^{|R|}$, which is larger on every negative shock.",
+       "no-abs": "That is $e^{0.125}$ alone. The formula also carries the factors 2 and $\\Phi(0.5) = 0.6915$.",
        "no-phi": "You left out the factor $\\Phi(0.5) = 0.6915$ of the formula."
       }
      },
@@ -366,101 +417,79 @@
    ]
   },
   {
-   "id": "p-root-of-uniform",
+   "id": "p-boom-bust",
    "difficulty": 4,
    "skills": [
     "mt-integral"
    ],
-   "prose": "Let $U$ be uniform on $(0, 1)$ and $X_n = U^{1/n}$, the $n$th root of $U$. At every outcome $X_n \\to 1$, since $U > 0$.",
+   "prose": "A strategy's capital starts at $M_0 = 1$. Each day it is multiplied by 1.6 or by 0.4, with equal chance, independently of other days. So $E[M_n] = 1$ for every $n$.",
    "parts": [
     {
-     "question": "Use the layer-cake formula $E[X_n] = \\int_0^1 P(X_n > t)\\,dt$, with $P(X_n > t) = 1 - t^n$. Find $E[X_4]$. Give a decimal.",
-     "widget": {
-      "kind": "numeric",
-      "answer": 0.8,
-      "tol": {
-       "abs": 0.001
-      },
-      "wrong": [
-       {
-        "id": "tail-only",
-        "value": 0.2,
-        "tol": {
-         "abs": 0.001
-        }
-       },
-       {
-        "id": "jensen",
-        "value": 0.8409,
-        "tol": {
-         "abs": 0.0005
-        }
-       }
-      ]
-     },
-     "feedback": {
-      "correct": "$E[X_4] = \\int_0^1 (1 - t^4)\\,dt = 1 - \\tfrac15 = 0.8$.",
-      "generic": "Not quite. Integrate $1 - t^4$ over $[0, 1]$.",
-      "byKey": {
-       "tail-only": "That is $\\int_0^1 t^4\\,dt$, the chance of the wrong side. Integrate $P(X_4 > t) = 1 - t^4$.",
-       "jensen": "That is $(E[U])^{1/4} = 0.5^{1/4}$. The mean of a root is not the root of the mean."
-      }
-     },
-     "explain": {
-      "text": "$X_4 > t$ means $U > t^4$, which has chance $1 - t^4$ for $t$ in $[0, 1]$. The layer-cake formula adds these chances over $t$: $E[X_4] = 1 - \\tfrac15 = 0.8$."
-     }
-    },
-    {
-     "question": "By the same formula $E[X_n^2] = \\tfrac{n}{n+2}$, and part 1 gives $E[X_n] = \\tfrac{n}{n+1}$. Write the mean-square distance $E[(X_n - 1)^2]$ as a single fraction in $n$.",
+     "question": "Each day multiplies $\\sqrt{M}$ by $\\sqrt{1.6}$ or $\\sqrt{0.4}$. Write $E[\\sqrt{M_n}]$ as an expression in $n$.",
      "widget": {
       "kind": "expression",
-      "answer": "\\frac{2}{(n+1)(n+2)}",
+      "answer": "0.9^{n/2}",
       "accept": [
-       "\\frac{2}{n^2+3n+2}"
+       "\\left(\\frac{3}{\\sqrt{10}}\\right)^{n}",
+       "\\left(\\frac{\\sqrt{1.6}+\\sqrt{0.4}}{2}\\right)^{n}",
+       "0.9^(n/2)",
+       "((sqrt(1.6)+sqrt(0.4))/2)^n"
       ],
       "wrong": [
        {
-        "id": "mean-gap",
-        "tex": "\\frac{1}{(n+1)^2}"
+        "id": "geo",
+        "tex": "0.8^{n}"
        },
        {
-        "id": "variance",
-        "tex": "\\frac{n}{(n+2)(n+1)^2}"
+        "id": "no-half",
+        "tex": "\\left(\\sqrt{1.6}+\\sqrt{0.4}\\right)^{n}"
+       },
+       {
+        "id": "squared",
+        "tex": "0.9^{n}"
        }
       ],
       "keyboard": "algebra"
      },
      "feedback": {
-      "correct": "$E[(X_n - 1)^2] = \\tfrac{n}{n+2} - \\tfrac{2n}{n+1} + 1 = \\tfrac{2}{(n+1)(n+2)}$.",
-      "generic": "Not quite. Expand the square and use both means.",
+      "correct": "One day gives $E[\\sqrt{M_1}] = \\tfrac{\\sqrt{1.6} + \\sqrt{0.4}}{2} = \\tfrac{3}{\\sqrt{10}} = \\sqrt{0.9}$. The days are independent, so $E[\\sqrt{M_n}] = 0.9^{n/2}$.",
+      "generic": "Not quite. Find $E[\\sqrt{M_1}]$, the mean of a two-valued simple function, then use independence.",
       "byKey": {
-       "mean-gap": "That is $(1 - E[X_n])^2$, the squared gap of the mean. The mean-square distance also counts the spread of $X_n$.",
-       "variance": "That is $\\mathrm{Var}(X_n)$, the spread about $E[X_n]$. Measure the distance to 1 instead."
+       "geo": "That is $\\sqrt{1.6 \\times 0.4} = 0.8$ a day, the root of one up and one down together. The mean of $\\sqrt{M_1}$ weights $\\sqrt{1.6}$ and $\\sqrt{0.4}$ by a half each.",
+       "no-half": "Each value has chance $\\tfrac12$, so halve the sum $\\sqrt{1.6} + \\sqrt{0.4}$.",
+       "squared": "That is $(E[\\sqrt{M_1}])^2$ for each day. One day gives $\\sqrt{0.9}$, not 0.9."
       }
      },
      "explain": {
-      "text": "Expand the square: $E[X_n^2] - 2E[X_n] + 1$. Put $\\tfrac{n}{n+2}$ and $\\tfrac{n}{n+1}$ over $(n+1)(n+2)$. The top is $n^2 + n - 2n^2 - 4n + n^2 + 3n + 2 = 2$."
+      "text": "$\\sqrt{M_1}$ takes two values with chance $\\tfrac12$ each, so its mean is $\\tfrac{\\sqrt{1.6} + \\sqrt{0.4}}{2} = \\sqrt{0.9} \\approx 0.9487$. Independent days multiply their means, giving $0.9^{n/2}$."
      }
     },
     {
-     "question": "Using part 2 with $n = 10$, find Chebyshev's bound $E[(X_{10} - 1)^2] / 0.1^2$ on $P(|X_{10} - 1| > 0.1)$. Give 4 decimal places.",
+     "question": "As in the proof of Chebyshev's bound, $\\mathbf{1}_{\\{M_n > \\varepsilon\\}} \\le \\sqrt{M_n / \\varepsilon}$, so $P(M_n > \\varepsilon) \\le E[\\sqrt{M_n}]/\\sqrt{\\varepsilon}$. Using part 1, give this bound for $n = 4$ and $\\varepsilon = 0.5$. Give 4 decimal places.",
      "widget": {
       "kind": "numeric",
-      "answer": 1.5152,
+      "answer": 1.145513,
       "tol": {
        "abs": 0.0001
       },
       "wrong": [
        {
-        "id": "no-eps",
-        "value": 0.0152,
+        "id": "no-root",
+        "value": 0.81,
         "tol": {
          "abs": 0.0001
         }
        },
        {
-        "id": "eps",
-        "value": 0.1515,
+        "id": "epsilon",
+        "value": 1.62,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "markov-m",
+        "value": 2,
         "tol": {
          "abs": 0.0001
         }
@@ -468,36 +497,44 @@
       ]
      },
      "feedback": {
-      "correct": "$E[(X_{10} - 1)^2] = \\tfrac{2}{11 \\times 12} = \\tfrac{1}{66}$, and dividing by $0.01$ gives $\\tfrac{100}{66} \\approx 1.5152$.",
-      "generic": "Not quite. Put $n = 10$ into part 2, then divide by $0.1^2$.",
+      "correct": "Part 1 gives $E[\\sqrt{M_4}] = 0.9^2 = 0.81$, so the bound is $\\tfrac{0.81}{\\sqrt{0.5}} \\approx 1.1455$, above 1 and so of no use.",
+      "generic": "Not quite. Put $n = 4$ into $0.9^{n/2}$, then divide by $\\sqrt{0.5}$.",
       "byKey": {
-       "no-eps": "That is $E[(X_{10} - 1)^2]$ alone. Chebyshev divides it by $0.1^2 = 0.01$.",
-       "eps": "You divided by $0.1$. Chebyshev divides by the square, $0.1^2$."
+       "no-root": "That is $E[\\sqrt{M_4}]$ alone. The bound divides it by $\\sqrt{\\varepsilon} = \\sqrt{0.5}$.",
+       "epsilon": "That divides by $\\varepsilon$. The indicator is bounded by $\\sqrt{M_n/\\varepsilon}$, so divide by $\\sqrt{\\varepsilon}$.",
+       "markov-m": "That is $E[M_4]/\\varepsilon = \\tfrac{1}{0.5}$, the bound from $M_4$ itself. The question uses $\\sqrt{M_4}$."
       }
      },
      "explain": {
-      "text": "A bound above 1 says nothing about a chance. Chebyshev's bound divides the mean-square distance by $\\varepsilon^2 = 0.01$. Here that is $\\tfrac{1}{66} \\div 0.01 \\approx 1.5152$."
+      "text": "With $E[\\sqrt{M_4}] = 0.9^{4/2} = 0.81$ and $\\sqrt{0.5} \\approx 0.7071$, the bound is $\\tfrac{0.81}{0.7071} \\approx 1.1455$."
      }
     },
     {
-     "question": "Now find the chance exactly: $|X_{10} - 1| > 0.1$ means $U < 0.9^{10}$. Give $P(|X_{10} - 1| > 0.1)$ to 4 decimal places.",
+     "question": "Now find the chance itself. After 4 days with $k$ up days, $M_4 = 1.6^k\\,0.4^{4-k}$. What is $P(M_4 > 0.5)$? Give 4 decimal places.",
      "widget": {
       "kind": "numeric",
-      "answer": 0.3487,
+      "answer": 0.3125,
       "tol": {
        "abs": 0.0001
       },
       "wrong": [
        {
-        "id": "complement",
-        "value": 0.6513,
+        "id": "two-ups",
+        "value": 0.6875,
         "tol": {
          "abs": 0.0001
         }
        },
        {
-        "id": "root",
-        "value": 0.9895,
+        "id": "all-up",
+        "value": 0.0625,
+        "tol": {
+         "abs": 0.0001
+        }
+       },
+       {
+        "id": "three-only",
+        "value": 0.25,
         "tol": {
          "abs": 0.0001
         }
@@ -505,51 +542,106 @@
       ]
      },
      "feedback": {
-      "correct": "$X_{10} < 0.9$ exactly when $U < 0.9^{10}$, so the chance is $0.9^{10} \\approx 0.3487$.",
-      "generic": "Not quite. The chance that $U$ falls below $0.9^{10}$ is that length.",
+      "correct": "Two up days give $M_4 = 0.4096$, three give $1.6384$. So $M_4 > 0.5$ needs $k \\ge 3$, with chance $\\tfrac{4 + 1}{16} = 0.3125$, against part 2's useless bound.",
+      "generic": "Not quite. Find the smallest $k$ with $1.6^k\\,0.4^{4-k} > 0.5$, then add the binomial chances.",
       "byKey": {
-       "complement": "That is $P(X_{10} \\ge 0.9)$, the chance of being close to 1.",
-       "root": "That is $0.9^{1/10}$. Raise both sides of $U^{1/10} < 0.9$ to the 10th power: $U < 0.9^{10}$."
+       "two-ups": "That counts $k \\ge 2$. Two up days give $M_4 = 1.6^2 \\times 0.4^2 = 0.4096$, below 0.5.",
+       "all-up": "That is four up days only. Three up days also give $M_4 = 1.6384 > 0.5$.",
+       "three-only": "That is exactly three up days, $\\tfrac{4}{16}$. Four up days give $M_4 > 0.5$ too."
       }
      },
      "explain": {
-      "text": "$X_{10} \\le 1$ always, so the event is $X_{10} < 0.9$, that is $U < 0.9^{10}$. Part 3's bound was no use here. The exact chance is the length $0.9^{10} \\approx 0.3487$."
+      "text": "The capital is $0.0256 \\times 4^k$, so it exceeds 0.5 only for $k = 3$ or 4. Those have $4 + 1$ of the 16 equally likely up-down patterns, so $P(M_4 > 0.5) = 0.3125$."
      }
     },
     {
-     "question": "In general $P(|X_n - 1| > 0.1) = 0.9^n$. Using this and part 2, in which modes does $X_n \\to 1$?",
+     "question": "The union bound with part 2's inequality gives $P(M_n > 0.01 \\text{ for some } n \\ge 200) \\le \\sum_{n \\ge 200} 0.9^{n/2}/\\sqrt{0.01}$. Find this bound. Give 5 decimal places.",
      "widget": {
-      "kind": "choice",
-      "layout": "stack",
-      "options": [
+      "kind": "numeric",
+      "answer": 0.005176,
+      "tol": {
+       "abs": 5e-06
+      },
+      "wrong": [
        {
-        "id": "all",
-        "text": "Every one of the four modes of lesson 8",
-        "correct": true
+        "id": "one-day",
+        "value": 0.000266,
+        "tol": {
+         "abs": 5e-06
+        }
        },
        {
-        "id": "not-ms",
-        "text": "Pointwise and in probability; the mean-square mode fails, as part 3's bound exceeds 1",
-        "why": "A bound above 1 at $n = 10$ says nothing about the limit: $\\tfrac{2}{(n+1)(n+2)} \\to 0$."
+        "id": "no-root",
+        "value": 0.000518,
+        "tol": {
+         "abs": 5e-06
+        }
        },
        {
-        "id": "prob-only",
-        "text": "In probability only, since $0.9^n$ is never 0",
-        "why": "In probability needs $0.9^n \\to 0$, not $0.9^n = 0$. And $U^{1/n} \\to 1$ at every outcome gives almost sure convergence."
-       },
-       {
-        "id": "dist-only",
-        "text": "In distribution only, as each $X_n$ has a different law",
-        "why": "The laws change with $n$ in every mode of convergence. Here the values themselves close in on 1."
+        "id": "epsilon",
+        "value": 0.05176,
+        "tol": {
+         "abs": 1e-05
+        }
        }
       ]
      },
      "feedback": {
-      "correct": "$U^{1/n} \\to 1$ at every outcome, $0.9^n \\to 0$ and $\\tfrac{2}{(n+1)(n+2)} \\to 0$, so every mode holds.",
-      "generic": "Not quite. Test each mode with what parts 2 and 4 found, letting $n$ grow."
+      "correct": "The sum is geometric with ratio $\\sqrt{0.9}$: $10 \\times \\tfrac{0.9^{100}}{1 - \\sqrt{0.9}} = 10 \\times \\tfrac{0.0000266}{0.0513} \\approx 0.00518$.",
+      "generic": "Not quite. Divide each term by $\\sqrt{0.01} = 0.1$ and sum the geometric series from $n = 200$.",
+      "byKey": {
+       "one-day": "That is the term for $n = 200$ alone. The union runs over every $n \\ge 200$, so add the whole tail.",
+       "no-root": "That leaves out the factor $\\tfrac{1}{\\sqrt{0.01}} = 10$ from each term.",
+       "epsilon": "That divides by $\\varepsilon = 0.01$. The inequality divides by $\\sqrt{\\varepsilon} = 0.1$."
+      }
      },
      "explain": {
-      "text": "Convergence at every outcome gives almost sure convergence. The mean-square distance $\\tfrac{2}{(n+1)(n+2)}$ tends to 0, which gives convergence in probability and in distribution too. The exact chance $0.9^n \\to 0$ confirms it."
+      "text": "Each term is $10 \\times 0.9^{n/2}$, and the ratio between terms is $\\sqrt{0.9} \\approx 0.9487$. The tail from $n = 200$ is $\\tfrac{10 \\times 0.9^{100}}{1 - 0.9487} \\approx 0.00518$."
+     }
+    },
+    {
+     "question": "The bound of part 4 shrinks to 0 as the start day grows, so $M_n \\to 0$ almost surely. Yet each day $E[M_{n+1}^2] = 1.36\\,E[M_n^2]$. Find $E[(M_{10} - 0)^2]$, the mean-square distance of $M_{10}$ from that limit. Give 2 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 21.64657,
+      "tol": {
+       "abs": 0.005
+      },
+      "wrong": [
+       {
+        "id": "mean-sq",
+        "value": 1,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "added",
+        "value": 13.6,
+        "tol": {
+         "abs": 0.005
+        }
+       },
+       {
+        "id": "one-day",
+        "value": 1.36,
+        "tol": {
+         "abs": 0.005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "One day gives $E[M_1^2] = \\tfrac{2.56 + 0.16}{2} = 1.36$, so $E[M_{10}^2] = 1.36^{10} \\approx 21.65$. It grows without bound, so $M_n \\to 0$ almost surely but not in mean square.",
+      "generic": "Not quite. Square each day's factor, average, and multiply over the 10 independent days.",
+      "byKey": {
+       "mean-sq": "That is $E[M_{10}]^2 = 1$. The mean of a square is not the square of the mean.",
+       "added": "That adds 1.36 for each day. Independent days multiply: the factor is $1.36^{10}$.",
+       "one-day": "That is $E[M_1^2]$, one day only. Raise it to the 10th power."
+      }
+     },
+     "explain": {
+      "text": "Squares of independent factors multiply in mean: $E[M_{10}^2] = 1.36^{10} \\approx 21.65$. The capital dies almost surely, and its mean-square distance from 0 still explodes."
      }
     }
    ]
@@ -607,7 +699,7 @@
       "options": [
        {
         "id": "four",
-        "text": "$Y = 4$: the quotient is $Te^{-sT}$ for some $s \\ge 0$, at most $T \\le 4$",
+        "text": "$Y = 4$: the quotient has size $Te^{-sT}$ for some $s \\ge 0$, at most $T \\le 4$",
         "correct": true
        },
        {
@@ -628,7 +720,7 @@
       ]
      },
      "feedback": {
-      "correct": "By the mean value theorem each quotient is $Te^{-sT}$ for some $s \\ge 0$, so it is at most $T \\le 4$, a constant with finite mean.",
+      "correct": "By the mean value theorem each quotient has size $Te^{-sT}$ for some $s \\ge 0$, so it is at most $T \\le 4$, a constant with finite mean.",
       "generic": "Not quite. Write the quotient with the mean value theorem."
      },
      "explain": {
