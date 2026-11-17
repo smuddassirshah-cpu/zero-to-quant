@@ -5,6 +5,7 @@
 //
 // Usage (from app/): node tools/same-course-reuse.mjs [--all | --file <json>] [--json] [--no-waivers] [--content <dir>]
 //   --all            every problems-<n>.json of every course (the gate: exit 1 on an unwaived error)
+//   --all-exams      also compare each set with every exam and mock the course's skills do not reach (parts[] items included): warnings tagged [all-exams], never gating    --no-extras   leave out the warning-only kinds ratio, xparam, story, chain-union (engine pass 7 remainder, package 3)
 //   --file <json>    one file of any kind (a review, homework or lesson too); fresh-check.mjs --file runs this by default for problems-<n>.json (--no-same-course to skip)
 //   --numbers n      shared distinctive numbers needed for a numbers hit (default 3)       --df n   a number or matrix held by more than n units of the app is not distinctive (default 40)
 //   --warn-run n     shared words in one run for a text warning (default 10)                 --error-run n   for a text error (default 12)
@@ -20,7 +21,7 @@ import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { shapesOf, buildIndex, matchShapes } from './reuse-shapes.mjs';
-import { learn, buildModel, prep, markStock, buildSentenceIndex, containersOf, scanRetold, matchRates, rateEvidence } from './retold-reuse.mjs';
+import { learn, buildModel, prep, markStock, buildSentenceIndex, containersOf, scanRetold, matchRates, rateEvidence, ratiosOf, givensOf, buildStoryIndex, storyMatches, courseWordDf, questionMatches, storyWords, buildStepIndex, chainUnion } from './retold-reuse.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const APP = join(HERE, '..');
@@ -199,8 +200,14 @@ function keyNums(node, out = []) {
   }
   return out;
 }
+// The model answers of longform items (ENGINE-BACKLOG 1106): read by the sentence test, a hit that needs one is a warning tagged [model]
+function modelsOf(node, out = []) {
+  if (Array.isArray(node)) { for (const v of node) modelsOf(v, out); return out; }
+  if (node && typeof node === 'object') for (const [k, v] of Object.entries(node)) { if (k === 'model' && typeof v === 'string') out.push(v); else if (v && typeof v === 'object' && !NOT_DATA.has(k)) modelsOf(v, out); }
+  return out;
+}
 const isFluency = (f) => /^fluency-/.test(f);
-function unitsOfFile(doc, rel) {
+function unitsOfFile(doc, rel, nested = false) {
   const u = [];
   const add = (path, node, stem, meta = {}) => {
     const sec = [], mats = [], osec = [];
@@ -211,13 +218,14 @@ function unitsOfFile(doc, rel) {
     jsonMatrices(stem ? [stem, node] : node, mats);
     if (!sec.length && !out.length) return;
     const fbs = fbOf(node);
-    u.push({ file: rel, path, ...meta, sec, osec: stem ? osec : sec, fbs, ofbs: fbs, sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.flatMap(matrixKeys)), shapes: shapesOf(shapeStrings(stem ? [stem, node] : node), stem ? null : node) });
+    u.push({ file: rel, path, ...meta, sec, osec: stem ? osec : sec, fbs, ofbs: fbs, models: modelsOf(node), ratios: ratiosOf(sec), givens: givensOf(sec), sens: sentences(sec), nums: numberSet(sec, keyNums([stem, node])), mats: new Set(mats.flatMap(matrixKeys)), shapes: shapesOf(shapeStrings(stem ? [stem, node] : node), stem ? null : node) });
   };
   const withParts = (path, q, i) => {
     const id = { id: q.id, skills: q.skills };   // the item's id and skills: an exam item belongs to the courses whose skills it carries
     add(path, q, undefined, { cont: 'items', idx: i, hasParts: Array.isArray(q.parts), ...id });
     if (Array.isArray(q.parts)) { const { parts, ...stem } = q; q.parts.forEach((p, j) => add(`${path}.parts[${j}]`, p, stem, { cont: path, idx: j, part: true, ...id })); }
   };
+  if (nested) { (doc.parts ?? []).forEach((pt, pi) => (pt.items ?? []).forEach((q, i) => withParts(`parts[${pi}].items[${i}]`, q, i))); return u; }   // an exam file whose items sit in parts[].items: read only by --all-exams (engine pass 7 remainder, package 3)
   (doc.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s, undefined, { cont: 'screens', idx: i }));
   (Array.isArray(doc.quiz) ? doc.quiz : doc.quiz?.items ?? []).forEach((q, i) => add(`quiz[${i}]`, q, undefined, { cont: 'quiz', idx: i }));
   (doc.items ?? []).forEach((q, i) => withParts(`items[${i}]`, q, i));
@@ -227,7 +235,7 @@ const courseFiles = (C, c) => jsonFiles(join(C, 'courses', c)).filter((f) => f !
 
 // Frequencies count distinct files (a part repeats its item's stem, so units would count one item several times).
 export function loadCorpus(C, { model: modelMode } = {}) {
-  const df = { num: new Map(), mat: new Map(), sh: new Map(), sen: new Map() };
+  const df = { num: new Map(), mat: new Map(), sh: new Map(), sen: new Map(), rat: new Map() };
   const bump = (m, k, f) => { let a = m.get(k); if (!a) m.set(k, (a = new Set())); a.add(f); };
   const byFile = new Map(), all = [], courses = existsSync(join(C, 'courses')) ? readdirSync(join(C, 'courses')).sort() : [];
   const add = (rel, units) => { all.push(...units); return units; };
@@ -235,10 +243,11 @@ export function loadCorpus(C, { model: modelMode } = {}) {
   // the exams hold the course's items too (engine pass 8 B): an item of a topic, stage or mock exam belongs to each course whose course.json lists one of its skills
   const skillCourse = new Map(), topicCourse = new Map();
   for (const c of courses) { const p = join(C, 'courses', c, 'course.json'); if (!existsSync(p)) continue; const cj = rd(p); for (const k of Object.keys(cj.skills ?? {})) skillCourse.set(k, c); if (cj.topic) topicCourse.set(String(cj.topic), c); }
-  const examByCourse = new Map();
+  const examByCourse = new Map(), allExamUnits = [], nestedExam = [];
   for (const sub of ['exams', 'bank']) for (const f of jsonFiles(join(C, sub))) {
     const doc = rd(join(C, sub, f)), us = add(`${sub}/${f}`, unitsOfFile(doc, `${sub}/${f}`));
     if (sub !== 'exams') continue;
+    allExamUnits.push(...us); nestedExam.push(...unitsOfFile(doc, `${sub}/${f}`, true));
     for (const x of us) {
       const cs = new Set((x.skills ?? []).map((k) => skillCourse.get(k)).filter(Boolean));
       if (!cs.size && !x.skills?.length && topicCourse.has(String(doc.topic))) cs.add(topicCourse.get(String(doc.topic)));   // an item with no skills follows its exam's topic
@@ -251,6 +260,7 @@ export function loadCorpus(C, { model: modelMode } = {}) {
     x.tk = tokensOf(x.sens, sdf); x.sh = new Set(shingles(x.tk));
     for (const k of x.nums.keys()) bump(df.num, k, x.file);
     for (const k of x.mats) bump(df.mat, k, x.file);
+    for (const k of x.ratios.keys()) bump(df.rat, k, x.file);
     for (const k of x.sh) bump(df.sh, k, x.file);
   }
   for (const m of [df.sh]) for (const [k, v] of m) m.set(k, v.size);
@@ -258,19 +268,22 @@ export function loadCorpus(C, { model: modelMode } = {}) {
   const live = modelMode ? modelMode === 'live' : resolve(C) === resolve(join(APP, 'content'));
   const snapPath = join(HERE, 'retold-model.json');
   const model = buildModel(all, live || !existsSync(snapPath) ? null : rd(snapPath));   // retold sentences and chains, rate forms: retold-reuse.mjs (word frequencies and stock sentences of the whole content)
-  return { df, byFile, courses, sdf, sidx, model, rIdx: new Map(), conts: new Map(), units: all, examByCourse };
+  for (const x of nestedExam) { x.tk = tokensOf(x.sens, sdf); x.sh = new Set(shingles(x.tk)); prep(x, model); markStock(x, model); }   // not in `all`: the frequencies and the model stay as they were; these units are sources of --all-exams only
+  allExamUnits.push(...nestedExam);
+  return { df, byFile, courses, sdf, sidx, model, rIdx: new Map(), conts: new Map(), units: all, examByCourse, allExamUnits, extra: new Map() };
 }
 
 // ---- scan ----
 const O = (argv, k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : d; };
 export function scanSet(corpus, rel, doc, opts = {}) {
-  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5, shapes = true, shapeDf = 4, retold = true, exams = true, examBaseline = null } = opts;
+  const { numbers = 3, df: DF = 15, warnRun = 10, errorRun = 12, boiler = 5, shapes = true, shapeDf = 4, retold = true, exams = true, examBaseline = null, extras = true, allExams = false } = opts;   // allExams: the sources are every exam and mock the course's own skills do not reach (warnings, tag all-exams)
   const course = rel.split('/')[1], hits = [];
   const mine = corpus.byFile.get(rel) ?? unitsOfFile(doc, rel);
   if (!corpus.byFile.has(rel)) for (const x of mine) { x.tk = tokensOf(x.sens, corpus.sdf); x.sh = new Set(shingles(x.tk)); }
   if (!corpus.byFile.has(rel)) for (const x of mine) { prep(x, corpus.model); markStock(x, corpus.model); }
-  const ownUnits = [...corpus.byFile.entries()].filter(([f]) => f !== rel && f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);
-  const examUnits = exams ? corpus.examByCourse?.get(course) ?? [] : [];   // the items of the topic, stage and mock exams that carry this course's skills
+  const ownUnits = allExams ? [] : [...corpus.byFile.entries()].filter(([f]) => f !== rel && f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);
+  const reached = new Set(corpus.examByCourse?.get(course) ?? []), xk = `${course}${exams ? '+x' : ''}${allExams ? '+all' : ''}`;
+  const examUnits = allExams ? (corpus.allExamUnits ?? []).filter((u) => !reached.has(u)) : exams ? corpus.examByCourse?.get(course) ?? [] : [];   // the items of the topic, stage and mock exams that carry this course's skills
   const examSet = new Set(examUnits);
   const sources = [...ownUnits, ...examUnits];
   const outside = (m, k) => [...(m.get(k) ?? [])].filter((f) => !f.startsWith(`courses/${course}/`)).length;   // files of other courses and exams: a figure the course alone repeats is the reuse, not a stock number
@@ -324,20 +337,45 @@ export function scanSet(corpus, rel, doc, opts = {}) {
   // retold sentences and chains (ENGINE-BACKLOG 1075, 1076, 1078) and rate forms (1080): retold-reuse.mjs
   if (retold) {
     const courseAll = [...corpus.byFile.entries()].filter(([f]) => f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);   // the index holds every file of the course, the target's own too (a hit never meets it: sentenceMatches skips the target's file)
-    if (!corpus.rIdx.has(course + (exams ? '+x' : ''))) corpus.rIdx.set(course + (exams ? '+x' : ''), buildSentenceIndex(courseAll.concat(examUnits).filter((x) => !x.part), courseAll));
+    if (!corpus.rIdx.has(xk)) corpus.rIdx.set(xk, buildSentenceIndex(courseAll.concat(examUnits).filter((x) => !x.part), courseAll));
     const srcContainers = [];
-    for (const [f, us] of corpus.byFile) if (f !== rel && f.startsWith(`courses/${course}/`)) { if (!corpus.conts.has(f)) corpus.conts.set(f, containersOf(us)); srcContainers.push([f, corpus.conts.get(f)]); }
+    for (const [f, us] of allExams ? [] : corpus.byFile) if (f !== rel && f.startsWith(`courses/${course}/`)) { if (!corpus.conts.has(f)) corpus.conts.set(f, containersOf(us)); srcContainers.push([f, corpus.conts.get(f)]); }
     const exFiles = new Map(); for (const u of examUnits) { let a = exFiles.get(u.file); if (!a) exFiles.set(u.file, (a = [])); a.push(u); }
-    for (const [f, us] of exFiles) { const ck = `${f}|${course}`; if (!corpus.conts.has(ck)) corpus.conts.set(ck, containersOf(us)); srcContainers.push([f, corpus.conts.get(ck)]); }
-    scanRetold({ rel, mine, idx: corpus.rIdx.get(course + (exams ? '+x' : '')), srcContainers, keep, model: corpus.model });
+    for (const [f, us] of exFiles) { const ck = `${f}|${allExams ? 'all' : course}`; if (!corpus.conts.has(ck)) corpus.conts.set(ck, containersOf(us)); srcContainers.push([f, corpus.conts.get(ck)]); }
+    scanRetold({ rel, mine, idx: corpus.rIdx.get(xk), srcContainers, keep, model: corpus.model });
     for (const t of mine) { if (t.hasParts) continue; for (const s of sources) { if (s.part) continue; const r = matchRates(t, s); if (r) keep(t, s, 'rate', 1, rateEvidence(r), [r.x.sentence, r.y.sentence]); } }
+  }
+  // ENGINE-BACKLOG 1088 (ratio), 1153 (xparam), 1128 (story), 1106 (chain-union): warnings only, one tag per kind; the longform model answer is read by the sentence test (tag model)
+  if (extras) {
+    const ex = (c, mk) => { const k = `${xk}|${c}`; if (!corpus.extra.has(k)) corpus.extra.set(k, mk()); return corpus.extra.get(k); };
+    const courseAll2 = allExams ? [] : [...corpus.byFile.entries()].filter(([f]) => f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us);
+    const flat = courseAll2.concat(examUnits).filter((s) => !s.hasParts);   // the indexes are kept per course, so they hold the target's own file too: a match against it is skipped below
+    const byKey = (name) => ex(name, () => { const m = new Map(); for (const s of flat) for (const k of (name === 'ratio' ? s.ratios : s.givens).keys()) { let a = m.get(k); if (!a) m.set(k, (a = [])); a.push(s); } return m; });
+    const rIdx = byKey('ratio'), gIdx = byKey('given');
+    for (const t of mine) {
+      if (t.hasParts) continue;
+      for (const [k, txt] of t.ratios) { if (outside(corpus.df.rat, k) > 3) continue; for (const s of rIdx.get(k) ?? []) { if (s.file === rel) continue; const o = s.ratios.get(k); if (o !== txt) keep(t, s, 'ratio', 1, `the ratio ${k} of two stated amounts (${txt} here, ${o} there)`); } }
+      if (t.skills?.length) for (const [k, txt] of t.givens) { if (outside(ex('gdf', () => { const m = new Map(); for (const u of corpus.units) for (const g of u.givens.keys()) { let a = m.get(g); if (!a) m.set(g, (a = new Set())); a.add(u.file); } return m; }), k) > 12) continue; for (const s of gIdx.get(k) ?? []) { if (s.file === rel) continue; const sk = (s.skills ?? []).filter((x) => t.skills.includes(x)); if (sk.length) keep(t, s, 'xparam', 1, `a given "${txt}" here and "${s.givens.get(k)}" there (${k}), one skill (${sk[0]})`); } }
+    }
+    const cdf = ex('cdf', () => courseWordDf([...corpus.byFile.entries()].filter(([f]) => f.startsWith(`courses/${course}/`)).flatMap(([, us]) => us)));
+    const sIdx = corpus.rIdx.get(xk);   // a question that holds a source question whole, from units that also share two particular words (a stock task asked in new words is not reuse)
+    if (sIdx) for (const t of mine) { if (t.hasParts) continue; const tw = storyWords(t, corpus.model, cdf); for (const m of questionMatches(t, sIdx, rel)) if ([...tw].filter((w) => storyWords(m.b.unit, corpus.model, cdf).has(w)).length >= 2) keep(t, m.b.unit, 'question', m.n, `a question that holds a source question whole, with a phrase added or a word changed: "${m.a.raw.slice(0, 90)}" against "${m.b.raw.slice(0, 90)}"`, [m.a.raw, m.b.raw]); }
+    const stIdx = ex('story', () => buildStoryIndex(flat, corpus.model, cdf));
+    for (const t of mine) { if (t.hasParts) continue; for (const m of storyMatches(t, stIdx, rel, corpus.model, cdf).slice(0, 3)) keep(t, m.s, 'story', m.n, `${m.n} particular words in common (${m.words.slice(0, 6).join(' ')}) and one question skeleton: "${m.q[0].slice(0, 80)}" against "${m.q[1].slice(0, 80)}"`, m.q); }
+    const stepIdx = ex('steps', () => buildStepIndex(flat));
+    const byItem = new Map(); for (const t of mine) if (t.part) { let a = byItem.get(t.cont); if (!a) byItem.set(t.cont, (a = [])); a.push(t); }
+    for (const parts of byItem.values()) { parts.sort((x, y) => x.idx - y.idx); const u = chainUnion(parts, stepIdx, rel); if (u) keep(u[0].t, u[0].s, 'chain-union', u.length, `${u.length} parts (${u.map((h) => h.t.idx + 1).join(', ')}) each follow a step of ${new Set(u.map((h) => `${h.s.file}|${h.s.cont}`)).size} different sources: ${u.map((h) => `${h.s.file.replace(/^courses\/[^/]+\//, '')}:${h.s.path}`).join(', ')}`); }
   }
   const waive = waivers(rel, doc);
   for (const h of best.values()) {
+    const NEW = ['ratio', 'xparam', 'story', 'chain-union', 'question'].includes(h.kind);
     h.level = h.kind === 'matrix' || SHAPE_KINDS.includes(h.kind) || RETOLD_KINDS.includes(h.kind) || (h.kind === 'text' && h.score >= errorRun) ? 'error' : 'warn';   // the four shapes became errors in ENGINE-BACKLOG 1059 (rules tightened in 1053 to 1058)
     // [exam-reuse] and [slip-line]: the two checks of engine pass 8 B. A set that existed before them (tools/reuse-baseline.json) is told, not failed, until its hits are triaged; a new set fails.
-    const tag = h.exam ? 'exam-reuse' : h.tag;
-    if (tag && examBase(rel, examBaseline)) { h.level = 'warn'; h.baseline = tag; }
+    let tag = h.exam ? 'exam-reuse' : h.tag;
+    if (NEW) { h.level = 'warn'; tag = h.kind; h.tag = tag; }   // the detections of engine pass 7 remainder, package 3 are warnings, never errors
+    if (h.tag === 'model') { h.level = 'warn'; tag = 'model'; }   // a hit that needs a longform model answer is a warning
+    if (allExams) { h.level = 'warn'; h.tag = tag = 'all-exams'; h.allExams = true; }
+    if (tag && !NEW && !allExams && tag !== 'model' && examBase(rel, examBaseline)) { h.level = 'warn'; h.baseline = tag; }
     const w = waive(h);
     if (w) { h.waived = w; }
     hits.push(h);
@@ -376,14 +414,14 @@ function waivers(rel, doc) {
   };
 }
 
-export const fmtHit = (h, doc) => `[same-course-reuse]${h.baseline ? ` [${h.baseline}]` : ''} ${h.waived ? 'waived' : h.level}  ${h.file}  ${(doc?.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id ?? h.item}  ${h.item}${h.part ? ` part ${h.part}` : ''}  ${h.kind}  <-  ${h.source}${h.exam && h.sourceId ? ` (exam item ${h.sourceId})` : ''}  ${h.evidence}`;
+export const fmtHit = (h, doc) => `[same-course-reuse]${h.allExams ? ' [all-exams]' : h.baseline ? ` [${h.baseline}]` : h.tag === 'model' ? ' [model]' : ''} ${h.waived ? 'waived' : h.level}  ${h.file}  ${(doc?.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id ?? h.item}  ${h.item}${h.part ? ` part ${h.part}` : ''}  ${h.kind}  <-  ${h.source}${h.exam && h.sourceId ? ` (exam item ${h.sourceId})` : ''}  ${h.evidence}`;
 // Every matched pair of a hit, one per line: the target's text, then the source's (engine pass 8 B: --pairs).
 export const fmtPairs = (h) => (h.pairs ?? (h.texts ? [h.texts] : [])).map((p) => `      pair: "${String(p[0]).replace(/\s+/g, ' ')}"  <-  "${String(p[1]).replace(/\s+/g, ' ')}"`);
 
 const main = () => {
   const argv = process.argv.slice(2), has = (k) => argv.includes(k);
   const C = O(argv, '--content', join(APP, 'content'));
-  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)), shapes: !has('--no-shapes'), shapeDf: Number(O(argv, '--shape-df', 4)), retold: !has('--no-retold'), exams: !has('--no-exams') };
+  const opts = { numbers: Number(O(argv, '--numbers', 3)), df: Number(O(argv, '--df', 15)), warnRun: Number(O(argv, '--warn-run', 10)), errorRun: Number(O(argv, '--error-run', 12)), boiler: Number(O(argv, '--boiler', 5)), shapes: !has('--no-shapes'), shapeDf: Number(O(argv, '--shape-df', 4)), retold: !has('--no-retold'), exams: !has('--no-exams'), extras: !has('--no-extras') };
   if (has('--no-waivers')) process.env.ZQ_NO_WAIVERS = '1';
   if (has('--exam-errors')) process.env.ZQ_EXAM_ERRORS = '1';
   const corpus = loadCorpus(C, { model: has('--learn') ? 'live' : undefined });
@@ -393,12 +431,17 @@ const main = () => {
   else if (has('--all')) rels = [...corpus.byFile.keys()].filter((f) => /\/problems-\d+\.json$/.test(f));
   else { console.error('usage: same-course-reuse.mjs --all | --file <json> [--json] [--no-waivers] [--numbers n] [--df n] [--warn-run n] [--error-run n] [--content dir]'); process.exit(2); }
   const all = [];
-  for (const rel of rels) { const doc = rd(join(C, rel)); for (const h of scanSet(corpus, rel, doc, opts)) all.push({ ...h, line: fmtHit(h, doc), itemId: (doc.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id }); }
+  for (const rel of rels) {
+    const doc = rd(join(C, rel)), id = (h) => (doc.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id;
+    for (const h of scanSet(corpus, rel, doc, opts)) all.push({ ...h, line: fmtHit(h, doc), itemId: id(h) });
+    if (has('--all-exams')) for (const h of scanSet(corpus, rel, doc, { ...opts, allExams: true })) all.push({ ...h, line: fmtHit(h, doc), itemId: id(h) });   // every exam and mock, warnings only, never gating
+  }
   if (has('--json')) console.log(JSON.stringify(all.map(({ line, ...h }) => h), null, 1));
   else for (const h of all) { console.log(h.line); if (has('--pairs')) for (const l of fmtPairs(h)) console.log(l); }
-  const errs = all.filter((h) => h.level === 'error' && !h.waived), warns = all.filter((h) => h.level === 'warn' && !h.waived), waived = all.filter((h) => h.waived);
-  const by = (l) => ['numbers', 'matrix', 'text', 'function', 'pair', 'transform', 'region', 'retold', 'rate'].map((k) => `${k} ${l.filter((h) => h.kind === k).length}`).join(', ');
+  const errs = all.filter((h) => h.level === 'error' && !h.waived), warns = all.filter((h) => h.level === 'warn' && !h.waived && !h.allExams), waived = all.filter((h) => h.waived), wide = all.filter((h) => h.allExams && !h.waived);
+  const by = (l) => ['numbers', 'matrix', 'text', 'function', 'pair', 'transform', 'region', 'retold', 'rate', 'ratio', 'xparam', 'story', 'chain-union', 'question'].map((k) => `${k} ${l.filter((h) => h.kind === k).length}`).join(', ');
   if (!has('--json')) console.log(`[same-course-reuse] ${rels.length} file(s): ${errs.length} error(s) (${by(errs)}), ${warns.length} warning(s) (${by(warns)}), ${waived.length} waived`);
+  if (!has('--json') && has('--all-exams')) console.log(`[same-course-reuse] --all-exams: ${wide.length} warning(s) against exams and mocks the course's skills do not reach (${by(wide)}); not gated`);
   process.exitCode = errs.length ? 1 : 0;
 };
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main();

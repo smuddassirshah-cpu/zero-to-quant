@@ -4,6 +4,7 @@
 // Problem sets (893): --file courses/<c>/problems-<n>.json also lists, as advisory, a shared displayed formula or two shared parameters with its course (--shared-params n, --no-set-reuse).
 // Same-course reuse (972): for problems-<n>.json (any course file with --same-course, off with --no-same-course) each item is also held against every other file of its course: numbers, matrices up to a scalar and a transpose, shared sentences
 //   plus (993) the shapes function, pair, transform and region and (1075 to 1080) retold screens and rate forms, which read feedback, explain and why too ([same-course-reuse] lines; an error fails the run, a warning does not; waivers in tools/same-course-waivers.json). Thresholds are those of tools/same-course-reuse.mjs, which also runs on its own (--all).
+// --all-exams (with --file on a problem set) also compares the set with every exam and mock, warnings only (engine pass 7 remainder, package 3).
 // Same-course reuse reads the exams that hold the course's items too (a hit names the exam file and item id; --pairs prints every matched pair; --files a,b,c checks several files with one corpus load; --exam-errors, tools/reuse-baseline.json).
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
 //                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
@@ -398,7 +399,12 @@ if (!has('--no-same-course') && !CROSS) {
   const sc = targets.filter((t) => (has('--same-course') ? /^courses\/[^/]+\/[^/]+\.json$/ : /^courses\/[^/]+\/problems-\d+\.json$/).test(t.rel));
   if (sc.length) {
     const corpus = loadSameCourse(C);
-    for (const t of sc) { const doc = rd(join(C, t.rel)); for (const h of scanSameCourse(corpus, t.rel, doc)) { sameLines.push(fmtSameCourse(h, doc)); if (has('--pairs')) sameLines.push(...fmtPairs(h)); if (h.level === 'error' && !h.waived) sameErrors++; } }
+    for (const t of sc) {
+      const doc = rd(join(C, t.rel));
+      for (const h of scanSameCourse(corpus, t.rel, doc)) { sameLines.push(fmtSameCourse(h, doc)); if (has('--pairs')) sameLines.push(...fmtPairs(h)); if (h.level === 'error' && !h.waived) sameErrors++; }
+      // --all-exams (engine pass 7 remainder, package 3): the set against every exam and mock, including those the course's skills do not reach; warnings only, never counted as errors
+      if (has('--all-exams')) for (const h of scanSameCourse(corpus, t.rel, doc, { allExams: true })) { sameLines.push(fmtSameCourse(h, doc)); if (has('--pairs')) sameLines.push(...fmtPairs(h)); }
+    }
   }
 }
 const hard = all.filter((h) => !ADVISORY.has(h.kind));

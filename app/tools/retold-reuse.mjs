@@ -108,7 +108,7 @@ export function prep(u, model) {
   const mk = (strs, kind) => splitSentences(strs).map((raw) => { const sig = wordsOf(raw).filter((w) => isSignal(w, model)); const info = sig.map((x) => (model.wdf.get(x) <= model.funcDf ? 1 : 0)), w = info.map((i) => (i ? 1 : model.par.funcWeight)), idf = sig.map((x) => Math.log(model.N / model.wdf.get(x))); return { raw, sig, w, info, idf, mass: w.reduce((p, q) => p + q, 0), key: sig.join(' '), skey: kind === 'fb' ? slipKey(raw) : null, kind, unit: u }; });
   // a feedback line of several sentences that opens with "You" is also read whole (a slip line of two short sentences, one number different): one record that carries only the slip key
   const wholes = (strs) => strs.filter((x) => typeof x === 'string' && splitSentences([x]).length > 1 && slipKey(x)).map((raw) => ({ raw, sig: [], w: [], info: [], idf: [], mass: 0, key: '', skey: slipKey(raw), kind: 'fb', unit: u }));
-  u.recs = [...mk(u.sec, 'set'), ...mk(u.fbs, 'fb'), ...wholes(u.fbs)];
+  u.recs = [...mk(u.sec, 'set'), ...mk(u.fbs, 'fb'), ...wholes(u.fbs), ...mk(u.models ?? [], 'model')];   // 'model': the model answer of a longform item, read by the sentence test as a warning only (ENGINE-BACKLOG 1106)
   u.orecs = u.osec === u.sec && u.ofbs === u.fbs ? u.recs : [...mk(u.osec, 'set'), ...mk(u.ofbs, 'fb'), ...wholes(u.ofbs)];
   u.rates = ratesOf([...u.sec, ...u.fbs]);
 }
@@ -174,7 +174,7 @@ export function distinctPairs(m) {
 
 // ---- (ii) chain ----
 // a step is the set of signal words (with their weights) of the unit's own sentences, stock ones left out; two steps match on the weighted share of their words (Jaccard)
-export const stepSig = (u, par) => { const s = new Map(); for (const r of u.orecs) if (!r.stock) r.sig.forEach((w, i) => { if (r.info[i]) s.set(w, r.idf[i]); }); return s.size >= par.stepMin ? s : null; };
+export const stepSig = (u, par) => { const s = new Map(); for (const r of u.orecs) if (!r.stock && r.kind !== 'model') r.sig.forEach((w, i) => { if (r.info[i]) s.set(w, r.idf[i]); }); return s.size >= par.stepMin ? s : null; };
 export const stepMatch = (a, b, par) => { let i = 0, un = 0, c = 0; for (const [w, x] of a) { un += x; if (b.has(w)) { i += x; c++; } } for (const [w, x] of b) if (!a.has(w)) un += x; return c >= par.stepMin && un > 0 && i / un >= par.stepJaccard; };
 // containers of one file: [{ label, steps: [unit] }], steps in reading order
 export function containersOf(units) {
@@ -209,15 +209,15 @@ export function scanRetold({ rel, mine, idx, srcContainers, keep, par = PAR, mod
     for (const [s, m] of sentenceMatches(t, idx, rel, par, model)) {
       const ms = distinctPairs(m);
       const rule = (xs) => xs.length && ((xs.length >= 2 && xs.reduce((p, x) => p + x.l, 0) >= par.totalW) || xs[0].l >= par.longW);
-      const longest = ms[0].l;
+      const longest = ms[0].l, base = ms.filter((x) => x.a.kind !== 'model' && x.b.kind !== 'model');
       if (rule(ms)) {
         const e = `${ms.length} retold sentence${ms.length > 1 ? 's' : ''} (${ms.slice(0, 2).map((x) => `weight ${x.l.toFixed(1)}`).join(', ')}): "${cut(ms[0].a.raw, 90)}" against "${cut(ms[0].b.raw, 90)}"`;
-        keep(t, s, 'retold', ms.length + longest / 1000, e, [ms[0].a.raw, ms[0].b.raw], ms.map((x) => [x.a.raw, x.b.raw, +x.l.toFixed(1), x.ni]), rule(ms.filter((x) => x.ni !== 99)) ? null : 'slip-line');   // 'slip-line': the hit stands on an identical short slip line alone
+        keep(t, s, 'retold', ms.length + longest / 1000, e, [ms[0].a.raw, ms[0].b.raw], ms.map((x) => [x.a.raw, x.b.raw, +x.l.toFixed(1), x.ni]), rule(base.filter((x) => x.ni !== 99)) ? null : rule(base) ? 'slip-line' : 'model');   // 'model': the hit needs a longform model answer (a warning). 'slip-line': the hit stands on an identical short slip line alone
       }
       if (t.part) {   // a problem that retells one source across its parts, a sentence or two in each
         const k = `${t.cont}|${s.file}`;
         let g = agg.get(k); if (!g) agg.set(k, (g = { t, s, by: new Map(), parts: new Set() }));
-        for (const x of ms) { const o = g.by.get(x.a.raw); if (!o || x.l > o.l) g.by.set(x.a.raw, x); }
+        for (const x of base) { const o = g.by.get(x.a.raw); if (!o || x.l > o.l) g.by.set(x.a.raw, x); }
         g.parts.add(t.idx + 1);
         if (s.path && (g.s.n ?? 0) < ms.length) { g.s = s; g.s.n = ms.length; }
       }
@@ -268,3 +268,105 @@ export function matchRates(t, s, par = PAR) {
   return null;
 }
 export const rateEvidence = (r) => `the rate ${r.x.text} here and ${r.y.text} there, with ${r.second} in both`;
+
+// ---- engine pass 7 remainder, package 3: warnings only (tags ratio, chain-union, story, xparam; the sentence read of a longform `model` is tagged model) ----
+// ratio (ENGINE-BACKLOG 1088): the ratio of two stated amounts of one sentence (640 to 1,000 is 1.5625; 32,000 to 50,000 is the same) when it is no simple fraction. Two settings that share it are one setting, though no figure is shared.
+const simpleRatio = (r) => { for (let q = 1; q <= 12; q++) if (Math.abs(r * q - Math.round(r * q)) < 1e-4 * r * q) return true; return false; };
+export function ratiosOf(strings) {
+  const out = new Map();   // key -> "a to b"
+  for (const raw of splitSentences(strings)) {
+    const t = raw.replace(/(?<=\d)(?:,|\{,\}|\\,|\\;)(?=\d{3}(?!\d))/g, '').replace(/\\[td]?frac\{(\d+)\}\{(\d+)\}/g, ' ');
+    const vs = [...new Set([...t.matchAll(/(?<![\w.])\d+(?:\.\d+)?(?![\w])/g)].map((m) => Number(m[0])).filter((v) => v >= 2))].slice(0, 8).sort((a, b) => a - b);
+    for (let i = 0; i < vs.length; i++) for (let j = i + 1; j < vs.length; j++) {
+      const r = vs[j] / vs[i];
+      if (r < 1.1 || r > 1000 || simpleRatio(r)) continue;   // a ratio near 1 (61.9 to 62.4) is a coincidence of two similar figures
+      const key = String(+r.toPrecision(5));
+      if (key.replace('.', '').replace(/^0+/, '').length < 4) continue;
+      if (!out.has(key)) out.set(key, `${vs[i]} to ${vs[j]}`);
+    }
+  }
+  return out;
+}
+// xparam (ENGINE-BACKLOG 1153): a given of the form "x over n years" (the same n and unit, n of five or more) in two units of one skill is one setting told in other words
+const GIVEN = /(\d[\d.]*)\s*(?:%|\\%)?\s*(?:[a-z]+\s+){0,3}?(?:over|across|for|in)\s+(?:the\s+(?:last|next|past)\s+)?(\d+)\s+(years?|months?|days?|weeks?|quarters?|periods?|trades?|steps?|observations?|samples?|rounds?|draws?|games?)\b/gi;
+export function givensOf(strings) {
+  const out = new Map();   // "n unit" -> the text of the given
+  for (const raw of splitSentences(strings)) for (const m of raw.replace(/(?<=\d),(?=\d{3}(?!\d))/g, '').matchAll(GIVEN)) { const n = Number(m[2]); if (n < 5) continue; const k = `${n} ${m[3].toLowerCase().replace(/s$/, '')}`; if (!out.has(k)) out.set(k, m[0].trim()); }
+  return out;
+}
+// story (ENGINE-BACKLOG 1128): a unit that tells another's setting in its own nouns: four or more particular words in common (five letters or more; held by at most STORY_DF files of the whole content
+// and by at most STORY_COURSE_DF files of the target's course, so a noun the course keeps for one setting counts and a word of the whole course does not), and a question sentence of the same skeleton.
+// Reported as a warning for a human to read.
+export const STORY_DF = 60, STORY_COURSE_DF = 3, STORY_MIN = 4;
+export function courseWordDf(units) {   // word -> files of the course that hold it (setting sentences only)
+  const m = new Map();
+  for (const u of units) for (const r of u.recs) if (r.kind === 'set') for (const w of wordsOf(r.raw)) { let a = m.get(w); if (!a) m.set(w, (a = new Set())); a.add(u.file); }
+  return m;
+}
+export function storyWords(u, model, cdf) {
+  if (u.story && u.storyKey === cdf) return u.story;
+  const s = new Set();
+  for (const r of u.recs) if (r.kind === 'set') for (const w of wordsOf(r.raw)) { const d = model.wdf.get(w); if (d >= 2 && d <= STORY_DF && w.length >= 5 && (cdf.get(w)?.size ?? 0) <= STORY_COURSE_DF) s.add(w); }
+  u.storyKey = cdf;
+  return (u.story = s);
+}
+const questionsOf = (u) => u.recs.filter((r) => r.kind === 'set' && /\?\s*$/.test(r.raw) && !r.stock);
+export function sharedQuestion(t, s, par = PAR) {
+  for (const a of questionsOf(t)) for (const b of questionsOf(s)) {
+    if (Math.min(a.sig.length, b.sig.length) < 3) continue;
+    const r = lcs(a.sig, b.sig, a.w);
+    if (r.ni >= 1 && r.n >= 4 && r.w >= par.minCover * Math.min(a.mass, b.mass) && r.n >= Math.ceil(0.7 * Math.min(a.sig.length, b.sig.length))) return [a.raw, b.raw];   // the same skeleton: most of the shorter question's signal words, in order, with a word that is not a function word
+  }
+  return null;
+}
+export function buildStoryIndex(units, model, cdf) {
+  const post = new Map();
+  units.forEach((u, i) => { for (const w of storyWords(u, model, cdf)) { let a = post.get(w); if (!a) post.set(w, (a = [])); a.push(i); } });
+  return { units, post };
+}
+export function storyMatches(t, sidx, rel, model, cdf) {
+  const cnt = new Map();
+  for (const w of storyWords(t, model, cdf)) for (const i of sidx.post.get(w) ?? []) cnt.set(i, (cnt.get(i) ?? 0) + 1);
+  const out = [];
+  for (const [i, n] of cnt) { const s = sidx.units[i]; if (n >= STORY_MIN && s.file !== rel && !s.hasParts) { const q = sharedQuestion(t, s); if (q) out.push({ s, n, q, words: [...storyWords(t, model, cdf)].filter((w) => storyWords(s, model, cdf).has(w)) }); } }
+  return out.sort((a, b) => b.n - a.n);
+}
+// question (ENGINE-BACKLOG 1121, 1144 in part): a question sentence of the target that holds a whole question of a source, with a phrase added or a word changed (the signal words of the shorter, seven or more,
+// all appear in order in the longer, less one). One such question alone is no retelling by the sentence test (it needs two sentences or a long one); as a warning it points a reader at the pair.
+export function questionMatches(t, idx, rel, par = PAR) {
+  const out = [], seen = new Set();
+  for (const a of t.recs) {
+    if (a.kind !== 'set' || !/\?\s*$/.test(a.raw) || a.stock || a.sig.length < 7) continue;
+    const cnt = new Map();
+    for (const w of [...new Set(a.sig)].sort((x, y) => (idx.idf.get(y) ?? 0) - (idx.idf.get(x) ?? 0)).slice(0, 3)) { const p = idx.post.get(w); if (!p || p.length > 800) continue; for (const id of p) cnt.set(id, (cnt.get(id) ?? 0) + 1); }
+    for (const [id] of cnt) {
+      const b = idx.recs[id];
+      if (b.unit.file === rel || b.kind !== 'set' || !/\?\s*$/.test(b.raw) || b.sig.length < 7 || seen.has(`${a.raw}|${b.raw}`)) continue;
+      const r = lcs(a.sig, b.sig, a.w), short = Math.min(a.sig.length, b.sig.length);
+      if (r.ni >= 1 && r.n >= short - 1) { seen.add(`${a.raw}|${b.raw}`); out.push({ a, b, n: r.n }); }
+    }
+  }
+  return out;
+}
+// chain-union (ENGINE-BACKLOG 1106): three or more parts of one problem each match (by signal words) a step of the course or its exams, the steps spread over two or more containers
+// (screens of one lesson, a quiz, a review, an exam item): no single source holds three, so the chain test does not fire, yet the problem is a collage of the level.
+const stepScore = (a, b) => { let i = 0, un = 0; for (const [w, x] of a) { un += x; if (b.has(w)) i += x; } for (const [w, x] of b) if (!a.has(w)) un += x; return un > 0 ? i / un : 0; };
+const stepOf = (u, par) => (u.ss === undefined ? (u.ss = stepSig(u, par)) : u.ss);
+export function buildStepIndex(units, par = PAR) {
+  const steps = [], post = new Map();
+  for (const u of units) { if (u.hasParts) continue; const sg = stepOf(u, par); if (!sg) continue; const id = steps.length; steps.push({ u, sg }); for (const w of sg.keys()) { let a = post.get(w); if (!a) post.set(w, (a = [])); a.push(id); } }
+  return { steps, post };
+}
+export function chainUnion(parts, sidx, rel, par = PAR) {
+  const hits = [];
+  for (const t of parts) {
+    const sg = stepOf(t, par); if (!sg) continue;
+    const cnt = new Map();
+    for (const w of sg.keys()) for (const id of sidx.post.get(w) ?? []) cnt.set(id, (cnt.get(id) ?? 0) + 1);
+    let best = null;
+    for (const [id, n] of cnt) { if (n < par.stepMin) continue; const s = sidx.steps[id]; if (s.u.file === rel || !stepMatch(sg, s.sg, par)) continue; const sc = stepScore(sg, s.sg); if (!best || sc > best.sc) best = { t, s: s.u, sc }; }
+    if (best) hits.push(best);
+  }
+  const conts = new Set(hits.map((h) => `${h.s.file}|${h.s.cont}`));
+  return hits.length >= par.chainMin && conts.size >= 2 ? hits : null;
+}
