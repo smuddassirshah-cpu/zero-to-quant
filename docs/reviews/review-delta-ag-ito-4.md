@@ -98,3 +98,11 @@ All three fixes together, on a scratch copy of the course: this script 204 check
 
 - `fresh-check` passes `p-band-wait` part 2, whose `explain` is l13 `screens[0]`'s `explain` with $\sigma^2$ folded into each coefficient ($3$ to $12$, $6x$ to $4 \times 6x$). The same class as the bullet raised by the first read; one more instance.
 - `fresh-check --file <path outside the content root>` reads the file as an exam and reports the set against itself. With `--content <copy>` it works. A line in its usage text would save the next reader the detour.
+
+## Fix pass
+
+1. `p-band-wait` part 2 `explain` and `byKey.no-half` (reuse): fixed with the exact texts. Recomputed: 48,000/12 = 4,000; 48,000/24 = 2,000 (the slip's value, unchanged).
+2. `p-band-wait` part 2 question (misleading): fixed, "the mean at $\tau$ equals the value at $t = 0$."
+3. `p-band-wait` part 4 `explain` (continuity): fixed with the exact text. Recomputed: 1,600/12 = 133.33.
+
+No keys, bands or `wrong` values changed; the three scripts needed no edit. Author script 325 of 325, reader 299 of 299 with 0 FINDING lines, delta script 204 checks, 0 failed, three rows `resolved`. Validator 0 errors, no warning on `ito/problems-4`. Voice scan 0 and 0. `fresh-check` 0 hits. `grade-all` 0 failures. Playthrough of `ito/problems-4` green with and without `--mobile`.
