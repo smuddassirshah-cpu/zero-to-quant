@@ -8,7 +8,8 @@ A static, single-user teaching app in `app/` (vanilla JS, no build step) that ta
 
 - Lessons 1,236 of 1,236 (Stage 0 204, Stage 1 566, Stage 2 207, Stage 3 259) in 79 course maps; 283 of 283 levels written, each with a review and homework (review items 2,558).
 - Exams: 29 topic, 4 stage, 16 mocks. Drills 270. Fluency sets 100 (318 families). Problem sets 167 (617 items). Question bank 36 files, 400 items. Hours 3,695, gap 0. Cross-course prerequisite edges 266, all with a reason.
-- Validator 0 errors (4,606 warnings, triaged as "stands"); same-course reuse 0 errors, 44 waived; 436 number scripts.
+- Validator 0 errors (4,606 warnings, triaged as "stands"); same-course reuse 0 errors, 44 waived; 436 number scripts, all passing on both CPU paths.
+- Acceptance: CI run 43 at 529f3c3a (full suite, full mode) green, 30 jobs.
 
 ## Definition of done (`docs/PLAN.md` section 13)
 
@@ -24,6 +25,7 @@ The Fable concept audit (PLAN 5b, continues on `claude/fable-audit`) and the pil
 2. The first CI run after a change to `fetch-vendor.sh` downloads the 389 MB Pyodide release again (later runs use the cache).
 3. Small leftovers from session AH: `ensembles/problems-2` `p-ipo-forest` part 1 feeds nothing; one gallery tree has small labels at 440 px; engine item 1036 is documented, not built.
 4. 4,606 validator warnings remain, each class triaged as "stands".
+5. One review script (`stat-learning-4-scripts/read-numbers.py`) passes on widened tolerances, not on the Pyodide values the learner sees.
 
 ## How to run it
 

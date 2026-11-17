@@ -313,7 +313,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 ### 7. Finalise
 - [x] Getting started (session AI; `docs/reviews/review-getting-started-ai.md`, `docs/reports/vendor-fallback-ai.md`): `app/README.md` and `README.md` describe clone, `app/run.sh`, first load (jsDelivr for Pyodide, MathLive, Compute Engine, YoWASP clang), the self-host fallback in `app/vendor/`
 - [x] Check `docs/PLAN.md` section 13 (session AI; `docs/reports/definition-of-done-ai.md`: all eight met, item 5 by the user's decision) (definition of done) item by item; record gaps in KNOWN_ISSUES.md
-- [ ] Final report to the user; create `DONE`
+- [x] Final report to the user; create `DONE` (session AI; `docs/reports/final-report-ai.md`; CI run 43 at 529f3c3a green, full)
 
 ## Completed
 - [x] Stage 0 content (163 lessons, 76 sets, stage exam; census 5 Nov: Stage 0 is now 193 lessons with proof and recruiting)
