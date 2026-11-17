@@ -1,5 +1,6 @@
 """List learner-visible sentences over MAX words in one course (or an exam file).
 Usage: VOICE_BASE=/home/user/zero-to-quant/app/content/courses/<course>/ python3 docs/reviews/voice-scan.py [MAX=20] [--summary]
+A lesson id written as a code span in learner text (`l4`, `l12`) is listed as "# lesson id in a code span": lessons write l4 bare and keep code spans for another course's name (engine pass 9, ENGINE-BACKLOG 1187).
 Canvas derive/let/formula strings are skipped (a derive caption is scanned). A $...$ formula, $$...$$ block `code` span or {{template}} value counts as one word; fenced code is dropped.
 """
 import json, glob, re, sys, os
@@ -77,9 +78,21 @@ for f in sorted(glob.glob(BASE + '*.json')):
         if re.search(r'(explain\.text|\.why|\.byKey\.[^.]+)$', path):
             n = len(sentences(t))
             if n > 3: over3.append((name, path, n))
+# a lesson id in a code span: `l4`, `l12`, `l4-name` (not another course's name, not code)
+ids = []
+for f in sorted(glob.glob(BASE + '*.json')):
+    name = os.path.basename(f)
+    if name == 'course.json': continue
+    for path, t in strings(json.load(open(f))):
+        if is_code_path(path): continue
+        t2 = re.sub(r'```.*?```', ' ', t, flags=re.S)
+        for m in re.finditer(r'`(l\d{1,2}(?:-[a-z0-9-]+)?)`', t2):
+            ids.append((name, path, m.group(1)))
 if '--summary' not in sys.argv:
     for name, path, n, s in rows:
         print(f'{name} | {path} | {n} | {s}')
 for name, path, n in over3: print(f'# explanation over three sentences: {name} | {path} | {n}')
+for name, path, i in ids: print(f'# lesson id in a code span: {name} | {path} | `{i}`')
+print(f'# lesson ids in code spans: {len(ids)}')
 print(f'# explanations over three sentences: {len(over3)}')
 print(f'# sentences scanned: {total}; over {MAX} words: {len(rows)}')
