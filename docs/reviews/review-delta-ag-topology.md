@@ -116,3 +116,21 @@ Format: `N. file | JSON path | class | problem | evidence | exact fix`.
 - No rule finds a restated key that, at its rounded value, fails the inequality it was the smallest solution of (`p-trapping-interval` part 4: 0.2711 against the root 0.27110667).
 
 Inbox: three bullets under `Raised later (review-delta-ag-topology):` in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+1. open, for KNOWN_ISSUES (ruled by the main session: reuse stays, no wording fix). Screens the reader names: l5 screens[0]; l8 screens[0], [1], [10]; `h2-five-families`; `q-connected-count`; `r2-preimage-sierpinski`; exam `e-four-point-topology`. The delta script keeps its FINDING 1 row.
+2. fixed: `p-signal-bands` parts 2 and 3 now list the five sets, one maths span per set.
+3. fixed: `f \circ p` defined in part 4 question; explain's first sentence now gives the preimage reason.
+4. fixed: `p-signal-bands` renumbered 98, 102, 97, 104 to 60, 64, 58, 67 throughout (prose, feedback, explain, options). The 5, 7, 6 and the part 4 argument are unchanged by the shift; the number script's band, grid and checks were updated and re-run.
+5. fixed: `p-kernel-equation` `over-one-minus` line replaced. Recomputed: $\tfrac{1}{1-q}\cdot\tfrac14=\tfrac13$, error $\tfrac1{20}$, ratio $\tfrac{20}{3}$; bound $\tfrac{q}{1-q}\cdot\tfrac14=\tfrac1{12}$.
+6. fixed: part 4 rounds up to 0.2712. Recomputed: $h(r)=r-0.2re^r-0.2$ is $<0$ at 0.2711 and $>0$ at 0.2712, so the condition fails at 0.2711 and holds at 0.2712. Key, band and `one-step` wrong value unchanged; `radius` slip tol now 0.00015 (takes 0.27095 to 0.27125, clear of the key band ending 0.25927); slip line reworded as given. Explain now says $B_{0.2712}$. Number script gained this check.
+7. fixed: `p-coin-paths` part 3 explain now says "strictly between 0 and 1".
+8. fixed: part 4 question now "Using parts 2 and 3, $V$ is continuous, though not one-to-one."
+9. fixed: doubled "the" removed in `p-plotter-zone` part 3 explain, with the given wording.
+10. fixed: `p-plotter-zone` part 4 explain now ends on the key with the given wording (still three sentences).
+
+Graded answers changed: none. Keys changed: none.
+
+Gates: validator 0 errors, no warning on the three sets; voice scan 35: 0 and 0; `fresh-check --file` 0 hits on all three (set 1 keeps its $d_p$ advisory); `grade-all --file` 16 widgets each, 0 failures; `playthrough --problems` sets 1 to 3 pass with and without `--mobile`; author's script 749 checks, 0 failures; reader's script 541 checks, 0 FINDING; delta script 365 checks, only FINDING 1 left.
+Mobile screenshots (440 px, `--shots`): looked at set 2 item 2 parts 2 to 4 and set 3 item 2 part 4; the lengthened questions wrap within the column and nothing runs off the page.

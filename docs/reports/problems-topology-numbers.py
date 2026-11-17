@@ -293,15 +293,15 @@ def level2():
     ok({frozenset(rev[x] for x in u) for u in tau} != tau, 'reversal is not a homeomorphism')
     num(it, 'p-four-point-line', 4, len(homeos), len(homeos2), {'reversal': 2, 'every-bijection': math.factorial(4)}, places=None)
 
-    # p-signal-bands. f: R -> S = {sell, hold, buy}: sell below 98, hold on [98, 102], buy above 102.
+    # p-signal-bands. f: R -> S = {sell, hold, buy}: sell below 60, hold on [60, 64], buy above 64.
     S3 = frozenset('shb')
     subs = [frozenset(c) for r in range(4) for c in itertools.combinations('shb', r)]
-    # route 1: a preimage holding hold contains [98, 102]; it is open only when it is all of R
+    # route 1: a preimage holding hold contains [60, 64]; it is open only when it is all of R
     tau_s = [W for W in subs if 'h' not in W or W == S3]
     # route 2: the preimage as a union of bands, tested for openness at its end points on a fine grid
-    band = lambda xv: 's' if xv < 98 else ('h' if xv <= 102 else 'b')
+    band = lambda xv: 's' if xv < 60 else ('h' if xv <= 64 else 'b')
     def pre_open(W):
-        pts = [90 + k / 100 for k in range(0, 2001)]
+        pts = [50 + k / 100 for k in range(0, 2001)]
         inside = [p for p in pts if band(p) in W]
         return all(band(p - 0.001) in W and band(p + 0.001) in W for p in inside)
     tau_s2 = [W for W in subs if pre_open(W)]
@@ -325,7 +325,7 @@ def level2():
     num(it, 'p-signal-bands', 3, len(conn), len(conn_b), {'all': 7, 'singletons': 3, 'no-pairs': 4}, places=None)
     ok(frozenset('sb') not in conn and all(A in conn for A in subs if A and 'h' in A), 'signal: only {sell, buy} splits')
     one_correct(it, 'p-signal-bands', 4, 'connected-image')
-    ok(band(97) == 's' and band(104) == 'b', 'signal: the path starts at sell and ends at buy')
+    ok(band(58) == 's' and band(67) == 'b', 'signal: the path starts at sell and ends at buy')
 
     # p-gapped-domain. Y = [0,1) u (1,2] u {4}
     def inY(t):
@@ -378,8 +378,8 @@ def level2():
     num(it, 'p-right-rays', 3, len(good), 3, {'with-flip': len(usual)}, places=None)
     one_correct(it, 'p-right-rays', 4, 'conn-not-haus')
 
-    lv.expect('problems', 'items[1].prose', 98)
-    lv.expect('problems', 'items[1].prose', 102)
+    lv.expect('problems', 'items[1].prose', 60)
+    lv.expect('problems', 'items[1].prose', 64)
     lv.expect('problems', 'items[2].prose', 0.9)
     lv.check_wrongs()
     return lv
@@ -462,6 +462,7 @@ def level3():
     ok(hfun(0.27) < 0 and abs(hfun(0.27) + 0.0007) < 0.00005 and hfun(0.272) > 0, 'trap p3: printed trial values')
     ok(abs(0.2 * math.exp(0.2711) - 0.2623) < 5e-5 and abs((1 - 0.2 * math.exp(rs1)) * rs1 - 0.2) < 1e-9, 'trap p3: printed q and room')
     ok(abs(0.2 * math.exp(rs1) - 0.26) < 0.005, 'trap p3: q about 0.26')
+    ok(hfun(0.2712) > 0 and hfun(0.2711) < 0 and (1 - 0.2 * math.exp(0.2712)) * 0.2712 >= 0.2, 'trap p4: part 2 condition holds at 0.2712, fails at 0.2711')
     xs_ = [0.0]
     for _ in range(80):
         xs_.append(0.2 * math.exp(xs_[-1]))
