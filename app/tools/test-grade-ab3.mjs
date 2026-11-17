@@ -108,6 +108,17 @@ for (const t of ['\\frac{x-1}{x+2}', '\\frac{x - 1}{x + 2}']) check(`945 simplif
 check('945 9v over 16(v-2) retyped is refused when it is cancellable', sf({ answer: '9v' }, '\\frac{9v(v-2)}{(v-2)}').ok === false);
 check('945 a fraction with a letter in the top only passes', sf({ answer: '\\frac{x}{2}' }, '\\frac{x}{2}').ok === true);
 
+/* ---------- Part 6b (888, 1024) ---------- */
+const rect = { answer: '\\frac{3}{2}-\\frac{3\\sqrt{3}}{2}i', form: 'rectangular' };
+for (const t of ['\\frac{3}{2}-\\frac{3\\sqrt{3}}{2}i', '\\frac{3}{2}-\\frac{3}{2}\\sqrt{3}i', '\\frac{3}{2}-\\frac{3\\sqrt{3}i}{2}', '\\frac{3}{2}-\\frac{3i\\sqrt{3}}{2}', '1.5-1.5\\sqrt{3}i']) check(`888 rectangular takes ${t}`, ex(rect, t).ok === true, JSON.stringify(ex(rect, t)));
+check('888 9\\sqrt{3}i is its own key', ex({ answer: '9\\sqrt{3}i', form: 'rectangular' }, '9\\sqrt{3}i').ok === true);
+check('888 a bare real times i stays reducible-checked (2*3i refused)', ex({ answer: '6i', form: 'rectangular' }, '2\\cdot 3i').ok === false);
+const one = { answer: '\\frac{5x+7}{(x+1)(x+2)}', form: 'simplified' };
+check('1024 the retyped question is refused as one fraction', ex(one, '\\frac{2}{x+1}+\\frac{3}{x+2}').ok === false && ex(one, '\\frac{2}{x+1}+\\frac{3}{x+2}').key === 'form');
+check('1024 5 minus a fraction is refused for 9/(n+1)', ex({ answer: '\\frac{9}{n+1}', form: 'simplified' }, '5-\\frac{5n-4}{n+1}').ok === false);
+check('1024 the single fraction passes', ex(one, '\\frac{5x+7}{(x+1)(x+2)}').ok === true && ex(one, '\\frac{5x+7}{x^2+3x+2}').ok === true);
+check('1024 an authored sum of fractions still passes', ex({ answer: '2+\\frac{1}{x}', form: 'simplified' }, '\\frac{1}{x}+2').ok === true);
+
 /* ---------- Part 7 (951, 955, 1077): the % sign and the factor of 100 get their own key ---------- */
 const pk = { answer: 18, tol: { abs: 0.01 } }, pd = { answer: 0.0035, unit: '%', tol: { abs: 0.00001 } };
 check('951 18% in a field with no % unit: key percent-sign, still wrong', nv(pk, '18%').ok === false && nv(pk, '18%').key === 'percent-sign');

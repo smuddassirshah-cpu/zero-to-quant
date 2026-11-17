@@ -732,7 +732,7 @@
     if (j === 'iota') return true;
     const h = jh(j), a = ja(j);
     if (h === 'Negate') return imagTerm(a[0]);
-    if (h === 'Multiply') { const w = a.filter(hasI); return w.length === 1 && w[0] === 'iota' && a.length === 2; }
+    if (h === 'Multiply') { const w = a.filter(hasI); return w.length === 1 && w[0] === 'iota'; }   // item 888: a number, a surd or both times i (3\sqrt{3}i); reducible() has already refused two plain numbers
     if (h === 'Divide') return imagTerm(a[0]) && !hasI(a[1]);
     return false;
   };
@@ -880,8 +880,11 @@
     return a.every(surdVerdict);
   };
   /* false when the typed form is not simplest, null when this check does not decide (the older checks then run) */
-  const rawShapeVerdict = (raw, constant) => {
+  /* item 1024: a sum with a fraction that has a letter in its denominator (5 - (5n-4)/(n+1), 2/(x+1) + 3/(x+2)) is not "one fraction" */
+  const fracSum = (j) => { j = unwrap(jNeg(unwrap(j))); const ts = jh(j) === 'Add' ? ja(j) : jh(j) === 'Subtract' ? ja(j) : null; return !!ts && ts.length >= 2 && ts.some(t => { t = unwrap(jNeg(unwrap(t))); return jh(t) === 'Divide' && lettersIn(ja(t)[1]).size > 0; }); };
+  const rawShapeVerdict = (raw, constant, ansRaw) => {
     if (constant && jHas(raw, 'Sqrt') && !surdVerdict(raw)) return false;
+    if (!constant && fracSum(raw) && ansRaw && !fracSum(ansRaw)) return false;   // not when the authored answer is such a sum itself
     let bad = false;
     const walk = (j) => {
       if (!Array.isArray(j) || bad) return;
@@ -912,7 +915,8 @@
         if (form === 'rectangular') return constant ? exprForms.rectangular(j) : true;
         if (form === 'simplified') {
           if (constant && exprForms.reducible(j)) return false;
-          let rv = null; try { rv = rawShapeVerdict(ce.parse(prep(L, hasImag(L), fo.functions), { canonical: false }).json, constant); } catch { rv = null; }   // items 944, 945: what was typed, not what the engine makes of it
+          let rv = null;
+          try { const raw = (s) => ce.parse(prep(s, hasImag(s), fo.functions), { canonical: false }).json; rv = rawShapeVerdict(raw(L), constant, typeof spec.answer === 'string' ? raw(spec.answer) : null); } catch { rv = null; }   // items 944, 945: what was typed, not what the engine makes of it
           if (rv === false) return false;
           const v = simplestVerdict(j); if (v != null) return v;
           try { return jsize(j) <= jsize(e.simplify().json); } catch { return true; }
