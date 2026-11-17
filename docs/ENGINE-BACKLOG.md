@@ -2494,7 +2494,7 @@ Last inbox heading numbered by engine pass 8: "Raised later (delta read AF conve
 1089 status: open: engine pass 8 part B.
 1090 status: open: engine pass 8 part B.
 1091 status: open: engine pass 8 part B.
-1092 status: open: engine pass 8 part A.
+1092 status: done in engine pass 8 part A: `[escaped-apostrophe]`, a warning for now (1 hit in content, `elimination/problems-1`; an error once it is fixed).
 1093 status: open.
 1094 status: open.
 1095 status: open.
@@ -2502,7 +2502,7 @@ Last inbox heading numbered by engine pass 8: "Raised later (delta read AF conve
 1097 status: open: engine pass 8 part B (exams read).
 1098 status: open: engine pass 8 part B.
 1099 status: open: engine pass 8 part B.
-1100 status: open: engine pass 8 part A.
+1100 status: done in engine pass 8 part A: `[table-source]` and the rule in AUTHORING.md section 5 (a part gives the value or names its source).
 1101 status: open: engine pass 8 part B.
 1102 status: open: engine pass 8 part B.
 1103 status: open: engine pass 8 part B (exams read).
@@ -2514,22 +2514,22 @@ Last inbox heading numbered by engine pass 8: "Raised later (delta read AF conve
 1109 status: open: engine pass 8 part B (exams read).
 1110 status: open: engine pass 8 part B.
 1111 status: open: engine pass 8 part B.
-1112 status: open: engine pass 8 part A.
+1112 status: partly done in engine pass 8 part A: `[rounding-tie]` (a key or slip exactly on a tie with a band that takes neither rounding, and a key that is one rounding of a tie the working prints); the 'Using x from part k' candidate is open.
 1113 status: open.
 1114 status: open: engine pass 8 part B (exams read).
 1115 status: open: engine pass 8 part B.
 1116 status: open: engine pass 8 part B.
-1117 status: open: engine pass 8 part A.
+1117 status: done in engine pass 8 part A: `[table-source]` (warning, 6 hits).
 1118 status: open: engine pass 8 part B (exams read).
 1119 status: open: engine pass 8 part B.
 1120 status: open: engine pass 8 part B.
 1121 status: open: engine pass 8 part B.
-1122 status: open: engine pass 8 part A (second candidate only; the first, a key printed in its own question, stays open).
-1123 status: open: engine pass 8 part A.
+1122 status: partly done in engine pass 8 part A: `[rounding-tie]` covers the tie candidate; the key printed in its own question is open.
+1123 status: done in engine pass 8 part A: `[wrong-band]` skips a slip that rounds to 0 at the asked places.
 1124 status: open: engine pass 8 part B.
 1125 status: open: engine pass 8 part B.
 1126 status: open: engine pass 8 part B (exams read).
-1127 status: open: engine pass 8 part A.
+1127 status: done in engine pass 8 part A: `[wide-wrong-tol]` (warning, 10 hits) for a `wrong` band wider than its own value; `[wrong-band]` no longer asks a slip rounding to 0 for a wider one.
 1128 status: open: engine pass 8 part B.
 1129 status: open.
 1130 status: open.
@@ -2539,13 +2539,14 @@ Last inbox heading numbered by engine pass 8: "Raised later (delta read AF conve
 1134 status: open.
 1135 status: open: engine pass 8 part B.
 1136 status: open.
-1137 status: open: engine pass 8 part A.
+1137 status: partly done in engine pass 8 part A: `[rounding-tie]` fires on an exact tie (not within 5% of one).
 1138 status: open.
 1139 status: open: engine pass 8 part B (exams read).
-1140 status: open: engine pass 8 part A.
-1141 status: open: engine pass 8 part A.
+1140 status: done in engine pass 8 part A: `[wrong-band]` skips a slip that rounds to 0 (98 hits became 70).
+1141 status: done in engine pass 8 part A: `[table-source]` (warning).
 1142 status: open.
-1143 status: open: engine pass 8 part A.
+1143 status: done in engine pass 8 part A: `[rounding-tie]` for keys and slips.
 1144 status: open: engine pass 8 part B.
-1145 status: open: engine pass 8 part A.
+1145 status: done in engine pass 8 part A: `[wrong-band]` skips a slip that rounds to 0.
 1146 status: open: engine pass 8 part B.
+Engine pass 8 part A also built `[percent-unit]` (error, 0 hits), the third finding class of KNOWN_ISSUES "session AF close" (a percentage part with no unit "%"), and `[working-band]` (warning, 2 hits), the first (a band that refuses the value the part's own working prints). Hits: `docs/reports/engine-pass-8-hits.md`.
