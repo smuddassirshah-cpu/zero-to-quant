@@ -316,73 +316,15 @@ def cn_dense(S, K, r, s, T, nx, L=1.0):
 
 
 def level3():
-    # p-call-heat: S 80, K 75, r 4%, sigma 25%, T 0.8
-    S, K, r, s, T = 80, 75, 0.04, 0.25, 0.8
-    tau = 0.5 * s * s * T
-    part(3, 'p-call-heat', 1, [tau, 0.03125 * 0.8], dp=3, wrong={'no-half': [s * s * T], 'unsquared': [0.5 * s * T]})
-    k = 2 * r / s ** 2
-    part(3, 'p-call-heat', 2, [k, 0.08 / 0.0625], dp=2, wrong={'no-two': [r / s ** 2], 'upside-down': [s ** 2 / (2 * r)]})
-    V, d1, d2 = bs(S, K, r, s, T)
-    x = math.log(S / K)
-    a1, a2 = (k + 1) / 2, (k - 1) / 2
-    arg = (x + 2 * a1 * tau) / math.sqrt(2 * tau)
-    part(3, 'p-call-heat', 3, [arg, d1, 0.12154 / math.sqrt(0.05)], dp=4,
-         wrong={'no-x': [2 * a1 * tau / math.sqrt(2 * tau)], 'used-a2': [(x + 2 * a2 * tau) / math.sqrt(2 * tau), d2]})
-    w = item(3, 'p-call-heat')['parts'][2]['widget']
-    ex_work = round(0.12154 / 0.2236, 4)
-    ok(ex_work == round(arg, 4),
-       f'L3 p-call-heat p3: the explanation\'s own division, 0.12154 / 0.2236, is {0.12154 / 0.2236:.5f}, {ex_work} to 4 places, not 0.5435 '
-       f'(it sits {abs(ex_work - w["answer"]):.6f} from the key, band {w["tol"]["abs"]})')
-    ok(abs(Phi(d1) - 0.70662) < 5e-6 and abs(Phi(d2) - 0.62549) < 5e-6 and abs(d2 - 0.3199) < 5e-5, 'L3 p-call-heat p4: given Phi values')
-    # second route: the kernel integral of the heat start (lesson 10's route), then undo the variables
-    ker = lambda y: np.maximum(np.exp(a1 * y) - np.exp(a2 * y), 0) * np.exp(-(x - y) ** 2 / (4 * tau)) / math.sqrt(4 * math.pi * tau)
-    Vq = K * math.exp(-(k - 1) / 2 * x - (k + 1) ** 2 / 4 * tau) * trap(ker, 0.0, 6.0, 600000)
-    disc = K * math.exp(-r * T)
-    part(3, 'p-call-heat', 4, [V, Vq, S * 0.70662 - disc * 0.62549, 56.530 - 45.434], dp=2,
-         wrong={'no-disc': [S * 0.70662 - K * 0.62549], 'swapped': [S * 0.62549 - disc * 0.70662]})
-    says(3, 'p-call-heat', 4, '72.638', '56.530', '45.434')
-    ok(abs(disc - 72.638) < 5e-4 and abs(80 * 0.70662 - 56.530) < 5e-4 and abs(72.638 * 0.62549 - 45.434) < 6e-4, 'L3 p-call-heat p4: printed products')
-
-    # p-fk-claim: V_t - 0.1 V_x + 0.18 V_xx - 0.05 V = 0, V(T, x) = e^x, x = 0, two years
-    part(3, 'p-fk-claim', 1, [0.18 * 2, 0.5 * 0.36 * 2], dp=2, wrong={'no-c': [2], 'double': [0.36 * 2]})
-    part(3, 'p-fk-claim', 2, [2 * 0.36, 0.36 * 2.0], dp=2, wrong={'tau': [0.36], 'sd': [math.sqrt(0.72)]})
-    dens = lambda y: np.exp(y) * np.exp(-(y + 0.2) ** 2 / (2 * 0.72)) / math.sqrt(2 * math.pi * 0.72)
-    part(3, 'p-fk-claim', 3, [math.exp(0.16), trap(dens, -12, 12)], dp=4, wrong={'no-half': [math.exp(-0.2 + 0.72)], 'no-var': [math.exp(-0.2)]})
-    # second route for V: V = e^{x + b(T - t)} in the equation gives -b - 0.1 + 0.18 - 0.05 = 0
-    bb = -0.1 + 0.18 - 0.05
-    part(3, 'p-fk-claim', 4, [math.exp(0.06), math.exp(bb * 2), math.exp(-0.1) * 1.1735], dp=4,
-         wrong={'no-disc': [math.exp(0.16), 1.1735], 'one-year': [math.exp(-0.05) * math.exp(0.16), math.exp(-0.05) * 1.1735]})
-    se = 1.0904 / math.sqrt(40000)
-    part(3, 'p-fk-claim', 5, [(1.0731 - math.exp(0.06)) / se, (1.0731 - math.exp(bb * 2)) * 200 / 1.0904, (1.0731 - 1.06184) / se, (1.0731 - 1.0618) / 0.005452], dp=2,
-         wrong={'sd-not-se': [(1.0731 - 1.0618) / 1.0904], 'over-n': [(1.0731 - 1.0618) / (1.0904 / 40000), (1.0731 - math.exp(0.06)) / (1.0904 / 40000)]})
-    sd_true = math.exp(0.06) * math.sqrt(math.exp(0.72) - 1)
-    ok(abs(sd_true - 1.0904) < 0.02, f'L3 p-fk-claim p5: the payoff\'s true sd is {sd_true:.4f}, so a sample sd of 1.0904 is plausible')
-
-    # p-grid-no-formula: S = K = 50, r 3%, sigma 24%, T 0.5
-    stated = {100: 3.7357101, 200: 3.7398157, 400: 3.7408399}
-    for nx, v in stated.items():
-        mine = cn_dense(50, 50, 0.03, 0.24, 0.5, nx)
-        ok(abs(mine - v) < 5e-7, f'L3 p-grid-no-formula: dense Crank-Nicolson on {nx} intervals gives {mine:.7f}, the prose {v}')
+    # Fix pass (session AF): p-call-heat, p-fk-claim and p-grid-no-formula were re-authored as p-straddle-vol,
+    # p-log-contract and p-grid-budget (findings 6 to 8), so the reader's checks of the old problems are removed,
+    # findings 1 and 4 with them. The solver check is kept and retargeted to the new grid prices; the delta reader
+    # adds its own checks of the new parts.
     ok(abs(cn_dense(100, 100, 0.05, 0.2, 1.0, 200) - 10.4486123) < 5e-7, 'L3 the reader\'s solver reproduces lesson 12\'s 10.4486123')
-    V1, V2, V4 = stated[100], stated[200], stated[400]
-    da, db = V2 - V1, V4 - V2
-    part(3, 'p-grid-no-formula', 1, [math.log2(da / db), math.log(da / db) / math.log(2), math.log(4.009) / math.log(2)], wrong={'ratio': [da / db, 4.009]})
-    ok(abs(round(math.log2(da / db), 1) - 2.0) < 1e-9 and abs(da - 0.0041056) < 5e-8 and abs(db - 0.0010242) < 5e-8 and abs(da / db - 4.009) < 5e-4, 'L3 p-grid-no-formula p1: differences, ratio, order')
-    part(3, 'p-grid-no-formula', 2, [db / 3 * 1e6, 1024.2 / 3], dp=1, wrong={'difference': [db * 1e6]})
-    R = V4 + db / 3
-    part(3, 'p-grid-no-formula', 3, [R, (4 * V4 - V2) / 3, 3.7408399 + 0.0003414], dp=6, wrong={'subtracted': [V4 - db / 3], 'quarter': [V4 + db / 4]})
-    Vbs = bs(50, 50, 0.03, 0.24, 0.5)[0]
-    ok(abs(R - Vbs) < 2e-6, f'L3 p-grid-no-formula p3: Richardson {R:.7f} against the formula {Vbs:.7f}')
-    disc = 50 * math.exp(-0.015)
-    _, d1, d2 = bs(50, 50, 0.03, 0.24, 0.5)
-    put_bs = disc * Phi(-d2) - 50 * Phi(-d1)
-    part(3, 'p-grid-no-formula', 4, [3.741181 - 50 + disc, R - 50 + disc], dp=4,
-         wrong={'no-disc': [3.741181], 'v400': [V4 - 50 + disc], 'sign': [3.741181 + 50 - disc]})
-    ok(abs(put_bs - (R - 50 + disc)) < 2e-6, 'L3 p-grid-no-formula p4: put against the formula')
-    not_says(3, 'p-grid-no-formula', 4, '49.255582', f'50 e^(-0.015) is {disc:.6f}')
-    w = item(3, 'p-grid-no-formula')['parts'][3]['widget']
-    v400 = next(x for x in w['wrong'] if x['id'] == 'v400')['value']
-    ok(abs(v400 - (V4 - 50 + disc)) < 5e-7, f'L3 p-grid-no-formula p4: wrong v400 is stored as {v400}; the slip gives {V4 - 50 + disc:.6f}')
+    pr = item(3, 'p-grid-budget')['prose']
+    for nx, v in {100: 12.9896396, 200: 12.9963192, 400: 12.9979920}.items():
+        mine = cn_dense(120, 120, 0.045, 0.18, 1.25, nx)
+        ok(abs(mine - v) < 5e-7 and f'{v:.7f}' in pr, f'L3 p-grid-budget: dense Crank-Nicolson on {nx} intervals gives {mine:.7f}, the prose {v}')
 
 
 def shape():
@@ -393,7 +335,8 @@ def shape():
             ok(3 <= len(i['parts']) <= 5 and 3 <= i['difficulty'] <= 5, f'L{n} {i["id"]}: part count and difficulty')
             for j, p in enumerate(i['parts'], 1):
                 q = p['question']
-                ok(any(t in q for t in ('decimal', 'whole number', 'fraction')), f'L{n} {i["id"]} p{j}: states its form')
+                form = ('expression', 'in terms of') if p['widget']['kind'] == 'expression' else ('decimal', 'whole number', 'fraction')
+                ok(any(t in q for t in form), f'L{n} {i["id"]} p{j}: states its form')
     course = json.load(open(os.path.join(BASE, 'course.json'), encoding='utf-8'))
     for lv in course['levels']:
         sk = set()

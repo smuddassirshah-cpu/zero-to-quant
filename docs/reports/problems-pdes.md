@@ -13,15 +13,15 @@ Author report for `app/content/courses/pdes/problems-1.json` to `problems-3.json
 | 2 | p-tent-rod | 4 numeric | l5, l6, l8 | 3 |
 | 2 | p-exp-series | 5 numeric | l6, l7 | 5 |
 | 2 | p-grid-modes | 4 numeric | l8, l5 | 4 |
-| 3 | p-call-heat | 4 numeric | l9, l10 | 4 |
-| 3 | p-fk-claim | 5 numeric | l9, l11, l10 | 5 |
-| 3 | p-grid-no-formula | 4 numeric | l12, l10 | 4 |
+| 3 | p-straddle-vol | 1 expression, 3 numeric | l9, l10 | 4 |
+| 3 | p-log-contract | 1 expression, 3 numeric | l9, l11 | 5 |
+| 3 | p-grid-budget | 4 numeric | l12, l11 | 4 |
 
 Level 1: 4 problems, 17 parts, all typed. Every lesson of the level appears (l1 in p-drift-walk; l2 in three; l3 in three; l4 in two). Skill `pe-heat` throughout (the only skill of the level's lessons).
 
 Level 2: 3 problems, 13 parts, all typed (one percentage part with unit "%"). l5 in two problems, l6 in two, l7 in one, l8 in two. Skills `pe-fourier` and `pe-heat`.
 
-Level 3: 3 problems, 13 parts, all typed. l9 in two problems, l10 in three, l11 in one, l12 in one. Skills `pe-bs`, `pe-heat`, `pe-fk`, `pe-fd`. The Crank-Nicolson prices of p-grid-no-formula come from the lesson 12 scheme (heat variables on $[-1, 1]$, $n_t = n_x/5$, zero left edge, exact right edge); the number script's own solver reproduces the lesson's £10.4427214 and £10.4486123 and the three stated prices to $5 \times 10^{-8}$.
+Level 3 (re-authored in session AF, review findings 6 to 8): 3 problems, 12 parts, all typed (two `expression`, two percentage parts with unit "%"). l9 in two problems, l10 in one, l11 in two, l12 in one; no lesson is in all three. Skills `pe-bs`, `pe-heat`, `pe-fk`, `pe-fd`. The Crank-Nicolson prices of p-grid-budget come from the lesson 12 scheme (heat variables on $[-1, 1]$, $n_t = n_x/5$, zero left edge, exact right edge); the number script's solver reproduces the lesson's £10.4427214 and £10.4486123 and the three stated prices to $5 \times 10^{-8}$, and the reader's dense solver agrees to $5 \times 10^{-7}$.
 
 ## Closest course items, per problem
 
@@ -41,7 +41,7 @@ Reuse scope: the level's lessons, quizzes, review and homework, every other set 
   - Review: review-1 item 5 ($u(-1, 1)$, unit step). Forward value only.
   - Homework: homework-1 item 2 (Gaussian start, $u(0, t)$). Different start and no inversion.
   - Exam: e-slab-heat (box start, $u(0, 0.75)$). Different start, forward only.
-- **p-grid-rod** (stable step count, the explicit step at $\lambda = \tfrac12$ as the neighbour mean, three steps by hand, the off-centre steady value).
+- **p-grid-rod** (stable step count, the explicit step at $\lambda = \tfrac12$ as the neighbour mean, three steps by hand, how far the grid still sits above the off-centre steady value).
   - Lesson: l4 screen 8 (the explicit step in code) and screen 0 (rod 20 to 50, middle settles at 35). Ours runs three steps by hand with held non-zero ends and asks an off-centre steady value.
   - Quiz: l4 quiz 1 (stays between the end values). Ours asks values, not bounds.
   - Review: review-1 item 7 (insulated rod settles at the mean). Ours has held ends and a line.
@@ -68,7 +68,7 @@ Reuse scope: the level's lessons, quizzes, review and homework, every other set 
   - Review: review-2 item 4 (coefficients like $1/k^2$ mean a kink) and item 5 (Parseval for $|x|$). Ours reads the slope from a formula and uses the pointwise value, not Parseval.
   - Homework: homework-2 item 3 (statements on the square wave from $-3$ to 3). Choice only.
   - Exam: e-jump-gibbs (midpoint and Gibbs peak of a jump from 1 to 7). A first draft ended on the Gibbs peak, which walked through this exam item; it now ends on the series sum instead, so only the midpoint step is shared.
-- **p-grid-modes** ($\lambda$ on a 12-interval rod, the grid factor of the smooth mode, its size after 50 steps, the percentage it lags the exact $e^{-1.5}$).
+- **p-grid-modes** ($\lambda$ on a 12-interval rod with $D = 0.75$ and $\Delta t = 0.04$, the grid factor of the smooth mode, its size after 40 steps, the percentage it lags the exact $e^{-1.2}$; renumbered in session AF, review finding 9).
   - Lesson: l8 screen 4 ($\Delta t_{\max}$ as an expression) and screen 5 (top-mode factor at $\lambda = 0.6$, unstable). Ours takes the smooth mode at a stable $\lambda$ and measures its accuracy, not its growth.
   - Quiz: l8 quiz 1 and quiz 2 (largest stable step for $N = 10$; the $-1.34$ factor). A first draft opened with the largest stable step; it was dropped to keep clear of these and review-2 item 6.
   - Review: review-2 item 6 (largest stable step, $N = 20$, $D = 0.5$). Not asked here.
@@ -77,45 +77,47 @@ Reuse scope: the level's lessons, quizzes, review and homework, every other set 
 
 ### Level 3
 
-- **p-call-heat** (heat time today, $k$, the lemma argument $d_1$ from $x$, $a$ and $\tau$, the price with given $\Phi$ values; $S = 80$, $K = 75$, $r = 4\%$, $\sigma = 25\%$, $T = 0.8$).
-  - Lesson: l10 screen 4 (the $S = 110$ price with $d_1$, $d_2$ and $\Phi$ given). Ours builds $d_1$ from the heat variables first, for an off-the-money strike.
-  - Quiz: l9 quiz 0 ($\tau$ for a two-year 30% option) and l10 quiz 0 (lemma argument for $x = 0.1$, $\tau = 0.02$, $a = 1.75$). One step each; ours chains them to the price.
-  - Review: review-3 items 0 to 2 ($k$, $\beta$, kernel sd for $r = 4\%$, $\sigma = 30\%$, $T = 0.5$). Ours shares the $k$ step only, then goes to $d_1$ and the price.
-  - Homework: homework-3 item 1 (order the change of variables). No numbers.
-  - Exam: e-heat-change ($\alpha$, $\beta$ for $r = 6\%$, $\sigma = 25\%$). Ours asks neither.
-- **p-fk-claim** (heat time of a Feynman-Kac equation, the variance of $X_T$ as $2\tau$, $E[e^{X_T}]$, the discounted value, and a simulation run in standard errors).
-  - Lesson: l11 screen 1 ($E[(x + W_t)^2]$), screen 3 (read $\mu$ and $\sigma$ off the equation), screen 4 (standard error of a batch of 2,000). Ours has a drifted process, an exponential payoff and the link to heat time.
-  - Quiz: l11 quiz 0 ($E[(x + W_t)^3]$). One step, no discount.
-  - Review: review-3 item 5 (standard error from sd £14.70 and 20,000 paths). Ours asks how far a run sits from the value, in standard errors.
-  - Homework: homework-3 item 4 (Vasicek bond). Different model.
-  - Exam: e-fk-square ($dX = 0.5\,dt + 1.2\,dW$, payoff $x^2$, $r = 10\%$) and e-fk-reverting (mean-reverting drift, payoff $x$). Same standard task, Feynman-Kac for a Gaussian process; ours has its own drift, volatility, rate and an exponential payoff, and adds the heat-time and simulation steps.
-- **p-grid-no-formula** (observed order from three grids without the formula, the shortfall of the finest grid, the extrapolated price, the put by parity).
-  - Lesson: l12 screen 3 (errors against the formula, times $10^6$) and screen 4 (Richardson on 100 and 200 intervals). Ours never uses the formula: the order comes from differences, and the shortfall is estimated, not measured.
-  - Quiz: l12 quiz 0 (order from two errors). Ours uses two differences of prices instead.
-  - Review: review-3 item 7 (Richardson on 200 and 400 for $S = K = 100$, $r = 3\%$, $\sigma = 25\%$) and item 3 (put by parity). Separate items in the review; ours chains them through the order and the shortfall, on its own option.
-  - Homework: homework-3 item 6 (smallest grid with error below $5 \times 10^{-5}$). Not asked here.
-  - Exam: e-explicit-code and e-heat-grid-steps (explicit scheme). Different scheme and task.
+Re-authored in session AF. The review ruled all three first-draft problems a walk of course items in the lessons' own order (findings 6 to 8); the new problems share no setting, number set or chain with them or with any course item.
+
+- **p-straddle-vol** ($r = 0$, $S = K = 80$, nine months, a straddle at £9.60: the lemma argument as an expression, $\Phi$ from the quote, the heat time by $\Phi^{-1}$, the implied volatility 17.38%).
+  - Lesson: l9 screen 8 ($r = 0$ edge case: equal heat time gives an equal price) and l10 screen 2 (the lemma arguments at $x = 0$, $\tau = 0.02$, as numbers). Ours simplifies the argument symbolically, then runs the route backwards from a market quote to $\tau$ and $\sigma$.
+  - Quiz: l10 `q-arg` (argument for $x = 0.1$, $\tau = 0.02$, $a = 1.75$, forward). Ours asks the form $\sqrt{\tau/2}$ and later inverts it.
+  - Review: `r-put` (put by parity). Ours uses parity only to split a straddle at $r = 0$ into equal legs; no put price is asked.
+  - Homework: `h-r0-sigma` ($r = 0$, matching total variance between two options). Ours reads the volatility from one price through $\Phi^{-1}$.
+  - Exam: `e-heat-grid-steps` part 1 ($\tau$ forward from $\sigma$ and $T$). Ours inverts $\tau$ to $\sigma$; no step count.
+- **p-log-contract** (a claim paying £1,000 $\ln(S_T/K)$, $K = S_0 = 64$, $\sigma = 28\%$, $r = 2\%$, $T = 1.5$: the constant $c = k - 1$ of a trial solution of the scaled equation, the value $-$£27.95, the break-even rise 2.92%, the chance 0.4665 of a positive payoff).
+  - Lesson: l9 screens 3 and 4 ($k$ and the $v_x$ coefficient $k - 1$) and l11 screen 3 (read $\mu$ and $\sigma$ off the equation). Ours puts a trial solution into the scaled equation, then reads it in heat time as a drifted normal.
+  - Quiz: l9 `q-coeff` (the $v_x$ coefficient as a number). Ours asks $c$ symbolically; $k - 1$ appears as a number only inside $(k - 1)\tau$.
+  - Review: `r-k`, `r-sd`. Ours never asks $k$ or the kernel's spread on their own.
+  - Homework: `h-vasicek`, `h-drift-sim`. Different claims and tasks.
+  - Exam: `e-fk-reverting` and `e-fk-square` (read a process off a Feynman-Kac equation, take the mean or second moment, discount). Ours gets the value from the trial solution in one step, with no read-mean-discount chain; Feynman-Kac enters only in part 4, for a probability. The first draft's mean-then-discount split was merged for this reason. A mock item in another course (`mock-superday-strats` `log-contract`, skills `it-`) prices $\ln S_T$ by Itô's lemma; ours works in the heat variables and asks other quantities.
+- **p-grid-budget** ($S = K = 120$, $r = 4.5\%$, $\sigma = 18\%$, $T = 1.25$: the order from two differences, the 400 grid's shortfall, the shortfall on 16 times the work, and the 256 times the paths a simulation needs for the same cut).
+  - Lesson: l12 screen 3 (errors against the formula, times $10^6$) and l11 screen 4 (standard error rescaled from 100,000 to 2,000 paths). Ours never uses the formula and compares how work buys accuracy on the grid and by simulation.
+  - Quiz: l12 `q-order` (order from two errors). Ours uses two differences of prices.
+  - Review: `r-rich` (Richardson) and `r-se` (standard error from $s$ and $n$). Ours computes neither an extrapolated price nor a standard error from data.
+  - Homework: `h-sequence` (smallest halving grid under a tolerance). Ours fixes the budget and predicts the shortfall; no tolerance search.
+  - Exam: `e-heat-grid-steps` and `e-explicit-code` (explicit scheme). A numerics exam item outside the course, `topic-2.5` `e-error-budget`, chains Richardson, the grid error and the paths for a standard error from a payoff sd; ours asks no extrapolated price, no payoff sd and no path count, so the chains differ (found by grep: `fresh-check` reads only the course's own exams).
 
 ## Fresh-check
 
 - problems-1: 0 hits, 4 advisory: the explicit-step formula (shared with l4 screen 8 and homework-1 item 4), the drift formula $c = (2q - 1)\Delta x/\Delta t$ (l2 screen 7, restated as the model, not a retold chain), and the parameter pair 0.25 and 0.02 also in l2 screen 10 (a different story: $D = 0.02$ there, $\Delta t = 0.02$ here). Judged clean.
 - problems-2: 0 hits, 2 advisory: $\cos k\pi = (-1)^k$ (l6 screen 3, a stock identity) and the grid factor $1 - 4\lambda\sin^2(k\Delta x/2)$ (l8 screen 4, the model the problem uses). A first draft drew one `rate` error: the Gibbs fraction 8.95% against 0.0895 in l7 screen 1, with 1.179 in both (a slip line quoted 1.179). That part was replaced by the series sum, so the constant no longer appears.
-- problems-3: 0 hits, 6 advisory: $k = 2r/\sigma^2$ (homework-3 item 1, review-3 item 0, exam e-heat-change), the Black-Scholes formula (l10 quiz 3), and $n_t = n_x/5$ (l12 screen 3, homework-3 item 6). All are the course's notation for the model, restated so each problem stands alone. Judged clean.
-- Second check by grep: the stories (tick walk, two-level bar, tent rod, $e^x$ series, exponential claim, convergence without a formula), the option parameters (80, 75, 4%, 25%, 0.8; 50, 50, 3%, 24%, 0.5) and each key number were grepped in `app/content/courses/pdes/` and `exams/topic-3.2.json`: no match beyond the advisories above.
+- problems-3 (session AF): 0 hits, 6 advisory: $k = 2r/\sigma^2$ (homework-3 item 1, review-3 item 0, exam e-heat-change), $n_t = n_x/5$ (l12 screen 3, homework-3 item 6), and the parameters 120, 1.25, 400 shared with a SQL table in `exams/stage-1.json` (chance). Judged clean.
+- Second check by grep: the stories (tick walk, two-level bar, tent rod, $e^x$ series, straddle, log claim, grid against simulation), the level 3 parameters (80, 9.60, 0.75; 64, 28%, 2%, 1.5; 120, 4.5%, 18%, 1.25) and each key number (0.07527, 0.01133, 17.38, 27.95, 0.0288, 2.92, 0.4665, 557.6, 34.85) were grepped in `app/content/courses/pdes/` and `exams/topic-3.2.json`: no match beyond the advisories above. Across `app/content/`, "straddle" and "log contract" stories exist only in other courses (named above).
 
 ## Gates
 
 | Set | Validator | Voice 35 | fresh-check | Numbers | grade-all | Playthrough | `--mobile --why` |
 |---|---|---|---|---|---|---|---|
-| 1 | 0 errors, no pass-8 warnings (one advisory O2) | 0 and 0 | 0 errors | exit 0 | 0 failures (17 widgets) | green | green, 34 slips routed |
-| 2 | 0 errors, no pass-8 warnings (two advisory O2) | 0 and 0 | 0 errors | exit 0 | 0 failures (13 widgets) | green | green |
-| 3 | 0 errors, no pass-8 warnings | 0 and 0 | 0 errors | exit 0 | 0 failures (13 widgets) | green | green |
+| 1 | 0 errors, no pass-8 warnings (two advisory O2, one from the reader's text) | 0 and 0 | 0 errors | exit 0 | 0 failures (17 widgets) | green | green |
+| 2 | 0 errors, no pass-8 warnings (two advisory O2) | 0 and 0 | 0 errors | exit 0 | 0 failures (13 widgets) | green | green, 28 slips routed |
+| 3 | 0 errors, no warnings | 0 and 0 | 0 errors | exit 0 | 0 failures (12 widgets: 2 expression, 10 numeric) | green | green, 30 slips routed |
 
-Number script: 571 checks, 0 failures (two methods per value, every slip recomputed, stated figures matched as text, `check_wrongs` per set, set shape).
+Gates rerun in session AF after the fix pass. Number script: 637 checks, 0 failures (two methods per value, every slip recomputed, stated figures matched as text and, for level 3, printed products and quotients recomputed at full precision and rounded with `shown`, `check_wrongs` per set, set shape). The reader's script: 716 checks, 0 `FINDING` lines; its checks of the three replaced problems were removed and its solver check retargeted to p-grid-budget.
 
 ## Inbox
 
-Two bullets under `Raised later (problems pdes):` in `docs/BACKLOG-INBOX.md`: the `rate` check on a universal constant, and the playthrough's message when the manifest lacks a new set.
+Two bullets under `Raised later (problems pdes):` in `docs/BACKLOG-INBOX.md`: the `rate` check on a universal constant, and the playthrough's message when the manifest lacks a new set. Session AF adds one under `Raised later (problems pdes, session AF):`: `fresh-check` does not read other courses' exams, where a chain walk (`e-error-budget`) was found only by grep.
 
 ## Course map
 

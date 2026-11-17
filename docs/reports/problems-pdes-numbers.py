@@ -340,73 +340,151 @@ def cn_price(S, K, r, s, T, nx, L=1.0):
     return K * math.exp(a * x[nx // 2] + b * tau) * u[nx // 2]
 
 
+def shown(value, printed, dp, label):
+    """A printed figure is the value at full precision, rounded to dp places (not a string match)."""
+    ok(round(value, dp) == round(printed, dp) and abs(value - printed) <= 0.5 * 10 ** -dp + 1e-12, f'{label}: {value:.8g} prints as {printed}')
+
+
+def expr_part(n, iid, p, key, accepts, slips):
+    """An expression part: the key equals the derived form, each accept form equals it, each slip differs."""
+    pt = part(n, iid, p)
+    w, tag = pt['widget'], f'L{n} {iid} p{p}'
+    ok(w['kind'] == 'expression', f'{tag} is an expression')
+    ids = {x['id']: x['tex'] for x in w.get('wrong', [])}
+    ok(set(ids) == set(slips), f'{tag} wrong ids {sorted(ids)} match slips {sorted(slips)}')
+    by = pt['feedback'].get('byKey', {})
+    syms = sorted(key.free_symbols, key=str)
+    pts = [dict(zip(syms, v)) for v in ((0.37,), (1.3,), (2.6,))] if len(syms) == 1 else [{}]
+    def same(a, b):
+        return all(abs(complex(a.subs(q)) - complex(b.subs(q))) < 1e-9 for q in pts)
+    for f in accepts:
+        ok(same(f, key), f'{tag} accept form {f} equals the key')
+    for wid, f in slips.items():
+        ok(not same(f, key), f'{tag} slip {wid} differs from the key')
+        ok(wid in by, f'{tag} wrong {wid} has a byKey line')
+
+
 def level3():
     n = 3
-    # p-call-heat
-    S, K, r, s, T = 80, 75, F(4, 100), F(1, 4), F(4, 5)
-    tau = s * s * T / 2
-    num(n, 'p-call-heat', 1, tau, 0.5 * 0.25 ** 2 * 0.8, {'no-half': s * s * T, 'unsquared': s * T / 2}, 0.025)
-    k = 2 * r / (s * s)
-    num(n, 'p-call-heat', 2, k, 0.08 / 0.0625, {'no-two': r / (s * s), 'upside-down': s * s / (2 * r)}, 1.28)
-    V, d1, d2 = bs_call(80, 75, 0.04, 0.25, 0.8)
-    x = math.log(80 / 75)
-    arg = (x + (float(k) + 1) * float(tau)) / math.sqrt(2 * float(tau))
-    num(n, 'p-call-heat', 3, arg, d1, {'no-x': (float(k) + 1) * float(tau) / math.sqrt(2 * float(tau)), 'used-a2': d2}, 0.5435)
-    ok(abs(d2 - 0.3199) < 0.00005 and abs(P(d1) - 0.70662) < 0.000005 and abs(P(d2) - 0.62549) < 0.000005, 'L3 call d2 and the two Phi values')
-    ST = lambda z: 80 * math.exp((0.04 - 0.03125) * 0.8 + 0.25 * math.sqrt(0.8) * z)
-    Vq = math.exp(-0.032) * quad(lambda z: max(ST(z) - 75, 0) * norm.pdf(z), -12, 12, points=[-0.54], limit=200)[0]
-    disc = 75 * math.exp(-0.032)
-    num(n, 'p-call-heat', 4, V, Vq, {'no-disc': 80 * 0.70662 - 75 * 0.62549, 'swapped': 80 * 0.62549 - disc * 0.70662}, 11.10, agree=1e-7)
-    ok(abs(80 * 0.70662 - disc * 0.62549 - V) < 0.0005, 'L3 call table route lands on 11.10')
-    says(n, 'p-call-heat', 3, '0.06454', '0.057', '0.12154', '0.5435')
-    says(n, 'p-call-heat', 4, '72.638', '56.530', '45.434', '11.10')
+    tau_, kk = sp.symbols('tau k', positive=True)
 
-    # p-fk-claim: V_t - 0.1 V_x + 0.18 V_xx - 0.05 V = 0, V(T, x) = e^x, x = 0, T - t = 2
-    c = F(18, 100)
-    tau2 = c * 2
-    num(n, 'p-fk-claim', 1, tau2, 0.36 / 2 * 2, {'no-c': 2, 'double': 2 * tau2}, 0.36)
-    var = 2 * tau2
-    num(n, 'p-fk-claim', 2, var, 2 * 0.18 * 2, {'tau': tau2, 'sd': math.sqrt(0.72)}, 0.72)
-    E = math.exp(-0.2 + 0.36)
-    Eq = quad(lambda y: math.exp(y) * norm.pdf(y, -0.2, math.sqrt(0.72)), -12, 12)[0]
-    num(n, 'p-fk-claim', 3, E, Eq, {'no-half': math.exp(-0.2 + 0.72), 'no-var': math.exp(-0.2)}, 1.1735, agree=1e-9)
-    Vf = math.exp(-0.1) * E
-    rng = np.random.default_rng(11)               # Monte Carlo with exact steps of the drifted Brownian motion
-    XT = -0.2 + math.sqrt(0.72) * rng.standard_normal(4_000_000)
-    Vmc = math.exp(-0.1) * np.exp(XT).mean()
-    num(n, 'p-fk-claim', 4, Vf, math.exp(0.06), {'no-disc': E, 'one-year': math.exp(-0.05) * E}, 1.0618)
-    ok(abs(Vmc - Vf) < 0.003, f'L3 fk Monte Carlo {Vmc:.5f} near {Vf:.5f}')
-    sd = math.exp(-0.1) * math.sqrt(math.exp(-0.4 + 2 * 0.72) - math.exp(-0.4 + 0.72))
-    ok(abs(sd - 1.0904) < 0.00005, 'L3 fk stated sd 1.0904 is the true sd of the discounted payoff')
-    se = 1.0904 / math.sqrt(40000)
-    zz = (1.0731 - Vf) / se
-    num(n, 'p-fk-claim', 5, zz, (1.0731 - math.exp(0.06)) * 200 / 1.0904, {'sd-not-se': (1.0731 - Vf) / 1.0904, 'over-n': (1.0731 - 1.0618) / (1.0904 / 40000)}, 2.07)
-    ok(abs((1.0731 - 1.0618) / 0.005452 - 2.07) < 0.008, 'L3 fk rounded V gives 2.07 in band')
-    says(n, 'p-fk-claim', 5, '0.005452', '2.07')
+    # p-straddle-vol: r = 0, S = K = 80, T = 0.75, straddle 9.60
+    K, T, Q = 80, 0.75, 9.60
+    a = sp.Rational(1, 2)
+    arg = sp.simplify((0 + 2 * a * tau_) / sp.sqrt(2 * tau_))
+    ok(sp.simplify(arg - sp.sqrt(tau_ / 2)) == 0, 'L3 straddle p1 argument is sqrt(tau/2)')
+    expr_part(n, 'p-straddle-vol', 1, sp.sqrt(tau_ / 2),
+              [sp.sqrt(tau_) / sp.sqrt(2), tau_ / sp.sqrt(2 * tau_), sp.sqrt(2 * tau_) / 2],
+              {'no-half': sp.sqrt(2 * tau_), 'numerator': tau_, 'no-root': sp.Rational(1, 2)})
+    # the call at r = 0 from the lemma equals Black-Scholes: K e^{-tau/4}(e^{tau/4}Phi(z) - e^{tau/4}Phi(-z)) = K(2 Phi(z) - 1)
+    for t_ in (0.004, 0.0113, 0.03):
+        z = math.sqrt(t_ / 2)
+        ok(abs(K * (2 * P(z) - 1) - bs_call(K, K, 1e-12, math.sqrt(2 * t_ / T), T)[0]) < 1e-8, f'L3 straddle C = K(2 Phi - 1) at tau = {t_}')
+    sig_iv = brentq(lambda s_: 2 * bs_call(K, K, 1e-12, s_, T)[0] - Q, 0.01, 1.0, xtol=1e-14)   # method 2: implied vol by root finding
+    Ph = (1 + Q / 2 / K) / 2
+    num(n, 'p-straddle-vol', 2, Ph, P(sig_iv * math.sqrt(T) / 2), {'whole': (1 + Q / K) / 2, 'c-over-k': Q / 2 / K}, 0.53)
+    zq = norm.ppf(0.53)
+    ok(abs(zq - 0.07527) < 5e-6, f'L3 straddle table value Phi^-1(0.53) = {zq:.6f}')
+    tau1 = 2 * zq ** 2
+    num(n, 'p-straddle-vol', 3, tau1, 0.5 * sig_iv ** 2 * T, {'unsquared': 2 * 0.07527, 'halved': 0.07527 ** 2 / 2, 'no-two': 0.07527 ** 2}, 0.01133, agree=1e-8)
+    ok(abs(2 * 0.07527 ** 2 - tau1) <= part(n, 'p-straddle-vol', 3)['widget']['tol']['abs'], 'L3 straddle p3 printed working in the band')
+    shown(0.07527 ** 2, 0.0056656, 7, 'L3 straddle p3 0.07527^2')
+    shown(2 * 0.07527 ** 2, 0.01133, 5, 'L3 straddle p3 tau')
+    sig = math.sqrt(2 * tau1 / T)
+    num(n, 'p-straddle-vol', 4, sig, sig_iv, {'no-half': math.sqrt(0.01133 / T), 'calendar': math.sqrt(2 * 0.01133), 'no-root': 2 * 0.01133 / T}, 0.1738, agree=1e-8)
+    w4 = part(n, 'p-straddle-vol', 4)['widget']
+    ok(w4.get('unit') == '%', 'L3 straddle p4 carries unit %')
+    ok(abs(math.sqrt(2 * 0.01133 / T) - w4['answer']) <= w4['tol']['abs'], 'L3 straddle p4 from the rounded tau lands in the band')
+    shown(2 * 0.01133, 0.02266, 5, 'L3 straddle p4 2 tau')
+    shown(0.02266 / 0.75, 0.030213, 6, 'L3 straddle p4 sigma^2')
+    shown(math.sqrt(0.030213), 0.1738, 4, 'L3 straddle p4 sigma')
+    ok(abs(2 * bs_call(K, K, 1e-12, 0.1738, T)[0] - Q) < 0.005, 'L3 straddle at 17.38% reprices to 9.60')
+    says(n, 'p-straddle-vol', 2, '4.80', '0.06', '0.5300')
+    says(n, 'p-straddle-vol', 4, '17.38%', '0.030213')
 
-    # p-grid-no-formula: S = K = 50, r = 3%, sigma = 24%, T = 0.5
-    Vs = {nx: cn_price(50, 50, 0.03, 0.24, 0.5, nx) for nx in (100, 200, 400)}
-    stated = {100: 3.7357101, 200: 3.7398157, 400: 3.7408399}
+    # p-log-contract: pays 1000 ln(S_T/K), K = S_0 = 64, sigma 28%, r 2%, T 1.5
+    r, s, T2, N = F(2, 100), F(28, 100), F(3, 2), 1000
+    k = 2 * r / s ** 2
+    tau2 = s * s * T2 / 2
+    x, c = sp.symbols('x c')
+    v = sp.exp(-kk * tau_) * (x + c * tau_)
+    res = sp.simplify((sp.diff(v, tau_) - sp.diff(v, x, 2) - (kk - 1) * sp.diff(v, x) + kk * v) / sp.exp(-kk * tau_))
+    csol = sp.solve(res, c)[0]
+    ok(sp.simplify(csol - (kk - 1)) == 0, 'L3 log p1 c = k - 1 by substitution')
+    expr_part(n, 'p-log-contract', 1, kk - 1, [-1 + kk], {'sign': 1 - kk, 'no-minus': kk, 'plus': kk + 1})
+    # second method for the whole claim: put V(S, t) into the Black-Scholes equation in S and t
+    S_, t_ = sp.symbols('S t', positive=True)
+    rr, ss = sp.Rational(2, 100), sp.Rational(28, 100)
+    Vst = N * sp.exp(-rr * (sp.Rational(3, 2) - t_)) * (sp.log(S_ / 64) + (rr - ss ** 2 / 2) * (sp.Rational(3, 2) - t_))
+    pde = sp.simplify(sp.diff(Vst, t_) + ss ** 2 * S_ ** 2 / 2 * sp.diff(Vst, S_, 2) + rr * S_ * sp.diff(Vst, S_) - rr * Vst)
+    ok(pde == 0, 'L3 log V(S, t) solves the Black-Scholes equation')
+    mean = (k - 1) * tau2
+    ok(mean == F(-288, 10000), 'L3 log mean is exactly -0.0288')
+    ok(k * tau2 == r * T2, 'L3 log k tau = rT')
+    shown(float(k), 0.5102, 4, 'L3 log k')
+    shown(float(tau2), 0.0588, 4, 'L3 log tau')
+    disc = math.exp(-float(k * tau2))
+    V = N * disc * float(mean)
+    rng = np.random.default_rng(23)                               # method 3: Feynman-Kac by simulation, exact log steps
+    lnST = (0.02 - 0.0392) * 1.5 + 0.28 * math.sqrt(1.5) * rng.standard_normal(4_000_000)
+    pay = N * math.exp(-0.03) * lnST
+    Vmc, se = pay.mean(), pay.std() / math.sqrt(len(pay))
+    ok(abs(Vmc - V) < 3 * se, f'L3 log Monte Carlo {Vmc:.3f} within 3 se ({se:.3f}) of {V:.4f}')
+    num(n, 'p-log-contract', 2, V, float(Vst.subs({S_: 64, t_: 0})), {'no-disc': N * float(mean), 'used-k': N * disc * float(k * tau2), 'sign': -V}, -27.95, agree=1e-9)
+    shown(disc, 0.97045, 5, 'L3 log discount')
+    shown(1000 * 0.97045 * -0.0288, -27.95, 2, 'L3 log p2 printed product')
+    shown(1000 * disc, 970.45, 2, 'L3 log p3 slope')
+    xb = 27.95 / 970.45
+    rise = math.exp(xb) - 1
+    xroot = brentq(lambda S: float(Vst.subs({S_: S, t_: 0})), 60, 70, xtol=1e-12)
+    num(n, 'p-log-contract', 3, rise, xroot / 64 - 1, {'log-return': 0.0288, 'no-disc': math.exp(27.95 / 1000) - 1}, 0.0292, agree=2e-6)
+    ok(part(n, 'p-log-contract', 3)['widget'].get('unit') == '%', 'L3 log p3 carries unit %')
+    shown(xb, 0.028801, 6, 'L3 log p3 x')
+    shown(math.exp(0.028801), 1.02922, 5, 'L3 log p3 ratio')
+    shown(64 * math.exp(0.0288), 65.87, 2, 'L3 log p3 break-even price')
+    sdl = math.sqrt(float(2 * tau2))
+    ok(2 * tau2 == s * s * T2 and float(2 * tau2) == 0.1176, 'L3 log variance 2 tau = sigma^2 T = 0.1176')
+    zl = float(mean) / sdl
+    shown(sdl, 0.34293, 5, 'L3 log p4 sd')
+    shown(-zl, 0.0840, 4, 'L3 log p4 z')
+    shown(P(0.0840), 0.5335, 4, 'L3 log p4 table value')
+    _, d1l, d2l = bs_call(64, 64, 0.02, 0.28, 1.5)
+    num(n, 'p-log-contract', 4, P(zl), P(d2l), {'wrong-side': 0.5335, 'no-drift': 0.5}, 0.4665, agree=1e-9)
+    ok(abs((lnST > 0).mean() - P(zl)) < 0.001, f'L3 log p4 simulated chance {(lnST > 0).mean():.4f} near {P(zl):.5f}')
+    ok(abs(1 - 0.5335 - part(n, 'p-log-contract', 4)['widget']['answer']) <= part(n, 'p-log-contract', 4)['widget']['tol']['abs'], 'L3 log p4 table route in the band')
+    says(n, 'p-log-contract', 2, '0.97045', '27.95', '0.5102')
+    says(n, 'p-log-contract', 3, '0.028801', '1.02922', '2.92%', '65.87')
+    says(n, 'p-log-contract', 4, '0.34293', '0.0840', '0.4665')
+
+    # p-grid-budget: S = K = 120, r 4.5%, sigma 18%, T 1.25
+    Vs = {nx: cn_price(120, 120, 0.045, 0.18, 1.25, nx) for nx in (100, 200, 400, 1600)}
+    stated = {100: 12.9896396, 200: 12.9963192, 400: 12.9979920}
     for nx in stated:
         ok(abs(Vs[nx] - stated[nx]) < 5e-8, f'L3 CN on {nx} intervals is {Vs[nx]:.7f}')
     V1, V2, V4 = stated[100], stated[200], stated[400]
-    d_a, d_b = V2 - V1, V4 - V2
-    pord = math.log2(d_a / d_b)
-    num(n, 'p-grid-no-formula', 1, pord, math.log(d_a / d_b) / math.log(2), {'ratio': d_a / d_b}, 2.0)
-    est = d_b / 3 * 1e6
-    c_ = d_b / (3 * (2 / 400) ** 2)                 # second method: fit V = V_inf - c h^2 to the 200 and 400 grids
-    vinf = V4 + c_ * (2 / 400) ** 2
-    num(n, 'p-grid-no-formula', 2, est, (vinf - V4) * 1e6, {'difference': d_b * 1e6}, 341.4, agree=1e-6)
-    R = V4 + d_b / 3
-    num(n, 'p-grid-no-formula', 3, R, vinf, {'subtracted': V4 - d_b / 3, 'quarter': V4 + d_b / 4}, 3.741181)
-    Vbs = bs_call(50, 50, 0.03, 0.24, 0.5)[0]
-    ok(abs(R - Vbs) < 1e-6, f'L3 Richardson {R:.7f} matches the formula {Vbs:.7f}')
-    put = R - 50 + 50 * math.exp(-0.015)
-    d1b = (math.log(1) + (0.03 + 0.24 ** 2 / 2) * 0.5) / (0.24 * math.sqrt(0.5)); d2b = d1b - 0.24 * math.sqrt(0.5)
-    put_bs = 50 * math.exp(-0.015) * P(-d2b) - 50 * P(-d1b)
-    num(n, 'p-grid-no-formula', 4, put, put_bs, {'no-disc': R, 'v400': V4 - 50 + 50 * math.exp(-0.015), 'sign': R + 50 - 50 * math.exp(-0.015)}, 2.9968, agree=1e-6)
-    says(n, 'p-grid-no-formula', 1, '0.0041056', '0.0010242', '4.009')
-    says(n, 'p-grid-no-formula', 4, '49.255582', '2.9968')
+    da, db = V2 - V1, V4 - V2
+    shown(da, 0.0066796, 7, 'L3 grid first difference')
+    shown(db, 0.0016728, 7, 'L3 grid second difference')
+    shown(da / db, 3.993, 3, 'L3 grid ratio')
+    pord = math.log2(da / db)
+    num(n, 'p-grid-budget', 1, pord, math.log(da / db) / math.log(2), {'ratio': da / db, 'inverted': -pord}, 2.0)
+    est = db / 3 * 1e6
+    geo = sum(db * 0.25 ** j for j in range(1, 200)) * 1e6        # second method: the remaining steps summed
+    num(n, 'p-grid-budget', 2, est, geo, {'difference': db * 1e6, 'quarter': db / 4 * 1e6}, 557.6, agree=1e-9)
+    Vbs = bs_call(120, 120, 0.045, 0.18, 1.25)[0]
+    ok(abs((Vbs - V4) * 1e6 - est) < 10, f'L3 grid estimated shortfall {est:.1f} near the true {(Vbs - V4) * 1e6:.1f}')
+    s16 = 557.6 / 16
+    num(n, 'p-grid-budget', 3, s16, 557.6 * (400 / 1600) ** 2, {'one-halving': 557.6 / 4, 'per-interval': 557.6 / 256}, 34.85, agree=1e-9)
+    ok(abs(est / 16 - s16) <= part(n, 'p-grid-budget', 3)['widget']['tol']['abs'], 'L3 grid p3 from the unrounded shortfall lands in the band')
+    true16 = (Vbs - Vs[1600]) * 1e6                                # the 1,600 run against the formula (a check of the model only)
+    ok(abs(true16 - s16) < 0.1 * s16, f'L3 grid the 1,600 run is {true16:.2f}e-6 below the formula, within 10% of the predicted 34.85')
+    ratio = 557.6 / 34.85
+    num(n, 'p-grid-budget', 4, ratio ** 2, 16 ** 2, {'linear': 16, 'root': 4}, 256, agree=1e-9)
+    se_paths = lambda m_: 557.6 / math.sqrt(m_)                    # error after m times the paths
+    ok(abs(se_paths(256) - 34.85) < 1e-9, 'L3 grid 256 times the paths reach 34.85')
+    says(n, 'p-grid-budget', 1, '0.0066796', '0.0016728', '3.993')
+    says(n, 'p-grid-budget', 2, '557.6')
+    says(n, 'p-grid-budget', 3, '34.85', '1,600')
     lv = Level('pdes', 3)
     lv.check_wrongs('problems')
     return lv

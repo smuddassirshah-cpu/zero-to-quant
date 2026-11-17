@@ -112,3 +112,35 @@ Result. All 43 keys agree with mine by two routes, and so do all 87 `wrong` valu
 3. Author scripts' `says()` checks a printed figure as a string, so a false figure passes (finding 1).
 
 Inbox bullets are under `Raised later (review problems pdes):` in `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Session AF, one agent re-authoring and fixing (`docs/briefs/reauthor-fix-af.md`). Every number below was recomputed at full precision before it was written, then rounded.
+
+1. Moot: `p-grid-no-formula` is re-authored (finding 8). The new problem prints no discount factor; level 3 printed products and quotients are now checked by value with `shown()` in the author's script, not as strings.
+2. Fixed through finding 9: part 4 now restates "0.298 from part 3", which is part 3's own working ($0.9702^{40} = 0.29816$) at the 3 places part 3 asks; a carried 0.2982 gives 1.00% and is taken.
+3. Fixed as written: both lines print 2.2057, `feedback.correct` adds that the unrounded $b_1$ gives 2.2056 ($0.6 \times 3.6761 = 2.20566$; $0.6 \times 3.676078 = 2.205647$; the band takes both).
+4. Moot: `p-call-heat` is re-authored (finding 6).
+5. Fixed as written (prose "We model its density by ..."; part 3 "the model's density ... it has mean $ct$ and variance $2Dt$"). Extended under the main session's rule that no sentence may claim the walk follows a model whose variance it does not match: part 3 now asks "what chance does the model give of being below 2 at $t = 0.32$?" in place of "the chance the walker is below 2". No key changes.
+6. Re-authored as `p-straddle-vol` (difficulty 4, l9 and l10): an $r = 0$ straddle at £9.60 read back to its implied volatility. The argument $\sqrt{\tau/2}$ as an expression, $\Phi = 0.53$, $\tau = 0.01133$ by $\Phi^{-1}(0.53) = 0.07527$, $\sigma = 17.38\%$. It opens with neither $\tau$ nor $k$ and ends on no formula with given $\Phi$ values.
+7. Re-authored as `p-log-contract` (difficulty 5, l9 and l11): a claim paying £1,000 $\ln(S_T/K)$. A trial solution of the scaled equation gives $c = k - 1$; the value $-$£27.95 in one step; the break-even rise 2.92%; Feynman-Kac in heat time gives the chance 0.4665 of a positive payoff. It has no read-mean-discount chain of `e-fk-reverting` or `e-fk-square`, no $\tau = c(T - t)$ step, no variance part and no standard error. The exponential payoff and the link $2\tau = \sigma^2(T - t)$ were not reused; $2\tau = 0.1176$ is printed, not asked.
+8. Re-authored as `p-grid-budget` (difficulty 4, l12 and l11). Parts 1 and 2 keep the order and shortfall from differences on a new option ($S = K = 120$, $r = 4.5\%$, $\sigma = 18\%$, $T = 1.25$; order 2.0, shortfall $557.6 \times 10^{-6}$). Parts 3 and 4 are new: the shortfall on 16 times the work ($34.85 \times 10^{-6}$) and the 256 times the paths a simulation needs for the same cut. No Richardson price, no parity, no at-the-money option with $r = 3\%$ and $T = 0.5$. A first draft of part 3 asked the paths for a standard error equal to the shortfall, which walks the numerics exam item `topic-2.5` `e-error-budget`; it was dropped (inbox bullet).
+9. Fixed as written: $D = 0.75$, $\Delta t = 0.04$, 40 steps to $t = 1.6$. Recomputed: $\lambda = 0.437708$; `no-d` $0.04 \div 0.068539 = 0.583610$; factor 0.970171; $0.970171^{40} = 0.297804$, $0.9702^{40} = 0.298161$, key 0.298 $\pm$ 0.0005; `exact` $e^{-1.2} = 0.301194$; `power-t` $0.9702^{1.6} = 0.952748$; part 4 $(0.3012 - 0.298) \div 0.3012 = 0.010624$, exact 0.011255, key 0.0106 $\pm$ 0.0008 (takes 1.0, 1.06, 1.1, 1.13 and a carried 0.2982's 1.00; refuses 0.9 and 1.2); `absolute` 0.0032 $\pm$ 0.0005; `ratio` $0.298 \div 0.3012 = 0.989376$, 0.9895 $\pm$ 0.0012, which takes 98.9 and 99.0 and is no wider than those roundings need (checked in both scripts). $e^{-0.03} = 0.970446$ prints as 0.9704.
+10. Fixed as written: key 4.375 $\pm$ 0.0005; `steady` 20, `mean-ends` $-20.625$, `left-end` 9.375.
+11. Fixed as written: $(\pi \times 11.5920 \div 11.5487 - 1) \div 2 = 1.076686$, in the band of 1.0767.
+
+Engine 1 to 3: left to the engine queue (bullets already in the inbox). Engine 3 is worked around in this course's script by `shown()`, which compares the full-precision value with the printed figure at its places.
+
+Keys changed: problems-1 `p-grid-rod` p4 (20 to 4.375, new slips); problems-2 `p-grid-modes` p1 `no-d` (0.875415 to 0.58361), p3 (0.220 to 0.298, slips 0.30119 and 0.95275), p4 (0.01405 to 0.0106, slips 0.0032 and 0.9895); problems-3 all 12 keys new.
+
+Level 3 shape after the re-authoring: l9 in `p-straddle-vol` and `p-log-contract`, l10 in `p-straddle-vol`, l11 in `p-log-contract` and `p-grid-budget`, l12 in `p-grid-budget`. No lesson is in all three problems; one difficulty 5 (`p-log-contract`).
+
+Gates:
+
+| set | validator | voice 35 | fresh-check `--file` | number scripts | grade-all | playthrough | `--mobile --why` |
+|---|---|---|---|---|---|---|---|
+| problems-1 | 0 errors | 0 and 0 | 0 errors, 4 advisory | author 637 checks 0 failures; reader 716 checks 0 `FINDING` | 0 failures (17) | green | green |
+| problems-2 | 0 errors | 0 and 0 | 0 errors, 2 advisory | as above | 0 failures (13) | green | green, 28 slips routed |
+| problems-3 | 0 errors, no warnings | 0 and 0 | 0 errors, 6 advisory | as above | 0 failures (12: 2 expression, 10 numeric) | green | green, 30 slips routed |
+
+The reader's script: checks of the three replaced problems removed (findings 1 and 4 go with them), its dense solver retargeted to the three `p-grid-budget` prices, the `p-grid-rod` and `p-grid-modes` checks moved to the new numbers, the `p-drift-walk` claim check now reads the wording, and the shape check accepts "expression" or "in terms of" as the stated form of an `expression` part. Screenshots at 440 px of the new set read: no overflow.
