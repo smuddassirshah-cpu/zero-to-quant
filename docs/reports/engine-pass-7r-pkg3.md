@@ -19,3 +19,10 @@ Gap found: the default mode never reads the 23 exam files whose items sit in `pa
 Gate: `same-course-reuse.mjs --all`: 0 errors, 9 warnings (ratio 7, chain-union 1, question 1), 37 waived; 54 s. No new hit is an error; no waiver or content changed.
 
 Playthrough smoke (shard 1/16): lessons pass, then the run ended on a page-load timeout of the sandbox; tools only changed.
+
+## Follow-up: `--all-exams` (reader's findings)
+- Duplicates fixed: the sentence index also held the course's own files, so 32 retold hits against them printed again under `[all-exams]`; `--all-exams` now keeps only exam and mock sources, each hit once.
+- `ratio` and `rate` dropped from `--all-exams` (27 of 27 chance in the review); both stay in same-course mode.
+- `--all-exams` is the documented way to cover the 23 exam files with items in `parts[].items` (mocks); the test reads a mock fixture. Mocks stay out of the gate.
+- Gate `--all`: 0 errors, 9 warnings (ratio 7, chain-union 1, question 1), 37 waived, as before. `--all --all-exams`: 4 warnings (numbers 1, function 1, pair 1, transform 1) plus 1 waived; was 65 lines.
+- Tests: the four `test-fresh-check-*` files pass; `test-fresh-check-pkg3.mjs` gains three checks (each hit once, no ratio or rate, ratio kept in same-course mode).
