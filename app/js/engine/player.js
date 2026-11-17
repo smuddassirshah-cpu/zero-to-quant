@@ -365,6 +365,7 @@
       },
       mark(r) { if (!widget) return; widget.markGraded(r); if (r.ok && widget.showSolved) { try { widget.showSolved(); } catch (e) { console.error(e); } } if (!r.ok && !r.final && widget.showWhy) { try { widget.showWhy(r.key); } catch (e) { console.error(e); } } },
       clear() { widget && widget.unlock(); },
+      retry() { if (widget && widget.retry) widget.retry(); },
       reset() { widget && widget.reset(); resetCanvas(); if (w && w.kind === 'tap-regions') count(tapCount(0)); },
       reveal() {
         if (!widget) return;
@@ -570,7 +571,7 @@
     const addXP = (n) => { S.xp += n; setXP(S.xp); };
     const setFrame = (k) => { app.classList.remove('is-ok', 'is-no'); if (k) app.classList.add('is-' + k); };
     const chip = (kind, title, line, xp, extra = '') => {
-      const ic = { ok: 'check', no: 'cross', rev: 'bulb' }[kind];
+      const ic = { ok: 'check', no: 'cross', rev: 'bulb', off: 'replay' }[kind];
       verdict.innerHTML = `<div class="lsn-chip is-${kind}"><span class="lsn-chip-ic">${icon(ic, 'sm')}</span><div class="lsn-chip-tx"><div class="lsn-chip-h"><b>${Z.esc(title)}</b>${xp ? `<span class="lsn-chip-xp tnum">${Z.spark(true)}+${xp} XP</span>` : ''}</div>${line ? `<span>${G().inline(strip(line, title))}</span>` : ''}${extra ? `<span class="lsn-chip-x">${extra}</span>` : ''}</div></div>`;
     };
     /* item 404: a chip still pending when the screen changes (a fast Continue) is dropped, so "Correct." never shows on
@@ -597,6 +598,7 @@
         case 'eval': p = { label: 'Check', disabled: true }; hint = quiz || !hasHints ? 'hidden' : 'off'; if (helpOpen) s = 'Get help'; break;
         case 'ok': p = { label: 'Continue', cls: 'correct' }; s = 'Why?'; break;
         case 'no': p = { label: 'Try again', cls: 'notyet' }; s = hasHints ? 'Get help' : 'Why?'; hint = hasHints ? 'on' : 'hidden'; break;
+        case 'offline': p = { label: 'Try again' }; hint = 'hidden'; break;
         case 'rev': p = { label: 'Continue' }; s = 'Why?'; break;
         case 'qok': p = { label: 'Continue', cls: 'correct' }; s = 'Why?'; break;
         case 'qno': p = { label: 'Continue', cls: 'notyet' }; s = 'Why?'; break;
@@ -742,6 +744,14 @@
       const r = await step.grade();
       if (!alive) return r;
       if (r && r.pending) { step.clear(); S.st = step.ready() ? 'engaged' : 'idle'; refresh(); return r; }
+      /* ENGINE-BACKLOG 1214: Python or C++ that could not load is the connection, not the answer: a neutral chip, no frame, no sound, no XP,
+         no attempt, no Redo entry, no check counted; Try again retries the load. */
+      if (r && r.offline) {
+        S.st = 'offline'; setFrame(null);
+        chipLater(() => chip('off', r.title || 'Could not load', r.line, 0, 'Nothing was checked, and nothing was counted.'), 80);
+        refresh(); later(scrollGraded, 140);
+        return r;
+      }
       S.checks++; S.anyCheck = true;
       if (S.phase === 'quiz') {
         r.final = true;
@@ -830,6 +840,7 @@
       if (primary.disabled || S.st === 'play' || busy) return Promise.resolve();
       if (S.st === 'idle' || S.st === 'engaged') return check();
       if (S.st === 'no') { tryAgain(); return Promise.resolve(); }
+      if (S.st === 'offline') { if (step.retry) step.retry(); tryAgain(); return Promise.resolve(); }
       return advance();
     };
 
@@ -1135,6 +1146,7 @@
         step.lock();
         const r = await step.grade();
         if (r && r.pending) { step.clear(); return r; }
+        if (r && r.offline) { step.clear(); step.retry(); return { pending: true, offline: true, ok: false, key: null, title: r.title, line: r.line }; } // ENGINE-BACKLOG 1214: not an answer; the load is retried so the next Check can work
         r.final = true;
         if (mode !== 'exam') step.mark(r);
         result = Object.assign({}, r, { line: r.ok ? (item.feedback && item.feedback.correct) || null : notYetLine(item, r), value: step.widget ? step.widget.value() : null, item });
@@ -1340,7 +1352,11 @@
       st0 = 'eval'; sync();
       const r = await cur.check();
       if (!alive) return;
-      if (r && r.pending) { st0 = cur.ready() ? 'engaged' : 'idle'; sync(); return; }
+      if (r && r.pending) {
+        st0 = cur.ready() ? 'engaged' : 'idle'; sync();
+        if (r.offline && mode !== 'exam') verdict.innerHTML = `<div class="lsn-chip is-off"><span class="lsn-chip-ic">${icon('replay', 'sm')}</span><div class="lsn-chip-tx"><div class="lsn-chip-h"><b>${Z.esc(r.title || 'Could not load')}</b></div>${r.line ? `<span>${Z.esc(r.line)}</span>` : ''}<span class="lsn-chip-x">Nothing was checked, and nothing was counted. Check again once it has loaded.</span></div></div>`;
+        return;
+      }
       /* an item with parts: a part that is not the last is a partial result (the item's result comes with its last part); the
          chip speaks of the part just checked (partOk), the item's own ok means every part right */
       const pok = r.partOk != null ? r.partOk : r.ok;

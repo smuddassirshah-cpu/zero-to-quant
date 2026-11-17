@@ -290,6 +290,12 @@
         if (!rev) { Z.sound('correct'); Z.haptic(); later(() => Z.burst(sum.querySelector('.drl-ver-chip')), 120); }
         say(`Verified. All ${x.total} tests passed.`);
         Z.emit('drill:verified', { id, revealed: rev });
+      } else if (r.offline) {
+        /* ENGINE-BACKLOG 1214: the compiler could not load: the connection, not the answer. No verdict, no sound, no failed attempt. */
+        sum.innerHTML = `<div class="drl-fail drl-offline"><span class="chip">${I('replay', 'xs')}${esc(r.title || 'C++ could not load')}</span><p class="t-body">${esc(r.line || '')}</p><button type="button" class="btn secondary drl-retry">${I('replay', 'sm')}<span>Try again</span></button></div>`;
+        sum.querySelector('.drl-retry').addEventListener('click', () => { if (w.retry) w.retry(); });
+        setVerdict(null);
+        say(`${r.title || 'C++ could not load'}. Nothing was checked.`);
       } else {
         if (counted) { S.failed += 1; persist(); }
         const first = /^test-(\d+)$/.exec(r.key || '');

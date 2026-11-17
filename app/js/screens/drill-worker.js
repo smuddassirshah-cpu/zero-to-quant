@@ -7,7 +7,8 @@
                  { type: 'run', id, code, spec }
                    spec = { fn, compare: 'isclose' | 'fraction', prelude, tests: [{ prices } | { gen } | { args }, expected] }
                    args and a string expected are Python source, evaluated after the prelude (lambdas for events, Fraction values)
-   Messages out: { type: 'ready', version, ms } | { type: 'fail', message }
+   Messages out: { type: 'ready', version, ms } | { type: 'fail', message } | { type: 'alive' } (bytes are arriving)
+                 { type: 'pkgfail', id, message }   a package download failed, so no test ran (not an answer)
                  { type: 'event', id, data }   data is JSON: loaded | test | error | done
                  { type: 'pkgs', id, phase: 'start' | 'msg' | 'end', text }   around loading imported packages
                  { type: 'crash', id, message } | { type: 'end', id }
@@ -154,13 +155,37 @@ def drl_run(code, spec_json, emit):
 `;
 
 /* Pyodide comes from the jsDelivr CDN (docs/PLAN.md section 3). A local copy (vendor/pyodide/, passed by the page as an
-   absolute indexURL ending in '/') is used only when the CDN cannot be reached and that copy actually exists. */
+   absolute indexURL ending in '/') is used only when the CDN cannot be reached and that copy actually exists.
+   ENGINE-BACKLOG 1214: the probe is a HEAD of a small file, so it must answer within PROBE_MS or the CDN counts as unreachable (a
+   proxy that holds the connection open would otherwise cost the page's whole load budget). A refusal (a network error, a 403
+   from a proxy) answers at once. */
 const CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
-const reachable = async (url) => { try { const r = await fetch(url, { method: 'HEAD' }); return r.ok; } catch { return false; } };
+const PROBE_MS = 8000;
+const reachable = async (url) => {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), PROBE_MS);
+  try { const r = await fetch(url, { method: 'HEAD', signal: ac.signal }); return r.ok; } catch { return false; } finally { clearTimeout(t); }
+};
 const pickIndexURL = async (local) => {
   if (await reachable(CDN + 'pyodide.mjs')) return CDN;
   if (local && await reachable(local + 'pyodide.mjs')) return local;
   throw new Error('Python could not be loaded: the Pyodide CDN is unreachable and there is no local copy in vendor/pyodide.');
+};
+
+/* Bytes arriving are the page's evidence that a slow load is still alive: every body being read posts { type: 'alive' } (at most
+   once a second), and the page gives up only after a stretch with none (code.js, drill.js). */
+let aliveAt = 0;
+const alive = () => { const n = performance.now(); if (n - aliveAt > 1000) { aliveAt = n; self.postMessage({ type: 'alive' }); } };
+const realFetch = self.fetch.bind(self);
+self.fetch = async (...a) => {
+  const r = await realFetch(...a);
+  alive();
+  if (!r.body || !r.ok) return r;
+  const rd = r.body.getReader();
+  const body = new ReadableStream({
+    pull: (c) => rd.read().then(({ done, value }) => { if (done) c.close(); else { alive(); c.enqueue(value); } }, (e) => c.error(e)),
+    cancel: (why) => rd.cancel(why),
+  });
+  return new Response(body, { status: r.status, statusText: r.statusText, headers: r.headers });
 };
 
 let indexURL = null;
@@ -201,12 +226,13 @@ self.onmessage = async (e) => {
       const pk = (phase, text) => self.postMessage({ type: 'pkgs', id: m.id, phase, text });
       const prepare = async () => {
         pk('start');
-        try { await py.loadPackagesFromImports(m.code, { messageCallback: (t) => pk('msg', String(t)), errorCallback: (t) => pk('msg', String(t)) }); } catch (e) { emit('Package load failed: ' + ((e && e.message) || e)); }
-        pk('end');
+        try { await py.loadPackagesFromImports(m.code, { messageCallback: (t) => pk('msg', String(t)), errorCallback: (t) => pk('msg', String(t)) }); }
+        catch (e) { pk('end'); self.postMessage({ type: 'pkgfail', id: m.id, message: String((e && e.message) || e) }); return false; } // ENGINE-BACKLOG 1214: a download failure is not an answer: the page says so and no test runs
         // Item 120: every run starts in a fresh, empty working directory, so files written by one run are gone in the next
         py.runPython("import os as _o, shutil as _s, tempfile as _t\n_p = globals().get('_zq_run_dir')\n_o.chdir('/')\nif _p: _s.rmtree(_p, ignore_errors=True)\n_zq_run_dir = _t.mkdtemp(prefix='run-')\n_o.chdir(_zq_run_dir)\nimport warnings as _w\n_w.filterwarnings('ignore', category=FutureWarning)\n_w.filterwarnings('ignore', category=DeprecationWarning)"); // item 182: library deprecation notices stay out of the learner's output
+        return true;
       };
-      await prepare();
+      if (!(await prepare())) { self.postMessage({ type: 'end', id: m.id }); return; }
       /* ENGINE-BACKLOG 917: a stack overflow kills this Pyodide. Report the test that overflowed, load a new one and carry on after it. */
       const seen = { loaded: false, last: -1 };
       const watch = (s) => { emit(s); try { const d = JSON.parse(s); if (d.kind === 'loaded') seen.loaded = true; else if (d.kind === 'test') seen.last = d.i; } catch { /* not JSON */ } };
@@ -224,7 +250,7 @@ self.onmessage = async (e) => {
           pk('start'); pk('msg', 'Restarting Python after a recursion that went too deep');
           py = null; runFn = null;
           await boot();
-          await prepare();
+          if (!(await prepare())) { self.postMessage({ type: 'end', id: m.id }); return; }
           from = i + 1; resume = true;
         }
       }

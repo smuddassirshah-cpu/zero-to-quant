@@ -195,6 +195,20 @@ jobs:
           node tools/test-drill-recursion.mjs
           node tools/test-planted-check.mjs
           EOF
+      # The vendor copies (docs/CI.md, "The vendor cache"): fetch-vendor.sh downloads the 389 MB Pyodide release (762 MB on disk) plus MathLive, the
+      # Compute Engine and YoWASP Clang. Its output is cached under a key made of the script's hash (the pinned versions are in the script) and the
+      # versions spelled out, so a warm run restores it and fetch-vendor.sh finds every folder complete and downloads nothing. The save is the built-in
+      # post step: it runs only when the job succeeded, so a half-fetched folder is never stored. A change to the script or a version makes a new key.
+      - name: Restore the vendor copies (fetch-vendor.sh output)
+        if: matrix.leg == 'python'
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/vendor/pyodide
+            app/vendor/mathlive
+            app/vendor/compute-engine
+            app/vendor/yowasp-clang
+          key: vendor-${{ runner.os }}-pyodide-0.27.7-mathlive-0.105.0-ce-0.30.2-clang-21.1.4-3-${{ hashFiles('app/tools/fetch-vendor.sh') }}
       - name: Self-hosting fallback (vendor/ copies with jsDelivr blocked)
         if: matrix.leg == 'python'
         run: |

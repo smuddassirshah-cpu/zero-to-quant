@@ -109,6 +109,14 @@ ok([...wf.matchAll(/actions\/cache\/save@v4/g)].length === 3 && [...wf.matchAll(
 ok([...wf.matchAll(/Save the green sha\n\s+if: \$\{\{ success\(\) \}\}/g)].length === 1 && /Record the green sha\n\s+if: \$\{\{ success\(\) \}\}/.test(wf), 'the number-scripts sha is recorded and saved only by a green job');
 ok(!/actions\/cache@v4\s+with:\s+path: app\/tools\/\.green-cache/.test(wf), 'the green cache is never saved by the post step of actions/cache (which would save on a failed job too, and be restored without a guard)');
 
+/* ---- the vendor cache (ENGINE-BACKLOG 1216): keyed on the script's hash and the versions it pins ---- */
+const fv = fs.readFileSync(path.resolve(HERE, 'fetch-vendor.sh'), 'utf8');
+const vk = (/^\s+key: (vendor-[^\n]+)$/m.exec(wf) || [])[1] || '';
+const pin = (re) => (re.exec(fv) || [])[1];
+const want = `pyodide-${pin(/^PYODIDE_VER=(\S+)/m)}-mathlive-${pin(/npm_fetch mathlive (\S+)/)}-ce-${pin(/npm_fetch @cortex-js\/compute-engine (\S+)/)}-clang-${pin(/npm_fetch @yowasp\/clang (\S+)/)}`;
+ok(vk.includes(want) && vk.includes("hashFiles('app/tools/fetch-vendor.sh')"), `the vendor cache key carries the script's hash and the versions it pins (${want})`);
+ok(/uses: actions\/cache@v4\s+with:\s+path: \|\s+app\/vendor\/pyodide\s+app\/vendor\/mathlive\s+app\/vendor\/compute-engine\s+app\/vendor\/yowasp-clang\s+key: vendor-/.test(wf) && wf.indexOf('Restore the vendor copies') < wf.indexOf('bash tools/fetch-vendor.sh'), 'the four vendor folders are restored (saved by the post step of a green job only) before fetch-vendor.sh runs');
+
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(bad ? `${bad} failed` : 'all passed');
 process.exitCode = bad ? 1 : 0;
