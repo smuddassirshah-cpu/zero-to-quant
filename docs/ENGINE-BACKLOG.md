@@ -2663,7 +2663,7 @@ Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 1155 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1156 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1157 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
-1158 status: session AH, with the gallery fix pass (the option-code overflow is a CSS item; engine pass 9b does not touch CSS).
+1158 status: done (already built as item 391: `.wd-opt-code` has `overflow-x: auto`; confirmed at 440 px in both themes by the session AH gallery fix pass).
 1159 status: done in engine pass 9 item d: `WIDE_PROBE` in `playthrough.mjs` fails an item at 600 px or less when text runs past the window or a clipping box holds wider text (problem sets per part, homework marked items, exam items, the wideNow checks); `test-playthrough-text-overflow.mjs`.
 1160 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1161 status: done in engine pass 9 item f: `--problems` and `--set` stop with "Run the validator first" when `content/manifest.json` lacks the set; `test-playthrough-manifest.mjs`.
@@ -2889,7 +2889,6 @@ Every item below is a post-completion item: it does not gate DONE. Each item's o
 - 1154: A validator warning per topic or stage exam for an (exam, essential skill) pair with fewer than two non-longform items.
 - 1190: An `expression` part with no `form` whose key is a polynomial and whose stem holds a `\div` or a fraction of polynomials.
 - 1210: A restated key that, at its rounded value, fails the inequality it was the smallest solution of (`topology/problems-3` `p-trapping-interval` part 4).
-- 1158 is not post-completion: it goes with the session AH gallery fix pass.
 
 ### From the second triage (section 10): the 32 not required for correctness, 412, and the number-line labels
 
