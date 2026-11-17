@@ -171,7 +171,9 @@ def level1():
     part(1, 'p-grid-rod', 3, [0.5 * (15 + 33.75), float(r3[1])], dp=3, wrong={'two-steps': [float(run(0.5, 2)[1])]})
     far = run(0.5, 5000)
     ok(np.abs(far - (15 + 50 * np.linspace(0, 1.2, 13))).max() < 1e-9, 'L1 p-grid-rod p4: the lambda = 1/2 grid does settle on the line')
-    part(1, 'p-grid-rod', 4, [15 + 50 * 0.1, float(far[1])], dp=0, wrong={'mean-ends': [45], 'left-end': [15]})
+    # fix pass: part 4 now asks how far 24.375 sits above the steady value (finding 10)
+    part(1, 'p-grid-rod', 4, [24.375 - (15 + 50 * 0.1), float(r3[1] - far[1])], dp=3,
+         wrong={'steady': [15 + 50 * 0.1], 'mean-ends': [24.375 - 45], 'left-end': [24.375 - 15]})
 
     # p-drift-walk: dx = 0.05, dt = 0.001, q = 0.6
     ok(abs(0.05 ** 2 / 0.002 - 1.25) < 1e-12, 'L1 p-drift-walk: D = 1.25')
@@ -197,7 +199,9 @@ def level1():
          wrong={'unsquared': [2.3263 / 6.325], 'var-dt': [(z99 / (10 / math.sqrt(1.25))) ** 2]})
     # claim: "its density obeys u_t + c u_x = D u_xx": the walk's own variance rate
     walk_var_rate = 4 * 0.6 * 0.4 * 0.05 ** 2 / 0.001
-    ok(abs(walk_var_rate - 2 * 1.25) < 1e-9,
+    # fix pass: the prose now calls the equation a model of the walk (finding 5), so the check reads the wording
+    pr = item(1, 'p-drift-walk')['prose'] + ' ' + item(1, 'p-drift-walk')['parts'][2]['question']
+    ok(abs(walk_var_rate - 2 * 1.25) > 1e-3 and 'obeys' not in pr and 'We model its density' in pr and 'the walker has' not in pr,
        f'L1 p-drift-walk prose: the walk\'s own variance is {walk_var_rate:.2f}t, not 2Dt = 2.50t (homework-1 item 7 names the gap c^2 dt t); '
        f'the walk itself is below 2 at t = 0.32 with chance {Phi((2 - m) / math.sqrt(walk_var_rate * 0.32)):.4f}, the model says 0.0899')
 
@@ -250,10 +254,10 @@ def level2():
          wrong={'no-half': [pi * coth - 1], 'keep-one': [pi * coth / 2], 'used-left': [(pi * math.exp(pi) / math.sinh(pi) - 1) / 2]})
     ok(abs(pi * coth - 3.15335) < 5e-6, 'L2 p-exp-series p5: pi coth pi = 3.15335')
 
-    # p-grid-modes: length pi, 12 intervals, D = 0.5, dt = 0.06
+    # p-grid-modes: length pi, 12 intervals, D = 0.75, dt = 0.04 (fix pass, finding 9)
     dx = pi / 12
-    lam = 0.5 * 0.06 / dx ** 2
-    part(2, 'p-grid-modes', 1, [lam, 0.5 * 0.06 * 144 / pi ** 2, 0.03 / 0.068539], dp=4, wrong={'no-d': [0.06 / dx ** 2], 'unsquared': [0.03 / dx]})
+    lam = 0.75 * 0.04 / dx ** 2
+    part(2, 'p-grid-modes', 1, [lam, 0.75 * 0.04 * 144 / pi ** 2, 0.03 / 0.068539], dp=4, wrong={'no-d': [0.04 / dx ** 2], 'unsquared': [0.03 / dx]})
     ok(abs(dx ** 2 - 0.068539) < 5e-7 and lam < 0.5, 'L2 p-grid-modes p1: dx^2 and lambda below 1/2')
     A = np.diag(np.full(11, 1 - 2 * lam)) + np.diag(np.full(10, lam), 1) + np.diag(np.full(10, lam), -1)
     eig = np.sort(np.linalg.eigvalsh(A))
@@ -262,15 +266,16 @@ def level2():
     part(2, 'p-grid-modes', 2, [g, float(eig[-1]), 1 - 4 * 0.4377 * 0.01704], dp=4,
          wrong={'exact': [math.exp(-0.03)], 'no-half': [1 - 4 * lam * math.sin(dx) ** 2, 1 - 4 * 0.4377 * math.sin(dx) ** 2]})
     mode = np.sin(np.arange(1, 12) * dx)
-    after = float((np.linalg.matrix_power(A, 50) @ mode)[5] / mode[5])
-    part(2, 'p-grid-modes', 3, [g ** 50, after, 0.9702 ** 50], dp=3, wrong={'exact': [math.exp(-1.5)], 'power-t': [0.9702 ** 3]})
-    ex = math.exp(-1.5)
-    part(2, 'p-grid-modes', 4, [(ex - g ** 50) / ex, (ex - after) / ex, (0.2231 - 0.2200) / 0.2231], dp=1, pct=True,
-         wrong={'absolute': [0.2231 - 0.2200], 'ratio': [0.2200 / 0.2231]})
+    after = float((np.linalg.matrix_power(A, 40) @ mode)[5] / mode[5])
+    part(2, 'p-grid-modes', 3, [g ** 40, after, 0.9702 ** 40], dp=3, wrong={'exact': [math.exp(-1.2)], 'power-t': [0.9702 ** 1.6]})
+    ex = math.exp(-1.2)
+    part(2, 'p-grid-modes', 4, [(ex - g ** 40) / ex, (ex - after) / ex, (0.3012 - 0.298) / 0.3012], dp=1, pct=True,
+         wrong={'absolute': [0.3012 - 0.298], 'ratio': [0.298 / 0.3012]})
     w = item(2, 'p-grid-modes')['parts'][3]['widget']
-    own4 = round(0.9702 ** 50, 4)
-    ok(abs(own4 - 0.2200) < 5e-5, f'L2 p-grid-modes p4: part 3\'s own working, 0.9702^50, is {own4} to 4 places, but part 4 restates 0.2200')
-    carried = (0.2231 - own4) / 0.2231
+    own4 = round(0.9702 ** 40, 4)
+    ok(round(0.9702 ** 40, 3) == 0.298 and '0.298 from part 3' in item(2, 'p-grid-modes')['parts'][3]['question'],
+       f'L2 p-grid-modes p4: part 3\'s own working, 0.9702^40, is {round(0.9702 ** 40, 3)} to 3 places, as part 4 restates')
+    carried = (0.3012 - own4) / 0.3012
     ok(abs(carried - w['answer']) <= w['tol']['abs'],
        f'L2 p-grid-modes p4: a learner who carries {own4} gets {100 * carried:.2f}% ({round(100 * carried, 1)} to 1 place) and is refused')
 

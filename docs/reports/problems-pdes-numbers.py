@@ -165,8 +165,10 @@ def level1():
     num(n, 'p-grid-rod', 2, run(1)[1], run_np(1)[1], {'lam-one': run(1, F(1))[1], 'three-mean': F(15 + 40 + 40, 3)}, 27.5)
     num(n, 'p-grid-rod', 3, run(3)[1], run_np(3)[1], {'two-steps': run(2)[1]}, 24.375)
     ok(run(2)[2] == F(135, 4), 'L1 rod u(0.2) after two steps is 33.75')
-    num(n, 'p-grid-rod', 4, F(15) + F(60) * F(1, 12), run_np(6000)[1], {'mean-ends': 45, 'left-end': 15}, 20, agree=1e-9)
+    steady = F(15) + F(60) * F(1, 12)
+    num(n, 'p-grid-rod', 4, run(3)[1] - steady, run_np(3)[1] - run_np(6000)[1], {'steady': steady, 'mean-ends': run(3)[1] - 45, 'left-end': run(3)[1] - 15}, 4.375, agree=1e-9)
     says(n, 'p-grid-rod', 3, '33.75', '24.375')
+    says(n, 'p-grid-rod', 4, '24.375', '4.375', '20')
 
     # p-drift-walk: dx 0.05, dt 0.001, q 0.6
     c = (2 * F(3, 5) - 1) * F(1, 20) / F(1, 1000)
@@ -239,6 +241,9 @@ def level2():
     num(n, 'p-exp-series', 1, b1e, quad(lambda x: math.exp(x) * math.sin(x), -math.pi, math.pi)[0] / math.pi, {'no-pi': shp, 'sign': -shp / math.pi}, 3.6761, agree=1e-9)
     b3e = 3 * 2 / 10 * float(b1e)
     num(n, 'p-exp-series', 2, b3e, quad(lambda x: math.exp(x) * math.sin(3 * x), -math.pi, math.pi)[0] / math.pi, {'sign': -b3e, 'no-k': 2 / 10 * float(b1e)}, 2.2056, agree=1e-9)
+    ok(round(0.6 * 3.6761, 4) == 2.2057 and abs(0.6 * 3.6761 - b3e) <= part(n, 'p-exp-series', 2)['widget']['tol']['abs'], 'L2 exp p2 rounded b1 gives 2.2057, in the band')
+    says(n, 'p-exp-series', 2, '2.2057', '2.2056')
+    says(n, 'p-exp-series', 5, '11.5487', '11.5920')
     kk = sp.Symbol('k', positive=True)
     slope = sp.limit(sp.log(2 * kk / (1 + kk ** 2)) / sp.log(kk), kk, sp.oo)
     big = 1e6
@@ -257,12 +262,12 @@ def level2():
     says(n, 'p-exp-series', 4, '23.1407', '0.0432', '11.5920')
     says(n, 'p-exp-series', 5, '3.15335', '1.0767')
 
-    # p-grid-modes: L = pi, N = 12, D = 0.5
+    # p-grid-modes: L = pi, N = 12, D = 0.75, dt = 0.04, 40 steps to t = 1.6
     dx = math.pi / 12
-    dtm = sp.pi ** 2 / 144 / (2 * sp.Rational(1, 2))       # the stability bound, quoted only in the feedback
+    dtm = sp.pi ** 2 / 144                                  # dx^2, quoted in the feedback
     ok(abs(float(dtm) - 0.068539) < 5e-7, 'L2 grid dx^2 = 0.068539')
-    lam = 0.5 * 0.06 / dx ** 2
-    num(n, 'p-grid-modes', 1, lam, 0.03 / float(dtm), {'no-d': 0.06 / dx ** 2, 'unsquared': 0.03 / dx}, 0.4377)
+    lam = 0.75 * 0.04 / dx ** 2
+    num(n, 'p-grid-modes', 1, lam, 0.03 / float(dtm), {'no-d': 0.04 / dx ** 2, 'unsquared': 0.03 / dx}, 0.4377)
     ok(lam < 0.5, 'L2 grid lambda below one half')
     g = 1 - 4 * lam * math.sin(dx / 2) ** 2
     M = np.eye(11) * (1 - 2 * lam) + np.eye(11, k=1) * lam + np.eye(11, k=-1) * lam
@@ -271,17 +276,28 @@ def level2():
     ok(abs(ev[0] - (1 - 4 * lam * math.sin(11 * dx / 2) ** 2)) < 1e-9 and abs(ev[0]) < 1, 'L2 grid top mode bounded')
     xg = np.arange(1, 12) * dx
     v = np.sin(xg)
-    for _ in range(50):
+    for _ in range(40):
         v = M @ v
-    num(n, 'p-grid-modes', 3, g ** 50, v[5] / math.sin(xg[5]), {'exact': math.exp(-1.5), 'power-t': 0.9702 ** 3}, 0.220, agree=1e-9)
-    ok(abs(0.9702 ** 50 - 0.2200) < 0.0005, 'L2 grid p3 rounded factor lands in the band')
-    short = (math.exp(-1.5) - g ** 50) / math.exp(-1.5)
-    num(n, 'p-grid-modes', 4, short, 1 - math.exp(50 * math.log(g) + 1.5), {'absolute': 0.2231 - 0.2200, 'ratio': 0.2200 / 0.2231}, 0.014, agree=1e-9)
-    ok(abs((0.2231 - 0.2200) / 0.2231 - short) < 0.0005, 'L2 grid p4 rounded inputs land in the band')
-    ok(part(2, 'p-grid-modes', 4)['widget'].get('unit') == '%', 'L2 grid p4 carries unit %')
-    says(n, 'p-grid-modes', 1, '0.068539', '0.4377')
+    num(n, 'p-grid-modes', 3, g ** 40, v[5] / math.sin(xg[5]), {'exact': math.exp(-1.2), 'power-t': 0.9702 ** 1.6}, 0.298, agree=1e-9)
+    ok(abs(0.9702 ** 40 - 0.298) < 0.0005 and round(0.9702 ** 40, 3) == 0.298, 'L2 grid p3 rounded factor gives 0.298, in the band')
+    ok(abs(math.exp(-1.2) - 0.3012) < 5e-5, 'L2 grid p4 e^-1.2 = 0.3012')
+    short = (math.exp(-1.2) - g ** 40) / math.exp(-1.2)
+    num(n, 'p-grid-modes', 4, short, 1 - math.exp(40 * math.log(g) + 1.2), {'absolute': 0.3012 - 0.298, 'ratio': 0.298 / 0.3012}, 0.011, agree=1e-9)
+    w4 = part(2, 'p-grid-modes', 4)['widget']
+    work4 = (0.3012 - 0.298) / 0.3012
+    for typed in (1.0, 1.1, 1.06, 1.13, 100 * (0.3012 - 0.2982) / 0.3012):   # 1 dp roundings, the printed working, the exact value, a carried 0.2982
+        ok(abs(typed / 100 - w4['answer']) <= w4['tol']['abs'] + 1e-12, f'L2 grid p4 takes {typed}%')
+    for typed in (0.9, 1.2):
+        ok(abs(typed / 100 - w4['answer']) > w4['tol']['abs'], f'L2 grid p4 refuses {typed}%')
+    ok(abs(work4 - 0.010624) < 1e-6 and round(work4, 3) == 0.011, 'L2 grid p4 printed working 0.0106, about 0.011')
+    rat = [x for x in w4['wrong'] if x['id'] == 'ratio'][0]
+    ok(all(abs(t / 100 - rat['value']) <= rat['tol']['abs'] for t in (98.9, 99.0)) and abs(0.298 / 0.3012 - rat['value']) <= rat['tol']['abs'], 'L2 grid p4 ratio band takes 98.9 and 99.0')
+    ok(rat['tol']['abs'] <= 0.0015, 'L2 grid p4 ratio band no wider than its roundings need')
+    ok(w4.get('unit') == '%', 'L2 grid p4 carries unit %')
+    says(n, 'p-grid-modes', 1, '0.068539', '0.4377', '0.75')
     says(n, 'p-grid-modes', 2, '0.01704', '0.9702')
-    says(n, 'p-grid-modes', 4, '0.2231', '0.014', '1.4%')
+    says(n, 'p-grid-modes', 3, '0.298', '1.6 \\div 0.04 = 40')
+    says(n, 'p-grid-modes', 4, '0.3012', '0.298', '0.011', '1.1%', '0.9704')
     lv = Level('pdes', 2)
     lv.check_wrongs('problems')
     return lv
