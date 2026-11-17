@@ -329,38 +329,52 @@
       }
     },
     {
-      "id": "e-gbm-below",
+      "id": "e-fk-reverting",
       "difficulty": 3,
       "skills": [
-        "it-bm"
+        "pe-fk"
       ],
       "tags": [
-        "gbm-below"
+        "feynman-kac"
       ],
-      "pace": 120,
-      "title": "The chance a price ends below 70",
-      "prose": "A share follows geometric Brownian motion with $S_0 = 80$, drift $\\mu = 6\\%$ and volatility $\\sigma = 30\\%$ a year.",
-      "question": "What is $P(S_2 < 70)$ after two years? Give four decimal places.",
+      "pace": 150,
+      "title": "Reading a process off its equation",
+      "prose": "A value $V(t, x)$ solves $V_t + 0.3(3 - x)V_x + 0.08V_{xx} - 0.04V = 0$, with $V(T, x) = x$. Today $x = 1$ and two years remain.",
+      "question": "What is $V$ by Feynman-Kac? Give four decimal places.",
       "widget": {
         "kind": "numeric",
-        "answer": 0.34995,
+        "answer": 1.75612,
         "tol": {
           "abs": 0.0005
         },
         "placeholder": "a decimal",
-        "label": "Probability",
-        "accept": "0.3500 within 0.0005",
+        "label": "Value",
+        "accept": "1.7561 within 0.0005",
         "wrong": [
           {
-            "id": "no-ito-term",
-            "value": 0.2751,
+            "id": "no-discount",
+            "value": 1.9024,
             "tol": {
               "abs": 0.0005
             }
           },
           {
-            "id": "sigma-not-root-t",
-            "value": 0.2928,
+            "id": "straight-line-drift",
+            "value": 2.0309,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-drift",
+            "value": 0.9231,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "level-reached",
+            "value": 2.7693,
             "tol": {
               "abs": 0.0005
             }
@@ -368,15 +382,17 @@
         ]
       },
       "feedback": {
-        "correct": "$\\ln S_2$ is normal with mean $\\ln 80 + 0.03$ and sd $0.3\\sqrt2$. So $z = -0.3855$ and the chance is 0.3500.",
-        "generic": "Take logs: the drift of $\\ln S$ is $\\mu - \\sigma^2/2$, and the sd over two years is $\\sigma\\sqrt{T}$.",
+        "correct": "The process is $dX = 0.3(3 - X)\\,dt + 0.4\\,dW$. Its mean after two years is $3 - 2e^{-0.6} = 1.9024$, and $V = e^{-0.08} \\times 1.9024 = 1.7561$.",
+        "generic": "Read the process off the $V_x$ and $V_{xx}$ terms. The payoff is $x$, so only the mean of $X_T$ matters. Then discount.",
         "byKey": {
-          "no-ito-term": "You used $\\mu$ as the drift of $\\ln S$. Itô's lemma takes off $\\sigma^2/2$, which is 4.5% a year here.",
-          "sigma-not-root-t": "You used $\\sigma$ as the sd over two years. It is $\\sigma\\sqrt{T} = 0.4243$."
+          "no-discount": "You left out the discount. The $-0.04V$ term is the factor $e^{-0.04 \\times 2}$.",
+          "straight-line-drift": "You held the drift at its starting value, 0.6 a year. It shrinks as $X$ nears 3, so the mean is $3 - 2e^{-0.6}$.",
+          "no-drift": "You dropped the $V_x$ term. It is the drift, $0.3(3 - x)$, which pulls $X$ up towards 3.",
+          "level-reached": "You took $X$ all the way to 3. Mean reversion closes the gap at rate 0.3, so $2e^{-0.6}$ of it is left."
         }
       },
       "explain": {
-        "text": "$\\ln S_2$ has mean $\\ln 80 + (0.06 - 0.045) \\cdot 2$ and sd $0.3\\sqrt2 = 0.4243$. The standardised barrier is $z = (\\ln(70/80) - 0.03)/0.4243 = -0.3855$. So $P = \\Phi(-0.3855) = 0.3500$."
+        "text": "Feynman-Kac gives $V = e^{-0.08}E[X_T]$ for $dX = 0.3(3 - X)\\,dt + 0.4\\,dW$, whose mean solves $m' = 0.3(3 - m)$. So $m = 3 - 2e^{-0.6} = 1.9024$ and $V = 1.7561$. The volatility does not enter a payoff that is linear in $x$."
       }
     },
     {
@@ -489,47 +505,71 @@
       }
     },
     {
-      "id": "e-drift-t2w2",
+      "id": "e-heat-grid-steps",
       "difficulty": 3,
       "skills": [
-        "it-calculus"
+        "pe-bs",
+        "pe-fd"
       ],
       "tags": [
-        "ito-drift"
+        "explicit-stability"
       ],
-      "pace": 90,
-      "title": "The drift of $t^2W_t^2$",
-      "prose": "Let $X_t = t^2W_t^2$, so $dX_t = a\\,dt + b\\,dW_t$. Write $w$ for $W_t$.",
-      "question": "Give the $dt$ coefficient $a$ as an expression in $t$ and $w$.",
+      "pace": 150,
+      "title": "Time steps for a stable heat grid",
+      "prose": "A desk prices a call with $\\sigma = 35\\%$ and $T = 0.6$ years. It works in the course's heat variables, where Black-Scholes becomes $u_\\tau = u_{xx}$ in $x = \\ln(S/K)$. The explicit scheme runs on a grid with $\\Delta x = 0.04$.",
+      "question": "What is the fewest number of equal time steps that keeps the explicit scheme stable?",
       "widget": {
-        "kind": "expression",
-        "answer": "2tw^2+t^2",
-        "keyboard": "algebra",
-        "accept": [
-          "t^2+2tw^2",
-          "2tw^2 + t^2"
-        ],
+        "kind": "numeric",
+        "answer": 46,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "label": "Time steps",
+        "accept": "46: $0.03675/0.0008 = 45.94$, rounded up",
         "wrong": [
           {
-            "id": "no-ito-term",
-            "tex": "2tw^2"
+            "id": "no-half",
+            "value": 92,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "forgot-half",
-            "tex": "2tw^2+2t^2"
+            "id": "lambda-one",
+            "value": 23,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "round-down",
+            "value": 45,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sigma-unsquared",
+            "value": 132,
+            "tol": {
+              "abs": 0
+            }
           }
         ]
       },
       "feedback": {
-        "correct": "With $f(t, x) = t^2x^2$, $a = f_t + \\tfrac12 f_{xx} = 2tx^2 + t^2$.",
-        "generic": "Use $a = f_t + \\tfrac12 f_{xx}$ with $f(t, x) = t^2x^2$.",
+        "correct": "Expiry sits at $\\tau = \\tfrac12\\sigma^2 T = 0.03675$. Stability needs $\\Delta\\tau \\le \\tfrac12\\Delta x^2 = 0.0008$, so 45.94 rounds up to 46 steps.",
+        "generic": "Turn the 0.6 years into heat time first. Then cap $\\lambda = \\Delta\\tau/\\Delta x^2$ at $\\tfrac12$.",
         "byKey": {
-          "no-ito-term": "You kept $f_t$ and dropped the Itô term $\\tfrac12 f_{xx}$, which is $t^2$ here.",
-          "forgot-half": "You added $f_{xx} = 2t^2$ in full. The Itô term has a half in front, so it is $t^2$."
+          "no-half": "You took $\\tau = \\sigma^2 T = 0.0735$. The change of time is $\\tau = \\tfrac12\\sigma^2(T - t)$, half of that.",
+          "lambda-one": "You allowed $\\lambda$ up to 1. The explicit scheme is stable only for $\\lambda \\le \\tfrac12$, which doubles the steps.",
+          "round-down": "You rounded 45.94 down. With 45 steps $\\lambda = 0.5104$, just past $\\tfrac12$, so the top mode grows.",
+          "sigma-unsquared": "You used $\\tfrac12\\sigma T = 0.105$. Heat time carries $\\sigma^2$, so $\\tau = \\tfrac12 \\times 0.1225 \\times 0.6$."
         }
       },
       "explain": {
-        "text": "Here $f_t = 2tx^2$ and $f_{xx} = 2t^2$. The drift is $f_t + \\tfrac12 f_{xx} = 2tw^2 + t^2$. The noise coefficient is $f_x = 2t^2w$."
+        "text": "Heat time to expiry is $\\tfrac12 \\times 0.1225 \\times 0.6 = 0.03675$. The cap is $\\Delta\\tau \\le \\tfrac12 \\times 0.0016 = 0.0008$, and $0.03675/0.0008 = 45.94$. So 46 steps give $\\lambda = 0.4993$."
       }
     },
     {
