@@ -1,0 +1,577 @@
+{
+  "id": "problems-1",
+  "course": "ito",
+  "level": 1,
+  "title": "Problems: Brownian motion",
+  "minutes": 45,
+  "items": [
+    {
+      "id": "p-maker-tally",
+      "difficulty": 4,
+      "skills": [
+        "it-bm",
+        "it-calculus"
+      ],
+      "prose": "A market-making algorithm makes 625 trades a day. Each trade gains or loses £40, gaining with chance 0.51, independently of the others. Its running P&L is a biased walk, which we shrink to Brownian motion with drift.",
+      "parts": [
+        {
+          "question": "What is the algorithm's expected P&L over one day, in pounds?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 500,
+            "tol": {
+              "abs": 0.5
+            },
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "wins-only",
+                "value": 12750,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "half-edge",
+                "value": 250,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "per-trade-count",
+                "value": 12.5,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Each trade has mean $40(0.51 - 0.49) = 0.8$ pounds, so 625 trades expect $625 \\times 0.8 = 500$.",
+            "generic": "Not quite. A trade's mean is the gain times its chance less the loss times its chance.",
+            "byKey": {
+              "wins-only": "That counts the £40 gains and none of the losses. The 49% of losing trades each hand £40 back.",
+              "half-edge": "The edge per trade is the gap between the two chances, 0.02, not half of it.",
+              "per-trade-count": "That is the edge counted in trades, $625 \\times 0.02$. Each trade is worth £40, so multiply by 40 as well."
+            }
+          },
+          "explain": {
+            "text": "A trade's mean is $40 \\times 0.51 - 40 \\times 0.49 = 0.8$ pounds. Means add across independent trades. The day's mean is $625 \\times 0.8 = 500$."
+          }
+        },
+        {
+          "question": "Each trade moves the P&L by $+40$ or $-40$, so the square of a move is 1,600 on every path. What is the sum of the squared moves over one day?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1000000,
+            "tol": {
+              "abs": 0.5
+            },
+            "wrong": [
+              {
+                "id": "variance",
+                "value": 999600,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "abs-sum",
+                "value": 25000,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The sum does not depend on the path: $625 \\times 1600 = 1000000$.",
+            "generic": "Not quite. Square one trade's move, then add one such square for every trade of the day.",
+            "byKey": {
+              "variance": "That is the day's variance, $625(1600 - 0.8^2)$. The squared moves themselves add to 1,600 a trade, with no mean taken off.",
+              "abs-sum": "You added the sizes of the moves, $625 \\times 40$. Square each move before adding."
+            }
+          },
+          "explain": {
+            "text": "Every path takes 625 moves of size 40, and each square is 1,600 whatever the sign. That makes the sum the walk's quadratic variation for the day, fixed on every path. It is $625 \\times 1600 = 1000000$."
+          }
+        },
+        {
+          "question": "Model the P&L as $X_t = 500t + \\sigma W_t$, with $t$ in trading days and $\\sigma^2 = 1{,}000{,}000$ from part 2. What is the standard deviation of the P&L over a five-day week? Give it to the nearest pound.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2236.068,
+            "tol": {
+              "abs": 0.5
+            },
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "sd-times-t",
+                "value": 5000,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "one-day",
+                "value": 1000,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Variance grows in step with time, so five days give $5\\sigma^2 = 5000000$ and the sd is $1000\\sqrt5 \\approx 2236$.",
+            "generic": "Not quite. Over $t$ days the noise term $\\sigma W_t$ has variance $\\sigma^2 t$.",
+            "byKey": {
+              "sd-times-t": "You scaled the sd by 5. Variances add over the five days, so the sd grows by $\\sqrt5$ only.",
+              "one-day": "That is one day's sd. The week holds five independent days of noise."
+            }
+          },
+          "explain": {
+            "text": "The drift $500t$ is fixed and adds no spread. $\\operatorname{Var}(\\sigma W_5) = 5\\sigma^2$, whose square root is $1000\\sqrt5$. So the week's sd is $\\approx 2236$."
+          }
+        },
+        {
+          "question": "The week's mean is $5 \\times 500 = 2{,}500$. Using the sd 2,236.07 from part 3, what is the chance the week ends down? Read $\\Phi$ from software or a normal table, and give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.131776,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "sd-times-t",
+                "value": 0.3085,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-drift",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "ends-up",
+                "value": 0.8682,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one-day",
+                "value": 0.0062,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A loss is $X_5 < 0$: $z = -2500/2236.07 = -1.1180$, and $\\Phi(-1.1180) \\approx 0.1318$.",
+            "generic": "Not quite. Standardise 0 with the week's mean and sd, then read the lower tail.",
+            "byKey": {
+              "sd-times-t": "That uses an sd of £5,000, which grows the noise like time itself. With the part 3 sd the score is $z = -1.1180$.",
+              "no-drift": "One half would hold with no edge. The week's mean of £2,500 pulls the chance of a loss below one half.",
+              "ends-up": "That is the chance the week ends up. A loss is the lower tail, below $z = -1.1180$.",
+              "one-day": "That sets one day's sd against the week's mean. Five days of noise give an sd of 2,236.07."
+            }
+          },
+          "explain": {
+            "text": "The week's P&L is normal with mean 2,500 and sd 2,236.07. Zero sits $2500/2236.07 = 1.1180$ sds below the mean. The lower tail is $\\Phi(-1.1180) \\approx 0.1318$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-quarter-rally",
+      "difficulty": 4,
+      "skills": [
+        "it-bm"
+      ],
+      "prose": "A share follows GBM from £45 with $\\mu = 13\\%$ and $\\sigma = 35\\%$, time in years. After three months it has rallied to $S_{0.25} = 52$. We forecast its price at $t = 1$ from that point.",
+      "parts": [
+        {
+          "question": "What is the standard deviation of $\\ln S_1 - \\ln S_{0.25}$? Give 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.303109,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "full-year",
+                "value": 0.35,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.0919,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "past-quarter",
+                "value": 0.175,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The log increment is a fixed drift plus $\\sigma(W_1 - W_{0.25})$, so its sd is $0.35\\sqrt{0.75} \\approx 0.3031$.",
+            "generic": "Not quite. Only the noise between the two dates counts, and its variance is $\\sigma^2$ times the gap.",
+            "byKey": {
+              "full-year": "That is the sd over the whole year. Three months are already known, so only $0.75$ of a year is left.",
+              "variance": "That is the variance, $0.35^2 \\times 0.75$. The sd is its square root.",
+              "past-quarter": "$0.35\\sqrt{0.25}$ is the sd of the three months that have passed. The forecast needs the nine months still to come."
+            }
+          },
+          "explain": {
+            "text": "The increment $W_1 - W_{0.25}$ is $N(0, 0.75)$, independent of the rally. The drift $(\\mu - \\tfrac12\\sigma^2)(0.75)$ adds no spread. So the sd is $0.35\\sqrt{0.75} \\approx 0.3031$."
+          }
+        },
+        {
+          "question": "Given $S_{0.25} = 52$, what is the median of $S_1$? Give 2 decimal places, in £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 54.75158,
+            "tol": {
+              "abs": 0.005
+            },
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "mean",
+                "value": 57.33,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "from-start",
+                "value": 48.2,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "whole-year",
+                "value": 55.7,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The median log rise is $(0.13 - 0.06125)(0.75) = 0.0515625$, so the median is $52e^{0.0515625} \\approx 54.75$.",
+            "generic": "Not quite. Restart the model at £52 and run the median's log drift for the time left.",
+            "byKey": {
+              "mean": "$52e^{0.13 \\times 0.75}$ is the mean, which puts the $\\tfrac12\\sigma^2$ back in. The median runs at $\\mu - \\tfrac12\\sigma^2$.",
+              "from-start": "That restarts at £45, as if the rally had not happened. Moves after $t = 0.25$ build on $S_{0.25} = 52$.",
+              "whole-year": "You ran a full year of drift from £52. Only $0.75$ of a year is left."
+            }
+          },
+          "explain": {
+            "text": "Independent increments let the forecast start again at £52. The log drift $\\mu - \\tfrac12\\sigma^2 = 0.06875$ runs for $0.75$ of a year. The median is $52e^{0.0515625} \\approx 54.75$."
+          }
+        },
+        {
+          "question": "Using the median $52e^{0.0515625}$ from part 2 and the log variance $0.35^2 \\times 0.75 = 0.091875$, what is the mean of $S_1$ given $S_{0.25} = 52$? Give 2 decimal places, in £.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 57.32539,
+            "tol": {
+              "abs": 0.01
+            },
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "median",
+                "value": 54.75,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "full-factor",
+                "value": 60.02,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "full-year",
+                "value": 59.22,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$52e^{0.0515625} \\times e^{0.091875/2} = 52e^{0.0975} \\approx 57.33$.",
+            "generic": "Not quite. A lognormal's mean is its median times $e^{v/2}$, with $v$ the log variance.",
+            "byKey": {
+              "median": "That is the median again. The mean adds the factor $e^{v/2}$ from the spread of the log.",
+              "full-factor": "You multiplied by $e^{v}$. The lognormal mean takes half the log variance, $e^{v/2}$.",
+              "full-year": "$52e^{0.13}$ runs the mean for a full year. Only $0.75$ of a year is left."
+            }
+          },
+          "explain": {
+            "text": "With $\\ln S_1$ normal of variance $v = 0.091875$, the mean is the median times $e^{v/2}$. The exponents add to $0.0515625 + 0.0459375$. So the mean is $52e^{0.0975} \\approx 57.33$."
+          }
+        },
+        {
+          "question": "Using the median $52e^{0.0515625}$ and the sd 0.3031 from part 1, what is $P(S_1 < 45)$, the chance of ending below the start? Give 4 decimal places, taking $\\Phi$ from software.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.258782,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "full-year-sd",
+                "value": 0.2876,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "no-rally",
+                "value": 0.4221,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "upper",
+                "value": 0.7412,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$z = (\\ln(45/52) - 0.0515625)/0.3031 = -0.6471$, so the chance is $\\Phi(-0.6471) \\approx 0.2588$.",
+            "generic": "Not quite. Standardise $\\ln 45$ against the log median and the sd of the nine months left.",
+            "byKey": {
+              "full-year-sd": "That uses the full year's sd, 0.35. The rally is known, so only nine months of noise are left.",
+              "no-rally": "That is the chance seen from the start, before the rally. Condition on $S_{0.25} = 52$.",
+              "upper": "This counts the paths that finish over £45. The question wants those that finish under it."
+            }
+          },
+          "explain": {
+            "text": "Given the rally, $\\ln S_1$ has mean $\\ln 52 + 0.0515625$ and sd 0.3031. £45 sits $(\\ln 45 - \\ln 52 - 0.0515625)/0.3031 = -0.6471$ sds away. The lower tail is $\\Phi(-0.6471) \\approx 0.2588$."
+          }
+        }
+      ]
+    },
+    {
+      "id": "p-realised-then-risk",
+      "difficulty": 5,
+      "skills": [
+        "it-bm",
+        "it-calculus"
+      ],
+      "prose": "Over the last 84 trading days, a third of a year, a share's squared daily log returns add to 0.0147. It trades at £64, and you take its drift as $\\mu = 9\\%$ a year. You want the chance that it is below £60 in a year, under GBM.",
+      "parts": [
+        {
+          "question": "Estimate the annual volatility $\\sigma$ from the quadratic variation. Give a decimal to 2 places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.21,
+            "tol": {
+              "abs": 0.005
+            },
+            "wrong": [
+              {
+                "id": "not-annual",
+                "value": 0.1212,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "variance",
+                "value": 0.0441,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "times-days",
+                "value": 1.9247,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sum r^2 \\approx \\sigma^2 T$ with $T = \\tfrac13$, so $\\sigma^2 = 0.0147 \\times 3 = 0.0441$ and $\\sigma = 0.21$.",
+            "generic": "Not quite. The squared returns add up to $\\sigma^2$ times the time they cover, in years.",
+            "byKey": {
+              "not-annual": "$\\sqrt{0.0147}$ is the volatility over the 84 days. Divide by $T = \\tfrac13$ before the square root to make it annual.",
+              "variance": "$0.0441$ is $\\sigma^2$. The volatility is its square root.",
+              "times-days": "You scaled by 252 days without dividing by the 84 days seen. The sum already covers a third of a year."
+            }
+          },
+          "explain": {
+            "text": "The quadratic variation of $\\sigma W$ over $T$ years is $\\sigma^2 T$. Here $T = 84/252 = \\tfrac13$, so $\\sigma^2 = 0.0441$. Its root is $\\sigma = 0.21$."
+          }
+        },
+        {
+          "question": "With $m$ equal steps, $\\sum(\\Delta W)^2$ over $[0, T]$ has variance $2T\\Delta t$. Using $\\sigma^2 = 0.0441$ from part 1 and $m = 84$, what is the standard deviation of the estimate $\\hat\\sigma^2 = \\sum r^2/T$? Give 4 significant figures.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0068048,
+            "tol": {
+              "abs": 2e-06
+            },
+            "wrong": [
+              {
+                "id": "no-sigma",
+                "value": 0.1543,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "sum-not-rate",
+                "value": 0.002268,
+                "tol": {
+                  "abs": 2e-06
+                }
+              },
+              {
+                "id": "variance",
+                "value": 4.63e-05,
+                "tol": {
+                  "abs": 5e-07
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\operatorname{Var}(\\hat\\sigma^2) = \\sigma^4 \\cdot 2T\\Delta t/T^2 = 2\\sigma^4/m$, so the sd is $0.0441\\sqrt{2/84} \\approx 0.006805$.",
+            "generic": "Not quite. Scale the variance of $\\sum(\\Delta W)^2$ by $\\sigma^4$, then allow for dividing the sum by $T$.",
+            "byKey": {
+              "no-sigma": "$\\sqrt{2/84}$ is the error relative to $\\sigma^2$. Multiply it by $\\sigma^2 = 0.0441$ to get the sd itself.",
+              "sum-not-rate": "That is the sd of the sum $\\sum r^2$. The estimate divides the sum by $T = \\tfrac13$, which triples its sd.",
+              "variance": "That is the variance $2\\sigma^4/m$. Its square root is the sd."
+            }
+          },
+          "explain": {
+            "text": "Each return is about $\\sigma\\,\\Delta W$, so $\\sum r^2$ has variance $\\sigma^4 \\cdot 2T\\Delta t$. Dividing by $T$ gives $\\operatorname{Var}(\\hat\\sigma^2) = 2\\sigma^4/m$. The sd is $0.0441\\sqrt{2/84} \\approx 0.006805$."
+          }
+        },
+        {
+          "question": "Using $\\sigma = 0.21$ from part 1, what is $P(S_1 < 60)$? Look up $\\Phi$ in a normal table, to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.264054,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "no-drag",
+                "value": 0.2309,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "upper",
+                "value": 0.7359,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "not-annual",
+                "value": 0.1124,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$z = (\\ln(60/64) - 0.06795)/0.21 = -0.6309$, and $\\Phi(-0.6309) \\approx 0.2641$.",
+            "generic": "Not quite. Under GBM, $\\ln(S_1/64)$ is normal with mean $\\mu - \\tfrac12\\sigma^2$ and sd $\\sigma$.",
+            "byKey": {
+              "no-drag": "That log mean leaves out the drag: a GBM's log moves at $\\mu - \\tfrac12\\sigma^2 = 0.06795$ a year, not 0.09.",
+              "upper": "Here you took the upper tail, a finish over £60. A fall below £60 sits in the left tail of $z$.",
+              "not-annual": "That uses the 84-day volatility 0.1212 for a whole year. Use the annual $\\sigma = 0.21$."
+            }
+          },
+          "explain": {
+            "text": "Here $\\ln(S_1/64)$ has mean $0.09 - 0.02205 = 0.06795$ and sd 0.21. £60 sits at $(\\ln(60/64) - 0.06795)/0.21 = -0.6309$. The lower tail is $\\Phi(-0.6309) \\approx 0.2641$."
+          }
+        },
+        {
+          "question": "The estimate of $\\sigma^2$ may be two sds too low. Using the sd 0.006805 from part 2, set $\\sigma^2 = 0.0441 + 2 \\times 0.006805$. What is $P(S_1 < 60)$ now? Use software for $\\Phi$ and round to 4 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.300423,
+            "tol": {
+              "abs": 0.0005
+            },
+            "wrong": [
+              {
+                "id": "unchanged",
+                "value": 0.2641,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "sd-on-sigma",
+                "value": 0.2812,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "same-drift",
+                "value": 0.2906,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$\\sigma^2 = 0.05771$ gives $\\sigma = 0.2402$ and a log drift of $0.09 - 0.02885 = 0.06115$. Then $z = -0.5232$ and $\\Phi(-0.5232) \\approx 0.3004$.",
+            "generic": "Not quite. Take the square root of the new $\\sigma^2$, and redo both the log drift and the sd.",
+            "byKey": {
+              "unchanged": "That is part 3's answer. The higher $\\sigma^2$ changes both the drift and the spread of the log.",
+              "sd-on-sigma": "You added $2 \\times 0.006805$ to $\\sigma$. The sd from part 2 is in units of $\\sigma^2$, so add it there.",
+              "same-drift": "You widened the spread but kept the old log drift 0.06795. The drag $\\tfrac12\\sigma^2$ grows too."
+            }
+          },
+          "explain": {
+            "text": "A larger $\\sigma$ lowers the log drift $\\mu - \\tfrac12\\sigma^2$ and widens the spread, and both move paths below £60. With $\\sigma = 0.2402$, $z = (\\ln(60/64) - 0.06115)/0.2402 = -0.5232$. The chance is $\\approx 0.3004$."
+          }
+        }
+      ]
+    }
+  ]
+}
