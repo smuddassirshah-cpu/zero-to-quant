@@ -75,17 +75,25 @@ const prob = (explain, extra = {}, fbx = {}) => set([{ id: 'p-x', prose: 'A brok
 }
 {
   // the true cases that must not get weaker: identical short slip lines, one number different
-  const src = lesson('l1', [screen({ prose: 'A series of 300 closes.', question: 'What is the ratio?', feedback: fb({ byKey: { flip: 'You divided the other way round.', kept: 'You kept $B$ of the gap, not $1 - B$.', band: 'You divided by 680. The band shrinks like $1/\\sqrt n$.' } }) })]);
+  const src = lesson('l1', [screen({ prose: 'A series of 300 closes.', question: 'What is the ratio?', feedback: fb({ byKey: { flip: 'You divided the other way round.', kept: 'You kept $B$ of the gap, not $1 - B$.', band: 'You divided by 680. The band shrinks like $1/\\sqrt n$.', run: 'You added plain distances, $2 + 0 + 2 + 4$.', tops: 'You divided $u\'$ by $v\'$. The derivative of a quotient is not the quotient of the derivatives.' } }) })]);
   const slip = (lines) => set([{ id: 'p-x', prose: 'A different desk with 41 books.', parts: [part('What is the ratio of the books?', { feedback: fb({ byKey: lines }) })] }]);
   let r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ flip: 'You divided the other way round.' }) });
-  check('11 an identical slip line of six words ("You divided the other way round.") is a hit', kinds(r, 'p-x').includes('retold') && r.status === 1, JSON.stringify(r.hits));
+  check('11 an identical slip line with no number ("You divided the other way round.") is stock: no hit (engine pass 8 C)', !kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
+  r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ band: 'You divided by 680. The band shrinks like $1/\\sqrt n$.' }) });
+  check('11b an identical numbered slip line (the whole feedback is equal) is a hit', kinds(r, 'p-x').includes('retold') && r.status === 1, JSON.stringify(r.hits));
+  r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ tops: 'You divided $u\'$ by $v\'$. The derivative of a quotient is not the quotient of the derivatives.' }) });
+  check('11c a whole feedback of two sentences with no number, equal word for word, is a hit', kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
   r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ kept: 'You kept $A$ of the gap, not $1 - A$.' }) });
-  check('12 a slip line that differs in its maths only ("You kept $B$ of the gap, not $1 - B$.") is a hit', kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
+  check('12 a slip line that differs in its maths only ("You kept $B$ of the gap, not $1 - B$.", one shared figure) is no hit', !kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
+  r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ run: 'You added plain distances, $2 + 0 + 2 + 4 + 0 + 4$.' }) });
+  check('12b a numbered slip line that shares a run of two numbers with its source (2 + 0 + 2 + 4) is a hit', kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
+  r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ run: 'You added plain distances, $3 + 1 + 5 + 7$.' }) });
+  check('12c the same line in other numbers is no hit', !kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
   r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ band: 'You divided by 910. The band shrinks like $1/\\sqrt n$.' }) });
-  check('13 a slip line that differs in one number ("You divided by 910.") is a hit', kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
+  check('13 a slip line that differs in one number ("You divided by 910." against 680) is no hit', !kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
   r = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ flip: 'You flipped it.' }) });
   check('14 a slip line of fewer than four words is not read whole (no hit)', !kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
-  const files = { 'courses/c/problems-1.json': slip({ flip: 'You divided the other way round.' }) };
+  const files = { 'courses/c/problems-1.json': slip({ band: 'You divided by 680. The band shrinks like $1/\\sqrt n$.' }) };
   for (let i = 1; i <= 8; i++) files[`courses/c/l${i}.json`] = src;
   r = run(files);
   check('15 a slip line held by eight or more files of the content is stock (no hit)', !kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits.map((h) => h.source)));
@@ -93,19 +101,19 @@ const prob = (explain, extra = {}, fbx = {}) => set([{ id: 'p-x', prose: 'A brok
   r = run({ 'courses/c/l1.json': lesson('l1', [screen({ prose: 'A flux.', question: 'Which theorem?', explain: 'Use the divergence theorem.' })]), 'courses/c/problems-1.json': rulep });
   check('16 a short rule line ("Use the divergence theorem.") is not a slip line and is stock by length (no hit)', !kinds(r, 'p-x').includes('retold'), JSON.stringify(r.hits));
   // a hit that rests on a slip line alone carries the tag, and a set of the baseline gets a warning
-  const t = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ flip: 'You divided the other way round.' }) });
+  const t = run({ 'courses/c/l1.json': src, 'courses/c/problems-1.json': slip({ band: 'You divided by 680. The band shrinks like $1/\\sqrt n$.' }) });
   check('17 a hit that stands on an identical slip line alone is tagged "slip-line"', t.hits.some((h) => h.itemId === 'p-x' && h.tag === 'slip-line'), JSON.stringify(t.hits));
 }
 
 // ---- 3. --pairs ----
 {
-  const src = lesson('l1', [screen({ prose: 'A series.', question: 'What is the ratio?', feedback: fb({ byKey: { flip: 'You divided the other way round.', kept: 'You kept $B$ of the gap, not $1 - B$.' } }) })]);
-  const p = set([{ id: 'p-x', prose: 'Books.', parts: [part('What is the ratio?', { feedback: fb({ byKey: { flip: 'You divided the other way round.', kept: 'You kept $A$ of the gap, not $1 - A$.' } }) })] }]);
+  const src = lesson('l1', [screen({ prose: 'A series.', question: 'What is the ratio?', feedback: fb({ byKey: { flip: 'You divided by 680. The band shrinks like $1/\\sqrt n$.', kept: 'You kept 15 of the 40 points, not 25.' } }) })]);
+  const p = set([{ id: 'p-x', prose: 'Books.', parts: [part('What is the ratio?', { feedback: fb({ byKey: { flip: 'You divided by 680. The band shrinks like $1/\\sqrt n$.', kept: 'You kept 15 of the 40 points, not 25.' } }) })] }]);
   withTree({ 'courses/c/course.json': COURSE, 'courses/c/l1.json': src, 'courses/c/problems-1.json': p }, (root) => {
     const a = sc(root, ['--all']), b = sc(root, ['--all', '--pairs']);
-    check('18 --pairs prints every matched pair of a hit (two lines, both texts); without it none', (b.out.match(/ {6}pair: /g) ?? []).length >= 2 && /pair: "You divided the other way round\."  <-  "You divided the other way round\."/.test(b.out) && /pair: "You kept \$A\$/.test(b.out) && !/pair: /.test(a.out), b.out);
+    check('18 --pairs prints every matched pair of a hit (two lines, both texts); without it none', (b.out.match(/ {6}pair: /g) ?? []).length >= 2 && /pair: "You divided by 680\. The band shrinks like \$1\/\\sqrt n\$\."  <-  "You divided by 680/.test(b.out) && /pair: "You kept 15 of the 40 points/.test(b.out) && !/pair: /.test(a.out), b.out);
     const f = spawnSync('node', [FC, '--content', root, '--file', join(root, 'courses/c/problems-1.json'), '--pairs'], { encoding: 'utf8' });
-    check('19 fresh-check.mjs --file --pairs prints the pairs too', /pair: "You kept \$A\$ of the gap/.test(f.stdout), f.stdout + f.stderr);
+    check('19 fresh-check.mjs --file --pairs prints the pairs too', /pair: "You kept 15 of the 40 points/.test(f.stdout), f.stdout + f.stderr);
     const j = scan(root);
     check('20 --json carries the pairs', j.hits.some((h) => (h.pairs ?? []).length >= 2), JSON.stringify(j.hits));
     const f2 = spawnSync('node', [FC, '--content', root, '--files', `${join(root, 'courses/c/problems-1.json')},${join(root, 'courses/c/l1.json')}`], { encoding: 'utf8' });
@@ -115,16 +123,18 @@ const prob = (explain, extra = {}, fbx = {}) => set([{ id: 'p-x', prose: 'A brok
 
 // ---- 4. waivers with a source ----
 {
+  const LN = 'You divided by 680. The band shrinks like $1/\\sqrt n$.';
   const mk = (id, line) => lesson(id, [screen({ prose: 'A series.', question: 'What is the ratio?', feedback: fb({ byKey: { flip: line } }) })]);
-  const p = set([{ id: 'p-x', prose: 'Books.', parts: [part('What is the ratio?', { feedback: fb({ byKey: { flip: 'You divided the other way round.' } }) })] }]);
-  const files = { 'courses/c/course.json': COURSE, 'courses/c/l1.json': mk('l1', 'You divided the other way round.'), 'courses/c/l2.json': mk('l2', 'You divided the other way round.'), 'courses/c/problems-1.json': p };
+  const p = set([{ id: 'p-x', prose: 'Books.', parts: [part('What is the ratio?', { feedback: fb({ byKey: { flip: LN } }) })] }]);
+  const files = { 'courses/c/course.json': COURSE, 'courses/c/l1.json': mk('l1', LN), 'courses/c/l2.json': mk('l2', LN), 'courses/c/problems-1.json': p };
   withTree(files, (root) => {
     const w = (extra) => { const f = join(root, 'w.json'); writeFileSync(f, JSON.stringify([{ file: 'courses/c/problems-1.json', item: 'p-x', kind: 'retold', reason: 'stands: test', ...extra }])); return { ZQ_WAIVERS: f }; };
     const waivedSources = (env) => scan(root, ['--all'], env).hits.filter((h) => h.waived).map((h) => h.source.split(':')[0]).sort();
     check('22 a waiver with no source clears every retold hit of its item (as today)', waivedSources(w({})).length === 2, JSON.stringify(waivedSources(w({}))));
     check('23 a waiver with a source (file) clears only the hit from that source', JSON.stringify(waivedSources(w({ source: 'courses/c/l1.json' }))) === '["courses/c/l1.json"]', JSON.stringify(waivedSources(w({ source: 'courses/c/l1.json' }))));
     check('24 a source list clears the hits of each file named', waivedSources(w({ source: ['courses/c/l1.json', 'courses/c/l2.json'] })).length === 2);
-    check('25 a source with a text clears only a hit whose pair holds the text', waivedSources(w({ source: { file: 'courses/c/l1.json', text: 'other way round' } })).length === 1 && waivedSources(w({ source: { file: 'courses/c/l1.json', text: 'not in any pair' } })).length === 0);
+    check('25 a source with a text clears only a hit whose pair holds the text', waivedSources(w({ source: { file: 'courses/c/l1.json', text: 'band shrinks' } })).length === 1 && waivedSources(w({ source: { file: 'courses/c/l1.json', text: 'not in any pair' } })).length === 0);
+    check('25b a top-level text (no source) clears only hits whose pair holds that phrase, against any source', waivedSources(w({ text: 'band shrinks' })).length === 2 && waivedSources(w({ text: 'not in any pair' })).length === 0 && waivedSources(w({ text: 'BAND SHRINKS', source: 'courses/c/l2.json' })).length === 1);
     check('26 the unwaived hit still fails the run (exit 1)', scan(root, ['--all'], w({ source: 'courses/c/l1.json' })).status === 1);
   });
   const real = JSON.parse(readFileSync(join(HERE, 'same-course-waivers.json'), 'utf8'));

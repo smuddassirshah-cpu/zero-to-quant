@@ -70,6 +70,18 @@ export function slipKey(raw, par = PAR) {
   const t = raw.toLowerCase().replace(MATH, ' # ').replace(/\d+(?:[.,]\d+)*/g, ' # ').replace(/[^a-z#]+/g, ' ').replace(/(?:# ?)+/g, '# ').trim();
   return t.split(' ').filter((x) => x !== '#').length >= par.slipMinWords ? t : null;
 }
+// Engine pass 8 C: an identical masked slip line is a retelling only when it is more than stock words. A line with no number is stock unless it is a whole feedback of several sentences that is equal word for word;
+// a numbered line fires when the whole line is equal, or when the two share a run of two numbers or one number of two or more figures.
+const numsOf = (raw) => (raw.match(/\d+(?:[.,]\d+)*/g) ?? []).map((x) => x.replace(/,/g, ''));
+export function slipFires(x, y) {
+  const nx = numsOf(x), ny = numsOf(y), norm = (r) => r.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (norm(x) === norm(y)) return nx.length > 0 || splitSentences([x]).length > 1;
+  if (!nx.length || !ny.length) return false;
+  const figs = (n) => n.replace(/\D/g, '').length;
+  if (nx.some((n) => figs(n) >= 2 && ny.includes(n))) return true;
+  for (let i = 0; i + 1 < nx.length; i++) for (let j = 0; j + 1 < ny.length; j++) if (nx[i] === ny[j] && nx[i + 1] === ny[j + 1]) return true;
+  return false;
+}
 export function modelFrom(snap, par = PAR) {
   const wdf = new Map(Object.entries(snap.wdf));
   return { wdf, N: snap.N, funcDf: Math.max(60, Math.round(par.funcFrac * snap.N)), par, stock: new Map((snap.stock ?? []).map((k) => [k, par.stockDf])) };
@@ -130,7 +142,7 @@ export function sentenceMatches(t, idx, rel, par, model) {
     if (seen.has(nr)) continue;
     seen.add(nr);
     // an identical slip line (numbers and maths masked) of at least slipMinWords words is a retelling whatever its length, unless the content says it everywhere
-    if (a.skey && model && (model.slipDf.get(a.skey) ?? 0) < par.slipStockDf) for (const b of idx.slip.get(a.skey) ?? []) if (b.unit.file !== rel) put(a, b, par.longW);
+    if (a.skey && model && (model.slipDf.get(a.skey) ?? 0) < par.slipStockDf) for (const b of idx.slip.get(a.skey) ?? []) if (b.unit.file !== rel && slipFires(a.raw, b.raw)) put(a, b, par.longW);
     if (a.stock) continue;
     if (stockKey(a.key)) continue;
     // candidates: the source sentences holding one of the three rarest words of this sentence (a changed noun is one word, so two of the three still meet)

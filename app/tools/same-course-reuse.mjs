@@ -345,7 +345,7 @@ export function scanSet(corpus, rel, doc, opts = {}) {
   return hits.sort((a, b) => a.item.localeCompare(b.item, undefined, { numeric: true }) || a.kind.localeCompare(b.kind));
 }
 
-// A waiver may name the source it clears: "source": "courses/c/l1.json", a list of such files, or { "file": ..., "item": "items[2]" or the item id, "text": "a phrase of either text of a pair" }. With no source it clears every hit of its item and kind.
+// A waiver may name the source it clears: "source": "courses/c/l1.json", a list of such files, or { "file": ..., "item": "items[2]" or the item id, "text": "a phrase of either text of a pair" }. With no source it clears every hit of its item and kind; a top-level "text" narrows any waiver to the hits whose pairs hold that phrase.
 function sourceOk(src, h) {
   if (!src) return true;
   if (Array.isArray(src)) return src.some((x) => sourceOk(x, h));
@@ -355,6 +355,8 @@ function sourceOk(src, h) {
   if (o.text && !(h.pairs ?? [h.texts ?? []]).some((p) => p.slice(0, 2).some((t) => String(t).toLowerCase().includes(String(o.text).toLowerCase())))) return false;
   return true;
 }
+// A waiver may carry a top-level "text" too (engine pass 8 C): it clears only the hits where either text of a pair holds that phrase, against any source.
+function textOk(text, h) { return !text || (h.pairs ?? [h.texts ?? []]).some((p) => p.slice(0, 2).some((t) => String(t).toLowerCase().includes(String(text).toLowerCase()))); }
 let baselineSet = null;
 function examBase(rel, opt) {
   if (opt === false || process.env.ZQ_EXAM_ERRORS) return false;
@@ -369,7 +371,7 @@ function waivers(rel, doc) {
   return (h) => {
     const id = (doc.items?.[Number(h.item.match(/\d+/)[0])] ?? {}).id;
     if (byItem.has(id)) return byItem.get(id);
-    const w = waiverList.find((x) => x.file === rel && x.item === id && (x.kind === '*' || x.kind === h.kind) && sourceOk(x.source, h));
+    const w = waiverList.find((x) => x.file === rel && x.item === id && (x.kind === '*' || x.kind === h.kind) && sourceOk(x.source, h) && textOk(x.text, h));
     return w ? w.reason : null;
   };
 }
