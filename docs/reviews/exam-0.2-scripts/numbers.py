@@ -168,8 +168,8 @@ ex.claim(not any('versions' in doc or 'draw' in doc for _ in [0]), 'one paper: n
 # timing (AUTHORING section 5: minutes is the time the exam really needs; paces on the topic-0.6 scale)
 PACE = {'e-expand-two': 60, 'e-bracket-equation': 60, 'e-gradient': 45, 'e-evaluate': 45, 'e-factorise': 60, 'e-gap-table': 90,
         'e-clear-fractions': 120, 'e-whole-numbers': 120, 'e-option-prices': 120, 'e-subject': 120, 'e-cubic-line': 75,
-        'e-shifted-peak': 90, 'e-composite': 120, 'e-inverse': 90, 'e-two-roots': 120, 'e-complete-table': 90, 'e-vertex': 120,
-        'e-two-roots': 120, 'e-floor-area': 120, 'e-perpendicular': 180, 'e-formula': 150, 'e-quad-inequality': 150,
+        'e-shifted-peak': 90, 'e-composite': 120, 'e-inverse': 90, 'e-complete-table': 90, 'e-vertex': 120,
+        'e-floor-area': 120, 'e-perpendicular': 180, 'e-quad-inequality': 150,
         'e-fg-equation': 180, 'e-odd-squares': 180, 'e-tangent-line': 300, 'e-lattice-region': 300, 'e-spread-model': 720}
 ex.claim(all(it.get('pace') == PACE[it['id']] for it in doc['items'] if it['id'] in PACE), 'items the review gave a pace still carry it')
 _paces = sum(it['pace'] for it in doc['items'])
@@ -324,14 +324,7 @@ same_expr(c12, lambda x: (5 * x) / 3 + 4, 'x', 'e-inverse option c is divide by 
 ex.claim('same order' not in opt('e-inverse', 'c')['why'] and 'divided by 3 before adding 4' in opt('e-inverse', 'c')['why'] and 'times 5, add 4, then divide by 3' in opt('e-inverse', 'c')['why'], 'e-inverse option c why names the real slip and the reverse order (finding 9)')
 ex.claim(f12(2) == 0.4 and (5 * 0.4 + 4) / 3 == 2, 'e-inverse check: f(2) = 2/5 and the inverse gives 6/3 = 2')
 
-# ---------------------------------------------------------------- [13] e-two-roots: 3x^2 + 5x - 12 = 0
-d13, r13 = quad_roots(3, 5, -12)
-ex.claim(d13 == 169 and [round(r, 9) for r in r13] == [-3, round(4 / 3, 9)], f'e-two-roots formula roots {r13}')
-same_expr(lambda x: (3 * x - 4) * (x + 3), lambda x: 3 * x * x + 5 * x - 12, 'x', 'e-two-roots (3x - 4)(x + 3) expands back')
-ex.claim(correct_ids('e-two-roots') == ['a', 'b'] and opt('e-two-roots', 'a')['text'] == '$\\dfrac{4}{3}$' and opt('e-two-roots', 'b')['text'] == '$-3$', 'e-two-roots keys a (4/3) and b (-3)')
-ex.claim(9 - 4 == 5 and 3 * -12 == 9 * -4 == -36, 'e-two-roots split: 9x - 4x, 9 x -4 = 3 x -12')
-ex.claim([opt('e-two-roots', o)['text'] for o in 'cde'] == ['$-\\dfrac{4}{3}$', '$3$', '$4$'], 'e-two-roots slips -4/3 (sign), 3 (from x + 3 = 0 read as +3), 4 (stopped at 3x = 4)')
-ex.claim(all(3 * r * r + 5 * r - 12 != 0 for r in (F(-4, 3), F(3), F(4))), 'e-two-roots the three distractors are not roots')
+# e-two-roots: removed by the session AG second-item pass (replaced by e-read-the-change, checked in exam-second-item-stage0-numbers.py)
 
 # ---------------------------------------------------------------- [14] e-complete-table: x^2 - 16x + 9
 p14, q14 = F(-16, 2), 9 - F(-16, 2) ** 2
@@ -355,14 +348,7 @@ ex.claim(cent15 == {'sign': (1, -9), 'intercept': (0, -8), 'root': (2, 0), 'root
 ex.claim(quad_roots(1, 2, -8)[1] == [-4, 2] and (2 + -4) / 2 == -1 and y15(0) == -8 and y15(-4) == 0, 'e-vertex roots 2 and -4, halfway -1; y-intercept -8')
 ex.claim('root-left' in IT['e-vertex']['feedback']['byKey'] and 'roots −4 and 2' in IT['e-vertex']['feedback']['byKey']['root-left'], 'e-vertex root-left slip has its line (finding 17)')
 
-# ---------------------------------------------------------------- [16] e-two-roots: 3x^2 + 5x - 12 = 0 (replaced e-one-root, 2x^2 - 8x + k)
-d16, r16 = quad_roots(3, 5, -12)
-_texts = {o['id']: o['text'] for o in W('e-two-roots')['options']}
-_correct = sorted(o['id'] for o in W('e-two-roots')['options'] if o.get('correct'))
-ex.claim(abs(r16[0] + 3) < 1e-9 and abs(r16[1] - 4 / 3) < 1e-9 and _correct == ['a', 'b'] and '4}{3}' in _texts['a'] and _texts['b'] == '$-3$', 'e-two-roots: roots 4/3 and -3 are the two keyed options')
-ex.claim([x for x in range(-20, 21) if 3 * x * x + 5 * x - 12 == 0] == [-3], 'e-two-roots integer scan: -3 (4/3 by the formula)')
-same_expr(lambda x: 3 * x * x + 5 * x - 12, lambda x: (3 * x - 4) * (x + 3), 'x', 'e-two-roots 3x^2 + 5x - 12 = (3x - 4)(x + 3)')
-ex.claim(all(3 * v * v + 5 * v - 12 != 0 for v in (F(-4, 3), 3, 4)), 'e-two-roots: the three distractors are not roots')
+# e-two-roots (second block): removed by the session AG second-item pass (replaced by e-read-the-change, checked in exam-second-item-stage0-numbers.py)
 
 # ---------------------------------------------------------------- [17] e-floor-area: w(w + 4) = 96
 d17, r17 = quad_roots(1, 4, -96)
@@ -389,17 +375,7 @@ ex.claim(W('e-perpendicular')['wrong'][2] == {'id': 'rounded', 'tex': '-0.33x+3'
 differ_expr(W('e-perpendicular')['wrong'][2]['tex'], W('e-perpendicular')['answer'], 'x', 'e-perpendicular rounded slip differs from the key')
 ex.claim('rounded' in IT['e-perpendicular']['feedback']['byKey'] and (8 - 2) / (1 - (-1)) == 3, 'e-perpendicular rounded slip has its line; explain gradient (8 - 2)/(1 - (-1)) = 3')
 
-# ---------------------------------------------------------------- [19] e-formula: 2x^2 - 3x - 7 = 0
-d19, r19 = quad_roots(2, -3, -7)
-key('e-formula', r19[1], t=1e-9)
-x = 2.0
-for _ in range(30):
-    x -= (2 * x * x - 3 * x - 7) / (4 * x - 3)
-ex.claim(near(x, r19[1], 1e-12) and d19 == 65, f'e-formula Newton {x:.6f} agrees; discriminant 65')
-inband('e-formula', 2.77)
-wrong('e-formula', 'no-2a', (3 + math.sqrt(65)) / 2, typed=5.53)
-wrong('e-formula', 'sign-b', (-3 + math.sqrt(65)) / 4, typed=1.27)
-ex.claim(round(math.sqrt(65), 3) == 8.062 and round(r19[0], 2) == -1.27 and 9 + 56 == 65, 'e-formula explain: sqrt 65 = 8.062, other root -1.27')
+# e-formula: removed by the session AG second-item pass (replaced by e-two-rates, checked in exam-second-item-stage0-numbers.py)
 
 # ---------------------------------------------------------------- [20] e-quad-inequality: x^2 + 3x - 18 < 0
 neg = [i / 4 for i in range(-80, 81) if (i / 4) ** 2 + 3 * (i / 4) - 18 < 0]

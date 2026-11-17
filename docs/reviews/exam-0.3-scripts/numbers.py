@@ -111,7 +111,7 @@ def has(iid, *phrases, head=False):
 ex.claim(doc['pass'] == 0.7, 'pass 0.7 as section 5 asks')
 ex.claim(20 <= len(doc['items']) <= 30, f'{len(doc["items"])} items, inside 20 to 30')
 ramp = {d: sum(1 for it in doc['items'] if it['difficulty'] == d) for d in (2, 3, 4, 5)}
-ex.claim(ramp == {2: 5, 3: 13, 4: 6, 5: 2}, f'ramp {ramp} of {len(doc["items"])} (19%, 50%, 23%, 8% against 20, 50, 20, 10)')
+ex.claim(ramp == {2: 6, 3: 15, 4: 6, 5: 3}, f'ramp {ramp} of {len(doc["items"])} (20%, 50%, 20%, 10%; 30 items after the session AG second-item pass)')
 union = {}
 for c in ('exp-log', 'series', 'trig', 'counting'):
     with open(os.path.join(COURSES, c, 'course.json'), encoding='utf8') as f:
@@ -121,16 +121,17 @@ used = {s for it in doc['items'] for s in it['skills']}
 ex.claim(used == set(union), 'every skill is tested by at least one item')
 # Timing (finding 22): AUTHORING section 5 says `minutes` is shown as written, so it is the time the paper really needs.
 # Rule used: the sum of the items' `pace` (Stage 0 paces of topic-0.6: d2 45 to 60 s, d3 90 to 150 s, d4 150 to 180 s,
-# d5 300 and 360 s), rounded up to the next whole 5 minutes. 3,525 s is 58.75 minutes, so the clock is 60.
+# d5 300 and 360 s), rounded up to the next whole 5 minutes. After the session AG second-item pass (30 items)
+# 4,125 s is 68.75 minutes, so the clock is 70.
 paces = [it.get('pace') for it in doc['items']]
 ex.claim(all(isinstance(p, (int, float)) and p > 0 for p in paces), 'every item has a positive pace')
 need = sum(paces)
-ex.claim(need == 3525, f'paces sum to {need} s ({need / 60:.2f} min)')
-ex.claim(doc['minutes'] == math.ceil(need / 300) * 5 == 60, f'minutes {doc["minutes"]} = paced need {need / 60:.2f} min rounded up to 5')
+ex.claim(need == 4125, f'paces sum to {need} s ({need / 60:.2f} min)')
+ex.claim(doc['minutes'] == math.ceil(need / 300) * 5 == 70, f'minutes {doc["minutes"]} = paced need {need / 60:.2f} min rounded up to 5')
 ex.claim(need <= doc['minutes'] * 60 <= 1.05 * need, 'the clock covers the paces and is within 5% of them (no slack of 30 minutes as before)')
 for it in doc['items']:
     ws = {w['id'] for w in it['widget'].get('wrong', [])}
-    bk = set(it['feedback'].get('byKey', {}))
+    bk = set(it['feedback'].get('byKey', {})) - ({'count'} if 'answers' in it['widget'] else set())   # `count` is the key of a wrong number of values in a numeric set
     ex.claim(ws == bk, f'{it["id"]} byKey ids equal wrong ids')
 
 # ---------------------------------------------------------------- e-log-thousandth (now log_4 0.0625, finding 15)
@@ -321,15 +322,7 @@ ex.claim(all(TXT[k].replace(' ', '').startswith('$y=' + MODEL_AMP[k] + '\\sin') 
 ex.claim(near(2 * math.pi / (math.pi / 6), 12, 1e-12) and near(2 * math.pi / (math.pi / 12), 24, 1e-12), 'e-wave-fit b = pi/6 gives period 12; option d (pi/12) gives 24')
 ex.claim(near(-6 * -1 + 5, 11, 0) and near(min(-6 * math.sin(math.pi * x / 6) + 5 for x in xs[::50]), -1, 1e-6), 'e-wave-fit option c reaches 11 and -1, not 8 and 2')
 
-# ---------------------------------------------------------------- e-sigma-odd (sum of 3k + 2 from k = 5; finding 20)
-terms = [3 * k + 2 for k in range(5, 21)]
-key('e-sigma-odd', sum(terms))
-ex.claim(len(terms) == 16 == 20 - 5 + 1 and terms[0] == 17 and terms[-1] == 62 and sum(terms) == 8 * 79 == 632, 'e-sigma-odd 16 terms 17..62, 8 x 79 = 632')
-wrong('e-sigma-odd', 'count', 15 * (17 + 62) / 2)
-wrong('e-sigma-odd', 'from-one', sum(3 * k + 2 for k in range(1, 21)))
-ex.claim(sum(3 * k + 2 for k in range(1, 5)) == 5 + 8 + 11 + 14 == 38 and 670 - 38 == 632, 'e-sigma-odd the first four terms 5, 8, 11, 14 add to 38; 670 - 38 = 632')
-X('e-sigma-odd', 'explain.text', 38)
-X('e-sigma-odd', 'explain.text', 670)
+# e-sigma-odd: removed by the session AG second-item pass (a sum already asked by e-weekly-savings; e-rebate-third takes its place, checked in exam-second-item-stage0-numbers.py)
 
 # ---------------------------------------------------------------- e-desk-block (all 720 seatings; finding 3)
 people = 'PTSABC'
@@ -551,7 +544,6 @@ REPEATS = [
     ('e-four-falls', ('4 days in a row',), 'exp-log l2 screens[6]: falls 10% every day for 10 days'),
     ('e-weekly-savings', ('£20 in week 1', '£5 more each week'), 'series l5 screens[1]: save £3 in week 1, then £2 more each week'),
     ('e-binomial-cube', ('coefficient of $x^3$',), 'series l11 quiz[0]: the number in front of x^3 in (x + 2)^5'),
-    ('e-sigma-odd', ('(2k - 1)',), 'series l5 quiz[2]: sum of (2k - 1)'),
 ]
 for iid, phrases, where in REPEATS:
     ex.claim(not has(iid, *phrases), f'{iid} fresh against {where}')
@@ -569,7 +561,7 @@ NEW = [
     ('e-fraction-powers', ('125^{2/3}', '625^{-1/4}')), ('e-arc-length', ('radius 6 cm', '1.8 radians')),
     ('e-log-thousandth', ('\\log_4 0.0625',)), ('e-four-falls', ('then rises 3% a day',)),
     ('e-weekly-savings', ('£2,775', 'fixed amount more')), ('e-binomial-cube', ('(1 + ax)^6', '135')),
-    ('e-sigma-odd', ('\\sum_{k=5}^{20} (3k + 2)',)), ('e-truss-angle', ('roof truss', '10 m', '7 m')),
+    ('e-truss-angle', ('roof truss', '10 m', '7 m')),
 ]
 for iid, phrases in NEW:
     ex.claim(has(iid, *phrases), f'{iid} carries its new setup {phrases}')

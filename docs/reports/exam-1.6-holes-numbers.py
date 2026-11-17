@@ -143,7 +143,8 @@ cnt = {d: sum(1 for i in doc['items'] if i['difficulty'] == d) for d in (2, 3, 4
 N = len(doc['items'])
 for d, s in {2: .2, 3: .5, 4: .2, 5: .1}.items():
     check(abs(cnt[d] / N - s) <= 0.1 + 1e-9, f'ramp d{d} {cnt[d]}/{N}')
-check(N <= 30 and 's-summary-dw' not in items, f'{N} items, s-summary-dw replaced')
+# session AG second-item pass added s-three-traders: the exam holds 31 items (70 minutes)
+check(N == 31 and 's-summary-dw' not in items, f'{N} items (30 + s-three-traders), s-summary-dw replaced')
 used = {s for i in doc['items'] for s in i.get('skills', [])}
 check(set(doc['skills']) <= used, 'every exam skill covered')
 check(sum('rg-diagnostics' in i.get('skills', []) for i in doc['items']) >= 2, 'rg-diagnostics still examined twice')

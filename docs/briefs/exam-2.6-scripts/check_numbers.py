@@ -102,9 +102,10 @@ def zq(p):
 # ------------------------------------------------------------------ the file
 ex._rec(20 <= len(items) <= 30, f'{len(items)} items, 20 to 30', '')
 ramp = Counter(i['difficulty'] for i in items)
-ex._rec(dict(ramp) == {2: 5, 3: 13, 4: 5, 5: 2}, f'ramp {dict(sorted(ramp.items()))} = 5, 13, 5, 2', '')
+# session AG second-item pass added one difficulty 4 item (26 items, 80 minutes, pace 3420 + 180)
+ex._rec(dict(ramp) == {2: 5, 3: 13, 4: 6, 5: 2}, f'ramp {dict(sorted(ramp.items()))} = 5, 13, 6, 2', '')
 pace = sum(i['pace'] for i in items)
-ex._rec(pace == 3420 and pace / 60 < doc['minutes'], f'pace {pace} s inside {doc["minutes"]} minutes', '')
+ex._rec(pace == 3600 and pace / 60 < doc['minutes'], f'pace {pace} s inside {doc["minutes"]} minutes', '')
 ex._rec(doc['pass'] == 0.7, 'pass 0.7', '')
 with open(os.path.join(HERE, '..', '..', '..', 'app', 'content', 'courses', 'stat-models', 'course.json'), encoding='utf8') as f:
     course = json.load(f)

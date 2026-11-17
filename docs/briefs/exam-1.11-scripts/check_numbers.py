@@ -391,12 +391,8 @@ wrong('e-cube-outflow', 'centre', (1 + 1 + 1) * 8)
 wrong('e-cube-outflow', 'one-term', 2 * 2 * simpson(lambda x: x * x, 0, 2))
 allow('e-cube-outflow', 32, 8 / 3, 32 / 3)
 
-# e-integrating-factor: RK4
-yi = rk4(lambda t, y: -4 * y + 9 * np.exp(-t), 0, [5.0], 1)[0]
-key('e-integrating-factor', yi, tol=1e-4)
-wrong('e-integrating-factor', 'const-add', yi - 2 * math.exp(-4) + 2)
-wrong('e-integrating-factor', 'no-fit', rk4(lambda t, y: -4 * y + 9 * np.exp(-t), 0, [8.0], 1)[0])
-allow('e-integrating-factor', 1.1403, 3.1036, 1.1952)
+allow('e-square-root-parts', 15, 16, -15)   # new item; recomputed in exam-second-item-1.6-1.11-numbers.py
+# e-integrating-factor removed by the session AG second-item pass (replaced by e-square-root-parts, checked in exam-second-item-1.6-1.11-numbers.py)
 
 # e-resonant-guess: y_p = A t^2 e^{2t} by finite differences; the slip by taking (t^2)'' = 1
 def resid(A, t, slip=False):
@@ -691,13 +687,14 @@ allow('e-stiff-steps', 80, -80, 2.7853, rk_b / 80, eu_b / 80, 1 / 80, 0.1, 0.03,
 # ------------------------------------------------------------------ every level has an item on a skill first met there
 LEVEL = {
     'e-divide-conjugate': ('complex', 1), 'e-arg-quadrant': ('complex', 1), 'e-fifth-roots': ('complex', 1),
+    'e-square-root-parts': ('complex', 1),   # added by the session AG second-item pass
     'e-harmonic-partner': ('complex', 2), 'e-log-square': ('complex', 2),
     'e-cauchy-plus-normal': ('complex', 3), 'e-upper-pole': ('complex', 3),
     'e-third-power-pole': ('complex', 3), 'e-damped-call': ('complex', 3), 'e-semicircle-proof': ('complex', 3),
     'e-wire-mass': ('vector-calc', 1), 'e-potential-work': ('vector-calc', 1),
     'e-circulation-flux': ('vector-calc', 2), 'e-vortex-square': ('vector-calc', 2),
     'e-tilted-patch': ('vector-calc', 3), 'e-cube-outflow': ('vector-calc', 3), 'e-hemisphere-curl': ('vector-calc', 3),
-    'e-rate-pull': ('odes', 1), 'e-integrating-factor': ('odes', 1), 'e-separable-slow': ('odes', 1),
+    'e-rate-pull': ('odes', 1), 'e-separable-slow': ('odes', 1),
     'e-char-roots': ('odes', 2), 'e-resonant-guess': ('odes', 2), 'e-damping-rate': ('odes', 2),
     'e-saddle-solution': ('odes', 3), 'e-spiral-turn': ('odes', 3), 'e-crowded-prey': ('odes', 3),
     'e-laplace-shift': ('odes', 4), 'e-euler-by-hand': ('odes', 4), 'e-laplace-rebound': ('odes', 4),

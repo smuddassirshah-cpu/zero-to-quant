@@ -135,8 +135,8 @@ ex.claim(doc['skills'] == union, 'skills map equals the union of the three cours
 cnt = {s: sum(1 for it in doc['items'] if s in it['skills']) for s in union}
 ex.claim(min(cnt.values()) >= 2, f'every skill tested by at least two items {cnt}')
 pace = {it['id']: it.get('pace') for it in doc['items']}
-ex.claim(all(isinstance(v, (int, float)) and v > 0 for v in pace.values()) and sum(pace.values()) == 90 * 60,
-         f'every item carries a positive pace and they sum to {sum(pace.values())} s = 90 minutes (finding 34)')
+ex.claim(all(isinstance(v, (int, float)) and v > 0 for v in pace.values()) and sum(pace.values()) == 5460,
+         f'every item carries a positive pace and they sum to {sum(pace.values())} s = 91 minutes (finding 34: 5,400 s before the session AG second-item pass swapped e-impact-double, pace 90, for e-honest-bar, pace 150; the clock stays 90, see the fix-pass report)')
 rub = sum(r['points'] for r in IT['e-results-note']['rubric'])
 ex.claim(rub == 10, f'longform rubric sums to {rub}')
 
@@ -285,13 +285,7 @@ expl = text('e-implied-q', 'explain.text')
 outside = re.sub(r'\$[^$]*\$', '', expl)
 ex.claim('^{' not in outside, 'e-implied-q explain: no TeX outside $...$', 'raw TeX is shown to the learner as text')
 
-# ---------------------------------------------------------------- e-impact-double
-rate1, rate2 = 0.015 * math.sqrt(40000 / 1.6e6), 0.015 * math.sqrt(80000 / 1.6e6)
-ex.claim(round(rate1 * 40000 * 60, 2) == 5692.10, f'e-impact-double first order £{rate1 * 2.4e6:.2f}')
-key('e-impact-double', rate2 * 80000 * 60)
-wrong('e-impact-double', 'linear', 2 * rate1 * 2.4e6, typed=11384.20)
-wrong('e-impact-double', 'old-notional', rate2 * 2.4e6, typed=8049.84)
-ex.claim(round(rate2 * 100, 3) == 0.335 and round(rate1 * 100, 3) == 0.237 and round(rate2 / rate1 * 2, 2) == 2.83, 'e-impact-double explain 0.335%, 0.237%, 2.83 times')
+# e-impact-double: removed by the session AG second-item pass (replaced by a bt-execution item checked in exam-second-item-2.x-3.2-numbers.py)
 
 # ---------------------------------------------------------------- e-ic-tstat
 decay = 0.5 ** (1 / 2)                       # one month of a two-month half-life

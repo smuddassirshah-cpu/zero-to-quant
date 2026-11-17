@@ -114,7 +114,7 @@ def predict(iid, src=None):
 ex.claim(doc['pass'] == 0.7, 'pass 0.7')
 ex.claim(20 <= len(doc['items']) <= 30, f'{len(doc["items"])} items, inside 20 to 30')
 ramp = {d: sum(1 for it in doc['items'] if it['difficulty'] == d) for d in (2, 3, 4, 5)}
-ex.claim(ramp == {2: 4, 3: 10, 4: 4, 5: 2}, f'ramp {ramp} (20, 50, 20, 10 per cent)')
+ex.claim(ramp == {2: 4, 3: 11, 4: 4, 5: 2}, f'ramp {ramp} (21 items after the session AG second-item pass)')
 union = {}
 for c in ('terminal', 'first-python'):
     with open(os.path.join(COURSES, c, 'course.json'), encoding='utf8') as f:
@@ -129,11 +129,12 @@ PACE = {'e-typing-speed': 45, 'e-three-operators': 45, 'e-header-line': 45, 'e-r
         'e-curly-quotes': 75, 'e-up-two': 90, 'e-two-greps': 90, 'e-wrong-folder': 120, 'e-range-step': 75,
         'e-slice-format': 75, 'e-list-update': 90, 'e-print-or-return': 90, 'e-code-band': 360,
         'e-text-number': 90, 'e-move-wildcard': 120, 'e-tap-cause': 150, 'e-code-biggest-move': 600,
-        'e-path-search': 150, 'e-redirect-trace': 240, 'e-code-daily-returns': 720}
+        'e-path-search': 150, 'e-redirect-trace': 240, 'e-code-daily-returns': 720,
+        'e-left-hand-commands': 60}   # added by the session AG second-item pass (checked in exam-second-item-stage0-numbers.py)
 ex.claim(set(PACE) == set(IT), 'a pace for every item')
 total = sum(PACE.values())
-ex.claim(total == 3315, f'paces sum to {total} s, {total / 60:.1f} minutes')
-ex.claim(doc['minutes'] == 60 and doc['minutes'] * 60 >= total, f'minutes {doc["minutes"]} covers the paces ({total / 60:.1f} min)',
+ex.claim(total == 3375, f'paces sum to {total} s, {total / 60:.1f} minutes')
+ex.claim(doc['minutes'] == 65 and doc['minutes'] * 60 >= total, f'minutes {doc["minutes"]} covers the paces ({total / 60:.1f} min)',
          'AUTHORING section 5: set minutes to the time the exam needs')
 ex.claim(all(it.get('pace') == PACE[it['id']] for it in doc['items']), 'every item stores the pace this script lists')
 ex.claim(sys.version_info[:2] == (3, 12), f'run under Python 3.12 (Pyodide 0.27.7 is 3.12.7); this is {PY}')

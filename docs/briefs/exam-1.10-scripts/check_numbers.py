@@ -158,7 +158,7 @@ ex._rec(dict(ramp) == {2: 6, 3: 15, 4: 6, 5: 3}, f'ramp {dict(ramp)} = 6, 15, 6,
 pace = sum(i['pace'] for i in items)
 ex._rec(pace / 60 < doc['minutes'], f'pace {pace} s inside {doc["minutes"]} minutes', '')
 by_course = Counter('analysis' if all(s.startswith('an-') for s in i['skills']) else 'linear-maps' for i in items)
-ex._rec(by_course == {'analysis': 17, 'linear-maps': 13}, f'by course {dict(by_course)}', '')
+ex._rec(by_course == {'analysis': 16, 'linear-maps': 14}, f'by course {dict(by_course)}', '')
 ex._rec(all(all(s.startswith('an-') for s in i['skills']) or all(s.startswith('lx-') for s in i['skills']) for i in items),
         'no item mixes the two courses', '')
 for s in doc['skills']:
@@ -306,23 +306,8 @@ ex._rec(all(abs(r_ - (n + 2) / 4) < 1e-9 for n, r_ in zip(range(1, 30), rat)) an
 ex._rec(abs(((51 / 50) ** 3) / 2 - 0.5) < 0.04, 'e-which-converge: n^3/2^n ratio tends to 1/2', '')
 correct_id('e-which-converge', ['ratio', 'comp'])
 
-# e-cube-delta: the factor on a fine grid of (1, 3), then delta checked by brute force
-g = np.linspace(1, 3, 200001)[1:-1]
-fac = g ** 2 + 2 * g + 4
-ex._rec(fac.max() < 19 and 19 - fac.max() < 1e-3, f'e-cube-delta: sup of the factor on (1, 3) = 19 (grid max {fac.max():.5f})', '')
-key('e-cube-delta', round(float(fac.max())), part=0, tol=0)
-wrong('e-cube-delta', 'at-a', 2 ** 2 + 2 * 2 + 4, part=0)
-wrong('e-cube-delta', 'at-left', float(fac.min().round()), part=0)
-dlt = min(1, 0.38 / 19)
-key('e-cube-delta', dlt, part=1)
-wrong('e-cube-delta', 'at-a', 0.38 / 12, part=1)
-_a = [x_ for x_ in node(W('e-cube-delta', 1))['wrong'] if x_['id'] == 'at-a'][0]
-ex._rec(all(abs(v_ - _a['value']) <= _a['tol']['abs'] for v_ in (0.0317, 0.032, 0.031667)), 'e-cube-delta: at-a band catches 0.0317 and 0.032', '')
-wrong('e-cube-delta', 'max', max(1, 0.38 / 19), part=1)
-xs = np.linspace(2 - dlt, 2 + dlt, 100001)[1:-1]
-ex._rec(np.all(np.abs(xs ** 3 - 8) < 0.38), 'e-cube-delta: |x^3 - 8| < 0.38 on (1.98, 2.02)', '')
-allow('e-cube-delta', 19, 0.38, 12, dlt, 25, 9)
-say('e-cube-delta', 'explain.text', 0.02)
+allow('e-integral-weights', 0.75, 2.25, 4.5)   # new item; its numbers are recomputed in exam-second-item-1.6-1.11-numbers.py
+# e-cube-delta removed by the session AG second-item pass (replaced by e-integral-weights, checked in exam-second-item-1.6-1.11-numbers.py)
 
 # e-mvt-quartic: bisection for c on a numerical derivative, grid max for M
 fM = lambda x: x ** 4 + x  # noqa: E731
@@ -622,12 +607,13 @@ LEVEL = {   # item -> (course, level of the lesson it is pitched at)
     'e-sup-rising': ('analysis', 1), 'e-diagonal-digits': ('analysis', 1), 'e-rational-between': ('analysis', 1),
     'e-n-for-quotient': ('analysis', 2), 'e-root-recursion': ('analysis', 2), 'e-contraction-proof': ('analysis', 2),
     'e-telescope-gap-three': ('analysis', 3), 'e-which-converge': ('analysis', 3), 'e-three-one-rearrange': ('analysis', 3),
-    'e-halvings-width': ('analysis', 4), 'e-cube-delta': ('analysis', 4), 'e-mvt-quartic': ('analysis', 4),
+    'e-halvings-width': ('analysis', 4), 'e-mvt-quartic': ('analysis', 4),
     'e-uniform-peak': ('analysis', 4),
     'e-upper-sum-square': ('analysis', 5), 'e-ftc-both-limits': ('analysis', 5), 'e-gram-schmidt-step': ('linear-maps', 3),
     'e-closed-sets': ('analysis', 5), 'e-compact-bounded': ('analysis', 5),
     'e-subspace-r3': ('linear-maps', 1), 'e-coords-new-basis': ('linear-maps', 1),
     'e-antisym-map': ('linear-maps', 2), 'e-matrix-of-map': ('linear-maps', 2), 'e-idempotent-split': ('linear-maps', 2),
+    'e-integral-weights': ('linear-maps', 3),   # added by the session AG second-item pass
     'e-dual-basis-pair': ('linear-maps', 3), 'e-hedge-residual': ('linear-maps', 3),
     'e-weighted-adjoint': ('linear-maps', 4), 'e-jordan-from-kernels': ('linear-maps', 4),
     'e-symmetric-power': ('linear-maps', 4), 'e-chain-response': ('linear-maps', 4), 'e-rayleigh-proof': ('linear-maps', 4),
