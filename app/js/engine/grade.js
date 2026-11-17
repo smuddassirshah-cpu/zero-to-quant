@@ -807,6 +807,93 @@
     }
     return jLit(k) != null && !(Number.isInteger(jLit(k)) && Math.abs(jLit(k)) === 1) ? false : null; // a number other than 1 (a whole number, a decimal, a fraction a/b) times a bracket is not simplest (ENGINE-BACKLOG 935)
   };
+  /* Items 944 and 945: the typed shape of a fraction or a surd. The engine canonicalises \sqrt{72} to 6\sqrt{2} and \frac{2x}{4} to x/2, so the
+     verdict is read from the parse that keeps what was typed (canonical: false). A constant that holds a square root is not simplest with a radicand
+     that has a square factor or is a fraction, a root in a denominator, two roots multiplied, like radicals added, or a coefficient and denominator
+     with a common factor; any fraction is not simplest with a fraction in its top or bottom, or a numerator and denominator (polynomials in one
+     letter, rational coefficients) with a common factor. null: not decided here. */
+  const jHas = (j, h) => Array.isArray(j) && (j[0] === h || j.some(x => jHas(x, h)));
+  const unwrap = (j) => { while (jh(j) === 'Delimiter' && ja(j).length === 1) j = ja(j)[0]; return j; };
+  const frN = (n, d = 1) => { if (d < 0) { n = -n; d = -d; } const g = gcdI(n, d) || 1; return [n / g, d / g]; };
+  const frAdd = (a, b) => frN(a[0] * b[1] + b[0] * a[1], a[1] * b[1]);
+  const frMul = (a, b) => frN(a[0] * b[0], a[1] * b[1]);
+  const frDiv = (a, b) => frN(a[0] * b[1], a[1] * b[0]);
+  const polyAdd = (p, q) => Array.from({ length: Math.max(p.length, q.length) }, (_, i) => frAdd(p[i] || [0, 1], q[i] || [0, 1]));
+  const polyMul = (p, q) => { const r = Array.from({ length: p.length + q.length - 1 }, () => [0, 1]); p.forEach((a, i) => q.forEach((b, k) => { r[i + k] = frAdd(r[i + k], frMul(a, b)); })); return r; };
+  const polyTrim = (p) => { while (p.length && p[p.length - 1][0] === 0) p = p.slice(0, -1); return p; };
+  /* the polynomial of a MathJSON tree in the letter v as fractions by degree (lowest first), or null (another letter, a function, a negative power) */
+  const fpolyOf = (j, v) => {
+    j = unwrap(j);
+    if (typeof j === 'string') return j === v ? [[0, 1], [1, 1]] : null;
+    const h = jh(j), a = ja(j);
+    if (h === 'Rational' || h === 'Divide') { const n = jLit(a[0]), d = jLit(a[1]); if (Number.isInteger(n) && Number.isInteger(d) && d) return [frN(n, d)]; }
+    const lit = jLit(j);
+    if (lit != null) return Number.isInteger(lit) ? [[lit, 1]] : [frN(Math.round(lit * 1e6), 1e6)];
+    const sub = a.map(x => fpolyOf(x, v));
+    if (sub.some(x => !x)) return null;
+    if (h === 'Negate') return sub[0].map(c => frN(-c[0], c[1]));
+    if (h === 'Add') return sub.reduce(polyAdd);
+    if (h === 'Subtract') return polyAdd(sub[0], sub[1].map(c => frN(-c[0], c[1])));
+    if (h === 'Multiply' || h === 'InvisibleOperator') return sub.reduce(polyMul);
+    if (h === 'Divide') { const d = jLit(a[1]); return Number.isInteger(d) && d ? sub[0].map(c => frDiv(c, [d, 1])) : null; }
+    if (h === 'Square') return polyMul(sub[0], sub[0]);
+    if (h === 'Power') { const n = jLit(a[1]); if (!Number.isInteger(n) || n < 0 || n > 8) return null; let r = [[1, 1]]; for (let i = 0; i < n; i++) r = polyMul(r, sub[0]); return r; }
+    return null;
+  };
+  const lettersIn = (j, out = new Set()) => { if (typeof j === 'string') { if (!/^(Pi|ExponentialE|ImaginaryUnit|iota)$/.test(j)) out.add(j); } else if (Array.isArray(j)) ja(j).forEach(x => lettersIn(x, out)); return out; };
+  const polyRem = (p, q) => { p = polyTrim(p.slice()); while (p.length >= q.length && p.length) { const f = frDiv(p[p.length - 1], q[q.length - 1]), sh = p.length - q.length; q.forEach((c, i) => { p[i + sh] = frAdd(p[i + sh], frN(-f[0] * c[0], f[1] * c[1])); }); p = polyTrim(p.slice(0, -1)); } return p; };
+  const polyGcdDeg = (p, q) => { let a = p, b = q; while (b.length) { const r = polyRem(a, b); a = b; b = r; } return a.length - 1; };
+  const lcmI = (a, b) => Math.abs(a * b) / (gcdI(a, b) || 1);
+  const intsOf = (p) => { const L = p.reduce((m, c) => lcmI(m, c[1]), 1); return p.map(c => c[0] * (L / c[1])); };
+  /* a numerator and denominator that can still be cancelled: a common factor with a letter in it, or a whole number dividing every coefficient of both */
+  const fracNotLowest = (n, d) => {
+    const ls = lettersIn(['x', n, d]); ls.delete('x');
+    if (ls.size > 1) return false;
+    const v = [...ls][0] || 'x', P = fpolyOf(n, v), Q = fpolyOf(d, v);
+    if (!P || !Q) return false;
+    const pt = polyTrim(P), qt = polyTrim(Q);
+    if (!pt.length || !qt.length) return false;
+    if (polyGcdDeg(pt, qt) >= 1) return true;
+    return [...intsOf(pt), ...intsOf(qt)].reduce(gcdI, 0) > 1 && pt.every(c => c[1] === 1) && qt.every(c => c[1] === 1);
+  };
+  const squareful = (n) => { for (let k = 2; k * k <= n; k++) if (n % (k * k) === 0) return true; return false; };
+  /* a surd term's coefficient and radicand: 3\sqrt{2} -> [3, 2], \sqrt{2} -> [1, 2]; null for another shape */
+  const surdTerm = (j) => {
+    j = unwrap(jNeg(unwrap(j)));
+    if (jh(j) === 'Sqrt' && Number.isInteger(jLit(ja(j)[0]))) return [1, jLit(ja(j)[0])];
+    if (jh(j) === 'Multiply' || jh(j) === 'InvisibleOperator') {
+      const a = ja(j).map(unwrap), r = a.filter(x => jh(x) === 'Sqrt');
+      if (r.length === 1 && a.length === 2) { const k = jLit(a.find(x => x !== r[0])); if (Number.isInteger(k) && Number.isInteger(jLit(ja(r[0])[0]))) return [k, jLit(ja(r[0])[0])]; }
+    }
+    return null;
+  };
+  const surdVerdict = (j) => {
+    if (!Array.isArray(j)) return true;
+    const h = jh(j), a = ja(j).map(unwrap);
+    if (h === 'Sqrt') { const n = jLit(a[0]); if (jHas(a[0], 'Divide') || jHas(a[0], 'Rational') || (n != null && !Number.isInteger(n)) || (Number.isInteger(n) && squareful(n))) return false; }
+    if (h === 'Divide') {
+      if (jHas(a[1], 'Sqrt')) return false;
+      if (jHas(a[0], 'Sqrt')) { const co = (jSum(a[0]) || [a[0]]).map(surdTerm); if (co.every(Boolean) && co.map(t => t[0]).concat(Number.isInteger(jLit(a[1])) ? [jLit(a[1])] : []).reduce(gcdI, 0) > 1) return false; }
+    }
+    if ((h === 'Multiply' || h === 'InvisibleOperator') && a.filter(x => jh(x) === 'Sqrt').length > 1) return false;
+    if (h === 'Add' || h === 'Subtract') { const rad = a.map(surdTerm).filter(Boolean).map(t => t[1]); if (new Set(rad).size < rad.length) return false; }
+    return a.every(surdVerdict);
+  };
+  /* false when the typed form is not simplest, null when this check does not decide (the older checks then run) */
+  const rawShapeVerdict = (raw, constant) => {
+    if (constant && jHas(raw, 'Sqrt') && !surdVerdict(raw)) return false;
+    let bad = false;
+    const walk = (j) => {
+      if (!Array.isArray(j) || bad) return;
+      if (jh(j) === 'Divide') {
+        const [n, d] = ja(j).map(unwrap);
+        if (jHas(n, 'Divide') || jHas(d, 'Divide') || (!constant && fracNotLowest(n, d))) { bad = true; return; }
+      }
+      ja(j).forEach(walk);
+    };
+    walk(raw);
+    return bad ? false : null;
+  };
   const exprShapeOk = (ce, spec, L, fo) => {
     const form = exprFormOf(spec);
     if (form === 'fraction') return shapeFraction(L);
@@ -825,6 +912,8 @@
         if (form === 'rectangular') return constant ? exprForms.rectangular(j) : true;
         if (form === 'simplified') {
           if (constant && exprForms.reducible(j)) return false;
+          let rv = null; try { rv = rawShapeVerdict(ce.parse(prep(L, hasImag(L), fo.functions), { canonical: false }).json, constant); } catch { rv = null; }   // items 944, 945: what was typed, not what the engine makes of it
+          if (rv === false) return false;
           const v = simplestVerdict(j); if (v != null) return v;
           try { return jsize(j) <= jsize(e.simplify().json); } catch { return true; }
         }

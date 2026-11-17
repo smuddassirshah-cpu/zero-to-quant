@@ -96,5 +96,17 @@ const e1 = { answer: '3x-12' }, e2 = { answer: '8x-26' }, e3 = { answer: '6t-9' 
 for (const [spec, t] of [[e1, '3(x-4)'], [e2, '2(4x-13)'], [e3, '3(2t-3)'], [{ answer: '8y-24' }, '8(y-3)'], [e1, '-3(4-x)'], [e1, '\\frac{3(x-4)}{1}'], [e2, '0.5(16x-52)']]) check(`935 simplified refuses an unopened bracket: ${t}`, sf(spec, t).ok === false && sf(spec, t).key === 'form', JSON.stringify(sf(spec, t)));
 for (const [spec, t] of [[e1, '3x-12'], [e1, '-12+3x'], [e2, '8x-26'], [e3, '6t-9'], [e1, '3x - 12'], [{ answer: '2x+6', accept: ['2(x+3)'] }, '2(x+3)'], [{ answer: '5n-100', accept: ['5(n-20)'] }, '5(n-20)'], [{ answer: '\\frac{x+1}{2}' }, '\\frac{1}{2}(x+1)']]) check(`935 simplified passes: ${t}`, sf(spec, t).ok === true, JSON.stringify(sf(spec, t)));
 
-console.log(`test-grade-ab3: ${n - fails.length}/${n} passed${fails.length ? ', ' + fails.length + ' FAILED' : ''}`);
+/* ---------- Part 6 (944, 945): form "simplified" reads what was typed: a surd and a cancellable fraction ---------- */
+const surd = { answer: '6\\sqrt{2}' };
+for (const t of ['\\sqrt{72}', '3\\sqrt{8}', '\\frac{12}{\\sqrt{2}}', '\\sqrt{2}\\sqrt{36}', '2\\sqrt{2}+4\\sqrt{2}', '\\frac{12\\sqrt{2}}{2}']) check(`944 simplified refuses ${t} for 6\\sqrt2`, sf(surd, t).ok === false && sf(surd, t).key === 'form', JSON.stringify(sf(surd, t)));
+for (const t of ['6\\sqrt{2}', '6\\sqrt2', '\\sqrt{2}\\times 6', '6\\sqrt{2}+0']) check(`944 simplified takes ${t} for 6\\sqrt2`, sf(surd, t).ok === true, JSON.stringify(sf(surd, t)));
+check('944 a surd over a whole number in lowest terms passes', sf({ answer: '\\frac{3\\sqrt{2}}{2}' }, '\\frac{3\\sqrt{2}}{2}').ok === true);
+check('944 a surd over a whole number not in lowest terms is refused', sf({ answer: '\\frac{3\\sqrt{2}}{2}' }, '\\frac{6\\sqrt{2}}{4}').ok === false);
+const fr = { answer: '\\frac{x-1}{x+2}' };
+for (const t of ['\\frac{(x-1)(x+3)}{(x+2)(x+3)}', '\\frac{x^2-1}{(x+2)(x+1)}', '\\frac{2x-2}{2x+4}', '\\frac{x-1}{x+2}\\div\\frac{1}{1}', '\\frac{\\frac{x-1}{1}}{x+2}']) check(`945 simplified refuses ${t}`, sf(fr, t).ok === false, JSON.stringify(sf(fr, t)));
+for (const t of ['\\frac{x-1}{x+2}', '\\frac{x - 1}{x + 2}']) check(`945 simplified takes ${t}`, sf(fr, t).ok === true, JSON.stringify(sf(fr, t)));
+check('945 9v over 16(v-2) retyped is refused when it is cancellable', sf({ answer: '9v' }, '\\frac{9v(v-2)}{(v-2)}').ok === false);
+check('945 a fraction with a letter in the top only passes', sf({ answer: '\\frac{x}{2}' }, '\\frac{x}{2}').ok === true);
+
+console.log(`test-grade-ab3:${n - fails.length}/${n} passed${fails.length ? ', ' + fails.length + ' FAILED' : ''}`);
 process.exit(fails.length ? 1 : 0);
