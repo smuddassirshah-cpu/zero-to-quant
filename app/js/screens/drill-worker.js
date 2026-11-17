@@ -228,6 +228,7 @@ self.onmessage = async (e) => {
         pk('start');
         try { await py.loadPackagesFromImports(m.code, { messageCallback: (t) => pk('msg', String(t)), errorCallback: (t) => pk('msg', String(t)) }); }
         catch (e) { pk('end'); self.postMessage({ type: 'pkgfail', id: m.id, message: String((e && e.message) || e) }); return false; } // ENGINE-BACKLOG 1214: a download failure is not an answer: the page says so and no test runs
+        pk('end');
         // Item 120: every run starts in a fresh, empty working directory, so files written by one run are gone in the next
         py.runPython("import os as _o, shutil as _s, tempfile as _t\n_p = globals().get('_zq_run_dir')\n_o.chdir('/')\nif _p: _s.rmtree(_p, ignore_errors=True)\n_zq_run_dir = _t.mkdtemp(prefix='run-')\n_o.chdir(_zq_run_dir)\nimport warnings as _w\n_w.filterwarnings('ignore', category=FutureWarning)\n_w.filterwarnings('ignore', category=DeprecationWarning)"); // item 182: library deprecation notices stay out of the learner's output
         return true;
