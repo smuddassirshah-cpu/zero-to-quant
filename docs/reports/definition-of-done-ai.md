@@ -22,3 +22,16 @@ Read at HEAD 99be2fe9. Last green full acceptance: run 35 at 5b651e21 (59 jobs);
 4. Export/import completeness (small). Add one assertion that `JSON.stringify(S.export())` equals the re-export after `reset` and `import` for a fully populated profile.
 5. Exam second-read mapping (small). Confirm with a script that each of the 29 topic exams (notably 0.5, 1.4, 1.5, 1.7, 1.8) is named in a review file; census says yes, filenames are grouped.
 6. Git and terminal "reading and tracing" line (small). Add one sentence to the first screen of `git/l1-every-version` and `terminal/l1-home-row` (or the git and terminal `course.json` description, if the Learn card shows it), for example "Here you read and trace commands; the browser has no shell." Needs a content agent, since content agents own lesson files; then validate and replay those two files.
+
+## After the session AI fixes
+
+| Item | Verdict now | Evidence |
+|---|---|---|
+| 1 | MET | `validate.mjs` 0 errors, 4,606 warnings at 5bb35c99 |
+| 2 | MET | CI `play` and `extras` shards, desktop and `--mobile` (full run at 5bb35c99) |
+| 3 | MET | `app/tools/test-screen-states.mjs`: 27 routes on an empty, a truly empty and a played state, 1280 and 440 px (CI `tests-browser` ui leg; `docs/reports/screen-states-ai.md`) |
+| 4 | MET | same test: an unwritten lesson on `tools/fixtures/mini-app` shows "Not yet written" and its route shows a card |
+| 5 | PARTLY | `docs/reports/prototype-compare-ai.md`: same screens, answers and grading; rows 2, 4, 6 and 12 now match (engine 1211 to 1213, content fix); the derive screen is an ordering task where the prototype picked a line, the simulate canvas looks different, options shuffle (backlog 591), wording was edited later. Not literally identical |
+| 6 | MET | same test: export, import into a fresh context, deep-equal, also after a reload |
+| 7 | MET | 283 of 283 levels read and fixed; every topic and stage exam is named in at least one `docs/reviews` file (checked by grep this session) |
+| 8 | MET | C++ hidden tests via YoWASP clang; the first screens of `git/l1-every-version` and `terminal/l1-home-row` now say the course teaches by reading and tracing |
