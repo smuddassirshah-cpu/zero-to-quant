@@ -1,25 +1,22 @@
 # Engine pass 9b (rule tightening)
 
-Base b6974c12 on `claude/session-ah-engine-pass-1nzn58`, from the reader's verdicts in `docs/reviews/review-pass9-hits.md`. All rules are warnings; the validator ends at 0 errors. Tests: `test-validate-pass8`, `-pass9` (34), new `-pass9b` (15), `-pkg2` (37), `-band-rules`, `test-voice-scan`, `test-playthrough-text-overflow`, all green. The new `-pass9b` is not in `acceptance.yml` (outside my file list).
+From the reader's verdicts in `docs/reviews/review-pass9-hits.md`. All rules are warnings; the validator ends at 0 errors. Green: `test-validate-pass8`, `-pass9`, new `-pass9b` (not in `acceptance.yml`, outside my file list), `-pkg2`, `-band-rules`, `test-voice-scan`, `test-playthrough-text-overflow`.
 
 ## Counts, before to after
-| tag | before | after |
-|---|---|---|
-| `[rounding-tie]` | 72 | 9 (slip branch withdrawn, 63 gone) |
-| `[working-band]` | 4 | 1 (whole-number ceilings skipped) |
-| `[key-in-question]` | 28 | 5 (3+ significant digits, sign, two table values) |
-| `[carry-band]` | 128 | 13 (12 on slips, 1 new carried-value hit) |
-| `[no-chain]`, `[slip-in-key-band]`, `[shown-arithmetic]` new shapes | 7, 2, 2 | unchanged |
-| `[band-edge]` (1203), `[later-key]` (1205) | new | 10, 10 |
-| doubled word (1209, voice scan) | new | 10 |
+- `[rounding-tie]` 72 to 9 (slip-past-places branch withdrawn)
+- `[working-band]` 4 to 1 (whole-number ceilings skipped)
+- `[key-in-question]` 28 to 5 (three or more significant digits, sign, two table values)
+- `[carry-band]` 128 to 13
+- `[no-chain]` 7, `[slip-in-key-band]` 2, `[shown-arithmetic]` new shapes 2: unchanged
+- New: `[band-edge]` (1203) 10, `[later-key]` (1205) 10, doubled word (1209, voice scan) 10
 
-`p-grid-budget` was a stale hit: its question was reworded after the list was made; the rule is deterministic (two runs identical).
+`p-grid-budget` was a stale hit (its question was reworded after the list); the rule is deterministic.
 
 ## Item 1182
-Today's `[carry-band]` did not catch it (it compares wrong bands only). I extended it to hold "0.2200 from part 3" against part 3's printed working; tested on the old text (commit 9a5a0937). One hit on content: `validation/problems-1` `p-rent-seeds` part 2.
+Today's `[carry-band]` did not catch it (it compared wrong bands only). It now holds "0.2200 from part 3" against part 3's printed working; tested on the old text (9a5a0937). One content hit: `validation/problems-1` `p-rent-seeds` part 2.
 
 ## `[carry-band]` sample
-Of 20 of the first 128 hits, 0 were faults. Cause: the carry was exact (integer, formula, given, or the stored key) or the slip too small to move. The rule now needs a rounded carry within 1% of the source key and warns only when the slip's band is under |slip| x that relative error; exact whole-number slips are skipped.
+Of 20 of the first 128 hits, 0 were faults: the carry was exact (integer, formula, given, stored key) or the slip too small to move. Now a rounded carry within 1% of the source key is needed, and a slip is reported only when its band is under |slip| times the carry's relative error. Exact whole-number slips are skipped.
 
 ## Other
-Mobile overflow now names the widest maths span (`the maths span $...$ (N px wide)`). Backlog: 1154, 1190, 1210 post-completion; 1158 with the gallery fix pass; 1182, 1203, 1205, 1209 done. Remaining unjudged hits: `docs/reports/engine-pass-9b-hits.md` (54).
+The mobile overflow message names the widest maths span. Backlog: 1154, 1190, 1210 post-completion; 1158 with the gallery fix pass; 1182, 1203, 1205, 1209 done. Unjudged hits: `docs/reports/engine-pass-9b-hits.md` (54).
