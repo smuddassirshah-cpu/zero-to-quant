@@ -101,3 +101,18 @@ Nothing here marks a learner wrongly, and no later part needs a figure it is not
 
 - Faults 2 to 8 make each band exactly half a step. The number scripts read the content files; if one asserts an old band, change the script's constant, not the band.
 - `p-right-rays` and the idle part 1 of `p-ipo-forest` are an author's call and are not in the fault list.
+
+## Fix pass
+
+1. `arma/problems-1` `p-gold-drift` part 2 "no-sqrt" `tol.abs` 0.01 to 0.025: applied; `[carry-band]` line gone.
+2. `ratio/problems-2` `p-fund-six-months` part 4 `tol.abs` 0.0001 to 5e-05: applied; `[band-edge]` line gone.
+3. `analysis/problems-3` `p-cube-root-greedy` part 2 `tol.abs` 0.0001 to 5e-05: applied; `[band-edge]` line gone.
+4. `analysis/problems-3` `p-cube-root-greedy` part 4 `tol.abs` 0.0001 to 5e-05: applied; `[band-edge]` line gone.
+5. `arma/problems-3` `p-smoothed-fund` part 3 `tol.abs` 6e-05 to 5e-05: applied; `[band-edge]` line gone.
+6. `arma/problems-3` `p-inflation-arma` part 3 `tol.abs` 6e-05 to 5e-05: applied; `[band-edge]` line gone.
+7. `garch/problems-1` `p-eight-day-window` part 1 `tol.abs` 6e-06 to 5e-06: applied; `[band-edge]` line gone.
+8. `numerics/problems-3` `p-rate-path-euler` part 3 `tol.abs` 6e-06 to 5e-06: applied; `[band-edge]` line gone.
+9. `testing/homework-4` `h-np-normal` feedback.correct 0.411 to 0.41125 (two places in the line): applied; `[shown-arithmetic]` line gone.
+10. `fin-ml/l11-deflated-sharpe` screen 11 `0.0976` to `0.09762` in three fields: applied; both `[shown-arithmetic]` lines gone.
+
+Checks: validator 0 errors, only warning lines removed (no new `[tight-band]` or other); voice scan 35 clean on the edited files; number scripts of the seven courses pass unchanged; `grade-all.mjs --file` 0 failures on all eight files; playthroughs green with and without `--mobile`.
