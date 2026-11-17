@@ -346,6 +346,44 @@ const keyPrinted = (text, ans, step, unit) => {
 /* [table-source] second test (engine pass 8 C): a part that names a table prints \Phi(x) with x to three or more places; a learner reads the table at x to 2 places (both neighbours when x ends in 5 at the third place).
    normalCdf is exact to 1e-12 (series), the table value is Phi to 4 places. */
 const normalCdf = (z) => { let t = z, sum = z; for (let n = 1; n < 80; n++) { t *= -z * z / (2 * n); sum += t / (2 * n + 1); } return 0.5 + sum / Math.sqrt(2 * Math.PI); };
+/* Engine pass 9 (ENGINE-BACKLOG 1154 to 1210), all warnings:
+     [rounding-tie]     widened: a wrong[] value stored one place past the asked places with a half-step band, in the middle of a step (a fraction of 0.2 to 0.8), whose band takes only one of the two roundings (the unrounded slip
+                        may be a tie); a key within 7% of a step of a tie, stored past the asked places, whose band does not take both roundings; a product or quotient of two printed
+                        figures that lands on a tie while the key's band takes only one rounding
+     [working-band]     widened: every printed span is re-evaluated from its own printed (rounded) figures, not only the final one, and a result that leaves the key's band is reported
+     [key-in-question]  a numeric key (rounded as asked) printed in its own part's question after "=", "\approx" or "is", or, for a key of three or more digits, anywhere in it */
+const evalLatexArith = (src) => {
+  let t = String(src).replace(/\\left|\\right|\\,|\\;|\\!|\\ |~/g, '').replace(/\{,\}/g, '').replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/−/g, '-').replace(/\\(?:text|mathrm)\{[^{}]*\}/g, '');
+  for (let i = 0; i < 6; i++) t = t.replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, '(($1)/($2))').replace(/\\sqrt\{([^{}]*)\}/g, 'Math.sqrt($1)');
+  t = t.replace(/\\times|\\cdot/g, '*').replace(/\\div/g, '/').replace(/\\ln\s*\(/g, 'Math.log(').replace(/\^\{([^{}]*)\}/g, '**($1)').replace(/\^(\d)/g, '**$1');
+  t = t.replace(/(^|[^A-Za-z])e\*\*\(([^()]*)\)/g, '$1Math.exp($2)');   // e^{x}
+  t = t.replace(/(\d|\))\s*(?=Math|\()/g, '$1*').replace(/\)\s*(?=\d)/g, ')*');
+  if (!/^[\d.+\-*/()\s]*(?:Math\.(?:exp|log|sqrt)[\d.+\-*/()\s]*)*$/.test(t) || !/\d/.test(t)) return null;
+  if (/\*\*\s*\(?\s*-?\s*\d{3,}/.test(t)) return null;
+  try { const v = Function('"use strict";return (' + t + ')')(); return Number.isFinite(v) ? v : null; } catch (e) { return null; }
+};
+const printedProducts = (text) => {
+  const out = [];
+  for (const m of String(text || '').matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)) {
+    const sp = (m[1] ?? m[2]).replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/\\text\{£\}|\\pounds|£|\\,/g, '');
+    for (const k of sp.matchAll(/(?<![\w.^}_{)])(\d+(?:\.\d+)?)\s*(\\times|\\cdot|\\div|\/)\s*(\d+(?:\.\d+)?)(?![\d.]*\s*[A-Za-z^_\\{(*/])/g)) {
+      const a = +k[1], b = +k[3];
+      out.push({ text: k[0].trim(), value: k[2] === '\\div' || k[2] === '/' ? (b === 0 ? NaN : a / b) : a * b });
+    }
+  }
+  return out;
+};
+const keyInQuestion = (q, ans, hw, step, unit) => {
+  const k = Math.abs(unit === '%' ? ans * 100 : ans), tol = Math.min(unit === '%' ? hw * 100 : hw, step != null ? (unit === '%' ? step * 100 : step) / 2 : 0) + 1e-9 * Math.max(1, k);
+  const t = String(q || '').replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/\\(?:text|mathrm)\{[^{}]*\}/g, ' ').replace(/[\^_]\{?-?\d+\}?/g, ' ').replace(/\\[A-Za-z]+/g, ' ');
+  const sig = String(+k.toPrecision(12)).replace(/^0\.0*|\./g, '').replace(/^0+/, '').replace(/0+$/, '').length;
+  for (const m of t.matchAll(/(?<![\w.])(\d+(?:\.\d+)?)(?![\w.]*\d)/g)) {
+    if (Math.abs(+m[1] - k) > tol) continue;
+    const before = t.slice(Math.max(0, m.index - 14), m.index);
+    if (/(?:=|\\approx|≈|\bis|\bequals)\s*[-−£$]?\s*$/.test(before) || sig >= 3) return m[1];
+  }
+  return null;
+};
 const pass8Rules = (file, where, it, p) => {
   const w = isObj(p) && isObj(p.widget) ? p.widget : null;
   if (!w || w.kind !== 'numeric' || typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
@@ -366,7 +404,20 @@ const pass8Rules = (file, where, it, p) => {
       const meets = (c, h2) => Math.abs(c - x.value) <= step / 2 + h2 + 1e-9 * Math.max(1, Math.abs(c));
       if (meets(ans, hw) || wrongs.some((y) => y !== x && meets(y.value, halfWidth(y.value, y.tol ?? { abs: 1e-9 })))) return;
       if (isTie(x.value, d, scale) && wh < step / 2 * (1 - 1e-6)) warn(file, `${where}.wrong[${i}]`, `[rounding-tie] wrong "${x.id || i}" (${fmt(x.value)}) is exactly on a rounding tie at ${pl}; its band +-${+wh.toPrecision(3)} takes neither rounding (${fmt(x.value - step / 2)}, ${fmt(x.value + step / 2)})`);
+      else if (decimalsOf(x.value) === d + (scale === 100 ? 2 : 0) + 1 && Math.abs(wh - step / 2) <= 0.01 * step) {
+        /* engine pass 9: a slip stored one place past the asked places with a half-step band (0.054688 for 7/128 at 5 places) may be a tie once unrounded: its band must take both d-place neighbours */
+        const q = Math.abs(x.value) / step, fr = q - Math.floor(q), sg = Math.sign(x.value), lo = sg * Math.floor(q) * step, hi = sg * Math.ceil(q) * step;
+        if (fr >= 0.2 - 1e-9 && fr <= 0.8 + 1e-9 && wh < step * (1 - 1e-6) && !(covers(lo, wh, x.value) && covers(hi, wh, x.value))) warn(file, `${where}.wrong[${i}]`, `[rounding-tie] wrong "${x.id || i}" (${x.value}) is stored past the ${pl} asked, near the middle of a step, and its band +-${+wh.toPrecision(3)} takes only one of the roundings (${fmt(lo)}, ${fmt(hi)}): the unrounded slip may be a tie, so a learner who rounds it the other way is refused; store the unrounded value or widen the band to a full step`);
+      }
     });
+    if (!isTie(ans, d, scale) && decimalsOf(ans) > d + (scale === 100 ? 2 : 0)) {
+      const q = Math.abs(ans) / step, fr = q - Math.floor(q), sg = Math.sign(ans), lo = sg * Math.floor(q) * step, hi = sg * Math.ceil(q) * step;
+      if (Math.abs(fr - 0.5) <= 0.07 && (covers(lo, hw, ans) !== covers(hi, hw, ans))) warn(file, where, `[rounding-tie] the key ${fmt(ans)} is within ${+(Math.abs(fr - 0.5) * step).toPrecision(2)} of a rounding tie at ${pl}; its band +-${+hw.toPrecision(3)} takes only one of the roundings (${fmt(lo)}, ${fmt(hi)}): a working that carries rounded figures can land on the other`);
+    }
+    for (const [name, text] of fb) for (const pr of printedProducts(text)) {
+      if (!Number.isFinite(pr.value) || !isTie(pr.value, d, scale) || Math.abs(pr.value - ans) > 0.03 * Math.abs(ans) + step) continue;
+      if (!(covers(pr.value - step / 2, hw, ans) && covers(pr.value + step / 2, hw, ans))) warn(file, where, `[rounding-tie] ${name} prints $${pr.text}$, which is ${fmt(pr.value)}, a rounding tie at ${pl}; the key ${fmt(ans)} +-${+hw.toPrecision(3)} takes only one of its roundings (${fmt(pr.value - step / 2)}, ${fmt(pr.value + step / 2)})`);
+    }
     fb.forEach(([name, text]) => {
       const v = finalPrinted(text, w.unit);
       if (v == null || !isTie(v, d, scale) || Math.abs(v - ans) > step) return;
@@ -384,6 +435,34 @@ const pass8Rules = (file, where, it, p) => {
     const typed = step != null && Math.abs(v / step - Math.round(v / step)) > 1e-6 ? Math.round(v / step) * step : v;
     if (Math.abs(typed - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans))) warn(file, where, `[working-band] ${name} ends at ${+v.toPrecision(10)}${typed !== v ? `, ${+typed.toPrecision(10)} at the asked places` : ''}, outside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the working is marked wrong`);
   });
+  /* [working-band] widened (engine pass 9): each span re-evaluated from its own printed figures; a recomputed value that leaves the band is reported */
+  if (!scaled && Math.abs(ans) > 0) fb.forEach(([name, text]) => {
+    const seen = new Set(), fin = finalPrinted(text, w.unit);
+    for (const m of String(text || '').matchAll(/\$\$([^$]+)\$\$|\$([^$]+)\$/g)) {
+      const segs = (m[1] ?? m[2]).split(/\\approx|=/);
+      segs.forEach((seg, j) => {
+        if (!/\\times|\\cdot|\\div|\/|\\[dt]?frac|\^|\\sqrt|\\ln|\(/.test(seg)) return;
+        const R = evalLatexArith(seg);
+        if (R == null || R === 0 || Math.abs(R - ans) > 0.01 * Math.abs(ans)) return;
+        /* only a step whose own result is printed next (a bare number) and agrees with the figures: the printed result is what a learner carries */
+        const nx = j + 1 < segs.length ? /^\s*(-?\d[\d,]*(?:\.\d+)?)\s*(?:\\[,;]|\\?%|\\text\{[^}]*\}|[A-Za-z£]+)*\s*$/.exec(segs[j + 1].replace(/\{,\}/g, ',')) : null;
+        if (!nx || Math.abs(+nx[1].replace(/,/g, '') - R) > 0.005 * Math.abs(R) + 1e-12) return;
+        const typed = step != null && Math.abs(R / step - Math.round(R / step)) > 1e-6 ? Math.round(R / step) * step : R;
+        if (Math.abs(typed - ans) <= hw + 1e-9 * Math.max(1, Math.abs(ans))) return;
+        if (wrongs.some(x => closeTo(x.value, R) || closeTo(x.value, typed))) return;
+        if (fin != null && closeTo(fin, R) && Math.abs(fin - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans))) return;   // the plain final-figure case is reported above
+        const key = seg.trim();
+        if (seen.has(key)) return;
+        seen.add(key);
+        warn(file, where, `[working-band] ${name} prints $${key.length > 60 ? key.slice(0, 57) + '...' : key}$, which comes to ${+R.toPrecision(8)}${typed !== R ? `, ${+typed.toPrecision(8)} at the asked places` : ''} from the printed figures, outside the key ${ans} band +-${+hw.toPrecision(3)}: a learner who follows the working is marked wrong`);
+      });
+    }
+  });
+  /* [key-in-question] (engine pass 9) */
+  if (!scaled) {
+    const hit = keyInQuestion(q, ans, hw, step, w.unit);
+    if (hit != null) warn(file, where, `[key-in-question] the key (${hit}) is printed in the part's own question: a learner can type it back without working; ask for the quantity without stating its value`);
+  }
   /* [table-source] */
   const printed = fb.map(([, t]) => String(t || '')).join(' ');
   if (TABLE_NEEDS.test(printed) || TABLE_ASKED.test(stripMathsAndCode(q))) {
