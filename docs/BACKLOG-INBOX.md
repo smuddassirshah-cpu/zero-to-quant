@@ -85,3 +85,7 @@ Raised later (review-delta-ag-ito):
 
 Raised later (problems pdes, session AF):
 - `fresh-check.mjs --file` reads the course's own exams (items carrying its skills) but no other course's exam: a first draft of `pdes` problems-3 `p-grid-budget` chained the order from grid differences, the shortfall and the paths a simulation needs for a standard error equal to it, which walks `topic-2.5` `e-error-budget` (skills `nm-fd`, `nm-mc`); only a grep for "How many paths" found it. Read exam items of other courses as an advisory source for the chain-of-steps test.
+
+Raised later (problems measure-prob re-author AF):
+- `[tight-band]` and `[wrong-band]` take the rounding from the item `prose` before the question's own "a decimal to 3 places": `roundingAsked(question) ?? roundingAsked(prose) ?? toPlaces(question)` read "the whole number with" in a draft prose of problems-1 `p-quote-ladder` as 0 places and raised six false warnings. Try `toPlaces(question)` before the prose.
+- `fresh-check` does not match a function whose letter is renamed and whose law differs: a draft of problems-2 `p-settlement-fails` charged $1.5^N$ against review-2 `r-heavy`'s $X = 1.5^K$ with no hit; found by hand and moved to $1.25^N$.

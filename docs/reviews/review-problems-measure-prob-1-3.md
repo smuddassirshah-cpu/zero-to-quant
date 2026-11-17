@@ -113,3 +113,25 @@ Rule 3 (working backwards). No part is passed by reversing a printed target, wit
 2. `fresh-check` reads exam stems but not option text or `explain`, so the sequence $U^{1/n}$ of e-swap-limits is missed (finding 6). It also misses a law given as $p_k = \tfrac{1}{k(k+1)}$ in a longform `prompt` against the same law as a `wrong` expression (finding 1).
 3. The `retold` rule did not fire on l6 "Summing the tail" against p-billed-hours part 2, though the explain lines differ by a few words (finding 5).
 4. Story reuse against mock exams that carry other skills is outside `fresh-check --file` (finding 12).
+
+## Fix pass
+
+Author agent, session AF (brief `docs/briefs/reauthor-fix-af.md`). Every corrected number was recomputed before writing (`docs/reports/problems-measure-prob-numbers.py`).
+
+1. Re-authored as `p-quote-ladder`: a ladder quote $X = 0.4^N$ of a uniform level; band chance, the law $0.6 \times 0.4^k$, a countable union of every third atom (25/39), the size of $\sigma(N)$, and $P(X \le 2U) = \tfrac56$. No $\tfrac1n$ tail, no left limit, no continuity part.
+2. Moot: `p-reciprocal-grid` is gone. Every slip of the new set is typed at the places asked in the reader's band loop, which passes.
+3. Fixed as written: block 44 throughout (`777`, `77`, "a digit other than 4", "in a 4 after", "ending in a 4"); no number changed. The id is now `p-no-double-four`.
+4. Fixed as written: `independent` 0.97119, band $[0.97089, 0.97149]$, clear of the key band $[0.9718, 0.9722]$; $0.981 \times 0.99 = 0.97119$ recomputed.
+5. Re-authored as `p-settlement-fails` (5b moot): a count with $P(N = k) = 0.64(k + 1)0.2^k$; a penalty mean through a series, monotone convergence in $s$ for $G'(s) \uparrow E[N]$, $E[N] = 0.5$, $E[N^2] = 0.875$, and $E[5^N] = \infty$. No tail sum, cap, grid or layer cake.
+6. Re-authored as `p-boom-bust` (the `dist-only` line moot): capital times 1.6 or 0.4 a day; $E[\sqrt{M_n}] = 0.9^{n/2}$, a root bound above 1 (1.1455) beside the exact 0.3125, a union bound 0.00518 after day 200, and $E[M_{10}^2] = 21.65$. The kept contrast is the bound against the exact chance.
+7. Fixed as written.
+8. Fixed as written.
+9. Fixed as written (option `four` and `feedback.correct`).
+10. Fixed as written.
+11. Fixed as written.
+12. Re-authored as `p-trial-stake`, by the main session's ruling: a biotech's value after three pieces of news, one Doob value $M_1 = 77.5$, $P(T = 2) = 0.45$ for a sell-at-80 rule, both selling rules at $E[M_T] = 54.5$, and $\mathrm{Var}(M_T) = 1074.75$. No cards, urn or coin stopping game (grepped `puzzles`, `brainteasers`, mock exams).
+13. Moot: `p-red-card-call` is gone.
+
+Fixed 7 (3, 4, 7 to 11), re-authored 4 (1, 5, 6, 12), moot 3 (2, 5b, 13: they sat in re-authored problems), disputed 0, deferred 0.
+
+Gates at the fix commit: validator 0 errors (the three sets carry only the advisory O2 lines, two old and one from finding 9's text); voice scan 35, 0 and 0; `fresh-check --files` on the three sets 0 hits; author's script 800 checks, 0 failures; reader's script 665 checks, 0 findings (its checks of the four replaced problems removed and noted in the script, the digit checks retargeted to 44 and the new slip); `grade-all --file` 19, 19 and 18 widgets, 0 failures; playthrough `--problems` green for the three sets with and without `--mobile`, 440 px shots read.

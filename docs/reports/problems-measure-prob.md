@@ -1,6 +1,6 @@
 # Problem sets: measure-prob levels 1 to 3 (brief `docs/briefs/wave-c-author-ag.md`)
 
-Files: `app/content/courses/measure-prob/problems-1.json` to `problems-3.json` (level 4 left to another author). Numbers: `docs/reports/problems-measure-prob-numbers.py` (exit 0, 704 checks, 0 failures). Builders kept in the scratch folder `author-measure-prob/` (l1.py, l2.py, l3.py).
+Files: `app/content/courses/measure-prob/problems-1.json` to `problems-3.json` (level 4 left to another author). Numbers: `docs/reports/problems-measure-prob-numbers.py` (exit 0, 800 checks, 0 failures after the session AF re-author and fix pass below). Builders kept in the scratch folder `author-measure-prob/` (l1.py, l2.py, l3.py).
 
 ## Sets
 
@@ -8,16 +8,16 @@ Files: `app/content/courses/measure-prob/problems-1.json` to `problems-3.json` (
 |---|---|---|---|---|
 | problems-1 | p-fat-cantor | 4 (3 / 1) | l1, l2, l3 | 4 |
 | problems-1 | p-ball-machine | 5 (4 / 1) | l2, l4 | 3 |
-| problems-1 | p-reciprocal-grid | 5 (4 / 1) | l3, l4 (l1 null points) | 4 |
-| problems-1 | p-no-double-seven | 5 (4 / 1) | l1, l2, l3 | 5 |
-| problems-2 | p-billed-hours | 4 (4 / 0) | l5, l6 | 3 |
+| problems-1 | p-quote-ladder (AF) | 5 (4 / 1) | l2, l3, l4 | 4 |
+| problems-1 | p-no-double-four (was p-no-double-seven) | 5 (4 / 1) | l1, l2, l3 | 5 |
+| problems-2 | p-settlement-fails (AF) | 5 (3 / 2) | l5, l6 | 4 |
 | problems-2 | p-compounding | 5 (4 / 1) | l6, l7 | 5 |
-| problems-2 | p-root-of-uniform | 5 (4 / 1) | l5, l8 | 4 |
+| problems-2 | p-boom-bust (AF) | 5 (5 / 0) | l5, l8 (l3 union bound) | 4 |
 | problems-2 | p-random-maturity | 4 (3 / 1) | l5, l7 | 4 |
 | problems-3 | p-nested-forecasts | 5 (5 / 0) | l9, l10 | 3 |
 | problems-3 | p-doob-split | 4 (3 / 1) | l11, l12 | 4 |
 | problems-3 | p-two-ups-stop | 5 (5 / 0) | l12, l13 (l11 stopping) | 5 |
-| problems-3 | p-red-card-call | 4 (4 / 0) | l10, l12, l13 | 4 |
+| problems-3 | p-trial-stake (AF) | 4 (3 / 1) | l10, l12, l13 | 4 |
 
 12 problems, 55 parts; typed 47 (level 1 15 of 19, level 2 15 of 18, level 3 17 of 18). Choice parts are judgements only: which closure makes $C$ Borel, which variable is measurable, what happens to $F_X$ at 0, which union step, which theorem swaps the limit, which bound dominates, which modes hold, whether $A$ is predictable. Proof steps are tested through a number (a length, a count, a limit) or the choice of the valid step; no part can be passed by working back from a printed target. Each later part restates the value it uses. Every lesson of each level appears; nothing runs past its level (level 3 uses only finite spaces and bounded stopping times).
 
@@ -107,3 +107,21 @@ Exam scope: of `topic-3.2.json`, e-die-reweight, e-is-weight and e-tree-price ca
 `fresh-check` reported 0 hits from the first run. Key numbers (0.5904, $2x^2$, $4x^3$, 0.8510, 25/48, 25.50, 0.1455, 0.00676, 16/35, 19/14, 4.14, 40.4, 42.4, 43.35, 7/128) were grepped in the course folder by hand: none occurs. 0.625 occurs as the tree's $q$ in l14 to l17; here it is the ratio $0.5/0.8$, an unrelated setting. 1.06 occurs in l1, problems-2 and review-4 in other roles. The stories (recovery-rate models, a share measure on a three-step tree, ten trades, the premium as a covariance) appear nowhere in the course; "recovery rate" occurs in `exams/topic-1.6.json` (a likelihood fit, another course). Slip lines are written per part; none repeats a course line.
 
 Notes: attribution as for levels 1 to 3 (the session's Opus 5.5 lines). One inbox bullet under `Raised later (problems measure-prob level 4):`. No `course.json` change proposed.
+## Session AF: re-author and fix pass (review `docs/reviews/review-problems-measure-prob-1-3.md`)
+
+Re-authored: `p-reciprocal-grid` as `p-quote-ladder`, `p-billed-hours` as `p-settlement-fails`, `p-root-of-uniform` as `p-boom-bust`, and, by the main session's ruling, `p-red-card-call` as `p-trial-stake`. Fixed as written: findings 3, 4 and 7 to 11 (`p-no-double-seven` renamed `p-no-double-four` with the block 44). Now 12 problems, 56 parts, typed 46 (level 1 15 of 19, level 2 15 of 19, level 3 16 of 18). The sets table above holds the new rows; the AG chains and reuse rows of the four replaced problems no longer apply.
+
+Chains. `p-quote-ladder`: $P(N = 2) = 0.096$, the law $0.6 \times 0.4^k$, $P(N \in \{0, 3, 6, \dots\}) = \tfrac{25}{39}$ by countable additivity, the size of $\sigma(N)$, $P(X \le 2U) = \tfrac56$. `p-settlement-fails`: $E[1.25^N] = \tfrac{256}{225}$ through a series, monotone convergence in $s$ for $G'(s) \uparrow E[N]$, $E[N] = 0.5$, $E[N^2] = 0.875$, $E[5^N] = \infty$. `p-boom-bust`: $E[\sqrt{M_n}] = 0.9^{n/2}$, the root bound 1.1455, the exact 0.3125, the union bound 0.00518 after day 200, $E[M_{10}^2] = 21.65$. `p-trial-stake`: $M_1 = 77.5$, $P(T = 2) = 0.45$, both selling rules at $E[M_T] = 54.5$, $\mathrm{Var}(M_T) = 1074.75$.
+
+Closest course material, per new problem (one line on how each differs).
+
+| problem | lesson screen | quiz | review | homework | exam | other set |
+|---|---|---|---|---|---|---|
+| p-quote-ladder | l2 "Why countable unions" (cofinite family, the even numbers): ours asks the size of $\sigma(N)$ with infinitely many atoms, not whether a family is closed | l2 q-two (8 events from two sets): ours is uncountable | r-counting (counting measure, $A_n \downarrow \varnothing$): ours is a probability on the whole numbers, no limit | h-build-space ($p_k = \tfrac{1}{k(k+1)}$, tails, continuity): the closest; ours has the law $0.6 \times 0.4^k$ from a map of $U$, a union over every third atom and an event mixing $X$ and $U$, no tail or continuity | e-atoms-three-sets (64 events): finite atoms | p-ball-machine parts 1 and 2 count the finite $\sigma(X)$, $\sigma(X, Y)$ |
+| p-settlement-fails | l6 "Summing the tail" (an indicator sum by monotone convergence): ours sums $1.25^k\mathbf 1_{\{N = k\}}$ and then uses the theorem in $s$; l5 "Does every random variable have a mean?": part 5 is the same idea (finite everywhere, infinite mean) on $5^N$ | l6 q-sum ($\sum 3^{-k}$): part 1 is one such swap | r-heavy ($1.5^K$ by series): a draft charged $1.5^N$, moved to $1.25^N$ on that grep | h-sp (capped St Petersburg): no cap | e-tail-integral: no tail used | none |
+| p-boom-bust | l8 "Mean square implies in probability": part 2 uses its indicator bound with $\sqrt{M}$; l8 "The spike in mean square": part 5 has the same contrast (almost surely yes, mean square no) for a product of daily factors | l8 q-cheb (0.16 from a given 0.04): ours computes the mean and sets the bound beside the exact chance | r-cheb (from $\tfrac1n$): another bound and other numbers; r-mode: no modes are picked | homework-1 h-long (Borel-Cantelli): part 4 is the union bound that drives it, by number | e-swap-limits: no part compares $E[M_n]$ with the mean of the limit | none |
+| p-trial-stake | l12 "The forecaster" (quotes at every node of three tosses): part 1 is one quote on an unequal tree; a root part was dropped so the chain does not follow the screen; l13 "Optional stopping, bounded case" (proof): part 3 applies it to two rules | l12 q-doob, l13 q-fixed | r-doob (heads count, coin 0.8), r-stop | homework-3 h-long (bounded optional stopping): used by a choice; h-prove-urn: no urn | e-tree-price, e-ruin-by-martingale: no pricing measure, no exit | p-two-ups-stop part 3 uses the same theorem by number |
+
+Reuse checks. `fresh-check --file` on each set and `--files` on all three: 0 hits. Grepped by hand: each new key (0.096, 25/39, 5/6, 256/225, 0.875, 1.1455, 0.3125, 0.00518, 21.65, 77.5, 54.5, 1074.75) in the course folder (only unrelated chart or table values), the bases $0.4^k$, $1.25^N$, $5^N$, the multipliers 1.6 and 0.4, and the stories (quote ladder, settlement fails, a biotech's staged news) across `app/content`: none in use. `markov/problems-2` holds a takeover deal with a regulator, so the staged story is a biotech, not a deal.
+
+Gates (session AF): validator 0 errors, no pass-8 warning on the sets; voice scan 35, 0 and 0; `fresh-check` 0 hits; author's script 800 checks, 0 failures; reader's script 665 checks, 0 findings; `grade-all --file` 19, 19 and 18 widgets, 0 failures; playthrough `--problems` green for all three sets with and without `--mobile`, 440 px shots read (no fault). Commits: one per set; the number scripts, this report and the review's fix pass land with the problems-3 commit, so the scripts pass from that commit on. Two engine bullets under `Raised later (problems measure-prob re-author AF)`.

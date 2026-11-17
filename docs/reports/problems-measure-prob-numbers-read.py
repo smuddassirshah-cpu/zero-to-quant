@@ -159,63 +159,30 @@ check(opts == {"parity": meas(lambda w: w % 2 == 0), "flag": meas(lambda w: Y[w]
       "ball machine part 5: which variables are sigma(X)-measurable")
 check((Y[10], Y[2], -(-1 // 4), -(-9 // 4), 4 % 3, 8 % 3) == (1, 0, 1, 3, 1, 2), "ball machine part 5: values in the why lines")
 
-# p-reciprocal-grid: lengths of preimages, and a fine exact grid of U.
-PN = lambda n: Fr(1, n) - Fr(1, n + 1)  # noqa: E731  {n <= 1/U < n+1} = (1/(n+1), 1/n]
-GRID = 27720 * 4  # divisible by 1..12, so the cut points 1/n for n <= 12 fall on the grid
-cnt = {}
-for i in range(1, GRID + 1):  # U = (i - 1/2)/GRID, a midpoint rule that is exact for these step sets
-    nn = (2 * GRID) // (2 * i - 1)
-    cnt[nn] = cnt.get(nn, 0) + 1
-check(all(Fr(cnt[n], GRID) == PN(n) for n in range(1, 12)), "reciprocal grid: P(N = n) = 1/(n(n+1)) on the grid")
-key_is(1, "p-reciprocal-grid", 1, PN(3), {"third": Fr(1, 3), "two": PN(2)})
-tail = lambda n: sum(Fr(c, GRID) for m, c in cnt.items() if m >= n)  # noqa: E731
-check(all(tail(n) == Fr(1, n) for n in range(1, 13)), "reciprocal grid: P(N >= n) = 1/n on the grid")
-expr_is(1, "p-reciprocal-grid", 2, "n", lambda n: 1 / n,
-        {"shift": lambda n: 1 / (n + 1), "below": lambda n: 1 - 1 / n, "point": lambda n: 1 / (n * (n + 1))})
-FX = lambda x, strict=False: sum(Fr(c, GRID) for m, c in cnt.items() if (Fr(1, m) < x if strict else Fr(1, m) <= x))  # noqa: E731
-key_is(1, "p-reciprocal-grid", 3, FX(Fr(3, 10)), {"as-u": Fr(3, 10), "three": Fr(1, 3)})
-key_is(1, "p-reciprocal-grid", 4, FX(Fr(1, 5), strict=True), {"at-point": FX(Fr(1, 5)), "jump": FX(Fr(1, 5)) - FX(Fr(1, 5), strict=True)})
-check(part(1, "p-reciprocal-grid", 5)["widget"]["options"][0].get("correct") is True and FX(Fr(0)) == 0, "reciprocal grid part 5 key")
+# p-reciprocal-grid was re-authored in the session AF fix pass as p-quote-ladder; its reader checks are removed (docs/reviews/review-problems-measure-prob-1-3.md, Fix pass).
 
-# p-no-double-seven: every digit string.
-good = lambda n: sum(1 for s in itertools.product(range(10), repeat=n) if all(not (s[i] == 7 and s[i + 1] == 7) for i in range(n - 1)))  # noqa: E731
+# p-no-double-four (was p-no-double-four; finding 3 moved the block to 44): every digit string.
+good = lambda n: sum(1 for s in itertools.product(range(10), repeat=n) if all(not (s[i] == 4 and s[i + 1] == 4) for i in range(n - 1)))  # noqa: E731
 a = {n: good(n) for n in range(1, 6)}
-check(a[2] == 99 and a[3] == 981 and a[4] == 9720 and all(a[n] == 9 * a[n - 1] + 9 * a[n - 2] for n in (3, 4, 5)), "no 77: counts and recursion by enumeration")
+check(a[2] == 99 and a[3] == 981 and a[4] == 9720 and all(a[n] == 9 * a[n - 1] + 9 * a[n - 2] for n in (3, 4, 5)), "no 44: counts and recursion by enumeration")
 three = [s for s in itertools.product(range(10), repeat=3)]
-check((sum(s[0] == s[1] == 7 for s in three), sum(s[1] == s[2] == 7 for s in three), 1000 - a[3]) == (10, 10, 19), "no 77: 10, 10 and 19 strings")
-key_is(1, "p-no-double-seven", 1, Fr(a[3], 1000), {"overlap": Fr(980, 1000), "first-pair": Fr(990, 1000)})
-key_is(1, "p-no-double-seven", 2, Fr(a[4], 10 ** 4), {"one-term": Fr(9 * a[3], 10 ** 4), "square": Fr(a[3], 1000) ** 2})
-key_is(1, "p-no-double-seven", 3, Fr(99, 100) ** 100, {"all-places": Fr(99, 100) ** 199, "all-digits": Fr(99, 100) ** 200})
+check((sum(s[0] == s[1] == 4 for s in three), sum(s[1] == s[2] == 4 for s in three), 1000 - a[3]) == (10, 10, 19), "no 44: 10, 10 and 19 strings")
+key_is(1, "p-no-double-four", 1, Fr(a[3], 1000), {"overlap": Fr(980, 1000), "first-pair": Fr(990, 1000)})
+key_is(1, "p-no-double-four", 2, Fr(a[4], 10 ** 4), {"one-term": Fr(9 * a[3], 10 ** 4), "square": Fr(a[3], 1000) ** 2, "independent": Fr(a[3], 1000) * Fr(99, 100)})
+key_is(1, "p-no-double-four", 3, Fr(99, 100) ** 100, {"all-places": Fr(99, 100) ** 199, "all-digits": Fr(99, 100) ** 200})
 big = [Fr(1), Fr(10)]
 for n in range(2, 201):
     big.append(9 * big[-1] + 9 * big[-2])
-check(Fr(big[200], 10 ** 200) <= Fr(99, 100) ** 100, "no 77: P(D_200) lies under the bound 0.99^100")
-check(all(Fr(big[2 * m], 10 ** (2 * m)) <= Fr(99, 100) ** m for m in range(1, 100)), "no 77: P(D_2m) <= 0.99^m")
-check(Fr(big[200], 10 ** 200) > Fr(99, 100) ** 199, "no 77: 0.99^199 is not an upper bound on P(D_200), as the all-places line says")
-key_is(1, "p-no-double-seven", 4, 0, {"complement": 1})
-check(part(1, "p-no-double-seven", 5)["widget"]["options"][0].get("correct") is True, "no 77 part 5 key")
-
-hw1 = open(os.path.join(COURSE, "homework-1.json"), encoding="utf-8").read()
-check(not ("\\tfrac{1}{k(k+1)}" in hw1 and "\\frac{1}{n(n+1)}" in json.dumps(SETS[1], ensure_ascii=False)),
-      "problems-1 p-reciprocal-grid: the law 1/(k(k+1)) with tails 1/n and continuity from above is homework-1 h-build-space and l3 q-above")
+check(Fr(big[200], 10 ** 200) <= Fr(99, 100) ** 100, "no 44: P(D_200) lies under the bound 0.99^100")
+check(all(Fr(big[2 * m], 10 ** (2 * m)) <= Fr(99, 100) ** m for m in range(1, 100)), "no 44: P(D_2m) <= 0.99^m")
+check(Fr(big[200], 10 ** 200) > Fr(99, 100) ** 199, "no 44: 0.99^199 is not an upper bound on P(D_200), as the all-places line says")
+key_is(1, "p-no-double-four", 4, 0, {"complement": 1})
+check(part(1, "p-no-double-four", 5)["widget"]["options"][0].get("correct") is True, "no 44 part 5 key")
 
 # ---------------------------------------------------------------- level 2
 t, r, u, x = sp.symbols("t r u x", positive=True)
 n_ = sp.Symbol("n", positive=True, integer=True)
-# p-billed-hours: E floor(X) as sum of k P(floor X = k), a route that does not use the tail sum.
-pk = lambda k, h=1.0: math.exp(-k * h) - math.exp(-(k + 1) * h)  # noqa: E731
-key_is(2, "p-billed-hours", 1, pk(2), {"tail": math.exp(-2), "cdf": 1 - math.exp(-2)})
-bill = lambda h: sum(k * h * pk(k, h) for k in range(1, int(60 / h)))  # noqa: E731
-key_is(2, "p-billed-hours", 2, bill(1.0), {"from-zero": bill(1.0) + 1, "mean": 1, "half-lost": 0.5})
-check(close(bill(1.0), 1 / (math.e - 1), 1e-10) and close(sp.summation(sp.exp(-n_), (n_, 1, sp.oo)), 1 / (math.e - 1), 1e-12), "billed hours: 1/(e - 1)")
-key_is(2, "p-billed-hours", 3, bill(0.5), {"no-half": 2 * bill(0.5), "from-zero": bill(0.5) + 0.5})
-check(all(close(bill(h), h / math.expm1(h), 1e-9) for h in (1.0, 0.5, 0.25, 1 / 32, 1 / 64)), "billed hours: mean h/(e^h - 1)")
-first = min(n for n in range(0, 20) if bill(2.0 ** -n) > 0.99)
-key_is(2, "p-billed-hours", 4, first, {"one-minus-h": min(n for n in range(0, 20) if 1 - 2.0 ** -n > 0.99)})
-check(round(bill(1 / 32), 4) == 0.9845 and round(bill(1 / 64), 4) == 0.9922, "billed hours: 0.9845 and 0.9922")
-check(1 - bill(1.0) < 0.5, "billed hours: rounding down loses under half an hour")
-check("simple function" not in part(2, "p-billed-hours", 4)["question"],
-      "problems-2 p-billed-hours part 4: h*floor(X/h) of an exponential X takes infinitely many values, so it is not a simple function as l5 defines one")
+# p-billed-hours was re-authored in the session AF fix pass as p-settlement-fails; its reader checks are removed (docs/reviews/review-problems-measure-prob-1-3.md, Fix pass).
 
 # p-compounding: moments by exact normal integrals.
 z = sp.Symbol("z", real=True)
@@ -243,22 +210,7 @@ leak = json.dumps(p3["feedback"], ensure_ascii=False)
 check(not ("1.1331" in leak and "E[e^R]" in leak),
       "problems-2 p-compounding part 3: its lines print E[e^R] = e^{0.125} and 1.1331, the key of part 5, two parts early")
 
-# p-root-of-uniform.
-EXn = sp.integrate(1 - t ** n_, (t, 0, 1))
-check(sp.simplify(EXn - n_ / (n_ + 1)) == 0, "root of uniform: E[X_n] = n/(n+1) by layer cake")
-key_is(2, "p-root-of-uniform", 1, sp.integrate(u ** sp.Rational(1, 4), (u, 0, 1)), {"tail-only": Fr(1, 5), "jensen": 0.5 ** 0.25})
-ms = lambda n: sp.integrate((u ** sp.Rational(1, n) - 1) ** 2, (u, 0, 1))  # noqa: E731
-check(all(ms(n) == sp.Rational(2, (n + 1) * (n + 2)) for n in (1, 2, 3, 4, 10)), "root of uniform: mean-square distance by direct integration")
-var = lambda n: float(sp.integrate(u ** sp.Rational(2, n), (u, 0, 1)) - sp.integrate(u ** sp.Rational(1, n), (u, 0, 1)) ** 2)  # noqa: E731
-check(all(close(var(n), n / ((n + 2) * (n + 1) ** 2), 1e-12) for n in (2, 3, 7)), "root of uniform: variance slip formula")
-expr_is(2, "p-root-of-uniform", 2, "n", lambda n: 2 / ((n + 1) * (n + 2)),
-        {"mean-gap": lambda n: 1 / (n + 1) ** 2, "variance": lambda n: n / ((n + 2) * (n + 1) ** 2)})
-key_is(2, "p-root-of-uniform", 3, ms(10) / sp.Rational(1, 100), {"no-eps": ms(10), "eps": ms(10) * 10})
-key_is(2, "p-root-of-uniform", 4, 0.9 ** 10, {"complement": 1 - 0.9 ** 10, "root": 0.9 ** 0.1})
-check(part(2, "p-root-of-uniform", 5)["widget"]["options"][0].get("correct") is True, "root of uniform part 5 key")
-exam = open(os.path.join(ROOT, "app", "content", "exams", "topic-3.2.json"), encoding="utf-8").read()
-check(not ("U^{1/n}" in exam and "U^{1/n}" in json.dumps(SETS[2], ensure_ascii=False)),
-      "problems-2 p-root-of-uniform: the sequence U^{1/n} with mean n/(n+1) is option a of exam e-swap-limits (topic-3.2.json)")
+# p-root-of-uniform was re-authored in the session AF fix pass as p-boom-bust; its reader checks are removed (docs/reviews/review-problems-measure-prob-1-3.md, Fix pass).
 
 # p-random-maturity.
 V = sp.integrate(sp.exp(-r * t), (t, 0, 4)) / 4
@@ -354,31 +306,7 @@ key_is(3, "p-two-ups-stop", 4, EST2, {"fixed-day": 4, "square-of-mean": EST ** 2
 check(EST2 == ET, "two ups: E[S_T^2] = E[T] by enumeration")
 key_is(3, "p-two-ups-stop", 5, late, {"sign": -late, "conditional": late / PT(4)})
 
-# p-red-card-call: all 35 orders of 4 red and 3 black.
-orders = sorted(set(itertools.permutations("RRRRBBB")))
-check(len(orders) == 35, "red card: 35 orders")
-share = lambda w, n: Fr(w[n:].count("R"), 7 - n)  # noqa: E731
-for n in range(0, 6):  # martingale property at every node
-    for pre in sorted({w[:n] for w in orders}):
-        grp = [w for w in orders if w[:n] == pre]
-        check(sum(share(w, n + 1) for w in grp) / len(grp) == share(grp[0], n), f"red card: martingale step after {''.join(pre)}")
-key_is(3, "p-red-card-call", 1, sum(share(w, 1) for w in orders) / 35, {"unweighted": (Fr(3, 6) + Fr(4, 6)) / 2, "red-shown": Fr(3, 6)})
-red1 = [w for w in orders if w[0] == "R"]
-key_is(3, "p-red-card-call", 2, sum(share(w, 2) for w in red1) / len(red1), {"red-again": Fr(2, 5), "start": Fr(4, 7)})
-
-
-def call_time(w):
-    for n in range(0, 6):
-        if share(w, n) > Fr(4, 7):
-            return n
-    return 6
-
-
-win = Fr(sum(1 for w in orders if w[call_time(w)] == "R"), 35)
-first = Fr(sum(1 for w in orders if call_time(w) == 1 and w[1] == "R"), 35)
-key_is(3, "p-red-card-call", 3, first, {"call-only": Fr(sum(1 for w in orders if call_time(w) == 1), 35), "win-only": Fr(4, 6)})
-key_is(3, "p-red-card-call", 4, win, {"threshold": Fr(4, 6), "coin": Fr(1, 2)})
-check(win == Fr(4, 7) and max(call_time(w) for w in orders) == 6, "red card: the rule wins with chance 4/7 and calls by card 6")
+# p-red-card-call was re-authored in the session AF fix pass as p-trial-stake; its reader checks are removed (docs/reviews/review-problems-measure-prob-1-3.md, Fix pass).
 
 # ---------------------------------------------------------------- bands, every numeric part
 for k, d in SETS.items():

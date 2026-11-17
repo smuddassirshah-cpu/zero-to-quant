@@ -1,7 +1,7 @@
 """Recompute every number in app/content/courses/measure-prob/problems-<n>.json twice.
 
 Method 1 is exact (fractions, closed forms, sympy). Method 2 is independent: enumeration of the finite
-spaces (balls, digit strings, coin paths, card orders), numerical integration or a long partial sum,
+spaces (balls, digit strings, coin paths, capital paths, the news tree), numerical integration or a long partial sum,
 or a seeded simulation where a closed form is the first method. Each numeric part's key must equal
 both values at the asked rounding and lie inside its own band; every `wrong` value is rebuilt from its
 named slip, lies outside the key's band, does not reach it, does not overlap another slip and has a
@@ -102,7 +102,7 @@ SYM = {s: sp.Symbol(s) for s in ('n', 'h', 's', 'm', 'k')}
 
 
 def tex(s):
-    s = s.replace('\\left', '').replace('\\right', '').replace(' ', '').replace('\\tfrac', '\\frac').replace('\\dfrac', '\\frac')
+    s = s.replace('\\sqrt', 'sqrt').replace('\\left', '').replace('\\right', '').replace(' ', '').replace('\\tfrac', '\\frac').replace('\\dfrac', '\\frac')
     while '\\frac' in s:
         i = s.index('\\frac')
 
@@ -232,51 +232,64 @@ def level1():
     ok(const_on_atoms(lambda w: w % 2) and not const_on_atoms(lambda w: w >= 10)
        and not const_on_atoms(lambda w: -(-w // 4)) and not const_on_atoms(lambda w: w % 3), 'balls: only parity is sigma(X)-measurable')
 
-    # p-reciprocal-grid
+    # p-quote-ladder (session AF, replaces p-reciprocal-grid)
+    r4 = F(2, 5)
     rng = random.Random(11)
-    us = [1 - rng.random() for _ in range(400000)]
-    Ns = [math.floor(1 / u) for u in us]
-    p3 = F(1, 3) - F(1, 4)
-    sim = sum(1 for x in Ns if x == 3) / len(Ns)
-    ok(abs(sim - float(p3)) < 0.002, f'grid: simulated P(N=3) {sim:.4f} near 1/12')
-    num_part(it, 'p-reciprocal-grid', 1, float(p3), 1 / 12, 4)
-    wrong_is(it, 'p-reciprocal-grid', 1, 'third', 1 / 3, 4)
-    wrong_is(it, 'p-reciprocal-grid', 1, 'two', 1 / 2 - 1 / 3, 4)
-    expr_part(it, 'p-reciprocal-grid', 2, 1 / SYM['n'])
-    for n in (2, 5, 9):
-        ok(abs(sum(1 for x in Ns if x >= n) / len(Ns) - 1 / n) < 0.003, f'grid: simulated P(N>={n}) near 1/{n}')
-    F03 = F(1, min(n for n in range(1, 100) if F(1, n) <= F(3, 10)))
-    num_part(it, 'p-reciprocal-grid', 3, float(F03), sum(1 for x in Ns if 1 / x <= 0.3) / len(Ns), 2, eps=0.02)
-    wrong_is(it, 'p-reciprocal-grid', 3, 'as-u', 0.3)
-    wrong_is(it, 'p-reciprocal-grid', 3, 'three', 1 / 3, 4)
-    left = F(1, min(n for n in range(1, 100) if F(1, n) < F(1, 5)))
-    num_part(it, 'p-reciprocal-grid', 4, float(left), 1 / 6, 4)
-    ok(abs(sum(1 for x in Ns if 1 / x < 0.2) / len(Ns) - 1 / 6) < 0.003, 'grid: simulated P(X<0.2) near 1/6')
-    wrong_is(it, 'p-reciprocal-grid', 4, 'at-point', 0.2)
-    wrong_is(it, 'p-reciprocal-grid', 4, 'jump', float(F(1, 5) - F(1, 6)), 4)
-    choice_key(it, 'p-reciprocal-grid', 5, 'cont')
-    ok(sum(F(1, k) - F(1, k + 1) for k in range(1, 2000)) == 1 - F(1, 2000), 'grid: jumps add to 1 - 1/K below 1')
+    us = [1 - rng.random() for _ in range(400000)]          # uniform on (0, 1]
+    def rung(u):
+        n = 0
+        while not (r4 ** (n + 1) < u <= r4 ** n):
+            n += 1
+        return n
+    Ns = [rung(u) for u in us]
+    pN = lambda k: r4 ** k - r4 ** (k + 1)
+    num_part(it, 'p-quote-ladder', 1, float(pN(2)), 0.16 - 0.064, 3)
+    ok(abs(sum(1 for x in Ns if x == 2) / len(Ns) - 0.096) < 0.002, 'ladder: simulated P(N = 2) near 0.096')
+    wrong_is(it, 'p-quote-ladder', 1, 'rung', 0.16)
+    wrong_is(it, 'p-quote-ladder', 1, 'next-rung', 0.064)
+    wrong_is(it, 'p-quote-ladder', 1, 'swap', 0.4 * 0.6 ** 2)
+    expr_part(it, 'p-quote-ladder', 2, sp.Rational(3, 5) * sp.Rational(2, 5) ** SYM['k'])
+    ok(all(pN(k) == F(3, 5) * r4 ** k for k in range(12)), 'ladder: band length 0.6 x 0.4^k')
+    p3 = F(3, 5) / (1 - r4 ** 3)
+    p3b = sum(pN(3 * j) for j in range(60))
+    num_part(it, 'p-quote-ladder', 3, float(p3), float(p3b), 4, eps=1e-12)
+    ok(p3 == F(25, 39), 'ladder: P(N in 3Z) = 25/39')
+    ok(abs(sum(1 for x in Ns if x % 3 == 0) / len(Ns) - float(p3)) < 0.003, 'ladder: simulated P(N in 3Z)')
+    wrong_is(it, 'p-quote-ladder', 3, 'no-zero', float(p3 - F(3, 5)), 4)
+    wrong_is(it, 'p-quote-ladder', 3, 'third', 1 / 3, 4)
+    wrong_is(it, 'p-quote-ladder', 3, 'two-terms', float(pN(0) + pN(3)), 4)
+    ok(abs(0.6 / 0.936 - float(p3)) < 1e-12, 'ladder: printed 0.6/0.936')
+    choice_key(it, 'p-quote-ladder', 4, 'all-b')
+    ok(r4 < F(1, 2) < 1, 'ladder: U <= 0.5 cuts the band (0.4, 1] of N = 0')
+    p5 = sum((r4 ** k - r4 ** k / 2) for k in range(200))     # band k keeps [0.5 * 0.4^k, 0.4^k]
+    ok(all(r4 ** k / 2 > r4 ** (k + 1) for k in range(50)), 'ladder: cut-off sits above each band floor')
+    sim5 = sum(1 for u, x in zip(us, Ns) if r4 ** x <= 2 * u) / len(us)
+    num_part(it, 'p-quote-ladder', 5, float(F(5, 6)), float(p5), 4, eps=1e-12)
+    ok(abs(sim5 - 5 / 6) < 0.003, f'ladder: simulated P(X <= 2U) {sim5:.4f} near 5/6')
+    ok(all(F(1, 2) * r4 ** k / pN(k) == F(5, 6) for k in range(10)), 'ladder: each band keeps 5/6 of its chance')
+    wrong_is(it, 'p-quote-ladder', 5, 'half-band', 0.5)
+    wrong_is(it, 'p-quote-ladder', 5, 'complement', 1 / 6, 4)
 
-    # p-no-double-seven
+    # p-no-double-four
     a = [1, 10]
     for n in range(2, 6):
         a.append(9 * a[-1] + 9 * a[-2])
-    brute = {n: sum(1 for t in itertools.product('0123456789', repeat=n) if '77' not in ''.join(t)) for n in (2, 3, 4)}
+    brute = {n: sum(1 for t in itertools.product('0123456789', repeat=n) if '44' not in ''.join(t)) for n in (2, 3, 4)}
     ok(a[2] == brute[2] == 99 and a[3] == brute[3] == 981 and a[4] == brute[4] == 9720, 'digits: recursion matches brute force')
-    num_part(it, 'p-no-double-seven', 1, a[3] / 1000, brute[3] / 1000, 3)
-    ok(1000 - (10 + 10 - 1) == 981, 'digits: inclusion-exclusion 19 strings hold 77')
-    wrong_is(it, 'p-no-double-seven', 1, 'overlap', 1 - 0.02)
+    num_part(it, 'p-no-double-four', 1, a[3] / 1000, brute[3] / 1000, 3)
+    ok(1000 - (10 + 10 - 1) == 981, 'digits: inclusion-exclusion 19 strings hold 44')
+    wrong_is(it, 'p-no-double-four', 1, 'overlap', 1 - 0.02)
     ok(abs(0.99 ** 2 - 0.98) <= 0.0002, 'digits: the 0.99^2 slip falls in the overlap band')
-    wrong_is(it, 'p-no-double-seven', 1, 'first-pair', 0.99)
-    num_part(it, 'p-no-double-seven', 2, a[4] / 10 ** 4, brute[4] / 10 ** 4, 3)
+    wrong_is(it, 'p-no-double-four', 1, 'first-pair', 0.99)
+    num_part(it, 'p-no-double-four', 2, a[4] / 10 ** 4, brute[4] / 10 ** 4, 3)
     ok(9 * 981 == 8829 and 9 * 99 == 891, 'digits: printed products')
-    wrong_is(it, 'p-no-double-seven', 2, 'one-term', 9 * 981 / 10 ** 4)
-    wrong_is(it, 'p-no-double-seven', 2, 'square', 0.981 ** 2, 4)
+    wrong_is(it, 'p-no-double-four', 2, 'one-term', 9 * 981 / 10 ** 4)
+    wrong_is(it, 'p-no-double-four', 2, 'square', 0.981 ** 2, 4)
     b1 = 0.99 ** 100
     b2 = math.exp(100 * math.log1p(-0.01))
-    num_part(it, 'p-no-double-seven', 3, b1, b2, 3)
-    wrong_is(it, 'p-no-double-seven', 3, 'all-places', 0.99 ** 199, 4)
-    wrong_is(it, 'p-no-double-seven', 3, 'all-digits', 0.99 ** 200, 3)
+    num_part(it, 'p-no-double-four', 3, b1, b2, 3)
+    wrong_is(it, 'p-no-double-four', 3, 'all-places', 0.99 ** 199, 4)
+    wrong_is(it, 'p-no-double-four', 3, 'all-digits', 0.99 ** 200, 3)
     # the bound holds: exact P(D_200) from the recursion is below it
     aa = [F(1), F(1)]
     for n in range(2, 201):
@@ -286,9 +299,13 @@ def level1():
     for n in range(201, 3001):
         aa.append(F(9, 10) * aa[-1] + F(9, 100) * aa[-2])
     ok(float(aa[3000]) < 1e-11 and 0.99 ** 1500 < 1e-6, 'digits: P(D_n) and the bound fall to 0')
-    num_part(it, 'p-no-double-seven', 4, 0, round(float(aa[3000]), 9))
-    wrong_is(it, 'p-no-double-seven', 4, 'complement', 1)
-    choice_key(it, 'p-no-double-seven', 5, 'sub')
+    num_part(it, 'p-no-double-four', 4, 0, round(float(aa[3000]), 9))
+    wrong_is(it, 'p-no-double-four', 4, 'complement', 1)
+    choice_key(it, 'p-no-double-four', 5, 'sub')
+    wrong_is(it, 'p-no-double-four', 2, 'independent', 0.981 * 0.99)
+    ok(abs(0.981 * 0.99 - 0.97119) < 1e-12, 'digits: independent slip 0.97119')
+    txt = json.dumps(it['p-no-double-four'])
+    ok('77' not in txt and '44' in txt and '444' in txt, 'digits: block 44 throughout, no 77 left')
 
     lv = Level('measure-prob', 1)
     hand = lv.check_wrongs('problems')
@@ -302,32 +319,39 @@ def level2():
         return
     structural(it, 2)
     e = math.e
-    # p-billed-hours
-    v1 = math.exp(-2) - math.exp(-3)
-    v2 = integrate.quad(lambda t: math.exp(-t), 2, 3)[0]
-    num_part(it, 'p-billed-hours', 1, v1, v2, 4)
-    wrong_is(it, 'p-billed-hours', 1, 'tail', math.exp(-2), 4)
-    wrong_is(it, 'p-billed-hours', 1, 'cdf', 1 - math.exp(-2), 4)
-    ok(round(math.exp(-2), 4) == 0.1353 and round(math.exp(-3), 4) == 0.0498, 'hours: printed tails')
-    f1 = 1 / (e - 1)
-    f2 = sum(k * (math.exp(-k) - math.exp(-k - 1)) for k in range(0, 200))
-    num_part(it, 'p-billed-hours', 2, f1, f2, 4)
-    wrong_is(it, 'p-billed-hours', 2, 'from-zero', e / (e - 1), 4)
-    wrong_is(it, 'p-billed-hours', 2, 'mean', 1)
-    wrong_is(it, 'p-billed-hours', 2, 'half-lost', 0.5)
-    h1 = 0.5 / (math.exp(0.5) - 1)
-    h2 = sum(0.5 * k * (math.exp(-k / 2) - math.exp(-(k + 1) / 2)) for k in range(0, 400))
-    num_part(it, 'p-billed-hours', 3, h1, h2, 4)
-    wrong_is(it, 'p-billed-hours', 3, 'no-half', 1 / (math.exp(0.5) - 1), 4)
-    wrong_is(it, 'p-billed-hours', 3, 'from-zero', 0.5 * math.exp(0.5) / (math.exp(0.5) - 1), 4)
-    m = lambda h: h / (math.exp(h) - 1)
-    mbrute = lambda h: sum(h * k * (math.exp(-k * h) - math.exp(-(k + 1) * h)) for k in range(0, int(60 / h)))
-    nstar = min(n for n in range(1, 30) if m(2 ** -n) > 0.99)
-    nstar2 = min(n for n in range(1, 12) if mbrute(2 ** -n) > 0.99)
-    num_part(it, 'p-billed-hours', 4, nstar, nstar2)
-    ok(round(m(1 / 32), 4) == 0.9845 and round(m(1 / 64), 4) == 0.9922, 'hours: printed means at h = 1/32, 1/64')
-    wrong_is(it, 'p-billed-hours', 4, 'one-minus-h', min(n for n in range(1, 30) if 1 - 2 ** -n > 0.99))
-    ok(all(m(2 ** -(n + 1)) > m(2 ** -n) for n in range(1, 12)), 'hours: the means rise with n')
+    # p-settlement-fails (session AF, replaces p-billed-hours)
+    pk = lambda k: F(16, 25) * (k + 1) * F(1, 5) ** k
+    ok(sum(pk(k) for k in range(400)) > 1 - F(1, 10 ** 200) and abs(float(sum(pk(k) for k in range(400))) - 1) < 1e-15, 'fails: chances add to 1')
+    sS = sp.Symbol('s')
+    Gs = 16 / (5 - sS) ** 2
+    kk = sp.Symbol('kk', integer=True, nonnegative=True)
+    Gser = sp.summation(sp.Rational(16, 25) * (kk + 1) * (sS / 5) ** kk, (kk, 0, sp.oo))
+    ok(all(abs(float(Gser.subs(sS, v)) - float(Gs.subs(sS, v))) < 1e-12 for v in (0, sp.Rational(1, 2), 1, sp.Rational(3, 2), 3)), 'fails: G(s) = 16/(5 - s)^2 from the series')
+    e1 = float(F(16, 25) / F(3, 4) ** 2)
+    e2 = float(sum(pk(k) * F(5, 4) ** k for k in range(300)))
+    num_part(it, 'p-settlement-fails', 1, e1, e2, 4, eps=1e-12)
+    ok(F(16, 25) / F(9, 16) == F(256, 225) and Gs.subs(sS, sp.Rational(5, 4)) == sp.Rational(256, 225), 'fails: E[1.25^N] = 256/225 = G(1.25)')
+    wrong_is(it, 'p-settlement-fails', 1, 'jensen', 1.25 ** 0.5, 4)
+    wrong_is(it, 'p-settlement-fails', 1, 'no-k', 0.64 / 0.75, 4)
+    choice_key(it, 'p-settlement-fails', 2, 'mct')
+    ok(sp.simplify(sp.diff(Gs, sS) - 32 / (5 - sS) ** 3) == 0 and sp.simplify(sp.diff(Gs, sS, 2) - 96 / (5 - sS) ** 4) == 0, 'fails: printed G\' and G\'\'')
+    EN = float(sum(k * pk(k) for k in range(400)))
+    num_part(it, 'p-settlement-fails', 3, float(sp.diff(Gs, sS).subs(sS, 1)), EN, 3, eps=1e-12)
+    ok(abs(EN - 2 * 0.2 / 0.8) < 1e-12, 'fails: E[N] = rq/p for the negative binomial')
+    ok(all(float(sp.diff(Gs, sS).subs(sS, v)) < 0.5 for v in (0.9, 0.99, 0.999)), 'fails: G\'(s) rises towards 0.5 from below')
+    wrong_is(it, 'p-settlement-fails', 3, 'one', float(Gs.subs(sS, 1)))
+    wrong_is(it, 'p-settlement-fails', 3, 'at-zero', float(pk(1)), 3)
+    ok(pk(1) == F(32, 125), 'fails: G\'(0) = P(N = 1) = 32/125')
+    wrong_is(it, 'p-settlement-fails', 3, 'square', 32 / 16)
+    EN2 = float(sum(k * k * pk(k) for k in range(400)))
+    fall = float(sp.diff(Gs, sS, 2).subs(sS, 1))
+    num_part(it, 'p-settlement-fails', 4, fall + 0.5, EN2, 3, eps=1e-12)
+    ok(abs(EN2 - (0.4 / 0.64 + 0.25)) < 1e-12, 'fails: E[N^2] = Var + mean^2 for the negative binomial')
+    wrong_is(it, 'p-settlement-fails', 4, 'falling', fall, 3)
+    wrong_is(it, 'p-settlement-fails', 4, 'variance', EN2 - EN ** 2, 3)
+    wrong_is(it, 'p-settlement-fails', 4, 'mean-sq', EN ** 2, 3)
+    choice_key(it, 'p-settlement-fails', 5, 'inf')
+    ok(all(pk(k) * 5 ** k == F(16, 25) * (k + 1) for k in range(30)) and float(sum(pk(k) * 5 ** k for k in range(1000))) > 3e5, 'fails: E[5^N] terms are 0.64(k+1), partial sums grow without bound')
 
     # p-compounding
     R = sp.Symbol('R')
@@ -363,31 +387,44 @@ def level2():
     wrong_is(it, 'p-compounding', 5, 'no-half', math.exp(0.25), 4)
     wrong_is(it, 'p-compounding', 5, 'bound', d2, 3)
 
-    # p-root-of-uniform
+    # p-boom-bust (session AF, replaces p-root-of-uniform)
     n_ = SYM['n']
-    t = sp.Symbol('t')
-    E4 = sp.integrate(1 - t ** 4, (t, 0, 1))
-    num_part(it, 'p-root-of-uniform', 1, float(E4), integrate.quad(lambda u: u ** 0.25, 0, 1)[0], 3, eps=1e-8)
-    wrong_is(it, 'p-root-of-uniform', 1, 'tail-only', 0.2)
-    wrong_is(it, 'p-root-of-uniform', 1, 'jensen', 0.5 ** 0.25, 4)
-    En = sp.integrate(1 - t ** n_, (t, 0, 1), conds='none')
-    E2 = sp.integrate(1 - t ** (n_ / 2), (t, 0, 1), conds='none')   # P(X^2 > t) = P(U > t^(n/2))
-    msd = sp.simplify(E2 - 2 * En + 1)
-    expr_part(it, 'p-root-of-uniform', 2, msd)
-    ok(same(msd, 2 / ((n_ + 1) * (n_ + 2))), 'root: mean-square distance is 2/((n+1)(n+2))')
-    for n in (3, 10):
-        ok(abs(integrate.quad(lambda u: (u ** (1 / n) - 1) ** 2, 0, 1)[0] - 2 / ((n + 1) * (n + 2))) < 1e-10, f'root: quadrature at n = {n}')
-    c1 = 2 / (11 * 12) / 0.01
-    c2 = integrate.quad(lambda u: (u ** 0.1 - 1) ** 2, 0, 1)[0] / 0.01
-    num_part(it, 'p-root-of-uniform', 3, c1, c2, 4, eps=1e-8)
-    wrong_is(it, 'p-root-of-uniform', 3, 'no-eps', 2 / 132, 4)
-    wrong_is(it, 'p-root-of-uniform', 3, 'eps', 2 / 132 / 0.1, 4)
-    pex = 0.9 ** 10
-    us = np.random.default_rng(3).random(1_000_000)
-    num_part(it, 'p-root-of-uniform', 4, pex, float(np.mean(np.abs(us ** 0.1 - 1) > 0.1)), 4, eps=0.004)
-    wrong_is(it, 'p-root-of-uniform', 4, 'complement', 1 - pex, 4)
-    wrong_is(it, 'p-root-of-uniform', 4, 'root', 0.9 ** 0.1, 4)
-    choice_key(it, 'p-root-of-uniform', 5, 'all')
+    up, dn = sp.Rational(8, 5), sp.Rational(2, 5)
+    e_root = (sp.sqrt(up) + sp.sqrt(dn)) / 2
+    ok(sp.simplify(e_root - sp.sqrt(sp.Rational(9, 10))) == 0, 'boom: E[sqrt M_1] = sqrt(0.9)')
+    expr_part(it, 'p-boom-bust', 1, sp.Rational(9, 10) ** (n_ / 2))
+    pathsE = lambda n, f: sum(math.comb(n, k) * f(1.6 ** k * 0.4 ** (n - k)) for k in range(n + 1)) / 2 ** n
+    ok(abs(pathsE(4, math.sqrt) - 0.81) < 1e-12 and abs(pathsE(7, math.sqrt) - 0.9 ** 3.5) < 1e-12, 'boom: E[sqrt M_n] by enumeration')
+    ok(abs(pathsE(6, lambda x: x) - 1) < 1e-12, 'boom: E[M_n] = 1')
+    b1 = 0.9 ** 2 / math.sqrt(0.5)
+    b2 = pathsE(4, math.sqrt) / math.sqrt(0.5)
+    num_part(it, 'p-boom-bust', 2, b1, b2, 4)
+    ok(b1 > 1, 'boom: the bound is above 1')
+    wrong_is(it, 'p-boom-bust', 2, 'no-root', 0.81)
+    wrong_is(it, 'p-boom-bust', 2, 'epsilon', 0.81 / 0.5)
+    wrong_is(it, 'p-boom-bust', 2, 'markov-m', pathsE(4, lambda x: x) / 0.5)
+    ex = sum(math.comb(4, k) for k in range(5) if 1.6 ** k * 0.4 ** (4 - k) > 0.5) / 16
+    ex2 = sum(1 for p in itertools.product((1.6, 0.4), repeat=4) if math.prod(p) > 0.5) / 16
+    num_part(it, 'p-boom-bust', 3, ex, ex2, 4)
+    ok(abs(1.6 ** 2 * 0.4 ** 2 - 0.4096) < 1e-12 and abs(1.6 ** 3 * 0.4 - 1.6384) < 1e-12, 'boom: printed 0.4096 and 1.6384')
+    wrong_is(it, 'p-boom-bust', 3, 'two-ups', 11 / 16)
+    wrong_is(it, 'p-boom-bust', 3, 'all-up', 1 / 16)
+    wrong_is(it, 'p-boom-bust', 3, 'three-only', 4 / 16)
+    t1 = 10 * 0.9 ** 100 / (1 - math.sqrt(0.9))
+    t2 = sum(0.9 ** (n / 2) / 0.1 for n in range(200, 6000))
+    num_part(it, 'p-boom-bust', 4, t1, t2, 5, eps=1e-9)
+    ok(round(0.9 ** 100, 7) == 0.0000266 and round(1 - math.sqrt(0.9), 4) == 0.0513 and round(math.sqrt(0.9), 4) == 0.9487, 'boom: printed 0.0000266, 0.0513, 0.9487')
+    wrong_is(it, 'p-boom-bust', 4, 'one-day', 10 * 0.9 ** 100, 6)
+    wrong_is(it, 'p-boom-bust', 4, 'no-root', t1 / 10, 6)
+    wrong_is(it, 'p-boom-bust', 4, 'epsilon', t1 * 10, 5)
+    ok(all(10 * 0.9 ** (m / 2) / (1 - math.sqrt(0.9)) > 10 * 0.9 ** ((m + 1) / 2) / (1 - math.sqrt(0.9)) for m in range(1, 400)) and 10 * 0.9 ** 500 / 0.0513 < 1e-20, 'boom: the tail bound falls to 0')
+    ms1 = 1.36 ** 10
+    ms2 = pathsE(10, lambda x: x * x)
+    num_part(it, 'p-boom-bust', 5, ms1, ms2, 2, eps=1e-9)
+    ok(abs((2.56 + 0.16) / 2 - 1.36) < 1e-12, 'boom: E[M_1^2] = 1.36')
+    wrong_is(it, 'p-boom-bust', 5, 'mean-sq', 1)
+    wrong_is(it, 'p-boom-bust', 5, 'added', 1.36 * 10)
+    wrong_is(it, 'p-boom-bust', 5, 'one-day', 1.36)
 
     # p-random-maturity
     r = 0.05
@@ -538,35 +575,59 @@ def level3():
     wrong_is(it, 'p-two-ups-stop', 5, 'sign', 0.625)
     wrong_is(it, 'p-two-ups-stop', 5, 'conditional', float(E4 / PT[4]))
 
-    # p-red-card-call
-    orders = set(itertools.permutations('RRRRBBB'))
-    nO = len(orders)
-    ok(nO == 35, 'cards: 35 distinct orders')
-    M = lambda o, n: F(o[n:].count('R'), 7 - n)
-    EM1 = sum(M(o, 1) for o in orders) / nO
-    num_part(it, 'p-red-card-call', 1, float(EM1), float(F(4, 7) * F(3, 6) + F(3, 7) * F(4, 6)), 4)
-    wrong_is(it, 'p-red-card-call', 1, 'unweighted', float((F(3, 6) + F(4, 6)) / 2), 4)
-    wrong_is(it, 'p-red-card-call', 1, 'red-shown', 0.5)
-    red1 = [o for o in orders if o[0] == 'R']
-    EM2 = sum(M(o, 2) for o in red1) / len(red1)
-    num_part(it, 'p-red-card-call', 2, float(EM2), 0.5 * 0.4 + 0.5 * 0.6, 3)
-    wrong_is(it, 'p-red-card-call', 2, 'red-again', 0.4)
-    wrong_is(it, 'p-red-card-call', 2, 'start', 4 / 7, 4)
-    def call_time(o):
-        for n in range(0, 7):
-            if M(o, n) > F(4, 7) or n == 6:
-                return n
-    wins = [(call_time(o), o[call_time(o)] == 'R') for o in orders]
-    p_t1_win = F(sum(1 for t, w in wins if t == 1 and w), nO)
-    num_part(it, 'p-red-card-call', 3, float(p_t1_win), float(F(3, 7) * F(4, 6)), 4)
-    ok(all(t >= 1 for t, w in wins), 'cards: the rule never calls at time 0')
-    wrong_is(it, 'p-red-card-call', 3, 'call-only', 3 / 7, 4)
-    wrong_is(it, 'p-red-card-call', 3, 'win-only', 2 / 3, 4)
-    pwin = F(sum(1 for t, w in wins if w), nO)
-    num_part(it, 'p-red-card-call', 4, float(pwin), 4 / 7, 4)
-    ok(pwin == F(4, 7), 'cards: optional stopping value 4/7 by enumeration')
-    wrong_is(it, 'p-red-card-call', 4, 'threshold', 2 / 3, 4)
-    wrong_is(it, 'p-red-card-call', 4, 'coin', 0.5)
+    # p-trial-stake (session AF, replaces p-red-card-call)
+    # paths: (chance, news list, X); news decides in order trial, approval, sales
+    paths = [(F(2, 5), ('fail',), 20), (F(3, 5) * F(1, 4), ('ok', 'refuse'), 40),
+             (F(3, 5) * F(3, 4) * F(4, 5), ('ok', 'approve', 'strong'), 100), (F(3, 5) * F(3, 4) * F(1, 5), ('ok', 'approve', 'weak'), 50)]
+    ok(sum(p for p, _, _ in paths) == 1, 'trial: chances add to 1')
+    def Mn(n, news):
+        pre = news[:n]
+        grp = [(p, x) for p, nw, x in paths if nw[:n] == pre]
+        return sum(p * x for p, x in grp) / sum(p for p, _ in grp)
+    M1ok = Mn(1, ('ok',))
+    num_part(it, 'p-trial-stake', 1, float(M1ok), 0.75 * (0.8 * 100 + 0.2 * 50) + 0.25 * 40, 2)
+    wrong_is(it, 'p-trial-stake', 1, 'approved', float(Mn(2, ('ok', 'approve'))))
+    wrong_is(it, 'p-trial-stake', 1, 'no-refusal', 0.75 * 90)
+    wrong_is(it, 'p-trial-stake', 1, 'unweighted', (100 + 50 + 40) / 3, 2)
+    M0 = Mn(0, ())
+    ok(M0 == F(109, 2) and abs(0.6 * 77.5 + 0.4 * 20 - 54.5) < 1e-12, 'trial: printed M_0 = 0.6 x 77.5 + 0.4 x 20 = 54.5 (tower)')
+    ok([float(p) for p, _, _ in paths] == [0.4, 0.15, 0.36, 0.09], 'trial: printed end chances 0.4, 0.15, 0.36, 0.09')
+    # martingale check at every node
+    for n in range(0, 3):
+        for news in {nw[:n] for _, nw, _ in paths if len(nw) > n}:
+            kids = [(p, nw) for p, nw, _ in paths if nw[:n] == news and len(nw) > n]
+            tot = sum(p for p, _ in kids)
+            ok(sum(p * Mn(n + 1, nw) for p, nw in kids) / tot == Mn(n, news), f'trial: E[M_{n+1} | F_{n}] = M_{n} at {news}')
+    def sale(rule):
+        out = []
+        for p, nw, x in paths:
+            T = 3
+            for n in range(0, 4):
+                if rule(Mn(min(n, len(nw)), nw)):
+                    T = n
+                    break
+            out.append((p, T, Mn(min(T, len(nw)), nw), x))
+        return out
+    s80 = sale(lambda m: m >= 80)
+    PT2 = sum(p for p, T, _, _ in s80 if T == 2)
+    num_part(it, 'p-trial-stake', 2, float(PT2), 0.6 * 0.75, 2)
+    ok(all(T in (2, 3) for _, T, _, _ in s80), 'trial: the 80 rule sells at 2 or 3')
+    wrong_is(it, 'p-trial-stake', 2, 'at-success', 0.6)
+    wrong_is(it, 'p-trial-stake', 2, 'strong', 0.36)
+    wrong_is(it, 'p-trial-stake', 2, 'approval', 0.75)
+    choice_key(it, 'p-trial-stake', 3, 'both')
+    sl = sale(lambda m: m <= 45)
+    ok(sum(p * m for p, _, m, _ in s80) == M0 == sum(p * m for p, _, m, _ in sl) == F(109, 2), 'trial: both rules have mean sale price 54.5 (optional stopping, by enumeration)')
+    EMT2 = sum(p * m * m for p, _, m, _ in s80)
+    v1 = float(EMT2 - M0 ** 2)
+    v2 = 0.45 * 8100 + 0.4 * 400 + 0.15 * 1600 - 54.5 ** 2
+    num_part(it, 'p-trial-stake', 4, v1, v2, 2)
+    VX = float(sum(p * x * x for p, _, x in paths) - M0 ** 2)
+    ok(abs(VX - 1254.75) < 1e-9 and abs(float(EMT2) - 4045) < 1e-9 and abs(54.5 ** 2 - 2970.25) < 1e-9, 'trial: printed 1254.75, 4045, 2970.25')
+    wrong_is(it, 'p-trial-stake', 4, 'hold', VX)
+    wrong_is(it, 'p-trial-stake', 4, 'no-mean', float(EMT2))
+    wrong_is(it, 'p-trial-stake', 4, 'gap', VX - v1)
+    ok(abs(float(sum(p * (x - m) ** 2 for p, _, m, x in s80)) - (VX - v1)) < 1e-9, 'trial: the gap 180 is E[(X - M_T)^2]')
 
     lv = Level('measure-prob', 3)
     lv.check_wrongs('problems')
