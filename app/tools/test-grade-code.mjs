@@ -59,5 +59,9 @@ say(/grade-all: 0 failures/.test(o), 'zq_no_sort passes a real merge and fails s
 o = run('nosort-script', { ...nosort, tests: [{ call: 'merge([1, 3], [2])', expect: '[1, 2, 3]' }, { call: 'zq_no_sort()', expect: 'True' }, { compare: 'stdout', expect: '' }], mutants: [{ source: 'def merge(a, b):\n    return sorted(a + b)', test: 2 }] });
 say(/grade-all: 0 failures/.test(o), 'zq_no_sort in script mode', o);
 
+/* 976: an expected Fraction needs no import by the learner */
+o = run('fraction', { tests: [{ call: 'f()', expect: 'Fraction(1, 3)', compare: 'fraction' }], solution: 'from fractions import Fraction as Fr\ndef f():\n    return Fr(1, 3)\n', starter: 'def f():\n    return 0\n' });
+say(/grade-all: 0 failures/.test(o), 'a fraction expect evaluates without the learner importing Fraction', o);
+
 console.log(`test-grade-code: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

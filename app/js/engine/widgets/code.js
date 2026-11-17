@@ -203,7 +203,8 @@ def __zq_raises(_call, _exp, _ns):
 
 def __zq_cmp(_a, _exp, _cmp, _ns, _tol=None):
     print(${JSON.stringify(MARK)} + repr(_a), end='')
-    return __zq_judge(_a, eval(_exp, _ns), _cmp, _tol)
+    from fractions import Fraction as _F  # item 976: an expected Fraction(1, 3) needs no import in the learner's code
+    return __zq_judge(_a, eval(_exp, {'Fraction': _F, **_ns}), _cmp, _tol)
 
 def __zq_judge(_a, _e, _cmp, _tol=None):
     # ENGINE-BACKLOG 861: the one value comparison, shared with the drill page (js/screens/drill.js)
