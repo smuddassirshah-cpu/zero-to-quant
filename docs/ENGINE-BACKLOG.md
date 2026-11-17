@@ -2626,3 +2626,63 @@ Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part 
 1208. [Could] `fresh-check` reads no finite topology up to a renaming of its points: `topology/problems-2` `p-signal-bands` carries the space $\{\varnothing, \{a\}, \{b\}, \{a, b\}, X\}$ of l5 screens[0] and l8 screens[1] with sell, buy, hold for $a$, $b$, $c$, and part 3's reason retells l8 screens[1] ("the only open set holding $c$ is $X$") with no hit. [inbox: review-delta-ag-topology]
 1209. [Should] No rule finds a doubled word in learner text ("the the open balls lesson proof", `topology/problems-1` `p-plotter-zone` part 3 `explain`). A voice-scan or validator warning on `\b(\w+) \1\b` outside maths would. [inbox: review-delta-ag-topology]
 1210. [Should] No rule finds a restated key that, at its rounded value, fails the inequality it was the smallest solution of (`topology/problems-3` `p-trapping-interval` part 4 takes $r = 0.2711$; the root is 0.27110667, so part 2's condition fails there by $4.4 \times 10^{-6}$). [inbox: review-delta-ag-topology]
+
+Engine pass 9 status (`docs/reports/engine-pass-9.md`):
+
+1154 status: open (not in engine pass 9).
+1155 status: open (not in engine pass 9).
+1156 status: open (not in engine pass 9).
+1157 status: open (not in engine pass 9).
+1158 status: open (not in engine pass 9).
+1159 status: done in engine pass 9 item d: `WIDE_PROBE` in `playthrough.mjs` fails an item at 600 px or less when text runs past the window or a clipping box holds wider text (problem sets per part, homework marked items, exam items, the wideNow checks); `test-playthrough-text-overflow.mjs`.
+1160 status: open (not in engine pass 9).
+1161 status: done in engine pass 9 item f: `--problems` and `--set` stop with "Run the validator first" when `content/manifest.json` lacks the set; `test-playthrough-manifest.mjs`.
+1162 status: open (not in engine pass 9).
+1163 status: open (not in engine pass 9).
+1164 status: done in engine pass 9 item f (same change as 1161).
+1165 status: open (not in engine pass 9).
+1166 status: done in engine pass 9 item f (same change as 1161).
+1167 status: done in engine pass 9 item d (a long KaTeX span past the right edge at 440 px fails; the validator warning on a long maths span was not built).
+1168 status: open (not in engine pass 9).
+1169 status: open (not in engine pass 9).
+1170 status: open (not in engine pass 9).
+1171 status: open (not in engine pass 9).
+1172 status: open (not in engine pass 9).
+1173 status: open (not in engine pass 9).
+1174 status: open (not in engine pass 9).
+1175 status: open (not in engine pass 9).
+1176 status: open (not in engine pass 9).
+1177 status: open (not in engine pass 9).
+1178 status: done in engine pass 9 item a: `[rounding-tie]` flags a `wrong` stored one place past the asked places with a half-unit band and a fraction of 0.2 to 0.8 of a step.
+1179 status: open (not in engine pass 9).
+1180 status: open (not in engine pass 9).
+1181 status: open (not in engine pass 9).
+1182 status: open (not in engine pass 9).
+1183 status: open (not in engine pass 9).
+1184 status: open (not in engine pass 9).
+1185 status: open (not in engine pass 9).
+1186 status: done in engine pass 9 item c as `[key-in-question]` (warning).
+1187 status: done in engine pass 9 item e: `voice-scan.py` lists a lesson id written as a code span.
+1188 status: open (not in engine pass 9).
+1189 status: open (not in engine pass 9).
+1190 status: open (not in engine pass 9).
+1191 status: done in engine pass 9 item a (same rule as 1178).
+1192 status: open (not in engine pass 9).
+1193 status: open (not in engine pass 9).
+1194 status: done in engine pass 9 item a: a key within 7% of a step of a tie, and a printed product or quotient on a tie, with a band that takes one rounding only.
+1195 status: partly done in engine pass 9 item b: `[working-band]` re-evaluates each printed span whose bare result follows it; the case of a printed sd beside its square (a choice of path) is not read.
+1196 status: open (not in engine pass 9).
+1197 status: open (not in engine pass 9).
+1198 status: open (not in engine pass 9).
+1199 status: open (not in engine pass 9).
+1200 status: done in engine pass 9 item c (same rule as 1186).
+1201 status: open (not in engine pass 9).
+1202 status: open (not in engine pass 9).
+1203 status: open (not in engine pass 9).
+1204 status: done in engine pass 9 item b (a printed product or quotient evaluated from the printed figures).
+1205 status: open (not in engine pass 9).
+1206 status: open (not in engine pass 9).
+1207 status: open (not in engine pass 9).
+1208 status: open (not in engine pass 9).
+1209 status: open (not in engine pass 9).
+1210 status: open (not in engine pass 9).
