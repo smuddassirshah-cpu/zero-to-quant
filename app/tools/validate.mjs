@@ -395,9 +395,9 @@ const keyPrinted = (text, ans, step, unit) => {
    normalCdf is exact to 1e-12 (series), the table value is Phi to 4 places. */
 const normalCdf = (z) => { let t = z, sum = z; for (let n = 1; n < 80; n++) { t *= -z * z / (2 * n); sum += t / (2 * n + 1); } return 0.5 + sum / Math.sqrt(2 * Math.PI); };
 /* Engine pass 9 (ENGINE-BACKLOG 1154 to 1210), all warnings:
-     [rounding-tie]     widened: a wrong[] value stored one place past the asked places with a half-step band, in the middle of a step (a fraction of 0.2 to 0.8), whose band takes only one of the two roundings (the unrounded slip
-                        may be a tie); a key within 7% of a step of a tie, stored past the asked places, whose band does not take both roundings; a product or quotient of two printed
-                        figures that lands on a tie while the key's band takes only one rounding
+     [rounding-tie]     widened: a key within 7% of a step of a tie, stored past the asked places, whose band does not take both roundings; a product or quotient of two printed
+                        figures that lands on a tie while the key's band takes only one rounding. (The slip-stored-one-place-past-the-places branch was withdrawn in pass 9b: such a value is always
+                        within half a step of its own rounding, so it cannot find a fault; a slip exactly on a tie at the asked places is still reported.)
      [working-band]     widened: every printed span is re-evaluated from its own printed (rounded) figures, not only the final one, and a result that leaves the key's band is reported
      [key-in-question]  a numeric key (rounded as asked) printed in its own part's question after "=", "\approx" or "is", or, for a key of three or more digits, anywhere in it */
 const evalLatexArith = (src) => {
@@ -465,11 +465,6 @@ const pass8Rules = (file, where, it, p) => {
       const meets = (c, h2) => Math.abs(c - x.value) <= step / 2 + h2 + 1e-9 * Math.max(1, Math.abs(c));
       if (meets(ans, hw) || wrongs.some((y) => y !== x && meets(y.value, halfWidth(y.value, y.tol ?? { abs: 1e-9 })))) return;
       if (isTie(x.value, d, scale) && wh < step / 2 * (1 - 1e-6)) warn(file, `${where}.wrong[${i}]`, `[rounding-tie] wrong "${x.id || i}" (${fmt(x.value)}) is exactly on a rounding tie at ${pl}; its band +-${+wh.toPrecision(3)} takes neither rounding (${fmt(x.value - step / 2)}, ${fmt(x.value + step / 2)})`);
-      else if (decimalsOf(x.value) === d + (scale === 100 ? 2 : 0) + 1 && Math.abs(wh - step / 2) <= 0.01 * step) {
-        /* engine pass 9: a slip stored one place past the asked places with a half-step band (0.054688 for 7/128 at 5 places) may be a tie once unrounded: its band must take both d-place neighbours */
-        const q = Math.abs(x.value) / step, fr = q - Math.floor(q), sg = Math.sign(x.value), lo = sg * Math.floor(q) * step, hi = sg * Math.ceil(q) * step;
-        if (fr >= 0.2 - 1e-9 && fr <= 0.8 + 1e-9 && wh < step * (1 - 1e-6) && !(covers(lo, wh, x.value) && covers(hi, wh, x.value))) warn(file, `${where}.wrong[${i}]`, `[rounding-tie] wrong "${x.id || i}" (${x.value}) is stored past the ${pl} asked, near the middle of a step, and its band +-${+wh.toPrecision(3)} takes only one of the roundings (${fmt(lo)}, ${fmt(hi)}): the unrounded slip may be a tie, so a learner who rounds it the other way is refused; store the unrounded value or widen the band to a full step`);
-      }
     });
     if (!isTie(ans, d, scale) && decimalsOf(ans) > d + (scale === 100 ? 2 : 0)) {
       const q = Math.abs(ans) / step, fr = q - Math.floor(q), sg = Math.sign(ans), lo = sg * Math.floor(q) * step, hi = sg * Math.ceil(q) * step;

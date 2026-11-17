@@ -2,7 +2,7 @@
 /* Scratch cases for the problem-set rules of engine pass 9 (ENGINE-BACKLOG 1154 to 1210; docs/AUTHORING.md section 5), pattern of test-validate-pass8.mjs.
    Copies tools/fixtures/mini-app to a temp folder (lib/validate-harness.mjs), writes the problem-set fixture into the copy's equations folder as problems-3.json, plants one case in each part
    and reads the report by part. Nothing under app/content is touched.
-     [rounding-tie]     a slip stored past the asked places; a key a hair off a tie; a printed product that lands on a tie
+     [rounding-tie]     a slip on a tie at the asked places (the slip-past-places branch was withdrawn in 9b); a key a hair off a tie; a printed product that lands on a tie
      [working-band]     a printed span re-evaluated from its own rounded figures leaves the band
      [key-in-question]  a numeric key printed in its own question
    Usage: node tools/test-validate-pass9.mjs. Exit 0 pass, 1 failure. */
@@ -24,7 +24,8 @@ const Q5 = 'What is the value? Give a decimal to 5 places.', Q4 = 'What is the v
 /* [item, part, name, question, widget, feedback.correct, explain.text, expect] ; expect: [kind, substring] with kind warn or nowarn */
 const CASES = [
   /* rounding-tie: a slip stored past the asked places */
-  [0, 0, 'slip-stored-past-the-places-with-a-half-step-band', Q5, num(0.006759, { abs: 5e-6 }, { wrong: [{ id: 'no-weight', value: 0.054688, tol: { abs: 5e-6 } }] }), OK_FB, OK_EX, [['warn', '[rounding-tie]'], ['warn', 'wrong "no-weight"']]],
+  [0, 0, 'slip-stored-past-the-places-with-a-half-step-band-is-silent-since-9b', Q5, num(0.006759, { abs: 5e-6 }, { wrong: [{ id: 'no-weight', value: 0.054688, tol: { abs: 5e-6 } }] }), OK_FB, OK_EX, [['nowarn', '[rounding-tie]']]],
+  [0, 4, 'slip-exactly-on-a-tie-at-the-asked-places', Q5, num(0.006759, { abs: 5e-6 }, { wrong: [{ id: 'tie', value: 0.054685, tol: { abs: 1e-6 } }] }), OK_FB, OK_EX, [['warn', '[rounding-tie]'], ['warn', 'wrong "tie"']]],
   [0, 1, 'slip-stored-past-the-places-with-a-full-step-band', Q5, num(0.006759, { abs: 5e-6 }, { wrong: [{ id: 'no-weight', value: 0.0546875, tol: { abs: 1e-5 } }] }), OK_FB, OK_EX, [['nowarn', '[rounding-tie]']]],
   [0, 2, 'slip-stored-past-the-places-near-a-round-value', Q5, num(0.006759, { abs: 5e-6 }, { wrong: [{ id: 'near', value: 0.054699, tol: { abs: 5e-6 } }] }), OK_FB, OK_EX, [['nowarn', '[rounding-tie]']]],
   [0, 3, 'slip-at-the-asked-places', Q5, num(0.006759, { abs: 5e-6 }, { wrong: [{ id: 'plain', value: 0.05469, tol: { abs: 5e-6 } }] }), OK_FB, OK_EX, [['nowarn', '[rounding-tie]']]],
