@@ -12,18 +12,18 @@ A static, single-user teaching app in `app/` (vanilla JS, no build step) that ta
 
 ## Definition of done (`docs/PLAN.md` section 13)
 
-Items 1 to 4 and 6 to 8 are met with evidence in `docs/reports/definition-of-done-ai.md`. Item 5 is partly met: the reference lesson has the prototype's screens, answers and grading, but not its exact widgets and look (below).
+All eight items are met, with evidence in `docs/reports/definition-of-done-ai.md`. Item 5 by your decision of 17 Nov: the reference lesson has the prototype's screens, answers, grading and simulation visual (dice, counters, the share of total 10 among kept rolls against 1/11); its derive screen stays an ordering task, which you judged better than the prototype's pick-a-line.
 
 ## Not in DONE, by the user's decision (16 Nov)
 
-The Fable concept audit (PLAN 5b, continues on `claude/fable-audit`) and the pilot (task 12).
+The Fable concept audit (PLAN 5b, continues on `claude/fable-audit`) and the pilot (task 12), both run independently after `DONE`.
 
 ## Known issues, heaviest first
 
-1. Item 5: on `conditional/l3-shrinking` the derive screen orders three lines where the prototype picked the missing one; the simulate canvas is a bar chart, not dice with a running trace; options shuffle per visit; some wording changed. Accept it, or ask for those to be rebuilt.
-2. Offline without `app/vendor/`: a Python check takes at least 60 s to give up and then reads as "Not quite right.", like a wrong answer.
-3. Offline Python with NumPy from `vendor/` is untested.
-4. Small leftovers: `ensembles/problems-2` `p-ipo-forest` part 1 feeds nothing; one gallery tree has small labels at 440 px; engine item 1036 is documented, not built.
+1. The gated Run buttons on a predict-first screen are disabled before the check but do not look dimmed; the note "Answer first, then run it." is the only cue.
+2. The first CI run after a change to `fetch-vendor.sh` downloads the 389 MB Pyodide release again (later runs use the cache).
+3. Small leftovers from session AH: `ensembles/problems-2` `p-ipo-forest` part 1 feeds nothing; one gallery tree has small labels at 440 px; engine item 1036 is documented, not built.
+4. 4,606 validator warnings remain, each class triaged as "stands".
 
 ## How to run it
 
@@ -33,4 +33,4 @@ cd zero-to-quant
 app/run.sh            # then open http://localhost:8080 in Chrome
 ```
 
-For offline use, run `app/tools/fetch-vendor.sh` once while online. Checks: `cd app && node tools/validate.mjs`; the full acceptance is `.github/workflows/acceptance.yml` (`docs/CI.md`).
+For offline use, run `app/tools/fetch-vendor.sh` once while online; with no copy and no network, a code check now says within seconds that Python or C++ could not load, not that the answer is wrong. Checks: `cd app && node tools/validate.mjs`; the full acceptance is `.github/workflows/acceptance.yml` (`docs/CI.md`).

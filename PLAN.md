@@ -15,7 +15,7 @@ Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not 
 - AF (done, 16 to 17 Nov): open findings of `review-delta-ae-4.md` fixed; `retold` and `rate` kinds in `fresh-check`; chained sets for 2.2, 2.5, 2.6 (21 sets, 149 in all), each second-read, fixed, delta-read and fixed.
 - AG (done, 17 Nov): chained sets for 3.2 and 3.4 (18 sets, 167 in all), each through the AF chain, 2d ticked; a second auto item for the 62 (exam, skill) pairs behind the 109 triples, read, fixed and delta-read; engine pass 8 (parts A, B, C) with its hits on the 149 older sets triaged and fixed.
 - AH (done, 17 Nov): engine pass 9 (57 inbox bullets numbered 1154 to 1210, six rule gaps, then a tightening pass), its hits triaged twice and fixed; the AG-close items; gallery read in both themes and fixed. Was: engine pass 7 remainder ([Must] and [Should] only; every [Could], E13, E15 to E19 to a post-completion list); full acceptance (`mode: full`); gallery in both themes.
-- AI (done, 17 Nov): section 7. READMEs written, followed literally on a fresh clone and fixed; the self-host fallback made to work for every CDN library (`fetch-vendor.sh`, `test-vendor-fallback.mjs`); section 13 read item by item and its gaps closed except item 5 (equivalent, not identical); final report `docs/reports/final-report-ai.md`; `DONE`.
+- AI (done, 17 Nov): section 7. READMEs written, followed literally on a fresh clone and fixed; the self-host fallback made to work for every CDN library (`fetch-vendor.sh`, `test-vendor-fallback.mjs`); section 13 read item by item and every gap closed (item 5 by the user's decision: derive stays an ordering task; simulate screen on the new `dice-sim` canvas); offline load failures reported within seconds (engine 1214 to 1216); final report `docs/reports/final-report-ai.md`; `DONE`.
 - Not required for DONE: section 5b (concept audit, continues on `claude/fable-audit` after release) and task 12 (pilot).
 
 ## Tasks (one per session; tick when committed)
@@ -312,7 +312,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 
 ### 7. Finalise
 - [x] Getting started (session AI; `docs/reviews/review-getting-started-ai.md`, `docs/reports/vendor-fallback-ai.md`): `app/README.md` and `README.md` describe clone, `app/run.sh`, first load (jsDelivr for Pyodide, MathLive, Compute Engine, YoWASP clang), the self-host fallback in `app/vendor/`
-- [x] Check `docs/PLAN.md` section 13 (session AI; `docs/reports/definition-of-done-ai.md`: 1 to 4 and 6 to 8 met, 5 partly) (definition of done) item by item; record gaps in KNOWN_ISSUES.md
+- [x] Check `docs/PLAN.md` section 13 (session AI; `docs/reports/definition-of-done-ai.md`: all eight met, item 5 by the user's decision) (definition of done) item by item; record gaps in KNOWN_ISSUES.md
 - [ ] Final report to the user; create `DONE`
 
 ## Completed

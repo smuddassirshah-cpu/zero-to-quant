@@ -35,3 +35,5 @@ Read at HEAD 99be2fe9. Last green full acceptance: run 35 at 5b651e21 (59 jobs);
 | 6 | MET | same test: export, import into a fresh context, deep-equal, also after a reload |
 | 7 | MET | 283 of 283 levels read and fixed; every topic and stage exam is named in at least one `docs/reviews` file (checked by grep this session) |
 | 8 | MET | C++ hidden tests via YoWASP clang; the first screens of `git/l1-every-version` and `terminal/l1-home-row` now say the course teaches by reading and tracing |
+
+Item 5 after the user's decision (17 Nov): MET. The simulate screen now uses the `dice-sim` canvas (engine 1217) and matches the prototype's dice, Rolled / Kept / Total 10 counters, share bar and running trace against 1/11; the derive screen stays an ordering task by the user's choice. Option shuffling (backlog 591) and later wording edits stand.
