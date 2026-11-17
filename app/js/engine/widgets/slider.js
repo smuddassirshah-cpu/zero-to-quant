@@ -29,7 +29,7 @@
     const nTicks = Math.round((max - min) / step);
     const ticks = spec.ticks === false ? '' : nTicks > 0 && nTicks <= 20 ? Array.from({ length: nTicks + 1 }, (_, i) => `<i style="left:${(i / nTicks) * 100}%"></i>`).join('') : '';
     const el = Z.h(`<div class="wd wd-slider">
-      <span class="wd-sl-label">${Z.md(Z.esc(name))}</span>
+      <span class="wd-sl-label">${Z.grade.inline(String(name))}</span>
       <div class="wd-sl-track">
         <span class="wd-sl-val" aria-hidden="true"></span>
         <input type="range" class="slider" min="${min}" max="${max}" step="${step}" value="${start}" aria-label="${Z.esc(String(name).replace(/\$/g, ''))}">
