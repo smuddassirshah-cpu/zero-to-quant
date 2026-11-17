@@ -340,6 +340,7 @@ if L1:
     ok(within(0.64, 0.6435, 0.005) and within(0.644, 0.6435, 0.005) and not within(0.6, 0.6435, 0.005) and not within(0.75, 0.6435, 0.005), 'lamp p3: radians band 0.005 takes 0.64 and 0.644, leaves 0.6 and 0.75 to their own entries')
     ok(all(lp[i]['widget'].get('form') == 'simplified' for i in (0, 4)) and lp[0]['widget']['accept'] == ['\\sqrt{1200}'] and lp[4]['widget']['accept'] == ['-15+20\\sqrt{3}'], 'lamp p1, p5: form simplified, unworked accept forms cut (finding 10)')
     hb = 50 * sp.sin((60 - aob) * DEG)
+    ok(all(within(v, 0.75, 0.051) for v in (0.7, 0.75, 0.8)) and not any(within(v, 0.75, 0.051) for v in (0.6, 0.6435, 36.87, 53.13, 48.59)), 'lamp p3: ratio-tan band 0.051 takes 0.7, 0.75 and 0.8, refuses ratio-sin, radians, the key and the angles')
     num(L1, 'p-desk-lamp', 4, hb, Bo[1],
         {'angle-aob': 50 * math.sin(rad(36.9)), 'sixty': 50 * math.sin(rad(60)), 'cos': 50 * math.cos(rad(23.1)), 'added': 50 * math.sin(rad(96.9))},
         asked=19.6, extra_ok=(50 * math.sin(rad(23.1)), ev(20 * s3 - 15)), printed='19.6', agree=1e-9)
@@ -369,6 +370,7 @@ if L2:
     num(L2, 'p-water-wheel', 2, th_e * 180 / sp.pi, deg_a,
         {'wrong-way': 2.25 * math.pi / 180, 'no-pi': 2.25 * 180}, asked=128.9, printed='128.9')
     h_e = hub + r * sp.sin(th_e)
+    ok(within(0.039, 0.0393, 0.005) and within(0.04, 0.0393, 0.005) and not any(within(v, 0.0393, 0.005) for v in (0, 0.1, 2.25, 128.92, 405)), 'water-wheel p2: wrong-way band 0.005 takes 0.039 and 0.04, refuses 0, 0.1, 2.25, the key and no-pi')
     num(L2, 'p-water-wheel', 3, h_e, hub + tip.imag,
         {'radian-mode': hub + r * math.sin(128.9), 'degree-mode': hub + r * math.sin(rad(2.25)),
          'cos': hub + r * math.cos(rad(128.9)), 'no-hub': r * math.sin(rad(128.9))},
