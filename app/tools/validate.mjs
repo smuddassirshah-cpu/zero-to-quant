@@ -2024,7 +2024,7 @@ const checkExam = (file, id, doc, cur) => {
     topicSkills.forEach(s => { if (!examSkills.has(s)) err(file, 'skills', `topic skill "${s}" is not covered by the exam`); });
     if (doc.draw !== undefined) err(file, 'draw', 'draw belongs in mock and stage exams: a topic exam must cover its skills with items it names');
     const items = Array.isArray(doc.items) ? doc.items : [];
-    if (items.length < 20 || items.length > 30) err(file, 'items', `20 to 30 items (found ${items.length})`);
+    if (items.length < 20 || items.length > 36) err(file, 'items', `20 to 36 items (found ${items.length})`);
     checkPaperItems(file, 'items', items, { lo: 2, hi: 5, label: 'exam', skills: examSkills, skillsRequired: true, allowLongform: true, generators: false });
     checkMultiUniform(file, 'items', items);
     checkPaperRules(file, '', doc);
