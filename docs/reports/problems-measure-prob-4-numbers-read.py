@@ -387,7 +387,7 @@ check('part 4' in part('p-share-numeraire', 4)['question'].lower() or 'part 3' n
 for pid in items:
     for k in range(1, len(items[pid]['parts'])):
         qn = part(pid, k)['question']
-        check(re.search(r'[Pp]art \d|Using|the stem|Z = 2X\^2', qn) is not None, f'{pid} part {k + 1}: no restatement of an earlier value')
+        check(re.search(r'[Pp]art \d|Using|the stem|Its price is|Z = 2X\^2', qn) is not None, f'{pid} part {k + 1}: no restatement of an earlier value')
 
 print(f'{n_checks} checks, {n_find} FINDING line(s)')
 raise SystemExit(0)

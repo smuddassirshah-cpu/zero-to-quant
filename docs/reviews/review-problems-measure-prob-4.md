@@ -81,3 +81,14 @@ Chain and cover. Each later part restates what it uses. Lessons drawn on: l14 (p
 2. No tool lists a choice part whose correct option alone repeats a phrase or symbol of the question (findings 4, 5).
 
 Both are in `docs/BACKLOG-INBOX.md` under `Raised later (review problems measure-prob):`.
+
+## Fix pass
+
+1. Fixed. `items[3].parts[4].question` replaced with the reader's text; key -4.14 and `wrong` values unchanged (recomputed by the author's script).
+2. Fixed. `no-weight` is now `0.0546875` with `tol.abs` 1e-05 (band [0.0546775, 0.0546975]); the author's script line 259 takes the exact value. The validator did not print `[rounding-tie]` on `measure-prob/problems-4` before the fix; one bullet added to `docs/BACKLOG-INBOX.md` under `Raised later (fix pass problems measure-prob 4):`.
+3. Fixed. `items[1].parts[4].question` now credits the price line to part 4 and `q^S` to part 3.
+4. Fixed. `items[1].parts[3]` question and option `qs` text replaced as given. The reader's script check on "restatement" now also accepts "Its price is", since the new question restates the price itself.
+5. Fixed. Option `any` text lost ", for any traded $X$".
+6. Fixed. `explain.text` of `items[3].parts[1]` replaced as given (16/21 and 19/14 ≈ 1.3571 rechecked).
+
+Gates: validator 0 errors (4568 warnings, one on the set is the usual O2 long-sentence note on the finding 1 text, no pass 8 warning); voice scan 35: 0 and 0; `fresh-check` 0 hits; `grade-all` 18 widgets, 0 failures; author script 267 checks 0 failures; reader script 392 checks, 0 FINDING lines; playthrough with and without `--mobile` both passed.

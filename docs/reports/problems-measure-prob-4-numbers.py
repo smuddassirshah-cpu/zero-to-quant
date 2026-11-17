@@ -256,7 +256,7 @@ def level4():
     ok([round(float(w(k)), 5) for k in (8, 9, 10)] == [0.14552, 0.03638, 0.00909], 'trades: printed weights 0.14552, 0.03638, 0.00909')
     ok(round(float(m2), 5) == 0.00676, 'trades: E_Q[Y^2] rounds to 0.00676')
     ok(round((45 * 0.1455 + 10 * float(w(9)) + float(w(10))) / 1024, 5) == 0.00676, 'trades: the rounded weight 0.1455 also gives 0.00676')
-    wrong_is(it, I, 2, 'no-weight', float(PA), 6)
+    wrong_is(it, I, 2, 'no-weight', float(PA))
     wrong_is(it, I, 2, 'eight-only', float(45 * w(8) / 1024), 6)
     rng = np.random.default_rng(21)
     k_ = rng.binomial(10, 0.8, 2_000_000)

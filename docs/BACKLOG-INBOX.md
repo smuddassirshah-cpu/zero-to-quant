@@ -70,3 +70,6 @@ Raised later (review problems topology):
 Raised later (review problems algebra 4):
 - `fresh-check` reads no `canvas.params` matrices of a lesson, so a matrix pair shown on a canvas and retold in a set's `why` is not reported (`algebra` `problems-4` finding 3).
 - An `expression` part with no `form` whose key is a polynomial and whose stem holds a `\div` or a fraction of polynomials could raise a validator warning (`algebra` `problems-4` finding 1; the class of the `review-problems-analysis-1-3` finding on a retyped question).
+
+Raised later (fix pass problems measure-prob 4):
+- `[rounding-tie]` did not fire on `app/content/courses/measure-prob/problems-4.json` items[2].parts[1].widget.wrong[0] (`no-weight`): slip value 0.0546875 (7/128) at 5 places, band abs 5e-06 around the stored 0.054688, so 0.05468 was refused. The rule reads the stored value, one digit past the asked places, and misses the tie.
