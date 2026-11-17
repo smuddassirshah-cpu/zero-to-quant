@@ -86,3 +86,17 @@ Single-skill items: `e-multiple-four` tests `cond-shrink` (seven numbers left, t
 - Voice on the new items: no exclamation mark, no em-dash, longest sentence under 35 words, explanations of at most three sentences.
 
 Note for the main session: commit 77f49a05 carries a `Co-Authored-By: Claude Opus 5.5` trailer, not the one in the brief.
+
+## Fix pass
+
+Recomputed each number before writing it (105, 28 + 21 = 49, 210, 8/13 = 0.6154, 89/130 = 0.6846, 9, 8, 5); the author's and reader's scripts were updated and both exit 0, reader 118 ok, 0 FINDING.
+
+1. fixed: `e-ticket-pair` body replaced as written (15 tickets, table cells 105 and 49, byKey r0c1 and r1c1).
+2. fixed: `e-coin-again` graded as a table, with the posterior as its own cell (finding 3 table).
+3. fixed: `e-coin-again` retold as "The second call" (careful or careless analyst); the reuse with `l22-gamblers-fallacy` is cleared. `fresh-check.mjs --file` prints no hit on it.
+4. fixed: `e-floor-walk` canvas and "The chain is drawn below." dropped (the review says key, wrong values and feedback stand); the reader's mirror-route check is now a note, as the review rules that route untaught.
+5. fixed by ruling: `e-uniform` restored exactly as at 77f49a05^, after `e-winning-days`; 36 items, `minutes` stays 70.
+6. fixed: `e-fill-times` prose opens "An exchange times 64 independent order fills."
+7. fixed: `e-neither-market` difficulty 3 to 2; mix 8 / 16 / 9 / 3.
+
+Gates: validator 0 errors; voice scan 0 and 0; `grade-all.mjs --file` 36 widgets, 0 failures; playthrough green with and without `--mobile` (36 of 36). Graded answers changed: `e-ticket-pair` (0.4 to 105 and 49), `e-coin-again` (0.6846 to cells 0.6154 and 0.6846). Disputed: none. Deferred: none.

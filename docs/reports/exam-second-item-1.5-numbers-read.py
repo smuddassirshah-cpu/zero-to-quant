@@ -26,7 +26,7 @@ EXAM = json.load(open(os.path.join(CONTENT, 'exams', 'topic-1.5.json'), encoding
 ITEMS = {it['id']: it for it in EXAM['items']}
 NEW = ['e-ticket-pair', 'e-neither-market', 'e-multiple-four', 'e-coin-again',
        'e-distance-three', 'e-fill-times', 'e-floor-walk']
-REMOVED = {'e-wait-six': ['dl-discrete'], 'e-uniform': ['dl-continuous']}
+REMOVED = {'e-wait-six': ['dl-discrete']}   # e-uniform restored (main session ruling)
 COURSES = ['counting-chance', 'conditional', 'random-vars', 'limits-thm', 'markov']
 
 n_ok = n_bad = 0
@@ -84,8 +84,8 @@ def text_of(it):
 
 
 # ---------------------------------------------------------------- structure
-check('35 items', len(EXAM['items']) == 35, str(len(EXAM['items'])))
-check('minutes pro rata, rounded to 5', EXAM['minutes'] == 5 * round(60 * 35 / 30 / 5) == 70, str(EXAM['minutes']))
+check('36 items', len(EXAM['items']) == 36 and 'e-uniform' in ITEMS, str(len(EXAM['items'])))
+check('minutes pro rata, rounded to 5', EXAM['minutes'] == 5 * round(60 * 36 / 30 / 5) == 70, str(EXAM['minutes']))
 check('all seven new ids present', all(i in ITEMS for i in NEW))
 check('removed ids absent', all(i not in ITEMS for i in REMOVED))
 check('ids unique', len(ITEMS) == len(EXAM['items']))
@@ -131,7 +131,7 @@ for i, sk in REMOVED.items():
         check(f'removal {i}: {s} keeps an item at difficulty 3 or below', any(d <= 3 for _, d, _ in keep),
               f'{keep}; essential to {essential[s]}')
 diff = collections.Counter(it['difficulty'] for it in EXAM['items'])
-check('difficulty mix 7/16/9/3', [diff[k] for k in (2, 3, 4, 5)] == [7, 16, 9, 3], str(sorted(diff.items())))
+check('difficulty mix 8/16/9/3', [diff[k] for k in (2, 3, 4, 5)] == [8, 16, 9, 3], str(sorted(diff.items())))
 
 # voice gates on the new items, read independently of voice-scan.py
 for i in NEW:
@@ -148,17 +148,18 @@ for i in NEW:
               and all(o.get('why') for o in opts if not o.get('correct')))
 
 # ---------------------------------------------------------------- e-ticket-pair
-pairs5 = list(itertools.combinations(range(1, 6), 2))
-key = F(sum(1 for a, b in pairs5 if (a + b) % 2 == 0), len(pairs5))
-rep = F(sum(1 for a in range(1, 6) for b in range(1, 6) if (a + b) % 2 == 0), 25)
-bands('e-ticket-pair', key, {'with-repeats': rep, 'odd': 1 - key})
-check('e-ticket-pair 10 pairs, 4 even', len(pairs5) == 10 and key == F(4, 10))
-check('e-ticket-pair explain 3 odd pairs, 1 even pair',
-      sum(1 for a, b in pairs5 if a % 2 and b % 2) == 3 and sum(1 for a, b in pairs5 if not a % 2 and not b % 2) == 1)
-# tag test: the multiplication rule alone gives the key, with no sample space and no count
-seq = F(3, 5) * F(2, 4) + F(2, 5) * F(1, 4)
-check('e-ticket-pair needs cc-sample and cc-count (no route round both)', seq != key,
-      f'draw-by-draw 3/5*2/4 + 2/5*1/4 = {seq}; ten pairs can also be listed by hand, as e-small-total (cc-sample only) asks')
+# table of two counts on tickets 1..15; counted by enumeration and by the odd/even split
+rows = ITEMS['e-ticket-pair']['widget']['rows']
+p15 = list(itertools.combinations(range(1, 16), 2))
+ev15 = sum(1 for a, b in p15 if (a + b) % 2 == 0)
+check('e-ticket-pair cell (a) 105 unordered pairs', rows[0][1]['answer'] == len(p15) == 105 == math.comb(15, 2))
+check('e-ticket-pair cell (b) 49 = 28 + 21 even sums', rows[1][1]['answer'] == ev15 == 49 == math.comb(8, 2) + math.comb(7, 2))
+check('e-ticket-pair cells are exact counts', rows[0][1]['tol']['abs'] == 0 and rows[1][1]['tol']['abs'] == 0)
+check('e-ticket-pair ordered draws give 210, named in the cell (a) feedback',
+      len([(a, b) for a in range(1, 16) for b in range(1, 16) if a != b]) == 210 and '210' in ITEMS['e-ticket-pair']['feedback']['byKey']['r0c1'])
+check('e-ticket-pair 8 odd and 7 even tickets', sum(1 for t in range(1, 16) if t % 2) == 8 and sum(1 for t in range(1, 16) if not t % 2) == 7)
+# tag test: 105 pairs cannot be listed by hand, and a draw-by-draw product gives a chance (7/15), not either count
+check('e-ticket-pair needs cc-sample and cc-count (graded counts, too many to list)', len(p15) > 100 and F(ev15, len(p15)) == F(7, 15))
 
 # ---------------------------------------------------------------- e-neither-market
 # 100 clients on a Venn diagram, integer regions
@@ -180,23 +181,30 @@ check('e-multiple-four d is P(multiple of 4)', F(len(m4), 30) == F(7, 30) and '{
 check('e-multiple-four explain lists 4..28, 12 and 24', m4 == [4, 8, 12, 16, 20, 24, 28] and m43 == [12, 24])
 check('e-multiple-four four distinct values', len({F(2, 7), F(1, 3), F(1, 15), F(7, 30)}) == 4)
 
-# ---------------------------------------------------------------- e-coin-again
-# joint route: P(HH) / P(H), no posterior and no Bayes step
+# ---------------------------------------------------------------- e-coin-again ("The second call", table)
 pH = F(1, 2) * F(1, 2) + F(1, 2) * F(4, 5)
 pHH = F(1, 2) * F(1, 2) ** 2 + F(1, 2) * F(4, 5) ** 2
 key = pHH / pH
-bands('e-coin-again', key, {'no-update': pH, 'posterior': F(1, 2) * F(4, 5) / pH, 'biased': F(4, 5)})
-check('e-coin-again exact 89/130, posterior 8/13, first head 0.65', key == F(89, 130) and F(1, 2) * F(4, 5) / pH == F(8, 13) and pH == F(13, 20))
-check('e-coin-again needs bayes (no route round the posterior)', False,
-      f'P(HH)/P(H) = {pHH}/{pH} = {key}: total probability twice and one division, no inversion')
+post = F(1, 2) * F(4, 5) / pH
+rows = ITEMS['e-coin-again']['widget']['rows']
+check('e-coin-again exact 89/130, posterior 8/13, first call 0.65', key == F(89, 130) and post == F(8, 13) and pH == F(13, 20))
+check('e-coin-again cell (a) 0.6154', rows[0][1]['answer'] == round(float(post), 4) == 0.6154)
+check('e-coin-again cell (b) 0.6846', rows[1][1]['answer'] == round(float(key), 4) == 0.6846)
+check('e-coin-again tolerances 0.0005 and no tie', all(r[1]['tol']['abs'] == 0.0005 for r in rows) and abs(float(post) * 1e4 % 1 - 0.5) > 1e-3 and abs(float(key) * 1e4 % 1 - 0.5) > 1e-3)
+check('e-coin-again cells apart', abs(float(post) - float(key)) > 0.05)
+# tag test: cell (a) is graded on its own, so the posterior cannot be skipped
+check('e-coin-again needs bayes (posterior is its own graded cell)', len(rows) == 2 and rows[0][1]['answer'] == 0.6154)
 rng = random.Random(15)
-h1 = h2 = 0
+h1 = h2 = c1 = 0
 for _ in range(400000):
-    p = 0.8 if rng.random() < 0.5 else 0.5
+    careful = rng.random() < 0.5
+    p = 0.8 if careful else 0.5
     if rng.random() < p:
         h1 += 1
+        c1 += careful
         h2 += rng.random() < p
-check('e-coin-again simulation', abs(h2 / h1 - float(key)) < 0.004, f'{h2 / h1:.4f}')
+check('e-coin-again simulation, second call', abs(h2 / h1 - float(key)) < 0.004, f'{h2 / h1:.4f}')
+check('e-coin-again simulation, careful', abs(c1 / h1 - float(post)) < 0.004, f'{c1 / h1:.4f}')
 
 # ---------------------------------------------------------------- e-distance-three
 pmf = collections.Counter()
@@ -238,13 +246,10 @@ check('e-fill-times no rounding tie', abs(clt_exact * 1e4 % 1 - 0.5) > 1e-2, f'{
 check('e-fill-times prints its normal value in the prose, as e-clt-pnl does', '\\Phi(2.5) = 0.9938' in ITEMS['e-fill-times']['prose'])
 
 # ---------------------------------------------------------------- e-floor-walk
-edges = ITEMS['e-floor-walk']['canvas']['params']['edges']
-P = collections.defaultdict(dict)
-for e in edges:
-    P[e['from']][e['to']] = F(str(e['w']))
+check('e-floor-walk canvas dropped (review note 4)', 'canvas' not in ITEMS['e-floor-walk'] and 'drawn below' not in ITEMS['e-floor-walk']['prose'])
+# the walk in the prose: 0 -> 1 surely, up or down a half each at 1 and 2, absorbed at 3
+P = {'s0': {'s1': F(1)}, 's1': {'s0': F(1, 2), 's2': F(1, 2)}, 's2': {'s1': F(1, 2), 's3': F(1, 2)}, 's3': {'s3': F(1)}}
 check('e-floor-walk rows sum to 1', all(sum(r.values()) == 1 for r in P.values()) and len(P) == 4)
-check('e-floor-walk graph is the walk in the prose',
-      P['s0'] == {'s1': 1} and P['s1'] == {'s0': F(1, 2), 's2': F(1, 2)} and P['s2'] == {'s1': F(1, 2), 's3': F(1, 2)} and P['s3'] == {'s3': 1})
 
 
 def hit_times(Q):
@@ -280,22 +285,10 @@ for _ in range(100000):
 check('e-floor-walk simulation', abs(tot / 100000 - 9) < 0.1, f'{tot / 100000:.3f}')
 # tag test: unfold the floor to a fair walk on -3..3; the duration formula i(N - i) of e-ruin-length gives the key
 unfold = 3 * (6 - 3)
-check('e-floor-walk needs mc-firststep (no route round the equations)', unfold != E[0],
-      f'mirror at 0: fair walk from 3 on 0..6 lasts i(N - i) = {unfold}, the formula printed in e-ruin-length feedback')
+print(f'note: mirror route i(N - i) = {unfold} equals the key but is not taught in markov (review note 4); the learner builds the walk from the prose')
+check('e-floor-walk first-step equations give the key without the canvas', E[0] == 9 and 'canvas' not in ITEMS['e-floor-walk'])
 
-# ---------------------------------------------------------------- proposed fixes, recomputed
-print('--- numbers of the fixes proposed in the review')
-p15 = list(itertools.combinations(range(1, 16), 2))
-k15 = F(sum(1 for a, b in p15 if (a + b) % 2 == 0), len(p15))
-o15 = [(a, b) for a in range(1, 16) for b in range(1, 16) if a != b]
-check('fix 1: tickets 1 to 15, cell (a) 105 pairs, cell (b) 28 + 21 = 49 with an even sum',
-      len(p15) == 105 == math.comb(15, 2) and math.comb(8, 2) == 28 and math.comb(7, 2) == 21
-      and sum(1 for a, b in p15 if (a + b) % 2 == 0) == 49 and k15 == F(7, 15), str(k15))
-check('fix 1: ordered draws give 210, named in the cell (a) feedback', len(o15) == 210 == 15 * 14)
-check('fix 1: 8 odd and 7 even tickets', sum(1 for t in range(1, 16) if t % 2) == 8)
-post = F(1, 2) * F(4, 5) / pH
-check('fix 2: cell (a) 8/13 = 0.6154, cell (b) 89/130 = 0.6846', round(float(post), 4) == 0.6154 and round(float(pHH / pH), 4) == 0.6846)
-check('fix 2: cells apart, no tie', abs(float(post) - float(pHH / pH)) > 0.001 and abs(float(post) * 1e4 % 1 - 0.5) > 1e-3)
-check('fix 5: with e-uniform back, 36 items and 70 minutes', 5 * round(60 * 36 / 30 / 5) == 70, f'{60 * 36 / 30}')
+# ---------------------------------------------------------------- applied rulings
+check('e-uniform back: 36 items and 70 minutes', 5 * round(60 * 36 / 30 / 5) == 70, f'{60 * 36 / 30}')
 
 print(f'\n{n_ok} ok, {n_bad} FINDING')

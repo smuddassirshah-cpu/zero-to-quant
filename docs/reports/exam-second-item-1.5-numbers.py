@@ -30,22 +30,24 @@ def r4(x):
     return round(float(x) + 1e-12, 4)
 
 # Exam shape
-check('item count', len(d['items']), 35)
-check('minutes 60 * 35 / 30 rounded to 5', d['minutes'], 5 * round(60 * 35 / 30 / 5))
-for gone in ('e-wait-six', 'e-uniform'):
-    check(f'{gone} removed', gone in items, False)
+check('item count', len(d['items']), 36)
+check('minutes stay 70 (main session ruling)', d['minutes'], 70)
+check('e-wait-six removed', 'e-wait-six' in items, False)
+check('e-uniform restored', 'e-uniform' in items, True)
 
-# e-ticket-pair: two different tickets from 1..5
+# e-ticket-pair: two different tickets from 1..15, table of two counts
 it = items['e-ticket-pair']
-pairs = list(itertools.combinations(range(1, 6), 2))
+pairs = list(itertools.combinations(range(1, 16), 2))
 even = [p for p in pairs if sum(p) % 2 == 0]
-check('pairs', len(pairs), math.comb(5, 2))
-check('even pairs', len(even), math.comb(3, 2) + math.comb(2, 2))
-check('ticket key', it['widget']['answer'], F(len(even), len(pairs)))
-rep = [p for p in itertools.product(range(1, 6), repeat=2) if sum(p) % 2 == 0]
-check('ticket with-repeats', wrongs(it)['with-repeats'], F(len(rep), 25))
-check('ticket odd', wrongs(it)['odd'], 1 - F(len(even), len(pairs)))
-refused(it)
+rows = it['widget']['rows']
+check('pairs 105', len(pairs), math.comb(15, 2))
+check('even pairs 49', len(even), math.comb(8, 2) + math.comb(7, 2))
+check('odd-odd 28', math.comb(8, 2), 28)
+check('even-even 21', math.comb(7, 2), 21)
+check('ordered draws 210', 15 * 14, 210)
+check('ticket cell a', rows[0][1]['answer'], len(pairs))
+check('ticket cell b', rows[1][1]['answer'], len(even))
+check('ticket tol exact', rows[0][1]['tol']['abs'] + rows[1][1]['tol']['abs'], 0)
 
 # e-neither-market
 it = items['e-neither-market']
@@ -72,22 +74,23 @@ check('d = 7/30 news', F(len(m4), 30), F(7, 30))
 vals = [F(2, 7), F(1, 3), F(1, 15), F(7, 30)]
 check('options distinct', len(set(vals)), 4)
 
-# e-coin-again
+# e-coin-again (now "The second call": careful or careless analyst, table of two cells)
 it = items['e-coin-again']
 pf, pb = F(1, 2), F(4, 5)
 ph1 = F(1, 2) * pf + F(1, 2) * pb
 post_b = F(1, 2) * pb / ph1
 ph2 = post_b * pb + (1 - post_b) * pf
-check('P(H1) printed 0.65', ph1, F(13, 20))
+rows = it['widget']['rows']
+check('P(first right) printed 0.65', ph1, F(13, 20))
 check('posterior 8/13', post_b, F(8, 13))
-check('next head 89/130', ph2, F(89, 130))
-check('next head direct', (F(1, 2) * pf**2 + F(1, 2) * pb**2) / ph1, F(89, 130))
-check('coin key 4 places', it['widget']['answer'], r4(ph2))
-check('coin no-update', wrongs(it)['no-update'], r4(ph1))
-check('coin posterior', wrongs(it)['posterior'], r4(post_b))
-check('coin biased', wrongs(it)['biased'], pb)
+check('next right 89/130', ph2, F(89, 130))
+check('next right direct', (F(1, 2) * pf**2 + F(1, 2) * pb**2) / ph1, F(89, 130))
+check('careful numerator 0.4', F(1, 2) * pb, F(2, 5))
+check('cell a 4 places', rows[0][1]['answer'], r4(post_b))
+check('cell b 4 places', rows[1][1]['answer'], r4(ph2))
+check('cells apart', abs(rows[0][1]['answer'] - rows[1][1]['answer']) > 0.01, True)
 check('key not a rounding tie', abs(float(ph2) * 1e4 % 1 - 0.5) > 0.01, True)
-refused(it)
+check('posterior not a rounding tie', abs(float(post_b) * 1e4 % 1 - 0.5) > 0.01, True)
 
 # e-distance-three
 it = items['e-distance-three']
@@ -139,11 +142,7 @@ check('lost-step', wrongs(it)['lost-step'], s1)
 check('straight-up', wrongs(it)['straight-up'], 3)
 check('from-one', wrongs(it)['from-one'], E1)
 refused(it)
-# canvas rows sum to 1
-out = {}
-for edge in it['canvas']['params']['edges']:
-    out[edge['from']] = out.get(edge['from'], 0) + edge['w']
-check('canvas rows sum to 1', all(abs(v - 1) < 1e-9 for v in out.values()), True)
+check('floor-walk has no canvas', 'canvas' in it, False)
 
 # Skill coverage: every essential skill of a topic level has at least two auto items
 import glob, collections
