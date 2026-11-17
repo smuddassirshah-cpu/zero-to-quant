@@ -156,6 +156,8 @@ One to three sets in a universe; each region is its exact shape.
 
 **Integration pass 6 additions:** `scale: "log"` (positive values, ticks at 1, 2, 5 times powers of ten) and `scale: "log-odds"` (probabilities placed by ln(p/(1 − p)), ticks at 1%, 5%, 10%, 25%, 50%, …; `format: "percent"`); values, snapping and labels stay in the natural unit.
 
+**Predict first (ENGINE-BACKLOG 1211):** `canvas.controlsAfter: "correct" | "check"` is read by the player, not the canvas. Until the screen's widget is checked (correct, or any check) it sets `disabled` and `aria-disabled` on every button, input and select in the canvas controls row (`.cvb-extra`, as the bars `sim` chips) and in `.lsn-controls`, and shows `.lsn-gate-note`. Controls a canvas draws later are caught by a MutationObserver. Needs a widget on the screen.
+
 **Integration pass 7 additions:** negative tick labels use the minus sign −. `params.tapIntervals: true` (or `tap: true` on an interval) makes intervals tap targets by their ids, beside points.
 
 ## boxes

@@ -1659,6 +1659,7 @@ const checkCanvas = (file, where, c) => {
     if (k.options != null && k.stops != null) err(file, `${where}.controls[${i}]`, 'a control has stops or options, not both');
   });
   if (c.maxHeight != null && !(typeof c.maxHeight === 'number' && c.maxHeight >= 120)) err(file, `${where}.maxHeight`, 'maxHeight is a number of pixels, 120 or more');
+  if (c.controlsAfter != null && c.controlsAfter !== 'correct' && c.controlsAfter !== 'check') err(file, `${where}.controlsAfter`, 'controlsAfter is "correct" or "check" (ENGINE-BACKLOG 1211)');
   /* item 326: a bars sim reads params and state.params by name; series sims read params */
   if (c.kind === 'bars' && isObj(P.sim)) checkSim(file, `${where}.params.sim`, P.sim, Object.keys({ ...(P.params || {}), ...(S.params || {}) }));
   if (c.kind === 'series') listOf(P.series).forEach((q, i) => { if (isObj(q) && isObj(q.sim)) checkSim(file, `${where}.params.series[${i}].sim`, q.sim, Object.keys(P.params || {})); });

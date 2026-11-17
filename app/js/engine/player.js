@@ -333,6 +333,23 @@
         Z.carry[w.carry] = v;
       } catch (e) { console.error(e); }
     };
+    /* ENGINE-BACKLOG 1211: canvas.controlsAfter "correct" | "check" holds the canvas controls (bars sim chips, explore
+       sliders and buttons) disabled, with a short note, until the widget is checked correct ("correct") or checked at all
+       ("check"). A revealed solution opens them too. */
+    const gateMode = spec.canvas && (spec.canvas.controlsAfter === 'correct' || spec.canvas.controlsAfter === 'check') && !!widget && cvHost ? spec.canvas.controlsAfter : null;
+    let gateOpen = !gateMode, gateNote = null, gateObs = null;
+    const gateSel = '.cvb-extra button, .cvb-extra input, .cvb-extra select, .lsn-controls button, .lsn-controls input, .lsn-controls select';
+    const gateApply = () => {
+      if (!gateMode) return;
+      el.querySelectorAll(gateSel).forEach((n) => { if (gateOpen) { if (n.dataset.gated) { n.disabled = false; n.removeAttribute('aria-disabled'); delete n.dataset.gated; } } else if (!n.disabled) { n.disabled = true; n.setAttribute('aria-disabled', 'true'); n.dataset.gated = '1'; } });
+    };
+    const gateOpenNow = () => { if (gateOpen) return; gateOpen = true; if (gateObs) gateObs.disconnect(); gateApply(); if (gateNote) { gateNote.remove(); gateNote = null; } };
+    if (gateMode) {
+      gateNote = Z.h('<p class="lsn-gate-note t-caption" role="status">Answer first, then run it.</p>');
+      (el.querySelector('.lsn-controls') || cvHost).insertAdjacentElement('afterend', gateNote);
+      gateApply();
+      if (typeof MutationObserver === 'function') { gateObs = new MutationObserver(gateApply); gateObs.observe(el, { childList: true, subtree: true }); }
+    }
     const graded = !!widget;
     const step = {
       spec, el, type, mode, widget, canvas, cbar,
@@ -344,14 +361,14 @@
       lock: () => widget && widget.lock(),
       grade: async () => {
         if (!widget) return { ok: true, key: null };
-        try { const r = (await widget.grade()) || { ok: false, key: null }; storeCarry(); return r; } catch (e) { console.error(e); return { ok: false, key: 'error', line: 'This answer could not be checked.' }; }
+        try { const r = (await widget.grade()) || { ok: false, key: null }; storeCarry(); if (gateMode && !r.pending && (gateMode === 'check' || r.ok)) gateOpenNow(); return r; } catch (e) { console.error(e); return { ok: false, key: 'error', line: 'This answer could not be checked.' }; }
       },
       mark(r) { if (!widget) return; widget.markGraded(r); if (!r.ok && !r.final && widget.showWhy) { try { widget.showWhy(r.key); } catch (e) { console.error(e); } } },
       clear() { widget && widget.unlock(); },
       reset() { widget && widget.reset(); resetCanvas(); if (w && w.kind === 'tap-regions') count(tapCount(0)); },
       reveal() {
         if (!widget) return;
-        widget.reveal(); storeCarry();
+        widget.reveal(); storeCarry(); gateOpenNow();
         if (canvas && spec.explain && spec.explain.canvas) { try { const { controls: cv0, ...pt } = spec.explain.canvas; canvas.set(pt); if (cv0 && typeof cv0 === 'object' && canvas.setParam) Object.entries(cv0).forEach(([b, v]) => canvas.setParam(b, v)); } catch (e) { console.error(e); } }
       },
       point(h) {
@@ -733,7 +750,7 @@
         if (r.ok) S.okChecks++;
         step.mark(r); setFrame(r.ok ? 'ok' : 'no'); syncDots();
         if (r.ok) { Z.sound('correct'); Z.haptic(10); } else Z.sound('notyet');
-        chipLater(() => r.ok ? chip('ok', 'Correct.', spec.feedback && spec.feedback.correct, XP.quiz) : chip('no', 'Not quite right.', notYetLine(spec, r)), 80);
+        chipLater(() => r.ok ? chip('ok', 'Correct.', spec.feedback && spec.feedback.correct, XP.quiz) : chip('no', 'Not quite right.', notYetLine(spec, r), 0, 'Added to your Redo queue.'), 80);
         if (r.ok) later(() => addXP(XP.quiz), 160);
         S.st = r.ok ? 'qok' : 'qno'; refresh();
         later(scrollGraded, 140);
