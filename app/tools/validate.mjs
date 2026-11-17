@@ -339,6 +339,13 @@ const TABLE_NEEDS = /\\Phi\s*(?:\^\{-1\}\s*)?\(|\\Phi\^\{-1\}|\bP\(\s*(?:Z\b|t\b
 const TABLE_ASKED = /\btail (?:area|probability)\b|\bcritical value\b|\bquantile\b|\bp-value\b|\bpercentile point\b/i;
 const TABLE_GIVEN = /\btables?\b|software|calculator|statistical package|\bscipy\b|\bpython\b|\bR\b|\bexcel\b|\bNORM\.|distribution function|\bCDF\b|\bcumulative\b|\bgiven\b|\bprovided\b|\bquoted\b|\buse\s+(?:the\s+)?(?:\$?[ztF]\b|\\Phi|critical|tabulated|standard normal)|\\Phi\s*\([^)]*\)\s*=\s*(?:[\d.]|\\t?frac)|\b[ztF]\s*=\s*\\?[\d.]|\b[ztF]_\{?[^=$]{0,12}=\s*[\d.]|(?:critical value|quantile|percentile|tail(?: area| probability)?|p-value)[^.?$]{0,60}?(?:is|are|of|=|at)\s*\$?\\?[\d.]|(?:critical value|quantile|percentile|tail(?: area| probability)?|p-value)[^.?$]{0,60}?\s\$?\\?\d+\.\d{2,}|\bP\([^)]*\)\s*=\s*(?:e\^|1\s*-|\\t?frac)|\bp\s*=\s*[\d.]|\\Phi\s*\(\s*[\d.\-]+\s*\)\s*=\s*[\d.]/i;
 const PERCENT_ASK2 = /\bwhat\s+(?:per\s?cent|percent(?:age)?)\b|\b(?:give|state|write|express|report|find)\b[^.?]{0,80}?\b(?:per\s?cent|percent(?:age)?)\b|\(\s*\\?%\s*\)/i;
+const keyPrinted = (text, ans, step, unit) => {
+  const k = unit === '%' ? ans * 100 : ans, tol = (step != null ? (unit === '%' ? step * 100 : step) / 2 : 0) + 1e-9 * Math.max(1, Math.abs(k));
+  return (String(text || '').replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d+(?:\.\d+)?/g) || []).some((n) => Math.abs(+n - Math.abs(k)) <= tol);
+};
+/* [table-source] second test (engine pass 8 C): a part that names a table prints \Phi(x) with x to three or more places; a learner reads the table at x to 2 places (both neighbours when x ends in 5 at the third place).
+   normalCdf is exact to 1e-12 (series), the table value is Phi to 4 places. */
+const normalCdf = (z) => { let t = z, sum = z; for (let n = 1; n < 80; n++) { t *= -z * z / (2 * n); sum += t / (2 * n + 1); } return 0.5 + sum / Math.sqrt(2 * Math.PI); };
 const pass8Rules = (file, where, it, p) => {
   const w = isObj(p) && isObj(p.widget) ? p.widget : null;
   if (!w || w.kind !== 'numeric' || typeof w.answer !== 'number' || !Number.isFinite(w.answer) || !isObj(w.tol)) return;
@@ -355,6 +362,9 @@ const pass8Rules = (file, where, it, p) => {
     if (isTie(ans, d, scale) && hw < step / 2 * (1 - 1e-6)) warn(file, where, `[rounding-tie] the key ${fmt(ans)} is exactly on a rounding tie at ${pl}; its band +-${+hw.toPrecision(3)} takes neither rounding (${fmt(ans - step / 2)}, ${fmt(ans + step / 2)}): widen it to +-${fmt(step / 2)} or move the key off the tie`);
     wrongs.forEach((x, i) => {
       const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
+      // engine pass 8 C: skip when the widened band (+-step/2) would meet the band of the key or of another wrong[] of the part: the value is a slip typed as it stands, not an angle or sum rounded
+      const meets = (c, h2) => Math.abs(c - x.value) <= step / 2 + h2 + 1e-9 * Math.max(1, Math.abs(c));
+      if (meets(ans, hw) || wrongs.some((y) => y !== x && meets(y.value, halfWidth(y.value, y.tol ?? { abs: 1e-9 })))) return;
       if (isTie(x.value, d, scale) && wh < step / 2 * (1 - 1e-6)) warn(file, `${where}.wrong[${i}]`, `[rounding-tie] wrong "${x.id || i}" (${fmt(x.value)}) is exactly on a rounding tie at ${pl}; its band +-${+wh.toPrecision(3)} takes neither rounding (${fmt(x.value - step / 2)}, ${fmt(x.value + step / 2)})`);
     });
     fb.forEach(([name, text]) => {
@@ -368,6 +378,7 @@ const pass8Rules = (file, where, it, p) => {
     const v = finalPrinted(text, w.unit);
     if (v == null || Math.abs(v - ans) > 0.03 * Math.abs(ans)) return;
     if (wrongs.some(x => closeTo(x.value, v))) return;
+    if (keyPrinted(text, ans, step, w.unit)) return;   // engine pass 8 C: the text prints the key before its last figure ("falls from 1.80 to 1.476 but no further than $1.20 + 0.24 = 1.44$")
     const dv = decimalsOf(v), da = decimalsOf(ans);
     if (dv < da && Math.abs(Math.round(ans * Math.pow(10, dv)) / Math.pow(10, dv) - v) <= 1e-9 * Math.max(1, Math.abs(v)) && Math.abs(v - ans) <= 0.02 * Math.abs(ans)) return;   // [tight-band] reports it
     const typed = step != null && Math.abs(v / step - Math.round(v / step)) > 1e-6 ? Math.round(v / step) * step : v;
@@ -377,6 +388,20 @@ const pass8Rules = (file, where, it, p) => {
   const printed = fb.map(([, t]) => String(t || '')).join(' ');
   if (TABLE_NEEDS.test(printed) || TABLE_ASKED.test(stripMathsAndCode(q))) {
     if (!TABLE_GIVEN.test(`${(it && it.prose) || ''} ${q}`)) warn(file, where, `[table-source] the part needs a tail area, quantile or table value (${(printed.match(TABLE_NEEDS) || stripMathsAndCode(q).match(TABLE_ASKED) || [''])[0].trim()}) but neither the stem nor the question gives it or names its source: state the value, or say where to read it (a table to 4 places, software)`);
+  }
+  if (!scaled && /\btables?\b/i.test(`${(it && it.prose) || ''} ${q}`)) {
+    const seen = new Set();
+    for (const [, text] of fb) for (const m of String(text || '').matchAll(/\\Phi\s*\(\s*(-?\d+\.\d{3,})\s*\)/g)) {
+      const x = +m[1];
+      if (seen.has(x) || Math.abs(x) > 6) continue;
+      seen.add(x);
+      const ties = Math.abs(x * 100 - Math.floor(x * 100) - 0.5) < 1e-9, reads = ties ? [Math.floor(x * 100) / 100, Math.ceil(x * 100) / 100] : [Math.round(x * 100) / 100];
+      const phi = (z) => Math.round(normalCdf(z) * 1e4) / 1e4, T = [(f) => f, (f) => 1 - f, (f) => 2 * (1 - f), (f) => 2 * f - 1];
+      const t = T.find((f) => Math.abs(f(normalCdf(x)) - ans) <= hw * 1.5 + 1e-9);
+      if (!t) continue;
+      const off = reads.map((r) => { const v = t(phi(r)), typed = step != null ? Math.round(v / step) * step : v; return [r, typed]; }).filter(([, v]) => Math.abs(v - ans) > hw + 1e-9 * Math.max(1, Math.abs(ans)));
+      if (off.length) warn(file, where, `[table-source] the part names a table, but its band +-${+hw.toPrecision(3)} around ${ans} refuses the reading at ${off.map(([r, v]) => `z = ${r} (${+v.toPrecision(6)})`).join(' and ')} of \\Phi(${m[1]}): widen the band to take each 2-place table reading`);
+    }
   }
   /* [percent-unit] */
   const qPct = q.replace(/\\?%\s*(?:\^\s*\{?2\}?|²)|percentage points?/gi, ' ').replace(/\$\$|\$/g, ' ');   // "%²" and percentage points are not a percentage answer
