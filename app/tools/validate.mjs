@@ -602,12 +602,24 @@ const pass8Rules = (file, where, it, p) => {
     const r0 = Math.round(ans / step) * step, nb = r0 + (ans >= r0 ? 1 : -1) * step, dist = Math.abs(nb - ans), fr = Math.abs(ans) / step - Math.floor(Math.abs(ans) / step);
     if (Math.abs(fr - 0.5) > 0.07 && dist <= hw + 1e-12 && hw - dist <= 0.01 * step + 2e-9) warn(file, where, `[band-edge] the key ${+ans.toPrecision(10)} rounds to ${+r0.toPrecision(10)} at the ${d} decimal place${d === 1 ? '' : 's'} asked, but its band +-${+hw.toPrecision(3)} reaches ${+nb.toPrecision(10)}, the next rounding, by a float margin: narrow the band to take the key's rounding only, or widen it on purpose to a full step`);
   }
-  /* [carry-band] (ENGINE-BACKLOG 1130): a part that carries a value "from part k" is worked by some learners from the printed (rounded) carry and by others from the unrounded one, so a slip's
-     band must be as wide as the key's: a narrower wrong band refuses the slip made with the other carry (garch p-recalibrate-short-var part 3, inverted at 1.5 against a key band of 5) */
-  if (!scaled && /\bfrom\s+parts?\s*\d/i.test(q)) wrongs.forEach((x, i) => {
-    const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
-    if (wh < hw * (1 - 1e-6) - 1e-12) warn(file, `${where}.wrong[${i}]`, `[carry-band] the question carries a value "from part k" and wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, narrower than the key's +-${+hw.toPrecision(3)}: a slip worked from the unrounded carry (or the printed one) lands outside it; widen it to the key's band`);
-  });
+  /* [carry-band] (ENGINE-BACKLOG 1130; tightened in pass 9b): a part that carries a printed, rounded value "from part k" is worked by some learners from that figure and by others from the unrounded one.
+     The carry differs from the source key by a relative error e (0.67 against 0.6667 is 0.5%), and a slip that uses it moves by about |slip| x e, so a wrong[] band narrower than that refuses one of
+     the two (garch p-recalibrate-short-var part 3). Not reported when the carried figure is exact (an integer, a formula, a given, or equal to the source key as stored): in a sample of 20 of the
+     first 128 hits none was a fault, since a wrong band narrower than the key's band is by design when the carry is exact or the slip is small. */
+  if (!scaled && /\bfrom\s+parts?\s*\d/i.test(q) && Array.isArray(it && it.parts)) {
+    const here = it.parts.indexOf(p);
+    let e = 0;
+    for (const m of q.replace(/\{,\}/g, ',').replace(/(\d),(?=\d{3}\b)/g, '$1').matchAll(/(-?\d+(?:\.\d+)?)\s*(?:%|\\%)?[^.\d]{0,40}?\s*from\s+parts?\s*(\d)/gi)) {
+      const src = it.parts[+m[2] - 1], sw = src && it.parts.indexOf(src) < here && isObj(src.widget) && src.widget.kind === 'numeric' && Number.isFinite(src.widget.answer) && src.widget.answer !== 0 ? src.widget : null;
+      if (!sw) continue;
+      for (const sc of [1, 100, 0.01]) { const c = +m[1] / sc, r = Math.abs(c - sw.answer) / Math.abs(sw.answer); if (r > 1e-9 && r < 0.01) e = Math.max(e, r); }
+    }
+    if (e > 0) wrongs.forEach((x, i) => {
+      const wh = halfWidth(x.value, x.tol ?? { abs: 1e-9 }), need = Math.abs(x.value) * e;
+      if (Number.isInteger(x.value) && wh <= 1e-6) return;   // an exact whole-number slip (a count, a constant) does not move with a rounded carry
+      if (need > 1e-12 && wh < need * (1 - 1e-6)) warn(file, `${where}.wrong[${i}]`, `[carry-band] the question carries a rounded value "from part k" (relative error ${+(e * 100).toPrecision(2)}% against the stored key) and wrong "${x.id || i}" (${x.value}) has a band of +-${+wh.toPrecision(3)}, narrower than the ${+need.toPrecision(2)} a slip worked from the unrounded carry (or the printed one) moves by: widen it`);
+    });
+  }
   /* [table-source] */
   const printed =fb.map(([, t]) => String(t || '')).join(' ');
   if (TABLE_NEEDS.test(printed) || TABLE_ASKED.test(stripMathsAndCode(q))) {

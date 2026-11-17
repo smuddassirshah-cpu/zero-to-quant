@@ -4,7 +4,7 @@
    in each part and reads the report by part. Parts are placed in order, five to an item; an ITEM case fills a whole item (a chain of parts). Nothing under app/content is touched.
      [slip-expr]        a numeric wrong[] entry's "slip" expression that does not read or does not give the entry's value   (1029)
      [no-chain]         a problem whose later parts never cite an earlier part                                              (1079)
-     [carry-band]       "Using x from part k" with a wrong band narrower than the key band                                   (1130)
+     [carry-band]       "Using x from part k" (a rounded carry) with a wrong band narrower than |slip| x the carry's relative error (pass 9b)                                   (1130)
      [quotient-band]    a printed quotient of two restated figures that leaves the key's band                               (1138)
      [shown-arithmetic] widened: "x is $a \times b$" and a quotient inside \Phi\big(...\big)                                (1142)
      [slip-band]        a slip typed at the places the part asks that falls in the key's band or outside its own band        (1175)
@@ -32,10 +32,6 @@ const PARTS = [
   ['slip-expression-does-not-read', Q2, num(1.73, { abs: 0.005 }, { wrong: [{ id: 'cubed', value: 0.43, tol: { abs: 0.005 }, slip: 'one quarter of 1.2 cubed' }] }), OK_FB, OK_EX, [['warn', 'does not read as arithmetic']]],
   ['slip-expression-with-functions-and-a-rounded-value', Q4, num(2.1, { abs: 0.0005 }, { wrong: [{ id: 'root', value: 1.4142, slip: 'sqrt(2)' }, { id: 'lg', value: 0.6931, slip: 'ln(2)' }, { id: 'ex', value: 7.3891, slip: 'exp(2)' }] }), OK_FB, OK_EX, [['nowarn', '[slip-expr]']]],
   ['slip-expression-that-is-not-a-string', Q2, num(1.73, { abs: 0.005 }, { wrong: [{ id: 'cubed', value: 0.43, tol: { abs: 0.005 }, slip: 0.43 }] }), OK_FB, OK_EX, [['warn', 'slip is an arithmetic expression']]],
-  /* 1130 [carry-band] */
-  ['carry-slip-band-narrower-than-the-key', 'Using $c = 1.1379$ from part 2, what is the VaR? Give the nearest whole number.', num(76945, { abs: 5 }, { wrong: [{ id: 'inverted', value: 59425, tol: { abs: 1.5 } }] }), OK_FB, OK_EX, [['warn', '[carry-band]'], ['warn', 'wrong "inverted"']]],
-  ['carry-slip-band-as-wide-as-the-key', 'Using $c = 1.1379$ from part 2, what is the VaR? Give the nearest whole number.', num(76945, { abs: 5 }, { wrong: [{ id: 'inverted', value: 59425, tol: { abs: 5 } }] }), OK_FB, OK_EX, [['nowarn', '[carry-band]']]],
-  ['narrow-slip-band-without-a-carry', 'What is the VaR? Give the nearest whole number.', num(76945, { abs: 5 }, { wrong: [{ id: 'inverted', value: 59425, tol: { abs: 1.5 } }] }), OK_FB, OK_EX, [['nowarn', '[carry-band]']]],
   /* 1138 [quotient-band] */
   ['quotient-of-scientific-figures-leaves-the-band', 'Using 0.0596% from part 2 and a factor error of $3.16 \\times 10^{-8}$, by what factor is the error enlarged? Give the nearest whole number.', num(18850, { abs: 5 }), '$5.96 \\times 10^{-4} \\div 3.16 \\times 10^{-8} \\approx 18{,}861$.', OK_EX, [['warn', '[quotient-band]'], ['warn', '18861']]],
   ['quotient-of-scientific-figures-in-the-band', 'Using 0.0596% from part 2 and a factor error of $3.16 \\times 10^{-8}$, by what factor is the error enlarged? Give the nearest whole number.', num(18850, { abs: 12 }), '$5.96 \\times 10^{-4} \\div 3.16 \\times 10^{-8} \\approx 18{,}861$.', OK_EX, [['nowarn', '[quotient-band]']]],
@@ -65,6 +61,14 @@ const ITEMS = [
   ['later-part-restates-an-earlier-key', [P('What is the first value? Give 1 decimal place.', 12.34), P('The desk holds 12.3 of the stock. What is the second value? Give 1 decimal place.', 7.5), P('What is the third value? Give 1 decimal place.', 3.5)], [['nowarn', '[no-chain]']]],
   ['small-whole-key-is-not-a-citation', [P('How many days? Give the nearest whole number.', 4), P('A spread of 4 days costs how much? Give 1 decimal place.', 7.5), P('What is the third value? Give 1 decimal place.', 3.5)], [['warn', '[no-chain]']]],
 ];
+/* 1130 [carry-band], tightened in pass 9b: a slip band against |slip| x the relative error of a rounded carry; an exact carry is silent */
+const CARRY = (carry, tol, q2) => [P('What is the factor c? Give 2 decimal places.', 1.14), [q2 || `Using ${carry} from part 1, what is the VaR? Give the nearest whole number.`, num(76945, { abs: 5 }, { wrong: [{ id: 'inverted', value: 59425, tol: { abs: tol } }] }), OK_FB, OK_EX], P('What is the third value? Give 1 decimal place.', 3.5)];
+ITEMS.push(
+  ['carry-rounded-slip-band-too-narrow', CARRY('1.1379', 1.5), [['warn', '[carry-band]'], ['warn', 'wrong "inverted"']]],
+  ['carry-rounded-slip-band-wide-enough', CARRY('1.1379', 200), [['nowarn', '[carry-band]']]],
+  ['carry-exact-the-stored-key', CARRY('1.14', 1.5), [['nowarn', '[carry-band]']]],
+  ['carry-without-a-from-part', CARRY('1.1379', 1.5, 'What is the VaR? Give the nearest whole number.'), [['nowarn', '[carry-band]']]],
+);
 const place = PARTS.map((c, n) => [Math.floor(n / 5), n % 5, c]);
 const itemBase = Math.ceil(PARTS.length / 5);
 const nItems = Math.max(itemBase + ITEMS.length, 3);
