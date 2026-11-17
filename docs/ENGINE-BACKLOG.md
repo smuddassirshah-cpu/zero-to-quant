@@ -2171,7 +2171,7 @@ Bank part 2 engine pass (engine pass AB-2, `docs/reports/engine-pass-ab-2.md`; t
 929. Done [Should] `fresh-check.mjs`: a reused question line below the share gate. [inbox: bank 2 session 2]
 929 status: done. for a `--bank`, `--exam` or `--drill` target an advisory line (exit 0, `stem shares n words`) reports a run of 8 or more words in the stem (`prose` and `question`; read as the prose and question together because the inbox case sat in the prose) shared with another unit at any share; `--question-run n`, `--no-question-run`. It does not fire for `finance-2` `fi-forwards-rich-forward` on current content (nothing of 8 words is shared there now). `tools/test-fresh-check.mjs`.
 930. [Could] `fresh-check.mjs` sees wording, not set-ups: a shared named model parameter and answer kind (a decay 0.94, a rate, a strike). [inbox: bank 2 session 4]
-930 status: open. needs a parameter extractor (`\lambda = 0.94`, "decay 0.94") and an answer-kind comparison; the existing `scanSetReuse` parameter test (two shared specific numbers) is the nearest and is limited to problem sets; not started.
+930 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. needs a parameter extractor (`\lambda = 0.94`, "decay 0.94") and an answer-kind comparison; the existing `scanSetReuse` parameter test (two shared specific numbers) is the nearest and is limited to problem sets; not started.
 
 Last inbox heading numbered: "Raised later (bank 2 session 4)" for the bank bullets only (920 to 930); the other bullets of "Raised later (review holes 0.1 and 0.2)" and later headings are still unnumbered.
 
@@ -2198,59 +2198,59 @@ Engine pass AB part 3 (`docs/reports/engine-pass-ab-3.md`: grader faults found b
 940. Done [Could] Validator rule candidate: a `wrong[].tex` holding `\begin{pmatrix}` on a part whose question says "Type it row by row". [inbox: review problems testing, vectors]
 940 status: done (not needed). once the grader reads every typing form (item 931) the stored form of a slip no longer decides whether it fires; `tools/test-grade-ab3.mjs` Part 1 and the typed-slip pass of item 939 hold it.
 941. [Could] Fluency formats: no format writes a thousands separator (`{x:,}` giving `3{,}300{,}000`). [inbox: fluency and problems number-sense 4]
-941 status: open.
+941 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 942. [Could] Expression `form` for a product of primes (`2^3 \times 3^2 \times 5`). [inbox: fluency and problems number-sense 4]
-942 status: open.
+942 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 943. [Could] `fluency-sample.mjs --json` leaves out a `wrong` entry's own `tol`. [inbox: fluency and problems number-sense 4]
-943 status: open.
+943 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 944. [Should] Expression `form` for a surd constant in simplest form (`simplified` lets $\sqrt{72}$ pass for $6\sqrt{2}$; ENGINE-BACKLOG 670 again). [inbox: fluency and problems quadratics 4]
-944 status: open.
+944 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
 945. [Should] Expression `form` for a cancelled algebraic fraction (the typed-back division of `quadratics/problems-4` `p-windy-ride` part 4 also passes). [inbox: fluency and problems quadratics 4; review holes 0.1 and 0.2]
-945 status: open. `form: "simplified"` still refuses only the two uncancelled forms; the division, a fraction over a fraction and the flipped product pass.
+945 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
 946. [Could] `fresh-check.mjs` cannot see a story reused with new numbers and words (a per-course list of setting nouns). [inbox: review holes 0.1 and 0.2]
-946 status: open.
+946 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 947. [Could] Validator rules from classes seen three times: `form: "expanded"` with no "multiplied out", "expand" or "no brackets" in the prompt; "Type the top" with no `whole` slip. [inbox: review holes 0.1 and 0.2]
-947 status: open.
+947 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 948. [Could] Fluency: a text var from a `pick` cannot hold a placeholder. [inbox: fluency and problems testing 4]
-948 status: open.
+948 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 949. [Could] Validator `[wrong-band]` on a "Give a whole number." part refuses a slip whose value is not whole; widening it makes it `[wide-wrong-band]`. [inbox: problems estimation]
-949 status: open. needs a rule decision (accept a non-whole value at its own band for an integer part, or say in AUTHORING which rule wins).
+949 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. needs a rule decision (accept a non-whole value at its own band for an integer part, or say in AUTHORING which rule wins).
 950. [Could] Playthrough `--shots`: on a `choice` part at 440 px the feedback sheet covers the lower options in the shot. [inbox: problems estimation]
-950 status: open.
+950 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 951. [Should] A numeric field whose `unit` is not `%` reads a typed % as a hundredth and marks it wrong with the generic line (`stat-learning/problems-4` `p-order-sizes`, `stat-learning/fluency-l16`, `testing/fluency-l15`). [inbox: review holes 1.6 and 2.1]
-951 status: open (engine). The validator side is item 936 (`[percent-form]` finds the parts that ask for per cent without `unit: "%"`); the field itself still reads `18%` in a field with no `%` unit as 0.18.
+951 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
 952. [Could] `fresh-check.mjs --exam topic-1.6` gives no hit for `s-pareto-losses` against `estimation/homework-2` (shared formula, a `longform` item's `model` not read). [inbox: review holes 1.6 and 2.1]
-952 status: open.
+952 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 953. [Could] Validator rule candidate: `k` decimal places with a half-unit band while the prompt holds `\ln` or "$X^2$". [inbox: review holes 1.6 and 2.1]
-953 status: open.
+953 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 954. [Could] `census.mjs` or the exam number scripts: list each lesson whose key term no exam item holds. [inbox: review holes 1.6 and 2.1]
-954 status: open.
+954 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 955. [Could] A `unit: "%"` part cannot name the slip of typing the decimal (0.0035 for 0.35%): the grader could return a built-in key `decimal` with a default line. [inbox: problems regression; review problems testing, vectors (the decimal its own working prints)]
-955 status: open. the same class as item 951 from the other side.
+955 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
 956. [Could] The Accepted line prints the band from the stored key's full decimals. [inbox: problems regression]
-956 status: open.
+956 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 957. [Could] `expression` matrix answers: nothing on screen says how to type a matrix before answering (a matrix template key or a `placeholder`). [inbox: problems vectors]
-957 status: open.
+957 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 958. [Could] `tools/grade-regression.mjs`: a `--file <path>` option for checking one new set's `wrong` routing. [inbox: problems vectors]
-958 status: open. `playthrough.mjs --problems <set>` (item 939) now checks a set's matrix and vector slips through the real field; the unit-level `--file` is not added.
+958 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. `playthrough.mjs --problems <set>` (item 939) now checks a set's matrix and vector slips through the real field; the unit-level `--file` is not added.
 959. [Could] `fresh-check.mjs --file` lists the standard constants (0.05, 0.01, 1.645, 1.96, ...) as shared parameters. [inbox: problems testing]
-959 status: open.
+959 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 960. [Could] Validator advisory: the question names a one-letter unit ("in hours", "in metres", "in grams", "in seconds") and the widget has no `unit`. [inbox: review problems testing, vectors; review holes 0.1 and 0.2 (a validator rule for a numeric question that names a unit)]
-960 status: open.
+960 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 961. [Could] `[wrong-band]` and `[tight-band]` do not notice a value that is a rounding tie at the asked places (8.645 to 2 places). [inbox: problems testing]
 961 status: done (with item 928's ruling). the existing rule already warns on a tie whose band is under half a unit (`tie-slip-with-a-narrow-band`, `tie-slip-with-the-default-band`, `tie-key-with-a-narrow-band`), and stays quiet for a band of half a unit, which takes in both neighbours; the cases are pinned in `tools/test-validate-band-rules.mjs` and AUTHORING section 7 says so. No code change. Item 928 is closed by the same finding.
 962. [Could] Number-script rule candidate: a `wrong` value worked from exact inputs with a half-step band where the question hands the learner a rounded input. [inbox: review problems 1.6 a]
-962 status: open.
+962 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 963. [Could] `fresh-check.mjs --file` passes a task repeated with new numbers (a masked-number run over question sentences). [inbox: review problems 1.6 a]
-963 status: open.
+963 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 964. [Could] Validator candidates from the testing read: a `wrong` value that equals the key rounded one place shorter; a `wrong` band under 0.005 on a part with no places asked; a doubled-tail slip with a half-unit band. [inbox: review problems testing, vectors]
-964 status: open.
+964 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 965. [Could] `fresh-check.mjs` cannot see two vectors reused under other names and scales (an item and a lesson screen sharing two coordinate pairs). [inbox: review problems testing, vectors]
-965 status: open.
+965 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 966. [Could] An inline `pmatrix` of two or more rows in a part's `question` is set at full height inside the line on a 440 px phone: a validator advisory, or render it in `\textstyle`. [inbox: problems elimination]
-966 status: open.
+966 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 967. [Could] `fresh-check.mjs --file` reports a shared two-term linear equation (`2y+z=7`) as a shared formula. [inbox: problems elimination]
-967 status: open.
+967 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 
 Last inbox headings numbered by engine pass AB part 3: every bullet under the headings named above (931 to 967); the bank 2 bullets (920 to 930) and "Raised later (bank 2 session 4)" were numbered earlier.
 
@@ -2370,7 +2370,30 @@ Last inbox heading numbered by engine pass AE part 1: "Raised later (audit limit
 Status lines of engine pass AE part 1 (`docs/reports/engine-pass-ae-1.md`):
 993 status: partly done. `tools/same-course-reuse.mjs` (so `fresh-check.mjs --file`) now also reads, as advisories, a function with its interval or factorisation (variable renamed; app-wide for a function with its interval, for a cubic or higher and for the heavy terms of a polynomial in two letters), two consecutive part keys held by one sentence of the course, a polynomial or number set shifted and scaled, and a region with its integrand (corners, circle with integrand, end points with route; app-wide). New file `tools/reuse-shapes.mjs`; test `tools/test-fresh-check-same-course-ae.mjs` (the eight session AD findings and four rulings as fixtures under `tools/fixtures/same-course-ae/`); 28 advisory hits on the 116 existing sets, all "to read". Not done: letter-entry matrices at a set value, a claim chain, a set-up under new wording, the topic exam as a source, a story noun in a screen title.
 971 status: done; changed-only mode added in engine pass AE part 1 (a green sha cache, `--changed <sha>`; SciPy 1.18.1, sympy 1.14.0 and statsmodels 0.15.0 pinned in `.github/actions/zq-setup/requirements.txt`; `docs/CI.md`).
-1028 to 1051 status: open (numbered in engine pass AE part 1).
+1028 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
+1029 status: done (session AH): engine pass 7 remainder, package 2; docs/reports/engine-pass-7r-pkg2.md: optional `slip` expression on a `wrong[]` entry; `[slip-expr]` warning; `numbers_lib.py` `check_slips`.
+1030 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1031 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
+1032 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
+1033 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1034 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1035 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1036 status: documented in AUTHORING only (session AH, engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md); key unchanged because a change would re-route existing test-N lines.
+1037 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
+1038 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1039 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1040 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1041 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1042 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1043 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1044 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1045 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1046 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1047 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1048 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1049 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1050 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1051 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1052 status: done in engine pass AE part 2 (`prereq.js` `examMeets`, `examShort`; `locked.js`; `tools/test-met-rule.mjs`, `tools/test-exam-meets-browser.mjs`; `docs/reports/engine-pass-ae-2.md`). `seenAll` dropped from `examMeets` (the exam rows themselves are the evidence). Content follow-up: 109 (exam, level, skill) triples hold one auto item, listed in the report.
 1053 to 1059 status: done in engine pass AE part 2 (`tools/reuse-shapes.mjs`, `tools/same-course-reuse.mjs`, `tools/same-course-waivers.json`, `tools/test-fresh-check-same-course-ae.mjs` with a fixture per class; `docs/reports/engine-pass-ae-2.md`). The six inbox bullets "Raised later (delta AE-1)" are these.
 
@@ -2476,86 +2499,93 @@ Numbered from the 22 inbox bullets under "Raised later (problems validation)", "
 Last inbox heading numbered by engine pass AF part 1: "Raised later (review problems fin-ml)" (end of file). The inbox is cleared. Last number: 1081.
 
 Status lines of engine pass AF part 1 (`docs/reports/engine-pass-af-1.md`):
-1060 status: open (repeated as 1073). 1061 status: open (repeated as 1074). 1062, 1063 status: open.
+1060 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. (repeated as 1073)
+1061 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. (repeated as 1074)
+1062 status: done (session AH): engine pass 7 remainder, package 3; docs/reports/engine-pass-7r-pkg3.md.
+1063 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1064 to 1069 status: done, the same items as 1053 to 1058 (engine pass AE part 2).
-1070 to 1072 status: open. 1073, 1074 status: open (repeats of 1060 and 1061).
+1070 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1071 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1072 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1073 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. (repeat of 1060)
+1074 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. (repeat of 1061)
 1075 status: done in engine pass AF part 1 (`tools/same-course-reuse.mjs` `fbOf`, `tools/retold-reuse.mjs`): every `feedback` line, `explain` and `why` of a set and of the course's lessons, reviews and homework is read, as sentences for the `retold` kind and as text for the `rate` kind; the old `text` kind still reads the setting only.
 1076 status: done as the `retold` kind (error): sentences with numbers, maths and rare nouns masked, stock sentences learned over the whole content (`tools/retold-model.json`), two matched sentences or one long one; shorter runs than the 6 words asked for, since a short sentence of common words is judged by weight, not length.
-1077 status: open.
+1077 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md.
 1078 status: partly done: the `retold` kind matches a sentence equal to a source sentence once nouns are masked or with one word changed, and a chain of three steps in order; a retelling with several words changed in each sentence is not seen (`docs/reports/engine-pass-af-1.md`, findings not reached).
-1079 status: open.
+1079 status: done (session AH): engine pass 7 remainder, package 2; docs/reports/engine-pass-7r-pkg2.md: `[no-chain]` warning.
 1080 status: done: the `rate` kind (error) and per cents read as fractions by the `numbers` kind and the `pair` shape.
-1081 status: open.
+1081 status: done (session AH): engine pass 7 remainder, package 2; docs/reports/engine-pass-7r-pkg2.md: `numbers_lib.py` `Level.slip(ref, path, wid, *routes)`: every route inside the slip band and outside the key band.
 Engine pass AF part 1 tools: `tools/retold-reuse.mjs`, `tools/retold-model.json` (`--learn`), `tools/reuse-hits-report.mjs`, `tools/test-fresh-check-retold-af.mjs` with `tools/fixtures/retold-af`; the 94 hits of the 128 sets are in `docs/reports/same-course-reuse-af-hits.md`.
 
 
 Last inbox heading numbered by engine pass 8: "Raised later (delta read AF convex)" (end of file). The inbox is cleared. Last number: 1146.
 
-1082 status: open: engine pass 8 part B.
-1083 status: open: engine pass 8 part B.
-1084 status: open: engine pass 8 part B.
-1085 status: open: engine pass 8 part B.
-1086 status: open: engine pass 8 part B (print every pair).
-1087 status: open: engine pass 8 part B (waiver `source`).
-1088 status: open: engine pass 8 part B.
-1089 status: open: engine pass 8 part B.
-1090 status: open: engine pass 8 part B.
-1091 status: open: engine pass 8 part B.
+1082 status: done (session AH): already built, status never updated: `tools/retold-reuse.mjs`; `test-fresh-check-pass8.mjs` (stands 50 to 22).
+1083 status: done (session AH): already built, status never updated: as 1082.
+1084 status: done (session AH): already built, status never updated: as 1082.
+1085 status: done (session AH): already built, status never updated: as 1082.
+1086 status: done (session AH): already built, status never updated: `tools/same-course-reuse.mjs` `--pairs`, `fmtPairs`; `tools/reuse-hits-report.mjs`.
+1087 status: done (session AH): already built, status never updated: `same-course-reuse.mjs` waiver match (`source`; `text` is 1152).
+1088 status: done (session AH): engine pass 7 remainder, package 3; docs/reports/engine-pass-7r-pkg3.md.
+1089 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1090 status: done (session AH): already built, status never updated: `[slip-line]`, `retold-reuse.mjs` `slipFires`; paraphrases dropped by the 1148 ruling.
+1091 status: done (session AH): already built, status never updated: `fresh-check.mjs --files`.
 1092 status: done in engine pass 8 part A: `[escaped-apostrophe]`, a warning for now (1 hit in content, `elimination/problems-1`; an error once it is fixed).
-1093 status: open.
-1094 status: open.
-1095 status: open.
-1096 status: open: engine pass 8 part B.
-1097 status: open: engine pass 8 part B (exams read).
-1098 status: open: engine pass 8 part B.
-1099 status: open: engine pass 8 part B.
+1093 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1094 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1095 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1096 status: done (session AH): already built, status never updated: normal quantiles are stock in `retold-reuse.mjs`.
+1097 status: done (session AH): already built, status never updated: exam sources, tag `[exam-reuse]`; `tools/test-fresh-check-pass8.mjs`.
+1098 status: done (session AH): already built, status never updated: in part: one-number lines fire (`[slip-line]`); a slip line in other numbers is stock by the 1148 ruling.
+1099 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1100 status: done in engine pass 8 part A: `[table-source]` and the rule in AUTHORING.md section 5 (a part gives the value or names its source).
-1101 status: open: engine pass 8 part B.
-1102 status: open: engine pass 8 part B.
-1103 status: open: engine pass 8 part B (exams read).
-1104 status: open: engine pass 8 part B.
-1105 status: open: engine pass 8 part B.
-1106 status: open: engine pass 8 part B.
-1107 status: open: engine pass 8 part B (exams read).
-1108 status: open: engine pass 8 part B.
-1109 status: open: engine pass 8 part B (exams read).
-1110 status: open: engine pass 8 part B.
-1111 status: open: engine pass 8 part B.
+1101 status: done (session AH): already built, status never updated: `rate` skips a decimal on a variable.
+1102 status: done (session AH): already built, status never updated: closed in `docs/reports/engine-pass-8-reuse.md`.
+1103 status: done (session AH): already built, status never updated: exams read (skill-to-course map from `course.json`); CI step "Same-course reuse".
+1104 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1105 status: done (session AH): already built, status never updated: exam sources; closed in `engine-pass-8-reuse.md`.
+1106 status: done (session AH): engine pass 7 remainder, package 3; docs/reports/engine-pass-7r-pkg3.md.
+1107 status: done (session AH): already built, status never updated: exams read, as 1103.
+1108 status: done (session AH): already built, status never updated: as 1098.
+1109 status: done (session AH): already built, status never updated: exams read, as 1103.
+1110 status: dropped: overtaken by 1147 and 1148; widening `retold` would reverse the triage of 189 warnings.
+1111 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1112 status: partly done in engine pass 8 part A: `[rounding-tie]` (a key or slip exactly on a tie with a band that takes neither rounding, and a key that is one rounding of a tie the working prints); the 'Using x from part k' candidate is open.
-1113 status: open.
-1114 status: open: engine pass 8 part B (exams read).
-1115 status: open: engine pass 8 part B.
-1116 status: open: engine pass 8 part B.
+1113 status: done (session AH): already built, status never updated: CI runs `same-course-reuse.mjs --all` on every push (`acceptance.yml`).
+1114 status: done (session AH): already built, status never updated: exams read, as 1103.
+1115 status: done (session AH): already built, status never updated: `[slip-line]`.
+1116 status: done (session AH): already built, status never updated: as 1098.
 1117 status: done in engine pass 8 part A: `[table-source]` (warning, 6 hits).
-1118 status: open: engine pass 8 part B (exams read).
-1119 status: open: engine pass 8 part B.
-1120 status: open: engine pass 8 part B.
-1121 status: open: engine pass 8 part B.
+1118 status: done (session AH): already built, status never updated: exams read, as 1103.
+1119 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1120 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1121 status: done (session AH): engine pass 7 remainder, package 3; docs/reports/engine-pass-7r-pkg3.md.
 1122 status: partly done in engine pass 8 part A: `[rounding-tie]` covers the tie candidate; the key printed in its own question is open.
 1123 status: done in engine pass 8 part A: `[wrong-band]` skips a slip that rounds to 0 at the asked places.
-1124 status: open: engine pass 8 part B.
-1125 status: open: engine pass 8 part B.
-1126 status: open: engine pass 8 part B (exams read).
+1124 status: done (session AH): already built, status never updated: corpus loaded once (54 s to 34 s).
+1125 status: done (session AH): already built, status never updated: `[slip-line]`.
+1126 status: done (session AH): already built, status never updated: exams read, as 1103.
 1127 status: done in engine pass 8 part A: `[wide-wrong-tol]` (warning, 10 hits) for a `wrong` band wider than its own value; `[wrong-band]` no longer asks a slip rounding to 0 for a wider one.
-1128 status: open: engine pass 8 part B.
-1129 status: open.
-1130 status: open.
-1131 status: open: engine pass 8 part B (exams read).
-1132 status: open: engine pass 8 part B.
-1133 status: open: engine pass 8 part B.
-1134 status: open.
-1135 status: open: engine pass 8 part B.
-1136 status: open.
+1128 status: done (session AH): engine pass 7 remainder, package 3; docs/reports/engine-pass-7r-pkg3.md.
+1129 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1130 status: done (session AH): engine pass 7 remainder, package 2; docs/reports/engine-pass-7r-pkg2.md: `[carry-band]` warning.
+1131 status: done (session AH): already built, status never updated: exam sources.
+1132 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1133 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1134 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1135 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1136 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1137 status: partly done in engine pass 8 part A: `[rounding-tie]` fires on an exact tie (not within 5% of one).
-1138 status: open.
-1139 status: open: engine pass 8 part B (exams read).
+1138 status: done (session AH): engine pass 7 remainder, package 2; docs/reports/engine-pass-7r-pkg2.md: `[quotient-band]` warning.
+1139 status: done (session AH): already built, status never updated: exam sources.
 1140 status: done in engine pass 8 part A: `[wrong-band]` skips a slip that rounds to 0 (98 hits became 70).
 1141 status: done in engine pass 8 part A: `[table-source]` (warning).
-1142 status: open.
+1142 status: done (session AH): engine pass 7 remainder, package 2; docs/reports/engine-pass-7r-pkg2.md: `[shown-arithmetic]` reads "x is $a \times b$" (either order) and a quotient inside `\Phi\big(...\big)`.
 1143 status: done in engine pass 8 part A: `[rounding-tie]` for keys and slips.
-1144 status: open: engine pass 8 part B.
+1144 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1145 status: done in engine pass 8 part A: `[wrong-band]` skips a slip that rounds to 0.
-1146 status: open: engine pass 8 part B.
+1146 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 Engine pass 8 part A also built `[percent-unit]` (error, 0 hits), the third finding class of KNOWN_ISSUES "session AF close" (a percentage part with no unit "%"), and `[working-band]` (warning, 2 hits), the first (a band that refuses the value the part's own working prints). Hits: `docs/reports/engine-pass-8-hits.md`.
 
 Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part C`):
@@ -2565,7 +2595,7 @@ Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part 
 1150 status: done in engine pass 8 part C: `[rounding-tie]` on a `wrong` skips when its widened band meets another band (1 hit left of 2).
 1151 status: partly done in engine pass 8 part C: `[table-source]` tests the 2-place table reading of a printed $\Phi(x)$, only where the stem or question names a table; a part that names no source still gets the word warning.
 1152 status: done in engine pass 8 part C: a waiver takes a top-level `text`.
-1153 status: open (the `p-fund-managers` exam hit no longer fires: it stood on the stock line alone).
+1153 status: done (session AH): engine pass 7 remainder, package 3; docs/reports/engine-pass-7r-pkg3.md.
 
 ## Engine pass 9 (`docs/reports/engine-pass-9.md`), items 1154 to 1210 (numbered from the inbox)
 
@@ -2629,60 +2659,288 @@ Status lines of engine pass 8 part C (`docs/reports/engine-pass-8.md`, `## Part 
 
 Engine pass 9 status (`docs/reports/engine-pass-9.md`):
 
-1154 status: open (not in engine pass 9).
-1155 status: open (not in engine pass 9).
-1156 status: open (not in engine pass 9).
-1157 status: open (not in engine pass 9).
-1158 status: open (not in engine pass 9).
+1154 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1155 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1156 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1157 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1158 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
 1159 status: done in engine pass 9 item d: `WIDE_PROBE` in `playthrough.mjs` fails an item at 600 px or less when text runs past the window or a clipping box holds wider text (problem sets per part, homework marked items, exam items, the wideNow checks); `test-playthrough-text-overflow.mjs`.
-1160 status: open (not in engine pass 9).
+1160 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1161 status: done in engine pass 9 item f: `--problems` and `--set` stop with "Run the validator first" when `content/manifest.json` lacks the set; `test-playthrough-manifest.mjs`.
-1162 status: open (not in engine pass 9).
-1163 status: open (not in engine pass 9).
+1162 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1163 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1164 status: done in engine pass 9 item f (same change as 1161).
-1165 status: open (not in engine pass 9).
+1165 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1166 status: done in engine pass 9 item f (same change as 1161).
 1167 status: done in engine pass 9 item d (a long KaTeX span past the right edge at 440 px fails; the validator warning on a long maths span was not built).
-1168 status: open (not in engine pass 9).
-1169 status: open (not in engine pass 9).
-1170 status: open (not in engine pass 9).
-1171 status: open (not in engine pass 9).
-1172 status: open (not in engine pass 9).
-1173 status: open (not in engine pass 9).
-1174 status: open (not in engine pass 9).
-1175 status: open (not in engine pass 9).
-1176 status: open (not in engine pass 9).
-1177 status: open (not in engine pass 9).
+1168 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1169 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1170 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1171 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1172 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1173 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1174 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1175 status: done (session AH): engine pass 7 remainder, package 2; docs/reports/engine-pass-7r-pkg2.md: `[slip-in-key-band]` warning (a slip that rounds at the asked places into the key band); the slip typed at the places that its own band refuses was already `[wrong-band]`.
+1176 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1177 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1178 status: done in engine pass 9 item a: `[rounding-tie]` flags a `wrong` stored one place past the asked places with a half-unit band and a fraction of 0.2 to 0.8 of a step.
-1179 status: open (not in engine pass 9).
-1180 status: open (not in engine pass 9).
-1181 status: open (not in engine pass 9).
-1182 status: open (not in engine pass 9).
-1183 status: open (not in engine pass 9).
-1184 status: open (not in engine pass 9).
-1185 status: open (not in engine pass 9).
+1179 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1180 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1181 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1182 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1183 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1184 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1185 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1186 status: done in engine pass 9 item c as `[key-in-question]` (warning).
 1187 status: done in engine pass 9 item e: `voice-scan.py` lists a lesson id written as a code span.
-1188 status: open (not in engine pass 9).
-1189 status: open (not in engine pass 9).
-1190 status: open (not in engine pass 9).
+1188 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1189 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1190 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
 1191 status: done in engine pass 9 item a (same rule as 1178).
-1192 status: open (not in engine pass 9).
-1193 status: open (not in engine pass 9).
+1192 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1193 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1194 status: done in engine pass 9 item a: a key within 7% of a step of a tie, and a printed product or quotient on a tie, with a band that takes one rounding only.
 1195 status: partly done in engine pass 9 item b: `[working-band]` re-evaluates each printed span whose bare result follows it; the case of a printed sd beside its square (a choice of path) is not read.
-1196 status: open (not in engine pass 9).
-1197 status: open (not in engine pass 9).
-1198 status: open (not in engine pass 9).
-1199 status: open (not in engine pass 9).
+1196 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1197 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1198 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1199 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
 1200 status: done in engine pass 9 item c (same rule as 1186).
-1201 status: open (not in engine pass 9).
-1202 status: open (not in engine pass 9).
-1203 status: open (not in engine pass 9).
+1201 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1202 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1203 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
 1204 status: done in engine pass 9 item b (a printed product or quotient evaluated from the printed figures).
-1205 status: open (not in engine pass 9).
-1206 status: open (not in engine pass 9).
-1207 status: open (not in engine pass 9).
-1208 status: open (not in engine pass 9).
-1209 status: open (not in engine pass 9).
-1210 status: open (not in engine pass 9).
+1205 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1206 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1207 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1208 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1209 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+1210 status: open (not in the pass 7 triage: raised in engine pass 9, [Should]).
+
+
+## Engine pass 7 triage (session AH, `docs/reports/engine-pass-7-triage.md`): status lines for items that had none
+
+340 to 422 status: done (built in integration pass 7, ec706cad; the code comments name the item numbers; evidence per file in `docs/reports/engine-pass-7-triage.md` section 4), except 383, 401 and 422 (dropped) and 412 (post-completion); leftovers of 403, 411 and 416 are listed in the last section.
+383 status: dropped: content, not engine; `course.json` maps now hold improper integrals, partial fractions, trig substitution, arc length, related rates and revolution.
+401 status: dropped: content; the maps hold matrix exponential, similar matrices, pseudoinverse and Cholesky.
+422 status: dropped: no brief or AUTHORING line makes the `build(values)` claim now.
+412 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section. `tree` minimum font or stacked rows under `maxHeight` (cosmetic: labels scale to 0.82 at least).
+471 / E13 status: done (concurrency canvas, `canvas/interleave.js`, `css/interleave.css`).
+630 status: done (already built): `docs/LEVEL-BRIEF.md` line 40.
+635 status: done (already built): `docs/reports/engine-pass-ac-4.md` section 4 (a harness fault, fixed); `KNOWN_ISSUES.md` line 244 is stale.
+687 status: done (already built): built as 970, 972, 993 and 1075 to 1080 (leftover: test `call` strings and ids, post-completion).
+692 status: done (already built): item 904 `dropLabel`.
+693 status: done (already built): item 904 `CALLLABEL`.
+883 status: done (already built): item 931.
+983 status: done (already built): `unitCanon`, `grade.js`; unread forms "1.732m", "20C" on a "degrees" field left stay unready, post-completion.
+990 status: done (already built): item 932 (leftover `16(3,1)+(2,1)`, post-completion).
+888 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md (grader side; content side applied in the session's fix pass) (as the pass 7 triage section 10).
+976 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md (grader side; content side applied in the session's fix pass) (as the pass 7 triage section 10).
+1024 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md (grader side; content side applied in the session's fix pass) (as the pass 7 triage section 10).
+1008 status: done (session AH): engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md (as 1031).
+681 status: documented in AUTHORING only (session AH, engine pass 7 remainder, package 1; docs/reports/engine-pass-7r-pkg1.md); key unchanged because a change would re-route existing test-N lines (same ask as 1036).
+668 status: dropped: overtaken by 618; an equation is graded as a relation (`tools/test-expr-equations.mjs`).
+623 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+624 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+628 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+643 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+645 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+646 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+651 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+652 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+659 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+660 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+667 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+676 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+677 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+696 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+697 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+705 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+707 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+709 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+710 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+716 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+717 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+737 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+879 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+880 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+890 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+899 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+974 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+979 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+980 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+987 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1006 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+1010 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section.
+E15, E16, E17, E18, E19 status: post-completion (not required for DONE; user, 16 Nov), listed in the last section (calculator panel on a paper; application tracker on You; role filter; readiness view; `asOf` and `sources` freshness fields).
+
+## Post-completion (not required for DONE; user, 16 Nov)
+
+Every item below is a post-completion item: it does not gate DONE. Each item's own status line says "post-completion". Gists are shortened from the item text; the full text sits under the item's number above (items 1 to 1210) or in the engine pass 7 triage (`docs/reports/engine-pass-7-triage.md`).
+
+### Open [Could] items and the pass 9 [Could] items not built
+
+- 709: Follow-up to 701: the playthrough's width check measures .katex-display only, and scrollWidth ...
+- 930: fresh-check.mjs sees wording, not set-ups: a shared named model parameter and answer kind (a ...
+- 941: Fluency formats: no format writes a thousands separator ({x:,} giving 3{,}300{,}000).
+- 942: Expression form for a product of primes (2^3 \times 3^2 \times 5).
+- 943: fluency-sample.mjs --json leaves out a wrong entry's own tol.
+- 946: fresh-check.mjs cannot see a story reused with new numbers and words (a per-course list of ...
+- 947: Validator rules from classes seen three times: form: "expanded" with no "multiplied out", ...
+- 948: Fluency: a text var from a pick cannot hold a placeholder.
+- 949: Validator [wrong-band] on a "Give a whole number." part refuses a slip whose value is not ...
+- 950: Playthrough --shots: on a choice part at 440 px the feedback sheet covers the lower options in ...
+- 952: fresh-check.mjs --exam topic-1.6 gives no hit for s-pareto-losses against ...
+- 953: Validator rule candidate: k decimal places with a half-unit band while the prompt holds \ln or ...
+- 954: census.mjs or the exam number scripts: list each lesson whose key term no exam item holds.
+- 956: The Accepted line prints the band from the stored key's full decimals.
+- 957: expression matrix answers: nothing on screen says how to type a matrix before answering (a ...
+- 958: tools/grade-regression.mjs: a --file <path> option for checking one new set's wrong routing.
+- 959: fresh-check.mjs --file lists the standard constants (0.05, 0.01, 1.645, 1.96, ...) as shared ...
+- 960: Validator advisory: the question names a one-letter unit ("in hours", "in metres", "in grams", ...
+- 962: Number-script rule candidate: a wrong value worked from exact inputs with a half-step band ...
+- 963: fresh-check.mjs --file passes a task repeated with new numbers (a masked-number run over ...
+- 964: Validator candidates from the testing read: a wrong value that equals the key rounded one ...
+- 965: fresh-check.mjs cannot see two vectors reused under other names and scales (an item and a ...
+- 966: An inline pmatrix of two or more rows in a part's question is set at full height inside the ...
+- 967: fresh-check.mjs --file reports a shared two-term linear equation (2y+z=7) as a shared formula.
+- 987: playthrough.mjs --problems --mobile stays green when a display equation in prose is wider than ...
+- 1030: Warn on a feedback.byKey line for a numeric or expression slip that holds neither the slip ...
+- 1033: A feedback.byKey.test-N line that says "timed out" or "too slow" must name a naive version ...
+- 1034: graphs-dp has no number script for its lessons, reviews and homework (only three perf ...
+- 1035: No node tool compiles and runs C++ with the app's compiler outside the browser playthrough, so ...
+- 1038: algo-think/homework-3 items[6] test 8 (kth_largest(list(range(5000)), 1)) does not catch a ...
+- 1039: docs/AUTHORING.md: any byte count from sys.getsizeof or pointer width must say "64-bit" or be ...
+- 1040: docs/AUTHORING.md: the hidden tests of a code widget share one namespace, so a cache carries ...
+- 1041: docs/AUTHORING.md: a console transcript quoting compiler notes must name the flags it was made ...
+- 1042: docs/AUTHORING.md: which feedback.byKey line an order widget shows (first misplaced line, or ...
+- 1043: A hidden test that how or a feedback line calls a boundary test is checked by no mutant ...
+- 1044: A read-count cap in a hidden test (big.looks <= 45) is checked against the authored solution ...
+- 1045: tools/drill-recursion.mjs covers drills; no check covers lesson code widgets (algo-think/l6 ...
+- 1046: A caption and the prose of one screen can describe the same canvas labels differently ...
+- 1047: Positional feedback.byKey keys on a console canvas (lN) are never checked against the line ...
+- 1048: byKey keys on the test number only, so a test-1 line shows for any first-test failure, ...
+- 1049: Validator: warn on tol.abs >= 1 for a whole-number answer (contests l2 screens[5] took 29 for ...
+- 1050: Drag-point region feedback is fixed text and cannot quote the value at the dropped point.
+- 1051: Add "only if", "every ... because", "almost always" and "as ... promises" to the validator's ...
+- 1060: A wrong[] entry above 1 on a unit: "%" numeric draws the over-100 warning meant for the key ...
+- 1061: fresh-check.mjs's shared-formula advisory compares the displayed text, so an equivalent ...
+- 1063: playthrough.mjs --problems ... --mobile passed while an inline KaTeX formula in a part ...
+- 1070: fresh-check.mjs --file, a miss across courses: a problem's story is compared with its own ...
+- 1071: fresh-check.mjs --file, a miss on numbers: 0 hits on eigen/problems-2 while p-oval-pond shares ...
+- 1072: reuse-shapes.mjs transform, a miss: a factor pair mirrored by $x \to -x$ is not seen for a ...
+- 1073: A wrong[] entry above 1 on a unit: "%" numeric draws the over-100 warning meant for the key ...
+- 1074: fresh-check.mjs's shared-formula advisory compares the displayed text, so an equivalent ...
+- 1089: docs/reports/same-course-reuse-af-hits.md lists 94 hits; one (ensembles/problems-3 ...
+- 1093: (re-author pass AF) A reader's exact replacement can raise a new validator warning that the ...
+- 1094: playthrough.mjs --problems fails with "the level review's card on the course page has no ...
+- 1095: playthrough.mjs --problems <course>/problems-<n> on a set missing from content/manifest.json ...
+- 1099: A chain held in one explain line is not read as a chain: homework-2 h-anova-summary explains ...
+- 1104: One distinctive parameter on the same task raises nothing: $\hat\phi = 0.915$ (l7 screens[11], ...
+- 1111: No check compares the problems of one set, or the sets of one course, for a repeated step with ...
+- 1119: A story held in a few rare nouns is not seen: "pension scheme", "gilts" and "equities" occur ...
+- 1120: A problem whose parts are each a different quiz or review item is not read as a chain: ...
+- 1129: Validator candidate: a score a part calls a hit rate or accuracy, printed to 2 places beside a ...
+- 1132: retold misses a slip line that differs by one word and a tail clause: l3 quiz 0 "That is the ...
+- 1133: fresh-check.mjs reads no canvas table or run of numbers in order: arma/problems-2 ...
+- 1134: Validator candidate (same review, finding 3): a feedback.correct that prints the answer at the ...
+- 1135: No tool reports one key number, up to sign, in two problems of a set: coint/problems-2 ...
+- 1136: Nothing links a quantity to the name an earlier course teaches it under: coint/problems-3 ...
+- 1144: fresh-check.mjs --file gave 0 hits on the four stat-models sets, yet p-hedge-ranks part 1 ...
+- 1146: fresh-check retold misses a sentence frame shared by two sets of one course when most of it is ...
+- 1155: Graph canvas (markov: true) at 440 px: a four-node chain in a row draws at about 330 px wide ...
+- 1156: A numeric answers set (unordered) draws the same narrow field as a single number: at 440 px a ...
+- 1157: An expression set (answers with unordered) cannot take form, so a set of complex roots accepts ...
+- 1160: retold learns stock sentences from committed content, so an instruction line repeated across ...
+- 1162: (session AF re-author) fresh-check transform reports any two six-term sets that are arithmetic ...
+- 1163: fresh-check same-course reuse warns when a choice option names the four modes of convergence ...
+- 1165: fresh-check.mjs reports a rate reuse error for a universal constant: the Gibbs overshoot ...
+- 1168: fresh-check.mjs --file reports a hit in another course (analysis l17, limits l17: $x^3 - 3x$ ...
+- 1169: fresh-check --files gave 0 hits on algebra/problems-3 p-fifteen-times, whose map 15x \bmod 36 ...
+- 1170: retold missed "has bottom row $7, 9, 10, \dots$. So $\sigma(1) = 7$, $\sigma(2) = 9$, and so ...
+- 1171: A permutation in cycle form is not compared with its inverse or with the same cycles started ...
+- 1172: A set problem whose parts each match a different item of one review, lesson or exam file by ...
+- 1173: fresh-check passes a problem whose process is a same-course item's in other units: ...
+- 1174: retold misses a stem that keeps a course sentence with its numbers and opening clause changed ...
+- 1176: fresh-check --file reads exam stems but not exam option text or explain, nor a longform ...
+- 1177: The retold rule did not fire on l6 "Summing the tail" against problems-2 p-billed-hours part 2 ...
+- 1179: No tool flags a choice part whose correct option alone repeats a phrase or symbol of the ...
+- 1180: A second author on a course with a per-course number script (problems-<course>-numbers.py) ...
+- 1181: fresh-check.mjs retold misses a stem that is mostly maths: pdes p-fk-claim ("a value $V(t, x)$ ...
+- 1183: Number scripts' says() helpers match a printed figure as a string, so a false figure passes ...
+- 1184: fresh-check.mjs passes a question that is another item's question word for word when the ...
+- 1185: fresh-check.mjs does not report a 2 by 2 matrix that shares a whole column with a course ...
+- 1188: fresh-check passes a part that is a course item with one constant folded in: ito/problems-4 ...
+- 1189: fresh-check reads no canvas.params matrices of a lesson, so a matrix pair shown on a canvas ...
+- 1192: fresh-check passes ito/problems-4 p-band-wait part 2: its explain is l13 screens[0]'s explain ...
+- 1193: fresh-check --file <path outside the content root> reads the file as an exam and reports the ...
+- 1196: fresh-check.mjs --file reads the course's own exams (items carrying its skills) but no other ...
+- 1197: [tight-band] and [wrong-band] take the rounding from the item prose before the question's own ...
+- 1198: fresh-check does not match a function whose letter is renamed and whose law differs: a draft ...
+- 1199: fresh-check.mjs --file content/courses/topology/problems-3.json runs for more than two minutes ...
+- 1201: fresh-check reads one course: pdes/problems-3 p-grid-budget parts 1 and 2 open as ...
+- 1202: fresh-check passes one step retold on the same grids (p-grid-budget part 3 against homework-3 ...
+- 1206: An explain or feedback line of part k that cites "part k" itself or a later part is cheap to ...
+- 1207: fresh-check did not match the option set and why lines of a choice part against a lesson ...
+- 1208: fresh-check reads no finite topology up to a renaming of its points: topology/problems-2 ...
+
+### From the second triage (section 10): the 32 not required for correctness, 412, and the number-line labels
+
+- 412: `tree` minimum font or stacked rows under `maxHeight` (cosmetic).
+- number line: six labelled points collide at 440 px (coint l4 `screens[5]`); `number-line.js` already stacks overlapping labels in tiers, the six-label screen was not rendered.
+- 623: warn on protocol-dependent puzzles
+- 624: list levels with no number script
+- 628: cross-course lesson references in prose
+- 643: `[shuffled-position]` refinements
+- 645: `[float-artefact]` opt-out
+- 646: playthrough `"verify": "stdout"`
+- 651: `unit "%"` above-1 rule on `answer` only
+- 652: `[float-example]` skips a rounding `call`
+- 659: rerun SQL solutions with reversed rows
+- 660: `numeric` `"places": n`
+- 667: `drag-point` `wrong[]` regions and on-target points
+- 676: built-in key for a decimal of an exact answer
+- 677: copy button strips shell prompts
+- 696: exam item needs only taught constructs
+- 697: longform "prose or prompt" rule wording
+- 705: homework wording on an `aloud` item
+- 707: `aloud` `reveal` list
+- 709: width check on inline `.katex` (with 1063, 987)
+- 710: rubric row cut at 440 px
+- 716: `data` path inside the course folder
+- 717: headings in `grade.prose`
+- 737: render a returned Figure in the code widget
+- 879: `form: "standard"`
+- 880: `form: "ratio"`
+- 890: `--problems --shots` shoots the Problem set row
+- 899: `trade` one-sided quote
+- 974: Python test limit under 5 s
+- 979: rule for "In 2,000 seeded fits"
+- 980: `fresh-check --bank` near copies
+- 987: `--problems --mobile` and a wide display in prose
+- 1006: `numbers_lib` `require_coverage()`
+- 1010: `numbers_lib` code runner ignores `setup`, `prelude`
+
+### E items and leftovers
+
+- E15: calculator panel on a paper.
+- E16: application tracker on You.
+- E17: role filter.
+- E18: readiness view.
+- E19: `asOf` and `sources` freshness fields.
+- 403 (leftover): a learner-edited second source file.
+- 411 (leftover): order after an `array` drag-reorder.
+- 416 (leftover): side panel for a heap.
+- 687, 983, 990 (leftovers): test `call` strings and ids for the setup signature; "1.732m" and "20C" unit forms; `16(3,1)+(2,1)`.
+
+### The 8 deferred bullets of engine pass 7 (never numbered; text from `git show fc24bf10^:docs/BACKLOG-INBOX.md`)
+
+- `series` marker tap snapping: markers a few days apart overlap at phone width (l11 `screens[1]`); snap a tap to the nearest marker and ring it, or offset clustered markers.
+- `number-line` six labelled points: at 440 px the labels shrink to about 8 px and collide (coint l4 `screens[5]`); stagger or drop overlapping labels, or warn on more than four labelled points.
+- `drag-point` pixel tolerance: a tolerance is checked only in data units; on a log number line 2 days near 34 is about 8 px at 440 px (arma l12 `screens[3]`); warn when a target window is under about 12 px at 440 px.
+- Validator `[prelude-drift]`: warn when a lesson prelude defines a function named as an earlier level's code-screen solution in the same course with a different body (alpha l16 `quantile_returns`, `rank_ic`).
+- Validator `[canvas-above]` (advisory): prose that says "above" for a canvas that renders below the prose (alpha l16 `screens[1]`).
+- Console line-number citations: a `console` with `numbers: true` is cited by line number in prose, hints and `why`, and nothing checks it (opt-dash l5 `screens[5]`); same ask as 1047; also "line N" of a console without `numbers: true`.
+- Validator advisory for Lo's standard error in the one-yearly-return form `(1 + SR^2/2)/T` in text about daily data with no $SR_d$ (backtest L4).
+- Longform homework "this" advisory; and a playthrough check for answer cells that sit off screen (text not recoverable from the inbox; wording as in `docs/reports/engine-pass-7-triage.md` section 5).
+- Dropped, not post-completion: the backtest fill-cap bullet (a content item: wire `capped_qty` into the l7 order layer).
