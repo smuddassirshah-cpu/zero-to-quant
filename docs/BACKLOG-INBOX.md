@@ -52,3 +52,8 @@ Raised later (review problems measure-prob):
 
 Raised later (problems measure-prob level 4):
 - A second author on a course with a per-course number script (`problems-<course>-numbers.py`) cannot import its helpers (`num_part`, `wrong_is`, `expr_part`, `structural`): the script runs its levels and calls `sys.exit` at import. Level 4 of measure-prob copied them into `problems-measure-prob-4-numbers.py`. Moving these problem-set helpers into `app/tools/numbers_lib.py` would let split scripts share one copy.
+
+Raised later (review problems pdes):
+- `fresh-check.mjs` `retold` misses a stem that is mostly maths: `pdes` `p-fk-claim` ("a value $V(t, x)$ solves ..., with $V(T, x) = e^x$. Today $x = 0$ and two years remain.") against exam `e-fk-reverting` (the same two sentences with other coefficients) gives 0 hits, since dropping the maths leaves too few signal words. Keep the shape of a displayed equation (its operators and letters, numbers masked) as signal for the skeleton test.
+- No validator rule checks a carried value: `pdes` `p-grid-modes` part 4 restates "0.2200 from part 3", but part 3's printed working ($0.9702^{50}$) gives 0.2203, and the learner who carries it is refused. `[working-band]` could evaluate a "Using <value> from part k" against part k's printed working at one more place than part k asks, and recompute simple printed products and quotients ("$0.6 \times 3.6761 \approx 2.2056$" is 2.2057).
+- Number scripts' `says()` helpers match a printed figure as a string, so a false figure passes (`pdes` `p-grid-no-formula`: "$50e^{-0.015} = 49.255582$", true 49.255597). A shared helper that takes the computed value and the places would close this.
